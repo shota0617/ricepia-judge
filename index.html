@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>らいすぴあ 精米品質AI判定</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP','Hiragino Sans',sans-serif;background:#f5f2eb;min-height:100vh;padding-bottom:60px;}
+  input,textarea,button{font-family:inherit;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .fade-in{animation:fadeIn 0.5s ease;}
+  .spinner{width:17px;height:17px;border:2px solid #2d2d1e;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite;flex-shrink:0;}
+
+/* Header */
+#header{background:#2d2d1e;padding:14px 20px;position:sticky;top:0;z-index:100;}
+#header-inner{max-width:480px;margin:0 auto;display:flex;align-items:center;gap:10px;}
+.hlogo{width:32px;height:32px;background:#c8a96e;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.htitle{color:#f5f2eb;font-size:14px;font-weight:700;letter-spacing:0.06em;}
+.hsub{color:#c8a96e;font-size:9px;letter-spacing:0.15em;}
+.hbadge{color:#6a6a54;font-size:10px;margin-left:2px;}
+.tab-btn{padding:4px 10px;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:400;}
+.tab-btn.active{background:#c8a96e;color:#2d2d1e;font-weight:700;}
+.tab-btn:not(.active){background:transparent;color:#6a6a54;}
+
+/* Main */
+#main{max-width:480px;margin:0 auto;padding:20px 16px 0;}
+
+/* Cards */
+.card{background:#fff;border-radius:14px;border:1px solid #e8e4d8;padding:18px;}
+.card+.card{margin-top:12px;}
+
+/* Buttons */
+.btn-primary{width:100%;padding:14px;background:#c8a96e;border:none;border-radius:11px;color:#2d2d1e;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.08em;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:disabled{background:#9a9a7a;cursor:not-allowed;}
+.btn-dark{width:100%;padding:14px;background:#2d2d1e;border:none;border-radius:11px;color:#c8a96e;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.08em;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-ghost{width:100%;padding:13px;background:transparent;border:1.5px solid #c4bfaa;border-radius:11px;color:#5a5a4a;font-size:13px;cursor:pointer;}
+.btn-sm-dark{flex:1;padding:11px;background:#2d2d1e;border:none;border-radius:9px;color:#f5f2eb;font-size:12px;cursor:pointer;}
+.btn-sm-ghost{flex:1;padding:11px;background:#fff;border:1.5px solid #c4bfaa;border-radius:9px;color:#5a5a4a;font-size:12px;cursor:pointer;}
+
+/* Upload zone */
+.upload-zone{border:2px dashed #c4bfaa;border-radius:14px;background:#fff;padding:36px 20px;text-align:center;cursor:pointer;transition:all 0.3s;}
+.upload-zone.has-image{border:2px solid #5b8a6b;background:#eef5f0;padding:0;overflow:hidden;}
+.upload-zone img{width:100%;display:block;max-height:280px;object-fit:cover;}
+.upload-zone .remove-btn{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.55);color:#fff;border:none;border-radius:50%;width:30px;height:30px;font-size:15px;cursor:pointer;}
+
+/* Score bar */
+.score-row{margin-bottom:13px;}
+.score-header{display:flex;justify-content:space-between;margin-bottom:4px;}
+.score-label{font-size:12px;color:#5a5a4a;}
+.score-val{font-size:12px;font-weight:700;color:#2d2d1e;}
+.score-track{height:5px;background:#ece9de;border-radius:3px;overflow:hidden;}
+.score-fill{height:100%;border-radius:3px;transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1);}
+
+/* Grade box */
+.grade-box{border-radius:14px;padding:20px;text-align:center;margin-bottom:12px;}
+.grade-letter{font-size:64px;font-weight:900;line-height:1;font-family:Georgia,serif;}
+
+/* Error */
+.error-box{margin-top:12px;padding:13px 15px;background:#fdf0f0;border-radius:9px;border:1px solid #f0c8c8;color:#b05555;font-size:12px;line-height:1.7;}
+
+/* Tip box */
+.tip-box{margin-top:10px;padding:10px 14px;background:#fff8ee;border-radius:9px;border:1px solid #e8d8b0;font-size:11px;color:#8a7040;line-height:1.6;}
+
+/* API key screen */
+#apiscreen{min-height:100vh;background:#f5f2eb;display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+.api-card{width:100%;max-width:400px;background:#fff;border-radius:16px;padding:22px;border:1px solid #e8e4d8;box-shadow:0 4px 20px rgba(0,0,0,0.06);}
+
+/* Grade colors */
+.grade-S{color:#c8a96e;} .bg-S{background:#fdf8ee;border:2px solid #c8a96e;}
+.grade-A{color:#5b8a6b;} .bg-A{background:#eef5f0;border:2px solid #5b8a6b;}
+.grade-B{color:#4a7ab5;} .bg-B{background:#eef3fb;border:2px solid #4a7ab5;}
+.grade-C{color:#d4924a;} .bg-C{background:#fdf3ea;border:2px solid #d4924a;}
+.grade-D{color:#b05555;} .bg-D{background:#fdf0f0;border:2px solid #b05555;}
+
+/* Admin */
+.grade-btn{flex:1;padding:8px 0;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;}
+.sample-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0ede4;}
+.sample-thumb{width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;}
+</style>
+
+</head>
+<body>
+
+<!-- API Key Screen -->
+
+<div id="apiscreen">
+  <div style="width:100%;max-width:400px;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:48px;">🌾</div>
+      <div style="font-size:19px;font-weight:700;color:#2d2d1e;letter-spacing:0.08em;">らいすぴあ 品質判定</div>
+      <div style="font-size:10px;color:#c8a96e;letter-spacing:0.2em;margin-top:3px;">RICE QUALITY AI — 近藤米穀店</div>
+    </div>
+    <div class="api-card">
+      <div style="font-size:12px;color:#5a5a4a;font-weight:600;margin-bottom:4px;">Anthropic API Key</div>
+      <div style="font-size:11px;color:#9a9a7a;margin-bottom:12px;">
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#c8a96e;">console.anthropic.com</a> で取得
+      </div>
+      <div style="position:relative;">
+        <input type="password" id="apiKeyInput" placeholder="sk-ant-..."
+          style="width:100%;padding:11px 40px 11px 13px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;color:#2d2d1e;background:#fafaf7;outline:none;font-family:monospace;"/>
+        <button onclick="toggleShowKey()" id="eyeBtn" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9a9a7a;font-size:15px;padding:0;">👁</button>
+      </div>
+      <button onclick="setApiKey()" id="startBtn"
+        style="width:100%;margin-top:12px;padding:13px;background:#d8d4c4;border:none;border-radius:9px;color:#2d2d1e;font-size:14px;font-weight:700;cursor:not-allowed;letter-spacing:0.06em;">
+        開始する →
+      </button>
+      <div style="margin-top:10px;font-size:10px;color:#b0ab96;text-align:center;">🔒 キーはブラウザ内のみで使用・保存されません</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main App (hidden until API key set) -->
+
+<div id="app" style="display:none;">
+
+  <!-- Header -->
+
+  <div id="header">
+    <div id="header-inner">
+      <div class="hlogo">🌾</div>
+      <div>
+        <div class="htitle">らいすぴあ 品質判定AI</div>
+        <div class="hsub">学習データ <span id="sampleCount">0</span>件参照中</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:6px;">
+        <button class="tab-btn active" id="tabJudge" onclick="switchTab('judge')">判定</button>
+        <button class="tab-btn" id="tabAdmin" onclick="switchTab('admin')">管理</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="main">
+
+```
+<!-- JUDGE MODE -->
+<div id="judgeMode">
+
+  <!-- Upload zone -->
+  <div id="uploadZone" class="upload-zone" onclick="onUploadClick()" style="position:relative;">
+    <div style="font-size:40px;margin-bottom:8px;opacity:0.6;">📷</div>
+    <div style="color:#5a5a4a;font-size:14px;font-weight:600;margin-bottom:4px;">精米の写真を選択</div>
+    <div style="color:#c8a96e;font-size:12px;">タップして撮影 / ギャラリー</div>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="onFileSelected(event)"/>
+
+  <!-- Camera/Gallery buttons -->
+  <div id="camBtns" style="display:flex;gap:8px;margin-top:10px;">
+    <button class="btn-sm-ghost" onclick="openGallery()">🖼 ギャラリー</button>
+    <button class="btn-sm-dark" onclick="openCamera()">📷 カメラ撮影</button>
+  </div>
+
+  <!-- Analyze button -->
+  <button id="analyzeBtn" class="btn-primary" style="display:none;margin-top:12px;" onclick="analyze()">
+    🌾 品質を判定する
+  </button>
+
+  <!-- Error -->
+  <div id="errorBox" class="error-box" style="display:none;"></div>
+
+  <!-- Result -->
+  <div id="resultBox" style="display:none;" class="fade-in"></div>
+
+  <!-- Tip -->
+  <div id="tipBox" style="margin-top:20px;padding:16px;background:#fff;border-radius:12px;border:1px solid #e8e4d8;">
+    <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:10px;">撮影のコツ</div>
+    <div style="font-size:12px;color:#5a5a4a;line-height:2;">
+      <span style="color:#c8a96e;">·</span> 明るい場所で撮影する<br/>
+      <span style="color:#c8a96e;">·</span> 精米をトレーに広げて均一に<br/>
+      <span style="color:#c8a96e;">·</span> 真上から水平に撮影<br/>
+      <span style="color:#c8a96e;">·</span> ピントを合わせてブレを防ぐ
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN MODE -->
+<div id="adminMode" style="display:none;">
+
+  <!-- Password gate -->
+  <div id="adminGate" class="card" style="margin-top:8px;">
+    <div style="font-size:13px;color:#5a5a4a;font-weight:600;margin-bottom:12px;">🔐 管理者パスワード</div>
+    <input type="password" id="adminPassInput" placeholder="パスワードを入力"
+      style="width:100%;padding:11px 13px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:14px;color:#2d2d1e;background:#fafaf7;outline:none;"
+      onkeydown="if(event.key==='Enter')adminLogin()"/>
+    <div id="passError" style="display:none;font-size:11px;color:#b05555;margin-top:5px;">パスワードが違います</div>
+    <button onclick="adminLogin()" style="width:100%;margin-top:10px;padding:12px;background:#2d2d1e;border:none;border-radius:9px;color:#f5f2eb;font-size:14px;font-weight:700;cursor:pointer;">
+      ログイン
+    </button>
+    <div style="margin-top:10px;font-size:11px;color:#9a9a7a;text-align:center;">初期パスワード: ricepia2024</div>
+  </div>
+
+  <!-- Admin panel -->
+  <div id="adminPanel" style="display:none;">
+    <!-- Add sample -->
+    <div class="card">
+      <div style="font-size:13px;color:#5a5a4a;font-weight:700;margin-bottom:14px;">📚 学習データを追加</div>
+      <div id="adminUpload" onclick="openAdminUpload()" style="border:2px dashed #c4bfaa;border-radius:10px;padding:24px;text-align:center;cursor:pointer;margin-bottom:12px;overflow:hidden;position:relative;">
+        <div style="color:#9a9a7a;font-size:13px;">📷 写真を選択</div>
+      </div>
+      <input type="file" id="adminFileInput" accept="image/*" style="display:none;" onchange="onAdminFileSelected(event)"/>
+      <div style="font-size:12px;color:#5a5a4a;margin-bottom:6px;font-weight:600;">グレード</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;" id="gradeBtns"></div>
+      <div style="font-size:12px;color:#5a5a4a;margin-bottom:6px;font-weight:600;">メモ（品質の特徴）</div>
+      <textarea id="adminMemo" placeholder="例：胴割れが多め、光沢は十分、粒揃い良好..."
+        style="width:100%;padding:10px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:12px;color:#2d2d1e;background:#fafaf7;outline:none;min-height:60px;resize:vertical;"></textarea>
+      <button id="addSampleBtn" onclick="addSample()" disabled
+        style="width:100%;margin-top:10px;padding:12px;background:#d8d4c4;border:none;border-radius:9px;color:#2d2d1e;font-size:14px;font-weight:700;cursor:not-allowed;">
+        学習データとして登録
+      </button>
+    </div>
+
+    <!-- Sample list -->
+    <div class="card" style="margin-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-size:13px;color:#5a5a4a;font-weight:700;">登録済み学習データ（<span id="sampleListCount">0</span>件）</div>
+        <button onclick="clearAllSamples()" id="clearBtn" style="display:none;font-size:11px;color:#b05555;background:none;border:1px solid #f0c8c8;border-radius:5px;padding:3px 8px;cursor:pointer;">全削除</button>
+      </div>
+      <div id="sampleList">
+        <div style="text-align:center;color:#9a9a7a;font-size:12px;padding:20px 0;">まだデータがありません</div>
+      </div>
+    </div>
+
+    <button onclick="adminLogout()" class="btn-ghost" style="margin-top:12px;">管理者モードを終了</button>
+  </div>
+</div>
+```
+
+  </div>
+</div>
+
+<script>
+// ── State ──
+const STORAGE_KEY = "ricepia_samples";
+const ADMIN_PASS  = "ricepia2024";
+const GRADES = ["S","A","B","C","D"];
+const GRADE_CFG = {
+  S:{color:"#c8a96e",bg:"#fdf8ee",desc:"最高品質・贈答用"},
+  A:{color:"#5b8a6b",bg:"#eef5f0",desc:"優秀・直売向け"},
+  B:{color:"#4a7ab5",bg:"#eef3fb",desc:"良品・家庭用"},
+  C:{color:"#d4924a",bg:"#fdf3ea",desc:"標準・業務用"},
+  D:{color:"#b05555",bg:"#fdf0f0",desc:"要改善・加工向け"},
+};
+
+let apiKey = "";
+let currentImage = null;
+let currentBase64 = null;
+let currentMime = "image/jpeg";
+let adminBase64 = null;
+let adminImg = null;
+let selectedGrade = "A";
+let samples = [];
+
+try { samples = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch{}
+
+// ── API Key ──
+document.getElementById("apiKeyInput").addEventListener("input", function(){
+  const ok = this.value.length > 10;
+  const btn = document.getElementById("startBtn");
+  btn.style.background = ok ? "#c8a96e" : "#d8d4c4";
+  btn.style.cursor = ok ? "pointer" : "not-allowed";
+});
+function toggleShowKey(){
+  const inp = document.getElementById("apiKeyInput");
+  const btn = document.getElementById("eyeBtn");
+  if(inp.type==="password"){inp.type="text";btn.textContent="🙈";}
+  else{inp.type="password";btn.textContent="👁";}
+}
+function setApiKey(){
+  const val = document.getElementById("apiKeyInput").value;
+  if(val.length <= 10) return;
+  apiKey = val;
+  document.getElementById("apiscreen").style.display = "none";
+  document.getElementById("app").style.display = "block";
+  updateSampleCount();
+  renderGradeBtns();
+  renderSampleList();
+}
+
+// ── Tab ──
+function switchTab(tab){
+  document.getElementById("judgeMode").style.display = tab==="judge"?"block":"none";
+  document.getElementById("adminMode").style.display = tab==="admin"?"block":"none";
+  document.getElementById("tabJudge").className = "tab-btn" + (tab==="judge"?" active":"");
+  document.getElementById("tabAdmin").className  = "tab-btn" + (tab==="admin"?" active":"");
+}
+
+// ── File handling ──
+function onUploadClick(){ if(!currentImage) document.getElementById("fileInput").click(); }
+function openGallery(){ document.getElementById("fileInput").click(); }
+function openCamera(){
+  const inp = document.getElementById("fileInput");
+  inp.setAttribute("capture","environment");
+  inp.click();
+  setTimeout(()=>inp.removeAttribute("capture"), 500);
+}
+function onFileSelected(e){
+  const file = e.target.files[0];
+  if(!file||!file.type.startsWith("image/")) return;
+  currentMime = file.type || "image/jpeg";
+  const reader = new FileReader();
+  reader.onload = ev => {
+    currentImage = ev.target.result;
+    currentBase64 = ev.target.result.split(",")[1];
+    resetResult();
+    renderUploadZone();
+  };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+}
+function renderUploadZone(){
+  const zone = document.getElementById("uploadZone");
+  const camBtns = document.getElementById("camBtns");
+  const analyzeBtn = document.getElementById("analyzeBtn");
+  const tipBox = document.getElementById("tipBox");
+  if(currentImage){
+    zone.className = "upload-zone has-image";
+    zone.innerHTML = `<div style="position:relative;"><img src="${currentImage}" alt="精米"/><button class="remove-btn" onclick="removeImage(event)">×</button></div>`;
+    camBtns.style.display = "none";
+    analyzeBtn.style.display = "flex";
+    tipBox.style.display = "none";
+  } else {
+    zone.className = "upload-zone";
+    zone.innerHTML = `<div style="font-size:40px;margin-bottom:8px;opacity:0.6;">📷</div><div style="color:#5a5a4a;font-size:14px;font-weight:600;margin-bottom:4px;">精米の写真を選択</div><div style="color:#c8a96e;font-size:12px;">タップして撮影 / ギャラリー</div>`;
+    camBtns.style.display = "flex";
+    analyzeBtn.style.display = "none";
+    tipBox.style.display = "block";
+  }
+}
+function removeImage(e){
+  e.stopPropagation();
+  currentImage = null; currentBase64 = null;
+  resetResult();
+  renderUploadZone();
+}
+function resetResult(){
+  document.getElementById("resultBox").style.display = "none";
+  document.getElementById("errorBox").style.display = "none";
+}
+
+// ── Analyze ──
+function buildPrompt(){
+  let base = `あなたは近藤米穀店「らいすぴあ」の精米品質判定AIです。
+送られた精米写真を分析し、当店独自の基準で判定してください。
+
+【判定項目と採点基準（0〜100点）】
+- 白度・光沢：米粒の白さと輝き
+- 粒の揃い：粒の大きさ・形の均一性
+- 異物・着色粒：茶色・黒ずみ・被害粒の少なさ（多いほど低点）
+- 割れ・欠け：胴割れ・砕け米の少なさ（多いほど低点）
+
+【グレード定義】
+S：最高品質。贈答用に出せる。全項目90以上。
+A：優秀。直売・贈答向け。全項目80以上。
+B：良品。家庭用として十分。全項目70以上。
+C：標準。業務用・加工向け。
+D：要改善。出荷前に再精米を検討。`;
+
+  if(samples.length > 0){
+    base += `\n\n【らいすぴあ 学習済み判定例 ${samples.length}件】\n`;
+    base += samples.map((s,i)=>
+      `例${i+1}：グレード${s.grade}（${GRADE_CFG[s.grade].desc}）\n  特徴：${s.memo||"なし"}`
+    ).join("\n");
+  }
+  base += `\n\n必ず以下のJSON形式のみで返答してください：\n{"grade":"A","whiteness":85,"uniformity":90,"foreign":95,"crack":88,"variety":"コシヒカリ","comment":"ここにコメント（2文以内）","usage":"贈答用・直売向け","points":["特徴1","特徴2","特徴3"]}\n\nvarietyは写真から推測できなければ「不明」と記載。`;
+  return base;
+}
+
+async function analyze(){
+  if(!currentBase64||!apiKey) return;
+  const btn = document.getElementById("analyzeBtn");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spinner"></span>AI判定中...`;
+  document.getElementById("errorBox").style.display = "none";
+  document.getElementById("resultBox").style.display = "none";
+
+  try{
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "x-api-key":apiKey,
+        "anthropic-version":"2023-06-01",
+        "anthropic-dangerous-direct-browser-access":"true"
+      },
+      body:JSON.stringify({
+        model:"claude-opus-4-5",
+        max_tokens:800,
+        system:buildPrompt(),
+        messages:[{role:"user",content:[
+          {type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}},
+          {type:"text",text:"この精米の品質を判定してください。"}
+        ]}]
+      })
+    });
+    if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e?.error?.message||`HTTP ${res.status}`); }
+    const data = await res.json();
+    const text = data.content?.map(b=>b.text||"").join("")||"";
+    const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+    renderResult(parsed);
+  }catch(e){
+    const eb = document.getElementById("errorBox");
+    eb.style.display = "block";
+    eb.textContent = `判定エラー: ${e.message}`;
+    if(e.message.includes("401")) eb.innerHTML += `<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = "🌾 品質を判定する";
+  }
+}
+
+function renderResult(r){
+  const cfg = GRADE_CFG[r.grade] || GRADE_CFG.B;
+  const bar = (val,color) => `
+    <div class="score-row">
+      <div class="score-header"><span class="score-label">${arguments[2]}</span><span class="score-val">${val}点</span></div>
+      <div class="score-track"><div class="score-fill" style="width:${val}%;background:${color};"></div></div>
+    </div>`;
+  // redefine with label
+  const scoreBar = (label,val,color) => `
+    <div class="score-row">
+      <div class="score-header"><span class="score-label">${label}</span><span class="score-val">${val}点</span></div>
+      <div class="score-track"><div class="score-fill" style="width:${val}%;background:${color};"></div></div>
+    </div>`;
+
+  const pointsHtml = r.points&&r.points.length ? `
+    <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:8px;">品質のポイント</div>
+    ${r.points.map(p=>`<div style="font-size:12px;color:#5a5a4a;margin-bottom:4px;">・${p}</div>`).join("")}
+  ` : "";
+
+  const html = `
+    <div class="grade-box bg-${r.grade}" style="background:${cfg.bg};border:2px solid ${cfg.color};">
+      <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.15em;margin-bottom:6px;">OVERALL GRADE</div>
+      <div class="grade-letter grade-${r.grade}">${r.grade}</div>
+      <div style="font-size:13px;color:${cfg.color};margin-top:6px;font-weight:600;">${cfg.desc}</div>
+      ${r.variety&&r.variety!=="不明"?`<div style="font-size:11px;color:#9a9a7a;margin-top:4px;">品種：${r.variety}</div>`:""}
+    </div>
+
+    <div class="card" style="margin-bottom:10px;">
+      <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:14px;">DETAIL SCORES</div>
+      ${scoreBar("白度・光沢",r.whiteness,"#c8a96e")}
+      ${scoreBar("粒の揃い",r.uniformity,"#5b8a6b")}
+      ${scoreBar("異物・着色粒",r.foreign,"#4a7ab5")}
+      ${scoreBar("割れ・欠け",r.crack,"#a06080")}
+    </div>
+
+    <div class="card" style="margin-bottom:10px;">
+      <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:8px;">AI コメント</div>
+      <p style="font-size:13px;color:#3a3a2e;line-height:1.8;">${r.comment}</p>
+    </div>
+
+    ${pointsHtml ? `<div class="card" style="margin-bottom:10px;">${pointsHtml}</div>` : ""}
+
+    <div style="background:#2d2d1e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+      <div style="font-size:10px;color:#c8a96e;letter-spacing:0.15em;margin-bottom:6px;">おすすめ用途</div>
+      <div style="font-size:13px;color:#f5f2eb;font-weight:600;">🍚 ${r.usage}</div>
+    </div>
+
+    <button class="btn-dark" onclick="printReceipt()" style="margin-bottom:10px;">🖨️ レシートプリンターで印刷</button>
+    <button class="btn-ghost" onclick="resetJudge()">別の写真を判定する</button>
+    <div class="tip-box">💡 印刷ダイアログでmC-Print3を選択してください。<br/>プリンターが表示されない場合はWi-Fi接続を確認してください。</div>
+  `;
+
+  const box = document.getElementById("resultBox");
+  box.innerHTML = html;
+  box.style.display = "block";
+  // Store result for printing
+  window._lastResult = r;
+  window._lastImage = currentImage;
+}
+
+function resetJudge(){
+  currentImage = null; currentBase64 = null;
+  window._lastResult = null; window._lastImage = null;
+  resetResult();
+  renderUploadZone();
+}
+
+// ── Print ──
+function printReceipt(){
+  const r = window._lastResult;
+  const img = window._lastImage;
+  if(!r) return;
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const bar = s => "█".repeat(Math.round(s/10)) + "░".repeat(10-Math.round(s/10)) + `  ${s}点`;
+  const cfg = GRADE_CFG[r.grade] || GRADE_CFG.B;
+  const win = window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>精米品質判定レポート</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Noto Sans JP','Hiragino Sans',monospace;width:58mm;margin:0 auto;padding:4mm 3mm;font-size:10pt;color:#000;background:#fff;}
+  .c{text-align:center;} .b{font-weight:700;}
+  .div{border-top:1px dashed #000;margin:3mm 0;}
+  .sr{display:flex;justify-content:space-between;margin:1.5mm 0;font-size:9pt;}
+  .sl{flex:0 0 22mm;} .sb{flex:1;font-family:monospace;font-size:8pt;}
+  @media print{body{width:58mm;}@page{size:58mm auto;margin:0;}}
+</style></head><body>
+
+<div class="c"><div style="font-size:13pt;font-weight:700;letter-spacing:0.05em;">近藤米穀店</div><div style="font-size:8pt;color:#444;">らいすぴあ</div></div>
+<div class="div"></div>
+<div class="c b" style="font-size:11pt;letter-spacing:0.05em;">精米品質 判定レポート</div>
+<div class="c" style="font-size:8pt;color:#444;">${dateStr}</div>
+<div class="div"></div>
+${img?`<img src="${img}" style="width:100%;max-height:30mm;object-fit:cover;margin:2mm 0;display:block;"/>`:""}
+<div style="font-size:9pt;margin:1mm 0;">品種：${r.variety||"不明"}</div>
+<div style="text-align:center;margin:3mm 0;padding:2mm;border:2px solid #000;">
+  <div style="font-size:8pt;color:#666;letter-spacing:0.15em;">OVERALL GRADE</div>
+  <div style="font-size:28pt;font-weight:900;line-height:1;">${r.grade}</div>
+  <div style="font-size:9pt;">${cfg.desc}</div>
+</div>
+<div class="div"></div>
+<div class="b" style="font-size:9pt;margin-bottom:1mm;">【詳細スコア】</div>
+<div class="sr"><span class="sl">白度・光沢</span><span class="sb">${bar(r.whiteness)}</span></div>
+<div class="sr"><span class="sl">粒の揃い　</span><span class="sb">${bar(r.uniformity)}</span></div>
+<div class="sr"><span class="sl">異物・着色</span><span class="sb">${bar(r.foreign)}</span></div>
+<div class="sr"><span class="sl">割れ・欠け</span><span class="sb">${bar(r.crack)}</span></div>
+<div class="div"></div>
+<div class="b" style="font-size:9pt;margin-bottom:1mm;">【AIコメント】</div>
+<div style="background:#f5f5f5;padding:2mm;font-size:9pt;line-height:1.6;">${r.comment}</div>
+<div class="div"></div>
+<div class="b" style="font-size:9pt;">【おすすめ用途】</div>
+<div style="font-size:10pt;font-weight:700;text-align:center;margin:2mm 0;">🍚 ${r.usage}</div>
+${r.points&&r.points.length?`<div class="div"></div><div class="b" style="font-size:9pt;margin-bottom:1mm;">【品質のポイント】</div>${r.points.map(p=>`<div style="font-size:8.5pt;margin:1mm 0;">・${p}</div>`).join("")}`:""}
+<div class="div"></div>
+<div style="font-size:7.5pt;color:#666;text-align:center;">学習データ ${samples.length}件を参照して判定</div>
+<div class="div"></div>
+<div style="font-size:8pt;text-align:center;color:#555;">近藤米穀店 らいすぴあ<br/>西尾市　創業130余年<br/>秀幸米 / 翔米</div>
+</body></html>`);
+  win.document.close();
+  setTimeout(()=>{win.focus();win.print();},600);
+}
+
+// ── Admin ──
+function adminLogin(){
+const pass = document.getElementById(“adminPassInput”).value;
+if(pass === ADMIN_PASS){
+document.getElementById(“adminGate”).style.display = “none”;
+document.getElementById(“adminPanel”).style.display = “block”;
+document.getElementById(“adminPassInput”).value = “”;
+document.getElementById(“passError”).style.display = “none”;
+} else {
+document.getElementById(“passError”).style.display = “block”;
+}
+}
+function adminLogout(){
+document.getElementById(“adminGate”).style.display = “block”;
+document.getElementById(“adminPanel”).style.display = “none”;
+}
+function renderGradeBtns(){
+const container = document.getElementById(“gradeBtns”);
+container.innerHTML = GRADES.map(g => ` <button class="grade-btn" onclick="selectGrade('${g}')" id="gradeBtn${g}" style="background:${g===selectedGrade?GRADE_CFG[g].color:'#f0ede4'};color:${g===selectedGrade?'#fff':'#5a5a4a'};"> ${g} </button>`).join(””);
+}
+function selectGrade(g){
+selectedGrade = g;
+renderGradeBtns();
+}
+function openAdminUpload(){ document.getElementById(“adminFileInput”).click(); }
+function onAdminFileSelected(e){
+const file = e.target.files[0];
+if(!file||!file.type.startsWith(“image/”)) return;
+const reader = new FileReader();
+reader.onload = ev => {
+adminImg = ev.target.result;
+adminBase64 = ev.target.result.split(”,”)[1];
+const zone = document.getElementById(“adminUpload”);
+zone.innerHTML = `<div style="position:relative;"><img src="${adminImg}" style="width:100%;display:block;max-height:180px;object-fit:cover;"/><button onclick="removeAdminImg(event)" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.55);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:14px;cursor:pointer;">×</button></div>`;
+const btn = document.getElementById(“addSampleBtn”);
+btn.disabled = false; btn.style.background = “#c8a96e”; btn.style.cursor = “pointer”;
+};
+reader.readAsDataURL(file);
+e.target.value = “”;
+}
+function removeAdminImg(e){
+e.stopPropagation();
+adminImg = null; adminBase64 = null;
+document.getElementById(“adminUpload”).innerHTML = `<div style="color:#9a9a7a;font-size:13px;">📷 写真を選択</div>`;
+const btn = document.getElementById(“addSampleBtn”);
+btn.disabled = true; btn.style.background = “#d8d4c4”; btn.style.cursor = “not-allowed”;
+}
+function addSample(){
+if(!adminBase64) return;
+const memo = document.getElementById(“adminMemo”).value;
+const newSample = {grade:selectedGrade,memo,thumbnail:adminImg,date:new Date().toLocaleDateString(“ja-JP”)};
+samples = […samples, newSample];
+saveSamples();
+adminImg = null; adminBase64 = null;
+document.getElementById(“adminMemo”).value = “”;
+document.getElementById(“adminUpload”).innerHTML = `<div style="color:#9a9a7a;font-size:13px;">📷 写真を選択</div>`;
+const btn = document.getElementById(“addSampleBtn”);
+btn.disabled = true; btn.style.background = “#d8d4c4”; btn.style.cursor = “not-allowed”;
+renderSampleList();
+updateSampleCount();
+}
+function clearAllSamples(){
+if(!confirm(“全件削除しますか？”)) return;
+samples = []; saveSamples(); renderSampleList(); updateSampleCount();
+}
+function deleteSample(i){
+samples = samples.filter((_,j)=>j!==i);
+saveSamples(); renderSampleList(); updateSampleCount();
+}
+function saveSamples(){
+try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(samples)); }catch{}
+}
+function updateSampleCount(){
+document.getElementById(“sampleCount”).textContent = samples.length;
+}
+function renderSampleList(){
+const list = document.getElementById(“sampleList”);
+const count = document.getElementById(“sampleListCount”);
+const clearBtn = document.getElementById(“clearBtn”);
+count.textContent = samples.length;
+clearBtn.style.display = samples.length > 0 ? “block” : “none”;
+if(samples.length === 0){
+list.innerHTML = `<div style="text-align:center;color:#9a9a7a;font-size:12px;padding:20px 0;">まだデータがありません</div>`;
+return;
+}
+list.innerHTML = samples.map((s,i) => ` <div class="sample-row"> ${s.thumbnail?`<img src="${s.thumbnail}" class="sample-thumb"/>`:""} <div style="flex:1;"> <div style="display:flex;align-items:center;gap:6px;"> <span style="font-size:15px;font-weight:900;color:${GRADE_CFG[s.grade]?.color};font-family:Georgia,serif;">${s.grade}</span> <span style="font-size:10px;color:#9a9a7a;">${s.date}</span> </div> ${s.memo?`<div style="font-size:11px;color:#7a7a5a;margin-top:2px;">${s.memo}</div>`:""} </div> <button onclick="deleteSample(${i})" style="background:none;border:none;color:#c8a8a8;font-size:16px;cursor:pointer;padding:4px;">×</button> </div>`).join(””);
+}
+</script>
+
+</body>
+</html>

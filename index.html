@@ -209,10 +209,17 @@ function openCamera(){
   inp.setAttribute("capture","environment");inp.click();
   setTimeout(()=>inp.removeAttribute("capture"),500);
 }
+function normalizeMime(type){
+  if(!type)return"image/jpeg";
+  if(type==="image/png")return"image/png";
+  if(type==="image/gif")return"image/gif";
+  if(type==="image/webp")return"image/webp";
+  return"image/jpeg";
+}
 function onFileSelected(e){
   const file=e.target.files[0];
   if(!file||!file.type.startsWith("image/"))return;
-  currentMime=file.type||"image/jpeg";
+  currentMime=normalizeMime(file.type);
   const reader=new FileReader();
   reader.onload=ev=>{
     currentImage=ev.target.result;
@@ -245,12 +252,42 @@ function resetResult(){
   document.getElementById("errorBox").style.display="none";
 }
 function buildPrompt(){
-  let base=`あなたは近藤米穀店「らいすぴあ」の精米品質判定AIです。送られた精米写真を分析し、当店独自の基準で判定してください。\n\n【判定項目と採点基準（0〜100点）】\n- 白度・光沢：米粒の白さと輝き\n- 粒の揃い：粒の大きさ・形の均一性\n- 異物・着色粒：茶色・黒ずみ・被害粒の少なさ（多いほど低点）\n- 割れ・欠け：胴割れ・砕け米の少なさ（多いほど低点）\n\n【グレード定義】\nS：最高品質。贈答用に出せる。全項目90以上。\nA：優秀。直売・贈答向け。全項目80以上。\nB：良品。家庭用として十分。全項目70以上。\nC：標準。業務用・加工向け。\nD：要改善。出荷前に再精米を検討。`;
+  let base="あなたは近藤米穀店「らいすぴあ」の精米品質判定AIです。創業130余年の老舗米店の5代目基準で、送られた精米写真を12項目で詳細に分析・採点してください。\n\n";
+  base+="【12項目 詳細判定基準（各0〜100点）】\n\n";
+  base+="＜外観品位＞\n";
+  base+="1. whiteness（白度）: 米粒全体の白さ。乳白・腹白・背白がなく透明感があるほど高得点\n";
+  base+="2. gloss（光沢）: 米粒表面の輝き・ツヤ。精米直後の新鮮な光沢があるほど高得点\n";
+  base+="3. uniformity（粒揃い）: 粒の大きさ・形・厚みの均一性。バラつきが少ないほど高得点\n";
+  base+="4. size（粒の充実度）: 品種標準に対する充実度。小粒・未熟粒が少ないほど高得点\n\n";
+  base+="＜欠陥粒＞\n";
+  base+="5. crack（割れ・欠け）: 胴割れ・砕け米・欠け米の少なさ。多いほど低得点\n";
+  base+="6. colored（着色粒）: 茶色・黒・紫など変色粒の少なさ。被害粒・カメムシ粒を含む\n";
+  base+="7. milky（乳白粒・未熟粒）: 白濁した未熟粒・乳白粒の少なさ。多いほど低得点\n";
+  base+="8. foreign（異物混入）: 石・わら・もみ・虫など異物の少なさ。混入あり=0点\n\n";
+  base+="＜精米品質＞\n";
+  base+="9. milling（精米仕上がり）: 糠の除去具合。糠残りがなく均一に精米されているほど高得点\n";
+  base+="10. freshness（鮮度感）: 酸化・変質の少なさ。黄ばみや油臭を感じさせない清潔感\n";
+  base+="11. variety_purity（品種純度）: 品種の均一性。異品種混入がなく揃っているほど高得点\n";
+  base+="12. cooking_suitability（炊飯適性予測）: 写真から推測する炊き上がり品質\n\n";
+  base+="【グレード定義（近藤米穀店 らいすぴあ基準）】\n";
+  base+="S：最高品質。秀幸米・翔米として贈答可。主要項目すべて90以上。\n";
+  base+="A：優秀。直売・贈答向け。主要項目80以上。光沢・粒揃いが良好。\n";
+  base+="B：良品。家庭用として十分。主要項目70以上。\n";
+  base+="C：標準品。業務用・加工向け。一部項目に課題あり。\n";
+  base+="D：要改善。出荷前に再精米・選別を検討。複数項目で基準以下。\n\n";
+  base+="【採点の注意】\n";
+  base+="- 写真から判断できない項目は中間値（60〜70）を与えてよい\n";
+  base+="- 致命的欠陥（異物混入・大量着色粒）があればグレードはC以下\n";
+  base+="- 総合グレードは最も問題のある項目を重視して判定";
   if(samples.length>0){
-    base+=`\n\n【らいすぴあ 学習済み判定例 ${samples.length}件】\n`;
-    base+=samples.map((s,i)=>`例${i+1}：グレード${s.grade}（${GRADE_CFG[s.grade].desc}）\n  特徴：${s.memo||"なし"}`).join("\n");
+    base+="\n\n【らいすぴあ 学習済み判定例 "+samples.length+"件】\n";
+    base+=samples.map(function(s,i){
+      var t="例"+(i+1)+"：グレード"+s.grade+"（"+GRADE_CFG[s.grade].desc+"）\n  特徴："+(s.memo||"なし");
+      if(s.isCorrected)t+="\n  ※AI判定"+s.correctedFrom+"を5代目が"+s.grade+"に修正";
+      return t;
+    }).join("\n");
   }
-  base+=`\n\n必ず以下のJSON形式のみで返答してください：\n{"grade":"A","whiteness":85,"uniformity":90,"foreign":95,"crack":88,"variety":"コシヒカリ","comment":"ここにコメント（2文以内）","usage":"贈答用・直売向け","points":["特徴1","特徴2","特徴3"]}\n\nvarietyは写真から推測できなければ「不明」と記載。`;
+  base+='\n\n必ず以下のJSON形式のみで返答してください。余分なテキスト不要：\n{"grade":"A","variety":"コシヒカリ","whiteness":88,"gloss":85,"uniformity":90,"size":82,"crack":88,"colored":95,"milky":80,"foreign":100,"milling":87,"freshness":85,"variety_purity":90,"cooking_suitability":86,"comment":"2文以内の総合コメント","usage":"おすすめ用途","points":["特徴1","特徴2","特徴3"]}\n\nvarietyは写真から推測できなければ「不明」。';
   return base;
 }
 async function analyze(){
@@ -276,46 +313,136 @@ async function analyze(){
     renderResult(parsed);
   }catch(e){
     const eb=document.getElementById("errorBox");
-    eb.style.display="block";eb.textContent=`判定エラー: ${e.message}`;
-    if(e.message.includes("401"))eb.innerHTML+=`<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
+    const msg=e&&e.message?e.message:String(e);
+    eb.style.display="block";eb.textContent=`判定エラー: ${msg}`;
+    if(msg.includes("401"))eb.innerHTML+=`<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
+    if(msg.includes("Failed to fetch")||msg.includes("NetworkError"))eb.innerHTML+=`<br/><span style="font-size:11px;">→ ネットワークエラー。接続を確認してください</span>`;
   }finally{
     btn.disabled=false;btn.innerHTML="🌾 品質を判定する";
   }
 }
+// correction grade state
+let correctionGrade=null;
+
+// 12 score definitions
+const SCORE_DEFS=[
+  {key:"whiteness",label:"白度",color:"#c8a96e",group:"外観"},
+  {key:"gloss",label:"光沢",color:"#b8964a",group:"外観"},
+  {key:"uniformity",label:"粒揃い",color:"#5b8a6b",group:"外観"},
+  {key:"size",label:"粒の充実度",color:"#7aaa8b",group:"外観"},
+  {key:"crack",label:"割れ・欠け",color:"#4a7ab5",group:"欠陥"},
+  {key:"colored",label:"着色粒",color:"#6a9ad5",group:"欠陥"},
+  {key:"milky",label:"乳白粒",color:"#8abae0",group:"欠陥"},
+  {key:"foreign",label:"異物混入",color:"#3a6aa0",group:"欠陥"},
+  {key:"milling",label:"精米仕上がり",color:"#a06080",group:"精米"},
+  {key:"freshness",label:"鮮度感",color:"#c08090",group:"精米"},
+  {key:"variety_purity",label:"品種純度",color:"#806090",group:"精米"},
+  {key:"cooking_suitability",label:"炊飯適性",color:"#c8a96e",group:"総合"},
+];
+
 function renderResult(r){
+  correctionGrade=r.grade;
   const cfg=GRADE_CFG[r.grade]||GRADE_CFG.B;
   const scoreBar=(label,val,color)=>`<div class="score-row"><div class="score-header"><span class="score-label">${label}</span><span class="score-val">${val}点</span></div><div class="score-track"><div class="score-fill" style="width:${val}%;background:${color};"></div></div></div>`;
-  const pointsHtml=r.points&&r.points.length?`<div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:8px;">品質のポイント</div>${r.points.map(p=>`<div style="font-size:12px;color:#5a5a4a;margin-bottom:4px;">・${p}</div>`).join("")}`:"";
+
+  // Group scores
+  const groups=["外観","欠陥","精米","総合"];
+  const groupLabels={"外観":"外観品位","欠陥":"欠陥粒","精米":"精米品質","総合":"総合予測"};
+  let scoreHtml='';
+  groups.forEach(function(g){
+    const defs=SCORE_DEFS.filter(function(d){return d.group===g;});
+    scoreHtml+=`<div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin:14px 0 8px;">${groupLabels[g]}</div>`;
+    defs.forEach(function(d){
+      const val=r[d.key]!==undefined?r[d.key]:"-";
+      if(val!=="-")scoreHtml+=scoreBar(d.label,val,d.color);
+    });
+  });
+
+  // avg score
+  const vals=SCORE_DEFS.map(function(d){return r[d.key];}).filter(function(v){return typeof v==="number";});
+  const avg=vals.length?Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length):0;
+
+  const pointsHtml=r.points&&r.points.length?`<div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:8px;">品質のポイント</div>${r.points.map(function(p){return `<div style="font-size:12px;color:#5a5a4a;margin-bottom:4px;">・${p}</div>`;}).join("")}`:"";
+  const gradeBtnsHtml=GRADES.map(function(g){return `<button onclick="setCorrectionGrade('${g}')" id="cg_${g}" style="flex:1;padding:8px 0;border:none;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer;background:${g===r.grade?GRADE_CFG[g].color:"#f0ede4"};color:${g===r.grade?"#fff":"#5a5a4a"};">${g}</button>`;}).join("");
+
   const html=`
     <div class="grade-box" style="background:${cfg.bg};border:2px solid ${cfg.color};">
       <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.15em;margin-bottom:6px;">OVERALL GRADE</div>
       <div class="grade-letter grade-${r.grade}">${r.grade}</div>
       <div style="font-size:13px;color:${cfg.color};margin-top:6px;font-weight:600;">${cfg.desc}</div>
       ${r.variety&&r.variety!=="不明"?`<div style="font-size:11px;color:#9a9a7a;margin-top:4px;">品種：${r.variety}</div>`:""}
+      <div style="font-size:11px;color:#9a9a7a;margin-top:6px;">12項目平均スコア：<span style="font-weight:700;color:${cfg.color};">${avg}点</span></div>
     </div>
+
     <div class="card" style="margin-bottom:10px;">
-      <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:14px;">DETAIL SCORES</div>
-      ${scoreBar("白度・光沢",r.whiteness,"#c8a96e")}
-      ${scoreBar("粒の揃い",r.uniformity,"#5b8a6b")}
-      ${scoreBar("異物・着色粒",r.foreign,"#4a7ab5")}
-      ${scoreBar("割れ・欠け",r.crack,"#a06080")}
+      <div style="font-size:11px;color:#2d2d1e;font-weight:700;margin-bottom:2px;">12項目 詳細スコア</div>
+      ${scoreHtml}
     </div>
+
     <div class="card" style="margin-bottom:10px;">
       <div style="font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin-bottom:8px;">AI コメント</div>
       <p style="font-size:13px;color:#3a3a2e;line-height:1.8;">${r.comment}</p>
     </div>
+
     ${pointsHtml?`<div class="card" style="margin-bottom:10px;">${pointsHtml}</div>`:""}
+
     <div style="background:#2d2d1e;border-radius:12px;padding:14px 16px;margin-bottom:14px;">
       <div style="font-size:10px;color:#c8a96e;letter-spacing:0.15em;margin-bottom:6px;">おすすめ用途</div>
       <div style="font-size:13px;color:#f5f2eb;font-weight:600;">🍚 ${r.usage}</div>
     </div>
+
+    <div class="card" style="margin-bottom:14px;border:1.5px solid #c8a96e;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
+        <span style="font-size:13px;font-weight:700;color:#2d2d1e;">✏️ 5代目修正</span>
+        <span style="font-size:10px;color:#9a9a7a;">グレードを修正して学習データに保存</span>
+      </div>
+      <div style="font-size:11px;color:#5a5a4a;margin-bottom:6px;font-weight:600;">正しいグレードを選択</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;" id="correctionGradeBtns">${gradeBtnsHtml}</div>
+      <div style="font-size:11px;color:#5a5a4a;margin-bottom:6px;font-weight:600;">修正メモ（任意）</div>
+      <textarea id="correctionMemo" placeholder="例：AIはBと判定したがうちの基準ではA。光沢が十分で割れが少ない。"
+        style="width:100%;padding:9px 11px;border:1.5px solid #c4bfaa;border-radius:8px;font-size:12px;color:#2d2d1e;background:#fafaf7;outline:none;min-height:56px;resize:vertical;"></textarea>
+      <button onclick="saveCorrection()" id="saveCorrectionBtn"
+        style="width:100%;margin-top:10px;padding:12px;background:#c8a96e;border:none;border-radius:9px;color:#2d2d1e;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        📚 修正して学習データに保存
+      </button>
+      <div id="correctionDone" style="display:none;margin-top:8px;text-align:center;font-size:12px;color:#5b8a6b;font-weight:600;">✓ 学習データに保存しました</div>
+    </div>
+
     <button class="btn-dark" onclick="printReceipt()" style="margin-bottom:10px;">🖨️ レシートプリンターで印刷</button>
     <button class="btn-ghost" onclick="resetJudge()">別の写真を判定する</button>
     <div class="tip-box">💡 印刷ダイアログでmC-Print3を選択してください。</div>`;
+
   const box=document.getElementById("resultBox");
   box.innerHTML=html;box.style.display="block";
   window._lastResult=r;window._lastImage=currentImage;
 }
+
+function setCorrectionGrade(g){
+  correctionGrade=g;
+  GRADES.forEach(function(gr){
+    var btn=document.getElementById("cg_"+gr);
+    if(!btn)return;
+    btn.style.background=gr===g?GRADE_CFG[gr].color:"#f0ede4";
+    btn.style.color=gr===g?"#fff":"#5a5a4a";
+  });
+}
+
+function saveCorrection(){
+  var r=window._lastResult;
+  if(!r)return;
+  var memo=document.getElementById("correctionMemo").value;
+  var aiGrade=r.grade;
+  var corrected=correctionGrade||aiGrade;
+  var memoText=memo||("AI判定:"+aiGrade+"→修正:"+corrected);
+  var newSample={grade:corrected,memo:memoText,thumbnail:window._lastImage,date:new Date().toLocaleDateString("ja-JP"),correctedFrom:aiGrade,isCorrected:true};
+  samples=samples.concat([newSample]);
+  saveSamples();updateSampleCount();
+  var btn=document.getElementById("saveCorrectionBtn");
+  var done=document.getElementById("correctionDone");
+  if(btn)btn.style.display="none";
+  if(done)done.style.display="block";
+}
+
 function resetJudge(){
   currentImage=null;currentBase64=null;
   window._lastResult=null;window._lastImage=null;
@@ -440,11 +567,12 @@ function renderSampleList(){
     return;
   }
   list.innerHTML=samples.map(function(s,i){
+    const corrBadge=s.isCorrected?`<span style="font-size:9px;background:#fff3e0;color:#d4924a;border:1px solid #f0c890;border-radius:4px;padding:1px 5px;margin-left:4px;">修正 ${s.correctedFrom}→${s.grade}</span>`:"";
     return `<div class="sample-row">${s.thumbnail?`<img src="${s.thumbnail}" class="sample-thumb"/>`:""}
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:15px;font-weight:900;color:${GRADE_CFG[s.grade]?GRADE_CFG[s.grade].color:"#666"};font-family:Georgia,serif;">${s.grade}</span>
-          <span style="font-size:10px;color:#9a9a7a;">${s.date}</span>
+          <span style="font-size:10px;color:#9a9a7a;">${s.date}</span>${corrBadge}
         </div>
         ${s.memo?`<div style="font-size:11px;color:#7a7a5a;margin-top:2px;">${s.memo}</div>`:""}
       </div>

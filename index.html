@@ -108,6 +108,46 @@ input,textarea,button{font-family:inherit;}
         <button class="btn-sm-ghost" onclick="openGallery()">🖼 ギャラリー</button>
         <button class="btn-sm-dark" onclick="openCamera()">📷 カメラ撮影</button>
       </div>
+      <!-- 品種選択 -->
+      <div id="varietySection" style="margin-top:12px;">
+        <div style="font-size:11px;color:#5a5a4a;font-weight:600;margin-bottom:6px;">品種を選択（任意）</div>
+        <select id="varietySelect" style="width:100%;padding:10px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;color:#2d2d1e;background:#fafaf7;outline:none;appearance:none;-webkit-appearance:none;">
+          <option value="">AIに推測させる</option>
+          <optgroup label="─ プレミアム ─">
+            <option value="姫さま（つや姫・減農薬）">姫さま（つや姫・減農薬）</option>
+            <option value="幻の米（JAながのコシヒカリ）">幻の米（JAながのコシヒカリ）</option>
+          </optgroup>
+          <optgroup label="─ 産地品種 ─">
+            <option value="富山コシヒカリ">富山コシヒカリ</option>
+            <option value="山形 雪若丸">山形 雪若丸</option>
+            <option value="佐賀 夢しずく">佐賀 夢しずく</option>
+            <option value="岩手 ひとめぼれ">岩手 ひとめぼれ</option>
+            <option value="ミルキークイーン">ミルキークイーン</option>
+            <option value="減農薬コシヒカリ">減農薬コシヒカリ</option>
+          </optgroup>
+          <optgroup label="─ 愛知産 ─">
+            <option value="安城 ハツシモ">安城 ハツシモ</option>
+            <option value="のどか愛知コシヒカリ">のどか愛知コシヒカリ</option>
+            <option value="あいちのかおり">あいちのかおり</option>
+            <option value="つやっ子（あいちコシヒカリ＋あいちのこころ）">つやっ子（あいちコシヒカリ＋あいちのこころ）</option>
+            <option value="西尾 にこまる">西尾 にこまる</option>
+          </optgroup>
+          <optgroup label="─ らいすぴあ オリジナル ─">
+            <option value="おにぎりがうまい米">おにぎりがうまい米</option>
+            <option value="花子（あいちのこころ＋中米）">花子（あいちのこころ＋中米）</option>
+            <option value="コスパ米（あいちのこころ＋中米）">コスパ米（あいちのこころ＋中米）</option>
+          </optgroup>
+          <optgroup label="─ 特殊米 ─">
+            <option value="ハイガ米（岩手ひとめぼれ）">ハイガ米（岩手ひとめぼれ）</option>
+            <option value="5分づき米（岩手ひとめぼれ）">5分づき米（岩手ひとめぼれ）</option>
+            <option value="玄米（岩手ひとめぼれ）">玄米（岩手ひとめぼれ）</option>
+            <option value="もっちり玄米">もっちり玄米</option>
+            <option value="もっちり玄米デラックス（黒米入り）">もっちり玄米デラックス（黒米入り）</option>
+            <option value="愛知コシヒカリ">愛知コシヒカリ</option>
+          </optgroup>
+        </select>
+      </div>
+
       <button id="analyzeBtn" class="btn-primary" style="display:none;margin-top:12px;" onclick="analyze()">🌾 品質を判定する</button>
       <div id="errorBox" class="error-box" style="display:none;"></div>
       <div id="resultBox" style="display:none;" class="fade-in"></div>
@@ -303,7 +343,7 @@ async function analyze(){
       body:JSON.stringify({model:"claude-opus-4-5",max_tokens:800,system:buildPrompt(),
         messages:[{role:"user",content:[
           {type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}},
-          {type:"text",text:"この精米の品質を判定してください。"}
+          {type:"text",text:(function(){var v=document.getElementById("varietySelect")?document.getElementById("varietySelect").value:"";return v?"品種：【"+v+"】として判定してください。この品種の特性を考慮して12項目を採点し、varietyフィールドに品種名を入れてください。":"この精米の品質を判定してください。varietyは写真から推測してください。";})()}
         ]}]})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
@@ -446,6 +486,7 @@ function saveCorrection(){
 function resetJudge(){
   currentImage=null;currentBase64=null;
   window._lastResult=null;window._lastImage=null;
+  var vs=document.getElementById("varietySelect");if(vs)vs.value="";
   resetResult();renderUploadZone();
 }
 function printReceipt(){

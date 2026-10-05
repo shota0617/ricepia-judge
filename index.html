@@ -92,6 +92,7 @@ input,textarea,button{font-family:inherit;}
       <div style="margin-left:auto;display:flex;gap:6px;">
         <button class="tab-btn active" id="tabJudge" onclick="switchTab('judge')">判定</button>
         <button class="tab-btn" id="tabAdmin" onclick="switchTab('admin')">管理</button>
+        <a class="tab-btn" href="marketing.html" style="text-decoration:none;">販促</a>
       </div>
     </div>
   </div>
@@ -448,6 +449,7 @@ function renderResult(r){
       <div id="correctionDone" style="display:none;margin-top:8px;text-align:center;font-size:12px;color:#5b8a6b;font-weight:600;">✓ 学習データに保存しました</div>
     </div>
 
+    <a class="btn-primary" href="marketing.html#studio" style="margin-bottom:10px;text-decoration:none;">📣 この結果で販促コンテンツを作る</a>
     <button class="btn-dark" onclick="printReceipt()" style="margin-bottom:10px;">🖨️ レシートプリンターで印刷</button>
     <button class="btn-ghost" onclick="resetJudge()">別の写真を判定する</button>
     <div class="tip-box">💡 印刷ダイアログでmC-Print3を選択してください。</div>`;
@@ -455,6 +457,8 @@ function renderResult(r){
   const box=document.getElementById("resultBox");
   box.innerHTML=html;box.style.display="block";
   window._lastResult=r;window._lastImage=currentImage;
+  // 販促ツール（marketing.html）で使えるように最新の判定結果を保存
+  try{localStorage.setItem("ricepia_last_judge",JSON.stringify({grade:r.grade,variety:r.variety,avg:avg,comment:r.comment,points:r.points,usage:r.usage,date:new Date().toLocaleString("ja-JP")}));}catch(e){}
 }
 
 function setCorrectionGrade(g){

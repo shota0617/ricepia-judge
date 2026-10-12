@@ -339,8 +339,8 @@ async function analyze(){
   try{
     const res=await fetch("https://api.anthropic.com/v1/messages",{
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-opus-4-5",max_tokens:800,system:buildPrompt(),
+      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:"claude-opus-5-5",max_tokens:16000,output_config:{effort:"medium"},fallbacks:"default",system:buildPrompt(),
         messages:[{role:"user",content:[
           {type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}},
           {type:"text",text:(function(){var v=document.getElementById("varietySelect")?document.getElementById("varietySelect").value:"";return v?"品種：【"+v+"】として判定してください。この品種の特性を考慮して12項目を採点し、varietyフィールドに品種名を入れてください。":"この精米の品質を判定してください。varietyは写真から推測してください。";})()}
@@ -348,7 +348,9 @@ async function analyze(){
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
     const data=await res.json();
-    const text=data.content?.map(b=>b.text||"").join("")||"";
+    if(data.stop_reason==="refusal")throw new Error("AIが判定を辞退しました。別の写真でお試しください");
+    if(data.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
+    const text=data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
     const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
     renderResult(parsed);
   }catch(e){

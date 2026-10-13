@@ -43,6 +43,9 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 #scene{position:relative;flex:none;height:clamp(220px,42dvh,380px);overflow:hidden;background:#2a2a22}
 #cv{position:absolute;inset:0;width:100%;height:100%;display:block}
 .hud{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:8px;padding:8px 14px;font:12px/1.2 var(--f-dot);letter-spacing:.06em;color:#efe6d0;text-shadow:0 1px 2px #000;pointer-events:none}
+.hudr{display:flex;align-items:center;gap:10px}
+.snd{pointer-events:auto;font:12px/1 var(--f-dot);letter-spacing:.06em;color:#efe6d0;background:rgba(22,18,13,.65);border:1px solid rgba(239,230,208,.35);border-radius:3px;padding:5px 8px}
+.snd[aria-pressed="true"]{border-color:var(--brass);color:var(--brass)}
 .hud .lamp{display:inline-block;width:8px;height:8px;border-radius:50%;background:#5a4a33;margin-right:6px;vertical-align:1px}
 .hud .lamp.on{background:var(--good);box-shadow:0 0 6px var(--good)}
 .fade{position:absolute;left:0;right:0;bottom:0;height:28px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
@@ -60,7 +63,7 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 
 /* meters */
 #meters{flex:none;display:grid;grid-template-columns:1.3fr 1fr auto;gap:14px;align-items:end;padding:8px 16px 9px;background:var(--bg2);border-block:1px solid var(--line)}
-.mh{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-size:11px;letter-spacing:.16em;color:var(--muted)}
+.mh{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:0 6px;font-size:11px;letter-spacing:.16em;color:var(--muted)}
 .mh b{font:400 13px var(--f-dot);letter-spacing:0;color:var(--fg);font-variant-numeric:tabular-nums;white-space:nowrap}
 .bar{position:relative;height:6px;margin-top:4px;background:#2a2219}
 .fill{height:100%;width:0;background:var(--brass);transition:width .4s linear}
@@ -113,6 +116,9 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .legend div{display:flex;align-items:center;gap:7px}
 .legend s{text-decoration:none;flex:none;width:12px;height:12px;border-radius:2px;display:block}
 .legend b{margin-left:auto;font:400 12px var(--f-dot);font-variant-numeric:tabular-nums}
+.nukabox{display:grid;grid-template-columns:52px 1fr;gap:12px;align-items:center}
+.nukabox .pile{display:block;width:52px;height:34px;border-radius:50% 50% 46% 46%/70% 70% 30% 30%;box-shadow:0 3px 0 #120e09}
+.nukabox>div{min-width:0}
 .impress{font:500 15px/1.75 var(--f-serif);margin:0;padding:10px 12px;background:var(--panel);border-left:2px solid var(--brass-dim)}
 
 /* touch */
@@ -151,10 +157,14 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .seglist .g{height:14px;border-radius:7px}
 .seglist .k{font:400 12px var(--f-dot);color:var(--muted);font-variant-numeric:tabular-nums}
 .verdict{font-weight:700;letter-spacing:.06em;white-space:nowrap}
+.voice{margin:0;padding:10px 12px;background:var(--paper);color:var(--ink);font:500 14.5px/1.7 var(--f-serif);border-radius:2px}
+.voice small{display:block;font:700 11px/1.4 var(--f-ui);letter-spacing:.14em;color:#6d5d40}
 .rank{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);background:var(--panel)}
 .rank .big{font:900 44px/1 var(--f-serif);color:var(--brass);min-width:70px;text-align:center}
 .rank p{margin:0;font:500 14px/1.7 var(--f-serif)}
 .rank small{display:block;color:var(--muted);font:12px var(--f-ui);letter-spacing:.08em}
+.bowl{border:1px solid var(--line);background:radial-gradient(ellipse at 50% 30%,#3a2d1e,#18130d 75%);border-radius:3px;overflow:hidden}
+.bowl canvas{display:block;width:100%;height:170px}
 .bags{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .bags div{padding:8px;text-align:center;background:var(--panel);border:1px solid var(--line)}
 .bags b{display:block;font:900 24px/1.2 var(--f-serif);color:var(--brass)}
@@ -172,6 +182,10 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .best{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
+@media (max-height:700px){
+  #scene{height:clamp(190px,36dvh,300px)}
+  #dialog{min-height:72px}
+}
 @media (prefers-reduced-motion:reduce){
   #stamp.on{animation:none;opacity:1}
   .fill,.scale .mark{transition:none}
@@ -181,7 +195,7 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 <div id="app">
   <div id="scene">
     <canvas id="cv" aria-hidden="true"></canvas>
-    <div class="hud"><span><i class="lamp" id="lamp"></i><span id="hudL">近藤米穀店 精米場</span></span><span id="hudR">5:30</span></div>
+    <div class="hud"><span><i class="lamp" id="lamp"></i><span id="hudL">近藤米穀店 精米場</span></span><span class="hudr"><span id="hudR">5:30</span><button id="bSound" class="snd" aria-pressed="false">音 切</button></span></div>
     <div id="stamp"></div>
     <div class="fade"></div>
   </div>
@@ -294,8 +308,13 @@ function rankOf(s){
 }
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=(a,b)=>a+Math.random()*(b-a);
-const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
-function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+// ゲームの乱数（日替わりモードでは日付で種を決め、誰がやっても同じ朝になる）。情景の演出は Math.random のまま。
+let RNG=Math.random;
+const rr=(a,b)=>a+RNG()*(b-a);
+const gauss=()=>{let u=0,v=0;while(!u)u=RNG();while(!v)v=RNG();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=RNG()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function todayKey(){const d=new Date();return d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();}
+function todayLabel(){const d=new Date();return `${d.getMonth()+1}月${d.getDate()}日`;}
 
 /* 粒の色：玄米の飴色 → 生成り（亜糊粉層） → チョークのような白 */
 const STOPS=[[0,[150,102,56]],[22,[176,136,84]],[40,[204,178,128]],[52,[226,212,172]],[58,[236,228,200]],[64,[242,238,220]],[72,[240,244,247]],[100,[250,252,255]]];
@@ -317,16 +336,18 @@ const S = {
 };
 const $=id=>document.getElementById(id);
 
-function newGame(){
+function newGame(daily){
+  S.daily=!!daily;
+  RNG = daily ? mulberry(todayKey()*7919) : Math.random;
   const vs=shuffle(VARIETIES).slice(0,3);
   const cs=shuffle(CUSTOMERS).slice(0,3);
   S.bags = BAG_PLAN.map((kg,i)=>{
-    const v=vs[i], c=CONDS[Math.random()*CONDS.length|0];
+    const v=vs[i], c=CONDS[RNG()*CONDS.length|0];
     const n = kg===10?2:3;
-    return {kg, v, cond:c, cust:cs[i], n, ease:v.ease*c.f*(1+rnd(-0.03,0.03)),
+    return {kg, v, cond:c, cust:cs[i], n, ease:v.ease*c.f*(1+rr(-0.03,0.03)),
             shares:SHARES[n], segs:[], segIdx:0, done:false, score:0};
   });
-  S.bagIdx=0; S.temp=rnd(11,14); S.minutes=330;
+  S.bagIdx=0; S.temp=rr(11,14); S.minutes=330;
   setRig([true,true],6.5);
   startBag();
 }
@@ -389,13 +410,14 @@ function segmentDone(){
   // 観察値（見る・触る）を作る：見た目は品種のクセとブレ、手ざわりは別のブレ
   seg.eye = seg.d + b.v.look + gauss()*2.2;
   seg.hand = seg.d + gauss()*2.6;
+  seg.nuka = seg.d + gauss()*3.0;
   if(b.segIdx>=b.shares.length){ finishBag(); return; }
   S.phase='adjust'; S.tab='look'; S.seen={look:false,touch:false};
   const left=b.shares.length-b.segIdx;
   say('親方', b.segIdx===1
       ? `出てきたぞ。手に取って、見て、触ってみろ。分銅を掛け替えられるのは、この袋であと${left}回だ。`
       : `次の米が出てきた。分銅を触れるのはあと${left}回。`);
-  note(null);
+  note(S.bagIdx===0&&b.segIdx===1 ? '下の「見る」「触る」で米を確かめてから、「分銅」で加減する。上の画面の分銅は指でずらせる。' : null);
   render();
 }
 function finishBag(){
@@ -453,6 +475,20 @@ function tempWords(t){
   return '熱い。機械が熱をもって削れすぎている。米も焼けはじめる。';
 }
 
+function nukaWords(n){
+  if(n<44) return '赤茶色の粗い糠がぱらぱら。まだ外の皮しか落ちていない。';
+  if(n<53) return '茶色い糠に、黄色っぽい糠が混じってきた。糊粉層が落ちはじめている。';
+  if(n<=63) return '淡い黄土色の、きめの細かい糠。糊粉層がちょうど落ちきった色だ。';
+  if(n<=70) return '糠が白っぽくなってきた。中まで削れはじめている。';
+  return '真っ白な粉がどっさり。白糠が出ている。削りすぎだ。';
+}
+function nukaRGB(n){
+  const st=[[30,[120,72,38]],[48,[170,122,62]],[58,[205,170,104]],[66,[226,212,182]],[76,[244,242,236]]];
+  n=clamp(n,30,76);
+  for(let i=1;i<st.length;i++) if(n<=st[i][0]){const [a,ca]=st[i-1],[b,cb]=st[i],t=(n-a)/(b-a);return ca.map((v,k)=>Math.round(v+(cb[k]-v)*t));}
+  return st[st.length-1][1];
+}
+
 /* ---------- 描画（パネル） ---------- */
 function fmtW(w){return w.toFixed(1)+'kg';}
 function fmtClock(m){const h=Math.floor(m/60),mm=Math.floor(m%60);return h+':'+String(mm).padStart(2,'0');}
@@ -484,7 +520,7 @@ function render(){
     else P.innerHTML=slipHTML(false);
   }
   else if(S.phase==='bagResult') P.innerHTML=bagResultHTML();
-  else if(S.phase==='final') P.innerHTML=finalHTML();
+  else if(S.phase==='final'){ P.innerHTML=finalHTML(); startBowl(); }
   P.scrollTop=0;
 }
 function syncBadges(){
@@ -499,7 +535,7 @@ function updateMeters(){
   const kg = S.phase==='title'?0 : (S.phase==='bagResult'||S.phase==='final') ? total : (S.flowKg||0);
   $('mKg').textContent = `${kg.toFixed(kg<10?1:0)} / ${total}kg`;
   $('fKg').style.width = (kg/total*100)+'%';
-  $('mW').textContent = fmtRig();
+  $('mW').textContent = rigMass(S.discs)+'kg・'+S.notch.toFixed(1);
   const ch=$('chances'); ch.innerHTML='';
   if(b){
     const n=b.n, used=Math.max(0,b.segIdx-1);
@@ -527,7 +563,10 @@ function titleHTML(){
       <li><b>回数</b><span>分銅を掛け替えられるのは、10kg袋で2回、30kg袋で3回だけ。</span></li>
       <li><b>クセ</b><span>品種ごとにぬか層のやわらかさが違う。機械は温まるほどよく削れる。</span></li>
     </ul>
-    <button class="btn" id="bStart">精米場に入る</button>
+    <div class="stack" style="gap:8px">
+      <button class="btn" id="bDaily">${todayLabel()}の朝（日替わり）</button>
+      <button class="btn ghost" id="bStart">おまかせの朝（毎回ちがう）</button>
+    </div>
     ${best?`<p class="best">これまでの最高　${best}点（${rankOf(best).r}）</p>`:''}
   </div>`;
 }
@@ -574,6 +613,8 @@ function lookHTML(){
     <div><p class="h3">手のひらに取った米　<span style="letter-spacing:.04em">${s.rig}</span></p>
     <div class="tray"><canvas id="trayCv" width="480" height="130"></canvas></div></div>
     <p class="impress">${eyeWords(e)}</p>
+    <div class="nukabox"><span class="pile" style="background:radial-gradient(circle at 40% 35%,${rgb(nukaRGB(s.nuka).map(v=>Math.min(255,v+20)))},${rgb(nukaRGB(s.nuka))} 60%,${rgb(nukaRGB(s.nuka).map(v=>v-40))})"></span>
+      <div><p class="h3" style="margin:0 0 2px">糠受けをのぞく</p><p class="lead" style="margin:0">${nukaWords(s.nuka)}</p></div></div>
     <div>
       <p class="h3">ルーペで粒を割って見る</p>
       <div class="xsec">
@@ -631,9 +672,20 @@ function bagResultHTML(){
   return `<div class="stack">
     <div class="rank"><div class="big">${rk.r}</div><div><small>${b.v.name} ${b.kg}kg　食味 ${b.score}点</small><p>${rk.m}</p></div></div>
     <div><p class="h3">袋の中身（出てきた順）</p><ul class="seglist">${rows}</ul></div>
+    <p class="voice"><small>${b.cust.who}の声</small>${custVoice(b)}</p>
     <p class="lead" style="margin:0">${bagAdvice(b)}</p>
     <button class="btn" id="bNext">${last?'親方の評価を聞く':'次の袋へ'}</button>
   </div>`;
+}
+function custVoice(b){
+  const ds=b.segs.map(x=>x.d), avg=ds.reduce((a,x,i)=>a+x*b.segs[i].kg,0)/b.kg;
+  const spread=Math.max(...ds)-Math.min(...ds);
+  if(b.score>=88) return '「炊きあがりの香りが違うね。噛むほど甘い。また頼むよ」';
+  if(b.score>=75) return avg<58 ? '「おいしいよ。ほんの少し糠の香りがするけど、それもいい」' : '「おいしいよ。粒がそろって、つやつやだ」';
+  if(spread>14) return '「炊くと、やわらかいところと硬いところがあるね」';
+  if(avg<50) return '「なんだか糠くさいって、お客さんに言われちゃって」';
+  if(avg>66) return '「見た目は真っ白できれいだけど、味がぼやけてるね」';
+  return '「うーん、いつもと何か違う気がするな」';
 }
 function bagAdvice(b){
   const ds=b.segs.map(s=>s.d);
@@ -651,10 +703,70 @@ function finalHTML(){
   const rk=rankOf(S.avg);
   return `<div class="stack">
     <div class="rank"><div class="big">${rk.r}</div><div><small>今朝の精米　平均 ${S.avg}点</small><p>${$('said').textContent}</p></div></div>
+    <div class="bowl"><canvas id="bowlCv" aria-label="炊きあがったごはん"></canvas></div>
     <div class="bags">${cells}</div>
     <p class="lead" style="margin:0">開店の9時。店先に精米したての米が並ぶ。</p>
-    <button class="btn" id="bAgain">もう一度、朝から</button>
+    <div class="row"><button class="btn ghost" id="bCopy">結果をコピー</button><button class="btn" id="bAgain">もう一度、朝から</button></div>
   </div>`;
+}
+
+function resultText(){
+  const head = `亜糊粉層を残せ　${S.daily?todayLabel()+'の朝（日替わり）':'おまかせの朝'}`;
+  const lines = S.bags.map((b,i)=>`第${i+1}袋 ${b.v.name} ${b.kg}kg　${rankOf(b.score).r}（${b.score}点）　`+b.segs.map(x=>verdict(x.d).t==='ちょうど'?'◎':verdict(x.d).t.includes('黒')?'●':'○').join(''));
+  return [head,...lines,`平均 ${S.avg}点　${rankOf(S.avg).r}`,'◎ちょうど ●黒い ○白い'].join('\n');
+}
+function copyResult(btn){
+  const txt=resultText();
+  const done=()=>{btn.textContent='コピーした';};
+  const fallback=()=>{const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); done();}catch(e){btn.textContent='コピーできなかった';} ta.remove();};
+  try{ navigator.clipboard.writeText(txt).then(done,fallback); }catch(e){ fallback(); }
+}
+
+/* ---------- 炊きあがり（最後の画面） ---------- */
+function startBowl(){
+  const cv=$('bowlCv'); if(!cv) return;
+  const dpr=Math.min(2,window.devicePixelRatio||1), W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr; const g=cv.getContext('2d'); g.scale(dpr,dpr);
+  const all=S.bags.flatMap(b=>b.segs);
+  const tot=all.reduce((a,x)=>a+x.kg,0);
+  const rand=mulberry(Math.round(S.avg*13+7));
+  const grains=[];
+  const by0=H*0.62, bw0=W*0.33;
+  for(let i=0;i<260;i++){ // 袋の中身の割合どおりに粒を混ぜて、茶碗にこんもり盛る
+    let r=rand()*tot, seg=all[0]; for(const x of all){ if(r<x.kg){seg=x;break;} r-=x.kg; }
+    const u=rand()*2-1, top=Math.sqrt(1-u*u);
+    grains.push({x:W/2+u*bw0*0.96, y:by0+4-rand()*top*H*0.3, a:rand()*Math.PI, d:seg.d});
+  }
+  grains.sort((p,q)=>p.y-q.y);
+  const steam=[0,1,2].map(i=>({x:W/2+(i-1)*W*0.09,p:i*2}));
+  function frame(now){
+    if(!document.body.contains(cv)) return;
+    g.clearRect(0,0,W,H);
+    // ごはんの山
+    const by=H*0.62;
+    for(const p of grains){
+      const c=grainRGB(p.d+12); // 炊くと白く透ける
+      g.save(); g.translate(p.x,p.y); g.rotate(p.a);
+      g.fillStyle=rgb(c); g.beginPath(); g.ellipse(0,0,5.6,3.4,0,0,Math.PI*2); g.fill();
+      const shine=p.d>50&&p.d<66?.7:p.d<50?.25:.2;
+      g.fillStyle=`rgba(255,255,255,${shine})`; g.beginPath(); g.ellipse(-1,-1.3,2.6,.8,0,0,Math.PI*2); g.fill();
+      g.restore();
+    }
+    // 茶碗
+    const bw=W*0.33;
+    const bg=g.createLinearGradient(W/2-bw,0,W/2+bw,0); bg.addColorStop(0,'#2a3b52'); bg.addColorStop(0.45,'#4b6688'); bg.addColorStop(1,'#1d2a3b');
+    g.fillStyle=bg; g.beginPath(); g.moveTo(W/2-bw,by); g.quadraticCurveTo(W/2-bw*0.95,H*0.96,W/2,H*0.96); g.quadraticCurveTo(W/2+bw*0.95,H*0.96,W/2+bw,by); g.closePath(); g.fill();
+    g.strokeStyle='rgba(230,236,245,.5)'; g.lineWidth=1.2; g.beginPath(); g.moveTo(W/2-bw*0.7,by+H*0.12); g.quadraticCurveTo(W/2,by+H*0.2,W/2+bw*0.7,by+H*0.12); g.stroke();
+    g.fillStyle='#16110b'; g.fillRect(W/2-bw*0.32,H*0.96,bw*0.64,4);
+    // 湯気（おいしいほど立つ）
+    const k=clamp((S.avg-40)/50,0.15,1);
+    if(!REDUCED) for(const st of steam){
+      g.strokeStyle=`rgba(255,250,238,${0.18*k})`; g.lineWidth=5; g.lineCap='round'; g.beginPath();
+      for(let y=0;y<H*0.32;y+=4){const x=st.x+Math.sin(y/12+now/700+st.p)*6; y===0?g.moveTo(x,H*0.24-y):g.lineTo(x,H*0.24-y);} g.stroke();
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 /* ---------- 手のひらの米（見る） ---------- */
@@ -717,7 +829,7 @@ function setupTouch(){
     const r=tp.getBoundingClientRect(); const x=ev.clientX-r.left, y=ev.clientY-r.top;
     if(touchState.last){
       const dx=x-touchState.last.x, dy=y-touchState.last.y, dist=Math.hypot(dx,dy);
-      touchState.rub+=dist;
+      touchState.rub+=dist; if(dist>2) rubSound(touchState.s.hand);
       for(const p of touchState.pts){const dd=Math.hypot(p.x-x,p.y-y); if(dd<34){p.vx+=dx*0.25*(1-dd/34); p.vy+=dy*0.25*(1-dd/34);}}
     }
     touchState.last={x,y,t:performance.now()};
@@ -768,19 +880,76 @@ function revealFeel(){
   if(navigator.vibrate){try{navigator.vibrate(s.hand>66?[8,30,8,30,8]:s.hand<48?[25]:[10]);}catch(e){}}
 }
 
+/* ---------- 音（モーター・擦れる音・米の落ちる音）。擦れる音は白くなるほど高く鋭くなる ---------- */
+const AU={ctx:null,on:false,n:null,lastRub:0};
+try{AU.on=localStorage.getItem('akofun-sound')==='1';}catch(e){}
+function ensureAudio(){
+  if(AU.ctx){ if(AU.ctx.state==='suspended') AU.ctx.resume().catch(()=>{}); return; }
+  const C=window.AudioContext||window.webkitAudioContext; if(!C) return;
+  let ctx; try{ctx=new C();}catch(e){return;}
+  AU.ctx=ctx;
+  const master=ctx.createGain(); master.gain.value=0.6; master.connect(ctx.destination);
+  const buf=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate), ch=buf.getChannelData(0);
+  for(let i=0;i<ch.length;i++) ch[i]=Math.random()*2-1;
+  const noise=()=>{const n=ctx.createBufferSource(); n.buffer=buf; n.loop=true; n.start(); return n;};
+  const mo=ctx.createOscillator(); mo.type='sawtooth'; mo.frequency.value=47;
+  const mlp=ctx.createBiquadFilter(); mlp.type='lowpass'; mlp.frequency.value=220;
+  const mg=ctx.createGain(); mg.gain.value=0; mo.connect(mlp); mlp.connect(mg); mg.connect(master); mo.start();
+  const hbp=ctx.createBiquadFilter(); hbp.type='bandpass'; hbp.Q.value=1.3; hbp.frequency.value=900;
+  const hg=ctx.createGain(); hg.gain.value=0; noise().connect(hbp); hbp.connect(hg); hg.connect(master);
+  const php=ctx.createBiquadFilter(); php.type='highpass'; php.frequency.value=3200;
+  const pg=ctx.createGain(); pg.gain.value=0; noise().connect(php); php.connect(pg); pg.connect(master);
+  AU.n={master,mo,mg,hbp,hg,pg,buf};
+}
+function audioWake(){ if(AU.on) ensureAudio(); }
+function audioFrame(){
+  if(!AU.ctx||!AU.n) return;
+  const t=AU.ctx.currentTime, n=AU.n, run=AU.on&&S.phase==='flow';
+  n.mg.gain.setTargetAtTime(run?0.16:0,t,0.25);
+  n.hg.gain.setTargetAtTime(run?0.11:0,t,0.3);
+  n.pg.gain.setTargetAtTime(run?0.03:0,t,0.3);
+  if(run){
+    n.hbp.frequency.setTargetAtTime(450+clamp(S.flowD||50,20,90)*17,t,0.4);
+    n.mo.frequency.setTargetAtTime(47-clamp(S.w,0,7)*0.9,t,0.5);       // 押さえが強いほどモーターが沈む
+  }
+}
+function blip(freq,dur,type,vol){
+  if(!AU.on||!AU.ctx||!AU.n) return;
+  const ctx=AU.ctx,t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type||'sine'; o.frequency.setValueAtTime(freq,t); o.frequency.exponentialRampToValueAtTime(freq*0.6,t+dur);
+  g.gain.setValueAtTime(vol||0.15,t); g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+  o.connect(g); g.connect(AU.n.master); o.start(t); o.stop(t+dur+0.02);
+}
+function rubSound(h){
+  if(!AU.on||!AU.ctx||!AU.n) return;
+  const now=performance.now(); if(now-AU.lastRub<70) return; AU.lastRub=now;
+  const ctx=AU.ctx,t=ctx.currentTime,src=ctx.createBufferSource(),bp=ctx.createBiquadFilter(),g=ctx.createGain();
+  src.buffer=AU.n.buf; bp.type='bandpass'; bp.frequency.value=900+clamp(h-30,0,50)*90; bp.Q.value=2+clamp(h-55,0,20)*0.3;
+  g.gain.setValueAtTime(0.18,t); g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+  src.connect(bp); bp.connect(g); g.connect(AU.n.master); src.start(t,Math.random()); src.stop(t+0.1);
+}
+function toggleSound(){
+  AU.on=!AU.on; try{localStorage.setItem('akofun-sound',AU.on?'1':'0');}catch(e){}
+  if(AU.on) ensureAudio(); syncSoundBtn();
+}
+function syncSoundBtn(){const b=$('bSound'); b.setAttribute('aria-pressed',String(AU.on)); b.textContent=AU.on?'音 入':'音 切';}
+
 /* ---------- 親方の台詞・判子 ---------- */
 function say(who,text,narr){
   $('who').textContent=who||'';
   const p=$('said'); p.textContent=text; p.classList.toggle('narr',!!narr);
 }
 function note(t){const n=$('note'); if(!t){n.hidden=true;return;} n.hidden=false; n.textContent=t;}
-function stamp(t,good){const s=$('stamp'); s.textContent=t; s.classList.toggle('good',!!good); s.classList.remove('on'); void s.offsetWidth; s.classList.add('on');}
+function stamp(t,good){blip(good?140:80,0.35,'triangle',0.3);const s=$('stamp'); s.textContent=t; s.classList.toggle('good',!!good); s.classList.remove('on'); void s.offsetWidth; s.classList.add('on');}
 
 /* ---------- 入力 ---------- */
 document.addEventListener('click',ev=>{
   const t=ev.target.closest('button'); if(!t||t.disabled) return;
-  if(t.id==='bStart'){newGame(); return;}
-  if(t.id==='bRun'){runSegment(); return;}
+  if(t.id==='bStart'){audioWake(); newGame(false); return;}
+  if(t.id==='bDaily'){audioWake(); newGame(true); return;}
+  if(t.id==='bCopy'){copyResult(t); return;}
+  if(t.id==='bSound'){toggleSound(); return;}
+  if(t.id==='bRun'){audioWake(); runSegment(); return;}
   if(t.id==='bGo'){ if(!S.seen.look&&!S.seen.touch){ say('親方','見もせず触りもせずに決めるのか。まあいい、流せ。'); } runSegment(); return;}
   if(t.id==='bNext'){nextBag(); return;}
   if(t.id==='bAgain'){S.phase='title'; say('親方','夜明け前だ。今朝も3袋。'); render(); return;}
@@ -789,19 +958,26 @@ document.addEventListener('click',ev=>{
   if(t.dataset.disc!==undefined){
     const i=+t.dataset.disc; const d=S.discs.slice(); d[i]=!d[i];
     if(!d.some(Boolean)){ say('親方','分銅を全部外したら、抵抗板が開きっぱなしで玄米のまま出てくるぞ。'); return; }
-    setRig(d,S.notch); rerenderKeep(); return;
+    setRig(d,S.notch); blip(d[i]?200:260,0.28,'triangle',0.28); rerenderKeep(); return;
   }
-  if(t.dataset.nudge!==undefined){ setRig(S.discs,S.notch+(+t.dataset.nudge)); rerenderKeep(); return; }
+  if(t.dataset.nudge!==undefined){ const b4=S.notch; setRig(S.discs,S.notch+(+t.dataset.nudge)); if(S.notch!==b4) blip(1700,0.05,'square',0.05); rerenderKeep(); return; }
 });
 function rerenderKeep(){const st=$('panel').scrollTop; render(); $('panel').scrollTop=st;}
 function afterTab(){
   if(S.phase!=='adjust') return;
   const s=S.lastSeg;
+  const first = S.bagIdx===0 && bag().segIdx===1;
+  note(null);
+  if(first && S.tab==='look') note('ルーペの断面で、茶色の糊粉層が消えて、金色の亜糊粉層が残っていればちょうどいい。');
+  if(first && S.tab==='touch') note('さらさらで指に粉がつかなければちょうど。しっとりなら黒い、キシキシなら白すぎ。温もりは、この先の削れ方の目安。');
+  if(first && S.tab==='weight') note('黒ければ分銅を先へ、白ければ手前へ。目盛1つで、搗き具合はおよそ一段変わる。');
+  if(S.bagIdx===0 && bag().segIdx===2 && S.tab==='touch') note('さっきより温かい。機械が温まると、同じ分銅でも次はもっと白くなる。');
   if(S.tab==='look') say('親方', s.eye<53?'まだ黒いか？':s.eye>63?'白く見えるか？':'どう見える。');
   if(S.tab==='touch') say('親方','米は手でわかる。こすって、握ってみろ。');
   if(S.tab==='weight') say('親方', `この袋で分銅を触れるのは、あと${bag().shares.length-bag().segIdx}回だ。`);
   if(S.tab==='slip') say('親方', bag().v.memo);
 }
+
 
 /* =========================================================
    精米場の情景（canvas）：らいすぴあの精米機の出口。
@@ -817,7 +993,7 @@ const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function resize(){
   const r=cv.getBoundingClientRect(), dpr=Math.min(2,window.devicePixelRatio||1);
   SW=r.width; SH=r.height; cv.width=SW*dpr; cv.height=SH*dpr;
-  VS=Math.max(SW/VW,SH/VH); VX=(SW-VW*VS)/2; VY=(SH-VH*VS)*0.35;
+  VS=Math.max(SW/VW,SH/VH); VX=(SW-VW*VS)/2; VY=clamp(SH*0.5-188*VS, SH-VH*VS, 0);   // 抵抗板と分銅が真ん中に来るように
   cx2.setTransform(dpr*VS,0,0,dpr*VS,dpr*VX,dpr*VY);
 }
 addEventListener('resize',()=>{resize(); if(S.phase==='adjust'&&S.tab==='look') drawTray();});
@@ -996,6 +1172,7 @@ function scene(now){
   // 夜明け前の暗さ（時間とともに明るく）
   const dawn=clamp((S.minutes-330)/180,0,1);
   g.fillStyle=`rgba(10,8,5,${0.32-dawn*0.2})`; g.fillRect(0,0,VW,VH);
+  audioFrame();
   requestAnimationFrame(scene);
 }
 requestAnimationFrame(scene);
@@ -1018,7 +1195,7 @@ cv.addEventListener('pointermove',ev=>{
   if(!drag) return;
   const n=tToNotch(tOnRod(p)-drag.off);
   const before=S.notch; setRig(S.discs,n);
-  if(S.notch!==before){ if(S.tab!=='weight'){S.tab='weight'; render();} else syncWeightPanel(); }
+  if(S.notch!==before){ blip(1700,0.05,'square',0.05); if(S.tab!=='weight'){S.tab='weight'; render();} else syncWeightPanel(); }
 });
 const endDrag=()=>{ if(drag){drag=null; if(S.phase==='adjust'){ if(S.tab!=='weight'){S.tab='weight'; render();} } } };
 cv.addEventListener('pointerup',endDrag); cv.addEventListener('pointercancel',endDrag);
@@ -1029,12 +1206,20 @@ function syncWeightPanel(){
 }
 
 /* ---------- 起動 ---------- */
-function boot(){
+function boot(data){
+  syncSoundBtn();
+  if(data && data.S && data.S.phase && data.S.phase!=='title'){
+    Object.assign(S, data.S);
+    if(S.phase==='flow'){ S.flowKg=S.flowTo; S.temp=S.flowTemp1; S.minutes=S.flowMin1; segmentDone(); return; }
+    if(S.phase==='final') finalSay(); else say('親方','さあ、続きだ。');
+    render(); return;
+  }
   S.phase='title'; S.bags=[];
   say('親方','夜明け前だ。今朝も3袋。出てきた米を見て、触って、分銅で加減しろ。');
   render();
 }
-boot();
+window.claude?.hot?.snapshot?.(()=>({S:JSON.parse(JSON.stringify(S))}));
+window.claude?.hot?.ready ? window.claude.hot.ready(boot) : boot(window.claude?.hot?.data ?? {});
 </script>
 <!-- ARTIFACT-END -->
 </body>

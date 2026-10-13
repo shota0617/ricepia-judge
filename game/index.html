@@ -314,6 +314,12 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const rnd=(a,b)=>a+Math.random()*(b-a);
 // ゲームの乱数（日替わりモードでは日付で種を決め、誰がやっても同じ朝になる）。情景の演出は Math.random のまま。
 let RNG=Math.random;
+function seedRNG(daily, skip){   // 呼んだ回数を数えておき、途中から再開しても同じ乱数列になるようにする
+  if(!daily){ RNG=Math.random; return; }
+  const base=mulberry(todayKey()*7919);
+  for(let i=0;i<(skip||0);i++) base();
+  RNG=()=>{ S.rngN=(S.rngN||0)+1; return base(); };
+}
 const rr=(a,b)=>a+RNG()*(b-a);
 const gauss=()=>{let u=0,v=0;while(!u)u=RNG();while(!v)v=RNG();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=RNG()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -342,7 +348,7 @@ const $=id=>document.getElementById(id);
 
 function newGame(daily){
   S.daily=!!daily;
-  RNG = daily ? mulberry(todayKey()*7919) : Math.random;
+  S.rngN=0; seedRNG(S.daily,0);
   const vs=shuffle(VARIETIES).slice(0,3);
   const cs=shuffle(CUSTOMERS).slice(0,3);
   S.bags = BAG_PLAN.map((kg,i)=>{
@@ -375,6 +381,7 @@ function startBag(){
 
 /* 1区間ぶん流す */
 function runSegment(){
+  drag=null;
   const b=bag();
   const i=b.segIdx, share=b.shares[i];
   const heatScale = b.kg/30*0.5+0.5;
@@ -439,7 +446,15 @@ function finishBag(){
 }
 function nextBag(){
   if(S.bagIdx<S.bags.length-1){S.bagIdx++; startBag();}
-  else{S.phase='final'; S.tab=null; finalSay(); render();}
+  else{S.phase='final'; S.tab=null; finalSay(); saveRecord(S.avg); render();}
+}
+function saveRecord(avg){
+  try{
+    const best=+localStorage.getItem('akofun-best')||0; if(avg>best) localStorage.setItem('akofun-best',avg);
+    let hist=JSON.parse(localStorage.getItem('akofun-hist')||'[]'); if(!Array.isArray(hist)) hist=[];
+    hist.unshift({day:S.daily?todayLabel():'おまかせ', avg, bags:S.bags.map(b=>rankOf(b.score).r)});
+    localStorage.setItem('akofun-hist',JSON.stringify(hist.slice(0,5)));
+  }catch(e){}
 }
 function finalSay(){
   const avg=Math.round(S.bags.reduce((s,b)=>s+b.score,0)/S.bags.length);
@@ -450,12 +465,6 @@ function finalSay(){
   else if(avg>=60) line='まだ手が迷ってる。黒と白のあいだは、思ってるより狭い。';
   else line='今朝の米はわしが搗き直す。明日もう一度だ。';
   say('親方', line);
-  try{
-    const best=+localStorage.getItem('akofun-best')||0; if(avg>best) localStorage.setItem('akofun-best',avg);
-    const hist=JSON.parse(localStorage.getItem('akofun-hist')||'[]');
-    hist.unshift({day:S.daily?todayLabel():'おまかせ', avg, bags:S.bags.map(b=>rankOf(b.score).r)});
-    localStorage.setItem('akofun-hist',JSON.stringify(hist.slice(0,5)));
-  }catch(e){}
 }
 
 /* ---------- 観察テキスト ---------- */
@@ -560,6 +569,9 @@ function updateMeters(){
 
 function titleHTML(){
   let best=0, hist=[]; try{best=+localStorage.getItem('akofun-best')||0; hist=JSON.parse(localStorage.getItem('akofun-hist')||'[]');}catch(e){}
+  if(!Array.isArray(hist)) hist=[];
+  hist=hist.filter(h=>h&&Array.isArray(h.bags)&&typeof h.avg==='number');
+  if(!isFinite(best)) best=0;
   const lay=LAYERS.map(l=>`<span style="width:${(l.b-l.a)}%;background:${l.col}"></span>`).join('')+`<span style="width:26%;background:#f7f5ee"></span>`;
   return `<div class="stack title">
     <div><p class="sub">近藤米穀店 らいすぴあ 精米場</p><h1>亜糊粉層を残せ</h1>
@@ -730,7 +742,7 @@ function resultText(){
 function copyResult(btn){
   const txt=resultText();
   const done=()=>{btn.textContent='コピーした';};
-  const fallback=()=>{const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy'); done();}catch(e){btn.textContent='コピーできなかった';} ta.remove();};
+  const fallback=()=>{const ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); let ok=false; try{ok=document.execCommand('copy');}catch(e){} if(ok) done(); else btn.textContent='コピーできなかった'; ta.remove();};
   try{ navigator.clipboard.writeText(txt).then(done,fallback); }catch(e){ fallback(); }
 }
 
@@ -963,7 +975,7 @@ document.addEventListener('click',ev=>{
   if(t.id==='bCopy'){copyResult(t); return;}
   if(t.id==='bSound'){toggleSound(); return;}
   if(t.id==='bRun'){audioWake(); runSegment(); return;}
-  if(t.id==='bGo'){ const blind=!S.seen.look&&!S.seen.touch; runSegment(); if(blind) note('親方：見もせず触りもせずに決めるのか。まあいい。'); return;}
+  if(t.id==='bGo'){ audioWake(); const blind=!S.seen.look&&!S.seen.touch; runSegment(); if(blind) note('親方：見もせず触りもせずに決めるのか。まあいい。'); return;}
   if(t.id==='bNext'){nextBag(); return;}
   if(t.id==='bAgain'){S.phase='title'; say('親方','夜明け前だ。今朝も3袋。'); render(); return;}
   if(t.dataset.tab){S.tab=t.dataset.tab; render(); afterTab(); return;}
@@ -1207,6 +1219,7 @@ cv.addEventListener('pointermove',ev=>{
   hoverW = S.phase==='adjust' && nearWeight(p);
   cv.style.cursor = drag?'grabbing':hoverW?'grab':'default';
   if(!drag) return;
+  if(S.phase!=='adjust'){ drag=null; return; }
   const n=tToNotch(tOnRod(p)-drag.off);
   const before=S.notch; setRig(S.discs,n);
   if(S.notch!==before){ blip(1700,0.05,'square',0.05); if(S.tab!=='weight'){S.tab='weight'; render();} else syncWeightPanel(); }
@@ -1224,6 +1237,9 @@ function boot(data){
   syncSoundBtn();
   if(data && data.S && data.S.phase && data.S.phase!=='title'){
     Object.assign(S, data.S);
+    seedRNG(S.daily, S.rngN||0);
+    const cb=S.bags[S.bagIdx];
+    if(cb) S.lastSeg = S.phase==='flow' ? (cb.segs[cb.segIdx-1]||null) : (cb.segs[cb.segIdx-1]||S.lastSeg);
     if(S.phase==='flow'){ S.flowKg=S.flowTo; S.temp=S.flowTemp1; S.minutes=S.flowMin1; segmentDone(); return; }
     if(S.phase==='final') finalSay(); else say('親方','さあ、続きだ。');
     render(); return;

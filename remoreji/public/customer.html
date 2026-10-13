@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>リモレジ</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 12px; display: grid; gap: 12px; }
+  .stage { aspect-ratio: 4 / 3; max-height: 46vh; width: 100%; }
+  @media (min-width: 860px) {
+    .wrap { grid-template-columns: 1.4fr 1fr; align-items: start; padding: 16px; }
+    .stage { aspect-ratio: 16 / 10; max-height: none; position: sticky; top: 16px; }
+  }
+  #prejoin { max-width: 460px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+  #prejoin .stage { aspect-ratio: 4 / 3; max-height: none; }
+  #prejoin video { transform: scaleX(-1); }
+  .panel { display: grid; gap: 12px; }
+  .h { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .1em; margin-bottom: 6px; }
+  #stripe-element { min-height: 120px; margin: 10px 0 14px; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="logo">レ</div><div class="brand"><span id="store-name">リモレジ</span><small>REMOTE REGISTER</small></div></header>
+
+<!-- 参加前：カメラ確認 -->
+<section id="prejoin" hidden>
+  <div>
+    <h1 style="font-size:19px">ビデオでお会計</h1>
+    <p class="muted small" style="margin-top:4px">店員とビデオ通話をしながら、画面越しにお会計ができます。お支払いはクレジットカードまたは PayPay です。</p>
+  </div>
+  <div class="stage"><video id="preview" class="remote" autoplay playsinline muted></video>
+    <div class="overlay" id="preview-off" hidden><div>カメラはオフです</div><div class="small">お客様の映像は店員に表示されません（音声のみ）</div></div>
+    <div class="controls"><button class="ctl" id="pre-mic" aria-label="マイク"></button><button class="ctl" id="pre-cam" aria-label="カメラ"></button></div>
+  </div>
+  <p class="muted small">カメラはオフのままでも参加できます。通話は録画・録音されません。</p>
+  <button class="btn btn-gold btn-lg btn-block" id="join">店員とつなぐ</button>
+  <div id="prejoin-error" class="error" hidden></div>
+</section>
+
+<!-- 通話中 -->
+<main class="wrap" id="incall" hidden>
+  <div class="stage">
+    <video id="remote" class="remote" autoplay playsinline></video>
+    <video id="local" class="local" autoplay playsinline muted></video>
+    <div class="badge" id="remote-badge" hidden></div>
+    <div class="overlay" id="stage-overlay"><div class="spinner"></div><div id="stage-msg">接続しています…</div></div>
+    <div class="controls">
+      <button class="ctl" id="mic" aria-label="マイク"></button>
+      <button class="ctl" id="cam" aria-label="カメラ"></button>
+      <button class="ctl off" id="leave" aria-label="通話を終了"></button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="card" id="pay-card" hidden></div>
+    <div class="card">
+      <div class="h">お買い上げ明細</div>
+      <div class="receipt" id="lines"></div>
+      <div id="totals"></div>
+    </div>
+  </div>
+</main>
+
+<!-- 終了 -->
+<section id="ended" hidden style="max-width:460px;margin:40px auto;padding:16px">
+  <div class="card center" style="display:grid;gap:12px">
+    <h1 style="font-size:19px" id="ended-title">接客が終了しました</h1>
+    <p class="muted" id="ended-msg">ご利用ありがとうございました。</p>
+    <a class="btn btn-gold" id="ended-receipt" hidden target="_blank" rel="noopener">領収書を表示</a>
+    <a class="btn btn-ghost" href="/">トップへ</a>
+  </div>
+</section>
+
+<script type="module" src="/customer.js"></script>
+</body>
+</html>

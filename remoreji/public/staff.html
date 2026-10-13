@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>店員ダッシュボード - リモレジ</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .wrap { max-width: 920px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
+  .h { font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: .08em; margin-bottom: 10px; }
+  .roomrow { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f0ede4; }
+  .roomrow:last-child { border-bottom: 0; }
+  .ringing { animation: ring 1.2s ease-in-out infinite; }
+  @keyframes ring { 50% { background: #fff3d6; } }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+  .stat { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 2px; }
+  .prod-form { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr auto; gap: 8px; align-items: end; }
+  @media (max-width: 640px) { .prod-form { grid-template-columns: 1fr 1fr; } .prod-form .wide { grid-column: 1 / -1; } }
+  .scroll-x { overflow-x: auto; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo">レ</div><div class="brand"><span id="store-name">リモレジ</span><small>STAFF</small></div>
+  <div class="grow"></div>
+  <button class="btn btn-ghost btn-sm" id="logout" hidden>ログアウト</button>
+</header>
+
+<section id="login" class="wrap" hidden style="max-width:400px;margin-top:40px">
+  <form class="card" id="login-form" style="display:grid;gap:12px">
+    <h1 style="font-size:18px">店員ログイン</h1>
+    <label class="field">パスワード<input class="input" type="password" name="password" autocomplete="current-password"></label>
+    <div class="notice" id="login-demo" hidden>デモモードです。パスワードなしでログインできます。</div>
+    <div class="error" id="login-error" hidden></div>
+    <button class="btn btn-gold btn-lg">ログイン</button>
+  </form>
+</section>
+
+<main id="app" class="wrap" hidden>
+  <div class="notice" id="demo-note" hidden></div>
+  <div class="tabs" role="tablist">
+    <button class="active" data-tab="rooms">接客</button>
+    <button data-tab="products">商品</button>
+    <button data-tab="sales">売上</button>
+  </div>
+
+  <!-- 接客 -->
+  <section data-panel="rooms" style="display:grid;gap:14px">
+    <div class="card">
+      <div class="h">呼び出し中のお客様</div>
+      <div id="waiting"></div>
+      <div class="row small muted" style="margin-top:8px">
+        <label class="row" style="gap:6px"><input type="checkbox" id="sound" checked> 呼び出し音を鳴らす</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="h">接客中</div>
+      <div id="open"></div>
+    </div>
+    <div class="card row" style="flex-wrap:wrap">
+      <div class="grow" style="min-width:220px">
+        <b>お客様を招待して接客を始める</b>
+        <p class="small muted">QRコード・リンク・6桁の入室コードを発行します（電話予約・LINE・メールでの案内に）。</p>
+      </div>
+      <button class="btn btn-gold" id="new-room">招待して接客を始める</button>
+    </div>
+    <div class="card small muted" style="line-height:1.8">
+      お客様向けの入口：<a id="entry-link" target="_blank" rel="noopener"></a><br>
+      お店のサイトやSNS、店頭のQRコードにこのURLを載せると、お客様が「店員を呼び出す」ボタンから呼び出せます。
+    </div>
+  </section>
+
+  <!-- 商品 -->
+  <section data-panel="products" hidden style="display:grid;gap:14px">
+    <form class="card prod-form" id="prod-form">
+      <label class="field">カテゴリ<input class="input" name="category" maxlength="30" placeholder="お米"></label>
+      <label class="field wide">商品名<input class="input" name="name" required maxlength="60"></label>
+      <label class="field">価格（税込）<input class="input" name="price" type="number" min="0" step="1" required inputmode="numeric"></label>
+      <label class="field">税率<select class="input" name="taxRate"><option value="8">8%（軽減）</option><option value="10">10%</option></select></label>
+      <button class="btn btn-gold">追加</button>
+    </form>
+    <div class="card scroll-x">
+      <table class="list"><thead><tr><th>カテゴリ</th><th>商品名</th><th class="r">価格</th><th>税率</th><th class="r">並び順</th><th></th></tr></thead><tbody id="prod-list"></tbody></table>
+      <p class="small muted" style="margin-top:8px">食品（酒類・外食を除く）は軽減税率 8%、それ以外は 10% です。</p>
+    </div>
+  </section>
+
+  <!-- 売上 -->
+  <section data-panel="sales" hidden style="display:grid;gap:14px">
+    <div class="row" style="flex-wrap:wrap">
+      <input type="date" class="input" id="sales-day" style="width:auto">
+      <div class="grow"></div>
+      <a class="btn btn-ghost btn-sm" id="csv">CSVダウンロード</a>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="card scroll-x">
+      <table class="list"><thead><tr><th>時刻</th><th>No.</th><th>支払方法</th><th class="r">金額</th><th>明細</th><th></th></tr></thead><tbody id="sales-list"></tbody></table>
+    </div>
+  </section>
+</main>
+
+<script type="module" src="/staff.js"></script>
+</body>
+</html>

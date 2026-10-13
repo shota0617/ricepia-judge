@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ビデオでお会計 - リモレジ</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  .wrap { max-width: 440px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 14px; }
+  .hero { text-align: center; padding: 10px 0 4px; }
+  .hero h1 { font-size: 22px; letter-spacing: .04em; }
+  .hero p { color: var(--muted); font-size: 13px; margin-top: 6px; line-height: 1.7; }
+  .steps { display: grid; gap: 8px; font-size: 13px; }
+  .steps div { display: flex; gap: 10px; align-items: center; }
+  .steps b { width: 22px; height: 22px; border-radius: 50%; background: var(--gold); display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+  .code-input { font-size: 26px; letter-spacing: .4em; text-align: center; font-variant-numeric: tabular-nums; }
+  .pays { display: flex; gap: 8px; justify-content: center; }
+  .pays span { font-size: 12px; padding: 4px 10px; border-radius: 6px; font-weight: 700; }
+</style>
+</head>
+<body>
+<header class="topbar"><div class="logo">レ</div><div class="brand"><span id="store-name">リモレジ</span><small>REMOTE REGISTER</small></div></header>
+<main class="wrap">
+  <div class="hero">
+    <h1>ビデオ通話でお会計</h1>
+    <p>店員と顔を見ながら相談して、そのまま画面越しにお支払いできます。</p>
+  </div>
+  <div class="pays"><span style="background:#ece9de">クレジットカード</span><span style="background:#ff0033;color:#fff">PayPay</span></div>
+
+  <div class="card" style="display:grid;gap:12px">
+    <button class="btn btn-gold btn-lg btn-block" id="call">📞 店員を呼び出す</button>
+    <div class="steps muted">
+      <div><b>1</b>ボタンを押すと店員につながります</div>
+      <div><b>2</b>ビデオで相談しながら、店員が商品をレジに登録します</div>
+      <div><b>3</b>画面に表示された金額をカードまたは PayPay でお支払い</div>
+    </div>
+  </div>
+
+  <form class="card" id="join-form" style="display:grid;gap:10px">
+    <b style="font-size:14px">入室コードをお持ちの方</b>
+    <input class="input code-input" name="code" inputmode="numeric" pattern="\d{3} ?\d{3}" maxlength="7" placeholder="000000" autocomplete="off" required>
+    <button class="btn btn-dark">入室する</button>
+  </form>
+  <div class="error" id="error" hidden></div>
+  <p class="center small muted"><a href="/staff">店員の方はこちら</a></p>
+</main>
+<script type="module">
+  import { $, api } from '/common.js';
+  const fail = (e) => { $('#error').hidden = false; $('#error').textContent = e.message; };
+  $('#call').onclick = async (e) => {
+    e.currentTarget.disabled = true;
+    try {
+      const { token } = await api('/api/call', { method: 'POST' });
+      location.href = `/r/${token}`;
+    } catch (err) {
+      fail(err);
+      e.currentTarget.disabled = false;
+    }
+  };
+  $('#join-form').onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const { token } = await api('/api/join', { method: 'POST', body: { code: new FormData(e.target).get('code').replace(/\s/g, '') } });
+      location.href = `/r/${token}`;
+    } catch (err) {
+      fail(err);
+    }
+  };
+  api('/api/staff/me').then((m) => { $('#store-name').textContent = m.store; document.title = `ビデオでお会計 - ${m.store}`; }).catch(() => {});
+</script>
+</body>
+</html>

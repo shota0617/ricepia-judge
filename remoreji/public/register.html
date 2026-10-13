@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>レジ - リモレジ</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+  body { display: flex; flex-direction: column; min-height: 100vh; }
+  .layout { flex: 1; display: grid; gap: 12px; padding: 12px; grid-template-columns: 1fr; }
+  @media (min-width: 980px) { .layout { grid-template-columns: minmax(0, 1.25fr) minmax(380px, 1fr); height: calc(100vh - 52px); } .col { min-height: 0; } }
+  .col { display: flex; flex-direction: column; gap: 12px; }
+  .stage { flex: 1; min-height: 260px; }
+  .invite { display: flex; gap: 14px; align-items: center; }
+  .invite img { width: 104px; height: 104px; border-radius: 8px; border: 1px solid var(--line); flex-shrink: 0; }
+  .code { font-size: 26px; font-weight: 700; letter-spacing: .2em; font-variant-numeric: tabular-nums; }
+  .register { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .cats { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; }
+  .cats button { flex-shrink: 0; border: 1.5px solid var(--line); background: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; }
+  .cats button.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; max-height: 30vh; overflow-y: auto; padding: 2px; }
+  .prod { border: 1px solid var(--line); background: #fff; border-radius: 10px; padding: 10px 8px; text-align: left; min-height: 64px; display: flex; flex-direction: column; justify-content: space-between; }
+  .prod:hover { border-color: var(--gold); }
+  .prod b { font-size: 13px; font-weight: 700; line-height: 1.35; }
+  .prod span { font-size: 13px; color: var(--muted); }
+  .cart { flex: 1; overflow-y: auto; min-height: 120px; }
+  .checkout-state { text-align: center; display: grid; gap: 10px; }
+  .checkout-state .big { font-size: 30px; font-weight: 700; }
+  dialog { border: 0; border-radius: var(--radius); padding: 18px; width: min(92vw, 380px); }
+  dialog::backdrop { background: rgba(0, 0, 0, .4); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo">レ</div><div class="brand"><span id="store-name">リモレジ</span><small>REGISTER</small></div>
+  <div class="grow"></div>
+  <span class="small" id="peer-status" style="color:#d8d4c4"></span>
+  <a class="btn btn-ghost btn-sm" href="/staff">ダッシュボード</a>
+  <button class="btn btn-ghost btn-sm" id="close-room">接客を終了</button>
+</header>
+
+<div id="start" class="card" style="max-width:420px;margin:40px auto;display:grid;gap:12px;text-align:center" hidden>
+  <h1 style="font-size:18px">接客を開始します</h1>
+  <p class="muted small">カメラとマイクを使用します。</p>
+  <button class="btn btn-gold btn-lg" id="start-btn">カメラをオンにして開始</button>
+</div>
+
+<main class="layout" id="main" hidden>
+  <section class="col">
+    <div class="stage">
+      <video id="remote" class="remote" autoplay playsinline></video>
+      <video id="local" class="local" autoplay playsinline muted></video>
+      <div class="badge" id="remote-badge" hidden></div>
+      <div class="overlay" id="stage-overlay"><div class="spinner"></div><div id="stage-msg">接続しています…</div></div>
+      <div class="controls">
+        <button class="ctl" id="mic" aria-label="マイク"></button>
+        <button class="ctl" id="cam" aria-label="カメラ"></button>
+        <button class="ctl" id="screen" aria-label="画面共有" title="画面共有"></button>
+      </div>
+    </div>
+    <div class="card invite" id="invite" hidden>
+      <img id="invite-qr" alt="招待QRコード">
+      <div class="grow" style="min-width:0">
+        <div class="small muted">お客様にこのQRコード・リンク・入室コードを伝えてください</div>
+        <div class="code" id="invite-code"></div>
+        <div class="row" style="flex-wrap:wrap;gap:6px">
+          <button class="btn btn-dark btn-sm" id="copy-link">リンクをコピー</button>
+          <button class="btn btn-ghost btn-sm" id="share-link" hidden>共有…</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="col">
+    <div class="card register">
+      <div id="cart-view" class="register">
+        <div class="cats" id="cats"></div>
+        <div class="grid" id="products"></div>
+        <div class="row" style="margin:10px 0 4px">
+          <button class="btn btn-ghost btn-sm" id="custom-btn">＋ 自由入力・値引き</button>
+          <div class="grow"></div>
+          <button class="btn btn-ghost btn-sm" id="clear-btn">クリア</button>
+        </div>
+        <div class="cart receipt" id="cart"></div>
+        <div id="totals"></div>
+        <button class="btn btn-gold btn-lg btn-block" id="checkout" style="margin-top:12px" disabled>お会計</button>
+      </div>
+      <div id="sale-view" class="checkout-state" hidden></div>
+    </div>
+  </section>
+</main>
+
+<dialog id="custom-dialog">
+  <form method="dialog" id="custom-form" style="display:grid;gap:10px">
+    <h2 style="font-size:16px">自由入力・値引き</h2>
+    <label class="field">品名<input class="input" name="name" required maxlength="60" value="値引き"></label>
+    <label class="field">金額（税込・値引きはマイナス）<input class="input" name="price" type="number" required step="1" inputmode="numeric"></label>
+    <label class="field">税率<select class="input" name="taxRate"><option value="10">10%</option><option value="8">8%（軽減税率）</option></select></label>
+    <div class="row"><button class="btn btn-ghost grow" value="cancel" formnovalidate>キャンセル</button><button class="btn btn-gold grow" value="ok">追加</button></div>
+  </form>
+</dialog>
+
+<script type="module" src="/register.js"></script>
+</body>
+</html>

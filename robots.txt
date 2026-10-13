@@ -25,5 +25,3 @@ Allow: /
 
 User-agent: Google-Extended
 Allow: /
-
-Sitemap: https://shota0617.github.io/ricepia-judge/sitemap.xml

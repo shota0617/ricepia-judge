@@ -320,13 +320,16 @@ input,textarea,button{font-family:inherit;}
 
     <div id="adminMode" style="display:none;">
       <div id="adminGate" class="card" style="margin-top:8px;">
-        <div style="font-size:13px;color:#5a5a4a;font-weight:600;margin-bottom:12px;">🔐 管理者パスワード</div>
+        <div id="adminGateTitle" style="font-size:13px;color:#5a5a4a;font-weight:600;margin-bottom:12px;">🔐 管理者パスワード</div>
+        <div id="adminSetupNote" style="display:none;font-size:11px;color:#8a7040;line-height:1.6;margin-bottom:10px;">この端末で初めて管理者モードを使います。8文字以上のパスワードを設定してください（学習データと同じく、この端末のブラウザに保存されます）。</div>
         <input type="password" id="adminPassInput" placeholder="パスワードを入力"
           style="width:100%;padding:11px 13px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:14px;color:#2d2d1e;background:#fafaf7;outline:none;"
           onkeydown="if(event.key==='Enter')adminLogin()"/>
+        <input type="password" id="adminPassConfirm" placeholder="確認のためもう一度入力"
+          style="display:none;width:100%;margin-top:8px;padding:11px 13px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:14px;color:#2d2d1e;background:#fafaf7;outline:none;"
+          onkeydown="if(event.key==='Enter')adminLogin()"/>
         <div id="passError" style="display:none;font-size:11px;color:#b05555;margin-top:5px;">パスワードが違います</div>
-        <button onclick="adminLogin()" style="width:100%;margin-top:10px;padding:12px;background:#2d2d1e;border:none;border-radius:9px;color:#f5f2eb;font-size:14px;font-weight:700;cursor:pointer;">ログイン</button>
-        <div style="margin-top:10px;font-size:11px;color:#9a9a7a;text-align:center;">初期パスワード: ricepia2024</div>
+        <button onclick="adminLogin()" style="width:100%;margin-top:10px;padding:12px;background:#2d2d1e;border:none;border-radius:9px;color:#f5f2eb;font-size:14px;font-weight:700;cursor:pointer;" id="adminLoginBtn">ログイン</button>
       </div>
       <div id="adminPanel" style="display:none;">
         <div class="card">
@@ -360,7 +363,7 @@ input,textarea,button{font-family:inherit;}
 
 <script>
 const STORAGE_KEY = "ricepia_samples";
-const ADMIN_PASS  = "ricepia2024";
+const ADMIN_HASH_KEY = "ricepia_admin_hash";
 const GRADES = ["S","A","B","C","D"];
 const GRADE_CFG = {
   S:{color:"#c8a96e",bg:"#fdf8ee",desc:"最高品質・贈答用"},
@@ -390,7 +393,7 @@ function setApiKey(){
   apiKey=val;
   document.getElementById("apiscreen").style.display="none";
   document.getElementById("app").style.display="block";
-  updateSampleCount();renderGradeBtns();renderSampleList();
+  updateSampleCount();renderGradeBtns();renderSampleList();renderAdminGate();
 }
 function switchTab(tab){
   document.getElementById("judgeMode").style.display=tab==="judge"?"block":"none";
@@ -694,16 +697,39 @@ ${r.points&&r.points.length?`<div class="div"></div><div class="b" style="font-s
 </body></html>`);
   win.document.close();setTimeout(()=>{win.focus();win.print();},600);
 }
-function adminLogin(){
-  const pass=document.getElementById("adminPassInput").value;
-  if(pass===ADMIN_PASS){
-    document.getElementById("adminGate").style.display="none";
-    document.getElementById("adminPanel").style.display="block";
-    document.getElementById("adminPassInput").value="";
-    document.getElementById("passError").style.display="none";
-  }else{document.getElementById("passError").style.display="block";}
+// 管理者パスワードは端末ごとに設定し、ソルト付きSHA-256ハッシュのみ保存する
+function loadAdminHash(){try{return JSON.parse(localStorage.getItem(ADMIN_HASH_KEY));}catch{return null;}}
+async function hashPass(salt,pass){
+  const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(salt+":"+pass));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+}
+function renderAdminGate(){
+  const setup=!loadAdminHash();
+  document.getElementById("adminGateTitle").textContent=setup?"🔐 管理者パスワードを設定":"🔐 管理者パスワード";
+  document.getElementById("adminSetupNote").style.display=setup?"block":"none";
+  document.getElementById("adminPassConfirm").style.display=setup?"block":"none";
+  document.getElementById("adminLoginBtn").textContent=setup?"設定してログイン":"ログイン";
+}
+function showPassError(msg){const e=document.getElementById("passError");e.textContent=msg;e.style.display="block";}
+async function adminLogin(){
+  const input=document.getElementById("adminPassInput"),confirm=document.getElementById("adminPassConfirm");
+  const pass=input.value,stored=loadAdminHash();
+  if(!stored){
+    if(pass.length<8)return showPassError("8文字以上で設定してください");
+    if(pass!==confirm.value)return showPassError("確認用のパスワードが一致しません");
+    const salt=Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b=>b.toString(16).padStart(2,"0")).join("");
+    try{localStorage.setItem(ADMIN_HASH_KEY,JSON.stringify({salt:salt,hash:await hashPass(salt,pass)}));}
+    catch{return showPassError("パスワードを保存できませんでした（ブラウザの保存領域が使えません）");}
+  }else if(await hashPass(stored.salt,pass)!==stored.hash){
+    return showPassError("パスワードが違います");
+  }
+  document.getElementById("adminGate").style.display="none";
+  document.getElementById("adminPanel").style.display="block";
+  input.value="";confirm.value="";
+  document.getElementById("passError").style.display="none";
 }
 function adminLogout(){
+  renderAdminGate();
   document.getElementById("adminGate").style.display="block";
   document.getElementById("adminPanel").style.display="none";
 }

@@ -1,0 +1,4 @@
+config.toml
+inbox/
+.env
+__pycache__/

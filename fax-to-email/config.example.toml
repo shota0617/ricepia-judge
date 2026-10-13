@@ -1,0 +1,42 @@
+# FAX→メール転送 設定ファイル
+# このファイルを config.toml にコピーして編集してください。
+
+[watch]
+# 受信FAXが保存されるフォルダ (複合機の「FAX受信→フォルダ保存」先など)
+# 相対パスはこの設定ファイルのある場所が基準になります。
+inbox = "./inbox"
+# 送信済みファイルの移動先 (省略時: inbox/sent)
+archive = "./inbox/sent"
+# 何度送っても失敗したファイルの移動先 (省略時: inbox/failed)
+failed = "./inbox/failed"
+# 転送対象の拡張子
+extensions = [".pdf", ".tif", ".tiff", ".png", ".jpg", ".jpeg"]
+# フォルダを確認する間隔 (秒)
+poll_interval = 10
+# ファイルのサイズが何秒変わらなければ「書き込み完了」とみなすか
+stable_seconds = 5
+# TIFF形式のFAXをPDFに変換して添付する (Pillow が必要。無ければTIFFのまま添付)
+convert_tiff_to_pdf = true
+# 送信失敗時の再試行回数 (超えると failed フォルダへ移動)
+max_retries = 5
+
+[smtp]
+# Gmail の例。Google アカウントで2段階認証を有効にし「アプリパスワード」を発行して使います。
+host = "smtp.gmail.com"
+port = 587
+security = "starttls"   # "starttls" (587番) / "ssl" (465番) / "none"
+username = "your-account@gmail.com"
+# パスワードはここに書かず、環境変数 FAX_SMTP_PASSWORD で渡すことを推奨します。
+# password = ""
+
+[mail]
+from = "your-account@gmail.com"
+to = ["office@example.com", "owner@example.com"]
+# 使える差し込み項目: {received} 受信日時 / {filename} 添付ファイル名 /
+#                     {original_filename} 元のファイル名 / {size_kb} サイズ(KB)
+subject = "【FAX受信】{received:%Y/%m/%d %H:%M} {filename}"
+# body = """FAXを受信しました。
+# 受信日時: {received:%Y年%m月%d日 %H:%M}
+# """
+# 添付できる最大サイズ (MB)。超える場合は本文で通知のみ行います。
+max_attachment_mb = 20

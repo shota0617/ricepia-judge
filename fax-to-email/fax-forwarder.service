@@ -1,0 +1,20 @@
+# systemd 用ユニットファイル (Raspberry Pi / Linux で常駐させる場合)
+# 1. /opt/fax-to-email にこのフォルダを置き、config.toml を作成
+# 2. /opt/fax-to-email/.env に FAX_SMTP_PASSWORD=アプリパスワード を記載 (chmod 600)
+# 3. sudo cp fax-forwarder.service /etc/systemd/system/
+#    sudo systemctl enable --now fax-forwarder
+[Unit]
+Description=FAX to Email forwarder
+After=network-online.target remote-fs.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/fax-to-email
+EnvironmentFile=-/opt/fax-to-email/.env
+ExecStart=/usr/bin/python3 /opt/fax-to-email/fax_forwarder.py -c /opt/fax-to-email/config.toml
+Restart=always
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

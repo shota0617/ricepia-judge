@@ -174,6 +174,8 @@ function renderCart() {
   $('#checkout').textContent = state.cart.length ? `お会計 ${yen(state.totals.total)}` : 'お会計';
 }
 
+const isExpiredAttempt = (a) => !!a.failed || (a.expiresAt && Date.parse(a.expiresAt) < Date.now());
+
 function renderSale() {
   const sale = state.sale;
   const inSale = sale && (sale.status === 'pending' || sale.status === 'paid');
@@ -195,8 +197,8 @@ function renderSale() {
   }
   const a = sale.attempt;
   let status = 'お客様が支払い方法を選んでいます';
-  if (a?.method === 'card') status = 'お客様がクレジットカード情報を入力しています';
-  if (a?.method === 'paypay') status = a.failed || (a.expiresAt && Date.parse(a.expiresAt) < Date.now()) ? 'PayPay の QR コードが期限切れ／失敗しました（お客様が再発行できます）' : 'お客様が PayPay で支払っています';
+  if (a?.method === 'card') status = isExpiredAttempt(a) ? 'カード決済の QR コードが期限切れになりました（お客様が再発行できます）' : 'お客様がご自分のスマホでカード決済をしています';
+  if (a?.method === 'paypay') status = isExpiredAttempt(a) ? 'PayPay の QR コードが期限切れ／失敗しました（お客様が再発行できます）' : 'お客様が PayPay で支払っています';
   view.innerHTML = `<div class="muted small">お会計中</div><div class="big">${yen(sale.total)}</div>
     <div class="row" style="justify-content:center"><div class="spinner dark"></div><span>${status}</span></div>
     ${a?.demo ? '<div class="notice">デモモード（実際の決済は行われません）</div>' : ''}

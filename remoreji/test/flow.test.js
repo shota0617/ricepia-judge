@@ -82,7 +82,7 @@ test('ログインしないと店員APIもWebSocketも使えない', async () =>
   assert.equal((await req('/api/staff/rooms', { method: 'POST', headers: { Origin: 'https://evil.example' } })).status, 403);
 });
 
-test('招待 → 入室 → 商品登録 → カード払い（デモ）→ 領収書・売上・返金', async () => {
+test('招待 → 入室 → 商品登録 → カード払い（スマホで QR・デモ）→ 領収書・売上・返金', async () => {
   const room = (await req('/api/staff/rooms', { method: 'POST' })).json;
   assert.match(room.code, /^\d{6}$/);
   const token = room.inviteUrl.split('/r/')[1];
@@ -127,15 +127,23 @@ test('招待 → 入室 → 商品登録 → カード払い（デモ）→ 領�
   // 別サイトからの支払い操作は拒否
   assert.equal((await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false, headers: { Origin: 'https://evil.example' } })).status, 403);
 
-  const card = await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false });
-  assert.deepEqual(card.json, { demo: true });
-  await stateWhere(staff, (m) => m.sale?.attempt?.method === 'card');
-  assert.equal((await req(`/api/r/${token}/pay/card/demo`, { method: 'POST', auth: false })).status, 200);
+  // カード：お客様の画面には QR とリンクだけ出し、カード番号はスマホで開く決済ページに入力する
+  assert.equal((await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false })).status, 200);
+  const cardState = await stateWhere(cust, (m) => m.sale?.attempt?.method === 'card');
+  assert.match(cardState.sale.attempt.qr, /^data:image\/png;base64,/);
+  const cardPath = new URL(cardState.sale.attempt.url).pathname;
+  assert.match(cardPath, /^\/demo\/card\//);
+  assert.equal(staff.msgs.findLast((m) => m.type === 'state' && m.sale?.attempt?.method === 'card').sale.attempt.url, undefined, '店員側には支払いリンクを送らない');
+  assert.match((await req(cardPath, { auth: false })).text, /カード番号/);
+  assert.equal((await req(cardPath, { method: 'POST', auth: false })).status, 303);
   const paid = await stateWhere(cust, (m) => m.sale?.status === 'paid');
   assert.match(paid.sale.receiptNo, /^\d{8}-0001$/);
+  assert.equal(paid.sale.method, 'card');
   assert.equal(paid.cart.length, 0, '会計後はカートが空になる');
   // 二重に支払っても1回分
-  assert.equal((await req(`/api/r/${token}/pay/card/demo`, { method: 'POST', auth: false })).status, 400);
+  await req(cardPath, { method: 'POST', auth: false });
+  assert.equal((await req('/api/staff/sales')).json.summary.count, 1);
+  assert.match((await req('/card-done', { auth: false })).text, /お支払いが完了しました/);
 
   const receipt = await req(paid.sale.receiptUrl, { auth: false });
   assert.equal(receipt.status, 200);
@@ -162,12 +170,14 @@ test('招待 → 入室 → 商品登録 → カード払い（デモ）→ 領�
   send(staff, { type: 'checkout:start' });
   await stateWhere(cust, (m) => m.sale?.status === 'pending');
   await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false });
+  const oldCard = new URL((await stateWhere(cust, (m) => m.sale?.attempt?.method === 'card')).sale.attempt.url).pathname;
   await req(`/api/r/${token}/pay/paypay`, { method: 'POST', auth: false });
   const pp = await stateWhere(cust, (m) => m.sale?.attempt?.method === 'paypay');
   assert.match(pp.sale.attempt.qr, /^data:image\/png;base64,/);
   const staffView = staff.msgs.findLast((m) => m.type === 'state' && m.sale?.attempt?.method === 'paypay');
   assert.equal(staffView?.sale.attempt.qr, undefined, '店員側には支払いQRを送らない');
-  assert.equal((await req(`/api/r/${token}/pay/card/demo`, { method: 'POST', auth: false })).status, 400, '取り下げたカード決済では支払えない');
+  await req(oldCard, { method: 'POST', auth: false });
+  assert.equal((await req('/api/staff/sales')).json.sales.filter((x) => x.status === 'paid').length, 0, '取り下げたカードの QR では支払えない');
   const demoPath = new URL(pp.sale.attempt.url).pathname;
   assert.match((await req(demoPath, { auth: false })).text, /支払う（デモ）/);
   assert.equal((await req(demoPath, { method: 'POST', auth: false })).status, 303);

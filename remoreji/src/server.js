@@ -92,17 +92,37 @@ ${sale.taxes.some((t) => t.rate === 8) ? '<p><small>※印は軽減税率（8%�
 <button onclick="print()">印刷 / PDFで保存</button></div></body></html>`;
 }
 
-function demoPayPayPage(ref, info) {
+const DEMO_BRAND = {
+  paypay: { title: 'PayPay（デモ）', color: '#ff0033', note: '本番では PayPay アプリが開きます。', card: false },
+  card: { title: 'カード決済（デモ）', color: '#635bff', note: '本番では決済会社 Stripe のお支払いページ（checkout.stripe.com）が開きます。', card: true },
+};
+
+function demoPayPage(kind, info) {
+  const b = DEMO_BRAND[kind];
   const body = !info
     ? '<p>このQRコードは無効です。</p>'
     : info.status === 'paid'
-      ? '<p class="ok">お支払いが完了しました ✓</p>'
-      : `<p>お支払い金額</p><p class="amt">${yen(info.total)}</p><form method="post"><button>支払う（デモ）</button></form>`;
-  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PayPay（デモ）</title>
+      ? '<p class="ok">お支払いが完了しました ✓</p><p>元の画面に戻ってください。</p>'
+      : `<p>お支払い金額</p><p class="amt">${yen(info.total)}</p>
+        ${b.card ? '<label>カード番号<input value="4242 4242 4242 4242" disabled></label>' : ''}
+        <form method="post"><button>支払う（デモ）</button></form>`;
+  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${b.title}</title>
 <style>body{font-family:sans-serif;background:#f2f2f2;margin:0;padding:24px;text-align:center}.box{max-width:360px;margin:auto;background:#fff;border-radius:14px;padding:24px}
-.logo{background:#ff0033;color:#fff;font-weight:900;font-size:22px;border-radius:10px;padding:10px}.amt{font-size:34px;font-weight:700}.ok{color:#0a7d32;font-size:20px;font-weight:700}
-button{width:100%;padding:16px;background:#ff0033;color:#fff;border:0;border-radius:10px;font-size:17px;font-weight:700}.n{font-size:12px;color:#777;margin-top:16px}</style></head>
-<body><div class="box"><div class="logo">PayPay（デモ）</div>${body}<p class="n">これはデモ用の擬似決済画面です。本番では PayPay アプリが開きます。</p></div></body></html>`;
+.logo{background:${b.color};color:#fff;font-weight:900;font-size:20px;border-radius:10px;padding:10px}.amt{font-size:34px;font-weight:700}.ok{color:#0a7d32;font-size:20px;font-weight:700}
+label{display:block;text-align:left;font-size:12px;color:#666;margin-bottom:14px}input{width:100%;padding:10px;font-size:16px;box-sizing:border-box}
+button{width:100%;padding:16px;background:${b.color};color:#fff;border:0;border-radius:10px;font-size:17px;font-weight:700}.n{font-size:12px;color:#777;margin-top:16px}</style></head>
+<body><div class="box"><div class="logo">${b.title}</div>${body}<p class="n">これはデモ用の擬似決済画面です。${b.note}</p></div></body></html>`;
+}
+
+/** Stripe の決済ページで支払い（または中止）した後に、お客様のスマホに出るページ */
+function cardDonePage(canceled) {
+  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(config.store.name)}</title>
+<style>body{font-family:'Hiragino Sans','Noto Sans JP',sans-serif;background:#f5f2eb;margin:0;padding:40px 20px;text-align:center;color:#2d2d1e}
+.box{max-width:360px;margin:auto;background:#fff;border-radius:14px;padding:28px 20px;border:1px solid #e8e4d8}.c{width:64px;height:64px;border-radius:50%;background:#3f7d55;color:#fff;font-size:34px;line-height:64px;margin:0 auto 12px}</style></head>
+<body><div class="box">${canceled
+    ? '<h1 style="font-size:18px">お支払いを中止しました</h1><p>ビデオ通話の画面に戻って、もう一度お支払い方法を選んでください。</p>'
+    : '<div class="c">✓</div><h1 style="font-size:18px">お支払いが完了しました</h1><p>ビデオ通話の画面に戻ってください。<br>自動で「会計完了」に切り替わります。</p>'}
+<p style="font-size:12px;color:#7a7a66">${esc(config.store.name)}</p></div></body></html>`;
 }
 
 function salesCsv(day) {
@@ -149,17 +169,19 @@ async function route(req, res) {
       const sale = payments.getSaleByReceiptToken(m[1]);
       return sale ? send(res, 200, renderReceipt(sale), MIME['.html']) : send(res, 404, '領収書が見つかりません', 'text/plain; charset=utf-8');
     }
-    if ((m = pathname.match(/^\/demo\/paypay\/([\w-]+)$/))) {
-      if (!paypayIsDemo()) return send(res, 404, 'Not Found', 'text/plain');
-      return send(res, 200, demoPayPayPage(m[1], payments.demoPayPayInfo(m[1])), MIME['.html']);
+    if (pathname === '/card-done') return send(res, 200, cardDonePage(url.searchParams.has('canceled')), MIME['.html']);
+    if ((m = pathname.match(/^\/demo\/(paypay|card)\/([\w-]+)$/))) {
+      if (!(m[1] === 'card' ? cardIsDemo() : paypayIsDemo())) return send(res, 404, 'Not Found', 'text/plain');
+      return send(res, 200, demoPayPage(m[1], payments.demoPayInfo(m[2])), MIME['.html']);
     }
     if (/^\/[\w-]+\.(css|js|svg|png|ico|mp3)$/.test(pathname)) return serveFile(res, pathname.slice(1));
   }
 
-  if (method === 'POST' && (m = pathname.match(/^\/demo\/paypay\/([\w-]+)$/))) {
-    if (!paypayIsDemo()) return send(res, 404, 'Not Found', 'text/plain');
+  if (method === 'POST' && (m = pathname.match(/^\/demo\/(paypay|card)\/([\w-]+)$/))) {
+    if (!(m[1] === 'card' ? cardIsDemo() : paypayIsDemo())) return send(res, 404, 'Not Found', 'text/plain');
     try {
-      payments.demoPayPayPay(m[1]);
+      if (m[1] === 'card') payments.demoPayCard(m[2]);
+      else payments.demoPayPayPay(m[2]);
     } catch (e) {
       if (!(e instanceof UserError)) throw e;
     }
@@ -209,9 +231,7 @@ async function route(req, res) {
     auth.rateLimit(`pay:${token}`, 30, 60_000);
     const room = customerRoom(token);
     switch (sub) {
-      case '/pay/card': return send(res, 200, await payments.selectCard(room));
-      case '/pay/card/confirm': return send(res, 200, await payments.confirmCard(room));
-      case '/pay/card/demo': payments.demoPayCard(room); return send(res, 200, { ok: true });
+      case '/pay/card': await payments.selectCard(room); return send(res, 200, { ok: true });
       case '/pay/paypay': await payments.selectPayPay(room, req.headers['user-agent']); return send(res, 200, { ok: true });
       case '/pay/back': await payments.backToMethods(room); return send(res, 200, { ok: true });
     }

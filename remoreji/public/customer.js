@@ -2,8 +2,6 @@ import { $, api, yen, esc, toast, totalsHtml, linesHtml, ICONS, METHOD_LABEL } f
 import { Call, getLocalMedia, wsBase } from './call.js';
 
 const token = location.pathname.split('/').pop();
-const params = new URLSearchParams(location.search);
-let returnedFromCard = params.has('payment_intent'); // 本人認証で別ページへ移動して戻ってきた
 if (location.search) history.replaceState(null, '', location.pathname);
 
 let info;
@@ -15,8 +13,6 @@ let remotePresent = false;
 let peerMedia = { mic: true, cam: true };
 let payViewKey = '';
 let lastReceiptUrl = null;
-let card = null; // { saleId, stripe, elements }
-let cardInfoPromise = null;
 let countdownTimer;
 
 function show(id) {
@@ -159,10 +155,6 @@ function onMessage(msg) {
   updateStage();
   renderLines();
   renderPay();
-  if (returnedFromCard && state.sale?.status === 'pending' && state.sale.attempt?.method === 'card') {
-    returnedFromCard = false;
-    confirmCard();
-  }
 }
 
 function renderLines() {
@@ -182,9 +174,8 @@ function renderPay() {
   clearInterval(countdownTimer);
   const box = $('#pay-card');
   box.hidden = !sale;
-  if (!sale) return destroyCard();
+  if (!sale) return;
   if (sale.status === 'paid') {
-    destroyCard();
     box.innerHTML = `<div class="done"><div class="check">✓</div>
       <h2 style="font-size:18px">お支払いが完了しました</h2>
       <p class="muted" style="margin:6px 0 14px">${yen(sale.total)}（${METHOD_LABEL[sale.method]}）</p>
@@ -193,7 +184,6 @@ function renderPay() {
     return;
   }
   if (!a) {
-    destroyCard();
     box.innerHTML = `<div class="h">お支払い</div>
       <div class="grand" style="margin:0 0 14px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
       <p class="small muted" style="margin-bottom:8px">お支払い方法を選んでください</p>
@@ -205,8 +195,7 @@ function renderPay() {
     $('#pick-paypay').onclick = (e) => pick(e.currentTarget, 'paypay');
     return;
   }
-  if (a.method === 'card') return renderCard(sale);
-  if (a.method === 'paypay') return renderPayPay(sale);
+  renderQrPay(sale);
 }
 
 async function pick(btn, method) {
@@ -234,143 +223,57 @@ function bindBack() {
   };
 }
 
-// ---- クレジットカード ----
-function renderCard(sale) {
-  const box = $('#pay-card');
-  if (info.cardDemo) {
-    destroyCard();
-    box.innerHTML = `<div class="h">クレジットカード</div>
-      <div class="grand" style="margin:0 0 12px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
-      <div class="notice" style="margin-bottom:10px">デモモードです。実際の決済は行われません（本番では Stripe の安全なカード入力欄が表示されます）。</div>
-      <label class="field">カード番号<input class="input" value="4242 4242 4242 4242" disabled></label>
-      <div class="row" style="margin-top:8px"><label class="field grow">有効期限<input class="input" value="12 / 30" disabled></label><label class="field grow">セキュリティコード<input class="input" value="123" disabled></label></div>
-      <button class="btn btn-gold btn-lg btn-block" id="card-pay" style="margin-top:14px">${yen(sale.total)} を支払う（デモ）</button>
-      ${backButton()}`;
-    $('#card-pay').onclick = async (e) => {
-      e.currentTarget.disabled = true;
-      e.currentTarget.innerHTML = '<div class="spinner dark"></div>';
-      try {
-        await api(`/api/r/${token}/pay/card/demo`, { method: 'POST' });
-      } catch (err) {
-        toast(err.message, true);
-        payViewKey = '';
-        renderPay();
-      }
-    };
-    return bindBack();
-  }
-  box.innerHTML = `<div class="h">クレジットカード</div>
-    <div class="grand" style="margin:0 0 6px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
-    <p class="muted small">カード情報は決済会社（Stripe）に直接送られ、店員やお店には見えません。</p>
-    <div id="stripe-element"><div class="center" style="padding:30px"><div class="spinner dark" style="margin:auto"></div></div></div>
-    <div class="error" id="card-error" hidden></div>
-    <button class="btn btn-gold btn-lg btn-block" id="card-pay" disabled style="margin-top:10px">${yen(sale.total)} を支払う</button>
-    ${backButton()}`;
-  bindBack();
-  mountStripe(sale).catch((e) => showCardError(e.message));
-}
+// ---- QR で支払う（カード・PayPay 共通）----
+const QR_PAY = {
+  card: {
+    title: 'クレジットカード',
+    btnClass: 'btn-gold',
+    open: 'カード決済ページを開く',
+    scan: 'お手持ちのスマホのカメラで QR コードを読み取ってください',
+    otherPhone: '別のスマホで支払う場合はこちらの QR を読み取ってください',
+    note: 'カード番号は、スマホに開く決済会社（Stripe）のページに入力します。この画面やお店にカード番号が伝わることはありません。',
+    demo: 'デモモードです。QR を読み取ると、デモ用の支払い画面が開きます（実際の決済は行われません）。',
+    pcButton: false, // パソコン・タブレットの画面ではカード番号を入れさせない
+  },
+  paypay: {
+    title: 'PayPay',
+    btnClass: 'btn-paypay',
+    open: 'PayPayアプリで支払う',
+    scan: 'スマホの PayPay アプリで QR コードを読み取ってください',
+    otherPhone: '別のスマホでお支払いの場合はこちらの QR を読み取ってください',
+    note: '',
+    demo: 'デモモードです。QR を読み取るかボタンを押すと、デモ用の支払い画面が開きます。',
+    pcButton: true,
+  },
+};
 
-function showCardError(msg) {
-  const el = $('#card-error');
-  if (!el) return toast(msg, true);
-  el.hidden = !msg;
-  el.textContent = msg ?? '';
-}
-
-function loadStripeJs() {
-  if (window.Stripe) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://js.stripe.com/v3/';
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('カード決済の読み込みに失敗しました。通信環境をご確認ください'));
-    document.head.append(s);
-  });
-}
-
-async function mountStripe(sale) {
-  cardInfoPromise ??= api(`/api/r/${token}/pay/card`, { method: 'POST' });
-  const ci = await cardInfoPromise.finally(() => (cardInfoPromise = null));
-  if (ci.paid) return;
-  await loadStripeJs();
-  if (!$('#stripe-element')) return; // 待っている間に画面が変わった
-  destroyCard();
-  const stripe = window.Stripe(ci.publishableKey, { locale: 'ja' });
-  const elements = stripe.elements({ clientSecret: ci.clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#c8a96e', borderRadius: '9px' } } });
-  // お支払いはクレジットカードのみ（Apple Pay / Google Pay などのウォレットは出さない）
-  const pe = elements.create('payment', { layout: 'tabs', wallets: { applePay: 'never', googlePay: 'never' } });
-  $('#stripe-element').innerHTML = '';
-  pe.mount('#stripe-element');
-  pe.on('ready', () => ($('#card-pay').disabled = false));
-  card = { saleId: sale.id, stripe, elements, pe };
-
-  $('#card-pay').onclick = async (e) => {
-    const btn = e.currentTarget;
-    btn.disabled = true;
-    const label = btn.innerHTML;
-    btn.innerHTML = '<div class="spinner dark"></div>';
-    showCardError(null);
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: 'if_required', // 本人認証（3Dセキュア）は基本的にこの画面の上で行われる
-      confirmParams: { return_url: `${location.origin}/r/${token}` },
-    });
-    if (error) {
-      showCardError(error.message);
-      btn.disabled = false;
-      btn.innerHTML = label;
-      return;
-    }
-    if (paymentIntent && ['succeeded', 'processing'].includes(paymentIntent.status)) await confirmCard();
-  };
-}
-
-/** Stripe で支払いが済んだらサーバーに確認してもらう（サーバーが Stripe に問い合わせる） */
-async function confirmCard() {
-  for (let i = 0; i < 10; i++) {
-    try {
-      const r = await api(`/api/r/${token}/pay/card/confirm`, { method: 'POST' });
-      if (r.paid) return;
-    } catch (e) {
-      return showCardError(e.message);
-    }
-    await new Promise((r) => setTimeout(r, 2000));
-  }
-  showCardError('お支払いの確認に時間がかかっています。店員にお知らせください');
-}
-
-function destroyCard() {
-  if (card) card.pe.destroy();
-  card = null;
-}
-
-// ---- PayPay ----
-function renderPayPay(sale) {
-  destroyCard();
+function renderQrPay(sale) {
   const a = sale.attempt;
+  const c = QR_PAY[a.method];
   const box = $('#pay-card');
-  const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent) && !/iPad/i.test(navigator.userAgent);
   const expired = a.failed || (a.expiresAt && Date.parse(a.expiresAt) < Date.now());
   if (expired) {
-    box.innerHTML = `<div class="h">PayPay</div><p style="margin:10px 0">${a.failed === 'FAILED' ? 'お支払いが完了しませんでした。' : 'QRコードの有効期限が切れました。'}</p>
-      <button class="btn btn-paypay btn-block btn-lg" id="pp-renew">QRコードを再発行</button>${backButton()}`;
-    $('#pp-renew').onclick = (e) => pick(e.currentTarget, 'paypay');
+    box.innerHTML = `<div class="h">${c.title}</div><p style="margin:10px 0">${a.failed === 'FAILED' ? 'お支払いが完了しませんでした。' : 'QRコードの有効期限が切れました。'}</p>
+      <button class="btn ${c.btnClass} btn-block btn-lg" id="qr-renew">QRコードを再発行</button>${backButton()}`;
+    $('#qr-renew').onclick = (e) => pick(e.currentTarget, a.method);
     return bindBack();
   }
-  const openBtn = `<a class="btn btn-paypay btn-block btn-lg" href="${esc(a.url)}" target="_blank" rel="noopener">PayPayアプリで支払う</a>`;
-  box.innerHTML = `<div class="h">PayPay</div>
+  const openBtn = (lg) => `<a class="btn ${c.btnClass} btn-block ${lg ? 'btn-lg' : ''}" href="${esc(a.url)}" target="_blank" rel="noopener">${c.open}</a>`;
+  box.innerHTML = `<div class="h">${c.title}</div>
     <div class="grand" style="margin:0 0 8px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
-    ${a.demo ? '<div class="notice" style="margin-bottom:8px">デモモードです。QRを読み取るかボタンを押すと、デモ用の支払い画面が開きます。</div>' : ''}
-    ${mobile ? `${openBtn}<p class="muted small center" style="margin-top:10px">別のスマホでお支払いの場合はこちらのQRを読み取ってください</p>` : '<p class="small center">スマホの PayPay アプリで QR コードを読み取ってください</p>'}
-    <img class="qr" src="${esc(a.qr)}" alt="PayPay 支払い用QRコード" style="${mobile ? 'width:150px' : ''}">
-    <p class="muted small center" id="pp-left"></p>
-    ${mobile ? '' : `<div style="margin-top:6px">${openBtn.replace('btn-lg', '')}</div>`}
+    ${a.demo ? `<div class="notice" style="margin-bottom:8px">${c.demo}</div>` : ''}
+    ${mobile ? `${openBtn(true)}<p class="muted small center" style="margin-top:10px">${c.otherPhone}</p>` : `<p class="center" style="font-weight:700">📱 ${c.scan}</p>`}
+    <img class="qr" src="${esc(a.qr)}" alt="${c.title} 支払い用QRコード" style="${mobile ? 'width:150px' : ''}">
+    <p class="muted small center" id="qr-left"></p>
+    ${!mobile && c.pcButton ? `<div style="margin-top:6px">${openBtn(false)}</div>` : ''}
+    ${c.note ? `<p class="small" style="margin-top:8px;line-height:1.7">🔒 ${c.note}</p>` : ''}
     <p class="muted small center" style="margin-top:8px">お支払いが完了すると、自動でこの画面が切り替わります。</p>
     ${backButton()}`;
   bindBack();
   const tick = () => {
     const left = Math.max(0, Math.floor((Date.parse(a.expiresAt) - Date.now()) / 1000));
-    const el = $('#pp-left');
+    const el = $('#qr-left');
     if (el) el.textContent = `有効期限まで ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
     if (left === 0) {
       clearInterval(countdownTimer);

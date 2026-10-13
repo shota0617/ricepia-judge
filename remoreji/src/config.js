@@ -56,7 +56,7 @@ export const config = {
   timeZone: 'Asia/Tokyo',
 };
 
-export const cardIsDemo = () => !(config.stripe.secretKey && config.stripe.publishableKey);
+export const cardIsDemo = () => !config.stripe.secretKey;
 export const paypayIsDemo = () => !(config.paypay.apiKey && config.paypay.apiSecret && config.paypay.merchantId);
 /** 決済の鍵が未設定で、自分のパソコンだけで試している状態（店員パスワードなしでログイン可） */
 export const isDemo = () => cardIsDemo() && paypayIsDemo() && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(config.baseUrl);

@@ -10,7 +10,8 @@ import * as paypay from './paypay.js';
 
 export const APP_TAG = 'remoreji'; // 同じ Stripe アカウントの他システムの決済と区別する印
 export const STRIPE_MIN_JPY = 50; // Stripe のカード決済の最低金額
-const PAYPAY_POLL_MS = Number(process.env.REMOREJI_PAYPAY_POLL_MS || 4500); // PayPay 推奨 4〜5 秒
+const POLL_MS = Number(process.env.REMOREJI_POLL_MS || 4500); // 支払い状況の確認間隔（PayPay 推奨 4〜5 秒）
+const CARD_LINK_MINUTES = 31; // カード決済ページの有効期限（Stripe は作成から 30 分以上が必要。時計のずれ分を足す）
 
 function parseSale(row) {
   return row && { ...row, items: JSON.parse(row.items_json), taxes: JSON.parse(row.taxes_json), attempt: row.attempt_json ? JSON.parse(row.attempt_json) : null };
@@ -84,17 +85,16 @@ export function nextCheckout(roomId) {
   emitChange(roomId);
 }
 
-/** 進行中の決済（PaymentIntent / PayPay QR）を止める。止める前に支払い済みだったら 'paid' を返す。 */
+/** 進行中の決済（カードの決済ページ / PayPay QR）を止める。止める前に支払い済みだったら 'paid' を返す。 */
 async function stopAttempt(sale) {
   const a = sale.attempt;
   if (!a) return 'none';
   if (a.method === 'card' && !a.demo) {
+    // お客様のスマホに開いている Stripe の決済ページを無効にする。すでに支払われていたら会計済みにする
     try {
-      await stripe.cancelPaymentIntent(a.ref);
+      await stripe.expireCheckoutSession(a.ref);
     } catch {
-      const pi = await stripe.retrievePaymentIntent(a.ref);
-      if (pi.status === 'succeeded') return markPaid(sale.id, { method: 'card', ref: pi.id }) && 'paid';
-      if (pi.status !== 'canceled') throw new UserError('カード決済の処理中です。少し待ってからもう一度お試しください');
+      if ((await checkStripeSession(a.ref)) === 'paid') return 'paid';
     }
   }
   if (a.method === 'paypay' && !a.demo) {
@@ -126,68 +126,87 @@ export function backToMethods(room) {
   });
 }
 
-/** クレジットカードを選んだ：Stripe の PaymentIntent を作り、カード入力欄用の client_secret を返す */
+/**
+ * クレジットカードを選んだ：Stripe の決済ページ（checkout.stripe.com）を作り、QR とリンクをお客様の画面に出す。
+ * カード番号はお客様が自分のスマホで Stripe のページに入力するので、当店の画面やサーバーには一切入らない。
+ */
 export function selectCard(room) {
   const { id } = pendingSaleOf(room);
   return withLock(id, async () => {
-    let sale = getSale(id);
+    const sale = getSale(id);
     if (sale.status !== 'pending') throw new UserError('お支払いを受け付けていません');
     if (sale.total < STRIPE_MIN_JPY) throw new UserError(`クレジットカードは ${STRIPE_MIN_JPY} 円以上からご利用いただけます`);
-    if (sale.attempt?.method === 'card') return cardClientInfo(sale.attempt);
-    if ((await stopAttempt(sale)) === 'paid') return { paid: true };
+    if (sale.attempt?.method === 'card' && !isExpired(sale.attempt)) return;
+    if ((await stopAttempt(sale)) === 'paid') return;
 
     let attempt;
+    const expiresAt = new Date(Date.now() + CARD_LINK_MINUTES * 60_000);
     if (cardIsDemo()) {
-      attempt = { method: 'card', demo: true, ref: `demo_card_${id}_${randomToken(6)}` };
+      const ref = `demo_card_${id}_${randomToken(6)}`;
+      attempt = { method: 'card', demo: true, ref, url: `${config.baseUrl}/demo/card/${ref}`, expiresAt: expiresAt.toISOString() };
     } else {
-      const pi = await stripe.createPaymentIntent({
-        amount: sale.total,
-        currency: 'jpy',
+      const cs = await stripe.createCheckoutSession({
+        mode: 'payment',
         payment_method_types: ['card'],
-        description: `${config.store.name} お会計 #${id}`,
+        line_items: [{ quantity: 1, price_data: { currency: 'jpy', unit_amount: sale.total, product_data: { name: `${config.store.name} お会計` } } }],
+        locale: 'ja',
+        expires_at: Math.floor(expiresAt.getTime() / 1000),
+        success_url: `${config.baseUrl}/card-done`,
+        cancel_url: `${config.baseUrl}/card-done?canceled=1`,
         metadata: { app: APP_TAG, sale_id: String(id) },
+        payment_intent_data: { description: `${config.store.name} お会計 #${id}`, metadata: { app: APP_TAG, sale_id: String(id) } },
       }, `remoreji-sale-${id}-${randomToken(6)}`);
-      attempt = { method: 'card', ref: pi.id, clientSecret: pi.client_secret };
+      attempt = { method: 'card', ref: cs.id, url: cs.url, expiresAt: new Date(cs.expires_at * 1000).toISOString() };
     }
+    attempt.qr = await QRCode.toDataURL(attempt.url, { margin: 1, width: 320 });
     setAttempt(id, attempt);
     emitChange(room.id);
-    return cardClientInfo(attempt);
+    if (!attempt.demo) pollAttempt(id, attempt.ref, () => checkStripeSession(attempt.ref));
   });
 }
 
-const cardClientInfo = (a) => (a.demo ? { demo: true } : { clientSecret: a.clientSecret, publishableKey: config.stripe.publishableKey });
+const isExpired = (a) => !!a.failed || (a.expiresAt && Date.parse(a.expiresAt) < Date.now());
 
-/** カード入力後：Stripe に問い合わせて本当に支払われたか確かめる（画面の申告は信用しない） */
-export function confirmCard(room) {
-  const sale = room?.sale_id && getSale(room.sale_id);
-  if (!sale) throw new UserError('お会計が見つかりません');
-  return withLock(sale.id, async () => {
-    const s = getSale(sale.id);
-    if (s.status === 'paid') return { paid: true };
-    if (s.attempt?.method !== 'card' || s.attempt.demo) throw new UserError('カード決済が開始されていません');
-    return { paid: await checkStripe(s.attempt.ref) };
-  });
-}
-
-async function checkStripe(piId) {
-  const pi = await stripe.retrievePaymentIntent(piId);
-  const sale = getSale(Number(pi.metadata?.sale_id));
-  if (pi.metadata?.app !== APP_TAG || !sale || pi.status !== 'succeeded') return false;
-  if (pi.amount_received !== sale.total || pi.currency !== 'jpy') {
-    console.error(`[stripe] 金額不一致 sale=${sale.id} total=${sale.total} received=${pi.amount_received} ${pi.currency}`);
-    return false;
+/** Stripe に決済ページの状態を問い合わせ、支払われていれば会計済みにする（画面の申告は信用しない） */
+async function checkStripeSession(sessionId) {
+  const cs = await stripe.retrieveCheckoutSession(sessionId);
+  const sale = getSale(Number(cs.metadata?.sale_id));
+  if (cs.metadata?.app !== APP_TAG || !sale) return 'unknown';
+  if (cs.payment_status === 'paid') {
+    if (cs.amount_total !== sale.total || cs.currency !== 'jpy') {
+      console.error(`[stripe] 金額不一致 sale=${sale.id} total=${sale.total} paid=${cs.amount_total} ${cs.currency}`);
+      return 'mismatch';
+    }
+    const pi = typeof cs.payment_intent === 'string' ? cs.payment_intent : cs.payment_intent?.id;
+    markPaid(sale.id, { method: 'card', ref: cs.id, paymentId: pi });
+    return 'paid';
   }
-  markPaid(sale.id, { method: 'card', ref: pi.id });
-  return true;
+  if (cs.status === 'expired' && sale.status === 'pending' && sale.attempt?.ref === cs.id) {
+    setAttempt(sale.id, { ...sale.attempt, failed: 'EXPIRED' });
+    emitChange(sale.room_id);
+  }
+  return cs.status;
 }
 
-/** デモ用：カード決済を擬似的に完了する */
-export function demoPayCard(room) {
-  if (!cardIsDemo()) throw new UserError('デモモードではありません', 403);
-  const sale = pendingSaleOf(room);
-  if (sale.attempt?.method !== 'card' || !sale.attempt.demo) throw new UserError('カード決済が開始されていません');
-  markPaid(sale.id, { method: 'card', ref: sale.attempt.ref, demo: true });
+export function checkCard(sessionId) {
+  const sale = getSaleByRef(sessionId);
+  if (!sale) return Promise.resolve('unknown');
+  return withLock(sale.id, () => (getSale(sale.id).status === 'paid' ? 'paid' : checkStripeSession(sessionId)));
 }
+
+/** デモ用：カード決済を擬似的に完了する（デモ用 QR をスマホで読むと開くページから呼ばれる） */
+export function demoPayCard(ref) {
+  if (!cardIsDemo()) throw new UserError('デモモードではありません', 403);
+  const sale = getSaleByRef(ref);
+  if (!sale || sale.status !== 'pending' || sale.attempt?.ref !== ref || isExpired(sale.attempt)) throw new UserError('このQRコードは無効です');
+  markPaid(sale.id, { method: 'card', ref, demo: true });
+}
+
+/** デモ用の支払いページ（カード・PayPay 共通）に出す情報 */
+export const demoPayInfo = (ref) => {
+  const sale = getSaleByRef(ref);
+  return sale && sale.attempt?.ref === ref ? { total: sale.total, status: sale.status } : null;
+};
 
 /** PayPay を選んだ：支払い用 QR（スマホではアプリが開くリンク）を作る */
 export function selectPayPay(room, userAgent = '') {
@@ -195,8 +214,7 @@ export function selectPayPay(room, userAgent = '') {
   return withLock(id, async () => {
     const sale = getSale(id);
     if (sale.status !== 'pending') throw new UserError('お支払いを受け付けていません');
-    const live = sale.attempt?.method === 'paypay' && !sale.attempt.failed && !(sale.attempt.expiresAt && Date.parse(sale.attempt.expiresAt) < Date.now());
-    if (live) return;
+    if (sale.attempt?.method === 'paypay' && !isExpired(sale.attempt)) return;
     if ((await stopAttempt(sale)) === 'paid') return;
 
     const ref = `rmj-${id}-${randomToken(8)}`;
@@ -217,25 +235,25 @@ export function selectPayPay(room, userAgent = '') {
     attempt.qr = await QRCode.toDataURL(attempt.url, { margin: 1, width: 320 });
     setAttempt(id, attempt);
     emitChange(room.id);
-    if (!attempt.demo) pollPayPay(id, ref);
+    if (!attempt.demo) pollAttempt(id, ref, () => checkPayPay(ref));
   });
 }
 
-// PayPay は支払い完了を自分で取りに行く（Webhook が届かなくても確実に検知するため）
+// 支払い完了は自分で取りに行く（Webhook が届かなくても確実に検知するため）
 const polling = new Set();
-function pollPayPay(saleId, ref) {
+function pollAttempt(saleId, ref, check) {
   if (polling.has(ref)) return;
   polling.add(ref);
   const tick = async () => {
     const sale = getSale(saleId);
     if (sale?.status !== 'pending' || sale.attempt?.ref !== ref) return polling.delete(ref);
-    await checkPayPay(ref).catch((e) => console.error('[paypay] 状態確認に失敗:', e.message));
+    await check().catch((e) => console.error(`[${sale.attempt.method}] 状態確認に失敗:`, e.message));
     const after = getSale(saleId);
     const expired = Date.parse(after.attempt?.expiresAt ?? 0) + 60_000 < Date.now();
-    if (after.status !== 'pending' || after.attempt?.ref !== ref || expired) return polling.delete(ref);
-    setTimeout(tick, PAYPAY_POLL_MS).unref();
+    if (after.status !== 'pending' || after.attempt?.ref !== ref || after.attempt?.failed || expired) return polling.delete(ref);
+    setTimeout(tick, POLL_MS).unref();
   };
-  setTimeout(tick, PAYPAY_POLL_MS).unref();
+  setTimeout(tick, POLL_MS).unref();
 }
 
 /** PayPay に支払い状況を問い合わせ、完了していれば会計済みにする */
@@ -270,16 +288,12 @@ export function demoPayPayPay(ref) {
   markPaid(sale.id, { method: 'paypay', ref, paymentId: `demo-${ref}`, demo: true });
 }
 
-export const demoPayPayInfo = (ref) => {
-  const sale = getSaleByRef(ref);
-  return sale && sale.attempt?.ref === ref ? { total: sale.total, status: sale.status } : null;
-};
-
-/** サーバー再起動時：支払い待ちの PayPay を見張り直す */
+/** サーバー再起動時：支払い待ちのカード・PayPay を見張り直す */
 export function resumePolling() {
-  for (const row of getDb().prepare("SELECT id, attempt_json FROM sales WHERE status = 'pending' AND method = 'paypay'").all()) {
+  for (const row of getDb().prepare("SELECT id, attempt_json FROM sales WHERE status = 'pending' AND method IS NOT NULL").all()) {
     const a = JSON.parse(row.attempt_json ?? 'null');
-    if (a && !a.demo) pollPayPay(row.id, a.ref);
+    if (!a || a.demo) continue;
+    pollAttempt(row.id, a.ref, () => (a.method === 'card' ? checkCard(a.ref) : checkPayPay(a.ref)));
   }
 }
 
@@ -296,7 +310,7 @@ function markPaid(saleId, { method, ref, paymentId = null, demo = false }) {
     const seq = d.prepare('SELECT last FROM receipt_seq WHERE day = ?').get(day).last;
     const receiptNo = `${day.replaceAll('-', '')}-${String(seq).padStart(4, '0')}`;
     d.prepare(`UPDATE sales SET status = 'paid', method = ?, provider_ref = ?, provider_payment_id = ?, demo = ?, receipt_no = ?, paid_at = ?,
-      attempt_json = json_remove(attempt_json, '$.clientSecret', '$.qr') WHERE id = ?`).run(method, ref, paymentId, demo ? 1 : 0, receiptNo, nowIso(), saleId);
+      attempt_json = json_remove(attempt_json, '$.qr') WHERE id = ?`).run(method, ref, paymentId, demo ? 1 : 0, receiptNo, nowIso(), saleId);
     // 会計が済んだらカートを空にする（取消後に入金された古い取引では今のカートに触れない）
     d.prepare("UPDATE rooms SET cart_json = '[]' WHERE id = ? AND sale_id = ?").run(sale.room_id, saleId);
     return sale.room_id;
@@ -307,10 +321,10 @@ function markPaid(saleId, { method, ref, paymentId = null, demo = false }) {
 
 export function handleStripeEvent(event) {
   const obj = event.data?.object;
-  if (obj?.object !== 'payment_intent' || obj.metadata?.app !== APP_TAG) return Promise.resolve({ ignored: true });
-  if (event.type !== 'payment_intent.succeeded') return Promise.resolve({ ok: true });
+  if (obj?.object !== 'checkout.session' || obj.metadata?.app !== APP_TAG) return Promise.resolve({ ignored: true });
+  if (!['checkout.session.completed', 'checkout.session.expired'].includes(event.type)) return Promise.resolve({ ok: true });
   // イベント本文ではなく API から最新の状態を取り直す
-  return withLock(Number(obj.metadata.sale_id), () => checkStripe(obj.id)).then((paid) => ({ paid }));
+  return checkCard(obj.id).then((status) => ({ status }));
 }
 
 export function refundSale(saleId) {
@@ -319,7 +333,7 @@ export function refundSale(saleId) {
     if (!sale) throw new UserError('取引が見つかりません', 404);
     if (sale.status !== 'paid') throw new UserError('会計済みの取引だけ返金できます');
     if (!sale.demo) {
-      if (sale.method === 'card') await stripe.createRefund({ payment_intent: sale.provider_ref, metadata: { app: APP_TAG, sale_id: String(sale.id) } }, `remoreji-refund-${sale.id}`);
+      if (sale.method === 'card') await stripe.createRefund({ payment_intent: sale.provider_payment_id, metadata: { app: APP_TAG, sale_id: String(sale.id) } }, `remoreji-refund-${sale.id}`);
       else await paypay.refund({ merchantRefundId: `rmjr-${sale.id}`, paymentId: sale.provider_payment_id, amount: sale.total, reason: '店舗による返金' });
     }
     getDb().prepare("UPDATE sales SET status = 'refunded', refunded_at = ? WHERE id = ?").run(nowIso(), saleId);
@@ -367,7 +381,7 @@ export function saleView(sale, role) {
       demo: !!a.demo,
       expiresAt: a.expiresAt ?? null,
       failed: a.failed ?? null,
-      ...(role === 'customer' && a.method === 'paypay' ? { url: a.url, qr: a.qr } : {}),
+      ...(role === 'customer' && a.url ? { url: a.url, qr: a.qr } : {}),
     },
   };
 }

@@ -1,4 +1,4 @@
-// Stripe REST API の最小クライアント（SDK不要）。カード決済だけに使う。
+// Stripe REST API の最小クライアント（SDK不要）。カード決済（Stripe の決済ページ）だけに使う。
 import crypto from 'node:crypto';
 import { config } from './config.js';
 
@@ -39,9 +39,9 @@ async function call(method, pathname, params, idempotencyKey) {
   return body;
 }
 
-export const createPaymentIntent = (params, idempotencyKey) => call('POST', '/payment_intents', params, idempotencyKey);
-export const retrievePaymentIntent = (id) => call('GET', `/payment_intents/${encodeURIComponent(id)}`);
-export const cancelPaymentIntent = (id) => call('POST', `/payment_intents/${encodeURIComponent(id)}/cancel`, {});
+export const createCheckoutSession = (params, idempotencyKey) => call('POST', '/checkout/sessions', params, idempotencyKey);
+export const retrieveCheckoutSession = (id) => call('GET', `/checkout/sessions/${encodeURIComponent(id)}`);
+export const expireCheckoutSession = (id) => call('POST', `/checkout/sessions/${encodeURIComponent(id)}/expire`, {});
 export const createRefund = (params, idempotencyKey) => call('POST', '/refunds', params, idempotencyKey);
 
 /** Stripe-Signature ヘッダーを検証して event を返す。不正なら例外。 */

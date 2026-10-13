@@ -4,11 +4,10 @@ import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 
 process.env.STRIPE_SECRET_KEY = 'sk_test_x';
-process.env.STRIPE_PUBLISHABLE_KEY = 'pk_test_x';
 process.env.PAYPAY_API_KEY = 'pp_key';
 process.env.PAYPAY_API_SECRET = 'pp_secret';
 process.env.PAYPAY_MERCHANT_ID = 'm_1';
-process.env.REMOREJI_PAYPAY_POLL_MS = '20';
+process.env.REMOREJI_POLL_MS = '20';
 
 const rooms = await import('../src/rooms.js');
 const payments = await import('../src/payments.js');
@@ -16,10 +15,10 @@ const { getDb } = await import('../src/db.js');
 
 // ---- 外部APIのモック ----
 let calls = [];
-let pi = {}; // Stripe PaymentIntent の状態
+let cs = {}; // Stripe 決済ページ（Checkout Session）の状態
 let paypayStatus = 'CREATED';
 let paypayAmount = null;
-let cancelFails = false;
+let expireFails = false;
 
 globalThis.fetch = async (url, opts = {}) => {
   const u = new URL(url);
@@ -27,15 +26,19 @@ globalThis.fetch = async (url, opts = {}) => {
   calls.push({ method: opts.method, host: u.host, path: u.pathname, headers: opts.headers, body });
   const json = (status, data) => new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json' } });
   if (u.host === 'api.stripe.com') {
-    if (opts.method === 'POST' && u.pathname === '/v1/payment_intents') {
-      pi = { object: 'payment_intent', id: `pi_${calls.length}`, client_secret: `pi_${calls.length}_secret`, status: 'requires_payment_method', amount: Number(body.amount), amount_received: 0, currency: body.currency, metadata: { app: body['metadata[app]'], sale_id: body['metadata[sale_id]'] } };
-      return json(200, pi);
+    if (opts.method === 'POST' && u.pathname === '/v1/checkout/sessions') {
+      cs = {
+        object: 'checkout.session', id: `cs_${calls.length}`, url: `https://checkout.stripe.com/c/pay/cs_${calls.length}`, status: 'open', payment_status: 'unpaid',
+        amount_total: Number(body['line_items[0][price_data][unit_amount]']), currency: body['line_items[0][price_data][currency]'],
+        expires_at: Number(body.expires_at), payment_intent: null, metadata: { app: body['metadata[app]'], sale_id: body['metadata[sale_id]'] },
+      };
+      return json(200, cs);
     }
-    if (opts.method === 'GET' && u.pathname === `/v1/payment_intents/${pi.id}`) return json(200, pi);
-    if (u.pathname === `/v1/payment_intents/${pi.id}/cancel`) {
-      if (cancelFails) return json(400, { error: { message: 'cannot cancel succeeded' } });
-      pi.status = 'canceled';
-      return json(200, pi);
+    if (opts.method === 'GET' && u.pathname === `/v1/checkout/sessions/${cs.id}`) return json(200, cs);
+    if (u.pathname === `/v1/checkout/sessions/${cs.id}/expire`) {
+      if (expireFails) return json(400, { error: { message: 'Only Checkout Sessions with a status in [open] can be expired.' } });
+      cs.status = 'expired';
+      return json(200, cs);
     }
     if (u.pathname === '/v1/refunds') return json(200, { id: 're_1', status: 'succeeded' });
   }
@@ -65,7 +68,7 @@ let room;
 let saleId;
 beforeEach(() => {
   calls = [];
-  cancelFails = false;
+  expireFails = false;
   paypayStatus = 'CREATED';
   room = rooms.createRoom('staff');
   const [p1, p2] = getDb().prepare('SELECT id FROM products ORDER BY id').all();
@@ -75,57 +78,59 @@ beforeEach(() => {
   room = rooms.getRoom(room.id);
 });
 
-test('カード：金額はサーバーのカートから計算し、カードだけの PaymentIntent を作る', async () => {
+test('カード：お客様のスマホで開く Stripe の決済ページを作り、支払い完了を自動で検知する', async () => {
   const sale = payments.getSale(saleId);
-  const r = await payments.selectCard(room);
-  assert.deepEqual(r, { clientSecret: pi.client_secret, publishableKey: 'pk_test_x' });
-  const create = calls.find((c) => c.path === '/v1/payment_intents');
-  assert.equal(create.body.amount, String(sale.total));
-  assert.equal(create.body.currency, 'jpy');
+  await payments.selectCard(room);
+  const create = calls.find((c) => c.path === '/v1/checkout/sessions');
+  assert.equal(create.body.mode, 'payment');
+  assert.equal(create.body['line_items[0][price_data][unit_amount]'], String(sale.total), '金額はサーバーのカートから');
+  assert.equal(create.body['line_items[0][price_data][currency]'], 'jpy');
   assert.equal(create.body['payment_method_types[0]'], 'card');
   assert.equal(create.body['payment_method_types[1]'], undefined, 'カード以外の支払い方法は出さない');
   assert.equal(create.body['metadata[app]'], 'remoreji');
+  assert.ok(Number(create.body.expires_at) - Date.now() / 1000 >= 30 * 60, 'Stripe の最短期限（30分）以上');
   assert.ok(create.headers['Idempotency-Key']);
-  assert.match(create.headers.Authorization, /^Bearer sk_test_x$/);
+  const a = payments.getSale(saleId).attempt;
+  assert.equal(a.url, cs.url, 'お客様の画面には Stripe のページへのリンクだけ');
+  assert.match(a.qr, /^data:image\/png/);
 
-  // 連打しても PaymentIntent は1つ
+  // 連打しても決済ページは1つ
   await payments.selectCard(room);
-  assert.equal(calls.filter((c) => c.path === '/v1/payment_intents').length, 1);
+  assert.equal(calls.filter((c) => c.path === '/v1/checkout/sessions').length, 1);
 
-  // 未払いのうちは会計済みにならない
-  assert.deepEqual(await payments.confirmCard(room), { paid: false });
+  // 未払いのうちは待つ
+  await until(() => calls.filter((c) => c.method === 'GET' && c.path === `/v1/checkout/sessions/${cs.id}`).length >= 2);
+  assert.equal(payments.getSale(saleId).status, 'pending');
   // 金額が合わなければ会計済みにしない
-  Object.assign(pi, { status: 'succeeded', amount_received: sale.total - 1 });
-  assert.deepEqual(await payments.confirmCard(room), { paid: false });
-  Object.assign(pi, { amount_received: sale.total });
-  assert.deepEqual(await payments.confirmCard(room), { paid: true });
+  Object.assign(cs, { status: 'complete', payment_status: 'paid', amount_total: sale.total - 1, payment_intent: 'pi_9' });
+  assert.equal(await payments.checkCard(cs.id), 'mismatch');
+  Object.assign(cs, { amount_total: sale.total });
+  await until(() => payments.getSale(saleId).status === 'paid');
   const paid = payments.getSale(saleId);
-  assert.equal(paid.status, 'paid');
-  assert.equal(paid.provider_ref, pi.id);
-  assert.equal(paid.attempt.clientSecret, undefined, '会計後は client_secret を残さない');
-
-  // デモ用の擬似決済は本番では使えない
-  assert.throws(() => payments.demoPayCard(rooms.getRoom(room.id)), /デモモードではありません/);
+  assert.equal(paid.method, 'card');
+  assert.equal(paid.provider_payment_id, 'pi_9');
+  assert.equal(paid.attempt.qr, undefined, '会計後は QR を残さない');
+  assert.throws(() => payments.demoPayCard(cs.id), /デモモードではありません/);
 
   await payments.refundSale(saleId);
   const refund = calls.find((c) => c.path === '/v1/refunds');
-  assert.equal(refund.body.payment_intent, pi.id);
+  assert.equal(refund.body.payment_intent, 'pi_9');
   assert.equal(payments.getSale(saleId).status, 'refunded');
 });
 
 test('Stripe Webhook：他システムの決済は無視し、リモレジの決済は API で確かめてから記録する', async () => {
   await payments.selectCard(room);
-  assert.deepEqual(await payments.handleStripeEvent({ type: 'payment_intent.succeeded', data: { object: { object: 'payment_intent', id: 'pi_other', metadata: { app: 'shomai' } } } }), { ignored: true });
-  Object.assign(pi, { status: 'succeeded', amount_received: pi.amount });
-  const r = await payments.handleStripeEvent({ type: 'payment_intent.succeeded', data: { object: { ...pi, status: 'requires_payment_method' } } });
-  assert.deepEqual(r, { paid: true });
+  assert.deepEqual(await payments.handleStripeEvent({ type: 'checkout.session.completed', data: { object: { object: 'checkout.session', id: 'cs_other', metadata: { app: 'shomai' } } } }), { ignored: true });
+  Object.assign(cs, { status: 'complete', payment_status: 'paid', payment_intent: 'pi_1' });
+  const r = await payments.handleStripeEvent({ type: 'checkout.session.completed', data: { object: { ...cs, payment_status: 'unpaid' } } });
+  assert.deepEqual(r, { status: 'paid' });
   assert.equal(payments.getSale(saleId).status, 'paid');
 });
 
-test('カード → PayPay に切り替え：PaymentIntent を取り消す。取り消す前に支払われていたら会計済みにする', async () => {
+test('カード → PayPay に切り替え：決済ページを無効にする。無効にする前に支払われていたら会計済みにする', async () => {
   await payments.selectCard(room);
   await payments.selectPayPay(room, 'UA');
-  assert.ok(calls.some((c) => c.path === `/v1/payment_intents/${pi.id}/cancel`));
+  assert.ok(calls.some((c) => c.path === `/v1/checkout/sessions/${cs.id}/expire`));
   assert.equal(payments.getSale(saleId).method, 'paypay');
 
   // 別の会計で、切り替えの瞬間にカード決済が完了していたケース
@@ -134,10 +139,20 @@ test('カード → PayPay に切り替え：PaymentIntent を取り消す。取
   const id2 = payments.startCheckout(room.id);
   const r2 = rooms.getRoom(room.id);
   await payments.selectCard(r2);
-  cancelFails = true;
-  Object.assign(pi, { status: 'succeeded', amount_received: pi.amount });
+  expireFails = true;
+  Object.assign(cs, { status: 'complete', payment_status: 'paid', payment_intent: 'pi_2' });
   await payments.backToMethods(r2);
   assert.equal(payments.getSale(id2).status, 'paid');
+});
+
+test('カード：決済ページの期限切れを検知して、お客様が QR を再発行できるようにする', async () => {
+  await payments.selectCard(room);
+  const first = cs.id;
+  cs.status = 'expired';
+  await until(() => payments.getSale(saleId).attempt?.failed === 'EXPIRED');
+  await payments.selectCard(room);
+  assert.notEqual(cs.id, first, '新しい決済ページを作る');
+  assert.equal(payments.getSale(saleId).attempt.ref, cs.id);
 });
 
 test('PayPay：署名付きで QR を作り、支払い完了をポーリングで検知する', async () => {

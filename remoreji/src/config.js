@@ -29,11 +29,13 @@ export const config = {
     invoiceNo: env('INVOICE_NO', ''),
   },
 
-  // クレジットカード（Stripe）。未設定ならカード決済はデモ（擬似決済）になる。
-  stripe: {
-    secretKey: env('STRIPE_SECRET_KEY'),
-    publishableKey: env('STRIPE_PUBLISHABLE_KEY'),
-    webhookSecret: env('STRIPE_WEBHOOK_SECRET'),
+  // クレジットカード（Airペイ オンライン決済）。Airペイには外部から使える API がないため、
+  // 店員が Airペイの管理画面で作った決済リンクをお客様の画面に渡し、入金も店員が確認する。
+  airpay: {
+    // 金額をお客様が入力するタイプの決済リンクを作ってある場合、そのURL（毎回の貼り付けを省略できる）
+    defaultLink: env('AIRPAY_LINK_URL'),
+    // 店員画面に出す「Airペイ管理画面を開く」ボタンの行き先
+    adminUrl: env('AIRPAY_ADMIN_URL', 'https://airregi.jp/payment/'),
   },
 
   // PayPay（PayPay for Developers のウェブペイメント）。未設定なら PayPay 決済はデモになる。
@@ -56,10 +58,9 @@ export const config = {
   timeZone: 'Asia/Tokyo',
 };
 
-export const cardIsDemo = () => !(config.stripe.secretKey && config.stripe.publishableKey);
 export const paypayIsDemo = () => !(config.paypay.apiKey && config.paypay.apiSecret && config.paypay.merchantId);
-/** 両方とも未設定なら全体をデモモードとみなす（店員パスワードなしでログイン可） */
-export const isDemo = () => cardIsDemo() && paypayIsDemo();
+/** 自分のパソコンだけで試している状態（店員パスワードなしでログイン可） */
+export const isDemo = () => paypayIsDemo() && /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(config.baseUrl);
 
 export function iceServers() {
   const servers = [{ urls: config.ice.stunUrls }];

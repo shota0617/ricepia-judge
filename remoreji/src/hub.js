@@ -1,6 +1,6 @@
 // WebSocket：ビデオ通話の接続情報（WebRTC シグナリング）の中継と、レジ画面の状態のリアルタイム配信。
 import { WebSocketServer } from 'ws';
-import { config, iceServers } from './config.js';
+import { config, iceServers, isDemo } from './config.js';
 import * as rooms from './rooms.js';
 import * as payments from './payments.js';
 import { isStaff, sameOrigin } from './auth.js';
@@ -65,6 +65,8 @@ async function handleStaffMessage(roomId, msg) {
     case 'checkout:start': return payments.startCheckout(roomId);
     case 'checkout:cancel': return payments.cancelCheckout(roomId);
     case 'checkout:next': return payments.nextCheckout(roomId);
+    case 'card:link': return payments.setCardLink(roomId, msg.url, { demo: !!msg.demo && isDemo() });
+    case 'card:confirm': return payments.confirmCardPaid(roomId, msg.airpayNo);
     case 'room:close': return rooms.closeRoom(roomId);
     default: throw new UserError('不明な操作です');
   }

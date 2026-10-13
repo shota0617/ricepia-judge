@@ -50,13 +50,13 @@ export function getDb() {
       room_id             TEXT NOT NULL,
       status              TEXT NOT NULL,      -- pending | paid | canceled | refunded
       method              TEXT,               -- card | paypay
-      attempt_json        TEXT,               -- 進行中の決済（PaymentIntent / PayPay QR）
+      attempt_json        TEXT,               -- 進行中の決済（Airペイの決済リンク / PayPay QR）
       items_json          TEXT NOT NULL,
       total               INTEGER NOT NULL,
       taxes_json          TEXT NOT NULL,
       receipt_no          TEXT UNIQUE,
       receipt_token       TEXT UNIQUE NOT NULL,
-      provider_ref        TEXT,               -- Stripe PaymentIntent ID / PayPay merchantPaymentId
+      provider_ref        TEXT,               -- Airペイの取引番号（店員入力）/ PayPay merchantPaymentId
       provider_payment_id TEXT,               -- PayPay paymentId（返金に使う）
       demo                INTEGER NOT NULL DEFAULT 0,
       created_at          TEXT NOT NULL,

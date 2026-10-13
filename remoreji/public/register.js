@@ -9,6 +9,8 @@ let category = null;
 let online = false;
 let remotePresent = false;
 let peerMedia = { mic: true, cam: true };
+let me;
+let saleKey = '';
 
 function send(msg) {
   if (!online) return toast('サーバーに接続していません', true);
@@ -16,7 +18,7 @@ function send(msg) {
 }
 
 async function init() {
-  const me = await api('/api/staff/me');
+  me = await api('/api/staff/me');
   if (!me.loggedIn) return location.replace(`/staff?next=${encodeURIComponent(location.pathname)}`);
   $('#store-name').textContent = me.store;
   let room;
@@ -180,9 +182,14 @@ function renderSale() {
   $('#cart-view').hidden = !!inSale;
   $('#sale-view').hidden = !inSale;
   $('#close-room').disabled = sale?.status === 'pending';
+  const a = sale?.attempt;
+  // 入力中の内容が消えないよう、表示が変わる時だけ描き直す
+  const key = inSale ? [sale.id, sale.status, a?.method, a?.url, a?.reported, a?.failed, a?.expiresAt].join(':') : '';
+  if (key === saleKey) return;
+  saleKey = key;
   if (!inSale) return;
   const view = $('#sale-view');
-  const items = `<div class="receipt" style="text-align:left;max-height:28vh;overflow:auto">${linesHtml(sale.items)}</div><div style="text-align:left">${totalsHtml(sale)}</div>`;
+  const items = `<div class="receipt" style="text-align:left;max-height:24vh;overflow:auto">${linesHtml(sale.items)}</div><div style="text-align:left">${totalsHtml(sale)}</div>`;
   if (sale.status === 'paid') {
     view.innerHTML = `<div class="done"><div class="check">✓</div><h2 style="font-size:18px">会計完了</h2></div>
       <div class="big">${yen(sale.total)}</div>
@@ -193,16 +200,77 @@ function renderSale() {
     $('#next').onclick = () => send({ type: 'checkout:next' });
     return;
   }
-  const a = sale.attempt;
+  if (a?.method === 'card') return renderCardPanel(view, sale, items);
   let status = 'お客様が支払い方法を選んでいます';
-  if (a?.method === 'card') status = 'お客様がクレジットカード情報を入力しています';
   if (a?.method === 'paypay') status = a.failed || (a.expiresAt && Date.parse(a.expiresAt) < Date.now()) ? 'PayPay の QR コードが期限切れ／失敗しました（お客様が再発行できます）' : 'お客様が PayPay で支払っています';
   view.innerHTML = `<div class="muted small">お会計中</div><div class="big">${yen(sale.total)}</div>
     <div class="row" style="justify-content:center"><div class="spinner dark"></div><span>${status}</span></div>
     ${a?.demo ? '<div class="notice">デモモード（実際の決済は行われません）</div>' : ''}
     ${items}
     <button class="btn btn-danger" id="cancel-sale">お会計を取り消す（カートに戻る）</button>`;
-  $('#cancel-sale').onclick = () => confirm('お会計を取り消しますか？') && send({ type: 'checkout:cancel' });
+  bindCancel(sale);
+}
+
+function bindCancel(sale) {
+  $('#cancel-sale').onclick = () => {
+    const warn = sale.attempt?.method === 'card' && sale.attempt.url
+      ? 'お会計を取り消しますか？\n\nお客様がすでに Airペイで支払っていないか、Airペイの管理画面で確認してください。'
+      : 'お会計を取り消しますか？';
+    if (confirm(warn)) send({ type: 'checkout:cancel' });
+  };
+}
+
+/** クレジットカード（Airペイ）：決済リンクを作って貼る → 入金を確認して会計完了 */
+function renderCardPanel(view, sale, items) {
+  const a = sale.attempt;
+  const linkForm = `
+    <form id="link-form" style="display:grid;gap:8px;text-align:left">
+      <ol class="small" style="padding-left:20px;line-height:1.9">
+        <li><a href="${esc(me.airpayAdminUrl)}" target="_blank" rel="noopener">Airペイの管理画面</a>の「オンライン決済 → 決済リンク管理」で、<b>都度決済・金額 ${yen(sale.total)}</b> の決済リンクを作る
+          <button type="button" class="btn btn-ghost btn-sm" id="copy-amount">金額をコピー</button></li>
+        <li>できたリンクのURLを下に貼り付けて「お客様に送る」</li>
+      </ol>
+      <input class="input" name="url" type="url" placeholder="https://… （Airペイの決済リンク）" required>
+      <div class="row"><button class="btn btn-gold grow">お客様に送る</button>
+        ${me.demo ? '<button type="button" class="btn btn-ghost" id="demo-link">デモ用リンクを送る</button>' : ''}</div>
+    </form>`;
+  let body;
+  if (!a.url) {
+    body = `<div class="notice" style="text-align:left">お客様が<b>クレジットカード（Airペイ）</b>を選びました。</div>${linkForm}`;
+  } else {
+    body = `
+      ${a.reported
+        ? '<div class="notice" style="text-align:left;border-color:#3f7d55;background:#eef6f0;color:#2d5e3e"><b>お客様が「支払いが終わりました」を押しました。</b><br>Airペイの管理画面で入金を確認してください。</div>'
+        : `<div class="row" style="justify-content:center"><div class="spinner dark"></div><span>決済リンクを送りました。お客様が支払っています</span></div>`}
+      <div class="small muted">送ったリンク：<a href="${esc(a.url)}" target="_blank" rel="noopener">${esc(a.host)}</a> ・ <a href="#" id="relink">貼り直す</a></div>
+      <div id="relink-box" hidden>${linkForm}</div>
+      <form id="confirm-form" class="card" style="display:grid;gap:8px;text-align:left;background:#faf8f2">
+        <b class="small">Airペイで入金を確認したら</b>
+        <input class="input" name="no" maxlength="64" placeholder="Airペイの取引番号など（任意・売上の照合用）">
+        <button class="btn btn-gold btn-lg">入金を確認した → 会計完了</button>
+      </form>`;
+  }
+  view.innerHTML = `<div class="muted small">お会計中</div><div class="big">${yen(sale.total)}</div>
+    ${a.demo ? '<div class="notice">デモ用リンク（実際の決済は行われません）</div>' : ''}
+    ${body}
+    ${items}
+    <button class="btn btn-danger" id="cancel-sale">お会計を取り消す（カートに戻る）</button>`;
+  bindCancel(sale);
+  view.querySelector('#copy-amount')?.addEventListener('click', () => navigator.clipboard.writeText(String(sale.total)).then(() => toast(`${sale.total} をコピーしました`)));
+  view.querySelector('#demo-link')?.addEventListener('click', () => send({ type: 'card:link', demo: true }));
+  view.querySelector('#link-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    send({ type: 'card:link', url: new FormData(e.target).get('url') });
+  });
+  view.querySelector('#relink')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    $('#relink-box').hidden = false;
+  });
+  view.querySelector('#confirm-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!confirm(`Airペイの管理画面で ${yen(sale.total)} の入金を確認しましたか？\n「はい」で会計完了にします。`)) return;
+    send({ type: 'card:confirm', airpayNo: new FormData(e.target).get('no') });
+  });
 }
 
 init().catch((e) => toast(e.message, true));

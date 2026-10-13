@@ -1,15 +1,12 @@
-// お会計（取引）と決済。カード＝Stripe、PayPay＝PayPay ウェブペイメント。
+// お会計（取引）と決済。カード＝Airペイ オンライン決済（決済リンク）、PayPay＝PayPay ウェブペイメント。
 // 金額は必ずサーバー側のカートから計算し、画面から送られた金額は使わない。
 import QRCode from 'qrcode';
-import { config, cardIsDemo, paypayIsDemo } from './config.js';
+import { config, paypayIsDemo, isDemo } from './config.js';
 import { getDb, tx } from './db.js';
 import { getRoom, emitChange } from './rooms.js';
 import { UserError, computeTotals, jst, jstDayRange, nowIso, randomToken } from './util.js';
-import * as stripe from './stripe.js';
 import * as paypay from './paypay.js';
 
-export const APP_TAG = 'remoreji'; // 同じ Stripe アカウントの他システムの決済と区別する印
-export const STRIPE_MIN_JPY = 50; // Stripe のカード決済の最低金額
 const PAYPAY_POLL_MS = Number(process.env.REMOREJI_PAYPAY_POLL_MS || 4500); // PayPay 推奨 4〜5 秒
 
 function parseSale(row) {
@@ -84,19 +81,10 @@ export function nextCheckout(roomId) {
   emitChange(roomId);
 }
 
-/** 進行中の決済（PaymentIntent / PayPay QR）を止める。止める前に支払い済みだったら 'paid' を返す。 */
+/** 進行中の決済（PayPay の QR）を止める。Airペイのリンクは店員が作ったものなので何もしない。止める前に支払い済みだったら 'paid' を返す。 */
 async function stopAttempt(sale) {
   const a = sale.attempt;
   if (!a) return 'none';
-  if (a.method === 'card' && !a.demo) {
-    try {
-      await stripe.cancelPaymentIntent(a.ref);
-    } catch {
-      const pi = await stripe.retrievePaymentIntent(a.ref);
-      if (pi.status === 'succeeded') return markPaid(sale.id, { method: 'card', ref: pi.id }) && 'paid';
-      if (pi.status !== 'canceled') throw new UserError('カード決済の処理中です。少し待ってからもう一度お試しください');
-    }
-  }
   if (a.method === 'paypay' && !a.demo) {
     await paypay.deleteCode(a.codeId).catch(() => {});
     const p = await paypay.getPaymentDetails(a.ref).catch(() => null);
@@ -126,68 +114,93 @@ export function backToMethods(room) {
   });
 }
 
-/** クレジットカードを選んだ：Stripe の PaymentIntent を作り、カード入力欄用の client_secret を返す */
+// ---- クレジットカード（Airペイ オンライン決済）----
+// Airペイには外部から使える API がないので、次の流れで受け付ける。
+//   お客様が「クレジットカード」を選ぶ → 店員が Airペイ管理画面で金額入りの決済リンク（都度決済）を作って貼り付ける
+//   → お客様の画面にリンクと QR が出る → お客様が Airペイの画面で支払う
+//   → 店員が Airペイ管理画面で入金を確認して「会計完了」を押す
+
+/** クレジットカードを選んだ */
 export function selectCard(room) {
   const { id } = pendingSaleOf(room);
   return withLock(id, async () => {
-    let sale = getSale(id);
+    const sale = getSale(id);
     if (sale.status !== 'pending') throw new UserError('お支払いを受け付けていません');
-    if (sale.total < STRIPE_MIN_JPY) throw new UserError(`クレジットカードは ${STRIPE_MIN_JPY} 円以上からご利用いただけます`);
-    if (sale.attempt?.method === 'card') return cardClientInfo(sale.attempt);
-    if ((await stopAttempt(sale)) === 'paid') return { paid: true };
-
-    let attempt;
-    if (cardIsDemo()) {
-      attempt = { method: 'card', demo: true, ref: `demo_card_${id}_${randomToken(6)}` };
-    } else {
-      const pi = await stripe.createPaymentIntent({
-        amount: sale.total,
-        currency: 'jpy',
-        payment_method_types: ['card'],
-        description: `${config.store.name} お会計 #${id}`,
-        metadata: { app: APP_TAG, sale_id: String(id) },
-      }, `remoreji-sale-${id}-${randomToken(6)}`);
-      attempt = { method: 'card', ref: pi.id, clientSecret: pi.client_secret };
-    }
+    if (sale.attempt?.method === 'card') return;
+    if ((await stopAttempt(sale)) === 'paid') return;
+    const attempt = { method: 'card', ref: `airpay-${id}-${randomToken(6)}`, url: null, reported: false };
+    if (config.airpay.defaultLink) Object.assign(attempt, await cardLink(config.airpay.defaultLink, attempt.ref));
     setAttempt(id, attempt);
     emitChange(room.id);
-    return cardClientInfo(attempt);
   });
 }
 
-const cardClientInfo = (a) => (a.demo ? { demo: true } : { clientSecret: a.clientSecret, publishableKey: config.stripe.publishableKey });
-
-/** カード入力後：Stripe に問い合わせて本当に支払われたか確かめる（画面の申告は信用しない） */
-export function confirmCard(room) {
-  const sale = room?.sale_id && getSale(room.sale_id);
-  if (!sale) throw new UserError('お会計が見つかりません');
-  return withLock(sale.id, async () => {
-    const s = getSale(sale.id);
-    if (s.status === 'paid') return { paid: true };
-    if (s.attempt?.method !== 'card' || s.attempt.demo) throw new UserError('カード決済が開始されていません');
-    return { paid: await checkStripe(s.attempt.ref) };
-  });
-}
-
-async function checkStripe(piId) {
-  const pi = await stripe.retrievePaymentIntent(piId);
-  const sale = getSale(Number(pi.metadata?.sale_id));
-  if (pi.metadata?.app !== APP_TAG || !sale || pi.status !== 'succeeded') return false;
-  if (pi.amount_received !== sale.total || pi.currency !== 'jpy') {
-    console.error(`[stripe] 金額不一致 sale=${sale.id} total=${sale.total} received=${pi.amount_received} ${pi.currency}`);
-    return false;
+function validLink(url) {
+  let u;
+  try {
+    u = new URL(String(url ?? '').trim());
+  } catch {
+    throw new UserError('決済リンクのURLが正しくありません');
   }
-  markPaid(sale.id, { method: 'card', ref: pi.id });
-  return true;
+  const demoLink = isDemo() && u.href.startsWith(`${config.baseUrl}/demo/airpay/`);
+  if (u.protocol !== 'https:' && !demoLink) throw new UserError('決済リンクは https:// で始まるURLを貼り付けてください');
+  return u.href;
 }
 
-/** デモ用：カード決済を擬似的に完了する */
-export function demoPayCard(room) {
-  if (!cardIsDemo()) throw new UserError('デモモードではありません', 403);
-  const sale = pendingSaleOf(room);
-  if (sale.attempt?.method !== 'card' || !sale.attempt.demo) throw new UserError('カード決済が開始されていません');
-  markPaid(sale.id, { method: 'card', ref: sale.attempt.ref, demo: true });
+async function cardLink(url, ref) {
+  const href = validLink(url);
+  return { url: href, host: new URL(href).host, demo: isDemo() && href.startsWith(`${config.baseUrl}/demo/airpay/`), qr: await QRCode.toDataURL(href, { margin: 1, width: 320 }), ref };
 }
+
+export const demoAirPayUrl = (sale) => `${config.baseUrl}/demo/airpay/${sale.attempt.ref}`;
+
+function cardSaleOf(roomId) {
+  const room = getRoom(roomId);
+  const sale = room?.sale_id && getSale(room.sale_id);
+  if (!sale || sale.status !== 'pending' || sale.attempt?.method !== 'card') throw new UserError('お客様がクレジットカードを選んでいません');
+  return sale;
+}
+
+/** 店員：Airペイで作った決済リンクをお客様の画面に送る（demo: true ならデモ用リンク） */
+export function setCardLink(roomId, url, { demo = false } = {}) {
+  const { id } = cardSaleOf(roomId);
+  return withLock(id, async () => {
+    const sale = getSale(id);
+    if (sale.status !== 'pending' || sale.attempt?.method !== 'card') return;
+    const link = await cardLink(demo ? demoAirPayUrl(sale) : url, sale.attempt.ref);
+    setAttempt(id, { ...sale.attempt, ...link, reported: false });
+    emitChange(roomId);
+  });
+}
+
+/** お客様：「支払いました」を押した（店員に入金確認を促すだけで、会計済みにはしない） */
+export function reportCardPaid(room) {
+  const sale = pendingSaleOf(room);
+  if (sale.attempt?.method !== 'card' || !sale.attempt.url) throw new UserError('決済リンクがまだ届いていません');
+  setAttempt(sale.id, { ...sale.attempt, reported: true });
+  emitChange(room.id);
+}
+
+/** 店員：Airペイ管理画面で入金を確認したので会計済みにする。airpayNo は Airペイの取引番号など（任意） */
+export function confirmCardPaid(roomId, airpayNo = '') {
+  const sale = cardSaleOf(roomId);
+  if (!sale.attempt.url) throw new UserError('先に決済リンクをお客様に送ってください');
+  const no = String(airpayNo ?? '').trim().slice(0, 64);
+  markPaid(sale.id, { method: 'card', ref: no || sale.attempt.ref, demo: sale.attempt.demo });
+}
+
+/** デモ用リンク：お客様が擬似的に支払った */
+export function demoAirPayPay(ref) {
+  const sale = getSaleByRef(ref);
+  if (!sale || sale.status !== 'pending' || sale.attempt?.ref !== ref || !sale.attempt.demo) throw new UserError('このリンクは無効です');
+  setAttempt(sale.id, { ...sale.attempt, reported: true });
+  emitChange(sale.room_id);
+}
+
+export const demoLinkInfo = (ref) => {
+  const sale = getSaleByRef(ref);
+  return sale && sale.attempt?.ref === ref ? { total: sale.total, status: sale.status, reported: !!sale.attempt.reported } : null;
+};
 
 /** PayPay を選んだ：支払い用 QR（スマホではアプリが開くリンク）を作る */
 export function selectPayPay(room, userAgent = '') {
@@ -296,7 +309,7 @@ function markPaid(saleId, { method, ref, paymentId = null, demo = false }) {
     const seq = d.prepare('SELECT last FROM receipt_seq WHERE day = ?').get(day).last;
     const receiptNo = `${day.replaceAll('-', '')}-${String(seq).padStart(4, '0')}`;
     d.prepare(`UPDATE sales SET status = 'paid', method = ?, provider_ref = ?, provider_payment_id = ?, demo = ?, receipt_no = ?, paid_at = ?,
-      attempt_json = json_remove(attempt_json, '$.clientSecret', '$.qr') WHERE id = ?`).run(method, ref, paymentId, demo ? 1 : 0, receiptNo, nowIso(), saleId);
+      attempt_json = json_remove(attempt_json, '$.qr') WHERE id = ?`).run(method, ref, paymentId, demo ? 1 : 0, receiptNo, nowIso(), saleId);
     // 会計が済んだらカートを空にする（取消後に入金された古い取引では今のカートに触れない）
     d.prepare("UPDATE rooms SET cart_json = '[]' WHERE id = ? AND sale_id = ?").run(sale.room_id, saleId);
     return sale.room_id;
@@ -305,22 +318,14 @@ function markPaid(saleId, { method, ref, paymentId = null, demo = false }) {
   return true;
 }
 
-export function handleStripeEvent(event) {
-  const obj = event.data?.object;
-  if (obj?.object !== 'payment_intent' || obj.metadata?.app !== APP_TAG) return Promise.resolve({ ignored: true });
-  if (event.type !== 'payment_intent.succeeded') return Promise.resolve({ ok: true });
-  // イベント本文ではなく API から最新の状態を取り直す
-  return withLock(Number(obj.metadata.sale_id), () => checkStripe(obj.id)).then((paid) => ({ paid }));
-}
-
 export function refundSale(saleId) {
   return withLock(saleId, async () => {
     const sale = getSale(saleId);
     if (!sale) throw new UserError('取引が見つかりません', 404);
     if (sale.status !== 'paid') throw new UserError('会計済みの取引だけ返金できます');
-    if (!sale.demo) {
-      if (sale.method === 'card') await stripe.createRefund({ payment_intent: sale.provider_ref, metadata: { app: APP_TAG, sale_id: String(sale.id) } }, `remoreji-refund-${sale.id}`);
-      else await paypay.refund({ merchantRefundId: `rmjr-${sale.id}`, paymentId: sale.provider_payment_id, amount: sale.total, reason: '店舗による返金' });
+    // カード（Airペイ）は API がないので、店員が Airペイ管理画面で取り消したうえで記録だけする
+    if (!sale.demo && sale.method === 'paypay') {
+      await paypay.refund({ merchantRefundId: `rmjr-${sale.id}`, paymentId: sale.provider_payment_id, amount: sale.total, reason: '店舗による返金' });
     }
     getDb().prepare("UPDATE sales SET status = 'refunded', refunded_at = ? WHERE id = ?").run(nowIso(), saleId);
     return getSale(saleId);
@@ -367,7 +372,8 @@ export function saleView(sale, role) {
       demo: !!a.demo,
       expiresAt: a.expiresAt ?? null,
       failed: a.failed ?? null,
-      ...(role === 'customer' && a.method === 'paypay' ? { url: a.url, qr: a.qr } : {}),
+      ...(a.method === 'card' ? { url: a.url ?? null, host: a.host ?? null, reported: !!a.reported } : {}),
+      ...(role === 'customer' && a.url ? { url: a.url, qr: a.qr } : {}),
     },
   };
 }

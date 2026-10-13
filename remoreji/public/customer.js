@@ -2,8 +2,6 @@ import { $, api, yen, esc, toast, totalsHtml, linesHtml, ICONS, METHOD_LABEL } f
 import { Call, getLocalMedia, wsBase } from './call.js';
 
 const token = location.pathname.split('/').pop();
-const params = new URLSearchParams(location.search);
-let returnedFromCard = params.has('payment_intent'); // 本人認証で別ページへ移動して戻ってきた
 if (location.search) history.replaceState(null, '', location.pathname);
 
 let info;
@@ -15,8 +13,6 @@ let remotePresent = false;
 let peerMedia = { mic: true, cam: true };
 let payViewKey = '';
 let lastReceiptUrl = null;
-let card = null; // { saleId, stripe, elements }
-let cardInfoPromise = null;
 let countdownTimer;
 
 function show(id) {
@@ -159,10 +155,6 @@ function onMessage(msg) {
   updateStage();
   renderLines();
   renderPay();
-  if (returnedFromCard && state.sale?.status === 'pending' && state.sale.attempt?.method === 'card') {
-    returnedFromCard = false;
-    confirmCard();
-  }
 }
 
 function renderLines() {
@@ -176,15 +168,14 @@ function renderLines() {
 function renderPay() {
   const sale = state.sale;
   const a = sale?.attempt;
-  const key = sale ? [sale.id, sale.status, a?.method, a?.expiresAt, a?.failed].join(':') : '';
+  const key = sale ? [sale.id, sale.status, a?.method, a?.expiresAt, a?.failed, a?.url, a?.reported].join(':') : '';
   if (key === payViewKey) return;
   payViewKey = key;
   clearInterval(countdownTimer);
   const box = $('#pay-card');
   box.hidden = !sale;
-  if (!sale) return destroyCard();
+  if (!sale) return;
   if (sale.status === 'paid') {
-    destroyCard();
     box.innerHTML = `<div class="done"><div class="check">✓</div>
       <h2 style="font-size:18px">お支払いが完了しました</h2>
       <p class="muted" style="margin:6px 0 14px">${yen(sale.total)}（${METHOD_LABEL[sale.method]}）</p>
@@ -193,7 +184,6 @@ function renderPay() {
     return;
   }
   if (!a) {
-    destroyCard();
     box.innerHTML = `<div class="h">お支払い</div>
       <div class="grand" style="margin:0 0 14px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
       <p class="small muted" style="margin-bottom:8px">お支払い方法を選んでください</p>
@@ -234,119 +224,49 @@ function bindBack() {
   };
 }
 
-// ---- クレジットカード ----
+// ---- クレジットカード（Airペイ）----
 function renderCard(sale) {
+  const a = sale.attempt;
   const box = $('#pay-card');
-  if (info.cardDemo) {
-    destroyCard();
-    box.innerHTML = `<div class="h">クレジットカード</div>
-      <div class="grand" style="margin:0 0 12px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
-      <div class="notice" style="margin-bottom:10px">デモモードです。実際の決済は行われません（本番では Stripe の安全なカード入力欄が表示されます）。</div>
-      <label class="field">カード番号<input class="input" value="4242 4242 4242 4242" disabled></label>
-      <div class="row" style="margin-top:8px"><label class="field grow">有効期限<input class="input" value="12 / 30" disabled></label><label class="field grow">セキュリティコード<input class="input" value="123" disabled></label></div>
-      <button class="btn btn-gold btn-lg btn-block" id="card-pay" style="margin-top:14px">${yen(sale.total)} を支払う（デモ）</button>
-      ${backButton()}`;
-    $('#card-pay').onclick = async (e) => {
-      e.currentTarget.disabled = true;
-      e.currentTarget.innerHTML = '<div class="spinner dark"></div>';
-      try {
-        await api(`/api/r/${token}/pay/card/demo`, { method: 'POST' });
-      } catch (err) {
-        toast(err.message, true);
-        payViewKey = '';
-        renderPay();
-      }
-    };
+  const head = `<div class="h">クレジットカード（Airペイ）</div>
+    <div class="grand" style="margin:0 0 10px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>`;
+  if (!a.url) {
+    box.innerHTML = `${head}<div class="row" style="justify-content:center;padding:14px 0"><div class="spinner dark"></div><span>店員がお支払い用のリンクを準備しています…</span></div>${backButton()}`;
     return bindBack();
   }
-  box.innerHTML = `<div class="h">クレジットカード</div>
-    <div class="grand" style="margin:0 0 6px"><span>お支払い金額</span><span class="v">${yen(sale.total)}</span></div>
-    <p class="muted small">カード情報は決済会社（Stripe）に直接送られ、店員やお店には見えません。</p>
-    <div id="stripe-element"><div class="center" style="padding:30px"><div class="spinner dark" style="margin:auto"></div></div></div>
-    <div class="error" id="card-error" hidden></div>
-    <button class="btn btn-gold btn-lg btn-block" id="card-pay" disabled style="margin-top:10px">${yen(sale.total)} を支払う</button>
+  if (a.reported) {
+    box.innerHTML = `${head}<div class="row" style="justify-content:center;padding:14px 0"><div class="spinner dark"></div><span>ありがとうございます。店員が入金を確認しています…</span></div>
+      <p class="muted small center">確認が終わると自動で切り替わります。</p>`;
+    return;
+  }
+  const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);
+  box.innerHTML = `${head}
+    ${a.demo ? '<div class="notice" style="margin-bottom:8px">デモモードです。デモ用の支払い画面が開きます（実際の決済は行われません）。</div>' : ''}
+    <ol class="small" style="padding-left:20px;line-height:1.9;margin-bottom:10px">
+      <li>下のボタンから Airペイのお支払い画面を開きます</li>
+      <li>金額が <b>${yen(sale.total)}</b> であることを確かめて、カード情報を入力します</li>
+      <li>支払いが終わったら、この画面に戻って「支払いが終わりました」を押してください</li>
+    </ol>
+    <a class="btn btn-gold btn-lg btn-block" href="${esc(a.url)}" target="_blank" rel="noopener">Airペイで支払う</a>
+    <p class="muted small center" style="margin-top:6px">お支払い先：${esc(a.host)}</p>
+    <p class="muted small center" style="margin-top:10px">${mobile ? '別のスマホで支払う場合はこちらのQRを読み取ってください' : 'スマホで支払う場合はこちらのQRを読み取ってください'}</p>
+    <img class="qr" src="${esc(a.qr)}" alt="Airペイ 支払い用QRコード" style="width:150px">
+    <button class="btn btn-dark btn-block" id="card-done" style="margin-top:8px">支払いが終わりました</button>
     ${backButton()}`;
   bindBack();
-  mountStripe(sale).catch((e) => showCardError(e.message));
-}
-
-function showCardError(msg) {
-  const el = $('#card-error');
-  if (!el) return toast(msg, true);
-  el.hidden = !msg;
-  el.textContent = msg ?? '';
-}
-
-function loadStripeJs() {
-  if (window.Stripe) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'https://js.stripe.com/v3/';
-    s.onload = resolve;
-    s.onerror = () => reject(new Error('カード決済の読み込みに失敗しました。通信環境をご確認ください'));
-    document.head.append(s);
-  });
-}
-
-async function mountStripe(sale) {
-  cardInfoPromise ??= api(`/api/r/${token}/pay/card`, { method: 'POST' });
-  const ci = await cardInfoPromise.finally(() => (cardInfoPromise = null));
-  if (ci.paid) return;
-  await loadStripeJs();
-  if (!$('#stripe-element')) return; // 待っている間に画面が変わった
-  destroyCard();
-  const stripe = window.Stripe(ci.publishableKey, { locale: 'ja' });
-  const elements = stripe.elements({ clientSecret: ci.clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#c8a96e', borderRadius: '9px' } } });
-  // お支払いはクレジットカードのみ（Apple Pay / Google Pay などのウォレットは出さない）
-  const pe = elements.create('payment', { layout: 'tabs', wallets: { applePay: 'never', googlePay: 'never' } });
-  $('#stripe-element').innerHTML = '';
-  pe.mount('#stripe-element');
-  pe.on('ready', () => ($('#card-pay').disabled = false));
-  card = { saleId: sale.id, stripe, elements, pe };
-
-  $('#card-pay').onclick = async (e) => {
-    const btn = e.currentTarget;
-    btn.disabled = true;
-    const label = btn.innerHTML;
-    btn.innerHTML = '<div class="spinner dark"></div>';
-    showCardError(null);
-    const { error, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      redirect: 'if_required', // 本人認証（3Dセキュア）は基本的にこの画面の上で行われる
-      confirmParams: { return_url: `${location.origin}/r/${token}` },
-    });
-    if (error) {
-      showCardError(error.message);
-      btn.disabled = false;
-      btn.innerHTML = label;
-      return;
-    }
-    if (paymentIntent && ['succeeded', 'processing'].includes(paymentIntent.status)) await confirmCard();
-  };
-}
-
-/** Stripe で支払いが済んだらサーバーに確認してもらう（サーバーが Stripe に問い合わせる） */
-async function confirmCard() {
-  for (let i = 0; i < 10; i++) {
+  $('#card-done').onclick = async (e) => {
+    e.currentTarget.disabled = true;
     try {
-      const r = await api(`/api/r/${token}/pay/card/confirm`, { method: 'POST' });
-      if (r.paid) return;
-    } catch (e) {
-      return showCardError(e.message);
+      await api(`/api/r/${token}/pay/card/reported`, { method: 'POST' });
+    } catch (err) {
+      toast(err.message, true);
+      e.currentTarget.disabled = false;
     }
-    await new Promise((r) => setTimeout(r, 2000));
-  }
-  showCardError('お支払いの確認に時間がかかっています。店員にお知らせください');
-}
-
-function destroyCard() {
-  if (card) card.pe.destroy();
-  card = null;
+  };
 }
 
 // ---- PayPay ----
 function renderPayPay(sale) {
-  destroyCard();
   const a = sale.attempt;
   const box = $('#pay-card');
   const mobile = /iPhone|iPad|Android/i.test(navigator.userAgent);

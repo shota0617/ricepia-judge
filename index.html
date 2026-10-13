@@ -330,6 +330,19 @@ function buildPrompt(){
   base+='\n\n必ず以下のJSON形式のみで返答してください。余分なテキスト不要：\n{"grade":"A","variety":"コシヒカリ","whiteness":88,"gloss":85,"uniformity":90,"size":82,"crack":88,"colored":95,"milky":80,"foreign":100,"milling":87,"freshness":85,"variety_purity":90,"cooking_suitability":86,"comment":"2文以内の総合コメント","usage":"おすすめ用途","points":["特徴1","特徴2","特徴3"]}\n\nvarietyは写真から推測できなければ「不明」。';
   return base;
 }
+async function callClaude(system,content,outputConfig){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-opus-5-5",max_tokens:16000,output_config:Object.assign({effort:"medium"},outputConfig||{}),fallbacks:"default",system:system,
+      messages:[{role:"user",content:content}]})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
+  const data=await res.json();
+  if(data.stop_reason==="refusal")throw new Error("AIが回答を辞退しました。別の写真・内容でお試しください");
+  if(data.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
+  return data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
+}
 async function analyze(){
   if(!currentBase64||!apiKey)return;
   const btn=document.getElementById("analyzeBtn");
@@ -337,20 +350,10 @@ async function analyze(){
   document.getElementById("errorBox").style.display="none";
   document.getElementById("resultBox").style.display="none";
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:"claude-opus-5-5",max_tokens:16000,output_config:{effort:"medium"},fallbacks:"default",system:buildPrompt(),
-        messages:[{role:"user",content:[
-          {type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}},
-          {type:"text",text:(function(){var v=document.getElementById("varietySelect")?document.getElementById("varietySelect").value:"";return v?"品種：【"+v+"】として判定してください。この品種の特性を考慮して12項目を採点し、varietyフィールドに品種名を入れてください。":"この精米の品質を判定してください。varietyは写真から推測してください。";})()}
-        ]}]})
-    });
-    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
-    const data=await res.json();
-    if(data.stop_reason==="refusal")throw new Error("AIが判定を辞退しました。別の写真でお試しください");
-    if(data.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
-    const text=data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
+    const text=await callClaude(buildPrompt(),[
+      {type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}},
+      {type:"text",text:(function(){var v=document.getElementById("varietySelect")?document.getElementById("varietySelect").value:"";return v?"品種：【"+v+"】として判定してください。この品種の特性を考慮して12項目を採点し、varietyフィールドに品種名を入れてください。":"この精米の品質を判定してください。varietyは写真から推測してください。";})()}
+    ]);
     const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
     renderResult(parsed);
   }catch(e){
@@ -433,6 +436,28 @@ function renderResult(r){
       <div style="font-size:13px;color:#f5f2eb;font-weight:600;">🍚 ${r.usage}</div>
     </div>
 
+    <div class="card" style="margin-bottom:14px;border:1.5px solid #c4302b;">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <span style="font-size:13px;font-weight:700;color:#2d2d1e;">▶️ YouTubeで発信</span>
+      </div>
+      <div style="font-size:10px;color:#9a9a7a;margin-bottom:12px;line-height:1.6;">この判定結果と店主の一言＝米屋の一次情報から、動画の台本・タイトル・概要欄を作ります</div>
+      <div style="font-size:11px;color:#5a5a4a;margin-bottom:6px;font-weight:600;">動画の形式</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px;">
+        <button onclick="setYtFormat('short')" id="ytf_short" style="flex:1;padding:8px 0;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">ショート（60秒）</button>
+        <button onclick="setYtFormat('long')" id="ytf_long" style="flex:1;padding:8px 0;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">通常動画（3〜5分）</button>
+      </div>
+      <div style="font-size:11px;color:#5a5a4a;margin-bottom:6px;font-weight:600;">店主の一言・現場の情報（任意）</div>
+      <textarea id="ytMemo" placeholder="例：今朝6時に精米したて。生産者さんの話では今年は猛暑で胴割れが出やすかったが、色彩選別を2回かけて仕上げた。"
+        style="width:100%;padding:9px 11px;border:1.5px solid #c4bfaa;border-radius:8px;font-size:12px;color:#2d2d1e;background:#fafaf7;outline:none;min-height:70px;resize:vertical;"></textarea>
+      <div style="font-size:10px;color:#9a9a7a;margin-top:4px;">※ ここに書いた事実と判定データだけを使います。AIが数字や産地を作り足すことはありません。</div>
+      <button onclick="generateYouTube()" id="ytGenBtn"
+        style="width:100%;margin-top:10px;padding:12px;background:#c4302b;border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+        🎬 台本と概要欄を作る
+      </button>
+      <div id="ytError" class="error-box" style="display:none;"></div>
+      <div id="ytOut" style="display:none;"></div>
+    </div>
+
     <div class="card" style="margin-bottom:14px;border:1.5px solid #c8a96e;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">
         <span style="font-size:13px;font-weight:700;color:#2d2d1e;">✏️ 5代目修正</span>
@@ -457,6 +482,7 @@ function renderResult(r){
   const box=document.getElementById("resultBox");
   box.innerHTML=html;box.style.display="block";
   window._lastResult=r;window._lastImage=currentImage;
+  setYtFormat(ytFormat);
 }
 
 function setCorrectionGrade(g){
@@ -491,6 +517,189 @@ function resetJudge(){
   var vs=document.getElementById("varietySelect");if(vs)vs.value="";
   resetResult();renderUploadZone();
 }
+// ── YouTube発信 ──
+let ytFormat="short",ytLast=null;
+const YT_SCHEMA={
+  type:"object",
+  properties:{
+    title:{type:"string"},
+    thumbnail_text:{type:"string"},
+    scenes:{type:"array",items:{type:"object",properties:{
+      time:{type:"string"},visual:{type:"string"},narration:{type:"string"},telop:{type:"string"}
+    },required:["time","visual","narration","telop"],additionalProperties:false}},
+    description:{type:"string"},
+    hashtags:{type:"array",items:{type:"string"}},
+    tags:{type:"array",items:{type:"string"}}
+  },
+  required:["title","thumbnail_text","scenes","description","hashtags","tags"],
+  additionalProperties:false
+};
+function setYtFormat(f){
+  ytFormat=f;
+  ["short","long"].forEach(function(k){
+    var btn=document.getElementById("ytf_"+k);
+    if(!btn)return;
+    btn.style.background=k===f?"#c4302b":"#f0ede4";
+    btn.style.color=k===f?"#fff":"#5a5a4a";
+  });
+}
+function buildYtPrompt(){
+  var p="あなたは西尾市の老舗米屋「近藤米穀店 らいすぴあ」（創業130余年・5代目）のYouTubeチャンネルの構成作家です。\n";
+  p+="米屋にしか出せない一次情報――店頭で実際に判定した精米の品質データと、店主が現場で見聞きした事実――を、視聴者に分かりやすく伝える動画の台本と投稿文を作ってください。\n\n";
+  p+="【絶対に守ること】\n";
+  p+="- 使ってよい事実は、渡された「判定データ」と「店主の一言」だけ。生産者名・産地・日付・価格・数値などを推測で足さない\n";
+  p+="- スコアは写真からのAI判定（推定値）であることを台本か概要欄で一度は明示する\n";
+  p+="- 5代目がAI判定を修正している場合は、それを店主の目利きとして紹介する\n";
+  p+="- 「日本一」「絶対」などの誇大表現、健康効果・効能の断定はしない\n";
+  p+="- 店主本人が話す想定の、親しみやすい口語（です・ます調）\n\n";
+  if(ytFormat==="short"){
+    p+="【形式】YouTubeショート（縦型・60秒以内）\n";
+    p+="- scenesは5〜7個。timeは「0:00-0:05」形式で合計60秒以内\n";
+    p+="- 最初の3秒で結論（グレードや驚きの事実）を見せるフック\n";
+    p+="- titleは40文字以内で末尾に #shorts\n";
+  }else{
+    p+="【形式】通常動画（横型・3〜5分）\n";
+    p+="- scenesは8〜12個。timeは「0:00-0:20」形式で合計3〜5分\n";
+    p+="- 導入→判定結果→項目ごとの見どころ→おすすめの食べ方→締め の流れ\n";
+    p+="- titleは50文字以内\n";
+    p+="- descriptionの冒頭に目次（チャプター。0:00から始める）を入れる\n";
+  }
+  p+="\n【各項目】\n";
+  p+="- visual: 撮るべき映像（例：トレーの精米を真上から、手ですくう、計量）\n";
+  p+="- narration: 店主が話すセリフ\n";
+  p+="- telop: 画面に出す短い字幕（15文字以内）\n";
+  p+="- thumbnail_text: サムネイルに載せる強い一言（12文字以内）\n";
+  p+="- description: 概要欄。動画の要点、判定データの要約、店名「近藤米穀店 らいすぴあ（愛知県西尾市）」を含める。ハッシュタグは含めない\n";
+  p+="- hashtags: 3〜5個、#付き\n";
+  p+="- tags: YouTubeのタグ用キーワード10〜15個（#なし）";
+  return p;
+}
+function buildYtFacts(){
+  var r=window._lastResult;
+  var lines=["【判定データ（らいすぴあ品質判定AI・写真からの推定）】"];
+  lines.push("判定日："+new Date().toLocaleDateString("ja-JP"));
+  if(r.variety&&r.variety!=="不明")lines.push("品種："+r.variety);
+  lines.push("AI総合グレード："+r.grade+"（"+(GRADE_CFG[r.grade]||GRADE_CFG.B).desc+"）");
+  if(correctionGrade&&correctionGrade!==r.grade)lines.push("5代目による修正グレード："+correctionGrade+"（"+GRADE_CFG[correctionGrade].desc+"）");
+  var vals=[];
+  SCORE_DEFS.forEach(function(d){if(typeof r[d.key]==="number"){lines.push(d.label+"："+r[d.key]+"点");vals.push(r[d.key]);}});
+  if(vals.length)lines.push("12項目平均："+Math.round(vals.reduce(function(a,b){return a+b;},0)/vals.length)+"点");
+  if(r.comment)lines.push("AIコメント："+r.comment);
+  if(r.points&&r.points.length)lines.push("品質のポイント："+r.points.join("／"));
+  if(r.usage)lines.push("おすすめ用途："+r.usage);
+  var memo=(document.getElementById("ytMemo")||{}).value||"";
+  var cmemo=(document.getElementById("correctionMemo")||{}).value||"";
+  lines.push("\n【店主の一言・現場の情報】");
+  lines.push(memo.trim()||"（なし）");
+  if(cmemo.trim())lines.push("5代目の修正メモ："+cmemo.trim());
+  return lines.join("\n");
+}
+async function generateYouTube(){
+  if(!window._lastResult||!apiKey)return;
+  var btn=document.getElementById("ytGenBtn"),err=document.getElementById("ytError"),out=document.getElementById("ytOut");
+  btn.disabled=true;btn.innerHTML=`<span class="spinner" style="border-color:#fff;border-top-color:transparent;"></span>台本を作成中...`;
+  err.style.display="none";
+  try{
+    var content=[];
+    if(currentBase64)content.push({type:"image",source:{type:"base64",media_type:currentMime,data:currentBase64}});
+    content.push({type:"text",text:buildYtFacts()+"\n\nこの一次情報だけを使って、動画の台本と投稿文を作ってください。"});
+    var text=await callClaude(buildYtPrompt(),content,{format:{type:"json_schema",schema:YT_SCHEMA}});
+    ytLast=JSON.parse(text);
+    renderYouTube(ytLast);
+  }catch(e){
+    err.style.display="block";err.textContent="作成エラー: "+(e&&e.message?e.message:String(e));
+  }finally{
+    btn.disabled=false;btn.innerHTML="🎬 台本と概要欄を作り直す";
+  }
+}
+function ytScriptText(y){
+  return y.scenes.map(function(sc){
+    return "["+sc.time+"]\n映像："+sc.visual+"\nセリフ："+sc.narration+"\nテロップ："+sc.telop;
+  }).join("\n\n");
+}
+function renderYouTube(y){
+  var out=document.getElementById("ytOut");
+  var field=function(id,label,rows){
+    return `<div style="margin-top:14px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+      <span style="font-size:11px;color:#5a5a4a;font-weight:700;">${label}</span>
+      <button onclick="copyYt('${id}',this)" style="font-size:11px;color:#c4302b;background:none;border:1px solid #e8c0be;border-radius:5px;padding:2px 9px;cursor:pointer;">コピー</button></div>
+      <textarea id="${id}" rows="${rows}" style="width:100%;padding:9px 11px;border:1.5px solid #c4bfaa;border-radius:8px;font-size:12px;color:#2d2d1e;background:#fafaf7;outline:none;resize:vertical;line-height:1.6;"></textarea></div>`;
+  };
+  out.innerHTML=
+    field("ytTitle","タイトル",2)+
+    field("ytThumb","サムネイルの文字",1)+
+    field("ytScript","台本（撮影・読み上げ用）",12)+
+    field("ytDesc","概要欄",10)+
+    field("ytTags","タグ（YouTube Studioのタグ欄に貼り付け）",3)+
+    `<div style="display:flex;gap:8px;margin-top:14px;">
+      <button class="btn-sm-dark" onclick="downloadYtThumb()">🖼 ${ytFormat==="short"?"表紙画像":"サムネイル"}を保存</button>
+      <a class="btn-sm-ghost" href="https://studio.youtube.com/" target="_blank" rel="noopener" style="text-align:center;text-decoration:none;">▶ YouTube Studio</a>
+    </div>
+    <div class="tip-box">💡 文章は自由に書き換えられます。公開前に、事実と違う点がないか必ず確認してください。</div>`;
+  document.getElementById("ytTitle").value=y.title;
+  document.getElementById("ytThumb").value=y.thumbnail_text;
+  document.getElementById("ytScript").value=ytScriptText(y);
+  document.getElementById("ytDesc").value=y.description+"\n\n"+y.hashtags.join(" ");
+  document.getElementById("ytTags").value=y.tags.join(",");
+  out.style.display="block";
+}
+function copyYt(id,btn){
+  var el=document.getElementById(id);
+  var done=function(){var t=btn.textContent;btn.textContent="✓ コピー済";setTimeout(function(){btn.textContent=t;},1500);};
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(el.value).then(done).catch(function(){el.select();document.execCommand("copy");done();});}
+  else{el.select();document.execCommand("copy");done();}
+}
+function wrapText(ctx,text,maxWidth){
+  var lines=[],line="";
+  Array.from(text).forEach(function(ch){
+    if(ch==="\n"){lines.push(line);line="";return;}
+    if(ctx.measureText(line+ch).width>maxWidth&&line){lines.push(line);line=ch;}
+    else line+=ch;
+  });
+  if(line)lines.push(line);
+  return lines;
+}
+async function downloadYtThumb(){
+  var r=window._lastResult,img=window._lastImage;
+  if(!r||!img)return;
+  var vertical=ytFormat==="short";
+  var W=vertical?1080:1280,H=vertical?1920:720;
+  var canvas=document.createElement("canvas");canvas.width=W;canvas.height=H;
+  var ctx=canvas.getContext("2d");
+  try{await document.fonts.load('700 80px "Noto Sans JP"');}catch(e){}
+  var photo=await new Promise(function(res,rej){var im=new Image();im.onload=function(){res(im);};im.onerror=rej;im.src=img;});
+  // 写真をcoverで敷く
+  var s=Math.max(W/photo.width,H/photo.height);
+  ctx.drawImage(photo,(W-photo.width*s)/2,(H-photo.height*s)/2,photo.width*s,photo.height*s);
+  var g=ctx.createLinearGradient(0,vertical?H*0.35:0,0,H);
+  g.addColorStop(0,"rgba(45,45,30,0)");g.addColorStop(1,"rgba(45,45,30,0.92)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  var grade=(correctionGrade||r.grade),cfg=GRADE_CFG[grade]||GRADE_CFG.B;
+  var font='"Noto Sans JP","Hiragino Sans",sans-serif';
+  // グレードバッジ
+  var bx=vertical?60:50,by=vertical?120:50,bs=vertical?260:200;
+  ctx.fillStyle=cfg.color;ctx.beginPath();ctx.roundRect(bx,by,bs,bs,28);ctx.fill();
+  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.font="900 "+Math.round(bs*0.68)+"px Georgia,serif";ctx.fillText(grade,bx+bs/2,by+bs*0.48);
+  ctx.font="700 "+Math.round(bs*0.11)+"px "+font;ctx.fillText("品質グレード",bx+bs/2,by+bs*0.88);
+  // メインコピー
+  var text=(document.getElementById("ytThumb")||{}).value||(ytLast&&ytLast.thumbnail_text)||"";
+  var size=vertical?120:96;
+  ctx.font="700 "+size+"px "+font;
+  var lines=wrapText(ctx,text,W-(vertical?120:100)).slice(0,3);
+  ctx.textAlign="left";ctx.textBaseline="alphabetic";
+  ctx.lineJoin="round";ctx.lineWidth=size*0.14;ctx.strokeStyle="#2d2d1e";
+  var baseY=H-(vertical?260:110)-(lines.length-1)*size*1.2;
+  lines.forEach(function(l,i){var y=baseY+i*size*1.2;var x=vertical?60:50;ctx.strokeText(l,x,y);ctx.fillStyle="#fff";ctx.fillText(l,x,y);});
+  // 店名・品種
+  ctx.font="700 "+(vertical?44:32)+"px "+font;ctx.fillStyle="#c8a96e";
+  var sub="近藤米穀店 らいすぴあ"+(r.variety&&r.variety!=="不明"?"｜"+r.variety:"");
+  ctx.fillText(sub,vertical?60:50,H-(vertical?150:50));
+  var a=document.createElement("a");
+  a.download="ricepia_"+(vertical?"short_cover":"thumbnail")+"_"+grade+".png";
+  a.href=canvas.toDataURL("image/png");a.click();
+}
+
 function printReceipt(){
   const r=window._lastResult,img=window._lastImage;
   if(!r)return;

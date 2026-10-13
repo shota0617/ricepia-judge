@@ -179,6 +179,10 @@ button:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 .rules li b{font-size:11px;letter-spacing:.14em;color:var(--brass);padding-top:2px}
 .layers{display:flex;height:16px;margin:4px 0 2px;border-radius:2px;overflow:hidden}
 .layers span{display:block;height:100%}
+.log ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px}
+.log li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;font-size:12.5px;padding:5px 8px;background:var(--panel)}
+.log li span:nth-child(2){color:var(--muted)}
+.log li b{font:400 13px var(--f-dot);font-variant-numeric:tabular-nums}
 .best{font-size:12px;color:var(--muted);text-align:center;margin-top:8px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 
@@ -446,7 +450,12 @@ function finalSay(){
   else if(avg>=60) line='まだ手が迷ってる。黒と白のあいだは、思ってるより狭い。';
   else line='今朝の米はわしが搗き直す。明日もう一度だ。';
   say('親方', line);
-  try{const best=+localStorage.getItem('akofun-best')||0; if(avg>best) localStorage.setItem('akofun-best',avg);}catch(e){}
+  try{
+    const best=+localStorage.getItem('akofun-best')||0; if(avg>best) localStorage.setItem('akofun-best',avg);
+    const hist=JSON.parse(localStorage.getItem('akofun-hist')||'[]');
+    hist.unshift({day:S.daily?todayLabel():'おまかせ', avg, bags:S.bags.map(b=>rankOf(b.score).r)});
+    localStorage.setItem('akofun-hist',JSON.stringify(hist.slice(0,5)));
+  }catch(e){}
 }
 
 /* ---------- 観察テキスト ---------- */
@@ -508,6 +517,7 @@ function render(){
     btn.classList.toggle('dotbadge', adj && ((t==='look'&&!S.seen.look)||(t==='touch'&&!S.seen.touch)));
   });
   $('tabs').hidden = !(adj || S.phase==='slip');
+  $('meters').hidden = S.phase==='title';
   updateMeters();
   const P=$('panel');
   if(S.phase==='title') P.innerHTML=titleHTML();
@@ -515,7 +525,7 @@ function render(){
   else if(S.phase==='flow') P.innerHTML=flowHTML();
   else if(S.phase==='adjust'){
     if(S.tab==='look'){P.innerHTML=lookHTML(); S.seen.look=true; drawTray(); syncBadges();}
-    else if(S.tab==='touch'){P.innerHTML=touchHTML(); S.seen.touch=true; setupTouch(); syncBadges();}
+    else if(S.tab==='touch'){P.innerHTML=touchHTML(); S.seen.touch=true; setupTouch(); if(S.lastSeg.felt) revealFeel(); syncBadges();}
     else if(S.tab==='weight') P.innerHTML=weightHTML();
     else P.innerHTML=slipHTML(false);
   }
@@ -538,7 +548,7 @@ function updateMeters(){
   $('mW').textContent = rigMass(S.discs)+'kg・'+S.notch.toFixed(1);
   const ch=$('chances'); ch.innerHTML='';
   if(b){
-    const n=b.n, used=Math.max(0,b.segIdx-1);
+    const n=b.n, used = S.phase==='bagResult'||S.phase==='final' ? n : S.phase==='flow' ? b.segIdx : Math.max(0,b.segIdx-1);
     for(let i=0;i<n;i++){const e=document.createElement('i');e.className = i<used?'used':'left';ch.appendChild(e);}
   }
   $('clock').textContent=fmtClock(S.minutes);
@@ -549,13 +559,19 @@ function updateMeters(){
 }
 
 function titleHTML(){
-  let best=0; try{best=+localStorage.getItem('akofun-best')||0;}catch(e){}
+  let best=0, hist=[]; try{best=+localStorage.getItem('akofun-best')||0; hist=JSON.parse(localStorage.getItem('akofun-hist')||'[]');}catch(e){}
   const lay=LAYERS.map(l=>`<span style="width:${(l.b-l.a)}%;background:${l.col}"></span>`).join('')+`<span style="width:26%;background:#f7f5ee"></span>`;
   return `<div class="stack title">
-    <div><p class="sub">近藤米穀店 らいすぴあ 精米場</p><h1>亜糊粉層を残せ</h1></div>
-    <ul class="rules">
+    <div><p class="sub">近藤米穀店 らいすぴあ 精米場</p><h1>亜糊粉層を残せ</h1>
+      <p class="lead" style="margin:6px 0 0">分銅ひとつで米の白さが変わる。黒すぎず、白すぎず。旨みの層だけを残して、開店までに3袋を仕上げる。</p></div>
+    <div class="stack" style="gap:8px">
+      <button class="btn" id="bDaily">${todayLabel()}の朝（日替わり）</button>
+      <button class="btn ghost" id="bStart">おまかせの朝（毎回ちがう）</button>
+    </div>
+    <p class="h3" style="margin:6px 0 0">遊び方</p>
+    <ul class="rules" style="margin:0">
       <li><b>仕事</b><span>開店前に、玄米を3袋精米する。10kg、30kg、10kg。</span></li>
-      <li><b>分銅</b><span>精米機の出口には抵抗板があり、腕に分銅を掛けて押さえている。重くすると米が強く擦れて白く、軽くすると黒く仕上がる。</span></li>
+      <li><b>分銅</b><span>精米機の出口には抵抗板があり、てこの棒に通した円筒の分銅で押さえている。分銅を棒の先へずらすほど米が強く擦れて白く、手前へずらすほど黒く仕上がる。</span></li>
       <li><b>狙い</b><span>糠の層を外から落としていき、旨みと甘みのある<strong>亜糊粉層</strong>だけを残す。黒すぎれば糠臭く、白すぎれば旨みが消える。
         <div class="layers" aria-hidden="true">${lay}</div>
         <small style="color:var(--muted)">果皮・種皮 → 糊粉層 → <span style="color:#efe0a8">亜糊粉層（残す）</span> → 胚乳</small></span></li>
@@ -563,11 +579,7 @@ function titleHTML(){
       <li><b>回数</b><span>分銅を掛け替えられるのは、10kg袋で2回、30kg袋で3回だけ。</span></li>
       <li><b>クセ</b><span>品種ごとにぬか層のやわらかさが違う。機械は温まるほどよく削れる。</span></li>
     </ul>
-    <div class="stack" style="gap:8px">
-      <button class="btn" id="bDaily">${todayLabel()}の朝（日替わり）</button>
-      <button class="btn ghost" id="bStart">おまかせの朝（毎回ちがう）</button>
-    </div>
-    ${best?`<p class="best">これまでの最高　${best}点（${rankOf(best).r}）</p>`:''}
+    ${best?`<div class="log"><p class="h3">精米帳</p><ul>${hist.map(h=>`<li><span>${h.day}</span><span>${h.bags.join(' ・ ')}</span><b>${h.avg}点</b></li>`).join('')}</ul><p class="best">これまでの最高　${best}点（${rankOf(best).r}）</p></div>`:''}
   </div>`;
 }
 function slipHTML(withStart){
@@ -870,6 +882,7 @@ function revealFeel(){
   if(!touchState||touchState.done) return;
   touchState.done=true;
   const s=touchState.s, hw=handWords(s.hand);
+  s.felt=true;
   $('feel').hidden=false; $('tpHint').textContent='手ざわり：'+hw.k;
   $('feelTex').textContent=hw.t;
   $('feelTemp').textContent='温もり：'+tempWords(s.tEnd);
@@ -950,7 +963,7 @@ document.addEventListener('click',ev=>{
   if(t.id==='bCopy'){copyResult(t); return;}
   if(t.id==='bSound'){toggleSound(); return;}
   if(t.id==='bRun'){audioWake(); runSegment(); return;}
-  if(t.id==='bGo'){ if(!S.seen.look&&!S.seen.touch){ say('親方','見もせず触りもせずに決めるのか。まあいい、流せ。'); } runSegment(); return;}
+  if(t.id==='bGo'){ const blind=!S.seen.look&&!S.seen.touch; runSegment(); if(blind) note('親方：見もせず触りもせずに決めるのか。まあいい。'); return;}
   if(t.id==='bNext'){nextBag(); return;}
   if(t.id==='bAgain'){S.phase='title'; say('親方','夜明け前だ。今朝も3袋。'); render(); return;}
   if(t.dataset.tab){S.tab=t.dataset.tab; render(); afterTab(); return;}
@@ -988,6 +1001,7 @@ function afterTab(){
 const cv=$('cv'), cx2=cv.getContext('2d');
 let SW=0, SH=0, VS=1, VX=0, VY=0, parts=[], dust=[], motes=[], drag=null, hoverW=false;
 const VW=400, VH=320;
+const FONT=(()=>{const cs=getComputedStyle(document.documentElement);return {serif:cs.getPropertyValue('--f-serif'),ui:cs.getPropertyValue('--f-ui'),dot:cs.getPropertyValue('--f-dot')};})();
 const ROD={x0:168,y0:150,x1:372,y1:176};       // 棒（レバーの継手 → 先端）
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function resize(){
@@ -1039,7 +1053,7 @@ function scene(now){
   g.fillStyle=tg; g.beginPath(); g.moveTo(70,0); g.lineTo(330,0); g.lineTo(330,96); g.lineTo(280,128); g.lineTo(130,128); g.lineTo(70,96); g.closePath(); g.fill();
   g.fillStyle='#3a6655'; g.fillRect(64,92,272,8);
   g.fillStyle='rgba(0,0,0,.18)'; g.fillRect(70,100,260,4);
-  g.fillStyle='rgba(225,235,225,.75)'; g.font=`700 30px ${getComputedStyle(document.body).getPropertyValue('--f-ui')}`; g.textAlign='left'; g.textBaseline='alphabetic';
+  g.fillStyle='rgba(225,235,225,.75)'; g.font=`700 30px ${FONT.ui}`; g.textAlign='left'; g.textBaseline='alphabetic';
   g.fillText('A',96,62); g.fillText('2',124,58);
   g.fillStyle='#ece6d6'; g.fillRect(268,22,34,48); g.strokeStyle='#5a5a52'; g.lineWidth=0.6;
   for(let i=0;i<5;i++){g.beginPath(); g.moveTo(274+i*3,30); g.lineTo(280+i*3,44); g.stroke();}
@@ -1116,7 +1130,7 @@ function scene(now){
   g.fillStyle='#e4e6e2'; g.beginPath(); g.ellipse(L,0,1.6,3,0,0,Math.PI*2); g.fill();
   // 目盛（棒の上に刻む）
   const adj=S.phase==='adjust';
-  g.font=`8px ${getComputedStyle(document.body).getPropertyValue('--f-dot')}`; g.textAlign='center'; g.textBaseline='top';
+  g.font=`8px ${FONT.dot}`; g.textAlign='center'; g.textBaseline='top';
   for(let n=NOTCH_MIN;n<=NOTCH_MAX;n+=0.5){
     const x=notchT(n)*L, big=n%1===0;
     g.strokeStyle=adj?'rgba(40,40,36,.85)':'rgba(40,40,36,.45)'; g.lineWidth=big?1:0.6;
@@ -1139,7 +1153,7 @@ function scene(now){
     g.strokeStyle=`rgba(207,165,78,${0.35+0.4*pulse})`; g.lineWidth=1.4; g.setLineDash([3,3]);
     g.beginPath(); g.ellipse(pC.x,pC.y,30,32,ang,0,Math.PI*2); g.stroke(); g.setLineDash([]);
     g.fillStyle='rgba(22,18,13,.75)'; g.fillRect(pC.x-26,pC.y-46,52,15);
-    g.fillStyle='#f0d38d'; g.font=`10px ${getComputedStyle(document.body).getPropertyValue('--f-dot')}`; g.textAlign='center'; g.textBaseline='middle';
+    g.fillStyle='#f0d38d'; g.font=`10px ${FONT.dot}`; g.textAlign='center'; g.textBaseline='middle';
     g.fillText('目盛 '+S.notch.toFixed(1),pC.x,pC.y-38.5);
   }
   // --- 出口のシュート（抵抗板の下の箱）

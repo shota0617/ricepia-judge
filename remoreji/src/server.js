@@ -2,13 +2,14 @@ import http from 'node:http';
 import QRCode from 'qrcode';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { config, paypayIsDemo, isDemo, iceServers, ROOT } from './config.js';
+import { config, cardIsDemo, paypayIsDemo, isDemo, iceServers, ROOT } from './config.js';
 import { getDb } from './db.js';
 import { UserError, esc, yen, jst } from './util.js';
 import * as auth from './auth.js';
 import * as rooms from './rooms.js';
 import * as payments from './payments.js';
 import * as products from './products.js';
+import { verifyWebhook } from './stripe.js';
 import { createHub, peers } from './hub.js';
 
 const PUBLIC_DIR = path.join(ROOT, 'public');
@@ -18,8 +19,8 @@ const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'same-origin',
   'X-Frame-Options': 'DENY',
-  // カメラ・マイク・画面共有は自サイトだけ
-  'Permissions-Policy': 'camera=(self), microphone=(self), display-capture=(self)',
+  // カメラ・マイクは自サイトだけ。決済（Payment Request）は Stripe の枠でも使えるように
+  'Permissions-Policy': 'camera=(self), microphone=(self), display-capture=(self), payment=(self "https://js.stripe.com")',
 };
 
 const send = (res, status, body, type = 'application/json; charset=utf-8', headers = {}) => {
@@ -60,7 +61,7 @@ async function serveFile(res, file) {
 
 // ---------- レシート（領収書） ----------
 
-const METHOD_LABEL = { card: 'クレジットカード（Airペイ）', paypay: 'PayPay' };
+const METHOD_LABEL = { card: 'クレジットカード', paypay: 'PayPay' };
 
 function renderReceipt(sale) {
   const paid = new Date(sale.paid_at);
@@ -102,20 +103,6 @@ function demoPayPayPage(ref, info) {
 .logo{background:#ff0033;color:#fff;font-weight:900;font-size:22px;border-radius:10px;padding:10px}.amt{font-size:34px;font-weight:700}.ok{color:#0a7d32;font-size:20px;font-weight:700}
 button{width:100%;padding:16px;background:#ff0033;color:#fff;border:0;border-radius:10px;font-size:17px;font-weight:700}.n{font-size:12px;color:#777;margin-top:16px}</style></head>
 <body><div class="box"><div class="logo">PayPay（デモ）</div>${body}<p class="n">これはデモ用の擬似決済画面です。本番では PayPay アプリが開きます。</p></div></body></html>`;
-}
-
-function demoAirPayPage(info) {
-  const body = !info
-    ? '<p>このリンクは無効です。</p>'
-    : info.status === 'paid' || info.reported
-      ? '<p class="ok">お支払い手続きが完了しました ✓</p><p>元の画面に戻ってください。</p>'
-      : `<p>お支払い金額</p><p class="amt">${yen(info.total)}</p><label>カード番号<input value="4242 4242 4242 4242" disabled></label><form method="post"><button>支払う（デモ）</button></form>`;
-  return `<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Airペイ（デモ）</title>
-<style>body{font-family:sans-serif;background:#eef3f8;margin:0;padding:24px;text-align:center}.box{max-width:360px;margin:auto;background:#fff;border-radius:14px;padding:24px}
-.logo{background:#1e78c8;color:#fff;font-weight:900;font-size:20px;border-radius:10px;padding:10px}.amt{font-size:34px;font-weight:700}.ok{color:#0a7d32;font-size:20px;font-weight:700}
-label{display:block;text-align:left;font-size:12px;color:#666;margin-bottom:14px}input{width:100%;padding:10px;font-size:16px;box-sizing:border-box}
-button{width:100%;padding:16px;background:#1e78c8;color:#fff;border:0;border-radius:10px;font-size:17px;font-weight:700}.n{font-size:12px;color:#777;margin-top:16px}</style></head>
-<body><div class="box"><div class="logo">Airペイ（デモ）</div>${body}<p class="n">これはデモ用の擬似画面です。本番では Airペイの決済リンク（カード入力画面）が開きます。</p></div></body></html>`;
 }
 
 function salesCsv(day) {
@@ -169,19 +156,6 @@ async function route(req, res) {
     if (/^\/[\w-]+\.(css|js|svg|png|ico|mp3)$/.test(pathname)) return serveFile(res, pathname.slice(1));
   }
 
-  if ((m = pathname.match(/^\/demo\/airpay\/([\w-]+)$/))) {
-    if (!isDemo()) return send(res, 404, 'Not Found', 'text/plain');
-    if (method === 'POST') {
-      try {
-        payments.demoAirPayPay(m[1]);
-      } catch (e) {
-        if (!(e instanceof UserError)) throw e;
-      }
-      return send(res, 303, '', 'text/plain', { Location: pathname });
-    }
-    return send(res, 200, demoAirPayPage(payments.demoLinkInfo(m[1])), MIME['.html']);
-  }
-
   if (method === 'POST' && (m = pathname.match(/^\/demo\/paypay\/([\w-]+)$/))) {
     if (!paypayIsDemo()) return send(res, 404, 'Not Found', 'text/plain');
     try {
@@ -193,6 +167,16 @@ async function route(req, res) {
   }
 
   // ---- Webhook ----
+  if (method === 'POST' && pathname === '/webhooks/stripe') {
+    if (!config.stripe.webhookSecret) return send(res, 404, { error: 'Webhook は未設定です' });
+    let event;
+    try {
+      event = verifyWebhook(await readBody(req, 1_000_000), req.headers['stripe-signature'], config.stripe.webhookSecret);
+    } catch (e) {
+      return send(res, 400, { error: e.message });
+    }
+    return send(res, 200, { received: true, ...(await payments.handleStripeEvent(event)) });
+  }
   if (method === 'POST' && pathname === '/webhooks/paypay') {
     // 本文は信用せず、書かれている取引番号について PayPay API に問い合わせ直す
     const body = await readJson(req).catch(() => ({}));
@@ -218,15 +202,16 @@ async function route(req, res) {
     const [, token, sub = ''] = m;
     if (method === 'GET' && sub === '') {
       const room = customerRoom(token);
-      return send(res, 200, { store: config.store.name, status: room.status, paypayDemo: paypayIsDemo(), iceServers: iceServers() });
+      return send(res, 200, { store: config.store.name, status: room.status, cardDemo: cardIsDemo(), paypayDemo: paypayIsDemo(), iceServers: iceServers() });
     }
     if (method !== 'POST') throw new UserError('Not Found', 404);
     if (!auth.sameOrigin(req)) throw new UserError('不正なリクエストです', 403);
     auth.rateLimit(`pay:${token}`, 30, 60_000);
     const room = customerRoom(token);
     switch (sub) {
-      case '/pay/card': await payments.selectCard(room); return send(res, 200, { ok: true });
-      case '/pay/card/reported': payments.reportCardPaid(room); return send(res, 200, { ok: true });
+      case '/pay/card': return send(res, 200, await payments.selectCard(room));
+      case '/pay/card/confirm': return send(res, 200, await payments.confirmCard(room));
+      case '/pay/card/demo': payments.demoPayCard(room); return send(res, 200, { ok: true });
       case '/pay/paypay': await payments.selectPayPay(room, req.headers['user-agent']); return send(res, 200, { ok: true });
       case '/pay/back': await payments.backToMethods(room); return send(res, 200, { ok: true });
     }
@@ -244,7 +229,7 @@ async function route(req, res) {
   if (method === 'GET' && pathname === '/api/staff/me') {
     return send(res, 200, {
       loggedIn: auth.isStaff(req), demo: isDemo(), passwordless: !config.staffPassword && isDemo(),
-      store: config.store.name, paypayDemo: paypayIsDemo(), airpayAdminUrl: config.airpay.adminUrl,
+      store: config.store.name, cardDemo: cardIsDemo(), paypayDemo: paypayIsDemo(),
       iceServers: auth.isStaff(req) ? iceServers() : undefined,
     });
   }
@@ -305,7 +290,7 @@ export function createServer() {
 if (process.argv[1] && path.resolve(process.argv[1]) === path.join(ROOT, 'src', 'server.js')) {
   createServer().listen(config.port, () => {
     console.log(`リモレジ起動: ${config.baseUrl}  （店員画面 ${config.baseUrl}/staff）`);
-    console.log('  カード決済: Airペイの決済リンク（店員が貼り付け・入金確認）');
+    if (cardIsDemo()) console.log('  カード決済: デモモード（STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY 未設定）');
     if (paypayIsDemo()) console.log('  PayPay決済: デモモード（PAYPAY_API_KEY / PAYPAY_API_SECRET / PAYPAY_MERCHANT_ID 未設定）');
     if (!config.staffPassword) console.log(isDemo() ? '  店員ログイン: パスワードなし（デモ）' : '  ⚠ STAFF_PASSWORD が未設定のため店員ログインできません');
   });

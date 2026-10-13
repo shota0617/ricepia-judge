@@ -34,9 +34,10 @@ function showApp() {
     await api('/api/staff/logout', { method: 'POST' });
     location.reload();
   };
-  if (me.paypayDemo) {
+  const demo = [me.cardDemo && 'クレジットカード', me.paypayDemo && 'PayPay'].filter(Boolean);
+  if (demo.length) {
     $('#demo-note').hidden = false;
-    $('#demo-note').textContent = 'PayPay はデモモードです（実際の決済は行われません）。PayPay の鍵を .env に設定すると実決済になります。クレジットカードは Airペイの決済リンクを使います。';
+    $('#demo-note').textContent = `${demo.join('・')} はデモモードです（実際の決済は行われません）。本番の鍵を .env に設定すると実決済になります。`;
   }
   $('#entry-link').href = $('#entry-link').textContent = `${location.origin}/`;
   document.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => openTab(b.dataset.tab)));
@@ -218,7 +219,7 @@ async function loadSales() {
   ].join('');
   const time = (iso) => new Date(iso).toLocaleTimeString('ja-JP', { timeZone: 'Asia/Tokyo', hour: '2-digit', minute: '2-digit' });
   $('#sales-list').innerHTML = sales.slice().reverse().map((s) => `
-    <tr data-id="${s.id}" data-method="${s.method}">
+    <tr data-id="${s.id}">
       <td>${time(s.paidAt)}</td>
       <td class="small"><a href="${esc(s.receiptUrl)}" target="_blank" rel="noopener">${esc(s.receiptNo)}</a></td>
       <td><span class="tag ${s.method}">${METHOD_LABEL[s.method]}</span> ${s.demo ? '<span class="tag demo">デモ</span>' : ''}</td>
@@ -234,11 +235,7 @@ function setupSales() {
   $('#sales-list').onclick = async (e) => {
     if (!e.target.closest('[data-refund]')) return;
     const id = e.target.closest('tr').dataset.id;
-    const isCard = e.target.closest('tr').dataset.method === 'card';
-    const msg = isCard
-      ? 'クレジットカード（Airペイ）の返金は、先に Airペイの管理画面で取引を取り消してください。\n\n取り消しが済んだら「OK」で返金済みとして記録します。'
-      : 'この取引を PayPay で全額返金しますか？（取り消せません）';
-    if (!confirm(msg)) return;
+    if (!confirm('この取引を全額返金しますか？（取り消せません）')) return;
     e.target.disabled = true;
     try {
       await api(`/api/staff/sales/${id}/refund`, { method: 'POST' });

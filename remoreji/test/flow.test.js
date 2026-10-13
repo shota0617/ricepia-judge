@@ -82,7 +82,7 @@ test('ログインしないと店員APIもWebSocketも使えない', async () =>
   assert.equal((await req('/api/staff/rooms', { method: 'POST', headers: { Origin: 'https://evil.example' } })).status, 403);
 });
 
-test('招待 → 入室 → 商品登録 → カード払い（Airペイ）→ 領収書・売上・返金', async () => {
+test('招待 → 入室 → 商品登録 → カード払い（デモ）→ 領収書・売上・返金', async () => {
   const room = (await req('/api/staff/rooms', { method: 'POST' })).json;
   assert.match(room.code, /^\d{6}$/);
   const token = room.inviteUrl.split('/r/')[1];
@@ -127,33 +127,15 @@ test('招待 → 入室 → 商品登録 → カード払い（Airペイ）→ �
   // 別サイトからの支払い操作は拒否
   assert.equal((await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false, headers: { Origin: 'https://evil.example' } })).status, 403);
 
-  // クレジットカード（Airペイ）：お客様が選ぶ → 店員がリンクを貼る → お客様が支払う → 店員が入金確認
-  assert.equal((await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false })).status, 200);
-  await stateWhere(staff, (m) => m.sale?.attempt?.method === 'card' && !m.sale.attempt.url);
-  // リンクが届く前は「支払いました」を押せない／店員も会計完了にできない
-  assert.equal((await req(`/api/r/${token}/pay/card/reported`, { method: 'POST', auth: false })).status, 400);
-  send(staff, { type: 'card:confirm' });
-  assert.match((await staff.next((m) => m.type === 'error')).message, /決済リンク/);
-  // https 以外のリンクは送れない
-  send(staff, { type: 'card:link', url: 'javascript:alert(1)' });
-  assert.match((await staff.next((m) => m.type === 'error')).message, /https/);
-  send(staff, { type: 'card:link', url: 'https://pay.airpayment.example/link/abc' });
-  const linked = await stateWhere(cust, (m) => m.sale?.attempt?.url);
-  assert.equal(linked.sale.attempt.url, 'https://pay.airpayment.example/link/abc');
-  assert.equal(linked.sale.attempt.host, 'pay.airpayment.example');
-  assert.match(linked.sale.attempt.qr, /^data:image\/png/);
-  assert.equal((await req(`/api/r/${token}/pay/card/reported`, { method: 'POST', auth: false })).status, 200);
-  const reported = await stateWhere(staff, (m) => m.sale?.attempt?.reported);
-  assert.equal(reported.sale.status, 'pending', 'お客様の申告だけでは会計済みにしない');
-  send(staff, { type: 'card:confirm', airpayNo: 'AP-12345' });
+  const card = await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false });
+  assert.deepEqual(card.json, { demo: true });
+  await stateWhere(staff, (m) => m.sale?.attempt?.method === 'card');
+  assert.equal((await req(`/api/r/${token}/pay/card/demo`, { method: 'POST', auth: false })).status, 200);
   const paid = await stateWhere(cust, (m) => m.sale?.status === 'paid');
   assert.match(paid.sale.receiptNo, /^\d{8}-0001$/);
-  assert.equal(paid.sale.method, 'card');
-  assert.equal(paid.sale.demo, false);
   assert.equal(paid.cart.length, 0, '会計後はカートが空になる');
-  // 二重に確定しても1回分
-  send(staff, { type: 'card:confirm' });
-  assert.match((await staff.next((m) => m.type === 'error')).message, /選んでいません/);
+  // 二重に支払っても1回分
+  assert.equal((await req(`/api/r/${token}/pay/card/demo`, { method: 'POST', auth: false })).status, 400);
 
   const receipt = await req(paid.sale.receiptUrl, { auth: false });
   assert.equal(receipt.status, 200);
@@ -180,19 +162,12 @@ test('招待 → 入室 → 商品登録 → カード払い（Airペイ）→ �
   send(staff, { type: 'checkout:start' });
   await stateWhere(cust, (m) => m.sale?.status === 'pending');
   await req(`/api/r/${token}/pay/card`, { method: 'POST', auth: false });
-  await stateWhere(staff, (m) => m.sale?.attempt?.method === 'card');
-  send(staff, { type: 'card:link', demo: true });
-  const demoLinked = await stateWhere(cust, (m) => m.sale?.attempt?.url);
-  assert.equal(demoLinked.sale.attempt.demo, true);
-  const airDemo = new URL(demoLinked.sale.attempt.url).pathname;
   await req(`/api/r/${token}/pay/paypay`, { method: 'POST', auth: false });
   const pp = await stateWhere(cust, (m) => m.sale?.attempt?.method === 'paypay');
   assert.match(pp.sale.attempt.qr, /^data:image\/png;base64,/);
   const staffView = staff.msgs.findLast((m) => m.type === 'state' && m.sale?.attempt?.method === 'paypay');
   assert.equal(staffView?.sale.attempt.qr, undefined, '店員側には支払いQRを送らない');
-  assert.equal((await req(`/api/r/${token}/pay/card/reported`, { method: 'POST', auth: false })).status, 400, '取り下げたカード決済は申告できない');
-  await req(airDemo, { method: 'POST', auth: false });
-  assert.equal(staff.msgs.findLast((m) => m.type === 'state').sale.attempt.method, 'paypay', '取り下げたデモリンクは無効');
+  assert.equal((await req(`/api/r/${token}/pay/card/demo`, { method: 'POST', auth: false })).status, 400, '取り下げたカード決済では支払えない');
   const demoPath = new URL(pp.sale.attempt.url).pathname;
   assert.match((await req(demoPath, { auth: false })).text, /支払う（デモ）/);
   assert.equal((await req(demoPath, { method: 'POST', auth: false })).status, 303);

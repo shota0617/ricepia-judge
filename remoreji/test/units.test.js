@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import { computeTotals, jst, jstDayRange, yen } from '../src/util.js';
 import { authHeader } from '../src/paypay.js';
+import { verifyWebhook, encodeForm } from '../src/stripe.js';
 
 test('税込価格から税率ごとに1回だけ切り捨てで内税を計算する', () => {
   const r = computeTotals([
@@ -39,4 +40,14 @@ test('PayPay の署名ヘッダーは公式 SDK と同じ手順で作る', () =>
   const g = authHeader({ method: 'GET', path: '/v2/codes/payments/x', apiKey: 'KEY', apiSecret: 'SECRET', nonce: 'n2', epoch: 1 });
   const mac2 = crypto.createHmac('sha256', 'SECRET').update(['/v2/codes/payments/x', 'GET', 'n2', 1, 'empty', 'empty'].join('\n')).digest('base64');
   assert.equal(g, `hmac OPA-Auth:KEY:${mac2}:n2:1:empty`);
+});
+
+test('Stripe Webhook の署名検証', () => {
+  const raw = JSON.stringify({ type: 'payment_intent.succeeded' });
+  const t = 1700000000;
+  const sig = crypto.createHmac('sha256', 'whsec_x').update(`${t}.${raw}`).digest('hex');
+  assert.equal(verifyWebhook(raw, `t=${t},v1=${sig}`, 'whsec_x', 300, t).type, 'payment_intent.succeeded');
+  assert.throws(() => verifyWebhook(raw, `t=${t},v1=${sig}`, 'whsec_other', 300, t), /一致しません/);
+  assert.throws(() => verifyWebhook(raw, `t=${t},v1=${sig}`, 'whsec_x', 300, t + 1000), /期限切れ/);
+  assert.equal(encodeForm({ payment_method_types: ['card'], metadata: { a: 1 } }).toString(), 'payment_method_types%5B0%5D=card&metadata%5Ba%5D=1');
 });

@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>らいすぴあ Meta広告分析</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:'Noto Sans JP','Hiragino Sans',sans-serif;background:#f5f2eb;color:#2d2d1e;min-height:100vh;padding-bottom:60px;}
+input,textarea,button,select{font-family:inherit;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn 0.5s ease;}
+.spinner{width:17px;height:17px;border:2px solid #2d2d1e;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite;flex-shrink:0;}
+#header{background:#2d2d1e;padding:14px 20px;position:sticky;top:0;z-index:100;}
+#header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:10px;}
+.hlogo{width:32px;height:32px;background:#c8a96e;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.htitle{color:#f5f2eb;font-size:14px;font-weight:700;letter-spacing:0.06em;}
+.hsub{color:#c8a96e;font-size:9px;letter-spacing:0.15em;}
+.hlink{margin-left:auto;color:#c8a96e;font-size:11px;text-decoration:none;border:1px solid #6a6a54;border-radius:6px;padding:4px 10px;white-space:nowrap;}
+#main{max-width:960px;margin:0 auto;padding:20px 16px 0;}
+.card{background:#fff;border-radius:14px;border:1px solid #e8e4d8;padding:18px;}
+.card+.card,.section+.card,.card+.section,.section+.section{margin-top:12px;}
+.ctitle{font-size:13px;color:#5a5a4a;font-weight:700;margin-bottom:12px;}
+.muted{color:#9a9a7a;}
+.small{font-size:11px;}
+.btn-primary{width:100%;padding:14px;background:#c8a96e;border:none;border-radius:11px;color:#2d2d1e;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.08em;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:disabled{background:#9a9a7a;cursor:not-allowed;}
+.btn-sm-dark{padding:10px 14px;background:#2d2d1e;border:none;border-radius:9px;color:#f5f2eb;font-size:12px;cursor:pointer;}
+.btn-sm-ghost{padding:10px 14px;background:#fff;border:1.5px solid #c4bfaa;border-radius:9px;color:#5a5a4a;font-size:12px;cursor:pointer;}
+.upload-zone{border:2px dashed #c4bfaa;border-radius:14px;background:#fafaf7;padding:28px 20px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.upload-zone.drag{border-color:#c8a96e;background:#fdf8ee;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:11px;color:#5a5a4a;font-weight:600;}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;color:#2d2d1e;background:#fafaf7;outline:none;}
+.field .hint{font-size:10px;color:#9a9a7a;line-height:1.5;}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
+.kpi{background:#fff;border:1px solid #e8e4d8;border-radius:11px;padding:11px 12px;}
+.kpi .k{font-size:10px;color:#9a9a7a;letter-spacing:0.06em;}
+.kpi .v{font-size:18px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums;}
+.kpi .d{font-size:10px;margin-top:2px;}
+.verdicts{display:flex;flex-wrap:wrap;gap:8px;}
+.vchip{display:flex;align-items:center;gap:6px;border-radius:9px;padding:8px 12px;font-size:12px;font-weight:700;}
+.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap;}
+.v-up{background:#eef5f0;color:#3f7050;}
+.v-keep{background:#eef3fb;color:#3a6aa0;}
+.v-fix{background:#fdf3ea;color:#a8682a;}
+.v-stop{background:#fdf0f0;color:#b05555;}
+.v-wait{background:#f0ede4;color:#7a7a64;}
+.tag{display:inline-block;background:#f5f2eb;border:1px solid #e8e4d8;color:#5a5a4a;border-radius:5px;padding:1px 6px;font-size:10px;margin:1px 2px 1px 0;white-space:nowrap;}
+.tag.bad{background:#fdf0f0;border-color:#f0c8c8;color:#b05555;}
+.tag.warn{background:#fff8ee;border-color:#e8d8b0;color:#8a7040;}
+.tag.good{background:#eef5f0;border-color:#c4dccb;color:#3f7050;}
+.tbl-wrap{overflow-x:auto;border:1px solid #e8e4d8;border-radius:11px;background:#fff;}
+table{border-collapse:collapse;width:100%;font-size:12px;}
+th{background:#faf8f2;color:#5a5a4a;font-weight:600;text-align:right;padding:8px 9px;white-space:nowrap;cursor:pointer;user-select:none;border-bottom:1px solid #e8e4d8;position:sticky;top:0;}
+th.l,td.l{text-align:left;}
+th .arr{color:#c8a96e;}
+td{padding:8px 9px;border-bottom:1px solid #f0ede4;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;vertical-align:top;}
+td.name{white-space:normal;min-width:180px;max-width:280px;}
+td.name .sub{font-size:10px;color:#9a9a7a;}
+td.issues{white-space:normal;min-width:200px;text-align:left;}
+tr:last-child td{border-bottom:none;}
+.bad-num{color:#b05555;font-weight:700;}
+.good-num{color:#3f7050;font-weight:700;}
+.error-box{margin-top:12px;padding:13px 15px;background:#fdf0f0;border-radius:9px;border:1px solid #f0c8c8;color:#b05555;font-size:12px;line-height:1.7;}
+.tip-box{padding:10px 14px;background:#fff8ee;border-radius:9px;border:1px solid #e8d8b0;font-size:11px;color:#8a7040;line-height:1.7;}
+.alert{padding:10px 13px;border-radius:9px;font-size:12px;line-height:1.7;margin-top:8px;}
+.alert.bad{background:#fdf0f0;border:1px solid #f0c8c8;color:#8a3a3a;}
+.alert.warn{background:#fff8ee;border:1px solid #e8d8b0;color:#7a6030;}
+.alert.good{background:#eef5f0;border:1px solid #c4dccb;color:#2f5a3e;}
+.ai-sect{font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin:18px 0 8px;}
+.ai-item{border:1px solid #e8e4d8;border-radius:10px;padding:11px 13px;margin-bottom:8px;font-size:12px;line-height:1.75;color:#3d3d2e;}
+.ai-item b{color:#2d2d1e;}
+.prio{display:inline-block;border-radius:5px;padding:1px 7px;font-size:10px;font-weight:700;margin-right:6px;}
+.p-now{background:#b05555;color:#fff;}.p-week{background:#d4924a;color:#fff;}.p-month{background:#4a7ab5;color:#fff;}
+.health{display:inline-block;border-radius:8px;padding:4px 12px;font-size:13px;font-weight:700;}
+details summary{cursor:pointer;font-size:12px;color:#5a5a4a;font-weight:600;}
+details[open] summary{margin-bottom:8px;}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+@media (max-width:520px){.kpi .v{font-size:16px;}.hlink{padding:4px 7px;}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-inner">
+    <div class="hlogo">📊</div>
+    <div>
+      <div class="htitle">らいすぴあ Meta広告分析</div>
+      <div class="hsub">FACEBOOK / INSTAGRAM 広告 成果診断</div>
+    </div>
+    <a class="hlink" href="index.html">🌾 品質判定へ</a>
+  </div>
+</div>
+
+<div id="main">
+  <!-- 1. 読み込み -->
+  <div class="card">
+    <div class="ctitle">① 広告マネージャのレポート（CSV）を読み込む</div>
+    <div id="dropZone" class="upload-zone" onclick="document.getElementById('csvInput').click()">
+      <div style="font-size:34px;opacity:0.6;margin-bottom:6px;">📄</div>
+      <div style="font-size:14px;font-weight:600;color:#5a5a4a;">CSVファイルを選択 / ここにドロップ</div>
+      <div style="font-size:11px;color:#c8a96e;margin-top:4px;">Meta広告マネージャ →「レポート」→「エクスポート」→ CSV</div>
+    </div>
+    <input type="file" id="csvInput" accept=".csv,text/csv" style="display:none;" onchange="onCsvSelected(event)"/>
+    <div class="row" style="margin-top:10px;">
+      <button class="btn-sm-ghost" onclick="loadSample()">🧪 サンプルデータで試す</button>
+      <span id="fileInfo" class="muted small"></span>
+    </div>
+    <details style="margin-top:12px;">
+      <summary>精度の高い分析のためのエクスポート設定</summary>
+      <div class="tip-box">
+        ・<b>列</b>：消化金額、インプレッション、リーチ、フリークエンシー、リンクのクリック、結果（または 購入 / 登録 / メッセージ など成果の列）、購入のコンバージョン値（売上が分かる場合）<br/>
+        ・<b>内訳</b>：「時間別 → 日」を付けると、CTRの低下（広告の飽き）やCPAの悪化傾向まで診断できます<br/>
+        ・<b>レベル</b>：キャンペーン / 広告セット / 広告 のどれでも可。広告レベルで出すと、どのクリエイティブが効いているか分かります<br/>
+        ・日本語・英語どちらの列名にも対応。データはブラウザ内だけで集計されます（AI分析を押した時のみ集計結果を送信）
+      </div>
+    </details>
+    <div id="loadError" class="error-box" style="display:none;"></div>
+  </div>
+
+  <!-- 2. 設定 -->
+  <div class="card" id="settingsCard" style="display:none;">
+    <div class="ctitle">② 判定の基準</div>
+    <div class="grid2">
+      <div class="field">
+        <label for="levelSel">分析する単位</label>
+        <select id="levelSel" onchange="recompute()"></select>
+      </div>
+      <div class="field">
+        <label for="convSel">成果として数える列</label>
+        <select id="convSel" onchange="recompute()"></select>
+        <div class="hint">購入・LINE友だち追加・メッセージなど、広告の目的に合う列を選んでください</div>
+      </div>
+      <div class="field">
+        <label for="targetCpa">目標CPA（1件あたりの許容広告費・円）</label>
+        <input id="targetCpa" type="number" inputmode="numeric" min="0" placeholder="未入力なら全体平均で判定" oninput="onSettingChange()"/>
+      </div>
+      <div class="field">
+        <label for="margin">粗利率（%）</label>
+        <input id="margin" type="number" inputmode="numeric" min="1" max="100" placeholder="例：30" oninput="onSettingChange()"/>
+        <div class="hint" id="breakevenHint">売上（コンバージョン値）がある場合、損益分岐ROASを計算してROASで判定します</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. 結果 -->
+  <div id="results" style="display:none;">
+    <div class="section" style="margin-top:12px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+        <div class="ctitle" style="margin:0;">③ アカウント全体</div>
+        <div id="periodInfo" class="muted small"></div>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <div id="accountAlerts"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="ctitle">④ 診断サマリー</div>
+      <div class="verdicts" id="verdictChips"></div>
+      <div id="realloc"></div>
+      <details style="margin-top:12px;">
+        <summary>判定ルール</summary>
+        <div class="tip-box" id="rulesText"></div>
+      </details>
+    </div>
+
+    <div class="section" style="margin-top:12px;">
+      <div class="row" style="justify-content:space-between;margin-bottom:8px;">
+        <div class="ctitle" style="margin:0;">⑤ <span id="levelLabel"></span>別の診断</div>
+        <div class="row">
+          <select id="verdictFilter" onchange="renderTable()" style="padding:7px 10px;border:1.5px solid #c4bfaa;border-radius:8px;font-size:12px;background:#fff;color:#2d2d1e;">
+            <option value="">すべて表示</option>
+          </select>
+          <button class="btn-sm-ghost" onclick="downloadDiagnosis()">⬇ CSV</button>
+        </div>
+      </div>
+      <div class="tbl-wrap"><table id="diagTable"></table></div>
+      <div class="muted small" style="margin-top:6px;" id="tableNote"></div>
+    </div>
+
+    <!-- 4. AI -->
+    <div class="card" style="margin-top:12px;">
+      <div class="ctitle">⑥ AIによる改善提案</div>
+      <div class="grid2">
+        <div class="field" style="grid-column:1/-1;">
+          <label for="context">補足情報（任意・あるほど具体的な提案になります）</label>
+          <textarea id="context" rows="3" placeholder="例：新米の通販（5kg 3,980円）への誘導が目的。LPは自社ECの商品ページ。10/1から新米訴求の動画広告に切り替えた。月の予算は5万円。"></textarea>
+        </div>
+        <div class="field" style="grid-column:1/-1;">
+          <label for="apiKeyInput">Anthropic API Key</label>
+          <div style="position:relative;">
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" style="padding-right:40px;font-family:monospace;"/>
+            <button onclick="toggleShowKey()" id="eyeBtn" type="button" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9a9a7a;font-size:15px;padding:0;">👁</button>
+          </div>
+          <div class="hint">🔒 キーはこのページを開いている間だけ使用し、保存しません。<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#c8a96e;">console.anthropic.com</a> で取得</div>
+        </div>
+      </div>
+      <button id="aiBtn" class="btn-primary" style="margin-top:14px;" onclick="runAi()">✨ AIで改善提案を作る</button>
+      <div id="aiError" class="error-box" style="display:none;"></div>
+      <div id="aiResult" style="display:none;" class="fade-in"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SETTINGS_KEY = "ricepia_meta_ads_settings";
+const MODEL = "claude-opus-5-5";
+
+// ───────── 列名の対応表（日本語 / 英語の広告マネージャ出力） ─────────
+const COLS = {
+  campaign:   [/^キャンペーン名$/, /^campaign name$/i],
+  adset:      [/^広告セット名$/, /^ad set name$/i],
+  ad:         [/^広告名$/, /^ad name$/i],
+  day:        [/^日$/, /^day$/i, /^日付$/, /^date$/i],
+  start:      [/^レポート開始日$/, /^reporting starts$/i],
+  end:        [/^レポート終了日$/, /^reporting ends$/i],
+  spend:      [/^消化金額/, /^amount spent/i, /^費用/],
+  imp:        [/^インプレッション$/, /^impressions$/i],
+  reach:      [/^リーチ$/, /^reach$/i],
+  freq:       [/^フリークエンシー$/, /^frequency$/i],
+  linkClicks: [/^リンクのクリック$/, /^link clicks$/i],
+  clicksAll:  [/^クリック[(（]すべて[)）]$/, /^clicks \(all\)$/i],
+  results:    [/^結果$/, /^results$/i],
+  resultType: [/^結果インジケーター$/, /^result indicator$/i, /^結果タイプ$/, /^result type$/i],
+  value:      [/購入.*コンバージョン値/, /purchases? conversion value/i, /website purchases conversion value/i],
+};
+// 成果列の候補（数値列のうち、名前がこれに当てはまるもの）
+const CONV_HINT = /^(結果|results|購入|purchases?|ウェブサイトでの購入|website purchases|登録|registrations?|リード|leads?|メッセージ|messaging|新しいメッセージのスレッド|カートに追加|adds? to cart|コンテンツビュー|チェックアウト開始|checkouts? initiated|友だち追加|on-facebook leads)/i;
+const CONV_EXCLUDE = /(単価|cost per|コンバージョン値|conversion value|ROAS|率|rate)/i;
+
+const LEVELS = [
+  {key:"campaign", label:"キャンペーン"},
+  {key:"adset", label:"広告セット"},
+  {key:"ad", label:"広告"},
+];
+const VERDICTS = {
+  up:   {label:"増額候補", cls:"v-up",   icon:"📈"},
+  keep: {label:"維持",     cls:"v-keep", icon:"➖"},
+  fix:  {label:"要改善",   cls:"v-fix",  icon:"🛠"},
+  stop: {label:"停止候補", cls:"v-stop", icon:"⛔"},
+  wait: {label:"データ不足", cls:"v-wait", icon:"⏳"},
+};
+
+let data = null;      // {headers, rows, col:{key:index}, convCandidates, levels, daily}
+let analysis = null;  // 最新の集計・診断結果
+let sortKey = "spend", sortDir = -1;
+
+// ───────── ユーティリティ ─────────
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function num(v){
+  if(v==null)return null;
+  const s=String(v).replace(/[¥￥,，\s円%]/g,"").trim();
+  if(s===""||s==="-"||s==="—"||s==="–")return null;
+  const n=Number(s);
+  return isFinite(n)?n:null;
+}
+function div(a,b){return b>0&&a!=null?a/b:null;}
+const fmt = {
+  yen:v=>v==null?"—":"¥"+Math.round(v).toLocaleString("ja-JP"),
+  int:v=>v==null?"—":Math.round(v).toLocaleString("ja-JP"),
+  pct:(v,d=2)=>v==null?"—":(v*100).toFixed(d)+"%",
+  x:v=>v==null?"—":v.toFixed(2),
+  roas:v=>v==null?"—":Math.round(v*100)+"%",
+};
+function median(arr){const a=arr.filter(v=>v!=null).sort((x,y)=>x-y);if(!a.length)return null;const m=Math.floor(a.length/2);return a.length%2?a[m]:(a[m-1]+a[m])/2;}
+function normDate(s){
+  if(!s)return null;
+  const m=String(s).trim().match(/^(\d{4})[-\/年.](\d{1,2})[-\/月.](\d{1,2})/);
+  if(!m)return null;
+  return m[1]+"-"+m[2].padStart(2,"0")+"-"+m[3].padStart(2,"0");
+}
+
+// RFC4180 準拠の簡易CSVパーサ（引用符・改行入りセルに対応）
+function parseCsv(text){
+  text=text.replace(/^﻿/,"");
+  const delim=(text.split("\n")[0].split("\t").length>text.split("\n")[0].split(",").length)?"\t":",";
+  const rows=[];let row=[],cell="",q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){
+      if(c==='"'){if(text[i+1]==='"'){cell+='"';i++;}else q=false;}
+      else cell+=c;
+    }else if(c==='"')q=true;
+    else if(c===delim){row.push(cell);cell="";}
+    else if(c==="\n"||c==="\r"){
+      if(c==="\r"&&text[i+1]==="\n")i++;
+      row.push(cell);cell="";
+      if(row.some(x=>x.trim()!==""))rows.push(row);
+      row=[];
+    }else cell+=c;
+  }
+  row.push(cell);if(row.some(x=>x.trim()!==""))rows.push(row);
+  return rows;
+}
+
+// ───────── 読み込み ─────────
+const dz=document.getElementById("dropZone");
+["dragenter","dragover"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove("drag");}));
+dz.addEventListener("drop",e=>{const f=e.dataTransfer.files[0];if(f)readFile(f);});
+function onCsvSelected(e){const f=e.target.files[0];if(f)readFile(f);e.target.value="";}
+
+async function readFile(file){
+  const buf=await file.arrayBuffer();
+  let text=new TextDecoder("utf-8").decode(buf);
+  // Excelで保存し直したCSVは Shift_JIS のことがある
+  if(text.includes("�")){try{text=new TextDecoder("shift_jis").decode(buf);}catch{}}
+  loadText(text,file.name);
+}
+
+function loadText(text,name){
+  const errBox=document.getElementById("loadError");
+  errBox.style.display="none";
+  try{
+    const rows=parseCsv(text);
+    if(rows.length<2)throw new Error("データ行がありません");
+    const headers=rows[0].map(h=>h.trim());
+    const col={};
+    for(const [k,pats] of Object.entries(COLS)){
+      const i=headers.findIndex(h=>pats.some(p=>p.test(h)));
+      if(i>=0)col[k]=i;
+    }
+    if(col.spend==null||col.imp==null)throw new Error("「消化金額」と「インプレッション」の列が見つかりません。広告マネージャからエクスポートしたCSVか確認してください（見つかった列: "+headers.slice(0,12).join(" / ")+"）");
+    const body=rows.slice(1).filter(r=>r.length>=headers.length-1);
+    // 合計行（名前列が空でスペンドだけ入っている行）を除外
+    const nameCols=["campaign","adset","ad"].filter(k=>col[k]!=null);
+    const cleaned=body.filter(r=>nameCols.length===0||nameCols.some(k=>(r[col[k]]||"").trim()!==""));
+    // 成果列の候補
+    const convCandidates=[];
+    headers.forEach((h,i)=>{
+      if(i===col.spend||i===col.imp||i===col.reach||i===col.freq||i===col.linkClicks||i===col.clicksAll)return;
+      if(CONV_EXCLUDE.test(h)||!CONV_HINT.test(h))return;
+      const sum=cleaned.reduce((s,r)=>s+(num(r[i])||0),0);
+      convCandidates.push({i,h,sum});
+    });
+    // 日別データの判定
+    let dateIdx=col.day;
+    if(dateIdx==null&&col.start!=null&&col.end!=null){
+      const daily=cleaned.every(r=>normDate(r[col.start])&&normDate(r[col.start])===normDate(r[col.end]));
+      const distinct=new Set(cleaned.map(r=>normDate(r[col.start])));
+      if(daily&&distinct.size>1)dateIdx=col.start;
+    }
+    const levels=LEVELS.filter(l=>col[l.key]!=null);
+    data={headers,rows:cleaned,col,convCandidates,levels,dateIdx,name};
+    setupSettings();
+    document.getElementById("fileInfo").textContent="✅ "+name+"（"+cleaned.length+"行）";
+    recompute();
+  }catch(e){
+    errBox.style.display="block";errBox.textContent="読み込みエラー: "+(e.message||e);
+    document.getElementById("results").style.display="none";
+    document.getElementById("settingsCard").style.display="none";
+  }
+}
+
+function setupSettings(){
+  const lv=document.getElementById("levelSel");
+  lv.innerHTML=data.levels.length?data.levels.map(l=>`<option value="${l.key}">${l.label}</option>`).join(""):`<option value="">（名前の列なし・全体のみ）</option>`;
+  // 最も細かい単位（広告 > 広告セット > キャンペーン）を初期表示
+  if(data.levels.length)lv.value=data.levels[data.levels.length-1].key;
+  const cs=document.getElementById("convSel");
+  if(data.convCandidates.length){
+    cs.innerHTML=data.convCandidates.map(c=>`<option value="${c.i}">${esc(c.h)}（計 ${fmt.int(c.sum)}）</option>`).join("");
+    // 購入列があり値が入っていればそれを優先、なければ「結果」、なければ最大の列
+    const pref=data.convCandidates.find(c=>/^(購入|purchases?|ウェブサイトでの購入|website purchases)$/i.test(c.h)&&c.sum>0)
+      ||data.convCandidates.find(c=>/^(結果|results)$/i.test(c.h)&&c.sum>0)
+      ||data.convCandidates.slice().sort((a,b)=>b.sum-a.sum)[0];
+    cs.value=pref.i;
+  }else{
+    cs.innerHTML=`<option value="">（成果の列が見つかりません）</option>`;
+  }
+  try{
+    const s=JSON.parse(localStorage.getItem(SETTINGS_KEY))||{};
+    if(s.targetCpa)document.getElementById("targetCpa").value=s.targetCpa;
+    if(s.margin)document.getElementById("margin").value=s.margin;
+    if(s.context&&!document.getElementById("context").value)document.getElementById("context").value=s.context;
+  }catch{}
+  document.getElementById("settingsCard").style.display="block";
+}
+
+let settingTimer=null;
+function onSettingChange(){
+  try{localStorage.setItem(SETTINGS_KEY,JSON.stringify({targetCpa:document.getElementById("targetCpa").value,margin:document.getElementById("margin").value,context:document.getElementById("context").value}));}catch{}
+  clearTimeout(settingTimer);settingTimer=setTimeout(recompute,250);
+}
+
+// ───────── 集計 ─────────
+function emptyAgg(){return{spend:0,imp:0,reach:0,reachRows:0,freqSingle:null,linkClicks:0,hasLink:false,clicksAll:0,conv:0,value:0,hasValue:false,rows:0,byDate:{}};}
+function addRow(a,r,convIdx){
+  const c=data.col;
+  const spend=num(r[c.spend])||0,imp=num(r[c.imp])||0;
+  const lc=c.linkClicks!=null?num(r[c.linkClicks]):null;
+  const ca=c.clicksAll!=null?num(r[c.clicksAll]):null;
+  const conv=convIdx!=null?(num(r[convIdx])||0):0;
+  const val=c.value!=null?num(r[c.value]):null;
+  a.spend+=spend;a.imp+=imp;a.rows++;
+  if(c.reach!=null){const rv=num(r[c.reach]);if(rv!=null){a.reach+=rv;a.reachRows++;}}
+  if(c.freq!=null)a.freqSingle=num(r[c.freq]);
+  if(lc!=null){a.linkClicks+=lc;a.hasLink=true;}
+  if(ca!=null)a.clicksAll+=ca;
+  a.conv+=conv;
+  if(val!=null){a.value+=val;a.hasValue=true;}
+  if(data.dateIdx!=null){
+    const d=normDate(r[data.dateIdx]);
+    if(d){const b=a.byDate[d]||(a.byDate[d]={spend:0,imp:0,clicks:0,conv:0});b.spend+=spend;b.imp+=imp;b.clicks+=(lc!=null?lc:(ca||0));b.conv+=conv;}
+  }
+}
+function metrics(a){
+  const clicks=a.hasLink?a.linkClicks:a.clicksAll;
+  // リーチは日別・複数行で合算すると重複するため、1行だけのときのみ正確なフリークエンシーになる
+  let freq=null,freqApprox=false;
+  if(a.rows===1&&a.freqSingle!=null)freq=a.freqSingle;
+  else if(a.reach>0){freq=a.imp/a.reach;freqApprox=a.rows>1;}
+  return{
+    spend:a.spend,imp:a.imp,reach:a.reach||null,freq,freqApprox,clicks,
+    ctr:div(clicks,a.imp),cpc:div(a.spend,clicks),cpm:a.imp>0?a.spend/a.imp*1000:null,
+    conv:a.conv,cvr:div(a.conv,clicks),cpa:div(a.spend,a.conv),
+    value:a.hasValue?a.value:null,roas:a.hasValue?div(a.value,a.spend):null,
+  };
+}
+// 期間を前半・後半に分けて、CTRとCPAの変化を見る
+function trend(a,splitDate){
+  if(!splitDate)return null;
+  const h={p:{spend:0,imp:0,clicks:0,conv:0},q:{spend:0,imp:0,clicks:0,conv:0}};
+  for(const [d,b] of Object.entries(a.byDate)){const t=d<splitDate?h.p:h.q;t.spend+=b.spend;t.imp+=b.imp;t.clicks+=b.clicks;t.conv+=b.conv;}
+  if(h.p.imp<500||h.q.imp<500)return null;
+  const ctr1=div(h.p.clicks,h.p.imp),ctr2=div(h.q.clicks,h.q.imp);
+  const cpa1=div(h.p.spend,h.p.conv),cpa2=div(h.q.spend,h.q.conv);
+  return{
+    ctrChange:ctr1&&ctr2!=null?ctr2/ctr1-1:null,
+    cpaChange:cpa1&&cpa2?cpa2/cpa1-1:null,
+    cpm1:h.p.spend/h.p.imp*1000,cpm2:h.q.spend/h.q.imp*1000,
+  };
+}
+
+function recompute(){
+  if(!data)return;
+  const level=document.getElementById("levelSel").value;
+  const convIdxRaw=document.getElementById("convSel").value;
+  const convIdx=convIdxRaw===""?null:Number(convIdxRaw);
+  const targetCpaIn=num(document.getElementById("targetCpa").value);
+  const marginIn=num(document.getElementById("margin").value);
+  const c=data.col;
+
+  // 期間
+  let dates=[];
+  if(data.dateIdx!=null)dates=[...new Set(data.rows.map(r=>normDate(r[data.dateIdx])).filter(Boolean))].sort();
+  else if(c.start!=null){
+    const s=data.rows.map(r=>normDate(r[c.start])).filter(Boolean).sort();
+    const e=c.end!=null?data.rows.map(r=>normDate(r[c.end])).filter(Boolean).sort():[];
+    if(s.length)dates=[s[0],e.length?e[e.length-1]:s[s.length-1]];
+  }
+  const splitDate=data.dateIdx!=null&&dates.length>=6?dates[Math.floor(dates.length/2)]:null;
+
+  // 全体
+  const totalAgg=emptyAgg();
+  data.rows.forEach(r=>addRow(totalAgg,r,convIdx));
+  const total=metrics(totalAgg);
+  total.trend=trend(totalAgg,splitDate);
+
+  // 単位ごと
+  const groups=new Map();
+  if(level){
+    const keyCols=level==="campaign"?["campaign"]:level==="adset"?["campaign","adset"]:["campaign","adset","ad"];
+    data.rows.forEach(r=>{
+      const parts=keyCols.filter(k=>c[k]!=null).map(k=>(r[c[k]]||"").trim());
+      const key=parts.join(" › ");
+      if(!groups.has(key))groups.set(key,{name:parts[parts.length-1]||"(名前なし)",parent:parts.slice(0,-1).join(" › "),agg:emptyAgg()});
+      addRow(groups.get(key).agg,r,convIdx);
+    });
+  }
+  const items=[...groups.values()].map(g=>{const m=metrics(g.agg);m.trend=trend(g.agg,splitDate);return Object.assign({name:g.name,parent:g.parent},m);});
+
+  // 判定の基準
+  const hasValue=total.value!=null&&total.value>0;
+  const breakevenRoas=marginIn>0?100/marginIn:null;
+  // 売上がある場合はROASで判定。粗利率がなければ全体平均ROASとの相対評価
+  // （価格の違う商品が混ざると、CPAの平均比較では高単価商品が不当に悪く見えるため）
+  const roasBench=breakevenRoas||(hasValue?total.roas:null);
+  const roasBenchLabel=breakevenRoas?"損益分岐":"全体平均";
+  const useRoas=hasValue&&roasBench>0&&(breakevenRoas!=null||!(targetCpaIn>0));
+  const benchCpa=targetCpaIn>0?targetCpaIn:total.cpa;
+  const benchSource=targetCpaIn>0?"目標CPA":"全体平均CPA";
+  const medCpm=median(items.filter(i=>i.imp>=1000).map(i=>i.cpm));
+  const medCtr=median(items.filter(i=>i.imp>=1000).map(i=>i.ctr));
+  document.getElementById("breakevenHint").textContent=breakevenRoas?`損益分岐ROAS ${fmt.roas(breakevenRoas)}（広告費1円で${breakevenRoas.toFixed(2)}円の売上が必要）`+(hasValue?"":" ※CSVに売上（コンバージョン値）の列がないためCPAで判定します"):"売上（コンバージョン値）がある場合、損益分岐ROASを計算してROASで判定します";
+
+  items.forEach(it=>diagnose(it,{benchCpa,useRoas,roasBench,roasBenchLabel,isBreakeven:breakevenRoas!=null,medCpm,medCtr,convIdx}));
+  total.issues=[];diagnoseIssues(total,{medCpm:null,medCtr:null},total.issues);
+
+  analysis={level,levelLabel:(LEVELS.find(l=>l.key===level)||{label:"全体"}).label,
+    convLabel:convIdx!=null?data.headers[convIdx]:null,total,items,dates,splitDate,
+    benchCpa,benchSource,useRoas,breakevenRoas,roasBench,roasBenchLabel,targetCpa:targetCpaIn,margin:marginIn,medCpm,medCtr,hasValue};
+  render();
+}
+
+function diagnoseIssues(it,ctx,issues){
+  if(it.freq!=null){
+    if(it.freq>=3.5)issues.push({t:`フリークエンシー${it.freq.toFixed(1)}${it.freqApprox?"（参考値）":""}：同じ人に出すぎ。広告の飽き・反応低下の原因`,s:"bad"});
+    else if(it.freq>=2.5)issues.push({t:`フリークエンシー${it.freq.toFixed(1)}${it.freqApprox?"（参考値）":""}：やや高め。新しいクリエイティブを準備`,s:"warn"});
+  }
+  if(it.imp>=1000&&it.ctr!=null){
+    if(it.ctr<0.005)issues.push({t:`CTR ${fmt.pct(it.ctr)}：低い。最初の1秒・画像・一言目の見直し`,s:"bad"});
+    else if(ctx.medCtr&&it.ctr<ctx.medCtr*0.6)issues.push({t:`CTR ${fmt.pct(it.ctr)}：他より低い（中央値 ${fmt.pct(ctx.medCtr)}）`,s:"warn"});
+    else if(it.ctr>=0.015)issues.push({t:`CTR ${fmt.pct(it.ctr)}：良好。訴求が刺さっている`,s:"good"});
+  }
+  if(ctx.medCpm&&it.imp>=1000&&it.cpm>ctx.medCpm*1.5)issues.push({t:`CPM ${fmt.yen(it.cpm)}：中央値の${(it.cpm/ctx.medCpm).toFixed(1)}倍。ターゲットが狭い/配置が割高`,s:"warn"});
+  if(it.clicks>=50&&it.cvr!=null&&it.cvr<0.01&&it.ctr!=null&&it.ctr>=0.008)issues.push({t:`クリック後の成果率 ${fmt.pct(it.cvr)}：広告は見られているが成果につながらない。LP・価格・導線を確認`,s:"bad"});
+  if(it.trend){
+    if(it.trend.ctrChange!=null&&it.trend.ctrChange<=-0.25)issues.push({t:`後半のCTRが前半より${Math.round(-it.trend.ctrChange*100)}%低下：クリエイティブ疲れの兆候`,s:"bad"});
+    if(it.trend.cpaChange!=null&&it.trend.cpaChange>=0.3)issues.push({t:`後半のCPAが前半より${Math.round(it.trend.cpaChange*100)}%悪化`,s:"bad"});
+    if(it.trend.cpaChange!=null&&it.trend.cpaChange<=-0.2)issues.push({t:`後半のCPAが${Math.round(-it.trend.cpaChange*100)}%改善`,s:"good"});
+  }
+}
+
+function diagnose(it,ctx){
+  const issues=[];
+  diagnoseIssues(it,ctx,issues);
+  let v="keep",why="";
+  const cpa=it.cpa,bench=ctx.benchCpa;
+  if(ctx.convIdx==null){
+    v=it.imp<1000?"wait":(issues.some(i=>i.s==="bad")?"fix":"keep");
+    why="成果の列がないため反応指標のみで判定";
+  }else if(ctx.useRoas){
+    const be=ctx.roasBench,r=it.roas,bl=ctx.roasBenchLabel,fixBelow=ctx.isBreakeven?1:0.7;
+    if(it.conv===0&&it.spend>=(bench||0)*2&&bench){v="stop";why=`成果0件で${fmt.yen(it.spend)}消化`;}
+    else if(it.conv<3&&it.spend<(bench||Infinity)*1.5){v="wait";why=`成果${it.conv}件・判断には少ない`;}
+    else if(r!=null&&r>=be*1.3&&it.conv>=3){v="up";why=`ROAS ${fmt.roas(r)}が${bl}${fmt.roas(be)}を大きく上回る`;}
+    else if(r!=null&&r<be*0.4){v="stop";why=`ROAS ${fmt.roas(r)}が${bl}${fmt.roas(be)}を大きく下回る`+(ctx.isBreakeven?"（赤字）":"");}
+    else if(r!=null&&r<be*fixBelow){v="fix";why=`ROAS ${fmt.roas(r)}が${bl}${fmt.roas(be)}を下回る`+(ctx.isBreakeven?"（赤字）":"");}
+    else{v="keep";why=`ROAS ${fmt.roas(r)}：${bl}${fmt.roas(be)}`+(ctx.isBreakeven?"以上で黒字":"並み以上");}
+  }else if(bench){
+    if(it.conv===0&&it.spend>=bench*2){v="stop";why=`成果0件で${fmt.yen(it.spend)}消化（基準CPAの${(it.spend/bench).toFixed(1)}倍）`;}
+    else if(it.conv===0||(it.conv<3&&it.spend<bench*1.5)){v="wait";why=it.conv===0?`成果0件・消化${fmt.yen(it.spend)}はまだ判断前`:`成果${it.conv}件・判断には少ない`;}
+    else if(cpa<=bench*0.8&&it.conv>=3){v="up";why=`CPA ${fmt.yen(cpa)}が基準${fmt.yen(bench)}より${Math.round((1-cpa/bench)*100)}%安い`;}
+    else if(cpa>bench*2){v="stop";why=`CPA ${fmt.yen(cpa)}が基準の${(cpa/bench).toFixed(1)}倍`;}
+    else if(cpa>bench*1.3){v="fix";why=`CPA ${fmt.yen(cpa)}が基準${fmt.yen(bench)}より${Math.round((cpa/bench-1)*100)}%高い`;}
+    else{v="keep";why=`CPA ${fmt.yen(cpa)}：基準${fmt.yen(bench)}の範囲内`;}
+  }else{
+    v=it.conv>0?"keep":"wait";why="基準CPAが未設定で全体にも成果がないため判定保留";
+  }
+  // 増額候補でも、飽き・悪化の兆候があれば「維持」に留める
+  if(v==="up"&&issues.some(i=>i.s==="bad")){v="keep";why+="。ただし悪化の兆候があるため増額は様子見";}
+  // 維持でも致命的な兆候があれば要改善
+  if(v==="keep"&&issues.filter(i=>i.s==="bad").length>=2){v="fix";why+="。複数の悪化サインあり";}
+  it.verdict=v;it.why=why;it.issues=issues;
+}
+
+// ───────── 描画 ─────────
+function render(){
+  const a=analysis,t=a.total;
+  document.getElementById("results").style.display="block";
+  document.getElementById("levelLabel").textContent=a.levelLabel;
+  document.getElementById("periodInfo").textContent=a.dates.length?`期間 ${a.dates[0]} 〜 ${a.dates[a.dates.length-1]}`+(a.splitDate?`（日別 ${a.dates.length}日・${a.splitDate}を境に前半/後半を比較）`:""):"";
+
+  const tr=t.trend;
+  const delta=(chg,goodIfDown)=>{if(chg==null)return"";const good=goodIfDown?chg<0:chg>0;const c=Math.abs(chg)<0.05?"#9a9a7a":good?"#3f7050":"#b05555";return`<div class="d" style="color:${c}">後半 ${chg>0?"+":""}${Math.round(chg*100)}%</div>`;};
+  const k=(label,val,extra="")=>`<div class="kpi"><div class="k">${label}</div><div class="v">${val}</div>${extra}</div>`;
+  let h="";
+  h+=k("消化金額",fmt.yen(t.spend));
+  h+=k("インプレッション",fmt.int(t.imp));
+  if(t.reach)h+=k("リーチ",fmt.int(t.reach),t.freqApprox?`<div class="d muted">日別合算のため重複あり</div>`:"");
+  if(t.freq!=null)h+=k("フリークエンシー",t.freq.toFixed(2)+(t.freqApprox?"*":""));
+  h+=k("クリック",fmt.int(t.clicks));
+  h+=k("CTR",fmt.pct(t.ctr),delta(tr&&tr.ctrChange,false));
+  h+=k("CPC",fmt.yen(t.cpc));
+  h+=k("CPM",fmt.yen(t.cpm),tr?delta(tr.cpm2/tr.cpm1-1,true):"");
+  if(a.convLabel){
+    h+=k("成果（"+esc(a.convLabel)+"）",fmt.int(t.conv));
+    h+=k("CPA",fmt.yen(t.cpa),delta(tr&&tr.cpaChange,true));
+    h+=k("クリック後の成果率",fmt.pct(t.cvr));
+  }
+  if(a.hasValue){h+=k("売上（CV値）",fmt.yen(t.value));h+=k("ROAS",fmt.roas(t.roas),a.breakevenRoas?`<div class="d" style="color:${t.roas>=a.breakevenRoas?"#3f7050":"#b05555"}">損益分岐 ${fmt.roas(a.breakevenRoas)}</div>`:"");}
+  document.getElementById("kpis").innerHTML=h;
+
+  // アカウント全体のアラート
+  const al=[];
+  if(!a.convLabel)al.push({s:"warn",t:"成果（購入・結果など）の列がCSVにありません。「結果」列を含めてエクスポートすると費用対効果まで判定できます。"});
+  if(a.convLabel&&!a.targetCpa&&!a.useRoas)al.push({s:"warn",t:`目標CPAが未入力のため、全体平均CPA ${fmt.yen(t.cpa)} を基準に相対評価しています。利益が出るCPAを入力すると判定が正確になります。`});
+  if(a.useRoas&&!a.breakevenRoas)al.push({s:"warn",t:`粗利率が未入力のため、全体平均ROAS ${fmt.roas(t.roas)} を基準に相対評価しています。粗利率を入れると、広告ごとに黒字か赤字かまで判定できます。`});
+  if(a.useRoas&&a.breakevenRoas&&t.roas!=null)al.push({s:t.roas>=a.breakevenRoas?"good":"bad",t:`全体ROAS ${fmt.roas(t.roas)}／損益分岐 ${fmt.roas(a.breakevenRoas)}：広告全体で ${t.roas>=a.breakevenRoas?"黒字":"赤字"}（粗利ベースの概算 ${fmt.yen(t.value*a.margin/100-t.spend)}）`});
+  if(a.convLabel&&t.conv>0&&a.splitDate){
+    const days=a.dates.length,weekly=t.conv/days*7;
+    if(weekly<50)al.push({s:"warn",t:`成果は週あたり約${weekly.toFixed(0)}件。Metaの機械学習が安定する目安（1広告セットあたり週50件）に届かないため、広告セットを分けすぎず、予算を集中させるのが有効です。`});
+  }
+  t.issues.filter(i=>i.s!=="good").forEach(i=>al.push({s:i.s,t:"全体："+i.t}));
+  document.getElementById("accountAlerts").innerHTML=al.map(x=>`<div class="alert ${x.s}">${esc(x.t)}</div>`).join("");
+
+  // 判定チップ
+  const cnt={},spendBy={};
+  Object.keys(VERDICTS).forEach(v=>{cnt[v]=0;spendBy[v]=0;});
+  a.items.forEach(i=>{cnt[i.verdict]++;spendBy[i.verdict]+=i.spend;});
+  document.getElementById("verdictChips").innerHTML=a.items.length?Object.entries(VERDICTS).filter(([v])=>cnt[v]).map(([v,c])=>`<div class="vchip ${c.cls}">${c.icon} ${c.label} ${cnt[v]}件<span style="font-weight:400;font-size:11px;">（${fmt.yen(spendBy[v])}）</span></div>`).join(""):`<div class="muted small">名前の列がないため、全体のみの集計です</div>`;
+
+  // 予算の再配分
+  const stops=a.items.filter(i=>i.verdict==="stop"),ups=a.items.filter(i=>i.verdict==="up"),fixes=a.items.filter(i=>i.verdict==="fix");
+  let rh="";
+  if(stops.length){
+    const s=stops.reduce((x,i)=>x+i.spend,0);
+    rh+=`<div class="alert bad">⛔ 停止候補 ${stops.length}件で期間中 <b>${fmt.yen(s)}</b>（全体の${Math.round(s/t.spend*100)}%）を消化しています。`+(ups.length?`止めた分の予算は、増額候補（${ups.slice(0,3).map(i=>"「"+esc(i.name)+"」").join("")}${ups.length>3?" ほか":""}）へ。`:"増額候補がないため、まずは要改善の広告の作り直しに回しましょう。")+`</div>`;
+  }
+  if(ups.length)rh+=`<div class="alert good">📈 増額候補 ${ups.length}件。予算は1回あたり20%以内で数日おきに上げると、学習がリセットされにくく成果が安定します。</div>`;
+  if(fixes.length)rh+=`<div class="alert warn">🛠 要改善 ${fixes.length}件。表の「気になる点」から、クリエイティブ（CTR）・ターゲット（CPM）・LP（成果率）のどこが原因かを切り分けてください。</div>`;
+  document.getElementById("realloc").innerHTML=rh;
+
+  document.getElementById("rulesText").innerHTML=
+    (a.useRoas?(a.breakevenRoas?`判定はROASで行います（損益分岐ROAS = 100 ÷ 粗利率 = ${fmt.roas(a.breakevenRoas)}）。<br/>・増額候補：成果3件以上かつROASが損益分岐の1.3倍以上<br/>・要改善：ROASが損益分岐未満／停止候補：損益分岐の0.4倍未満、または成果0件で基準CPAの2倍以上消化<br/>`
+      :`判定はROASで行います（基準：全体平均ROAS ${fmt.roas(a.roasBench)}。商品単価の違いをならすため、売上がある場合はCPAではなくROASで比べます）。<br/>・増額候補：成果3件以上かつROASが平均の1.3倍以上<br/>・要改善：平均の0.7倍未満／停止候補：0.4倍未満、または成果0件で平均CPAの2倍以上消化<br/>`)
+    :`判定はCPAで行います（基準：${a.benchSource} ${fmt.yen(a.benchCpa)}）。<br/>・増額候補：成果3件以上かつCPAが基準より20%以上安い<br/>・要改善：CPAが基準の1.3倍超／停止候補：2倍超、または成果0件で基準の2倍以上消化<br/>`)+
+    `・データ不足：成果が少なく消化も少ないため、まだ判断しない（早すぎる停止は機会損失）<br/>・増額候補でも、CTR低下などの悪化サインがあれば「維持」に留めます<br/>・CTR 0.5%未満、フリークエンシー3.5以上、CPMが中央値の1.5倍超などを「気になる点」として表示<br/>・フリークエンシーの*は日別・複数行のリーチ合算による参考値（実際より低めに出ます）`;
+
+  // フィルタ
+  const vf=document.getElementById("verdictFilter"),cur=vf.value;
+  vf.innerHTML=`<option value="">すべて表示（${a.items.length}）</option>`+Object.entries(VERDICTS).filter(([v])=>cnt[v]).map(([v,c])=>`<option value="${v}">${c.label}のみ（${cnt[v]}）</option>`).join("");
+  vf.value=cnt[cur]?cur:"";
+  renderTable();
+}
+
+const TABLE_COLS=[
+  {k:"name",label:"名前",cls:"l"},
+  {k:"verdict",label:"判定",cls:"l"},
+  {k:"spend",label:"消化",f:fmt.yen},
+  {k:"imp",label:"表示",f:fmt.int},
+  {k:"freq",label:"頻度",f:v=>v==null?"—":v.toFixed(2)},
+  {k:"ctr",label:"CTR",f:v=>fmt.pct(v)},
+  {k:"cpc",label:"CPC",f:fmt.yen},
+  {k:"cpm",label:"CPM",f:fmt.yen},
+  {k:"conv",label:"成果",f:fmt.int,needConv:true},
+  {k:"cvr",label:"成果率",f:v=>fmt.pct(v),needConv:true},
+  {k:"cpa",label:"CPA",f:fmt.yen,needConv:true},
+  {k:"roas",label:"ROAS",f:fmt.roas,needValue:true},
+  {k:"issues",label:"判定理由・気になる点",cls:"l"},
+];
+const VERDICT_ORDER={stop:0,fix:1,up:2,keep:3,wait:4};
+function sortBy(k){if(k==="issues")return;if(sortKey===k)sortDir=-sortDir;else{sortKey=k;sortDir=(k==="name"||k==="verdict")?1:-1;}renderTable();}
+function renderTable(){
+  const a=analysis;if(!a)return;
+  const cols=TABLE_COLS.filter(c=>(!c.needConv||a.convLabel)&&(!c.needValue||a.hasValue));
+  const filter=document.getElementById("verdictFilter").value;
+  const items=a.items.filter(i=>!filter||i.verdict===filter).slice().sort((x,y)=>{
+    let p=x[sortKey],q=y[sortKey];
+    if(sortKey==="verdict"){p=VERDICT_ORDER[p];q=VERDICT_ORDER[q];}
+    if(p==null&&q==null)return 0;if(p==null)return 1;if(q==null)return -1;
+    return(typeof p==="string"?p.localeCompare(q,"ja"):p-q)*sortDir;
+  });
+  const bench=a.benchCpa;
+  const cell=(c,i)=>{
+    if(c.k==="name")return`<td class="name l">${esc(i.name)}${i.parent?`<div class="sub">${esc(i.parent)}</div>`:""}</td>`;
+    if(c.k==="verdict"){const v=VERDICTS[i.verdict];return`<td class="l"><span class="badge ${v.cls}">${v.icon} ${v.label}</span></td>`;}
+    if(c.k==="issues")return`<td class="issues"><div style="font-size:11px;color:#5a5a4a;margin-bottom:3px;">${esc(i.why)}</div>${i.issues.map(x=>`<span class="tag ${x.s}">${esc(x.t)}</span>`).join("")}</td>`;
+    let cls="";
+    if(c.k==="cpa"&&i.cpa!=null&&bench){cls=i.cpa<=bench*0.8?"good-num":i.cpa>bench*1.3?"bad-num":"";}
+    if(c.k==="roas"&&i.roas!=null&&a.roasBench){cls=i.roas>=a.roasBench*1.3?"good-num":i.roas<a.roasBench*(a.breakevenRoas?1:0.7)?"bad-num":"";}
+    if(c.k==="cpa"&&a.useRoas)cls="";
+    if(c.k==="freq"&&i.freq!=null&&i.freq>=3.5)cls="bad-num";
+    if(c.k==="ctr"&&i.ctr!=null&&i.imp>=1000&&i.ctr<0.005)cls="bad-num";
+    const val=c.f(i[c.k])+(c.k==="freq"&&i.freqApprox&&i.freq!=null?"*":"");
+    return`<td class="${cls}">${val}</td>`;
+  };
+  document.getElementById("diagTable").innerHTML=
+    `<thead><tr>${cols.map(c=>`<th class="${c.cls||""}" onclick="sortBy('${c.k}')">${c.label}${sortKey===c.k?`<span class="arr">${sortDir>0?" ▲":" ▼"}</span>`:""}</th>`).join("")}</tr></thead>`+
+    `<tbody>${items.map(i=>`<tr>${cols.map(c=>cell(c,i)).join("")}</tr>`).join("")||`<tr><td colspan="${cols.length}" class="l muted">該当なし</td></tr>`}</tbody>`;
+  document.getElementById("tableNote").textContent=a.convLabel?`成果＝「${a.convLabel}」列。見出しをタップで並べ替え。`:"見出しをタップで並べ替え。";
+}
+
+function downloadDiagnosis(){
+  const a=analysis;if(!a)return;
+  const head=["名前","上位","判定","判定理由","消化金額","インプレッション","フリークエンシー","クリック","CTR","CPC","CPM","成果","成果率","CPA","売上","ROAS","気になる点"];
+  const q=v=>{const s=v==null?"":String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+  const lines=[head.join(",")].concat(a.items.map(i=>[i.name,i.parent,VERDICTS[i.verdict].label,i.why,Math.round(i.spend),i.imp,i.freq!=null?i.freq.toFixed(2):"",i.clicks,i.ctr!=null?(i.ctr*100).toFixed(2)+"%":"",i.cpc!=null?Math.round(i.cpc):"",i.cpm!=null?Math.round(i.cpm):"",i.conv,i.cvr!=null?(i.cvr*100).toFixed(2)+"%":"",i.cpa!=null?Math.round(i.cpa):"",i.value!=null?Math.round(i.value):"",i.roas!=null?Math.round(i.roas*100)+"%":"",i.issues.map(x=>x.t).join(" / ")].map(q).join(",")));
+  const blob=new Blob(["﻿"+lines.join("\r\n")],{type:"text/csv"});
+  const url=URL.createObjectURL(blob);
+  const el=document.createElement("a");el.href=url;el.download="meta広告診断_"+(a.dates[0]||"")+".csv";el.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+// ───────── AI分析 ─────────
+function toggleShowKey(){
+  const inp=document.getElementById("apiKeyInput"),btn=document.getElementById("eyeBtn");
+  if(inp.type==="password"){inp.type="text";btn.textContent="🙈";}else{inp.type="password";btn.textContent="👁";}
+}
+document.getElementById("context").addEventListener("input",onSettingChange);
+
+const AI_SCHEMA={
+  type:"object",additionalProperties:false,
+  required:["health","summary","key_findings","actions","budget_plan","creative_ideas","tests","cautions"],
+  properties:{
+    health:{type:"string",enum:["良好","注意","要対策"]},
+    summary:{type:"string"},
+    key_findings:{type:"array",items:{type:"object",additionalProperties:false,required:["title","evidence","impact"],properties:{title:{type:"string"},evidence:{type:"string"},impact:{type:"string"}}}},
+    actions:{type:"array",items:{type:"object",additionalProperties:false,required:["priority","target","action","reason","expected"],properties:{priority:{type:"string",enum:["今すぐ","今週中","今月中"]},target:{type:"string"},action:{type:"string"},reason:{type:"string"},expected:{type:"string"}}}},
+    budget_plan:{type:"string"},
+    creative_ideas:{type:"array",items:{type:"object",additionalProperties:false,required:["angle","primary_text","headline","visual"],properties:{angle:{type:"string"},primary_text:{type:"string"},headline:{type:"string"},visual:{type:"string"}}}},
+    tests:{type:"array",items:{type:"object",additionalProperties:false,required:["hypothesis","how","metric"],properties:{hypothesis:{type:"string"},how:{type:"string"},metric:{type:"string"}}}},
+    cautions:{type:"array",items:{type:"string"}},
+  },
+};
+
+function buildSystem(){
+  return `あなたは近藤米穀店「らいすぴあ」（愛知県の創業130余年の老舗米店。精米したての米を店頭・通販・ふるさと納税で販売）専属のMeta広告（Facebook / Instagram）運用アドバイザーです。
+小さな店の限られた予算で、利益の出る広告運用にするための具体的な改善提案を行ってください。
+
+【分析の進め方】
+- 渡された集計数値だけを根拠にする。推測で数字を作らない。根拠には必ず数値（CPA・CTR・フリークエンシー等）を添える
+- 自動判定（増額候補／要改善／停止候補／データ不足）は参考。異なる結論を出す場合は理由を書く
+- 成果件数が少ない項目は「データ不足」として結論を急がない（統計的にぶれが大きい）
+- 原因の切り分け：CTR低い→クリエイティブ・訴求、CPM高い→ターゲットの狭さ・配置・競合期、CTRは良いのに成果率が低い→LP・価格・送料・購入導線、フリークエンシー高い/CTR低下→広告の飽き
+- Metaの学習の仕組みを踏まえる：予算変更は1回20%以内、学習期間中の頻繁な編集は避ける、週50件の成果に届かないなら広告セットを統合して予算を集中、Advantage+配置・広めのターゲットも選択肢
+- 米屋ならではの季節性（新米 9〜11月、年末年始の贈答、ふるさと納税の駆け込み 10〜12月、梅雨〜夏の保存・虫対策需要）を提案に活かす
+
+【クリエイティブ案の注意】
+- 景品表示法：「日本一」「最高級」「どこよりも安い」など根拠のない最上級・比較表現は使わない
+- 食品表示：産地・品種・年産・精米日は事実の範囲で。健康効果を断定しない（薬機法・健康増進法）
+- 精米したて・5代目の目利き・品質判定AIでの検品など、店の実際の強みを使う
+- primary_textは125字前後、headlineは25字以内
+
+【出力】
+- summary：全体の状況を3文以内で
+- key_findings：重要な発見を重要度順に3〜5個
+- actions：具体的な操作（どのキャンペーン/広告セット/広告を、どうするか）を優先度順に3〜7個
+- budget_plan：予算配分の見直し案（金額や割合で）
+- creative_ideas：次に作るべき広告案を2〜3個
+- tests：次に検証するA/Bテストを1〜3個
+- cautions：判断の前提・データの限界（なければ空配列）`;
+}
+
+function buildUserMessage(){
+  const a=analysis,t=a.total;
+  const r2=v=>v==null?"":Math.round(v*100)/100;
+  const lines=[];
+  lines.push(`# 期間\n${a.dates.length?a.dates[0]+" 〜 "+a.dates[a.dates.length-1]+(a.splitDate?`（日別データ。${a.splitDate}以降を後半として比較）`:""):"不明"}`);
+  lines.push(`# 判定の基準\n成果の定義: ${a.convLabel||"なし（成果列なし）"}\n目標CPA: ${a.targetCpa?fmt.yen(a.targetCpa):"未設定（全体平均で相対評価）"}\n粗利率: ${a.margin?a.margin+"%（損益分岐ROAS "+fmt.roas(a.breakevenRoas)+"）":"未設定"}\n自動判定の指標: ${a.useRoas?"ROAS（基準："+a.roasBenchLabel+" "+fmt.roas(a.roasBench)+"）":"CPA（基準："+a.benchSource+" "+fmt.yen(a.benchCpa)+"）"}`);
+  lines.push(`# アカウント全体\n消化 ${fmt.yen(t.spend)} / 表示 ${fmt.int(t.imp)} / リーチ ${fmt.int(t.reach)} / 頻度 ${t.freq!=null?t.freq.toFixed(2)+(t.freqApprox?"(参考値)":""):"—"} / クリック ${fmt.int(t.clicks)} / CTR ${fmt.pct(t.ctr)} / CPC ${fmt.yen(t.cpc)} / CPM ${fmt.yen(t.cpm)}`+
+    (a.convLabel?` / 成果 ${fmt.int(t.conv)} / 成果率 ${fmt.pct(t.cvr)} / CPA ${fmt.yen(t.cpa)}`:"")+(a.hasValue?` / 売上 ${fmt.yen(t.value)} / ROAS ${fmt.roas(t.roas)}`:"")+
+    (t.trend?`\n前半→後半: CTR ${t.trend.ctrChange!=null?(t.trend.ctrChange>0?"+":"")+Math.round(t.trend.ctrChange*100)+"%":"—"} / CPA ${t.trend.cpaChange!=null?(t.trend.cpaChange>0?"+":"")+Math.round(t.trend.cpaChange*100)+"%":"—"} / CPM ${fmt.yen(t.trend.cpm1)}→${fmt.yen(t.trend.cpm2)}`:""));
+  const items=a.items.slice().sort((x,y)=>y.spend-x.spend);
+  const top=items.slice(0,60);
+  const head=["名前","上位","自動判定","消化","表示","頻度","クリック","CTR%","CPC","CPM","成果","成果率%","CPA","売上","ROAS%","CTR前後半%","CPA前後半%","気になる点"];
+  const rows=top.map(i=>[i.name,i.parent,VERDICTS[i.verdict].label,Math.round(i.spend),i.imp,r2(i.freq),i.clicks,i.ctr!=null?r2(i.ctr*100):"",i.cpc!=null?Math.round(i.cpc):"",i.cpm!=null?Math.round(i.cpm):"",i.conv,i.cvr!=null?r2(i.cvr*100):"",i.cpa!=null?Math.round(i.cpa):"",i.value!=null?Math.round(i.value):"",i.roas!=null?Math.round(i.roas*100):"",i.trend&&i.trend.ctrChange!=null?Math.round(i.trend.ctrChange*100):"",i.trend&&i.trend.cpaChange!=null?Math.round(i.trend.cpaChange*100):"",i.issues.map(x=>x.t).join(" / ")].map(v=>String(v).replace(/[\t\n]/g," ")).join("\t"));
+  lines.push(`# ${a.levelLabel}別（消化額の多い順${items.length>top.length?`・上位${top.length}件／全${items.length}件`:""}）\n`+head.join("\t")+"\n"+rows.join("\n"));
+  if(items.length>top.length){
+    const rest=items.slice(top.length),rs=rest.reduce((s,i)=>s+i.spend,0),rc=rest.reduce((s,i)=>s+i.conv,0);
+    lines.push(`（残り${rest.length}件の合計：消化 ${fmt.yen(rs)}、成果 ${rc}件）`);
+  }
+  const ctx=document.getElementById("context").value.trim();
+  if(ctx)lines.push(`# 店からの補足\n${ctx}`);
+  lines.push("上記のMeta広告の成果を分析し、改善提案をしてください。");
+  return lines.join("\n\n");
+}
+
+async function runAi(){
+  const apiKey=document.getElementById("apiKeyInput").value.trim();
+  const eb=document.getElementById("aiError");
+  eb.style.display="none";
+  if(!analysis){return;}
+  if(apiKey.length<=10){eb.style.display="block";eb.textContent="Anthropic API Key を入力してください";return;}
+  const btn=document.getElementById("aiBtn");
+  btn.disabled=true;btn.innerHTML=`<span class="spinner"></span>AIが分析中...（1分ほどかかります）`;
+  document.getElementById("aiResult").style.display="none";
+  try{
+    const res=await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({model:MODEL,max_tokens:32000,fallbacks:"default",
+        output_config:{effort:"high",format:{type:"json_schema",schema:AI_SCHEMA}},
+        system:buildSystem(),
+        messages:[{role:"user",content:buildUserMessage()}]})
+    });
+    if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
+    const out=await res.json();
+    if(out.stop_reason==="refusal")throw new Error("AIが分析を辞退しました。補足情報を見直してもう一度お試しください");
+    if(out.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
+    const text=out.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
+    renderAi(JSON.parse(text));
+  }catch(e){
+    const msg=e&&e.message?e.message:String(e);
+    eb.style.display="block";eb.textContent="AI分析エラー: "+msg;
+    if(msg.includes("401")||/api.?key/i.test(msg))eb.innerHTML+=`<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
+    if(msg.includes("Failed to fetch")||msg.includes("NetworkError"))eb.innerHTML+=`<br/><span style="font-size:11px;">→ ネットワークエラー。接続を確認してください</span>`;
+  }finally{
+    btn.disabled=false;btn.innerHTML="✨ AIで改善提案を作る";
+  }
+}
+
+let lastAi=null;
+function renderAi(r){
+  lastAi=r;
+  const hc={"良好":"v-up","注意":"v-fix","要対策":"v-stop"}[r.health]||"v-keep";
+  const pc={"今すぐ":"p-now","今週中":"p-week","今月中":"p-month"};
+  let h=`<div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span class="health ${hc}">${esc(r.health)}</span><button class="btn-sm-ghost" onclick="copyAi()" id="copyBtn">📋 テキストでコピー</button></div>`;
+  h+=`<div style="margin-top:10px;font-size:13px;line-height:1.85;color:#2d2d1e;">${esc(r.summary)}</div>`;
+  if(r.key_findings?.length){h+=`<div class="ai-sect">重要な発見</div>`+r.key_findings.map(f=>`<div class="ai-item"><b>${esc(f.title)}</b><br/><span class="muted">根拠：</span>${esc(f.evidence)}<br/><span class="muted">影響：</span>${esc(f.impact)}</div>`).join("");}
+  if(r.actions?.length){h+=`<div class="ai-sect">やること</div>`+r.actions.map(x=>`<div class="ai-item"><span class="prio ${pc[x.priority]||"p-month"}">${esc(x.priority)}</span><b>${esc(x.target)}</b><br/>${esc(x.action)}<br/><span class="muted">理由：</span>${esc(x.reason)}<br/><span class="muted">期待効果：</span>${esc(x.expected)}</div>`).join("");}
+  if(r.budget_plan){h+=`<div class="ai-sect">予算配分</div><div class="ai-item">${esc(r.budget_plan).replace(/\n/g,"<br/>")}</div>`;}
+  if(r.creative_ideas?.length){h+=`<div class="ai-sect">次の広告案</div>`+r.creative_ideas.map(c=>`<div class="ai-item"><b>${esc(c.angle)}</b><br/><span class="muted">見出し：</span>${esc(c.headline)}<br/><span class="muted">本文：</span>${esc(c.primary_text)}<br/><span class="muted">画像・動画：</span>${esc(c.visual)}</div>`).join("");}
+  if(r.tests?.length){h+=`<div class="ai-sect">次のテスト</div>`+r.tests.map(x=>`<div class="ai-item"><b>${esc(x.hypothesis)}</b><br/><span class="muted">方法：</span>${esc(x.how)}<br/><span class="muted">見る指標：</span>${esc(x.metric)}</div>`).join("");}
+  if(r.cautions?.length){h+=`<div class="ai-sect">前提・注意</div><div class="tip-box">${r.cautions.map(c=>"・"+esc(c)).join("<br/>")}</div>`;}
+  const el=document.getElementById("aiResult");el.innerHTML=h;el.style.display="block";
+}
+function aiAsText(r){
+  const L=[];
+  L.push(`【Meta広告 分析レポート】${analysis&&analysis.dates.length?analysis.dates[0]+"〜"+analysis.dates[analysis.dates.length-1]:""}`);
+  L.push(`状態：${r.health}`,r.summary,"");
+  if(r.key_findings?.length){L.push("■ 重要な発見");r.key_findings.forEach((f,i)=>L.push(`${i+1}. ${f.title}\n   根拠：${f.evidence}\n   影響：${f.impact}`));L.push("");}
+  if(r.actions?.length){L.push("■ やること");r.actions.forEach(x=>L.push(`[${x.priority}] ${x.target}：${x.action}\n   理由：${x.reason}／期待効果：${x.expected}`));L.push("");}
+  if(r.budget_plan)L.push("■ 予算配分",r.budget_plan,"");
+  if(r.creative_ideas?.length){L.push("■ 次の広告案");r.creative_ideas.forEach(c=>L.push(`・${c.angle}\n   見出し：${c.headline}\n   本文：${c.primary_text}\n   画像・動画：${c.visual}`));L.push("");}
+  if(r.tests?.length){L.push("■ 次のテスト");r.tests.forEach(x=>L.push(`・${x.hypothesis}\n   方法：${x.how}／指標：${x.metric}`));L.push("");}
+  if(r.cautions?.length){L.push("■ 前提・注意");r.cautions.forEach(c=>L.push("・"+c));}
+  return L.join("\n");
+}
+async function copyAi(){
+  if(!lastAi)return;
+  const btn=document.getElementById("copyBtn");
+  try{await navigator.clipboard.writeText(aiAsText(lastAi));btn.textContent="✅ コピーしました";}
+  catch{btn.textContent="コピーできませんでした";}
+  setTimeout(()=>{btn.textContent="📋 テキストでコピー";},2000);
+}
+
+// ───────── サンプルデータ（米屋の広告を想定） ─────────
+function loadSample(){
+  const ads=[
+    // キャンペーン, 広告セット, 広告, 日予算, CPM, CTR, 成果率, 単価, 頻度の伸び, CTRの減衰
+    ["新米2026_通販","愛知県_30-60代_女性","新米動画_炊きあがり湯気",1800,820,0.019,0.045,4200,0.09,0.0],
+    ["新米2026_通販","愛知県_30-60代_女性","新米静止画_5kg価格訴求",1200,780,0.011,0.030,3980,0.10,0.35],
+    ["新米2026_通販","全国_類似オーディエンス","新米動画_炊きあがり湯気",1500,610,0.013,0.020,4200,0.05,0.0],
+    ["新米2026_通販","全国_類似オーディエンス","5代目の目利き_リール",900,650,0.004,0.010,4200,0.05,0.10],
+    ["ふるさと納税_翔米","全国_35-65歳","翔米_お礼品カルーセル",1400,700,0.012,0.012,10000,0.06,0.15],
+    ["ふるさと納税_翔米","全国_35-65歳","翔米_年末駆け込み",700,690,0.009,0.000,10000,0.06,0.0],
+    ["店頭集客_西尾安城","西尾安城10km_全年齢","精米したて店頭_クーポン",600,1450,0.008,0.035,2500,0.22,0.40],
+  ];
+  const head=["レポート開始日","レポート終了日","キャンペーン名","広告セット名","広告名","消化金額 (JPY)","インプレッション","リーチ","フリークエンシー","リンクのクリック","結果","結果インジケーター","購入","購入のコンバージョン値"];
+  const lines=[head.join(",")];
+  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};
+  const start=new Date("2026-09-15T00:00:00");
+  for(let d=0;d<28;d++){
+    const dt=new Date(start.getTime()+d*86400000);
+    const ds=dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+    ads.forEach(a=>{
+      const spend=Math.round(a[3]*(0.85+rnd()*0.3));
+      const imp=Math.round(spend/a[4]*1000);
+      const freq=1+a[8]*(d+1)*0.35;
+      const reach=Math.round(imp/Math.min(freq,1.8));
+      const ctr=a[5]*(1-a[9]*d/27)*(0.8+rnd()*0.4);
+      const clicks=Math.round(imp*ctr);
+      let conv=0;for(let i=0;i<clicks;i++)if(rnd()<a[6])conv++;
+      const val=conv*a[7]*(1+(rnd()<0.3?1:0));
+      lines.push([ds,ds,a[0],a[1],a[2],spend,imp,reach,(imp/reach).toFixed(2),clicks,conv,"actions:offsite_conversion.fb_pixel_purchase",conv,val].join(","));
+    });
+  }
+  loadText(lines.join("\n"),"サンプル（米屋の広告・28日分）");
+}
+</script>
+</body>
+</html>

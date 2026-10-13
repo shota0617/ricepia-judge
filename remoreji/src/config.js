@@ -32,7 +32,6 @@ export const config = {
   // クレジットカード（Stripe）。未設定ならカード決済はデモ（擬似決済）になる。
   stripe: {
     secretKey: env('STRIPE_SECRET_KEY'),
-    publishableKey: env('STRIPE_PUBLISHABLE_KEY'),
     webhookSecret: env('STRIPE_WEBHOOK_SECRET'),
   },
 

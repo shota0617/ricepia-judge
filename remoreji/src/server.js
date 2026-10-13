@@ -310,7 +310,7 @@ export function createServer() {
 if (process.argv[1] && path.resolve(process.argv[1]) === path.join(ROOT, 'src', 'server.js')) {
   createServer().listen(config.port, () => {
     console.log(`リモレジ起動: ${config.baseUrl}  （店員画面 ${config.baseUrl}/staff）`);
-    if (cardIsDemo()) console.log('  カード決済: デモモード（STRIPE_SECRET_KEY / STRIPE_PUBLISHABLE_KEY 未設定）');
+    if (cardIsDemo()) console.log('  カード決済: デモモード（STRIPE_SECRET_KEY 未設定）');
     if (paypayIsDemo()) console.log('  PayPay決済: デモモード（PAYPAY_API_KEY / PAYPAY_API_SECRET / PAYPAY_MERCHANT_ID 未設定）');
     if (!config.staffPassword) console.log(isDemo() ? '  店員ログイン: パスワードなし（デモ）' : '  ⚠ STAFF_PASSWORD が未設定のため店員ログインできません');
   });

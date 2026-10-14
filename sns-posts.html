@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>らいすぴあ SNS投稿メーカー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:'Noto Sans JP','Hiragino Sans',sans-serif;background:#f5f2eb;color:#2d2d1e;min-height:100vh;padding-bottom:60px;}
+input,textarea,button,select{font-family:inherit;}
+@keyframes spin{to{transform:rotate(360deg);}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeIn 0.5s ease;}
+.spinner{width:17px;height:17px;border:2px solid #2d2d1e;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.8s linear infinite;flex-shrink:0;}
+#header{background:#2d2d1e;padding:14px 20px;position:sticky;top:0;z-index:100;}
+#header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;gap:10px;}
+.hlogo{width:32px;height:32px;background:#c8a96e;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.htitle{color:#f5f2eb;font-size:14px;font-weight:700;letter-spacing:0.06em;}
+.hsub{color:#c8a96e;font-size:9px;letter-spacing:0.15em;}
+.hlinks{margin-left:auto;display:flex;gap:6px;}
+.hlink{color:#c8a96e;font-size:11px;text-decoration:none;border:1px solid #6a6a54;border-radius:6px;padding:4px 10px;white-space:nowrap;}
+#main{max-width:960px;margin:0 auto;padding:20px 16px 0;}
+.tabs{display:flex;gap:6px;margin-bottom:12px;}
+.tab{flex:1;padding:11px 8px;border:1.5px solid #c4bfaa;border-radius:10px;background:#fff;color:#5a5a4a;font-size:13px;font-weight:600;cursor:pointer;}
+.tab.active{background:#2d2d1e;border-color:#2d2d1e;color:#f5f2eb;}
+.card{background:#fff;border-radius:14px;border:1px solid #e8e4d8;padding:18px;}
+.card+.card{margin-top:12px;}
+.ctitle{font-size:13px;color:#5a5a4a;font-weight:700;margin-bottom:12px;}
+.muted{color:#9a9a7a;}
+.small{font-size:11px;}
+.btn-primary{width:100%;padding:14px;background:#c8a96e;border:none;border-radius:11px;color:#2d2d1e;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.08em;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-primary:disabled{background:#9a9a7a;cursor:not-allowed;}
+.btn-sm-dark{padding:9px 13px;background:#2d2d1e;border:none;border-radius:9px;color:#f5f2eb;font-size:12px;cursor:pointer;}
+.btn-sm-dark:disabled{background:#9a9a7a;cursor:not-allowed;}
+.btn-sm-ghost{padding:9px 13px;background:#fff;border:1.5px solid #c4bfaa;border-radius:9px;color:#5a5a4a;font-size:12px;cursor:pointer;}
+.field{display:flex;flex-direction:column;gap:5px;}
+.field label,.flabel{font-size:11px;color:#5a5a4a;font-weight:600;}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;color:#2d2d1e;background:#fafaf7;outline:none;}
+.field textarea{line-height:1.7;resize:vertical;}
+.field .hint{font-size:10px;color:#9a9a7a;line-height:1.5;}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;}
+.full{grid-column:1/-1;}
+.chips{display:flex;flex-wrap:wrap;gap:6px;}
+.chip{display:flex;align-items:center;gap:5px;border:1.5px solid #c4bfaa;border-radius:20px;padding:6px 12px;font-size:12px;color:#5a5a4a;cursor:pointer;background:#fff;user-select:none;}
+.chip input{display:none;}
+.chip.on{background:#fdf8ee;border-color:#c8a96e;color:#2d2d1e;font-weight:600;}
+.photo-zone{border:2px dashed #c4bfaa;border-radius:12px;background:#fafaf7;padding:14px;text-align:center;cursor:pointer;font-size:12px;color:#5a5a4a;}
+.photo-prev{display:flex;align-items:center;gap:10px;}
+.photo-prev img{width:72px;height:72px;object-fit:cover;border-radius:9px;border:1px solid #e8e4d8;}
+.error-box{margin-top:12px;padding:13px 15px;background:#fdf0f0;border-radius:9px;border:1px solid #f0c8c8;color:#b05555;font-size:12px;line-height:1.7;}
+.tip-box{padding:10px 14px;background:#fff8ee;border-radius:9px;border:1px solid #e8d8b0;font-size:11px;color:#8a7040;line-height:1.7;}
+.concept{margin-top:16px;padding:12px 14px;background:#faf8f2;border:1px solid #e8e4d8;border-radius:10px;font-size:13px;line-height:1.8;}
+.posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px;margin-top:12px;}
+.post{border:1px solid #e8e4d8;border-radius:12px;padding:14px;background:#fff;display:flex;flex-direction:column;gap:8px;}
+.post-head{display:flex;align-items:center;gap:8px;}
+.post-head .pname{font-size:13px;font-weight:700;}
+.post-head .count{margin-left:auto;font-size:11px;font-variant-numeric:tabular-nums;}
+.post textarea{width:100%;min-height:200px;padding:10px 12px;border:1.5px solid #e8e4d8;border-radius:9px;font-size:13px;line-height:1.75;color:#2d2d1e;background:#fafaf7;outline:none;resize:vertical;}
+.post textarea:focus{border-color:#c8a96e;}
+.meta-line{font-size:11px;color:#5a5a4a;line-height:1.7;}
+.meta-line b{color:#9a9a7a;font-weight:600;margin-right:4px;}
+.checks{display:flex;flex-direction:column;gap:4px;}
+.chk{font-size:11px;line-height:1.6;padding:6px 9px;border-radius:7px;}
+.chk.bad{background:#fdf0f0;border:1px solid #f0c8c8;color:#8a3a3a;}
+.chk.warn{background:#fff8ee;border:1px solid #e8d8b0;color:#7a6030;}
+.chk.good{background:#eef5f0;border:1px solid #c4dccb;color:#2f5a3e;}
+.scenes{border:1px solid #e8e4d8;border-radius:9px;overflow:hidden;}
+.scene{display:grid;grid-template-columns:52px 1fr;font-size:11px;line-height:1.6;border-bottom:1px solid #f0ede4;}
+.scene:last-child{border-bottom:none;}
+.scene .sec{background:#faf8f2;color:#8a7040;font-weight:700;padding:7px 6px;text-align:center;}
+.scene .body{padding:7px 9px;}
+.scene .body span{color:#9a9a7a;}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.ai-sect{font-size:10px;color:#9a9a7a;letter-spacing:0.12em;margin:18px 0 8px;}
+.cal-day{border:1px solid #e8e4d8;border-radius:10px;padding:11px 13px;margin-bottom:8px;background:#fff;}
+.cal-day .d{font-size:12px;font-weight:700;color:#2d2d1e;}
+.cal-day .d .dow{color:#9a9a7a;font-weight:400;margin-left:4px;}
+.cal-day .d .dow.sun{color:#b05555;}.cal-day .d .dow.sat{color:#3a6aa0;}
+.cal-item{display:flex;gap:10px;align-items:flex-start;margin-top:8px;font-size:12px;line-height:1.7;}
+.cal-item .txt{flex:1;}
+.cal-item .txt .sub{color:#7a7a64;font-size:11px;}
+.badge{display:inline-block;border-radius:6px;padding:1px 8px;font-size:10px;font-weight:700;white-space:nowrap;background:#f5f2eb;border:1px solid #e8e4d8;color:#5a5a4a;margin-right:4px;}
+.hist-item{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #f0ede4;font-size:12px;}
+.hist-item:last-child{border-bottom:none;}
+.hist-item .t{flex:1;cursor:pointer;color:#2d2d1e;}
+.hist-item .t .muted{font-size:10px;}
+details summary{cursor:pointer;font-size:12px;color:#5a5a4a;font-weight:600;}
+details[open] summary{margin-bottom:10px;}
+@media (max-width:520px){.hlink{padding:4px 7px;}.posts{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-inner">
+    <div class="hlogo">📣</div>
+    <div>
+      <div class="htitle">らいすぴあ SNS投稿メーカー</div>
+      <div class="hsub">INSTAGRAM / LINE / X / GOOGLE</div>
+    </div>
+    <div class="hlinks">
+      <a class="hlink" href="index.html">🌾 判定</a>
+      <a class="hlink" href="meta-ads.html">📊 広告</a>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+  <div class="tabs">
+    <button class="tab active" id="tabPost" onclick="switchTab('post')">✍️ 投稿を作る</button>
+    <button class="tab" id="tabCal" onclick="switchTab('cal')">📅 投稿カレンダー</button>
+  </div>
+
+  <!-- ───────── 投稿を作る ───────── -->
+  <div id="postMode">
+    <div class="card">
+      <div class="ctitle">① 何を発信しますか</div>
+      <div class="grid2">
+        <div class="field">
+          <label for="purposeSel">投稿の目的</label>
+          <select id="purposeSel"></select>
+        </div>
+        <div class="field">
+          <label for="productSel">紹介する商品（任意）</label>
+          <select id="productSel">
+            <option value="">指定しない</option>
+            <optgroup label="─ プレミアム ─">
+              <option>姫さま（つや姫・減農薬）</option>
+              <option>幻の米（JAながのコシヒカリ）</option>
+            </optgroup>
+            <optgroup label="─ 産地品種 ─">
+              <option>富山コシヒカリ</option>
+              <option>山形 雪若丸</option>
+              <option>佐賀 夢しずく</option>
+              <option>岩手 ひとめぼれ</option>
+              <option>ミルキークイーン</option>
+              <option>減農薬コシヒカリ</option>
+            </optgroup>
+            <optgroup label="─ 愛知産 ─">
+              <option>安城 ハツシモ</option>
+              <option>のどか愛知コシヒカリ</option>
+              <option>あいちのかおり</option>
+              <option>つやっ子（あいちコシヒカリ＋あいちのこころ）</option>
+              <option>西尾 にこまる</option>
+            </optgroup>
+            <optgroup label="─ らいすぴあ オリジナル ─">
+              <option>おにぎりがうまい米</option>
+              <option>花子（あいちのこころ＋中米）</option>
+              <option>コスパ米（あいちのこころ＋中米）</option>
+            </optgroup>
+            <optgroup label="─ 特殊米 ─">
+              <option>ハイガ米（岩手ひとめぼれ）</option>
+              <option>5分づき米（岩手ひとめぼれ）</option>
+              <option>玄米（岩手ひとめぼれ）</option>
+              <option>もっちり玄米</option>
+              <option>もっちり玄米デラックス（黒米入り）</option>
+              <option>愛知コシヒカリ</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="field full">
+          <label for="memo">伝えたいこと・事実メモ</label>
+          <textarea id="memo" rows="4" placeholder="例：2026年産の安城ハツシモが入荷。5kg 3,480円。10/20〜10/31は店頭で精米したての試食あり。粒が大きくてお寿司・カレーに合う。"></textarea>
+          <div class="hint">価格・期間・特典・数量など、書いた事実だけが投稿に使われます（AIは数字を作りません）</div>
+        </div>
+        <div class="field">
+          <label for="postDate">投稿予定日</label>
+          <input id="postDate" type="date"/>
+          <div class="hint">季節感（新米・年末の贈答など）を合わせるのに使います</div>
+        </div>
+        <div class="field">
+          <span class="flabel">写真（任意）</span>
+          <div id="photoZone" class="photo-zone" onclick="document.getElementById('photoInput').click()">📷 投稿に使う写真を選ぶと、AIが写真に合わせて書きます</div>
+          <div id="photoPrev" class="photo-prev" style="display:none;">
+            <img id="photoImg" alt="選んだ写真"/>
+            <button class="btn-sm-ghost" type="button" onclick="clearPhoto()">✕ 外す</button>
+          </div>
+          <input type="file" id="photoInput" accept="image/*" style="display:none;" onchange="onPhoto(event)"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">② どこに投稿しますか</div>
+      <div class="chips" id="platformChips"></div>
+      <div class="grid2" style="margin-top:14px;">
+        <div class="field">
+          <label for="toneSel">文章のトーン</label>
+          <select id="toneSel"></select>
+        </div>
+        <div class="field">
+          <label for="emojiSel">絵文字</label>
+          <select id="emojiSel">
+            <option value="少なめ（1投稿に2〜3個まで）">少なめ</option>
+            <option value="ふつう（要所に適度に）" selected>ふつう</option>
+            <option value="多め（にぎやかに）">多め</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">③ AIで投稿文を作る</div>
+      <details id="shopDetails">
+        <summary>お店の情報・定番ハッシュタグ（この端末に保存）</summary>
+        <div class="grid2" id="shopFields"></div>
+      </details>
+      <div class="field" style="margin-top:12px;">
+        <label for="apiKeyInput">Anthropic API Key</label>
+        <div style="position:relative;">
+          <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" style="padding-right:40px;font-family:monospace;"/>
+          <button onclick="toggleShowKey()" type="button" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9a9a7a;font-size:15px;padding:0;">👁</button>
+        </div>
+        <div class="hint">🔒 キーはこのページを開いている間だけ使用し、保存しません。<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#c8a96e;">console.anthropic.com</a> で取得</div>
+      </div>
+      <button id="genBtn" class="btn-primary" style="margin-top:14px;" onclick="generatePosts()">✨ 投稿文を作る</button>
+      <div id="genError" class="error-box" style="display:none;"></div>
+      <div id="postResult" style="display:none;" class="fade-in"></div>
+    </div>
+
+    <div class="card" id="histCard" style="display:none;">
+      <details>
+        <summary>これまでに作った投稿（この端末に最新20件）</summary>
+        <div id="histList"></div>
+      </details>
+    </div>
+  </div>
+
+  <!-- ───────── 投稿カレンダー ───────── -->
+  <div id="calMode" style="display:none;">
+    <div class="card">
+      <div class="ctitle">① 期間と媒体</div>
+      <div class="grid2">
+        <div class="field">
+          <label for="calStart">開始日</label>
+          <input id="calStart" type="date"/>
+        </div>
+        <div class="field">
+          <label for="calWeeks">期間</label>
+          <select id="calWeeks">
+            <option value="1">1週間</option>
+            <option value="2">2週間</option>
+            <option value="4" selected>4週間</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="calFreq">投稿の頻度（媒体ごと）</label>
+          <select id="calFreq">
+            <option value="週2回">週2回</option>
+            <option value="週3回" selected>週3回</option>
+            <option value="週5回">週5回</option>
+            <option value="毎日">毎日</option>
+          </select>
+          <div class="hint">続けられる頻度がいちばん大切です</div>
+        </div>
+        <div class="field">
+          <span class="flabel">媒体</span>
+          <div class="chips" id="calPlatformChips"></div>
+        </div>
+        <div class="field full">
+          <label for="calFocus">この期間の重点・予定（任意）</label>
+          <textarea id="calFocus" rows="3" placeholder="例：新米の販売を伸ばしたい。10/25（土）に店頭で新米試食会。ふるさと納税（翔米）の申込みを12月までに増やしたい。"></textarea>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:10px;">API Key は「投稿を作る」タブの欄に入力したものを使います</div>
+      <button id="calBtn" class="btn-primary" style="margin-top:14px;" onclick="generateCalendar()">📅 投稿カレンダーを作る</button>
+      <div id="calError" class="error-box" style="display:none;"></div>
+    </div>
+    <div id="calResult" style="display:none;" class="card fade-in"></div>
+  </div>
+</div>
+
+<script>
+const MODEL = "claude-opus-5-5";
+const SHOP_KEY = "ricepia_sns_shop";
+const HIST_KEY = "ricepia_sns_history";
+
+const PURPOSES = [
+  "新米・入荷のお知らせ",
+  "季節のおすすめ商品",
+  "セール・キャンペーン・イベント",
+  "ふるさと納税・贈答",
+  "お米の豆知識・おいしい炊き方",
+  "お店の裏側・5代目の想い",
+  "品質判定AIでの検品の紹介",
+  "お客様の声・レシピ紹介",
+  "その他（メモの内容で）",
+];
+const TONES = [
+  {v:"親しみやすい（ご近所の米屋さんとして、気さくに話しかける）", l:"親しみやすい"},
+  {v:"丁寧・上品（贈答やふるさと納税にふさわしい、落ち着いた文）", l:"丁寧・上品"},
+  {v:"元気・にぎやか（セールやイベントを盛り上げる）", l:"元気・にぎやか"},
+  {v:"職人のこだわり（5代目店主が一人称で語る）", l:"職人のこだわり"},
+];
+// limit：文字数の上限（null は上限なし）、weighted：Xの重み付きカウント、tags：ハッシュタグを使うか
+const PLATFORMS = {
+  instagram:{label:"Instagram フィード",icon:"📷",limit:2200,tags:true,maxTags:30,def:true,
+    rule:"フィード投稿のキャプション。冒頭1〜2行（全角60字以内）で手を止めさせる一文にする（『続きを読む』の前に見える部分）。本文は300〜600字目安、改行で読みやすく。ハッシュタグは8〜15個（店の定番＋地域＋商品＋季節・用途）。キャプションのリンクは押せないので『プロフィールのリンクから』と誘導する"},
+  reel:{label:"Instagram リール",icon:"🎬",limit:2200,tags:true,maxTags:30,
+    rule:"15〜30秒の縦動画。reel_scriptに3〜6カット（秒数・映像・テロップ・ナレーション）。冒頭2秒で惹きつけるカット（精米機から米が流れる、炊き上がりの湯気など）から始める。店主がスマホ1台で撮れる内容にする。textはリールのキャプション（150字前後）、ハッシュタグ5〜10個"},
+  line:{label:"LINE公式アカウント",icon:"💬",limit:500,tags:false,def:true,
+    rule:"友だち登録しているお客様へのメッセージ。500字以内（目安200〜300字）。1行目で要点が分かるようにし、期間・価格・特典など来店や購入の判断に必要な情報と、何をしてほしいか（来店・注文・返信）を明記。ハッシュタグは使わない（hashtagsは空配列）"},
+  x:{label:"X（旧Twitter）",icon:"𝕏",limit:280,weighted:true,tags:true,maxTags:3,
+    rule:"全角140字以内（ハッシュタグ込み。全角は2、半角英数は1、URLは23として数え、合計280以内）。言い切りで短く。ハッシュタグは1〜2個"},
+  facebook:{label:"Facebook",icon:"👍",limit:null,tags:true,maxTags:5,
+    rule:"200〜400字。地域の常連・年配のお客様を意識した、丁寧で読みやすい文。ハッシュタグは0〜3個"},
+  gbp:{label:"Googleビジネスプロフィール",icon:"📍",limit:1500,tags:false,def:true,
+    rule:"Googleマップの『最新情報』投稿。150〜300字。地域名＋お米屋さん・精米・新米など検索されやすい言葉を自然に含める。電話番号は審査で却下されやすいので本文に書かない。ハッシュタグは使わない（hashtagsは空配列）。ctaにはボタンの種類（予約／オンライン注文／購入／詳細／登録／電話）から1つ選び、その理由を添える"},
+};
+const SHOP_FIELDS = [
+  {k:"name", l:"店名の表記", ph:"近藤米穀店 らいすぴあ", def:"近藤米穀店 らいすぴあ"},
+  {k:"area", l:"所在地・商圏", ph:"例：愛知県西尾市（安城・碧南からも来店）"},
+  {k:"hours", l:"営業時間・定休日", ph:"例：9:00〜18:00／日曜定休"},
+  {k:"url", l:"通販・予約のURL", ph:"https://..."},
+  {k:"tags", l:"毎回入れる定番ハッシュタグ", ph:"#らいすぴあ #近藤米穀店 #お米屋さん", def:"#らいすぴあ #近藤米穀店 #お米屋さん #精米したて"},
+  {k:"style", l:"文体の決まりごと", ph:"例：店主の一人称は「わたし」。「〜ですよ」より「〜です」"},
+];
+const DOW = ["日","月","火","水","木","金","土"];
+
+// ───────── ユーティリティ ─────────
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function parseYmd(s){const m=String(s||"").match(/^(\d{4})-(\d{2})-(\d{2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function dateLabel(s){const d=parseYmd(s);return d?`${d.getMonth()+1}/${d.getDate()}（${DOW[d.getDay()]}）`:s;}
+function lsGet(k,fb){try{const v=JSON.parse(localStorage.getItem(k));return v==null?fb:v;}catch{return fb;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+
+// X は全角・絵文字を2、半角英数を1、URLを23として数える（twitter-text の重み付けに準拠）
+function xLength(s){
+  let n=0;
+  s=s.replace(/https?:\/\/\S+/g,()=>{n+=23;return "";});
+  for(const ch of s){
+    const c=ch.codePointAt(0);
+    n+=(c<=0x10FF||(c>=0x2000&&c<=0x200D)||(c>=0x2010&&c<=0x201F)||(c>=0x2032&&c<=0x2037))?1:2;
+  }
+  return n;
+}
+function charLength(s){return [...s].length;}
+
+// ───────── 表示の切り替え・初期化 ─────────
+function switchTab(t){
+  document.getElementById("postMode").style.display=t==="post"?"block":"none";
+  document.getElementById("calMode").style.display=t==="cal"?"block":"none";
+  document.getElementById("tabPost").classList.toggle("active",t==="post");
+  document.getElementById("tabCal").classList.toggle("active",t==="cal");
+}
+function chipHtml(name,key,p,checked){
+  return `<label class="chip${checked?" on":""}"><input type="checkbox" name="${name}" value="${key}"${checked?" checked":""} onchange="this.parentNode.classList.toggle('on',this.checked)"/>${p.icon} ${esc(p.label)}</label>`;
+}
+function checkedPlatforms(name){return [...document.querySelectorAll(`input[name="${name}"]:checked`)].map(i=>i.value);}
+function setPlatforms(name,keys){document.querySelectorAll(`input[name="${name}"]`).forEach(i=>{i.checked=keys.includes(i.value);i.parentNode.classList.toggle("on",i.checked);});}
+
+function init(){
+  document.getElementById("purposeSel").innerHTML=PURPOSES.map(p=>`<option>${esc(p)}</option>`).join("");
+  document.getElementById("toneSel").innerHTML=TONES.map(t=>`<option value="${esc(t.v)}">${esc(t.l)}</option>`).join("");
+  document.getElementById("platformChips").innerHTML=Object.entries(PLATFORMS).map(([k,p])=>chipHtml("pf",k,p,p.def)).join("");
+  document.getElementById("calPlatformChips").innerHTML=Object.entries(PLATFORMS).map(([k,p])=>chipHtml("calpf",k,p,k==="instagram"||k==="line")).join("");
+  const today=new Date();
+  document.getElementById("postDate").value=ymd(today);
+  const mon=new Date(today);mon.setDate(today.getDate()+((8-today.getDay())%7||7));
+  document.getElementById("calStart").value=ymd(mon);
+  const shop=lsGet(SHOP_KEY,{});
+  document.getElementById("shopFields").innerHTML=SHOP_FIELDS.map(f=>`<div class="field${f.k==="style"?" full":""}"><label for="shop_${f.k}">${esc(f.l)}</label><input id="shop_${f.k}" placeholder="${esc(f.ph)}" value="${esc(shop[f.k]!=null?shop[f.k]:(f.def||""))}" oninput="saveShop()"/></div>`).join("");
+  renderHistory();
+}
+function shopInfo(){const o={};SHOP_FIELDS.forEach(f=>{o[f.k]=document.getElementById("shop_"+f.k).value.trim();});return o;}
+function saveShop(){lsSet(SHOP_KEY,shopInfo());}
+function toggleShowKey(){const i=document.getElementById("apiKeyInput");i.type=i.type==="password"?"text":"password";}
+
+// ───────── 写真 ─────────
+let photo=null; // {media_type, data(base64), url}
+function onPhoto(e){
+  const f=e.target.files[0];e.target.value="";
+  if(!f)return;
+  const img=new Image();
+  img.onload=()=>{
+    // 送信量を抑えるため長辺1568pxに縮小（Claudeの画像入力の推奨上限）
+    const s=Math.min(1,1568/Math.max(img.width,img.height));
+    const c=document.createElement("canvas");c.width=Math.round(img.width*s);c.height=Math.round(img.height*s);
+    c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    const url=c.toDataURL("image/jpeg",0.85);
+    URL.revokeObjectURL(img.src);
+    photo={media_type:"image/jpeg",data:url.split(",")[1],url};
+    document.getElementById("photoImg").src=url;
+    document.getElementById("photoPrev").style.display="flex";
+    document.getElementById("photoZone").style.display="none";
+  };
+  img.onerror=()=>{URL.revokeObjectURL(img.src);alert("この画像は読み込めませんでした");};
+  img.src=URL.createObjectURL(f);
+}
+function clearPhoto(){
+  photo=null;
+  document.getElementById("photoPrev").style.display="none";
+  document.getElementById("photoZone").style.display="block";
+}
+
+// ───────── 表示チェック（景品表示法・食品表示・各媒体の制限） ─────────
+const RULES = [
+  {re:/日本一|世界一|業界一|地域一|No\.?\s?1|ナンバーワン|ナンバー1|最高級|最高品質|最上級|究極|どこよりも|一番(安|おいし|美味)|最安/i, lvl:"bad",
+    msg:"根拠のない最上級・比較表現の可能性（景品表示法）。受賞歴など客観的な根拠がなければ言い換えを"},
+  {re:/絶対|必ず|100\s?%|１００％|完全/, lvl:"warn", msg:"断定表現。誤解を招かないか確認を"},
+  {re:/痩せ|やせる|ダイエット効果|血糖値|病気|治る|治す|免疫|若返|デトックス|がん予防|便秘(が|を)?(解消|改善)/, lvl:"bad",
+    msg:"健康効果を断定する表現の可能性（薬機法・健康増進法）。「食物繊維を含む」など事実の範囲に"},
+  {re:/無農薬/, lvl:"bad", msg:"「無農薬」は特別栽培農産物の表示ガイドラインで使えない表示です。「農薬不使用（栽培期間中）」など正しい表記に"},
+  {re:/減農薬/, lvl:"warn", msg:"「減農薬」は表示ガイドラインで使用不可の表示。商品名として使う場合も「特別栽培米（節減対象農薬◯割減）」などの併記を検討"},
+];
+function checkPost(key,text,dateStr){
+  const p=PLATFORMS[key],out=[];
+  const len=p.weighted?xLength(text):charLength(text);
+  if(p.limit&&len>p.limit)out.push({lvl:"bad",msg:`文字数オーバー（${len} / ${p.limit}${p.weighted?"・全角2で計算":""}）`});
+  const tags=(text.match(/[#＃][^\s#＃]+/g)||[]).length;
+  if(!p.tags&&tags)out.push({lvl:"warn",msg:`${p.label}ではハッシュタグは効果がほぼありません（${tags}個）`});
+  if(p.maxTags&&tags>p.maxTags)out.push({lvl:"bad",msg:`ハッシュタグが多すぎます（${tags} / 上限${p.maxTags}）`});
+  if(key==="gbp"&&/0\d{1,4}-?\d{1,4}-?\d{3,4}/.test(text))out.push({lvl:"warn",msg:"電話番号が入っていると投稿が却下されることがあります。ボタンの「電話」を使ってください"});
+  if(key==="instagram"||key==="reel"){
+    const first=text.split("\n")[0];
+    if(charLength(first)>60)out.push({lvl:"warn",msg:"1行目が長めです。『続きを読む』の前に見えるのは60字ほど"});
+  }
+  RULES.forEach(r=>{const m=text.match(r.re);if(m)out.push({lvl:r.lvl,msg:`「${m[0]}」… ${r.msg}`});});
+  // 「新米」表示は生産年の12月31日までに精米・包装されたものに限る（玄米及び精米品質表示基準）
+  const d=parseYmd(dateStr)||new Date();
+  if(/新米/.test(text)&&d.getMonth()<=6)out.push({lvl:"warn",msg:"「新米」と表示できるのは生産年の12月31日までに精米・包装したお米です。年をまたいだ米の表現に注意"});
+  if(!out.length)out.push({lvl:"good",msg:"表示チェック：気になる表現は見つかりませんでした"});
+  return {len,out};
+}
+
+// ───────── AI 呼び出し ─────────
+const POST_SCHEMA = {
+  type:"object",additionalProperties:false,required:["concept","posts","notes"],
+  properties:{
+    concept:{type:"string"},
+    posts:{type:"array",items:{type:"object",additionalProperties:false,
+      required:["platform","text","hashtags","visual","best_time","cta","reel_script"],
+      properties:{
+        platform:{type:"string",enum:Object.keys(PLATFORMS)},
+        text:{type:"string"},
+        hashtags:{type:"array",items:{type:"string"}},
+        visual:{type:"string"},
+        best_time:{type:"string"},
+        cta:{type:"string"},
+        reel_script:{type:"array",items:{type:"object",additionalProperties:false,required:["sec","scene","telop","narration"],
+          properties:{sec:{type:"string"},scene:{type:"string"},telop:{type:"string"},narration:{type:"string"}}}},
+      }}},
+    notes:{type:"array",items:{type:"string"}},
+  },
+};
+const CAL_SCHEMA = {
+  type:"object",additionalProperties:false,required:["theme","items","tips"],
+  properties:{
+    theme:{type:"string"},
+    items:{type:"array",items:{type:"object",additionalProperties:false,
+      required:["date","platform","purpose","title","outline","visual"],
+      properties:{
+        date:{type:"string"},
+        platform:{type:"string",enum:Object.keys(PLATFORMS)},
+        purpose:{type:"string",enum:PURPOSES},
+        title:{type:"string"},
+        outline:{type:"string"},
+        visual:{type:"string"},
+      }}},
+    tips:{type:"array",items:{type:"string"}},
+  },
+};
+
+function shopBlock(){
+  const s=shopInfo(),L=[];
+  L.push(`店名：${s.name||"近藤米穀店 らいすぴあ"}`);
+  if(s.area)L.push(`所在地・商圏：${s.area}`);
+  if(s.hours)L.push(`営業時間・定休日：${s.hours}`);
+  if(s.url)L.push(`通販・予約URL：${s.url}`);
+  if(s.tags)L.push(`毎回入れる定番ハッシュタグ（ハッシュタグを使う媒体のみ）：${s.tags}`);
+  if(s.style)L.push(`文体の決まりごと：${s.style}`);
+  return L.join("\n");
+}
+const BASE_SYSTEM = `あなたは近藤米穀店「らいすぴあ」（愛知県の創業130余年の老舗米店。5代目店主が目利きした米を、注文ごとに精米したてで店頭・通販・ふるさと納税で販売。写真から精米の品質を採点する「品質判定AI」も自社で運用）のSNS担当です。
+小さな地域のお米屋さんが、無理なく続けられて、来店・注文につながる投稿を作ってください。
+
+【書き方の原則】
+- 使ってよい事実は、店の情報と依頼メモ・写真に書かれていることだけ。価格・期間・数量・受賞歴・産地などを作らない。不足していれば、その部分を「◯◯円」「◯/◯まで」のように伏せ字にし、notesで補うよう伝える
+- 大手の通販にはない「人の顔が見える米屋」らしさを出す：精米したての香り、5代目の目利き、品種ごとの食べ方の提案、地域とのつながり
+- 季節を活かす：新米（9〜11月）、年末年始の贈答・お餅、ふるさと納税の駆け込み（10〜12月）、梅雨〜夏の保存・虫対策、行事（お彼岸・運動会・お弁当・おにぎり）
+- 媒体ごとに、その場所で読まれる長さと書き方に変える。同じ文の使い回しにしない
+- 読み手が次にすること（来店・注文・保存・コメント）を1つだけはっきり示す
+
+【表示のルール（必ず守る）】
+- 景品表示法：「日本一」「最高級」「No.1」「どこよりも安い」など根拠のない最上級・比較表現は使わない
+- 健康効果を断定しない（薬機法・健康増進法）：「痩せる」「血糖値が下がる」「免疫が上がる」などは不可。「胚芽が残っている」「食物繊維を含む」など事実の範囲で
+- 「無農薬」「減農薬」は表示ガイドラインで使えない表示。商品名に含まれる場合は商品名としてのみ使い、説明文では使わない
+- 「新米」と書けるのは、生産年の12月31日までに精米・包装した米だけ
+- 品質判定AIの結果に触れるときは「AIで検品している」という事実にとどめ、点数やグレードを品質の保証のように書かない
+
+【店の情報】
+`;
+
+async function callClaude({system,messages,schema,effort,btn,busyLabel}){
+  const apiKey=document.getElementById("apiKeyInput").value.trim();
+  if(apiKey.length<=10)throw new Error("Anthropic API Key を「投稿を作る」タブの③に入力してください");
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:MODEL,max_tokens:32000,fallbacks:"default",
+      output_config:{effort,format:{type:"json_schema",schema}},
+      system,messages})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
+  const out=await res.json();
+  if(out.stop_reason==="refusal")throw new Error("AIが作成を辞退しました。メモの内容を見直してもう一度お試しください");
+  if(out.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。媒体を減らしてもう一度お試しください");
+  const text=out.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
+  return {json:JSON.parse(text),text};
+}
+function showError(boxId,e){
+  const eb=document.getElementById(boxId);
+  const msg=e&&e.message?e.message:String(e);
+  eb.style.display="block";eb.textContent="エラー: "+msg;
+  if(msg.includes("401")||/api.?key/i.test(msg))eb.innerHTML+=`<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
+  if(msg.includes("Failed to fetch")||msg.includes("NetworkError"))eb.innerHTML+=`<br/><span style="font-size:11px;">→ ネットワークエラー。接続を確認してください</span>`;
+}
+
+// ───────── 投稿を作る ─────────
+let convo=null;   // 修正指示で作り直すための直前の会話 {system, messages, assistantText, input}
+let lastPosts=null;
+
+function collectPostInput(){
+  return {
+    purpose:document.getElementById("purposeSel").value,
+    product:document.getElementById("productSel").value,
+    memo:document.getElementById("memo").value.trim(),
+    date:document.getElementById("postDate").value,
+    platforms:checkedPlatforms("pf"),
+    tone:document.getElementById("toneSel").value,
+    emoji:document.getElementById("emojiSel").value,
+  };
+}
+function buildPostMessage(inp){
+  const L=[];
+  const d=parseYmd(inp.date)||new Date();
+  L.push(`# 投稿予定日\n${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${DOW[d.getDay()]}）`);
+  L.push(`# 投稿の目的\n${inp.purpose}`);
+  if(inp.product)L.push(`# 紹介する商品\n${inp.product}`);
+  L.push(`# 伝えたいこと・事実メモ\n${inp.memo||"（なし。目的と季節から、事実を作らずに書ける内容で）"}`);
+  L.push(`# トーン\n${inp.tone}\n絵文字：${inp.emoji}`);
+  L.push(`# 作る媒体と書き方\n`+inp.platforms.map(k=>`- ${k}（${PLATFORMS[k].label}）：${PLATFORMS[k].rule}`).join("\n"));
+  if(photo)L.push("# 写真\n添付の写真をこの投稿に使います。写っているものを正確に読み取り、文章と合わせてください。写真から分からないこと（品種・産地など）は断定しない。visualには写真の使い方（トリミング・何枚目にするか・追加で撮ると良いカット）を書く");
+  else L.push("# 写真\nまだありません。visualには、店主がスマホで撮れる具体的な写真・動画の撮り方（被写体・構図・光）を書く");
+  L.push(`# 出力
+- concept：今回の投稿の狙いを1〜2文で
+- posts：上の媒体ごとに1つずつ（platformは媒体のキー）。textは本文のみでハッシュタグは含めない。hashtagsは「#」付き。best_timeはその媒体で読まれやすい曜日・時間帯と理由。ctaは読み手にしてほしい行動。reel_scriptはreelのときだけ埋め、他は空配列
+- notes：投稿前に店が確認・補うべきこと（伏せ字の箇所、事実確認など）。なければ空配列`);
+  return L.join("\n\n");
+}
+
+async function generatePosts(){
+  const eb=document.getElementById("genError");eb.style.display="none";
+  const inp=collectPostInput();
+  if(!inp.platforms.length){showError("genError",new Error("投稿する媒体を1つ以上選んでください"));return;}
+  const system=BASE_SYSTEM+shopBlock();
+  const content=[];
+  if(photo)content.push({type:"image",source:{type:"base64",media_type:photo.media_type,data:photo.data}});
+  content.push({type:"text",text:buildPostMessage(inp)});
+  await runPosts({system,messages:[{role:"user",content}],input:inp});
+}
+async function refinePosts(){
+  const ins=document.getElementById("refineInput").value.trim();
+  if(!convo||!ins)return;
+  const messages=[...convo.messages,{role:"assistant",content:convo.assistantText},
+    {role:"user",content:`次の修正指示に従って、同じ出力形式で全体を作り直してください。指示に関係ない部分は良いところを残してください。\n\n# 修正指示\n${ins}`}];
+  await runPosts({system:convo.system,messages,input:convo.input,refine:ins});
+}
+async function runPosts({system,messages,input,refine}){
+  const btn=document.getElementById("genBtn"),rb=document.getElementById("refineBtn");
+  const eb=document.getElementById("genError");eb.style.display="none";
+  btn.disabled=true;btn.innerHTML=`<span class="spinner"></span>投稿文を作成中...（30秒ほど）`;
+  if(rb){rb.disabled=true;rb.textContent="作り直し中...";}
+  try{
+    const {json,text}=await callClaude({system,messages,schema:POST_SCHEMA,effort:"medium"});
+    convo={system,messages,assistantText:text,input};
+    renderPosts(json,input);
+    addHistory({at:new Date().toISOString(),input,result:json,refine:refine||""});
+  }catch(e){
+    showError("genError",e);
+    if(rb){rb.disabled=false;rb.textContent="↻ 作り直す";}
+  }finally{
+    btn.disabled=false;btn.innerHTML="✨ 投稿文を作る";
+  }
+}
+
+function composeText(p){
+  const tags=(p.hashtags||[]).map(t=>t.trim()).filter(Boolean).map(t=>/^[#＃]/.test(t)?t:"#"+t);
+  return p.text.trim()+(tags.length?"\n\n"+tags.join(" "):"");
+}
+function renderPosts(r,input){
+  lastPosts={r,input};
+  const order=Object.keys(PLATFORMS);
+  const posts=(r.posts||[]).filter(p=>PLATFORMS[p.platform]).sort((a,b)=>order.indexOf(a.platform)-order.indexOf(b.platform));
+  let h=`<div class="concept"><span class="muted small">狙い</span><br/>${esc(r.concept)}</div>`;
+  h+=`<div class="posts">`+posts.map((p,i)=>{
+    const pf=PLATFORMS[p.platform];
+    let s=`<div class="post"><div class="post-head"><span style="font-size:16px;">${pf.icon}</span><span class="pname">${esc(pf.label)}</span><span class="count" id="cnt${i}"></span></div>`;
+    s+=`<textarea id="txt${i}" data-pf="${p.platform}" oninput="updateCheck(${i})">${esc(composeText(p))}</textarea>`;
+    s+=`<div class="checks" id="chk${i}"></div>`;
+    if(p.platform==="reel"&&p.reel_script?.length){
+      s+=`<div class="scenes">`+p.reel_script.map(c=>`<div class="scene"><div class="sec">${esc(c.sec)}</div><div class="body">${esc(c.scene)}${c.telop?`<br/><span>テロップ：</span>${esc(c.telop)}`:""}${c.narration?`<br/><span>声：</span>${esc(c.narration)}`:""}</div></div>`).join("")+`</div>`;
+    }
+    s+=`<div class="meta-line"><b>写真・動画</b>${esc(p.visual)}</div>`;
+    s+=`<div class="meta-line"><b>おすすめ時間</b>${esc(p.best_time)}</div>`;
+    if(p.cta)s+=`<div class="meta-line"><b>行動の呼びかけ</b>${esc(p.cta)}</div>`;
+    s+=`<div class="row"><button class="btn-sm-dark" onclick="copyPost(${i},this)">📋 コピー</button>${p.platform==="reel"&&p.reel_script?.length?`<button class="btn-sm-ghost" onclick="copyScript(${i},this)">🎬 台本をコピー</button>`:""}</div></div>`;
+    return s;
+  }).join("")+`</div>`;
+  if(r.notes?.length)h+=`<div class="ai-sect">投稿前に確認すること</div><div class="tip-box">${r.notes.map(n=>"・"+esc(n)).join("<br/>")}</div>`;
+  h+=`<div class="ai-sect">修正して作り直す</div>
+    <div class="field"><textarea id="refineInput" rows="2" placeholder="例：全体をもう少し短く。LINEは試食会の日時を先頭に。Instagramは絵文字を減らして上品に。"></textarea></div>
+    <div class="row" style="margin-top:8px;"><button class="btn-sm-dark" id="refineBtn" onclick="refinePosts()"${convo?"":" disabled"}>↻ 作り直す</button><span class="muted small">${convo?"":"履歴から開いた投稿は、作り直しできません"}</span></div>`;
+  const el=document.getElementById("postResult");el.innerHTML=h;el.style.display="block";
+  posts.forEach((p,i)=>updateCheck(i));
+  window._posts=posts;
+}
+function updateCheck(i){
+  const ta=document.getElementById("txt"+i);if(!ta)return;
+  const key=ta.dataset.pf,pf=PLATFORMS[key];
+  const date=lastPosts?.input?.date;
+  const {len,out}=checkPost(key,ta.value,date);
+  const cnt=document.getElementById("cnt"+i);
+  cnt.textContent=pf.limit?`${len} / ${pf.limit}${pf.weighted?"（全角2）":""}`:`${len}字`;
+  cnt.style.color=pf.limit&&len>pf.limit?"#b05555":"#9a9a7a";
+  document.getElementById("chk"+i).innerHTML=out.map(c=>`<div class="chk ${c.lvl}">${esc(c.msg)}</div>`).join("");
+}
+async function copyText(text,btn){
+  const orig=btn.textContent;
+  try{await navigator.clipboard.writeText(text);btn.textContent="✅ コピーしました";}
+  catch{btn.textContent="コピーできませんでした";}
+  setTimeout(()=>{btn.textContent=orig;},2000);
+}
+function copyPost(i,btn){copyText(document.getElementById("txt"+i).value,btn);}
+function copyScript(i,btn){
+  const p=window._posts[i];
+  copyText(p.reel_script.map(c=>`【${c.sec}】${c.scene}\nテロップ：${c.telop}\n声：${c.narration}`).join("\n\n"),btn);
+}
+
+// ───────── 履歴（この端末のみ） ─────────
+function addHistory(entry){
+  const h=lsGet(HIST_KEY,[]);
+  h.unshift(entry);
+  lsSet(HIST_KEY,h.slice(0,20));
+  renderHistory();
+}
+function renderHistory(){
+  const h=lsGet(HIST_KEY,[]);
+  document.getElementById("histCard").style.display=h.length?"block":"none";
+  document.getElementById("histList").innerHTML=h.map((e,i)=>{
+    const d=new Date(e.at);
+    const pfs=(e.input?.platforms||[]).map(k=>PLATFORMS[k]?.icon||"").join("");
+    return `<div class="hist-item"><div class="t" onclick="openHistory(${i})">${esc(e.input?.purpose||"")}${e.input?.product?"／"+esc(e.input.product):""} ${pfs}<br/><span class="muted">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}${e.refine?"・修正："+esc(e.refine.slice(0,30)):""}</span></div><button class="btn-sm-ghost" onclick="deleteHistory(${i})" aria-label="削除">✕</button></div>`;
+  }).join("");
+}
+function openHistory(i){
+  const e=lsGet(HIST_KEY,[])[i];if(!e)return;
+  convo=null;
+  renderPosts(e.result,e.input);
+  document.getElementById("postResult").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function deleteHistory(i){
+  const h=lsGet(HIST_KEY,[]);h.splice(i,1);lsSet(HIST_KEY,h);renderHistory();
+}
+
+// ───────── 投稿カレンダー ─────────
+let lastCal=null;
+async function generateCalendar(){
+  const eb=document.getElementById("calError");eb.style.display="none";
+  const platforms=checkedPlatforms("calpf");
+  if(!platforms.length){showError("calError",new Error("媒体を1つ以上選んでください"));return;}
+  const start=parseYmd(document.getElementById("calStart").value);
+  if(!start){showError("calError",new Error("開始日を入力してください"));return;}
+  const weeks=+document.getElementById("calWeeks").value;
+  const end=new Date(start);end.setDate(start.getDate()+weeks*7-1);
+  const freq=document.getElementById("calFreq").value;
+  const focus=document.getElementById("calFocus").value.trim();
+  const btn=document.getElementById("calBtn");
+  btn.disabled=true;btn.innerHTML=`<span class="spinner"></span>カレンダーを作成中...（1分ほど）`;
+  try{
+    const msg=[
+      `# 期間\n${ymd(start)}（${DOW[start.getDay()]}）〜 ${ymd(end)}（${DOW[end.getDay()]}）の${weeks}週間`,
+      `# 媒体と頻度\n`+platforms.map(k=>`- ${k}（${PLATFORMS[k].label}）：${freq}`).join("\n"),
+      `# この期間の重点・予定\n${focus||"（特になし。季節と店の強みから考える）"}`,
+      `# 出力
+- theme：この期間の発信テーマを1文で
+- items：投稿予定を日付順に。dateは YYYY-MM-DD。platformは媒体のキー。purposeは用意された選択肢から。titleは投稿のネタを20字前後で、outlineは内容の要点（使う事実・切り口）を2〜3文で、visualは撮る写真・動画
+- 同じ切り口が続かないよう、販売の投稿・役立つ投稿・お店の人柄が伝わる投稿をバランスよく混ぜる（販売色の強い投稿は全体の3割程度まで）
+- イベントや締切の前には予告→前日→当日のように段階を踏む。土日・月末・給料日・行事の日も意識する
+- tips：この期間の運用のコツを2〜4個`,
+    ].join("\n\n");
+    const {json}=await callClaude({system:BASE_SYSTEM+shopBlock(),messages:[{role:"user",content:msg}],schema:CAL_SCHEMA,effort:"medium"});
+    renderCalendar(json);
+  }catch(e){showError("calError",e);}
+  finally{btn.disabled=false;btn.innerHTML="📅 投稿カレンダーを作る";}
+}
+function renderCalendar(r){
+  const items=(r.items||[]).filter(x=>PLATFORMS[x.platform]).sort((a,b)=>a.date.localeCompare(b.date));
+  lastCal={theme:r.theme,items,tips:r.tips||[]};
+  const byDate={};items.forEach((x,i)=>{(byDate[x.date]=byDate[x.date]||[]).push({...x,i});});
+  let h=`<div class="row" style="justify-content:space-between;"><div class="ctitle" style="margin:0;">② 投稿カレンダー</div><button class="btn-sm-ghost" onclick="downloadCalendar()">⬇ CSV</button></div>`;
+  h+=`<div class="concept">${esc(r.theme)}</div><div style="margin-top:12px;">`;
+  h+=Object.keys(byDate).sort().map(d=>{
+    const dt=parseYmd(d),dow=dt?dt.getDay():-1;
+    return `<div class="cal-day"><div class="d">${dt?`${dt.getMonth()+1}/${dt.getDate()}`:esc(d)}<span class="dow${dow===0?" sun":dow===6?" sat":""}">${dow>=0?DOW[dow]:""}</span></div>`+
+      byDate[d].map(x=>`<div class="cal-item"><div class="txt"><span class="badge">${PLATFORMS[x.platform].icon} ${esc(PLATFORMS[x.platform].label)}</span><b>${esc(x.title)}</b><br/>${esc(x.outline)}<br/><span class="sub">📷 ${esc(x.visual)}</span></div><button class="btn-sm-ghost" onclick="calToPost(${x.i})">✍️ 下書き</button></div>`).join("")+`</div>`;
+  }).join("");
+  h+=`</div>`;
+  if(lastCal.tips.length)h+=`<div class="ai-sect">運用のコツ</div><div class="tip-box">${lastCal.tips.map(t=>"・"+esc(t)).join("<br/>")}</div>`;
+  const el=document.getElementById("calResult");el.innerHTML=h;el.style.display="block";
+}
+// カレンダーの1件を「投稿を作る」フォームに流し込む
+function calToPost(i){
+  const x=lastCal?.items[i];if(!x)return;
+  const ps=document.getElementById("purposeSel");
+  ps.value=PURPOSES.includes(x.purpose)?x.purpose:PURPOSES[PURPOSES.length-1];
+  document.getElementById("productSel").value="";
+  document.getElementById("memo").value=`${x.title}\n${x.outline}`;
+  if(parseYmd(x.date))document.getElementById("postDate").value=x.date;
+  setPlatforms("pf",[x.platform]);
+  switchTab("post");
+  document.getElementById("memo").focus();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function downloadCalendar(){
+  if(!lastCal)return;
+  const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const rows=[["日付","曜日","媒体","目的","ネタ","内容","写真・動画"].map(q).join(",")];
+  lastCal.items.forEach(x=>{const d=parseYmd(x.date);rows.push([x.date,d?DOW[d.getDay()]:"",PLATFORMS[x.platform].label,x.purpose,x.title,x.outline,x.visual].map(q).join(","));});
+  // Excelで文字化けしないようBOM付きUTF-8
+  const blob=new Blob(["﻿"+rows.join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`投稿カレンダー_${lastCal.items[0]?.date||ymd(new Date())}.csv`;
+  a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+init();
+</script>
+</body>
+</html>

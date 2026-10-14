@@ -192,12 +192,12 @@ details[open] summary{margin-bottom:8px;}
           <textarea id="context" rows="3" placeholder="例：新米の通販（5kg 3,980円）への誘導が目的。LPは自社ECの商品ページ。10/1から新米訴求の動画広告に切り替えた。月の予算は5万円。"></textarea>
         </div>
         <div class="field" style="grid-column:1/-1;">
-          <label for="apiKeyInput">Anthropic API Key</label>
+          <label for="apiKeyInput">Gemini API Key</label>
           <div style="position:relative;">
-            <input type="password" id="apiKeyInput" placeholder="sk-ant-..." autocomplete="off" style="padding-right:40px;font-family:monospace;"/>
+            <input type="password" id="apiKeyInput" placeholder="AIza..." autocomplete="off" style="padding-right:40px;font-family:monospace;"/>
             <button onclick="toggleShowKey()" id="eyeBtn" type="button" style="position:absolute;right:11px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9a9a7a;font-size:15px;padding:0;">👁</button>
           </div>
-          <div class="hint">🔒 キーはこのページを開いている間だけ使用し、保存しません。<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#c8a96e;">console.anthropic.com</a> で取得</div>
+          <div class="hint">🔒 キーはこのページを開いている間だけ使用し、保存しません。<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" style="color:#c8a96e;">Google AI Studio</a> で取得</div>
         </div>
       </div>
       <button id="aiBtn" class="btn-primary" style="margin-top:14px;" onclick="runAi()">✨ AIで改善提案を作る</button>
@@ -209,7 +209,7 @@ details[open] summary{margin-bottom:8px;}
 
 <script>
 const SETTINGS_KEY = "ricepia_meta_ads_settings";
-const MODEL = "claude-opus-5-5";
+const MODEL = "gemini-4-argon";
 
 // ───────── 列名の対応表（日本語 / 英語の広告マネージャ出力） ─────────
 const COLS = {
@@ -757,29 +757,30 @@ async function runAi(){
   const eb=document.getElementById("aiError");
   eb.style.display="none";
   if(!analysis){return;}
-  if(apiKey.length<=10){eb.style.display="block";eb.textContent="Anthropic API Key を入力してください";return;}
+  if(apiKey.length<=10){eb.style.display="block";eb.textContent="Gemini API Key を入力してください";return;}
   const btn=document.getElementById("aiBtn");
   btn.disabled=true;btn.innerHTML=`<span class="spinner"></span>AIが分析中...（1分ほどかかります）`;
   document.getElementById("aiResult").style.display="none";
   try{
-    const res=await fetch("https://api.anthropic.com/v1/messages",{
+    const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent",{
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-beta":"server-side-fallback-2026-07-01","anthropic-dangerous-direct-browser-access":"true"},
-      body:JSON.stringify({model:MODEL,max_tokens:32000,fallbacks:"default",
-        output_config:{effort:"high",format:{type:"json_schema",schema:AI_SCHEMA}},
-        system:buildSystem(),
-        messages:[{role:"user",content:buildUserMessage()}]})
+      headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
+      body:JSON.stringify({
+        systemInstruction:{parts:[{text:buildSystem()}]},
+        contents:[{role:"user",parts:[{text:buildUserMessage()}]}],
+        generationConfig:{maxOutputTokens:32768,responseMimeType:"application/json",responseJsonSchema:AI_SCHEMA,thinkingConfig:{thinkingLevel:"HIGH"}}})
     });
     if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||`HTTP ${res.status}`);}
     const out=await res.json();
-    if(out.stop_reason==="refusal")throw new Error("AIが分析を辞退しました。補足情報を見直してもう一度お試しください");
-    if(out.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
-    const text=out.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
+    const cand=out.candidates?.[0];
+    if(out.promptFeedback?.blockReason||!cand||/SAFETY|PROHIBITED|BLOCKLIST|SPII|RECITATION/.test(cand.finishReason||""))throw new Error("AIが分析を辞退しました。補足情報を見直してもう一度お試しください");
+    if(cand.finishReason==="MAX_TOKENS")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
+    const text=(cand.content?.parts||[]).filter(p=>p.text&&!p.thought).map(p=>p.text).join("");
     renderAi(JSON.parse(text));
   }catch(e){
     const msg=e&&e.message?e.message:String(e);
     eb.style.display="block";eb.textContent="AI分析エラー: "+msg;
-    if(msg.includes("401")||/api.?key/i.test(msg))eb.innerHTML+=`<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
+    if(/40[13]|api.?key/i.test(msg))eb.innerHTML+=`<br/><span style="font-size:11px;">→ APIキーを確認してください</span>`;
     if(msg.includes("Failed to fetch")||msg.includes("NetworkError"))eb.innerHTML+=`<br/><span style="font-size:11px;">→ ネットワークエラー。接続を確認してください</span>`;
   }finally{
     btn.disabled=false;btn.innerHTML="✨ AIで改善提案を作る";

@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>精米品質AI判定｜写真で白度・光沢・割れを12項目採点 - らいすぴあ（近藤米穀店）</title>
 <meta name="description" content="精米の写真を撮るだけで、AIが白度・光沢・粒揃い・割れ・着色粒・乳白粒など12項目を0〜100点で採点し、S〜Dの5段階でグレード判定。創業130余年の米店「近藤米穀店 らいすぴあ」の5代目基準で判定する無料の精米品質チェックツールです。"/>
 <meta name="robots" content="index,follow,max-image-preview:large"/>
@@ -106,7 +106,9 @@
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'"/>
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/></noscript>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:'Noto Sans JP','Hiragino Sans',sans-serif;background:#f5f2eb;min-height:100vh;padding-bottom:60px;}
@@ -180,7 +182,7 @@ input,textarea,button{font-family:inherit;}
     <div class="api-card">
       <div style="font-size:12px;color:#5a5a4a;font-weight:600;margin-bottom:4px;">Anthropic API Key</div>
       <div style="font-size:11px;color:#9a9a7a;margin-bottom:12px;">
-        <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#c8a96e;">console.anthropic.com</a> で取得
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" style="color:#c8a96e;">console.anthropic.com</a> で取得
       </div>
       <div style="position:relative;">
         <input type="password" id="apiKeyInput" placeholder="sk-ant-..."

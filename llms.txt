@@ -2,6 +2,7 @@
 
 > 精米の写真をAIが解析し、12項目を各0〜100点で採点して S・A・B・C・D の5段階グレードを判定する無料のWebツール。判定基準は創業130余年の老舗米店「近藤米穀店 らいすぴあ」の5代目が定めたもの。
 
+- URL: https://ricepia-judge.vercel.app/
 - 運営: 近藤米穀店 らいすぴあ（愛知県西尾市、創業130余年の米店。ブランド米「秀幸米」「翔米」）
 - 判定AI: Anthropic の Claude（写真を解析して採点）
 - 言語: 日本語
@@ -80,8 +81,8 @@
 
 ## ページ
 
-- [精米品質AI判定](index.html): 本ツール。12項目の説明・グレード基準・使い方・FAQを掲載
+- [精米品質AI判定](https://ricepia-judge.vercel.app/): 本ツール。12項目の説明・グレード基準・使い方・FAQを掲載
 
 ## Optional
 
-- [Meta広告分析](meta-ads.html): らいすぴあの Meta（Facebook / Instagram）広告の成果を、広告マネージャのCSVから診断するツール（精米品質判定とは別機能）
+- [Meta広告分析](https://ricepia-judge.vercel.app/meta-ads.html): らいすぴあの Meta（Facebook / Instagram）広告の成果を、広告マネージャのCSVから診断するツール（精米品質判定とは別機能）

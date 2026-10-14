@@ -82,3 +82,7 @@
 ## ページ
 
 - [精米品質AI判定](https://ricepia-judge.vercel.app/): 本ツール。12項目の説明・グレード基準・使い方・FAQを掲載
+- [お米の品質ガイド](https://ricepia-judge.vercel.app/guide/): 米店による解説記事の一覧
+- [精米の品質を見分ける12のポイント](https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html): 白度・光沢・粒揃い・割れ・着色粒・乳白粒・異物・精米仕上がり・鮮度感・品種純度・炊飯適性の見方と原因、自宅での確認方法
+- [お米の「1等米」と精米の品質はどう違う？](https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html): 農産物検査法の等級（1等〜3等・規格外、主に玄米が対象）と食味ランキング（特A）、らいすぴあのS〜Dグレードの違い
+- [llms-full.txt](https://ricepia-judge.vercel.app/llms-full.txt): 上記ページの本文をまとめた全文版

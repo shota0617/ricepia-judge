@@ -82,7 +82,3 @@
 ## ページ
 
 - [精米品質AI判定](https://ricepia-judge.vercel.app/): 本ツール。12項目の説明・グレード基準・使い方・FAQを掲載
-
-## Optional
-
-- [Meta広告分析](https://ricepia-judge.vercel.app/meta-ads.html): らいすぴあの Meta（Facebook / Instagram）広告の成果を、広告マネージャのCSVから診断するツール（精米品質判定とは別機能）

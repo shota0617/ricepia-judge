@@ -86,3 +86,5 @@
 - [精米の品質を見分ける12のポイント](https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html): 白度・光沢・粒揃い・割れ・着色粒・乳白粒・異物・精米仕上がり・鮮度感・品種純度・炊飯適性の見方と原因、自宅での確認方法
 - [お米の「1等米」と精米の品質はどう違う？](https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html): 農産物検査法の等級（1等〜3等・規格外、主に玄米が対象）と食味ランキング（特A）、らいすぴあのS〜Dグレードの違い
 - [llms-full.txt](https://ricepia-judge.vercel.app/llms-full.txt): 上記ページの本文をまとめた全文版
+
+- [お米の撮影のコツ｜AI判定で見落としを減らす準備と確認](https://ricepia-judge.vercel.app/guide/rice-photo-tips.html): 照明・ピント・背景・粒の広げ方と写真による推定の限界

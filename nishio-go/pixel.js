@@ -553,26 +553,52 @@ function addWorldFeatures(elements, L) {
     }
   }
 }
-// 川の名前：同じ名前の川の線を長い順に見て、線のまんなかあたりに名前を置く（同じ名前は30マス=3km以上はなす。短い川は出さない）
+// 川の名前：OSM では1本の川がいくつもの線に分かれていることが多いので、同じ名前でつながっている線を1本にしてから、
+// 長い川には40マス（4km）ごとに名前を置く（短い川は出さない。同じ名前どうしは30マス以上はなす）
+function joinLines(lines) {
+  const eq = (a, b) => Math.abs(a[0] - b[0]) < 0.05 && Math.abs(a[1] - b[1]) < 0.05;
+  const out = lines.map(l => l.slice());
+  for (let merged = true; merged;) {
+    merged = false;
+    for (let i = 0; i < out.length && !merged; i++) for (let j = i + 1; j < out.length && !merged; j++) {
+      const a = out[i], b = out[j];
+      let m = null;
+      if (eq(a[a.length - 1], b[0])) m = a.concat(b.slice(1));
+      else if (eq(b[b.length - 1], a[0])) m = b.concat(a.slice(1));
+      else if (eq(a[a.length - 1], b[b.length - 1])) m = a.concat(b.slice(0, -1).reverse());
+      else if (eq(a[0], b[0])) m = a.slice().reverse().concat(b.slice(1));
+      if (m) { out[i] = m; out.splice(j, 1); merged = true; }
+    }
+  }
+  return out;
+}
 function riverLabels(L) {
-  const out = [];
-  const lines = [];
-  for (const [name, pts] of L.rivers || []) for (const line of pts) {
+  const byName = new Map();
+  for (const [name, pts] of L.rivers || []) { if (!byName.has(name)) byName.set(name, []); byName.get(name).push(...pts); }
+  const chains = [];
+  for (const [name, lines] of byName) for (const line of joinLines(lines)) {
     let len = 0;
     for (let i = 1; i < line.length; i++) len += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
-    if (len >= 8) lines.push([name, line, len]);
+    if (len >= 8) chains.push([name, line, len]);
   }
-  lines.sort((a, b) => b[2] - a[2]);
-  for (const [name, line, len] of lines) {
-    let half = len / 2, x = line[0][0], y = line[0][1];
+  chains.sort((a, b) => b[2] - a[2]);
+  const at = (line, dist) => {
     for (let i = 1; i < line.length; i++) {
       const d = Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
-      if (half <= d) { const t = d ? half / d : 0; x = line[i - 1][0] + (line[i][0] - line[i - 1][0]) * t; y = line[i - 1][1] + (line[i][1] - line[i - 1][1]) * t; break; }
-      half -= d;
+      if (dist <= d) { const t = d ? dist / d : 0; return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * t, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * t]; }
+      dist -= d;
     }
-    if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
-    if (out.some(l => l[2] === name && Math.hypot(l[0] - x, l[1] - y) < 30)) continue;
-    out.push([+x.toFixed(2), +y.toFixed(2), name, 2, 'rv']);
+    return line[line.length - 1];
+  };
+  const out = [];
+  for (const [name, line, len] of chains) {
+    const n = Math.max(1, Math.floor(len / 40));
+    for (let k = 0; k < n; k++) {
+      const [x, y] = at(line, (k + 0.5) * len / n);
+      if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
+      if (out.some(l => l[2] === name && Math.hypot(l[0] - x, l[1] - y) < 30)) continue;
+      out.push([+x.toFixed(2), +y.toFixed(2), name, 2, 'rv']);
+    }
   }
   return out;
 }
@@ -1224,11 +1250,30 @@ function step(dir) {
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
-  // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、外へ出られるように通す
-  const stuck = BLOCK.has(codeAt(Math.floor(t.x), Math.floor(t.y))) && codeAt(nx, ny) !== C.X;
-  if (BLOCK.has(codeAt(nx, ny)) && !stuck) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
+  // いちばん近い歩けるマスへ近づく向きにだけ動ける（出口へ向かうとき以外は、ふだんどおり通れない）
+  const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
+  const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
+  if (BLOCK.has(codeAt(nx, ny)) && !escape) { if (navigator.vibrate) navigator.vibrate(20); return; }
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng);
+}
+// いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
+function exitDist(x, y) {
+  if (!BLOCK.has(codeAt(x, y))) return 0;
+  const seen = new Set([x + ',' + y]);
+  let frontier = [[x, y]];
+  for (let d = 1; d <= 40 && frontier.length; d++) {
+    const next = [];
+    for (const [px, py] of frontier) for (const [dx, dy] of Object.values(DIRS)) {
+      const qx = px + dx, qy = py + dy, k = qx + ',' + qy, c = codeAt(qx, qy);
+      if (seen.has(k) || c === C.X) continue;
+      if (!BLOCK.has(c)) return d;
+      seen.add(k); next.push([qx, qy]);
+    }
+    frontier = next;
+  }
+  return Infinity;
 }
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {

@@ -304,7 +304,7 @@ async function demFor(cx, cy) {
 }
 
 /* ---------- 地図データの取得と保存 ---------- */
-const PX_KEY = 'nsg_px6_', PX_IDX = 'nsg_px6_idx', PX_DAYS = 30, PX_KEEP = 60;
+const PX_KEY = 'nsg_px7_', PX_IDX = 'nsg_px7_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
   get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
@@ -378,6 +378,26 @@ function chunkQuery(b) {
 out geom qt;`;
 }
 
+// 用意しておいた区画（GitHub Actions の tools/bake-chunks.js が実際の地図データと標高から作った nishio-go/chunks/区画.json）
+// 中身は「値の文字＋個数（36進）＋.」のくり返し（ランレングス）。なければ null（ブラウザで地図データを取る）
+const unrle = s => {
+  const g = new Uint8Array(CHUNK * CHUNK);
+  let i = 0;
+  for (const m of s.matchAll(/([\s\S])([0-9a-z]+)\./g)) { const n = parseInt(m[2], 36); if (i + n > g.length) return null; g.fill(m[1].charCodeAt(0) - 48, i, i + n); i += n; }
+  return i === g.length ? g : null;
+};
+async function bakedChunk(cx, cy) {
+  if (BAKE) return null;
+  try {
+    const r = await fetch(`nishio-go/chunks/${cx}_${cy}.json`);
+    const j = r.ok ? await r.json() : null;
+    const g = j && typeof j.d === 'string' ? unrle(j.d) : null;
+    if (!g) return null;
+    g.pois = Array.isArray(j.p) ? j.p : [];
+    return g;
+  } catch (e) { return null; }
+}
+
 async function pump() {
   if (pumping) return;
   pumping = true;
@@ -389,6 +409,13 @@ async function pump() {
       const [cx, cy] = queue.shift();
       const k = cx + '_' + cy;
       chunks.set(k, { state: 'loading' });
+      const pre = await bakedChunk(cx, cy);
+      if (pre) {
+        chunks.set(k, { state: 'ok', g: pre, pois: pre.pois });
+        saveChunk(k, pre, PX_DAYS);
+        dirty = true;
+        continue;
+      }
       try {
         // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);
@@ -1220,5 +1247,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; } };
+window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; } };
 })();

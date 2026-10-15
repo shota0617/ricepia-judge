@@ -54,6 +54,15 @@ button{font-family:inherit;cursor:pointer;}
 .cb small{font-size:9px;margin-top:2px;}
 .cb.off{background:#c94c4c;}
 .cb.end{background:#c94c4c;} .cb.go{background:#3f7050;}
+.cb.zoom{background:#2d8cff;}
+#gear{margin-left:auto;background:rgba(0,0,0,.35);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:50%;}
+#zoomHint{width:auto;padding:12px 20px;margin-top:6px;background:#2d8cff;color:#fff;font-size:15px;}
+.field{margin-top:14px;text-align:left;}
+.field label{display:block;font-size:12px;font-weight:700;color:#5a5a4a;margin-bottom:4px;}
+.field input{width:100%;padding:11px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;background:#fafaf7;color:#2d2d1e;}
+.field .hint{font-size:11px;color:#9a9a7a;line-height:1.7;margin-top:4px;}
+#sheet{position:fixed;inset:0;background:rgba(20,20,12,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;}
+#sheet .box{color:#2d2d1e;}
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#2d2d1e;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:90vw;text-align:center;z-index:10;}
 </style>
 </head>
@@ -65,6 +74,9 @@ button{font-family:inherit;cursor:pointer;}
     <h1>📞 本店⇔支店</h1>
     <p>本店と支店をビデオ通話でつなぎます。<br/>最初に1回だけ、本店と支店それぞれの「開くだけでつながるリンク」を作ります。</p>
     <div id="setupStart">
+      <div class="field"><label for="zoomIn">予備のZoomリンク（任意）</label>
+        <input id="zoomIn" inputmode="url" placeholder="https://us05web.zoom.us/j/…?pwd=…" autocomplete="off"/>
+        <div class="hint">この画面でつながらないときに使うZoomのミーティングURL（「招待リンクをコピー」で取れる、pwd= 付きのもの）。入れておくと本店・支店の両方に「Zoom」ボタンが出ます。あとからでも設定できます。</div></div>
       <button class="big gold" id="makeBtn">つなぐリンクを作る</button>
       <p class="note">IDやパスワードは不要です。リンクには推測できない文字列が入るので、リンクを知らない人はつなげません。リンクは店の人以外に教えないでください。</p>
     </div>
@@ -83,15 +95,27 @@ button{font-family:inherit;cursor:pointer;}
 <div id="call" hidden>
   <div id="stage">
     <video id="remote" autoplay playsinline></video>
-    <div id="waiting"><div class="spinner"></div><div class="msg" id="waitMsg">準備中…</div><div class="sub" id="waitSub"></div></div>
+    <div id="waiting"><div class="spinner"></div><div class="msg" id="waitMsg">準備中…</div><div class="sub" id="waitSub"></div><button class="big" id="zoomHint" hidden>つながらないときは Zoom で</button></div>
     <button class="big gold" id="tapAudio" hidden style="width:auto;padding:14px 22px;">🔊 タップして音を出す</button>
     <video id="self" autoplay playsinline muted></video>
-    <div id="top"><span class="dot" id="dot"></span><b id="meName"></b><span id="state" style="color:#d8d4c4;"></span></div>
+    <div id="top"><span class="dot" id="dot"></span><b id="meName"></b><span id="state" style="color:#d8d4c4;"></span><button id="gear" title="設定">⚙</button></div>
   </div>
   <div id="bar">
     <button class="cb" id="micBtn" title="マイク">🎤<small>マイク</small></button>
     <button class="cb" id="camBtn" title="カメラ">📷<small>カメラ</small></button>
     <button class="cb end" id="hangBtn" title="切る">✕<small>切る</small></button>
+    <button class="cb zoom" id="zoomBtn" title="Zoomに切り替える" hidden>Z<small>Zoom</small></button>
+  </div>
+</div>
+<div id="sheet" hidden>
+  <div class="box">
+    <h1 style="font-size:17px;">⚙ 設定</h1>
+    <div class="field"><label for="zoomEdit">予備のZoomリンク</label>
+      <input id="zoomEdit" inputmode="url" placeholder="https://us05web.zoom.us/j/…?pwd=…" autocomplete="off"/>
+      <div class="hint">この端末に保存されます。<span id="resendHint">支店にも使ってもらうには、保存したあと下のボタンで支店にリンクを送り直してください。</span></div></div>
+    <button class="big gold" id="zoomSave">保存</button>
+    <button class="big line" id="resendLine">支店にリンクを送り直す（LINE）</button>
+    <button class="big ghost" id="sheetClose">閉じる</button>
   </div>
 </div>
 <div id="toast" hidden></div>
@@ -107,7 +131,7 @@ const other = me => me === "honten" ? "shiten" : "honten";
 const pid = (key, me) => "ricepia-tsunagu-" + key + "-" + me;
 const LS = "ricepia_tsunagu";
 
-const S = {key:"", me:"", peer:null, local:null, call:null, connected:false, stopped:false, retryT:0, wake:null, toastT:0};
+const S = {key:"", me:"", zoom:"", hintT:0, peer:null, local:null, call:null, connected:false, stopped:false, retryT:0, wake:null, toastT:0};
 
 function toast(msg, ms){
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
@@ -115,15 +139,21 @@ function toast(msg, ms){
 }
 function load(){ try{ return JSON.parse(localStorage.getItem(LS)) || {}; }catch(e){ return {}; } }
 function save(o){ try{ localStorage.setItem(LS, JSON.stringify(o)); }catch(e){} }
-function linkFor(key, me){ return location.origin + location.pathname + "#k=" + key + "&me=" + me; }
+function linkFor(key, me, zoom){ return location.origin + location.pathname + "#k=" + key + "&me=" + me + (zoom ? "&z=" + encodeURIComponent(zoom) : ""); }
+// only real Zoom meeting links (https, *.zoom.us / *.zoom.com)
+function normZoom(u){ u = String(u || "").trim(); return /^https:\/\/([a-z0-9-]+\.)*zoom\.(us|com)\/[^\s<>"]*$/i.test(u) ? u : ""; }
+function shitenText(link){ return "本店とビデオ通話でつなぐリンクです。支店のスマホかタブレットで開いて、ホーム画面に追加しておいてください。\n" + link; }
 function newKey(){ const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; crypto.getRandomValues(new Uint8Array(16)).forEach(x => s += a[x % a.length]); return s; }
 
 /* ---------- which store is this device? (from the link, else remembered) ---------- */
 function resolve(){
   const h = new URLSearchParams(location.hash.slice(1));
   const k = (h.get("k") || "").replace(/[^a-z0-9]/g, ""), me = h.get("me");
-  if(k.length >= 12 && STORES[me]){ save({key:k, me}); return {key:k, me}; }
   const s = load();
+  if(k.length >= 12 && STORES[me]){
+    const o = {key:k, me, zoom:normZoom(h.get("z")) || (s.key === k ? s.zoom || "" : "")};
+    save(o); return o;
+  }
   return s.key && STORES[s.me] ? s : null;
 }
 
@@ -131,12 +161,14 @@ function resolve(){
 function showSetup(){
   $("#setup").hidden = false;
   $("#makeBtn").onclick = () => {
-    const key = newKey(), shiten = linkFor(key, "shiten");
+    const raw = $("#zoomIn").value.trim(), zoom = normZoom(raw);
+    if(raw && !zoom){ toast("Zoomのリンクは https://…zoom.us/j/… の形で入れてください（空欄でもOK）"); return; }
+    const key = newKey(), shiten = linkFor(key, "shiten", zoom);
     $("#setupStart").hidden = true; $("#setupLinks").hidden = false;
     $("#shitenLink").textContent = shiten;
-    $("#sendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent("本店とビデオ通話でつなぐリンクです。支店のスマホかタブレットで開いて、ホーム画面に追加しておいてください。\n" + shiten), "_blank", "noopener");
+    $("#sendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent(shitenText(shiten)), "_blank", "noopener");
     $("#copyShiten").onclick = async () => { try{ await navigator.clipboard.writeText(shiten); toast("コピーしました"); }catch(e){ prompt("このリンクをコピーしてください", shiten); } };
-    $("#openHonten").onclick = () => { location.hash = "k=" + key + "&me=honten"; location.reload(); };
+    $("#openHonten").onclick = () => { location.hash = "k=" + key + "&me=honten" + (zoom ? "&z=" + encodeURIComponent(zoom) : ""); location.reload(); };
   };
 }
 
@@ -145,6 +177,9 @@ function setState(kind, msg, sub){
   $("#dot").className = "dot " + (kind === "on" ? "on" : kind === "wait" ? "wait" : "");
   $("#state").textContent = kind === "on" ? STORES[other(S.me)] + "とつながっています" : "";
   $("#waiting").hidden = kind === "on";
+  clearTimeout(S.hintT); $("#zoomHint").hidden = true;
+  // still not connected after a while: offer the Zoom backup
+  if(kind !== "on" && S.zoom) S.hintT = setTimeout(() => { if(!S.connected) $("#zoomHint").hidden = false; }, kind === "off" ? 0 : 30000);
   $("#waitMsg").textContent = msg || "";
   $("#waitSub").textContent = sub || "";
   $(".spinner").hidden = kind !== "wait";
@@ -156,8 +191,23 @@ async function getMedia(){
     catch(e2){ return null; }
   }
 }
+function paintZoom(){ $("#zoomBtn").hidden = !S.zoom; }
+/* Zoom backup: the camera and mic can't serve two calls well at once, so this call is ended first. */
+function goZoom(){
+  if(!S.zoom) return;
+  if(!confirm("Zoomに切り替えます。この画面の通話は切ります（あとで「つなぐ」で戻れます）。")) return;
+  if(!S.stopped) hangUp();
+  const w = window.open(S.zoom, "_blank");
+  if(w) w.opener = null; else location.href = S.zoom;
+}
+function openSheet(){
+  $("#zoomEdit").value = S.zoom || "";
+  $("#resendLine").hidden = $("#resendHint").hidden = S.me !== "honten";
+  $("#sheet").hidden = false;
+}
 function startCall(){
   $("#call").hidden = false;
+  paintZoom();
   $("#meName").textContent = STORES[S.me];
   document.title = "らいすぴあ " + STORES[S.me] + " ⇔ " + STORES[other(S.me)];
   connect();
@@ -272,6 +322,17 @@ async function keepAwake(){
 }
 
 $("#micBtn").onclick = () => toggle("audio");
+$("#zoomBtn").onclick = goZoom;
+$("#zoomHint").onclick = goZoom;
+$("#gear").onclick = openSheet;
+$("#sheetClose").onclick = () => $("#sheet").hidden = true;
+$("#zoomSave").onclick = () => {
+  const raw = $("#zoomEdit").value.trim(), z = normZoom(raw);
+  if(raw && !z){ toast("Zoomのリンクは https://…zoom.us/j/… の形で入れてください"); return; }
+  S.zoom = z; save({key:S.key, me:S.me, zoom:z}); paintZoom();
+  toast(z ? "Zoomリンクを保存しました" : "Zoomリンクを外しました");
+};
+$("#resendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent(shitenText(linkFor(S.key, "shiten", S.zoom))), "_blank", "noopener");
 $("#camBtn").onclick = () => toggle("video");
 $("#hangBtn").onclick = hangUp;
 $("#tapAudio").onclick = () => $("#remote").play().then(() => $("#tapAudio").hidden = true).catch(() => {});
@@ -285,7 +346,7 @@ window.addEventListener("pagehide", () => { try{ S.call && S.call.close(); S.pee
 window.addEventListener("online", () => { if(!S.stopped && S.key && (!S.peer || S.peer.destroyed)) openPeer(); });
 
 const who = resolve();
-if(who){ S.key = who.key; S.me = who.me; startCall(); }
+if(who){ S.key = who.key; S.me = who.me; S.zoom = normZoom(who.zoom); startCall(); }
 else showSetup();
 </script>
 </body>

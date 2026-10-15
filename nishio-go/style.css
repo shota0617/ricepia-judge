@@ -45,7 +45,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .popup .tag{display:inline-block;padding:1px 6px;border-radius:6px;background:#eef3e6;color:var(--green);font-size:11px;margin-right:4px}
 .popup .tag.gold{background:#fff1d1;color:#8a5a00}
 
-.fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 96px);z-index:900;display:flex;flex-direction:column;gap:10px}
+.fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 170px);z-index:900;display:flex;flex-direction:column;gap:10px}
 .fab{width:48px;height:48px;border-radius:50%;border:0;background:#fff;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 
 /* 下部シート */

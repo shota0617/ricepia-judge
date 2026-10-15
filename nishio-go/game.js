@@ -170,24 +170,27 @@ function buildSpots(config, osmItems) {
   const osm = osmItems.map(([id, name, cat, lat, lng, raw]) => ({ id, name, raw: raw || name, cat, lat, lng }));
   const used = new Set();
   // 座標が未入力のスポットは、入力されるまで地図に出さない
-  const featured = config.filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng)).map(c => {
-    const s = { id: 'f-' + c.id, name: c.name, cat: 'featured', icon: c.icon || '⭐', lat: c.lat, lng: c.lng,
-      featured: true, approx: !!c.approx, points: c.points, desc: c.desc || '', reach: c.reach };
-    if (Array.isArray(c.match) && c.match.length) {
+  const num = (v, max) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : undefined; };
+  const featured = config.filter(c => c && c.id && c.name && Number.isFinite(c.lat) && Number.isFinite(c.lng)).map(c => {
+    const s = { id: 'f-' + c.id, name: String(c.name), cat: 'featured', kind: CATS[c.cat] ? c.cat : 'featured',
+      icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: !!c.approx,
+      points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '' };
+    const match = Array.isArray(c.match) ? c.match.filter(m => typeof m === 'string' && m) : [];
+    if (match.length) {
       let best = null, bestD = Infinity;
       for (const o of osm) {
-        if (used.has(o.id) || !c.match.some(m => nameMatches(o.raw, m))) continue;
+        if (used.has(o.id) || !match.some(m => nameMatches(o.raw, m))) continue;
         const d = dist(s, o);
         if (d < CFG.matchRadius && d < bestD) { best = o; bestD = d; }
       }
-      if (best) { s.lat = best.lat; s.lng = best.lng; s.approx = false; used.add(best.id); }
+      if (best) { s.lat = best.lat; s.lng = best.lng; s.approx = false; if (s.kind === 'featured') s.kind = best.cat; used.add(best.id); }
     }
     return s;
   });
   // 注目スポットのすぐ近く（同じ場所の重複）や、同名で近いものは除く
   const kept = [];
   const grid = new Map();
-  const cell = p => `${Math.floor(p.lat / 0.002)}:${Math.floor(p.lng / 0.002)}`;
+  const cell = p => `${Math.floor(p.lat / 0.0025)}:${Math.floor(p.lng / 0.0025)}`; // 経度0.0025°≒228m（200m以上）
   const neighbors = p => {
     const [a, b] = cell(p).split(':').map(Number), out = [];
     for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) out.push(...(grid.get(`${a + i}:${b + j}`) || []));
@@ -206,12 +209,22 @@ function buildSpots(config, osmItems) {
   return kept;
 }
 
-async function loadSpots(force) {
-  setStatus('スポットを読み込んでいます…');
+let spotsLoading = null;
+function loadSpots(force) {
+  if (!spotsLoading) {
+    spotsLoading = doLoadSpots(force)
+      .catch(() => toast('スポットの読み込みに失敗しました。もう一度お試しください。'))
+      .finally(() => { spotsLoading = null; refreshNearby(); });
+    refreshNearby();
+  }
+  return spotsLoading;
+}
+async function doLoadSpots(force) {
   let config = [];
   try {
     const res = await fetch('nishio-go/spots.json', { cache: 'no-cache' });
-    if (res.ok) config = (await res.json()).spots || [];
+    const json = res.ok ? await res.json() : null;
+    if (json && Array.isArray(json.spots)) config = json.spots;
   } catch (e) { /* 注目スポットなしで続行 */ }
 
   const cached = store.get(OSM_KEY, null);
@@ -231,6 +244,7 @@ async function loadSpots(force) {
   spots = buildSpots(config, items || []);
   spotMeta.osm = (items || []).length;
   spotMeta.featured = spots.filter(s => s.featured).length;
+  spotMeta.loaded = true;
   markers.forEach(m => m.remove());
   markers.clear();
   renderMarkers();
@@ -301,7 +315,7 @@ map.on('moveend zoomend', renderMarkers);
 
 /* ---------- 現在地 ---------- */
 let me = null;          // {lat,lng,acc,t}
-let meMarker = null, accCircle = null, reachCircle = null;
+let meMarker = null, accCircle = null, spotRing = null;
 let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '';
 
 function placeMe() {
@@ -310,12 +324,10 @@ function placeMe() {
   if (!meMarker) {
     meMarker = L.marker(ll, { icon: L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
       zIndexOffset: 1000, interactive: false, keyboard: false }).addTo(map);
-    reachCircle = L.circle(ll, { radius: CFG.reach, color: '#2a6fdb', weight: 2, opacity: 0.6, dashArray: '6 6', fillOpacity: 0.1, interactive: false }).addTo(map);
     accCircle = L.circle(ll, { radius: me.acc || 0, color: '#2a6fdb', weight: 0, fillOpacity: 0.08, interactive: false }).addTo(map);
   }
   meMarker.setLatLng(ll);
   meMarker.getElement()?.firstElementChild?.classList.toggle('demo', demo);
-  reachCircle.setLatLng(ll);
   accCircle.setLatLng(ll).setRadius(demo ? 0 : me.acc || 0);
   if (follow) map.panTo(ll, { animate: true });
 }
@@ -362,7 +374,7 @@ function trackWalk(p) {
   lastWalk = p;
   if (dt > CFG.walkMaxGapSec) return;                   // 画面を閉じていた間の移動は数えない
   if (v > CFG.vehicleSpeed) { vehicleUntil = Date.now() + CFG.vehicleLockMs; return; }
-  if (v > CFG.walkMaxSpeed) return;
+  if (v > CFG.walkMaxSpeed || Date.now() < vehicleUntil) return;
   addWalk(d);
 }
 
@@ -427,7 +439,7 @@ function checkin() {
     const b = CFG.pts.daily + Math.min(S.streak.days - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
     total += b; lines.push(`📅 今日のはじめて（${S.streak.days}日連続） +${b}`);
   }
-  S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.cat, icon: iconOf(s), featured: !!s.featured };
+  S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
   S.checkins++;
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   const lvUp = gainPoints(total);
@@ -447,6 +459,7 @@ function refreshNearby() {
   const btn = $('spinBtn');
   if (!me) {
     btn.hidden = true;
+    showRing(null);
     setStatus(gpsError || (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'));
     return;
   }
@@ -459,6 +472,7 @@ function refreshNearby() {
     }
   }
   selected = best ? best.s : null;
+  showRing(selected || nearest);
   if (selected) {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);
@@ -476,6 +490,7 @@ function refreshNearby() {
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected) {
     if (nearest) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`);
+    else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
@@ -484,11 +499,20 @@ function refreshNearby() {
   setStatus(msgs.join('<br/>'), true);
 }
 
+// 目標スポットのまわりに、チェックインできる範囲を点線で表示
+function showRing(s) {
+  if (!s) { if (spotRing) { spotRing.remove(); spotRing = null; } return; }
+  const color = s.featured ? '#e3a42b' : '#2a6fdb';
+  if (!spotRing) spotRing = L.circle([s.lat, s.lng], { weight: 2, opacity: 0.7, dashArray: '6 6', fillOpacity: 0.08, interactive: false }).addTo(map);
+  spotRing.setLatLng([s.lat, s.lng]).setRadius(reachOf(s)).setStyle({ color, fillColor: color });
+}
+
 /* ---------- バッジ ---------- */
 function countVisits(fn) { return Object.values(S.visits).filter(fn).length; }
 function badgeDefs() {
   const uniq = Object.keys(S.visits).length;
-  const featTotal = spotMeta.featured || spots.filter(s => s.featured).length;
+  const featTotal = spotMeta.featured;
+  const km = Math.floor(S.walked / 100) / 10;
   return [
     { id: 'first', i: '👟', n: 'はじめの一歩', d: 'はじめてチェックイン', cur: S.checkins, goal: 1 },
     { id: 'spot10', i: '🗺️', n: 'まちあるき', d: '10か所をめぐる', cur: uniq, goal: 10 },
@@ -498,15 +522,15 @@ function badgeDefs() {
     { id: 'temple', i: '🪷', n: 'お寺めぐり', d: 'お寺を5か所', cur: countVisits(v => v.cat === 'temple'), goal: 5 },
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
-    { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: countVisits(v => v.featured), goal: Math.max(featTotal, 1) },
-    { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: Math.floor(S.walked / 1000), goal: 5 },
-    { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: Math.floor(S.walked / 1000), goal: 42.195 },
+    { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: countVisits(v => v.featured), goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
+    { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
   ];
 }
 function checkBadges() {
   const got = new Set(S.badges);
-  const fresh = badgeDefs().filter(b => b.cur >= b.goal && !got.has(b.id));
+  const fresh = badgeDefs().filter(b => b.ready !== false && b.cur >= b.goal && !got.has(b.id));
   if (!fresh.length) return;
   fresh.forEach(b => S.badges.push(b.id));
   save();
@@ -565,7 +589,7 @@ function renderLog() {
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
-    const done = got.has(b.id) || b.cur >= b.goal;
+    const done = got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
     const pct = Math.min(100, (b.cur / b.goal) * 100);
     return `<div class="badge ${done ? 'got' : 'locked'}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
       ${done ? '<small>獲得済み</small>' : `<div class="bp"><i style="width:${pct}%"></i></div><small>${Math.min(b.cur, b.goal)}/${b.goal}</small>`}</div>`;
@@ -576,14 +600,21 @@ function renderBadges() {
       <small>Lv${l}（累計 ${needFor(l).toLocaleString()}pt）</small></span>${titleOf(lv) === t ? '<span class="num">いまここ</span>' : ''}</li>`).join('');
 }
 
+function featRange() {
+  const p = spots.filter(s => s.featured).map(ptsOf);
+  if (!p.length) return `${CFG.pts.featured}pt`;
+  const lo = Math.min(...p), hi = Math.max(...p);
+  return lo === hi ? `${lo}pt` : `${lo}〜${hi}pt`;
+}
+
 function renderSpotInfo() {
   const n = spots.length;
   $('spotInfo').textContent = spotMeta.osmOk
     ? `${n.toLocaleString()}か所（注目${spotMeta.featured}）・地図データ取得 ${fmtTime(spotMeta.osmAt)}`
     : `${n}か所（注目スポットのみ。OpenStreetMapを取得できませんでした）`;
   $('rules').innerHTML = [
-    `スポットまで約${CFG.reach}m以内に近づくと「チェックイン」できます`,
-    `ふつうのスポット ${CFG.pts.normal}pt／⭐注目スポット ${CFG.pts.featured}〜50pt`,
+    `スポットまで約${CFG.reach}m以内に近づくと「チェックイン」できます（お店など一部のスポットは範囲が広め。地図の点線の円が範囲です）`,
+    `ふつうのスポット ${CFG.pts.normal}pt／⭐注目スポット ${featRange()}`,
     `はじめての訪問 +${CFG.pts.first}pt（注目スポットは +${CFG.pts.firstFeatured}pt）`,
     `その日はじめてのチェックイン +${CFG.pts.daily}pt、連続日数ごとに +${CFG.pts.streakStep}pt（最大 +${CFG.pts.streakStep * CFG.pts.streakMax}pt）`,
     `同じスポットは${CFG.cooldownMin}分ごとにチェックインできます`,
@@ -627,7 +658,7 @@ function setMode(isDemo) {
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
   me = null; lastWalk = null; vehicleUntil = 0;
-  if (meMarker) { meMarker.remove(); accCircle.remove(); reachCircle.remove(); meMarker = accCircle = reachCircle = null; }
+  if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
     const c = map.getCenter();
@@ -648,10 +679,10 @@ map.on('click', e => {
 $('demoToggle').addEventListener('change', e => { setMode(e.target.checked); toast(demo ? 'デモモードにしました（地図タップで移動）' : '本番モードにしました'); });
 
 $('reloadSpots').addEventListener('click', async e => {
-  e.target.disabled = true;
-  await loadSpots(true);
-  e.target.disabled = false;
-  toast(`スポットを更新しました（${spots.length}か所）`);
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  try { await loadSpots(true); toast(`スポットを更新しました（${spots.length}か所）`); }
+  finally { btn.disabled = false; }
 });
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`${demo ? 'デモ' : '本番'}モードのポイントと記録をすべて削除します。よろしいですか？`)) return;

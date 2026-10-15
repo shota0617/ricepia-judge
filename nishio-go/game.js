@@ -20,7 +20,8 @@ const CFG = {
   walkMaxGapSec: 180,       // 位置の更新がこれ以上途切れたら、その間の移動は数えない
   vehicleSpeed: 8.5,        // m/s（約30km/h：これを超えたら乗り物とみなす）
   vehicleLockMs: 120000,    // 乗り物判定後、チェックインを止める時間
-  matchRadius: 4000,        // 注目スポットの名前をOSMから探す範囲（m）
+  matchRadius: 1000,        // 注目スポットの名前をOSMから探す範囲（m）：座標が概算のとき
+  matchRadiusExact: 300,    //   座標が確かなとき
   osmCacheDays: 7,
   overpass: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
 };
@@ -188,8 +189,8 @@ function buildSpots(config, osmItems) {
     const cands = match.length ? osm.filter(o => !used.has(o.id) && match.some(m => nameMatches(o.raw, m))) : [];
     let best = null;
     if (hasPos) {
-      // 座標は目安。近くで名前が一致するものがあれば、その正確な位置を使う
-      let bestD = CFG.matchRadius;
+      // 近くで名前が一致するものがあれば、その位置に補正する（確かな座標は300m、概算の座標は1km以内だけ）
+      let bestD = c.approx ? CFG.matchRadius : CFG.matchRadiusExact;
       for (const o of cands) { const d = dist(s, o); if (d < bestD) { best = o; bestD = d; } }
     } else if (cands.length && cands.every(o => dist(o, cands[0]) < 500)) {
       best = cands[0];   // 座標なし：名前が一致する場所が1か所に絞れたときだけ使う（同名が離れて複数あれば出さない）

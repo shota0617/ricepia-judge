@@ -347,10 +347,7 @@ function ensureChunk(cx, cy) {
   if (b.n < nb[0][0] - 0.01 || b.s > nb[1][0] + 0.01 || b.e < nb[0][1] - 0.01 || b.w > nb[1][1] + 0.01) {
     chunks.set(k, { state: 'out' }); return;
   }
-  const saved = store.get(PX_KEY + k);
-  if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-    chunks.set(k, { state: 'ok', g: dec(saved.d), pois: saved.p || [] }); return;
-  }
+  // 用意した区画（chunks/区画.json）を先に確かめたいので、端末の保存分はここでは使わず pump() で使う
   chunks.set(k, { state: 'queued' });
   queue.push([cx, cy]);
   pump();
@@ -409,13 +406,21 @@ async function pump() {
       const [cx, cy] = queue.shift();
       const k = cx + '_' + cy;
       chunks.set(k, { state: 'loading' });
+      // 1) 用意した区画（いつも最新を使う。ブラウザのHTTPキャッシュが効くので2回目からは軽い。端末には保存しない）
       const pre = await bakedChunk(cx, cy);
       if (pre) {
         chunks.set(k, { state: 'ok', g: pre, pois: pre.pois });
-        saveChunk(k, pre, PX_DAYS);
         dirty = true;
         continue;
       }
+      // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
+      const saved = store.get(PX_KEY + k);
+      if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
+        chunks.set(k, { state: 'ok', g: dec(saved.d), pois: saved.p || [] });
+        dirty = true;
+        continue;
+      }
+      // 3) それもなければ、ブラウザで地図データと標高を取って作る
       try {
         // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);

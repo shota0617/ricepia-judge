@@ -52,5 +52,12 @@ jobs:
           if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
           test -s ricepia-jp/index.html
           stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
-          lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; mv www/index.html www/index.html.bak-$stamp; put ricepia-jp/index.html -o www/index.html; bye" "$FTP_SERVER"
+          ftp() { lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set cmd:fail-exit yes; $1; bye" "$FTP_SERVER"; }
+          # 先に別名でアップロードしてから入れ替える（途中で失敗しても、トップページが消えたままにならないように）
+          ftp "put ricepia-jp/index.html -o www/index.html.new"
+          if ! ftp "mv www/index.html www/index.html.bak-$stamp; mv www/index.html.new www/index.html"; then
+            echo "::error::入れ替えに失敗したので元に戻します"
+            ftp "mv www/index.html.bak-$stamp www/index.html" || true
+            exit 1
+          fi
           echo "アップロードしました（元のファイルは www/index.html.bak-$stamp）"

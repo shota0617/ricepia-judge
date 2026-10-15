@@ -49,10 +49,23 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         // 海岸線は「その区画に重なるもの」だけを渡す（1区画ずつ問い合わせたときと同じにする）。
         // ほかの区画の海岸線が混ざると、rasterize() が「海岸線のある区画」とみなして、海だけの区画を陸にしてしまう
         const isCoast = el => el.tags && el.tags.natural === 'coastline';
-        const crosses = (el, bx, pad) => (el.geometry || []).some((q, i, a) => {
-          const r = a[i + 1] || q;
-          return Math.max(q.lat, r.lat) >= bx.s - pad && Math.min(q.lat, r.lat) <= bx.n + pad && Math.max(q.lon, r.lon) >= bx.w - pad && Math.min(q.lon, r.lon) <= bx.e + pad;
-        });
+        // 線分が（少し広げた）区画の長方形を本当に通るか（Liang–Barsky の線分クリッピング）
+        const segHits = (q, r, x0, y0, x1, y1) => {
+          const dx = r.lon - q.lon, dy = r.lat - q.lat;
+          let t0 = 0, t1 = 1;
+          for (const [p, d] of [[-dx, q.lon - x0], [dx, x1 - q.lon], [-dy, q.lat - y0], [dy, y1 - q.lat]]) {
+            if (p === 0) { if (d < 0) return false; continue; }
+            const t = d / p;
+            if (p < 0) { if (t > t1) return false; if (t > t0) t0 = t; } else { if (t < t0) return false; if (t < t1) t1 = t; }
+          }
+          return true;
+        };
+        const crosses = (el, bx, pad) => {
+          const g = el.geometry || [];
+          if (g.length === 1) return segHits(g[0], g[0], bx.w - pad, bx.s - pad, bx.e + pad, bx.n + pad);
+          for (let i = 0; i + 1 < g.length; i++) if (segHits(g[i], g[i + 1], bx.w - pad, bx.s - pad, bx.e + pad, bx.n + pad)) return true;
+          return false;
+        };
         for (const [cx, cy] of cs) {
           let dem = null;
           for (let t = 0; t < 3 && !(dem && !dem.partial); t++) {   // 標高タイルの一時的な失敗は取り直す

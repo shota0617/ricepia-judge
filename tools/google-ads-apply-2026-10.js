@@ -43,7 +43,7 @@ const SEARCH_NEGATIVES = ['通販', '送料無料', '楽天', 'amazon', 'アマ�
 // P-MAX #2 から新米２にも付けるアセットの種類
 const SHARE_ASSET_FIELDS = ['SITELINK', 'CALL'];
 // 入札に使う成果として残すもの（STEP2）。これ以外の目標は「入札に使わない」にする
-const KEEP_GOAL = { category: 'SIGNUP', origin: 'WEBSITE' };
+const KEEP_GOAL = { category: 'SIGNUP', origin: 'WEBSITE', actionName: /LINE/ };
 
 const LIMITS = { HEADLINE: 30, LONG_HEADLINE: 90, DESCRIPTION: 90, BUSINESS_NAME: 25 };
 const report = { done: [], skipped: [], failed: [] };
@@ -70,8 +70,8 @@ function main() {
     }
   }
   if (CONFIG.STEP2_LINE_GOALS) {
-    setLineOnlyGoals();
-    if (pmax) useAccountGoals(pmax);
+    // アカウントの目標が LINE だけになったときに限って、P-MAX をアカウントの目標に切り替える
+    if (setLineOnlyGoals() && pmax) useAccountGoals(pmax);
   }
   Logger.log('\n===== 結果 =====');
   Logger.log('反映 ' + report.done.length + ' 件\n  ' + report.done.join('\n  '));
@@ -142,6 +142,11 @@ function replaceAssetGroupText(ag, r) {
   if (r.field === 'BUSINESS_NAME') ops.push(remove);
   if (!already) { const rn = textAssetFor(r.to, ops); ops.push(linkOp(ag, rn, r.field)); }
   if (r.field !== 'BUSINESS_NAME') ops.push(remove);
+  // P-MAX は60文字（全角30字）以内の短い説明文が最低1本いる。差し替え後もそれが残るかを確かめる
+  if (r.field === 'DESCRIPTION') {
+    const after = cur.filter(a => a.field === 'DESCRIPTION' && a !== old).map(a => a.text).concat(already ? [] : [r.to]);
+    if (!after.some(t => width(t) <= 60)) { report.failed.push(label + ' … 60文字以内の短い説明文が無くなるので中止'); return; }
+  }
   apply(label, ops);
 }
 function addAssetGroupText(ag, a) {
@@ -213,19 +218,28 @@ function setPresenceOnly(camp) {
 
 // ---- STEP2 ----
 function setLineOnlyGoals() {
+  // 「登録・ウェブサイト」の目標には、同じ種類のアクションが全部入る。LINE 以外のメインのアクションがあれば止める
+  const actions = rows("SELECT conversion_action.name, conversion_action.primary_for_goal FROM conversion_action " +
+    "WHERE conversion_action.status = 'ENABLED' AND conversion_action.category = " + q(KEEP_GOAL.category) +
+    ' AND conversion_action.origin = ' + q(KEEP_GOAL.origin)).map(r => r.conversionAction).filter(a => a.primaryForGoal);
+  const others = actions.filter(a => !KEEP_GOAL.actionName.test(a.name));
+  if (!actions.some(a => KEEP_GOAL.actionName.test(a.name)) || others.length) {
+    report.failed.push('登録・ウェブサイトの目標に LINE 以外のアクションがある（' + others.map(a => a.name).join('、') +
+      '）、または LINE のアクションが無いので、目標は変えずに中止。管理画面で確認してください'); return false;
+  }
   const goals = rows('SELECT customer_conversion_goal.resource_name, customer_conversion_goal.category, ' +
     'customer_conversion_goal.origin, customer_conversion_goal.biddable FROM customer_conversion_goal')
     .map(r => r.customerConversionGoal);
   const keep = goals.find(g => g.category === KEEP_GOAL.category && g.origin === KEEP_GOAL.origin);
-  if (!keep) { report.failed.push('LINE（登録・ウェブサイト）の目標が見つからないので、目標は変えずに中止'); return; }
+  if (!keep) { report.failed.push('LINE（登録・ウェブサイト）の目標が見つからないので、目標は変えずに中止'); return false; }
   const ops = [];
   goals.forEach(g => {
     const want = g === keep;
     if (!!g.biddable !== want) ops.push({ customerConversionGoalOperation: {
       update: { resourceName: g.resourceName, biddable: want }, updateMask: 'biddable' } });
   });
-  if (!ops.length) { report.skipped.push('アカウントの目標（もう LINE だけ）'); return; }
-  apply('アカウントの目標を LINE だけにする（' + goals.filter(g => g !== keep && g.biddable)
+  if (!ops.length) { report.skipped.push('アカウントの目標（もう LINE だけ）'); return true; }
+  return apply('アカウントの目標を LINE だけにする（' + goals.filter(g => g !== keep && g.biddable)
     .map(g => g.category + '/' + g.origin).join('、') + ' を入札に使わない）', ops);
 }
 function useAccountGoals(camp) {

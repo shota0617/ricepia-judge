@@ -31,30 +31,72 @@
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "Organization",
-      "@id": "https://ricepia-judge.vercel.app/#org",
+      "@type": "Store",
+      "@id": "https://ricepia.jp/#business",
       "name": "近藤米穀店 らいすぴあ",
-      "url": "https://ricepia-judge.vercel.app/",
-      "alternateName": ["らいすぴあ", "近藤米穀店", "Ricepia"],
-      "description": "愛知県西尾市の創業130余年の老舗米店。5代目が精米の品質基準を定め、産地品種・愛知県産米・オリジナルブレンド米を扱う。",
-      "address": {"@type": "PostalAddress", "addressLocality": "西尾市", "addressRegion": "愛知県", "addressCountry": "JP"},
-      "brand": [{"@type": "Brand", "name": "秀幸米"}, {"@type": "Brand", "name": "翔米"}],
-      "knowsAbout": ["精米", "米の品質判定", "米の品種", "愛知県産米"]
+      "url": "https://ricepia.jp/",
+      "alternateName": [
+        "近藤米穀店",
+        "らいすぴあ",
+        "Kondo Rice Nishio"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "postalCode": "445-0802",
+        "addressRegion": "愛知県",
+        "addressLocality": "西尾市",
+        "streetAddress": "米津町蓮台３−１",
+        "addressCountry": "JP"
+      },
+      "telephone": "+81563544001",
+      "foundingDate": "1892",
+      "sameAs": [
+        "https://www.instagram.com/ricepiablog/",
+        "https://www.youtube.com/@ricepia",
+        "https://line.me/R/ti/p/@wxh6702b"
+      ],
+      "hasMap": "https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7",
+      "employee": {
+        "@id": "https://ricepia.jp/#shota"
+      }
     },
     {
       "@type": "WebPage",
       "@id": "https://ricepia-judge.vercel.app/#webpage",
       "url": "https://ricepia-judge.vercel.app/",
-      "isPartOf": {"@type": "WebSite", "@id": "https://ricepia-judge.vercel.app/#website", "name": "らいすぴあ 精米品質AI判定", "url": "https://ricepia-judge.vercel.app/", "inLanguage": "ja", "publisher": {"@id": "https://ricepia-judge.vercel.app/#org"}},
+      "isPartOf": {
+        "@type": "WebSite",
+        "@id": "https://ricepia-judge.vercel.app/#website",
+        "name": "らいすぴあ 精米品質AI判定",
+        "url": "https://ricepia-judge.vercel.app/",
+        "inLanguage": "ja",
+        "publisher": {
+          "@id": "https://ricepia.jp/#business"
+        }
+      },
       "name": "精米品質AI判定｜写真で白度・光沢・割れを12項目採点",
       "inLanguage": "ja",
       "dateModified": "2026-10-15",
-      "publisher": {"@id": "https://ricepia-judge.vercel.app/#org"},
-      "mainEntity": {"@id": "https://ricepia-judge.vercel.app/#app"},
-      "relatedLink": ["https://ricepia-judge.vercel.app/guide/", "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html", "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"],
+      "publisher": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "mainEntity": {
+        "@id": "https://ricepia-judge.vercel.app/#app"
+      },
+      "relatedLink": [
+        "https://ricepia-judge.vercel.app/guide/",
+        "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html",
+        "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
+      ],
       "about": [
-        {"@type": "Thing", "name": "精米の品質判定"},
-        {"@type": "Thing", "name": "米の等級・グレード"}
+        {
+          "@type": "Thing",
+          "name": "精米の品質判定"
+        },
+        {
+          "@type": "Thing",
+          "name": "米の等級・グレード"
+        }
       ]
     },
     {
@@ -67,8 +109,14 @@
       "operatingSystem": "Web ブラウザ（スマートフォン・PC）",
       "inLanguage": "ja",
       "isAccessibleForFree": true,
-      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "JPY"},
-      "publisher": {"@id": "https://ricepia-judge.vercel.app/#org"},
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "JPY"
+      },
+      "publisher": {
+        "@id": "https://ricepia.jp/#business"
+      },
       "description": "精米の写真をAI（AnthropicのClaude）が解析し、白度・光沢・粒揃い・粒の充実度・割れ欠け・着色粒・乳白粒/未熟粒・異物混入・精米仕上がり・鮮度感・品種純度・炊飯適性予測の12項目を0〜100点で採点、近藤米穀店 らいすぴあ独自のS/A/B/C/Dの5段階でグレード判定するツール。",
       "featureList": [
         "精米写真からの12項目品質採点（各0〜100点）",
@@ -84,25 +132,118 @@
       "name": "精米の品質をAIで判定する方法",
       "inLanguage": "ja",
       "step": [
-        {"@type": "HowToStep", "position": 1, "name": "APIキーを入力", "text": "Anthropic APIキーを入力して開始します。キーはブラウザ内でのみ使用され、保存されません。"},
-        {"@type": "HowToStep", "position": 2, "name": "精米を撮影", "text": "明るい場所で精米をトレーに均一に広げ、真上から水平にピントを合わせて撮影します。"},
-        {"@type": "HowToStep", "position": 3, "name": "品種を選択（任意）", "text": "品種がわかっていれば選択します。未選択の場合はAIが推測します。"},
-        {"@type": "HowToStep", "position": 4, "name": "判定結果を確認", "text": "12項目の点数、S〜Dのグレード、総合コメント、おすすめ用途が表示されます。"}
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "APIキーを入力",
+          "text": "Anthropic APIキーを入力して開始します。キーはブラウザ内でのみ使用され、保存されません。"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "精米を撮影",
+          "text": "明るい場所で精米をトレーに均一に広げ、真上から水平にピントを合わせて撮影します。"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "品種を選択（任意）",
+          "text": "品種がわかっていれば選択します。未選択の場合はAIが推測します。"
+        },
+        {
+          "@type": "HowToStep",
+          "position": 4,
+          "name": "判定結果を確認",
+          "text": "12項目の点数、S〜Dのグレード、総合コメント、おすすめ用途が表示されます。"
+        }
       ]
     },
     {
       "@type": "FAQPage",
       "mainEntity": [
-        {"@type": "Question", "name": "精米の品質は何で判定しますか？", "acceptedAnswer": {"@type": "Answer", "text": "白度・光沢・粒揃い・粒の充実度（外観品位）、割れ欠け・着色粒・乳白粒/未熟粒・異物混入（欠陥粒）、精米仕上がり・鮮度感・品種純度・炊飯適性予測（精米品質）の12項目を各0〜100点で採点します。"}},
-        {"@type": "Question", "name": "グレードS・A・B・C・Dの違いは？", "acceptedAnswer": {"@type": "Answer", "text": "S：最高品質・贈答用（主要項目すべて90点以上）。A：優秀・直売向け（主要項目80点以上）。B：良品・家庭用（主要項目70点以上）。C：標準・業務用／加工向け（一部項目に課題あり）。D：要改善（出荷前に再精米・選別を検討）。異物混入や大量の着色粒など致命的な欠陥がある場合はC以下になります。"}},
-        {"@type": "Question", "name": "国の農産物検査の等級（1等・2等など）と同じですか？", "acceptedAnswer": {"@type": "Answer", "text": "違います。S〜Dは近藤米穀店 らいすぴあ独自の精米品質の基準です。農産物検査法に基づく等級（1等〜3等・規格外）は、登録検査機関が玄米などを検査して格付けするもので、このツールの判定は公的な検査や証明の代わりにはなりません。"}},
-        {"@type": "Question", "name": "玄米や分づき米も判定できますか？", "acceptedAnswer": {"@type": "Answer", "text": "品種の選択肢から玄米・5分づき米・ハイガ米を選んで判定できます。ただし白度や精米仕上がりなどは白米を想定した項目のため、玄米・分づき米の結果は参考値としてご覧ください。"}},
-        {"@type": "Question", "name": "利用料金はかかりますか？", "acceptedAnswer": {"@type": "Answer", "text": "ツール自体は無料です。判定にはご自身のAnthropic APIキーが必要で、API利用料はAnthropicの料金体系に従います。"}},
-        {"@type": "Question", "name": "スマートフォンだけで使えますか？", "acceptedAnswer": {"@type": "Answer", "text": "使えます。アプリのインストールは不要で、スマートフォンやPCのWebブラウザから撮影・判定・レポートの印刷まで行えます。"}},
-        {"@type": "Question", "name": "APIキーや写真は保存されますか？", "acceptedAnswer": {"@type": "Answer", "text": "APIキーはブラウザ内でのみ使用され保存されません。写真は判定のためにAnthropic APIへ送信されます。管理者が登録した学習データはその端末のブラウザ内に保存されます。"}},
-        {"@type": "Question", "name": "判定結果はどのくらい正確ですか？", "acceptedAnswer": {"@type": "Answer", "text": "写真1枚からの推定のため、照明や撮影角度で結果が変わります。写真で判断できない項目は中間値になります。米店の基準写真を学習データとして登録すると、判定がその店の基準に近づきます。"}},
-        {"@type": "Question", "name": "きれいに判定するための撮影のコツは？", "acceptedAnswer": {"@type": "Answer", "text": "明るい場所で、精米をトレーに均一に広げ、真上から水平に、ピントを合わせてブレを防いで撮影してください。"}}
+        {
+          "@type": "Question",
+          "name": "精米の品質は何で判定しますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "白度・光沢・粒揃い・粒の充実度（外観品位）、割れ欠け・着色粒・乳白粒/未熟粒・異物混入（欠陥粒）、精米仕上がり・鮮度感・品種純度・炊飯適性予測（精米品質）の12項目を各0〜100点で採点します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "グレードS・A・B・C・Dの違いは？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "S：最高品質・贈答用（主要項目すべて90点以上）。A：優秀・直売向け（主要項目80点以上）。B：良品・家庭用（主要項目70点以上）。C：標準・業務用／加工向け（一部項目に課題あり）。D：要改善（出荷前に再精米・選別を検討）。異物混入や大量の着色粒など致命的な欠陥がある場合はC以下になります。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "国の農産物検査の等級（1等・2等など）と同じですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "違います。S〜Dは近藤米穀店 らいすぴあ独自の精米品質の基準です。農産物検査法に基づく等級（1等〜3等・規格外）は、登録検査機関が玄米などを検査して格付けするもので、このツールの判定は公的な検査や証明の代わりにはなりません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "玄米や分づき米も判定できますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "品種の選択肢から玄米・5分づき米・ハイガ米を選んで判定できます。ただし白度や精米仕上がりなどは白米を想定した項目のため、玄米・分づき米の結果は参考値としてご覧ください。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "利用料金はかかりますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ツール自体は無料です。判定にはご自身のAnthropic APIキーが必要で、API利用料はAnthropicの料金体系に従います。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "スマートフォンだけで使えますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "使えます。アプリのインストールは不要で、スマートフォンやPCのWebブラウザから撮影・判定・レポートの印刷まで行えます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "APIキーや写真は保存されますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "APIキーはブラウザ内でのみ使用され保存されません。写真は判定のためにAnthropic APIへ送信されます。管理者が登録した学習データはその端末のブラウザ内に保存されます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "判定結果はどのくらい正確ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "写真1枚からの推定のため、照明や撮影角度で結果が変わります。写真で判断できない項目は中間値になります。米店の基準写真を学習データとして登録すると、判定がその店の基準に近づきます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "きれいに判定するための撮影のコツは？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "明るい場所で、精米をトレーに均一に広げ、真上から水平に、ピントを合わせてブレを防いで撮影してください。"
+          }
+        }
       ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://ricepia.jp/#shota",
+      "name": "近藤翔太",
+      "jobTitle": "五代目店主",
+      "worksFor": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "url": "https://ricepia.jp/shomai/"
     }
   ]
 }
@@ -291,7 +432,7 @@ input,textarea,button{font-family:inherit;}
         <details><summary>きれいに判定するための撮影のコツは？</summary><p>明るい場所で、精米をトレーに均一に広げ、真上から水平に、ピントを合わせてブレを防いで撮影してください。</p></details>
       </section>
 
-      <footer><a href="/guide/" style="color:#8a7040;">お米の品質ガイド</a><br/>運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）<br/>最終更新：<time datetime="2026-10-15">2026年10月15日</time><br/>© 近藤米穀店 らいすぴあ</footer>
+      <footer><a href="/guide/" style="color:#8a7040;">お米の品質ガイド</a><br/>運営：近藤米穀店 らいすぴあ<br/>本店：〒445-0802 愛知県西尾市米津町蓮台３−１<br/>電話：<a href="tel:+81563544001">0563-54-4001</a>（2店舗共通）<br/>創業：1892年（明治25年）｜五代目店主：<a href="https://ricepia.jp/shomai/">近藤翔太</a><br/><a href="https://ricepia.jp/">公式サイト</a> · <a href="https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7">本店のGoogleマップ</a> · <a href="https://www.instagram.com/ricepiablog/">Instagram</a> · <a href="https://www.youtube.com/@ricepia">YouTube</a> · <a href="https://line.me/R/ti/p/@wxh6702b">LINE</a><br/>最終更新：<time datetime="2026-10-15">2026年10月15日</time><br/>© 近藤米穀店 らいすぴあ</footer>
     </article>
   </div>
 </div>

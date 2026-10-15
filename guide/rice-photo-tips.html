@@ -28,105 +28,139 @@
 <meta name="twitter:image" content="https://ricepia-judge.vercel.app/ogp.png"/>
 <script type="application/ld+json">
 {
- "@context": "https://schema.org",
- "@graph": [
-  {
-   "@type": "Organization",
-   "@id": "https://ricepia-judge.vercel.app/#org",
-   "name": "近藤米穀店 らいすぴあ",
-   "url": "https://ricepia-judge.vercel.app/"
-  },
-  {
-   "@type": "BreadcrumbList",
-   "itemListElement": [
+  "@context": "https://schema.org",
+  "@graph": [
     {
-     "@type": "ListItem",
-     "position": 1,
-     "name": "精米品質AI判定",
-     "item": "https://ricepia-judge.vercel.app/"
+      "@type": "Store",
+      "@id": "https://ricepia.jp/#business",
+      "name": "近藤米穀店 らいすぴあ",
+      "url": "https://ricepia.jp/",
+      "alternateName": [
+        "近藤米穀店",
+        "らいすぴあ",
+        "Kondo Rice Nishio"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "postalCode": "445-0802",
+        "addressRegion": "愛知県",
+        "addressLocality": "西尾市",
+        "streetAddress": "米津町蓮台３−１",
+        "addressCountry": "JP"
+      },
+      "telephone": "+81563544001",
+      "foundingDate": "1892",
+      "sameAs": [
+        "https://www.instagram.com/ricepiablog/",
+        "https://www.youtube.com/@ricepia",
+        "https://line.me/R/ti/p/@wxh6702b"
+      ],
+      "hasMap": "https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7",
+      "employee": {
+        "@id": "https://ricepia.jp/#shota"
+      }
     },
     {
-     "@type": "ListItem",
-     "position": 2,
-     "name": "お米の品質ガイド",
-     "item": "https://ricepia-judge.vercel.app/guide/"
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "精米品質AI判定",
+          "item": "https://ricepia-judge.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "お米の品質ガイド",
+          "item": "https://ricepia-judge.vercel.app/guide/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
+          "item": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html"
+        }
+      ]
     },
     {
-     "@type": "ListItem",
-     "position": 3,
-     "name": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
-     "item": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html"
+      "@type": "Article",
+      "@id": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html#article",
+      "headline": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
+      "description": "精米の写真をAI判定に使うときの撮影手順。背景・照明・ピント・粒の広げ方と、撮影条件による見え方の違いを説明します。写真では確定できない品種・食味・安全性も整理。",
+      "url": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html",
+      "inLanguage": "ja",
+      "datePublished": "2026-10-15",
+      "dateModified": "2026-10-15",
+      "author": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "publisher": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "image": "https://ricepia-judge.vercel.app/ogp.png",
+      "keywords": [
+        "米 写真 撮影",
+        "精米 AI判定",
+        "米 品質 確認"
+      ],
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "@id": "https://ricepia-judge.vercel.app/#website",
+        "name": "らいすぴあ 精米品質AI判定",
+        "url": "https://ricepia-judge.vercel.app/"
+      },
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "精米の撮影"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "白い皿でないと判定できませんか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "白い皿でなくても構いません。模様や強い光沢がなく、米粒の輪郭が見分けやすい背景を使ってください。同じ米を比較するときは、背景と照明をそろえることが大切です。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "写真を明るく加工すれば判定しやすくなりますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "強い補正やフィルターは、粒の色や細部を変えてしまいます。加工で整えるより、照明・影・ピントを確認して撮り直し、実物に近い見え方の写真を使ってください。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "高得点なら安全で美味しい米ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "写真による点数は外観を中心とした参考情報で、安全性や食味の保証ではありません。異物の見落としもあり得ます。異臭やカビなどが疑われる場合は、食べずに購入先へ確認してください。"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://ricepia.jp/#shota",
+      "name": "近藤翔太",
+      "jobTitle": "五代目店主",
+      "worksFor": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "url": "https://ricepia.jp/shomai/"
     }
-   ]
-  },
-  {
-   "@type": "Article",
-   "@id": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html#article",
-   "headline": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
-   "description": "精米の写真をAI判定に使うときの撮影手順。背景・照明・ピント・粒の広げ方と、撮影条件による見え方の違いを説明します。写真では確定できない品種・食味・安全性も整理。",
-   "url": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html",
-   "inLanguage": "ja",
-   "datePublished": "2026-10-15",
-   "dateModified": "2026-10-15",
-   "author": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "publisher": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "image": "https://ricepia-judge.vercel.app/ogp.png",
-   "keywords": [
-    "米 写真 撮影",
-    "精米 AI判定",
-    "米 品質 確認"
-   ],
-   "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html"
-   },
-   "isPartOf": {
-    "@type": "WebSite",
-    "@id": "https://ricepia-judge.vercel.app/#website",
-    "name": "らいすぴあ 精米品質AI判定",
-    "url": "https://ricepia-judge.vercel.app/"
-   },
-   "about": [
-    {
-     "@type": "Thing",
-     "name": "精米の撮影"
-    }
-   ]
-  },
-  {
-   "@type": "FAQPage",
-   "mainEntity": [
-    {
-     "@type": "Question",
-     "name": "白い皿でないと判定できませんか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "白い皿でなくても構いません。模様や強い光沢がなく、米粒の輪郭が見分けやすい背景を使ってください。同じ米を比較するときは、背景と照明をそろえることが大切です。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "写真を明るく加工すれば判定しやすくなりますか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "強い補正やフィルターは、粒の色や細部を変えてしまいます。加工で整えるより、照明・影・ピントを確認して撮り直し、実物に近い見え方の写真を使ってください。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "高得点なら安全で美味しい米ですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "写真による点数は外観を中心とした参考情報で、安全性や食味の保証ではありません。異物の見落としもあり得ます。異臭やカビなどが疑われる場合は、食べずに購入先へ確認してください。"
-     }
-    }
-   ]
-  }
- ]
+  ]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -161,6 +195,7 @@ summary{font-weight:700;cursor:pointer;font-size:14px;}
 details p{margin:8px 0 0;}
 .cta{display:block;margin:28px 0 0;padding:14px;background:#c8a96e;color:#2d2d1e;border-radius:11px;text-align:center;font-weight:700;text-decoration:none;letter-spacing:0.06em;}
 .related{margin-top:24px;font-size:14px;}
+footer a{color:#705529;overflow-wrap:anywhere;}
 footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8a8a70;text-align:center;line-height:1.8;}
 .note{font-size:12px;color:#8a7040;background:#fff8ee;border:1px solid #e8d8b0;border-radius:8px;padding:10px 12px;margin:12px 0;}
 </style>
@@ -212,6 +247,6 @@ footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8
 <div class="related"><a href="/guide/">お米の品質ガイド一覧へ戻る</a></div>
 </article>
 </main>
-<footer>運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）<br/>© 近藤米穀店 らいすぴあ</footer>
+<footer>運営：近藤米穀店 らいすぴあ<br/>本店：〒445-0802 愛知県西尾市米津町蓮台３−１<br/>電話：<a href="tel:+81563544001">0563-54-4001</a>（2店舗共通）<br/>創業：1892年（明治25年）｜五代目店主：<a href="https://ricepia.jp/shomai/">近藤翔太</a><br/><a href="https://ricepia.jp/">公式サイト</a> · <a href="https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7">本店のGoogleマップ</a> · <a href="https://www.instagram.com/ricepiablog/">Instagram</a> · <a href="https://www.youtube.com/@ricepia">YouTube</a> · <a href="https://line.me/R/ti/p/@wxh6702b">LINE</a><br/>© 近藤米穀店 らいすぴあ</footer>
 </body>
 </html>

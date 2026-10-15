@@ -121,7 +121,11 @@ APIキーはブラウザ内でのみ使用され保存されません。写真�
 明るい場所で、精米をトレーに均一に広げ、真上から水平に、ピントを合わせてブレを防いで撮影してください。
 
 [お米の品質ガイド](https://ricepia-judge.vercel.app/guide/)
-運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）
+運営：近藤米穀店 らいすぴあ
+本店：〒445-0802 愛知県西尾市米津町蓮台３−１
+電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
+創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 最終更新：2026年10月15日
 © 近藤米穀店 らいすぴあ
 
@@ -139,7 +143,11 @@ URL: https://ricepia-judge.vercel.app/guide/
 
  [🌾 精米の写真をAIで判定してみる（ツール無料・API利用料別）](https://ricepia-judge.vercel.app/)
 
-運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）
+運営：近藤米穀店 らいすぴあ
+本店：〒445-0802 愛知県西尾市米津町蓮台３−１
+電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
+創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ
 
 ---
@@ -251,7 +259,11 @@ URL: https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html
 - [精米の品質を見分ける12のポイント｜白度・光沢・割れ・着色粒の見方](https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html)
 - [精米品質AI判定（ツール無料・API利用料別）](https://ricepia-judge.vercel.app/)
 
-運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）
+運営：近藤米穀店 らいすぴあ
+本店：〒445-0802 愛知県西尾市米津町蓮台３−１
+電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
+創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ
 
 ---
@@ -322,7 +334,11 @@ URL: https://ricepia-judge.vercel.app/guide/rice-photo-tips.html
 
 [お米の品質ガイド一覧へ戻る](https://ricepia-judge.vercel.app/guide/)
 
-運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）
+運営：近藤米穀店 らいすぴあ
+本店：〒445-0802 愛知県西尾市米津町蓮台３−１
+電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
+創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ
 
 ---
@@ -445,5 +461,9 @@ URL: https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html
 - [お米の「1等米」と精米の品質はどう違う？農産物検査の等級と店の基準](https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html)
 - [精米品質AI判定（ツール無料・API利用料別）](https://ricepia-judge.vercel.app/)
 
-運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）
+運営：近藤米穀店 らいすぴあ
+本店：〒445-0802 愛知県西尾市米津町蓮台３−１
+電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
+創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ

@@ -62,6 +62,20 @@ class ContentTests(unittest.TestCase):
         page=next(n for n in graph if n.get('@type')=='WebPage')
         self.assertTrue(all(isinstance(u,str) and u.startswith('https://') for u in page['relatedLink']))
 
+    def test_operator_identity_matches_visible_contact(self):
+        operators=[]
+        for path in [ROOT/'index.html', *sorted((ROOT/'guide').glob('*.html'))]:
+            doc=parse(path.read_text())
+            graph=json.loads(doc.find_all('script',type='application/ld+json')[0].text())['@graph']
+            operator=next(n for n in graph if n.get('@id')=='https://ricepia.jp/#business')
+            operators.append(operator)
+            visible=doc.find_all('footer')[0].text()
+            for value in [operator['name'],operator['address']['postalCode'],operator['address']['streetAddress'],operator['foundingDate'],'0563-54-4001']:
+                self.assertIn(value,visible)
+            self.assertNotIn('founder',operator)
+            self.assertIn('近藤翔太',visible)
+        self.assertTrue(all(n==operators[0] for n in operators))
+
     def test_aichi_variety_group(self):
         doc=parse((ROOT/'index.html').read_text())
         group=next(n for n in doc.find_all('optgroup') if '愛知産' in n.attrs['label'])

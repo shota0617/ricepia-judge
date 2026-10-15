@@ -28,131 +28,165 @@
 <meta name="twitter:image" content="https://ricepia-judge.vercel.app/ogp.png"/>
 <script type="application/ld+json">
 {
- "@context": "https://schema.org",
- "@graph": [
-  {
-   "@type": "Organization",
-   "@id": "https://ricepia-judge.vercel.app/#org",
-   "name": "近藤米穀店 らいすぴあ",
-   "url": "https://ricepia-judge.vercel.app/"
-  },
-  {
-   "@type": "BreadcrumbList",
-   "itemListElement": [
+  "@context": "https://schema.org",
+  "@graph": [
     {
-     "@type": "ListItem",
-     "position": 1,
-     "name": "精米品質AI判定",
-     "item": "https://ricepia-judge.vercel.app/"
+      "@type": "Store",
+      "@id": "https://ricepia.jp/#business",
+      "name": "近藤米穀店 らいすぴあ",
+      "url": "https://ricepia.jp/",
+      "alternateName": [
+        "近藤米穀店",
+        "らいすぴあ",
+        "Kondo Rice Nishio"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "postalCode": "445-0802",
+        "addressRegion": "愛知県",
+        "addressLocality": "西尾市",
+        "streetAddress": "米津町蓮台３−１",
+        "addressCountry": "JP"
+      },
+      "telephone": "+81563544001",
+      "foundingDate": "1892",
+      "sameAs": [
+        "https://www.instagram.com/ricepiablog/",
+        "https://www.youtube.com/@ricepia",
+        "https://line.me/R/ti/p/@wxh6702b"
+      ],
+      "hasMap": "https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7",
+      "employee": {
+        "@id": "https://ricepia.jp/#shota"
+      }
     },
     {
-     "@type": "ListItem",
-     "position": 2,
-     "name": "お米の品質ガイド",
-     "item": "https://ricepia-judge.vercel.app/guide/"
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "精米品質AI判定",
+          "item": "https://ricepia-judge.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "お米の品質ガイド",
+          "item": "https://ricepia-judge.vercel.app/guide/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
+          "item": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
+        }
+      ]
     },
     {
-     "@type": "ListItem",
-     "position": 3,
-     "name": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
-     "item": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
+      "@type": "Article",
+      "@id": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html#article",
+      "headline": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
+      "description": "「1等米」は農産物検査法に基づき主に玄米を1等〜3等・規格外に格付けしたもので、美味しさや精米後の状態は含みません。等級が示すこと・示さないこと、特Aとの違い、米店が見る精米品質（S〜D）との関係を創業130余年の米店が解説。",
+      "url": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html",
+      "inLanguage": "ja",
+      "datePublished": "2026-10-14",
+      "dateModified": "2026-10-15",
+      "author": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "publisher": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "image": "https://ricepia-judge.vercel.app/ogp.png",
+      "keywords": [
+        "1等米 とは",
+        "農産物検査 等級",
+        "米 等級 違い",
+        "特A 1等米 違い",
+        "精米 品質"
+      ],
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "@id": "https://ricepia-judge.vercel.app/#website",
+        "name": "らいすぴあ 精米品質AI判定",
+        "url": "https://ricepia-judge.vercel.app/"
+      },
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "1等米 とは"
+        },
+        {
+          "@type": "Thing",
+          "name": "農産物検査 等級"
+        },
+        {
+          "@type": "Thing",
+          "name": "米 等級 違い"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "「1等米」とはどういう意味ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "農産物検査法に基づく検査で、主に玄米の品位（整粒の割合、水分、被害粒・着色粒・異物の少なさなど）が最上位の「1等」に格付けされた米という意味です。見た目の規格であり、美味しさを直接評価したものではありません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "1等米なら必ず美味しいですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "必ずではありません。等級は玄米の見た目の規格で、食味や精米後の仕上がり、精米からの日数による鮮度は含まれません。良い玄米である可能性は高いものの、食卓での美味しさは精米と保管に大きく左右されます。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "特Aと1等米は同じですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "違います。特Aは日本穀物検定協会の「米の食味ランキング」で、産地品種ごとの食味評価です。1等は農産物検査法に基づく個々の玄米の品位の格付けです。評価する機関も対象も異なります。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "らいすぴあのS〜Dグレードは公的なものですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "公的なものではありません。近藤米穀店 らいすぴあが精米した白米を見るために独自に定めた基準で、国の検査や証明の代わりにはなりません。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "精米には国の等級はないのですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "農産物検査には精米の規格も定められていますが、流通で広く使われる格付けは玄米段階のものです。店頭の白米の状態は、米店や消費者がそれぞれ確認することになります。"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://ricepia.jp/#shota",
+      "name": "近藤翔太",
+      "jobTitle": "五代目店主",
+      "worksFor": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "url": "https://ricepia.jp/shomai/"
     }
-   ]
-  },
-  {
-   "@type": "Article",
-   "@id": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html#article",
-   "headline": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
-   "description": "「1等米」は農産物検査法に基づき主に玄米を1等〜3等・規格外に格付けしたもので、美味しさや精米後の状態は含みません。等級が示すこと・示さないこと、特Aとの違い、米店が見る精米品質（S〜D）との関係を創業130余年の米店が解説。",
-   "url": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html",
-   "inLanguage": "ja",
-   "datePublished": "2026-10-14",
-   "dateModified": "2026-10-15",
-   "author": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "publisher": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "image": "https://ricepia-judge.vercel.app/ogp.png",
-   "keywords": [
-    "1等米 とは",
-    "農産物検査 等級",
-    "米 等級 違い",
-    "特A 1等米 違い",
-    "精米 品質"
-   ],
-   "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
-   },
-   "isPartOf": {
-    "@type": "WebSite",
-    "@id": "https://ricepia-judge.vercel.app/#website",
-    "name": "らいすぴあ 精米品質AI判定",
-    "url": "https://ricepia-judge.vercel.app/"
-   },
-   "about": [
-    {
-     "@type": "Thing",
-     "name": "1等米 とは"
-    },
-    {
-     "@type": "Thing",
-     "name": "農産物検査 等級"
-    },
-    {
-     "@type": "Thing",
-     "name": "米 等級 違い"
-    }
-   ]
-  },
-  {
-   "@type": "FAQPage",
-   "mainEntity": [
-    {
-     "@type": "Question",
-     "name": "「1等米」とはどういう意味ですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "農産物検査法に基づく検査で、主に玄米の品位（整粒の割合、水分、被害粒・着色粒・異物の少なさなど）が最上位の「1等」に格付けされた米という意味です。見た目の規格であり、美味しさを直接評価したものではありません。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "1等米なら必ず美味しいですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "必ずではありません。等級は玄米の見た目の規格で、食味や精米後の仕上がり、精米からの日数による鮮度は含まれません。良い玄米である可能性は高いものの、食卓での美味しさは精米と保管に大きく左右されます。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "特Aと1等米は同じですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "違います。特Aは日本穀物検定協会の「米の食味ランキング」で、産地品種ごとの食味評価です。1等は農産物検査法に基づく個々の玄米の品位の格付けです。評価する機関も対象も異なります。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "らいすぴあのS〜Dグレードは公的なものですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "公的なものではありません。近藤米穀店 らいすぴあが精米した白米を見るために独自に定めた基準で、国の検査や証明の代わりにはなりません。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "精米には国の等級はないのですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "農産物検査には精米の規格も定められていますが、流通で広く使われる格付けは玄米段階のものです。店頭の白米の状態は、米店や消費者がそれぞれ確認することになります。"
-     }
-    }
-   ]
-  }
- ]
+  ]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -187,6 +221,7 @@ summary{font-weight:700;cursor:pointer;font-size:14px;}
 details p{margin:8px 0 0;}
 .cta{display:block;margin:28px 0 0;padding:14px;background:#c8a96e;color:#2d2d1e;border-radius:11px;text-align:center;font-weight:700;text-decoration:none;letter-spacing:0.06em;}
 .related{margin-top:24px;font-size:14px;}
+footer a{color:#705529;overflow-wrap:anywhere;}
 footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8a8a70;text-align:center;line-height:1.8;}
 .note{font-size:12px;color:#8a7040;background:#fff8ee;border:1px solid #e8d8b0;border-radius:8px;padding:10px 12px;margin:12px 0;}
 </style>
@@ -275,6 +310,6 @@ footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8
 <li><a href="/">精米品質AI判定（ツール無料・API利用料別）</a></li></ul></div>
 </article>
 </main>
-<footer>運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）<br/>© 近藤米穀店 らいすぴあ</footer>
+<footer>運営：近藤米穀店 らいすぴあ<br/>本店：〒445-0802 愛知県西尾市米津町蓮台３−１<br/>電話：<a href="tel:+81563544001">0563-54-4001</a>（2店舗共通）<br/>創業：1892年（明治25年）｜五代目店主：<a href="https://ricepia.jp/shomai/">近藤翔太</a><br/><a href="https://ricepia.jp/">公式サイト</a> · <a href="https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7">本店のGoogleマップ</a> · <a href="https://www.instagram.com/ricepiablog/">Instagram</a> · <a href="https://www.youtube.com/@ricepia">YouTube</a> · <a href="https://line.me/R/ti/p/@wxh6702b">LINE</a><br/>© 近藤米穀店 らいすぴあ</footer>
 </body>
 </html>

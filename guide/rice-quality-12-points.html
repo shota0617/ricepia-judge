@@ -28,132 +28,166 @@
 <meta name="twitter:image" content="https://ricepia-judge.vercel.app/ogp.png"/>
 <script type="application/ld+json">
 {
- "@context": "https://schema.org",
- "@graph": [
-  {
-   "@type": "Organization",
-   "@id": "https://ricepia-judge.vercel.app/#org",
-   "name": "近藤米穀店 らいすぴあ",
-   "url": "https://ricepia-judge.vercel.app/"
-  },
-  {
-   "@type": "BreadcrumbList",
-   "itemListElement": [
+  "@context": "https://schema.org",
+  "@graph": [
     {
-     "@type": "ListItem",
-     "position": 1,
-     "name": "精米品質AI判定",
-     "item": "https://ricepia-judge.vercel.app/"
+      "@type": "Store",
+      "@id": "https://ricepia.jp/#business",
+      "name": "近藤米穀店 らいすぴあ",
+      "url": "https://ricepia.jp/",
+      "alternateName": [
+        "近藤米穀店",
+        "らいすぴあ",
+        "Kondo Rice Nishio"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "postalCode": "445-0802",
+        "addressRegion": "愛知県",
+        "addressLocality": "西尾市",
+        "streetAddress": "米津町蓮台３−１",
+        "addressCountry": "JP"
+      },
+      "telephone": "+81563544001",
+      "foundingDate": "1892",
+      "sameAs": [
+        "https://www.instagram.com/ricepiablog/",
+        "https://www.youtube.com/@ricepia",
+        "https://line.me/R/ti/p/@wxh6702b"
+      ],
+      "hasMap": "https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7",
+      "employee": {
+        "@id": "https://ricepia.jp/#shota"
+      }
     },
     {
-     "@type": "ListItem",
-     "position": 2,
-     "name": "お米の品質ガイド",
-     "item": "https://ricepia-judge.vercel.app/guide/"
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "精米品質AI判定",
+          "item": "https://ricepia-judge.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "お米の品質ガイド",
+          "item": "https://ricepia-judge.vercel.app/guide/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "精米の品質を見分ける12のポイント",
+          "item": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html"
+        }
+      ]
     },
     {
-     "@type": "ListItem",
-     "position": 3,
-     "name": "精米の品質を見分ける12のポイント",
-     "item": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html"
+      "@type": "Article",
+      "@id": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html#article",
+      "headline": "精米の品質を見分ける12のポイント",
+      "description": "精米（白米）の品質は見た目でかなり分かります。創業130余年の米店 らいすぴあが出荷前に見ている12のポイント（白度・光沢・粒揃い・粒の充実度・割れ欠け・着色粒・乳白粒・異物・精米仕上がり・鮮度感・品種純度・炊飯適性）を、原因と自宅での確認方法とともに解説。",
+      "url": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html",
+      "inLanguage": "ja",
+      "datePublished": "2026-10-14",
+      "dateModified": "2026-10-15",
+      "author": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "publisher": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "image": "https://ricepia-judge.vercel.app/ogp.png",
+      "keywords": [
+        "精米の品質",
+        "白米の見分け方",
+        "胴割れ米",
+        "着色粒",
+        "乳白粒",
+        "精米 鮮度"
+      ],
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "@id": "https://ricepia-judge.vercel.app/#website",
+        "name": "らいすぴあ 精米品質AI判定",
+        "url": "https://ricepia-judge.vercel.app/"
+      },
+      "about": [
+        {
+          "@type": "Thing",
+          "name": "精米の品質"
+        },
+        {
+          "@type": "Thing",
+          "name": "白米の見分け方"
+        },
+        {
+          "@type": "Thing",
+          "name": "胴割れ米"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "精米の良し悪しを見るとき、まず何を見ればいいですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "最初に見るべきは「割れ・欠け」「着色粒」「異物」の3つです。これらは炊き上がりと見た目を直接損なう欠陥で、少量でも品質評価を大きく下げます。次に白度（濁りの少なさ）と粒揃いを確認します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "乳白粒（白く濁った米）が入っていると食べられませんか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "乳白粒であること自体は、腐敗やカビを意味しません。澱粉の蓄積が不十分な粒が多いと精米時に砕けやすく、食感に影響する場合があります。ただし写真だけで安全性は判断できません。異臭やカビが疑われる場合は食べずに購入先へ確認してください。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "胴割れ米はなぜ起きますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "胴割れは米粒内部にヒビが入る現象です。登熟初期の高温で発生しやすくなり、収穫後の急速な乾燥なども原因になります。胴割れ粒は精米時に砕けやすく、砕米が増えると歩留まりや炊き上がりに影響します。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "写真だけで品質はどこまで分かりますか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "白度・光沢・粒揃い・割れ・着色粒・異物など外観で分かる項目は写真からおおむね判断できます。食味そのものや品種純度は推定になるため、当店のAI判定では写真から判断できない項目は中間的な点数にしています。"
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "この12項目は国の検査基準ですか？",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "違います。近藤米穀店 らいすぴあが店頭で用いている独自の基準です。農産物検査法の等級（1等〜3等）は登録検査機関が主に玄米を検査して格付けするもので、別の制度です。"
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://ricepia.jp/#shota",
+      "name": "近藤翔太",
+      "jobTitle": "五代目店主",
+      "worksFor": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "url": "https://ricepia.jp/shomai/"
     }
-   ]
-  },
-  {
-   "@type": "Article",
-   "@id": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html#article",
-   "headline": "精米の品質を見分ける12のポイント",
-   "description": "精米（白米）の品質は見た目でかなり分かります。創業130余年の米店 らいすぴあが出荷前に見ている12のポイント（白度・光沢・粒揃い・粒の充実度・割れ欠け・着色粒・乳白粒・異物・精米仕上がり・鮮度感・品種純度・炊飯適性）を、原因と自宅での確認方法とともに解説。",
-   "url": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html",
-   "inLanguage": "ja",
-   "datePublished": "2026-10-14",
-   "dateModified": "2026-10-15",
-   "author": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "publisher": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "image": "https://ricepia-judge.vercel.app/ogp.png",
-   "keywords": [
-    "精米の品質",
-    "白米の見分け方",
-    "胴割れ米",
-    "着色粒",
-    "乳白粒",
-    "精米 鮮度"
-   ],
-   "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html"
-   },
-   "isPartOf": {
-    "@type": "WebSite",
-    "@id": "https://ricepia-judge.vercel.app/#website",
-    "name": "らいすぴあ 精米品質AI判定",
-    "url": "https://ricepia-judge.vercel.app/"
-   },
-   "about": [
-    {
-     "@type": "Thing",
-     "name": "精米の品質"
-    },
-    {
-     "@type": "Thing",
-     "name": "白米の見分け方"
-    },
-    {
-     "@type": "Thing",
-     "name": "胴割れ米"
-    }
-   ]
-  },
-  {
-   "@type": "FAQPage",
-   "mainEntity": [
-    {
-     "@type": "Question",
-     "name": "精米の良し悪しを見るとき、まず何を見ればいいですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "最初に見るべきは「割れ・欠け」「着色粒」「異物」の3つです。これらは炊き上がりと見た目を直接損なう欠陥で、少量でも品質評価を大きく下げます。次に白度（濁りの少なさ）と粒揃いを確認します。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "乳白粒（白く濁った米）が入っていると食べられませんか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "乳白粒であること自体は、腐敗やカビを意味しません。澱粉の蓄積が不十分な粒が多いと精米時に砕けやすく、食感に影響する場合があります。ただし写真だけで安全性は判断できません。異臭やカビが疑われる場合は食べずに購入先へ確認してください。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "胴割れ米はなぜ起きますか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "胴割れは米粒内部にヒビが入る現象です。登熟初期の高温で発生しやすくなり、収穫後の急速な乾燥なども原因になります。胴割れ粒は精米時に砕けやすく、砕米が増えると歩留まりや炊き上がりに影響します。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "写真だけで品質はどこまで分かりますか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "白度・光沢・粒揃い・割れ・着色粒・異物など外観で分かる項目は写真からおおむね判断できます。食味そのものや品種純度は推定になるため、当店のAI判定では写真から判断できない項目は中間的な点数にしています。"
-     }
-    },
-    {
-     "@type": "Question",
-     "name": "この12項目は国の検査基準ですか？",
-     "acceptedAnswer": {
-      "@type": "Answer",
-      "text": "違います。近藤米穀店 らいすぴあが店頭で用いている独自の基準です。農産物検査法の等級（1等〜3等）は登録検査機関が主に玄米を検査して格付けするもので、別の制度です。"
-     }
-    }
-   ]
-  }
- ]
+  ]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -188,6 +222,7 @@ summary{font-weight:700;cursor:pointer;font-size:14px;}
 details p{margin:8px 0 0;}
 .cta{display:block;margin:28px 0 0;padding:14px;background:#c8a96e;color:#2d2d1e;border-radius:11px;text-align:center;font-weight:700;text-decoration:none;letter-spacing:0.06em;}
 .related{margin-top:24px;font-size:14px;}
+footer a{color:#705529;overflow-wrap:anywhere;}
 footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8a8a70;text-align:center;line-height:1.8;}
 .note{font-size:12px;color:#8a7040;background:#fff8ee;border:1px solid #e8d8b0;border-radius:8px;padding:10px 12px;margin:12px 0;}
 </style>
@@ -267,6 +302,6 @@ footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8
 <li><a href="/">精米品質AI判定（ツール無料・API利用料別）</a></li></ul></div>
 </article>
 </main>
-<footer>運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）<br/>© 近藤米穀店 らいすぴあ</footer>
+<footer>運営：近藤米穀店 らいすぴあ<br/>本店：〒445-0802 愛知県西尾市米津町蓮台３−１<br/>電話：<a href="tel:+81563544001">0563-54-4001</a>（2店舗共通）<br/>創業：1892年（明治25年）｜五代目店主：<a href="https://ricepia.jp/shomai/">近藤翔太</a><br/><a href="https://ricepia.jp/">公式サイト</a> · <a href="https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7">本店のGoogleマップ</a> · <a href="https://www.instagram.com/ricepiablog/">Instagram</a> · <a href="https://www.youtube.com/@ricepia">YouTube</a> · <a href="https://line.me/R/ti/p/@wxh6702b">LINE</a><br/>© 近藤米穀店 らいすぴあ</footer>
 </body>
 </html>

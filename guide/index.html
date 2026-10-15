@@ -26,69 +26,103 @@
 <meta name="twitter:image" content="https://ricepia-judge.vercel.app/ogp.png"/>
 <script type="application/ld+json">
 {
- "@context": "https://schema.org",
- "@graph": [
-  {
-   "@type": "Organization",
-   "@id": "https://ricepia-judge.vercel.app/#org",
-   "name": "近藤米穀店 らいすぴあ",
-   "url": "https://ricepia-judge.vercel.app/"
-  },
-  {
-   "@type": "BreadcrumbList",
-   "itemListElement": [
+  "@context": "https://schema.org",
+  "@graph": [
     {
-     "@type": "ListItem",
-     "position": 1,
-     "name": "精米品質AI判定",
-     "item": "https://ricepia-judge.vercel.app/"
+      "@type": "Store",
+      "@id": "https://ricepia.jp/#business",
+      "name": "近藤米穀店 らいすぴあ",
+      "url": "https://ricepia.jp/",
+      "alternateName": [
+        "近藤米穀店",
+        "らいすぴあ",
+        "Kondo Rice Nishio"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "postalCode": "445-0802",
+        "addressRegion": "愛知県",
+        "addressLocality": "西尾市",
+        "streetAddress": "米津町蓮台３−１",
+        "addressCountry": "JP"
+      },
+      "telephone": "+81563544001",
+      "foundingDate": "1892",
+      "sameAs": [
+        "https://www.instagram.com/ricepiablog/",
+        "https://www.youtube.com/@ricepia",
+        "https://line.me/R/ti/p/@wxh6702b"
+      ],
+      "hasMap": "https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7",
+      "employee": {
+        "@id": "https://ricepia.jp/#shota"
+      }
     },
     {
-     "@type": "ListItem",
-     "position": 2,
-     "name": "お米の品質ガイド",
-     "item": "https://ricepia-judge.vercel.app/guide/"
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "精米品質AI判定",
+          "item": "https://ricepia-judge.vercel.app/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "お米の品質ガイド",
+          "item": "https://ricepia-judge.vercel.app/guide/"
+        }
+      ]
+    },
+    {
+      "@type": "CollectionPage",
+      "@id": "https://ricepia-judge.vercel.app/guide/",
+      "url": "https://ricepia-judge.vercel.app/guide/",
+      "name": "お米の品質ガイド",
+      "inLanguage": "ja",
+      "dateModified": "2026-10-15",
+      "publisher": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "isPartOf": {
+        "@type": "WebSite",
+        "@id": "https://ricepia-judge.vercel.app/#website",
+        "name": "らいすぴあ 精米品質AI判定",
+        "url": "https://ricepia-judge.vercel.app/"
+      },
+      "hasPart": [
+        {
+          "@type": "Article",
+          "@id": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html#article",
+          "headline": "精米の品質を見分ける12のポイント",
+          "url": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html"
+        },
+        {
+          "@type": "Article",
+          "@id": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html#article",
+          "headline": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
+          "url": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
+        },
+        {
+          "@type": "Article",
+          "@id": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html#article",
+          "headline": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
+          "url": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html"
+        }
+      ]
+    },
+    {
+      "@type": "Person",
+      "@id": "https://ricepia.jp/#shota",
+      "name": "近藤翔太",
+      "jobTitle": "五代目店主",
+      "worksFor": {
+        "@id": "https://ricepia.jp/#business"
+      },
+      "url": "https://ricepia.jp/shomai/"
     }
-   ]
-  },
-  {
-   "@type": "CollectionPage",
-   "@id": "https://ricepia-judge.vercel.app/guide/",
-   "url": "https://ricepia-judge.vercel.app/guide/",
-   "name": "お米の品質ガイド",
-   "inLanguage": "ja",
-   "dateModified": "2026-10-15",
-   "publisher": {
-    "@id": "https://ricepia-judge.vercel.app/#org"
-   },
-   "isPartOf": {
-    "@type": "WebSite",
-    "@id": "https://ricepia-judge.vercel.app/#website",
-    "name": "らいすぴあ 精米品質AI判定",
-    "url": "https://ricepia-judge.vercel.app/"
-   },
-   "hasPart": [
-    {
-     "@type": "Article",
-     "@id": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html#article",
-     "headline": "精米の品質を見分ける12のポイント",
-     "url": "https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html"
-    },
-    {
-     "@type": "Article",
-     "@id": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html#article",
-     "headline": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
-     "url": "https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html"
-    },
-    {
-     "@type": "Article",
-     "@id": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html#article",
-     "headline": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
-     "url": "https://ricepia-judge.vercel.app/guide/rice-photo-tips.html"
-    }
-   ]
-  }
- ]
+  ]
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -123,6 +157,7 @@ summary{font-weight:700;cursor:pointer;font-size:14px;}
 details p{margin:8px 0 0;}
 .cta{display:block;margin:28px 0 0;padding:14px;background:#c8a96e;color:#2d2d1e;border-radius:11px;text-align:center;font-weight:700;text-decoration:none;letter-spacing:0.06em;}
 .related{margin-top:24px;font-size:14px;}
+footer a{color:#705529;overflow-wrap:anywhere;}
 footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8a8a70;text-align:center;line-height:1.8;}
 .note{font-size:12px;color:#8a7040;background:#fff8ee;border:1px solid #e8d8b0;border-radius:8px;padding:10px 12px;margin:12px 0;}
 .list a{display:block;background:#fafaf7;border:1px solid #e8e4d8;border-radius:11px;padding:14px 16px;margin-bottom:10px;text-decoration:none;color:#2d2d1e;}
@@ -146,6 +181,6 @@ footer{max-width:720px;margin:20px auto 0;padding:0 16px;font-size:12px;color:#8
 <a class="cta" href="/">🌾 精米の写真をAIで判定してみる（ツール無料・API利用料別）</a>
 </article>
 </main>
-<footer>運営：近藤米穀店 らいすぴあ（愛知県西尾市・創業130余年）<br/>© 近藤米穀店 らいすぴあ</footer>
+<footer>運営：近藤米穀店 らいすぴあ<br/>本店：〒445-0802 愛知県西尾市米津町蓮台３−１<br/>電話：<a href="tel:+81563544001">0563-54-4001</a>（2店舗共通）<br/>創業：1892年（明治25年）｜五代目店主：<a href="https://ricepia.jp/shomai/">近藤翔太</a><br/><a href="https://ricepia.jp/">公式サイト</a> · <a href="https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7">本店のGoogleマップ</a> · <a href="https://www.instagram.com/ricepiablog/">Instagram</a> · <a href="https://www.youtube.com/@ricepia">YouTube</a> · <a href="https://line.me/R/ti/p/@wxh6702b">LINE</a><br/>© 近藤米穀店 らいすぴあ</footer>
 </body>
 </html>

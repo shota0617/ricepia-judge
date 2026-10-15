@@ -174,25 +174,10 @@ function rasterize(elements, cx, cy, dem) {
     const pts = rings.map(r => r.map(p => { const q = toTile(p.lat, p.lon); return [q.x - x0, q.y - y0]; }));
     if (k.coast) coasts.push(...pts); else ops.push({ k, pts });
   }
-  if (!ops.length && !coasts.length && !dem) {
-    // データが何もない区画：三河湾側（南）なら海、それ以外は野原とみなす
-    g.fill((toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82 && elements.length === 0 ? C.A : C.G) | (2 << 5));
-    return g;
-  }
   const dh = (x, y) => dem[(y + 1) * DB + (x + 1)];
   ops.sort((a, b) => a.k.p - b.k.p);
   let seaDone = false;
-  const sea = () => {
-    if (seaDone) return;
-    seaDone = true;
-    if (coasts.length) seaFill(g, coasts);   // 海岸線がある区画は、海岸線で決める
-    else if (dem) {                           // ない区画は、標高データのない所（国土地理院の「データなし」）を海に
-      for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
-        const i = y * CHUNK + x;
-        if (g[i] === UNSET && Number.isNaN(dh(x, y))) g[i] = C.A;
-      }
-    }
-  };
+  const sea = () => { if (!seaDone) { seaDone = true; if (coasts.length) seaFill(g, coasts); } };   // 海は海岸線で決める
   for (const o of ops) {
     if (o.k.p >= 18) sea();
     if (o.k.a) {
@@ -205,6 +190,14 @@ function rasterize(elements, cx, cy, dem) {
     } else for (const line of o.pts) strokeLine(g, line, o.k.c, o.k.w);
   }
   sea();
+  // 海岸線が通らない区画は、まるごと陸かまるごと海。地図データが何もなく、
+  // さらに標高データも大半が「データなし」（標高がなければ三河湾側の南）のときだけ海とみなす
+  if (!coasts.length && g.every(v => v === UNSET)) {
+    let na = 0, known = 0;
+    if (dem) for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) { const h = dh(x, y); if (Number.isNaN(h)) { na++; known++; } else if (h > UNK) known++; }
+    const isSea = known > CHUNK * CHUNK / 2 ? na > known * 0.9 : toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82;
+    if (isSea) g.fill(C.A);
+  }
   for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
   const ok = h => Number.isFinite(h) && h > UNK;
@@ -274,7 +267,7 @@ async function demFor(cx, cy) {
 }
 
 /* ---------- 地図データの取得と保存 ---------- */
-const PX_KEY = 'nsg_px4_', PX_IDX = 'nsg_px4_idx', PX_DAYS = 30, PX_KEEP = 60;
+const PX_KEY = 'nsg_px5_', PX_IDX = 'nsg_px5_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
   get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },

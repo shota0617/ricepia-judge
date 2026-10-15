@@ -426,31 +426,8 @@ const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 150;   // 西尾�
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
-const WORLD_KEY = 'nsg_world3';
+const WORLD_KEY = 'nsg_world4';
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
-
-function worldQuery(withAreas) {
-  return `[out:json][timeout:120][bbox:${WB.s},${WB.w},${WB.n},${WB.e}];
-(
-  way["waterway"~"^(river|canal)$"];
-  wr["natural"="water"]["water"~"^(river|lake|reservoir|pond|canal)$"];
-  way["railway"="rail"];
-  way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"];${withAreas ? `
-  wr["natural"="wood"];
-  wr["landuse"~"^(forest|residential|commercial|retail|industrial)$"];` : ''}
-);
-out geom qt;
-nwr["amenity"~"^(townhall|hospital|library|fire_station)$"];
-out center qt;
-nwr["shop"~"^(mall|department_store)$"];
-out center qt;
-node["place"~"^(city|town|village|suburb)$"]["name"];
-out qt;
-nwr["place"="island"]["name"];
-out center qt;
-node["railway"="station"]["name"];
-out qt;`;
-}
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
 const WCOL = { [C.G]: '#3f9b3c', [C.F]: '#7fb84a', [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
@@ -468,15 +445,92 @@ function makeWorldImg() {
   worldImg = c;
 }
 
+// 地図データは、軽い「名前」の問い合わせと、範囲を4×4に分けた「線と面」の問い合わせに分けて取る
+// （市全体を1回で取ると、無料の Overpass サーバーでは時間切れになるため）。届いた所から順に地図に反映する
+const WSPLIT = 4;
+function worldNamesQuery() {
+  return `[out:json][timeout:60][bbox:${WB.s},${WB.w},${WB.n},${WB.e}];
+node["place"~"^(city|town|village|suburb)$"]["name"];
+out qt;
+nwr["place"="island"]["name"];
+out center qt;
+node["railway"="station"]["name"];
+out qt;
+nwr["amenity"~"^(townhall|hospital|library|fire_station)$"];
+out center qt;
+nwr["shop"~"^(mall|department_store)$"];
+out center qt;`;
+}
+function worldPartQuery(s, w, n, e) {
+  return `[out:json][timeout:90][bbox:${s.toFixed(4)},${w.toFixed(4)},${n.toFixed(4)},${e.toFixed(4)}];
+(
+  way["waterway"~"^(river|canal)$"];
+  wr["natural"="water"]["water"~"^(river|lake|reservoir|pond|canal)$"];
+  way["railway"="rail"];
+  way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"];
+  wr["natural"="wood"];
+  wr["landuse"~"^(forest|residential|commercial|retail|industrial)$"];
+);
+out geom qt;`;
+}
+const RANK = { city: 4, town: 3, island: 3, village: 2, suburb: 2 };
+function parseWorldNames(elements) {
+  const wp = [], wl = [];
+  for (const el of elements) {
+    const tg = el.tags || {}, kind = poiKind(tg), c = elCenter(el), q = c && llToW(c.lat, c.lon);
+    if (!q || q.x < 0 || q.y < 0 || q.x >= WW || q.y >= WH) continue;
+    if (kind && WORLD_POI.has(kind)) wp.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(tg.name || '').slice(0, 40)]);
+    else if ((RANK[tg.place] || tg.railway === 'station') && tg.name) {
+      let name = String(tg.name).slice(0, 12);
+      if (tg.railway === 'station' && !name.endsWith('駅')) name += '駅';
+      wl.push([+q.x.toFixed(2), +q.y.toFixed(2), name, RANK[tg.place] || 1]);
+    }
+  }
+  return [dedupePois(wp, 1.5), wl.filter((l, i) => !wl.slice(0, i).some(m => m[2] === l[2] && Math.hypot(m[0] - l[0], m[1] - l[1]) < 5))];
+}
+function addWorldFeatures(elements, L) {
+  for (const el of elements) {
+    let rings;
+    if (el.type === 'way' && el.geometry) rings = [el.geometry];
+    else if (el.type === 'relation' && el.members) rings = el.members.filter(m => m.type === 'way' && m.geometry).map(m => m.geometry);
+    else continue;
+    if (!rings.length || !rings[0].length) continue;
+    const t = el.tags || {}, pts = rings.map(r => r.map(p => { const q = llToW(p.lat, p.lon); return [q.x, q.y]; }));
+    if (t.waterway) L.lines.push([pts, C.A, 30]);
+    else if (t.railway) L.lines.push([pts, C.L, 40]);
+    else if (t.highway) L.lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
+    else if (t.natural === 'water') fillPoly(L.water, pts, 1, WW, WH);
+    else if (t.natural === 'wood' || t.landuse === 'forest') fillPoly(L.wood, pts, 1, WW, WH);
+    else if (t.landuse) fillPoly(L.town, pts, 1, WW, WH);
+  }
+}
+// 標高から作った下地（海・山・丘・平地=UNSET）に、地図データの面と線を重ねる
+function combineWorld(base, L) {
+  const g = base.slice();
+  for (let i = 0; i < g.length; i++) {
+    const c = g[i];
+    if (L.water[i]) g[i] = C.A;
+    else if (c === C.A && (L.wood[i] || L.town[i])) g[i] = L.wood[i] ? C.W : C.T;   // 地図データで森や町なみがある所は陸
+    else if (c === C.A || c === C.M) continue;
+    else if (L.wood[i]) g[i] = C.W;
+    else if (L.town[i] && c === UNSET) g[i] = C.T;
+  }
+  const keepSeaMt = new Set([C.A, C.M]), keepMt = new Set([C.M]);
+  L.lines.slice().sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => pts.forEach(line => strokeLine(g, line, code, 1, null, WW, WH, code === C.A ? keepMt : keepSeaMt)));
+  for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
+  return g;
+}
+
+let worldProgress = '';
 async function buildWorld(force) {
-  if (worldState === 'building' || (worldState === 'ok' && !force)) return;
+  if (worldState === 'building' || worldState === 'enriching' || (worldState === 'ok' && !force)) return;
   const saved = !force && store.get(WORLD_KEY);
   if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
     world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
   }
   worldState = 'building';
   try {
-    const N = WW * WH, g = new Uint8Array(N).fill(UNSET);
+    const N = WW * WH, base = new Uint8Array(N).fill(UNSET);
     // 1) 標高（ズーム12＝約31m）から海・平地・丘・山。1マスに5点ずつ調べる
     const DZ = 12, PTS = [[0.25, 0.25], [0.75, 0.25], [0.5, 0.5], [0.25, 0.75], [0.75, 0.75]];
     const keys = new Array(N * 5), offs = new Int32Array(N * 5), need = new Map();
@@ -498,63 +552,39 @@ async function buildWorld(force) {
         if (Number.isNaN(v)) na++; else if (v > UNK) { sum += v; n++; }
       }
       // この縮尺では海岸線を使えないので、標高データのない所を海とみなす（街の詳しい地図は海岸線で判定）
-      if (na >= 3) g[i] = C.A;
-      else if (n) { const h = sum / n; g[i] = h >= MOUNTAIN_M ? C.M : h >= HILL_M ? C.K : UNSET; }
+      if (na >= 3) base[i] = C.A;
+      else if (n) { const h = sum / n; base[i] = h >= MOUNTAIN_M ? C.M : h >= HILL_M ? C.K : UNSET; }
     }
-    // 2) 地図データ：川・水面・国道・線路・森・町なみ
-    let json;
-    try { json = await overpass(worldQuery(true)); } catch (e) { json = await overpass(worldQuery(false)).catch(() => ({ elements: [] })); }
-    const water = new Uint8Array(N), wood = new Uint8Array(N), town = new Uint8Array(N), lines = [], wp = [], wl = [];
-    const RANK = { city: 4, town: 3, island: 3, village: 2, suburb: 2 };
-    for (const el of json.elements || []) {
-      const kind = poiKind(el.tags || {});
-      if (kind && WORLD_POI.has(kind)) {
-        const c = elCenter(el), q = c && llToW(c.lat, c.lon);
-        if (q && q.x >= 0 && q.y >= 0 && q.x < WW && q.y < WH) wp.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(el.tags.name || '').slice(0, 40)]);
-        continue;
-      }
-      const tg = el.tags || {};
-      if ((RANK[tg.place] || tg.railway === 'station') && tg.name) {   // 地名・駅名
-        const c = elCenter(el), q = c && llToW(c.lat, c.lon);
-        let name = String(tg.name).slice(0, 12);
-        if (tg.railway === 'station' && !name.endsWith('駅')) name += '駅';
-        if (q && q.x >= 0 && q.y >= 0 && q.x < WW && q.y < WH) wl.push([+q.x.toFixed(2), +q.y.toFixed(2), name, RANK[tg.place] || 1]);
-        continue;
-      }
-      let rings;
-      if (el.type === 'way' && el.geometry) rings = [el.geometry];
-      else if (el.type === 'relation' && el.members) rings = el.members.filter(m => m.type === 'way' && m.geometry).map(m => m.geometry);
-      else continue;
-      if (!rings.length || !rings[0].length) continue;
-      const t = el.tags || {}, pts = rings.map(r => r.map(p => { const q = llToW(p.lat, p.lon); return [q.x, q.y]; }));
-      if (t.waterway) lines.push([pts, C.A, 30]);
-      else if (t.railway) lines.push([pts, C.L, 40]);
-      else if (t.highway) lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
-      else if (t.natural === 'water') fillPoly(water, pts, 1, WW, WH);
-      else if (t.natural === 'wood' || t.landuse === 'forest') fillPoly(wood, pts, 1, WW, WH);
-      else if (t.landuse) fillPoly(town, pts, 1, WW, WH);
+    const L = { water: new Uint8Array(N), wood: new Uint8Array(N), town: new Uint8Array(N), lines: [] };
+    world = combineWorld(base, L); makeWorldImg();
+    worldState = 'enriching';   // まず地形を見せて、地図データは届いた所から足していく
+    // 2) 地名・駅名・大きな建物（軽い）
+    let namesOk = true;
+    try { [worldPois, worldLabels] = parseWorldNames((await overpass(worldNamesQuery())).elements || []); } catch (e) { namesOk = false; }
+    // 3) 川・道・線路・森・町なみ（4×4に分けて、自分のいる所から近い順に）
+    const here = G.me ? llToW(G.me.lat, G.me.lng) : llToW(34.825, 137.07);
+    const parts = [];
+    for (let j = 0; j < WSPLIT; j++) for (let i = 0; i < WSPLIT; i++) parts.push([i, j]);
+    parts.sort((a, b) => Math.hypot((a[0] + 0.5) * WW / WSPLIT - here.x, (a[1] + 0.5) * WH / WSPLIT - here.y) - Math.hypot((b[0] + 0.5) * WW / WSPLIT - here.x, (b[1] + 0.5) * WH / WSPLIT - here.y));
+    let ok = 0, done = 0;
+    for (const [i, j] of parts) {
+      worldProgress = `ちずを くわしくしています… ${done}/${parts.length}`;
+      const w = WB.w + (WB.e - WB.w) * i / WSPLIT, e = WB.w + (WB.e - WB.w) * (i + 1) / WSPLIT;
+      const n = WB.n - (WB.n - WB.s) * j / WSPLIT, s = WB.n - (WB.n - WB.s) * (j + 1) / WSPLIT;
+      try {
+        addWorldFeatures((await overpass(worldPartQuery(s, w, n, e))).elements || [], L);
+        ok++;
+        world = combineWorld(base, L); makeWorldImg();
+      } catch (e2) { /* この区域は地形だけ */ }
+      done++;
     }
-    for (let i = 0; i < N; i++) {
-      const c = g[i];
-      if (water[i]) g[i] = C.A;
-      else if (c === C.A && (wood[i] || town[i])) g[i] = wood[i] ? C.W : C.T;   // 地図データで森や町なみがある所は陸
-      else if (c === C.A || c === C.M) continue;
-      else if (wood[i]) g[i] = C.W;
-      else if (town[i] && c === UNSET) g[i] = C.T;
-      else if (c === UNSET) g[i] = C.G;
-    }
-    const keepSeaMt = new Set([C.A, C.M]);
-    lines.sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => pts.forEach(line => strokeLine(g, line, code, 1, null, WW, WH, code === C.A ? new Set([C.M]) : keepSeaMt)));
-    for (let i = 0; i < N; i++) if (g[i] === UNSET) g[i] = C.G;
-    world = g;
-    worldPois = dedupePois(wp, 1.5);
-    worldLabels = wl.filter((l, i) => !wl.slice(0, i).some(m => m[2] === l[2] && Math.hypot(m[0] - l[0], m[1] - l[1]) < 5));
-    makeWorldImg();
+    worldProgress = '';
     worldState = 'ok';
-    const days = partial || !(json.elements || []).length ? 1 : PX_DAYS;   // 欠けたら1日で作り直す
-    if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(g), p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
+    const days = partial || !namesOk || ok < parts.length ? 1 : PX_DAYS;   // 欠けたら1日で作り直す
+    if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(world), p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
   } catch (e) {
-    worldState = 'fail';
+    worldProgress = '';
+    worldState = world ? 'ok' : 'fail';
   }
 }
 
@@ -934,7 +964,7 @@ function drawWorld(now, w, h, dpr) {
     ctx.drawImage(spotSprites[p[2]][0], Math.round(X), Math.round(Y), bs, bs);
   }
   // 注目スポット（引いたときはお店と大きな名所だけ）
-  const size = Math.max(T * 1.6, 14 * dpr);
+  const size = Math.max(T * 1.6, (WSIZES[wscale] <= 3 ? 12 : 15) * dpr);
   for (const s of G.spots) {
     if (!worldSpotShown(s)) continue;
     const p = llToW(s.lat, s.lng), X = ox + p.x * T - size / 2, Y = oy + p.y * T - size / 2;
@@ -954,20 +984,19 @@ function drawWorld(now, w, h, dpr) {
   if (msg) $('pxMsg').textContent = msg;
 }
 function worldSpotShown(s) {
-  if (!s.featured) return false;
-  const css = WSIZES[wscale];
-  return css >= 6 || ['f-kondo-beikoku', 'f-ricepia'].includes(s.id) || (css >= 3 && (s.points || 0) >= 50);
+  return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
 }
 // 地名・駅名をドラクエ風の白文字に黒ふちで。大きな地名から順に、重ならないものだけ
 function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
   const minRank = css <= 3 ? 3 : css <= 6 ? 2 : 1;
   const base = worldLabels.length ? worldLabels : AREA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; });
+  const spotNames = css >= 10 ? G.spots.filter(worldSpotShown).map(s => { const p = llToW(s.lat, s.lng); return [p.x, p.y, s.name.replace(/（.*?）/g, ''), 0]; }) : [];
   const list = base.concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
-    .filter(l => l[3] >= minRank).sort((a, b) => b[3] - a[3]);
-  const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11 }, boxes = [];
+    .filter(l => l[3] >= minRank).sort((a, b) => b[3] - a[3]).concat(spotNames);
+  const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11, 0: 10 }, boxes = [];
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#000';
   for (const [x, y, name, rank] of list) {
-    const fs = Math.round(SIZE[rank] * dpr), X = ox + x * T, Y = oy + y * T + (rank === 1 ? fs : 0);
+    const fs = Math.round(SIZE[rank] * dpr), X = ox + x * T, Y = oy + y * T + (rank === 1 ? fs : rank === 0 ? Math.max(T * 1.1, 10 * dpr) + fs / 2 : 0);
     if (X < -100 || Y < -40 || X > w + 100 || Y > h + 40) continue;
     ctx.font = `${fs}px "DotGothic16", monospace`;
     const bw = ctx.measureText(name).width + 6 * dpr, bh = fs + 4 * dpr;
@@ -976,8 +1005,15 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
     boxes.push(box);
     if (rank === 1 && css >= 10) ctx.drawImage(spotSprites.station[0], Math.round(X - T * 0.7), Math.round(Y - fs - T * 1.2), Math.round(T * 1.4), Math.round(T * 1.4));
     ctx.lineWidth = Math.max(2, Math.round((rank >= 3 ? 4 : 3) * dpr));
-    ctx.fillStyle = rank === 1 ? '#ffe9a8' : '#fff';
+    ctx.fillStyle = rank === 1 ? '#ffe9a8' : rank === 0 ? '#ffd54f' : '#fff';
     ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y);
+  }
+  if (worldProgress) {   // 地図データを足している途中
+    const fs = Math.round(12 * dpr);
+    ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'left';
+    const tw = ctx.measureText(worldProgress).width;
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, 8 * dpr, tw + 16 * dpr, fs + 12 * dpr);
+    ctx.fillStyle = '#fff'; ctx.fillText(worldProgress, 16 * dpr, 8 * dpr + (fs + 12 * dpr) / 2);
   }
 }
 function setWorld(on) {

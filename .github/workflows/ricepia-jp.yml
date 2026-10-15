@@ -1,0 +1,56 @@
+# ricepia.jp（さくらのレンタルサーバ）のトップページを更新する
+# - いつも：いまの www/index.html をダウンロードして、ログと成果物に出す（サイトは変えない）
+# - ricepia-jp/deploy.txt に「deploy」と書いたときだけ：サーバーの index.html を index.html.bak-日時 に残してから、
+#   ricepia-jp/index.html をアップロードする
+# 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
+name: ricepia.jp top page
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - ricepia-jp/**
+      - .github/workflows/ricepia-jp.yml
+permissions:
+  contents: read
+concurrency:
+  group: ricepia-jp
+  cancel-in-progress: false
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FTP_SERVER: ${{ secrets.SAKURA_FTP_SERVER }}
+      FTP_USER: ${{ secrets.SAKURA_FTP_USER }}
+      FTP_PASS: ${{ secrets.SAKURA_FTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secrets
+        run: |
+          for v in FTP_SERVER FTP_USER FTP_PASS; do
+            if [ -z "${!v}" ]; then echo "::error::シークレットがありません（SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD）"; exit 1; fi
+          done
+      - name: Install lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Download current index.html
+        run: |
+          mkdir -p current
+          # パスワードが平文で流れないよう、FTPS（暗号化）を必須にする
+          lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set net:max-retries 2; get www/index.html -o current/index.html; bye" "$FTP_SERVER"
+          echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
+          cat current/index.html
+          echo "----- end -----"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ricepia-jp-current
+          path: current/index.html
+      - name: Deploy (only when ricepia-jp/deploy.txt says deploy)
+        run: |
+          if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
+          test -s ricepia-jp/index.html
+          stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
+          lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; mv www/index.html www/index.html.bak-$stamp; put ricepia-jp/index.html -o www/index.html; bye" "$FTP_SERVER"
+          echo "アップロードしました（元のファイルは www/index.html.bak-$stamp）"

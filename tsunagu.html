@@ -74,9 +74,9 @@ button{font-family:inherit;cursor:pointer;}
     <h1>📞 本店⇔支店</h1>
     <p>本店と支店をビデオ通話でつなぎます。<br/>最初に1回だけ、本店と支店それぞれの「開くだけでつながるリンク」を作ります。</p>
     <div id="setupStart">
-      <div class="field"><label for="zoomIn">予備のZoomリンク（任意）</label>
-        <input id="zoomIn" inputmode="url" placeholder="https://us05web.zoom.us/j/…?pwd=…" autocomplete="off"/>
-        <div class="hint">この画面でつながらないときに使うZoomのミーティングURL（「招待リンクをコピー」で取れる、pwd= 付きのもの）。入れておくと本店・支店の両方に「Zoom」ボタンが出ます。あとからでも設定できます。</div></div>
+      <div class="field"><label for="zoomIn">予備のZoom（通常は空欄のままでOK）</label>
+        <input id="zoomIn" inputmode="url" placeholder="空欄なら Zoom ID 544 001 0563 を使います" autocomplete="off"/>
+        <div class="hint">この画面でつながらないときは「Zoom」ボタンで、らいすぴあのZoom（パーソナルミーティングID 544 001 0563）に切り替えます。パスコードの入力を省きたいときは、Zoomの「招待リンクをコピー」で取れる pwd= 付きのリンクをここに貼ってください。</div></div>
       <button class="big gold" id="makeBtn">つなぐリンクを作る</button>
       <p class="note">IDやパスワードは不要です。リンクには推測できない文字列が入るので、リンクを知らない人はつなげません。リンクは店の人以外に教えないでください。</p>
     </div>
@@ -111,8 +111,8 @@ button{font-family:inherit;cursor:pointer;}
   <div class="box">
     <h1 style="font-size:17px;">⚙ 設定</h1>
     <div class="field"><label for="zoomEdit">予備のZoomリンク</label>
-      <input id="zoomEdit" inputmode="url" placeholder="https://us05web.zoom.us/j/…?pwd=…" autocomplete="off"/>
-      <div class="hint">この端末に保存されます。<span id="resendHint">支店にも使ってもらうには、保存したあと下のボタンで支店にリンクを送り直してください。</span></div></div>
+      <input id="zoomEdit" inputmode="url" placeholder="空欄なら Zoom ID 544 001 0563" autocomplete="off"/>
+      <div class="hint">空欄のときは らいすぴあのZoom（ID 544 001 0563）を使います。pwd= 付きの招待リンクを入れると、パスコードの入力が要らなくなります（この端末に保存）。<span id="resendHint">支店にも使ってもらうには、保存したあと下のボタンで支店にリンクを送り直してください。</span></div></div>
     <button class="big gold" id="zoomSave">保存</button>
     <button class="big line" id="resendLine">支店にリンクを送り直す（LINE）</button>
     <button class="big ghost" id="sheetClose">閉じる</button>
@@ -141,6 +141,8 @@ function load(){ try{ return JSON.parse(localStorage.getItem(LS)) || {}; }catch(
 function save(o){ try{ localStorage.setItem(LS, JSON.stringify(o)); }catch(e){} }
 function linkFor(key, me, zoom){ return location.origin + location.pathname + "#k=" + key + "&me=" + me + (zoom ? "&z=" + encodeURIComponent(zoom) : ""); }
 // only real Zoom meeting links (https, *.zoom.us / *.zoom.com)
+// らいすぴあのZoom（パーソナルミーティングID 544 001 0563）。リンクを登録していなくても常にこれへ切り替えられる
+const DEFAULT_ZOOM = "https://zoom.us/j/5440010563";
 function normZoom(u){ u = String(u || "").trim(); return /^https:\/\/([a-z0-9-]+\.)*zoom\.(us|com)\/[^\s<>"]*$/i.test(u) ? u : ""; }
 function shitenText(link){ return "本店とビデオ通話でつなぐリンクです。支店のスマホかタブレットで開いて、ホーム画面に追加しておいてください。\n" + link; }
 function newKey(){ const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; crypto.getRandomValues(new Uint8Array(16)).forEach(x => s += a[x % a.length]); return s; }
@@ -201,7 +203,7 @@ function goZoom(){
   if(w) w.opener = null; else location.href = S.zoom;
 }
 function openSheet(){
-  $("#zoomEdit").value = S.zoom || "";
+  $("#zoomEdit").value = S.zoom === DEFAULT_ZOOM ? "" : S.zoom || "";
   $("#resendLine").hidden = $("#resendHint").hidden = S.me !== "honten";
   $("#sheet").hidden = false;
 }
@@ -329,10 +331,10 @@ $("#sheetClose").onclick = () => $("#sheet").hidden = true;
 $("#zoomSave").onclick = () => {
   const raw = $("#zoomEdit").value.trim(), z = normZoom(raw);
   if(raw && !z){ toast("Zoomのリンクは https://…zoom.us/j/… の形で入れてください"); return; }
-  S.zoom = z; save({key:S.key, me:S.me, zoom:z}); paintZoom();
-  toast(z ? "Zoomリンクを保存しました" : "Zoomリンクを外しました");
+  save({key:S.key, me:S.me, zoom:z}); S.zoom = z || DEFAULT_ZOOM; paintZoom();
+  toast(z ? "Zoomリンクを保存しました" : "標準のZoom（ID 544 001 0563）を使います");
 };
-$("#resendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent(shitenText(linkFor(S.key, "shiten", S.zoom))), "_blank", "noopener");
+$("#resendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent(shitenText(linkFor(S.key, "shiten", S.zoom === DEFAULT_ZOOM ? "" : S.zoom))), "_blank", "noopener");
 $("#camBtn").onclick = () => toggle("video");
 $("#hangBtn").onclick = hangUp;
 $("#tapAudio").onclick = () => $("#remote").play().then(() => $("#tapAudio").hidden = true).catch(() => {});
@@ -346,7 +348,7 @@ window.addEventListener("pagehide", () => { try{ S.call && S.call.close(); S.pee
 window.addEventListener("online", () => { if(!S.stopped && S.key && (!S.peer || S.peer.destroyed)) openPeer(); });
 
 const who = resolve();
-if(who){ S.key = who.key; S.me = who.me; S.zoom = normZoom(who.zoom); startCall(); }
+if(who){ S.key = who.key; S.me = who.me; S.zoom = normZoom(who.zoom) || DEFAULT_ZOOM; startCall(); }
 else showSetup();
 </script>
 </body>

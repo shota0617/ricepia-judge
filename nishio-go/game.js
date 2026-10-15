@@ -149,6 +149,7 @@ async function fetchOverpass(query) {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctl.signal });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const json = await res.json();
+      if (json.remark && /error|runtime/i.test(json.remark)) throw new Error(json.remark);   // 時間切れでも200で返ることがある
       const items = [];
       for (const el of json.elements || []) {
         const t = el.tags || {};

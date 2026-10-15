@@ -20,11 +20,11 @@ const chunkBox = (cx, cy) => {
 };
 
 /* ---------- 地形 ---------- */
-// G草原 F田んぼ T町 W森 P公園 A水 S砂浜 B建物 R道 H大きな道 L線路 D小道 X未読込 M山 K丘 E茶畑 V畑 I工場 J境内 Y墓地 N温室
-const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12, M: 13, K: 14, E: 15, V: 16, I: 17, J: 18, Y: 19, N: 20 };
+// G草原 F田んぼ T町 W森 P公園 A水 S砂浜 B建物 R道 H大きな道 L線路 D小道 X未読込 M山 K丘 E茶畑 V畑 I工場 J境内 Y墓地 N温室 U農地（作物不明）
+const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12, M: 13, K: 14, E: 15, V: 16, I: 17, J: 18, Y: 19, N: 20, U: 21 };
 const UNSET = 255;
-const BLOCK = new Set([C.A, C.B, C.M]);    // デモで歩けないマス（水・建物・山）
-const HILL_M = 35, MOUNTAIN_M = 150;        // 標高（m）：これ以上の草地は丘、さらに高い所は山
+const BLOCK = new Set([C.A, C.B, C.M, C.X]);    // デモで歩けないマス（水・建物・山・まだ読み込んでいない所）
+const HILL_M = 35, MOUNTAIN_M = 110;        // 標高（m）：これ以上の草地は丘、さらに高い所（幡豆の尾根・茶臼山・三ヶ根山）は山
 
 function classify(t, closed) {
   if (t.building && closed) return { a: 1, c: t.building === 'greenhouse' ? C.N : C.B, p: 30 };
@@ -43,15 +43,19 @@ function classify(t, closed) {
   if (t.natural === 'water' || t.waterway === 'riverbank' || t.landuse === 'reservoir' || t.landuse === 'basin') return { a: 1, c: C.A, p: 20 };
   if (t.natural === 'beach' || t.natural === 'sand') return { a: 1, c: C.S, p: 19 };
   if (t.natural === 'wood' || t.landuse === 'forest' || t.natural === 'scrub') return { a: 1, c: C.W, p: 16 };
-  if (t.natural === 'wetland') return { a: 1, c: C.P, p: 15 };
+  if (t.natural === 'wetland') return { a: 1, c: /^(tidalflat|saltmarsh)$/.test(t.wetland || '') ? C.S : C.P, p: 19 };   // 干潟は砂浜。海の判定のあとに塗る
   const lu = t.landuse || '';
+  if (/^(aquaculture|salt_pond)$/.test(lu)) return { a: 1, c: C.A, p: 20 };   // 一色の養鰻池・塩田
+  if (/^(harbour|port)$/.test(lu)) return null;                               // 港は水面を覆うことがあるので塗らない
+  if (lu === 'religious') return { a: 1, c: C.J, p: 13 };                     // 境内
   if (lu === 'cemetery' || t.amenity === 'grave_yard') return { a: 1, c: C.Y, p: 14 };
   if (t.amenity === 'place_of_worship') return { a: 1, c: C.J, p: 13 };          // 神社・お寺の境内
   if (t.leisure || /^(grass|recreation_ground|village_green)$/.test(lu)) return { a: 1, c: C.P, p: 14 };
   if (lu === 'greenhouse_horticulture') return { a: 1, c: C.N, p: 12 };
   const tea = /tea/.test(`${t.crop || ''} ${t.trees || ''} ${t.produce || ''}`);
   if (tea && /^(farmland|orchard|plant_nursery)$/.test(lu)) return { a: 1, c: C.E, p: 12 };   // 茶畑（西尾の抹茶）
-  if (lu === 'paddy' || (lu === 'farmland' && (!t.crop || /rice/.test(t.crop)))) return { a: 1, c: C.F, p: 12 };  // 西尾の農地は多くが田んぼ
+  if (lu === 'paddy' || /rice/.test(t.crop || '')) return { a: 1, c: C.F, p: 12 };   // 田んぼは paddy か crop=rice のときだけ
+  if (lu === 'farmland' && !t.crop) return { a: 1, c: C.U, p: 12 };                  // 作物の分からない農地
   if (/^(farmland|orchard|vineyard|plant_nursery|allotments)$/.test(lu)) return { a: 1, c: C.V, p: 12 };
   if (lu === 'meadow') return { a: 1, c: C.G, p: 12 };
   if (lu === 'industrial') return { a: 1, c: C.I, p: 10 };
@@ -102,33 +106,56 @@ function strokeLine(g, pts, code, w, mask) {
   }
 }
 
-// 海岸線（OSMでは進行方向の右側が海）から海を塗る。海岸線は砂浜にする
+// 海岸線（OSMでは進行方向の右側が海）から海を決める。
+// 海岸線で区切られた「まだ何もないマス」のかたまりごとに、線の左右に置いた点で投票し（右＝海に＋、左＝陸に−）、
+// 海の票が多いかたまりだけを海にする（狭い入江や鋭い切れ込みで陸が丸ごと海になるのを防ぐ）。
+// 海岸線そのものは海と陸の境目として使うだけ（砂浜は natural=beach で別に描く）
 function seaFill(g, coasts) {
-  const bar = new Uint8Array(CHUNK * CHUNK);
+  const N = CHUNK * CHUNK, bar = new Uint8Array(N);
   for (const line of coasts) strokeLine(g, line, 0, 1, bar);
-  const stack = [];
+  const comp = new Int32Array(N).fill(-1), stack = [];
+  const open = j => comp[j] === -1 && !bar[j] && g[j] === UNSET;
+  let nc = 0;
+  for (let s = 0; s < N; s++) {
+    if (!open(s)) continue;
+    comp[s] = nc;
+    stack.push(s);
+    while (stack.length) {
+      const i = stack.pop(), x = i % CHUNK;
+      for (const j of [x > 0 ? i - 1 : -1, x < CHUNK - 1 ? i + 1 : -1, i - CHUNK, i + CHUNK]) {
+        if (j >= 0 && j < N && open(j)) { comp[j] = nc; stack.push(j); }
+      }
+    }
+    nc++;
+  }
+  const vote = new Float64Array(nc);
   for (const line of coasts) for (let i = 0; i < line.length - 1; i++) {
     const [x1, y1] = line[i], [x2, y2] = line[i + 1];
     const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
-    if (!len) continue;
+    if (!len || Math.max(x1, x2) < -2 || Math.min(x1, x2) > CHUNK + 2 || Math.max(y1, y2) < -2 || Math.min(y1, y2) > CHUNK + 2) continue;
     const nx = -dy / len, ny = dx / len;   // 画面座標（y下向き）での右手方向
-    for (const t of [0.25, 0.5, 0.75]) {
-      const sx = Math.floor(x1 + dx * t + nx * 1.5), sy = Math.floor(y1 + dy * t + ny * 1.5);
-      if (sx >= 0 && sy >= 0 && sx < CHUNK && sy < CHUNK) stack.push(sy * CHUNK + sx);
+    const n = Math.max(1, Math.ceil(len));
+    for (let s = 0; s < n; s++) {
+      const t = (s + 0.5) / n, px = x1 + dx * t, py = y1 + dy * t;
+      for (const side of [1, -1]) {
+        // 線から外へ少しずつ離れ、海岸線のマスを抜けた最初のマスに投票する
+        for (const d of [0.6, 1.1, 1.6, 2.1]) {
+          const sx = Math.floor(px + nx * d * side), sy = Math.floor(py + ny * d * side);
+          if (sx < 0 || sy < 0 || sx >= CHUNK || sy >= CHUNK) break;
+          const j = sy * CHUNK + sx;
+          if (bar[j]) continue;
+          if (comp[j] >= 0) vote[comp[j]] += side;
+          break;
+        }
+      }
     }
   }
-  while (stack.length) {
-    const i = stack.pop();
-    if (bar[i] || g[i] !== UNSET) continue;
-    g[i] = C.A;
-    const x = i % CHUNK;
-    if (x > 0) stack.push(i - 1);
-    if (x < CHUNK - 1) stack.push(i + 1);
-    if (i >= CHUNK) stack.push(i - CHUNK);
-    if (i < CHUNK * (CHUNK - 1)) stack.push(i + CHUNK);
-  }
-  for (let i = 0; i < bar.length; i++) if (bar[i] && g[i] === UNSET) g[i] = C.S;
+  for (let i = 0; i < N; i++) if (comp[i] >= 0 && vote[comp[i]] > 0) g[i] = C.A;
 }
+
+// 標高は区画のまわり1マスを含む (CHUNK+2)² で持つ（区画の境目でも陰影が途切れないように）。
+// NaN＝海（データなし）、UNK＝不明（取得失敗・異常値）
+const DB = CHUNK + 2, UNK = -32768;
 
 function rasterize(elements, cx, cy, dem) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
@@ -152,14 +179,19 @@ function rasterize(elements, cx, cy, dem) {
     g.fill((toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82 && elements.length === 0 ? C.A : C.G) | (2 << 5));
     return g;
   }
+  const dh = (x, y) => dem[(y + 1) * DB + (x + 1)];
   ops.sort((a, b) => a.k.p - b.k.p);
   let seaDone = false;
   const sea = () => {
     if (seaDone) return;
     seaDone = true;
-    // 標高データのない所（国土地理院の標高タイルで「データなし」）は海
-    if (dem) for (let i = 0; i < g.length; i++) if (g[i] === UNSET && Number.isNaN(dem[i])) g[i] = C.A;
-    if (coasts.length) seaFill(g, coasts);
+    if (coasts.length) seaFill(g, coasts);   // 海岸線がある区画は、海岸線で決める
+    else if (dem) {                           // ない区画は、標高データのない所（国土地理院の「データなし」）を海に
+      for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
+        const i = y * CHUNK + x;
+        if (g[i] === UNSET && Number.isNaN(dh(x, y))) g[i] = C.A;
+      }
+    }
   };
   for (const o of ops) {
     if (o.k.p >= 18) sea();
@@ -175,21 +207,18 @@ function rasterize(elements, cx, cy, dem) {
   sea();
   for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
-  // 高い所の草地・森は丘や山に
-  for (let i = 0; i < g.length; i++) {
-    const h = dem[i];
-    if (!(h >= HILL_M)) continue;
-    const c = g[i];
-    if (h >= MOUNTAIN_M && (c === C.G || c === C.W || c === C.P)) g[i] = C.M;
-    else if (c === C.G || c === C.P) g[i] = C.K;
-  }
-  // 斜面の陰影（北西から光が当たる）。0暗い〜2平ら〜4明るい を上位ビットに入れる
-  const hAt = (x, y) => dem[Math.min(CHUNK - 1, Math.max(0, y)) * CHUNK + Math.min(CHUNK - 1, Math.max(0, x))];
+  const ok = h => Number.isFinite(h) && h > UNK;
   for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
-    const i = y * CHUNK + x;
+    const i = y * CHUNK + x, h = dh(x, y), c = g[i];
+    // 高い所の草地・森は丘や山に
+    if (ok(h) && h >= HILL_M) {
+      if (h >= MOUNTAIN_M && (c === C.G || c === C.W || c === C.P)) g[i] = C.M;
+      else if (c === C.G || c === C.P) g[i] = C.K;
+    }
+    // 斜面の陰影（北西から光が当たる）。0暗い〜2平ら〜4明るい を上位ビットに入れる
     let sh = 2;
-    const a = hAt(x - 1, y - 1), b = hAt(x + 1, y + 1);
-    if (g[i] !== C.A && !Number.isNaN(a) && !Number.isNaN(b)) {
+    const a = dh(x - 1, y - 1), b = dh(x + 1, y + 1);
+    if (c !== C.A && ok(a) && ok(b)) {
       const sl = (b - a) / (2 * Math.SQRT2 * TILE_M);   // 南東へ上る斜面（北西向き）ほど明るい
       sh = sl > 0.12 ? 4 : sl > 0.04 ? 3 : sl < -0.12 ? 0 : sl < -0.04 ? 1 : 2;
     }
@@ -217,30 +246,35 @@ function demTile(x, y) {
       const d = x2.getImageData(0, 0, 256, 256).data, h = new Float32Array(65536);
       for (let i = 0; i < 65536; i++) {
         const v = d[i * 4] * 65536 + d[i * 4 + 1] * 256 + d[i * 4 + 2];
-        h[i] = v === 8388608 ? NaN : (v < 8388608 ? v : v - 16777216) * 0.01;   // 2^23 は「データなし」
+        if (v === 8388608) { h[i] = NaN; continue; }                 // 2^23 は「データなし」
+        const m = (v < 8388608 ? v : v - 16777216) * 0.01;
+        h[i] = m < -100 || m > 1000 ? UNK : m;   // 指紋対策で画素が乱れたときなどの異常値は「不明」に
       }
       return h;
     })().catch(e => { demCache.delete(k); throw e; }));
   }
   return demCache.get(k);
 }
+// 区画（＋まわり1マス）の標高。取れなかったタイルの所は「不明」（海にはしない）。全部不明なら null
 async function demFor(cx, cy) {
   const pts = [], need = new Map();
-  for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+  for (let j = -1; j <= CHUNK; j++) for (let i = -1; i <= CHUNK; i++) {
     const ll = toLatLng(cx * CHUNK + i + 0.5, cy * CHUNK + j + 0.5), m = merc(ll.lat, ll.lng);
     const tx = Math.floor(m.x / 256), ty = Math.floor(m.y / 256);
     pts.push([tx + '/' + ty, Math.min(255, Math.floor(m.x - tx * 256)) + Math.min(255, Math.floor(m.y - ty * 256)) * 256]);
     need.set(tx + '/' + ty, [tx, ty]);
   }
   const got = new Map();
-  await Promise.all([...need].map(async ([k, [tx, ty]]) => got.set(k, await demTile(tx, ty))));
-  const h = new Float32Array(CHUNK * CHUNK);
-  pts.forEach(([k, off], i) => { const t = got.get(k); h[i] = t === 'sea' ? NaN : t[off]; });
-  return h;
+  await Promise.all([...need].map(async ([k, [tx, ty]]) => got.set(k, await demTile(tx, ty).catch(() => null))));
+  const partial = [...got.values()].some(t => t === null);
+  if ([...got.values()].every(t => t === null)) return null;
+  const h = new Float32Array(DB * DB);
+  pts.forEach(([k, off], i) => { const t = got.get(k); h[i] = t === 'sea' ? NaN : t ? t[off] : UNK; });
+  return { h, partial };
 }
 
 /* ---------- 地図データの取得と保存 ---------- */
-const PX_KEY = 'nsg_px2_', PX_IDX = 'nsg_px2_idx', PX_DAYS = 30, PX_KEEP = 60;
+const PX_KEY = 'nsg_px4_', PX_IDX = 'nsg_px4_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
   get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
@@ -250,13 +284,13 @@ const enc = g => String.fromCharCode(...g.map(c => 48 + c));
 const dec = s => Uint8Array.from(s, ch => ch.charCodeAt(0) - 48);
 const encode = g => { let s = ''; for (let i = 0; i < g.length; i += 4096) s += enc(g.subarray(i, i + 4096)); return s; };
 
-function saveChunk(k, g) {
+function saveChunk(k, g, days) {
   const idx = (store.get(PX_IDX) || []).filter(x => x !== k);
   idx.push(k);
   while (idx.length > PX_KEEP) store.del(PX_KEY + idx.shift());
-  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g) })) {
+  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), days })) {
     // 保存領域がいっぱいなら古い区画から消してもう一度
-    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g) })) break; }
+    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), days })) break; }
   }
   store.set(PX_IDX, idx);
 }
@@ -284,7 +318,7 @@ function ensureChunk(cx, cy) {
     chunks.set(k, { state: 'out' }); return;
   }
   const saved = store.get(PX_KEY + k);
-  if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < PX_DAYS * 864e5) {
+  if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
     chunks.set(k, { state: 'ok', g: dec(saved.d) }); return;
   }
   chunks.set(k, { state: 'queued' });
@@ -293,7 +327,8 @@ function ensureChunk(cx, cy) {
 }
 
 function chunkQuery(b) {
-  const p = 0.0005;
+  const p = 0.0005, q = 0.03;   // 森は区画をすっぽり包むことがあるので、約3km広い範囲で取る
+  const big = `(${(b.s - q).toFixed(5)},${(b.w - q).toFixed(5)},${(b.n + q).toFixed(5)},${(b.e + q).toFixed(5)})`;
   return `[out:json][timeout:90][bbox:${(b.s - p).toFixed(5)},${(b.w - p).toFixed(5)},${(b.n + p).toFixed(5)},${(b.e + p).toFixed(5)}];
 (
   way["building"];
@@ -302,6 +337,8 @@ function chunkQuery(b) {
   way["waterway"~"^(river|canal|stream|riverbank)$"];
   way["natural"="coastline"];
   wr["natural"~"^(water|wood|beach|sand|scrub|wetland)$"];
+  wr["natural"="wood"]${big};
+  wr["landuse"="forest"]${big};
   wr["landuse"];
   wr["leisure"~"^(park|garden|pitch|playground|golf_course|recreation_ground|sports_centre)$"];
   wr["amenity"~"^(school|parking|university|college|hospital|kindergarten|place_of_worship|grave_yard)$"];
@@ -323,9 +360,9 @@ async function pump() {
       try {
         // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);
-        const g = rasterize(json.elements || [], cx, cy, dem);
+        const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         chunks.set(k, { state: 'ok', g });
-        saveChunk(k, g);
+        saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -343,7 +380,10 @@ async function overpass(query) {
       const res = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(query),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctl.signal });
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      return await res.json();
+      const json = await res.json();
+      // Overpass は時間切れなどでも HTTP 200 で、remark に error を入れて途中までのデータを返すことがある
+      if (json.remark && /error|runtime/i.test(json.remark)) throw new Error(json.remark);
+      return json;
     } catch (e) { last = e; } finally { clearTimeout(timer); }
   }
   throw last || new Error('取得失敗');
@@ -371,6 +411,11 @@ const TILE_ART = {
     for (let y = 1; y < 16; y += 3) for (let x = (y % 2) + 1; x < 16; x += 3) px('#5a9530', x, y, 1, 2);
     for (let i = 0; i < 4; i++) px('#a8d8ff', (r() * 15) | 0, (r() * 15) | 0, 2, 1);
     px('#6b5a3a', 0, 15, 16, 1); px('#6b5a3a', 15, 0, 1, 16);   // あぜ道
+  },
+  [C.U]: (px, r) => {            // 農地（作物不明）：緑の作物の列
+    px('#86b54c', 0, 0, 16, 16);
+    for (let y = 1; y < 16; y += 4) { px('#6a9a36', 0, y, 16, 2); for (let x = (r() * 3) | 0; x < 16; x += 4) px('#a3cc66', x, y - 1); }
+    px('#7a6a46', 0, 15, 16, 1);
   },
   [C.V]: (px, r) => {            // 畑
     px('#9a6b3f', 0, 0, 16, 16);

@@ -22,7 +22,7 @@
 <body>
 
 <header class="bar">
-  <div class="brand">🚶 にしおさんぽGO<span id="demoTag" class="demo-tag" hidden>デモ</span></div>
+  <div class="brand">🚶 にしおさんぽGO<span class="beta-tag" title="試作版です。内容は予告なく変わります">試作版</span><span id="demoTag" class="demo-tag" hidden>デモ</span></div>
   <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
     <span class="lv-num">Lv<b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
@@ -143,6 +143,7 @@
   <div class="intro-box">
     <div class="intro-ico">🏯⛩️🌳</div>
     <h1>にしおさんぽGO</h1>
+    <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
     <p>西尾のまちを歩いて、地図上のスポットに近づくとポイントが貯まります。</p>
     <ul>
       <li>⭐ 注目スポット（西尾城跡・岩瀬文庫など）は <b>ボーナス</b></li>
@@ -151,7 +152,7 @@
     </ul>
     <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
     <button type="button" class="btn big" id="startBtn">位置情報をオンにしてはじめる</button>
-    <button type="button" class="btn ghost" id="demoBtn">デモで試す（地図タップで移動）</button>
+    <button type="button" class="btn ghost" id="demoBtn">デモで試す（位置情報なしで歩ける）</button>
   </div>
 </div>
 

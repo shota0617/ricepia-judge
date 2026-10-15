@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>らいすぴあ ミーティング</title>
+<meta name="description" content="ブラウザだけで使えるビデオ会議。発言を自動で文字起こしし、AIがお客様のニーズ・確認事項・次のアクションを整理して、開発バックログやGitHub Issueにつなげます。"/>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="mtg/style.css"/>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+<div id="header">
+  <div id="header-inner">
+    <div class="hlogo">🎥</div>
+    <div>
+      <div class="htitle">らいすぴあ ミーティング</div>
+      <div class="hsub">文字起こし → お客様のニーズ → 開発へ</div>
+    </div>
+    <nav id="tabs" aria-label="メニュー">
+      <button data-go="meet">🎥 ミーティング</button>
+      <button data-go="analyze">✨ 要望分析<em class="nb" id="nbAnalyze" hidden></em></button>
+      <button data-go="backlog">🛠 開発バックログ<em class="nb" id="nbBacklog" hidden></em></button>
+      <button data-go="history">🗂 履歴</button>
+    </nav>
+    <div class="hright">
+      <button id="keyBtn" class="hbtn" onclick="M.keyModal()">🔑 APIキー</button>
+      <a class="hlink" href="index.html">🌾 品質判定</a>
+    </div>
+  </div>
+</div>
+
+<div id="main">
+
+  <!-- ================= ミーティング（ロビー） ================= -->
+  <section id="v-meet" class="view" hidden>
+    <div class="lobby">
+      <div>
+        <div class="preview">
+          <video id="lbVideo" autoplay playsinline muted></video>
+          <div class="ph" id="lbPh">カメラとマイクを確認します<br/><button class="btn btn-gold btn-sm" id="lbPreviewBtn" style="margin-top:8px;">📷 カメラ・マイクを確認</button></div>
+          <div class="pbar"><button class="round" id="lbMic" title="マイク">🎤</button><button class="round" id="lbCam" title="カメラ">📷</button></div>
+        </div>
+        <div class="meter"><i id="lbMeter"></i></div>
+        <div class="muted small" style="margin-top:6px;line-height:1.7;">マイクの音に合わせて緑のバーが動けばOKです。アプリのインストールは不要です。</div>
+      </div>
+
+      <div class="card" id="joinCard">
+        <div class="field"><label for="lbName">表示名</label><input id="lbName" maxlength="30" placeholder="例：近藤（らいすぴあ）" autocomplete="name"/></div>
+
+        <div id="hostBox" style="margin-top:14px;">
+          <div class="ctitle" style="margin-bottom:8px;">新しいミーティングを開く（主催者）</div>
+          <div class="grid2">
+            <div class="field"><label for="lbTitle">会議名</label><input id="lbTitle" maxlength="60" placeholder="例：業務用米の発注ヒアリング"/></div>
+            <div class="field"><label for="lbCustomer">お客様（会社・店名）</label><input id="lbCustomer" maxlength="60" placeholder="例：和食処たかみ様"/></div>
+          </div>
+          <button class="btn btn-gold btn-wide" id="btnHost" style="margin-top:12px;">🎥 新しいミーティングを開始</button>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="hostToggle" hidden style="margin-top:12px;">自分で新しいミーティングを開く</button>
+
+        <div class="or">または コードで参加</div>
+        <div class="grid2">
+          <div class="field"><label for="lbCode">ミーティングコード</label><input id="lbCode" maxlength="40" placeholder="例：k3m9-p2xq" autocomplete="off" style="font-family:ui-monospace,monospace;letter-spacing:.06em;"/></div>
+          <div class="field"><label for="lbRole">参加区分</label><select id="lbRole"><option value="お客様">お客様</option><option value="当社">らいすぴあ（当社スタッフ）</option></select></div>
+        </div>
+        <button class="btn btn-dark btn-wide" id="btnJoin" style="margin-top:12px;">参加する</button>
+
+        <label class="chk" style="margin-top:14px;"><input type="checkbox" id="lbStt" checked/> 参加と同時に自分の発言の文字起こしを開始する</label>
+        <div class="muted small" id="lbSttNote" style="margin-top:4px;line-height:1.6;"></div>
+        <div class="tip" id="lbGuestNote" hidden style="margin-top:10px;">この会議は、内容の確認のために発言が文字起こしされることがあります。文字起こし中は画面上部に「🔴 文字起こし中」と表示されます。</div>
+        <div id="lbErr" hidden></div>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step"><span class="n">1</span><b>ミーティングを開く</b>開始すると招待リンクができます。LINEやメールでお客様に送るだけで、ブラウザから参加できます。</div>
+      <div class="step"><span class="n">2</span><b>自動で文字起こし</b>参加者それぞれの端末が自分の発言を文字にし、話者名つきで全員の画面に共有します。字幕としても表示されます。</div>
+      <div class="step"><span class="n">3</span><b>AIがニーズを整理</b>終了後、「要望分析」で明示・潜在ニーズ、根拠の発言、受け入れ条件、確認事項、次のアクションをまとめます。</div>
+      <div class="step"><span class="n">4</span><b>開発へつなぐ</b>ニーズはバックログに溜まり、同じ要望は自動でまとまります。GitHub Issueや開発依頼書（Claude Code向けの依頼文つき）にできます。</div>
+    </div>
+    <details class="card" style="margin-top:12px;">
+      <summary>動作環境・プライバシーについて</summary>
+      <div class="small mid" style="line-height:1.85;">
+        ・映像と音声は参加者どうしで直接やりとりします（WebRTC）。接続の仲介には PeerJS の公開サーバーを使います。自社のサーバーを使う場合は URL に <code>?peerhost=ホスト名&amp;peerport=443</code> を付けて開きます。<br/>
+        ・少人数（目安6人まで）の打ち合わせ向けです。人数が増えると各端末の通信量が増えます。<br/>
+        ・自動文字起こしはブラウザの音声認識機能を使います（Chrome / Edge / Safari）。Chrome では音声がブラウザ提供元の認識サーバーに送られます。ミュート中は文字起こしも止まります。<br/>
+        ・「⏺ 録音」で会議の音声（全員分）を録音できます。録音は押した人の端末のブラウザ内に保存され、要望分析の画面で発言の時刻から聞き直せます。録音中は全員の画面に「⏺ 録音中」と表示されます。<br/>
+        ・文字起こし・議事録・バックログは、この端末のブラウザ内にだけ保存されます（サーバーには送りません）。AI分析を実行したときだけ、文字起こしが Anthropic API に送られます。<br/>
+        ・会議の前に、文字起こしをすることをお客様に一言お伝えください。
+      </div>
+    </details>
+  </section>
+
+  <!-- ================= 要望分析 ================= -->
+  <section id="v-analyze" class="view" hidden>
+    <div class="page-head"><h1>要望分析</h1><span class="spacer"></span>
+      <button class="btn btn-ghost btn-sm" id="anImportBtn">📥 外部の文字起こしを取り込む</button>
+      <button class="btn btn-ghost btn-sm" id="anSample">🧪 サンプルで試す</button>
+      <p>会議の文字起こしから、AIがお客様のニーズ（はっきり言われたこと／言葉の裏にある本当の困りごと）を、根拠の発言つきで整理します。</p>
+    </div>
+
+    <div class="card" id="importCard" hidden>
+      <div class="ctitle">外部の文字起こしを取り込む（Zoom・Google Meet・Teams・録音アプリなど）</div>
+      <div class="grid2">
+        <div class="field"><label for="imTitle">会議名</label><input id="imTitle" placeholder="例：〇〇様 定例"/></div>
+        <div class="field"><label for="imCustomer">お客様</label><input id="imCustomer" placeholder="例：〇〇株式会社"/></div>
+        <div class="field"><label for="imDate">日時</label><input id="imDate" type="datetime-local"/></div>
+        <div class="field"><label for="imFile">ファイル（.vtt / .srt / .txt）</label><input id="imFile" type="file" accept=".vtt,.srt,.txt,text/plain,text/vtt"/></div>
+        <div class="field"><label for="imAudio">録音（任意・.m4a / .mp3 / .webm）</label><input id="imAudio" type="file" accept="audio/*,.m4a,.mp3,.webm,.wav"/>
+          <div class="hint">文字起こしと同じ会議の録音を付けると、発言の時刻から聞き直せます（この端末にだけ保存）。</div></div>
+      </div>
+      <div class="field" style="margin-top:10px;"><label for="imText">または貼り付け</label><textarea id="imText" rows="6" placeholder="例：&#10;[00:01:02] 高見: 毎週電話で注文してるんですけど…&#10;近藤: ありがとうございます…"></textarea>
+        <div class="hint">Zoom の「音声トランスクリプト（.vtt）」や「名前: 発言」形式のテキストを読み取ります。</div></div>
+      <button class="btn btn-dark" id="imBtn" style="margin-top:10px;">取り込む</button>
+    </div>
+
+    <div class="card">
+      <div class="grid2">
+        <div class="field" style="grid-column:1/-1;"><label for="anSelect">分析する会議</label><select id="anSelect"></select></div>
+        <div class="field"><label for="anProduct">開発対象・前提（任意・保存されます）</label><textarea id="anProduct" rows="3" placeholder="例：飲食店向けの業務用米の発注サービスを作りたい。既存：品質判定AI、LINE公式アカウント、自社EC。"></textarea>
+          <div class="hint">書いておくと、AIが既存の仕組みとの関係まで踏まえて整理します。</div></div>
+        <div class="field"><label for="anOurSide">当社側の話者名（取り込んだ文字起こし用）</label><input id="anOurSide" placeholder="例：近藤, 鈴木"/>
+          <div class="hint">ここに含まれない話者を「お客様」として読みます。この画面のミーティングは参加区分が自動で付きます。</div></div>
+      </div>
+      <div id="anMeta" style="margin-top:12px;"></div>
+      <button class="btn btn-gold btn-wide" id="anBtn" style="margin-top:12px;">✨ AIでお客様のニーズを分析</button>
+    </div>
+    <div id="anOut"></div>
+  </section>
+
+  <!-- ================= 開発バックログ ================= -->
+  <section id="v-backlog" class="view" hidden>
+    <div class="page-head"><h1>開発バックログ</h1>
+      <p>複数の会議から集まったお客様のニーズです。同じ目的の要望は1つにまとまり、言及した会議が多いほど・優先度と影響が大きいほどスコアが上がります。</p></div>
+    <div class="kpis" id="blStats"></div>
+    <details class="card" id="rpCard" style="margin-bottom:12px;">
+      <summary>📊 お客様の声レポート（全会議を横断してAIが傾向とロードマップ案をまとめる）</summary>
+      <div class="row" style="margin-top:8px;"><button class="btn btn-gold btn-sm" id="rpBtn">✨ レポートを作る／更新</button><span class="spacer"></span>
+        <span id="rpActs" class="row"><button class="btn btn-ghost btn-sm" id="rpCopy">📋 コピー</button><button class="btn btn-ghost btn-sm" id="rpDl">⬇ .md</button></span></div>
+      <div class="md" id="rpOut" style="margin-top:10px;"></div>
+    </details>
+    <div class="card">
+      <div class="row">
+        <select id="blFilter" class="inp" style="width:auto;" aria-label="絞り込み">
+          <option value="active">対応中（新規・検討中・開発中・お知らせ未送信）</option><option value="all">すべて</option>
+          <option value="new">新規</option><option value="review">検討中</option><option value="dev">開発中</option><option value="released">リリース済み</option><option value="rejected">見送り</option>
+        </select>
+        <input id="blSearch" class="inp" style="flex:1;min-width:160px;" placeholder="🔍 キーワード・お客様名で検索"/>
+        <input id="blRepo" class="inp" style="width:220px;" placeholder="GitHubリポジトリ owner/repo" aria-label="GitHubリポジトリ"/>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-gold btn-sm" id="blSpec">📄 開発依頼書を作る（選択 or 上位8件）</button>
+        <button class="btn btn-ghost btn-sm" id="blMd">⬇ Markdown</button>
+        <button class="btn btn-ghost btn-sm" id="blCsv">⬇ CSV</button>
+        <span class="muted small">左のチェックで項目を選べます</span>
+      </div>
+    </div>
+    <div id="blList" style="margin-top:12px;"></div>
+    <div class="card" id="specCard" hidden style="margin-top:12px;">
+      <div class="ctitle">開発依頼書<span class="spacer"></span><button class="btn btn-ghost btn-sm" id="specCopy">📋 コピー</button><button class="btn btn-ghost btn-sm" id="specDl">⬇ .md</button></div>
+      <div class="md" id="specOut"></div>
+    </div>
+  </section>
+
+  <!-- ================= 履歴 ================= -->
+  <section id="v-history" class="view" hidden>
+    <div class="page-head"><h1>履歴</h1><span class="spacer"></span>
+      <button class="btn btn-ghost btn-sm" id="hiBackup">⬇ 全データをバックアップ</button>
+      <label class="btn btn-ghost btn-sm" style="cursor:pointer;">⬆ 復元<input type="file" id="hiRestore" accept="application/json,.json" hidden/></label>
+      <p>会議の記録はこの端末のブラウザに保存されています。大事な記録は定期的にバックアップしてください（録音はバックアップに含まれないため、必要なものは「要望分析」の「⬇ 録音」で個別に保存してください）。</p></div>
+    <div id="hiList"></div>
+  </section>
+</div>
+
+<!-- ================= 通話画面 ================= -->
+<div id="room" hidden>
+  <div class="rtop">
+    <span class="ttl" id="rTitle"></span>
+    <button class="code" id="rCode" title="招待" style="background:none;border:none;font-size:12px;"></button>
+    <span id="rTimer" style="font-variant-numeric:tabular-nums;">0:00</span>
+    <span class="live paused" id="rLive"><i></i>文字起こし停止中</span>
+    <span class="live" id="rRec" hidden><i></i>⏺ 録音中</span>
+    <span class="spacer"></span>
+    <span id="rCount">👥 1</span>
+  </div>
+  <div class="rbody">
+    <div class="stage"><div id="grid"></div></div>
+    <aside id="side" hidden>
+      <div class="stabs">
+        <button data-pane="tr">📝 文字起こし</button><button data-pane="chat">💬 チャット</button><button data-pane="memo">💡 AIメモ</button>
+        <button class="x" id="sideClose" title="閉じる">×</button>
+      </div>
+      <div class="spane-wrap" data-pane="tr" style="display:contents;">
+        <div class="spane"><div id="trList"></div><div id="trInterim"></div></div>
+        <div class="sfoot row">
+          <select id="sttLang" class="inp" style="width:auto;padding:6px 8px;font-size:12px;" aria-label="認識する言語"><option value="ja-JP">日本語</option><option value="en-US">English</option><option value="zh-CN">中文</option><option value="ko-KR">한국어</option></select>
+          <span class="spacer"></span><button class="btn btn-ghost btn-sm" id="trSave">⬇ 保存</button>
+        </div>
+      </div>
+      <div class="spane-wrap" data-pane="chat" style="display:contents;">
+        <div class="spane"><div id="chatList"></div></div>
+        <div class="sfoot row" style="flex-wrap:nowrap;"><input id="chatInput" class="inp" placeholder="メッセージ（Enterで送信）" maxlength="2000"/><button class="btn btn-dark btn-sm" id="chatSend">送信</button></div>
+      </div>
+      <div class="spane-wrap" data-pane="memo" style="display:contents;">
+        <div class="spane">
+          <button class="btn btn-gold btn-sm" id="memoBtn" style="width:100%;">💡 ここまでの要望を整理（聞き漏らしチェック）</button>
+          <div id="memoOut" style="margin-top:10px;"></div>
+          <div class="memo-h">手書きメモ（議事録・分析に使われます。相手には見えません）</div>
+          <textarea id="memoNotes" class="inp" rows="6" placeholder="例：予算感は月3万円まで／決裁は社長"></textarea>
+        </div>
+      </div>
+    </aside>
+  </div>
+  <div class="rbar">
+    <button class="cbtn" id="cMic" title="ミュート（Alt+A）"><span class="ic">🎤</span><span class="lb">ミュート</span></button>
+    <button class="cbtn" id="cCam" title="ビデオ（Alt+V）"><span class="ic">📷</span><span class="lb">ビデオ停止</span></button>
+    <button class="cbtn" id="cShare"><span class="ic">🖥</span><span class="lb">画面共有</span></button>
+    <div class="rsep"></div>
+    <button class="cbtn" id="cStt"><span class="ic">📝</span><span class="lb">文字起こし</span></button>
+    <button class="cbtn" id="cRec" title="会議の音声を録音（この端末に保存）"><span class="ic">⏺</span><span class="lb">録音</span></button>
+    <button class="cbtn" id="cCaps" title="字幕の表示"><span class="ic">💬</span><span class="lb">字幕</span></button>
+    <button class="cbtn" id="cTr"><span class="ic">📜</span><span class="lb">記録</span></button>
+    <button class="cbtn" id="cChat"><span class="ic">✉<em class="cnt" hidden></em></span><span class="lb">チャット</span></button>
+    <button class="cbtn" id="cMemo"><span class="ic">💡</span><span class="lb">AIメモ</span></button>
+    <button class="cbtn" id="cInvite"><span class="ic">👥</span><span class="lb">招待・参加者</span></button>
+    <div class="rsep"></div>
+    <button class="cbtn end" id="cEnd"><span class="ic">⏻</span><span class="lb">終了</span></button>
+  </div>
+</div>
+
+<!-- ================= modals ================= -->
+<div class="modal" id="invModal" hidden>
+  <div class="modal-box">
+    <h3>お客様を招待</h3>
+    <div class="muted small">ミーティングコード</div>
+    <div id="invCode" style="font-family:ui-monospace,monospace;font-size:26px;font-weight:700;letter-spacing:.1em;margin:2px 0 10px;"></div>
+    <div class="linkbox"><input id="invUrl" class="inp" readonly aria-label="招待リンク"/><button class="btn btn-dark btn-sm" id="invCopy">コピー</button></div>
+    <div class="row" style="margin-top:10px;">
+      <a class="btn btn-sm" id="invLine" target="_blank" rel="noopener" style="background:#06c755;color:#fff;text-decoration:none;">LINEで送る</a>
+      <a class="btn btn-ghost btn-sm" id="invMail" style="text-decoration:none;">✉ メール</a>
+      <button class="btn btn-ghost btn-sm" id="invCopyText">招待文をコピー</button>
+    </div>
+    <textarea id="invText" hidden></textarea>
+    <div class="memo-h" style="margin-top:16px;">参加者</div>
+    <div id="invPeople"></div>
+    <div class="acts"><button class="btn btn-gold" onclick="M.modal('invModal',false)">閉じる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="mailModal" hidden>
+  <div class="modal-box">
+    <h3>お客様への確認メール（文面案）</h3>
+    <textarea id="mailText" class="inp" rows="16"></textarea>
+    <div class="acts"><button class="btn btn-ghost" onclick="M.modal('mailModal',false)">閉じる</button><button class="btn btn-gold" id="mailCopy">📋 コピー</button></div>
+  </div>
+</div>
+
+<div class="modal" id="relModal" hidden>
+  <div class="modal-box" style="max-width:600px;">
+    <h3>📣 お客様へのお知らせ</h3>
+    <div class="small mid">「<b id="relTitle"></b>」を要望してくださったお客様ごとの文面案です。送ったら「連絡済み」にしておくと、送り漏れを防げます。</div>
+    <div id="relList"></div>
+    <div class="acts"><button class="btn btn-gold" onclick="M.modal('relModal',false)">閉じる</button></div>
+  </div>
+</div>
+
+<div class="modal" id="keyModal" hidden>
+  <div class="modal-box">
+    <h3>🔑 Anthropic APIキー</h3>
+    <div class="field"><input type="password" id="keyInput" placeholder="sk-ant-..." autocomplete="off" style="font-family:monospace;"/>
+      <div class="hint">AI分析にだけ使います（文字起こし・会議には不要）。<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> で取得できます。Marketing Studio と共通です。</div></div>
+    <label class="chk" style="margin-top:10px;"><input type="checkbox" id="keyRemember"/> この端末に記憶する（店内の信頼できる端末のみ）</label>
+    <div class="acts"><button class="btn btn-ghost" onclick="M.forgetKey()">消去</button><button class="btn btn-ghost" onclick="M.modal('keyModal',false)">キャンセル</button><button class="btn btn-gold" onclick="M.saveKey()">保存</button></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="mtg/core.js"></script>
+<script src="mtg/call.js"></script>
+<script src="mtg/recorder.js"></script>
+<script src="mtg/analyze.js"></script>
+<script src="mtg/backlog.js"></script>
+<script src="mtg/sample.js"></script>
+<script>M.boot();</script>
+</body>
+</html>

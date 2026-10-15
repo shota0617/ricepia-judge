@@ -1,6 +1,6 @@
 らいすぴあ 品質判定AI ／ Marketing Studio
 
-近藤米穀店「らいすぴあ」のための、ビルド不要の静的Webアプリです（GitHub Pages等にそのまま置けます）。
+近藤米穀店「らいすぴあ」のための、ビルド不要の静的Webアプリです（Vercel：https://ricepia-judge.vercel.app/ で公開）。
 
 ## アプリ
 
@@ -8,6 +8,7 @@
 |---|---|
 | `index.html` | 精米品質AI判定（写真→12項目採点・グレード判定・レシート印刷） |
 | `marketing.html` | **らいすぴあ Marketing Studio**（AIマーケティング統合ツール） |
+| `meta-ads.html` | Meta（Facebook / Instagram）広告の成果診断。広告マネージャのCSVを読み込み、CPA・ROAS・CTR・フリークエンシー・前後半の推移から「増額／維持／要改善／停止／データ不足」を判定し、AIが改善策と次の広告案を提案 |
 
 ## Marketing Studio の機能
 
@@ -25,7 +26,7 @@
 
 ## 使い方
 
-1. `marketing.html` を開き、右上の「🔑」から Anthropic APIキーを設定（[console.anthropic.com](https://console.anthropic.com/settings/keys)）。
+1. `marketing.html`（https://ricepia-judge.vercel.app/marketing.html）を開き、右上の「🔑」から Anthropic APIキーを設定（[console.anthropic.com](https://console.anthropic.com/settings/keys)）。
 2. まず「ブランド設定」で所在地・営業時間・価格などの【　】部分を埋めて保存。
 3. ダッシュボードで月次KPIを入力し、各機能を利用。
 

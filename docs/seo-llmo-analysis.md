@@ -2,7 +2,7 @@
 
 対象: https://ricepia-judge.vercel.app/（`index.html`、`meta-ads.html`、`llms.txt`、`robots.txt`、`sitemap.xml`、`ogp.png`）
 作成日: 2026-10-14
-状態: **Codex に引き継ぎ（2026-10-15）。引き継ぎメモは `docs/HANDOFF-codex.md`。進捗は下表。**
+状態: **Codexレビュー・続きの実装済み（未公開、2026-10-15）。最新の結果は `docs/REVIEW-codex.md`、店舗情報は `docs/store-information-sources.md`。以下は引き継ぎ時点の分析記録。**
 
 | 項目 | 状態 |
 |---|---|

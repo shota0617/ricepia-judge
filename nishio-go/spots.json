@@ -1,0 +1,820 @@
+{
+  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類を指定できます。",
+  "spots": [
+    {
+      "id": "kondo-beikoku",
+      "name": "近藤米穀店（本店）",
+      "icon": "🍚",
+      "lat": 34.891717,
+      "lng": 137.059249,
+      "approx": false,
+      "reach": 70,
+      "points": 50,
+      "desc": "明治25年創業、西尾のお米屋さん。米津町蓮台3-1、名鉄米津駅の西口から歩いて約2分。"
+    },
+    {
+      "id": "ricepia",
+      "name": "らいすぴあ・秀幸",
+      "icon": "🌾",
+      "lat": 34.859668,
+      "lng": 137.04994,
+      "approx": false,
+      "reach": 70,
+      "points": 50,
+      "desc": "近藤米穀店のお店。ドライブスルーでお米が買えます。永吉4丁目62。"
+    },
+    {
+      "id": "nishio-castle",
+      "name": "西尾市歴史公園（西尾城跡）",
+      "icon": "🏯",
+      "lat": 34.866111,
+      "lng": 137.0475,
+      "approx": true,
+      "match": [
+        "西尾市歴史公園",
+        "西尾城"
+      ],
+      "points": 50,
+      "cat": "castle",
+      "desc": "西尾城の跡を整備した公園。本丸丑寅櫓などが再建されている。"
+    },
+    {
+      "id": "konoe-tei",
+      "name": "旧近衛邸",
+      "icon": "🍵",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "旧近衛邸"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "京都の近衛邸の建物を西尾城二の丸跡へ移築。お抹茶で一服できる。"
+    },
+    {
+      "id": "shokoso",
+      "name": "尚古荘",
+      "icon": "🌿",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "尚古荘"
+      ],
+      "points": 30,
+      "cat": "park",
+      "desc": "昭和初期に西尾城東之丸跡に造られた京風庭園。"
+    },
+    {
+      "id": "nishio-shiryokan",
+      "name": "西尾市資料館",
+      "icon": "🏛️",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "西尾市資料館"
+      ],
+      "points": 30,
+      "cat": "museum",
+      "desc": "西尾市歴史公園内。西尾城時代の資料などを展示。"
+    },
+    {
+      "id": "iwase-bunko",
+      "name": "西尾市岩瀬文庫",
+      "icon": "📚",
+      "lat": 34.874389,
+      "lng": 137.053861,
+      "approx": false,
+      "match": [
+        "岩瀬文庫"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "古典籍など8万冊余りを保存・公開する「書物の博物館」。"
+    },
+    {
+      "id": "ibun-jinja",
+      "name": "伊文神社",
+      "icon": "⛩️",
+      "lat": 34.870222,
+      "lng": 137.057389,
+      "approx": false,
+      "match": [
+        "伊文神社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "西尾の氏神。夏の西尾祇園祭で知られる。"
+    },
+    {
+      "id": "kozenji",
+      "name": "康全寺",
+      "icon": "🪷",
+      "lat": 34.869028,
+      "lng": 137.054389,
+      "approx": false,
+      "match": [
+        "康全寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "曹洞宗の寺院。三河三十三観音の第31番札所。"
+    },
+    {
+      "id": "seiganji",
+      "name": "盛巌寺",
+      "icon": "🪷",
+      "lat": 34.871944,
+      "lng": 137.0525,
+      "approx": false,
+      "match": [
+        "盛巌寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "西尾市馬場町にある曹洞宗の寺院。"
+    },
+    {
+      "id": "kumaku-jinja",
+      "name": "久麻久神社",
+      "icon": "⛩️",
+      "lat": 34.876111,
+      "lng": 137.073889,
+      "approx": false,
+      "match": [
+        "久麻久神社"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "八ツ面山の中腹に鎮座。本殿は国の重要文化財。"
+    },
+    {
+      "id": "yatsuomote",
+      "name": "八ツ面山",
+      "icon": "⛰️",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "八ツ面山"
+      ],
+      "points": 30,
+      "cat": "view",
+      "desc": "男山（67.4m）と女山からなる、市街地近くの山。",
+      "reach": 150
+    },
+    {
+      "id": "wakuwaku",
+      "name": "抹茶ミュージアム 西条園 和く和く",
+      "icon": "🍵",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "和く和く"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "あいや本社にある抹茶ミュージアム（見学・体験は予約制）。"
+    },
+    {
+      "id": "jissoji",
+      "name": "実相寺",
+      "icon": "🪷",
+      "lat": 34.876417,
+      "lng": 137.036333,
+      "approx": false,
+      "match": [
+        "実相寺"
+      ],
+      "points": 40,
+      "cat": "temple",
+      "desc": "1271年に吉良満氏が創建したと伝わる禅寺。"
+    },
+    {
+      "id": "choenji",
+      "name": "長圓寺",
+      "icon": "🪷",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "長圓寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "京都所司代・板倉勝重ら板倉家の菩提寺。"
+    },
+    {
+      "id": "glass-museum",
+      "name": "三河工芸ガラス美術館",
+      "icon": "🔮",
+      "lat": 34.853231,
+      "lng": 137.024261,
+      "approx": false,
+      "match": [
+        "三河工芸ガラス美術館"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "西尾市富山町にあるガラス工芸の美術館。"
+    },
+    {
+      "id": "yojuji",
+      "name": "養寿寺",
+      "icon": "🪷",
+      "lat": 34.847806,
+      "lng": 137.027472,
+      "approx": false,
+      "match": [
+        "養寿寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "西尾市下矢田町にある浄土宗西山深草派の寺院。"
+    },
+    {
+      "id": "terazu-hachiman",
+      "name": "寺津八幡社",
+      "icon": "⛩️",
+      "lat": 34.841389,
+      "lng": 137.013889,
+      "approx": false,
+      "match": [
+        "八幡社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "西尾市寺津町に鎮座する八幡社。"
+    },
+    {
+      "id": "michinoeki-okanoyama",
+      "name": "道の駅にしお岡ノ山",
+      "icon": "🚗",
+      "lat": 34.87678,
+      "lng": 137.08314,
+      "approx": false,
+      "match": [
+        "岡ノ山"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "国道23号沿いの道の駅。",
+      "reach": 100
+    },
+    {
+      "id": "nishio-station",
+      "name": "名鉄 西尾駅",
+      "icon": "🚉",
+      "lat": 34.863889,
+      "lng": 137.057778,
+      "approx": false,
+      "match": [
+        "=西尾",
+        "=西尾駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "まち歩きのスタート地点にどうぞ。"
+    },
+    {
+      "id": "nishio-cityhall",
+      "name": "西尾市役所",
+      "icon": "🏛️",
+      "lat": 34.862009,
+      "lng": 137.061741,
+      "approx": false,
+      "match": [
+        "西尾市役所"
+      ],
+      "points": 20,
+      "cat": "townhall",
+      "desc": "西尾市の市役所。名鉄西尾駅から東へ約400m。"
+    },
+    {
+      "id": "ikimono-sato",
+      "name": "西尾いきものふれあいの里",
+      "icon": "🦋",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "いきものふれあいの里"
+      ],
+      "points": 40,
+      "cat": "park",
+      "desc": "市東部の丘陵にある里山の自然観察施設。",
+      "reach": 150
+    },
+    {
+      "id": "hirabara-taki",
+      "name": "平原の滝",
+      "icon": "💧",
+      "lat": 34.848264,
+      "lng": 137.122222,
+      "approx": false,
+      "match": [
+        "平原の滝"
+      ],
+      "points": 40,
+      "cat": "sight",
+      "desc": "高さ5mの大滝と2mの小滝。古くから信仰を集める。"
+    },
+    {
+      "id": "isshiki-sakana",
+      "name": "一色さかな広場",
+      "icon": "🐟",
+      "lat": 34.794428,
+      "lng": 137.014115,
+      "approx": false,
+      "match": [
+        "一色さかな広場"
+      ],
+      "points": 40,
+      "cat": "sight",
+      "desc": "三河湾に面した、鮮魚や海産物の市場。",
+      "reach": 100
+    },
+    {
+      "id": "isshiki-port",
+      "name": "一色港（佐久島行き船のりば）",
+      "icon": "⛴️",
+      "lat": 34.794466,
+      "lng": 137.015547,
+      "approx": false,
+      "match": [
+        "佐久島行"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "佐久島へ向かう市営渡船の乗り場。"
+    },
+    {
+      "id": "isshiki-suwa",
+      "name": "三河一色諏訪神社",
+      "icon": "⛩️",
+      "lat": 34.8085,
+      "lng": 137.022806,
+      "approx": false,
+      "match": [
+        "諏訪神社"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "450年以上続く三河一色大提灯まつりの舞台。"
+    },
+    {
+      "id": "ankyuji",
+      "name": "安休寺（一色氏発祥之地）",
+      "icon": "🪷",
+      "lat": 34.811722,
+      "lng": 137.024417,
+      "approx": false,
+      "match": [
+        "安休寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "吉良満義・一色有義の墓がある寺。北隣に一色氏発祥之地の碑。"
+    },
+    {
+      "id": "isshiki-manabi",
+      "name": "一色学びの館",
+      "icon": "🏛️",
+      "lat": 34.805556,
+      "lng": 137.027778,
+      "approx": true,
+      "match": [
+        "一色学びの館"
+      ],
+      "points": 30,
+      "cat": "museum",
+      "desc": "西尾市立図書館の分館などが入る公共施設。"
+    },
+    {
+      "id": "koromozaki",
+      "name": "衣崎海岸（一色干潟）",
+      "icon": "🏖️",
+      "lat": 34.775954,
+      "lng": 137.040153,
+      "approx": true,
+      "match": [
+        "衣崎"
+      ],
+      "points": 30,
+      "cat": "beach",
+      "desc": "三河湾最大の干潟「一色干潟」がある海岸。潮干狩りで知られる。",
+      "reach": 150
+    },
+    {
+      "id": "sakushima-nishi",
+      "name": "佐久島 西港",
+      "icon": "⛴️",
+      "lat": 34.726389,
+      "lng": 137.031944,
+      "approx": true,
+      "match": [
+        "佐久島西港",
+        "西港"
+      ],
+      "points": 50,
+      "cat": "station",
+      "desc": "一色港から船で約20分。佐久島めぐりの入口。"
+    },
+    {
+      "id": "sakushima-higashi",
+      "name": "佐久島 東港",
+      "icon": "⛴️",
+      "lat": 34.720278,
+      "lng": 137.0475,
+      "approx": true,
+      "match": [
+        "佐久島東港",
+        "東港"
+      ],
+      "points": 50,
+      "cat": "station",
+      "desc": "佐久島の南東側の港。"
+    },
+    {
+      "id": "benten-salon",
+      "name": "佐久島弁天サロン",
+      "icon": "🏛️",
+      "lat": 34.725928,
+      "lng": 137.034397,
+      "approx": false,
+      "match": [
+        "弁天サロン"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "西港のそばの施設。休憩所としても使える。"
+    },
+    {
+      "id": "suunji",
+      "name": "崇運寺（佐久島）",
+      "icon": "🪷",
+      "lat": 34.726694,
+      "lng": 137.033722,
+      "approx": false,
+      "match": [
+        "崇運寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "鎌倉時代創建と伝わる島の寺。"
+    },
+    {
+      "id": "ohirune-house",
+      "name": "おひるねハウス（佐久島）",
+      "icon": "🎨",
+      "lat": 34.722946,
+      "lng": 137.036977,
+      "approx": true,
+      "match": [
+        "おひるねハウス"
+      ],
+      "points": 50,
+      "cat": "art",
+      "desc": "黒い立方体のアート作品。中で寝転べる。"
+    },
+    {
+      "id": "kamome-parking",
+      "name": "カモメの駐車場（佐久島）",
+      "icon": "🎨",
+      "lat": 34.724865,
+      "lng": 137.04474,
+      "approx": true,
+      "match": [
+        "カモメの駐車場"
+      ],
+      "points": 40,
+      "cat": "art",
+      "desc": "堤防の上にカモメの風見鶏が並ぶアート作品。"
+    },
+    {
+      "id": "oura-beach",
+      "name": "大浦海水浴場（佐久島）",
+      "icon": "🏖️",
+      "lat": 34.722866,
+      "lng": 137.04579,
+      "approx": false,
+      "match": [
+        "大浦海水浴場"
+      ],
+      "points": 40,
+      "cat": "beach",
+      "desc": "島の南側の入り江にある、波の穏やかな海水浴場。"
+    },
+    {
+      "id": "yatsurugi",
+      "name": "八劔神社・神明社（佐久島）",
+      "icon": "⛩️",
+      "lat": 34.722417,
+      "lng": 137.04875,
+      "approx": false,
+      "match": [
+        "八劔神社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "1月の八日講まつりで知られる島の神社。"
+    },
+    {
+      "id": "kezoji",
+      "name": "華蔵寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.84275,
+      "lng": 137.0815,
+      "approx": false,
+      "match": [
+        "華蔵寺"
+      ],
+      "points": 40,
+      "cat": "temple",
+      "desc": "吉良家の菩提寺。吉良義央の木像を伝える。"
+    },
+    {
+      "id": "kogane-zutsumi",
+      "name": "黄金堤（吉良）",
+      "icon": "📜",
+      "lat": 34.847647,
+      "lng": 137.087141,
+      "approx": false,
+      "match": [
+        "黄金堤"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "江戸時代に築かれた堤防。桜の名所。",
+      "reach": 100
+    },
+    {
+      "id": "tojo-jo",
+      "name": "東条城跡（吉良）",
+      "icon": "🏯",
+      "lat": 34.835,
+      "lng": 137.090556,
+      "approx": true,
+      "match": [
+        "東条城"
+      ],
+      "points": 40,
+      "cat": "castle",
+      "desc": "東条吉良氏・東条松平氏が居城とした中世の城跡。"
+    },
+    {
+      "id": "gentokuji",
+      "name": "源徳寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.832855,
+      "lng": 137.068356,
+      "approx": false,
+      "match": [
+        "源徳寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "侠客・吉良の仁吉の墓があるお寺。"
+    },
+    {
+      "id": "konrenji",
+      "name": "金蓮寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.809367,
+      "lng": 137.07285,
+      "approx": false,
+      "match": [
+        "金蓮寺"
+      ],
+      "points": 50,
+      "cat": "temple",
+      "desc": "弥陀堂は国宝。愛知県内に現存する最古の建築とされる。"
+    },
+    {
+      "id": "ozaki-shiro",
+      "name": "尾﨑士郎記念館（吉良）",
+      "icon": "🏛️",
+      "lat": 34.806667,
+      "lng": 137.065,
+      "approx": true,
+      "match": [
+        "尾﨑士郎記念館",
+        "尾崎士郎記念館"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "吉良町出身の作家・尾﨑士郎の記念館。"
+    },
+    {
+      "id": "kira-yoshida",
+      "name": "名鉄 吉良吉田駅",
+      "icon": "🚉",
+      "lat": 34.79438,
+      "lng": 137.071011,
+      "approx": false,
+      "match": [
+        "=吉良吉田",
+        "=吉良吉田駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "西尾線と蒲郡線が乗り入れる吉良の玄関口。"
+    },
+    {
+      "id": "shohoji-kofun",
+      "name": "正法寺古墳（吉良）",
+      "icon": "📜",
+      "lat": 34.789444,
+      "lng": 137.085556,
+      "approx": true,
+      "match": [
+        "正法寺古墳"
+      ],
+      "points": 50,
+      "cat": "historic",
+      "desc": "西三河最大の前方後円墳（墳長約94m）。国の史跡。",
+      "reach": 100
+    },
+    {
+      "id": "shio-no-sato",
+      "name": "吉良饗庭塩の里",
+      "icon": "🧂",
+      "lat": 34.783257,
+      "lng": 137.083189,
+      "approx": false,
+      "match": [
+        "塩の里"
+      ],
+      "points": 30,
+      "cat": "museum",
+      "desc": "塩田で昔ながらの塩づくりを体験できる施設。"
+    },
+    {
+      "id": "kira-onsen",
+      "name": "吉良温泉",
+      "icon": "♨️",
+      "lat": 34.782511,
+      "lng": 137.094748,
+      "approx": true,
+      "match": [
+        "=吉良温泉"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "三河湾岸の温泉地。明治の頃から湯治場として知られた。",
+      "reach": 150
+    },
+    {
+      "id": "kira-waikiki",
+      "name": "吉良ワイキキビーチ（宮崎海水浴場）",
+      "icon": "🏖️",
+      "lat": 34.781273,
+      "lng": 137.096084,
+      "approx": true,
+      "match": [
+        "吉良ワイキキビーチ",
+        "宮崎海水浴場"
+      ],
+      "points": 40,
+      "cat": "beach",
+      "desc": "宮崎海水浴場から恵比寿海水浴場までの海岸の愛称。",
+      "reach": 150
+    },
+    {
+      "id": "hazu-jinja",
+      "name": "幡頭神社（吉良）",
+      "icon": "⛩️",
+      "lat": 34.778111,
+      "lng": 137.087472,
+      "approx": false,
+      "match": [
+        "幡頭神社"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "702年創建と伝わる式内社。本殿は国の重要文化財。"
+    },
+    {
+      "id": "nishi-hazu",
+      "name": "名鉄 西幡豆駅",
+      "icon": "🚉",
+      "lat": 34.792444,
+      "lng": 137.121181,
+      "approx": false,
+      "match": [
+        "=西幡豆",
+        "=西幡豆駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "名鉄蒲郡線の駅。"
+    },
+    {
+      "id": "terabe-jo",
+      "name": "寺部城址（幡豆）",
+      "icon": "🏯",
+      "lat": 34.78905,
+      "lng": 137.12318,
+      "approx": true,
+      "match": [
+        "寺部城"
+      ],
+      "points": 40,
+      "cat": "castle",
+      "desc": "戦国時代、幡豆小笠原氏の居城の跡。いまは公園。"
+    },
+    {
+      "id": "higashi-hazu",
+      "name": "名鉄 東幡豆駅",
+      "icon": "🚉",
+      "lat": 34.789444,
+      "lng": 137.145833,
+      "approx": false,
+      "match": [
+        "=東幡豆",
+        "=東幡豆駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "幡豆の海と山の玄関口。"
+    },
+    {
+      "id": "myozenji",
+      "name": "妙善寺（かぼちゃ寺）",
+      "icon": "🪷",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "妙善寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "かぼちゃ伝来の地とされるお寺（東幡豆町森）。"
+    },
+    {
+      "id": "tombolo",
+      "name": "トンボロ干潟（前島）",
+      "icon": "🏖️",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "=前島"
+      ],
+      "points": 40,
+      "cat": "beach",
+      "desc": "干潮のとき、前島まで歩いて渡れる干潟。潮の時刻に注意。",
+      "reach": 200
+    },
+    {
+      "id": "kodomonokuni-st",
+      "name": "名鉄 こどもの国駅",
+      "icon": "🚉",
+      "lat": 34.788611,
+      "lng": 137.163056,
+      "approx": false,
+      "match": [
+        "=こどもの国",
+        "=こどもの国駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "愛知こどもの国の最寄り駅。"
+    },
+    {
+      "id": "aichi-kodomo",
+      "name": "愛知こどもの国",
+      "icon": "🎡",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "愛知こどもの国"
+      ],
+      "points": 40,
+      "cat": "park",
+      "desc": "三河湾を望む丘陵にある大きな児童遊園。",
+      "reach": 200
+    },
+    {
+      "id": "sangane-kannon",
+      "name": "三ヶ根観音",
+      "icon": "🙏",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "三ヶ根観音",
+        "三ケ根観音"
+      ],
+      "points": 50,
+      "cat": "temple",
+      "desc": "三ヶ根山の山頂付近の観音さま。三河湾の眺めも。",
+      "reach": 100
+    }
+  ]
+}

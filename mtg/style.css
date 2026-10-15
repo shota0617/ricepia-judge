@@ -216,3 +216,9 @@ details[open] summary{margin-bottom:8px;}
   body,html{background:#fff;}
   .card{border:none;padding:0;}
 }
+#cRec.on{color:#ff8a8a;}
+.tm-play{background:none;border:1px solid var(--line);border-radius:5px;color:#8a6a2e;font-size:10px;padding:0 6px;margin-left:6px;font-variant-numeric:tabular-nums;line-height:1.6;}
+.tm-play:hover{background:#f7efdc;border-color:#e8d8b0;}
+.spk{border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700;background:#f0ede4;color:var(--mid);}
+.spk.b-gold{background:#f7efdc;color:#7a5a20;border-color:#e8d8b0;}
+.spk.unset{background:#fff;border-style:dashed;color:var(--muted);}

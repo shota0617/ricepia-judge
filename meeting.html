@@ -87,6 +87,7 @@
         ・映像と音声は参加者どうしで直接やりとりします（WebRTC）。接続の仲介には PeerJS の公開サーバーを使います。自社のサーバーを使う場合は URL に <code>?peerhost=ホスト名&amp;peerport=443</code> を付けて開きます。<br/>
         ・少人数（目安6人まで）の打ち合わせ向けです。人数が増えると各端末の通信量が増えます。<br/>
         ・自動文字起こしはブラウザの音声認識機能を使います（Chrome / Edge / Safari）。Chrome では音声がブラウザ提供元の認識サーバーに送られます。ミュート中は文字起こしも止まります。<br/>
+        ・「⏺ 録音」で会議の音声（全員分）を録音できます。録音は押した人の端末のブラウザ内に保存され、要望分析の画面で発言の時刻から聞き直せます。録音中は全員の画面に「⏺ 録音中」と表示されます。<br/>
         ・文字起こし・議事録・バックログは、この端末のブラウザ内にだけ保存されます（サーバーには送りません）。AI分析を実行したときだけ、文字起こしが Anthropic API に送られます。<br/>
         ・会議の前に、文字起こしをすることをお客様に一言お伝えください。
       </div>
@@ -108,6 +109,8 @@
         <div class="field"><label for="imCustomer">お客様</label><input id="imCustomer" placeholder="例：〇〇株式会社"/></div>
         <div class="field"><label for="imDate">日時</label><input id="imDate" type="datetime-local"/></div>
         <div class="field"><label for="imFile">ファイル（.vtt / .srt / .txt）</label><input id="imFile" type="file" accept=".vtt,.srt,.txt,text/plain,text/vtt"/></div>
+        <div class="field"><label for="imAudio">録音（任意・.m4a / .mp3 / .webm）</label><input id="imAudio" type="file" accept="audio/*,.m4a,.mp3,.webm,.wav"/>
+          <div class="hint">文字起こしと同じ会議の録音を付けると、発言の時刻から聞き直せます（この端末にだけ保存）。</div></div>
       </div>
       <div class="field" style="margin-top:10px;"><label for="imText">または貼り付け</label><textarea id="imText" rows="6" placeholder="例：&#10;[00:01:02] 高見: 毎週電話で注文してるんですけど…&#10;近藤: ありがとうございます…"></textarea>
         <div class="hint">Zoom の「音声トランスクリプト（.vtt）」や「名前: 発言」形式のテキストを読み取ります。</div></div>
@@ -133,10 +136,16 @@
     <div class="page-head"><h1>開発バックログ</h1>
       <p>複数の会議から集まったお客様のニーズです。同じ目的の要望は1つにまとまり、言及した会議が多いほど・優先度と影響が大きいほどスコアが上がります。</p></div>
     <div class="kpis" id="blStats"></div>
+    <details class="card" id="rpCard" style="margin-bottom:12px;">
+      <summary>📊 お客様の声レポート（全会議を横断してAIが傾向とロードマップ案をまとめる）</summary>
+      <div class="row" style="margin-top:8px;"><button class="btn btn-gold btn-sm" id="rpBtn">✨ レポートを作る／更新</button><span class="spacer"></span>
+        <span id="rpActs" class="row"><button class="btn btn-ghost btn-sm" id="rpCopy">📋 コピー</button><button class="btn btn-ghost btn-sm" id="rpDl">⬇ .md</button></span></div>
+      <div class="md" id="rpOut" style="margin-top:10px;"></div>
+    </details>
     <div class="card">
       <div class="row">
         <select id="blFilter" class="inp" style="width:auto;" aria-label="絞り込み">
-          <option value="active">対応中（新規・検討中・開発中）</option><option value="all">すべて</option>
+          <option value="active">対応中（新規・検討中・開発中・お知らせ未送信）</option><option value="all">すべて</option>
           <option value="new">新規</option><option value="review">検討中</option><option value="dev">開発中</option><option value="released">リリース済み</option><option value="rejected">見送り</option>
         </select>
         <input id="blSearch" class="inp" style="flex:1;min-width:160px;" placeholder="🔍 キーワード・お客様名で検索"/>
@@ -161,7 +170,7 @@
     <div class="page-head"><h1>履歴</h1><span class="spacer"></span>
       <button class="btn btn-ghost btn-sm" id="hiBackup">⬇ 全データをバックアップ</button>
       <label class="btn btn-ghost btn-sm" style="cursor:pointer;">⬆ 復元<input type="file" id="hiRestore" accept="application/json,.json" hidden/></label>
-      <p>会議の記録はこの端末のブラウザに保存されています。大事な記録は定期的にバックアップしてください。</p></div>
+      <p>会議の記録はこの端末のブラウザに保存されています。大事な記録は定期的にバックアップしてください（録音はバックアップに含まれないため、必要なものは「要望分析」の「⬇ 録音」で個別に保存してください）。</p></div>
     <div id="hiList"></div>
   </section>
 </div>
@@ -173,6 +182,7 @@
     <button class="code" id="rCode" title="招待" style="background:none;border:none;font-size:12px;"></button>
     <span id="rTimer" style="font-variant-numeric:tabular-nums;">0:00</span>
     <span class="live paused" id="rLive"><i></i>文字起こし停止中</span>
+    <span class="live" id="rRec" hidden><i></i>⏺ 録音中</span>
     <span class="spacer"></span>
     <span id="rCount">👥 1</span>
   </div>
@@ -210,6 +220,7 @@
     <button class="cbtn" id="cShare"><span class="ic">🖥</span><span class="lb">画面共有</span></button>
     <div class="rsep"></div>
     <button class="cbtn" id="cStt"><span class="ic">📝</span><span class="lb">文字起こし</span></button>
+    <button class="cbtn" id="cRec" title="会議の音声を録音（この端末に保存）"><span class="ic">⏺</span><span class="lb">録音</span></button>
     <button class="cbtn" id="cCaps" title="字幕の表示"><span class="ic">💬</span><span class="lb">字幕</span></button>
     <button class="cbtn" id="cTr"><span class="ic">📜</span><span class="lb">記録</span></button>
     <button class="cbtn" id="cChat"><span class="ic">✉<em class="cnt" hidden></em></span><span class="lb">チャット</span></button>
@@ -247,6 +258,15 @@
   </div>
 </div>
 
+<div class="modal" id="relModal" hidden>
+  <div class="modal-box" style="max-width:600px;">
+    <h3>📣 お客様へのお知らせ</h3>
+    <div class="small mid">「<b id="relTitle"></b>」を要望してくださったお客様ごとの文面案です。送ったら「連絡済み」にしておくと、送り漏れを防げます。</div>
+    <div id="relList"></div>
+    <div class="acts"><button class="btn btn-gold" onclick="M.modal('relModal',false)">閉じる</button></div>
+  </div>
+</div>
+
 <div class="modal" id="keyModal" hidden>
   <div class="modal-box">
     <h3>🔑 Anthropic APIキー</h3>
@@ -261,6 +281,7 @@
 
 <script src="mtg/core.js"></script>
 <script src="mtg/call.js"></script>
+<script src="mtg/recorder.js"></script>
 <script src="mtg/analyze.js"></script>
 <script src="mtg/backlog.js"></script>
 <script src="mtg/sample.js"></script>

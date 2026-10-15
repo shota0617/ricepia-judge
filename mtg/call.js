@@ -9,7 +9,7 @@ const canShare = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayM
 const C = {
   peer:null, isHost:false, code:"", myId:"", name:"", role:"当社", hostConn:null, inRoom:false, joining:false,
   local:null, mic:null, cam:null, placeholder:null, phTimer:0, screen:null, camBeforeShare:null,
-  conns:new Map(), calls:new Map(), names:new Map(), roles:new Map(), states:new Map(), seen:new Set(),
+  conns:new Map(), calls:new Map(), remote:new Map(), names:new Map(), roles:new Map(), states:new Map(), seen:new Set(),
   muted:false, camOff:false, sharing:false, rec:null, seq:0, timer:0, saveT:0, unread:0, pane:"",
   stt:{want:false, running:false, r:null, lang:"ja-JP", lastErr:"", interimT:0, fails:0}
 };
@@ -199,7 +199,7 @@ function destroyPeer(){
 }
 
 function resetRoom(){
-  C.seen.clear(); C.names.clear(); C.roles.clear(); C.states.clear(); C.unread = 0; C.seq = 0;
+  C.seen.clear(); C.names.clear(); C.roles.clear(); C.states.clear(); C.remote.clear(); C.unread = 0; C.seq = 0;
   $("#grid").innerHTML = "";
   C.rec = {id:"pending", participants:{}, lines:[], chat:[], notes:"", startedAt:Date.now()};
 }
@@ -227,6 +227,7 @@ function enterRoom(){
 function leave(notify){
   if(!C.inRoom) return;
   if(notify !== false) broadcast({type: C.isHost ? "end" : "bye"});
+  const recDone = M.recorder ? M.recorder.stop(true) : Promise.resolve();
   sttStop(true);
   C.inRoom = false;
   C.rec.endedAt = Date.now();
@@ -235,17 +236,19 @@ function leave(notify){
   setTimeout(() => { destroyPeer(); stopMedia(); }, 300);
   $("#room").hidden = true; document.body.style.overflow = "";
   $("#lbVideo").srcObject = null; $("#lbPh").hidden = false;
-  const id = C.rec.id;
-  M.toast("会議の記録を保存しました（" + C.rec.lines.length + "件の発言）", "ok");
-  M.go(C.rec.lines.length || C.rec.notes ? "analyze" : "history", {meetingId:id});
+  const rec = C.rec;
+  M.toast("会議の記録を保存しました（" + rec.lines.length + "件の発言）", "ok");
+  recDone.then(() => M.go(rec.lines.length || rec.notes || rec.audio ? "analyze" : "history", {meetingId:rec.id}));
 }
+C.notifyAll = text => { addSys(text, true); broadcast({type:"sys", text}); };
+C.stateChanged = () => stateChanged();
 function confirmLeave(){
   const msg = C.isHost ? "ミーティングを終了しますか？\n参加者全員の会議も終了します。" : "ミーティングから退出しますか？";
   if(confirm(msg)) leave();
 }
 
 /* ================= data channel ================= */
-function myState(){ return {muted:C.muted, camOff:C.camOff, sharing:C.sharing, stt:C.stt.want && !C.muted}; }
+function myState(){ return {muted:C.muted, camOff:C.camOff, sharing:C.sharing, stt:C.stt.want && !C.muted, rec:!!(M.recorder && M.recorder.active)}; }
 function send(conn, msg){ try{ if(conn && conn.open) conn.send(msg); }catch(e){} }
 function broadcast(msg){ C.conns.forEach(c => send(c, msg)); }
 function setupConn(conn){
@@ -295,6 +298,7 @@ function onData(pid, d){
       tile(pid, false); paintTile(pid);
       if(first) addSys(C.names.get(pid) + "さんが参加しました", true);
       if(first && C.stt.want) send(C.conns.get(pid), {type:"sys", text:"🔴 " + C.name + "さんの発言は文字起こしされています"});
+      if(first && M.recorder && M.recorder.active) send(C.conns.get(pid), {type:"sys", text:"⏺ " + C.name + "さんがこの会議を録音しています"});
       paintBar(); persist();
       break;
     }
@@ -325,6 +329,7 @@ function dropPeer(pid){
   if(!C.seen.has(pid) && !C.conns.has(pid) && !C.calls.has(pid)) return;
   const c = C.conns.get(pid); C.conns.delete(pid); try{ c && c.close(); }catch(e){}
   const call = C.calls.get(pid); C.calls.delete(pid); try{ call && call.close(); }catch(e){}
+  C.remote.delete(pid);
   const t = $('#grid .tile[data-pid="' + CSS.escape(pid) + '"]'); if(t) t.remove();
   if(C.seen.has(pid) && C.inRoom){ C.seen.delete(pid); addSys((C.names.get(pid) || "参加者") + "さんが退出しました", true); }
   layout(); paintBar();
@@ -475,6 +480,7 @@ function attach(pid, stream){
   const t = tile(pid, pid === C.myId), v = $("video", t);
   if(v.srcObject !== stream) v.srcObject = stream;
   v.play().catch(() => {});
+  if(pid !== C.myId){ C.remote.set(pid, stream); if(M.recorder) M.recorder.addStream(pid, stream); }
 }
 function paintTile(pid){
   const t = $('#grid .tile[data-pid="' + CSS.escape(pid) + '"]'); if(!t) return;
@@ -515,6 +521,10 @@ function paintBar(){
   const anyStt = C.stt.want && !C.muted || Array.from(C.states.values()).some(s => s.stt);
   const live = $("#rLive"); live.classList.toggle("paused", !anyStt);
   live.innerHTML = "<i></i>" + (anyStt ? "文字起こし中" : "文字起こし停止中");
+  const recOn = M.recorder && M.recorder.active, anyRec = recOn || Array.from(C.states.values()).some(s => s.rec);
+  $("#rRec").hidden = !anyRec;
+  b("cRec", recOn); $("#cRec .lb").textContent = recOn ? "録音を停止" : "録音";
+  $("#cRec").hidden = !(M.recorder && M.recorder.supported());
   $("#rCount").textContent = "👥 " + (C.seen.size + 1);
   const cnt = $("#cChat .cnt"); cnt.textContent = C.unread || ""; cnt.hidden = !C.unread;
 }
@@ -678,6 +688,7 @@ M.mod.meet = {
     $("#cChat").onclick = () => setPane("chat");
     $("#cMemo").onclick = () => setPane("memo");
     $("#cInvite").onclick = invite;
+    $("#cRec").onclick = () => M.recorder.toggle();
     $("#rCode").onclick = invite;
     $("#cEnd").onclick = confirmLeave;
     $$(".stabs button[data-pane]").forEach(b => b.onclick = () => setPane(b.dataset.pane));

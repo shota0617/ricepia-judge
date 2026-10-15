@@ -24,9 +24,31 @@ M.saveMeeting = function(rec){
   if(i >= 0) list[i] = rec; else list.unshift(rec);
   return M.store.set("meetings", list.slice(0, 200));
 };
-M.deleteMeeting = id => M.store.set("meetings", M.meetings().filter(m => m.id !== id));
+M.deleteMeeting = id => { M.audio.del(id); return M.store.set("meetings", M.meetings().filter(m => m.id !== id)); };
 M.backlog = () => M.store.get("backlog", []);
 M.saveBacklog = list => M.store.set("backlog", list);
+
+/* meeting audio (recordings) — too big for localStorage, kept in IndexedDB keyed by meeting id */
+M.audio = (function(){
+  let dbp = null;
+  const db = () => dbp || (dbp = new Promise((res, rej) => {
+    if(!window.indexedDB){ rej(new Error("このブラウザでは録音を保存できません")); return; }
+    const r = indexedDB.open("rmt_audio", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("audio");
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => rej(r.error || new Error("録音の保存領域を開けませんでした"));
+  }));
+  const tx = (mode, fn) => db().then(d => new Promise((res, rej) => {
+    const t = d.transaction("audio", mode), st = t.objectStore("audio"), req = fn(st);
+    t.oncomplete = () => res(req && req.result);
+    t.onerror = t.onabort = () => rej(t.error || new Error("録音の保存に失敗しました（容量不足の可能性）"));
+  }));
+  return {
+    put:(id, blob) => tx("readwrite", st => st.put(blob, id)),
+    get:id => tx("readonly", st => st.get(id)).catch(() => null),
+    del:id => tx("readwrite", st => st.delete(id)).catch(() => {})
+  };
+})();
 
 /* ================= utilities ================= */
 M.$ = (s, r=document) => r.querySelector(s);
@@ -218,6 +240,8 @@ M.errorBox = function(el, e){
 
 /* ================= transcript formatting ================= */
 M.lineTime = (m, l) => M.clock(l.at - m.startedAt);
+/** "1:02:03" / "2:05" → seconds */
+M.parseClock = s => { const p = String(s || "").trim().split(":").map(Number); if(p.some(isNaN) || !p.length) return null; return p.reduce((a, x) => a * 60 + x, 0); };
 M.transcriptText = function(m, opts){
   opts = opts || {};
   return m.lines.map(l => `[${M.lineTime(m, l)}] ${l.who}${opts.roles && l.role === "お客様" ? "（お客様）" : ""}: ${l.text}`).join("\n");

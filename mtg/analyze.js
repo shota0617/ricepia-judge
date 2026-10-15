@@ -152,7 +152,7 @@ function parseTranscript(text, base){
   }
   return lines;
 }
-function importNow(){
+async function importNow(){
   const text = $("#imText").value.trim();
   if(!text){ M.toast("文字起こしを貼り付けるか、ファイルを選んでください", "err"); return; }
   const d = $("#imDate").value ? new Date($("#imDate").value).getTime() : Date.now();
@@ -162,8 +162,14 @@ function importNow(){
     title: $("#imTitle").value.trim() || "取り込んだ会議 " + M.dt(d), customer: $("#imCustomer").value.trim(),
     startedAt:d, endedAt:lines[lines.length-1].at, participants:{}, lines, chat:[], notes:"", analysis:null};
   M.speakers(rec).forEach((n, i) => rec.participants["s" + i] = {name:n, role:""});
+  const audio = $("#imAudio").files[0];
+  if(audio){
+    // the transcript's cue times are measured from the start of this recording
+    try{ await M.audio.put(rec.id, audio); rec.audio = {startedAt:d, mime:audio.type || "audio/mp4", size:audio.size, timing:"start"}; }
+    catch(e){ M.toast("録音ファイルを保存できませんでした：" + e.message, "err"); }
+  }
   M.saveMeeting(rec);
-  $("#imText").value = ""; $("#imTitle").value = ""; $("#imCustomer").value = "";
+  $("#imText").value = ""; $("#imTitle").value = ""; $("#imCustomer").value = ""; $("#imAudio").value = "";
   $("#importCard").hidden = true;
   M.toast(lines.length + "件の発言を取り込みました", "ok");
   M.go("analyze", {meetingId:rec.id});
@@ -177,24 +183,91 @@ function renderSelect(sel){
   if(sel) $("#anSelect").value = sel;
   current = M.meeting($("#anSelect").value);
 }
+/* ---------- recording playback ---------- */
+let audioUrl = "", trOpen = false, editing = false;
+const speakSec = t => Math.min(20, Math.max(1.5, String(t || "").length / 6)); // rough speaking time of a line
+function lineSec(m, l){
+  const a = m.audio; if(!a) return 0;
+  return Math.max(0, (l.at - a.startedAt) / 1000 - (a.timing === "end" ? speakSec(l.text) : 0) - 1);
+}
+function quoteSec(m, e){
+  const key = String(e.quote || "").replace(/[…「」\s]/g, "").slice(0, 10);
+  const l = key && m.lines.find(x => x.text.replace(/\s/g, "").includes(key));
+  if(l) return lineSec(m, l);
+  const t = M.parseClock(e.time); if(t == null || !m.audio) return 0;
+  return Math.max(0, t + (m.startedAt - m.audio.startedAt) / 1000 - 2);
+}
+const playBtn = (sec, label) => `<button class="tm-play" data-sec="${sec.toFixed(1)}" title="録音をここから再生">▶ ${esc(label)}</button>`;
+async function loadAudio(m){
+  if(audioUrl){ URL.revokeObjectURL(audioUrl); audioUrl = ""; }
+  const box = $("#anAudioBox"); if(!box) return;
+  if(!m.audio){ box.innerHTML = ""; return; }
+  const blob = await M.audio.get(m.id);
+  if(current !== m) return;
+  if(!blob){ box.innerHTML = '<div class="muted small">録音ファイルが見つかりません（別の端末で録音したか、ブラウザのデータが消去されました）</div>'; return; }
+  audioUrl = URL.createObjectURL(blob);
+  box.innerHTML = `<div class="row"><audio id="anAudio" controls preload="metadata" src="${audioUrl}" style="flex:1;min-width:220px;"></audio>
+    <a class="btn btn-ghost btn-sm" href="${audioUrl}" download="${esc(M.safeName(m.title))}_録音.${/mp4/.test(m.audio.mime) ? "m4a" : /ogg/.test(m.audio.mime) ? "ogg" : "webm"}">⬇ 録音</a></div>
+    <div class="muted small" style="margin-top:4px;">文字起こしや「お客様の声」の ▶ を押すと、その発言のあたりから再生します。</div>`;
+}
+function seek(sec){
+  const a = $("#anAudio");
+  if(!a){ M.toast("この会議には録音がありません"); return; }
+  a.currentTime = Math.max(0, sec); a.play().catch(() => {});
+}
+
+/* ---------- speakers & transcript correction ---------- */
+function setRole(m, who){
+  const cur = m.lines.find(l => l.who === who), now = cur ? cur.role || "" : "";
+  const next = {"":"お客様", "お客様":"当社", "当社":""}[now];
+  m.lines.forEach(l => { if(l.who === who) l.role = next; });
+  Object.values(m.participants || {}).forEach(p => { if(p.name === who) p.role = next; });
+  if(m.analysis) m.analysisStale = true;
+  M.saveMeeting(m); renderMeta();
+}
+function saveEdits(m){
+  let changed = false;
+  $$("#anTr textarea[data-id]").forEach(ta => {
+    const l = m.lines.find(x => x.id === ta.dataset.id); if(!l) return;
+    const v = ta.value.replace(/\s+/g, " ").trim();
+    if(v !== l.text){ l.text = v; changed = true; }
+  });
+  const before = m.lines.length;
+  m.lines = m.lines.filter(l => l.text);
+  if(m.lines.length !== before) changed = true;
+  editing = false;
+  if(changed){ if(m.analysis) m.analysisStale = true; M.saveMeeting(m); M.toast("文字起こしを修正しました", "ok"); }
+  renderMeta();
+}
+
 function renderMeta(){
   const m = current, box = $("#anMeta");
   $("#anBtn").disabled = !m || (!m.lines.length && !m.notes);
   if(!m){ box.innerHTML = '<div class="empty">「ミーティング」で会議をすると、文字起こしがここに届きます。<br/>Zoomなどの文字起こし（.vtt / .txt）を取り込むか、サンプルで試すこともできます。</div>'; $("#anOut").innerHTML = ""; return; }
   const spk = M.speakers(m);
-  const roles = spk.map(n => { const l = m.lines.find(x => x.who === n); const r = roleOf(m, l); return `<span class="tag">${esc(n)}${r ? "・" + r : ""}</span>`; }).join("");
+  const roles = spk.map(n => { const l = m.lines.find(x => x.who === n), r = roleOf(m, l), set = !!l.role;
+    return `<button class="spk ${r === "お客様" ? "b-gold" : r === "当社" ? "" : "unset"}" data-who="${esc(n)}" title="クリックで「お客様 → 当社 → 未設定」を切り替え">${esc(n)}・${r ? esc(r) + (set ? "" : "（推定）") : "未設定"}</button>`; }).join("");
+  const rows = m.lines.map(l => editing
+    ? `<div class="tline"><span class="who ${M.colorOf(l.who, spk)}">${esc(l.who)}</span><span class="tm">${M.lineTime(m, l)}</span><textarea class="inp" data-id="${esc(l.id)}" rows="2" style="margin-top:3px;font-size:12.5px;">${esc(l.text)}</textarea></div>`
+    : `<div class="tline"><span class="who ${M.colorOf(l.who, spk)}">${esc(l.who)}</span>${m.audio ? playBtn(lineSec(m, l), M.lineTime(m, l)) : `<span class="tm">${M.lineTime(m, l)}</span>`}<br/>${esc(l.text)}</div>`).join("");
   box.innerHTML = `<div class="kpis">
       <div class="kpi"><div class="k">日時</div><div class="v" style="font-size:13px;">${esc(M.dt(m.startedAt))}</div></div>
       <div class="kpi"><div class="k">長さ</div><div class="v">${esc(M.dur(m))}</div></div>
       <div class="kpi"><div class="k">発言</div><div class="v">${m.lines.length}</div></div>
       <div class="kpi"><div class="k">話者</div><div class="v">${spk.length}</div></div>
     </div>
-    <div class="small mid" style="margin-bottom:6px;">話者：${roles || "—"}</div>
-    <details><summary>文字起こしを見る（${m.lines.length}件）</summary>
-      <div style="max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:8px 12px;background:var(--soft);">
-        ${m.lines.map(l => `<div class="tline"><span class="who ${M.colorOf(l.who, spk)}">${esc(l.who)}</span><span class="tm">${M.lineTime(m, l)}</span><br/>${esc(l.text)}</div>`).join("") || '<div class="muted small">発言なし</div>'}
+    <div class="small mid row" style="margin-bottom:6px;gap:4px;">話者：${roles || "—"}</div>
+    <div id="anAudioBox" style="margin:8px 0;"></div>
+    <details id="anTrBox"${trOpen || editing ? " open" : ""}><summary>文字起こしを見る・修正する（${m.lines.length}件）</summary>
+      <div class="row" style="margin-bottom:6px;">${editing
+        ? '<button class="btn btn-gold btn-sm" id="anEditSave">💾 修正を保存</button><button class="btn btn-ghost btn-sm" id="anEditCancel">キャンセル</button><span class="muted small">空にした発言は削除されます</span>'
+        : '<button class="btn btn-ghost btn-sm" id="anEdit">✏️ 誤変換を修正</button><span class="muted small">音声認識の聞き間違いを直してから分析すると精度が上がります</span>'}</div>
+      <div id="anTr" style="max-height:${editing ? 520 : 320}px;overflow:auto;border:1px solid var(--line);border-radius:9px;padding:8px 12px;background:var(--soft);">
+        ${rows || '<div class="muted small">発言なし</div>'}
         ${m.notes ? `<div class="memo-h">手書きメモ</div><div class="small" style="white-space:pre-wrap;">${esc(m.notes)}</div>` : ""}
       </div></details>`;
+  $("#anTrBox").ontoggle = e => { trOpen = e.target.open; };
+  loadAudio(m);
   renderResult();
 }
 function renderResult(){
@@ -208,6 +281,7 @@ function renderResult(){
       <button class="btn btn-ghost btn-sm" id="anCopyMd">📋 議事録をコピー</button>
       <button class="btn btn-ghost btn-sm" id="anDlMd">⬇ 議事録.md</button>
       <button class="btn btn-ghost btn-sm" id="anMail">✉ 確認メール文面</button></div>
+    ${m.analysisStale ? '<div class="tip" style="margin-bottom:10px;">分析のあとに文字起こしや話者の区分が修正されています。もう一度「✨ AIでお客様のニーズを分析」を押すと反映されます。</div>' : ""}
     <div class="kpis">
       <div class="kpi"><div class="k">ニーズ</div><div class="v">${a.needs.length}</div></div>
       <div class="kpi"><div class="k">Must</div><div class="v" style="color:var(--red)">${a.needs.filter(n => n.priority === "Must").length}</div></div>
@@ -225,7 +299,7 @@ function renderResult(){
         ${n.backlog_match && blTitle(n.backlog_match) ? `<span class="badge b-gold" title="既存のバックログに統合されます">↻ 既存「${esc(blTitle(n.backlog_match))}」と同じ要望</span>` : ""}
         ${n._added ? '<span class="badge b-green">バックログ追加済み</span>' : ""}</div>
       <p>${esc(n.description)}</p>
-      ${n.evidence.map(e => `<div class="quote">「${esc(e.quote)}」<span class="src">${esc(e.speaker)} · ${esc(e.time)}</span></div>`).join("")}
+      ${n.evidence.map(e => `<div class="quote">「${esc(e.quote)}」<span class="src">${esc(e.speaker)} · ${m.audio ? playBtn(quoteSec(m, e), e.time) : esc(e.time)}</span></div>`).join("")}
       <div class="lbl">ユーザーストーリー</div><p>${esc(n.user_story)}</p>
       <div class="lbl">受け入れ条件</div><ul class="ac">${n.acceptance_criteria.map(c => `<li>${esc(c)}</li>`).join("")}</ul>
       ${n.dev_notes ? `<div class="lbl">開発メモ</div><p>${esc(n.dev_notes)}</p>` : ""}
@@ -274,7 +348,7 @@ async function analyze(){
     const ids = new Set(bl.map(b => b.id));
     r.needs.forEach(x => { if(!ids.has(x.backlog_match)) x.backlog_match = ""; });
     r.at = Date.now();
-    m.analysis = r;
+    m.analysis = r; m.analysisStale = false;
     M.saveMeeting(m); M.badges();
     renderSelect(m.id); renderResult();
     M.toast("分析が完了しました（ニーズ " + r.needs.length + "件）", "ok");
@@ -287,7 +361,15 @@ M.mod.analyze = {
     const s = M.settings();
     $("#anProduct").value = s.product || "";
     $("#anOurSide").value = s.ourSide || "";
-    $("#anSelect").onchange = () => { current = M.meeting($("#anSelect").value); renderMeta(); };
+    $("#anSelect").onchange = () => { current = M.meeting($("#anSelect").value); editing = false; renderMeta(); };
+    $("#anMeta").addEventListener("click", e => {
+      const m = current; if(!m) return;
+      const sp = e.target.closest(".spk"); if(sp){ setRole(m, sp.dataset.who); return; }
+      if(e.target.closest("#anEdit")){ editing = true; renderMeta(); }
+      if(e.target.closest("#anEditSave")) saveEdits(m);
+      if(e.target.closest("#anEditCancel")){ editing = false; renderMeta(); }
+    });
+    $("#v-analyze").addEventListener("click", e => { const b = e.target.closest(".tm-play"); if(b) seek(+b.dataset.sec); });
     $("#anBtn").onclick = analyze;
     $("#anImportBtn").onclick = () => { $("#importCard").hidden = !$("#importCard").hidden; };
     $("#anSample").onclick = () => { const rec = M.loadSample(); M.go("analyze", {meetingId:rec.id}); M.toast("サンプルの会議と分析結果を読み込みました", "ok"); };
@@ -315,7 +397,7 @@ function renderHistory(){
   el.innerHTML = `<div class="tbl-wrap"><table class="mtable"><tr><th>日時</th><th>会議 / お客様</th><th>長さ</th><th>発言</th><th>状態</th><th></th></tr>` +
     list.map(m => `<tr>
       <td style="white-space:nowrap;">${esc(M.dt(m.startedAt))}</td>
-      <td><b>${esc(m.title)}</b>${m.customer ? `<div class="muted small">${esc(m.customer)}</div>` : ""}${m.source === "import" ? ' <span class="tag">取り込み</span>' : ""}${m.sample ? ' <span class="tag">サンプル</span>' : ""}</td>
+      <td><b>${esc(m.title)}</b>${m.customer ? `<div class="muted small">${esc(m.customer)}</div>` : ""}${m.source === "import" ? ' <span class="tag">取り込み</span>' : ""}${m.sample ? ' <span class="tag">サンプル</span>' : ""}${m.audio ? ' <span class="tag">🎙 録音あり</span>' : ""}</td>
       <td style="white-space:nowrap;">${esc(M.dur(m))}</td><td>${m.lines.length}</td>
       <td>${m.analysis ? `<span class="badge b-green">分析済み・ニーズ${m.analysis.needs.length}</span>` : '<span class="badge">未分析</span>'}</td>
       <td style="white-space:nowrap;"><button class="btn btn-gold btn-sm" data-act="an" data-id="${esc(m.id)}">分析</button>

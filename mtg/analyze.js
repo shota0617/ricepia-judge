@@ -122,11 +122,14 @@ function parseTranscript(text, base){
     raw = raw.trim(); if(!raw) return;
     let who = "話者", t = raw, m;
     if((m = raw.match(/^<v\s+([^>]+)>([\s\S]*?)(?:<\/v>)?$/))){ who = m[1].trim(); t = m[2]; }
-    else if((m = raw.match(/^([^:：「」\n]{1,24})[:：]\s*([\s\S]+)$/))){ who = m[1].trim(); t = m[2]; }
+    else if((m = raw.match(/^([^:：「」\n]{1,24})[:：]\s*([\s\S]+)$/)) && !/^[\d\s]+$/.test(m[1])){ who = m[1].trim(); t = m[2]; } // "12:30に…" is not a speaker
     t = t.replace(/<[^>]+>/g, "").trim();
     if(!t) return;
     const last = lines[lines.length - 1];
-    if(last && last.who === who && ms - (last.at - base) < 4000 && last.text.length < 300){ last.text += t; return; }
+    if(last && last.who === who && ms - (last.at - base) < 4000 && last.text.length < 300){
+      last.text += /[\x21-\x7e]$/.test(last.text) && /^[\x21-\x7e]/.test(t) ? " " + t : t; // keep words apart in English captions
+      return;
+    }
     lines.push({id:"im-" + lines.length + "-" + M.uid(), at:base + ms, who, role:"", pid:"", text:t});
   };
   if(/-->/.test(text)){
@@ -405,6 +408,29 @@ function renderHistory(){
         <button class="btn btn-ghost btn-sm" data-act="txt" data-id="${esc(m.id)}">文字起こし</button>
         <button class="btn btn-ghost btn-sm" data-act="del" data-id="${esc(m.id)}" title="削除">🗑</button></td></tr>`).join("") + "</table></div>";
 }
+/** Fill defaults so a hand-edited or older backup can't break rendering. */
+function normalizeBackup(d){
+  const arr = v => Array.isArray(v) ? v : [], str = v => v == null ? "" : String(v);
+  const out = Object.assign({}, d);
+  out.meetings = arr(d.meetings).filter(m => m && typeof m === "object" && m.id).map(m => Object.assign({}, m, {
+    id:str(m.id), title:str(m.title) || "（無題）", customer:str(m.customer), startedAt:Number(m.startedAt) || Date.now(),
+    participants:m.participants && typeof m.participants === "object" ? m.participants : {},
+    lines:arr(m.lines).filter(l => l && typeof l === "object").map(l => ({id:str(l.id) || M.uid(), at:Number(l.at) || Number(m.startedAt) || 0, who:str(l.who) || "話者", role:l.role === "お客様" || l.role === "当社" ? l.role : "", pid:str(l.pid), text:str(l.text)})),
+    chat:arr(m.chat).filter(c => c && typeof c === "object").map(c => ({id:str(c.id) || M.uid(), at:Number(c.at) || 0, who:str(c.who), pid:str(c.pid), text:str(c.text)})),
+    notes:str(m.notes),
+    analysis:m.analysis && typeof m.analysis === "object" && Array.isArray(m.analysis.needs) ? m.analysis : null
+  }));
+  const ST = ["new","review","dev","released","rejected"];
+  out.backlog = arr(d.backlog).filter(b => b && typeof b === "object" && b.id).map(b => Object.assign({}, b, {
+    id:str(b.id), title:str(b.title) || "（無題）", status:ST.includes(b.status) ? b.status : "new",
+    priority:["Must","Should","Could"].includes(b.priority) ? b.priority : "Could", impact:["高","中","低"].includes(b.impact) ? b.impact : "中",
+    category:str(b.category) || "その他", kind:b.kind === "潜在" ? "潜在" : "明示", description:str(b.description), user_story:str(b.user_story),
+    acceptance_criteria:arr(b.acceptance_criteria).map(str), dev_notes:str(b.dev_notes), issueUrl:/^https:\/\/github\.com\//.test(str(b.issueUrl)) ? str(b.issueUrl) : "",
+    mentions:arr(b.mentions).filter(x => x && typeof x === "object").map(x => Object.assign({}, x, {customer:str(x.customer), meetingTitle:str(x.meetingTitle), date:Number(x.date) || 0, evidence:arr(x.evidence).filter(e => e && typeof e === "object").map(e => ({time:str(e.time), speaker:str(e.speaker), quote:str(e.quote)}))})),
+    created:Number(b.created) || Date.now(), updated:Number(b.updated) || Date.now()
+  }));
+  return out;
+}
 function backupAll(){
   const data = {app:"ricepia-meeting", version:1, exported:new Date().toISOString(), data:{}};
   M.store.keys().forEach(k => data.data[k] = M.store.get(k));
@@ -415,9 +441,13 @@ function restoreAll(file){
   fr.onload = () => {
     try{
       const j = JSON.parse(fr.result);
-      if(j.app !== "ricepia-meeting" || !j.data) throw new Error("形式が違います");
-      if(!confirm("現在の会議記録・バックログを、バックアップの内容で上書きします。よろしいですか？")) return;
-      Object.keys(j.data).forEach(k => M.store.set(k, j.data[k]));
+      if(j.app !== "ricepia-meeting" || !j.data || typeof j.data !== "object") throw new Error("形式が違います");
+      const data = normalizeBackup(j.data);
+      if(!confirm("現在の会議記録・バックログを、バックアップの内容で置き換えます（録音はそのまま残ります）。よろしいですか？")) return;
+      M.store.keys().forEach(k => M.store.del(k));
+      let ok = true;
+      Object.keys(data).forEach(k => { ok = M.store.set(k, data[k]) && ok; });
+      if(!ok) throw new Error("容量不足で一部を復元できませんでした");
       M.toast("復元しました", "ok"); setTimeout(() => location.reload(), 600);
     }catch(e){ M.toast("復元に失敗しました：" + e.message, "err"); }
   };

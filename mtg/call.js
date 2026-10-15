@@ -10,7 +10,7 @@ const C = {
   peer:null, isHost:false, code:"", myId:"", name:"", role:"当社", hostConn:null, inRoom:false, joining:false,
   local:null, mic:null, cam:null, placeholder:null, phTimer:0, screen:null, camBeforeShare:null,
   conns:new Map(), calls:new Map(), remote:new Map(), names:new Map(), roles:new Map(), states:new Map(), seen:new Set(),
-  muted:false, camOff:false, sharing:false, rec:null, seq:0, timer:0, saveT:0, unread:0, pane:"",
+  muted:false, camOff:false, sharing:false, rec:null, seq:0, timer:0, saveT:0, unread:0, pane:"", clockOffset:0,
   stt:{want:false, running:false, r:null, lang:"ja-JP", lastErr:"", interimT:0, fails:0}
 };
 M.call = C;
@@ -173,8 +173,7 @@ async function joinRoom(){
     await openPeer(null, 0);
     await new Promise((res, rej) => {
       C.joining = {res, rej};
-      C.hostConn = C.peer.connect(PREFIX + code, {reliable:true});
-      setupConn(C.hostConn);
+      C.hostConn = connectTo(PREFIX + code);
       setTimeout(() => { if(C.joining){ C.joining = false; rej(new Error("主催者からの応答がありません。コードを確認してください")); } }, 15000);
     });
     enterRoom();
@@ -200,6 +199,7 @@ function destroyPeer(){
 
 function resetRoom(){
   C.seen.clear(); C.names.clear(); C.roles.clear(); C.states.clear(); C.remote.clear(); C.unread = 0; C.seq = 0;
+  C.pane = ""; C.clockOffset = 0;
   $("#grid").innerHTML = "";
   C.rec = {id:"pending", participants:{}, lines:[], chat:[], notes:"", startedAt:Date.now()};
 }
@@ -231,16 +231,22 @@ function leave(notify){
   sttStop(true);
   C.inRoom = false;
   C.rec.endedAt = Date.now();
-  persist(true);
+  const saved = persist(true);
   clearInterval(C.timer);
   setTimeout(() => { destroyPeer(); stopMedia(); }, 300);
   $("#room").hidden = true; document.body.style.overflow = "";
   $("#lbVideo").srcObject = null; $("#lbPh").hidden = false;
   const rec = C.rec;
-  M.toast("会議の記録を保存しました（" + rec.lines.length + "件の発言）", "ok");
+  if(saved) M.toast("会議の記録を保存しました（" + rec.lines.length + "件の発言）", "ok");
+  else {
+    // localStorage is full: never lose the meeting silently
+    M.download(M.safeName(rec.title) + "_議事録.md", M.minutesMd(rec), "text/markdown;charset=utf-8");
+    M.toast("ブラウザの保存容量が足りず記録を保存できなかったため、文字起こしをファイルに書き出しました。「履歴」で古い会議を削除してください", "err");
+  }
   recDone.then(() => M.go(rec.lines.length || rec.notes || rec.audio ? "analyze" : "history", {meetingId:rec.id}));
 }
-C.notifyAll = text => { addSys(text, true); broadcast({type:"sys", text}); };
+// Notices about recording / transcription are shown locally; peers derive their own from our `state`.
+C.notifyAll = text => addSys(text);
 C.stateChanged = () => stateChanged();
 function confirmLeave(){
   const msg = C.isHost ? "ミーティングを終了しますか？\n参加者全員の会議も終了します。" : "ミーティングから退出しますか？";
@@ -248,17 +254,30 @@ function confirmLeave(){
 }
 
 /* ================= data channel ================= */
-function myState(){ return {muted:C.muted, camOff:C.camOff, sharing:C.sharing, stt:C.stt.want && !C.muted, rec:!!(M.recorder && M.recorder.active)}; }
+function myState(){ return {muted:C.muted, camOff:C.camOff, sharing:C.sharing, stt:C.stt.want && !C.muted, sttOn:C.stt.want, rec:!!(M.recorder && M.recorder.active)}; }
+const now = () => Date.now() + C.clockOffset; // host clock, so every participant's lines share one timeline
+// When two peers open connections to each other at the same time, both sides keep the one started by the smaller id.
+const starter = c => c._out ? C.myId : c.peer;
+function connectTo(id){ const c = C.peer.connect(id, {reliable:true}); c._out = true; setupConn(c); return c; }
+function callTo(id){ const c = C.peer.call(id, C.local, {metadata:{name:C.name}}); if(c){ c._out = true; setupCall(c); } }
 function send(conn, msg){ try{ if(conn && conn.open) conn.send(msg); }catch(e){} }
 function broadcast(msg){ C.conns.forEach(c => send(c, msg)); }
 function setupConn(conn){
   conn.on("open", () => {
-    C.conns.set(conn.peer, conn);
+    const ex = C.conns.get(conn.peer);
+    if(ex && ex !== conn && ex.open){
+      if(starter(conn) > starter(ex)){ conn.close(); return; }
+      C.conns.set(conn.peer, conn); ex.close();
+    } else C.conns.set(conn.peer, conn);
     send(conn, {type:"intro", name:C.name, role:C.role, state:myState()});
     if(conn === C.hostConn) send(conn, {type:"hello"});
   });
   conn.on("data", d => { try{ onData(conn.peer, d); }catch(e){ console.error(e); } });
-  conn.on("close", () => dropPeer(conn.peer));
+  conn.on("close", () => {
+    if(C.conns.get(conn.peer) === conn) C.conns.delete(conn.peer);
+    // a duplicate connection being closed is not the participant leaving
+    setTimeout(() => { const cur = C.conns.get(conn.peer); if(!cur || !cur.open) dropPeer(conn.peer); }, 1500);
+  });
   conn.on("error", () => {});
 }
 function onData(pid, d){
@@ -269,69 +288,94 @@ function onData(pid, d){
       send(C.conns.get(pid), {type:"welcome",
         peers: Array.from(C.conns.keys()).filter(id => id !== pid).map(id => ({id, name:C.names.get(id) || ""})),
         meeting:{title:C.rec.title, customer:C.rec.customer, startedAt:C.rec.startedAt, code:C.code},
-        lines:C.rec.lines, chat:C.rec.chat});
+        lines:C.rec.lines, chat:C.rec.chat, now:Date.now()});
       break;
     case "welcome": {
-      if(!C.joining) return;
+      if(!C.joining || !C.hostConn || pid !== C.hostConn.peer) return;
       const mt = d.meeting || {};
-      const id = "m_" + C.code + "_" + mt.startedAt;
+      if(Number.isFinite(Number(d.now))) C.clockOffset = Number(d.now) - Date.now();
+      const startedAt = Number(mt.startedAt) || Date.now();
+      const id = "m_" + C.code + "_" + startedAt;
       const prev = M.meeting(id), early = C.rec;
-      C.rec = prev || {id, code:C.code, source:"live", role:"guest", title:mt.title || "ミーティング", customer:mt.customer || "",
-        startedAt:mt.startedAt || Date.now(), endedAt:null, participants:{}, lines:[], chat:[], notes:"", analysis:null};
+      C.rec = prev || {id, code:C.code, source:"live", role:"guest", title:String(mt.title || "ミーティング").slice(0, 80), customer:String(mt.customer || "").slice(0, 80),
+        startedAt, endedAt:null, participants:{}, lines:[], chat:[], notes:"", analysis:null};
       C.rec.endedAt = null;
       Object.assign(C.rec.participants, early.participants);
-      (d.lines || []).forEach(l => mergeLine(l));
-      (d.chat || []).forEach(c => { if(!C.rec.chat.some(x => x.id === c.id)) C.rec.chat.push(c); });
+      (Array.isArray(d.lines) ? d.lines : []).forEach(l => { if(l && typeof l === "object") mergeLine(cleanLine(l, startedAt)); });
+      (Array.isArray(d.chat) ? d.chat : []).forEach(c => { if(c && typeof c === "object"){ const x = cleanChat(c, startedAt); if(x.text && !C.rec.chat.some(y => y.id === x.id)) C.rec.chat.push(x); } });
       const j = C.joining; C.joining = false; j.res();
       // mesh: open data + media to everyone already in the room (the host included)
-      (d.peers || []).forEach(p => { if(!C.conns.has(p.id)) setupConn(C.peer.connect(p.id, {reliable:true})); });
-      [C.hostConn.peer].concat((d.peers || []).map(p => p.id)).forEach(id => setupCall(C.peer.call(id, C.local, {metadata:{name:C.name}})));
+      const others = (Array.isArray(d.peers) ? d.peers : []).map(p => String(p && p.id || "")).filter(x => x && x !== C.myId);
+      others.forEach(x => { if(!C.conns.has(x)) connectTo(x); });
+      [C.hostConn.peer].concat(others).forEach(callTo);
       break;
     }
     case "intro": {
       const first = !C.seen.has(pid);
       C.seen.add(pid);
-      C.names.set(pid, String(d.name || "参加者").slice(0, 40));
-      C.roles.set(pid, d.role === "お客様" ? "お客様" : "当社");
-      C.states.set(pid, d.state || {});
+      if(first){ // the display name and role are fixed at the first intro (no renaming into someone else mid-meeting)
+        C.names.set(pid, String(d.name || "参加者").slice(0, 40));
+        C.roles.set(pid, d.role === "お客様" ? "お客様" : "当社");
+      }
+      const st = cleanState(d.state);
+      C.states.set(pid, st);
       C.rec.participants[pid] = {name:C.names.get(pid), role:C.roles.get(pid)};
       tile(pid, false); paintTile(pid);
-      if(first) addSys(C.names.get(pid) + "さんが参加しました", true);
-      if(first && C.stt.want) send(C.conns.get(pid), {type:"sys", text:"🔴 " + C.name + "さんの発言は文字起こしされています"});
-      if(first && M.recorder && M.recorder.active) send(C.conns.get(pid), {type:"sys", text:"⏺ " + C.name + "さんがこの会議を録音しています"});
+      if(first){
+        addSys(C.names.get(pid) + "さんが参加しました");
+        if(st.sttOn) addSys("🔴 " + C.names.get(pid) + "さんの発言は文字起こしされています");
+        if(st.rec) addSys("⏺ " + C.names.get(pid) + "さんがこの会議を録音しています");
+      }
       paintBar(); persist();
       break;
     }
-    case "state": C.states.set(pid, d.state || {}); paintTile(pid); paintBar(); break;
+    case "state": {
+      if(!C.seen.has(pid)) break;
+      const prev = C.states.get(pid) || {}, st = cleanState(d.state), nm = C.names.get(pid);
+      if(!!prev.sttOn !== st.sttOn) addSys(st.sttOn ? "🔴 " + nm + "さんの文字起こしが始まりました（発言はテキストとして記録されます）" : "⏸ " + nm + "さんの文字起こしが止まりました");
+      if(!!prev.rec !== st.rec) addSys(st.rec ? "⏺ " + nm + "さんが録音を開始しました（音声が記録されます）" : "⏹ " + nm + "さんが録音を停止しました");
+      C.states.set(pid, st); paintTile(pid); paintBar();
+      break;
+    }
     case "line": {
-      if(!d.line) break;
-      const l = sanitizeLine(d.line, pid);
-      if(mergeLine(l)){ appendLine(l); persist(); }
+      if(!d.line || !C.seen.has(pid)) break;
+      const l = peerLine(d.line, pid);
+      if(l.text && mergeLine(l)){ appendLine(l); persist(); }
       caption(pid, l.text, true);
       break;
     }
-    case "interim": caption(pid, d.text, false); break;
-    case "chat": if(d.msg) addChat(sanitizeChat(d.msg, pid), false); break;
-    case "sys": addSys(String(d.text || "").slice(0, 200), true); break;
+    case "interim": if(C.seen.has(pid)) caption(pid, String(d.text || "").slice(0, 500), false); break;
+    case "chat": if(d.msg && C.seen.has(pid)){ const c = peerChat(d.msg, pid); if(c.text) addChat(c, false); } break;
     case "bye": dropPeer(pid); break;
     case "end":
+      // only the host can end the meeting for everyone
+      if(C.isHost || !C.hostConn || pid !== C.hostConn.peer) break;
       M.toast("主催者がミーティングを終了しました");
       leave(false);
       break;
   }
 }
-function sanitizeLine(l, pid){
-  return {id:String(l.id || pid + "-" + M.uid()), at:Number(l.at) || Date.now(), who:String(l.who || C.names.get(pid) || "参加者").slice(0, 40),
-    role:l.role === "お客様" ? "お客様" : "当社", pid:String(l.pid || pid), text:String(l.text || "").slice(0, 2000)};
+const bool = v => v === true;
+function cleanState(s){ s = s && typeof s === "object" ? s : {}; return {muted:bool(s.muted), camOff:bool(s.camOff), sharing:bool(s.sharing), stt:bool(s.stt), sttOn:bool(s.sttOn), rec:bool(s.rec)}; }
+// A peer's own line: identity and time come from our side, never from the payload.
+function peerLine(l, pid){
+  return {id:pid + "-" + String(l.id || M.uid()).slice(-40), at:now(), who:C.names.get(pid) || "参加者", role:C.roles.get(pid) || "当社", pid, text:String(l.text || "").slice(0, 2000)};
 }
-function sanitizeChat(c, pid){ return {id:String(c.id || M.uid()), at:Number(c.at) || Date.now(), who:String(c.who || C.names.get(pid) || "").slice(0, 40), text:String(c.text || "").slice(0, 2000)}; }
+function peerChat(c, pid){ return {id:pid + "-" + String(c.id || M.uid()).slice(-40), at:now(), who:C.names.get(pid) || "参加者", pid, text:String(c.text || "").slice(0, 2000)}; }
+// History sent by the host in `welcome`: trusted source, but normalise types so rendering can't break.
+function cleanLine(l, base){
+  const at = Number(l.at);
+  return {id:String(l.id || M.uid()).slice(0, 120), at:Number.isFinite(at) ? at : base, who:String(l.who || "参加者").slice(0, 40),
+    role:l.role === "お客様" ? "お客様" : "当社", pid:String(l.pid || "").slice(0, 80), text:String(l.text || "").slice(0, 2000)};
+}
+function cleanChat(c, base){ const at = Number(c.at); return {id:String(c.id || M.uid()).slice(0, 120), at:Number.isFinite(at) ? at : base, who:String(c.who || "").slice(0, 40), pid:String(c.pid || "").slice(0, 80), text:String(c.text || "").slice(0, 2000)}; }
 function dropPeer(pid){
   if(!C.seen.has(pid) && !C.conns.has(pid) && !C.calls.has(pid)) return;
   const c = C.conns.get(pid); C.conns.delete(pid); try{ c && c.close(); }catch(e){}
   const call = C.calls.get(pid); C.calls.delete(pid); try{ call && call.close(); }catch(e){}
   C.remote.delete(pid);
   const t = $('#grid .tile[data-pid="' + CSS.escape(pid) + '"]'); if(t) t.remove();
-  if(C.seen.has(pid) && C.inRoom){ C.seen.delete(pid); addSys((C.names.get(pid) || "参加者") + "さんが退出しました", true); }
+  if(C.seen.has(pid) && C.inRoom){ C.seen.delete(pid); addSys((C.names.get(pid) || "参加者") + "さんが退出しました"); }
   layout(); paintBar();
   if(!C.isHost && C.hostConn && pid === C.hostConn.peer && C.inRoom) M.toast("主催者との接続が切れました。ほかの参加者とは会議を続けられます");
 }
@@ -339,7 +383,12 @@ function dropPeer(pid){
 /* ================= media connections ================= */
 function setupCall(call){
   if(!call) return;
-  const old = C.calls.get(call.peer); if(old && old !== call){ try{ old.close(); }catch(e){} }
+  const old = C.calls.get(call.peer);
+  if(old && old !== call && old.open !== false){
+    // simultaneous calls in both directions: both ends keep the one started by the smaller id
+    if(starter(call) > starter(old)){ try{ call.close(); }catch(e){} return; }
+    try{ old.close(); }catch(e){}
+  }
   C.calls.set(call.peer, call);
   call.on("stream", s => { tile(call.peer, false); attach(call.peer, s); });
   call.on("close", () => { if(C.calls.get(call.peer) === call) C.calls.delete(call.peer); });
@@ -397,8 +446,7 @@ function sttStart(){
   if(!SR){ M.toast("このブラウザは自動文字起こしに未対応です。Chrome / Edge / Safari をお使いください（他の参加者の文字起こしは届きます）", "err"); return; }
   if(C.stt.want) return;
   C.stt.want = true; C.stt.fails = 0;
-  const msg = "🔴 " + C.name + "さんの文字起こしを開始しました（発言はテキストとして記録されます）";
-  addSys(msg, true); broadcast({type:"sys", text:msg});
+  addSys("🔴 " + C.name + "さんの文字起こしを開始しました（発言はテキストとして記録されます）");
   if(C.muted) M.toast("ミュート中は文字起こしを一時停止します");
   sttRun(); stateChanged();
 }
@@ -406,7 +454,7 @@ function sttStop(silent){
   if(!C.stt.want) return;
   C.stt.want = false;
   sttPause();
-  if(!silent){ const msg = "⏸ " + C.name + "さんの文字起こしを停止しました"; addSys(msg, true); broadcast({type:"sys", text:msg}); stateChanged(); }
+  if(!silent){ addSys("⏸ " + C.name + "さんの文字起こしを停止しました"); stateChanged(); }
 }
 function sttPause(){
   const r = C.stt.r; C.stt.r = null; C.stt.running = false;
@@ -451,7 +499,7 @@ function sttGiveUp(msg){
   sttStop();
 }
 function emitLine(text){
-  const line = {id:C.myId + "-" + (++C.seq) + "-" + Date.now().toString(36), at:Date.now(), who:C.name, role:C.role, pid:C.myId, text};
+  const line = {id:C.myId + "-" + (++C.seq) + "-" + Date.now().toString(36), at:now(), who:C.name, role:C.role, pid:C.myId, text};
   if(mergeLine(line)){ appendLine(line); persist(); }
   caption(C.myId, text, true);
   broadcast({type:"line", line});
@@ -571,20 +619,19 @@ function renderInterim(pid, text){
   clearTimeout(el._t); el._t = setTimeout(() => el.remove(), 5000);
   scrollEnd("#trList");
 }
-function addSys(text, local){
+function addSys(text){
   const el = $("#trList");
   if(!el) return;
   if(el.querySelector(".empty")) el.innerHTML = "";
   el.insertAdjacentHTML("beforeend", lineHtml({sys:true, text}));
   scrollEnd("#trList");
-  if(!local) broadcast({type:"sys", text});
 }
 function renderChat(){
   const el = $("#chatList");
   el.innerHTML = C.rec.chat.length ? C.rec.chat.map(chatHtml).join("") : '<div class="empty">チャットはまだありません。<br/>URLや資料名の共有に使えます（議事録にも残ります）。</div>';
 }
 function chatHtml(c){
-  const mine = c.who === C.name;
+  const mine = c.pid ? c.pid === C.myId : c.who === C.name;
   const body = esc(c.text).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   return `<div class="chatmsg${mine ? " mine" : ""}"><div class="muted small">${esc(c.who)} · ${M.lineTime(C.rec, c)}</div><span class="bub">${body}</span></div>`;
 }
@@ -600,7 +647,7 @@ function addChat(c, mine){
 function sendChat(){
   const inp = $("#chatInput"), text = inp.value.trim();
   if(!text) return;
-  const c = {id:C.myId + "-" + M.uid(), at:Date.now(), who:C.name, text};
+  const c = {id:C.myId + "-" + M.uid(), at:now(), who:C.name, pid:C.myId, text};
   addChat(c, true); broadcast({type:"chat", msg:c});
   inp.value = "";
 }
@@ -650,11 +697,13 @@ function invite(){
 }
 
 /* ================= persistence ================= */
-function persist(now){
-  if(!C.rec) return;
+function persist(immediate){
+  if(!C.rec || C.rec.id === "pending") return true; // guests: nothing to save until the host's welcome arrives
   clearTimeout(C.saveT);
-  const go = () => { M.saveMeeting(C.rec); M.badges(); };
-  if(now) go(); else C.saveT = setTimeout(go, 700);
+  const go = () => { const ok = M.saveMeeting(C.rec); M.badges(); return ok; };
+  if(immediate) return go();
+  C.saveT = setTimeout(go, 700);
+  return true;
 }
 
 /* ================= module ================= */
@@ -708,7 +757,11 @@ M.mod.meet = {
       if(e.code === "KeyV"){ e.preventDefault(); toggleCam(); }
     });
     window.addEventListener("beforeunload", e => { if(C.inRoom){ persist(true); e.preventDefault(); e.returnValue = ""; } });
-    window.addEventListener("pagehide", () => { if(C.inRoom){ broadcast({type: C.isHost ? "end" : "bye"}); C.rec.endedAt = Date.now(); persist(true); } });
+    window.addEventListener("pagehide", () => {
+      if(!C.inRoom) return;
+      broadcast({type: C.isHost ? "end" : "bye"}); C.rec.endedAt = Date.now(); persist(true);
+      if(M.recorder) M.recorder.flushNow(); // pieces already in IndexedDB are recovered on the next visit
+    });
   },
   show(){ M.$("#lbName").value = M.$("#lbName").value || M.settings().name || ""; }
 };

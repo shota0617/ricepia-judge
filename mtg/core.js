@@ -9,8 +9,12 @@ M.store = {
   get(k, d){ try{ const v = localStorage.getItem(PFX+k); return v == null ? d : JSON.parse(v); }catch(e){ return d; } },
   set(k, v){
     try{ localStorage.setItem(PFX+k, JSON.stringify(v)); return true; }
-    catch(e){ M.toast("保存に失敗しました（ブラウザの容量不足の可能性）。古い会議を書き出して削除してください", "err"); return false; }
+    catch(e){
+      if(Date.now() - (M._quotaToast || 0) > 20000){ M._quotaToast = Date.now(); M.toast("保存に失敗しました（ブラウザの容量不足）。「履歴」で古い会議をバックアップしてから削除してください", "err"); }
+      return false;
+    }
   },
+  del(k){ try{ localStorage.removeItem(PFX+k); }catch(e){} },
   keys(){ const out=[]; try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(k.startsWith(PFX)) out.push(k.slice(PFX.length)); } }catch(e){} return out; }
 };
 M.settings = () => Object.assign({name:"", repo:"", product:"", ourSide:""}, M.store.get("settings", {}));
@@ -22,6 +26,7 @@ M.meeting = id => M.meetings().find(m => m.id === id) || null;
 M.saveMeeting = function(rec){
   const list = M.meetings(), i = list.findIndex(m => m.id === rec.id);
   if(i >= 0) list[i] = rec; else list.unshift(rec);
+  list.slice(200).forEach(m => M.audio.del(m.id)); // keep recordings in step with the records that remain
   return M.store.set("meetings", list.slice(0, 200));
 };
 M.deleteMeeting = id => { M.audio.del(id); return M.store.set("meetings", M.meetings().filter(m => m.id !== id)); };
@@ -46,7 +51,9 @@ M.audio = (function(){
   return {
     put:(id, blob) => tx("readwrite", st => st.put(blob, id)),
     get:id => tx("readonly", st => st.get(id)).catch(() => null),
-    del:id => tx("readwrite", st => st.delete(id)).catch(() => {})
+    keys:() => tx("readonly", st => st.getAllKeys()).catch(() => []),
+    // also removes unfinished pieces of a recording ("<id>:part:N", "<id>:meta")
+    del:id => tx("readwrite", st => { st.delete(id); st.delete(IDBKeyRange.bound(id + ":", id + ":\uffff")); }).catch(() => {})
   };
 })();
 
@@ -77,6 +84,13 @@ M.copy = async function(text, msg){
   }
   M.toast(msg || "コピーしました", "ok");
 };
+/** Synchronous copy (works inside the click handler, before focus moves to a newly opened tab). */
+M.copySync = function(text){
+  const ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+  ta.remove(); return ok;
+};
 M.download = function(name, content, mime){
   const blob = new Blob([content], {type: mime || "text/plain;charset=utf-8"});
   const a = document.createElement("a");
@@ -91,7 +105,11 @@ M.busy = function(btn, on, label){
   if(on){ btn.dataset.label = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>' + M.esc(label || "AIが分析中…"); }
   else { btn.disabled = false; if(btn.dataset.label) btn.innerHTML = btn.dataset.label; }
 };
-M.modal = function(id, show){ M.$("#" + id).hidden = !show; };
+M.modal = function(id, show){
+  M.$("#" + id).hidden = !show;
+  // closing the key dialog without saving must not leave an AI request waiting forever
+  if(id === "keyModal" && !show && M._keyWaiter){ const w = M._keyWaiter; M._keyWaiter = null; w.rej(new Error("APIキーが設定されていないため中止しました（右上の🔑から設定できます）")); }
+};
 
 /* Minimal, escape-first markdown renderer for AI output */
 M.md = function(src){
@@ -149,8 +167,9 @@ M.saveKey = function(){
     sessionStorage.setItem(KEY, v);
     if(M.$("#keyRemember").checked) localStorage.setItem(KEY, v); else localStorage.removeItem(KEY);
   }catch(e){}
+  const w = M._keyWaiter; M._keyWaiter = null;
   M.modal("keyModal", false); M.renderKey(); M.toast("APIキーを設定しました", "ok");
-  if(M._keyWaiter){ const w = M._keyWaiter; M._keyWaiter = null; w(); }
+  if(w) w.res();
 };
 M.forgetKey = function(){
   try{ sessionStorage.removeItem(KEY); localStorage.removeItem(KEY); }catch(e){}
@@ -158,7 +177,7 @@ M.forgetKey = function(){
 };
 M.ensureKey = function(){
   if(M.getKey()) return Promise.resolve();
-  return new Promise(res => { M._keyWaiter = res; M.keyModal(); M.toast("先にAPIキーを設定してください"); });
+  return new Promise((res, rej) => { M._keyWaiter = {res, rej}; M.keyModal(); M.toast("先にAPIキーを設定してください"); });
 };
 
 /* ================= Claude API (browser direct, SSE streaming) =================
@@ -274,12 +293,13 @@ M.boot = function(){
     if(g){ e.preventDefault(); M.go(g.dataset.go); }
   });
   document.addEventListener("keydown", e => {
-    if(e.key === "Escape") M.$$(".modal").forEach(m => m.hidden = true);
+    if(e.key === "Escape") M.$$(".modal").forEach(m => { if(!m.hidden) M.modal(m.id, false); });
     if(e.key === "Enter" && e.target.id === "keyInput") M.saveKey();
   });
-  M.$$(".modal").forEach(m => m.addEventListener("click", e => { if(e.target === m) m.hidden = true; }));
+  M.$$(".modal").forEach(m => m.addEventListener("click", e => { if(e.target === m) M.modal(m.id, false); }));
   Object.keys(M.mod).forEach(k => { try{ M.mod[k].init && M.mod[k].init(); }catch(e){ console.error(k, e); } });
   M.renderKey();
+  window.addEventListener("hashchange", () => { const x = location.hash.slice(1); if(!/^join=/.test(x) && !(M.call && M.call.inRoom)) M.go(x); });
   const h = location.hash.slice(1);
   M.go(/^join=/.test(h) ? "meet" : (h || "meet"));
 };

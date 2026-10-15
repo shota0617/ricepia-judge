@@ -55,11 +55,16 @@ function itemMd(b, opts){
     `- バックログID：${b.id}（らいすぴあ ミーティングで作成）`);
   return L.join("\n");
 }
+/** Prefilled "new issue" URL. Japanese text grows ~9x when URL-encoded, so the body is cut by encoded length
+    (GitHub rejects very long URLs); when cut, the full body is put on the clipboard to paste instead. */
 function issueUrl(b){
-  const repo = M.settings().repo.trim();
-  let body = itemMd(b);
-  if(body.length > 5500) body = body.slice(0, 5500) + "\n\n…（長いため省略）";
-  return "https://github.com/" + repo + "/issues/new?title=" + encodeURIComponent("[要望] " + b.title) + "&body=" + encodeURIComponent(body);
+  const repo = M.settings().repo.trim(), full = itemMd(b), LIMIT = 6000;
+  const base = "https://github.com/" + repo + "/issues/new?title=" + encodeURIComponent("[要望] " + b.title) + "&body=";
+  if(encodeURIComponent(full).length <= LIMIT) return {url:base + encodeURIComponent(full), full, cut:false};
+  const note = "\n\n…（長いため省略。全文はクリップボードにコピーしてあります。この本文を消して貼り付けてください）";
+  let lo = 0, hi = full.length;
+  while(lo < hi){ const mid = Math.ceil((lo + hi) / 2); if(encodeURIComponent(full.slice(0, mid) + note).length <= LIMIT) lo = mid; else hi = mid - 1; }
+  return {url:base + encodeURIComponent(full.slice(0, lo) + note), full, cut:true};
 }
 function backlogMd(items){
   const L = ["# 開発バックログ（お客様の声から）", "", "作成日：" + M.dt(Date.now()), "", "| ID | タイトル | 優先度 | 影響 | 言及 | 状態 |", "|---|---|---|---|---|---|"];
@@ -297,9 +302,14 @@ M.mod.backlog = {
       if(b.dataset.act === "issue"){
         const repo = M.settings().repo;
         if(!/^[\w.-]+\/[\w.-]+$/.test(repo || "")){ M.toast("先に上の「GitHubリポジトリ」に owner/repo を入力してください", "err"); $("#blRepo").focus(); return; }
-        window.open(issueUrl(item), "_blank", "noopener");
+        const iu = issueUrl(item);
+        // copy first: once the new tab has focus, this page may no longer write to the clipboard
+        const copied = iu.cut && M.copySync(iu.full);
+        window.open(iu.url, "_blank", "noopener");
+        if(!iu.cut) M.toast("GitHubの新規Issue画面を開きました。内容を確認して「Submit」してください");
+        else if(copied) M.toast("本文が長いため途中までを入れました。全文をコピーしてあるので、GitHubの本文欄に貼り付けてください", "ok");
+        else M.toast("本文が長いため途中までを入れました。全文は「📋 Markdown」でコピーして貼り付けてください", "err");
         if(item.status === "new") update(item.id, {status:"review"});
-        M.toast("GitHubの新規Issue画面を開きました。内容を確認して「Submit」してください");
       }
       if(b.dataset.act === "link"){
         const u = prompt("作成したIssueのURLを貼り付けてください", "https://github.com/" + (M.settings().repo || ""));

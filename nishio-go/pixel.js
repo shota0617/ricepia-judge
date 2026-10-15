@@ -1224,7 +1224,9 @@ function step(dir) {
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
-  if (BLOCK.has(codeAt(nx, ny))) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、外へ出られるように通す
+  const stuck = BLOCK.has(codeAt(Math.floor(t.x), Math.floor(t.y))) && codeAt(nx, ny) !== C.X;
+  if (BLOCK.has(codeAt(nx, ny)) && !stuck) { if (navigator.vibrate) navigator.vibrate(20); return; }
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng);
 }

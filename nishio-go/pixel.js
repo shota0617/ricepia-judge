@@ -490,7 +490,7 @@ function parseWorldNames(elements) {
     const tg = el.tags || {}, kind = poiKind(tg), c = elCenter(el), q = c && llToW(c.lat, c.lon);
     if (!q || q.x < 0 || q.y < 0 || q.x >= WW || q.y >= WH) continue;
     if (kind && WORLD_POI.has(kind)) wp.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(tg.name || '').slice(0, 40)]);
-    else if ((RANK[tg.place] || tg.railway === 'station') && tg.name) {
+    else if ((RANK[tg.place] || (tg.railway === 'station' && tg.station !== 'miniature')) && tg.name) {   // 遊園地の豆汽車の駅は除く
       let name = String(tg.name).slice(0, 12);
       if (tg.railway === 'station' && !name.endsWith('駅')) name += '駅';
       wl.push([+q.x.toFixed(2), +q.y.toFixed(2), name, RANK[tg.place] || 1]);
@@ -506,7 +506,7 @@ function addWorldFeatures(elements, L) {
     else continue;
     if (!rings.length || !rings[0].length) continue;
     const t = el.tags || {}, pts = rings.map(r => r.map(p => { const q = llToW(p.lat, p.lon); return [q.x, q.y]; }));
-    if (t.waterway) L.lines.push([pts, C.A, 30]);
+    if (t.waterway) { if (t.waterway === 'river') L.lines.push([pts, C.A, 30]); }   // 用水路（canal）は1マス100mだと町じゅうが水に見えるので描かない（幅のある水面は natural=water で描く）
     else if (t.railway) L.lines.push([pts, C.L, 40]);
     else if (t.highway) L.lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
     else {   // 面は歩く地図と同じ分け方（田んぼ・茶畑・工場・境内・墓地・公園…）。重なりは優先度の高いものを上に

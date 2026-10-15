@@ -124,7 +124,6 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* はじめに */
 .intro{position:fixed;inset:0;z-index:2000;background:rgba(20,35,24,.6);display:flex;align-items:center;justify-content:center;padding:16px}
 .intro-box{background:var(--card);border-radius:20px;padding:22px 20px;max-width:400px;width:100%;max-height:100%;overflow-y:auto;text-align:center}
-.intro-ico{font-size:40px;letter-spacing:4px}
 .intro h1{font-size:24px;margin:6px 0 8px;color:var(--green)}
 .intro p{font-size:14px;line-height:1.7;margin:6px 0}
 .intro ul{text-align:left;font-size:14px;line-height:1.9;padding-left:1.2em;margin:10px 0}
@@ -227,3 +226,5 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 .px-info .area-card .area-spots{list-style:none;margin:4px 0 6px;padding:0;color:#fff;font-size:13px;columns:2;column-gap:12px}
 .px-info .area-card .src{font-size:11px;color:#bbb}
 .px-info .area-card .src a{color:#9cd2ff;margin-right:4px}
+.intro-box h1.logo{margin:4px 0 12px;line-height:0}
+.intro-box h1.logo img{display:block;width:100%;max-width:100%;height:auto;margin:0 auto;image-rendering:pixelated}

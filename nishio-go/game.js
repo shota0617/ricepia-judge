@@ -880,7 +880,9 @@ function begin(isDemo) {
   store.set('nsg_started', true);
   $('intro').hidden = true;
   setMode(isDemo);
-  if (isDemo) toast('デモモード：地図をタップするとその場所へ移動します');
+  if (isDemo) toast(document.body.classList.contains('px')
+    ? 'デモモード：＋で歩く地図にして、十字ボタン（矢印キー）で歩きます'
+    : 'デモモード：地図をタップするとその場所へ移動します');
 }
 $('startBtn').addEventListener('click', () => begin(false));
 $('demoBtn').addEventListener('click', () => begin(true));

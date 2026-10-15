@@ -970,6 +970,12 @@ function drawWorld(now, w, h, dpr) {
     const p = llToW(s.lat, s.lng), X = ox + p.x * T - size / 2, Y = oy + p.y * T - size / 2;
     if (X > w || Y > h || X + size < 0 || Y + size < 0) continue;
     ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), size, size);
+    if (G.state.visits[s.id]) {   // めぐった名所には金色のしるし
+      const r = Math.max(3 * dpr, size * 0.2), cx = Math.round(X + size - r * 0.6), cy = Math.round(Y + r * 0.6);
+      ctx.fillStyle = '#000'; ctx.fillRect(cx - r - dpr, cy - r - dpr, r * 2 + 2 * dpr, r * 2 + 2 * dpr);
+      ctx.fillStyle = '#ffd54f'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
+      ctx.fillStyle = '#000'; ctx.font = `${Math.round(r * 1.8)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✓', cx, cy + dpr * 0.5);
+    }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
   // 主人公
@@ -992,7 +998,10 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
   const base = worldLabels.length ? worldLabels : AREA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; });
   const spotNames = css >= 10 ? G.spots.filter(worldSpotShown).map(s => { const p = llToW(s.lat, s.lng); return [p.x, p.y, s.name.replace(/（.*?）/g, ''), 0]; }) : [];
   const list = base.concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
-    .filter(l => l[3] >= minRank).sort((a, b) => b[3] - a[3]).concat(spotNames);
+    .filter(l => l[3] >= minRank)
+    // 駅が名所（名鉄 西尾駅など）になっている所は、名所の名前だけ出す
+    .filter(l => l[3] !== 1 || !spotNames.some(n => Math.hypot(n[0] - l[0], n[1] - l[1]) < 2))
+    .sort((a, b) => b[3] - a[3]).concat(spotNames);
   const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11, 0: 10 }, boxes = [];
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#000';
   for (const [x, y, name, rank] of list) {
@@ -1008,12 +1017,15 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
     ctx.fillStyle = rank === 1 ? '#ffe9a8' : rank === 0 ? '#ffd54f' : '#fff';
     ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y);
   }
-  if (worldProgress) {   // 地図データを足している途中
+  // 左上：地図データを足している途中なら進み具合、それ以外はめぐった名所の数
+  const featured = G.spots.filter(worldSpotShown);
+  const corner = worldProgress || (featured.length ? `めぐった名所 ${featured.filter(s => G.state.visits[s.id]).length}/${featured.length}` : '');
+  if (corner) {
     const fs = Math.round(12 * dpr);
     ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'left';
-    const tw = ctx.measureText(worldProgress).width;
+    const tw = ctx.measureText(corner).width;
     ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, 8 * dpr, tw + 16 * dpr, fs + 12 * dpr);
-    ctx.fillStyle = '#fff'; ctx.fillText(worldProgress, 16 * dpr, 8 * dpr + (fs + 12 * dpr) / 2);
+    ctx.fillStyle = '#fff'; ctx.fillText(corner, 16 * dpr, 8 * dpr + (fs + 12 * dpr) / 2);
   }
 }
 function setWorld(on) {

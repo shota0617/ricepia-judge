@@ -46,6 +46,7 @@
   <button type="button" class="on" data-tab="map">🗺️<span>マップ</span></button>
   <button type="button" data-tab="log">📒<span>きろく</span></button>
   <button type="button" data-tab="badges">🏅<span>バッジ</span></button>
+  <button type="button" data-tab="rewards" id="rewardsTab" hidden>🎁<span>とくてん</span></button>
   <button type="button" data-tab="settings">⚙️<span>せってい</span></button>
 </nav>
 
@@ -67,6 +68,16 @@
   <ul class="list" id="titleList"></ul>
 </section>
 
+<!-- 特典 -->
+<section class="panel" id="panel-rewards" hidden>
+  <h2>とくてん</h2>
+  <div class="card wallet"><small>使えるポイント</small><b id="walletPts">0</b><small>pt</small></div>
+  <p class="note" id="rewardNote"></p>
+  <ul class="list" id="rewardList"></ul>
+  <h3>交換したクーポン</h3>
+  <ul class="list" id="couponList"></ul>
+</section>
+
 <!-- 設定 -->
 <section class="panel" id="panel-settings" hidden>
   <h2>せってい</h2>
@@ -75,6 +86,10 @@
       <span><b>デモモード</b><small>地図をタップした場所へ移動できます。デモのポイントは本番とは別に保存されます。</small></span>
       <input type="checkbox" id="demoToggle"/>
     </label>
+  </div>
+  <div class="card">
+    <div class="row"><span><b>いまのGPS</b><small id="gpsInfo">—</small></span>
+      <button type="button" class="btn" id="copyGps">座標をコピー</button></div>
   </div>
   <div class="card">
     <div class="row"><span><b>スポット</b><small id="spotInfo">—</small></span>
@@ -119,6 +134,23 @@
     <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
     <button type="button" class="btn big" id="startBtn">位置情報をオンにしてはじめる</button>
     <button type="button" class="btn ghost" id="demoBtn">デモで試す（地図タップで移動）</button>
+  </div>
+</div>
+
+<!-- クーポン（店頭で見せる画面） -->
+<div class="coupon" id="coupon" hidden role="dialog" aria-modal="true" aria-labelledby="cpName">
+  <div class="coupon-box">
+    <div class="cp-shop" id="cpShop"></div>
+    <div class="cp-name" id="cpName"></div>
+    <div class="cp-code" id="cpCode"></div>
+    <div class="cp-clock" id="cpClock"></div>
+    <div class="cp-band" aria-hidden="true"><i></i></div>
+    <div class="cp-state" id="cpState"></div>
+    <div class="cp-staff" id="cpStaff">
+      <small>店員さんへ：内容を確認したら押してください（押すと使用済みになります）</small>
+      <button type="button" class="btn big" id="cpUse">使用済みにする</button>
+    </div>
+    <button type="button" class="btn ghost" id="cpClose">とじる</button>
   </div>
 </div>
 

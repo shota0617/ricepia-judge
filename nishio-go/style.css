@@ -149,3 +149,34 @@ button{font:inherit;color:inherit;cursor:pointer}
   .reward .rw{animation:fade 2.6s forwards}
   @keyframes fade{0%,85%{opacity:1}100%{opacity:0}}
 }
+
+/* 特典 */
+.wallet{display:flex;align-items:baseline;gap:6px}
+.wallet b{font-size:28px;color:var(--green);font-variant-numeric:tabular-nums}
+.wallet small{color:var(--sub);font-size:12px}
+.list li .num.minus{color:var(--red)}
+.list li .btn{font-size:13px;padding:7px 12px}
+.list li .btn:disabled{background:#c9cfc6;opacity:1;font-weight:600}
+.sample{font-style:normal;font-size:11px;background:#fff1d1;color:#8a5a00;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px}
+.coupon{position:fixed;inset:0;z-index:2600;background:rgba(20,35,24,.75);display:flex;align-items:center;justify-content:center;padding:16px}
+.coupon-box{background:#fff;border-radius:20px;padding:22px 18px;max-width:380px;width:100%;text-align:center;border:6px solid var(--gold);max-height:100%;overflow-y:auto}
+.coupon[data-state=used] .coupon-box,.coupon[data-state=expired] .coupon-box{border-color:#bbb;filter:grayscale(.6)}
+.cp-shop{font-size:13px;color:var(--sub)}
+.cp-name{font-size:22px;font-weight:900;margin:6px 0;color:var(--green);line-height:1.4}
+.cp-code{font-size:16px;font-weight:700;letter-spacing:2px}
+.cp-clock{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;margin:10px 0 6px}
+.cp-band{height:10px;border-radius:5px;background:#eee;overflow:hidden;position:relative}
+.cp-band i{position:absolute;top:0;bottom:0;width:30%;background:linear-gradient(90deg,var(--matcha),var(--gold));animation:band 1.6s linear infinite}
+.coupon[data-state=used] .cp-band i,.coupon[data-state=expired] .cp-band i{animation:none;display:none}
+@keyframes band{from{left:-30%}to{left:100%}}
+.cp-state{margin:10px 0;font-weight:700}
+.coupon[data-state=valid] .cp-state{color:var(--green)}
+.coupon[data-state=used] .cp-state,.coupon[data-state=expired] .cp-state{color:var(--red);font-size:18px}
+.cp-staff{border-top:1px dashed var(--line);padding-top:10px;margin-top:6px}
+.cp-staff small{display:block;font-size:12px;color:var(--sub);margin-bottom:8px;line-height:1.5}
+/* スイッチ */
+.row input[type=checkbox]{appearance:none;-webkit-appearance:none;width:50px;height:30px;border-radius:15px;background:#ccd3c9;position:relative;cursor:pointer;transition:background .2s}
+.row input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}
+.row input[type=checkbox]:checked{background:var(--green)}
+.row input[type=checkbox]:checked::after{left:23px}
+.row input[type=checkbox]:focus-visible{outline:3px solid var(--gold);outline-offset:2px}

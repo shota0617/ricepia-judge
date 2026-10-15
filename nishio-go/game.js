@@ -88,7 +88,7 @@ const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
-    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [] };
+    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -362,6 +362,7 @@ function onFix(lat, lng, acc, t) {
   me = p;
   gpsError = '';
   placeMe();
+  if (!$('panel-settings').hidden) renderGpsInfo();
   trackWalk(p);
   renderMarkers();
   refreshNearby();
@@ -609,10 +610,10 @@ function showReward(total, name, lines, lvUp) {
 function renderLog() {
   const lv = levelOf(S.total);
   $('stats').innerHTML = [
-    ['所持ポイント', S.points.toLocaleString(), 'pt'], ['レベル', `${lv}`, titleOf(lv)],
+    ['使えるポイント', S.points.toLocaleString(), 'pt'], ['レベル', `${lv}`, titleOf(lv)],
     ['めぐったスポット', Object.keys(S.visits).length, 'か所'], ['チェックイン', S.checkins, '回'],
     ['歩いた距離', fmtM(S.walked), ''], ['連続日数', S.streak.last === ymd() || S.streak.last === yesterday() ? S.streak.days : 0, '日'],
-    ['最長連続', S.streak.max || 0, '日'], ['累計ポイント', S.total.toLocaleString(), 'pt'],
+    ['最長連続', S.streak.max || 0, '日'], ['これまでの合計', S.total.toLocaleString(), 'pt'],
   ].map(([k, v, u]) => `<div class="stat"><small>${k}</small><b>${esc(v)}<small>${esc(u)}</small></b></div>`).join('');
 
   const visits = Object.entries(S.visits).sort((a, b) => b[1].last - a[1].last);
@@ -622,8 +623,8 @@ function renderLog() {
     : '<li class="empty">まだありません。地図のスポットへ歩いてみよう！</li>';
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
-    `<li><span class="ico">${l.type === 'walk' ? '👣' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
-      <small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small></span><span class="num">+${l.pts}</span></li>`).join('')
+    `<li><span class="ico">${l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
+      <small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small></span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
     : '<li class="empty">まだありません</li>';
 }
 
@@ -664,13 +665,139 @@ function renderSpotInfo() {
   ].map(t => `<li>${esc(t)}</li>`).join('');
 }
 
+/* ---------- 特典（ポイント交換） ---------- */
+let rewardCfg = { shop: '', validMin: 30, rewards: [] };
+async function loadRewards() {
+  try {
+    const res = await fetch('nishio-go/rewards.json', { cache: 'no-cache' });
+    const j = res.ok ? await res.json() : null;
+    if (j && Array.isArray(j.rewards)) {
+      rewardCfg = {
+        shop: String(j.shop || ''),
+        validMin: Number(j.validMin) > 0 ? Number(j.validMin) : 30,
+        rewards: j.rewards.filter(r => r && r.id && r.name && Number(r.cost) > 0)
+          .map(r => ({ id: String(r.id), name: String(r.name), cost: Math.round(Number(r.cost)), desc: r.desc ? String(r.desc) : '',
+            perDay: Number(r.perDay) > 0 ? Math.floor(Number(r.perDay)) : 0, active: r.active === true })),
+      };
+    }
+  } catch (e) { /* 特典なしで続行 */ }
+  updateRewardsTab();
+}
+// 本番は active の特典だけ。デモでは無効の特典も「サンプル」として試せる
+const visibleRewards = () => rewardCfg.rewards.filter(r => r.active || demo);
+function updateRewardsTab() {
+  const has = visibleRewards().length > 0;
+  $('rewardsTab').hidden = !has;
+  if (!has && !$('panel-rewards').hidden) openTab('map');
+}
+const couponState = c => c.used ? 'used' : Date.now() > c.t + c.validMin * 60000 ? 'expired' : 'valid';
+const usedToday = rid => S.coupons.filter(c => c.rid === rid && ymd(new Date(c.t)) === ymd()).length;
+
+function renderRewards() {
+  $('walletPts').textContent = S.points.toLocaleString();
+  $('rewardNote').textContent = demo
+    ? 'デモモード：サンプルの特典で交換の流れを試せます（デモのクーポンはお店では使えません）。'
+    : `交換すると、その場でクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に交換してください。`;
+  $('rewardList').innerHTML = visibleRewards().map(r => {
+    const limit = r.perDay && usedToday(r.id) >= r.perDay;
+    const short = S.points < r.cost;
+    const why = limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
+    return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
+      <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}${r.desc ? '・' + esc(r.desc) : ''}</small></span>
+      <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''}>${why ? esc(why) : '交換'}</button></li>`;
+  }).join('') || '<li class="empty">いま交換できる特典はありません</li>';
+  const list = S.coupons.slice().sort((a, b) => b.t - a.t).slice(0, 20);
+  $('couponList').innerHTML = list.length ? list.map(c => {
+    const st = couponState(c);
+    const label = st === 'used' ? `使用済み ${fmtTime(c.used)}` : st === 'expired' ? '期限切れ' : `有効 あと${Math.ceil((c.t + c.validMin * 60000 - Date.now()) / 60000)}分`;
+    return `<li data-coupon="${esc(c.id)}" class="${st === 'valid' ? 'now' : ''}"><span class="ico">🎫</span><span class="main"><b>${esc(c.name)}</b>
+      <small>${fmtTime(c.t)} 交換・${label}</small></span>${st === 'valid' ? '<span class="num">見せる</span>' : ''}</li>`;
+  }).join('') : '<li class="empty">まだありません</li>';
+}
+
+function redeem(rid) {
+  const r = visibleRewards().find(x => x.id === rid);
+  if (!r) return;
+  if (S.points < r.cost) { toast('ポイントが足りません'); return; }
+  if (r.perDay && usedToday(r.id) >= r.perDay) { toast('この特典は今日はもう交換しました'); return; }
+  if (!confirm(`「${r.name}」と ${r.cost}pt を交換しますか？\n\n交換するとクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に押してください。交換したポイントは戻せません。`)) return;
+  const rnd = new Uint32Array(2);
+  (window.crypto || {}).getRandomValues ? crypto.getRandomValues(rnd) : (rnd[0] = Math.random() * 4e9, rnd[1] = Math.random() * 4e9);
+  const c = { id: rnd[0].toString(36) + rnd[1].toString(36), rid: r.id, name: r.name, cost: r.cost, t: Date.now(),
+    validMin: rewardCfg.validMin, code: String(rnd[0] % 10000).padStart(4, '0'), used: 0, demo, sample: !r.active };
+  S.points -= r.cost;
+  S.coupons.push(c);
+  S.coupons = S.coupons.slice(-50);
+  S.log.unshift({ type: 'use', t: c.t, pts: -r.cost, name: `${r.name} と交換` });
+  save();
+  renderHeader();
+  renderRewards();
+  showCoupon(c.id);
+}
+
+let couponTimer = null, couponId = null;
+function showCoupon(id) {
+  couponId = id;
+  $('coupon').hidden = false;
+  tickCoupon();
+  clearInterval(couponTimer);
+  couponTimer = setInterval(tickCoupon, 1000);
+}
+function tickCoupon() {
+  const c = S.coupons.find(x => x.id === couponId);
+  if (!c) { closeCoupon(); return; }
+  const st = couponState(c);
+  const d = new Date();
+  $('cpShop').textContent = c.demo ? 'デモ（お店では使えません）' : rewardCfg.shop;
+  $('cpName').textContent = c.name;
+  $('cpCode').textContent = `No. ${c.code}`;
+  $('cpClock').textContent = `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  const left = c.t + c.validMin * 60000 - Date.now();
+  $('cpState').textContent = st === 'used' ? `使用済み（${fmtTime(c.used)}）` : st === 'expired' ? '有効期限が切れています'
+    : `有効 あと${Math.floor(left / 60000)}分${pad2(Math.floor(left / 1000) % 60)}秒（${fmtTime(c.t)} 交換）`;
+  $('coupon').dataset.state = st;
+  $('cpStaff').hidden = st !== 'valid';
+}
+function closeCoupon() {
+  clearInterval(couponTimer); couponTimer = null; couponId = null;
+  $('coupon').hidden = true;
+  if (!$('panel-rewards').hidden) renderRewards();
+}
+$('cpUse').addEventListener('click', () => {
+  const c = S.coupons.find(x => x.id === couponId);
+  if (!c || couponState(c) !== 'valid') return;
+  c.used = Date.now();
+  save();
+  tickCoupon();
+});
+$('cpClose').addEventListener('click', closeCoupon);
+$('rewardList').addEventListener('click', e => { const b = e.target.closest('[data-redeem]'); if (b && !b.disabled) redeem(b.dataset.redeem); });
+$('couponList').addEventListener('click', e => {
+  const li = e.target.closest('li[data-coupon]');
+  if (li) showCoupon(li.dataset.coupon);
+});
+
+/* いまのGPS（お店などのスポットを登録するときに、その場で座標を取れるように） */
+function renderGpsInfo() {
+  $('gpsInfo').textContent = !me ? (gpsError || 'まだ位置が取れていません')
+    : `${me.lat.toFixed(6)}, ${me.lng.toFixed(6)}（${demo ? 'デモの位置' : `誤差 約${Math.round(me.acc)}m`}）`;
+  $('copyGps').disabled = !me;
+}
+$('copyGps').addEventListener('click', async () => {
+  if (!me) return;
+  const t = `${me.lat.toFixed(6)}, ${me.lng.toFixed(6)}`;
+  try { await navigator.clipboard.writeText(t); toast(`座標をコピーしました：${t}`); }
+  catch (e) { prompt('この座標をコピーしてください', t); }
+});
+
 /* タブ */
 function openTab(tab) {
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  ['log', 'badges', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
+  ['log', 'badges', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
+  if (tab === 'rewards') renderRewards();
   if (tab === 'log') renderLog();
   if (tab === 'badges') renderBadges();
-  if (tab === 'settings') { renderSpotInfo(); $('demoToggle').checked = demo; }
+  if (tab === 'settings') { renderSpotInfo(); renderGpsInfo(); $('demoToggle').checked = demo; }
   if (tab === 'map') setTimeout(() => map.invalidateSize(), 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
@@ -708,6 +835,7 @@ function setMode(isDemo) {
     startGps();
   }
   renderHeader();
+  updateRewardsTab();
   markers.forEach(m => m.remove()); markers.clear();
   renderMarkers();
   refreshNearby();
@@ -738,7 +866,7 @@ $('reloadSpots').addEventListener('click', async e => {
 });
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`${demo ? 'デモ' : '本番'}モードのポイントと記録をすべて削除します。よろしいですか？`)) return;
-  S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby();
+  S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
   toast('記録を削除しました');
 });
 
@@ -755,6 +883,7 @@ $('demoBtn').addEventListener('click', () => begin(true));
 /* 起動 */
 renderHeader();
 loadSpots(false);
+loadRewards();
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); } });

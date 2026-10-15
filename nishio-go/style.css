@@ -180,3 +180,37 @@ button{font:inherit;color:inherit;cursor:pointer}
 .row input[type=checkbox]:checked{background:var(--green)}
 .row input[type=checkbox]:checked::after{left:23px}
 .row input[type=checkbox]:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* ドット絵の地図 */
+#pxView{position:fixed;top:var(--bar-h);left:0;right:0;bottom:calc(var(--tabs-h) + var(--safe-b));z-index:2;background:#000;display:none}
+body.px #pxView{display:block}
+body.px #map{visibility:hidden}
+#pxCanvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:manipulation}
+.dq{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace;padding:10px 12px;line-height:1.7}
+.px-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);white-space:pre-line;text-align:center;font-size:15px;max-width:calc(100% - 32px)}
+.px-attr{position:absolute;right:4px;bottom:2px;font-size:10px;color:#fff;background:rgba(0,0,0,.5);padding:0 4px;border-radius:3px}
+.px-zoom{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
+.px-zoom button,.px-pad button{background:rgba(0,0,0,.72);color:#fff;border:2px solid #fff;border-radius:6px;font-family:"DotGothic16",monospace;font-size:18px;width:40px;height:40px;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
+.px-zoom button:active,.px-pad button:active{background:#333}
+.px-pad{position:absolute;left:12px;bottom:150px;display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
+.px-pad button{width:48px;height:48px}
+.px-pad .u{grid-area:1/2}.px-pad .l{grid-area:2/1}.px-pad .r{grid-area:2/3}.px-pad .d{grid-area:3/2}
+.px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
+.px-info .dq{width:100%;max-width:420px;max-height:70%;overflow-y:auto}
+.px-info .popup h4{font-size:17px;margin:0 0 6px;color:#ffd54f}
+.px-info .popup p{color:#fff;font-size:14px;margin:2px 0}
+.px-info .popup .tag{background:none;border:1px solid #fff;color:#fff;border-radius:3px}
+.px-info .popup .tag.gold{border-color:#ffd54f;color:#ffd54f}
+.px-info .btn{background:#000;border:2px solid #fff;border-radius:4px;font-family:inherit}
+.dq-close{display:block;margin:8px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:14px}
+/* ドット絵表示のときは、下のウィンドウもドラクエ風に */
+body.px .sheet{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace}
+body.px .status{color:#fff;font-size:14px}
+body.px .status b{color:#ffd54f;font-weight:400}
+body.px .spin{background:#000;border:2px solid #fff;box-shadow:none;border-radius:4px;font-family:inherit}
+body.px .spin.feat{background:#000;border-color:#ffd54f;box-shadow:none}
+body.px .spin-ico{background:none}
+body.px .spin-txt b{font-weight:400}
+body.px .spin-txt b::before{content:"▶ "}
+body.px .spin:disabled{filter:none;opacity:.6}
+body.px .leaflet-control-container{display:none}

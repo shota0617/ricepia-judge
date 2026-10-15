@@ -15,6 +15,8 @@
 <meta property="og:description" content="西尾市内のスポットに歩いて近づくとポイントゲット。注目スポット・連続ログイン・歩いた距離でもポイントが貯まります。"/>
 <meta property="og:url" content="https://ricepia-judge.vercel.app/nishio-go.html"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"/>
 <link rel="stylesheet" href="nishio-go/style.css"/>
 </head>
 <body>
@@ -30,7 +32,23 @@
 
 <main id="map" aria-label="西尾市の地図"></main>
 
+<!-- ドット絵の地図 -->
+<section id="pxView" aria-label="ドット絵の地図">
+  <canvas id="pxCanvas"></canvas>
+  <div class="px-zoom"><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
+  <div class="dq px-msg" id="pxMsg" hidden></div>
+  <div class="px-attr">© OpenStreetMap contributors</div>
+  <div class="px-pad" id="pxPad" hidden>
+    <button type="button" data-dir="up" class="u" aria-label="上へ">▲</button>
+    <button type="button" data-dir="left" class="l" aria-label="左へ">◀</button>
+    <button type="button" data-dir="right" class="r" aria-label="右へ">▶</button>
+    <button type="button" data-dir="down" class="d" aria-label="下へ">▼</button>
+  </div>
+  <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
+</section>
+
 <div class="fab-col">
+  <button class="fab" id="viewBtn" type="button" title="ドット絵の地図にする" aria-label="地図の表示を切り替え">👾</button>
   <button class="fab" id="locateBtn" type="button" title="現在地へ" aria-label="現在地へ移動">📍</button>
 </div>
 
@@ -159,5 +177,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="nishio-go/game.js"></script>
+<script src="nishio-go/pixel.js"></script>
 </body>
 </html>

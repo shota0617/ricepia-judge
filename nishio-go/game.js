@@ -97,6 +97,7 @@ function loadState() {
   return s && s.v === 1 ? Object.assign(freshState(), s) : freshState();
 }
 let S = loadState();
+const modeListeners = [];   // 本番／デモの切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('記録を保存できませんでした（ブラウザの保存領域を確認してください）'); };
 
 /* ---------- 地図 ---------- */
@@ -347,7 +348,7 @@ function placeMe() {
   const ll = [me.lat, me.lng];
   if (!meMarker) {
     if (follow) map.setView(ll, Math.max(map.getZoom(), 17), { animate: false });
-    meMarker = L.marker(ll, { icon: L.divIcon({ className: 'me-wrap', html: '<div class="me"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
+    meMarker = L.marker(ll, { icon: L.divIcon({ className: 'me-wrap', html: '<div class="me"></div>', iconSize: [32, 32], iconAnchor: [16, 24] }),
       zIndexOffset: 1000, interactive: false, keyboard: false }).addTo(map);
     accCircle = L.circle(ll, { radius: me.acc || 0, color: '#2a6fdb', weight: 0, fillOpacity: 0.08, interactive: false }).addTo(map);
   }
@@ -516,7 +517,7 @@ function refreshNearby() {
   }
 
   const msgs = [];
-  if (demo) msgs.push('🟡 デモモード：地図をタップして移動');
+  if (demo) msgs.push(document.body.classList.contains('px') ? '🟡 デモモード：十字ボタン（矢印キー）で歩く' : '🟡 デモモード：地図をタップして移動');
   else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
@@ -526,7 +527,7 @@ function refreshNearby() {
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  if (map.getZoom() < 14) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
+  if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
   const wd = S.walkDay.date === ymd() ? S.walkDay.pts : 0;
   msgs.push(`👣 今日の歩きポイント ${wd}/${CFG.walkDailyCap}pt`);
   setStatus(msgs.join('<br/>'), true);
@@ -836,6 +837,7 @@ function setMode(isDemo) {
   }
   renderHeader();
   updateRewardsTab();
+  modeListeners.forEach(fn => fn(demo));
   markers.forEach(m => m.remove()); markers.clear();
   renderMarkers();
   refreshNearby();
@@ -853,7 +855,7 @@ document.addEventListener('click', e => {
   follow = false;
   onFix(s.lat, s.lng, 5, Date.now());
 });
-$('demoToggle').addEventListener('change', e => { setMode(e.target.checked); toast(demo ? 'デモモードにしました（地図タップで移動）' : '本番モードにしました'); });
+$('demoToggle').addEventListener('change', e => { setMode(e.target.checked); toast(demo ? `デモモードにしました（${document.body.classList.contains('px') ? '十字ボタンで歩く' : '地図タップで移動'}）` : '本番モードにしました'); });
 
 $('reloadSpots').addEventListener('click', async e => {
   const btn = e.currentTarget;
@@ -888,6 +890,13 @@ if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); 
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); } });
 
-// テスト・デバッグ用
-window.nishioGo = { get state() { return S; }, get spots() { return spots; }, CFG };
+// ドット絵表示（pixel.js）とテストから使う窓口
+window.nishioGo = {
+  get state() { return S; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
+  get selected() { return selected; }, CFG,
+  dist, cooldownLeft, inReach, reachOf, popupHtml, toast,
+  moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
+  invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
+  onModeChange(fn) { modeListeners.push(fn); },
+};
 })();

@@ -169,9 +169,10 @@ function nameMatches(osmName, m) {
 function buildSpots(config, osmItems) {
   const osm = osmItems.map(([id, name, cat, lat, lng, raw]) => ({ id, name, raw: raw || name, cat, lat, lng }));
   const used = new Set();
-  const featured = config.map(c => {
+  // 座標が未入力のスポットは、入力されるまで地図に出さない
+  const featured = config.filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lng)).map(c => {
     const s = { id: 'f-' + c.id, name: c.name, cat: 'featured', icon: c.icon || '⭐', lat: c.lat, lng: c.lng,
-      featured: true, approx: !!c.approx, points: c.points, desc: c.desc || '' };
+      featured: true, approx: !!c.approx, points: c.points, desc: c.desc || '', reach: c.reach };
     if (Array.isArray(c.match) && c.match.length) {
       let best = null, bestD = Infinity;
       for (const o of osm) {
@@ -238,7 +239,7 @@ async function loadSpots(force) {
 }
 
 const iconOf = s => s.featured ? s.icon : (CATS[s.cat] || CATS.sight).i;
-const reachOf = s => s.featured && s.approx ? CFG.reachApprox : CFG.reach;
+const reachOf = s => s.reach || (s.featured && s.approx ? CFG.reachApprox : CFG.reach);
 const cooldownLeft = s => { const v = S.visits[s.id]; return v ? Math.max(0, v.last + CFG.cooldownMin * 60000 - Date.now()) : 0; };
 const ptsOf = s => s.featured ? (s.points || CFG.pts.featured) : CFG.pts.normal;
 function inReach(s) {

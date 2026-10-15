@@ -1,0 +1,73 @@
+# ricepia.jp（さくらのレンタルサーバ）のトップページを更新する
+# - いつも：いまの www/index.html をダウンロードして、ログと成果物に出す（サイトは変えない）
+# - ricepia-jp/deploy.txt に「deploy」と書いたときだけ：サーバーの index.html を index.html.bak-日時 に残してから、
+#   ricepia-jp/index.html をアップロードする
+# 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
+name: ricepia.jp top page
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - ricepia-jp/**
+      - .github/workflows/ricepia-jp.yml
+permissions:
+  contents: read
+concurrency:
+  group: ricepia-jp
+  cancel-in-progress: false
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FTP_SERVER: ${{ secrets.SAKURA_FTP_SERVER }}
+      FTP_USER: ${{ secrets.SAKURA_FTP_USER }}
+      FTP_PASS: ${{ secrets.SAKURA_FTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check secrets
+        id: secrets
+        run: |
+          for v in FTP_SERVER FTP_USER FTP_PASS; do
+            if [ -z "${!v}" ]; then
+              # まだ設定されていないときは何もしない（失敗にはしない）
+              echo "::warning::シークレットが未設定のため ricepia.jp にはつなぎません（SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD）"
+              echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+          done
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+      - name: Install lftp
+        if: steps.secrets.outputs.ok == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Download current index.html
+        if: steps.secrets.outputs.ok == 'true'
+        run: |
+          mkdir -p current
+          # パスワードが平文で流れないよう、FTPS（暗号化）を必須にする
+          lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set net:max-retries 2; get www/index.html -o current/index.html; bye" "$FTP_SERVER"
+          echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
+          cat current/index.html
+          echo "----- end -----"
+      - uses: actions/upload-artifact@v4
+        if: steps.secrets.outputs.ok == 'true'
+        with:
+          name: ricepia-jp-current
+          path: current/index.html
+      - name: Deploy (only when ricepia-jp/deploy.txt says deploy)
+        if: steps.secrets.outputs.ok == 'true'
+        run: |
+          if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
+          test -s ricepia-jp/index.html
+          stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
+          ftp() { lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set cmd:fail-exit yes; $1; bye" "$FTP_SERVER"; }
+          # 先に別名でアップロードしてから入れ替える（途中で失敗しても、トップページが消えたままにならないように）
+          ftp "put ricepia-jp/index.html -o www/index.html.new"
+          if ! ftp "mv www/index.html www/index.html.bak-$stamp; mv www/index.html.new www/index.html"; then
+            echo "::error::入れ替えに失敗したので元に戻します"
+            ftp "mv www/index.html.bak-$stamp www/index.html" || true
+            exit 1
+          fi
+          echo "アップロードしました（元のファイルは www/index.html.bak-$stamp）"

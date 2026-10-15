@@ -1,0 +1,41 @@
+# にしおさんぽGO：歩く地図（1マス8m）を西尾市全体ぶん実際の地図データから作り直して、nishio-go/chunks/ をコミットする
+name: Bake Nishio walking map
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/bake-chunks.js
+      - tools/chunks-version.txt
+      - .github/workflows/bake-chunks.yml
+permissions:
+  contents: write
+concurrency:
+  group: bake-chunks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-package-lock playwright@1.48.2
+          npx playwright install --with-deps chromium
+      - name: Bake walking map chunks
+        run: node tools/bake-chunks.js
+      - name: Commit chunks
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nishio-go/chunks
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -q -m "にしおさんぽGO: 歩く地図を実際の地図データから作り直し（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          exit 1

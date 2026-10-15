@@ -20,7 +20,7 @@ async function bakeOnce(browser) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 780 } });
   await ctx.addInitScript(() => { window.NSG_BAKE = true; localStorage.setItem('nsg_view', 'map'); localStorage.setItem('nsg_started', 'true'); });
   const page = await ctx.newPage();
-  page.on('console', m => { if (m.type() === 'error') console.log('  console:', m.text().slice(0, 200)); });
+  page.on('console', m => { const t = m.text(); if (m.type() === 'error' || t.startsWith('[bake]')) console.log('  ' + t.slice(0, 200)); });
   page.on('pageerror', e => console.log('  pageerror:', e.message));
   await page.goto(`http://localhost:${PORT}/nishio-go.html`);
   await page.waitForFunction(() => window.nishioPixel, null, { timeout: 60000 });
@@ -32,7 +32,7 @@ async function bakeOnce(browser) {
     const st = await page.evaluate(() => nishioPixel.worldState);
     if (st !== last) { console.log(`  ${Math.round((Date.now() - t0) / 1000)}s: ${st}`); last = st; }
     if (st === 'ok' || st === 'fail') break;
-    if (Date.now() - t0 > 35 * 60000) throw new Error('時間切れ');
+    if (Date.now() - t0 > 100 * 60000) throw new Error('時間切れ');
   }
   const saved = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('nsg_world5')); } catch (e) { return null; } });
   const C = await page.evaluate(() => nishioPixel.C);
@@ -45,7 +45,7 @@ async function bakeOnce(browser) {
 (async () => {
   const browser = await chromium.launch();
   let res, err;
-  for (let i = 1; i <= 3 && !res; i++) {
+  for (let i = 1; i <= 2 && !res; i++) {
     console.log(`作成 ${i} 回目`);
     try { res = await bakeOnce(browser); } catch (e) { err = e; console.log('  失敗:', e.message); }
   }

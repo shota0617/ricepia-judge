@@ -580,7 +580,13 @@ async function buildWorld(force) {
     worldState = 'enriching';   // まず地形を見せて、地図データは届いた所から足していく
     // 2) 地名・駅名・大きな建物（軽い）
     let namesOk = true;
-    try { [worldPois, worldLabels] = parseWorldNames((await overpass(worldNamesQuery())).elements || []); } catch (e) { namesOk = false; }
+    for (let tries = BAKE ? 5 : 1, k = 1; k <= tries; k++) {
+      try { [worldPois, worldLabels] = parseWorldNames((await overpass(worldNamesQuery())).elements || []); namesOk = true; break; } catch (e) {
+        namesOk = false;
+        if (BAKE) console.log(`[bake] names try ${k} failed: ${e.message}`);
+        if (k < tries) await new Promise(r => setTimeout(r, 30000 * k));
+      }
+    }
     // 3) 川・道・線路・森・町なみ（4×4に分けて、自分のいる所から近い順に）
     const here = G.me ? llToW(G.me.lat, G.me.lng) : llToW(34.825, 137.07);
     const parts = [];
@@ -591,11 +597,21 @@ async function buildWorld(force) {
       worldProgress = `ちずを くわしくしています… ${done}/${parts.length}`;
       const w = WB.w + (WB.e - WB.w) * i / WSPLIT, e = WB.w + (WB.e - WB.w) * (i + 1) / WSPLIT;
       const n = WB.n - (WB.n - WB.s) * j / WSPLIT, s = WB.n - (WB.n - WB.s) * (j + 1) / WSPLIT;
-      try {
-        addWorldFeatures((await overpass(worldPartQuery(s, w, n, e))).elements || [], L);
-        ok++;
-        world = combineWorld(base, L); makeWorldImg();
-      } catch (e2) { /* この区域は地形だけ */ }
+      // 作るとき（NSG_BAKE）は、混んでいて断られても少し待って取り直す
+      for (let tries = BAKE ? 5 : 1, k = 1; k <= tries; k++) {
+        const t0 = Date.now();
+        try {
+          const els = (await overpass(worldPartQuery(s, w, n, e))).elements || [];
+          addWorldFeatures(els, L);
+          ok++;
+          world = combineWorld(base, L); makeWorldImg();
+          if (BAKE) console.log(`[bake] part ${i},${j}: ${els.length} elements, ${Math.round((Date.now() - t0) / 1000)}s`);
+          break;
+        } catch (e2) {   // ふだんは、この区域は地形だけ
+          if (BAKE) console.log(`[bake] part ${i},${j} try ${k} failed after ${Math.round((Date.now() - t0) / 1000)}s: ${e2.message}`);
+          if (k < tries) await new Promise(r => setTimeout(r, 30000 * k));
+        }
+      }
       done++;
     }
     worldProgress = '';

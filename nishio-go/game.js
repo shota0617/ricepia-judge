@@ -185,7 +185,8 @@ function buildSpots(config, osmItems) {
     const hasPos = Number.isFinite(c.lat) && Number.isFinite(c.lng);
     const s = { id: 'f-' + c.id, name: String(c.name), cat: 'featured', kind: CATS[c.cat] ? c.cat : 'featured',
       icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: hasPos && !!c.approx,
-      points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '' };
+      points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '',
+      area: typeof c.area === 'string' ? c.area : null };
     const match = matchesOf(c);
     const cands = match.length ? osm.filter(o => !used.has(o.id) && match.some(m => nameMatches(o.raw, m))) : [];
     let best = null;
@@ -225,6 +226,22 @@ function buildSpots(config, osmItems) {
     if (!clash) add(o);
   }
   return kept;
+}
+
+/* ---------- 地区（西尾・一色・吉良・幡豆・佐久島）：areas.json ---------- */
+let areas = [];
+async function loadAreas() {
+  try {
+    const res = await fetch('nishio-go/areas.json', { cache: 'no-cache' });
+    const json = res.ok ? await res.json() : null;
+    if (json && Array.isArray(json.areas)) areas = json.areas.filter(a => a && a.id && a.name && Number.isFinite(a.lat) && Number.isFinite(a.lng));
+  } catch (e) { /* 地区ガイドなしで続行 */ }
+  if (spotMeta.loaded) renderLog();
+}
+// 地区ごとの注目スポット数と、めぐった数
+function areaProgress(id) {
+  const list = spots.filter(s => s.featured && s.area === id);
+  return { list, total: list.length, done: list.filter(s => S.visits[s.id]).length };
 }
 
 let spotsLoading = null;
@@ -569,6 +586,10 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: countVisits(v => v.featured), goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    ...areas.map(a => {
+      const p = areaProgress(a.id);
+      return { id: 'area-' + a.id, i: a.icon || '🗾', n: `${a.name}制覇`, d: `${a.name}の注目スポット${p.total}か所すべて`, cur: p.done, goal: Math.max(p.total, 1), ready: spotMeta.loaded && p.total > 0 };
+    }),
     { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
@@ -625,6 +646,12 @@ function renderLog() {
     `<li data-spot="${esc(id)}"><span class="ico">${esc(v.icon || '📍')}</span><span class="main"><b>${esc(v.name)}</b>
       <small>${v.n}回・最後 ${fmtTime(v.last)}</small></span>${v.featured ? '<span class="num">⭐</span>' : ''}</li>`).join('')
     : '<li class="empty">まだありません。地図のスポットへ歩いてみよう！</li>';
+
+  $('areaList').innerHTML = areas.length ? areas.map(a => {
+    const p = areaProgress(a.id), pct = p.total ? Math.round(p.done / p.total * 100) : 0;
+    return `<li class="area-row"><span class="ico">${esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
+      <small>${esc(a.catch || '')}</small><span class="bar"><i style="width:${pct}%"></i></span></span><span class="num">${p.done}/${p.total}</span></li>`;
+  }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -890,6 +917,7 @@ $('demoBtn').addEventListener('click', () => begin(true));
 /* 起動 */
 renderHeader();
 loadSpots(false);
+loadAreas();
 loadRewards();
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
@@ -898,6 +926,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { re
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   get state() { return S; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
+  get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },

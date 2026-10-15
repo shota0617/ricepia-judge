@@ -422,12 +422,12 @@ async function overpass(query) {
 }
 
 /* ---------- 西尾市全体のドット絵マップ（せかいちず）：1マス＝150m ---------- */
-const WB = { s: 34.69, w: 136.96, n: 34.93, e: 137.21 }, WT = 150;
+const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 150;   // 西尾市と周り（碧南・安城・幸田・蒲郡の一部）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
-const WORLD_KEY = 'nsg_world2';
-let world = null, worldPois = [], worldState = 'none';   // none | building | ok | fail
+const WORLD_KEY = 'nsg_world3';
+let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 function worldQuery(withAreas) {
   return `[out:json][timeout:120][bbox:${WB.s},${WB.w},${WB.n},${WB.e}];
@@ -435,7 +435,7 @@ function worldQuery(withAreas) {
   way["waterway"~"^(river|canal)$"];
   wr["natural"="water"]["water"~"^(river|lake|reservoir|pond|canal)$"];
   way["railway"="rail"];
-  way["highway"~"^(motorway|trunk|primary)$"];${withAreas ? `
+  way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"];${withAreas ? `
   wr["natural"="wood"];
   wr["landuse"~"^(forest|residential|commercial|retail|industrial)$"];` : ''}
 );
@@ -443,14 +443,36 @@ out geom qt;
 nwr["amenity"~"^(townhall|hospital|library|fire_station)$"];
 out center qt;
 nwr["shop"~"^(mall|department_store)$"];
-out center qt;`;
+out center qt;
+node["place"~"^(city|town|village|suburb)$"]["name"];
+out qt;
+nwr["place"="island"]["name"];
+out center qt;
+node["railway"="station"]["name"];
+out qt;`;
+}
+
+// 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
+const WCOL = { [C.G]: '#3f9b3c', [C.F]: '#7fb84a', [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
+  [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
+  [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: '#86b54c' };
+function makeWorldImg() {
+  if (!world) return;
+  const c = document.createElement('canvas');
+  c.width = WW; c.height = WH;
+  const x = c.getContext('2d'), img = x.createImageData(WW, WH);
+  const rgb = {};
+  for (const [k, v] of Object.entries(WCOL)) rgb[k] = [parseInt(v.slice(1, 3), 16), parseInt(v.slice(3, 5), 16), parseInt(v.slice(5, 7), 16)];
+  for (let i = 0; i < world.length; i++) { const [r, g, b] = rgb[world[i]] || rgb[C.X]; img.data[i * 4] = r; img.data[i * 4 + 1] = g; img.data[i * 4 + 2] = b; img.data[i * 4 + 3] = 255; }
+  x.putImageData(img, 0, 0);
+  worldImg = c;
 }
 
 async function buildWorld(force) {
   if (worldState === 'building' || (worldState === 'ok' && !force)) return;
   const saved = !force && store.get(WORLD_KEY);
   if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-    world = dec(saved.d); worldPois = saved.p || []; worldState = 'ok'; return;
+    world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
   }
   worldState = 'building';
   try {
@@ -482,12 +504,21 @@ async function buildWorld(force) {
     // 2) 地図データ：川・水面・国道・線路・森・町なみ
     let json;
     try { json = await overpass(worldQuery(true)); } catch (e) { json = await overpass(worldQuery(false)).catch(() => ({ elements: [] })); }
-    const water = new Uint8Array(N), wood = new Uint8Array(N), town = new Uint8Array(N), lines = [], wp = [];
+    const water = new Uint8Array(N), wood = new Uint8Array(N), town = new Uint8Array(N), lines = [], wp = [], wl = [];
+    const RANK = { city: 4, town: 3, island: 3, village: 2, suburb: 2 };
     for (const el of json.elements || []) {
       const kind = poiKind(el.tags || {});
       if (kind && WORLD_POI.has(kind)) {
         const c = elCenter(el), q = c && llToW(c.lat, c.lon);
         if (q && q.x >= 0 && q.y >= 0 && q.x < WW && q.y < WH) wp.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(el.tags.name || '').slice(0, 40)]);
+        continue;
+      }
+      const tg = el.tags || {};
+      if ((RANK[tg.place] || tg.railway === 'station') && tg.name) {   // 地名・駅名
+        const c = elCenter(el), q = c && llToW(c.lat, c.lon);
+        let name = String(tg.name).slice(0, 12);
+        if (tg.railway === 'station' && !name.endsWith('駅')) name += '駅';
+        if (q && q.x >= 0 && q.y >= 0 && q.x < WW && q.y < WH) wl.push([+q.x.toFixed(2), +q.y.toFixed(2), name, RANK[tg.place] || 1]);
         continue;
       }
       let rings;
@@ -498,7 +529,7 @@ async function buildWorld(force) {
       const t = el.tags || {}, pts = rings.map(r => r.map(p => { const q = llToW(p.lat, p.lon); return [q.x, q.y]; }));
       if (t.waterway) lines.push([pts, C.A, 30]);
       else if (t.railway) lines.push([pts, C.L, 40]);
-      else if (t.highway) lines.push([pts, C.H, 42]);
+      else if (t.highway) lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
       else if (t.natural === 'water') fillPoly(water, pts, 1, WW, WH);
       else if (t.natural === 'wood' || t.landuse === 'forest') fillPoly(wood, pts, 1, WW, WH);
       else if (t.landuse) fillPoly(town, pts, 1, WW, WH);
@@ -517,9 +548,11 @@ async function buildWorld(force) {
     for (let i = 0; i < N; i++) if (g[i] === UNSET) g[i] = C.G;
     world = g;
     worldPois = dedupePois(wp, 1.5);
+    worldLabels = wl.filter((l, i) => !wl.slice(0, i).some(m => m[2] === l[2] && Math.hypot(m[0] - l[0], m[1] - l[1]) < 5));
+    makeWorldImg();
     worldState = 'ok';
     const days = partial || !(json.elements || []).length ? 1 : PX_DAYS;   // 欠けたら1日で作り直す
-    if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(g), p: worldPois, days })) store.del(WORLD_KEY);
+    if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(g), p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
   } catch (e) {
     worldState = 'fail';
   }
@@ -864,13 +897,16 @@ function poiHtml(p) {
 }
 
 /* ---------- せかいちずの表示 ---------- */
-let worldMode = false, wcam = null, wscale = 1;
-const WSIZES = [6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）
-const AREA_LABELS = [['西尾', 34.872, 137.058], ['一色', 34.802, 137.028], ['吉良', 34.818, 137.078], ['幡豆', 34.800, 137.138], ['佐久島', 34.733, 137.040], ['三河湾', 34.752, 137.105]];
+let worldMode = false, wcam = null, wscale = 2;
+const WSIZES = [2, 3, 4, 6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）。6以下は色のブロック、10以上はドット絵タイル
+// 地図データに地名がないときの予備と、海の名前
+const AREA_LABELS = [['西尾', 34.872, 137.058, 4], ['一色', 34.802, 137.028, 3], ['吉良', 34.818, 137.078, 3], ['幡豆', 34.800, 137.138, 3], ['佐久島', 34.733, 137.040, 3]];
+const SEA_LABELS = [['三河湾', 34.752, 137.105, 4]];
 const wT = dpr => Math.round(WSIZES[wscale] * dpr);
 function worldCamStart() {
-  const me = G.me, p = me ? llToW(me.lat, me.lng) : llToW(G.CFG.center[0], G.CFG.center[1]);
-  return p.x >= 0 && p.y >= 0 && p.x <= WW && p.y <= WH ? p : { x: WW / 2, y: WH / 2 };
+  const me = G.me, nb2 = G.CFG.nishioBounds;
+  if (me && me.lat > nb2[0][0] && me.lat < nb2[1][0] && me.lng > nb2[0][1] && me.lng < nb2[1][1]) return llToW(me.lat, me.lng);
+  return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
 function drawWorld(now, w, h, dpr) {
   const T = wT(dpr), f = Math.floor(now / 600) % 2;
@@ -879,34 +915,33 @@ function drawWorld(now, w, h, dpr) {
   ctx.imageSmoothingEnabled = false;
   const ox = Math.round(w / 2 - wcam.x * T), oy = Math.round(h / 2 - wcam.y * T);
   const x0 = Math.floor(-ox / T), y0 = Math.floor(-oy / T), x1 = Math.ceil((w - ox) / T), y1 = Math.ceil((h - oy) / T);
-  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+  const css = WSIZES[wscale];
+  if (css <= 6 && worldImg) {   // 引いて見るとき：1マス＝色のブロック
+    ctx.fillStyle = WCOL[C.X]; ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(worldImg, ox, oy, WW * T, WH * T);
+  } else for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
     const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
     const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
     ctx.drawImage(tiles[code][v % 3][code === C.A || code === C.X ? f : 0], ox + x * T, oy + y * T, T, T);
   }
-  // 地名（ドラクエ風の白文字に黒ふち）
-  const fs = Math.round(Math.max(11, Math.min(16, WSIZES[wscale] * 1.1)) * dpr);
-  ctx.font = `${fs}px "DotGothic16", monospace`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.lineWidth = Math.max(2, Math.round(3 * dpr)); ctx.strokeStyle = '#000'; ctx.fillStyle = '#fff';
-  for (const [name, lat, lng] of AREA_LABELS) { const p = llToW(lat, lng), X = ox + p.x * T, Y = oy + p.y * T; ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y); }
-  // 大きな建物
+  // 大きな建物（引いたときは出さない）
   const bs = Math.max(T * 1.4, 12 * dpr);
-  for (const p of worldPois) {
+  for (const p of css >= 6 ? worldPois : []) {
     const X = ox + p[0] * T - bs / 2, Y = oy + p[1] * T - bs / 2;
     if (X > w || Y > h || X + bs < 0 || Y + bs < 0) continue;
     if (G.spots.some(s => s.featured && Math.hypot(llToW(s.lat, s.lng).x - p[0], llToW(s.lat, s.lng).y - p[1]) < 1)) continue;
     ctx.drawImage(spotSprites[p[2]][0], Math.round(X), Math.round(Y), bs, bs);
   }
-  // 注目スポット
+  // 注目スポット（引いたときはお店と大きな名所だけ）
   const size = Math.max(T * 1.6, 14 * dpr);
   for (const s of G.spots) {
-    if (!s.featured) continue;
+    if (!worldSpotShown(s)) continue;
     const p = llToW(s.lat, s.lng), X = ox + p.x * T - size / 2, Y = oy + p.y * T - size / 2;
     if (X > w || Y > h || X + size < 0 || Y + size < 0) continue;
     ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), size, size);
   }
+  drawWorldLabels(ox, oy, T, w, h, dpr, css);
   // 主人公
   const me = G.me;
   if (me) {
@@ -918,6 +953,33 @@ function drawWorld(now, w, h, dpr) {
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
 }
+function worldSpotShown(s) {
+  if (!s.featured) return false;
+  const css = WSIZES[wscale];
+  return css >= 6 || ['f-kondo-beikoku', 'f-ricepia'].includes(s.id) || (css >= 3 && (s.points || 0) >= 50);
+}
+// 地名・駅名をドラクエ風の白文字に黒ふちで。大きな地名から順に、重ならないものだけ
+function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
+  const minRank = css <= 3 ? 3 : css <= 6 ? 2 : 1;
+  const base = worldLabels.length ? worldLabels : AREA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; });
+  const list = base.concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
+    .filter(l => l[3] >= minRank).sort((a, b) => b[3] - a[3]);
+  const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11 }, boxes = [];
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#000';
+  for (const [x, y, name, rank] of list) {
+    const fs = Math.round(SIZE[rank] * dpr), X = ox + x * T, Y = oy + y * T + (rank === 1 ? fs : 0);
+    if (X < -100 || Y < -40 || X > w + 100 || Y > h + 40) continue;
+    ctx.font = `${fs}px "DotGothic16", monospace`;
+    const bw = ctx.measureText(name).width + 6 * dpr, bh = fs + 4 * dpr;
+    const box = [X - bw / 2, Y - bh / 2, X + bw / 2, Y + bh / 2];
+    if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+    boxes.push(box);
+    if (rank === 1 && css >= 10) ctx.drawImage(spotSprites.station[0], Math.round(X - T * 0.7), Math.round(Y - fs - T * 1.2), Math.round(T * 1.4), Math.round(T * 1.4));
+    ctx.lineWidth = Math.max(2, Math.round((rank >= 3 ? 4 : 3) * dpr));
+    ctx.fillStyle = rank === 1 ? '#ffe9a8' : '#fff';
+    ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y);
+  }
+}
 function setWorld(on) {
   worldMode = on;
   document.body.classList.toggle('pxw', on);
@@ -925,6 +987,7 @@ function setWorld(on) {
   $('pxWorld').title = on ? '歩く地図にもどる' : '西尾市ぜんたいの地図';
   $('pxInfo').hidden = true;
   if (on) { wcam = worldCamStart(); buildWorld(); }
+  try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }
   updatePad();
 }
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
@@ -955,8 +1018,15 @@ function setActive(on) {
 }
 function updatePad() { $('pxPad').hidden = !(active && G.demo && !worldMode); }
 $('viewBtn').addEventListener('click', () => setActive(!active));
-$('pxZoomIn').addEventListener('click', () => { if (worldMode) wscale = Math.min(WSIZES.length - 1, wscale + 1); else setScale(scale + 1); });
-$('pxZoomOut').addEventListener('click', () => { if (worldMode) wscale = Math.max(0, wscale - 1); else setScale(scale - 1); });
+// せかいちずをいちばん大きくしてさらに拡大すると歩く地図へ、歩く地図をいちばん小さくしてさらに縮小するとせかいちずへ
+$('pxZoomIn').addEventListener('click', () => {
+  if (!worldMode) return setScale(scale + 1);
+  if (wscale < WSIZES.length - 1) wscale++; else { setScale(1); setWorld(false); }
+});
+$('pxZoomOut').addEventListener('click', () => {
+  if (worldMode) { wscale = Math.max(0, wscale - 1); return; }
+  if (scale > 1) setScale(scale - 1); else { wscale = WSIZES.length - 1; setWorld(true); }
+});
 function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
 
 // デモ：十字ボタンで1マスずつ歩く（水と建物には入れない）
@@ -990,14 +1060,14 @@ cv.addEventListener('click', e => {
     const T = wT(Math.min(window.devicePixelRatio || 1, 3)), x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
     let hit = null, best = Math.max(T * 1.2, 16 * dpr);
     for (const s of G.spots) {
-      if (!s.featured) continue;
+      if (!worldSpotShown(s)) continue;
       const p = llToW(s.lat, s.lng), d = Math.hypot(x - (cv.width / 2 + (p.x - wcam.x) * T), y - (cv.height / 2 + (p.y - wcam.y) * T));
       if (d < best) { hit = s; best = d; }
     }
     if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
     let bp = null;
     best = Math.max(T, 12 * dpr);
-    for (const p of worldPois) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - wcam.x) * T), y - (cv.height / 2 + (p[1] - wcam.y) * T)); if (d < best) { bp = p; best = d; } }
+    for (const p of WSIZES[wscale] >= 6 ? worldPois : []) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - wcam.x) * T), y - (cv.height / 2 + (p[1] - wcam.y) * T)); if (d < best) { bp = p; best = d; } }
     if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
     return;
   }
@@ -1020,10 +1090,11 @@ cv.addEventListener('click', e => {
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });
 
 G.onModeChange(updatePad);
-let initial = 'map';
-try { initial = localStorage.getItem('nsg_view') || 'map'; } catch (e) { /* noop */ }
-if (initial === 'px') setActive(true);
+// はじめての人はドット絵（ダンジョン風）のせかいちずから
+let initial = 'px', worldOn = '1';
+try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
+if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; } };
+window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; } };
 })();

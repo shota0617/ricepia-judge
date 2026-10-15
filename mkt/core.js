@@ -213,6 +213,7 @@ RP.renderKey = function(){
   const k = RP.getKey(), b = RP.$("#keyBadge");
   b.textContent = k ? "🔑 APIキー設定済み" : "🔑 APIキー未設定";
   b.classList.toggle("ok", !!k);
+  const m = RP.$("#keyBadgeM"); if(m){ m.classList.toggle("ok", !!k); m.title = k ? "APIキー設定済み" : "APIキー未設定"; }
 };
 RP.keyModal = function(){
   RP.$("#keyInput").value = RP.getKey();
@@ -479,14 +480,16 @@ RP.resetAll = function(){
 };
 
 /* ================= routing ================= */
-RP.VIEWS = ["dash","studio","doctor","reviews","campaign","calendar","customers","research","library","brand","settings"];
+RP.VIEWS = ["home","improve","sales","studio","doctor","reviews","campaign","calendar","customers","research","library","brand","settings"];
 RP.go = function(name, params){
-  if(!RP.VIEWS.includes(name)) name = "dash";
+  if(name === "dash") name = "home"; // old bookmark
+  if(!RP.VIEWS.includes(name)) name = "home";
   RP.$$(".view").forEach(v => v.hidden = v.id !== "v-" + name);
   RP.$$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.go === name));
   const m = RP.mod[name];
   if(m && m.show) m.show(params || {});
   if(location.hash !== "#" + name) history.replaceState(null, "", "#" + name);
+  if(RP.refreshBadges) RP.refreshBadges();
   const nb = RP.$('#nav button[data-go="' + name + '"]');
   if(nb && nb.scrollIntoView && window.innerWidth <= 900) nb.scrollIntoView({inline:"center", block:"nearest"});
   window.scrollTo(0, 0);
@@ -505,6 +508,6 @@ RP.boot = function(){
   Object.keys(RP.mod).forEach(k => { try{ RP.mod[k].init && RP.mod[k].init(); }catch(e){ console.error(k, e); } });
   RP.renderKey(); RP.renderCost();
   window.addEventListener("hashchange", () => RP.go(location.hash.slice(1)));
-  RP.go(location.hash.slice(1) || "dash");
+  RP.go(location.hash.slice(1) || "home");
 };
 })();

@@ -180,6 +180,7 @@ RP.mod.calendar = {
         ${e.note ? `<div class="item-body">${esc(e.note)}</div>` : ""}
         <div class="item-actions"><button data-act="edit" data-id="${e.id}">編集</button><button data-act="make" data-id="${e.id}">✍️ コンテンツを作る</button>${e.status !== "done" ? `<button data-act="done" data-id="${e.id}">✓ 完了</button>` : ""}</div></div>`).join("")
       : `<div class="empty">この月の予定はまだありません。<br/>日付をタップして追加するか、「1ヶ月分をAIで計画」をお試しください。</div>`;
+    if(RP.refreshBadges) RP.refreshBadges();
   },
   edit(id, preset){
     const all = evs();

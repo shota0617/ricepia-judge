@@ -6,87 +6,123 @@
 <title>らいすぴあ Marketing Studio</title>
 <meta name="robots" content="noindex,nofollow"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="mkt/style.css"/>
 </head>
 <body>
 
-<header id="topbar">
-  <div class="tb-inner">
-    <div class="hlogo">🌾</div>
-    <div>
-      <div class="htitle">らいすぴあ Marketing Studio</div>
-      <div class="hsub">AI MARKETING SUITE — 近藤米穀店</div>
-    </div>
-    <div class="tb-right">
-      <span id="costBadge" class="badge" title="今月のAI利用料（概算）">¥0</span>
-      <button id="keyBadge" class="badge badge-btn" onclick="RP.keyModal()">🔑 APIキー未設定</button>
-      <a class="badge badge-btn" href="index.html" title="品質判定AIへ">🍚 品質判定</a>
-    </div>
-  </div>
-</header>
-
 <div class="shell">
-  <nav id="nav" aria-label="メニュー">
-    <div class="nav-group">概要</div>
-    <button data-go="dash">📊<span>ダッシュボード</span></button>
-    <div class="nav-group">つくる</div>
-    <button data-go="studio">✍️<span>コンテンツ生成</span></button>
-    <button data-go="doctor">🩺<span>コピー診断</span></button>
-    <button data-go="reviews">💬<span>口コミ対応</span></button>
-    <div class="nav-group">計画する</div>
-    <button data-go="campaign">🎯<span>キャンペーン設計</span></button>
-    <button data-go="calendar">🗓️<span>販促カレンダー</span></button>
-    <div class="nav-group">分析する</div>
-    <button data-go="customers">👥<span>顧客分析</span></button>
-    <button data-go="research">🔎<span>市場リサーチ</span></button>
-    <div class="nav-group">管理</div>
-    <button data-go="library">📚<span>ライブラリ</span></button>
-    <button data-go="brand">🏷️<span>ブランド設定</span></button>
-    <button data-go="settings">⚙️<span>設定・データ</span></button>
-  </nav>
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🌾</div>
+      <div class="brand-txt">
+        <div class="brand-name">らいすぴあ</div>
+        <div class="brand-sub">販促の管理画面</div>
+      </div>
+      <button id="keyBadgeM" class="badge badge-btn only-m" onclick="RP.keyModal()">🔑</button>
+    </div>
+    <nav id="nav" aria-label="メニュー">
+      <button data-go="home"><i>⌂</i><span>ホーム</span></button>
+      <button data-go="improve"><i>✧</i><span>今週の改善</span><em class="nb" id="nbImprove"></em></button>
+      <button data-go="calendar"><i>▦</i><span>販促カレンダー</span><em class="nb" id="nbCalendar"></em></button>
+      <button data-go="sales"><i>▥</i><span>売上と配信</span></button>
+      <button data-go="customers"><i>☺</i><span>顧客分析</span></button>
+      <div class="nav-sep"></div>
+      <button data-go="studio"><i>✎</i><span>コンテンツ生成</span></button>
+      <button data-go="doctor"><i>✓</i><span>コピー診断</span></button>
+      <button data-go="reviews"><i>☏</i><span>口コミ対応</span></button>
+      <button data-go="campaign"><i>◎</i><span>キャンペーン設計</span></button>
+      <button data-go="research"><i>⌕</i><span>市場リサーチ</span></button>
+      <div class="nav-sep"></div>
+      <button data-go="library"><i>❏</i><span>ライブラリ</span></button>
+      <button data-go="brand"><i>◈</i><span>ブランド設定</span><em class="nb warn" id="nbBrand"></em></button>
+      <button data-go="settings"><i>⚙</i><span>設定・データ</span></button>
+    </nav>
+    <div class="side-foot">
+      <button id="keyBadge" class="badge badge-btn" onclick="RP.keyModal()">🔑 APIキー未設定</button>
+      <span id="costBadge" class="badge" title="今月のAI利用料（概算）">¥0</span>
+      <a class="side-link" href="index.html">🍚 品質判定AI</a>
+      <a class="side-link" href="meta-ads.html">📊 Meta広告診断</a>
+    </div>
+  </aside>
 
   <main id="main">
 
-    <!-- ============ DASHBOARD ============ -->
-    <section id="v-dash" class="view">
-      <div class="view-head">
-        <h1>ダッシュボード</h1>
-        <p>売上・集客の推移と、今やるべき施策をひと目で。</p>
+    <!-- ============ ホーム ============ -->
+    <section id="v-home" class="view">
+      <div class="page-head">
+        <h1>ホーム</h1><span class="muted small" id="homeTime"></span>
+        <span class="spacer"></span>
+        <button class="btn-ghost-sm" onclick="RP.mod.home.show()">更新</button>
       </div>
-      <div id="dashTiles" class="tiles"></div>
+      <div id="homeWelcome"></div>
+      <div class="act-row">
+        <div id="homeAction" class="act-box"></div>
+        <button id="homeDiagJump" class="diag-jump" onclick="document.getElementById('homeDiag').scrollIntoView({behavior:'smooth'})"></button>
+      </div>
+      <div id="homeTiles" class="tiles tiles-big"></div>
+      <div id="homeStrip" class="strip"></div>
+      <div class="card" id="homeDiag"></div>
+      <div class="card">
+        <div class="card-head"><h2>チャネルの調子 <small>7日</small></h2><span class="spacer"></span><button class="btn-ghost-sm" onclick="RP.mod.home.editStats()">数値を更新</button><button class="link" data-go="studio">つくる →</button></div>
+        <div id="homeChannels" class="tbl-wrap"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>日別発信数 <small>直近30日</small></h2><span class="spacer"></span><button class="link" data-go="calendar">カレンダー →</button></div>
+        <div id="homeDaily" class="chart"></div>
+      </div>
       <div class="grid2">
         <div class="card">
-          <div class="card-head">
-            <h2>月次推移</h2>
-            <select id="dashMetric" class="sel-sm"></select>
-          </div>
-          <div id="dashChart" class="chart"></div>
-          <details class="tbl-toggle"><summary>表で見る</summary><div id="dashChartTable"></div></details>
+          <div class="card-head"><h2>今後2週間の予定</h2><span class="spacer"></span><button class="link" data-go="calendar">すべて →</button></div>
+          <div id="dashUpcoming"></div>
         </div>
         <div class="card">
-          <div class="card-head"><h2>今後2週間の予定</h2><button class="link" data-go="calendar">カレンダー →</button></div>
-          <div id="dashUpcoming"></div>
-          <div class="card-head" style="margin-top:14px;"><h2>季節の販促ヒント</h2></div>
+          <div class="card-head"><h2>季節の販促ヒント</h2></div>
           <div id="dashSeason"></div>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ 今週の改善 ============ -->
+    <section id="v-improve" class="view" hidden>
+      <div class="view-head">
+        <h1>今週の改善</h1>
+        <p>入力済みのデータから自動で見つけた改善点と、AIによる打ち手の提案。</p>
+      </div>
+      <div class="card" id="improveList"></div>
+      <div class="card">
+        <div class="card-head"><h2>AI経営アドバイザー</h2></div>
+        <p class="hint">KPIの推移・季節・ブランド情報から、今月の打ち手を優先順位付きで提案します。</p>
+        <button class="btn-primary" id="dashAiBtn" onclick="RP.mod.sales.advise()">📈 今月の打ち手を提案してもらう</button>
+        <div id="dashAiOut" class="ai-out" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ 売上と配信 ============ -->
+    <section id="v-sales" class="view" hidden>
+      <div class="view-head">
+        <h1>売上と配信</h1>
+        <p>月次の売上・客数・フォロワーの推移。数値を入力するとホームと診断に反映されます。</p>
+      </div>
+      <div id="dashTiles" class="tiles"></div>
+      <div class="card">
+        <div class="card-head">
+          <h2>月次推移</h2>
+          <select id="dashMetric" class="sel-sm"></select>
+        </div>
+        <div id="dashChart" class="chart"></div>
+        <details class="tbl-toggle"><summary>表で見る</summary><div id="dashChartTable"></div></details>
       </div>
       <div class="card">
         <div class="card-head">
           <h2>月次KPI入力</h2>
-          <button class="btn-sm" onclick="RP.mod.dash.addRow()">＋ 月を追加</button>
+          <button class="btn-sm" onclick="RP.mod.sales.addRow()">＋ 月を追加</button>
         </div>
         <p class="hint">数値を入力すると自動保存されます。空欄はそのままでOK。</p>
         <div class="tbl-wrap"><table class="tbl" id="kpiTable"></table></div>
         <div class="row-btns">
-          <button class="btn-ghost-sm" onclick="RP.mod.dash.sample()">サンプルデータを入れる</button>
+          <button class="btn-ghost-sm" onclick="RP.mod.sales.sample()">サンプルデータを入れる</button>
         </div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h2>🤖 AI経営アドバイザー</h2></div>
-        <p class="hint">KPIの推移・季節・ブランド情報から、今月の打ち手を優先順位付きで提案します。</p>
-        <button class="btn-primary" id="dashAiBtn" onclick="RP.mod.dash.advise()">📈 今月の打ち手を提案してもらう</button>
-        <div id="dashAiOut" class="ai-out" hidden></div>
       </div>
     </section>
 
@@ -473,6 +509,7 @@
 <script src="mkt/studio.js"></script>
 <script src="mkt/plan.js"></script>
 <script src="mkt/insight.js"></script>
+<script src="mkt/home.js"></script>
 <script>RP.boot();</script>
 </body>
 </html>

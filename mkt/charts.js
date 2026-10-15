@@ -16,8 +16,10 @@ function short(v){
   if(a >= 1e4) return (v/1e4).toFixed(a >= 1e5 ? 0 : 1).replace(/\.0$/, "") + "万";
   return Math.round(v).toLocaleString("ja-JP");
 }
-function frame(el, data, fmt){
-  const max = niceMax(Math.max(0, ...data.map(d => d.value || 0)));
+function frame(el, data, fmt, integer){
+  const top = Math.max(0, ...data.map(d => d.value || 0));
+  // small whole-number counts get whole-number ticks (0,1,2,3,4) instead of 0.25 steps
+  const max = integer && top <= 8 ? 4 * Math.max(1, Math.ceil(top / 4)) : niceMax(top);
   const iw = W - PAD.l - PAD.r, ih = H - PAD.t - PAD.b;
   const y = v => PAD.t + ih - (v / max) * ih;
   let g = "";
@@ -28,8 +30,9 @@ function frame(el, data, fmt){
   }
   const step = iw / data.length;
   const every = Math.ceil(data.length / 8);
+  const last = data.length - 1;
   data.forEach((d, i) => {
-    if(i % every === 0 || i === data.length - 1)
+    if(i === last || (i % every === 0 && last - i >= every))
       g += `<text class="ax" x="${PAD.l + step*i + step/2}" y="${H-8}" text-anchor="middle">${RP.esc(d.label)}</text>`;
   });
   return {max, iw, ih, y, step, g};
@@ -57,7 +60,7 @@ RP.chart = {
     opts = opts || {};
     const fmt = opts.fmt || (v => RP.fmt(v));
     if(!data.length || data.every(d => !d.value)){ el.innerHTML = `<div class="empty">${RP.esc(opts.empty || "データがありません")}</div>`; return; }
-    const f = frame(el, data, fmt);
+    const f = frame(el, data, fmt, opts.integer);
     const bw = Math.min(42, f.step * 0.62);
     let marks = "", hits = "", labels = "";
     const maxI = data.reduce((m, d, i) => (d.value || 0) > (data[m].value || 0) ? i : m, 0);

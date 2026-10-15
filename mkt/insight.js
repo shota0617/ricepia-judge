@@ -18,7 +18,8 @@ const kpis = () => RP.store.get("kpis", []).slice().sort((a, b) => a.month < b.m
 const val = (r, m) => m.derived ? m.derived(r) : RP.num(r[m.k]);
 const fmtM = m => v => m.yen ? RP.yen(v) : RP.fmt(v) + m.unit;
 
-RP.mod.dash = {
+RP.kpi = {list: kpis, val, METRICS};
+RP.mod.sales = {
   init(){
     $("#dashMetric").innerHTML = METRICS.map(m => `<option value="${m.k}">${esc(m.label)}</option>`).join("");
     $("#dashMetric").addEventListener("change", () => this.renderChart());
@@ -36,7 +37,7 @@ RP.mod.dash = {
       const b = e.target.closest("button[data-occ]"); if(b) RP.go("studio", {occasion: b.dataset.occ});
     });
   },
-  show(){ this.renderTiles(); this.renderChart(); this.renderTable(); this.renderUpcoming(); this.renderSeason(); },
+  show(){ this.renderTiles(); this.renderChart(); this.renderTable(); },
   renderTiles(){
     const list = kpis(), last = list[list.length-1], prev = list[list.length-2];
     const tile = (label, m, sub) => {
@@ -87,6 +88,18 @@ RP.mod.dash = {
         ec: Math.round(80 * s + (11 - i) * 4), line: 380 + (11 - i) * 22 + Math.round(Math.random() * 10), ig: 520 + (11 - i) * 35, ad: Math.round(30000 * s / 1000) * 1000});
     }
     RP.store.set("kpis", list); this.show(); RP.toast("サンプルデータを入れました（実データに書き換えてください）");
+  },
+  sampleData(){
+    // used by the home "サンプルで試す" button
+    const now = new Date(), list = [];
+    const season = [0.95, 0.85, 0.9, 0.95, 0.9, 0.85, 0.9, 0.95, 1.05, 1.3, 1.25, 1.45];
+    for(let i = 12; i >= 1; i--){
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1), s = season[d.getMonth()];
+      const customers = Math.round(620 * s * (0.95 + Math.random() * 0.1));
+      list.push({month: RP.ym(d), customers, sales: Math.round(customers * (3900 + Math.random() * 500) / 100) * 100,
+        ec: Math.round(80 * s + (12 - i) * 4), line: 380 + (12 - i) * 22, ig: 520 + (12 - i) * 35, ad: Math.round(30000 * s / 1000) * 1000});
+    }
+    return list;
   },
   renderUpcoming(){
     const t = RP.today(), end = RP.addDays(t, 14);
@@ -181,7 +194,7 @@ RP.mod.customers = {
     };
     fr.readAsText(file);
   },
-  sample(){
+  sample(silent){
     const list = [], now = new Date();
     const fam = ["佐藤","鈴木","高橋","田中","伊藤","渡辺","山本","中村","小林","加藤","吉田","山田","近藤","石川","杉浦","神谷","鈴村","太田"];
     for(let i = 0; i < 160; i++){
@@ -191,7 +204,7 @@ RP.mod.customers = {
       const d = new Date(now - days * 864e5);
       list.push({name: fam[i % fam.length] + "様" + (i+1), last: RP.ymd(d), freq, monetary: Math.round(freq * (3000 + Math.random() * 3000) / 100) * 100});
     }
-    RP.store.set("customers", list); this.render(); RP.toast("サンプル顧客を生成しました");
+    RP.store.set("customers", list); this.render(); if(silent !== true) RP.toast("サンプル顧客を生成しました");
   },
   clear(){ if(confirm("顧客データを全削除しますか？")){ RP.store.set("customers", []); this.render(); } },
   stats(){

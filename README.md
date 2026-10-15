@@ -14,7 +14,9 @@
 
 | 区分 | 機能 | 概要 |
 |---|---|---|
-| 概要 | ダッシュボード | 月次KPI（売上・客数・客単価・EC注文・LINE友だち・Instagram・販促費）の入力とグラフ、今後2週間の予定、季節の販促ヒント、AI経営アドバイザー |
+| 概要 | ホーム | 要アクション（期限切れの予定・未入力の設定など）、らいすぴあAIの診断（入力データからの自動診断・AI利用料なし）、売上・客数・LINE友だち・今月の発信、チャネルの調子（規模・増減7日・発信7日・前週比）、日別発信数、今後の予定、季節の販促ヒント。「サンプルで試す」で全体の見え方を確認できます |
+| 概要 | 今週の改善 | 要アクションと診断の一覧、AI経営アドバイザー（今月の打ち手を文章で提案） |
+| 概要 | 売上と配信 | 月次KPI（売上・客数・客単価・EC注文・LINE友だち・Instagram・販促費）の入力とグラフ |
 | つくる | コンテンツ生成 | Instagram / X / LINE / Googleビジネス / ブログ / EC商品ページ / POP / チラシ / メルマガ / プレスリリース / ギフト文面。チャネル別の文字数・書式ルール、複数案、写真添付、修正指示、**品質判定結果からの投稿作成** |
 | つくる | コピー診断 | 6観点の採点、景品表示法・食品表示・米トレーサビリティ法などの表示リスク指摘、改善版3案 |
 | つくる | 口コミ対応 | ★評価に応じた店主らしい返信文／複数口コミの傾向分析（テーマ・強み・改善点・打ち手） |
@@ -28,11 +30,11 @@
 
 1. `marketing.html`（https://ricepia-judge.vercel.app/marketing.html）を開き、右上の「🔑」から Anthropic APIキーを設定（[console.anthropic.com](https://console.anthropic.com/settings/keys)）。
 2. まず「ブランド設定」で所在地・営業時間・価格などの【　】部分を埋めて保存。
-3. ダッシュボードで月次KPIを入力し、各機能を利用。
+3. 「売上と配信」で月次KPIを、ホームの「数値を更新」で各SNS・LINEの数字を入れると、ホームの診断が具体的になります。
 
 ## 技術メモ
 
-- 構成：`marketing.html` + `mkt/`（`style.css`, `core.js`, `charts.js`, `data.js`, `studio.js`, `plan.js`, `insight.js`）。外部ライブラリなし。
+- 構成：`marketing.html` + `mkt/`（`style.css`, `core.js`, `charts.js`, `data.js`, `studio.js`, `plan.js`, `insight.js`, `home.js`）。外部ライブラリなし。
 - AI：Anthropic Messages API をブラウザから直接呼び出し（SSEストリーミング）。既定モデル `claude-opus-5-5`（設定で `claude-sonnet-5-5` に切替可）、`effort` 指定、拒否時の `fallbacks: "default"`、リサーチは `web_search_20260209`（`pause_turn` の継続にも対応）。
 - データ：すべてブラウザの localStorage（キー接頭辞 `rpm_`）。APIキーは既定でセッション内のみ保持。
 - 品質判定との連携：`index.html` が最新の判定結果を `ricepia_last_judge` に保存し、コンテンツ生成画面で利用。

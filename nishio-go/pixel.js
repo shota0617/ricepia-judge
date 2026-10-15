@@ -20,12 +20,14 @@ const chunkBox = (cx, cy) => {
 };
 
 /* ---------- 地形 ---------- */
-const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12 };
+// G草原 F田んぼ T町 W森 P公園 A水 S砂浜 B建物 R道 H大きな道 L線路 D小道 X未読込 M山 K丘 E茶畑 V畑 I工場 J境内 Y墓地 N温室
+const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12, M: 13, K: 14, E: 15, V: 16, I: 17, J: 18, Y: 19, N: 20 };
 const UNSET = 255;
-const BLOCK = new Set([C.A, C.B]);    // デモで歩けないマス（水・建物）
+const BLOCK = new Set([C.A, C.B, C.M]);    // デモで歩けないマス（水・建物・山）
+const HILL_M = 35, MOUNTAIN_M = 150;        // 標高（m）：これ以上の草地は丘、さらに高い所は山
 
 function classify(t, closed) {
-  if (t.building && closed) return { a: 1, c: C.B, p: 30 };
+  if (t.building && closed) return { a: 1, c: t.building === 'greenhouse' ? C.N : C.B, p: 30 };
   if (t.natural === 'coastline') return { coast: 1 };
   if (t.highway) {
     const h = t.highway;
@@ -42,9 +44,18 @@ function classify(t, closed) {
   if (t.natural === 'beach' || t.natural === 'sand') return { a: 1, c: C.S, p: 19 };
   if (t.natural === 'wood' || t.landuse === 'forest' || t.natural === 'scrub') return { a: 1, c: C.W, p: 16 };
   if (t.natural === 'wetland') return { a: 1, c: C.P, p: 15 };
-  if (t.leisure || /^(grass|cemetery|recreation_ground|village_green)$/.test(t.landuse || '')) return { a: 1, c: C.P, p: 14 };
-  if (/^(farmland|meadow|orchard|vineyard|greenhouse_horticulture|plant_nursery|paddy)$/.test(t.landuse || '')) return { a: 1, c: C.F, p: 12 };
-  if (t.landuse || t.amenity) return { a: 1, c: C.T, p: 10 };
+  const lu = t.landuse || '';
+  if (lu === 'cemetery' || t.amenity === 'grave_yard') return { a: 1, c: C.Y, p: 14 };
+  if (t.amenity === 'place_of_worship') return { a: 1, c: C.J, p: 13 };          // 神社・お寺の境内
+  if (t.leisure || /^(grass|recreation_ground|village_green)$/.test(lu)) return { a: 1, c: C.P, p: 14 };
+  if (lu === 'greenhouse_horticulture') return { a: 1, c: C.N, p: 12 };
+  const tea = /tea/.test(`${t.crop || ''} ${t.trees || ''} ${t.produce || ''}`);
+  if (tea && /^(farmland|orchard|plant_nursery)$/.test(lu)) return { a: 1, c: C.E, p: 12 };   // 茶畑（西尾の抹茶）
+  if (lu === 'paddy' || (lu === 'farmland' && (!t.crop || /rice/.test(t.crop)))) return { a: 1, c: C.F, p: 12 };  // 西尾の農地は多くが田んぼ
+  if (/^(farmland|orchard|vineyard|plant_nursery|allotments)$/.test(lu)) return { a: 1, c: C.V, p: 12 };
+  if (lu === 'meadow') return { a: 1, c: C.G, p: 12 };
+  if (lu === 'industrial') return { a: 1, c: C.I, p: 10 };
+  if (lu || t.amenity) return { a: 1, c: C.T, p: 10 };
   return null;
 }
 
@@ -119,7 +130,7 @@ function seaFill(g, coasts) {
   for (let i = 0; i < bar.length; i++) if (bar[i] && g[i] === UNSET) g[i] = C.S;
 }
 
-function rasterize(elements, cx, cy) {
+function rasterize(elements, cx, cy, dem) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
   const x0 = cx * CHUNK, y0 = cy * CHUNK;
   const ops = [], coasts = [];
@@ -136,14 +147,20 @@ function rasterize(elements, cx, cy) {
     const pts = rings.map(r => r.map(p => { const q = toTile(p.lat, p.lon); return [q.x - x0, q.y - y0]; }));
     if (k.coast) coasts.push(...pts); else ops.push({ k, pts });
   }
-  if (!ops.length && !coasts.length) {
+  if (!ops.length && !coasts.length && !dem) {
     // データが何もない区画：三河湾側（南）なら海、それ以外は野原とみなす
-    g.fill(toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82 && elements.length === 0 ? C.A : C.G);
+    g.fill((toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82 && elements.length === 0 ? C.A : C.G) | (2 << 5));
     return g;
   }
   ops.sort((a, b) => a.k.p - b.k.p);
   let seaDone = false;
-  const sea = () => { if (!seaDone) { seaDone = true; if (coasts.length) seaFill(g, coasts); } };
+  const sea = () => {
+    if (seaDone) return;
+    seaDone = true;
+    // 標高データのない所（国土地理院の標高タイルで「データなし」）は海
+    if (dem) for (let i = 0; i < g.length; i++) if (g[i] === UNSET && Number.isNaN(dem[i])) g[i] = C.A;
+    if (coasts.length) seaFill(g, coasts);
+  };
   for (const o of ops) {
     if (o.k.p >= 18) sea();
     if (o.k.a) {
@@ -157,11 +174,73 @@ function rasterize(elements, cx, cy) {
   }
   sea();
   for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
+  if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
+  // 高い所の草地・森は丘や山に
+  for (let i = 0; i < g.length; i++) {
+    const h = dem[i];
+    if (!(h >= HILL_M)) continue;
+    const c = g[i];
+    if (h >= MOUNTAIN_M && (c === C.G || c === C.W || c === C.P)) g[i] = C.M;
+    else if (c === C.G || c === C.P) g[i] = C.K;
+  }
+  // 斜面の陰影（北西から光が当たる）。0暗い〜2平ら〜4明るい を上位ビットに入れる
+  const hAt = (x, y) => dem[Math.min(CHUNK - 1, Math.max(0, y)) * CHUNK + Math.min(CHUNK - 1, Math.max(0, x))];
+  for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
+    const i = y * CHUNK + x;
+    let sh = 2;
+    const a = hAt(x - 1, y - 1), b = hAt(x + 1, y + 1);
+    if (g[i] !== C.A && !Number.isNaN(a) && !Number.isNaN(b)) {
+      const sl = (b - a) / (2 * Math.SQRT2 * TILE_M);   // 南東へ上る斜面（北西向き）ほど明るい
+      sh = sl > 0.12 ? 4 : sl > 0.04 ? 3 : sl < -0.12 ? 0 : sl < -0.04 ? 1 : 2;
+    }
+    g[i] |= sh << 5;
+  }
   return g;
 }
 
+/* ---------- 標高（国土地理院 標高タイル dem_png、ズーム14＝約8m） ---------- */
+const DEM_Z = 14;
+const demCache = new Map();
+const merc = (lat, lng) => { const n = 256 * 2 ** DEM_Z, r = lat * Math.PI / 180; return { x: (lng + 180) / 360 * n, y: (1 - Math.log(Math.tan(r) + 1 / Math.cos(r)) / Math.PI) / 2 * n }; };
+function demTile(x, y) {
+  const k = x + '/' + y;
+  if (!demCache.has(k)) {
+    demCache.set(k, (async () => {
+      const res = await fetch(`https://cyberjapandata.gsi.go.jp/xyz/dem_png/${DEM_Z}/${x}/${y}.png`);
+      if (res.status === 404) return 'sea';        // タイルがない＝陸地がない（海）
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const bmp = await createImageBitmap(await res.blob(), { colorSpaceConversion: 'none', premultiplyAlpha: 'none' });
+      const c = document.createElement('canvas');
+      c.width = c.height = 256;
+      const x2 = c.getContext('2d', { willReadFrequently: true });
+      x2.drawImage(bmp, 0, 0);
+      const d = x2.getImageData(0, 0, 256, 256).data, h = new Float32Array(65536);
+      for (let i = 0; i < 65536; i++) {
+        const v = d[i * 4] * 65536 + d[i * 4 + 1] * 256 + d[i * 4 + 2];
+        h[i] = v === 8388608 ? NaN : (v < 8388608 ? v : v - 16777216) * 0.01;   // 2^23 は「データなし」
+      }
+      return h;
+    })().catch(e => { demCache.delete(k); throw e; }));
+  }
+  return demCache.get(k);
+}
+async function demFor(cx, cy) {
+  const pts = [], need = new Map();
+  for (let j = 0; j < CHUNK; j++) for (let i = 0; i < CHUNK; i++) {
+    const ll = toLatLng(cx * CHUNK + i + 0.5, cy * CHUNK + j + 0.5), m = merc(ll.lat, ll.lng);
+    const tx = Math.floor(m.x / 256), ty = Math.floor(m.y / 256);
+    pts.push([tx + '/' + ty, Math.min(255, Math.floor(m.x - tx * 256)) + Math.min(255, Math.floor(m.y - ty * 256)) * 256]);
+    need.set(tx + '/' + ty, [tx, ty]);
+  }
+  const got = new Map();
+  await Promise.all([...need].map(async ([k, [tx, ty]]) => got.set(k, await demTile(tx, ty))));
+  const h = new Float32Array(CHUNK * CHUNK);
+  pts.forEach(([k, off], i) => { const t = got.get(k); h[i] = t === 'sea' ? NaN : t[off]; });
+  return h;
+}
+
 /* ---------- 地図データの取得と保存 ---------- */
-const PX_KEY = 'nsg_px1_', PX_IDX = 'nsg_px1_idx', PX_DAYS = 30, PX_KEEP = 60;
+const PX_KEY = 'nsg_px2_', PX_IDX = 'nsg_px2_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
   get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
@@ -188,12 +267,13 @@ let pumping = false;
 const nb = G.CFG.nishioBounds;
 
 function chunkState(cx, cy) { const c = chunks.get(cx + '_' + cy); return c ? c.state : 'none'; }
-function codeAt(tx, ty) {
+function rawAt(tx, ty) {   // 下位5bit＝地形、上位＝陰影
   const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK);
   const c = chunks.get(cx + '_' + cy);
-  if (!c || !c.g) return C.X;
+  if (!c || !c.g) return C.X | (2 << 5);
   return c.g[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)];
 }
+const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
 
 function ensureChunk(cx, cy) {
   const k = cx + '_' + cy;
@@ -224,7 +304,7 @@ function chunkQuery(b) {
   wr["natural"~"^(water|wood|beach|sand|scrub|wetland)$"];
   wr["landuse"];
   wr["leisure"~"^(park|garden|pitch|playground|golf_course|recreation_ground|sports_centre)$"];
-  wr["amenity"~"^(school|parking|university|college|hospital|kindergarten)$"];
+  wr["amenity"~"^(school|parking|university|college|hospital|kindergarten|place_of_worship|grave_yard)$"];
 );
 out geom qt;`;
 }
@@ -241,8 +321,9 @@ async function pump() {
       const k = cx + '_' + cy;
       chunks.set(k, { state: 'loading' });
       try {
-        const json = await overpass(chunkQuery(chunkBox(cx, cy)));
-        const g = rasterize(json.elements || [], cx, cy);
+        // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
+        const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);
+        const g = rasterize(json.elements || [], cx, cy, dem);
         chunks.set(k, { state: 'ok', g });
         saveChunk(k, g);
       } catch (e) {
@@ -285,10 +366,46 @@ const grassBase = (px, r) => {
 };
 const TILE_ART = {
   [C.G]: grassBase,
-  [C.F]: (px, r) => {            // 田んぼ・畑
-    px('#8fbf45', 0, 0, 16, 16);
-    for (let y = 1; y < 16; y += 4) { px('#6d9a2c', 0, y, 16, 1); for (let x = (r() * 4) | 0; x < 16; x += 3 + ((r() * 3) | 0)) px('#b7d96a', x, y - 1); }
-    px('#7aa838', 0, 15, 16, 1);
+  [C.F]: (px, r) => {            // 田んぼ（苗の列と水の光）
+    px('#7fb84a', 0, 0, 16, 16);
+    for (let y = 1; y < 16; y += 3) for (let x = (y % 2) + 1; x < 16; x += 3) px('#5a9530', x, y, 1, 2);
+    for (let i = 0; i < 4; i++) px('#a8d8ff', (r() * 15) | 0, (r() * 15) | 0, 2, 1);
+    px('#6b5a3a', 0, 15, 16, 1); px('#6b5a3a', 15, 0, 1, 16);   // あぜ道
+  },
+  [C.V]: (px, r) => {            // 畑
+    px('#9a6b3f', 0, 0, 16, 16);
+    for (let y = 2; y < 16; y += 4) { px('#7a512c', 0, y + 1, 16, 1); for (let x = (r() * 3) | 0; x < 16; x += 3) px('#6ab04c', x, y, 1, 1); }
+  },
+  [C.E]: (px) => {               // 茶畑（丸く刈り込んだ茶の木の列）
+    px('#7a5a3a', 0, 0, 16, 16);
+    for (const y of [1, 9]) { px('#2f7a34', 1, y, 14, 6); px('#2f7a34', 0, y + 1, 16, 4); px('#56a64a', 2, y, 12, 1); px('#1f5a25', 1, y + 5, 14, 1); px('#78c060', 4, y + 1, 2, 1); px('#78c060', 10, y + 1, 2, 1); }
+  },
+  [C.N]: (px) => {               // ビニールハウス
+    px('#dfe9ee', 0, 0, 16, 16);
+    for (let x = 0; x < 16; x += 4) px('#b3c4cd', x, 0, 1, 16);
+    px('#ffffff', 1, 1, 14, 1); px('#8fa3ad', 0, 15, 16, 1);
+  },
+  [C.I]: (px, r) => { speckle(px, r, '#9aa0a3', ['#8b9194', '#a9afb2'], 10); px('#80868a', 0, 7, 16, 1); px('#80868a', 7, 0, 1, 16); },   // 工場の敷地
+  [C.J]: (px, r) => speckle(px, r, '#e4dfd2', ['#c9c2b0', '#f2eee4', '#b9b19d'], 30),   // 境内の砂利
+  [C.Y]: (px, r) => {            // 墓地
+    speckle(px, r, '#4a9a46', ['#3d863a'], 8);
+    for (const [a, b] of [[2, 3], [9, 2], [5, 9], [11, 10]]) { px('#a5a5a5', a, b, 3, 4); px('#d0d0d0', a, b, 3, 1); px('#5f5f5f', a, b + 4, 3, 1); }
+  },
+  [C.K]: (px, r) => {            // 丘
+    grassBase(px, r);
+    for (let y = 5; y <= 13; y++) { const w = Math.round(Math.sqrt(1 - ((y - 13) / 8) ** 2) * 7); px('#5fb853', 8 - w, y, w * 2, 1); }
+    px('#7fd06e', 5, 7, 4, 1); px('#7fd06e', 4, 8, 2, 1);
+    for (let y = 5; y <= 13; y++) { const w = Math.round(Math.sqrt(1 - ((y - 13) / 8) ** 2) * 7); px('#2a6f29', 8 - w - 1, y, 1, 1); px('#2a6f29', 8 + w, y, 1, 1); }
+    px('#2a6f29', 1, 14, 14, 1);
+  },
+  [C.M]: (px, r) => {            // 山
+    grassBase(px, r);
+    for (let y = 2; y <= 14; y++) {
+      const hw = Math.round((y - 2) * 7 / 12);
+      px('#b08a62', 8 - hw, y, hw, 1); px('#7a5c40', 8, y, hw + 1, 1);
+      px('#3a2a1a', 8 - hw - 1, y, 1, 1); px('#3a2a1a', 8 + hw + 1, y, 1, 1);
+    }
+    px('#3a2a1a', 7, 1, 2, 1); px('#d8c3a5', 7, 3, 1, 2); px('#3a2a1a', 1, 15, 15, 1);
   },
   [C.T]: (px, r) => speckle(px, r, '#cdbf9e', ['#b8aa88', '#ddd1b4'], 14),   // 町なかの地面
   [C.W]: (px, r) => {            // 森
@@ -326,6 +443,7 @@ const TILE_ART = {
   [C.D]: (px, r) => speckle(px, r, '#c9a66b', ['#b08a50', '#dcbd88'], 12),
   [C.X]: (px, r, f) => { px('#0d1418', 0, 0, 16, 16); px('#1a252b', (f * 8) % 16, 7, 2, 2); },
 };
+const SHADE = ['rgba(0,0,0,.32)', 'rgba(0,0,0,.16)', '', 'rgba(255,250,220,.12)', 'rgba(255,250,220,.24)'];
 const tiles = {};   // code → [variant][frame]
 for (const [code, draw] of Object.entries(TILE_ART)) {
   tiles[code] = [0, 1, 2].map(v => [makeTile(draw, code * 97 + v * 31 + 7, 0), makeTile(draw, code * 97 + v * 31 + 7, 1)]);
@@ -440,9 +558,19 @@ function frame(now) {
   const ox = Math.round(w / 2 - cam.x * T), oy = Math.round(h / 2 - cam.y * T);
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
-    const code = codeAt(tx, ty);
+    const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
     const v = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
-    ctx.drawImage(tiles[code][v % 3][code === C.A || code === C.X ? f : 0], ox + tx * T, oy + ty * T, T, T);
+    const X = ox + tx * T, Y = oy + ty * T;
+    ctx.drawImage(tiles[code][v % 3][code === C.A || code === C.X ? f : 0], X, Y, T, T);
+    if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
+    if (code === C.A) {          // 岸に白い波打ち際
+      const u = Math.max(1, Math.round(T / 16)), land = c => c !== C.A && c !== C.X;
+      ctx.fillStyle = f ? '#e8f2ff' : '#cfe2ff';
+      if (land(codeAt(tx, ty - 1))) ctx.fillRect(X, Y, T, u);
+      if (land(codeAt(tx, ty + 1))) ctx.fillRect(X, Y + T - u, T, u);
+      if (land(codeAt(tx - 1, ty))) ctx.fillRect(X, Y, u, T);
+      if (land(codeAt(tx + 1, ty))) ctx.fillRect(X + T - u, Y, u, T);
+    }
   }
 
   // スポット
@@ -566,5 +694,5 @@ try { initial = localStorage.getItem('nsg_view') || 'map'; } catch (e) { /* noop
 if (initial === 'px') setActive(true);
 
 // テスト用
-window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, C, CHUNK, chunks, setActive };
+window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc };
 })();

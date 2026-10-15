@@ -241,21 +241,25 @@ async function doLoadSpots(force) {
     if (json && Array.isArray(json.spots)) config = json.spots;
   } catch (e) { /* 注目スポットなしで続行 */ }
 
+  // 取得を待つ間も、位置が確かな注目スポット（概算でないもの）は先に見せる
+  if (!spots.length) { spots = buildSpots(config.filter(c => c && !c.approx), []); renderMarkers(); refreshNearby(); }
+
+  let ok = false;
   const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
   const stored = store.get(OSM_KEY, null);
   const cached = stored && stored.q === query ? stored : null;   // 注目スポットの名前が変わったら取り直す
   let items = null;
   if (!force && cached && Date.now() - cached.t < CFG.osmCacheDays * 864e5) {
-    items = cached.items; spotMeta.osmAt = cached.t; spotMeta.osmOk = true;
+    items = cached.items; spotMeta.osmAt = cached.t; spotMeta.osmOk = true; ok = true;
   } else {
     try {
       items = await fetchOverpass(query);
-      spotMeta.osmAt = Date.now(); spotMeta.osmOk = true;
+      spotMeta.osmAt = Date.now(); spotMeta.osmOk = true; ok = true;
       if (!store.set(OSM_KEY, { t: spotMeta.osmAt, q: query, items })) store.del(OSM_KEY);
     } catch (e) {
       const old = cached || stored;   // 取得できなければ古いキャッシュでも使う
       if (old) { items = old.items; spotMeta.osmAt = old.t; spotMeta.osmOk = true; }
-      else toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
+      else if (!force) toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
     }
   }
   spots = buildSpots(config, items || []);
@@ -267,6 +271,7 @@ async function doLoadSpots(force) {
   renderMarkers();
   refreshNearby();
   renderSpotInfo();
+  return ok;
 }
 
 const iconOf = s => s.featured ? s.icon : (CATS[s.cat] || CATS.sight).i;
@@ -303,7 +308,8 @@ function popupHtml(s) {
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
-    ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}</div>`;
+    ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
+    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（デモ）</button>` : ''}</div>`;
 }
 
 function renderMarkers() {
@@ -329,6 +335,7 @@ function renderMarkers() {
   }
 }
 map.on('moveend zoomend', renderMarkers);
+map.on('zoomend', () => refreshNearby());
 
 /* ---------- 現在地 ---------- */
 let me = null;          // {lat,lng,acc,t}
@@ -339,7 +346,8 @@ function placeMe() {
   if (!me) return;
   const ll = [me.lat, me.lng];
   if (!meMarker) {
-    meMarker = L.marker(ll, { icon: L.divIcon({ className: '', html: '<div class="me"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
+    if (follow) map.setView(ll, Math.max(map.getZoom(), 17), { animate: false });
+    meMarker = L.marker(ll, { icon: L.divIcon({ className: 'me-wrap', html: '<div class="me"></div>', iconSize: [22, 22], iconAnchor: [11, 11] }),
       zIndexOffset: 1000, interactive: false, keyboard: false }).addTo(map);
     accCircle = L.circle(ll, { radius: me.acc || 0, color: '#2a6fdb', weight: 0, fillOpacity: 0.08, interactive: false }).addTo(map);
   }
@@ -416,7 +424,7 @@ function addWalk(d) {
 }
 
 /* ---------- ポイント ---------- */
-const needFor = lv => 50 * (lv - 1) * lv;     // Lv2:100 Lv3:300 Lv4:600 Lv5:1000 …
+const needFor = lv => 25 * (lv - 1) * lv;     // Lv2:50 Lv5:500 Lv10:2250 Lv20:9500 Lv30:21750
 const levelOf = total => { let lv = 1; while (total >= needFor(lv + 1)) lv++; return lv; };
 const titleOf = lv => TITLES.filter(([l]) => lv >= l).pop()[1];
 
@@ -477,6 +485,7 @@ function refreshNearby() {
   if (!me) {
     btn.hidden = true;
     showRing(null);
+    showGuide(null);
     setStatus(gpsError || (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'));
     return;
   }
@@ -490,12 +499,17 @@ function refreshNearby() {
   }
   selected = best ? best.s : null;
   showRing(selected || nearest);
+  showGuide(selected ? null : nearest);
   if (selected) {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);
     $('spinIco').textContent = iconOf(selected);
     $('spinName').textContent = selected.name;
-    $('spinSub').textContent = `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
+    const lock = demo ? 0 : vehicleUntil - Date.now();
+    const why = lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
+      : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
+    btn.disabled = !!why;
+    $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
   } else {
     btn.hidden = true;
   }
@@ -511,6 +525,7 @@ function refreshNearby() {
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
+  if (map.getZoom() < 14) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
   const wd = S.walkDay.date === ymd() ? S.walkDay.pts : 0;
   msgs.push(`👣 今日の歩きポイント ${wd}/${CFG.walkDailyCap}pt`);
   setStatus(msgs.join('<br/>'), true);
@@ -522,6 +537,15 @@ function showRing(s) {
   const color = s.featured ? '#e3a42b' : '#2a6fdb';
   if (!spotRing) spotRing = L.circle([s.lat, s.lng], { weight: 2, opacity: 0.7, dashArray: '6 6', fillOpacity: 0.08, interactive: false }).addTo(map);
   spotRing.setLatLng([s.lat, s.lng]).setRadius(reachOf(s)).setStyle({ color, fillColor: color });
+}
+
+// 現在地からいちばん近いスポットへ点線を引く（方向の目安）
+let guideLine = null;
+function showGuide(s) {
+  if (!s || !me) { if (guideLine) { guideLine.remove(); guideLine = null; } return; }
+  const pts = [[me.lat, me.lng], [s.lat, s.lng]];
+  if (!guideLine) guideLine = L.polyline(pts, { color: '#5d6b60', weight: 2, opacity: 0.6, dashArray: '2 6', interactive: false }).addTo(map);
+  else guideLine.setLatLngs(pts);
 }
 
 /* ---------- バッジ ---------- */
@@ -577,7 +601,7 @@ function showReward(total, name, lines, lvUp) {
   const el = $('reward');
   el.innerHTML = `<div class="rw"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
-    ${lvUp ? `<div class="lvup">🎉 レベルアップ！ Lv${lvUp}「${esc(titleOf(lvUp))}」</div>` : ''}</div>`;
+    ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
   clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, 2700);
 }
@@ -626,7 +650,7 @@ function featRange() {
 
 function renderSpotInfo() {
   const n = spots.length;
-  $('spotInfo').textContent = spotMeta.osmOk
+  $('spotInfo').textContent = spotsLoading ? '読み込んでいます…' : spotMeta.osmOk
     ? `${n.toLocaleString()}か所（注目${spotMeta.featured}）・地図データ取得 ${fmtTime(spotMeta.osmAt)}`
     : `${n}か所（注目スポットのみ。OpenStreetMapを取得できませんでした）`;
   $('rules').innerHTML = [
@@ -635,7 +659,7 @@ function renderSpotInfo() {
     `はじめての訪問 +${CFG.pts.first}pt（注目スポットは +${CFG.pts.firstFeatured}pt）`,
     `その日はじめてのチェックイン +${CFG.pts.daily}pt、連続日数ごとに +${CFG.pts.streakStep}pt（最大 +${CFG.pts.streakStep * CFG.pts.streakMax}pt）`,
     `同じスポットは${CFG.cooldownMin}分ごとにチェックインできます`,
-    `${CFG.walkUnitM}m 歩くごとに ${CFG.walkUnitPts}pt（1日 ${CFG.walkDailyCap}ptまで）`,
+    `${CFG.walkUnitM}m 歩くごとに ${CFG.walkUnitPts}pt（1日 ${CFG.walkDailyCap}ptまで）。数えるのは、このページを開いて画面がついている間に歩いた距離だけです（画面を消す・ほかのアプリを開くと止まります）`,
     '乗り物での移動（時速約30km以上）中は、チェックインと歩数ポイントが止まります',
   ].map(t => `<li>${esc(t)}</li>`).join('');
 }
@@ -674,7 +698,7 @@ function setMode(isDemo) {
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
-  me = null; lastWalk = null; vehicleUntil = 0;
+  me = null; lastWalk = null;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
   if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
@@ -693,12 +717,23 @@ map.on('click', e => {
   follow = false;
   onFix(e.latlng.lat, e.latlng.lng, 5, Date.now());
 });
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-move]');
+  const s = b && demo && spots.find(x => x.id === b.dataset.move);
+  if (!s) return;
+  map.closePopup();
+  follow = false;
+  onFix(s.lat, s.lng, 5, Date.now());
+});
 $('demoToggle').addEventListener('change', e => { setMode(e.target.checked); toast(demo ? 'デモモードにしました（地図タップで移動）' : '本番モードにしました'); });
 
 $('reloadSpots').addEventListener('click', async e => {
   const btn = e.currentTarget;
   btn.disabled = true;
-  try { await loadSpots(true); toast(`スポットを更新しました（${spots.length}か所）`); }
+  try {
+    const ok = await loadSpots(true);
+    toast(ok ? `スポットを更新しました（${spots.length}か所）` : 'スポット情報を取得できませんでした。通信環境を確認して、時間をおいてお試しください。');
+  }
   finally { btn.disabled = false; }
 });
 $('resetBtn').addEventListener('click', () => {
@@ -721,7 +756,7 @@ $('demoBtn').addEventListener('click', () => begin(true));
 renderHeader();
 loadSpots(false);
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
-setInterval(() => { renderMarkers(); refreshNearby(); }, 20000);
+setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); } });
 
 // テスト・デバッグ用

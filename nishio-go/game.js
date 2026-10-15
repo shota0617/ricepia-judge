@@ -25,7 +25,9 @@ const CFG = {
   overpass: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
 };
 
-const OSM_QUERY = `[out:json][timeout:60];
+// 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
+const reEsc = t => t.replace(/[.*+?^${}()|[\]\\"']/g, '.');   // 正規表現の記号は「任意の1文字」に（取得側は広め、照合はJSで厳密に）
+const buildQuery = names => `[out:json][timeout:60];
 area["name"="西尾市"]["admin_level"="7"]->.a;
 (
   nwr["amenity"="place_of_worship"]["name"](area.a);
@@ -34,7 +36,8 @@ area["name"="西尾市"]["admin_level"="7"]->.a;
   nwr["leisure"="park"]["name"](area.a);
   nwr["amenity"="library"]["name"](area.a);
   nwr["railway"="station"]["name"](area.a);
-  nwr["natural"="beach"]["name"](area.a);
+  nwr["natural"="beach"]["name"](area.a);${names.length ? `
+  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : ''}
 );
 out center tags;`;
 
@@ -132,16 +135,16 @@ function catOf(t) {
   if (t.amenity === 'library') return 'library';
   if (t.railway === 'station') return 'station';
   if (t.natural === 'beach') return 'beach';
-  return 'sight';
+  return 'other';   // 名前検索でだけ見つかったもの（ふつうのスポットにはしない）
 }
 
-async function fetchOverpass() {
+async function fetchOverpass(query) {
   let lastErr;
   for (const url of CFG.overpass) {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 45000);
     try {
-      const res = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(OSM_QUERY),
+      const res = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(query),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctl.signal });
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const json = await res.json();
@@ -162,6 +165,8 @@ async function fetchOverpass() {
   throw lastErr || new Error('取得失敗');
 }
 
+function matchesOf(c) { return Array.isArray(c.match) ? c.match.filter(m => typeof m === 'string' && m) : []; }
+
 function nameMatches(osmName, m) {
   return m.startsWith('=') ? osmName === m.slice(1) : osmName.includes(m);
 }
@@ -169,24 +174,33 @@ function nameMatches(osmName, m) {
 function buildSpots(config, osmItems) {
   const osm = osmItems.map(([id, name, cat, lat, lng, raw]) => ({ id, name, raw: raw || name, cat, lat, lng }));
   const used = new Set();
-  // 座標が未入力のスポットは、入力されるまで地図に出さない
   const num = (v, max) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : undefined; };
-  const featured = config.filter(c => c && c.id && c.name && Number.isFinite(c.lat) && Number.isFinite(c.lng)).map(c => {
+  const featured = [];
+  for (const c of config) {
+    if (!c || !c.id || !c.name) continue;
+    const hasPos = Number.isFinite(c.lat) && Number.isFinite(c.lng);
     const s = { id: 'f-' + c.id, name: String(c.name), cat: 'featured', kind: CATS[c.cat] ? c.cat : 'featured',
-      icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: !!c.approx,
+      icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: hasPos && !!c.approx,
       points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '' };
-    const match = Array.isArray(c.match) ? c.match.filter(m => typeof m === 'string' && m) : [];
-    if (match.length) {
-      let best = null, bestD = Infinity;
-      for (const o of osm) {
-        if (used.has(o.id) || !match.some(m => nameMatches(o.raw, m))) continue;
-        const d = dist(s, o);
-        if (d < CFG.matchRadius && d < bestD) { best = o; bestD = d; }
-      }
-      if (best) { s.lat = best.lat; s.lng = best.lng; s.approx = false; if (s.kind === 'featured') s.kind = best.cat; used.add(best.id); }
+    const match = matchesOf(c);
+    const cands = match.length ? osm.filter(o => !used.has(o.id) && match.some(m => nameMatches(o.raw, m))) : [];
+    let best = null;
+    if (hasPos) {
+      // 座標は目安。近くで名前が一致するものがあれば、その正確な位置を使う
+      let bestD = CFG.matchRadius;
+      for (const o of cands) { const d = dist(s, o); if (d < bestD) { best = o; bestD = d; } }
+    } else if (cands.length && cands.every(o => dist(o, cands[0]) < 500)) {
+      best = cands[0];   // 座標なし：名前が一致する場所が1か所に絞れたときだけ使う（同名が離れて複数あれば出さない）
     }
-    return s;
-  });
+    if (best) {
+      s.lat = best.lat; s.lng = best.lng; s.approx = false;
+      if (s.kind === 'featured' && best.cat !== 'other') s.kind = best.cat;
+      cands.filter(o => dist(o, best) < 500).forEach(o => used.add(o.id));
+    } else if (!hasPos) {
+      continue;          // 位置が分からないスポットは地図に出さない
+    }
+    featured.push(s);
+  }
   // 注目スポットのすぐ近く（同じ場所の重複）や、同名で近いものは除く
   const kept = [];
   const grid = new Map();
@@ -199,7 +213,7 @@ function buildSpots(config, osmItems) {
   const add = p => { kept.push(p); const k = cell(p); if (!grid.has(k)) grid.set(k, []); grid.get(k).push(p); };
   featured.forEach(add);
   for (const o of osm) {
-    if (used.has(o.id)) continue;
+    if (used.has(o.id) || o.cat === 'other') continue;
     const clash = neighbors(o).some(k => {
       const d = dist(k, o);
       return d < 20 || (k.featured && d < 30) || (k.name === o.name && d < 200);
@@ -227,17 +241,20 @@ async function doLoadSpots(force) {
     if (json && Array.isArray(json.spots)) config = json.spots;
   } catch (e) { /* 注目スポットなしで続行 */ }
 
-  const cached = store.get(OSM_KEY, null);
+  const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
+  const stored = store.get(OSM_KEY, null);
+  const cached = stored && stored.q === query ? stored : null;   // 注目スポットの名前が変わったら取り直す
   let items = null;
   if (!force && cached && Date.now() - cached.t < CFG.osmCacheDays * 864e5) {
     items = cached.items; spotMeta.osmAt = cached.t; spotMeta.osmOk = true;
   } else {
     try {
-      items = await fetchOverpass();
+      items = await fetchOverpass(query);
       spotMeta.osmAt = Date.now(); spotMeta.osmOk = true;
-      if (!store.set(OSM_KEY, { t: spotMeta.osmAt, items })) store.del(OSM_KEY);
+      if (!store.set(OSM_KEY, { t: spotMeta.osmAt, q: query, items })) store.del(OSM_KEY);
     } catch (e) {
-      if (cached) { items = cached.items; spotMeta.osmAt = cached.t; spotMeta.osmOk = true; }
+      const old = cached || stored;   // 取得できなければ古いキャッシュでも使う
+      if (old) { items = old.items; spotMeta.osmAt = old.t; spotMeta.osmOk = true; }
       else toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
     }
   }

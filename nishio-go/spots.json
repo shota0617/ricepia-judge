@@ -1,5 +1,5 @@
 {
-  "_説明": "注目スポット（ボーナス対象）の一覧。match に書いた名前を OpenStreetMap のデータから探し、見つかればその正確な位置を使います（approx の座標は検索の目安）。見つからない場合は approx の座標を使い、誤差を見込んでチェックイン範囲を広げます。正確な位置が分かっているスポット（お店など）は approx を false にしてください。lat / lng が null のスポットは地図に表示されません。reach（m）を書くと、そのスポットだけチェックインできる距離を変えられます。match の先頭に = を付けると完全一致で探します。 cat（shrine / temple / park / castle / museum / station など）を書くと、神社めぐり等のバッジに数えられます。",
+  "_説明": "注目スポット（ボーナス対象）の一覧。位置は OpenStreetMap から match の名前で探します（先頭に = を付けると完全一致）。lat / lng を書いた場合はその近く（4km以内）で名前が一致する場所を使い、見つからなければ書いた座標のまま使います（approx: true なら誤差を見込んでチェックイン範囲を120mに）。lat / lng が null の場合は名前だけで探し、1か所に絞れたときだけ地図に出します（見つからない・同名が離れて複数ある場合は表示されません）。お店など正確な位置が分かっている場所は lat / lng を書いて approx を false に。reach（m）でチェックインできる距離、cat（shrine / temple / park / castle / museum / station / beach など）で神社めぐり等のバッジの種類を指定できます。",
   "spots": [
     {
       "id": "kondo-beikoku",
@@ -122,6 +122,241 @@
       "points": 40,
       "desc": "吉良氏ゆかりの禅寺。",
       "cat": "temple"
+    },
+    {
+      "id": "konoe-tei",
+      "name": "旧近衛邸",
+      "icon": "🍵",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "旧近衛邸"
+      ],
+      "points": 30,
+      "desc": "西尾市歴史公園の中にある邸宅。お抹茶で一服できます。"
+    },
+    {
+      "id": "shokoso",
+      "name": "尚古荘",
+      "icon": "🌿",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "尚古荘"
+      ],
+      "points": 30,
+      "desc": "西尾城跡のそばにある庭園。"
+    },
+    {
+      "id": "wakuwaku",
+      "name": "抹茶ミュージアム 西条園 和く和く",
+      "icon": "🍵",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "和く和く"
+      ],
+      "points": 40,
+      "desc": "西尾の抹茶づくりを見て学べる施設。"
+    },
+    {
+      "id": "yatsuomote",
+      "name": "八ツ面山",
+      "icon": "⛰️",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "八ツ面山"
+      ],
+      "points": 30,
+      "desc": "市街地から近い小さな山。",
+      "reach": 150
+    },
+    {
+      "id": "kumaku-jinja",
+      "name": "久麻久神社",
+      "icon": "⛩️",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "久麻久神社"
+      ],
+      "points": 30,
+      "desc": "西尾の古い神社。",
+      "cat": "shrine"
+    },
+    {
+      "id": "michinoeki-okanoyama",
+      "name": "道の駅にしお岡ノ山",
+      "icon": "🚗",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "岡ノ山"
+      ],
+      "points": 30,
+      "desc": "地元の野菜などが買える道の駅。",
+      "reach": 100
+    },
+    {
+      "id": "ikimono-sato",
+      "name": "西尾いきものふれあいの里",
+      "icon": "🦋",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "いきものふれあいの里"
+      ],
+      "points": 40,
+      "desc": "里山の自然や生きものにふれられる施設。",
+      "cat": "park",
+      "reach": 150
+    },
+    {
+      "id": "glass-museum",
+      "name": "三河工芸ガラス美術館",
+      "icon": "🔮",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "三河工芸ガラス美術館"
+      ],
+      "points": 40,
+      "desc": "ガラスアートの美術館。",
+      "cat": "museum"
+    },
+    {
+      "id": "sakushima",
+      "name": "佐久島",
+      "icon": "🏝️",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "=佐久島"
+      ],
+      "points": 100,
+      "desc": "三河湾に浮かぶアートの島。一色港から船で約20分。島に渡ったらチェックイン！",
+      "reach": 500
+    },
+    {
+      "id": "isshiki-sakana",
+      "name": "一色さかな広場",
+      "icon": "🐟",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "一色さかな広場"
+      ],
+      "points": 40,
+      "desc": "うなぎや三河湾の海の幸がそろう市場。",
+      "reach": 100
+    },
+    {
+      "id": "gentokuji",
+      "name": "源徳寺（吉良）",
+      "icon": "🪷",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "源徳寺"
+      ],
+      "points": 30,
+      "desc": "吉良の仁吉ゆかりのお寺。",
+      "cat": "temple"
+    },
+    {
+      "id": "kira-waikiki",
+      "name": "吉良ワイキキビーチ（宮崎海水浴場）",
+      "icon": "🏖️",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "吉良ワイキキビーチ",
+        "宮崎海水浴場"
+      ],
+      "points": 40,
+      "desc": "吉良の海水浴場。",
+      "cat": "beach",
+      "reach": 150
+    },
+    {
+      "id": "kira-onsen",
+      "name": "吉良温泉",
+      "icon": "♨️",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "=吉良温泉"
+      ],
+      "points": 30,
+      "desc": "三河湾を望む温泉地。",
+      "reach": 200
+    },
+    {
+      "id": "shio-no-sato",
+      "name": "吉良饗庭塩の里",
+      "icon": "🧂",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "塩の里"
+      ],
+      "points": 30,
+      "desc": "昔ながらの塩づくりを伝える施設。"
+    },
+    {
+      "id": "sangane-kannon",
+      "name": "三ヶ根観音",
+      "icon": "🙏",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "三ヶ根観音",
+        "三ケ根観音"
+      ],
+      "points": 50,
+      "desc": "三ヶ根山の観音さま。三河湾の眺めも楽しめます。",
+      "reach": 100
+    },
+    {
+      "id": "terabe-jo",
+      "name": "寺部城址（幡豆）",
+      "icon": "🏯",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "寺部城"
+      ],
+      "points": 40,
+      "desc": "戦国時代、幡豆小笠原氏の居城の跡。",
+      "cat": "castle"
+    },
+    {
+      "id": "hazu-jinja",
+      "name": "幡頭神社",
+      "icon": "⛩️",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "幡頭神社"
+      ],
+      "points": 30,
+      "desc": "幡豆の古い神社。",
+      "cat": "shrine"
+    },
+    {
+      "id": "aichi-kodomo",
+      "name": "愛知こどもの国",
+      "icon": "🎡",
+      "lat": null,
+      "lng": null,
+      "match": [
+        "愛知こどもの国"
+      ],
+      "points": 40,
+      "desc": "幡豆の丘にある大きな公園。",
+      "cat": "park",
+      "reach": 200
     }
   ]
 }

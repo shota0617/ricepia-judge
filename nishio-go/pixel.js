@@ -407,7 +407,7 @@ async function overpass(query) {
   let last;
   for (const url of G.CFG.overpass) {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 90000);
+    const timer = setTimeout(() => ctl.abort(), BAKE ? 200000 : 90000);
     try {
       const res = await fetch(url, { method: 'POST', body: 'data=' + encodeURIComponent(query),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, signal: ctl.signal });
@@ -421,12 +421,16 @@ async function overpass(query) {
   throw last || new Error('取得失敗');
 }
 
-/* ---------- 西尾市全体のドット絵マップ（せかいちず）：1マス＝150m ---------- */
-const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 150;   // 西尾市と周り（碧南・安城・幸田・蒲郡の一部）
+/* ---------- 西尾市全体のドット絵マップ（せかいちず）：1マス＝100m ----------
+ * ふだんは GitHub Actions で実際の地図データ（OpenStreetMap・地理院の標高）から作っておいた nishio-go/world.json を読む。
+ * 読めないときだけ、ブラウザで地図データを取って作る（軽い問い合わせだけ）。
+ * NSG_BAKE（tools/bake-world.js）のときは、田んぼ・茶畑・工場・公園なども取って細かく作る */
+const BAKE = !!window.NSG_BAKE;
+const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 100;   // 西尾市と周り（碧南・安城・幸田・蒲郡の一部）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
-const WORLD_KEY = 'nsg_world4';
+const WORLD_KEY = 'nsg_world5', WORLD_FILE = 'nishio-go/world.json';
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
@@ -447,7 +451,7 @@ function makeWorldImg() {
 
 // 地図データは、軽い「名前」の問い合わせと、範囲を4×4に分けた「線と面」の問い合わせに分けて取る
 // （市全体を1回で取ると、無料の Overpass サーバーでは時間切れになるため）。届いた所から順に地図に反映する
-const WSPLIT = 4;
+const WSPLIT = BAKE ? 8 : 4;
 function worldNamesQuery() {
   return `[out:json][timeout:60][bbox:${WB.s},${WB.w},${WB.n},${WB.e}];
 node["place"~"^(city|town|village|suburb)$"]["name"];
@@ -462,14 +466,20 @@ nwr["shop"~"^(mall|department_store)$"];
 out center qt;`;
 }
 function worldPartQuery(s, w, n, e) {
-  return `[out:json][timeout:90][bbox:${s.toFixed(4)},${w.toFixed(4)},${n.toFixed(4)},${e.toFixed(4)}];
+  const rich = BAKE ? `
+  wr["natural"="water"];
+  wr["natural"~"^(beach|sand|wetland|scrub)$"];
+  wr["landuse"~"^(farmland|paddy|orchard|vineyard|plant_nursery|greenhouse_horticulture|meadow|grass|recreation_ground|cemetery|religious|aquaculture|salt_pond|reservoir|basin)$"];
+  wr["leisure"~"^(park|golf_course|pitch|sports_centre|stadium|nature_reserve)$"];
+  wr["amenity"~"^(school|university|college|hospital|place_of_worship|grave_yard)$"];` : '';
+  return `[out:json][timeout:${BAKE ? 180 : 90}][bbox:${s.toFixed(4)},${w.toFixed(4)},${n.toFixed(4)},${e.toFixed(4)}];
 (
   way["waterway"~"^(river|canal)$"];
   wr["natural"="water"]["water"~"^(river|lake|reservoir|pond|canal)$"];
   way["railway"="rail"];
   way["highway"~"^(motorway|trunk|primary|secondary|tertiary)$"];
   wr["natural"="wood"];
-  wr["landuse"~"^(forest|residential|commercial|retail|industrial)$"];
+  wr["landuse"~"^(forest|residential|commercial|retail|industrial)$"];${rich}
 );
 out geom qt;`;
 }
@@ -499,21 +509,20 @@ function addWorldFeatures(elements, L) {
     if (t.waterway) L.lines.push([pts, C.A, 30]);
     else if (t.railway) L.lines.push([pts, C.L, 40]);
     else if (t.highway) L.lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
-    else if (t.natural === 'water') fillPoly(L.water, pts, 1, WW, WH);
-    else if (t.natural === 'wood' || t.landuse === 'forest') fillPoly(L.wood, pts, 1, WW, WH);
-    else if (t.landuse) fillPoly(L.town, pts, 1, WW, WH);
+    else {   // 面は歩く地図と同じ分け方（田んぼ・茶畑・工場・境内・墓地・公園…）。重なりは優先度の高いものを上に
+      const k = classify(t, true);
+      if (k && k.a && k.c !== C.B) L.areas.push([pts, k.c, k.p]);
+    }
   }
 }
 // 標高から作った下地（海・山・丘・平地=UNSET）に、地図データの面と線を重ねる
 function combineWorld(base, L) {
-  const g = base.slice();
+  const g = base.slice(), ag = new Uint8Array(g.length).fill(UNSET);
+  L.areas.slice().sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => fillPoly(ag, pts, code, WW, WH));
   for (let i = 0; i < g.length; i++) {
-    const c = g[i];
-    if (L.water[i]) g[i] = C.A;
-    else if (c === C.A && (L.wood[i] || L.town[i])) g[i] = L.wood[i] ? C.W : C.T;   // 地図データで森や町なみがある所は陸
-    else if (c === C.A || c === C.M) continue;
-    else if (L.wood[i]) g[i] = C.W;
-    else if (L.town[i] && c === UNSET) g[i] = C.T;
+    const c = g[i], a = ag[i];
+    if (a === UNSET || c === C.M) continue;   // 山はそのまま
+    g[i] = a;   // 海でも地図データで田畑・町なみなどがある所は陸（埋め立て地）。丘も土地利用で塗る
   }
   const keepSeaMt = new Set([C.A, C.M]), keepMt = new Set([C.M]);
   L.lines.slice().sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => pts.forEach(line => strokeLine(g, line, code, 1, null, WW, WH, code === C.A ? keepMt : keepSeaMt)));
@@ -529,6 +538,17 @@ async function buildWorld(force) {
     world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
   }
   worldState = 'building';
+  if (!BAKE) {   // 用意しておいた地図（実際の地図データから作ったもの）
+    try {
+      const r = await fetch(WORLD_FILE, { cache: 'no-cache' });
+      const b = r.ok ? await r.json() : null;
+      if (b && b.w === WW && b.h === WH && typeof b.d === 'string' && b.d.length === WW * WH) {
+        world = dec(b.d); worldPois = b.p || []; worldLabels = b.l || []; makeWorldImg(); worldState = 'ok';
+        if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days: 7 })) store.del(WORLD_KEY);
+        return;
+      }
+    } catch (e) { /* なければブラウザで作る */ }
+  }
   try {
     const N = WW * WH, base = new Uint8Array(N).fill(UNSET);
     // 1) 標高（ズーム12＝約31m）から海・平地・丘・山。1マスに5点ずつ調べる
@@ -555,7 +575,7 @@ async function buildWorld(force) {
       if (na >= 3) base[i] = C.A;
       else if (n) { const h = sum / n; base[i] = h >= MOUNTAIN_M ? C.M : h >= HILL_M ? C.K : UNSET; }
     }
-    const L = { water: new Uint8Array(N), wood: new Uint8Array(N), town: new Uint8Array(N), lines: [] };
+    const L = { areas: [], lines: [] };
     world = combineWorld(base, L); makeWorldImg();
     worldState = 'enriching';   // まず地形を見せて、地図データは届いた所から足していく
     // 2) 地名・駅名・大きな建物（軽い）
@@ -927,7 +947,7 @@ function poiHtml(p) {
 }
 
 /* ---------- せかいちずの表示 ---------- */
-let worldMode = false, wcam = null, wscale = 2;
+let worldMode = false, wcam = null, wscale = 2, wcamOnMe = false;   // wcamOnMe：まだ現在地が分からないうちに開いた（分かったら主人公へ寄せる）
 const WSIZES = [2, 3, 4, 6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）。6以下は色のブロック、10以上はドット絵タイル
 // 地図データに地名がないときの予備と、海の名前
 const AREA_LABELS = [['西尾', 34.872, 137.058, 4], ['一色', 34.802, 137.028, 3], ['吉良', 34.818, 137.078, 3], ['幡豆', 34.800, 137.138, 3], ['佐久島', 34.733, 137.040, 3]];
@@ -935,12 +955,13 @@ const SEA_LABELS = [['三河湾', 34.752, 137.105, 4]];
 const wT = dpr => Math.round(WSIZES[wscale] * dpr);
 function worldCamStart() {
   const me = G.me, nb2 = G.CFG.nishioBounds;
+  wcamOnMe = !me;
   if (me && me.lat > nb2[0][0] && me.lat < nb2[1][0] && me.lng > nb2[0][1] && me.lng < nb2[1][1]) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
 function drawWorld(now, w, h, dpr) {
   const T = wT(dpr), f = Math.floor(now / 600) % 2;
-  if (!wcam) wcam = worldCamStart();
+  if (!wcam || (wcamOnMe && G.me)) wcam = worldCamStart();
   wcam.x = Math.min(WW, Math.max(0, wcam.x)); wcam.y = Math.min(WH, Math.max(0, wcam.y));
   ctx.imageSmoothingEnabled = false;
   const ox = Math.round(w / 2 - wcam.x * T), oy = Math.round(h / 2 - wcam.y * T);
@@ -1045,7 +1066,7 @@ cv.addEventListener('pointerdown', e => { if (!worldMode) return; drag = { x: e.
 cv.addEventListener('pointermove', e => {
   if (!worldMode || !drag) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-  if (Math.abs(dx) + Math.abs(dy) > 4) dragMoved = true;
+  if (Math.abs(dx) + Math.abs(dy) > 4) { dragMoved = true; wcamOnMe = false; }
   if (!dragMoved) return;
   const T = WSIZES[wscale];
   wcam.x -= dx / T; wcam.y -= dy / T; drag = { x: e.clientX, y: e.clientY };

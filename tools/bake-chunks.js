@@ -46,10 +46,23 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         let json;
         try { json = await P.overpass(P.chunkQuery(b)); } catch (e) { return { error: e.message }; }
         const els = json.elements || [], out = [];
+        // 海岸線は「その区画に重なるもの」だけを渡す（1区画ずつ問い合わせたときと同じにする）。
+        // ほかの区画の海岸線が混ざると、rasterize() が「海岸線のある区画」とみなして、海だけの区画を陸にしてしまう
+        const isCoast = el => el.tags && el.tags.natural === 'coastline';
+        const crosses = (el, bx, pad) => (el.geometry || []).some((q, i, a) => {
+          const r = a[i + 1] || q;
+          return Math.max(q.lat, r.lat) >= bx.s - pad && Math.min(q.lat, r.lat) <= bx.n + pad && Math.max(q.lon, r.lon) >= bx.w - pad && Math.min(q.lon, r.lon) <= bx.e + pad;
+        });
         for (const [cx, cy] of cs) {
-          const dem = await P.demFor(cx, cy).catch(() => null);
+          let dem = null;
+          for (let t = 0; t < 3 && !(dem && !dem.partial); t++) {   // 標高タイルの一時的な失敗は取り直す
+            if (t) await new Promise(r => setTimeout(r, 5000));
+            dem = await P.demFor(cx, cy).catch(() => null);
+          }
           if (!dem || dem.partial) { out.push({ k: cx + '_' + cy, skip: 'dem' }); continue; }
-          const g = P.rasterize(els, cx, cy, dem.h);
+          const bx = P.chunkBox(cx, cy);
+          const mine = els.filter(el => !isCoast(el) || crosses(el, bx, 0.0005));
+          const g = P.rasterize(mine, cx, cy, dem.h);
           let s = '', allSea = true;
           for (let i = 0; i < g.length;) {
             const v = g[i]; let j = i + 1;
@@ -64,9 +77,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
       }, cs);
       if (res.error) { console.log(`  ブロック ${bk} ${tries}回目 失敗: ${res.error}`); res = null; await sleep(30000 * tries); }
     }
-    if (!res) { failed += cs.length; continue; }
+    // 作れなかった区画は、前に作ったファイルが残っていれば消す（古いデータより、ブラウザで作るほうがよい）
+    const drop = k => fs.rmSync(path.join(OUT, k + '.json'), { force: true });
+    if (!res) { failed += cs.length; cs.forEach(([cx, cy]) => drop(cx + '_' + cy)); continue; }
     for (const c of res.out) {
-      if (c.skip) { failed++; continue; }
+      if (c.skip) { failed++; drop(c.k); continue; }
       fs.writeFileSync(path.join(OUT, c.k + '.json'), JSON.stringify({ v: 1, d: c.d, p: c.p }));
       saved++; if (c.sea) sea++;
     }

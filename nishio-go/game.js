@@ -56,6 +56,7 @@ const CATS = {
   park:     { i: '🌳', n: '公園' },
   library:  { i: '📚', n: '図書館' },
   station:  { i: '🚉', n: '駅' },
+  townhall: { i: '🏛️', n: '市役所・支所' },
   beach:    { i: '🏖️', n: '海岸' },
 };
 

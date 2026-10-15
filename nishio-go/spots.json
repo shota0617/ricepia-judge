@@ -280,6 +280,20 @@
       "desc": "まち歩きのスタート地点にどうぞ。"
     },
     {
+      "id": "nishio-cityhall",
+      "name": "西尾市役所",
+      "icon": "🏛️",
+      "lat": 34.862009,
+      "lng": 137.061741,
+      "approx": false,
+      "match": [
+        "西尾市役所"
+      ],
+      "points": 20,
+      "cat": "townhall",
+      "desc": "西尾市の市役所。名鉄西尾駅から東へ約400m。"
+    },
+    {
       "id": "ikimono-sato",
       "name": "西尾いきものふれあいの里",
       "icon": "🦋",

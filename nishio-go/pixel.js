@@ -63,6 +63,36 @@ function classify(t, closed) {
   return null;
 }
 
+// 主要な建物（ドット絵のアイコンで描く。チェックインはできない）
+const POI_LABEL = { townhall: '🏛️ 市役所・支所', hospital: '🏥 病院', school: '🏫 学校', library: '📚 図書館', police: '👮 警察・交番',
+  fire: '🚒 消防署', post: '〒 郵便局', shop: '🛒 お店', station: '🚉 駅' };
+const WORLD_POI = new Set(['townhall', 'hospital', 'library', 'fire', 'shop']);   // せかいちずに出す大きな建物
+function poiKind(t) {
+  const a = t.amenity;
+  if (a === 'townhall') return 'townhall';
+  if (a === 'hospital') return 'hospital';
+  if (/^(school|kindergarten|university|college)$/.test(a || '')) return 'school';
+  if (a === 'library') return 'library';
+  if (a === 'police') return 'police';
+  if (a === 'fire_station') return 'fire';
+  if (a === 'post_office') return 'post';
+  if (/^(mall|department_store|supermarket)$/.test(t.shop || '')) return 'shop';
+  return null;
+}
+function elCenter(el) {
+  if (el.lat != null) return { lat: el.lat, lon: el.lon };
+  if (el.center) return el.center;
+  const pts = el.geometry || (el.members || []).flatMap(m => m.geometry || []);
+  if (!pts.length) return null;
+  return { lat: pts.reduce((a, p) => a + p.lat, 0) / pts.length, lon: pts.reduce((a, p) => a + p.lon, 0) / pts.length };
+}
+// 同じ種類・同じ名前で近いもの（建物の輪郭と点の両方がある等）は1つに
+function dedupePois(list, near) {
+  const out = [];
+  for (const p of list) if (!out.some(q => q[2] === p[2] && q[3] === p[3] && Math.hypot(q[0] - p[0], q[1] - p[1]) < near)) out.push(p);
+  return out;
+}
+
 // 多角形を塗る（偶奇規則。マルチポリゴンの部品がつながっていなくても、辺の集合で正しく塗れる）
 function fillPoly(g, rings, code, W = CHUNK, H = CHUNK) {
   let minY = Infinity, maxY = -Infinity, n = 0;
@@ -161,8 +191,13 @@ const DB = CHUNK + 2, UNK = -32768;
 function rasterize(elements, cx, cy, dem) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
   const x0 = cx * CHUNK, y0 = cy * CHUNK;
-  const ops = [], coasts = [];
+  const ops = [], coasts = [], pois = [];
   for (const el of elements) {
+    const kind = poiKind(el.tags || {});
+    if (kind) {
+      const c = elCenter(el), q = c && toTile(c.lat, c.lon);
+      if (q && q.x >= x0 && q.y >= y0 && q.x < x0 + CHUNK && q.y < y0 + CHUNK) pois.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(el.tags.name || '').slice(0, 40)]);
+    }
     let rings;
     if (el.type === 'way' && el.geometry) rings = [el.geometry];
     else if (el.type === 'relation' && el.members) rings = el.members.filter(m => m.type === 'way' && m.geometry).map(m => m.geometry);
@@ -175,6 +210,7 @@ function rasterize(elements, cx, cy, dem) {
     const pts = rings.map(r => r.map(p => { const q = toTile(p.lat, p.lon); return [q.x - x0, q.y - y0]; }));
     if (k.coast) coasts.push(...pts); else ops.push({ k, pts });
   }
+  g.pois = dedupePois(pois, 4);
   const dh = (x, y) => dem[(y + 1) * DB + (x + 1)];
   ops.sort((a, b) => a.k.p - b.k.p);
   let seaDone = false;
@@ -268,7 +304,7 @@ async function demFor(cx, cy) {
 }
 
 /* ---------- 地図データの取得と保存 ---------- */
-const PX_KEY = 'nsg_px5_', PX_IDX = 'nsg_px5_idx', PX_DAYS = 30, PX_KEEP = 60;
+const PX_KEY = 'nsg_px6_', PX_IDX = 'nsg_px6_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
   get(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
@@ -282,9 +318,9 @@ function saveChunk(k, g, days) {
   const idx = (store.get(PX_IDX) || []).filter(x => x !== k);
   idx.push(k);
   while (idx.length > PX_KEEP) store.del(PX_KEY + idx.shift());
-  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), days })) {
+  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days })) {
     // 保存領域がいっぱいなら古い区画から消してもう一度
-    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), days })) break; }
+    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days })) break; }
   }
   store.set(PX_IDX, idx);
 }
@@ -313,7 +349,7 @@ function ensureChunk(cx, cy) {
   }
   const saved = store.get(PX_KEY + k);
   if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-    chunks.set(k, { state: 'ok', g: dec(saved.d) }); return;
+    chunks.set(k, { state: 'ok', g: dec(saved.d), pois: saved.p || [] }); return;
   }
   chunks.set(k, { state: 'queued' });
   queue.push([cx, cy]);
@@ -336,6 +372,8 @@ function chunkQuery(b) {
   wr["landuse"];
   wr["leisure"~"^(park|garden|pitch|playground|golf_course|recreation_ground|sports_centre)$"];
   wr["amenity"~"^(school|parking|university|college|hospital|kindergarten|place_of_worship|grave_yard)$"];
+  nwr["amenity"~"^(townhall|hospital|school|kindergarten|university|college|library|police|fire_station|post_office)$"];
+  nwr["shop"~"^(mall|department_store|supermarket)$"];
 );
 out geom qt;`;
 }
@@ -355,7 +393,7 @@ async function pump() {
         // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
-        chunks.set(k, { state: 'ok', g });
+        chunks.set(k, { state: 'ok', g, pois: g.pois || [] });
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
@@ -388,8 +426,8 @@ const WB = { s: 34.69, w: 136.96, n: 34.93, e: 137.21 }, WT = 150;
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
-const WORLD_KEY = 'nsg_world1';
-let world = null, worldState = 'none';   // none | building | ok | fail
+const WORLD_KEY = 'nsg_world2';
+let world = null, worldPois = [], worldState = 'none';   // none | building | ok | fail
 
 function worldQuery(withAreas) {
   return `[out:json][timeout:120][bbox:${WB.s},${WB.w},${WB.n},${WB.e}];
@@ -401,14 +439,18 @@ function worldQuery(withAreas) {
   wr["natural"="wood"];
   wr["landuse"~"^(forest|residential|commercial|retail|industrial)$"];` : ''}
 );
-out geom qt;`;
+out geom qt;
+nwr["amenity"~"^(townhall|hospital|library|fire_station)$"];
+out center qt;
+nwr["shop"~"^(mall|department_store)$"];
+out center qt;`;
 }
 
 async function buildWorld(force) {
   if (worldState === 'building' || (worldState === 'ok' && !force)) return;
   const saved = !force && store.get(WORLD_KEY);
   if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-    world = dec(saved.d); worldState = 'ok'; return;
+    world = dec(saved.d); worldPois = saved.p || []; worldState = 'ok'; return;
   }
   worldState = 'building';
   try {
@@ -440,8 +482,14 @@ async function buildWorld(force) {
     // 2) 地図データ：川・水面・国道・線路・森・町なみ
     let json;
     try { json = await overpass(worldQuery(true)); } catch (e) { json = await overpass(worldQuery(false)).catch(() => ({ elements: [] })); }
-    const water = new Uint8Array(N), wood = new Uint8Array(N), town = new Uint8Array(N), lines = [];
+    const water = new Uint8Array(N), wood = new Uint8Array(N), town = new Uint8Array(N), lines = [], wp = [];
     for (const el of json.elements || []) {
+      const kind = poiKind(el.tags || {});
+      if (kind && WORLD_POI.has(kind)) {
+        const c = elCenter(el), q = c && llToW(c.lat, c.lon);
+        if (q && q.x >= 0 && q.y >= 0 && q.x < WW && q.y < WH) wp.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(el.tags.name || '').slice(0, 40)]);
+        continue;
+      }
       let rings;
       if (el.type === 'way' && el.geometry) rings = [el.geometry];
       else if (el.type === 'relation' && el.members) rings = el.members.filter(m => m.type === 'way' && m.geometry).map(m => m.geometry);
@@ -468,9 +516,10 @@ async function buildWorld(force) {
     lines.sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => pts.forEach(line => strokeLine(g, line, code, 1, null, WW, WH, code === C.A ? new Set([C.M]) : keepSeaMt)));
     for (let i = 0; i < N; i++) if (g[i] === UNSET) g[i] = C.G;
     world = g;
+    worldPois = dedupePois(wp, 1.5);
     worldState = 'ok';
     const days = partial || !(json.elements || []).length ? 1 : PX_DAYS;   // 欠けたら1日で作り直す
-    if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(g), days })) store.del(WORLD_KEY);
+    if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(g), p: worldPois, days })) store.del(WORLD_KEY);
   } catch (e) {
     worldState = 'fail';
   }
@@ -608,6 +657,27 @@ const ART = {
   chest: ['................', '................', '................', '...kkkkkkkkkk...', '..knnnnnnnnnnk..', '..knNNNNNNNNnk..', '..knnnnnnnnnnk..', '..kkkkkyykkkkk..',
     '..knnnkyyknnnk..', '..knnnnkknnnnk..', '..knNNNNNNNNnk..', '..knnnnnnnnnnk..', '..kkkkkkkkkkkk..', '................', '................', '................'],
 };
+// 主要な建物のドット絵
+const BUILDING_ART = {
+  townhall: ['......k.........', '......krr.......', '......krrr......', '......k.........', '...kkkkkkkkkk...', '...kggggggggk...', '.kkkkkkkkkkkkkk.', '.kwwwwwyywwwwwk.',
+    '.kwbbwwyywwbbwk.', '.kwbbwwwwwwbbwk.', '.kwwwwwwwwwwwwk.', '.kwbbwwkkwwbbwk.', '.kwbbwwkkwwbbwk.', '.kwwwwwkkwwwwwk.', 'kkkkkkkkkkkkkkkk', 'kggggggggggggggk'],
+  hospital: ['................', '................', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwwwwrrwwwwk..', '..kwwrrrrrrwwk..', '..kwwrrrrrrwwk..', '..kwwwwrrwwwwk..',
+    '..kwwwwwwwwwwk..', '..kbbwbbwbbwbk..', '..kwwwwwwwwwwk..', '..kbbwbbwbbwbk..', '..kwwwwkkwwwwk..', '..kwwwwkkwwwwk..', '.kkkkkkkkkkkkkk.', '................'],
+  school: ['.......kk.......', '......kwwk......', '......kwwk......', '...kkkkkkkkkk...', '..knnnnnnnnnnk..', '.knnnnnnnnnnnnk.', '.kkkkkkkkkkkkkk.', '.kwwwwwwwwwwwwk.',
+    '.kwbbwbbwbbwbbk.', '.kwbbwbbwbbwbbk.', '.kwwwwwwwwwwwwk.', '.kwbbwwkkwwbbwk.', '.kwbbwwkkwwbbwk.', '.kwwwwwkkwwwwwk.', 'kkkkkkkkkkkkkkkk', 'kllllllllllllllk'],
+  library: ['................', '................', '..kkkkkkkkkkkk..', '.kGGGGGGGGGGGGk.', 'kkkkkkkkkkkkkkkk', '.kwwwwwwwwwwwwk.', '.kwwrrwbbwyywwk.', '.kwwrrwbbwyywwk.',
+    '.kwwrrwbbwyywwk.', '.kwwwwwwwwwwwwk.', '.kggggggggggggk.', '.kwwwwwkkwwwwwk.', '.kwwwwwkkwwwwwk.', '.kwwwwwkkwwwwwk.', 'kkkkkkkkkkkkkkkk', '................'],
+  police: ['................', '.......kk.......', '.......rr.......', '....kkkkkkkk....', '...kBBBBBBBBk...', '..kBBBBBBBBBBk..', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..',
+    '..kwbbwwwwbbwk..', '..kwbbwwwwbbwk..', '..kwwwwkkwwwwk..', '..kwwwwkkwwwwk..', '..kwwwwkkwwwwk..', '.kkkkkkkkkkkkkk.', '................', '................'],
+  fire: ['................', '......krrk......', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..krrrrwwrrrrk..', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kGGGGwGGGGwk..',
+    '..kGggGwGggGwk..', '..kGGGGwGGGGwk..', '..kGggGwGggGwk..', '..kGGGGwGGGGwk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
+  post: ['................', '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwwkkkkkkwwk..', '..kwwwwwwwwwwk..',
+    '..kwwkkkkkkwwk..', '..kwwwwkkwwwwk..', '..kwwwwkkwwwwk..', '..kwwwwwwwwwwk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
+  shop: ['................', '................', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwyyyyyyyywk..', '..kwwwwwwwwwwk..', '.krwrwrwrwrwrwk.', '.krwrwrwrwrwrwk.',
+    '..kbbbbbbbbbbk..', '..kbbbbkkbbbbk..', '..kbbbbkkbbbbk..', '..kbbbbkkbbbbk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
+  station: ['................', '................', '................', '................', '.kkkkkkkkkkkkkk.', '.kGGGGGGGGGGGGk.', 'kkkkkkkkkkkkkkkk', '.kwwwwwwwwwwwwk.',
+    '.kwbbwbbwbbwbbk.', '.kwwwwwkkwwwwwk.', '.kwwwwwkkwwwwwk.', 'kkkkkkkkkkkkkkkk', 'gggggggggggggggg', 'kkkkkkkkkkkkkkkk', 'nknknknknknknknk', 'kkkkkkkkkkkkkkkk'],
+};
 const HERO_TOP = ['................', '.....kkkkkk.....', '....kyyyyyyk....', '...kyyyyyyyyk...'];
 const LEGS_A = ['....kBBkkBBk....', '....knnk.knnk...', '.....kk...kk....'];
 const LEGS_B = ['....kBBkkBBk....', '...knnk..knnk...', '....kk....kk....'];
@@ -634,11 +704,14 @@ heroSprites.left = heroSprites.right.map((_, i) => sprite(mirror([...HERO_TOP, .
   document.head.appendChild(st);
 })();
 const spotSprites = {};
-for (const [k, rows] of Object.entries(ART)) spotSprites[k] = [sprite(rows), sprite(rows, true)];
+for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 
 function spotArt(s) {
   const kind = s.featured ? (s.kind || 'featured') : s.cat;
   if (kind === 'castle') return 'castle';
+  if (kind === 'townhall') return 'townhall';
+  if (kind === 'station') return 'station';
+  if (kind === 'library') return 'library';
   if (kind === 'shrine') return 'torii';
   if (kind === 'temple' || kind === 'worship') return 'temple';
   return s.featured ? 'town' : 'chest';
@@ -706,8 +779,12 @@ function frame(now) {
     }
   }
 
-  // スポット
+  // 主要な建物（同じ場所にスポットがあるときはスポットを優先）
   const spots = G.spots;
+  for (const p of visiblePois(tx0, ty0, tx1, ty1)) {
+    const size = T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * 0.7);
+    ctx.drawImage(spotSprites[p[2]][0], sx, sy, size, size);
+  }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
@@ -763,6 +840,29 @@ function frame(now) {
   dirty = false;
 }
 
+// 画面に見えている区画の建物。注目スポットや同じ名前のスポットのすぐ近くの建物は出さない
+let poiCache = { key: '', list: [] };
+function visiblePois(tx0, ty0, tx1, ty1) {
+  const key = [Math.floor(tx0 / 8), Math.floor(ty0 / 8), Math.floor(tx1 / 8), Math.floor(ty1 / 8), G.spots.length, chunks.size].join(',');
+  if (poiCache.key === key) return poiCache.list;
+  const list = [];
+  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 2) / CHUNK); cy++)
+    for (let cx = Math.floor((tx0 - 2) / CHUNK); cx <= Math.floor((tx1 + 2) / CHUNK); cx++) {
+      const c = chunks.get(cx + '_' + cy);
+      for (const p of (c && c.pois) || []) {
+        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 2) continue;
+        const clash = G.spots.some(s => { const q = toTile(s.lat, s.lng), d = Math.hypot(q.x - p[0], q.y - p[1]); return d < (s.featured ? 4 : 2) || (d < 25 && p[3] && s.name.includes(p[3])); });
+        if (!clash) list.push(p);
+      }
+    }
+  poiCache = { key, list };
+  return list;
+}
+function poiHtml(p) {
+  const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  return `<div class="popup"><h4>${esc(p[3] || POI_LABEL[p[2]].replace(/^\S+ /, ''))}</h4><p><span class="tag">${esc(POI_LABEL[p[2]])}</span></p><p>主要な建物です（チェックインはできません）。</p></div>`;
+}
+
 /* ---------- せかいちずの表示 ---------- */
 let worldMode = false, wcam = null, wscale = 1;
 const WSIZES = [6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）
@@ -791,6 +891,14 @@ function drawWorld(now, w, h, dpr) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.lineWidth = Math.max(2, Math.round(3 * dpr)); ctx.strokeStyle = '#000'; ctx.fillStyle = '#fff';
   for (const [name, lat, lng] of AREA_LABELS) { const p = llToW(lat, lng), X = ox + p.x * T, Y = oy + p.y * T; ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y); }
+  // 大きな建物
+  const bs = Math.max(T * 1.4, 12 * dpr);
+  for (const p of worldPois) {
+    const X = ox + p[0] * T - bs / 2, Y = oy + p[1] * T - bs / 2;
+    if (X > w || Y > h || X + bs < 0 || Y + bs < 0) continue;
+    if (G.spots.some(s => s.featured && Math.hypot(llToW(s.lat, s.lng).x - p[0], llToW(s.lat, s.lng).y - p[1]) < 1)) continue;
+    ctx.drawImage(spotSprites[p[2]][0], Math.round(X), Math.round(Y), bs, bs);
+  }
   // 注目スポット
   const size = Math.max(T * 1.6, 14 * dpr);
   for (const s of G.spots) {
@@ -886,7 +994,11 @@ cv.addEventListener('click', e => {
       const p = llToW(s.lat, s.lng), d = Math.hypot(x - (cv.width / 2 + (p.x - wcam.x) * T), y - (cv.height / 2 + (p.y - wcam.y) * T));
       if (d < best) { hit = s; best = d; }
     }
-    if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; }
+    if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
+    let bp = null;
+    best = Math.max(T, 12 * dpr);
+    for (const p of worldPois) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - wcam.x) * T), y - (cv.height / 2 + (p[1] - wcam.y) * T)); if (d < best) { bp = p; best = d; } }
+    if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
     return;
   }
   const T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3));
@@ -899,7 +1011,11 @@ cv.addEventListener('click', e => {
     const half = (s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
-  if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; }
+  if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
+  let bp = null;
+  best = T * 1.2;
+  for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (cv.height / 2 + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
+  if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
 });
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });
 
@@ -909,5 +1025,5 @@ try { initial = localStorage.getItem('nsg_view') || 'map'; } catch (e) { /* noop
 if (initial === 'px') setActive(true);
 
 // テスト用
-window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldState() { return worldState; } };
+window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; } };
 })();

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
+<title>にしおさんぽGO｜西尾市を歩いてスポットを巡るポイントラリー - らいすぴあ</title>
+<meta name="description" content="西尾市の地図を歩いて、神社・お寺・公園・名所などのスポットに近づくとポイントが貯まるお散歩ゲーム。西尾城跡や岩瀬文庫などの注目スポットはボーナスポイント。"/>
+<meta name="theme-color" content="#2f5d3a"/>
+<link rel="canonical" href="https://ricepia-judge.vercel.app/nishio-go.html"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%B6%3C/text%3E%3C/svg%3E"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="ja_JP"/>
+<meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
+<meta property="og:title" content="にしおさんぽGO - 西尾市を歩いてポイントを貯めよう"/>
+<meta property="og:description" content="西尾市内のスポットに歩いて近づくとポイントゲット。注目スポット・連続ログイン・歩いた距離でもポイントが貯まります。"/>
+<meta property="og:url" content="https://ricepia-judge.vercel.app/nishio-go.html"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="stylesheet" href="nishio-go/style.css"/>
+</head>
+<body>
+
+<header class="bar">
+  <div class="brand">🚶 にしおさんぽGO<span id="demoTag" class="demo-tag" hidden>デモ</span></div>
+  <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
+    <span class="lv-num">Lv<b id="lvNum">1</b></span>
+    <span class="lv-bar"><i id="lvFill"></i></span>
+  </button>
+  <div class="pts" aria-live="polite"><b id="ptsNum">0</b><small>pt</small></div>
+</header>
+
+<main id="map" aria-label="西尾市の地図"></main>
+
+<div class="fab-col">
+  <button class="fab" id="locateBtn" type="button" title="現在地へ" aria-label="現在地へ移動">📍</button>
+</div>
+
+<section class="sheet" id="sheet">
+  <div class="status" id="status">位置情報を待っています…</div>
+  <button class="spin" id="spinBtn" type="button" hidden>
+    <span class="spin-ico" id="spinIco">⭐</span>
+    <span class="spin-txt"><b id="spinName">スポット</b><small id="spinSub">タップしてポイントゲット</small></span>
+  </button>
+</section>
+
+<nav class="tabs" aria-label="メニュー">
+  <button type="button" class="on" data-tab="map">🗺️<span>マップ</span></button>
+  <button type="button" data-tab="log">📒<span>きろく</span></button>
+  <button type="button" data-tab="badges">🏅<span>バッジ</span></button>
+  <button type="button" data-tab="settings">⚙️<span>せってい</span></button>
+</nav>
+
+<!-- 記録 -->
+<section class="panel" id="panel-log" hidden>
+  <h2>きろく</h2>
+  <div class="stats" id="stats"></div>
+  <h3>めぐったスポット</h3>
+  <ul class="list" id="visitedList"></ul>
+  <h3>最近のポイント</h3>
+  <ul class="list" id="logList"></ul>
+</section>
+
+<!-- バッジ -->
+<section class="panel" id="panel-badges" hidden>
+  <h2>バッジ</h2>
+  <div class="badges" id="badgeGrid"></div>
+  <h3>レベルと称号</h3>
+  <ul class="list" id="titleList"></ul>
+</section>
+
+<!-- 設定 -->
+<section class="panel" id="panel-settings" hidden>
+  <h2>せってい</h2>
+  <div class="card">
+    <label class="row">
+      <span><b>デモモード</b><small>地図をタップした場所へ移動できます。デモのポイントは本番とは別に保存されます。</small></span>
+      <input type="checkbox" id="demoToggle"/>
+    </label>
+  </div>
+  <div class="card">
+    <div class="row"><span><b>スポット</b><small id="spotInfo">—</small></span>
+      <button type="button" class="btn" id="reloadSpots">再読み込み</button></div>
+  </div>
+  <div class="card">
+    <h3>ポイントのルール</h3>
+    <ul class="rules" id="rules"></ul>
+  </div>
+  <div class="card">
+    <h3>安全に遊ぶために</h3>
+    <ul class="rules">
+      <li>歩きながら画面を見ないでください。立ち止まって操作しましょう。</li>
+      <li>私有地・立入禁止の場所、境内の立入禁止区域には入らないでください。</li>
+      <li>神社やお寺では参拝の方の迷惑にならないようにしましょう。</li>
+      <li>車・自転車の運転中は操作しないでください（乗り物での移動中はチェックインできません）。</li>
+      <li>夜間や悪天候、海沿い・川沿いでは無理をしないでください。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>プライバシー</h3>
+    <p class="note">現在地はこの端末の中だけで使い、外部へ送信しません。記録はこのブラウザ（localStorage）に保存されます。スポット情報は OpenStreetMap（Overpass API）から西尾市全域分をまとめて取得します。</p>
+  </div>
+  <div class="card danger">
+    <div class="row"><span><b>記録を消す</b><small>表示中のモード（本番／デモ）のポイントと記録をすべて削除します。</small></span>
+      <button type="button" class="btn red" id="resetBtn">削除</button></div>
+  </div>
+  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>運営：近藤米穀店 らいすぴあ（西尾市）</p>
+</section>
+
+<!-- はじめに -->
+<div class="intro" id="intro">
+  <div class="intro-box">
+    <div class="intro-ico">🏯⛩️🌳</div>
+    <h1>にしおさんぽGO</h1>
+    <p>西尾のまちを歩いて、地図上のスポットに近づくとポイントが貯まります。</p>
+    <ul>
+      <li>⭐ 注目スポット（西尾城跡・岩瀬文庫など）は <b>ボーナス</b></li>
+      <li>🆕 はじめて行くスポットは <b>初訪問ボーナス</b></li>
+      <li>👣 歩いた距離・📅 連続日数でもポイント</li>
+    </ul>
+    <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
+    <button type="button" class="btn big" id="startBtn">位置情報をオンにしてはじめる</button>
+    <button type="button" class="btn ghost" id="demoBtn">デモで試す（地図タップで移動）</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="reward" id="reward" aria-live="assertive"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="nishio-go/game.js"></script>
+</body>
+</html>

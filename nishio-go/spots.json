@@ -1,0 +1,82 @@
+{
+  "_説明": "注目スポット（ボーナス対象）の一覧。match に書いた名前を OpenStreetMap のデータから探し、見つかればその正確な位置を使います（approx の座標は検索の目安）。見つからない場合は approx の座標を使い、誤差を見込んでチェックイン範囲を広げます。正確な位置が分かっているスポット（お店など）は approx を false にしてください。match の先頭に = を付けると完全一致で探します。",
+  "spots": [
+    {
+      "id": "nishio-castle",
+      "name": "西尾市歴史公園（西尾城跡）",
+      "icon": "🏯",
+      "lat": 34.8603,
+      "lng": 137.0521,
+      "approx": true,
+      "match": ["西尾市歴史公園", "西尾城"],
+      "points": 50,
+      "desc": "本丸丑寅櫓や旧近衛邸、尚古荘がある西尾城の跡。"
+    },
+    {
+      "id": "iwase-bunko",
+      "name": "西尾市岩瀬文庫",
+      "icon": "📚",
+      "lat": 34.8566,
+      "lng": 137.0516,
+      "approx": true,
+      "match": ["岩瀬文庫"],
+      "points": 40,
+      "desc": "日本初の「古典籍の博物館」。"
+    },
+    {
+      "id": "ibun-jinja",
+      "name": "伊文神社",
+      "icon": "⛩️",
+      "lat": 34.8655,
+      "lng": 137.0542,
+      "approx": true,
+      "match": ["伊文神社"],
+      "points": 30,
+      "desc": "西尾の産土神。夏の西尾祇園祭の舞台。"
+    },
+    {
+      "id": "nishio-station",
+      "name": "名鉄 西尾駅",
+      "icon": "🚉",
+      "lat": 34.8636,
+      "lng": 137.0601,
+      "approx": true,
+      "match": ["=西尾", "=西尾駅"],
+      "points": 20,
+      "desc": "まち歩きのスタート地点にどうぞ。"
+    },
+    {
+      "id": "kezoji",
+      "name": "華蔵寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.8165,
+      "lng": 137.1243,
+      "approx": true,
+      "match": ["華蔵寺"],
+      "points": 40,
+      "desc": "吉良家の菩提寺。"
+    },
+    {
+      "id": "konrenji",
+      "name": "金蓮寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.817,
+      "lng": 137.099,
+      "approx": true,
+      "match": ["金蓮寺"],
+      "points": 50,
+      "desc": "国宝の弥陀堂がある古刹。"
+    },
+    {
+      "id": "jissoji",
+      "name": "実相寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.837,
+      "lng": 137.095,
+      "approx": true,
+      "match": ["実相寺"],
+      "points": 40,
+      "desc": "吉良氏ゆかりの禅寺。"
+    }
+  ]
+}

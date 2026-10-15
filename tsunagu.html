@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>らいすぴあ 本店⇔支店</title>
-<meta name="description" content="本店と支店をビデオ通話でつなぐページ。開くだけで相手とつながります。"/>
+<title>らいすぴあ つなぐ</title>
+<meta name="description" content="らいすぴあの店舗どうしをビデオ通話でつなぐページ。開くだけで、最大3台がひとつの部屋に入ります。"/>
 <meta name="robots" content="noindex,nofollow"/>
 <meta name="theme-color" content="#1c1c14"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-title" content="本店⇔支店"/>
+<meta name="apple-mobile-web-app-title" content="つなぐ"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -20,101 +20,64 @@ button{font-family:inherit;cursor:pointer;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ---------- setup (first time only) ---------- */
-#setup{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:#f5f2eb;color:#2d2d1e;}
-.box{background:#fff;border:1px solid #e8e4d8;border-radius:16px;padding:24px 20px;max-width:460px;width:100%;}
-.box h1{font-size:19px;margin-bottom:6px;}
-.box p{font-size:13px;line-height:1.85;color:#5a5a4a;}
-.big{display:block;width:100%;padding:16px;border:none;border-radius:12px;font-size:17px;font-weight:700;margin-top:14px;}
-.gold{background:#c8a96e;color:#2d2d1e;} .dark{background:#2d2d1e;color:#f5f2eb;} .line{background:#06c755;color:#fff;}
-.ghost{background:#fff;border:1.5px solid #c4bfaa;color:#5a5a4a;font-size:14px;padding:12px;}
-.step{border:1px solid #e8e4d8;border-radius:12px;padding:14px;margin-top:14px;}
-.step b{display:block;font-size:14px;margin-bottom:4px;}
-.step .big{margin-top:10px;}
-.link{font-family:ui-monospace,monospace;font-size:11px;color:#8a8a70;word-break:break-all;margin-top:8px;}
-.note{font-size:11px;color:#9a9a7a;line-height:1.7;margin-top:14px;}
-
-/* ---------- call ---------- */
 #call{position:fixed;inset:0;display:flex;flex-direction:column;}
 #stage{position:relative;flex:1;min-height:0;background:#111;}
-#remote{width:100%;height:100%;object-fit:contain;background:#111;}
-#self{position:absolute;right:12px;bottom:12px;width:min(28vw,220px);aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:2px solid #3d3d2e;background:#2b2b20;transform:scaleX(-1);}
+#grid{position:absolute;inset:0;display:grid;gap:4px;grid-template-columns:1fr;}
+#grid.two{grid-template-columns:1fr 1fr;}
+@media (orientation:portrait){ #grid.two{grid-template-columns:1fr;grid-template-rows:1fr 1fr;} }
+#grid video{width:100%;height:100%;min-height:0;object-fit:contain;background:#111;}
+#self{position:absolute;right:12px;bottom:12px;width:min(28vw,220px);aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:2px solid #3d3d2e;background:#2b2b20;transform:scaleX(-1);z-index:2;}
 #self.off{visibility:hidden;}
-#top{position:absolute;left:0;right:0;top:0;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;background:linear-gradient(rgba(0,0,0,.6),transparent);font-size:14px;}
-#top b{font-size:15px;}
+#top{position:absolute;left:0;right:0;top:0;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;background:linear-gradient(rgba(0,0,0,.6),transparent);font-size:14px;z-index:3;}
 .dot{width:10px;height:10px;border-radius:50%;background:#9a9a7a;display:inline-block;}
 .dot.on{background:#7cc48e;} .dot.wait{background:#e0b050;animation:pulse 1.4s infinite;}
-#waiting{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;}
+#gear{margin-left:auto;background:rgba(0,0,0,.35);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:50%;}
+#waiting{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;z-index:1;}
 #waiting .msg{font-size:20px;font-weight:700;line-height:1.6;}
 #waiting .sub{font-size:13px;color:#bdbda0;line-height:1.8;}
 .spinner{width:34px;height:34px;border:3px solid #c8a96e;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;}
-#tapAudio{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+.big{display:block;border:none;border-radius:12px;font-size:16px;font-weight:700;padding:13px 20px;}
+#zoomHint{background:#2d8cff;color:#fff;}
+#tapAudio{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#c8a96e;color:#2d2d1e;z-index:4;}
 #bar{display:flex;justify-content:center;gap:14px;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));background:#24241a;}
 .cb{width:64px;height:64px;border-radius:50%;border:none;background:#3d3d2e;color:#fff;font-size:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .cb small{font-size:9px;margin-top:2px;}
-.cb.off{background:#c94c4c;}
-.cb.end{background:#c94c4c;} .cb.go{background:#3f7050;}
-.cb.zoom{background:#2d8cff;}
-#gear{margin-left:auto;background:rgba(0,0,0,.35);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:50%;}
-#zoomHint{width:auto;padding:12px 20px;margin-top:6px;background:#2d8cff;color:#fff;font-size:15px;}
-.field{margin-top:14px;text-align:left;}
-.field label{display:block;font-size:12px;font-weight:700;color:#5a5a4a;margin-bottom:4px;}
-.field input{width:100%;padding:11px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;background:#fafaf7;color:#2d2d1e;}
-.field .hint{font-size:11px;color:#9a9a7a;line-height:1.7;margin-top:4px;}
+.cb.off{background:#c94c4c;} .cb.end{background:#c94c4c;} .cb.go{background:#3f7050;} .cb.zoom{background:#2d8cff;}
 #sheet{position:fixed;inset:0;background:rgba(20,20,12,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;}
-#sheet .box{color:#2d2d1e;}
+.box{background:#fff;color:#2d2d1e;border-radius:16px;padding:22px 20px;max-width:440px;width:100%;}
+.box h1{font-size:17px;margin-bottom:6px;}
+.box label{display:block;font-size:12px;font-weight:700;color:#5a5a4a;margin:12px 0 4px;}
+.box input{width:100%;padding:11px 12px;border:1.5px solid #c4bfaa;border-radius:9px;font-size:13px;background:#fafaf7;color:#2d2d1e;}
+.box .hint{font-size:11px;color:#9a9a7a;line-height:1.7;margin-top:4px;}
+.box .big{width:100%;margin-top:12px;}
+.gold{background:#c8a96e;color:#2d2d1e;} .ghost{background:#fff;border:1.5px solid #c4bfaa !important;color:#5a5a4a;}
 #toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:#2d2d1e;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;max-width:90vw;text-align:center;z-index:10;}
 </style>
 </head>
 <body>
 
-<!-- 最初の設定（1回だけ） -->
-<div id="setup" hidden>
-  <div class="box">
-    <h1>📞 本店⇔支店</h1>
-    <p>本店と支店をビデオ通話でつなぎます。<br/>最初に1回だけ、本店と支店それぞれの「開くだけでつながるリンク」を作ります。</p>
-    <div id="setupStart">
-      <div class="field"><label for="zoomIn">予備のZoom（通常は空欄のままでOK）</label>
-        <input id="zoomIn" inputmode="url" placeholder="空欄なら Zoom ID 544 001 0563 を使います" autocomplete="off"/>
-        <div class="hint">この画面でつながらないときは「Zoom」ボタンで、らいすぴあのZoom（パーソナルミーティングID 544 001 0563）に切り替えます。パスコードの入力を省きたいときは、Zoomの「招待リンクをコピー」で取れる pwd= 付きのリンクをここに貼ってください。</div></div>
-      <button class="big gold" id="makeBtn">つなぐリンクを作る</button>
-      <p class="note">IDやパスワードは不要です。リンクには推測できない文字列が入るので、リンクを知らない人はつなげません。リンクは店の人以外に教えないでください。</p>
-    </div>
-    <div id="setupLinks" hidden>
-      <div class="step"><b>① 支店にリンクを送る</b><p>支店のスマホ・タブレットで開いてもらいます。</p>
-        <button class="big line" id="sendLine">LINEで支店に送る</button>
-        <button class="big ghost" id="copyShiten">リンクをコピー</button>
-        <div class="link" id="shitenLink"></div></div>
-      <div class="step"><b>② この端末（本店）で開く</b><p>開いたら、ホーム画面に追加しておくと次からワンタップです。</p>
-        <button class="big dark" id="openHonten">本店としてつなぐ</button></div>
-    </div>
-  </div>
-</div>
-
-<!-- 通話 -->
-<div id="call" hidden>
+<div id="call">
   <div id="stage">
-    <video id="remote" autoplay playsinline></video>
+    <div id="grid"></div>
     <div id="waiting"><div class="spinner"></div><div class="msg" id="waitMsg">準備中…</div><div class="sub" id="waitSub"></div><button class="big" id="zoomHint" hidden>つながらないときは Zoom で</button></div>
-    <button class="big gold" id="tapAudio" hidden style="width:auto;padding:14px 22px;">🔊 タップして音を出す</button>
+    <button class="big" id="tapAudio" hidden>🔊 タップして音を出す</button>
     <video id="self" autoplay playsinline muted></video>
-    <div id="top"><span class="dot" id="dot"></span><b id="meName"></b><span id="state" style="color:#d8d4c4;"></span><button id="gear" title="設定">⚙</button></div>
+    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><button id="gear" title="設定">⚙</button></div>
   </div>
   <div id="bar">
     <button class="cb" id="micBtn" title="マイク">🎤<small>マイク</small></button>
     <button class="cb" id="camBtn" title="カメラ">📷<small>カメラ</small></button>
     <button class="cb end" id="hangBtn" title="切る">✕<small>切る</small></button>
-    <button class="cb zoom" id="zoomBtn" title="Zoomに切り替える" hidden>Z<small>Zoom</small></button>
+    <button class="cb zoom" id="zoomBtn" title="Zoomに切り替える">Z<small>Zoom</small></button>
   </div>
 </div>
 <div id="sheet" hidden>
   <div class="box">
-    <h1 style="font-size:17px;">⚙ 設定</h1>
-    <div class="field"><label for="zoomEdit">予備のZoomリンク</label>
-      <input id="zoomEdit" inputmode="url" placeholder="空欄なら Zoom ID 544 001 0563" autocomplete="off"/>
-      <div class="hint">空欄のときは らいすぴあのZoom（ID 544 001 0563）を使います。pwd= 付きの招待リンクを入れると、パスコードの入力が要らなくなります（この端末に保存）。<span id="resendHint">支店にも使ってもらうには、保存したあと下のボタンで支店にリンクを送り直してください。</span></div></div>
+    <h1>⚙ 設定</h1>
+    <label for="zoomEdit">予備のZoomリンク</label>
+    <input id="zoomEdit" inputmode="url" placeholder="空欄なら Zoom ID 544 001 0563" autocomplete="off"/>
+    <div class="hint">空欄のときは らいすぴあのZoom（ID 544 001 0563）を開きます。Zoomの「招待リンクをコピー」で取れる pwd= 付きのリンクを入れると、パスコードの入力が要らなくなります（この端末にだけ保存）。</div>
     <button class="big gold" id="zoomSave">保存</button>
-    <button class="big line" id="resendLine">支店にリンクを送り直す（LINE）</button>
     <button class="big ghost" id="sheetClose">閉じる</button>
   </div>
 </div>
@@ -122,184 +85,62 @@ button{font-family:inherit;cursor:pointer;}
 
 <script>
 "use strict";
-/* 本店⇔支店: two fixed endpoints derived from a random key in the link.
-   Each side registers "<prefix>-<key>-<me>" on the PeerJS server and calls the other side;
-   whoever opens later makes the call, and only the paired store's id is answered. */
+/* らいすぴあ つなぐ — one shared room, up to 3 devices, nothing to set up.
+   Each device takes the first free seat "<ROOM>-1/2/3" on the PeerJS server and calls the other seats;
+   whoever opens later makes the calls, and both ends of a doubled call keep the one the lower seat started. */
 const $ = s => document.querySelector(s);
-const STORES = {honten:"本店", shiten:"支店"};
-const other = me => me === "honten" ? "shiten" : "honten";
-const pid = (key, me) => "ricepia-tsunagu-" + key + "-" + me;
-const LS = "ricepia_tsunagu";
+const ROOM = "ricepia-tsunagu-room", SEATS = 3;
+const seatId = n => ROOM + "-" + n;
+const seatOf = id => Number(String(id).slice(ROOM.length + 1)) || 0;
+const DEFAULT_ZOOM = "https://zoom.us/j/5440010563"; // らいすぴあのZoom（パーソナルミーティングID 544 001 0563）
+const LS = "ricepia_tsunagu_zoom";
 
-const S = {key:"", me:"", zoom:"", hintT:0, peer:null, local:null, call:null, connected:false, stopped:false, retryT:0, wake:null, toastT:0};
+const S = {seat:0, peer:null, local:null, calls:new Map(), streams:new Map(), stopped:false, retryT:0, hintT:0, wake:null, toastT:0, zoom:""};
 
 function toast(msg, ms){
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
   clearTimeout(S.toastT); S.toastT = setTimeout(() => t.hidden = true, ms || 3500);
 }
-function load(){ try{ return JSON.parse(localStorage.getItem(LS)) || {}; }catch(e){ return {}; } }
-function save(o){ try{ localStorage.setItem(LS, JSON.stringify(o)); }catch(e){} }
-function linkFor(key, me, zoom){ return location.origin + location.pathname + "#k=" + key + "&me=" + me + (zoom ? "&z=" + encodeURIComponent(zoom) : ""); }
-// only real Zoom meeting links (https, *.zoom.us / *.zoom.com)
-// らいすぴあのZoom（パーソナルミーティングID 544 001 0563）。リンクを登録していなくても常にこれへ切り替えられる
-const DEFAULT_ZOOM = "https://zoom.us/j/5440010563";
 function normZoom(u){ u = String(u || "").trim(); return /^https:\/\/([a-z0-9-]+\.)*zoom\.(us|com)\/[^\s<>"]*$/i.test(u) ? u : ""; }
-function shitenText(link){ return "本店とビデオ通話でつなぐリンクです。支店のスマホかタブレットで開いて、ホーム画面に追加しておいてください。\n" + link; }
-function newKey(){ const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; crypto.getRandomValues(new Uint8Array(16)).forEach(x => s += a[x % a.length]); return s; }
+function loadZoom(){ try{ return normZoom(localStorage.getItem(LS)) || DEFAULT_ZOOM; }catch(e){ return DEFAULT_ZOOM; } }
 
-/* ---------- which store is this device? (from the link, else remembered) ---------- */
-function resolve(){
-  const h = new URLSearchParams(location.hash.slice(1));
-  const k = (h.get("k") || "").replace(/[^a-z0-9]/g, ""), me = h.get("me");
-  const s = load();
-  if(k.length >= 12 && STORES[me]){
-    const o = {key:k, me, zoom:normZoom(h.get("z")) || (s.key === k ? s.zoom || "" : "")};
-    save(o); return o;
-  }
-  return s.key && STORES[s.me] ? s : null;
+/* ---------- screen ---------- */
+const others = () => Array.from(S.streams.keys());
+function render(){
+  const n = S.streams.size, grid = $("#grid");
+  grid.className = n === 2 ? "two" : "";
+  // keep video elements stable so playback isn't interrupted
+  Array.from(grid.children).forEach(v => { if(!S.streams.has(v.dataset.id)) v.remove(); });
+  S.streams.forEach((st, id) => {
+    let v = grid.querySelector('video[data-id="' + CSS.escape(id) + '"]');
+    if(!v){ v = document.createElement("video"); v.autoplay = true; v.playsInline = true; v.dataset.id = id; grid.appendChild(v); }
+    if(v.srcObject !== st){ v.srcObject = st; v.play().then(() => $("#tapAudio").hidden = true).catch(() => $("#tapAudio").hidden = false); }
+  });
+  if(n){
+    $("#dot").className = "dot on";
+    $("#state").textContent = (n + 1) + "台でつながっています";
+    $("#waiting").hidden = true; clearTimeout(S.hintT); $("#zoomHint").hidden = true;
+    keepAwake();
+  } else if(!S.stopped && S.seat) waiting("ほかの端末がこのページを開くと、自動でつながります", "最大3台まで入れます");
 }
-
-/* ---------- first-time setup ---------- */
-function showSetup(){
-  $("#setup").hidden = false;
-  $("#makeBtn").onclick = () => {
-    const raw = $("#zoomIn").value.trim(), zoom = normZoom(raw);
-    if(raw && !zoom){ toast("Zoomのリンクは https://…zoom.us/j/… の形で入れてください（空欄でもOK）"); return; }
-    const key = newKey(), shiten = linkFor(key, "shiten", zoom);
-    $("#setupStart").hidden = true; $("#setupLinks").hidden = false;
-    $("#shitenLink").textContent = shiten;
-    $("#sendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent(shitenText(shiten)), "_blank", "noopener");
-    $("#copyShiten").onclick = async () => { try{ await navigator.clipboard.writeText(shiten); toast("コピーしました"); }catch(e){ prompt("このリンクをコピーしてください", shiten); } };
-    $("#openHonten").onclick = () => { location.hash = "k=" + key + "&me=honten" + (zoom ? "&z=" + encodeURIComponent(zoom) : ""); location.reload(); };
-  };
-}
-
-/* ---------- call ---------- */
-function setState(kind, msg, sub){
-  $("#dot").className = "dot " + (kind === "on" ? "on" : kind === "wait" ? "wait" : "");
-  $("#state").textContent = kind === "on" ? STORES[other(S.me)] + "とつながっています" : "";
-  $("#waiting").hidden = kind === "on";
-  clearTimeout(S.hintT); $("#zoomHint").hidden = true;
-  // still not connected after a while: offer the Zoom backup
-  if(kind !== "on" && S.zoom) S.hintT = setTimeout(() => { if(!S.connected) $("#zoomHint").hidden = false; }, kind === "off" ? 0 : 30000);
-  $("#waitMsg").textContent = msg || "";
-  $("#waitSub").textContent = sub || "";
+function waiting(msg, sub, kind){
+  kind = kind || "wait";
+  $("#dot").className = "dot " + (kind === "wait" ? "wait" : "");
+  $("#state").textContent = kind === "wait" ? "待っています" : "";
+  $("#waiting").hidden = false;
+  $("#waitMsg").textContent = msg || ""; $("#waitSub").textContent = sub || "";
   $(".spinner").hidden = kind !== "wait";
+  clearTimeout(S.hintT); $("#zoomHint").hidden = true;
+  S.hintT = setTimeout(() => { if(!S.streams.size) $("#zoomHint").hidden = false; }, kind === "wait" ? 30000 : 0);
 }
+
+/* ---------- media ---------- */
 async function getMedia(){
   try{ return await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true, noiseSuppression:true}, video:{width:{ideal:1280}, height:{ideal:720}, facingMode:"user"}}); }
   catch(e){
     try{ const s = await navigator.mediaDevices.getUserMedia({audio:true}); toast("カメラが使えないため音声だけでつなぎます"); return s; }
     catch(e2){ return null; }
   }
-}
-function paintZoom(){ $("#zoomBtn").hidden = !S.zoom; }
-/* Zoom backup: the camera and mic can't serve two calls well at once, so this call is ended first. */
-function goZoom(){
-  if(!S.zoom) return;
-  if(!confirm("Zoomに切り替えます。この画面の通話は切ります（あとで「つなぐ」で戻れます）。")) return;
-  if(!S.stopped) hangUp();
-  const w = window.open(S.zoom, "_blank");
-  if(w) w.opener = null; else location.href = S.zoom;
-}
-function openSheet(){
-  $("#zoomEdit").value = S.zoom === DEFAULT_ZOOM ? "" : S.zoom || "";
-  $("#resendLine").hidden = $("#resendHint").hidden = S.me !== "honten";
-  $("#sheet").hidden = false;
-}
-function startCall(){
-  $("#call").hidden = false;
-  paintZoom();
-  $("#meName").textContent = STORES[S.me];
-  document.title = "らいすぴあ " + STORES[S.me] + " ⇔ " + STORES[other(S.me)];
-  connect();
-}
-async function connect(){
-  S.stopped = false;
-  $("#hangBtn").className = "cb end"; $("#hangBtn").innerHTML = "✕<small>切る</small>";
-  setState("wait", "準備中…");
-  if(!window.Peer){ setState("off", "通話の部品を読み込めませんでした", "インターネット接続を確認して、ページを開き直してください"); return; }
-  if(!S.local){
-    S.local = await getMedia();
-    if(!S.local){ setState("off", "カメラとマイクが使えません", "ブラウザの設定でこのページのカメラ・マイクを「許可」にして、開き直してください"); return; }
-    $("#self").srcObject = S.local;
-    paintButtons();
-  }
-  openPeer();
-}
-function openPeer(){
-  if(S.peer && !S.peer.destroyed) return;
-  const p = S.peer = new Peer(pid(S.key, S.me), {debug:0});
-  p.on("open", () => { waitForOther(); tryCall(); });
-  p.on("call", call => {
-    if(call.peer !== pid(S.key, other(S.me))){ call.close(); return; } // only the paired store
-    if(S.stopped){ call.close(); return; }
-    // both sides called at the same moment: both ends keep the call 本店 started
-    if(S.call && S.call._out && S.me === "honten"){ call.close(); return; }
-    call.answer(S.local); useCall(call);
-  });
-  p.on("disconnected", () => { if(!p.destroyed) setTimeout(() => { try{ p.reconnect(); }catch(e){} }, 2000); });
-  p.on("error", e => {
-    if(e.type === "peer-unavailable"){
-      // the other store isn't open yet: drop our unanswered call so their call can come in, and keep waiting
-      if(S.call && S.call._out && !S.connected){ const c = S.call; S.call = null; try{ c.close(); }catch(x){} }
-      return;
-    }
-    if(e.type === "unavailable-id"){
-      setState("off", "この" + STORES[S.me] + "の画面が、ほかの端末かタブでも開いています", "そちらを閉じると自動でつながります");
-      p.destroy(); S.peer = null; clearTimeout(S.retryT); S.retryT = setTimeout(openPeer, 8000); return;
-    }
-    if(e.type === "network" || e.type === "server-error" || e.type === "socket-error" || e.type === "socket-closed"){
-      setState("wait", "インターネットにつながるのを待っています…", "回線が戻ると自動でつながります");
-      p.destroy(); S.peer = null; clearTimeout(S.retryT); S.retryT = setTimeout(openPeer, 5000); return;
-    }
-    if(e.type === "browser-incompatible"){ setState("off", "このブラウザはビデオ通話に対応していません", "Chrome か Safari の最新版でお試しください"); }
-  });
-}
-function waitForOther(){
-  if(!S.connected) setState("wait", STORES[other(S.me)] + "がこのページを開くと、自動でつながります", STORES[other(S.me)] + "の端末で「本店⇔支店」を開いてもらってください");
-}
-function tryCall(){
-  clearTimeout(S.retryT);
-  if(S.stopped || S.connected || !S.peer || !S.peer.open) return;
-  const c = S.peer.call(pid(S.key, other(S.me)), S.local);
-  if(c){ c._out = true; useCall(c); }
-  // a lost "other side opened" moment (sleeping tablet, flaky line) is caught by retrying now and then
-  S.retryT = setTimeout(tryCall, 15000);
-}
-function useCall(c){
-  if(S.call && S.call !== c){ const old = S.call; S.call = null; try{ old.close(); }catch(e){} }
-  S.call = c;
-  c.on("stream", st => {
-    if(S.call !== c) return;
-    const v = $("#remote"); v.srcObject = st;
-    v.play().then(() => $("#tapAudio").hidden = true).catch(() => { $("#tapAudio").hidden = false; });
-    if(!S.connected){ S.connected = true; chime(); keepAwake(); }
-    setState("on");
-  });
-  c.on("close", () => {
-    if(S.call !== c) return;
-    S.call = null; S.connected = false; $("#remote").srcObject = null;
-    if(S.stopped) return;
-    toast(STORES[other(S.me)] + "との通話が切れました。相手が開き直すと、またつながります");
-    waitForOther();
-    clearTimeout(S.retryT); S.retryT = setTimeout(tryCall, 3000);
-  });
-  c.on("error", () => {});
-  // ICE failure (e.g. Wi-Fi switched): treat as closed so we retry
-  const pc = c.peerConnection;
-  if(pc) pc.addEventListener("connectionstatechange", () => { if(pc.connectionState === "failed" && S.call === c) c.close(); });
-}
-function hangUp(){
-  if(S.stopped){ connect(); return; }
-  S.stopped = true; clearTimeout(S.retryT);
-  if(S.call){ const c = S.call; S.call = null; try{ c.close(); }catch(e){} }
-  S.connected = false; $("#remote").srcObject = null;
-  try{ S.peer && S.peer.destroy(); }catch(e){} S.peer = null;
-  if(S.local){ S.local.getTracks().forEach(t => t.stop()); S.local = null; $("#self").srcObject = null; }
-  if(S.wake){ S.wake.release().catch(() => {}); S.wake = null; }
-  setState("off", "通話を切りました", "もう一度つなぐときは下の「つなぐ」を押してください");
-  $("#hangBtn").className = "cb go"; $("#hangBtn").innerHTML = "📞<small>つなぐ</small>";
 }
 function paintButtons(){
   const a = S.local && S.local.getAudioTracks()[0], v = S.local && S.local.getVideoTracks()[0];
@@ -312,6 +153,120 @@ function toggle(kind){
   if(!t){ toast(kind === "audio" ? "マイクが使えません" : "カメラが使えません"); return; }
   t.enabled = !t.enabled; paintButtons();
 }
+
+/* ---------- room ---------- */
+async function join(){
+  S.stopped = false;
+  $("#hangBtn").className = "cb end"; $("#hangBtn").innerHTML = "✕<small>切る</small>";
+  waiting("準備中…");
+  if(!window.Peer){ waiting("通話の部品を読み込めませんでした", "インターネット接続を確認して、ページを開き直してください", "off"); return; }
+  if(!S.local){
+    S.local = await getMedia();
+    if(!S.local){ waiting("カメラとマイクが使えません", "ブラウザの設定でこのページのカメラ・マイクを「許可」にして、開き直してください", "off"); return; }
+    $("#self").srcObject = S.local; paintButtons();
+  }
+  takeSeat(1);
+}
+/** Register the first free seat; a taken seat answers "unavailable-id", so try the next one. */
+function takeSeat(n){
+  if(S.stopped) return;
+  if(n > SEATS){
+    waiting("満室です（" + SEATS + "台まで）", "ほかの端末が1台閉じると、自動で入ります", "wait");
+    clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 8000); return;
+  }
+  const p = new Peer(seatId(n), {debug:0});
+  let opened = false;
+  p.on("open", () => { opened = true; S.peer = p; S.seat = n; bind(p); render(); callAll(); });
+  p.on("error", e => {
+    if(opened) return;
+    p.destroy();
+    if(e.type === "unavailable-id") return takeSeat(n + 1);
+    if(e.type === "browser-incompatible"){ waiting("このブラウザはビデオ通話に対応していません", "Chrome か Safari の最新版でお試しください", "off"); return; }
+    waiting("インターネットにつながるのを待っています…", "回線が戻ると自動でつながります");
+    clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 5000);
+  });
+}
+function bind(p){
+  p.on("call", call => {
+    const s = seatOf(call.peer);
+    if(S.stopped || !s || s > SEATS || call.peer === p.id){ call.close(); return; } // only the room's seats
+    const cur = S.calls.get(call.peer);
+    // both sides called at once: keep the call the lower seat started
+    // (but a call from a seat we think is already connected means that device restarted: take the new one)
+    if(cur && cur._out && S.seat < s && !S.streams.has(call.peer)){ call.close(); return; }
+    call.answer(S.local); use(call);
+  });
+  p.on("disconnected", () => { if(!p.destroyed) setTimeout(() => { try{ p.reconnect(); }catch(e){} }, 2000); });
+  p.on("error", e => {
+    if(e.type === "peer-unavailable"){
+      // that seat is empty: drop our unanswered call so a later call from it can come in
+      const id = (String(e.message).match(/ricepia-tsunagu-room-\d/) || [])[0];
+      const c = id && S.calls.get(id);
+      if(c && c._out && !S.streams.has(id)){ S.calls.delete(id); try{ c.close(); }catch(x){} }
+      return;
+    }
+    if(e.type === "network" || e.type === "server-error" || e.type === "socket-error" || e.type === "socket-closed"){
+      if(!S.streams.size) waiting("インターネットにつながるのを待っています…", "回線が戻ると自動でつながります");
+      leaveSeat(); clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 5000);
+    }
+  });
+}
+function callAll(){
+  clearTimeout(S.retryT);
+  if(S.stopped || !S.peer || !S.peer.open) return;
+  for(let n = 1; n <= SEATS; n++){
+    const id = seatId(n);
+    if(n === S.seat || S.streams.has(id) || S.calls.has(id)) continue;
+    const c = S.peer.call(id, S.local);
+    if(c){ c._out = true; use(c); }
+  }
+  // catch a device that opened while our calls were in flight (or a sleeping tablet that woke up)
+  S.retryT = setTimeout(callAll, 15000);
+}
+function use(c){
+  const id = c.peer, old = S.calls.get(id);
+  if(old && old !== c){ S.calls.delete(id); try{ old.close(); }catch(e){} }
+  S.calls.set(id, c);
+  c.on("stream", st => {
+    if(S.calls.get(id) !== c) return;
+    const isNew = !S.streams.has(id);
+    S.streams.set(id, st); render();
+    if(isNew) chime();
+  });
+  c.on("close", () => {
+    if(S.calls.get(id) !== c) return;
+    S.calls.delete(id);
+    if(S.streams.delete(id) && !S.stopped) toast("1台が抜けました");
+    render();
+  });
+  c.on("error", () => {});
+  const pc = c.peerConnection; // ICE failure (Wi-Fi switched etc.): treat as closed
+  if(pc) pc.addEventListener("connectionstatechange", () => { if(pc.connectionState === "failed" && S.calls.get(id) === c) c.close(); });
+}
+function leaveSeat(){
+  S.calls.forEach(c => { try{ c.close(); }catch(e){} }); S.calls.clear(); S.streams.clear();
+  try{ S.peer && S.peer.destroy(); }catch(e){} S.peer = null; S.seat = 0;
+  render();
+}
+function hangUp(){
+  if(S.stopped){ join(); return; }
+  S.stopped = true; clearTimeout(S.retryT);
+  leaveSeat();
+  if(S.local){ S.local.getTracks().forEach(t => t.stop()); S.local = null; $("#self").srcObject = null; }
+  if(S.wake){ S.wake.release().catch(() => {}); S.wake = null; }
+  waiting("通話を切りました", "もう一度つなぐときは下の「つなぐ」を押してください", "off");
+  $("#hangBtn").className = "cb go"; $("#hangBtn").innerHTML = "📞<small>つなぐ</small>";
+}
+
+/* ---------- Zoom backup ---------- */
+// The camera and mic can't serve two calls well at once, so this call is ended before Zoom opens.
+function goZoom(){
+  if(!confirm("Zoomに切り替えます。この画面の通話は切ります（あとで「つなぐ」で戻れます）。")) return;
+  if(!S.stopped) hangUp();
+  const w = window.open(S.zoom, "_blank");
+  if(w) w.opener = null; else location.href = S.zoom;
+}
+
 function chime(){
   try{
     const ac = new (window.AudioContext || window.webkitAudioContext)(), g = ac.createGain(); g.connect(ac.destination);
@@ -324,32 +279,32 @@ async function keepAwake(){
 }
 
 $("#micBtn").onclick = () => toggle("audio");
+$("#camBtn").onclick = () => toggle("video");
+$("#hangBtn").onclick = hangUp;
 $("#zoomBtn").onclick = goZoom;
 $("#zoomHint").onclick = goZoom;
-$("#gear").onclick = openSheet;
+$("#tapAudio").onclick = () => { document.querySelectorAll("#grid video").forEach(v => v.play().catch(() => {})); $("#tapAudio").hidden = true; };
+$("#gear").onclick = () => { $("#zoomEdit").value = S.zoom === DEFAULT_ZOOM ? "" : S.zoom; $("#sheet").hidden = false; };
 $("#sheetClose").onclick = () => $("#sheet").hidden = true;
 $("#zoomSave").onclick = () => {
   const raw = $("#zoomEdit").value.trim(), z = normZoom(raw);
   if(raw && !z){ toast("Zoomのリンクは https://…zoom.us/j/… の形で入れてください"); return; }
-  save({key:S.key, me:S.me, zoom:z}); S.zoom = z || DEFAULT_ZOOM; paintZoom();
+  try{ if(z) localStorage.setItem(LS, z); else localStorage.removeItem(LS); }catch(e){}
+  S.zoom = z || DEFAULT_ZOOM; $("#sheet").hidden = true;
   toast(z ? "Zoomリンクを保存しました" : "標準のZoom（ID 544 001 0563）を使います");
 };
-$("#resendLine").onclick = () => window.open("https://line.me/R/msg/text/?" + encodeURIComponent(shitenText(linkFor(S.key, "shiten", S.zoom === DEFAULT_ZOOM ? "" : S.zoom))), "_blank", "noopener");
-$("#camBtn").onclick = () => toggle("video");
-$("#hangBtn").onclick = hangUp;
-$("#tapAudio").onclick = () => $("#remote").play().then(() => $("#tapAudio").hidden = true).catch(() => {});
 document.addEventListener("visibilitychange", () => {
-  if(document.visibilityState !== "visible") return;
-  if(S.connected) keepAwake();
-  else if(!S.stopped && S.key){ if(!S.peer || S.peer.destroyed) openPeer(); else tryCall(); } // tablet woke up
+  if(document.visibilityState !== "visible" || S.stopped) return;
+  if(S.streams.size) keepAwake();
+  if(!S.peer || S.peer.destroyed){ if(!S.seat) takeSeat(1); } else callAll(); // tablet woke up
 });
-// closing the page: end the call cleanly so the other store notices right away
-window.addEventListener("pagehide", () => { try{ S.call && S.call.close(); S.peer && S.peer.destroy(); }catch(e){} });
-window.addEventListener("online", () => { if(!S.stopped && S.key && (!S.peer || S.peer.destroyed)) openPeer(); });
+window.addEventListener("online", () => { if(!S.stopped && (!S.peer || S.peer.destroyed)) takeSeat(1); });
+// closing the page frees our seat right away and tells the others
+window.addEventListener("pagehide", () => { try{ S.calls.forEach(c => c.close()); S.peer && S.peer.destroy(); }catch(e){} });
 
-const who = resolve();
-if(who){ S.key = who.key; S.me = who.me; S.zoom = normZoom(who.zoom) || DEFAULT_ZOOM; startCall(); }
-else showSetup();
+if(location.hash) history.replaceState(null, "", location.pathname); // old setup links (#k=…) are no longer needed
+S.zoom = loadZoom();
+join();
 </script>
 </body>
 </html>

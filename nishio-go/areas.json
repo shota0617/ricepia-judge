@@ -1,0 +1,136 @@
+{
+  "_説明": "西尾市の5つの地区（2011年に一色町・吉良町・幡豆町を編入。佐久島は旧一色町だがゲームでは別の地区）の分析データ。せかいちずの地区の札と地区ガイド、地区制覇バッジに使う。lat/lng は札を出す位置（地区の中心あたりの概算）。人口・面積は出典の値か、市の公表値から計算した値（2026年10月に調査）。",
+  "city": {
+    "name": "西尾市",
+    "population": 169284,
+    "populationAsOf": "2025年4月1日・住民基本台帳",
+    "areaKm2": 161.22,
+    "sources": [
+      "https://www.seikatsu-guide.com/keyword/1100/23/23213/",
+      "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/008/044/toshimasu3-1.pdf"
+    ]
+  },
+  "areas": [
+    {
+      "id": "nishio",
+      "name": "西尾",
+      "kana": "にしお",
+      "icon": "🍵",
+      "catch": "城下町と抹茶のまち",
+      "lat": 34.872,
+      "lng": 137.058,
+      "population": 113523,
+      "populationAsOf": "2020年国勢調査から計算",
+      "areaKm2": 76.2,
+      "summary": "矢作川下流の平野にある旧城下町。西尾城跡のまわりに寺や神社が多く、「三河の小京都」とも呼ばれる。抹茶の原料になるてん茶の一大産地で、市内の茶園の96%以上がてん茶を育てている。",
+      "specialties": [
+        "西尾の抹茶",
+        "てん茶の茶畑（稲荷山に約100ha）",
+        "抹茶スイーツ"
+      ],
+      "trivia": "西尾の茶づくりは明治5年（1872年）、紅樹院の住職・足立順道が京都の宇治から茶の種を取り寄せて茶園を開いたのが始まり。紅樹院は「茶祖の寺」と呼ばれている。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/008/044/toshimasu3-1.pdf",
+        "https://nishiokanko.com/wp-content/uploads/2022/07/model001.pdf",
+        "https://aichinow.pref.aichi.jp/events/detail/1218/",
+        "https://www.criser.jp/document/crec/167chiiki2.pdf"
+      ]
+    },
+    {
+      "id": "isshiki",
+      "name": "一色",
+      "kana": "いっしき",
+      "icon": "🐟",
+      "catch": "うなぎと大提灯の港町",
+      "lat": 34.803,
+      "lng": 137.02,
+      "population": 22475,
+      "populationAsOf": "2020年国勢調査から計算（佐久島を除く）",
+      "areaKm2": 20.9,
+      "summary": "三河湾に面した干拓地と漁港の町。干拓地には矢作川の水を使ったうなぎの養殖池が広がり、長く生産量日本一とされてきた。三河一色大提灯まつりや、えびせんべい、一色さかな広場で知られる。",
+      "specialties": [
+        "一色産うなぎ（地域団体商標）",
+        "三河一色えびせんべい",
+        "一色さかな広場の海の幸"
+      ],
+      "trivia": "三河一色大提灯まつりの大提灯は、長いもので約10m。6組12張が奉納され、愛知県の有形民俗文化財になっている。海の魔物をしずめるかがり火が始まりと伝わる。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/003/616/issiki0330.pdf",
+        "https://www.jpo.go.jp/system/trademark/gaiyo/chidan/shoukai/ichiran/5093218.html",
+        "https://aichinow.pref.aichi.jp/spots/detail/145/"
+      ]
+    },
+    {
+      "id": "kira",
+      "name": "吉良",
+      "kana": "きら",
+      "icon": "♨️",
+      "catch": "塩と温泉、名君・上野介の里",
+      "lat": 34.815,
+      "lng": 137.078,
+      "population": 21705,
+      "populationAsOf": "2020年国勢調査",
+      "areaKm2": 36.2,
+      "summary": "三河湾に面し、江戸時代には饗庭（あいば）塩の産地として栄えた。吉良上野介義央の領地で、忠臣蔵では悪役でも、地元では堤防づくりや新田開発をした名君として語り継がれている。海沿いには吉良温泉と宮崎海岸がある。",
+      "specialties": [
+        "饗庭塩（塩づくり体験）",
+        "吉良温泉",
+        "宮崎海岸の潮干狩り・海水浴"
+      ],
+      "trivia": "上野介が築いた堤防のおかげで水害がなくなり、田んぼが金色の稲穂でいっぱいになったことから「黄金堤」と呼ばれている。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/003/616/kira0330.pdf",
+        "https://aichinow.pref.aichi.jp/spots/detail/2127/",
+        "https://www.maff.go.jp/j/nousin/sekkei/museum/m_kakuti/27_kogane/index.html"
+      ]
+    },
+    {
+      "id": "hazu",
+      "name": "幡豆",
+      "kana": "はず",
+      "icon": "⛰️",
+      "catch": "三ヶ根山と海の国定公園",
+      "lat": 34.8,
+      "lng": 137.15,
+      "population": 11147,
+      "populationAsOf": "2020年国勢調査",
+      "areaKm2": 26.2,
+      "summary": "三ヶ根山の丘が三河湾にせまる、三河湾国定公園の地区。尾根を三ヶ根山スカイラインが通り、ふもとには愛知こどもの国がある。東幡豆の沖には前島・沖島が浮かび、潮が引くとトンボロ干潟が現れる。",
+      "specialties": [
+        "三ヶ根山のあじさい（約7万本）",
+        "トンボロ干潟と前島",
+        "鳥羽の火祭り（国の重要無形民俗文化財）"
+      ],
+      "trivia": "前島と沖島は昭和32年（1957年）に「うさぎ島」「猿が島」として開かれ、観光船でにぎわった。1985年のゴールデンウィークには約17,000人が訪れたという。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/003/616/hazu0330.pdf",
+        "https://www.aichinow.pref.aichi.jp/spots/detail/123/",
+        "https://tabi-mag.jp/toba-himatsuri/"
+      ]
+    },
+    {
+      "id": "sakushima",
+      "name": "佐久島",
+      "kana": "さくしま",
+      "icon": "🏝️",
+      "catch": "黒壁とアートの島",
+      "lat": 34.727,
+      "lng": 137.042,
+      "population": 196,
+      "populationAsOf": "2020年国勢調査",
+      "areaKm2": 1.73,
+      "summary": "三河湾のほぼ真ん中にある、三河湾でいちばん大きな島（海岸線約11km）。一色港から市営渡船で約20分。島の8割以上が里山で、2001年に始まったアートプランで、アート作品が点在する「アートの島」になった。",
+      "specialties": [
+        "島じゅうのアート作品",
+        "黒壁集落",
+        "アサリ・タコなどの魚介"
+      ],
+      "trivia": "西地区の家が黒いのは、潮風から守るためにコールタールを塗っているから。その町並みは「三河湾の黒真珠」と呼ばれている。",
+      "sources": [
+        "https://rito.pref.aichi.jp/wp-content/themes/aichi/assets/pdf/guide.pdf",
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/010/063/ar527sakushima.pdf",
+        "https://aichinow.pref.aichi.jp/features/detail/357/"
+      ]
+    }
+  ]
+}

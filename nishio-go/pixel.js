@@ -999,8 +999,8 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
   const spotNames = css >= 10 ? G.spots.filter(worldSpotShown).map(s => { const p = llToW(s.lat, s.lng); return [p.x, p.y, s.name.replace(/（.*?）/g, ''), 0]; }) : [];
   const list = base.concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
     .filter(l => l[3] >= minRank)
-    // 駅が名所（名鉄 西尾駅など）になっている所は、名所の名前だけ出す
-    .filter(l => l[3] !== 1 || !spotNames.some(n => Math.hypot(n[0] - l[0], n[1] - l[1]) < 2))
+    // 同じ駅が名所（名鉄 西尾駅など）になっている所は、名所の名前だけ出す（近くの別の名所では消さない）
+    .filter(l => l[3] !== 1 || !spotNames.some(n => n[2].endsWith('駅') && n[2].includes(l[2].replace(/駅$/, '')) && Math.hypot(n[0] - l[0], n[1] - l[1]) < 3))
     .sort((a, b) => b[3] - a[3]).concat(spotNames);
   const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11, 0: 10 }, boxes = [];
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#000';

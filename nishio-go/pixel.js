@@ -962,6 +962,23 @@ function poiHtml(p) {
   return `<div class="popup"><h4>${esc(p[3] || POI_LABEL[p[2]].replace(/^\S+ /, ''))}</h4><p><span class="tag">${esc(POI_LABEL[p[2]])}</span></p><p>主要な建物です（チェックインはできません）。</p></div>`;
 }
 
+// 地区ガイド（areas.json の分析：特徴・名物・人口・豆知識と、その地区の名所のめぐり具合）
+function areaHtml(a) {
+  const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const p = G.areaProgress(a.id), num = v => (Number.isFinite(v) ? v.toLocaleString() : null);
+  const facts = [num(a.population) && `人口 ${num(a.population)}人${a.populationAsOf ? `（${esc(a.populationAsOf)}）` : ''}`, num(a.areaKm2) && `面積 約${num(a.areaKm2)}km²`].filter(Boolean);
+  const src = (a.sources || []).filter(u => /^https?:\/\//.test(u)).slice(0, 4);
+  return `<div class="popup area-card"><h4>${esc(a.icon || '')} ${esc(a.name)}${a.kana ? `<small>（${esc(a.kana)}）</small>` : ''}</h4>
+    ${a.catch ? `<p class="catch">${esc(a.catch)}</p>` : ''}
+    ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}
+    ${(a.specialties || []).length ? `<p><span class="tag">名物</span> ${a.specialties.map(esc).join('・')}</p>` : ''}
+    ${facts.length ? `<p><span class="tag">データ</span> ${facts.join('／')}</p>` : ''}
+    ${a.trivia ? `<p>💡 ${esc(a.trivia)}</p>` : ''}
+    <p><span class="tag">めぐった名所</span> ${p.done}/${p.total}</p>
+    <ul class="area-spots">${p.list.map(s => `<li>${G.state.visits[s.id] ? '✓' : '・'} ${esc(s.name)}</li>`).join('')}</ul>
+    ${src.length ? `<p class="src">出典：${src.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">${i + 1}</a>`).join(' ')}</p>` : ''}</div>`;
+}
+
 /* ---------- せかいちずの表示 ---------- */
 let worldMode = false, wcam = null, wscale = 2, wcamOnMe = false;   // wcamOnMe：まだ現在地が分からないうちに開いた（分かったら主人公へ寄せる）
 const WSIZES = [2, 3, 4, 6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）。6以下は色のブロック、10以上はドット絵タイル
@@ -1030,16 +1047,36 @@ function worldSpotShown(s) {
   return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
 }
 // 地名・駅名をドラクエ風の白文字に黒ふちで。大きな地名から順に、重ならないものだけ
+let areaBoxes = [];   // 地区の札（タップで地区ガイド）
 function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
   const minRank = css <= 3 ? 3 : css <= 6 ? 2 : 1;
-  const base = worldLabels.length ? worldLabels : AREA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; });
+  const areas = G.areas || [];
+  const base = worldLabels.length ? worldLabels : areas.length ? [] : AREA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; });
+  // 地区の札：ドラクエのウィンドウ風に「名前 めぐった数/名所の数」。寄りすぎたら名所の名前を優先して出さない
+  const boxes = [];
+  areaBoxes = [];
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (const a of css <= 10 ? areas : []) {
+    const q = llToW(a.lat, a.lng), X = ox + q.x * T, Y = oy + q.y * T, pr = G.areaProgress(a.id);
+    const label = `${a.name} ${pr.done}/${pr.total}`, fs = Math.round(13 * dpr);
+    ctx.font = `${fs}px "DotGothic16", monospace`;
+    const bw = ctx.measureText(label).width + 16 * dpr, bh = fs + 12 * dpr;
+    const box = [X - bw / 2, Y - bh / 2, X + bw / 2, Y + bh / 2];
+    if (box[2] < 0 || box[0] > w || box[3] < 0 || box[1] > h) continue;
+    if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
+    boxes.push(box); areaBoxes.push([box, a]);
+    ctx.fillStyle = 'rgba(0,0,0,.8)'; ctx.fillRect(box[0], box[1], bw, bh);
+    ctx.strokeStyle = pr.total && pr.done === pr.total ? '#ffd54f' : '#fff'; ctx.lineWidth = Math.max(2, Math.round(2 * dpr));
+    ctx.strokeRect(box[0] + dpr, box[1] + dpr, bw - 2 * dpr, bh - 2 * dpr);
+    ctx.fillStyle = '#fff'; ctx.fillText(label, X, Y);
+  }
   const spotNames = css >= 10 ? G.spots.filter(worldSpotShown).map(s => { const p = llToW(s.lat, s.lng); return [p.x, p.y, s.name.replace(/（.*?）/g, ''), 0]; }) : [];
   const list = base.concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
     .filter(l => l[3] >= minRank)
     // 同じ駅が名所（名鉄 西尾駅など）になっている所は、名所の名前だけ出す（近くの別の名所では消さない）
     .filter(l => l[3] !== 1 || !spotNames.some(n => n[2].endsWith('駅') && n[2].includes(l[2].replace(/駅$/, '')) && Math.hypot(n[0] - l[0], n[1] - l[1]) < 3))
     .sort((a, b) => b[3] - a[3]).concat(spotNames);
-  const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11, 0: 10 }, boxes = [];
+  const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11, 0: 10 };
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#000';
   for (const [x, y, name, rank] of list) {
     const fs = Math.round(SIZE[rank] * dpr), X = ox + x * T, Y = oy + y * T + (rank === 1 ? fs : rank === 0 ? Math.max(T * 1.1, 10 * dpr) + fs / 2 : 0);
@@ -1143,6 +1180,8 @@ cv.addEventListener('click', e => {
   if (worldMode) {   // せかいちず：ドラッグでなければ、近くの注目スポットの説明を出す
     if (dragMoved) return;
     const T = wT(Math.min(window.devicePixelRatio || 1, 3)), x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
+    const ab = areaBoxes.find(([b]) => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]);
+    if (ab) { $('pxInfoBody').innerHTML = areaHtml(ab[1]); $('pxInfo').hidden = false; return; }
     let hit = null, best = Math.max(T * 1.2, 16 * dpr);
     for (const s of G.spots) {
       if (!worldSpotShown(s)) continue;
@@ -1181,5 +1220,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; } };
+window.nishioPixel = { rasterize, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; } };
 })();

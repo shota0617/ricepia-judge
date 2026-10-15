@@ -1,8 +1,9 @@
 {
-  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類を指定できます。",
+  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島。地区ガイドと地区制覇バッジに使う）を指定できます。",
   "spots": [
     {
       "id": "kondo-beikoku",
+      "area": "nishio",
       "name": "近藤米穀店（本店）",
       "icon": "🍚",
       "lat": 34.891717,
@@ -14,6 +15,7 @@
     },
     {
       "id": "ricepia",
+      "area": "nishio",
       "name": "らいすぴあ・秀幸",
       "icon": "🌾",
       "lat": 34.859668,
@@ -25,6 +27,7 @@
     },
     {
       "id": "nishio-castle",
+      "area": "nishio",
       "name": "西尾市歴史公園（西尾城跡）",
       "icon": "🏯",
       "lat": 34.866111,
@@ -40,6 +43,7 @@
     },
     {
       "id": "konoe-tei",
+      "area": "nishio",
       "name": "旧近衛邸",
       "icon": "🍵",
       "lat": null,
@@ -54,6 +58,7 @@
     },
     {
       "id": "shokoso",
+      "area": "nishio",
       "name": "尚古荘",
       "icon": "🌿",
       "lat": null,
@@ -68,6 +73,7 @@
     },
     {
       "id": "nishio-shiryokan",
+      "area": "nishio",
       "name": "西尾市資料館",
       "icon": "🏛️",
       "lat": null,
@@ -82,6 +88,7 @@
     },
     {
       "id": "iwase-bunko",
+      "area": "nishio",
       "name": "西尾市岩瀬文庫",
       "icon": "📚",
       "lat": 34.874389,
@@ -96,6 +103,7 @@
     },
     {
       "id": "ibun-jinja",
+      "area": "nishio",
       "name": "伊文神社",
       "icon": "⛩️",
       "lat": 34.870222,
@@ -110,6 +118,7 @@
     },
     {
       "id": "kozenji",
+      "area": "nishio",
       "name": "康全寺",
       "icon": "🪷",
       "lat": 34.869028,
@@ -124,6 +133,7 @@
     },
     {
       "id": "seiganji",
+      "area": "nishio",
       "name": "盛巌寺",
       "icon": "🪷",
       "lat": 34.871944,
@@ -138,6 +148,7 @@
     },
     {
       "id": "kumaku-jinja",
+      "area": "nishio",
       "name": "久麻久神社",
       "icon": "⛩️",
       "lat": 34.876111,
@@ -152,6 +163,7 @@
     },
     {
       "id": "yatsuomote",
+      "area": "nishio",
       "name": "八ツ面山",
       "icon": "⛰️",
       "lat": null,
@@ -167,6 +179,7 @@
     },
     {
       "id": "wakuwaku",
+      "area": "nishio",
       "name": "抹茶ミュージアム 西条園 和く和く",
       "icon": "🍵",
       "lat": null,
@@ -181,6 +194,7 @@
     },
     {
       "id": "jissoji",
+      "area": "nishio",
       "name": "実相寺",
       "icon": "🪷",
       "lat": 34.876417,
@@ -195,6 +209,7 @@
     },
     {
       "id": "choenji",
+      "area": "nishio",
       "name": "長圓寺",
       "icon": "🪷",
       "lat": null,
@@ -209,6 +224,7 @@
     },
     {
       "id": "glass-museum",
+      "area": "nishio",
       "name": "三河工芸ガラス美術館",
       "icon": "🔮",
       "lat": 34.853231,
@@ -223,6 +239,7 @@
     },
     {
       "id": "yojuji",
+      "area": "nishio",
       "name": "養寿寺",
       "icon": "🪷",
       "lat": 34.847806,
@@ -237,6 +254,7 @@
     },
     {
       "id": "terazu-hachiman",
+      "area": "nishio",
       "name": "寺津八幡社",
       "icon": "⛩️",
       "lat": 34.841389,
@@ -251,6 +269,7 @@
     },
     {
       "id": "michinoeki-okanoyama",
+      "area": "nishio",
       "name": "道の駅にしお岡ノ山",
       "icon": "🚗",
       "lat": 34.87678,
@@ -266,6 +285,7 @@
     },
     {
       "id": "nishio-station",
+      "area": "nishio",
       "name": "名鉄 西尾駅",
       "icon": "🚉",
       "lat": 34.863889,
@@ -281,6 +301,7 @@
     },
     {
       "id": "nishio-cityhall",
+      "area": "nishio",
       "name": "西尾市役所",
       "icon": "🏛️",
       "lat": 34.862009,
@@ -295,6 +316,7 @@
     },
     {
       "id": "ikimono-sato",
+      "area": "hazu",
       "name": "西尾いきものふれあいの里",
       "icon": "🦋",
       "lat": null,
@@ -310,6 +332,7 @@
     },
     {
       "id": "hirabara-taki",
+      "area": "nishio",
       "name": "平原の滝",
       "icon": "💧",
       "lat": 34.848264,
@@ -323,7 +346,50 @@
       "desc": "高さ5mの大滝と2mの小滝。古くから信仰を集める。"
     },
     {
+      "id": "inariyama-chaen",
+      "area": "nishio",
+      "name": "稲荷山茶園公園",
+      "icon": "🍵",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "稲荷山茶園"
+      ],
+      "cat": "view",
+      "desc": "西尾の茶畑約200haのうち、約100haの茶園を見わたせる高台の公園。八十八夜には茶摘みの行事がある。"
+    },
+    {
+      "id": "kojuin",
+      "area": "nishio",
+      "name": "紅樹院（茶祖の寺）",
+      "icon": "🛕",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "紅樹院"
+      ],
+      "cat": "temple",
+      "desc": "明治5年に住職の足立順道が宇治から茶の種を取り寄せて茶園を開いた、西尾茶の「茶祖の寺」。"
+    },
+    {
+      "id": "atsuike-hachiman",
+      "area": "nishio",
+      "name": "熱池八幡社（てんてこ祭）",
+      "icon": "⛩️",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "熱池八幡"
+      ],
+      "cat": "shrine",
+      "desc": "毎年1月3日、五穀豊穣を願う奇祭「てんてこ祭」が行われる神社。"
+    },
+    {
       "id": "isshiki-sakana",
+      "area": "isshiki",
       "name": "一色さかな広場",
       "icon": "🐟",
       "lat": 34.794428,
@@ -339,6 +405,7 @@
     },
     {
       "id": "isshiki-port",
+      "area": "isshiki",
       "name": "一色港（佐久島行き船のりば）",
       "icon": "⛴️",
       "lat": 34.794466,
@@ -353,6 +420,7 @@
     },
     {
       "id": "isshiki-suwa",
+      "area": "isshiki",
       "name": "三河一色諏訪神社",
       "icon": "⛩️",
       "lat": 34.8085,
@@ -367,6 +435,7 @@
     },
     {
       "id": "ankyuji",
+      "area": "isshiki",
       "name": "安休寺（一色氏発祥之地）",
       "icon": "🪷",
       "lat": 34.811722,
@@ -381,6 +450,7 @@
     },
     {
       "id": "isshiki-manabi",
+      "area": "isshiki",
       "name": "一色学びの館",
       "icon": "🏛️",
       "lat": 34.805556,
@@ -395,6 +465,7 @@
     },
     {
       "id": "koromozaki",
+      "area": "isshiki",
       "name": "衣崎海岸（一色干潟）",
       "icon": "🏖️",
       "lat": 34.775954,
@@ -410,6 +481,7 @@
     },
     {
       "id": "sakushima-nishi",
+      "area": "sakushima",
       "name": "佐久島 西港",
       "icon": "⛴️",
       "lat": 34.726389,
@@ -425,6 +497,7 @@
     },
     {
       "id": "sakushima-higashi",
+      "area": "sakushima",
       "name": "佐久島 東港",
       "icon": "⛴️",
       "lat": 34.720278,
@@ -440,6 +513,7 @@
     },
     {
       "id": "benten-salon",
+      "area": "sakushima",
       "name": "佐久島弁天サロン",
       "icon": "🏛️",
       "lat": 34.725928,
@@ -454,6 +528,7 @@
     },
     {
       "id": "suunji",
+      "area": "sakushima",
       "name": "崇運寺（佐久島）",
       "icon": "🪷",
       "lat": 34.726694,
@@ -468,6 +543,7 @@
     },
     {
       "id": "ohirune-house",
+      "area": "sakushima",
       "name": "おひるねハウス（佐久島）",
       "icon": "🎨",
       "lat": 34.722946,
@@ -482,6 +558,7 @@
     },
     {
       "id": "kamome-parking",
+      "area": "sakushima",
       "name": "カモメの駐車場（佐久島）",
       "icon": "🎨",
       "lat": 34.724865,
@@ -496,6 +573,7 @@
     },
     {
       "id": "oura-beach",
+      "area": "sakushima",
       "name": "大浦海水浴場（佐久島）",
       "icon": "🏖️",
       "lat": 34.722866,
@@ -510,6 +588,7 @@
     },
     {
       "id": "yatsurugi",
+      "area": "sakushima",
       "name": "八劔神社・神明社（佐久島）",
       "icon": "⛩️",
       "lat": 34.722417,
@@ -523,7 +602,22 @@
       "desc": "1月の八日講まつりで知られる島の神社。"
     },
     {
+      "id": "kurokabe",
+      "area": "sakushima",
+      "name": "黒壁集落（佐久島）",
+      "icon": "🏘️",
+      "lat": 34.729,
+      "lng": 137.037,
+      "approx": true,
+      "match": [
+        "黒壁"
+      ],
+      "cat": "sight",
+      "desc": "潮風よけにコールタールを塗った黒い家が細い路地に並ぶ、「三河湾の黒真珠」と呼ばれる集落。"
+    },
+    {
       "id": "kezoji",
+      "area": "kira",
       "name": "華蔵寺（吉良）",
       "icon": "🪷",
       "lat": 34.84275,
@@ -538,6 +632,7 @@
     },
     {
       "id": "kogane-zutsumi",
+      "area": "kira",
       "name": "黄金堤（吉良）",
       "icon": "📜",
       "lat": 34.847647,
@@ -553,6 +648,7 @@
     },
     {
       "id": "tojo-jo",
+      "area": "kira",
       "name": "東条城跡（吉良）",
       "icon": "🏯",
       "lat": 34.835,
@@ -567,6 +663,7 @@
     },
     {
       "id": "gentokuji",
+      "area": "kira",
       "name": "源徳寺（吉良）",
       "icon": "🪷",
       "lat": 34.832855,
@@ -581,6 +678,7 @@
     },
     {
       "id": "konrenji",
+      "area": "kira",
       "name": "金蓮寺（吉良）",
       "icon": "🪷",
       "lat": 34.809367,
@@ -595,6 +693,7 @@
     },
     {
       "id": "ozaki-shiro",
+      "area": "kira",
       "name": "尾﨑士郎記念館（吉良）",
       "icon": "🏛️",
       "lat": 34.806667,
@@ -610,6 +709,7 @@
     },
     {
       "id": "kira-yoshida",
+      "area": "kira",
       "name": "名鉄 吉良吉田駅",
       "icon": "🚉",
       "lat": 34.79438,
@@ -625,6 +725,7 @@
     },
     {
       "id": "shohoji-kofun",
+      "area": "kira",
       "name": "正法寺古墳（吉良）",
       "icon": "📜",
       "lat": 34.789444,
@@ -640,6 +741,7 @@
     },
     {
       "id": "shio-no-sato",
+      "area": "kira",
       "name": "吉良饗庭塩の里",
       "icon": "🧂",
       "lat": 34.783257,
@@ -654,6 +756,7 @@
     },
     {
       "id": "kira-onsen",
+      "area": "kira",
       "name": "吉良温泉",
       "icon": "♨️",
       "lat": 34.782511,
@@ -669,6 +772,7 @@
     },
     {
       "id": "kira-waikiki",
+      "area": "kira",
       "name": "吉良ワイキキビーチ（宮崎海水浴場）",
       "icon": "🏖️",
       "lat": 34.781273,
@@ -685,6 +789,7 @@
     },
     {
       "id": "hazu-jinja",
+      "area": "kira",
       "name": "幡頭神社（吉良）",
       "icon": "⛩️",
       "lat": 34.778111,
@@ -699,6 +804,7 @@
     },
     {
       "id": "nishi-hazu",
+      "area": "hazu",
       "name": "名鉄 西幡豆駅",
       "icon": "🚉",
       "lat": 34.792444,
@@ -714,6 +820,7 @@
     },
     {
       "id": "terabe-jo",
+      "area": "hazu",
       "name": "寺部城址（幡豆）",
       "icon": "🏯",
       "lat": 34.78905,
@@ -728,6 +835,7 @@
     },
     {
       "id": "higashi-hazu",
+      "area": "hazu",
       "name": "名鉄 東幡豆駅",
       "icon": "🚉",
       "lat": 34.789444,
@@ -743,6 +851,7 @@
     },
     {
       "id": "myozenji",
+      "area": "hazu",
       "name": "妙善寺（かぼちゃ寺）",
       "icon": "🪷",
       "lat": null,
@@ -757,6 +866,7 @@
     },
     {
       "id": "tombolo",
+      "area": "hazu",
       "name": "トンボロ干潟（前島）",
       "icon": "🏖️",
       "lat": null,
@@ -772,6 +882,7 @@
     },
     {
       "id": "kodomonokuni-st",
+      "area": "hazu",
       "name": "名鉄 こどもの国駅",
       "icon": "🚉",
       "lat": 34.788611,
@@ -787,6 +898,7 @@
     },
     {
       "id": "aichi-kodomo",
+      "area": "hazu",
       "name": "愛知こどもの国",
       "icon": "🎡",
       "lat": null,
@@ -802,6 +914,7 @@
     },
     {
       "id": "sangane-kannon",
+      "area": "hazu",
       "name": "三ヶ根観音",
       "icon": "🙏",
       "lat": null,
@@ -815,6 +928,20 @@
       "cat": "temple",
       "desc": "三ヶ根山の山頂付近の観音さま。三河湾の眺めも。",
       "reach": 100
+    },
+    {
+      "id": "toba-shinmei",
+      "area": "hazu",
+      "name": "鳥羽神明社（鳥羽の火祭り）",
+      "icon": "🔥",
+      "lat": null,
+      "lng": null,
+      "approx": false,
+      "match": [
+        "鳥羽神明社"
+      ],
+      "cat": "shrine",
+      "desc": "約1200年続く国の重要無形民俗文化財「鳥羽の火祭り」の舞台。毎年2月第2日曜。"
     }
   ]
 }

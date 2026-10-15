@@ -3,6 +3,9 @@ name: Bake Nishio world map
 on:
   workflow_dispatch:
   push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
     paths:
       - tools/bake-world.js
       - .github/workflows/bake-world.yml

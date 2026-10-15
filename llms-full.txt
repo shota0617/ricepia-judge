@@ -125,7 +125,7 @@ APIキーはブラウザ内でのみ使用され保存されません。写真�
 本店：〒445-0802 愛知県西尾市米津町蓮台３−１
 電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
 創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
-[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Facebook](https://www.facebook.com/ricepia/) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 最終更新：2026年10月15日
 © 近藤米穀店 らいすぴあ
 
@@ -147,7 +147,7 @@ URL: https://ricepia-judge.vercel.app/guide/
 本店：〒445-0802 愛知県西尾市米津町蓮台３−１
 電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
 創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
-[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Facebook](https://www.facebook.com/ricepia/) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ
 
 ---
@@ -263,7 +263,7 @@ URL: https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html
 本店：〒445-0802 愛知県西尾市米津町蓮台３−１
 電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
 創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
-[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Facebook](https://www.facebook.com/ricepia/) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ
 
 ---
@@ -338,7 +338,7 @@ URL: https://ricepia-judge.vercel.app/guide/rice-photo-tips.html
 本店：〒445-0802 愛知県西尾市米津町蓮台３−１
 電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
 創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
-[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Facebook](https://www.facebook.com/ricepia/) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ
 
 ---
@@ -465,5 +465,5 @@ URL: https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html
 本店：〒445-0802 愛知県西尾市米津町蓮台３−１
 電話：[0563-54-4001](tel:+81563544001)（2店舗共通）
 創業：1892年（明治25年）｜五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
-[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
+[公式サイト](https://ricepia.jp/) · [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7) · [Facebook](https://www.facebook.com/ricepia/) · [Instagram](https://www.instagram.com/ricepiablog/) · [YouTube](https://www.youtube.com/@ricepia) · [LINE](https://line.me/R/ti/p/@wxh6702b)
 © 近藤米穀店 らいすぴあ

@@ -49,12 +49,14 @@
 - PageSpeed Insights公式APIをモバイルで1回実行：HTTP 429（Queries per dayの上限超過）。スコア未取得、再試行なし。新しいAPIキー・課金設定の追加なし。
 - APIキー入力・判定API呼び出し・広告CSV処理は変更対象外。課金を伴うAI判定は実行していない。
 
+外部バリデータの証跡はFacebookリンク追加前の結果。追加後はローカルの6テストと全文生成一致を再検証した。
+
 証跡: `verification/browser-results.json`、`verification/production-check.json`、`verification/schema-validator.png`、`verification/rich-results.png`。
 
 ## 残タスク
 
 1. 店側で記事内容を確認し、個人の著者・監修者を付ける場合は担当者を確定。
-2. Facebookの正式URLを確定。取得時に制限表示があり保留。GoogleマップURLは公式サイトのリンクを採用し、GBP管理値そのものとの一致は未確認。
+2. Facebookの正式URLは店主提供画像で確認・反映済み。GoogleマップURLは公式サイトのリンクを採用し、GBP管理値そのものとの一致は未確認。
 3. 独自ドメイン化の予定がある場合、移行先確定後にcanonical・OGP・sitemap・llmsを一括変更。
-4. 店主の承認後にpush・PR/マージ・本番公開。Search Consoleは新Googleアカウント `ricepiaricepiaricepia@gmail.com` の対象プロパティ所有確認後に、公開版sitemapを送信する。今回登録・送信は行っていない。
+4. 店主の「進めて」によりpush・レビューPR作成を進めたが、Gitの認証エラーとGitHub連携の書込権限不足（403）で未反映。認証復旧後にpush・PR作成。本番へのマージ・公開は別途承認後。Search Consoleは新Googleアカウント `ricepiaricepiaricepia@gmail.com` の対象プロパティ所有確認後に、公開版sitemapを送信する。今回登録・送信は行っていない。
 5. 公開後、今回404だった2パスを再確認し、PageSpeedを再測定。AI引用への効果は今回未測定。次回確認の目安は公開から4〜8週間後（仮に10月15日公開なら11月12日以降）。自動実行は未設定。

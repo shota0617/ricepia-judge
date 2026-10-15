@@ -10,6 +10,7 @@
 | 電話 | 0563-54-4001（2店舗共通） | 公式トップ・会社案内 |
 | 創業 | 1892年（明治25年） | 会社案内の沿革 |
 | Googleマップ | https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7 | 公式トップの「近藤米穀店」の地図リンク |
+| Facebook | https://www.facebook.com/ricepia/ | 2026-10-15 店主提供スクリーンショット：URL欄とKondo Rice Nishio管理画面、店舗住所・電話・公式サイトを確認 |
 | Instagram | https://www.instagram.com/ricepiablog/ | 公式トップのSNS欄・sameAs |
 | YouTube | https://www.youtube.com/@ricepia | 公式トップのSNS欄・sameAs |
 | LINE | https://line.me/R/ti/p/@wxh6702b | 公式トップのsameAs |
@@ -25,4 +26,8 @@ Facebookは過去のローカル作業ログに `https://www.facebook.com/ricepi
 
 五代目を1892年創業の `founder` とするのは不適切なので採用しない。氏名と「五代目店主」のみを公式情報に基づき掲載し、記事の著者・監修者としての指定は店主の確認後に行う。
 
-残確認: Facebookの正式URL、記事の監修・著者の扱い、独自ドメイン化の予定。
+残確認: 記事の監修・著者の扱い、独自ドメイン化の予定。
+
+## 追加確認（2026-10-15）
+
+店主から届いたスクリーンショットで `facebook.com/ricepia/` と表示名「Kondo Rice Nishio」、店舗住所・電話・公式サイトを確認。Facebookの保留を解除し、全ページのsameAs・footer・llmsへ追加した。上記の取得制限は当初の調査記録として残す。スクリーンショット自体は管理画面を含むためリポジトリには転載しない。

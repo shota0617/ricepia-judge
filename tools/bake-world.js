@@ -93,7 +93,9 @@ async function bakeOnce(browser) {
   console.log('地名', saved.l.length, '大きな建物', saved.p.length);
   // それらしい地図になっているか（道・川・町なみ・地名がそろっているか）
   const roads = (hist.H || 0) + (hist.R || 0);
-  if (roads < 2000 || (hist.T || 0) < 2000 || (hist.A || 0) < 5000 || saved.l.length < 10) { console.error('地図データが少なすぎるので保存しない'); process.exit(1); }
+  // （西尾は町なみ T より田畑・道が多いので、町なみの量では判定しない）
+  const land = saved.w * saved.h - (hist.A || 0);
+  if (roads < 2000 || (hist.A || 0) < 5000 || land < 20000 || saved.l.length < 10 || saved.p.length < 10) { console.error('地図データが少なすぎるので保存しない'); process.exit(1); }
   const out = { v: 1, baked: new Date().toISOString(), src: 'OpenStreetMap contributors (ODbL) / 国土地理院 標高タイル', w: saved.w, h: saved.h, d: saved.d, p: saved.p, l: saved.l };
   fs.writeFileSync(OUT, JSON.stringify(out));
   console.log('保存しました:', path.relative(ROOT, OUT), fs.statSync(OUT).size, 'bytes');

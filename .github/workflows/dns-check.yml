@@ -14,12 +14,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          for ns in ns1.dns.ne.jp 8.8.8.8 1.1.1.1; do
-            echo "== @$ns"
-            for q in "CNAME go.ricepia.jp" "A go.ricepia.jp" "A ricepia.jp" "CNAME www.ricepia.jp" "MX ricepia.jp" "TXT ricepia.jp" "CNAME mail.ricepia.jp"; do
-              printf '%-22s ' "$q"; dig +short @$ns $q | tr '\n' ' '; echo
-            done
+          for u in https://ricepia.jp/ http://ricepia.jp/ https://www.ricepia.jp/ https://go.ricepia.jp/ https://go.ricepia.jp/nishio-go/ogp.png; do
+            for t in 1 2; do printf '%-45s ' "$u"; curl -sS -o /dev/null --max-time 25 -w '%{http_code} %{size_download} %{remote_ip}\n' "$u" || echo; done
           done
-          echo "== https://ricepia.jp/"; curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' https://ricepia.jp/ || true
-          echo "== https://go.ricepia.jp/"; curl -sS -o /tmp/go.html -w '%{http_code} %{size_download}\n' https://go.ricepia.jp/ || true
-          grep -o '<title>[^<]*' /tmp/go.html 2>/dev/null || true

@@ -4530,6 +4530,38 @@
 #shinmai-news .news-archive{font-size:16px;line-height:1.7;padding:16px;background:#fff;border:1px solid #bca77b;margin-top:24px}
 @media(max-width:600px){#shinmai-news .news-stock{padding:18px 14px}#shinmai-news .news-stock ul{grid-template-columns:1fr}#shinmai-news .news-actions a{width:100%}}
 </style>
+<!-- nishio-go:start にしおさんぽGO（試作版）のお知らせ。ricepia.jp トップの「動画で見る らいすぴあ」の上に入れる（tools/build-ricepia-jp.py） -->
+<style id="nishio-go-style">
+  #nishio-go { background: var(--green-soft, #e8efdf); padding: clamp(2.5rem, 6vw, 4rem) 1.25rem; text-align: center; }
+  #nishio-go .ng-inner { max-width: 640px; margin: 0 auto; }
+  #nishio-go .ng-logo { display: block; width: min(100%, 440px); height: auto; margin: 0 auto 1rem; image-rendering: pixelated; }
+  #nishio-go .ng-tag { display: inline-block; margin: 0 0 .9rem; padding: .15em .9em; border: 1px solid var(--gold, #b8893a); border-radius: 999px; background: #fff; color: var(--gold-text, #8a6423); font-size: .85rem; font-weight: 700; }
+  #nishio-go .sec-title { margin-bottom: .9rem; }
+  #nishio-go .sec-lead { margin: 0 auto 1.6rem; }
+  #nishio-go .ng-points { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: 0 0 1.8rem; padding: 0; list-style: none; }
+  #nishio-go .ng-points li { padding: .35em .9em; border-radius: 999px; background: #fff; color: var(--ink, #1a1814); font-size: .9rem; box-shadow: var(--shadow-soft); }
+  #nishio-go .ng-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 14px 40px; border-radius: 999px; background: var(--green-deep, #1f4d2b); color: #fff; font-size: 1.05rem; font-weight: 700; letter-spacing: .05em; text-decoration: none; transition: background .15s; }
+  #nishio-go .ng-btn:hover { background: #173e2d; }
+  #nishio-go .ng-btn:focus-visible { outline: 3px solid var(--gold, #b8893a); outline-offset: 4px; }
+  #nishio-go .ng-note { margin: 1rem 0 0; color: var(--text-muted, #736c5e); font-size: .85rem; line-height: 1.7; }
+  @media (max-width: 599px) { #nishio-go .ng-btn { width: 100%; } }
+</style>
+<section id="nishio-go" aria-labelledby="nishio-go-title">
+  <div class="ng-inner">
+    <img class="ng-logo" src="https://ricepia-judge.vercel.app/nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80" loading="lazy">
+    <span class="ng-tag">🧪 試作版</span>
+    <h2 id="nishio-go-title" class="sec-title">西尾のまちを歩いて、<br><span class="em">名所をめぐる</span>ゲーム。</h2>
+    <p class="sec-lead">名所に近づくとポイントが貯まるお散歩ゲームをつくりました。西尾城跡・岩瀬文庫・佐久島…そして らいすぴあ も名所のひとつです。</p>
+    <ul class="ng-points">
+      <li>📜 毎日かわる「今日のクエスト」</li>
+      <li>🎁 道ばたの たからばこ</li>
+      <li>🎮 家でも遊べる「操作モード」</li>
+    </ul>
+    <a class="ng-btn" href="https://ricepia-judge.vercel.app/nishio-go.html" target="_blank" rel="noopener">▶ あそんでみる</a>
+    <p class="ng-note">スマホのブラウザで遊べます（アプリのインストールは不要・無料）。<br>歩いて遊ぶときは、まわりの安全に気をつけてください。</p>
+  </div>
+</section>
+<!-- nishio-go:end -->
 <!-- ▼ 動画コーナー（ここから） -->
 <section id="videos" class="section rp-videos" aria-labelledby="rp-videos-title">
   <div class="rp-videos__inner section-inner">

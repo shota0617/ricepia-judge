@@ -1,0 +1,67 @@
+name: 異常・課金監視
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_email:
+        description: "テストメールを送信する"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # 前回までの通知状態（同じ異常を15分ごとに何度も送らないため）
+      - uses: actions/cache/restore@v4
+        with:
+          path: .monitor-state
+          key: monitor-state-${{ github.run_id }}
+          restore-keys: monitor-state-
+
+      - name: 監視チェック
+        run: node monitor/check.mjs
+        env:
+          MONITOR_TEST_EMAIL: ${{ inputs.test_email }}
+          ALERT_EMAIL_TO: ${{ vars.ALERT_EMAIL_TO || 'ricepiaricepiaricepia@gmail.com' }}
+          ALERT_EMAIL_FROM: ${{ vars.ALERT_EMAIL_FROM }}
+          MONITOR_URLS: ${{ vars.MONITOR_URLS }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ANTHROPIC_ADMIN_KEY: ${{ secrets.ANTHROPIC_ADMIN_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REFS: ${{ vars.SUPABASE_PROJECT_REFS }}
+          ANTHROPIC_DAILY_USD_LIMIT: ${{ vars.ANTHROPIC_DAILY_USD_LIMIT }}
+          ANTHROPIC_MONTHLY_USD_LIMIT: ${{ vars.ANTHROPIC_MONTHLY_USD_LIMIT }}
+          CF_WORKER_REQ_1H_LIMIT: ${{ vars.CF_WORKER_REQ_1H_LIMIT }}
+          CF_WORKER_REQ_24H_LIMIT: ${{ vars.CF_WORKER_REQ_24H_LIMIT }}
+          CF_WORKER_ERROR_RATE_LIMIT: ${{ vars.CF_WORKER_ERROR_RATE_LIMIT }}
+          CF_R2_OPS_24H_LIMIT: ${{ vars.CF_R2_OPS_24H_LIMIT }}
+          CF_D1_SIZE_MB_LIMIT: ${{ vars.CF_D1_SIZE_MB_LIMIT }}
+          ALERT_REMIND_HOURS: ${{ vars.ALERT_REMIND_HOURS }}
+          AUTO_STOP: ${{ vars.AUTO_STOP }}
+          AUTO_STOP_EXCLUDE_WORKERS: ${{ vars.AUTO_STOP_EXCLUDE_WORKERS }}
+          AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS: ${{ vars.AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS }}
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .monitor-state
+          key: monitor-state-${{ github.run_id }}

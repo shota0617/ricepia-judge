@@ -583,7 +583,9 @@ function syncChestMarkers() {
   for (const c of list) {
     if (opened.includes(c.id)) continue;
     keep.add(c.id);
-    if (!chestMarkers.has(c.id)) chestMarkers.set(c.id, L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="chest-mk">🎁</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), keyboard: false, interactive: false }).addTo(map));
+    const m = chestMarkers.get(c.id);
+    if (m) m.setLatLng([c.lat, c.lng]);   // 置き直されたら印も動かす
+    else chestMarkers.set(c.id, L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="chest-mk">🎁</div>', iconSize: [30, 30], iconAnchor: c.at ? [-6, 34] : [15, 15] }), keyboard: false, interactive: false, zIndexOffset: 600 }).addTo(map));
   }
   for (const [id, m] of chestMarkers) if (!keep.has(id)) { m.remove(); chestMarkers.delete(id); }
 }
@@ -658,7 +660,7 @@ function refreshNearby() {
   }
   syncChestMarkers();
   const ch = nearestChest();
-  if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${fmtM(ch.d)}）`);
+  if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${ch.c.at ? `${esc(ch.c.at)}・` : ''}${fmtM(ch.d)}）`);
   if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
   const wd = S.walkDay.date === ymd() ? S.walkDay.pts : 0, qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length;
   msgs.push(`📜 今日のクエスト ${qd}/3　👣 歩き ${wd}/${CFG.walkDailyCap}pt`);

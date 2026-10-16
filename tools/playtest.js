@@ -76,8 +76,8 @@ async function walkTo(page, id) {
   const shot = async (page, name) => { await page.screenshot({ path: path.join(OUT, name + '.png') }); R.shots.push(name + '.png'); };
   const state = page => page.evaluate(() => ({ pts: nishioGo.state.points, demo: nishioGo.demo, status: document.getElementById('status').textContent }));
 
-  // 1) 操作して移動で遊ぶ
-  let { ctx, page, errors } = await newPage(browser);
+  // 1) 操作して移動で遊ぶ（位置情報は許可しておき、あとで同じ画面のまま、あるいて移動に切り替える）
+  const { ctx, page, errors } = await newPage(browser, { permissions: ['geolocation'], geolocation: { latitude: STATION[0], longitude: STATION[1], accuracy: 10 } });
   await page.goto(URL); await page.waitForTimeout(800);
   await shot(page, '01-intro');
   await page.click('#demoBtn'); await page.waitForTimeout(2500);
@@ -131,21 +131,33 @@ async function walkTo(page, id) {
   await page.click('[data-tab=badges]'); await page.waitForTimeout(400); await shot(page, '07-badges');
   await page.click('[data-tab=map]'); await page.waitForTimeout(300);
   R.checks.operateFinal = await state(page);
-  R.errors.push(...errors);
-  await ctx.close();
 
-  // 2) あるいて移動（位置情報で現在地が出るか、操作モードと記録が別か）
-  ({ ctx, page, errors } = await newPage(browser, { permissions: ['geolocation'], geolocation: { latitude: STATION[0], longitude: STATION[1], accuracy: 10 } }));
-  await page.goto(URL); await page.waitForTimeout(500);
-  await page.click('#startBtn'); await page.waitForTimeout(3500);
+  // 2) 同じ画面のまま、あるいて移動に切り替える（位置情報で現在地が出るか、記録が操作モードと別か、戻すと操作モードの記録が残っているか）
+  await page.click('.mode-sw [data-mode=real]'); await page.waitForTimeout(3500);
   R.checks.walkMode = await page.evaluate(([la, lo]) => !nishioGo.demo && !!nishioGo.me && Math.abs(nishioGo.me.lat - la) < 1e-4 && Math.abs(nishioGo.me.lng - lo) < 1e-4 && document.getElementById('pxPad').hidden, STATION);
-  R.checks.walkModeSeparateRecord = await page.evaluate(() => nishioGo.state.points === 0);
+  R.checks.walkModePoints = await page.evaluate(() => nishioGo.state.points);
+  R.checks.walkChests = await page.evaluate(() => nishioPixel.chests.map(c => c.at || ''));   // あるいて移動ではスポットの上にだけ
   await shot(page, '08-walk-mode');
+  await page.click('.mode-sw [data-mode=demo]'); await page.waitForTimeout(1000);
+  R.checks.operatePointsKept = await page.evaluate(() => nishioGo.state.points);
   R.errors.push(...errors);
   await ctx.close();
 
   await browser.close(); server.close();
-  R.ok = R.errors.length === 0 && R.walk.every(w => w.reached) && R.checks.chestsNearby > 0 && Object.entries(R.checks).every(([, v]) => v !== false);
+  // 合格の条件：どれか1つでも外れたら、理由を failures に書いて終了コード1
+  const c = R.checks, fail = [];
+  const need = (ok, why) => { if (!ok) fail.push(why); };
+  need(R.errors.length === 0, 'ページでエラーが出た');
+  need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
+  need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
+  need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');
+  need(Array.isArray(c.quests) && c.quests.length === 4 && c.quests.some(q => q.startsWith('✅')), '今日のクエストが出ないか、1つも達成されない');
+  need(/^[1-9]\d*\/[1-9]\d*$/.test(c.facts || ''), 'まめちしきが集まらない');
+  need(c.walkModePoints === 0 && c.operatePointsKept === c.operateFinal.pts && c.operateFinal.pts > 0, '記録がモードごとに分かれていない');
+  need(Array.isArray(c.walkChests) && c.walkChests.every(at => at), 'あるいて移動のたからばこがスポット以外に置かれた');
+  R.failures = fail;
+  R.ok = fail.length === 0;
   fs.writeFileSync(path.join(OUT, 'playtest.json'), JSON.stringify(R, null, 2));
   console.log(JSON.stringify(R, null, 2));
   process.exit(R.ok ? 0 : 1);

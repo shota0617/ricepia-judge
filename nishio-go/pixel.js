@@ -1013,8 +1013,8 @@ function frame(now) {
   // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
   for (const c of chests) {
     if (G.chestOpened(c.id)) continue;
-    const p = toTile(c.lat, c.lng), hop = f ? Math.round(T / 8) : 0;
-    const sx = Math.round(ox + p.x * T - T / 2), sy = Math.round(oy + p.y * T - T / 2) - hop;
+    const p = toTile(c.lat, c.lng), hop = f ? Math.round(T / 8) : 0, sh = c.at ? T * 0.9 : 0;   // スポットに置いたものは右上にずらす
+    const sx = Math.round(ox + p.x * T - T / 2 + sh), sy = Math.round(oy + p.y * T - T / 2 - sh) - hop;
     if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
     ctx.drawImage(spotSprites.treasure[0], sx, sy, T, T);
   }
@@ -1366,11 +1366,11 @@ function snapDemoStart() {
 /* ---------- たからばこ ----------
    400m四方（50マス）の区画ごとに、日付から決まる場所に1〜2個置く（同じ日・同じモードなら、だれが見ても同じ）。
    ・操作して移動：画面の中だけの冒険なので、区画の中の道や小道に置く
-   ・あるいて移動：実際にそこへ歩いていくので、道の上（車道や私有地の通路かもしれない）には置かない。
-     チェックインのスポットになっている名前のある公園・神社・お寺・城跡・海岸・展望地のすぐそば（約24m以内）の、
-     草地・林・公園・境内・砂浜・小道のマスにだけ置く（建物・車道・水・田畑の上には置かない）
+   ・あるいて移動：実際にそこへ歩いていくので、道や小道（地図データでは車道や私有地の通路と見分けられない）には置かない。
+     チェックインのスポットになっている名前のある公園・神社・お寺・城跡・海岸・展望地そのものに置く
+     （ゲームがもともと案内している場所なので、そこより危ない所へは行かせない。絵はスポットと重ならないよう少しずらす）
    地図やスポットがまだ届いていない区画は、届いてから置く。開けたかどうかは game.js が覚える */
-const CHEST_CELL = 50, PUBLIC_KINDS = new Set(['park', 'shrine', 'temple', 'castle', 'beach', 'view']), PUBLIC_GROUND = new Set([C.G, C.W, C.P, C.J, C.S, C.D]);
+const CHEST_CELL = 50, PUBLIC_KINDS = new Set(['park', 'shrine', 'temple', 'castle', 'beach', 'view']);
 let chests = [], chestKey = '', chestCells = new Map();
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const seededRnd = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -1395,9 +1395,7 @@ function chestCell(i, j, date, walking) {
       .sort((a, b) => (a.s.id < b.s.id ? -1 : 1));
     for (let k = 0; k < 2 && parks.length; k++) {
       const p = parks.splice(Math.floor(rnd() * parks.length), 1)[0], pts = 10 + Math.floor(rnd() * 3) * 10;
-      const t = nearTile(Math.floor(p.t.x), Math.floor(p.t.y), 3, (c, d) => d >= 1 && PUBLIC_GROUND.has(c));   // スポットの真上は避ける
-      if (t === undefined) return null;
-      if (t) add(t, k, pts);
+      out.push({ id: `${date}:${i}:${j}:${k}:${p.s.id}`, lat: p.s.lat, lng: p.s.lng, pts, at: p.s.name });
     }
     return out;
   }

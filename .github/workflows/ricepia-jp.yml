@@ -1,7 +1,8 @@
 # ricepia.jp（さくらのレンタルサーバ）のトップページを更新する
 # - いつも：いまの www/index.html をダウンロードして、ログと成果物に出す（サイトは変えない）
 # - ricepia-jp/deploy.txt に「deploy」と書いたときだけ：サーバーの index.html を index.html.bak-日時 に残してから、
-#   ricepia-jp/index.html をアップロードする
+#   いまの index.html に ricepia-jp/game-section.html を入れたもの（tools/build-ricepia-jp.py）をアップロードする
+#   （ricepia-jp/index.html は、公開中のページ ricepia-jp/current.html から作った確認用の案）
 # 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
 name: ricepia.jp top page
 on:
@@ -14,6 +15,7 @@ on:
       - ricepia-jp/**
       - .github/workflows/ricepia-jp.yml
       - .github/ricepia-ftp.sh
+      - tools/build-ricepia-jp.py
 permissions:
   contents: read
 concurrency:
@@ -75,11 +77,13 @@ jobs:
         if: steps.secrets.outputs.ok == 'true'
         run: |
           if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
-          test -s ricepia-jp/index.html
+          # いまサーバーにある index.html（さっきダウンロードしたもの）にお知らせ欄を入れて上げる
+          # （案を作ったあとにトップページが更新されていても、その更新を消さないように）
+          python3 tools/build-ricepia-jp.py current/index.html current/new-index.html
           stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
           . .github/ricepia-ftp.sh
           # 先に別名でアップロードしてから入れ替える（途中で失敗しても、トップページが消えたままにならないように）
-          ftp "put ricepia-jp/index.html -o www/index.html.new"
+          ftp "put current/new-index.html -o www/index.html.new"
           if ! ftp "mv www/index.html www/index.html.bak-$stamp; mv www/index.html.new www/index.html"; then
             echo "::error::入れ替えに失敗したので元に戻します"
             ftp "mv www/index.html.bak-$stamp www/index.html" || true

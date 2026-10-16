@@ -53,9 +53,12 @@
 </div>
 
 <section class="sheet" id="sheet">
-  <div class="mode-sw" role="group" aria-label="移動のしかた">
-    <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
-    <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
+  <div class="sheet-top">
+    <div class="mode-sw" role="group" aria-label="移動のしかた">
+      <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
+      <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
+    </div>
+    <button type="button" class="snd-btn" id="sndBtn" aria-label="音楽（BGM）をオンにする" title="音楽（BGM）">🔇</button>
   </div>
   <div class="status" id="status">位置情報を待っています…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
@@ -109,6 +112,10 @@
     <label class="row">
       <span><b>🎮 操作して移動</b><small>十字ボタン（矢印キー）や地図のタップで移動します。オフにすると、実際に歩いて移動します（位置情報を使います）。ポイントと記録は別々に保存され、お店のとくてんは「あるいて移動」でだけ使えます。</small></span>
       <input type="checkbox" id="demoToggle"/>
+    </label>
+    <label class="row">
+      <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。地図の下の 🔊 ボタンでも切り替えられます。</small></span>
+      <input type="checkbox" id="bgmToggle"/>
     </label>
   </div>
   <div class="card">

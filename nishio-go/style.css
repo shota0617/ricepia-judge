@@ -58,7 +58,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 /* 下部シート */
 .sheet{position:fixed;left:10px;right:10px;bottom:calc(var(--tabs-h) + var(--safe-b) + 10px);z-index:900;background:var(--card);border-radius:16px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:8px;max-width:520px;margin:0 auto}
-.mode-sw{display:flex;gap:4px;background:#eef3e6;border-radius:10px;padding:3px}
+.sheet-top{display:flex;gap:6px;align-items:stretch}
+.mode-sw{flex:1;display:flex;gap:4px;background:#eef3e6;border-radius:10px;padding:3px}
+.snd-btn{flex:0 0 40px;border:0;border-radius:10px;background:#eef3e6;font-size:16px;padding:0}
 .mode-sw button{flex:1;border:0;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;background:none;color:var(--sub);white-space:nowrap}
 .mode-sw button[aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .status{font-size:13px;color:var(--sub);line-height:1.5}
@@ -223,6 +225,7 @@ body.px #map{visibility:hidden}
 body.px .sheet{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace}
 body.px .status{color:#fff;font-size:14px}
 body.px .mode-sw{background:none;border:2px solid #fff;border-radius:4px;padding:2px}
+body.px .snd-btn{background:none;border:2px solid #fff;border-radius:4px}
 body.px .mode-sw button{color:#bbb;font-family:inherit;font-weight:400;border-radius:2px}
 body.px .mode-sw button[aria-pressed="true"]{background:#fff;color:#000;box-shadow:none}
 body.px .status b{color:#ffd54f;font-weight:400}

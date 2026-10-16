@@ -628,6 +628,7 @@ function toast(msg) {
 }
 
 function showReward(total, name, lines, lvUp) {
+  sound.jingle(lvUp ? 'levelup' : 'checkin');
   const el = $('reward');
   el.innerHTML = `<div class="rw"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
@@ -915,6 +916,52 @@ $('resetBtn').addEventListener('click', () => {
   toast('記録を削除しました');
 });
 
+/* ---------- 音楽（BGM と効果音） ----------
+   nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。field：ふだん（歩く地図・ふつうの地図）、
+   world：せかいちず（無ければ field）、checkin：チェックイン、levelup：レベルアップ。
+   ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
+const sound = (() => {
+  const SRC = { field: 'nishio-go/bgm/field.mp3', world: 'nishio-go/bgm/world.mp3', checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
+  const VOL = 0.45, LOOP = new Set(['field', 'world']), els = {}, missing = new Set();
+  let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null;
+  const el = k => {
+    if (!els[k]) {
+      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k); a.volume = VOL; a.src = SRC[k];
+      a.addEventListener('error', () => { missing.add(k); if (LOOP.has(k)) apply(); });
+      els[k] = a;
+    }
+    return els[k];
+  };
+  const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : missing.has('field') ? null : 'field');
+  function apply() {
+    const k = on && unlocked && !document.hidden ? pick() : null;
+    for (const n of LOOP) if (els[n] && n !== k) els[n].pause();
+    cur = k;
+    if (k) { const a = el(k); if (a.paused) a.play().catch(() => {}); }
+    $('sndBtn').textContent = on ? '🔊' : '🔇';
+    $('sndBtn').setAttribute('aria-label', on ? '音楽（BGM）をオフにする' : '音楽（BGM）をオンにする');
+    $('bgmToggle').checked = on;
+  }
+  const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
+  ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, { once: true, capture: true }));
+  document.addEventListener('visibilitychange', apply);
+  return {
+    apply,
+    scene(s) { if (s !== scene) { scene = s; apply(); } },
+    toggle(v) { on = v === undefined ? !on : !!v; store.set('nsg_bgm', on); unlocked = true; apply(); },
+    jingle(k) {   // 効果音のあいだは BGM を小さく
+      if (!on || !unlocked || missing.has(k)) return;
+      const a = el(k), bg = cur && els[cur];
+      if (bg) bg.volume = VOL * 0.25;
+      a.onended = a.onerror = () => { if (bg) bg.volume = VOL; };
+      a.currentTime = 0; a.play().catch(() => { if (bg) bg.volume = VOL; });
+    },
+  };
+})();
+$('sndBtn').addEventListener('click', () => { sound.toggle(); toast(store.get('nsg_bgm', true) ? '🔊 音楽をオンにしました' : '🔇 音楽をオフにしました'); });
+$('bgmToggle').addEventListener('change', e => sound.toggle(e.target.checked));
+sound.apply();
+
 /* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、十字ボタンや丸ボタンが隠れないようにする */
 if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--sheet-h', $('sheet').offsetHeight + 'px')).observe($('sheet'));
 
@@ -941,6 +988,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { re
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
+  sound,
   get state() { return S; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,

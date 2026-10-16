@@ -1,7 +1,8 @@
 # ricepia.jp（さくらのレンタルサーバ）のトップページを更新する
 # - いつも：いまの www/index.html をダウンロードして、ログと成果物に出す（サイトは変えない）
 # - ricepia-jp/deploy.txt に「deploy」と書いたときだけ：サーバーの index.html を index.html.bak-日時 に残してから、
-#   ricepia-jp/index.html をアップロードする
+#   いまの index.html に ricepia-jp/game-section.html を入れたもの（tools/build-ricepia-jp.py）をアップロードする
+#   （ricepia-jp/index.html は、公開中のページ ricepia-jp/current.html から作った確認用の案）
 # 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
 name: ricepia.jp top page
 on:
@@ -13,6 +14,8 @@ on:
     paths:
       - ricepia-jp/**
       - .github/workflows/ricepia-jp.yml
+      - .github/ricepia-ftp.sh
+      - tools/build-ricepia-jp.py
 permissions:
   contents: read
 concurrency:
@@ -39,32 +42,52 @@ jobs:
             fi
           done
           echo "ok=true" >> "$GITHUB_OUTPUT"
+      - name: Fetch public page (https://ricepia.jp/)
+        # FTP につながらなくても、公開中のページ（ブラウザで見えるもの）は取れるので、案づくりに使えるよう出しておく
+        run: |
+          mkdir -p current
+          curl -fsSL --retry 2 -A 'Mozilla/5.0 (ricepia-jp workflow)' -D current/public.headers -o current/public.html https://ricepia.jp/
+          cat current/public.headers
+          echo "----- https://ricepia.jp/ ($(wc -c < current/public.html) bytes) -----"
+          cat current/public.html
+          echo "----- end -----"
       - name: Install lftp
         if: steps.secrets.outputs.ok == 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
       - name: Download current index.html
+        id: download
         if: steps.secrets.outputs.ok == 'true'
         run: |
           mkdir -p current
-          # パスワードが平文で流れないよう、FTPS（暗号化）を必須にする
-          lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set net:max-retries 2; get www/index.html -o current/index.html; bye" "$FTP_SERVER"
+          . .github/ricepia-ftp.sh
+          # つながらないときに原因がログでわかるように、やりとりを出す（lftp はパスワードを XXXX と伏せて表示する）
+          if ! ftp "debug 3; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"; then
+            msg="FTP でつながりませんでした。あいさつ（220）の直後に切られるときは、さくらの「国外IPアドレスフィルタ」で GitHub（海外）からの FTP が止められている可能性があります"
+            # アップロードしないときは確認だけなので、失敗にはしない（ふだんはフィルタを有効にしておくため）
+            if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "::warning::$msg"; echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+            echo "::error::$msg"
+            exit 1
+          fi
           echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
           cat current/index.html
           echo "----- end -----"
       - uses: actions/upload-artifact@v4
-        if: steps.secrets.outputs.ok == 'true'
+        if: always()
         with:
           name: ricepia-jp-current
-          path: current/index.html
+          path: current/
+          if-no-files-found: ignore
       - name: Deploy (only when ricepia-jp/deploy.txt says deploy)
-        if: steps.secrets.outputs.ok == 'true'
+        if: steps.secrets.outputs.ok == 'true' && steps.download.outputs.ok != 'false'
         run: |
           if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
-          test -s ricepia-jp/index.html
+          # いまサーバーにある index.html（さっきダウンロードしたもの）にお知らせ欄を入れて上げる
+          # （案を作ったあとにトップページが更新されていても、その更新を消さないように）
+          python3 tools/build-ricepia-jp.py current/index.html current/new-index.html
           stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
-          ftp() { lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set cmd:fail-exit yes; $1; bye" "$FTP_SERVER"; }
+          . .github/ricepia-ftp.sh
           # 先に別名でアップロードしてから入れ替える（途中で失敗しても、トップページが消えたままにならないように）
-          ftp "put ricepia-jp/index.html -o www/index.html.new"
+          ftp "put current/new-index.html -o www/index.html.new"
           if ! ftp "mv www/index.html www/index.html.bak-$stamp; mv www/index.html.new www/index.html"; then
             echo "::error::入れ替えに失敗したので元に戻します"
             ftp "mv www/index.html.bak-$stamp www/index.html" || true

@@ -186,7 +186,8 @@ function buildSpots(config, osmItems) {
     const s = { id: 'f-' + c.id, name: String(c.name), cat: 'featured', kind: CATS[c.cat] ? c.cat : 'featured',
       icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: hasPos && !!c.approx,
       points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '',
-      area: typeof c.area === 'string' ? c.area : null };
+      area: typeof c.area === 'string' ? c.area : null,
+      shop: !!c.shop, url: typeof c.url === 'string' && /^https:\/\//.test(c.url) ? c.url : '' };
     const match = matchesOf(c);
     const cands = match.length ? osm.filter(o => !used.has(o.id) && match.some(m => nameMatches(o.raw, m))) : [];
     let best = null;
@@ -307,6 +308,7 @@ function inReach(s) {
 function spotState(s) {
   const cls = ['spot'];
   if (s.featured) cls.push('feat');
+  if (s.shop) cls.push('shop');
   if (cooldownLeft(s) > 0) cls.push('cool');
   else if (inReach(s)) cls.push('near');
   if (S.visits[s.id]) cls.push('visited');
@@ -314,7 +316,7 @@ function spotState(s) {
 }
 
 function makeIcon(s, cls) {
-  const size = s.featured ? 42 : 34;
+  const size = s.shop ? 50 : s.featured ? 42 : 34;
   return L.divIcon({ className: '', html: `<div class="${cls}">${iconOf(s)}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
@@ -324,12 +326,14 @@ function popupHtml(s) {
   const left = cooldownLeft(s);
   const d = me ? fmtM(dist(me, s)) : '—';
   return `<div class="popup"><h4>${esc(s.name)}</h4>
-    <p>${s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
+    <p>${s.shop ? '<span class="tag shop">🍚 当店（近藤米穀店）</span>' : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
+    ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
+      <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（デモ）</button>` : ''}</div>`;
 }
 

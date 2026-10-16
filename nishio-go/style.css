@@ -33,6 +33,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* スポットのマーカー */
 .spot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fff;border:3px solid var(--blue);box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .2s}
 .spot.feat{width:42px;height:42px;font-size:22px;border-color:var(--gold);background:#fff8e6;box-shadow:0 0 0 4px rgba(227,164,43,.3),0 2px 6px rgba(0,0,0,.3)}
+.spot.shop{width:50px;height:50px;font-size:26px;border-color:#d23a2e;background:#fff3e0;position:relative;box-shadow:0 0 0 4px rgba(210,58,46,.28),0 2px 6px rgba(0,0,0,.3)}
+.spot.shop::after{content:'当店';position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#d23a2e;color:#fff;font-size:11px;font-weight:800;line-height:1;padding:3px 6px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.shop-links{display:flex;gap:6px;flex-wrap:wrap}
+.shop-links .btn{text-decoration:none}
 .spot.near{transform:scale(1.15);animation:pulse 1.2s infinite}
 .spot.visited{border-color:var(--matcha)}
 .spot.cool{border-color:#aaa;background:#eee;filter:grayscale(.9);opacity:.75;animation:none}
@@ -46,6 +50,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .popup p{margin:2px 0;font-size:12px;color:var(--sub)}
 .popup .tag{display:inline-block;padding:1px 6px;border-radius:6px;background:#eef3e6;color:var(--green);font-size:11px;margin-right:4px}
 .popup .tag.gold{background:#fff1d1;color:#8a5a00}
+.popup .tag.shop{background:#d23a2e;color:#fff}
 
 .fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 170px);z-index:900;display:flex;flex-direction:column;gap:10px}
 .fab{width:48px;height:48px;border-radius:50%;border:0;background:#fff;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
@@ -203,6 +208,7 @@ body.px #map{visibility:hidden}
 .px-info .popup p{color:#fff;font-size:14px;margin:2px 0}
 .px-info .popup .tag{background:none;border:1px solid #fff;color:#fff;border-radius:3px}
 .px-info .popup .tag.gold{border-color:#ffd54f;color:#ffd54f}
+.px-info .popup .tag.shop{border-color:#ff8a80;color:#ff8a80}
 .px-info .btn{background:#000;border:2px solid #fff;border-radius:4px;font-family:inherit}
 .dq-close{display:block;margin:8px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:14px}
 /* ドット絵表示のときは、下のウィンドウもドラクエ風に */

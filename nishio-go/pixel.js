@@ -876,6 +876,7 @@ const BUILDING_ART = {
     '..kGggGwGggGwk..', '..kGGGGwGGGGwk..', '..kGggGwGggGwk..', '..kGGGGwGGGGwk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
   post: ['................', '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwwkkkkkkwwk..', '..kwwwwwwwwwwk..',
     '..kwwkkkkkkwwk..', '..kwwwwkkwwwwk..', '..kwwwwkkwwwwk..', '..kwwwwwwwwwwk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
+  ricestore: ['................', '.kkkkkkkkkkkkkk.', 'kNNNNNNNNNNNNNNk', 'kNnNnNnNnNnNnNNk', 'kkkkkkkkkkkkkkkk', '.kwwwwwwwwwwwwk.', '.kwwwwwkwwwwwwk.', '.kwwwkwkwkwwwwk.', '.kwwwkkkkkwwwwk.', '.kwwwwkkkwwwwwk.', '.kwwwkwkwkwwwwk.', '.kkkkkkkkkkkkkk.', '.krrrkrrrrkrrrk.', '.krrrkrrrrkrrrk.', '.ksskNNNNNNkssk.', 'kkkkkkkkkkkkkkkk'],   // 当店（米屋：のれんと「米」の看板）
   shop: ['................', '................', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwyyyyyyyywk..', '..kwwwwwwwwwwk..', '.krwrwrwrwrwrwk.', '.krwrwrwrwrwrwk.',
     '..kbbbbbbbbbbk..', '..kbbbbkkbbbbk..', '..kbbbbkkbbbbk..', '..kbbbbkkbbbbk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
   station: ['................', '................', '................', '................', '.kkkkkkkkkkkkkk.', '.kGGGGGGGGGGGGk.', 'kkkkkkkkkkkkkkkk', '.kwwwwwwwwwwwwk.',
@@ -910,6 +911,7 @@ const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 
 function spotArt(s) {
+  if (s.shop) return 'ricestore';
   const kind = s.featured ? (s.kind || 'featured') : s.cat;
   if (kind === 'castle') return 'castle';
   if (kind === 'townhall') return 'townhall';
@@ -992,7 +994,7 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.featured ? T * 2 : T;
+    const size = s.shop ? Math.round(T * 2.5) : s.featured ? T * 2 : T;
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
@@ -1004,6 +1006,7 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 13 * u), Math.round(sy + 1 * u), Math.ceil(u), Math.ceil(u * 3));
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
+    if (s.shop) drawShopTag(sx + size / 2, sy, dpr);
   }
   // 目標スポットのチェックイン範囲（点線の円）
   const target = G.selected || nearest;
@@ -1123,19 +1126,22 @@ function drawWorld(now, w, h, dpr) {
   }
   // 注目スポット（引いたときはお店と大きな名所だけ）
   const size = Math.max(T * 1.6, (WSIZES[wscale] <= 3 ? 12 : 15) * dpr);
-  for (const s of G.spots) {
-    if (!worldSpotShown(s)) continue;
-    const p = llToW(s.lat, s.lng), X = ox + p.x * T - size / 2, Y = oy + p.y * T - size / 2;
-    if (X > w || Y > h || X + size < 0 || Y + size < 0) continue;
-    ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), size, size);
+  const shopTags = [];
+  for (const s of G.spots.filter(worldSpotShown).sort((a, b) => !!a.shop - !!b.shop)) {   // 当店はいちばん上に
+    const sz = s.shop ? Math.round(size * 1.35) : size;
+    const p = llToW(s.lat, s.lng), X = ox + p.x * T - sz / 2, Y = oy + p.y * T - sz / 2;
+    if (X > w || Y > h || X + sz < 0 || Y + sz < 0) continue;
+    ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), sz, sz);
+    if (s.shop) shopTags.push([X + sz / 2, Y]);
     if (G.state.visits[s.id]) {   // めぐった名所には金色のしるし
-      const r = Math.max(3 * dpr, size * 0.2), cx = Math.round(X + size - r * 0.6), cy = Math.round(Y + r * 0.6);
+      const r = Math.max(3 * dpr, sz * 0.2), cx = Math.round(X + sz - r * 0.6), cy = Math.round(Y + r * 0.6);
       ctx.fillStyle = '#000'; ctx.fillRect(cx - r - dpr, cy - r - dpr, r * 2 + 2 * dpr, r * 2 + 2 * dpr);
       ctx.fillStyle = '#ffd54f'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
       ctx.fillStyle = '#000'; ctx.font = `${Math.round(r * 1.8)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✓', cx, cy + dpr * 0.5);
     }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
+  for (const [x, y] of shopTags) drawShopTag(x, y, dpr);   // 「当店」の札は地名より上に
   // 主人公
   const me = G.me;
   if (me) {
@@ -1146,6 +1152,16 @@ function drawWorld(now, w, h, dpr) {
     : worldState === 'fail' ? 'せかいちずを つくれなかった。\nしばらくして もういちど ためしてね。' : '';
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
+}
+// 当店の札：赤地に白文字で「当店」。(cx, bottom) は札の下のまん中
+function drawShopTag(cx, bottom, dpr) {
+  const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
+  ctx.font = `${fs}px "DotGothic16", monospace`;
+  const tw = Math.ceil(ctx.measureText('当店').width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
+  ctx.fillStyle = '#000'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
+  ctx.fillStyle = '#d23a2e'; ctx.fillRect(x, y, bw, bh);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('当店', x + bw / 2, y + bh / 2 + dpr * 0.5);
 }
 function worldSpotShown(s) {
   return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
@@ -1369,7 +1385,7 @@ cv.addEventListener('click', e => {
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = cv.height / 2 + (p.y - c.y) * T;
-    const half = (s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
+    const half = (s.shop ? T * 1.25 : s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }

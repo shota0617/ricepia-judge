@@ -80,7 +80,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, guide: null, guides: 0 };
+    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, guide: null, guides: 0, guideDone: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -411,6 +411,7 @@ function talkNpc(id, page = 0) {
     }
     const g = decideGuide(n);
     if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); }
+    else if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
   }
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
   return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
@@ -953,6 +954,14 @@ function shopOpen(id, d = new Date()) {
   return true;
 }
 const firstClause = t => String(t || '').split(/[。、]/)[0];
+// 着いたとみなす距離（checkGuide と decideGuide で同じものを使う）：人は話しかけられる距離、名所・店はチェックインできる距離、田畑は24m
+function guideRadius(g) {
+  if (g.kind === 'npc') return NPC_TALK_M[demo ? 'play' : 'walk'];
+  if (g.kind === 'farm') return 24;
+  const s = spots.find(x => x.id === g.id);
+  return (s ? reachOf(s) : 40) + Math.min((me && me.acc) || 0, CFG.accSlack);
+}
+const GUIDE_RECENT = 8;   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 田畑のマスをさがす（読み込んだ地図の中で、いまいる所から近い順。見つからなければ null）
 function nearFarm(maxTiles = 150) {
   const P = window.nishioPixel;
@@ -968,14 +977,17 @@ function nearFarm(maxTiles = 150) {
 function decideGuide(from) {
   if (!me) return null;
   const now = new Date(), range = GUIDE_RANGE[demo ? 'play' : 'walk'], r = riceOf();
-  const far = x => { const d = dist(me, x); return d > 60 && d <= range; };
+  const recent = new Set(S.guideDone || []);
+  // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
+  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5) && d <= range && !recent.has(id); };
+  const far = x => okFor('spot', x.id)(x);
   const by = from ? `${from.name}の話` : 'まわりのようす';
   const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
   const cands = [];
   // ① 籾が重くなった → 開いているお店へ（日曜は本店がお休み・夜はらいすぴあのコイン精米所が24時間）
   if (r.momi >= RICE.minLoad && !spots.some(s => s.shop && inReach(s))) {   // 店にいるときは、その場で持ち込めるので出さない
     // いま着いている店は出さない（その店で持ち込めるので。出すと、着く→また同じ店、をくり返してしまう）
-    const shops = spots.filter(s => s.shop && !inReach(s)).sort((a, b) => dist(me, a) - dist(me, b));
+    const shops = spots.filter(s => s.shop && !inReach(s) && dist(me, s) > guideRadius({ kind: 'shop', id: s.id }) * 1.5).sort((a, b) => dist(me, a) - dist(me, b));
     const s = shops.find(x => shopOpen(x.id, now)) || shops.find(x => x.id === 'f-ricepia') || shops[0];
     if (s) {
       const note = !shopOpen('f-kondo-beikoku', now) && s.id === 'f-ricepia' ? (now.getDay() === 0 ? '（きょうは日曜で本店はお休み）' : '') : '';
@@ -987,7 +999,7 @@ function decideGuide(from) {
   if (from && Array.isArray(from.refer)) {
     const all = placeNpcs();
     const ref = from.refer.map(([id, words]) => ({ n: all.find(x => x.id === id), words }))
-      .find(x => x.n && !npcMet(x.n.id) && dist(me, x.n) > 60 && dist(me, x.n) <= 10000);
+      .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > guideRadius({ kind: 'npc' }) * 1.5 && dist(me, x.n) <= 10000);
     if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
   }
   // ② 今月・来月の行事の会場
@@ -996,7 +1008,7 @@ function decideGuide(from) {
     if (s && far(s) && !ISLAND_SPOTS.has(e.spot)) { cands.push({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: say(`${when}に${s.name}で「${e.name}」があるもんで、いっぺん見に行ってみりん。`, `${when}に${s.name}で「${e.name}」があるらしい。行ってみよう。`) }); break; }
   }
   // ③ まだ話していない人（人の話から、次の人へ）
-  const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && far(n)).sort((a, b) => dist(me, a) - dist(me, b));
+  const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && okFor('npc', n.id)(n)).sort((a, b) => dist(me, a) - dist(me, b));
   const pickN = people[(S.guides || 0) % Math.min(3, people.length || 1)];
   if (pickN) {
     const s = spots.find(x => x.id === 'f-' + pickN.spot), about = firstClause(s && s.desc);
@@ -1006,7 +1018,7 @@ function decideGuide(from) {
   // ④ 田畑（籾がまだ少ないとき。9〜10月は新米の季節）
   if (r.momi < RICE.minLoad) {
     const f = nearFarm();
-    if (f && far(f)) {
+    if (f && okFor('farm', 'farm')(f)) {
       const season = [9, 10].includes(now.getMonth() + 1) ? '新米の季節だもんで、' : '';
       cands.push({ kind: 'farm', id: 'farm', name: '近くの田畑', lat: f.lat, lng: f.lng, why: say(`${season}この先の田畑を歩いてみりん。籾が拾えるに。`, `${season ? '新米の季節。' : ''}田畑が見える。歩くと籾が拾えそうだ。`) });
     }
@@ -1033,6 +1045,7 @@ const guideTarget = () => {
 };
 // 行き先に着いたときの記録とごほうび（1日5回まで）。戻り値：もらったポイント
 function guideReward(g) {
+  if (g.kind !== 'farm') S.guideDone = [g.id, ...(S.guideDone || []).filter(x => x !== g.id)].slice(0, GUIDE_RECENT);
   const day = dayState();
   day.guide = day.guide || 0;
   const pts = day.guide < GUIDE_DAILY ? GUIDE_PTS : 0;
@@ -1049,8 +1062,7 @@ function checkGuide() {
     return;
   }
   if (g.kind === 'npc') return;
-  const d = dist(me, g), r = g.kind === 'farm' ? 24 : (spots.find(s => s.id === g.id) ? reachOf(spots.find(s => s.id === g.id)) : 40);
-  if (d > r + Math.min(me.acc || 0, CFG.accSlack)) return;
+  if (dist(me, g) > guideRadius(g)) return;
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);

@@ -974,8 +974,9 @@ function guideRadius(g) {
   return (s ? reachOf(s) : 40) + Math.min((me && me.acc) || 0, CFG.accSlack);
 }
 const GUIDE_RECENT = 8;
-// その場にいると認めてよい位置か（チェックイン・たからばこと同じ条件）。あるいて移動では GPS の精度が悪いときと乗り物で移動中はだめ
-const fixOk = () => !!me && (demo || (me.acc <= CFG.maxAccuracy && Date.now() >= vehicleUntil));   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
+// その場にいると認めてよい位置か（チェックイン・たからばこと同じ条件）。車（軽トラ）に乗っているあいだはだめ（降りれば着いたことになる）。
+// あるいて移動では GPS の精度が悪いときと乗り物で移動中もだめ
+const fixOk = () => !!me && !driving && (demo || (me.acc <= CFG.maxAccuracy && Date.now() >= vehicleUntil));   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 田畑のマスをさがす（読み込んだ地図の中で、いまいる所から近い順。見つからなければ null）
 function nearFarm(maxTiles = 150) {
   const P = window.nishioPixel;

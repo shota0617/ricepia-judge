@@ -20,7 +20,7 @@ async function bakeOnce(browser) {
     if (st === 'ok' || st === 'fail') break;
     if (Date.now() - t0 > 100 * 60000) throw new Error('時間切れ');
   }
-  const saved = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem('nsg_world5')); } catch (e) { return null; } });
+  const saved = await page.evaluate(() => { try { return JSON.parse(localStorage.getItem(nishioPixel.WORLD_KEY)); } catch (e) { return null; } });
   const C = await page.evaluate(() => nishioPixel.C);
   await ctx.close();
   if (!saved || !saved.d) throw new Error('地図ができなかった');

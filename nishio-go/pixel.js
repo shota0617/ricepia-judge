@@ -462,7 +462,9 @@ const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 100;   // 西尾�
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
-const WORLD_KEY = 'nsg_world5', WORLD_FILE = 'nishio-go/world.json';
+// 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
+const WORLD_KEY = 'nsg_world6', WORLD_FILE = 'nishio-go/world.json';
+for (let i = 1; i <= 5; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
@@ -486,7 +488,7 @@ function makeWorldImg() {
 const WSPLIT = BAKE ? 8 : 4;
 function worldNamesQuery() {
   return `[out:json][timeout:60][bbox:${WB.s},${WB.w},${WB.n},${WB.e}];
-node["place"~"^(city|town|village|suburb)$"]["name"];
+node["place"~"^(city|town|village|suburb|quarter|neighbourhood|hamlet)$"]["name"];
 out qt;
 nwr["place"="island"]["name"];
 out center qt;
@@ -515,7 +517,10 @@ function worldPartQuery(s, w, n, e) {
 );
 out geom qt;`;
 }
-const RANK = { city: 4, town: 3, island: 3, village: 2, suburb: 2 };
+// 地名の大きさ。町名（quarter / neighbourhood / hamlet）は寄ったときだけ出す
+// 名前の表は [x, y, 名前, 大きさ, 種類]。種類は st=駅、tw=町名、rv=川（古いデータで種類がなければ、大きさ1は駅）
+const RANK = { city: 4, town: 3, island: 3, village: 2, suburb: 2, quarter: 1, neighbourhood: 1, hamlet: 1 };
+const TOWN_PLACE = new Set(['quarter', 'neighbourhood', 'hamlet']);
 function parseWorldNames(elements) {
   const wp = [], wl = [];
   for (const el of elements) {
@@ -524,8 +529,9 @@ function parseWorldNames(elements) {
     if (kind && WORLD_POI.has(kind)) wp.push([+q.x.toFixed(2), +q.y.toFixed(2), kind, String(tg.name || '').slice(0, 40)]);
     else if ((RANK[tg.place] || (tg.railway === 'station' && tg.station !== 'miniature')) && tg.name) {   // 遊園地の豆汽車の駅は除く
       let name = String(tg.name).slice(0, 12);
-      if (tg.railway === 'station' && !name.endsWith('駅')) name += '駅';
-      wl.push([+q.x.toFixed(2), +q.y.toFixed(2), name, RANK[tg.place] || 1]);
+      const st = !tg.place && tg.railway === 'station';
+      if (st && !name.endsWith('駅')) name += '駅';
+      wl.push([+q.x.toFixed(2), +q.y.toFixed(2), name, RANK[tg.place] || 1, st ? 'st' : TOWN_PLACE.has(tg.place) ? 'tw' : undefined]);
     }
   }
   return [dedupePois(wp, 1.5), wl.filter((l, i) => !wl.slice(0, i).some(m => m[2] === l[2] && Math.hypot(m[0] - l[0], m[1] - l[1]) < 5))];
@@ -538,7 +544,9 @@ function addWorldFeatures(elements, L) {
     else continue;
     if (!rings.length || !rings[0].length) continue;
     const t = el.tags || {}, pts = rings.map(r => r.map(p => { const q = llToW(p.lat, p.lon); return [q.x, q.y]; }));
-    if (t.waterway) { if (t.waterway === 'river') L.lines.push([pts, C.A, 30]); }   // 用水路（canal）は1マス100mだと町じゅうが水に見えるので描かない（幅のある水面は natural=water で描く）
+    if (t.waterway) {
+      if (t.waterway === 'river') { L.lines.push([pts, C.A, 30]); if (t.name) addRiver(L, String(t.name).slice(0, 12), pts); }
+    }   // 用水路（canal）は1マス100mだと町じゅうが水に見えるので描かない（幅のある水面は natural=water で描く）
     else if (t.railway) L.lines.push([pts, C.L, 40]);
     else if (t.highway) L.lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
     else {   // 面は歩く地図と同じ分け方（田んぼ・茶畑・工場・境内・墓地・公園…）。重なりは優先度の高いものを上に
@@ -546,6 +554,67 @@ function addWorldFeatures(elements, L) {
       if (k && k.a && k.c !== C.B) L.areas.push([pts, k.c, k.p]);
     }
   }
+}
+// 区切った問い合わせの境目にかかる川は同じ線が何度も届くので、線の形（すべての点）がまったく同じものは1回だけ数える。
+// 川のリレーションと、その中の線そのものの両方が届いたときも同じ形なので重ならない
+function addRiver(L, name, pts) {
+  const seen = L.riverSeen || (L.riverSeen = new Set());
+  const keep = pts.filter(line => {
+    const k = name + '|' + line.map(p => p[0].toFixed(3) + ',' + p[1].toFixed(3)).join(';');
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  if (keep.length) (L.rivers = L.rivers || []).push([name, keep]);
+}
+// 川の名前：OSM では1本の川がいくつもの線に分かれていることが多いので、同じ名前でつながっている線を1本にしてから、
+// 長い川には40マス（4km）ごとに名前を置く（短い川は出さない。同じ名前どうしは30マス以上はなす）
+function joinLines(lines) {
+  const eq = (a, b) => Math.abs(a[0] - b[0]) < 0.05 && Math.abs(a[1] - b[1]) < 0.05;
+  const out = lines.map(l => l.slice());
+  for (let merged = true; merged;) {
+    merged = false;
+    for (let i = 0; i < out.length && !merged; i++) for (let j = i + 1; j < out.length && !merged; j++) {
+      const a = out[i], b = out[j];
+      let m = null;
+      if (eq(a[a.length - 1], b[0])) m = a.concat(b.slice(1));
+      else if (eq(b[b.length - 1], a[0])) m = b.concat(a.slice(1));
+      else if (eq(a[a.length - 1], b[b.length - 1])) m = a.concat(b.slice(0, -1).reverse());
+      else if (eq(a[0], b[0])) m = a.slice().reverse().concat(b.slice(1));
+      if (m) { out[i] = m; out.splice(j, 1); merged = true; }
+    }
+  }
+  return out;
+}
+function riverLabels(L) {
+  const byName = new Map();
+  for (const [name, pts] of L.rivers || []) { if (!byName.has(name)) byName.set(name, []); byName.get(name).push(...pts); }
+  const chains = [];
+  for (const [name, lines] of byName) for (const line of joinLines(lines)) {
+    let len = 0;
+    for (let i = 1; i < line.length; i++) len += Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+    if (len >= 8) chains.push([name, line, len]);
+  }
+  chains.sort((a, b) => b[2] - a[2]);
+  const at = (line, dist) => {
+    for (let i = 1; i < line.length; i++) {
+      const d = Math.hypot(line[i][0] - line[i - 1][0], line[i][1] - line[i - 1][1]);
+      if (dist <= d) { const t = d ? dist / d : 0; return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * t, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * t]; }
+      dist -= d;
+    }
+    return line[line.length - 1];
+  };
+  const out = [];
+  for (const [name, line, len] of chains) {
+    const n = Math.max(1, Math.floor(len / 40));
+    for (let k = 0; k < n; k++) {
+      const [x, y] = at(line, (k + 0.5) * len / n);
+      if (x < 0 || y < 0 || x >= WW || y >= WH) continue;
+      if (out.some(l => l[2] === name && Math.hypot(l[0] - x, l[1] - y) < 30)) continue;
+      out.push([+x.toFixed(2), +y.toFixed(2), name, 2, 'rv']);
+    }
+  }
+  return out;
 }
 // 標高から作った下地（海・山・丘・平地=UNSET）に、地図データの面と線を重ねる
 function combineWorld(base, L) {
@@ -576,7 +645,9 @@ async function buildWorld(force) {
       const b = r.ok ? await r.json() : null;
       if (b && b.w === WW && b.h === WH && typeof b.d === 'string' && b.d.length === WW * WH) {
         world = dec(b.d); worldPois = b.p || []; worldLabels = b.l || []; makeWorldImg(); worldState = 'ok';
-        if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days: 7 })) store.del(WORLD_KEY);
+        // 名前の表が古い形（川・町名の種類がない）なら、作り直しが届くまでの仮として1日だけ保存する
+        const days = worldLabels.some(l => l[4]) ? 7 : 1;
+        if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
         return;
       }
     } catch (e) { /* なければブラウザで作る */ }
@@ -647,6 +718,7 @@ async function buildWorld(force) {
       done++;
     }
     worldProgress = '';
+    worldLabels = worldLabels.concat(riverLabels(L));
     worldState = 'ok';
     const days = partial || !namesOk || ok < parts.length ? 1 : PX_DAYS;   // 欠けたら1日で作り直す
     if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: encode(world), p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
@@ -804,6 +876,7 @@ const BUILDING_ART = {
     '..kGggGwGggGwk..', '..kGGGGwGGGGwk..', '..kGggGwGggGwk..', '..kGGGGwGGGGwk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
   post: ['................', '................', '..kkkkkkkkkkkk..', '..krrrrrrrrrrk..', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwwkkkkkkwwk..', '..kwwwwwwwwwwk..',
     '..kwwkkkkkkwwk..', '..kwwwwkkwwwwk..', '..kwwwwkkwwwwk..', '..kwwwwwwwwwwk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
+  ricestore: ['................', '.kkkkkkkkkkkkkk.', 'kNNNNNNNNNNNNNNk', 'kNnNnNnNnNnNnNNk', 'kkkkkkkkkkkkkkkk', '.kwwwwwwwwwwwwk.', '.kwwwwwkwwwwwwk.', '.kwwwkwkwkwwwwk.', '.kwwwkkkkkwwwwk.', '.kwwwwkkkwwwwwk.', '.kwwwkwkwkwwwwk.', '.kkkkkkkkkkkkkk.', '.krrrkrrrrkrrrk.', '.krrrkrrrrkrrrk.', '.ksskNNNNNNkssk.', 'kkkkkkkkkkkkkkkk'],   // 当店（米屋：のれんと「米」の看板）
   shop: ['................', '................', '..kkkkkkkkkkkk..', '..kwwwwwwwwwwk..', '..kwyyyyyyyywk..', '..kwwwwwwwwwwk..', '.krwrwrwrwrwrwk.', '.krwrwrwrwrwrwk.',
     '..kbbbbbbbbbbk..', '..kbbbbkkbbbbk..', '..kbbbbkkbbbbk..', '..kbbbbkkbbbbk..', '.kkkkkkkkkkkkkk.', '................', '................', '................'],
   station: ['................', '................', '................', '................', '.kkkkkkkkkkkkkk.', '.kGGGGGGGGGGGGk.', 'kkkkkkkkkkkkkkkk', '.kwwwwwwwwwwwwk.',
@@ -838,6 +911,7 @@ const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 
 function spotArt(s) {
+  if (s.shop) return 'ricestore';
   const kind = s.featured ? (s.kind || 'featured') : s.cat;
   if (kind === 'castle') return 'castle';
   if (kind === 'townhall') return 'townhall';
@@ -873,6 +947,7 @@ function frame(now) {
   const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
   if (!w || !h) return;
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
+  shopHits = [];
   if (worldMode) { drawWorld(now, w, h, dpr); return; }
   const T = Math.round(16 * scale * dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
@@ -888,7 +963,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -920,7 +995,7 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.featured ? T * 2 : T;
+    const size = s.shop ? Math.round(T * 2.5) : s.featured ? T * 2 : T;
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
@@ -932,6 +1007,7 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 13 * u), Math.round(sy + 1 * u), Math.ceil(u), Math.ceil(u * 3));
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
+    if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
   // 目標スポットのチェックイン範囲（点線の円）
   const target = G.selected || nearest;
@@ -1051,19 +1127,25 @@ function drawWorld(now, w, h, dpr) {
   }
   // 注目スポット（引いたときはお店と大きな名所だけ）
   const size = Math.max(T * 1.6, (WSIZES[wscale] <= 3 ? 12 : 15) * dpr);
-  for (const s of G.spots) {
-    if (!worldSpotShown(s)) continue;
-    const p = llToW(s.lat, s.lng), X = ox + p.x * T - size / 2, Y = oy + p.y * T - size / 2;
-    if (X > w || Y > h || X + size < 0 || Y + size < 0) continue;
-    ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), size, size);
+  const shopTags = [];
+  for (const s of G.spots.filter(worldSpotShown).sort((a, b) => !!a.shop - !!b.shop)) {   // 当店はいちばん上に
+    const sz = s.shop ? Math.round(size * 1.35) : size;
+    const p = llToW(s.lat, s.lng), X = ox + p.x * T - sz / 2, Y = oy + p.y * T - sz / 2;
+    if (X > w || Y > h || X + sz < 0 || Y + sz < 0) continue;
+    ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), sz, sz);
+    if (s.shop) shopTags.push([X + sz / 2, Y, sz, s]);
     if (G.state.visits[s.id]) {   // めぐった名所には金色のしるし
-      const r = Math.max(3 * dpr, size * 0.2), cx = Math.round(X + size - r * 0.6), cy = Math.round(Y + r * 0.6);
+      const r = Math.max(3 * dpr, sz * 0.2), cx = Math.round(X + sz - r * 0.6), cy = Math.round(Y + r * 0.6);
       ctx.fillStyle = '#000'; ctx.fillRect(cx - r - dpr, cy - r - dpr, r * 2 + 2 * dpr, r * 2 + 2 * dpr);
       ctx.fillStyle = '#ffd54f'; ctx.fillRect(cx - r, cy - r, r * 2, r * 2);
       ctx.fillStyle = '#000'; ctx.font = `${Math.round(r * 1.8)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✓', cx, cy + dpr * 0.5);
     }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
+  for (const [x, y, sz, s] of shopTags) {   // 「当店」の札は地名より上に。札も絵もタップできる
+    const t = drawShopTag(x, y, dpr);
+    shopHits.push([Math.min(t[0], x - sz / 2), t[1], Math.max(t[2], x + sz / 2), y + sz, s]);
+  }
   // 主人公
   const me = G.me;
   if (me) {
@@ -1074,6 +1156,18 @@ function drawWorld(now, w, h, dpr) {
     : worldState === 'fail' ? 'せかいちずを つくれなかった。\nしばらくして もういちど ためしてね。' : '';
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
+}
+// 当店の札：赤地に白文字で「当店」。(cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
+let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
+function drawShopTag(cx, bottom, dpr) {
+  const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
+  ctx.font = `${fs}px "DotGothic16", monospace`;
+  const tw = Math.ceil(ctx.measureText('当店').width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
+  ctx.fillStyle = '#000'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
+  ctx.fillStyle = '#d23a2e'; ctx.fillRect(x, y, bw, bh);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('当店', x + bw / 2, y + bh / 2 + dpr * 0.5);
+  return [x - b, y - b, x + bw + b, y + bh + b];
 }
 function worldSpotShown(s) {
   return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
@@ -1103,24 +1197,28 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
     ctx.fillStyle = '#fff'; ctx.fillText(label, X, Y);
   }
   const spotNames = css >= 10 ? G.spots.filter(worldSpotShown).map(s => { const p = llToW(s.lat, s.lng); return [p.x, p.y, s.name.replace(/（.*?）/g, ''), 0]; }) : [];
-  const list = base.concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
+  const isStation = l => l[3] === 1 && (l[4] || 'st') === 'st';
+  // 町名は名所の名前より後（重なったら名所を優先）。寄ったときだけ
+  const towns = css >= 10 ? base.filter(l => l[4] === 'tw') : [];
+  const list = base.filter(l => l[4] !== 'tw').concat(SEA_LABELS.map(([n, la, lo, r]) => { const p = llToW(la, lo); return [p.x, p.y, n, r]; }))
     .filter(l => l[3] >= minRank)
     // 同じ駅が名所（名鉄 西尾駅など）になっている所は、名所の名前だけ出す（近くの別の名所では消さない）
-    .filter(l => l[3] !== 1 || !spotNames.some(n => n[2].endsWith('駅') && n[2].includes(l[2].replace(/駅$/, '')) && Math.hypot(n[0] - l[0], n[1] - l[1]) < 3))
-    .sort((a, b) => b[3] - a[3]).concat(spotNames);
+    .filter(l => !isStation(l) || !spotNames.some(n => n[2].endsWith('駅') && n[2].includes(l[2].replace(/駅$/, '')) && Math.hypot(n[0] - l[0], n[1] - l[1]) < 3))
+    .sort((a, b) => b[3] - a[3]).concat(spotNames, towns);
   const SIZE = { 4: 17, 3: 14, 2: 12, 1: 11, 0: 10 };
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.strokeStyle = '#000';
-  for (const [x, y, name, rank] of list) {
-    const fs = Math.round(SIZE[rank] * dpr), X = ox + x * T, Y = oy + y * T + (rank === 1 ? fs : rank === 0 ? Math.max(T * 1.1, 10 * dpr) + fs / 2 : 0);
+  for (const l of list) {
+    const [x, y, name, rank, kind] = l, st = isStation(l), tw = kind === 'tw';
+    const fs = Math.round((tw ? 10 : SIZE[rank]) * dpr), X = ox + x * T, Y = oy + y * T + (st ? fs : rank === 0 ? Math.max(T * 1.1, 10 * dpr) + fs / 2 : 0);
     if (X < -100 || Y < -40 || X > w + 100 || Y > h + 40) continue;
     ctx.font = `${fs}px "DotGothic16", monospace`;
     const bw = ctx.measureText(name).width + 6 * dpr, bh = fs + 4 * dpr;
     const box = [X - bw / 2, Y - bh / 2, X + bw / 2, Y + bh / 2];
     if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
     boxes.push(box);
-    if (rank === 1 && css >= 10) ctx.drawImage(spotSprites.station[0], Math.round(X - T * 0.7), Math.round(Y - fs - T * 1.2), Math.round(T * 1.4), Math.round(T * 1.4));
+    if (st && css >= 10) ctx.drawImage(spotSprites.station[0], Math.round(X - T * 0.7), Math.round(Y - fs - T * 1.2), Math.round(T * 1.4), Math.round(T * 1.4));
     ctx.lineWidth = Math.max(2, Math.round((rank >= 3 ? 4 : 3) * dpr));
-    ctx.fillStyle = rank === 1 ? '#ffe9a8' : rank === 0 ? '#ffd54f' : '#fff';
+    ctx.fillStyle = st ? '#ffe9a8' : kind === 'rv' ? '#bfe6ff' : tw ? '#e8e8e8' : rank === 0 ? '#ffd54f' : '#fff';
     ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y);
   }
   // 左上：地図データを足している途中なら進み具合、それ以外はめぐった名所の数
@@ -1190,9 +1288,68 @@ function step(dir) {
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
-  if (BLOCK.has(codeAt(nx, ny))) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
+  // いちばん近い歩けるマスへ近づく向きにだけ動ける（出口へ向かうとき以外は、ふだんどおり通れない）
+  const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
+  const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
+  if (BLOCK.has(codeAt(nx, ny)) && !escape) { if (navigator.vibrate) navigator.vibrate(20); return; }
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng);
+}
+// いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
+function exitDist(x, y) {
+  if (!BLOCK.has(codeAt(x, y))) return 0;
+  const seen = new Set([x + ',' + y]);
+  let frontier = [[x, y]];
+  for (let d = 1; d <= 40 && frontier.length; d++) {
+    const next = [];
+    for (const [px, py] of frontier) for (const [dx, dy] of Object.values(DIRS)) {
+      const qx = px + dx, qy = py + dy, k = qx + ',' + qy, c = codeAt(qx, qy);
+      if (seen.has(k) || c === C.X) continue;
+      if (!BLOCK.has(c)) return d;
+      seen.add(k); next.push([qx, qy]);
+    }
+    frontier = next;
+  }
+  return Infinity;
+}
+// デモで立った場所（始めた所・地図をタップして飛んだ所）が建物や水の上なら、いちばん近い歩けるマスへ移す。
+// 地図が届くまでは待つ。同じマスは1回だけ調べる（遠いときは、せかいちずで陸へ移してから、もう一度細かく合わせる）
+let snapKey = '', snapWorld = '';
+function snapDemoStart() {
+  if (!G.demo || !G.me || worldMode) return;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y), key = x + ',' + y, c = codeAt(x, y);
+  if (key === snapKey || c === C.X) return;
+  snapKey = key;
+  if (!BLOCK.has(c)) return;
+  const seen = new Set([key]);
+  let frontier = [[x, y]];
+  for (let d = 1; d <= 40 && frontier.length; d++) {
+    const next = [];
+    for (const [px, py] of frontier) for (const [dx, dy] of Object.values(DIRS)) {
+      const qx = px + dx, qy = py + dy, k = qx + ',' + qy, q = codeAt(qx, qy);
+      if (seen.has(k) || q === C.X) continue;
+      if (!BLOCK.has(q)) { const ll = toLatLng(qx + 0.5, qy + 0.5); snapKey = k; G.moveTo(ll.lat, ll.lng); return; }
+      seen.add(k); next.push([qx, qy]);
+    }
+    frontier = next;
+  }
+  // 近くに歩ける所がない（海の真ん中など）：せかいちず（100mごと）でいちばん近い陸を探して、そこへ移す
+  if (!world) { snapKey = ''; if (worldState === 'none') buildWorld(); return; }   // せかいちずが届いたら、もう一度
+  const me = llToW(G.me.lat, G.me.lng), wx = Math.floor(me.x), wy = Math.floor(me.y);
+  for (let r = 1; r < Math.max(WW, WH); r++) {
+    let best = null, bd = Infinity;
+    for (let j = wy - r; j <= wy + r; j++) for (let i = wx - r; i <= wx + r; i++) {
+      if (Math.max(Math.abs(i - wx), Math.abs(j - wy)) !== r || i < 0 || j < 0 || i >= WW || j >= WH) continue;
+      const wc = world[j * WW + i], d = Math.hypot(i - wx, j - wy);
+      if (wc !== C.A && wc !== C.M && d < bd) { bd = d; best = [i, j]; }
+    }
+    if (best) {
+      if (snapWorld === best.join(',')) return;   // 同じ所へもう飛んだ（そこでも歩ける所が見つからない）ならあきらめる
+      snapWorld = best.join(',');
+      const ll = wToLL(best[0] + 0.5, best[1] + 0.5); G.moveTo(ll.lat, ll.lng); return;
+    }
+  }
 }
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {
@@ -1209,6 +1366,11 @@ document.addEventListener('keydown', e => {
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
+  if (!(worldMode && dragMoved)) {   // 当店の札と絵がいちばん上に描かれているので、先に調べる
+    const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr;
+    const sh = shopHits.find(([a, b, c2, d]) => px >= a && px <= c2 && py >= b && py <= d);
+    if (sh) { $('pxInfoBody').innerHTML = G.popupHtml(sh[4]); $('pxInfo').hidden = false; return; }
+  }
   if (worldMode) {   // せかいちず：ドラッグでなければ、近くの注目スポットの説明を出す
     if (dragMoved) return;
     const T = wT(Math.min(window.devicePixelRatio || 1, 3)), x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
@@ -1234,7 +1396,7 @@ cv.addEventListener('click', e => {
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = cv.height / 2 + (p.y - c.y) * T;
-    const half = (s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
+    const half = (s.shop ? T * 1.25 : s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
@@ -1252,5 +1414,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; } };
+window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; } };
 })();

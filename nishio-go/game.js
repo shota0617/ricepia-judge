@@ -827,10 +827,11 @@ function harvest(p, prev) {
   prev = from;
   const mode = demo ? 'play' : 'walk', cap = RICE.dayCap[mode], d = dayState(), r = riceOf();
   d.momi = d.momi || 0; d.momiTiles = d.momiTiles || [];
-  let got = 0;
+  let got = 0, unloaded = false;
   const n = Math.max(1, Math.ceil(dd / 4));
   for (let i = 1; i <= n; i++) {
     const q = P.toTile(prev.lat + (p.lat - prev.lat) * i / n, prev.lng + (p.lng - prev.lng) * i / n), x = Math.floor(q.x), y = Math.floor(q.y), c = P.codeAt(x, y);
+    if (c === P.C.X) { unloaded = true; continue; }   // 地図データがまだ届いていない
     if (c !== P.C.U && c !== P.C.F) continue;
     const key = x + ',' + y;
     if (d.momiTiles.includes(key)) continue;
@@ -841,6 +842,8 @@ function harvest(p, prev) {
     const g = Math.min(RICE.tile[mode], cap - d.momi);
     d.momiTiles.push(key); d.momi += g; r.momi += g; got += g;
   }
+  // 地図データがまだのマスを通ったときは、起点を戻して、次の位置でこの道すじをもう一度調べる（集めたマスは2回数えない）
+  if (unloaded && !demo) harvestFrom = from;
   if (!got) return;
   d.momi = Math.round(d.momi * 100) / 100; r.momi = Math.round(r.momi * 100) / 100;
   save();
@@ -862,7 +865,10 @@ function startSort() {
   const rnd = seeded(hashStr('mk:' + Date.now())), N = 24, bad = 6 + Math.floor(rnd() * 3), kinds = Object.keys(KINDS);
   const grains = Array.from({ length: N }, (_, i) => ({ k: i < bad ? kinds[Math.floor(rnd() * kinds.length)] : 'ok', gone: false }));
   for (let i = N - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [grains[i], grains[j]] = [grains[j], grains[i]]; }
-  Object.assign(mk, { stage: 'sort', grains, bad, removed: 0, miss: 0, left: 12, timer: setInterval(() => { if (!mk) return; mk.left--; if (mk.left <= 0) endSort(); else renderMekiki(); }, 1000) });
+  // 残り時間は時計で数える（画面を消したり別のアプリにしたりしても、12秒は12秒）
+  const deadline = Date.now() + 12000;
+  const tick = () => { if (!mk || mk.stage !== 'sort') return; mk.left = Math.max(0, Math.ceil((deadline - Date.now()) / 1000)); if (mk.left <= 0) endSort(); else renderMekiki(); };
+  Object.assign(mk, { stage: 'sort', grains, bad, removed: 0, miss: 0, left: 12, deadline, timer: setInterval(tick, 250) });
   renderMekiki();
 }
 function endSort() {
@@ -924,6 +930,7 @@ $('mekiki').addEventListener('click', e => {
   if (!mk) return;
   const g = e.target.closest('[data-grain]');
   if (g && mk.stage === 'sort') {
+    if (Date.now() >= mk.deadline) { endSort(); return; }   // 時間切れのあとのタップは数えない
     const it = mk.grains[+g.dataset.grain];
     if (it.gone) return;
     it.gone = true;

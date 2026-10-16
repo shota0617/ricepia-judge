@@ -404,8 +404,9 @@ function talkNpc(id, page = 0) {
     setTimeout(checkBadges, 800);
   }
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
-  if (page === 0 && !(S.guide && S.guide.byId === n.id)) {
-    if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id && fixOk()) {   // すすめられた人に会えた
+  // GPS の精度が悪いあいだは、話はできても行き先は変えない（精度が上がってから話しかければ、着いたことになる）
+  if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
+    if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) {   // すすめられた人に会えた
       const pts = guideReward(S.guide);
       if (pts) toast(`🧭 ${n.name}に会えた +${pts}pt`);
     }

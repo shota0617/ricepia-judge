@@ -48,7 +48,8 @@ jobs:
         run: |
           mkdir -p current
           . .github/ricepia-ftp.sh
-          ftp "set net:max-retries 2; get www/index.html -o current/index.html"
+          # つながらないときに原因がログでわかるように、やりとりを出す（lftp はパスワードを XXXX と伏せて表示する）
+          ftp "debug 3; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"
           echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
           cat current/index.html
           echo "----- end -----"

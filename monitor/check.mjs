@@ -295,18 +295,31 @@ async function checkSupabase() {
 // ---------- 各社の障害情報（status page）----------
 async function checkStatusPages() {
   const pages = {
-    Anthropic: "https://status.claude.com/api/v2/status.json",
-    Cloudflare: "https://www.cloudflarestatus.com/api/v2/status.json",
-    Supabase: "https://status.supabase.com/api/v2/status.json",
-    Vercel: "https://www.vercel-status.com/api/v2/status.json",
+    Anthropic: "https://status.claude.com/api/v2/summary.json",
+    Cloudflare: "https://www.cloudflarestatus.com/api/v2/summary.json",
+    Supabase: "https://status.supabase.com/api/v2/summary.json",
+    Vercel: "https://www.vercel-status.com/api/v2/summary.json",
   };
   for (const [name, url] of Object.entries(pages)) {
     try {
       const r = await http(url);
       const ind = r.json?.status?.indicator;
-      // minor は頻繁に出るので major / critical のみ通知
+      // minor は頻繁に出るので major / critical のみ通知。
+      // major（Partial System Outage）は「一部の機能・地域」の障害で、Cloudflare では日常的に出る。
+      // 自分のサイトに影響があるか判断できるよう、障害の件名も本文に入れる。
       if (ind === "major" || ind === "critical") {
-        alert(`status:${name}`, `${name} で大規模障害が発生中です`, `${r.json.status.description}\n${url.replace("/api/v2/status.json", "")}`);
+        const title = ind === "critical"
+          ? `${name} で大規模障害が発生中です`
+          : `${name} の一部サービスで障害が発生中です`;
+        const incidents = (r.json.incidents || [])
+          .filter((i) => i.status !== "resolved" && i.status !== "postmortem")
+          .slice(0, 5)
+          .map((i) => `  - ${i.name}（影響度: ${i.impact}）${i.shortlink ? ` ${i.shortlink}` : ""}`);
+        alert(`status:${name}`, title, [
+          r.json.status.description,
+          ...(incidents.length ? ["発生中の障害:", ...incidents] : []),
+          url.replace("/api/v2/summary.json", ""),
+        ].join("\n"));
       }
     } catch {
       // ステータスページ自体の取得失敗は通知しない（ノイズ防止）

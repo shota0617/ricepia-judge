@@ -602,6 +602,8 @@ function nearestChest() {
   return best;
 }
 function tryChest() {
+  // あるいて移動では、チェックインと同じく GPS の誤差が大きいときと乗り物で移動中は開けない
+  if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
   const n = nearestChest();
   if (!n || n.d > (demo ? 18 : 30)) return;
   const c = n.c, d = dayState();
@@ -620,6 +622,7 @@ function tryChest() {
 /* ---------- 近くのスポット ---------- */
 function refreshNearby() {
   const btn = $('spinBtn');
+  syncChestMarkers();   // 位置がまだないときも、前のモードのたからばこの印は消す
   if (!me) {
     btn.hidden = true;
     showRing(null);
@@ -663,7 +666,6 @@ function refreshNearby() {
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  syncChestMarkers();
   const ch = nearestChest();
   if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${ch.c.at ? `${esc(ch.c.at)}・` : ''}${fmtM(ch.d)}）`);
   if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');

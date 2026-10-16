@@ -80,7 +80,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] } };
+    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, guide: null, guides: 0 };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -372,6 +372,7 @@ function npcPages(n) {
   const pages = n.lines.slice();
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
+  if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
   return pages;
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
@@ -401,6 +402,11 @@ function talkNpc(id, page = 0) {
     toast(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
     track('npc_talk', { npc: n.id, mode: demo ? 'play' : 'walk' });
     setTimeout(checkBadges, 800);
+  }
+  // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
+  if (page === 0 && !(S.guide && S.guide.byId === n.id)) {
+    const g = decideGuide(n);
+    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); }
   }
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
   return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
@@ -791,13 +797,28 @@ const toKg = g => (g * 0.15).toFixed(g * 0.15 >= 10 ? 0 : 1);   // 1合＝約150
 const riceOf = () => (S.rice = Object.assign({ momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, S.rice || {}));
 const nextGoal = () => RICE_GOALS.find(g => !riceOf().goals.includes(g.id));
 // ① 籾ひろい：前の位置から今の位置まで（60m以内）の道すじで、田畑のマスを通ったら集める
+// 操作して移動：十字ボタン・矢印キーで歩いた1歩だけ（地図のタップ・「ここへ移動」は近くても集めない）。
+// あるいて移動：歩いた距離と同じ GPS の条件（精度35m以内・ゆらぎより大きい移動・歩く速さ）で、前に集めた所からの道すじ
+let stepMove = false, harvestFrom = null;
 function harvest(p, prev) {
   const P = window.nishioPixel;
   if (P && P.ensureAround) P.ensureAround(p.lat, p.lng);   // ふつうの地図で遊んでいても、田畑かどうか分かるように地図データを読む
-  if (!P || driving || !prev) return;
-  const dd = dist(prev, p);
-  if (dd > 60 || dd < 1) return;   // 飛んだとき（地図のタップ・GPS の飛び）は集めない
-  if (!demo && (p.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
+  if (!P || driving) { harvestFrom = null; return; }
+  let from;
+  if (demo) {
+    if (!stepMove || !prev) return;
+    from = prev;
+  } else {
+    if (p.acc > CFG.walkMaxAcc || Date.now() < vehicleUntil) return;
+    if (!harvestFrom) { harvestFrom = p; return; }
+    const d0 = dist(harvestFrom, p), dt = (p.t - harvestFrom.t) / 1000;
+    if (d0 < Math.max(8, p.acc * 0.5)) return;   // GPS のゆらぎ
+    if (d0 > 60 || dt <= 0 || dt > CFG.walkMaxGapSec || d0 / dt > CFG.walkMaxSpeed) { harvestFrom = p; return; }
+    from = harvestFrom; harvestFrom = p;
+  }
+  const dd = dist(from, p);
+  if (dd > 60 || dd < 1) return;
+  prev = from;
   const mode = demo ? 'play' : 'walk', cap = RICE.dayCap[mode], d = dayState(), r = riceOf();
   d.momi = d.momi || 0; d.momiTiles = d.momiTiles || [];
   let got = 0;
@@ -911,6 +932,130 @@ $('mekiki').addEventListener('click', e => {
 });
 $('riceBtn').addEventListener('click', () => { const sh = spots.find(s => s.shop && inReach(s)); if (sh) openMekiki(sh); });
 
+/* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
+   「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
+   次に行く所は、プレイヤーが選ぶのではなく、話を聞いた人と、まわりの環境（季節・時間・お店の営業時間・今月の行事・籾の重さ・田畑）が決める。
+   ・西尾の人と話すと、その人が次の行き先をすすめてくれる（話の最後のページ）
+   ・行き先に着く（人なら話しかける）と、そこの環境やその人の話で、また次が決まる
+   ・ほかの人の話を聞けば、行き先はその人のすすめに変わる（行き先を自分で選ぶボタンはない）
+   報酬はきびしめ：すすめられた所に着いたら +5pt（1日5回まで）。人と話す +10pt は、はじめての人だけ */
+const GUIDE_PTS = 5, GUIDE_DAILY = 5, GUIDE_RANGE = { walk: 2000, play: 3000 };
+const WEEKDAY = d => '日月火水木金土'[d.getDay()];
+// お店の営業時間（ricepia.jp）：本店 9:00〜19:30・日曜定休／らいすぴあ秀幸 10:00〜19:00・年中無休（コイン精米所は24時間）
+function shopOpen(id, d = new Date()) {
+  const m = d.getHours() * 60 + d.getMinutes();
+  if (id === 'f-kondo-beikoku') return d.getDay() !== 0 && m >= 540 && m < 1170;
+  if (id === 'f-ricepia') return m >= 600 && m < 1140;
+  return true;
+}
+const firstClause = t => String(t || '').split(/[。、]/)[0];
+// 田畑のマスをさがす（読み込んだ地図の中で、いまいる所から近い順。見つからなければ null）
+function nearFarm(maxTiles = 150) {
+  const P = window.nishioPixel;
+  if (!P || !me) return null;
+  const q = P.toTile(me.lat, me.lng), x0 = Math.floor(q.x), y0 = Math.floor(q.y), d = dayState(), done = new Set(d.momiTiles || []);
+  for (let r = 4; r <= maxTiles; r += 4) for (let i = -r; i <= r; i += 2) for (const [x, y] of [[x0 + i, y0 - r], [x0 + i, y0 + r], [x0 - r, y0 + i], [x0 + r, y0 + i]]) {
+    const c = P.codeAt(x, y);
+    if ((c === P.C.U || c === P.C.F) && !done.has(x + ',' + y)) { const ll = P.toLatLng(x + 0.5, y + 0.5); return { lat: ll.lat, lng: ll.lng }; }
+  }
+  return null;
+}
+// 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by }
+function decideGuide(from) {
+  if (!me) return null;
+  const now = new Date(), range = GUIDE_RANGE[demo ? 'play' : 'walk'], r = riceOf();
+  const far = x => { const d = dist(me, x); return d > 60 && d <= range; };
+  const by = from ? `${from.name}の話` : 'まわりのようす';
+  const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
+  const cands = [];
+  // ① 籾が重くなった → 開いているお店へ（日曜は本店がお休み・夜はらいすぴあのコイン精米所が24時間）
+  if (r.momi >= RICE.minLoad) {
+    const shops = spots.filter(s => s.shop).sort((a, b) => dist(me, a) - dist(me, b));
+    const s = shops.find(x => shopOpen(x.id, now)) || shops.find(x => x.id === 'f-ricepia') || shops[0];
+    if (s) {
+      const note = !shopOpen('f-kondo-beikoku', now) && s.id === 'f-ricepia' ? (now.getDay() === 0 ? '（きょうは日曜で本店はお休み）' : '') : '';
+      cands.push({ kind: 'shop', id: s.id, name: s.name, lat: s.lat, lng: s.lng,
+        why: say(`籾がずいぶんたまったね。${s.name}へ持っていって、選別と精米をしてもらいん${note}。`, `籾がずっしり重くなってきた。${s.name}へ持っていこう${note}。`) });
+    }
+  }
+  // ② 今月・来月の行事の会場
+  for (const { e, when } of upcomingEvents()) {
+    const s = e.spot && spots.find(x => x.id === evSpotId(e));
+    if (s && far(s) && !ISLAND_SPOTS.has(e.spot)) { cands.push({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: say(`${when}に${s.name}で「${e.name}」があるもんで、いっぺん見に行ってみりん。`, `${when}に${s.name}で「${e.name}」があるらしい。行ってみよう。`) }); break; }
+  }
+  // ③ まだ話していない人（人の話から、次の人へ）
+  const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && far(n)).sort((a, b) => dist(me, a) - dist(me, b));
+  const pickN = people[(S.guides || 0) % Math.min(3, people.length || 1)];
+  if (pickN) {
+    const s = spots.find(x => x.id === 'f-' + pickN.spot), about = firstClause(s && s.desc);
+    cands.push({ kind: 'npc', id: pickN.id, name: `${pickN.name}（${pickN.spotName}）`, lat: pickN.lat, lng: pickN.lng,
+      why: say(`${pickN.spotName}のそばに${pickN.name}がおるで、話を聞いてみりん。${about ? `（${about}）` : ''}`, `${pickN.spotName}のほうに人がいる。話を聞いてみよう。`) });
+  }
+  // ④ 田畑（籾がまだ少ないとき。9〜10月は新米の季節）
+  if (r.momi < RICE.minLoad) {
+    const f = nearFarm();
+    if (f && far(f)) {
+      const season = [9, 10].includes(now.getMonth() + 1) ? '新米の季節だもんで、' : '';
+      cands.push({ kind: 'farm', id: 'farm', name: '近くの田畑', lat: f.lat, lng: f.lng, why: say(`${season}この先の田畑を歩いてみりん。籾が拾えるに。`, `${season ? '新米の季節。' : ''}田畑が見える。歩くと籾が拾えそうだ。`) });
+    }
+  }
+  // ⑤ まだ行っていない注目スポット
+  const sp = spots.filter(s => s.featured && !s.shop && !S.visits[s.id] && far(s) && !ISLAND_SPOTS.has(s.id.slice(2))).sort((a, b) => dist(me, a) - dist(me, b))[0];
+  if (sp) cands.push({ kind: 'spot', id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng, why: say(`${sp.name}へは、もう行ったかん？${firstClause(sp.desc)}。`, `${sp.name}が近いらしい。行ってみよう。`) });
+  if (!cands.length) return null;
+  // 籾が重いときは、まずお店。それ以外は、話を聞くたびに「行事・人・田畑」を順に
+  let c = cands.find(x => x.kind === 'shop');
+  if (!c) { const order = [['spot', 'npc', 'farm'], ['npc', 'farm', 'spot'], ['farm', 'npc', 'spot']][(S.guides || 0) % 3]; for (const k of order) if ((c = cands.find(x => x.kind === k))) break; }
+  return { ...(c || cands[0]), by };
+}
+function setGuide(g) {
+  S.guide = g ? { ...g, t: Date.now() } : null;
+  if (g) S.guides = (S.guides || 0) + 1;
+  save();
+}
+const guideTarget = () => {
+  const g = S.guide;
+  if (!g) return null;
+  if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); return n ? { ...g, ...npcSpot(n) } : null; }
+  return g;
+};
+// 行き先に着いたか（人のときは、話しかけたときに次が決まる）
+function checkGuide() {
+  const g = guideTarget();
+  if (!me) return;
+  if (!g) {   // 行き先がないときは、まわりのようすで決める（決まらなければ少し待ってから、もう一度）
+    if (spots.length && !S.guide && Date.now() - (checkGuide.t || 0) > 5000) { checkGuide.t = Date.now(); setGuide(decideGuide(null)); }
+    return;
+  }
+  if (g.kind === 'npc') return;
+  const d = dist(me, g), r = g.kind === 'farm' ? 24 : (spots.find(s => s.id === g.id) ? reachOf(spots.find(s => s.id === g.id)) : 40);
+  if (d > r + Math.min(me.acc || 0, CFG.accSlack)) return;
+  const day = dayState();
+  day.guide = day.guide || 0;
+  const pts = day.guide < GUIDE_DAILY ? GUIDE_PTS : 0;
+  if (pts) { day.guide++; gainPoints(pts); S.log.unshift({ type: 'guide', t: Date.now(), pts, name: `すすめられた所に着いた：${g.name}`, icon: '🧭' }); }
+  track('guide_arrive', { kind: g.kind, by: g.by, mode: demo ? 'play' : 'walk' });
+  const next = decideGuide(null);
+  setGuide(next);
+  toast(`🧭 ${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
+}
+$('guide').addEventListener('click', () => $('guide').classList.toggle('open'));   // タップで話の全文
+function renderGuide() {
+  const el = $('guide');
+  const g = guideTarget();
+  if (!g || !me) { el.hidden = true; return; }
+  el.hidden = false;
+  // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
+  el.innerHTML = `<b>🧭 ${esc(g.name)}<span>　${bearing(me, g)}へ ${fmtM(dist(me, g))}</span></b><small>${esc(g.by)}「${esc(g.why)}」</small>`;
+  el.title = `${g.by}「${g.why}」`;
+}
+const DIR8 = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
+function bearing(a, b) {
+  const y = Math.sin((b.lng - a.lng) * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180);
+  const x = Math.cos(a.lat * Math.PI / 180) * Math.sin(b.lat * Math.PI / 180) - Math.sin(a.lat * Math.PI / 180) * Math.cos(b.lat * Math.PI / 180) * Math.cos((b.lng - a.lng) * Math.PI / 180);
+  return DIR8[Math.round(((Math.atan2(y, x) * 180 / Math.PI + 360) % 360) / 45) % 8];
+}
+
 /* ---------- 近くのスポット ---------- */
 function refreshNearby() {
   const btn = $('spinBtn');
@@ -918,6 +1063,7 @@ function refreshNearby() {
   if (!me) {
     btn.hidden = true;
     $('riceBtn').hidden = true;
+    $('guide').hidden = true;
     showRing(null);
     showGuide(null);
     setStatus(gpsError || (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'));
@@ -933,7 +1079,7 @@ function refreshNearby() {
   }
   selected = best ? best.s : null;
   showRing(selected || nearest);
-  showGuide(selected ? null : nearest);
+  showGuide(selected ? null : guideTarget() || nearest);
   if (selected) {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);
@@ -949,6 +1095,8 @@ function refreshNearby() {
     btn.hidden = true;
   }
 
+  checkGuide();
+  renderGuide();
   const shopNear = spots.find(s => s.shop && inReach(s)), r = riceOf(), ng = nextGoal();
   $('riceBtn').hidden = !(shopNear && r.momi >= RICE.minLoad);
   if (shopNear) $('riceSub').textContent = `籾 ${r.momi}合を選別して精米する`;
@@ -962,7 +1110,7 @@ function refreshNearby() {
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected) {
-    if (nearest) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`);
+    if (nearest) { if (!guideTarget()) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`); }   // 行き先があるときは、みちしるべが案内する
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
@@ -1309,7 +1457,7 @@ function setMode(isDemo) {
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
-  me = null; lastWalk = null; driving = false;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
+  me = null; lastWalk = null; driving = false; harvestFrom = null;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
   if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
@@ -1452,9 +1600,10 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
-  moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
+  moveTo(lat, lng, how) { if (!demo) return; follow = false; stepMove = how === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get rice() { return riceOf(); }, openMekiki, RICE,
+  get guide() { return guideTarget(); }, decideGuide, setGuide,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },

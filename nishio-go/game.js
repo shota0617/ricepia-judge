@@ -79,7 +79,8 @@ const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
-    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [] };
+    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
+    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] } };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -317,6 +318,7 @@ function popupHtml(s) {
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
+    ${s.shop ? `<p class="mb">🌾 田畑で集めた籾を${RICE.minLoad}合から持ち込んで、選別・精米できます（いま籾 ${riceOf().momi}合）</p>` : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}</div>`;
@@ -460,12 +462,13 @@ function placeMe() {
 }
 
 function onFix(lat, lng, acc, t) {
-  const p = { lat, lng, acc, t };
+  const p = { lat, lng, acc, t }, prev = me;
   me = p;
   gpsError = '';
   placeMe();
   if (!$('panel-settings').hidden) renderGpsInfo();
   trackWalk(p);
+  harvest(p, prev);
   renderMarkers();
   refreshNearby();
   tryChest();
@@ -758,12 +761,163 @@ function tryChest() {
   refreshNearby();
 }
 
+/* ---------- 米屋の仕事（このゲームの面白さの核：docs/fun-core.md） ----------
+   ① 西尾の田畑を歩いて「籾（もみ）」を集める → ② 当店に持ち込んで、米屋の目で選別（目利き）→ ③ 精米して、自分の米袋をいっぱいにする。
+   当店の本物の仕事（農産物検査員が選ぶお米・しっかり選別・コイン精米所の3つの仕上がり）をゲームにしたもの。報酬はきびしめ：
+   ・籾は田畑のマス1つにつき1日1回。あるいて 0.3合・操作 0.15合。1日の上限はあるいて60合・操作30合。車に乗ったままや、飛んで（地図のタップ）では集まらない
+   ・持ち込みは籾5合から、当店の2店舗（チェックインできる距離）でだけ
+   ・目利きの出来で等級が決まり、白米の量が変わる（1等×1.0・2等×0.9・3等×0.75）
+   ・ポイントは米袋の目標（5kg・10kg・30kg・1俵60kg）に届いたときだけ */
+const RICE = { tile: { walk: 0.3, play: 0.15 }, dayCap: { walk: 60, play: 30 }, minLoad: 5, husk: 0.8, grade: { 1: 1, 2: 0.9, 3: 0.75 } };
+const POLISH = [
+  { id: 'gobu', name: '5分づき', note: 'ぬかを半分ほど残す仕上がり。白米より量が多めに残ります', yield: 0.95 },
+  { id: 'normal', name: '通常', note: 'いつもの白米の仕上がり', yield: 0.9 },
+  { id: 'clean', name: 'クリーン精米', note: 'ぬかをよりしっかり落とす仕上がり', yield: 0.9 },
+];
+const RICE_GOALS = [
+  { id: 'bag5', go: 33.3, name: '5kgの米袋', pts: 50 }, { id: 'bag10', go: 66.7, name: '10kgの米袋', pts: 100 },
+  { id: 'bag30', go: 200, name: '30kgの米袋', pts: 300 }, { id: 'hyo', go: 400, name: '1俵（60kg）', pts: 600 },
+];
+// 精米のあとに出す当店の一言（ricepia.jp に書いてあること）
+const SHOP_TIPS = [
+  'お米は精米した瞬間から味が落ちていきます。玄米のまま買って、食べる分だけ精米すれば、いつも精米したての味。らいすぴあの駐車場のコイン精米所は24時間・10kgごとに100円です。',
+  '当店は「農産物検査員が選ぶお米」。カメムシのあとが見られる年も、しっかり選別して、きれいなお米だけをお届けしています。',
+  'コイン精米所の仕上がりは、5分づき・通常・クリーン精米の3つ。石抜装置付きのクボタ製精米機です。',
+  '翔米（しょうまい）は、五代目・近藤翔太が選び、店で毎日精米するブランド名。冷めてもおいしいので、おにぎりやお弁当にもおすすめです。',
+  'お米のドライブスルーは昭和61年（1986年）から。今年で40年目です。車に乗ったまま、重いお米もスタッフが積み込みます。',
+];
+const r1 = x => Math.round(x * 10) / 10;
+const toKg = g => (g * 0.15).toFixed(g * 0.15 >= 10 ? 0 : 1);   // 1合＝約150g
+const riceOf = () => (S.rice = Object.assign({ momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, S.rice || {}));
+const nextGoal = () => RICE_GOALS.find(g => !riceOf().goals.includes(g.id));
+// ① 籾ひろい：前の位置から今の位置まで（60m以内）の道すじで、田畑のマスを通ったら集める
+function harvest(p, prev) {
+  const P = window.nishioPixel;
+  if (P && P.ensureAround) P.ensureAround(p.lat, p.lng);   // ふつうの地図で遊んでいても、田畑かどうか分かるように地図データを読む
+  if (!P || driving || !prev) return;
+  const dd = dist(prev, p);
+  if (dd > 60 || dd < 1) return;   // 飛んだとき（地図のタップ・GPS の飛び）は集めない
+  if (!demo && (p.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
+  const mode = demo ? 'play' : 'walk', cap = RICE.dayCap[mode], d = dayState(), r = riceOf();
+  d.momi = d.momi || 0; d.momiTiles = d.momiTiles || [];
+  let got = 0;
+  const n = Math.max(1, Math.ceil(dd / 4));
+  for (let i = 1; i <= n; i++) {
+    const q = P.toTile(prev.lat + (p.lat - prev.lat) * i / n, prev.lng + (p.lng - prev.lng) * i / n), x = Math.floor(q.x), y = Math.floor(q.y), c = P.codeAt(x, y);
+    if (c !== P.C.U && c !== P.C.F) continue;
+    const key = x + ',' + y;
+    if (d.momiTiles.includes(key)) continue;
+    if (d.momi >= cap) {
+      if (!d.momiCapNoted) { d.momiCapNoted = true; toast(`🌾 きょう集められる籾は${cap}合まで。あしたまた田畑を歩こう`); }
+      break;
+    }
+    const g = Math.min(RICE.tile[mode], cap - d.momi);
+    d.momiTiles.push(key); d.momi += g; r.momi += g; got += g;
+  }
+  if (!got) return;
+  d.momi = Math.round(d.momi * 100) / 100; r.momi = Math.round(r.momi * 100) / 100;
+  save();
+  if (P.floatText) P.floatText(`🌾+${Math.round(got * 100) / 100}合`);
+}
+// ② ③ 持ち込み：目利き（選別）→ 精米 → 米袋
+const KINDS = { kame: '着色粒（カメムシのあと）', ao: '未熟粒（青い粒）', wari: '砕粒（割れた粒）' };
+let mk = null;
+function openMekiki(shop) {
+  const r = riceOf();
+  if (driving) { toast('🚗 車を降りてから持ち込んでね'); return; }
+  if (r.momi < RICE.minLoad) { toast(`🌾 籾が${RICE.minLoad}合たまったら持ち込めます（いま${r.momi}合）`); return; }
+  mk = { shop, stage: 'intro' };
+  $('mekiki').hidden = false;
+  renderMekiki();
+}
+function closeMekiki() { clearInterval(mk && mk.timer); mk = null; $('mekiki').hidden = true; }
+function startSort() {
+  const rnd = seeded(hashStr('mk:' + Date.now())), N = 24, bad = 6 + Math.floor(rnd() * 3), kinds = Object.keys(KINDS);
+  const grains = Array.from({ length: N }, (_, i) => ({ k: i < bad ? kinds[Math.floor(rnd() * kinds.length)] : 'ok', gone: false }));
+  for (let i = N - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [grains[i], grains[j]] = [grains[j], grains[i]]; }
+  Object.assign(mk, { stage: 'sort', grains, bad, removed: 0, miss: 0, left: 12, timer: setInterval(() => { if (!mk) return; mk.left--; if (mk.left <= 0) endSort(); else renderMekiki(); }, 1000) });
+  renderMekiki();
+}
+function endSort() {
+  clearInterval(mk.timer);
+  const ratio = mk.removed / mk.bad;
+  mk.grade = mk.removed === mk.bad && mk.miss === 0 ? 1 : ratio >= 0.7 && mk.miss <= 1 ? 2 : 3;
+  mk.stage = 'polish';
+  renderMekiki();
+}
+function doPolish(id) {
+  const r = riceOf(), pol = POLISH.find(x => x.id === id) || POLISH[1], momi = r.momi;
+  const white = r1(momi * RICE.husk * pol.yield * RICE.grade[mk.grade]);
+  r.momi = 0; r.white = r1(r.white + white); r.loads++; if (mk.grade === 1) r.g1++;
+  S.log.unshift({ type: 'rice', t: Date.now(), pts: 0, name: `精米（${mk.grade}等・${pol.name}）白米 ${white}合`, icon: '🍚' });
+  let pts = 0;
+  const reached = [];
+  for (const g of RICE_GOALS) if (!r.goals.includes(g.id) && r.white >= g.go) { r.goals.push(g.id); pts += g.pts; reached.push(g); S.log.unshift({ type: 'rice', t: Date.now(), pts: g.pts, name: `米袋の目標「${g.name}」`, icon: '🌾' }); }
+  const lvUp = pts ? gainPoints(pts) : 0;
+  save();
+  track('rice_load', { grade: mk.grade, polish: pol.id, mode: demo ? 'play' : 'walk', shop: mk.shop.name });
+  reached.forEach(g => track('rice_goal', { goal: g.id, mode: demo ? 'play' : 'walk' }));
+  Object.assign(mk, { stage: 'done', momi, white, pol, reached, pts, tip: SHOP_TIPS[r.loads % SHOP_TIPS.length], lvUp });
+  sound.jingle(lvUp ? 'levelup' : 'checkin');
+  renderMekiki();
+  setTimeout(checkBadges, 1500);
+}
+function renderMekiki() {
+  if (!mk) return;
+  const r = riceOf(), box = $('mkBox'), ng = nextGoal();
+  const bag = `<div class="mk-bag"><span>🍚 米袋 ${toKg(r.white)}kg（${r.white}合）</span>${ng ? `<i style="width:${Math.min(100, r.white / ng.go * 100)}%"></i><small>つぎの目標：${esc(ng.name)}</small>` : '<small>1俵達成！</small>'}</div>`;
+  if (mk.stage === 'intro') {
+    box.innerHTML = `<h3>🌾 ${esc(mk.shop.name)}に持ち込み</h3>
+      <p>籾 <b>${r.momi}合</b> を持ってきました。精米の前に、米屋の目で<b>選別</b>します。</p>
+      <ul class="mk-rule"><li>悪い粒をタップして取りのぞこう：${Object.values(KINDS).map(esc).join('・')}</li>
+        <li>制限時間は12秒。いい粒をまちがえて取ると減点</li>
+        <li>ぜんぶ取りのぞいて、まちがいなし＝<b>1等</b>。等級で白米の量が変わります</li></ul>
+      <div class="mk-demo"><span class="grain ok"></span>いい粒　<span class="grain kame"></span>着色粒　<span class="grain ao"></span>未熟粒　<span class="grain wari"></span>砕粒</div>
+      <button type="button" class="btn big" data-mk="start">選別をはじめる</button>
+      <button type="button" class="btn ghost" data-mk="close">あとにする</button>`;
+  } else if (mk.stage === 'sort') {
+    box.innerHTML = `<h3>🔍 選別中… <span class="mk-time">${mk.left}秒</span></h3>
+      <p class="mk-sub">悪い粒 のこり ${mk.bad - mk.removed}／まちがい ${mk.miss}</p>
+      <div class="mk-grid">${mk.grains.map((g, i) => `<button type="button" class="grain ${g.k}${g.gone ? ' gone' : ''}" data-grain="${i}" aria-label="${g.gone ? '取りのぞいた' : '粒'}"${g.gone ? ' disabled' : ''}></button>`).join('')}</div>`;
+  } else if (mk.stage === 'polish') {
+    box.innerHTML = `<h3>${mk.grade === 1 ? '🥇 1等' : mk.grade === 2 ? '🥈 2等' : '🥉 3等'}（悪い粒 ${mk.removed}/${mk.bad}・まちがい ${mk.miss}）</h3>
+      <p>仕上がりをえらんで精米しよう（らいすぴあのコイン精米所と同じ3つ）</p>
+      <div class="mk-pol">${POLISH.map(x => `<button type="button" class="btn" data-polish="${x.id}"><b>${esc(x.name)}</b><small>${esc(x.note)}</small></button>`).join('')}</div>
+      <p class="mk-note">籾 → 玄米（もみすり）→ 白米（精米）。等級：1等×1.0・2等×0.9・3等×0.75</p>`;
+  } else {
+    box.innerHTML = `<h3>🍚 精米できた！</h3>
+      <p>籾 ${mk.momi}合 → <b>${mk.grade}等・${esc(mk.pol.name)}</b> → 白米 <b>${mk.white}合</b></p>
+      ${bag}
+      ${mk.reached.length ? `<p class="mk-goal">🌾 目標達成：${mk.reached.map(g => esc(g.name)).join('・')}　+${mk.pts}pt${mk.lvUp ? `　🎉 Lv${mk.lvUp}` : ''}</p>` : '<p class="mk-note">ポイントは米袋の目標に届いたときにもらえます</p>'}
+      <p class="fact">💬 当店より：${esc(mk.tip)}</p>
+      <button type="button" class="btn big" data-mk="close">とじる</button>`;
+  }
+}
+$('mekiki').addEventListener('click', e => {
+  if (!mk) return;
+  const g = e.target.closest('[data-grain]');
+  if (g && mk.stage === 'sort') {
+    const it = mk.grains[+g.dataset.grain];
+    if (it.gone) return;
+    it.gone = true;
+    if (it.k === 'ok') { mk.miss++; if (navigator.vibrate) navigator.vibrate(60); } else mk.removed++;
+    if (mk.removed === mk.bad) endSort(); else renderMekiki();
+    return;
+  }
+  const a = e.target.closest('[data-mk]'), pol = e.target.closest('[data-polish]');
+  if (pol && mk.stage === 'polish') doPolish(pol.dataset.polish);
+  else if (a && a.dataset.mk === 'start') startSort();
+  else if (a && a.dataset.mk === 'close') closeMekiki();
+});
+$('riceBtn').addEventListener('click', () => { const sh = spots.find(s => s.shop && inReach(s)); if (sh) openMekiki(sh); });
+
 /* ---------- 近くのスポット ---------- */
 function refreshNearby() {
   const btn = $('spinBtn');
   syncChestMarkers();   // 位置がまだないときも、前のモードのたからばこの印は消す
   if (!me) {
     btn.hidden = true;
+    $('riceBtn').hidden = true;
     showRing(null);
     showGuide(null);
     setStatus(gpsError || (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'));
@@ -795,7 +949,13 @@ function refreshNearby() {
     btn.hidden = true;
   }
 
+  const shopNear = spots.find(s => s.shop && inReach(s)), r = riceOf(), ng = nextGoal();
+  $('riceBtn').hidden = !(shopNear && r.momi >= RICE.minLoad);
+  if (shopNear) $('riceSub').textContent = `籾 ${r.momi}合を選別して精米する`;
   const msgs = [];
+  // 1行に収める（案内パネルが高くなると地図が隠れるので）
+  msgs.push(shopNear && r.momi < RICE.minLoad ? `🌾 籾 <b>${r.momi}合</b>：${RICE.minLoad}合からここで選別・精米できます`
+    : `🌾 籾 <b>${r.momi}合</b>・🍚 米袋 <b>${toKg(r.white)}</b>／${ng ? toKg(ng.go) : '60'}kg`);
   if (driving) msgs.push('🚗 軽トラで移動中（道だけ走れます。歩いたポイントは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
   else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
@@ -858,6 +1018,10 @@ function badgeDefs() {
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
     { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MEIBUTSU.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MEIBUTSU.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MEIBUTSU.length, 1) },
+    { id: 'rice1', i: '🍚', n: 'はじめての精米', d: '籾を当店に持ち込んで精米する', cur: riceOf().loads, goal: 1 },
+    { id: 'bag5', i: '🌾', n: '5kgの米袋', d: '米袋を5kgにする', cur: r1(riceOf().white * 0.15), goal: 5 },
+    { id: 'bag30', i: '🏆', n: '30kgの米袋', d: '米袋を30kgにする', cur: r1(riceOf().white * 0.15), goal: 30 },
+    { id: 'grade1', i: '🥇', n: '米屋の目利き', d: '選別で1等を5回とる', cur: riceOf().g1, goal: 5 },
     { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: (S.met || []).length, goal: 5 },
     { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${(window.NISHIO_NPCS || []).length}人みんなと話す`, cur: (S.met || []).length, goal: Math.max((window.NISHIO_NPCS || []).length, 1) },
   ];
@@ -921,6 +1085,7 @@ function renderLog() {
   const lv = levelOf(S.total);
   $('stats').innerHTML = [
     ['使えるポイント', S.points.toLocaleString(), 'pt'], ['レベル', `${lv}`, titleOf(lv)],
+    ['米袋', toKg(riceOf().white), 'kg'], ['1等の回数', riceOf().g1, `回／精米${riceOf().loads}回`],
     ['めぐったスポット', Object.keys(S.visits).length, 'か所'], ['チェックイン', S.checkins, '回'],
     ['歩いた距離', fmtM(S.walked), ''], ['連続日数', S.streak.last === ymd() || S.streak.last === yesterday() ? S.streak.days : 0, '日'],
     ['最長連続', S.streak.max || 0, '日'], ['これまでの合計', S.total.toLocaleString(), 'pt'],
@@ -1289,6 +1454,7 @@ window.nishioGo = {
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
   get driving() { return driving; },
+  get rice() { return riceOf(); }, openMekiki, RICE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },

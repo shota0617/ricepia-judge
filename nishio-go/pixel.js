@@ -1039,6 +1039,8 @@ function spotArt(s) {
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx = cv.getContext('2d');
 let active = false, raf = 0, dirty = true, scale = 2;
+const floaters = [];   // 浮かぶ文字 { t, at }
+function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
 
@@ -1183,6 +1185,18 @@ function frame(now) {
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(h / 2 - T / 2), T, T);
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(h / 2 - T * 0.75), T, T);
+
+  // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    const fl = floaters[i], age = (now - fl.at) / 1000;
+    if (age > 1.2) { floaters.splice(i, 1); continue; }
+    ctx.globalAlpha = Math.min(1, (1.2 - age) * 2);
+    ctx.font = `${Math.round(11 * dpr)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.lineWidth = Math.max(2, Math.round(2 * dpr)); ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.fillStyle = '#ffe27a';
+    const fy = Math.round(h / 2 - T * 0.85 - age * T * 0.8);
+    ctx.strokeText(fl.t, w / 2, fy); ctx.fillText(fl.t, w / 2, fy);
+    ctx.globalAlpha = 1;
+  }
 
   // 画面の外にある一番近いスポットへの矢印
   if (nearest && !G.selected) {
@@ -1716,5 +1730,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar };
+window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

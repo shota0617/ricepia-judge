@@ -13,6 +13,7 @@ on:
     paths:
       - ricepia-jp/**
       - .github/workflows/ricepia-jp.yml
+      - .github/ricepia-ftp.sh
 permissions:
   contents: read
 concurrency:
@@ -46,8 +47,8 @@ jobs:
         if: steps.secrets.outputs.ok == 'true'
         run: |
           mkdir -p current
-          # パスワードが平文で流れないよう、FTPS（暗号化）を必須にする
-          lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set net:max-retries 2; get www/index.html -o current/index.html; bye" "$FTP_SERVER"
+          . .github/ricepia-ftp.sh
+          ftp "set net:max-retries 2; get www/index.html -o current/index.html"
           echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
           cat current/index.html
           echo "----- end -----"
@@ -62,7 +63,7 @@ jobs:
           if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
           test -s ricepia-jp/index.html
           stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
-          ftp() { lftp -u "$FTP_USER","$FTP_PASS" -e "set ftp:ssl-force true; set ftp:ssl-protect-data true; set cmd:fail-exit yes; $1; bye" "$FTP_SERVER"; }
+          . .github/ricepia-ftp.sh
           # 先に別名でアップロードしてから入れ替える（途中で失敗しても、トップページが消えたままにならないように）
           ftp "put ricepia-jp/index.html -o www/index.html.new"
           if ! ftp "mv www/index.html www/index.html.bak-$stamp; mv www/index.html.new www/index.html"; then

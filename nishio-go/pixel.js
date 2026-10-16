@@ -462,7 +462,9 @@ const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 100;   // 西尾�
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
-const WORLD_KEY = 'nsg_world5', WORLD_FILE = 'nishio-go/world.json';
+// 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
+const WORLD_KEY = 'nsg_world6', WORLD_FILE = 'nishio-go/world.json';
+for (let i = 1; i <= 5; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）

@@ -53,6 +53,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .popup .tag.shop{background:#d23a2e;color:#fff}
 .popup .ev{margin:4px 0;padding:4px 8px;border-radius:8px;background:#fff6d6;color:#6b4a00;font-size:12px;font-weight:700}
 .px-info .popup .ev{background:none;border:1px dashed #ffd54f;color:#ffd54f}
+.popup .mb{margin:4px 0;padding:4px 8px;border-radius:8px;background:#e8f3e0;color:#24502c;font-size:12px}
+.px-info .popup .mb{background:none;border:1px dashed #8fd18a;color:#cfeec9}
 .leaflet-container a.btn{color:#fff}   /* Leaflet の a{color} より強く：当店のポップアップのボタン文字を白に */
 
 .fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + max(170px,calc(var(--sheet-h,0px) + 22px)));z-index:900;display:flex;flex-direction:column;gap:10px}

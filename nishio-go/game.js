@@ -313,6 +313,7 @@ function popupHtml(s) {
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">📅 ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
+    ${spotMeibutsu(s).map(m => `<p class="mb">${m.icon} <b>${esc(m.name)}</b>：${esc(m.note)}</p>`).join('')}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
@@ -591,6 +592,10 @@ function checkin() {
   setTimeout(checkBadges, 2700);
 }
 
+/* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
+const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
+const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
+
 /* ---------- 西尾のおまつり・行事（events.js：西尾市観光協会と西尾市公式ウェブサイトから） ---------- */
 const EVENTS = (window.NISHIO_EVENTS && NISHIO_EVENTS.list) || [];
 const ISLAND_SPOTS = new Set(['sakushima-nishi', 'sakushima-higashi', 'benten-salon', 'suunji', 'ohirune-house', 'kamome-parking', 'oura-beach', 'yatsurugi', 'kurokabe']);
@@ -685,6 +690,7 @@ function factPool() {   // まめちしき：地区の豆知識・紹介文と�
   }
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
   for (const e of EVENTS) if (e.desc) m.set(`e:${e.id}`, `${e.name}（${e.when}・${e.place}）：${e.desc}`);
+  for (const x of MEIBUTSU) x.facts.forEach((f, i) => m.set(`m:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   return m;
 }
 // たからばこで出すまめちしき：まだ持っていないものから、①そのスポットの話・そこでの行事 ②同じ地区の話 ③ほか の順に選ぶ
@@ -696,7 +702,7 @@ function pickFact(c) {
   for (const s of spots) { const d = dist(c, s); if ((c.at ? s.name === c.at : true) && d < nd) { near = s; nd = d; } }
   const area = near && near.area, inArea = id => { const s = spots.find(x => x.id === id); return s && s.area === area; };
   const tiers = [
-    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id)),
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
     () => true,
   ];
@@ -844,6 +850,7 @@ function badgeDefs() {
     { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
+    { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MEIBUTSU.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MEIBUTSU.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MEIBUTSU.length, 1) },
     { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: (S.met || []).length, goal: 5 },
     { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${(window.NISHIO_NPCS || []).length}人みんなと話す`, cur: (S.met || []).length, goal: Math.max((window.NISHIO_NPCS || []).length, 1) },
   ];

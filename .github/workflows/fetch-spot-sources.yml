@@ -9,6 +9,9 @@ on:
       - .github/workflows/fetch-spot-sources.yml
 permissions:
   contents: write
+concurrency:
+  group: research-commit
+  cancel-in-progress: false
 jobs:
   fetch:
     runs-on: ubuntu-latest
@@ -22,4 +25,4 @@ jobs:
           git add reference
           git diff --cached --quiet && exit 0
           git commit -m "参考：観光協会のスポットと OpenStreetMap の名前つきの場所（一時的）"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          for i in 1 2 3; do git pull --rebase origin ${GITHUB_REF_NAME} && git push origin HEAD:${GITHUB_REF_NAME} && break; sleep 5; done

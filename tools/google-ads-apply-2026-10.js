@@ -198,14 +198,13 @@ function shareCampaignAssets(from, to) {
   apply(to.name + '：' + from.name + ' のサイトリンク・電話を ' + ops.length + ' 件付ける', ops);
 }
 function addNegatives(camp) {
-  const c = AdsApp.campaigns().withIds([camp.id]).get();
-  if (!c.hasNext()) { report.failed.push(camp.name + '：除外キーワードを付けるキャンペーンが取れない'); return; }
-  const campaign = c.next(), have = new Set(), it = campaign.negativeKeywords().get();
-  while (it.hasNext()) have.add(it.next().getText().replace(/["\[\]+]/g, '').toLowerCase());
+  const have = new Set(rows('SELECT campaign_criterion.keyword.text FROM campaign_criterion WHERE campaign.id = ' + camp.id +
+    " AND campaign_criterion.negative = TRUE AND campaign_criterion.type = 'KEYWORD' AND campaign_criterion.status != 'REMOVED'")
+    .map(r => r.campaignCriterion.keyword.text.toLowerCase()));
   const add = SEARCH_NEGATIVES.filter(w => !have.has(w.toLowerCase()));
   if (!add.length) { report.skipped.push(camp.name + '：除外キーワード（もう全部ある）'); return; }
-  add.forEach(w => campaign.createNegativeKeyword(w));
-  report.done.push(camp.name + '：除外キーワード ' + add.length + ' 語（' + add.join('、') + '）');
+  apply(camp.name + '：除外キーワード ' + add.length + ' 語（' + add.join('、') + '）', add.map(w => ({ campaignCriterionOperation: {
+    create: { campaign: camp.rn, negative: true, keyword: { text: w, matchType: 'BROAD' } } } })));
 }
 function setPresenceOnly(camp) {
   const r = rows('SELECT campaign.geo_target_type_setting.positive_geo_target_type FROM campaign WHERE campaign.id = ' + camp.id);

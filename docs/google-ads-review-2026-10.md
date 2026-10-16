@@ -276,6 +276,24 @@ CV はクリックした日にさかのぼって後から計上されます。�
 3. 問題がなければ「実行」を押す（第1週の分）。
 4. 1週間後、先頭の `STEP1_COPY_AND_ASSETS` を `false`、`STEP2_LINE_GOALS` を `true` にして、もう一度プレビュー → 実行する（LINE重視の目標設定）。
 
+**API から反映する場合（管理画面に貼らない方法）**
+
+`tools/google-ads-run.js` を使うと、同じスクリプトを Google Ads API 経由で実行できます。Claude のクラウド環境から実行するときはこちらです。
+
+- 認証情報は、環境の設定（Network secrets または環境変数）に入れます。チャットやリポジトリには書きません。
+  - 必須：`GOOGLE_ADS_DEVELOPER_TOKEN` / `GOOGLE_ADS_CLIENT_ID` / `GOOGLE_ADS_CLIENT_SECRET` / `GOOGLE_ADS_REFRESH_TOKEN` / `GOOGLE_ADS_CUSTOMER_ID`
+  - MCC 経由のときだけ：`GOOGLE_ADS_LOGIN_CUSTOMER_ID`
+- 実行の仕方
+
+| コマンド | すること |
+|---|---|
+| `node tools/google-ads-run.js` | 第1週の分を検証だけ（validateOnly。アカウントは変わらない） |
+| `node tools/google-ads-run.js --apply` | 第1週の分を反映 |
+| `node tools/google-ads-run.js --step2` | 第2週の分（LINE重視の目標）を検証だけ |
+| `node tools/google-ads-run.js --step2 --apply` | 第2週の分を反映 |
+
+- API のバージョンは v25 です。変える場合は `GOOGLE_ADS_API_VERSION` で指定します。
+
 スクリプトがすること・しないこと
 
 - **する：**

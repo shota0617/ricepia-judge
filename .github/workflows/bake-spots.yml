@@ -1,0 +1,40 @@
+# にしおさんぽGO：ふつうのスポット（神社・お寺・公園・史跡など）を OpenStreetMap から作り直して、nishio-go/osm-spots.json をコミットする
+name: Bake Nishio spots
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 18 * * 0'   # 毎週月曜 3:17（日本時間）に作り直す（OpenStreetMap の更新を取り込む）
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - nishio-go/spots.json
+      - nishio-go/osm-query.js
+      - tools/bake-spots.js
+      - .github/workflows/bake-spots.yml
+permissions:
+  contents: write
+concurrency:
+  group: bake-spots-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Bake spots
+        run: node tools/bake-spots.js
+      - name: Commit osm-spots.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nishio-go/osm-spots.json
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -m "にしおさんぽGO: スポットを OpenStreetMap から作り直し（自動）"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

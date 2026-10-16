@@ -26,21 +26,8 @@ const CFG = {
   overpass: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
 };
 
-// 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
-const reEsc = t => t.replace(/[.*+?^${}()|[\]\\"']/g, '.');   // 正規表現の記号は「任意の1文字」に（取得側は広め、照合はJSで厳密に）
-const buildQuery = names => `[out:json][timeout:60];
-area["name"="西尾市"]["admin_level"="7"]->.a;
-(
-  nwr["amenity"="place_of_worship"]["name"](area.a);
-  nwr["historic"]["name"](area.a);
-  nwr["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|theme_park)$"]["name"](area.a);
-  nwr["leisure"="park"]["name"](area.a);
-  nwr["amenity"="library"]["name"](area.a);
-  nwr["railway"="station"]["name"](area.a);
-  nwr["natural"="beach"]["name"](area.a);${names.length ? `
-  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : ''}
-);
-out center tags;`;
+// OpenStreetMap への問い合わせと分類は osm-query.js（tools/bake-spots.js と共通）
+const { buildQuery, toItems } = window.NSG_OSM;
 
 const CATS = {
   featured: { i: '⭐', n: '注目スポット' },
@@ -128,21 +115,6 @@ let spots = [], spotsVersion = 0;   // spotsVersion：スポットの一覧を�
 let spotMeta = { osm: 0, osmAt: 0, osmOk: false, featured: 0 };
 const markers = new Map();
 
-function catOf(t) {
-  if (t.amenity === 'place_of_worship') return t.religion === 'shinto' ? 'shrine' : t.religion === 'buddhist' ? 'temple' : 'worship';
-  if (t.historic === 'castle') return 'castle';
-  if (t.historic) return 'historic';
-  if (t.tourism === 'museum' || t.tourism === 'gallery') return 'museum';
-  if (t.tourism === 'viewpoint') return 'view';
-  if (t.tourism === 'artwork') return 'art';
-  if (t.tourism) return 'sight';
-  if (t.leisure === 'park') return 'park';
-  if (t.amenity === 'library') return 'library';
-  if (t.railway === 'station') return 'station';
-  if (t.natural === 'beach') return 'beach';
-  return 'other';   // 名前検索でだけ見つかったもの（ふつうのスポットにはしない）
-}
-
 async function fetchOverpass(query) {
   let lastErr;
   for (const url of CFG.overpass) {
@@ -154,16 +126,7 @@ async function fetchOverpass(query) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const json = await res.json();
       if (json.remark && /error|runtime/i.test(json.remark)) throw new Error(json.remark);   // 時間切れでも200で返ることがある
-      const items = [];
-      for (const el of json.elements || []) {
-        const t = el.tags || {};
-        const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
-        if (!t.name || lat == null || lng == null) continue;
-        const cat = catOf(t);
-        let name = t.name;
-        if (cat === 'station' && !name.endsWith('駅')) name += '駅';
-        items.push([el.type[0] + el.id, name, cat, +lat.toFixed(6), +lng.toFixed(6), t.name]);
-      }
+      const items = toItems(json);
       if (!items.length) throw new Error('0件');
       return items;
     } catch (e) { lastErr = e; } finally { clearTimeout(timer); }
@@ -247,6 +210,15 @@ function areaProgress(id) {
   return { list, total: list.length, done: list.filter(s => S.visits[s.id]).length };
 }
 
+// 前もって作ったスポット（nishio-go/osm-spots.json）。無い・壊れているときは null
+async function loadBaked() {
+  try {
+    const res = await fetch('nishio-go/osm-spots.json', { cache: 'no-cache' });
+    const j = res.ok ? await res.json() : null;
+    return j && Array.isArray(j.items) && j.items.length ? j : null;
+  } catch (e) { return null; }
+}
+
 let spotsLoading = null;
 function loadSpots(force) {
   if (!spotsLoading) {
@@ -272,16 +244,19 @@ async function doLoadSpots(force) {
   const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
   const stored = store.get(OSM_KEY, null);
   const cached = stored && stored.q === query ? stored : null;   // 注目スポットの名前が変わったら取り直す
-  let items = null;
+  let items = null, baked = null;
   if (!force && cached && Date.now() - cached.t < CFG.osmCacheDays * 864e5) {
     items = cached.items; spotMeta.osmAt = cached.t; spotMeta.osmOk = true; ok = true;
+  } else if (!force && (baked = await loadBaked()) && baked.q === query) {
+    // 前もって作ったスポット（osm-spots.json：GitHub Actions が毎週作り直す）。問い合わせが同じならそのまま使う
+    items = baked.items; spotMeta.osmAt = baked.t; spotMeta.osmOk = true; ok = true;
   } else {
     try {
       items = await fetchOverpass(query);
       spotMeta.osmAt = Date.now(); spotMeta.osmOk = true; ok = true;
       if (!store.set(OSM_KEY, { t: spotMeta.osmAt, q: query, items })) store.del(OSM_KEY);
     } catch (e) {
-      const old = cached || stored;   // 取得できなければ古いキャッシュでも使う
+      const old = cached || stored || baked || (await loadBaked());   // 取得できなければ古いキャッシュや前もって作ったスポットでも使う
       if (old) { items = old.items; spotMeta.osmAt = old.t; spotMeta.osmOk = true; }
       else if (!force) toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
     }

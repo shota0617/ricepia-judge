@@ -1126,7 +1126,7 @@ function refreshNearby() {
   }
   selected = best ? best.s : null;
   showRing(selected || nearest);
-  showGuide(selected ? null : guideTarget() || nearest);
+  showGuide(guideTarget() || (selected ? null : nearest));   // 行き先（みちしるべ）はいつも指す。ほかのスポットの範囲にいるときに消すのは「いちばん近いスポット」だけ
   if (selected) {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);

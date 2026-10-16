@@ -1,0 +1,9 @@
+HTTP/2 200 
+server: nginx
+date: Fri, 16 Oct 2026 07:40:45 GMT
+content-type: text/html
+content-length: 372435
+last-modified: Tue, 13 Oct 2026 08:17:32 GMT
+etag: "5aed3-65db47241ac67"
+accept-ranges: bytes
+

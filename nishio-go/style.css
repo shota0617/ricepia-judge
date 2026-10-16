@@ -52,7 +52,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .popup .tag.gold{background:#fff1d1;color:#8a5a00}
 .popup .tag.shop{background:#d23a2e;color:#fff}
 
-.fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 170px);z-index:900;display:flex;flex-direction:column;gap:10px}
+.fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + max(170px,calc(var(--sheet-h,0px) + 22px)));z-index:900;display:flex;flex-direction:column;gap:10px}
+@media (max-height:600px){.fab-col{flex-direction:row}}   /* 背の低い画面では横に並べて、右上の拡大ボタンと重ならないように */
 .fab{width:48px;height:48px;border-radius:50%;border:0;background:#fff;font-size:22px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 
 /* 下部シート */
@@ -206,7 +207,7 @@ body.px #map{visibility:hidden}
 .px-zoom{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
 .px-zoom button,.px-pad button{background:rgba(0,0,0,.72);color:#fff;border:2px solid #fff;border-radius:6px;font-family:"DotGothic16",monospace;font-size:18px;width:40px;height:40px;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
 .px-zoom button:active,.px-pad button:active{background:#333}
-.px-pad{position:absolute;left:12px;bottom:150px;display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
+.px-pad{position:absolute;left:12px;bottom:max(150px,calc(var(--sheet-h,0px) + 22px));display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
 .px-pad button{width:48px;height:48px}
 .px-pad .u{grid-area:1/2}.px-pad .l{grid-area:2/1}.px-pad .r{grid-area:2/3}.px-pad .d{grid-area:3/2}
 .px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}

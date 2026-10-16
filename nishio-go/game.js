@@ -915,6 +915,9 @@ $('resetBtn').addEventListener('click', () => {
   toast('記録を削除しました');
 });
 
+/* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、十字ボタンや丸ボタンが隠れないようにする */
+if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--sheet-h', $('sheet').offsetHeight + 'px')).observe($('sheet'));
+
 /* はじめに */
 function begin(isDemo) {
   store.set('nsg_started', true);

@@ -1268,7 +1268,10 @@ function setActive(on) {
   if (on) { lastT = 0; raf = requestAnimationFrame(frame); }
   else G.invalidateMap();
 }
-function updatePad() { $('pxPad').hidden = !(active && G.demo && !worldMode); }
+function updatePad() {
+  $('pxPad').hidden = !(active && G.demo && !worldMode);
+  G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
+}
 $('viewBtn').addEventListener('click', () => setActive(!active));
 // せかいちずをいちばん大きくしてさらに拡大すると歩く地図へ、歩く地図をいちばん小さくしてさらに縮小するとせかいちずへ
 $('pxZoomIn').addEventListener('click', () => {

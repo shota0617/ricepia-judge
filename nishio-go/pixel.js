@@ -836,13 +836,13 @@ for (const [code, draw] of Object.entries(TILE_ART)) {
 // 文字で描くスプライト（16×16）
 const PAL = { k: '#000000', w: '#ffffff', r: '#d23a2e', R: '#8e1c1c', g: '#a8a8a8', G: '#686868', y: '#f2c230', Y: '#b88a12',
   b: '#2b5fd9', B: '#1a3a8a', n: '#8d5524', N: '#5d3a1a', s: '#f4c58f', l: '#43a047', o: '#ff9800' };
-function sprite(rows, gray) {
+function sprite(rows, gray, pal = PAL) {
   const c = document.createElement('canvas');
   c.width = c.height = 16;
   const x = c.getContext('2d');
   rows.forEach((row, y) => [...row].forEach((ch, i) => {
-    if (ch === '.' || !PAL[ch]) return;
-    let col = PAL[ch];
+    if (ch === '.' || !pal[ch]) return;
+    let col = pal[ch];
     if (gray) { const v = Math.round(0.3 * parseInt(col.slice(1, 3), 16) + 0.59 * parseInt(col.slice(3, 5), 16) + 0.11 * parseInt(col.slice(5, 7), 16)); col = `rgb(${v},${v},${v})`; }
     x.fillStyle = col; x.fillRect(i, y, 1, 1);
   }));
@@ -892,6 +892,50 @@ const HERO = {
   right: ['...kyyyykkkkk...', '...kyyyksssk....', '...kyyksskssk...', '....kksssssk....', '....kkbbbbkk....', '....kbbbbsssk...', '....kbbbbsssk...', '....kbbbbbbk....', '....kbbbbbbk....'],
 };
 const mirror = rows => rows.map(r => [...r].reverse().join(''));
+// 西尾の人たち（npcs.js）：同じ形で、髪・服・ズボンの色を変える（h 髪、c 服、p ズボン、a 小物）
+const NPC_ROWS = ['................', '.....kkkkkk.....', '....khhhhhhk....', '...khhhhhhhhk...', '...khsssssshk...', '...kskssssksk...', '....kssssssk....', '.....kssssk.....',
+  '....kkcccckk....', '...kccccccccak..', '..ksccccccccsk..', '..ksccccccccsk..', '...kcccccccck...', '....kppppppk....', '....kppkkppk....', '....kkk..kkk....'];
+const NPC_COLORS = {
+  elder:   { h: '#c8c8c8', c: '#6d5a44', p: '#4a4a4a', a: '#6d5a44' },
+  granny:  { h: '#eeeeee', c: '#8e5a9e', p: '#5b3f66', a: '#8e5a9e' },
+  man:     { h: '#2b2018', c: '#3f7fbf', p: '#2d3a55', a: '#3f7fbf' },
+  woman:   { h: '#5a3418', c: '#e57373', p: '#6b4b3a', a: '#e57373' },
+  kid:     { h: '#2b2018', c: '#ffb300', p: '#3b6fd1', a: '#ffb300' },
+  student: { h: '#1d1d1d', c: '#203a63', p: '#203a63', a: '#ffffff' },
+  fisher:  { h: '#ffffff', c: '#3a7bd5', p: '#2a2a2a', a: '#ffcc00' },
+  staff:   { h: '#3b2a1a', c: '#2e7d32', p: '#3e3e3e', a: '#ffffff' },
+  guide:   { h: '#3b2a1a', c: '#f2c230', p: '#4a4a4a', a: '#d23a2e' },
+  monk:    { h: '#f4c58f', c: '#2b2b2b', p: '#2b2b2b', a: '#b88a12' },
+};
+const npcSprites = {};
+for (const [k, col] of Object.entries(NPC_COLORS)) {
+  const pal = { ...PAL, ...col };
+  npcSprites[k] = [sprite(NPC_ROWS, false, pal), sprite(NPC_ROWS.map((r, i) => (i >= 13 ? NPC_ROWS[i] : r)).map((r, i) => i === 9 ? r.replace('a', 'c') : r), false, pal)];
+}
+// 人の立つマス：スポットからずらした位置が建物や水なら、近くの歩けるマスへ（地図を読み込んでから決める）
+const npcTileCache = new Map();
+function npcTile(n) {
+  const key = `${n.id}:${n.lat}:${n.lng}`, c = npcTileCache.get(key);
+  if (c && c.ok) return c;
+  const p = toTile(n.lat, n.lng), x0 = Math.floor(p.x), y0 = Math.floor(p.y);
+  const code = codeAt(x0, y0);
+  if (code === C.X) return { x: x0, y: y0, ok: false };   // まだ地図を読み込んでいない
+  let best = null;
+  for (let r = 0; r <= 8 && !best; r++)
+    for (let dy = -r; dy <= r && !best; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      if (!BLOCK.has(codeAt(x0 + dx, y0 + dy))) { best = { x: x0 + dx, y: y0 + dy, ok: true }; break; }
+    }
+  const t = best || { x: x0, y: y0, ok: true };
+  npcTileCache.set(key, t);
+  return t;
+}
+const npcAt = (tx, ty) => (G.npcs || []).find(n => { const t = npcTile(n); return t.x === tx && t.y === ty; });
+function openNpc(n) {
+  const r = G.talkNpc(n.id);
+  if (!r) return;
+  $('pxInfoBody').innerHTML = r.html; $('pxInfo').hidden = false;
+}
 const heroSprites = {};
 for (const dir of ['down', 'up', 'right']) heroSprites[dir] = [sprite([...HERO_TOP, ...HERO[dir], ...LEGS_A]), sprite([...HERO_TOP, ...HERO[dir], ...LEGS_B])];
 heroSprites.left = heroSprites.right.map((_, i) => sprite(mirror([...HERO_TOP, ...HERO.right, ...(i ? LEGS_B : LEGS_A)])));
@@ -1009,6 +1053,18 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
+  }
+  // 西尾の人たち（まだ話していない人の上には吹き出し）
+  for (const n of G.npcs || []) {
+    const t = npcTile(n), sx = Math.round(ox + t.x * T), sy = Math.round(oy + t.y * T - T * 0.25);
+    if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
+    ctx.drawImage((npcSprites[n.look] || npcSprites.man)[f], sx, sy, T, T);
+    if (!G.npcMet(n.id)) {   // 💬（白い吹き出し）
+      const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.55), by = sy - Math.round(T * 0.45) - (f ? u : 0);
+      ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 6 * u);
+      ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 4 * u); ctx.fillRect(bx + u, by + 4 * u, 2 * u, 2 * u);
+      ctx.fillStyle = '#000'; ctx.fillRect(bx + u, by + 2 * u, u, u); ctx.fillRect(bx + 3 * u, by + 2 * u, u, u); ctx.fillRect(bx + 5 * u, by + 2 * u, u, u);
+    }
   }
   // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
   for (const c of G.liveChests()) {
@@ -1307,6 +1363,8 @@ function step(dir) {
   const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
   const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
   if (BLOCK.has(codeAt(nx, ny)) && !escape) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  const who = npcAt(nx, ny);
+  if (who) { if ($('pxInfo').hidden) openNpc(who); return; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng);
 }
@@ -1476,6 +1534,10 @@ cv.addEventListener('click', e => {
   const T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3));
   const c = camTile();
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
+  // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
+  const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - cv.height / 2) / T + 0.25);
+  const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
+  if (who) { openNpc(who); return; }
   let hit = null, best = Infinity;
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
@@ -1498,5 +1560,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; } };
+window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; } };
 })();

@@ -79,7 +79,7 @@ const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
-    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [] };
+    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -269,6 +269,8 @@ async function doLoadSpots(force) {
   markers.forEach(m => m.remove());
   markers.clear();
   renderMarkers();
+  npcMarkers.forEach(m => m.remove()); npcMarkers.clear();
+  renderNpcMarkers();
   refreshNearby();
   renderSpotInfo();
   return ok;
@@ -338,8 +340,91 @@ function renderMarkers() {
     }
   }
 }
-map.on('moveend zoomend', renderMarkers);
+map.on('moveend zoomend', () => { renderMarkers(); renderNpcMarkers(); });
 map.on('zoomend', () => refreshNearby());
+
+/* ---------- 西尾の人たち（npcs.js：話しかけられる町の人） ----------
+   注目スポットのそばに立つ。近くで話しかけると、その土地の話（出典のある事実）をしてくれる。はじめて話すと +10pt */
+const NPC_LOOK = { elder: '👴', granny: '👵', man: '👨', woman: '👩', kid: '🧒', student: '🧑‍🎓', fisher: '🎣', staff: '🧑‍🌾', guide: '🧑‍🏫', monk: '🧑‍🦲' };
+const NPC_TALK_M = { play: 30, walk: 60 };   // 話しかけられる距離（m）
+let npcs = [], npcsVersion = -1;
+function placeNpcs() {
+  if (npcsVersion === spotsVersion) return npcs;
+  npcsVersion = spotsVersion;
+  npcs = [];
+  for (const n of window.NISHIO_NPCS || []) {
+    const s = spots.find(x => x.id === 'f-' + n.spot);
+    if (!s) continue;   // そのスポットが地図に出ていなければ、その人も出さない
+    const [e, nn] = Array.isArray(n.off) ? n.off : [20, 20];
+    npcs.push({ ...n, spotName: s.name, lat: s.lat + nn / 111320, lng: s.lng + e / (111320 * Math.cos(s.lat * Math.PI / 180)) });
+  }
+  return npcs;
+}
+const npcMet = id => (S.met || []).includes(id);
+// 話す中身：その人のことばと、その場所で今月・来月にある行事の話
+function npcPages(n) {
+  const pages = n.lines.slice();
+  const ev = spotEvents({ id: 'f-' + n.spot });
+  if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
+  return pages;
+}
+// 話しかける（近くにいれば話す。はじめてなら +10pt）。戻り値：{ html, near }
+function talkNpc(id, page = 0) {
+  const n = placeNpcs().find(x => x.id === id);
+  if (!n) return null;
+  const d = me ? dist(me, n) : Infinity, lim = demo ? NPC_TALK_M.play : NPC_TALK_M.walk;
+  const head = `<div class="popup npc"><h4>${NPC_LOOK[n.look] || '🙂'} ${esc(n.name)}</h4><p class="npc-at">${esc(n.spotName)}のそば</p>`;
+  if (d > lim) {
+    return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
+      ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
+  }
+  if (page === 0 && !npcMet(n.id)) {
+    S.met = [...(S.met || []), n.id];
+    S.log.unshift({ type: 'npc', t: Date.now(), pts: 10, name: `${n.name}と話した`, icon: NPC_LOOK[n.look] || '💬' });
+    const lvUp = gainPoints(10);
+    save();
+    sound.jingle(lvUp ? 'levelup' : 'checkin');
+    toast(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+    track('npc_talk', { npc: n.id, mode: demo ? 'play' : 'walk' });
+    setTimeout(checkBadges, 800);
+  }
+  const pages = npcPages(n), i = Math.min(page, pages.length - 1);
+  return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
+    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}</div>` };
+}
+// ふつうの地図：人を絵文字で出す（寄ったときだけ）
+const npcMarkers = new Map();
+function renderNpcMarkers() {
+  const show = map.getZoom() >= 15, b = map.getBounds().pad(0.2), keep = new Set();
+  if (show) for (const n of placeNpcs()) {
+    if (!b.contains([n.lat, n.lng])) continue;
+    keep.add(n.id);
+    const cls = 'npc-mk' + (npcMet(n.id) ? ' met' : '');
+    let m = npcMarkers.get(n.id);
+    if (!m) {
+      m = L.marker([n.lat, n.lng], { icon: L.divIcon({ className: '', html: `<div class="${cls}">${NPC_LOOK[n.look] || '🙂'}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }), zIndexOffset: 400, keyboard: false })
+        .bindPopup(() => talkNpc(n.id).html, { autoPanPaddingBottomRight: [10, 140] }).addTo(map);
+      m._cls = cls; npcMarkers.set(n.id, m);
+    } else if (m._cls !== cls) {
+      m.setIcon(L.divIcon({ className: '', html: `<div class="${cls}">${NPC_LOOK[n.look] || '🙂'}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] })); m._cls = cls;
+    }
+  }
+  for (const [id, m] of npcMarkers) if (!keep.has(id)) { m.remove(); npcMarkers.delete(id); }
+}
+// 「つぎへ」「近くへ移動」（ふつうの地図のポップアップ・ドット絵のウィンドウの両方）
+document.addEventListener('click', e => {
+  const nx = e.target.closest('[data-npc]');
+  if (nx) {
+    const r = talkNpc(nx.dataset.npc, Number(nx.dataset.page) || 0);
+    const box = nx.closest('.leaflet-popup-content, #pxInfoBody');
+    if (r && box) box.innerHTML = r.html;
+    e.stopPropagation();
+    return;
+  }
+  const mv = e.target.closest('[data-move-npc]');
+  const n = mv && demo && placeNpcs().find(x => x.id === mv.dataset.moveNpc);
+  if (n) { map.closePopup(); follow = false; onFix(n.lat - 12 / 111320, n.lng, 5, Date.now()); }
+});
 
 /* ---------- 現在地 ---------- */
 let me = null;          // {lat,lng,acc,t}
@@ -750,6 +835,8 @@ function badgeDefs() {
     { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
+    { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: (S.met || []).length, goal: 5 },
+    { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${(window.NISHIO_NPCS || []).length}人みんなと話す`, cur: (S.met || []).length, goal: Math.max((window.NISHIO_NPCS || []).length, 1) },
   ];
 }
 function checkBadges() {
@@ -1176,7 +1263,7 @@ window.nishioGo = {
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
-  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, chestOpened: id => dayState().chests.includes(id), liveChests,
+  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },

@@ -1,0 +1,26 @@
+# 一時的：西尾市のホームページと観光協会の観光・イベント・特産のページを集めて reference/ に保存する（ゲームの改善の参考用。main には入れない）
+name: Fetch Nishio reference
+on:
+  push:
+    branches:
+      - claude/confident-turing-etepui
+    paths:
+      - tools/fetch-reference.py
+      - .github/workflows/fetch-reference.yml
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/fetch-reference.py
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add reference
+          git diff --cached --quiet && exit 0
+          git commit -m "参考：西尾市のホームページと観光協会のページを保存（一時的）"
+          git push origin HEAD:${GITHUB_REF_NAME}

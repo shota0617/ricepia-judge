@@ -15,5 +15,5 @@ jobs:
     steps:
       - run: |
           for u in https://ricepia.jp/ http://ricepia.jp/ https://www.ricepia.jp/ https://go.ricepia.jp/ https://go.ricepia.jp/nishio-go/ogp.png; do
-            for t in 1 2; do printf '%-45s ' "$u"; curl -sS -o /dev/null --max-time 25 -w '%{http_code} %{size_download} %{remote_ip}\n' "$u" || echo; done
+            for t in 1; do printf '%-45s ' "$u"; curl -sS -o /dev/null --max-time 25 -w '%{http_code} %{size_download} %{remote_ip}\n' "$u" || echo; done
           done

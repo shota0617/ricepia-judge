@@ -543,7 +543,7 @@ function addWorldFeatures(elements, L) {
     if (!rings.length || !rings[0].length) continue;
     const t = el.tags || {}, pts = rings.map(r => r.map(p => { const q = llToW(p.lat, p.lon); return [q.x, q.y]; }));
     if (t.waterway) {
-      if (t.waterway === 'river') { L.lines.push([pts, C.A, 30]); if (t.name) (L.rivers = L.rivers || []).push([String(t.name).slice(0, 12), pts]); }
+      if (t.waterway === 'river') { L.lines.push([pts, C.A, 30]); if (t.name) addRiver(L, String(t.name).slice(0, 12), pts); }
     }   // 用水路（canal）は1マス100mだと町じゅうが水に見えるので描かない（幅のある水面は natural=water で描く）
     else if (t.railway) L.lines.push([pts, C.L, 40]);
     else if (t.highway) L.lines.push(/^(motorway|trunk|primary)/.test(t.highway) ? [pts, C.H, 42] : [pts, C.R, 41]);
@@ -552,6 +552,19 @@ function addWorldFeatures(elements, L) {
       if (k && k.a && k.c !== C.B) L.areas.push([pts, k.c, k.p]);
     }
   }
+}
+// 区切った問い合わせの境目にかかる川は同じ線が何度も届くので、線の形（点の数と両はし）で1回だけ数える。
+// 川のリレーションと、その中の線そのものの両方が届いたときも同じ形なので重ならない
+function addRiver(L, name, pts) {
+  const seen = L.riverSeen || (L.riverSeen = new Set());
+  const keep = pts.filter(line => {
+    const a = line[0], b = line[line.length - 1];
+    const k = name + '|' + line.length + '|' + [a[0], a[1], b[0], b[1]].map(v => v.toFixed(3)).join(',');
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  if (keep.length) (L.rivers = L.rivers || []).push([name, keep]);
 }
 // 川の名前：OSM では1本の川がいくつもの線に分かれていることが多いので、同じ名前でつながっている線を1本にしてから、
 // 長い川には40マス（4km）ごとに名前を置く（短い川は出さない。同じ名前どうしは30マス以上はなす）

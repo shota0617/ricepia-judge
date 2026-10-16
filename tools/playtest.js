@@ -11,6 +11,8 @@ const OUT = path.resolve(process.argv[2] || 'playtest-out');
 const PORT = 8899, URL = `http://localhost:${PORT}/nishio-go.html`;
 const VIEW = { width: 390, height: 780 };
 const STATION = [34.8640, 137.0560];   // あるいて移動で使う位置（名鉄 西尾駅の近く）
+// 今日のクエストとたからばこは日付で決まるので、台本の中の日付を固定する（この日は「西尾の注目スポット」と「たからばこ2つ」が出て、この道順で達成できる）
+const PLAY_DATE = process.env.PLAYTEST_DATE || '2026-10-16T10:00:00+09:00';
 
 async function newPage(browser, opts = {}) {
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...opts });
@@ -21,6 +23,7 @@ async function newPage(browser, opts = {}) {
     HTMLMediaElement.prototype.play = function () { window.__played.push(this.src.split('/').pop()); return play.call(this); };
   });
   const page = await ctx.newPage();
+  await page.clock.setFixedTime(new Date(PLAY_DATE));   // Date だけ固定（タイマーやアニメーションはふつうに動く）
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   if (process.env.LEAFLET_DIR) await page.route('https://unpkg.com/**', r => {

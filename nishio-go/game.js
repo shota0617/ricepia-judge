@@ -405,6 +405,10 @@ function talkNpc(id, page = 0) {
   }
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   if (page === 0 && !(S.guide && S.guide.byId === n.id)) {
+    if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) {   // すすめられた人に会えた
+      const pts = guideReward(S.guide);
+      if (pts) toast(`🧭 ${n.name}に会えた +${pts}pt`);
+    }
     const g = decideGuide(n);
     if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); }
   }
@@ -969,8 +973,9 @@ function decideGuide(from) {
   const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
   const cands = [];
   // ① 籾が重くなった → 開いているお店へ（日曜は本店がお休み・夜はらいすぴあのコイン精米所が24時間）
-  if (r.momi >= RICE.minLoad) {
-    const shops = spots.filter(s => s.shop).sort((a, b) => dist(me, a) - dist(me, b));
+  if (r.momi >= RICE.minLoad && !spots.some(s => s.shop && inReach(s))) {   // 店にいるときは、その場で持ち込めるので出さない
+    // いま着いている店は出さない（その店で持ち込めるので。出すと、着く→また同じ店、をくり返してしまう）
+    const shops = spots.filter(s => s.shop && !inReach(s)).sort((a, b) => dist(me, a) - dist(me, b));
     const s = shops.find(x => shopOpen(x.id, now)) || shops.find(x => x.id === 'f-ricepia') || shops[0];
     if (s) {
       const note = !shopOpen('f-kondo-beikoku', now) && s.id === 'f-ricepia' ? (now.getDay() === 0 ? '（きょうは日曜で本店はお休み）' : '') : '';
@@ -1026,7 +1031,16 @@ const guideTarget = () => {
   if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); return n ? { ...g, ...npcSpot(n) } : null; }
   return g;
 };
-// 行き先に着いたか（人のときは、話しかけたときに次が決まる）
+// 行き先に着いたときの記録とごほうび（1日5回まで）。戻り値：もらったポイント
+function guideReward(g) {
+  const day = dayState();
+  day.guide = day.guide || 0;
+  const pts = day.guide < GUIDE_DAILY ? GUIDE_PTS : 0;
+  if (pts) { day.guide++; gainPoints(pts); S.log.unshift({ type: 'guide', t: Date.now(), pts, name: `すすめられた所に着いた：${g.name}`, icon: '🧭' }); }
+  track('guide_arrive', { kind: g.kind, by: g.by, mode: demo ? 'play' : 'walk' });
+  return pts;
+}
+// 行き先に着いたか（人のときは、話しかけたときに着いたことになり、その人の話で次が決まる）
 function checkGuide() {
   const g = guideTarget();
   if (!me) return;
@@ -1037,11 +1051,7 @@ function checkGuide() {
   if (g.kind === 'npc') return;
   const d = dist(me, g), r = g.kind === 'farm' ? 24 : (spots.find(s => s.id === g.id) ? reachOf(spots.find(s => s.id === g.id)) : 40);
   if (d > r + Math.min(me.acc || 0, CFG.accSlack)) return;
-  const day = dayState();
-  day.guide = day.guide || 0;
-  const pts = day.guide < GUIDE_DAILY ? GUIDE_PTS : 0;
-  if (pts) { day.guide++; gainPoints(pts); S.log.unshift({ type: 'guide', t: Date.now(), pts, name: `すすめられた所に着いた：${g.name}`, icon: '🧭' }); }
-  track('guide_arrive', { kind: g.kind, by: g.by, mode: demo ? 'play' : 'walk' });
+  const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
   toast(`🧭 ${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);

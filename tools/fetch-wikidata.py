@@ -1,5 +1,5 @@
 # 一時的：スポットを増やす下調べ。Wikidata から、西尾市内にある位置情報つきの項目（神社・寺・史跡・文化財・公園など）を集める
-import json, os, urllib.request, urllib.parse
+import json, os, time, urllib.request, urllib.parse, urllib.error
 os.makedirs('reference', exist_ok=True)
 Q = '''
 SELECT ?item ?itemLabel ?coord ?typeLabel ?article ?heritageLabel ?desc WHERE {
@@ -14,7 +14,11 @@ SELECT ?item ?itemLabel ?coord ?typeLabel ?article ?heritageLabel ?desc WHERE {
 }'''
 url = 'https://query.wikidata.org/sparql?format=json&query=' + urllib.parse.quote(Q)
 req = urllib.request.Request(url, headers={'User-Agent': 'nishio-go-research/1.0 (github.com/shota0617/ricepia-judge)', 'Accept': 'application/sparql-results+json'})
-j = json.load(urllib.request.urlopen(req, timeout=120))
+for i in range(6):   # Wikidata は混んでいると1分に1回までしか答えないので、待ってやり直す
+    try: j = json.load(urllib.request.urlopen(req, timeout=180)); break
+    except urllib.error.HTTPError as e:
+        print('retry', e.code, e.reason); time.sleep(75)
+else: raise SystemExit('Wikidata に問い合わせできませんでした')
 rows = {}
 for b in j['results']['bindings']:
     q = b['item']['value'].rsplit('/', 1)[1]

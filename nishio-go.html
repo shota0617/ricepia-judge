@@ -22,7 +22,7 @@
 <body>
 
 <header class="bar">
-  <div class="brand">🚶 にしおさんぽGO<span class="beta-tag" title="試作版です。内容は予告なく変わります">試作版</span><span id="demoTag" class="demo-tag" hidden>デモ</span></div>
+  <div class="brand">🚶 にしおさんぽGO<span class="beta-tag" title="試作版です。内容は予告なく変わります">試作版</span></div>
   <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
     <span class="lv-num">Lv<b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
@@ -53,6 +53,10 @@
 </div>
 
 <section class="sheet" id="sheet">
+  <div class="mode-sw" role="group" aria-label="移動のしかた">
+    <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
+    <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
+  </div>
   <div class="status" id="status">位置情報を待っています…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
     <span class="spin-ico" id="spinIco">⭐</span>
@@ -103,7 +107,7 @@
   <h2>せってい</h2>
   <div class="card">
     <label class="row">
-      <span><b>デモモード</b><small>地図をタップした場所へ移動できます。デモのポイントは本番とは別に保存されます。</small></span>
+      <span><b>🎮 操作して移動</b><small>十字ボタン（矢印キー）や地図のタップで移動します。オフにすると、実際に歩いて移動します（位置情報を使います）。ポイントと記録は別々に保存され、お店のとくてんは「あるいて移動」でだけ使えます。</small></span>
       <input type="checkbox" id="demoToggle"/>
     </label>
   </div>
@@ -134,7 +138,7 @@
     <p class="note">現在地の座標そのものは、どこにも送信しません。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
   </div>
   <div class="card danger">
-    <div class="row"><span><b>記録を消す</b><small>表示中のモード（本番／デモ）のポイントと記録をすべて削除します。</small></span>
+    <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
       <button type="button" class="btn red" id="resetBtn">削除</button></div>
   </div>
   <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>運営：近藤米穀店 らいすぴあ（西尾市）</p>
@@ -152,8 +156,9 @@
       <li>👣 歩いた距離・📅 連続日数でもポイント</li>
     </ul>
     <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
-    <button type="button" class="btn big" id="startBtn">位置情報をオンにしてはじめる</button>
-    <button type="button" class="btn ghost" id="demoBtn">デモで試す（位置情報なしで歩ける）</button>
+    <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
+    <button type="button" class="btn big mode-pick" id="startBtn">🚶 あるいて遊ぶ<small>位置情報を使って、実際に西尾のまちを歩きます</small></button>
+    <button type="button" class="btn big mode-pick alt" id="demoBtn">🎮 操作して遊ぶ<small>十字ボタンで動かして、家からでも西尾めぐり</small></button>
   </div>
 </div>
 

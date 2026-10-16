@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/", "has": [{ "type": "host", "value": "go.ricepia.jp" }], "destination": "/nishio-go.html" }
+  ]
+}

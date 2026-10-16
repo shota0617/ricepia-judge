@@ -405,7 +405,7 @@ function talkNpc(id, page = 0) {
   }
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   if (page === 0 && !(S.guide && S.guide.byId === n.id)) {
-    if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) {   // すすめられた人に会えた
+    if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id && fixOk()) {   // すすめられた人に会えた
       const pts = guideReward(S.guide);
       if (pts) toast(`🧭 ${n.name}に会えた +${pts}pt`);
     }
@@ -935,7 +935,11 @@ $('mekiki').addEventListener('click', e => {
   else if (a && a.dataset.mk === 'start') startSort();
   else if (a && a.dataset.mk === 'close') closeMekiki();
 });
-$('riceBtn').addEventListener('click', () => { const sh = spots.find(s => s.shop && inReach(s)); if (sh) openMekiki(sh); });
+$('riceBtn').addEventListener('click', () => {
+  if (!fixOk()) { toast('📡 GPS の精度が上がるのを待ってから持ち込んでね'); return; }
+  const sh = spots.find(s => s.shop && inReach(s));
+  if (sh) openMekiki(sh);
+});
 
 /* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
    「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
@@ -961,7 +965,9 @@ function guideRadius(g) {
   const s = spots.find(x => x.id === g.id);
   return (s ? reachOf(s) : 40) + Math.min((me && me.acc) || 0, CFG.accSlack);
 }
-const GUIDE_RECENT = 8;   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
+const GUIDE_RECENT = 8;
+// その場にいると認めてよい位置か（チェックイン・たからばこと同じ条件）。あるいて移動では GPS の精度が悪いときと乗り物で移動中はだめ
+const fixOk = () => !!me && (demo || (me.acc <= CFG.maxAccuracy && Date.now() >= vehicleUntil));   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 田畑のマスをさがす（読み込んだ地図の中で、いまいる所から近い順。見つからなければ null）
 function nearFarm(maxTiles = 150) {
   const P = window.nishioPixel;
@@ -1064,7 +1070,7 @@ function checkGuide() {
     return;
   }
   if (g.kind === 'npc') return;
-  if (dist(me, g) > guideRadius(g)) return;
+  if (dist(me, g) > guideRadius(g) || !fixOk()) return;
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
@@ -1128,7 +1134,7 @@ function refreshNearby() {
 
   checkGuide();
   renderGuide();
-  const shopNear = spots.find(s => s.shop && inReach(s)), r = riceOf(), ng = nextGoal();
+  const shopNear = fixOk() && spots.find(s => s.shop && inReach(s)), r = riceOf(), ng = nextGoal();
   $('riceBtn').hidden = !(shopNear && r.momi >= RICE.minLoad);
   if (shopNear) $('riceSub').textContent = `籾 ${r.momi}合を選別して精米する`;
   const msgs = [];

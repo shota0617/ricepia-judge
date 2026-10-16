@@ -553,13 +553,12 @@ function addWorldFeatures(elements, L) {
     }
   }
 }
-// 区切った問い合わせの境目にかかる川は同じ線が何度も届くので、線の形（点の数と両はし）で1回だけ数える。
+// 区切った問い合わせの境目にかかる川は同じ線が何度も届くので、線の形（すべての点）がまったく同じものは1回だけ数える。
 // 川のリレーションと、その中の線そのものの両方が届いたときも同じ形なので重ならない
 function addRiver(L, name, pts) {
   const seen = L.riverSeen || (L.riverSeen = new Set());
   const keep = pts.filter(line => {
-    const a = line[0], b = line[line.length - 1];
-    const k = name + '|' + line.length + '|' + [a[0], a[1], b[0], b[1]].map(v => v.toFixed(3)).join(',');
+    const k = name + '|' + line.map(p => p[0].toFixed(3) + ',' + p[1].toFixed(3)).join(';');
     if (seen.has(k)) return false;
     seen.add(k);
     return true;

@@ -978,6 +978,13 @@ function decideGuide(from) {
         why: say(`籾がずいぶんたまったね。${s.name}へ持っていって、選別と精米をしてもらいん${note}。`, `籾がずっしり重くなってきた。${s.name}へ持っていこう${note}。`) });
     }
   }
+  // ①' この人が知っている人（人から人へ）。まだ話していない人だけ。遠くても10kmまで（佐久島へは船で）
+  if (from && Array.isArray(from.refer)) {
+    const all = placeNpcs();
+    const ref = from.refer.map(([id, words]) => ({ n: all.find(x => x.id === id), words }))
+      .find(x => x.n && !npcMet(x.n.id) && dist(me, x.n) > 60 && dist(me, x.n) <= 10000);
+    if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
+  }
   // ② 今月・来月の行事の会場
   for (const { e, when } of upcomingEvents()) {
     const s = e.spot && spots.find(x => x.id === evSpotId(e));
@@ -1003,8 +1010,8 @@ function decideGuide(from) {
   const sp = spots.filter(s => s.featured && !s.shop && !S.visits[s.id] && far(s) && !ISLAND_SPOTS.has(s.id.slice(2))).sort((a, b) => dist(me, a) - dist(me, b))[0];
   if (sp) cands.push({ kind: 'spot', id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng, why: say(`${sp.name}へは、もう行ったかん？${firstClause(sp.desc)}。`, `${sp.name}が近いらしい。行ってみよう。`) });
   if (!cands.length) return null;
-  // 籾が重いときは、まずお店。それ以外は、話を聞くたびに「行事・人・田畑」を順に
-  let c = cands.find(x => x.kind === 'shop');
+  // 籾が重いときは、まずお店。つぎに、話した人が知っている人。それ以外は、話を聞くたびに「行事・人・田畑」を順に
+  let c = cands.find(x => x.kind === 'shop') || cands.find(x => x.refer);   // 籾が重いときはお店、つぎに、その人が知っている人
   if (!c) { const order = [['spot', 'npc', 'farm'], ['npc', 'farm', 'spot'], ['farm', 'npc', 'spot']][(S.guides || 0) % 3]; for (const k of order) if ((c = cands.find(x => x.kind === k))) break; }
   return { ...(c || cands[0]), by };
 }

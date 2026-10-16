@@ -1097,9 +1097,10 @@ function frame(now) {
       if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
       if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
       if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
+      // 黄色の線は、道の縁が同じ向きに3マス以上続くところだけ（2マス幅の道の端や、ななめの道の段差に横向きの線を引かない）
       ctx.fillStyle = '#f2c230';
-      if (!road(up) && dn === C.H) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }
-      if (!road(lf) && rt === C.H) { ctx.fillRect(X + T - u, Y + u * 2, u, u * 4); ctx.fillRect(X + T - u, Y + u * 10, u, u * 4); }
+      if (!road(up) && dn === C.H && hEdgeRun(tx, ty, 1, 0, road) >= 3) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }
+      if (!road(lf) && rt === C.H && hEdgeRun(tx, ty, 0, 1, road) >= 3) { ctx.fillRect(X + T - u, Y + u * 2, u, u * 4); ctx.fillRect(X + T - u, Y + u * 10, u, u * 4); }
     }
     if (code === C.A) {          // 岸に白い波打ち際
       const u = Math.max(1, Math.round(T / 16)), land = c => c !== C.A && c !== C.X;
@@ -1206,6 +1207,15 @@ function frame(now) {
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
   dirty = false;
+}
+
+// 大きな道の「縁のマス」（外側が道でなく、内側の隣も大きな道）が、(dx,dy) の向きに続く長さ（自分を含む。前後2マスまで）
+function hEdgeRun(tx, ty, dx, dy, road) {
+  const ox = dy, oy = dx;   // 縁の外側の向き（横に続く縁なら上、縦に続く縁なら左）
+  const edge = (x, y) => codeAt(x, y) === C.H && !road(codeAt(x - ox, y - oy)) && codeAt(x + ox, y + oy) === C.H;
+  let n = 1;
+  for (const s of [1, -1]) for (let k = 1; k <= 2 && edge(tx + dx * k * s, ty + dy * k * s); k++) n++;
+  return n;
 }
 
 // 画面に見えている区画の建物。注目スポットや同じ名前のスポットのすぐ近くの建物は出さない

@@ -1116,6 +1116,7 @@ function refreshNearby() {
     setStatus(gpsError || (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'));
     return;
   }
+  checkGuide();   // 着いたら先に次の行き先へ進めてから、線・矢印・カードを描く（古い行き先を指さないように）
   let best = null, nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const d = dist(me, s);
@@ -1142,7 +1143,6 @@ function refreshNearby() {
     btn.hidden = true;
   }
 
-  checkGuide();
   renderGuide();
   const shopNear = fixOk() && spots.find(s => s.shop && inReach(s)), r = riceOf(), ng = nextGoal();
   $('riceBtn').hidden = !(shopNear && r.momi >= RICE.minLoad);

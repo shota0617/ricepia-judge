@@ -26,21 +26,8 @@ const CFG = {
   overpass: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
 };
 
-// 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
-const reEsc = t => t.replace(/[.*+?^${}()|[\]\\"']/g, '.');   // 正規表現の記号は「任意の1文字」に（取得側は広め、照合はJSで厳密に）
-const buildQuery = names => `[out:json][timeout:60];
-area["name"="西尾市"]["admin_level"="7"]->.a;
-(
-  nwr["amenity"="place_of_worship"]["name"](area.a);
-  nwr["historic"]["name"](area.a);
-  nwr["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|theme_park)$"]["name"](area.a);
-  nwr["leisure"="park"]["name"](area.a);
-  nwr["amenity"="library"]["name"](area.a);
-  nwr["railway"="station"]["name"](area.a);
-  nwr["natural"="beach"]["name"](area.a);${names.length ? `
-  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : ''}
-);
-out center tags;`;
+// OpenStreetMap への問い合わせと分類は osm-query.js（tools/bake-spots.js と共通）
+const { buildQuery, toItems } = window.NSG_OSM;
 
 const CATS = {
   featured: { i: '⭐', n: '注目スポット' },
@@ -92,7 +79,7 @@ const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
-    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [] };
+    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -128,21 +115,6 @@ let spots = [], spotsVersion = 0;   // spotsVersion：スポットの一覧を�
 let spotMeta = { osm: 0, osmAt: 0, osmOk: false, featured: 0 };
 const markers = new Map();
 
-function catOf(t) {
-  if (t.amenity === 'place_of_worship') return t.religion === 'shinto' ? 'shrine' : t.religion === 'buddhist' ? 'temple' : 'worship';
-  if (t.historic === 'castle') return 'castle';
-  if (t.historic) return 'historic';
-  if (t.tourism === 'museum' || t.tourism === 'gallery') return 'museum';
-  if (t.tourism === 'viewpoint') return 'view';
-  if (t.tourism === 'artwork') return 'art';
-  if (t.tourism) return 'sight';
-  if (t.leisure === 'park') return 'park';
-  if (t.amenity === 'library') return 'library';
-  if (t.railway === 'station') return 'station';
-  if (t.natural === 'beach') return 'beach';
-  return 'other';   // 名前検索でだけ見つかったもの（ふつうのスポットにはしない）
-}
-
 async function fetchOverpass(query) {
   let lastErr;
   for (const url of CFG.overpass) {
@@ -154,16 +126,7 @@ async function fetchOverpass(query) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const json = await res.json();
       if (json.remark && /error|runtime/i.test(json.remark)) throw new Error(json.remark);   // 時間切れでも200で返ることがある
-      const items = [];
-      for (const el of json.elements || []) {
-        const t = el.tags || {};
-        const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
-        if (!t.name || lat == null || lng == null) continue;
-        const cat = catOf(t);
-        let name = t.name;
-        if (cat === 'station' && !name.endsWith('駅')) name += '駅';
-        items.push([el.type[0] + el.id, name, cat, +lat.toFixed(6), +lng.toFixed(6), t.name]);
-      }
+      const items = toItems(json);
       if (!items.length) throw new Error('0件');
       return items;
     } catch (e) { lastErr = e; } finally { clearTimeout(timer); }
@@ -179,11 +142,14 @@ function nameMatches(osmName, m) {
 
 function buildSpots(config, osmItems) {
   const osm = osmItems.map(([id, name, cat, lat, lng, raw]) => ({ id, name, raw: raw || name, cat, lat, lng }));
+  // spots.json の normal: true は、ふつうのスポットとして足す（OpenStreetMap にない社寺を Wikidata から足したもの）
+  for (const c of config) if (c && c.normal && c.id && c.name && Number.isFinite(c.lat) && Number.isFinite(c.lng))
+    osm.push({ id: 'n-' + c.id, name: String(c.name), raw: String(c.name), cat: CATS[c.cat] ? c.cat : 'sight', lat: c.lat, lng: c.lng });
   const used = new Set();
   const num = (v, max) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : undefined; };
   const featured = [];
   for (const c of config) {
-    if (!c || !c.id || !c.name) continue;
+    if (!c || !c.id || !c.name || c.normal) continue;
     const hasPos = Number.isFinite(c.lat) && Number.isFinite(c.lng);
     const s = { id: 'f-' + c.id, name: String(c.name), cat: 'featured', kind: CATS[c.cat] ? c.cat : 'featured',
       icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: hasPos && !!c.approx,
@@ -247,6 +213,15 @@ function areaProgress(id) {
   return { list, total: list.length, done: list.filter(s => S.visits[s.id]).length };
 }
 
+// 前もって作ったスポット（nishio-go/osm-spots.json）。無い・壊れているときは null
+async function loadBaked() {
+  try {
+    const res = await fetch('nishio-go/osm-spots.json', { cache: 'no-cache' });
+    const j = res.ok ? await res.json() : null;
+    return j && Array.isArray(j.items) && j.items.length ? j : null;
+  } catch (e) { return null; }
+}
+
 let spotsLoading = null;
 function loadSpots(force) {
   if (!spotsLoading) {
@@ -272,16 +247,19 @@ async function doLoadSpots(force) {
   const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
   const stored = store.get(OSM_KEY, null);
   const cached = stored && stored.q === query ? stored : null;   // 注目スポットの名前が変わったら取り直す
-  let items = null;
+  let items = null, baked = null;
   if (!force && cached && Date.now() - cached.t < CFG.osmCacheDays * 864e5) {
     items = cached.items; spotMeta.osmAt = cached.t; spotMeta.osmOk = true; ok = true;
+  } else if (!force && (baked = await loadBaked()) && baked.q === query) {
+    // 前もって作ったスポット（osm-spots.json：GitHub Actions が毎週作り直す）。問い合わせが同じならそのまま使う
+    items = baked.items; spotMeta.osmAt = baked.t; spotMeta.osmOk = true; ok = true;
   } else {
     try {
       items = await fetchOverpass(query);
       spotMeta.osmAt = Date.now(); spotMeta.osmOk = true; ok = true;
       if (!store.set(OSM_KEY, { t: spotMeta.osmAt, q: query, items })) store.del(OSM_KEY);
     } catch (e) {
-      const old = cached || stored;   // 取得できなければ古いキャッシュでも使う
+      const old = cached || stored || baked || (await loadBaked());   // 取得できなければ古いキャッシュや前もって作ったスポットでも使う
       if (old) { items = old.items; spotMeta.osmAt = old.t; spotMeta.osmOk = true; }
       else if (!force) toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
     }
@@ -294,6 +272,8 @@ async function doLoadSpots(force) {
   markers.forEach(m => m.remove());
   markers.clear();
   renderMarkers();
+  npcMarkers.forEach(m => m.remove()); npcMarkers.clear();
+  renderNpcMarkers();
   refreshNearby();
   renderSpotInfo();
   return ok;
@@ -333,6 +313,7 @@ function popupHtml(s) {
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">📅 ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
+    ${spotMeibutsu(s).map(m => `<p class="mb">${m.icon} <b>${esc(m.name)}</b>：${esc(m.note)}</p>`).join('')}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
@@ -363,13 +344,105 @@ function renderMarkers() {
     }
   }
 }
-map.on('moveend zoomend', renderMarkers);
+map.on('moveend zoomend', () => { renderMarkers(); renderNpcMarkers(); });
 map.on('zoomend', () => refreshNearby());
+
+/* ---------- 西尾の人たち（npcs.js：話しかけられる町の人） ----------
+   注目スポットのそばに立つ。近くで話しかけると、その土地の話（出典のある事実）をしてくれる。はじめて話すと +10pt */
+const NPC_LOOK = { elder: '👴', granny: '👵', man: '👨', woman: '👩', kid: '🧒', student: '🧑‍🎓', fisher: '🎣', staff: '🧑‍🌾', guide: '🧑‍🏫', monk: '🧑‍🦲' };
+const NPC_TALK_M = { play: 30, walk: 60 };   // 話しかけられる距離（m）
+let npcs = [], npcsVersion = -1;
+function placeNpcs() {
+  if (npcsVersion === spotsVersion) return npcs;
+  npcsVersion = spotsVersion;
+  npcs = [];
+  for (const n of window.NISHIO_NPCS || []) {
+    const s = spots.find(x => x.id === 'f-' + n.spot);
+    if (!s) continue;   // そのスポットが地図に出ていなければ、その人も出さない
+    const [e, nn] = Array.isArray(n.off) ? n.off : [20, 20];
+    npcs.push({ ...n, spotName: s.name, lat: s.lat + nn / 111320, lng: s.lng + e / (111320 * Math.cos(s.lat * Math.PI / 180)) });
+  }
+  return npcs;
+}
+const npcMet = id => (S.met || []).includes(id);
+// 話す中身：その人のことばと、その場所で今月・来月にある行事の話
+function npcPages(n) {
+  const pages = n.lines.slice();
+  const ev = spotEvents({ id: 'f-' + n.spot });
+  if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
+  return pages;
+}
+// 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
+function npcSpot(n) {
+  const P = window.nishioPixel;
+  if (!P || !document.body.classList.contains('px')) return n;
+  const t = P.npcTile(n);
+  return t.ok ? P.toLatLng(t.x + 0.5, t.y + 0.5) : n;
+}
+// 話しかける（近くにいれば話す。はじめてなら +10pt）。戻り値：{ html, near }
+function talkNpc(id, page = 0) {
+  const n = placeNpcs().find(x => x.id === id);
+  if (!n) return null;
+  const d = me ? dist(me, npcSpot(n)) : Infinity, lim = demo ? NPC_TALK_M.play : NPC_TALK_M.walk;
+  const head = `<div class="popup npc"><h4>${NPC_LOOK[n.look] || '🙂'} ${esc(n.name)}</h4><p class="npc-at">${esc(n.spotName)}のそば</p>`;
+  if (driving) return { near: false, html: `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
+  if (d > lim) {
+    return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
+      ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
+  }
+  if (page === 0 && !npcMet(n.id)) {
+    S.met = [...(S.met || []), n.id];
+    S.log.unshift({ type: 'npc', t: Date.now(), pts: 10, name: `${n.name}と話した`, icon: NPC_LOOK[n.look] || '💬' });
+    const lvUp = gainPoints(10);
+    save();
+    sound.jingle(lvUp ? 'levelup' : 'checkin');
+    toast(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+    track('npc_talk', { npc: n.id, mode: demo ? 'play' : 'walk' });
+    setTimeout(checkBadges, 800);
+  }
+  const pages = npcPages(n), i = Math.min(page, pages.length - 1);
+  return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
+    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}</div>` };
+}
+// ふつうの地図：人を絵文字で出す（寄ったときだけ）
+const npcMarkers = new Map();
+function renderNpcMarkers() {
+  const show = map.getZoom() >= 15, b = map.getBounds().pad(0.2), keep = new Set();
+  if (show) for (const n of placeNpcs()) {
+    if (!b.contains([n.lat, n.lng])) continue;
+    keep.add(n.id);
+    const cls = 'npc-mk' + (npcMet(n.id) ? ' met' : '');
+    let m = npcMarkers.get(n.id);
+    if (!m) {
+      m = L.marker([n.lat, n.lng], { icon: L.divIcon({ className: '', html: `<div class="${cls}">${NPC_LOOK[n.look] || '🙂'}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] }), zIndexOffset: 400, keyboard: false })
+        .bindPopup(() => talkNpc(n.id).html, { autoPanPaddingBottomRight: [10, 140] }).addTo(map);
+      m._cls = cls; npcMarkers.set(n.id, m);
+    } else if (m._cls !== cls) {
+      m.setIcon(L.divIcon({ className: '', html: `<div class="${cls}">${NPC_LOOK[n.look] || '🙂'}</div>`, iconSize: [30, 30], iconAnchor: [15, 15] })); m._cls = cls;
+    }
+  }
+  for (const [id, m] of npcMarkers) if (!keep.has(id)) { m.remove(); npcMarkers.delete(id); }
+}
+// 「つぎへ」「近くへ移動」（ふつうの地図のポップアップ・ドット絵のウィンドウの両方）
+document.addEventListener('click', e => {
+  const nx = e.target.closest('[data-npc]');
+  if (nx) {
+    const r = talkNpc(nx.dataset.npc, Number(nx.dataset.page) || 0);
+    const box = nx.closest('.leaflet-popup-content, #pxInfoBody');
+    if (r && box) box.innerHTML = r.html;
+    e.stopPropagation();
+    return;
+  }
+  const mv = e.target.closest('[data-move-npc]');
+  const n = mv && demo && placeNpcs().find(x => x.id === mv.dataset.moveNpc);
+  if (n) { const p = npcSpot(n); map.closePopup(); follow = false; onFix(p.lat - 12 / 111320, p.lng, 5, Date.now()); }
+});
 
 /* ---------- 現在地 ---------- */
 let me = null;          // {lat,lng,acc,t}
 let meMarker = null, accCircle = null, spotRing = null;
 let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '';
+let driving = false;   // 操作して移動で、ドット絵の地図の車（軽トラ）に乗っている（pixel.js が切り替える）
 
 function placeMe() {
   if (!me) return;
@@ -417,8 +490,8 @@ function stopGps() { if (watchId != null) { navigator.geolocation.clearWatch(wat
 /* ---------- 歩いた距離 ---------- */
 function trackWalk(p) {
   if (demo) {
-    // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする
-    if (lastWalk) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d); }
+    // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする（車で走った分は数えない）
+    if (lastWalk && !driving) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d); }
     lastWalk = p;
     return;
   }
@@ -476,6 +549,7 @@ const SHOP_NOTE = '西尾のお米屋さん（明治25年創業）。車に乗�
 function checkin() {
   const s = selected;
   if (!s || !me) return;
+  if (driving) { toast('🚗 車を降りてからチェックインしてね（十字ボタンのまん中）'); return; }
   const now = Date.now();
   if (!demo && now < vehicleUntil) { toast('乗り物での移動中はチェックインできません。降りて歩いてからどうぞ。'); return; }
   if (!demo && me.acc > CFG.maxAccuracy) { toast(`GPSの精度が低いようです（誤差 約${Math.round(me.acc)}m）。少し待ってからもう一度。`); return; }
@@ -524,6 +598,10 @@ function checkin() {
   updateQuests(1200);   // チェックインの知らせのあとにクエスト達成を知らせる
   setTimeout(checkBadges, 2700);
 }
+
+/* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
+const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
+const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
 
 /* ---------- 西尾のおまつり・行事（events.js：西尾市観光協会と西尾市公式ウェブサイトから） ---------- */
 const EVENTS = (window.NISHIO_EVENTS && NISHIO_EVENTS.list) || [];
@@ -619,6 +697,7 @@ function factPool() {   // まめちしき：地区の豆知識・紹介文と�
   }
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
   for (const e of EVENTS) if (e.desc) m.set(`e:${e.id}`, `${e.name}（${e.when}・${e.place}）：${e.desc}`);
+  for (const x of MEIBUTSU) x.facts.forEach((f, i) => m.set(`m:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   return m;
 }
 // たからばこで出すまめちしき：まだ持っていないものから、①そのスポットの話・そこでの行事 ②同じ地区の話 ③ほか の順に選ぶ
@@ -630,7 +709,7 @@ function pickFact(c) {
   for (const s of spots) { const d = dist(c, s); if ((c.at ? s.name === c.at : true) && d < nd) { near = s; nd = d; } }
   const area = near && near.area, inArea = id => { const s = spots.find(x => x.id === id); return s && s.area === area; };
   const tiers = [
-    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id)),
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
     () => true,
   ];
@@ -661,6 +740,7 @@ function nearestChest() {
   return best;
 }
 function tryChest() {
+  if (driving) return;   // 車に乗っている間は開けない（降りると開く）
   // あるいて移動では、チェックインと同じく GPS の誤差が大きいときと乗り物で移動中は開けない
   if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
   const n = nearestChest();
@@ -706,7 +786,8 @@ function refreshNearby() {
     $('spinIco').textContent = iconOf(selected);
     $('spinName').textContent = selected.name;
     const lock = demo ? 0 : vehicleUntil - Date.now();
-    const why = lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
+    const why = driving ? '🚗 車を降りるとチェックインできます'
+      : lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
       : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
     btn.disabled = !!why;
     $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
@@ -715,6 +796,7 @@ function refreshNearby() {
   }
 
   const msgs = [];
+  if (driving) msgs.push('🚗 軽トラで移動中（道だけ走れます。歩いたポイントは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
   else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
@@ -775,6 +857,9 @@ function badgeDefs() {
     { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
+    { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MEIBUTSU.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MEIBUTSU.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MEIBUTSU.length, 1) },
+    { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: (S.met || []).length, goal: 5 },
+    { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${(window.NISHIO_NPCS || []).length}人みんなと話す`, cur: (S.met || []).length, goal: Math.max((window.NISHIO_NPCS || []).length, 1) },
   ];
 }
 function checkBadges() {
@@ -1059,7 +1144,7 @@ function setMode(isDemo) {
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
-  me = null; lastWalk = null;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
+  me = null; lastWalk = null; driving = false;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
   if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
@@ -1201,8 +1286,10 @@ window.nishioGo = {
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
-  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, chestOpened: id => dayState().chests.includes(id), liveChests,
+  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
+  get driving() { return driving; },
+  setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },
 };

@@ -1,5 +1,5 @@
 {
-  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、shop: true は当店（地図で「当店」の札と専用の絵、お店のサイト url と道案内を出す）、area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島。地区ガイドと地区制覇バッジに使う）を指定できます。",
+  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、shop: true は当店（地図で「当店」の札と専用の絵、お店のサイト url と道案内を出す）、area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島。地区ガイドと地区制覇バッジに使う）を指定できます。normal: true はふつうのスポット（注目スポットではない。OpenStreetMap にない社寺を Wikidata から足したもの）。",
   "spots": [
     {
       "id": "kondo-beikoku",
@@ -50,8 +50,8 @@
       "area": "nishio",
       "name": "旧近衛邸",
       "icon": "🍵",
-      "lat": null,
-      "lng": null,
+      "lat": 34.866653,
+      "lng": 137.048111,
       "approx": false,
       "match": [
         "旧近衛邸"
@@ -65,8 +65,8 @@
       "area": "nishio",
       "name": "尚古荘",
       "icon": "🌿",
-      "lat": null,
-      "lng": null,
+      "lat": 34.865402,
+      "lng": 137.049225,
       "approx": false,
       "match": [
         "尚古荘"
@@ -80,8 +80,8 @@
       "area": "nishio",
       "name": "西尾市資料館",
       "icon": "🏛️",
-      "lat": null,
-      "lng": null,
+      "lat": 34.866205,
+      "lng": 137.048352,
       "approx": false,
       "match": [
         "西尾市資料館"
@@ -170,9 +170,9 @@
       "area": "nishio",
       "name": "八ツ面山",
       "icon": "⛰️",
-      "lat": null,
-      "lng": null,
-      "approx": false,
+      "lat": 34.877354,
+      "lng": 137.074539,
+      "approx": true,
       "match": [
         "八ツ面山"
       ],
@@ -186,8 +186,8 @@
       "area": "nishio",
       "name": "抹茶ミュージアム 西条園 和く和く",
       "icon": "🍵",
-      "lat": null,
-      "lng": null,
+      "lat": 34.877701,
+      "lng": 137.039688,
       "approx": false,
       "match": [
         "和く和く"
@@ -216,9 +216,9 @@
       "area": "nishio",
       "name": "長圓寺",
       "icon": "🪷",
-      "lat": null,
-      "lng": null,
-      "approx": false,
+      "lat": 34.873415,
+      "lng": 137.122862,
+      "approx": true,
       "match": [
         "長圓寺"
       ],
@@ -323,9 +323,9 @@
       "area": "hazu",
       "name": "西尾いきものふれあいの里",
       "icon": "🦋",
-      "lat": null,
-      "lng": null,
-      "approx": false,
+      "lat": 34.862717,
+      "lng": 137.11618,
+      "approx": true,
       "match": [
         "いきものふれあいの里"
       ],
@@ -354,8 +354,8 @@
       "area": "nishio",
       "name": "稲荷山茶園公園",
       "icon": "🍵",
-      "lat": null,
-      "lng": null,
+      "lat": 34.88184,
+      "lng": 137.041995,
       "approx": false,
       "match": [
         "稲荷山茶園"
@@ -368,8 +368,8 @@
       "area": "nishio",
       "name": "紅樹院（茶祖の寺）",
       "icon": "🛕",
-      "lat": null,
-      "lng": null,
+      "lat": 34.880573,
+      "lng": 137.035217,
       "approx": false,
       "match": [
         "紅樹院"
@@ -382,8 +382,8 @@
       "area": "nishio",
       "name": "熱池八幡社（てんてこ祭）",
       "icon": "⛩️",
-      "lat": null,
-      "lng": null,
+      "lat": 34.839443,
+      "lng": 137.042282,
       "approx": false,
       "match": [
         "熱池八幡"
@@ -858,8 +858,8 @@
       "area": "hazu",
       "name": "妙善寺（かぼちゃ寺）",
       "icon": "🪷",
-      "lat": null,
-      "lng": null,
+      "lat": 34.78894,
+      "lng": 137.146029,
       "approx": false,
       "match": [
         "妙善寺"
@@ -873,9 +873,9 @@
       "area": "hazu",
       "name": "トンボロ干潟（前島）",
       "icon": "🏖️",
-      "lat": null,
-      "lng": null,
-      "approx": false,
+      "lat": 34.77897,
+      "lng": 137.145,
+      "approx": true,
       "match": [
         "=前島"
       ],
@@ -905,9 +905,9 @@
       "area": "hazu",
       "name": "愛知こどもの国",
       "icon": "🎡",
-      "lat": null,
-      "lng": null,
-      "approx": false,
+      "lat": 34.788807,
+      "lng": 137.155816,
+      "approx": true,
       "match": [
         "愛知こどもの国"
       ],
@@ -921,8 +921,8 @@
       "area": "hazu",
       "name": "三ヶ根観音",
       "icon": "🙏",
-      "lat": null,
-      "lng": null,
+      "lat": 34.814953,
+      "lng": 137.160004,
       "approx": false,
       "match": [
         "三ヶ根観音",
@@ -938,14 +938,378 @@
       "area": "hazu",
       "name": "鳥羽神明社（鳥羽の火祭り）",
       "icon": "🔥",
-      "lat": null,
-      "lng": null,
-      "approx": false,
+      "lat": 34.80127,
+      "lng": 137.101974,
+      "approx": true,
       "match": [
         "鳥羽神明社"
       ],
       "cat": "shrine",
       "desc": "約1200年続く国の重要無形民俗文化財「鳥羽の火祭り」の舞台。毎年2月第2日曜。"
+    },
+    {
+      "id": "antaiji",
+      "area": "hazu",
+      "name": "安泰寺（家康公鎧掛けの松）",
+      "icon": "🪷",
+      "lat": 34.792561,
+      "lng": 137.129608,
+      "approx": false,
+      "match": [
+        "=安泰寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "幡豆小笠原氏の菩提寺（1513年創建）。家康が鎧を掛けたと伝わる松の根が残る。"
+    },
+    {
+      "id": "fukusenji",
+      "area": "kira",
+      "name": "福泉寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.832672,
+      "lng": 137.069992,
+      "approx": false,
+      "match": [
+        "=福泉寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "『人生劇場』の作家・尾﨑士郎の墓と文学碑があるお寺。"
+    },
+    {
+      "id": "genkuin",
+      "area": "nishio",
+      "name": "源空院",
+      "icon": "🌸",
+      "lat": 34.890171,
+      "lng": 137.097809,
+      "approx": true,
+      "match": [
+        "=源空院"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "樹齢250年以上といわれる枝垂れ桜の古木が咲くお寺。1523年に松平康孝が創建したと伝わる。"
+    },
+    {
+      "id": "jofukuji",
+      "area": "nishio",
+      "name": "常福寺（刈宿の大仏）",
+      "icon": "🪷",
+      "lat": 34.830536,
+      "lng": 137.014816,
+      "approx": false,
+      "match": [
+        "=常福寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "高さ14mのコンクリートの大仏「刈宿の大仏」が海の方を向いて座る。昭和の初めに海難者の冥福を祈って建てられた。"
+    },
+    {
+      "id": "jomyoji",
+      "area": "nishio",
+      "name": "浄名寺（円空仏）",
+      "icon": "🪷",
+      "lat": 34.84185,
+      "lng": 137.021362,
+      "approx": false,
+      "match": [
+        "=浄名寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "像の高さ270cmの円空仏（観音菩薩立像・市の文化財）があるお寺。"
+    },
+    {
+      "id": "kasuya-tei",
+      "area": "kira",
+      "name": "旧糟谷邸（吉良）",
+      "icon": "🏯",
+      "lat": 34.806454,
+      "lng": 137.06517,
+      "approx": false,
+      "match": [
+        "糟谷邸"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "三河木綿問屋などで栄えた吉良の豪農・豪商、糟谷家の屋敷。主屋や長屋門などが県の文化財。"
+    },
+    {
+      "id": "anakobo",
+      "area": "hazu",
+      "name": "見影山穴弘法",
+      "icon": "🙏",
+      "lat": 34.794975,
+      "lng": 137.120041,
+      "approx": true,
+      "match": [
+        "穴弘法"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "江戸時代の末から、見影山のふもとから山頂まで88体の弘法さんがまつられた八十八ヶ所めぐり。"
+    },
+    {
+      "id": "munosato",
+      "area": "nishio",
+      "name": "無の里休憩所（合掌造り）",
+      "icon": "🏡",
+      "lat": 34.846935,
+      "lng": 137.121475,
+      "approx": true,
+      "match": [
+        "無の里"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "岐阜県の旧徳山村から移した、明治6年の合掌造りの家。"
+    },
+    {
+      "id": "nakahata-hachiman",
+      "area": "nishio",
+      "name": "中畑八幡社（おまんと祭）",
+      "icon": "⛩️",
+      "lat": 34.872265,
+      "lng": 137.014618,
+      "approx": false,
+      "match": [
+        "中畑八幡社",
+        "=八幡社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "10月第3日曜の「おまんと祭」で、走る馬の首につかまって一緒に駆ける人馬一体の祭りが奉納される。"
+    },
+    {
+      "id": "kaminagara-shinmei",
+      "area": "nishio",
+      "name": "上永良神明社（神明社の大シイ）",
+      "icon": "🌳",
+      "lat": 34.875057,
+      "lng": 137.11409,
+      "approx": false,
+      "match": [
+        "上永良神明社",
+        "=神明社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "樹齢千年ともいわれる大シイの巨木がある古社。戦国武将・加藤嘉明の出身地。"
+    },
+    {
+      "id": "shozanji",
+      "area": "nishio",
+      "name": "勝山寺（節分会）",
+      "icon": "🪷",
+      "lat": 34.869911,
+      "lng": 137.054947,
+      "approx": false,
+      "match": [
+        "=勝山寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "西尾城主・三浦義理が城の鬼門封じに創建したと伝わる寺。2月の節分会（豆まき）で知られる。"
+    },
+    {
+      "id": "sairinji",
+      "area": "kira",
+      "name": "西林寺（白瀬南極探検隊長墓碑）",
+      "icon": "🐧",
+      "lat": 34.842724,
+      "lng": 137.089752,
+      "approx": false,
+      "match": [
+        "=西林寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "南極探検隊長・白瀬矗（のぶ）の墓碑があるお寺。ペンギンの像なども展示されている。"
+    },
+    {
+      "id": "takakura-jinja",
+      "area": "nishio",
+      "name": "高倉神社（天狗祭）",
+      "icon": "👺",
+      "lat": 34.82534,
+      "lng": 137.045914,
+      "approx": true,
+      "match": [
+        "=高倉神社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "高さ1.65mの大天狗が納まる三河大天狗堂がある。10月第3日曜の天狗祭で知られる。"
+    },
+    {
+      "id": "toteiyama",
+      "area": "hazu",
+      "name": "とうてい山古墳",
+      "icon": "🏞️",
+      "lat": 34.792233,
+      "lng": 137.148605,
+      "approx": true,
+      "match": [
+        "とうてい山古墳"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "6世紀中ごろの円墳。石棺には佐久島の砂岩が使われ、三河湾の島々を見わたせる。"
+    },
+    {
+      "id": "tenjiku-jinja",
+      "area": "nishio",
+      "name": "天竹神社（棉祖祭）",
+      "icon": "⛩️",
+      "lat": 34.830273,
+      "lng": 137.059875,
+      "approx": false,
+      "match": [
+        "=天竹神社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "綿の神様をまつる神社。799年に漂着した崑崙人（天竺人）が綿の種をまいたと伝わる、木綿発祥の地。"
+    },
+    {
+      "id": "semon-jinja",
+      "area": "kira",
+      "name": "瀬門神社（馬駈神事）",
+      "icon": "🐎",
+      "lat": 34.84217,
+      "lng": 137.09014,
+      "approx": true,
+      "match": [
+        "=瀬門神社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "吉良町の駮馬・瀬戸の2地区でまつる神社。秋の祭礼で飾り馬が奉納される（馬具は県の文化財）。"
+    },
+    {
+      "id": "kagakuji",
+      "area": "kira",
+      "name": "花岳寺（吉良）",
+      "icon": "🪷",
+      "lat": 34.84331,
+      "lng": 137.082246,
+      "approx": false,
+      "match": [
+        "=花岳寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "東条吉良氏の菩提寺。本堂は吉良義央の寄付をもとに再建され、国の登録有形文化財。"
+    },
+    {
+      "id": "ennyuji",
+      "area": "kira",
+      "name": "円融寺（清水一学の墓）",
+      "icon": "🪷",
+      "lat": 34.831657,
+      "lng": 137.122818,
+      "approx": false,
+      "match": [
+        "=円融寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "吉良公を守った清水一学の墓があるお寺。門前の「吉良の五本松」は市の天然記念物。"
+    },
+    {
+      "id": "saifukuji",
+      "area": "kira",
+      "name": "西福寺鐘楼（吉良）",
+      "icon": "🔔",
+      "lat": 34.800183,
+      "lng": 137.067962,
+      "approx": false,
+      "match": [
+        "西福寺鐘楼"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "三代将軍家光が建てた鐘楼を、明治4年に岡崎の伊賀八幡宮から移したもの。"
+    },
+    {
+      "id": "shorakuji",
+      "area": "kira",
+      "name": "勝楽寺（小山田地蔵尊）",
+      "icon": "🪷",
+      "lat": 34.805219,
+      "lng": 137.083409,
+      "approx": false,
+      "match": [
+        "小山田地蔵尊"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "足利尊氏の創建と伝わる、安産・子育て祈願で知られるお寺。"
+    },
+    {
+      "id": "ebisu-beach",
+      "area": "kira",
+      "name": "恵比寿海水浴場",
+      "icon": "🏖️",
+      "lat": 34.777023,
+      "lng": 137.088707,
+      "approx": false,
+      "match": [
+        "=恵比寿海水浴場"
+      ],
+      "points": 30,
+      "cat": "beach",
+      "desc": "波がおだやかで、砂のきめ細かいビーチ（浜の長さ約310m）。"
+    },
+    {
+      "id": "terabe-beach",
+      "area": "hazu",
+      "name": "寺部海水浴場",
+      "icon": "🏖️",
+      "lat": 34.782768,
+      "lng": 137.129266,
+      "approx": false,
+      "match": [
+        "=寺部海水浴場"
+      ],
+      "points": 30,
+      "cat": "beach",
+      "desc": "波が静かな、落ち着いた穴場の海水浴場。"
+    },
+    {
+      "id": "futaiin",
+      "normal": true,
+      "name": "不退院",
+      "cat": "temple",
+      "lat": 34.83425,
+      "lng": 137.03889
+    },
+    {
+      "id": "tokoji",
+      "normal": true,
+      "name": "東向寺",
+      "cat": "temple",
+      "lat": 34.86388,
+      "lng": 137.10584
+    },
+    {
+      "id": "joken-ji",
+      "normal": true,
+      "name": "浄賢寺",
+      "cat": "temple",
+      "lat": 34.86447,
+      "lng": 137.05167
+    },
+    {
+      "id": "kumaku-kumami",
+      "normal": true,
+      "name": "久麻久神社（熊味町）",
+      "cat": "shrine",
+      "lat": 34.87201,
+      "lng": 137.07049
     }
   ]
 }

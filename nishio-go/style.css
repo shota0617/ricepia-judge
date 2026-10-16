@@ -53,6 +53,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .popup .tag.shop{background:#d23a2e;color:#fff}
 .popup .ev{margin:4px 0;padding:4px 8px;border-radius:8px;background:#fff6d6;color:#6b4a00;font-size:12px;font-weight:700}
 .px-info .popup .ev{background:none;border:1px dashed #ffd54f;color:#ffd54f}
+.popup .mb{margin:4px 0;padding:4px 8px;border-radius:8px;background:#e8f3e0;color:#24502c;font-size:12px}
+.px-info .popup .mb{background:none;border:1px dashed #8fd18a;color:#cfeec9}
 .leaflet-container a.btn{color:#fff}   /* Leaflet の a{color} より強く：当店のポップアップのボタン文字を白に */
 
 .fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + max(170px,calc(var(--sheet-h,0px) + 22px)));z-index:900;display:flex;flex-direction:column;gap:10px}
@@ -231,6 +233,7 @@ body.px #map{visibility:hidden}
 .px-pad{position:absolute;left:12px;bottom:max(150px,calc(var(--sheet-h,0px) + 22px));display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
 .px-pad button{width:48px;height:48px}
 .px-pad .u{grid-area:1/2}.px-pad .l{grid-area:2/1}.px-pad .r{grid-area:2/3}.px-pad .d{grid-area:3/2}
+.px-pad .c{grid-area:2/2;font-size:22px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
 .px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
 .px-info .dq{width:100%;max-width:420px;max-height:70%;overflow-y:auto}
 .px-info .popup h4{font-size:17px;margin:0 0 6px;color:#ffd54f}
@@ -274,3 +277,10 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 /* はじめの画面やスポットの説明ウィンドウが出ている間は、知らせ（トースト）を下に出して文字に重ねない */
 body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
 body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}
+/* 西尾の人たち（話しかけられる町の人） */
+.popup.npc .npc-at{margin:0 0 6px;font-size:12px;color:var(--sub)}
+.popup.npc .npc-say{margin:6px 0;font-size:14px;line-height:1.7}
+.popup.npc .npc-end{margin:4px 0 0;font-size:11px;color:var(--sub);text-align:right}
+.px-info .popup.npc .npc-at,.px-info .popup.npc .npc-end{color:#cfd8dc}
+.npc-mk{font-size:22px;line-height:30px;text-align:center;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
+.npc-mk:not(.met)::after{content:"💬";position:absolute;right:-10px;top:-12px;font-size:13px}

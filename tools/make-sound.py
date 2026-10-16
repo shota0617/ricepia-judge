@@ -41,9 +41,13 @@ class Song:
         self.buf = np.zeros(int(round(SR * self.spb * beats)))
 
     def put(self, beat, wave_):
-        i = int(round(SR * self.spb * beat))
-        n = min(len(wave_), len(self.buf) - i)
-        self.buf[i:i + n] += wave_[:n]
+        # 曲はくり返し流すので、終わりからはみ出した分は頭に重ねる（つなぎ目で音がぷつっと切れないように）
+        L, i = len(self.buf), int(round(SR * self.spb * beat)) % len(self.buf)
+        for k in range(0, len(wave_), L):
+            part = wave_[k:k + L]
+            n = min(len(part), L - i)
+            self.buf[i:i + n] += part[:n]
+            self.buf[:len(part) - n] += part[n:]
 
     def line(self, notes, fn, vol, gate=0.9, start=0.0, **kw):
         """notes = [(音名 or None, 拍数), ...] を順に鳴らす"""

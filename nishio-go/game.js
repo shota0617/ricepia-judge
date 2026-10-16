@@ -923,7 +923,7 @@ $('resetBtn').addEventListener('click', () => {
 const sound = (() => {
   const SRC = { field: 'nishio-go/bgm/field.mp3', world: 'nishio-go/bgm/world.mp3', checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
   const VOL = 0.45, LOOP = new Set(['field', 'world']), els = {}, missing = new Set();
-  let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null;
+  let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null, ducking = 0;   // ducking：鳴っている効果音の数
   const el = k => {
     if (!els[k]) {
       const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k); a.volume = VOL; a.src = SRC[k];
@@ -934,10 +934,13 @@ const sound = (() => {
   };
   const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : missing.has('field') ? null : 'field');
   function apply() {
-    const k = on && unlocked && !document.hidden ? pick() : null;
-    for (const n of LOOP) if (els[n] && n !== k) els[n].pause();
+    const live = on && unlocked && !document.hidden, k = live ? pick() : null;
+    for (const [n, a] of Object.entries(els)) {
+      if (LOOP.has(n) ? n !== k : !live) a.pause();   // 消したとき・画面を離れたときは効果音も止める
+    }
+    if (!live) ducking = 0;
     cur = k;
-    if (k) { const a = el(k); if (a.paused) a.play().catch(() => {}); }
+    if (k) { const a = el(k); a.volume = ducking ? VOL * 0.25 : VOL; if (a.paused) a.play().catch(() => {}); }
     $('sndBtn').textContent = on ? '🔊' : '🔇';
     $('sndBtn').setAttribute('aria-label', on ? '音楽（BGM）をオフにする' : '音楽（BGM）をオンにする');
     $('bgmToggle').checked = on;
@@ -949,12 +952,14 @@ const sound = (() => {
     apply,
     scene(s) { if (s !== scene) { scene = s; apply(); } },
     toggle(v) { on = v === undefined ? !on : !!v; store.set('nsg_bgm', on); unlocked = true; apply(); },
-    jingle(k) {   // 効果音のあいだは BGM を小さく
-      if (!on || !unlocked || missing.has(k)) return;
-      const a = el(k), bg = cur && els[cur];
-      if (bg) bg.volume = VOL * 0.25;
-      a.onended = a.onerror = () => { if (bg) bg.volume = VOL; };
-      a.currentTime = 0; a.play().catch(() => { if (bg) bg.volume = VOL; });
+    jingle(k) {   // 効果音のあいだは BGM を小さく（途中で曲が切り替わっても小さいまま）
+      if (!on || !unlocked || document.hidden || missing.has(k)) return;
+      const a = el(k);
+      if (!a.paused) { a.currentTime = 0; return; }   // 同じ効果音が鳴っている最中なら頭から鳴らし直すだけ
+      const done = () => { a.onended = a.onerror = a.onpause = null; ducking = Math.max(0, ducking - 1); apply(); };
+      ducking++; apply();
+      a.onended = a.onerror = a.onpause = done;
+      a.currentTime = 0; a.play().catch(done);
     },
   };
 })();

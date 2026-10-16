@@ -25,6 +25,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 .pts{display:flex;align-items:baseline;gap:2px;background:rgba(0,0,0,.2);padding:4px 10px;border-radius:14px}
 .pts b{font-size:18px;font-variant-numeric:tabular-nums}
 .pts small{font-size:11px}
+/* 当店のホームページへ戻るボタン（同じタブで ricepia.jp へ。記録はブラウザに残るので、またすぐ続きから遊べる） */
+.home-btn{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;width:44px;height:40px;border-radius:10px;background:#fff;color:var(--green);text-decoration:none;line-height:1.1;box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.home-btn span{font-size:17px}
+.home-btn small{font-size:9px;font-weight:700;white-space:nowrap}
+.home-btn:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
 
 /* 地図 */
 #map{position:fixed;top:var(--bar-h);left:0;right:0;bottom:calc(var(--tabs-h) + var(--safe-b));z-index:1;background:#e8ecdf}

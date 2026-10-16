@@ -857,6 +857,7 @@ const ART = {
     '..knwwknnkwwnk..', '..knwwknnkwwnk..', '..knnnnnnnnnnk..', '..knnnkNNknnnk..', '..knnnkNNknnnk..', '.kkkkkkkkkkkkkk.', '.kggggggggggggk.', '.kkkkkkkkkkkkkk.'],
   town: ['................', '......kkkk......', '.....krrrrk.....', '....krrrrrrk....', '...krrrrrrrrk...', '..krrrrrrrrrrk..', '.kkkkkkkkkkkkkk.', '..kwwwwwwwwwwk..',
     '..kwbbwwwwbbwk..', '..kwbbwwwwbbwk..', '..kwwwwkkwwwwk..', '..kwwwwkNkwwwk..', '..kwwwwkNkwwwk..', '..kkkkkkkkkkkk..', '................', '................'],
+  treasure: ['................', '................', '...kkkkkkkkkk...', '..kyrrrrrrrryk..', '..krrrrrrrrrrk..', '..kyrrrrrrrryk..', '..kkkkkkkkkkkk..', '..kyyyyyyyyyyk..', '..kRRRRkkRRRRk..', '..kRrrkyykrrRk..', '..kRrrrkkrrrRk..', '..kRrrrrrrrrRk..', '..kyyyyyyyyyyk..', '..kkkkkkkkkkkk..', '................', '................'],   // 道ばたのたからばこ（赤と金）
   chest: ['................', '................', '................', '...kkkkkkkkkk...', '..knnnnnnnnnnk..', '..knNNNNNNNNnk..', '..knnnnnnnnnnk..', '..kkkkkyykkkkk..',
     '..knnnkyyknnnk..', '..knnnnkknnnnk..', '..knNNNNNNNNnk..', '..knnnnnnnnnnk..', '..kkkkkkkkkkkk..', '................', '................', '................'],
 };
@@ -963,7 +964,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -1008,6 +1009,14 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
+  }
+  // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
+  for (const c of chests) {
+    if (G.chestOpened(c.id)) continue;
+    const p = toTile(c.lat, c.lng), hop = f ? Math.round(T / 8) : 0;
+    const sx = Math.round(ox + p.x * T - T / 2), sy = Math.round(oy + p.y * T - T / 2) - hop;
+    if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
+    ctx.drawImage(spotSprites.treasure[0], sx, sy, T, T);
   }
   // 目標スポットのチェックイン範囲（点線の円）
   const target = G.selected || nearest;
@@ -1354,6 +1363,46 @@ function snapDemoStart() {
     }
   }
 }
+/* ---------- 道ばたのたからばこ ----------
+   400m四方（50マス）の区画ごとに、日付から決まる場所の近くの道（細い道）に1〜2個置く。
+   同じ日ならだれが見ても同じ場所。地図がまだ届いていない区画は、届いてから置く。開けたかどうかは game.js が覚える */
+const CHEST_CELL = 50;
+let chests = [], chestDay = '', chestCells = new Map();
+const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+function chestCell(i, j, date) {
+  let seed = hashStr(`chest:${date}:${i}:${j}`);
+  const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const out = [];
+  for (let k = 0; k < 2; k++) {
+    const fx = rnd(), fy = rnd(), pts = 10 + Math.floor(rnd() * 3) * 10, want = k === 0 || rnd() < 0.5;
+    if (!want) continue;
+    const x0 = Math.floor((i + fx) * CHEST_CELL), y0 = Math.floor((j + fy) * CHEST_CELL);
+    let spot = null;
+    for (let r = 0; r <= 8 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+      const c = codeAt(x0 + dx, y0 + dy);
+      if (c === C.X) return null;          // 地図がまだ届いていない → あとで置き直す
+      if (c === C.R) { spot = [x0 + dx, y0 + dy]; break; }
+    }
+    if (spot) { const ll = toLatLng(spot[0] + 0.5, spot[1] + 0.5); out.push({ id: `${date}:${i}:${j}:${k}`, lat: ll.lat, lng: ll.lng, pts }); }
+  }
+  return out;
+}
+function updateChests() {
+  if (!G.me) return;
+  const date = G.ymd();
+  if (date !== chestDay) { chestDay = date; chestCells = new Map(); }
+  const t = targetTile(), ci = Math.floor(t.x / CHEST_CELL), cj = Math.floor(t.y / CHEST_CELL), list = [];
+  for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
+    const key = i + ',' + j;
+    if (!chestCells.has(key)) { const r = chestCell(i, j, date); if (r) chestCells.set(key, r); }
+    if (chestCells.has(key)) list.push(...chestCells.get(key));
+  }
+  const changed = list.length !== chests.length || list.some((c, k) => c.id !== chests[k].id);
+  chests = list;
+  if (changed) G.refreshNearby();   // 「たからばこが近くにある」の案内を新しく
+}
+
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {
   const start = e => { e.preventDefault(); step(b.dataset.dir); clearInterval(holdTimer); holdTimer = setInterval(() => step(b.dataset.dir), 180); };
@@ -1417,5 +1466,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; } };
+window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; } };
 })();

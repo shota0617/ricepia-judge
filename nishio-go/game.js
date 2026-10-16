@@ -1075,7 +1075,8 @@ function checkGuide() {
   const g = guideTarget();
   if (!me) return;
   if (!g) {   // 行き先がないときは、まわりのようすで決める（決まらなければ少し待ってから、もう一度）
-    if (spots.length && !S.guide && Date.now() - (checkGuide.t || 0) > 5000) { checkGuide.t = Date.now(); setGuide(decideGuide(null)); }
+    // 決めるのは、その場にいると認めてよい位置のときだけ（GPS の精度が悪い位置や乗り物で移動中の位置から決めない）
+    if (spots.length && !S.guide && fixOk() && Date.now() - (checkGuide.t || 0) > 5000) { checkGuide.t = Date.now(); setGuide(decideGuide(null)); }
     return;
   }
   if (g.kind === 'npc') return;

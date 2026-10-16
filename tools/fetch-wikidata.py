@@ -3,7 +3,8 @@ import json, os, urllib.request, urllib.parse
 os.makedirs('reference', exist_ok=True)
 Q = '''
 SELECT ?item ?itemLabel ?coord ?typeLabel ?article ?heritageLabel ?desc WHERE {
-  ?item wdt:P131+ wd:Q389583 ;
+  ?city rdfs:label "西尾市"@ja ; wdt:P17 wd:Q17 .
+  ?item wdt:P131+ ?city ;
         wdt:P625 ?coord .
   OPTIONAL { ?item wdt:P31 ?type . }
   OPTIONAL { ?item wdt:P1435 ?heritage . }

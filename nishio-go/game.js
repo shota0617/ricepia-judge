@@ -1041,7 +1041,9 @@ const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
   if (g.kind === 'npc') { const n = placeNpcs().find(x => x.id === g.id); return n ? { ...g, ...npcSpot(n) } : null; }
-  return g;
+  // 名所・店は、いま読み込んでいるスポットの位置で（スポットを読み直すと、OpenStreetMap で位置が補正されることがある）
+  const s = g.kind !== 'farm' && spots.find(x => x.id === g.id);
+  return s ? { ...g, lat: s.lat, lng: s.lng } : g;
 };
 // 行き先に着いたときの記録とごほうび（1日5回まで）。戻り値：もらったポイント
 function guideReward(g) {

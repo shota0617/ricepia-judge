@@ -12,7 +12,7 @@
 | Cloudflare R2 操作数 | 24時間 30万回超 | なし（通知のみ） |
 | Cloudflare D1 容量 | 1DB 400MB 超 | なし（通知のみ） |
 | Supabase | プロジェクト状態・各サービスのヘルス | なし（通知のみ） |
-| Anthropic / Cloudflare / Supabase / Vercel 障害情報 | 公式ステータスが major / critical | なし |
+| Anthropic / Cloudflare / Supabase / Vercel 障害情報 | 公式ステータスが major（一部で障害）/ critical（大規模障害）。本文に障害の件名を載せる | なし |
 
 - 同じ異常は **6時間ごと** にしか再通知しません。復旧したら「復旧」メールが届きます。
 - メールが送れないときはジョブが失敗し、GitHub から失敗通知メールが届きます（予備の通知手段）。

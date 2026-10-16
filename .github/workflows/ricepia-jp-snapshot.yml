@@ -1,0 +1,33 @@
+# ricepia.jp の公開中のトップページ（ブラウザで見えるもの）を ricepia-jp/current.html に保存する
+# トップページを書きかえる案（ricepia-jp/index.html）を、いまのページをもとに作るため
+name: ricepia.jp snapshot
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - claude/confident-turing-etepui
+    paths:
+      - .github/workflows/ricepia-jp-snapshot.yml
+permissions:
+  contents: write
+concurrency:
+  group: ricepia-jp-snapshot
+  cancel-in-progress: false
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch https://ricepia.jp/
+        run: |
+          curl -fsSL --retry 2 -A 'Mozilla/5.0 (ricepia-jp snapshot)' -D ricepia-jp/current.headers.txt -o ricepia-jp/current.html https://ricepia.jp/
+          cat ricepia-jp/current.headers.txt; wc -c ricepia-jp/current.html
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add ricepia-jp/current.html ricepia-jp/current.headers.txt
+          git diff --cached --quiet && { echo "変化なし"; exit 0; }
+          git commit -m "ricepia.jp: 公開中のトップページを保存（$(TZ=Asia/Tokyo date '+%Y-%m-%d %H:%M')）"
+          git push origin HEAD:${GITHUB_REF_NAME}

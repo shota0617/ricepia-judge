@@ -377,6 +377,7 @@ function talkNpc(id, page = 0) {
   if (!n) return null;
   const d = me ? dist(me, n) : Infinity, lim = demo ? NPC_TALK_M.play : NPC_TALK_M.walk;
   const head = `<div class="popup npc"><h4>${NPC_LOOK[n.look] || '🙂'} ${esc(n.name)}</h4><p class="npc-at">${esc(n.spotName)}のそば</p>`;
+  if (driving) return { near: false, html: `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
   if (d > lim) {
     return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
@@ -433,6 +434,7 @@ document.addEventListener('click', e => {
 let me = null;          // {lat,lng,acc,t}
 let meMarker = null, accCircle = null, spotRing = null;
 let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '';
+let driving = false;   // 操作して移動で、ドット絵の地図の車（軽トラ）に乗っている（pixel.js が切り替える）
 
 function placeMe() {
   if (!me) return;
@@ -480,8 +482,8 @@ function stopGps() { if (watchId != null) { navigator.geolocation.clearWatch(wat
 /* ---------- 歩いた距離 ---------- */
 function trackWalk(p) {
   if (demo) {
-    // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする
-    if (lastWalk) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d); }
+    // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする（車で走った分は数えない）
+    if (lastWalk && !driving) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d); }
     lastWalk = p;
     return;
   }
@@ -539,6 +541,7 @@ const SHOP_NOTE = '西尾のお米屋さん（明治25年創業）。車に乗�
 function checkin() {
   const s = selected;
   if (!s || !me) return;
+  if (driving) { toast('🚗 車を降りてからチェックインしてね（十字ボタンのまん中）'); return; }
   const now = Date.now();
   if (!demo && now < vehicleUntil) { toast('乗り物での移動中はチェックインできません。降りて歩いてからどうぞ。'); return; }
   if (!demo && me.acc > CFG.maxAccuracy) { toast(`GPSの精度が低いようです（誤差 約${Math.round(me.acc)}m）。少し待ってからもう一度。`); return; }
@@ -724,6 +727,7 @@ function nearestChest() {
   return best;
 }
 function tryChest() {
+  if (driving) return;   // 車に乗っている間は開けない（降りると開く）
   // あるいて移動では、チェックインと同じく GPS の誤差が大きいときと乗り物で移動中は開けない
   if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
   const n = nearestChest();
@@ -769,7 +773,8 @@ function refreshNearby() {
     $('spinIco').textContent = iconOf(selected);
     $('spinName').textContent = selected.name;
     const lock = demo ? 0 : vehicleUntil - Date.now();
-    const why = lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
+    const why = driving ? '🚗 車を降りるとチェックインできます'
+      : lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
       : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
     btn.disabled = !!why;
     $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
@@ -778,6 +783,7 @@ function refreshNearby() {
   }
 
   const msgs = [];
+  if (driving) msgs.push('🚗 軽トラで移動中（道だけ走れます。歩いたポイントは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
   else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
@@ -1124,7 +1130,7 @@ function setMode(isDemo) {
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
-  me = null; lastWalk = null;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
+  me = null; lastWalk = null; driving = false;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
   if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
@@ -1268,6 +1274,8 @@ window.nishioGo = {
   get selected() { return selected; }, CFG,
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
+  get driving() { return driving; },
+  setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },
 };

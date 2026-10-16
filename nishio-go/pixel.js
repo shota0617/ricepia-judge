@@ -1039,6 +1039,16 @@ function spotArt(s) {
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx = cv.getContext('2d');
 let active = false, raf = 0, dirty = true, scale = 2;
+const floaters = [];   // 浮かぶ文字 { t, at }
+// 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
+let cover = 0, fieldCy = 0;
+function updateCover() {
+  const sh = $('sheet'), cr = cv.getBoundingClientRect(), sr = sh ? sh.getBoundingClientRect() : null;
+  cover = sr && sr.height ? Math.max(0, Math.min(cr.height * 0.6, cr.bottom - sr.top)) : 0;
+}
+if (window.ResizeObserver && $('sheet')) new ResizeObserver(updateCover).observe($('sheet'));
+window.addEventListener('resize', updateCover);
+function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
 
@@ -1077,11 +1087,13 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
-  const ox = Math.round(w / 2 - cam.x * T), oy = Math.round(h / 2 - cam.y * T);
+  const vh = h - Math.round(cover * dpr), cy = Math.round(vh / 2);   // 見えている所の高さと、そのまん中
+  fieldCy = cy;
+  const ox = Math.round(w / 2 - cam.x * T), oy = Math.round(cy - cam.y * T);
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
@@ -1181,21 +1193,42 @@ function frame(now) {
   }
 
   // 主人公（車に乗っているときは車）
-  if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(h / 2 - T / 2), T, T);
-  else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(h / 2 - T * 0.75), T, T);
+  if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
+  else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
-  // 画面の外にある一番近いスポットへの矢印
-  if (nearest && !G.selected) {
-    const p = toTile(nearest.lat, nearest.lng);
+  // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
+  for (let i = floaters.length - 1; i >= 0; i--) {
+    const fl = floaters[i], age = (now - fl.at) / 1000;
+    if (age > 1.2) { floaters.splice(i, 1); continue; }
+    ctx.globalAlpha = Math.min(1, (1.2 - age) * 2);
+    ctx.font = `${Math.round(11 * dpr)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.lineWidth = Math.max(2, Math.round(2 * dpr)); ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.fillStyle = '#ffe27a';
+    const fy = Math.round(cy - T * 0.85 - age * T * 0.8);
+    ctx.strokeText(fl.t, w / 2, fy); ctx.fillText(fl.t, w / 2, fy);
+    ctx.globalAlpha = 1;
+  }
+
+  // 画面の外にある行き先（みちしるべ。なければ一番近いスポット）への矢印。行き先が画面の中なら、その上で ▼ がはねる
+  const gt = G.guide, aim = gt || nearest;
+  if (gt) {
+    const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T;
+    if (ex >= 0 && ey >= 0 && ex <= w && ey <= vh) {
+      const by = Math.round(ey - T * 1.3 - (f ? T * 0.15 : 0));
+      ctx.fillStyle = '#000'; ctx.beginPath(); ctx.moveTo(ex - T * 0.38, by - T * 0.3); ctx.lineTo(ex + T * 0.38, by - T * 0.3); ctx.lineTo(ex, by + T * 0.2); ctx.fill();
+      ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
+    }
+  }
+  if (aim && !G.selected) {
+    const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
-    if (ex < 0 || ey < 0 || ex > w || ey > h) {
-      const a = Math.atan2(ey - h / 2, ex - w / 2), m = T * 0.8;
-      const ax = Math.min(w - m, Math.max(m, w / 2 + Math.cos(a) * w)), ay = Math.min(h - m, Math.max(m, h / 2 + Math.sin(a) * h));
-      const px = Math.min(Math.abs((w / 2 - m) / Math.cos(a)), Math.abs((h / 2 - m) / Math.sin(a)));
-      const qx = w / 2 + Math.cos(a) * px, qy = h / 2 + Math.sin(a) * px;
+    if (ex < 0 || ey < 0 || ex > w || ey > vh) {   // 見えている所（パネルの上）の外なら、その縁に矢印
+      const a = Math.atan2(ey - cy, ex - w / 2), m = T * 0.8;
+      const ax = Math.min(w - m, Math.max(m, w / 2 + Math.cos(a) * w)), ay = Math.min(vh - m, Math.max(m, cy + Math.sin(a) * vh));
+      const px = Math.min(Math.abs((w / 2 - m) / Math.cos(a)), Math.abs((vh / 2 - m) / Math.sin(a)));
+      const qx = w / 2 + Math.cos(a) * px, qy = cy + Math.sin(a) * px;
       ctx.save(); ctx.translate(isFinite(qx) ? qx : ax, isFinite(qy) ? qy : ay); ctx.rotate(a);
       ctx.fillStyle = '#000'; ctx.beginPath(); ctx.moveTo(T * 0.45, 0); ctx.lineTo(-T * 0.3, -T * 0.35); ctx.lineTo(-T * 0.3, T * 0.35); ctx.fill();
-      ctx.fillStyle = '#ffd54f'; ctx.beginPath(); ctx.moveTo(T * 0.32, 0); ctx.lineTo(-T * 0.2, -T * 0.24); ctx.lineTo(-T * 0.2, T * 0.24); ctx.fill();
+      ctx.fillStyle = gt ? '#7ee0ff' : '#ffd54f'; ctx.beginPath(); ctx.moveTo(T * 0.32, 0); ctx.lineTo(-T * 0.2, -T * 0.24); ctx.lineTo(-T * 0.2, T * 0.24); ctx.fill();
       ctx.restore();
     }
   }
@@ -1476,7 +1509,7 @@ function step(dir) {
   if (driving) {   // 車は道（ふつうの道と大きな道）だけ。人がいたら止まる
     if (!CAR_OK.has(codeAt(nx, ny)) || npcAt(nx, ny)) { if (navigator.vibrate) navigator.vibrate(20); return; }
     const ll = toLatLng(nx + 0.5, ny + 0.5);
-    G.moveTo(ll.lat, ll.lng);
+    G.moveTo(ll.lat, ll.lng, 'step');   // 十字ボタンの1歩
     return;
   }
   // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
@@ -1487,7 +1520,7 @@ function step(dir) {
   const who = npcAt(nx, ny);
   if (who) { if ($('pxInfo').hidden) openNpc(who); return; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
-  G.moveTo(ll.lat, ll.lng);
+  G.moveTo(ll.lat, ll.lng, 'step');   // 十字ボタンの1歩
 }
 // 車：十字ボタンのまん中で乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
 // 乗っている間は、歩いた距離・チェックイン・たからばこ・話しかけはお休み（降りるとできる）
@@ -1690,20 +1723,20 @@ cv.addEventListener('click', e => {
   const c = camTile();
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
-  const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - cv.height / 2) / T + 0.25);
+  const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }
   let hit = null, best = Infinity;
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
-    const sx = cv.width / 2 + (p.x - c.x) * T, sy = cv.height / 2 + (p.y - c.y) * T;
+    const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
     const half = (s.shop ? T * 1.25 : s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
   let bp = null;
   best = T * 1.2;
-  for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (cv.height / 2 + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
+  for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
   if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
 });
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });
@@ -1716,5 +1749,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar };
+window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

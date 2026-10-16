@@ -68,10 +68,15 @@
     </div>
     <button type="button" class="snd-btn" id="sndBtn" aria-label="音楽（BGM）をオンにする" title="音楽（BGM）">🔇</button>
   </div>
+  <div class="guide" id="guide" hidden></div>
   <div class="status" id="status">位置情報を待っています…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
     <span class="spin-ico" id="spinIco">⭐</span>
     <span class="spin-txt"><b id="spinName">スポット</b><small id="spinSub">タップしてポイントゲット</small></span>
+  </button>
+  <button class="spin rice" id="riceBtn" type="button" hidden>
+    <span class="spin-ico">🌾</span>
+    <span class="spin-txt"><b>籾を持ち込む（選別・精米）</b><small id="riceSub">籾を選別して精米する</small></span>
   </button>
 </section>
 
@@ -175,11 +180,15 @@
   <div class="intro-box">
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
     <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
-    <p>西尾のまちを歩いて、地図上のスポットに近づくとポイントが貯まります。</p>
+    <p class="pitch"><b>🧭 行き先は、自分では決めない。</b><br/>西尾の人の話や、季節・時間・まわりのようすが、次に行く所を教えてくれます。話を聞いて、すすめられた所へ。そこでまた、次の話が待っています。</p>
+    <p>道すがら、お米屋さんの仕事もできます。</p>
+    <ol class="core">
+      <li><b>集める</b>：田畑を歩くと籾（もみ）が集まる</li>
+      <li><b>目利き</b>：当店に持ち込んで、カメムシのあと・青い粒・割れた粒を見つけて取りのぞく。うまいほど1等米</li>
+      <li><b>精米</b>：5分づき・通常・クリーン精米をえらんで、米袋へ。5kg・10kg・30kg・1俵をめざそう</li>
+    </ol>
     <ul>
-      <li>⭐ 注目スポット（西尾城跡・岩瀬文庫など）は <b>ボーナス</b></li>
-      <li>🆕 はじめて行くスポットは <b>初訪問ボーナス</b></li>
-      <li>👣 歩いた距離・📅 連続日数でもポイント</li>
+      <li>⭐ 西尾の名所に着いたらチェックインでポイント（はじめての場所はボーナス）</li>
       <li>📜 毎日かわる「今日のクエスト」と、今月のおまつりの会場めぐり</li>
     </ul>
     <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
@@ -189,6 +198,9 @@
     <button type="button" class="btn big mode-pick alt" id="demoBtn">🎮 操作して遊ぶ<small>十字ボタンで動かして、家からでも西尾めぐり</small></button>
   </div>
 </div>
+
+<!-- 米屋の仕事：選別（目利き）と精米 -->
+<div class="mekiki" id="mekiki" hidden role="dialog" aria-modal="true" aria-label="選別と精米"><div class="mk-box" id="mkBox"></div></div>
 
 <!-- クーポン（店頭で見せる画面） -->
 <div class="coupon" id="coupon" hidden role="dialog" aria-modal="true" aria-labelledby="cpName">

@@ -496,6 +496,7 @@ function checkin() {
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
   const day = dayState();   // 今日のクエストの数え上げ
   day.checkins++;
+  if (!day.spots.includes(s.id)) day.spots.push(s.id);
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
   if (!v) day.fresh++;
   if (s.featured && s.area && !day.areas.includes(s.area)) day.areas.push(s.area);
@@ -517,26 +518,29 @@ function checkin() {
 
 /* ---------- 今日のおさんぽクエスト ----------
    毎日3つのお題（日付で決まるので、だれでも同じ日は同じお題）。ぜんぶ達成でボーナス。ときどき「当店に寄る」も出る */
+// お題は日付だけで決める（読み込み中のデータに左右されない）。その日の地区は船のいらない本土の4地区から（佐久島は渡船が要るので出さない）
+const QUEST_AREAS = [{ id: 'nishio', name: '西尾', icon: '🍵' }, { id: 'isshiki', name: '一色', icon: '🐟' }, { id: 'kira', name: '吉良', icon: '♨️' }, { id: 'hazu', name: '幡豆', icon: '⛰️' }];
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const seeded = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 function dayState() {
-  if (!S.day || S.day.date !== ymd()) S.day = { date: ymd(), walked: 0, checkins: 0, shrine: 0, fresh: 0, areas: [], shop: 0, chests: [], done: [], bonus: false };
+  if (!S.day || S.day.date !== ymd()) S.day = { date: ymd(), walked: 0, checkins: 0, spots: [], shrine: 0, fresh: 0, areas: [], shop: 0, chests: [], done: [], bonus: false };
+  if (!S.day.spots) S.day.spots = [];
   return S.day;
 }
 function todaysQuests() {
   const date = ymd(), rnd = seeded(hashStr('quest:' + date));
-  const area = areas.length ? areas[Math.floor(rnd() * areas.length)] : null;
+  const area = QUEST_AREAS[Math.floor(rnd() * QUEST_AREAS.length)];
   const pool = [
-    { id: 'spots2', icon: '📍', text: 'スポットを2か所めぐる', goal: 2, pts: 40, val: d => d.checkins },
+    { id: 'spots2', icon: '📍', text: 'ちがうスポットを2か所めぐる', goal: 2, pts: 40, val: d => d.spots.length },
     { id: 'shrine', icon: '⛩️', text: '神社かお寺にチェックインする', goal: 1, pts: 40, val: d => d.shrine },
     { id: 'walk500', icon: '👣', text: '500m歩く', goal: 500, pts: 30, val: d => Math.floor(d.walked), unit: 'm' },
-    { id: 'chest2', icon: '🎁', text: '道ばたのたからばこを2つ開ける', goal: 2, pts: 30, val: d => d.chests.length },
+    { id: 'chest2', icon: '🎁', text: 'たからばこを2つ開ける', goal: 2, pts: 30, val: d => d.chests.length },
     { id: 'fresh', icon: '🆕', text: 'はじめてのスポットに行く', goal: 1, pts: 40, val: d => d.fresh },
   ];
-  if (area) pool.push({ id: 'area', icon: area.icon || '🗾', text: `${area.name}の注目スポットに行く`, goal: 1, pts: 60, val: d => d.areas.includes(area.id) ? 1 : 0 });
+  pool.push({ id: 'area', icon: area.icon, text: `${area.name}の注目スポットに行く`, goal: 1, pts: 60, val: d => d.areas.includes(area.id) ? 1 : 0 });
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const qs = pool.slice(0, 3);
-  if (rnd() < 0.35 && spots.some(s => s.shop)) qs[2] = { id: 'shop', icon: '🌾', text: '当店（らいすぴあ・秀幸／近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
+  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（らいすぴあ・秀幸／近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
   return qs;
 }
 function updateQuests() {
@@ -558,8 +562,8 @@ function updateQuests() {
   refreshNearby();
 }
 
-/* ---------- 道ばたのたからばこ ----------
-   置き場所は pixel.js が決める（日付と400m四方の区画から、道の上に）。近づくと開いて、ポイントと西尾のまめちしき */
+/* ---------- たからばこ ----------
+   置き場所は pixel.js が決める（日付と400m四方の区画から。あるいて移動では公園・神社・お寺などのそばだけ）。近づくと開いて、ポイントと西尾のまめちしき */
 function factPool() {   // まめちしき：地区の豆知識・紹介文と、注目スポットの説明（どれも出典つきのデータから）
   const m = new Map();
   for (const a of areas) {
@@ -568,6 +572,17 @@ function factPool() {   // まめちしき：地区の豆知識・紹介文と�
   }
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
   return m;
+}
+// ふつうの地図にも、まだ開けていないたからばこを 🎁 で出す
+const chestMarkers = new Map();
+function syncChestMarkers() {
+  const list = (window.nishioPixel && nishioPixel.chests) || [], opened = dayState().chests, keep = new Set();
+  for (const c of list) {
+    if (opened.includes(c.id)) continue;
+    keep.add(c.id);
+    if (!chestMarkers.has(c.id)) chestMarkers.set(c.id, L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="chest-mk">🎁</div>', iconSize: [30, 30], iconAnchor: [15, 15] }), keyboard: false, interactive: false }).addTo(map));
+  }
+  for (const [id, m] of chestMarkers) if (!keep.has(id)) { m.remove(); chestMarkers.delete(id); }
 }
 function nearestChest() {
   const list = (window.nishioPixel && nishioPixel.chests) || [];
@@ -638,6 +653,7 @@ function refreshNearby() {
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
+  syncChestMarkers();
   const ch = nearestChest();
   if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${fmtM(ch.d)}）`);
   if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
@@ -737,7 +753,7 @@ function renderLog() {
   const facts = factPool();
   $('factCount').textContent = `${S.facts.filter(k => facts.has(k)).length}/${facts.size}`;
   $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">💡</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
-    || '<li class="empty">道ばたの🎁たからばこを開けると、西尾のまめちしきが集まります</li>';
+    || '<li class="empty">🎁たからばこを開けると、西尾のまめちしきが集まります</li>';
   const lv = levelOf(S.total);
   $('stats').innerHTML = [
     ['使えるポイント', S.points.toLocaleString(), 'pt'], ['レベル', `${lv}`, titleOf(lv)],

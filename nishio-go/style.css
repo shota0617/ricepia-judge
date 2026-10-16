@@ -158,6 +158,8 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 .reward .rw.long{animation:popLong 7s ease forwards;max-width:min(360px,calc(100% - 40px))}
 .reward .rw .fact{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:#f4f1e6;font-size:13px;line-height:1.6;text-align:left;color:var(--ink)}
 @keyframes popLong{0%{transform:scale(.4);opacity:0}4%{transform:scale(1.08);opacity:1}7%{transform:scale(1)}94%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+.chest-mk{font-size:22px;line-height:30px;text-align:center;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));animation:hop 1s steps(2) infinite}
+@keyframes hop{50%{transform:translateY(-4px)}}
 #questList{margin-bottom:14px}
 #questList li.done{background:#f3f8ec}
 #questList li.done b{color:var(--green)}
@@ -169,6 +171,7 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
   .stats{grid-template-columns:repeat(4,1fr)}
 }
 @media (prefers-reduced-motion:reduce){
+  .chest-mk{animation:none}
   .spot.near,.spin.go .spin-ico{animation:none}
   .reward .rw{animation:fade 2.6s forwards}
   @keyframes fade{0%,85%{opacity:1}100%{opacity:0}}

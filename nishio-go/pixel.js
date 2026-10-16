@@ -1363,45 +1363,71 @@ function snapDemoStart() {
     }
   }
 }
-/* ---------- 道ばたのたからばこ ----------
-   400m四方（50マス）の区画ごとに、日付から決まる場所の近くの道（細い道）に1〜2個置く。
-   同じ日ならだれが見ても同じ場所。地図がまだ届いていない区画は、届いてから置く。開けたかどうかは game.js が覚える */
-const CHEST_CELL = 50;
-let chests = [], chestDay = '', chestCells = new Map();
+/* ---------- たからばこ ----------
+   400m四方（50マス）の区画ごとに、日付から決まる場所に1〜2個置く（同じ日・同じモードなら、だれが見ても同じ）。
+   ・操作して移動：画面の中だけの冒険なので、区画の中の道や小道に置く
+   ・あるいて移動：実際にそこへ歩いていくので、道の上（車道や私有地の通路かもしれない）には置かない。
+     チェックインのスポットになっている名前のある公園・神社・お寺・城跡・海岸・展望地のすぐそば（約24m以内）の、
+     草地・林・公園・境内・砂浜・小道のマスにだけ置く（建物・車道・水・田畑の上には置かない）
+   地図やスポットがまだ届いていない区画は、届いてから置く。開けたかどうかは game.js が覚える */
+const CHEST_CELL = 50, PUBLIC_KINDS = new Set(['park', 'shrine', 'temple', 'castle', 'beach', 'view']), PUBLIC_GROUND = new Set([C.G, C.W, C.P, C.J, C.S, C.D]);
+let chests = [], chestKey = '', chestCells = new Map();
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
-function chestCell(i, j, date) {
-  let seed = hashStr(`chest:${date}:${i}:${j}`);
-  const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-  const out = [];
+const seededRnd = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+// (x0, y0) からまわり r マスで、ok なマスをいちばん近い順に探す。地図が届いていないマスに当たったら undefined（あとで）
+function nearTile(x0, y0, r, ok) {
+  for (let d = 0; d <= r; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+    const c = codeAt(x0 + dx, y0 + dy);
+    if (c === C.X) return undefined;
+    if (ok(c, d)) return [x0 + dx, y0 + dy];
+  }
+  return null;
+}
+function chestCell(i, j, date, walking) {
+  const rnd = seededRnd(hashStr(`chest:${walking ? 'walk' : 'play'}:${date}:${i}:${j}`)), out = [];
+  const add = (t, k, pts) => { const ll = toLatLng(t[0] + 0.5, t[1] + 0.5); out.push({ id: `${date}:${i}:${j}:${k}`, lat: ll.lat, lng: ll.lng, pts }); };
+  if (walking) {
+    if (!G.spots.length) return null;   // スポットがまだ届いていない
+    const x0 = i * CHEST_CELL, y0 = j * CHEST_CELL;
+    const parks = G.spots.filter(s => PUBLIC_KINDS.has(s.kind || s.cat)).map(s => ({ s, t: toTile(s.lat, s.lng) }))
+      .filter(p => p.t.x >= x0 && p.t.x < x0 + CHEST_CELL && p.t.y >= y0 && p.t.y < y0 + CHEST_CELL)
+      .sort((a, b) => (a.s.id < b.s.id ? -1 : 1));
+    for (let k = 0; k < 2 && parks.length; k++) {
+      const p = parks.splice(Math.floor(rnd() * parks.length), 1)[0], pts = 10 + Math.floor(rnd() * 3) * 10;
+      const t = nearTile(Math.floor(p.t.x), Math.floor(p.t.y), 3, (c, d) => d >= 1 && PUBLIC_GROUND.has(c));   // スポットの真上は避ける
+      if (t === undefined) return null;
+      if (t) add(t, k, pts);
+    }
+    return out;
+  }
   for (let k = 0; k < 2; k++) {
     const fx = rnd(), fy = rnd(), pts = 10 + Math.floor(rnd() * 3) * 10, want = k === 0 || rnd() < 0.5;
     if (!want) continue;
-    const x0 = Math.floor((i + fx) * CHEST_CELL), y0 = Math.floor((j + fy) * CHEST_CELL);
-    let spot = null;
-    for (let r = 0; r <= 8 && !spot; r++) for (let dy = -r; dy <= r && !spot; dy++) for (let dx = -r; dx <= r; dx++) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-      const c = codeAt(x0 + dx, y0 + dy);
-      if (c === C.X) return null;          // 地図がまだ届いていない → あとで置き直す
-      if (c === C.R) { spot = [x0 + dx, y0 + dy]; break; }
-    }
-    if (spot) { const ll = toLatLng(spot[0] + 0.5, spot[1] + 0.5); out.push({ id: `${date}:${i}:${j}:${k}`, lat: ll.lat, lng: ll.lng, pts }); }
+    const t = nearTile(Math.floor((i + fx) * CHEST_CELL), Math.floor((j + fy) * CHEST_CELL), 8, c => c === C.R || c === C.D);
+    if (t === undefined) return null;
+    if (t) add(t, k, pts);
   }
   return out;
 }
+// どの地図を見ていても（ふつうの地図・せかいちずでも）、主人公のまわりの区画を読み込んでたからばこを置く
 function updateChests() {
   if (!G.me) return;
-  const date = G.ymd();
-  if (date !== chestDay) { chestDay = date; chestCells = new Map(); }
+  const date = G.ymd(), key = date + (G.demo ? ':play' : ':walk');
+  if (key !== chestKey) { chestKey = key; chestCells = new Map(); }
   const t = targetTile(), ci = Math.floor(t.x / CHEST_CELL), cj = Math.floor(t.y / CHEST_CELL), list = [];
+  for (let cy = Math.floor((cj - 1) * CHEST_CELL / CHUNK); cy <= Math.floor(((cj + 2) * CHEST_CELL - 1) / CHUNK); cy++)
+    for (let cx = Math.floor((ci - 1) * CHEST_CELL / CHUNK); cx <= Math.floor(((ci + 2) * CHEST_CELL - 1) / CHUNK); cx++) ensureChunk(cx, cy);
   for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
-    const key = i + ',' + j;
-    if (!chestCells.has(key)) { const r = chestCell(i, j, date); if (r) chestCells.set(key, r); }
-    if (chestCells.has(key)) list.push(...chestCells.get(key));
+    const k = i + ',' + j;
+    if (!chestCells.has(k)) { const r = chestCell(i, j, date, !G.demo); if (r) chestCells.set(k, r); }
+    if (chestCells.has(k)) list.push(...chestCells.get(k));
   }
-  const changed = list.length !== chests.length || list.some((c, k) => c.id !== chests[k].id);
+  const changed = list.length !== chests.length || list.some((c, n) => c.id !== chests[n].id);
   chests = list;
-  if (changed) G.refreshNearby();   // 「たからばこが近くにある」の案内を新しく
+  if (changed) G.refreshNearby();   // 「たからばこが近くにある」の案内とふつうの地図の印を新しく
 }
+setInterval(updateChests, 2000);
 
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {

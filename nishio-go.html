@@ -12,8 +12,14 @@
 <meta property="og:locale" content="ja_JP"/>
 <meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
 <meta property="og:title" content="にしおさんぽGO - 西尾市を歩いてポイントを貯めよう"/>
-<meta property="og:description" content="西尾市内のスポットに歩いて近づくとポイントゲット。注目スポット・連続ログイン・歩いた距離でもポイントが貯まります。"/>
+<meta property="og:description" content="西尾のまちを歩いて名所をめぐるお散歩ゲーム。今日のクエスト・たからばこ・今月のおまつりの会場めぐり。家から遊べる操作モードも。無料・スマホのブラウザで遊べます。"/>
 <meta property="og:url" content="https://ricepia-judge.vercel.app/nishio-go.html"/>
+<meta property="og:image" content="https://ricepia-judge.vercel.app/nishio-go/ogp.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="にしおさんぽGO：西尾のまちを歩いて、名所をめぐるお散歩ゲーム"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://ricepia-judge.vercel.app/nishio-go/ogp.png"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"/>
@@ -124,6 +130,10 @@
       <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。地図の下の 🔊 ボタンでも切り替えられます。</small></span>
       <input type="checkbox" id="bgmToggle"/>
     </label>
+    <label class="row">
+      <span><b>📊 アクセス解析</b><small>どの画面を見たか・どのボタンを押したかを、Google・LINEヤフー・Meta の解析に送ります（現在地の座標は送りません）。オフにすると送りません。くわしくは<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>。</small></span>
+      <input type="checkbox" id="anaToggle"/>
+    </label>
   </div>
   <div class="card">
     <div class="row"><span><b>いまのGPS</b><small id="gpsInfo">—</small></span>
@@ -148,7 +158,7 @@
     </ul>
   </div>
   <div class="card">
-    <h3>プライバシー</h3>
+    <h3>プライバシー（<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>）</h3>
     <p class="note">現在地の座標そのものは、どこにも送信しません。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
   </div>
   <div class="card danger">
@@ -199,6 +209,7 @@
 <div class="reward" id="reward" aria-live="assertive"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="nishio-go/analytics.js"></script>
 <script src="nishio-go/events.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/pixel.js"></script>

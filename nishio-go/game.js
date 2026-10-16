@@ -86,6 +86,8 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
   del(k) { try { localStorage.removeItem(k); } catch (e) { /* noop */ } },
 };
+// アクセス解析（analytics.js）。現在地の座標は送らない
+const track = (name, params) => { if (window.nsgTrack) nsgTrack(name, params); };
 const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
@@ -507,6 +509,8 @@ function checkin() {
   if (s.featured && s.area && !day.areas.includes(s.area)) day.areas.push(s.area);
   if (s.shop) day.shop = 1;
   S.checkins++;
+  track('checkin', { spot: s.name, featured: !!s.featured, first: !v, mode: demo ? 'play' : 'walk' });
+  if (s.shop) track('shop_checkin', { spot: s.name, mode: demo ? 'play' : 'walk' });
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   const lvUp = gainPoints(total);
   save();
@@ -587,10 +591,12 @@ function updateQuests(delay = 0) {
   let gained = 0;
   for (const q of qs) if (!d.done.includes(q.id) && q.val(d) >= q.goal) {
     d.done.push(q.id); gained += q.pts; done.push(q.text);
+    track('quest_complete', { quest: q.id });
     S.log.unshift({ type: 'quest', t: Date.now(), pts: q.pts, name: `クエスト「${q.text}」`, icon: '📜' });
   }
   if (!d.bonus && qs.every(q => d.done.includes(q.id))) {
     d.bonus = true; gained += CFG.pts.questAll;
+    track('quest_all', {});
     S.log.unshift({ type: 'quest', t: Date.now(), pts: CFG.pts.questAll, name: '今日のクエストをぜんぶ達成', icon: '🏆' });
   }
   if (!gained) return;
@@ -662,6 +668,7 @@ function tryChest() {
   const c = n.c, d = dayState();
   d.chests.push(c.id);
   const pick = pickFact(c);
+  track('chest_open', { mode: demo ? 'play' : 'walk' });
   if (pick && !S.facts.includes(pick)) S.facts.push(pick);
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
@@ -1085,6 +1092,7 @@ document.addEventListener('click', e => {
 function switchMode(isDemo) {
   if (isDemo === demo) return;
   setMode(isDemo);
+  track('mode_switch', { mode: demo ? 'play' : 'walk' });
   toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? '十字ボタンで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
@@ -1155,6 +1163,9 @@ const sound = (() => {
 })();
 $('sndBtn').addEventListener('click', () => { sound.toggle(); toast(store.get('nsg_bgm', true) ? '🔊 音楽をオンにしました' : '🔇 音楽をオフにしました'); });
 $('bgmToggle').addEventListener('change', e => sound.toggle(e.target.checked));
+// アクセス解析（analytics.js）のオン・オフ。切り替えは次に開いたときから
+$('anaToggle').checked = !store.get('nsg_noanalytics', false);
+$('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg_noanalytics', e.target.checked ? '0' : '1'); } catch (err) { /* noop */ } toast(e.target.checked ? '📊 アクセス解析をオンにしました（次に開いたときから）' : '📊 アクセス解析をオフにしました（次に開いたときから送りません）'); });
 sound.apply();
 
 /* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、十字ボタンや丸ボタンが隠れないようにする */
@@ -1163,6 +1174,7 @@ if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.sty
 /* はじめに */
 function begin(isDemo) {
   store.set('nsg_started', true);
+  track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
   // 操作して遊ぶは、十字ボタンで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
   if (isDemo && !document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

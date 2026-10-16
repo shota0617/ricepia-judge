@@ -1277,7 +1277,8 @@ function setActive(on) {
   else G.invalidateMap();
 }
 function updatePad() {
-  $('pxPad').hidden = !(active && G.demo && !worldMode);
+  // 操作して移動なら、せかいちずでも十字ボタンを出す（押すと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
+  $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
 }
 $('viewBtn').addEventListener('click', () => setActive(!active));
@@ -1427,16 +1428,21 @@ function updateChests() {
 }
 setInterval(updateChests, 2000);
 
+// 十字ボタン・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く
+function padStep(dir) {
+  if (worldMode) setWorld(false);
+  step(dir);
+}
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {
-  const start = e => { e.preventDefault(); step(b.dataset.dir); clearInterval(holdTimer); holdTimer = setInterval(() => step(b.dataset.dir), 180); };
+  const start = e => { e.preventDefault(); padStep(b.dataset.dir); clearInterval(holdTimer); holdTimer = setInterval(() => padStep(b.dataset.dir), 180); };
   const stop = () => { clearInterval(holdTimer); holdTimer = null; };
   b.addEventListener('pointerdown', start);
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
 });
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); step(k); }
+  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); padStep(k); }
 });
 
 // スポットをタップすると、ドラクエ風のウィンドウで説明
@@ -1490,5 +1496,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; } };
+window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; } };
 })();

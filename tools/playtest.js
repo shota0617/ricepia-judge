@@ -8,7 +8,7 @@ const fs = require('fs'), path = require('path');
 const { startServer } = require('./bake-common');
 
 const OUT = path.resolve(process.argv[2] || 'playtest-out');
-const PORT = 8899, URL = `http://localhost:${PORT}/nishio-go.html`;
+const PORT = Number(process.env.PLAYTEST_PORT) || 8899, URL = `http://localhost:${PORT}/nishio-go.html`;
 const VIEW = { width: 390, height: 780 };
 const STATION = [34.8640, 137.0560];   // あるいて移動で使う位置（名鉄 西尾駅の近く）
 // 今日のクエストとたからばこは日付で決まるので、台本の中の日付を固定する（この日は「西尾の注目スポット」と「たからばこ2つ」が出て、この道順で達成できる）
@@ -83,8 +83,13 @@ async function walkTo(page, id) {
   const { ctx, page, errors } = await newPage(browser, { permissions: ['geolocation'], geolocation: { latitude: STATION[0], longitude: STATION[1], accuracy: 10 } });
   await page.goto(URL); await page.waitForTimeout(800);
   await shot(page, '01-intro');
+  // はじめての人と同じく、せかいちずを開いた状態で「操作して遊ぶ」を押す（せかいちずでも十字ボタンが出て、押すと歩く地図にもどる）
+  await page.evaluate(() => nishioPixel.setWorld(true));
   await page.click('#demoBtn'); await page.waitForTimeout(2500);
-  R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !document.getElementById('pxPad').hidden);
+  R.checks.padOnWorldMap = await page.evaluate(() => nishioGo.demo && nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
+  await page.dispatchEvent('#pxPad [data-dir=up]', 'pointerdown'); await page.dispatchEvent('#pxPad [data-dir=up]', 'pointerup');
+  await page.waitForTimeout(800);
+  R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
   R.checks.bgmStarted = await page.evaluate(() => window.__played.includes('field.mp3'));
   await shot(page, '02-operate-start');
   R.checks.chestsNearby = await page.evaluate(() => nishioPixel.chests.length);
@@ -152,6 +157,7 @@ async function walkTo(page, id) {
   const need = (ok, why) => { if (!ok) fail.push(why); };
   need(R.errors.length === 0, 'ページでエラーが出た');
   need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
+  need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、十字ボタンが出ない');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
   need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');

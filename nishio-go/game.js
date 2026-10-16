@@ -823,6 +823,7 @@ $('copyGps').addEventListener('click', async () => {
 
 /* タブ */
 function openTab(tab) {
+  clearTimeout(showReward.t); $('reward').innerHTML = '';   // ほかのタブを開いたら、ポイントの知らせは消す
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   ['log', 'badges', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
   if (tab === 'rewards') renderRewards();

@@ -645,7 +645,9 @@ async function buildWorld(force) {
       const b = r.ok ? await r.json() : null;
       if (b && b.w === WW && b.h === WH && typeof b.d === 'string' && b.d.length === WW * WH) {
         world = dec(b.d); worldPois = b.p || []; worldLabels = b.l || []; makeWorldImg(); worldState = 'ok';
-        if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days: 7 })) store.del(WORLD_KEY);
+        // 名前の表が古い形（川・町名の種類がない）なら、作り直しが届くまでの仮として1日だけ保存する
+        const days = worldLabels.some(l => l[4]) ? 7 : 1;
+        if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
         return;
       }
     } catch (e) { /* なければブラウザで作る */ }
@@ -958,7 +960,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -1288,6 +1290,44 @@ function exitDist(x, y) {
     frontier = next;
   }
   return Infinity;
+}
+// デモで立った場所（始めた所・地図をタップして飛んだ所）が建物や水の上なら、いちばん近い歩けるマスへ移す。
+// 地図が届くまでは待つ。同じマスは1回だけ調べる（遠いときは、せかいちずで陸へ移してから、もう一度細かく合わせる）
+let snapKey = '', snapWorld = '';
+function snapDemoStart() {
+  if (!G.demo || !G.me || worldMode) return;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y), key = x + ',' + y, c = codeAt(x, y);
+  if (key === snapKey || c === C.X) return;
+  snapKey = key;
+  if (!BLOCK.has(c)) return;
+  const seen = new Set([key]);
+  let frontier = [[x, y]];
+  for (let d = 1; d <= 40 && frontier.length; d++) {
+    const next = [];
+    for (const [px, py] of frontier) for (const [dx, dy] of Object.values(DIRS)) {
+      const qx = px + dx, qy = py + dy, k = qx + ',' + qy, q = codeAt(qx, qy);
+      if (seen.has(k) || q === C.X) continue;
+      if (!BLOCK.has(q)) { const ll = toLatLng(qx + 0.5, qy + 0.5); snapKey = k; G.moveTo(ll.lat, ll.lng); return; }
+      seen.add(k); next.push([qx, qy]);
+    }
+    frontier = next;
+  }
+  // 近くに歩ける所がない（海の真ん中など）：せかいちず（100mごと）でいちばん近い陸を探して、そこへ移す
+  if (!world) { snapKey = ''; if (worldState === 'none') buildWorld(); return; }   // せかいちずが届いたら、もう一度
+  const me = llToW(G.me.lat, G.me.lng), wx = Math.floor(me.x), wy = Math.floor(me.y);
+  for (let r = 1; r < Math.max(WW, WH); r++) {
+    let best = null, bd = Infinity;
+    for (let j = wy - r; j <= wy + r; j++) for (let i = wx - r; i <= wx + r; i++) {
+      if (Math.max(Math.abs(i - wx), Math.abs(j - wy)) !== r || i < 0 || j < 0 || i >= WW || j >= WH) continue;
+      const wc = world[j * WW + i], d = Math.hypot(i - wx, j - wy);
+      if (wc !== C.A && wc !== C.M && d < bd) { bd = d; best = [i, j]; }
+    }
+    if (best) {
+      if (snapWorld === best.join(',')) return;   // 同じ所へもう飛んだ（そこでも歩ける所が見つからない）ならあきらめる
+      snapWorld = best.join(',');
+      const ll = wToLL(best[0] + 0.5, best[1] + 0.5); G.moveTo(ll.lat, ll.lng); return;
+    }
+  }
 }
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {

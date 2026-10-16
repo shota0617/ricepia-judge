@@ -132,6 +132,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* 通知 */
 .toast{position:fixed;left:50%;top:calc(var(--bar-h) + 12px);transform:translate(-50%,-20px);opacity:0;pointer-events:none;background:rgba(30,40,32,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:3000;transition:all .3s;max-width:calc(100% - 32px);text-align:center;line-height:1.5}
 .toast.show{opacity:1;transform:translate(-50%,0)}
+body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では、左上の「めぐった名所」と重ならないよう少し下に */
 .reward{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2500}
 .reward .rw{background:#fff;border-radius:20px;padding:18px 24px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35);animation:pop 2.6s ease forwards;min-width:220px;max-width:calc(100% - 40px)}
 .reward .rw .big{font-size:40px;font-weight:900;color:var(--gold);line-height:1.1}

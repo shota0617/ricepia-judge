@@ -122,7 +122,7 @@ let follow = true;
 map.on('dragstart', () => { follow = false; });
 
 /* ---------- スポット ---------- */
-let spots = [];
+let spots = [], spotsVersion = 0;   // spotsVersion：スポットの一覧を入れ替えるたびに1つ増やす（たからばこの置き直しに使う）
 let spotMeta = { osm: 0, osmAt: 0, osmOk: false, featured: 0 };
 const markers = new Map();
 
@@ -264,7 +264,7 @@ async function doLoadSpots(force) {
   } catch (e) { /* 注目スポットなしで続行 */ }
 
   // 取得を待つ間も、位置が確かな注目スポット（概算でないもの）は先に見せる
-  if (!spots.length) { spots = buildSpots(config.filter(c => c && !c.approx), []); renderMarkers(); refreshNearby(); }
+  if (!spots.length) { spots = buildSpots(config.filter(c => c && !c.approx), []); spotsVersion++; renderMarkers(); refreshNearby(); }
 
   let ok = false;
   const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
@@ -285,6 +285,7 @@ async function doLoadSpots(force) {
     }
   }
   spots = buildSpots(config, items || []);
+  spotsVersion++;
   spotMeta.osm = (items || []).length;
   spotMeta.featured = spots.filter(s => s.featured).length;
   spotMeta.loaded = true;
@@ -498,7 +499,8 @@ function checkin() {
   day.checkins++;
   if (!day.spots.includes(s.id)) day.spots.push(s.id);
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
-  if (!v) day.fresh++;
+  // 「はじめてのスポット」：まだ行っていない所がもう無い人は、どのスポットでも達成にする
+  if (!v || spots.every(x => x.id === s.id || S.visits[x.id])) day.fresh++;
   if (s.featured && s.area && !day.areas.includes(s.area)) day.areas.push(s.area);
   if (s.shop) day.shop = 1;
   S.checkins++;
@@ -1118,7 +1120,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { re
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   sound,
-  get state() { return S; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
+  get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, chestOpened: id => dayState().chests.includes(id), liveChests,

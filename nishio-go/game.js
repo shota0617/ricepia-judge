@@ -1205,11 +1205,11 @@ $('resetBtn').addEventListener('click', () => {
    ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
 const sound = (() => {
   const SRC = { field: 'nishio-go/bgm/field.mp3', world: 'nishio-go/bgm/world.mp3', checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
-  const VOL = 0.45, LOOP = new Set(['field', 'world']), els = {}, missing = new Set();
+  const VOL = 0.28, SFX_VOL = 0.35, LOOP = new Set(['field', 'world']), els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
   let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null, ducking = 0;   // ducking：鳴っている効果音の数
   const el = k => {
     if (!els[k]) {
-      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k); a.volume = VOL; a.src = SRC[k];
+      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k); a.volume = LOOP.has(k) ? VOL : SFX_VOL; a.src = SRC[k];
       a.addEventListener('error', () => { missing.add(k); if (LOOP.has(k)) apply(); });
       els[k] = a;
     }

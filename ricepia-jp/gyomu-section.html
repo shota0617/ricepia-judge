@@ -1,0 +1,71 @@
+<!-- gyomu:start 業務用米のご案内。ricepia.jp トップの「太郎」セクション（#taro）と入れ替える（tools/build-ricepia-jp.py） -->
+<style>
+  /* 長いラベルのボタンが狭い画面でビューポートを超えないよう、.btn の white-space:nowrap をこのセクション内だけ解除する */
+  #taro .btn {
+    white-space: normal;
+    max-width: 100%;
+    text-align: center;
+    line-height: 1.45;
+  }
+  @media (max-width: 480px) {
+    #taro .btn { padding: .75rem 1.1rem; }
+  }
+  #taro .gy-lineup { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; max-width: 720px; margin: 0 auto .6rem; padding: 0; list-style: none; }
+  #taro .gy-lineup li { min-width: 180px; padding: .9rem 1.4rem; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); text-align: center; font-family: var(--font-serif); font-size: 1.15rem; font-weight: 700; color: var(--ink); }
+  #taro .gy-lineup small { display: block; margin-top: .2rem; font-family: inherit; font-size: .78rem; font-weight: 400; color: var(--text-muted); }
+  #taro .gy-etc { margin: 0 0 2.5rem; text-align: center; font-size: .85rem; color: var(--text-muted); }
+  #taro .gy-note { font-size: .8rem; color: var(--text-muted); line-height: 1.8; }
+</style>
+<section id="taro" class="section sec-boundary" aria-label="業務用米">
+  <div class="section-inner">
+    <div class="sec-head center reveal">
+      <div class="sec-eyebrow">FOR BUSINESS</div>
+      <h2 class="sec-title">飲食店・事業者様向け<br><span class="em">業務用米</span></h2>
+      <p class="sec-lead">太郎（高級米ブレンド）、あいちのかおり、つやっこなど、業務用向けのお米を取り揃えております。<br>ご注文・仕入れのご相談は、業務用LINEにご登録ください。配達もいたします。<br><a href="/gyomu/">→ 業務用サイト(無料サンプル・WEB発注のご案内)はこちら</a></p>
+    </div>
+
+    <ul class="gy-lineup reveal" aria-label="業務用米のラインナップ">
+      <li>太郎<small>高級米ブレンド</small></li>
+      <li>あいちのかおり</li>
+      <li>つやっこ</li>
+    </ul>
+    <p class="gy-etc reveal">など、用途やご予算に合わせてご相談ください。</p>
+
+    <figure class="reveal" style="max-width:720px;margin:0 auto 2.5rem;text-align:center;">
+      <img width="1400" height="1050" src="images/taro-rice.jpg" alt="業務用米「太郎」の炊き上がり。つやのある粒立ち" loading="lazy" style="width:100%;height:auto;border-radius:var(--radius);box-shadow:var(--shadow-hover);display:block;">
+      <figcaption style="font-size:.8rem;color:var(--text-muted);margin-top:.6rem;letter-spacing:.05em;">太郎（高級米ブレンド）の炊き上がり — つやと粒立ちをご覧ください</figcaption>
+    </figure>
+
+    <div class="feature-grid reveal" style="max-width:860px;margin:0 auto 2.5rem;">
+      <div class="feature">
+        <div class="feature-icon">🌾</div>
+        <h3>毎日精米で受け渡し</h3>
+        <p>年間３６０日、毎日精米。精米したての業務用米をお渡しします。</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🎖️</div>
+        <h3>農産物検査員が検品</h3>
+        <p>国家資格を持つ検査員が品質を見極め。安定した炊き上がりを支えます。</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🚚</div>
+        <h3>配達いたします</h3>
+        <p>業務用のご注文は配達もいたします。30kgもドライブスルーで車に乗ったまま受け取りOK。<br><span class="gy-note">※個人のお客様への配達は行っておりません。</span></p>
+      </div>
+    </div>
+
+    <div class="reveal" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2rem;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:2rem;max-width:720px;margin:0 auto;">
+      <img src="images/taro-line-qr.png" alt="業務用LINE 友だち追加QRコード" width="140" height="140" loading="lazy" style="border-radius:8px;">
+      <div style="min-width:220px;flex:1;">
+        <h3 class="serif" style="font-size:1.05rem;margin-bottom:.5rem;">業務用LINEにご登録ください</h3>
+        <p style="font-size:.85rem;color:var(--text-muted);line-height:1.9;margin-bottom:1rem;">ご注文・配達・業務用価格・数量・銘柄のご相談を承ります。<br>QRコードを読み取るか、ボタンからどうぞ。<br><span class="gy-note">※配達は飲食店・事業者様のみです。個人のお客様への配達は行っておりません。</span></p>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:.75rem;">
+          <a href="https://ricepia.jp/go/lin.ee/o5IAq4y?from=top-4" target="_blank" rel="noopener" class="btn btn-line">業務用LINE 友だち追加</a>
+          <a href="tel:+81563544001" class="btn btn-outline">電話 0563-54-4001</a>
+          <a href="/gyomu/" class="btn btn-gold">業務用サイトを見る(無料サンプル・WEB発注)</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- gyomu:end -->

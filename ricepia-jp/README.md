@@ -1,12 +1,13 @@
 # ricepia.jp トップページの更新
 
-ricepia.jp（さくらのレンタルサーバ）の `www/index.html` に、にしおさんぽGO のお知らせ欄（`game-section.html`）を入れます。
+ricepia.jp（さくらのレンタルサーバ）の `www/index.html` に、にしおさんぽGO のお知らせ欄（`game-section.html`）を入れ、「太郎」セクションを業務用米のご案内（`gyomu-section.html`）と入れ替えます。
 
 | ファイル | 中身 |
 | --- | --- |
 | `game-section.html` | お知らせ欄。「動画で見る らいすぴあ」の欄のすぐ上に入れる |
+| `gyomu-section.html` | 業務用米のご案内（太郎・あいちのかおり・つやっこ、業務用LINE、配達は事業者様のみ）。「太郎」セクション（`#taro`）と入れ替える。あわせて配達の説明（個人は配達なし・業務用は配達あり）とナビの「飲食店様向け」を「業務用米」に変える |
 | `current.html` | 公開中のトップページを保存したもの（`.github/workflows/ricepia-jp-snapshot.yml` が保存） |
-| `index.html` | `current.html` にお知らせ欄を入れた案（`python3 tools/build-ricepia-jp.py` で作る）。確認用で、手でアップロードするときはこれを使う |
+| `index.html` | `current.html` にお知らせ欄・業務用米を入れた案（`python3 tools/build-ricepia-jp.py` で作る）。確認用で、手でアップロードするときはこれを使う |
 
 ## GitHub Actions でアップロードする
 

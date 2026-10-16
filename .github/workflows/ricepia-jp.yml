@@ -1,7 +1,7 @@
 # ricepia.jp（さくらのレンタルサーバ）のトップページを更新する
 # - いつも：いまの www/index.html をダウンロードして、ログと成果物に出す（サイトは変えない）
 # - ricepia-jp/deploy.txt に「deploy」と書いたときだけ：サーバーの index.html を index.html.bak-日時 に残してから、
-#   いまの index.html に ricepia-jp/game-section.html を入れたもの（tools/build-ricepia-jp.py）をアップロードする
+#   いまの index.html に ricepia-jp/game-section.html・gyomu-section.html を入れたもの（tools/build-ricepia-jp.py）をアップロードする
 #   （ricepia-jp/index.html は、公開中のページ ricepia-jp/current.html から作った確認用の案）
 # 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
 name: ricepia.jp top page

@@ -51,6 +51,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .popup .tag{display:inline-block;padding:1px 6px;border-radius:6px;background:#eef3e6;color:var(--green);font-size:11px;margin-right:4px}
 .popup .tag.gold{background:#fff1d1;color:#8a5a00}
 .popup .tag.shop{background:#d23a2e;color:#fff}
+.popup .ev{margin:4px 0;padding:4px 8px;border-radius:8px;background:#fff6d6;color:#6b4a00;font-size:12px;font-weight:700}
+.px-info .popup .ev{background:none;border:1px dashed #ffd54f;color:#ffd54f}
+.leaflet-container a.btn{color:#fff}   /* Leaflet の a{color} より強く：当店のポップアップのボタン文字を白に */
 
 .fab-col{position:fixed;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + max(170px,calc(var(--sheet-h,0px) + 22px)));z-index:900;display:flex;flex-direction:column;gap:10px}
 @media (max-height:600px){.fab-col{flex-direction:row}}   /* 背の低い画面では横に並べて、右上の拡大ボタンと重ならないように */
@@ -142,6 +145,8 @@ button{font:inherit;color:inherit;cursor:pointer}
 .intro h1{font-size:24px;margin:6px 0 8px;color:var(--green)}
 .intro p{font-size:14px;line-height:1.7;margin:6px 0}
 .intro ul{text-align:left;font-size:14px;line-height:1.9;padding-left:1.2em;margin:10px 0}
+.intro .by{font-size:12px;line-height:1.6;color:var(--sub);margin:4px 0 8px}
+.intro .by b{color:var(--ink)}
 .intro .warn{font-size:12px;background:#fff4e0;border-radius:10px;padding:8px;color:#7a4b00}
 
 /* 通知 */
@@ -183,6 +188,9 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 .wallet b{font-size:28px;color:var(--green);font-variant-numeric:tabular-nums}
 .wallet small{color:var(--sub);font-size:12px}
 .list li .num.minus{color:var(--red)}
+#eventList li.next{opacity:.75}
+#eventList .btn.mini{margin:0;flex:none}
+.note.src{font-size:11px;color:var(--sub);line-height:1.6;margin:6px 2px 14px}
 .list li .btn{font-size:13px;padding:7px 12px}
 .list li .btn:disabled{background:#c9cfc6;opacity:1;font-weight:600}
 .sample{font-style:normal;font-size:11px;background:#fff1d1;color:#8a5a00;border-radius:6px;padding:1px 6px;margin-left:4px;vertical-align:1px}
@@ -216,7 +224,7 @@ body.px #map{visibility:hidden}
 #pxCanvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:manipulation}
 .dq{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace;padding:10px 12px;line-height:1.7}
 .px-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);white-space:pre-line;text-align:center;font-size:15px;max-width:calc(100% - 32px)}
-.px-attr{position:absolute;right:4px;bottom:2px;font-size:10px;color:#fff;background:rgba(0,0,0,.5);padding:0 4px;border-radius:3px}
+.px-attr{position:absolute;right:4px;bottom:calc(var(--sheet-h,0px) + 10px);font-size:9px;line-height:12px;color:#fff;background:rgba(0,0,0,.5);padding:0 4px;border-radius:3px}
 .px-zoom{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
 .px-zoom button,.px-pad button{background:rgba(0,0,0,.72);color:#fff;border:2px solid #fff;border-radius:6px;font-family:"DotGothic16",monospace;font-size:18px;width:40px;height:40px;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
 .px-zoom button:active,.px-pad button:active{background:#333}
@@ -260,3 +268,9 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 .px-info .area-card .src a{color:#9cd2ff;margin-right:4px}
 .intro-box h1.logo{margin:4px 0 12px;line-height:0}
 .intro-box h1.logo img{display:block;width:100%;max-width:100%;height:auto;margin:0 auto;image-rendering:pixelated}
+
+/* せまい画面：ポイントが4けたになっても、タイトルと「試作版」が切れないように */
+@media (max-width:420px){.brand{font-size:15px}.lv{width:56px}.pts{padding:4px 8px}.pts b{font-size:16px}}
+/* はじめの画面やスポットの説明ウィンドウが出ている間は、知らせ（トースト）を下に出して文字に重ねない */
+body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
+body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}

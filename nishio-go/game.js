@@ -330,6 +330,7 @@ function popupHtml(s) {
     <p>${s.shop ? '<span class="tag shop">🍚 当店（近藤米穀店）</span>' : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
+    ${spotEvents(s).map(x => `<p class="ev">📅 ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
@@ -468,6 +469,8 @@ function gainPoints(n) {
 
 let selected = null;   // シートに表示中のチェックイン候補
 
+// 当店にチェックインしたときの一言（ricepia.jp の内容から）
+const SHOP_NOTE = '西尾のお米屋さん（明治25年創業）。車に乗ったままお米を受け取れるドライブスルーや、24時間つかえるコイン精米所もあります。くわしくは ricepia.jp で。';
 function checkin() {
   const s = selected;
   if (!s || !me) return;
@@ -510,13 +513,40 @@ function checkin() {
 
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
-  showReward(total, s.name, lines, lvUp);
+  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : lines, lvUp, s.shop ? SHOP_NOTE : '');
   map.closePopup();
   renderMarkers();
   refreshNearby();
   updateQuests(1200);   // チェックインの知らせのあとにクエスト達成を知らせる
   setTimeout(checkBadges, 2700);
 }
+
+/* ---------- 西尾のおまつり・行事（events.js：西尾市観光協会と西尾市公式ウェブサイトから） ---------- */
+const EVENTS = (window.NISHIO_EVENTS && NISHIO_EVENTS.list) || [];
+const ISLAND_SPOTS = new Set(['sakushima-nishi', 'sakushima-higashi', 'benten-salon', 'suunji', 'ohirune-house', 'kamome-parking', 'oura-beach', 'yatsurugi', 'kurokabe']);
+const WEEK = '日月火水木金土';
+// 日付が決まっている年はその日付、ほかの年は「10月第3日曜日」のような文で案内する
+const evDate = (e, d = new Date()) => e.date && Number(e.date.slice(0, 4)) === d.getFullYear() ? e.date : '';
+function evWhen(e, d = new Date()) {
+  const x = evDate(e, d);
+  if (!x) return e.when;
+  const t = new Date(x + 'T00:00:00');
+  return `${t.getMonth() + 1}月${t.getDate()}日（${WEEK[t.getDay()]}）`;
+}
+// その月の行事（日付が決まっていて、もう終わったものは出さない）
+function monthEvents(d = new Date()) {
+  const m = d.getMonth() + 1, today = ymd();
+  return EVENTS.filter(e => { const x = evDate(e, d); return x ? Number(x.slice(5, 7)) === m && x >= today : e.months.includes(m); })
+    .sort((a, b) => (evDate(a, d) || '9') < (evDate(b, d) || '9') ? -1 : (evDate(a, d) || '9') > (evDate(b, d) || '9') ? 1 : 0);
+}
+function upcomingEvents() {
+  const now = new Date(), next = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const a = monthEvents(now), ids = new Set(a.map(e => e.id));
+  return [...a.map(e => ({ e, when: evWhen(e, now), next: false })), ...monthEvents(next).filter(e => !ids.has(e.id)).map(e => ({ e, when: evWhen(e, next), next: true }))];
+}
+const evSpotId = e => e.spot ? 'f-' + e.spot : '';   // events.js の spot は spots.json の id（読み込んだスポットの id は頭に「f-」が付く）
+const spotEvents = s => upcomingEvents().filter(x => evSpotId(x.e) === s.id);
+const todayEvents = () => EVENTS.filter(e => evDate(e) === ymd());
 
 /* ---------- 今日のおさんぽクエスト ----------
    毎日3つのお題（日付で決まるので、だれでも同じ日は同じお題）。ぜんぶ達成でボーナス。ときどき「当店に寄る」も出る */
@@ -542,7 +572,13 @@ function todaysQuests() {
   pool.push({ id: 'area', icon: area.icon, text: `${area.name}の注目スポットに行く`, goal: 1, pts: 60, val: d => d.areas.includes(area.id) ? 1 : 0 });
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const qs = pool.slice(0, 3);
-  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（らいすぴあ・秀幸／近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
+  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
+  // ときどき「今月の行事の会場に行く」（会場がスポットになっていて、船のいらない所だけ）
+  const evs = monthEvents(new Date(date + 'T12:00:00')).filter(e => e.spot && !ISLAND_SPOTS.has(e.spot)), er = seeded(hashStr('event:' + date));
+  if (evs.length && qs[2].id !== 'shop' && er() < 0.4) {
+    const e = evs[Math.floor(er() * evs.length)];
+    qs[2] = { id: 'event', icon: '📅', text: `今月の「${e.name}」の会場に行く`, sub: e.place, goal: 1, pts: 60, val: d => d.spots.includes(evSpotId(e)) ? 1 : 0 };
+  }
   return qs;
 }
 // 達成の判定と記録はすぐに行う（モードを切り替えても、達成したモードの記録に入る）。知らせだけ delay ミリ秒あとに出す
@@ -576,7 +612,24 @@ function factPool() {   // まめちしき：地区の豆知識・紹介文と�
     if (a.summary) m.set(`a:${a.id}:s`, `${a.name}：${a.summary}`);
   }
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
+  for (const e of EVENTS) if (e.desc) m.set(`e:${e.id}`, `${e.name}（${e.when}・${e.place}）：${e.desc}`);
   return m;
+}
+// たからばこで出すまめちしき：まだ持っていないものから、①そのスポットの話・そこでの行事 ②同じ地区の話 ③ほか の順に選ぶ
+function pickFact(c) {
+  const pool = factPool(), keys = [...pool.keys()], fresh = keys.filter(k => !S.facts.includes(k));
+  const list = fresh.length ? fresh : keys;
+  if (!list.length) return '';
+  let near = null, nd = Infinity;
+  for (const s of spots) { const d = dist(c, s); if ((c.at ? s.name === c.at : true) && d < nd) { near = s; nd = d; } }
+  const area = near && near.area, inArea = id => { const s = spots.find(x => x.id === id); return s && s.area === area; };
+  const tiers = [
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id)),
+    k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
+    () => true,
+  ];
+  for (const t of tiers) { const g = list.filter(t); if (g.length) return g[hashStr(c.id) % g.length]; }
+  return '';
 }
 // いまのモード・今日のたからばこで、まだ開けていないもの（モードを切り替えた直後や日付が変わった直後に、
 // 前のモード・前の日のたからばこを開けたり出したりしない）
@@ -608,8 +661,7 @@ function tryChest() {
   if (!n || n.d > (demo ? 18 : 30)) return;
   const c = n.c, d = dayState();
   d.chests.push(c.id);
-  const facts = [...factPool().keys()], fresh = facts.filter(k => !S.facts.includes(k));
-  const pick = (fresh.length ? fresh : facts)[hashStr(c.id) % (fresh.length || facts.length || 1)];
+  const pick = pickFact(c);
   if (pick && !S.facts.includes(pick)) S.facts.push(pick);
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
@@ -666,6 +718,8 @@ function refreshNearby() {
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
+  const te = todayEvents();
+  if (te.length) msgs.push(`📅 きょうは ${te.slice(0, 2).map(e => `「${esc(e.name)}」`).join('')}${te.length > 2 ? ` ほか${te.length - 2}件` : ''}（きろくで見られます）`);
   const ch = nearestChest();
   if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${ch.c.at ? `${esc(ch.c.at)}・` : ''}${fmtM(ch.d)}）`);
   if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
@@ -760,8 +814,14 @@ function renderLog() {
   $('questList').innerHTML = qs.map(q => {
     const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
     return `<li class="${done ? 'done' : ''}"><span class="ico">${done ? '✅' : q.icon}</span><span class="main"><b>${esc(q.text)}</b>
-      <small>${done ? '達成！' : `${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}`}</small></span><span class="num">+${q.pts}</span></li>`;
+      <small>${done ? '達成！' : `${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}`}${q.sub ? `・${esc(q.sub)}` : ''}</small></span><span class="num">+${q.pts}</span></li>`;
   }).join('') + `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${day.bonus ? '🏆' : '🎯'}</span><span class="main"><b>3つぜんぶ達成</b><small>${day.bonus ? '達成！あしたも新しいクエストが出ます' : 'あしたは別のクエストになります'}</small></span><span class="num">+${CFG.pts.questAll}</span></li>`;
+  const ev = upcomingEvents();
+  $('eventList').innerHTML = ev.length ? ev.map(({ e, when, next }) => {
+    const s = e.spot && spots.find(x => x.id === evSpotId(e));
+    return `<li class="${next ? 'next' : ''}"><span class="ico">${next ? '🗓️' : '📅'}</span><span class="main"><b>${esc(e.name)}</b>
+      <small>${esc(when)}・${esc(e.place)}</small></span>${s && demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">行く</button>` : s && S.visits[s.id] ? '<span class="num">✓</span>' : ''}</li>`;
+  }).join('') : '<li class="empty">今月と来月の行事はありません</li>';
   const facts = factPool();
   $('factCount').textContent = `${S.facts.filter(k => facts.has(k)).length}/${facts.size}`;
   $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">💡</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
@@ -981,6 +1041,7 @@ $('visitedList').addEventListener('click', e => {
 $('spinBtn').addEventListener('click', checkin);
 $('locateBtn').addEventListener('click', () => {
   follow = true;
+  if (document.body.classList.contains('px') && window.nishioPixel) nishioPixel.centerOnMe();   // ドット絵の地図（せかいちず）でも主人公へ
   if (me) map.setView([me.lat, me.lng], Math.max(map.getZoom(), 16));
   else toast(demo ? '地図をタップして移動してください' : '位置情報を取得中です…');
 });
@@ -1019,6 +1080,7 @@ document.addEventListener('click', e => {
   map.closePopup();
   follow = false;
   onFix(s.lat, s.lng, 5, Date.now());
+  if ($('panel-log') && !$('panel-log').hidden) openTab('map');   // きろくの「行く」から来たときは地図へ
 });
 function switchMode(isDemo) {
   if (isDemo === demo) return;

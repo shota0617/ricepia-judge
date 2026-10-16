@@ -35,7 +35,7 @@ async function newPage(browser, opts = {}) {
 async function walkTo(page, id) {
   const plan = await page.evaluate(id => {
     const s = id === 'chest'
-      ? nishioPixel.chests.filter(c => !nishioGo.chestOpened(c.id)).sort((a, b) => nishioGo.dist(nishioGo.me, a) - nishioGo.dist(nishioGo.me, b)).map(c => ({ ...c, name: 'たからばこ', reach: 12 }))[0]
+      ? nishioGo.liveChests().sort((a, b) => nishioGo.dist(nishioGo.me, a) - nishioGo.dist(nishioGo.me, b)).map(c => ({ ...c, name: 'たからばこ', reach: 12 }))[0]
       : nishioGo.spots.find(x => x.id === id);
     if (!s) return null;
     const P = nishioPixel, C = P.C, BL = new Set([C.A, C.B, C.M, C.X]), me = nishioGo.me;
@@ -136,7 +136,7 @@ async function walkTo(page, id) {
   await page.click('.mode-sw [data-mode=real]'); await page.waitForTimeout(3500);
   R.checks.walkMode = await page.evaluate(([la, lo]) => !nishioGo.demo && !!nishioGo.me && Math.abs(nishioGo.me.lat - la) < 1e-4 && Math.abs(nishioGo.me.lng - lo) < 1e-4 && document.getElementById('pxPad').hidden, STATION);
   R.checks.walkModePoints = await page.evaluate(() => nishioGo.state.points);
-  R.checks.walkChests = await page.evaluate(() => nishioPixel.chests.map(c => c.at || ''));   // あるいて移動ではスポットの上にだけ
+  R.checks.walkChests = await page.evaluate(() => nishioGo.liveChests().map(c => c.at || ''));   // あるいて移動ではスポットの上にだけ
   await shot(page, '08-walk-mode');
   await page.click('.mode-sw [data-mode=demo]'); await page.waitForTimeout(1000);
   R.checks.operatePointsKept = await page.evaluate(() => nishioGo.state.points);
@@ -155,6 +155,7 @@ async function walkTo(page, id) {
   need(Array.isArray(c.quests) && c.quests.length === 4 && c.quests.some(q => q.startsWith('✅')), '今日のクエストが出ないか、1つも達成されない');
   need(/^[1-9]\d*\/[1-9]\d*$/.test(c.facts || ''), 'まめちしきが集まらない');
   need(c.walkModePoints === 0 && c.operatePointsKept === c.operateFinal.pts && c.operateFinal.pts > 0, '記録がモードごとに分かれていない');
+  need(Array.isArray(c.walkChests) && c.walkChests.length > 0, 'あるいて移動でたからばこが置かれていない');
   need(Array.isArray(c.walkChests) && c.walkChests.every(at => at), 'あるいて移動のたからばこがスポット以外に置かれた');
   R.failures = fail;
   R.ok = fail.length === 0;

@@ -576,12 +576,17 @@ function factPool() {   // まめちしき：地区の豆知識・紹介文と�
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
   return m;
 }
+// いまのモード・今日のたからばこで、まだ開けていないもの（モードを切り替えた直後や日付が変わった直後に、
+// 前のモード・前の日のたからばこを開けたり出したりしない）
+function liveChests() {
+  const list = (window.nishioPixel && nishioPixel.chests) || [], d = dayState(), mode = demo ? 'play' : 'walk';
+  return list.filter(c => c.mode === mode && c.id.startsWith(d.date + ':') && !d.chests.includes(c.id));
+}
 // ふつうの地図にも、まだ開けていないたからばこを 🎁 で出す
 const chestMarkers = new Map();
 function syncChestMarkers() {
-  const list = (window.nishioPixel && nishioPixel.chests) || [], opened = dayState().chests, keep = new Set();
-  for (const c of list) {
-    if (opened.includes(c.id)) continue;
+  const keep = new Set();
+  for (const c of liveChests()) {
     keep.add(c.id);
     const m = chestMarkers.get(c.id);
     if (m) m.setLatLng([c.lat, c.lng]);   // 置き直されたら印も動かす
@@ -590,10 +595,8 @@ function syncChestMarkers() {
   for (const [id, m] of chestMarkers) if (!keep.has(id)) { m.remove(); chestMarkers.delete(id); }
 }
 function nearestChest() {
-  const list = (window.nishioPixel && nishioPixel.chests) || [];
-  const opened = dayState().chests;
   let best = null;
-  if (me) for (const c of list) { if (opened.includes(c.id)) continue; const d = dist(me, c); if (!best || d < best.d) best = { c, d }; }
+  if (me) for (const c of liveChests()) { const d = dist(me, c); if (!best || d < best.d) best = { c, d }; }
   return best;
 }
 function tryChest() {
@@ -1118,7 +1121,7 @@ window.nishioGo = {
   get state() { return S; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
-  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, chestOpened: id => dayState().chests.includes(id),
+  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },

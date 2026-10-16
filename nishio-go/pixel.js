@@ -1011,8 +1011,7 @@ function frame(now) {
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
   // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
-  for (const c of chests) {
-    if (G.chestOpened(c.id)) continue;
+  for (const c of G.liveChests()) {
     const p = toTile(c.lat, c.lng), hop = f ? Math.round(T / 8) : 0, sh = c.at ? T * 0.9 : 0;   // スポットに置いたものは右上にずらす
     const sx = Math.round(ox + p.x * T - T / 2 + sh), sy = Math.round(oy + p.y * T - T / 2 - sh) - hop;
     if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
@@ -1386,7 +1385,7 @@ function nearTile(x0, y0, r, ok) {
 }
 function chestCell(i, j, date, walking) {
   const rnd = seededRnd(hashStr(`chest:${walking ? 'walk' : 'play'}:${date}:${i}:${j}`)), out = [];
-  const add = (t, k, pts) => { const ll = toLatLng(t[0] + 0.5, t[1] + 0.5); out.push({ id: `${date}:${i}:${j}:${k}`, lat: ll.lat, lng: ll.lng, pts }); };
+  const add = (t, k, pts) => { const ll = toLatLng(t[0] + 0.5, t[1] + 0.5); out.push({ id: `${date}:${i}:${j}:${k}`, lat: ll.lat, lng: ll.lng, pts, mode: 'play' }); };
   if (walking) {
     if (!G.spots.length) return null;   // スポットがまだ届いていない
     const x0 = i * CHEST_CELL, y0 = j * CHEST_CELL;
@@ -1395,7 +1394,7 @@ function chestCell(i, j, date, walking) {
       .sort((a, b) => (a.s.id < b.s.id ? -1 : 1));
     for (let k = 0; k < 2 && parks.length; k++) {
       const p = parks.splice(Math.floor(rnd() * parks.length), 1)[0], pts = 10 + Math.floor(rnd() * 3) * 10;
-      out.push({ id: `${date}:${i}:${j}:${k}:${p.s.id}`, lat: p.s.lat, lng: p.s.lng, pts, at: p.s.name });
+      out.push({ id: `${date}:${i}:${j}:${k}:${p.s.id}`, lat: p.s.lat, lng: p.s.lng, pts, at: p.s.name, mode: 'walk' });
     }
     return out;
   }

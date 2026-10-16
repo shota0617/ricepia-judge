@@ -1,0 +1,25 @@
+# 一時的：go.ricepia.jp の DNS と https を確かめる（ricepia.jp 本体が変わっていないことも）
+name: DNS check
+on:
+  push:
+    branches:
+      - claude/confident-turing-etepui
+    paths:
+      - .github/workflows/dns-check.yml
+permissions:
+  contents: read
+jobs:
+  dig:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          for ns in ns1.dns.ne.jp 8.8.8.8 1.1.1.1; do
+            echo "== @$ns"
+            for q in "CNAME go.ricepia.jp" "A go.ricepia.jp" "A ricepia.jp" "CNAME www.ricepia.jp" "MX ricepia.jp" "TXT ricepia.jp" "CNAME mail.ricepia.jp"; do
+              printf '%-22s ' "$q"; dig +short @$ns $q | tr '\n' ' '; echo
+            done
+          done
+          echo "== https://ricepia.jp/"; curl -sS -o /dev/null -w '%{http_code} %{size_download}\n' https://ricepia.jp/ || true
+          echo "== https://go.ricepia.jp/"; curl -sS -o /tmp/go.html -w '%{http_code} %{size_download}\n' https://go.ricepia.jp/ || true
+          grep -o '<title>[^<]*' /tmp/go.html 2>/dev/null || true

@@ -372,11 +372,18 @@ function npcPages(n) {
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
   return pages;
 }
+// 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
+function npcSpot(n) {
+  const P = window.nishioPixel;
+  if (!P || !document.body.classList.contains('px')) return n;
+  const t = P.npcTile(n);
+  return t.ok ? P.toLatLng(t.x + 0.5, t.y + 0.5) : n;
+}
 // 話しかける（近くにいれば話す。はじめてなら +10pt）。戻り値：{ html, near }
 function talkNpc(id, page = 0) {
   const n = placeNpcs().find(x => x.id === id);
   if (!n) return null;
-  const d = me ? dist(me, n) : Infinity, lim = demo ? NPC_TALK_M.play : NPC_TALK_M.walk;
+  const d = me ? dist(me, npcSpot(n)) : Infinity, lim = demo ? NPC_TALK_M.play : NPC_TALK_M.walk;
   const head = `<div class="popup npc"><h4>${NPC_LOOK[n.look] || '🙂'} ${esc(n.name)}</h4><p class="npc-at">${esc(n.spotName)}のそば</p>`;
   if (driving) return { near: false, html: `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
   if (d > lim) {
@@ -428,7 +435,7 @@ document.addEventListener('click', e => {
   }
   const mv = e.target.closest('[data-move-npc]');
   const n = mv && demo && placeNpcs().find(x => x.id === mv.dataset.moveNpc);
-  if (n) { map.closePopup(); follow = false; onFix(n.lat - 12 / 111320, n.lng, 5, Date.now()); }
+  if (n) { const p = npcSpot(n); map.closePopup(); follow = false; onFix(p.lat - 12 / 111320, p.lng, 5, Date.now()); }
 });
 
 /* ---------- 現在地 ---------- */

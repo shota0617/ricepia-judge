@@ -54,7 +54,40 @@ function toItems(json) {
   return items;
 }
 
-const api = { buildQuery, catOf, toItems };
+// 街並みの目印（コンビニ・スーパー・ガソリンスタンドなど）。西尾の人が見て「あそこだ」と分かるように、名前つきで地図に出す
+const LANDMARK_QUERY = `[out:json][timeout:120];
+area["name"="西尾市"]["admin_level"="7"]->.a;
+(
+  nwr["shop"~"^(convenience|supermarket|mall|department_store|doityourself|hardware|furniture|chemist|drugstore|electronics|books|clothes|car|bakery|confectionery|tea)$"]["name"](area.a);
+  nwr["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office)$"]["name"](area.a);
+);
+out center tags;`;
+function landmarkKind(t) {
+  const s = t.shop || '', a = t.amenity || '';
+  if (s === 'convenience') return 'konbini';
+  if (/^(supermarket|mall|department_store)$/.test(s)) return 'super';
+  if (/^(doityourself|hardware|furniture)$/.test(s)) return 'home';
+  if (/^(chemist|drugstore)$/.test(s) || a === 'pharmacy') return 'drug';
+  if (a === 'fuel') return 'fuel';
+  if (a === 'bank') return 'bank';
+  if (a === 'post_office') return 'post';
+  if (/^(restaurant|fast_food)$/.test(a)) return 'food';
+  if (a === 'cafe' || /^(bakery|confectionery|tea)$/.test(s)) return 'cafe';
+  return 'store';
+}
+// [緯度, 経度, 種類, 名前] の一覧
+function toLandmarks(json) {
+  const out = [];
+  for (const el of json.elements || []) {
+    const t = el.tags || {};
+    const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
+    if (!t.name || lat == null || lng == null) continue;
+    out.push([+lat.toFixed(6), +lng.toFixed(6), landmarkKind(t), String(t.name).slice(0, 30)]);
+  }
+  return out;
+}
+
+const api = { buildQuery, catOf, toItems, LANDMARK_QUERY, landmarkKind, toLandmarks };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.NSG_OSM = api;
 })(typeof window !== 'undefined' ? window : globalThis);

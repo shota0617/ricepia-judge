@@ -4,7 +4,7 @@
     {
       "id": "kondo-beikoku",
       "shop": true,
-      "url": "https://ricepia.jp/",
+      "url": "https://ricepia.jp/?utm_source=nishio-go&utm_medium=game&utm_campaign=spot",
       "area": "nishio",
       "name": "近藤米穀店（本店）",
       "icon": "🍚",
@@ -18,7 +18,7 @@
     {
       "id": "ricepia",
       "shop": true,
-      "url": "https://ricepia.jp/",
+      "url": "https://ricepia.jp/?utm_source=nishio-go&utm_medium=game&utm_campaign=spot",
       "area": "nishio",
       "name": "らいすぴあ・秀幸",
       "icon": "🌾",

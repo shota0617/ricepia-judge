@@ -81,6 +81,9 @@
   <h3>📜 今日のおさんぽクエスト</h3>
   <ul class="list" id="questList"></ul>
   <div class="stats" id="stats"></div>
+  <h3>📅 今月・来月の西尾のおまつり・行事</h3>
+  <ul class="list" id="eventList"></ul>
+  <p class="note src">出典：<a href="https://nishiokanko.com/eventpage" target="_blank" rel="noopener">西尾観光（西尾市観光協会）</a>・<a href="https://www.city.nishio.aichi.jp/sportskanko/kanko/index.html" target="_blank" rel="noopener">西尾市公式ウェブサイト</a>。日にちは変わることがあるので、お出かけ前に確かめてください。</p>
   <h3>地区ごとのめぐり具合</h3>
   <ul class="list" id="areaList"></ul>
   <h3>📖 西尾まめちしき <small id="factCount"></small></h3>
@@ -165,7 +168,9 @@
       <li>⭐ 注目スポット（西尾城跡・岩瀬文庫など）は <b>ボーナス</b></li>
       <li>🆕 はじめて行くスポットは <b>初訪問ボーナス</b></li>
       <li>👣 歩いた距離・📅 連続日数でもポイント</li>
+      <li>📜 毎日かわる「今日のクエスト」と、今月のおまつりの会場めぐり</li>
     </ul>
+    <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
     <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
     <button type="button" class="btn big mode-pick" id="startBtn">🚶 あるいて遊ぶ<small>位置情報を使って、実際に西尾のまちを歩きます</small></button>
@@ -194,6 +199,7 @@
 <div class="reward" id="reward" aria-live="assertive"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="nishio-go/events.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/pixel.js"></script>
 </body>

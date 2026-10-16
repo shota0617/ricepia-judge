@@ -32,6 +32,7 @@ process.on('exit', () => fs.rmSync(tmp, { recursive: true, force: true }));
 function curl(url, body, headerPath, contentType) {
   const a = ['-sS', '--max-time', '120', '-X', 'POST', '-H', 'Content-Type: ' + contentType, '--data-binary', '@-', '-w', '\n%{http_code}', url];
   if (headerPath) a.splice(0, 0, '-H', '@' + headerPath);
+  a.unshift('-q'); // 最初の引数で ~/.curlrc を読ませない（トレース設定などで認証情報がログに残るのを防ぐ）
   const out = execFileSync('curl', a, { input: body, encoding: 'utf8', maxBuffer: 64 << 20 });
   const i = out.lastIndexOf('\n');
   return { status: Number(out.slice(i + 1)), json: out.slice(0, i) ? JSON.parse(out.slice(0, i)) : {} };

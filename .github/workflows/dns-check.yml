@@ -1,0 +1,21 @@
+# 一時的：go.ricepia.jp と古いアドレスの転送を確かめる
+name: DNS check
+on:
+  push:
+    branches:
+      - claude/confident-turing-etepui
+    paths:
+      - .github/workflows/dns-check.yml
+permissions:
+  contents: read
+jobs:
+  dig:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          sleep 60
+          for u in "https://ricepia-judge.vercel.app/nishio-go.html?utm_source=test" https://go.ricepia.jp/ https://go.ricepia.jp/nishio-go/privacy.html https://ricepia-judge.vercel.app/ https://ricepia.jp/; do
+            printf '%-70s ' "$u"; curl -sS -o /tmp/p.html --max-time 25 -w '%{http_code} %{size_download} -> %{redirect_url}\n' "$u" || echo
+            grep -o '<link rel="canonical"[^>]*>' /tmp/p.html | head -1
+          done

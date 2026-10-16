@@ -99,7 +99,7 @@ function loadState() {
   return s && s.v === 1 ? Object.assign(freshState(), s) : freshState();
 }
 let S = loadState();
-const modeListeners = [];   // 本番／デモの切り替えを知らせる先（pixel.js）
+const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('記録を保存できませんでした（ブラウザの保存領域を確認してください）'); };
 
 /* ---------- 地図 ---------- */
@@ -334,7 +334,7 @@ function popupHtml(s) {
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
-    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（デモ）</button>` : ''}</div>`;
+    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}</div>`;
 }
 
 function renderMarkers() {
@@ -401,7 +401,7 @@ function startGps() {
     pos => { if (!demo) onFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp || Date.now()); },
     err => {
       gpsError = err.code === 1
-        ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「せってい」→デモモードでも試せます）。'
+        ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「🎮 操作して移動」なら位置情報なしで遊べます）。'
         : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報を取得できませんでした。電波の良い屋外でお試しください。';
       refreshNearby();
     },
@@ -412,7 +412,7 @@ function stopGps() { if (watchId != null) { navigator.geolocation.clearWatch(wat
 /* ---------- 歩いた距離 ---------- */
 function trackWalk(p) {
   if (demo) {
-    // デモ：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする
+    // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする
     if (lastWalk) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d); }
     lastWalk = p;
     return;
@@ -541,7 +541,7 @@ function refreshNearby() {
   }
 
   const msgs = [];
-  if (demo) msgs.push(document.body.classList.contains('px') ? '🟡 デモモード：十字ボタン（矢印キー）で歩く' : '🟡 デモモード：地図をタップして移動');
+  if (demo) msgs.push(document.body.classList.contains('px') ? '🎮 十字ボタン（矢印キー）で歩く' : '🎮 地図をタップして移動');
   else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
@@ -617,7 +617,7 @@ function renderHeader() {
   $('lvNum').textContent = lv;
   $('lvFill').style.width = Math.min(100, ((S.total - lo) / (hi - lo)) * 100) + '%';
   $('ptsNum').textContent = S.points.toLocaleString();
-  $('demoTag').hidden = !demo;
+  document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.setAttribute('aria-pressed', String((b.dataset.mode === 'demo') === demo)));
 }
 
 let toastTimer;
@@ -718,7 +718,7 @@ async function loadRewards() {
   } catch (e) { /* 特典なしで続行 */ }
   updateRewardsTab();
 }
-// 本番は active の特典だけ。デモでは無効の特典も「サンプル」として試せる
+// あるいて移動では active の特典だけ。操作して移動では無効の特典も「サンプル」として試せる
 const visibleRewards = () => rewardCfg.rewards.filter(r => r.active || demo);
 function updateRewardsTab() {
   const has = visibleRewards().length > 0;
@@ -731,7 +731,7 @@ const usedToday = rid => S.coupons.filter(c => c.rid === rid && ymd(new Date(c.t
 function renderRewards() {
   $('walletPts').textContent = S.points.toLocaleString();
   $('rewardNote').textContent = demo
-    ? 'デモモード：サンプルの特典で交換の流れを試せます（デモのクーポンはお店では使えません）。'
+    ? '操作して移動：サンプルの特典で交換の流れを試せます（このクーポンはお店では使えません。お店のとくてんは「あるいて移動」で）。'
     : `交換すると、その場でクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に交換してください。`;
   $('rewardList').innerHTML = visibleRewards().map(r => {
     const limit = r.perDay && usedToday(r.id) >= r.perDay;
@@ -783,7 +783,7 @@ function tickCoupon() {
   if (!c) { closeCoupon(); return; }
   const st = couponState(c);
   const d = new Date();
-  $('cpShop').textContent = c.demo ? 'デモ（お店では使えません）' : rewardCfg.shop;
+  $('cpShop').textContent = c.demo ? '操作モード（お店では使えません）' : rewardCfg.shop;
   $('cpName').textContent = c.name;
   $('cpCode').textContent = `No. ${c.code}`;
   $('cpClock').textContent = `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
@@ -815,7 +815,7 @@ $('couponList').addEventListener('click', e => {
 /* いまのGPS（お店などのスポットを登録するときに、その場で座標を取れるように） */
 function renderGpsInfo() {
   $('gpsInfo').textContent = !me ? (gpsError || 'まだ位置が取れていません')
-    : `${me.lat.toFixed(6)}, ${me.lng.toFixed(6)}（${demo ? 'デモの位置' : `誤差 約${Math.round(me.acc)}m`}）`;
+    : `${me.lat.toFixed(6)}, ${me.lng.toFixed(6)}（${demo ? '操作して移動した位置' : `誤差 約${Math.round(me.acc)}m`}）`;
   $('copyGps').disabled = !me;
 }
 $('copyGps').addEventListener('click', async () => {
@@ -858,6 +858,7 @@ $('locateBtn').addEventListener('click', () => {
 
 /* モード切替 */
 function setMode(isDemo) {
+  const here = !demo && me ? me : null;   // 歩いていた場所から操作を始める（まだ位置がなければ地図のまん中）
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
@@ -865,7 +866,7 @@ function setMode(isDemo) {
   if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
-    const c = map.getCenter();
+    const c = here || map.getCenter();
     onFix(c.lat, c.lng, 5, Date.now());
   } else {
     startGps();
@@ -890,7 +891,14 @@ document.addEventListener('click', e => {
   follow = false;
   onFix(s.lat, s.lng, 5, Date.now());
 });
-$('demoToggle').addEventListener('change', e => { setMode(e.target.checked); toast(demo ? `デモモードにしました（${document.body.classList.contains('px') ? '十字ボタンで歩く' : '地図タップで移動'}）` : '本番モードにしました'); });
+function switchMode(isDemo) {
+  if (isDemo === demo) return;
+  setMode(isDemo);
+  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? '十字ボタンで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
+    : '🚶 あるいて移動にしました（位置情報を使います）');
+}
+$('demoToggle').addEventListener('change', e => switchMode(e.target.checked));
+document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode === 'demo')));
 
 $('reloadSpots').addEventListener('click', async e => {
   const btn = e.currentTarget;
@@ -902,10 +910,13 @@ $('reloadSpots').addEventListener('click', async e => {
   finally { btn.disabled = false; }
 });
 $('resetBtn').addEventListener('click', () => {
-  if (!confirm(`${demo ? 'デモ' : '本番'}モードのポイントと記録をすべて削除します。よろしいですか？`)) return;
+  if (!confirm(`「${demo ? '操作して移動' : 'あるいて移動'}」のポイントと記録をすべて削除します。よろしいですか？`)) return;
   S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
   toast('記録を削除しました');
 });
+
+/* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、十字ボタンや丸ボタンが隠れないようにする */
+if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--sheet-h', $('sheet').offsetHeight + 'px')).observe($('sheet'));
 
 /* はじめに */
 function begin(isDemo) {
@@ -913,8 +924,8 @@ function begin(isDemo) {
   $('intro').hidden = true;
   setMode(isDemo);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? 'デモモード：＋で歩く地図にして、十字ボタン（矢印キー）で歩きます'
-    : 'デモモード：地図をタップするとその場所へ移動します');
+    ? '🎮 ＋で歩く地図にして、十字ボタン（矢印キー）で歩きます'
+    : '🎮 地図をタップするとその場所へ移動します');
 }
 $('startBtn').addEventListener('click', () => begin(false));
 $('demoBtn').addEventListener('click', () => begin(true));

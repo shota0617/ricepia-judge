@@ -1,5 +1,8 @@
 {
   "rewrites": [
     { "source": "/", "has": [{ "type": "host", "value": "go.ricepia.jp" }], "destination": "/nishio-go.html" }
+  ],
+  "redirects": [
+    { "source": "/nishio-go.html", "has": [{ "type": "host", "value": "ricepia-judge.vercel.app" }], "destination": "https://go.ricepia.jp/", "permanent": true }
   ]
 }

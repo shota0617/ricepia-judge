@@ -857,6 +857,7 @@ const ART = {
     '..knwwknnkwwnk..', '..knwwknnkwwnk..', '..knnnnnnnnnnk..', '..knnnkNNknnnk..', '..knnnkNNknnnk..', '.kkkkkkkkkkkkkk.', '.kggggggggggggk.', '.kkkkkkkkkkkkkk.'],
   town: ['................', '......kkkk......', '.....krrrrk.....', '....krrrrrrk....', '...krrrrrrrrk...', '..krrrrrrrrrrk..', '.kkkkkkkkkkkkkk.', '..kwwwwwwwwwwk..',
     '..kwbbwwwwbbwk..', '..kwbbwwwwbbwk..', '..kwwwwkkwwwwk..', '..kwwwwkNkwwwk..', '..kwwwwkNkwwwk..', '..kkkkkkkkkkkk..', '................', '................'],
+  treasure: ['................', '................', '...kkkkkkkkkk...', '..kyrrrrrrrryk..', '..krrrrrrrrrrk..', '..kyrrrrrrrryk..', '..kkkkkkkkkkkk..', '..kyyyyyyyyyyk..', '..kRRRRkkRRRRk..', '..kRrrkyykrrRk..', '..kRrrrkkrrrRk..', '..kRrrrrrrrrRk..', '..kyyyyyyyyyyk..', '..kkkkkkkkkkkk..', '................', '................'],   // 道ばたのたからばこ（赤と金）
   chest: ['................', '................', '................', '...kkkkkkkkkk...', '..knnnnnnnnnnk..', '..knNNNNNNNNnk..', '..knnnnnnnnnnk..', '..kkkkkyykkkkk..',
     '..knnnkyyknnnk..', '..knnnnkknnnnk..', '..knNNNNNNNNnk..', '..knnnnnnnnnnk..', '..kkkkkkkkkkkk..', '................', '................', '................'],
 };
@@ -963,7 +964,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -1008,6 +1009,13 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
+  }
+  // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
+  for (const c of G.liveChests()) {
+    const p = toTile(c.lat, c.lng), hop = f ? Math.round(T / 8) : 0, sh = c.at ? T * 0.9 : 0;   // スポットに置いたものは右上にずらす
+    const sx = Math.round(ox + p.x * T - T / 2 + sh), sy = Math.round(oy + p.y * T - T / 2 - sh) - hop;
+    if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
+    ctx.drawImage(spotSprites.treasure[0], sx, sy, T, T);
   }
   // 目標スポットのチェックイン範囲（点線の円）
   const target = G.selected || nearest;
@@ -1354,6 +1362,71 @@ function snapDemoStart() {
     }
   }
 }
+/* ---------- たからばこ ----------
+   400m四方（50マス）の区画ごとに、日付から決まる場所に1〜2個置く（同じ日・同じモードなら、だれが見ても同じ）。
+   ・操作して移動：画面の中だけの冒険なので、区画の中の道や小道に置く
+   ・あるいて移動：実際にそこへ歩いていくので、道や小道（地図データでは車道や私有地の通路と見分けられない）には置かない。
+     チェックインのスポットになっている名前のある公園・神社・お寺・城跡・海岸・展望地そのものに置く
+     （ゲームがもともと案内している場所なので、そこより危ない所へは行かせない。絵はスポットと重ならないよう少しずらす）
+   地図やスポットがまだ届いていない区画は、届いてから置く。開けたかどうかは game.js が覚える */
+const CHEST_CELL = 50, PUBLIC_KINDS = new Set(['park', 'shrine', 'temple', 'castle', 'beach', 'view']);
+let chests = [], chestKey = '', chestCells = new Map();
+const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const seededRnd = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+// (x0, y0) からまわり r マスで、ok なマスをいちばん近い順に探す。地図が届いていないマスに当たったら undefined（あとで）
+function nearTile(x0, y0, r, ok) {
+  for (let d = 0; d <= r; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) !== d) continue;
+    const c = codeAt(x0 + dx, y0 + dy);
+    if (c === C.X) return undefined;
+    if (ok(c, d)) return [x0 + dx, y0 + dy];
+  }
+  return null;
+}
+function chestCell(i, j, date, walking) {
+  const rnd = seededRnd(hashStr(`chest:${walking ? 'walk' : 'play'}:${date}:${i}:${j}`)), out = [];
+  const add = (t, k, pts) => { const ll = toLatLng(t[0] + 0.5, t[1] + 0.5); out.push({ id: `${date}:${i}:${j}:${k}`, lat: ll.lat, lng: ll.lng, pts, mode: 'play' }); };
+  if (walking) {
+    if (!G.spots.length) return null;   // スポットがまだ届いていない
+    const x0 = i * CHEST_CELL, y0 = j * CHEST_CELL;
+    const parks = G.spots.filter(s => PUBLIC_KINDS.has(s.kind || s.cat)).map(s => ({ s, t: toTile(s.lat, s.lng) }))
+      .filter(p => p.t.x >= x0 && p.t.x < x0 + CHEST_CELL && p.t.y >= y0 && p.t.y < y0 + CHEST_CELL)
+      .sort((a, b) => (a.s.id < b.s.id ? -1 : 1));
+    for (let k = 0; k < 2 && parks.length; k++) {
+      const p = parks.splice(Math.floor(rnd() * parks.length), 1)[0], pts = 10 + Math.floor(rnd() * 3) * 10;
+      out.push({ id: `${date}:${i}:${j}:${k}:${p.s.id}`, lat: p.s.lat, lng: p.s.lng, pts, at: p.s.name, mode: 'walk' });
+    }
+    return out;
+  }
+  for (let k = 0; k < 2; k++) {
+    const fx = rnd(), fy = rnd(), pts = 10 + Math.floor(rnd() * 3) * 10, want = k === 0 || rnd() < 0.5;
+    if (!want) continue;
+    const t = nearTile(Math.floor((i + fx) * CHEST_CELL), Math.floor((j + fy) * CHEST_CELL), 8, c => c === C.R || c === C.D);
+    if (t === undefined) return null;
+    if (t) add(t, k, pts);
+  }
+  return out;
+}
+// どの地図を見ていても（ふつうの地図・せかいちずでも）、主人公のまわりの区画を読み込んでたからばこを置く
+function updateChests() {
+  if (!G.me) return;
+  // あるいて移動の置き場所はスポットしだいなので、スポットの一覧が入れ替わったら（読み込み直しも）置き直す
+  const date = G.ymd(), key = date + (G.demo ? ':play' : ':walk:' + G.spotsVersion);
+  if (key !== chestKey) { chestKey = key; chestCells = new Map(); }
+  const t = targetTile(), ci = Math.floor(t.x / CHEST_CELL), cj = Math.floor(t.y / CHEST_CELL), list = [];
+  for (let cy = Math.floor((cj - 1) * CHEST_CELL / CHUNK); cy <= Math.floor(((cj + 2) * CHEST_CELL - 1) / CHUNK); cy++)
+    for (let cx = Math.floor((ci - 1) * CHEST_CELL / CHUNK); cx <= Math.floor(((ci + 2) * CHEST_CELL - 1) / CHUNK); cx++) ensureChunk(cx, cy);
+  for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
+    const k = i + ',' + j;
+    if (!chestCells.has(k)) { const r = chestCell(i, j, date, !G.demo); if (r) chestCells.set(k, r); }
+    if (chestCells.has(k)) list.push(...chestCells.get(k));
+  }
+  const changed = list.length !== chests.length || list.some((c, n) => c.id !== chests[n].id);
+  chests = list;
+  if (changed) G.refreshNearby();   // 「たからばこが近くにある」の案内とふつうの地図の印を新しく
+}
+setInterval(updateChests, 2000);
+
 let holdTimer = null;
 document.querySelectorAll('#pxPad [data-dir]').forEach(b => {
   const start = e => { e.preventDefault(); step(b.dataset.dir); clearInterval(holdTimer); holdTimer = setInterval(() => step(b.dataset.dir), 180); };
@@ -1417,5 +1490,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; } };
+window.nishioPixel = { rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, demFor, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; } };
 })();

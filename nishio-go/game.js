@@ -11,7 +11,7 @@ const CFG = {
   accSlack: 25,             // GPS誤差として上乗せする最大値（m）
   maxAccuracy: 80,          // これより精度が悪いとチェックイン不可（m）
   cooldownMin: 60,          // 同じスポットに再チェックインできるまで（分）
-  pts: { normal: 10, featured: 30, first: 30, firstFeatured: 100, daily: 20, streakStep: 5, streakMax: 6 },
+  pts: { normal: 10, featured: 30, first: 30, firstFeatured: 100, daily: 20, streakStep: 5, streakMax: 6, questAll: 50 },
   walkUnitM: 100,           // 100m 歩くごとに
   walkUnitPts: 1,           //   1pt
   walkDailyCap: 100,        // 歩数ポイントは1日100ptまで
@@ -90,7 +90,7 @@ const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
-    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [] };
+    visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -122,7 +122,7 @@ let follow = true;
 map.on('dragstart', () => { follow = false; });
 
 /* ---------- スポット ---------- */
-let spots = [];
+let spots = [], spotsVersion = 0;   // spotsVersion：スポットの一覧を入れ替えるたびに1つ増やす（たからばこの置き直しに使う）
 let spotMeta = { osm: 0, osmAt: 0, osmOk: false, featured: 0 };
 const markers = new Map();
 
@@ -264,7 +264,7 @@ async function doLoadSpots(force) {
   } catch (e) { /* 注目スポットなしで続行 */ }
 
   // 取得を待つ間も、位置が確かな注目スポット（概算でないもの）は先に見せる
-  if (!spots.length) { spots = buildSpots(config.filter(c => c && !c.approx), []); renderMarkers(); refreshNearby(); }
+  if (!spots.length) { spots = buildSpots(config.filter(c => c && !c.approx), []); spotsVersion++; renderMarkers(); refreshNearby(); }
 
   let ok = false;
   const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
@@ -285,6 +285,7 @@ async function doLoadSpots(force) {
     }
   }
   spots = buildSpots(config, items || []);
+  spotsVersion++;
   spotMeta.osm = (items || []).length;
   spotMeta.featured = spots.filter(s => s.featured).length;
   spotMeta.loaded = true;
@@ -391,6 +392,7 @@ function onFix(lat, lng, acc, t) {
   trackWalk(p);
   renderMarkers();
   refreshNearby();
+  tryChest();
 }
 
 function startGps() {
@@ -430,6 +432,7 @@ function trackWalk(p) {
 }
 
 function addWalk(d) {
+  dayState().walked += d;
   S.walked += d;
   S.walkCarry += d;
   const today = ymd();
@@ -446,6 +449,7 @@ function addWalk(d) {
     gainPoints(gained);
   }
   save();
+  updateQuests();
   checkBadges();
 }
 
@@ -491,6 +495,14 @@ function checkin() {
     total += b; lines.push(`📅 今日のはじめて（${S.streak.days}日連続） +${b}`);
   }
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
+  const day = dayState();   // 今日のクエストの数え上げ
+  day.checkins++;
+  if (!day.spots.includes(s.id)) day.spots.push(s.id);
+  if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
+  // 「はじめてのスポット」：まだ行っていない所がもう無い人は、どのスポットでも達成にする
+  if (!v || spots.every(x => x.id === s.id || S.visits[x.id])) day.fresh++;
+  if (s.featured && s.area && !day.areas.includes(s.area)) day.areas.push(s.area);
+  if (s.shop) day.shop = 1;
   S.checkins++;
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   const lvUp = gainPoints(total);
@@ -502,12 +514,115 @@ function checkin() {
   map.closePopup();
   renderMarkers();
   refreshNearby();
+  updateQuests(1200);   // チェックインの知らせのあとにクエスト達成を知らせる
   setTimeout(checkBadges, 2700);
+}
+
+/* ---------- 今日のおさんぽクエスト ----------
+   毎日3つのお題（日付で決まるので、だれでも同じ日は同じお題）。ぜんぶ達成でボーナス。ときどき「当店に寄る」も出る */
+// お題は日付だけで決める（読み込み中のデータに左右されない）。その日の地区は船のいらない本土の4地区から（佐久島は渡船が要るので出さない）
+const QUEST_AREAS = [{ id: 'nishio', name: '西尾', icon: '🍵' }, { id: 'isshiki', name: '一色', icon: '🐟' }, { id: 'kira', name: '吉良', icon: '♨️' }, { id: 'hazu', name: '幡豆', icon: '⛰️' }];
+const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const seeded = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+function dayState() {
+  if (!S.day || S.day.date !== ymd()) S.day = { date: ymd(), walked: 0, checkins: 0, spots: [], shrine: 0, fresh: 0, areas: [], shop: 0, chests: [], done: [], bonus: false };
+  if (!S.day.spots) S.day.spots = [];
+  return S.day;
+}
+function todaysQuests() {
+  const date = ymd(), rnd = seeded(hashStr('quest:' + date));
+  const area = QUEST_AREAS[Math.floor(rnd() * QUEST_AREAS.length)];
+  const pool = [
+    { id: 'spots2', icon: '📍', text: 'ちがうスポットを2か所めぐる', goal: 2, pts: 40, val: d => d.spots.length },
+    { id: 'shrine', icon: '⛩️', text: '神社かお寺にチェックインする', goal: 1, pts: 40, val: d => d.shrine },
+    { id: 'walk500', icon: '👣', text: '500m歩く', goal: 500, pts: 30, val: d => Math.floor(d.walked), unit: 'm' },
+    { id: 'chest2', icon: '🎁', text: 'たからばこを2つ開ける', goal: 2, pts: 30, val: d => d.chests.length },
+    { id: 'fresh', icon: '🆕', text: 'はじめてのスポットに行く', goal: 1, pts: 40, val: d => d.fresh },
+  ];
+  pool.push({ id: 'area', icon: area.icon, text: `${area.name}の注目スポットに行く`, goal: 1, pts: 60, val: d => d.areas.includes(area.id) ? 1 : 0 });
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const qs = pool.slice(0, 3);
+  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（らいすぴあ・秀幸／近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
+  return qs;
+}
+// 達成の判定と記録はすぐに行う（モードを切り替えても、達成したモードの記録に入る）。知らせだけ delay ミリ秒あとに出す
+function updateQuests(delay = 0) {
+  const d = dayState(), qs = todaysQuests(), done = [];
+  let gained = 0;
+  for (const q of qs) if (!d.done.includes(q.id) && q.val(d) >= q.goal) {
+    d.done.push(q.id); gained += q.pts; done.push(q.text);
+    S.log.unshift({ type: 'quest', t: Date.now(), pts: q.pts, name: `クエスト「${q.text}」`, icon: '📜' });
+  }
+  if (!d.bonus && qs.every(q => d.done.includes(q.id))) {
+    d.bonus = true; gained += CFG.pts.questAll;
+    S.log.unshift({ type: 'quest', t: Date.now(), pts: CFG.pts.questAll, name: '今日のクエストをぜんぶ達成', icon: '🏆' });
+  }
+  if (!gained) return;
+  const lvUp = gainPoints(gained), all = d.bonus && done.length;
+  save();
+  refreshNearby();
+  setTimeout(() => {
+    sound.jingle(lvUp ? 'levelup' : 'checkin');
+    toast(`📜 クエスト達成！${done.map(t => `「${t}」`).join('')}${all ? '　🏆 今日のクエストぜんぶ達成！' : ''} +${gained}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+  }, delay);
+}
+
+/* ---------- たからばこ ----------
+   置き場所は pixel.js が決める（日付と400m四方の区画から。あるいて移動では公園・神社・お寺などのそばだけ）。近づくと開いて、ポイントと西尾のまめちしき */
+function factPool() {   // まめちしき：地区の豆知識・紹介文と、注目スポットの説明（どれも出典つきのデータから）
+  const m = new Map();
+  for (const a of areas) {
+    if (a.trivia) m.set(`a:${a.id}:t`, `${a.name}：${a.trivia}`);
+    if (a.summary) m.set(`a:${a.id}:s`, `${a.name}：${a.summary}`);
+  }
+  for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
+  return m;
+}
+// いまのモード・今日のたからばこで、まだ開けていないもの（モードを切り替えた直後や日付が変わった直後に、
+// 前のモード・前の日のたからばこを開けたり出したりしない）
+function liveChests() {
+  const list = (window.nishioPixel && nishioPixel.chests) || [], d = dayState(), mode = demo ? 'play' : 'walk';
+  return list.filter(c => c.mode === mode && c.id.startsWith(d.date + ':') && !d.chests.includes(c.id));
+}
+// ふつうの地図にも、まだ開けていないたからばこを 🎁 で出す
+const chestMarkers = new Map();
+function syncChestMarkers() {
+  const keep = new Set();
+  for (const c of liveChests()) {
+    keep.add(c.id);
+    const m = chestMarkers.get(c.id);
+    if (m) m.setLatLng([c.lat, c.lng]);   // 置き直されたら印も動かす
+    else chestMarkers.set(c.id, L.marker([c.lat, c.lng], { icon: L.divIcon({ className: '', html: '<div class="chest-mk">🎁</div>', iconSize: [30, 30], iconAnchor: c.at ? [-6, 34] : [15, 15] }), keyboard: false, interactive: false, zIndexOffset: 600 }).addTo(map));
+  }
+  for (const [id, m] of chestMarkers) if (!keep.has(id)) { m.remove(); chestMarkers.delete(id); }
+}
+function nearestChest() {
+  let best = null;
+  if (me) for (const c of liveChests()) { const d = dist(me, c); if (!best || d < best.d) best = { c, d }; }
+  return best;
+}
+function tryChest() {
+  // あるいて移動では、チェックインと同じく GPS の誤差が大きいときと乗り物で移動中は開けない
+  if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
+  const n = nearestChest();
+  if (!n || n.d > (demo ? 18 : 30)) return;
+  const c = n.c, d = dayState();
+  d.chests.push(c.id);
+  const facts = [...factPool().keys()], fresh = facts.filter(k => !S.facts.includes(k));
+  const pick = (fresh.length ? fresh : facts)[hashStr(c.id) % (fresh.length || facts.length || 1)];
+  if (pick && !S.facts.includes(pick)) S.facts.push(pick);
+  S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
+  const lvUp = gainPoints(c.pts);
+  save();
+  showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`], lvUp, pick ? factPool().get(pick) : '');
+  updateQuests(1500);
+  refreshNearby();
 }
 
 /* ---------- 近くのスポット ---------- */
 function refreshNearby() {
   const btn = $('spinBtn');
+  syncChestMarkers();   // 位置がまだないときも、前のモードのたからばこの印は消す
   if (!me) {
     btn.hidden = true;
     showRing(null);
@@ -541,7 +656,7 @@ function refreshNearby() {
   }
 
   const msgs = [];
-  if (demo) msgs.push(document.body.classList.contains('px') ? '🎮 十字ボタン（矢印キー）で歩く' : '🎮 地図をタップして移動');
+  if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
   else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
@@ -551,9 +666,11 @@ function refreshNearby() {
     else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
     else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
+  const ch = nearestChest();
+  if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${ch.c.at ? `${esc(ch.c.at)}・` : ''}${fmtM(ch.d)}）`);
   if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
-  const wd = S.walkDay.date === ymd() ? S.walkDay.pts : 0;
-  msgs.push(`👣 今日の歩きポイント ${wd}/${CFG.walkDailyCap}pt`);
+  const wd = S.walkDay.date === ymd() ? S.walkDay.pts : 0, qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length;
+  msgs.push(`📜 今日のクエスト ${qd}/3　👣 歩き ${wd}/${CFG.walkDailyCap}pt`);
   setStatus(msgs.join('<br/>'), true);
 }
 
@@ -627,17 +744,28 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
 }
 
-function showReward(total, name, lines, lvUp) {
+function showReward(total, name, lines, lvUp, fact) {
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   const el = $('reward');
-  el.innerHTML = `<div class="rw"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
+  el.innerHTML = `<div class="rw${fact ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
+    ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
     ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, 2700);
+  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, fact ? 7000 : 2700);
 }
 
 function renderLog() {
+  const day = dayState(), qs = todaysQuests();
+  $('questList').innerHTML = qs.map(q => {
+    const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
+    return `<li class="${done ? 'done' : ''}"><span class="ico">${done ? '✅' : q.icon}</span><span class="main"><b>${esc(q.text)}</b>
+      <small>${done ? '達成！' : `${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}`}</small></span><span class="num">+${q.pts}</span></li>`;
+  }).join('') + `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${day.bonus ? '🏆' : '🎯'}</span><span class="main"><b>3つぜんぶ達成</b><small>${day.bonus ? '達成！あしたも新しいクエストが出ます' : 'あしたは別のクエストになります'}</small></span><span class="num">+${CFG.pts.questAll}</span></li>`;
+  const facts = factPool();
+  $('factCount').textContent = `${S.facts.filter(k => facts.has(k)).length}/${facts.size}`;
+  $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">💡</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
+    || '<li class="empty">🎁たからばこを開けると、西尾のまめちしきが集まります</li>';
   const lv = levelOf(S.total);
   $('stats').innerHTML = [
     ['使えるポイント', S.points.toLocaleString(), 'pt'], ['レベル', `${lv}`, titleOf(lv)],
@@ -994,10 +1122,10 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { re
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   sound,
-  get state() { return S; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
+  get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG,
-  dist, cooldownLeft, inReach, reachOf, popupHtml, toast,
+  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },

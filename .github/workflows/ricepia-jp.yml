@@ -40,6 +40,15 @@ jobs:
             fi
           done
           echo "ok=true" >> "$GITHUB_OUTPUT"
+      - name: Fetch public page (https://ricepia.jp/)
+        # FTP につながらなくても、公開中のページ（ブラウザで見えるもの）は取れるので、案づくりに使えるよう出しておく
+        run: |
+          mkdir -p current
+          curl -fsSL --retry 2 -A 'Mozilla/5.0 (ricepia-jp workflow)' -D current/public.headers -o current/public.html https://ricepia.jp/
+          cat current/public.headers
+          echo "----- https://ricepia.jp/ ($(wc -c < current/public.html) bytes) -----"
+          cat current/public.html
+          echo "----- end -----"
       - name: Install lftp
         if: steps.secrets.outputs.ok == 'true'
         run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
@@ -49,15 +58,19 @@ jobs:
           mkdir -p current
           . .github/ricepia-ftp.sh
           # つながらないときに原因がログでわかるように、やりとりを出す（lftp はパスワードを XXXX と伏せて表示する）
-          ftp "debug 3; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"
+          if ! ftp "debug 3; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"; then
+            echo "::error::FTP でつながりませんでした。あいさつ（220）の直後に切られるときは、さくらの「国外IPアドレスフィルタ」で GitHub（海外）からの FTP が止められている可能性があります"
+            exit 1
+          fi
           echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
           cat current/index.html
           echo "----- end -----"
       - uses: actions/upload-artifact@v4
-        if: steps.secrets.outputs.ok == 'true'
+        if: always()
         with:
           name: ricepia-jp-current
-          path: current/index.html
+          path: current/
+          if-no-files-found: ignore
       - name: Deploy (only when ricepia-jp/deploy.txt says deploy)
         if: steps.secrets.outputs.ok == 'true'
         run: |

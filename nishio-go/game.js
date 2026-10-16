@@ -512,7 +512,7 @@ function checkin() {
   map.closePopup();
   renderMarkers();
   refreshNearby();
-  setTimeout(updateQuests, 1200);
+  updateQuests(1200);   // チェックインの知らせのあとにクエスト達成を知らせる
   setTimeout(checkBadges, 2700);
 }
 
@@ -543,7 +543,8 @@ function todaysQuests() {
   if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（らいすぴあ・秀幸／近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
   return qs;
 }
-function updateQuests() {
+// 達成の判定と記録はすぐに行う（モードを切り替えても、達成したモードの記録に入る）。知らせだけ delay ミリ秒あとに出す
+function updateQuests(delay = 0) {
   const d = dayState(), qs = todaysQuests(), done = [];
   let gained = 0;
   for (const q of qs) if (!d.done.includes(q.id) && q.val(d) >= q.goal) {
@@ -555,11 +556,13 @@ function updateQuests() {
     S.log.unshift({ type: 'quest', t: Date.now(), pts: CFG.pts.questAll, name: '今日のクエストをぜんぶ達成', icon: '🏆' });
   }
   if (!gained) return;
-  const lvUp = gainPoints(gained);
+  const lvUp = gainPoints(gained), all = d.bonus && done.length;
   save();
-  sound.jingle(lvUp ? 'levelup' : 'checkin');
-  toast(`📜 クエスト達成！${done.map(t => `「${t}」`).join('')}${d.bonus && done.length ? '　🏆 今日のクエストぜんぶ達成！' : ''} +${gained}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
   refreshNearby();
+  setTimeout(() => {
+    sound.jingle(lvUp ? 'levelup' : 'checkin');
+    toast(`📜 クエスト達成！${done.map(t => `「${t}」`).join('')}${all ? '　🏆 今日のクエストぜんぶ達成！' : ''} +${gained}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+  }, delay);
 }
 
 /* ---------- たからばこ ----------
@@ -603,7 +606,7 @@ function tryChest() {
   const lvUp = gainPoints(c.pts);
   save();
   showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`], lvUp, pick ? factPool().get(pick) : '');
-  setTimeout(updateQuests, 1500);
+  updateQuests(1500);
   refreshNearby();
 }
 

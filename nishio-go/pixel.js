@@ -1413,7 +1413,8 @@ function chestCell(i, j, date, walking) {
 // どの地図を見ていても（ふつうの地図・せかいちずでも）、主人公のまわりの区画を読み込んでたからばこを置く
 function updateChests() {
   if (!G.me) return;
-  const date = G.ymd(), key = date + (G.demo ? ':play' : ':walk');
+  // あるいて移動の置き場所はスポットしだいなので、スポットが読み込み直されたら（数が変わったら）置き直す
+  const date = G.ymd(), key = date + (G.demo ? ':play' : ':walk:' + G.spots.length);
   if (key !== chestKey) { chestKey = key; chestCells = new Map(); }
   const t = targetTile(), ci = Math.floor(t.x / CHEST_CELL), cj = Math.floor(t.y / CHEST_CELL), list = [];
   for (let cy = Math.floor((cj - 1) * CHEST_CELL / CHUNK); cy <= Math.floor(((cj + 2) * CHEST_CELL - 1) / CHUNK); cy++)

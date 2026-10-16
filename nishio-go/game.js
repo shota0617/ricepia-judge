@@ -1102,9 +1102,11 @@ if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.sty
 function begin(isDemo) {
   store.set('nsg_started', true);
   $('intro').hidden = true;
+  // 操作して遊ぶは、十字ボタンで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
+  if (isDemo && !document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
   setMode(isDemo);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? '🎮 ＋で歩く地図にして、十字ボタン（矢印キー）で歩きます'
+    ? '🎮 左下の十字ボタン（矢印キー）で歩きます'
     : '🎮 地図をタップするとその場所へ移動します');
 }
 $('startBtn').addEventListener('click', () => begin(false));

@@ -1000,7 +1000,7 @@ function decideGuide(from) {
   c = c || cands[0];
   // ほかの候補（行き先がちがうものを2つまで）。札をひらくと選べる
   const alts = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i).slice(0, 2)
-    .map(x => ({ kind: x.kind, id: x.id, name: x.name, lat: x.lat, lng: x.lng, why: x.why, by: x.by || by }));
+    .map(x => ({ kind: x.kind, id: x.id, name: x.name, lat: x.lat, lng: x.lng, why: x.why, by: x.by || by, refer: x.refer, weather: x.weather }));
   return { ...c, by: c.by || by, alts };
 }
 function setGuide(g) {
@@ -1073,7 +1073,8 @@ $('guide').addEventListener('click', e => {
 function pickAlt(i) {
   const g = S.guide, a = g && g.alts && g.alts[i];
   if (!a) return;
-  const keep = ({ kind, id, name, lat, lng, why, by, byId }) => ({ kind, id, name, lat, lng, why, by, byId });
+  // refer（人のすすめ：遠くても12kmまで決め直さない）・weather（雨宿り）も持ちこす。戻したときに すぐ決め直されないように
+  const keep = ({ kind, id, name, lat, lng, why, by, byId, refer, weather }) => ({ kind, id, name, lat, lng, why, by, byId, refer, weather });
   S.guide = { ...keep(a), mine: true, alts: [keep(g), ...g.alts.filter((_, k) => k !== i).map(keep)], t: Date.now() };   // 前の行き先も候補に残す（戻せる）
   save();
   $('guide').classList.remove('open');

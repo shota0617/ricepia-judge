@@ -52,5 +52,40 @@ window.NISHIO_EVENTS = {
     { id: 'kurokabe', name: '黒壁運動', months: [2], when: '2月第1日曜日', place: '佐久島', spot: 'kurokabe' },
     { id: 'setsubun', name: '節分会（豆まき）', months: [1, 2], when: '節分の直前の日曜日', place: '勝山寺', spot: 'shozanji' },
     { id: 'himatsuri', name: '鳥羽の火祭り', months: [2], when: '2月第2日曜日', place: '鳥羽神明社', spot: 'toba-shinmei', desc: '約1200年続く、国の重要無形民俗文化財。' },
+  // ==== となりの市町（岡崎・安城・碧南・高浜・幸田・蒲郡。area にその市町の id。2026年10月に調査、出典は src） ====
+  // 岡崎
+    {"id": "okazaki-sakura", "area": "okazaki", "name": "岡崎の桜まつり", "months": [3, 4], "when": "3月下旬〜4月上旬", "place": "岡崎公園とそのまわり", "spot": "okazaki-castle", "desc": "日本さくら名所100選の岡崎公園と周辺に、約800本のソメイヨシノがさき、夜はライトアップもあります。", "src": "https://tabi-mag.jp/okazaki-sakurafes/"},
+    {"id": "okazaki-ieyasu-gyoretsu", "area": "okazaki", "name": "家康行列", "months": [4], "when": "4月（桜まつりのメイン行事。2026年は4月5日）", "place": "伊賀八幡宮〜乙川河川敷", "spot": "okazaki-iga-hachimangu", "desc": "家康公と徳川四天王などの三河武士団が、馬といっしょに町の中心を歩きます。", "src": "https://aichinow.pref.aichi.jp/events/detail/90/"},
+    {"id": "okazaki-hanabi", "area": "okazaki", "name": "岡崎城下家康公夏まつり花火大会", "months": [8], "when": "8月はじめの土曜日（2026年は8月1日）", "place": "乙川（殿橋下流）河畔・矢作川河畔", "spot": "okazaki-castle", "desc": "仕掛け花火や金魚花火、スターマインなどが、岡崎城の近くの川で打ち上がります。", "src": "https://aichinow.pref.aichi.jp/events/detail/1602/"},
+    {"id": "okazaki-oni-matsuri", "area": "okazaki", "name": "瀧山寺鬼まつり", "months": [2], "when": "旧暦の正月7日に近い土曜日", "place": "瀧山寺", "spot": "okazaki-takisanji", "desc": "天下泰平と五穀豊穣をいのるまつりで、30をこえる大きな松明を本堂に持ちこみ、鬼がおどります。", "src": "https://tabi-mag.jp/takisanji-himatsuri/"},
+    {"id": "okazaki-iwazu-ume", "area": "okazaki", "name": "岩津天満宮 梅まつり", "months": [2, 3], "when": "2月上旬〜3月中旬", "place": "岩津天満宮", "spot": "okazaki-iwazu-tenmangu", "desc": "東山梅苑などで、全国の有名な天満宮からおくられた梅の木も見られます。", "src": "https://aichinow.pref.aichi.jp/events/detail/2047/"},
+    {"id": "okazaki-okudono-rose", "area": "okazaki", "name": "奥殿陣屋 バラまつり", "months": [5, 6], "when": "5月中旬〜6月中旬", "place": "奥殿陣屋", "spot": "okazaki-okudono-jinya", "desc": "入場無料で、園内のあちこちでバラが楽しめます。", "src": "https://aichinow.pref.aichi.jp/events/detail/2962/"},
+    {"id": "okazaki-rokusho-setsubun", "area": "okazaki", "name": "六所神社 節分祭", "months": [2], "when": "2月の節分のころ", "place": "六所神社", "spot": "okazaki-rokusho-jinja", "src": "https://aichinow.pref.aichi.jp/tw/events/detail/2022/"},
+    {"id": "okazaki-kuragari-koyo", "area": "okazaki", "name": "くらがり渓谷紅葉まつり", "months": [11], "when": "11月ごろ（紅葉の見ごろは11月中旬〜12月上旬）", "place": "くらがり渓谷", "spot": "okazaki-kuragari", "desc": "カエデやケヤキなどが色づく渓谷で行われる、秋のまつりです。", "src": "https://aichinow.pref.aichi.jp/events/detail/1777/"},
+  // 安城
+    {"id": "anjo-sakura", "area": "anjo", "name": "安城桜まつり", "months": [3, 4], "when": "3月中旬〜4月上旬（2026年は3月13日〜4月7日）", "place": "安城公園・城山公園・日の出公園など", "spot": "anjo-park", "desc": "市内の公園で桜を楽しむおまつり。安城公園には屋台も出る。", "src": "https://aichinow.pref.aichi.jp/events/detail/1299/"},
+    {"id": "anjo-tanabata", "area": "anjo", "name": "安城七夕まつり", "months": [8], "when": "8月第1週の金・土・日（2026年は8月7日〜9日）", "place": "JR安城駅周辺の市街地一帯", "spot": "anjo-station", "desc": "1954年に駅のまわりの商店街の人たちが始めた、夏の大きなおまつり。", "src": "https://aichinow.pref.aichi.jp/events/detail/136/"},
+    {"id": "anjo-denpark-winter", "area": "anjo", "name": "デンパーク ウィンターフェスティバル", "months": [11, 12, 1], "when": "11月下旬〜1月中旬（2025年度は11月21日〜1月12日）", "place": "デンパーク", "spot": "anjo-denpark", "desc": "建物の壁を使ったプロジェクションマッピングや、温室のクリスマスフラワーショーがある冬のイベント。", "src": "https://aichinow.pref.aichi.jp/events/detail/1845/"},
+  // 碧南
+    {"id": "hekinan-ninjin-day", "area": "hekinan", "name": "碧南人参の日", "months": [1], "when": "1月23日", "place": "碧南市内", "spot": null, "desc": "「いい（1）にん（2）じん（3）」の語呂合わせで、JAあいち中央碧南人参部会が決めた記念日。", "src": "http://www.city.hekinan.lg.jp/soshiki/keizai_kankyo/nogyo_suisan/regional_promotion/16655.html"},
+    {"id": "hekinan-toshogu-sairei", "area": "hekinan", "name": "称名寺東照宮祭礼", "months": [5], "when": "毎年5月5日", "place": "称名寺", "spot": "hekinan-shomyoji", "desc": "竹千代の名づけで知られる称名寺のおまつりで、お茶会などもひらかれる。", "src": "https://aichinow.pref.aichi.jp/events/detail/1233/"},
+    {"id": "hekinan-hanashobu", "area": "hekinan", "name": "花しょうぶまつり", "months": [5, 6], "when": "5月下旬〜6月上旬", "place": "油ヶ淵花しょうぶ園・応仁寺", "spot": "hekinan-oninji", "desc": "市の花・花しょうぶが80品種・1万3千株さき、期間中は応仁寺の本堂も開かれる。", "src": "https://aichinow.pref.aichi.jp/events/detail/1535/"},
+    {"id": "hekinan-rosenki", "area": "hekinan", "name": "浜風臘扇忌", "months": [6], "when": "毎年6月6日", "place": "西方寺", "spot": "hekinan-saihoji", "desc": "西方寺でなくなった清沢満之をしのぶ法要。", "src": "https://iko-yo.net/facilities/55857"},
+    {"id": "hekinan-minato-hanabi", "area": "hekinan", "name": "衣浦みなとまつり花火大会", "months": [7], "when": "7月下旬（2025年は7月26日）", "place": "衣浦港", "spot": null, "desc": "衣浦港のまわりの半田市・碧南市・武豊町が、順番に会場になる花火大会。", "src": "https://aichinow.pref.aichi.jp/events/detail/1062/"},
+    {"id": "hekinan-teramachi-walking", "area": "hekinan", "name": "大浜てらまちウォーキング", "months": [10], "when": "10月中旬〜下旬の日曜日", "place": "大浜てらまち", "spot": null, "desc": "大浜の古い町なみを歩くイベントで、十ヶ寺めぐりのスタンプラリーやステージなどがある。", "src": "https://aichinow.pref.aichi.jp/events/detail/1795/"},
+  // 高浜
+    {"id": "takahama-oyama-sakura", "area": "takahama", "name": "大山千本桜 ライトアップ", "months": [3, 4], "when": "3月下旬〜4月上旬（2026年は3月23日〜4月5日）", "place": "大山緑地", "spot": "takahama-oyama", "desc": "千本桜の大山で、夜の桜を楽しめる。", "src": "https://aichinow.pref.aichi.jp/events/detail/2156/"},
+    {"id": "takahama-hanamatsuri", "area": "takahama", "name": "人形小路 花まつり", "months": [5], "when": "5月（2026年は5月9日・10日）", "place": "人形小路一帯（屋敷町）", "spot": "takahama-ningyo-koji", "desc": "白象のパレードやマルシェがあり、吉浜細工人形も公開される。", "src": "https://aichinow.pref.aichi.jp/events/detail/2183/"},
+    {"id": "takahama-tenno", "area": "takahama", "name": "天王祭・茅の輪くぐり", "months": [6, 7], "when": "6月末〜7月はじめごろ（2026年は6月28日）", "place": "春日神社", "spot": "takahama-kasuga", "desc": "茅で作った大きな輪をくぐって、のこり半年の健康を願う行事。", "src": "https://www.aichinow.pref.aichi.jp/events/detail/4108/"},
+    {"id": "takahama-omanto", "area": "takahama", "name": "おまんと（春日神社）", "months": [10], "when": "10月はじめの土・日（2026年は10月3日・4日）", "place": "春日神社", "spot": "takahama-kasuga", "desc": "丸太で組んだ馬場を走る馬に若者が飛びつく、約350年の歴史がある市の無形民俗文化財。", "src": "https://aichinow.pref.aichi.jp/events/detail/1109/"},
+    {"id": "takahama-onimichi-fes", "area": "takahama", "name": "鬼みちまつり", "months": [10], "when": "10月の土曜日（2025年は10月18日）", "place": "鬼みち沿道（かわら美術館・森前公園など）", "spot": "takahama-kawara-museum", "desc": "鬼瓦のまちの散策路「鬼みち」でひらかれるおまつり。", "src": "https://tabi-mag.jp/onimichifes/"},
+  // 幸田
+    {"id": "kota-takoage", "area": "kota", "name": "こうた凧揚げまつり", "months": [1], "when": "1月（2026年は1月11日）", "place": "菱池地内", "spot": "kota-hishiike", "desc": "小さな凧から大凧まで、手作りの凧が新春の空をいろどります。", "src": "https://aichinow.pref.aichi.jp/events/detail/149/"},
+    {"id": "kota-shidarezakura", "area": "kota", "name": "幸田しだれ桜まつり", "months": [4], "when": "4月1日〜15日", "place": "幸田文化広場（幸田文化公園）", "spot": "kota-bunka-hiroba", "desc": "しだれ桜約350本をはじめ、約500本の桜が見られます。", "src": "https://aichinow.pref.aichi.jp/events/detail/1112/"},
+    {"id": "kota-ajisai", "area": "kota", "name": "本光寺紫陽花まつり", "months": [6], "when": "6月（2026年は6月1日〜30日）", "place": "本光寺", "spot": "kota-honkoji", "desc": "約1万本のあじさいがさき、期間中は本堂も拝観できます。", "src": "https://aichinow.pref.aichi.jp/events/detail/1113/"},
+    {"id": "kota-hikoza", "area": "kota", "name": "幸田彦左まつり", "months": [7], "when": "7月最終土曜日（2026年は中止と案内）", "place": "幸田駅前通り", "spot": "kota-station", "desc": "郷土の英雄・大久保彦左衛門や一心太助にふんした仮装行列が、歩行者天国の駅前通りを練り歩きます。", "src": "https://aichinow.pref.aichi.jp/spots/detail/1357/"},
+    {"id": "kota-natsumatsuri", "area": "kota", "name": "こうた夏まつり", "months": [8], "when": "8月（2026年は8月15日）", "place": "ハッピネス・ヒル・幸田", "spot": "kota-happiness-hill", "desc": "町民総踊りや、手筒花火と打ち上げ花火の花火大会があります。", "src": "https://aichinow.pref.aichi.jp/events/detail/1525/"},
+    {"id": "kota-sangyo", "area": "kota", "name": "こうた産業まつり", "months": [11], "when": "11月第2日曜日（2026年は11月8日）", "place": "ハッピネス・ヒル・幸田", "spot": "kota-happiness-hill", "desc": "地元の農林産物の品評会や豚汁千人鍋、餅投げ大会などがあります。", "src": "https://aichinow.pref.aichi.jp/events/detail/2826/"},
+  // ==== となりの市町ここまで ====
   ],
 };

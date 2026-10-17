@@ -1,5 +1,5 @@
 {
-  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、shop: true は当店（地図で「当店」の札と専用の絵、お店のサイト url と道案内を出す）、area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島。地区ガイドと地区制覇バッジに使う）を指定できます。normal: true はふつうのスポット（注目スポットではない。OpenStreetMap にない社寺を Wikidata から足したもの）。",
+  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、shop: true は当店（地図で「当店」の札と専用の絵、お店のサイト url と道案内を出す）、area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島、となりの市町は okazaki 岡崎／anjo 安城／hekinan 碧南／takahama 高浜／kota 幸田／gamagori 蒲郡。地区ガイドと地区制覇バッジに使う）を指定できます。normal: true はふつうのスポット（注目スポットではない。OpenStreetMap にない社寺を Wikidata から足したもの）。",
   "spots": [
     {
       "id": "kondo-beikoku",
@@ -1310,6 +1310,1132 @@
       "cat": "shrine",
       "lat": 34.87201,
       "lng": 137.07049
+    },
+    {
+      "id": "okazaki-castle",
+      "area": "okazaki",
+      "name": "岡崎城（岡崎公園）",
+      "icon": "🏯",
+      "lat": 34.956389,
+      "lng": 137.158889,
+      "approx": false,
+      "match": [
+        "岡崎城",
+        "岡崎公園"
+      ],
+      "points": 50,
+      "cat": "castle",
+      "desc": "徳川家康が生まれた城。まわりは岡崎公園になっていて、2006年に日本100名城にえらばれました。",
+      "src": "https://en.wikipedia.org/wiki/Okazaki_Castle"
+    },
+    {
+      "id": "okazaki-daijuji",
+      "area": "okazaki",
+      "name": "大樹寺",
+      "icon": "🛕",
+      "lat": 34.9844,
+      "lng": 137.1653,
+      "approx": false,
+      "match": [
+        "大樹寺"
+      ],
+      "points": 50,
+      "cat": "temple",
+      "desc": "1475年に松平親忠がたてた、松平家と徳川将軍家の菩提寺。門のむこうに約3km先の岡崎城が見えます。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/38/"
+    },
+    {
+      "id": "okazaki-kakukyu",
+      "area": "okazaki",
+      "name": "カクキュー八丁味噌（八丁味噌の郷）",
+      "icon": "🫘",
+      "lat": 34.9547,
+      "lng": 137.1497,
+      "approx": true,
+      "match": [
+        "カクキュー",
+        "八丁味噌の郷"
+      ],
+      "points": 50,
+      "cat": "sight",
+      "desc": "八帖町で八丁味噌をつくる蔵元。工場見学は無料で、味噌蔵や史料館を見ることができます。",
+      "src": "https://rurubu.jp/andmore/spot/80023872"
+    },
+    {
+      "id": "okazaki-maruya",
+      "area": "okazaki",
+      "name": "まるや八丁味噌",
+      "icon": "🫘",
+      "lat": 34.9541,
+      "lng": 137.1503,
+      "approx": true,
+      "match": [
+        "まるや八丁味噌",
+        "まるや"
+      ],
+      "points": 40,
+      "cat": "sight",
+      "desc": "八丁味噌の蔵元。いま八丁味噌をつくっているのは、カクキューとまるやの2軒だけです。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1817/"
+    },
+    {
+      "id": "okazaki-iga-hachimangu",
+      "area": "okazaki",
+      "name": "伊賀八幡宮",
+      "icon": "⛩️",
+      "lat": 34.97143,
+      "lng": 137.16467,
+      "approx": true,
+      "match": [
+        "伊賀八幡宮"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "松平親忠がはじめたとされる神社。本殿や随神門、石橋が国の重要文化財で、夏は蓮池に花がさきます。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/2023/"
+    },
+    {
+      "id": "okazaki-takisanji",
+      "area": "okazaki",
+      "name": "瀧山寺（滝山寺）",
+      "icon": "🛕",
+      "lat": 34.988333,
+      "lng": 137.206111,
+      "approx": true,
+      "match": [
+        "瀧山寺",
+        "滝山寺"
+      ],
+      "points": 40,
+      "cat": "temple",
+      "desc": "源頼朝とゆかりの深いお寺。本堂は国の重要文化財で、冬の「鬼まつり」の火まつりで知られています。",
+      "src": "https://tabi-mag.jp/takisanji-himatsuri/"
+    },
+    {
+      "id": "okazaki-iwazu-tenmangu",
+      "area": "okazaki",
+      "name": "岩津天満宮",
+      "icon": "⛩️",
+      "lat": 35.0035,
+      "lng": 137.1745,
+      "approx": true,
+      "match": [
+        "岩津天満宮",
+        "岩津天神"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "学問の神様・菅原道真をまつる神社。合格をいのる人が一年中おまいりし、梅の季節はおよそ400本の梅がさきます。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/23/"
+    },
+    {
+      "id": "okazaki-rokusho-jinja",
+      "area": "okazaki",
+      "name": "六所神社",
+      "icon": "⛩️",
+      "lat": 34.949431,
+      "lng": 137.168442,
+      "approx": false,
+      "match": [
+        "六所神社"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "家康が生まれたとき、産土神としておまいりしたと伝わる神社。本殿や楼門などは国の重要文化財です。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1966/"
+    },
+    {
+      "id": "okazaki-okudono-jinya",
+      "area": "okazaki",
+      "name": "奥殿陣屋",
+      "icon": "🏯",
+      "lat": 35.02896,
+      "lng": 137.19477,
+      "approx": true,
+      "match": [
+        "奥殿陣屋"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "大給松平家の奥殿藩の陣屋あと。いまは書院や日本庭園がある公園で、季節ごとにバラなどの花がさきます。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1473/"
+    },
+    {
+      "id": "okazaki-higashi-park",
+      "area": "okazaki",
+      "name": "東公園",
+      "icon": "🐘",
+      "lat": 34.959,
+      "lng": 137.193,
+      "approx": true,
+      "match": [
+        "=東公園",
+        "岡崎市東公園"
+      ],
+      "points": 30,
+      "cat": "park",
+      "desc": "1983年に開園した入園無料の動物園がある公園。園内には洋館の旧本多忠次邸もあります。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1796/"
+    },
+    {
+      "id": "okazaki-honda-tei",
+      "area": "okazaki",
+      "name": "旧本多忠次邸",
+      "icon": "🏠",
+      "lat": 34.9585,
+      "lng": 137.1945,
+      "approx": true,
+      "match": [
+        "旧本多忠次邸"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "岡崎藩主・本多家の子孫、本多忠次が1932年に東京につくった洋館。2012年に東公園へうつされました。",
+      "src": "https://www.aichinow.pref.aichi.jp/spots/detail/1585/"
+    },
+    {
+      "id": "okazaki-minami-park",
+      "area": "okazaki",
+      "name": "南公園",
+      "icon": "🚂",
+      "lat": 34.929,
+      "lng": 137.165,
+      "approx": true,
+      "match": [
+        "=南公園",
+        "岡崎市南公園"
+      ],
+      "points": 30,
+      "cat": "park",
+      "desc": "遊園地や交通広場がある公園。交通広場にはゴーカート場があり、蒸気機関車D51 688号がおかれています。",
+      "src": "https://tabi-mag.jp/ai0451/"
+    },
+    {
+      "id": "okazaki-museum",
+      "area": "okazaki",
+      "name": "岡崎市美術博物館",
+      "icon": "🖼️",
+      "lat": 34.9475,
+      "lng": 137.21722,
+      "approx": true,
+      "match": [
+        "岡崎市美術博物館"
+      ],
+      "points": 30,
+      "cat": "museum",
+      "desc": "岡崎中央総合公園の中にある、美術と博物の2つを紹介する館。1996年7月6日に開館しました。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/3534/"
+    },
+    {
+      "id": "okazaki-higashi-okazaki-sta",
+      "area": "okazaki",
+      "name": "東岡崎駅",
+      "icon": "🚉",
+      "lat": 34.951858,
+      "lng": 137.167364,
+      "approx": false,
+      "match": [
+        "=東岡崎",
+        "=東岡崎駅"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "名鉄名古屋本線の駅で、1923年に開業しました。南口を出ると、すぐ近くに六所神社があります。",
+      "src": "https://en.wikipedia.org/wiki/Higashi_Okazaki_Station"
+    },
+    {
+      "id": "okazaki-okazaki-sta",
+      "area": "okazaki",
+      "name": "岡崎駅",
+      "icon": "🚉",
+      "lat": 34.925595,
+      "lng": 137.157311,
+      "approx": false,
+      "match": [
+        "=岡崎",
+        "=岡崎駅"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "JR東海道本線と愛知環状鉄道の駅。愛知環状鉄道は、この岡崎駅が南のはしの駅です。",
+      "src": "https://en.wikipedia.org/wiki/Okazaki_Station"
+    },
+    {
+      "id": "okazaki-shooji",
+      "area": "okazaki",
+      "name": "松應寺",
+      "icon": "🛕",
+      "lat": 34.96,
+      "lng": 137.166,
+      "approx": true,
+      "match": [
+        "松應寺",
+        "松応寺"
+      ],
+      "points": 20,
+      "cat": "temple",
+      "desc": "1560年に家康が、父・松平広忠のためにたてたと伝わるお寺。参道には木のアーケードの横丁があります。",
+      "src": "https://toretabi.jp/travel/teiban_vol16/01.html"
+    },
+    {
+      "id": "okazaki-hozoji",
+      "area": "okazaki",
+      "name": "法蔵寺",
+      "icon": "🛕",
+      "lat": 34.91,
+      "lng": 137.27,
+      "approx": true,
+      "match": [
+        "法蔵寺"
+      ],
+      "points": 20,
+      "cat": "temple",
+      "desc": "本宿町にある浄土宗のお寺。徳川家康が竹千代とよばれた子どものころ、ここで学んだと伝えられています。",
+      "src": "https://tabi-mag.jp/ai0267/"
+    },
+    {
+      "id": "okazaki-fujikawa-shuku",
+      "area": "okazaki",
+      "name": "道の駅 藤川宿",
+      "icon": "🌾",
+      "lat": 34.913,
+      "lng": 137.217,
+      "approx": true,
+      "match": [
+        "藤川宿"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "東海道五十三次の37番目の宿場・藤川宿にある道の駅。特産の「むらさき麦」をつかったうどんなどがあります。",
+      "src": "https://www.aichinow.pref.aichi.jp/spots/detail/1614/"
+    },
+    {
+      "id": "okazaki-kuragari",
+      "area": "okazaki",
+      "name": "くらがり渓谷",
+      "icon": "🍁",
+      "lat": 34.905,
+      "lng": 137.38,
+      "approx": true,
+      "match": [
+        "くらがり渓谷"
+      ],
+      "points": 30,
+      "cat": "view",
+      "desc": "石原町にある渓谷で、キャンプ場やマスつりがあります。紅葉は11月中旬から12月上旬が見ごろです。",
+      "src": "https://koyo.walkerplus.com/detail/ar0623e154630/"
+    },
+    {
+      "id": "okazaki-hongusan",
+      "area": "okazaki",
+      "name": "本宮山",
+      "icon": "⛰️",
+      "lat": 34.909761,
+      "lng": 137.420558,
+      "approx": true,
+      "match": [
+        "本宮山"
+      ],
+      "points": 30,
+      "cat": "view",
+      "desc": "岡崎市・豊川市・新城市にまたがる標高789mの山。山頂の近くに砥鹿神社の奥宮があります。",
+      "src": "https://en.wikipedia.org/wiki/Mount_Hong%C5%AB_(Aichi)"
+    },
+    {
+      "id": "anjo-denpark",
+      "area": "anjo",
+      "name": "デンパーク（安城産業文化公園）",
+      "icon": "🌷",
+      "lat": 34.9302,
+      "lng": 137.0586,
+      "approx": true,
+      "match": [
+        "デンパーク",
+        "安城産業文化公園"
+      ],
+      "points": 50,
+      "cat": "park",
+      "desc": "「日本デンマーク」と呼ばれた歴史にちなむ花の公園。1997年開園、広さ13.1ha。高さ19mの風車や花の大温室がある。",
+      "src": "https://www.pref.aichi.jp/uploaded/attachment/554128.pdf"
+    },
+    {
+      "id": "anjo-jozanen",
+      "area": "anjo",
+      "name": "丈山苑",
+      "icon": "🍁",
+      "lat": 34.9206,
+      "lng": 137.044,
+      "approx": true,
+      "match": [
+        "丈山苑"
+      ],
+      "points": 40,
+      "cat": "sight",
+      "desc": "江戸時代のはじめの文人・石川丈山が生まれた和泉町につくられた日本庭園。京都の詩仙堂をモデルに1996年に開苑した。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/122/"
+    },
+    {
+      "id": "anjo-honshoji",
+      "area": "anjo",
+      "name": "本證寺",
+      "icon": "🛕",
+      "lat": 34.8961,
+      "lng": 137.092,
+      "approx": true,
+      "match": [
+        "本證寺",
+        "本証寺"
+      ],
+      "points": 50,
+      "cat": "temple",
+      "desc": "二重の堀と土塁にかこまれた「城郭寺院」。三河一向一揆の拠点になったお寺で、2015年に国の史跡になった。",
+      "src": "https://online.bunka.go.jp/heritages/detail/278366"
+    },
+    {
+      "id": "anjo-castle",
+      "area": "anjo",
+      "name": "安祥城址",
+      "icon": "🏯",
+      "lat": 34.942,
+      "lng": 137.0938,
+      "approx": true,
+      "match": [
+        "安祥城"
+      ],
+      "points": 40,
+      "cat": "castle",
+      "desc": "安城松平家の四代が約50年のあいだ本拠にした、中世の平城のあと。いまは安祥城址公園になっている。",
+      "src": "https://www.city.anjo.aichi.jp/shisei/shisetsu/kyoikushisetsu/documents/ieyasukankokaido.pdf"
+    },
+    {
+      "id": "anjo-museum",
+      "area": "anjo",
+      "name": "安城市歴史博物館",
+      "icon": "🏛️",
+      "lat": 34.9433,
+      "lng": 137.0925,
+      "approx": true,
+      "match": [
+        "安城市歴史博物館"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "安祥城址公園にある博物館。1991年（平成3年）2月に開館し、矢作川流域の歴史を原始から現代まで学べる。",
+      "src": "https://www.city.anjo.aichi.jp/shisei/koho/202101/documents/12.pdf"
+    },
+    {
+      "id": "anjo-horiuchi-park",
+      "area": "anjo",
+      "name": "堀内公園",
+      "icon": "🎡",
+      "lat": 34.93,
+      "lng": 137.086,
+      "approx": true,
+      "match": [
+        "=堀内公園"
+      ],
+      "points": 30,
+      "cat": "park",
+      "desc": "入園無料の公園。高さ35mの大観覧車や電動汽車「メルヘン号」などの乗り物がある。名鉄の堀内公園駅のすぐそば。",
+      "src": "https://www.aichinow.pref.aichi.jp/spots/detail/2472/"
+    },
+    {
+      "id": "anjo-park",
+      "area": "anjo",
+      "name": "安城公園",
+      "icon": "🌸",
+      "lat": 34.9565,
+      "lng": 137.079,
+      "approx": true,
+      "match": [
+        "=安城公園"
+      ],
+      "points": 30,
+      "cat": "park",
+      "desc": "桜町にある公園。ソメイヨシノが約170本あり、市内でも有数の桜の名所。安城桜まつりの会場のひとつ。",
+      "src": "https://aichinow.pref.aichi.jp/events/detail/1299/"
+    },
+    {
+      "id": "anjo-futago-kofun",
+      "area": "anjo",
+      "name": "二子古墳",
+      "icon": "⛰️",
+      "lat": 34.9123,
+      "lng": 137.096,
+      "approx": true,
+      "match": [
+        "二子古墳"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "桜井町にある、この地方最大級の前方後円墳。桜井古墳群のひとつで、1927年（昭和2年）に国の史跡になった。",
+      "src": "https://www.city.anjo.aichi.jp/shisei/shisetsu/kyoikushisetsu/documents/1hozonkanrikeikakunomokuteki.pdf"
+    },
+    {
+      "id": "anjo-himeogawa-kofun",
+      "area": "anjo",
+      "name": "姫小川古墳",
+      "icon": "⛩️",
+      "lat": 34.9186,
+      "lng": 137.1072,
+      "approx": true,
+      "match": [
+        "姫小川古墳"
+      ],
+      "points": 30,
+      "cat": "historic",
+      "desc": "全長65mの古墳時代前期の前方後円墳で、市内で2番目に大きい。後円部に浅間神社の社殿が建つ。国の史跡。",
+      "src": "https://www.pref.aichi.jp/uploaded/attachment/553933.pdf"
+    },
+    {
+      "id": "anjo-station",
+      "area": "anjo",
+      "name": "安城駅（JR）",
+      "icon": "🚉",
+      "lat": 34.9579,
+      "lng": 137.087,
+      "approx": true,
+      "match": [
+        "=安城"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "JR東海道本線の駅。毎年8月の安城七夕まつりは、この駅のまわりの市街地一帯で開かれる。",
+      "src": "https://aichinow.pref.aichi.jp/events/detail/136/"
+    },
+    {
+      "id": "anjo-mikawa-anjo-station",
+      "area": "anjo",
+      "name": "三河安城駅",
+      "icon": "🚄",
+      "lat": 34.9686,
+      "lng": 137.0607,
+      "approx": true,
+      "match": [
+        "=三河安城"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "東海道新幹線の駅。地元が工事費を出した「請願駅」で、1988年3月13日に開業した。東海道本線の駅もある。",
+      "src": "https://tabi-mag.jp/mikawaanjost/"
+    },
+    {
+      "id": "anjo-minami-anjo-station",
+      "area": "anjo",
+      "name": "南安城駅",
+      "icon": "🚉",
+      "lat": 34.9449,
+      "lng": 137.08,
+      "approx": true,
+      "match": [
+        "=南安城"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "名鉄西尾線の駅。安城市歴史博物館や安祥城址へは、ここから東へ歩いて15分ほど。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/2894/"
+    },
+    {
+      "id": "anjo-cityhall",
+      "area": "anjo",
+      "name": "安城市役所",
+      "icon": "🏢",
+      "lat": 34.9589,
+      "lng": 137.0803,
+      "approx": true,
+      "match": [
+        "安城市役所"
+      ],
+      "points": 20,
+      "cat": "townhall",
+      "desc": "安城市の市役所（桜町）。安城市は1952年（昭和27年）5月5日に、愛知県で13番目の市になった。",
+      "src": "https://www.city.anjo.aichi.jp/shisei/gyoseishiryo/documents/r6seiso1shisei.pdf"
+    },
+    {
+      "id": "hekinan-aquarium",
+      "area": "hekinan",
+      "name": "碧南海浜水族館・碧南市青少年海の科学館",
+      "icon": "🐟",
+      "lat": 34.8765,
+      "lng": 136.974,
+      "approx": true,
+      "match": [
+        "碧南海浜水族館",
+        "青少年海の科学館"
+      ],
+      "points": 50,
+      "cat": "museum",
+      "desc": "1982年に開いた水族館。三河湾や伊勢湾の魚が泳ぐ200トンの大水槽があり、海の科学館もいっしょになっている。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/3073/"
+    },
+    {
+      "id": "hekinan-rinkai-park",
+      "area": "hekinan",
+      "name": "碧南市臨海公園",
+      "icon": "🌳",
+      "lat": 34.8758,
+      "lng": 136.973,
+      "approx": true,
+      "match": [
+        "臨海公園"
+      ],
+      "points": 30,
+      "cat": "park",
+      "desc": "碧南海浜水族館のすぐとなりにある公園。遊具があり、子どもも大人も自由に楽しめる市民のいこいの場。",
+      "src": "https://newt.net/jpn/aichi/mag-351777248794"
+    },
+    {
+      "id": "hekinan-akashi-park",
+      "area": "hekinan",
+      "name": "碧南市明石公園",
+      "icon": "🎡",
+      "lat": 34.9006,
+      "lng": 136.9812,
+      "approx": true,
+      "match": [
+        "明石公園"
+      ],
+      "points": 40,
+      "cat": "park",
+      "desc": "入園は無料。1回100円で乗れるゴーカートやメリーゴーランドのほか、衣浦港が見わたせる高さ30mの観覧車がある。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1015/"
+    },
+    {
+      "id": "hekinan-shomyoji",
+      "area": "hekinan",
+      "name": "称名寺",
+      "icon": "🛕",
+      "lat": 34.8701,
+      "lng": 136.9792,
+      "approx": true,
+      "match": [
+        "称名寺"
+      ],
+      "points": 40,
+      "cat": "temple",
+      "desc": "大浜てらまちのお寺。徳川家康の小さいころの名前「竹千代」を、このお寺の和尚さんが名づけたと伝わる。",
+      "src": "https://aichinow.pref.aichi.jp/events/detail/1233/"
+    },
+    {
+      "id": "hekinan-kaitokuji",
+      "area": "hekinan",
+      "name": "海徳寺",
+      "icon": "🛕",
+      "lat": 34.8722,
+      "lng": 136.9813,
+      "approx": true,
+      "match": [
+        "海徳寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "本尊の阿弥陀如来坐像は国の重要文化財。明治のはじめに、伊勢（三重県）の菩提山神宮寺から移されてきた。",
+      "src": "https://online.bunka.go.jp/db/heritages/detail/158558"
+    },
+    {
+      "id": "hekinan-saihoji",
+      "area": "hekinan",
+      "name": "西方寺（清澤満之記念館）",
+      "icon": "🛕",
+      "lat": 34.8731,
+      "lng": 136.9806,
+      "approx": true,
+      "match": [
+        "西方寺",
+        "清澤満之記念館",
+        "清沢満之記念館"
+      ],
+      "points": 40,
+      "cat": "temple",
+      "desc": "明治時代の宗教思想家・清沢満之が最後の日々をすごしたお寺。境内に清澤満之記念館がある。",
+      "src": "https://www.city.hekinan.lg.jp/city_info/photo_news/backnumber/2023/19961.html"
+    },
+    {
+      "id": "hekinan-kokonoe-mirin",
+      "area": "hekinan",
+      "name": "九重味淋",
+      "icon": "🍶",
+      "lat": 34.8737,
+      "lng": 136.9806,
+      "approx": true,
+      "match": [
+        "九重味淋",
+        "石川八郎治商店"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "1772年創業の本みりんの老舗。昔ながらの作り方を守る工場と資料館を、予約すれば無料で見学できる。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/2731/"
+    },
+    {
+      "id": "hekinan-fujii-museum",
+      "area": "hekinan",
+      "name": "碧南市藤井達吉現代美術館",
+      "icon": "🎨",
+      "lat": 34.873,
+      "lng": 136.9823,
+      "approx": true,
+      "match": [
+        "藤井達吉現代美術館"
+      ],
+      "points": 40,
+      "cat": "art",
+      "desc": "2008年4月5日、市制60周年の記念日に開館した市の美術館。旧商工会議所の建物を増改築して作られた。",
+      "src": "https://www.museum.or.jp/museum/16821"
+    },
+    {
+      "id": "hekinan-kumano",
+      "area": "hekinan",
+      "name": "大浜熊野大神社",
+      "icon": "⛩️",
+      "lat": 34.8617,
+      "lng": 136.9735,
+      "approx": true,
+      "match": [
+        "熊野大神社"
+      ],
+      "points": 30,
+      "cat": "shrine",
+      "desc": "大浜の宮町にある神社で「下の宮」ともよばれる。お正月には初もうでの神社としても知られている。",
+      "src": "https://weathernews.jp/hatsumoude/area/aichi/23209/"
+    },
+    {
+      "id": "hekinan-mugaen",
+      "area": "hekinan",
+      "name": "哲学たいけん村 無我苑",
+      "icon": "🧘",
+      "lat": 34.9102,
+      "lng": 137.0109,
+      "approx": true,
+      "match": [
+        "無我苑",
+        "哲学たいけん村"
+      ],
+      "points": 50,
+      "cat": "museum",
+      "desc": "「無我愛」をとなえた哲学者・伊藤証信にちなむ施設。1992年に開き、瞑想室のある瞑想回廊や茶室がある。",
+      "src": "http://www.city.hekinan.lg.jp/soshiki/kyouiku/bunkazai/1_3/1/4904.html"
+    },
+    {
+      "id": "hekinan-oninji",
+      "area": "hekinan",
+      "name": "応仁寺",
+      "icon": "🛕",
+      "lat": 34.9085,
+      "lng": 137.0118,
+      "approx": true,
+      "match": [
+        "応仁寺"
+      ],
+      "points": 30,
+      "cat": "temple",
+      "desc": "蓮如上人（1415〜1499年）が、この地方で教えを広めるための拠点にしたお寺。近くは花しょうぶの名所。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/2114/"
+    },
+    {
+      "id": "hekinan-aoi-park",
+      "area": "hekinan",
+      "name": "碧南市農業活性化センター あおいパーク",
+      "icon": "🥕",
+      "lat": 34.8519,
+      "lng": 136.968,
+      "approx": true,
+      "match": [
+        "あおいパーク",
+        "農業活性化センター"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "農業を元気にするための市の施設。野菜の直売所や、もぎとり体験ができる農園があり、にんじんの収穫体験もある。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1286/"
+    },
+    {
+      "id": "hekinan-station",
+      "area": "hekinan",
+      "name": "碧南駅",
+      "icon": "🚉",
+      "lat": 34.8738,
+      "lng": 136.9856,
+      "approx": false,
+      "match": [
+        "=碧南駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "名鉄三河線の駅。九重味淋まで歩いて約5分で、大浜てらまちや碧南海浜水族館へも歩いて行ける。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/2731/"
+    },
+    {
+      "id": "hekinan-chuo-station",
+      "area": "hekinan",
+      "name": "碧南中央駅",
+      "icon": "🚉",
+      "lat": 34.8873,
+      "lng": 136.9895,
+      "approx": false,
+      "match": [
+        "=碧南中央駅"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "名鉄三河線の駅。碧南市をめぐる名鉄ハイキングでは、この駅がスタートの受付になったこともある。",
+      "src": "https://www.meitetsu.co.jp/hiking/railroad/detail/data1/1288692_8044.html"
+    },
+    {
+      "id": "hekinan-cityhall",
+      "area": "hekinan",
+      "name": "碧南市役所",
+      "icon": "🏛️",
+      "lat": 34.8848,
+      "lng": 136.9937,
+      "approx": false,
+      "match": [
+        "碧南市役所"
+      ],
+      "points": 20,
+      "cat": "townhall",
+      "desc": "碧南市の市役所。碧南市は1948年に大浜町・新川町・棚尾町・旭村が合併し、県内で10番目の市になった。",
+      "src": "https://www.city.hekinan.lg.jp/material/files/group/1/1951_17.pdf"
+    },
+    {
+      "id": "takahama-kawara-museum",
+      "area": "takahama",
+      "name": "高浜市やきものの里 かわら美術館",
+      "icon": "🏛️",
+      "lat": 34.919718,
+      "lng": 136.984048,
+      "approx": true,
+      "match": [
+        "かわら美術館"
+      ],
+      "points": 50,
+      "cat": "museum",
+      "desc": "三州瓦の中心的な産地・高浜にある、かわら美術館と市立図書館がいっしょになった施設。瓦の歴史や文様を紹介する。",
+      "src": "https://www.museum.or.jp/museum/4733"
+    },
+    {
+      "id": "takahama-minato-station",
+      "area": "takahama",
+      "name": "高浜港駅",
+      "icon": "👹",
+      "lat": 34.9163,
+      "lng": 136.9897,
+      "approx": true,
+      "match": [
+        "=高浜港"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "名鉄三河線の駅で、散策路「鬼みち」の出発点。駅前のニコニコ鬼広場には、日本一大きいとされる古代鬼面の鬼瓦がある。",
+      "src": "https://tabi-mag.jp/ai0387/"
+    },
+    {
+      "id": "takahama-kasuga",
+      "area": "takahama",
+      "name": "春日神社",
+      "icon": "⛩️",
+      "lat": 34.931,
+      "lng": 136.9905,
+      "approx": true,
+      "match": [
+        "春日神社"
+      ],
+      "points": 40,
+      "cat": "shrine",
+      "desc": "春日町にある神社。秋の「おまんと」や、夏の天王祭・茅の輪くぐりが行われる。三河高浜駅から歩いて約10分。",
+      "src": "https://www.aichinow.pref.aichi.jp/events/detail/4108/"
+    },
+    {
+      "id": "takahama-oyama",
+      "area": "takahama",
+      "name": "大山緑地",
+      "icon": "🌸",
+      "lat": 34.9335,
+      "lng": 136.987,
+      "approx": true,
+      "match": [
+        "大山緑地"
+      ],
+      "points": 40,
+      "cat": "park",
+      "desc": "衣浦湾や市街地を見わたせる高台の公園。約1,000本のソメイヨシノがさき、「千本桜の大山」と呼ばれる。",
+      "src": "https://aichinow.pref.aichi.jp/events/detail/2156/"
+    },
+    {
+      "id": "takahama-ningyo-koji",
+      "area": "takahama",
+      "name": "人形小路",
+      "icon": "🎎",
+      "lat": 34.9405,
+      "lng": 136.9905,
+      "approx": true,
+      "match": [
+        "人形小路"
+      ],
+      "points": 40,
+      "cat": "sight",
+      "desc": "吉浜細工人形の等身大の人形の舞台9つをめぐる、約800mの散歩道。名鉄吉浜駅から歩いて約3分。",
+      "src": "https://allabout.co.jp/gm/gc/66396/"
+    },
+    {
+      "id": "takahama-mikawa-takahama-station",
+      "area": "takahama",
+      "name": "三河高浜駅",
+      "icon": "🚉",
+      "lat": 34.9265,
+      "lng": 136.9905,
+      "approx": true,
+      "match": [
+        "=三河高浜"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "名鉄三河線の駅。散策路「鬼みち」のゴールで、大山緑地や春日神社へは歩いて約10分。",
+      "src": "https://tabi-mag.jp/ai0387/"
+    },
+    {
+      "id": "takahama-yoshihama-station",
+      "area": "takahama",
+      "name": "吉浜駅",
+      "icon": "🚉",
+      "lat": 34.9396,
+      "lng": 136.993,
+      "approx": true,
+      "match": [
+        "=吉浜"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "名鉄三河線の駅。吉浜細工人形が見られる人形小路まで、歩いて約3分。",
+      "src": "https://allabout.co.jp/gm/gc/66396/"
+    },
+    {
+      "id": "takahama-cityhall",
+      "area": "takahama",
+      "name": "高浜市役所",
+      "icon": "🏢",
+      "lat": 34.927598,
+      "lng": 136.987297,
+      "approx": false,
+      "match": [
+        "高浜市役所"
+      ],
+      "points": 20,
+      "cat": "townhall",
+      "desc": "高浜市の市役所。高浜市の面積は13.11km²で、愛知県の中でも小さな市のひとつ。",
+      "src": "https://www.seikatsu-guide.com/keyword/1100/23/23227/"
+    },
+    {
+      "id": "kota-honkoji",
+      "area": "kota",
+      "name": "本光寺（あじさい寺）",
+      "icon": "🛕",
+      "lat": 34.837311,
+      "lng": 137.182125,
+      "approx": false,
+      "match": [
+        "本光寺"
+      ],
+      "points": 50,
+      "cat": "temple",
+      "desc": "1523年に深溝松平家の松平忠定が建てたお寺。約1万本のあじさいで「三河のあじさい寺」とよばれ、深溝松平家の墓所は国の史跡です。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/2752/"
+    },
+    {
+      "id": "kota-kyodo-shiryokan",
+      "area": "kota",
+      "name": "幸田町郷土資料館",
+      "icon": "🏛️",
+      "lat": 34.83864,
+      "lng": 137.179772,
+      "approx": false,
+      "match": [
+        "幸田町郷土資料館"
+      ],
+      "points": 30,
+      "cat": "museum",
+      "desc": "1977年に開館した町の資料館。菱池の干拓や深溝松平家の墓所などを紹介し、外には自衛隊の飛行機やヘリコプターがあります。入館無料。",
+      "src": "https://ja.wikipedia.org/wiki/%E5%B9%B8%E7%94%B0%E7%94%BA%E9%83%B7%E5%9C%9F%E8%B3%87%E6%96%99%E9%A4%A8"
+    },
+    {
+      "id": "kota-bunka-hiroba",
+      "area": "kota",
+      "name": "幸田文化広場（幸田文化公園）",
+      "icon": "🌸",
+      "lat": 34.854167,
+      "lng": 137.168611,
+      "approx": false,
+      "match": [
+        "幸田文化広場",
+        "幸田文化公園"
+      ],
+      "points": 40,
+      "cat": "park",
+      "desc": "1983年に開園した公園。シダレザクラ約350本をふくむ約500本の桜があり、春は「幸田しだれ桜まつり」の会場になります。",
+      "src": "https://aichinow.pref.aichi.jp/events/detail/1112/"
+    },
+    {
+      "id": "kota-michinoeki",
+      "area": "kota",
+      "name": "道の駅 筆柿の里・幸田",
+      "icon": "🛣️",
+      "lat": 34.848569,
+      "lng": 137.138229,
+      "approx": false,
+      "match": [
+        "筆柿の里"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "2009年4月4日に開業した国道23号の道の駅。名前のとおり筆柿の畑にかこまれていて、筆柿などの特産品を売っています。",
+      "src": "https://aichinow.pref.aichi.jp/spots/detail/1431/"
+    },
+    {
+      "id": "kota-hishiike",
+      "area": "kota",
+      "name": "菱池（干拓でできた田んぼ）",
+      "icon": "🌾",
+      "lat": 34.875275,
+      "lng": 137.160419,
+      "approx": true,
+      "match": [
+        "菱池"
+      ],
+      "points": 30,
+      "cat": "sight",
+      "desc": "むかしは大きな池でしたが、明治16年（1883年）に干拓が始まり、1886年に池のぜんぶが田んぼになりました。",
+      "src": "https://ja.wikipedia.org/wiki/%E8%8F%B1%E6%B1%A0_(%E6%B9%96%E6%B2%BC)"
+    },
+    {
+      "id": "kota-happiness-hill",
+      "area": "kota",
+      "name": "ハッピネス・ヒル・幸田（幸田町民会館）",
+      "icon": "🎭",
+      "lat": 34.872708,
+      "lng": 137.179643,
+      "approx": false,
+      "match": [
+        "幸田町民会館",
+        "ハッピネス・ヒル"
+      ],
+      "points": 20,
+      "cat": "sight",
+      "desc": "町民会館・町立図書館・町民プールが集まる場所。町民会館は1996年に開館し、こうた夏まつりや産業まつりの会場にもなります。",
+      "src": "https://ja.wikipedia.org/wiki/%E5%B9%B8%E7%94%B0%E7%94%BA%E6%B0%91%E4%BC%9A%E9%A4%A8"
+    },
+    {
+      "id": "kota-townhall",
+      "area": "kota",
+      "name": "幸田町役場",
+      "icon": "🏢",
+      "lat": 34.86447,
+      "lng": 137.16581,
+      "approx": false,
+      "match": [
+        "幸田町役場"
+      ],
+      "points": 20,
+      "cat": "townhall",
+      "desc": "幸田町の役場です。むかし池だった菱池と同じ、大字菱池（字元林）にあります。",
+      "src": "https://ja.wikipedia.org/wiki/%E5%B9%B8%E7%94%B0%E7%94%BA"
+    },
+    {
+      "id": "kota-station",
+      "area": "kota",
+      "name": "幸田駅",
+      "icon": "🚉",
+      "lat": 34.859962,
+      "lng": 137.164662,
+      "approx": false,
+      "match": [
+        "=幸田"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "1908年に開業した東海道本線の駅。福島県に広田駅があったので駅名を「幸田」にし、広田村も幸田村に名前をかえました。",
+      "src": "https://ja.wikipedia.org/wiki/%E5%B9%B8%E7%94%B0%E9%A7%85"
+    },
+    {
+      "id": "kota-sangane-station",
+      "area": "kota",
+      "name": "三ケ根駅",
+      "icon": "🚉",
+      "lat": 34.835688,
+      "lng": 137.177278,
+      "approx": false,
+      "match": [
+        "=三ケ根",
+        "=三ヶ根"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "1967年3月20日に開業した駅。地元がお金を出してつくった請願駅で、本光寺や郷土資料館まで歩いて行けます。",
+      "src": "https://ja.wikipedia.org/wiki/%E4%B8%89%E3%82%B1%E6%A0%B9%E9%A7%85"
+    },
+    {
+      "id": "kota-aimi-station",
+      "area": "kota",
+      "name": "相見駅",
+      "icon": "🚉",
+      "lat": 34.887685,
+      "lng": 137.160356,
+      "approx": false,
+      "match": [
+        "=相見"
+      ],
+      "points": 20,
+      "cat": "station",
+      "desc": "2012年3月17日に開業した東海道本線の駅。幸田駅・三ケ根駅につづく、町で3番目の駅です。",
+      "src": "https://ja.wikipedia.org/wiki/%E7%9B%B8%E8%A6%8B%E9%A7%85"
+    },
+    {
+      "id": "gamagori-takeshima",
+      "area": "gamagori",
+      "name": "竹島・八百富神社",
+      "icon": "⛩️",
+      "lat": 34.810528,
+      "lng": 137.231639,
+      "approx": false,
+      "match": [
+        "八百富神社",
+        "竹島"
+      ],
+      "points": 50,
+      "cat": "shrine",
+      "desc": "三河湾にうかぶ竹島にある神社。島へは長さ387mの竹島橋でわたれます。島の植物は1930年に国の天然記念物になりました。",
+      "src": "https://ja.wikipedia.org/wiki/%E5%85%AB%E7%99%BE%E5%AF%8C%E7%A5%9E%E7%A4%BE"
+    },
+    {
+      "id": "gamagori-aquarium",
+      "area": "gamagori",
+      "name": "竹島水族館",
+      "icon": "🐟",
+      "lat": 34.8152,
+      "lng": 137.2285,
+      "approx": true,
+      "match": [
+        "竹島水族館"
+      ],
+      "points": 40,
+      "cat": "museum",
+      "desc": "1956年に開館した蒲郡市の水族館。2024年に大きく改装し、深海の生きものの展示は日本でも有数の大きさになりました。",
+      "src": "https://ja.wikipedia.org/wiki/%E7%AB%B9%E5%B3%B6%E6%B0%B4%E6%97%8F%E9%A4%A8"
+    },
+    {
+      "id": "gamagori-station",
+      "area": "gamagori",
+      "name": "蒲郡駅",
+      "icon": "🚉",
+      "lat": 34.8256,
+      "lng": 137.2197,
+      "approx": true,
+      "match": [
+        "=蒲郡"
+      ],
+      "points": 30,
+      "cat": "station",
+      "desc": "1888年に開業したJR東海道本線の駅。名鉄蒲郡線の駅でもあり、名鉄は1936年に乗り入れました。",
+      "src": "https://ja.wikipedia.org/wiki/%E8%92%B2%E9%83%A1%E9%A7%85"
     }
   ]
 }

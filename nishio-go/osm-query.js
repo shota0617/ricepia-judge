@@ -6,9 +6,10 @@
 // 正規表現の記号は「任意の1文字」に（取得側は広め、照合は game.js で厳密に）
 const reEsc = t => t.replace(/[.*+?^${}()|[\]\\"']/g, '.');
 
+// 遊べる市町（西尾市と となりの市町。region.js と同じ）の中で探す
 // 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
 const buildQuery = names => `[out:json][timeout:90];
-area["name"="西尾市"]["admin_level"="7"]->.a;
+area["name"~"^(西尾市|岡崎市|安城市|碧南市|幸田町|蒲郡市|高浜市)$"]["admin_level"="7"]->.a;
 (
   nwr["amenity"="place_of_worship"]["name"](area.a);
   nwr["historic"]["name"](area.a);
@@ -56,7 +57,7 @@ function toItems(json) {
 
 // 街並みの目印（コンビニ・スーパー・ガソリンスタンドなど）。西尾の人が見て「あそこだ」と分かるように、名前つきで地図に出す
 const LANDMARK_QUERY = `[out:json][timeout:120];
-area["name"="西尾市"]["admin_level"="7"]->.a;
+area["name"~"^(西尾市|岡崎市|安城市|碧南市|幸田町|蒲郡市|高浜市)$"]["admin_level"="7"]->.a;
 (
   nwr["shop"~"^(convenience|supermarket|mall|department_store|doityourself|hardware|furniture|chemist|drugstore|electronics|books|clothes|car|bakery|confectionery|tea)$"]["name"](area.a);
   nwr["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office)$"]["name"](area.a);

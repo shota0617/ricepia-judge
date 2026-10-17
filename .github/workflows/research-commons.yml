@@ -1,0 +1,24 @@
+# 調査（一時的）：名所の写真を Wikimedia Commons から集める（ドット絵の参考）。結果を reference/ にコミットする
+name: Research Commons photos
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-turing-etepui]
+    paths: [.github/workflows/research-commons.yml, reference/commons-probe.js]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node reference/commons-probe.js
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reference/commons reference/commons.json; git commit -q -m "調査：名所の写真（Wikimedia Commons）（自動）" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done

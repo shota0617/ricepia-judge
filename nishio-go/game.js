@@ -350,7 +350,7 @@ function inReach(s) {
 function spotState(s) {
   const cls = ['spot'];
   if (s.featured) cls.push('feat');
-  if (s.shop) cls.push('shop');
+  if (s.shop) cls.push('shop', s.id === 'f-ricepia' ? 'shop-ricepia' : 'shop-kondo');   // 札は本物の看板と同じ色の店名（style.css）
   if (cooldownLeft(s) > 0) cls.push('cool');
   else if (inReach(s)) cls.push('near');
   if (S.visits[s.id]) cls.push('visited');
@@ -359,7 +359,8 @@ function spotState(s) {
 
 function makeIcon(s, cls) {
   const size = s.shop ? 50 : s.featured ? 42 : 34;
-  return L.divIcon({ className: '', html: `<div class="${cls}">${iconOf(s)}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+  const sign = s.shop ? ` data-sign="${esc(s.id === 'f-ricepia' ? 'らいすぴあ・秀幸' : '近藤米穀店')}"` : '';
+  return L.divIcon({ className: '', html: `<div class="${cls}"${sign}>${iconOf(s)}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
 function popupHtml(s) {
@@ -368,7 +369,7 @@ function popupHtml(s) {
   const left = cooldownLeft(s);
   const d = me ? fmtM(dist(me, s)) : '—';
   return `<div class="popup"><h4>${esc(s.name)}</h4>
-    <p>${s.shop ? '<span class="tag shop">🍚 当店（近藤米穀店）</span>' : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
+    <p>${s.shop ? '<span class="tag shop">🍚 当店（${esc(s.name)}）</span>' : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
@@ -789,7 +790,7 @@ function todaysQuests() {
   pool.push({ id: 'area', icon: area.icon, text: `${area.name}の注目スポットに行く`, goal: 1, pts: 60, val: d => d.areas.includes(area.id) ? 1 : 0 });
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const qs = pool.slice(0, 3);
-  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
+  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（近藤米穀店・らいすぴあ）に寄る', goal: 1, pts: 80, val: d => d.shop };
   // ときどき「今月の行事の会場に行く」（会場がスポットになっていて、船のいらない所だけ）
   const evs = monthEvents(new Date(date + 'T12:00:00')).filter(e => e.spot && !e.area && !ISLAND_SPOTS.has(e.spot)), er = seeded(hashStr('event:' + date));
   if (evs.length && qs[2].id !== 'shop' && er() < 0.4) {

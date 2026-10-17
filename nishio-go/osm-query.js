@@ -8,11 +8,15 @@ const reEsc = t => t.replace(/[.*+?^${}()|[\]\\"']/g, '.');
 
 // 近藤米穀店（本店）から半径15km（game.js の CFG.home。市町の外でも遊べる範囲）
 const HOME = { lat: 34.891717, lng: 137.059249, r: 15000 };
-// 遊べる範囲で探す：遊べる市町（西尾市と となりの市町。region.js と同じ）の中と、本店から15km（＋300m）の円の中
+// 遊べる範囲で探す：遊べる市町（西尾市と となりの市町。region.js と同じ）の中と、本店から15km（＋300m）の円を囲む長方形の中
+// （around より長方形のほうがサーバーの負担がずっと軽い。円の外の角に出たものは、game.js が遊べる範囲で絞る）
 const AREA = 'area["name"~"^(西尾市|岡崎市|安城市|碧南市|幸田町|蒲郡市|高浜市)$"]["admin_level"="7"]->.a;';
-const IN = ['(area.a)', `(around:${HOME.r + 300},${HOME.lat},${HOME.lng})`];
+const KM_LNG = 111.32 * Math.cos(HOME.lat * Math.PI / 180), R_KM = (HOME.r + 300) / 1000, f6 = v => v.toFixed(4);
+const BOX = `${f6(HOME.lat - R_KM / 111.32)},${f6(HOME.lng - R_KM / KM_LNG)},${f6(HOME.lat + R_KM / 111.32)},${f6(HOME.lng + R_KM / KM_LNG)}`;
+const IN = ['(area.a)', `(${BOX})`];
 const stmts = filters => filters.flatMap(f => IN.map(w => `\n  nwr${f}${w};`)).join('');
 // 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
+// （注目スポットはどれも遊べる市町の中なので、名前で探すのは市町の中だけ）
 const buildQuery = names => `[out:json][timeout:180];
 ${AREA}
 (${stmts([
@@ -25,8 +29,8 @@ ${AREA}
     '["natural"~"^(beach|peak|cape)$"]["name"]',
     '["waterway"="waterfall"]["name"]',
     '["man_made"="lighthouse"]["name"]',
-    ...(names.length ? [`["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"]`] : []),
-  ])}
+  ])}${names.length ? `
+  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : ''}
 );
 out center tags;`;
 

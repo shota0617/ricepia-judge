@@ -1187,11 +1187,11 @@ function guideReward(g) {
 // 行き先に着いたか（人のときは、話しかけたときに着いたことになり、その人の話で次が決まる）
 // 天気と行き先が合わなくなったら、まわりのようす（環境）で決めた行き先だけ決め直す（人のすすめ・お店の案内はそのまま）
 //   雨になった → 屋根のある所が見つかれば、そこへ。雨が止んだ → 雨宿りの案内をやめて、ふだんの行き先へ
-//   天気が届いたとき・スポットが読み込めたとき（屋根のある所が見つかるようになる）など、状況が変わったときだけ調べる
+//   天気が届いたとき・スポットが読み込めたとき・200mほど動いたとき（屋根のある所がすすめる範囲に入る）など、状況が変わったときだけ調べる
 function weatherGuide() {
   const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
   if (!g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
-  const key = `${wet}:${spots.length}:${g.id}`;
+  const key = `${wet}:${spots.length}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
   if (weatherGuide.key === key) return;
   weatherGuide.key = key;
   const next = decideGuide(null);

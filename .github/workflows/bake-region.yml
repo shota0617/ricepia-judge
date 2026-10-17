@@ -1,0 +1,36 @@
+# にしおさんぽGO：遊べる市町（西尾市と となりの市町）の境界を OpenStreetMap から作り直して、nishio-go/region.js をコミットする
+name: Bake Nishio region
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/bake-region.js
+      - .github/workflows/bake-region.yml
+permissions:
+  contents: write
+concurrency:
+  group: bake-region-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Bake region
+        run: node tools/bake-region.js
+      - name: Commit region.js
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nishio-go/region.js
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -m "にしおさんぽGO: 遊べる市町の境界を OpenStreetMap から作り直し（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          exit 1

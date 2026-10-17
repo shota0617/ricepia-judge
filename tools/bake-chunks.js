@@ -3,7 +3,8 @@
 // GitHub Actions（.github/workflows/bake-chunks.yml）で動かす。ゲームと同じ pixel.js の rasterize() を使うので、
 // 見た目はブラウザで作ったときと同じ。地図データは2×2区画（約2km四方）ずつまとめて取る。
 //   使い方: npm install --no-save playwright && npx playwright install chromium && node tools/bake-chunks.js
-//   ふだんは まだファイルのない区画だけ作る。全部作り直すときは BAKE_ALL=1（見た目の作り方を変えたとき）
+//   ふだんは まだファイルのない区画と、tools/chunks-version.txt の版が古い区画だけ作る（見た目の作り方を変えたら版を上げる）。
+//   1回の実行は BAKE_MINUTES（既定240分）まで。残りは次の実行で作る。BAKE_ALL=1 なら全部作り直す
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { ROOT, startServer, openBakePage } = require('./bake-common');
@@ -23,10 +24,13 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
         if (P.chunkInPlay(cx, cy)) out.push([cx, cy]);
     return out;
   });
-  // ふだんは まだ作っていない区画だけ作る（BAKE_ALL=1 のときは全部作り直す）。範囲の外になった古い区画は消す
+  // 範囲の外になった古い区画は消す
   const want = new Set(all.map(([cx, cy]) => cx + '_' + cy));
   for (const f of fs.existsSync(OUT) ? fs.readdirSync(OUT) : []) if (/^-?\d+_-?\d+\.json$/.test(f) && !want.has(f.slice(0, -5))) fs.rmSync(path.join(OUT, f));
-  const list = process.env.BAKE_ALL === '1' ? all : all.filter(([cx, cy]) => !fs.existsSync(path.join(OUT, cx + '_' + cy + '.json')));
+  // 作り直す区画：ファイルがない区画と、作ったときの版（cv。なければ1）が tools/chunks-version.txt と違う区画
+  const CV = Number(fs.readFileSync(path.join(ROOT, 'tools', 'chunks-version.txt'), 'utf8').trim()) || 1;
+  const stale = ([cx, cy]) => { try { return (JSON.parse(fs.readFileSync(path.join(OUT, cx + '_' + cy + '.json'), 'utf8')).cv || 1) !== CV; } catch (e) { return true; } };
+  const list = process.env.BAKE_ALL === '1' ? all : all.filter(stale);
   console.log(`遊べる範囲の区画 ${all.length} 個のうち、作るのは ${list.length} 個`);
   const blocks = new Map();
   for (const [cx, cy] of list) {
@@ -101,7 +105,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     if (!res) { failed += cs.length; cs.forEach(([cx, cy]) => drop(cx + '_' + cy)); continue; }
     for (const c of res.out) {
       if (c.skip) { failed++; drop(c.k); continue; }
-      fs.writeFileSync(path.join(OUT, c.k + '.json'), JSON.stringify({ v: 1, d: c.d, p: c.p }));
+      fs.writeFileSync(path.join(OUT, c.k + '.json'), JSON.stringify({ v: 1, cv: CV, d: c.d, p: c.p }));
       saved++; if (c.sea) sea++;
     }
     console.log(`  [${n}/${blocks.size}] ${bk}: ${res.els} 件 → ${res.out.length} 区画（${Math.round((Date.now() - t0) / 60000)}分）`);

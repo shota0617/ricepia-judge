@@ -93,7 +93,8 @@
 
 <!-- 記録 -->
 <section class="panel" id="panel-log" hidden>
-  <h2>きろく</h2>
+  <h2>きろく <button type="button" class="btn mini share-btn" id="shareLogBtn">📣 シェア</button></h2>
+  <div class="campaigns" id="campaignBox" hidden></div>
   <h3>📜 今日のおさんぽクエスト</h3>
   <ul class="list" id="questList"></ul>
   <div class="stats" id="stats"></div>
@@ -202,6 +203,24 @@
   </div>
 </div>
 
+<!-- シェア（SNS・LINE・画像） -->
+<div class="share" id="share" hidden role="dialog" aria-modal="true" aria-label="シェア">
+  <div class="share-box">
+    <h3>📣 にしおさんぽGOをシェア</h3>
+    <canvas id="shareCard" width="1200" height="630" aria-label="シェア用の画像"></canvas>
+    <p class="share-text" id="shareText"></p>
+    <div class="share-btns">
+      <button type="button" class="btn" data-share="native" id="shareNative" hidden>📱 シェアする</button>
+      <a class="btn" data-share="x" id="shareX" target="_blank" rel="noopener">𝕏 ポスト</a>
+      <a class="btn" data-share="line" id="shareLine" target="_blank" rel="noopener">LINE</a>
+      <a class="btn" data-share="facebook" id="shareFb" target="_blank" rel="noopener">Facebook</a>
+      <button type="button" class="btn" data-share="copy">🔗 コピー</button>
+      <button type="button" class="btn" data-share="image">🖼️ 画像を保存</button>
+    </div>
+    <button type="button" class="btn big" data-share="close">とじる</button>
+  </div>
+</div>
+
 <!-- 米屋の仕事：選別（目利き）と精米 -->
 <div class="mekiki" id="mekiki" hidden role="dialog" aria-modal="true" aria-label="選別と精米"><div class="mk-box" id="mkBox"></div></div>
 
@@ -236,5 +255,6 @@
 <script src="nishio-go/osm-query.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/pixel.js"></script>
+<script src="nishio-go/share.js"></script>
 </body>
 </html>

@@ -1,0 +1,52 @@
+# にしおさんぽGO：広告用の動画（縦長 9:16・mp4）と画像を、ほんとうのゲーム画面から作る（tools/make-promo.js）
+# 動画と画像は Actions の「Artifacts」から取り出す。画像は mkt/nishio-go/ にもコミットする
+name: Make Nishio promo
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/make-promo.js
+      - .github/workflows/make-promo.yml
+permissions:
+  contents: write
+concurrency:
+  group: make-promo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  promo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Playwright and ffmpeg
+        run: |
+          npm install --no-save --no-package-lock playwright@1.48.2
+          npx playwright install --with-deps chromium
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+      - name: Record promo
+        run: node tools/make-promo.js promo-out
+      - name: Convert to mp4
+        run: |
+          ffmpeg -y -loglevel error -i promo-out/nishio-go-9x16.webm -c:v libx264 -pix_fmt yuv420p -preset slow -crf 22 -movflags +faststart -an promo-out/nishio-go-9x16.mp4
+          ls -la promo-out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nishio-go-promo
+          path: promo-out/
+          retention-days: 30
+      - name: Commit stills
+        run: |
+          mkdir -p mkt/nishio-go && cp promo-out/*.png mkt/nishio-go/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mkt/nishio-go
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -q -m "にしおさんぽGO: 広告用の画像を作り直し（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          exit 1

@@ -180,7 +180,9 @@ function buildSpots(config, osmItems) {
       icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: hasPos && !!c.approx,
       points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '',
       area: typeof c.area === 'string' ? c.area : null,
-      shop: !!c.shop, url: typeof c.url === 'string' && /^https:\/\//.test(c.url) ? c.url : '' };
+      shop: !!c.shop, url: typeof c.url === 'string' && /^https:\/\//.test(c.url) ? c.url : '',
+      // 協賛スポット（地元のお店など）：名前・ひとこと・サイト（https のみ）
+      sponsor: c.sponsor && typeof c.sponsor.name === 'string' ? { name: String(c.sponsor.name), text: c.sponsor.text ? String(c.sponsor.text) : '', url: typeof c.sponsor.url === 'string' && /^https:\/\//.test(c.sponsor.url) ? c.sponsor.url : '' } : null };
     const match = matchesOf(c);
     const cands = match.length ? osm.filter(o => !used.has(o.id) && match.some(m => nameMatches(o.raw, m))) : [];
     let best = null;
@@ -337,6 +339,7 @@ function popupHtml(s) {
     <p>${s.shop ? '<span class="tag shop">🍚 当店（近藤米穀店）</span>' : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
+    ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">📅 ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     ${spotMeibutsu(s).map(m => `<p class="mb">${m.icon} <b>${esc(m.name)}</b>：${esc(m.note)}</p>`).join('')}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
@@ -597,6 +600,35 @@ function gainPoints(n) {
 let selected = null;   // シートに表示中のチェックイン候補
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
+/* ---------- キャンペーン（nishio-go/campaigns.json：お店の企画や広告と連動） ----------
+   active: true のものだけ本番で出す（false はサンプルとして「操作して遊ぶ」でだけ出す。とくてんと同じ）。
+   期間（from〜to）のあいだ、きろくの上に出し、bonus.shopCheckin があれば当店でのチェックインに1日1回ボーナス */
+let campaigns = [];
+async function loadCampaigns() {
+  try {
+    const res = await fetch('nishio-go/campaigns.json', { cache: 'no-cache' });
+    const j = res.ok ? await res.json() : null;
+    if (j && Array.isArray(j.campaigns)) campaigns = j.campaigns.filter(c => c && c.id && c.title && /^\d{4}-\d\d-\d\d$/.test(c.from) && /^\d{4}-\d\d-\d\d$/.test(c.to))
+      .map(c => ({ id: String(c.id), title: String(c.title), text: c.text ? String(c.text) : '', icon: c.icon ? String(c.icon) : '📣', from: c.from, to: c.to, active: c.active === true,
+        url: typeof c.url === 'string' && /^https:\/\//.test(c.url) ? c.url : '', shopBonus: Number(c.bonus && c.bonus.shopCheckin) > 0 ? Math.round(Number(c.bonus.shopCheckin)) : 0 }));
+  } catch (e) { /* キャンペーンなしで続ける */ }
+  renderCampaigns();
+}
+const liveCampaigns = () => { const d = ymd(); return campaigns.filter(c => (c.active || demo) && c.from <= d && d <= c.to); };
+// 広告・シェアから来た人を数えられるように、当店などへのリンクに UTM を付ける
+function utmUrl(u, campaign) {
+  try { const x = new URL(u); if (!x.searchParams.has('utm_source')) { x.searchParams.set('utm_source', 'nishio-go'); x.searchParams.set('utm_medium', 'game'); x.searchParams.set('utm_campaign', campaign); } return x.toString(); } catch (e) { return u; }
+}
+function renderCampaigns() {
+  const el = $('campaignBox');
+  if (!el) return;
+  const list = liveCampaigns();
+  el.hidden = !list.length;
+  el.innerHTML = list.map(c => `<div class="camp"><b>${esc(c.icon)} ${esc(c.title)}${c.active ? '' : '（サンプル）'}</b><small>${esc(c.from.slice(5).replace('-', '/'))}〜${esc(c.to.slice(5).replace('-', '/'))}</small>
+    ${c.text ? `<p>${esc(c.text)}</p>` : ''}${c.shopBonus ? `<p>🍚 期間中、当店でチェックインすると +${c.shopBonus}pt（1日1回）</p>` : ''}
+    ${c.url ? `<a class="btn mini" href="${esc(utmUrl(c.url, 'campaign_' + c.id))}" target="_blank" rel="noopener" data-camp="${esc(c.id)}">くわしく見る</a>` : ''}</div>`).join('');
+}
+
 const SHOP_NOTE = '西尾のお米屋さん（明治25年創業）。車に乗ったままお米を受け取れるドライブスルーや、24時間つかえるコイン精米所もあります。くわしくは ricepia.jp で。';
 function checkin() {
   const s = selected;
@@ -624,6 +656,14 @@ function checkin() {
     S.streak.max = Math.max(S.streak.max || 0, S.streak.days);
     const b = CFG.pts.daily + Math.min(S.streak.days - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
     total += b; lines.push(`📅 今日のはじめて（${S.streak.days}日連続） +${b}`);
+  }
+  // キャンペーン中は、当店でのチェックインに1日1回ボーナス
+  if (s.shop) for (const c of liveCampaigns()) {
+    const key = c.id + ':' + today;
+    if (!c.shopBonus || (S.campDone || []).includes(key)) continue;
+    S.campDone = [key, ...(S.campDone || [])].slice(0, 60);
+    total += c.shopBonus; lines.push(`${c.icon} ${c.title}${c.active ? '' : '（サンプル）'} +${c.shopBonus}`);
+    track('campaign_bonus', { campaign: c.id, mode: demo ? 'play' : 'walk' });
   }
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
   const day = dayState();   // 今日のクエストの数え上げ
@@ -970,6 +1010,7 @@ function renderMekiki() {
       ${bag}
       ${mk.reached.length ? `<p class="mk-goal">🌾 目標達成：${mk.reached.map(g => esc(g.name)).join('・')}　+${mk.pts}pt${mk.lvUp ? `　🎉 Lv${mk.lvUp}` : ''}</p>` : '<p class="mk-note">ポイントは米袋の目標に届いたときにもらえます</p>'}
       <p class="fact">💬 当店より：${esc(mk.tip)}</p>
+      ${mk.reached.length ? '<button type="button" class="btn" data-share-open="rice">📣 米袋をシェア</button>' : ''}
       <button type="button" class="btn big" data-mk="close">とじる</button>`;
   }
 }
@@ -1358,6 +1399,7 @@ function showReward(total, name, lines, lvUp, fact) {
 }
 
 function renderLog() {
+  renderCampaigns();
   const day = dayState(), qs = todaysQuests();
   $('questList').innerHTML = qs.map(q => {
     const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
@@ -1725,6 +1767,10 @@ function begin(isDemo) {
     ? '🎮 左下の十字ボタン（矢印キー）で歩きます'
     : '🎮 地図をタップするとその場所へ移動します');
 }
+document.addEventListener('click', e => {
+  const a = e.target.closest && e.target.closest('[data-sponsor],[data-camp]');
+  if (a) track(a.dataset.sponsor ? 'sponsor_link' : 'campaign_link', { id: a.dataset.sponsor || a.dataset.camp });
+});
 $('startBtn').addEventListener('click', () => begin(false));
 $('demoBtn').addEventListener('click', () => begin(true));
 
@@ -1733,6 +1779,7 @@ renderHeader();
 loadSpots(false);
 loadAreas();
 loadRewards();
+loadCampaigns();
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); } });
@@ -1743,6 +1790,21 @@ window.nishioGo = {
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, inPlay,
+  // share.js（シェア・広告からの来訪）から使う
+  begin, track, utmUrl, get campaigns() { return campaigns; }, liveCampaigns, renderCampaigns,
+  stats() {
+    const lv = levelOf(S.total), r = riceOf();
+    return { lv, title: titleOf(lv), points: S.points, total: S.total, places: Object.values(S.visits).filter(v => v.featured).length, spots: Object.keys(S.visits).length,
+      met: (S.met || []).length, kg: Math.round(r.white * 0.15 * 10) / 10, badges: (S.badges || []).length, demo };
+  },
+  focusSpot(id) {   // 広告やQRのリンク（?spot=）で、そのスポットを見せる
+    const s = spots.find(x => x.id === 'f-' + id || x.id === id);
+    if (!s) return false;
+    if (demo) { follow = false; stepMove = false; onFix(s.lat, s.lng, 5, Date.now()); }
+    else { follow = false; map.setView([s.lat, s.lng], 17); }
+    toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
+    return true;
+  },
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng, how) { if (!demo) return; follow = false; stepMove = how === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },

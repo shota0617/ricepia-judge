@@ -331,3 +331,19 @@ body.px .guide small{color:#ddd}
 .koyomi{position:fixed;top:calc(var(--bar-h) + 8px);left:8px;z-index:3;max-width:calc(100% - 84px);text-align:left;background:rgba(0,0,0,.75);color:#fff;font:12px/1.45 "DotGothic16",monospace;padding:4px 8px;border:2px solid #fff;border-radius:4px;cursor:pointer}
 .koyomi .more{display:none}
 .koyomi.open .more{display:block;margin-top:4px;font-size:11px;opacity:.95}
+/* キャンペーン（きろくの上） */
+.campaigns{margin:0 auto 12px}
+.camp{border:2px solid #e0b84a;background:#fff8e1;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.camp b{display:block}.camp small{color:#7a6a3a}.camp p{margin:4px 0}
+.share-btn{float:right;font-size:13px}
+.popup .sponsor{background:#f4f8ff;border-radius:6px;padding:4px 6px}
+/* シェア */
+.share{position:fixed;inset:0;z-index:2700;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px}
+.share[hidden]{display:none}
+.share-box{background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:92vh;overflow-y:auto;padding:14px;text-align:center}
+.share-box h3{margin:0 0 8px}
+.share-box canvas{width:100%;height:auto;border-radius:8px;border:1px solid #ddd}
+.share-text{font-size:13px;text-align:left;white-space:pre-wrap;word-break:break-all;margin:8px 0}
+.share-btns a.btn{text-decoration:none}
+.share-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
+.share-btns .btn{flex:1 1 30%;min-width:96px}

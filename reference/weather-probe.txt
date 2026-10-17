@@ -1,0 +1,71 @@
+== HEAD https://www.jma.go.jp/bosai/forecast/data/forecast/230000.json
+HTTP/2 200 
+content-type: application/json
+content-length: 3013
+cache-control: max-age=60
+access-control-allow-origin: *
+access-control-allow-headers: X-Requested-With
+== HEAD https://www.jma.go.jp/bosai/amedas/data/latest_time.txt
+HTTP/2 200 
+content-type: text/plain
+content-length: 25
+cache-control: max-age=60
+access-control-allow-origin: *
+access-control-allow-headers: X-Requested-With
+== HEAD https://www.jma.go.jp/bosai/amedas/const/amedastable.json
+HTTP/2 200 
+content-type: application/json
+content-length: 187742
+cache-control: max-age=60
+access-control-allow-origin: *
+access-control-allow-headers: X-Requested-With
+== HEAD https://www.jma.go.jp/bosai/common/const/area.json
+HTTP/2 200 
+content-type: application/json
+content-length: 262108
+cache-control: max-age=60
+access-control-allow-origin: *
+access-control-allow-headers: X-Requested-With
+== forecast 230000 (head)
+[{"publishingOffice":"名古屋地方気象台","reportDatetime":"2026-10-17T11:00:00+09:00","timeSeries":[{"timeDefines":["2026-10-17T11:00:00+09:00","2026-10-18T00:00:00+09:00","2026-10-19T00:00:00+09:00"],"areas":[{"area":{"name":"西部","code":"230010"},"weatherCodes":["100","101","212"],"weathers":["晴れ","晴れ　時々　くもり","くもり　後　一時　雨"],"winds":["南の風","東の風　後　南東の風","南東の風"],"waves":["０．５メートル","０．５メートル　後　１メートル","１メートル　後　０．５メートル"]},{"area":{"name":"東部","code":"230020"},"weatherCodes":["100","101","212"],"weathers":["晴れ","晴れ　時々　くもり","くもり　後　一時　雨"],"winds":["南の風","東の風","南東の風"],"waves":["１．５メートル　ただし　内海　では　０．５メートル","１．５メートル　ただし　内海　では　０．５メートル　後　１メートル","１．５メートル　ただし　内海　では　１メートル　後　０．５メートル"]}]},{"timeDefines":["2026-10-17T12:00:00+09:00","2026-10-17T18:00:00+09:00","2026-10-18T00:00:00+09:00","2026-10-18T06:00:00+09:00","2026-10-18T12:00:00+09:00","2026-10-18T18:00:00+09:00"],"areas":[{"area":{"name":"西部","code":"230010"},"pops":["0","0","10","0","10","10"]},{"area":{"name":"東部","code":"230020"},"pops":["0","0","10","0","10","10"]}]},{"timeDefines":["2026-10-17T09:00:00+09:00","2026-10-17T00:00:00+09:00","2026-10-18T00:00:00+09:00","2026-10-18T09:00:00+09:00"],"areas":[{"area":{"name":"名古屋","code":"51106"},"temps":["27","27","17","26"]},{"area":{"name":"豊橋","code":"51331"},"temps":["27","27","17","27"]}]}]},{"publishingOffice":"名古屋地方気象台","reportDatetime":"2026-10-17T11:00:00+09:00","timeSeries":[{"timeDefines":["2026-10-18T00:00:00+09:00","2026-10-19T00:00:00+09:00","2026-10-20T00:00:00+09:00","2026-10-21T00:00:00+09:00","2026-10-22T00:00:00+09:00","2026-10-23T00:00:00+09:00","2026-10-24T00:00:00+09:00"],"areas":[{"area":{"name":"愛知県","code":"230000"},"weatherCodes":["101","212","202","202","201","200","202"],"pops":["","50","50","70","30","40","50"],"reliabilities":["","","C","A","A","B","C"]}]},{"timeDefines":["2026-10-18T00:00:00+09:00","2026-10-19T00:00:00+09:00","2026-10-20T00:00:00+09:00","2026-10-21T00:00:00+09:00","2026-10-22T00:00:00+09:00","2026-10-23T00:00:00+09:00","2026-10-24T00:00:00+09:00"],"areas":[{"area":{"name":"名古屋",
+== latest 2026-10-17T14:30:00+09:00
+== key 20261017053000
+HTTP/2 200 
+access-control-allow-origin: *
+access-control-allow-headers: X-Requested-With
+51116 豊田 C 35.1317 137.1767 11112010
+51216 大府 C 34.995 136.9433 11112010
+51192 阿蔵 C 35.0783 137.4133 01000000
+51226 岡崎 C 34.9183 137.1933 11112010
+51241 作手 C 34.9767 137.425 01000000
+51271 一色 C 34.8117 137.0283 01000000
+51281 蒲郡 C 34.845 137.2167 11112010
+51311 南知多 C 34.74 136.9383 11112010
+51331 豊橋 C 34.75 137.3417 11112010
+51346 伊良湖 B 34.6283 137.0933 11111011
+51356 田原 C 34.6267 137.2217 01000000
+sample 11001 {'temp': [9.3, 0], 'humidity': [53, 0], 'sun10m': [0, 0], 'sun1h': [0.0, 0], 'precipitation10m': [0.0, 0], 'precipitation1h': [0.0, 0], 'precipitation3h': [0.0, 0], 'precipitation24h': [0.0, 0], 'windDirection': [13, 0], 'wind': [13.0, 0]}
+51106 {'pressure': [1017.9, 0], 'normalPressure': [1024.6, 0], 'temp': [17.1, 0], 'humidity': [76, 0], 'visibility': [17400.0, 0], 'sun10m': [0, 0], 'sun1h': [0.0, 0], 'precipitation10m': [0.0, 0], 'precipitation1h': [0.0, 0], 'precipitation3h': [0.0, 0], 'precipitation24h': [0.0, 0], 'windDirection': [16, 0], 'wind': [2.6, 0]}
+51216 {'temp': [17.1, 0], 'humidity': [76, 0], 'sun10m': [0, 0], 'sun1h': [0.0, 0], 'precipitation10m': [0.0, 0], 'precipitation1h': [0.0, 0], 'precipitation3h': [0.0, 0], 'precipitation24h': [0.0, 0], 'windDirection': [16, 0], 'wind': [1.7, 0]}
+51331 {'temp': [14.9, 0], 'humidity': [77, 0], 'sun10m': [0, 0], 'sun1h': [0.0, 0], 'precipitation10m': [0.0, 0], 'precipitation1h': [0.0, 0], 'precipitation3h': [0.0, 0], 'precipitation24h': [0.0, 0], 'windDirection': [16, 0], 'wind': [3.4, 0]}
+51336 None
+51281 {'temp': [20.2, 0], 'humidity': [55, 0], 'sun10m': [0, 0], 'sun1h': [0.0, 0], 'precipitation10m': [0.0, 0], 'precipitation1h': [0.0, 0], 'precipitation3h': [0.0, 0], 'precipitation24h': [0.0, 0], 'windDirection': [15, 0], 'wind': [3.8, 0]}
+51196 None
+== area.json class20 for 西尾/岡崎/安城/碧南/幸田/蒲郡/高浜
+2320200 岡崎市 230014
+2320900 碧南市 230014
+2321200 安城市 230014
+2321300 西尾市 230014
+2321400 蒲郡市 230023
+2322700 高浜市 230014
+2350100 幸田町 230014
+c15 230011 尾張東部 230010
+c15 230012 尾張西部 230010
+c15 230013 知多地域 230010
+c15 230014 西三河南部 230010
+c15 230015 西三河北西部 230010
+c15 230021 西三河北東部 230020
+c15 230022 東三河北部 230020
+c15 230023 東三河南部 230020
+c10 230010 西部 230000
+c10 230020 東部 230000

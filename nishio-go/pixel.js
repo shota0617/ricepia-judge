@@ -1178,16 +1178,24 @@ carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(C
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 spotSprites.store = spotSprites.shop;
-// 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。Googleストリートビューで見られる外観をもとに描いたドット絵）
+// 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。お店から受け取った外観の写真を見て描いたドット絵）
 //   らいすぴあ・秀幸：赤と白の建物、横の壁に白いどんぶりと「米」のマーク、上に白い看板、右に赤い「米のドライブスルー」の屋根と「ドライブスルー IN」の看板
 //   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根
 // 文字の並び（# のところを塗る）で小さな絵を描く
 const pix = (r, rows, ox, oy, col) => rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ch === '#') r(ox + i, oy + y, 1, 1, col); }));
-function shopCanvas(draw) {
+function shopCanvas(draw, outline = false) {
   const c = document.createElement('canvas');
   c.width = c.height = 32;
   const x = c.getContext('2d'), r = (px, py, w, h, col) => { x.fillStyle = col; x.fillRect(px, py, w, h); };
-  draw(r);
+  draw(r, (py, x0, x1, col) => r(x0, py, x1 - x0 + 1, 1, col));   // 2つめ：1行を x0〜x1 まで塗る
+  if (outline) {   // 絵のまわりを黒くふちどる（すきとおった所のうち、上下左右に色がある所）
+    const d = x.getImageData(0, 0, 32, 32), a = i => d.data[i * 4 + 3] > 0, edge = [];
+    for (let i = 0; i < 32 * 32; i++) {
+      const px = i % 32, py = (i - px) / 32;
+      if (!a(i) && ((px > 0 && a(i - 1)) || (px < 31 && a(i + 1)) || (py > 0 && a(i - 32)) || (py < 31 && a(i + 32)))) edge.push(i);
+    }
+    for (const i of edge) r(i % 32, Math.floor(i / 32), 1, 1, '#000');
+  }
   const g = document.createElement('canvas');   // チェックインしたあと（しばらく）は灰色に
   g.width = g.height = 32;
   const gx = g.getContext('2d'), d = x.getImageData(0, 0, 32, 32);
@@ -1238,11 +1246,149 @@ spotSprites.kondo = shopCanvas(r => {
   r(0, 14, 10, 2, GR);
   r(1, 16, 1, 15, GR); r(8, 16, 1, 15, GR);
 });
-
+// 名所の専用の絵（32×32）。Wikimedia Commons の、自由に使える写真（README の「名所の絵の参考にした写真」）を見て描いたドット絵
+const LANDMARK_ART = {
+  'f-nishio-castle': 'nishioCastle', 'f-iwase-bunko': 'iwaseBunko', 'f-konoe-tei': 'konoeTei', 'f-konrenji': 'konrenji', 'f-kira-yoshida': 'kiraYoshida',
+  'f-ohirune-house': 'ohirune', 'f-kamome-parking': 'kamome', 'f-isshiki-sakana': 'sakanaHiroba', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen',
+};
+const ROOF = '#4a4f57', ROOF_HI = '#6c737d', WALL = '#f3f1ea', WOOD = '#5b4632';
+// 西尾城（本丸丑寅櫓）：石垣の上の三重櫓。各重とも上が白い漆喰、下が黒い下見板。右に瓦をのせた白い土塀
+spotSprites.nishioCastle = shopCanvas((r, h) => {
+  const B = '#2a2622', ST = '#9b968a', SD = '#6f6a61', GD = '#e2b13a';
+  h(19, 23, 31, ROOF); r(24, 20, 8, 4, WALL);                        // 土塀
+  for (let y = 24; y < 32; y++) h(y, 5 - ((y - 24) >> 1), 26 + ((y - 24) >> 1), ST);   // 石垣
+  h(26, 4, 27, SD); h(29, 2, 29, SD); h(24, 26, 31, ST); h(25, 26, 31, ST);
+  for (const x of [9, 15, 21]) { r(x, 24, 1, 2, SD); r(x, 30, 1, 2, SD); }
+  for (const x of [6, 12, 18, 24]) r(x, 27, 1, 2, SD);
+  r(7, 19, 17, 2, WALL); r(7, 21, 17, 3, B); r(10, 22, 3, 1, '#8a7f6a'); r(18, 22, 3, 1, '#8a7f6a');   // 一重め
+  h(15, 8, 22, ROOF_HI); h(16, 6, 24, ROOF); h(17, 4, 26, ROOF); h(18, 3, 27, ROOF); r(3, 17, 1, 1, ROOF); r(27, 17, 1, 1, ROOF);
+  r(10, 11, 12, 2, WALL); r(10, 13, 12, 2, B);                       // 二重め
+  h(13, 15, 16, ROOF); h(14, 14, 17, ROOF); h(15, 13, 18, ROOF); r(15, 14, 2, 1, WALL);   // 千鳥破風
+  h(8, 10, 21, ROOF_HI); h(9, 8, 23, ROOF); h(10, 7, 24, ROOF); r(7, 9, 1, 1, ROOF); r(24, 9, 1, 1, ROOF);
+  r(12, 5, 8, 2, WALL); r(12, 7, 8, 1, B); r(15, 6, 2, 1, B);        // 三重め
+  h(2, 12, 19, ROOF_HI); h(3, 11, 20, ROOF); h(4, 9, 22, ROOF); r(9, 3, 1, 1, ROOF); r(22, 3, 1, 1, ROOF);
+  r(12, 0, 1, 2, GD); r(19, 0, 1, 2, GD);                            // しゃちほこ
+}, true);
+// 西尾市岩瀬文庫：赤レンガの旧書庫（昭和5年）と、うしろの白い今の建物（ガラスの帯）
+spotSprites.iwaseBunko = shopCanvas((r, h) => {
+  const CON = '#d8d4cc', COD = '#b9b5ad', GL = '#5f7f99', BR = '#a14a30', BRD = '#86402a', WIN = '#e8e2d0';
+  r(11, 7, 21, 21, CON); h(7, 11, 31, COD);
+  for (const x of [16, 21, 26]) r(x, 8, 1, 8, COD);
+  r(12, 16, 20, 11, GL); h(16, 12, 31, '#8fb0c8');
+  for (const x of [15, 19, 23, 27, 31]) r(x, 16, 1, 11, COD);
+  h(7, 3, 12, ROOF_HI); h(8, 2, 13, ROOF); h(9, 1, 14, ROOF); h(10, 0, 15, ROOF);   // 旧書庫の屋根
+  r(1, 11, 14, 17, BR);
+  for (const y of [13, 16, 21, 24]) h(y, 1, 14, BRD);
+  h(18, 1, 14, '#c9c0ae'); h(27, 1, 14, '#8a8278');
+  for (const [x, y] of [[3, 12], [10, 12], [3, 19], [10, 19]]) { r(x, y, 3, 4, WIN); r(x + 1, y + 1, 1, 2, '#2a2a30'); }
+  r(6, 21, 3, 6, '#3a2a20'); r(7, 20, 1, 1, '#3a2a20');
+}, true);
+// 旧近衛邸（西尾市歴史公園）：京都から移した近衛家の建物。正面に大きな破風、まん中に小さな屋根の玄関
+spotSprites.konoeTei = shopCanvas((r, h) => {
+  const PL = '#ece5d4', LT = '#3a3128', LG = '#8a7a62';
+  h(11, 3, 28, ROOF_HI); h(12, 1, 30, ROOF); h(13, 0, 31, ROOF);
+  for (let y = 3; y <= 12; y++) { h(y, 15 - (y - 3), 16 + (y - 3), ROOF); if (y >= 5) h(y, 17 - (y - 3), 14 + (y - 3), PL); }
+  h(9, 11, 20, WOOD); r(15, 6, 2, 7, WOOD);
+  r(2, 14, 28, 13, PL); h(14, 2, 29, WOOD); h(26, 2, 29, WOOD);
+  for (const x of [2, 9, 22, 29]) r(x, 14, 1, 13, WOOD);
+  for (const x0 of [4, 24]) { r(x0, 17, 4, 6, LT); r(x0 + 1, 17, 1, 6, LG); r(x0 + 3, 17, 1, 6, LG); h(19, x0, x0 + 3, LG); h(21, x0, x0 + 3, LG); }
+  h(14, 15, 16, ROOF); h(15, 13, 18, ROOF); h(16, 11, 20, ROOF); h(17, 10, 21, ROOF); h(18, 9, 22, ROOF); r(14, 16, 4, 1, '#c8a46a');   // 玄関の屋根と額
+  r(11, 19, 1, 8, WOOD); r(20, 19, 1, 8, WOOD); r(12, 19, 8, 8, '#2e2620'); r(14, 19, 1, 8, '#6a5a44'); r(17, 19, 1, 8, '#6a5a44');
+  h(27, 10, 21, '#a9a49a'); h(28, 10, 21, '#a9a49a'); r(13, 30, 2, 1, '#c0bbb0'); r(17, 30, 2, 1, '#c0bbb0');
+}, true);
+// 金蓮寺弥陀堂（国宝）：檜皮ぶきの大きな屋根と、格子の壁、まわりの縁
+spotSprites.konrenji = shopCanvas((r, h) => {
+  const RB = '#8a6a4a', RH = '#a8875e', RD = '#5e4630', PI = '#9a7650', LT = '#3e3024', LG = '#6a5640';
+  h(5, 13, 18, RD); h(6, 11, 20, '#6e5238');
+  [[10, 21], [9, 22], [8, 23], [7, 24], [6, 25], [5, 26], [3, 28], [2, 29]].forEach(([a, b], i) => h(7 + i, a, b, i % 3 === 1 ? RH : RB));
+  h(15, 1, 30, RD); r(1, 14, 1, 1, RD); r(30, 14, 1, 1, RD); h(16, 3, 28, '#4a3826');
+  r(5, 17, 22, 9, '#7a5a3c');
+  for (const [a, b] of [[6, 9], [22, 25], [11, 20]]) for (let y = 17; y <= (a === 11 ? 19 : 25); y++) h(y, a, b, (y % 2) ? LT : LG);
+  for (const [a, b] of [[6, 9], [22, 25], [11, 20]]) for (let x = a; x <= b; x += 2) r(x, 17, 1, a === 11 ? 3 : 9, LT);
+  r(11, 20, 10, 6, '#3a2c20'); r(15, 20, 2, 6, LG);
+  for (const x of [5, 10, 21, 26]) r(x, 17, 1, 9, PI);
+  h(19, 5, 26, PI);
+  h(26, 2, 29, '#b08a5e'); h(27, 2, 29, '#7a5a3c');
+  for (const x of [3, 8, 13, 18, 23, 28]) r(x, 28, 1, 2, '#6e5238');
+  h(30, 1, 30, '#c2bdb1'); h(31, 1, 30, '#a6a196');
+}, true);
+// 名鉄 吉良吉田駅：青緑のトタン屋根の駅舎と、右の白い2階建て
+spotSprites.kiraYoshida = shopCanvas((r, h) => {
+  const TE = '#4f9e9a', TH = '#7cc2bd', TD = '#357a76', BL = '#2f74b8', GL = '#6f8fa8';
+  r(18, 4, 13, 23, WALL); h(4, 18, 30, '#c9c9c4');
+  for (const [x, y] of [[20, 7], [26, 7], [20, 13], [26, 13]]) { r(x, y, 3, 3, GL); r(x, y, 3, 1, '#9fb8cc'); }
+  [[6, 17], [5, 18], [4, 19], [3, 20], [2, 21], [1, 22]].forEach(([a, b], i) => h(8 + i, a, b, i ? TE : TH));
+  for (let x = 3; x <= 21; x += 2) r(x, 9, 1, 5, '#6fb7b1');
+  h(14, 0, 23, TD);
+  h(15, 1, 22, BL); r(8, 15, 8, 2, WALL); r(9, 15, 1, 1, '#d23a2e'); for (const x of [11, 12, 14]) r(x, 16, 1, 1, BL);
+  r(1, 17, 22, 10, WALL); h(26, 1, 22, '#9a9a96');
+  r(2, 18, 5, 5, GL); r(17, 18, 5, 5, GL); r(9, 18, 7, 8, '#3f5566'); r(12, 18, 1, 8, WALL);
+  r(24, 22, 2, 5, '#d23a2e'); r(27, 20, 3, 7, '#2a5fb0'); r(28, 21, 1, 3, WALL);   // ポストと自動販売機
+}, true);
+// おひるねハウス（佐久島のアート）：浜に置かれた黒い箱。格子のすきまから空と海が見え、はしごで上れる
+spotSprites.ohirune = shopCanvas((r, h) => {
+  const SA = '#eadfbe', SK = '#a6d8f0', SE = '#5fa8c8', BK = '#161616', LD = '#a0a0a0';
+  h(26, 5, 26, SA); h(27, 3, 28, SA); h(28, 1, 30, SA); h(29, 0, 31, SA); h(30, 2, 29, SA);
+  h(27, 6, 26, '#c9bb90'); r(4, 29, 1, 1, '#d4c79f'); r(27, 28, 1, 1, '#d4c79f');
+  r(6, 4, 20, 23, BK);
+  for (const x of [8, 14, 20]) {
+    r(x, 6, 4, 5, SK); r(x, 13, 4, 3, SK); r(x, 16, 4, 2, SE); r(x, 20, 4, 3, SE); r(x, 23, 4, 2, SA);
+  }
+  for (const [x, y0] of [[9, 12], [20, 18]]) { r(x, y0, 1, 16 - (y0 - 12), LD); r(x + 2, y0, 1, 16 - (y0 - 12), LD); for (let y = y0 + 1; y < 28; y += 2) r(x + 1, y, 1, 1, LD); }
+}, true);
+// カモメの駐車場（佐久島のアート）：石の防波堤に、カモメの木像がずらりと並ぶ
+spotSprites.kamome = shopCanvas((r, h) => {
+  const SG = '#9d968b', SL = '#c2bbaf', SD = '#6f685e', BW = '#eef1f3', BG = '#8f99a3', PO = '#e0902a';
+  [[2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [1, 31], [1, 30], [2, 29], [3, 28]].forEach(([a, b], i) => h(17 + i, a, b, SG));
+  for (let y = 18; y < 27; y += 3) for (let x = (y % 2) * 3; x < 31; x += 6) { r(x, y, 1, 2, SD); r(x + 1, y, 3, 1, SL); }
+  for (let i = 0; i < 5; i++) {   // 横向きのカモメ（右が頭）と、立てた棒
+    const x = 1 + i * 6, y = 11 + (i % 2);
+    r(x + 2, y + 3, 1, 3, PO);
+    pix(r, ['...##', '#####', '.###.'], x, y, BW); pix(r, ['.....', '.##..'], x, y, BG); r(x, y + 1, 1, 1, '#333'); r(x + 4, y, 1, 1, '#333'); r(x + 5, y + 1, 1, 1, PO);
+  }
+}, true);
+// 一色さかな広場：茶色い建物に白い字の看板、入口の白い丸屋根、のぼり
+spotSprites.sakanaHiroba = shopCanvas((r, h) => {
+  const BN = '#6e5852', BD = '#5a4640', CA = '#f2f2f2', CU = '#b9bcc0', GL = '#4a5f70';
+  r(1, 5, 30, 21, BN); h(5, 1, 30, BD);
+  r(5, 8, 3, 3, '#d6332a'); r(6, 9, 1, 1, '#ffffff');
+  pix(r, ['#.##.#.##.#.##.#', '##.#.###.#.##.##', '#.##.#.##.#.#..#'], 10, 8, '#ffffff');
+  r(10, 16, 12, 9, GL); for (const x of [13, 18]) r(x, 16, 1, 9, '#cfd4d8');
+  r(12, 22, 1, 2, '#e57373'); r(16, 21, 1, 3, '#ffb300'); r(20, 22, 1, 2, '#3f7fbf');   // 店の前の人
+  h(12, 10, 21, CA); h(13, 8, 23, CA); h(14, 7, 24, CA); h(15, 6, 25, CA); h(16, 6, 25, CU);
+  r(7, 17, 1, 10, '#555'); r(24, 17, 1, 10, '#555');
+  h(25, 4, 27, '#a9a9a6'); h(26, 4, 27, '#8a8a88'); h(27, 4, 27, '#a9a9a6');
+  r(2, 14, 1, 13, '#888'); r(3, 14, 2, 9, '#e0466a'); r(29, 14, 1, 13, '#888'); r(27, 14, 2, 9, '#2f5fae');
+}, true);
+// 佐久島の黒壁の集落：板壁をコールタールで黒くぬった家が並ぶ
+spotSprites.kurokabe = shopCanvas((r, h) => {
+  const RT = '#3c4148', RB = '#5d646c', BK = '#1f1f23', BL = '#34353b';
+  [[5, 12], [4, 13], [3, 14], [2, 15], [1, 16], [0, 17]].forEach(([a, b], i) => h(5 + i, a, b, i ? RB : RT));
+  for (let x = 3; x <= 14; x += 2) r(x, 7, 1, 3, '#4b5158');
+  r(1, 11, 16, 17, BK); for (let x = 3; x <= 15; x += 3) r(x, 11, 1, 17, BL);
+  r(4, 14, 5, 4, '#8a8a80'); r(5, 15, 3, 2, '#c8d8e0'); r(6, 15, 1, 2, '#8a8a80');
+  r(10, 20, 5, 8, '#2b2620'); r(12, 20, 1, 8, '#4a4038');
+  [[19, 29], [18, 30], [17, 31], [17, 31]].forEach(([a, b], i) => h(11 + i, a, b, i ? RB : RT));
+  for (let x = 19; x <= 29; x += 2) r(x, 12, 1, 2, '#4b5158');
+  r(18, 15, 13, 13, BK); for (let x = 20; x <= 29; x += 3) r(x, 15, 1, 13, BL);
+  r(21, 17, 4, 3, '#8a8a80'); r(22, 18, 2, 1, '#c8d8e0');
+  r(26, 25, 3, 3, '#a0522d'); r(26, 23, 3, 2, '#43a047');   // 植木ばち
+}, true);
+// 稲荷山茶園公園：まるくかりこんだ茶の木の列と、あずまや
+spotSprites.chaen = shopCanvas((r, h) => {
+  const TG = '#3f8f3a', TL = '#7fc65e', TD = '#2a5f28', SO = '#b08a5a';
+  r(15, 4, 2, 1, '#6a5444'); [[13, 18], [11, 20], [9, 22], [7, 24]].forEach(([a, b], i) => h(5 + i, a, b, i ? '#4a3a2e' : '#6a5444'));
+  r(9, 9, 1, 7, WOOD); r(22, 9, 1, 7, WOOD); h(13, 11, 20, '#8a6a4a');
+  for (const y of [15, 20, 25]) {
+    h(y, 1, 30, TL); r(0, y + 1, 32, 2, TG); h(y + 3, 0, 31, TD); if (y < 25) h(y + 4, 0, 31, SO);
+    for (let x = 2 + (y % 2) * 2; x < 30; x += 5) { h(y - 1, x, x + 1, TL); r(x + 3, y + 1, 1, 1, TL); }   // 新芽のでこぼこ
+  }
+}, true);
 
 function spotArt(s) {
   if (s.id === 'f-ricepia') return 'ricepia';
   if (s.id === 'f-kondo-beikoku') return 'kondo';
+  if (LANDMARK_ART[s.id]) return LANDMARK_ART[s.id];
   if (s.shop) return 'ricestore';
   const kind = s.featured ? (s.kind || 'featured') : s.cat;
   if (kind === 'castle') return 'castle';
@@ -1378,7 +1524,7 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.shop ? Math.round(T * 3.5) : s.featured ? T * 2 : T;   // 当店は本物の建物に合わせて大きめに
+    const size = s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }

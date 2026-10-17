@@ -118,7 +118,7 @@ function updateHere() {
   const t = targetTile();
   let best = null, bd = 150;
   for (const x of towns) { const d = Math.hypot(x[0] - t.x, x[1] - t.y); if (d < bd) { bd = d; best = x; } }
-  const me = G.me, c = me && G.cityAt(me.lat, me.lng), town = best ? best[2] : '', city = c ? c.name : '';
+  const me = G.me, c = me && (G.cityNear || G.cityAt)(me.lat, me.lng), town = best ? best[2] : '', city = c ? c.name : '';
   if (town && town !== here.town) {
     if (here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
     here.town = town;

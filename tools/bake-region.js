@@ -55,11 +55,13 @@ function simplify(pts, tol) {
   }
   return pts.filter((_, i) => keep[i]).map(p => [+p.lat.toFixed(5), +p.lon.toFixed(5)]);
 }
-// 閉じた輪は始点と終点が同じなので、始点からいちばん遠い点で2つに分けて間引く
+// 閉じた輪は始点と終点が同じなので、始点からいちばん遠い点で2つに分けて間引く。
+// 小さな島（竹島など）は形が消えないように、大きさに合わせて こまかく間引く
 function simplifyRing(r) {
   let far = 1, best = -1;
   for (let i = 1; i < r.length - 1; i++) { const d = Math.hypot((r[i].lon - r[0].lon) * M_LNG, (r[i].lat - r[0].lat) * M_LAT); if (d > best) { best = d; far = i; } }
-  return simplify(r.slice(0, far + 1), TOL_M).concat(simplify(r.slice(far), TOL_M).slice(1));
+  const tol = Math.min(TOL_M, Math.max(3, best / 8));
+  return simplify(r.slice(0, far + 1), tol).concat(simplify(r.slice(far), tol).slice(1));
 }
 const areaKm2 = r => {   // 輪の面積（km²）
   let s = 0;
@@ -100,7 +102,8 @@ out geom;`;
   const SRC = ksj ? '国土数値情報（行政区域データ・国土交通省）を加工して作成' : 'OpenStreetMap（© OpenStreetMap contributors, ODbL）の行政界から作成';
   const cities = [];
   for (const [id, name] of CITIES) {
-    const rs = (raw.get(name) || []).filter(r => r.length >= 4).map(simplifyRing).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
+    // 国土数値情報は陸だけなので、名所のある小さな島（蒲郡の竹島 約0.02km² など）も残す。岩のような ごく小さな島は除く
+    const rs = (raw.get(name) || []).filter(r => r.length >= 4).map(simplifyRing).filter(r => r.length >= 4 && areaKm2(r) > (ksj ? 0.005 : 0.02));
     if (!rs.length) throw new Error(`${name} の境界を輪にできません`);
     const all = rs.flat();
     const bbox = [[Math.min(...all.map(p => p[0])), Math.min(...all.map(p => p[1]))], [Math.max(...all.map(p => p[0])), Math.max(...all.map(p => p[1]))]];

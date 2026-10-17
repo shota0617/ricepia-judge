@@ -45,6 +45,14 @@ function cityAt(lat, lng) {
   }
   return null;
 }
+// いまいる市町の表示用：境のすぐ外（海辺・橋の上など。約300m以内）は、となりあう市町にする
+const PAD_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]];
+function cityNear(lat, lng) {
+  const c = cityAt(lat, lng);
+  if (c) return c;
+  for (const [a, b] of PAD_DIRS) { const n = cityAt(lat + a * 0.003, lng + b * 0.003); if (n) return n; }
+  return null;
+}
 // 本店からの距離（m）。半径 CFG.home.r の円も遊べる範囲
 const M_PER_LNG = 111320 * Math.cos(CFG.home.lat * Math.PI / 180);
 const homeDist = (lat, lng) => Math.hypot((lat - CFG.home.lat) * 111320, (lng - CFG.home.lng) * M_PER_LNG);
@@ -1925,7 +1933,7 @@ window.nishioGo = {
   sound,
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
-  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, inPlay,
+  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）

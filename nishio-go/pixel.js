@@ -105,11 +105,12 @@ fetch('nishio-go/landmarks.json').then(r => (r.ok ? r.json() : null)).then(j => 
   poiCache.key = ''; dirty = true;
 }).catch(() => { /* 目印なしで続行 */ });
 // 町名（せかいちずの地名のうち町・字。world.json の l の 'tw'）：[マスx, マスy, 名前]。歩く地図に町名の札を出し、いまいる町を左上に出す
-let towns = [], townsLoad = null;
+let towns = [], townsLoad = null, townsRetry = 0;
 function loadTowns() {
-  if (towns.length || townsLoad) return;
+  if (towns.length || townsLoad || Date.now() < townsRetry) return;
   const use = l => { towns = (l || []).filter(x => x[4] === 'tw' && x[2]).map(x => { const ll = wToLL(x[0], x[1]), q = toTile(ll.lat, ll.lng); return [q.x, q.y, String(x[2])]; }); dirty = true; };
   if (worldLabels.some(x => x[4] === 'tw')) { use(worldLabels); return; }
+  townsRetry = Date.now() + 60000;   // 取れなかったら1分おいて試し直す
   townsLoad = fetch(WORLD_FILE).then(r => (r.ok ? r.json() : null)).then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });
 }
 // いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
@@ -119,10 +120,8 @@ function updateHere() {
   let best = null, bd = 150;
   for (const x of towns) { const d = Math.hypot(x[0] - t.x, x[1] - t.y); if (d < bd) { bd = d; best = x; } }
   const me = G.me, c = me && (G.cityNear || G.cityAt)(me.lat, me.lng), town = best ? best[2] : '', city = c ? c.name : '';
-  if (town && town !== here.town) {
-    if (here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
-    here.town = town;
-  }
+  if (town && here.town && town !== here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
+  here.town = town;   // 近くに町名がない（田畑や山の中）ときは消す
   here.city = city;
 }
 // 看板の色（お店の種類ごと。よく知られた店は、その店らしい色に）。白い字で名前を書く
@@ -2025,8 +2024,9 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
   return out.reverse();
 }
-function autoRead() {   // 話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる
+function autoRead() {   // 人の話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる（スポットやお店の説明は、自分で閉じるまで待つ）
   const body = $('pxInfoBody'), now = Date.now();
+  if (!body.querySelector('.npc-next, .npc-end')) { autoS.read = 0; return; }
   if (!autoS.read) { autoS.read = now + Math.min(6000, 1800 + body.textContent.length * 40); return; }
   if (now < autoS.read) return;
   autoS.read = 0;
@@ -2035,7 +2035,7 @@ function autoRead() {   // 話のウィンドウ：読む時間をおいて「�
 }
 function autoTick() {
   setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
-  if (!auto || !active || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;
+  if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;
   if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }

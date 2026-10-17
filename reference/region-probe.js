@@ -8,7 +8,11 @@ function inRing(lat, lon, r) { let a = false; for (let i = 0, j = r.length - 1; 
 const near = (p, q) => Math.hypot((p.lon - q.lon) * M_LNG, (p.lat - q.lat) * M_LAT) < 10;
 (async () => {
   const q = `[out:json][timeout:180];rel["boundary"="administrative"]["admin_level"="7"]["name"~"^(西尾市|安城市)$"];out geom;`;
-  const json = JSON.parse(await overpassFromNode('data=' + encodeURIComponent(q)));
+  const ask = async body => { for (let t = 0; ; t++) { try { return await overpassFromNode(body); } catch (e) { if (t >= 4) throw e; await new Promise(r => setTimeout(r, 60000)); } } };
+  // OSM では本店の地点がどの区域に入っているか（町の境界 admin_level 9/10 も含めて）
+  const isIn = JSON.parse(await ask('data=' + encodeURIComponent(`[out:json][timeout:60];is_in(${P.lat},${P.lon})->.a;area.a["boundary"="administrative"];out tags;`)));
+  for (const a of isIn.elements) log(`is_in: level ${a.tags.admin_level} ${a.tags.name} (area ${a.id})`);
+  const json = JSON.parse(await ask('data=' + encodeURIComponent(q)));
   for (const rel of json.elements.filter(e => e.type === 'relation')) {
     log(`== ${rel.tags.name} rel ${rel.id} members ${rel.members.length} roles ${[...new Set(rel.members.map(m => m.type + ':' + m.role))].join(' ')}`);
     const ways = rel.members.filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry && m.geometry.length > 1);

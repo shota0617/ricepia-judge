@@ -239,15 +239,15 @@ body.px #map{visibility:hidden}
 .px-pad button{width:48px;height:48px}
 .px-pad .c{font-size:22px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
 /* スティック：さわったまま動かすと、その向きへ歩きつづける（大きく倒すと速く、ななめは2つの向きを交互に） */
-.px-stick{position:relative;width:136px;height:136px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);box-shadow:inset 0 0 0 6px rgba(255,255,255,.08);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.px-stick{position:relative;width:104px;height:104px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);box-shadow:inset 0 0 0 5px rgba(255,255,255,.08);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .px-stick.on{background:rgba(0,0,0,.6);cursor:grabbing}
-.px-stick i{position:absolute;width:0;height:0;border:7px solid transparent;opacity:.75;pointer-events:none}
-.px-stick .u{left:calc(50% - 7px);top:6px;border-bottom-color:#fff;border-top-width:0}
-.px-stick .d{left:calc(50% - 7px);bottom:6px;border-top-color:#fff;border-bottom-width:0}
-.px-stick .l{top:calc(50% - 7px);left:6px;border-right-color:#fff;border-left-width:0}
-.px-stick .r{top:calc(50% - 7px);right:6px;border-left-color:#fff;border-right-width:0}
+.px-stick i{position:absolute;width:0;height:0;border:6px solid transparent;opacity:.75;pointer-events:none}
+.px-stick .u{left:calc(50% - 6px);top:5px;border-bottom-color:#fff;border-top-width:0}
+.px-stick .d{left:calc(50% - 6px);bottom:5px;border-top-color:#fff;border-bottom-width:0}
+.px-stick .l{top:calc(50% - 6px);left:5px;border-right-color:#fff;border-left-width:0}
+.px-stick .r{top:calc(50% - 6px);right:5px;border-left-color:#fff;border-right-width:0}
 .px-stick i.lit{opacity:1;filter:drop-shadow(0 0 3px #ffd54f)}
-.px-knob{position:absolute;left:calc(50% - 28px);top:calc(50% - 28px);width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#666,#222 70%);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);pointer-events:none;transition:transform .12s ease-out}
+.px-knob{position:absolute;left:calc(50% - 21px);top:calc(50% - 21px);width:42px;height:42px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#666,#222 70%);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);pointer-events:none;transition:transform .12s ease-out}
 .px-stick.on .px-knob{transition:none;border-color:#ffd54f}
 .px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
 .px-info .dq{width:100%;max-width:420px;max-height:70%;overflow-y:auto}

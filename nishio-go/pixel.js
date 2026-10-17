@@ -1859,7 +1859,7 @@ function stickTick() {
   stick.timer = setTimeout(stickTick, driving ? (fast ? 70 : 120) : (fast ? 130 : 230));
 }
 function stickMove(e) {
-  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 14;
+  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 10;
   let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
   const d = Math.hypot(dx, dy);
   if (d > R) { dx *= R / d; dy *= R / d; }

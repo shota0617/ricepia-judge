@@ -125,7 +125,7 @@ async function endCard(page) {
   // 広告用の画像（各サイズ）と、LINE リッチメニューのマス（docs/ads-game-kit.md）
   const shotB64 = n => fs.readFileSync(path.join(OUT, n)).toString('base64');
   const logoUrl = `http://localhost:${PORT}/nishio-go/logo.svg`;
-  const FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">';
+  const FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&family=M+PLUS+Rounded+1c:wght@800&display=swap">';
   const BG = 'linear-gradient(#9fd6ff,#e8f6ff 62%,#cfae4a 62%)';
   const phone = (n, h) => `<img src="data:image/png;base64,${shotB64(n)}" style="height:${h}px;border:${Math.max(4, h / 95)}px solid #000;border-radius:${h / 36}px;display:block">`;
   const pill = (t, fs) => `<div style="font-size:${fs}px;background:rgba(0,0,0,.8);color:#fff;border-radius:${fs / 2.8}px;padding:${fs / 3}px ${fs / 1.8}px;display:inline-block">${t}</div>`;
@@ -156,6 +156,28 @@ async function endCard(page) {
       <div style="font-size:${fs}px;font-weight:bold;white-space:nowrap;background:#fff;border:${h / 120}px solid #000;border-radius:${h / 30}px;padding:${h / 60}px ${w / 30}px">西尾をあるくゲーム</div>
       <div style="font-size:${Math.round(fs * 0.8)}px;background:#1f5a25;color:#fff;border-radius:${h / 30}px;padding:${h / 80}px ${h / 22}px">▶ あそぶ（無料）</div></div>`;
   }
+  function richMenu() {
+    const R = 42, K = '#1d1412';   // 角丸と、文字・絵の色（いまのメニューと同じ黒に近い茶）
+    const tileBox = (x0, y0, x1, y1, bg, inner) => `<div style="position:absolute;left:${x0}px;top:${y0}px;width:${x1 - x0}px;height:${y1 - y0}px;border-radius:${R}px;background:${bg};display:flex;flex-direction:column;align-items:center;justify-content:center;color:${K};font-family:'M PLUS Rounded 1c','Zen Maru Gothic',sans-serif;font-weight:800;text-align:center;line-height:1.15">${inner}</div>`;
+    const big = (t, fs) => `<div style="font-size:${fs}px;letter-spacing:-2px">${t}</div>`;
+    const sub = (t, fs) => `<div style="font-size:${fs}px;margin-top:14px">${t}</div>`;
+    const svg = (w, h, body) => `<svg width="${w}" height="${h}" viewBox="0 0 100 100" style="margin-bottom:22px">${body}</svg>`;
+    const clipboard = svg(170, 200, `<rect x="18" y="16" width="64" height="80" rx="9" fill="${K}"/><rect x="27" y="27" width="46" height="60" rx="3" fill="#c7b9f8"/><rect x="36" y="6" width="28" height="18" rx="6" fill="${K}"/><circle cx="50" cy="13" r="4" fill="#c7b9f8"/><rect x="34" y="42" width="32" height="6" fill="${K}"/><rect x="34" y="56" width="32" height="6" fill="${K}"/><rect x="34" y="70" width="32" height="6" fill="${K}"/>`);
+    const pin = svg(170, 200, `<path d="M50 4C30 4 16 19 16 38c0 26 34 58 34 58s34-32 34-58C84 19 70 4 50 4z" fill="${K}"/><circle cx="50" cy="38" r="20" fill="#fda170"/><path d="M50 26v13l9 6" stroke="${K}" stroke-width="6" fill="none" stroke-linecap="round"/>`);
+    const card = svg(200, 160, `<rect x="6" y="16" width="88" height="66" rx="9" fill="${K}"/><rect x="14" y="24" width="72" height="50" rx="3" fill="#c8f06f"/><rect x="14" y="30" width="72" height="9" fill="${K}"/><circle cx="28" cy="58" r="5" fill="${K}"/><circle cx="43" cy="58" r="5" fill="${K}"/><circle cx="58" cy="58" r="5" fill="${K}"/><circle cx="73" cy="58" r="5" fill="${K}"/>`);
+    const rice = `<svg width="430" height="330" viewBox="0 0 130 100" style="margin-bottom:30px">
+      <path d="M14 56h62c0 15-13 26-31 26S14 71 14 56z" fill="${K}"/><rect x="28" y="86" width="34" height="6" rx="3" fill="${K}"/><rect x="40" y="80" width="10" height="8" fill="${K}"/>
+      <path d="M28 46c-4-5 4-9 0-15M42 46c-4-5 4-9 0-15M56 46c-4-5 4-9 0-15" stroke="${K}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+      <path d="M78 14c22 10 34 34 32 70" stroke="#a8561a" stroke-width="4" fill="none" stroke-linecap="round"/>
+      ${[[80, 18, -40], [88, 16, -10], [86, 27, -50], [95, 24, -20], [93, 36, -55], [102, 34, -25], [99, 46, -60], [107, 46, -30], [104, 58, -65], [111, 58, -35]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="6.2" transform="rotate(${r} ${x} ${y})" fill="#d8962c"/>`).join('')}</svg>`;
+    // 位置（2500×1686）：左 35〜806・中 844〜1654・右 1694〜2463、上 21〜815・下 846〜1650（中のマスは上下つなぎ）
+    return `<div style="position:absolute;inset:0;background:#fff"></div>
+      ${tileBox(35, 21, 806, 815, '#7ddaf9', `<img src="${logoUrl}" style="width:700px;margin-bottom:40px">${big('お散歩ゲーム', 118)}${sub('西尾をあるく・無料', 74)}`)}
+      ${tileBox(35, 846, 806, 1650, '#fda170', `${pin}${big('店舗・営業時間', 104)}${sub('地図・定休日', 92)}`)}
+      ${tileBox(844, 21, 1654, 1650, '#fed82c', `${rice}${big('新米 販売中', 150)}${sub('入荷速報', 110)}${sub('産地レポート', 110)}`)}
+      ${tileBox(1694, 21, 2463, 815, '#c7b9f8', `${clipboard}${big('価格表PDF', 118)}${sub('全銘柄・税込', 86)}`)}
+      ${tileBox(1694, 846, 2463, 1650, '#c8f06f', `${card}${big('常連さま', 126)}${big('ポイント', 126)}${sub('残高を見る', 86)}`)}`;
+  }
   const make = async (name, w, h, html) => {
     const c2 = await browser.newContext({ viewport: { width: w, height: h } });
     const p2 = await c2.newPage();
@@ -169,6 +191,9 @@ async function endCard(page) {
   if (fs.existsSync(path.join(OUT, 'ad-1200x630.png'))) fs.copyFileSync(path.join(OUT, 'ad-1200x630.png'), path.join(OUT, 'link-1200x630.png'));
   // LINE リッチメニューのマス：大（2500×1686）の6分割・小（2500×843）の3分割は 833×843、大の4分割は 1250×843、2分割は 1250×1686
   for (const [w, h] of [[833, 843], [1250, 843], [1250, 1686]]) await make(`richmenu-tile-${w}x${h}.png`, w, h, tile(w, h));
+  // いまのリッチメニュー（らいすぴあぶろぐ・2026年10月のスクリーンショットから、マスの位置・角丸・色を測ったもの）を描き直し、
+  // 左上の「ドライブスルー」を「お散歩ゲーム」に替える。ほかの4マスの位置は同じなので、いまのタップ範囲のまま使える
+  await make('richmenu-2500x1686.png', 2500, 1686, richMenu());
   await browser.close(); srv.close();
   console.log('できました:', OUT);
 })().catch(e => { console.error(e); process.exit(1); });

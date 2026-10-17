@@ -302,41 +302,16 @@ body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(
 .px-info .popup.npc .npc-at,.px-info .popup.npc .npc-end{color:#cfd8dc}
 .npc-mk{font-size:22px;line-height:30px;text-align:center;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
 .npc-mk:not(.met)::after{content:"💬";position:absolute;right:-10px;top:-12px;font-size:13px}
-/* 米屋の仕事（このゲームの核）：持ち込みボタン・選別と精米の画面 */
-.spin.rice{background:linear-gradient(135deg,#c9a227,#e8c95a);color:#3a2a00}
-.intro .pitch{margin:8px 0 4px;font-size:15px;line-height:1.6}
-.intro ol.core{margin:4px 0 8px;padding-left:1.4em;font-size:13px;line-height:1.7}
-.mekiki{position:fixed;inset:0;z-index:1900;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
-.mk-box{width:min(100%,420px);max-height:calc(100dvh - 32px);overflow:auto;background:#fffdf5;border-radius:14px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.mk-box h3{margin:0 0 6px;font-size:17px;display:flex;justify-content:space-between;align-items:baseline}
-.mk-box p{margin:6px 0;font-size:14px;line-height:1.6}
-.mk-rule{margin:4px 0 8px;padding-left:1.2em;font-size:13px;line-height:1.6}
-.mk-demo{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;font-size:12px;margin:6px 0 10px}
-.mk-demo .grain{width:16px;height:22px;display:inline-block}
-.mk-time{font-size:22px;color:#b3261e;font-variant-numeric:tabular-nums}
-.mk-sub{color:var(--sub);font-size:13px}
-.mk-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px;background:#3b2f25;border-radius:10px}
-.grain{position:relative;border:2px solid #2a2015;padding:0;aspect-ratio:5/8;width:100%;border-radius:50% 50% 46% 46%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff 0 20%,#f3ecd6 50%,#e2d6b4 100%);touch-action:manipulation}
-.grain.kame::after{content:"";position:absolute;left:38%;top:32%;width:26%;height:20%;border-radius:50%;background:#5a3b1c;box-shadow:0 0 0 2px rgba(120,80,30,.35)}
-.grain.ao{background:radial-gradient(circle at 35% 30%,#f2fbe0 0 15%,#c9e3a0 55%,#9fc472 100%)}
-.grain.wari{clip-path:polygon(0 0,100% 0,100% 48%,55% 62%,0 70%)}
-.grain.gone{visibility:hidden}
-.mk-pol{display:grid;gap:8px;margin:8px 0}
-.mk-pol .btn{display:flex;flex-direction:column;align-items:flex-start;white-space:normal;text-align:left;padding:10px 12px}
-.mk-pol .btn small{font-weight:400;font-size:12px;opacity:.9}
-.mk-note{font-size:12px!important;color:var(--sub)}
-.mk-goal{font-weight:700;color:#8a6423}
-.mk-bag{position:relative;margin:8px 0;padding:8px 10px;border:2px solid #c9a227;border-radius:10px;background:#fff8e1;overflow:hidden}
-.mk-bag span{position:relative;font-weight:700;z-index:1}
-.mk-bag i{position:absolute;left:0;top:0;bottom:0;background:rgba(201,162,39,.25)}
-.mk-bag small{position:relative;display:block;font-size:12px;color:var(--sub);z-index:1}
-.mk-box .fact{font-size:13px;background:#f1f6ec;border-radius:8px;padding:8px 10px}
 /* みちしるべ（次の行き先。人の話とまわりのようすで決まる） */
 .guide{margin:0 0 6px;padding:6px 10px;border-left:4px solid #3aa7d6;background:#eef8fc;border-radius:8px;font-size:13px;line-height:1.5}
 .guide b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide b span{font-weight:400;font-size:12px}
 .guide small{display:block;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide.open b,.guide.open small{white-space:normal}
+.guide .alts{display:none;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+.guide.open .alts{display:flex}
+.guide .alts em{font-style:normal;font-size:12px;color:var(--sub)}
+.guide .alts .btn{margin:0;white-space:normal;text-align:left}
 body.px .guide{background:#000;color:#7ee0ff;border:2px solid #7ee0ff;border-left-width:4px}
 body.px .guide b{font-weight:400}
 body.px .guide small{color:#ddd}

@@ -1411,14 +1411,14 @@ function frame(now) {
       ctx.globalAlpha = Math.min(1, age * 3, (2.8 - age) * 2);
       const bs = Math.round(18 * dpr), t = `〜 ${here.banner} 〜`;
       ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const tw = ctx.measureText(t).width, by = Math.round(cy - T * 3);
+      const tw = ctx.measureText(t).width, by = Math.round(Math.max(cy - T * 3, 80 * dpr + bs));   // 左上の「📍 市町 町名」の札より下に
       ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(w / 2 - tw / 2 - 14 * dpr), by - bs, Math.round(tw + 28 * dpr), bs * 2);
       ctx.fillStyle = '#fff'; ctx.fillText(t, w / 2, by);
       ctx.globalAlpha = 1;
     }
   }
 
-  // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
+  // 主人公の頭の上に浮かぶ文字（ポイントなど）
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i], age = (now - fl.at) / 1000;
     if (age > 1.2) { floaters.splice(i, 1); continue; }
@@ -1978,7 +1978,7 @@ document.addEventListener('keydown', e => {
 
 /* ---------- おまかせ歩き（操作して移動） ----------
    みちしるべの行き先まで、道を探して自動で歩く（ほぼ放っておいてもゲームが進む）。
-   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のミッションが決まる）
+   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のたのまれごとが決まる）
    ・名所が行き先なら、着いたところでチェックインする（とちゅうの まだ行っていない所も）
    ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
    ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */

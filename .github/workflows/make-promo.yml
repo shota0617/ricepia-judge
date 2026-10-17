@@ -42,7 +42,7 @@ jobs:
           retention-days: 30
       - name: Commit stills
         run: |
-          mkdir -p mkt/nishio-go && cp promo-out/*.png mkt/nishio-go/
+          mkdir -p mkt/nishio-go && rm -f mkt/nishio-go/*.png && cp promo-out/*.png mkt/nishio-go/   # 使わなくなった場面の画像を残さない
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add mkt/nishio-go

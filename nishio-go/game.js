@@ -114,7 +114,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, guide: null, guides: 0, guideDone: [] };
+    rice: { momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} } };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
@@ -691,12 +691,14 @@ function checkin() {
   track('checkin', { spot: s.name, featured: !!s.featured, first: !v, mode: demo ? 'play' : 'walk' });
   if (s.shop) track('shop_checkin', { spot: s.name, mode: demo ? 'play' : 'walk' });
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
+  // その場所の話（まだ知らない西尾メモがあれば。ないときは ほかの話）
+  const fk = s.shop ? '' : learnFact('c:' + s.id + ':' + S.checkins);
   const lvUp = gainPoints(total);
   save();
 
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
-  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : lines, lvUp, s.shop ? SHOP_NOTE : '');
+  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : fk ? [...lines, '📖 西尾メモ +1'] : lines, lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '');
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -1404,6 +1406,91 @@ function checkBadges() {
   toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
 }
 
+/* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら西尾メモ ----------
+   ・アプリを閉じていた間も、主人公が西尾をさんぽして ポイント・籾・西尾メモ を集めてくる（10分から。上限はふつう4時間）
+   ・ポイントで「おまかせ強化」：おまかせ歩きを速く／るすばん中に集まる量を多く／るすばんの上限を長く
+   ・おまかせ歩きで約150マス進むごとに、まだ知らない西尾メモを1つ。チェックインしたところの話も */
+const IDLE = { minMin: 10, baseH: 4, napH: 2, ptPerMin: 1 / 15, momiPerMin: 0.04, maxFacts: 3,
+  ups: [
+    { id: 'spd', icon: '👟', name: 'はやあし', desc: 'おまかせ歩きが速くなる', cost: [30, 80, 200] },
+    { id: 'bag', icon: '🧺', name: 'おおきなかご', desc: 'るすばん中に集まるポイントと籾が1.5倍・2倍・2.5倍', cost: [40, 100, 240] },
+    { id: 'nap', icon: '🏠', name: 'るすばん上手', desc: 'るすばんで集まる時間が2時間ずつのびる', cost: [50, 120, 280] },
+  ] };
+const idleOf = () => { if (!S.idle || typeof S.idle !== 'object') S.idle = { last: 0, lv: {} }; if (!S.idle.lv) S.idle.lv = {}; return S.idle; };
+const upLv = id => Math.min(3, idleOf().lv[id] || 0);
+const idleCapH = () => IDLE.baseH + IDLE.napH * upLv('nap');
+const autoInterval = () => [230, 190, 160, 135][upLv('spd')];
+// まだ知らない西尾メモを1つ覚える（いまいる所の近くの話から）。覚えたものの鍵を返す。ぜんぶ知っていたら ''
+function learnFact(id) {
+  const c = me || { lat: CFG.center[0], lng: CFG.center[1] };
+  const k = pickFact({ id, lat: c.lat, lng: c.lng });
+  if (!k || S.facts.includes(k)) return '';
+  S.facts.push(k);
+  return k;
+}
+// おかえり：閉じていた間（または「あるいて移動」にしていた間）のるすばんの分を渡す
+function idleCheck(tries = 0) {
+  if (!demo) return;
+  if ((!spots.length || !areas.length) && tries < 20) { clearTimeout(idleCheck.t); idleCheck.t = setTimeout(() => idleCheck(tries + 1), 1500); return; }
+  const i = idleOf(), now = Date.now(), last = i.last;
+  i.last = now;
+  if (!last || now - last < IDLE.minMin * 60000) { save(); return; }
+  const min = Math.min((now - last) / 60000, idleCapH() * 60), mul = 1 + 0.5 * upLv('bag');
+  const pts = Math.max(1, Math.floor(min * IDLE.ptPerMin * mul)), momi = Math.round(min * IDLE.momiPerMin * mul * 10) / 10;
+  const learned = [];
+  for (let n = Math.min(IDLE.maxFacts + upLv('nap'), Math.max(1, Math.floor(min / 60))), k = 0; k < n; k++) {
+    const f = learnFact(`idle:${now}:${k}`);
+    if (!f) break;
+    learned.push(f);
+  }
+  const r = riceOf();
+  r.momi = Math.round((r.momi + momi) * 100) / 100;
+  S.log.unshift({ type: 'idle', t: now, pts, name: 'るすばんのさんぽ', icon: '🏠' });
+  const lvUp = gainPoints(pts);
+  save();
+  track('idle_return', { minutes: Math.round(min) });
+  const h = Math.floor(min / 60), m = Math.round(min % 60), capped = (now - last) / 60000 >= idleCapH() * 60;
+  const lines = [`⏱️ るすばん ${h ? h + '時間' : ''}${m}分${capped ? `（上限${idleCapH()}時間）` : ''}`, `🏠 さんぽのポイント +${pts}`];
+  if (momi > 0) lines.push(`🌾 田んぼで籾 +${momi}合（いま${r.momi}合）`);
+  if (learned.length) lines.push(`📖 西尾メモ +${learned.length}（きろくで読めます）`);
+  showReward(pts, 'おかえりなさい！ るすばん中に西尾をさんぽしてきました', lines, lvUp, learned.length ? factPool().get(learned[0]) : '');
+  renderLog();
+  refreshNearby();
+}
+function idleMark() { if (demo) { idleOf().last = Date.now(); save(); } }
+// おまかせ歩きで進んだとき（pixel.js から約150マスごと）：西尾メモを1つ
+function autoLearn() {
+  if (!demo) return;
+  const k = learnFact(`walk:${S.facts.length}:${me ? Math.round(me.lat * 1e4) + ':' + Math.round(me.lng * 1e4) : ''}`);
+  if (!k) return;
+  save();
+  const t = factPool().get(k) || '';
+  toast(`📖 西尾メモ：${t.length > 72 ? t.slice(0, 71) + '…' : t}`);
+  track('idle_fact', { mode: 'play' });
+}
+function buyUp(id) {
+  const u = IDLE.ups.find(x => x.id === id), lv = upLv(id);
+  if (!demo || !u || lv >= u.cost.length) return;
+  const cost = u.cost[lv];
+  if (S.points < cost) { toast(`ポイントが足りません（あと${cost - S.points}pt）`); return; }
+  S.points -= cost;
+  idleOf().lv[id] = lv + 1;
+  S.log.unshift({ type: 'up', t: Date.now(), pts: -cost, name: `${u.name} Lv${lv + 1}`, icon: u.icon });
+  save(); renderHeader(); renderLog();
+  toast(`${u.icon} ${u.name}が Lv${lv + 1} になりました`);
+  track('idle_upgrade', { id, lv: lv + 1 });
+}
+function renderUps() {
+  $('upBox').hidden = !demo;
+  if (!demo) return;
+  $('upNote').textContent = `るすばんで集まるのは最大${idleCapH()}時間。アプリを閉じている間も、主人公が西尾をさんぽして ポイント・籾・西尾メモ を集めてきます。`;
+  $('upList').innerHTML = IDLE.ups.map(u => {
+    const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
+    return `<li><span class="ico">${u.icon}</span><span class="main"><b>${esc(u.name)} <small>Lv${lv}/${u.cost.length}</small></b><small>${esc(u.desc)}</small></span>`
+      + (max ? '<span class="num">MAX</span>' : `<button type="button" class="btn mini" data-up="${u.id}"${S.points < cost ? ' disabled' : ''}>${cost}pt</button>`) + '</li>';
+  }).join('');
+}
+
 /* ---------- 画面 ---------- */
 function setStatus(html, isHtml) { const el = $('status'); if (isHtml) el.innerHTML = html; else el.textContent = html; }
 
@@ -1436,6 +1523,7 @@ function showReward(total, name, lines, lvUp, fact) {
 
 function renderLog() {
   renderCampaigns();
+  renderUps();
   const day = dayState(), qs = todaysQuests();
   $('questList').innerHTML = qs.map(q => {
     const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
@@ -1676,6 +1764,7 @@ $('locateBtn').addEventListener('click', () => {
 /* モード切替 */
 function setMode(isDemo) {
   const here = !demo && me ? me : null;   // 歩いていた場所から操作を始める（まだ位置がなければ地図のまん中）
+  if (demo && !isDemo) idleMark();   // 操作して移動をやめるときは、ここから るすばん
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
@@ -1694,6 +1783,7 @@ function setMode(isDemo) {
   markers.forEach(m => m.remove()); markers.clear();
   renderMarkers();
   refreshNearby();
+  idleCheck();
 }
 map.on('click', e => {
   if (!demo) return;
@@ -1824,7 +1914,11 @@ fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() 
 }).catch(() => { /* なしで続ける */ });
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); } });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
+window.addEventListener('pagehide', idleMark);
+// 開いている間は るすばん にならない（しばらく止まっていた後は、先に おかえり を渡すので触らない）
+setInterval(() => { if (!document.hidden && demo && Date.now() - idleOf().last < 5 * 60000) idleMark(); }, 60000);
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-up]'); if (b) buyUp(b.dataset.up); });
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
@@ -1856,6 +1950,7 @@ window.nishioGo = {
   get driving() { return driving; },
   get rice() { return riceOf(); }, openMekiki, RICE,
   get guide() { return guideTarget(); }, decideGuide, setGuide,
+  autoInterval, autoLearn, idleCheck, buyUp, IDLE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },
   onModeChange(fn) { modeListeners.push(fn); },

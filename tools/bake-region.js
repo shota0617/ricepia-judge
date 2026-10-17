@@ -1,6 +1,8 @@
-// にしおさんぽGO で遊べる市町（西尾市と、となりの岡崎市・安城市・碧南市・幸田町・蒲郡市・高浜市）の境界を
-// OpenStreetMap から取り、少し間引いて nishio-go/region.js に保存する：node tools/bake-region.js
-// ゲームはこれで「歩く地図の区画を作るか」「いまどの市町にいるか」を決め、せかいちずに市町の境を描く。
+// にしおさんぽGO で遊べる市町（西尾市と、となりの岡崎市・安城市・碧南市・幸田町・蒲郡市・高浜市）の境界を取り、
+// 少し間引いて nishio-go/region.js に保存する。ゲームはこれで「歩く地図の区画を作るか」「いまどの市町にいるか」を決め、せかいちずに市町の境を描く。
+//   node tools/bake-region.js 国土数値情報の行政区域（N03・愛知県）の GeoJSON … ふだんはこちら（.github/workflows/bake-region.yml が取ってくる）
+//   node tools/bake-region.js                                              … OpenStreetMap の行政界から（GeoJSON が取れないとき）
+// OpenStreetMap の西尾市と安城市の境は、米津町のあたりが数百m の粗い線で、本店（西尾市米津町）が安城市に入ってしまうため、国土数値情報を先に使う。
 const fs = require('fs'), path = require('path');
 const { ROOT, overpassFromNode } = require('./bake-common');
 
@@ -65,19 +67,40 @@ const areaKm2 = r => {   // 輪の面積（km²）
   return Math.abs(s) / 2 / 1e6;
 };
 
-(async () => {
+// 国土数値情報の行政区域（GeoJSON）：市町ごとの外側の輪（島ごとに1つ）。座標は [経度, 緯度]、輪は始点と終点が同じ
+function fromKsj(file) {
+  const gj = JSON.parse(fs.readFileSync(file, 'utf8')), by = new Map(CITIES.map(c => [c[1], []]));
+  for (const f of gj.features || []) {
+    const p = f.properties || {}, g = f.geometry;
+    if (p.N03_001 !== '愛知県' || !by.has(p.N03_004) || !g) continue;
+    const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
+    for (const poly of polys) by.get(p.N03_004).push(poly[0].map(([lon, lat]) => ({ lat, lon })));
+  }
+  return by;
+}
+// OpenStreetMap の行政界（admin_level 7）：way をつなげて輪にする
+async function fromOsm() {
   const q = `[out:json][timeout:180];
 rel["boundary"="administrative"]["admin_level"="7"]["name"~"^(${CITIES.map(c => c[1]).join('|')})$"];
 out geom;`;
-  const json = JSON.parse(await overpassFromNode('data=' + encodeURIComponent(q)));
-  const cities = [];
-  for (const [id, name] of CITIES) {
+  const json = JSON.parse(await overpassFromNode('data=' + encodeURIComponent(q))), by = new Map();
+  for (const [, name] of CITIES) {
     // 愛知県のもの（同じ名前の市町はほかの県にない）
     const rel = (json.elements || []).find(e => e.type === 'relation' && e.tags && e.tags.name === name);
     if (!rel) throw new Error(`${name} の境界が見つかりません`);
     const ways = rel.members.filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry && m.geometry.length > 1).map(m => m.geometry);
     console.log(`${name}: 境界の線 ${ways.length} 本（役割 ${[...new Set(rel.members.map(m => m.type + ':' + m.role))].join(' ')}）`);
-    const rs = rings(ways, name).map(simplifyRing).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
+    by.set(name, rings(ways, name));
+  }
+  return by;
+}
+
+(async () => {
+  const ksj = process.argv[2], raw = ksj ? fromKsj(ksj) : await fromOsm();
+  const SRC = ksj ? '国土数値情報（行政区域データ・国土交通省）を加工して作成' : 'OpenStreetMap（© OpenStreetMap contributors, ODbL）の行政界から作成';
+  const cities = [];
+  for (const [id, name] of CITIES) {
+    const rs = (raw.get(name) || []).filter(r => r.length >= 4).map(simplifyRing).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
     if (!rs.length) throw new Error(`${name} の境界を輪にできません`);
     const all = rs.flat();
     const bbox = [[Math.min(...all.map(p => p[0])), Math.min(...all.map(p => p[1]))], [Math.max(...all.map(p => p[0])), Math.max(...all.map(p => p[1]))]];
@@ -85,7 +108,7 @@ out geom;`;
     console.log(`${name}: 輪 ${rs.length} 個・点 ${all.length} 個・約 ${km2.toFixed(1)} km²・範囲 ${JSON.stringify(bbox)}`);
     cities.push({ id, name, bbox, rings: rs });
   }
-  const body = `// tools/bake-region.js が OpenStreetMap（© OpenStreetMap contributors, ODbL）の行政界から作った、遊べる市町の境界（約${TOL_M}mに間引き）。手で編集しないでください。
+  const body = `// tools/bake-region.js が ${SRC}した、遊べる市町の境界（約${TOL_M}mに間引き）。手で編集しないでください。
 // rings は [緯度, 経度] の輪（島などで複数あることがある）。bbox は [[南, 西], [北, 東]]
 globalThis.NISHIO_REGION = ${JSON.stringify({ cities })};
 if (typeof module !== 'undefined') module.exports = globalThis.NISHIO_REGION;

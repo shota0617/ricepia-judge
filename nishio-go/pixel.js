@@ -1976,7 +1976,7 @@ document.addEventListener('keydown', e => {
    ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
    ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */
 let auto = (() => { try { return localStorage.getItem('nsg_auto') !== 'false'; } catch (e) { return true; } })();
-const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0 };
+const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0, walked: 0 };
 const AUTO_ROADS = new Set([C.R, C.H, C.D]);
 function setAuto(on, quiet) {
   auto = !!on;
@@ -2030,7 +2030,7 @@ function autoRead() {   // 話のウィンドウ：読む時間をおいて「�
   if (next) next.click(); else $('pxInfo').hidden = true;
 }
 function autoTick() {
-  setTimeout(autoTick, 230);
+  setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
   if (!auto || !active || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;
@@ -2066,7 +2066,10 @@ function autoTick() {
   if (Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) { autoS.path = []; return; }   // 道すじからずれた（タップで移動など）：探し直す
   const dir = nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up';
   autoS.steps++;
-  if (step(dir)) autoS.stuck = 0; else autoS.path = [];   // 通れなかった（読み込んだら建物だった など）：探し直す
+  if (step(dir)) {
+    autoS.stuck = 0;
+    if (++autoS.walked % 150 === 0 && G.autoLearn) G.autoLearn();   // 歩いているだけで西尾のことが分かる
+  } else autoS.path = [];   // 通れなかった（読み込んだら建物だった など）：探し直す
 }
 $('pxAuto').addEventListener('click', () => setAuto(!auto));
 setAuto(auto, true);

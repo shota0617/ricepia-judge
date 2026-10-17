@@ -47,7 +47,7 @@
   <canvas id="pxCanvas"></canvas>
   <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）">🌏</button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
-  <div class="px-attr">地図 © OpenStreetMap contributors／標高：地理院タイル／土地利用：国土数値情報（国土交通省）を加工して作成</div>
+  <div class="px-attr">地図 © OpenStreetMap contributors／標高：地理院タイル／土地利用・市町の境界：国土数値情報（国土交通省）を加工して作成</div>
   <div class="px-pad" id="pxPad" hidden>
     <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）">🚗</button>
@@ -93,6 +93,11 @@
 <section class="panel" id="panel-log" hidden>
   <h2>きろく <button type="button" class="btn mini share-btn" id="shareLogBtn">📣 シェア</button></h2>
   <div class="campaigns" id="campaignBox" hidden></div>
+  <div id="upBox" hidden>
+    <h3>🧭 おまかせ強化 <small>操作して移動</small></h3>
+    <p class="note" id="upNote"></p>
+    <ul class="list" id="upList"></ul>
+  </div>
   <h3>📜 今日のおさんぽクエスト</h3>
   <ul class="list" id="questList"></ul>
   <div class="stats" id="stats"></div>

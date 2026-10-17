@@ -196,7 +196,7 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 .wallet small{color:var(--sub);font-size:12px}
 .list li .num.minus{color:var(--red)}
 #eventList li.next{opacity:.75}
-#eventList .btn.mini{margin:0;flex:none}
+#eventList .btn.mini,#upList .btn.mini{margin:0;flex:none}
 .note.src{font-size:11px;color:var(--sub);line-height:1.6;margin:6px 2px 14px}
 .list li .btn{font-size:13px;padding:7px 12px}
 .list li .btn:disabled{background:#c9cfc6;opacity:1;font-weight:600}

@@ -68,8 +68,9 @@ function toItems(json) {
 
 // 街並みの目印（コンビニ・スーパー・ガソリンスタンドなど）。西尾の人が見て「あそこだ」と分かるように、名前つきで地図に出す
 const LANDMARK_FILTERS = [
-  '["shop"~"^(convenience|supermarket|mall|department_store|doityourself|hardware|furniture|chemist|drugstore|electronics|books|clothes|car|bakery|confectionery|tea)$"]["name"]',
-  '["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office)$"]["name"]',
+  '["shop"]["name"]',   // 名前のあるお店はぜんぶ（町の八百屋・酒屋・お茶屋・自転車屋なども「あそこの店だ」と分かるように）
+  '["craft"]["name"]',   // 和菓子・鰻・瓦・お茶など、つくっているところ
+  '["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office|ice_cream|bar|pub|karaoke_box|car_wash)$"]["name"]',
 ];
 const LANDMARK_QUERY = wrap(stmts(LANDMARK_FILTERS), true);
 const LANDMARK_PARTS = [wrap(stmts(LANDMARK_FILTERS, [IN[0]]), true), wrap(stmts(LANDMARK_FILTERS, [IN[1]]), false)];
@@ -82,8 +83,8 @@ function landmarkKind(t) {
   if (a === 'fuel') return 'fuel';
   if (a === 'bank') return 'bank';
   if (a === 'post_office') return 'post';
-  if (/^(restaurant|fast_food)$/.test(a)) return 'food';
-  if (a === 'cafe' || /^(bakery|confectionery|tea)$/.test(s)) return 'cafe';
+  if (/^(restaurant|fast_food|bar|pub|karaoke_box)$/.test(a)) return 'food';
+  if (/^(cafe|ice_cream)$/.test(a) || /^(bakery|confectionery|tea|pastry)$/.test(s) || /^(confectionery|tea)$/.test(t.craft || '')) return 'cafe';
   return 'store';
 }
 // [緯度, 経度, 種類, 名前] の一覧

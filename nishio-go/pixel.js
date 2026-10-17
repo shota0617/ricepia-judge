@@ -1636,7 +1636,7 @@ function setActive(on) {
   else G.invalidateMap();
 }
 function updatePad() {
-  // 操作して移動なら、せかいちずでも十字ボタンを出す（押すと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
+  // 操作して移動なら、せかいちずでもスティックを出す（動かすと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
   $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
 }
@@ -1652,30 +1652,31 @@ $('pxZoomOut').addEventListener('click', () => {
 });
 function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
 
-// デモ：十字ボタンで1マスずつ歩く（水と建物には入れない）
+// デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-function step(dir) {
-  if (!G.demo) return;
+function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
+  if (!G.demo) return false;
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
   if (driving) {   // 車は道（ふつうの道と大きな道）だけ。人がいたら止まる
-    if (!CAR_OK.has(codeAt(nx, ny)) || npcAt(nx, ny)) { if (navigator.vibrate) navigator.vibrate(20); return; }
+    if (!CAR_OK.has(codeAt(nx, ny)) || npcAt(nx, ny)) return false;
     const ll = toLatLng(nx + 0.5, ny + 0.5);
-    G.moveTo(ll.lat, ll.lng, 'step');   // 十字ボタンの1歩
-    return;
+    G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
+    return true;
   }
   // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
   // いちばん近い歩けるマスへ近づく向きにだけ動ける（出口へ向かうとき以外は、ふだんどおり通れない）
   const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
   const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
-  if (BLOCK.has(codeAt(nx, ny)) && !escape) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  if (BLOCK.has(codeAt(nx, ny)) && !escape) return false;
   const who = npcAt(nx, ny);
-  if (who) { if ($('pxInfo').hidden) openNpc(who); return; }   // 人にぶつかったら話しかける（ドラクエ風）
+  if (who) { if ($('pxInfo').hidden) openNpc(who); return true; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
-  G.moveTo(ll.lat, ll.lng, 'step');   // 十字ボタンの1歩
+  G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
+  return true;
 }
-// 車：十字ボタンのまん中で乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
+// 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
 // 乗っている間は、歩いた距離・チェックイン・たからばこ・話しかけはお休み（降りるとできる）
 const CAR_OK = new Set([C.R, C.H]);
 let driving = false;
@@ -1829,18 +1830,66 @@ function updateChests() {
 }
 setInterval(updateChests, 2000);
 
-// 十字ボタン・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く
+// スティック・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く。通れなければ ぶるっ
 function padStep(dir) {
   if (worldMode) setWorld(false);
-  step(dir);
+  const ok = step(dir);
+  if (!ok && navigator.vibrate) navigator.vibrate(20);
+  return ok;
 }
-let holdTimer = null;
-document.querySelectorAll('#pxPad [data-dir]').forEach(b => {
-  const start = e => { e.preventDefault(); padStep(b.dataset.dir); clearInterval(holdTimer); holdTimer = setInterval(() => padStep(b.dataset.dir), driving ? 90 : 180); };
-  const stop = () => { clearInterval(holdTimer); holdTimer = null; };
-  b.addEventListener('pointerdown', start);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+// スティック：さわったまま動かすと、倒した向きへ歩きつづける。
+//   ・まん中の少しは遊び（動かない）。大きく倒すと速く歩く（車はもっと速い）
+//   ・ななめに倒すと、2つの向きを交互に1マスずつ（片方が通れなければ、もう片方へ）
+const stick = { id: null, x: 0, y: 0, dirs: [], turn: 0, timer: null, key: '' };
+const STICK_DEAD = 0.28, STICK_FAST = 0.75, STICK_DIAG = Math.tan(Math.PI / 8);
+function stickDirs(x, y) {   // x, y は -1〜1（半径で割った値）
+  const ax = Math.abs(x), ay = Math.abs(y);
+  if (Math.hypot(x, y) < STICK_DEAD) return [];
+  const h = x < 0 ? 'left' : 'right', v = y < 0 ? 'up' : 'down';
+  if (Math.min(ax, ay) > Math.max(ax, ay) * STICK_DIAG) return ay >= ax ? [v, h] : [h, v];
+  return [ax > ay ? h : v];
+}
+function stickTick() {
+  stick.timer = null;
+  if (!stick.dirs.length) return;
+  const n = stick.dirs.length, first = stick.dirs[stick.turn % n];
+  if (!padStep(first) && n > 1) padStep(stick.dirs[(stick.turn + 1) % n]);
+  stick.turn++;
+  const fast = Math.hypot(stick.x, stick.y) >= STICK_FAST;
+  stick.timer = setTimeout(stickTick, driving ? (fast ? 70 : 120) : (fast ? 130 : 230));
+}
+function stickMove(e) {
+  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 14;
+  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  const d = Math.hypot(dx, dy);
+  if (d > R) { dx *= R / d; dy *= R / d; }
+  stick.x = dx / R; stick.y = dy / R;
+  $('pxKnob').style.transform = `translate(${dx}px,${dy}px)`;
+  const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
+  for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
+  if (key === stick.key) return;
+  stick.key = key; stick.dirs = dirs; stick.turn = 0;
+  clearTimeout(stick.timer); stick.timer = null;
+  if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
+}
+function stickEnd(e) {
+  if (e && stick.id !== e.pointerId) return;
+  stick.id = null; stick.dirs = []; stick.key = ''; stick.x = stick.y = 0;
+  clearTimeout(stick.timer); stick.timer = null;
+  $('pxStick').classList.remove('on');
+  $('pxKnob').style.transform = '';
+  $('pxStick').querySelectorAll('i').forEach(i => i.classList.remove('lit'));
+}
+$('pxStick').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  stick.id = e.pointerId;
+  try { $('pxStick').setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
+  $('pxStick').classList.add('on');
+  stickMove(e);
 });
+$('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId) stickMove(e); });
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => $('pxStick').addEventListener(ev, stickEnd));
+window.addEventListener('blur', () => stickEnd());
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
   if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); padStep(k); }

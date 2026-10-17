@@ -235,10 +235,20 @@ body.px #map{visibility:hidden}
 .px-zoom{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
 .px-zoom button,.px-pad button{background:rgba(0,0,0,.72);color:#fff;border:2px solid #fff;border-radius:6px;font-family:"DotGothic16",monospace;font-size:18px;width:40px;height:40px;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
 .px-zoom button:active,.px-pad button:active{background:#333}
-.px-pad{position:absolute;left:12px;bottom:max(150px,calc(var(--sheet-h,0px) + 22px));display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
+.px-pad{position:absolute;left:12px;bottom:max(176px,calc(var(--sheet-h,0px) + 48px));display:flex;align-items:flex-end;gap:8px}
 .px-pad button{width:48px;height:48px}
-.px-pad .u{grid-area:1/2}.px-pad .l{grid-area:2/1}.px-pad .r{grid-area:2/3}.px-pad .d{grid-area:3/2}
-.px-pad .c{grid-area:2/2;font-size:22px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
+.px-pad .c{font-size:22px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
+/* スティック：さわったまま動かすと、その向きへ歩きつづける（大きく倒すと速く、ななめは2つの向きを交互に） */
+.px-stick{position:relative;width:136px;height:136px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);box-shadow:inset 0 0 0 6px rgba(255,255,255,.08);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.px-stick.on{background:rgba(0,0,0,.6);cursor:grabbing}
+.px-stick i{position:absolute;width:0;height:0;border:7px solid transparent;opacity:.75;pointer-events:none}
+.px-stick .u{left:calc(50% - 7px);top:6px;border-bottom-color:#fff;border-top-width:0}
+.px-stick .d{left:calc(50% - 7px);bottom:6px;border-top-color:#fff;border-bottom-width:0}
+.px-stick .l{top:calc(50% - 7px);left:6px;border-right-color:#fff;border-left-width:0}
+.px-stick .r{top:calc(50% - 7px);right:6px;border-left-color:#fff;border-right-width:0}
+.px-stick i.lit{opacity:1;filter:drop-shadow(0 0 3px #ffd54f)}
+.px-knob{position:absolute;left:calc(50% - 28px);top:calc(50% - 28px);width:56px;height:56px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#666,#222 70%);border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);pointer-events:none;transition:transform .12s ease-out}
+.px-stick.on .px-knob{transition:none;border-color:#ffd54f}
 .px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
 .px-info .dq{width:100%;max-width:420px;max-height:70%;overflow-y:auto}
 .px-info .popup h4{font-size:17px;margin:0 0 6px;color:#ffd54f}

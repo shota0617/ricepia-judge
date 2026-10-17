@@ -636,7 +636,7 @@ const SHOP_NOTE = '西尾のお米屋さん（明治25年創業）。車に乗�
 function checkin() {
   const s = selected;
   if (!s || !me) return;
-  if (driving) { toast('🚗 車を降りてからチェックインしてね（十字ボタンのまん中）'); return; }
+  if (driving) { toast('🚗 車を降りてからチェックインしてね（スティックのとなりの🚶ボタン）'); return; }
   const now = Date.now();
   if (!demo && now < vehicleUntil) { toast('乗り物での移動中はチェックインできません。降りて歩いてからどうぞ。'); return; }
   if (!demo && me.acc > CFG.maxAccuracy) { toast(`GPSの精度が低いようです（誤差 約${Math.round(me.acc)}m）。少し待ってからもう一度。`); return; }
@@ -893,7 +893,7 @@ const toKg = g => (g * 0.15).toFixed(g * 0.15 >= 10 ? 0 : 1);   // 1合＝約150
 const riceOf = () => (S.rice = Object.assign({ momi: 0, white: 0, loads: 0, g1: 0, goals: [] }, S.rice || {}));
 const nextGoal = () => RICE_GOALS.find(g => !riceOf().goals.includes(g.id));
 // ① 籾ひろい：前の位置から今の位置まで（60m以内）の道すじで、田畑のマスを通ったら集める
-// 操作して移動：十字ボタン・矢印キーで歩いた1歩だけ（地図のタップ・「ここへ移動」は近くても集めない）。
+// 操作して移動：スティック・矢印キーで歩いた1歩だけ（地図のタップ・「ここへ移動」は近くても集めない）。
 // あるいて移動：歩いた距離と同じ GPS の条件（精度35m以内・ゆらぎより大きい移動・歩く速さ）で、前に集めた所からの道すじ
 let stepMove = false, harvestFrom = null;
 function harvest(p, prev) {
@@ -1682,7 +1682,7 @@ function switchMode(isDemo) {
   if (isDemo === demo) return;
   setMode(isDemo);
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
-  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? '十字ボタンで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
+  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スティックで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
 $('demoToggle').addEventListener('change', e => switchMode(e.target.checked));
@@ -1757,7 +1757,7 @@ $('anaToggle').checked = !store.get('nsg_noanalytics', false);
 $('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg_noanalytics', e.target.checked ? '0' : '1'); } catch (err) { /* noop */ } toast(e.target.checked ? '📊 アクセス解析をオンにしました（次に開いたときから）' : '📊 アクセス解析をオフにしました（次に開いたときから送りません）'); });
 sound.apply();
 
-/* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、十字ボタンや丸ボタンが隠れないようにする */
+/* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、スティックや丸ボタンが隠れないようにする */
 if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--sheet-h', $('sheet').offsetHeight + 'px')).observe($('sheet'));
 
 /* はじめに */
@@ -1765,11 +1765,11 @@ function begin(isDemo) {
   store.set('nsg_started', true);
   track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
-  // 操作して遊ぶは、十字ボタンで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
+  // 操作して遊ぶは、スティックで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
   if (isDemo && !document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
   setMode(isDemo);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? '🎮 左下の十字ボタン（矢印キー）で歩きます'
+    ? '🎮 左下のスティック（矢印キー）で歩きます'
     : '🎮 地図をタップするとその場所へ移動します');
 }
 document.addEventListener('click', e => {

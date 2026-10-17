@@ -65,7 +65,7 @@ async function endCard(page) {
   await page.click('#demoBtn'); await sleep(800);
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-nishio-castle'); nishioGo.moveTo(s.lat - 0.0006, s.lng + 0.0006); });
   await sleep(2500);
-  await caption(page, '西尾のまちを、ドット絵で歩こう', '十字ボタンで、家からでも西尾めぐり');
+  await caption(page, '西尾のまちを、ドット絵で歩こう', 'スティックで、家からでも西尾めぐり');
   for (const k of ['ArrowLeft', 'ArrowLeft', 'ArrowUp', 'ArrowUp', 'ArrowLeft', 'ArrowUp']) { await page.keyboard.press(k); await sleep(380); }
   await sleep(1500);
   await shot('02-walk');

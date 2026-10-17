@@ -1,0 +1,47 @@
+# 一時的な調査：国土数値情報 土地利用細分メッシュ（L03-b）のダウンロード先とファイルの形を調べて reference/ にコミットする（マージ前に消す）
+name: Research landuse mesh
+on:
+  push:
+    branches: [claude/confident-turing-etepui]
+    paths: [.github/workflows/research-landuse.yml]
+permissions:
+  contents: write
+concurrency:
+  group: research-commit
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe
+        run: |
+          mkdir -p reference work && cd work
+          out=../reference/landuse-probe.txt; : > $out
+          for p in KsjTmplt-L03-b-2021.html KsjTmplt-L03-b-2016.html KsjTmplt-L03-b-2014.html KsjTmplt-L03-b.html; do
+            echo "== $p" >> $out
+            curl -sSL -m 60 "https://nlftp.mlit.go.jp/ksj/gml/datalist/$p" -o page.html || true
+            grep -oE "[^\"' ]*L03-b[^\"' ]*523[67][^\"' ]*\.zip" page.html | sort -u | head -20 >> $out || true
+            grep -oE "(利用規約|商用|CC BY|クリエイティブ・コモンズ)[^<]{0,80}" page.html | sort -u | head -10 >> $out || true
+          done
+          url=$(grep -hoE "[^\"' ]*L03-b[^\"' ]*5236[^\"' ]*\.zip" page.html ../reference/landuse-probe.txt | head -1)
+          echo "== first url: $url" >> $out
+          for m in 5236 5237; do
+            u=$(grep -hoE "[^\"' ]*L03-b-2[0-9][^\"' ]*${m}[^\"' ]*\.zip" ../reference/landuse-probe.txt | head -1)
+            [ -z "$u" ] && u=$(grep -hoE "[^\"' ]*L03-b[^\"' ]*${m}[^\"' ]*\.zip" ../reference/landuse-probe.txt | head -1)
+            case "$u" in http*) ;; /*) u="https://nlftp.mlit.go.jp$u";; *) u="https://nlftp.mlit.go.jp/ksj/gml/datalist/$u";; esac
+            u=$(echo "$u" | sed 's#/ksj/gml/datalist/\.\./#/ksj/gml/#')
+            echo "== download $m: $u" >> $out
+            curl -sSL -m 120 "$u" -o m$m.zip; ls -la m$m.zip >> $out; file m$m.zip >> $out
+            unzip -o -q m$m.zip -d m$m >> $out 2>&1 || true
+            find m$m -type f | head -30 | xargs -I{} ls -la {} >> $out
+            f=$(find m$m -type f \( -iname '*.xml' -o -iname '*.gml' \) | head -1)
+            [ -n "$f" ] && { echo "== head $f" >> $out; head -c 3000 "$f" >> $out; echo >> $out; echo "== tail" >> $out; tail -c 1500 "$f" >> $out; echo >> $out; }
+            d=$(find m$m -type f -iname '*.dbf' | head -1)
+            [ -n "$d" ] && { echo "== dbf head $d" >> $out; head -c 1200 "$d" | od -c | head -40 >> $out; }
+          done
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"; git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reference/landuse-probe.txt; git commit -q -m "調査：土地利用細分メッシュ（自動）" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done

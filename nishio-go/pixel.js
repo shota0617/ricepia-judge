@@ -23,6 +23,11 @@ const chunkBox = (cx, cy) => {
 // G草原 F田んぼ T町 W森 P公園 A水 S砂浜 B建物 R道 H大きな道 L線路 D小道 X未読込 M山 K丘 E茶畑 V畑 I工場 J境内 Y墓地 N温室 U農地（作物不明） Q住宅地
 const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12, M: 13, K: 14, E: 15, V: 16, I: 17, J: 18, Y: 19, N: 20, U: 21, Q: 22 };
 const UNSET = 255;
+// こよみ（season.js）：田畑の色は月で（田おこし・田植え・青田・稲刈り・刈田）、森は紅葉のころ、公園は桜のころに変わる
+const KO = window.NISHIO_SEASON, KO_NOW = new Date();
+const PADDY_TILE = KO ? KO.paddy(KO_NOW).tile : 'green';
+const KOYO = !!KO && KO.inRange(KO_NOW, [11, 1], [12, 10]), SAKURA = !!KO && KO.inRange(KO_NOW, [3, 25], [4, 10]);
+const PADDY_COL = { green: '#86b54c', gold: '#cfae4a', flooded: '#8fbfd8', soil: '#8a6a44', stubble: '#a89a6a' }[PADDY_TILE] || '#86b54c';
 const BLOCK = new Set([C.A, C.B, C.M, C.X]);    // デモで歩けないマス（水・建物・山・まだ読み込んでいない所）
 const HILL_M = 35, MOUNTAIN_M = 110;        // 標高（m）：これ以上の草地は丘、さらに高い所（幡豆の尾根・茶臼山・三ヶ根山）は山
 
@@ -521,7 +526,7 @@ let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
 const WCOL = { [C.G]: '#3f9b3c', [C.F]: '#7fb84a', [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
   [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
-  [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: '#86b54c', [C.Q]: '#c9a27a' };
+  [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
   if (!world) return;
   const c = document.createElement('canvas');
@@ -794,19 +799,33 @@ const grassBase = (px, r) => {
   speckle(px, r, '#3f9b3c', ['#2f7f2e', '#56b552'], 10);
   for (let i = 0; i < 3; i++) { const a = (r() * 13) | 0, b = 3 + ((r() * 11) | 0); px('#2a6f29', a, b); px('#2a6f29', a + 2, b); px('#2a6f29', a + 1, b - 1); }
 };
-const TILE_ART = {
-  [C.G]: grassBase,
-  [C.F]: (px, r) => {            // 田んぼ（苗の列と水の光）
-    px('#7fb84a', 0, 0, 16, 16);
-    for (let y = 1; y < 16; y += 3) for (let x = (y % 2) + 1; x < 16; x += 3) px('#5a9530', x, y, 1, 2);
-    for (let i = 0; i < 4; i++) px('#a8d8ff', (r() * 15) | 0, (r() * 15) | 0, 2, 1);
-    px('#6b5a3a', 0, 15, 16, 1); px('#6b5a3a', 15, 0, 1, 16);   // あぜ道
-  },
-  [C.U]: (px, r) => {            // 農地（作物不明）：緑の作物の列
+// 田畑のマス：こよみの田んぼのようす（PADDY_TILE）で描き分ける
+function paddyArt(px, r) {
+  if (PADDY_TILE === 'gold') {            // 稲刈りのころ：黄金色の稲穂
+    px('#cfae4a', 0, 0, 16, 16);
+    for (let y = 1; y < 16; y += 4) { px('#b08a2a', 0, y, 16, 2); for (let x = (r() * 3) | 0; x < 16; x += 3) px('#f2d36b', x, y - 1); }
+  } else if (PADDY_TILE === 'flooded') {  // 田植えのころ：水をはった田に小さな苗
+    px('#8fbfd8', 0, 0, 16, 16);
+    for (let i = 0; i < 3; i++) px('#cfe9f7', (r() * 13) | 0, (r() * 15) | 0, 3, 1);
+    for (let y = 2; y < 16; y += 4) for (let x = 1 + ((y / 4) % 2); x < 16; x += 4) px('#4f9a35', x, y, 1, 2);
+  } else if (PADDY_TILE === 'soil') {     // 田おこしのころ：たがやした土
+    px('#8a6a44', 0, 0, 16, 16);
+    for (let y = 2; y < 16; y += 4) px('#6e5233', 0, y, 16, 1);
+    for (let i = 0; i < 6; i++) px('#a3815a', (r() * 15) | 0, (r() * 15) | 0, 2, 1);
+  } else if (PADDY_TILE === 'stubble') {  // 刈田：稲の株とわら
+    px('#a89a6a', 0, 0, 16, 16);
+    for (let y = 2; y < 16; y += 4) for (let x = 1 + ((y / 4) % 2) * 2; x < 16; x += 4) { px('#7d6f48', x, y, 1, 2); px('#cdbf8e', x + 1, y); }
+    for (let i = 0; i < 2; i++) px('#dccc96', (r() * 12) | 0, (r() * 15) | 0, 4, 1);
+  } else {                                // 青田：緑の稲の列
     px('#86b54c', 0, 0, 16, 16);
     for (let y = 1; y < 16; y += 4) { px('#6a9a36', 0, y, 16, 2); for (let x = (r() * 3) | 0; x < 16; x += 4) px('#a3cc66', x, y - 1); }
-    px('#7a6a46', 0, 15, 16, 1);
-  },
+  }
+  px('#7a6a46', 0, 15, 16, 1);
+}
+const TILE_ART = {
+  [C.G]: grassBase,
+  [C.F]: (px, r) => { paddyArt(px, r); px('#6b5a3a', 15, 0, 1, 16); },   // 田んぼ（あぜ道つき）
+  [C.U]: (px, r) => paddyArt(px, r),   // 農地（作物不明）：西尾では多くが田んぼなので、こよみの田んぼのようすで描く
   [C.V]: (px, r) => {            // 畑
     px('#9a6b3f', 0, 0, 16, 16);
     for (let y = 2; y < 16; y += 4) { px('#7a512c', 0, y + 1, 16, 1); for (let x = (r() * 3) | 0; x < 16; x += 3) px('#6ab04c', x, y, 1, 1); }
@@ -846,15 +865,21 @@ const TILE_ART = {
   [C.W]: (px, r) => {            // 森
     grassBase(px, r);
     const ox = ((r() * 3) | 0) - 1;
+    // 紅葉のころ（11月〜12月上旬）は、木の葉の色が赤・だいだい・黄色まじりになる
+    const [leaf, hi] = KOYO ? [['#c8641e', '#e08a3a'], ['#b03a24', '#d0563c'], ['#c99a1e', '#e6c040'], ['#1d5e26', '#2e8a38']][(r() * 4) | 0] : ['#1d5e26', '#2e8a38'];
     px('#5b3a1e', 7 + ox, 11, 2, 4);
-    px('#1d5e26', 3 + ox, 3, 10, 8); px('#1d5e26', 4 + ox, 2, 8, 10); px('#1d5e26', 2 + ox, 5, 12, 4);
-    px('#2e8a38', 5 + ox, 3, 4, 3); px('#2e8a38', 4 + ox, 5, 2, 2);
+    px(leaf, 3 + ox, 3, 10, 8); px(leaf, 4 + ox, 2, 8, 10); px(leaf, 2 + ox, 5, 12, 4);
+    px(hi, 5 + ox, 3, 4, 3); px(hi, 4 + ox, 5, 2, 2);
     px('#123f19', 4 + ox, 10, 8, 1);
   },
   [C.P]: (px, r) => {            // 公園・芝生
     speckle(px, r, '#4fb24b', ['#45a242', '#66c461'], 12);
     const cols = ['#ff8fb1', '#fff176', '#ffffff'];
     for (let i = 0; i < 3; i++) { const a = 1 + ((r() * 13) | 0), b = 1 + ((r() * 13) | 0); px(cols[i % 3], a, b); px('#2f8f2c', a, b + 1); }
+    if (SAKURA && r() < 0.6) {   // 桜のころは、公園に桜の木
+      const a = 3 + ((r() * 6) | 0), b = 2 + ((r() * 4) | 0);
+      px('#6b4a2e', a + 3, b + 6, 2, 4); px('#f7b6cc', a, b, 8, 6); px('#f7b6cc', a + 1, b - 1, 6, 8); px('#fde0ea', a + 2, b + 1, 3, 2); px('#e48aa8', a + 1, b + 6, 6, 1);
+    }
   },
   [C.A]: (px, r, f) => {         // 水（2コマで波が動く）
     px('#2a62c9', 0, 0, 16, 16);
@@ -1463,8 +1488,9 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
     const fs = Math.round(12 * dpr);
     ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'left';
     const tw = ctx.measureText(corner).width;
-    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, 8 * dpr, tw + 16 * dpr, fs + 12 * dpr);
-    ctx.fillStyle = '#fff'; ctx.fillText(corner, 16 * dpr, 8 * dpr + (fs + 12 * dpr) / 2);
+    const y0 = 44 * dpr;   // 上には こよみ の札がある
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, y0, tw + 16 * dpr, fs + 12 * dpr);
+    ctx.fillStyle = '#fff'; ctx.fillText(corner, 16 * dpr, y0 + (fs + 12 * dpr) / 2);
   }
 }
 function setWorld(on) {

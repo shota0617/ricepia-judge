@@ -395,7 +395,13 @@ const npcMet = id => (S.met || []).includes(id);
 const NPC_NISHIO = (window.NISHIO_NPCS || []).filter(n => !n.area), NPC_NEAR = (window.NISHIO_NPCS || []).filter(n => n.area);
 // 話す中身：その人のことばと、その場所で今月・来月にある行事の話
 function npcPages(n) {
-  const pages = n.lines.slice();
+  const pages = n.lines.slice(), now = new Date();
+  if (KO) {
+    pages[0] = KO.daypart(now).greet + pages[0];   // 時間帯のあいさつ
+    const h = KO.seasonSpots(now).find(x => x.spot === n.spot);
+    if (h) pages.push(`いまは${h.text}だに。ちょうどええ時に来たねえ。`);
+    if (KO.doyoUshi(now) && MEIBUTSU.some(m => m.id === 'unagi' && m.spots.includes(n.spot))) pages.push('きょうは土用の丑の日。うなぎを食べる人が多い日だもんで、一色のうなぎも大いそがしだに。');
+  }
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
@@ -642,6 +648,8 @@ function checkin() {
 
 /* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
+// こよみ（season.js：季節・二十四節気・田んぼのようす・見ごろ・時間帯・土用の丑の日）
+const KO = window.NISHIO_SEASON || null;
 // area があるのは となりの市町の名物（バッジを「西尾の名物」と分ける）
 const MB_NISHIO = MEIBUTSU.filter(m => !m.area), MB_NEAR = MEIBUTSU.filter(m => m.area && m.spots.length);
 const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
@@ -808,7 +816,9 @@ function tryChest() {
    ・持ち込みは籾5合から、当店の2店舗（チェックインできる距離）でだけ
    ・目利きの出来で等級が決まり、白米の量が変わる（1等×1.0・2等×0.9・3等×0.75）
    ・ポイントは米袋の目標（5kg・10kg・30kg・1俵60kg）に届いたときだけ */
-const RICE = { tile: { walk: 0.3, play: 0.15 }, dayCap: { walk: 60, play: 30 }, minLoad: 5, husk: 0.8, grade: { 1: 1, 2: 0.9, 3: 0.75 } };
+const RICE = { tile: { walk: 0.3, play: 0.15 }, dayCap: { walk: 60, play: 30 }, minLoad: 5, husk: 0.8, grade: { 1: 1, 2: 0.9, 3: 0.75 }, shinmai: 1.5 };
+// 稲刈りのころ（こよみ：9〜10月）は、1マスの籾が1.5倍（1日の上限は同じ）
+const riceSeason = () => (KO && KO.paddy(new Date()).id === 'inekari' ? RICE.shinmai : 1);
 const POLISH = [
   { id: 'gobu', name: '5分づき', note: 'ぬかを半分ほど残す仕上がり。白米より量が多めに残ります', yield: 0.95 },
   { id: 'normal', name: '通常', note: 'いつもの白米の仕上がり', yield: 0.9 },
@@ -867,7 +877,7 @@ function harvest(p, prev) {
       if (!d.momiCapNoted) { d.momiCapNoted = true; toast(`🌾 きょう集められる籾は${cap}合まで。あしたまた田畑を歩こう`); }
       break;
     }
-    const g = Math.min(RICE.tile[mode], cap - d.momi);
+    const g = Math.min(Math.round(Math.round(RICE.tile[mode] * 100) * riceSeason()) / 100, cap - d.momi);   // 稲刈りのころは あるいて0.45合・操作0.23合
     d.momiTiles.push(key); d.momi += g; r.momi += g; got += g;
   }
   // 地図データがまだのマスを通ったときは、起点を戻して、次の位置でこの道すじをもう一度調べる（集めたマスは2回数えない）
@@ -1047,11 +1057,23 @@ function decideGuide(from) {
       .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > guideRadius({ kind: 'npc' }) * 1.5 && dist(me, x.n) <= 10000);
     if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
   }
+  // ②' 季節の見ごろ（こよみ）：いまの時期に見ごろの所。行事と交互に先にする
+  const seasonC = (() => {
+    if (!KO) return null;
+    const se = KO.season(now), sk = KO.sekki(now);
+    const hs = KO.seasonSpots(now).map(h => ({ h, s: spots.find(x => x.id === 'f-' + h.spot) })).filter(x => x.s && far(x.s) && !ISLAND_SPOTS.has(x.h.spot)).sort((a, b) => dist(me, a.s) - dist(me, b.s));
+    if (!hs.length) return null;
+    const { h, s } = hs[0];
+    return { kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, season: true, by: from ? undefined : `季節（${se.icon}${se.name}・${sk.name}のころ）`,
+      why: say(`いまは${h.text}だもんで、${s.name}へ行ってみりん。`, `${h.icon} いまは${h.text}。${s.name}へ行ってみよう。`) };
+  })();
+  if (seasonC && (S.guides || 0) % 2 === 0) cands.push(seasonC);
   // ② 今月・来月の行事の会場
   for (const { e, when } of upcomingEvents()) {
     const s = e.spot && spots.find(x => x.id === evSpotId(e));
     if (s && far(s) && !ISLAND_SPOTS.has(e.spot)) { cands.push({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: say(`${when}に${s.name}で「${e.name}」があるもんで、いっぺん見に行ってみりん。`, `${when}に${s.name}で「${e.name}」があるらしい。行ってみよう。`) }); break; }
   }
+  if (seasonC && (S.guides || 0) % 2 === 1) cands.push(seasonC);
   // ③ まだ話していない人（人の話から、次の人へ）
   const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && okFor('npc', n.id)(n)).sort((a, b) => dist(me, a) - dist(me, b));
   const pickN = people[(S.guides || 0) % Math.min(3, people.length || 1)];
@@ -1075,7 +1097,8 @@ function decideGuide(from) {
   // 籾が重いときは、まずお店。つぎに、話した人が知っている人。それ以外は、話を聞くたびに「行事・人・田畑」を順に
   let c = cands.find(x => x.kind === 'shop') || cands.find(x => x.refer);   // 籾が重いときはお店、つぎに、その人が知っている人
   if (!c) { const order = [['spot', 'npc', 'farm'], ['npc', 'farm', 'spot'], ['farm', 'npc', 'spot']][(S.guides || 0) % 3]; for (const k of order) if ((c = cands.find(x => x.kind === k))) break; }
-  return { ...(c || cands[0]), by };
+  c = c || cands[0];
+  return { ...c, by: c.by || by };
 }
 function setGuide(g) {
   S.guide = g ? { ...g, t: Date.now() } : null;
@@ -1110,7 +1133,9 @@ function checkGuide() {
     return;
   }
   // 遠くへ移った（となりの市町へ行ったなど）ときは、いまいる所のようすで決め直す
-  if (dist(me, g) > GUIDE_FAR && fixOk()) { setGuide(decideGuide(null)); return; }
+  // （人のすすめ・お店は10kmまで出すので12km、それ以外は すすめる範囲の2倍まで）
+  const farLimit = g.refer || g.kind === 'shop' ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
+  if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;
   const pts = guideReward(g);
@@ -1136,7 +1161,23 @@ function bearing(a, b) {
 }
 
 /* ---------- 近くのスポット ---------- */
+// こよみの札（地図の左上）。タップで、節気・田んぼ・見ごろのくわしい話
+function renderKoyomi() {
+  const el = $('koyomi');
+  if (!el || !KO) return;
+  const now = new Date(), key = ymd() + ':' + now.getHours();
+  if (renderKoyomi.key === key) return;
+  renderKoyomi.key = key;
+  const sk = KO.sekki(now), p = KO.paddy(now), hs = KO.seasonSpots(now);
+  el.innerHTML = `<b>${esc(KO.line(now))}</b><span class="more">${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}${p.id === 'inekari' ? `（籾が${RICE.shinmai}倍集まる）` : ''}`
+    + (hs.length ? `<br>見ごろ：${hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i).join('・')}` : '')
+    + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + '</span>';
+  el.hidden = false;
+}
+$('koyomi') && $('koyomi').addEventListener('click', () => $('koyomi').classList.toggle('open'));
+
 function refreshNearby() {
+  renderKoyomi();
   const btn = $('spinBtn');
   syncChestMarkers();   // 位置がまだないときも、前のモードのたからばこの印は消す
   if (!me) {

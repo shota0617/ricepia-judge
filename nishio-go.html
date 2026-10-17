@@ -39,6 +39,9 @@
 
 <main id="map" aria-label="西尾市の地図"></main>
 
+<!-- こよみ（日付・季節・田んぼのようす）。タップでくわしく -->
+<button type="button" class="koyomi" id="koyomi" hidden aria-label="きょうのこよみ"></button>
+
 <!-- ドット絵の地図 -->
 <section id="pxView" aria-label="ドット絵の地図">
   <canvas id="pxCanvas"></canvas>
@@ -228,6 +231,7 @@
 <script src="nishio-go/npcs.js"></script>
 <script src="nishio-go/meibutsu.js"></script>
 <script src="nishio-go/region.js"></script>
+<script src="nishio-go/season.js"></script>
 <script src="nishio-go/osm-query.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/pixel.js"></script>

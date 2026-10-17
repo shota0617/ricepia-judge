@@ -327,3 +327,7 @@ body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(
 body.px .guide{background:#000;color:#7ee0ff;border:2px solid #7ee0ff;border-left-width:4px}
 body.px .guide b{font-weight:400}
 body.px .guide small{color:#ddd}
+/* こよみの札（地図の左上） */
+.koyomi{position:fixed;top:calc(var(--bar-h) + 8px);left:8px;z-index:3;max-width:calc(100% - 84px);text-align:left;background:rgba(0,0,0,.75);color:#fff;font:12px/1.45 "DotGothic16",monospace;padding:4px 8px;border:2px solid #fff;border-radius:4px;cursor:pointer}
+.koyomi .more{display:none}
+.koyomi.open .more{display:block;margin-top:4px;font-size:11px;opacity:.95}

@@ -53,6 +53,12 @@ function simplify(pts, tol) {
   }
   return pts.filter((_, i) => keep[i]).map(p => [+p.lat.toFixed(5), +p.lon.toFixed(5)]);
 }
+// 閉じた輪は始点と終点が同じなので、始点からいちばん遠い点で2つに分けて間引く
+function simplifyRing(r) {
+  let far = 1, best = -1;
+  for (let i = 1; i < r.length - 1; i++) { const d = Math.hypot((r[i].lon - r[0].lon) * M_LNG, (r[i].lat - r[0].lat) * M_LAT); if (d > best) { best = d; far = i; } }
+  return simplify(r.slice(0, far + 1), TOL_M).concat(simplify(r.slice(far), TOL_M).slice(1));
+}
 const areaKm2 = r => {   // 輪の面積（km²）
   let s = 0;
   for (let i = 0; i + 1 < r.length; i++) s += r[i][1] * M_LNG * r[i + 1][0] * M_LAT - r[i + 1][1] * M_LNG * r[i][0] * M_LAT;
@@ -71,7 +77,7 @@ out geom;`;
     if (!rel) throw new Error(`${name} の境界が見つかりません`);
     const ways = rel.members.filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry && m.geometry.length > 1).map(m => m.geometry);
     console.log(`${name}: 境界の線 ${ways.length} 本（役割 ${[...new Set(rel.members.map(m => m.type + ':' + m.role))].join(' ')}）`);
-    const rs = rings(ways, name).map(r => simplify(r, TOL_M)).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
+    const rs = rings(ways, name).map(simplifyRing).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
     if (!rs.length) throw new Error(`${name} の境界を輪にできません`);
     const all = rs.flat();
     const bbox = [[Math.min(...all.map(p => p[0])), Math.min(...all.map(p => p[1]))], [Math.max(...all.map(p => p[0])), Math.max(...all.map(p => p[1]))]];

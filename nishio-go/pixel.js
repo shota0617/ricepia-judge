@@ -28,6 +28,22 @@ const KO = window.NISHIO_SEASON, KO_NOW = new Date();
 const PADDY_TILE = KO ? KO.paddy(KO_NOW).tile : 'green';
 const KOYO = !!KO && KO.inRange(KO_NOW, [11, 1], [12, 10]), SAKURA = !!KO && KO.inRange(KO_NOW, [3, 25], [4, 10]);
 const PADDY_COL = { green: '#86b54c', gold: '#cfae4a', flooded: '#8fbfd8', soil: '#8a6a44', stubble: '#a89a6a' }[PADDY_TILE] || '#86b54c';
+
+/* ---------- 土地利用（nishio-go/landuse.json：国土数値情報「土地利用細分メッシュ」100m、国土交通省） ----------
+ * OpenStreetMap に何も描かれていない所を、実際の土地利用で塗る（田んぼと市街地の場所を実際の地図に合わせる）。
+ * a 田・b その他の農用地・c 森林・d 荒地・e 建物用地・f 道路・g 鉄道・h その他の用地・i 河川地及び湖沼・j 海浜・k 海水域・l ゴルフ場 */
+let LU = null;
+const luReady = fetch('nishio-go/landuse.json').then(r => (r.ok ? r.json() : null)).then(j => {
+  if (!j || !Array.isArray(j.rows) || j.rows.length !== j.h) return;
+  const g = new Uint8Array(j.w * j.h);
+  j.rows.forEach((row, y) => { let x = 0; for (const part of row.split(',')) { if (!part) continue; const c = part.charCodeAt(0), n = parseInt(part.slice(1), 36); g.fill(c, y * j.w + x, y * j.w + x + n); x += n; } });
+  LU = { lat0: j.lat0, lng0: j.lng0, dLat: j.dLat, dLng: j.dLng, w: j.w, h: j.h, g };
+}).catch(() => { /* 土地利用なしで続ける */ });
+function luAt(lat, lng) {   // その場所の土地利用（1文字）。表の外・読めていないときは ''
+  if (!LU) return '';
+  const y = LU.h - 1 - Math.floor((lat - LU.lat0) / LU.dLat), x = Math.floor((lng - LU.lng0) / LU.dLng);
+  return x < 0 || y < 0 || x >= LU.w || y >= LU.h ? '' : String.fromCharCode(LU.g[y * LU.w + x]);
+}
 const BLOCK = new Set([C.A, C.B, C.M, C.X]);    // デモで歩けないマス（水・建物・山・まだ読み込んでいない所）
 const HILL_M = 35, MOUNTAIN_M = 110;        // 標高（m）：これ以上の草地は丘、さらに高い所（幡豆の尾根・茶臼山・三ヶ根山）は山
 
@@ -202,6 +218,31 @@ function seaFill(g, coasts) {
 // NaN＝海（データなし）、UNK＝不明（取得失敗・異常値）
 const DB = CHUNK + 2, UNK = -32768;
 
+// OpenStreetMap に何もないマスを土地利用で塗る：田→田んぼ、その他の農用地→畑、森林→森、建物用地→家並み（道に面したマスは家、ほかは4マスに3つが家）、
+// その他の用地・道路・鉄道→町の地面、ゴルフ場→芝生、海浜→砂浜、それ以外（荒地・川・海）→草地。作物の分からない農地（OSM）は、田なら田んぼ、その他の農用地なら畑
+function fillLanduse(g, cx, cy) {
+  const x0 = cx * CHUNK, y0 = cy * CHUNK, lats = [], lngs = [];
+  for (let k = 0; k < CHUNK; k++) { lats.push(toLatLng(x0, y0 + k + 0.5).lat); lngs.push(toLatLng(x0 + k + 0.5, y0).lng); }
+  const road = i => { const c = g[i]; return c === C.R || c === C.H; };
+  for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
+    const i = y * CHUNK + x, c = g[i];
+    if (c !== UNSET && c !== C.U) continue;
+    const u = LU ? luAt(lats[y], lngs[x]) : '';
+    if (c === C.U) { if (u === 'a') g[i] = C.F; else if (u === 'b') g[i] = C.V; continue; }
+    if (u === 'a') g[i] = C.F;
+    else if (u === 'b') g[i] = C.V;
+    else if (u === 'c') g[i] = C.W;
+    else if (u === 'e') {
+      const front = (x > 0 && road(i - 1)) || (x < CHUNK - 1 && road(i + 1)) || (y > 0 && road(i - CHUNK)) || (y < CHUNK - 1 && road(i + CHUNK));
+      const h = (((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0;
+      g[i] = front || h % 4 ? C.Q : C.T;
+    } else if (u === 'h' || u === 'f' || u === 'g') g[i] = C.T;
+    else if (u === 'l') g[i] = C.P;
+    else if (u === 'j') g[i] = C.S;
+    else g[i] = C.G;
+  }
+  g.lu = !!LU;
+}
 function rasterize(elements, cx, cy, dem) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
   const x0 = cx * CHUNK, y0 = cy * CHUNK;
@@ -249,7 +290,7 @@ function rasterize(elements, cx, cy, dem) {
     const isSea = known > CHUNK * CHUNK / 2 ? na > known * 0.9 : toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82;
     if (isSea) g.fill(C.A);
   }
-  for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
+  fillLanduse(g, cx, cy);
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
   const ok = h => Number.isFinite(h) && h > UNK;
   for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
@@ -360,9 +401,9 @@ function saveChunk(k, g, days) {
   const idx = (store.get(PX_IDX) || []).filter(x => x !== k);
   idx.push(k);
   while (idx.length > PX_KEEP) store.del(PX_KEY + idx.shift());
-  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days })) {
+  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days, lu: !!g.lu })) {
     // 保存領域がいっぱいなら古い区画から消してもう一度
-    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days })) break; }
+    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days, lu: !!g.lu })) break; }
   }
   store.set(PX_IDX, idx);
 }
@@ -447,6 +488,7 @@ async function bakedChunk(cx, cy) {
     const g = j && typeof j.d === 'string' ? unrle(j.d) : null;
     if (!g) return null;
     g.pois = Array.isArray(j.p) ? j.p : [];
+    g.lu = (j.cv || 1) >= 2;   // 版2からは土地利用で塗ってある
     return g;
   } catch (e) { return null; }
 }
@@ -465,24 +507,25 @@ async function pump() {
       // 1) 用意した区画（いつも最新を使う。ブラウザのHTTPキャッシュが効くので2回目からは軽い。端末には保存しない）
       const pre = await bakedChunk(cx, cy);
       if (pre) {
-        chunks.set(k, { state: 'ok', g: townify(pre), pois: pre.pois });
+        // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
+        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois });
         dirty = true;
         continue;
       }
       // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
       const saved = store.get(PX_KEY + k);
       if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: townify(dec(saved.d)), pois: saved.p || [] });
+        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] });
         dirty = true;
         continue;
       }
       // 3) それもなければ、ブラウザで地図データと標高を取って作る
       try {
         // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
-        const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);
+        const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE ? g : townify(g), pois: g.pois || [] });
+        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] });
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -519,12 +562,12 @@ const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) *
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
 // 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
-const WORLD_KEY = 'nsg_world7', WORLD_FILE = 'nishio-go/world.json';
-for (let i = 1; i <= 6; i++) store.del('nsg_world' + i);
+const WORLD_KEY = 'nsg_world8', WORLD_FILE = 'nishio-go/world.json';
+for (let i = 1; i <= 7; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
-const WCOL = { [C.G]: '#3f9b3c', [C.F]: '#7fb84a', [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
+const WCOL = { [C.G]: '#3f9b3c', [C.F]: PADDY_COL, [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
   [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
   [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
@@ -681,6 +724,13 @@ function combineWorld(base, L) {
     if (a === UNSET || c === C.M) continue;   // 山はそのまま
     g[i] = a;   // 海でも地図データで田畑・町なみなどがある所は陸（埋め立て地）。丘も土地利用で塗る
   }
+  // 地図データで塗られていない所（と丘）は、土地利用（100mメッシュ＝せかいちずの1マスとほぼ同じ大きさ）で塗る
+  if (LU) for (let i = 0; i < g.length; i++) {
+    if (g[i] !== UNSET && g[i] !== C.K) continue;
+    const q = wToLL(i % WW + 0.5, Math.floor(i / WW) + 0.5), u = luAt(q.lat, q.lng);
+    const c = { a: C.F, b: C.V, c: C.W, e: C.T, h: C.T, f: C.T, g: C.T, l: C.P, j: C.S, k: C.A, i: C.A }[u];
+    if (c !== undefined && !(g[i] === C.K && (c === C.A || c === C.T))) g[i] = c;
+  }
   const keepSeaMt = new Set([C.A, C.M]), keepMt = new Set([C.M]);
   L.lines.slice().sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => pts.forEach(line => strokeLine(g, line, code, 1, null, WW, WH, code === C.A ? keepMt : keepSeaMt)));
   for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
@@ -690,6 +740,7 @@ function combineWorld(base, L) {
 let worldProgress = '';
 async function buildWorld(force) {
   if (worldState === 'building' || worldState === 'enriching' || (worldState === 'ok' && !force)) return;
+  if (BAKE) await luReady;   // 作るときは土地利用の表を待つ
   const saved = !force && store.get(WORLD_KEY);
   if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
     world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
@@ -1825,5 +1876,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

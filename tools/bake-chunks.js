@@ -51,6 +51,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     for (let tries = 1; tries <= 4 && !res; tries++) {
       res = await page.evaluate(async cs => {
         const P = nishioPixel, C = P.C;
+        await P.luReady;   // 土地利用の表（landuse.json）を読みおわってから塗る
         const boxes = cs.map(([cx, cy]) => P.chunkBox(cx, cy));
         const b = { s: Math.min(...boxes.map(x => x.s)), w: Math.min(...boxes.map(x => x.w)), n: Math.max(...boxes.map(x => x.n)), e: Math.max(...boxes.map(x => x.e)) };
         let json;
@@ -112,7 +113,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   }
   await ctx.close(); await browser.close(); srv.close();
   console.log(`保存 ${saved} 区画（うち海だけ ${sea}）、作れなかった ${failed} 区画`);
-  if (saved) fs.writeFileSync(path.join(OUT, 'README.md'), `# 歩く地図の区画データ\n\n\`tools/bake-chunks.js\` が OpenStreetMap（© OpenStreetMap contributors, ODbL）と国土地理院の標高タイルから作ったものです（${new Date().toISOString().slice(0, 10)}）。手で編集しないでください。\n`);
+  if (saved) fs.writeFileSync(path.join(OUT, 'README.md'), `# 歩く地図の区画データ\n\n\`tools/bake-chunks.js\` が OpenStreetMap（© OpenStreetMap contributors, ODbL）と国土地理院の標高タイル、国土数値情報（土地利用細分メッシュデータ）（国土交通省）を加工して作ったものです（${new Date().toISOString().slice(0, 10)}）。手で編集しないでください。\n`);
   // ほとんど作れなかったときは失敗にする（中途半端なデータでコミットしない）
   if (saved < tried * 0.8) { console.error('作れなかった区画が多すぎるので失敗にする'); process.exit(1); }
   // 時間の上限で止めたときは、Actions に「続きがある」と知らせる（ワークフローがこの実行のコミットのあと、もう一度自分を起動する）

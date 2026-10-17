@@ -49,7 +49,10 @@ const playBounds = REGION.reduce((b, c) => [[Math.min(b[0][0], c.bbox[0][0]), Ma
   CFG.nishioBounds.map(p => p.slice()));
 // となりの市町の地区 id（areas.json・spots.json の area）
 const NEAR_AREAS = new Set(['okazaki', 'anjo', 'hekinan', 'kota', 'gamagori', 'takahama']);
-const inPlay = (lat, lng) => (lat > CFG.nishioBounds[0][0] && lat < CFG.nishioBounds[1][0] && lng > CFG.nishioBounds[0][1] && lng < CFG.nishioBounds[1][1]) || !!cityAt(lat, lng);
+// 境界は約60mに間引いてあるので、境のすぐ外（約300m以内）も遊べる範囲にする（境の上にある名所が外にならないように。区画の判定と同じ幅）
+const PLAY_PAD = 0.003;
+const inPlay = (lat, lng) => (lat > CFG.nishioBounds[0][0] && lat < CFG.nishioBounds[1][0] && lng > CFG.nishioBounds[0][1] && lng < CFG.nishioBounds[1][1])
+  || [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([a, b]) => !!cityAt(lat + a * PLAY_PAD, lng + b * PLAY_PAD));
 
 // OpenStreetMap への問い合わせと分類は osm-query.js（tools/bake-spots.js と共通）
 const { buildQuery, toItems } = window.NSG_OSM;
@@ -1799,7 +1802,11 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, get campaigns() { return campaigns; }, liveCampaigns, renderCampaigns,
+  begin, track, utmUrl,
+  playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
+    if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
+    if (!demo) setMode(true);
+  }, get campaigns() { return campaigns; }, liveCampaigns, renderCampaigns,
   stats() {
     const lv = levelOf(S.total), r = riceOf();
     return { lv, title: titleOf(lv), points: S.points, total: S.total, places: Object.values(S.visits).filter(v => v.featured).length, spots: Object.keys(S.visits).length,

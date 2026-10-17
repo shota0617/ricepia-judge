@@ -18,7 +18,9 @@ for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c',
 if (Object.keys(land).length) {
   track('landing', land);
   if (land.c) track('campaign_landing', { campaign: land.c });
-  if (land.play === '1' && document.getElementById('intro') && !document.getElementById('intro').hidden) G.begin(true);   // 広告から「操作して遊ぶ」ですぐ始める
+  if (land.play === '1') {   // 広告から「操作して遊ぶ」ですぐ始める（はじめての人は始め、もう始めている人は切り替える）
+    if (document.getElementById('intro') && !document.getElementById('intro').hidden) G.begin(true); else G.playMode();
+  }
   if (land.spot) {   // スポットの読み込みを待って見せる（最大20秒）
     let n = 0;
     const t = setInterval(() => { if (G.focusSpot(land.spot) || ++n > 40) clearInterval(t); }, 500);

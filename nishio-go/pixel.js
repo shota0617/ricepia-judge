@@ -24,10 +24,18 @@ const chunkBox = (cx, cy) => {
 const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12, M: 13, K: 14, E: 15, V: 16, I: 17, J: 18, Y: 19, N: 20, U: 21, Q: 22 };
 const UNSET = 255;
 // こよみ（season.js）：田畑の色は月で（田おこし・田植え・青田・稲刈り・刈田）、森は紅葉のころ、公園は桜のころに変わる
-const KO = window.NISHIO_SEASON, KO_NOW = new Date();
-const PADDY_TILE = KO ? KO.paddy(KO_NOW).tile : 'green';
-const KOYO = !!KO && KO.inRange(KO_NOW, [11, 1], [12, 10]), SAKURA = !!KO && KO.inRange(KO_NOW, [3, 25], [4, 10]);
-const PADDY_COL = { green: '#86b54c', gold: '#cfae4a', flooded: '#8fbfd8', soil: '#8a6a44', stubble: '#a89a6a' }[PADDY_TILE] || '#86b54c';
+// 日付が変わったら seasonNow() で計算し直し、田畑・森・公園のタイルとせかいちずの色を作り直す（refreshSeason）
+const KO = window.NISHIO_SEASON;
+const PADDY_COLS = { green: '#86b54c', gold: '#cfae4a', flooded: '#8fbfd8', soil: '#8a6a44', stubble: '#a89a6a' };
+let PADDY_TILE = 'green', KOYO = false, SAKURA = false, PADDY_COL = PADDY_COLS.green;
+function seasonNow() {
+  const d = new Date();
+  PADDY_TILE = KO ? KO.paddy(d).tile : 'green';
+  KOYO = !!KO && KO.inRange(d, [11, 1], [12, 10]); SAKURA = !!KO && KO.inRange(d, [3, 25], [4, 10]);
+  PADDY_COL = PADDY_COLS[PADDY_TILE] || PADDY_COLS.green;
+  return PADDY_TILE + KOYO + SAKURA;
+}
+let seasonKey = seasonNow();
 
 /* ---------- 土地利用（nishio-go/landuse.json：国土数値情報「土地利用細分メッシュ」100m、国土交通省） ----------
  * OpenStreetMap に何も描かれていない所を、実際の土地利用で塗る（田んぼと市街地の場所を実際の地図に合わせる）。
@@ -965,8 +973,25 @@ const TILE_ART = {
 };
 const SHADE = ['rgba(0,0,0,.32)', 'rgba(0,0,0,.16)', '', 'rgba(255,250,220,.12)', 'rgba(255,250,220,.24)'];
 const tiles = {};   // code → [variant][frame]
-for (const [code, draw] of Object.entries(TILE_ART)) {
-  tiles[code] = (+code === C.Q ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 1, 2]).map(v => [makeTile(draw, code * 97 + v * 31 + 7, 0), makeTile(draw, code * 97 + v * 31 + 7, 1)]);
+function buildTiles(codes) {
+  for (const [code, draw] of Object.entries(TILE_ART)) {
+    if (codes && !codes.includes(+code)) continue;
+    tiles[code] = (+code === C.Q ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 1, 2]).map(v => [makeTile(draw, code * 97 + v * 31 + 7, 0), makeTile(draw, code * 97 + v * 31 + 7, 1)]);
+  }
+}
+buildTiles();
+// 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
+let seasonCheckT = 0;
+function refreshSeason(now) {
+  if (now - seasonCheckT < 60000) return;
+  seasonCheckT = now;
+  const k = seasonNow();
+  if (k === seasonKey) return;
+  seasonKey = k;
+  WCOL[C.U] = WCOL[C.F] = PADDY_COL;
+  buildTiles([C.U, C.F, C.W, C.P]);
+  makeWorldImg();
+  dirty = true;
 }
 
 // 文字で描くスプライト（16×16）
@@ -1186,6 +1211,7 @@ function frame(now) {
   if (!w || !h) return;
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
+  refreshSeason(now);
   if (worldMode) { drawWorld(now, w, h, dpr); return; }
   const T = Math.round(16 * scale * dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);

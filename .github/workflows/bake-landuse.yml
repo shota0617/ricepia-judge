@@ -11,6 +11,7 @@ on:
       - .github/workflows/bake-landuse.yml
 permissions:
   contents: write
+  actions: write
 concurrency:
   group: bake-landuse-${{ github.ref }}
   cancel-in-progress: true
@@ -32,12 +33,25 @@ jobs:
           done
       - name: Bake landuse.json
         run: node tools/bake-landuse.js landuse-src
+      # 土地利用の表が変わったら、歩く地図とせかいちずの版を上げて（古い区画をぜんぶ作り直す対象にする）いっしょにコミットし、
+      # 両方の作成を起動する（GITHUB_TOKEN のコミットでは push の起動がかからないため）
       - name: Commit landuse.json
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add nishio-go/landuse.json
           if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
-          git commit -q -m "にしおさんぽGO: 土地利用の表を国土数値情報から作り直し（自動）"
-          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          echo $(( $(cat tools/chunks-version.txt) + 1 )) > tools/chunks-version.txt
+          echo $(( $(cat tools/world-version.txt) + 1 )) > tools/world-version.txt
+          git add tools/chunks-version.txt tools/world-version.txt
+          git commit -q -m "にしおさんぽGO: 土地利用の表を国土数値情報から作り直し、歩く地図とせかいちずを作り直す（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && echo "changed=1" >> "$GITHUB_OUTPUT" && exit 0; sleep 10; done
           exit 1
+      - name: Rebake maps for the new landuse
+        if: steps.commit.outputs.changed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run bake-chunks.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run bake-world.yml --ref "${GITHUB_REF_NAME}"

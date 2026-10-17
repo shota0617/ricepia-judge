@@ -1316,8 +1316,8 @@
       "area": "okazaki",
       "name": "岡崎城（岡崎公園）",
       "icon": "🏯",
-      "lat": 34.956389,
-      "lng": 137.158889,
+      "lat": 34.956324,
+      "lng": 137.158807,
       "approx": false,
       "match": [
         "岡崎城",
@@ -1333,8 +1333,8 @@
       "area": "okazaki",
       "name": "大樹寺",
       "icon": "🛕",
-      "lat": 34.9844,
-      "lng": 137.1653,
+      "lat": 34.984318,
+      "lng": 137.165292,
       "approx": false,
       "match": [
         "大樹寺"
@@ -1349,9 +1349,9 @@
       "area": "okazaki",
       "name": "カクキュー八丁味噌（八丁味噌の郷）",
       "icon": "🫘",
-      "lat": 34.9547,
-      "lng": 137.1497,
-      "approx": true,
+      "lat": 34.957862,
+      "lng": 137.152684,
+      "approx": false,
       "match": [
         "カクキュー",
         "八丁味噌の郷"
@@ -1366,9 +1366,9 @@
       "area": "okazaki",
       "name": "まるや八丁味噌",
       "icon": "🫘",
-      "lat": 34.9541,
-      "lng": 137.1503,
-      "approx": true,
+      "lat": 34.95657,
+      "lng": 137.152038,
+      "approx": false,
       "match": [
         "まるや八丁味噌",
         "まるや"
@@ -1383,9 +1383,9 @@
       "area": "okazaki",
       "name": "伊賀八幡宮",
       "icon": "⛩️",
-      "lat": 34.97143,
-      "lng": 137.16467,
-      "approx": true,
+      "lat": 34.971484,
+      "lng": 137.164686,
+      "approx": false,
       "match": [
         "伊賀八幡宮"
       ],
@@ -1399,9 +1399,9 @@
       "area": "okazaki",
       "name": "瀧山寺（滝山寺）",
       "icon": "🛕",
-      "lat": 34.988333,
-      "lng": 137.206111,
-      "approx": true,
+      "lat": 34.988169,
+      "lng": 137.205582,
+      "approx": false,
       "match": [
         "瀧山寺",
         "滝山寺"
@@ -1416,9 +1416,9 @@
       "area": "okazaki",
       "name": "岩津天満宮",
       "icon": "⛩️",
-      "lat": 35.0035,
-      "lng": 137.1745,
-      "approx": true,
+      "lat": 35.005186,
+      "lng": 137.176734,
+      "approx": false,
       "match": [
         "岩津天満宮",
         "岩津天神"
@@ -1433,8 +1433,8 @@
       "area": "okazaki",
       "name": "六所神社",
       "icon": "⛩️",
-      "lat": 34.949431,
-      "lng": 137.168442,
+      "lat": 34.949433,
+      "lng": 137.168446,
       "approx": false,
       "match": [
         "六所神社"
@@ -1449,9 +1449,9 @@
       "area": "okazaki",
       "name": "奥殿陣屋",
       "icon": "🏯",
-      "lat": 35.02896,
-      "lng": 137.19477,
-      "approx": true,
+      "lat": 35.029313,
+      "lng": 137.195169,
+      "approx": false,
       "match": [
         "奥殿陣屋"
       ],
@@ -1465,9 +1465,9 @@
       "area": "okazaki",
       "name": "東公園",
       "icon": "🐘",
-      "lat": 34.959,
-      "lng": 137.193,
-      "approx": true,
+      "lat": 34.954547,
+      "lng": 137.195621,
+      "approx": false,
       "match": [
         "=東公園",
         "岡崎市東公園"
@@ -1482,9 +1482,9 @@
       "area": "okazaki",
       "name": "旧本多忠次邸",
       "icon": "🏠",
-      "lat": 34.9585,
-      "lng": 137.1945,
-      "approx": true,
+      "lat": 34.952857,
+      "lng": 137.19037,
+      "approx": false,
       "match": [
         "旧本多忠次邸"
       ],
@@ -1498,9 +1498,9 @@
       "area": "okazaki",
       "name": "南公園",
       "icon": "🚂",
-      "lat": 34.929,
-      "lng": 137.165,
-      "approx": true,
+      "lat": 34.915682,
+      "lng": 137.164944,
+      "approx": false,
       "match": [
         "=南公園",
         "岡崎市南公園"
@@ -1515,9 +1515,9 @@
       "area": "okazaki",
       "name": "岡崎市美術博物館",
       "icon": "🖼️",
-      "lat": 34.9475,
-      "lng": 137.21722,
-      "approx": true,
+      "lat": 34.947475,
+      "lng": 137.217116,
+      "approx": false,
       "match": [
         "岡崎市美術博物館"
       ],
@@ -1531,8 +1531,8 @@
       "area": "okazaki",
       "name": "東岡崎駅",
       "icon": "🚉",
-      "lat": 34.951858,
-      "lng": 137.167364,
+      "lat": 34.951908,
+      "lng": 137.167451,
       "approx": false,
       "match": [
         "=東岡崎",
@@ -1548,8 +1548,8 @@
       "area": "okazaki",
       "name": "岡崎駅",
       "icon": "🚉",
-      "lat": 34.925595,
-      "lng": 137.157311,
+      "lat": 34.925583,
+      "lng": 137.157307,
       "approx": false,
       "match": [
         "=岡崎",
@@ -1565,12 +1565,12 @@
       "area": "okazaki",
       "name": "松應寺",
       "icon": "🛕",
-      "lat": 34.96,
-      "lng": 137.166,
-      "approx": true,
+      "lat": 34.964587,
+      "lng": 137.161744,
+      "approx": false,
       "match": [
-        "松應寺",
-        "松応寺"
+        "=松應寺",
+        "=松応寺"
       ],
       "points": 20,
       "cat": "temple",
@@ -1582,9 +1582,9 @@
       "area": "okazaki",
       "name": "法蔵寺",
       "icon": "🛕",
-      "lat": 34.91,
-      "lng": 137.27,
-      "approx": true,
+      "lat": 34.888499,
+      "lng": 137.261771,
+      "approx": false,
       "match": [
         "法蔵寺"
       ],
@@ -1598,11 +1598,12 @@
       "area": "okazaki",
       "name": "道の駅 藤川宿",
       "icon": "🌾",
-      "lat": 34.913,
-      "lng": 137.217,
-      "approx": true,
+      "lat": 34.91418,
+      "lng": 137.216932,
+      "approx": false,
       "match": [
-        "藤川宿"
+        "道の駅藤川宿",
+        "道の駅 藤川宿"
       ],
       "points": 30,
       "cat": "sight",
@@ -1646,9 +1647,9 @@
       "area": "anjo",
       "name": "デンパーク（安城産業文化公園）",
       "icon": "🌷",
-      "lat": 34.9302,
-      "lng": 137.0586,
-      "approx": true,
+      "lat": 34.929881,
+      "lng": 137.060433,
+      "approx": false,
       "match": [
         "デンパーク",
         "安城産業文化公園"
@@ -1663,9 +1664,9 @@
       "area": "anjo",
       "name": "丈山苑",
       "icon": "🍁",
-      "lat": 34.9206,
-      "lng": 137.044,
-      "approx": true,
+      "lat": 34.920122,
+      "lng": 137.046592,
+      "approx": false,
       "match": [
         "丈山苑"
       ],
@@ -1679,9 +1680,9 @@
       "area": "anjo",
       "name": "本證寺",
       "icon": "🛕",
-      "lat": 34.8961,
-      "lng": 137.092,
-      "approx": true,
+      "lat": 34.900188,
+      "lng": 137.085356,
+      "approx": false,
       "match": [
         "本證寺",
         "本証寺"
@@ -1696,9 +1697,9 @@
       "area": "anjo",
       "name": "安祥城址",
       "icon": "🏯",
-      "lat": 34.942,
-      "lng": 137.0938,
-      "approx": true,
+      "lat": 34.945076,
+      "lng": 137.097193,
+      "approx": false,
       "match": [
         "安祥城"
       ],
@@ -1712,9 +1713,9 @@
       "area": "anjo",
       "name": "安城市歴史博物館",
       "icon": "🏛️",
-      "lat": 34.9433,
-      "lng": 137.0925,
-      "approx": true,
+      "lat": 34.945844,
+      "lng": 137.098047,
+      "approx": false,
       "match": [
         "安城市歴史博物館"
       ],
@@ -1728,9 +1729,9 @@
       "area": "anjo",
       "name": "堀内公園",
       "icon": "🎡",
-      "lat": 34.93,
-      "lng": 137.086,
-      "approx": true,
+      "lat": 34.92745,
+      "lng": 137.089652,
+      "approx": false,
       "match": [
         "=堀内公園"
       ],
@@ -1744,9 +1745,9 @@
       "area": "anjo",
       "name": "安城公園",
       "icon": "🌸",
-      "lat": 34.9565,
-      "lng": 137.079,
-      "approx": true,
+      "lat": 34.957966,
+      "lng": 137.078384,
+      "approx": false,
       "match": [
         "=安城公園"
       ],
@@ -1760,9 +1761,9 @@
       "area": "anjo",
       "name": "二子古墳",
       "icon": "⛰️",
-      "lat": 34.9123,
-      "lng": 137.096,
-      "approx": true,
+      "lat": 34.928827,
+      "lng": 137.096459,
+      "approx": false,
       "match": [
         "二子古墳"
       ],
@@ -1776,9 +1777,9 @@
       "area": "anjo",
       "name": "姫小川古墳",
       "icon": "⛩️",
-      "lat": 34.9186,
-      "lng": 137.1072,
-      "approx": true,
+      "lat": 34.915511,
+      "lng": 137.095634,
+      "approx": false,
       "match": [
         "姫小川古墳"
       ],
@@ -1792,9 +1793,9 @@
       "area": "anjo",
       "name": "安城駅（JR）",
       "icon": "🚉",
-      "lat": 34.9579,
-      "lng": 137.087,
-      "approx": true,
+      "lat": 34.960197,
+      "lng": 137.087192,
+      "approx": false,
       "match": [
         "=安城"
       ],
@@ -1808,9 +1809,9 @@
       "area": "anjo",
       "name": "三河安城駅",
       "icon": "🚄",
-      "lat": 34.9686,
-      "lng": 137.0607,
-      "approx": true,
+      "lat": 34.968627,
+      "lng": 137.060677,
+      "approx": false,
       "match": [
         "=三河安城"
       ],
@@ -1824,9 +1825,9 @@
       "area": "anjo",
       "name": "南安城駅",
       "icon": "🚉",
-      "lat": 34.9449,
-      "lng": 137.08,
-      "approx": true,
+      "lat": 34.951959,
+      "lng": 137.092513,
+      "approx": false,
       "match": [
         "=南安城"
       ],
@@ -1840,9 +1841,9 @@
       "area": "anjo",
       "name": "安城市役所",
       "icon": "🏢",
-      "lat": 34.9589,
-      "lng": 137.0803,
-      "approx": true,
+      "lat": 34.959141,
+      "lng": 137.080196,
+      "approx": false,
       "match": [
         "安城市役所"
       ],
@@ -1856,9 +1857,9 @@
       "area": "hekinan",
       "name": "碧南海浜水族館・碧南市青少年海の科学館",
       "icon": "🐟",
-      "lat": 34.8765,
-      "lng": 136.974,
-      "approx": true,
+      "lat": 34.87989,
+      "lng": 136.981599,
+      "approx": false,
       "match": [
         "碧南海浜水族館",
         "青少年海の科学館"
@@ -1873,9 +1874,9 @@
       "area": "hekinan",
       "name": "碧南市臨海公園",
       "icon": "🌳",
-      "lat": 34.8758,
-      "lng": 136.973,
-      "approx": true,
+      "lat": 34.875991,
+      "lng": 136.979199,
+      "approx": false,
       "match": [
         "臨海公園"
       ],
@@ -1889,9 +1890,9 @@
       "area": "hekinan",
       "name": "碧南市明石公園",
       "icon": "🎡",
-      "lat": 34.9006,
-      "lng": 136.9812,
-      "approx": true,
+      "lat": 34.904996,
+      "lng": 136.983538,
+      "approx": false,
       "match": [
         "明石公園"
       ],
@@ -1988,9 +1989,9 @@
       "area": "hekinan",
       "name": "大浜熊野大神社",
       "icon": "⛩️",
-      "lat": 34.8617,
-      "lng": 136.9735,
-      "approx": true,
+      "lat": 34.861818,
+      "lng": 136.973888,
+      "approx": false,
       "match": [
         "熊野大神社"
       ],
@@ -2021,9 +2022,9 @@
       "area": "hekinan",
       "name": "応仁寺",
       "icon": "🛕",
-      "lat": 34.9085,
-      "lng": 137.0118,
-      "approx": true,
+      "lat": 34.908719,
+      "lng": 137.012024,
+      "approx": false,
       "match": [
         "応仁寺"
       ],
@@ -2054,8 +2055,8 @@
       "area": "hekinan",
       "name": "碧南駅",
       "icon": "🚉",
-      "lat": 34.8738,
-      "lng": 136.9856,
+      "lat": 34.873525,
+      "lng": 136.985377,
       "approx": false,
       "match": [
         "=碧南駅"
@@ -2070,8 +2071,8 @@
       "area": "hekinan",
       "name": "碧南中央駅",
       "icon": "🚉",
-      "lat": 34.8873,
-      "lng": 136.9895,
+      "lat": 34.8871,
+      "lng": 136.98964,
       "approx": false,
       "match": [
         "=碧南中央駅"
@@ -2086,8 +2087,8 @@
       "area": "hekinan",
       "name": "碧南市役所",
       "icon": "🏛️",
-      "lat": 34.8848,
-      "lng": 136.9937,
+      "lat": 34.884848,
+      "lng": 136.993655,
       "approx": false,
       "match": [
         "碧南市役所"
@@ -2102,9 +2103,9 @@
       "area": "takahama",
       "name": "高浜市やきものの里 かわら美術館",
       "icon": "🏛️",
-      "lat": 34.919718,
-      "lng": 136.984048,
-      "approx": true,
+      "lat": 34.923221,
+      "lng": 136.981749,
+      "approx": false,
       "match": [
         "かわら美術館"
       ],
@@ -2118,9 +2119,9 @@
       "area": "takahama",
       "name": "高浜港駅",
       "icon": "👹",
-      "lat": 34.9163,
-      "lng": 136.9897,
-      "approx": true,
+      "lat": 34.921182,
+      "lng": 136.98932,
+      "approx": false,
       "match": [
         "=高浜港"
       ],
@@ -2150,9 +2151,9 @@
       "area": "takahama",
       "name": "大山緑地",
       "icon": "🌸",
-      "lat": 34.9335,
-      "lng": 136.987,
-      "approx": true,
+      "lat": 34.933032,
+      "lng": 136.985598,
+      "approx": false,
       "match": [
         "大山緑地"
       ],
@@ -2182,9 +2183,9 @@
       "area": "takahama",
       "name": "三河高浜駅",
       "icon": "🚉",
-      "lat": 34.9265,
-      "lng": 136.9905,
-      "approx": true,
+      "lat": 34.930517,
+      "lng": 136.990096,
+      "approx": false,
       "match": [
         "=三河高浜"
       ],
@@ -2198,9 +2199,9 @@
       "area": "takahama",
       "name": "吉浜駅",
       "icon": "🚉",
-      "lat": 34.9396,
-      "lng": 136.993,
-      "approx": true,
+      "lat": 34.946399,
+      "lng": 136.989057,
+      "approx": false,
       "match": [
         "=吉浜"
       ],
@@ -2230,8 +2231,8 @@
       "area": "kota",
       "name": "本光寺（あじさい寺）",
       "icon": "🛕",
-      "lat": 34.837311,
-      "lng": 137.182125,
+      "lat": 34.837537,
+      "lng": 137.181957,
       "approx": false,
       "match": [
         "本光寺"
@@ -2246,8 +2247,8 @@
       "area": "kota",
       "name": "幸田町郷土資料館",
       "icon": "🏛️",
-      "lat": 34.83864,
-      "lng": 137.179772,
+      "lat": 34.838649,
+      "lng": 137.179781,
       "approx": false,
       "match": [
         "幸田町郷土資料館"
@@ -2279,8 +2280,8 @@
       "area": "kota",
       "name": "道の駅 筆柿の里・幸田",
       "icon": "🛣️",
-      "lat": 34.848569,
-      "lng": 137.138229,
+      "lat": 34.848245,
+      "lng": 137.138468,
       "approx": false,
       "match": [
         "筆柿の里"
@@ -2311,8 +2312,8 @@
       "area": "kota",
       "name": "ハッピネス・ヒル・幸田（幸田町民会館）",
       "icon": "🎭",
-      "lat": 34.872708,
-      "lng": 137.179643,
+      "lat": 34.872642,
+      "lng": 137.179803,
       "approx": false,
       "match": [
         "幸田町民会館",
@@ -2328,8 +2329,8 @@
       "area": "kota",
       "name": "幸田町役場",
       "icon": "🏢",
-      "lat": 34.86447,
-      "lng": 137.16581,
+      "lat": 34.864577,
+      "lng": 137.165666,
       "approx": false,
       "match": [
         "幸田町役場"
@@ -2344,8 +2345,8 @@
       "area": "kota",
       "name": "幸田駅",
       "icon": "🚉",
-      "lat": 34.859962,
-      "lng": 137.164662,
+      "lat": 34.86007,
+      "lng": 137.1644,
       "approx": false,
       "match": [
         "=幸田"
@@ -2360,8 +2361,8 @@
       "area": "kota",
       "name": "三ケ根駅",
       "icon": "🚉",
-      "lat": 34.835688,
-      "lng": 137.177278,
+      "lat": 34.835689,
+      "lng": 137.177266,
       "approx": false,
       "match": [
         "=三ケ根",
@@ -2377,8 +2378,8 @@
       "area": "kota",
       "name": "相見駅",
       "icon": "🚉",
-      "lat": 34.887685,
-      "lng": 137.160356,
+      "lat": 34.887686,
+      "lng": 137.16028,
       "approx": false,
       "match": [
         "=相見"
@@ -2393,8 +2394,8 @@
       "area": "gamagori",
       "name": "竹島・八百富神社",
       "icon": "⛩️",
-      "lat": 34.810528,
-      "lng": 137.231639,
+      "lat": 34.8106,
+      "lng": 137.231627,
       "approx": false,
       "match": [
         "八百富神社",
@@ -2410,9 +2411,9 @@
       "area": "gamagori",
       "name": "竹島水族館",
       "icon": "🐟",
-      "lat": 34.8152,
-      "lng": 137.2285,
-      "approx": true,
+      "lat": 34.817132,
+      "lng": 137.231794,
+      "approx": false,
       "match": [
         "竹島水族館"
       ],
@@ -2426,9 +2427,9 @@
       "area": "gamagori",
       "name": "蒲郡駅",
       "icon": "🚉",
-      "lat": 34.8256,
-      "lng": 137.2197,
-      "approx": true,
+      "lat": 34.82313,
+      "lng": 137.225906,
+      "approx": false,
       "match": [
         "=蒲郡"
       ],

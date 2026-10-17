@@ -1239,6 +1239,8 @@ $('koyomi') && $('koyomi').addEventListener('click', () => $('koyomi').classList
 
 function refreshNearby() {
   renderKoyomi();
+  // その日はじめて遊んだ端末を1回だけ数える（累計・毎日のプレイ人数：tools/ga4-stats.js）
+  if (me && store.get('nsg_started', false) && store.get('nsg_play_day', '') !== ymd()) { store.set('nsg_play_day', ymd()); track('play_day', { mode: demo ? 'play' : 'walk' }); }
   const btn = $('spinBtn');
   syncChestMarkers();   // 位置がまだないときも、前のモードのたからばこの印は消す
   if (!me) {
@@ -1780,6 +1782,12 @@ loadSpots(false);
 loadAreas();
 loadRewards();
 loadCampaigns();
+// 累計プレイ人数（nishio-go/stats.json：Google アナリティクスから毎日数える）。100人をこえたら、はじめの画面に出す
+fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(j => {
+  if (!j || !(j.players >= 100) || !$('playerCount')) return;
+  $('playerCount').textContent = `👥 これまでに ${Math.floor(j.players / 10) * 10}人以上が遊んでいます（${j.updated.slice(5).replace('-', '/')}時点）`;
+  $('playerCount').hidden = false;
+}).catch(() => { /* なしで続ける */ });
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); } });

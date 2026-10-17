@@ -347,3 +347,4 @@ body.px .guide small{color:#ddd}
 .share-btns a.btn{text-decoration:none}
 .share-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
 .share-btns .btn{flex:1 1 30%;min-width:96px}
+.player-count{font-weight:bold;color:#1f5a25;background:#eaf6e2;border-radius:6px;padding:4px 8px;display:inline-block}

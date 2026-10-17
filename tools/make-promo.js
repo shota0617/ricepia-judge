@@ -1,7 +1,7 @@
 // にしおさんぽGO の広告用の動画と画像を、ほんとうのゲーム画面から作る：node tools/make-promo.js [出力フォルダ]
 // ・ヘッドレス Chromium で「操作して遊ぶ」を台本どおりに進め、字幕をのせて縦長（9:16、1080×1920）の動画（webm）を録る
 //   （ワークフローでは ffmpeg で mp4 にする：.github/workflows/make-promo.yml）
-// ・場面ごとの静止画（9:16）と、リンク広告用の横長画像（1200×630）も作る
+// ・場面ごとの静止画（9:16）と、広告用の画像（Google・Meta・LINEヤフー広告の各サイズ）、LINE リッチメニューのマスも作る
 // ・字幕は docs/fun-core.md と ricepia.jp に書いてあることだけ。Meta・Google・LINE の広告、店頭のモニターなどに使う
 // 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、PROMO_PORT
 const { chromium } = require('playwright');
@@ -122,20 +122,53 @@ async function endCard(page) {
   await ctx.close();
   if (video) { const p = await video.path(); fs.renameSync(p, path.join(OUT, 'nishio-go-9x16.webm')); console.log('  nishio-go-9x16.webm'); }
 
-  // リンク広告用の横長画像（1200×630）
-  const c2 = await browser.newContext({ viewport: { width: 1200, height: 630 } });
-  const p2 = await c2.newPage();
-  await p2.setContent(`<html><head><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"></head>
-    <body style="margin:0;width:1200px;height:630px;font-family:'DotGothic16',sans-serif;background:linear-gradient(#9fd6ff,#e8f6ff 62%,#cfae4a 62%);position:relative;overflow:hidden">
-    <img src="http://localhost:${PORT}/nishio-go/logo.svg" style="position:absolute;left:48px;top:40px;width:544px">
-    <img src="data:image/png;base64,${fs.readFileSync(path.join(OUT, '02-walk.png')).toString('base64')}" style="position:absolute;right:60px;top:30px;height:570px;border:6px solid #000;border-radius:16px">
-    <div style="position:absolute;left:48px;top:170px;font-size:56px;font-weight:bold;line-height:1.35;text-shadow:0 0 8px #fff">西尾のまちを歩く<br>お散歩ゲーム</div>
-    <div style="position:absolute;left:48px;top:350px;font-size:28px;background:rgba(0,0,0,.8);color:#fff;border-radius:10px;padding:10px 16px">行き先は、西尾の人の話で決まる</div>
-    <div style="position:absolute;left:48px;top:430px;font-size:28px;background:rgba(0,0,0,.8);color:#fff;border-radius:10px;padding:10px 16px">無料・登録なし ／ go.ricepia.jp</div>
-    <div style="position:absolute;left:0;right:0;bottom:0;height:56px;background:rgba(0,0,0,.8);color:#fff;font-size:24px;line-height:56px;padding-left:48px">西尾のお米屋さん 近藤米穀店・らいすぴあ</div></body></html>`, { waitUntil: 'networkidle' }).catch(() => {});
-  await sleep(800);
-  await p2.screenshot({ path: path.join(OUT, 'link-1200x630.png') }); console.log('  link-1200x630.png');
-  await c2.close();
+  // 広告用の画像（各サイズ）と、LINE リッチメニューのマス（docs/ads-game-kit.md）
+  const shotB64 = n => fs.readFileSync(path.join(OUT, n)).toString('base64');
+  const logoUrl = `http://localhost:${PORT}/nishio-go/logo.svg`;
+  const FONT = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap">';
+  const BG = 'linear-gradient(#9fd6ff,#e8f6ff 62%,#cfae4a 62%)';
+  const phone = (n, h) => `<img src="data:image/png;base64,${shotB64(n)}" style="height:${h}px;border:${Math.max(4, h / 95)}px solid #000;border-radius:${h / 36}px;display:block">`;
+  const pill = (t, fs) => `<div style="font-size:${fs}px;background:rgba(0,0,0,.8);color:#fff;border-radius:${fs / 2.8}px;padding:${fs / 3}px ${fs / 1.8}px;display:inline-block">${t}</div>`;
+  const foot = (fs, h) => `<div style="position:absolute;left:0;right:0;bottom:0;height:${h}px;background:rgba(0,0,0,.8);color:#fff;font-size:${fs}px;line-height:${h}px;text-align:center">西尾のお米屋さん 近藤米穀店・らいすぴあ</div>`;
+  function layout(w, h) {
+    if (w / h > 1.4) {   // 横長：左に文、右にゲーム画面
+      const ph = Math.round(h * 0.9), fs = Math.round(h / 11);
+      return `<img src="${logoUrl}" style="position:absolute;left:${w * 0.04}px;top:${h * 0.06}px;width:${w * 0.45}px">
+        <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.27}px;font-size:${fs}px;font-weight:bold;line-height:1.35;text-shadow:0 0 8px #fff">西尾のまちを歩く<br>お散歩ゲーム</div>
+        <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.56}px">${pill('行き先は、西尾の人の話で決まる', Math.round(fs / 2))}</div>
+        <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.69}px">${pill('無料・登録なし ／ go.ricepia.jp', Math.round(fs / 2))}</div>
+        <div style="position:absolute;right:${w * 0.05}px;top:${h * 0.05}px">${phone('02-walk.png', ph)}</div>${foot(Math.round(fs / 2.3), Math.round(h * 0.09))}`;
+    }
+    // 正方形・縦長：上から ロゴ → 見出し → 2つの札 → ゲーム画面（縦長は1台、正方形は2台）。位置は横幅から順に積む
+    const fs = Math.round(w / 14), logoTop = h * 0.035, headTop = logoTop + w * 0.13, pill1 = headTop + w * 0.21, pill2 = pill1 + w * 0.075;
+    const phoneTop = pill2 + w * 0.085, ph = Math.round(h * 0.9 - phoneTop);
+    return `<div style="position:absolute;left:0;right:0;top:${logoTop}px;text-align:center"><img src="${logoUrl}" style="width:${w * 0.7}px"></div>
+      <div style="position:absolute;left:0;right:0;top:${headTop}px;text-align:center;font-size:${fs}px;font-weight:bold;line-height:1.3;text-shadow:0 0 8px #fff">西尾のまちを歩く<br>お散歩ゲーム</div>
+      <div style="position:absolute;left:0;right:0;top:${pill1}px;text-align:center">${pill('行き先は、西尾の人の話で決まる', Math.round(fs / 2.3))}</div>
+      <div style="position:absolute;left:0;right:0;top:${pill2}px;text-align:center">${pill('無料・登録なし ／ go.ricepia.jp', Math.round(fs / 2.3))}</div>
+      <div style="position:absolute;left:0;right:0;top:${phoneTop}px;display:flex;justify-content:center;gap:${w * 0.03}px">${phone('03-talk.png', ph)}${h / w > 1.1 ? '' : phone('04-field.png', ph)}</div>${foot(Math.round(fs / 2.4), Math.round(h * 0.075))}`;
+  }
+  // LINE リッチメニューの1マス（ドライブスルーの代わり）。小さくても読めるように、ロゴと大きな文字だけ
+  function tile(w, h) {
+    const fs = Math.round(Math.min(h / 7.5, w * 0.8 / 9.6));   // 「西尾をあるくゲーム」9文字が1行に入る大きさ
+    return `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:${h * 0.05}px">
+      <img src="${logoUrl}" style="width:${w * 0.86}px">
+      <div style="font-size:${fs}px;font-weight:bold;white-space:nowrap;background:#fff;border:${h / 120}px solid #000;border-radius:${h / 30}px;padding:${h / 60}px ${w / 30}px">西尾をあるくゲーム</div>
+      <div style="font-size:${Math.round(fs * 0.8)}px;background:#1f5a25;color:#fff;border-radius:${h / 30}px;padding:${h / 80}px ${h / 22}px">▶ あそぶ（無料）</div></div>`;
+  }
+  const make = async (name, w, h, html) => {
+    const c2 = await browser.newContext({ viewport: { width: w, height: h } });
+    const p2 = await c2.newPage();
+    await p2.setContent(`<html><head>${FONT}</head><body style="margin:0;width:${w}px;height:${h}px;font-family:'DotGothic16',sans-serif;background:${BG};position:relative;overflow:hidden">${html}</body></html>`, { waitUntil: 'networkidle' }).catch(() => {});
+    await sleep(500);
+    await p2.screenshot({ path: path.join(OUT, name) }); console.log('  ' + name);
+    await c2.close();
+  };
+  // Google（P-MAX・ディスプレイ）・Meta・LINEヤフー広告で使う大きさ
+  for (const [w, h] of [[1200, 630], [1200, 628], [1200, 1200], [1080, 1080], [960, 1200], [1080, 1350], [1080, 1920], [600, 400]]) await make(`ad-${w}x${h}.png`, w, h, layout(w, h));
+  if (fs.existsSync(path.join(OUT, 'ad-1200x630.png'))) fs.copyFileSync(path.join(OUT, 'ad-1200x630.png'), path.join(OUT, 'link-1200x630.png'));
+  // LINE リッチメニューのマス：大（2500×1686）の6分割・小（2500×843）の3分割は 833×843、大の4分割は 1250×843、2分割は 1250×1686
+  for (const [w, h] of [[833, 843], [1250, 843], [1250, 1686]]) await make(`richmenu-tile-${w}x${h}.png`, w, h, tile(w, h));
   await browser.close(); srv.close();
   console.log('できました:', OUT);
 })().catch(e => { console.error(e); process.exit(1); });

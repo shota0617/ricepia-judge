@@ -402,6 +402,11 @@ function npcPages(n) {
     if (h) pages.push(`いまは${h.text}だに。ちょうどええ時に来たねえ。`);
     if (KO.doyoUshi(now) && MEIBUTSU.some(m => m.id === 'unagi' && m.spots.includes(n.spot))) pages.push('きょうは土用の丑の日。うなぎを食べる人が多い日だもんで、一色のうなぎも大いそがしだに。');
   }
+  const wx = weatherNow();   // 天気のひとこと
+  if (wx) pages.push(wx.raining ? (wx.kind === 'snow' ? '雪がふっとるねえ。すべらんように気をつけりんよ。' : '雨の中、よう来たねえ。ぬれんように気をつけりんよ。')
+    : wx.temp !== null && wx.temp >= 30 ? 'きょうは暑いねえ。水分をとって、休み休み歩きりんよ。'
+    : wx.temp !== null && wx.temp <= 5 ? 'きょうは冷えるねえ。あったかくして歩きりんよ。'
+    : wx.kind === 'sunny' ? 'ええ天気だねえ。歩くのにちょうどええわ。' : 'くもっとるけど、歩くにはちょうどええね。');
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
@@ -650,6 +655,10 @@ function checkin() {
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
 // こよみ（season.js：季節・二十四節気・田んぼのようす・見ごろ・時間帯・土用の丑の日）
 const KO = window.NISHIO_SEASON || null;
+// 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
+const WX = window.NISHIO_WEATHER || null;
+const weatherNow = () => (WX && WX.current) || null;
+if (WX) WX.onChange(() => { renderKoyomi.key = null; renderKoyomi(); });
 // area があるのは となりの市町の名物（バッジを「西尾の名物」と分ける）
 const MB_NISHIO = MEIBUTSU.filter(m => !m.area), MB_NEAR = MEIBUTSU.filter(m => m.area && m.spots.length);
 const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
@@ -1057,11 +1066,19 @@ function decideGuide(from) {
       .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > guideRadius({ kind: 'npc' }) * 1.5 && dist(me, x.n) <= 10000);
     if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
   }
+  // ②'' 雨がふっている（天気）→ 屋根のある所（博物館・資料館・美術館・水族館・図書館）。いちばん先に
+  const wxNow = weatherNow();
+  if (wxNow && wxNow.raining) {
+    const roof = spots.filter(s => s.featured && !s.shop && (s.kind === 'museum' || s.kind === 'library') && far(s) && !ISLAND_SPOTS.has(s.id.slice(2))).sort((a, b) => dist(me, a) - dist(me, b))[0];
+    if (roof) cands.push({ kind: 'spot', id: roof.id, name: roof.name, lat: roof.lat, lng: roof.lng, weather: true, by: from ? undefined : `天気（${wxNow.icon}${wxNow.name}）`,
+      why: say(`${wxNow.kind === 'snow' ? '雪' : '雨'}がふっとるもんで、屋根のある${roof.name}で雨宿りしてきりん。`, `${wxNow.icon} ${wxNow.kind === 'snow' ? '雪' : '雨'}がふってきた。屋根のある${roof.name}へ行こう。`) });
+  }
   // ②' 季節の見ごろ（こよみ）：いまの時期に見ごろの所。行事と交互に先にする
   const seasonC = (() => {
     if (!KO) return null;
     const se = KO.season(now), sk = KO.sekki(now);
-    const hs = KO.seasonSpots(now).map(h => ({ h, s: spots.find(x => x.id === 'f-' + h.spot) })).filter(x => x.s && far(x.s) && !ISLAND_SPOTS.has(x.h.spot)).sort((a, b) => dist(me, a.s) - dist(me, b.s));
+    const wet = !!(weatherNow() && weatherNow().raining);   // 雨の日は海辺の見ごろ（海水浴）は出さない
+    const hs = KO.seasonSpots(now).map(h => ({ h, s: spots.find(x => x.id === 'f-' + h.spot) })).filter(x => x.s && far(x.s) && !ISLAND_SPOTS.has(x.h.spot) && !(wet && (x.h.id === 'umi' || x.s.kind === 'beach'))).sort((a, b) => dist(me, a.s) - dist(me, b.s));
     if (!hs.length) return null;
     const { h, s } = hs[0];
     return { kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, season: true, by: from ? undefined : `季節（${se.icon}${se.name}・${sk.name}のころ）`,
@@ -1095,7 +1112,7 @@ function decideGuide(from) {
   if (sp) cands.push({ kind: 'spot', id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng, why: say(`${sp.name}へは、もう行ったかん？${firstClause(sp.desc)}。`, `${sp.name}が近いらしい。行ってみよう。`) });
   if (!cands.length) return null;
   // 籾が重いときは、まずお店。つぎに、話した人が知っている人。それ以外は、話を聞くたびに「行事・人・田畑」を順に
-  let c = cands.find(x => x.kind === 'shop') || cands.find(x => x.refer);   // 籾が重いときはお店、つぎに、その人が知っている人
+  let c = cands.find(x => x.kind === 'shop') || cands.find(x => x.refer) || cands.find(x => x.weather);   // 籾が重いときはお店、つぎに、その人が知っている人、雨なら屋根のある所
   if (!c) { const order = [['spot', 'npc', 'farm'], ['npc', 'farm', 'spot'], ['farm', 'npc', 'spot']][(S.guides || 0) % 3]; for (const k of order) if ((c = cands.find(x => x.kind === k))) break; }
   c = c || cands[0];
   return { ...c, by: c.by || by };
@@ -1166,12 +1183,15 @@ function renderKoyomi() {
   const el = $('koyomi');
   if (!el || !KO) return;
   const now = new Date(), key = ymd() + ':' + now.getHours();
+  if (WX && Date.now() - (renderKoyomi.wt || 0) > 60000) { renderKoyomi.wt = Date.now(); const at = me || { lat: CFG.center[0], lng: CFG.center[1] }; WX.refresh(at.lat, at.lng); }   // 天気は10分ごとに取り直す（weather.js）
   if (renderKoyomi.key === key) return;
   renderKoyomi.key = key;
-  const sk = KO.sekki(now), p = KO.paddy(now), hs = KO.seasonSpots(now);
-  el.innerHTML = `<b>${esc(KO.line(now))}</b><span class="more">${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}${p.id === 'inekari' ? `（籾が${RICE.shinmai}倍集まる）` : ''}`
+  const sk = KO.sekki(now), p = KO.paddy(now), hs = KO.seasonSpots(now), wx = weatherNow();
+  const wxShort = wx ? `　${wx.icon}${wx.name}${wx.temp !== null ? ` ${Math.round(wx.temp)}℃` : ''}` : '';
+  const wxLong = wx ? `<br>${wx.icon} いま${wx.raining ? '雨がふっています' : '雨はふっていません'}${wx.rainAt ? `（${esc(wx.rainAt)}）` : ''}${wx.temp !== null ? `・気温 ${wx.temp}℃（${esc(wx.tempAt)}）` : ''}・${esc(wx.at)}の観測<br>きょうの予報（${esc(wx.forecastArea)}）：${esc(wx.forecast)}<br><small>天気の出典：気象庁（アメダス・天気予報）</small>` : '';
+  el.innerHTML = `<b>${esc(KO.line(now))}${wxShort}</b><span class="more">${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}${p.id === 'inekari' ? `（籾が${RICE.shinmai}倍集まる）` : ''}`
     + (hs.length ? `<br>見ごろ：${hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i).join('・')}` : '')
-    + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + '</span>';
+    + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + wxLong + '</span>';
   el.hidden = false;
 }
 $('koyomi') && $('koyomi').addEventListener('click', () => $('koyomi').classList.toggle('open'));

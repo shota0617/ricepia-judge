@@ -1087,6 +1087,30 @@ function updateCover() {
 }
 if (window.ResizeObserver && $('sheet')) new ResizeObserver(updateCover).observe($('sheet'));
 window.addEventListener('resize', updateCover);
+// 天気（weather.js：気象庁のアメダス・予報）：雨と雪は画面に降らせ、くもりは少し暗く
+function drawWeather(now, w, h, dpr) {
+  const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current;
+  if (!wx) return;
+  if (wx.kind === 'cloudy') { ctx.fillStyle = 'rgba(40,50,70,.12)'; ctx.fillRect(0, 0, w, h); return; }
+  if (wx.kind !== 'rain' && wx.kind !== 'snow') return;
+  ctx.fillStyle = 'rgba(30,40,60,.18)'; ctx.fillRect(0, 0, w, h);
+  const n = wx.kind === 'rain' ? 70 : 45, t = now / 1000;
+  ctx.save();
+  if (wx.kind === 'rain') { ctx.strokeStyle = 'rgba(200,225,255,.55)'; ctx.lineWidth = Math.max(1, dpr); ctx.beginPath(); }
+  else ctx.fillStyle = 'rgba(255,255,255,.85)';
+  for (let i = 0; i < n; i++) {
+    const r1 = ((i * 2654435761) >>> 0) / 4294967296, r2 = ((i * 40503 + 7) % 997) / 997;
+    if (wx.kind === 'rain') {
+      const x = (r1 * w + t * 60 * dpr) % w, y = (r2 * h + t * 520 * dpr) % h;
+      ctx.moveTo(x, y); ctx.lineTo(x - 3 * dpr, y + 10 * dpr);
+    } else {
+      const y = (r2 * h + t * 40 * dpr) % h, x = (r1 * w + Math.sin(t + i) * 8 * dpr) % w, sz = (1.5 + (i % 3)) * dpr;
+      ctx.fillRect(x, y, sz, sz);
+    }
+  }
+  if (wx.kind === 'rain') ctx.stroke();
+  ctx.restore();
+}
 function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
@@ -1234,6 +1258,8 @@ function frame(now) {
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
+
+  drawWeather(now, w, h, dpr);
 
   // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
   for (let i = floaters.length - 1; i >= 0; i--) {

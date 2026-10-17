@@ -376,14 +376,28 @@ function rawAt(tx, ty) {   // 下位5bit＝地形、上位＝陰影
 }
 const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
 
+// 区画を作るか：西尾市の範囲（佐久島を含む長方形）にかかるか、となりの市町（region.js）の境界から約300m以内にかかるもの
+function chunkInPlay(cx, cy) {
+  const b = chunkBox(cx, cy);
+  if (!(b.n < nb[0][0] - 0.01 || b.s > nb[1][0] + 0.01 || b.e < nb[0][1] - 0.01 || b.w > nb[1][1] + 0.01)) return true;
+  const pad = 0.003, s = b.s - pad, n = b.n + pad, w = b.w - pad, e = b.e + pad;
+  for (const c of G.REGION) {
+    if (n < c.bbox[0][0] || s > c.bbox[1][0] || e < c.bbox[0][1] || w > c.bbox[1][1]) continue;
+    // 境界の点が区画に入っているか、区画の中の5×5の点のどれかが市町の中か
+    if (c.rings.some(r => r.some(p => p[0] >= s && p[0] <= n && p[1] >= w && p[1] <= e))) return true;
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+      const q = G.cityAt(s + (n - s) * i / 4, w + (e - w) * j / 4);
+      if (q && q.id === c.id) return true;
+    }
+  }
+  return false;
+}
+
 function ensureChunk(cx, cy) {
   const k = cx + '_' + cy;
   const c = chunks.get(k);
   if (c && !(c.state === 'fail' && Date.now() - c.t > 60000)) return;
-  const b = chunkBox(cx, cy);
-  if (b.n < nb[0][0] - 0.01 || b.s > nb[1][0] + 0.01 || b.e < nb[0][1] - 0.01 || b.w > nb[1][1] + 0.01) {
-    chunks.set(k, { state: 'out' }); return;
-  }
+  if (!chunkInPlay(cx, cy)) { chunks.set(k, { state: 'out' }); return; }
   // 用意した区画（chunks/区画.json）を先に確かめたいので、端末の保存分はここでは使わず pump() で使う
   chunks.set(k, { state: 'queued' });
   queue.push([cx, cy]);
@@ -495,13 +509,13 @@ async function overpass(query) {
  * 読めないときだけ、ブラウザで地図データを取って作る（軽い問い合わせだけ）。
  * NSG_BAKE（tools/bake-world.js）のときは、田んぼ・茶畑・工場・公園なども取って細かく作る */
 const BAKE = !!window.NSG_BAKE;
-const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 100;   // 西尾市と周り（碧南・安城・幸田・蒲郡の一部）
+const WB = { s: 34.68, w: 136.92, n: 35.05, e: 137.43 }, WT = 100;   // 西尾市と となりの市町（岡崎・安城・碧南・幸田・蒲郡・高浜。region.js の範囲を含む）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
 // 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
-const WORLD_KEY = 'nsg_world6', WORLD_FILE = 'nishio-go/world.json';
-for (let i = 1; i <= 5; i++) store.del('nsg_world' + i);
+const WORLD_KEY = 'nsg_world7', WORLD_FILE = 'nishio-go/world.json';
+for (let i = 1; i <= 6; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
@@ -1302,13 +1316,14 @@ function areaHtml(a) {
 let worldMode = false, wcam = null, wscale = 2, wcamOnMe = false;   // wcamOnMe：まだ現在地が分からないうちに開いた（分かったら主人公へ寄せる）
 const WSIZES = [2, 3, 4, 6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）。6以下は色のブロック、10以上はドット絵タイル
 // 地図データに地名がないときの予備と、海の名前
-const AREA_LABELS = [['西尾', 34.872, 137.058, 4], ['一色', 34.802, 137.028, 3], ['吉良', 34.818, 137.078, 3], ['幡豆', 34.800, 137.138, 3], ['佐久島', 34.733, 137.040, 3]];
+const AREA_LABELS = [['西尾', 34.872, 137.058, 4], ['一色', 34.802, 137.028, 3], ['吉良', 34.818, 137.078, 3], ['幡豆', 34.800, 137.138, 3], ['佐久島', 34.733, 137.040, 3],
+  ['岡崎', 34.955, 137.165, 4], ['安城', 34.959, 137.081, 4], ['碧南', 34.885, 136.993, 4], ['幸田', 34.865, 137.166, 3], ['蒲郡', 34.826, 137.219, 4], ['高浜', 34.928, 136.989, 3]];
 const SEA_LABELS = [['三河湾', 34.752, 137.105, 4]];
 const wT = dpr => Math.round(WSIZES[wscale] * dpr);
 function worldCamStart() {
-  const me = G.me, nb2 = G.CFG.nishioBounds;
+  const me = G.me;
   wcamOnMe = !me;
-  if (me && me.lat > nb2[0][0] && me.lat < nb2[1][0] && me.lng > nb2[0][1] && me.lng < nb2[1][1]) return llToW(me.lat, me.lng);
+  if (me && G.inPlay(me.lat, me.lng)) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
 function drawWorld(now, w, h, dpr) {
@@ -1328,6 +1343,15 @@ function drawWorld(now, w, h, dpr) {
     const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
     ctx.drawImage(tiles[code][v % tiles[code].length][code === C.A || code === C.X ? f : 0], ox + x * T, oy + y * T, T, T);
   }
+  // 市町の境（region.js）：うすい点線
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, dpr * 1.2); ctx.setLineDash([4 * dpr, 4 * dpr]);
+  for (const c of G.REGION) for (const r of c.rings) {
+    ctx.beginPath();
+    r.forEach(([la, lo], i) => { const q = llToW(la, lo); ctx[i ? 'lineTo' : 'moveTo'](ox + q.x * T, oy + q.y * T); });
+    ctx.stroke();
+  }
+  ctx.restore();
   // 大きな建物（引いたときは出さない）
   const bs = Math.max(T * 1.4, 12 * dpr);
   for (const p of css >= 6 ? worldPois : []) {
@@ -1749,5 +1773,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

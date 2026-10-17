@@ -26,6 +26,31 @@ const CFG = {
   overpass: ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'],
 };
 
+// 遊べる市町（西尾市と となりの市町）の境界は region.js（tools/bake-region.js が OpenStreetMap から作る）
+const REGION = (window.NISHIO_REGION && Array.isArray(window.NISHIO_REGION.cities)) ? window.NISHIO_REGION.cities : [];
+// 点が輪の中か（偶奇規則）
+function inRing(lat, lng, r) {
+  let inside = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    if ((r[i][0] > lat) !== (r[j][0] > lat) && lng < (r[j][1] - r[i][1]) * (lat - r[i][0]) / (r[j][0] - r[i][0]) + r[i][1]) inside = !inside;
+  }
+  return inside;
+}
+// いまいる市町（region.js の city）。どこにも入らなければ null
+function cityAt(lat, lng) {
+  for (const c of REGION) {
+    if (lat < c.bbox[0][0] || lat > c.bbox[1][0] || lng < c.bbox[0][1] || lng > c.bbox[1][1]) continue;
+    if (c.rings.some(r => inRing(lat, lng, r))) return c;
+  }
+  return null;
+}
+// 遊べる範囲のおおよその長方形（西尾市の範囲と、となりの市町の範囲をあわせたもの）
+const playBounds = REGION.reduce((b, c) => [[Math.min(b[0][0], c.bbox[0][0]), Math.min(b[0][1], c.bbox[0][1])], [Math.max(b[1][0], c.bbox[1][0]), Math.max(b[1][1], c.bbox[1][1])]],
+  CFG.nishioBounds.map(p => p.slice()));
+// となりの市町の地区 id（areas.json・spots.json の area）
+const NEAR_AREAS = new Set(['okazaki', 'anjo', 'hekinan', 'kota', 'gamagori', 'takahama']);
+const inPlay = (lat, lng) => (lat > CFG.nishioBounds[0][0] && lat < CFG.nishioBounds[1][0] && lng > CFG.nishioBounds[0][1] && lng < CFG.nishioBounds[1][1]) || !!cityAt(lat, lng);
+
 // OpenStreetMap への問い合わせと分類は osm-query.js（tools/bake-spots.js と共通）
 const { buildQuery, toItems } = window.NSG_OSM;
 
@@ -99,14 +124,13 @@ if (!window.L) {
   return;
 }
 const map = L.map('map', { zoomControl: false, minZoom: 11, maxZoom: 19,
-  maxBounds: L.latLngBounds([34.55, 136.80], [35.05, 137.40]), maxBoundsViscosity: 0.8 })
+  maxBounds: L.latLngBounds([playBounds[0][0] - 0.15, playBounds[0][1] - 0.15], [playBounds[1][0] + 0.15, playBounds[1][1] + 0.15]), maxBoundsViscosity: 0.8 })
   .setView(CFG.center, 15);
 L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png', {
   minZoom: 5, maxNativeZoom: 18, maxZoom: 19,
   attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a> | スポット © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
 }).addTo(map);
 L.control.zoom({ position: 'topright' }).addTo(map);
-const nishioBounds = L.latLngBounds(CFG.nishioBounds);
 
 let follow = true;
 map.on('dragstart', () => { follow = false; });
@@ -367,6 +391,8 @@ function placeNpcs() {
   return npcs;
 }
 const npcMet = id => (S.met || []).includes(id);
+// area があるのは となりの市町の人（バッジを「西尾の人」と分ける）
+const NPC_NISHIO = (window.NISHIO_NPCS || []).filter(n => !n.area), NPC_NEAR = (window.NISHIO_NPCS || []).filter(n => n.area);
 // 話す中身：その人のことばと、その場所で今月・来月にある行事の話
 function npcPages(n) {
   const pages = n.lines.slice();
@@ -616,6 +642,8 @@ function checkin() {
 
 /* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
+// area があるのは となりの市町の名物（バッジを「西尾の名物」と分ける）
+const MB_NISHIO = MEIBUTSU.filter(m => !m.area), MB_NEAR = MEIBUTSU.filter(m => m.area);
 const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
 
 /* ---------- 西尾のおまつり・行事（events.js：西尾市観光協会と西尾市公式ウェブサイトから） ---------- */
@@ -671,7 +699,7 @@ function todaysQuests() {
   const qs = pool.slice(0, 3);
   if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（近藤米穀店）に寄る', goal: 1, pts: 80, val: d => d.shop };
   // ときどき「今月の行事の会場に行く」（会場がスポットになっていて、船のいらない所だけ）
-  const evs = monthEvents(new Date(date + 'T12:00:00')).filter(e => e.spot && !ISLAND_SPOTS.has(e.spot)), er = seeded(hashStr('event:' + date));
+  const evs = monthEvents(new Date(date + 'T12:00:00')).filter(e => e.spot && !e.area && !ISLAND_SPOTS.has(e.spot)), er = seeded(hashStr('event:' + date));
   if (evs.length && qs[2].id !== 'shop' && er() < 0.4) {
     const e = evs[Math.floor(er() * evs.length)];
     qs[2] = { id: 'event', icon: '📅', text: `今月の「${e.name}」の会場に行く`, sub: e.place, goal: 1, pts: 60, val: d => d.spots.includes(evSpotId(e)) ? 1 : 0 };
@@ -1002,7 +1030,8 @@ function decideGuide(from) {
   // ① 籾が重くなった → 開いているお店へ（日曜は本店がお休み・夜はらいすぴあのコイン精米所が24時間）
   if (r.momi >= RICE.minLoad && !spots.some(s => s.shop && inReach(s))) {   // 店にいるときは、その場で持ち込めるので出さない
     // いま着いている店は出さない（その店で持ち込めるので。出すと、着く→また同じ店、をくり返してしまう）
-    const shops = spots.filter(s => s.shop && !inReach(s) && dist(me, s) > guideRadius({ kind: 'shop', id: s.id }) * 1.5).sort((a, b) => dist(me, a) - dist(me, b));
+    // となりの市町の遠くにいるときは出さない（10kmまで。籾はとっておいて、西尾に来たときに持ち込める）
+    const shops = spots.filter(s => s.shop && !inReach(s) && dist(me, s) > guideRadius({ kind: 'shop', id: s.id }) * 1.5 && dist(me, s) <= 10000).sort((a, b) => dist(me, a) - dist(me, b));
     const s = shops.find(x => shopOpen(x.id, now)) || shops.find(x => x.id === 'f-ricepia') || shops[0];
     if (s) {
       const note = !shopOpen('f-kondo-beikoku', now) && s.id === 'f-ricepia' ? (now.getDay() === 0 ? '（きょうは日曜で本店はお休み）' : '') : '';
@@ -1153,7 +1182,7 @@ function refreshNearby() {
     : `🌾 籾 <b>${r.momi}合</b>・🍚 米袋 <b>${toKg(r.white)}</b>／${ng ? toKg(ng.go) : '60'}kg`);
   if (driving) msgs.push('🚗 軽トラで移動中（道だけ走れます。歩いたポイントは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
-  else if (!nishioBounds.contains([me.lat, me.lng])) msgs.push('📍 いまは西尾市の外にいるようです');
+  else if (!inPlay(me.lat, me.lng)) msgs.push('📍 いまは遊べる範囲（西尾市と となりの市町）の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected) {
@@ -1193,7 +1222,9 @@ function showGuide(s) {
 function countVisits(fn) { return Object.values(S.visits).filter(fn).length; }
 function badgeDefs() {
   const uniq = Object.keys(S.visits).length;
-  const featTotal = spotMeta.featured;
+  // 「注目スポット制覇」は西尾市の中だけ（となりの市町は、市町ごとの制覇バッジ）
+  const nearIds = new Set(spots.filter(s => s.featured && NEAR_AREAS.has(s.area)).map(s => s.id));
+  const featTotal = spotMeta.featured - nearIds.size;
   const km = Math.floor(S.walked / 100) / 10;
   return [
     { id: 'first', i: '👟', n: 'はじめの一歩', d: 'はじめてチェックイン', cur: S.checkins, goal: 1 },
@@ -1204,7 +1235,7 @@ function badgeDefs() {
     { id: 'temple', i: '🪷', n: 'お寺めぐり', d: 'お寺を5か所', cur: countVisits(v => v.cat === 'temple'), goal: 5 },
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
-    { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: countVisits(v => v.featured), goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
     ...areas.map(a => {
       const p = areaProgress(a.id);
       return { id: 'area-' + a.id, i: a.icon || '🗾', n: `${a.name}制覇`, d: `${a.name}の注目スポット${p.total}か所すべて`, cur: p.done, goal: Math.max(p.total, 1), ready: spotMeta.loaded && p.total > 0 };
@@ -1212,13 +1243,15 @@ function badgeDefs() {
     { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
-    { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MEIBUTSU.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MEIBUTSU.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MEIBUTSU.length, 1) },
+    { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MB_NISHIO.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NISHIO.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NISHIO.length, 1) },
+    { id: 'meibutsu2', i: '🧭', n: 'となりまちの名物めぐり', d: `${MB_NEAR.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NEAR.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NEAR.length, 1), ready: MB_NEAR.length > 0 },
     { id: 'rice1', i: '🍚', n: 'はじめての精米', d: '籾を当店に持ち込んで精米する', cur: riceOf().loads, goal: 1 },
     { id: 'bag5', i: '🌾', n: '5kgの米袋', d: '米袋を5kgにする', cur: r1(riceOf().white * 0.15), goal: 5 },
     { id: 'bag30', i: '🏆', n: '30kgの米袋', d: '米袋を30kgにする', cur: r1(riceOf().white * 0.15), goal: 30 },
     { id: 'grade1', i: '🥇', n: '米屋の目利き', d: '選別で1等を5回とる', cur: riceOf().g1, goal: 5 },
     { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: (S.met || []).length, goal: 5 },
-    { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${(window.NISHIO_NPCS || []).length}人みんなと話す`, cur: (S.met || []).length, goal: Math.max((window.NISHIO_NPCS || []).length, 1) },
+    { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${NPC_NISHIO.length}人みんなと話す`, cur: NPC_NISHIO.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NISHIO.length, 1) },
+    { id: 'npcnear', i: '🧭', n: 'となりまちの顔なじみ', d: `となりの市町の人${NPC_NEAR.length}人みんなと話す`, cur: NPC_NEAR.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NEAR.length, 1), ready: NPC_NEAR.length > 0 },
   ];
 }
 function checkBadges() {
@@ -1645,7 +1678,7 @@ window.nishioGo = {
   sound,
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
-  get selected() { return selected; }, CFG,
+  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, inPlay,
   dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng, how) { if (!demo) return; follow = false; stepMove = how === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },

@@ -57,7 +57,7 @@ function emit() { for (const f of listeners) try { f(cur); } catch (e) { /* noop
 // lat, lng：いまいる所（市町のどのあたりかで、観測所と予報の地域を選ぶだけ。どこにも送らない）
 function refresh(lat, lng) {
   if (loading) return loading;
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Date.now() - s.t < TTL && Math.abs(s.lat - lat) < 0.05 && Math.abs(s.lng - lng) < 0.05) { cur = s.w; emit(); return Promise.resolve(cur); } } catch (e) { /* noop */ }
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Date.now() - s.t < TTL && Math.abs(s.lat - lat) < 0.05 && Math.abs(s.lng - lng) < 0.05 && isEast(s.lat, s.lng) === isEast(lat, lng)) { cur = s.w; emit(); return Promise.resolve(cur); } } catch (e) { /* noop */ }
   loading = load(lat, lng).then(w => {
     cur = w; emit();
     try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), lat, lng, w })); } catch (e) { /* noop */ }

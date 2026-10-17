@@ -1815,7 +1815,7 @@ window.nishioGo = {
   focusSpot(id) {   // 広告やQRのリンク（?spot=）で、そのスポットを見せる
     const s = spots.find(x => x.id === 'f-' + id || x.id === id);
     if (!s) return false;
-    if (demo) { follow = false; stepMove = false; onFix(s.lat, s.lng, 5, Date.now()); }
+    if (demo) { follow = false; stepMove = false; onFix(s.lat, s.lng, 5, Date.now()); if (window.nishioPixel) nishioPixel.centerOnMe(); }   // せかいちずを開いていれば、カメラもそこへ
     else { follow = false; map.setView([s.lat, s.lng], 17); }
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;

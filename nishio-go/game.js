@@ -369,7 +369,7 @@ function popupHtml(s) {
   const left = cooldownLeft(s);
   const d = me ? fmtM(dist(me, s)) : '—';
   return `<div class="popup"><h4>${esc(s.name)}</h4>
-    <p>${s.shop ? '<span class="tag shop">🍚 当店（${esc(s.name)}）</span>' : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
+    <p>${s.shop ? `<span class="tag shop">🍚 当店（${esc(s.name)}）</span>` : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
     <span class="tag">${ptsOf(s)}pt</span></p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}

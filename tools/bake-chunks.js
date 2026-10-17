@@ -43,9 +43,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const t0 = Date.now();
   let saved = 0, sea = 0, failed = 0, n = 0;
   const budget = (Number(process.env.BAKE_MINUTES) || 240) * 60000;   // Actions の時間切れの前に止めて、作った分だけコミットする（残りは次の実行で）
-  let tried = 0;
+  let tried = 0, stopped = false;
   for (const [bk, cs] of blocks) {
-    if (Date.now() - t0 > budget) { console.log(`時間の上限なので、残り ${blocks.size - n} ブロックは次の実行で作る`); break; }
+    if (Date.now() - t0 > budget) { console.log(`時間の上限なので、残り ${blocks.size - n} ブロックは次の実行で作る`); stopped = true; break; }
     n++; tried += cs.length;
     let res = null;
     for (let tries = 1; tries <= 4 && !res; tries++) {
@@ -115,4 +115,6 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   if (saved) fs.writeFileSync(path.join(OUT, 'README.md'), `# 歩く地図の区画データ\n\n\`tools/bake-chunks.js\` が OpenStreetMap（© OpenStreetMap contributors, ODbL）と国土地理院の標高タイルから作ったものです（${new Date().toISOString().slice(0, 10)}）。手で編集しないでください。\n`);
   // ほとんど作れなかったときは失敗にする（中途半端なデータでコミットしない）
   if (saved < tried * 0.8) { console.error('作れなかった区画が多すぎるので失敗にする'); process.exit(1); }
+  // 時間の上限で止めたときは、Actions に「続きがある」と知らせる（ワークフローがこの実行のコミットのあと、もう一度自分を起動する）
+  if (stopped && saved && process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'more=1\n');
 })().catch(e => { console.error(e); process.exit(1); });

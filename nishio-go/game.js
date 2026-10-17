@@ -1252,7 +1252,7 @@ function badgeDefs() {
     { id: 'bag5', i: '🌾', n: '5kgの米袋', d: '米袋を5kgにする', cur: r1(riceOf().white * 0.15), goal: 5 },
     { id: 'bag30', i: '🏆', n: '30kgの米袋', d: '米袋を30kgにする', cur: r1(riceOf().white * 0.15), goal: 30 },
     { id: 'grade1', i: '🥇', n: '米屋の目利き', d: '選別で1等を5回とる', cur: riceOf().g1, goal: 5 },
-    { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: (S.met || []).length, goal: 5 },
+    { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: NPC_NISHIO.filter(n => npcMet(n.id)).length, goal: 5 },
     { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${NPC_NISHIO.length}人みんなと話す`, cur: NPC_NISHIO.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NISHIO.length, 1) },
     { id: 'npcnear', i: '🧭', n: 'となりまちの顔なじみ', d: `となりの市町の人${NPC_NEAR.length}人みんなと話す`, cur: NPC_NEAR.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NEAR.length, 1), ready: NPC_NEAR.length > 0 },
   ];

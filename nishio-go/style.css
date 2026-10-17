@@ -235,10 +235,20 @@ body.px #map{visibility:hidden}
 .px-zoom{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px}
 .px-zoom button,.px-pad button{background:rgba(0,0,0,.72);color:#fff;border:2px solid #fff;border-radius:6px;font-family:"DotGothic16",monospace;font-size:18px;width:40px;height:40px;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
 .px-zoom button:active,.px-pad button:active{background:#333}
-.px-pad{position:absolute;left:12px;bottom:max(150px,calc(var(--sheet-h,0px) + 22px));display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(3,48px);gap:2px}
-.px-pad button{width:48px;height:48px}
-.px-pad .u{grid-area:1/2}.px-pad .l{grid-area:2/1}.px-pad .r{grid-area:2/3}.px-pad .d{grid-area:3/2}
-.px-pad .c{grid-area:2/2;font-size:22px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
+.px-pad{position:absolute;left:12px;bottom:max(176px,calc(var(--sheet-h,0px) + 48px));display:flex;align-items:flex-end;gap:8px}
+.px-pad button{width:42px;height:42px}
+.px-pad .c{font-size:19px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
+/* スティック：さわったまま動かすと、その向きへ歩きつづける（大きく倒すと速く、ななめは2つの向きを交互に） */
+.px-stick{position:relative;width:80px;height:80px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);box-shadow:inset 0 0 0 4px rgba(255,255,255,.08);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.px-stick.on{background:rgba(0,0,0,.6);cursor:grabbing}
+.px-stick i{position:absolute;width:0;height:0;border:5px solid transparent;opacity:.75;pointer-events:none}
+.px-stick .u{left:calc(50% - 5px);top:4px;border-bottom-color:#fff;border-top-width:0}
+.px-stick .d{left:calc(50% - 5px);bottom:4px;border-top-color:#fff;border-bottom-width:0}
+.px-stick .l{top:calc(50% - 5px);left:4px;border-right-color:#fff;border-left-width:0}
+.px-stick .r{top:calc(50% - 5px);right:4px;border-left-color:#fff;border-right-width:0}
+.px-stick i.lit{opacity:1;filter:drop-shadow(0 0 3px #ffd54f)}
+.px-knob{position:absolute;left:calc(50% - 16px);top:calc(50% - 16px);width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#666,#222 70%);border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);pointer-events:none;transition:transform .12s ease-out}
+.px-stick.on .px-knob{transition:none;border-color:#ffd54f}
 .px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
 .px-info .dq{width:100%;max-width:420px;max-height:70%;overflow-y:auto}
 .px-info .popup h4{font-size:17px;margin:0 0 6px;color:#ffd54f}
@@ -327,3 +337,24 @@ body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(
 body.px .guide{background:#000;color:#7ee0ff;border:2px solid #7ee0ff;border-left-width:4px}
 body.px .guide b{font-weight:400}
 body.px .guide small{color:#ddd}
+/* こよみの札（地図の左上） */
+.koyomi{position:fixed;top:calc(var(--bar-h) + 8px);left:8px;z-index:3;max-width:calc(100% - 84px);text-align:left;background:rgba(0,0,0,.75);color:#fff;font:12px/1.45 "DotGothic16",monospace;padding:4px 8px;border:2px solid #fff;border-radius:4px;cursor:pointer}
+.koyomi .more{display:none}
+.koyomi.open .more{display:block;margin-top:4px;font-size:11px;opacity:.95}
+/* キャンペーン（きろくの上） */
+.campaigns{margin:0 auto 12px}
+.camp{border:2px solid #e0b84a;background:#fff8e1;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.camp b{display:block}.camp small{color:#7a6a3a}.camp p{margin:4px 0}
+.share-btn{float:right;font-size:13px}
+.popup .sponsor{background:#f4f8ff;border-radius:6px;padding:4px 6px}
+/* シェア */
+.share{position:fixed;inset:0;z-index:2700;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px}
+.share[hidden]{display:none}
+.share-box{background:#fff;border-radius:12px;max-width:520px;width:100%;max-height:92vh;overflow-y:auto;padding:14px;text-align:center}
+.share-box h3{margin:0 0 8px}
+.share-box canvas{width:100%;height:auto;border-radius:8px;border:1px solid #ddd}
+.share-text{font-size:13px;text-align:left;white-space:pre-wrap;word-break:break-all;margin:8px 0}
+.share-btns a.btn{text-decoration:none}
+.share-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
+.share-btns .btn{flex:1 1 30%;min-width:96px}
+.player-count{font-weight:bold;color:#1f5a25;background:#eaf6e2;border-radius:6px;padding:4px 8px;display:inline-block}

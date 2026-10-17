@@ -1,8 +1,10 @@
-// にしおさんぽGO：歩く地図（1マス8m、128×128マスの区画）を、西尾市全体ぶん実際の地図データから作って
+// にしおさんぽGO：歩く地図（1マス8m、128×128マスの区画）を、遊べる範囲（西尾市と となりの市町）ぶん実際の地図データから作って
 // nishio-go/chunks/区画.json に保存する。ゲームはまずこのファイルを読み、なければブラウザで地図データを取る。
 // GitHub Actions（.github/workflows/bake-chunks.yml）で動かす。ゲームと同じ pixel.js の rasterize() を使うので、
 // 見た目はブラウザで作ったときと同じ。地図データは2×2区画（約2km四方）ずつまとめて取る。
 //   使い方: npm install --no-save playwright && npx playwright install chromium && node tools/bake-chunks.js
+//   ふだんは まだファイルのない区画と、tools/chunks-version.txt の版が古い区画だけ作る（見た目の作り方を変えたら版を上げる）。
+//   1回の実行は BAKE_MINUTES（既定240分）まで。残りは次の実行で作る。BAKE_ALL=1 なら全部作り直す
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { ROOT, startServer, openBakePage } = require('./bake-common');
@@ -13,18 +15,23 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
   const browser = await chromium.launch();
   const { ctx, page } = await openBakePage(browser, PORT);
-  // 西尾市の範囲にかかる区画（ゲームの ensureChunk と同じ判定）
-  const list = await page.evaluate(() => {
-    const P = nishioPixel, nb = nishioGo.CFG.nishioBounds, out = [];
-    const a = P.toTile(nb[1][0] + 0.01, nb[0][1] - 0.01), b = P.toTile(nb[0][0] - 0.01, nb[1][1] + 0.01);
+  // 遊べる範囲（西尾市と となりの市町）にかかる区画（ゲームの ensureChunk と同じ判定）
+  const all = await page.evaluate(() => {
+    const P = nishioPixel, pb = nishioGo.playBounds, out = [];
+    const a = P.toTile(pb[1][0] + 0.01, pb[0][1] - 0.01), b = P.toTile(pb[0][0] - 0.01, pb[1][1] + 0.01);
     for (let cy = Math.floor(a.y / P.CHUNK); cy <= Math.floor(b.y / P.CHUNK); cy++)
-      for (let cx = Math.floor(a.x / P.CHUNK); cx <= Math.floor(b.x / P.CHUNK); cx++) {
-        const bx = P.chunkBox(cx, cy);
-        if (bx.n < nb[0][0] - 0.01 || bx.s > nb[1][0] + 0.01 || bx.e < nb[0][1] - 0.01 || bx.w > nb[1][1] + 0.01) continue;
-        out.push([cx, cy]);
-      }
+      for (let cx = Math.floor(a.x / P.CHUNK); cx <= Math.floor(b.x / P.CHUNK); cx++)
+        if (P.chunkInPlay(cx, cy)) out.push([cx, cy]);
     return out;
   });
+  // 範囲の外になった古い区画は消す
+  const want = new Set(all.map(([cx, cy]) => cx + '_' + cy));
+  for (const f of fs.existsSync(OUT) ? fs.readdirSync(OUT) : []) if (/^-?\d+_-?\d+\.json$/.test(f) && !want.has(f.slice(0, -5))) fs.rmSync(path.join(OUT, f));
+  // 作り直す区画：ファイルがない区画と、作ったときの版（cv。なければ1）が tools/chunks-version.txt と違う区画
+  const CV = Number(fs.readFileSync(path.join(ROOT, 'tools', 'chunks-version.txt'), 'utf8').trim()) || 1;
+  const stale = ([cx, cy]) => { try { return (JSON.parse(fs.readFileSync(path.join(OUT, cx + '_' + cy + '.json'), 'utf8')).cv || 1) !== CV; } catch (e) { return true; } };
+  const list = process.env.BAKE_ALL === '1' ? all : all.filter(stale);
+  console.log(`遊べる範囲の区画 ${all.length} 個のうち、作るのは ${list.length} 個`);
   const blocks = new Map();
   for (const [cx, cy] of list) {
     const k = Math.floor(cx / BLOCK) + '_' + Math.floor(cy / BLOCK);
@@ -35,12 +42,16 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   fs.mkdirSync(OUT, { recursive: true });
   const t0 = Date.now();
   let saved = 0, sea = 0, failed = 0, n = 0;
+  const budget = (Number(process.env.BAKE_MINUTES) || 240) * 60000;   // Actions の時間切れの前に止めて、作った分だけコミットする（残りは次の実行で）
+  let tried = 0, stopped = false;
   for (const [bk, cs] of blocks) {
-    n++;
+    if (Date.now() - t0 > budget) { console.log(`時間の上限なので、残り ${blocks.size - n} ブロックは次の実行で作る`); stopped = true; break; }
+    n++; tried += cs.length;
     let res = null;
     for (let tries = 1; tries <= 4 && !res; tries++) {
       res = await page.evaluate(async cs => {
         const P = nishioPixel, C = P.C;
+        await P.luReady;   // 土地利用の表（landuse.json）を読みおわってから塗る
         const boxes = cs.map(([cx, cy]) => P.chunkBox(cx, cy));
         const b = { s: Math.min(...boxes.map(x => x.s)), w: Math.min(...boxes.map(x => x.w)), n: Math.max(...boxes.map(x => x.n)), e: Math.max(...boxes.map(x => x.e)) };
         let json;
@@ -95,14 +106,16 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     if (!res) { failed += cs.length; cs.forEach(([cx, cy]) => drop(cx + '_' + cy)); continue; }
     for (const c of res.out) {
       if (c.skip) { failed++; drop(c.k); continue; }
-      fs.writeFileSync(path.join(OUT, c.k + '.json'), JSON.stringify({ v: 1, d: c.d, p: c.p }));
+      fs.writeFileSync(path.join(OUT, c.k + '.json'), JSON.stringify({ v: 1, cv: CV, d: c.d, p: c.p }));
       saved++; if (c.sea) sea++;
     }
     console.log(`  [${n}/${blocks.size}] ${bk}: ${res.els} 件 → ${res.out.length} 区画（${Math.round((Date.now() - t0) / 60000)}分）`);
   }
   await ctx.close(); await browser.close(); srv.close();
   console.log(`保存 ${saved} 区画（うち海だけ ${sea}）、作れなかった ${failed} 区画`);
-  fs.writeFileSync(path.join(OUT, 'README.md'), `# 歩く地図の区画データ\n\n\`tools/bake-chunks.js\` が OpenStreetMap（© OpenStreetMap contributors, ODbL）と国土地理院の標高タイルから作ったものです（${new Date().toISOString().slice(0, 10)}）。手で編集しないでください。\n`);
+  if (saved) fs.writeFileSync(path.join(OUT, 'README.md'), `# 歩く地図の区画データ\n\n\`tools/bake-chunks.js\` が OpenStreetMap（© OpenStreetMap contributors, ODbL）と国土地理院の標高タイル、国土数値情報（土地利用細分メッシュデータ）（国土交通省）を加工して作ったものです（${new Date().toISOString().slice(0, 10)}）。手で編集しないでください。\n`);
   // ほとんど作れなかったときは失敗にする（中途半端なデータでコミットしない）
-  if (saved < list.length * 0.8) { console.error('作れなかった区画が多すぎるので失敗にする'); process.exit(1); }
+  if (saved < tried * 0.8) { console.error('作れなかった区画が多すぎるので失敗にする'); process.exit(1); }
+  // 時間の上限で止めたときは、Actions に「続きがある」と知らせる（ワークフローがこの実行のコミットのあと、もう一度自分を起動する）
+  if (stopped && saved && process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'more=1\n');
 })().catch(e => { console.error(e); process.exit(1); });

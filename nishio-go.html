@@ -39,18 +39,18 @@
 
 <main id="map" aria-label="西尾市の地図"></main>
 
+<!-- こよみ（日付・季節・田んぼのようす）。タップでくわしく -->
+<button type="button" class="koyomi" id="koyomi" hidden aria-label="きょうのこよみ"></button>
+
 <!-- ドット絵の地図 -->
 <section id="pxView" aria-label="ドット絵の地図">
   <canvas id="pxCanvas"></canvas>
-  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="西尾市ぜんたいの地図" title="西尾市ぜんたいの地図">🌏</button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
+  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）">🌏</button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
-  <div class="px-attr">地図 © OpenStreetMap contributors／標高：地理院タイルを加工して作成</div>
+  <div class="px-attr">地図 © OpenStreetMap contributors／標高：地理院タイル／土地利用：国土数値情報（国土交通省）を加工して作成</div>
   <div class="px-pad" id="pxPad" hidden>
-    <button type="button" data-dir="up" class="u" aria-label="上へ">▲</button>
-    <button type="button" data-dir="left" class="l" aria-label="左へ">◀</button>
-    <button type="button" data-dir="right" class="r" aria-label="右へ">▶</button>
+    <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）">🚗</button>
-    <button type="button" data-dir="down" class="d" aria-label="下へ">▼</button>
   </div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
 </section>
@@ -90,7 +90,8 @@
 
 <!-- 記録 -->
 <section class="panel" id="panel-log" hidden>
-  <h2>きろく</h2>
+  <h2>きろく <button type="button" class="btn mini share-btn" id="shareLogBtn">📣 シェア</button></h2>
+  <div class="campaigns" id="campaignBox" hidden></div>
   <h3>📜 今日のおさんぽクエスト</h3>
   <ul class="list" id="questList"></ul>
   <div class="stats" id="stats"></div>
@@ -130,7 +131,7 @@
   <h2>せってい</h2>
   <div class="card">
     <label class="row">
-      <span><b>🎮 操作して移動</b><small>十字ボタン（矢印キー）や地図のタップで移動します。オフにすると、実際に歩いて移動します（位置情報を使います）。ポイントと記録は別々に保存され、お店のとくてんは「あるいて移動」でだけ使えます。</small></span>
+      <span><b>🎮 操作して移動</b><small>スティック（矢印キー）や地図のタップで移動します。オフにすると、実際に歩いて移動します（位置情報を使います）。ポイントと記録は別々に保存され、お店のとくてんは「あるいて移動」でだけ使えます。</small></span>
       <input type="checkbox" id="demoToggle"/>
     </label>
     <label class="row">
@@ -179,6 +180,7 @@
 <div class="intro" id="intro">
   <div class="intro-box">
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
+    <p class="player-count" id="playerCount" hidden></p>
     <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
     <p class="pitch"><b>🧭 行き先は、自分では決めない。</b><br/>西尾の人の話や、季節・時間・まわりのようすが、次に行く所を教えてくれます。話を聞いて、すすめられた所へ。そこでまた、次の話が待っています。</p>
     <p>道すがら、お米屋さんの仕事もできます。</p>
@@ -195,7 +197,25 @@
     <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
     <button type="button" class="btn big mode-pick" id="startBtn">🚶 あるいて遊ぶ<small>位置情報を使って、実際に西尾のまちを歩きます</small></button>
-    <button type="button" class="btn big mode-pick alt" id="demoBtn">🎮 操作して遊ぶ<small>十字ボタンで動かして、家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick alt" id="demoBtn">🎮 操作して遊ぶ<small>スティックで動かして、家からでも西尾めぐり</small></button>
+  </div>
+</div>
+
+<!-- シェア（SNS・LINE・画像） -->
+<div class="share" id="share" hidden role="dialog" aria-modal="true" aria-label="シェア">
+  <div class="share-box">
+    <h3>📣 にしおさんぽGOをシェア</h3>
+    <canvas id="shareCard" width="1200" height="630" aria-label="シェア用の画像"></canvas>
+    <p class="share-text" id="shareText"></p>
+    <div class="share-btns">
+      <button type="button" class="btn" data-share="native" id="shareNative" hidden>📱 シェアする</button>
+      <a class="btn" data-share="x" id="shareX" target="_blank" rel="noopener">𝕏 ポスト</a>
+      <a class="btn" data-share="line" id="shareLine" target="_blank" rel="noopener">LINE</a>
+      <a class="btn" data-share="facebook" id="shareFb" target="_blank" rel="noopener">Facebook</a>
+      <button type="button" class="btn" data-share="copy">🔗 コピー</button>
+      <button type="button" class="btn" data-share="image">🖼️ 画像を保存</button>
+    </div>
+    <button type="button" class="btn big" data-share="close">とじる</button>
   </div>
 </div>
 
@@ -227,8 +247,12 @@
 <script src="nishio-go/events.js"></script>
 <script src="nishio-go/npcs.js"></script>
 <script src="nishio-go/meibutsu.js"></script>
+<script src="nishio-go/region.js"></script>
+<script src="nishio-go/season.js"></script>
+<script src="nishio-go/weather.js"></script>
 <script src="nishio-go/osm-query.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/pixel.js"></script>
+<script src="nishio-go/share.js"></script>
 </body>
 </html>

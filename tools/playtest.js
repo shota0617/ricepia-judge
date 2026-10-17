@@ -83,12 +83,19 @@ async function walkTo(page, id) {
   const { ctx, page, errors } = await newPage(browser, { permissions: ['geolocation'], geolocation: { latitude: STATION[0], longitude: STATION[1], accuracy: 10 } });
   await page.goto(URL); await page.waitForTimeout(800);
   await shot(page, '01-intro');
-  // はじめての人と同じく、せかいちずを開いた状態で「操作して遊ぶ」を押す（せかいちずでも十字ボタンが出て、押すと歩く地図にもどる）
+  // はじめての人と同じく、せかいちずを開いた状態で「操作して遊ぶ」を押す（せかいちずでもスティックが出て、動かすと歩く地図にもどる）
   await page.evaluate(() => nishioPixel.setWorld(true));
   await page.click('#demoBtn'); await page.waitForTimeout(2500);
   R.checks.padOnWorldMap = await page.evaluate(() => nishioGo.demo && nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
-  await page.dispatchEvent('#pxPad [data-dir=up]', 'pointerdown'); await page.dispatchEvent('#pxPad [data-dir=up]', 'pointerup');
-  await page.waitForTimeout(800);
+  // スティックを上へ倒して少し持ち、はなす（北へ何マスか歩く）
+  const lat0 = await page.evaluate(() => nishioGo.me && nishioGo.me.lat);
+  const sb = await page.locator('#pxStick').boundingBox();
+  await page.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2); await page.mouse.down();
+  await page.mouse.move(sb.x + sb.width / 2, sb.y + 8, { steps: 4 }); await page.waitForTimeout(700);
+  R.checks.stickKnobMoved = await page.evaluate(() => /translate/.test(document.getElementById('pxKnob').style.transform));
+  await page.mouse.up(); await page.waitForTimeout(800);
+  R.checks.stickWalkedNorth = await page.evaluate(l => !!nishioGo.me && l != null && nishioGo.me.lat > l, lat0);
+  R.checks.stickReleased = await page.evaluate(() => !document.getElementById('pxKnob').style.transform && !document.getElementById('pxStick').classList.contains('on'));
   R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
   R.checks.bgmStarted = await page.evaluate(() => window.__played.includes('field.mp3'));
   await shot(page, '02-operate-start');
@@ -105,7 +112,7 @@ async function walkTo(page, id) {
   R.checks.checkinSound = await page.evaluate(() => window.__played.some(f => f === 'checkin.mp3' || f === 'levelup.mp3'));
   R.checks.cooldown = await page.evaluate(() => document.getElementById('spinBtn').hidden || !document.getElementById('spinSub').textContent.includes('タップして'));
   // 当店の「当店」の札をタップして、お店の案内（サイト・道案内）が開くか
-  // 札が十字ボタンなどの下に隠れていたら、見えるところに来るまで少し歩く
+  // 札がスティックなどの下に隠れていたら、見えるところに来るまで少し歩く
   const findTag = () => page.evaluate(() => {
     const h = nishioPixel.shopHits.find(x => x[4].id === 'f-ricepia'); if (!h) return null;
     const cv = document.getElementById('pxCanvas'), r = cv.getBoundingClientRect(), k = cv.width / r.width;
@@ -124,7 +131,8 @@ async function walkTo(page, id) {
     await shot(page, '04-shop-card');
     await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; });
   } else R.checks.shopCard = false;
-  // せかいちず：川の名前・町名・駅名
+  // せかいちず：川の名前・町名・駅名（チェックインのほうびの知らせは7秒出ているので、写す前に消す）
+  await page.evaluate(() => { document.getElementById('reward').innerHTML = ''; });
   await page.click('#pxWorld');
   await page.waitForFunction(() => nishioPixel.worldState === 'ok', null, { timeout: 30000 });
   for (let i = 0; i < 3; i++) await page.click('#pxZoomIn');
@@ -157,7 +165,8 @@ async function walkTo(page, id) {
   const need = (ok, why) => { if (!ok) fail.push(why); };
   need(R.errors.length === 0, 'ページでエラーが出た');
   need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
-  need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、十字ボタンが出ない');
+  need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
+  need(c.stickKnobMoved && c.stickWalkedNorth && c.stickReleased, 'スティックを上へ倒しても北へ歩かない・はなしても戻らない');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
   need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');

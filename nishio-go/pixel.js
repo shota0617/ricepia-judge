@@ -23,6 +23,35 @@ const chunkBox = (cx, cy) => {
 // G草原 F田んぼ T町 W森 P公園 A水 S砂浜 B建物 R道 H大きな道 L線路 D小道 X未読込 M山 K丘 E茶畑 V畑 I工場 J境内 Y墓地 N温室 U農地（作物不明） Q住宅地
 const C = { G: 0, F: 1, T: 2, W: 3, P: 4, A: 5, S: 6, B: 7, R: 8, H: 9, L: 10, D: 11, X: 12, M: 13, K: 14, E: 15, V: 16, I: 17, J: 18, Y: 19, N: 20, U: 21, Q: 22 };
 const UNSET = 255;
+// こよみ（season.js）：田畑の色は月で（田おこし・田植え・青田・稲刈り・刈田）、森は紅葉のころ、公園は桜のころに変わる
+// 日付が変わったら seasonNow() で計算し直し、田畑・森・公園のタイルとせかいちずの色を作り直す（refreshSeason）
+const KO = window.NISHIO_SEASON;
+const PADDY_COLS = { green: '#86b54c', gold: '#cfae4a', flooded: '#8fbfd8', soil: '#8a6a44', stubble: '#a89a6a' };
+let PADDY_TILE = 'green', KOYO = false, SAKURA = false, PADDY_COL = PADDY_COLS.green;
+function seasonNow() {
+  const d = new Date();
+  PADDY_TILE = KO ? KO.paddy(d).tile : 'green';
+  KOYO = !!KO && KO.inRange(d, [11, 1], [12, 10]); SAKURA = !!KO && KO.inRange(d, [3, 25], [4, 10]);
+  PADDY_COL = PADDY_COLS[PADDY_TILE] || PADDY_COLS.green;
+  return PADDY_TILE + KOYO + SAKURA;
+}
+let seasonKey = seasonNow();
+
+/* ---------- 土地利用（nishio-go/landuse.json：国土数値情報「土地利用細分メッシュ」100m、国土交通省） ----------
+ * OpenStreetMap に何も描かれていない所を、実際の土地利用で塗る（田んぼと市街地の場所を実際の地図に合わせる）。
+ * a 田・b その他の農用地・c 森林・d 荒地・e 建物用地・f 道路・g 鉄道・h その他の用地・i 河川地及び湖沼・j 海浜・k 海水域・l ゴルフ場 */
+let LU = null;
+const luReady = fetch('nishio-go/landuse.json').then(r => (r.ok ? r.json() : null)).then(j => {
+  if (!j || !Array.isArray(j.rows) || j.rows.length !== j.h) return;
+  const g = new Uint8Array(j.w * j.h);
+  j.rows.forEach((row, y) => { let x = 0; for (const part of row.split(',')) { if (!part) continue; const c = part.charCodeAt(0), n = parseInt(part.slice(1), 36); g.fill(c, y * j.w + x, y * j.w + x + n); x += n; } });
+  LU = { lat0: j.lat0, lng0: j.lng0, dLat: j.dLat, dLng: j.dLng, w: j.w, h: j.h, g };
+}).catch(() => { /* 土地利用なしで続ける */ });
+function luAt(lat, lng) {   // その場所の土地利用（1文字）。表の外・読めていないときは ''
+  if (!LU) return '';
+  const y = LU.h - 1 - Math.floor((lat - LU.lat0) / LU.dLat), x = Math.floor((lng - LU.lng0) / LU.dLng);
+  return x < 0 || y < 0 || x >= LU.w || y >= LU.h ? '' : String.fromCharCode(LU.g[y * LU.w + x]);
+}
 const BLOCK = new Set([C.A, C.B, C.M, C.X]);    // デモで歩けないマス（水・建物・山・まだ読み込んでいない所）
 const HILL_M = 35, MOUNTAIN_M = 110;        // 標高（m）：これ以上の草地は丘、さらに高い所（幡豆の尾根・茶臼山・三ヶ根山）は山
 
@@ -197,6 +226,31 @@ function seaFill(g, coasts) {
 // NaN＝海（データなし）、UNK＝不明（取得失敗・異常値）
 const DB = CHUNK + 2, UNK = -32768;
 
+// OpenStreetMap に何もないマスを土地利用で塗る：田→田んぼ、その他の農用地→畑、森林→森、建物用地→家並み（道に面したマスは家、ほかは4マスに3つが家）、
+// その他の用地・道路・鉄道→町の地面、ゴルフ場→芝生、海浜→砂浜、それ以外（荒地・川・海）→草地。作物の分からない農地（OSM）は、田なら田んぼ、その他の農用地なら畑
+function fillLanduse(g, cx, cy) {
+  const x0 = cx * CHUNK, y0 = cy * CHUNK, lats = [], lngs = [];
+  for (let k = 0; k < CHUNK; k++) { lats.push(toLatLng(x0, y0 + k + 0.5).lat); lngs.push(toLatLng(x0 + k + 0.5, y0).lng); }
+  const road = i => { const c = g[i]; return c === C.R || c === C.H; };
+  for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
+    const i = y * CHUNK + x, c = g[i];
+    if (c !== UNSET && c !== C.U) continue;
+    const u = LU ? luAt(lats[y], lngs[x]) : '';
+    if (c === C.U) { if (u === 'a') g[i] = C.F; else if (u === 'b') g[i] = C.V; continue; }
+    if (u === 'a') g[i] = C.F;
+    else if (u === 'b') g[i] = C.V;
+    else if (u === 'c') g[i] = C.W;
+    else if (u === 'e') {
+      const front = (x > 0 && road(i - 1)) || (x < CHUNK - 1 && road(i + 1)) || (y > 0 && road(i - CHUNK)) || (y < CHUNK - 1 && road(i + CHUNK));
+      const h = (((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0;
+      g[i] = front || h % 4 ? C.Q : C.T;
+    } else if (u === 'h' || u === 'f' || u === 'g') g[i] = C.T;
+    else if (u === 'l') g[i] = C.P;
+    else if (u === 'j') g[i] = C.S;
+    else g[i] = C.G;
+  }
+  g.lu = !!LU;
+}
 function rasterize(elements, cx, cy, dem) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
   const x0 = cx * CHUNK, y0 = cy * CHUNK;
@@ -244,7 +298,7 @@ function rasterize(elements, cx, cy, dem) {
     const isSea = known > CHUNK * CHUNK / 2 ? na > known * 0.9 : toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82;
     if (isSea) g.fill(C.A);
   }
-  for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
+  fillLanduse(g, cx, cy);
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
   const ok = h => Number.isFinite(h) && h > UNK;
   for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
@@ -355,9 +409,9 @@ function saveChunk(k, g, days) {
   const idx = (store.get(PX_IDX) || []).filter(x => x !== k);
   idx.push(k);
   while (idx.length > PX_KEEP) store.del(PX_KEY + idx.shift());
-  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days })) {
+  if (!store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days, lu: !!g.lu })) {
     // 保存領域がいっぱいなら古い区画から消してもう一度
-    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days })) break; }
+    while (idx.length > 1) { store.del(PX_KEY + idx.shift()); if (store.set(PX_KEY + k, { t: Date.now(), d: encode(g), p: g.pois || [], days, lu: !!g.lu })) break; }
   }
   store.set(PX_IDX, idx);
 }
@@ -376,14 +430,28 @@ function rawAt(tx, ty) {   // 下位5bit＝地形、上位＝陰影
 }
 const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
 
+// 区画を作るか：西尾市の範囲（佐久島を含む長方形）にかかるか、となりの市町（region.js）の境界から約300m以内にかかるもの
+function chunkInPlay(cx, cy) {
+  const b = chunkBox(cx, cy);
+  if (!(b.n < nb[0][0] - 0.01 || b.s > nb[1][0] + 0.01 || b.e < nb[0][1] - 0.01 || b.w > nb[1][1] + 0.01)) return true;
+  const pad = 0.003, s = b.s - pad, n = b.n + pad, w = b.w - pad, e = b.e + pad;
+  for (const c of G.REGION) {
+    if (n < c.bbox[0][0] || s > c.bbox[1][0] || e < c.bbox[0][1] || w > c.bbox[1][1]) continue;
+    // 境界の点が区画に入っているか、区画の中の5×5の点のどれかが市町の中か
+    if (c.rings.some(r => r.some(p => p[0] >= s && p[0] <= n && p[1] >= w && p[1] <= e))) return true;
+    for (let i = 0; i <= 4; i++) for (let j = 0; j <= 4; j++) {
+      const q = G.cityAt(s + (n - s) * i / 4, w + (e - w) * j / 4);
+      if (q && q.id === c.id) return true;
+    }
+  }
+  return false;
+}
+
 function ensureChunk(cx, cy) {
   const k = cx + '_' + cy;
   const c = chunks.get(k);
   if (c && !(c.state === 'fail' && Date.now() - c.t > 60000)) return;
-  const b = chunkBox(cx, cy);
-  if (b.n < nb[0][0] - 0.01 || b.s > nb[1][0] + 0.01 || b.e < nb[0][1] - 0.01 || b.w > nb[1][1] + 0.01) {
-    chunks.set(k, { state: 'out' }); return;
-  }
+  if (!chunkInPlay(cx, cy)) { chunks.set(k, { state: 'out' }); return; }
   // 用意した区画（chunks/区画.json）を先に確かめたいので、端末の保存分はここでは使わず pump() で使う
   chunks.set(k, { state: 'queued' });
   queue.push([cx, cy]);
@@ -428,6 +496,7 @@ async function bakedChunk(cx, cy) {
     const g = j && typeof j.d === 'string' ? unrle(j.d) : null;
     if (!g) return null;
     g.pois = Array.isArray(j.p) ? j.p : [];
+    g.lu = (j.cv || 1) >= 2;   // 版2からは土地利用で塗ってある
     return g;
   } catch (e) { return null; }
 }
@@ -446,24 +515,25 @@ async function pump() {
       // 1) 用意した区画（いつも最新を使う。ブラウザのHTTPキャッシュが効くので2回目からは軽い。端末には保存しない）
       const pre = await bakedChunk(cx, cy);
       if (pre) {
-        chunks.set(k, { state: 'ok', g: townify(pre), pois: pre.pois });
+        // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
+        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois });
         dirty = true;
         continue;
       }
       // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
       const saved = store.get(PX_KEY + k);
       if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: townify(dec(saved.d)), pois: saved.p || [] });
+        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] });
         dirty = true;
         continue;
       }
       // 3) それもなければ、ブラウザで地図データと標高を取って作る
       try {
         // 地図データと標高を同時に取得（標高が取れなくても地図は作る）
-        const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null)]);
+        const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE ? g : townify(g), pois: g.pois || [] });
+        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] });
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -495,19 +565,19 @@ async function overpass(query) {
  * 読めないときだけ、ブラウザで地図データを取って作る（軽い問い合わせだけ）。
  * NSG_BAKE（tools/bake-world.js）のときは、田んぼ・茶畑・工場・公園なども取って細かく作る */
 const BAKE = !!window.NSG_BAKE;
-const WB = { s: 34.68, w: 136.92, n: 34.95, e: 137.25 }, WT = 100;   // 西尾市と周り（碧南・安城・幸田・蒲郡の一部）
+const WB = { s: 34.68, w: 136.92, n: 35.05, e: 137.43 }, WT = 100;   // 西尾市と となりの市町（岡崎・安城・碧南・幸田・蒲郡・高浜。region.js の範囲を含む）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
 // 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
-const WORLD_KEY = 'nsg_world6', WORLD_FILE = 'nishio-go/world.json';
-for (let i = 1; i <= 5; i++) store.del('nsg_world' + i);
+const WORLD_KEY = 'nsg_world8', WORLD_FILE = 'nishio-go/world.json';
+for (let i = 1; i <= 7; i++) store.del('nsg_world' + i);
 let world = null, worldPois = [], worldLabels = [], worldImg = null, worldState = 'none';   // none | building | ok | fail
 
 // 引いて見るときの地図の色（ドット絵タイルの代表色。道は目立つように明るく）
-const WCOL = { [C.G]: '#3f9b3c', [C.F]: '#7fb84a', [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
+const WCOL = { [C.G]: '#3f9b3c', [C.F]: PADDY_COL, [C.T]: '#d8ccaa', [C.W]: '#1f6528', [C.P]: '#55b650', [C.A]: '#2a62c9', [C.S]: '#e7cf8c',
   [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
-  [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: '#86b54c', [C.Q]: '#c9a27a' };
+  [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
   if (!world) return;
   const c = document.createElement('canvas');
@@ -662,6 +732,13 @@ function combineWorld(base, L) {
     if (a === UNSET || c === C.M) continue;   // 山はそのまま
     g[i] = a;   // 海でも地図データで田畑・町なみなどがある所は陸（埋め立て地）。丘も土地利用で塗る
   }
+  // 地図データで塗られていない所（と丘）は、土地利用（100mメッシュ＝せかいちずの1マスとほぼ同じ大きさ）で塗る
+  if (LU) for (let i = 0; i < g.length; i++) {
+    if (g[i] !== UNSET && g[i] !== C.K) continue;
+    const q = wToLL(i % WW + 0.5, Math.floor(i / WW) + 0.5), u = luAt(q.lat, q.lng);
+    const c = { a: C.F, b: C.V, c: C.W, e: C.T, h: C.T, f: C.T, g: C.T, l: C.P, j: C.S, k: C.A, i: C.A }[u];
+    if (c !== undefined && !(g[i] === C.K && (c === C.A || c === C.T))) g[i] = c;
+  }
   const keepSeaMt = new Set([C.A, C.M]), keepMt = new Set([C.M]);
   L.lines.slice().sort((a, b) => a[2] - b[2]).forEach(([pts, code]) => pts.forEach(line => strokeLine(g, line, code, 1, null, WW, WH, code === C.A ? keepMt : keepSeaMt)));
   for (let i = 0; i < g.length; i++) if (g[i] === UNSET) g[i] = C.G;
@@ -671,12 +748,11 @@ function combineWorld(base, L) {
 let worldProgress = '';
 async function buildWorld(force) {
   if (worldState === 'building' || worldState === 'enriching' || (worldState === 'ok' && !force)) return;
-  const saved = !force && store.get(WORLD_KEY);
-  if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-    world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
-  }
+  if (BAKE) await luReady;   // 作るときは土地利用の表を待つ
   worldState = 'building';
-  if (!BAKE) {   // 用意しておいた地図（実際の地図データから作ったもの）
+  // 1) 用意しておいた地図（実際の地図データから作ったもの）をいつも先に見る。作り直されたら（土地利用の更新など）すぐ新しい地図に。
+  //    変わっていなければブラウザの HTTP キャッシュの確かめだけで軽い
+  if (!BAKE) {
     try {
       const r = await fetch(WORLD_FILE, { cache: 'no-cache' });
       const b = r.ok ? await r.json() : null;
@@ -687,7 +763,12 @@ async function buildWorld(force) {
         if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
         return;
       }
-    } catch (e) { /* なければブラウザで作る */ }
+    } catch (e) { /* 取れなければ（オフラインなど）端末に保存した地図か、ブラウザで作る */ }
+  }
+  // 2) 端末に保存した地図（用意した地図が取れないときと、ブラウザで作った地図）
+  const saved = !force && store.get(WORLD_KEY);
+  if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
+    world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
   }
   try {
     const N = WW * WH, base = new Uint8Array(N).fill(UNSET);
@@ -780,19 +861,33 @@ const grassBase = (px, r) => {
   speckle(px, r, '#3f9b3c', ['#2f7f2e', '#56b552'], 10);
   for (let i = 0; i < 3; i++) { const a = (r() * 13) | 0, b = 3 + ((r() * 11) | 0); px('#2a6f29', a, b); px('#2a6f29', a + 2, b); px('#2a6f29', a + 1, b - 1); }
 };
-const TILE_ART = {
-  [C.G]: grassBase,
-  [C.F]: (px, r) => {            // 田んぼ（苗の列と水の光）
-    px('#7fb84a', 0, 0, 16, 16);
-    for (let y = 1; y < 16; y += 3) for (let x = (y % 2) + 1; x < 16; x += 3) px('#5a9530', x, y, 1, 2);
-    for (let i = 0; i < 4; i++) px('#a8d8ff', (r() * 15) | 0, (r() * 15) | 0, 2, 1);
-    px('#6b5a3a', 0, 15, 16, 1); px('#6b5a3a', 15, 0, 1, 16);   // あぜ道
-  },
-  [C.U]: (px, r) => {            // 農地（作物不明）：緑の作物の列
+// 田畑のマス：こよみの田んぼのようす（PADDY_TILE）で描き分ける
+function paddyArt(px, r) {
+  if (PADDY_TILE === 'gold') {            // 稲刈りのころ：黄金色の稲穂
+    px('#cfae4a', 0, 0, 16, 16);
+    for (let y = 1; y < 16; y += 4) { px('#b08a2a', 0, y, 16, 2); for (let x = (r() * 3) | 0; x < 16; x += 3) px('#f2d36b', x, y - 1); }
+  } else if (PADDY_TILE === 'flooded') {  // 田植えのころ：水をはった田に小さな苗
+    px('#8fbfd8', 0, 0, 16, 16);
+    for (let i = 0; i < 3; i++) px('#cfe9f7', (r() * 13) | 0, (r() * 15) | 0, 3, 1);
+    for (let y = 2; y < 16; y += 4) for (let x = 1 + ((y / 4) % 2); x < 16; x += 4) px('#4f9a35', x, y, 1, 2);
+  } else if (PADDY_TILE === 'soil') {     // 田おこしのころ：たがやした土
+    px('#8a6a44', 0, 0, 16, 16);
+    for (let y = 2; y < 16; y += 4) px('#6e5233', 0, y, 16, 1);
+    for (let i = 0; i < 6; i++) px('#a3815a', (r() * 15) | 0, (r() * 15) | 0, 2, 1);
+  } else if (PADDY_TILE === 'stubble') {  // 刈田：稲の株とわら
+    px('#a89a6a', 0, 0, 16, 16);
+    for (let y = 2; y < 16; y += 4) for (let x = 1 + ((y / 4) % 2) * 2; x < 16; x += 4) { px('#7d6f48', x, y, 1, 2); px('#cdbf8e', x + 1, y); }
+    for (let i = 0; i < 2; i++) px('#dccc96', (r() * 12) | 0, (r() * 15) | 0, 4, 1);
+  } else {                                // 青田：緑の稲の列
     px('#86b54c', 0, 0, 16, 16);
     for (let y = 1; y < 16; y += 4) { px('#6a9a36', 0, y, 16, 2); for (let x = (r() * 3) | 0; x < 16; x += 4) px('#a3cc66', x, y - 1); }
-    px('#7a6a46', 0, 15, 16, 1);
-  },
+  }
+  px('#7a6a46', 0, 15, 16, 1);
+}
+const TILE_ART = {
+  [C.G]: grassBase,
+  [C.F]: (px, r) => { paddyArt(px, r); px('#6b5a3a', 15, 0, 1, 16); },   // 田んぼ（あぜ道つき）
+  [C.U]: (px, r) => paddyArt(px, r),   // 農地（作物不明）：西尾では多くが田んぼなので、こよみの田んぼのようすで描く
   [C.V]: (px, r) => {            // 畑
     px('#9a6b3f', 0, 0, 16, 16);
     for (let y = 2; y < 16; y += 4) { px('#7a512c', 0, y + 1, 16, 1); for (let x = (r() * 3) | 0; x < 16; x += 3) px('#6ab04c', x, y, 1, 1); }
@@ -832,15 +927,21 @@ const TILE_ART = {
   [C.W]: (px, r) => {            // 森
     grassBase(px, r);
     const ox = ((r() * 3) | 0) - 1;
+    // 紅葉のころ（11月〜12月上旬）は、木の葉の色が赤・だいだい・黄色まじりになる
+    const [leaf, hi] = KOYO ? [['#c8641e', '#e08a3a'], ['#b03a24', '#d0563c'], ['#c99a1e', '#e6c040'], ['#1d5e26', '#2e8a38']][(r() * 4) | 0] : ['#1d5e26', '#2e8a38'];
     px('#5b3a1e', 7 + ox, 11, 2, 4);
-    px('#1d5e26', 3 + ox, 3, 10, 8); px('#1d5e26', 4 + ox, 2, 8, 10); px('#1d5e26', 2 + ox, 5, 12, 4);
-    px('#2e8a38', 5 + ox, 3, 4, 3); px('#2e8a38', 4 + ox, 5, 2, 2);
+    px(leaf, 3 + ox, 3, 10, 8); px(leaf, 4 + ox, 2, 8, 10); px(leaf, 2 + ox, 5, 12, 4);
+    px(hi, 5 + ox, 3, 4, 3); px(hi, 4 + ox, 5, 2, 2);
     px('#123f19', 4 + ox, 10, 8, 1);
   },
   [C.P]: (px, r) => {            // 公園・芝生
     speckle(px, r, '#4fb24b', ['#45a242', '#66c461'], 12);
     const cols = ['#ff8fb1', '#fff176', '#ffffff'];
     for (let i = 0; i < 3; i++) { const a = 1 + ((r() * 13) | 0), b = 1 + ((r() * 13) | 0); px(cols[i % 3], a, b); px('#2f8f2c', a, b + 1); }
+    if (SAKURA && r() < 0.6) {   // 桜のころは、公園に桜の木
+      const a = 3 + ((r() * 6) | 0), b = 2 + ((r() * 4) | 0);
+      px('#6b4a2e', a + 3, b + 6, 2, 4); px('#f7b6cc', a, b, 8, 6); px('#f7b6cc', a + 1, b - 1, 6, 8); px('#fde0ea', a + 2, b + 1, 3, 2); px('#e48aa8', a + 1, b + 6, 6, 1);
+    }
   },
   [C.A]: (px, r, f) => {         // 水（2コマで波が動く）
     px('#2a62c9', 0, 0, 16, 16);
@@ -875,8 +976,25 @@ const TILE_ART = {
 };
 const SHADE = ['rgba(0,0,0,.32)', 'rgba(0,0,0,.16)', '', 'rgba(255,250,220,.12)', 'rgba(255,250,220,.24)'];
 const tiles = {};   // code → [variant][frame]
-for (const [code, draw] of Object.entries(TILE_ART)) {
-  tiles[code] = (+code === C.Q ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 1, 2]).map(v => [makeTile(draw, code * 97 + v * 31 + 7, 0), makeTile(draw, code * 97 + v * 31 + 7, 1)]);
+function buildTiles(codes) {
+  for (const [code, draw] of Object.entries(TILE_ART)) {
+    if (codes && !codes.includes(+code)) continue;
+    tiles[code] = (+code === C.Q ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 1, 2]).map(v => [makeTile(draw, code * 97 + v * 31 + 7, 0), makeTile(draw, code * 97 + v * 31 + 7, 1)]);
+  }
+}
+buildTiles();
+// 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
+let seasonCheckT = 0;
+function refreshSeason(now) {
+  if (now - seasonCheckT < 60000) return;
+  seasonCheckT = now;
+  const k = seasonNow();
+  if (k === seasonKey) return;
+  seasonKey = k;
+  WCOL[C.U] = WCOL[C.F] = PADDY_COL;
+  buildTiles([C.U, C.F, C.W, C.P]);
+  makeWorldImg();
+  dirty = true;
 }
 
 // 文字で描くスプライト（16×16）
@@ -1048,6 +1166,30 @@ function updateCover() {
 }
 if (window.ResizeObserver && $('sheet')) new ResizeObserver(updateCover).observe($('sheet'));
 window.addEventListener('resize', updateCover);
+// 天気（weather.js：気象庁のアメダス・予報）：雨と雪は画面に降らせ、くもりは少し暗く
+function drawWeather(now, w, h, dpr) {
+  const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current;
+  if (!wx) return;
+  if (wx.kind === 'cloudy') { ctx.fillStyle = 'rgba(40,50,70,.12)'; ctx.fillRect(0, 0, w, h); return; }
+  if (wx.kind !== 'rain' && wx.kind !== 'snow') return;
+  ctx.fillStyle = 'rgba(30,40,60,.18)'; ctx.fillRect(0, 0, w, h);
+  const n = wx.kind === 'rain' ? 70 : 45, t = now / 1000;
+  ctx.save();
+  if (wx.kind === 'rain') { ctx.strokeStyle = 'rgba(200,225,255,.55)'; ctx.lineWidth = Math.max(1, dpr); ctx.beginPath(); }
+  else ctx.fillStyle = 'rgba(255,255,255,.85)';
+  for (let i = 0; i < n; i++) {
+    const r1 = ((i * 2654435761) >>> 0) / 4294967296, r2 = ((i * 40503 + 7) % 997) / 997;
+    if (wx.kind === 'rain') {
+      const x = (r1 * w + t * 60 * dpr) % w, y = (r2 * h + t * 520 * dpr) % h;
+      ctx.moveTo(x, y); ctx.lineTo(x - 3 * dpr, y + 10 * dpr);
+    } else {
+      const y = (r2 * h + t * 40 * dpr) % h, x = (r1 * w + Math.sin(t + i) * 8 * dpr) % w, sz = (1.5 + (i % 3)) * dpr;
+      ctx.fillRect(x, y, sz, sz);
+    }
+  }
+  if (wx.kind === 'rain') ctx.stroke();
+  ctx.restore();
+}
 function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
@@ -1072,6 +1214,7 @@ function frame(now) {
   if (!w || !h) return;
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
+  refreshSeason(now);
   if (worldMode) { drawWorld(now, w, h, dpr); return; }
   const T = Math.round(16 * scale * dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
@@ -1196,6 +1339,8 @@ function frame(now) {
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
+  drawWeather(now, w, h, dpr);
+
   // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i], age = (now - fl.at) / 1000;
@@ -1302,13 +1447,14 @@ function areaHtml(a) {
 let worldMode = false, wcam = null, wscale = 2, wcamOnMe = false;   // wcamOnMe：まだ現在地が分からないうちに開いた（分かったら主人公へ寄せる）
 const WSIZES = [2, 3, 4, 6, 10, 16, 24];   // 1マスの大きさ（CSSピクセル）。6以下は色のブロック、10以上はドット絵タイル
 // 地図データに地名がないときの予備と、海の名前
-const AREA_LABELS = [['西尾', 34.872, 137.058, 4], ['一色', 34.802, 137.028, 3], ['吉良', 34.818, 137.078, 3], ['幡豆', 34.800, 137.138, 3], ['佐久島', 34.733, 137.040, 3]];
+const AREA_LABELS = [['西尾', 34.872, 137.058, 4], ['一色', 34.802, 137.028, 3], ['吉良', 34.818, 137.078, 3], ['幡豆', 34.800, 137.138, 3], ['佐久島', 34.733, 137.040, 3],
+  ['岡崎', 34.955, 137.165, 4], ['安城', 34.959, 137.081, 4], ['碧南', 34.885, 136.993, 4], ['幸田', 34.865, 137.166, 3], ['蒲郡', 34.826, 137.219, 4], ['高浜', 34.928, 136.989, 3]];
 const SEA_LABELS = [['三河湾', 34.752, 137.105, 4]];
 const wT = dpr => Math.round(WSIZES[wscale] * dpr);
 function worldCamStart() {
-  const me = G.me, nb2 = G.CFG.nishioBounds;
+  const me = G.me;
   wcamOnMe = !me;
-  if (me && me.lat > nb2[0][0] && me.lat < nb2[1][0] && me.lng > nb2[0][1] && me.lng < nb2[1][1]) return llToW(me.lat, me.lng);
+  if (me && G.inPlay(me.lat, me.lng)) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
 function drawWorld(now, w, h, dpr) {
@@ -1328,6 +1474,15 @@ function drawWorld(now, w, h, dpr) {
     const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
     ctx.drawImage(tiles[code][v % tiles[code].length][code === C.A || code === C.X ? f : 0], ox + x * T, oy + y * T, T, T);
   }
+  // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
+  ctx.save();
+  for (const c of G.REGION) for (const r of c.rings) {
+    ctx.beginPath();
+    r.forEach(([la, lo], i) => { const q = llToW(la, lo); ctx[i ? 'lineTo' : 'moveTo'](ox + q.x * T, oy + q.y * T); });
+    ctx.setLineDash([]); ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 3.5 * dpr; ctx.stroke();
+    ctx.setLineDash([5 * dpr, 4 * dpr]); ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.6 * dpr; ctx.stroke();
+  }
+  ctx.restore();
   // 大きな建物（引いたときは出さない）
   const bs = Math.max(T * 1.4, 12 * dpr);
   for (const p of css >= 6 ? worldPois : []) {
@@ -1439,8 +1594,9 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
     const fs = Math.round(12 * dpr);
     ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'left';
     const tw = ctx.measureText(corner).width;
-    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, 8 * dpr, tw + 16 * dpr, fs + 12 * dpr);
-    ctx.fillStyle = '#fff'; ctx.fillText(corner, 16 * dpr, 8 * dpr + (fs + 12 * dpr) / 2);
+    const y0 = 44 * dpr;   // 上には こよみ の札がある
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, y0, tw + 16 * dpr, fs + 12 * dpr);
+    ctx.fillStyle = '#fff'; ctx.fillText(corner, 16 * dpr, y0 + (fs + 12 * dpr) / 2);
   }
 }
 function setWorld(on) {
@@ -1483,7 +1639,7 @@ function setActive(on) {
   else G.invalidateMap();
 }
 function updatePad() {
-  // 操作して移動なら、せかいちずでも十字ボタンを出す（押すと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
+  // 操作して移動なら、せかいちずでもスティックを出す（動かすと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
   $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
 }
@@ -1499,30 +1655,31 @@ $('pxZoomOut').addEventListener('click', () => {
 });
 function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
 
-// デモ：十字ボタンで1マスずつ歩く（水と建物には入れない）
+// デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-function step(dir) {
-  if (!G.demo) return;
+function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
+  if (!G.demo) return false;
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
   if (driving) {   // 車は道（ふつうの道と大きな道）だけ。人がいたら止まる
-    if (!CAR_OK.has(codeAt(nx, ny)) || npcAt(nx, ny)) { if (navigator.vibrate) navigator.vibrate(20); return; }
+    if (!CAR_OK.has(codeAt(nx, ny)) || npcAt(nx, ny)) return false;
     const ll = toLatLng(nx + 0.5, ny + 0.5);
-    G.moveTo(ll.lat, ll.lng, 'step');   // 十字ボタンの1歩
-    return;
+    G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
+    return true;
   }
   // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
   // いちばん近い歩けるマスへ近づく向きにだけ動ける（出口へ向かうとき以外は、ふだんどおり通れない）
   const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
   const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
-  if (BLOCK.has(codeAt(nx, ny)) && !escape) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  if (BLOCK.has(codeAt(nx, ny)) && !escape) return false;
   const who = npcAt(nx, ny);
-  if (who) { if ($('pxInfo').hidden) openNpc(who); return; }   // 人にぶつかったら話しかける（ドラクエ風）
+  if (who) { if ($('pxInfo').hidden) openNpc(who); return true; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
-  G.moveTo(ll.lat, ll.lng, 'step');   // 十字ボタンの1歩
+  G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
+  return true;
 }
-// 車：十字ボタンのまん中で乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
+// 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
 // 乗っている間は、歩いた距離・チェックイン・たからばこ・話しかけはお休み（降りるとできる）
 const CAR_OK = new Set([C.R, C.H]);
 let driving = false;
@@ -1676,18 +1833,66 @@ function updateChests() {
 }
 setInterval(updateChests, 2000);
 
-// 十字ボタン・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く
+// スティック・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く。通れなければ ぶるっ
 function padStep(dir) {
   if (worldMode) setWorld(false);
-  step(dir);
+  const ok = step(dir);
+  if (!ok && navigator.vibrate) navigator.vibrate(20);
+  return ok;
 }
-let holdTimer = null;
-document.querySelectorAll('#pxPad [data-dir]').forEach(b => {
-  const start = e => { e.preventDefault(); padStep(b.dataset.dir); clearInterval(holdTimer); holdTimer = setInterval(() => padStep(b.dataset.dir), driving ? 90 : 180); };
-  const stop = () => { clearInterval(holdTimer); holdTimer = null; };
-  b.addEventListener('pointerdown', start);
-  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, stop));
+// スティック：さわったまま動かすと、倒した向きへ歩きつづける。
+//   ・まん中の少しは遊び（動かない）。大きく倒すと速く歩く（車はもっと速い）
+//   ・ななめに倒すと、2つの向きを交互に1マスずつ（片方が通れなければ、もう片方へ）
+const stick = { id: null, x: 0, y: 0, dirs: [], turn: 0, timer: null, key: '' };
+const STICK_DEAD = 0.28, STICK_FAST = 0.75, STICK_DIAG = Math.tan(Math.PI / 8);
+function stickDirs(x, y) {   // x, y は -1〜1（半径で割った値）
+  const ax = Math.abs(x), ay = Math.abs(y);
+  if (Math.hypot(x, y) < STICK_DEAD) return [];
+  const h = x < 0 ? 'left' : 'right', v = y < 0 ? 'up' : 'down';
+  if (Math.min(ax, ay) > Math.max(ax, ay) * STICK_DIAG) return ay >= ax ? [v, h] : [h, v];
+  return [ax > ay ? h : v];
+}
+function stickTick() {
+  stick.timer = null;
+  if (!stick.dirs.length) return;
+  const n = stick.dirs.length, first = stick.dirs[stick.turn % n];
+  if (!padStep(first) && n > 1) padStep(stick.dirs[(stick.turn + 1) % n]);
+  stick.turn++;
+  const fast = Math.hypot(stick.x, stick.y) >= STICK_FAST;
+  stick.timer = setTimeout(stickTick, driving ? (fast ? 70 : 120) : (fast ? 130 : 230));
+}
+function stickMove(e) {
+  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 8;
+  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+  const d = Math.hypot(dx, dy);
+  if (d > R) { dx *= R / d; dy *= R / d; }
+  stick.x = dx / R; stick.y = dy / R;
+  $('pxKnob').style.transform = `translate(${dx}px,${dy}px)`;
+  const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
+  for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
+  if (key === stick.key) return;
+  stick.key = key; stick.dirs = dirs; stick.turn = 0;
+  clearTimeout(stick.timer); stick.timer = null;
+  if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
+}
+function stickEnd(e) {
+  if (e && stick.id !== e.pointerId) return;
+  stick.id = null; stick.dirs = []; stick.key = ''; stick.x = stick.y = 0;
+  clearTimeout(stick.timer); stick.timer = null;
+  $('pxStick').classList.remove('on');
+  $('pxKnob').style.transform = '';
+  $('pxStick').querySelectorAll('i').forEach(i => i.classList.remove('lit'));
+}
+$('pxStick').addEventListener('pointerdown', e => {
+  e.preventDefault();
+  stick.id = e.pointerId;
+  try { $('pxStick').setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
+  $('pxStick').classList.add('on');
+  stickMove(e);
 });
+$('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId) stickMove(e); });
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => $('pxStick').addEventListener(ev, stickEnd));
+window.addEventListener('blur', () => stickEnd());
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
   if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); padStep(k); }
@@ -1749,5 +1954,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

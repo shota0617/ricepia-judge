@@ -145,17 +145,17 @@ async function walkTo(page, id) {
   await page.click('[data-tab=log]'); await page.waitForTimeout(400); await shot(page, '06-log');
   R.checks.quests = await page.evaluate(() => [...document.querySelectorAll('#questList li')].map(li => li.innerText.replace(/\s+/g, ' ')));
   R.checks.facts = await page.evaluate(() => document.getElementById('factCount').textContent);
-  await page.click('[data-tab=badges]'); await page.waitForTimeout(400); await shot(page, '07-badges');
+  await page.evaluate(() => document.getElementById('badgeHead').scrollIntoView()); await page.waitForTimeout(300); await shot(page, '07-badges');   // バッジは きろく の下
   await page.click('[data-tab=map]'); await page.waitForTimeout(300);
   R.checks.operateFinal = await state(page);
 
   // 2) 同じ画面のまま、あるいて移動に切り替える（位置情報で現在地が出るか、記録が操作モードと別か、戻すと操作モードの記録が残っているか）
-  await page.click('.mode-sw [data-mode=real]'); await page.waitForTimeout(3500);
+  await page.click('[data-tab=settings]'); await page.click('.mode-sw [data-mode=real]'); await page.click('[data-tab=map]'); await page.waitForTimeout(3500);   // 移動のしかたは せってい で切り替える
   R.checks.walkMode = await page.evaluate(([la, lo]) => !nishioGo.demo && !!nishioGo.me && Math.abs(nishioGo.me.lat - la) < 1e-4 && Math.abs(nishioGo.me.lng - lo) < 1e-4 && document.getElementById('pxPad').hidden, STATION);
   R.checks.walkModePoints = await page.evaluate(() => nishioGo.state.points);
   R.checks.walkChests = await page.evaluate(() => nishioGo.liveChests().map(c => c.at || ''));   // あるいて移動ではスポットの上にだけ
   await shot(page, '08-walk-mode');
-  await page.click('.mode-sw [data-mode=demo]'); await page.waitForTimeout(1000);
+  await page.click('[data-tab=settings]'); await page.click('.mode-sw [data-mode=demo]'); await page.click('[data-tab=map]'); await page.waitForTimeout(1000);
   R.checks.operatePointsKept = await page.evaluate(() => nishioGo.state.points);
   R.errors.push(...errors);
   await ctx.close();

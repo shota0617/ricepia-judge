@@ -127,6 +127,7 @@ function updateHere() {
   if (town && here.town && town !== here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
   here.town = town;   // 近くに町名がない（田畑や山の中）ときは消す
   here.city = city;
+  if (G.setPlace) G.setPlace(city, town);   // 左上の こよみ の札に「📍町名」として出す
 }
 // 看板の色（お店の種類ごと。よく知られた店は、その店らしい色に）。白い字で名前を書く
 const SIGN_KIND = { konbini: '#2a7d4f', super: '#c0392b', home: '#8a5a2b', drug: '#2a6fb0', fuel: '#5a5a5a', bank: '#1d4f91', post: '#d7000f', food: '#a0522d', cafe: '#7b4b2a', store: '#555',
@@ -1459,14 +1460,7 @@ function frame(now) {
 
   drawWeather(now, w, h, dpr);
 
-  // 左上：いまいる市町と町名（こよみ の札の下）。町が変わったら、まん中に町名を大きく出す
-  if (here.town || here.city) {
-    const t = `📍 ${here.city ? here.city + ' ' : ''}${here.town}`, hs = Math.round(12 * dpr);
-    ctx.font = `${hs}px "DotGothic16", monospace`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    const tw = ctx.measureText(t).width, y0 = 44 * dpr;
-    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, y0, tw + 16 * dpr, hs + 12 * dpr);
-    ctx.fillStyle = '#fff'; ctx.fillText(t, 16 * dpr, y0 + (hs + 12 * dpr) / 2);
-  }
+  // 町が変わったら、まん中に町名を大きく出す（いまいる町名は、左上の こよみ の札に出す）
   if (here.banner) {
     const age = (now - here.bannerAt) / 1000;
     if (age > 2.8) here.banner = '';
@@ -1474,7 +1468,7 @@ function frame(now) {
       ctx.globalAlpha = Math.min(1, age * 3, (2.8 - age) * 2);
       const bs = Math.round(18 * dpr), t = `〜 ${here.banner} 〜`;
       ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const tw = ctx.measureText(t).width, by = Math.round(Math.max(cy - T * 3, 80 * dpr + bs));   // 左上の「📍 市町 町名」の札より下に
+      const tw = ctx.measureText(t).width, by = Math.round(Math.max(cy - T * 3, 48 * dpr + bs));   // 左上の こよみ の札より下に
       ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(w / 2 - tw / 2 - 14 * dpr), by - bs, Math.round(tw + 28 * dpr), bs * 2);
       ctx.fillStyle = '#fff'; ctx.fillText(t, w / 2, by);
       ctx.globalAlpha = 1;
@@ -2044,7 +2038,7 @@ document.addEventListener('keydown', e => {
 
 /* ---------- おまかせ歩き（操作して移動） ----------
    みちしるべの行き先まで、道を探して自動で歩く（ほぼ放っておいてもゲームが進む）。
-   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のたのまれごとが決まる）
+   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のイベントが決まる）
    ・名所が行き先なら、着いたところでチェックインする（とちゅうの まだ行っていない所も）
    ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
    ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */

@@ -71,7 +71,7 @@ async function endCard(page) {
   await shot('02-walk');
   // 3) 人の話で、次の行き先が決まる
   await G(() => { const n = nishioGo.npcs.find(x => x.id === 'castle-guide'); nishioGo.moveTo(n.lat, n.lng); const r = nishioGo.talkNpc(n.id, 0); document.getElementById('pxInfoBody').innerHTML = r.html; document.getElementById('pxInfo').hidden = false; });
-  await caption(page, '📜 まちの人の「たのまれごと」', '話を聞くと、次に行く所が決まる'); await sleep(3500);
+  await caption(page, '📜 まちの人の話で「イベント」発生', '話を聞くと、次に行く所が決まる'); await sleep(3500);
   await G(() => { let h = ''; for (let i = 1; i < 8; i++) { const r = nishioGo.talkNpc('castle-guide', i); if (r.html === h) break; h = r.html; } document.getElementById('pxInfoBody').innerHTML = h; });
   await sleep(3000);
   await shot('03-talk');

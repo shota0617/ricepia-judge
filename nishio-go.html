@@ -28,7 +28,7 @@
 <body>
 
 <header class="bar">
-  <div class="brand">🚶 にしおさんぽGO<span class="beta-tag" title="試作版です。内容は予告なく変わります">試作版</span></div>
+  <div class="brand">🚶 にしおさんぽGO</div>
   <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
     <span class="lv-num">Lv<b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
@@ -62,13 +62,6 @@
 </div>
 
 <section class="sheet" id="sheet">
-  <div class="sheet-top">
-    <div class="mode-sw" role="group" aria-label="移動のしかた">
-      <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
-      <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
-    </div>
-    <button type="button" class="snd-btn" id="sndBtn" aria-label="音楽（BGM）をオンにする" title="音楽（BGM）">🔇</button>
-  </div>
   <div class="guide" id="guide" hidden></div>
   <div class="status" id="status">位置情報を待っています…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
@@ -80,7 +73,6 @@
 <nav class="tabs" aria-label="メニュー">
   <button type="button" class="on" data-tab="map">🗺️<span>マップ</span></button>
   <button type="button" data-tab="log">📒<span>きろく</span></button>
-  <button type="button" data-tab="badges">🏅<span>バッジ</span></button>
   <button type="button" data-tab="rewards" id="rewardsTab" hidden>🎁<span>とくてん</span></button>
   <button type="button" data-tab="settings">⚙️<span>せってい</span></button>
 </nav>
@@ -108,15 +100,13 @@
   <ul class="list" id="visitedList"></ul>
   <h3>最近のポイント</h3>
   <ul class="list" id="logList"></ul>
-</section>
-
-<!-- バッジ -->
-<section class="panel" id="panel-badges" hidden>
-  <h2>バッジ</h2>
+  <h3 id="badgeHead">🏅 バッジ</h3>
   <div class="badges" id="badgeGrid"></div>
   <h3>レベルと称号</h3>
   <ul class="list" id="titleList"></ul>
 </section>
+
+
 
 <!-- 特典 -->
 <section class="panel" id="panel-rewards" hidden>
@@ -132,12 +122,16 @@
 <section class="panel" id="panel-settings" hidden>
   <h2>せってい</h2>
   <div class="card">
+    <div class="mode-sw" role="group" aria-label="移動のしかた">
+      <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
+      <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
+    </div>
     <label class="row">
-      <span><b>🎮 操作して移動</b><small>スティック（矢印キー）や地図のタップで移動します。オフにすると、実際に歩いて移動します（位置情報を使います）。ポイントと記録は別々に保存され、お店のとくてんは「あるいて移動」でだけ使えます。</small></span>
-      <input type="checkbox" id="demoToggle"/>
+      <span><b>👾 ドット絵の地図</b><small>オフにすると、ふつうの地図（地理院タイル）で遊べます。</small></span>
+      <input type="checkbox" id="pxToggle"/>
     </label>
     <label class="row">
-      <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。地図の下の 🔊 ボタンでも切り替えられます。</small></span>
+      <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。</small></span>
       <input type="checkbox" id="bgmToggle"/>
     </label>
     <label class="row">
@@ -186,7 +180,7 @@
     <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
     <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>まちの人の話や、季節・天気・まわりのようすが、次に行く所をすすめてくれます。すすめられた所へ行くと、そこでまた次の話が待っています（ほかの行き先に変えることもできます）。</p>
     <ol class="core">
-      <li><b>聞く</b>：まちの人に話しかけると「📜 たのまれごと」。たのまれた所へ行ってみよう</li>
+      <li><b>聞く</b>：まちの人に話しかけると「📜 イベント」。たのまれた所へ行ってみよう</li>
       <li><b>知る</b>：着いた所・たからばこ・歩いた道すがらで「📖 まちメモ」が集まる</li>
       <li><b>おまかせ</b>：操作して遊ぶときは、🧭おまかせ歩きで放っておいても、主人公が歩いて、話して、まちを知っていく。閉じている間も るすばん でさんぽ</li>
     </ol>

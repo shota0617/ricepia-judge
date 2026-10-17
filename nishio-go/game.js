@@ -465,7 +465,7 @@ function talkNpc(id, page = 0) {
     return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
   }
-  const say = [];   // 知らせ（はじめて話した・たのまれごと達成・たのまれごと）はまとめて1つに
+  const say = [];   // 知らせ（はじめて話した・イベント達成・イベント）はまとめて1つに
   if (page === 0 && !npcMet(n.id)) {
     S.met = [...(S.met || []), n.id];
     S.log.unshift({ type: 'npc', t: Date.now(), pts: 10, name: `${n.name}と話した`, icon: NPC_LOOK[n.look] || '💬' });
@@ -481,11 +481,11 @@ function talkNpc(id, page = 0) {
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) {   // すすめられた人に会えた
       const pts = guideReward(S.guide);
-      say.push(`🎉 ${S.guide.byId ? 'たのまれごと達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
+      say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
     }
-    // 人の話で行き先が決まったら、たのまれごと（みちしるべが案内し、おまかせ歩きならそこへ向かう）
+    // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
     const g = decideGuide(n);
-    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 たのまれごと：${g.name}へ行ってみて`); }
+    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 イベント発生：${g.name}へ行ってみて`); }
     else if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
   }
   if (say.length) toast(say.join('　'));
@@ -764,7 +764,6 @@ function upcomingEvents() {
 }
 const evSpotId = e => e.spot ? 'f-' + e.spot : '';   // events.js の spot は spots.json の id（読み込んだスポットの id は頭に「f-」が付く）
 const spotEvents = s => upcomingEvents().filter(x => evSpotId(x.e) === s.id);
-const todayEvents = () => EVENTS.filter(e => evDate(e) === ymd());
 
 /* ---------- 今日のおさんぽクエスト ----------
    毎日3つのお題（日付で決まるので、だれでも同じ日は同じお題）。ぜんぶ達成でボーナス。ときどき「当店に寄る」も出る */
@@ -912,7 +911,7 @@ function tryChest() {
 /* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
    「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
    次に行く所は、話を聞いた人と、まわりの環境（季節・天気・今月の行事・まだ会っていない人・まだ行っていない名所）が決める。
-   ・西尾の人と話すと、その人が次の行き先をすすめてくれる（話の最後のページ）。その人の頼みが「たのまれごと」
+   ・西尾の人と話すと、その人が次の行き先をすすめてくれる（話の最後のページ）。その人の頼みが「イベント」
    ・行き先に着く（人なら話しかける）と、そこの環境やその人の話で、また次が決まる
    ・ほかの人の話を聞けば、行き先はその人のすすめに変わる
    ・少しだけ自分でも選べる：みちしるべの札をひらくと、ほかの候補（2つまで）に変えられる。選ばなければ、すすめのとおりに進む
@@ -1063,7 +1062,7 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  toast(`${g.byId ? '🎉 たのまれごと達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
+  toast(`${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
 }
 // タップで話の全文と、ほかの行き先（2つまで）。ほかの行き先を押すと、そこへ変える
 $('guide').addEventListener('click', e => {
@@ -1102,10 +1101,20 @@ function bearing(a, b) {
 
 /* ---------- 近くのスポット ---------- */
 // こよみの札（地図の左上）。タップで、節気・田んぼ・見ごろのくわしい話
+// いまいる市町と町名（ドット絵の地図が決めて知らせる：pixel.js の updateHere）。こよみの札に出す
+let place = { city: '', town: '' };
+function setPlace(city, town) {
+  if (place.city === city && place.town === town) return;
+  place = { city, town };
+  renderKoyomi();
+}
+// こよみの札：ふだんは「10/18（日）🍁☀️ 📍錦城町」の1行だけ。タップで、節気・田んぼ・見ごろ・天気・いまいる市町のくわしい話
 function renderKoyomi() {
   const el = $('koyomi');
   if (!el || !KO) return;
-  const now = new Date(), key = ymd() + ':' + now.getHours();
+  const now = new Date(), px = document.body.classList.contains('px');
+  const pc = px ? place : { city: ((me && placeAt(me.lat, me.lng)) || {}).name || '', town: '' };
+  const key = ymd() + ':' + now.getHours() + ':' + pc.city + ':' + pc.town;
   if (WX) {   // 天気は10分ごとに取り直す（weather.js）。予報の地域（東部・西部）をまたいだら、1分を待たずにすぐ
     const at = me || { lat: CFG.center[0], lng: CFG.center[1] }, east = WX.isEast(at.lat, at.lng);
     if (Date.now() - (renderKoyomi.wt || 0) > 60000 || east !== renderKoyomi.we) { renderKoyomi.wt = Date.now(); renderKoyomi.we = east; WX.refresh(at.lat, at.lng); }
@@ -1115,7 +1124,9 @@ function renderKoyomi() {
   const sk = KO.sekki(now), p = KO.paddy(now), hs = KO.seasonSpots(now), wx = weatherNow();
   const wxShort = wx ? `　${wx.icon}${wx.name}${wx.temp !== null ? ` ${Math.round(wx.temp)}℃` : ''}` : '';
   const wxLong = wx ? `<br>${wx.icon} いま${wx.raining ? '雨がふっています' : '雨はふっていません'}${wx.rainAt ? `（${esc(wx.rainAt)}）` : ''}${wx.temp !== null ? `・気温 ${wx.temp}℃（${esc(wx.tempAt)}）` : ''}・${esc(wx.at)}の観測<br>きょうの予報（${esc(wx.forecastArea)}）：${esc(wx.forecast)}<br><small>天気の出典：気象庁（アメダス・天気予報）</small>` : '';
-  el.innerHTML = `<b>${esc(KO.line(now))}${wxShort}</b><span class="more">${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}`
+  const se = KO.season(now), where = pc.town || pc.city;
+  el.innerHTML = `<b>${now.getMonth() + 1}/${now.getDate()}（${WEEKDAY(now)}）${se.icon}${wx ? wx.icon : ''}${where ? `　📍${esc(where)}` : ''}</b>`
+    + `<span class="more">${esc(KO.line(now))}${wxShort}${pc.city ? `<br>📍 ${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}` : ''}<br>${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}`
     + (hs.length ? `<br>見ごろ：${hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i).join('・')}` : '')
     + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + wxLong + '</span>';
   el.hidden = false;
@@ -1164,29 +1175,23 @@ function refreshNearby() {
   }
 
   renderGuide();
+  // 画面をすっきりさせるため、案内パネルは1〜2行だけ：気をつけること（車・範囲外・GPS など）があればそれを、なければ まちメモ とクエストの数
   const msgs = [];
-  // 1行に収める（案内パネルが高くなると地図が隠れるので）
-  const facts = factPool();
-  msgs.push(`📖 まちメモ <b>${S.facts.filter(k => facts.has(k)).length}</b>／${facts.size}・💬 話した人 <b>${(S.met || []).length}</b>人`);
-  if (driving) msgs.push('🚗 軽トラで移動中（道だけ走れます。歩いたポイントは降りてから）');
+  if (driving) msgs.push('🚗 軽トラで移動中（チェックインは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
-  else if (!inPlay(me.lat, me.lng)) msgs.push('📍 いまは遊べる範囲（西尾市と となりの市町、本店から15km）の外にいるようです');
+  else if (!inPlay(me.lat, me.lng)) msgs.push('📍 遊べる範囲（西尾市と となりの市町、本店から15km）の外です');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
-  if (!selected) {
-    if (nearest) { if (!guideTarget()) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`); }   // 行き先があるときは、みちしるべが案内する
+  if (!selected && !guideTarget()) {
+    if (nearest) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`);
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
-    else if (spots.length) msgs.push('近くのスポットはすべてチェックイン済みです。時間をおいてまた来てね。');
-    else msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
+    else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  const te = todayEvents();
-  if (te.length) msgs.push(`📅 きょうは ${te.slice(0, 2).map(e => `「${esc(e.name)}」`).join('')}${te.length > 2 ? ` ほか${te.length - 2}件` : ''}（きろくで見られます）`);
-  const ch = nearestChest();
-  if (ch && ch.d <= 300) msgs.push(`🎁 たからばこが近くにある！（${ch.c.at ? `${esc(ch.c.at)}・` : ''}${fmtM(ch.d)}）`);
-  if (map.getZoom() < 14 && !document.body.classList.contains('px')) msgs.push('🔍 拡大すると、ふつうのスポットも表示されます');
-  const wd = S.walkDay.date === ymd() ? S.walkDay.pts : 0, qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length;
-  msgs.push(`📜 今日のクエスト ${qd}/3　👣 歩き ${wd}/${CFG.walkDailyCap}pt`);
-  setStatus(msgs.join('<br/>'), true);
+  if (!msgs.length) {
+    const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length;
+    msgs.push(`📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`);
+  }
+  setStatus(msgs.slice(0, 2).join('<br/>'), true);
 }
 
 // 目標スポットのまわりに、チェックインできる範囲を点線で表示
@@ -1574,15 +1579,15 @@ $('copyGps').addEventListener('click', async () => {
 function openTab(tab) {
   clearTimeout(showReward.t); $('reward').innerHTML = '';   // ほかのタブを開いたら、ポイントの知らせは消す
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  ['log', 'badges', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
+  ['log', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
   if (tab === 'rewards') renderRewards();
-  if (tab === 'log') renderLog();
-  if (tab === 'badges') renderBadges();
-  if (tab === 'settings') { renderSpotInfo(); renderGpsInfo(); $('demoToggle').checked = demo; }
+  if (tab === 'log') { renderLog(); renderBadges(); }   // バッジは きろく の下に
+  if (tab === 'settings') { renderSpotInfo(); renderGpsInfo(); $('pxToggle').checked = document.body.classList.contains('px'); }
   if (tab === 'map') setTimeout(() => map.invalidateSize(), 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
-$('lvBtn').addEventListener('click', () => openTab('badges'));
+$('lvBtn').addEventListener('click', () => { openTab('log'); $('badgeHead').scrollIntoView(); });
+$('pxToggle').addEventListener('change', e => { if (window.nishioPixel) nishioPixel.setActive(e.target.checked); });
 
 $('visitedList').addEventListener('click', e => {
   const li = e.target.closest('li[data-spot]');
@@ -1647,7 +1652,6 @@ function switchMode(isDemo) {
   toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スティックで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
-$('demoToggle').addEventListener('change', e => switchMode(e.target.checked));
 document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode === 'demo')));
 
 $('reloadSpots').addEventListener('click', async e => {
@@ -1690,8 +1694,6 @@ const sound = (() => {
     if (!live) ducking = 0;
     cur = k;
     if (k) { const a = el(k); a.volume = ducking ? VOL * 0.25 : VOL; if (a.paused) a.play().catch(() => {}); }
-    $('sndBtn').textContent = on ? '🔊' : '🔇';
-    $('sndBtn').setAttribute('aria-label', on ? '音楽（BGM）をオフにする' : '音楽（BGM）をオンにする');
     $('bgmToggle').checked = on;
   }
   const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
@@ -1712,7 +1714,6 @@ const sound = (() => {
     },
   };
 })();
-$('sndBtn').addEventListener('click', () => { sound.toggle(); toast(store.get('nsg_bgm', true) ? '🔊 音楽をオンにしました' : '🔇 音楽をオフにしました'); });
 $('bgmToggle').addEventListener('change', e => sound.toggle(e.target.checked));
 // アクセス解析（analytics.js）のオン・オフ。切り替えは次に開いたときから
 $('anaToggle').checked = !store.get('nsg_noanalytics', false);
@@ -1766,7 +1767,7 @@ window.nishioGo = {
   sound,
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
-  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, inPlay,
+  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）

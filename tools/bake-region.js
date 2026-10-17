@@ -12,23 +12,27 @@ const CITIES = [
 const TOL_M = 60;   // 間引くときに許すずれ（m）。歩く地図の区画（約1km）を決めるには十分こまかい
 const M_LAT = 110950, M_LNG = 111320 * Math.cos(34.86 * Math.PI / 180);
 
-// way をつなげて輪にする（端の座標が同じものどうしをつなぐ）
-function rings(ways) {
-  const key = p => p.lat.toFixed(7) + ',' + p.lon.toFixed(7);
-  const left = ways.map(w => w.slice()), out = [];
+// way をつなげて輪にする。端どうしが約10m以内ならつながっているとみなす（データの細かな食い違いを許す）
+function rings(ways, name) {
+  const near = (p, q) => Math.hypot((p.lon - q.lon) * M_LNG, (p.lat - q.lat) * M_LAT) < 10;
+  const left = ways.map(w => w.filter(Boolean)).filter(w => w.length > 1), out = [];
   while (left.length) {
     let ring = left.shift();
-    for (let grew = true; grew && key(ring[0]) !== key(ring[ring.length - 1]);) {
+    for (let grew = true; grew && !(ring.length > 3 && near(ring[0], ring[ring.length - 1]));) {
       grew = false;
       for (let i = 0; i < left.length; i++) {
-        const w = left[i], end = key(ring[ring.length - 1]);
-        if (key(w[0]) === end) ring = ring.concat(w.slice(1));
-        else if (key(w[w.length - 1]) === end) ring = ring.concat(w.slice(0, -1).reverse());
+        const w = left[i], end = ring[ring.length - 1], start = ring[0];
+        if (near(w[0], end)) ring = ring.concat(w.slice(1));
+        else if (near(w[w.length - 1], end)) ring = ring.concat(w.slice(0, -1).reverse());
+        else if (near(w[w.length - 1], start)) ring = w.slice(0, -1).concat(ring);
+        else if (near(w[0], start)) ring = w.slice(1).reverse().concat(ring);
         else continue;
         left.splice(i, 1); grew = true; break;
       }
     }
-    if (ring.length >= 4 && key(ring[0]) === key(ring[ring.length - 1])) out.push(ring);
+    const gap = Math.hypot((ring[0].lon - ring[ring.length - 1].lon) * M_LNG, (ring[0].lat - ring[ring.length - 1].lat) * M_LAT);
+    if (ring.length >= 4 && gap < 10) out.push(ring.concat([ring[0]]));
+    else console.log(`  ${name}: つながらない線（点 ${ring.length} 個、端の間 ${Math.round(gap)}m）`);
   }
   return out;
 }
@@ -66,7 +70,8 @@ out geom;`;
     const rel = (json.elements || []).find(e => e.type === 'relation' && e.tags && e.tags.name === name);
     if (!rel) throw new Error(`${name} の境界が見つかりません`);
     const ways = rel.members.filter(m => m.type === 'way' && m.role !== 'inner' && m.geometry && m.geometry.length > 1).map(m => m.geometry);
-    const rs = rings(ways).map(r => simplify(r, TOL_M)).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
+    console.log(`${name}: 境界の線 ${ways.length} 本（役割 ${[...new Set(rel.members.map(m => m.type + ':' + m.role))].join(' ')}）`);
+    const rs = rings(ways, name).map(r => simplify(r, TOL_M)).filter(r => r.length >= 4 && areaKm2(r) > 0.02);
     if (!rs.length) throw new Error(`${name} の境界を輪にできません`);
     const all = rs.flat();
     const bbox = [[Math.min(...all.map(p => p[0])), Math.min(...all.map(p => p[1]))], [Math.max(...all.map(p => p[0])), Math.max(...all.map(p => p[1]))]];

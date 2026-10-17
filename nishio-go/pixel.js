@@ -1874,6 +1874,7 @@ function stickMove(e) {
   const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
   for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
   if (key === stick.key) return;
+  if (dirs.length) autoPause();   // 自分で動かしたら、おまかせ歩きは少し休む
   stick.key = key; stick.dirs = dirs; stick.turn = 0;
   clearTimeout(stick.timer); stick.timer = null;
   if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
@@ -1898,8 +1899,111 @@ $('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId
 window.addEventListener('blur', () => stickEnd());
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); padStep(k); }
+  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); autoPause(); padStep(k); }
 });
+
+/* ---------- おまかせ歩き（操作して移動） ----------
+   みちしるべの行き先まで、道を探して自動で歩く（ほぼ放っておいてもゲームが進む）。
+   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のミッションが決まる）
+   ・名所が行き先なら、着いたところでチェックインする（とちゅうの まだ行っていない所も）
+   ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
+   ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */
+let auto = (() => { try { return localStorage.getItem('nsg_auto') !== 'false'; } catch (e) { return true; } })();
+const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0 };
+const AUTO_ROADS = new Set([C.R, C.H, C.D]);
+function setAuto(on, quiet) {
+  auto = !!on;
+  try { localStorage.setItem('nsg_auto', String(auto)); } catch (e) { /* noop */ }
+  const b = $('pxAuto');
+  b.classList.toggle('on', auto); b.setAttribute('aria-pressed', String(auto));
+  autoS.path = []; autoS.read = 0;
+  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックをさわると少し休みます）' : '🧭 おまかせ歩き：オフ');
+}
+function autoPause() { autoS.pauseUntil = Date.now() + 8000; autoS.path = []; }
+// (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで
+function planPath(sx, sy, gx, gy, goalR, avoid) {
+  const pad = 40, x0 = Math.min(sx, gx) - pad, y0 = Math.min(sy, gy) - pad, W = Math.abs(gx - sx) + pad * 2 + 1, H = Math.abs(gy - sy) + pad * 2 + 1;
+  if (W * H > 700000) return [];
+  const N = W * H, g = new Float32Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
+  const hx = [], hf = [];   // 二分ヒープ（f の小さい順）
+  const push = (i, f) => { hx.push(i); hf.push(f); let k = hx.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (hf[p] <= hf[k]) break; [hx[p], hx[k]] = [hx[k], hx[p]]; [hf[p], hf[k]] = [hf[k], hf[p]]; k = p; } };
+  const pop = () => { const top = hx[0], li = hx.pop(), lf = hf.pop(); if (hx.length) { hx[0] = li; hf[0] = lf; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < hx.length && hf[a] < hf[m]) m = a; if (b < hx.length && hf[b] < hf[m]) m = b; if (m === k) break; [hx[m], hx[k]] = [hx[k], hx[m]]; [hf[m], hf[k]] = [hf[k], hf[m]]; k = m; } } return top; };
+  const h = (x, y) => (Math.abs(x - gx) + Math.abs(y - gy)) * 0.9;
+  const start = (sy - y0) * W + (sx - x0);
+  g[start] = 0; push(start, h(sx, sy));
+  let best = start, bestH = h(sx, sy), found = -1, n = 0;
+  while (hx.length && n++ < 150000) {
+    const i = pop();
+    if (done[i]) continue;
+    done[i] = 1;
+    const x = i % W + x0, y = (i / W | 0) + y0;
+    if (Math.hypot(x - gx, y - gy) <= goalR) { found = i; break; }
+    if (h(x, y) < bestH) { bestH = h(x, y); best = i; }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, lx = nx - x0, ly = ny - y0;
+      if (lx < 0 || ly < 0 || lx >= W || ly >= H) continue;
+      const j = ly * W + lx;
+      if (done[j]) continue;
+      const c = codeAt(nx, ny), isGoal = goalR === 0 && nx === gx && ny === gy;
+      if (!isGoal && (c !== C.X && BLOCK.has(c) || avoid.has(nx + ',' + ny))) continue;
+      const cost = c === C.X ? 4 : AUTO_ROADS.has(c) ? 1 : 1.6;
+      if (g[i] + cost < g[j]) { g[j] = g[i] + cost; from[j] = i; push(j, g[j] + h(nx, ny)); }
+    }
+  }
+  const out = [];
+  for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
+  return out.reverse();
+}
+function autoRead() {   // 話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる
+  const body = $('pxInfoBody'), now = Date.now();
+  if (!autoS.read) { autoS.read = now + Math.min(6000, 1800 + body.textContent.length * 40); return; }
+  if (now < autoS.read) return;
+  autoS.read = 0;
+  const next = body.querySelector('.npc-next');
+  if (next) next.click(); else $('pxInfo').hidden = true;
+}
+function autoTick() {
+  setTimeout(autoTick, 230);
+  if (!auto || !active || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;
+  if (!$('pxInfo').hidden) { autoRead(); return; }
+  autoS.read = 0;
+  if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }
+  const g = G.guide;
+  // 着いた名所（行き先か、まだ行っていない所）でチェックイン
+  const sel = G.selected;
+  if (sel && G.inReach(sel) && G.cooldownLeft(sel) <= 0 && (!G.state.visits[sel.id] || (g && g.id === sel.id))) { G.checkin(); autoS.pauseUntil = Date.now() + 2500; return; }
+  if (!g) return;   // 行き先が決まるのを待つ（まわりのようすで決まる）
+  const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
+  let gx, gy, goalR;
+  if (g.kind === 'npc') {   // 人：その人のマスへ歩いていくと話しかける
+    const nn = (G.npcs || []).find(x => x.id === g.id);
+    if (!nn) return;
+    const q = npcTile(nn); gx = q.x; gy = q.y; goalR = 0;
+  } else {
+    const q = toTile(g.lat, g.lng); gx = Math.floor(q.x); gy = Math.floor(q.y);
+    goalR = Math.max(1, Math.floor(G.guideRadius(g) / TILE_M * 0.6));
+  }
+  const key = `${g.id}:${gx}:${gy}`;
+  if (key !== autoS.goal || !autoS.path.length || autoS.steps >= 40) {
+    // ほかの人のマスは通らない（ぶつかると話しかけてしまう）
+    const avoid = new Set((G.npcs || []).filter(x => x.id !== g.id).map(x => { const q = npcTile(x); return q.x + ',' + q.y; }));
+    autoS.goal = key; autoS.steps = 0; autoS.path = planPath(sx, sy, gx, gy, goalR, avoid);
+    if (!autoS.path.length && Math.hypot(sx - gx, sy - gy) > goalR) {
+      // 近づけない（まわりが通れない所ばかり）：しばらく待っても動けなければ、別の行き先にしてもらう
+      if (++autoS.stuck > 25) { autoS.stuck = 0; G.setGuide(null); }
+      return;
+    }
+  }
+  const nx = autoS.path.shift();
+  if (!nx) return;
+  if (Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) { autoS.path = []; return; }   // 道すじからずれた（タップで移動など）：探し直す
+  const dir = nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up';
+  autoS.steps++;
+  if (step(dir)) autoS.stuck = 0; else autoS.path = [];   // 通れなかった（読み込んだら建物だった など）：探し直す
+}
+$('pxAuto').addEventListener('click', () => setAuto(!auto));
+setAuto(auto, true);
+setTimeout(autoTick, 1500);
 
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {

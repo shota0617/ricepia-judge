@@ -443,13 +443,14 @@ function talkNpc(id, page = 0) {
     return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
   }
+  const say = [];   // 知らせ（はじめて話した・ミッション達成・ミッション開始）はまとめて1つに
   if (page === 0 && !npcMet(n.id)) {
     S.met = [...(S.met || []), n.id];
     S.log.unshift({ type: 'npc', t: Date.now(), pts: 10, name: `${n.name}と話した`, icon: NPC_LOOK[n.look] || '💬' });
     const lvUp = gainPoints(10);
     save();
     sound.jingle(lvUp ? 'levelup' : 'checkin');
-    toast(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+    say.push(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
     track('npc_talk', { npc: n.id, mode: demo ? 'play' : 'walk' });
     setTimeout(checkBadges, 800);
   }
@@ -458,12 +459,14 @@ function talkNpc(id, page = 0) {
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) {   // すすめられた人に会えた
       const pts = guideReward(S.guide);
-      if (pts) toast(`🧭 ${n.name}に会えた +${pts}pt`);
+      say.push(`🎉 ${S.guide.byId ? 'ミッション達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
     }
+    // 人の話で行き先が決まったら、ミッションのはじまり（みちしるべが案内し、おまかせ歩きならそこへ向かう）
     const g = decideGuide(n);
-    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); }
+    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 ミッション開始：${g.name}へ`); }
     else if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
   }
+  if (say.length) toast(say.join('　'));
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
   return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
     ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}</div>` };
@@ -1227,7 +1230,7 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  toast(`🧭 ${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
+  toast(`${g.byId ? '🎉 ミッション達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
 }
 $('guide').addEventListener('click', () => $('guide').classList.toggle('open'));   // タップで話の全文
 function renderGuide() {
@@ -1236,7 +1239,7 @@ function renderGuide() {
   if (!g || !me) { el.hidden = true; return; }
   el.hidden = false;
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
-  el.innerHTML = `<b>🧭 ${esc(g.name)}<span>　${bearing(me, g)}へ ${fmtM(dist(me, g))}</span></b><small>${esc(g.by)}「${esc(g.why)}」</small>`;
+  el.innerHTML = `<b>${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${bearing(me, g)}へ ${fmtM(dist(me, g))}</span></b><small>${esc(g.by)}「${esc(g.why)}」</small>`;
   el.title = `${g.by}「${g.why}」`;
 }
 const DIR8 = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
@@ -1848,7 +1851,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
   moveTo(lat, lng, how) { if (!demo) return; follow = false; stepMove = how === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get rice() { return riceOf(); }, openMekiki, RICE,

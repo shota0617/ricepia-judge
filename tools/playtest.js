@@ -17,6 +17,7 @@ const PLAY_DATE = process.env.PLAYTEST_DATE || '2026-10-16T10:00:00+09:00';
 async function newPage(browser, opts = {}) {
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...opts });
   await ctx.addInitScript(() => {
+    localStorage.setItem('nsg_auto', 'false');   // おまかせ歩きは止めて、台本どおりに歩く
     if (!localStorage.getItem('nsg_view')) { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); }
     window.__played = [];   // 鳴らした音（効果音・BGM）を記録する
     const play = HTMLMediaElement.prototype.play;

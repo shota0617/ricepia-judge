@@ -53,6 +53,17 @@ function cityNear(lat, lng) {
   for (const [a, b] of PAD_DIRS) { const n = cityAt(lat + a * 0.003, lng + b * 0.003); if (n) return n; }
   return null;
 }
+// 本店から15kmの円にかかる、7市町より外の市町の境界（region.js の around。遊べる範囲には使わず、いまどのまちにいるかだけ）
+const AROUND = (window.NISHIO_REGION && Array.isArray(window.NISHIO_REGION.around)) ? window.NISHIO_REGION.around : [];
+function aroundAt(lat, lng) {
+  for (const c of AROUND) {
+    if (lat < c.bbox[0][0] || lat > c.bbox[1][0] || lng < c.bbox[0][1] || lng > c.bbox[1][1]) continue;
+    if (c.rings.some(r => inRing(lat, lng, r))) return c;
+  }
+  return null;
+}
+// 表示用の市町（7市町なら境のすぐ外も含めて、そうでなければ まわりの市町）。どこでもなければ null
+const placeAt = (lat, lng) => cityNear(lat, lng) || aroundAt(lat, lng);
 // 本店からの距離（m）。半径 CFG.home.r の円も遊べる範囲
 const M_PER_LNG = 111320 * Math.cos(CFG.home.lat * Math.PI / 180);
 const homeDist = (lat, lng) => Math.hypot((lat - CFG.home.lat) * 111320, (lng - CFG.home.lng) * M_PER_LNG);
@@ -815,9 +826,11 @@ function updateQuests(delay = 0) {
    置き場所は pixel.js が決める（日付と400m四方の区画から。あるいて移動では公園・神社・お寺などのそばだけ）。近づくと開いて、ポイントと まちメモ */
 // 本店から15kmの円に入る、7市町より外のまち（machi.js：刈谷・知立・半田・東浦・阿久比・武豊）
 const MACHI = window.NISHIO_MACHI || [];
-// いまいるのが7市町の外なら、いちばん近いまち（役所から8km以内）。7市町の中や、どこにも近くなければ null
+// いまいるのが7市町の外なら、そのまち（市町の境界で決める）。7市町の中や、まちメモのない市町なら null
+// 境界（region.js の around）がまだないときだけ、いちばん近い役所（8km以内）で代わりにする
 function machiAt(p) {
   if (!p || cityAt(p.lat, p.lng)) return null;
+  if (AROUND.length) { const a = aroundAt(p.lat, p.lng); return (a && MACHI.find(t => t.city === a.name)) || null; }
   let best = null, bd = 8000;
   for (const t of MACHI) { const d = dist(p, { lat: t.center[0], lng: t.center[1] }); if (d < bd) { bd = d; best = t; } }
   return best;
@@ -971,6 +984,15 @@ function decideGuide(from) {
   // ⑤ まだ行っていない注目スポット
   const sp = spots.filter(s => s.featured && !s.shop && !S.visits[s.id] && far(s) && !ISLAND_SPOTS.has(s.id.slice(2))).sort((a, b) => dist(me, a) - dist(me, b))[0];
   if (sp) cands.push({ kind: 'spot', id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng, why: say(`${sp.name}へは、もう行ったかん？${firstClause(sp.desc)}。`, `${sp.name}が近いらしい。行ってみよう。`) });
+  // ⑥ まだ行っていない ふつうの名所（神社・お寺・史跡・公園・駅など。近い3つから順に）。注目スポットが遠い所（半田・刈谷など）でも行き先があるように
+  // 公園（ちびっこ広場なども多い）より、神社・お寺・史跡・駅などを先に
+  const ordAll = spots.filter(s => !s.featured && !s.shop && !S.visits[s.id] && far(s)).sort((a, b) => dist(me, a) - dist(me, b));
+  const ord = (ordAll.some(s => s.cat !== 'park') ? ordAll.filter(s => s.cat !== 'park') : ordAll).slice(0, 3);
+  const os = ord[(S.guides || 0) % (ord.length || 1)];
+  if (os) {
+    const cat = (CATS[os.cat] || {}).n || '名所';
+    cands.push({ kind: 'spot', id: os.id, name: os.name, lat: os.lat, lng: os.lng, why: say(`この先に${cat}の「${os.name}」があるで、寄ってみりん。`, `${cat}の「${os.name}」が近くにあるらしい。寄ってみよう。`) });
+  }
   if (!cands.length) return null;
   // 話した人が知っている人、雨なら屋根のある所を先に。それ以外は、話を聞くたびに「名所・人」を順に
   let c = cands.find(x => x.refer) || cands.find(x => x.weather);
@@ -1743,7 +1765,7 @@ window.nishioGo = {
   sound,
   get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
-  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, inPlay,
+  get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）

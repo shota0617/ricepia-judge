@@ -104,12 +104,12 @@ fetch('nishio-go/landmarks.json').then(r => (r.ok ? r.json() : null)).then(j => 
   landmarks = j.items.filter(m => POI_LABEL[m[2]]).map(([lat, lng, kind, name]) => { const q = toTile(lat, lng); return [+q.x.toFixed(2), +q.y.toFixed(2), kind, name, 'lm']; });
   poiCache.key = ''; dirty = true;
 }).catch(() => { /* 目印なしで続行 */ });
-// 町名（せかいちずの地名のうち町・字。world.json の l の 'tw'）：[マスx, マスy, 名前, 市町名（7市町の外は ''）]。歩く地図に町名の札を出し、いまいる町を左上に出す
+// 町名（せかいちずの地名のうち町・字。world.json の l の 'tw'）：[マスx, マスy, 名前, 市町名（7市町と まわりの市町。どこでもなければ ''）]。歩く地図に町名の札を出し、いまいる町を左上に出す
 let towns = [], townsLoad = null, townsRetry = 0;
 function loadTowns() {
   if (towns.length || townsLoad || Date.now() < townsRetry) return;
   const use = l => {
-    towns = (l || []).filter(x => x[4] === 'tw' && x[2]).map(x => { const ll = wToLL(x[0], x[1]), q = toTile(ll.lat, ll.lng), c = (G.cityNear || G.cityAt)(ll.lat, ll.lng); return [q.x, q.y, String(x[2]), c ? c.name : '']; });
+    towns = (l || []).filter(x => x[4] === 'tw' && x[2]).map(x => { const ll = wToLL(x[0], x[1]), q = toTile(ll.lat, ll.lng), c = (G.placeAt || G.cityAt)(ll.lat, ll.lng); return [q.x, q.y, String(x[2]), c ? c.name : '']; });
     dirty = true;
   };
   if (worldLabels.some(x => x[4] === 'tw')) { use(worldLabels); return; }
@@ -119,7 +119,7 @@ function loadTowns() {
 // いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
 const here = { town: '', city: '', banner: '', bannerAt: 0 };
 function updateHere() {
-  const t = targetTile(), me = G.me, c = me && (G.cityNear || G.cityAt)(me.lat, me.lng), city = c ? c.name : '';
+  const t = targetTile(), me = G.me, c = me && (G.placeAt || G.cityAt)(me.lat, me.lng), city = c ? c.name : '';
   // 同じ市町の町名だけから選ぶ（境のそばで「西尾市 金平町（蒲郡市）」のようにならないように）
   let best = null, bd = 150;
   for (const x of towns) { if (x[3] !== city) continue; const d = Math.hypot(x[0] - t.x, x[1] - t.y); if (d < bd) { bd = d; best = x; } }

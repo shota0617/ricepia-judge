@@ -1193,7 +1193,7 @@ function weatherGuide() {
   if (!w) return;   // 天気がまだ届いていない（取れない）ときは、雨宿りの案内も消さない
   if (!g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
   if (!fixOk()) return;   // GPS の精度が悪い位置や乗り物で移動中の位置からは決めない（ほかの決め直しと同じ）
-  const key = `${wet}:${spotsVersion}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
+  const key = `${demo}:${wet}:${spotsVersion}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
   if (weatherGuide.key === key) return;
   weatherGuide.key = key;
   const next = decideGuide(null);

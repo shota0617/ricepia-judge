@@ -138,7 +138,8 @@ function freshState() {
     guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} } };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
-const stateKey = () => demo ? 'nsg_state_demo' : 'nsg_state';
+// 記録は版ごとに分ける（西尾市版は nsg_state_city など。お店の版で行った当店の記録や、当店への行き先を持ちこまない）
+const stateKey = () => (demo ? 'nsg_state_demo' : 'nsg_state') + (ED.shops ? '' : '_' + ED.id);
 function loadState() {
   const s = store.get(stateKey(), null);
   return s && s.v === 1 ? Object.assign(freshState(), s) : freshState();

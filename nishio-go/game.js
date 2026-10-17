@@ -1924,8 +1924,8 @@ if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); 
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
 window.addEventListener('pagehide', idleMark);
-// 開いている間は るすばん にならない（しばらく止まっていた後は、先に おかえり を渡すので触らない）
-setInterval(() => { if (!document.hidden && demo && Date.now() - idleOf().last < 5 * 60000) idleMark(); }, 60000);
+// 開いている間は るすばん にならない。端末がスリープしていたなどで しばらくタイマーが止まっていたときは、先に おかえり を渡す
+setInterval(() => { if (!document.hidden && demo) { if (Date.now() - idleOf().last < 5 * 60000) idleMark(); else idleCheck(); } }, 60000);
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-up]'); if (b) buyUp(b.dataset.up); });
 
 // ドット絵表示（pixel.js）とテストから使う窓口

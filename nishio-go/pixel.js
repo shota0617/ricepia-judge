@@ -1177,8 +1177,71 @@ carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(C
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 spotSprites.store = spotSprites.shop;
+// 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。Googleストリートビューで見られる外観をもとに描いたドット絵）
+//   らいすぴあ・秀幸：赤と白の建物、横の壁に白いどんぶりと「米」のマーク、上に白い看板、右に赤い「米のドライブスルー」の屋根と「ドライブスルー IN」の看板
+//   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根
+// 文字の並び（# のところを塗る）で小さな絵を描く
+const pix = (r, rows, ox, oy, col) => rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ch === '#') r(ox + i, oy + y, 1, 1, col); }));
+function shopCanvas(draw) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const x = c.getContext('2d'), r = (px, py, w, h, col) => { x.fillStyle = col; x.fillRect(px, py, w, h); };
+  draw(r);
+  const g = document.createElement('canvas');   // チェックインしたあと（しばらく）は灰色に
+  g.width = g.height = 32;
+  const gx = g.getContext('2d'), d = x.getImageData(0, 0, 32, 32);
+  for (let i = 0; i < d.data.length; i += 4) { const v = Math.round(0.3 * d.data[i] + 0.59 * d.data[i + 1] + 0.11 * d.data[i + 2]); d.data[i] = d.data[i + 1] = d.data[i + 2] = v; }
+  gx.putImageData(d, 0, 0);
+  return [c, g];
+}
+spotSprites.ricepia = shopCanvas(r => {
+  const K = '#000', RED = '#d7262e', W = '#ffffff', GR = '#9e9e9e';
+  r(3, 8, 25, 23, K); r(4, 9, 23, 21, RED);                      // 赤い建物
+  r(4, 21, 23, 2, W);                                             // 白い帯
+  // 横の壁：白いどんぶりに山もりのごはん（ふちが波形）、ごはんに赤い「米」
+  pix(r, ['..#.#.#..', '.#######.', '#########', '#########', '#########', '.........', '#########', '.#######.', '..#####..', '...###...'], 4, 10, W);
+  pix(r, ['#.#.#', '.###.', '#####', '.###.', '#.#.#'], 6, 10, RED);
+  // 正面：白い板と赤いしずく形、まん中の赤い帯
+  for (const [px, py] of [[14, 10], [18, 10], [14, 23], [18, 23]]) { r(px, py, 3, py > 20 ? 7 : 10, W); r(px + 1, py + 3, 1, 2, RED); }
+  // 入口のガラス戸（値段の貼り紙）
+  r(21, 23, 6, 7, '#2f3438'); r(22, 24, 2, 3, '#f5f5f5'); r(25, 24, 1, 2, '#f5f5f5'); r(24, 23, 1, 7, '#cfd8dc');
+  // 上の白い看板「らいすぴあ・秀幸」
+  r(10, 3, 17, 6, K); r(11, 4, 15, 4, W);
+  pix(r, ['#..##.#..#.#.##', '.#.#..##.#..#.#'], 11, 5, RED);   // 赤い字（らいすぴあ・秀幸）
+  // 右の「米のドライブスルー」の屋根（赤に白い字）と柱
+  r(20, 15, 12, 4, K); r(21, 16, 11, 2, RED);
+  for (const px of [23, 25, 27, 29]) r(px, 16, 1, 2, W);
+  r(30, 19, 1, 12, GR);
+  // 「ドライブスルー IN」の看板（白地に青い字、赤い矢印）
+  r(26, 24, 6, 6, K); r(27, 25, 4, 4, W); r(27, 25, 4, 1, '#1f5fbf'); r(27, 27, 4, 1, RED); r(27, 26, 1, 3, RED);
+  // 黄色いのぼり
+  r(19, 20, 1, 11, '#2e7d32'); r(18, 21, 1, 6, '#f2d230');
+});
+spotSprites.kondo = shopCanvas(r => {
+  const K = '#000', CR = '#ebdfb6', CRD = '#cdbf93', RED = '#d0342c', GR = '#8f8f8f';
+  // クリーム色の建物（左の高い所と、右の少し低い所）
+  r(8, 3, 15, 28, K); r(9, 4, 13, 27, CR);
+  r(21, 8, 11, 23, K); r(22, 9, 9, 22, CR); r(22, 9, 9, 1, CRD);
+  // 大きな赤い「米」（筆で書いた太い字）
+  pix(r, ['.....##....', '.##..##..##', '..##.##.##.', '...#.##.#..', '###########', '###########', '....####...', '...#.##.#..', '..##.##.##.', '.##..##..##', '##...##...#', '.....##....'], 10, 4, RED);
+  r(12, 17, 6, 1, '#4a4a4a');                                       // 電話番号
+  // 2階の窓
+  r(24, 11, 5, 3, K); r(25, 12, 3, 1, '#b8d0e0');
+  // 1階：「近藤米穀店」の看板とガラス戸、緑のひさし
+  r(20, 19, 12, 4, K); r(21, 20, 11, 2, '#f3ead0');
+  for (const px of [22, 24, 26, 28, 30]) r(px, 20, 1, 2, '#222');
+  r(21, 23, 11, 8, '#9fb4c4'); for (const px of [24, 27, 30]) r(px, 23, 1, 8, '#5d6b75');
+  r(13, 20, 8, 2, '#2e7d32'); r(14, 22, 6, 9, '#6d7b84');
+  // 左の「米のドライブスルー」（白地に青い字の看板・赤い帯、灰色の屋根と柱）
+  r(0, 9, 10, 5, K); r(1, 10, 8, 2, '#ffffff'); for (const px of [2, 4, 6]) r(px, 10, 1, 2, '#1f5fbf'); r(1, 12, 8, 1, RED);
+  r(0, 14, 10, 2, GR);
+  r(1, 16, 1, 15, GR); r(8, 16, 1, 15, GR);
+});
+
 
 function spotArt(s) {
+  if (s.id === 'f-ricepia') return 'ricepia';
+  if (s.id === 'f-kondo-beikoku') return 'kondo';
   if (s.shop) return 'ricestore';
   const kind = s.featured ? (s.kind || 'featured') : s.cat;
   if (kind === 'castle') return 'castle';
@@ -1314,7 +1377,7 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.shop ? Math.round(T * 2.5) : s.featured ? T * 2 : T;
+    const size = s.shop ? Math.round(T * 3.5) : s.featured ? T * 2 : T;   // 当店は本物の建物に合わせて大きめに
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
@@ -1326,7 +1389,7 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 13 * u), Math.round(sy + 1 * u), Math.ceil(u), Math.ceil(u * 3));
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
-    if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
+    if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
   // 西尾の人たち（まだ話していない人の上には吹き出し）
   for (const n of G.npcs || []) {
@@ -1585,8 +1648,8 @@ function drawWorld(now, w, h, dpr) {
     }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
-  for (const [x, y, sz, s] of shopTags) {   // 「当店」の札は地名より上に。札も絵もタップできる
-    const t = drawShopTag(x, y, dpr);
+  for (const [x, y, sz, s] of shopTags) {   // 当店の札（店名）は地名より上に。札も絵もタップできる
+    const t = drawShopTag(x, y, dpr, s);
     shopHits.push([Math.min(t[0], x - sz / 2), t[1], Math.max(t[2], x + sz / 2), y + sz, s]);
   }
   // 主人公
@@ -1600,16 +1663,19 @@ function drawWorld(now, w, h, dpr) {
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
 }
-// 当店の札：赤地に白文字で「当店」。(cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
+// 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
+// (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
-function drawShopTag(cx, bottom, dpr) {
+const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
+function drawShopTag(cx, bottom, dpr, s) {
+  const [text, bg, fg] = SHOP_SIGN[s && s.id] || ['当店', '#d23a2e', '#ffffff'];
   const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
   ctx.font = `${fs}px "DotGothic16", monospace`;
-  const tw = Math.ceil(ctx.measureText('当店').width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const tw = Math.ceil(ctx.measureText(text).width), bw = tw + pad * 2, bh = fs + pad * 2;
   const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
   ctx.fillStyle = '#000'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
-  ctx.fillStyle = '#d23a2e'; ctx.fillRect(x, y, bw, bh);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('当店', x + bw / 2, y + bh / 2 + dpr * 0.5);
+  ctx.fillStyle = bg; ctx.fillRect(x, y, bw, bh);
+  ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
 }
 function worldSpotShown(s) {
@@ -2139,5 +2205,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

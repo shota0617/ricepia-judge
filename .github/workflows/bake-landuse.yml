@@ -1,0 +1,43 @@
+# にしおさんぽGO：国土数値情報「土地利用細分メッシュ」（国土交通省）から、遊べる範囲の土地利用の表 nishio-go/landuse.json を作ってコミットする
+name: Bake Nishio landuse
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/bake-landuse.js
+      - .github/workflows/bake-landuse.yml
+permissions:
+  contents: write
+concurrency:
+  group: bake-landuse-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Download landuse mesh (1次メッシュ 5236・5237、令和3年度)
+        run: |
+          mkdir -p landuse-src
+          for m in 5236 5237; do
+            curl -sSfL --retry 3 -m 300 "https://nlftp.mlit.go.jp/ksj/gml/data/L03-b/L03-b-21/L03-b-21_${m}-jgd2011_GML.zip" -o "landuse-src/$m.zip"
+            unzip -o -q "landuse-src/$m.zip" '*.dbf' -d "landuse-src/$m"
+          done
+      - name: Bake landuse.json
+        run: node tools/bake-landuse.js landuse-src
+      - name: Commit landuse.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nishio-go/landuse.json
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -q -m "にしおさんぽGO: 土地利用の表を国土数値情報から作り直し（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          exit 1

@@ -1,0 +1,33 @@
+# 調査（一時的）：名所とお店を道から見た写真を Mapillary から集める（ドット絵の参考）。結果を reference/ にコミットする
+# シークレット MAPILLARY_TOKEN（Mapillary の Client Token）がないときは何もしない
+name: Research Mapillary photos
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/confident-turing-etepui]
+    paths: [.github/workflows/research-mapillary.yml, reference/mapillary-probe.js, reference/mapillary-run.txt]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node reference/mapillary-probe.js
+        env:
+          MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
+      - name: 画像を小さくする（幅640）
+        run: |
+          [ -d reference/mapillary ] || exit 0
+          command -v mogrify >/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick; }
+          mogrify -resize 640x -quality 72 -strip reference/mapillary/*.jpg 2>/dev/null || true
+      - run: |
+          [ -f reference/mapillary.json ] || exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reference/mapillary reference/mapillary.json; git commit -q -m "調査：名所とお店の路上写真（Mapillary）（自動）" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done

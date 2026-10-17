@@ -1190,6 +1190,7 @@ function guideReward(g) {
 //   天気が届いたとき・スポットが読み込めたとき・200mほど動いたとき（屋根のある所がすすめる範囲に入る）など、状況が変わったときだけ調べる
 function weatherGuide() {
   const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
+  if (!w) return;   // 天気がまだ届いていない（取れない）ときは、雨宿りの案内も消さない
   if (!g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
   if (!fixOk()) return;   // GPS の精度が悪い位置や乗り物で移動中の位置からは決めない（ほかの決め直しと同じ）
   const key = `${wet}:${spots.length}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;

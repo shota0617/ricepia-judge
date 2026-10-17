@@ -104,6 +104,36 @@ fetch('nishio-go/landmarks.json').then(r => (r.ok ? r.json() : null)).then(j => 
   landmarks = j.items.filter(m => POI_LABEL[m[2]]).map(([lat, lng, kind, name]) => { const q = toTile(lat, lng); return [+q.x.toFixed(2), +q.y.toFixed(2), kind, name, 'lm']; });
   poiCache.key = ''; dirty = true;
 }).catch(() => { /* 目印なしで続行 */ });
+// 町名（せかいちずの地名のうち町・字。world.json の l の 'tw'）：[マスx, マスy, 名前]。歩く地図に町名の札を出し、いまいる町を左上に出す
+let towns = [], townsLoad = null;
+function loadTowns() {
+  if (towns.length || townsLoad) return;
+  const use = l => { towns = (l || []).filter(x => x[4] === 'tw' && x[2]).map(x => { const ll = wToLL(x[0], x[1]), q = toTile(ll.lat, ll.lng); return [q.x, q.y, String(x[2])]; }); dirty = true; };
+  if (worldLabels.some(x => x[4] === 'tw')) { use(worldLabels); return; }
+  townsLoad = fetch(WORLD_FILE).then(r => (r.ok ? r.json() : null)).then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });
+}
+// いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
+const here = { town: '', city: '', banner: '', bannerAt: 0 };
+function updateHere() {
+  const t = targetTile();
+  let best = null, bd = 150;
+  for (const x of towns) { const d = Math.hypot(x[0] - t.x, x[1] - t.y); if (d < bd) { bd = d; best = x; } }
+  const me = G.me, c = me && G.cityAt(me.lat, me.lng), town = best ? best[2] : '', city = c ? c.name : '';
+  if (town && town !== here.town) {
+    if (here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
+    here.town = town;
+  }
+  here.city = city;
+}
+// 看板の色（お店の種類ごと。よく知られた店は、その店らしい色に）。白い字で名前を書く
+const SIGN_KIND = { konbini: '#2a7d4f', super: '#c0392b', home: '#8a5a2b', drug: '#2a6fb0', fuel: '#5a5a5a', bank: '#1d4f91', post: '#d7000f', food: '#a0522d', cafe: '#7b4b2a', store: '#555',
+  townhall: '#2f4f4f', hospital: '#b03030', school: '#3b6e3b', library: '#6a4c93', police: '#1f3f7a', fire: '#c0392b', shop: '#c0392b', station: '#2f4f4f' };
+const SIGN_BRAND = [[/ファミリーマート|ファミマ/, '#0b8f3c'], [/セブン/, '#ef6c1a'], [/ローソン/, '#1474c4'], [/ミニストップ/, '#0b3c8c'], [/デイリーヤマザキ|ヤマザキ/, '#d7000f'],
+  [/アオキ/, '#d40f1e'], [/アピタ|ピアゴ/, '#e64a19'], [/カネスエ/, '#0068b7'], [/ヤマナカ|フランテ/, '#d6002a'], [/バロー/, '#d7000f'], [/フィール/, '#2e8b57'], [/イオン|マックスバリュ/, '#b0127a'],
+  [/スギ薬局/, '#0067b0'], [/スギヤマ/, '#e0457b'], [/ゲンキー/, '#e0a800'], [/ウエルシア/, '#e4007f'], [/コメリ/, '#e05a00'], [/カインズ/, '#00843d'], [/エディオン/, '#e60012'],
+  [/信用金庫|信金|銀行/, '#1d4f91'], [/郵便局/, '#d7000f'], [/マクドナルド/, '#d52b1e'], [/コメダ/, '#7a4a1f'], [/スターバックス/, '#00704a'], [/すき家/, '#d7000f'], [/吉野家/, '#f08300']];
+const signColor = (kind, name) => { for (const [re, c] of SIGN_BRAND) if (re.test(name)) return c; return SIGN_KIND[kind] || '#555'; };
+const MAJOR_SIGN = new Set(['super', 'konbini', 'home', 'drug', 'fuel', 'bank', 'townhall', 'hospital', 'station', 'post', 'shop']);   // 引いて見ても看板を出す
 const WORLD_POI = new Set(['townhall', 'hospital', 'library', 'fire', 'shop']);   // せかいちずに出す大きな建物
 function poiKind(t) {
   const a = t.amenity;
@@ -1233,7 +1263,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -1277,19 +1307,34 @@ function frame(now) {
     const size = p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * 0.7);
     ctx.drawImage((spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
   }
-  if (scale >= 2) {   // 寄ったときは名前も（「あそこのコンビニだ」と分かるように）
-    const fs = Math.round(9 * dpr);
-    ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.lineWidth = Math.max(2, Math.round(2 * dpr)); ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.fillStyle = '#fff';
-    for (const p of pois) {
-      if (!p[3]) continue;
-      const name = p[3].length > 14 ? p[3].slice(0, 13) + '…' : p[3];
-      const X = Math.round(ox + p[0] * T), Y = Math.round(oy + p[1] * T + T * 0.35), tw = ctx.measureText(name).width;
-      const box = [X - tw / 2 - 2, Y, X + tw / 2 + 2, Y + fs + 2];
-      if (box[2] < 0 || box[0] > w || box[1] > h || box[3] < 0 || labelBoxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
-      labelBoxes.push(box);
-      ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y);
-    }
+  // 町名の札（青地に白い字。電柱の町名表示のように）・駅名標（白地に黒い字と青い線）・お店の看板（その店らしい色に白い字）
+  // 重ならないように、町名 → 駅 → 看板 の順に場所を取る。引いて見たときは、大きなお店の看板だけ
+  const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), bw = Math.max(1, Math.round(dpr));
+  ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const board = (X, Y, text, bg, fg, line) => {
+    const tw = ctx.measureText(text).width, bx = Math.round(X - tw / 2 - pad), by = Math.round(Y), bwid = Math.round(tw + pad * 2), bh = fs + pad * 2;
+    const box = [bx - 1, by - 1, bx + bwid + 1, by + bh + 1];
+    if (box[2] < 0 || box[0] > w || box[1] > h || box[3] < 0 || labelBoxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) return;
+    labelBoxes.push(box);
+    ctx.fillStyle = '#000'; ctx.fillRect(bx - bw, by - bw, bwid + bw * 2, bh + bw * 2);
+    ctx.fillStyle = bg; ctx.fillRect(bx, by, bwid, bh);
+    if (line) { ctx.fillStyle = line; ctx.fillRect(bx, by + bh - Math.round(3 * dpr), bwid, Math.round(3 * dpr)); }
+    ctx.fillStyle = fg; ctx.fillText(text, X, by + bh / 2 - (line ? dpr : 0));
+  };
+  const short = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+  for (const x of towns) {
+    if (x[0] < tx0 - 4 || x[0] > tx1 + 4 || x[1] < ty0 - 2 || x[1] > ty1 + 2) continue;
+    board(Math.round(ox + x[0] * T), Math.round(oy + x[1] * T), short(x[2], 10), '#1b4fa0', '#fff');
+  }
+  for (const sp of spots) {
+    if ((sp.kind || sp.cat) !== 'station') continue;
+    const q = toTile(sp.lat, sp.lng);
+    if (q.x < tx0 - 4 || q.x > tx1 + 4 || q.y < ty0 - 2 || q.y > ty1 + 2) continue;
+    board(Math.round(ox + q.x * T), Math.round(oy + q.y * T + T * 0.7), short(sp.name.replace(/^名鉄\s*/, ''), 12), '#fff', '#111', '#1b4fa0');
+  }
+  for (const p of pois) {
+    if (!p[3] || (scale < 2 && !MAJOR_SIGN.has(p[2]))) continue;
+    board(Math.round(ox + p[0] * T), Math.round(oy + p[1] * T + T * 0.35), short(p[3], 12), signColor(p[2], p[3]), '#fff');
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
@@ -1343,6 +1388,28 @@ function frame(now) {
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
   drawWeather(now, w, h, dpr);
+
+  // 左上：いまいる市町と町名（こよみ の札の下）。町が変わったら、まん中に町名を大きく出す
+  if (here.town || here.city) {
+    const t = `📍 ${here.city ? here.city + ' ' : ''}${here.town}`, hs = Math.round(12 * dpr);
+    ctx.font = `${hs}px "DotGothic16", monospace`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(t).width, y0 = 44 * dpr;
+    ctx.fillStyle = 'rgba(0,0,0,.75)'; ctx.fillRect(8 * dpr, y0, tw + 16 * dpr, hs + 12 * dpr);
+    ctx.fillStyle = '#fff'; ctx.fillText(t, 16 * dpr, y0 + (hs + 12 * dpr) / 2);
+  }
+  if (here.banner) {
+    const age = (now - here.bannerAt) / 1000;
+    if (age > 2.8) here.banner = '';
+    else {
+      ctx.globalAlpha = Math.min(1, age * 3, (2.8 - age) * 2);
+      const bs = Math.round(18 * dpr), t = `〜 ${here.banner} 〜`;
+      ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(t).width, by = Math.round(cy - T * 3);
+      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(w / 2 - tw / 2 - 14 * dpr), by - bs, Math.round(tw + 28 * dpr), bs * 2);
+      ctx.fillStyle = '#fff'; ctx.fillText(t, w / 2, by);
+      ctx.globalAlpha = 1;
+    }
+  }
 
   // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
   for (let i = floaters.length - 1; i >= 0; i--) {
@@ -2061,5 +2128,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

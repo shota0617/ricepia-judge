@@ -1227,7 +1227,10 @@ function renderKoyomi() {
   const el = $('koyomi');
   if (!el || !KO) return;
   const now = new Date(), key = ymd() + ':' + now.getHours();
-  if (WX && Date.now() - (renderKoyomi.wt || 0) > 60000) { renderKoyomi.wt = Date.now(); const at = me || { lat: CFG.center[0], lng: CFG.center[1] }; WX.refresh(at.lat, at.lng); }   // 天気は10分ごとに取り直す（weather.js）
+  if (WX) {   // 天気は10分ごとに取り直す（weather.js）。予報の地域（東部・西部）をまたいだら、1分を待たずにすぐ
+    const at = me || { lat: CFG.center[0], lng: CFG.center[1] }, east = WX.isEast(at.lat, at.lng);
+    if (Date.now() - (renderKoyomi.wt || 0) > 60000 || east !== renderKoyomi.we) { renderKoyomi.wt = Date.now(); renderKoyomi.we = east; WX.refresh(at.lat, at.lng); }
+  }
   if (renderKoyomi.key === key) return;
   renderKoyomi.key = key;
   const sk = KO.sekki(now), p = KO.paddy(now), hs = KO.seasonSpots(now), wx = weatherNow();

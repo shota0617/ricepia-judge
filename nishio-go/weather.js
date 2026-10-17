@@ -12,7 +12,7 @@ const KEY = 'nsg_weather', TTL = 10 * 60000;
 const kinds = {
   sunny: { name: '晴れ', icon: '☀️' }, cloudy: { name: 'くもり', icon: '☁️' }, rain: { name: '雨', icon: '☔' }, snow: { name: '雪', icon: '⛄' },
 };
-let cur = null, loading = null;
+let cur = null, loading = null, loadingEast = null;
 const listeners = [];
 const d2 = (a, b) => Math.hypot((a[0] - b[0]) * 111, (a[1] - b[1]) * 91);
 
@@ -56,8 +56,10 @@ async function load(lat, lng) {
 function emit() { for (const f of listeners) try { f(cur); } catch (e) { /* noop */ } }
 // lat, lng：いまいる所（市町のどのあたりかで、観測所と予報の地域を選ぶだけ。どこにも送らない）
 function refresh(lat, lng) {
-  if (loading) return loading;
+  const east = isEast(lat, lng);
+  if (loading) return loadingEast === east ? loading : loading.then(() => refresh(lat, lng));   // 取りに行っている途中で予報の地域をまたいだら、終わってから取り直す
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Date.now() - s.t < TTL && Math.abs(s.lat - lat) < 0.05 && Math.abs(s.lng - lng) < 0.05 && isEast(s.lat, s.lng) === isEast(lat, lng)) { cur = s.w; emit(); return Promise.resolve(cur); } } catch (e) { /* noop */ }
+  loadingEast = east;
   loading = load(lat, lng).then(w => {
     cur = w; emit();
     try { localStorage.setItem(KEY, JSON.stringify({ t: Date.now(), lat, lng, w })); } catch (e) { /* noop */ }

@@ -5,7 +5,8 @@
 ## 動かし方
 
 ```sh
-npm install -g playwright      # まだなら（Chromium も必要：npx playwright install chromium）
+npm install --no-save --no-package-lock playwright@1.48.2   # repo の直下の node_modules に入れる（-g だと require できない）
+npx playwright install chromium                              # Chromium（すでにあれば CHROMIUM=場所 でもよい）
 node tools/playtest.js playtest-out
 ```
 

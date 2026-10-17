@@ -701,16 +701,7 @@ const KO = window.NISHIO_SEASON || null;
 // 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
 const WX = window.NISHIO_WEATHER || null;
 const weatherNow = () => (WX && WX.current) || null;
-if (WX) WX.onChange(w => {
-  renderKoyomi.key = null; renderKoyomi();
-  // 天気が届いた・変わったら、まわりのようす（環境）で決めた行き先だけ決め直す（人のすすめ・お店の案内はそのまま）
-  //   雨になった → 屋根のある所が見つかれば、そこへ。雨が止んだ → 雨宿りの案内をやめて、ふだんの行き先へ
-  const g = S.guide, wet = !!(w && w.raining);
-  if (!me || !g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
-  const next = decideGuide(null);
-  if (wet && !(next && next.weather)) return;
-  S.guide = next ? { ...next, t: Date.now() } : null; save(); refreshNearby();
-});
+if (WX) WX.onChange(() => { renderKoyomi.key = null; renderKoyomi(); if (me) refreshNearby(); });   // 行き先の決め直しは checkGuide → weatherGuide
 // area があるのは となりの市町の名物（バッジを「西尾の名物」と分ける）
 const MB_NISHIO = MEIBUTSU.filter(m => !m.area), MB_NEAR = MEIBUTSU.filter(m => m.area && m.spots.length);
 const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
@@ -1194,9 +1185,23 @@ function guideReward(g) {
   return pts;
 }
 // 行き先に着いたか（人のときは、話しかけたときに着いたことになり、その人の話で次が決まる）
+// 天気と行き先が合わなくなったら、まわりのようす（環境）で決めた行き先だけ決め直す（人のすすめ・お店の案内はそのまま）
+//   雨になった → 屋根のある所が見つかれば、そこへ。雨が止んだ → 雨宿りの案内をやめて、ふだんの行き先へ
+//   天気が届いたとき・スポットが読み込めたとき（屋根のある所が見つかるようになる）など、状況が変わったときだけ調べる
+function weatherGuide() {
+  const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
+  if (!g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
+  const key = `${wet}:${spots.length}:${g.id}`;
+  if (weatherGuide.key === key) return;
+  weatherGuide.key = key;
+  const next = decideGuide(null);
+  if (wet && !(next && next.weather)) return;   // 屋根のある所がまだ見つからない（スポットの読み込み前など）
+  S.guide = next ? { ...next, t: Date.now() } : null; save();
+}
 function checkGuide() {
-  const g = guideTarget();
   if (!me) return;
+  weatherGuide();
+  const g = guideTarget();
   if (!g) {   // 行き先がないときは、まわりのようすで決める（決まらなければ少し待ってから、もう一度）
     // 決めるのは、その場にいると認めてよい位置のときだけ（GPS の精度が悪い位置や乗り物で移動中の位置から決めない）
     if (spots.length && !S.guide && fixOk() && Date.now() - (checkGuide.t || 0) > 5000) { checkGuide.t = Date.now(); setGuide(decideGuide(null)); }

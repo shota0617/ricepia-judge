@@ -701,7 +701,16 @@ const KO = window.NISHIO_SEASON || null;
 // 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
 const WX = window.NISHIO_WEATHER || null;
 const weatherNow = () => (WX && WX.current) || null;
-if (WX) WX.onChange(() => { renderKoyomi.key = null; renderKoyomi(); });
+if (WX) WX.onChange(w => {
+  renderKoyomi.key = null; renderKoyomi();
+  // 天気が届いた・変わったら、まわりのようす（環境）で決めた行き先だけ決め直す（人のすすめ・お店の案内はそのまま）
+  //   雨になった → 屋根のある所が見つかれば、そこへ。雨が止んだ → 雨宿りの案内をやめて、ふだんの行き先へ
+  const g = S.guide, wet = !!(w && w.raining);
+  if (!me || !g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
+  const next = decideGuide(null);
+  if (wet && !(next && next.weather)) return;
+  S.guide = next ? { ...next, t: Date.now() } : null; save(); refreshNearby();
+});
 // area があるのは となりの市町の名物（バッジを「西尾の名物」と分ける）
 const MB_NISHIO = MEIBUTSU.filter(m => !m.area), MB_NEAR = MEIBUTSU.filter(m => m.area && m.spots.length);
 const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));

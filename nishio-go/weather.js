@@ -45,8 +45,9 @@ async function load(lat, lng) {
   const tSt = near.find(s => s[4] && obs[s[0]] && obs[s[0]].temp && obs[s[0]].temp[1] === 0);
   const pSt = near.find(s => obs[s[0]] && obs[s[0]].precipitation10m && obs[s[0]].precipitation10m[1] === 0);
   const temp = tSt ? obs[tSt[0]].temp[0] : null;
-  const rain10 = pSt ? obs[pSt[0]].precipitation10m[0] : null, rain1h = pSt && obs[pSt[0]].precipitation1h ? obs[pSt[0]].precipitation1h[0] : null;
-  const raining = (rain10 || 0) > 0 || (rain1h || 0) >= 0.5;
+  // いま降っているかは、直近10分の雨量だけで決める（1時間の雨量だと、止んでから1時間近く雨のままになる）
+  const rain10 = pSt ? obs[pSt[0]].precipitation10m[0] : null;
+  const raining = (rain10 || 0) > 0;
   const fk = fromCode(area.weatherCodes[0]);
   // いま雨が降っていれば雨（気温が低ければ雪）。降っていなければ、きょうの予報の晴れ・くもり（雨の予報なら「くもり」）
   const kind = raining ? (temp !== null && temp <= 1 ? 'snow' : 'rain') : fk === 'sunny' ? 'sunny' : 'cloudy';

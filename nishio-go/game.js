@@ -62,8 +62,8 @@ function aroundAt(lat, lng) {
   }
   return null;
 }
-// 表示用の市町（7市町なら境のすぐ外も含めて、そうでなければ まわりの市町）。どこでもなければ null
-const placeAt = (lat, lng) => cityNear(lat, lng) || aroundAt(lat, lng);
+// 表示用の市町：まず境界の中にぴったり入る市町（7市町、まわりの市町の順）。どこにも入らない海辺・橋の上などだけ、境のすぐ外（約300m）の7市町にする
+const placeAt = (lat, lng) => cityAt(lat, lng) || aroundAt(lat, lng) || cityNear(lat, lng);
 // 本店からの距離（m）。半径 CFG.home.r の円も遊べる範囲
 const M_PER_LNG = 111320 * Math.cos(CFG.home.lat * Math.PI / 180);
 const homeDist = (lat, lng) => Math.hypot((lat - CFG.home.lat) * 111320, (lng - CFG.home.lng) * M_PER_LNG);

@@ -1,12 +1,13 @@
 // にしおさんぽGO の広告用の動画と画像を、ほんとうのゲーム画面から作る：node tools/make-promo.js [出力フォルダ]
-// ・ヘッドレス Chromium で「操作して遊ぶ」を台本どおりに進め、字幕をのせて縦長（9:16、1080×1920）の動画（webm）を録る
-//   （ワークフローでは ffmpeg で mp4 にする：.github/workflows/make-promo.yml）
+// ・ヘッドレス Chromium で「操作して遊ぶ」を台本どおりに進め、字幕をのせて縦長（9:16、1080×1920）の動画（mp4。音はゲームの BGM）を録る
+//   （tools/record-page.js：画面を2倍の解像度で撮りつづけて ffmpeg でつなぐ。ffmpeg が要る）
 // ・場面ごとの静止画（9:16）と、広告用の画像（Google・Meta・LINEヤフー広告の各サイズ）、LINE リッチメニューのマスも作る
 // ・字幕は docs/fun-core.md と ricepia.jp に書いてあることだけ。Meta・Google・LINE の広告、店頭のモニターなどに使う
 // 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、PROMO_PORT
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
-const { startServer } = require('./bake-common');
+const { startServer, ROOT } = require('./bake-common');
+const { recordPage, toMp4 } = require('./record-page');
 
 const OUT = path.resolve(process.argv[2] || 'promo-out');
 const PORT = Number(process.env.PROMO_PORT) || 8897, URL = `http://localhost:${PORT}/nishio-go.html`;
@@ -43,8 +44,7 @@ async function endCard(page) {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 3, timezoneId: 'Asia/Tokyo', locale: 'ja-JP',
-    recordVideo: { dir: OUT, size: { width: 1080, height: 1920 } } });
+  const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 3, timezoneId: 'Asia/Tokyo', locale: 'ja-JP' });
   await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_noanalytics', '1'); });
   const page = await ctx.newPage();
   page.on('pageerror', e => console.log('pageerror:', e.message));
@@ -57,6 +57,9 @@ async function endCard(page) {
   const G = (fn, arg) => page.evaluate(fn, arg);
 
   await page.goto(URL); await sleep(2500);
+  const frames = path.join(OUT, 'promo-frames');
+  fs.rmSync(frames, { recursive: true, force: true });
+  const stop = await recordPage(page, frames);
   // 1) はじめの画面
   await caption(page, '西尾のお米屋さんがつくった<br>お散歩ゲーム', 'にしおさんぽGO'); await sleep(3500);
   await shot('01-intro');
@@ -103,9 +106,11 @@ async function endCard(page) {
   await caption(page, '');
   await endCard(page); await sleep(3500);
   await shot('07-end');
-  const video = page.video();
+  const rec = await stop();
   await ctx.close();
-  if (video) { const p = await video.path(); fs.renameSync(p, path.join(OUT, 'nishio-go-9x16.webm')); console.log('  nishio-go-9x16.webm'); }
+  toMp4(rec, path.join(OUT, 'nishio-go-9x16.mp4'), { audio: path.join(ROOT, 'nishio-go', 'bgm', 'field.mp3') });
+  fs.rmSync(frames, { recursive: true, force: true });
+  console.log(`  nishio-go-9x16.mp4（${rec.duration.toFixed(1)}秒）`);
 
   // 広告用の画像（各サイズ）と、LINE リッチメニューのマス（docs/ads-game-kit.md）
   const shotB64 = n => fs.readFileSync(path.join(OUT, n)).toString('base64');

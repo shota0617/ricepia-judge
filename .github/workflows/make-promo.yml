@@ -1,4 +1,4 @@
-# にしおさんぽGO：広告用の動画（縦長 9:16・mp4）と画像を、ほんとうのゲーム画面から作る（tools/make-promo.js）
+# にしおさんぽGO：広告用の動画（縦長 9:16・mp4）と画像、インスタのリール用のデモプレイ動画を、ほんとうのゲーム画面から作る（tools/make-promo.js・make-reel.js）
 # 動画と画像は Actions の「Artifacts」から取り出す。画像は mkt/nishio-go/ にもコミットする
 name: Make Nishio promo
 on:
@@ -9,6 +9,8 @@ on:
       - claude/confident-turing-etepui
     paths:
       - tools/make-promo.js
+      - tools/make-reel.js
+      - tools/record-page.js
       - .github/workflows/make-promo.yml
 permissions:
   contents: write
@@ -29,11 +31,10 @@ jobs:
           npm install --no-save --no-package-lock playwright@1.48.2
           npx playwright install --with-deps chromium
           command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
-      - name: Record promo
-        run: node tools/make-promo.js promo-out
-      - name: Convert to mp4
+      - name: Record promo and demo reel
         run: |
-          ffmpeg -y -loglevel error -i promo-out/nishio-go-9x16.webm -c:v libx264 -pix_fmt yuv420p -preset slow -crf 22 -movflags +faststart -an promo-out/nishio-go-9x16.mp4
+          node tools/make-promo.js promo-out
+          node tools/make-reel.js promo-out   # インスタのリール用のデモプレイ動画（nishio-go-reel.mp4）
           ls -la promo-out
       - uses: actions/upload-artifact@v4
         with:

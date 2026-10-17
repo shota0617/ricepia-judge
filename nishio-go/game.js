@@ -1187,13 +1187,13 @@ function guideReward(g) {
 // 行き先に着いたか（人のときは、話しかけたときに着いたことになり、その人の話で次が決まる）
 // 天気と行き先が合わなくなったら、まわりのようす（環境）で決めた行き先だけ決め直す（人のすすめ・お店の案内はそのまま）
 //   雨になった → 屋根のある所が見つかれば、そこへ。雨が止んだ → 雨宿りの案内をやめて、ふだんの行き先へ
-//   天気が届いたとき・スポットが読み込めたとき・200mほど動いたとき（屋根のある所がすすめる範囲に入る）など、状況が変わったときだけ調べる
+//   天気が届いたとき・スポットが読み込み直されたとき・200mほど動いたとき（屋根のある所がすすめる範囲に入る）など、状況が変わったときだけ調べる
 function weatherGuide() {
   const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
   if (!w) return;   // 天気がまだ届いていない（取れない）ときは、雨宿りの案内も消さない
   if (!g || g.refer || g.kind === 'shop' || /の話$/.test(g.by || '') || !!g.weather === wet) return;
   if (!fixOk()) return;   // GPS の精度が悪い位置や乗り物で移動中の位置からは決めない（ほかの決め直しと同じ）
-  const key = `${wet}:${spots.length}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
+  const key = `${wet}:${spotsVersion}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
   if (weatherGuide.key === key) return;
   weatherGuide.key = key;
   const next = decideGuide(null);
@@ -1202,7 +1202,9 @@ function weatherGuide() {
 }
 function checkGuide() {
   if (!me) return;
-  weatherGuide();
+  // いまの行き先に着いたときは、天気で決め直す前に着いたことにする（ごほうびを先に）
+  const g0 = guideTarget();
+  if (!(g0 && g0.kind !== 'npc' && dist(me, g0) <= guideRadius(g0) && fixOk())) weatherGuide();
   const g = guideTarget();
   if (!g) {   // 行き先がないときは、まわりのようすで決める（決まらなければ少し待ってから、もう一度）
     // 決めるのは、その場にいると認めてよい位置のときだけ（GPS の精度が悪い位置や乗り物で移動中の位置から決めない）

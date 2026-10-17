@@ -124,7 +124,8 @@ async function walkTo(page, id) {
     await shot(page, '04-shop-card');
     await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; });
   } else R.checks.shopCard = false;
-  // せかいちず：川の名前・町名・駅名
+  // せかいちず：川の名前・町名・駅名（チェックインのほうびの知らせは7秒出ているので、写す前に消す）
+  await page.evaluate(() => { document.getElementById('reward').innerHTML = ''; });
   await page.click('#pxWorld');
   await page.waitForFunction(() => nishioPixel.worldState === 'ok', null, { timeout: 30000 });
   for (let i = 0; i < 3; i++) await page.click('#pxZoomIn');

@@ -33,7 +33,7 @@ globalThis.NISHIO_MACHI = [
     src: ['https://www.city.handa.lg.jp/'],
   },
   {
-    id: 'higashiura', city: '東浦町', icon: '🍇', center: [35.004, 136.966],
+    id: 'higashiura', city: '東浦町', icon: '🍇', center: [34.969, 136.955],
     facts: [
       '緒川は、徳川家康の母・於大の方が生まれた所。於大公園では藤の花のころに「於大まつり」がひらかれます。',
       'ぶどうの産地で、夏から秋にかけて、巨峰などのぶどうが店先にならびます。',

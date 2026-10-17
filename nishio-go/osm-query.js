@@ -14,25 +14,26 @@ const AREA = 'area["name"~"^(西尾市|岡崎市|安城市|碧南市|幸田町|�
 const KM_LNG = 111.32 * Math.cos(HOME.lat * Math.PI / 180), R_KM = (HOME.r + 300) / 1000, f6 = v => v.toFixed(4);
 const BOX = `${f6(HOME.lat - R_KM / 111.32)},${f6(HOME.lng - R_KM / KM_LNG)},${f6(HOME.lat + R_KM / 111.32)},${f6(HOME.lng + R_KM / KM_LNG)}`;
 const IN = ['(area.a)', `(${BOX})`];
-const stmts = filters => filters.flatMap(f => IN.map(w => `\n  nwr${f}${w};`)).join('');
+const stmts = (filters, ins = IN) => filters.flatMap(f => ins.map(w => `\n  nwr${f}${w};`)).join('');
+const SPOT_FILTERS = [
+  '["amenity"="place_of_worship"]["name"]',
+  '["historic"]["name"]',
+  '["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|theme_park)$"]["name"]',
+  '["leisure"~"^(park|garden|nature_reserve)$"]["name"]',
+  '["amenity"~"^(library|townhall)$"]["name"]',
+  '["railway"="station"]["name"]',
+  '["natural"~"^(beach|peak|cape)$"]["name"]',
+  '["waterway"="waterfall"]["name"]',
+  '["man_made"="lighthouse"]["name"]',
+];
 // 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
 // （注目スポットはどれも遊べる市町の中なので、名前で探すのは市町の中だけ）
-const buildQuery = names => `[out:json][timeout:180];
-${AREA}
-(${stmts([
-    '["amenity"="place_of_worship"]["name"]',
-    '["historic"]["name"]',
-    '["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|theme_park)$"]["name"]',
-    '["leisure"~"^(park|garden|nature_reserve)$"]["name"]',
-    '["amenity"~"^(library|townhall)$"]["name"]',
-    '["railway"="station"]["name"]',
-    '["natural"~"^(beach|peak|cape)$"]["name"]',
-    '["waterway"="waterfall"]["name"]',
-    '["man_made"="lighthouse"]["name"]',
-  ])}${names.length ? `
-  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : ''}
-);
-out center tags;`;
+const nameStmt = names => names.length ? `\n  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : '';
+const wrap = (body, area) => `[out:json][timeout:180];\n${area ? AREA + '\n' : ''}(${body}\n);\nout center tags;`;
+// ゲームが使う問い合わせ（osm-spots.json の q と同じ文字列なら、前もって作ったスポットを使う）
+const buildQuery = names => wrap(stmts(SPOT_FILTERS) + nameStmt(names), true);
+// 前もって作るとき（tools/bake-spots.js）は、市町の中と長方形の中を別々に問い合わせて合わせる（1回が重すぎて時間切れになるため）
+const buildQueryParts = names => [wrap(stmts(SPOT_FILTERS, [IN[0]]) + nameStmt(names), true), wrap(stmts(SPOT_FILTERS, [IN[1]]), false)];
 
 function catOf(t) {
   if (t.amenity === 'place_of_worship') return t.religion === 'shinto' ? 'shrine' : t.religion === 'buddhist' ? 'temple' : 'worship';
@@ -66,14 +67,12 @@ function toItems(json) {
 }
 
 // 街並みの目印（コンビニ・スーパー・ガソリンスタンドなど）。西尾の人が見て「あそこだ」と分かるように、名前つきで地図に出す
-const LANDMARK_QUERY = `[out:json][timeout:180];
-${AREA}
-(${stmts([
-    '["shop"~"^(convenience|supermarket|mall|department_store|doityourself|hardware|furniture|chemist|drugstore|electronics|books|clothes|car|bakery|confectionery|tea)$"]["name"]',
-    '["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office)$"]["name"]',
-  ])}
-);
-out center tags;`;
+const LANDMARK_FILTERS = [
+  '["shop"~"^(convenience|supermarket|mall|department_store|doityourself|hardware|furniture|chemist|drugstore|electronics|books|clothes|car|bakery|confectionery|tea)$"]["name"]',
+  '["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office)$"]["name"]',
+];
+const LANDMARK_QUERY = wrap(stmts(LANDMARK_FILTERS), true);
+const LANDMARK_PARTS = [wrap(stmts(LANDMARK_FILTERS, [IN[0]]), true), wrap(stmts(LANDMARK_FILTERS, [IN[1]]), false)];
 function landmarkKind(t) {
   const s = t.shop || '', a = t.amenity || '';
   if (s === 'convenience') return 'konbini';
@@ -99,7 +98,7 @@ function toLandmarks(json) {
   return out;
 }
 
-const api = { HOME, buildQuery, catOf, toItems, LANDMARK_QUERY, landmarkKind, toLandmarks };
+const api = { HOME, buildQuery, buildQueryParts, LANDMARK_PARTS, catOf, toItems, LANDMARK_QUERY, landmarkKind, toLandmarks };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else root.NSG_OSM = api;
 })(typeof window !== 'undefined' ? window : globalThis);

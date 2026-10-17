@@ -1343,13 +1343,13 @@ function drawWorld(now, w, h, dpr) {
     const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
     ctx.drawImage(tiles[code][v % tiles[code].length][code === C.A || code === C.X ? f : 0], ox + x * T, oy + y * T, T, T);
   }
-  // 市町の境（region.js）：うすい点線
+  // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();
-  ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, dpr * 1.2); ctx.setLineDash([4 * dpr, 4 * dpr]);
   for (const c of G.REGION) for (const r of c.rings) {
     ctx.beginPath();
     r.forEach(([la, lo], i) => { const q = llToW(la, lo); ctx[i ? 'lineTo' : 'moveTo'](ox + q.x * T, oy + q.y * T); });
-    ctx.stroke();
+    ctx.setLineDash([]); ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = 3.5 * dpr; ctx.stroke();
+    ctx.setLineDash([5 * dpr, 4 * dpr]); ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 1.6 * dpr; ctx.stroke();
   }
   ctx.restore();
   // 大きな建物（引いたときは出さない）

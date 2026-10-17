@@ -38,7 +38,7 @@ if (Object.keys(land).length) {
 const shareUrl = kind => `${SITE}?utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
 function shareText() {
   const s = G.stats();
-  return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n#にしおさんぽGO #西尾市 #らいすぴあ`;
+  return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;
 }
 // シェア用の画像：空と田んぼ（こよみの季節の色）の上に、きろくと当店の名前
 const logo = new Image();
@@ -65,7 +65,7 @@ function drawCard() {
   x.font = '30px "DotGothic16", sans-serif'; x.strokeText(season, 40, 362); x.fillText(season, 40, 362);
   x.fillStyle = 'rgba(0,0,0,.78)'; x.fillRect(0, H - 70, W, 70);
   x.fillStyle = '#fff'; x.font = '30px "DotGothic16", sans-serif';
-  x.fillText('西尾のお米屋さん 近藤米穀店・らいすぴあ が つくったお散歩ゲーム', 30, H - 26);
+  x.fillText((window.NSG_EDITION && window.NSG_EDITION.share) || '西尾のお米屋さん 近藤米穀店・らいすぴあ が つくったお散歩ゲーム', 30, H - 26);
   x.textAlign = 'right'; x.fillStyle = '#ffe27a'; x.fillText('go.ricepia.jp', W - 30, H - 26);
 }
 let cur = 'log';

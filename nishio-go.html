@@ -147,6 +147,11 @@
     <div class="row"><span><b>スポット</b><small id="spotInfo">—</small></span>
       <button type="button" class="btn" id="reloadSpots">再読み込み</button></div>
   </div>
+  <div class="card" id="edBox" hidden>
+    <h3>🏛 西尾市版（提案用デモ）について</h3>
+    <p class="note">西尾市が、歩いてまちを知ってもらうためにつくったゲーム、と仮定した版です。西尾市に見てもらうための試作で、西尾市の公式のものではありません。お店の要素（当店・特典・キャンペーン）を外し、市役所に観光担当の職員さんがいます。</p>
+    <button type="button" class="btn" id="edShop">お店の版にもどす</button>
+  </div>
   <div class="card">
     <h3>ポイントのルール</h3>
     <ul class="rules" id="rules"></ul>
@@ -169,7 +174,7 @@
     <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
       <button type="button" class="btn red" id="resetBtn">削除</button></div>
   </div>
-  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。作者の一覧は docs/landmark-photos.md）を参考に描いたもの<br/>運営：近藤米穀店 らいすぴあ（西尾市）</p>
+  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。作者の一覧は docs/landmark-photos.md）を参考に描いたもの<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
 </section>
 
 <!-- はじめに -->
@@ -240,6 +245,7 @@
 <script src="nishio-go/npcs.js"></script>
 <script src="nishio-go/meibutsu.js"></script>
 <script src="nishio-go/machi.js"></script>
+<script src="nishio-go/edition.js"></script>
 <script src="nishio-go/region.js"></script>
 <script src="nishio-go/season.js"></script>
 <script src="nishio-go/weather.js"></script>

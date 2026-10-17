@@ -3,6 +3,8 @@
 (() => {
 'use strict';
 
+// 版（edition.js）：shops が false の版（西尾市版・提案用デモ）では、当店・特典・キャンペーンを出さない
+const ED = window.NSG_EDITION || { id: 'shop', shops: true };
 const CFG = {
   center: [34.8625, 137.0570],            // 名鉄西尾駅〜西尾城跡のあたり
   nishioBounds: [[34.69, 136.96], [34.93, 137.21]], // 西尾市（佐久島を含む）のおおよその範囲
@@ -203,7 +205,7 @@ function buildSpots(config, osmItems) {
   const num = (v, max) => { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.min(n, max) : undefined; };
   const featured = [];
   for (const c of config) {
-    if (!c || !c.id || !c.name || c.normal) continue;
+    if (!c || !c.id || !c.name || c.normal || (c.shop && !ED.shops)) continue;
     const hasPos = Number.isFinite(c.lat) && Number.isFinite(c.lng);
     const s = { id: 'f-' + c.id, name: String(c.name), cat: 'featured', kind: CATS[c.cat] ? c.cat : 'featured',
       icon: c.icon || '⭐', lat: c.lat, lng: c.lng, featured: true, approx: hasPos && !!c.approx,
@@ -789,7 +791,7 @@ function todaysQuests() {
   pool.push({ id: 'area', icon: area.icon, text: `${area.name}の注目スポットに行く`, goal: 1, pts: 60, val: d => d.areas.includes(area.id) ? 1 : 0 });
   for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
   const qs = pool.slice(0, 3);
-  if (rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（近藤米穀店・らいすぴあ）に寄る', goal: 1, pts: 80, val: d => d.shop };
+  if (ED.shops && rnd() < 0.35) qs[2] = { id: 'shop', icon: '🌾', text: '当店（近藤米穀店・らいすぴあ）に寄る', goal: 1, pts: 80, val: d => d.shop };
   // ときどき「今月の行事の会場に行く」（会場がスポットになっていて、船のいらない所だけ）
   const evs = monthEvents(new Date(date + 'T12:00:00')).filter(e => e.spot && !e.area && !ISLAND_SPOTS.has(e.spot)), er = seeded(hashStr('event:' + date));
   if (evs.length && qs[2].id !== 'shop' && er() < 0.4) {
@@ -1747,8 +1749,7 @@ $('demoBtn').addEventListener('click', () => begin(true));
 renderHeader();
 loadSpots(false);
 loadAreas();
-loadRewards();
-loadCampaigns();
+if (ED.shops) { loadRewards(); loadCampaigns(); }
 // 累計プレイ人数（nishio-go/stats.json：Google アナリティクスから毎日数える）。100人をこえたら、はじめの画面に出す
 fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(j => {
   if (!j || !(j.players >= 100) || !$('playerCount')) return;

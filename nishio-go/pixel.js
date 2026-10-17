@@ -749,12 +749,10 @@ let worldProgress = '';
 async function buildWorld(force) {
   if (worldState === 'building' || worldState === 'enriching' || (worldState === 'ok' && !force)) return;
   if (BAKE) await luReady;   // 作るときは土地利用の表を待つ
-  const saved = !force && store.get(WORLD_KEY);
-  if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-    world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
-  }
   worldState = 'building';
-  if (!BAKE) {   // 用意しておいた地図（実際の地図データから作ったもの）
+  // 1) 用意しておいた地図（実際の地図データから作ったもの）をいつも先に見る。作り直されたら（土地利用の更新など）すぐ新しい地図に。
+  //    変わっていなければブラウザの HTTP キャッシュの確かめだけで軽い
+  if (!BAKE) {
     try {
       const r = await fetch(WORLD_FILE, { cache: 'no-cache' });
       const b = r.ok ? await r.json() : null;
@@ -765,7 +763,12 @@ async function buildWorld(force) {
         if (!store.set(WORLD_KEY, { t: Date.now(), w: WW, h: WH, d: b.d, p: worldPois, l: worldLabels, days })) store.del(WORLD_KEY);
         return;
       }
-    } catch (e) { /* なければブラウザで作る */ }
+    } catch (e) { /* 取れなければ（オフラインなど）端末に保存した地図か、ブラウザで作る */ }
+  }
+  // 2) 端末に保存した地図（用意した地図が取れないときと、ブラウザで作った地図）
+  const saved = !force && store.get(WORLD_KEY);
+  if (saved && saved.w === WW && saved.h === WH && saved.d && saved.d.length === WW * WH && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
+    world = dec(saved.d); worldPois = saved.p || []; worldLabels = saved.l || []; makeWorldImg(); worldState = 'ok'; return;
   }
   try {
     const N = WW * WH, base = new Uint8Array(N).fill(UNSET);

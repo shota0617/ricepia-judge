@@ -2,7 +2,13 @@
 // ゲームと同じ問い合わせ（nishio-go/osm-query.js）で取り、nishio-go/osm-spots.json に保存する。
 // ゲームはまずこのファイルを使うので、遊ぶたびに Overpass に問い合わせなくてよく、混んでいて取れないこともない。
 const fs = require('fs'), path = require('path');
-const { ROOT, overpassFromNode } = require('./bake-common');
+const { ROOT, overpassFromNode: once } = require('./bake-common');
+// 遊べる範囲が広いので、混んでいて時間切れになったら少し待って取り直す（3回まで）
+async function overpassFromNode(body) {
+  for (let i = 1; ; i++) {
+    try { return await once(body); } catch (e) { if (i >= 3) throw e; console.log(`  ${i}回目 失敗。${60 * i}秒待って取り直す`); await new Promise(r => setTimeout(r, 60000 * i)); }
+  }
+}
 const { buildQuery, toItems, LANDMARK_QUERY, toLandmarks } = require('../nishio-go/osm-query.js');
 
 (async () => {

@@ -69,7 +69,7 @@ const inPlay = (lat, lng) => (lat > CFG.nishioBounds[0][0] && lat < CFG.nishioBo
   || [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([a, b]) => !!cityAt(lat + a * PLAY_PAD, lng + b * PLAY_PAD));
 
 // OpenStreetMap への問い合わせと分類は osm-query.js（tools/bake-spots.js と共通）
-const { buildQuery, toItems } = window.NSG_OSM;
+const { buildQuery, buildQueryParts, toItems } = window.NSG_OSM;
 
 const CATS = {
   featured: { i: '⭐', n: '注目スポット' },
@@ -289,7 +289,7 @@ async function doLoadSpots(force) {
   if (!spots.length) { spots = buildSpots(config.filter(c => c && !c.approx), []); spotsVersion++; renderMarkers(); refreshNearby(); }
 
   let ok = false;
-  const query = buildQuery([...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))]);
+  const names = [...new Set(config.flatMap(c => (c ? matchesOf(c) : [])))], query = buildQuery(names);   // query はキャッシュの見分けに使う
   const stored = store.get(OSM_KEY, null);
   const cached = stored && stored.q === query ? stored : null;   // 注目スポットの名前が変わったら取り直す
   let items = null, baked = null;
@@ -300,7 +300,10 @@ async function doLoadSpots(force) {
     items = baked.items; spotMeta.osmAt = baked.t; spotMeta.osmOk = true; ok = true;
   } else {
     try {
-      items = await fetchOverpass(query);
+      // 1回で全部は重くて時間切れになりやすいので、市町の中と本店から15kmの長方形の中に分けて取り、同じ場所は1つにする（tools/bake-spots.js と同じ）
+      const seen = new Set();
+      items = [];
+      for (const q of buildQueryParts(names)) for (const it of await fetchOverpass(q)) if (!seen.has(it[0])) { seen.add(it[0]); items.push(it); }
       spotMeta.osmAt = Date.now(); spotMeta.osmOk = true; ok = true;
       if (!store.set(OSM_KEY, { t: spotMeta.osmAt, q: query, items })) store.del(OSM_KEY);
     } catch (e) {

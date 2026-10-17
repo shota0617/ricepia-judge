@@ -20,8 +20,22 @@ const d2 = (a, b) => Math.hypot((a[0] - b[0]) * 111, (a[1] - b[1]) * 91);
 const fromCode = c => ({ 1: 'sunny', 2: 'cloudy', 3: 'rain', 4: 'snow' })[String(c || '')[0]] || null;
 async function getJson(u) { const r = await fetch(u, { cache: 'no-cache' }); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
 
+function inRing(lat, lng, r) {
+  let inside = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    if ((r[i][0] > lat) !== (r[j][0] > lat) && lng < (r[j][1] - r[i][1]) * (lat - r[i][0]) / (r[j][0] - r[i][0]) + r[i][1]) inside = !inside;
+  }
+  return inside;
+}
+// 東部の予報は蒲郡市だけ（ほかの6市町は西部）。市町の境界（region.js）で決め、どの市町にも入らない所（海の上など）だけ蒲郡のあたりかで決める
+function isEast(lat, lng) {
+  const cities = (root.NISHIO_REGION && root.NISHIO_REGION.cities) || [];
+  const c = cities.find(c => (c.rings || []).some(r => inRing(lat, lng, r)));
+  return c ? c.id === 'gamagori' : lng > 137.15 && lat < 34.9;
+}
+
 async function load(lat, lng) {
-  const east = lng > 137.15 && lat < 34.9;   // 蒲郡のあたりは東部の予報
+  const east = isEast(lat, lng);
   const [fc, t] = await Promise.all([getJson(BASE + 'forecast/data/forecast/230000.json'), fetch(BASE + 'amedas/data/latest_time.txt', { cache: 'no-cache' }).then(r => r.ok ? r.text() : Promise.reject(new Error('HTTP ' + r.status)))]);
   const m = /^(\d{4})-(\d\d)-(\d\d)T(\d\d):(\d\d):(\d\d)/.exec(t.trim());
   if (!m) throw new Error('時刻が読めない');
@@ -51,5 +65,5 @@ function refresh(lat, lng) {
   }).catch(() => cur).finally(() => { loading = null; });
   return loading;
 }
-root.NISHIO_WEATHER = { refresh, get current() { return cur; }, onChange(f) { listeners.push(f); }, kinds, STATIONS };
+root.NISHIO_WEATHER = { refresh, get current() { return cur; }, onChange(f) { listeners.push(f); }, kinds, STATIONS, isEast };
 })(window);

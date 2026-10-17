@@ -32,9 +32,11 @@ jobs:
             unzip -o -q "landuse-src/$m.zip" '*.dbf' -d "landuse-src/$m"
           done
       - name: Bake landuse.json
+        id: bake
         run: node tools/bake-landuse.js landuse-src
-      # 土地利用の表が変わったら、歩く地図とせかいちずの版を上げて（古い区画をぜんぶ作り直す対象にする）いっしょにコミットし、
-      # 両方の作成を起動する（GITHUB_TOKEN のコミットでは push の起動がかからないため）
+      # 土地利用の表が変わったら、せかいちずの版を上げ、前の範囲の中身が変わったときは歩く地図の版も上げて（古い区画をぜんぶ作り直す対象にする）
+      # いっしょにコミットし、両方の作成を起動する（GITHUB_TOKEN のコミットでは push の起動がかからないため）。
+      # 範囲を広げただけ（前の範囲は同じ）なら、歩く地図は新しく範囲に入った区画だけ作る
       - name: Commit landuse.json
         id: commit
         run: |
@@ -42,7 +44,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add nishio-go/landuse.json
           if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
-          echo $(( $(cat tools/chunks-version.txt) + 1 )) > tools/chunks-version.txt
+          if [ "${{ steps.bake.outputs.old_changed }}" != "0" ]; then echo $(( $(cat tools/chunks-version.txt) + 1 )) > tools/chunks-version.txt; fi
           echo $(( $(cat tools/world-version.txt) + 1 )) > tools/world-version.txt
           git add tools/chunks-version.txt tools/world-version.txt
           git commit -q -m "にしおさんぽGO: 土地利用の表を国土数値情報から作り直し、歩く地図とせかいちずを作り直す（自動）"

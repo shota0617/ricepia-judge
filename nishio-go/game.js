@@ -6,6 +6,7 @@
 const CFG = {
   center: [34.8625, 137.0570],            // 名鉄西尾駅〜西尾城跡のあたり
   nishioBounds: [[34.69, 136.96], [34.93, 137.21]], // 西尾市（佐久島を含む）のおおよその範囲
+  home: { lat: 34.891717, lng: 137.059249, r: 15000 },   // 近藤米穀店（本店）から半径15kmも遊べる範囲（刈谷・知立・半田・東浦・阿久比・武豊など、市町の外も）
   reach: 40,                // チェックインできる距離（m）
   reachApprox: 120,         // 位置が概算の注目スポットは広めに
   accSlack: 25,             // GPS誤差として上乗せする最大値（m）
@@ -44,14 +45,19 @@ function cityAt(lat, lng) {
   }
   return null;
 }
-// 遊べる範囲のおおよその長方形（西尾市の範囲と、となりの市町の範囲をあわせたもの）
+// 本店からの距離（m）。半径 CFG.home.r の円も遊べる範囲
+const M_PER_LNG = 111320 * Math.cos(CFG.home.lat * Math.PI / 180);
+const homeDist = (lat, lng) => Math.hypot((lat - CFG.home.lat) * 111320, (lng - CFG.home.lng) * M_PER_LNG);
+const HOME_BOX = [[CFG.home.lat - CFG.home.r / 111320, CFG.home.lng - CFG.home.r / M_PER_LNG], [CFG.home.lat + CFG.home.r / 111320, CFG.home.lng + CFG.home.r / M_PER_LNG]];
+// 遊べる範囲のおおよその長方形（西尾市の範囲、となりの市町の範囲、本店から15kmの円をあわせたもの）
 const playBounds = REGION.reduce((b, c) => [[Math.min(b[0][0], c.bbox[0][0]), Math.min(b[0][1], c.bbox[0][1])], [Math.max(b[1][0], c.bbox[1][0]), Math.max(b[1][1], c.bbox[1][1])]],
-  CFG.nishioBounds.map(p => p.slice()));
+  [[Math.min(CFG.nishioBounds[0][0], HOME_BOX[0][0]), Math.min(CFG.nishioBounds[0][1], HOME_BOX[0][1])], [Math.max(CFG.nishioBounds[1][0], HOME_BOX[1][0]), Math.max(CFG.nishioBounds[1][1], HOME_BOX[1][1])]]);
 // となりの市町の地区 id（areas.json・spots.json の area）
 const NEAR_AREAS = new Set(['okazaki', 'anjo', 'hekinan', 'kota', 'gamagori', 'takahama']);
 // 境界は約60mに間引いてあるので、境のすぐ外（約300m以内）も遊べる範囲にする（境の上にある名所が外にならないように。区画の判定と同じ幅）
 const PLAY_PAD = 0.003;
 const inPlay = (lat, lng) => (lat > CFG.nishioBounds[0][0] && lat < CFG.nishioBounds[1][0] && lng > CFG.nishioBounds[0][1] && lng < CFG.nishioBounds[1][1])
+  || homeDist(lat, lng) <= CFG.home.r + 300
   || [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].some(([a, b]) => !!cityAt(lat + a * PLAY_PAD, lng + b * PLAY_PAD));
 
 // OpenStreetMap への問い合わせと分類は osm-query.js（tools/bake-spots.js と共通）
@@ -1313,7 +1319,7 @@ function refreshNearby() {
     : `🌾 籾 <b>${r.momi}合</b>・🍚 米袋 <b>${toKg(r.white)}</b>／${ng ? toKg(ng.go) : '60'}kg`);
   if (driving) msgs.push('🚗 軽トラで移動中（道だけ走れます。歩いたポイントは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
-  else if (!inPlay(me.lat, me.lng)) msgs.push('📍 いまは遊べる範囲（西尾市と となりの市町）の外にいるようです');
+  else if (!inPlay(me.lat, me.lng)) msgs.push('📍 いまは遊べる範囲（西尾市と となりの市町、本店から15km）の外にいるようです');
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected) {

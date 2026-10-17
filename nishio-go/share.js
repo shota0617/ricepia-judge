@@ -35,7 +35,8 @@ if (Object.keys(land).length) {
 }
 
 /* ---------- シェア ---------- */
-const shareUrl = kind => `${SITE}?utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+// 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
 function shareText() {
   const s = G.stats();
   return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;

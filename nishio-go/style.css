@@ -39,7 +39,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .spot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;background:#fff;border:3px solid var(--blue);box-shadow:0 2px 6px rgba(0,0,0,.3);transition:transform .2s}
 .spot.feat{width:42px;height:42px;font-size:22px;border-color:var(--gold);background:#fff8e6;box-shadow:0 0 0 4px rgba(227,164,43,.3),0 2px 6px rgba(0,0,0,.3)}
 .spot.shop{width:50px;height:50px;font-size:26px;border-color:#d23a2e;background:#fff3e0;position:relative;box-shadow:0 0 0 4px rgba(210,58,46,.28),0 2px 6px rgba(0,0,0,.3)}
-.spot.shop::after{content:'当店';position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:#d23a2e;color:#fff;font-size:11px;font-weight:800;line-height:1;padding:3px 6px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.spot.shop::after{content:attr(data-sign);position:absolute;top:-16px;left:50%;transform:translateX(-50%);background:#d23a2e;color:#fff;border:1px solid #000;font-size:11px;font-weight:800;line-height:1;padding:3px 6px;border-radius:4px;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+/* 本物の看板と同じ色：らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字 */
+.spot.shop-ricepia::after{background:#fff;color:#d7262e}
+.spot.shop-kondo::after{background:#f3ead0;color:#111}
 .shop-links{display:flex;gap:6px;flex-wrap:wrap}
 .shop-links .btn{text-decoration:none}
 .spot.near{transform:scale(1.15);animation:pulse 1.2s infinite}
@@ -68,9 +71,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 
 /* 下部シート */
 .sheet{position:fixed;left:10px;right:10px;bottom:calc(var(--tabs-h) + var(--safe-b) + 10px);z-index:900;background:var(--card);border-radius:16px;padding:10px 12px;box-shadow:0 4px 16px rgba(0,0,0,.2);display:flex;flex-direction:column;gap:8px;max-width:520px;margin:0 auto}
-.sheet-top{display:flex;gap:6px;align-items:stretch}
-.mode-sw{flex:1;display:flex;gap:4px;background:#eef3e6;border-radius:10px;padding:3px}
-.snd-btn{flex:0 0 40px;border:0;border-radius:10px;background:#eef3e6;font-size:16px;padding:0}
+.mode-sw{display:flex;gap:4px;background:#eef3e6;border-radius:10px;padding:3px;margin-bottom:8px}
 .mode-sw button{flex:1;border:0;border-radius:8px;padding:6px 4px;font-size:12px;font-weight:700;background:none;color:var(--sub);white-space:nowrap}
 .mode-sw button[aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .status{font-size:13px;color:var(--sub);line-height:1.5}
@@ -196,7 +197,7 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 .wallet small{color:var(--sub);font-size:12px}
 .list li .num.minus{color:var(--red)}
 #eventList li.next{opacity:.75}
-#eventList .btn.mini{margin:0;flex:none}
+#eventList .btn.mini,#upList .btn.mini{margin:0;flex:none}
 .note.src{font-size:11px;color:var(--sub);line-height:1.6;margin:6px 2px 14px}
 .list li .btn{font-size:13px;padding:7px 12px}
 .list li .btn:disabled{background:#c9cfc6;opacity:1;font-weight:600}
@@ -238,6 +239,9 @@ body.px #map{visibility:hidden}
 .px-pad{position:absolute;left:12px;bottom:max(176px,calc(var(--sheet-h,0px) + 48px));display:flex;align-items:flex-end;gap:8px}
 .px-pad button{width:42px;height:42px}
 .px-pad .c{font-size:19px}.px-pad .c.on{background:rgba(31,77,43,.9);border-color:#ffd54f}
+.px-pad .a{font-size:19px}.px-pad .a.on{background:rgba(31,77,43,.9);border-color:#ffd54f;animation:autoGlow 1.6s ease-in-out infinite}
+@keyframes autoGlow{50%{box-shadow:0 0 0 3px rgba(255,213,79,.45)}}
+@media (prefers-reduced-motion:reduce){.px-pad .a.on{animation:none}}
 /* スティック：さわったまま動かすと、その向きへ歩きつづける（大きく倒すと速く、ななめは2つの向きを交互に） */
 .px-stick{position:relative;width:80px;height:80px;border-radius:50%;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.85);box-shadow:inset 0 0 0 4px rgba(255,255,255,.08);touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
 .px-stick.on{background:rgba(0,0,0,.6);cursor:grabbing}
@@ -261,10 +265,7 @@ body.px #map{visibility:hidden}
 /* ドット絵表示のときは、下のウィンドウもドラクエ風に */
 body.px .sheet{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace}
 body.px .status{color:#fff;font-size:14px}
-body.px .mode-sw{background:none;border:2px solid #fff;border-radius:4px;padding:2px}
-body.px .snd-btn{background:none;border:2px solid #fff;border-radius:4px}
-body.px .mode-sw button{color:#bbb;font-family:inherit;font-weight:400;border-radius:2px}
-body.px .mode-sw button[aria-pressed="true"]{background:#fff;color:#000;box-shadow:none}
+body.px .fab-col{display:none}   /* ドット絵の地図では、地図の切り替え（せってい）と現在地のボタンを出さない（カメラは主人公についていく） */
 body.px .status b{color:#ffd54f;font-weight:400}
 body.px .spin{background:#000;border:2px solid #fff;box-shadow:none;border-radius:4px;font-family:inherit}
 body.px .spin.feat{background:#000;border-color:#ffd54f;box-shadow:none}
@@ -299,41 +300,16 @@ body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(
 .px-info .popup.npc .npc-at,.px-info .popup.npc .npc-end{color:#cfd8dc}
 .npc-mk{font-size:22px;line-height:30px;text-align:center;filter:drop-shadow(0 1px 1px rgba(0,0,0,.45))}
 .npc-mk:not(.met)::after{content:"💬";position:absolute;right:-10px;top:-12px;font-size:13px}
-/* 米屋の仕事（このゲームの核）：持ち込みボタン・選別と精米の画面 */
-.spin.rice{background:linear-gradient(135deg,#c9a227,#e8c95a);color:#3a2a00}
-.intro .pitch{margin:8px 0 4px;font-size:15px;line-height:1.6}
-.intro ol.core{margin:4px 0 8px;padding-left:1.4em;font-size:13px;line-height:1.7}
-.mekiki{position:fixed;inset:0;z-index:1900;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px}
-.mk-box{width:min(100%,420px);max-height:calc(100dvh - 32px);overflow:auto;background:#fffdf5;border-radius:14px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.mk-box h3{margin:0 0 6px;font-size:17px;display:flex;justify-content:space-between;align-items:baseline}
-.mk-box p{margin:6px 0;font-size:14px;line-height:1.6}
-.mk-rule{margin:4px 0 8px;padding-left:1.2em;font-size:13px;line-height:1.6}
-.mk-demo{display:flex;align-items:center;flex-wrap:wrap;gap:4px 6px;font-size:12px;margin:6px 0 10px}
-.mk-demo .grain{width:16px;height:22px;display:inline-block}
-.mk-time{font-size:22px;color:#b3261e;font-variant-numeric:tabular-nums}
-.mk-sub{color:var(--sub);font-size:13px}
-.mk-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px;background:#3b2f25;border-radius:10px}
-.grain{position:relative;border:2px solid #2a2015;padding:0;aspect-ratio:5/8;width:100%;border-radius:50% 50% 46% 46%/60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff 0 20%,#f3ecd6 50%,#e2d6b4 100%);touch-action:manipulation}
-.grain.kame::after{content:"";position:absolute;left:38%;top:32%;width:26%;height:20%;border-radius:50%;background:#5a3b1c;box-shadow:0 0 0 2px rgba(120,80,30,.35)}
-.grain.ao{background:radial-gradient(circle at 35% 30%,#f2fbe0 0 15%,#c9e3a0 55%,#9fc472 100%)}
-.grain.wari{clip-path:polygon(0 0,100% 0,100% 48%,55% 62%,0 70%)}
-.grain.gone{visibility:hidden}
-.mk-pol{display:grid;gap:8px;margin:8px 0}
-.mk-pol .btn{display:flex;flex-direction:column;align-items:flex-start;white-space:normal;text-align:left;padding:10px 12px}
-.mk-pol .btn small{font-weight:400;font-size:12px;opacity:.9}
-.mk-note{font-size:12px!important;color:var(--sub)}
-.mk-goal{font-weight:700;color:#8a6423}
-.mk-bag{position:relative;margin:8px 0;padding:8px 10px;border:2px solid #c9a227;border-radius:10px;background:#fff8e1;overflow:hidden}
-.mk-bag span{position:relative;font-weight:700;z-index:1}
-.mk-bag i{position:absolute;left:0;top:0;bottom:0;background:rgba(201,162,39,.25)}
-.mk-bag small{position:relative;display:block;font-size:12px;color:var(--sub);z-index:1}
-.mk-box .fact{font-size:13px;background:#f1f6ec;border-radius:8px;padding:8px 10px}
 /* みちしるべ（次の行き先。人の話とまわりのようすで決まる） */
 .guide{margin:0 0 6px;padding:6px 10px;border-left:4px solid #3aa7d6;background:#eef8fc;border-radius:8px;font-size:13px;line-height:1.5}
 .guide b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide b span{font-weight:400;font-size:12px}
 .guide small{display:block;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide.open b,.guide.open small{white-space:normal}
+.guide .alts{display:none;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+.guide.open .alts{display:flex}
+.guide .alts em{font-style:normal;font-size:12px;color:var(--sub)}
+.guide .alts .btn{margin:0;white-space:normal;text-align:left}
 body.px .guide{background:#000;color:#7ee0ff;border:2px solid #7ee0ff;border-left-width:4px}
 body.px .guide b{font-weight:400}
 body.px .guide small{color:#ddd}

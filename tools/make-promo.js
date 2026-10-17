@@ -1,12 +1,13 @@
 // にしおさんぽGO の広告用の動画と画像を、ほんとうのゲーム画面から作る：node tools/make-promo.js [出力フォルダ]
-// ・ヘッドレス Chromium で「操作して遊ぶ」を台本どおりに進め、字幕をのせて縦長（9:16、1080×1920）の動画（webm）を録る
-//   （ワークフローでは ffmpeg で mp4 にする：.github/workflows/make-promo.yml）
+// ・ヘッドレス Chromium で「操作して遊ぶ」を台本どおりに進め、字幕をのせて縦長（9:16、1080×1920）の動画（mp4。音はゲームの BGM）を録る
+//   （tools/record-page.js：画面を2倍の解像度で撮りつづけて ffmpeg でつなぐ。ffmpeg が要る）
 // ・場面ごとの静止画（9:16）と、広告用の画像（Google・Meta・LINEヤフー広告の各サイズ）、LINE リッチメニューのマスも作る
 // ・字幕は docs/fun-core.md と ricepia.jp に書いてあることだけ。Meta・Google・LINE の広告、店頭のモニターなどに使う
 // 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、PROMO_PORT
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
-const { startServer } = require('./bake-common');
+const { startServer, ROOT } = require('./bake-common');
+const { recordPage, toMp4 } = require('./record-page');
 
 const OUT = path.resolve(process.argv[2] || 'promo-out');
 const PORT = Number(process.env.PROMO_PORT) || 8897, URL = `http://localhost:${PORT}/nishio-go.html`;
@@ -43,9 +44,8 @@ async function endCard(page) {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 3, timezoneId: 'Asia/Tokyo', locale: 'ja-JP',
-    recordVideo: { dir: OUT, size: { width: 1080, height: 1920 } } });
-  await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_noanalytics', '1'); });
+  const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 3, timezoneId: 'Asia/Tokyo', locale: 'ja-JP' });
+  await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_noanalytics', '1'); });
   const page = await ctx.newPage();
   page.on('pageerror', e => console.log('pageerror:', e.message));
   if (process.env.LEAFLET_DIR) await page.route('https://unpkg.com/**', r => {
@@ -57,6 +57,9 @@ async function endCard(page) {
   const G = (fn, arg) => page.evaluate(fn, arg);
 
   await page.goto(URL); await sleep(2500);
+  const frames = path.join(OUT, 'promo-frames');
+  fs.rmSync(frames, { recursive: true, force: true });
+  const stop = await recordPage(page, frames);
   // 1) はじめの画面
   await caption(page, '西尾のお米屋さんがつくった<br>お散歩ゲーム', 'にしおさんぽGO'); await sleep(3500);
   await shot('01-intro');
@@ -71,7 +74,7 @@ async function endCard(page) {
   await shot('02-walk');
   // 3) 人の話で、次の行き先が決まる
   await G(() => { const n = nishioGo.npcs.find(x => x.id === 'castle-guide'); nishioGo.moveTo(n.lat, n.lng); const r = nishioGo.talkNpc(n.id, 0); document.getElementById('pxInfoBody').innerHTML = r.html; document.getElementById('pxInfo').hidden = false; });
-  await caption(page, '🧭 行き先は、自分では決めない', '西尾の人の話が、次に行く所を教えてくれる'); await sleep(3500);
+  await caption(page, '📜 まちの人の話で「イベント」発生', '話を聞くと、次に行く所が決まる'); await sleep(3500);
   await G(() => { let h = ''; for (let i = 1; i < 8; i++) { const r = nishioGo.talkNpc('castle-guide', i); if (r.html === h) break; h = r.html; } document.getElementById('pxInfoBody').innerHTML = h; });
   await sleep(3000);
   await shot('03-talk');
@@ -80,35 +83,20 @@ async function endCard(page) {
   await G(() => { const k = document.getElementById('koyomi'); if (k && !k.hidden) k.classList.add('open'); });
   await caption(page, '季節や天気で、まちのようすが変わる', '田んぼの色も、月ごとに'); await sleep(3500);
   await G(() => { const k = document.getElementById('koyomi'); if (k) k.classList.remove('open'); });
-  // 5) 田んぼで籾を集める
-  const run = await G(async () => {
-    const P = nishioPixel, C = P.C, s = nishioGo.spots.find(x => x.id === 'f-ricepia'); nishioGo.moveTo(s.lat, s.lng);
-    await new Promise(r => setTimeout(r, 2500));
-    const q = P.toTile(s.lat, s.lng), x0 = Math.floor(q.x), y0 = Math.floor(q.y), farm = (x, y) => [C.U, C.F].includes(P.codeAt(x, y));
-    for (let r = 0; r < 120; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
-      if ([0, 1, 2, 3, 4, 5, 6, 7].every(k => farm(x0 + dx + k, y0 + dy))) return [x0 + dx, y0 + dy];
-    }
-    return null;
-  });
-  if (run) {
-    await G(([x, y]) => { const ll = nishioPixel.toLatLng(x - 0.5, y + 0.5); nishioGo.moveTo(ll.lat, ll.lng, 'tap'); }, run);
-    await sleep(1200);
-    await caption(page, '🌾 田んぼを歩いて、籾を集める', '新米の季節は、たくさん集まる');
-    for (let k = 0; k < 7; k++) { await page.keyboard.press('ArrowRight'); await sleep(420); }
-    await sleep(1200);
-    await shot('04-field');
-  }
-  // 6) 当店で選別して精米
-  const mk = await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-ricepia'); nishioGo.moveTo(s.lat, s.lng); const r = nishioGo.rice; r.momi = Math.max(r.momi, 12); nishioGo.openMekiki(s); return { open: !document.getElementById('mekiki').hidden, toast: document.getElementById('toast').textContent }; });
-  console.log('  選別の画面:', JSON.stringify(mk));
-  await caption(page, '🍚 お米屋さんの仕事も、体験', '悪い粒を見つけて取りのぞき、精米して米袋へ'); await sleep(2500);
-  await page.click('[data-mk="start"]').catch(() => {});
-  await sleep(600);
-  for (let i = 0; i < 8; i++) { await page.click('.mk-grid .grain.kame:not(.gone), .mk-grid .grain.ao:not(.gone), .mk-grid .grain.wari:not(.gone)', { timeout: 800 }).catch(() => {}); await sleep(350); }
+  // 5) おまかせ歩きで、まちを知る（まちメモ）
+  await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-iwase-bunko'); nishioGo.moveTo(s.lat + 0.0006, s.lng); });
+  await sleep(2000);
+  await caption(page, '🧭 おまかせ歩きで、まちを知る', '歩くだけで「まちメモ」が集まる。閉じている間も るすばん');
+  for (const k of ['ArrowDown', 'ArrowDown', 'ArrowRight', 'ArrowDown', 'ArrowDown']) { await page.keyboard.press(k); await sleep(380); }
+  await G(() => nishioGo.autoLearn());
   await sleep(1500);
-  await shot('05-mekiki');
-  await G(() => { document.getElementById('mekiki').hidden = true; });
+  await shot('04-memo');
+  await sleep(1500);
+  // 6) ほかの行き先にも変えられる
+  await G(() => { const g = document.getElementById('guide'); if (g && !g.hidden) g.classList.add('open'); });
+  await caption(page, '行き先は、まちの人がすすめてくれる', 'ほかの行き先に変えることもできる'); await sleep(3000);
+  await shot('05-guide');
+  await G(() => { const g = document.getElementById('guide'); if (g) g.classList.remove('open'); });
   // 7) せかいちず
   await G(() => nishioPixel.setWorld(true)); await sleep(800);
   for (let i = 0; i < 2; i++) { await page.click('#pxZoomOut').catch(() => {}); await sleep(300); }
@@ -118,9 +106,11 @@ async function endCard(page) {
   await caption(page, '');
   await endCard(page); await sleep(3500);
   await shot('07-end');
-  const video = page.video();
+  const rec = await stop();
   await ctx.close();
-  if (video) { const p = await video.path(); fs.renameSync(p, path.join(OUT, 'nishio-go-9x16.webm')); console.log('  nishio-go-9x16.webm'); }
+  toMp4(rec, path.join(OUT, 'nishio-go-9x16.mp4'), { audio: path.join(ROOT, 'nishio-go', 'bgm', 'field.mp3') });
+  fs.rmSync(frames, { recursive: true, force: true });
+  console.log(`  nishio-go-9x16.mp4（${rec.duration.toFixed(1)}秒）`);
 
   // 広告用の画像（各サイズ）と、LINE リッチメニューのマス（docs/ads-game-kit.md）
   const shotB64 = n => fs.readFileSync(path.join(OUT, n)).toString('base64');
@@ -146,7 +136,7 @@ async function endCard(page) {
       <div style="position:absolute;left:0;right:0;top:${headTop}px;text-align:center;font-size:${fs}px;font-weight:bold;line-height:1.3;text-shadow:0 0 8px #fff">西尾のまちを歩く<br>お散歩ゲーム</div>
       <div style="position:absolute;left:0;right:0;top:${pill1}px;text-align:center">${pill('行き先は、西尾の人の話で決まる', Math.round(fs / 2.3))}</div>
       <div style="position:absolute;left:0;right:0;top:${pill2}px;text-align:center">${pill('無料・登録なし ／ go.ricepia.jp', Math.round(fs / 2.3))}</div>
-      <div style="position:absolute;left:0;right:0;top:${phoneTop}px;display:flex;justify-content:center;gap:${w * 0.03}px">${phone('03-talk.png', ph)}${h / w > 1.1 ? '' : phone('04-field.png', ph)}</div>${foot(Math.round(fs / 2.4), Math.round(h * 0.075))}`;
+      <div style="position:absolute;left:0;right:0;top:${phoneTop}px;display:flex;justify-content:center;gap:${w * 0.03}px">${phone('03-talk.png', ph)}${h / w > 1.1 ? '' : phone('04-memo.png', ph)}</div>${foot(Math.round(fs / 2.4), Math.round(h * 0.075))}`;
   }
   // LINE リッチメニューの1マス（ドライブスルーの代わり）。小さくても読めるように、ロゴと大きな文字だけ
   function tile(w, h) {

@@ -106,11 +106,13 @@ async function walkTo(page, id) {
   await page.waitForTimeout(7500);   // まめちしきの知らせが消えるのを待つ
   for (const id of ['f-nishio-cityhall', 'f-nishio-station', 'f-ricepia']) {
     const w = await walkTo(page, id);
-    if (w.reached) { await page.click('#spinBtn'); await page.waitForTimeout(800); w.after = await state(page); }
+    if (w.reached) { await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); }); await page.click('#spinBtn'); await page.waitForTimeout(800); w.after = await state(page); }
     R.walk.push(w);
   }
   await shot(page, '03-ricepia-checkin');
   R.checks.checkinSound = await page.evaluate(() => window.__played.some(f => f === 'checkin.mp3' || f === 'levelup.mp3'));
+  // チェックインのほうびの知らせは、タップで消える（消えるまで、下の地図にはタップが届かない）
+  R.checks.rewardTapClose = await page.evaluate(() => { const r = document.getElementById('reward'); if (!r.classList.contains('show')) return false; r.click(); return !r.classList.contains('show') && !r.innerHTML; });
   R.checks.cooldown = await page.evaluate(() => document.getElementById('spinBtn').hidden || !document.getElementById('spinSub').textContent.includes('タップして'));
   // 当店の「当店」の札をタップして、お店の案内（サイト・道案内）が開くか
   // 札がスティックなどの下に隠れていたら、見えるところに来るまで少し歩く
@@ -126,14 +128,15 @@ async function walkTo(page, id) {
     await page.keyboard.press(k); await page.waitForTimeout(400); tag = await findTag();
   }
   if (tag) {
-    await page.waitForTimeout(2500);   // チェックインの知らせが消えるのを待つ
+    await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });   // 知らせが出ていたら消す（下の地図にタップが届くように）
+    await page.waitForTimeout(300);
     await page.mouse.click(tag.x, tag.y); await page.waitForTimeout(500);
     R.checks.shopCard = await page.evaluate(() => !document.getElementById('pxInfo').hidden && /お店のサイト/.test(document.getElementById('pxInfoBody').innerText) && /道案内/.test(document.getElementById('pxInfoBody').innerText));
     await shot(page, '04-shop-card');
     await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; });
   } else R.checks.shopCard = false;
   // せかいちず：川の名前・町名・駅名（チェックインのほうびの知らせは7秒出ているので、写す前に消す）
-  await page.evaluate(() => { document.getElementById('reward').innerHTML = ''; });
+  await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   await page.click('#pxWorld');
   await page.waitForFunction(() => nishioPixel.worldState === 'ok', null, { timeout: 30000 });
   for (let i = 0; i < 3; i++) await page.click('#pxZoomIn');
@@ -169,6 +172,7 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.stickKnobMoved && c.stickWalkedNorth && c.stickReleased, 'スティックを上へ倒しても北へ歩かない・はなしても戻らない');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
+  need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
   need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');
   need(Array.isArray(c.quests) && c.quests.length === 4 && c.quests.some(q => q.startsWith('✅')), '今日のクエストが出ないか、1つも達成されない');

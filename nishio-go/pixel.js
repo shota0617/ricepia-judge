@@ -3929,7 +3929,9 @@ function spotArt(s) {
 }
 
 /* ---------- 画面 ---------- */
-const view = $('pxView'), cv = $('pxCanvas'), ctx = cv.getContext('2d');
+const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
+// 歩く地図を Godot で描くとき（せってい の試作。nishio-go/godot-field.js）は、描く命令を ctx の代わりの記録係に書いて Godot に渡す
+let ctx = ctx0, rec = null;
 let active = false, raf = 0, dirty = true, scale = 2;
 const floaters = [];   // 浮かぶ文字 { t, at }
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
@@ -3941,12 +3943,14 @@ function updateCover() {
 if (window.ResizeObserver && $('sheet')) new ResizeObserver(updateCover).observe($('sheet'));
 window.addEventListener('resize', updateCover);
 // 天気（weather.js：気象庁のアメダス・予報）：雨と雪は画面に降らせ、くもりは少し暗く
-function drawWeather(now, w, h, dpr) {
+// shadeOnly：くもり・雨・雪の暗さだけ描く（Godot で描くとき。雨と雪のつぶは Godot が描く）
+function drawWeather(now, w, h, dpr, shadeOnly) {
   const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current;
   if (!wx) return;
   if (wx.kind === 'cloudy') { ctx.fillStyle = 'rgba(40,50,70,.12)'; ctx.fillRect(0, 0, w, h); return; }
   if (wx.kind !== 'rain' && wx.kind !== 'snow') return;
   ctx.fillStyle = 'rgba(30,40,60,.18)'; ctx.fillRect(0, 0, w, h);
+  if (shadeOnly) return;
   const n = wx.kind === 'rain' ? 70 : 45, t = now / 1000;
   ctx.save();
   if (wx.kind === 'rain') { ctx.strokeStyle = 'rgba(200,225,255,.55)'; ctx.lineWidth = Math.max(1, dpr); ctx.beginPath(); }
@@ -3989,7 +3993,10 @@ function frame(now) {
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
   refreshSeason(now);
-  if (worldMode) { drawWorld(now, w, h, dpr); return; }
+  if (rec) { rec.end(); rec = null; ctx = ctx0; }
+  if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
+  rec = window.NSG_GODOT && NSG_GODOT.on() ? NSG_GODOT.rec : null;   // Godot で描く：ここから frame の終わりまで、描く命令を記録する
+  if (rec) { ctx = rec; rec.begin(w, h); }
   const T = Math.round(16 * scale * dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
   lastT = now;
@@ -4132,7 +4139,7 @@ function frame(now) {
     }
   }
 
-  drawWeather(now, w, h, dpr);
+  drawWeather(now, w, h, dpr, !!rec);   // Godot で描くときは、暗さだけ。雨と雪は Godot のつぶで
 
   // 町が変わったら、まん中に町名を大きく出す（いまいる町名は、左上の こよみ の札に出す）
   if (here.banner) {
@@ -4192,6 +4199,7 @@ function frame(now) {
     : st === 'ok' ? '' : 'ちずを よみこんでいます…';
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
+  if (rec) { rec.end(); rec = null; ctx = ctx0; }
   dirty = false;
 }
 
@@ -4447,7 +4455,7 @@ function setActive(on) {
   updatePad();
   cancelAnimationFrame(raf);
   if (on) { lastT = 0; raf = requestAnimationFrame(frame); }
-  else G.invalidateMap();
+  else { G.invalidateMap(); if (window.NSG_GODOT) NSG_GODOT.idle(); }   // ふつうの地図のあいだは Godot を休ませる
 }
 function updatePad() {
   // 操作して移動なら、せかいちずでもスティックを出す（動かすと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）

@@ -1383,8 +1383,12 @@ function showReward(total, name, lines, lvUp, fact, dot) {
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
     ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, fact || dot ? 7000 : 2700);
+  el.classList.add('show');
+  clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, fact || dot ? 7000 : 2700);
 }
+// ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
+function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); }
+$('reward').addEventListener('click', hideReward);
 
 /* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 70000枚） ----------
    西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・天気・日にちで決まる */
@@ -1639,7 +1643,7 @@ $('copyGps').addEventListener('click', async () => {
 
 /* タブ */
 function openTab(tab) {
-  clearTimeout(showReward.t); $('reward').innerHTML = '';   // ほかのタブを開いたら、ポイントの知らせは消す
+  hideReward();   // ほかのタブを開いたら、ポイントの知らせは消す
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   ['log', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
   if (tab === 'rewards') renderRewards();

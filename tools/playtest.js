@@ -106,7 +106,7 @@ async function walkTo(page, id) {
   await page.waitForTimeout(7500);   // まめちしきの知らせが消えるのを待つ
   for (const id of ['f-nishio-cityhall', 'f-nishio-station', 'f-ricepia']) {
     const w = await walkTo(page, id);
-    if (w.reached) { await page.click('#spinBtn'); await page.waitForTimeout(800); w.after = await state(page); }
+    if (w.reached) { await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); }); await page.click('#spinBtn'); await page.waitForTimeout(800); w.after = await state(page); }
     R.walk.push(w);
   }
   await shot(page, '03-ricepia-checkin');
@@ -126,14 +126,16 @@ async function walkTo(page, id) {
     await page.keyboard.press(k); await page.waitForTimeout(400); tag = await findTag();
   }
   if (tag) {
-    await page.waitForTimeout(2500);   // チェックインの知らせが消えるのを待つ
+    // チェックインのほうびの知らせは、タップで消える（消えるまで、下の地図にはタップが届かない）
+    R.checks.rewardTapClose = await page.evaluate(() => { const r = document.getElementById('reward'); if (!r.classList.contains('show')) return 'not-shown'; r.click(); return !r.classList.contains('show') && !r.innerHTML; });
+    await page.waitForTimeout(300);
     await page.mouse.click(tag.x, tag.y); await page.waitForTimeout(500);
     R.checks.shopCard = await page.evaluate(() => !document.getElementById('pxInfo').hidden && /お店のサイト/.test(document.getElementById('pxInfoBody').innerText) && /道案内/.test(document.getElementById('pxInfoBody').innerText));
     await shot(page, '04-shop-card');
     await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; });
   } else R.checks.shopCard = false;
   // せかいちず：川の名前・町名・駅名（チェックインのほうびの知らせは7秒出ているので、写す前に消す）
-  await page.evaluate(() => { document.getElementById('reward').innerHTML = ''; });
+  await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   await page.click('#pxWorld');
   await page.waitForFunction(() => nishioPixel.worldState === 'ok', null, { timeout: 30000 });
   for (let i = 0; i < 3; i++) await page.click('#pxZoomIn');

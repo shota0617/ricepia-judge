@@ -4595,7 +4595,7 @@ function snapDemoStart() {
      （ゲームがもともと案内している場所なので、そこより危ない所へは行かせない。絵はスポットと重ならないよう少しずらす）
    地図やスポットがまだ届いていない区画は、届いてから置く。開けたかどうかは game.js が覚える */
 const CHEST_CELL = 50, PUBLIC_KINDS = new Set(['park', 'shrine', 'temple', 'castle', 'beach', 'view']);
-let chests = [], chestKey = '', chestCells = new Map();
+let chests = [], chestKey = '', chestCells = new Map(), welcomeC = null;
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const seededRnd = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 // (x0, y0) からまわり r マスで、ok なマスをいちばん近い順に探す。地図が届いていないマスに当たったら undefined（あとで）
@@ -4637,7 +4637,7 @@ function updateChests() {
   if (!G.me) return;
   // あるいて移動の置き場所はスポットしだいなので、スポットの一覧が入れ替わったら（読み込み直しも）置き直す
   const date = G.ymd(), key = date + (G.demo ? ':play' : ':walk:' + G.spotsVersion);
-  if (key !== chestKey) { chestKey = key; chestCells = new Map(); }
+  if (key !== chestKey) { chestKey = key; chestCells = new Map(); welcomeC = null; }
   const t = targetTile(), ci = Math.floor(t.x / CHEST_CELL), cj = Math.floor(t.y / CHEST_CELL), list = [];
   for (let cy = Math.floor((cj - 1) * CHEST_CELL / CHUNK); cy <= Math.floor(((cj + 2) * CHEST_CELL - 1) / CHUNK); cy++)
     for (let cx = Math.floor((ci - 1) * CHEST_CELL / CHUNK); cx <= Math.floor(((ci + 2) * CHEST_CELL - 1) / CHUNK); cx++) ensureChunk(cx, cy);
@@ -4645,6 +4645,18 @@ function updateChests() {
     const k = i + ',' + j;
     if (!chestCells.has(k)) { const r = chestCell(i, j, date, !G.demo); if (r) chestCells.set(k, r); }
     if (chestCells.has(k)) list.push(...chestCells.get(k));
+  }
+  // はじめての人（操作して移動）：主人公から4〜5マス（約40m）の道に「ようこそ たからばこ」。おまかせ歩きでも寄り道する近さ（docs/retention.md）
+  if (G.welcomeChest) {
+    if (!welcomeC) {
+      const sx = Math.floor(t.x), sy = Math.floor(t.y);
+      for (const [dx, dy] of [[4, 1], [-4, 1], [1, 4], [1, -4]]) {
+        const w = nearTile(sx + dx, sy + dy, 3, c => c === C.R || c === C.D);
+        if (w === undefined) break;   // 地図がまだ届いていない：あとで
+        if (w) { const ll = toLatLng(w[0] + 0.5, w[1] + 0.5); welcomeC = { id: `${date}:welcome`, lat: ll.lat, lng: ll.lng, pts: 30, mode: 'play' }; break; }
+      }
+    }
+    if (welcomeC) list.push(welcomeC);
   }
   const changed = list.length !== chests.length || list.some((c, n) => c.id !== chests[n].id);
   chests = list;
@@ -4793,7 +4805,9 @@ function autoTick() {
   const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
   let gx, gy, goalR, gid;
   // すぐ近く（約60m）のたからばこには寄り道する。遠くのたからばこは、自分で操作して探す楽しみ（行けなかったものは、もう狙わない）
-  const ch = G.liveChests().filter(c => !autoS.skip.has(c.id) && G.dist(G.me, c) < AUTO_CHEST_M).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+  // はじめての人の「ようこそ たからばこ」は、少し遠くても（150mまで）先に開けに行く
+  const near = c => G.dist(G.me, c) < (c.id.endsWith(':welcome') ? 150 : AUTO_CHEST_M);
+  const ch = G.liveChests().filter(c => !autoS.skip.has(c.id) && near(c)).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
   if (ch) {
     const q = toTile(ch.lat, ch.lng); gx = Math.floor(q.x); gy = Math.floor(q.y); goalR = 1; gid = 'chest:' + ch.id;
     if (autoS.chest !== ch.id) { autoS.chest = ch.id; autoS.chestTicks = 0; }

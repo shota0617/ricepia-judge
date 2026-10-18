@@ -7,6 +7,10 @@
 <meta name="description" content="西尾市の地図を歩いて、神社・お寺・公園・名所などのスポットに近づくとポイントが貯まるお散歩ゲーム。西尾城跡や岩瀬文庫などの注目スポットはボーナスポイント。"/>
 <meta name="theme-color" content="#2f5d3a"/>
 <link rel="canonical" href="https://go.ricepia.jp/nishio-go.html"/>
+<link rel="manifest" href="nishio-go.webmanifest"/>
+<link rel="apple-touch-icon" href="nishio-go/icon-192.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="さんぽGO"/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%B6%3C/text%3E%3C/svg%3E"/>
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="ja_JP"/>
@@ -80,6 +84,7 @@
 <!-- 記録 -->
 <section class="panel" id="panel-log" hidden>
   <h2>きろく <button type="button" class="btn mini share-btn" id="shareLogBtn">📣 シェア</button></h2>
+  <div class="card tomorrow" id="tomorrowBox" hidden></div>
   <div class="campaigns" id="campaignBox" hidden></div>
   <div id="upBox" hidden>
     <h3>🧭 おまかせ強化 <small>操作して移動</small></h3>
@@ -186,28 +191,38 @@
   <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。作者の一覧は docs/landmark-photos.md）を参考に描いたもの<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
 </section>
 
-<!-- はじめに -->
+<!-- はじめに（遊びかたのボタンは、スクロールしなくても見える所に。くわしい説明はたたんでおく） -->
 <div class="intro" id="intro">
   <div class="intro-box">
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
     <p class="player-count" id="playerCount" hidden></p>
-    <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
-    <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>まちの人の話や、季節・天気・まわりのようすが、次に行く所をすすめてくれます。すすめられた所へ行くと、そこでまた次の話が待っています（ほかの行き先に変えることもできます）。</p>
-    <ol class="core">
-      <li><b>聞く</b>：まちの人に話しかけると「📜 イベント」。たのまれた所へ行ってみよう</li>
-      <li><b>知る</b>：着いた所・たからばこ・歩いた道すがらで「📖 まちメモ」が集まる</li>
-      <li><b>おまかせ</b>：操作して遊ぶときは、🧭おまかせ歩きで放っておいても、主人公が歩いて、話して、まちを知っていく。閉じている間も るすばん でさんぽ</li>
-    </ol>
-    <ul>
-      <li>⭐ 西尾の名所に着いたらチェックインでポイント（はじめての場所はボーナス）</li>
-      <li>📜 毎日かわる「今日のクエスト」と、今月のおまつりの会場めぐり</li>
-    </ul>
-    <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
-    <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
+    <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>名所に着くとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
     <button type="button" class="btn big mode-pick" id="startBtn">🚶 あるいて遊ぶ<small>位置情報を使って、実際に西尾のまちを歩きます</small></button>
     <button type="button" class="btn big mode-pick alt" id="demoBtn">🎮 操作して遊ぶ<small>スティックで動かして、家からでも西尾めぐり</small></button>
+    <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
+    <details class="intro-more">
+      <summary>くわしい遊びかた</summary>
+      <ol class="core">
+        <li><b>聞く</b>：まちの人に話しかけると「📜 イベント」。たのまれた所へ行ってみよう</li>
+        <li><b>知る</b>：着いた所・たからばこ・歩いた道すがらで「📖 まちメモ」が集まる</li>
+        <li><b>おまかせ</b>：操作して遊ぶときは、🧭おまかせ歩きで放っておいても、主人公が歩いて、話して、まちを知っていく。閉じている間も るすばん でさんぽ</li>
+      </ol>
+      <ul>
+        <li>⭐ 西尾の名所に着いたらチェックインでポイント（はじめての場所はボーナス）</li>
+        <li>📜 毎日かわる「今日のクエスト」と、今月のおまつりの会場めぐり</li>
+        <li>📅 毎日つづけると、連続日数のボーナス</li>
+      </ul>
+    </details>
+    <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
+    <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
   </div>
+</div>
+
+<!-- ホーム画面に追加のおすすめ（ごほうびを2回もらったあとに、7日に1回まで） -->
+<div class="a2hs" id="a2hs" hidden role="dialog" aria-label="ホーム画面に追加">
+  <p id="a2hsText">📲 ホーム画面に追加すると、あしたもワンタップで遊べます</p>
+  <div class="a2hs-btns"><button type="button" class="btn mini" id="a2hsAdd">追加する</button><button type="button" class="btn mini ghost" id="a2hsNo">あとで</button></div>
 </div>
 
 <!-- シェア（SNS・LINE・画像） -->

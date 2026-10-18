@@ -1,19 +1,25 @@
 // 型でつくる名所の絵の一覧（nishio-go/landmark-gen.js）を作る
-//   node tools/make-landmark-gen.js [写真のフォルダ] [写真の出典JSON]
+//   node tools/dump-spot-ids.js && node tools/make-landmark-gen.js [写真のフォルダ] [写真の出典JSON] [地図に出るスポットの id の一覧]
 // ・OpenStreetMap の名所（osm-spots.json）から、神社・お寺・駅・城跡・博物館・図書館・役所・教会・史跡・見どころを、
 //   注目スポット（spots.json）と重ならず、専用の絵（pixel.js の LANDMARK_ART）もない所だけ選ぶ（注目スポットから150m以内は除く）。名所の絵が全部で1000か所になる数まで
+// ・数えるのも選ぶのも、ゲームの地図に本当に出るスポットだけ（tools/dump-spot-ids.js が書き出す一覧。遊べる範囲の外・注目スポットと同じ所・すぐ近くの重複は出ない）
 // ・写真（日本語版ウィキペディアの代表画像）がある所を先に選び、色は写真から測る（空・木・白とびを除いた色のうち、暗めでくすんだ色を屋根、
 //   明るい色を壁、あざやかな色を差し色）。写真がない所は種類の基本の色（pixel.js の GEN_BASE）
 // ・形の番号は、名前（古墳・門・稲荷・教会など）と、id から決まる番号で選ぶ
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const ROOT = path.join(__dirname, '..');
 const PHOTOS = process.argv[2] || path.join(ROOT, 'reference/osm-photos'), META = process.argv[3] || path.join(ROOT, 'reference/osm-photos.json');
+const SHOWN = process.argv[4] || path.join(ROOT, 'reference/spot-ids.json');
+if (!fs.existsSync(SHOWN)) { console.error(`${SHOWN} がありません。先に node tools/dump-spot-ids.js を動かしてください`); process.exit(1); }
+const shown = new Set(JSON.parse(fs.readFileSync(SHOWN, 'utf8')));
 const TOTAL = 1000;
 const items = require(path.join(ROOT, 'nishio-go/osm-spots.json')).items;
 const featured = require(path.join(ROOT, 'nishio-go/spots.json')).spots.filter(s => Number.isFinite(s.lat));
 const pixel = fs.readFileSync(path.join(ROOT, 'nishio-go/pixel.js'), 'utf8');
 const artBlock = pixel.match(/const LANDMARK_ART = \{[\s\S]*?\n\};/)[0];   // 専用の絵がある名所（注目スポットの f-… と、手描きした OpenStreetMap の id）
 const artIds = new Set([...artBlock.matchAll(/'?(f-[a-z0-9-]+|[nwr]\d+)'?: '\w+'/g)].map(m => m[1]));
+const artShown = [...artIds].filter(id => shown.has(id)).length;
+if (artShown < artIds.size) console.warn(`専用の絵のうち ${artIds.size - artShown}か所は地図に出ません：${[...artIds].filter(id => !shown.has(id)).join(' ')}`);
 const meta = fs.existsSync(META) ? JSON.parse(fs.readFileSync(META, 'utf8')) : [];
 const photoOf = new Map(meta.map(m => [m.id, m]));
 const dist = (a, b, c, d) => Math.hypot((a - c) * 111000, (b - d) * 91000);
@@ -56,9 +62,9 @@ function colorsOf(file) {   // 写真の主な色（下の8割・まん中寄り
   const vivid = keep.filter(x => sat(x.c) > 0.45 && lum(x.c) > 50).sort((a, b) => b.n - a.n)[0];
   return [hex(roof.c), hex(wall.c), vivid ? hex(vivid.c) : null];
 }
-const pool = items.filter(it => it[1] && ORDER.includes(it[2]) && !artIds.has(it[0]) && !featured.some(f => dist(it[3], it[4], f.lat, f.lng) < 150));
+const pool = items.filter(it => it[1] && shown.has(it[0]) && ORDER.includes(it[2]) && !artIds.has(it[0]) && !featured.some(f => dist(it[3], it[4], f.lat, f.lng) < 150));
 pool.sort((a, b) => (photoOf.has(b[0]) - photoOf.has(a[0])) || ORDER.indexOf(a[2]) - ORDER.indexOf(b[2]) || a[0].localeCompare(b[0]));
-const want = TOTAL - artIds.size, gen = {};
+const want = TOTAL - artShown, gen = {};
 let withPhoto = 0;
 for (const it of pool.slice(0, want)) {
   const k = kindOf(it[2], it[1]), v = variantOf(k, it[1], it[0]), p = photoOf.get(it[0]);
@@ -73,4 +79,4 @@ const js = `// にしおさんぽGO：型でつくる名所の絵の一覧（too
 window.NISHIO_LANDMARK_GEN = ${JSON.stringify(gen).replace(/\],"/g, '],\n"')};
 `;
 fs.writeFileSync(path.join(ROOT, 'nishio-go/landmark-gen.js'), js);
-console.log(`型の絵 ${Object.keys(gen).length}か所（写真の色 ${withPhoto}）＋ 専用の絵 ${artIds.size}か所 ＝ ${Object.keys(gen).length + artIds.size}`);
+console.log(`型の絵 ${Object.keys(gen).length}か所（写真の色 ${withPhoto}）＋ 専用の絵 ${artShown}か所 ＝ ${Object.keys(gen).length + artShown}（地図に出る名所）`);

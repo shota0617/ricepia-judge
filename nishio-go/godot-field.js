@@ -6,13 +6,15 @@
 // ・Godot の画面は地図の canvas の上にかさね、タップは下の canvas に通す（名所やお店の札のタップはいままでどおり）
 // ・Godot は約7.6MB（圧縮して）あるので、オンにしたときだけ読みこむ。WebGL2 が使えない端末では使えない
 // ・オフにしたら Godot を終わらせる（見えないまま動きつづけて電池を使わないように）。またオンにしたら起動しなおす
+// ・せかいちず・ふつうの地図のあいだは Godot を休ませる（nsgField.awake() が false。Godot は1秒に2回だけ動き、雨と雪のつぶも止める）
+//   Emscripten の pauseMainLoop は使わない（止めると Godot がそのまま終了してしまう）
 (() => {
   'use strict';
   const KEY = 'nsg_godot', P = window.nishioPixel, G = window.nishioGo;
   if (!P || !G) return;
   const $ = id => document.getElementById(id);
   let want = (() => { try { return localStorage.getItem(KEY) === '1' || /[?&]godot=1\b/.test(location.search); } catch (e) { return false; } })();
-  let ready = false, starting = false, canvas = null, engine = null, latest = '', sent = '';
+  let ready = false, starting = false, canvas = null, engine = null, sleeping = false, latest = '', sent = '';
 
   /* ---------- 描く命令の記録係（CanvasRenderingContext2D のうち、pixel.js の frame が使うものだけ） ---------- */
   const scratch = document.createElement('canvas').getContext('2d');   // 文字の幅をはかる
@@ -99,14 +101,15 @@
   window.nsgField = {
     frame() { if (latest === sent) return ''; sent = latest; return latest; },
     png(id) { const c = byId[id]; if (!c) return ''; try { return c.toDataURL('image/png').split(',')[1]; } catch (e) { return ''; } },
+    awake() { return !sleeping; },
     env() { const w = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current; return JSON.stringify({ kind: (w && w.kind) || '', hour: jstHour() }); },
   };
 
   /* ---------- pixel.js から見える口 ---------- */
   window.NSG_GODOT = {
     rec,
-    on() { if (want && !ready && !starting) start(); syncSize(); return want && ready; },   // Godot が動いているときだけ記録係で描く
-    idle() { if (canvas) canvas.style.visibility = 'hidden'; },
+    on() { if (want && !ready && !starting) start(); if (want && ready) sleeping = false; syncSize(); return want && ready; },   // Godot が動いているときだけ記録係で描く
+    idle() { if (canvas) canvas.style.visibility = 'hidden'; sleeping = true; },
   };
 
   function syncSize() {
@@ -147,7 +150,7 @@
   // Godot を終わらせる（オフにしたとき）。canvas も外す（つぎは新しい canvas で起動する）
   function stop() {
     if (starting) return;   // 起動が終わってから止める（launch の then）
-    ready = false;
+    ready = false; sleeping = false;
     if (engine) { try { engine.requestQuit(); } catch (e) { /* noop */ } engine = null; }
     if (canvas) { canvas.remove(); canvas = null; }
   }

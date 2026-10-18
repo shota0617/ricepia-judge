@@ -63,7 +63,7 @@ func _ready() -> void:
 	cam.position_smoothing_enabled = false
 
 # ---------- ステージをつくる（西尾の地形をもとにした手づくり） ----------
-func _set(x: int, y: int, v: int) -> void:
+func put(x: int, y: int, v: int) -> void:
 	if x >= 0 and x < W and y >= 0 and y < ROWS:
 		grid[y * W + x] = v
 
@@ -79,7 +79,7 @@ func tile(x: int, y: int) -> int:
 func _fill(x0: int, x1: int, top: int, v: int = SOLID) -> void:
 	for x in range(x0, x1 + 1):
 		for y in range(top, ROWS):
-			_set(x, y, v)
+			put(x, y, v)
 
 func _coin(x: int, y: int) -> void:
 	items.append({"p": Vector2(x * TS + 8, y * TS + 8), "t": "leaf", "got": false, "vy": 0.0})
@@ -103,23 +103,23 @@ func build(n: int) -> void:
 			_fill(0, 24, ground)
 			for i in 4:   # 1つめの丘：うねが階段のよう
 				for x in range(26 + i * 3, 33 + i * 3):
-					_set(x, ground - 1 - i * 2, PLAT)
+					put(x, ground - 1 - i * 2, PLAT)
 				_coins(27 + i * 3, 29 + i * 3, ground - 2 - i * 2)
 			_fill(25, 60, ground)
-			_set(40, 4, BALE)
+			put(40, 4, BALE)
 			_foe(36, ground - 1, "bug")
 			_fill(64, 80, ground)   # 小川をこえる
-			for x in range(66, 72): _set(x, 8, PLAT)
+			for x in range(66, 72): put(x, 8, PLAT)
 			_coins(66, 71, 7)
 			_foe(75, ground - 1, "bug")
 			for i in 5:   # 2つめの丘：上りのうねと下りのうね
 				for x in range(84 + i * 4, 88 + i * 4):
-					_set(x, ground - 1 - min(i, 4 - i) * 2, PLAT)
+					put(x, ground - 1 - min(i, 4 - i) * 2, PLAT)
 			_fill(82, 112, ground)
 			_foe(96, ground - 1, "bug"); _foe(104, ground - 1, "bug")
-			_set(100, 6, BALE)
+			put(100, 6, BALE)
 			_fill(116, 149, ground)
-			for x in range(118, 124): _set(x, 9, PLAT)
+			for x in range(118, 124): put(x, 9, PLAT)
 			_coins(118, 123, 8)
 			start_p = Vector2(3 * TS, (ground - 1) * TS)
 			goal_x = 142 * TS
@@ -129,20 +129,20 @@ func build(n: int) -> void:
 				_fill(19 + i * 2, 20 + i * 2, ground - 1 - i, STONE)
 			_fill(27, 34, ground - 4, STONE)
 			_coins(28, 33, ground - 6)
-			for x in range(35, 41): for y in range(ground, ROWS): _set(x, y, WATER)   # 堀
+			for x in range(35, 41): for y in range(ground, ROWS): put(x, y, WATER)   # 堀
 			_fill(41, 50, ground - 2, STONE)
 			_foe(46, ground - 3, "cat")
-			for x in range(52, 60): _set(x, ground - 6, PLAT)   # 瓦屋根
+			for x in range(52, 60): put(x, ground - 6, PLAT)   # 瓦屋根
 			_coins(53, 58, ground - 7)
-			for x in range(51, 62): for y in range(ground, ROWS): _set(x, y, WATER)
+			for x in range(51, 62): for y in range(ground, ROWS): put(x, y, WATER)
 			_fill(62, 75, ground)
-			_set(66, 7, BALE)
+			put(66, 7, BALE)
 			_foe(70, ground - 1, "cat")
 			for i in 3:
 				_fill(77 + i * 3, 78 + i * 3, ground - 2 - i * 2, STONE)
-			for x in range(77, 88): if tile(x, ground) == AIR: for y in range(ground, ROWS): _set(x, y, WATER)
+			for x in range(77, 88): if tile(x, ground) == AIR: for y in range(ground, ROWS): put(x, y, WATER)
 			_fill(88, 110, ground - 6, STONE)
-			for x in range(92, 104, 4): _set(x, ground - 9, PLAT)
+			for x in range(92, 104, 4): put(x, ground - 9, PLAT)
 			_coins(90, 108, ground - 8)
 			_foe(98, ground - 7, "cat")
 			_fill(111, 159, ground)
@@ -157,14 +157,14 @@ func build(n: int) -> void:
 			for p in 5:   # 養鰻池：水のあいだにコンクリートのふち
 				var x0 := 42 + p * 7
 				_fill(x0, x0, ground - 1, STONE)
-				for x in range(x0 + 1, x0 + 7): for y in range(ground, ROWS): _set(x, y, WATER)
+				for x in range(x0 + 1, x0 + 7): for y in range(ground, ROWS): put(x, y, WATER)
 				_coin(x0 + 3, ground - 3)
 			_fill(77, 77, ground - 1, STONE)
 			_fill(78, 100, ground)
-			_set(86, 7, BALE)
+			put(86, 7, BALE)
 			_foe(90, ground - 1, "crab")
 			_fill(101, 125, ground, MUD)
-			for x in range(104, 122, 6): _set(x, ground - 4, PLAT)
+			for x in range(104, 122, 6): put(x, ground - 4, PLAT)
 			_coins(104, 122, ground - 5)
 			_foe(110, ground - 1, "crab"); _foe(118, ground - 1, "crab")
 			_fill(126, 159, ground)
@@ -172,8 +172,8 @@ func build(n: int) -> void:
 			goal_x = 150 * TS
 		4:   # 三河湾の船と佐久島：動く船をとびうつって島へ。黒壁の家の屋根の上も
 			_fill(0, 16, ground)
-			for x in range(10, 17): _set(x, ground - 1, PLAT)   # 一色港の桟橋
-			for x in range(17, 100): for y in range(ground + 1, ROWS): _set(x, y, WATER)
+			for x in range(10, 17): put(x, ground - 1, PLAT)   # 一色港の桟橋
+			for x in range(17, 100): for y in range(ground + 1, ROWS): put(x, y, WATER)
 			var bx := [20, 34, 48, 62, 78]
 			for i in bx.size():
 				boats.append({"p": Vector2(bx[i] * TS, (ground - 1) * TS), "w": 4 * TS, "x0": bx[i] * TS, "x1": (bx[i] + 6) * TS, "v": 40.0 + i * 8})
@@ -183,9 +183,9 @@ func build(n: int) -> void:
 			for h in 4:   # 黒壁の家並み：屋根をつたって
 				var x0 := 108 + h * 12
 				_fill(x0, x0 + 6, ground - 4, STONE)
-				for x in range(x0 - 1, x0 + 8): _set(x, ground - 5, PLAT)
+				for x in range(x0 - 1, x0 + 8): put(x, ground - 5, PLAT)
 				_coins(x0, x0 + 6, ground - 6)
-			_set(130, 4, BALE)
+			put(130, 4, BALE)
 			_foe(120, 4, "gull"); _foe(146, 3, "gull")
 			start_p = Vector2(3 * TS, (ground - 1) * TS)
 			goal_x = 162 * TS
@@ -196,7 +196,7 @@ func build(n: int) -> void:
 				var seg := 6 + (x % 4)
 				_fill(x, x + seg, h)
 				if x > 10 and x % 3 == 0:
-					_set(x + 2, h - 1, SPRINGT)
+					put(x + 2, h - 1, SPRINGT)
 				if x > 6:
 					_coins(x + 1, x + seg - 1, h - 3)
 				x += seg + 1
@@ -204,7 +204,7 @@ func build(n: int) -> void:
 					h = max(4, h - 1 - (x % 2))
 			_fill(W - 14, W - 1, h)
 			_foe(30, 4, "crow"); _foe(60, 3, "crow"); _foe(95, 2, "crow"); _foe(125, 2, "crow")
-			_set(50, max(1, h - 6), BALE)
+			put(50, max(1, h - 6), BALE)
 			start_p = Vector2(3 * TS, (ground - 1) * TS)
 			goal_x = (W - 6) * TS
 	check_p = start_p
@@ -388,7 +388,7 @@ func _move(pl, dt: float) -> void:
 			if _solid_at(hx, ny - 8, false, 0):
 				var tx = int(floor(hx / TS)); var ty = int(floor((ny - 8) / TS))
 				if tile(tx, ty) == BALE:   # 米俵をたたくと、おにぎりが出る
-					_set(tx, ty, USED)
+					put(tx, ty, USED)
 					items.append({"p": Vector2(tx * TS + 8, ty * TS - 8), "t": "onigiri", "got": false, "vy": -160.0})
 				ny = (ty + 1) * TS + 8
 				pl.v.y = 0

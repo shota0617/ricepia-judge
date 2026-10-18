@@ -7,11 +7,13 @@ extends Node2D
 #     3 多角形   点の数 n  x1 y1 … xn yn  色 不透明度
 # ・Godot だけでしていること：雨と雪のつぶ（気象庁の今の天気）と、時間帯の色あい（夕方はだいだい、夜は青く）。nsgField.env() で受けとる
 # ・地図のしくみ（歩く・チェックイン・たからばこ・人の話）とスティックやボタンは、いままでどおり JavaScript の画面
+# ・歩く地図が見えていないとき（せかいちず・ふつうの地図）は nsgField.awake() が false。そのあいだは1秒に2回だけ動いて、つぶも止める（電池のため）
 
 var field = null          # window.nsgField（Web で動いているときだけ）
 var tex := {}             # 絵の id → ImageTexture
 var cmds := PackedFloat32Array()
 var env_at := 0.0
+var awake := true
 var tint := CanvasModulate.new()
 var rain := CPUParticles2D.new()
 var snow := CPUParticles2D.new()
@@ -62,6 +64,18 @@ func _drop_texture(w: int, h: int, line: bool) -> Texture2D:
 
 func _process(delta: float) -> void:
 	if field == null:
+		return
+	var a := bool(field.awake())
+	if a != awake:
+		awake = a
+		Engine.max_fps = 0 if a else 2
+		OS.low_processor_usage_mode = not a
+		if a:
+			env_at = 0.0
+		else:
+			rain.emitting = false
+			snow.emitting = false
+	if not awake:
 		return
 	var s = field.frame()
 	if typeof(s) == TYPE_STRING and s != "":

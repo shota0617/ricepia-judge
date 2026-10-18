@@ -375,6 +375,7 @@ function popupHtml(s) {
   const v = S.visits[s.id];
   const left = cooldownLeft(s);
   const d = me ? fmtM(dist(me, s)) : '—';
+  if (simple()) return popupPic(s, c, v, left, d);
   return `<div class="popup"><h4>${esc(s.name)}</h4>
     <p>${s.shop ? `<span class="tag shop">🍚 当店（${esc(s.name)}）</span>` : s.featured ? '<span class="tag gold">⭐ 注目スポット</span>' : `<span class="tag">${c.i} ${c.n}</span>`}
     <span class="tag">${ptsOf(s)}pt</span></p>
@@ -388,6 +389,21 @@ function popupHtml(s) {
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}</div>`;
+}
+
+// 文字を少なく（ふだん）：名所の大きなドット絵と、絵の札（種類・ポイント・きょり・行った回数）。説明の文と名物・行事はそのまま
+function popupPic(s, c, v, left, d) {
+  const th = spotThumb(s).replace('class="gthumb"', 'class="pop-art"').replace(/width="28" height="28"/, 'width="64" height="64"');
+  return `<div class="popup pic"><div class="pop-head">${th}<h4>${esc(s.name)}</h4></div>
+    <p class="chips">${s.shop ? `<span>${PI('bowl', '当店')}</span>` : s.featured ? `<span>${PI('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${c.i}</span>`}<span>${PI('coin', 'ポイント')}${ptsOf(s)}</span>
+      <span>${PI('pin', '現在地から')}${d}</span><span>${v ? `${PI('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PI('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
+    ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
+    ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
+    ${spotEvents(s).map(x => `<p class="ev">${PI('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
+    ${spotMeibutsu(s).map(m => `<p class="mb" title="${esc(m.note)}">${m.icon} <b>${esc(m.name)}</b></p>`).join('')}
+    ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
+      <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
+    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PI('feet', '')} ここへ</button>` : ''}</div>`;
 }
 
 function renderMarkers() {
@@ -461,14 +477,26 @@ function npcSpot(n) {
   const t = P.npcTile(n);
   return t.ok ? P.toLatLng(t.x + 0.5, t.y + 0.5) : n;
 }
+// 人の顔：ドット絵の地図と同じ絵（読み込めないときは絵文字）
+const faceCache = {};
+function npcFace(n) {
+  const P = window.nishioPixel;
+  if (!(n.look in faceCache) && P && P.npcSprite) { try { faceCache[n.look] = P.npcSprite(n.look).toDataURL(); } catch (e) { faceCache[n.look] = ''; } }
+  return faceCache[n.look] ? `<img class="npc-face" src="${faceCache[n.look]}" alt="" width="48" height="48"/>` : `<span class="npc-face">${NPC_LOOK[n.look] || '🙂'}</span>`;
+}
 // 話しかける（近くにいれば話す。はじめてなら +10pt）。戻り値：{ html, near }
 function talkNpc(id, page = 0) {
   const n = placeNpcs().find(x => x.id === id);
   if (!n) return null;
   const d = me ? dist(me, npcSpot(n)) : Infinity, lim = demo ? NPC_TALK_M.play : NPC_TALK_M.walk;
-  const head = `<div class="popup npc"><h4>${NPC_LOOK[n.look] || '🙂'} ${esc(n.name)}</h4><p class="npc-at">${esc(n.spotName)}のそば</p>`;
-  if (driving) return { near: false, html: `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
+  const pic = simple();   // 文字を少なく（ふだん）：顔のドット絵と名札、遠いときは絵ときょり
+  const head = pic ? `<div class="popup npc pic"><div class="npc-head">${npcFace(n)}<h4 class="plate">${esc(n.name)}</h4></div>`
+    : `<div class="popup npc"><h4>${NPC_LOOK[n.look] || '🙂'} ${esc(n.name)}</h4><p class="npc-at">${esc(n.spotName)}のそば</p>`;
+  if (driving) return { near: false, html: pic ? `${head}<p class="npc-say chips"><span>${PI('car', '車に乗ったままでは話せない')}</span><span>→</span><span>${PI('walker', '車を降りて話しかけよう')}</span></p></div>`
+    : `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
   if (d > lim) {
+    if (pic) return { near: false, html: `${head}<p class="npc-say chips"><span>${PI('talk', '遠くて声が届かない。近づいて話しかけよう')}</span>${Number.isFinite(d) ? `<span>${PI('feet', 'あと')}${fmtM(d - lim)}</span>` : ''}</p>
+      ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">${PI('feet', '')} 近くへ</button>` : ''}</div>` };
     return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
   }
@@ -479,7 +507,7 @@ function talkNpc(id, page = 0) {
     const lvUp = gainPoints(10);
     save();
     sound.jingle(lvUp ? 'levelup' : 'checkin');
-    say.push(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+    say.push(simple() ? `💬 +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}` : `💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
     track('npc_talk', { npc: n.id, mode: demo ? 'play' : 'walk' });
     setTimeout(checkBadges, 800);
   }
@@ -492,11 +520,16 @@ function talkNpc(id, page = 0) {
     }
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
     const g = decideGuide(n);
-    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 イベント発生：${g.name}へ行ってみて`); }
+    if (g) { setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(simple() ? `📜 → ${g.name}` : `📜 イベント発生：${g.name}へ行ってみて`); }
     else if (S.guide && S.guide.kind === 'npc' && S.guide.id === n.id) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
   }
   if (say.length) toast(say.join('　'));
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
+  if (pic) {
+    const dots = `<span class="pg">${pages.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</span>`;
+    return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
+    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}" aria-label="つぎへ（${i + 1}/${pages.length}）">${dots} ▼</button>` : `<p class="npc-end">${dots}</p>`}</div>` };
+  }
   return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
     ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}</div>` };
 }

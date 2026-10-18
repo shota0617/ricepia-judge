@@ -4,7 +4,7 @@
 //   題材：抹茶（防霜ファンの茶畑・覆いをかけたてん茶の茶畑・抹茶と和菓子・石臼・抹茶ソフト）、一色のうなぎ（養殖池と水車・うな重・炭火のかば焼き）、
 //   えびせんべい、三河湾のあさり、漁港、佐久島への船、佐久島の黒壁の家並み、幡豆の海と沖の島、西尾城の丑寅櫓、城下町の町家、名鉄の電車、吉良の赤馬、
 //   黄金堤、饗庭塩の塩田、手筒花火、鳥羽の火祭り、三河一色の大提灯、三ヶ根山のあじさい、西尾の田んぼ
-// ・どの題材が出るかは、その場所の地区（西尾・一色・吉良・幡豆・佐久島）と土地利用（田・畑・建物・海辺・森など）で決まる。
+// ・どの題材が出るかは、その場所の地区（西尾・一色・吉良・幡豆・佐久島。注目スポットはその地区、ほかは いちばん近い注目スポットの地区）と土地利用（田・畑・建物・海辺・森など）で決まる。
 //   季節と時間帯は、もらったときの本当の季節と時間（行事とあじさいは、その時期の景色で、色や人の数がかわる）。置き方は場所と日にちで決まる
 //   → 全部集めるには、いろいろな地区を、いろいろな季節と時間に歩くことになる
 // ・絵だけで、事実の説明はつけない（名物の説明は meibutsu.js のまちメモ）。行事の時期：手筒花火は夏、鳥羽の火祭りは2月、大提灯まつりは8月、三ヶ根山のあじさいは6月ごろ
@@ -415,21 +415,24 @@
   const dataUrl = id => { const c = canvas(id); return c ? c.toDataURL() : ''; };
 
   /* ---------- その場所でもらえる1枚 ---------- */
-  const AREAS = [['nishio', 34.872, 137.058], ['isshiki', 34.803, 137.02], ['kira', 34.815, 137.078], ['hazu', 34.8, 137.15]];
+  // 地区：その場所にいちばん近い、地区のわかっている注目スポット（spots.json の area）の地区。注目スポットは西尾市の中に多いので、旧町の境目の近くでもだいたい合う
+  const DISTRICTS = new Set(['nishio', 'isshiki', 'kira', 'hazu', 'sakushima']);
+  let refs = [], refsOf = null;
   function areaOf(lat, lng) {
-    if (lat < 34.745 && lng > 136.99 && lng < 137.08) return 'sakushima';
-    let best = null, bd = 1e9;
-    for (const [id, a, b] of AREAS) { const d = Math.hypot((lat - a) * 111, (lng - b) * 91); if (d < bd) { bd = d; best = id; } }
+    if (refsOf !== G.spots) { refsOf = G.spots; refs = (G.spots || []).filter(x => x.featured && DISTRICTS.has(x.area)); }
+    let best = 'nishio', bd = Infinity;
+    for (const x of refs) { const d = Math.hypot((lat - x.lat) * 111, (lng - x.lng) * 91); if (d < bd) { bd = d; best = x.area; } }
     return best;
   }
   const jst = d => new Date(d.getTime() + 9 * 3600e3);   // 西尾の季節と時間（端末の時間帯の設定によらず日本時間）
   const seasonOf = d => [3, 3, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3][jst(d).getUTCMonth()];
   const timeOf = d => { const hr = jst(d).getUTCHours(); return hr >= 5 && hr < 10 ? 0 : hr < 16 && hr >= 10 ? 1 : hr >= 16 && hr < 19 ? 2 : 3; };
-  // lat, lng：もらう場所。seed：たからばこやスポットの id（同じ場所・同じ日・同じ時間帯なら同じ1枚）。西尾市の外なら null
-  function pick(lat, lng, seed, now = new Date()) {
+  // lat, lng：もらう場所。seed：たからばこやスポットの id（同じ場所・同じ日・同じ時間帯なら同じ1枚）。area：その場所の地区が分かっていれば（注目スポットの area）。西尾市の外なら null
+  function pick(lat, lng, seed, now = new Date(), area = '') {
     const c = G.cityAt && G.cityAt(lat, lng);
     if (!c || c.name !== '西尾市') return null;
-    const area = areaOf(lat, lng), lu = (P.luAt && P.luAt(lat, lng)) || '';
+    if (!DISTRICTS.has(area)) area = areaOf(lat, lng);
+    const lu = (P.luAt && P.luAt(lat, lng)) || '';
     let cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area) && (!M[i].lu || M[i].lu.includes(lu)));
     if (!cand.length) cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area));
     const hsh = hashStr(`${seed}:${G.ymd ? G.ymd() : ''}`), m = cand[hsh % cand.length], mo = M[m];

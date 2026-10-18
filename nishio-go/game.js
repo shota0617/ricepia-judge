@@ -717,7 +717,7 @@ function checkin() {
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   // その場所の話（まだ知らないまちメモがあれば。ないときは ほかの話）
   const fk = s.shop ? '' : learnFact('c:' + s.id + ':' + S.checkins);
-  const dot = s.shop ? null : gainDot(s.lat, s.lng, 'c:' + s.id + ':' + S.checkins);
+  const dot = s.shop ? null : gainDot(s.lat, s.lng, 'c:' + s.id + ':' + S.checkins, s.area);
   const lvUp = gainPoints(total);
   save();
 
@@ -1304,7 +1304,7 @@ function idleCheck(tries = 0) {
   // ドット絵：2時間に1枚（西尾市のスポットのどこかで見つけてくる）
   const dots = [], home = spots.filter(x => { const c = cityAt(x.lat, x.lng); return c && c.name === '西尾市'; });
   for (let n = Math.min(IDLE.maxDots + upLv('nap'), Math.floor(min / IDLE.dotMin)), k = 0; k < n && home.length; k++) {
-    const sp = home[Math.floor(Math.random() * home.length)], d = gainDot(sp.lat, sp.lng, `idle:${now}:${k}`);
+    const sp = home[Math.floor(Math.random() * home.length)], d = gainDot(sp.lat, sp.lng, `idle:${now}:${k}`, sp.area);
     if (d) dots.push(d);
   }
   S.log.unshift({ type: 'idle', t: now, pts, name: 'るすばんのさんぽ', icon: '🏠' });
@@ -1388,10 +1388,10 @@ function showReward(total, name, lines, lvUp, fact, dot) {
 
 /* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 10000枚） ----------
    西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・日にちで決まる */
-function gainDot(lat, lng, seed) {
+function gainDot(lat, lng, seed, area) {
   const D = window.NISHIO_DOTS;
   if (!D || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-  const id = D.pick(lat, lng, seed);
+  const id = D.pick(lat, lng, seed, new Date(), area);
   if (id == null) return null;
   if (!Array.isArray(S.dots)) S.dots = [];
   const fresh = !S.dots.includes(id);

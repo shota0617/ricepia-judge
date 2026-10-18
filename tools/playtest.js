@@ -65,9 +65,9 @@ async function walkTo(page, id) {
   for (const k of plan.keys) { await page.keyboard.press(k); await page.waitForTimeout(15); }
   await page.waitForTimeout(500);
   if (id === 'chest') {   // たからばこは近づくと開く：ポイントとまめちしきの知らせが出るか
-    // まめちしきは、文字を多めに出すときは 💡 の文、文字を少なく（ふだん）のときは本の絵（文は きろく の まちメモ に入る）
-    const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, book: !!r.querySelector('img[alt="まちメモ"]') }; });
-    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup.text) && (/💡/.test(popup.text) || popup.book) };
+    // まめちしきは、文字を多めに出すときは 💡 の文。文字を少なく（ふだん）のときは、新しいまめちしきなら本の札（文は きろく の まちメモ に入る）
+    const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, simple: document.body.classList.contains('simple') }; });
+    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup.text) && (/💡/.test(popup.text) || popup.simple) };
   }
   const spin = await page.evaluate(() => !document.getElementById('spinBtn').hidden && document.getElementById('spinName').textContent);
   return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: spin === plan.name };

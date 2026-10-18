@@ -910,14 +910,14 @@ function tryChest() {
   const c = n.c, d = dayState(), welcome = c.id.endsWith(':welcome');
   d.chests.push(c.id);
   if (welcome) S.welcomed = true;
-  const pick = pickFact(c);
+  const pick = pickFact(c), newFact = !!pick && !S.facts.includes(pick);
   track('chest_open', { mode: demo ? 'play' : 'walk' });
-  if (pick && !S.facts.includes(pick)) S.facts.push(pick);
+  if (newFact) S.facts.push(pick);
   const dot = gainDot(c.lat, c.lng, 'chest:' + c.id);
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
-  showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...dotLines(dot), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dot);
+  showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...(newFact ? ['📖 まちメモ +1'] : []), ...dotLines(dot), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dot);
   updateQuests(1500);
   refreshNearby();
 }
@@ -1421,7 +1421,6 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     if (hero && ic !== 'card' && v === `+${total}`) continue;
     out.push(`<span title="${esc(l)}">${PI(ic, l)}${v}</span>`);
   }
-  if (fact && !book) out.push(`<span title="まちメモ">${PI('book', 'まちメモ')}+1</span>`);
   return `<div class="chips">${out.join('')}</div>`;
 }
 // ドット絵のめずらしさ（星）：西尾にしかない題材は★3、全国有数の名物・産地の題材は★2（docs/dots-nishio.md）。虹・雪・満月の絵は＋1

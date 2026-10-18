@@ -8,7 +8,7 @@ const ROOT = path.join(__dirname, '..');
 const DIR = process.argv[2] || 'landuse-src';
 
 // 範囲は せかいちず（pixel.js の WB）と同じ
-const WB = { s: 34.68, w: 136.92, n: 35.05, e: 137.43 };
+const WB = { s: 34.68, w: 136.86, n: 35.05, e: 137.43 };
 const DLAT = 1 / 1200, DLNG = 1 / 800;   // 100mメッシュ＝3次メッシュ（30秒×45秒）の10分の1
 const lat0 = Math.floor(WB.s / DLAT) * DLAT, lng0 = Math.floor(WB.w / DLNG) * DLNG;
 const H = Math.ceil((WB.n - lat0) / DLAT), W = Math.ceil((WB.e - lng0) / DLNG);
@@ -72,3 +72,14 @@ let old = '';
 try { old = fs.readFileSync(out, 'utf8'); } catch (e) { /* まだ無い */ }
 if (old === text) console.log('nishio-go/landuse.json: 変更なし');
 else { fs.writeFileSync(out, text); console.log(`nishio-go/landuse.json: ${W}×${H} メッシュ・${fs.statSync(out).size} bytes`); }
+// 前の表の範囲で、中身が1マスでも変わったか（範囲を広げただけなら、もう作った歩く地図は作り直さなくてよい）
+// GitHub Actions では old_changed=1/0 を出力する（bake-landuse.yml が歩く地図の版を上げるかどうかに使う）
+let oldChanged = true;
+try {
+  const o = JSON.parse(old), dec = r => { const a = []; for (const m of r.matchAll(/([a-l.])([0-9a-z]+),/g)) for (let i = parseInt(m[2], 36); i > 0; i--) a.push(m[1]); return a; };
+  const x0 = Math.round((o.lng0 - lng0) / DLNG), yTop = Math.round((lat0 + H * DLAT - (o.lat0 + o.h * o.dLat)) / DLAT);   // 前の表の左上が、新しい表のどこか
+  oldChanged = !(o.dLat === DLAT && o.dLng === DLNG && x0 >= 0 && yTop >= 0 && x0 + o.w <= W && yTop + o.h <= H &&
+    o.rows.every((r, y) => dec(r).every((c, x) => grid[(yTop + y) * W + x0 + x] === c)));
+} catch (e) { /* 前の表がない・読めない */ }
+console.log(oldChanged ? '前の範囲の土地利用が変わった（歩く地図をぜんぶ作り直す）' : '前の範囲の土地利用は同じ（新しい範囲だけ作る）');
+if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `old_changed=${oldChanged ? 1 : 0}\n`);

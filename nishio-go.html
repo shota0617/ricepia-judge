@@ -28,7 +28,7 @@
 <body>
 
 <header class="bar">
-  <div class="brand">🚶 にしおさんぽGO<span class="beta-tag" title="試作版です。内容は予告なく変わります">試作版</span></div>
+  <div class="brand">🚶 にしおさんぽGO</div>
   <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
     <span class="lv-num">Lv<b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
@@ -47,10 +47,11 @@
   <canvas id="pxCanvas"></canvas>
   <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）">🌏</button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
-  <div class="px-attr">地図 © OpenStreetMap contributors／標高：地理院タイル／土地利用：国土数値情報（国土交通省）を加工して作成</div>
+  <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
   <div class="px-pad" id="pxPad" hidden>
     <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）">🚗</button>
+    <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）">🧭</button>
   </div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
 </section>
@@ -61,29 +62,17 @@
 </div>
 
 <section class="sheet" id="sheet">
-  <div class="sheet-top">
-    <div class="mode-sw" role="group" aria-label="移動のしかた">
-      <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
-      <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
-    </div>
-    <button type="button" class="snd-btn" id="sndBtn" aria-label="音楽（BGM）をオンにする" title="音楽（BGM）">🔇</button>
-  </div>
   <div class="guide" id="guide" hidden></div>
   <div class="status" id="status">位置情報を待っています…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
     <span class="spin-ico" id="spinIco">⭐</span>
     <span class="spin-txt"><b id="spinName">スポット</b><small id="spinSub">タップしてポイントゲット</small></span>
   </button>
-  <button class="spin rice" id="riceBtn" type="button" hidden>
-    <span class="spin-ico">🌾</span>
-    <span class="spin-txt"><b>籾を持ち込む（選別・精米）</b><small id="riceSub">籾を選別して精米する</small></span>
-  </button>
 </section>
 
 <nav class="tabs" aria-label="メニュー">
   <button type="button" class="on" data-tab="map">🗺️<span>マップ</span></button>
   <button type="button" data-tab="log">📒<span>きろく</span></button>
-  <button type="button" data-tab="badges">🏅<span>バッジ</span></button>
   <button type="button" data-tab="rewards" id="rewardsTab" hidden>🎁<span>とくてん</span></button>
   <button type="button" data-tab="settings">⚙️<span>せってい</span></button>
 </nav>
@@ -92,6 +81,11 @@
 <section class="panel" id="panel-log" hidden>
   <h2>きろく <button type="button" class="btn mini share-btn" id="shareLogBtn">📣 シェア</button></h2>
   <div class="campaigns" id="campaignBox" hidden></div>
+  <div id="upBox" hidden>
+    <h3>🧭 おまかせ強化 <small>操作して移動</small></h3>
+    <p class="note" id="upNote"></p>
+    <ul class="list" id="upList"></ul>
+  </div>
   <h3>📜 今日のおさんぽクエスト</h3>
   <ul class="list" id="questList"></ul>
   <div class="stats" id="stats"></div>
@@ -100,21 +94,19 @@
   <p class="note src">出典：<a href="https://nishiokanko.com/eventpage" target="_blank" rel="noopener">西尾観光（西尾市観光協会）</a>・<a href="https://www.city.nishio.aichi.jp/sportskanko/kanko/index.html" target="_blank" rel="noopener">西尾市公式ウェブサイト</a>。日にちは変わることがあるので、お出かけ前に確かめてください。</p>
   <h3>地区ごとのめぐり具合</h3>
   <ul class="list" id="areaList"></ul>
-  <h3>📖 西尾まめちしき <small id="factCount"></small></h3>
+  <h3>📖 まちメモ（西尾と まわりのまち） <small id="factCount"></small></h3>
   <ul class="list" id="factList"></ul>
   <h3>めぐったスポット</h3>
   <ul class="list" id="visitedList"></ul>
   <h3>最近のポイント</h3>
   <ul class="list" id="logList"></ul>
-</section>
-
-<!-- バッジ -->
-<section class="panel" id="panel-badges" hidden>
-  <h2>バッジ</h2>
+  <h3 id="badgeHead">🏅 バッジ</h3>
   <div class="badges" id="badgeGrid"></div>
   <h3>レベルと称号</h3>
   <ul class="list" id="titleList"></ul>
 </section>
+
+
 
 <!-- 特典 -->
 <section class="panel" id="panel-rewards" hidden>
@@ -130,12 +122,16 @@
 <section class="panel" id="panel-settings" hidden>
   <h2>せってい</h2>
   <div class="card">
+    <div class="mode-sw" role="group" aria-label="移動のしかた">
+      <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
+      <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
+    </div>
     <label class="row">
-      <span><b>🎮 操作して移動</b><small>スティック（矢印キー）や地図のタップで移動します。オフにすると、実際に歩いて移動します（位置情報を使います）。ポイントと記録は別々に保存され、お店のとくてんは「あるいて移動」でだけ使えます。</small></span>
-      <input type="checkbox" id="demoToggle"/>
+      <span><b>👾 ドット絵の地図</b><small>オフにすると、ふつうの地図（地理院タイル）で遊べます。</small></span>
+      <input type="checkbox" id="pxToggle"/>
     </label>
     <label class="row">
-      <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。地図の下の 🔊 ボタンでも切り替えられます。</small></span>
+      <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。</small></span>
       <input type="checkbox" id="bgmToggle"/>
     </label>
     <label class="row">
@@ -150,6 +146,11 @@
   <div class="card">
     <div class="row"><span><b>スポット</b><small id="spotInfo">—</small></span>
       <button type="button" class="btn" id="reloadSpots">再読み込み</button></div>
+  </div>
+  <div class="card" id="edBox" hidden>
+    <h3>🏛 西尾市版（提案用デモ）について</h3>
+    <p class="note">西尾市が、歩いてまちを知ってもらうためにつくったゲーム、と仮定した版です。西尾市に見てもらうための試作で、西尾市の公式のものではありません。お店の要素（当店・特典・キャンペーン）を外し、市役所に観光担当の職員さんがいます。</p>
+    <button type="button" class="btn" id="edShop">お店の版にもどす</button>
   </div>
   <div class="card">
     <h3>ポイントのルール</h3>
@@ -173,7 +174,7 @@
     <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
       <button type="button" class="btn red" id="resetBtn">削除</button></div>
   </div>
-  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>運営：近藤米穀店 らいすぴあ（西尾市）</p>
+  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。作者の一覧は docs/landmark-photos.md）を参考に描いたもの<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
 </section>
 
 <!-- はじめに -->
@@ -182,12 +183,11 @@
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
     <p class="player-count" id="playerCount" hidden></p>
     <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
-    <p class="pitch"><b>🧭 行き先は、自分では決めない。</b><br/>西尾の人の話や、季節・時間・まわりのようすが、次に行く所を教えてくれます。話を聞いて、すすめられた所へ。そこでまた、次の話が待っています。</p>
-    <p>道すがら、お米屋さんの仕事もできます。</p>
+    <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>まちの人の話や、季節・天気・まわりのようすが、次に行く所をすすめてくれます。すすめられた所へ行くと、そこでまた次の話が待っています（ほかの行き先に変えることもできます）。</p>
     <ol class="core">
-      <li><b>集める</b>：田畑を歩くと籾（もみ）が集まる</li>
-      <li><b>目利き</b>：当店に持ち込んで、カメムシのあと・青い粒・割れた粒を見つけて取りのぞく。うまいほど1等米</li>
-      <li><b>精米</b>：5分づき・通常・クリーン精米をえらんで、米袋へ。5kg・10kg・30kg・1俵をめざそう</li>
+      <li><b>聞く</b>：まちの人に話しかけると「📜 イベント」。たのまれた所へ行ってみよう</li>
+      <li><b>知る</b>：着いた所・たからばこ・歩いた道すがらで「📖 まちメモ」が集まる</li>
+      <li><b>おまかせ</b>：操作して遊ぶときは、🧭おまかせ歩きで放っておいても、主人公が歩いて、話して、まちを知っていく。閉じている間も るすばん でさんぽ</li>
     </ol>
     <ul>
       <li>⭐ 西尾の名所に着いたらチェックインでポイント（はじめての場所はボーナス）</li>
@@ -219,9 +219,6 @@
   </div>
 </div>
 
-<!-- 米屋の仕事：選別（目利き）と精米 -->
-<div class="mekiki" id="mekiki" hidden role="dialog" aria-modal="true" aria-label="選別と精米"><div class="mk-box" id="mkBox"></div></div>
-
 <!-- クーポン（店頭で見せる画面） -->
 <div class="coupon" id="coupon" hidden role="dialog" aria-modal="true" aria-labelledby="cpName">
   <div class="coupon-box">
@@ -247,6 +244,8 @@
 <script src="nishio-go/events.js"></script>
 <script src="nishio-go/npcs.js"></script>
 <script src="nishio-go/meibutsu.js"></script>
+<script src="nishio-go/machi.js"></script>
+<script src="nishio-go/edition.js"></script>
 <script src="nishio-go/region.js"></script>
 <script src="nishio-go/season.js"></script>
 <script src="nishio-go/weather.js"></script>

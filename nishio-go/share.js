@@ -1,6 +1,6 @@
 // にしおさんぽGO の宣伝まわり：シェア（SNS・LINE・画像）と、広告・QR・シェアから来た人の受けとり
 // ・シェアのリンクには UTM（utm_source=share）を付けて、シェアから来た人を数えられるようにする
-// ・シェア用の画像（1200×630）は、その人のきろく（レベル・めぐった名所・米袋）と当店の名前をのせて、その場で描く（どこにも送らない）
+// ・シェア用の画像（1200×630）は、その人のきろく（レベル・めぐった名所・話した人）と当店の名前をのせて、その場で描く（どこにも送らない）
 // ・広告やQRのリンクのパラメータ：?c=キャンペーンのid ／ ?spot=スポットのid（そのスポットを見せる）／ ?play=1（操作して遊ぶで始める）／ ?from=どこから（チラシ・POP など）
 //   来た人は analytics.js の landing イベントで数える（utm_* もいっしょに）
 (() => {
@@ -35,16 +35,16 @@ if (Object.keys(land).length) {
 }
 
 /* ---------- シェア ---------- */
-const shareUrl = kind => `${SITE}?utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
-function shareText(kind) {
+// 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+function shareText() {
   const s = G.stats();
-  const head = kind === 'rice' ? `米袋が${s.kg}kgになったよ🌾` : `Lv${s.lv}「${s.title}」になったよ🚶`;
-  return `にしおさんぽGOで西尾のまちを歩いて、${head}\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・米袋 ${s.kg}kg\n#にしおさんぽGO #西尾市 #らいすぴあ`;
+  return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;
 }
 // シェア用の画像：空と田んぼ（こよみの季節の色）の上に、きろくと当店の名前
 const logo = new Image();
 logo.src = 'nishio-go/logo.svg';
-function drawCard(kind) {
+function drawCard() {
   const cv = $('shareCard'), x = cv.getContext('2d'), W = cv.width, H = cv.height, s = G.stats();
   const KO = window.NISHIO_SEASON, p = KO ? KO.paddy(new Date()) : null;
   const field = { gold: ['#cfae4a', '#b08a2a'], flooded: ['#8fbfd8', '#4f9a35'], soil: ['#8a6a44', '#6e5233'], stubble: ['#a89a6a', '#7d6f48'] }[p && p.tile] || ['#86b54c', '#6a9a36'];
@@ -55,7 +55,7 @@ function drawCard(kind) {
   for (let yy = H * 0.62 + 10; yy < H - 70; yy += 22) { x.fillStyle = field[1]; x.fillRect(0, yy, W, 6); }   // 田んぼのうね
   if (logo.complete && logo.naturalWidth) x.drawImage(logo, 40, 34, 544, 80);
   else { x.fillStyle = '#1f5a25'; x.font = 'bold 64px "DotGothic16", sans-serif'; x.fillText('にしおさんぽGO', 40, 100); }
-  const big = kind === 'rice' ? `🌾 米袋 ${s.kg}kg 達成！` : `🚶 Lv${s.lv}「${s.title}」`;
+  const big = `🚶 Lv${s.lv}「${s.title}」`;
   x.textAlign = 'left'; x.textBaseline = 'alphabetic';
   x.font = 'bold 66px "DotGothic16", sans-serif'; x.lineWidth = 10; x.strokeStyle = '#fff'; x.fillStyle = '#2b2b2b';
   x.strokeText(big, 40, 240); x.fillText(big, 40, 240);
@@ -66,14 +66,14 @@ function drawCard(kind) {
   x.font = '30px "DotGothic16", sans-serif'; x.strokeText(season, 40, 362); x.fillText(season, 40, 362);
   x.fillStyle = 'rgba(0,0,0,.78)'; x.fillRect(0, H - 70, W, 70);
   x.fillStyle = '#fff'; x.font = '30px "DotGothic16", sans-serif';
-  x.fillText('西尾のお米屋さん 近藤米穀店・らいすぴあ が つくったお散歩ゲーム', 30, H - 26);
+  x.fillText((window.NSG_EDITION && window.NSG_EDITION.share) || '西尾のお米屋さん 近藤米穀店・らいすぴあ が つくったお散歩ゲーム', 30, H - 26);
   x.textAlign = 'right'; x.fillStyle = '#ffe27a'; x.fillText('go.ricepia.jp', W - 30, H - 26);
 }
 let cur = 'log';
 function openShare(kind) {
   cur = kind;
-  const text = shareText(kind), url = shareUrl(kind);
-  drawCard(kind);
+  const text = shareText(), url = shareUrl(kind);
+  drawCard();
   $('shareText').textContent = `${text}\n${url}`;
   $('shareX').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
   $('shareLine').href = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
@@ -87,7 +87,7 @@ $('share').addEventListener('click', async e => {
   const b = e.target.closest('[data-share]');
   if (e.target === $('share')) { $('share').hidden = true; return; }
   if (!b) return;
-  const via = b.dataset.share, text = shareText(cur), url = shareUrl(cur);
+  const via = b.dataset.share, text = shareText(), url = shareUrl(cur);
   if (via === 'close') { $('share').hidden = true; return; }
   track('share', { kind: cur, via });
   if (via === 'native') {

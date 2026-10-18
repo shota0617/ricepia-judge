@@ -9,21 +9,27 @@ async function overpassFromNode(body) {
     try { return await once(body); } catch (e) { if (i >= 3) throw e; console.log(`  ${i}回目 失敗。${60 * i}秒待って取り直す`); await new Promise(r => setTimeout(r, 60000 * i)); }
   }
 }
-const { buildQuery, toItems, LANDMARK_QUERY, toLandmarks } = require('../nishio-go/osm-query.js');
+const { buildQuery, buildQueryParts, toItems, LANDMARK_PARTS, toLandmarks } = require('../nishio-go/osm-query.js');
+// 1回では重すぎるので、市町の中と、本店から15kmの円を囲む長方形の中を別々に取って合わせる（同じ場所は1つに）
+async function fetchParts(parts, conv, key) {
+  const seen = new Set(), out = [];
+  for (const q of parts) for (const x of conv(JSON.parse(await overpassFromNode('data=' + encodeURIComponent(q))))) { const k = key(x); if (!seen.has(k)) { seen.add(k); out.push(x); } }
+  return out;
+}
 
 (async () => {
   const config = JSON.parse(fs.readFileSync(path.join(ROOT, 'nishio-go', 'spots.json'), 'utf8')).spots || [];
   const names = [...new Set(config.flatMap(c => (c && Array.isArray(c.match) ? c.match.filter(m => typeof m === 'string' && m) : [])))];
   const q = buildQuery(names);   // ゲームの問い合わせと1文字でも違うと使われないので、同じ作り方にする
   console.log(`注目スポットの名前 ${names.length} 件で問い合わせ`);
-  const items = toItems(JSON.parse(await overpassFromNode('data=' + encodeURIComponent(q))));
+  const items = await fetchParts(buildQueryParts(names), toItems, it => it[0]);
   if (items.length < 100) throw new Error(`スポットが少なすぎます（${items.length} 件）。取得に失敗した可能性があります`);
   const count = {};
   for (const it of items) count[it[2]] = (count[it[2]] || 0) + 1;
   console.log(`${items.length} 件`, count);
   await writeIfChanged(path.join(ROOT, 'nishio-go', 'osm-spots.json'), { _説明: 'tools/bake-spots.js が OpenStreetMap から作ったスポット（© OpenStreetMap contributors, ODbL）。q はゲームの問い合わせと同じ文字列', q, items }, j => j.q === q && JSON.stringify(j.items) === JSON.stringify(items));
   // 街並みの目印
-  const marks = toLandmarks(JSON.parse(await overpassFromNode('data=' + encodeURIComponent(LANDMARK_QUERY))));
+  const marks = await fetchParts(LANDMARK_PARTS, toLandmarks, m => m.join('|'));
   if (marks.length < 50) throw new Error(`目印が少なすぎます（${marks.length} 件）`);
   const mc = {};
   for (const m of marks) mc[m[2]] = (mc[m[2]] || 0) + 1;

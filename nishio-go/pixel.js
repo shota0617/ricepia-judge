@@ -104,6 +104,40 @@ fetch('nishio-go/landmarks.json').then(r => (r.ok ? r.json() : null)).then(j => 
   landmarks = j.items.filter(m => POI_LABEL[m[2]]).map(([lat, lng, kind, name]) => { const q = toTile(lat, lng); return [+q.x.toFixed(2), +q.y.toFixed(2), kind, name, 'lm']; });
   poiCache.key = ''; dirty = true;
 }).catch(() => { /* 目印なしで続行 */ });
+// 町名（せかいちずの地名のうち町・字。world.json の l の 'tw'）：[マスx, マスy, 名前, 市町名（7市町と まわりの市町。どこでもなければ ''）]。歩く地図に町名の札を出し、いまいる町を左上に出す
+let towns = [], townsLoad = null, townsRetry = 0;
+function loadTowns() {
+  if (towns.length || townsLoad || Date.now() < townsRetry) return;
+  const use = l => {
+    towns = (l || []).filter(x => x[4] === 'tw' && x[2]).map(x => { const ll = wToLL(x[0], x[1]), q = toTile(ll.lat, ll.lng), c = (G.placeAt || G.cityAt)(ll.lat, ll.lng); return [q.x, q.y, String(x[2]), c ? c.name : '']; });
+    dirty = true;
+  };
+  if (worldLabels.some(x => x[4] === 'tw')) { use(worldLabels); return; }
+  townsRetry = Date.now() + 60000;   // 取れなかったら1分おいて試し直す
+  townsLoad = fetch(WORLD_FILE).then(r => (r.ok ? r.json() : null)).then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });
+}
+// いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
+const here = { town: '', city: '', banner: '', bannerAt: 0 };
+function updateHere() {
+  const t = targetTile(), me = G.me, c = me && (G.placeAt || G.cityAt)(me.lat, me.lng), city = c ? c.name : '';
+  // 同じ市町の町名だけから選ぶ（境のそばで「西尾市 金平町（蒲郡市）」のようにならないように）
+  let best = null, bd = 150;
+  for (const x of towns) { if (x[3] !== city) continue; const d = Math.hypot(x[0] - t.x, x[1] - t.y); if (d < bd) { bd = d; best = x; } }
+  const town = best ? best[2] : '';
+  if (town && here.town && town !== here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
+  here.town = town;   // 近くに町名がない（田畑や山の中）ときは消す
+  here.city = city;
+  if (G.setPlace) G.setPlace(city, town);   // 左上の こよみ の札に「📍町名」として出す
+}
+// 看板の色（お店の種類ごと。よく知られた店は、その店らしい色に）。白い字で名前を書く
+const SIGN_KIND = { konbini: '#2a7d4f', super: '#c0392b', home: '#8a5a2b', drug: '#2a6fb0', fuel: '#5a5a5a', bank: '#1d4f91', post: '#d7000f', food: '#a0522d', cafe: '#7b4b2a', store: '#555',
+  townhall: '#2f4f4f', hospital: '#b03030', school: '#3b6e3b', library: '#6a4c93', police: '#1f3f7a', fire: '#c0392b', shop: '#c0392b', station: '#2f4f4f' };
+const SIGN_BRAND = [[/ファミリーマート|ファミマ/, '#0b8f3c'], [/セブン/, '#ef6c1a'], [/ローソン/, '#1474c4'], [/ミニストップ/, '#0b3c8c'], [/デイリーヤマザキ|ヤマザキ/, '#d7000f'],
+  [/アオキ/, '#d40f1e'], [/アピタ|ピアゴ/, '#e64a19'], [/カネスエ/, '#0068b7'], [/ヤマナカ|フランテ/, '#d6002a'], [/バロー/, '#d7000f'], [/フィール/, '#2e8b57'], [/イオン|マックスバリュ/, '#b0127a'],
+  [/スギ薬局/, '#0067b0'], [/スギヤマ/, '#e0457b'], [/ゲンキー/, '#e0a800'], [/ウエルシア/, '#e4007f'], [/コメリ/, '#e05a00'], [/カインズ/, '#00843d'], [/エディオン/, '#e60012'],
+  [/信用金庫|信金|銀行/, '#1d4f91'], [/郵便局/, '#d7000f'], [/マクドナルド/, '#d52b1e'], [/コメダ/, '#7a4a1f'], [/スターバックス/, '#00704a'], [/すき家/, '#d7000f'], [/吉野家/, '#f08300']];
+const signColor = (kind, name) => { for (const [re, c] of SIGN_BRAND) if (re.test(name)) return c; return SIGN_KIND[kind] || '#555'; };
+const MAJOR_SIGN = new Set(['super', 'konbini', 'home', 'drug', 'fuel', 'bank', 'townhall', 'hospital', 'station', 'post', 'shop']);   // 重なるときは、こちらの看板を先に出す
 const WORLD_POI = new Set(['townhall', 'hospital', 'library', 'fire', 'shop']);   // せかいちずに出す大きな建物
 function poiKind(t) {
   const a = t.amenity;
@@ -434,6 +468,9 @@ const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
 function chunkInPlay(cx, cy) {
   const b = chunkBox(cx, cy);
   if (!(b.n < nb[0][0] - 0.01 || b.s > nb[1][0] + 0.01 || b.e < nb[0][1] - 0.01 || b.w > nb[1][1] + 0.01)) return true;
+  // 本店から半径15km（＋約300m）の円にかかる区画（区画の中で本店にいちばん近い点で調べる）
+  const h = G.CFG.home, la = Math.min(Math.max(h.lat, b.s), b.n), lo = Math.min(Math.max(h.lng, b.w), b.e);
+  if (Math.hypot((la - h.lat) * 111320, (lo - h.lng) * 111320 * Math.cos(h.lat * Math.PI / 180)) <= h.r + 300) return true;
   const pad = 0.003, s = b.s - pad, n = b.n + pad, w = b.w - pad, e = b.e + pad;
   for (const c of G.REGION) {
     if (n < c.bbox[0][0] || s > c.bbox[1][0] || e < c.bbox[0][1] || w > c.bbox[1][1]) continue;
@@ -565,7 +602,7 @@ async function overpass(query) {
  * 読めないときだけ、ブラウザで地図データを取って作る（軽い問い合わせだけ）。
  * NSG_BAKE（tools/bake-world.js）のときは、田んぼ・茶畑・工場・公園なども取って細かく作る */
 const BAKE = !!window.NSG_BAKE;
-const WB = { s: 34.68, w: 136.92, n: 35.05, e: 137.43 }, WT = 100;   // 西尾市と となりの市町（岡崎・安城・碧南・幸田・蒲郡・高浜。region.js の範囲を含む）
+const WB = { s: 34.68, w: 136.86, n: 35.05, e: 137.43 }, WT = 100;   // 西尾市と となりの市町（岡崎・安城・碧南・幸田・蒲郡・高浜。region.js の範囲を含む）と、本店から15km（西は半田・武豊まで）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
@@ -1141,8 +1178,421 @@ carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(C
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 spotSprites.store = spotSprites.shop;
+// 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。お店から受け取った外観の写真を見て描いたドット絵）
+//   らいすぴあ・秀幸：赤と白の建物、横の壁に白いどんぶりと「米」のマーク、上に白い看板、右に赤い「米のドライブスルー」の屋根と「ドライブスルー IN」の看板
+//   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根
+// 文字の並び（# のところを塗る）で小さな絵を描く
+const pix = (r, rows, ox, oy, col) => rows.forEach((row, y) => [...row].forEach((ch, i) => { if (ch === '#') r(ox + i, oy + y, 1, 1, col); }));
+function shopCanvas(draw, outline = false) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 32;
+  const x = c.getContext('2d'), r = (px, py, w, h, col) => { x.fillStyle = col; x.fillRect(px, py, w, h); };
+  draw(r, (py, x0, x1, col) => r(x0, py, x1 - x0 + 1, 1, col));   // 2つめ：1行を x0〜x1 まで塗る
+  if (outline) {   // 絵のまわりを黒くふちどる（すきとおった所のうち、上下左右に色がある所）
+    const d = x.getImageData(0, 0, 32, 32), a = i => d.data[i * 4 + 3] > 0, edge = [];
+    for (let i = 0; i < 32 * 32; i++) {
+      const px = i % 32, py = (i - px) / 32;
+      if (!a(i) && ((px > 0 && a(i - 1)) || (px < 31 && a(i + 1)) || (py > 0 && a(i - 32)) || (py < 31 && a(i + 32)))) edge.push(i);
+    }
+    for (const i of edge) r(i % 32, Math.floor(i / 32), 1, 1, '#000');
+  }
+  const g = document.createElement('canvas');   // チェックインしたあと（しばらく）は灰色に
+  g.width = g.height = 32;
+  const gx = g.getContext('2d'), d = x.getImageData(0, 0, 32, 32);
+  for (let i = 0; i < d.data.length; i += 4) { const v = Math.round(0.3 * d.data[i] + 0.59 * d.data[i + 1] + 0.11 * d.data[i + 2]); d.data[i] = d.data[i + 1] = d.data[i + 2] = v; }
+  gx.putImageData(d, 0, 0);
+  return [c, g];
+}
+spotSprites.ricepia = shopCanvas(r => {
+  const K = '#000', RED = '#d7262e', W = '#ffffff', GR = '#9e9e9e';
+  r(3, 8, 25, 23, K); r(4, 9, 23, 21, RED);                      // 赤い建物
+  r(4, 21, 23, 2, W);                                             // 白い帯
+  // 横の壁：白いどんぶりに山もりのごはん（ふちが波形）、ごはんに赤い「米」
+  pix(r, ['..#.#.#..', '.#######.', '#########', '#########', '#########', '.........', '#########', '.#######.', '..#####..', '...###...'], 4, 10, W);
+  pix(r, ['#.#.#', '.###.', '#####', '.###.', '#.#.#'], 6, 10, RED);
+  // 正面：白い板と赤いしずく形、まん中の赤い帯
+  for (const [px, py] of [[14, 10], [18, 10], [14, 23], [18, 23]]) { r(px, py, 3, py > 20 ? 7 : 10, W); r(px + 1, py + 3, 1, 2, RED); }
+  // 入口のガラス戸（値段の貼り紙）
+  r(21, 23, 6, 7, '#2f3438'); r(22, 24, 2, 3, '#f5f5f5'); r(25, 24, 1, 2, '#f5f5f5'); r(24, 23, 1, 7, '#cfd8dc');
+  // 上の白い看板「らいすぴあ・秀幸」
+  r(10, 3, 17, 6, K); r(11, 4, 15, 4, W);
+  pix(r, ['#..##.#..#.#.##', '.#.#..##.#..#.#'], 11, 5, RED);   // 赤い字（らいすぴあ・秀幸）
+  // 右の「米のドライブスルー」の屋根（赤に白い字）と柱
+  r(20, 15, 12, 4, K); r(21, 16, 11, 2, RED);
+  for (const px of [23, 25, 27, 29]) r(px, 16, 1, 2, W);
+  r(30, 19, 1, 12, GR);
+  // 「ドライブスルー IN」の看板（白地に青い字、赤い矢印）
+  r(26, 24, 6, 6, K); r(27, 25, 4, 4, W); r(27, 25, 4, 1, '#1f5fbf'); r(27, 27, 4, 1, RED); r(27, 26, 1, 3, RED);
+  // 黄色いのぼり
+  r(19, 20, 1, 11, '#2e7d32'); r(18, 21, 1, 6, '#f2d230');
+});
+spotSprites.kondo = shopCanvas(r => {
+  const K = '#000', CR = '#ebdfb6', CRD = '#cdbf93', RED = '#d0342c', GR = '#8f8f8f';
+  // クリーム色の建物（左の高い所と、右の少し低い所）
+  r(8, 3, 15, 28, K); r(9, 4, 13, 27, CR);
+  r(21, 8, 11, 23, K); r(22, 9, 9, 22, CR); r(22, 9, 9, 1, CRD);
+  // 大きな赤い「米」（筆で書いた太い字）
+  pix(r, ['.....##....', '.##..##..##', '..##.##.##.', '...#.##.#..', '###########', '###########', '....####...', '...#.##.#..', '..##.##.##.', '.##..##..##', '##...##...#', '.....##....'], 10, 4, RED);
+  r(12, 17, 6, 1, '#4a4a4a');                                       // 電話番号
+  // 2階の窓
+  r(24, 11, 5, 3, K); r(25, 12, 3, 1, '#b8d0e0');
+  // 1階：「近藤米穀店」の看板とガラス戸、緑のひさし
+  r(20, 19, 12, 4, K); r(21, 20, 11, 2, '#f3ead0');
+  for (const px of [22, 24, 26, 28, 30]) r(px, 20, 1, 2, '#222');
+  r(21, 23, 11, 8, '#9fb4c4'); for (const px of [24, 27, 30]) r(px, 23, 1, 8, '#5d6b75');
+  r(13, 20, 8, 2, '#2e7d32'); r(14, 22, 6, 9, '#6d7b84');
+  // 左の「米のドライブスルー」（白地に青い字の看板・赤い帯、灰色の屋根と柱）
+  r(0, 9, 10, 5, K); r(1, 10, 8, 2, '#ffffff'); for (const px of [2, 4, 6]) r(px, 10, 1, 2, '#1f5fbf'); r(1, 12, 8, 1, RED);
+  r(0, 14, 10, 2, GR);
+  r(1, 16, 1, 15, GR); r(8, 16, 1, 15, GR);
+});
+// 名所の専用の絵（32×32）。Wikimedia Commons の、自由に使える写真（README の「名所の絵の参考にした写真」）を見て描いたドット絵
+const LANDMARK_ART = {
+  'f-nishio-castle': 'nishioCastle', 'f-iwase-bunko': 'iwaseBunko', 'f-konoe-tei': 'konoeTei', 'f-konrenji': 'konrenji', 'f-kira-yoshida': 'kiraYoshida',
+  'f-ohirune-house': 'ohirune', 'f-kamome-parking': 'kamome', 'f-isshiki-sakana': 'sakanaHiroba', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen',
+  'f-nishio-station': 'nishioStation', 'f-nishio-cityhall': 'cityhall', 'f-shokoso': 'shokoso', 'f-ibun-jinja': 'ibunJinja', 'f-wakuwaku': 'wakuwaku',
+  'f-glass-museum': 'glassMuseum', 'f-michinoeki-okanoyama': 'michinoeki', 'f-isshiki-suwa': 'isshikiSuwa', 'f-isshiki-port': 'isshikiPort', 'f-aichi-kodomo': 'kodomoTrain',
+  'f-tojo-jo': 'tojoJo', 'f-myozenji': 'myozenji', 'f-shio-no-sato': 'shioNoSato', 'f-kira-waikiki': 'waikiki', 'f-okazaki-castle': 'okazakiCastle',
+  'f-okazaki-kakukyu': 'misoBarrel', 'f-anjo-denpark': 'denpark', 'f-hekinan-aquarium': 'hekinanAquarium', 'f-takahama-kawara-museum': 'kawaraMuseum',
+};
+const ROOF = '#4a4f57', ROOF_HI = '#6c737d', WALL = '#f3f1ea', WOOD = '#5b4632';
+// 西尾城（本丸丑寅櫓）：石垣の上の三重櫓。各重とも上が白い漆喰、下が黒い下見板。右に瓦をのせた白い土塀
+spotSprites.nishioCastle = shopCanvas((r, h) => {
+  const B = '#2a2622', ST = '#9b968a', SD = '#6f6a61', GD = '#e2b13a';
+  h(19, 23, 31, ROOF); r(24, 20, 8, 4, WALL);                        // 土塀
+  for (let y = 24; y < 32; y++) h(y, 5 - ((y - 24) >> 1), 26 + ((y - 24) >> 1), ST);   // 石垣
+  h(26, 4, 27, SD); h(29, 2, 29, SD); h(24, 26, 31, ST); h(25, 26, 31, ST);
+  for (const x of [9, 15, 21]) { r(x, 24, 1, 2, SD); r(x, 30, 1, 2, SD); }
+  for (const x of [6, 12, 18, 24]) r(x, 27, 1, 2, SD);
+  r(7, 19, 17, 2, WALL); r(7, 21, 17, 3, B); r(10, 22, 3, 1, '#8a7f6a'); r(18, 22, 3, 1, '#8a7f6a');   // 一重め
+  h(15, 8, 22, ROOF_HI); h(16, 6, 24, ROOF); h(17, 4, 26, ROOF); h(18, 3, 27, ROOF); r(3, 17, 1, 1, ROOF); r(27, 17, 1, 1, ROOF);
+  r(10, 11, 12, 2, WALL); r(10, 13, 12, 2, B);                       // 二重め
+  h(13, 15, 16, ROOF); h(14, 14, 17, ROOF); h(15, 13, 18, ROOF); r(15, 14, 2, 1, WALL);   // 千鳥破風
+  h(8, 10, 21, ROOF_HI); h(9, 8, 23, ROOF); h(10, 7, 24, ROOF); r(7, 9, 1, 1, ROOF); r(24, 9, 1, 1, ROOF);
+  r(12, 5, 8, 2, WALL); r(12, 7, 8, 1, B); r(15, 6, 2, 1, B);        // 三重め
+  h(2, 12, 19, ROOF_HI); h(3, 11, 20, ROOF); h(4, 9, 22, ROOF); r(9, 3, 1, 1, ROOF); r(22, 3, 1, 1, ROOF);
+  r(12, 0, 1, 2, GD); r(19, 0, 1, 2, GD);                            // しゃちほこ
+}, true);
+// 西尾市岩瀬文庫：赤レンガの旧書庫（昭和5年）と、うしろの白い今の建物（ガラスの帯）
+spotSprites.iwaseBunko = shopCanvas((r, h) => {
+  const CON = '#d8d4cc', COD = '#b9b5ad', GL = '#5f7f99', BR = '#a14a30', BRD = '#86402a', WIN = '#e8e2d0';
+  r(11, 7, 21, 21, CON); h(7, 11, 31, COD);
+  for (const x of [16, 21, 26]) r(x, 8, 1, 8, COD);
+  r(12, 16, 20, 11, GL); h(16, 12, 31, '#8fb0c8');
+  for (const x of [15, 19, 23, 27, 31]) r(x, 16, 1, 11, COD);
+  h(7, 3, 12, ROOF_HI); h(8, 2, 13, ROOF); h(9, 1, 14, ROOF); h(10, 0, 15, ROOF);   // 旧書庫の屋根
+  r(1, 11, 14, 17, BR);
+  for (const y of [13, 16, 21, 24]) h(y, 1, 14, BRD);
+  h(18, 1, 14, '#c9c0ae'); h(27, 1, 14, '#8a8278');
+  for (const [x, y] of [[3, 12], [10, 12], [3, 19], [10, 19]]) { r(x, y, 3, 4, WIN); r(x + 1, y + 1, 1, 2, '#2a2a30'); }
+  r(6, 21, 3, 6, '#3a2a20'); r(7, 20, 1, 1, '#3a2a20');
+}, true);
+// 旧近衛邸（西尾市歴史公園）：京都から移した近衛家の建物。正面に大きな破風、まん中に小さな屋根の玄関
+spotSprites.konoeTei = shopCanvas((r, h) => {
+  const PL = '#ece5d4', LT = '#3a3128', LG = '#8a7a62';
+  h(11, 3, 28, ROOF_HI); h(12, 1, 30, ROOF); h(13, 0, 31, ROOF);
+  for (let y = 3; y <= 12; y++) { h(y, 15 - (y - 3), 16 + (y - 3), ROOF); if (y >= 5) h(y, 17 - (y - 3), 14 + (y - 3), PL); }
+  h(9, 11, 20, WOOD); r(15, 6, 2, 7, WOOD);
+  r(2, 14, 28, 13, PL); h(14, 2, 29, WOOD); h(26, 2, 29, WOOD);
+  for (const x of [2, 9, 22, 29]) r(x, 14, 1, 13, WOOD);
+  for (const x0 of [4, 24]) { r(x0, 17, 4, 6, LT); r(x0 + 1, 17, 1, 6, LG); r(x0 + 3, 17, 1, 6, LG); h(19, x0, x0 + 3, LG); h(21, x0, x0 + 3, LG); }
+  h(14, 15, 16, ROOF); h(15, 13, 18, ROOF); h(16, 11, 20, ROOF); h(17, 10, 21, ROOF); h(18, 9, 22, ROOF); r(14, 16, 4, 1, '#c8a46a');   // 玄関の屋根と額
+  r(11, 19, 1, 8, WOOD); r(20, 19, 1, 8, WOOD); r(12, 19, 8, 8, '#2e2620'); r(14, 19, 1, 8, '#6a5a44'); r(17, 19, 1, 8, '#6a5a44');
+  h(27, 10, 21, '#a9a49a'); h(28, 10, 21, '#a9a49a'); r(13, 30, 2, 1, '#c0bbb0'); r(17, 30, 2, 1, '#c0bbb0');
+}, true);
+// 金蓮寺弥陀堂（国宝）：檜皮ぶきの大きな屋根と、格子の壁、まわりの縁
+spotSprites.konrenji = shopCanvas((r, h) => {
+  const RB = '#8a6a4a', RH = '#a8875e', RD = '#5e4630', PI = '#9a7650', LT = '#3e3024', LG = '#6a5640';
+  h(5, 13, 18, RD); h(6, 11, 20, '#6e5238');
+  [[10, 21], [9, 22], [8, 23], [7, 24], [6, 25], [5, 26], [3, 28], [2, 29]].forEach(([a, b], i) => h(7 + i, a, b, i % 3 === 1 ? RH : RB));
+  h(15, 1, 30, RD); r(1, 14, 1, 1, RD); r(30, 14, 1, 1, RD); h(16, 3, 28, '#4a3826');
+  r(5, 17, 22, 9, '#7a5a3c');
+  for (const [a, b] of [[6, 9], [22, 25], [11, 20]]) for (let y = 17; y <= (a === 11 ? 19 : 25); y++) h(y, a, b, (y % 2) ? LT : LG);
+  for (const [a, b] of [[6, 9], [22, 25], [11, 20]]) for (let x = a; x <= b; x += 2) r(x, 17, 1, a === 11 ? 3 : 9, LT);
+  r(11, 20, 10, 6, '#3a2c20'); r(15, 20, 2, 6, LG);
+  for (const x of [5, 10, 21, 26]) r(x, 17, 1, 9, PI);
+  h(19, 5, 26, PI);
+  h(26, 2, 29, '#b08a5e'); h(27, 2, 29, '#7a5a3c');
+  for (const x of [3, 8, 13, 18, 23, 28]) r(x, 28, 1, 2, '#6e5238');
+  h(30, 1, 30, '#c2bdb1'); h(31, 1, 30, '#a6a196');
+}, true);
+// 名鉄 吉良吉田駅：青緑のトタン屋根の駅舎と、右の白い2階建て
+spotSprites.kiraYoshida = shopCanvas((r, h) => {
+  const TE = '#4f9e9a', TH = '#7cc2bd', TD = '#357a76', BL = '#2f74b8', GL = '#6f8fa8';
+  r(18, 4, 13, 23, WALL); h(4, 18, 30, '#c9c9c4');
+  for (const [x, y] of [[20, 7], [26, 7], [20, 13], [26, 13]]) { r(x, y, 3, 3, GL); r(x, y, 3, 1, '#9fb8cc'); }
+  [[6, 17], [5, 18], [4, 19], [3, 20], [2, 21], [1, 22]].forEach(([a, b], i) => h(8 + i, a, b, i ? TE : TH));
+  for (let x = 3; x <= 21; x += 2) r(x, 9, 1, 5, '#6fb7b1');
+  h(14, 0, 23, TD);
+  h(15, 1, 22, BL); r(8, 15, 8, 2, WALL); r(9, 15, 1, 1, '#d23a2e'); for (const x of [11, 12, 14]) r(x, 16, 1, 1, BL);
+  r(1, 17, 22, 10, WALL); h(26, 1, 22, '#9a9a96');
+  r(2, 18, 5, 5, GL); r(17, 18, 5, 5, GL); r(9, 18, 7, 8, '#3f5566'); r(12, 18, 1, 8, WALL);
+  r(24, 22, 2, 5, '#d23a2e'); r(27, 20, 3, 7, '#2a5fb0'); r(28, 21, 1, 3, WALL);   // ポストと自動販売機
+}, true);
+// おひるねハウス（佐久島のアート）：浜に置かれた黒い箱。格子のすきまから空と海が見え、はしごで上れる
+spotSprites.ohirune = shopCanvas((r, h) => {
+  const SA = '#eadfbe', SK = '#a6d8f0', SE = '#5fa8c8', BK = '#161616', LD = '#a0a0a0';
+  h(26, 5, 26, SA); h(27, 3, 28, SA); h(28, 1, 30, SA); h(29, 0, 31, SA); h(30, 2, 29, SA);
+  h(27, 6, 26, '#c9bb90'); r(4, 29, 1, 1, '#d4c79f'); r(27, 28, 1, 1, '#d4c79f');
+  r(6, 4, 20, 23, BK);
+  for (const x of [8, 14, 20]) {
+    r(x, 6, 4, 5, SK); r(x, 13, 4, 3, SK); r(x, 16, 4, 2, SE); r(x, 20, 4, 3, SE); r(x, 23, 4, 2, SA);
+  }
+  for (const [x, y0] of [[9, 12], [20, 18]]) { r(x, y0, 1, 16 - (y0 - 12), LD); r(x + 2, y0, 1, 16 - (y0 - 12), LD); for (let y = y0 + 1; y < 28; y += 2) r(x + 1, y, 1, 1, LD); }
+}, true);
+// カモメの駐車場（佐久島のアート）：石の防波堤に、カモメの木像がずらりと並ぶ
+spotSprites.kamome = shopCanvas((r, h) => {
+  const SG = '#9d968b', SL = '#c2bbaf', SD = '#6f685e', BW = '#eef1f3', BG = '#8f99a3', PO = '#e0902a';
+  [[2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [1, 31], [1, 30], [2, 29], [3, 28]].forEach(([a, b], i) => h(17 + i, a, b, SG));
+  for (let y = 18; y < 27; y += 3) for (let x = (y % 2) * 3; x < 31; x += 6) { r(x, y, 1, 2, SD); r(x + 1, y, 3, 1, SL); }
+  for (let i = 0; i < 5; i++) {   // 横向きのカモメ（右が頭）と、立てた棒
+    const x = 1 + i * 6, y = 11 + (i % 2);
+    r(x + 2, y + 3, 1, 3, PO);
+    pix(r, ['...##', '#####', '.###.'], x, y, BW); pix(r, ['.....', '.##..'], x, y, BG); r(x, y + 1, 1, 1, '#333'); r(x + 4, y, 1, 1, '#333'); r(x + 5, y + 1, 1, 1, PO);
+  }
+}, true);
+// 一色さかな広場：茶色い建物に白い字の看板、入口の白い丸屋根、のぼり
+spotSprites.sakanaHiroba = shopCanvas((r, h) => {
+  const BN = '#6e5852', BD = '#5a4640', CA = '#f2f2f2', CU = '#b9bcc0', GL = '#4a5f70';
+  r(1, 5, 30, 21, BN); h(5, 1, 30, BD);
+  r(5, 8, 3, 3, '#d6332a'); r(6, 9, 1, 1, '#ffffff');
+  pix(r, ['#.##.#.##.#.##.#', '##.#.###.#.##.##', '#.##.#.##.#.#..#'], 10, 8, '#ffffff');
+  r(10, 16, 12, 9, GL); for (const x of [13, 18]) r(x, 16, 1, 9, '#cfd4d8');
+  r(12, 22, 1, 2, '#e57373'); r(16, 21, 1, 3, '#ffb300'); r(20, 22, 1, 2, '#3f7fbf');   // 店の前の人
+  h(12, 10, 21, CA); h(13, 8, 23, CA); h(14, 7, 24, CA); h(15, 6, 25, CA); h(16, 6, 25, CU);
+  r(7, 17, 1, 10, '#555'); r(24, 17, 1, 10, '#555');
+  h(25, 4, 27, '#a9a9a6'); h(26, 4, 27, '#8a8a88'); h(27, 4, 27, '#a9a9a6');
+  r(2, 14, 1, 13, '#888'); r(3, 14, 2, 9, '#e0466a'); r(29, 14, 1, 13, '#888'); r(27, 14, 2, 9, '#2f5fae');
+}, true);
+// 佐久島の黒壁の集落：板壁をコールタールで黒くぬった家が並ぶ
+spotSprites.kurokabe = shopCanvas((r, h) => {
+  const RT = '#3c4148', RB = '#5d646c', BK = '#1f1f23', BL = '#34353b';
+  [[5, 12], [4, 13], [3, 14], [2, 15], [1, 16], [0, 17]].forEach(([a, b], i) => h(5 + i, a, b, i ? RB : RT));
+  for (let x = 3; x <= 14; x += 2) r(x, 7, 1, 3, '#4b5158');
+  r(1, 11, 16, 17, BK); for (let x = 3; x <= 15; x += 3) r(x, 11, 1, 17, BL);
+  r(4, 14, 5, 4, '#8a8a80'); r(5, 15, 3, 2, '#c8d8e0'); r(6, 15, 1, 2, '#8a8a80');
+  r(10, 20, 5, 8, '#2b2620'); r(12, 20, 1, 8, '#4a4038');
+  [[19, 29], [18, 30], [17, 31], [17, 31]].forEach(([a, b], i) => h(11 + i, a, b, i ? RB : RT));
+  for (let x = 19; x <= 29; x += 2) r(x, 12, 1, 2, '#4b5158');
+  r(18, 15, 13, 13, BK); for (let x = 20; x <= 29; x += 3) r(x, 15, 1, 13, BL);
+  r(21, 17, 4, 3, '#8a8a80'); r(22, 18, 2, 1, '#c8d8e0');
+  r(26, 25, 3, 3, '#a0522d'); r(26, 23, 3, 2, '#43a047');   // 植木ばち
+}, true);
+// 稲荷山茶園公園：まるくかりこんだ茶の木の列と、あずまや
+spotSprites.chaen = shopCanvas((r, h) => {
+  const TG = '#3f8f3a', TL = '#7fc65e', TD = '#2a5f28', SO = '#b08a5a';
+  r(15, 4, 2, 1, '#6a5444'); [[13, 18], [11, 20], [9, 22], [7, 24]].forEach(([a, b], i) => h(5 + i, a, b, i ? '#4a3a2e' : '#6a5444'));
+  r(9, 9, 1, 7, WOOD); r(22, 9, 1, 7, WOOD); h(13, 11, 20, '#8a6a4a');
+  for (const y of [15, 20, 25]) {
+    h(y, 1, 30, TL); r(0, y + 1, 32, 2, TG); h(y + 3, 0, 31, TD); if (y < 25) h(y + 4, 0, 31, SO);
+    for (let x = 2 + (y % 2) * 2; x < 30; x += 5) { h(y - 1, x, x + 1, TL); r(x + 3, y + 1, 1, 1, TL); }   // 新芽のでこぼこ
+  }
+}, true);
+// 2回目に足した名所（同じく Wikimedia Commons の写真を参考に。docs/landmark-photos.md）
+// spans の行を上から順に塗る（[x0, x1] の並び。col は色か、行の番号から色を返す関数）
+const spanRows = (h, y0, spans, col) => spans.forEach(([a, b], i) => h(y0 + i, a, b, typeof col === 'function' ? col(i) : col));
+// 名鉄 西尾駅：ホームの屋根と駅名の看板、名鉄の赤い電車
+spotSprites.nishioStation = shopCanvas((r, h) => {
+  const RD = '#d0232a', RDD = '#9e1a20', WN = '#2b3440';
+  h(5, 0, 31, '#9a9ea4'); r(0, 6, 32, 2, '#7d8187');
+  for (const x of [3, 16, 29]) r(x, 8, 1, 8, '#555b60');
+  r(6, 9, 9, 4, '#ffffff'); h(12, 6, 14, '#2f74b8'); pix(r, ['#.#..##', '.#..#.#'], 7, 9, '#222');   // 駅名の看板
+  r(0, 15, 32, 3, '#b8b2a6'); h(15, 0, 31, '#f2c230');
+  r(0, 18, 26, 10, RD); spanRows(h, 18, [[26, 28], [26, 29], [26, 30], [26, 31], [26, 31], [26, 31], [26, 31], [26, 31], [26, 31], [26, 31]], RD);
+  for (let x = 1; x < 22; x += 4) r(x, 20, 3, 3, WN);
+  r(26, 20, 4, 3, WN); for (const x of [8, 16]) r(x, 19, 1, 9, RDD);
+  r(29, 24, 2, 1, '#ffe27a'); r(0, 27, 32, 2, '#333');
+  h(30, 0, 31, '#8a7a6a'); for (let x = 1; x < 32; x += 4) r(x, 31, 2, 1, '#6a5a4a');
+}, true);
+// 西尾市役所：青いガラスの今の庁舎（白いわくの階が重なる）と、前の木
+spotSprites.cityhall = shopCanvas((r, h) => {
+  const GL = '#5d8fc4', GH = '#9cc3e8', FR = '#e6e9ec', MU = '#c9d3dc';
+  h(3, 5, 27, '#b0b8c0'); r(5, 4, 23, 20, GL); r(5, 4, 6, 20, '#eef0f2');
+  for (let y = 4; y < 24; y += 4) h(y, 5, 27, FR);
+  for (let x = 13; x < 28; x += 3) r(x, 5, 1, 19, MU);
+  for (let y = 6; y < 24; y += 4) { r(7, y, 2, 2, GL); r(12, y, 3, 1, GH); r(21, y + 1, 2, 1, GH); }
+  h(23, 4, 28, FR); r(6, 24, 21, 4, '#2f4f6f'); for (const x of [10, 16, 22]) r(x, 24, 1, 4, FR);
+  for (const [x, y] of [[0, 21], [27, 20]]) { r(x + 1, y, 3, 1, '#4f9a3a'); r(x, y + 1, 5, 4, '#3f8a34'); r(x + 1, y + 2, 2, 1, '#6fba50'); r(x + 2, y + 5, 1, 3, WOOD); }
+}, true);
+// 尚古荘：松の庭と、縁側に障子の座敷
+spotSprites.shokoso = shopCanvas((r, h) => {
+  const SJ = '#f2eee2', SG = '#bfb6a0', PN = '#2f6a3a', PL = '#4f8a4a';
+  spanRows(h, 7, [[6, 29], [5, 30], [4, 31], [3, 31], [2, 31]], i => i ? ROOF : ROOF_HI);
+  r(4, 12, 27, 10, SJ); for (let x = 4; x < 31; x += 3) r(x, 12, 1, 10, SG); h(16, 4, 30, SG);
+  for (const x of [4, 13, 22, 30]) r(x, 12, 1, 11, '#6a4a30');
+  h(22, 3, 31, '#8a6a4a'); h(23, 3, 31, '#6a4a30');
+  r(14, 25, 18, 7, '#5fa0c0'); h(25, 14, 31, '#8cc0dd'); r(20, 28, 3, 1, '#8cc0dd');   // 池
+  for (const [x, y, w] of [[9, 24, 4], [3, 26, 6], [10, 28, 4]]) { r(x, y, w, 2, '#a9a49a'); h(y, x, x + w - 1, '#c8c3b8'); }
+  r(5, 6, 1, 18, '#6a4a30'); r(6, 4, 1, 4, '#6a4a30');   // 松
+  for (const [x, y] of [[0, 1], [3, 5], [0, 9], [3, 13]]) { pix(r, ['.#####.', '#######', '.#####.'], x, y, PN); h(y, x + 2, x + 4, PL); }   // 枝ごとに丸く刈りこんだ葉
+}, true);
+// 伊文神社：緑青の銅ぶき屋根の拝殿と、しめ縄・石灯籠
+spotSprites.ibunJinja = shopCanvas((r, h) => {
+  const CU = '#5f9e8a', CH = '#86c0ac', CD = '#3e6e60', PI = '#c8a46a', IN = '#3a2a20', ST = '#a9a49a';
+  spanRows(h, 5, [[10, 21], [8, 23], [6, 25], [4, 27], [2, 29], [1, 30]], i => i === 0 ? CD : i === 2 ? CH : CU);
+  h(11, 0, 31, CD); r(0, 10, 1, 1, CD); r(31, 10, 1, 1, CD);
+  spanRows(h, 7, [[15, 16], [13, 18], [12, 19], [11, 20]], CU); h(10, 13, 18, CD); r(15, 8, 2, 1, '#e2b13a');   // 正面の破風
+  r(5, 12, 22, 11, IN); for (const x of [5, 10, 21, 26]) r(x, 12, 1, 11, PI);
+  for (let x = 12; x < 20; x += 2) r(x, 16, 1, 7, '#5a4430');
+  r(7, 13, 18, 2, '#f0e6c8'); for (const x of [10, 15, 20]) { r(x, 15, 1, 1, '#ffffff'); r(x + 1, 16, 1, 1, '#ffffff'); }
+  h(23, 4, 27, '#8a6a4a'); spanRows(h, 24, [[11, 20], [10, 21], [9, 22], [8, 23]], i => i % 2 ? ST : '#c8c3b8');
+  for (const x of [0, 28]) { r(x + 1, 18, 2, 1, ST); r(x, 19, 4, 2, ST); r(x + 1, 20, 2, 1, '#ffe27a'); r(x + 1, 21, 2, 6, ST); r(x, 27, 4, 1, ST); }
+}, true);
+// 抹茶ミュージアム 西条園 和く和く：ベージュの壁に緑のマーク、竹垣
+spotSprites.wakuwaku = shopCanvas((r, h) => {
+  const BE = '#d8c9a8', GR = '#3f9a3a';
+  r(1, 5, 30, 3, '#3a3a3a'); r(2, 8, 27, 20, BE);
+  r(5, 10, 4, 4, GR); r(6, 11, 2, 2, '#ffffff'); pix(r, ['#.#.##.#.#.##', '.#..#..#.#.#.'], 11, 11, GR);
+  r(5, 17, 9, 6, '#3b3020'); r(6, 18, 3, 2, '#e8a050'); r(10, 18, 3, 3, '#8fc05a');
+  r(15, 17, 6, 11, '#2b3440'); r(17, 17, 1, 11, '#5a6470');
+  r(21, 18, 11, 10, '#c8b88a'); for (let x = 22; x < 32; x += 2) r(x, 18, 1, 10, '#9a8a5e'); h(21, 21, 31, '#222'); h(25, 21, 31, '#222');   // 竹垣
+  r(0, 24, 5, 4, '#3f8a34'); r(1, 23, 3, 1, '#6fba50');
+}, true);
+// 三河工芸ガラス美術館：白い箱の建物に青いたて長の窓、1階のガラスに色ガラス
+spotSprites.glassMuseum = shopCanvas((r, h) => {
+  r(4, 3, 24, 25, '#d6d4ce'); h(3, 4, 27, '#eceae4');
+  for (const x of [11, 13, 18, 20]) r(x, 7, 1, 7, '#3b5f9e');
+  h(17, 3, 28, '#bdbab3'); h(18, 3, 28, '#9e9b94');
+  r(6, 19, 20, 9, '#4c5c6a'); for (const x of [10, 15, 20]) r(x, 19, 1, 9, '#cfd4d8');
+  for (const [x, y, c] of [[7, 21, '#e57373'], [12, 22, '#ffd54f'], [17, 21, '#64b5f6'], [22, 22, '#81c784'], [8, 24, '#ba68c8'], [23, 25, '#ffb74d']]) r(x, y, 2, 2, c);
+}, true);
+// 道の駅にしお岡ノ山：瓦屋根の平屋が2つと、青い道の駅の看板、駐車場
+spotSprites.michinoeki = shopCanvas((r, h) => {
+  const WL = '#e8e2d2';
+  spanRows(h, 9, [[4, 13], [2, 15], [1, 16], [0, 17]], i => i ? ROOF : ROOF_HI); spanRows(h, 7, [[8, 9], [7, 10]], ROOF);
+  r(1, 13, 16, 10, WL); for (const x of [1, 6, 11, 16]) r(x, 13, 1, 10, WOOD); r(7, 16, 4, 7, '#3f5566');
+  spanRows(h, 12, [[19, 28], [17, 30], [16, 31], [15, 31]], i => i ? ROOF : ROOF_HI);
+  r(16, 16, 15, 7, WL); for (const x of [16, 23, 30]) r(x, 16, 1, 7, WOOD); r(18, 18, 4, 3, '#6f8fa8'); r(25, 18, 4, 3, '#6f8fa8');
+  r(2, 15, 4, 5, '#2a5fb0'); r(3, 16, 2, 1, '#ffffff'); r(3, 18, 2, 1, '#ffffff'); r(3, 20, 1, 4, '#888');   // 道の駅の看板
+  r(0, 24, 32, 6, '#8a8a88'); for (let x = 3; x < 32; x += 6) r(x, 25, 1, 4, '#f4f4f4');
+}, true);
+// 三河一色諏訪神社：瓦の大きな拝殿と、石の鳥居
+spotSprites.isshikiSuwa = shopCanvas((r, h) => {
+  const ST = '#9a968c', SH = '#c2beb4';
+  spanRows(h, 3, [[11, 20], [9, 22], [7, 24], [5, 26], [3, 28], [2, 29], [1, 30]], i => i === 0 || i === 3 ? ROOF_HI : ROOF);
+  spanRows(h, 5, [[15, 16], [14, 17], [13, 18], [12, 19]], '#ece5d4'); h(9, 12, 19, WOOD);
+  h(10, 0, 31, '#2e3238'); r(3, 11, 26, 13, '#8a6a4a'); r(11, 13, 10, 10, '#3a2a20'); for (const x of [3, 10, 21, 28]) r(x, 11, 1, 13, '#6a4a30');
+  h(24, 2, 29, ST);
+  h(13, 3, 28, ST); h(14, 4, 27, SH); r(3, 12, 1, 1, ST); r(28, 12, 1, 1, ST); h(17, 7, 24, ST);   // 鳥居
+  r(8, 15, 2, 15, ST); r(22, 15, 2, 15, ST); r(15, 15, 2, 2, '#3a3a3a');
+  h(30, 6, 25, '#b8b2a6'); h(31, 6, 25, '#9a948a');
+}, true);
+// 一色港：佐久島へ渡る白い高速船（青と赤の線）
+spotSprites.isshikiPort = shopCanvas((r, h) => {
+  const WH = '#f4f6f8', SE = '#4f8fbf';
+  r(14, 3, 1, 6, '#555'); h(4, 12, 16, '#555');
+  r(9, 8, 11, 3, WH); r(10, 9, 8, 1, '#2b3440');
+  r(5, 11, 18, 5, WH); for (let x = 7; x < 21; x += 3) r(x, 12, 2, 2, '#2b3440');
+  spanRows(h, 16, [[1, 27], [1, 29], [1, 30], [2, 31], [2, 30], [3, 29], [3, 28], [4, 27], [5, 26]], i => i === 3 ? '#2f5fae' : i === 5 ? '#d23a2e' : i >= 7 ? '#2f5fae' : WH);
+  r(0, 25, 32, 7, SE); for (const [x, y] of [[2, 27], [12, 29], [22, 27], [27, 30], [7, 30]]) r(x, y, 3, 1, '#8cc0e0');
+}, true);
+// 愛知こどもの国：園内を走る白い汽車（ロードトレイン）
+spotSprites.kodomoTrain = shopCanvas((r, h) => {
+  const WH = '#f4f4f4', RD = '#d23a2e', BK = '#222', WN = '#2b3440';
+  h(9, 0, 16, RD); h(10, 0, 16, RD); for (const x of [0, 8, 16]) r(x, 11, 1, 6, '#888');
+  for (const [x, c] of [[2, '#ffb300'], [5, '#5a3418'], [10, '#e57373'], [13, '#2b2018']]) r(x, 14, 2, 2, c);
+  r(0, 16, 17, 6, WH); h(19, 0, 16, RD);
+  r(18, 8, 6, 2, '#b33a2e'); r(18, 10, 6, 12, WH); r(19, 11, 4, 3, WN);
+  r(24, 14, 6, 8, WH); h(17, 24, 29, RD); r(26, 8, 3, 6, BK); r(25, 7, 5, 1, BK); r(30, 18, 2, 4, BK); r(28, 15, 1, 1, '#ffe27a');
+  for (const x of [2, 11, 20, 26]) { r(x, 21, 4, 4, BK); r(x + 1, 22, 2, 2, '#9a9a9a'); }
+  r(0, 26, 32, 4, '#7a7a7a'); h(27, 0, 31, '#f2c230');
+}, true);
+// 東条城跡（吉良）：木の物見やぐらと門、まわりの木の柵
+spotSprites.tojoJo = shopCanvas((r, h) => {
+  const WD = '#6a4a30', WL = '#8a6a4a', DK = '#3a3a3a';
+  spanRows(h, 1, [[23, 25], [21, 27], [19, 29], [18, 30]], DK); r(19, 5, 11, 5, WL); r(22, 6, 5, 2, '#2a2018');
+  r(20, 10, 2, 19, WD); r(27, 10, 2, 19, WD); for (let y = 12; y < 28; y += 5) { h(y, 22, 26, WD); r(23 + (y % 2), y + 1, 2, 1, WD); }
+  spanRows(h, 13, [[3, 13], [1, 15], [0, 16]], DK); r(2, 16, 2, 11, WD); r(13, 16, 2, 11, WD); r(4, 17, 9, 10, '#5a3e28'); r(8, 17, 1, 10, '#3a2818');
+  for (let x = 0; x < 32; x += 2) if (x < 1 || x > 16) r(x, 21, 1, 7, WL); h(23, 17, 31, WD);
+  r(0, 28, 32, 3, '#5a9a3a'); h(28, 0, 31, '#7fbf5f');
+}, true);
+// 妙善寺（かぼちゃ寺）：瓦屋根の小さなお堂と、かぼちゃ
+spotSprites.myozenji = shopCanvas((r, h) => {
+  r(15, 2, 2, 2, '#b88a12');
+  spanRows(h, 4, [[13, 18], [11, 20], [9, 22], [7, 24], [5, 26], [4, 27]], i => i === 5 ? '#2e3238' : i % 2 ? ROOF : ROOF_HI);
+  r(8, 10, 16, 12, '#7a5a3c'); r(12, 12, 8, 10, '#3e3024'); for (let x = 13; x < 20; x += 2) r(x, 12, 1, 10, '#6a5640');
+  spanRows(h, 22, [[10, 21], [9, 22], [8, 23], [7, 24]], i => i % 2 ? '#a9a49a' : '#c8c3b8');
+  for (const x of [0, 25]) {
+    pix(r, ['.####.', '######', '######', '######', '.####.'], x, 25, '#3e6b2e'); r(x + 2, 25, 1, 5, '#2c4f20'); r(x + 4, 26, 1, 3, '#5a8a40'); r(x + 2, 24, 2, 1, '#6a4a30');
+  }
+}, true);
+// 吉良饗庭塩の里：砂をならした塩田と、塩をたく小屋
+spotSprites.shioNoSato = shopCanvas((r, h) => {
+  const SA = '#d9cfb3', SD = '#c4b896';
+  spanRows(h, 7, [[20, 23], [18, 25], [16, 27], [15, 28]], '#4a3a2e'); r(16, 11, 12, 7, '#3a2c20'); for (let x = 18; x < 28; x += 3) r(x, 11, 1, 7, '#55402e'); r(20, 13, 3, 5, '#1e1610');
+  h(10, 1, 11, '#6a4a30'); h(11, 0, 12, '#6a4a30'); r(1, 12, 1, 6, WOOD); r(11, 12, 1, 6, WOOD);
+  r(0, 18, 32, 13, SA); h(18, 0, 31, '#8a7a5a'); for (let y = 20; y < 31; y += 2) h(y, 1, 30, SD);
+  r(4, 24, 5, 2, '#7fb8d8'); r(23, 26, 1, 4, '#8a6a4a'); h(29, 21, 25, '#8a6a4a');
+}, true);
+// 吉良ワイキキビーチ（宮崎海水浴場）：砂浜と海、うしろの山とホテル
+spotSprites.waikiki = shopCanvas((r, h) => {
+  r(17, 3, 13, 12, '#f2f2ee'); for (let y = 5; y < 14; y += 3) for (let x = 19; x < 29; x += 3) r(x, y, 2, 1, '#6f8fa8');
+  spanRows(h, 8, [[0, 16], [0, 17], [0, 18], [0, 31], [0, 31], [0, 31], [0, 31]], i => i % 2 ? '#3f7a34' : '#4f8a3a');
+  spanRows(h, 15, [[0, 31], [0, 31], [0, 31], [2, 31], [5, 31], [8, 31], [11, 31], [14, 31], [17, 31], [20, 31]], '#ecdcae');
+  spanRows(h, 18, [[0, 1], [0, 4], [0, 7], [0, 10], [0, 13], [0, 16], [0, 19], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31]], '#3f8fcf');
+  for (const [x, y] of [[2, 24], [10, 28], [20, 29], [5, 30], [26, 31]]) h(y, x, x + 2, '#8cc0e0');
+  for (const [x, c] of [[14, '#d23a2e'], [23, '#ffb300']]) { h(13, x - 2, x + 2, c); h(14, x - 3, x + 3, c); r(x, 15, 1, 4, '#555'); }
+}, true);
+// 岡崎城：白い壁の天守と石垣（徳川家康の生まれた城）
+spotSprites.okazakiCastle = shopCanvas((r, h) => {
+  const RF = '#5a606a', RH = '#7c838d', WL = '#f6f6f2', WN = '#3a3a3a', ST = '#9b968a', SD = '#6f6a61', GD = '#e2b13a';
+  for (let y = 24; y < 32; y++) h(y, 5 - ((y - 24) >> 1), 26 + ((y - 24) >> 1), ST);
+  h(27, 4, 27, SD); h(30, 2, 29, SD); for (const x of [10, 16, 22]) r(x, 25, 1, 2, SD);
+  r(6, 19, 20, 5, WL); for (const x of [9, 13, 18, 22]) r(x, 20, 2, 2, WN);
+  h(15, 8, 23, RH); h(16, 6, 25, RF); h(17, 4, 27, RF); h(18, 3, 28, RF); r(3, 17, 1, 1, RF); r(28, 17, 1, 1, RF);
+  spanRows(h, 13, [[15, 16], [14, 17]], RF); r(14, 15, 4, 1, WL);
+  r(9, 10, 14, 5, WL); for (const x of [11, 15, 19]) r(x, 11, 2, 2, WN);
+  h(8, 10, 21, RH); h(9, 8, 23, RF); r(7, 8, 1, 1, RF); r(24, 8, 1, 1, RF);
+  r(12, 5, 8, 3, WL); r(14, 6, 1, 1, WN); r(17, 6, 1, 1, WN);
+  h(2, 12, 19, RH); h(3, 11, 20, RF); h(4, 10, 21, RF); r(10, 3, 1, 1, RF); r(21, 3, 1, 1, RF);
+  r(12, 0, 1, 2, GD); r(19, 0, 1, 2, GD);
+}, true);
+// カクキュー 八丁味噌：石を山のように積んだ、大きな木の仕込み樽
+spotSprites.misoBarrel = shopCanvas((r, h) => {
+  const WD = '#9a6a3a', WH = '#b5824e', BD = '#4a3020', SG = '#a8a49c', SL = '#d0ccc4', SK = '#6f6a61';
+  const barrel = (x0, x1, y0, y1) => {
+    r(x0, y0, x1 - x0 + 1, y1 - y0 + 1, WD); r(x0 - 1, y0 + 2, 1, y1 - y0 - 3, WD); r(x1 + 1, y0 + 2, 1, y1 - y0 - 3, WD);
+    for (let x = x0 + 2; x < x1; x += 3) r(x, y0, 1, y1 - y0 + 1, WH);
+    for (const y of [y0 + 1, Math.round((y0 + y1) / 2), y1 - 1]) h(y, x0 - 1, x1 + 1, BD);
+    let w = x1 - x0 - 1, y = y0 - 1;   // 石の山
+    for (let x = x0 + 1; w > 0; y -= 2, w -= 4, x += 2) for (let sx = x; sx + 1 <= x + w; sx += 3) { r(sx, y - 1, 3, 2, SG); r(sx, y - 1, 2, 1, SL); r(sx + 2, y, 1, 1, SK); }
+  };
+  barrel(2, 15, 14, 29); barrel(17, 29, 17, 30);
+}, true);
+// デンパーク（安城）：とんがった屋根の窓が並ぶ建物と、黄色いひさし、花だん
+spotSprites.denpark = shopCanvas((r, h) => {
+  const RF = '#4a5a4a', RH = '#5e705e';
+  spanRows(h, 9, [[3, 28], [2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31]], i => i % 3 ? RF : RH);
+  for (const x of [5, 15, 25]) { spanRows(h, 5, [[x, x + 1], [x - 1, x + 2], [x - 2, x + 3], [x - 2, x + 3], [x - 2, x + 3]], RF); r(x - 1, 8, 4, 3, '#f4f0e4'); r(x, 9, 2, 2, '#6f8fa8'); }
+  r(0, 16, 32, 2, '#e8c840'); h(18, 0, 31, '#c8a830');
+  r(1, 19, 30, 7, '#f4f0e4'); for (let x = 3; x < 30; x += 5) r(x, 20, 3, 5, '#4c5c6a'); for (const x of [0, 10, 21, 31]) r(x, 18, 1, 9, '#7a5a3c');
+  r(0, 27, 32, 2, '#3f8a34'); for (let x = 1; x < 32; x += 3) r(x, 27, 1, 1, x % 2 ? '#d23a2e' : '#ffd54f');
+}, true);
+// 碧南海浜水族館：白い建物に青い帯、塔の上に青い丸いマーク
+spotSprites.hekinanAquarium = shopCanvas((r, h) => {
+  const WH = '#f4f6f8', BL = '#2f74b8', CY = '#4fb3d9';
+  r(2, 2, 9, 10, WH); r(4, 3, 5, 5, BL); r(5, 4, 3, 3, '#ffffff'); r(6, 5, 1, 1, BL);
+  r(0, 10, 32, 17, WH); h(10, 0, 31, '#d8dde2'); r(0, 14, 32, 2, BL); h(16, 0, 31, CY);
+  for (let x = 2; x < 13; x += 4) r(x, 19, 3, 3, '#6f8fa8');
+  r(14, 18, 12, 9, '#2b3440'); h(17, 13, 26, '#333'); for (const x of [17, 22]) r(x, 18, 1, 9, '#5a6470');
+  r(27, 6, 1, 12, '#888'); r(28, 6, 3, 2, BL);
+  r(0, 26, 12, 2, '#d23a2e'); r(0, 25, 12, 1, '#4f9a3a');
+}, true);
+// 高浜市やきものの里 かわら美術館：段々の茶色い建物と、入口の鬼瓦
+spotSprites.kawaraMuseum = shopCanvas((r, h) => {
+  const BN = '#8a7a6c', BD = '#6e5f52', TL = '#a0604a', TP = '#b58a7a';
+  r(1, 12, 30, 16, BN); r(8, 7, 23, 6, BN); r(16, 3, 15, 5, BN);
+  for (const [x0, y] of [[1, 12], [8, 7], [16, 3]]) for (let x = x0; x < 31; x += 4) spanRows(h, y - 2, [[x + 1, x + 2], [x, x + 3]], TP);
+  for (const y of [9, 15, 19]) h(y, 1, 30, TL); h(5, 16, 30, TL);
+  for (let x = 20; x < 31; x += 3) r(x, 13, 1, 6, BD);
+  r(5, 21, 12, 7, '#3a3a40'); h(20, 4, 17, BD);
+  for (const x of [1, 18]) { r(x, 22, 4, 5, '#7a7a78'); r(x + 1, 21, 2, 1, '#7a7a78'); r(x + 1, 23, 1, 1, '#2a2a2a'); r(x + 2, 23, 1, 1, '#2a2a2a'); r(x, 27, 4, 1, '#5a5a58'); }   // 鬼瓦
+}, true);
 
 function spotArt(s) {
+  if (s.id === 'f-ricepia') return 'ricepia';
+  if (s.id === 'f-kondo-beikoku') return 'kondo';
+  if (LANDMARK_ART[s.id]) return LANDMARK_ART[s.id];
   if (s.shop) return 'ricestore';
   const kind = s.featured ? (s.kind || 'featured') : s.cat;
   if (kind === 'castle') return 'castle';
@@ -1230,7 +1680,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -1274,25 +1724,11 @@ function frame(now) {
     const size = p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * 0.7);
     ctx.drawImage((spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
   }
-  if (scale >= 2) {   // 寄ったときは名前も（「あそこのコンビニだ」と分かるように）
-    const fs = Math.round(9 * dpr);
-    ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-    ctx.lineWidth = Math.max(2, Math.round(2 * dpr)); ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.fillStyle = '#fff';
-    for (const p of pois) {
-      if (!p[3]) continue;
-      const name = p[3].length > 14 ? p[3].slice(0, 13) + '…' : p[3];
-      const X = Math.round(ox + p[0] * T), Y = Math.round(oy + p[1] * T + T * 0.35), tw = ctx.measureText(name).width;
-      const box = [X - tw / 2 - 2, Y, X + tw / 2 + 2, Y + fs + 2];
-      if (box[2] < 0 || box[0] > w || box[1] > h || box[3] < 0 || labelBoxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
-      labelBoxes.push(box);
-      ctx.strokeText(name, X, Y); ctx.fillText(name, X, Y);
-    }
-  }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.shop ? Math.round(T * 2.5) : s.featured ? T * 2 : T;
+    const size = s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
@@ -1304,7 +1740,7 @@ function frame(now) {
       ctx.fillRect(Math.round(sx + 13 * u), Math.round(sy + 1 * u), Math.ceil(u), Math.ceil(u * 3));
       ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
     }
-    if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
+    if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
   // 西尾の人たち（まだ話していない人の上には吹き出し）
   for (const n of G.npcs || []) {
@@ -1339,9 +1775,57 @@ function frame(now) {
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
+  {   // 看板は人や建物の上に出す（主人公には重ねない）
+    // 町名の札（青地に白い字。電柱の町名表示のように）・駅名標（白地に黒い字と青い線）・お店の看板（その店らしい色に白い字）
+    // 重ならないように、町名 → 駅 → 大きなお店 → ほかのお店 の順に場所を取る
+    const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), bw = Math.max(1, Math.round(dpr));
+    labelBoxes.push([w / 2 - T, cy - T * 1.6, w / 2 + T, cy + T * 0.8]);   // 主人公のところ
+    ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const board = (X, Y, text, bg, fg, line) => {
+      const tw = ctx.measureText(text).width, bx = Math.round(X - tw / 2 - pad), by = Math.round(Y), bwid = Math.round(tw + pad * 2), bh = fs + pad * 2;
+      const box = [bx - 1, by - 1, bx + bwid + 1, by + bh + 1];
+      if (box[2] < 0 || box[0] > w || box[1] > h || box[3] < 0 || labelBoxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) return;
+      labelBoxes.push(box);
+      ctx.fillStyle = '#000'; ctx.fillRect(bx - bw, by - bw, bwid + bw * 2, bh + bw * 2);
+      ctx.fillStyle = bg; ctx.fillRect(bx, by, bwid, bh);
+      if (line) { ctx.fillStyle = line; ctx.fillRect(bx, by + bh - Math.round(3 * dpr), bwid, Math.round(3 * dpr)); }
+      ctx.fillStyle = fg; ctx.fillText(text, X, by + bh / 2 - (line ? dpr : 0));
+    };
+    const short = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+    for (const x of towns) {
+      if (x[0] < tx0 - 4 || x[0] > tx1 + 4 || x[1] < ty0 - 2 || x[1] > ty1 + 2) continue;
+      board(Math.round(ox + x[0] * T), Math.round(oy + x[1] * T), short(x[2], 10), '#1b4fa0', '#fff');
+    }
+    for (const sp of spots) {
+      if ((sp.kind || sp.cat) !== 'station') continue;
+      const q = toTile(sp.lat, sp.lng);
+      if (q.x < tx0 - 4 || q.x > tx1 + 4 || q.y < ty0 - 2 || q.y > ty1 + 2) continue;
+      board(Math.round(ox + q.x * T), Math.round(oy + q.y * T + T * 0.7), short(sp.name.replace(/^名鉄\s*/, ''), 12), '#fff', '#111', '#1b4fa0');
+    }
+    for (const p of pois.filter(q => MAJOR_SIGN.has(q[2])).concat(pois.filter(q => !MAJOR_SIGN.has(q[2])))) {   // 大きなお店から場所を取る
+      if (!p[3]) continue;
+      board(Math.round(ox + p[0] * T), Math.round(oy + p[1] * T + T * 0.35), short(p[3], 12), signColor(p[2], p[3]), '#fff');
+    }
+  }
+
   drawWeather(now, w, h, dpr);
 
-  // 主人公の頭の上に浮かぶ文字（籾を集めたときの「🌾+0.3合」など）
+  // 町が変わったら、まん中に町名を大きく出す（いまいる町名は、左上の こよみ の札に出す）
+  if (here.banner) {
+    const age = (now - here.bannerAt) / 1000;
+    if (age > 2.8) here.banner = '';
+    else {
+      ctx.globalAlpha = Math.min(1, age * 3, (2.8 - age) * 2);
+      const bs = Math.round(18 * dpr), t = `〜 ${here.banner} 〜`;
+      ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(t).width, by = Math.round(Math.max(cy - T * 3, 48 * dpr + bs));   // 左上の こよみ の札より下に
+      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(w / 2 - tw / 2 - 14 * dpr), by - bs, Math.round(tw + 28 * dpr), bs * 2);
+      ctx.fillStyle = '#fff'; ctx.fillText(t, w / 2, by);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // 主人公の頭の上に浮かぶ文字（ポイントなど）
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i], age = (now - fl.at) / 1000;
     if (age > 1.2) { floaters.splice(i, 1); continue; }
@@ -1508,8 +1992,8 @@ function drawWorld(now, w, h, dpr) {
     }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
-  for (const [x, y, sz, s] of shopTags) {   // 「当店」の札は地名より上に。札も絵もタップできる
-    const t = drawShopTag(x, y, dpr);
+  for (const [x, y, sz, s] of shopTags) {   // 当店の札（店名）は地名より上に。札も絵もタップできる
+    const t = drawShopTag(x, y, dpr, s);
     shopHits.push([Math.min(t[0], x - sz / 2), t[1], Math.max(t[2], x + sz / 2), y + sz, s]);
   }
   // 主人公
@@ -1523,16 +2007,19 @@ function drawWorld(now, w, h, dpr) {
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
 }
-// 当店の札：赤地に白文字で「当店」。(cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
+// 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
+// (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
-function drawShopTag(cx, bottom, dpr) {
+const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
+function drawShopTag(cx, bottom, dpr, s) {
+  const [text, bg, fg] = SHOP_SIGN[s && s.id] || ['当店', '#d23a2e', '#ffffff'];
   const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
   ctx.font = `${fs}px "DotGothic16", monospace`;
-  const tw = Math.ceil(ctx.measureText('当店').width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const tw = Math.ceil(ctx.measureText(text).width), bw = tw + pad * 2, bh = fs + pad * 2;
   const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
   ctx.fillStyle = '#000'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
-  ctx.fillStyle = '#d23a2e'; ctx.fillRect(x, y, bw, bh);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('当店', x + bw / 2, y + bh / 2 + dpr * 0.5);
+  ctx.fillStyle = bg; ctx.fillRect(x, y, bw, bh);
+  ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
 }
 function worldSpotShown(s) {
@@ -1871,6 +2358,7 @@ function stickMove(e) {
   const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
   for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
   if (key === stick.key) return;
+  if (dirs.length) autoPause();   // 自分で動かしたら、おまかせ歩きは少し休む
   stick.key = key; stick.dirs = dirs; stick.turn = 0;
   clearTimeout(stick.timer); stick.timer = null;
   if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
@@ -1895,8 +2383,115 @@ $('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId
 window.addEventListener('blur', () => stickEnd());
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); padStep(k); }
+  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); autoPause(); padStep(k); }
 });
+
+/* ---------- おまかせ歩き（操作して移動） ----------
+   みちしるべの行き先まで、道を探して自動で歩く（ほぼ放っておいてもゲームが進む）。
+   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のイベントが決まる）
+   ・名所が行き先なら、着いたところでチェックインする（とちゅうの まだ行っていない所も）
+   ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
+   ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */
+let auto = (() => { try { return localStorage.getItem('nsg_auto') !== 'false'; } catch (e) { return true; } })();
+const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0, walked: 0 };
+const AUTO_ROADS = new Set([C.R, C.H, C.D]);
+function setAuto(on, quiet) {
+  auto = !!on;
+  try { localStorage.setItem('nsg_auto', String(auto)); } catch (e) { /* noop */ }
+  const b = $('pxAuto');
+  b.classList.toggle('on', auto); b.setAttribute('aria-pressed', String(auto));
+  autoS.path = []; autoS.read = 0;
+  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックをさわると少し休みます）' : '🧭 おまかせ歩き：オフ');
+}
+function autoPause() { autoS.pauseUntil = Date.now() + 8000; autoS.path = []; }
+// (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで
+function planPath(sx, sy, gx, gy, goalR, avoid) {
+  const pad = 40, x0 = Math.min(sx, gx) - pad, y0 = Math.min(sy, gy) - pad, W = Math.abs(gx - sx) + pad * 2 + 1, H = Math.abs(gy - sy) + pad * 2 + 1;
+  if (W * H > 700000) return [];
+  const N = W * H, g = new Float32Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
+  const hx = [], hf = [];   // 二分ヒープ（f の小さい順）
+  const push = (i, f) => { hx.push(i); hf.push(f); let k = hx.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (hf[p] <= hf[k]) break; [hx[p], hx[k]] = [hx[k], hx[p]]; [hf[p], hf[k]] = [hf[k], hf[p]]; k = p; } };
+  const pop = () => { const top = hx[0], li = hx.pop(), lf = hf.pop(); if (hx.length) { hx[0] = li; hf[0] = lf; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < hx.length && hf[a] < hf[m]) m = a; if (b < hx.length && hf[b] < hf[m]) m = b; if (m === k) break; [hx[m], hx[k]] = [hx[k], hx[m]]; [hf[m], hf[k]] = [hf[k], hf[m]]; k = m; } } return top; };
+  const h = (x, y) => (Math.abs(x - gx) + Math.abs(y - gy)) * 0.9;
+  const start = (sy - y0) * W + (sx - x0);
+  g[start] = 0; push(start, h(sx, sy));
+  let best = start, bestH = h(sx, sy), found = -1, n = 0;
+  while (hx.length && n++ < 150000) {
+    const i = pop();
+    if (done[i]) continue;
+    done[i] = 1;
+    const x = i % W + x0, y = (i / W | 0) + y0;
+    if (Math.hypot(x - gx, y - gy) <= goalR) { found = i; break; }
+    if (h(x, y) < bestH) { bestH = h(x, y); best = i; }
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, lx = nx - x0, ly = ny - y0;
+      if (lx < 0 || ly < 0 || lx >= W || ly >= H) continue;
+      const j = ly * W + lx;
+      if (done[j]) continue;
+      const c = codeAt(nx, ny), isGoal = goalR === 0 && nx === gx && ny === gy;
+      if (!isGoal && (c !== C.X && BLOCK.has(c) || avoid.has(nx + ',' + ny))) continue;
+      const cost = c === C.X ? 4 : AUTO_ROADS.has(c) ? 1 : 1.6;
+      if (g[i] + cost < g[j]) { g[j] = g[i] + cost; from[j] = i; push(j, g[j] + h(nx, ny)); }
+    }
+  }
+  const out = [];
+  for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
+  return out.reverse();
+}
+function autoRead() {   // 人の話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる（スポットやお店の説明は、自分で閉じるまで待つ）
+  const body = $('pxInfoBody'), now = Date.now();
+  if (!body.querySelector('.npc-next, .npc-end')) { autoS.read = 0; return; }
+  if (!autoS.read) { autoS.read = now + Math.min(6000, 1800 + body.textContent.length * 40); return; }
+  if (now < autoS.read) return;
+  autoS.read = 0;
+  const next = body.querySelector('.npc-next');
+  if (next) next.click(); else $('pxInfo').hidden = true;
+}
+function autoTick() {
+  setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
+  if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
+  if (!$('pxInfo').hidden) { autoRead(); return; }
+  autoS.read = 0;
+  if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }
+  const g = G.guide;
+  // 着いた名所（行き先か、まだ行っていない所）でチェックイン
+  const sel = G.selected;
+  if (sel && G.inReach(sel) && G.cooldownLeft(sel) <= 0 && (!G.state.visits[sel.id] || (g && g.id === sel.id))) { G.checkin(); autoS.pauseUntil = Date.now() + 2500; return; }
+  if (!g) return;   // 行き先が決まるのを待つ（まわりのようすで決まる）
+  const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
+  let gx, gy, goalR;
+  if (g.kind === 'npc') {   // 人：その人のマスへ歩いていくと話しかける
+    const nn = (G.npcs || []).find(x => x.id === g.id);
+    if (!nn) return;
+    const q = npcTile(nn); gx = q.x; gy = q.y; goalR = 0;
+  } else {
+    const q = toTile(g.lat, g.lng); gx = Math.floor(q.x); gy = Math.floor(q.y);
+    goalR = Math.max(1, Math.floor(G.guideRadius(g) / TILE_M * 0.6));
+  }
+  const key = `${g.id}:${gx}:${gy}`;
+  if (key !== autoS.goal || !autoS.path.length || autoS.steps >= 40) {
+    // ほかの人のマスは通らない（ぶつかると話しかけてしまう）
+    const avoid = new Set((G.npcs || []).filter(x => x.id !== g.id).map(x => { const q = npcTile(x); return q.x + ',' + q.y; }));
+    autoS.goal = key; autoS.steps = 0; autoS.path = planPath(sx, sy, gx, gy, goalR, avoid);
+    if (!autoS.path.length && Math.hypot(sx - gx, sy - gy) > goalR) {
+      // 近づけない（まわりが通れない所ばかり）：しばらく待っても動けなければ、別の行き先にしてもらう
+      if (++autoS.stuck > 25) { autoS.stuck = 0; G.setGuide(null); }
+      return;
+    }
+  }
+  const nx = autoS.path.shift();
+  if (!nx) return;
+  if (Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) { autoS.path = []; return; }   // 道すじからずれた（タップで移動など）：探し直す
+  const dir = nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up';
+  autoS.steps++;
+  if (step(dir)) {
+    autoS.stuck = 0;
+    if (++autoS.walked % 150 === 0 && G.autoLearn) G.autoLearn();   // 歩いているだけで西尾のことが分かる
+  } else autoS.path = [];   // 通れなかった（読み込んだら建物だった など）：探し直す
+}
+$('pxAuto').addEventListener('click', () => setAuto(!auto));
+setAuto(auto, true);
+setTimeout(autoTick, 1500);
 
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
@@ -1935,7 +2530,7 @@ cv.addEventListener('click', e => {
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = (s.shop ? T * 1.25 : s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);
+    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
@@ -1954,5 +2549,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

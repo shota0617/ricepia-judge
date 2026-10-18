@@ -2835,6 +2835,121 @@ spotSprites.gamagoriStation = hiCanvas((r, h) => {
   for (const [x, y] of [[2, 36], [40, 34], [6, 42], [36, 42]]) { r(x, y, 5, 4, '#3f7a34'); r(x + 2, y + 4, 1, 2, '#6a4a3a'); }
 });
 
+/* ---------- 型でつくる名所の絵（48×48） ----------
+   専用の絵がない OpenStreetMap の名所（神社・お寺・駅・史跡など）に、種類ごとの型で絵をつける。
+   nishio-go/landmark-gen.js（tools/make-landmark-gen.js が作る）の NISHIO_LANDMARK_GEN = { OSMのid: [種類, 形の番号, 屋根の色, 壁の色, 差し色] }。
+   色は、その場所の日本語版ウィキペディアの代表画像（Commons）から測ったもの。写真がない所は種類ごとの基本の色。絵は見えたときに作って覚えておく */
+const GEN = window.NISHIO_LANDMARK_GEN || {};
+const genCache = new Map();
+const shade = (hex, f) => {   // f<1 で暗く、f>1 で白に近づける
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.round(f >= 1 ? v + (255 - v) * (f - 1) : v * f));
+  return '#' + c.map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, '0')).join('');
+};
+const roofOf = c => [shade(c, 1.35), c, shade(c, 0.55), shade(c, 0.8)];
+const STONE = '#a8a49a', PATH = '#c8c3b8';
+function genTorii(r, h, x0, x1, y, col, tall = 16) {   // 鳥居：笠木（両はしが反る）・貫・柱2本
+  h(y, x0, x1, col); h(y + 1, x0 + 1, x1 - 1, col); r(x0, y - 1, 1, 1, col); r(x1, y - 1, 1, 1, col); h(y + 4, x0 + 3, x1 - 3, col);
+  r(x0 + 4, y + 2, 2, tall, col); r(x1 - 5, y + 2, 2, tall, col); r(x0 + 4, y + 2, 1, tall, shade(col, 1.25));
+}
+function genLantern(r, x, y) { r(x + 1, y, 2, 1, STONE); r(x, y + 1, 4, 2, STONE); r(x + 1, y + 2, 2, 1, '#f2d27a'); r(x + 1, y + 3, 2, 5, STONE); r(x, y + 8, 4, 1, '#8a857a'); }
+function genHall(r, h, x0, x1, y0, roof, wall, opt = {}) {   // 入母屋の堂：瓦の帯・軒・柱と戸
+  const w = x1 - x0, rows = opt.rows || 7, spans = [];
+  for (let i = 0; i < rows; i++) { const k = Math.round((rows - 1 - i) * w / (rows * 4)); spans.push([x0 + k, x1 - k]); }
+  if (opt.gable) for (let k = 0; k < 4; k++) h(y0 - 3 + k, Math.round((x0 + x1) / 2) - k, Math.round((x0 + x1) / 2) + k + 1, k ? shade(wall, 1.05) : roof[2]);
+  tileRoof(r, h, y0, spans, roof);
+  const by = y0 + rows, bh = opt.body || 10;
+  r(x0 + 3, by, w - 5, bh, wall); h(by, x0 + 3, x1 - 3, shade(wall, 0.7));
+  for (let x = x0 + 3; x <= x1 - 3; x += Math.max(4, Math.round(w / 6))) r(x, by, 1, bh, shade(wall, 0.55));
+  const dx = Math.round((x0 + x1) / 2) - 4; r(dx, by + 2, 9, bh - 2, '#2e2620'); for (let x = dx + 1; x < dx + 9; x += 2) r(x, by + 2, 1, bh - 2, '#5a4a3a');
+  return by + bh;
+}
+const GEN_DRAW = {
+  shrine(r, h, v, [roof, wall, acc]) {   // 神社：拝殿としめ縄、手前に鳥居、石灯籠
+    const RC = v % 3 === 1 ? roofOf('#5f9e8a') : roofOf(roof);
+    if (v === 3) {   // 小さな祠
+      tileRoof(r, h, 14, [[18, 29], [16, 31], [15, 32]], RC); r(18, 17, 12, 9, wall); r(21, 19, 6, 7, '#2e2620'); h(26, 15, 32, STONE);
+    } else {
+      const by = genHall(r, h, 3, 44, 4, RC, wall, { rows: 8, body: 12 });
+      h(13, 9, 38, '#efe4c8'); h(14, 9, 38, '#d8c8a0'); for (const x of [14, 23, 32]) { r(x, 15, 1, 2, '#ffffff'); r(x + 1, 16, 1, 1, '#ffffff'); }
+      h(by, 4, 43, STONE);
+    }
+    genTorii(r, h, 8, 39, 28, acc, 17);
+    if (v % 2 === 0) { genLantern(r, 1, 36); genLantern(r, 43, 36); }
+    for (let y = 40; y < 48; y++) h(y, 19 - (y - 40), 28 + (y - 40), y % 2 ? PATH : '#b8b2a6');
+  },
+  temple(r, h, v, [roof, wall, acc]) {   // お寺：瓦の大屋根の本堂。形の番号で鐘つき堂・山門・松をそえる
+    const RC = roofOf(roof), right = v === 1 ? 33 : 45;
+    const by = genHall(r, h, 2, right, 9, RC, wall, { rows: 11, body: 16, gable: v !== 3 });
+    h(by, 1, right + 1, STONE); h(by + 1, 3, right - 1, '#8a857a');
+    if (v === 1) { tileRoof(r, h, 12, [[36, 44], [35, 45], [34, 46]], RC); r(35, 15, 1, 15, '#5b4632'); r(45, 15, 1, 15, '#5b4632'); r(38, 17, 5, 6, '#5f7a62'); h(23, 38, 42, '#3a5a44'); }
+    if (v === 2) { tileRoof(r, h, 37, [[12, 35], [10, 37], [9, 38]], RC); r(12, 40, 2, 8, '#6a4a30'); r(34, 40, 2, 8, '#6a4a30'); r(14, 41, 20, 7, '#2a2018'); }   // 手前の山門
+    if (v === 3) { for (const [x, y] of [[0, 30], [4, 26], [0, 22]]) { pix(r, PINE, x, y, '#2f6a3a'); h(y, x + 2, x + 4, '#4f8a4a'); } r(3, 33, 1, 10, '#6a4a30'); }
+    if (v !== 2) for (let y = 42; y < 48; y++) h(y, 20 - (y - 42), 27 + (y - 42), y % 2 ? PATH : '#b8b2a6');
+  },
+  station(r, h, v, [roof, wall, acc]) {   // 駅：形の番号で、木の駅舎・今の駅ビル・高架・ホームだけ
+    const rail = () => { r(0, 43, 48, 5, '#5a4d40'); h(44, 0, 47, '#9a9a9a'); h(46, 0, 47, '#9a9a9a'); for (let x = 1; x < 48; x += 3) r(x, 45, 1, 1, '#7a6a5a'); };
+    if (v === 0) {
+      tileRoof(r, h, 14, [[10, 37], [8, 39], [6, 41], [5, 42]], roofOf(roof)); r(6, 18, 36, 17, wall);
+      for (const x of [9, 30]) { r(x, 22, 7, 6, '#6f8fa8'); h(22, x, x + 6, '#9fb8cc'); } r(19, 22, 9, 13, '#3f4a52'); r(17, 18, 13, 3, '#ffffff'); h(20, 17, 29, acc);
+      r(0, 35, 48, 6, '#a2a29f'); h(35, 0, 47, '#d8b860'); rail();
+    } else if (v === 1) {
+      r(4, 8, 40, 28, wall); h(8, 4, 43, shade(wall, 1.15)); for (let y = 12; y < 30; y += 5) { r(7, y, 34, 3, '#5d8fc4'); for (let x = 7; x < 41; x += 4) r(x, y, 1, 3, shade(wall, 1.1)); }
+      r(14, 22, 20, 3, acc); r(16, 23, 16, 1, '#ffffff'); r(10, 30, 28, 6, '#3f4a52'); h(29, 6, 41, shade(wall, 0.6)); r(0, 36, 48, 5, '#a2a29f'); rail();
+    } else if (v === 2) {
+      r(0, 30, 48, 5, '#b8b8b4'); for (const x of [6, 22, 38]) r(x, 35, 4, 13, '#a8a8a4'); r(2, 14, 44, 3, roof); h(13, 3, 44, shade(roof, 1.3)); for (const x of [8, 24, 40]) r(x, 17, 1, 13, '#8a8a88');
+      r(6, 21, 36, 9, acc); r(6, 21, 36, 2, shade(acc, 0.7)); for (let x = 9; x < 40; x += 5) r(x, 24, 3, 3, '#2b3440'); h(29, 6, 41, '#333');
+    } else {
+      r(2, 16, 44, 3, roof); h(15, 3, 44, shade(roof, 1.3)); for (const x of [6, 24, 41]) r(x, 19, 1, 14, '#8a8a88'); r(10, 26, 10, 4, wall); r(28, 22, 8, 10, acc); r(29, 23, 6, 4, '#f4f4f4');
+      r(0, 33, 48, 8, '#a2a29f'); h(33, 0, 47, '#d8b860'); for (let y = 34; y < 41; y += 2) r(5, y, 1, 1, '#b89840'); rail();
+    }
+  },
+  castle(r, h, v, [roof, wall, acc]) {   // 城跡：石垣と、小さな櫓か石碑
+    for (let y = 28; y < 46; y++) { const k = (y - 28) >> 1; h(y, 6 - k, 41 + k, (y % 3) ? '#9b968a' : '#7a756b'); }
+    for (let x = 6; x < 42; x += 6) r(x + ((x / 6) % 2) * 3, 29, 1, 16, '#6f6a61');
+    if (v % 2 === 0) { tileRoof(r, h, 10, [[14, 33], [12, 35], [10, 37], [9, 38]], roofOf(roof)); r(12, 14, 24, 14, wall); r(12, 22, 24, 6, '#2d2d2c'); r(16, 16, 3, 3, '#3a3a3a'); r(29, 16, 3, 3, '#3a3a3a'); }
+    else { r(20, 10, 8, 18, STONE); h(10, 20, 27, '#c8c4bc'); for (let y = 12; y < 26; y += 3) r(23, y, 2, 2, '#4a4a48'); r(16, 26, 16, 2, '#8a857a'); pix(r, PINE, 33, 12, '#2f6a3a'); r(36, 15, 1, 13, '#6a4a30'); }
+  },
+  public(r, h, v, [roof, wall, acc]) {   // 博物館・図書館・役所・美術館：今の建物。形の番号で、箱形・低く広い・時計塔・和風の大屋根
+    if (v === 0) { r(5, 8, 38, 32, wall); h(8, 5, 42, shade(wall, 1.15)); for (let y = 12; y < 34; y += 6) { r(8, y, 32, 3, acc); for (let x = 8; x < 40; x += 5) r(x, y, 1, 3, shade(wall, 1.1)); } r(18, 34, 12, 6, '#3f4a52'); }
+    else if (v === 1) { r(2, 20, 44, 20, wall); h(20, 2, 45, shade(wall, 1.2)); h(21, 2, 45, roof); for (let x = 5; x < 44; x += 6) r(x, 26, 4, 8, acc); r(17, 28, 14, 12, '#3f4a52'); r(14, 26, 20, 2, shade(wall, 0.7)); }
+    else if (v === 2) { r(4, 18, 40, 22, wall); h(18, 4, 43, shade(wall, 1.15)); r(18, 4, 12, 14, wall); r(21, 7, 6, 6, '#f4f4f0'); r(23, 9, 2, 1, '#333'); r(24, 8, 1, 2, '#333'); h(4, 17, 30, roof); for (let x = 7; x < 42; x += 5) r(x, 23, 3, 4, acc); for (let x = 7; x < 42; x += 5) r(x, 30, 3, 4, acc); r(19, 33, 10, 7, '#3f4a52'); }
+    else { tileRoof(r, h, 10, [[10, 37], [8, 39], [6, 41], [4, 43], [3, 44]], roofOf(roof)); r(6, 15, 36, 25, wall); for (let x = 9; x < 40; x += 6) r(x, 19, 4, 6, acc); r(18, 29, 12, 11, '#3f4a52'); }
+    r(0, 40, 48, 3, '#a2a29f'); h(43, 0, 47, '#8a8a88');
+  },
+  historic(r, h, v, [roof, wall, acc]) {   // 史跡：形の番号で、石碑・古墳・古い門・古い家
+    if (v === 0) { r(19, 8, 10, 26, STONE); h(8, 19, 28, '#c8c4bc'); r(19, 8, 2, 26, '#c0bcb2'); for (let y = 11; y < 31; y += 3) r(23, y, 2, 2, '#4a4a48'); r(14, 34, 20, 3, '#8a857a'); for (let x = 8; x < 41; x += 4) r(x, 36, 1, 6, '#6a4a30'); h(37, 8, 40, '#6a4a30'); }
+    else if (v === 1) { spanRows(h, 14, [[18, 29], [14, 33], [11, 36], [8, 39], [6, 41], [4, 43], [3, 44], [2, 45], [1, 46], [0, 47], [0, 47], [0, 47]], i => i % 3 ? '#5a8a3a' : '#6fa04a'); for (const [x, y] of [[16, 12], [24, 11], [31, 13]]) { r(x, y, 4, 4, '#2f6a2a'); r(x + 1, y + 4, 1, 2, '#5a4030'); } r(21, 30, 6, 6, STONE); }
+    else if (v === 2) { tileRoof(r, h, 10, [[10, 37], [8, 39], [7, 40], [6, 41]], roofOf(roof)); r(10, 14, 3, 26, '#6a4a30'); r(35, 14, 3, 26, '#6a4a30'); r(13, 16, 22, 24, '#3a2a1a'); r(13, 16, 22, 2, '#5a4030'); r(23, 16, 2, 24, '#4a3624'); for (const x of [2, 40]) r(x, 22, 6, 18, wall); h(22, 2, 7, roof); h(22, 40, 45, roof); }
+    else { tileRoof(r, h, 12, [[6, 41], [4, 43], [2, 45], [1, 46]], roofOf(roof)); r(3, 16, 42, 22, wall); for (let x = 4; x < 44; x += 3) r(x, 26, 1, 12, shade(wall, 0.7)); h(26, 3, 44, shade(wall, 0.6)); r(18, 28, 10, 10, '#2e2620'); r(6, 18, 8, 5, '#c8b890'); r(34, 18, 8, 5, '#c8b890'); }
+    r(0, 42, 48, 6, '#b8b2a6');
+  },
+  view(r, h, v, [roof, wall, acc]) {   // 見どころ：形の番号で、展望台・像・庭と池・大きな木
+    if (v === 0) { r(20, 6, 8, 4, wall); h(10, 17, 30, shade(wall, 0.7)); r(21, 11, 6, 26, wall); r(22, 13, 4, 3, '#6f8fa8'); r(22, 20, 4, 3, '#6f8fa8'); r(14, 37, 20, 4, STONE); spanRows(h, 41, [[6, 41], [3, 44], [1, 46], [0, 47], [0, 47], [0, 47], [0, 47]], '#4f8a3a'); }
+    else if (v === 1) { r(20, 6, 8, 7, acc); r(18, 13, 12, 14, acc); r(18, 13, 3, 14, shade(acc, 1.3)); r(20, 27, 3, 6, acc); r(25, 27, 3, 6, acc); r(14, 33, 20, 12, STONE); h(33, 14, 33, '#c8c4bc'); }
+    else if (v === 2) { spanRows(h, 30, [[8, 39], [4, 43], [2, 45], [2, 45], [4, 43], [8, 39]], '#4f8fbf'); h(31, 10, 20, '#8cc0e0'); for (const [x, y] of [[2, 18], [36, 16], [20, 14]]) { pix(r, PINE, x, y, '#2f6a3a'); h(y, x + 2, x + 4, '#4f8a4a'); r(x + 3, y + 3, 1, 8, '#6a4a30'); } tileRoof(r, h, 18, [[26, 34], [25, 35]], roofOf(roof)); r(26, 20, 9, 6, wall); }
+    else { r(6, 4, 36, 26, '#3f7a34'); r(10, 6, 12, 8, '#5a9a44'); r(26, 12, 12, 8, '#5a9a44'); r(21, 28, 6, 16, '#6a4a30'); r(19, 38, 10, 6, '#5a3e28'); r(12, 30, 3, 2, '#e8dcc0'); h(31, 12, 36, '#e8dcc0'); }
+  },
+  church(r, h, v, [roof, wall, acc]) {   // 教会：とんがり屋根の塔と十字架
+    r(21, 2, 2, 7, '#e8e4dc'); r(19, 4, 6, 2, '#e8e4dc'); spanRows(h, 9, [[20, 23], [19, 24], [18, 25], [17, 26]], roof); r(17, 13, 10, 27, wall);
+    for (let k = 0; k < 8; k++) h(18 + k, 26 - k, 47, k ? shade(roof, 1.1) : roof); r(27, 26, 18, 14, wall); for (const x of [30, 36, 41]) { r(x, 29, 3, 6, acc); r(x + 1, 28, 1, 1, acc); }
+    r(19, 30, 6, 10, '#3a2a1a'); r(20, 18, 4, 5, acc); r(0, 40, 48, 3, '#a2a29f');
+  },
+};
+// 種類（GEN の1つめ）→ 描く型
+const GEN_KIND = { s: 'shrine', t: 'temple', e: 'station', c: 'castle', p: 'public', h: 'historic', v: 'view', w: 'church' };
+const GEN_BASE = { shrine: ['#5a6068', '#8a6a4a', '#c8382c'], temple: ['#4e535e', '#eeeae0', '#7a5a3c'], station: ['#6a7480', '#e8e6e0', '#2f74b8'], castle: ['#4a4f57', '#f3f1ea', '#9b968a'],
+  public: ['#7a7e84', '#d8d4cc', '#5e7f99'], historic: ['#5a6068', '#e8e2d2', '#8a6a4a'], view: ['#5a6068', '#f4f2ec', '#b08850'], church: ['#7a4a3a', '#f0ece4', '#6f8fa8'] };
+function genSprite(id) {
+  if (genCache.has(id)) return genCache.get(id);
+  const g = GEN[id]; if (!g) return null;
+  const kind = GEN_KIND[g[0]] || 'historic', base = GEN_BASE[kind], pal = [g[2] || base[0], g[3] || base[1], g[4] || base[2]];
+  const sp = hiCanvas((r, h) => GEN_DRAW[kind](r, h, (g[1] | 0) % 4, pal));
+  genCache.set(id, sp);
+  return sp;
+}
+// スポットの絵（専用の絵 → 型の絵 → ふつうの絵）
+const spriteOf = s => (!LANDMARK_ART[s.id] && !s.featured && GEN[s.id] && genSprite(s.id)) || spotSprites[spotArt(s)];
+
 function spotArt(s) {
   if (s.id === 'f-ricepia') return 'ricepia';
   if (s.id === 'f-kondo-beikoku') return 'kondo';
@@ -2974,12 +3089,12 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに
+    const size = s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
-    ctx.drawImage(spotSprites[spotArt(s)][cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    ctx.drawImage(spriteOf(s)[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = size / 16;
@@ -3228,7 +3343,7 @@ function drawWorld(now, w, h, dpr) {
     const sz = s.shop ? Math.round(size * 1.35) : size;
     const p = llToW(s.lat, s.lng), X = ox + p.x * T - sz / 2, Y = oy + p.y * T - sz / 2;
     if (X > w || Y > h || X + sz < 0 || Y + sz < 0) continue;
-    ctx.drawImage(spotSprites[spotArt(s)][G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), sz, sz);
+    ctx.drawImage(spriteOf(s)[G.cooldownLeft(s) > 0 ? 1 : 0], Math.round(X), Math.round(Y), sz, sz);
     if (s.shop) shopTags.push([X + sz / 2, Y, sz, s]);
     if (G.state.visits[s.id]) {   // めぐった名所には金色のしるし
       const r = Math.max(3 * dpr, sz * 0.2), cx = Math.round(X + sz - r * 0.6), cy = Math.round(Y + r * 0.6);
@@ -3776,7 +3891,7 @@ cv.addEventListener('click', e => {
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
+    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
@@ -3795,5 +3910,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

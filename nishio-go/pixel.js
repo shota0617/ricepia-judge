@@ -9,7 +9,8 @@ const $ = id => document.getElementById(id);
 
 /* ---------- 座標 → マス ---------- */
 const TILE_M = 8;          // 1マス = 8m
-const SIMPLE = () => document.body.classList.contains('simple');   // 文字を少なく（せってい の「文字を多めに出す」がオフ）
+const SIMPLE = () => document.body.classList.contains('simple');
+const ICO = (n, emoji, alt) => (window.NSG_ICONS && NSG_ICONS.ART[n] ? NSG_ICONS.html(n, alt) : emoji);   // ボタンの絵（ドット絵。なければ絵文字）   // 文字を少なく（せってい の「文字を多めに出す」がオフ）
 const CHUNK = 128;         // 1区画 = 128×128マス（約1km四方）ごとに地図データを取得
 const ORG_LAT = 35.0, ORG_LNG = 136.9;
 const M_LAT = 110950, M_LNG = 111320 * Math.cos(34.86 * Math.PI / 180);
@@ -4426,7 +4427,7 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
 function setWorld(on) {
   worldMode = on;
   document.body.classList.toggle('pxw', on);
-  $('pxWorld').textContent = on ? '👣' : '🌏';
+  $('pxWorld').innerHTML = on ? ICO('feet', '👣', '歩く地図') : ICO('globe', '🌏', 'せかいちず');
   $('pxWorld').title = on ? '歩く地図にもどる' : '西尾市ぜんたいの地図';
   $('pxInfo').hidden = true;
   if (on) { wcam = worldCamStart(); buildWorld(); }
@@ -4455,7 +4456,7 @@ function setActive(on) {
   if (!on && driving) setDriving(false);   // ふつうの地図では車に乗れない
   document.body.classList.toggle('px', on);
   try { localStorage.setItem('nsg_view', on ? 'px' : 'map'); } catch (e) { /* noop */ }
-  $('viewBtn').textContent = on ? '🗺️' : '👾';
+  $('viewBtn').innerHTML = on ? ICO('map', '🗺️', 'ふつうの地図') : ICO('pixmap', '👾', 'ドット絵の地図');
   $('viewBtn').title = on ? 'ふつうの地図にする' : 'ドット絵の地図にする';
   updatePad();
   cancelAnimationFrame(raf);
@@ -4510,7 +4511,7 @@ let driving = false;
 function setDriving(on, msg) {
   driving = !!on;
   const b = $('pxCar');
-  b.textContent = driving ? '🚶' : '🚗';
+  b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
   b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
   b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
   b.classList.toggle('on', driving);

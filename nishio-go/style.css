@@ -426,3 +426,7 @@ body.px .guide small{color:#ddd}
 .simple .px-zoom button,.simple .px-pad button{border-radius:50%;background:radial-gradient(circle at 50% 35%,#3f8f88,#1d4f4c);border:2px solid #f3fbf4;box-shadow:0 0 0 2px rgba(233,196,106,.85),0 3px 8px rgba(0,0,0,.35)}
 .simple .px-pad .c.on{background:radial-gradient(circle at 50% 35%,#4fa36a,#1f4d2b);border-color:#ffd54f}
 .simple .fab{background:radial-gradient(circle at 50% 35%,#ffffff,#e6f3ec);box-shadow:0 0 0 2px #e9c46a,0 3px 8px rgba(0,0,0,.3)}
+/* 地図の上の丸いボタンの絵 */
+.px-zoom button img.pi,.px-pad button img.pi{width:24px;height:24px;vertical-align:middle}
+.fab img.pi{width:26px;height:26px;vertical-align:middle}
+.spin-ico img.gthumb{width:34px;height:34px;image-rendering:pixelated}

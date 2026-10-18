@@ -7,7 +7,7 @@
   const PAL = {
     k: '#1a1a1a', w: '#ffffff', W: '#d8d8d8', a: '#a8a8a8', A: '#686868',
     y: '#ffd54f', Y: '#c89a1a', o: '#f2a516', r: '#d23a2e', R: '#8f2018', p: '#f4a7c0', P: '#d9668f',
-    g: '#7cc04a', G: '#2f7a34', b: '#5aa9e6', B: '#1b4fa0', n: '#a0683a', N: '#5d3a1a', c: '#fff3b0', s: '#bfe6ff',
+    g: '#7cc04a', G: '#2f7a34', b: '#5aa9e6', B: '#1b4fa0', n: '#a0683a', N: '#5d3a1a', c: '#fff3b0', s: '#bfe6ff', f: '#f4c9a0',
   };
   const ART = {
     coin: [
@@ -94,6 +94,24 @@
     snowman: [
       '....kkkk....', '...kwwwwk...', '...kwkwkw...', '...kwwowk...', '....kkkk....', '..kkwwwwkk..',
       '.kwwwwwwwwk.', 'kwwwwkwwwwwk', 'kwwwwwwwwwwk', 'kwwwwkwwwwwk', '.kWWWWWWWWk.', '..kkkkkkkk..'],
+    globe: [
+      '...kkkkkk...', '..kbbggbbk..', '.kbggggbbbk.', 'kbbggggbbbbk', 'kbbbggbbggbk', 'kbbbbbbgggbk',
+      'kbbbbbbggbbk', 'kbggbbbbbbbk', 'kbgggbbbbbbk', '.kbggbbbbbk.', '..kbbbbbbk..', '...kkkkkk...'],
+    feet: [
+      '..kkk.......', '.knnnk......', '.knnnk......', '.knnnk......', '..kkk..kkk..', '..knk.knnnk.',
+      '...k..knnnk.', '......knnnk.', '.......kkk..', '.......knk..', '........k...', '............'],
+    pixmap: [
+      '............', '..g......g..', '...g....g...', '..gggggggg..', '.ggkggggkgg.', 'gggggggggggg',
+      'g.gggggggg.g', 'g.g......g.g', '...gg..gg...', '............', '............', '............'],
+    car: [
+      '............', '............', '....kkkkk...', '...kssksk...', '..ksssksrk..', 'kkkkkkkkkkkk',
+      'krrrrrrrrrrk', 'krrwrrrrrwrk', 'kkkkkkkkkkkk', '..kak..kak..', '...k....k...', '............'],
+    walker: [
+      '.....kk.....', '....kffk....', '....kffk....', '.....kk.....', '...kkbbkk...', '..kbkbbkbk..',
+      '..k.kbbk.k..', '....kbbk....', '....kbbk....', '...kb..bk...', '...kk..kk...', '............'],
+    compass: [
+      '...kkkkkk...', '..kwwwwwwk..', '.kwwwrwwwwk.', 'kwwwwrrwwwwk', 'kwwwrrrwwwwk', 'kwwwwkwwwwwk',
+      'kwwwwbwwwwwk', 'kwwwbbbwwwwk', '.kwwwbbwwwk.', '..kwwbwwwk..', '...kkkkkk...', '............'],
   };
   const cache = {};
   function canvas(name) {

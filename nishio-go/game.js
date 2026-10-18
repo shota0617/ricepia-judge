@@ -1099,9 +1099,11 @@ function pickAlt(i) {
 // 行き先の名所のドット絵（歩く地図と同じ絵）。人が行き先のときは出さない
 const thumbCache = new Map();
 function guideThumb(g) {
-  if (g.kind === 'npc' || !window.nishioPixel || !nishioPixel.spriteOf) return '';
-  const sp = spots.find(x => x.id === g.id);
-  if (!sp) return '';
+  if (g.kind === 'npc') return '';
+  return spotThumb(spots.find(x => x.id === g.id));
+}
+function spotThumb(sp) {
+  if (!sp || !window.nishioPixel || !nishioPixel.spriteOf) return '';
   if (!thumbCache.has(sp.id)) { try { const c = nishioPixel.spriteOf(sp); thumbCache.set(sp.id, c ? c.toDataURL() : ''); } catch (e) { thumbCache.set(sp.id, ''); } }
   const u = thumbCache.get(sp.id);
   return u ? `<img class="gthumb" src="${u}" alt="" width="28" height="28"/>` : '';
@@ -1192,7 +1194,8 @@ function refreshNearby() {
   if (selected) {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);
-    $('spinIco').textContent = iconOf(selected);
+    const th = simple() ? spotThumb(selected) : '';
+    if (th) $('spinIco').innerHTML = th; else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
     $('spinName').textContent = selected.name;
     const lock = demo ? 0 : vehicleUntil - Date.now();
     const why = driving ? '🚗 車を降りるとチェックインできます'

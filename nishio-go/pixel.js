@@ -3929,7 +3929,9 @@ function spotArt(s) {
 }
 
 /* ---------- 画面 ---------- */
-const view = $('pxView'), cv = $('pxCanvas'), ctx = cv.getContext('2d');
+const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
+// 歩く地図を Godot で描くとき（せってい の試作。nishio-go/godot-field.js）は、描く命令を ctx の代わりの記録係に書いて Godot に渡す
+let ctx = ctx0, rec = null;
 let active = false, raf = 0, dirty = true, scale = 2;
 const floaters = [];   // 浮かぶ文字 { t, at }
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
@@ -3989,7 +3991,10 @@ function frame(now) {
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
   refreshSeason(now);
-  if (worldMode) { drawWorld(now, w, h, dpr); return; }
+  if (rec) { rec.end(); rec = null; ctx = ctx0; }
+  if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
+  rec = window.NSG_GODOT && NSG_GODOT.on() ? NSG_GODOT.rec : null;   // Godot で描く：ここから frame の終わりまで、描く命令を記録する
+  if (rec) { ctx = rec; rec.begin(w, h); }
   const T = Math.round(16 * scale * dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
   lastT = now;
@@ -4132,7 +4137,7 @@ function frame(now) {
     }
   }
 
-  drawWeather(now, w, h, dpr);
+  if (!rec) drawWeather(now, w, h, dpr);   // Godot で描くときは、雨と雪は Godot のつぶで
 
   // 町が変わったら、まん中に町名を大きく出す（いまいる町名は、左上の こよみ の札に出す）
   if (here.banner) {
@@ -4192,6 +4197,7 @@ function frame(now) {
     : st === 'ok' ? '' : 'ちずを よみこんでいます…';
   $('pxMsg').hidden = !msg;
   if (msg) $('pxMsg').textContent = msg;
+  if (rec) { rec.end(); rec = null; ctx = ctx0; }
   dirty = false;
 }
 

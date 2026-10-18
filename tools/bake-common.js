@@ -3,14 +3,15 @@
 const http = require('http'), fs = require('fs'), path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.mp3': 'audio/mpeg' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.mp3': 'audio/mpeg', '.wasm': 'application/wasm' };
 function startServer(PORT) {
   return http.createServer((req, res) => {
     const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
     if (!p.startsWith(ROOT)) { res.writeHead(403); res.end(); return; }
     fs.readFile(p, (e, d) => {
       if (e) { res.writeHead(404); res.end(); return; }
-      res.writeHead(200, { 'Content-Type': (TYPES[path.extname(p)] || 'application/octet-stream') + '; charset=utf-8' }); res.end(d);
+      const type = TYPES[path.extname(p)] || 'application/octet-stream';
+      res.writeHead(200, { 'Content-Type': /^(text|application\/json)/.test(type) || type.includes('javascript') || type.includes('svg') ? type + '; charset=utf-8' : type }); res.end(d);
     });
   }).listen(PORT);
 }

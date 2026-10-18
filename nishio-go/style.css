@@ -249,6 +249,7 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 body.px #pxView{display:block}
 body.px #map{visibility:hidden}
 #pxCanvas{width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:manipulation}
+#godotCanvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none;image-rendering:pixelated}   /* Godot で描く地図（試作）。タップは下の地図に通す */
 .dq{background:#000;color:#fff;border:3px solid #fff;border-radius:6px;box-shadow:0 0 0 3px #000;font-family:"DotGothic16","Hiragino Sans",monospace;padding:10px 12px;line-height:1.7}
 .px-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);white-space:pre-line;text-align:center;font-size:15px;max-width:calc(100% - 32px)}
 .px-attr{position:absolute;right:4px;bottom:calc(var(--sheet-h,0px) + 10px);font-size:9px;line-height:12px;color:#fff;background:rgba(0,0,0,.5);padding:0 4px;border-radius:3px}

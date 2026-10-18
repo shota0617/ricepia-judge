@@ -4802,7 +4802,7 @@ function autoTick() {
   const key = `${gid}:${gx}:${gy}`;
   if (key !== autoS.goal || !autoS.path.length || autoS.steps >= 40) {
     // ほかの人のマスは通らない（ぶつかると話しかけてしまう）
-    const avoid = new Set((G.npcs || []).filter(x => x.id !== g.id).map(x => { const q = npcTile(x); return q.x + ',' + q.y; }));
+    const avoid = new Set((G.npcs || []).filter(x => x.id !== gid).map(x => { const q = npcTile(x); return q.x + ',' + q.y; }));
     autoS.goal = key; autoS.steps = 0; autoS.path = planPath(sx, sy, gx, gy, goalR, avoid);
     if (!autoS.path.length && Math.hypot(sx - gx, sy - gy) > goalR) {
       // 近づけない（まわりが通れない所ばかり）：しばらく待っても動けなければ、別の行き先にしてもらう

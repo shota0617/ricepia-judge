@@ -126,3 +126,20 @@
 - 共有用の画像（OGP）：`nishio-go/ogp.png`（1200×630）。`node tools/make-ogp.js` でゲーム画面を撮って作り直せます。
 - 自社ドメイン：**https://go.ricepia.jp/** で公開。`vercel.json` で、`go.ricepia.jp/` を `go.ricepia.jp/nishio-go.html` へ、古いアドレス `ricepia-judge.vercel.app/nishio-go.html` も `go.ricepia.jp/nishio-go.html` へ転送します（クエリ文字列＝utm などはそのまま）。トップに別のアプリの `index.html` があり、Vercel では同じ場所にファイルがあると rewrite が効かないため、転送にしています。DNS はさくらのレンタルサーバのコントロールパネル →「ドメイン/SSL」→ ricepia.jp の「設定」→「DNSレコード設定」に `go` の CNAME（Vercel が示す値）を登録してあります（2026-10-16）。
 - 注意：ポイントは端末内で計算しているため、改ざんは防げません。特典は「動く時計が出ていること（スクリーンショットでないこと）」と残り時間を店頭で確認する運用が前提です。高額な特典にする場合はサーバー側での検証（ログイン・チェックイン記録の照合）を追加してください。
+
+## バックアップ（restic）
+
+このリポジトリ（すべての履歴と、まだコミットしていない変更）を [restic](https://restic.net/) で暗号化してバックアップする。スクリプトは `tools/restic-backup.sh`。保存先はクラウドと外付けSSDの2か所にする（GitHub とあわせて3か所。3-2-1ルール）。
+
+- **クラウド（毎日自動）**：`.github/workflows/restic-backup.yml` が毎日 3:17 に動く。GitHub のシークレットに `RESTIC_REPOSITORY`（例 `s3:https://<アカウントID>.r2.cloudflarestorage.com/<バケット>`）と `RESTIC_PASSWORD`、保存先の鍵（R2・S3 は `RESTIC_AWS_ACCESS_KEY_ID`・`RESTIC_AWS_SECRET_ACCESS_KEY`、B2 は `B2_ACCOUNT_ID`・`B2_ACCOUNT_KEY`）を入れる。入れるまでは何もしない
+- **外付けSSD（自分のパソコンで）**：Mac の例
+  ```sh
+  brew install restic
+  security add-generic-password -s restic-ricepia -a "$USER" -w    # パスワードをキーチェーンに保存（聞かれたら入力）
+  export RESTIC_REPOSITORY=/Volumes/<SSDの名前>/restic-ricepia
+  export RESTIC_PASSWORD_COMMAND="security find-generic-password -s restic-ricepia -w"
+  bash tools/restic-backup.sh       # はじめての時は保存先も作る。2回目からは変わったところだけ
+  ```
+- **元に戻す**：`restic snapshots` で一覧、`restic restore latest --target ./restore` で取り出す（`.git` ごと戻るので、履歴もそのまま）
+- パスワードをなくすと元に戻せない。パスワード管理アプリにも控えておく。チャットやファイルには書かない
+- 残す数：毎日7・毎週4・毎月12（古いものは自動で消す）

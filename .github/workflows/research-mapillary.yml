@@ -1,15 +1,14 @@
-# 調査（一時的）：名所とお店を道から見た写真を Mapillary から集める（ドット絵の参考）。結果を reference/ にコミットする
+# 調査用：名所とお店を道から見た写真を Mapillary から集める（ドット絵の参考）。動かしたブランチの reference/ にコミットする
+# 手で動かすだけ（Actions の「Run workflow」で、作業中のブランチをえらぶ）。写真は絵を描いたら消し、main には入れない
 # シークレット MAPILLARY_TOKEN（Mapillary の Client Token）がないときは何もしない
 name: Research Mapillary photos
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/confident-turing-etepui]
-    paths: [.github/workflows/research-mapillary.yml, reference/mapillary-probe.js, reference/mapillary-run.txt]
 permissions:
   contents: write
 jobs:
   probe:
+    if: github.ref_name != github.event.repository.default_branch   # main には写真をコミットしない
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -17,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: node reference/mapillary-probe.js
+      - run: node tools/mapillary-probe.js
         env:
           MAPILLARY_TOKEN: ${{ secrets.MAPILLARY_TOKEN }}
       - name: 画像を小さくする（幅640）

@@ -1,10 +1,10 @@
-// 調査（一時的）：Mapillary（だれでも使える CC BY-SA 4.0 の路上写真）から、名所とお店を道から見た写真を探し、
+// 調査用：Mapillary（だれでも使える CC BY-SA 4.0 の路上写真）から、名所とお店を道から見た写真を探し、
 // ドット絵を本物に近づける参考として reference/mapillary/ に小さな画像と撮った人などを保存する
 // ・対象：当店の2店舗と、西尾市内の注目スポットのうち、まだ専用の絵がないもの（spots.json と pixel.js の LANDMARK_ART から決める）
 // ・スポットから 8〜90m の所で、カメラがスポットのほうを向いて撮った写真（向きのずれ40度まで）を、近くて新しい順に2枚まで
 // 環境変数 MAPILLARY_TOKEN（Mapillary の Client Token。GitHub のシークレットに入れる）
 const fs = require('fs'), path = require('path');
-const ROOT = path.join(__dirname, '..'), TOKEN = process.env.MAPILLARY_TOKEN;
+const ROOT = path.join(__dirname, '..'), OUT = path.join(ROOT, 'reference'), TOKEN = process.env.MAPILLARY_TOKEN;
 if (!TOKEN) { console.log('MAPILLARY_TOKEN がないので、何もしません'); process.exit(0); }
 const AREAS = new Set(['nishio', 'isshiki', 'kira', 'hazu', 'sakushima', '']);
 const spots = require(path.join(ROOT, 'nishio-go/spots.json')).spots;
@@ -15,7 +15,7 @@ const distM = (a, b) => { const x = rad(b[0] - a[0]) * Math.cos(rad((a[1] + b[1]
 const bearing = (a, b) => { const y = Math.sin(rad(b[0] - a[0])) * Math.cos(rad(b[1])), x = Math.cos(rad(a[1])) * Math.sin(rad(b[1])) - Math.sin(rad(a[1])) * Math.cos(rad(b[1])) * Math.cos(rad(b[0] - a[0])); return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
-  const dir = path.join(__dirname, 'mapillary'); fs.mkdirSync(dir, { recursive: true });
+  const dir = path.join(OUT, 'mapillary'); fs.mkdirSync(dir, { recursive: true });
   const out = [];
   for (const s of targets) {
     const p = [s.lng, s.lat], d = 0.0009;   // 約90m四方
@@ -47,5 +47,5 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     out.push({ id: s.id, name: s.name, photos: got });
     await sleep(300);
   }
-  fs.writeFileSync(path.join(__dirname, 'mapillary.json'), JSON.stringify(out, null, 1));
+  fs.writeFileSync(path.join(OUT, 'mapillary.json'), JSON.stringify(out, null, 1));
 })().catch(e => { console.error(e.message); process.exit(1); });

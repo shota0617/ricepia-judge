@@ -3943,12 +3943,14 @@ function updateCover() {
 if (window.ResizeObserver && $('sheet')) new ResizeObserver(updateCover).observe($('sheet'));
 window.addEventListener('resize', updateCover);
 // 天気（weather.js：気象庁のアメダス・予報）：雨と雪は画面に降らせ、くもりは少し暗く
-function drawWeather(now, w, h, dpr) {
+// shadeOnly：くもり・雨・雪の暗さだけ描く（Godot で描くとき。雨と雪のつぶは Godot が描く）
+function drawWeather(now, w, h, dpr, shadeOnly) {
   const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current;
   if (!wx) return;
   if (wx.kind === 'cloudy') { ctx.fillStyle = 'rgba(40,50,70,.12)'; ctx.fillRect(0, 0, w, h); return; }
   if (wx.kind !== 'rain' && wx.kind !== 'snow') return;
   ctx.fillStyle = 'rgba(30,40,60,.18)'; ctx.fillRect(0, 0, w, h);
+  if (shadeOnly) return;
   const n = wx.kind === 'rain' ? 70 : 45, t = now / 1000;
   ctx.save();
   if (wx.kind === 'rain') { ctx.strokeStyle = 'rgba(200,225,255,.55)'; ctx.lineWidth = Math.max(1, dpr); ctx.beginPath(); }
@@ -4137,7 +4139,7 @@ function frame(now) {
     }
   }
 
-  if (!rec) drawWeather(now, w, h, dpr);   // Godot で描くときは、雨と雪は Godot のつぶで
+  drawWeather(now, w, h, dpr, !!rec);   // Godot で描くときは、暗さだけ。雨と雪は Godot のつぶで
 
   // 町が変わったら、まん中に町名を大きく出す（いまいる町名は、左上の こよみ の札に出す）
   if (here.banner) {

@@ -1096,6 +1096,16 @@ function pickAlt(i) {
   toast(`🧭 行き先を「${a.name}」にした`);
   track('guide_pick', { kind: a.kind, mode: demo ? 'play' : 'walk' });
 }
+// 行き先の名所のドット絵（歩く地図と同じ絵）。人が行き先のときは出さない
+const thumbCache = new Map();
+function guideThumb(g) {
+  if (g.kind === 'npc' || !window.nishioPixel || !nishioPixel.spriteOf) return '';
+  const sp = spots.find(x => x.id === g.id);
+  if (!sp) return '';
+  if (!thumbCache.has(sp.id)) { try { const c = nishioPixel.spriteOf(sp); thumbCache.set(sp.id, c ? c.toDataURL() : ''); } catch (e) { thumbCache.set(sp.id, ''); } }
+  const u = thumbCache.get(sp.id);
+  return u ? `<img class="gthumb" src="${u}" alt="" width="28" height="28"/>` : '';
+}
 function renderGuide() {
   const el = $('guide');
   const g = guideTarget();
@@ -1103,7 +1113,7 @@ function renderGuide() {
   el.hidden = false;
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
   const alts = (S.guide && S.guide.alts) || [];
-  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${g.byId ? PI('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${fmtM(dist(me, g))}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${fmtM(dist(me, g))}</span>`;
+  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PI('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${fmtM(dist(me, g))}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${fmtM(dist(me, g))}</span>`;
   el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
@@ -1394,7 +1404,7 @@ function toast(msg) {
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
 const CHIP = [['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
-function rewardChips(lines, fact) {
+function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
   let book = false;
   for (const l of lines) {
@@ -1403,19 +1413,32 @@ function rewardChips(lines, fact) {
     if (ic === 'book') book = true;
     const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
     const v = ic === 'card' ? (/もう持っている/.test(l) ? '' : PI('new', 'はじめての絵')) : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
+    if (hero && (ic === 'card' || v === `+${total}`)) continue;
     out.push(`<span title="${esc(l)}">${PI(ic, l)}${v}</span>`);
   }
   if (fact && !book) out.push(`<span title="まちメモ">${PI('book', 'まちメモ')}+1</span>`);
   return `<div class="chips">${out.join('')}</div>`;
 }
+// ドット絵のめずらしさ（星）：西尾にしかない題材は★3、全国有数の名物・産地の題材は★2（docs/dots-nishio.md）。虹・雪・満月の絵は＋1
+const DOT_TWO_STARS = new Set(['kabuse', 'matcha', 'ishiusu', 'ike', 'unaju', 'kabayaki', 'ebisen', 'asari', 'tanbo', 'carnation']);
+const dotStars = f => (DOT_TWO_STARS.has(f.motif) ? 2 : 3) + (['rainbow', 'snow', 'moon'].includes(f.wk) ? 1 : 0);
+const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i></i>'.repeat(n)}</div>`;
 function showReward(total, name, lines, lvUp, fact, dot) {
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   const el = $('reward'), D = window.NISHIO_DOTS;
   if (simple()) {
-    el.innerHTML = `<div class="rw${dot ? ' long' : ''}"><div class="big">${PI('coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
-      ${dot && D ? `<img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
-      ${rewardChips(lines, fact)}
-      ${lvUp ? `<div class="lvup">${PI('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`;
+    // 絵が主役：ドット絵を大きく、金の額縁に。はじめての絵には NEW のリボンと、めずらしさの星
+    const f = dot && D ? D.info(dot.id) : null;
+    el.innerHTML = f
+      ? `<div class="rw hero long">${dot.fresh ? '<span class="ribbon">NEW</span>' : ''}
+        <div class="frame"><img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(f.name)}" width="192" height="192"/></div>
+        ${starRow(dotStars(f))}<div class="banner">${esc(f.title)}</div>
+        <div class="sub">${PI('coin', 'ポイント')}<b>+${total}</b>　${esc(name)}</div>
+        ${rewardChips(lines, fact, total, true)}
+        ${lvUp ? `<div class="lvup">${PI('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`
+      : `<div class="rw"><div class="big">${PI('coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
+        ${rewardChips(lines, fact)}
+        ${lvUp ? `<div class="lvup">${PI('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
     el.classList.add('show');
     clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, dot ? 5000 : 2700);
@@ -1956,6 +1979,17 @@ function sessionEnd() {
 function sessionStart() { Object.assign(session, { start: Date.now(), on: true, gained: 0, rewards: 0 }); }
 document.addEventListener('visibilitychange', () => { if (document.hidden) sessionEnd(); else if (store.get('nsg_started', false)) sessionStart(); });   // はじめの画面のあいだは数えない
 window.addEventListener('pagehide', sessionEnd);
+
+// はじめの画面の絵：いまの季節の、西尾城の丑寅櫓・佐久島の黒壁・稲荷山の茶摘み（西尾ドット絵帳の絵）を3枚、扇のように
+function introHero() {
+  const D = window.NISHIO_DOTS, el = $('introHero');
+  if (!D || !el || !D.idOf) return;
+  const mo = new Date().getMonth() + 1, se = mo >= 3 && mo <= 5 ? 0 : mo <= 8 && mo >= 6 ? 1 : mo >= 9 && mo <= 11 ? 2 : 3;
+  const keys = ['kurokabe', 'ushitora', 'chatsumi'], idx = keys.map(k => D.MOTIFS.findIndex(m => (m.key || m) === k));
+  if (idx.some(i => i < 0)) return;
+  el.innerHTML = idx.map((m, n) => `<img class="hc hc${n}" src="${D.dataUrl(D.idOf(m, 0, se * 4 + 1, [6, 12, 3][n]))}" alt="" width="144" height="144"/>`).join('') + '<i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i>';
+}
+document.addEventListener('DOMContentLoaded', introHero);
 
 /* はじめに */
 function begin(isDemo) {

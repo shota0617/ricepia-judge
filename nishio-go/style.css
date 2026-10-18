@@ -391,3 +391,38 @@ body.px .guide small{color:#ddd}
 
 /* 西尾市版（提案用デモ。edition.js）：西尾市の公式とまちがえられないよう、いつも上に札を出す */
 .ed-tag{position:fixed;top:calc(env(safe-area-inset-top,0px) + 1px);left:50%;transform:translateX(-50%);z-index:4000;background:#fffbe6;color:#5a4300;border:1px solid #b88a12;border-radius:0 0 8px 8px;padding:1px 8px;font-size:10px;font-weight:700;white-space:nowrap;pointer-events:none;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+
+/* ---------- 絵が主役（文字を少なく：body.simple） ---------- */
+/* はじめの画面：ドット絵帳の絵を3枚、扇のように。きらきら */
+.intro-hero{display:none}
+.simple .intro-hero{display:block;position:relative;height:170px;margin:4px auto 6px;max-width:320px}
+.intro-hero .hc{position:absolute;top:10px;left:50%;width:132px;height:132px;image-rendering:pixelated;border-radius:10px;border:3px solid #e9c46a;box-shadow:0 0 0 2px #fff8e0,0 6px 16px rgba(0,0,0,.3)}
+.intro-hero .hc0{transform:translateX(-118%) rotate(-12deg) scale(.86);opacity:.95}
+.intro-hero .hc2{transform:translateX(18%) rotate(12deg) scale(.86);opacity:.95}
+.intro-hero .hc1{transform:translateX(-50%);z-index:2;width:148px;height:148px;top:2px}
+.intro-hero .sp{position:absolute;width:10px;height:10px;background:#ffe9a8;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);z-index:3;animation:twinkle 2.4s ease-in-out infinite}
+.intro-hero .s1{left:12%;top:8px}.intro-hero .s2{right:10%;top:30px;animation-delay:.8s}.intro-hero .s3{left:50%;bottom:4px;animation-delay:1.6s}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.2)}}
+.tagline{display:none}
+.simple .tagline{display:block;font-weight:800;color:var(--green);font-size:16px;margin:4px 0 2px}
+.simple .intro .pitch,.simple .intro .mode-q{display:none}
+.simple .btn.mode-pick{border-radius:999px;box-shadow:0 0 0 3px #e9c46a,0 4px 0 #1f3f27}
+.simple .btn.mode-pick.alt{box-shadow:0 0 0 3px #e9c46a,0 4px 0 #22305a}
+.simple .btn.mode-pick small{display:none}
+.simple .btn.mode-pick .mp-t{font-size:18px}
+/* ごほうび：金の額縁のドット絵、めずらしさの星、名前の帯、NEW のリボン */
+.reward .rw.hero{position:relative;background:linear-gradient(180deg,#f3fbf4 0%,#dff2e6 100%);border:3px solid #e9c46a;box-shadow:0 0 0 3px #fff8e0,0 12px 40px rgba(0,0,0,.4);padding:18px 18px 14px}
+.reward .rw.hero .frame{display:inline-block;padding:6px;border-radius:12px;background:linear-gradient(135deg,#ffe9a8,#c89a1a 50%,#ffe9a8);box-shadow:0 0 18px rgba(255,213,79,.7)}
+.reward .rw.hero .dot-card{width:192px;height:192px;margin:0;border-radius:8px;box-shadow:none}
+.reward .rw.hero .banner{display:inline-block;margin-top:6px;padding:4px 16px;border-radius:999px;background:#2f6f6a;color:#fff;font-weight:800;font-size:15px;box-shadow:0 0 0 2px #e9c46a}
+.reward .rw.hero .sub{margin-top:6px;font-size:13px;color:var(--sub)}
+.reward .rw.hero .sub b{color:var(--gold);font-size:18px;margin-left:2px}
+.reward .ribbon{position:absolute;top:10px;left:-8px;background:#ffd54f;color:#5d3a1a;font-weight:900;font-size:13px;padding:3px 14px 3px 10px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);box-shadow:0 2px 0 rgba(0,0,0,.2);z-index:2}
+.stars{display:flex;justify-content:center;gap:3px;margin-top:8px}
+.stars i{width:18px;height:18px;background:#f2a516;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 0 #8a5a10)}
+/* 案内：行き先の名所の絵 */
+.guide b img.gthumb{width:28px;height:28px;image-rendering:pixelated;vertical-align:-9px;margin:0 4px 0 2px;border-radius:4px;background:#fff8e0;box-shadow:0 0 0 2px #e9c46a}
+/* 丸いボタン（地図の上の ＋ − 🌏・スティックの横の 🚗 🧭・右の 👾 📍） */
+.simple .px-zoom button,.simple .px-pad button{border-radius:50%;background:radial-gradient(circle at 50% 35%,#3f8f88,#1d4f4c);border:2px solid #f3fbf4;box-shadow:0 0 0 2px rgba(233,196,106,.85),0 3px 8px rgba(0,0,0,.35)}
+.simple .px-pad .c.on{background:radial-gradient(circle at 50% 35%,#4fa36a,#1f4d2b);border-color:#ffd54f}
+.simple .fab{background:radial-gradient(circle at 50% 35%,#ffffff,#e6f3ec);box-shadow:0 0 0 2px #e9c46a,0 3px 8px rgba(0,0,0,.3)}

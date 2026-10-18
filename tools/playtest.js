@@ -62,12 +62,13 @@ async function walkTo(page, id) {
     return { name: s.name, keys: keys.reverse(), straight: Math.round(nishioGo.dist(me, s)) };
   }, id);
   if (!plan || !plan.keys) return { id, reached: false };
+  const facts0 = await page.evaluate(() => nishioGo.state.facts.length);
   for (const k of plan.keys) { await page.keyboard.press(k); await page.waitForTimeout(15); }
   await page.waitForTimeout(500);
   if (id === 'chest') {   // たからばこは近づくと開く：ポイントとまめちしきの知らせが出るか
-    // まめちしきは、文字を多めに出すときは 💡 の文。文字を少なく（ふだん）のときは、新しいまめちしきなら本の札（文は きろく の まちメモ に入る）
-    const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, simple: document.body.classList.contains('simple') }; });
-    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup.text) && (/💡/.test(popup.text) || popup.simple) };
+    // まめちしき：新しいまちメモが1つ増え、文字を多めに出すときは 💡 の文、文字を少なく（ふだん）のときは本の札（文は きろく の まちメモ に入る）
+    const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, book: !!r.querySelector('img[alt^="📖"]'), facts: nishioGo.state.facts.length }; });
+    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup.text) && popup.facts > facts0 && (/💡/.test(popup.text) || popup.book) };
   }
   const spin = await page.evaluate(() => !document.getElementById('spinBtn').hidden && document.getElementById('spinName').textContent);
   return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: spin === plan.name };

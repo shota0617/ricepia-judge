@@ -135,7 +135,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} } };
+    guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} }, dots: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 記録は版ごとに分ける（西尾市版は nsg_state_city など。お店の版で行った当店の記録や、当店への行き先を持ちこまない）
@@ -717,12 +717,13 @@ function checkin() {
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   // その場所の話（まだ知らないまちメモがあれば。ないときは ほかの話）
   const fk = s.shop ? '' : learnFact('c:' + s.id + ':' + S.checkins);
+  const dot = s.shop ? null : gainDot(s.lat, s.lng, 'c:' + s.id, s.area);
   const lvUp = gainPoints(total);
   save();
 
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
-  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : fk ? [...lines, '📖 まちメモ +1'] : lines, lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '');
+  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : [...lines, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', dot);
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -903,10 +904,11 @@ function tryChest() {
   const pick = pickFact(c);
   track('chest_open', { mode: demo ? 'play' : 'walk' });
   if (pick && !S.facts.includes(pick)) S.facts.push(pick);
+  const dot = gainDot(c.lat, c.lng, 'chest:' + c.id);
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
-  showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`], lvUp, pick ? factPool().get(pick) : '');
+  showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...dotLines(dot)], lvUp, pick ? factPool().get(pick) : '', dot);
   updateQuests(1500);
   refreshNearby();
 }
@@ -1259,14 +1261,18 @@ function checkBadges() {
 }
 
 /* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら まちメモ ----------
-   ・アプリを閉じていた間も、主人公が西尾やとなりのまちをさんぽして ポイント・まちメモ を集めてくる（10分から。上限はふつう4時間）
-   ・ポイントで「おまかせ強化」：おまかせ歩きを速く／るすばん中に集まるポイントを多く／るすばんの上限を長く
+   遊び方は3つ。どれにも出番があるように、集まる速さに差をつけている（3分ずつ遊ばせて確かめた目安）
+   ・自分で操作：いちばんたくさん集まる。たからばこ（ドット絵とまちメモが出る）を自由に探せるのは、自分で動かしたときだけ
+   ・おまかせ歩き：見ているだけで、行き先へ歩いてチェックインし、人の話を読む。集まるのは自分で操作したときの半分くらい。たからばこは、すぐ近くのものだけ寄り道して開ける
+   ・るすばん：アプリを閉じていた間も、主人公が西尾やとなりのまちをさんぽして ポイント・まちメモ・ドット絵 を集めてくる（10分から。上限はふつう4時間）。
+     ポイントはレベルが上がるほど多い（1時間に 60＋レベル×6）。遊んでいる間ほどは集まらないが、閉じていてもゼロにはならない
+   ・ポイントで「おまかせ強化」：おまかせ歩きを速く／るすばん中に集まるポイントを多く／るすばんの上限を長く。自分で操作して集めたポイントで、放置を強くする目標になる値段にしてある
    ・おまかせ歩きで約150マス進むごとに、まだ知らない まちメモ を1つ（いまいる市町の話から）。チェックインしたところの話も */
-const IDLE = { minMin: 10, baseH: 4, napH: 2, ptPerMin: 1 / 15, maxFacts: 3,
+const IDLE = { minMin: 10, baseH: 4, napH: 2, ptPerHour: lv => 60 + 6 * lv, maxFacts: 3, dotMin: 120, maxDots: 2,
   ups: [
-    { id: 'spd', icon: '👟', name: 'はやあし', desc: 'おまかせ歩きが速くなる', cost: [30, 80, 200] },
-    { id: 'bag', icon: '🎒', name: 'おおきなリュック', desc: 'るすばん中に集まるポイントが1.5倍・2倍・2.5倍', cost: [40, 100, 240] },
-    { id: 'nap', icon: '🏠', name: 'るすばん上手', desc: 'るすばんで集まる時間が2時間ずつのびる', cost: [50, 120, 280] },
+    { id: 'spd', icon: '👟', name: 'はやあし', desc: 'おまかせ歩きが速くなる', cost: [300, 1000, 3000] },
+    { id: 'bag', icon: '🎒', name: 'おおきなリュック', desc: 'るすばん中に集まるポイントが1.5倍・2倍・2.5倍', cost: [400, 1200, 3600] },
+    { id: 'nap', icon: '🏠', name: 'るすばん上手', desc: 'るすばんで集まる時間が2時間ずつのびて、まちメモとドット絵も1つずつ多く持ち帰る', cost: [500, 1500, 4500] },
   ] };
 const idleOf = () => { if (!S.idle || typeof S.idle !== 'object') S.idle = { last: 0, lv: {} }; if (!S.idle.lv) S.idle.lv = {}; return S.idle; };
 const upLv = id => Math.min(3, idleOf().lv[id] || 0);
@@ -1288,12 +1294,18 @@ function idleCheck(tries = 0) {
   i.last = now;
   if (!last || now - last < IDLE.minMin * 60000) { save(); return; }
   const min = Math.min((now - last) / 60000, idleCapH() * 60), mul = 1 + 0.5 * upLv('bag');
-  const pts = Math.max(1, Math.floor(min * IDLE.ptPerMin * mul));
+  const pts = Math.max(1, Math.floor(min / 60 * IDLE.ptPerHour(levelOf(S.total)) * mul));
   const learned = [];
   for (let n = Math.min(IDLE.maxFacts + upLv('nap'), Math.max(1, Math.floor(min / 60))), k = 0; k < n; k++) {
     const f = learnFact(`idle:${now}:${k}`);
     if (!f) break;
     learned.push(f);
+  }
+  // ドット絵：2時間に1枚（西尾市のスポットのどこかで見つけてくる）
+  const dots = [], home = spots.filter(x => { const c = cityAt(x.lat, x.lng); return c && c.name === '西尾市'; });
+  for (let n = Math.min(IDLE.maxDots + upLv('nap'), Math.floor(min / IDLE.dotMin)), k = 0; k < n && home.length; k++) {
+    const sp = home[Math.floor(Math.random() * home.length)], d = gainDot(sp.lat, sp.lng, `idle:${now}:${k}`, sp.area);
+    if (d) dots.push(d);
   }
   S.log.unshift({ type: 'idle', t: now, pts, name: 'るすばんのさんぽ', icon: '🏠' });
   const lvUp = gainPoints(pts);
@@ -1302,7 +1314,8 @@ function idleCheck(tries = 0) {
   const h = Math.floor(min / 60), m = Math.round(min % 60), capped = (now - last) / 60000 >= idleCapH() * 60;
   const lines = [`⏱️ るすばん ${h ? h + '時間' : ''}${m}分${capped ? `（上限${idleCapH()}時間）` : ''}`, `🏠 さんぽのポイント +${pts}`];
   if (learned.length) lines.push(`📖 まちメモ +${learned.length}（きろくで読めます）`);
-  showReward(pts, 'おかえりなさい！ るすばん中に まちをさんぽしてきました', lines, lvUp, learned.length ? factPool().get(learned[0]) : '');
+  for (const d of dots) lines.push(...dotLines(d));
+  showReward(pts, 'おかえりなさい！ るすばん中に まちをさんぽしてきました', lines, lvUp, learned.length ? factPool().get(learned[0]) : '', dots[0]);
   renderLog();
   refreshNearby();
 }
@@ -1333,7 +1346,8 @@ function buyUp(id) {
 function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
-  $('upNote').textContent = `るすばんで集まるのは最大${idleCapH()}時間。アプリを閉じている間も、主人公が西尾やとなりのまちをさんぽして ポイント・まちメモ を集めてきます。`;
+  const lv = levelOf(S.total), perH = Math.floor(IDLE.ptPerHour(lv) * (1 + 0.5 * upLv('bag')));
+  $('upNote').textContent = `🎮 自分で操作：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🧭 おまかせ歩き：見ているだけで行き先へ（集まるのは半分くらい。たからばこは すぐ近くのものだけ）。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     return `<li><span class="ico">${u.icon}</span><span class="main"><b>${esc(u.name)} <small>Lv${lv}/${u.cost.length}</small></b><small>${esc(u.desc)}</small></span>`
@@ -1360,16 +1374,57 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
 }
 
-function showReward(total, name, lines, lvUp, fact) {
+function showReward(total, name, lines, lvUp, fact, dot) {
   sound.jingle(lvUp ? 'levelup' : 'checkin');
-  const el = $('reward');
-  el.innerHTML = `<div class="rw${fact ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
+  const el = $('reward'), D = window.NISHIO_DOTS;
+  el.innerHTML = `<div class="rw${fact || dot ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
+    ${dot && D ? `<img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
     ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, fact ? 7000 : 2700);
+  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, fact || dot ? 7000 : 2700);
 }
+
+/* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 10000枚） ----------
+   西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・日にちで決まる */
+function gainDot(lat, lng, seed, area) {
+  const D = window.NISHIO_DOTS;
+  if (!D || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const id = D.pick(lat, lng, seed, new Date(), area);
+  if (id == null) return null;
+  if (!Array.isArray(S.dots)) S.dots = [];
+  const fresh = !S.dots.includes(id);
+  if (fresh) S.dots.push(id);
+  track('dot_get', { motif: D.info(id).motif, fresh, mode: demo ? 'play' : 'walk' });
+  return { id, fresh };
+}
+function dotLines(dot) {
+  const D = window.NISHIO_DOTS;
+  if (!dot || !D) return [];
+  const f = D.info(dot.id);
+  return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`];
+}
+let dotSel = null;   // 絵帳で開いている題材（null は、さいきんもらった絵）
+function renderDots() {
+  const D = window.NISHIO_DOTS, grid = $('dotGrid');
+  if (!D || !grid) return;
+  const have = (S.dots || []).filter(id => id >= 0 && id < D.COUNT), by = new Map();
+  for (const id of have) { const m = Math.floor(id / D.PER); by.set(m, (by.get(m) || 0) + 1); }
+  $('dotCount').textContent = `${have.length.toLocaleString()}/${D.COUNT.toLocaleString()}`;
+  $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}"><button type="button" data-dotm="${i}"><span>${m.icon}</span><b>${esc(m.name)}</b><small>${by.get(i) || 0}/${D.PER}</small></button></li>`).join('');
+  const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => Math.floor(id / D.PER) === dotSel).sort((a, b) => a - b);
+  $('dotNote').textContent = dotSel == null ? 'さいきんもらった絵（題材を押すと、その題材の絵を番号順に見られます）' : `${D.MOTIFS[dotSel].icon} ${D.MOTIFS[dotSel].name}（もう一度押すと、さいきんもらった絵にもどります）`;
+  grid.innerHTML = list.length ? list.map(id => { const f = D.info(id); return `<figure><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96" loading="lazy"/><figcaption>No.${f.no}<br/>${dotSel == null ? esc(f.title) + '<br/>' : ''}${esc(f.label)}</figcaption></figure>`; }).join('')
+    : `<p class="empty">${dotSel == null ? 'まだありません。西尾市の中で、たからばこを開けたり、スポットにチェックインしたりしてみよう' : 'この題材の絵は、まだありません'}</p>`;
+}
+$('dotMotifs').addEventListener('click', e => {
+  const b = e.target.closest('[data-dotm]');
+  if (!b) return;
+  const i = Number(b.dataset.dotm);
+  dotSel = dotSel === i ? null : i;
+  renderDots();
+});
 
 function renderLog() {
   renderCampaigns();
@@ -1388,6 +1443,7 @@ function renderLog() {
   }).join('') : '<li class="empty">今月と来月の行事はありません</li>';
   const facts = factPool();
   $('factCount').textContent = `${S.facts.filter(k => facts.has(k)).length}/${facts.size}`;
+  renderDots();
   $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">💡</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
     || '<li class="empty">たからばこを開けたり、チェックインしたり、おまかせ歩きで歩いたりすると、まちメモが集まります</li>';
   const lv = levelOf(S.total);

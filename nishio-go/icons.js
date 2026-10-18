@@ -112,6 +112,15 @@
     compass: [
       '...kkkkkk...', '..kwwwwwwk..', '.kwwwrwwwwk.', 'kwwwwrrwwwwk', 'kwwwrrrwwwwk', 'kwwwwkwwwwwk',
       'kwwwwbwwwwwk', 'kwwwbbbwwwwk', '.kwwwbbwwwk.', '..kwwbwwwk..', '...kkkkkk...', '............'],
+    calendar: [
+      '.k..k..k..k.', 'kkkkkkkkkkkk', 'krrrrrrrrrrk', 'kkkkkkkkkkkk', 'kwwwwwwwwwwk', 'kwkkwkkwkkwk',
+      'kwwwwwwwwwwk', 'kwkkwkkwkkwk', 'kwwwwwwwwwwk', 'kwkkwkkwrrwk', 'kwwwwwwwrrwk', 'kkkkkkkkkkkk'],
+    medal: [
+      '.kbk...krk..', '.kbbk.krrk..', '..kbbkrrk...', '...kbbrk....', '....kkkk....', '...kyyyyk...',
+      '..kyyyyyyk..', '..kyyYwyyk..', '..kyyYyyyk..', '..kyyyyyyk..', '...kyyyyk...', '....kkkk....'],
+    face: [
+      '...kkkkkk...', '..knnnnnnk..', '.knnnnnnnnk.', '.knffffffnk.', '.kffkffkffk.', '.kffffffffk.',
+      '.kfffrrfffk.', '..kffffffk..', '...kkkkkk...', '..kbbbbbbk..', '.kbbbbbbbbk.', '.kbbbbbbbbk.'],
   };
   const cache = {};
   function canvas(name) {

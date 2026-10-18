@@ -431,3 +431,15 @@ body.px .guide small{color:#ddd}
 .px-zoom button img.pi,.px-pad button img.pi{width:24px;height:24px;vertical-align:middle}
 .fab img.pi{width:26px;height:26px;vertical-align:middle}
 .spin-ico img.gthumb{width:34px;height:34px;image-rendering:pixelated}
+/* きろく：見出しの絵・数字のタイル・クエストの進み具合の棒 */
+.panel h3 img.pi{width:18px;height:18px;vertical-align:-3px}
+.stat.pic{display:flex;align-items:center;gap:8px}
+.stat.pic img.pi{width:28px;height:28px}
+.list li .ico img.pi{width:24px;height:24px}
+.list li .num img.pi{width:16px;height:16px;vertical-align:-3px;margin-right:1px}
+.list li .bar{display:block;height:8px;margin-top:5px;border-radius:4px;background:#e6e0cc;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.list li .bar i{display:block;height:100%;background:linear-gradient(90deg,#7cc04a,#e9c46a);border-radius:4px}
+.list li.done .bar i{background:#e9c46a}
+.simple #upNote{display:none}
+.card.tomorrow .chips{justify-content:flex-start}
+.card.tomorrow b img.pi{width:18px;height:18px;vertical-align:-3px}

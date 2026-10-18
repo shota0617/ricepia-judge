@@ -1505,6 +1505,7 @@ $('dotMotifs').addEventListener('click', e => {
   renderDots();
 });
 
+const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
   renderTomorrow();
   renderCampaigns();
@@ -1512,9 +1513,13 @@ function renderLog() {
   const day = dayState(), qs = todaysQuests();
   $('questList').innerHTML = qs.map(q => {
     const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
+    if (simple()) return `<li class="${done ? 'done' : ''}"><span class="ico">${PI(done ? 'star' : 'scroll', done ? '達成' : 'クエスト')}</span><span class="main"><b>${esc(q.text)}</b>
+      <span class="bar" title="${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}"><i style="width:${Math.round(v / q.goal * 100)}%"></i></span></span><span class="num">${PI('coin', 'ポイント')}+${q.pts}</span></li>`;
     return `<li class="${done ? 'done' : ''}"><span class="ico">${done ? '✅' : q.icon}</span><span class="main"><b>${esc(q.text)}</b>
       <small>${done ? '達成！' : `${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}`}${q.sub ? `・${esc(q.sub)}` : ''}</small></span><span class="num">+${q.pts}</span></li>`;
-  }).join('') + `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${day.bonus ? '🏆' : '🎯'}</span><span class="main"><b>3つぜんぶ達成</b><small>${day.bonus ? '達成！あしたも新しいクエストが出ます' : 'あしたは別のクエストになります'}</small></span><span class="num">+${CFG.pts.questAll}</span></li>`;
+  }).join('') + (simple()
+    ? `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${PI(day.bonus ? 'medal' : 'scroll', '3つぜんぶ達成')}</span><span class="main"><b>3つぜんぶ達成</b></span><span class="num">${PI('coin', 'ポイント')}+${CFG.pts.questAll}</span></li>`
+    : `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${day.bonus ? '🏆' : '🎯'}</span><span class="main"><b>3つぜんぶ達成</b><small>${day.bonus ? '達成！あしたも新しいクエストが出ます' : 'あしたは別のクエストになります'}</small></span><span class="num">+${CFG.pts.questAll}</span></li>`);
   const ev = upcomingEvents();
   $('eventList').innerHTML = ev.length ? ev.map(({ e, when, next }) => {
     const s = e.spot && spots.find(x => x.id === evSpotId(e));
@@ -1533,7 +1538,9 @@ function renderLog() {
     ['めぐったスポット', Object.keys(S.visits).length, 'か所'], ['チェックイン', S.checkins, '回'],
     ['歩いた距離', fmtM(S.walked), ''], ['連続日数', S.streak.last === ymd() || S.streak.last === yesterday() ? S.streak.days : 0, '日'],
     ['最長連続', S.streak.max || 0, '日'], ['これまでの合計', S.total.toLocaleString(), 'pt'],
-  ].map(([k, v, u]) => `<div class="stat"><small>${k}</small><b>${esc(v)}<small>${esc(u)}</small></b></div>`).join('');
+  ].map(([k, v, u], i) => simple()   // 文字を少なく（ふだん）：名前のかわりにドット絵（名前は読み上げと長押しで）
+    ? `<div class="stat pic" title="${esc(k)}">${PI(STAT_PI[i], k)}<b>${esc(v)}<small>${esc(i === 1 ? '' : u)}</small></b></div>`
+    : `<div class="stat"><small>${k}</small><b>${esc(v)}<small>${esc(u)}</small></b></div>`).join('');
 
   const visits = Object.entries(S.visits).sort((a, b) => b[1].last - a[1].last);
   $('visitedList').innerHTML = visits.length ? visits.map(([id, v]) =>
@@ -1941,7 +1948,10 @@ function renderTomorrow() {
   const el = $('tomorrowBox');
   if (!el) return;
   el.hidden = !store.get('nsg_started', false);
-  el.innerHTML = `<b>📅 あしたのおたのしみ</b><ul>${tomorrowItems().map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
+  const items = tomorrowItems();
+  el.innerHTML = simple()   // 文字を少なく（ふだん）：絵＋数の札（くわしくは長押しで出る名前）
+    ? `<b>${PI('calendar', '')} あした</b><div class="chips">${[['fire', `+${tomorrowBonus()}`, items[0]], ['scroll', '×3', items[1]], ['chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : [])].map(([ic, v, t]) => `<span title="${esc(t)}">${PI(ic, t)}${v}</span>`).join('')}</div>`
+    : `<b>📅 あしたのおたのしみ</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 // ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）
 let a2hsEvt = null, a2hsPending = false;

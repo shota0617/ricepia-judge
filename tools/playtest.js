@@ -155,7 +155,7 @@ async function walkTo(page, id) {
   await shot(page, '05-world-map');
   await page.click('#pxWorld'); await page.waitForTimeout(300);
   await page.click('[data-tab=log]'); await page.waitForTimeout(400); await shot(page, '06-log');
-  R.checks.quests = await page.evaluate(() => [...document.querySelectorAll('#questList li')].map(li => li.innerText.replace(/\s+/g, ' ')));
+  R.checks.quests = await page.evaluate(() => [...document.querySelectorAll('#questList li')].map(li => (li.classList.contains('done') && !li.innerText.startsWith('✅') ? '✅ ' : '') + li.innerText.replace(/\s+/g, ' ')));   // 文字を少なく（ふだん）では ✅ のかわりに星の絵なので、達成は class で見る
   R.checks.facts = await page.evaluate(() => document.getElementById('factCount').textContent);
   await page.evaluate(() => document.getElementById('badgeHead').scrollIntoView()); await page.waitForTimeout(300); await shot(page, '07-badges');   // バッジは きろく の下
   await page.click('[data-tab=map]'); await page.waitForTimeout(300);

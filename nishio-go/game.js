@@ -717,7 +717,7 @@ function checkin() {
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   // その場所の話（まだ知らないまちメモがあれば。ないときは ほかの話）
   const fk = s.shop ? '' : learnFact('c:' + s.id + ':' + S.checkins);
-  const dot = s.shop ? null : gainDot(s.lat, s.lng, 'c:' + s.id + ':' + S.checkins, s.area);
+  const dot = s.shop ? null : gainDot(s.lat, s.lng, 'c:' + s.id, s.area);
   const lvUp = gainPoints(total);
   save();
 

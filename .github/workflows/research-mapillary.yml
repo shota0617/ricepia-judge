@@ -28,5 +28,5 @@ jobs:
           [ -f reference/mapillary.json ] || exit 0
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reference/mapillary reference/mapillary.json; git commit -q -m "調査：名所とお店の路上写真（Mapillary）（自動）" || exit 0
+          git add -A reference/mapillary reference/mapillary.json; git commit -q -m "調査：名所とお店の路上写真（Mapillary）（自動）" || exit 0
           for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done

@@ -15,7 +15,8 @@ const distM = (a, b) => { const x = rad(b[0] - a[0]) * Math.cos(rad((a[1] + b[1]
 const bearing = (a, b) => { const y = Math.sin(rad(b[0] - a[0])) * Math.cos(rad(b[1])), x = Math.cos(rad(a[1])) * Math.sin(rad(b[1])) - Math.sin(rad(a[1])) * Math.cos(rad(b[1])) * Math.cos(rad(b[0] - a[0])); return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360; };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 (async () => {
-  const dir = path.join(OUT, 'mapillary'); fs.mkdirSync(dir, { recursive: true });
+  const dir = path.join(OUT, 'mapillary');
+  fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true });   // 前に動かしたときの写真は消す（mapillary.json にない写真を残さない）
   const out = [];
   for (const s of targets) {
     const p = [s.lng, s.lat], d = 0.0009;   // 約90m四方

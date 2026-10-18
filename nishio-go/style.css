@@ -443,3 +443,9 @@ body.px .guide small{color:#ddd}
 .simple #upNote{display:none}
 .card.tomorrow .chips{justify-content:flex-start}
 .card.tomorrow b img.pi{width:18px;height:18px;vertical-align:-3px}
+/* バッジ：丸いメダル（金のふち）。まだのものは灰色 */
+.badge.pic .medal{width:52px;height:52px;margin:0 auto;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#fff8e0,#e9c46a);box-shadow:0 0 0 3px #c89a1a,0 0 0 5px #fff8e0,0 3px 6px rgba(0,0,0,.25)}
+.badge.pic .medal img.pi{width:32px;height:32px}
+.badge.pic.locked .medal{background:#d8d8d8;box-shadow:0 0 0 3px #a8a8a8,0 0 0 5px #f0f0f0}
+.badge.pic.locked .medal img.pi{filter:grayscale(1);opacity:.45}
+.badge.pic b{margin-top:8px}

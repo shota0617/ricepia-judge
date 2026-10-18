@@ -1560,17 +1560,22 @@ function renderLog() {
     : '<li class="empty">まだありません</li>';
 }
 
+// バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
+const BADGE_PI = { first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
+  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face' };
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
     const done = got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
     const pct = Math.min(100, (b.cur / b.goal) * 100);
+    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
+      ${done ? '' : `<div class="bp"><i style="width:${pct}%"></i></div>`}</div>`;
     return `<div class="badge ${done ? 'got' : 'locked'}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
       ${done ? '<small>獲得済み</small>' : `<div class="bp"><i style="width:${pct}%"></i></div><small>${Math.min(b.cur, b.goal)}/${b.goal}</small>`}</div>`;
   }).join('');
   const lv = levelOf(S.total);
   $('titleList').innerHTML = TITLES.map(([l, t]) =>
-    `<li class="${titleOf(lv) === t ? 'now' : ''}"><span class="ico">${lv >= l ? '🎖️' : '🔒'}</span><span class="main"><b>${esc(t)}</b>
+    `<li class="${titleOf(lv) === t ? 'now' : ''}"><span class="ico">${simple() ? PI(lv >= l ? 'medal' : 'lock', lv >= l ? '獲得' : 'まだ') : lv >= l ? '🎖️' : '🔒'}</span><span class="main"><b>${esc(t)}</b>
       <small>Lv${l}（累計 ${needFor(l).toLocaleString()}pt）</small></span>${titleOf(lv) === t ? '<span class="num">いまここ</span>' : ''}</li>`).join('');
 }
 

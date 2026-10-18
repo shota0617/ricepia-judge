@@ -121,6 +121,24 @@
     face: [
       '...kkkkkk...', '..knnnnnnk..', '.knnnnnnnnk.', '.knffffffnk.', '.kffkffkffk.', '.kffffffffk.',
       '.kfffrrfffk.', '..kffffffk..', '...kkkkkk...', '..kbbbbbbk..', '.kbbbbbbbbk.', '.kbbbbbbbbk.'],
+    torii: [
+      'krrrrrrrrrrk', 'kRrrrrrrrrRk', '.kkkkkkkkkk.', '..krrrrrrk..', '..kkrkkrkk..', '...kr..rk...',
+      '...kr..rk...', '...kr..rk...', '...kr..rk...', '...kr..rk...', '..kkk..kkk..', '............'],
+    temple: [
+      '.....kk.....', '....kAAk....', '..kkAAAAkk..', '.kAAAAAAAAk.', 'kkkkkkkkkkkk', '..knnnnnnk..',
+      '..knNnnNnk..', '..knNnnNnk..', '..knnnnnnk..', '.kkkkkkkkkk.', 'kaaaaaaaaaak', 'kkkkkkkkkkkk'],
+    tree: [
+      '....kkkk....', '..kkggggkk..', '.kggggGgggk.', 'kggGgggggggk', 'kgggggGggggk', 'kgGgggggGggk',
+      '.kggggggggk.', '..kkggggkk..', '....knnk....', '....knnk....', '...kknnkk...', '............'],
+    tea: [
+      '............', '............', '.kkkkkkkkk..', 'kwgggggggwk.', 'kwwgggggwwkk', 'kwwwwwwwwwkk',
+      'kwwwwwwwwwk.', '.kwwwwwwwk..', '..kkkkkkk...', '.kAAAAAAAk..', '..kkkkkkk...', '............'],
+    talk: [
+      '............', '.kkkkkkkkkk.', 'kwwwwwwwwwwk', 'kwkwwkwwkwwk', 'kwwwwwwwwwwk', 'kwwwwwwwwwwk',
+      '.kkwkkkkkkk.', '..kwk.......', '..kk........', '............', '............', '............'],
+    lock: [
+      '....kkkk....', '...kaaaak...', '..ka....ak..', '..ka....ak..', '.kkkkkkkkkk.', '.kyyyyyyyyk.',
+      '.kyyykkyyyk.', '.kyyykkyyyk.', '.kyyyykyyyk.', '.kYYYYYYYYk.', '.kkkkkkkkkk.', '............'],
   };
   const cache = {};
   function canvas(name) {

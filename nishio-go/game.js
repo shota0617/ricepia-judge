@@ -135,7 +135,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} } };
+    guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} }, dots: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 記録は版ごとに分ける（西尾市版は nsg_state_city など。お店の版で行った当店の記録や、当店への行き先を持ちこまない）
@@ -717,12 +717,13 @@ function checkin() {
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   // その場所の話（まだ知らないまちメモがあれば。ないときは ほかの話）
   const fk = s.shop ? '' : learnFact('c:' + s.id + ':' + S.checkins);
+  const dot = s.shop ? null : gainDot(s.lat, s.lng, 'c:' + s.id + ':' + S.checkins);
   const lvUp = gainPoints(total);
   save();
 
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
-  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : fk ? [...lines, '📖 まちメモ +1'] : lines, lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '');
+  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : [...lines, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', dot);
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -903,10 +904,11 @@ function tryChest() {
   const pick = pickFact(c);
   track('chest_open', { mode: demo ? 'play' : 'walk' });
   if (pick && !S.facts.includes(pick)) S.facts.push(pick);
+  const dot = gainDot(c.lat, c.lng, 'chest:' + c.id);
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
-  showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`], lvUp, pick ? factPool().get(pick) : '');
+  showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...dotLines(dot)], lvUp, pick ? factPool().get(pick) : '', dot);
   updateQuests(1500);
   refreshNearby();
 }
@@ -1360,16 +1362,57 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
 }
 
-function showReward(total, name, lines, lvUp, fact) {
+function showReward(total, name, lines, lvUp, fact, dot) {
   sound.jingle(lvUp ? 'levelup' : 'checkin');
-  const el = $('reward');
-  el.innerHTML = `<div class="rw${fact ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
+  const el = $('reward'), D = window.NISHIO_DOTS;
+  el.innerHTML = `<div class="rw${fact || dot ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
+    ${dot && D ? `<img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
     ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, fact ? 7000 : 2700);
+  clearTimeout(showReward.t); showReward.t = setTimeout(() => { el.innerHTML = ''; }, fact || dot ? 7000 : 2700);
 }
+
+/* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 10000枚） ----------
+   西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・日にちで決まる */
+function gainDot(lat, lng, seed) {
+  const D = window.NISHIO_DOTS;
+  if (!D || !Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const id = D.pick(lat, lng, seed);
+  if (id == null) return null;
+  if (!Array.isArray(S.dots)) S.dots = [];
+  const fresh = !S.dots.includes(id);
+  if (fresh) S.dots.push(id);
+  track('dot_get', { motif: D.info(id).motif, fresh, mode: demo ? 'play' : 'walk' });
+  return { id, fresh };
+}
+function dotLines(dot) {
+  const D = window.NISHIO_DOTS;
+  if (!dot || !D) return [];
+  const f = D.info(dot.id);
+  return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`];
+}
+let dotSel = null;   // 絵帳で開いている題材（null は、さいきんもらった絵）
+function renderDots() {
+  const D = window.NISHIO_DOTS, grid = $('dotGrid');
+  if (!D || !grid) return;
+  const have = (S.dots || []).filter(id => id >= 0 && id < D.COUNT), by = new Map();
+  for (const id of have) { const m = Math.floor(id / D.PER); by.set(m, (by.get(m) || 0) + 1); }
+  $('dotCount').textContent = `${have.length.toLocaleString()}/${D.COUNT.toLocaleString()}`;
+  $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}"><button type="button" data-dotm="${i}"><span>${m.icon}</span><b>${esc(m.name)}</b><small>${by.get(i) || 0}/${D.PER}</small></button></li>`).join('');
+  const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => Math.floor(id / D.PER) === dotSel).sort((a, b) => a - b);
+  $('dotNote').textContent = dotSel == null ? 'さいきんもらった絵（題材を押すと、その題材の絵を番号順に見られます）' : `${D.MOTIFS[dotSel].icon} ${D.MOTIFS[dotSel].name}（もう一度押すと、さいきんもらった絵にもどります）`;
+  grid.innerHTML = list.length ? list.map(id => { const f = D.info(id); return `<figure><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96" loading="lazy"/><figcaption>No.${f.no}<br/>${dotSel == null ? esc(f.title) + '<br/>' : ''}${esc(f.label)}</figcaption></figure>`; }).join('')
+    : `<p class="empty">${dotSel == null ? 'まだありません。西尾市の中で、たからばこを開けたり、スポットにチェックインしたりしてみよう' : 'この題材の絵は、まだありません'}</p>`;
+}
+$('dotMotifs').addEventListener('click', e => {
+  const b = e.target.closest('[data-dotm]');
+  if (!b) return;
+  const i = Number(b.dataset.dotm);
+  dotSel = dotSel === i ? null : i;
+  renderDots();
+});
 
 function renderLog() {
   renderCampaigns();
@@ -1388,6 +1431,7 @@ function renderLog() {
   }).join('') : '<li class="empty">今月と来月の行事はありません</li>';
   const facts = factPool();
   $('factCount').textContent = `${S.facts.filter(k => facts.has(k)).length}/${facts.size}`;
+  renderDots();
   $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">💡</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
     || '<li class="empty">たからばこを開けたり、チェックインしたり、おまかせ歩きで歩いたりすると、まちメモが集まります</li>';
   const lv = levelOf(S.total);

@@ -177,6 +177,18 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 #questList li.done{background:#f3f8ec}
 #questList li.done b{color:var(--green)}
 #factList li .main small{color:var(--ink);font-size:13px;line-height:1.6}
+/* 西尾ドット絵帳 */
+.reward .rw .dot-card{display:block;margin:8px auto 0;width:144px;height:144px;image-rendering:pixelated;border-radius:8px;box-shadow:0 0 0 3px #f4f1e6}
+.dot-motifs{list-style:none;padding:0;margin:6px 0;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.dot-motifs button{width:100%;display:grid;grid-template-columns:22px 1fr auto;align-items:center;gap:4px;padding:6px 8px;border:1px solid #e3ddcc;border-radius:10px;background:#fff;font:inherit;font-size:12px;text-align:left;color:var(--ink);cursor:pointer}
+.dot-motifs b{font-weight:600;line-height:1.3}
+.dot-motifs small{color:var(--sub);font-size:11px}
+.dot-motifs li.on button{border-color:var(--green);background:#f3f8ec}
+.dot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:6px 0 14px}
+.dot-grid figure{margin:0;text-align:center}
+.dot-grid img{width:96px;height:96px;image-rendering:pixelated;border-radius:6px;display:block;margin:0 auto}
+.dot-grid figcaption{font-size:11px;color:var(--sub);line-height:1.4;margin-top:2px}
+.dot-grid .empty{grid-column:1/-1;color:var(--sub);font-size:13px}
 @keyframes pop{0%{transform:scale(.4);opacity:0}12%{transform:scale(1.08);opacity:1}20%{transform:scale(1)}85%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
 
 @media (min-width:700px){

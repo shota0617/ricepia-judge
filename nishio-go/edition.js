@@ -42,7 +42,10 @@
   window.NISHIO_NPCS = npcs;
   // 行事の会場の書き方から「当店」を外す
   const list = (window.NISHIO_EVENTS && window.NISHIO_EVENTS.list) || [];
-  for (const e of list) if (typeof e.place === 'string') e.place = e.place.replace(/（当店[^）]*）/g, '');
+  for (const e of list) {
+    if (typeof e.place === 'string') e.place = e.place.replace(/（当店[^）]*）/g, '');
+    if (SHOP_SPOTS.has(e.spot)) delete e.spot;   // 会場が当店の行事は、地図に会場がないので、クエストや行き先にしない
+  }
 
   // 画面：上に「提案用デモ」の札、つくった人の書き方、当店HPのボタンを外す
   document.title = ED.title;

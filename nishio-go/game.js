@@ -391,7 +391,7 @@ function popupHtml(s) {
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}</div>`;
 }
 
-// 文字を少なく（ふだん）：名所の大きなドット絵と、絵の札（種類・ポイント・きょり・行った回数）。説明の文と名物・行事はそのまま
+// 文字を少なく（ふだん）：名所の大きなドット絵と、絵の札（種類・ポイント・きょり・行った回数）。説明の文・行事はそのまま、名物は名前（タップで説明）
 function popupPic(s, c, v, left, d) {
   const th = spotThumb(s).replace('class="gthumb"', 'class="pop-art"').replace(/width="28" height="28"/, 'width="64" height="64"');
   return `<div class="popup pic"><div class="pop-head">${th}<h4>${esc(s.name)}</h4></div>
@@ -400,7 +400,7 @@ function popupPic(s, c, v, left, d) {
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">${PI('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
-    ${spotMeibutsu(s).map(m => `<p class="mb" title="${esc(m.note)}">${m.icon} <b>${esc(m.name)}</b></p>`).join('')}
+    ${spotMeibutsu(s).map(m => `<details class="mb"><summary>${m.icon} <b>${esc(m.name)}</b></summary>${esc(m.note)}</details>`).join('')}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PI('feet', '')} ここへ</button>` : ''}</div>`;

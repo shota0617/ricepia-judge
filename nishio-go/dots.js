@@ -1,6 +1,9 @@
-// にしおさんぽGO：西尾ドット絵帳（西尾ならではのドット絵 10000枚）
+// にしおさんぽGO：西尾ドット絵帳（西尾ならではのドット絵 70000枚）
 // ・西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる
-// ・絵は25の題材 × 16 × 25 ＝ 10000枚。どれも 48×48 の1枚の景色で、題材ごとの描き方に、季節と時間帯（16）と、ものの置き方・小物（25）を組み合わせて描く
+// ・絵は35の題材 × 季節と時間帯16 × 置き方・小物25 × 天気5 ＝ 70000枚。どれも 48×48 の1枚の景色で、題材ごとの描き方に組み合わせて描く
+//   天気：晴れ・くもり・雨・霧・（冬は雪／夜は満月／ほかは虹）。もらうときの天気は気象庁の実際の天気（weather.js）で決まり、朝は霧、雨のあとは虹のことも
+//   番号：No.1〜10000 は はじめの25題材の晴れ（前からある絵。番号も絵も変えない）、10001〜50000 は同じ25題材の くもり・雨・霧・雪/虹/満月、
+//   50001〜70000 はあとから足した10題材（八ツ面山の桜・西尾城の鍮石門・旧近衛邸の茶室・岩瀬文庫の古い本・抹茶パフェ・茶畑と摘採機・三河湾の海苔ひび・吉良温泉と三河湾・華蔵寺の山門・一色の干潟の水鳥）の5つの天気
 //   題材：抹茶（防霜ファンの茶畑・覆いをかけたてん茶の茶畑・抹茶と和菓子・石臼・抹茶ソフト）、一色のうなぎ（養殖池と水車・うな重・炭火のかば焼き）、
 //   えびせんべい、三河湾のあさり、漁港、佐久島への船、佐久島の黒壁の家並み、幡豆の海と沖の島、西尾城の丑寅櫓、城下町の町家、名鉄の電車、吉良の赤馬、
 //   黄金堤、饗庭塩の塩田、手筒花火、鳥羽の火祭り、三河一色の大提灯、三ヶ根山のあじさい、西尾の田んぼ
@@ -30,7 +33,14 @@
   /* ---------- 共通の部品（r(x, y, w, h, 色)・h(y, x0, x1, 色)） ---------- */
   const SKY = [['#9fd0f0', '#cfe6f2', '#f8d8b0'], ['#5fb0ea', '#8cc8f0', '#c4e6f8'], ['#4a3e7e', '#c86a6a', '#f6b46a'], ['#0a1230', '#16224a', '#26386a']];
   const SKY_TINT = ['#f4e4ec', '#2a7ad8', '#e8d8a8', '#e8eef4'];
+  // 天気（k.wk）：'' 晴れ・cloudy くもり・rain 雨・mist 霧・snow 雪・rainbow 虹・moon 満月。晴れのときは前からの絵とまったく同じに描く
+  const WX_SKY = { cloudy: ['#9aa2aa', '#2a3040', 0.55], rain: ['#6e7680', '#1e2430', 0.7], mist: ['#dfe4e6', '#4a5260', 0.6], snow: ['#c8ccd2', '#3a4250', 0.5] };
+  const wxStops = (st, k) => { const w = WX_SKY[k.wk]; return w ? st.map(c => mix(c, k.t === 3 ? w[1] : w[0], w[2])) : st; };
+  function rainbow(r, cx, cy, rad) {   // 空の虹（外から赤・だいだい・黄・緑・青・むらさき）
+    ['#e8504a', '#f09a3a', '#f2d24a', '#6ac05a', '#4a8ad8', '#8a5ac8'].forEach((c, i) => { const rr = rad - i; for (let a = 0; a <= 180; a += 3) { const t = a * Math.PI / 180; r(Math.round(cx + Math.cos(t) * rr), Math.round(cy - Math.sin(t) * rr * 0.7), 1, 1, '!' + mix(c, '#ffffff', 0.15)); } });
+  }
   function sky(r, h, k, hz, o = {}) {
+    if (k.wk) return wxSky(r, h, k, hz, o);
     const st = SKY[k.t].map(c => mix(c, SKY_TINT[k.s], 0.12));   // 季節で空の色を少しかえる（春はかすみ、夏は濃い青、秋はすんだ色、冬はうすい色）
     for (let y = 0; y < hz; y++) { const f = hz > 1 ? y / (hz - 1) : 1, c = f < 0.5 ? mix(st[0], st[1], f * 2) : mix(st[1], st[2], (f - 0.5) * 2); h(y, 0, 47, '!' + c); }
     const sx = 6 + k.a * 8 + (k.b % 2) * 3;
@@ -42,6 +52,32 @@
       r(sx, sy, 4, 4, '!' + col); r(sx - 1, sy + 1, 6, 2, '!' + col); r(sx + 1, sy - 1, 2, 6, '!' + col);
     }
     if (k.t < 3 && !o.noCloud) for (let i = 0; i < 1 + (k.b % 3); i++) { const x = Math.floor(k.R() * 40), y = 2 + Math.floor(k.R() * Math.max(1, hz - 8)); r(x, y, 7, 2, '#ffffff'); r(x + 2, y - 1, 3, 1, '#ffffff'); }
+  }
+  function wxSky(r, h, k, hz, o) {   // 晴れ以外の空
+    const st = wxStops(SKY[k.t].map(c => mix(c, SKY_TINT[k.s], 0.12)), k), R = k.W;
+    for (let y = 0; y < hz; y++) { const f = hz > 1 ? y / (hz - 1) : 1, c = f < 0.5 ? mix(st[0], st[1], f * 2) : mix(st[1], st[2], (f - 0.5) * 2); h(y, 0, 47, '!' + c); }
+    const sx = 6 + k.a * 8 + (k.b % 2) * 3;
+    if (k.wk === 'cloudy' || k.wk === 'rain' || k.wk === 'snow') {   // 雲が空をおおう
+      const cc = k.t === 3 ? '#2e3444' : k.wk === 'rain' ? '#5a626c' : '#b4bac0';
+      for (let i = 0; i < 5 + k.b; i++) { const x = Math.floor(R() * 44) - 4, y = Math.floor(R() * Math.max(1, hz - 3)); r(x, y, 10 + (i % 3) * 3, 3, '!' + cc); r(x + 2, y - 1, 6, 1, '!' + cc); }
+    } else if (k.wk === 'mist') {
+      for (let y = Math.max(0, hz - 8); y < hz; y += 2) h(y, 0, 47, '!' + mix(st[2], '#ffffff', 0.35));
+    } else if (k.wk === 'rainbow') {
+      if (!o.noSun) { r(sx, 3, 4, 4, '!#fffbe8'); }
+      rainbow(r, 24 + (k.a - 2) * 3, hz + 2, 18 + (k.b % 3) * 2);
+      for (let i = 0; i < 2; i++) { const x = Math.floor(R() * 40), y = 2 + Math.floor(R() * Math.max(1, hz - 8)); r(x, y, 7, 2, '!#f4f6f8'); }
+    } else if (k.wk === 'moon') {
+      for (let i = 0; i < 18 + k.b * 2; i++) r(Math.floor(R() * 48), Math.floor(R() * Math.max(1, hz - 1)), 1, 1, '!#f4f6ff');
+      const mx = 30 - k.a * 4; r(mx + 1, 2, 6, 8, '!#fff6d0'); r(mx, 3, 8, 6, '!#fff6d0'); r(mx + 2, 4, 2, 2, '!#e8dcb0'); r(mx + 5, 6, 1, 1, '!#e8dcb0');
+    }
+  }
+  // 天気の色あい（晴れはそのまま）と、絵の上にかさねる雨・雪・霧
+  const WX_TONE = { cloudy: c => mix(c, '#7a8088', 0.1), rain: c => mix(c, '#4a5260', 0.2), mist: c => mix(c, '#dfe4e6', 0.38), snow: c => mix(c, '#eef2f6', 0.15) };
+  function wxOver(r, k, y1 = 48) {
+    const R = k.W;
+    if (k.wk === 'rain') for (let i = 0; i < 40 + k.b * 4; i++) { const x = Math.floor(R() * 50), y = Math.floor(R() * y1); r(x, y, 1, 1, '!#c8dcf0'); r(x - 1, y + 1, 1, 1, '!#a8c0dc'); r(x - 2, y + 2, 1, 1, '!#c8dcf0'); }
+    else if (k.wk === 'snow') for (let i = 0; i < 36 + k.b * 4; i++) { const x = Math.floor(R() * 48), y = Math.floor(R() * y1); r(x, y, 1 + (i % 3 === 0), 1 + (i % 3 === 0), '!#ffffff'); }
+    else if (k.wk === 'mist') for (let y = 10 + (k.a % 3) * 3; y < y1; y += 9) for (let x = (y * 7) % 11 - 6; x < 48; x += 16) r(x, y, 12, 2, '!' + (k.t === 3 ? '#4a5466' : '#eef2f4'));
   }
   const GRASS = ['#8fca5e', '#4d9a3c', '#b49a52', '#a9a48c'];
   function ground(r, h, k, hz, col = GRASS[k.s]) {
@@ -74,12 +110,18 @@
     const spans = []; for (let i = 0; i < rows; i++) { const k = rows - 1 - i; spans.push([x0 + k, x1 - k]); }
     tileRoof(r, h, y, spans, cols);
   }
-  function windowView(r, h, k, x, y, w, hh) {   // 部屋の窓（外の空と季節の木が見える）
+  function windowView(r, h, k, x, y, w, hh) {   // 部屋の窓（外の空と季節の木と、天気が見える）
     r(x - 1, y - 1, w + 2, hh + 2, '#6a4a30');
-    for (let yy = 0; yy < hh; yy++) { const f = yy / Math.max(1, hh - 1), st = SKY[k.t]; r(x, y + yy, w, 1, '!' + mix(st[0], st[2], f)); }
-    if (k.t === 3) r(x + w - 4, y + 1, 2, 2, '!#f4eecc');
+    const st = k.wk ? wxStops(SKY[k.t], k) : SKY[k.t];
+    for (let yy = 0; yy < hh; yy++) { const f = yy / Math.max(1, hh - 1); r(x, y + yy, w, 1, '!' + mix(st[0], st[2], f)); }
+    if (k.t === 3 && (!k.wk || k.wk === 'moon' || k.wk === 'rainbow')) r(x + w - 4, y + 1, k.wk === 'moon' ? 3 : 2, k.wk === 'moon' ? 3 : 2, '!#f4eecc');
     const tc = LEAF[k.s][0];
     r(x, y + hh - 3, w, 3, tc); r(x + 2, y + hh - 5, 4, 2, tc);
+    if (k.wk === 'rain') for (let i = 0; i < w * hh / 8; i++) r(x + Math.floor(k.W() * w), y + Math.floor(k.W() * (hh - 1)), 1, 2, k.t === 3 ? '!#6a7a9a' : '!#c8dcf0');
+    else if (k.wk === 'snow') { for (let i = 0; i < w * hh / 7; i++) r(x + Math.floor(k.W() * w), y + Math.floor(k.W() * hh), 1, 1, '!#ffffff'); r(x, y + hh - 2, w, 2, '!#f4f6f8'); }
+    else if (k.wk === 'mist') for (let yy = y + 2; yy < y + hh; yy += 3) r(x, yy, w, 1, k.t === 3 ? '!#4a5466' : '!#eef2f4');
+    else if (k.wk === 'rainbow' && k.t !== 3) for (let i = 0; i < 4; i++) r(x + 1 + i, y + 2 + i, w - 2 - i * 2, 1, '!' + ['#e8504a', '#f2d24a', '#6ac05a', '#4a8ad8'][i]);
+    else if (k.wk === 'cloudy') { const cc = k.t === 3 ? '!#3a4252' : '!#b4bac0'; r(x + 1, y + 2, w - 4, 2, cc); r(x + 3, y + 1, 4, 1, cc); }
     r(x + (w >> 1), y, 1, hh, '#6a4a30'); r(x, y + (hh >> 1), w, 1, '#6a4a30');
   }
   function table(r, h, y, col = '#8a5a34') { for (let yy = y + 1; yy < 48; yy++) h(yy, 0, 47, col); h(y, 0, 47, mix(col, '#ffffff', 0.25)); for (let x = 3; x < 48; x += 11) r(x, y + 3, 6, 1, dark(col, 0.85)); }
@@ -122,7 +164,7 @@
     r(bx, fy + 5, 14, 7, bc); r(bx + 1, fy + 12, 12, 2, dark(bc, 0.8)); r(bx + 4, fy + 14, 6, 1, dark(bc, 0.6)); h(fy + 5, bx, bx + 13, '#6a9a32'); h(fy + 6, bx + 1, bx + 12, '#8cc040'); r(bx + 4, fy + 6, 3, 1, '#b8e070');
     const cx = bx + 18; r(cx, fy + 2, 2, 8, '#d8c890'); r(cx - 2, fy + 10, 6, 4, '#e8dca8'); for (let i = 0; i < 6; i += 2) r(cx - 2 + i, fy + 10, 1, 4, '#c8b880');
     const [sw, ac] = SWEET[k.s], px = bx + 25 > 40 ? 2 : bx + 25; r(px - 1, fy + 11, 9, 2, '#f4f0e8'); r(px, fy + 7, 7, 4, sw); r(px + 1, fy + 6, 5, 1, sw); r(px + 2, fy + 7, 3, 1, ac);
-  });
+  }, { wy: 20 });
   def('ishiusu', '石臼でひく抹茶', '🍵', ['nishio'], 'efh', (r, h, k) => {
     for (let y = 0; y < 48; y++) h(y, 0, 47, y < 30 ? '#e8e0c8' : '#c8bc84');
     for (let x = 0; x < 48; x += 3) r(x, 0, 1, 30, '#c8bc9a');
@@ -135,7 +177,7 @@
     r(x - 2, 40, 20, 3, '#6a9a32'); r(x, 39, 16, 1, '#8cc040');
     const NAT = ['#1a1a1a', '#8a2a2a', '#c8a040', '#2a4a6a', '#5a3a2a'];
     r(4 + ((k.a + 3) % 5) * 7, 38, 5, 6, NAT[k.b]); r(4 + ((k.a + 3) % 5) * 7, 37, 5, 1, mix(NAT[k.b], '#ffffff', 0.3));
-  });
+  }, { indoor: true });
   def('soft', '抹茶ソフトクリーム', '🍦', ['nishio'], 'efgh', (r, h, k) => {
     const hz = 30;
     sky(r, h, k, hz); ground(r, h, k, hz, '#b8b4ac');
@@ -169,7 +211,7 @@
     const SUI = ['#1e1a1a', '#a82a22', '#2a2a3a', '#6a3a22', '#1e1a1a'];
     r(x + 30, 34, 9, 7, SUI[k.b]); h(34, x + 30, x + 38, '#e8d8a8'); r(x + 32, 34, 2, 1, '#5a8a3a');
     if (k.b >= 3) r(x + 28, 44, 12, 2, '#c8a060');
-  });
+  }, { indoor: true });
   def('kabayaki', '炭火のかば焼き', '🐟', ['isshiki', 'nishio'], 'efg', (r, h, k) => {
     const hz = 24;
     sky(r, h, k, hz); for (let y = hz; y < 48; y++) h(y, 0, 47, '#8a7a6a');
@@ -190,7 +232,7 @@
     r(bx, 28, 34, 14, '#c89a5a'); r(bx + 1, 27, 32, 1, '#a87a3a'); for (let x = bx + 2; x < bx + 33; x += 4) r(x, 28, 1, 14, '#a87a3a');
     for (let i = 0; i < 9; i++) { const ex = bx + 2 + (i % 5) * 6 + (i >= 5 ? 3 : 0), ey = 25 + (i >= 5 ? 6 : 0) + Math.floor(k.R() * 2), c = MIX[i % 3]; r(ex, ey, 6, 5, c); r(ex + 1, ey - 1, 4, 1, c); r(ex + 2, ey + 1, 2, 1, '#d84a3a'); }
     const sx = bx + 26 - k.a * 3; r(sx, 20, 6, 2, '#e85a3a'); r(sx + 5, 18, 2, 3, '#e85a3a'); r(sx - 2, 21, 2, 1, '#f08a5a');
-  });
+  }, { indoor: true });
   def('asari', '三河湾のあさり', '🐚', ['isshiki', 'kira', 'hazu', 'sakushima'], 'jk', (r, h, k) => {
     const hz = 16 + (k.a % 3) * 2;
     sky(r, h, k, hz); sea(r, h, k, hz, hz + 6); for (let y = hz + 6; y < 48; y++) h(y, 0, 47, '#c8b88a');
@@ -291,7 +333,7 @@
     r(x + 6, 23, 7, 3, '#1a1a1a'); r(x + 7, 24, 5, 1, '#e8c030'); r(x + 19, 16, 1, 1, '#1a1a1a'); r(x + 14, 18, 2, 8, '#1a1a1a'); r(x, 25, 2, 6, '#1a1a1a');
     for (let i = 0; i < 3; i++) r(x + 4 + i * 4, 28, 2, 2, ['#2a6ad8', '#e8c030', '#2aa860'][i]);
     r(x - 1, 38, 22, 1, '#2a2a2a');
-  });
+  }, { indoor: true });
   def('kogane', '黄金堤', '🌾', ['kira'], 'abic', (r, h, k) => {
     const hz = 14 + (k.a % 2) * 2;
     sky(r, h, k, hz); ground(r, h, k, hz, k.s === 2 ? '#c8a848' : GRASS[k.s]);
@@ -326,7 +368,7 @@
     r(x, 26, 3, 7, '#8a6a48'); r(x - 1, 26, 1, 7, '#d8c890');
     person(r, x, 31, '#e8e4dc', { face: '#a87858', leg: '#2a2a2a' }); r(x - 1, 31, 5, 1, '!#ffe8a0');
     for (let i = 0; i < 4 + k.t * 2 + k.b; i++) { const cx = (i * 7 + k.a * 3) % 46; r(cx, 41 + (i % 2), 3, 4, '#141414'); r(cx + 1, 40 + (i % 2), 1, 1, '#141414'); }
-  }, { fixed: true, L: [['金の火', 'だいだいの火', '白い火', '赤い火'], ['夕暮れ', '宵', '夜', '夜ふけ']] });
+  }, { fixed: true, scene: k => ({ s: 1, night: k.t !== 0 }), L: [['金の火', 'だいだいの火', '白い火', '赤い火'], ['夕暮れ', '宵', '夜', '夜ふけ']] });
   def('toba', '鳥羽の火祭り', '🔥', ['hazu'], 'eh', (r, h, k) => {
     const kk = { ...k, s: 3, t: k.t === 0 ? 2 : 3 }; sky(r, h, kk, 40, { noCloud: true, noSun: true });
     for (let y = 40; y < 48; y++) h(y, 0, 47, '#3a3028');
@@ -339,7 +381,7 @@
     }
     for (let i = 0; i < 5 + k.t + k.b; i++) { const cx = (i * 9 + k.a * 4) % 46; r(cx, 42, 3, 5, '#141414'); }
     for (let i = 0; i < 12; i++) r(Math.floor(k.R() * 48), Math.floor(k.R() * 12), 1, 1, '!#ffb02a');
-  }, { fixed: true, L: [['火の粉', '大きな炎', '燃えあがる', '火の柱'], ['夕暮れ', '宵', '夜', '夜ふけ']] });
+  }, { fixed: true, scene: k => ({ s: 3, night: k.t !== 0 }), L: [['火の粉', '大きな炎', '燃えあがる', '火の柱'], ['夕暮れ', '宵', '夜', '夜ふけ']] });
   const LANT = [['#d8302a', '#2a5ab8', '#e8c030'], ['#2a8a5a', '#d8302a', '#f4f0e8'], ['#6a3a8a', '#e8a030', '#2a5ab8'], ['#c8102e', '#1a1a1a', '#e8c030']];
   def('chochin', '三河一色の大提灯', '🏮', ['isshiki'], 'eh', (r, h, k) => {
     const kk = { ...k, s: 1, t: k.t === 0 ? 2 : 3 }; sky(r, h, kk, 44, { noCloud: true, noSun: k.t !== 3 });
@@ -354,7 +396,7 @@
       r(x + 2, y + hh + 1, w - 4, 1, '#1a1a1a'); r(x + (w >> 1), y - 3, 1, 3, '#2a2a2a');
     }
     for (let i = 0; i < 3 + k.t + k.b; i++) { const cx = (i * 8 + k.a * 5) % 46; r(cx, 41, 3, 6, '#141414'); }
-  }, { fixed: true, L: [['武者の絵', '龍の絵', '花の絵', '赤い絵'], ['夕暮れ', '宵', '夜', '夜ふけ']] });
+  }, { fixed: true, scene: k => ({ s: 1, night: k.t !== 0 }), L: [['武者の絵', '龍の絵', '花の絵', '赤い絵'], ['夕暮れ', '宵', '夜', '夜ふけ']] });
   const AJI = [['#4a7ad8', '#7aa0f0'], ['#8a5ac8', '#b08ae8'], ['#e87aa8', '#f4a8c8'], ['#f0f2f4', '#d8e4f0']];
   def('ajisai', '三ヶ根山のあじさい', '💠', ['hazu'], 'cd', (r, h, k) => {
     const kk = { ...k, s: 1 }, hz = 14 + (k.a % 2) * 2;
@@ -366,7 +408,7 @@
       r(x, y + 3, 7, 3, '#2f6a2a'); r(x + 1, y, 5, 4, c1); r(x, y + 1, 7, 2, c1); r(x + 2, y + 1, 2, 1, c2); r(x + 4, y + 2, 1, 1, c2);
     }
     if (k.b >= 3) person(r, 20 + k.a * 3, 30, '#e8e4dc', { hat: '#8a5ac8' });
-  }, { fixed: 'time', L: [['青いあじさい', 'むらさきのあじさい', 'もも色のあじさい', '白いあじさい'], TIME] });
+  }, { fixed: 'time', scene: k => ({ s: 1, night: k.t === 3 }), L: [['青いあじさい', 'むらさきのあじさい', 'もも色のあじさい', '白いあじさい'], TIME] });
   const PADDY = ['#7ab0d0', '#4a9a3a', '#d8b040', '#a89a7a'];
   def('tanbo', '西尾の田んぼ', '🌾', ['nishio', 'isshiki', 'kira', 'hazu'], 'a', (r, h, k) => {
     const hz = 16 + (k.a % 3) * 2;
@@ -388,26 +430,155 @@
     else if (k.b === 4) person(r, 14 + k.a * 5, 28, '#4a6ab8', { hat: '#e8d8a8' });
   });
 
+  /* ---------- あとから足した10題材（No.50001〜70000） ---------- */
+  def('yatsuomote', '八ツ面山の桜', '🌸', ['nishio'], 'ce', (r, h, k) => {
+    const hz = 18 + (k.a % 2) * 2, px = 24 + (k.a - 2) * 3, top = y => 40 - Math.max(0, 22 - Math.abs(y - px) * 22 / 26);
+    sky(r, h, k, hz); hills(r, h, k, 40, '#4f7a3f', [[px, 22, 26]]); hills(r, h, k, 40, '#5f8a4a', [[px + 10, 12, 14]]);
+    ground(r, h, k, 40);
+    for (let y = 22; y < 40; y += 3) { const x = px - 8 + ((y >> 1) % 2 ? 6 : -4); h(y, x, x + 5, '#c8b888'); }
+    const n = 5 + (k.b % 3);
+    for (let i = 0; i < n; i++) { const x = 2 + i * Math.floor(40 / n) + (k.a % 2) * 2; tree(r, h, k, x, Math.round(top(x + 3)) - 4, 6); }
+    if (k.b >= 3) person(r, 30 - k.a * 4, 38, '#e86a8a');
+    if (k.b === 4) for (let x = 2; x < 46; x += 5) { r(x, 33, 2, 2, '!#ffe8d0'); r(x + 2, 32, 3, 1, '#c83a3a'); }
+  });
+  def('chujaku', '西尾城の鍮石門', '🏯', ['nishio'], 'eh', (r, h, k) => {
+    const hz = 26, x = 8 + k.a * 2, open = k.b % 2 === 1;
+    sky(r, h, k, hz); ground(r, h, k, hz, '#c8c0b0');
+    for (let y = 20; y < 40; y++) { h(y, 0, x + 3, (y % 3) ? '#9b968a' : '#7a756b'); h(y, x + 30, 47, (y % 3) ? '#9b968a' : '#7a756b'); }
+    for (let xx = 2; xx < 48; xx += 5) { r(xx, 21, 1, 18, '#6f6a61'); }
+    roofTiles(r, h, x - 3, x + 35, 6, 4, ['#a8acb2', '#7a7e86', '#3a3e44', '#5a5e66']);
+    r(x, 10, 32, 9, '#f3f1ea'); for (let wx = x + 4; wx < x + 30; wx += 8) { r(wx, 12, 4, 4, '#3a3230'); r(wx + 1, 12, 1, 4, '#8a7a6a'); r(wx + 3, 12, 1, 4, '#8a7a6a'); }
+    r(x, 19, 32, 2, '#3a3230'); r(x + 2, 21, 3, 19, '#5a3a24'); r(x + 27, 21, 3, 19, '#5a3a24');
+    if (open) { r(x + 5, 21, 22, 19, '#2a2018'); for (let y = 26; y < 40; y++) h(y, x + 12 - ((y - 26) >> 1), x + 19 + ((y - 26) >> 1), '#b8b0a0'); }
+    else { r(x + 5, 21, 22, 19, '#6a4428'); r(x + 15, 21, 2, 19, '#3a2418'); for (let yy = 24; yy < 40; yy += 4) for (let xx = x + 7; xx < x + 26; xx += 4) r(xx, yy, 1, 1, '#c8a040'); }
+    if (k.b >= 2) { tree(r, h, k, 0, 13, 7); tree(r, h, k, 41, 14, 7); }
+    if (k.b >= 3) person(r, x + 14, 38, '#3a6ab8');
+  });
+  def('konoe', '旧近衛邸の茶室', '🍵', ['nishio'], 'eh', (r, h, k) => {
+    const hz = 16, x = 2 + k.a * 2;
+    sky(r, h, k, hz); ground(r, h, k, hz, k.s === 3 ? '#9a9a7a' : '#5f8a4a');
+    roofTiles(r, h, x - 2, x + 30, 10, 4, ['#8a8e94', '#62666e', '#3a3e44', '#545860']);
+    r(x, 14, 28, 12, '#e8e2d0'); for (let sx = x + 1; sx < x + 27; sx += 6) { r(sx, 16, 5, 8, '#f6f4ec'); r(sx + 2, 16, 1, 8, '#c8c0ac'); r(sx, 19, 5, 1, '#c8c0ac'); }
+    r(x - 2, 26, 32, 2, '#8a6a48'); r(x - 2, 28, 32, 1, '#5a4430');
+    if (k.b !== 1) { const px = 26 + k.a; for (let y = 34; y < 44; y++) h(y, px + Math.abs(y - 39) - 2, px + 18 - Math.abs(y - 39), '#4f8fae'); h(35, px + 4, px + 10, '#8cc0d8'); }
+    for (let i = 0; i < 4; i++) r(8 + i * 5 + (i % 2), 32 + i * 3, 4, 2, '#a8a49a');
+    if (k.b >= 2) { r(4, 36, 3, 1, '#a8a49a'); r(3, 37, 5, 2, '#a8a49a'); r(4, 38, 3, 1, '!#f2d27a'); r(4, 39, 3, 4, '#a8a49a'); r(3, 43, 5, 1, '#8a857a'); }
+    if (k.b >= 3) tree(r, h, k, 38 - k.a, 6, 9);
+  });
+  const BOOK = ['#2a3a5a', '#6a4a2a', '#a8884a', '#3a4a3a', '#5a2a2a', '#c8b890'];
+  def('iwase', '岩瀬文庫の古い本', '📚', ['nishio'], 'eh', (r, h, k) => {
+    for (let y = 0; y < 30; y++) h(y, 0, 47, '#d8ccb0');
+    const sx = k.a < 2 ? 1 : 26;   // 本棚と窓は左右に分ける（窓から季節と天気が見えるように）
+    windowView(r, h, k, k.a < 2 ? 26 + k.a * 2 : 3 + (k.a - 2) * 3, 3, 13, 12);
+    r(sx, 2, 19, 27, '#6a4a30'); for (let row = 0; row < 4; row++) { const y = 4 + row * 6; for (let bx = sx + 1; bx < sx + 18; bx += 2) r(bx, y, 2, 5, BOOK[(bx + row + k.b) % 6]); h(y + 5, sx + 1, sx + 17, '#4a3020'); }
+    table(r, h, 30, '#7a5232');
+    const bx = 10 + k.a * 3; r(bx, 34, 22, 9, '#f4eedc'); r(bx + 11, 34, 1, 9, '#c8bca0'); for (let y = 36; y < 42; y += 2) { h(y, bx + 2, bx + 9, '#4a4a4a'); h(y, bx + 13, bx + 20, '#4a4a4a'); }
+    r(bx - 1, 43, 24, 1, BOOK[k.b]);
+    if (k.b >= 3) { r(bx + 24, 36, 5, 5, '#c8d8e0'); r(bx + 25, 37, 3, 3, '#e8f0f4'); r(bx + 28, 41, 4, 1, '#6a4a30'); }
+  }, { indoor: true });
+  const TOP = [['#f4f4f0', '#f4f4f0'], ['#e8c040', '#c8a030'], ['#d8303a', '#2a7a3a'], ['#c89a5a', '#f4e8c8'], ['#6aa84a', '#f4f4f0']];
+  def('parfait', '抹茶パフェ', '🍨', ['nishio'], 'efgh', (r, h, k) => {
+    for (let y = 0; y < 28; y++) h(y, 0, 47, '#e8dcc8');
+    windowView(r, h, k, k.a < 3 ? 30 : 3, 3, 14, 13);
+    table(r, h, 30, '#9a6a44');
+    const x = 12 + k.a * 3;
+    r(x, 14, 12, 26, '#e8f0f4'); r(x + 1, 30, 10, 9, '#5a9a3a'); r(x + 1, 25, 10, 5, '#f8f6f0'); r(x + 1, 21, 10, 4, '#6a2a2a'); r(x + 1, 17, 10, 4, '#f8f6f0'); h(29, x + 1, x + 10, '#7ab04a');
+    r(x + 2, 9, 8, 6, '#7ab048'); r(x + 3, 8, 6, 1, '#8cc050'); r(x + 4, 10, 2, 2, '#a8d870');
+    const [t1, t2] = TOP[k.b]; r(x + 8, 7, 4, 4, t1); r(x - 1, 11, 3, 3, t2); r(x + 10, 3, 1, 8, '#c8a060');
+    r(x + 4, 40, 4, 2, '#d8e4e8'); r(x + 2, 42, 8, 1, '#c8d4d8');
+    r(x + 16, 38, 8, 1, '#c8ccd0'); r(x + 23, 37, 3, 3, '#c8ccd0');
+  }, { indoor: true });
+  const MACH = ['#e86a2a', '#2a6ab8', '#e8c030', '#3a8a3a', '#c8303a'];
+  def('tekisai', '茶畑と摘採機', '🍵', ['nishio'], 'abdh', (r, h, k) => {
+    const hz = 16 + (k.a % 2) * 2;
+    sky(r, h, k, hz); tree(r, h, k, 36 - k.a * 3, hz - 7, 7); ground(r, h, k, hz, '#8a6a48');
+    for (let i = 0, y = hz + 1; y < 48; i++) { const th = 2 + (i >> 1); for (let t = 0; t < th; t++) h(y + t, 0, 47, t === th - 1 ? dark(TEA[k.s], 0.75) : TEA[k.s]); if (k.s === 0) for (let x = (i * 5) % 7; x < 48; x += 7) r(x, y, 2, 1, '#c4e88a'); y += th + 1 + (i >> 2); }
+    const mx = 4 + k.a * 7, my = 22, mc = MACH[k.b];
+    r(mx, my, 18, 9, mc); r(mx, my, 18, 1, mix(mc, '#ffffff', 0.35)); r(mx + 2, my + 9, 3, 6, '#2a2a2a'); r(mx + 13, my + 9, 3, 6, '#2a2a2a'); r(mx + 5, my + 12, 8, 2, '#5a5a5a');
+    r(mx + 15, my - 5, 6, 5, '#e8e8e8'); r(mx - 3, my + 4, 4, 5, '#7ab048');
+    person(r, mx + 7, my - 7, '#4a6ab8', { hat: '#e8d8a8' });
+  });
+  def('nori', '三河湾の海苔ひび', '🌊', ['isshiki', 'hazu', 'kira'], 'jk', (r, h, k) => {
+    const hz = 16 + (k.a % 2) * 2;
+    sky(r, h, k, hz); hills(r, h, k, hz, '#5a7a7a', [[10 + k.a * 6, 3, 10]]); sea(r, h, k, hz, 48);
+    for (let row = 0; row < 4; row++) {
+      const y = hz + 4 + row * (3 + row * 2), gap = 3 + row * 2, len = 2 + row * 2;
+      for (let x = (row * 3 + k.a) % gap; x < 48; x += gap) r(x, y - len, 1, len + 1, '#3a3428');
+      r(0, y, 48, 1 + (row >> 1), '#1e2a20'); if (row >= 2) h(y + 2, 0, 47, '#2a3a2a');
+    }
+    if (k.b >= 2) { const bx = 6 + k.b * 6; r(bx, hz + 8, 10, 3, '#f4f4f2'); r(bx + 2, hz + 6, 4, 2, '#e8e8e8'); person(r, bx + 6, hz + 2, '#e8a030', { hat: '#f0e8c8' }); }
+    if (k.b === 4) gull(r, 34, 5);
+  });
+  def('kiraonsen', '吉良温泉と三河湾', '♨️', ['kira'], 'ejhk', (r, h, k) => {
+    const hz = 18;
+    sky(r, h, k, hz); sea(r, h, k, hz, 32); hills(r, h, k, hz, '#4a6a5a', [[36 - k.a * 3, 4, 9]]);
+    for (let y = 32; y < 48; y++) h(y, 0, 47, '#b8b0a0');
+    const HC = ['#f0ece2', '#e8dcc0', '#d8dce0', '#f4e8d8', '#e0d4c4'];
+    for (let i = 0; i < 2 + (k.b % 2); i++) { const bx = 2 + i * 15 + (k.a % 2) * 2, bh = 12 + (i % 2) * 5; r(bx, 32 - bh, 13, bh, HC[(k.b + i) % 5]); for (let wy = 34 - bh; wy < 30; wy += 3) for (let wx = bx + 1; wx < bx + 12; wx += 3) r(wx, wy, 2, 2, k.t === 3 ? '!#ffe8a0' : '#5a6a7a'); }
+    const px = 26 - k.a * 2; for (let y = 38; y < 46; y++) h(y, px + Math.abs(y - 42), px + 18 - Math.abs(y - 42), '#8ab8c8'); for (const [rx, ry] of [[px - 1, 40], [px + 18, 41], [px + 4, 45], [px + 13, 45]]) r(rx, ry, 3, 2, '#7a756b');
+    for (let i = 0; i < 5; i++) { const sx = px + 3 + i * 3, sy = 34 - (i % 2) * 3; r(sx, sy, 2, 3, '#f4f6f8'); r(sx + 1, sy - 2, 2, 2, '#f8fafc'); }
+  });
+  def('kezoji', '華蔵寺の山門', '⛩', ['kira'], 'ehc', (r, h, k) => {
+    const hz = 20, x = 9 + k.a * 2;
+    sky(r, h, k, hz); for (let i = 0; i < 6; i++) tree(r, h, k, i * 8, hz - 6 + (i % 2) * 2, 8, i % 2 === 0); ground(r, h, k, hz + 6);
+    for (let y = 34; y < 48; y++) h(y, x + 8 - ((y - 34) >> 1), x + 21 + ((y - 34) >> 1), (y % 2) ? '#a8a49a' : '#8a857a');
+    roofTiles(r, h, x - 4, x + 33, 8, 5, ['#8a8e94', '#62666e', '#3a3e44', '#545860']);
+    r(x, 13, 29, 2, '#5a3a24'); r(x + 1, 15, 3, 19, '#6a4a30'); r(x + 25, 15, 3, 19, '#6a4a30'); r(x + 4, 15, 21, 4, '#8a6a48'); r(x + 7, 19, 15, 15, '#2a2018');
+    r(x + 11, 15, 7, 3, '#e8dcb0'); h(16, x + 12, x + 16, '#3a3a3a');
+    if (k.b % 2 === 1) for (const lx of [x - 4, x + 31]) { r(lx + 1, 26, 2, 1, '#a8a49a'); r(lx, 27, 4, 2, '#a8a49a'); r(lx + 1, 28, 2, 1, '!#f2d27a'); r(lx + 1, 29, 2, 5, '#a8a49a'); }
+    if (k.b >= 3) person(r, x + 13, 38, '#4a4a6a');
+  });
+  def('higata', '一色の干潟の水鳥', '🐦', ['isshiki'], 'jkai', (r, h, k) => {
+    const hz = 15 + (k.a % 2) * 2;
+    sky(r, h, k, hz); sea(r, h, k, hz, hz + 6);
+    for (let y = hz + 6; y < 48; y++) h(y, 0, 47, '#9a8a6a');
+    for (let i = 0; i < 5; i++) { const y = hz + 9 + i * 5, x = (i * 13 + k.a * 4) % 30; r(x, y, 14 + (i % 3) * 4, 2, '#7a9ab0'); r(x + 2, y, 6, 1, '#a8c4d8'); }
+    for (let i = 0; i < 4 + k.b * 2; i++) { const x = 2 + Math.floor(k.R() * 42), y = hz + 10 + Math.floor(k.R() * (34 - hz)); r(x, y, 3, 2, '#8a6a4a'); r(x, y + 1, 3, 1, '#f4f0e8'); r(x + 3, y, 1, 1, '#2a2a2a'); r(x + 1, y + 2, 1, 1, '#4a4a4a'); }
+    if (k.b >= 2) { const x = 30 - k.a * 4, c = k.b === 4 ? '#f8f8f6' : '#9aa0a8'; r(x, 30, 4, 4, c); r(x + 3, 26, 1, 4, c); r(x + 3, 25, 3, 1, c); r(x + 6, 25, 2, 1, '#e8a030'); r(x + 1, 34, 1, 5, '#3a3a3a'); r(x + 3, 34, 1, 5, '#3a3a3a'); }
+  });
+
   /* ---------- 番号 ⇄ 絵 ---------- */
-  const COUNT = M.length * PER;
-  const split = id => { const m = Math.floor(id / PER), sl = Math.floor((id % PER) / NCOMP), c = id % NCOMP; return { m, s: sl >> 2, t: sl & 3, a: Math.floor(c / 5), b: c % 5 }; };
+  // 番号：0〜9999 ＝ はじめの25題材の晴れ（前からの絵）、10000〜49999 ＝ 同じ25題材の天気1〜4、50000〜69999 ＝ あとの10題材の天気0〜4
+  const OLD = 25, NWX = 5, PERM = PER * NWX, COUNT = M.length * PERM;
+  const WX_LABEL = ['', 'くもり', '雨', '霧'];
+  function split(id) {
+    let m, w, r;
+    if (id < OLD * PER) { m = Math.floor(id / PER); w = 0; r = id % PER; }
+    else if (id < OLD * PERM) { const k = id - OLD * PER; w = 1 + Math.floor(k / (OLD * PER)); m = Math.floor((k % (OLD * PER)) / PER); r = k % PER; }
+    else { const k = id - OLD * PERM, n = M.length - OLD; w = Math.floor(k / (n * PER)); m = OLD + Math.floor((k % (n * PER)) / PER); r = k % PER; }
+    const sl = Math.floor(r / NCOMP), c = r % NCOMP;
+    return { m, w, s: sl >> 2, t: sl & 3, a: Math.floor(c / 5), b: c % 5 };
+  }
+  function idOf(m, w, slot, comp) {
+    const r = slot * NCOMP + comp;
+    if (m < OLD) return w === 0 ? m * PER + r : OLD * PER + (w - 1) * OLD * PER + m * PER + r;
+    return OLD * PERM + w * (M.length - OLD) * PER + (m - OLD) * PER + r;
+  }
+  const sceneOf = (mo, p) => (mo.scene ? mo.scene(p) : { s: p.s, night: p.t === 3 });
+  // 天気4つめ：冬の景色は雪、夜は満月、ほかは虹
+  const wxKind = (mo, p) => (p.w === 0 ? '' : p.w < 4 ? ['', 'cloudy', 'rain', 'mist'][p.w] : sceneOf(mo, p).s === 3 ? 'snow' : sceneOf(mo, p).night ? 'moon' : 'rainbow');
+  const WK_LABEL = { cloudy: 'くもり', rain: '雨', mist: '霧', snow: '雪', rainbow: '虹', moon: '満月' };
   function info(id) {
     if (!(id >= 0 && id < COUNT)) return null;
-    const p = split(id), mo = M[p.m];
-    const label = mo.fixed ? FEST.labels(p.s, p.t, mo.L) : `${SEASON[p.s]}の${TIME[p.t]}`;
-    return { id, no: id + 1, motif: mo.key, icon: mo.icon, title: mo.name, label, name: `${mo.name}（${label}）` };
+    const p = split(id), mo = M[p.m], wk = wxKind(mo, p);
+    const label = (mo.fixed ? FEST.labels(p.s, p.t, mo.L) : `${SEASON[p.s]}の${TIME[p.t]}`) + (wk ? `・${WK_LABEL[wk]}` : '');
+    return { id, no: id + 1, motif: mo.key, m: p.m, icon: mo.icon, title: mo.name, label, name: `${mo.name}（${label}）` };
   }
+  const motifOf = id => split(id).m;
   const cache = new Map();
   function canvas(id) {
     if (cache.has(id)) return cache.get(id);
     if (!(id >= 0 && id < COUNT)) return null;
-    const p = split(id), mo = M[p.m], cv = document.createElement('canvas');
+    const p = split(id), mo = M[p.m], cv = document.createElement('canvas'), wk = wxKind(mo, p);
     cv.width = cv.height = 48;
-    const x = cv.getContext('2d'), tone = TONE[mo.fixed === true ? 1 : p.t];
+    const tTone = TONE[mo.fixed === true ? 1 : p.t], wTone = !mo.indoor && WX_TONE[wk], tone = wTone ? c => wTone(tTone(c)) : tTone;
+    const x = cv.getContext('2d');
     const fill = c => { x.fillStyle = c[0] === '!' ? c.slice(1) : tone(c); };
     const r = (px, py, w, hh, c) => { if (w <= 0 || hh <= 0) return; fill(c); x.fillRect(px, py, w, hh); };
     const h = (py, x0, x1, c) => r(x0, py, x1 - x0 + 1, 1, c);
-    mo.draw(r, h, { ...p, R: rndOf(hashStr('dot:' + id)) });
+    const k = { ...p, wk, R: rndOf(hashStr('dot:' + id)), W: rndOf(hashStr('wx:' + id)) };
+    mo.draw(r, h, k);
+    if (wk && !mo.indoor) wxOver(r, k, mo.wy || 48);
     if (cache.size > 300) cache.delete(cache.keys().next().value);
     cache.set(id, cv);
     return cv;
@@ -437,7 +608,18 @@
     if (!cand.length) cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area));
     const hsh = hashStr(`${seed}:${G.ymd ? G.ymd() : ''}`), m = cand[hsh % cand.length], mo = M[m];
     const s = mo.fixed ? (hsh >>> 8) % 4 : seasonOf(now), t = mo.fixed === true ? (hsh >>> 12) % 4 : timeOf(now);
-    return m * PER + (s * 4 + t) * NCOMP + (hashStr(`${seed}:${hsh}`) % NCOMP);
+    return idOf(m, weatherOf(hsh, t, sceneOf(mo, { s, t }).s), s * 4 + t, hashStr(`${seed}:${hsh}`) % NCOMP);
   }
-  window.NISHIO_DOTS = { COUNT, PER, MOTIFS: M.map(({ key, name, icon }) => ({ key, name, icon })), info, canvas, dataUrl, pick, areaOf };
+  // 天気：気象庁の今の天気（weather.js）。晴れ 0・くもり 1・雨 2・雪 4。朝は3回に1回 霧、雨のときは4回に1回 虹（冬は雪）、晴れでもたまに虹。
+  // 天気がわからないときは、晴れ多めに くじで決める
+  function weatherOf(hsh, t, ss) {   // ss：絵の季節（冬の景色の4つめの天気は雪なので、晴れの日には出さない）
+    const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, kind = wx && wx.kind, u = (hsh >>> 16) % 24;
+    if (t === 0 && u % 3 === 0) return 3;
+    if (kind === 'snow') return 4;
+    if (kind === 'rain') return u % 4 === 1 ? 4 : 2;
+    if (kind === 'cloudy') return 1;
+    if (kind === 'sunny') return u === 5 && ss !== 3 ? 4 : 0;
+    return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4][u];
+  }
+  window.NISHIO_DOTS = { COUNT, PER: PERM, MOTIFS: M.map(({ key, name, icon }) => ({ key, name, icon })), info, canvas, dataUrl, pick, areaOf, motifOf, idOf };
 })();

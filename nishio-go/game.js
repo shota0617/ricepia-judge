@@ -1690,7 +1690,9 @@ function setMode(isDemo) {
   const inside = p => p && inPlay(p.lat, p.lng);
   const here = !demo && inside(me) ? me : null;
   if (demo && !isDemo) idleMark();   // 操作して移動をやめるときは、ここから るすばん
+  sessionEnd();   // 1回に遊んだ時間・ポイントは、モードごとに分けて送る（るすばん の おかえり より前に新しい回を始める）
   demo = isDemo;
+  if (store.get('nsg_started', false)) sessionStart();
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();
   me = null; lastWalk = null; driving = false;   // 乗り物判定（vehicleUntil）はモードを切り替えても保持する
@@ -1726,9 +1728,7 @@ document.addEventListener('click', e => {
 });
 function switchMode(isDemo) {
   if (isDemo === demo) return;
-  sessionEnd();   // 1回に遊んだ時間・ポイントは、モードごとに分けて送る
   setMode(isDemo);
-  if (store.get('nsg_started', false)) sessionStart();
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
   toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スティックで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
@@ -1907,7 +1907,6 @@ function begin(isDemo) {
   if (!store.get('nsg_started', false)) store.set('nsg_begin_t', Date.now());
   if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', ymd());
   store.set('nsg_started', true);
-  sessionStart();
   track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
   // 操作して遊ぶは、スティックで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
@@ -1941,7 +1940,7 @@ if (store.get('nsg_started', false)) {
   // この計測より前から遊んでいる人：はじめて遊んだ日・はじめてのごほうびは「わからない」にしておく（数字にまぜない）
   if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', 'unknown');
   if (!store.get('nsg_begin_t', 0)) store.set('nsg_first_reward', true);
-  $('intro').hidden = true; setMode(demo); sessionStart();
+  $('intro').hidden = true; setMode(demo);   // setMode が1回に遊んだ時間を数えはじめる
 }
 else track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);

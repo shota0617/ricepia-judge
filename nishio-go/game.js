@@ -145,6 +145,7 @@ function loadState() {
   return s && s.v === 1 ? Object.assign(freshState(), s) : freshState();
 }
 let S = loadState();
+const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('記録を保存できませんでした（ブラウザの保存領域を確認してください）'); };
 
@@ -561,6 +562,7 @@ function onFix(lat, lng, acc, t) {
   renderMarkers();
   refreshNearby();
   tryChest();
+  welcomeWalk();
 }
 
 function startGps() {
@@ -570,6 +572,7 @@ function startGps() {
   watchId = navigator.geolocation.watchPosition(
     pos => { if (!demo) onFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp || Date.now()); },
     err => {
+      if (!gpsError) track('geo_error', { code: err.code });
       gpsError = err.code === 1
         ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「🎮 操作して移動」なら位置情報なしで遊べます）。'
         : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報を取得できませんでした。電波の良い屋外でお試しください。';
@@ -629,6 +632,7 @@ const titleOf = lv => TITLES.filter(([l]) => lv >= l).pop()[1];
 function gainPoints(n) {
   const before = levelOf(S.total);
   S.points += n; S.total += n;
+  session.gained += n;   // 1回に遊んだ間にふえたポイント（session_end）
   S.log = S.log.slice(0, 200);
   renderHeader();
   return levelOf(S.total) > before ? levelOf(S.total) : 0;
@@ -899,8 +903,9 @@ function tryChest() {
   if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
   const n = nearestChest();
   if (!n || n.d > (demo ? 18 : 30)) return;
-  const c = n.c, d = dayState();
+  const c = n.c, d = dayState(), welcome = c.id.endsWith(':welcome');
   d.chests.push(c.id);
+  if (welcome) S.welcomed = true;
   const pick = pickFact(c);
   track('chest_open', { mode: demo ? 'play' : 'walk' });
   if (pick && !S.facts.includes(pick)) S.facts.push(pick);
@@ -908,7 +913,7 @@ function tryChest() {
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
-  showReward(c.pts, 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...dotLines(dot)], lvUp, pick ? factPool().get(pick) : '', dot);
+  showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...dotLines(dot), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dot);
   updateQuests(1500);
   refreshNearby();
 }
@@ -1142,7 +1147,7 @@ $('koyomi') && $('koyomi').addEventListener('click', () => $('koyomi').classList
 function refreshNearby() {
   renderKoyomi();
   // その日はじめて遊んだ端末を1回だけ数える（累計・毎日のプレイ人数：tools/ga4-stats.js）
-  if (me && store.get('nsg_started', false) && store.get('nsg_play_day', '') !== ymd()) { store.set('nsg_play_day', ymd()); track('play_day', { mode: demo ? 'play' : 'walk' }); }
+  if (me && store.get('nsg_started', false) && store.get('nsg_play_day', '') !== ymd()) { store.set('nsg_play_day', ymd()); track('play_day', { mode: demo ? 'play' : 'walk', day_n: dayN() }); }
   const btn = $('spinBtn');
   syncChestMarkers();   // 位置がまだないときも、前のモードのたからばこの印は消す
   if (!me) {
@@ -1150,7 +1155,8 @@ function refreshNearby() {
     $('guide').hidden = true;
     showRing(null);
     showGuide(null);
-    setStatus(gpsError || (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'));
+    // 位置情報が使えないときは、その場で「操作して遊ぶ」に切り替えられるボタンを出す（ここで閉じられてしまわないように）
+    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'), true);
     return;
   }
   checkGuide();   // 着いたら先に次の行き先へ進めてから、線・矢印・カードを描く（古い行き先を指さないように）
@@ -1185,7 +1191,10 @@ function refreshNearby() {
   const msgs = [];
   if (driving) msgs.push('🚗 軽トラで移動中（チェックインは降りてから）');
   if (demo && !document.body.classList.contains('px')) msgs.push('🎮 地図をタップして移動');
-  else if (!inPlay(me.lat, me.lng)) msgs.push('📍 遊べる範囲（西尾市と となりの市町、本店から15km）の外です');
+  else if (!inPlay(me.lat, me.lng)) {
+    msgs.push('📍 遊べる範囲（西尾市と となりの市町、本店から15km）の外です' + (demo ? '' : RESCUE_BTN('range')));
+    if (!demo && !refreshNearby.outTracked) { refreshNearby.outTracked = true; track('out_of_range', {}); }
+  }
   if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected && !guideTarget()) {
@@ -1385,6 +1394,7 @@ function showReward(total, name, lines, lvUp, fact, dot) {
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
   el.classList.add('show');
   clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, fact || dot ? 7000 : 2700);
+  afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
 function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); }
@@ -1433,6 +1443,7 @@ $('dotMotifs').addEventListener('click', e => {
 });
 
 function renderLog() {
+  renderTomorrow();
   renderCampaigns();
   renderUps();
   const day = dayState(), qs = todaysQuests();
@@ -1789,16 +1800,117 @@ sound.apply();
 /* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、スティックや丸ボタンが隠れないようにする */
 if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--sheet-h', $('sheet').offsetHeight + 'px')).observe($('sheet'));
 
+/* ---------- 離脱を減らす（docs/retention.md） ----------
+   ・はじめの1分でごほうび：操作して遊ぶは、すぐ近くに「ようこそ たからばこ」（pixel.js が置く）。あるいて遊ぶは、遊べる範囲で位置が取れたら「ようこそ」
+   ・行きづまらない：位置情報が使えない・遊べる範囲の外なら、その場で「操作して遊ぶ」に切り替えるボタン
+   ・あしたも来たくなる：あしたのおたのしみ（連続日数のボーナス・新しいクエスト・るすばん）を、きろくと1日1回の知らせで
+   ・また開きやすく：ごほうびを2回もらったら「ホーム画面に追加」をすすめる（7日に1回まで。追加ずみ・アプリとして開いているときは出さない）
+   ・はかる：はじめてのごほうびまでの秒数、はじめて遊んだ日から何日目か、1回に遊んだ時間（session_end） */
+function RESCUE_BTN(why) { return `<br/><button type="button" class="btn mini" data-rescue="${why}">🎮 操作して遊ぶ に切り替える（家からでも遊べます）</button>`; }
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-rescue]');
+  if (!b) return;
+  track('rescue_switch', { why: b.dataset.rescue });
+  switchMode(true);
+  if (window.nishioPixel && !document.body.classList.contains('px')) nishioPixel.setActive(true);
+});
+function welcomeDue() { return demo && !S.welcomed && S.total < 200; }   // まだ ようこそ たからばこ を開けていない、はじめのうちの人
+function welcomeWalk() {
+  if (demo || S.welcomed || S.total >= 200 || !me || !inPlay(me.lat, me.lng) || !fixOk()) return;
+  S.welcomed = true;
+  const pts = 30, dot = gainDot(me.lat, me.lng, 'welcome:' + ymd());
+  S.log.unshift({ type: 'welcome', t: Date.now(), pts, name: 'ようこそ', icon: '🎉' });
+  const lvUp = gainPoints(pts);
+  save();
+  const g = guideTarget();
+  showReward(pts, 'ようこそ にしおさんぽGOへ！', ['🎉 はじめてボーナス +30', ...dotLines(dot), g ? `🧭 つぎは「${g.name}」（${fmtM(dist(me, g))}）へ。着くとポイント` : '⭐ 近くの名所に着くとチェックインでポイント'], lvUp, '', dot);
+  renderLog();
+}
+function dayN() { const f = store.get('nsg_first_day', ''); return f ? Math.max(0, Math.round((new Date(ymd()) - new Date(f)) / 86400000)) : 0; }
+function afterReward() {
+  session.rewards++;
+  if (!store.get('nsg_first_reward', false)) {
+    store.set('nsg_first_reward', true);
+    const t0 = store.get('nsg_begin_t', 0);
+    track('first_reward', { secs: t0 ? Math.round((Date.now() - t0) / 1000) : -1, mode: demo ? 'play' : 'walk' });
+  }
+  // 1日1回：その日2回目のごほうびのあと、ごほうびの画面が消えてから「あしたのおたのしみ」。そのあと ホーム画面に追加のおすすめ
+  if (session.rewards < 2) return;
+  afterRewardClosed(() => {
+    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toast(`📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
+    setTimeout(a2hsOffer, 4200);
+  });
+}
+// ごほうびの画面が消えてから（重ならないように）。続けてごほうびが出たら、そのぶん待つ
+function afterRewardClosed(fn) {
+  clearTimeout(afterRewardClosed.t);
+  const wait = () => { afterRewardClosed.t = setTimeout(() => ($('reward').classList.contains('show') ? wait() : fn()), 1000); };
+  wait();
+}
+function tomorrowItems() {
+  const bonus = d => CFG.pts.daily + Math.min(d - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
+  const done = S.streak.last === ymd(), d = done ? S.streak.days + 1 : S.streak.last === yesterday() ? S.streak.days + 1 : 1;
+  const out = [done ? `名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt` : `きょう名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt。あしたも続けると +${bonus(d + 1)}pt`, '新しい「今日のクエスト」3つ（達成でポイント）', '新しい たからばこ（日によって置き場所が変わる）'];
+  if (demo) out.push('閉じている間も るすばん でさんぽ（おかえりのポイントとドット絵）');
+  return out;
+}
+function renderTomorrow() {
+  const el = $('tomorrowBox');
+  if (!el) return;
+  el.hidden = !store.get('nsg_started', false);
+  el.innerHTML = `<b>📅 あしたのおたのしみ</b><ul>${tomorrowItems().map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
+}
+// ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）
+let a2hsEvt = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); a2hsEvt = e; });
+window.addEventListener('appinstalled', () => { track('a2hs_installed', {}); store.set('nsg_a2hs_done', true); $('a2hs').hidden = true; });
+function standalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function a2hsOffer() {
+  if (standalone() || store.get('nsg_a2hs_done', false) || Date.now() - store.get('nsg_a2hs_t', 0) < 7 * 86400000) return;
+  if (!a2hsEvt && !isIOS()) return;   // 追加の画面を出せず、手順も案内できない端末では出さない
+  store.set('nsg_a2hs_t', Date.now());
+  $('a2hsText').textContent = a2hsEvt ? '📲 ホーム画面に追加すると、あしたもワンタップで遊べます'
+    : '📲 ホーム画面に追加すると、あしたもワンタップで遊べます。Safari の下の 共有ボタン（□↑）→「ホーム画面に追加」';
+  $('a2hsAdd').hidden = !a2hsEvt;
+  $('a2hs').hidden = false;
+  track('a2hs_shown', { how: a2hsEvt ? 'prompt' : 'ios' });
+}
+$('a2hsAdd').addEventListener('click', async () => {
+  $('a2hs').hidden = true;
+  if (!a2hsEvt) return;
+  a2hsEvt.prompt();
+  const r = await a2hsEvt.userChoice.catch(() => null);
+  track('a2hs_click', { outcome: (r && r.outcome) || 'unknown' });
+  a2hsEvt = null;
+});
+$('a2hsNo').addEventListener('click', () => { $('a2hs').hidden = true; track('a2hs_later', {}); });
+if (/[?&]src=a2hs\b/.test(location.search)) track('a2hs_open', {});
+// 1回に遊んだ時間と、その間にふえたポイント（画面を離れたときに送る）
+function sessionEnd() {
+  if (!store.get('nsg_started', false) || !session.on) return;
+  const secs = Math.round((Date.now() - session.start) / 1000);
+  if (secs >= 5) track('session_end', { secs, pts: session.gained, rewards: session.rewards, day_n: dayN(), mode: demo ? 'play' : 'walk', transport_type: 'beacon' });
+  session.on = false;
+}
+function sessionStart() { Object.assign(session, { start: Date.now(), on: true, gained: 0, rewards: 0 }); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) sessionEnd(); else sessionStart(); });
+window.addEventListener('pagehide', sessionEnd);
+
 /* はじめに */
 function begin(isDemo) {
+  if (!store.get('nsg_started', false)) store.set('nsg_begin_t', Date.now());
+  if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', ymd());
   store.set('nsg_started', true);
   track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
   // 操作して遊ぶは、スティックで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
   if (isDemo && !document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
   setMode(isDemo);
+  // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
+  if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? '🎮 左下のスティック（矢印キー）で歩きます'
+    ? (welcomeDue() ? '🎁 すぐ近くに たからばこ！ 左下のスティック（矢印キー）で近づくと開きます' : '🎮 左下のスティック（矢印キー）で歩きます')
     : '🎮 地図をタップするとその場所へ移動します');
 }
 document.addEventListener('click', e => {
@@ -1820,6 +1932,8 @@ fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() 
   $('playerCount').hidden = false;
 }).catch(() => { /* なしで続ける */ });
 if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
+else track('intro_view', {});
+sessionStart();
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
 window.addEventListener('pagehide', idleMark);
@@ -1852,7 +1966,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests,
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

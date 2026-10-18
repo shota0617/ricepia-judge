@@ -12,6 +12,12 @@
   #nishio-go .ng-btn:hover { background: #173e2d; }
   #nishio-go .ng-btn:focus-visible { outline: 3px solid var(--gold, #b8893a); outline-offset: 4px; }
   #nishio-go .ng-note { margin: 1rem 0 0; color: var(--text-muted, #736c5e); font-size: .85rem; line-height: 1.7; }
+  /* プレイ画面（スマホの画面のスクリーンショット。go.ricepia.jp/nishio-go/shots/）。スマホでは横にすべらせて見る */
+  #nishio-go .ng-shots { display: flex; gap: 14px; margin: 0 -1.25rem 1.8rem; padding: 6px 1.25rem 10px; list-style: none; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; }
+  #nishio-go .ng-shots li { flex: 0 0 auto; width: 150px; scroll-snap-align: center; }
+  #nishio-go .ng-shots img { display: block; width: 100%; height: auto; aspect-ratio: 1 / 2; border-radius: 18px; border: 4px solid #1a1814; box-shadow: 0 6px 16px rgba(0,0,0,.18); background: #e8ecdf; }
+  #nishio-go .ng-shots span { display: block; margin-top: .5rem; color: var(--ink, #1a1814); font-size: .85rem; font-weight: 700; white-space: nowrap; }
+  @media (min-width: 700px) { #nishio-go .ng-shots { justify-content: center; overflow: visible; margin: 0 0 2rem; padding: 6px 0 0; } #nishio-go .ng-shots li { width: 140px; } }
   @media (max-width: 599px) { #nishio-go .ng-btn { width: 100%; } }
 </style>
 <section id="nishio-go" aria-labelledby="nishio-go-title">
@@ -24,6 +30,12 @@
       <li>📜 毎日かわる「今日のクエスト」</li>
       <li>🎁 道ばたの たからばこ</li>
       <li>🎮 家でも遊べる「操作モード」</li>
+    </ul>
+    <ul class="ng-shots" aria-label="プレイ画面">
+      <li><img src="https://go.ricepia.jp/nishio-go/shots/walk.webp" alt="ドット絵の西尾のまちを、主人公が歩いている画面" width="540" height="1080" loading="lazy"><span>西尾を歩く</span></li>
+      <li><img src="https://go.ricepia.jp/nishio-go/shots/reward.webp" alt="たからばこを開けて、名鉄の電車のドット絵をもらった画面" width="540" height="1080" loading="lazy"><span>ドット絵をあつめる</span></li>
+      <li><img src="https://go.ricepia.jp/nishio-go/shots/world.webp" alt="西尾市と となりの市町の、名所が並んだ地図の画面" width="540" height="1080" loading="lazy"><span>名所をめぐる</span></li>
+      <li><img src="https://go.ricepia.jp/nishio-go/shots/badges.webp" alt="神社めぐり・お寺めぐりなどのバッジが並んだ画面" width="540" height="1080" loading="lazy"><span>バッジをそろえる</span></li>
     </ul>
     <a class="ng-btn" href="https://go.ricepia.jp/?utm_source=ricepia.jp&amp;utm_medium=referral&amp;utm_campaign=homepage" target="_blank" rel="noopener">▶ あそんでみる</a>
     <p class="ng-note">スマホのブラウザで遊べます（アプリのインストールは不要・無料）。<br>歩いて遊ぶときは、まわりの安全に気をつけてください。</p>

@@ -1,7 +1,7 @@
 // 型でつくる名所の絵の一覧（nishio-go/landmark-gen.js）を作る
 //   node tools/make-landmark-gen.js [写真のフォルダ] [写真の出典JSON]
 // ・OpenStreetMap の名所（osm-spots.json）から、神社・お寺・駅・城跡・博物館・図書館・役所・教会・史跡・見どころを、
-//   注目スポット（spots.json）と重ならない所だけ選ぶ（注目スポットから150m以内は除く）。名所の絵が全部で1000か所になる数まで
+//   注目スポット（spots.json）と重ならず、専用の絵（pixel.js の LANDMARK_ART）もない所だけ選ぶ（注目スポットから150m以内は除く）。名所の絵が全部で1000か所になる数まで
 // ・写真（日本語版ウィキペディアの代表画像）がある所を先に選び、色は写真から測る（空・木・白とびを除いた色のうち、暗めでくすんだ色を屋根、
 //   明るい色を壁、あざやかな色を差し色）。写真がない所は種類の基本の色（pixel.js の GEN_BASE）
 // ・形の番号は、名前（古墳・門・稲荷・教会など）と、id から決まる番号で選ぶ
@@ -12,7 +12,8 @@ const TOTAL = 1000;
 const items = require(path.join(ROOT, 'nishio-go/osm-spots.json')).items;
 const featured = require(path.join(ROOT, 'nishio-go/spots.json')).spots.filter(s => Number.isFinite(s.lat));
 const pixel = fs.readFileSync(path.join(ROOT, 'nishio-go/pixel.js'), 'utf8');
-const artIds = new Set([...pixel.matchAll(/'(f-[a-z0-9-]+)': '\w+'/g)].map(m => m[1]));
+const artBlock = pixel.match(/const LANDMARK_ART = \{[\s\S]*?\n\};/)[0];   // 専用の絵がある名所（注目スポットの f-… と、手描きした OpenStreetMap の id）
+const artIds = new Set([...artBlock.matchAll(/'?(f-[a-z0-9-]+|[nwr]\d+)'?: '\w+'/g)].map(m => m[1]));
 const meta = fs.existsSync(META) ? JSON.parse(fs.readFileSync(META, 'utf8')) : [];
 const photoOf = new Map(meta.map(m => [m.id, m]));
 const dist = (a, b, c, d) => Math.hypot((a - c) * 111000, (b - d) * 91000);
@@ -55,7 +56,7 @@ function colorsOf(file) {   // 写真の主な色（下の8割・まん中寄り
   const vivid = keep.filter(x => sat(x.c) > 0.45 && lum(x.c) > 50).sort((a, b) => b.n - a.n)[0];
   return [hex(roof.c), hex(wall.c), vivid ? hex(vivid.c) : null];
 }
-const pool = items.filter(it => it[1] && ORDER.includes(it[2]) && !featured.some(f => dist(it[3], it[4], f.lat, f.lng) < 150));
+const pool = items.filter(it => it[1] && ORDER.includes(it[2]) && !artIds.has(it[0]) && !featured.some(f => dist(it[3], it[4], f.lat, f.lng) < 150));
 pool.sort((a, b) => (photoOf.has(b[0]) - photoOf.has(a[0])) || ORDER.indexOf(a[2]) - ORDER.indexOf(b[2]) || a[0].localeCompare(b[0]));
 const want = TOTAL - artIds.size, gen = {};
 let withPhoto = 0;

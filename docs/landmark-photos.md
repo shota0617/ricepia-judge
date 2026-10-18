@@ -584,3 +584,152 @@ Googleストリートビューの画像は、Google マップの利用規約で�
 ## 蒲郡駅
 
 - [Gamagori Station (2018-05-19) 11.jpg](https://commons.wikimedia.org/wiki/File:Gamagori_Station_(2018-05-19)_11.jpg) — Lombroso（CC BY-SA 4.0）
+
+<!-- OpenStreetMap の名所（日本語版ウィキペディアの記事の代表画像。手描きの絵と、型の絵の色の参考） -->
+
+- 形原駅：[MT-Katahara Station-Building 1.jpg](https://commons.wikimedia.org/wiki/File:MT-Katahara_Station-Building_1.jpg) — ButuCC（CC BY-SA 4.0）
+- 三河鹿島駅：[MT-Mikawa Kashima Station-Platform 2021-1.jpg](https://commons.wikimedia.org/wiki/File:MT-Mikawa_Kashima_Station-Platform_2021-1.jpg) — ButuCC（CC BY-SA 4.0）
+- 蒲郡市博物館：[Gamagori City Museum2.jpg](https://commons.wikimedia.org/wiki/File:Gamagori_City_Museum2.jpg) — Bariston（CC BY-SA 4.0）
+- 生命の海科学館：[Science Museum Sea of Life.jpg](https://commons.wikimedia.org/wiki/File:Science_Museum_Sea_of_Life.jpg) — Alpsdake（CC BY-SA 4.0）
+- 海辺の文学記念館：[Seaside Literary Memorial (2018-05-19) 02.jpg](https://commons.wikimedia.org/wiki/File:Seaside_Literary_Memorial_(2018-05-19)_02.jpg) — Lombroso（CC BY-SA 4.0）
+- 岡崎市役所 (Okazaki City Hall)：[Okazaki-City-Hall-4.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-City-Hall-4.jpg) — Evelyn-rose（CC0）
+- 碧南市民図書館：[Hekinan City Library exterior in Apr. 2018 ac (2).jpg](https://commons.wikimedia.org/wiki/File:Hekinan_City_Library_exterior_in_Apr._2018_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 蒲郡ファンタジー館：[竹島ファンタジー館外観.jpg](https://commons.wikimedia.org/wiki/File:%E7%AB%B9%E5%B3%B6%E3%83%95%E3%82%A1%E3%83%B3%E3%82%BF%E3%82%B8%E3%83%BC%E9%A4%A8%E5%A4%96%E8%A6%B3.jpg) — Mikkabie（CC BY-SA 4.0）
+- 岡崎信用金庫資料館：[Okazaki Shinkin Bank Museum, Temmadori Okazaki 2022.jpg](https://commons.wikimedia.org/wiki/File:Okazaki_Shinkin_Bank_Museum,_Temmadori_Okazaki_2022.jpg) — Tomio344456（CC BY-SA 4.0）
+- 高浜市立図書館：[Takahama City Library ac (2).jpg](https://commons.wikimedia.org/wiki/File:Takahama_City_Library_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 三河安城駅：[Mikawa-Anjō Station.jpg](https://commons.wikimedia.org/wiki/File:Mikawa-Anj%C5%8D_Station.jpg) — EXECUTOR（CC0）
+- 三河塩津駅：[MT-Gamagōri-Kyōteijō-Mae Station-Building 2015-1.JPG](https://commons.wikimedia.org/wiki/File:MT-Gamag%C5%8Dri-Ky%C5%8Dteij%C5%8D-Mae_Station-Building_2015-1.JPG) — ButuCC（CC BY-SA 4.0）
+- 北岡崎駅：[Aikan-04-Kita-okazaki-station-entrance-east-side-20150504-125644.jpg](https://commons.wikimedia.org/wiki/File:Aikan-04-Kita-okazaki-station-entrance-east-side-20150504-125644.jpg) — LERK（CC BY-SA 4.0）
+- 五井山：[Mount Goi.jpg](https://commons.wikimedia.org/wiki/File:Mount_Goi.jpg) — Alpsdake（CC BY-SA 4.0）
+- 遠望峰山：[Aichi Pref r-323 Ogi.JPG](https://commons.wikimedia.org/wiki/File:Aichi_Pref_r-323_Ogi.JPG) — Charidri（CC0）
+- 長瀬八幡宮：[Nagasehachiman.jpg](https://commons.wikimedia.org/wiki/File:Nagasehachiman.jpg) — Bariston（CC BY-SA 4.0）
+- 長瀬八幡宮：[Nagasehachiman.jpg](https://commons.wikimedia.org/wiki/File:Nagasehachiman.jpg) — Bariston（CC BY-SA 4.0）
+- 村積山：[Distant View of Mount Murazumi (1), Hosokawa-cho Okazaki 2022.jpg](https://commons.wikimedia.org/wiki/File:Distant_View_of_Mount_Murazumi_(1),_Hosokawa-cho_Okazaki_2022.jpg) — Tomio344456（CC BY-SA 4.0）
+- 北野廃寺跡：[Okazaki-Kitano-Park-2.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Kitano-Park-2.jpg) — Evelyn-rose（CC0）
+- 信光明寺：[Shinkoumyou-ji Temple Kannondou 01, Iwazu-cho Okazaki 2019.jpg](https://commons.wikimedia.org/wiki/File:Shinkoumyou-ji_Temple_Kannondou_01,_Iwazu-cho_Okazaki_2019.jpg) — Tomio344456（CC BY-SA 4.0）
+- 松明院：[Okazaki-Shomyoin-3.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Shomyoin-3.jpg) — Evelyn-rose（CC0）
+- 龍渓院：[Ryukei-in Temple Hondou, Osawa Kuwabara-cho Okazaki 2022.jpg](https://commons.wikimedia.org/wiki/File:Ryukei-in_Temple_Hondou,_Osawa_Kuwabara-cho_Okazaki_2022.jpg) — Tomio344456（CC BY-SA 4.0）
+- 山中八幡宮：[Yamanakahachiman3.jpg](https://commons.wikimedia.org/wiki/File:Yamanakahachiman3.jpg) — Bariston（CC BY-SA 4.0）
+- 本宗寺：[Okazaki-Honshuji-4.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Honshuji-4.jpg) — Evelyn-rose（CC0）
+- 鴨田天満宮：[Okazaki-Kamoda-Hachimangu-2.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Kamoda-Hachimangu-2.jpg) — Evelyn-rose（CC0）
+- 知立神社：[Chiryu Jinja Haiden.jpg](https://commons.wikimedia.org/wiki/File:Chiryu_Jinja_Haiden.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 恩任寺：[Takahama Onninji ac (1).jpg](https://commons.wikimedia.org/wiki/File:Takahama_Onninji_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 西尾口駅：[MT-Nishio-guchi Station-TicketGate 2019.jpg](https://commons.wikimedia.org/wiki/File:MT-Nishio-guchi_Station-TicketGate_2019.jpg) — ButuCC（CC BY-SA 4.0）
+- 六名駅：[Mutsuna-Station-1.jpg](https://commons.wikimedia.org/wiki/File:Mutsuna-Station-1.jpg) — Evelyn-rose（CC0）
+- 上地八幡宮：[Uejihachiman.jpg](https://commons.wikimedia.org/wiki/File:Uejihachiman.jpg) — Bariston（CC BY-SA 4.0）
+- 新安城駅：[MT-Shin Anjō Station-SouthGate 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Shin_Anj%C5%8D_Station-SouthGate_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 上横須賀駅：[Kami Yokosuka Sta.JPG](https://commons.wikimedia.org/wiki/File:Kami_Yokosuka_Sta.JPG) — Popculture（Public domain）
+- 北安城駅：[MT-Kita Anjō Station-Building.JPG](https://commons.wikimedia.org/wiki/File:MT-Kita_Anj%C5%8D_Station-Building.JPG) — ButuCC（CC BY-SA 3.0）
+- 北野桝塚駅：[Kitanomasuzuka Station.jpg](https://commons.wikimedia.org/wiki/File:Kitanomasuzuka_Station.jpg) — Lombroso（Public domain）
+- 北新川駅：[MT-Kita Shinkawa Station-Building 2024 1.jpg](https://commons.wikimedia.org/wiki/File:MT-Kita_Shinkawa_Station-Building_2024_1.jpg) — ButuCC（CC BY-SA 4.0）
+- 新川町駅：[Shinkawamachi Station ac (1).jpg](https://commons.wikimedia.org/wiki/File:Shinkawamachi_Station_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 名電山中駅：[MT-Meiden Yamanaka Station 2025-1.jpg](https://commons.wikimedia.org/wiki/File:MT-Meiden_Yamanaka_Station_2025-1.jpg) — ButuCC（CC BY-SA 4.0）
+- 藤川駅：[MT-Fujikawa Station-Building for Toyohashi 5.jpg](https://commons.wikimedia.org/wiki/File:MT-Fujikawa_Station-Building_for_Toyohashi_5.jpg) — ButuCC（CC BY-SA 4.0）
+- 美合駅：[MT-Miai Station-Building 2.jpg](https://commons.wikimedia.org/wiki/File:MT-Miai_Station-Building_2.jpg) — ButuCC（CC BY-SA 4.0）
+- 男川駅：[MT-Otogawa Station-Building 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Otogawa_Station-Building_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 岡崎公園前駅：[MT-Okazakikōen-mae Station 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Okazakik%C5%8Den-mae_Station_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 矢作橋駅：[MT-Yahagi-bashi Station-NorthGate 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Yahagi-bashi_Station-NorthGate_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 宇頭駅：[MT-Utō Station.jpg](https://commons.wikimedia.org/wiki/File:MT-Ut%C5%8D_Station.jpg) — ButuCC（CC BY-SA 4.0）
+- 三河鳥羽駅：[MT-Mikawa-Toba-Station-Gate.jpg](https://commons.wikimedia.org/wiki/File:MT-Mikawa-Toba-Station-Gate.jpg) — HQA02330（CC BY-SA 4.0）
+- 碧海古井駅：[MT-Hekikai Furui Station-Building.jpg](https://commons.wikimedia.org/wiki/File:MT-Hekikai_Furui_Station-Building.jpg) — ButuCC（CC BY-SA 4.0）
+- 桜町前駅：[Sakuramachi-mae-station-building-bc.jpg](https://commons.wikimedia.org/wiki/File:Sakuramachi-mae-station-building-bc.jpg) — HQA02330（CC BY-SA 4.0）
+- 米津駅：[MT-Yonezu Station-Building for Shin Anjō 2.jpg](https://commons.wikimedia.org/wiki/File:MT-Yonezu_Station-Building_for_Shin_Anj%C5%8D_2.jpg) — ButuCC（CC BY-SA 4.0）
+- 福地駅：[MT-Fukuchi Station-Building.jpg](https://commons.wikimedia.org/wiki/File:MT-Fukuchi_Station-Building.jpg) — ButuCC（CC BY-SA 4.0）
+- 西浦駅：[MT-Nishiura Station-Waiting shelter 4.jpg](https://commons.wikimedia.org/wiki/File:MT-Nishiura_Station-Waiting_shelter_4.jpg) — ButuCC（CC BY-SA 4.0）
+- 蒲郡競艇場前駅：[MT-Gamagōri-Kyōteijō-Mae Station-Building 2021-3.jpg](https://commons.wikimedia.org/wiki/File:MT-Gamag%C5%8Dri-Ky%C5%8Dteij%C5%8D-Mae_Station-Building_2021-3.jpg) — ButuCC（CC BY-SA 4.0）
+- 勝鬘寺：[Okazaki-Shomanji-3.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Shomanji-3.jpg) — Evelyn-rose（CC0）
+- 岡崎市郷土館：[Okazaki-City-Kyodokan-5.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-City-Kyodokan-5.jpg) — Evelyn-rose（CC0）
+- 蒲郡市立図書館：[Gamagori City Library 2020-03 ac (2).jpg](https://commons.wikimedia.org/wiki/File:Gamagori_City_Library_2020-03_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 岡崎天満宮：[Okazaki-Tenmangu-6.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Tenmangu-6.jpg) — Evelyn-rose（CC0）
+- 稲前神社：[Okazaki-Inasaki-Jinja-1.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Inasaki-Jinja-1.jpg) — Evelyn-rose（CC0）
+- 総持尼寺：[Okazaki-Sojiji-1.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Sojiji-1.jpg) — Evelyn-rose（CC0）
+- 日本福音ルーテル岡崎教会：[JELC Okazaki Church ac (2).jpg](https://commons.wikimedia.org/wiki/File:JELC_Okazaki_Church_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 和志山古墳：[Washiyama-kofun haisho.JPG](https://commons.wikimedia.org/wiki/File:Washiyama-kofun_haisho.JPG) — Saigen Jiro（CC0）
+- 石工団地神社：[Sekko-Danchi-Jinja-1.jpg](https://commons.wikimedia.org/wiki/File:Sekko-Danchi-Jinja-1.jpg) — Evelyn-rose（CC0）
+- 上宮寺：[Sasaki-Joguji Hondo 100917.jpg](https://commons.wikimedia.org/wiki/File:Sasaki-Joguji_Hondo_100917.jpg) — Umako（Public domain）
+- 西心寺：[Saishin-ji Anjo ac (1).jpg](https://commons.wikimedia.org/wiki/File:Saishin-ji_Anjo_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 随念寺：[Zuinen２.jpg](https://commons.wikimedia.org/wiki/File:Zuinen%EF%BC%92.jpg) — Bariston（CC BY-SA 4.0）
+- 大府駅：[JR Central Ōbu Station East Exit.jpg](https://commons.wikimedia.org/wiki/File:JR_Central_%C5%8Cbu_Station_East_Exit.jpg) — Mister0124（CC BY-SA 4.0）
+- ラグナシア：[LAGUNASIA.jpg](https://commons.wikimedia.org/wiki/File:LAGUNASIA.jpg) — Bariston（CC BY-SA 4.0）
+- 明治川神社：[Meijigawa Shrine 1.jpg](https://commons.wikimedia.org/wiki/File:Meijigawa_Shrine_1.jpg) — Tsukiyo-mi（CC BY-SA 4.0）
+- ラグーナテンボス：[LAGUNA TEN BOSCH.jpg](https://commons.wikimedia.org/wiki/File:LAGUNA_TEN_BOSCH.jpg) — Bariston（CC BY-SA 4.0）
+- 真宮遺跡：[Shingu Ruins 110310.jpg](https://commons.wikimedia.org/wiki/File:Shingu_Ruins_110310.jpg) — Umako（CC0）
+- 三河武士のやかた家康館：[The Iyeyasu And Mikawa Bushi Museum 2019-12 ac.jpg](https://commons.wikimedia.org/wiki/File:The_Iyeyasu_And_Mikawa_Bushi_Museum_2019-12_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 糟目犬頭神社：[Okazaki-Kasumekento-Jinja-1.jpg](https://commons.wikimedia.org/wiki/File:Okazaki-Kasumekento-Jinja-1.jpg) — Evelyn-rose（CC0）
+- 不乗森神社：[Norazunomori-jinja ac (1).jpg](https://commons.wikimedia.org/wiki/File:Norazunomori-jinja_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 刈谷駅：[View of the Plaza in front of Kariya Station South Entrance (1), Wakamatsu-cho 2-chome, Kariya City 2022.jpg](https://commons.wikimedia.org/wiki/File:View_of_the_Plaza_in_front_of_Kariya_Station_South_Entrance_(1),_Wakamatsu-cho_2-chome,_Kariya_City_2022.jpg) — Tomio344456（CC BY-SA 4.0）
+- 刈谷駅：[View of the Plaza in front of Kariya Station South Entrance (1), Wakamatsu-cho 2-chome, Kariya City 2022.jpg](https://commons.wikimedia.org/wiki/File:View_of_the_Plaza_in_front_of_Kariya_Station_South_Entrance_(1),_Wakamatsu-cho_2-chome,_Kariya_City_2022.jpg) — Tomio344456（CC BY-SA 4.0）
+- 野田新町駅：[Noda-shimmachi Station-SouthGate.jpg](https://commons.wikimedia.org/wiki/File:Noda-shimmachi_Station-SouthGate.jpg) — ButuCC（CC BY-SA 4.0）
+- 刈谷市役所：[Kariya City Hall 2020-10 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kariya_City_Hall_2020-10_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 大府市役所：[Obu City Hall ac.jpg](https://commons.wikimedia.org/wiki/File:Obu_City_Hall_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 東海市立中央図書館：[Tokai city Central library 01.jpg](https://commons.wikimedia.org/wiki/File:Tokai_city_Central_library_01.jpg) — 八幡鏡太郎（CC BY 4.0）
+- 東海市立中央図書館：[Tokai city Central library 01.jpg](https://commons.wikimedia.org/wiki/File:Tokai_city_Central_library_01.jpg) — 八幡鏡太郎（CC BY 4.0）
+- 半田市立博物館：[Handa city museum.jpg](https://commons.wikimedia.org/wiki/File:Handa_city_museum.jpg) — Bariston（CC BY-SA 4.0）
+- 刈谷市郷土資料館：[Kariya City Museum of Local History 2019-05 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kariya_City_Museum_of_Local_History_2019-05_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 東浦町中央図書館：[Higashiura Town Central Library exterior ac (1).jpg](https://commons.wikimedia.org/wiki/File:Higashiura_Town_Central_Library_exterior_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 東浦町中央図書館：[Higashiura Town Central Library exterior ac (1).jpg](https://commons.wikimedia.org/wiki/File:Higashiura_Town_Central_Library_exterior_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 知立市歴史民俗資料館：[Chiryu City Library 2020-10 ac (3).jpg](https://commons.wikimedia.org/wiki/File:Chiryu_City_Library_2020-10_ac_(3).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 知立市図書館：[Chiryu City Library 2020-10 ac (3).jpg](https://commons.wikimedia.org/wiki/File:Chiryu_City_Library_2020-10_ac_(3).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 武豊町歴史民俗資料館：[Taketoyo Town Folk Historical Museum 2019-08 ac.jpg](https://commons.wikimedia.org/wiki/File:Taketoyo_Town_Folk_Historical_Museum_2019-08_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 市原稲荷神社：[Ichiharainari.jpg](https://commons.wikimedia.org/wiki/File:Ichiharainari.jpg) — Bariston（CC BY-SA 4.0）
+- 阿久比町立図書館：[Agui Town Library exterior ac (2).jpg](https://commons.wikimedia.org/wiki/File:Agui_Town_Library_exterior_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 阿久比町立図書館：[Agui Town Library exterior ac (2).jpg](https://commons.wikimedia.org/wiki/File:Agui_Town_Library_exterior_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 洞隣寺：[Kariya Torinji 2020-10 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kariya_Torinji_2020-10_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 今川八幡宮：[Imagawa Hachimangu ac (3).jpg](https://commons.wikimedia.org/wiki/File:Imagawa_Hachimangu_ac_(3).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 野田史料館：[Noda Hachimangu 2025-09 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Noda_Hachimangu_2025-09_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 野田八幡宮：[Noda Hachimangu 2025-09 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Noda_Hachimangu_2025-09_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 敬専寺：[Kariya Keisenji ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kariya_Keisenji_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- トヨタ創業期試作工場：[East Building, The prototype plant at the establishment of Toyota ac (6).jpg](https://commons.wikimedia.org/wiki/File:East_Building,_The_prototype_plant_at_the_establishment_of_Toyota_ac_(6).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 太田川駅：[MT-Ōtagawa Station-EastPlaza 2023 2.jpg](https://commons.wikimedia.org/wiki/File:MT-%C5%8Ctagawa_Station-EastPlaza_2023_2.jpg) — ButuCC（CC BY-SA 4.0）
+- 高横須賀駅：[MT-Takayokosuka Station 2023.jpg](https://commons.wikimedia.org/wiki/File:MT-Takayokosuka_Station_2023.jpg) — ButuCC（CC BY-SA 4.0）
+- 刈谷市歴史博物館：[Kariya city Museum of History exterior ac (2).jpg](https://commons.wikimedia.org/wiki/File:Kariya_city_Museum_of_History_exterior_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 三河八橋駅：[MT-Mikawa Yatsuhashi Station-EastGate 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Mikawa_Yatsuhashi_Station-EastGate_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 三河知立駅：[MT-Mikawa Chiryū Station-Building for Sanage 1.jpg](https://commons.wikimedia.org/wiki/File:MT-Mikawa_Chiry%C5%AB_Station-Building_for_Sanage_1.jpg) — ButuCC（CC BY-SA 4.0）
+- 知立駅：[MT-Chiryu-station-building-2024-5.jpg](https://commons.wikimedia.org/wiki/File:MT-Chiryu-station-building-2024-5.jpg) — HQA02330（CC BY-SA 4.0）
+- 重原駅：[MT-Shigehara Station-Building for Chiryū 2024-2.jpg](https://commons.wikimedia.org/wiki/File:MT-Shigehara_Station-Building_for_Chiry%C5%AB_2024-2.jpg) — ButuCC（CC BY-SA 4.0）
+- 刈谷市駅：[MT-Kariyashi Station-Gate 2018.jpg](https://commons.wikimedia.org/wiki/File:MT-Kariyashi_Station-Gate_2018.jpg) — ButuCC（CC BY-SA 4.0）
+- 小垣江駅：[MT-Ogakie Station-Building 2019-2.jpg](https://commons.wikimedia.org/wiki/File:MT-Ogakie_Station-Building_2019-2.jpg) — ButuCC（CC BY-SA 4.0）
+- 一ツ木駅：[MT-Hitotsugi Station-Building for Nagoya 4.jpg](https://commons.wikimedia.org/wiki/File:MT-Hitotsugi_Station-Building_for_Nagoya_4.jpg) — ButuCC（CC BY-SA 4.0）
+- 上ゲ駅：[MT-Age Station-Building 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Age_Station-Building_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 阿久比駅：[MT-Agui Station-Plaza.JPG](https://commons.wikimedia.org/wiki/File:MT-Agui_Station-Plaza.JPG) — ButuCC（CC BY-SA 4.0）
+- 半田口駅：[MT-Handaguchi Station-Platform 2022 1.jpg](https://commons.wikimedia.org/wiki/File:MT-Handaguchi_Station-Platform_2022_1.jpg) — ButuCC（CC BY-SA 4.0）
+- 住吉町駅：[MT-Sumiyoshichō Station-Building 2022.jpg](https://commons.wikimedia.org/wiki/File:MT-Sumiyoshich%C5%8D_Station-Building_2022.jpg) — ButuCC（CC BY-SA 4.0）
+- 知多半田駅：[MT-Chita-Handa Station-Eastplaza.jpg](https://commons.wikimedia.org/wiki/File:MT-Chita-Handa_Station-Eastplaza.jpg) — ButuCC（Public domain）
+- 植大駅：[MT-Uedai Station-Building 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Uedai_Station-Building_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 河和駅：[MT-Kowa-station-building-001.jpg](https://commons.wikimedia.org/wiki/File:MT-Kowa-station-building-001.jpg) — HQA02330（CC BY-SA 4.0）
+- 坂部駅：[MT-Sakabe Station-Building for Ōtagawa 2022 2.jpg](https://commons.wikimedia.org/wiki/File:MT-Sakabe_Station-Building_for_%C5%8Ctagawa_2022_2.jpg) — ButuCC（CC BY-SA 4.0）
+- 成岩駅：[MT-Narawa Station-Building 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Narawa_Station-Building_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 巽ヶ丘駅：[MT-Tatsumigaoka Station-Building 2023 2.jpg](https://commons.wikimedia.org/wiki/File:MT-Tatsumigaoka_Station-Building_2023_2.jpg) — ButuCC（CC BY-SA 4.0）
+- 南加木屋駅：[Minami Kagiya Station-Building 2024.jpg](https://commons.wikimedia.org/wiki/File:Minami_Kagiya_Station-Building_2024.jpg) — ButuCC（CC BY-SA 4.0）
+- 八幡新田駅：[MT-Yawata Shinden Station-SouthGate for Chita-Handa.jpg](https://commons.wikimedia.org/wiki/File:MT-Yawata_Shinden_Station-SouthGate_for_Chita-Handa.jpg) — ButuCC（Public domain）
+- 知多武豊駅：[MT-Chita-Taketoyo Station-Westgate 3.jpg](https://commons.wikimedia.org/wiki/File:MT-Chita-Taketoyo_Station-Westgate_3.jpg) — ButuCC（CC BY-SA 4.0）
+- 富貴駅：[Fuki-eki01.JPG](https://commons.wikimedia.org/wiki/File:Fuki-eki01.JPG) — Traveller（CC BY-SA 3.0）
+- 河和口駅：[MT-Kōwaguchi Station-Building 2.JPG](https://commons.wikimedia.org/wiki/File:MT-K%C5%8Dwaguchi_Station-Building_2.JPG) — ButuCC（CC BY-SA 4.0）
+- 三河上郷駅：[Mikawa-kamigo Station.jpg](https://commons.wikimedia.org/wiki/File:Mikawa-kamigo_Station.jpg) — Lombroso（Public domain）
+- あいち健康の森公園：[Aichikenko1.JPG](https://commons.wikimedia.org/wiki/File:Aichikenko1.JPG) — Bariston（CC BY-SA 4.0）
+- 順慶寺：[Kariya Junkyoji ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kariya_Junkyoji_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 了運寺：[Ryoun-ji Chiryu 2025-08 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Ryoun-ji_Chiryu_2025-08_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 東浦駅：[Higashiura Station-Building.jpg](https://commons.wikimedia.org/wiki/File:Higashiura_Station-Building.jpg) — ButuCC（CC BY-SA 4.0）
+- 東成岩駅：[JR Central Higashi-narawa Station building.jpg](https://commons.wikimedia.org/wiki/File:JR_Central_Higashi-narawa_Station_building.jpg) — Mister0124（CC BY-SA 4.0）
+- 武豊駅：[JR Central Taketoyo Station building and square.jpg](https://commons.wikimedia.org/wiki/File:JR_Central_Taketoyo_Station_building_and_square.jpg) — Mister0124（CC BY-SA 4.0）
+- 半田駅：[JR Handa Station ac.jpg](https://commons.wikimedia.org/wiki/File:JR_Handa_Station_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 乙川駅：[Okkawa Station-Building.jpg](https://commons.wikimedia.org/wiki/File:Okkawa_Station-Building.jpg) — ButuCC（CC BY-SA 4.0）
+- 尾張森岡駅：[Owari-Morioka Station-Gate.jpg](https://commons.wikimedia.org/wiki/File:Owari-Morioka_Station-Gate.jpg) — ButuCC（CC BY-SA 4.0）
+- 緒川駅：[OGAWA STATION November 2024.jpg](https://commons.wikimedia.org/wiki/File:OGAWA_STATION_November_2024.jpg) — AlphaBetaGamma（CC BY 4.0）
+- 石浜駅：[JR Central Ishihama Station Entrance.jpg](https://commons.wikimedia.org/wiki/File:JR_Central_Ishihama_Station_Entrance.jpg) — Mister0124（CC BY-SA 4.0）
+- 亀崎駅：[JR Kamezaki Station ac (2).jpg](https://commons.wikimedia.org/wiki/File:JR_Kamezaki_Station_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 永覚駅：[Aikan-08-Ekaku-station-entrance-20150504-112740.jpg](https://commons.wikimedia.org/wiki/File:Aikan-08-Ekaku-station-entrance-20150504-112740.jpg) — LERK（CC BY-SA 4.0）
+- 夢と学びの科学体験館：[Hands-On Science Museum 2020 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Hands-On_Science_Museum_2020_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 依佐美送信所記念館：[Floral garden Yosami Floral Plaza 2020-05 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Floral_garden_Yosami_Floral_Plaza_2020-05_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 加木屋中ノ池駅：[MT-Kagiya-nakanoike Station-NorthGate 10.jpg](https://commons.wikimedia.org/wiki/File:MT-Kagiya-nakanoike_Station-NorthGate_10.jpg) — ButuCC（CC BY-SA 4.0）
+- 半田市役所：[Kamezaki-Shiohi-Matsuri-1.jpg](https://commons.wikimedia.org/wiki/File:Kamezaki-Shiohi-Matsuri-1.jpg) — Evelyn-rose（CC0）
+- 半田空の科学館：[Handa City Gymnasium.jpg](https://commons.wikimedia.org/wiki/File:Handa_City_Gymnasium.jpg) — At by At（CC BY-SA 3.0）
+- 新美南吉記念館：[Niiminankichikinenkan.JPG](https://commons.wikimedia.org/wiki/File:Niiminankichikinenkan.JPG) — Bariston（CC BY-SA 4.0）
+- 半田赤レンガ建物：[Handaakarenga.JPG](https://commons.wikimedia.org/wiki/File:Handaakarenga.JPG) — Bariston（CC BY-SA 4.0）
+- アイシンコムセンター：[刈谷市アイシンコムセンター.jpg](https://commons.wikimedia.org/wiki/File:%E5%88%88%E8%B0%B7%E5%B8%82%E3%82%A2%E3%82%A4%E3%82%B7%E3%83%B3%E3%82%B3%E3%83%A0%E3%82%BB%E3%83%B3%E3%82%BF%E3%83%BC.jpg) — Narutanu（CC BY-SA 4.0）
+- 本刈谷神社：[Motokariya-jinja 2025-08 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Motokariya-jinja_2025-08_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 尾張三社：[Kamezaki Owari Sansha ac (2).jpg](https://commons.wikimedia.org/wiki/File:Kamezaki_Owari_Sansha_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 海潮院：[Kamezaki Kaichoin ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kamezaki_Kaichoin_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 旧中埜半六邸：[Handa Nakano Hanroku House ac (1).jpg](https://commons.wikimedia.org/wiki/File:Handa_Nakano_Hanroku_House_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 大府市歴史民俗資料館：[Obu City Okura Kaikan ac (1).jpg](https://commons.wikimedia.org/wiki/File:Obu_City_Okura_Kaikan_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- 成石神社：[Naruishi Shrine in Handa City.jpg](https://commons.wikimedia.org/wiki/File:Naruishi_Shrine_in_Handa_City.jpg) — ブルーノ・プラス（CC BY 4.0）

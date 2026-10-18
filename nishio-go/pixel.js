@@ -1254,6 +1254,9 @@ const LANDMARK_ART = {
   'f-glass-museum': 'glassMuseum', 'f-michinoeki-okanoyama': 'michinoeki', 'f-isshiki-suwa': 'isshikiSuwa', 'f-isshiki-port': 'isshikiPort', 'f-aichi-kodomo': 'kodomoTrain',
   'f-tojo-jo': 'tojoJo', 'f-myozenji': 'myozenji', 'f-shio-no-sato': 'shioNoSato', 'f-kira-waikiki': 'waikiki', 'f-okazaki-castle': 'okazakiCastle',
   'f-okazaki-kakukyu': 'misoBarrel', 'f-anjo-denpark': 'denpark', 'f-hekinan-aquarium': 'hekinanAquarium', 'f-takahama-kawara-museum': 'kawaraMuseum',
+  'f-jissoji': 'jissoji', 'f-kumaku-jinja': 'kumakuJinja', 'f-choenji': 'choenji', 'f-yojuji': 'yojuji', 'f-kojuin': 'kojuin', 'f-isshiki-manabi': 'isshikiManabi',
+  'f-sakushima-nishi': 'sakushimaPort', 'f-sakushima-higashi': 'sakushimaPort', 'f-oura-beach': 'ouraBeach', 'f-kogane-zutsumi': 'koganeZutsumi', 'f-ozaki-shiro': 'ozakiShiro',
+  'f-hazu-jinja': 'hazuJinja', 'f-nishi-hazu': 'nishiHazu', 'f-higashi-hazu': 'higashiHazu', 'f-toba-shinmei': 'tobaShinmei', 'f-jofukuji': 'daibutsu', 'f-kasuya-tei': 'kasuyaTei', 'f-yatsuomote': 'yatsuomote',
 };
 const ROOF = '#4a4f57', ROOF_HI = '#6c737d', WALL = '#f3f1ea', WOOD = '#5b4632';
 // 西尾城（本丸丑寅櫓）：石垣の上の三重櫓。各重とも上が白い漆喰、下が黒い下見板。右に瓦をのせた白い土塀
@@ -1587,6 +1590,145 @@ spotSprites.kawaraMuseum = shopCanvas((r, h) => {
   for (let x = 20; x < 31; x += 3) r(x, 13, 1, 6, BD);
   r(5, 21, 12, 7, '#3a3a40'); h(20, 4, 17, BD);
   for (const x of [1, 18]) { r(x, 22, 4, 5, '#7a7a78'); r(x + 1, 21, 2, 1, '#7a7a78'); r(x + 1, 23, 1, 1, '#2a2a2a'); r(x + 2, 23, 1, 1, '#2a2a2a'); r(x, 27, 4, 1, '#5a5a58'); }   // 鬼瓦
+}, true);
+// 3回目に足した名所（同じく Wikimedia Commons の写真を参考に。docs/landmark-photos.md）
+const PINE = ['.#####.', '#######', '.#####.'];
+// 実相寺 釈迦堂：こけらぶきの寄棟の大屋根と、黒っぽい板の壁。まわりの松
+spotSprites.jissoji = shopCanvas((r, h) => {
+  const RB = '#7a6a58', RH = '#958470';
+  for (const [x, y] of [[0, 0], [24, 1], [2, 4]]) { pix(r, PINE, x, y, '#2f6a3a'); h(y, x + 2, x + 4, '#4f8a4a'); }
+  spanRows(h, 5, [[12, 19], [10, 21], [8, 23], [6, 25], [4, 27], [2, 29], [1, 30]], i => i % 3 === 1 ? RH : RB); h(12, 0, 31, '#4a3e30');
+  r(5, 13, 22, 11, '#4a3626'); for (const x of [5, 10, 21, 26]) r(x, 13, 1, 11, '#6a4e36');
+  r(12, 15, 8, 9, '#2e2218'); for (let x = 13; x < 20; x += 2) r(x, 15, 1, 9, '#5a4430');
+  h(24, 3, 28, '#8a7a68'); for (let x = 1; x < 31; x += 3) r(x, 25, 1, 3, '#6a5040'); h(26, 0, 31, '#6a5040');
+  h(29, 2, 29, '#a9a49a'); h(30, 1, 30, '#c2bdb1');
+}, true);
+// 久麻久神社：石段の上の拝殿（瓦屋根と木の社殿）
+spotSprites.kumakuJinja = shopCanvas((r, h) => {
+  spanRows(h, 3, [[10, 21], [8, 23], [6, 25], [4, 27], [3, 28]], i => i % 2 ? ROOF : ROOF_HI); h(8, 2, 29, '#2e3238');
+  r(5, 9, 22, 8, '#8a6a4a'); r(12, 10, 8, 7, '#3a2a20'); for (const x of [5, 11, 20, 26]) r(x, 9, 1, 8, '#6a4a30'); r(15, 9, 2, 1, '#e2b13a');
+  h(17, 2, 29, '#c8c3b8'); for (let x = 3; x < 30; x += 2) r(x, 15, 1, 2, '#9a7650');
+  spanRows(h, 18, [[11, 20], [11, 20], [10, 21], [10, 21], [9, 22], [9, 22], [8, 23], [8, 23], [7, 24], [7, 24], [6, 25], [6, 25], [5, 26], [5, 26]], i => i % 2 ? '#8a857a' : '#b8b2a6');
+  for (const [x, y] of [[9, 18], [22, 18]]) r(x, y, 1, 14, '#c8c3b8');
+}, true);
+// 長圓寺：苔むした広い石段の上の山門と、白い土塀
+spotSprites.choenji = shopCanvas((r, h) => {
+  for (const x of [0, 26]) { r(x, 2, 6, 12, '#2f6a3a'); r(x + 1, 3, 3, 2, '#4f8a4a'); }
+  r(4, 9, 24, 5, '#f0ece2'); h(8, 3, 28, ROOF);
+  spanRows(h, 3, [[12, 19], [10, 21], [9, 22], [8, 23]], i => i % 2 ? ROOF : ROOF_HI); h(7, 8, 23, '#2e3238');
+  r(10, 8, 2, 6, WOOD); r(20, 8, 2, 6, WOOD); r(12, 9, 8, 5, '#2a2018');
+  for (let y = 14; y < 32; y++) { const a = Math.max(0, 9 - (y - 14)), b = Math.min(31, 22 + (y - 14)); h(y, a, b, (y % 3) === 2 ? '#7a756b' : (y % 3) ? '#a9a49a' : '#6a8a4a'); }
+}, true);
+// 養寿寺：瓦屋根の本堂と、右の鐘つき堂
+spotSprites.yojuji = shopCanvas((r, h) => {
+  spanRows(h, 6, [[6, 15], [4, 17], [2, 19], [1, 20], [0, 21]], i => i % 2 ? ROOF : ROOF_HI); h(11, 0, 21, '#2e3238');
+  r(2, 12, 18, 12, '#7a5a3c'); r(7, 14, 8, 10, '#3e3024'); for (const x of [2, 6, 15, 19]) r(x, 12, 1, 12, '#9a7650');
+  spanRows(h, 4, [[24, 27], [22, 29], [21, 30]], i => i % 2 ? ROOF : ROOF_HI); spanRows(h, 2, [[25, 26]], '#b88a12');
+  r(22, 7, 1, 17, WOOD); r(29, 7, 1, 17, WOOD); r(24, 9, 4, 5, '#4f7a5a'); h(14, 24, 27, '#3a5a44'); r(25, 8, 2, 1, '#333');
+  h(24, 0, 31, '#a9a49a'); h(25, 0, 31, '#c2bdb1');
+}, true);
+// 紅樹院（茶祖の寺）：瓦の大屋根の本堂と、手前の茶の木
+spotSprites.kojuin = shopCanvas((r, h) => {
+  spanRows(h, 3, [[11, 20], [9, 22], [7, 24], [5, 26], [3, 28], [1, 30], [0, 31]], i => i % 2 ? ROOF : ROOF_HI); h(10, 0, 31, '#2e3238');
+  r(4, 11, 24, 10, '#7a5a3c'); r(10, 13, 12, 8, '#3e3024'); for (const x of [4, 9, 22, 27]) r(x, 11, 1, 10, '#9a7650');
+  h(21, 2, 29, '#a9a49a');
+  for (const y of [23, 27]) { h(y, 1, 30, '#7fc65e'); r(0, y + 1, 32, 2, '#3f8f3a'); h(y + 3, 0, 31, '#2a5f28'); }
+}, true);
+// 一色学びの館：丸い筒形の塔と、列柱のある低い建物
+spotSprites.isshikiManabi = shopCanvas((r, h) => {
+  r(13, 2, 14, 19, '#b49a88'); r(13, 2, 3, 19, '#c8b2a0'); r(23, 2, 4, 19, '#9a806e'); h(2, 13, 26, '#d8c4b2'); h(3, 13, 26, '#8a705e');
+  r(0, 17, 32, 9, '#d8cfc4'); h(17, 0, 31, '#e8e0d6'); h(18, 0, 31, '#b8afa4');
+  for (let x = 1; x < 31; x += 4) { r(x, 19, 1, 7, '#e8e0d6'); r(x + 1, 19, 3, 6, '#5a5550'); }
+  r(0, 26, 32, 4, '#8a8a88'); for (let x = 2; x < 32; x += 6) r(x, 27, 1, 3, '#f4f4f4');
+}, true);
+// 佐久島の港：「三河湾の黒真珠 佐久島」の白い看板と、黒い板の小屋、船着き場
+spotSprites.sakushimaPort = shopCanvas((r, h) => {
+  r(0, 22, 32, 10, '#4f8fbf'); for (const [x, y] of [[3, 25], [12, 28], [24, 26], [18, 30]]) h(y, x, x + 2, '#8cc0e0');
+  r(0, 18, 20, 4, '#b8b2a6'); h(18, 0, 19, '#d0cbc0'); r(1, 22, 2, 3, '#8a857a'); r(16, 22, 2, 3, '#8a857a');
+  r(20, 6, 11, 13, '#2a2522'); for (let x = 22; x < 31; x += 3) r(x, 6, 1, 13, '#3c3632'); spanRows(h, 4, [[21, 30], [20, 31]], '#3c4148'); r(23, 10, 4, 3, '#8a8a80');
+  r(12, 1, 6, 17, '#f4f4f4'); r(13, 2, 4, 15, '#ffffff'); for (let y = 3; y < 16; y += 2) r(14, y, 2, 1, y < 9 ? '#2f5fae' : '#222'); r(14, 18, 2, 0, '#555');
+  r(9, 20, 6, 2, '#e8e2d0');   // 舟
+}, true);
+// 大浦海水浴場（佐久島）：草地の中の、高い木の見はらし小屋
+spotSprites.ouraBeach = shopCanvas((r, h) => {
+  r(0, 18, 32, 14, '#6fae4a'); spanRows(h, 22, [[10, 14], [9, 15], [9, 16], [8, 16], [8, 17], [7, 17], [7, 18], [6, 18], [6, 19], [5, 19]], '#d9cfb3');
+  spanRows(h, 2, [[16, 25], [14, 27], [13, 28]], '#4a3a2e'); r(15, 5, 1, 17, WOOD); r(26, 5, 1, 17, WOOD);
+  r(14, 11, 14, 2, '#8a6a4a'); for (let x = 15; x < 27; x += 2) r(x, 8, 1, 3, '#8a6a4a'); h(8, 14, 27, '#8a6a4a');
+  for (let i = 0; i < 9; i++) r(27 + Math.floor(i / 3), 13 + i, 2, 1, '#8a6a4a');
+  r(0, 14, 9, 5, '#3f7a34'); r(1, 13, 6, 1, '#5a9a44');
+}, true);
+// 黄金堤（吉良）：木の並ぶ土手と、まわりの黄金色の田んぼ
+spotSprites.koganeZutsumi = shopCanvas((r, h) => {
+  for (let x = 1; x < 31; x += 7) { r(x, 4, 6, 6, '#3f8a34'); r(x + 1, 4, 3, 2, '#6fba50'); r(x + 2, 10, 2, 3, '#6a4a30'); }
+  spanRows(h, 12, [[3, 28], [2, 29], [1, 30], [0, 31], [0, 31]], i => i ? '#6fae4a' : '#c8b88a');
+  r(0, 17, 32, 15, '#e0b83a'); for (let y = 18; y < 32; y += 3) for (let x = (y % 2) * 2; x < 32; x += 4) r(x, y, 2, 1, '#c89a20');
+  h(24, 0, 31, '#8a7a4a');
+}, true);
+// 尾﨑士郎記念館（吉良）：瓦屋根の白い建物と、前の胸像
+spotSprites.ozakiShiro = shopCanvas((r, h) => {
+  spanRows(h, 5, [[6, 25], [4, 27], [2, 29], [1, 30]], i => i % 2 ? ROOF : ROOF_HI); h(9, 0, 31, '#2e3238');
+  r(2, 10, 28, 15, '#f4f2ec'); for (const x of [2, 12, 29]) r(x, 10, 1, 15, '#3a3a3a'); h(10, 2, 29, '#3a3a3a');
+  r(5, 13, 5, 6, '#3a3a3a'); r(6, 14, 3, 4, '#c8d8e0'); r(15, 13, 11, 12, '#3a3a3a'); r(16, 14, 9, 11, '#5a6470');
+  r(5, 22, 6, 7, '#9a968c'); r(6, 19, 4, 3, '#6a5a40'); r(7, 17, 2, 2, '#6a5a40');   // 胸像
+  h(25, 0, 31, '#a9a49a');
+}, true);
+// 幡頭神社（吉良）：大きな石の鳥居と、奥の拝殿、社名の石柱
+spotSprites.hazuJinja = shopCanvas((r, h) => {
+  const ST = '#b8b2a6', SD = '#8a857a';
+  spanRows(h, 7, [[11, 20], [10, 21], [9, 22]], ROOF); r(10, 10, 12, 6, '#8a6a4a'); r(13, 11, 6, 5, '#3a2a20');
+  h(4, 2, 27, ST); h(5, 3, 26, SD); r(2, 3, 1, 1, ST); r(27, 3, 1, 1, ST); h(8, 5, 24, ST);
+  r(6, 6, 2, 22, ST); r(21, 6, 2, 22, ST); r(14, 6, 2, 2, SD);
+  spanRows(h, 16, [[13, 18], [12, 19], [12, 19], [11, 20], [11, 20], [10, 21], [10, 21], [9, 22], [9, 22], [8, 23], [8, 23], [7, 24], [7, 24], [6, 25], [6, 25], [5, 26]], i => i % 2 ? '#c8c3b8' : '#a9a49a');
+  r(27, 6, 3, 24, '#9a968c'); for (let y = 8; y < 26; y += 3) r(28, y, 1, 2, '#3a3a3a');
+}, true);
+// 名鉄 西幡豆駅：木の小さな駅舎（クリーム色の壁、茶色のわく、青い駅名の看板）と赤いポスト
+spotSprites.nishiHazu = shopCanvas((r, h) => {
+  spanRows(h, 6, [[10, 21], [7, 24], [4, 27], [2, 29], [1, 30]], i => i % 2 ? '#6a5a4a' : '#7a6a5a');
+  r(3, 11, 26, 15, '#efe6d2'); for (const x of [3, 11, 20, 28]) r(x, 11, 1, 15, '#7a4a2a'); h(11, 3, 28, '#7a4a2a'); h(18, 3, 28, '#7a4a2a');
+  r(13, 12, 6, 3, '#3f7fbf'); r(14, 13, 4, 1, '#ffffff');
+  r(5, 19, 5, 5, '#6f8fa8'); r(12, 19, 7, 7, '#3f5566'); r(22, 19, 5, 5, '#6f8fa8');
+  r(29, 20, 2, 6, '#d23a2e'); h(26, 1, 30, '#9a9a96');
+}, true);
+// 名鉄 東幡豆駅：赤いトタン屋根の駅舎と、白い壁、駅名の看板、赤いポスト
+spotSprites.higashiHazu = shopCanvas((r, h) => {
+  spanRows(h, 7, [[6, 25], [4, 27], [2, 29], [1, 30], [0, 31]], i => i % 2 ? '#c0392b' : '#d8503f');
+  for (let x = 2; x < 31; x += 2) r(x, 8, 1, 3, '#a83020');
+  r(2, 12, 28, 14, '#f4f2ec'); h(12, 2, 29, '#c8c3b8');
+  r(10, 13, 10, 3, '#ffffff'); h(15, 10, 19, '#3f9a5a'); r(11, 13, 7, 1, '#3f7fbf');
+  r(4, 17, 5, 5, '#6f8fa8'); r(12, 17, 6, 9, '#3f5566'); r(21, 17, 5, 5, '#6f8fa8');
+  r(27, 19, 2, 7, '#d23a2e'); h(26, 0, 31, '#9a9a96');
+}, true);
+// 鳥羽神明社：拝殿と、2月の「鳥羽の火祭り」で燃やす大きなたいまつ（すずみ）
+spotSprites.tobaShinmei = shopCanvas((r, h) => {
+  spanRows(h, 8, [[4, 17], [2, 19], [1, 20], [0, 21]], i => i % 2 ? ROOF : ROOF_HI); h(12, 0, 21, '#2e3238');
+  r(1, 13, 20, 11, '#8a6a4a'); r(2, 14, 18, 4, '#f4f2ec'); for (const x of [5, 10, 15]) { r(x, 15, 2, 2, '#222'); } r(6, 18, 10, 6, '#3a2a20');
+  h(24, 0, 21, '#a9a49a');
+  r(23, 9, 6, 19, '#b8a060'); for (let y = 11; y < 27; y += 4) h(y, 23, 28, '#6a5a30'); r(25, 28, 2, 3, '#6a4a30');   // すずみ
+  spanRows(h, 1, [[25, 26], [24, 27], [23, 28], [22, 29], [23, 28], [23, 28], [22, 29], [23, 28]], i => i < 2 ? '#ffe27a' : i < 5 ? '#ffb300' : '#e65100');
+}, true);
+// 刈宿の大仏（常福寺）：光背のある、すわった大きな仏さまの像と石の台
+spotSprites.daibutsu = shopCanvas((r, h) => {
+  const BZ = '#b08a5a', BH = '#d0aa70', BD = '#7a5a34';
+  for (let a = 0; a < 360; a += 6) { const x = Math.round(16 + 12 * Math.cos(a * Math.PI / 180)), y = Math.round(11 + 10 * Math.sin(a * Math.PI / 180)); if (y < 20) r(x, y, 1, 1, '#c09a60'); }
+  r(14, 1, 4, 2, BD); spanRows(h, 3, [[13, 18], [12, 19], [12, 19], [12, 19], [12, 19], [13, 18]], BZ); h(3, 13, 18, BD);   // 頭（上は螺髪）
+  r(13, 5, 2, 1, BD); r(17, 5, 2, 1, BD); r(15, 7, 2, 1, BD); r(13, 4, 1, 2, BH); r(15, 9, 2, 1, BZ);
+  spanRows(h, 10, [[10, 21], [8, 23], [7, 24], [6, 25], [5, 26], [5, 26], [4, 27], [4, 27], [3, 28]], i => i % 3 === 1 ? BH : BZ);
+  r(12, 14, 8, 3, BD); r(13, 15, 6, 1, BH); r(15, 10, 2, 4, BD);   // 組んだ手と衣のえり
+  spanRows(h, 19, [[2, 29], [3, 28], [5, 26]], '#c08a70'); h(20, 3, 28, '#a87060');   // 蓮の台
+  r(7, 22, 18, 7, '#9a968c'); h(22, 7, 24, '#b8b2a6'); r(5, 29, 22, 2, '#7a756b');
+}, true);
+// 旧糟谷邸（吉良）：黒い板壁に瓦屋根の古い家と、大きなイスノキ
+spotSprites.kasuyaTei = shopCanvas((r, h) => {
+  spanRows(h, 9, [[1, 16], [0, 17], [0, 18]], i => i % 2 ? ROOF : ROOF_HI); r(0, 12, 17, 15, '#2a2522'); for (let x = 2; x < 17; x += 3) r(x, 12, 1, 15, '#3c3632'); r(5, 19, 6, 8, '#5a4a3a');
+  r(17, 1, 15, 12, '#3f7a34'); r(19, 2, 6, 3, '#5a9a44'); r(26, 6, 5, 3, '#5a9a44');
+  r(22, 12, 4, 17, '#6a4a30'); r(21, 16, 2, 4, '#6a4a30'); r(25, 9, 2, 6, '#5a3e28'); r(23, 14, 1, 10, '#4a3420');
+  h(29, 18, 31, '#8a7a5a'); h(27, 0, 17, '#a9a49a');
+}, true);
+// 八ツ面山：緑の山と、てっぺんの白い展望台
+spotSprites.yatsuomote = shopCanvas((r, h) => {
+  r(13, 2, 6, 3, '#e8e8e4'); h(5, 11, 20, '#c8c8c4'); r(14, 6, 4, 9, '#f4f4f0'); r(15, 7, 2, 2, '#6f8fa8'); r(15, 11, 2, 2, '#6f8fa8');
+  spanRows(h, 13, [[10, 21], [8, 23], [6, 25], [4, 27], [3, 28], [2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31]], i => i % 4 === 1 ? '#5a9a44' : '#3f7a34');
+  for (const [x, y] of [[4, 20], [12, 18], [22, 21], [8, 26], [18, 25], [27, 27]]) { r(x, y, 3, 2, '#2f6a2a'); r(x, y, 2, 1, '#6fba50'); }
 }, true);
 
 function spotArt(s) {

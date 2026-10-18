@@ -4,14 +4,6 @@
   "validMin": 30,
   "rewards": [
     {
-      "id": "sample-gift",
-      "name": "お米のプチギフト",
-      "cost": 300,
-      "perDay": 1,
-      "desc": "店頭でこの画面を見せてください。",
-      "active": false
-    },
-    {
       "id": "sample-discount",
       "name": "お米お買い上げ 100円引き",
       "cost": 500,

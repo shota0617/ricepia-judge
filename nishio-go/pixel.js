@@ -1268,335 +1268,30 @@ const LANDMARK_ART = {
   'f-okazaki-kakukyu': 'misoBarrel', 'f-anjo-denpark': 'denpark', 'f-hekinan-aquarium': 'hekinanAquarium', 'f-takahama-kawara-museum': 'kawaraMuseum',
   'f-jissoji': 'jissoji', 'f-kumaku-jinja': 'kumakuJinja', 'f-choenji': 'choenji', 'f-yojuji': 'yojuji', 'f-kojuin': 'kojuin', 'f-isshiki-manabi': 'isshikiManabi',
   'f-sakushima-nishi': 'sakushimaPort', 'f-sakushima-higashi': 'sakushimaPort', 'f-oura-beach': 'ouraBeach', 'f-kogane-zutsumi': 'koganeZutsumi', 'f-ozaki-shiro': 'ozakiShiro',
-  'f-hazu-jinja': 'hazuJinja', 'f-nishi-hazu': 'nishiHazu', 'f-higashi-hazu': 'higashiHazu', 'f-toba-shinmei': 'tobaShinmei', 'f-jofukuji': 'daibutsu', 'f-kasuya-tei': 'kasuyaTei', 'f-yatsuomote': 'yatsuomote',
+  'f-hazu-jinja': 'hazuJinja', 'f-nishi-hazu': 'nishiHazu', 'f-higashi-hazu': 'higashiHazu', 'f-toba-shinmei': 'tobaShinmei', 'f-jofukuji': 'daibutsu', 'f-kasuya-tei': 'kasuyaTei', 'f-yatsuomote': 'yatsuomote',  'f-kozenji': 'kozenji', 'f-terazu-hachiman': 'terazuHachiman', 'f-hirabara-taki': 'hirabaraTaki', 'f-ankyuji': 'ankyuji', 'f-suunji': 'suunji',
+  'f-yatsurugi': 'yatsurugi', 'f-kezoji': 'kezoji', 'f-gentokuji': 'gentokuji', 'f-shohoji-kofun': 'shohojiKofun', 'f-kira-onsen': 'kiraOnsen',
+  'f-terabe-jo': 'terabeJo', 'f-kodomonokuni-st': 'kodomonokuniSt', 'f-antaiji': 'antaiji', 'f-fukusenji': 'fukusenji', 'f-genkuin': 'genkuin',
+  'f-kaminagara-shinmei': 'kaminagaraShinmei', 'f-shozanji': 'shozanji', 'f-sairinji': 'sairinji', 'f-tenjiku-jinja': 'tenjikuJinja', 'f-semon-jinja': 'semonJinja',
+  'f-kagakuji': 'kagakuji', 'f-ennyuji': 'ennyuji', 'f-shorakuji': 'shorakuji', 'f-okazaki-daijuji': 'okazakiDaijuji', 'f-okazaki-maruya': 'okazakiMaruya',
+  'f-okazaki-iga-hachimangu': 'okazakiIgaHachimangu', 'f-okazaki-takisanji': 'okazakiTakisanji', 'f-okazaki-iwazu-tenmangu': 'okazakiIwazuTenmangu', 'f-okazaki-rokusho-jinja': 'okazakiRokushoJinja', 'f-okazaki-okudono-jinya': 'okazakiOkudonoJinya',
+  'f-okazaki-higashi-park': 'okazakiHigashiPark', 'f-okazaki-honda-tei': 'okazakiHondaTei', 'f-okazaki-minami-park': 'okazakiMinamiPark', 'f-okazaki-museum': 'okazakiMuseum', 'f-okazaki-higashi-okazaki-sta': 'okazakiHigashiOkazakiSta',
+  'f-okazaki-okazaki-sta': 'okazakiOkazakiSta', 'f-okazaki-shooji': 'okazakiShooji', 'f-okazaki-hozoji': 'okazakiHozoji', 'f-okazaki-fujikawa-shuku': 'okazakiFujikawaShuku', 'f-okazaki-kuragari': 'okazakiKuragari',
+  'f-okazaki-hongusan': 'okazakiHongusan', 'f-anjo-jozanen': 'anjoJozanen', 'f-anjo-honshoji': 'anjoHonshoji', 'f-anjo-castle': 'anjoCastle', 'f-anjo-museum': 'anjoMuseum',
+  'f-anjo-horiuchi-park': 'anjoHoriuchiPark', 'f-anjo-park': 'anjoPark', 'f-anjo-futago-kofun': 'anjoFutagoKofun', 'f-anjo-himeogawa-kofun': 'anjoHimeogawaKofun', 'f-anjo-station': 'anjoStation',
+  'f-anjo-mikawa-anjo-station': 'anjoMikawaAnjoStation', 'f-anjo-minami-anjo-station': 'anjoMinamiAnjoStation', 'f-anjo-cityhall': 'anjoCityhall', 'f-hekinan-rinkai-park': 'hekinanRinkaiPark', 'f-hekinan-akashi-park': 'hekinanAkashiPark',
+  'f-hekinan-shomyoji': 'hekinanShomyoji', 'f-hekinan-kaitokuji': 'hekinanKaitokuji', 'f-hekinan-kokonoe-mirin': 'hekinanKokonoeMirin', 'f-hekinan-fujii-museum': 'hekinanFujiiMuseum', 'f-hekinan-kumano': 'hekinanKumano',
+  'f-hekinan-mugaen': 'hekinanMugaen', 'f-hekinan-oninji': 'hekinanOninji', 'f-hekinan-station': 'hekinanStation', 'f-hekinan-chuo-station': 'hekinanChuoStation', 'f-hekinan-cityhall': 'hekinanCityhall',
+  'f-takahama-minato-station': 'takahamaMinatoStation', 'f-takahama-kasuga': 'takahamaKasuga', 'f-takahama-oyama': 'takahamaOyama', 'f-takahama-mikawa-takahama-station': 'takahamaMikawaTakahamaStation', 'f-takahama-yoshihama-station': 'takahamaYoshihamaStation',
+  'f-takahama-cityhall': 'takahamaCityhall', 'f-kota-honkoji': 'kotaHonkoji', 'f-kota-kyodo-shiryokan': 'kotaKyodoShiryokan', 'f-kota-bunka-hiroba': 'kotaBunkaHiroba', 'f-kota-michinoeki': 'kotaMichinoeki',
+  'f-kota-hishiike': 'kotaHishiike', 'f-kota-happiness-hill': 'kotaHappinessHill', 'f-kota-townhall': 'kotaTownhall', 'f-kota-station': 'kotaStation', 'f-kota-sangane-station': 'kotaSanganeStation',
+  'f-kota-aimi-station': 'kotaAimiStation', 'f-gamagori-takeshima': 'gamagoriTakeshima', 'f-gamagori-aquarium': 'gamagoriAquarium', 'f-gamagori-station': 'gamagoriStation',
 };
 const ROOF = '#4a4f57', ROOF_HI = '#6c737d', WALL = '#f3f1ea', WOOD = '#5b4632';
-// カモメの駐車場（佐久島のアート）：石の防波堤に、カモメの木像がずらりと並ぶ
-spotSprites.kamome = shopCanvas((r, h) => {
-  const SG = '#9d968b', SL = '#c2bbaf', SD = '#6f685e', BW = '#eef1f3', BG = '#8f99a3', PO = '#e0902a';
-  [[2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [1, 31], [1, 30], [2, 29], [3, 28]].forEach(([a, b], i) => h(17 + i, a, b, SG));
-  for (let y = 18; y < 27; y += 3) for (let x = (y % 2) * 3; x < 31; x += 6) { r(x, y, 1, 2, SD); r(x + 1, y, 3, 1, SL); }
-  for (let i = 0; i < 5; i++) {   // 横向きのカモメ（右が頭）と、立てた棒
-    const x = 1 + i * 6, y = 11 + (i % 2);
-    r(x + 2, y + 3, 1, 3, PO);
-    pix(r, ['...##', '#####', '.###.'], x, y, BW); pix(r, ['.....', '.##..'], x, y, BG); r(x, y + 1, 1, 1, '#333'); r(x + 4, y, 1, 1, '#333'); r(x + 5, y + 1, 1, 1, PO);
-  }
-}, true);
-// 稲荷山茶園公園：まるくかりこんだ茶の木の列と、あずまや
-spotSprites.chaen = shopCanvas((r, h) => {
-  const TG = '#3f8f3a', TL = '#7fc65e', TD = '#2a5f28', SO = '#b08a5a';
-  r(15, 4, 2, 1, '#6a5444'); [[13, 18], [11, 20], [9, 22], [7, 24]].forEach(([a, b], i) => h(5 + i, a, b, i ? '#4a3a2e' : '#6a5444'));
-  r(9, 9, 1, 7, WOOD); r(22, 9, 1, 7, WOOD); h(13, 11, 20, '#8a6a4a');
-  for (const y of [15, 20, 25]) {
-    h(y, 1, 30, TL); r(0, y + 1, 32, 2, TG); h(y + 3, 0, 31, TD); if (y < 25) h(y + 4, 0, 31, SO);
-    for (let x = 2 + (y % 2) * 2; x < 30; x += 5) { h(y - 1, x, x + 1, TL); r(x + 3, y + 1, 1, 1, TL); }   // 新芽のでこぼこ
-  }
-}, true);
 // 2回目に足した名所（同じく Wikimedia Commons の写真を参考に。docs/landmark-photos.md）
 // spans の行を上から順に塗る（[x0, x1] の並び。col は色か、行の番号から色を返す関数）
 const spanRows = (h, y0, spans, col) => spans.forEach(([a, b], i) => h(y0 + i, a, b, typeof col === 'function' ? col(i) : col));
-// 尚古荘：松の庭と、縁側に障子の座敷
-spotSprites.shokoso = shopCanvas((r, h) => {
-  const SJ = '#f2eee2', SG = '#bfb6a0', PN = '#2f6a3a', PL = '#4f8a4a';
-  spanRows(h, 7, [[6, 29], [5, 30], [4, 31], [3, 31], [2, 31]], i => i ? ROOF : ROOF_HI);
-  r(4, 12, 27, 10, SJ); for (let x = 4; x < 31; x += 3) r(x, 12, 1, 10, SG); h(16, 4, 30, SG);
-  for (const x of [4, 13, 22, 30]) r(x, 12, 1, 11, '#6a4a30');
-  h(22, 3, 31, '#8a6a4a'); h(23, 3, 31, '#6a4a30');
-  r(14, 25, 18, 7, '#5fa0c0'); h(25, 14, 31, '#8cc0dd'); r(20, 28, 3, 1, '#8cc0dd');   // 池
-  for (const [x, y, w] of [[9, 24, 4], [3, 26, 6], [10, 28, 4]]) { r(x, y, w, 2, '#a9a49a'); h(y, x, x + w - 1, '#c8c3b8'); }
-  r(5, 6, 1, 18, '#6a4a30'); r(6, 4, 1, 4, '#6a4a30');   // 松
-  for (const [x, y] of [[0, 1], [3, 5], [0, 9], [3, 13]]) { pix(r, ['.#####.', '#######', '.#####.'], x, y, PN); h(y, x + 2, x + 4, PL); }   // 枝ごとに丸く刈りこんだ葉
-}, true);
-// 伊文神社：緑青の銅ぶき屋根の拝殿と、しめ縄・石灯籠
-spotSprites.ibunJinja = shopCanvas((r, h) => {
-  const CU = '#5f9e8a', CH = '#86c0ac', CD = '#3e6e60', PI = '#c8a46a', IN = '#3a2a20', ST = '#a9a49a';
-  spanRows(h, 5, [[10, 21], [8, 23], [6, 25], [4, 27], [2, 29], [1, 30]], i => i === 0 ? CD : i === 2 ? CH : CU);
-  h(11, 0, 31, CD); r(0, 10, 1, 1, CD); r(31, 10, 1, 1, CD);
-  spanRows(h, 7, [[15, 16], [13, 18], [12, 19], [11, 20]], CU); h(10, 13, 18, CD); r(15, 8, 2, 1, '#e2b13a');   // 正面の破風
-  r(5, 12, 22, 11, IN); for (const x of [5, 10, 21, 26]) r(x, 12, 1, 11, PI);
-  for (let x = 12; x < 20; x += 2) r(x, 16, 1, 7, '#5a4430');
-  r(7, 13, 18, 2, '#f0e6c8'); for (const x of [10, 15, 20]) { r(x, 15, 1, 1, '#ffffff'); r(x + 1, 16, 1, 1, '#ffffff'); }
-  h(23, 4, 27, '#8a6a4a'); spanRows(h, 24, [[11, 20], [10, 21], [9, 22], [8, 23]], i => i % 2 ? ST : '#c8c3b8');
-  for (const x of [0, 28]) { r(x + 1, 18, 2, 1, ST); r(x, 19, 4, 2, ST); r(x + 1, 20, 2, 1, '#ffe27a'); r(x + 1, 21, 2, 6, ST); r(x, 27, 4, 1, ST); }
-}, true);
-// 抹茶ミュージアム 西条園 和く和く：ベージュの壁に緑のマーク、竹垣
-spotSprites.wakuwaku = shopCanvas((r, h) => {
-  const BE = '#d8c9a8', GR = '#3f9a3a';
-  r(1, 5, 30, 3, '#3a3a3a'); r(2, 8, 27, 20, BE);
-  r(5, 10, 4, 4, GR); r(6, 11, 2, 2, '#ffffff'); pix(r, ['#.#.##.#.#.##', '.#..#..#.#.#.'], 11, 11, GR);
-  r(5, 17, 9, 6, '#3b3020'); r(6, 18, 3, 2, '#e8a050'); r(10, 18, 3, 3, '#8fc05a');
-  r(15, 17, 6, 11, '#2b3440'); r(17, 17, 1, 11, '#5a6470');
-  r(21, 18, 11, 10, '#c8b88a'); for (let x = 22; x < 32; x += 2) r(x, 18, 1, 10, '#9a8a5e'); h(21, 21, 31, '#222'); h(25, 21, 31, '#222');   // 竹垣
-  r(0, 24, 5, 4, '#3f8a34'); r(1, 23, 3, 1, '#6fba50');
-}, true);
-// 三河工芸ガラス美術館：白い箱の建物に青いたて長の窓、1階のガラスに色ガラス
-spotSprites.glassMuseum = shopCanvas((r, h) => {
-  r(4, 3, 24, 25, '#d6d4ce'); h(3, 4, 27, '#eceae4');
-  for (const x of [11, 13, 18, 20]) r(x, 7, 1, 7, '#3b5f9e');
-  h(17, 3, 28, '#bdbab3'); h(18, 3, 28, '#9e9b94');
-  r(6, 19, 20, 9, '#4c5c6a'); for (const x of [10, 15, 20]) r(x, 19, 1, 9, '#cfd4d8');
-  for (const [x, y, c] of [[7, 21, '#e57373'], [12, 22, '#ffd54f'], [17, 21, '#64b5f6'], [22, 22, '#81c784'], [8, 24, '#ba68c8'], [23, 25, '#ffb74d']]) r(x, y, 2, 2, c);
-}, true);
-// 道の駅にしお岡ノ山：瓦屋根の平屋が2つと、青い道の駅の看板、駐車場
-spotSprites.michinoeki = shopCanvas((r, h) => {
-  const WL = '#e8e2d2';
-  spanRows(h, 9, [[4, 13], [2, 15], [1, 16], [0, 17]], i => i ? ROOF : ROOF_HI); spanRows(h, 7, [[8, 9], [7, 10]], ROOF);
-  r(1, 13, 16, 10, WL); for (const x of [1, 6, 11, 16]) r(x, 13, 1, 10, WOOD); r(7, 16, 4, 7, '#3f5566');
-  spanRows(h, 12, [[19, 28], [17, 30], [16, 31], [15, 31]], i => i ? ROOF : ROOF_HI);
-  r(16, 16, 15, 7, WL); for (const x of [16, 23, 30]) r(x, 16, 1, 7, WOOD); r(18, 18, 4, 3, '#6f8fa8'); r(25, 18, 4, 3, '#6f8fa8');
-  r(2, 15, 4, 5, '#2a5fb0'); r(3, 16, 2, 1, '#ffffff'); r(3, 18, 2, 1, '#ffffff'); r(3, 20, 1, 4, '#888');   // 道の駅の看板
-  r(0, 24, 32, 6, '#8a8a88'); for (let x = 3; x < 32; x += 6) r(x, 25, 1, 4, '#f4f4f4');
-}, true);
-// 三河一色諏訪神社：瓦の大きな拝殿と、石の鳥居
-spotSprites.isshikiSuwa = shopCanvas((r, h) => {
-  const ST = '#9a968c', SH = '#c2beb4';
-  spanRows(h, 3, [[11, 20], [9, 22], [7, 24], [5, 26], [3, 28], [2, 29], [1, 30]], i => i === 0 || i === 3 ? ROOF_HI : ROOF);
-  spanRows(h, 5, [[15, 16], [14, 17], [13, 18], [12, 19]], '#ece5d4'); h(9, 12, 19, WOOD);
-  h(10, 0, 31, '#2e3238'); r(3, 11, 26, 13, '#8a6a4a'); r(11, 13, 10, 10, '#3a2a20'); for (const x of [3, 10, 21, 28]) r(x, 11, 1, 13, '#6a4a30');
-  h(24, 2, 29, ST);
-  h(13, 3, 28, ST); h(14, 4, 27, SH); r(3, 12, 1, 1, ST); r(28, 12, 1, 1, ST); h(17, 7, 24, ST);   // 鳥居
-  r(8, 15, 2, 15, ST); r(22, 15, 2, 15, ST); r(15, 15, 2, 2, '#3a3a3a');
-  h(30, 6, 25, '#b8b2a6'); h(31, 6, 25, '#9a948a');
-}, true);
-// 一色港：佐久島へ渡る白い高速船（青と赤の線）
-spotSprites.isshikiPort = shopCanvas((r, h) => {
-  const WH = '#f4f6f8', SE = '#4f8fbf';
-  r(14, 3, 1, 6, '#555'); h(4, 12, 16, '#555');
-  r(9, 8, 11, 3, WH); r(10, 9, 8, 1, '#2b3440');
-  r(5, 11, 18, 5, WH); for (let x = 7; x < 21; x += 3) r(x, 12, 2, 2, '#2b3440');
-  spanRows(h, 16, [[1, 27], [1, 29], [1, 30], [2, 31], [2, 30], [3, 29], [3, 28], [4, 27], [5, 26]], i => i === 3 ? '#2f5fae' : i === 5 ? '#d23a2e' : i >= 7 ? '#2f5fae' : WH);
-  r(0, 25, 32, 7, SE); for (const [x, y] of [[2, 27], [12, 29], [22, 27], [27, 30], [7, 30]]) r(x, y, 3, 1, '#8cc0e0');
-}, true);
-// 愛知こどもの国：園内を走る白い汽車（ロードトレイン）
-spotSprites.kodomoTrain = shopCanvas((r, h) => {
-  const WH = '#f4f4f4', RD = '#d23a2e', BK = '#222', WN = '#2b3440';
-  h(9, 0, 16, RD); h(10, 0, 16, RD); for (const x of [0, 8, 16]) r(x, 11, 1, 6, '#888');
-  for (const [x, c] of [[2, '#ffb300'], [5, '#5a3418'], [10, '#e57373'], [13, '#2b2018']]) r(x, 14, 2, 2, c);
-  r(0, 16, 17, 6, WH); h(19, 0, 16, RD);
-  r(18, 8, 6, 2, '#b33a2e'); r(18, 10, 6, 12, WH); r(19, 11, 4, 3, WN);
-  r(24, 14, 6, 8, WH); h(17, 24, 29, RD); r(26, 8, 3, 6, BK); r(25, 7, 5, 1, BK); r(30, 18, 2, 4, BK); r(28, 15, 1, 1, '#ffe27a');
-  for (const x of [2, 11, 20, 26]) { r(x, 21, 4, 4, BK); r(x + 1, 22, 2, 2, '#9a9a9a'); }
-  r(0, 26, 32, 4, '#7a7a7a'); h(27, 0, 31, '#f2c230');
-}, true);
-// 東条城跡（吉良）：木の物見やぐらと門、まわりの木の柵
-spotSprites.tojoJo = shopCanvas((r, h) => {
-  const WD = '#6a4a30', WL = '#8a6a4a', DK = '#3a3a3a';
-  spanRows(h, 1, [[23, 25], [21, 27], [19, 29], [18, 30]], DK); r(19, 5, 11, 5, WL); r(22, 6, 5, 2, '#2a2018');
-  r(20, 10, 2, 19, WD); r(27, 10, 2, 19, WD); for (let y = 12; y < 28; y += 5) { h(y, 22, 26, WD); r(23 + (y % 2), y + 1, 2, 1, WD); }
-  spanRows(h, 13, [[3, 13], [1, 15], [0, 16]], DK); r(2, 16, 2, 11, WD); r(13, 16, 2, 11, WD); r(4, 17, 9, 10, '#5a3e28'); r(8, 17, 1, 10, '#3a2818');
-  for (let x = 0; x < 32; x += 2) if (x < 1 || x > 16) r(x, 21, 1, 7, WL); h(23, 17, 31, WD);
-  r(0, 28, 32, 3, '#5a9a3a'); h(28, 0, 31, '#7fbf5f');
-}, true);
-// 妙善寺（かぼちゃ寺）：瓦屋根の小さなお堂と、かぼちゃ
-spotSprites.myozenji = shopCanvas((r, h) => {
-  r(15, 2, 2, 2, '#b88a12');
-  spanRows(h, 4, [[13, 18], [11, 20], [9, 22], [7, 24], [5, 26], [4, 27]], i => i === 5 ? '#2e3238' : i % 2 ? ROOF : ROOF_HI);
-  r(8, 10, 16, 12, '#7a5a3c'); r(12, 12, 8, 10, '#3e3024'); for (let x = 13; x < 20; x += 2) r(x, 12, 1, 10, '#6a5640');
-  spanRows(h, 22, [[10, 21], [9, 22], [8, 23], [7, 24]], i => i % 2 ? '#a9a49a' : '#c8c3b8');
-  for (const x of [0, 25]) {
-    pix(r, ['.####.', '######', '######', '######', '.####.'], x, 25, '#3e6b2e'); r(x + 2, 25, 1, 5, '#2c4f20'); r(x + 4, 26, 1, 3, '#5a8a40'); r(x + 2, 24, 2, 1, '#6a4a30');
-  }
-}, true);
-// 吉良饗庭塩の里：砂をならした塩田と、塩をたく小屋
-spotSprites.shioNoSato = shopCanvas((r, h) => {
-  const SA = '#d9cfb3', SD = '#c4b896';
-  spanRows(h, 7, [[20, 23], [18, 25], [16, 27], [15, 28]], '#4a3a2e'); r(16, 11, 12, 7, '#3a2c20'); for (let x = 18; x < 28; x += 3) r(x, 11, 1, 7, '#55402e'); r(20, 13, 3, 5, '#1e1610');
-  h(10, 1, 11, '#6a4a30'); h(11, 0, 12, '#6a4a30'); r(1, 12, 1, 6, WOOD); r(11, 12, 1, 6, WOOD);
-  r(0, 18, 32, 13, SA); h(18, 0, 31, '#8a7a5a'); for (let y = 20; y < 31; y += 2) h(y, 1, 30, SD);
-  r(4, 24, 5, 2, '#7fb8d8'); r(23, 26, 1, 4, '#8a6a4a'); h(29, 21, 25, '#8a6a4a');
-}, true);
-// 吉良ワイキキビーチ（宮崎海水浴場）：砂浜と海、うしろの山とホテル
-spotSprites.waikiki = shopCanvas((r, h) => {
-  r(17, 3, 13, 12, '#f2f2ee'); for (let y = 5; y < 14; y += 3) for (let x = 19; x < 29; x += 3) r(x, y, 2, 1, '#6f8fa8');
-  spanRows(h, 8, [[0, 16], [0, 17], [0, 18], [0, 31], [0, 31], [0, 31], [0, 31]], i => i % 2 ? '#3f7a34' : '#4f8a3a');
-  spanRows(h, 15, [[0, 31], [0, 31], [0, 31], [2, 31], [5, 31], [8, 31], [11, 31], [14, 31], [17, 31], [20, 31]], '#ecdcae');
-  spanRows(h, 18, [[0, 1], [0, 4], [0, 7], [0, 10], [0, 13], [0, 16], [0, 19], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31]], '#3f8fcf');
-  for (const [x, y] of [[2, 24], [10, 28], [20, 29], [5, 30], [26, 31]]) h(y, x, x + 2, '#8cc0e0');
-  for (const [x, c] of [[14, '#d23a2e'], [23, '#ffb300']]) { h(13, x - 2, x + 2, c); h(14, x - 3, x + 3, c); r(x, 15, 1, 4, '#555'); }
-}, true);
-// 岡崎城：白い壁の天守と石垣（徳川家康の生まれた城）
-spotSprites.okazakiCastle = shopCanvas((r, h) => {
-  const RF = '#5a606a', RH = '#7c838d', WL = '#f6f6f2', WN = '#3a3a3a', ST = '#9b968a', SD = '#6f6a61', GD = '#e2b13a';
-  for (let y = 24; y < 32; y++) h(y, 5 - ((y - 24) >> 1), 26 + ((y - 24) >> 1), ST);
-  h(27, 4, 27, SD); h(30, 2, 29, SD); for (const x of [10, 16, 22]) r(x, 25, 1, 2, SD);
-  r(6, 19, 20, 5, WL); for (const x of [9, 13, 18, 22]) r(x, 20, 2, 2, WN);
-  h(15, 8, 23, RH); h(16, 6, 25, RF); h(17, 4, 27, RF); h(18, 3, 28, RF); r(3, 17, 1, 1, RF); r(28, 17, 1, 1, RF);
-  spanRows(h, 13, [[15, 16], [14, 17]], RF); r(14, 15, 4, 1, WL);
-  r(9, 10, 14, 5, WL); for (const x of [11, 15, 19]) r(x, 11, 2, 2, WN);
-  h(8, 10, 21, RH); h(9, 8, 23, RF); r(7, 8, 1, 1, RF); r(24, 8, 1, 1, RF);
-  r(12, 5, 8, 3, WL); r(14, 6, 1, 1, WN); r(17, 6, 1, 1, WN);
-  h(2, 12, 19, RH); h(3, 11, 20, RF); h(4, 10, 21, RF); r(10, 3, 1, 1, RF); r(21, 3, 1, 1, RF);
-  r(12, 0, 1, 2, GD); r(19, 0, 1, 2, GD);
-}, true);
-// カクキュー 八丁味噌：石を山のように積んだ、大きな木の仕込み樽
-spotSprites.misoBarrel = shopCanvas((r, h) => {
-  const WD = '#9a6a3a', WH = '#b5824e', BD = '#4a3020', SG = '#a8a49c', SL = '#d0ccc4', SK = '#6f6a61';
-  const barrel = (x0, x1, y0, y1) => {
-    r(x0, y0, x1 - x0 + 1, y1 - y0 + 1, WD); r(x0 - 1, y0 + 2, 1, y1 - y0 - 3, WD); r(x1 + 1, y0 + 2, 1, y1 - y0 - 3, WD);
-    for (let x = x0 + 2; x < x1; x += 3) r(x, y0, 1, y1 - y0 + 1, WH);
-    for (const y of [y0 + 1, Math.round((y0 + y1) / 2), y1 - 1]) h(y, x0 - 1, x1 + 1, BD);
-    let w = x1 - x0 - 1, y = y0 - 1;   // 石の山
-    for (let x = x0 + 1; w > 0; y -= 2, w -= 4, x += 2) for (let sx = x; sx + 1 <= x + w; sx += 3) { r(sx, y - 1, 3, 2, SG); r(sx, y - 1, 2, 1, SL); r(sx + 2, y, 1, 1, SK); }
-  };
-  barrel(2, 15, 14, 29); barrel(17, 29, 17, 30);
-}, true);
-// デンパーク（安城）：とんがった屋根の窓が並ぶ建物と、黄色いひさし、花だん
-spotSprites.denpark = shopCanvas((r, h) => {
-  const RF = '#4a5a4a', RH = '#5e705e';
-  spanRows(h, 9, [[3, 28], [2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31]], i => i % 3 ? RF : RH);
-  for (const x of [5, 15, 25]) { spanRows(h, 5, [[x, x + 1], [x - 1, x + 2], [x - 2, x + 3], [x - 2, x + 3], [x - 2, x + 3]], RF); r(x - 1, 8, 4, 3, '#f4f0e4'); r(x, 9, 2, 2, '#6f8fa8'); }
-  r(0, 16, 32, 2, '#e8c840'); h(18, 0, 31, '#c8a830');
-  r(1, 19, 30, 7, '#f4f0e4'); for (let x = 3; x < 30; x += 5) r(x, 20, 3, 5, '#4c5c6a'); for (const x of [0, 10, 21, 31]) r(x, 18, 1, 9, '#7a5a3c');
-  r(0, 27, 32, 2, '#3f8a34'); for (let x = 1; x < 32; x += 3) r(x, 27, 1, 1, x % 2 ? '#d23a2e' : '#ffd54f');
-}, true);
-// 碧南海浜水族館：白い建物に青い帯、塔の上に青い丸いマーク
-spotSprites.hekinanAquarium = shopCanvas((r, h) => {
-  const WH = '#f4f6f8', BL = '#2f74b8', CY = '#4fb3d9';
-  r(2, 2, 9, 10, WH); r(4, 3, 5, 5, BL); r(5, 4, 3, 3, '#ffffff'); r(6, 5, 1, 1, BL);
-  r(0, 10, 32, 17, WH); h(10, 0, 31, '#d8dde2'); r(0, 14, 32, 2, BL); h(16, 0, 31, CY);
-  for (let x = 2; x < 13; x += 4) r(x, 19, 3, 3, '#6f8fa8');
-  r(14, 18, 12, 9, '#2b3440'); h(17, 13, 26, '#333'); for (const x of [17, 22]) r(x, 18, 1, 9, '#5a6470');
-  r(27, 6, 1, 12, '#888'); r(28, 6, 3, 2, BL);
-  r(0, 26, 12, 2, '#d23a2e'); r(0, 25, 12, 1, '#4f9a3a');
-}, true);
-// 高浜市やきものの里 かわら美術館：段々の茶色い建物と、入口の鬼瓦
-spotSprites.kawaraMuseum = shopCanvas((r, h) => {
-  const BN = '#8a7a6c', BD = '#6e5f52', TL = '#a0604a', TP = '#b58a7a';
-  r(1, 12, 30, 16, BN); r(8, 7, 23, 6, BN); r(16, 3, 15, 5, BN);
-  for (const [x0, y] of [[1, 12], [8, 7], [16, 3]]) for (let x = x0; x < 31; x += 4) spanRows(h, y - 2, [[x + 1, x + 2], [x, x + 3]], TP);
-  for (const y of [9, 15, 19]) h(y, 1, 30, TL); h(5, 16, 30, TL);
-  for (let x = 20; x < 31; x += 3) r(x, 13, 1, 6, BD);
-  r(5, 21, 12, 7, '#3a3a40'); h(20, 4, 17, BD);
-  for (const x of [1, 18]) { r(x, 22, 4, 5, '#7a7a78'); r(x + 1, 21, 2, 1, '#7a7a78'); r(x + 1, 23, 1, 1, '#2a2a2a'); r(x + 2, 23, 1, 1, '#2a2a2a'); r(x, 27, 4, 1, '#5a5a58'); }   // 鬼瓦
-}, true);
 // 3回目に足した名所（同じく Wikimedia Commons の写真を参考に。docs/landmark-photos.md）
 const PINE = ['.#####.', '#######', '.#####.'];
-// 実相寺 釈迦堂：こけらぶきの寄棟の大屋根と、黒っぽい板の壁。まわりの松
-spotSprites.jissoji = shopCanvas((r, h) => {
-  const RB = '#7a6a58', RH = '#958470';
-  for (const [x, y] of [[0, 0], [24, 1], [2, 4]]) { pix(r, PINE, x, y, '#2f6a3a'); h(y, x + 2, x + 4, '#4f8a4a'); }
-  spanRows(h, 5, [[12, 19], [10, 21], [8, 23], [6, 25], [4, 27], [2, 29], [1, 30]], i => i % 3 === 1 ? RH : RB); h(12, 0, 31, '#4a3e30');
-  r(5, 13, 22, 11, '#4a3626'); for (const x of [5, 10, 21, 26]) r(x, 13, 1, 11, '#6a4e36');
-  r(12, 15, 8, 9, '#2e2218'); for (let x = 13; x < 20; x += 2) r(x, 15, 1, 9, '#5a4430');
-  h(24, 3, 28, '#8a7a68'); for (let x = 1; x < 31; x += 3) r(x, 25, 1, 3, '#6a5040'); h(26, 0, 31, '#6a5040');
-  h(29, 2, 29, '#a9a49a'); h(30, 1, 30, '#c2bdb1');
-}, true);
-// 久麻久神社：石段の上の拝殿（瓦屋根と木の社殿）
-spotSprites.kumakuJinja = shopCanvas((r, h) => {
-  spanRows(h, 3, [[10, 21], [8, 23], [6, 25], [4, 27], [3, 28]], i => i % 2 ? ROOF : ROOF_HI); h(8, 2, 29, '#2e3238');
-  r(5, 9, 22, 8, '#8a6a4a'); r(12, 10, 8, 7, '#3a2a20'); for (const x of [5, 11, 20, 26]) r(x, 9, 1, 8, '#6a4a30'); r(15, 9, 2, 1, '#e2b13a');
-  h(17, 2, 29, '#c8c3b8'); for (let x = 3; x < 30; x += 2) r(x, 15, 1, 2, '#9a7650');
-  spanRows(h, 18, [[11, 20], [11, 20], [10, 21], [10, 21], [9, 22], [9, 22], [8, 23], [8, 23], [7, 24], [7, 24], [6, 25], [6, 25], [5, 26], [5, 26]], i => i % 2 ? '#8a857a' : '#b8b2a6');
-  for (const [x, y] of [[9, 18], [22, 18]]) r(x, y, 1, 14, '#c8c3b8');
-}, true);
-// 長圓寺：苔むした広い石段の上の山門と、白い土塀
-spotSprites.choenji = shopCanvas((r, h) => {
-  for (const x of [0, 26]) { r(x, 2, 6, 12, '#2f6a3a'); r(x + 1, 3, 3, 2, '#4f8a4a'); }
-  r(4, 9, 24, 5, '#f0ece2'); h(8, 3, 28, ROOF);
-  spanRows(h, 3, [[12, 19], [10, 21], [9, 22], [8, 23]], i => i % 2 ? ROOF : ROOF_HI); h(7, 8, 23, '#2e3238');
-  r(10, 8, 2, 6, WOOD); r(20, 8, 2, 6, WOOD); r(12, 9, 8, 5, '#2a2018');
-  for (let y = 14; y < 32; y++) { const a = Math.max(0, 9 - (y - 14)), b = Math.min(31, 22 + (y - 14)); h(y, a, b, (y % 3) === 2 ? '#7a756b' : (y % 3) ? '#a9a49a' : '#6a8a4a'); }
-}, true);
-// 養寿寺：瓦屋根の本堂と、右の鐘つき堂
-spotSprites.yojuji = shopCanvas((r, h) => {
-  spanRows(h, 6, [[6, 15], [4, 17], [2, 19], [1, 20], [0, 21]], i => i % 2 ? ROOF : ROOF_HI); h(11, 0, 21, '#2e3238');
-  r(2, 12, 18, 12, '#7a5a3c'); r(7, 14, 8, 10, '#3e3024'); for (const x of [2, 6, 15, 19]) r(x, 12, 1, 12, '#9a7650');
-  spanRows(h, 4, [[24, 27], [22, 29], [21, 30]], i => i % 2 ? ROOF : ROOF_HI); spanRows(h, 2, [[25, 26]], '#b88a12');
-  r(22, 7, 1, 17, WOOD); r(29, 7, 1, 17, WOOD); r(24, 9, 4, 5, '#4f7a5a'); h(14, 24, 27, '#3a5a44'); r(25, 8, 2, 1, '#333');
-  h(24, 0, 31, '#a9a49a'); h(25, 0, 31, '#c2bdb1');
-}, true);
-// 紅樹院（茶祖の寺）：瓦の大屋根の本堂と、手前の茶の木
-spotSprites.kojuin = shopCanvas((r, h) => {
-  spanRows(h, 3, [[11, 20], [9, 22], [7, 24], [5, 26], [3, 28], [1, 30], [0, 31]], i => i % 2 ? ROOF : ROOF_HI); h(10, 0, 31, '#2e3238');
-  r(4, 11, 24, 10, '#7a5a3c'); r(10, 13, 12, 8, '#3e3024'); for (const x of [4, 9, 22, 27]) r(x, 11, 1, 10, '#9a7650');
-  h(21, 2, 29, '#a9a49a');
-  for (const y of [23, 27]) { h(y, 1, 30, '#7fc65e'); r(0, y + 1, 32, 2, '#3f8f3a'); h(y + 3, 0, 31, '#2a5f28'); }
-}, true);
-// 一色学びの館：丸い筒形の塔と、列柱のある低い建物
-spotSprites.isshikiManabi = shopCanvas((r, h) => {
-  r(13, 2, 14, 19, '#b49a88'); r(13, 2, 3, 19, '#c8b2a0'); r(23, 2, 4, 19, '#9a806e'); h(2, 13, 26, '#d8c4b2'); h(3, 13, 26, '#8a705e');
-  r(0, 17, 32, 9, '#d8cfc4'); h(17, 0, 31, '#e8e0d6'); h(18, 0, 31, '#b8afa4');
-  for (let x = 1; x < 31; x += 4) { r(x, 19, 1, 7, '#e8e0d6'); r(x + 1, 19, 3, 6, '#5a5550'); }
-  r(0, 26, 32, 4, '#8a8a88'); for (let x = 2; x < 32; x += 6) r(x, 27, 1, 3, '#f4f4f4');
-}, true);
-// 佐久島の港：「三河湾の黒真珠 佐久島」の白い看板と、黒い板の小屋、船着き場
-spotSprites.sakushimaPort = shopCanvas((r, h) => {
-  r(0, 22, 32, 10, '#4f8fbf'); for (const [x, y] of [[3, 25], [12, 28], [24, 26], [18, 30]]) h(y, x, x + 2, '#8cc0e0');
-  r(0, 18, 20, 4, '#b8b2a6'); h(18, 0, 19, '#d0cbc0'); r(1, 22, 2, 3, '#8a857a'); r(16, 22, 2, 3, '#8a857a');
-  r(20, 6, 11, 13, '#2a2522'); for (let x = 22; x < 31; x += 3) r(x, 6, 1, 13, '#3c3632'); spanRows(h, 4, [[21, 30], [20, 31]], '#3c4148'); r(23, 10, 4, 3, '#8a8a80');
-  r(12, 1, 6, 17, '#f4f4f4'); r(13, 2, 4, 15, '#ffffff'); for (let y = 3; y < 16; y += 2) r(14, y, 2, 1, y < 9 ? '#2f5fae' : '#222'); r(14, 18, 2, 0, '#555');
-  r(9, 20, 6, 2, '#e8e2d0');   // 舟
-}, true);
-// 大浦海水浴場（佐久島）：草地の中の、高い木の見はらし小屋
-spotSprites.ouraBeach = shopCanvas((r, h) => {
-  r(0, 18, 32, 14, '#6fae4a'); spanRows(h, 22, [[10, 14], [9, 15], [9, 16], [8, 16], [8, 17], [7, 17], [7, 18], [6, 18], [6, 19], [5, 19]], '#d9cfb3');
-  spanRows(h, 2, [[16, 25], [14, 27], [13, 28]], '#4a3a2e'); r(15, 5, 1, 17, WOOD); r(26, 5, 1, 17, WOOD);
-  r(14, 11, 14, 2, '#8a6a4a'); for (let x = 15; x < 27; x += 2) r(x, 8, 1, 3, '#8a6a4a'); h(8, 14, 27, '#8a6a4a');
-  for (let i = 0; i < 9; i++) r(27 + Math.floor(i / 3), 13 + i, 2, 1, '#8a6a4a');
-  r(0, 14, 9, 5, '#3f7a34'); r(1, 13, 6, 1, '#5a9a44');
-}, true);
-// 黄金堤（吉良）：木の並ぶ土手と、まわりの黄金色の田んぼ
-spotSprites.koganeZutsumi = shopCanvas((r, h) => {
-  for (let x = 1; x < 31; x += 7) { r(x, 4, 6, 6, '#3f8a34'); r(x + 1, 4, 3, 2, '#6fba50'); r(x + 2, 10, 2, 3, '#6a4a30'); }
-  spanRows(h, 12, [[3, 28], [2, 29], [1, 30], [0, 31], [0, 31]], i => i ? '#6fae4a' : '#c8b88a');
-  r(0, 17, 32, 15, '#e0b83a'); for (let y = 18; y < 32; y += 3) for (let x = (y % 2) * 2; x < 32; x += 4) r(x, y, 2, 1, '#c89a20');
-  h(24, 0, 31, '#8a7a4a');
-}, true);
-// 尾﨑士郎記念館（吉良）：瓦屋根の白い建物と、前の胸像
-spotSprites.ozakiShiro = shopCanvas((r, h) => {
-  spanRows(h, 5, [[6, 25], [4, 27], [2, 29], [1, 30]], i => i % 2 ? ROOF : ROOF_HI); h(9, 0, 31, '#2e3238');
-  r(2, 10, 28, 15, '#f4f2ec'); for (const x of [2, 12, 29]) r(x, 10, 1, 15, '#3a3a3a'); h(10, 2, 29, '#3a3a3a');
-  r(5, 13, 5, 6, '#3a3a3a'); r(6, 14, 3, 4, '#c8d8e0'); r(15, 13, 11, 12, '#3a3a3a'); r(16, 14, 9, 11, '#5a6470');
-  r(5, 22, 6, 7, '#9a968c'); r(6, 19, 4, 3, '#6a5a40'); r(7, 17, 2, 2, '#6a5a40');   // 胸像
-  h(25, 0, 31, '#a9a49a');
-}, true);
-// 幡頭神社（吉良）：大きな石の鳥居と、奥の拝殿、社名の石柱
-spotSprites.hazuJinja = shopCanvas((r, h) => {
-  const ST = '#b8b2a6', SD = '#8a857a';
-  spanRows(h, 7, [[11, 20], [10, 21], [9, 22]], ROOF); r(10, 10, 12, 6, '#8a6a4a'); r(13, 11, 6, 5, '#3a2a20');
-  h(4, 2, 27, ST); h(5, 3, 26, SD); r(2, 3, 1, 1, ST); r(27, 3, 1, 1, ST); h(8, 5, 24, ST);
-  r(6, 6, 2, 22, ST); r(21, 6, 2, 22, ST); r(14, 6, 2, 2, SD);
-  spanRows(h, 16, [[13, 18], [12, 19], [12, 19], [11, 20], [11, 20], [10, 21], [10, 21], [9, 22], [9, 22], [8, 23], [8, 23], [7, 24], [7, 24], [6, 25], [6, 25], [5, 26]], i => i % 2 ? '#c8c3b8' : '#a9a49a');
-  r(27, 6, 3, 24, '#9a968c'); for (let y = 8; y < 26; y += 3) r(28, y, 1, 2, '#3a3a3a');
-}, true);
-// 名鉄 西幡豆駅：木の小さな駅舎（クリーム色の壁、茶色のわく、青い駅名の看板）と赤いポスト
-spotSprites.nishiHazu = shopCanvas((r, h) => {
-  spanRows(h, 6, [[10, 21], [7, 24], [4, 27], [2, 29], [1, 30]], i => i % 2 ? '#6a5a4a' : '#7a6a5a');
-  r(3, 11, 26, 15, '#efe6d2'); for (const x of [3, 11, 20, 28]) r(x, 11, 1, 15, '#7a4a2a'); h(11, 3, 28, '#7a4a2a'); h(18, 3, 28, '#7a4a2a');
-  r(13, 12, 6, 3, '#3f7fbf'); r(14, 13, 4, 1, '#ffffff');
-  r(5, 19, 5, 5, '#6f8fa8'); r(12, 19, 7, 7, '#3f5566'); r(22, 19, 5, 5, '#6f8fa8');
-  r(29, 20, 2, 6, '#d23a2e'); h(26, 1, 30, '#9a9a96');
-}, true);
-// 名鉄 東幡豆駅：赤いトタン屋根の駅舎と、白い壁、駅名の看板、赤いポスト
-spotSprites.higashiHazu = shopCanvas((r, h) => {
-  spanRows(h, 7, [[6, 25], [4, 27], [2, 29], [1, 30], [0, 31]], i => i % 2 ? '#c0392b' : '#d8503f');
-  for (let x = 2; x < 31; x += 2) r(x, 8, 1, 3, '#a83020');
-  r(2, 12, 28, 14, '#f4f2ec'); h(12, 2, 29, '#c8c3b8');
-  r(10, 13, 10, 3, '#ffffff'); h(15, 10, 19, '#3f9a5a'); r(11, 13, 7, 1, '#3f7fbf');
-  r(4, 17, 5, 5, '#6f8fa8'); r(12, 17, 6, 9, '#3f5566'); r(21, 17, 5, 5, '#6f8fa8');
-  r(27, 19, 2, 7, '#d23a2e'); h(26, 0, 31, '#9a9a96');
-}, true);
-// 鳥羽神明社：拝殿と、2月の「鳥羽の火祭り」で燃やす大きなたいまつ（すずみ）
-spotSprites.tobaShinmei = shopCanvas((r, h) => {
-  spanRows(h, 8, [[4, 17], [2, 19], [1, 20], [0, 21]], i => i % 2 ? ROOF : ROOF_HI); h(12, 0, 21, '#2e3238');
-  r(1, 13, 20, 11, '#8a6a4a'); r(2, 14, 18, 4, '#f4f2ec'); for (const x of [5, 10, 15]) { r(x, 15, 2, 2, '#222'); } r(6, 18, 10, 6, '#3a2a20');
-  h(24, 0, 21, '#a9a49a');
-  r(23, 9, 6, 19, '#b8a060'); for (let y = 11; y < 27; y += 4) h(y, 23, 28, '#6a5a30'); r(25, 28, 2, 3, '#6a4a30');   // すずみ
-  spanRows(h, 1, [[25, 26], [24, 27], [23, 28], [22, 29], [23, 28], [23, 28], [22, 29], [23, 28]], i => i < 2 ? '#ffe27a' : i < 5 ? '#ffb300' : '#e65100');
-}, true);
-// 旧糟谷邸（吉良）：黒い板壁に瓦屋根の古い家と、大きなイスノキ
-spotSprites.kasuyaTei = shopCanvas((r, h) => {
-  spanRows(h, 9, [[1, 16], [0, 17], [0, 18]], i => i % 2 ? ROOF : ROOF_HI); r(0, 12, 17, 15, '#2a2522'); for (let x = 2; x < 17; x += 3) r(x, 12, 1, 15, '#3c3632'); r(5, 19, 6, 8, '#5a4a3a');
-  r(17, 1, 15, 12, '#3f7a34'); r(19, 2, 6, 3, '#5a9a44'); r(26, 6, 5, 3, '#5a9a44');
-  r(22, 12, 4, 17, '#6a4a30'); r(21, 16, 2, 4, '#6a4a30'); r(25, 9, 2, 6, '#5a3e28'); r(23, 14, 1, 10, '#4a3420');
-  h(29, 18, 31, '#8a7a5a'); h(27, 0, 17, '#a9a49a');
-}, true);
-// 八ツ面山：緑の山と、てっぺんの白い展望台
-spotSprites.yatsuomote = shopCanvas((r, h) => {
-  r(13, 2, 6, 3, '#e8e8e4'); h(5, 11, 20, '#c8c8c4'); r(14, 6, 4, 9, '#f4f4f0'); r(15, 7, 2, 2, '#6f8fa8'); r(15, 11, 2, 2, '#6f8fa8');
-  spanRows(h, 13, [[10, 21], [8, 23], [6, 25], [4, 27], [3, 28], [2, 29], [1, 30], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31], [0, 31]], i => i % 4 === 1 ? '#5a9a44' : '#3f7a34');
-  for (const [x, y] of [[4, 20], [12, 18], [22, 21], [8, 26], [18, 25], [27, 27]]) { r(x, y, 3, 2, '#2f6a2a'); r(x, y, 2, 1, '#6fba50'); }
-}, true);
 // ---- 48×48 の名所の絵（写真から測った色で描きなおしたもの。上の 32×32 の絵を置きかえる） ----
 // 西尾城（本丸丑寅櫓）：銀ねずの瓦屋根が三重、壁はこげ茶の下見板と白い漆喰、二重めの屋根に千鳥破風、てっぺんにしゃちほこ。石垣の上
 spotSprites.nishioCastle = hiCanvas((r, h) => {
@@ -1777,6 +1472,1367 @@ spotSprites.ohirune = hiCanvas((r, h) => {
     r(ox2, oy2, 6, y + 7 - oy2, row === 2 ? SE : SK); if (row === 1) r(ox2, y + 5, 6, 2, SE); if (row === 2) h(y + 6, ox2, ox2 + 5, SA);
   });
   for (const [x, y0, y1] of [[21, 9, 41], [31, 26, 41]]) { r(x, y0, 1, y1 - y0, '#2a2a2e'); r(x + 4, y0, 1, y1 - y0, '#2a2a2e'); for (let y = y0 + 2; y < y1; y += 3) r(x + 1, y, 3, 1, '#4a4a50'); }   // はしご
+});
+// ---- 48×48 に描き直した名所の絵（もとは 32×32。参考写真から色と比率をとりなおしたもの） ----
+// カモメの駐車場（佐久島）：沖へのびる石の防波堤に、棒の上のカモメの像が2列にずらり（遠くほど小さく）
+spotSprites.kamome = hiCanvas((r, h) => {
+  const SE = '#6b8796', SL = '#8aa6b4', RK = '#8a847e', RL = '#aaa49e', RD = '#5e5a56';
+  spanRows(h, 24, Array.from({ length: 24 }, (_, i) => [Math.max(0, 14 - i), Math.min(47, 33 + i)]), SE);
+  for (const [x, y] of [[4, 40], [38, 30], [42, 44], [8, 30]]) h(y, x, x + 3, SL);
+  for (let y = 18; y < 48; y++) { const k = (y - 18) / 30, a = Math.round(20 - k * 16), b = Math.round(27 + k * 16); h(y, a, b, RK); }   // 遠くから手前へ広がる防波堤
+  for (let y = 20; y < 48; y += 3) { const k = (y - 18) / 30, a = Math.round(20 - k * 16), b = Math.round(27 + k * 16); for (let x = a + ((y / 3) % 2 ? 1 : 3); x < b - 1; x += Math.max(2, Math.round(3 + k * 3))) { r(x, y, Math.max(1, Math.round(1 + k * 2)), 1, RL); r(x - 1, y + 1, 1, 1, RD); } }
+  for (let i = 0; i < 7; i++) {   // カモメの像（2列）
+    const k = i / 6, y = Math.round(6 + i * 4.2), s = k < 0.3 ? 1 : k < 0.7 ? 2 : 3;
+    for (const side of [-1, 1]) {
+      const x = Math.round(23.5 + side * (2 + k * 9)) - s;
+      r(x + s, y + s, 1, 2 + s * 2, '#c88a3b');
+      h(y, x, x + s * 2, '#d8dce0'); h(y + 1, x, x + s * 2, '#6a727e'); r(x + s * 2 + 1, y, 1, 1, '#e8a040'); if (s > 1) h(y - 1, x + s, x + s * 2, '#e8ecf0');
+    }
+  }
+});
+// 稲荷山茶園公園：こい灰色の寄棟屋根のあずまや（灰色の柱・石段）と、まるくかりこんだ茶の木の列
+spotSprites.chaen = hiCanvas((r, h) => {
+  const TG = '#3f8f3a', TL = '#7fc65e', TD = '#2a5f28', SO = '#a88a62';
+  tileRoof(r, h, 5, [[18, 29], [15, 32], [12, 35], [9, 38], [7, 40]], ['#5a585e', '#3e3c42', '#2c292d', '#48464c']); r(22, 3, 4, 2, '#5a585e');
+  h(10, 9, 38, '#8a8c90'); for (const x of [10, 23, 37]) r(x, 11, 2, 12, '#7a7d82'); r(15, 17, 18, 2, '#8a6a4a'); r(20, 15, 8, 2, '#a07a58');   // 柱とベンチ・机
+  for (let i = 0; i < 3; i++) h(21 + i, 14 - i, 33 + i, i % 2 ? '#8a8a88' : '#a8a8a4');
+  for (const y of [25, 32, 39]) {
+    h(y, 1, 46, TL); r(0, y + 1, 48, 3, TG); h(y + 4, 0, 47, TD); if (y < 39) h(y + 5, 0, 47, SO); if (y < 39) h(y + 6, 0, 47, SO);
+    for (let x = 2 + (y % 2) * 3; x < 46; x += 6) { h(y - 1, x, x + 2, TL); r(x + 4, y + 2, 1, 1, TL); }
+  }
+});
+// 尚古荘：銀ねずの瓦屋根、障子の白い帯とこげ茶の柱、ガラス戸の縁側。手前に斜めにのびる松の幹と庭石
+spotSprites.shokoso = hiCanvas((r, h) => {
+  const WD = '#473f41', SJ = '#e8e6e0';
+  tileRoof(r, h, 8, [[12, 46], [10, 47], [8, 47], [6, 47], [5, 47]], ['#9aa29e', '#7a827e', '#4a504c', '#6a726e']);
+  r(7, 13, 41, 3, '#3a3236'); r(7, 16, 41, 9, SJ); for (let x = 7; x < 48; x += 3) r(x, 16, 1, 9, '#c8c4bc'); h(20, 7, 47, '#c8c4bc');
+  r(7, 25, 41, 7, '#262120'); for (let x = 8; x < 48; x += 4) r(x + 1, 26, 2, 3, '#7a8a90');
+  for (const x of [7, 17, 27, 37, 47]) r(x, 13, 1, 20, WD);
+  h(32, 4, 47, '#5a5054'); h(33, 4, 47, '#3b383c'); for (let x = 6; x < 48; x += 6) r(x, 34, 1, 4, WD);
+  for (let i = 0; i < 40; i++) r(Math.round(18 + i * 0.25), 8 + i, 2, 1, i % 5 ? '#6a5a4c' : '#4a3e34');   // 松の幹
+  for (const [x, y] of [[2, 1], [10, 4], [0, 8], [22, 0]]) { pix(r, PINE, x, y, '#3a5a34'); h(y, x + 2, x + 4, '#5a7a4a'); }
+  r(0, 40, 48, 8, '#7a8a5a'); for (const [x, y, w] of [[2, 41, 9], [14, 43, 7], [30, 42, 10]]) { r(x, y, w, 3, '#8a8688'); h(y, x + 1, x + w - 2, '#a8a4a6'); }
+  pix(r, ['.####.', '######', '######'], 0, 36, '#4a7a3a');
+});
+// 伊文神社：緑青の銅ぶき屋根（正面に反った唐破風）、白木の柱、しめ縄と紙垂、石段と白い砂利
+spotSprites.ibunJinja = hiCanvas((r, h) => {
+  const CU = '#6f9a8e', CL = '#8fb8aa', CD = '#4a6e64', WD = '#c8b89a', WS = '#8a7a64', DK = '#2b2521';
+  spanRows(h, 8, [[14, 33], [11, 36], [8, 39], [6, 41], [4, 43], [3, 44], [2, 45]], i => i < 2 ? CL : CU); h(15, 1, 46, CD); r(1, 14, 1, 1, CD); r(46, 14, 1, 1, CD);
+  for (let x = 6; x < 42; x += 3) r(x, 10, 1, 4, '#80aa9c');
+  spanRows(h, 9, [[21, 26], [18, 29], [16, 31], [15, 32], [14, 33], [14, 33]], i => i === 0 ? CL : CU); h(14, 14, 33, CD); r(13, 13, 1, 1, CD); r(34, 13, 1, 1, CD);   // 唐破風
+  r(22, 5, 4, 3, CD); r(23, 4, 2, 1, '#8a6a3a');
+  r(6, 16, 36, 15, WS); r(8, 18, 32, 13, DK); for (const x of [6, 13, 20, 27, 34, 41]) r(x, 16, 2, 15, WD); h(16, 6, 42, '#d8ccb0');
+  for (let x = 9; x < 40; x += 2) r(x, 19, 1, 5, '#4a3e34');
+  r(9, 21, 30, 2, '#e8dcc0'); for (const x of [13, 19, 25, 31, 37]) { r(x, 23, 1, 1, '#ffffff'); r(x + 1, 24, 1, 2, '#ffffff'); }   // しめ縄と紙垂
+  h(31, 4, 43, '#8a7a6a'); r(4, 32, 6, 3, WD); r(38, 32, 6, 3, WD); for (let x = 5; x < 43; x += 2) r(x, 32, 1, 3, '#a89878');
+  for (let i = 0; i < 5; i++) h(35 + i, 16 - i, 31 + i, i % 2 ? '#8a8886' : '#a8a6a4');
+  r(0, 40, 48, 8, '#d8d4cc'); for (const [x, y] of [[4, 43], [12, 46], [36, 44], [42, 46]]) r(x, y, 2, 1, '#b8b4ac');
+});
+// 抹茶ミュージアム 西条園 和く和く：大きな黒い軒の下、ベージュの壁に緑の葉のマークと「和く和く」の字、展示の窓、白い竹垣
+spotSprites.wakuwaku = hiCanvas((r, h) => {
+  const BE = '#c8ae8c', BD = '#a48e70';
+  r(0, 4, 48, 3, '#4a4a48'); h(7, 0, 47, '#2e2e2c'); r(0, 8, 8, 36, '#3a383c'); for (let y = 10; y < 44; y += 3) h(y, 0, 7, '#4a484c');
+  r(8, 8, 26, 36, BE); r(8, 8, 26, 2, BD);
+  pix(r, ['..##..', '.####.', '######', '#.##.#', '..##..'], 11, 13, '#5aae2f'); pix(r, ['#.#.##.#.#.##', '.#..#..#.#.#.', '#.#.##.#.#.##'], 19, 14, '#2a2a2a');
+  r(12, 23, 16, 9, '#222'); r(13, 24, 6, 7, '#c86a3a'); r(19, 24, 4, 3, '#e8c890'); r(23, 24, 4, 7, '#7a9a5a'); r(19, 27, 4, 4, '#a84a3a');   // 展示の窓
+  r(34, 8, 14, 36, '#3a3a3a'); r(35, 18, 12, 2, '#222'); r(36, 20, 10, 24, '#2a3036'); r(38, 18, 8, 1, '#5aae2f');
+  r(30, 28, 18, 16, '#d8d0c4'); for (let x = 31; x < 48; x += 2) r(x, 28, 1, 16, '#b8b0a4'); for (const y of [32, 39]) for (let x = 32; x < 48; x += 4) { r(x, y, 1, 1, '#111'); r(x + 1, y + 1, 1, 1, '#111'); }   // 竹垣
+  r(0, 44, 48, 4, '#a49e9b'); pix(r, ['.###', '####', '####'], 26, 41, '#4a8a3a');
+});
+// 三河工芸ガラス美術館：灰色がかったクリーム色の箱の建物、青いたて長の窓が2つずつ、1階の白い帯とガラス張り（中に色ガラス）
+spotSprites.glassMuseum = hiCanvas((r, h) => {
+  const WL = '#d8d4cc', WS = '#b8b4ac';
+  r(6, 4, 36, 26, WL); r(6, 4, 4, 26, WS); h(4, 6, 41, '#e8e6e0'); for (let y = 10; y < 30; y += 6) h(y, 6, 41, '#c8c4bc');
+  for (const [x, y] of [[16, 8], [19, 8], [28, 7], [31, 7], [16, 18], [19, 18], [28, 18], [31, 18]]) { r(x, y, 2, 6, '#2a4a8a'); r(x, y, 1, 2, '#5a7ab8'); }
+  r(3, 30, 42, 4, '#f0eee8'); h(33, 3, 44, '#c8c4bc'); r(41, 6, 1, 24, WS);
+  r(5, 34, 38, 11, '#3a4248'); for (const x of [5, 11, 17, 23, 29, 35, 42]) r(x, 34, 1, 11, '#b8bcc0');
+  for (const [x, y, c] of [[7, 38, '#e57373'], [13, 40, '#ffd54f'], [19, 37, '#64b5f6'], [31, 39, '#81c784'], [37, 37, '#ba68c8']]) r(x, y, 2, 3, c);
+  r(24, 36, 4, 9, '#5a6670'); r(0, 45, 48, 3, '#6a6a6a'); r(44, 34, 1, 11, '#333');
+});
+// 道の駅にしお岡ノ山：こい灰色の切妻屋根の平屋が2つ（白っぽい破風）、丸い柱の通路、駐車場の青い区画
+spotSprites.michinoeki = hiCanvas((r, h) => {
+  const RC = ['#5a5e64', '#3e4248', '#24282c', '#4a4e54'];
+  tileRoof(r, h, 9, [[6, 21], [4, 23], [2, 25], [1, 26], [0, 27]], RC); spanRows(h, 9, [[13, 14], [12, 15], [11, 16], [10, 17]], '#e8e4d8');
+  r(1, 14, 25, 12, '#d8d0c0'); r(4, 17, 6, 9, '#2a3036'); r(14, 17, 9, 6, '#4a5866'); for (const x of [2, 12, 24]) r(x, 14, 1, 12, '#8a8070');
+  tileRoof(r, h, 7, [[24, 47], [23, 47], [22, 47], [21, 47], [20, 47], [20, 47]], RC);
+  r(21, 13, 27, 13, '#cfc6b4'); r(24, 16, 22, 8, '#2a3036'); for (const x of [27, 34, 41]) { r(x, 14, 2, 12, '#e8e4dc'); r(x, 14, 1, 12, '#ffffff'); }
+  r(0, 26, 48, 22, '#6a6a6c'); spanRows(h, 33, [[6, 24], [5, 25], [4, 26], [3, 27], [2, 28], [1, 29]], '#3a8ad8'); for (const x of [8, 14, 20]) r(x, 34, 1, 4, '#ffffff');
+  for (const x of [32, 40]) r(x, 30, 1, 12, '#f4f4f4'); h(42, 30, 47, '#c84a4a');
+});
+// 三河一色諏訪神社：銀ねずの瓦の重い入母屋屋根（反った軒）、彫刻のある茶色い木の社殿、高い床と手すり
+spotSprites.isshikiSuwa = hiCanvas((r, h) => {
+  const RC = ['#b8bcc2', '#8a8e96', '#4a4e56', '#7a7e86'], WD = '#7a5a40', WL = '#9a7a58', DK = '#3a2a20';
+  spanRows(h, 2, [[18, 29], [17, 30]], '#5a5e66'); tileRoof(r, h, 4, [[15, 32], [13, 34], [11, 36], [9, 38], [7, 40], [5, 42], [3, 44], [2, 45]], RC);
+  spanRows(h, 5, [[22, 25], [21, 26], [20, 27], [19, 28]], '#e8e4dc'); r(23, 6, 2, 1, '#8a6a3a');   // 破風の妻
+  r(6, 12, 36, 3, '#5a4a3a'); h(12, 6, 41, '#8a7a68');
+  r(7, 15, 34, 14, WD); for (const x of [7, 14, 20, 27, 33, 40]) r(x, 15, 1, 14, WL);
+  for (let x = 8; x < 40; x += 2) r(x, 16, 1, 4, '#5a4632'); r(15, 21, 5, 8, DK); r(28, 21, 5, 8, DK); r(21, 21, 6, 8, '#2a1e16');
+  for (let x = 8; x < 40; x += 3) r(x, 17, 2, 2, '#b89a70');   // 彫刻
+  h(29, 3, 44, '#8a7a6a'); r(3, 30, 42, 2, WL); for (let x = 4; x < 44; x += 3) r(x, 32, 1, 5, WD); h(36, 2, 45, '#6a5a4a');
+  r(0, 37, 48, 6, '#9a968c'); h(37, 0, 47, '#b8b4aa'); r(0, 43, 48, 5, '#c8c4b8');
+  r(42, 30, 3, 9, '#9a968c'); r(41, 29, 5, 2, '#b8b4aa');   // 石灯籠
+});
+// 一色港：佐久島へ渡る白い高速船「さちかぜ」（青い船底と虹のマーク、黒い窓の操舵室）と、青い柱の船着き場の屋根
+spotSprites.isshikiPort = hiCanvas((r, h) => {
+  const WH = '#f0f2f4', WS = '#c8ccd4', BL = '#2f5fae';
+  r(0, 0, 20, 3, '#2a4a8a'); r(4, 3, 2, 30, '#2a6ac0'); r(16, 3, 2, 26, '#2a6ac0');
+  r(22, 4, 1, 6, '#666'); h(5, 20, 25, '#666');
+  r(18, 9, 14, 6, WH); r(19, 11, 12, 2, '#222a30'); h(9, 18, 31, '#ffffff');
+  r(10, 15, 30, 8, WH); r(10, 21, 30, 2, WS); for (let x = 12; x < 38; x += 4) r(x, 17, 3, 2, '#2a3440');
+  spanRows(h, 23, [[2, 40], [2, 42], [3, 44], [3, 46], [4, 45], [5, 44], [6, 42], [8, 40], [10, 38]], i => i === 3 ? BL : i === 4 ? '#d23a2e' : i >= 6 ? BL : WH);
+  for (const [x, c] of [[12, '#e53935'], [13, '#fb8c00'], [14, '#fdd835'], [15, '#43a047'], [16, '#1e88e5']]) r(x, 25, 1, 3, c);   // 虹のマーク
+  r(0, 32, 48, 16, '#5a7a8a'); for (const [x, y] of [[3, 36], [20, 40], [34, 35], [40, 44], [10, 44]]) h(y, x, x + 3, '#8aaab8');
+  r(0, 30, 10, 6, '#9a9a96'); h(30, 0, 9, '#c8c8c4'); for (let x = 0; x < 10; x += 3) r(x, 33, 2, 1, '#e8c040');
+});
+// 愛知こどもの国：園内を走る白い汽車（丸い顔に煙突、運転台）と、白い屋根つきの客車
+spotSprites.kodomoTrain = hiCanvas((r, h) => {
+  const WH = '#f4f4f2', WS = '#c8c8c4', DK = '#2a2a2a';
+  r(0, 14, 24, 2, WH); h(16, 0, 23, WS); for (const x of [0, 8, 16, 23]) r(x, 16, 1, 8, WS);
+  for (const [x, c] of [[2, '#ffb300'], [5, '#5a3418'], [10, '#e57373'], [13, '#2b2018'], [18, '#3f7fbf']]) { r(x, 20, 2, 2, '#f4c58f'); r(x, 22, 2, 2, c); }
+  r(0, 24, 24, 8, WH); h(28, 0, 23, '#b8b8b4'); for (let x = 2; x < 23; x += 4) r(x, 25, 2, 2, '#d8d8d4');
+  r(25, 11, 9, 2, WH); r(25, 13, 9, 19, WH); r(26, 15, 7, 5, '#2a3440'); r(25, 13, 1, 19, WS);   // 運転台
+  r(34, 20, 11, 12, WH); r(34, 20, 11, 2, '#ffffff'); r(37, 13, 4, 7, WH); r(36, 12, 6, 2, WS);   // ボイラーと煙突
+  spanRows(h, 19, [[44, 46], [43, 47], [43, 47], [43, 47], [43, 47], [43, 47], [44, 46]], WS); r(44, 21, 3, 3, DK); r(45, 22, 1, 1, '#c8c8c4');   // 丸い顔
+  for (const x of [3, 15, 27, 38]) { r(x, 31, 5, 5, DK); r(x + 1, 32, 3, 3, '#8a8a8a'); r(x + 2, 33, 1, 1, DK); }
+  r(0, 36, 48, 12, '#5a5a5c'); for (let x = 0; x < 48; x += 2) r(x, 40, 1, 1, '#e8c040'); h(41, 0, 47, '#e8c040');
+});
+// 東条城跡（吉良）：丸太の脚に筋かいを組んだ高い物見やぐら、高床の小さな門の建物、木の柵、草の丘
+spotSprites.tojoJo = hiCanvas((r, h) => {
+  const WD = '#5a4a3a', WL = '#7a6650', RF = '#3a3a3a';
+  spanRows(h, 1, [[31, 38], [28, 41], [26, 43], [25, 44]], i => i === 3 ? '#222' : RF); r(27, 5, 16, 6, WL); for (let x = 28; x < 43; x += 2) r(x, 5, 1, 6, WD); r(29, 7, 11, 2, '#2a2018');
+  h(11, 26, 43, WD); r(28, 12, 2, 26, WD); r(39, 12, 2, 26, WD); r(33, 12, 2, 26, WL);
+  for (let y = 14; y < 36; y += 7) { for (let i = 0; i < 6; i++) { r(30 + i, y + i, 1, 1, WL); r(38 - i, y + i, 1, 1, WL); } h(y + 6, 28, 40, WD); }   // 筋かい
+  spanRows(h, 14, [[6, 19], [4, 21], [3, 22]], i => i === 2 ? '#222' : RF); r(5, 17, 15, 5, WL); r(8, 18, 9, 3, '#2a2018'); for (const x of [5, 19]) r(x, 22, 1, 12, WD);
+  for (let x = 0; x < 48; x += 2) if (x < 26 || x > 42) r(x, 26, 1, 9, WL); h(28, 0, 47, WD);
+  spanRows(h, 34, [[0, 47], [0, 47], [0, 47]], '#6fa04a'); r(0, 37, 48, 11, '#5a9a3a'); for (const [x, y] of [[4, 40], [18, 43], [36, 41]]) h(y, x, x + 5, '#7fb85a');
+  pix(r, ['.####.', '######', '######'], 8, 30, '#3f7a34');
+});
+// 妙善寺（かぼちゃ寺）：こけむした古い瓦の宝形屋根の小さなお堂（こげ茶の板壁、正面に石段）、右に瓦をのせた白い塀、松
+spotSprites.myozenji = hiCanvas((r, h) => {
+  const RC = ['#8a7a6a', '#6a5e54', '#3a322c', '#5a504a'], WD = '#5a3e2c';
+  r(22, 1, 3, 3, '#5a4a3a');
+  tileRoof(r, h, 4, [[18, 28], [15, 31], [12, 34], [9, 37], [6, 40], [4, 42], [3, 43]], RC); for (const [x, y] of [[14, 7], [24, 6], [30, 8], [20, 9]]) r(x, y, 2, 1, '#c8a050');   // こけ
+  h(11, 4, 42, '#a89880'); r(8, 12, 30, 20, WD); for (const x of [8, 13, 33, 37]) r(x, 12, 1, 20, '#7a5a40');
+  r(14, 13, 19, 14, '#2a1e16'); r(17, 15, 13, 8, '#4a3a2a'); r(21, 18, 5, 4, '#c8a060');   // 中のお厨子
+  for (let i = 0; i < 6; i++) h(27 + i, 14 - i, 32 + i, i % 2 ? '#8a7a6a' : '#a89a8a');
+  r(38, 16, 10, 18, '#e8e4dc'); tileRoof(r, h, 14, [[37, 47], [37, 47]], ['#4a4e56', '#4a4e56', '#2e3238', '#3a3e44']); for (let y = 20; y < 34; y += 4) h(y, 38, 47, '#c8c4bc');
+  r(0, 33, 48, 15, '#b8b4a8'); for (const [x, y] of [[0, 2], [2, 7], [0, 13]]) { pix(r, PINE, x, y, '#3a5a34'); h(y, x + 2, x + 4, '#5a7a4a'); } r(3, 14, 2, 20, '#5a4a3c');
+  for (const x of [1, 42]) { pix(r, ['.####.', '######', '######', '.####.'], x, 39, '#3e6b2e'); r(x + 2, 39, 1, 4, '#2c4f20'); r(x + 2, 38, 2, 1, '#6a4a30'); }   // かぼちゃ
+});
+// 吉良饗庭塩の里：砂をならした入浜式の塩田と木の樋、黒い板の塩たき小屋、柱だけのあずまや、うしろの緑の山
+spotSprites.shioNoSato = hiCanvas((r, h) => {
+  const SA = '#c8c2b4', SD = '#a8a294';
+  r(0, 4, 48, 12, '#3f7a34'); for (const [x, y] of [[3, 5], [14, 4], [26, 6], [38, 4]]) r(x, y, 6, 2, '#5a9a44'); h(15, 0, 47, '#4a6a3a');
+  tileRoof(r, h, 9, [[30, 45], [29, 46], [28, 47]], ['#6a6e74', '#4a4e54', '#2e3238', '#5a5e64']); r(29, 12, 18, 9, '#2e2a28'); for (let x = 30; x < 47; x += 2) r(x, 12, 1, 9, '#3e3a38'); r(35, 15, 4, 6, '#1a1612');
+  r(3, 10, 22, 2, '#4a3a2e'); for (const x of [4, 12, 23]) r(x, 12, 1, 8, '#6a5a4a'); for (let x = 6; x < 22; x += 4) r(x, 17, 2, 2, '#a07a50');   // あずまや
+  r(0, 20, 48, 28, SA); for (let y = 22; y < 48; y += 3) h(y, 0, 47, SD); h(20, 0, 47, '#8a8478');
+  for (let i = 0; i < 18; i++) { r(4 + i, 26 + i, 3, 1, '#5a4a3a'); r(5 + i, 25 + i, 2, 1, '#8a7258'); }   // 木の樋
+  r(30, 30, 9, 3, '#b0a890'); r(34, 36, 5, 2, '#2a6ac0');
+});
+// 吉良ワイキキビーチ（宮崎海水浴場）：エメラルド色の浅い海、白い砂浜、ホテルが並ぶ緑の岬
+spotSprites.waikiki = hiCanvas((r, h) => {
+  r(0, 8, 48, 14, '#4f8a3a'); for (const [x, y] of [[2, 9], [14, 8], [30, 10], [40, 9]]) r(x, y, 7, 2, '#6fa85a');
+  r(0, 2, 10, 20, '#e8ecee'); r(0, 2, 10, 2, '#c8d0d8'); for (let y = 5; y < 21; y += 2) for (let x = 1; x < 10; x += 2) r(x, y, 1, 1, '#7a9ab8');   // 高いホテル
+  for (const [x, y, w, hh] of [[12, 12, 10, 10], [24, 14, 8, 8], [34, 13, 9, 9]]) { r(x, y, w, hh, '#f4f4f0'); for (let yy = y + 2; yy < y + hh; yy += 2) for (let xx = x + 1; xx < x + w - 1; xx += 2) r(xx, yy, 1, 1, '#8aa0b8'); }
+  spanRows(h, 22, [[0, 47], [0, 47], [0, 47], [0, 44], [0, 40], [0, 34], [0, 28]], '#ecdcb4');
+  for (const [x, c] of [[10, '#d23a2e'], [22, '#ffb300'], [32, '#3f7fbf']]) { h(20, x - 2, x + 2, c); h(21, x - 3, x + 3, c); r(x, 22, 1, 3, '#555'); }
+  spanRows(h, 25, Array.from({ length: 23 }, (_, i) => [i < 6 ? [45, 41, 35, 29, 22, 14][i] : 0, 47]), '#4ab8b0');
+  for (let y = 30; y < 48; y += 4) for (let x = (y % 8) * 2; x < 48; x += 10) h(y, x, x + 3, '#8ad8d0'); spanRows(h, 26, [[44, 47], [40, 47], [34, 47]], '#f4f4f0');
+});
+// 岡崎城：石垣の上に建つ白い壁の天守（三重、灰色の瓦屋根に千鳥破風、金のしゃちほこ）。徳川家康の生まれた城
+spotSprites.okazakiCastle = hiCanvas((r, h) => {
+  const RC = ['#9aa0a8', '#6a7078', '#3a3e46', '#5a6068'], WL = '#f6f6f2', WS = '#d8d8d4', WN = '#3a3a3a', ST = '#8a8680', SL = '#a8a49e', SD = '#5e5a56';
+  for (const [x, d] of [[16, -1], [30, 1]]) { r(x, 0, 2, 3, '#d8a830'); r(x + (d < 0 ? -1 : 2), 0, 1, 2, '#d8a830'); }
+  tileRoof(r, h, 3, [[15, 32], [13, 34], [11, 36], [10, 37], [9, 38]], RC); spanRows(h, 1, [[23, 24], [22, 25]], RC[2]);
+  r(13, 8, 22, 6, WL); r(13, 8, 3, 6, WS); for (const x of [17, 22, 27, 31]) r(x, 9, 2, 3, WN);
+  tileRoof(r, h, 14, [[9, 38], [7, 40], [5, 42], [4, 43], [3, 44]], RC);
+  for (let k = 0; k < 6; k++) h(10 + k, 23 - k, 24 + k, k < 2 ? RC[1] : RC[0]); for (let k = 2; k < 6; k++) h(10 + k, 25 - k, 22 + k, WL);   // 千鳥破風
+  r(7, 19, 34, 7, WL); r(7, 19, 4, 7, WS); for (const x of [12, 18, 24, 30, 36]) r(x, 21, 2, 3, WN);
+  tileRoof(r, h, 26, [[4, 43], [2, 45], [1, 46], [0, 47]], RC);
+  r(5, 30, 38, 5, WL); for (const x of [9, 17, 25, 33]) r(x, 31, 3, 2, WN);
+  for (let y = 35; y < 48; y++) { const k = (y - 35) >> 2; h(y, 4 - k, 43 + k, (y - 35) % 3 ? ST : SL); }
+  for (const y of [38, 42, 46]) h(y, 2, 45, SD); for (let x = 6; x < 44; x += 5) { r(x, 35, 1, 3, SD); r(x + 2, 39, 1, 3, SD); r(x, 43, 1, 3, SD); }
+});
+// カクキュー 八丁味噌：うす暗い蔵の中、赤茶の台にのった大きな木の仕込み樽。上に川の石を山のように積む
+spotSprites.misoBarrel = hiCanvas((r, h) => {
+  const WD = '#8a6a4a', WH = '#a8845e', WS = '#6a4e34', BD = '#7a3a2a', SG = '#c8c8c4', SL = '#ecece8', SK = '#8a8a86';
+  r(0, 0, 48, 45, '#3a322c'); r(0, 0, 48, 6, '#2a2420'); for (let x = 4; x < 48; x += 10) r(x, 0, 2, 40, '#4a3e34'); r(30, 2, 3, 2, '#f4f0d8'); r(36, 6, 10, 14, '#4a4038');   // うす暗い蔵の中
+  const barrel = (x0, x1, y0, y1) => {
+    r(x0, y0, x1 - x0 + 1, y1 - y0 + 1, WD); r(x0, y0, 3, y1 - y0 + 1, WH); r(x1 - 3, y0, 4, y1 - y0 + 1, WS);
+    for (let x = x0 + 4; x < x1 - 3; x += 3) r(x, y0, 1, y1 - y0 + 1, '#7a5a3e');
+    for (const y of [y0 + 2, Math.round((y0 * 2 + y1) / 3), Math.round((y0 + y1 * 2) / 3), y1 - 2]) { h(y, x0, x1, BD); h(y + 1, x0, x1, '#5a2a1e'); }
+    let w = x1 - x0 - 1, y = y0 - 1;
+    for (let x = x0 + 1; w > 1; y -= 2, w -= 4, x += 2) for (let sx = x; sx + 2 <= x + w; sx += 3) { r(sx, y - 1, 3, 2, SG); r(sx, y - 1, 2, 1, SL); r(sx + 2, y, 1, 1, SK); }   // 積んだ石
+  };
+  barrel(28, 45, 20, 38); r(27, 39, 20, 4, '#b8402e'); h(39, 27, 46, '#d0583e');
+  barrel(2, 24, 16, 40); r(1, 41, 25, 4, '#b8402e'); h(41, 1, 25, '#d0583e'); r(3, 45, 3, 3, '#8a2e20'); r(20, 45, 3, 3, '#8a2e20');
+  r(0, 45, 48, 3, '#8a8680');
+});
+// デンパーク（安城）：こい緑の屋根に白い三角の飾り窓が並ぶ建物と、黄色い波板のひさし、緑の柱、うしろの針葉樹
+spotSprites.denpark = hiCanvas((r, h) => {
+  const RF = '#3e5a46', RH = '#56745e', YL = '#d8c040', YD = '#b8a020';
+  for (const x of [4, 14, 36, 44]) { spanRows(h, 0, [[x, x], [x - 1, x + 1], [x - 1, x + 1], [x - 2, x + 2], [x - 2, x + 2], [x - 3, x + 3], [x - 3, x + 3], [x - 3, x + 3]], '#2f5a34'); r(x, 8, 1, 3, '#5a4030'); }
+  spanRows(h, 10, [[6, 41], [5, 42], [4, 43], [3, 44], [2, 45], [1, 46]], i => i < 2 ? RH : RF);
+  for (const x of [12, 24, 36]) { spanRows(h, 6, [[x, x + 1], [x - 1, x + 2], [x - 2, x + 3], [x - 3, x + 4], [x - 4, x + 5]], RF); spanRows(h, 8, [[x, x + 1], [x - 1, x + 2], [x - 2, x + 3]], '#f0ece0'); r(x, 9, 2, 2, '#c84a3a'); }   // 三角の飾り窓
+  r(0, 16, 48, 4, YL); for (let x = 1; x < 48; x += 2) r(x, 16, 1, 4, YD); h(20, 0, 47, '#8a7a20');
+  r(2, 21, 44, 12, '#3a3630'); for (let x = 4; x < 45; x += 5) r(x, 22, 3, 8, '#5a6a72');
+  for (const x of [1, 12, 24, 35, 46]) r(x, 20, 1, 14, '#3f7a3a');
+  r(0, 33, 48, 2, '#9a968c'); r(0, 35, 48, 13, '#4a4a4c'); for (const x of [8, 22, 36]) r(x, 40, 8, 1, '#e8e8e4');
+});
+// 碧南海浜水族館：白い建物に青い帯が2本、屋上の塔に青い魚のマーク、正面の黒いパーゴラと、れんがの広場
+spotSprites.hekinanAquarium = hiCanvas((r, h) => {
+  const WH = '#f0f2f4', WS = '#c8d0d8', BL = '#2a5fae', BL2 = '#4a8ad0';
+  r(16, 2, 14, 9, '#d0d8e0'); r(18, 3, 4, 5, BL); r(24, 3, 4, 5, BL); r(19, 4, 2, 2, WH); r(25, 4, 2, 2, WH);   // 魚のマーク
+  r(10, 3, 2, 8, WS);
+  r(0, 10, 34, 22, WH); r(0, 10, 34, 1, '#d8dce0'); h(14, 0, 33, BL); h(15, 0, 33, BL); h(19, 0, 33, BL2);
+  r(34, 16, 14, 16, WH); spanRows(h, 12, [[36, 46], [35, 47], [34, 47], [34, 47]], '#8a96a0'); for (let x = 35; x < 47; x += 2) r(x, 13, 1, 3, '#d8dce4'); h(20, 34, 47, BL);
+  r(36, 22, 10, 10, '#2a3440'); for (const x of [38, 42]) r(x, 22, 1, 10, WS);
+  for (const x of [2, 9, 16, 23, 30]) r(x, 22, 1, 13, '#2a2a2e'); h(22, 0, 32, '#2a2a2e'); h(23, 0, 32, '#4a4a50');   // パーゴラ
+  r(0, 32, 48, 16, '#a86a52'); for (let y = 34; y < 48; y += 3) for (let x = (y % 2) * 3; x < 48; x += 6) r(x, y, 4, 1, '#c88a6a');
+  r(30, 34, 10, 4, WH); r(31, 32, 8, 2, '#3f8a34'); r(33, 28, 2, 4, '#6a6a6a');
+});
+// 高浜市やきものの里 かわら美術館：うすい茶色の段々の建物（赤茶の帯）と、のこぎり屋根のような三角の妻、手前の木と鬼瓦の像
+spotSprites.kawaraMuseum = hiCanvas((r, h) => {
+  const BN = '#c8b8a4', BS = '#a89480', ST = '#9a5a4a', TP = '#d8c8b4';
+  r(8, 18, 40, 20, BN); r(16, 12, 32, 7, BN); r(26, 7, 22, 6, BS);
+  for (const [x0, y] of [[16, 12], [26, 7]]) for (let x = x0 + 1; x < 45; x += 7) spanRows(h, y - 4, [[x + 2, x + 3], [x + 1, x + 4], [x, x + 5], [x, x + 5]], TP);   // 三角の妻（のこぎり屋根）
+  for (const y of [15, 21, 26, 31]) h(y, 8, 47, ST); h(10, 26, 47, ST);
+  for (let x = 22; x < 47; x += 4) r(x, 22, 1, 12, BS);
+  r(16, 32, 28, 6, '#3a3a3e'); h(31, 14, 45, '#8a7a6a'); for (const x of [22, 30, 38]) r(x, 32, 1, 6, '#9aa0a6');
+  r(0, 6, 11, 18, '#3f8a34'); r(2, 8, 5, 3, '#5aaa44'); r(6, 14, 4, 3, '#5aaa44'); r(5, 24, 2, 14, '#5a4030');   // 手前の木
+  for (const x of [12, 40]) { r(x, 33, 5, 6, '#6a6a68'); r(x + 1, 31, 3, 2, '#7a7a78'); r(x + 1, 34, 1, 1, '#2a2a2a'); r(x + 3, 34, 1, 1, '#2a2a2a'); }   // 鬼瓦の像
+  r(0, 38, 48, 3, '#c84a3a'); h(38, 0, 47, '#e85a4a'); r(0, 41, 48, 7, '#9a9894');
+});
+// 実相寺 釈迦堂：灰色がかった茶色の、こけらぶきの大きな寄棟屋根。黒っぽい板の壁、手前の木の柵、まわりの松
+spotSprites.jissoji = hiCanvas((r, h) => {
+  for (const [x, y] of [[0, 0], [38, 1], [3, 5], [41, 6]]) { pix(r, PINE, x, y, '#2f5a34'); h(y, x + 2, x + 4, '#4f7a4a'); }
+  r(3, 9, 2, 26, '#5a4636'); r(43, 10, 2, 25, '#5a4636');
+  for (let y = 8; y < 22; y++) { const k = y - 8, a = Math.round(17 - k * 1.1), b = Math.round(30 + k * 1.1); h(y, a, b, y < 12 ? '#b0a8a4' : y < 18 ? '#968c88' : '#847a76'); for (let x = a + 1 + (y % 2); x < b; x += 2) r(x, y, 1, 1, y < 12 ? '#a09894' : '#7a706c'); }
+  r(18, 6, 12, 2, '#6a605c'); h(22, 0, 47, '#4a403c'); h(23, 2, 45, '#2a2420');
+  r(6, 24, 36, 13, '#2a2226'); for (const x of [6, 13, 20, 27, 34, 41]) r(x, 24, 2, 13, '#4a3a32'); for (let x = 15; x < 33; x += 2) r(x, 27, 1, 8, '#3a2e28');
+  h(37, 4, 43, '#7a7068'); for (let x = 2; x < 46; x += 3) r(x, 38, 1, 5, '#4a4a50'); h(39, 0, 47, '#4a4a50'); h(42, 0, 47, '#4a4a50');   // 木の柵
+  r(0, 43, 48, 5, '#a8a49a');
+});
+// 久麻久神社：石段の上の拝殿（銀ねずの瓦、茶色い木の社殿、白い紙垂）と、両わきの石の玉垣・木
+spotSprites.kumakuJinja = hiCanvas((r, h) => {
+  const RC = ['#c8ccd2', '#9aa0a8', '#4a4e56', '#868c94'], WD = '#7a5a48', DK = '#3a2a24';
+  for (const x of [0, 38]) { r(x, 0, 10, 16, '#3f6a34'); r(x + 2, 1, 5, 3, '#5a8a44'); }
+  tileRoof(r, h, 3, [[14, 33], [12, 35], [10, 37], [8, 39], [6, 41], [5, 42]], RC); spanRows(h, 3, [[22, 25], [21, 26], [20, 27]], '#e8e4dc');
+  r(9, 9, 30, 13, WD); r(16, 11, 16, 11, DK); for (const x of [9, 15, 32, 38]) r(x, 9, 1, 13, '#9a7a62'); h(12, 17, 30, '#e8dcc0'); for (const x of [19, 24, 29]) r(x, 13, 1, 2, '#ffffff');
+  r(23, 9, 2, 2, '#c8a050'); h(22, 6, 41, '#8a8682'); for (let x = 7; x < 41; x += 3) r(x, 20, 1, 2, '#c84a3a');
+  for (let i = 0; i < 13; i++) h(23 + i * 2, 17 - i, 30 + i, i % 2 ? '#7a7672' : '#9a9692'), h(24 + i * 2, 17 - i, 30 + i, '#5a5652');   // 石段
+  for (const s of [-1, 1]) for (let i = 0; i < 12; i++) r(s < 0 ? 15 - i : 32 + i, 23 + i * 2, 1, 3, '#b8b4ac');   // 石の手すり
+  r(0, 26, 6, 22, '#8a8682'); r(42, 26, 6, 22, '#8a8682'); for (let y = 28; y < 48; y += 4) { h(y, 0, 5, '#a8a49e'); h(y, 42, 47, '#a8a49e'); }
+});
+// 長圓寺：苔むした広い石段をのぼった先の山門（瓦屋根・こげ茶の柱）と、両わきの白い土塀、うっそうとした木
+spotSprites.choenji = hiCanvas((r, h) => {
+  r(0, 0, 14, 20, '#2f5a2a'); r(34, 0, 14, 20, '#2f5a2a'); for (const [x, y] of [[2, 2], [8, 8], [36, 3], [42, 10]]) r(x, y, 4, 3, '#4f7a3e');
+  r(4, 11, 40, 7, '#f0ece2'); tileRoof(r, h, 9, [[3, 44], [3, 44]], ['#5a5e64', '#5a5e64', '#2e3238', '#4a4e54']); for (let y = 13; y < 18; y += 2) h(y, 4, 43, '#d8d4ca');
+  tileRoof(r, h, 2, [[17, 30], [15, 32], [13, 34], [12, 35], [11, 36]], ['#7a7e86', '#4e5150', '#2a2d2c', '#5e6160']); r(23, 0, 2, 2, '#3a3d3c');
+  r(14, 7, 2, 11, '#4a3628'); r(32, 7, 2, 11, '#4a3628'); r(16, 8, 16, 10, '#1a1612'); r(19, 10, 10, 8, '#3a4a2a');   // 門の奥の緑
+  for (let y = 18; y < 48; y++) { const k = y - 18, a = Math.max(0, 13 - Math.round(k * 0.5)), b = Math.min(47, 34 + Math.round(k * 0.5)); const t = k % 3; h(y, a, b, t === 0 ? '#9aa07e' : t === 1 ? '#7a7d5b' : '#5a5e44'); }   // 苔むした石段
+  for (let y = 20; y < 48; y += 3) for (let x = 6 + (y % 2) * 4; x < 42; x += 8) r(x, y, 3, 1, '#6a8a3a');
+});
+// 養寿寺：銀ねずの瓦の大屋根の本堂と、右の反った屋根の鐘つき堂、白い砂利の境内
+spotSprites.yojuji = hiCanvas((r, h) => {
+  const RC = ['#c8ccd2', '#9aa0a8', '#4a4e56', '#868c94'], WD = '#8a7a6a', DK = '#3a3230';
+  tileRoof(r, h, 6, [[6, 24], [4, 26], [2, 28], [1, 29], [0, 30], [0, 30]], RC); spanRows(h, 4, [[13, 17], [12, 18]], RC[1]); spanRows(h, 7, [[14, 16], [13, 17]], '#e8e4dc');
+  r(2, 12, 26, 15, WD); r(8, 15, 14, 12, DK); for (const x of [2, 7, 22, 27]) r(x, 12, 1, 15, '#a8988a'); for (let x = 9; x < 21; x += 2) r(x, 15, 1, 6, '#5a4e46');
+  spanRows(h, 8, [[34, 41], [32, 43], [31, 44], [30, 45]], i => i === 3 ? RC[2] : RC[1]); r(30, 10, 1, 1, RC[2]); r(45, 10, 1, 1, RC[2]); r(36, 6, 4, 2, RC[0]);   // 鐘つき堂の反った屋根
+  for (const x of [32, 43]) r(x, 12, 2, 14, '#6a5a4a'); r(35, 13, 6, 6, '#5a7a62'); h(18, 35, 40, '#3a5a44'); r(37, 12, 2, 1, '#333'); r(31, 22, 14, 4, '#9a968c');
+  r(0, 27, 48, 21, '#c8c4bc'); for (const [x, y] of [[4, 32], [16, 38], [30, 34], [40, 42], [8, 44]]) r(x, y, 3, 1, '#a8a49c');
+});
+// 紅樹院（茶祖の寺）：銀ねずの瓦の大きな入母屋屋根、黒っぽい木の正面、石灯籠と、手前の茶の木
+spotSprites.kojuin = hiCanvas((r, h) => {
+  const RC = ['#b8bcc2', '#8a8e94', '#3a3e44', '#7a7e84'];
+  tileRoof(r, h, 4, [[14, 33], [12, 35], [10, 37], [8, 39], [6, 41], [4, 43], [2, 45], [1, 46]], RC); spanRows(h, 5, [[22, 25], [21, 26], [20, 27], [19, 28]], '#e8e4dc');
+  r(5, 12, 38, 14, '#5a4a40'); r(12, 15, 24, 11, '#1d1d22'); for (const x of [5, 11, 36, 42]) r(x, 12, 1, 14, '#7a6a5a'); for (let x = 13; x < 35; x += 3) r(x, 15, 1, 6, '#3a3430');
+  r(40, 22, 3, 8, '#9a968c'); r(39, 21, 5, 2, '#b8b4ac');
+  r(0, 26, 48, 4, '#b8b2a6');
+  for (const y of [30, 37]) { h(y, 1, 46, '#7fc65e'); r(0, y + 1, 48, 3, '#3f8f3a'); h(y + 4, 0, 47, '#2a5f28'); if (y < 37) { h(y + 5, 0, 47, '#a88a62'); h(y + 6, 0, 47, '#a88a62'); } for (let x = 2 + (y % 2) * 3; x < 46; x += 6) h(y - 1, x, x + 2, '#7fc65e'); }
+  r(0, 42, 48, 6, '#a88a62');
+});
+// 一色学びの館：茶色がかった灰色の丸い筒形の塔（左が日なた、右が日かげ）と、白い列柱の低い建物、駐車場
+spotSprites.isshikiManabi = hiCanvas((r, h) => {
+  for (let x = 16; x < 36; x++) { const t = (x - 16) / 19, c = t < 0.25 ? '#c8b8ac' : t < 0.6 ? '#a8968a' : t < 0.85 ? '#8a786e' : '#6a5a52'; r(x, 4, 1, 26, c); }
+  h(3, 17, 34, '#d8c8bc'); h(4, 16, 35, '#7a6a60'); for (let y = 9; y < 30; y += 5) h(y, 16, 35, '#9a887c');
+  r(0, 25, 48, 13, '#d8d2c8'); h(25, 0, 47, '#e8e2d8'); h(26, 0, 47, '#b8b2a8');
+  for (let x = 1; x < 47; x += 5) { r(x, 27, 2, 11, '#f0ece4'); r(x + 2, 27, 3, 10, '#4a4a46'); }
+  r(0, 38, 48, 10, '#7a7a78'); for (let x = 3; x < 48; x += 8) r(x, 40, 1, 6, '#f4f4f4'); r(40, 34, 8, 4, '#2a6ac0'); r(41, 35, 6, 1, '#d8e4f4');   // バス
+});
+// 佐久島の港：「三河湾の黒真珠 佐久島」と書いた白い縦長の看板、黒い板の小屋、砂浜と港の海
+spotSprites.sakushimaPort = hiCanvas((r, h) => {
+  r(0, 22, 48, 26, '#6a8a9a'); for (const [x, y] of [[3, 26], [14, 30], [6, 34]]) h(y, x, x + 4, '#8aaab8');
+  spanRows(h, 30, Array.from({ length: 18 }, (_, i) => [Math.max(0, 22 - i * 2), 47]), '#c8c0a4'); for (const [x, y] of [[26, 38], [34, 44], [20, 46]]) r(x, y, 3, 1, '#a8a088');
+  spanRows(h, 4, [[28, 45], [27, 46], [26, 47]], '#3a3c40'); r(28, 7, 18, 19, '#2e2a2c'); for (let x = 29; x < 46; x += 3) r(x, 7, 1, 19, '#3e3a3c'); r(30, 11, 6, 5, '#7a7a74'); r(38, 18, 5, 8, '#1a1618');
+  r(19, 1, 8, 30, '#f4f4f2'); r(19, 1, 1, 30, '#c8c8c4'); r(21, 0, 4, 1, '#e8e8e4');
+  for (let y = 3; y < 28; y += 2) r(22, y, 2, 1, y < 13 ? '#2a3a6a' : '#1a1a1a'); r(18, 31, 10, 2, '#8a8680');
+  r(4, 25, 10, 2, '#e8e2d0'); r(5, 24, 3, 1, '#c84a3a');   // 舟
+});
+// 大浦海水浴場（佐久島）：草地の中の高床の木の見はらし小屋（寄棟の屋根・はしご段）と、浜へ下りる白い小道
+spotSprites.ouraBeach = hiCanvas((r, h) => {
+  r(0, 24, 48, 24, '#8aa86a'); for (const [x, y] of [[4, 28], [30, 30], [40, 40], [10, 42]]) h(y, x, x + 5, '#a8c48a');
+  spanRows(h, 30, Array.from({ length: 18 }, (_, i) => [14 - Math.round(i * 0.6), 20 + Math.round(i * 0.7)]), '#d8d2b8');
+  spanRows(h, 2, [[24, 33], [21, 36], [19, 38], [18, 39]], i => i === 3 ? '#2a2420' : '#4a3e34');
+  r(20, 6, 18, 2, '#5a4a3a'); for (let x = 21; x < 38; x += 3) r(x, 8, 1, 5, '#6a5a48'); h(8, 20, 37, '#6a5a48'); r(20, 13, 18, 2, '#7a6650');
+  for (const x of [21, 36]) r(x, 15, 2, 15, '#4a3e34'); r(28, 15, 2, 15, '#5a4a3a');
+  for (let i = 0; i < 12; i++) r(38 + Math.floor(i / 2), 14 + i, 3, 1, '#7a6650');   // はしご段
+  r(0, 16, 14, 9, '#3f7a34'); r(2, 15, 9, 2, '#5a9a44'); r(40, 18, 8, 7, '#3f7a34');
+});
+// 黄金堤（吉良）：草の土手の上に、こんもりした桜の並木がずっと続く。手前の道と白いさく
+spotSprites.koganeZutsumi = hiCanvas((r, h) => {
+  for (let i = 0; i < 6; i++) { const x = i * 8 - 1, y = 6 + (i % 2) * 2; spanRows(h, y, [[x + 2, x + 8], [x, x + 10], [x, x + 10], [x, x + 10], [x + 1, x + 9], [x + 2, x + 8]], '#4a7a3a'); r(x + 2, y + 1, 4, 2, '#6a9a54'); r(x + 5, y + 6, 1, 6, '#5a4434'); }
+  spanRows(h, 16, [[0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47]], i => i < 2 ? '#7aa25a' : i < 5 ? '#6a9a4a' : '#5a8a3e');   // 土手の斜面
+  r(0, 24, 48, 12, '#9a9690'); for (let x = 2; x < 48; x += 9) r(x, 29, 5, 1, '#b8b4ae');
+  h(34, 0, 47, '#f4f4f2'); for (let x = 1; x < 48; x += 4) r(x, 34, 1, 5, '#f4f4f2'); h(37, 0, 47, '#e8e8e4');
+  r(0, 39, 48, 9, '#6a9a4a'); r(4, 18, 6, 5, '#f0ece0'); r(5, 19, 4, 2, '#c84a3a'); r(6, 23, 1, 4, '#5a5a5a');   // 案内板
+});
+// 尾﨑士郎記念館（吉良）：銀ねずの瓦屋根の白い建物（黒いわく・白い柱の玄関）と、前の石の台にのった胸像、ヤシの幹
+spotSprites.ozakiShiro = hiCanvas((r, h) => {
+  const RC = ['#7a8088', '#4a5058', '#24282e', '#3a4048'];
+  for (let k = 0; k < 12; k++) h(4 + k, 26 - k * 2, 27 + k * 2, k < 2 ? RC[2] : RC[1]); for (let k = 2; k < 12; k++) h(4 + k, 28 - k * 2, 25 + k * 2, '#f4f2ec');   // 正面の大きな破風
+  r(22, 8, 6, 3, '#2a2a2a');
+  tileRoof(r, h, 14, [[1, 47], [0, 47], [0, 47]], RC);
+  r(2, 17, 44, 22, '#f4f2ec'); r(2, 17, 6, 22, '#d8d6d0'); for (let y = 30; y < 39; y += 3) h(y, 2, 45, '#c8ccd4');
+  r(10, 20, 3, 18, '#ffffff'); r(9, 20, 1, 18, '#c8c8c4'); r(14, 21, 7, 17, '#1a1a1a'); r(30, 22, 12, 9, '#2a2a2a'); for (let x = 31; x < 42; x += 2) r(x, 22, 1, 9, '#5a5a5a');
+  r(24, 31, 9, 13, '#c8c4bc'); h(31, 24, 32, '#e0dcd4'); spanRows(h, 22, [[26, 30], [25, 31], [24, 32], [24, 32], [25, 31], [23, 33], [22, 34], [22, 34], [22, 34]], '#6a5a46'); r(26, 23, 4, 3, '#8a7a62');   // 胸像
+  r(40, 0, 3, 39, '#8a7a6a'); for (let y = 2; y < 39; y += 3) r(40, y, 3, 1, '#6a5a4a');   // ヤシの幹
+  r(0, 39, 48, 9, '#b8b4ac'); pix(r, ['..####..', '.######.', '########'], 2, 36, '#3f7a34');
+});
+// 幡頭神社（吉良）：明るい灰色の大きな石の鳥居、奥へまっすぐのびる石だたみの参道、右に「幡頭神社」の石柱、松林
+spotSprites.hazuJinja = hiCanvas((r, h) => {
+  const ST = '#c8c4bc', SL = '#e0dcd4', SD = '#9a968e';
+  r(0, 4, 10, 30, '#2f5a2a'); r(36, 4, 12, 30, '#2f5a2a'); for (const [x, y] of [[2, 6], [38, 8], [42, 18], [4, 20]]) r(x, y, 4, 3, '#4f7a3e');
+  h(5, 4, 39, ST); h(4, 5, 38, SL); r(3, 3, 2, 2, ST); r(39, 3, 2, 2, ST); h(6, 6, 37, SD);   // 笠木
+  h(10, 8, 35, ST); h(11, 8, 35, SD); r(19, 7, 6, 3, '#4a4a4a');   // 貫と額
+  r(10, 7, 4, 28, ST); r(10, 7, 1, 28, SL); r(13, 7, 1, 28, SD); r(30, 7, 4, 28, ST); r(30, 7, 1, 28, SL); r(33, 7, 1, 28, SD);
+  r(9, 34, 6, 3, SD); r(29, 34, 6, 3, SD);
+  spanRows(h, 14, Array.from({ length: 34 }, (_, i) => [20 - Math.round(i * 0.45), 23 + Math.round(i * 0.45)]), '#a8a49c'); for (let y = 16; y < 48; y += 3) h(y, 20 - Math.round((y - 14) * 0.45), 23 + Math.round((y - 14) * 0.45), '#8a867e');
+  r(38, 2, 6, 40, '#b8b4aa'); r(38, 2, 1, 40, '#d0ccc2'); for (let y = 6; y < 38; y += 5) r(40, y, 2, 3, '#3a3a3a');   // 社名の石柱
+  r(0, 34, 18, 14, '#a88a5a'); r(28, 38, 10, 10, '#a88a5a'); r(44, 38, 4, 10, '#a88a5a');
+});
+// 名鉄 西幡豆駅：茶色い寄棟屋根の小さな木の駅舎（クリーム色の板壁、こげ茶のわく、出窓）、青い駅名の看板、赤いポスト
+spotSprites.nishiHazu = hiCanvas((r, h) => {
+  const RC = ['#8a7a6a', '#6a5a4a', '#3a2e24', '#5a4a3c'], WL = '#efe6d2', FR = '#6a3a2a';
+  tileRoof(r, h, 6, [[12, 37], [9, 40], [6, 43], [4, 45], [2, 46], [1, 47]], RC);
+  r(3, 12, 42, 24, WL); for (let y = 14; y < 36; y += 2) h(y, 3, 44, '#d8ceb8'); for (const x of [3, 12, 44]) r(x, 12, 1, 24, FR);
+  r(26, 13, 14, 5, '#ffffff'); r(27, 14, 3, 3, '#2a8ad0'); for (let x = 31; x < 39; x += 2) r(x, 15, 1, 1, '#2a5a8a');   // 駅名の看板
+  r(14, 19, 32, 2, FR); r(14, 21, 32, 13, '#e8e0cc'); for (const x of [14, 22, 31, 39, 45]) r(x, 21, 1, 13, FR); for (const x of [24, 33, 41]) r(x, 23, 6, 7, '#9ab4c4');   // 出窓
+  r(15, 23, 5, 11, '#5a6a72'); r(16, 24, 3, 4, '#c8d4dc');
+  r(0, 26, 6, 10, '#3f7a34'); r(1, 25, 4, 1, '#5a9a44');
+  r(44, 25, 3, 6, '#d23a2e'); r(45, 31, 1, 5, '#555'); h(36, 0, 47, '#9a9a96'); r(0, 37, 48, 11, '#8a8a88');
+});
+// 名鉄 東幡豆駅：赤いトタン屋根の長い駅舎、白とうすいピンクの壁、駅名の看板、赤いポスト、改札口
+spotSprites.higashiHazu = hiCanvas((r, h) => {
+  const RD = '#c84a3a', RL = '#e06a50', RS = '#8a2e22';
+  spanRows(h, 8, [[8, 40], [6, 42], [4, 44], [2, 46], [1, 47], [0, 47]], i => i < 2 ? RL : RD); for (let x = 2; x < 47; x += 2) r(x, 9, 1, 5, RS); h(14, 0, 47, RS);
+  r(1, 15, 46, 20, '#f0e8e4'); r(1, 15, 46, 2, '#d8d0cc'); h(26, 1, 46, '#c88a8a');
+  r(16, 10, 14, 6, '#ffffff'); r(17, 11, 3, 2, '#3f9a5a'); for (let x = 21; x < 29; x += 2) r(x, 12, 1, 2, '#2a2a2a'); h(15, 16, 29, '#3f9a5a');
+  r(3, 18, 8, 7, '#7a9ab0'); r(13, 18, 6, 17, '#3a4650'); r(22, 18, 9, 7, '#7a9ab0'); r(34, 18, 9, 7, '#9ab4c4');
+  r(24, 27, 4, 7, '#3fae5a'); r(25, 28, 2, 3, '#e8f4e8'); r(30, 28, 3, 5, '#d23a2e'); r(31, 33, 1, 2, '#555');
+  r(0, 35, 48, 13, '#8a8a88'); for (const x of [6, 22, 38]) r(x, 40, 6, 1, '#a8a8a4');
+});
+// 鳥羽神明社：銀ねずの瓦の拝殿に、黒い紋の白い幕。石垣と石段、両わきに白いのぼりと木の幟立て
+spotSprites.tobaShinmei = hiCanvas((r, h) => {
+  const RC = ['#c8ccd2', '#9aa0a8', '#4a4e56', '#868c94'];
+  r(0, 0, 48, 10, '#2f5a2a'); for (const [x, y] of [[4, 2], [16, 1], [28, 3], [40, 1]]) r(x, y, 5, 3, '#4f7a3e');
+  tileRoof(r, h, 6, [[14, 33], [11, 36], [9, 38], [7, 40], [6, 41]], RC); spanRows(h, 6, [[22, 25], [21, 26]], '#e8e4dc');
+  r(9, 11, 30, 11, '#7a5a40'); r(10, 13, 28, 6, '#f8f8f6'); for (let x = 10; x < 38; x += 4) r(x, 13, 1, 6, '#d8d8d4');
+  for (const x of [14, 22, 30]) { r(x, 14, 4, 4, '#1a1a1a'); r(x + 1, 15, 2, 2, '#f8f8f6'); }   // 黒い紋
+  r(20, 19, 8, 3, '#3a2a20');
+  r(4, 22, 40, 8, '#9a968c'); for (let y = 24; y < 30; y += 2) h(y, 4, 43, '#7a766c'); for (let x = 6; x < 44; x += 5) r(x, 22, 1, 8, '#7a766c');   // 石垣
+  for (let i = 0; i < 9; i++) h(22 + i, 18 - i, 29 + i, i % 2 ? '#8a8682' : '#aaa6a0');
+  for (const x of [1, 44]) { r(x, 6, 3, 26, '#f8f8f6'); for (let y = 8; y < 30; y += 3) r(x + 1, y, 1, 2, '#1a1a1a'); r(x + 3, 6, 1, 36, '#6a5040'); }
+  r(0, 31, 48, 17, '#b8b2a6'); for (const [x, y] of [[8, 36], [30, 40], [16, 44]]) r(x, y, 3, 1, '#9a9488');
+});
+// 旧糟谷邸（吉良）：こぶのある太い幹を広げる大きなイスノキと、白い立て札。左に黒い板壁の古い家
+spotSprites.kasuyaTei = hiCanvas((r, h) => {
+  r(0, 4, 12, 34, '#2a2522'); for (let x = 1; x < 12; x += 3) r(x, 4, 1, 34, '#3c3632'); tileRoof(r, h, 1, [[0, 13], [0, 14], [0, 15]], ['#6a6e74', '#4a4e54', '#2e3238', '#5a5e64']);
+  spanRows(h, 0, [[18, 40], [14, 44], [12, 46], [11, 47], [12, 47], [13, 46], [14, 45], [16, 43], [18, 40], [21, 36], [24, 33]], '#3f6a34'); for (const [x, y] of [[16, 2], [26, 1], [36, 3], [30, 6], [20, 6], [41, 5]]) r(x, y, 5, 2, '#5a8a44');   // 大きく広がる葉
+  r(25, 16, 7, 24, '#7a6a5a'); r(25, 16, 2, 24, '#9a8a78'); r(29, 22, 2, 8, '#5a4a3c');   // 幹
+  for (let i = 0; i < 8; i++) { r(25 - i, 16 - i, 2, 1, '#7a6a5a'); r(31 + i, 15 - i, 2, 1, '#7a6a5a'); r(28, 12 - i, 1, 1, '#7a6a5a'); }   // 枝
+  r(20, 38, 18, 3, '#4a6a3a'); for (let x = 19; x < 39; x += 3) r(x, 40, 2, 2, '#a8a49c');
+  r(14, 22, 7, 6, '#f8f8f6'); spanRows(h, 20, [[16, 18], [15, 19]], '#e8e8e4'); r(17, 28, 1, 12, '#c8c8c4');   // 立て札
+  r(0, 38, 48, 10, '#d8d0c0'); for (const [x, y] of [[4, 42], [40, 44], [10, 46]]) r(x, y, 3, 1, '#b8b0a0');
+});
+// 八ツ面山：冬木立の中の展望台（白い床の段と、うす茶色のれんがの壁、手すりのある見晴らし台）
+spotSprites.yatsuomote = hiCanvas((r, h) => {
+  r(14, 6, 22, 3, '#f0ece4'); h(9, 14, 35, '#a8a49c'); r(16, 10, 18, 6, '#c8a07a'); for (let x = 17; x < 34; x += 3) r(x, 10, 1, 6, '#a8805a');
+  r(12, 16, 26, 3, '#f0ece4'); h(19, 12, 37, '#a8a49c'); for (let x = 13; x < 37; x += 2) r(x, 14, 1, 2, '#5a5a5a');   // 見晴らし台の手すり
+  r(17, 20, 16, 10, '#c8a07a'); r(17, 20, 3, 10, '#d8b890'); for (let y = 22; y < 30; y += 2) h(y, 17, 32, '#b08a64'); r(24, 23, 3, 4, '#3a3a3a');
+  r(15, 30, 20, 3, '#f0ece4'); r(19, 33, 12, 9, '#e8e4dc'); r(23, 35, 4, 7, '#4a4a4a');
+  for (const [x0, d] of [[6, 1], [42, -1]]) { r(x0, 10, 2, 32, '#5a4a40'); for (let i = 0; i < 8; i++) { r(x0 + d * i, 18 - i, 1, 1, '#6a5a4c'); r(x0 + d * (i + 1), 26 - i, 1, 1, '#6a5a4c'); } }   // 冬木立
+  r(0, 42, 48, 6, '#7a6a52'); for (let x = 2; x < 48; x += 5) r(x, 42, 2, 2, '#9a8a6a');
+});
+// ---- 48×48 の名所の絵（4回目：専用の絵がなかった注目スポット。Wikimedia Commons の写真を見て、色と比率を写真に合わせて描いたもの） ----
+// 康全寺：青みのある瓦の入母屋の本堂、白い漆喰に黒い木の柱、茶色の板戸。右に大きなヒマラヤスギ、左に冬木
+spotSprites.kozenji = hiCanvas((r, h) => {
+  const W = '#f0efea', K = '#3a3634';
+  h(4, 13, 34, '#3e4450'); r(12, 2, 2, 2, '#3e4450'); r(34, 2, 2, 2, '#3e4450');
+  tileRoof(r, h, 5, [[12, 35], [11, 36], [10, 37], [9, 38], [8, 39], [7, 40], [6, 41], [5, 42], [4, 43], [3, 44], [2, 45], [1, 46]], ['#9aa6b6', '#6e7888', '#3e4450', '#59606c']);
+  r(4, 17, 40, 19, W); h(17, 4, 43, K); h(22, 4, 43, K); h(35, 4, 43, K);
+  for (const x of [4, 10, 16, 31, 37, 43]) r(x, 17, 1, 19, K);
+  r(18, 24, 12, 11, '#8a6848'); for (let x = 20; x < 30; x += 3) r(x, 24, 1, 11, '#6a4e34'); h(24, 18, 29, '#6a4e34');
+  r(7, 25, 5, 5, '#5a5048'); r(8, 24, 3, 1, '#5a5048'); r(8, 26, 3, 3, '#8a8078');   // 花頭窓
+  r(5, 36, 38, 2, '#8a867c');
+  spanRows(h, 3, [[38, 41], [36, 43], [35, 44], [34, 45], [33, 46], [32, 46], [32, 47], [31, 47], [31, 47], [30, 47], [30, 47], [29, 47], [29, 47], [30, 47], [30, 47], [31, 47], [31, 46], [32, 46], [33, 45], [34, 44], [35, 43], [36, 42]], '#5d6a25');   // ヒマラヤスギ
+  for (let y = 4; y < 25; y++) for (let x = 30 + (y * 7) % 3; x < 47; x += 3) { const v = (x * 13 + y * 7) % 5; if (v === 0) r(x, y, 1, 1, '#8a9a3a'); else if (v === 1) r(x, y, 1, 1, '#3b4a17'); }
+  r(38, 25, 2, 15, '#5a4030');
+  r(3, 6, 1, 30, '#7a6a5a'); for (const [x, y] of [[1, 8], [4, 11], [0, 14], [5, 9]]) r(x, y, 1, 5, '#7a6a5a');   // 冬木
+  r(0, 38, 48, 10, '#a8a090'); spanRows(h, 38, [[20, 27], [19, 28], [19, 28], [18, 29], [18, 29], [17, 30], [17, 30], [16, 31], [16, 31], [15, 32]], '#c4c0b6');
+});
+// 寺津八幡社：反りの大きな暗い瓦の入母屋屋根に、金の飾りの破風。手前は緑青の唐破風。しめ縄の木の拝殿と、左右の大きな石灯籠
+spotSprites.terazuHachiman = hiCanvas((r, h) => {
+  r(23, 1, 2, 3, '#2c2e32'); r(22, 2, 4, 1, '#c8a040');
+  for (let k = 0; k < 19; k++) { const y = 4 + k, a = Math.round(23 - 1.15 * k - 1), b = Math.round(24 + 1.15 * k + 1); h(y, a, b, '#2c2e32'); if (k > 1) h(y, a + 1, Math.round(23 - 0.2 * k), '#697485'); if (k > 1) h(y, Math.round(23 - 0.2 * k) + 1, b - 1, '#4a4e56'); }
+  for (let k = 4; k < 13; k++) h(4 + k, 23 - Math.round(k * 0.55), 24 + Math.round(k * 0.55), '#3a2c22');   // 破風の中の木組み
+  r(22, 9, 4, 2, '#c8a040'); r(20, 13, 8, 1, '#c8a040'); r(23, 14, 2, 2, '#c8a040');
+  h(22, 3, 44, '#202224'); r(2, 21, 1, 1, '#202224'); r(45, 21, 1, 1, '#202224');
+  spanRows(h, 16, [[19, 28], [16, 31], [14, 33], [13, 34], [13, 34]], i => i === 4 ? '#3e6e60' : i < 2 ? '#86c0ac' : '#5f9e8a');   // 唐破風
+  r(22, 17, 4, 1, '#c8a040');
+  r(8, 23, 32, 14, '#56432f'); for (const x of [8, 14, 33, 39]) r(x, 23, 1, 14, '#3a2c22');
+  r(15, 26, 18, 10, '#2a201a'); for (let x = 16; x < 33; x += 2) r(x, 26, 1, 10, '#4a3a2a'); r(20, 28, 8, 2, '#c8a040');
+  h(24, 13, 34, '#e8dcb0'); h(25, 14, 33, '#d8c890'); for (const x of [16, 21, 26, 31]) { r(x, 26, 1, 1, '#ffffff'); r(x + 1, 27, 1, 1, '#ffffff'); }
+  for (const x of [0, 40]) { r(x + 2, 19, 4, 2, '#8a8472'); r(x + 1, 21, 6, 2, '#a8a290'); r(x + 2, 23, 4, 4, '#a8a290'); r(x + 3, 24, 2, 2, '#4a443a'); r(x + 1, 27, 6, 1, '#8a8472'); r(x + 2, 28, 4, 8, '#a8a290'); r(x + 3, 30, 2, 3, '#7a7462'); r(x, 36, 8, 3, '#8a8472'); }
+  r(0, 39, 48, 9, '#d9dadb'); for (let y = 41; y < 48; y += 3) h(y, 0, 47, '#c4c5c6'); spanRows(h, 39, [[16, 31], [15, 32], [14, 33]], '#e8e8e8');
+});
+// 平原の滝：苔むした灰色の岩壁を、ひとすじの白い滝が落ちる。下に小さな滝つぼ
+spotSprites.hirabaraTaki = hiCanvas((r, h) => {
+  const RK = '#7a8288', RD = '#4e555a', RL = '#9aa2a6', MS = '#7a9a5a';
+  spanRows(h, 4, [[12, 34], [9, 37], [7, 39], [6, 40], [5, 41], [5, 42], [4, 42], [4, 43], [4, 43], [3, 43], [3, 44], [3, 44], [3, 44], [2, 44], [2, 45], [2, 45], [2, 45], [2, 45], [2, 45], [2, 45], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46], [1, 46]], RK);
+  for (const [x, y, w, hh] of [[8, 8, 6, 3], [30, 6, 7, 2], [36, 14, 6, 4], [6, 20, 5, 3], [28, 22, 8, 3], [12, 30, 6, 2], [34, 32, 7, 3]]) { r(x, y, w, hh, RL); h(y + hh, x, x + w - 1, RD); }   // 岩のでこぼこ
+  for (const [x, y, w, hh] of [[14, 5, 8, 2], [3, 14, 5, 4], [38, 24, 6, 4], [5, 34, 6, 3], [24, 10, 4, 2]]) r(x, y, w, hh, MS);   // 苔
+  for (const [x, y] of [[20, 12], [26, 16], [10, 25], [32, 28], [16, 36]]) r(x, y, 1, 4, RD);
+  r(18, 4, 3, 36, '#d8e2e6'); r(19, 4, 1, 36, '#f4f8fa'); for (let y = 8; y < 40; y += 5) r(17, y, 1, 2, '#c8d4d8');   // 滝
+  spanRows(h, 40, [[8, 32], [5, 36], [5, 36], [8, 33]], '#5a7a8a'); h(40, 14, 24, '#8ab0c0'); r(17, 39, 5, 2, '#f4f8fa');
+  r(34, 1, 5, 3, '#6a5a48'); spanRows(h, 0, [[33, 39]], '#8a4a3a');   // 岩の上の小さな祠
+  r(0, 44, 48, 4, '#5a6a4a'); h(44, 0, 47, '#7a8a5a');
+});
+// 安休寺：反りのある瓦屋根の山門（灰色の木の柱、上に扁額）と、左右の白い漆喰と黒い板の塀、右に寺名の石柱
+spotSprites.ankyuji = hiCanvas((r, h) => {
+  const RC = ['#8a8e9a', '#60616d', '#3a3b44', '#4e4f5a'];
+  for (const x0 of [0, 34]) { tileRoof(r, h, 25, [[x0 + 1, x0 + 12], [x0, x0 + 13]], ['#7a7e8a', '#60616d', '#3a3b44', '#4e4f5a']); r(x0, 27, 14, 5, '#f0eee8'); r(x0, 32, 14, 8, '#2a262e'); for (let x = x0 + 1; x < x0 + 14; x += 2) r(x, 32, 1, 8, '#3a3640'); }
+  r(9, 3, 2, 2, '#3a3b44'); r(37, 3, 2, 2, '#3a3b44');
+  tileRoof(r, h, 5, [[10, 37], [8, 39], [7, 40], [6, 41], [5, 42], [4, 43]], RC); r(3, 9, 1, 1, '#3a3b44'); r(44, 9, 1, 1, '#3a3b44');
+  r(9, 11, 30, 3, '#4a443e'); for (let x = 10; x < 38; x += 3) r(x, 12, 2, 1, '#7a6e60');   // 組物
+  r(20, 14, 8, 2, '#e8e4d8'); r(22, 14, 4, 1, '#3a3a3a');   // 扁額
+  r(13, 14, 3, 27, '#7a7068'); r(32, 14, 3, 27, '#7a7068'); r(13, 14, 1, 27, '#9a9088'); h(16, 13, 34, '#5a5048');
+  r(16, 17, 16, 24, '#3a3632'); spanRows(h, 26, [[18, 29], [17, 30]], '#6a6e78'); r(18, 28, 12, 6, '#5a4a3a'); r(22, 30, 4, 4, '#8a6a4a');   // 門の向こうの本堂
+  r(40, 22, 3, 19, '#b0aca4'); r(40, 21, 3, 1, '#c8c4bc'); for (let y = 24; y < 38; y += 3) r(41, y, 1, 2, '#3a3a3a');
+  r(0, 41, 48, 7, '#9a9a98'); r(16, 41, 16, 7, '#b8b8b4'); for (const x of [4, 36, 44]) r(x, 42, 1, 6, '#f0f0f0');
+});
+// 崇運寺（佐久島）：明るい灰色の瓦の大きな入母屋屋根、暗い木の本堂と縁、石灯籠と梅の木
+spotSprites.suunji = hiCanvas((r, h) => {
+  h(5, 15, 32, '#5d6469'); r(14, 3, 2, 2, '#5d6469'); r(32, 3, 2, 2, '#5d6469');
+  tileRoof(r, h, 6, [[13, 34], [12, 35], [10, 37], [9, 38], [8, 39], [7, 40], [5, 42], [4, 43], [3, 44], [2, 45], [1, 46], [1, 46]], ['#b4bac2', '#8b919a', '#4d5459', '#7a8088']);
+  for (let k = 0; k < 5; k++) h(7 + k, 22 - k, 25 + k, '#9aa0a8'); h(11, 17, 30, '#5d6469');   // 正面の破風
+  r(6, 18, 36, 16, '#3a332c'); for (const x of [6, 14, 22, 25, 33, 41]) r(x, 18, 1, 16, '#6a5a48'); h(18, 6, 41, '#2a241f');
+  for (const x0 of [7, 15, 26, 34]) { r(x0, 21, 6, 10, '#4a4036'); for (let x = x0; x < x0 + 6; x += 2) r(x, 21, 1, 10, '#5a4e40'); }
+  r(23, 21, 2, 12, '#1f1d22'); h(33, 4, 43, '#7a6a58'); h(34, 4, 43, '#4a3e32'); for (let x = 6; x < 43; x += 6) r(x, 35, 1, 4, '#403b37');
+  r(35, 27, 4, 2, '#8a857a'); r(34, 29, 6, 2, '#9a958a'); r(35, 31, 4, 2, '#5a554a'); r(36, 33, 2, 5, '#9a958a'); r(34, 38, 6, 2, '#8a857a');   // 石灯籠
+  r(10, 26, 1, 14, '#5a4a40'); for (const [x, y] of [[6, 27], [12, 25], [8, 30], [14, 29]]) { r(x, y, 4, 1, '#5a4a40'); r(x + 1, y - 1, 2, 1, '#e8a0b0'); }   // 梅
+  r(0, 39, 48, 9, '#8a8476'); for (let x = 2; x < 48; x += 7) r(x, 42, 4, 1, '#a09a8c');
+});
+// 八劔神社・神明社（佐久島）：うすい緑青の銅ぶき屋根、暗い木の拝殿と格子戸、白いのぼり、石灯籠と狛犬、石段と石垣
+spotSprites.yatsurugi = hiCanvas((r, h) => {
+  h(5, 15, 32, '#5a7478');
+  spanRows(h, 6, [[14, 33], [12, 35], [11, 36], [9, 38], [8, 39], [6, 41], [5, 42], [3, 44], [2, 45]], i => i < 3 ? '#a8c4c8' : i < 8 ? '#88aab0' : '#5a7478');
+  for (let y = 7; y < 14; y++) for (let x = 6 + ((y * 3) % 5); x < 42; x += 5) r(x, y, 1, 1, '#98b6bc');
+  h(15, 2, 45, '#3a4a4c'); h(16, 4, 43, '#2a201c');
+  r(7, 17, 34, 16, '#2e2824'); for (const x of [7, 15, 32, 40]) r(x, 17, 1, 16, '#4a3e34');
+  r(17, 19, 14, 13, '#3a3028'); for (let x = 18; x < 31; x += 2) r(x, 19, 1, 13, '#5a4e42'); for (let y = 21; y < 32; y += 3) h(y, 17, 30, '#5a4e42');
+  for (const x of [11, 35]) { r(x, 19, 2, 11, '#f4f4f0'); r(x, 20, 2, 1, '#c03030'); r(x, 23, 2, 4, '#7a4a9a'); }
+  for (const x of [1, 41]) { r(x + 1, 18, 4, 2, '#8a8a84'); r(x, 20, 6, 2, '#a8a8a0'); r(x + 1, 22, 4, 3, '#a8a8a0'); r(x + 2, 23, 2, 1, '#4a4a44'); r(x, 25, 6, 1, '#8a8a84'); r(x + 1, 26, 4, 8, '#a8a8a0'); r(x, 34, 6, 2, '#8a8a84'); }
+  for (const x of [13, 31]) { r(x, 29, 4, 4, '#b8b8b0'); r(x + 1, 27, 2, 2, '#b8b8b0'); }   // 狛犬
+  spanRows(h, 33, [[16, 31], [15, 32], [14, 33], [13, 34]], i => i % 2 ? '#a8a8a0' : '#c8c8c0');
+  r(0, 37, 48, 8, '#8a8a84'); for (const [x, y, w] of [[0, 37, 7], [8, 38, 6], [36, 37, 5], [42, 38, 6], [3, 41, 8], [34, 41, 7], [12, 41, 4]]) { r(x, y, w, 3, '#a8a8a2'); h(y, x, x + w - 1, '#c0c0ba'); }
+  r(14, 37, 20, 8, '#6a6a64'); r(0, 45, 48, 3, '#5a5c5e');
+});
+// 華蔵寺（吉良）：横に長い本堂。明るい灰色の瓦屋根、上は白い漆喰に黒い柱のます目、下は格子の障子戸。まん中の石段と丸い植えこみ
+spotSprites.kezoji = hiCanvas((r, h) => {
+  r(4, 7, 2, 2, '#4a4a4c'); r(42, 7, 2, 2, '#4a4a4c'); h(9, 6, 41, '#4a4a4c');
+  tileRoof(r, h, 10, [[5, 42], [4, 43], [3, 44], [2, 45], [1, 46], [0, 47], [0, 47]], ['#c4c2c4', '#a8a6a8', '#4a4a4c', '#8a888a']);
+  r(2, 17, 44, 2, '#3a2a20'); for (let x = 3; x < 45; x += 2) r(x, 18, 1, 1, '#7a6a5a');
+  r(2, 19, 44, 6, '#f0efea'); h(22, 2, 45, '#4a3a30'); for (let x = 2; x < 46; x += 6) r(x, 19, 1, 6, '#4a3a30');
+  r(2, 25, 44, 9, '#6a5a50'); for (let x = 3; x < 46; x += 6) { r(x, 26, 5, 7, '#9a8a7a'); r(x + 2, 26, 1, 7, '#6a5a50'); h(29, x, x + 4, '#6a5a50'); }
+  h(34, 1, 46, '#3a2a20'); h(35, 1, 46, '#5a4a40');
+  spanRows(h, 35, [[19, 28], [18, 29], [17, 30], [16, 31], [15, 32]], i => i % 2 ? '#a8a8a4' : '#c8c8c4'); r(18, 35, 1, 5, '#e8e8e4'); r(29, 35, 1, 5, '#e8e8e4');
+  for (const x of [2, 9, 34, 41]) { pix(r, ['.####.', '######', '######', '.####.'], x, 35, '#4a6a30'); h(35, x + 1, x + 3, '#6a8a44'); }
+  for (const x of [13, 33]) { r(x, 25, 2, 14, '#2f5a2a'); r(x - 1, 27, 4, 2, '#3f6a32'); r(x - 1, 31, 4, 2, '#3f6a32'); }
+  r(0, 40, 48, 8, '#a89a84'); h(40, 0, 47, '#b8aa94');
+});
+// 源徳寺（吉良）：侠客・吉良の仁吉の墓。高い石の墓碑と台石、手前に赤い屋根の小さなおおい、右に赤いわくの白い立て札
+spotSprites.gentokuji = hiCanvas((r, h) => {
+  r(0, 4, 18, 22, '#6a6c74'); for (let y = 6; y < 26; y += 4) h(y, 0, 17, '#7a7c84'); spanRows(h, 2, [[0, 17], [0, 18]], '#4a4c58');   // うしろの家
+  r(2, 8, 4, 3, '#e8e8e8'); r(10, 8, 4, 3, '#e8e8e8');
+  r(16, 3, 10, 24, '#7a7a80'); r(16, 3, 3, 24, '#9a9aa0'); h(3, 16, 25, '#aaaab0'); for (let y = 6; y < 24; y += 3) r(21, y, 2, 2, '#4a4a50');   // 墓碑と刻んだ字
+  r(13, 27, 16, 4, '#9a9690'); h(27, 13, 28, '#b0aca4'); r(11, 31, 20, 5, '#8a867e'); h(31, 11, 30, '#a8a49c'); r(9, 36, 24, 5, '#7a766e');
+  r(19, 32, 4, 4, '#6a5a48'); r(20, 30, 2, 2, '#e8c840'); r(18, 30, 1, 2, '#3a7a3a');   // 花立て
+  for (let k = 0; k < 5; k++) h(33 + k, 7 - k, 8 + k, '#d23a2e'); r(3, 38, 10, 4, '#e8e4dc'); r(4, 38, 1, 4, '#9a9690');   // 赤い屋根のおおい
+  r(32, 14, 11, 20, '#f4f4f0'); h(14, 32, 42, '#c0302a'); for (let k = 0; k < 4; k++) h(13 - k, 33 + k, 41 - k, '#c0302a'); r(32, 14, 1, 20, '#c0302a'); r(42, 14, 1, 20, '#c0302a');
+  for (const [x, y] of [[37, 17], [37, 20], [37, 23], [37, 26], [35, 22], [35, 25]]) r(x, y, 1, 2, '#222');   // 「吉良仁吉之墓」
+  r(36, 34, 3, 8, '#c0302a');
+  r(0, 41, 48, 7, '#8a8678'); for (let x = 0; x < 10; x += 3) r(x, 36, 2, 5, '#a8a49c');
+  r(26, 0, 22, 12, '#3f6a32'); r(28, 1, 8, 3, '#5a8a44'); r(40, 4, 6, 3, '#5a8a44');
+});
+// 正法寺古墳（吉良）：草におおわれた前方後円墳の小山と、その上の木々
+spotSprites.shohojiKofun = hiCanvas((r, h) => {
+  r(0, 30, 48, 18, '#9b9731'); for (const [x, y] of [[4, 34], [14, 40], [30, 36], [40, 42], [22, 44]]) r(x, y, 3, 1, '#b8b048');
+  spanRows(h, 18, [[24, 40], [20, 43], [18, 45], [4, 46], [2, 47], [1, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47]], i => i < 3 ? '#7a7a2a' : i % 3 ? '#8a8a2c' : '#6a6a24');   // 前方後円墳の形の小山
+  h(29, 0, 47, '#5a5a20');
+  for (const [x, y, w] of [[0, 6, 10], [9, 10, 8], [36, 4, 12]]) { r(x, y, w, 8, '#3f6a2a'); r(x + 1, y, w - 3, 2, '#5a8a3a'); }
+  for (const [x, y0] of [[22, 6], [30, 3], [38, 8], [16, 12]]) {   // 冬の木（細い枝がけむるように広がる）
+    spanRows(h, y0, [[x - 2, x + 2], [x - 4, x + 4], [x - 5, x + 5], [x - 5, x + 5], [x - 4, x + 4], [x - 2, x + 2]], '#a89a80');
+    for (let i = 0; i < 6; i++) r(x - 4 + ((i * 3) % 9), y0 + 1 + (i % 4), 1, 1, '#7a6e5a');
+    r(x, y0 + 4, 1, 26 - y0, '#5a5040');
+  }
+  r(30, 20, 2, 10, '#36351c');
+});
+// 吉良温泉：緑の山すそに並ぶ白いホテルと、手前の浜と三河湾
+spotSprites.kiraOnsen = hiCanvas((r, h) => {
+  spanRows(h, 6, [[18, 30], [12, 36], [8, 40], [5, 44], [3, 46], [1, 47], [0, 47]], '#4f8a3a'); r(0, 13, 48, 20, '#4f8a3a'); for (const [x, y] of [[6, 10], [36, 8], [44, 16], [2, 20]]) r(x, y, 4, 2, '#6aa04a');
+  r(20, 5, 20, 27, '#f2f2ee'); r(36, 5, 4, 27, '#d8d8d2'); h(5, 20, 39, '#c8c8c4'); for (let y = 8; y < 30; y += 3) for (let x = 22; x < 36; x += 3) r(x, y, 2, 1, '#6f8fa8');
+  r(4, 16, 15, 16, '#ece6d8'); h(16, 4, 18, '#c4b8a4'); for (let y = 19; y < 30; y += 3) for (let x = 6; x < 18; x += 3) r(x, y, 2, 1, '#6f8fa8');
+  r(41, 20, 6, 12, '#e8e8e2'); spanRows(h, 18, [[41, 46], [40, 47]], '#b84a3a'); r(43, 24, 2, 2, '#6f8fa8');
+  r(0, 32, 48, 4, '#ecdcae'); h(32, 0, 47, '#d8c890');
+  r(0, 36, 48, 12, '#3f8fcf'); for (const [x, y] of [[4, 39], [18, 42], [32, 38], [40, 44], [10, 45]]) h(y, x, x + 3, '#8cc0e0');
+});
+// 寺部城址（幡豆）：草と木にかこまれた、城跡をしめす高い石碑
+spotSprites.terabeJo = hiCanvas((r, h) => {
+  r(0, 4, 14, 20, '#3f6a2a'); r(1, 5, 8, 3, '#5a8a3a'); r(34, 2, 14, 22, '#3f6a2a'); r(38, 3, 8, 3, '#5a8a3a');
+  r(19, 4, 10, 34, '#6a6c70'); r(26, 4, 3, 34, '#4e5054'); r(19, 4, 2, 34, '#86888c'); spanRows(h, 2, [[20, 27], [19, 28]], '#7a7c80');
+  for (let y = 8; y < 32; y += 3) r(22, y, 2, 2, '#3a3c40');   // 刻んだ字
+  r(16, 38, 16, 3, '#9a9c9e'); h(38, 16, 31, '#b8babc');
+  spanRows(h, 34, [[6, 16], [3, 17], [1, 18], [0, 19]], '#506b3c'); spanRows(h, 34, [[32, 42], [31, 45], [30, 47], [29, 47]], '#506b3c');
+  r(0, 41, 48, 7, '#506b3c'); for (const [x, y] of [[4, 43], [12, 45], [28, 43], [40, 46], [20, 46]]) r(x, y, 3, 1, '#6a8a4a');
+});
+// 名鉄 こどもの国駅：高架の駅。白い屋根のホームと茶色の柱、コンクリートの壁に駅名と色あざやかな看板、下に入口
+spotSprites.kodomonokuniSt = hiCanvas((r, h) => {
+  r(8, 5, 40, 3, '#e6e8ed'); h(8, 8, 47, '#5a5a5a'); for (const x of [10, 22, 34, 46]) r(x, 9, 1, 6, '#8a6a4a');
+  r(4, 14, 44, 3, '#a8a8a0'); h(14, 4, 47, '#c4c4bc'); for (let x = 5; x < 47; x += 3) r(x, 12, 1, 2, '#c8c8c8'); h(11, 4, 47, '#c8c8c8');
+  r(0, 17, 48, 21, '#8a8880'); r(0, 17, 14, 21, '#6c6d67'); for (let y = 19; y < 37; y += 4) h(y, 0, 47, '#7a7870');
+  r(16, 20, 9, 3, '#f4f4f4'); for (const x of [17, 19, 21, 23]) r(x, 21, 1, 1, '#2f5fae');
+  r(27, 19, 13, 5, '#ffffff'); r(28, 20, 4, 3, '#f2c230'); r(32, 20, 4, 3, '#3f9ad8'); r(36, 20, 3, 3, '#e05a5a');
+  r(27, 27, 13, 11, '#e0e0dc'); r(27, 27, 13, 1, '#5a5a56'); r(32, 31, 2, 4, '#4a4a4a');   // 入口
+  r(2, 30, 10, 8, '#9a9890'); r(4, 26, 3, 4, '#3f7a34'); r(3, 25, 5, 2, '#4f8a3a');
+  r(0, 38, 48, 10, '#7a7a7a'); r(0, 38, 26, 4, '#a8a8a4'); for (const x of [30, 38, 46]) r(x, 44, 4, 1, '#f0f0f0'); h(41, 30, 47, '#e8e8e8');
+});
+// 安泰寺（家康公鎧掛けの松）：千鳥破風のある大きな瓦屋根の本堂、白い壁に黒い木組み、木の縁と階段。手前にあじさい、うしろに杉
+spotSprites.antaiji = hiCanvas((r, h) => {
+  for (const x of [34, 41]) { spanRows(h, 0, [[x + 2, x + 3], [x + 1, x + 4], [x + 1, x + 4], [x, x + 5], [x, x + 5], [x, x + 6], [x, x + 6], [x - 1, x + 6], [x - 1, x + 7], [x - 1, x + 7], [x - 1, x + 7], [x - 2, x + 7]], '#2f5a2a'); }
+  tileRoof(r, h, 8, [[12, 36], [10, 38], [8, 40], [6, 42], [4, 44], [2, 46], [1, 47]], ['#7a8088', '#51575b', '#2e3236', '#454b50']);
+  for (let k = 0; k < 9; k++) { const y = 5 + k; h(y, 24 - k - 1, 25 + k + 1, '#2e3236'); if (k > 1) h(y, 24 - k + 1, 25 + k - 1, '#c8a878'); }   // 千鳥破風
+  for (let k = 3; k < 9; k++) r(24, 5 + k, 2, 1, '#6a5038'); h(13, 17, 32, '#6a5038');
+  r(8, 15, 32, 16, '#f0eee8'); for (const x of [8, 16, 24, 32, 39]) r(x, 15, 1, 16, '#3a3630'); h(15, 8, 39, '#3a3630'); h(22, 8, 39, '#3a3630');
+  for (const x0 of [10, 18, 26, 34]) { r(x0, 17, 5, 4, '#8a7a68'); for (let x = x0; x < x0 + 5; x += 2) r(x, 17, 1, 4, '#5a4a3a'); }
+  r(10, 24, 4, 6, '#3a3630'); r(33, 24, 5, 6, '#3a3630');
+  h(31, 2, 42, '#6a5038'); for (let x = 3; x < 42; x += 5) r(x, 32, 1, 6, '#5a4030'); h(33, 2, 42, '#8a6a4a');
+  for (let i = 0; i < 6; i++) r(2 + i, 32 + i, 3, 1, '#8a6a4a');   // 階段
+  for (const [x, y] of [[0, 39], [8, 41], [16, 40], [28, 41], [38, 39], [44, 42]]) { r(x, y, 5, 4, '#3f7a34'); r(x + 1, y, 3, 2, ['#6a7ac8', '#8a6ac8', '#5a8ad8'][x % 3]); }   // あじさい
+  r(0, 44, 48, 4, '#3f7a34');
+});
+// 福泉寺（吉良）：反りの強い瓦屋根に鬼瓦の本堂、こげ茶の木の正面と板戸、左右に石灯籠、石畳
+spotSprites.fukusenji = hiCanvas((r, h) => {
+  r(10, 4, 3, 3, '#3a3a44'); r(35, 4, 3, 3, '#3a3a44'); h(6, 12, 35, '#3a3a44');
+  tileRoof(r, h, 7, [[12, 35], [11, 36], [10, 37], [9, 38], [8, 39], [6, 41], [4, 43], [2, 45], [1, 46]], ['#8a8e96', '#5e626c', '#2a2a32', '#4a4e58']);
+  r(1, 14, 2, 2, '#2a2a32'); r(45, 14, 2, 2, '#2a2a32'); r(14, 13, 3, 3, '#3a3a44'); r(31, 13, 3, 3, '#3a3a44');   // 鬼瓦
+  r(5, 16, 38, 2, '#3a2e26'); r(7, 18, 34, 15, '#5a4a3c'); for (const x of [7, 15, 32, 40]) r(x, 18, 2, 15, '#6a5a48');
+  r(18, 21, 12, 12, '#8a6848'); for (let x = 20; x < 30; x += 3) r(x, 21, 1, 12, '#6a4e34');
+  r(10, 22, 4, 6, '#9aa0a4'); r(34, 22, 4, 6, '#9aa0a4'); h(33, 5, 42, '#6a5a48'); spanRows(h, 34, [[14, 33], [13, 34], [12, 35]], i => i % 2 ? '#8a8a86' : '#a8a8a4');
+  r(42, 20, 6, 14, '#f0eee8'); h(20, 42, 47, '#3a3630');
+  for (const x of [2, 40]) { r(x + 1, 27, 4, 2, '#d0d0c8'); r(x, 29, 6, 1, '#b0b0a8'); r(x + 1, 30, 4, 3, '#e8e8e0'); r(x + 2, 31, 2, 1, '#4a4a44'); r(x + 2, 33, 2, 5, '#d0d0c8'); r(x, 38, 6, 2, '#b0b0a8'); }
+  r(0, 37, 48, 11, '#8a8a84'); spanRows(h, 37, [[18, 29], [17, 30], [17, 30], [16, 31], [16, 31], [15, 32], [15, 32], [14, 33], [14, 33], [13, 34], [13, 34]], '#b8b8b2'); for (let y = 39; y < 48; y += 2) h(y, 14, 33, '#a4a49e');
+});
+// 源空院：反りのある明るい灰色の瓦屋根、白い漆喰と黒い木組み、明るい木の板壁の小さなお堂。右に白い石柱
+spotSprites.genkuin = hiCanvas((r, h) => {
+  r(40, 6, 3, 3, '#5a5a60'); h(9, 14, 41, '#5a5a60');
+  tileRoof(r, h, 10, [[13, 42], [11, 43], [9, 44], [7, 45], [5, 46], [3, 47]], ['#d0d0d0', '#b0b0b2', '#5a5a60', '#9a9a9c']);
+  r(4, 16, 42, 2, '#5a4030');
+  r(6, 18, 38, 8, '#f0eee8'); for (const x of [6, 16, 26, 36, 43]) r(x, 18, 1, 8, '#3a3028'); h(21, 6, 43, '#3a3028'); for (let i = 0; i < 4; i++) r(30 + i, 18 + i * 2, 1, 2, '#3a3028');
+  r(6, 26, 38, 11, '#c89a60'); for (let x = 7; x < 44; x += 2) r(x, 26, 1, 11, '#b88a50');
+  r(9, 27, 6, 7, '#4a5a64'); r(10, 28, 4, 2, '#8a9aa4'); r(19, 27, 8, 10, '#5a4a3a'); r(22, 28, 2, 9, '#8a7050');
+  r(16, 18, 2, 19, '#4a3a2c'); r(28, 18, 2, 19, '#4a3a2c');
+  r(4, 37, 42, 2, '#9a7a5a'); r(6, 39, 38, 2, '#7a6a5a');
+  r(0, 22, 4, 15, '#d03a3a'); r(1, 24, 1, 8, '#f0f0f0');   // うしろの赤いのぼり
+  r(40, 26, 4, 15, '#e8e8e4'); h(26, 40, 43, '#f8f8f4'); for (let y = 28; y < 38; y += 3) r(41, y, 1, 2, '#3a3a3a');
+  r(0, 41, 48, 7, '#9a7a6a'); for (let x = 0; x < 48; x += 4) r(x, 43, 2, 1, '#8a6a5a'); r(30, 36, 8, 5, '#3f7a34'); r(31, 35, 6, 1, '#5a9a44');
+});
+// 上永良神明社の大シイ：こぶだらけの太い幹が何本にも分かれ、濃い緑の葉がこんもり。幹にしめ縄、手前に石の玉垣
+spotSprites.kaminagaraShinmei = hiCanvas((r, h) => {
+  const LD = '#2a3e22', LM = '#3f5a30', LL = '#5f7a40', TR = '#5a4a3a', TL = '#7a6a58', TS = '#3a2e24';
+  for (const [x, y, w, hh] of [[2, 4, 16, 12], [12, 0, 24, 12], [30, 3, 17, 13], [0, 13, 14, 9], [34, 13, 14, 9], [16, 9, 18, 8]]) { r(x + 1, y, w - 2, hh, LM); r(x, y + 1, w, hh - 2, LM); }
+  for (const [x, y] of [[4, 6], [15, 2], [24, 3], [33, 5], [2, 15], [38, 15], [20, 11], [9, 10]]) { r(x, y, 5, 2, LL); r(x + 1, y + 2, 3, 1, LL); }
+  for (const [x, y] of [[8, 12], [28, 10], [40, 10], [14, 18], [30, 17]]) r(x, y, 4, 2, LD);
+  r(15, 18, 18, 22, TR); r(15, 18, 4, 22, TL); r(28, 18, 5, 22, TS);   // 太い幹
+  spanRows(h, 12, [[10, 13], [11, 14], [12, 15], [13, 16], [14, 17], [15, 18]], TR); spanRows(h, 12, [[35, 38], [34, 37], [33, 36], [32, 35], [31, 34], [30, 33]], TS);   // 左右に分かれる太い枝
+  r(22, 10, 4, 8, TR); r(22, 10, 1, 8, TL);
+  for (const [x, y] of [[18, 24], [25, 30], [20, 34], [27, 22]]) { r(x, y, 3, 2, TS); r(x, y - 1, 2, 1, TL); }   // こぶ
+  for (let y = 19; y < 40; y++) for (let x = 16 + (y % 3); x < 33; x += 4) r(x, y, 1, 2, (x + y) % 2 ? TS : '#4a3c2e');   // 樹皮のすじ
+  r(13, 22, 3, 18, TR); r(13, 22, 1, 18, TL); r(33, 25, 3, 15, TS); r(11, 30, 2, 10, TS); r(36, 31, 2, 9, TS);   // ごつごつした幹のふくらみ
+  h(27, 13, 35, '#e8dcb0'); h(28, 13, 35, '#c8b888'); for (const x of [19, 29]) { r(x, 29, 1, 2, '#ffffff'); r(x + 1, 31, 1, 2, '#ffffff'); }   // しめ縄としで
+  spanRows(h, 40, [[9, 38], [6, 41], [4, 43]], TS); for (const [x, y] of [[6, 41], [14, 42], [31, 42], [39, 41]]) r(x, y, 4, 1, TR);   // 張りだした根
+  for (let x = 1; x < 47; x += 6) { r(x, 38, 3, 7, '#c8ccd0'); h(38, x, x + 2, '#e4e8ec'); } h(41, 0, 47, '#b0b4b8');   // 石の玉垣
+  r(0, 45, 48, 3, '#9a8a6a');
+});
+// 勝山寺：反りの強い入母屋の大屋根を正面に見せ、下に唐破風の向拝。「節分豆まき」の白い幕、左に松、右にのぼり
+spotSprites.shozanji = hiCanvas((r, h) => {
+  const RL = '#8a8784', RM = '#655b59', RD = '#2e2a2a', WD = '#4a3a30', WL = '#6a5040';
+  r(21, 1, 6, 3, '#4a4444'); r(22, 0, 4, 1, '#6a6464');   // 鬼瓦
+  for (let y = 4; y < 19; y++) { const k = y - 4, w = Math.round(2 + k * 1.2 + k * k * 0.04); h(y, 24 - w, 23 + w, y < 9 ? RL : RM); for (let x = 25 - w + (y % 2); x < 23 + w; x += 2) r(x, y, 1, 1, '#5a5250'); }
+  h(18, 1, 46, RD); r(1, 17, 1, 1, RD); r(46, 17, 1, 1, RD);
+  for (let k = 0; k < 8; k++) h(6 + k, 23 - k, 24 + k, k < 2 ? RL : '#9a8f84'); for (let x = 19; x < 29; x += 2) r(x, 11, 1, 3, '#6a5a50');   // 妻の木組み
+  r(5, 19, 38, 18, WD); for (const x of [5, 13, 34, 42]) r(x, 19, 2, 18, WL);
+  spanRows(h, 18, [[16, 31], [13, 34], [12, 35], [12, 35]], i => i < 2 ? RM : RD); r(12, 20, 1, 2, RD); r(35, 20, 1, 2, RD);   // 唐破風
+  r(14, 23, 20, 4, '#f4f2ec'); pix(r, ['#.#.##.#.#.#.##.#.', '.#.#..#.##.#..#.#.'], 15, 24, '#222');   // 節分豆まきの幕
+  r(16, 28, 16, 9, '#2a2420'); for (let x = 17; x < 31; x += 3) r(x, 28, 1, 9, '#4a3a30');
+  for (let y = 37; y < 42; y++) h(y, 16 - (y - 37), 31 + (y - 37), y % 2 ? '#a9a697' : '#c4c0b0');
+  for (const [x, y] of [[0, 14], [2, 19], [0, 25], [3, 30]]) { pix(r, PINE, x, y, '#283a24'); h(y, x + 2, x + 4, '#3f5a34'); } r(4, 33, 2, 10, '#4a3a2a');
+  r(43, 24, 1, 19, '#888'); r(40, 24, 3, 15, '#f4f2ec'); for (let y = 26; y < 38; y += 3) r(41, y, 1, 2, '#c03030');
+  r(0, 42, 48, 6, '#b8b4a8');
+});
+// 西林寺：南極探検の白瀬矗の墓。上の丸い自然石に字が刻まれ、石の台の両わきに花立て（黄色い菊）、まわりは苔と木
+spotSprites.sairinji = hiCanvas((r, h) => {
+  const ST = '#9a9080', SL = '#b4aa98', SD = '#7a7060';
+  pix(r, ['...#####...', '.#########.', '###########', '###########', '###########'], 0, 30, '#5a6a42'); pix(r, ['...#####...', '.#########.', '###########', '###########', '###########'], 37, 30, '#5a6a42');
+  spanRows(h, 3, [[20, 26], [18, 28], [17, 29], [17, 29]], ST);
+  for (let y = 7; y < 28; y++) h(y, 16 + (y > 22 ? 1 : 0), 30 - (y > 22 ? 1 : 0), ST);
+  r(17, 5, 3, 22, SL); r(27, 7, 3, 20, SD); for (let y = 9; y < 26; y += 2) { r(22, y, 1, 1, '#4a4238'); r(25, y + 1, 1, 1, '#4a4238'); }   // 刻まれた字
+  r(8, 28, 32, 6, '#d0c9bb'); h(28, 8, 39, '#e4ded2'); r(8, 33, 32, 1, '#a8a294');
+  for (const x of [9, 34]) { r(x, 22, 5, 12, '#c4bcae'); r(x + 4, 22, 1, 12, '#9a9488'); for (const [dx, dy] of [[0, 0], [2, -1], [4, 0], [1, 1], [3, 1]]) r(x + dx, 19 + dy, 2, 2, (dx + dy) % 2 ? '#e8d050' : '#c8a838'); r(x + 2, 21, 1, 2, '#4a7a3a'); }   // 花立てと菊
+  r(20, 34, 8, 5, '#b8b2a4'); h(34, 20, 27, '#d0c9bb');
+  r(4, 38, 40, 5, '#78766c'); h(38, 4, 43, '#9a988c'); r(0, 43, 48, 5, '#6a6b53'); for (const [x, y] of [[3, 44], [12, 46], [30, 45], [41, 44]]) r(x, y, 3, 1, '#8a8a68');
+});
+// 天竹神社（棉祖祭）：青みがかった灰色の瓦の大きな屋根、木の拝殿、両わきに石灯籠とこま犬、正面の石段と石の玉垣
+spotSprites.tenjikuJinja = hiCanvas((r, h) => {
+  const RC = ['#c8d0d8', '#9aa4b0', '#4a5460', '#8a94a0'], WB = '#8a6a50', WD = '#6a4a34', ST = '#c8c8c8', SD = '#9a9a9a';
+  h(3, 14, 33, '#5a6470'); tileRoof(r, h, 4, [[12, 35], [10, 37], [8, 39], [6, 41], [5, 42], [4, 43], [3, 44], [2, 45]], RC);
+  h(12, 4, 43, '#f0eee8'); r(6, 13, 36, 2, '#7a5a40'); for (let x = 8; x < 40; x += 4) r(x, 13, 2, 2, '#a07a58');   // 白い軒裏と組物
+  r(8, 15, 32, 16, WB); for (const x of [8, 15, 32, 39]) r(x, 15, 1, 16, WD);
+  r(17, 17, 14, 14, WD); for (let x = 18; x < 31; x += 2) r(x, 17, 1, 14, '#8a6448'); r(23, 17, 2, 14, '#4a3424');   // 格子戸
+  h(30, 6, 41, '#a8a8a8'); for (let x = 7; x < 41; x += 3) r(x, 28, 1, 3, '#d8d8d8');
+  for (let y = 31; y < 37; y++) h(y, 18 - (y - 31), 29 + (y - 31), y % 2 ? SD : ST);
+  for (const x of [1, 41]) { r(x + 1, 22, 4, 2, ST); r(x, 24, 6, 2, ST); r(x + 2, 26, 2, 2, '#ffe9a0'); r(x + 1, 28, 4, 2, ST); r(x + 2, 30, 2, 6, ST); r(x, 36, 6, 2, SD); }   // 石灯籠
+  for (const x of [8, 35]) { r(x, 31, 4, 4, '#b8b4a8'); r(x + 1, 30, 2, 1, '#b8b4a8'); r(x, 35, 5, 2, SD); }   // こま犬
+  r(0, 37, 48, 4, '#b8b7b7'); for (let x = 0; x < 48; x += 4) r(x, 37, 1, 4, '#9a9a9a'); r(0, 41, 48, 7, '#c8c0b0'); r(20, 41, 8, 7, '#a8a49a');
+});
+// 瀬門神社（馬駈神事）：灰色の瓦の寄棟屋根に、こげ茶の板張りの長い拝殿。まん中の戸にしめ縄、前に木の長いす、白い砂地
+spotSprites.semonJinja = hiCanvas((r, h) => {
+  const RC = ['#c0c4cc', '#a4a8b3', '#5a5e66', '#8a8e96'], WB = '#4a3038', WL = '#5e3e46', WD = '#36242a';
+  h(5, 10, 37, '#6a6e76'); tileRoof(r, h, 6, [[9, 38], [7, 40], [6, 41], [5, 42], [4, 43], [3, 44], [2, 45], [1, 46]], RC);
+  h(14, 3, 44, '#7a757d');
+  r(3, 15, 42, 21, WB); for (let x = 4; x < 45; x += 2) r(x, 15, 1, 21, WL); for (const x of [3, 12, 22, 25, 35, 44]) r(x, 15, 1, 21, WD); h(24, 3, 44, WD);
+  r(19, 18, 10, 18, '#2a1a20'); for (let x = 20; x < 28; x += 2) r(x, 18, 1, 18, '#4a3038');
+  for (let x = 17; x <= 30; x++) r(x, 18 + Math.round(Math.sin((x - 17) / 13 * Math.PI) * 2), 1, 1, '#e8dcb0'); for (const x of [20, 24, 28]) { r(x, 21, 1, 2, '#ffffff'); r(x + 1, 22, 1, 2, '#ffffff'); }   // しめ縄
+  h(36, 2, 45, '#8a8a88'); h(37, 2, 45, '#b8b8b4');
+  r(17, 38, 14, 2, '#6a5040'); r(18, 40, 1, 2, '#4a3a2a'); r(29, 40, 1, 2, '#4a3a2a');   // 木の長いす
+  r(0, 42, 48, 6, '#e9e7e2'); for (const [x, y] of [[5, 44], [30, 46], [40, 43]]) r(x, y, 3, 1, '#d0ccc4');
+  pix(r, ['..####', '.#####', '######', '######', '######', '######'], 42, 36, '#3f6a34');
+});
+// 花岳寺（吉良）：うすい銀ねずの大きな寄棟の瓦屋根、白い漆喰の帯と茶色の木組み、障子の本堂。左に丸く刈った松、右にとがったヒノキ
+spotSprites.kagakuji = hiCanvas((r, h) => {
+  const RC = ['#e4e6ea', '#c8ccd2', '#6a6e76', '#b0b4ba'], WD = '#433838', WL = '#5a4c4a';
+  h(4, 14, 33, '#9a9ea6'); tileRoof(r, h, 5, [[12, 35], [10, 37], [8, 39], [6, 41], [5, 42], [4, 43], [3, 44], [2, 45], [1, 46]], RC);
+  h(14, 3, 44, '#8a8e96');
+  r(4, 15, 40, 5, '#f2f0ea'); for (const x of [4, 11, 18, 29, 36, 43]) r(x, 15, 1, 5, WD); h(15, 4, 43, WD); r(20, 16, 8, 3, '#6a5040'); for (const x of [21, 23, 25]) r(x, 17, 1, 1, '#e8e0c8');   // 漆喰の帯と扁額
+  r(4, 20, 40, 13, WL); for (const x of [6, 12, 31, 37]) { r(x, 21, 5, 9, '#e8e4d8'); for (let y = 23; y < 30; y += 2) h(y, x, x + 4, '#b8b0a0'); r(x + 2, 21, 1, 9, '#b8b0a0'); }   // 障子
+  r(19, 21, 10, 12, '#2a2427'); r(22, 23, 4, 6, '#c8b090'); for (const x of [4, 18, 29, 43]) r(x, 20, 1, 13, WD);
+  h(33, 2, 45, '#6a5a50'); r(3, 34, 42, 3, '#2a2224');
+  for (let y = 34; y < 39; y++) h(y, 18 - (y - 34), 29 + (y - 34), y % 2 ? '#8a8682' : '#a8a49e');
+  r(0, 39, 48, 9, '#e0d7d0'); for (const [x, y] of [[8, 42], [34, 44], [24, 46]]) r(x, y, 4, 1, '#c8bfb6');
+  pix(r, ['...######...', '.##########.', '############', '############', '.##########.', '...######...'], 0, 30, '#3a5a2e'); h(30, 4, 8, '#5a7a44'); r(5, 36, 2, 4, '#4a3a2a');   // 丸い松
+  for (let y = 18; y < 40; y++) { const w = Math.min(4, 1 + Math.floor((y - 18) / 4)); h(y, 43 - w, 43 + w > 47 ? 47 : 43 + w, y % 3 ? '#2f5a2a' : '#3f6a34'); }   // ヒノキ
+});
+// 円融寺の前の「吉良の五本松」：太い幹が大きく傾き、低い枝は地面近くまでのびる。上に平らな松の葉のかたまり。左下にお寺の瓦屋根
+spotSprites.ennyuji = hiCanvas((r, h) => {
+  const TR = '#7a7060', TL = '#9a9282', TS = '#4e463a', ND = '#24402a', NM = '#2f5030', NL = '#4f7a48';
+  tileRoof(r, h, 34, [[0, 12], [0, 13], [0, 14], [0, 15]], ['#7a7f87', '#5a5f67', '#33373e', '#4a4f57']); r(0, 38, 14, 6, '#e8e4dc'); for (const x of [0, 6, 12]) r(x, 38, 1, 6, '#5a4632');
+  for (let i = 0; i < 34; i++) { const t = i / 33, x = Math.round(22 + 14 * t - 4 * Math.sin(t * Math.PI)), y = Math.round(44 - 36 * t), w = Math.round(4 - 2 * t); r(x - w, y, w * 2 + 1, 1, TR); r(x - w, y, 1, 1, TL); r(x + w, y, 1, 1, TS); }   // 傾いた幹
+  for (let i = 0; i < 22; i++) { const t = i / 21, x = Math.round(20 - 17 * t), y = Math.round(34 + 8 * t * t); r(x, y, 3, 2, i % 3 ? TR : TS); }   // 地面へのびる低い枝
+  for (const [x, y, w] of [[26, 2, 16], [32, 9, 14], [20, 7, 12], [36, 16, 11], [12, 16, 12], [2, 26, 12], [24, 18, 10]]) { r(x + 1, y, w - 2, 3, NM); r(x, y + 1, w, 2, NM); h(y, x + 2, x + w - 3, NL); h(y + 3, x + 1, x + w - 2, ND); }   // 平らな葉のかたまり
+  r(0, 44, 48, 4, '#beb5ae'); h(44, 0, 47, '#d0c8c0');
+});
+// 勝楽寺（小山田地蔵尊）：彫りものの破風が前に張りだす本堂（木の格子と白い壁）、左は木の間をのぼる石段
+spotSprites.shorakuji = hiCanvas((r, h) => {
+  const RC = ['#6a6a72', '#4a4a52', '#26262c', '#3a3a42'], WB = '#8a6a50', WD = '#4a3426';
+  for (const [x, y, w] of [[0, 6, 10], [6, 2, 9], [2, 14, 9], [8, 10, 7]]) { r(x, y, w, 7, '#2f5a2a'); r(x + 1, y, w - 3, 2, '#4f7a3e'); }
+  for (let i = 0; i < 12; i++) h(42 - i * 2, 2 + i, 9 + i, i % 2 ? '#a8a8a0' : '#c0c0b8'); for (let i = 0; i < 12; i++) h(43 - i * 2, 2 + i, 9 + i, '#7a7a72');   // 石段
+  r(0, 30, 6, 14, '#3f6a34'); r(1, 29, 4, 1, '#5a8a44');
+  for (let k = 0; k < 14; k++) { const y = 4 + k; h(y, 30 - k - 2, 31 + k + 2, RC[2]); h(y, 30 - k - 1, 31 + k + 1, k < 4 ? RC[0] : RC[1]); }   // 正面の破風
+  r(28, 1, 6, 3, '#3a3a40'); r(29, 0, 4, 1, '#5a5a62');
+  for (let k = 3; k < 13; k++) h(4 + k, 30 - k + 2, 31 + k - 2, '#7a6450'); for (let x = 25; x < 37; x += 2) r(x, 11, 1, 5, '#a08468'); h(16, 21, 40, '#5a4634');   // 妻飾り
+  tileRoof(r, h, 17, [[14, 47], [13, 47], [12, 47], [11, 47]], RC);
+  r(13, 21, 35, 3, '#e8e4dc'); r(13, 24, 35, 16, WB); for (const x of [13, 21, 30, 39, 47]) r(x, 21, 1, 19, WD);
+  r(32, 26, 6, 11, '#3a2a20'); for (let y = 27; y < 37; y += 2) h(y, 32, 37, '#6a5040'); r(23, 26, 6, 6, '#e8e4d8'); for (let x = 24; x < 29; x += 2) r(x, 26, 1, 6, '#a89880'); r(41, 26, 5, 6, '#e8e4d8');
+  h(40, 12, 47, '#6a5040'); r(12, 41, 36, 3, '#4a3a30'); r(0, 44, 48, 4, '#a8a49a');
+});
+// 大樹寺の山門：二重の大きな楼門。黒ずんだ木の組物、上の階にまわり縁と手すり、両わきに花頭窓のある白壁の回廊
+spotSprites.okazakiDaijuji = hiCanvas((r, h) => {
+  const RC = ['#8a8a8c', '#5c5b5a', '#27231f', '#4a4948'], WD = '#4a443e', WL = '#6a625a', BR = '#9a948c';
+  tileRoof(r, h, 26, [[0, 12], [0, 13], [0, 14]], RC); tileRoof(r, h, 26, [[35, 47], [34, 47], [33, 47]], RC);
+  for (const x0 of [0, 34]) { r(x0, 29, 14, 11, '#e8e6e0'); for (const x of [x0 + 2, x0 + 8]) { spanRows(h, 31, [[x + 1, x + 2], [x, x + 3], [x, x + 3], [x, x + 3], [x, x + 3]], '#3a3632'); for (let y = 32; y < 36; y += 2) h(y, x, x + 3, '#8a8680'); } r(x0, 36, 14, 4, '#5a524a'); }   // 回廊と花頭窓
+  h(2, 9, 38, '#4a4948'); tileRoof(r, h, 3, [[8, 39], [6, 41], [5, 42], [4, 43], [3, 44]], RC); r(3, 6, 1, 1, RC[2]); r(44, 6, 1, 1, RC[2]);
+  r(9, 8, 30, 3, BR); for (let x = 10; x < 38; x += 3) r(x, 8, 2, 3, WD);   // 上の組物
+  r(11, 11, 26, 5, WL); r(23, 11, 2, 3, '#8a2a20'); for (let x = 12; x < 36; x += 4) r(x, 12, 3, 3, '#e8e4dc');   // 上の階
+  h(16, 8, 39, BR); for (let x = 8; x < 40; x += 2) r(x, 17, 1, 1, WD); h(18, 8, 39, WD);   // まわり縁の手すり
+  tileRoof(r, h, 19, [[7, 40], [5, 42], [4, 43], [3, 44]], RC);
+  r(9, 23, 30, 2, BR); for (let x = 10; x < 38; x += 3) r(x, 23, 2, 2, WD);
+  r(10, 25, 28, 15, WD); for (const x of [10, 17, 23, 30, 37]) r(x, 25, 2, 15, WL); r(19, 27, 10, 13, '#1a1814'); r(21, 33, 6, 7, '#8a8a7a');
+  r(14, 36, 3, 4, '#c8c4bc'); r(31, 36, 3, 4, '#c8c4bc'); for (let x = 19; x < 29; x += 2) r(x, 37, 1, 3, '#d8d4cc');
+  r(0, 40, 48, 3, '#c8c8c4'); h(40, 0, 47, '#e0e0dc'); r(0, 43, 48, 5, '#dbdbdc');
+});
+// まるや八丁味噌：白い漆喰の大きな蔵（切妻の妻に黒い丸の紋）、下は黒い焼き板と格子戸、石の土台。右に続く低い蔵
+spotSprites.okazakiMaruya = hiCanvas((r, h) => {
+  const WW = '#f0f0ec', WS = '#c8ccd0', BK = '#22201e', BL = '#3a3836', RC = ['#7a7f87', '#5a5f67', '#2a2e34', '#4a4f57'];
+  tileRoof(r, h, 14, [[29, 47], [28, 47], [27, 47]], RC); r(28, 17, 20, 9, WS); r(28, 26, 20, 14, BK); for (let x = 29; x < 48; x += 2) r(x, 26, 1, 14, BL); r(36, 28, 6, 12, '#6a4a3a'); for (let x = 37; x < 42; x += 2) r(x, 28, 1, 12, '#4a3428');
+  for (let k = 0; k < 18; k++) { const y = 3 + k; h(y, 17 - k - 1, 18 + k + 1, RC[2]); h(y, 17 - k, 18 + k, RC[k < 4 ? 0 : 1]); if (k >= 1) h(y, 17 - k + 2, 18 + k - 2, k > 12 ? WS : WW); }   // 切妻の屋根と白い妻
+  r(14, 1, 8, 2, '#3a3e44');
+  pix(r, ['.####.', '#....#', '#.##.#', '#.##.#', '#....#', '.####.'], 15, 9, BK);   // 黒い丸の紋
+  r(1, 21, 33, 5, WW); r(1, 21, 2, 19, WS); h(25, 1, 33, '#9a9ea4');
+  r(1, 26, 33, 12, BK); for (let x = 2; x < 34; x += 2) r(x, 26, 1, 12, BL); h(26, 1, 33, '#5a5450');
+  r(20, 28, 9, 10, '#3a2a22'); for (let x = 21; x < 29; x += 2) r(x, 28, 1, 10, '#6a5040');   // 格子戸
+  r(1, 38, 47, 3, '#8a8a84'); h(38, 1, 47, '#a8a8a2'); r(0, 41, 48, 7, '#c8c6c0'); for (const [x, y] of [[6, 44], [26, 46]]) r(x, y, 6, 1, '#b0aea8');
+});
+// 伊賀八幡宮の随身門：檜皮ぶきの大きな屋根、朱ぬりの柱と梁、白い壁、軒下の色あざやかな組物。前に石の反り橋と玉垣、蓮の池
+spotSprites.okazakiIgaHachimangu = hiCanvas((r, h) => {
+  const RC = ['#a8988a', '#7a6a5a', '#3e3026', '#6a5a4c'], RD = '#c83a2a', RL = '#e05a40', RS = '#8e2418', WW = '#f0eee8';
+  h(3, 14, 33, '#4e3e32'); tileRoof(r, h, 4, [[12, 35], [10, 37], [8, 39], [6, 41], [5, 42], [4, 43], [3, 44], [2, 45]], RC);
+  r(5, 12, 38, 3, '#2f6a4a'); for (let x = 6; x < 42; x += 3) { r(x, 12, 2, 2, RL); r(x, 14, 2, 1, '#e8c040'); }   // 軒下の組物
+  r(8, 15, 32, 17, RD); r(8, 15, 32, 2, RS);
+  for (const x0 of [10, 31]) { r(x0, 18, 7, 12, WW); r(x0 + 2, 20, 3, 6, '#3a3030'); }
+  r(19, 18, 10, 14, '#2a1a14'); for (const x of [8, 18, 29, 39]) r(x, 15, 2, 17, RL); h(17, 8, 39, '#e8c040');
+  r(6, 32, 36, 2, '#b8b0a8'); h(32, 6, 41, '#d0c8c0');
+  spanRows(h, 34, [[16, 31], [15, 32], [14, 33], [14, 33], [13, 34]], i => i ? '#a8a098' : '#c8c0b8'); for (const x of [14, 33]) r(x, 31, 1, 3, '#9a9288');   // 石の反り橋
+  for (let x = 0; x < 48; x += 4) if (x < 12 || x > 36) { r(x, 30, 2, 9, '#b8ae98'); h(30, x, x + 1, '#d0c8b4'); } h(33, 0, 11, '#a2957c'); h(33, 37, 47, '#a2957c');   // 石の玉垣
+  r(0, 39, 48, 9, '#4a6a5a'); for (const [x, y] of [[2, 41], [9, 44], [36, 42], [42, 45], [20, 46], [28, 44]]) { r(x, y, 4, 2, '#4f8a3a'); r(x + 1, y, 2, 1, '#7ab05a'); } r(10, 41, 2, 2, '#f0a0b8');   // 蓮の池
+});
+// 瀧山寺の本堂（滝山寺）：檜皮ぶきの大きな寄棟屋根、軒下に五色の幕、風化した木の堂と縁、前に木の桶
+spotSprites.okazakiTakisanji = hiCanvas((r, h) => {
+  const RL = '#b08a74', RM = '#8a6a58', RD = '#2f231e', WB = '#9c8270', WD = '#6a5442';
+  h(8, 18, 29, '#5a4436');
+  for (let y = 9; y < 22; y++) { const k = y - 9, a = Math.round(17 - k * 1.25), b = Math.round(30 + k * 1.25); h(y, a, b, y < 13 ? RL : RM); for (let x = a + 1 + (y % 3); x < b; x += 3) r(x, y, 1, 1, '#7a5a4a'); }
+  h(22, 0, 47, RD); h(23, 1, 46, '#4a3a30'); r(0, 21, 1, 1, RD); r(47, 21, 1, 1, RD);
+  const CUR = ['#7a3a8a', '#f4f2ec', '#d34d35', '#e8c030', '#1d8650'];
+  for (let x = 4; x < 44; x++) r(x, 24, 1, 4, CUR[Math.floor((x - 4) / 2) % 5]);   // 五色の幕
+  r(4, 28, 40, 8, WB); for (const x of [4, 11, 18, 29, 36, 43]) r(x, 28, 1, 8, WD); for (let x = 5; x < 43; x += 2) r(x, 29, 1, 6, '#b49a86');
+  r(20, 29, 8, 7, '#3a2a20');
+  h(36, 2, 45, '#b8a490'); h(37, 2, 45, '#6a5442'); r(3, 38, 42, 2, '#3a2e26'); for (let x = 4; x < 44; x += 6) r(x, 38, 1, 2, WB);
+  for (let y = 36; y < 42; y++) h(y, 20 - (y - 36), 27 + (y - 36), y % 2 ? '#c8c0b8' : '#dcd6ce');
+  for (const x of [5, 38]) { r(x, 37, 5, 5, '#8a6a4a'); h(38, x, x + 4, '#4a3a2a'); h(40, x, x + 4, '#4a3a2a'); h(37, x, x + 4, '#a88a64'); }   // 木の桶
+  r(0, 42, 48, 6, '#dfdad6'); for (const [x, y] of [[6, 45], [30, 44], [40, 46]]) r(x, y, 4, 1, '#c8c2bc');
+});
+// 岩津天満宮の拝殿：金の飾りの唐破風を正面に、朱ぬりの柱と梁、白い幕に黒い梅鉢の紋、朱の手すり。前に石の撫で牛
+spotSprites.okazakiIwazuTenmangu = hiCanvas((r, h) => {
+  const RC = ['#7a7480', '#5a5462', '#2a2430', '#4a4452'], RD = '#c83a2a', RL = '#e05a40', RS = '#8e2418', GD = '#d8b040';
+  tileRoof(r, h, 14, [[4, 43], [2, 45], [1, 46], [0, 47]], RC);
+  for (let k = 0; k < 14; k++) { const y = 2 + k; h(y, 23 - k - 2, 24 + k + 2, RC[2]); h(y, 23 - k - 1, 24 + k + 1, k < 3 ? RC[0] : RC[1]); if (k >= 4) h(y, 23 - k + 3, 24 + k - 3, RS); }   // 正面の破風
+  r(22, 0, 4, 2, '#3a3440'); for (let k = 5; k < 13; k += 2) h(2 + k, 24 - 2, 25, GD); r(21, 9, 6, 4, GD); r(23, 10, 2, 2, '#4a7ad0');   // 金の飾りと額
+  for (let x = 12; x <= 35; x++) r(x, 16 + Math.round(-Math.sin((x - 12) / 23 * Math.PI) * 2), 1, 2, RC[2]);   // 唐破風のアーチ
+  r(4, 18, 40, 4, RD); r(4, 18, 40, 1, RL); for (let x = 5; x < 43; x += 3) r(x, 19, 2, 2, GD);
+  r(4, 22, 40, 6, '#f4f2ec'); for (const x of [14, 31]) { r(x, 23, 4, 4, '#222'); r(x + 1, 24, 2, 2, '#f4f2ec'); }   // 白い幕と梅鉢の紋
+  r(4, 28, 40, 8, '#3a2a24'); for (const x of [4, 13, 22, 25, 34, 43]) r(x, 18, 1, 18, RL);
+  h(33, 3, 44, RD); for (let x = 3; x < 45; x += 3) r(x, 34, 1, 3, RD); h(36, 3, 44, RS);   // 朱の手すり
+  r(0, 37, 48, 11, '#d8d4cc'); for (let x = 2; x < 48; x += 6) r(x, 40, 4, 1, '#c0bcb4');
+  spanRows(h, 38, [[4, 13], [3, 15], [3, 16], [4, 16]], '#8a8a8e'); r(14, 36, 3, 3, '#8a8a8e'); r(15, 36, 1, 1, '#5a5a5e'); h(38, 5, 12, '#aaaaae'); r(5, 42, 3, 2, '#6a6a6e'); r(13, 42, 3, 2, '#6a6a6e'); r(2, 44, 16, 3, '#9a948a');   // 撫で牛
+});
+// 六所神社：檜皮ぶきの大屋根に金の飾りの唐破風、朱ぬりの柱と黒い組物、しめ縄、両わきに石灯籠
+spotSprites.okazakiRokushoJinja = hiCanvas((r, h) => {
+  const RL = '#c4bcbc', RM = '#a8a0a0', RD = '#4a4040', RD2 = '#c83a2a', RLL = '#e05a40', GD = '#d8b040';
+  h(4, 10, 37, '#6a6060');
+  for (let y = 5; y < 17; y++) { const k = y - 5, a = Math.round(9 - k * 0.7), b = Math.round(38 + k * 0.7); h(y, a, b, y < 9 ? RL : RM); for (let x = a + 1 + (y % 3); x < b; x += 3) r(x, y, 1, 1, '#948c8c'); }
+  h(17, 0, 47, RD); r(0, 16, 1, 1, RD); r(47, 16, 1, 1, RD);
+  for (let k = 0; k < 8; k++) { const y = 3 + k; h(y, 23 - k - 1, 24 + k + 1, RD); h(y, 23 - k, 24 + k, '#8a7a72'); } r(22, 1, 4, 2, GD); r(20, 7, 8, 3, GD); r(23, 8, 2, 1, '#222');   // 千鳥破風と金の飾り
+  for (let x = 14; x <= 33; x++) r(x, 16 + Math.round(-Math.sin((x - 14) / 19 * Math.PI) * 3), 1, 2, RD);   // 唐破風
+  r(3, 18, 42, 4, '#2a2424'); for (let x = 4; x < 44; x += 3) r(x, 19, 2, 2, GD);   // 黒と金の組物
+  r(3, 22, 42, 14, '#3a2a26'); for (const x of [3, 12, 21, 26, 35, 44]) r(x, 22, 2, 14, RD2); for (const x of [3, 12, 21, 26, 35, 44]) r(x, 22, 1, 14, RLL);
+  h(22, 3, 45, RD2); h(28, 3, 45, RD2);
+  for (let x = 14; x <= 33; x++) r(x, 25 + Math.round(Math.sin((x - 14) / 19 * Math.PI) * 2), 1, 1, '#e8dcb0'); for (const x of [17, 23, 29]) { r(x, 27, 1, 2, '#ffffff'); r(x + 1, 28, 1, 2, '#ffffff'); }   // しめ縄
+  h(36, 1, 46, '#8a8a88'); r(17, 36, 14, 4, '#a8a49e');
+  for (const x of [1, 41]) { r(x + 1, 29, 4, 2, '#9a9690'); r(x, 31, 6, 2, '#9a9690'); r(x + 2, 33, 2, 1, '#ffe9a0'); r(x + 2, 34, 2, 6, '#9a9690'); r(x, 40, 6, 1, '#7a7670'); }
+  r(0, 40, 48, 8, '#d0ccc4'); for (const [x, y] of [[8, 43], [34, 45]]) r(x, y, 5, 1, '#b8b4ac');
+});
+// 奥殿陣屋の入口：こげ茶の太い木の門柱と横木、右の柱に「奥殿陣屋」の茶色い看板、緑のトンネルの下の石の小道
+spotSprites.okazakiOkudonoJinya = hiCanvas((r, h) => {
+  const PD = '#3a3028', PL = '#5a4a3c', LD = '#3f6a2a', LM = '#5f8a3a', LL = '#8eaa5f';
+  for (const [x, y, w, hh] of [[0, 0, 20, 14], [14, 0, 20, 10], [28, 0, 20, 14], [0, 10, 8, 14], [40, 10, 8, 14]]) { r(x, y, w, hh, LM); }
+  for (const [x, y] of [[3, 2], [17, 1], [30, 3], [10, 8], [36, 9], [1, 15], [42, 16], [24, 5]]) { r(x, y, 5, 2, LL); r(x + 1, y + 2, 3, 1, LL); }
+  for (const [x, y] of [[8, 11], [26, 8], [20, 12], [44, 6]]) r(x, y, 5, 2, LD);
+  r(0, 17, 48, 14, '#2f5a26'); for (const [x, y] of [[4, 20], [14, 18], [28, 22], [40, 19], [20, 25]]) r(x, y, 6, 2, '#4a7a34');   // 奥の木々（緑のトンネル）
+  spanRows(h, 30, [[18, 29], [16, 31], [14, 33], [12, 35], [10, 37], [8, 39], [6, 41], [4, 43], [2, 45], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47]], i => i % 3 ? '#b8b4ac' : '#a8a49c');
+  r(0, 32, 9, 8, '#4a7a34'); r(39, 32, 9, 8, '#4a7a34'); h(32, 0, 8, LL); h(32, 39, 47, LL);
+  r(2, 14, 44, 3, PD); h(14, 2, 45, PL); r(4, 19, 40, 2, PD);   // 横木
+  for (const x of [8, 37]) { r(x, 14, 4, 30, PD); r(x, 14, 1, 30, PL); }
+  r(41, 18, 4, 16, '#b8783a'); r(41, 18, 4, 1, '#d8985a'); for (let y = 20; y < 33; y += 3) r(42, y, 2, 2, '#2a1a10');   // 看板
+  r(13, 28, 4, 3, '#e8e0c8'); r(14, 31, 1, 4, PD);   // 立て札
+  r(0, 44, 48, 4, '#8a8882');
+});
+// 東公園（岡崎）：芦池にのびる長い木の桟橋と、先の六角のあずまや。むこう岸の木立と、水に映る影
+spotSprites.okazakiHigashiPark = hiCanvas((r, h) => {
+  const WA = '#6f7978', WL = '#8a9496', WD = '#556060';
+  spanRows(h, 14, [[0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47], [0, 47]], i => i % 3 ? '#2c321f' : '#3f4a2a');
+  for (const [x, w] of [[2, 6], [12, 5], [30, 7], [40, 6]]) { r(x, 11, w, 3, '#3f4a2a'); h(11, x + 1, x + w - 2, '#55643a'); }
+  for (let y = 22; y < 47; y++) { const k = Math.sqrt(Math.max(0, 1 - Math.pow((y - 22) / 25, 2))); h(y, Math.round(24 - 24 * k), Math.round(23 + 24 * k), WA); }   // 楕円の池
+  for (const [x, y] of [[4, 27], [20, 31], [34, 26], [10, 37], [26, 41], [36, 35], [18, 44]]) h(y, x, x + 5, WL);
+  spanRows(h, 6, [[13, 14], [11, 16], [9, 18], [7, 20], [6, 21]], i => i % 2 ? '#57514c' : '#6e6862'); r(13, 4, 2, 2, '#404641');   // あずまやの屋根
+  h(11, 6, 21, '#3e3a36'); for (const x of [7, 13, 20]) r(x, 12, 1, 7, '#404641'); h(16, 7, 20, '#7b818a');
+  r(6, 19, 40, 2, '#7b818a'); h(19, 6, 45, '#9aa0a8'); h(17, 22, 45, '#7b818a'); for (let x = 23; x < 46; x += 4) r(x, 17, 1, 2, '#5a6068');   // 桟橋と手すり
+  for (let x = 8; x < 46; x += 4) r(x, 21, 1, 5, '#404641');
+  for (let x = 8; x < 46; x += 4) r(x, 27, 1, 3, WD); h(29, 8, 20, WD); spanRows(h, 30, [[9, 18], [11, 16]], WD);   // 水に映る影
+  for (const [x, y] of [[36, 0], [41, 3]]) { pix(r, PINE, x, y, '#2c3a24'); h(y, x + 2, x + 4, '#44583a'); }
+});
+// 旧本多忠次邸（岡崎）：クリーム色の壁にレンガ色の縁どり。左は半円窓の破風、まん中は3つのアーチの玄関廊、右は丸い塔。赤茶の瓦
+spotSprites.okazakiHondaTei = hiCanvas((r, h) => {
+  const CW = '#e2d8b6', CS = '#c6ba96', BR = '#9a6a48', RF = '#7a4a3a', WN = '#3a3a40', WF = '#f2eee2';
+  const win = (x, y, w, hh) => { r(x, y, w, hh, WN); r(x, y, w, 1, WF); r(x + (w >> 1), y, 1, hh, WF); };
+  for (let k = 0; k < 7; k++) { h(6 + k, 8 - k - 1, 9 + k + 1, BR); h(6 + k, 8 - k, 9 + k, CW); }   // 左の破風
+  r(1, 13, 16, 27, CW); r(13, 13, 4, 27, CS); h(13, 1, 16, BR);
+  for (let a = 0; a <= 180; a += 15) { const t = a * Math.PI / 180; r(Math.round(8.5 - 5 * Math.cos(t)), Math.round(20 - 5 * Math.sin(t)), 1, 1, BR); }   // 半円の縁どり
+  win(5, 16, 8, 5); h(22, 3, 14, BR); for (const x of [3, 7, 11]) win(x, 26, 3, 8);
+  h(11, 16, 34, RF); h(12, 15, 35, '#5a3428'); r(16, 13, 18, 27, CW); h(13, 16, 33, BR);
+  for (const x of [18, 25]) win(x, 15, 6, 5); h(22, 16, 33, BR);
+  for (const cx of [19, 25, 31]) { spanRows(h, 25, [[cx - 2, cx + 1], [cx - 3, cx + 2], [cx - 3, cx + 2], [cx - 4, cx + 3]], BR); spanRows(h, 26, [[cx - 1, cx], [cx - 2, cx + 1], [cx - 3, cx + 2]], WN); r(cx - 3, 29, 6, 9, WN); r(cx - 4, 29, 1, 9, BR); r(cx + 3, 29, 1, 9, BR); r(cx - 1, 31, 2, 7, '#6a5a50'); }   // 3つのアーチ（奥にガラス戸）
+  r(34, 9, 13, 31, CW); r(42, 9, 5, 31, CS); h(9, 34, 46, CS); for (let x = 34; x < 47; x += 3) r(x, 7, 2, 2, CW); h(10, 34, 46, BR); h(24, 34, 46, BR);   // 丸い塔
+  for (const x of [35, 39, 43]) { win(x, 13, 3, 7); win(x, 27, 3, 8); }
+  h(40, 0, 47, '#b8b0a0'); r(0, 41, 48, 7, '#8fa83a'); h(41, 0, 47, '#a8c050');
+});
+// 南公園（岡崎）：遊園地のピンクのコーヒーカップ。うしろに緑と白のしま模様の建物、まわりに手すり
+spotSprites.okazakiMinamiPark = hiCanvas((r, h) => {
+  const PK = '#f0a2c0', PD = '#c05c88', PS = '#f8d4e2', GR = '#2f4a3e';
+  r(4, 8, 36, 2, '#e8e6e0'); r(4, 10, 36, 13, '#e8e6e0'); for (let x = 4; x < 40; x += 6) r(x, 10, 3, 13, GR); h(16, 4, 39, '#c8c6be');
+  for (let x = 6; x < 38; x += 4) { r(x, 18, 2, 4, '#5a6a72'); } h(22, 4, 39, '#b8b0a0'); r(2, 18, 2, 12, '#d8d4c8');
+  for (const [x, c] of [[42, '#e8d24a'], [45, '#5ac0a0']]) r(x, 14, 2, 2, c);
+  r(0, 30, 48, 18, '#6aa8a0'); h(30, 0, 47, '#7ec0b8');
+  const cup = (x, y, w, c1, c2) => { spanRows(h, y, [[x, x + w], [x, x + w], [x + 1, x + w - 1], [x + 1, x + w - 1], [x + 2, x + w - 2], [x + 3, x + w - 3]], c1); h(y, x, x + w, c2); r(x + w + 1, y + 1, 2, 3, c2); spanRows(h, y + 6, [[x - 2, x + w + 2], [x - 1, x + w + 1]], PS); };
+  cup(3, 27, 9, '#5aa8d8', '#2a6a98'); cup(12, 31, 13, PK, PD); cup(29, 33, 13, PK, PD);
+  for (let x = 0; x < 48; x += 6) r(x, 39, 1, 7, '#d8dcdc'); h(40, 0, 47, '#e8ecec'); h(44, 0, 47, '#c8cccc');   // 手すり
+});
+// 岡崎市美術博物館：段々に重なるコンクリートの壁と大きな階段、右に高いガラスの塔、左に細い柱の薄い屋根
+spotSprites.okazakiMuseum = hiCanvas((r, h) => {
+  const CL = '#d0cac4', CM = '#bcb4ac', CS = '#a99a92', GL = '#9baeb4', GF = '#c8d6dc';
+  r(33, 3, 11, 26, GL); for (let y = 3; y < 29; y += 3) h(y, 33, 43, GF); for (let x = 33; x < 44; x += 3) r(x, 3, 1, 26, GF); r(41, 3, 3, 26, '#86989e');   // ガラスの塔
+  spanRows(h, 12, [[2, 22], [1, 22]], '#707577'); for (const x of [4, 10, 16, 21]) r(x, 14, 1, 10, '#e8e8e8');   // 細い柱の屋根
+  r(4, 22, 32, 6, CM); h(22, 4, 35, CL); r(8, 18, 24, 4, CL); h(18, 8, 31, '#e0dad4');
+  r(0, 28, 48, 6, CS); h(28, 0, 47, CM); r(28, 24, 10, 5, CL); h(24, 28, 37, '#e0dad4');
+  for (let y = 34; y < 48; y++) h(y, Math.max(0, 22 - (y - 34) * 2), 47, (y % 2) ? CM : CL);   // 大きな階段
+  spanRows(h, 34, [[2, 20], [2, 17], [2, 14], [2, 11], [2, 8]], CS); h(38, 2, 10, '#8a7e76');
+});
+// 名鉄 東岡崎駅：灰色の駅ビル（窓の列）と、色とりどりの看板の帯、1階の店の入口と街路樹
+spotSprites.okazakiHigashiOkazakiSta = hiCanvas((r, h) => {
+  const GY = '#b4b4ae', GD = '#8e8e88', WN = '#4a5560';
+  r(0, 8, 48, 34, GY); h(8, 0, 47, '#d4d4ce'); r(10, 4, 14, 4, '#e8e8e8'); r(11, 5, 12, 2, '#d23a2e');   // 屋上の看板
+  for (const y of [11, 17]) { for (let x = 1; x < 47; x += 4) r(x, y, 3, 4, WN); h(y + 5, 0, 47, GD); }
+  for (const [x, w, c] of [[0, 9, '#d23a2e'], [9, 7, '#2f74b8'], [16, 10, '#d23a2e'], [26, 6, '#3f9a5a'], [32, 9, '#2f74b8'], [41, 7, '#f2c230']]) { r(x, 24, w, 4, c); h(25, x + 1, x + w - 2, '#ffffff'); }
+  h(28, 0, 47, GD); r(0, 29, 48, 10, '#3a3e44'); for (let x = 2; x < 46; x += 7) r(x, 30, 5, 8, '#6a7a88'); r(20, 31, 8, 8, '#222');
+  r(0, 39, 48, 3, '#9a9a96'); r(0, 42, 48, 6, '#7a7a78'); for (const x of [8, 26]) r(x, 44, 6, 1, '#f4f4f4');
+  r(34, 30, 2, 12, '#5a4030'); r(31, 26, 8, 6, '#3f7a34'); r(32, 25, 5, 1, '#5a9a44');
+});
+// JR 岡崎駅：銀色のパネルの駅舎と、ガラスの階段室、白い駅名の看板にオレンジの JR マーク
+spotSprites.okazakiOkazakiSta = hiCanvas((r, h) => {
+  const SV = '#c8ccd0', SD = '#9aa0a6', GL = '#6f8696', GH = '#b0c4d0';
+  r(10, 4, 36, 30, SV); h(4, 10, 45, '#e4e6e8'); for (let y = 8; y < 34; y += 4) h(y, 10, 45, SD); r(38, 4, 8, 30, SD);
+  r(30, 10, 8, 16, '#4a6070'); h(10, 30, 37, '#7a90a0');
+  r(1, 16, 12, 24, GL); for (let y = 16; y < 40; y += 4) h(y, 1, 12, GH); for (let x = 1; x < 13; x += 4) r(x, 16, 1, 24, '#d8e0e6'); h(15, 0, 13, '#e4e6e8');   // ガラスの階段室
+  r(8, 24, 22, 6, '#f8f8f8'); r(9, 25, 4, 4, '#f08a24'); r(10, 26, 2, 2, '#ffffff'); for (let x = 15; x < 28; x += 2) r(x, 26, 1, 2, '#222');   // 駅名の看板
+  r(12, 30, 34, 10, '#3e4a54'); for (let x = 14; x < 46; x += 5) r(x, 31, 3, 9, GL);
+  r(0, 40, 48, 8, '#a8a6a2'); h(40, 0, 47, '#c4c2be'); r(36, 41, 10, 4, '#4f8a3a');
+});
+// 松應寺（岡崎）：瓦の大屋根の本堂（正面に白い破風）、木の柱の正面、左に松
+spotSprites.okazakiShooji = hiCanvas((r, h) => {
+  const RC = ['#8c9096', '#62666e', '#3a3e44', '#545860'], WD = '#7a5a3c', DK = '#2e2620';
+  for (let k = 0; k < 9; k++) { h(5 + k, 24 - k - 1, 25 + k + 1, '#3a3e44'); h(5 + k, 24 - k, 25 + k, '#62666e'); if (k >= 3) h(5 + k, 24 - k + 2, 25 + k - 2, '#ece8de'); }   // 正面の破風
+  r(23, 3, 4, 2, '#5a5e66'); h(10, 19, 30, WD);
+  tileRoof(r, h, 13, [[8, 41], [6, 43], [4, 45], [2, 47], [1, 47]], RC);
+  r(5, 18, 38, 18, '#9a7a56'); for (const x of [5, 13, 21, 28, 35, 42]) r(x, 18, 1, 18, WD); h(18, 5, 42, '#6a4a30'); h(23, 5, 42, '#6a4a30');
+  r(14, 24, 20, 12, DK); for (let x = 15; x < 34; x += 2) r(x, 24, 1, 12, '#5a4632'); r(22, 28, 4, 8, '#1a1410');
+  h(36, 2, 45, '#a9a49a'); h(37, 4, 43, '#c4bfb4'); r(0, 38, 48, 10, '#b8b2a6'); spanRows(h, 38, [[20, 28], [19, 29], [18, 30], [17, 31], [16, 32]], '#d8d2c6');
+  for (const [x, y] of [[0, 2], [3, 6], [0, 10]]) { pix(r, PINE, x, y, '#2f5a32'); h(y, x + 2, x + 4, '#4a7a48'); } r(4, 13, 1, 22, '#5a4030');
+  r(40, 28, 3, 10, '#e8e4d8'); r(41, 29, 1, 7, '#333');   // 立て札
+});
+// 法蔵寺（岡崎）：灰色の瓦の宝形屋根に金の宝珠、こげ茶の板壁と格子戸、まわりの縁と手すり
+spotSprites.okazakiHozoji = hiCanvas((r, h) => {
+  const WD = '#6a4a32', WL = '#8a6a4a', DK = '#3a2a1e';
+  r(23, 1, 2, 3, '#d8b040'); r(22, 3, 4, 1, '#b08a30');
+  tileRoof(r, h, 4, [[21, 26], [19, 28], [17, 30], [15, 32], [13, 34], [11, 36], [9, 38], [7, 40], [5, 42], [4, 43]], ['#9aa098', '#7a8078', '#3e423e', '#6a7068']);
+  h(14, 6, 41, '#2e2a26'); r(9, 15, 30, 17, WD); for (const x of [9, 16, 23, 31, 38]) r(x, 15, 1, 17, WL);
+  r(18, 18, 12, 14, DK); for (let x = 19; x < 30; x += 2) r(x, 18, 1, 14, '#6a5038'); for (let y = 19; y < 32; y += 3) h(y, 18, 29, '#6a5038');
+  r(10, 18, 5, 6, DK); r(33, 18, 5, 6, DK); r(25, 16, 6, 2, '#c03a2a');   // 額
+  h(32, 4, 43, '#9a7a56'); h(33, 4, 43, '#5a4030'); for (let x = 5; x < 44; x += 3) r(x, 28, 1, 4, '#9a7a56'); h(28, 4, 43, '#9a7a56');   // 縁と手すり
+  r(6, 34, 36, 4, '#2a2420'); for (const x of [6, 18, 29, 41]) r(x, 34, 1, 4, WL); h(38, 3, 44, '#b8b4aa'); h(39, 3, 44, '#9a968c');
+  r(43, 12, 5, 26, '#f0ece2'); r(0, 8, 5, 20, '#4a7a3a'); r(1, 7, 3, 1, '#6a9a4a');
+});
+// 道の駅 藤川宿（岡崎）：黒い瓦の長い屋根に破風が2つ、白い壁と木の柱の軒下、手前の駐車場
+spotSprites.okazakiFujikawaShuku = hiCanvas((r, h) => {
+  const RC = ['#6a6e78', '#4a4e56', '#2a2c30', '#3e4248'];
+  tileRoof(r, h, 14, [[2, 45], [1, 46], [0, 47], [0, 47]], RC);
+  for (const cx of [12, 33]) for (let k = 0; k < 6; k++) { h(9 + k, cx - k - 1, cx + k + 1, '#2a2c30'); h(9 + k, cx - k, cx + k, '#4a4e56'); if (k >= 2) h(9 + k, cx - k + 2, cx + k - 2, '#ece8e0'); }   // 破風
+  r(1, 18, 46, 12, '#ece8e0'); h(18, 1, 46, '#6a5440'); for (let x = 1; x < 47; x += 6) r(x, 18, 1, 12, '#6a5440');
+  for (let x = 3; x < 45; x += 6) r(x, 21, 4, 7, '#5a6e7e'); r(20, 20, 8, 3, '#3a2a1a'); for (const x of [22, 24, 26]) r(x, 21, 1, 1, '#e8d8a8');   // 看板
+  r(0, 30, 48, 18, '#5a5a5c'); for (let x = 2; x < 48; x += 7) r(x, 32, 1, 8, '#f0f0f0'); h(40, 0, 47, '#f0f0f0'); r(4, 41, 8, 5, '#3a7ac8'); r(6, 42, 4, 3, '#ffffff');
+  for (const [x, c] of [[16, '#e8e8e8'], [30, '#5a6a8a'], [37, '#d8d8d0']]) { r(x, 33, 6, 4, c); r(x + 1, 32, 4, 1, c); r(x + 1, 37, 1, 1, '#222'); r(x + 4, 37, 1, 1, '#222'); }   // 車
+});
+// くらがり渓谷（岡崎）：深い森の中の、赤茶の屋根の山小屋と、白い石の河原と流れ
+spotSprites.okazakiKuragari = hiCanvas((r, h) => {
+  for (const [x, y, w, c] of [[0, 0, 14, '#2f5a2a'], [12, 2, 12, '#3f6a32'], [24, 0, 12, '#2a4a24'], [34, 3, 14, '#3f6a32']]) { r(x, y, w, 14, c); r(x + 2, y + 1, w - 5, 2, '#5a8a44'); }
+  spanRows(h, 10, [[17, 31], [15, 33], [13, 35], [12, 36]], i => i % 2 ? '#6a5040' : '#7e6250'); r(30, 6, 3, 5, '#5a5a5a');
+  r(14, 14, 20, 12, '#8a6a4a'); for (let x = 15; x < 34; x += 3) r(x, 14, 1, 12, '#6a4e36'); r(17, 17, 5, 4, '#2e2a26'); r(26, 17, 5, 4, '#2e2a26'); r(23, 19, 3, 7, '#3a2a1e');
+  r(0, 14, 13, 14, '#3a6a30'); r(35, 14, 13, 14, '#2f5a2a');
+  r(0, 26, 48, 22, '#c8c4bc'); for (const [x, y] of [[3, 29], [12, 33], [30, 30], [40, 34], [20, 40], [6, 42], [36, 43]]) { r(x, y, 4, 2, '#a8a49c'); h(y, x, x + 2, '#e0dcd4'); }
+  spanRows(h, 36, [[26, 47], [22, 47], [18, 47], [16, 47], [14, 47], [12, 47]], '#6a9ab0'); for (const [x, y] of [[30, 38], [24, 40], [38, 39], [20, 41]]) h(y, x, x + 3, '#a8c8d8');
+});
+// 本宮山（岡崎）：「三河富士」とも呼ばれる、すそ野の広い山。森の濃い緑と、山頂のアンテナ
+spotSprites.okazakiHongusan = hiCanvas((r, h) => {
+  for (let y = 12; y < 44; y++) { const k = y - 12, a = Math.max(0, Math.round(20 - k * 1.6 - k * k * 0.02)), b = Math.min(47, Math.round(28 + k * 1.4 + k * k * 0.02)); h(y, a, b, y < 18 ? '#4a5a3e' : y < 28 ? '#3e5034' : '#34462c'); }   // すそ野の広い山
+  spanRows(h, 10, [[22, 26], [20, 28]], '#4a5a3e');
+  for (let y = 12; y < 42; y += 3) { r(22 - (y - 12) / 2 | 0, y, 2, 1, '#5e7048'); r(30 + (y - 12) / 3 | 0, y + 1, 2, 1, '#2a3a24'); }   // 尾根と谷
+  r(24, 5, 1, 5, '#c8c8c8'); r(21, 7, 1, 3, '#c8c8c8'); r(23, 4, 3, 1, '#e8e8e8');   // アンテナ
+  r(0, 40, 48, 8, '#7a8a5a'); for (let x = 2; x < 48; x += 6) r(x, 42, 3, 2, '#d8d0c0'); h(44, 0, 47, '#8a9a6a');
+});
+// 丈山苑（安城）：竹林を背にした茅葺きのあずまやと、池と庭の植えこみ
+spotSprites.anjoJozanen = hiCanvas((r, h) => {
+  for (let x = 0; x < 48; x += 3) { r(x, 0, 2, 22, x % 2 ? '#5a8a3a' : '#4a7a32'); r(x + 1, 0, 1, 22, '#78a850'); }   // 竹林
+  spanRows(h, 9, [[24, 27], [21, 30], [19, 32], [17, 34], [15, 36], [14, 37]], i => i % 2 ? '#8a7a60' : '#9a8a6e'); h(15, 14, 37, '#5a4e3c');
+  for (const x of [16, 25, 35]) r(x, 16, 1, 8, '#4a3a2a'); r(17, 21, 18, 3, '#6a5a44');
+  r(0, 24, 48, 6, '#3f6a32'); for (const [x, w] of [[2, 8], [12, 6], [38, 8]]) { r(x, 22, w, 4, '#4f7a3a'); h(22, x + 1, x + w - 2, '#6a9a4a'); }
+  r(0, 30, 48, 10, '#5a7a6a'); for (const [x, y] of [[4, 33], [22, 35], [36, 32]]) h(y, x, x + 5, '#7a9a8a'); r(14, 29, 5, 3, '#8a8478'); r(30, 30, 4, 2, '#8a8478');
+  r(0, 40, 48, 8, '#d8d0c0'); spanRows(h, 40, [[0, 20], [0, 16], [0, 12]], '#6a9a3a');
+});
+// 本證寺（安城）の鼓楼：石垣の上に、黒い板壁の下の重と、白い漆喰の上の重。銀ねずの瓦屋根に千鳥破風
+spotSprites.anjoHonshoji = hiCanvas((r, h) => {
+  const RC = ['#c8c8cc', '#8e9096', '#4a4c52', '#74767c'], PL = '#ece8de', BK = '#2a2a2c';
+  r(17, 1, 2, 3, '#5a5c62'); r(29, 1, 2, 3, '#5a5c62'); h(3, 17, 30, '#4a4c52');
+  tileRoof(r, h, 4, [[15, 32], [13, 34], [11, 36], [9, 38], [8, 39]], RC);
+  for (let k = 0; k < 5; k++) { h(2 + k, 23 - k - 1, 24 + k + 1, '#4a4c52'); if (k >= 2) h(2 + k, 23 - k + 1, 24 + k - 1, PL); }   // 千鳥破風
+  r(13, 9, 22, 9, PL); h(9, 13, 34, '#b8b4aa'); for (const x of [13, 19, 28, 34]) r(x, 9, 1, 9, '#6a5040'); r(21, 11, 6, 4, '#4a3a2a'); for (let x = 22; x < 27; x += 2) r(x, 11, 1, 4, '#8a7050');
+  tileRoof(r, h, 18, [[8, 39], [6, 41], [4, 43], [3, 44], [2, 45]], RC); h(23, 4, 43, PL);
+  r(7, 24, 34, 13, BK); for (let x = 8; x < 41; x += 2) r(x, 24, 1, 13, '#3a3a3c'); r(18, 27, 12, 10, '#6a4a30'); r(23, 27, 2, 10, '#3a2a1a'); h(24, 7, 40, PL);
+  for (let y = 37; y < 48; y++) { const k = (y - 37) >> 1; h(y, 5 - k, 42 + k, (y % 2) ? '#8a8680' : '#a8a49e'); } for (let x = 8; x < 42; x += 5) { r(x, 39, 1, 2, '#6a6660'); r(x + 2, 43, 1, 2, '#6a6660'); }
+});
+// 安祥城址（安城）：城あとの公園。お寺の屋根、大きな松、「安祥城址」の石碑と石灯籠、庭石と植えこみ
+spotSprites.anjoCastle = hiCanvas((r, h) => {
+  tileRoof(r, h, 8, [[6, 24], [4, 26], [3, 27], [2, 28]], ['#8c9096', '#5a5e66', '#33363c', '#4a4e56']); r(5, 12, 20, 10, '#7a5a3c'); r(10, 14, 10, 8, '#3a2a20');
+  for (const [x, y] of [[26, 0], [33, 2], [28, 5], [37, 7]]) { pix(r, PINE, x, y, '#2f5a32'); h(y, x + 2, x + 4, '#4a7a48'); } r(33, 9, 2, 14, '#5a4030');
+  r(31, 18, 7, 24, '#b8b4ac'); r(36, 18, 2, 24, '#9a968e'); h(18, 31, 37, '#d0ccc4'); for (let y = 21; y < 38; y += 3) r(33, y, 2, 2, '#4a4844');   // 石碑
+  r(19, 30, 6, 2, '#a8a49c'); r(20, 32, 4, 3, '#c8c4bc'); r(21, 33, 2, 1, '#ffe27a'); r(20, 35, 4, 1, '#a8a49c'); r(21, 36, 2, 5, '#a8a49c'); r(19, 41, 6, 1, '#8a867e');   // 石灯籠
+  for (const [x, y, w, c] of [[0, 32, 16, '#3f6a32'], [10, 36, 10, '#5a8a3a'], [38, 34, 10, '#4a7a3a'], [26, 38, 8, '#3f6a32']]) { r(x, y, w, 10 - (y - 32), c); h(y, x + 1, x + w - 2, '#6a9a4a'); }
+  for (const [x, y] of [[4, 42], [14, 44], [40, 43]]) { r(x, y, 5, 3, '#8a8478'); h(y, x + 1, x + 3, '#a8a296'); }
+  r(0, 46, 48, 2, '#b8a888');
+});
+// 安城市歴史博物館：茶色の瓦の大きな切妻と、妻いっぱいの三角のガラス窓、ベージュのタイルの壁、左に白い棟
+spotSprites.anjoMuseum = hiCanvas((r, h) => {
+  const BG = '#cfc8ba', BS = '#b4ac9c', RF = '#7a4a3a', GL = '#3a4a5a', GM = '#c8ccd0';
+  r(0, 24, 14, 16, '#ece8e0'); h(23, 0, 13, '#a8a49a'); for (let x = 1; x < 13; x += 4) r(x, 27, 3, 5, '#5a6a78');
+  for (let k = 0; k < 16; k++) { const y = 5 + k; h(y, 26 - k - 2, 27 + k + 2, RF); h(y, 26 - k, 27 + k, BG); }   // 切妻
+  r(10, 21, 34, 19, BG); r(38, 21, 6, 19, BS); h(21, 8, 45, RF);
+  for (let k = 0; k < 13; k++) { const y = 11 + k; h(y, 26 - k + 1, 27 + k - 1, GL); }   // 三角のガラス
+  r(15, 24, 24, 16, GL); for (let x = 17; x < 39; x += 4) r(x, 11, 1, 29, GM); for (let y = 16; y < 40; y += 5) h(y, 15, 38, GM); r(26, 11, 1, 29, GM);
+  r(0, 40, 48, 2, '#9a968c'); r(0, 42, 48, 6, '#c8c4bc'); for (let x = 3; x < 48; x += 8) r(x, 44, 4, 1, '#d8d4cc');
+  r(42, 30, 2, 12, '#5a4030'); r(39, 24, 8, 7, '#4a7a3a'); r(40, 23, 5, 1, '#6a9a4a');
+});
+// 堀内公園（安城）：色とりどりのゴンドラが下がる大観覧車と、白い支柱、ふもとの木立
+spotSprites.anjoHoriuchiPark = hiCanvas((r, h) => {
+  const cx = 24, cy = 19, R = 17, cols = ['#d23a2e', '#2f74b8', '#f2c230', '#3f9a5a', '#e57399', '#8a5ac8'];
+  for (let y = cy - R; y <= cy + R; y++) for (let x = cx - R; x <= cx + R; x++) if (Math.hypot(x - cx, y - cy) < R) r(x, y, 1, 1, '#cfe6f2');   // 輪の中から見える空
+  for (let a = 0; a < 360; a += 3) { const t = a * Math.PI / 180; r(Math.round(cx + R * Math.cos(t)), Math.round(cy + R * Math.sin(t)), 1, 1, '#d8dce0'); r(Math.round(cx + (R - 3) * Math.cos(t)), Math.round(cy + (R - 3) * Math.sin(t)), 1, 1, '#b8bcc0'); }
+  for (let a = 0; a < 360; a += 30) { const t = a * Math.PI / 180; for (let d = 2; d < R; d += 1) r(Math.round(cx + d * Math.cos(t)), Math.round(cy + d * Math.sin(t)), 1, 1, '#c8ccd0'); }
+  r(cx - 2, cy - 2, 4, 4, '#e8e8e8');
+  for (let i = 0; i < 12; i++) { const t = i * 30 * Math.PI / 180, x = Math.round(cx + R * Math.cos(t)), y = Math.round(cy + R * Math.sin(t)); r(x - 1, y, 3, 3, cols[i % 6]); r(x, y + 1, 1, 1, '#ffffff'); }   // ゴンドラ
+  for (let y = cy; y < 42; y++) { const k = (y - cy) * 0.45; r(Math.round(cx - 2 - k), y, 2, 1, '#e8ecee'); r(Math.round(cx + 1 + k), y, 2, 1, '#c8ccd0'); }   // 支柱
+  for (const [x, w, c] of [[0, 12, '#3f6a32'], [10, 10, '#4f7a3a'], [34, 14, '#3f6a32'], [27, 9, '#4f7a3a']]) { r(x, 36, w, 8, c); h(36, x + 1, x + w - 2, '#6a9a4a'); }
+  r(0, 44, 48, 4, '#6aa040');
+});
+// 安城公園：木立にかこまれた池と、赤い太鼓橋、小島の柵
+spotSprites.anjoPark = hiCanvas((r, h) => {
+  for (const [x, y, w, c] of [[0, 2, 14, '#3f6a32'], [12, 6, 10, '#5a8a3a'], [22, 0, 12, '#3f6a32'], [33, 4, 15, '#4f7a3a']]) { r(x, y, w, 18 - y, c); r(x + 2, y + 1, w - 5, 2, '#6a9a4a'); }
+  r(4, 14, 2, 6, '#5a4030'); r(40, 14, 2, 6, '#5a4030');
+  r(0, 20, 48, 28, '#4a5a50'); for (const [x, y] of [[4, 34], [30, 38], [16, 44], [38, 28]]) h(y, x, x + 6, '#6a7a70'); spanRows(h, 21, [[0, 47], [0, 47]], '#3a4a40');
+  for (let x = 8; x <= 40; x++) { const y = Math.round(25 - 5 * Math.sin((x - 8) / 32 * Math.PI)); r(x, y, 1, 2, '#b03a2a'); r(x, y - 2, 1, 1, '#c84a3a'); } for (let x = 10; x < 40; x += 4) { const y = Math.round(25 - 5 * Math.sin((x - 8) / 32 * Math.PI)); r(x, y - 2, 1, 2, '#c84a3a'); }   // 赤い太鼓橋
+  for (let x = 9; x <= 39; x += 3) { const y = Math.round(29 + 3 * Math.sin((x - 8) / 32 * Math.PI)); r(x, y, 2, 1, '#6a3a30'); }   // 水に映る橋
+  spanRows(h, 36, [[18, 34], [16, 36], [16, 36], [18, 34]], '#3f6a32'); for (let x = 17; x < 36; x += 3) r(x, 35, 1, 3, '#8a6a4a'); h(36, 16, 36, '#8a6a4a');
+});
+// 二子古墳（安城）：前方後円墳。草におおわれた2つのふくらみと、上に生える松、手前の青い田んぼ
+spotSprites.anjoFutagoKofun = hiCanvas((r, h) => {
+  for (let x = 0; x < 48; x++) { const y = Math.round(30 - Math.max(9 * Math.exp(-Math.pow((x - 14) / 9, 2)), 11 * Math.exp(-Math.pow((x - 33) / 10, 2)), 2)); for (let yy = y; yy < 34; yy++) r(x, yy, 1, 1, yy < y + 2 ? '#a8c060' : yy < y + 6 ? '#8aa84a' : '#7a9a40'); }   // 2つのふくらみ
+  for (const [x, y] of [[8, 13], [15, 10], [26, 10], [33, 7], [40, 11]]) { pix(r, ['.###.', '#####', '.###.'], x, y, '#2f5a2a'); r(x + 2, y + 3, 1, 5, '#5a4030'); h(y, x + 1, x + 3, '#4a7a3a'); }
+  h(34, 0, 47, '#c8b888'); r(0, 35, 48, 13, '#5aa03a'); for (let y = 36; y < 48; y += 2) for (let x = (y % 4) ? 0 : 2; x < 48; x += 4) r(x, y, 2, 1, '#7ac050');
+  r(43, 28, 3, 7, '#9a968c'); h(28, 43, 45, '#b8b4ac');
+});
+// 姫小川古墳（安城）：古墳の上の姫小川神社。木立の中の石段と、両わきの石灯籠、上の小さな社
+spotSprites.anjoHimeogawaKofun = hiCanvas((r, h) => {
+  for (const [x, y, w, c] of [[0, 0, 16, '#2f5a2a'], [14, 2, 8, '#4a7a3a'], [26, 0, 10, '#3f6a32'], [34, 1, 14, '#2f5a2a']]) { r(x, y, w, 22 - y, c); r(x + 2, y + 1, w - 5, 2, '#5a8a44'); }
+  spanRows(h, 6, [[19, 28], [17, 30], [16, 31]], i => i % 2 ? '#5a5f66' : '#7a7f86'); r(18, 9, 12, 7, '#8a6a4a'); r(21, 10, 6, 6, '#3a2a20'); r(23, 8, 2, 1, '#e2b13a');
+  for (let y = 16; y < 42; y++) { const k = Math.round((y - 16) * 0.35); h(y, 20 - k, 27 + k, (y % 2) ? '#a8a49a' : '#c8c3b8'); }   // 石段
+  for (const x of [6, 37]) { r(x, 24, 6, 2, '#b8b4a8'); r(x + 1, 26, 4, 4, '#c8c4b8'); r(x + 2, 27, 2, 2, '#ffe27a'); r(x, 30, 6, 1, '#b8b4a8'); r(x + 2, 31, 2, 8, '#b8b4a8'); r(x, 39, 6, 2, '#9a968c'); }   // 石灯籠
+  r(0, 22, 6, 20, '#4a5a3a'); r(42, 22, 6, 20, '#4a5a3a'); r(0, 42, 48, 6, '#c8bca8'); for (const [x, y] of [[4, 44], [38, 45]]) h(y, x, x + 4, '#b0a490');
+});
+// JR 安城駅：茶色のパネルと白い帯の低い駅舎、右に白い棟と「JR」の看板。前は植えこみと広い駅前広場、背の高い街灯
+spotSprites.anjoStation = hiCanvas((r, h) => {
+  r(2, 14, 27, 2, '#e8e4dc'); r(2, 16, 27, 16, '#91664b'); for (let x = 4; x < 29; x += 5) r(x, 16, 1, 16, '#7e5640');
+  r(8, 21, 19, 6, '#444547'); for (let x = 8; x < 27; x += 3) r(x, 21, 1, 6, '#8a8a8a'); h(21, 8, 26, '#6a6c70');
+  for (const x of [10, 13, 16, 19, 22]) r(x, 28, 2, 2, '#c83a3a');
+  r(28, 11, 18, 23, '#e8e6e0'); h(11, 28, 45, '#f4f2ee'); r(31, 14, 3, 2, '#e8601c'); for (let x = 35; x < 44; x += 2) r(x, 14, 1, 2, '#3a3a3c');
+  r(30, 19, 6, 7, '#444547'); r(31, 20, 2, 2, '#8a9aa8'); r(38, 19, 6, 7, '#5a5c60'); r(28, 29, 18, 5, '#3a3c40'); for (let x = 31; x < 46; x += 4) r(x, 29, 1, 5, '#b8bcc0');
+  r(2, 32, 27, 2, '#c8c4b8');
+  r(0, 34, 46, 3, '#4a6a2a'); for (let x = 2; x < 44; x += 4) r(x, 34, 1, 1, '#c83a4a');
+  r(0, 37, 48, 11, '#b1a99a'); for (let x = 0; x < 48; x += 6) r(x, 37, 1, 11, '#c4bcac'); spanRows(h, 40, [[0, 3], [3, 7], [7, 11], [11, 15], [15, 19], [19, 23], [23, 27], [27, 31]], '#d8b040');
+  r(16, 3, 1, 34, '#8a8e94'); r(14, 2, 5, 2, '#c8ccd0');
+});
+// 三河安城駅：茶色の長い屋根にとんがった白い屋根窓、まん中は赤茶の屋根のアーチの入口、白い時計塔に赤い四角すいの屋根。前に柵と花だん
+spotSprites.anjoMikawaAnjoStation = hiCanvas((r, h) => {
+  spanRows(h, 1, [[26, 27], [25, 28], [24, 29], [23, 30]], i => i < 2 ? '#b84a58' : '#9a3040');
+  r(24, 5, 6, 12, '#ece9e6'); r(29, 5, 1, 12, '#c8c4c4'); r(25, 8, 4, 4, '#ffffff'); r(26, 9, 1, 2, '#333'); r(27, 10, 1, 1, '#333');
+  tileRoof(r, h, 14, [[6, 41], [5, 42], [4, 43], [3, 44], [2, 45], [1, 46], [1, 46], [0, 47]], ['#9a7a6e', '#7a5a50', '#4a3a34', '#6a4c44']);
+  for (const x of [7, 14, 36, 42]) { spanRows(h, 14, [[x + 1, x + 2], [x, x + 3], [x - 1, x + 4], [x - 1, x + 4]], '#ece8e0'); r(x, 16, 3, 2, '#4a4448'); }   // 屋根窓
+  r(2, 22, 44, 12, '#d8cfc0'); for (let x = 4; x < 46; x += 4) r(x, 24, 2, 4, '#5a5458'); for (let x = 3; x < 46; x += 8) r(x, 22, 1, 12, '#c4baa8');
+  spanRows(h, 16, [[23, 24], [22, 25], [21, 26], [20, 27], [19, 28], [18, 29], [17, 30], [16, 31]], i => i % 2 ? '#8a4a48' : '#a05a56');   // 入口の破風
+  r(18, 24, 12, 10, '#d8cfc0'); spanRows(h, 25, [[22, 25], [20, 27], [19, 28]], '#2a2224'); r(19, 28, 10, 6, '#2a2224'); r(21, 29, 6, 5, '#5a6870');
+  r(35, 25, 7, 2, '#3a8a3a'); r(36, 25, 2, 1, '#e8601c');
+  r(0, 34, 48, 1, '#3a3a3e'); for (let x = 0; x < 48; x += 2) r(x, 35, 1, 3, '#3a3a3e'); h(37, 0, 47, '#3a3a3e');
+  r(0, 38, 48, 3, '#4a7a34'); for (let x = 1; x < 48; x += 3) r(x, 38, 1, 1, '#e8c840');
+  r(0, 41, 48, 7, '#a8a8a6'); for (let x = 4; x < 48; x += 8) r(x, 41, 1, 7, '#c4c4c2');
+});
+// 名鉄 南安城駅：高架の線路の下の駅。コンクリートの高架と架線柱、茶色の板張りの棟、右は白い縦じまの長い建物、入口の駅名の看板と赤いポスト
+spotSprites.anjoMinamiAnjoStation = hiCanvas((r, h) => {
+  for (const x of [6, 36]) { r(x, 0, 1, 10, '#7a7e84'); h(2, x - 3, x + 4, '#7a7e84'); }
+  r(0, 8, 32, 6, '#a09888'); h(8, 0, 31, '#b8b0a0'); h(13, 0, 31, '#7a7266');
+  r(4, 14, 22, 16, '#675040'); for (let x = 5; x < 26; x += 3) r(x, 14, 1, 16, '#5a4436');
+  r(22, 11, 26, 26, '#e6e0d6'); h(11, 22, 47, '#f2ede4'); for (let x = 22; x < 48; x += 6) r(x, 12, 2, 25, '#cfc8bc'); for (let x = 25; x < 46; x += 6) r(x, 16, 2, 14, '#7a8288');
+  r(2, 28, 20, 10, '#ece8e0'); r(6, 27, 10, 2, '#f8f8f8'); r(7, 27, 2, 2, '#2f5fae'); for (let x = 10; x < 16; x += 2) r(x, 28, 1, 1, '#2f5fae'); r(6, 31, 9, 7, '#3a3a3c'); r(8, 32, 5, 4, '#6a7880');
+  r(17, 33, 2, 5, '#d23a2e'); h(33, 17, 18, '#e8584a');
+  r(0, 38, 48, 3, '#3f6a2f'); h(38, 0, 47, '#4f7a3a'); r(0, 41, 48, 7, '#6a6a6a'); h(44, 0, 47, '#7a7a7a');
+});
+// 安城市役所（西庁舎）と安城公園：ベージュの庁舎に窓の帯とベランダ、うしろに給水塔、右に大きな木、前は池と木の柵
+spotSprites.anjoCityhall = hiCanvas((r, h) => {
+  r(30, 1, 4, 6, '#c8ccd0'); r(31, 7, 2, 4, '#a8acb0');
+  r(10, 8, 11, 4, '#c8c4b8'); r(6, 12, 34, 22, '#dcd8cc'); h(12, 6, 39, '#ece8dc');
+  for (const y of [15, 21, 27]) { r(7, y, 32, 3, '#5b6b7e'); for (let x = 7; x < 39; x += 4) r(x, y, 1, 3, '#c8ccd0'); h(y + 3, 6, 39, '#f0ece0'); h(y - 1, 7, 38, '#8a9aa8'); }
+  pix(r, ['...#######...', '.###########.', '#############', '#############', '#############', '.###########.', '..#########..'], 31, 6, '#3f7a34'); for (const [x, y] of [[34, 7], [39, 9], [36, 11]]) r(x, y, 3, 1, '#5a9a44');
+  r(36, 13, 3, 21, '#5a4030');
+  r(0, 30, 48, 4, '#4f7a3a'); for (let x = 1; x < 47; x += 4) r(x, 31, 1, 5, '#837e73'); h(32, 0, 47, '#9a958a');
+  r(0, 36, 48, 9, '#5a6a5a'); for (const [x, y] of [[4, 38], [16, 40], [30, 38], [40, 41], [10, 42]]) r(x, y, 5, 1, '#8a9a8a'); r(14, 37, 12, 1, '#c8c4b8');
+  h(45, 0, 47, '#9a968c'); h(46, 0, 47, '#7a766c');
+});
+// 碧南市臨海公園：芝生の上の浅い池に、口から水を吹く青いクジラのすべり台。うしろに遊具
+spotSprites.hekinanRinkaiPark = hiCanvas((r, h) => {
+  r(36, 14, 1, 14, '#c83a3a'); r(45, 14, 1, 14, '#c83a3a'); spanRows(h, 11, [[39, 42], [37, 44], [36, 45]], '#8a5a3a'); h(20, 36, 45, '#c83a3a'); spanRows(h, 21, [[30, 35], [26, 31], [22, 27]], '#3a9a5a');
+  r(0, 28, 48, 20, '#7a9a48'); for (const [x, y] of [[3, 44], [14, 46], [40, 44], [30, 46]]) r(x, y, 4, 1, '#8aaa58');
+  spanRows(h, 30, [[10, 37], [6, 41], [4, 43], [4, 43], [5, 42], [8, 39], [12, 35]], i => i === 0 || i === 6 ? '#c8c4bc' : '#9ab8c8'); for (const [x, y] of [[8, 33], [30, 34], [20, 35]]) r(x, y, 4, 1, '#c4dce8');
+  spanRows(h, 8, [[20, 25], [18, 27], [17, 28], [16, 29], [16, 29], [16, 30], [17, 30], [17, 30], [18, 30], [18, 30], [19, 30], [19, 30], [20, 30], [20, 31], [19, 32], [18, 33], [17, 34], [17, 35], [18, 35], [20, 34], [22, 33], [24, 31]], i => i < 3 ? '#6a8ac0' : '#4a6a9a');   // クジラ
+  for (let y = 13; y < 28; y++) r(17 + Math.floor((y - 13) / 4), y, 2, 1, '#e8eef4');   // 白いおなか
+  r(25, 13, 2, 2, '#1e212a'); r(21, 10, 3, 1, '#8aaad8');
+  spanRows(h, 2, [[21, 21], [19, 23], [18, 24]], '#d8f0fc'); r(21, 5, 1, 3, '#d8f0fc');   // 吹きあげる水
+  for (const [x, y] of [[14, 29], [34, 29], [12, 31], [37, 31]]) r(x, y, 2, 2, '#e8f4fc');
+});
+// 碧南市明石公園：白い大観覧車（赤・黄・青のゴンドラ）と、赤レンガの広場の青白しまのパラソル
+spotSprites.hekinanAkashiPark = hiCanvas((r, h) => {
+  const CX = 24, CY = 19;
+  for (let a = 0; a < 360; a += 30) { const t = a * Math.PI / 180; for (let d = 2; d < 16; d++) r(Math.round(CX + d * Math.cos(t)), Math.round(CY + d * Math.sin(t)), 1, 1, '#e8e8ec'); }   // スポーク
+  for (let y = 0; y < 40; y++) for (let x = 4; x < 45; x++) { const d = Math.hypot(x - CX, y - CY); if (d >= 15.3 && d < 16.6) r(x, y, 1, 1, '#f8f8f8'); else if (d >= 9.6 && d < 10.4) r(x, y, 1, 1, '#c8c8d0'); }
+  [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].forEach((a, i) => { const t = a * Math.PI / 180; r(Math.round(CX + 17 * Math.cos(t)) - 1, Math.round(CY + 17 * Math.sin(t)) - 1, 3, 3, ['#d23a3a', '#f2c230', '#3a6ad0'][i % 3]); });   // ゴンドラ
+  r(CX - 1, CY - 1, 3, 3, '#b8b8c0');
+  for (let i = 0; i < 20; i++) { r(Math.round(CX - i * 0.55) - 1, CY + i, 2, 1, '#f0f0f4'); r(Math.round(CX + i * 0.55), CY + i, 2, 1, '#f0f0f4'); }   // 脚
+  r(0, 39, 48, 9, '#a6715a'); for (let y = 41; y < 48; y += 3) h(y, 0, 47, '#8a5a48'); for (let x = 3; x < 48; x += 6) r(x, 39, 1, 9, '#8a5a48');
+  for (const x of [2, 9, 37, 43]) { spanRows(h, 35, [[x + 1, x + 2], [x, x + 3]], '#4a8ad8'); r(x + 1, 35, 1, 2, '#ffffff'); r(x + 2, 37, 1, 3, '#888'); }
+});
+// 称名寺（碧南）：うすい緑青の銅ぶきの上屋根と、灰色の瓦のひさし屋根の本堂。白い壁と木の格子、正面の石段、白い砂利
+spotSprites.hekinanShomyoji = hiCanvas((r, h) => {
+  h(5, 15, 32, '#6a6a6c'); h(6, 15, 32, '#4a4a4c');
+  spanRows(h, 7, [[14, 33], [13, 34], [12, 35], [11, 36], [10, 37], [9, 38], [8, 39], [8, 39]], i => i === 7 ? '#5a7a68' : i < 3 ? '#b8d4c0' : '#9cc0a8');
+  for (let y = 7; y < 14; y++) for (let x = 15 - (y - 7) + (y % 2); x < 33 + (y - 7); x += 3) r(x, y, 1, 1, '#8ab098');   // 銅板の継ぎ目
+  r(11, 15, 26, 3, '#e8e4d8'); for (const x of [11, 18, 24, 30, 36]) r(x, 15, 1, 3, '#5a4632');
+  tileRoof(r, h, 18, [[6, 41], [4, 43], [2, 45], [1, 46], [0, 47], [0, 47]], ['#a8aab0', '#7a7c80', '#4a4c50', '#6a6c70']);
+  r(3, 24, 41, 13, '#4a3a2e'); h(24, 3, 43, '#e8e4d8'); h(25, 3, 43, '#e8e4d8');
+  for (const [a, b] of [[4, 9], [11, 16], [31, 36], [38, 43]]) { r(a, 27, b - a + 1, 5, '#3a2e26'); for (let x = a; x <= b; x += 2) r(x, 27, 1, 5, '#8a7a68'); h(29, a, b, '#8a7a68'); }
+  r(18, 28, 12, 9, '#7a5a42'); for (const x of [21, 24, 27]) r(x, 28, 1, 9, '#5a4030');
+  for (const x of [3, 10, 17, 30, 37, 43]) r(x, 24, 1, 13, '#6a5442');
+  h(37, 2, 45, '#8a6a50'); spanRows(h, 38, [[19, 28], [18, 29], [17, 30], [16, 31]], i => i % 2 ? '#a8a49c' : '#c8c4bc');
+  r(0, 42, 48, 6, '#dcdbda'); for (const [x, y] of [[4, 44], [12, 46], [36, 44], [42, 46], [26, 45]]) r(x, y, 2, 1, '#c4c2c0');
+  r(1, 34, 3, 2, '#9a968c'); r(0, 36, 5, 2, '#b8b4ac'); r(1, 38, 3, 4, '#9a968c');
+});
+// 海徳寺（碧南・大浜）：鬼瓦をのせた大きな三角の破風と、黒っぽい瓦の大屋根の本堂。こげ茶の木の正面、石段、右に松
+spotSprites.hekinanKaitokuji = hiCanvas((r, h) => {
+  tileRoof(r, h, 15, [[6, 41], [4, 43], [2, 45], [1, 46], [0, 47]], ['#8a8886', '#6a6866', '#3a3836', '#5a5856']);
+  for (let k = 0; k < 15; k++) { const y = 4 + k; h(y, 23 - k - 1, 24 + k + 1, '#5a5856'); h(y, 23 - k, 24 + k, '#7a7876'); if (k >= 3) h(y, 23 - k + 2, 24 + k - 2, '#6a5e54'); }   // 大きな破風
+  for (const y of [11, 15]) h(y, 23 - (y - 4) + 3, 24 + (y - 4) - 3, '#8a7a68'); r(23, 9, 2, 9, '#8a7a68'); r(21, 13, 6, 2, '#a89888');   // 破風の木組み
+  r(22, 1, 4, 3, '#4a4a4c'); r(21, 2, 1, 2, '#4a4a4c'); r(26, 2, 1, 2, '#4a4a4c'); r(23, 2, 2, 1, '#7a7a7c');   // 鬼瓦
+  tileRoof(r, h, 20, [[3, 44], [2, 45], [1, 46], [0, 47]], ['#8a8886', '#6a6866', '#3a3836', '#5a5856']);
+  r(4, 24, 40, 14, '#3a2e28'); for (const x of [4, 11, 18, 29, 36, 43]) r(x, 24, 1, 14, '#5a4638');
+  for (const [a, b] of [[5, 10], [12, 17], [30, 35], [37, 42]]) { for (let x = a; x <= b; x += 2) r(x, 26, 1, 10, '#6a5444'); h(30, a, b, '#6a5444'); }
+  r(19, 27, 10, 11, '#4a3c34'); for (const x of [21, 24, 27]) r(x, 27, 1, 11, '#7a6450'); r(20, 28, 8, 2, '#8a9aa4');
+  spanRows(h, 38, [[15, 32], [14, 33], [13, 34], [12, 35]], i => i % 2 ? '#c9b498' : '#d8c8a8');
+  r(0, 42, 48, 6, '#d8d6d0'); r(20, 42, 8, 6, '#c8c4bc');
+  for (const [x, y] of [[38, 14], [40, 19], [37, 23], [41, 27]]) { pix(r, PINE, x, y, '#2f5a30'); h(y, x + 2, x + 4, '#4a7a44'); } r(42, 22, 2, 16, '#5a4030');
+});
+// 九重味淋：紺色の板壁に白い小窓が散らばる大きな切妻の蔵（白い破風板・てっぺんに鬼瓦）、石積みの土台
+spotSprites.hekinanKokonoeMirin = hiCanvas((r, h) => {
+  const NV = '#202c46', NH = '#2c3a58';
+  tileRoof(r, h, 9, [[32, 46], [33, 47], [34, 47]], ['#7a7a82', '#616069', '#3a3a40', '#55545c']);
+  for (let k = 0; k < 16; k++) { const y = 4 + k; h(y, 22 - Math.round(k * 1.3), 23 + Math.round(k * 1.3), '#e8e8e8'); if (k >= 1) h(y, 23 - Math.round(k * 1.3), 22 + Math.round(k * 1.3), NV); }   // 白い破風板と紺の妻壁
+  r(20, 2, 5, 2, '#3a3a40'); r(21, 1, 3, 1, '#3a3a40');
+  r(2, 20, 42, 17, NV); for (let x = 3; x < 44; x += 3) r(x, 20, 1, 17, NH); r(44, 12, 3, 25, '#1a2236');
+  for (const [x, y] of [[12, 14], [20, 10], [30, 14], [8, 22], [17, 22], [26, 22], [36, 22], [12, 28], [31, 28], [22, 16]]) { r(x, y, 3, 3, '#f0f0f0'); r(x + 1, y, 1, 3, '#b8bcc4'); h(y + 1, x, x + 2, '#b8bcc4'); }
+  for (const x of [6, 14, 22, 30, 38]) { r(x, 33, 4, 2, '#d8d8d8'); h(34, x, x + 3, '#8a8a90'); }   // 床下の換気口
+  r(1, 37, 46, 6, '#6a6a70'); for (let y = 38; y < 43; y += 2) for (let x = 1 + (y % 4 ? 2 : 0); x < 47; x += 5) r(x, y, 4, 1, '#808088'); h(37, 1, 46, '#4a4a50');
+  r(0, 43, 48, 5, '#b8b4ac');
+});
+// 碧南市藤井達吉現代美術館：黒っぽい縦板の切妻の建物に、大きなガラスの箱。右に黒い板の壁、前の階段
+spotSprites.hekinanFujiiMuseum = hiCanvas((r, h) => {
+  const DK = '#343e4f', DL = '#2a3242';
+  spanRows(h, 9, [[20, 33], [16, 36], [12, 39], [8, 41], [4, 42], [2, 43]], '#3c485f'); h(9, 20, 33, '#4c5a72');
+  r(2, 15, 40, 22, DK); for (let x = 3; x < 42; x += 2) r(x, 15, 1, 22, DL);
+  r(18, 12, 18, 25, '#608197'); for (let x = 18; x < 36; x += 3) r(x, 12, 1, 25, '#4a6070'); for (let y = 12; y < 37; y += 6) h(y, 18, 35, '#4a6070'); for (let i = 0; i < 10; i++) r(20 + i, 13 + i, 2, 1, '#a8c4d4');
+  r(37, 10, 9, 27, '#2e3646'); for (let x = 38; x < 46; x += 2) r(x, 10, 1, 27, '#3c4658'); r(40, 18, 2, 2, '#c84a3a'); r(40, 22, 2, 2, '#c84a3a');
+  r(10, 33, 8, 4, '#a8343a');
+  spanRows(h, 37, [[16, 38], [15, 39], [14, 40]], i => i % 2 ? '#9a9a96' : '#b8b8b4'); r(0, 40, 48, 8, '#6a6a6a'); for (let x = 2; x < 30; x += 4) r(x, 42, 2, 6, '#e8e8e8');
+});
+// 大浜熊野大神社：石の明神鳥居、左右に台座の上の狛犬、奥にしめ縄と白い幕の拝殿、白っぽい参道の砂利
+spotSprites.hekinanKumano = hiCanvas((r, h) => {
+  const ST = '#b8b4a6', SD = '#8a8678';
+  spanRows(h, 16, [[16, 31], [14, 33], [14, 33]], '#6a6a70'); r(16, 19, 16, 8, '#6a4a32'); r(17, 20, 14, 2, '#f4f2ec'); r(21, 22, 6, 5, '#3a2a20'); h(21, 18, 29, '#e8d8a0');   // 奥の拝殿
+  h(6, 6, 41, ST); h(7, 7, 40, ST); h(8, 8, 39, SD); r(5, 5, 1, 1, ST); r(42, 5, 1, 1, ST); h(12, 10, 37, ST); h(13, 10, 37, SD);   // 鳥居
+  r(13, 8, 3, 28, ST); r(32, 8, 3, 28, ST); r(15, 8, 1, 28, SD); r(34, 8, 1, 28, SD); r(22, 8, 4, 4, ST);
+  for (const x of [1, 38]) { r(x + 1, 22, 6, 4, '#a8a498'); r(x + 2, 20, 3, 2, '#a8a498'); r(x, 26, 9, 2, '#c8c4b8'); r(x, 28, 9, 8, '#9a968a'); for (let y = 29; y < 36; y += 2) h(y, x, x + 8, '#8a8678'); }   // 狛犬と台座
+  for (const x of [8, 34]) { r(x, 20, 1, 16, '#9a9a9a'); spanRows(h, 18, [[x, x], [x - 1, x + 1]], '#9a9a9a'); }
+  r(0, 36, 48, 12, '#bab7a5'); spanRows(h, 36, [[19, 28], [18, 29], [17, 30], [16, 31], [15, 32], [14, 33], [13, 34], [12, 35], [11, 36], [10, 37], [9, 38], [8, 39]], '#ccc9b8');
+});
+// 哲学たいけん村 無我苑：銀ねずの瓦の寄棟屋根の平屋（黒っぽい木とガラス戸）、手前に芝生と庭石、両わきに木
+spotSprites.hekinanMugaen = hiCanvas((r, h) => {
+  tileRoof(r, h, 14, [[16, 39], [14, 41], [12, 43], [10, 45], [9, 46], [8, 47]], ['#c8c2c8', '#ada6ac', '#5a5458', '#968e94']);
+  r(11, 20, 34, 11, '#2a2a24'); for (let x = 12; x < 44; x += 4) { r(x, 21, 3, 7, '#6a7a7c'); r(x, 21, 3, 1, '#9aacae'); } h(30, 11, 44, '#5a4a38');
+  pix(r, ['...######...', '.##########.', '############', '############', '############', '.##########.', '...######...'], 0, 6, '#3f7a34'); r(5, 13, 2, 18, '#5a4030'); h(7, 3, 7, '#5a9a44');
+  pix(r, ['..####..', '.######.', '########', '########', '.######.'], 38, 10, '#4f8a3a'); r(41, 15, 2, 6, '#5a4030');
+  r(0, 31, 48, 17, '#7a9a3d'); for (const [x, y] of [[3, 40], [12, 44], [30, 42], [40, 46], [22, 38]]) r(x, y, 4, 1, '#8aaa4d');
+  r(26, 33, 22, 6, '#c8c4b8'); for (const [x, y, w] of [[18, 36, 5], [28, 35, 4], [34, 38, 6], [12, 39, 4]]) { r(x, y, w, 2, '#8a8680'); h(y, x, x + w - 1, '#a8a49e'); }   // 庭石と砂利
+});
+// 応仁寺（碧南）：銀ねずの瓦の大屋根の本堂、こげ茶の木の正面、左右に石灯籠と五色の幕、正面の参道
+spotSprites.hekinanOninji = hiCanvas((r, h) => {
+  h(5, 13, 34, '#6a686c'); tileRoof(r, h, 6, [[12, 35], [11, 36], [10, 37], [9, 38], [8, 39], [7, 40], [5, 42], [3, 44], [2, 45], [1, 46], [1, 46]], ['#b8b6ba', '#9a989c', '#4a484c', '#858388']);
+  r(4, 17, 40, 15, '#3a2c26'); for (const x of [4, 12, 20, 27, 35, 43]) r(x, 17, 1, 15, '#5a4636'); h(17, 4, 43, '#5a4636');
+  for (const [a, b] of [[5, 11], [36, 42]]) { for (let x = a; x <= b; x += 2) r(x, 19, 1, 9, '#6a5444'); h(23, a, b, '#6a5444'); }
+  r(14, 21, 20, 9, '#e8d8b0'); for (const [x, c] of [[14, '#3a6ac0'], [18, '#e8c840'], [22, '#c83a3a'], [26, '#f4f4f4'], [30, '#e88a30']]) r(x, 21, 4, 2, c);   // 五色の幕
+  r(16, 24, 16, 6, '#2a201c'); h(32, 3, 44, '#8a6a50'); r(12, 33, 24, 2, '#c8a87a');
+  for (const x of [6, 38]) { r(x + 1, 28, 3, 1, '#a8a49c'); r(x, 29, 5, 2, '#a8a49c'); r(x + 1, 31, 3, 2, '#e8d8a0'); r(x, 33, 5, 1, '#a8a49c'); r(x + 1, 34, 3, 4, '#9a968e'); r(x, 38, 5, 2, '#b8b4ac'); }   // 石灯籠
+  r(0, 40, 48, 8, '#c8c4bc'); spanRows(h, 40, [[19, 28], [18, 29], [17, 30], [16, 31], [15, 32], [14, 33], [13, 34], [12, 35]], '#a8a49c');
+});
+// 名鉄 碧南駅：灰色の高い箱に駅名の看板、手前に低くて長い黒っぽい屋根の駅舎、前の横断歩道
+spotSprites.hekinanStation = hiCanvas((r, h) => {
+  r(12, 6, 22, 18, '#6a7078'); h(6, 12, 33, '#8a9098'); r(14, 9, 9, 3, '#e8e8e8'); r(15, 10, 1, 1, '#2f5fae'); for (let x = 17; x < 22; x += 2) r(x, 10, 1, 1, '#333'); r(34, 10, 10, 14, '#c8ccd0');
+  tileRoof(r, h, 20, [[3, 46], [2, 47], [1, 47], [0, 47]], ['#7a7b80', '#616266', '#3a3b3e', '#55565a']);
+  r(2, 24, 44, 9, '#26252a'); for (let x = 4; x < 45; x += 5) r(x, 25, 3, 6, '#6a7a82'); for (const x of [2, 18, 30, 45]) r(x, 24, 1, 9, '#8a8a8e');
+  r(38, 26, 2, 7, '#d23a2e'); r(44, 22, 2, 11, '#3a3a3e'); r(44, 23, 2, 6, '#5a5c60');
+  r(0, 33, 48, 2, '#9a9a96'); r(0, 35, 48, 13, '#4a4a4c'); for (let x = 2; x < 46; x += 4) r(x, 39, 3, 6, '#e8e8e8');
+});
+// 名鉄 碧南中央駅：白い駅ビルに、サーモン色の丸いアーチの入口の屋根、2階の白いアーチ窓。前の歩道に黄色い点字ブロック
+spotSprites.hekinanChuoStation = hiCanvas((r, h) => {
+  r(0, 10, 48, 25, '#ecebe6'); h(10, 0, 47, '#f8f8f6'); h(11, 0, 47, '#c8c8c4');
+  for (let x = 1; x < 30; x += 3) { r(x, 13, 2, 5, '#8a9aa4'); r(x, 13, 2, 1, '#ecebe6'); }   // 2階のアーチ窓
+  r(18, 18, 30, 2, '#c87a72'); spanRows(h, 14, [[24, 31], [22, 33], [21, 34], [20, 35]], '#c87a72'); spanRows(h, 16, [[25, 30], [24, 31], [23, 32]], '#ecebe6');   // アーチの屋根
+  r(26, 14, 8, 2, '#f8f8f8'); r(27, 14, 2, 1, '#2f5fae');
+  r(2, 22, 14, 10, '#6a7a84'); for (let x = 2; x < 16; x += 3) r(x, 22, 1, 10, '#c8ccd0');
+  r(22, 22, 12, 13, '#3a4650'); r(23, 23, 10, 9, '#5a6a74'); for (const x of [20, 35]) r(x, 20, 2, 15, '#f4f4f2');
+  r(37, 22, 10, 10, '#6a7a84'); for (let x = 37; x < 47; x += 3) r(x, 22, 1, 10, '#c8ccd0');
+  r(0, 35, 48, 13, '#d8d0c4'); for (let y = 37; y < 48; y += 3) h(y, 0, 47, '#c8c0b4'); spanRows(h, 41, [[0, 5], [5, 11], [11, 17], [17, 23], [23, 29], [29, 35]], '#d8b040');
+  for (const x of [4, 12, 20]) r(x, 33, 2, 5, '#3a3a3e');
+});
+// 碧南市役所：銀ねずの大きな四角すいの屋根の棟と、右の高い庁舎（ガラスの階段塔）。ベージュの壁
+spotSprites.hekinanCityhall = hiCanvas((r, h) => {
+  r(28, 4, 14, 32, '#c8c4b8'); spanRows(h, 1, [[33, 41], [30, 42], [28, 42]], '#4a5060'); for (let y = 8; y < 34; y += 4) for (let x = 30; x < 40; x += 3) r(x, y, 2, 2, '#4a5868');
+  r(39, 2, 4, 34, '#2e3947'); for (let y = 3; y < 35; y += 2) h(y, 39, 42, '#6a8aa8'); r(40, 0, 1, 2, '#6a6a70');
+  r(14, 2, 2, 7, '#8a8a90'); r(13, 1, 4, 1, '#8a8a90');
+  for (let k = 0; k < 14; k++) h(8 + k, 15 - Math.round(k * 1.1), 16 + Math.round(k * 1.1), k < 6 ? '#c4c0b6' : '#aeaba1'); for (let k = 2; k < 14; k += 2) h(8 + k, 15 - Math.round(k * 1.1) + 1, 16 + Math.round(k * 1.1) - 1, '#9e9b91');   // 四角すいの屋根
+  h(22, 0, 31, '#7a786e'); r(1, 23, 30, 13, '#d4d0c4'); for (let x = 3; x < 30; x += 5) r(x, 26, 3, 6, '#4a5868'); r(13, 25, 6, 10, '#5a6a7a');
+  r(0, 36, 48, 3, '#8a8a86'); r(0, 39, 48, 9, '#5a5a5c'); for (const x of [6, 21]) { r(x, 28, 1, 11, '#5a4030'); r(x - 2, 29, 2, 1, '#5a4030'); r(x + 1, 30, 2, 1, '#5a4030'); r(x - 3, 28, 1, 1, '#5a4030'); r(x + 3, 29, 1, 1, '#5a4030'); }   // 冬の街路樹
+});
+// 名鉄 高浜港駅：白い漆喰の壁に黒い瓦屋根の蔵づくりの駅舎、腰はなまこ壁（白と黒の格子）、窓の上に小さなひさし
+spotSprites.takahamaMinatoStation = hiCanvas((r, h) => {
+  const BR = ['#4a4c54', '#2e3036', '#16171a', '#3e4048'];
+  tileRoof(r, h, 12, [[14, 44], [13, 45], [12, 46], [12, 46]], BR); tileRoof(r, h, 18, [[1, 13], [0, 14], [0, 14]], BR);
+  r(12, 16, 34, 18, '#f0efea'); r(1, 21, 12, 13, '#f0efea'); h(16, 12, 45, '#d8d6d0');
+  r(33, 18, 10, 3, '#ffffff'); r(34, 19, 2, 1, '#2f5fae'); for (let x = 37; x < 42; x += 2) r(x, 19, 1, 1, '#333');
+  for (const [x, w] of [[4, 6], [19, 7], [30, 13]]) { h(23, x - 1, x + w, '#2e3036'); h(24, x - 1, x + w, '#4a4c54'); }   // ひさし
+  r(4, 25, 5, 4, '#3a3a3e'); r(19, 25, 6, 4, '#3a3a3e'); r(30, 25, 5, 9, '#5a6670'); r(36, 25, 6, 4, '#7a8a94');
+  r(1, 29, 45, 5, '#2a2a2e'); for (let y = 29; y < 34; y++) for (let x = 1 + ((y - 29) % 2); x < 46; x += 2) r(x, y, 1, 1, '#f0f0f0');   // なまこ壁
+  r(30, 29, 5, 5, '#5a6670'); r(0, 34, 48, 14, '#4a4a4c'); h(34, 0, 47, '#6a6a6c');
+});
+// 高浜の春日神社：銀ねずの瓦の大屋根の拝殿、赤茶の木の正面と格子、しめ縄、右に台座の上の狛犬、左に赤い灯籠の柱
+spotSprites.takahamaKasuga = hiCanvas((r, h) => {
+  tileRoof(r, h, 4, [[18, 41], [16, 43], [14, 45], [12, 46], [10, 47], [8, 47], [6, 47], [5, 47]], ['#e2e0e4', '#c8c6ca', '#6a686c', '#a8a6aa']); h(3, 19, 40, '#8a888c');
+  r(10, 12, 36, 20, '#4a2a2a'); for (const x of [10, 17, 24, 31, 38, 45]) r(x, 12, 1, 20, '#6a3a34');
+  for (const [a, b] of [[11, 16], [32, 37], [39, 44]]) { for (let x = a; x <= b; x += 2) r(x, 14, 1, 12, '#7a4a3e'); for (let y = 14; y < 26; y += 3) h(y, a, b, '#7a4a3e'); }
+  r(18, 16, 13, 10, '#2a1a1a'); h(14, 12, 44, '#e8d8a0'); for (const x of [16, 24, 32]) r(x, 15, 1, 3, '#ffffff');   // しめ縄と紙垂
+  h(32, 9, 46, '#8a6a50'); spanRows(h, 33, [[18, 31], [17, 32], [16, 33]], i => i % 2 ? '#a8a49c' : '#c8c4bc');
+  r(4, 4, 1, 34, '#c83a2a'); r(3, 3, 3, 2, '#c83a2a'); r(1, 26, 7, 8, '#d8d0b8'); r(2, 27, 5, 6, '#f4f0e0');   // 赤い灯籠の柱と掲示板
+  r(38, 22, 6, 5, '#b8b4a8'); r(39, 20, 3, 2, '#b8b4a8'); r(37, 27, 8, 2, '#c8c4b8'); r(37, 29, 8, 8, '#a8a498'); h(31, 37, 44, '#8a8678');   // 狛犬
+  r(0, 37, 48, 11, '#e8e6e0'); h(37, 0, 47, '#d0cec8');
+});
+// 大山緑地（高浜）：丸い石の台に立つ、茶色いやきもののたぬきの大きな像と、まわりの木
+spotSprites.takahamaOyama = hiCanvas((r, h) => {
+  const BM = '#6a4030', BL = '#8a5a40', BD = '#3e2418';
+  for (const [x, y] of [[0, 6], [36, 4], [2, 20], [38, 18]]) { r(x, y, 10, 10, '#2f6a2a'); r(x + 2, y + 1, 5, 3, '#4f8a3a'); }
+  pix(r, ['.##....', '####...'], 18, 2, BD); r(17, 4, 12, 9, BM); r(19, 5, 4, 3, BL); r(26, 6, 3, 2, '#2a1810'); r(28, 9, 3, 2, BM);   // 頭（右を向いて鼻をあげる）
+  spanRows(h, 13, [[15, 31], [14, 32], [13, 33], [13, 33], [13, 33], [13, 33], [13, 33], [13, 33], [13, 33], [14, 32], [14, 32], [14, 32], [14, 32], [15, 31], [15, 31], [15, 31], [15, 31], [15, 31], [14, 32], [14, 32], [13, 33], [13, 33]], i => i % 5 === 1 ? BL : BM);
+  for (const y of [18, 24, 30]) h(y, 15, 31, '#5a3424'); r(22, 14, 2, 20, '#5a3424'); r(12, 16, 3, 9, BM); r(32, 16, 3, 9, BM); r(13, 17, 1, 6, BL);   // 着物のしま・腕
+  r(16, 35, 6, 2, BD); r(25, 35, 6, 2, BD);   // 足
+  spanRows(h, 37, [[9, 38], [7, 40], [6, 41], [6, 41]], i => i ? '#4a4648' : '#6a6668'); r(0, 41, 48, 7, '#7a8a5a'); h(41, 0, 47, '#9aaa6a');
+});
+// 名鉄 三河高浜駅：白い曲線の駅舎に赤レンガ色の箱と屋根の塔、うしろに高いマンション
+spotSprites.takahamaMikawaTakahamaStation = hiCanvas((r, h) => {
+  const WH = '#ecebe8', WS = '#c8c6c2', BR = '#8a3a2e', AP = '#9a8e82', AD = '#6f6963';
+  r(26, 0, 16, 26, AP); r(38, 0, 4, 26, AD); for (let y = 2; y < 26; y += 3) h(y, 26, 41, AD); for (let y = 3; y < 26; y += 3) for (let x = 28; x < 38; x += 3) r(x, y, 2, 1, '#c8c0b4');   // マンション
+  r(2, 16, 42, 16, WH); h(16, 2, 43, '#f8f8f6'); r(2, 24, 42, 1, WS);
+  spanRows(h, 12, [[6, 20], [4, 22], [3, 23]], WH); r(10, 9, 6, 4, BR); spanRows(h, 7, [[11, 14], [10, 15]], '#5a4a48');   // 赤い塔と屋根
+  r(14, 18, 10, 4, '#3a3a40'); for (let x = 15; x < 24; x += 2) r(x, 18, 1, 4, '#7a8088'); r(4, 18, 3, 3, '#3a3a40'); for (let x = 27; x < 42; x += 4) r(x, 19, 2, 4, '#3a3a40');
+  for (let i = 0; i < 10; i++) r(26 + i * 2, 24 - Math.floor(i / 1.5), 3, 1, WS);   // 外の階段
+  r(8, 32, 14, 9, BR); r(10, 34, 3, 3, '#5a2a22'); r(16, 34, 3, 3, '#5a2a22'); r(24, 32, 18, 9, WS); r(30, 32, 6, 9, BR);
+  r(4, 32, 2, 9, '#e0dedb'); r(42, 32, 2, 9, '#e0dedb'); r(0, 41, 48, 7, '#8a8682'); h(41, 0, 47, '#a8a49e');
+});
+// 名鉄 吉浜駅：かまぼこ形の屋根の白い小さな駅舎に駅名の看板、赤・白・青の自動販売機。右に「人形小路」の赤いのぼり
+spotSprites.takahamaYoshihamaStation = hiCanvas((r, h) => {
+  const WH = '#ecebe8';
+  spanRows(h, 12, [[10, 33], [7, 36], [5, 38], [4, 39]], i => i ? '#9caeb7' : '#b8c8d0');
+  r(4, 16, 36, 22, WH); h(16, 4, 39, '#d0d4d8');
+  r(12, 18, 20, 3, '#ffffff'); r(13, 19, 2, 1, '#2f5fae'); for (let x = 17; x < 31; x += 2) r(x, 19, 1, 1, '#222'); h(21, 12, 31, '#3f7fbf');   // 駅名
+  r(5, 24, 8, 14, '#4a4846'); r(6, 26, 6, 5, '#8a9298');
+  for (const [x, c] of [[15, '#d42a2a'], [21, '#f4f4f4'], [27, '#2a4aa8']]) { r(x, 25, 5, 12, c); r(x + 1, 26, 3, 4, '#cfd8e0'); h(30, x + 1, x + 3, '#444'); }   // 自動販売機
+  h(37, 4, 39, '#7a5a40'); r(33, 26, 3, 11, '#a8a8a8');
+  r(43, 3, 1, 38, '#7a4a3a'); r(39, 4, 4, 14, '#c8302a'); for (let y = 6; y < 17; y += 3) r(40, y, 2, 2, '#ffffff');   // 人形小路ののぼり
+  r(0, 38, 48, 10, '#8a8682'); h(38, 0, 47, '#a09a94'); for (const x of [12, 20]) r(x, 40, 1, 5, '#b8b8b8');
+});
+// 高浜市役所：白い建物に灰色の市松もようのパネル、黒い窓の列、屋上に白いアンテナの丸、手前に瓦屋根の玄関
+spotSprites.takahamaCityhall = hiCanvas((r, h) => {
+  r(4, 8, 10, 32, '#e8e8e8'); r(4, 8, 2, 32, '#f8f8f8'); r(5, 4, 3, 3, '#f4f4f4'); r(9, 3, 4, 4, '#f4f4f4'); r(9, 3, 1, 1, '#cccccc');   // 白い塔とアンテナ
+  r(14, 10, 32, 26, '#d4d4d8'); for (let y = 10; y < 36; y += 4) for (let x = 14 + ((y / 4) % 2) * 4; x < 46; x += 8) r(x, y, 4, 4, '#a4a4a8');   // 市松もよう
+  for (const y of [15, 24]) for (let x = 16; x < 45; x += 3) r(x, y, 2, 4, '#2a3440');
+  h(10, 14, 45, '#e8e8ec');
+  tileRoof(r, h, 31, [[16, 46], [14, 47], [13, 47]], ['#8a8a90', '#6a6a70', '#444448', '#5a5a60']); r(16, 34, 30, 6, '#4a4a50'); r(24, 35, 10, 5, '#2a3440');
+  r(22, 37, 8, 4, '#d8d8d8'); for (let x = 23; x < 30; x += 2) r(x, 37, 1, 4, '#b0b0b0');   // 前の丸い囲い
+  r(0, 40, 48, 8, '#6f6e6d'); h(40, 0, 47, '#8a8a88'); r(30, 43, 8, 1, '#c8a040');
+});
+// 本光寺（幸田・あじさい寺）：赤茶にぬった板の小さなお堂と、銀ねずの瓦の宝形屋根
+spotSprites.kotaHonkoji = hiCanvas((r, h) => {
+  r(23, 2, 2, 3, '#5a5a5e'); r(22, 5, 4, 1, '#7a7a7e');
+  tileRoof(r, h, 6, [[19, 28], [17, 30], [15, 32], [13, 34], [11, 36], [9, 38], [7, 40], [5, 42], [4, 43]], ['#b8b8bc', '#9f9fa4', '#5a5a60', '#8a8a90']);
+  h(15, 6, 41, '#d8d4c8'); r(9, 16, 30, 18, '#7a3a2a'); r(9, 16, 30, 2, '#5a2a20');
+  for (const x of [9, 18, 29, 38]) r(x, 16, 1, 18, '#5a2a20'); r(19, 20, 10, 14, '#6a3020'); r(23, 20, 2, 14, '#4a2018');
+  for (const x0 of [11, 31]) { r(x0, 20, 6, 8, '#6a3020'); for (let x = x0; x < x0 + 6; x += 2) r(x, 20, 1, 8, '#8a4a38'); }   // 格子窓
+  h(34, 6, 41, '#8a7a68'); h(35, 6, 41, '#6a5a48'); for (const x of [8, 39]) r(x, 36, 2, 4, '#6a5a48');
+  r(0, 40, 48, 8, '#a8a090'); h(40, 0, 47, '#c0b8a8'); pix(r, ['.####.', '######', '######'], 40, 36, '#3f7a34');
+});
+// 幸田町郷土資料館：赤い波板の屋根の平屋、白い壁と窓、手前の植えこみと館名の白い柱
+spotSprites.kotaKyodoShiryokan = hiCanvas((r, h) => {
+  spanRows(h, 14, [[6, 41], [4, 43], [3, 44], [2, 45]], i => i < 2 ? '#c06a58' : '#a85648'); for (let x = 4; x < 45; x += 2) r(x, 15, 1, 3, '#d8806c'); h(18, 2, 45, '#7a3a30');
+  r(4, 19, 40, 13, '#ecebe6'); for (const x of [6, 13, 27, 35]) { r(x, 21, 6, 6, '#6f8fa8'); r(x, 21, 6, 1, '#9fb8cc'); r(x + 3, 21, 1, 6, '#ecebe6'); } r(20, 22, 5, 10, '#4a4440');
+  r(0, 32, 48, 8, '#4a7a2a'); h(32, 0, 47, '#6a9a3a'); for (let x = 2; x < 48; x += 5) r(x, 33, 2, 1, '#8aba4a');
+  r(37, 6, 4, 30, '#f8f8f8'); for (let y = 8; y < 34; y += 3) r(38, y, 2, 2, '#222');   // 館名の柱
+  r(0, 40, 48, 8, '#6a6a68'); h(40, 0, 47, '#8a8a88');
+});
+// 幸田文化広場：「幸田文化広場」と彫った大きな石と、つつじの花、うしろのしだれ桜
+spotSprites.kotaBunkaHiroba = hiCanvas((r, h) => {
+  spanRows(h, 0, [[10, 37], [6, 41], [3, 44], [2, 45], [1, 46], [1, 46], [1, 46], [2, 45]], i => i % 3 === 1 ? '#f4c8d8' : '#e8a8c0');   // しだれ桜のこずえ
+  for (let x = 2; x < 46; x += 3) r(x, 8, 2, 5 + (x % 7), (x % 2) ? '#e8a8c0' : '#f0b8cc');   // たれさがる枝の花
+  r(22, 6, 3, 10, '#6a4a3a');
+  spanRows(h, 15, [[5, 42], [4, 43], [3, 44], [3, 44], [3, 44], [3, 44], [3, 44], [3, 44], [3, 44], [3, 44], [3, 44], [3, 44], [4, 43], [4, 43], [5, 42]], i => i < 2 ? '#b8a090' : i > 11 ? '#8a6a5a' : '#a08878');
+  for (let i = 0; i < 6; i++) { const x = 7 + i * 6; r(x, 19, 4, 1, '#4a3a30'); r(x + 1, 20, 1, 3, '#4a3a30'); r(x, 22, 4, 1, '#4a3a30'); r(x + 3, 20, 1, 2, '#5a4a40'); }   // 彫った字「幸田文化広場」
+  h(25, 14, 18, '#5a4a40'); h(25, 26, 32, '#5a4a40');
+  r(0, 30, 48, 18, '#3f7a34'); for (const [x, y] of [[2, 31], [9, 33], [16, 31], [23, 34], [30, 32], [37, 31], [43, 34], [5, 38], [20, 39], [35, 38], [12, 43], [28, 42], [41, 42]]) { r(x, y, 3, 2, '#d0306a'); r(x + 1, y, 1, 1, '#f070a0'); }   // つつじ
+});
+// 道の駅 筆柿の里・幸田：濃い灰色の大きな屋根に三角の明かり窓がふたつ、ガラスの店先と、うしろの山
+spotSprites.kotaMichinoeki = hiCanvas((r, h) => {
+  r(0, 4, 48, 14, '#3f6a34'); for (let x = 0; x < 48; x += 6) { r(x, 2 + (x % 4), 6, 4, '#3f6a34'); r(x + 1, 4, 3, 2, '#5a8a44'); }   // うしろの山
+  tileRoof(r, h, 16, [[4, 43], [2, 45], [1, 46], [0, 47], [0, 47]], ['#7a7980', '#5e5d64', '#3a393e', '#4e4d54']);
+  for (const cx of [14, 34]) for (let k = 0; k < 6; k++) { h(12 + k, cx - k - 1, cx + k + 1, '#5e5d64'); if (k > 1) h(12 + k, cx - k + 1, cx + k - 1, '#a8c0d0'); }   // 三角の明かり窓
+  r(1, 21, 46, 13, '#8a7a62'); for (let x = 3; x < 46; x += 6) r(x, 23, 4, 9, '#4a5560'); for (let x = 2; x < 47; x += 6) r(x, 21, 1, 13, '#5a4a3a');
+  r(18, 22, 10, 2, '#c87a30'); r(20, 22, 6, 1, '#f0e0c0');   // 看板
+  r(0, 34, 48, 14, '#8a8a88'); for (let x = 4; x < 48; x += 8) r(x, 36, 1, 8, '#f4f4f4'); for (const x of [6, 26, 38]) r(x, 35, 1, 2, '#e05a20');
+});
+// 菱池の排水機場（幸田）：干拓地の水を川へ出す、赤い屋根の白い機械小屋と、れんがの水門・黒い鉄の柱、手前の水路
+spotSprites.kotaHishiike = hiCanvas((r, h) => {
+  spanRows(h, 6, [[16, 41], [15, 42], [14, 43]], i => i ? '#a84838' : '#c05a48');
+  r(17, 9, 24, 13, '#e0d8c8'); r(17, 9, 24, 2, '#c8c0b0'); r(21, 12, 4, 4, '#6f8fa8'); r(31, 12, 4, 4, '#6f8fa8');
+  r(9, 12, 9, 10, '#d8d4cc'); r(9, 12, 9, 1, '#b8b4ac'); r(11, 14, 3, 3, '#6f8fa8'); r(3, 8, 7, 2, '#7a7a7a'); for (const x of [4, 8]) r(x, 10, 1, 4, '#8a8a8a');   // となりの小屋と手すり
+  r(0, 22, 48, 3, '#7aa898'); for (let x = 0; x < 48; x += 3) r(x, 20, 1, 3, '#5a8a7a');   // 緑の柵
+  r(4, 25, 13, 12, '#7a4a3a'); for (let y = 26; y < 37; y += 2) h(y, 4, 16, '#8a5a48'); spanRows(h, 30, [[8, 12], [7, 13], [7, 13]], '#2a1e18');   // れんがの水門（アーチ）
+  r(17, 25, 26, 12, '#3a3632'); for (let x = 18; x < 43; x += 3) r(x, 25, 1, 12, '#5a4a3a'); h(25, 17, 42, '#6a625a');
+  r(40, 16, 3, 9, '#3a7ab8'); r(42, 14, 5, 3, '#3a7ab8');   // 青い管
+  r(0, 37, 48, 11, '#4a5a50'); for (const [x, y] of [[4, 40], [18, 43], [30, 40], [40, 44]]) r(x, y, 5, 1, '#6a7a70');
+  spanRows(h, 36, [[0, 4], [0, 3], [0, 2], [0, 1]], '#8a9a5a');
+});
+// ハッピネス・ヒル・幸田：うすいピンクの壁に、銀色のゆるい丸屋根の大きなホール。左に低い棟、前に木の列
+spotSprites.kotaHappinessHill = hiCanvas((r, h) => {
+  spanRows(h, 10, [[18, 30], [14, 34], [11, 37], [9, 39], [8, 40]], i => i < 2 ? '#c8d0dc' : '#a8b4c4'); r(22, 7, 4, 3, '#a8b4c4'); h(15, 8, 40, '#7a8494');
+  r(9, 16, 31, 18, '#d8b4a4'); r(9, 16, 31, 2, '#c8a090'); for (const x of [10, 37]) r(x, 16, 2, 18, '#e8c8b8');
+  r(16, 19, 18, 4, '#5e666c'); for (let x = 17; x < 34; x += 3) r(x, 19, 1, 4, '#9aa4ac'); r(14, 26, 22, 3, '#5e666c'); for (let x = 15; x < 36; x += 3) r(x, 26, 1, 3, '#9aa4ac');
+  r(0, 22, 10, 12, '#e8c8b8'); r(0, 22, 10, 1, '#c8a090'); r(2, 25, 6, 3, '#5e666c');
+  r(40, 20, 8, 14, '#e8c8b8'); r(42, 23, 4, 3, '#5e666c');
+  for (let x = 0; x < 48; x += 7) { r(x, 30, 6, 5, '#4a7a34'); r(x + 1, 30, 3, 1, '#6a9a44'); r(x + 2, 35, 1, 3, '#6a4a3a'); }
+  r(0, 38, 48, 10, '#7aa848'); h(38, 0, 47, '#9ac860');
+});
+// 幸田町役場：茶色いれんがタイルの6階建て、横長の窓の帯が重なる。屋上にアンテナ、前に旗ざおと植えこみ
+spotSprites.kotaTownhall = hiCanvas((r, h) => {
+  const BS = '#b8683f', BM = '#a0583a', BD = '#7b533a';
+  r(12, 7, 30, 31, BM); r(12, 7, 22, 31, BS); r(34, 7, 8, 31, BD); h(7, 12, 41, '#c8784a');
+  for (const y of [11, 16, 21, 26]) { r(14, y, 19, 2, '#3a3236'); r(35, y, 6, 2, '#2a2428'); }
+  r(30, 4, 3, 3, '#e8e8e8'); r(31, 3, 1, 1, '#cccccc');   // アンテナ
+  r(14, 31, 14, 7, '#3a3236'); r(16, 30, 10, 1, '#c8784a'); r(17, 32, 8, 6, '#5a6470');
+  for (const x of [4, 7, 10]) { r(x, 18, 1, 22, '#c8c8c8'); r(x + 1, 18, 2, 2, x === 7 ? '#d23a2e' : '#3a8a3a'); }   // 旗ざお
+  r(0, 38, 48, 4, '#3f7a34'); h(38, 0, 47, '#5a9a44'); r(0, 42, 48, 6, '#6a6a68'); for (let x = 4; x < 48; x += 6) r(x, 44, 3, 1, '#f4f4f4');
+});
+// JR 幸田駅：白い駅舎にガラスの正面と薄いひさし、赤いポスト・自動販売機、ヤシの木
+spotSprites.kotaStation = hiCanvas((r, h) => {
+  r(0, 14, 14, 24, '#ecebe6'); for (let y = 18; y < 34; y += 4) r(1, y, 12, 2, '#a8b8c0');   // 左の白い建物
+  r(14, 16, 32, 3, '#f4f2ec'); h(18, 14, 45, '#c8c4bc'); r(15, 19, 30, 19, '#e8e6e0');
+  r(17, 21, 14, 17, '#4a5560'); for (let x = 17; x < 31; x += 4) r(x, 21, 1, 17, '#dcdcd8'); r(19, 23, 2, 6, '#8fa8b8');
+  r(33, 21, 8, 3, '#d87a30'); r(34, 22, 6, 1, '#f8f0e0'); r(33, 25, 10, 12, '#f4f4f4'); for (let x = 34; x < 43; x += 3) r(x, 26, 2, 5, '#8ab0d0');   // 看板・自動販売機
+  r(12, 31, 3, 6, '#d23a2e'); h(31, 12, 14, '#e8584a');
+  for (const [x, y] of [[4, 2], [9, 5]]) { r(x + 2, y + 4, 1, 32 - y, '#7a6a50'); pix(r, ['#..#..#', '.#.#.#.', '..###..', '.#.#.#.', '#..#..#'], x, y, '#3f7a34'); }   // ヤシの木
+  r(0, 38, 48, 10, '#8a8a88'); h(38, 0, 47, '#a8a8a4');
+});
+// JR 三ケ根駅：線路の上をまたぐ、クリーム色の壁と赤茶の屋根の橋上駅舎、両側の白い階段
+spotSprites.kotaSanganeStation = hiCanvas((r, h) => {
+  spanRows(h, 10, [[10, 37], [9, 38], [8, 39]], i => i ? '#8a4a40' : '#a85a50');
+  r(9, 13, 30, 9, '#ece4d4'); for (let x = 12; x < 37; x += 4) r(x, 15, 3, 3, '#6f8fa8'); r(9, 21, 30, 1, '#c8c0b0');
+  r(9, 22, 30, 16, '#6a625a'); for (const x of [9, 19, 28, 37]) r(x, 22, 2, 16, '#d8d0c0');   // 駅舎の下（暗い）と柱
+  spanRows(h, 22, [[0, 9], [0, 8], [0, 7], [0, 6], [0, 5], [0, 4], [0, 3], [0, 2]], '#f4f4f2'); spanRows(h, 22, [[39, 47], [40, 47], [41, 47], [42, 47], [43, 47], [44, 47], [45, 47], [46, 47]], '#f4f4f2');
+  for (let i = 0; i < 16; i++) { r(Math.max(0, 9 - Math.floor(i / 2)), 22 + i, 1, 1, '#a8a8a8'); r(Math.min(47, 38 + Math.floor(i / 2)), 22 + i, 1, 1, '#a8a8a8'); }   // 白い階段と手すり
+  r(13, 30, 20, 8, '#e8e0d0'); r(16, 32, 5, 6, '#4a4a50'); r(24, 32, 6, 3, '#6f8fa8');
+  r(0, 38, 48, 10, '#8a8682'); h(38, 0, 47, '#a8a49e'); r(42, 30, 6, 8, '#a83a2a'); h(30, 42, 47, '#f4f4f4');   // 赤いトイレの小屋
+});
+// JR 相見駅：ガラスばりの明るい駅舎と、白い大きな箱の建物、前に並ぶ黒い柱
+spotSprites.kotaAimiStation = hiCanvas((r, h) => {
+  r(24, 12, 22, 24, '#e8ecf0'); h(12, 24, 45, '#f8f8fa'); for (let x = 26; x < 45; x += 4) r(x, 16, 2, 2, '#a8b4c4');   // 白い箱
+  r(4, 10, 22, 26, '#8aa8c8'); h(10, 4, 25, '#e8ecf0'); for (let x = 5; x < 26; x += 2) r(x, 11, 1, 25, '#b8cce0'); for (let i = 0; i < 10; i++) r(5 + i, 12 + i, 2, 1, '#dce8f4');   // ガラスの棟
+  r(18, 14, 8, 6, '#ffffff'); r(19, 15, 2, 2, '#d23a2e'); r(22, 16, 3, 1, '#333');   // JR の看板
+  r(26, 18, 6, 18, '#6aa0c0'); r(26, 18, 6, 1, '#f8f8fa');
+  for (let x = 2; x < 46; x += 4) r(x, 28, 2, 10, '#3a3a40');   // 黒い柱の列
+  r(0, 38, 48, 10, '#d8d0c0'); h(38, 0, 47, '#e8e0d0'); r(0, 44, 48, 4, '#6a6a68');
+});
+// 竹島・八百富神社（蒲郡）：大きな木にかこまれた、緑青の銅屋根の社殿と、白いのぼり、石灯籠、敷石の参道
+spotSprites.gamagoriTakeshima = hiCanvas((r, h) => {
+  for (const [x, y, w] of [[0, 0, 14], [34, 0, 14], [0, 10, 10], [38, 12, 10]]) { r(x, y, w, 12, '#2f5a28'); r(x + 2, y + 2, w - 5, 3, '#4a7a38'); } r(6, 18, 3, 22, '#4a3a2a'); r(40, 20, 3, 20, '#4a3a2a');
+  spanRows(h, 12, [[14, 33], [12, 35], [11, 36], [10, 37]], i => i ? '#6f8a76' : '#8aa890'); spanRows(h, 9, [[20, 27], [18, 29], [17, 30]], '#6f8a76'); h(16, 10, 37, '#3a4a3a');
+  r(12, 17, 24, 13, '#4a3a2a'); r(19, 19, 10, 11, '#2a2018'); r(20, 19, 8, 1, '#c8a050'); for (const x of [12, 18, 29, 35]) r(x, 17, 1, 13, '#6a5038');
+  r(15, 4, 3, 26, '#f4f4f4'); r(30, 6, 3, 24, '#f4f4f4'); for (let y = 6; y < 28; y += 3) { r(16, y, 1, 2, '#222'); r(31, y + 1, 1, 2, '#222'); }   // のぼり
+  r(37, 26, 4, 2, '#9a968c'); r(38, 28, 2, 2, '#ffe27a'); r(38, 30, 2, 6, '#9a968c'); r(36, 36, 6, 2, '#9a968c');   // 石灯籠
+  r(0, 30, 48, 18, '#b0a48d'); spanRows(h, 30, [[20, 27], [19, 28], [19, 28], [18, 29], [18, 29], [17, 30], [17, 30], [16, 31], [16, 31], [15, 32], [15, 32], [14, 33], [14, 33], [13, 34], [13, 34], [12, 35], [12, 35], [11, 36]], i => i % 3 ? '#cfc6b4' : '#a89c88');
+});
+// 竹島水族館（蒲郡）：紺色の帯に白い丸と魚のもよう、上に「竹島水族館」の看板、白い建物と木
+spotSprites.gamagoriAquarium = hiCanvas((r, h) => {
+  r(2, 10, 12, 8, '#d8d4cc'); r(28, 8, 10, 6, '#d8d4cc');
+  for (let i = 0; i < 5; i++) { r(10 + i * 5, 11, 4, 4, '#2a3a6a'); r(11 + i * 5, 12, 2, 2, '#ffffff'); } r(40, 10, 6, 3, '#2a3a6a');   // 看板の字のかこみ
+  r(0, 16, 48, 9, '#1c2b4d'); for (const [x, y] of [[3, 18], [9, 20], [15, 18], [21, 20], [27, 18], [33, 20], [39, 18], [44, 20]]) { r(x, y, 3, 3, '#e8f0f8'); r(x + 1, y + 1, 1, 1, '#6a8ab8'); }   // 白い丸（水の泡）
+  h(16, 0, 47, '#3a4a7a'); r(0, 25, 48, 12, '#e8e8e8'); h(25, 0, 47, '#c8c8c8');
+  r(10, 27, 22, 9, '#b8bcc4'); for (let x = 11; x < 32; x += 2) r(x, 27, 1, 9, '#ececec'); r(34, 28, 8, 8, '#3a4a5a');
+  pix(r, ['..####..', '.######.', '########', '.######.', '..####..'], 36, 24, '#3f8a3a'); r(39, 29, 2, 8, '#6a4a3a'); pix(r, ['.####.', '######', '.####.'], 1, 28, '#3f8a3a'); r(3, 31, 1, 6, '#6a4a3a');
+  r(0, 37, 48, 11, '#8a8682'); h(37, 0, 47, '#a8a49e');
+});
+// JR・名鉄 蒲郡駅：高架の長い駅（白い屋根と灰色の駅舎）と、前のロータリーに立つ白い帆の記念碑、うしろの山
+spotSprites.gamagoriStation = hiCanvas((r, h) => {
+  spanRows(h, 4, [[0, 10], [0, 18], [0, 26], [0, 34], [0, 47], [0, 47]], i => i % 2 ? '#4f7a4a' : '#3f6a3a');   // うしろの山
+  r(0, 10, 48, 4, '#c8c4c0'); for (let x = 2; x < 48; x += 8) r(x, 8, 6, 2, '#f4f4f4');   // 駅の白い屋根
+  r(0, 14, 48, 6, '#7a7880'); for (let x = 1; x < 48; x += 3) r(x, 15, 2, 3, '#a8b0bc'); h(20, 0, 47, '#5a5860');
+  for (let x = 3; x < 48; x += 8) r(x, 21, 2, 4, '#9a9aa0');
+  spanRows(h, 25, [[0, 47], [0, 47]], '#8a8682'); r(0, 27, 48, 21, '#9a948c');
+  spanRows(h, 31, [[14, 33], [11, 36], [10, 37], [10, 37], [11, 36], [14, 33]], '#6aa04a'); h(31, 14, 33, '#e8e8e8'); h(36, 14, 33, '#e8e8e8');   // ロータリーの芝
+  r(23, 8, 1, 26, '#e8e8e8'); spanRows(h, 26, [[20, 23], [18, 23], [16, 23], [14, 30]], '#f8f8f8'); r(18, 32, 12, 2, '#f8f8f8');   // 白い帆の記念碑
+  for (const [x, y] of [[2, 36], [40, 34], [6, 42], [36, 42]]) { r(x, y, 5, 4, '#3f7a34'); r(x + 2, y + 4, 1, 2, '#6a4a3a'); }
 });
 
 function spotArt(s) {

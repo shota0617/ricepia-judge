@@ -1409,10 +1409,12 @@ let dotSel = null;   // 絵帳で開いている題材（null は、さいきん
 function renderDots() {
   const D = window.NISHIO_DOTS, grid = $('dotGrid');
   if (!D || !grid) return;
-  const have = (S.dots || []).filter(id => id >= 0 && id < D.COUNT), by = new Map();
-  for (const id of have) { const m = D.motifOf(id); by.set(m, (by.get(m) || 0) + 1); }
-  $('dotCount').textContent = `${have.length.toLocaleString()}/${D.COUNT.toLocaleString()}`;
-  $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}"><button type="button" data-dotm="${i}"><span>${m.icon}</span><b>${esc(m.name)}</b><small>${by.get(i) || 0}/${D.PER}</small></button></li>`).join('');
+  // 目標は「題材 n/35」と「題材×天気 n/175」。70000枚ぜんぶは目標にしない（置き方のちがいは、見つけるたびの楽しみ）
+  const have = (S.dots || []).filter(id => id >= 0 && id < D.COUNT), by = new Map(), wx = new Map();
+  for (const id of have) { const f = D.info(id); by.set(f.m, (by.get(f.m) || 0) + 1); if (!wx.has(f.m)) wx.set(f.m, new Set()); wx.get(f.m).add(f.w); }
+  const nWx = [...wx.values()].reduce((a, x) => a + x.size, 0), WX_ICON = ['☀️', '☁️', '☔', '🌫️', '🌈'];
+  $('dotCount').textContent = `題材 ${by.size}/${D.MOTIFS.length}・題材×天気 ${nWx}/${D.MOTIFS.length * 5}・絵 ${have.length.toLocaleString()}枚`;
+  $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}"><span>${by.has(i) ? m.icon : '？'}</span><b>${esc(m.name)}</b><small>${WX_ICON.map((c, w) => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}">${c}</i>`).join('')} ${by.get(i) || 0}枚</small></button></li>`).join('');
   const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => D.motifOf(id) === dotSel).sort((a, b) => a - b);
   $('dotNote').textContent = dotSel == null ? 'さいきんもらった絵（題材を押すと、その題材の絵を番号順に見られます）' : `${D.MOTIFS[dotSel].icon} ${D.MOTIFS[dotSel].name}（もう一度押すと、さいきんもらった絵にもどります）`;
   grid.innerHTML = list.length ? list.map(id => { const f = D.info(id); return `<figure><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96" loading="lazy"/><figcaption>No.${f.no}<br/>${dotSel == null ? esc(f.title) + '<br/>' : ''}${esc(f.label)}</figcaption></figure>`; }).join('')

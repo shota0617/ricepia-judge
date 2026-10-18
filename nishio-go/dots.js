@@ -3,7 +3,7 @@
 // ・絵は35の題材 × 季節と時間帯16 × 置き方・小物25 × 天気5 ＝ 70000枚。どれも 48×48 の1枚の景色で、題材ごとの描き方に組み合わせて描く
 //   天気：晴れ・くもり・雨・霧・（冬は雪／夜は満月／ほかは虹）。もらうときの天気は気象庁の実際の天気（weather.js）で決まり、朝は霧、雨のあとは虹のことも
 //   番号：No.1〜10000 は はじめの25題材の晴れ（前からある絵。番号も絵も変えない）、10001〜50000 は同じ25題材の くもり・雨・霧・雪/虹/満月、
-//   50001〜70000 はあとから足した10題材（八ツ面山・西尾城の鍮石門・旧近衛邸の茶室・岩瀬文庫の古い本・抹茶パフェ・茶畑と摘採機・一色の海苔ひび・吉良温泉と三河湾・華蔵寺の山門・一色の干潟の水鳥）の5つの天気
+//   50001〜70000 はあとから足した10題材（八ツ面山・西尾城の鍮石門・旧近衛邸の茶室・岩瀬文庫の古い本・カーネーションの温室・稲荷山茶園・一色の海苔ひび・吉良温泉と三河湾・華蔵寺の山門・一色の干潟の水鳥）の5つの天気
 //   題材：抹茶（防霜ファンの茶畑・覆いをかけたてん茶の茶畑・抹茶と和菓子・石臼・抹茶ソフト）、一色のうなぎ（養殖池と水車・うな重・炭火のかば焼き）、
 //   えびせんべい、三河湾のあさり、漁港、佐久島への船、佐久島の黒壁の家並み、幡豆の海と沖の島、西尾城の丑寅櫓、城下町の町家、名鉄の電車、吉良の赤馬、
 //   黄金堤、饗庭塩の塩田、西尾祇園祭、鳥羽の火祭り、三河一色の大提灯、三ヶ根山のあじさい、西尾の田んぼ
@@ -481,27 +481,34 @@
     r(bx - 1, 43, 24, 1, BOOK[k.b]);
     if (k.b >= 3) { r(bx + 24, 36, 5, 5, '#c8d8e0'); r(bx + 25, 37, 3, 3, '#e8f0f4'); r(bx + 28, 41, 4, 1, '#6a4a30'); }
   }, { indoor: true });
-  const TOP = [['#f4f4f0', '#f4f4f0'], ['#e8c040', '#c8a030'], ['#d8303a', '#2a7a3a'], ['#c89a5a', '#f4e8c8'], ['#6aa84a', '#f4f4f0']];
-  def('parfait', '抹茶パフェ', '🍨', ['nishio'], 'efgh', (r, h, k) => {
-    for (let y = 0; y < 28; y++) h(y, 0, 47, '#e8dcc8');
-    windowView(r, h, k, k.a < 3 ? 30 : 3, 3, 14, 13);
-    table(r, h, 30, '#9a6a44');
-    const x = 12 + k.a * 3;
-    r(x, 14, 12, 26, '#e8f0f4'); r(x + 1, 30, 10, 9, '#5a9a3a'); r(x + 1, 25, 10, 5, '#f8f6f0'); r(x + 1, 21, 10, 4, '#6a2a2a'); r(x + 1, 17, 10, 4, '#f8f6f0'); h(29, x + 1, x + 10, '#7ab04a');
-    r(x + 2, 9, 8, 6, '#7ab048'); r(x + 3, 8, 6, 1, '#8cc050'); r(x + 4, 10, 2, 2, '#a8d870');
-    const [t1, t2] = TOP[k.b]; r(x + 8, 7, 4, 4, t1); r(x - 1, 11, 3, 3, t2); r(x + 10, 3, 1, 8, '#c8a060');
-    r(x + 4, 40, 4, 2, '#d8e4e8'); r(x + 2, 42, 8, 1, '#c8d4d8');
-    r(x + 16, 38, 8, 1, '#c8ccd0'); r(x + 23, 37, 3, 3, '#c8ccd0');
-  }, { indoor: true });
-  const MACH = ['#e86a2a', '#2a6ab8', '#e8c030', '#3a8a3a', '#c8303a'];
-  def('tekisai', '茶畑と摘採機', '🍵', ['nishio'], 'abdh', (r, h, k) => {
-    const hz = 16 + (k.a % 2) * 2;
-    sky(r, h, k, hz); tree(r, h, k, 36 - k.a * 3, hz - 7, 7); ground(r, h, k, hz, '#8a6a48');
-    for (let i = 0, y = hz + 1; y < 48; i++) { const th = 2 + (i >> 1); for (let t = 0; t < th; t++) h(y + t, 0, 47, t === th - 1 ? dark(TEA[k.s], 0.75) : TEA[k.s]); if (k.s === 0) for (let x = (i * 5) % 7; x < 48; x += 7) r(x, y, 2, 1, '#c4e88a'); y += th + 1 + (i >> 2); }
-    const mx = 4 + k.a * 7, my = 22, mc = MACH[k.b];
-    r(mx, my, 18, 9, mc); r(mx, my, 18, 1, mix(mc, '#ffffff', 0.35)); r(mx + 2, my + 9, 3, 6, '#2a2a2a'); r(mx + 13, my + 9, 3, 6, '#2a2a2a'); r(mx + 5, my + 12, 8, 2, '#5a5a5a');
-    r(mx + 15, my - 5, 6, 5, '#e8e8e8'); r(mx - 3, my + 4, 4, 5, '#7ab048');
-    person(r, mx + 7, my - 7, '#4a6ab8', { hat: '#e8d8a8' });
+  // 西尾のカーネーション：施設園芸（温室）の生産額が全国トップクラス（愛知県「西尾の農林水産物」）
+  const FLOWER = [['#d8283a', '#f04a5a'], ['#f08aa8', '#f8b8c8'], ['#f4f2ec', '#e0dcd0'], ['#f0c838', '#f8e070'], ['#e86a2a', '#f49a5a']];
+  def('carnation', 'カーネーションの温室', '💐', ['nishio', 'isshiki', 'kira', 'hazu'], 'abeh', (r, h, k) => {
+    const hz = 10 + (k.a % 2) * 2;
+    sky(r, h, k, hz); for (let y = hz; y < 48; y++) h(y, 0, 47, '#8a7656');   // ガラス越しの空と、温室の土
+    for (let x = -2 + k.a * 2; x < 50; x += 12) { r(x, 0, 1, hz + 2, '#d8dce0'); } h(4, 0, 47, '#d8dce0'); h(hz, 0, 47, '#c8ccd0'); h(hz + 1, 0, 47, '#e8ecee');
+    const [c1, c2] = FLOWER[k.b];
+    for (let row = 0; row < 4; row++) {   // 手前ほど大きく見える花のうね
+      const y = hz + 5 + row * (3 + row * 2), sp = 2 + row, fh = 1 + row;
+      r(0, y + fh + 1, 48, 2 + row, '#3f7a3a'); h(y + fh + 3 + row, 0, 47, '#6a5a40');
+      for (let x = (row * 3 + k.a) % sp; x < 48; x += sp) { r(x, y + 1, 1, fh + 1, '#4f8a3a'); r(x - (row >> 1), y - fh + 1, 1 + (row >> 1) * 2, fh, c1); if (row >= 2) r(x, y - fh + 1, 1, 1, c2); }
+    }
+    if (k.b % 2 === 0) person(r, 30 - k.a * 4, hz + 9, '#4a6ab8', { hat: '#e8d8a8' });
+    if (k.b >= 3) { r(4 + k.a * 3, 40, 8, 5, '#c8a868'); r(5 + k.a * 3, 38, 6, 2, c1); }   // 摘みとった花のかご
+  });
+  // 稲荷山茶園：西尾市の茶畑約200haの半分（約100ha）。5月ごろの茶摘みには、茶摘み娘（かすり）の衣装の体験も（tabi-mag・Aichi Now）
+  def('chatsumi', '稲荷山茶園', '🍵', ['nishio'], 'abdh', (r, h, k) => {
+    const hz = 14 + (k.a % 2) * 2;
+    sky(r, h, k, hz); hills(r, h, k, hz + 6, TEA[k.s], [[12 + k.a * 5, 8, 18], [38, 5, 14]]);
+    ground(r, h, k, hz + 6, '#8a6a48');
+    for (let i = 0, y = hz + 7; y < 48; i++) { const th = 2 + (i >> 1), off = Math.round(Math.sin((i + k.a) * 0.9) * 3); for (let t = 0; t < th; t++) h(y + t, 0, 47, t === th - 1 ? dark(TEA[k.s], 0.72) : TEA[k.s]); if (k.s === 0) for (let x = (i * 5 + off + 50) % 6; x < 48; x += 6) r(x, y, 2, 1, '#c4e88a'); y += th + 1; }
+    if (k.s === 0) for (let i = 0; i < 1 + (k.b % 3); i++) {   // 茶摘みの季節：かすりの着物にたすき・すげ笠の茶摘み娘
+      const x = 6 + ((k.a * 9 + i * 13) % 34), y = 26 + i * 4;
+      r(x - 2, y, 7, 1, '#d8c890'); r(x - 1, y - 1, 5, 1, '#c8b880'); r(x, y + 1, 3, 2, '#f0c8a0');
+      r(x - 1, y + 3, 5, 4, '#2a3a6a'); r(x, y + 4, 1, 1, '#f4f4f0'); r(x + 2, y + 5, 1, 1, '#f4f4f0'); r(x - 1, y + 3, 5, 1, '#d8303a');
+      r(x + 4, y + 5, 3, 3, '#c8a868');
+    }
+    if (k.b === 4) { r(36 - k.a * 2, hz - 1, 9, 5, '#e8dcc0'); roofTiles(r, h, 34 - k.a * 2, 46 - k.a * 2, hz - 4, 3); }
   });
   def('nori', '一色の海苔ひび', '🌊', ['isshiki'], 'jk', (r, h, k) => {
     const hz = 16 + (k.a % 2) * 2;
@@ -567,7 +574,7 @@
     if (!(id >= 0 && id < COUNT)) return null;
     const p = split(id), mo = M[p.m], wk = wxKind(mo, p);
     const label = (mo.fixed ? FEST.labels(p.s, p.t, mo.L) : `${SEASON[p.s]}の${TIME[p.t]}`) + (wk ? `・${WK_LABEL[wk]}` : '');
-    return { id, no: id + 1, motif: mo.key, m: p.m, icon: mo.icon, title: mo.name, label, name: `${mo.name}（${label}）` };
+    return { id, no: id + 1, motif: mo.key, m: p.m, w: p.w, wk: wk || 'clear', icon: mo.icon, title: mo.name, label, name: `${mo.name}（${label}）` };
   }
   const motifOf = id => split(id).m;
   const cache = new Map();
@@ -600,6 +607,11 @@
     for (const x of refs) { const d = Math.hypot((lat - x.lat) * 111, (lng - x.lng) * 91); if (d < bd) { bd = d; best = x.area; } }
     return best;
   }
+  function nearCoast(lat, lng) {   // まわり約300m（8方向）に海か海浜があるか
+    if (!P.luAt) return false;
+    for (const [a, b] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) { const c = P.luAt(lat + a * 0.0027, lng + b * 0.0033); if (c === 'j' || c === 'k') return true; }
+    return false;
+  }
   const jst = d => new Date(d.getTime() + 9 * 3600e3);   // 西尾の季節と時間（端末の時間帯の設定によらず日本時間）
   const seasonOf = d => [3, 3, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3][jst(d).getUTCMonth()];
   const timeOf = d => { const hr = jst(d).getUTCHours(); return hr >= 5 && hr < 10 ? 0 : hr < 16 && hr >= 10 ? 1 : hr >= 16 && hr < 19 ? 2 : 3; };
@@ -608,20 +620,23 @@
     const c = G.cityAt && G.cityAt(lat, lng);
     if (!c || c.name !== '西尾市') return null;
     if (!DISTRICTS.has(area)) area = areaOf(lat, lng);
-    const lu = (P.luAt && P.luAt(lat, lng)) || '';
-    let cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area) && (!M[i].lu || M[i].lu.includes(lu)));
+    const lu = (P.luAt && P.luAt(lat, lng)) || '', coast = nearCoast(lat, lng);
+    // 土地利用が合う題材。海辺の題材（海浜 j・海 k）は、海から約300m以内なら出す（たからばこやスポットは海の上にないので）
+    let cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area) && (!M[i].lu || (lu && M[i].lu.includes(lu)) || (coast && /[jk]/.test(M[i].lu))));
     if (!cand.length) cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area));
     const hsh = hashStr(`${seed}:${G.ymd ? G.ymd() : ''}`), m = cand[hsh % cand.length], mo = M[m];
     const s = mo.fixed ? (hsh >>> 8) % 4 : seasonOf(now), t = mo.fixed === true ? (hsh >>> 12) % 4 : timeOf(now);
-    return idOf(m, weatherOf(hsh, t, sceneOf(mo, { s, t }).s), s * 4 + t, hashStr(`${seed}:${hsh}`) % NCOMP);
+    return idOf(m, weatherOf(hsh, t, sceneOf(mo, { s, t })), s * 4 + t, hashStr(`${seed}:${hsh}`) % NCOMP);
   }
-  // 天気：気象庁の今の天気（weather.js）。晴れ 0・くもり 1・雨 2・雪 4。朝は3回に1回 霧、雨のときは4回に1回 虹（冬は雪）、晴れでもたまに虹。
+  // 天気：気象庁の今の天気（weather.js）に合わせる。晴れ 0・くもり 1・雨 2・霧 3・4つめ（冬の景色は雪、夜は満月、ほかは虹）。
+  // 4つめは景色で絵がかわるので、今の天気とちがう絵にならないときだけ使う：雪の日は冬の景色なら雪（ほかの景色はくもり）、
+  // 雨のときは4回に1回、冬でも夜でもない景色なら雨あがりの虹、晴れの日はたまに虹か満月（冬の景色では出さない）。朝は3回に1回 霧
   // 天気がわからないときは、晴れ多めに くじで決める
-  function weatherOf(hsh, t, ss) {   // ss：絵の季節（冬の景色の4つめの天気は雪なので、晴れの日には出さない）
-    const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, kind = wx && wx.kind, u = (hsh >>> 16) % 24;
-    if (t === 0 && u % 3 === 0) return 3;
-    if (kind === 'snow') return 4;
-    if (kind === 'rain') return u % 4 === 1 ? 4 : 2;
+  function weatherOf(hsh, t, sc) {   // sc：絵の景色（季節 s と、夜 night）
+    const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, kind = wx && wx.kind, u = (hsh >>> 16) % 24, ss = sc.s;
+    if (t === 0 && u % 3 === 0 && kind !== 'snow') return 3;
+    if (kind === 'snow') return ss === 3 ? 4 : 1;
+    if (kind === 'rain') return u % 4 === 1 && ss !== 3 && !sc.night ? 4 : 2;
     if (kind === 'cloudy') return 1;
     if (kind === 'sunny') return u === 5 && ss !== 3 ? 4 : 0;
     return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4][u];

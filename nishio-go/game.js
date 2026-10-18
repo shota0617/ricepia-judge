@@ -669,7 +669,8 @@ function renderCampaigns() {
   const list = liveCampaigns();
   el.hidden = !list.length;
   el.innerHTML = list.map(c => `<div class="camp"><b>${esc(c.icon)} ${esc(c.title)}${c.active ? '' : '（サンプル）'}</b><small>${esc(c.from.slice(5).replace('-', '/'))}〜${esc(c.to.slice(5).replace('-', '/'))}</small>
-    ${c.text ? `<p>${esc(c.text)}</p>` : ''}${c.shopBonus ? `<p>🍚 期間中、当店でチェックインすると +${c.shopBonus}pt（1日1回）</p>` : ''}
+    ${simple() ? (c.shopBonus ? `<p class="chips"><span>${PI('bowl', '当店でチェックイン')}${PI('coin', 'ポイント')}+${c.shopBonus}</span></p>` : '')
+      : `${c.text ? `<p>${esc(c.text)}</p>` : ''}${c.shopBonus ? `<p>🍚 期間中、当店でチェックインすると +${c.shopBonus}pt（1日1回）</p>` : ''}`}
     ${c.url ? `<a class="btn mini" href="${esc(utmUrl(c.url, 'campaign_' + c.id))}" target="_blank" rel="noopener" data-camp="${esc(c.id)}">くわしく見る</a>` : ''}</div>`).join('');
 }
 
@@ -1374,6 +1375,7 @@ function buyUp(id) {
   toast(`${u.icon} ${u.name}が Lv${lv + 1} になりました`);
   track('idle_upgrade', { id, lv: lv + 1 });
 }
+const UP_PI = { spd: 'feet', bag: 'bag', nap: 'home' };   // おまかせ強化の絵（文字を少なく：ふだん）
 function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
@@ -1381,6 +1383,8 @@ function renderUps() {
   $('upNote').textContent = `🎮 自分で操作：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🧭 おまかせ歩き：見ているだけで行き先へ（集まるのは半分くらい。たからばこは すぐ近くのものだけ）。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
+    if (simple()) return `<li title="${esc(u.desc)}"><span class="ico">${PI(UP_PI[u.id] || 'up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`
+      + (max ? `<span class="num">${PI('medal', 'MAX')}</span>` : `<button type="button" class="btn mini" data-up="${u.id}"${S.points < cost ? ' disabled' : ''}>${PI('coin', 'ポイント')}${cost}</button>`) + '</li>';
     return `<li><span class="ico">${u.icon}</span><span class="main"><b>${esc(u.name)} <small>Lv${lv}/${u.cost.length}</small></b><small>${esc(u.desc)}</small></span>`
       + (max ? '<span class="num">MAX</span>' : `<button type="button" class="btn mini" data-up="${u.id}"${S.points < cost ? ' disabled' : ''}>${cost}pt</button>`) + '</li>';
   }).join('');
@@ -1491,7 +1495,9 @@ function renderDots() {
   for (const id of have) { const f = D.info(id); by.set(f.m, (by.get(f.m) || 0) + 1); if (!wx.has(f.m)) wx.set(f.m, new Set()); wx.get(f.m).add(f.w); }
   const nWx = [...wx.values()].reduce((a, x) => a + x.size, 0), WX_ICON = ['☀️', '☁️', '☔', '🌫️', '🌈'];
   $('dotCount').textContent = `題材 ${by.size}/${D.MOTIFS.length}・題材×天気 ${nWx}/${D.MOTIFS.length * 5}・絵 ${have.length.toLocaleString()}枚`;
-  $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}"><span>${by.has(i) ? m.icon : '？'}</span><b>${esc(m.name)}</b><small>${WX_ICON.map((c, w) => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}">${c}</i>`).join('')} ${by.get(i) || 0}枚</small></button></li>`).join('');
+  const last = new Map(); for (const id of have) last.set(D.info(id).m, id);   // 題材ごとの、さいきんもらった絵
+  if (simple()) $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="pic${dotSel === i ? ' on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}" title="${esc(m.name)}（${by.get(i) || 0}枚）">${by.has(i) ? `<img src="${D.dataUrl(last.get(i))}" alt="" width="72" height="72" loading="lazy"/>` : PI('lock', 'まだ')}<b>${by.has(i) ? esc(m.name) : '？'}</b><span class="wx">${[0, 1, 2, 3, 4].map(w => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}"></i>`).join('')}</span></button></li>`).join('');
+  else $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}"><span>${by.has(i) ? m.icon : '？'}</span><b>${esc(m.name)}</b><small>${WX_ICON.map((c, w) => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}">${c}</i>`).join('')} ${by.get(i) || 0}枚</small></button></li>`).join('');
   const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => D.motifOf(id) === dotSel).sort((a, b) => a - b);
   $('dotNote').textContent = dotSel == null ? 'さいきんもらった絵（題材を押すと、その題材の絵を番号順に見られます）' : `${D.MOTIFS[dotSel].icon} ${D.MOTIFS[dotSel].name}（もう一度押すと、さいきんもらった絵にもどります）`;
   grid.innerHTML = list.length ? list.map(id => { const f = D.info(id); return `<figure><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96" loading="lazy"/><figcaption>No.${f.no}<br/>${dotSel == null ? esc(f.title) + '<br/>' : ''}${esc(f.label)}</figcaption></figure>`; }).join('')
@@ -1505,6 +1511,7 @@ $('dotMotifs').addEventListener('click', e => {
   renderDots();
 });
 
+const LOG_PI = { walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
   renderTomorrow();
@@ -1523,13 +1530,13 @@ function renderLog() {
   const ev = upcomingEvents();
   $('eventList').innerHTML = ev.length ? ev.map(({ e, when, next }) => {
     const s = e.spot && spots.find(x => x.id === evSpotId(e));
-    return `<li class="${next ? 'next' : ''}"><span class="ico">${next ? '🗓️' : '📅'}</span><span class="main"><b>${esc(e.name)}</b>
-      <small>${esc(when)}・${esc(e.place)}</small></span>${s && demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">行く</button>` : s && S.visits[s.id] ? '<span class="num">✓</span>' : ''}</li>`;
+    return `<li class="${next ? 'next' : ''}"><span class="ico">${simple() ? (s ? spotThumb(s) || PI('calendar', '') : PI('calendar', '')) : next ? '🗓️' : '📅'}</span><span class="main"><b>${esc(e.name)}</b>
+      <small>${esc(when)}${simple() ? '' : `・${esc(e.place)}`}</small></span>${s && demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">行く</button>` : s && S.visits[s.id] ? '<span class="num">✓</span>' : ''}</li>`;
   }).join('') : '<li class="empty">今月と来月の行事はありません</li>';
   const facts = factPool();
   $('factCount').textContent = `${S.facts.filter(k => facts.has(k)).length}/${facts.size}`;
   renderDots();
-  $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">💡</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
+  $('factList').innerHTML = S.facts.filter(k => facts.has(k)).slice().reverse().map(k => `<li><span class="ico">${simple() ? PI('book', '') : '💡'}</span><span class="main"><small>${esc(facts.get(k))}</small></span></li>`).join('')
     || '<li class="empty">たからばこを開けたり、チェックインしたり、おまかせ歩きで歩いたりすると、まちメモが集まります</li>';
   const lv = levelOf(S.total);
   $('stats').innerHTML = [
@@ -1544,19 +1551,21 @@ function renderLog() {
 
   const visits = Object.entries(S.visits).sort((a, b) => b[1].last - a[1].last);
   $('visitedList').innerHTML = visits.length ? visits.map(([id, v]) =>
-    `<li data-spot="${esc(id)}"><span class="ico">${esc(v.icon || '📍')}</span><span class="main"><b>${esc(v.name)}</b>
+    simple()   // 文字を少なく（ふだん）：名所のドット絵と、行った回数
+      ? `<li data-spot="${esc(id)}"><span class="ico">${spotThumb(spots.find(x => x.id === id)) || PI('pin', '')}</span><span class="main"><b>${esc(v.name)}</b></span><span class="num">${v.featured ? PI('star', '注目スポット') : ''}×${v.n}</span></li>`
+      : `<li data-spot="${esc(id)}"><span class="ico">${esc(v.icon || '📍')}</span><span class="main"><b>${esc(v.name)}</b>
       <small>${v.n}回・最後 ${fmtTime(v.last)}</small></span>${v.featured ? '<span class="num">⭐</span>' : ''}</li>`).join('')
     : '<li class="empty">まだありません。地図のスポットへ歩いてみよう！</li>';
 
   $('areaList').innerHTML = areas.length ? areas.map(a => {
     const p = areaProgress(a.id), pct = p.total ? Math.round(p.done / p.total * 100) : 0;
-    return `<li class="area-row"><span class="ico">${esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
-      <small>${esc(a.catch || '')}</small><span class="bar"><i style="width:${pct}%"></i></span></span><span class="num">${p.done}/${p.total}</span></li>`;
+    return `<li class="area-row"><span class="ico">${simple() ? PI(p.total && p.done === p.total ? 'medal' : 'flag', '') : esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
+      ${simple() ? '' : `<small>${esc(a.catch || '')}</small>`}<span class="bar"><i style="width:${pct}%"></i></span></span><span class="num">${p.done}/${p.total}</span></li>`;
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
-    `<li><span class="ico">${l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
-      <small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small></span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
+    `<li><span class="ico">${simple() ? PI(LOG_PI[l.type] || 'flag', '') : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
+      ${simple() ? '' : `<small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small>`}</span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
     : '<li class="empty">まだありません</li>';
 }
 
@@ -1576,7 +1585,7 @@ function renderBadges() {
   const lv = levelOf(S.total);
   $('titleList').innerHTML = TITLES.map(([l, t]) =>
     `<li class="${titleOf(lv) === t ? 'now' : ''}"><span class="ico">${simple() ? PI(lv >= l ? 'medal' : 'lock', lv >= l ? '獲得' : 'まだ') : lv >= l ? '🎖️' : '🔒'}</span><span class="main"><b>${esc(t)}</b>
-      <small>Lv${l}（累計 ${needFor(l).toLocaleString()}pt）</small></span>${titleOf(lv) === t ? '<span class="num">いまここ</span>' : ''}</li>`).join('');
+      <small>Lv${l}${simple() ? '' : `（累計 ${needFor(l).toLocaleString()}pt）`}</small></span>${titleOf(lv) === t ? '<span class="num">いまここ</span>' : ''}</li>`).join('');
 }
 
 function featRange() {

@@ -449,3 +449,21 @@ body.px .guide small{color:#ddd}
 .badge.pic.locked .medal{background:#d8d8d8;box-shadow:0 0 0 3px #a8a8a8,0 0 0 5px #f0f0f0}
 .badge.pic.locked .medal img.pi{filter:grayscale(1);opacity:.45}
 .badge.pic b{margin-top:8px}
+/* ドット絵帳：題材は絵のタイル（まだの題材は鍵）。天気は5つの点 */
+.simple .dot-motifs{grid-template-columns:repeat(3,1fr)}
+.dot-motifs li.pic button{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;text-align:center}
+.dot-motifs li.pic img{width:72px;height:72px;image-rendering:pixelated;border-radius:6px;box-shadow:0 0 0 2px #e9c46a}
+.dot-motifs li.pic img.pi{width:40px;height:40px;margin:16px 0;box-shadow:none;opacity:.5}
+.dot-motifs li.pic b{font-size:11px;line-height:1.3;height:2.6em;overflow:hidden}
+.dot-motifs li.pic .wx{display:flex;gap:3px}
+.dot-motifs li.pic .wx i{width:7px;height:7px;border-radius:50%;background:#ddd6c2}
+.dot-motifs li.pic .wx i.on{background:#e9c46a}
+.simple #panel-log .note{display:none}
+.list li .ico img.gthumb{width:28px;height:28px;image-rendering:pixelated}
+/* おまかせ強化：Lv は点、ねだんはコインの絵 */
+.lvdots{display:flex;gap:4px;margin-top:4px}
+.lvdots i{width:9px;height:9px;border-radius:50%;background:#ddd6c2}
+.lvdots i.on{background:#e9c46a}
+.btn.mini img.pi{width:14px;height:14px;vertical-align:-2px;margin-right:2px}
+.camp .chips{margin-top:6px;justify-content:flex-start}
+.simple #upBox h3 small{display:none}

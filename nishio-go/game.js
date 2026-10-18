@@ -396,7 +396,7 @@ function popupPic(s, c, v, left, d) {
   const th = spotThumb(s).replace('class="gthumb"', 'class="pop-art"').replace(/width="28" height="28"/, 'width="64" height="64"');
   return `<div class="popup pic"><div class="pop-head">${th}<h4>${esc(s.name)}</h4></div>
     <p class="chips">${s.shop ? `<span>${PI('bowl', '当店')}</span>` : s.featured ? `<span>${PI('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${c.i}</span>`}<span>${PI('coin', 'ポイント')}${ptsOf(s)}</span>
-      <span>${PI('pin', '現在地から')}${d}</span><span>${v ? `${PI('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PI('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
+      <span${s.approx ? ' title="位置は概算・広めに判定"' : ''}>${PI('pin', s.approx ? '現在地から（位置は概算・広めに判定）' : '現在地から')}${s.approx ? '≈' : ''}${d}</span><span>${v ? `${PI('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PI('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">${PI('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
@@ -528,7 +528,7 @@ function talkNpc(id, page = 0) {
   if (pic) {
     const dots = `<span class="pg">${pages.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</span>`;
     return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
-    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}" aria-label="つぎへ（${i + 1}/${pages.length}）">${dots} ▼</button>` : `<p class="npc-end">${dots}</p>`}</div>` };
+    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}" aria-label="つぎへ（${i + 1}/${pages.length}）">${dots} ▼</button>` : `<p class="npc-end">${dots}<span class="vh">（${pages.length}/${pages.length}）おわり</span></p>`}</div>` };
   }
   return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
     ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}</div>` };

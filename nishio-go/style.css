@@ -483,3 +483,4 @@ body.px .guide small{color:#ddd}
 .popup.npc .pg i.on{background:#e9c46a}
 .popup.npc .npc-end{text-align:right}
 body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いている間は、こよみが窓の上に重ならないように */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}   /* 読み上げだけ */

@@ -1726,7 +1726,9 @@ document.addEventListener('click', e => {
 });
 function switchMode(isDemo) {
   if (isDemo === demo) return;
+  sessionEnd();   // 1回に遊んだ時間・ポイントは、モードごとに分けて送る
   setMode(isDemo);
+  if (store.get('nsg_started', false)) sessionStart();
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
   toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スティックで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');

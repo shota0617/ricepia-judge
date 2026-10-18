@@ -664,13 +664,13 @@
     if (!cand.length) cand = M.map((m, i) => i).filter(i => M[i].areas.includes(area));
     const hsh = hashStr(`${seed}:${G.ymd ? G.ymd() : ''}`), m = cand[hsh % cand.length], mo = M[m];
     const s = mo.fixed ? (hsh >>> 8) % 4 : seasonOf(now), t = mo.fixed === true ? (hsh >>> 12) % 4 : timeOf(now);
-    return idOf(m, weatherOf(hsh, t, sceneOf(mo, { s, t })), s * 4 + t, hashStr(`${seed}:${hsh}`) % NCOMP);
+    return idOf(m, weatherOf(hsh, timeOf(now), sceneOf(mo, { s, t })), s * 4 + t, hashStr(`${seed}:${hsh}`) % NCOMP);   // 朝の霧は本当の時刻で（行事の t は人出の番号なので）
   }
   // 天気：気象庁の今の天気（weather.js）に合わせる。晴れ 0・くもり 1・雨 2・霧 3・4つめ（冬の景色は雪、夜は満月、ほかは虹）。
   // 4つめは景色で絵がかわるので、今の天気とちがう絵にならないときだけ使う：雪の日は冬の景色なら雪（ほかの景色はくもり）、
   // 雨のときは4回に1回、冬でも夜でもない景色なら雨あがりの虹、晴れの日はたまに虹か満月（冬の景色では出さない）。朝は3回に1回 霧
   // 天気がわからないときは、晴れ多めに くじで決める
-  function weatherOf(hsh, t, sc) {   // sc：絵の景色（季節 s と、夜 night）
+  function weatherOf(hsh, t, sc) {   // t：本当の時間帯（朝 0）、sc：絵の景色（季節 s と、夜 night）
     const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, kind = wx && wx.kind, u = (hsh >>> 16) % 24, ss = sc.s;
     if (t === 0 && u % 3 === 0 && kind !== 'snow') return 3;
     if (kind === 'snow') return ss === 3 ? 4 : 1;

@@ -1866,14 +1866,18 @@ function renderTomorrow() {
   el.innerHTML = `<b>📅 あしたのおたのしみ</b><ul>${tomorrowItems().map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 // ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）
-let a2hsEvt = null;
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); a2hsEvt = e; });
+let a2hsEvt = null, a2hsPending = false;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); a2hsEvt = e;
+  // Chrome は、しばらく見てからでないとこの合図を出さない。おすすめを出すはずだった人には、合図が来たところで出す（ごほうびの画面が消えてから）
+  if (a2hsPending) { a2hsPending = false; const go = () => ($('reward').classList.contains('show') ? setTimeout(go, 1000) : a2hsOffer()); go(); }
+});
 window.addEventListener('appinstalled', () => { track('a2hs_installed', {}); store.set('nsg_a2hs_done', true); $('a2hs').hidden = true; });
 function standalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
 function isIOS() { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
 function a2hsOffer() {
   if (standalone() || store.get('nsg_a2hs_done', false) || Date.now() - store.get('nsg_a2hs_t', 0) < 7 * 86400000) return;
-  if (!a2hsEvt && !isIOS()) return;   // 追加の画面を出せず、手順も案内できない端末では出さない
+  if (!a2hsEvt && !isIOS()) { a2hsPending = true; return; }   // 追加の画面をまだ出せない（Chrome の合図待ち）。手順も案内できない端末では、合図が来なければ出さない
   store.set('nsg_a2hs_t', Date.now());
   $('a2hsText').textContent = a2hsEvt ? '📲 ホーム画面に追加すると、あしたもワンタップで遊べます'
     : '📲 ホーム画面に追加すると、あしたもワンタップで遊べます。Safari の下の 共有ボタン（□↑）→「ホーム画面に追加」';
@@ -1899,7 +1903,7 @@ function sessionEnd() {
   session.on = false;
 }
 function sessionStart() { Object.assign(session, { start: Date.now(), on: true, gained: 0, rewards: 0 }); }
-document.addEventListener('visibilitychange', () => { if (document.hidden) sessionEnd(); else sessionStart(); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) sessionEnd(); else if (store.get('nsg_started', false)) sessionStart(); });   // はじめの画面のあいだは数えない
 window.addEventListener('pagehide', sessionEnd);
 
 /* はじめに */

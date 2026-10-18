@@ -403,6 +403,7 @@ body.px .guide small{color:#ddd}
 .intro-hero .sp{position:absolute;width:10px;height:10px;background:#ffe9a8;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);z-index:3;animation:twinkle 2.4s ease-in-out infinite}
 .intro-hero .s1{left:12%;top:8px}.intro-hero .s2{right:10%;top:30px;animation-delay:.8s}.intro-hero .s3{left:50%;bottom:4px;animation-delay:1.6s}
 @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.2)}}
+@media (prefers-reduced-motion:reduce){.intro-hero .sp{animation:none;opacity:.8}}   /* 動きを減らす設定の人には、きらきらを止める */
 .tagline{display:none}
 .simple .tagline{display:block;font-weight:800;color:var(--green);font-size:16px;margin:4px 0 2px}
 .simple .intro .pitch,.simple .intro .mode-q{display:none}

@@ -1409,14 +1409,16 @@ function toast(msg) {
 const CHIP = [['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
 function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
-  let book = false;
+  let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
   for (const l of lines) {
     if (l.startsWith('🧭')) continue;   // 「つぎは〜へ」は下の案内に出ている
     const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
     if (ic === 'book') book = true;
     const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
     const v = ic === 'card' ? (/もう持っている/.test(l) ? '' : PI('new', 'はじめての絵')) : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
-    if (hero && (ic === 'card' || v === `+${total}`)) continue;
+    // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
+    if (hero && ic === 'card' && !shown) { shown = true; continue; }
+    if (hero && ic !== 'card' && v === `+${total}`) continue;
     out.push(`<span title="${esc(l)}">${PI(ic, l)}${v}</span>`);
   }
   if (fact && !book) out.push(`<span title="まちメモ">${PI('book', 'まちメモ')}+1</span>`);

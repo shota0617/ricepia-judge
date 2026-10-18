@@ -149,3 +149,95 @@ Googleストリートビューの画像は、Google マップの利用規約で�
 
 - [Kawara Museum of Takahama city, a Hometown Ceramics exterior ac.jpg](https://commons.wikimedia.org/wiki/File:Kawara_Museum_of_Takahama_city,_a_Hometown_Ceramics_exterior_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
 - [Kawara Museum 2023-07 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Kawara_Museum_2023-07_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+
+## 実相寺（釈迦堂）
+
+- [Jisso-ji hojo ac (1).jpg](https://commons.wikimedia.org/wiki/File:Jisso-ji_hojo_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- [Jisso-ji shakado ac (1).jpg](https://commons.wikimedia.org/wiki/File:Jisso-ji_shakado_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+
+## 久麻久神社
+
+- [Kumakujinja.jpg](https://commons.wikimedia.org/wiki/File:Kumakujinja.jpg) — Bariston（CC BY-SA 4.0）
+- [PXL 20231021 054810288.jpg](https://commons.wikimedia.org/wiki/File:PXL_20231021_054810288.jpg) — Z3N ABD（CC BY-SA 4.0）
+
+## 八ツ面山
+
+- [Views of Mount Yatsuomote from Nishio-guchi Station.jpg](https://commons.wikimedia.org/wiki/File:Views_of_Mount_Yatsuomote_from_Nishio-guchi_Station.jpg) — ButuCC（CC BY-SA 4.0）
+- [Observation deck of Mount Yatsuomote.jpg](https://commons.wikimedia.org/wiki/File:Observation_deck_of_Mount_Yatsuomote.jpg) — Nryate（CC BY-SA 4.0）
+
+## 長圓寺
+
+- [Tyoenji1.jpg](https://commons.wikimedia.org/wiki/File:Tyoenji1.jpg) — Bariston（CC BY-SA 4.0）
+- [Tyoenji2.jpg](https://commons.wikimedia.org/wiki/File:Tyoenji2.jpg) — Bariston（CC BY-SA 4.0）
+- [Tyoenji3.jpg](https://commons.wikimedia.org/wiki/File:Tyoenji3.jpg) — Bariston（CC BY-SA 4.0）
+
+## 養寿寺
+
+- [Nishio-Yojuji-1.jpg](https://commons.wikimedia.org/wiki/File:Nishio-Yojuji-1.jpg) — Evelyn-rose（CC0）
+- [Yoju-ji Ushikubo 2026-07 ac (1).jpg](https://commons.wikimedia.org/wiki/File:Yoju-ji_Ushikubo_2026-07_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+
+## 紅樹院
+
+- [Nishio city Koju-in ac (1).jpg](https://commons.wikimedia.org/wiki/File:Nishio_city_Koju-in_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- [Nishio city Koju-in ac (2).jpg](https://commons.wikimedia.org/wiki/File:Nishio_city_Koju-in_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- [Nishio Kojuin1.JPG](https://commons.wikimedia.org/wiki/File:Nishio_Kojuin1.JPG) — At by At（CC0）
+
+## 一色学びの館
+
+- [Isshiki Manabinoyakata exterior ac.jpg](https://commons.wikimedia.org/wiki/File:Isshiki_Manabinoyakata_exterior_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+
+## 佐久島 西港
+
+- [西港 (愛知県西尾市 佐久島) - panoramio.jpg](https://commons.wikimedia.org/wiki/File:%E8%A5%BF%E6%B8%AF_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E8%A5%BF%E5%B0%BE%E5%B8%82_%E4%BD%90%E4%B9%85%E5%B3%B6)_-_panoramio.jpg) — gundam2345（CC BY 3.0）
+- [西港 (愛知県西尾市 佐久島) - panoramio (6).jpg](https://commons.wikimedia.org/wiki/File:%E8%A5%BF%E6%B8%AF_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E8%A5%BF%E5%B0%BE%E5%B8%82_%E4%BD%90%E4%B9%85%E5%B3%B6)_-_panoramio_(6).jpg) — gundam2345（CC BY 3.0）
+
+## 佐久島 東港
+
+- [東港 (愛知県西尾市 佐久島) - panoramio.jpg](https://commons.wikimedia.org/wiki/File:%E6%9D%B1%E6%B8%AF_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E8%A5%BF%E5%B0%BE%E5%B8%82_%E4%BD%90%E4%B9%85%E5%B3%B6)_-_panoramio.jpg) — gundam2345（CC BY 3.0）
+- [東港から (愛知県西尾市 佐久島) - panoramio.jpg](https://commons.wikimedia.org/wiki/File:%E6%9D%B1%E6%B8%AF%E3%81%8B%E3%82%89_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E8%A5%BF%E5%B0%BE%E5%B8%82_%E4%BD%90%E4%B9%85%E5%B3%B6)_-_panoramio.jpg) — gundam2345（CC BY 3.0）
+- [東港付近 (愛知県西尾市 佐久島) - panoramio.jpg](https://commons.wikimedia.org/wiki/File:%E6%9D%B1%E6%B8%AF%E4%BB%98%E8%BF%91_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E8%A5%BF%E5%B0%BE%E5%B8%82_%E4%BD%90%E4%B9%85%E5%B3%B6)_-_panoramio.jpg) — gundam2345（CC BY 3.0）
+
+## 大浦海水浴場（佐久島）
+
+- [大浦海水浴場付近 (愛知県西尾市 佐久島) - panoramio.jpg](https://commons.wikimedia.org/wiki/File:%E5%A4%A7%E6%B5%A6%E6%B5%B7%E6%B0%B4%E6%B5%B4%E5%A0%B4%E4%BB%98%E8%BF%91_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E8%A5%BF%E5%B0%BE%E5%B8%82_%E4%BD%90%E4%B9%85%E5%B3%B6)_-_panoramio.jpg) — gundam2345（CC BY 3.0）
+
+## 黄金堤（吉良）
+
+- [黄金堤.jpg](https://commons.wikimedia.org/wiki/File:%E9%BB%84%E9%87%91%E5%A0%A4.jpg) — おはぐろ蜻蛉（Public domain）
+
+## 尾﨑士郎記念館
+
+- [Shiro-Ozaki-2.jpg](https://commons.wikimedia.org/wiki/File:Shiro-Ozaki-2.jpg) — Evelyn-rose（CC0）
+- [Nishio City Shiro Ozaki Memorial Museum exterior ac (1).jpg](https://commons.wikimedia.org/wiki/File:Nishio_City_Shiro_Ozaki_Memorial_Museum_exterior_ac_(1).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- [Shiro-Ozaki-4.jpg](https://commons.wikimedia.org/wiki/File:Shiro-Ozaki-4.jpg) — Evelyn-rose（CC0）
+
+## 幡頭神社
+
+- [Hazu-jinja (Nishio), haiden.jpg](https://commons.wikimedia.org/wiki/File:Hazu-jinja_(Nishio),_haiden.jpg) — Saigen Jiro（CC0）
+- [Hazu-jinja (Nishio), torii.jpg](https://commons.wikimedia.org/wiki/File:Hazu-jinja_(Nishio),_torii.jpg) — Saigen Jiro（CC0）
+- [Hazu-jinja (Nishio), honden.jpg](https://commons.wikimedia.org/wiki/File:Hazu-jinja_(Nishio),_honden.jpg) — Saigen Jiro（CC0）
+
+## 名鉄 西幡豆駅
+
+- [Nishi-Hazu Station.JPG](https://commons.wikimedia.org/wiki/File:Nishi-Hazu_Station.JPG) — おはぐろ蜻蛉 at Japanese Wikipedia（CC BY-SA 3.0）
+- [MT-Nishi Hazu Station-Gate 5.jpg](https://commons.wikimedia.org/wiki/File:MT-Nishi_Hazu_Station-Gate_5.jpg) — ButuCC（CC BY-SA 4.0）
+
+## 名鉄 東幡豆駅
+
+- [Higashi-Hazu Station 2016.jpg](https://commons.wikimedia.org/wiki/File:Higashi-Hazu_Station_2016.jpg) — Kiyok（CC BY-SA 4.0）
+- [Higashi-Hazu Station.JPG](https://commons.wikimedia.org/wiki/File:Higashi-Hazu_Station.JPG) — おはぐろ蜻蛉 at Japanese Wikipedia（CC BY-SA 3.0）
+- [MT-Higashi Hazu Station-Gate 4.jpg](https://commons.wikimedia.org/wiki/File:MT-Higashi_Hazu_Station-Gate_4.jpg) — ButuCC（CC BY-SA 4.0）
+
+## 鳥羽神明社
+
+- [鳥羽神明社 (愛知県幡豆郡幡豆町鳥羽) - panoramio (1).jpg](https://commons.wikimedia.org/wiki/File:%E9%B3%A5%E7%BE%BD%E7%A5%9E%E6%98%8E%E7%A4%BE_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E5%B9%A1%E8%B1%86%E9%83%A1%E5%B9%A1%E8%B1%86%E7%94%BA%E9%B3%A5%E7%BE%BD)_-_panoramio_(1).jpg) — gundam2345（CC BY 3.0）
+- [鳥羽神明社 (愛知県幡豆郡幡豆町鳥羽) - panoramio.jpg](https://commons.wikimedia.org/wiki/File:%E9%B3%A5%E7%BE%BD%E7%A5%9E%E6%98%8E%E7%A4%BE_(%E6%84%9B%E7%9F%A5%E7%9C%8C%E5%B9%A1%E8%B1%86%E9%83%A1%E5%B9%A1%E8%B1%86%E7%94%BA%E9%B3%A5%E7%BE%BD)_-_panoramio.jpg) — gundam2345（CC BY 3.0）
+
+## 刈宿の大仏（常福寺）
+
+- [Kariyado Daibutsu ac (2).jpg](https://commons.wikimedia.org/wiki/File:Kariyado_Daibutsu_ac_(2).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+- [Kariyado Daibutsu back ac (3).jpg](https://commons.wikimedia.org/wiki/File:Kariyado_Daibutsu_back_ac_(3).jpg) — Asturio Cantabrio（CC BY-SA 4.0）
+
+## 旧糟谷邸
+
+- [Nishio city Kasuya House the Distylium racemosum ac.jpg](https://commons.wikimedia.org/wiki/File:Nishio_city_Kasuya_House_the_Distylium_racemosum_ac.jpg) — Asturio Cantabrio（CC BY-SA 4.0）

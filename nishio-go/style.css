@@ -184,6 +184,11 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 .dot-motifs b{font-weight:600;line-height:1.3}
 .dot-motifs small{color:var(--sub);font-size:11px}
 .dot-motifs li.on button{border-color:var(--green);background:#f3f8ec}
+.dot-motifs li.none b{color:var(--sub)}
+.dot-motifs small i{font-style:normal;opacity:.22;filter:grayscale(1)}
+.dot-motifs small i.on{opacity:1;filter:none}
+.dot-motifs button{grid-template-columns:22px 1fr}
+.dot-motifs small{grid-column:2;letter-spacing:-1px}
 .dot-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin:6px 0 14px}
 .dot-grid figure{margin:0;text-align:center}
 .dot-grid img{width:96px;height:96px;image-rendering:pixelated;border-radius:6px;display:block;margin:0 auto}

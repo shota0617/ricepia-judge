@@ -4717,7 +4717,8 @@ document.addEventListener('keydown', e => {
    ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
    ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */
 let auto = (() => { try { return localStorage.getItem('nsg_auto') !== 'false'; } catch (e) { return true; } })();
-const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0, walked: 0 };
+const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0, walked: 0, skip: new Set(), chest: '', chestTicks: 0 };
+const AUTO_CHEST_M = 60;   // おまかせ歩きが寄り道する たからばこ の近さ（m）
 const AUTO_ROADS = new Set([C.R, C.H, C.D]);
 function setAuto(on, quiet) {
   auto = !!on;
@@ -4781,24 +4782,31 @@ function autoTick() {
   // 着いた名所（行き先か、まだ行っていない所）でチェックイン
   const sel = G.selected;
   if (sel && G.inReach(sel) && G.cooldownLeft(sel) <= 0 && (!G.state.visits[sel.id] || (g && g.id === sel.id))) { G.checkin(); autoS.pauseUntil = Date.now() + 2500; return; }
-  if (!g) return;   // 行き先が決まるのを待つ（まわりのようすで決まる）
   const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
-  let gx, gy, goalR;
-  if (g.kind === 'npc') {   // 人：その人のマスへ歩いていくと話しかける
+  let gx, gy, goalR, gid;
+  // すぐ近く（約60m）のたからばこには寄り道する。遠くのたからばこは、自分で操作して探す楽しみ（行けなかったものは、もう狙わない）
+  const ch = G.liveChests().filter(c => !autoS.skip.has(c.id) && G.dist(G.me, c) < AUTO_CHEST_M).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+  if (ch) {
+    const q = toTile(ch.lat, ch.lng); gx = Math.floor(q.x); gy = Math.floor(q.y); goalR = 1; gid = 'chest:' + ch.id;
+    if (autoS.chest !== ch.id) { autoS.chest = ch.id; autoS.chestTicks = 0; }
+    if (++autoS.chestTicks > 40) { autoS.skip.add(ch.id); autoS.path = []; return; }   // 40歩で着けなければ あきらめる（回り道が長い所など）
+  } else if (!g) return;   // 行き先が決まるのを待つ（まわりのようすで決まる）
+  else if (g.kind === 'npc') {   // 人：その人のマスへ歩いていくと話しかける
     const nn = (G.npcs || []).find(x => x.id === g.id);
     if (!nn) return;
-    const q = npcTile(nn); gx = q.x; gy = q.y; goalR = 0;
+    const q = npcTile(nn); gx = q.x; gy = q.y; goalR = 0; gid = g.id;
   } else {
-    const q = toTile(g.lat, g.lng); gx = Math.floor(q.x); gy = Math.floor(q.y);
+    const q = toTile(g.lat, g.lng); gx = Math.floor(q.x); gy = Math.floor(q.y); gid = g.id;
     goalR = Math.max(1, Math.floor(G.guideRadius(g) / TILE_M * 0.6));
   }
-  const key = `${g.id}:${gx}:${gy}`;
+  const key = `${gid}:${gx}:${gy}`;
   if (key !== autoS.goal || !autoS.path.length || autoS.steps >= 40) {
     // ほかの人のマスは通らない（ぶつかると話しかけてしまう）
     const avoid = new Set((G.npcs || []).filter(x => x.id !== g.id).map(x => { const q = npcTile(x); return q.x + ',' + q.y; }));
     autoS.goal = key; autoS.steps = 0; autoS.path = planPath(sx, sy, gx, gy, goalR, avoid);
     if (!autoS.path.length && Math.hypot(sx - gx, sy - gy) > goalR) {
       // 近づけない（まわりが通れない所ばかり）：しばらく待っても動けなければ、別の行き先にしてもらう
+      if (ch) { autoS.skip.add(ch.id); return; }
       if (++autoS.stuck > 25) { autoS.stuck = 0; G.setGuide(null); }
       return;
     }

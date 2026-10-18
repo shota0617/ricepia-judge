@@ -4372,9 +4372,11 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   for (const a of css <= 10 ? areas : []) {
     const q = llToW(a.lat, a.lng), X = ox + q.x * T, Y = oy + q.y * T, pr = G.areaProgress(a.id);
-    const label = `${a.name} ${pr.done}/${pr.total}`, fs = Math.round(13 * dpr);
+    // 文字を少なく（ふだん）：地区の名前のかわりに旗の絵と「めぐった数/名所の数」（札をタップすると地区の案内）
+    const flag = SIMPLE() && window.NSG_ICONS && NSG_ICONS.canvas('flag');
+    const label = flag ? `${pr.done}/${pr.total}` : `${a.name} ${pr.done}/${pr.total}`, fs = Math.round(13 * dpr), ic = flag ? fs + 4 * dpr : 0;
     ctx.font = `${fs}px "DotGothic16", monospace`;
-    const bw = ctx.measureText(label).width + 16 * dpr, bh = fs + 12 * dpr;
+    const bw = ctx.measureText(label).width + ic + 16 * dpr, bh = fs + 12 * dpr;
     const box = [X - bw / 2, Y - bh / 2, X + bw / 2, Y + bh / 2];
     if (box[2] < 0 || box[0] > w || box[3] < 0 || box[1] > h) continue;
     if (boxes.some(b => box[0] < b[2] && box[2] > b[0] && box[1] < b[3] && box[3] > b[1])) continue;
@@ -4382,7 +4384,8 @@ function drawWorldLabels(ox, oy, T, w, h, dpr, css) {
     ctx.fillStyle = 'rgba(0,0,0,.8)'; ctx.fillRect(box[0], box[1], bw, bh);
     ctx.strokeStyle = pr.total && pr.done === pr.total ? '#ffd54f' : '#fff'; ctx.lineWidth = Math.max(2, Math.round(2 * dpr));
     ctx.strokeRect(box[0] + dpr, box[1] + dpr, bw - 2 * dpr, bh - 2 * dpr);
-    ctx.fillStyle = '#fff'; ctx.fillText(label, X, Y);
+    if (flag) ctx.drawImage(flag, Math.round(box[0] + 8 * dpr), Math.round(Y - fs / 2), fs, fs);
+    ctx.fillStyle = '#fff'; ctx.fillText(label, X + ic / 2, Y);
   }
   const spotNames = css >= 10 ? G.spots.filter(worldSpotShown).map(s => { const p = llToW(s.lat, s.lng); return [p.x, p.y, s.name.replace(/（.*?）/g, ''), 0]; }) : [];
   const isStation = l => l[3] === 1 && (l[4] || 'st') === 'st';

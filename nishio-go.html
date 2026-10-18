@@ -30,15 +30,16 @@
 <link rel="stylesheet" href="nishio-go/style.css"/>
 </head>
 <body>
+<script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 
 <header class="bar">
-  <div class="brand">🚶 にしおさんぽGO</div>
+  <div class="brand"><i data-pi="castle"></i><span class="tx">にしおさんぽGO</span></div>
   <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
-    <span class="lv-num">Lv<b id="lvNum">1</b></span>
+    <span class="lv-num"><i data-pi="star"></i><span class="tx">Lv</span><b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
   </button>
-  <div class="pts" aria-live="polite"><b id="ptsNum">0</b><small>pt</small></div>
-  <a class="home-btn" href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=home_button" aria-label="当店（らいすぴあ）のホームページへ戻る" title="当店（らいすぴあ）のホームページへ戻る"><span aria-hidden="true">🍚</span><small>当店HP</small></a>
+  <div class="pts" aria-live="polite"><i data-pi="coin"></i><b id="ptsNum">0</b><small class="tx">pt</small></div>
+  <a class="home-btn" href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=home_button" aria-label="当店（らいすぴあ）のホームページへ戻る" title="当店（らいすぴあ）のホームページへ戻る"><i data-pi="bowl"></i><small class="tx">当店HP</small></a>
 </header>
 
 <main id="map" aria-label="西尾市の地図"></main>
@@ -75,10 +76,10 @@
 </section>
 
 <nav class="tabs" aria-label="メニュー">
-  <button type="button" class="on" data-tab="map">🗺️<span>マップ</span></button>
-  <button type="button" data-tab="log">📒<span>きろく</span></button>
-  <button type="button" data-tab="rewards" id="rewardsTab" hidden>🎁<span>とくてん</span></button>
-  <button type="button" data-tab="settings">⚙️<span>せってい</span></button>
+  <button type="button" class="on" data-tab="map" aria-label="マップ"><i data-pi="map"></i><span>マップ</span></button>
+  <button type="button" data-tab="log" aria-label="きろく"><i data-pi="note"></i><span>きろく</span></button>
+  <button type="button" data-tab="rewards" id="rewardsTab" hidden aria-label="とくてん"><i data-pi="gift"></i><span>とくてん</span></button>
+  <button type="button" data-tab="settings" aria-label="せってい"><i data-pi="gear"></i><span>せってい</span></button>
 </nav>
 
 <!-- 記録 -->
@@ -139,6 +140,10 @@
     <label class="row">
       <span><b>👾 ドット絵の地図</b><small>オフにすると、ふつうの地図（地理院タイル）で遊べます。</small></span>
       <input type="checkbox" id="pxToggle"/>
+    </label>
+    <label class="row">
+      <span><b>📝 文字を多めに出す</b><small>オンにすると、地図の町名・駅名・お店の看板、ごほうびのくわしい説明、案内のすすめた人の話などの文字も出します。オフ（はじめ）は、文字を少なくしてドット絵で出します。</small></span>
+      <input type="checkbox" id="textToggle"/>
     </label>
     <label class="row">
       <span><b>🎮 Godotで地図を描く（試作）</b><small>ドット絵の地図を、ゲームエンジン Godot で描きます。雨や雪がつぶで降り、夕方や夜は色あいが変わります。はじめに約8MBを読みこみます（WebGL2 が使える端末だけ）。</small></span>
@@ -264,6 +269,7 @@
 <div class="reward" id="reward" aria-live="assertive"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="nishio-go/icons.js"></script>
 <script src="nishio-go/analytics.js"></script>
 <script src="nishio-go/events.js"></script>
 <script src="nishio-go/npcs.js"></script>

@@ -130,6 +130,9 @@ const store = {
 };
 // アクセス解析（analytics.js）。現在地の座標は送らない
 const track = (name, params) => { if (window.nsgTrack) nsgTrack(name, params); };
+// 文字を少なく（ふだん）：文字のかわりにドット絵（icons.js）。せってい の「文字を多めに出す」で切り替え
+const simple = () => document.body.classList.contains('simple');
+const PI = (n, alt = '') => (window.NSG_ICONS ? NSG_ICONS.html(n, alt) : '');
 const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
@@ -826,7 +829,8 @@ function updateQuests(delay = 0) {
   refreshNearby();
   setTimeout(() => {
     sound.jingle(lvUp ? 'levelup' : 'checkin');
-    toast(`📜 クエスト達成！${done.map(t => `「${t}」`).join('')}${all ? '　🏆 今日のクエストぜんぶ達成！' : ''} +${gained}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+    toast(simple() ? `📜✅${all ? '🏆' : ''} +${gained}pt${lvUp ? `　⭐Lv${lvUp}` : ''}`
+      : `📜 クエスト達成！${done.map(t => `「${t}」`).join('')}${all ? '　🏆 今日のクエストぜんぶ達成！' : ''} +${gained}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
   }, delay);
 }
 
@@ -1099,7 +1103,8 @@ function renderGuide() {
   el.hidden = false;
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
   const alts = (S.guide && S.guide.alts) || [];
-  el.innerHTML = `<b>${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${bearing(me, g)}へ ${fmtM(dist(me, g))}</span></b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
+  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${g.byId ? PI('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${fmtM(dist(me, g))}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${fmtM(dist(me, g))}</span>`;
+  el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
 }
@@ -1136,7 +1141,10 @@ function renderKoyomi() {
   const wxShort = wx ? `　${wx.icon}${wx.name}${wx.temp !== null ? ` ${Math.round(wx.temp)}℃` : ''}` : '';
   const wxLong = wx ? `<br>${wx.icon} いま${wx.raining ? '雨がふっています' : '雨はふっていません'}${wx.rainAt ? `（${esc(wx.rainAt)}）` : ''}${wx.temp !== null ? `・気温 ${wx.temp}℃（${esc(wx.tempAt)}）` : ''}・${esc(wx.at)}の観測<br>きょうの予報（${esc(wx.forecastArea)}）：${esc(wx.forecast)}<br><small>天気の出典：気象庁（アメダス・天気予報）</small>` : '';
   const se = KO.season(now), where = pc.town || pc.city;
-  el.innerHTML = `<b>${now.getMonth() + 1}/${now.getDate()}（${WEEKDAY(now)}）${se.icon}${wx ? wx.icon : ''}${where ? `　📍${esc(where)}` : ''}</b>`
+  const SEASON_PI = { winter: 'snowman', spring: 'sakura', summer: 'sunflower', autumn: 'momiji' }, WX_PI = { sunny: 'sun', cloudy: 'cloud', rain: 'rain', snow: 'snow' };
+  el.innerHTML = (simple()   // 文字を少なく（ふだん）：日付と、季節・天気の絵だけ（タップでくわしく）
+    ? `<b>${now.getMonth() + 1}/${now.getDate()} ${PI(SEASON_PI[se.id] || '', se.name)}${wx && WX_PI[wx.kind] ? PI(WX_PI[wx.kind], wx.name) : ''}</b>`
+    : `<b>${now.getMonth() + 1}/${now.getDate()}（${WEEKDAY(now)}）${se.icon}${wx ? wx.icon : ''}${where ? `　📍${esc(where)}` : ''}</b>`)
     + `<span class="more">${esc(KO.line(now))}${wxShort}${pc.city ? `<br>📍 ${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}` : ''}<br>${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}`
     + (hs.length ? `<br>見ごろ：${hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i).join('・')}` : '')
     + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + wxLong + '</span>';
@@ -1181,7 +1189,8 @@ function refreshNearby() {
       : lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
       : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
     btn.disabled = !!why;
-    $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
+    if (why || !simple()) $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
+    else $('spinSub').innerHTML = `${PI('coin', 'ポイント')}+${ptsOf(selected)}${S.visits[selected.id] ? '' : ' ' + PI('new', 'はじめての場所')}`;
   } else {
     btn.hidden = true;
   }
@@ -1204,7 +1213,7 @@ function refreshNearby() {
   }
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length;
-    msgs.push(`📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`);
+    msgs.push(simple() ? `${PI('book', 'まちメモ')} <b>${knownFacts()}</b>　${PI('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`);
   }
   setStatus(msgs.slice(0, 2).join('<br/>'), true);
 }
@@ -1383,9 +1392,36 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
 }
 
+// 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
+const CHIP = [['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
+function rewardChips(lines, fact) {
+  const out = [];
+  let book = false;
+  for (const l of lines) {
+    if (l.startsWith('🧭')) continue;   // 「つぎは〜へ」は下の案内に出ている
+    const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
+    if (ic === 'book') book = true;
+    const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
+    const v = ic === 'card' ? (/もう持っている/.test(l) ? '' : PI('new', 'はじめての絵')) : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
+    out.push(`<span title="${esc(l)}">${PI(ic, l)}${v}</span>`);
+  }
+  if (fact && !book) out.push(`<span title="まちメモ">${PI('book', 'まちメモ')}+1</span>`);
+  return `<div class="chips">${out.join('')}</div>`;
+}
 function showReward(total, name, lines, lvUp, fact, dot) {
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   const el = $('reward'), D = window.NISHIO_DOTS;
+  if (simple()) {
+    el.innerHTML = `<div class="rw${dot ? ' long' : ''}"><div class="big">${PI('coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
+      ${dot && D ? `<img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
+      ${rewardChips(lines, fact)}
+      ${lvUp ? `<div class="lvup">${PI('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`;
+    if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
+    el.classList.add('show');
+    clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, dot ? 5000 : 2700);
+    afterReward();
+    return;
+  }
   el.innerHTML = `<div class="rw${fact || dot ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
     ${dot && D ? `<img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
@@ -1800,6 +1836,14 @@ $('bgmToggle').addEventListener('change', e => sound.toggle(e.target.checked));
 $('anaToggle').checked = !store.get('nsg_noanalytics', false);
 $('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg_noanalytics', e.target.checked ? '0' : '1'); } catch (err) { /* noop */ } toast(e.target.checked ? '📊 アクセス解析をオンにしました（次に開いたときから）' : '📊 アクセス解析をオフにしました（次に開いたときから送りません）'); });
 sound.apply();
+// 文字を多めに出す（オフ＝文字を少なくしてドット絵。はじめはオフ）
+$('textToggle').checked = !simple();
+$('textToggle').addEventListener('change', e => {
+  document.body.classList.toggle('simple', !e.target.checked);
+  try { localStorage.setItem('nsg_text_more', e.target.checked ? '1' : '0'); } catch (err) { /* noop */ }
+  renderKoyomi.key = null; renderKoyomi(); refreshNearby();
+  track('text_mode', { more: e.target.checked });
+});
 
 /* 下の案内パネルの高さ（チェックインのボタンが出ると高くなる）を CSS に知らせ、スティックや丸ボタンが隠れないようにする */
 if (window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--sheet-h', $('sheet').offsetHeight + 'px')).observe($('sheet'));
@@ -1845,7 +1889,7 @@ function afterReward() {
   store.set('nsg_rw_day', { date: today, n });
   if (n < 2) return;
   afterRewardClosed(() => {
-    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toast(`📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
+    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toast(simple() ? `📅 あしたも来ると +${tomorrowBonus()}pt` : `📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
     setTimeout(a2hsOffer, 4200);
   });
 }
@@ -1854,6 +1898,10 @@ function afterRewardClosed(fn) {
   clearTimeout(afterRewardClosed.t);
   const wait = () => { afterRewardClosed.t = setTimeout(() => ($('reward').classList.contains('show') ? wait() : fn()), 1000); };
   wait();
+}
+function tomorrowBonus() {   // あした来たときの、その日はじめてのチェックインのボーナス（きょうチェックインしていれば連続）
+  const d = S.streak.last === ymd() ? S.streak.days + 1 : 1;
+  return CFG.pts.daily + Math.min(d - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
 }
 function tomorrowItems() {
   const bonus = d => CFG.pts.daily + Math.min(d - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
@@ -1922,7 +1970,7 @@ function begin(isDemo) {
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? (welcomeDue() ? '🎁 すぐ近くに たからばこ！ 左下のスティック（矢印キー）で近づくと開きます' : '🎮 左下のスティック（矢印キー）で歩きます')
+    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ 左下のスティック（矢印キー）で近づくと開きます') : '🎮 左下のスティック（矢印キー）で歩きます')
     : '🎮 地図をタップするとその場所へ移動します');
 }
 document.addEventListener('click', e => {

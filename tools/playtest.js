@@ -65,8 +65,9 @@ async function walkTo(page, id) {
   for (const k of plan.keys) { await page.keyboard.press(k); await page.waitForTimeout(15); }
   await page.waitForTimeout(500);
   if (id === 'chest') {   // たからばこは近づくと開く：ポイントとまめちしきの知らせが出るか
-    const popup = await page.evaluate(() => document.getElementById('reward').innerText);
-    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup) && /💡/.test(popup) };
+    // まめちしきは、文字を多めに出すときは 💡 の文、文字を少なく（ふだん）のときは本の絵（文は きろく の まちメモ に入る）
+    const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, book: !!r.querySelector('img[alt="まちメモ"]') }; });
+    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup.text) && (/💡/.test(popup.text) || popup.book) };
   }
   const spin = await page.evaluate(() => !document.getElementById('spinBtn').hidden && document.getElementById('spinName').textContent);
   return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: spin === plan.name };
@@ -88,6 +89,8 @@ async function walkTo(page, id) {
   // はじめての人は歩く地図から始まり、すぐ近くに「ようこそ たからばこ」が置かれる（docs/retention.md）
   await page.evaluate(() => nishioPixel.setWorld(true));
   await page.click('#demoBtn'); await page.waitForTimeout(2500);
+  // 文字を少なく（ふだん）：上のバーと下のタブは文字を出さず、ドット絵だけ
+  R.checks.simpleDefault = await page.evaluate(() => document.body.classList.contains('simple') && !!document.querySelector('.tabs img.pi') && getComputedStyle(document.querySelector('.tabs button span')).display === 'none' && getComputedStyle(document.querySelector('.brand .tx')).display === 'none');
   R.checks.firstOnField = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
   R.checks.welcomeChestM = await page.evaluate(() => { const c = nishioGo.liveChests().find(x => x.id.endsWith(':welcome')); return c ? Math.round(nishioGo.dist(nishioGo.me, c)) : null; });
   // せかいちずでもスティックが出て、動かすと歩く地図にもどる
@@ -156,6 +159,11 @@ async function walkTo(page, id) {
   await page.evaluate(() => document.getElementById('badgeHead').scrollIntoView()); await page.waitForTimeout(300); await shot(page, '07-badges');   // バッジは きろく の下
   await page.click('[data-tab=map]'); await page.waitForTimeout(300);
   R.checks.operateFinal = await state(page);
+  // せってい の「文字を多めに出す」で、文字が出る（もどすと また少なく）
+  await page.click('[data-tab=settings]'); await page.click('#textToggle'); await page.waitForTimeout(200);
+  R.checks.textMore = await page.evaluate(() => !document.body.classList.contains('simple') && /（.）/.test(document.getElementById('koyomi').textContent));
+  await page.click('#textToggle'); await page.click('[data-tab=map]'); await page.waitForTimeout(200);
+  R.checks.textLessAgain = await page.evaluate(() => document.body.classList.contains('simple'));
 
   // 2) 同じ画面のまま、あるいて移動に切り替える（位置情報で現在地が出るか、記録が操作モードと別か、戻すと操作モードの記録が残っているか）
   await page.click('[data-tab=settings]'); await page.click('.mode-sw [data-mode=real]'); await page.click('[data-tab=map]'); await page.waitForTimeout(3500);   // 移動のしかたは せってい で切り替える
@@ -176,6 +184,7 @@ async function walkTo(page, id) {
   need(R.errors.length === 0, 'ページでエラーが出た');
   need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
+  need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.firstOnField && c.welcomeChestM !== null && c.welcomeChestM <= 150, 'はじめての人が歩く地図から始まらないか、近くに ようこそ たからばこ がない');
   need(c.stickKnobMoved && c.stickWalkedNorth && c.stickReleased, 'スティックを上へ倒しても北へ歩かない・はなしても戻らない');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');

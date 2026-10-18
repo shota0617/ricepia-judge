@@ -30,6 +30,26 @@ button{font:inherit;color:inherit;cursor:pointer}
 .home-btn span{font-size:17px}
 .home-btn small{font-size:9px;font-weight:700;white-space:nowrap}
 .home-btn:focus-visible{outline:3px solid #ffd54f;outline-offset:2px}
+/* ドット絵のアイコン（icons.js）。文字を少なく（body.simple）では、文字のかわりにこれだけ出す */
+img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex:none}
+.brand img.pi{width:24px;height:24px;vertical-align:-6px;margin-right:4px}
+.lv-num img.pi{width:14px;height:14px;vertical-align:-2px}
+.pts{align-items:center}
+.pts img.pi{margin-right:3px}
+.home-btn img.pi{width:22px;height:22px}
+.tabs button img.pi{width:24px;height:24px}
+.simple .tx{display:none}
+.simple .brand{flex:1}
+.simple .tabs button span{display:none}
+.simple .tabs button img.pi{width:30px;height:30px}
+.simple .tabs button.on img.pi{filter:drop-shadow(0 2px 0 var(--green))}
+.simple .guide small{display:none}
+.simple .guide.open small{display:block}
+.simple .guide b img.pi{width:18px;height:18px;vertical-align:-4px;margin-right:2px}
+.chips{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 10px;margin:8px 0 0;font-size:15px;font-weight:700;color:var(--ink)}
+.chips span{display:inline-flex;align-items:center;gap:3px}
+.chips img.pi{width:20px;height:20px}
+.reward .rw .big img.pi{width:34px;height:34px;vertical-align:-4px;margin-right:4px}
 
 /* 地図 */
 #map{position:fixed;top:var(--bar-h);left:0;right:0;bottom:calc(var(--tabs-h) + var(--safe-b));z-index:1;background:#e8ecdf}

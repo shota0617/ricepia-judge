@@ -1686,7 +1686,9 @@ $('locateBtn').addEventListener('click', () => {
 
 /* モード切替 */
 function setMode(isDemo) {
-  const here = !demo && me ? me : null;   // 歩いていた場所から操作を始める（まだ位置がなければ地図のまん中）
+  // 歩いていた場所から操作を始める（まだ位置がなければ地図のまん中）。遊べる範囲の外にいたときは、西尾のまん中から（範囲の外は歩く地図が作られず、歩けない）
+  const inside = p => p && inPlay(p.lat, p.lng);
+  const here = !demo && inside(me) ? me : null;
   if (demo && !isDemo) idleMark();   // 操作して移動をやめるときは、ここから るすばん
   demo = isDemo;
   store.set('nsg_mode', demo ? 'demo' : 'real');
@@ -1695,7 +1697,7 @@ function setMode(isDemo) {
   if (meMarker) { meMarker.remove(); accCircle.remove(); meMarker = accCircle = null; }
   if (demo) {
     stopGps();
-    const c = here || map.getCenter();
+    const mc = map.getCenter(), c = here || (inside(mc) ? mc : { lat: CFG.center[0], lng: CFG.center[1] });
     onFix(c.lat, c.lng, 5, Date.now());
   } else {
     startGps();
@@ -1813,6 +1815,7 @@ document.addEventListener('click', e => {
   track('rescue_switch', { why: b.dataset.rescue });
   switchMode(true);
   if (window.nishioPixel && !document.body.classList.contains('px')) nishioPixel.setActive(true);
+  if (welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);   // はじめてなら、ようこそ たからばこ の見える歩く地図で
 });
 function welcomeDue() { return demo && !S.welcomed && S.total < 200; }   // まだ ようこそ たからばこ を開けていない、はじめのうちの人
 function welcomeWalk() {
@@ -1826,13 +1829,13 @@ function welcomeWalk() {
   showReward(pts, 'ようこそ にしおさんぽGOへ！', ['🎉 はじめてボーナス +30', ...dotLines(dot), g ? `🧭 つぎは「${g.name}」（${fmtM(dist(me, g))}）へ。着くとポイント` : '⭐ 近くの名所に着くとチェックインでポイント'], lvUp, '', dot);
   renderLog();
 }
-function dayN() { const f = store.get('nsg_first_day', ''); return f ? Math.max(0, Math.round((new Date(ymd()) - new Date(f)) / 86400000)) : 0; }
+function dayN() { const f = store.get('nsg_first_day', ''); return /^\d{4}-\d\d-\d\d$/.test(f) ? Math.max(0, Math.round((new Date(ymd()) - new Date(f)) / 86400000)) : -1; }   // -1：はじめて遊んだ日がわからない（この計測より前から遊んでいる人）
 function afterReward() {
   session.rewards++;
   if (!store.get('nsg_first_reward', false)) {
     store.set('nsg_first_reward', true);
     const t0 = store.get('nsg_begin_t', 0);
-    track('first_reward', { secs: t0 ? Math.round((Date.now() - t0) / 1000) : -1, mode: demo ? 'play' : 'walk' });
+    if (t0) track('first_reward', { secs: Math.round((Date.now() - t0) / 1000), mode: demo ? 'play' : 'walk' });   // はじめた時刻がわからない人（前から遊んでいる人）は数えない
   }
   // 1日1回：その日2回目のごほうびのあと、ごほうびの画面が消えてから「あしたのおたのしみ」。そのあと ホーム画面に追加のおすすめ
   if (session.rewards < 2) return;
@@ -1902,6 +1905,7 @@ function begin(isDemo) {
   if (!store.get('nsg_started', false)) store.set('nsg_begin_t', Date.now());
   if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', ymd());
   store.set('nsg_started', true);
+  sessionStart();
   track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
   // 操作して遊ぶは、スティックで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
@@ -1931,9 +1935,13 @@ fetch('nishio-go/stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() 
   $('playerCount').textContent = `👥 これまでに ${Math.floor(j.players / 10) * 10}人以上が遊んでいます（${j.updated.slice(5).replace('-', '/')}時点）`;
   $('playerCount').hidden = false;
 }).catch(() => { /* なしで続ける */ });
-if (store.get('nsg_started', false)) { $('intro').hidden = true; setMode(demo); }
-else track('intro_view', {});
-sessionStart();
+if (store.get('nsg_started', false)) {
+  // この計測より前から遊んでいる人：はじめて遊んだ日・はじめてのごほうびは「わからない」にしておく（数字にまぜない）
+  if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', 'unknown');
+  if (!store.get('nsg_begin_t', 0)) store.set('nsg_first_reward', true);
+  $('intro').hidden = true; setMode(demo); sessionStart();
+}
+else track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
 window.addEventListener('pagehide', idleMark);

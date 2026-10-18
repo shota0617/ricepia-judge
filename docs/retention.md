@@ -30,9 +30,9 @@ GA4 の数字（`nishio-go/stats.json`）はまだ届いていない（シーク
 |---|---|---|
 | `intro_view` | はじめの画面を見た（はじめての人） | |
 | `game_start` | 遊びかたを選んだ（前からある） | `mode` |
-| `first_reward` | はじめてごほうびが出た | `secs`（遊びかたを選んでからの秒数）、`mode` |
-| `play_day` | その日はじめて遊んだ（前からある） | `mode`、`day_n`（はじめて遊んだ日から何日目か。0＝その日） |
-| `session_end` | 画面を離れた | `secs`（遊んだ秒数）、`pts`、`rewards`、`day_n`、`mode` |
+| `first_reward` | はじめてごほうびが出た（この計測より前から遊んでいる人は送らない） | `secs`（遊びかたを選んでからの秒数）、`mode` |
+| `play_day` | その日はじめて遊んだ（前からある） | `mode`、`day_n`（はじめて遊んだ日から何日目か。0＝その日。-1＝この計測より前から遊んでいて、はじめての日がわからない人） |
+| `session_end` | 画面を離れた | `secs`（遊んだ秒数。はじめての人は遊びかたを選んでから）、`pts`、`rewards`、`day_n`、`mode` |
 | `geo_error` / `out_of_range` | 位置情報が使えない／遊べる範囲の外 | `code` |
 | `rescue_switch` | 切り替えボタンで操作して遊ぶにした | `why`（`geo`・`range`） |
 | `a2hs_shown` / `a2hs_click` / `a2hs_later` / `a2hs_installed` / `a2hs_open` | ホーム画面に追加のおすすめ・結果・ホーム画面から開いた | `how`、`outcome` |

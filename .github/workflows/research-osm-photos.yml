@@ -1,0 +1,23 @@
+# 調査（一時的）：OpenStreetMap の名所の写真を、日本語版ウィキペディアの代表画像（Commons）から集める。結果を reference/ にコミットする
+name: Research OSM spot photos
+on:
+  push:
+    branches: [claude/confident-turing-etepui]
+    paths: [.github/workflows/research-osm-photos.yml, reference/osm-photo-probe.js]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node reference/osm-photo-probe.js
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A reference/osm-photos reference/osm-photos.json; git commit -q -m "調査：OSM の名所の写真（ウィキペディアの代表画像）（自動）" || exit 0
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done

@@ -43,6 +43,9 @@
     flag: [
       'kk..........', 'krrrkk......', 'krrrrrkk....', 'krrwrrrrk...', 'krrrrrkk....', 'krrrkk......',
       'kkk.........', 'kn..........', 'kn..........', 'kn..........', 'kn..........', 'kkk.........'],
+    bag: [
+      '....kkkk....', '...k....k...', '..kkkkkkkk..', '.krrrrrrrrk.', 'krrwrrrrrrRk', 'krrrrrrrrrRk',
+      'kkkkkkkkkkkk', 'krrrkyykrrRk', 'krrrkkkkrrRk', 'krrrrrrrrrRk', '.kRRRRRRRRk.', '..kkkkkkkk..'],
     chest: [
       '............', '..kkkkkkkk..', '.knnnnnnnnk.', 'knnnnnnnnnnk', 'kkkkkyykkkkk', 'kNNNkyykNNNk',
       'kkkkkkkkkkkk', 'knnnnyynnnnk', 'knnnnnnnnnnk', 'kNNNNNNNNNNk', 'kkkkkkkkkkkk', '............'],

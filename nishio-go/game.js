@@ -477,9 +477,10 @@ function npcSpot(n) {
   const t = P.npcTile(n);
   return t.ok ? P.toLatLng(t.x + 0.5, t.y + 0.5) : n;
 }
-// 人の顔：ドット絵の地図と同じ絵（読み込めないときは絵文字）
-const faceCache = {};
+// 人の顔：Blender で作った胸から上の絵（tools/blender/pixel-art.py）。ない見た目はドット絵の地図と同じ絵、読み込めないときは絵文字
+const faceCache = {}, NPC_ART = new Set(['elder', 'granny', 'man', 'woman', 'kid', 'student', 'fisher', 'staff', 'guide', 'monk']);
 function npcFace(n) {
+  if (NPC_ART.has(n.look)) return `<img class="npc-face art" src="nishio-go/art/npc-${n.look}.png" alt="" width="48" height="48"/>`;
   const P = window.nishioPixel;
   if (!(n.look in faceCache) && P && P.npcSprite) { try { faceCache[n.look] = P.npcSprite(n.look).toDataURL(); } catch (e) { faceCache[n.look] = ''; } }
   return faceCache[n.look] ? `<img class="npc-face" src="${faceCache[n.look]}" alt="" width="48" height="48"/>` : `<span class="npc-face">${NPC_LOOK[n.look] || '🙂'}</span>`;

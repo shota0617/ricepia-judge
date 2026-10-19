@@ -38,6 +38,11 @@ MATS = {
     'door': '#7a4a2a', 'zzz': '#7ec8ff', 'chest': '#9c5b2e', 'chestD': '#5d3a1a', 'band': '#d8a326', 'gem': '#e94b6a',
     # バッジのメダル
     'medal': '#f2b81f', 'medalL': '#ffe58a', 'ribbonR': '#d23a2e', 'ribbonW': '#f4f1e8',
+    # 町の人（pixel.js の NPC_COLORS に合わせる）
+    'skin': '#f4c9a0', 'eye': '#2a2a2a', 'cheek': '#f29b9b', 'hairGray': '#c8c8c8', 'hairWhite': '#eeeeee', 'hairBlack': '#2b2018',
+    'hairBrown': '#5a3418', 'hairDark': '#1d1d1d', 'hairTea': '#3b2a1a', 'cElder': '#6d5a44', 'cGranny': '#8e5a9e', 'cMan': '#3f7fbf',
+    'cWoman': '#e57373', 'cKid': '#ffb300', 'cStudent': '#203a63', 'cFisher': '#3a7bd5', 'cStaff': '#2e7d32', 'cGuide': '#f2c230',
+    'cMonk': '#2b2b2b', 'kesa': '#b88a12', 'towel': '#ffffff', 'capY': '#ffcc00', 'collar': '#ffffff',
 }
 
 
@@ -49,7 +54,8 @@ def hex2rgb(h):
 def tones(h):   # 影（少し青みに寄せて暗く）・ふつう・明るい
     r, g, b = hex2rgb(h)
     shadow = (int(r * 0.62), int(g * 0.62), int(min(255, b * 0.72 + 12)))
-    light = tuple(int(c + (255 - c) * 0.38) for c in (r, g, b))
+    k = 0.38 if (r + g + b) / 765 > 0.3 else 0.16   # 黒っぽい色（髪など）は、明るい所も白っぽくしすぎない
+    light = tuple(int(c + (255 - c) * k) for c in (r, g, b))
     return [shadow, (r, g, b), light]
 
 
@@ -428,6 +434,80 @@ def chest():
     return dict(target=(0, 0, 0.26), scale=1.15)
 
 
+def npc_bust(coat, hair=None, bald=False, extra=None):
+    """町の人の胸から上（丸い頭、目とほお、服）。extra で髪型や帽子を足す"""
+    sphere('body', coat, 0.40, (0, 0, -0.30), (1, 0.75, 0.8))
+    cyl('neck', 'skin', 0.09, 0.12, (0, 0, 0.0), verts=12)
+    sphere('head', 'skin', 0.27, (0, 0, 0.26))
+    for x in (-0.09, 0.09):
+        sphere(f'eye{x}', 'eye', 0.03, (x, -0.245, 0.27), (1, 0.6, 1.3))
+        sphere(f'cheek{x}', 'cheek', 0.035, (x * 1.6, -0.22, 0.19), (1, 0.5, 0.7))
+    if hair:
+        sphere('hair', hair, 0.285, (0, 0.035, 0.31), (1.02, 1, 0.92))   # 頭の後ろと上
+        box('bang', hair, (0.42, 0.10, 0.10), (0, -0.17, 0.46), bevel=0.04)
+    if extra:
+        extra()
+    return dict(target=(0, 0, 0.10), scale=1.12, el=6, az=-12)
+
+
+def npc_elder():
+    """おじいさん：頭の横だけ白い髪、茶色の上着"""
+    def ex():
+        for x in (-0.25, 0.25):
+            sphere(f'side{x}', 'hairGray', 0.09, (x, 0.02, 0.27), (0.7, 1, 1))
+    return npc_bust('cElder', extra=ex)
+
+
+def npc_granny():
+    """おばあさん：白い髪にお団子、むらさきの服"""
+    return npc_bust('cGranny', 'hairWhite', extra=lambda: sphere('bun', 'hairWhite', 0.11, (0, 0.17, 0.48)))
+
+
+def npc_man():
+    """男の人：黒い短い髪、青い服"""
+    return npc_bust('cMan', 'hairBlack')
+
+
+def npc_woman():
+    """女の人：茶色の長い髪、赤い服"""
+    def ex():
+        box('long', 'hairBrown', (0.56, 0.24, 0.40), (0, 0.10, 0.12), bevel=0.08)
+    return npc_bust('cWoman', 'hairBrown', extra=ex)
+
+
+def npc_kid():
+    """子ども：黄色い帽子、黄色い服"""
+    def ex():
+        sphere('cap', 'capY', 0.29, (0, 0.02, 0.36), (1.02, 1.02, 0.7))
+        box('tsuba', 'capY', (0.30, 0.16, 0.03), (0, -0.25, 0.40))
+    return npc_bust('cKid', 'hairBlack', extra=ex)
+
+
+def npc_student():
+    """学生：黒い髪、紺の制服と白いえり"""
+    return npc_bust('cStudent', 'hairDark', extra=lambda: box('eri', 'collar', (0.24, 0.05, 0.10), (0, -0.27, -0.06), (0.4, 0, 0)))
+
+
+def npc_fisher():
+    """漁師さん：白いねじりはちまき、青い服"""
+    return npc_bust('cFisher', 'hairBlack', extra=lambda: cyl('hachimaki', 'towel', 0.29, 0.07, (0, 0, 0.40), verts=20))
+
+
+def npc_staff():
+    """お店の人・農家さん：茶色の髪、緑の服と白い前かけのひも"""
+    return npc_bust('cStaff', 'hairTea', extra=lambda: box('himo', 'collar', (0.36, 0.05, 0.04), (0, -0.29, -0.18)))
+
+
+def npc_guide():
+    """ガイドさん：茶色の髪、黄色い上着、赤い名札"""
+    return npc_bust('cGuide', 'hairTea', extra=lambda: box('fuda', 'ribbonR', (0.10, 0.03, 0.07), (0.14, -0.29, -0.14)))
+
+
+def npc_monk():
+    """お坊さん：髪のない頭、黒い衣に金色のけさ"""
+    return npc_bust('cMonk', extra=lambda: box('kesa', 'kesa', (0.12, 0.05, 0.62), (0.08, -0.25, -0.26), (0, -0.6, 0)))
+
+
 def medal():
     """バッジのメダル（赤と白のリボンに、金のメダル。まんなかは平らにして、バッジの絵を上にのせる）"""
     rot = (math.pi / 2, 0, 0)
@@ -443,6 +523,8 @@ def medal():
 
 
 MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
+MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
+    ('student', npc_student), ('fisher', npc_fisher), ('staff', npc_staff), ('guide', npc_guide), ('monk', npc_monk))})
 MODELS.update({f'paddy-{k}': v for k, v in (('stubble', paddy_stubble), ('soil', paddy_soil), ('flooded', paddy_flooded), ('green', paddy_green), ('gold', paddy_gold))})
 MODELS.update({f'wx-{k}': v for k, v in (('sunny', wx_sun), ('cloudy', wx_cloudy), ('rain', wx_rain), ('snow', wx_snow))})
 MODELS.update({f'area-{k}': v for k, v in (

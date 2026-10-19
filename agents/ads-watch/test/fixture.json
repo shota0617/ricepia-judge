@@ -1,0 +1,222 @@
+{
+  "google": [
+    {
+      "platform": "google",
+      "id": "111",
+      "name": "新米キャンペーン",
+      "active": true,
+      "dailyBudgetYen": 2000,
+      "days": {
+        "2026-10-11": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-12": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-13": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-14": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-15": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-16": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-17": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-18": {
+          "cost": 2000,
+          "impressions": 3000,
+          "clicks": 80,
+          "conversions": 4
+        },
+        "2026-10-19": {
+          "cost": 3800,
+          "impressions": 5000,
+          "clicks": 120,
+          "conversions": 2
+        }
+      }
+    },
+    {
+      "platform": "google",
+      "id": "222",
+      "name": "業務用米",
+      "active": true,
+      "dailyBudgetYen": 3000,
+      "days": {
+        "2026-10-11": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-12": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-13": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-14": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-15": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-16": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-17": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 3
+        },
+        "2026-10-18": {
+          "cost": 3000,
+          "impressions": 3500,
+          "clicks": 85,
+          "conversions": 1
+        },
+        "2026-10-19": {
+          "cost": 3500,
+          "impressions": 4000,
+          "clicks": 90,
+          "conversions": 0
+        }
+      }
+    }
+  ],
+  "meta": [
+    {
+      "platform": "meta",
+      "id": "333",
+      "name": "LINE友だち追加",
+      "active": true,
+      "dailyBudgetYen": 1500,
+      "days": {
+        "2026-10-11": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-12": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-13": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-14": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-15": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-16": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-17": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        },
+        "2026-10-18": {
+          "cost": 1500,
+          "impressions": 4000,
+          "clicks": 60,
+          "conversions": 5
+        }
+      }
+    },
+    {
+      "platform": "meta",
+      "id": "444",
+      "name": "ふるさと納税",
+      "active": false,
+      "dailyBudgetYen": null,
+      "days": {
+        "2026-10-11": {
+          "cost": 1000,
+          "impressions": 2000,
+          "clicks": 30,
+          "conversions": 1
+        },
+        "2026-10-12": {
+          "cost": 1000,
+          "impressions": 2000,
+          "clicks": 30,
+          "conversions": 1
+        },
+        "2026-10-13": {
+          "cost": 1000,
+          "impressions": 2000,
+          "clicks": 30,
+          "conversions": 1
+        },
+        "2026-10-14": {
+          "cost": 1000,
+          "impressions": 2000,
+          "clicks": 30,
+          "conversions": 1
+        }
+      }
+    }
+  ]
+}

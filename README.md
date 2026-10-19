@@ -13,6 +13,12 @@
 | `meeting.html` | **らいすぴあ ミーティング**（Zoomのようなビデオ会議）。発言を自動で文字起こしし、AIがお客様のニーズを抽出して開発バックログ・GitHub Issue・開発依頼書につなげる |
 | `meta-ads.html` | Meta（Facebook / Instagram）広告の成果診断。広告マネージャのCSVを読み込み、CPA・ROAS・CTR・フリークエンシー・前後半の推移から「増額／維持／要改善／停止／データ不足」を判定し、AIが改善策と次の広告案を提案 |
 
+## エージェント（Mac Studio で24時間動かす）
+
+| フォルダ | 内容 |
+|---|---|
+| `agents/ads-watch/` | **広告監視エージェント**。Google広告・Meta広告を30分おきに読み取り専用で見張り、予算の使い過ぎ・配信停止・成果0・CPA急上昇を LINE／メールで通知。朝7:30と夜20:00に Claude Code が報告を書いて送る。設定は [agents/ads-watch/README.md](agents/ads-watch/README.md) |
+
 ## Marketing Studio の機能
 
 | 区分 | 機能 | 概要 |

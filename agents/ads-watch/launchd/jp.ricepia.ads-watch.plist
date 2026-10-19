@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- 広告の見張り：30分おき（install.sh が __DIR__ と __HOME__ を置き換えて登録する） -->
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>jp.ricepia.ads-watch</string>
+  <key>ProgramArguments</key>
+  <array><string>/bin/zsh</string><string>__DIR__/run-watch.sh</string></array>
+  <key>StartInterval</key><integer>1800</integer>
+  <key>RunAtLoad</key><true/>
+  <key>StandardOutPath</key><string>__HOME__/ricepia-agents/ads-watch/logs/watch.log</string>
+  <key>StandardErrorPath</key><string>__HOME__/ricepia-agents/ads-watch/logs/watch.log</string>
+</dict>
+</plist>

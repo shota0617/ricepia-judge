@@ -47,7 +47,7 @@
     if (SHOP_SPOTS.has(e.spot)) delete e.spot;   // 会場が当店の行事は、地図に会場がないので、クエストや行き先にしない
   }
 
-  // 画面：上に「提案用デモ」の札、つくった人の書き方、当店HPのボタンを外す
+  // 画面：上に「提案用デモ」の札、つくった人の書き方、当店HPのボタンとお店の版のプレイ画面を外す
   document.title = ED.title;
   document.body.classList.add('ed-city');
   const tag = document.createElement('div');
@@ -57,6 +57,8 @@
   if (by) by.innerHTML = ED.by;
   if (cr) cr.textContent = ED.credit;
   if (home) home.hidden = true;
+  const shots = document.querySelector('#intro .intro-shots');   // はじめの画面のプレイ画面は、お店の版の画面（当店の札・とくてん）が写っているので出さない
+  if (shots) shots.remove();
   const box = document.getElementById('edBox'), back = document.getElementById('edShop');
   if (box) box.hidden = false;
   if (back) back.addEventListener('click', () => {

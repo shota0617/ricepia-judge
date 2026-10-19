@@ -1105,7 +1105,7 @@ loadMapTiles();
    生きもの・道ばたの物・水辺や浜の物・西尾らしい物（茶つみ・うなぎ池の水車・大ちょうちん・赤馬・海苔ひび・カーネーション・野点 など）を、
    マスの種類に合わせて、ところどころに置く（場所ごとに決まった物・向き・色）
    季節（春・夏・秋・冬のシート）と月（ひまわりは夏、コスモスは秋 など）で、置く物が変わる。生きものは2つのポーズで少し動く */
-const DECO = { img: null, s: -1, idx: null, cols: 96 };
+const DECO = { img: null, s: -1, idx: null, cols: 96, m: new Date().getMonth() + 1 };   // m：いまの月（refreshSeason で1分ごとに確かめる）
 const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ。名前#rain は、いま雨のときだけ）
   [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10',
     'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9', 'kiji', 'usagi', 'tsubame@4-7', 'hotaru@6-6', 'sanpo', 'jogger',
@@ -1154,7 +1154,7 @@ function loadDeco() {
 const decoLists = new Map();   // その月に置ける物の表（月が替わったら作りなおす）
 function decoList(code) {
   const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, rain = !!(wx && wx.kind === 'rain');
-  const m = new Date().getMonth() + 1, key = code + ':' + m + ':' + rain + ':' + (code === C.U || code === C.F ? PADDY_TILE : '');
+  const m = DECO.m, key = code + ':' + m + ':' + rain + ':' + (code === C.U || code === C.F ? PADDY_TILE : '');
   if (decoLists.has(key)) return decoLists.get(key);
   const place = code === C.U || code === C.F ? [14, DECO_PADDY[PADDY_TILE] || DECO_PADDY.green] : DECO_PLACE[code];
   const inMonths = (a, b) => (a <= b ? m >= a && m <= b : m >= a || m <= b);   // 11-3 のように年をまたぐ月も
@@ -1171,6 +1171,7 @@ function drawDeco(code, tx, ty, X, Y, T, now) {
   if (!L || !L[1].length) return;
   const h = Math.imul(tx, 2654435761) ^ Math.imul(ty, 40503) ^ 0x5bd1e995, u = (h ^ (h >>> 15)) >>> 0;
   if (u % L[0]) return;
+  if (code === C.T && tiles[C.T].length === 80 && tileVar(code, tx, ty) % 80 >= 70) return;   // 町なかの地面に自販機や電柱がもう描いてあるマスには置かない
   const name = L[1][(u >>> 4) % L[1].length], si = DECO.idx.get(name);
   if (si === undefined) return;
   if (code === C.A && (DECO_POND.has(name) ? !landNear(tx, ty, 2) : DECO_OPEN.has(name) && landNear(tx, ty, 1))) return;
@@ -1203,7 +1204,8 @@ function refreshSeason(now) {
   seasonCheckT = now;
   const k = seasonNow();
   loadMapTiles();
-  loadDeco();   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
+  loadDeco();
+  DECO.m = new Date().getMonth() + 1;   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
   if (k === seasonKey) return;
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;

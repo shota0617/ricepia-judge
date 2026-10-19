@@ -14,7 +14,7 @@ M.score = b => (PRI_W[b.priority] || 1) * (IMP_W[b.impact] || 1) + (b.mentions.l
 
 /** Merge analysed needs into the backlog. Same-purpose needs (backlog_match) gain a mention instead of a duplicate. */
 M.addNeeds = function(meeting, needs){
-  const list = M.backlog(); let added = 0, merged = 0;
+  const list = M.backlog(); let added = 0, merged = 0; const items = [];
   needs.forEach(n => {
     const mention = {meetingId:meeting.id, meetingTitle:meeting.title, customer:meeting.customer || "", date:meeting.startedAt, evidence:n.evidence};
     const hit = n.backlog_match && list.find(b => b.id === n.backlog_match);
@@ -26,16 +26,16 @@ M.addNeeds = function(meeting, needs){
       if(n.dev_notes && !hit.dev_notes.includes(n.dev_notes)) hit.dev_notes = (hit.dev_notes ? hit.dev_notes + "\n" : "") + n.dev_notes;
       if(hit.status === "rejected") hit.status = "review";
       hit.updated = Date.now();
-      merged++;
+      merged++; items.push({id:hit.id, isNew:false});
     } else {
       list.unshift({id:"BL-" + M.uid().slice(-6).toUpperCase(), title:n.title, category:n.category, kind:n.kind, priority:n.priority, impact:n.impact,
         description:n.description, user_story:n.user_story, acceptance_criteria:n.acceptance_criteria.slice(), dev_notes:n.dev_notes || "",
         status:"new", mentions:[mention], created:Date.now(), updated:Date.now(), issueUrl:""});
-      added++;
+      added++; items.push({id:list[0].id, isNew:true});
     }
   });
   M.saveBacklog(list);
-  return {added, merged};
+  return {added, merged, items};
 };
 
 function itemMd(b, opts){
@@ -43,7 +43,9 @@ function itemMd(b, opts){
   const L = [];
   if(opts.heading) L.push("## " + b.title + "（" + b.id + "）", "");
   L.push("## 背景（お客様の声）", b.description, "");
-  b.mentions.forEach(m => {
+  // anonymous: for public repositories — no customer names or quotes
+  if(opts.anonymous) L.push("（公開リポジトリのため、お客様の名前と発言の引用は載せていません）");
+  else b.mentions.forEach(m => {
     (m.evidence || []).slice(0, 3).forEach(e => L.push(`> 「${e.quote}」— ${e.speaker}（${m.customer ? m.customer + "・" : ""}${M.dt(m.date)} [${e.time}]）`));
   });
   L.push("", "## ユーザーストーリー", b.user_story, "", "## 受け入れ条件");
@@ -51,10 +53,11 @@ function itemMd(b, opts){
   if(b.dev_notes) L.push("", "## 開発メモ", b.dev_notes);
   L.push("", "## メタ情報",
     `- 優先度：${b.priority} / 影響：${b.impact} / 種別：${b.category}（${b.kind}ニーズ）`,
-    `- 言及：${b.mentions.length}件の会議（${Array.from(new Set(b.mentions.map(m => m.customer || m.meetingTitle))).join("、")}）`,
+    `- 言及：${b.mentions.length}件の会議` + (opts.anonymous ? "" : `（${Array.from(new Set(b.mentions.map(m => m.customer || m.meetingTitle))).join("、")}）`),
     `- バックログID：${b.id}（らいすぴあ ミーティングで作成）`);
   return L.join("\n");
 }
+M.itemMd = itemMd;
 /** Prefilled "new issue" URL. Japanese text grows ~9x when URL-encoded, so the body is cut by encoded length
     (GitHub rejects very long URLs); when cut, the full body is put on the clipboard to paste instead. */
 function issueUrl(b){
@@ -110,6 +113,7 @@ function render(){
         <select class="blStatus" data-id="${esc(b.id)}" aria-label="状態">${Object.keys(STATUS).map(k => `<option value="${k}"${k === b.status ? " selected" : ""}>${STATUS[k].label}</option>`).join("")}</select>
         <button class="btn btn-dark btn-sm" data-act="issue" data-id="${esc(b.id)}">🐙 GitHub Issueを作成</button>
         ${b.issueUrl ? `<a class="small" href="${esc(b.issueUrl)}" target="_blank" rel="noopener">Issueを開く</a>` : `<button class="btn btn-ghost btn-sm" data-act="link" data-id="${esc(b.id)}">🔗 Issue URLを記録</button>`}
+        ${b.issueUrl && !["released","rejected"].includes(b.status) ? (b.devRequested ? `<span class="badge b-orange" title="${esc(M.dt(b.devRequested))}">🤖 Claude が開発中</span>` : `<button class="btn btn-ghost btn-sm" data-act="dev" data-id="${esc(b.id)}">🤖 開発を依頼</button>`) : ""}
         ${b.status === "released" ? `<button class="btn btn-gold btn-sm" data-act="notice" data-id="${esc(b.id)}">📣 お客様へのお知らせ${pendingNotices(b) ? "（未連絡 " + pendingNotices(b) + "）" : "（連絡済み）"}</button>` : ""}
         <button class="btn btn-ghost btn-sm" data-act="md" data-id="${esc(b.id)}">📋 Markdown</button>
         <button class="btn btn-ghost btn-sm" data-act="del" data-id="${esc(b.id)}" title="削除">🗑</button>
@@ -316,6 +320,12 @@ M.mod.backlog = {
         if(u && /^https:\/\/github\.com\//.test(u.trim())) update(item.id, {issueUrl:u.trim()});
       }
       if(b.dataset.act === "notice") openNotices(item);
+      if(b.dataset.act === "dev"){
+        if(!confirm("「" + item.title + "」の開発を Claude Code に依頼します（Issue に claude-dev ラベルを付けます）。よろしいですか？")) return;
+        M.busy(b, true, "依頼中…");
+        M.auto.requestDev(item.id).then(() => { render(); M.badges(); M.toast("開発を依頼しました。進み具合は Issue に書き込まれます", "ok"); })
+          .catch(e => { M.busy(b, false); M.toast(e.message, "err"); });
+      }
       if(b.dataset.act === "md") M.copy("# " + item.title + "\n\n" + itemMd(item), "Markdownをコピーしました");
       if(b.dataset.act === "del" && confirm("「" + item.title + "」をバックログから削除します。よろしいですか？")){ M.saveBacklog(M.backlog().filter(x => x.id !== item.id)); render(); M.badges(); }
     });

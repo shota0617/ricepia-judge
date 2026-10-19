@@ -545,3 +545,4 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .stat.pic img.pi.art{width:32px;height:32px}
 .list li .ico img.pi.art{width:32px;height:32px}
 .card.tomorrow .chips img.pi.art{width:32px;height:32px}
+.px-zoom button img.pi.art,.px-pad button img.pi.art{width:32px;height:32px}

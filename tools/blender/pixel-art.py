@@ -145,22 +145,6 @@ def ricebag():
     return dict(target=(0, 0, 0.47), scale=1.2)
 
 
-def mill():
-    """コイン精米機（青い箱。上にお米を入れる口、前にお金を入れる所と赤いボタン、下に精米したお米の出口）"""
-    box('cab', 'blue', (0.62, 0.52, 1.00), (0, 0, 0.50), bevel=0.03)
-    box('panel', 'white', (0.50, 0.02, 0.34), (0, -0.265, 0.70), bevel=0.01)
-    box('slot', 'dark', (0.10, 0.02, 0.05), (-0.12, -0.28, 0.76))
-    cyl('btn', 'red', 0.045, 0.03, (0.10, -0.28, 0.76), (math.pi / 2, 0, 0), 16)
-    box('coinwin', 'glass', (0.14, 0.02, 0.07), (0, -0.28, 0.62))
-    box('chute', 'steel', (0.24, 0.20, 0.08), (0, -0.30, 0.26), (0.35, 0, 0), bevel=0.01)
-    box('base', 'navy', (0.66, 0.56, 0.08), (0, 0, 0.04))
-    cyl('hopper', 'steel', 0.34, 0.26, (0, 0.02, 1.13), (0, 0, math.pi / 4), 4, r2=0.14)   # 逆さのじょうご
-    box('rim', 'yellow', (0.50, 0.50, 0.04), (0, 0.02, 1.27), (0, 0, 0))
-    for i in range(6):   # 口に入ったお米
-        sphere(f'r{i}', 'rice', 0.05, (0.08 * (i % 3) - 0.08, 0.02 + 0.06 * (i // 3) - 0.03, 1.28), (1, 1, 0.6))
-    return dict(target=(0, 0, 0.66), scale=1.5)
-
-
 def coin():
     """ポイントのコイン（金色。少し横を向けて厚みを見せる。まんなかに一段高い面と星）"""
     rot = (math.radians(90), 0, math.radians(-62))
@@ -522,7 +506,7 @@ def medal():
     return dict(target=(0, 0, 0.06), scale=1.28, el=8, az=0)
 
 
-MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
+MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
     ('student', npc_student), ('fisher', npc_fisher), ('staff', npc_staff), ('guide', npc_guide), ('monk', npc_monk))})
 MODELS.update({f'paddy-{k}': v for k, v in (('stubble', paddy_stubble), ('soil', paddy_soil), ('flooded', paddy_flooded), ('green', paddy_green), ('gold', paddy_gold))})

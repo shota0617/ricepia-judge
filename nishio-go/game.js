@@ -1191,10 +1191,25 @@ function renderKoyomi() {
   el.innerHTML = (simple()   // 文字を少なく（ふだん）：日付と、季節・天気の絵だけ（タップでくわしく）
     ? `<b>${now.getMonth() + 1}/${now.getDate()} ${PI(SEASON_PI[se.id] || '', se.name)}${wx && WX_PI[wx.kind] ? PI(WX_PI[wx.kind], wx.name) : ''}</b>`
     : `<b>${now.getMonth() + 1}/${now.getDate()}（${WEEKDAY(now)}）${se.icon}${wx ? wx.icon : ''}${where ? `　📍${esc(where)}` : ''}</b>`)
-    + `<span class="more">${esc(KO.line(now))}${wxShort}${pc.city ? `<br>📍 ${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}` : ''}<br>${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}`
+    + (simple() ? koyomiPic(now, sk, p, hs, wx, se, pc, SEASON_PI) : `<span class="more">${esc(KO.line(now))}${wxShort}${pc.city ? `<br>📍 ${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}` : ''}<br>${esc(sk.name)}：${esc(sk.desc)}<br>${p.icon} ${esc(p.desc)}`
     + (hs.length ? `<br>見ごろ：${hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i).join('・')}` : '')
-    + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + wxLong + '</span>';
+    + (KO.doyoUshi(now) ? '<br>🐟 きょうは土用の丑の日' : '') + wxLong + '</span>');
   el.hidden = false;
+}
+// 文字を少なく（ふだん）：こよみを開いたときも絵が主役。田んぼの1年と天気は Blender で作った絵（tools/blender/pixel-art.py）。くわしい説明は「文字を多く」で
+const PADDY_ART = new Set(['stubble', 'soil', 'flooded', 'green', 'gold']), WX_ART = new Set(['sunny', 'cloudy', 'rain', 'snow']);
+function koyomiPic(now, sk, p, hs, wx, se, pc, SEASON_PI) {
+  const art = (src, alt) => `<img class="ko-art" src="nishio-go/art/${src}.png" alt="${esc(alt)}" width="48" height="48"/>`;
+  const cells = [
+    PADDY_ART.has(p.tile) ? `<span class="ko-cell">${art('paddy-' + p.tile, p.name)}<b>${esc(p.name)}</b></span>` : '',
+    wx && WX_ART.has(wx.kind) ? `<span class="ko-cell">${art('wx-' + wx.kind, wx.name)}<b>${wx.temp !== null ? `${Math.round(wx.temp)}℃` : esc(wx.name)}</b></span>` : '',
+    `<span class="ko-cell">${PI(SEASON_PI[se.id] || 'calendar', se.name)}<b>${esc(sk.name)}</b></span>`,
+  ].join('');
+  const seen = hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i);
+  return `<span class="more ko-pic"><span class="ko-cells">${cells}</span>`
+    + (seen.length || KO.doyoUshi(now) ? `<span class="chips">${seen.map(x => `<span>${x}</span>`).join('')}${KO.doyoUshi(now) ? '<span>🐟 土用の丑</span>' : ''}</span>` : '')
+    + (pc.city ? `<span class="ko-where">${PI('pin', '')}${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}</span>` : '')
+    + (wx ? '<small>天気の出典：気象庁（アメダス・天気予報）</small>' : '') + '</span>';
 }
 $('koyomi') && $('koyomi').addEventListener('click', () => $('koyomi').classList.toggle('open'));
 

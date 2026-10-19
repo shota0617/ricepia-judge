@@ -1,6 +1,7 @@
 // にしおさんぽGO：西尾ドット絵帳（西尾ならではのドット絵 74000枚）
 // ・西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる
 // ・絵は37の題材 × 季節と時間帯16 × 置き方・小物25 × 天気5 ＝ 74000枚。どれも 48×48 の1枚の景色で、題材ごとの描き方に組み合わせて描く
+//   No.1〜10000（はじめの25題材の晴れ）は Blender で立体を作って焼いた絵（tools/blender/dots3d.py → nishio-go/dots3d/ のシート）。ほかは下の描き方で描く
 //   天気：晴れ・くもり・雨・霧・（冬は雪／夜は満月／ほかは虹）。もらうときの天気は気象庁の実際の天気（weather.js）で決まり、朝は霧のことも、晴れの日はたまに虹や満月
 //   番号：No.1〜10000 は はじめの25題材の晴れ（前からある絵。番号は変えない。西尾ならではか確かめて、5題材は絵と名前を入れかえた：docs/dots-nishio.md）、10001〜50000 は同じ25題材の くもり・雨・霧・雪/虹/満月、
 //   50001〜74000 はあとから足した12題材（八ツ面山・西尾城の鍮石門・旧近衛邸の茶室・岩瀬文庫の古い本・カーネーションの温室・稲荷山茶園・一色の海苔ひび・吉良温泉と三河湾・華蔵寺の山門・一色の干潟の水鳥・金蓮寺弥陀堂・三河万歳）の5つの天気
@@ -604,6 +605,25 @@
     if (m < OLD) return w === 0 ? m * PER + r : OLD * PER + (w - 1) * OLD * PER + m * PER + r;
     return OLD * PERM + w * (M.length - OLD) * PER + (m - OLD) * PER + r;
   }
+  // No.1〜10000（はじめの25題材の晴れ）は、Blender で立体を作って焼いた絵（tools/blender/dots3d.py）。題材・季節・時間帯ごとのシート（48×48 が 5×5。並びは置き方の番号）を読み、切り出して使う
+  // シートが読めないあいだ（読みこみ中・オフライン）は、前からの描き方で描く
+  const SHEETS = new Map();   // '題材-季節-時間帯' → { img, st：0 読みこみ中・1 読めた・2 読めなかった, p }
+  const is3d = id => id >= 0 && id < OLD * PER;
+  const sheetOf = id => { const r = id % PER, sl = Math.floor(r / NCOMP); return { key: `${Math.floor(id / PER)}-${sl >> 2}-${sl & 3}`, i: r % NCOMP }; };
+  function loadSheet(key) {
+    let e = SHEETS.get(key);
+    if (!e) {
+      e = { img: new Image(), st: 0 };
+      e.p = new Promise(res => { e.img.onload = () => { e.st = 1; res(); }; e.img.onerror = () => { e.st = 2; res(); }; });
+      e.img.src = `nishio-go/dots3d/${key}.png`;
+      SHEETS.set(key, e);
+    }
+    return e;
+  }
+  const keysOf = ids => [...new Set(ids.filter(is3d).map(id => sheetOf(id).key))];
+  // ready(ids)：絵を出してよいか（シートが読めたか、読めなかったと分かった）。load(ids)：シートを読む（4秒で待つのをやめる）
+  const ready = ids => keysOf(ids).every(k => SHEETS.has(k) && SHEETS.get(k).st !== 0);
+  const load = ids => Promise.race([Promise.all(keysOf(ids).map(k => loadSheet(k).p)), new Promise(res => setTimeout(res, 4000))]);
   const sceneOf = (mo, p) => (mo.scene ? mo.scene(p) : { s: p.s, night: p.t === 3 });
   // 天気4つめ：冬の景色は雪、夜は満月、ほかは虹
   const wxKind = (mo, p) => (p.w === 0 ? '' : p.w < 4 ? ['', 'cloudy', 'rain', 'mist'][p.w] : sceneOf(mo, p).s === 3 ? 'snow' : sceneOf(mo, p).night ? 'moon' : 'rainbow');
@@ -621,6 +641,12 @@
     if (!(id >= 0 && id < COUNT)) return null;
     const p = split(id), mo = M[p.m], cv = document.createElement('canvas'), wk = wxKind(mo, p);
     cv.width = cv.height = 48;
+    const sh = is3d(id) ? loadSheet(sheetOf(id).key) : null;
+    if (sh && sh.st === 1) {   // Blender の絵を切り出す
+      const i = sheetOf(id).i;
+      cv.getContext('2d').drawImage(sh.img, (i % 5) * 48, Math.floor(i / 5) * 48, 48, 48, 0, 0, 48, 48);
+      return keep(id, cv);
+    }
     const tTone = TONE[mo.fixed === true ? 1 : p.t], wTone = !mo.indoor && WX_TONE[wk], tone = wTone ? c => wTone(tTone(c)) : tTone;
     const x = cv.getContext('2d');
     const fill = c => { x.fillStyle = c[0] === '!' ? c.slice(1) : tone(c); };
@@ -629,6 +655,9 @@
     const k = { ...p, wk, R: rndOf(hashStr('dot:' + id)), W: rndOf(hashStr('wx:' + id)) };
     mo.draw(r, h, k);
     if (wk && !mo.indoor) wxOver(r, k, mo.wy || 48);
+    return sh && sh.st === 0 ? cv : keep(id, cv);   // 読みこみ中に描いた代わりの絵は、とっておかない
+  }
+  function keep(id, cv) {
     if (cache.size > 300) cache.delete(cache.keys().next().value);
     cache.set(id, cv);
     return cv;
@@ -679,5 +708,5 @@
     if (kind === 'sunny') return u === 5 && ss !== 3 ? 4 : 0;
     return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4][u];
   }
-  window.NISHIO_DOTS = { COUNT, PER: PERM, MOTIFS: M.map(({ key, name, icon }) => ({ key, name, icon })), info, canvas, dataUrl, pick, areaOf, motifOf, idOf };
+  window.NISHIO_DOTS = { COUNT, PER: PERM, MOTIFS: M.map(({ key, name, icon }) => ({ key, name, icon })), info, canvas, dataUrl, pick, areaOf, motifOf, idOf, ready, load };
 })();

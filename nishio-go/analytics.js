@@ -8,6 +8,7 @@
     hosts: ['go.ricepia.jp', 'ricepia-judge.vercel.app'],
     ga4: 'G-3R0SBHBEW4',            // Google アナリティクス（ricepia.jp と同じプロパティ）
     ads: 'AW-18316764348',          // Google 広告
+    adsGameStart: '',               // Google 広告のコンバージョン「にしおさんぽGO ゲーム開始」のラベル（tools/google-ads-game-campaign-2026-10.js のログに出る）
     line: '6f0ea051-6c40-4f88-aee0-0779b6592add',   // LINEヤフー広告 計測タグ
     meta: '',                       // Meta ピクセル（データセットID）。決まったらここに入れる
   };
@@ -19,6 +20,8 @@
     if (!on) return;
     try {
       window.gtag && gtag('event', name, params);
+      // ゲーム専用キャンペーンは、遊び始めた数で入札する
+      if (name === 'game_start' && CFG.adsGameStart && window.gtag) gtag('event', 'conversion', { send_to: `${CFG.ads}/${CFG.adsGameStart}` });
       if (window.fbq) {
         // 当店のサイト・道案内へ進んだら「見込み客」、それ以外はカスタムイベント
         if (name === 'shop_link' || name === 'shop_checkin') fbq('track', 'Lead', params);

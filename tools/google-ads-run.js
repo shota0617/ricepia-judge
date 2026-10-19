@@ -6,6 +6,7 @@
 //     node tools/google-ads-run.js --step2         第2週（LINE重視の目標設定）を検証だけ
 //     node tools/google-ads-run.js --step2 --apply 第2週の分を反映する
 //     node tools/google-ads-run.js --job game      にしおさんぽGO のサイトリンク・コールアウトを検証だけ（--apply で反映）
+//     node tools/google-ads-run.js --job game-campaign  にしおさんぽGO 専用キャンペーン（一時停止で作る）を検証だけ（--apply で反映）
 //   読む環境変数（値はチャットやリポジトリに書かない）:
 //     GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN,
 //     GOOGLE_ADS_CUSTOMER_ID（広告アカウントのお客様ID）, GOOGLE_ADS_LOGIN_CUSTOMER_ID（MCC経由のときだけ）,
@@ -84,11 +85,25 @@ global.AdsApp = {
   mutateAll,
   mutate: (op, opts) => mutateAll([op], opts)[0],
 };
+// 画像は go.ricepia.jp に出ているものと同じ、リポジトリのファイルを読む
+const ROOT = path.join(__dirname, '..');
+global.UrlFetchApp = { fetch: url => {
+  const m = /^https:\/\/go\.ricepia\.jp\/([^?#]+)$/.exec(url);
+  if (!m) throw new Error('読めない URL: ' + url);
+  const bytes = fs.readFileSync(path.join(ROOT, m[1]));
+  return { getBlob: () => ({ getBytes: () => bytes }) };
+} };
+global.Utilities = { base64Encode: bytes => Buffer.from(bytes).toString('base64') };
 
 const ji = args.indexOf('--job'), JOB = ji >= 0 ? args[ji + 1] : '';
-const job = require(JOB === 'game' ? './google-ads-game-2026-10.js' : './google-ads-apply-2026-10.js');
-if (JOB !== 'game') { job.CONFIG.STEP1_COPY_AND_ASSETS = !STEP2; job.CONFIG.STEP2_LINE_GOALS = STEP2; }
-console.log((APPLY ? '【反映】' : '【検証だけ（validateOnly）】') + ' API ' + VERSION + ' / ' + (JOB === 'game' ? 'にしおさんぽGO（サイトリンク・コールアウト）' : STEP2 ? '第2週（目標）' : '第1週（広告文・アセット）'));
+const JOBS = {
+  game: ['./google-ads-game-2026-10.js', 'にしおさんぽGO（サイトリンク・コールアウト）'],
+  'game-campaign': ['./google-ads-game-campaign-2026-10.js', 'にしおさんぽGO 専用キャンペーン'],
+};
+if (JOB && !JOBS[JOB]) { console.error('--job は ' + Object.keys(JOBS).join(' / ') + ' のどれか'); process.exit(2); }
+const job = require(JOB ? JOBS[JOB][0] : './google-ads-apply-2026-10.js');
+if (!JOB) { job.CONFIG.STEP1_COPY_AND_ASSETS = !STEP2; job.CONFIG.STEP2_LINE_GOALS = STEP2; }
+console.log((APPLY ? '【反映】' : '【検証だけ（validateOnly）】') + ' API ' + VERSION + ' / ' + (JOB ? JOBS[JOB][1] : STEP2 ? '第2週（目標）' : '第1週（広告文・アセット）'));
 job.main();
 console.log('\nAPI の変更リクエスト ' + mutateCount + ' 回' + (APPLY ? '' : '（検証だけなので、アカウントは変わっていません。--apply で反映）'));
 process.exitCode = job._report.failed.length ? 1 : 0;

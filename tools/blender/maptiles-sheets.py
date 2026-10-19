@@ -8,6 +8,7 @@
 # - 茶畑・畑・砂浜・境内の砂利・草地：nishio-go/maptiles/field-<季節>.png（12×10。草地は2コマ目で草がゆれる）
 # - 水：nishio-go/maptiles/water.png（3×2。下の段は波が動いた2コマ目）。町なかの地面：town-<季節>.png（12×1）
 # - 軽トラ（4方向）・たからばこ・コンバイン（4方向）：nishio-go/maptiles/sprites.png（10×1、背景なし）
+# - 建物の屋根：nishio-go/maptiles/roofs.png（32×1。瓦・金属・陸屋根。pixel.js が建物のまとまりごとに同じ屋根をえらぶ）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 import os
 import random
@@ -257,6 +258,24 @@ def sprite_tile(mat, band, names):
     return img
 
 
+# 建物の屋根：nishio-go/maptiles/roofs.png（32×1）。0〜9 瓦（色5 × 継ぎ目2）、10〜19 金属（色5 × 波2）、20〜31 陸屋根（色3 × 何もなし・室外機・タンク・出入り口）
+KAWARA = ['#4f5763', '#2e2e33', '#6b5a4a', '#5d6c8c', '#8c3d2a']
+METAL = ['#3a6a9a', '#9a3a2a', '#3a7a5a', '#8a8e92', '#b8903a']
+FLAT = ['#b8b4ac', '#a8aca8', '#c8c0b0']
+
+
+def roof_tile(mat, band, names, pal, rnd):
+    img = np.zeros((N, N, 3), np.uint8)
+    for y in range(N):
+        for x in range(N):
+            n = names[mat[y, x]] if mat[y, x] != 255 else list(pal)[0]
+            c = tones(pal.get(n, '#ff00ff'), 0.78, 1.14)[band[y, x]]
+            if n in ('flat',) and rnd.random() < 0.05:
+                c = tuple(max(0, v - 14) for v in c)   # 陸屋根のよごれ
+            img[y, x] = c
+    return img
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     geos = [f'house-{a}-{e}-{f}' for a in range(5) for e in range(5) for f in range(2)]
@@ -328,6 +347,17 @@ def main():
         ssheet.paste(Image.fromarray(sprite_tile(mat, band, names), 'RGBA'), (i * N, 0))
     ssheet.save(os.path.join(OUT, 'sprites.png'), optimize=True)
     print('sprites.png', os.path.getsize(os.path.join(OUT, 'sprites.png')))
+    rsheet = Image.new('RGB', (32 * N, N))
+    j = lambda h, f: '#%02x%02x%02x' % tuple(max(0, min(255, int(c * f))) for c in rgb(h))
+    for kind, cols, geos, base in ((0, KAWARA, 2, 0), (1, METAL, 2, 10), (2, FLAT, 4, 20)):
+        for ci, col in enumerate(cols):
+            for g in range(geos):
+                mat, band, names = load(f'roof-{kind}-{g}')
+                pal = ({'kawara': col, 'kawaraJ': j(col, 0.7)} if kind == 0 else {'metal': col, 'metalR': j(col, 1.25)} if kind == 1
+                       else {'flat': col, 'flatJ': j(col, 0.82), 'ac': '#e4e4e0', 'fan': '#3a3a40', 'tank': '#e8eef4', 'hatch': '#c8c4bc'})
+                img = roof_tile(mat, band, names, pal, random.Random(f'r{kind}-{ci}-{g}'))
+                rsheet.paste(Image.fromarray(img), ((base + ci * geos + g) * N, 0))
+    save(rsheet, 'roofs.png')
     for st in PADDY:
         sheet = Image.new('RGB', (9 * N, 4 * N))
         for k in range(3):

@@ -8,6 +8,7 @@
 # - 茶畑・畑・砂浜・境内の砂利・草地：茶畑と畑と砂利はくり返す景色（となりとつながる）、砂浜と草地はマスの中の小物
 # - 水：さざ波の列をくり返す景色を3通り × 2コマ（波を半分ずらす）。町なかの地面：6通り（たいていは何もなく、ときどき小物）
 # - 軽トラ（4方向）・たからばこ：背景なし（地面を置かない）
+# - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -424,6 +425,49 @@ def town(k):
     return dict(target=(0, 0, 0.1) if k in (3, 4) else (0, 0, 0))
 
 
+# ---------- 建物の屋根（くり返す景色。となりの屋根のマスとすきまなくつながる） ----------
+def roofs(kind, g):
+    """kind：0 瓦（g で継ぎ目のずれ2通り）・1 金属の屋根（g で波の間2通り）・2 陸屋根（g=0 何もなし、1 室外機、2 給水タンク、3 屋上の出入り口）"""
+    if kind == 0:
+        box('jimen', 'kawaraJ', (4.0, 4.0, 0.02), (0, 0, -0.01))
+        b0 = cyl('row', 'kawara', 0.05, 4.0, (0, 0, -5), (0, math.pi / 2, 0), 10)
+        j0 = box('joint', 'kawaraJ', (0.012, PY / 2 * 0.9, 0.05), (0, 0, -5))
+        for j in range(-16, 17):
+            y = j * PY / 2
+            dup(b0, f'row{j}', (0, y, 0.0))
+            for i in range(-16, 17):
+                dup(j0, f'j{j}_{i}', (i * PX / 2 + ((j % 2) * PX / 4 if g else 0), y, 0.02))
+    elif kind == 1:
+        box('jimen', 'metal', (4.0, 4.0, 0.02), (0, 0, -0.01))
+        step = PX / 2 if g == 0 else PX   # 波板：かまぼこ形の山がならぶ（光の当たり方で、山と谷が見える）
+        r0 = cyl('rib', 'metal', step * 0.48, 4.0, (0, 0, -5), (math.pi / 2, 0, 0), 10)
+        r0.scale = (1, 0.5, 1)
+        for i in range(-32, 33):
+            dup(r0, f'rib{i}', (i * step, 0, 0.0))
+        e0 = box('edge', 'metalR', (0.04, 4.0, 0.03), (0, 0, -5))
+        for i in range(-8, 9):
+            dup(e0, f'e{i}', (i * PX * 2, 0, 0.02))   # 板のつなぎ目（2マスに1本）
+    else:
+        box('jimen', 'flat', (4.0, 4.0, 0.02), (0, 0, -0.01))
+        s0 = box('seam', 'flatJ', (4.0, 0.012, 0.004), (0, 0, -5))
+        t0 = box('seamT', 'flatJ', (0.012, 4.0, 0.004), (0, 0, -5))
+        for j in range(-8, 9):
+            dup(s0, f's{j}', (0, j * PY * 2, 0.002))
+            dup(t0, f't{j}', (j * PX * 2, 0, 0.002))
+        if g == 1:   # 室外機
+            for i, x in enumerate((-0.12, 0.1)):
+                box(f'ac{i}', 'ac', (0.16, 0.1, 0.1), (x, 0.05, 0.05))
+                cyl(f'fan{i}', 'fan', 0.035, 0.01, (x, -0.001, 0.055), (math.pi / 2, 0, 0), 10)
+        elif g == 2:   # 給水タンク
+            cyl('tank', 'tank', 0.12, 0.18, (0.05, 0.05, 0.16), verts=14)
+            for x in (-0.05, 0.15):
+                box(f'leg{x}', 'fan', (0.02, 0.02, 0.08), (x, 0.05, 0.04))
+        elif g == 3:   # 屋上の出入り口
+            box('hatch', 'hatch', (0.24, 0.2, 0.18), (0.0, 0.08, 0.09))
+            box('door', 'fan', (0.08, 0.01, 0.13), (0.0, -0.021, 0.065))
+    return dict(target=(0, 0, 0))
+
+
 # ---------- 地図の上を動くもの（背景なし）：軽トラ（4方向）・たからばこ ----------
 def truck(d):
     """米袋を積んだ白い軽トラ。d：0 上（北へ走る）・1 右・2 下・3 左"""
@@ -494,7 +538,8 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else SPRITES[kind][0](*args) if kind in SPRITES
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof'
+            else SPRITES[kind][0](*args) if kind in SPRITES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
     if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
@@ -528,6 +573,7 @@ def main():
     jobs += [(f, (k,)) for f, (_, n) in FIELD.items() for k in range(n)]
     jobs += [('water', (k, f)) for k in range(3) for f in range(2)] + [('town', (k,)) for k in range(6)]
     jobs += [(sp, (k,)) for sp, (_, n) in SPRITES.items() for k in range(n)]
+    jobs += [('roof', (0, g)) for g in range(2)] + [('roof', (1, g)) for g in range(2)] + [('roof', (2, g)) for g in range(4)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

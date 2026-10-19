@@ -11,15 +11,6 @@
       "perDay": 1,
       "desc": "お米5kg以上のお買い上げで使えます。ほかの割引との併用はできません。",
       "active": false
-    },
-    {
-      "id": "sample-polish",
-      "art": "mill",
-      "name": "コイン精米 1回無料",
-      "cost": 200,
-      "perDay": 1,
-      "desc": "らいすぴあ・秀幸のコイン精米所で使えます。",
-      "active": false
     }
   ]
 }

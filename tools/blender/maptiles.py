@@ -4,6 +4,7 @@
 # - 木：10の立体（広葉樹・松・杉・竹・植えこみ など）。風でゆれる2コマ目は、シートにする段で葉をずらして作る
 # - 斜め上（南）から見下ろす。4倍の大きさに2回描き（光の当たり具合／材質ごとの色分け）、16×16 の材質の番号と明るさの段を TMP に保存する
 # - 公園・ビニールハウス・墓地・工場の敷地・丘・山：それぞれ6つの立体（季節と色はシートにする段で）
+# - 田んぼ：こよみの田んぼのようす5つ（青田・黄金色・田植え・田おこし・刈田）× 3通り。上下左右のマスとつながるよう、景色をマスの大きさでくり返す
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -281,6 +282,45 @@ def mountain(k):
     return dict(target=(0, 0.06, 0.24))
 
 
+# ---------- 田んぼ（こよみの田んぼのようす5つ × 3通り） ----------
+# 田んぼのマスはとなりとすきまなくつながるよう、景色を「1マスぶんの大きさ」でくり返す（くり返す景色なら、どこを切りとっても上下左右がつながる）
+EL = math.radians(42)
+PX, PY = 0.25, (1.0 / math.sin(EL)) / 4   # 稲の株の間（横に4つ・たてに4つで1マス）
+PADDY = ['green', 'gold', 'flooded', 'soil', 'stubble']
+
+
+def paddy(stage, k):
+    base = {'green': 'mizuta', 'gold': 'tsuchiD', 'flooded': 'mizu', 'soil': 'tsuchi', 'stubble': 'karita'}[stage]
+    box('jimen', base, (4.0, 4.0, 0.02), (0, 0, -0.01))
+    ox = (0, PX / 2, PX / 4)[k]   # 列のずらし方
+    rows = range(-8, 9)
+    for j in rows:
+        y = j * PY
+        sh = (j % 2) * PX / 2 if k == 1 else 0
+        for i in range(-16, 17):   # 稲は列に植わっているので、横は半分の間で（列が横すじに見える）
+            x = i * PX / 2 + ox + sh
+            if stage == 'green':
+                cyl(f'i{i}_{j}', 'ine', 0.065, 0.17, (x, y, 0.085), verts=6, r2=0.025)
+            elif stage == 'gold':
+                cyl(f'i{i}_{j}', 'ine', 0.06, 0.15, (x, y, 0.075), verts=6, r2=0.03)
+                sphere(f'h{i}_{j}', 'ho', 0.045, (x + 0.02, y - 0.015, 0.16), (1.2, 1, 0.8))
+            elif stage == 'flooded':
+                if i % 2 == 0:
+                    cyl(f'i{i}_{j}', 'nae', 0.03, 0.09, (x, y, 0.045), verts=5, r2=0.01)
+            elif stage == 'stubble' and i % 2 == 0:
+                cyl(f'i{i}_{j}', 'kabu', 0.03, 0.045, (x, y, 0.022), verts=5)
+        if stage == 'soil' and j % 1 == 0:   # たがやしたうね
+            box(f'une{j}', 'tsuchiU', (4.0, PY * 0.45, 0.035), (0, y, 0.017))   # うねの高さは3通りとも同じ（となりのマスとつながるように）
+            for i in range(-8, 9):   # 土のかたまり（通りごとに置く所をかえる）
+                if (i * 3 + j * 5 + k) % 7 == 0:
+                    sphere(f'tsuchi{i}_{j}', 'tsuchiU', 0.03, (i * PX + PX * 0.3, y - PY * 0.45, 0.01), (1.3, 1, 0.6))
+    if stage == 'stubble':   # わらの山（マスごとに1つ。くり返しても目立たないよう、横に4マスぶんの間をあける）
+        for j in (-4, 0, 4):
+            for i in (-4, 0, 4):
+                sphere(f'wara{i}{j}', 'wara', 0.07, (i * PX + PX * (k + 1) * 0.5, j * PY + PY * 0.5, 0.03), (1.4, 1, 0.5))
+    return dict(target=(0, 0, 0))
+
+
 FRAME = {'park', 'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
 
@@ -288,7 +328,7 @@ MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory':
 def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
-    opts = house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else MISC[kind](*args)
+    opts = house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy' else MISC[kind](*args)
     target, scale = opts['target'], 1.0
     if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
         el = math.radians(42)
@@ -317,6 +357,7 @@ def main():
     os.makedirs(TMP, exist_ok=True)
     jobs = [('house', (s, e, f)) for s in range(5) for e in range(5) for f in range(2)] + [('tree', (k,)) for k in range(10)]
     jobs += [(m, (k,)) for m in MISC for k in range(6)]
+    jobs += [('paddy', (st, k)) for st in PADDY for k in range(3)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

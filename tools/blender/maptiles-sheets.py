@@ -4,6 +4,7 @@
 #   季節で変わるもの：庭木と植木の色（桜・紅葉）、地面にちる花びら・落ち葉・霜。どの季節のシートを使うかは nishio-go/pixel.js の mapSeason
 # - 木（森のマス）：10の立体 × 葉の色3 ＝ 30マス を季節4つぶん。nishio-go/maptiles/tree-<季節>.png（30×2。下の段は風で葉がゆれた2コマ目）
 # - 公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30マスずつを季節4つぶん。nishio-go/maptiles/misc-<季節>.png（30×6。行の順は MISC）
+# - 田んぼ：ようす5つ × 立体3 × 色3。nishio-go/maptiles/paddy-<ようす>.png（9×4。青田と黄金色は2コマ目で風に稲がゆれる）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 import os
 import random
@@ -167,6 +168,44 @@ def misc_pal(kind, s, v):
     return pal
 
 
+# 田んぼ：こよみの田んぼのようす5つ × 立体3 × 色3 ＝ 9マスずつ。nishio-go/maptiles/paddy-<ようす>.png（9×4：農地・農地の2コマ目・あぜのある田んぼ・その2コマ目）
+PADDY = ['green', 'gold', 'flooded', 'soil', 'stubble']
+PADDY_PAL = {
+    'green': {'mizuta': '#4f7a36', 'ine': '#8cc050'}, 'gold': {'tsuchiD': '#9a7a40', 'ine': '#b08a2a', 'ho': '#e8c050'},
+    'flooded': {'mizu': '#8fbfd8', 'nae': '#4f9a35'}, 'soil': {'tsuchi': '#8a6a44', 'tsuchiU': '#9a7850'},
+    'stubble': {'karita': '#a89a6a', 'kabu': '#7d6f48', 'wara': '#dccc96'},
+}
+PADDY_SPECK = {'flooded': ['#cfe9f7', '#b8dcee'], 'soil': ['#a3815a', '#6e5233'], 'stubble': ['#dccc96', '#cdbf8e'], 'green': ['#a3cc66'], 'gold': ['#f2d36b']}
+SWAY = {'green': ('ine',), 'gold': ('ine', 'ho')}
+
+
+def paddy_tile(mat, band, names, stage, v, rnd, sway=False, aze=False):
+    f = (0.98, 1.0, 1.02)[v]   # 色の差は小さく（ひとつの田んぼの中でまだらにならないように）
+    pal = {n: tuple(min(255, int(c * f)) for c in rgb(h)) for n, h in PADDY_PAL[stage].items()}
+    plant = np.zeros_like(mat, bool)
+    for n in SWAY.get(stage, ()):
+        if n in names:
+            plant |= mat == names.index(n)
+    m = mat.copy()
+    if sway:   # 風：穂先（上にとなりがない稲）を1つ右へ
+        top = plant & ~np.vstack([np.zeros((1, N), bool), plant[:-1]])
+        for y, x in zip(*np.where(top)):
+            if x + 1 < N and not plant[y, x + 1]:
+                m[y, x + 1], m[y, x] = mat[y, x], mat[min(N - 1, y + 1), x] if not plant[min(N - 1, y + 1), x] else names.index(list(PADDY_PAL[stage])[0])
+    img = np.zeros((N, N, 3), np.uint8)
+    for y in range(N):
+        for x in range(N):
+            n = names[m[y, x]] if m[y, x] != 255 else list(PADDY_PAL[stage])[0]
+            c = tones('#%02x%02x%02x' % pal.get(n, (255, 0, 255)), 0.8, 1.12)[band[y, x]]
+            if n == list(PADDY_PAL[stage])[0] and rnd.random() < (0.03 if stage in SWAY else 0.07):
+                c = rgb(rnd.choice(PADDY_SPECK[stage]))
+            img[y, x] = c
+    if aze:   # あぜ道（右と下）
+        img[:, N - 1] = rgb('#6b5a3a')
+        img[N - 1, :] = rgb('#7a6a46')
+    return img
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     geos = [f'house-{a}-{e}-{f}' for a in range(5) for e in range(5) for f in range(2)]
@@ -205,6 +244,15 @@ def main():
                                 outline=rgb(MISC_OUTLINE.get(kind, '#2a2420')), flat=MISC_FLAT.get(kind, ()))
                     msheet.paste(Image.fromarray(img), ((k * 5 + v) * N, row * N))
         save(msheet, f'misc-{s}.png')
+    for st in PADDY:
+        sheet = Image.new('RGB', (9 * N, 4 * N))
+        for k in range(3):
+            mat, band, names = load(f'paddy-{st}-{k}')
+            for v in range(3):
+                for row, (sw, aze) in enumerate(((False, False), (True, False), (False, True), (True, True))):
+                    img = paddy_tile(mat, band, names, st, v, random.Random(f'p{st}-{k}-{v}-{aze}'), sw and st in SWAY, aze)
+                    sheet.paste(Image.fromarray(img), ((k * 3 + v) * N, row * N))
+        save(sheet, f'paddy-{st}.png')
     print('家のマス（ちがう絵）:', len(seen), '/ 10000')
 
 

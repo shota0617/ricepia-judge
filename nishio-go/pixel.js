@@ -1101,6 +1101,61 @@ function loadMapTiles() {
   }
 }
 loadMapTiles();
+/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。ちがう絵で3万枚以上） ----------
+   生きもの・道ばたの物・水辺や浜の物を、マスの種類に合わせて、ところどころに置く（場所ごとに決まった物・向き・色）
+   季節（春・夏・秋・冬のシート）と月（ひまわりは夏、コスモスは秋 など）で、置く物が変わる。生きものは2つのポーズで少し動く */
+const DECO = { img: null, s: -1, idx: null, cols: 96 };
+const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ）
+  [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10', 'kinoko@6-11', 'iwa']],
+  [C.P]: [10, ['picnic@3-11', 'bench', 'inu', 'kodomo', 'hana@3-10', 'choucho@4-10', 'kotori', 'sanrinsha']],
+  [C.T]: [11, ['neko', 'neko', 'inu', 'jitensha', 'jihanki', 'ueki', 'gomi', 'tanuki', 'chouchin', 'kodomo', 'sanrinsha', 'bench', 'karasu', 'kotori']],
+  [C.A]: [28, ['kamo', 'kamo', 'fune', 'boto', 'bui', 'hasu@6-9', 'kamome']],
+  [C.S]: [9, ['kamome', 'kani', 'sunashiro@4-10', 'kasa@7-8', 'tsuri', 'boto']],
+  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo']],
+  [C.J]: [10, ['tourou', 'jizo', 'hokora', 'neko']],
+  [C.E]: [16, ['noufu', 'kotori']],
+  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10']],
+};
+const DECO_PADDY = {   // 田んぼは、こよみの田んぼのようすで置く物を変える
+  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon'],
+  gold: ['kakashi', 'kakashi', 'karasu', 'kotori', 'noufu', 'sagi'], stubble: ['hazakake', 'warazuka', 'warazuka', 'karasu', 'sagi', 'kotori'],
+  soil: ['sagi', 'karasu', 'noufu', 'kotori', 'suimon'],
+};
+const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri']);
+const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
+function loadDeco() {
+  const s = decoSeason();
+  if (s === DECO.s) return;
+  DECO.s = s;
+  if (!DECO.idx) fetch('nishio-go/deco/deco.json').then(r => r.json()).then(j => { DECO.idx = new Map(j.subjects.map((n, i) => [n, i])); DECO.cols = j.cols; dirty = true; }).catch(() => { DECO.s = -1; });
+  const img = new Image();
+  img.onload = () => { if (DECO.s === s) { DECO.img = img; dirty = true; } };
+  img.onerror = () => { if (DECO.s === s) DECO.s = -1; };   // つぎに季節を確かめるとき、もう一度
+  img.src = `nishio-go/deco/deco-${s}.png`;
+}
+const decoLists = new Map();   // その月に置ける物の表（月が替わったら作りなおす）
+function decoList(code) {
+  const m = new Date().getMonth() + 1, key = code + ':' + m + ':' + (code === C.U || code === C.F ? PADDY_TILE : '');
+  if (decoLists.has(key)) return decoLists.get(key);
+  const place = code === C.U || code === C.F ? [14, DECO_PADDY[PADDY_TILE] || DECO_PADDY.green] : DECO_PLACE[code];
+  const list = !place ? null : [place[0], place[1].filter(e => { const [, r] = e.split('@'); if (!r) return true; const [a, b] = r.split('-').map(Number); return m >= a && m <= b; }).map(e => e.split('@')[0])];
+  decoLists.set(key, list);
+  return list;
+}
+function drawDeco(code, tx, ty, X, Y, T, now) {
+  if (!DECO.img || !DECO.idx) return;
+  const L = decoList(code);
+  if (!L || !L[1].length) return;
+  const h = Math.imul(tx, 2654435761) ^ Math.imul(ty, 40503) ^ 0x5bd1e995, u = (h ^ (h >>> 15)) >>> 0;
+  if (u % L[0]) return;
+  const name = L[1][(u >>> 4) % L[1].length], si = DECO.idx.get(name);
+  if (si === undefined) return;
+  let k = (u >>> 9) % 6;
+  if (DECO_ANIM.has(name)) k = (k & 6) | ((Math.floor(now / 650) + (u >>> 20)) & 1);   // 生きものは2つのポーズをいったりきたり
+  const i = ((si * 6 + k) * 4 + (u >>> 13) % 4) * 8 + (u >>> 16) % 8;
+  ctx.drawImage(DECO.img, (i % DECO.cols) * 16, Math.floor(i / DECO.cols) * 16, 16, 16, X, Y, T, T);
+}
+loadDeco();
 const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f
   : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1   // 森は、風がわたるように少しずつずれてゆれる
   : code === C.U || code === C.F ? (Math.floor(now / 900) + ((tx + ty) >> 2)) & 1   // 田んぼの稲は、ななめに風の波がわたる
@@ -1113,7 +1168,8 @@ function refreshSeason(now) {
   if (now - seasonCheckT < 60000) return;
   seasonCheckT = now;
   const k = seasonNow();
-  loadMapTiles();   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
+  loadMapTiles();
+  loadDeco();   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
   if (k === seasonKey) return;
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;
@@ -4113,6 +4169,7 @@ function frame(now) {
     const v = tileVar(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
+    drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;

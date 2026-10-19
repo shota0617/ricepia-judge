@@ -243,7 +243,10 @@ function leave(notify){
     M.download(M.safeName(rec.title) + "_議事録.md", M.minutesMd(rec), "text/markdown;charset=utf-8");
     M.toast("ブラウザの保存容量が足りず記録を保存できなかったため、文字起こしをファイルに書き出しました。「履歴」で古い会議を削除してください", "err");
   }
-  recDone.then(() => M.go(rec.lines.length || rec.notes || rec.audio ? "analyze" : "history", {meetingId:rec.id}));
+  recDone.then(() => {
+    M.go(rec.lines.length || rec.notes || rec.audio ? "analyze" : "history", {meetingId:rec.id});
+    if(saved && M.auto) M.auto.afterMeeting(rec.id); // analysis → backlog → Issue → development, as configured
+  });
 }
 // Notices about recording / transcription are shown locally; peers derive their own from our `state`.
 C.notifyAll = text => addSys(text);

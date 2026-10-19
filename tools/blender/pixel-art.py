@@ -36,6 +36,8 @@ MATS = {
     # おまかせ強化・たからばこ
     'shoe': '#2f7fd6', 'sole': '#f2f2f2', 'lace': '#ffffff', 'bag': '#d23a2e', 'bagD': '#8f2018', 'wall': '#f1e6c8', 'yaneR': '#c0392b',
     'door': '#7a4a2a', 'zzz': '#7ec8ff', 'chest': '#9c5b2e', 'chestD': '#5d3a1a', 'band': '#d8a326', 'gem': '#e94b6a',
+    # バッジのメダル
+    'medal': '#f2b81f', 'medalL': '#ffe58a', 'ribbonR': '#d23a2e', 'ribbonW': '#f4f1e8',
 }
 
 
@@ -426,7 +428,21 @@ def chest():
     return dict(target=(0, 0, 0.26), scale=1.15)
 
 
-MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest}
+def medal():
+    """バッジのメダル（赤と白のリボンに、金のメダル。まんなかは平らにして、バッジの絵を上にのせる）"""
+    rot = (math.pi / 2, 0, 0)
+    for side in (-1, 1):   # V の字のリボン（赤・白・赤）
+        for j, (dx, m) in enumerate(((-0.07, 'ribbonR'), (0.0, 'ribbonW'), (0.07, 'ribbonR'))):
+            box(f'rib{side}{j}', m, (0.07, 0.03, 0.40), (side * 0.13 + dx, 0.06, 0.40), (0, side * 0.35, 0))
+    cyl('rim', 'medal', 0.40, 0.10, (0, 0, -0.08), rot, 48)
+    cyl('face', 'medalL', 0.31, 0.11, (0, 0, -0.08), rot, 48)
+    for i in range(16):   # ふちのぎざぎざ
+        a = i / 16 * math.tau
+        sphere(f'g{i}', 'medal', 0.045, (0.40 * math.cos(a), 0, -0.08 + 0.40 * math.sin(a)), (1, 0.8, 1))
+    return dict(target=(0, 0, 0.06), scale=1.28, el=8, az=0)
+
+
+MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({f'paddy-{k}': v for k, v in (('stubble', paddy_stubble), ('soil', paddy_soil), ('flooded', paddy_flooded), ('green', paddy_green), ('gold', paddy_gold))})
 MODELS.update({f'wx-{k}': v for k, v in (('sunny', wx_sun), ('cloudy', wx_cloudy), ('rain', wx_rain), ('snow', wx_snow))})
 MODELS.update({f'area-{k}': v for k, v in (

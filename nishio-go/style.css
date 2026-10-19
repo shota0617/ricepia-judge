@@ -561,3 +561,4 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 /* 文やボタンの中の小さい絵も Blender の 32×32（16px で出す：こまかい画面では 1点＝2画素でくっきり） */
 .lv-num img.pi.art,.pts img.pi.art,.btn img.pi.art,.popup .ev img.pi.art,.koyomi .ko-where img.pi.art,.simple .guide img.pi.art,details summary img.pi.art,.popup .area-prog img.pi.art{width:16px;height:16px;vertical-align:-3px}
 .fab img.pi.art{width:32px;height:32px}
+.spot img.pi.art,.spin-ico img.pi.art{width:32px;height:32px;vertical-align:middle}

@@ -351,6 +351,8 @@ async function doLoadSpots(force) {
 }
 
 const iconOf = s => s.featured ? s.icon : (CATS[s.cat] || CATS.sight).i;
+// 文字を少なく（ふだん）：スポットの種類も Blender の 32×32 の絵で（注目スポットは星）
+const catArt = s => ART32(s.featured ? 'stat-star' : 'cat-' + (CATS[s.cat] && s.cat !== 'featured' ? s.cat : 'sight'), s.featured ? '注目スポット' : (CATS[s.cat] || CATS.sight).n);
 const reachOf = s => s.reach || (s.featured && s.approx ? CFG.reachApprox : CFG.reach);
 const cooldownLeft = s => { const v = S.visits[s.id]; return v ? Math.max(0, v.last + CFG.cooldownMin * 60000 - Date.now()) : 0; };
 const ptsOf = s => s.featured ? (s.points || CFG.pts.featured) : CFG.pts.normal;
@@ -372,7 +374,7 @@ function spotState(s) {
 function makeIcon(s, cls) {
   const size = s.shop ? 50 : s.featured ? 42 : 34;
   const sign = s.shop ? ` data-sign="${esc(s.id === 'f-ricepia' ? 'らいすぴあ・秀幸' : '近藤米穀店')}"` : '';
-  return L.divIcon({ className: '', html: `<div class="${cls}"${sign}>${iconOf(s)}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
+  return L.divIcon({ className: '', html: `<div class="${cls}"${sign}>${simple() && !s.shop && !s.featured ? catArt(s) : iconOf(s)}</div>`, iconSize: [size, size], iconAnchor: [size / 2, size / 2] });
 }
 
 function popupHtml(s) {
@@ -400,7 +402,7 @@ function popupHtml(s) {
 function popupPic(s, c, v, left, d) {
   const th = spotThumb(s).replace('class="gthumb"', 'class="pop-art"').replace(/width="28" height="28"/, 'width="64" height="64"');
   return `<div class="popup pic"><div class="pop-head">${th}<h4>${esc(s.name)}</h4></div>
-    <p class="chips">${s.shop ? `<span>${PIA('bowl', '当店')}</span>` : s.featured ? `<span>${PIA('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${c.i}</span>`}<span>${PIA('coin', 'ポイント')}${ptsOf(s)}</span>
+    <p class="chips">${s.shop ? `<span>${PIA('bowl', '当店')}</span>` : s.featured ? `<span>${PIA('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${catArt(s)}</span>`}<span>${PIA('coin', 'ポイント')}${ptsOf(s)}</span>
       <span${s.approx ? ' title="位置は概算・広めに判定"' : ''}>${PIA('pin', s.approx ? '現在地から（位置は概算・広めに判定）' : '現在地から')}${s.approx ? '≈' : ''}${d}</span><span>${v ? `${PIA('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PIA('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
@@ -1250,7 +1252,7 @@ function refreshNearby() {
     btn.hidden = false;
     btn.classList.toggle('feat', !!selected.featured);
     const th = simple() ? spotThumb(selected) : '';
-    if (th) $('spinIco').innerHTML = th; else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
+    if (th) $('spinIco').innerHTML = th; else if (simple()) $('spinIco').innerHTML = catArt(selected); else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
     $('spinName').textContent = selected.name;
     const lock = demo ? 0 : vehicleUntil - Date.now();
     const why = driving ? '🚗 車を降りるとチェックインできます'

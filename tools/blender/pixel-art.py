@@ -48,6 +48,8 @@ MATS = {
     'giftR': '#d23a2e', 'giftY': '#ffd54f', 'gear': '#9aa4b0', 'gearD': '#3a3a3a', 'chawan': '#c0392b', 'gohan': '#ffffff', 'hashi': '#8a5a2b',
     # きろく の数字の札
     'hoshi': '#ffd54f', 'hon': '#2f5d9a', 'flagR': '#d23a2e', 'pole': '#8a6a3e', 'pinR': '#e0453a', 'fire': '#ff8a1c', 'fireY': '#ffd54f', 'ashi': '#7a4a2a',
+    # 地図の上のボタン
+    'umi': '#3d86c6', 'riku': '#6fbf4a', 'truck': '#f4f4f4', 'tire': '#2a2a2a', 'hari': '#d23a2e', 'hariB': '#2f5d9a', 'hairY': '#f2c230', 'shirt': '#3f7fbf', 'pants': '#2d3a55',
 }
 
 
@@ -650,6 +652,50 @@ def quest():
     return dict(target=(0, 0, 0.38), scale=1.05, el=8, az=-15, size=32)
 
 
+# ---------- 地図の上の丸いボタン（せかいちず・車・おまかせ歩き）：32×32 ----------
+def btn_globe():
+    """せかいちず：青い地球に緑の陸"""
+    sphere('chikyu', 'umi', 0.42, (0, 0, 0))
+    for i, (x, y, z, r) in enumerate(((-0.12, -0.30, 0.16, 0.16), (0.16, -0.32, -0.06, 0.14), (-0.20, -0.28, -0.18, 0.10), (0.05, -0.36, 0.22, 0.08))):
+        sphere(f'riku{i}', 'riku', r, (x, y, z), (1.3, 0.5, 1))
+    return dict(target=(0, 0, 0), scale=1.0, el=10, az=-10, size=32)
+
+
+def btn_car():
+    """車に乗る：白い軽トラック（運転席と荷台、黒いタイヤ）"""
+    box('cab', 'truck', (0.30, 0.42, 0.34), (0.26, 0, 0.30), bevel=0.04)
+    box('mado', 'glass', (0.02, 0.36, 0.14), (0.415, 0, 0.36))
+    box('dai', 'truck', (0.80, 0.44, 0.10), (0.0, 0, 0.14))
+    box('aori', 'truck', (0.50, 0.44, 0.12), (-0.16, 0, 0.24))
+    box('kome', 'kraft', (0.30, 0.30, 0.12), (-0.16, 0, 0.32), bevel=0.03)
+    for x in (0.26, -0.26):
+        for y in (0.22, -0.22):
+            cyl(f'tire{x}{y}', 'tire', 0.09, 0.06, (x, y, 0.09), (math.pi / 2, 0, 0), 16)
+    return dict(target=(0, 0, 0.22), scale=1.0, el=20, az=-40, size=32)
+
+
+def btn_walker():
+    """降りる（歩く）：黄色い髪に青い服の主人公が歩くところ"""
+    sphere('atama', 'skin', 0.13, (0, 0, 0.78))
+    sphere('kami', 'hairY', 0.14, (0, 0.03, 0.82), (1, 1, 0.8))
+    box('karada', 'shirt', (0.22, 0.14, 0.30), (0, 0, 0.50), bevel=0.04)
+    for side in (-1, 1):
+        box(f'ashi{side}', 'pants', (0.08, 0.09, 0.30), (side * 0.06, side * 0.06, 0.20), (side * 0.35, 0, 0))
+        box(f'ude{side}', 'shirt', (0.06, 0.07, 0.24), (side * 0.15, -side * 0.05, 0.52), (-side * 0.4, 0, 0))
+    return dict(target=(0, 0, 0.48), scale=1.05, el=8, az=-70, size=32)
+
+
+def btn_compass():
+    """おまかせ歩き：方位磁石（金のふち、白い文字盤、赤と青の針）"""
+    rot = (math.pi / 2, 0, 0)
+    cyl('fuchi', 'gold', 0.44, 0.10, (0, 0, 0), rot, 40)
+    cyl('ban', 'white', 0.36, 0.11, (0, 0, 0), rot, 40)
+    cyl('kita', 'hari', 0.07, 0.30, (0, -0.07, 0.15), (0, 0, 0), 4, r2=0.0)
+    cyl('minami', 'hariB', 0.07, 0.30, (0, -0.07, -0.15), (math.pi, 0, 0), 4, r2=0.0)
+    sphere('jiku', 'gold', 0.04, (0, -0.08, 0))
+    return dict(target=(0, 0, 0), scale=1.0, el=6, az=-10, size=32)
+
+
 def medal():
     """バッジのメダル（赤と白のリボンに、金のメダル。まんなかは平らにして、バッジの絵を上にのせる）"""
     rot = (math.pi / 2, 0, 0)
@@ -668,6 +714,7 @@ MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
+MODELS.update({'btn-globe': btn_globe, 'btn-car': btn_car, 'btn-walker': btn_walker, 'btn-compass': btn_compass})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
     ('student', npc_student), ('fisher', npc_fisher), ('staff', npc_staff), ('guide', npc_guide), ('monk', npc_monk))})

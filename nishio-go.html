@@ -50,13 +50,13 @@
 <!-- ドット絵の地図 -->
 <section id="pxView" aria-label="ドット絵の地図">
   <canvas id="pxCanvas"></canvas>
-  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
+  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
   <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
   <div class="px-pad" id="pxPad" hidden>
     <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
-    <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car"></i></button>
-    <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）"><i data-pi="compass"></i></button>
+    <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car" data-art="btn-car"></i></button>
+    <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）"><i data-pi="compass" data-art="btn-compass"></i></button>
   </div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
 </section>

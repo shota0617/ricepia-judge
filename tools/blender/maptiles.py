@@ -3,7 +3,7 @@
 #   → tools/blender/maptiles-sheets.py で 屋根の色10 × 壁の色5 × 季節4 をのせて 1万通り（10000マス）
 # - 木：10の立体（広葉樹・松・杉・竹・植えこみ など）。風でゆれる2コマ目は、シートにする段で葉をずらして作る
 # - 斜め上（南）から見下ろす。4倍の大きさに2回描き（光の当たり具合／材質ごとの色分け）、16×16 の材質の番号と明るさの段を TMP に保存する
-# - 公園・ビニールハウス・墓地・工場の敷地・丘・山：それぞれ6つの立体（季節と色はシートにする段で）
+# - 芝生（公園など）・ビニールハウス・墓地・工場の敷地・丘・山：それぞれ6つの立体（季節と色はシートにする段で）
 # - 田んぼ：こよみの田んぼのようす5つ（青田・黄金色・田植え・田おこし・刈田）× 3通り。上下左右のマスとつながるよう、景色をマスの大きさでくり返す
 # - 茶畑・畑・砂浜・境内の砂利・草地：茶畑と畑と砂利はくり返す景色（となりとつながる）、砂浜と草地はマスの中の小物
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
@@ -128,53 +128,21 @@ def tree(k):
 
 # ---------- 公園・ビニールハウス・墓地・工場の敷地・丘・山（どれも 0〜5 の6通り） ----------
 def park(k):
+    """芝生（公園のほか、湿地・運動場・ゴルフ場なども同じマスなので、遊具は置かず芝生と花と木だけ）"""
     box('jimen', 'shiba', (3.0, 3.0, 0.02), (0, 0, -0.01))
-    # 小道は描かない（となりのマスとつながらず、しまもようになるので）
-
-    def bench(x, y):
-        box(f'bench{x}', 'bench', (0.24, 0.07, 0.02), (x, y, 0.09))
-        box(f'benchB{x}', 'bench', (0.24, 0.02, 0.07), (x, y + 0.04, 0.14))
-        for dx in (-0.1, 0.1):
-            box(f'benchL{x}{dx}', 'kuro', (0.02, 0.06, 0.08), (x + dx, y, 0.04))
-
-    def flowers(x, y, w=0.26):
-        box(f'kadan{x}', 'renga', (w, 0.14, 0.05), (x, y, 0.025))
-        for i in range(5):
-            sphere(f'hana{x}{i}', 'hana' if i % 2 else 'hana2', 0.03, (x - w / 2 + 0.03 + i * (w - 0.06) / 4, y, 0.07))
-
-    def tree(x, y, r=0.2, m='ki'):
-        cyl(f'miki{x}', 'miki', 0.03, 0.22, (x, y, 0.11), verts=6)
-        sphere(f'ha{x}', m, r, (x, y, 0.22 + r * 0.7), (1, 1, 0.85))
-    if k == 0:
-        bench(0.22, -0.2)
-        tree(0.25, 0.25, 0.22, 'sakura')
-        flowers(-0.32, -0.32)
-    elif k == 1:   # すべり台
-        box('dai', 'yugu', (0.12, 0.12, 0.3), (-0.15, 0.1, 0.15))
-        box('suberi', 'yugu2', (0.12, 0.42, 0.015), (-0.15, -0.12, 0.15), (-0.62, 0, 0))
-        tree(0.28, 0.22, 0.18)
-        flowers(0.22, -0.3, 0.22)
-    elif k == 2:   # ブランコ
-        for x in (-0.28, 0.08):
-            cyl(f'po{x}', 'yugu', 0.015, 0.34, (x, 0.05, 0.17), verts=6)
-        cyl('bar', 'yugu', 0.015, 0.4, (-0.1, 0.05, 0.34), (0, math.pi / 2, 0), 6)
-        for x in (-0.2, 0.0):
-            box(f'za{x}', 'bench', (0.08, 0.05, 0.015), (x, 0.05, 0.1))
-        tree(0.3, -0.25, 0.17, 'sakura')
-    elif k == 3:
-        tree(0.22, 0.12, 0.26, 'sakura')
-        bench(-0.32, -0.3)
-    elif k == 4:   # 池と噴水
-        cyl('ike', 'mizu', 0.3, 0.02, (0, 0, 0.01), verts=20)
-        cyl('fuchi', 'iwa', 0.33, 0.015, (0, 0, 0.005), verts=20)
-        cyl('funsui', 'iwa', 0.05, 0.12, (0, 0, 0.06), verts=8)
-        sphere('mizu2', 'mizu', 0.05, (0, 0, 0.15))
-    else:   # 街灯と花だん
-        cyl('toh', 'kuro', 0.015, 0.4, (-0.3, 0.2, 0.2), verts=6)
-        sphere('akari', 'akari', 0.04, (-0.3, 0.2, 0.42))
-        flowers(-0.25, -0.25)
-        tree(-0.15, 0.32, 0.16)
-    return dict(target=(0, 0.06, 0.16))
+    rnd = __import__('random').Random(400 + k)
+    b0 = cyl('kabu', 'kusaK', 0.05, 0.1, (0, 0, -5), verts=5, r2=0.0)
+    for i in range(3 + k % 3):   # 草の株
+        dup(b0, f'kabu{i}', (rnd.uniform(-0.4, 0.4), rnd.uniform(-0.4, 0.3), 0.05))
+    if k in (1, 3):   # 小さな花のかたまり
+        for i in range(4):
+            sphere(f'hana{i}', 'hana' if i % 2 else 'hana2', 0.03, (rnd.uniform(-0.35, 0.35), rnd.uniform(-0.35, 0.25), 0.03))
+    if k == 4:   # 低い植えこみ
+        sphere('yabu', 'ki', 0.12, (0.2, -0.15, 0.05), (1.4, 1, 0.6))
+    if k == 5:   # 木（桜のころは花）
+        cyl('miki', 'miki', 0.03, 0.22, (0.05, 0.12, 0.11), verts=6)
+        sphere('ha', 'sakura', 0.22, (0.05, 0.12, 0.37), (1, 1, 0.85))
+    return dict(target=(0, 0.06, 0.12))
 
 
 def greenhouse(k):
@@ -420,7 +388,7 @@ def grass(k):
 
 
 FIELD = {'tea': (tea, 3), 'veg': (veg, 4), 'sand': (sand, 4), 'gravel': (gravel, 3), 'grass': (grass, 6)}
-FRAME = {'park', 'cemetery', 'factory', 'hill', 'mountain'}
+FRAME = {'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
 
 

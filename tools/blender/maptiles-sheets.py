@@ -139,10 +139,10 @@ def sway(mat, names, leafy=LEAFY, ground='kusa'):
     return out
 
 
-# 公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30マスずつ（季節4つ）。nishio-go/maptiles/misc-<季節>.png に1行ずつ
+# 芝生（公園など）・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30マスずつ（季節4つ）。nishio-go/maptiles/misc-<季節>.png に1行ずつ
 MISC = ['park', 'greenhouse', 'cemetery', 'factory', 'hill', 'mountain']
 MISC_GROUND = {'park': 'shiba', 'greenhouse': 'tsuchi', 'cemetery': 'jari', 'factory': 'concrete', 'hill': 'kusa', 'mountain': 'kusa'}
-MISC_FLAT = {'park': ('suna', 'mizu', 'fuchi', 'iwa'), 'factory': ('sen',), 'cemetery': ('hana',)}
+MISC_FLAT = {'park': ('kusaK', 'hana', 'hana2'), 'factory': ('sen',), 'cemetery': ('hana',)}
 MISC_OUTLINE = {'park': '#2a6f29', 'hill': '#2a6f29', 'mountain': '#3a2a1a', 'greenhouse': '#4a5a60'}
 VAR = {   # 色5通り（場所ごとにちがう色になる）
     'hana': ['#ff8fb1', '#fff176', '#ffffff', '#e04a6a', '#c78ad8'], 'hana2': ['#fff176', '#ffffff', '#ff8fb1', '#ffb347', '#8fc8ff'],
@@ -164,6 +164,7 @@ def misc_pal(kind, s, v):
     pal['ki'] = LEAF[s][v % 3]
     pal['sakura'] = ['#f2a9c4', LEAF[1][v % 3], LEAF[2][v % 3], '#8a6a50'][s]   # 桜：春は花、夏は緑、秋は紅葉、冬は枝
     pal['matsu'] = '#2a6a3a'
+    pal['kusaK'] = ['#3f9a3a', '#3a8f36', '#5a8a36', '#4a7a46'][s]
     pal['oka'] = [['#6cc35a', '#62b850'], ['#5fb853', '#56ad4a'], ['#7fb04a', '#c8963a'], ['#8a9a6a', '#7f9060']][s][v % 2]
     pal['yama'] = [['#5f8a40', '#6a8a48'], ['#4a7a3a', '#557a40'], ['#a0602a', '#8a6a30'], ['#7a6a50', '#6a6248']][s][v % 2]
     pal['yamaki'] = [LEAF[0][0], LEAF[1][0], LEAF[2][v % 3], LEAF[3][0]][s]

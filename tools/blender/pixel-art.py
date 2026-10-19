@@ -757,11 +757,53 @@ def clock():
     return dict(target=(0, 0, 0.44), scale=1.0, el=6, az=-12, size=32)
 
 
+def lock():
+    """まだ見つけていない題材：南京錠（銀のつると金の本体、黒い鍵穴）"""
+    tube('tsuru', 'steel', [(-0.2, 0, 0.42), (-0.2, 0, 0.66), (0, 0, 0.82), (0.2, 0, 0.66), (0.2, 0, 0.42)], 0.06)
+    box('hontai', 'gold', (0.62, 0.22, 0.5), (0, 0, 0.25), bevel=0.05)
+    cyl('kagiana', 'dark', 0.06, 0.05, (0, -0.11, 0.3), (math.pi / 2, 0, 0), 12)
+    box('kagiana2', 'dark', (0.04, 0.05, 0.14), (0, -0.11, 0.2))
+    return dict(target=(0, 0, 0.42), scale=1.05, el=8, az=-15)
+
+
+def ticket():
+    """クーポン：赤い帯の券（点線の切り取り線）"""
+    box('kami', 'white', (0.86, 0.04, 0.48), (0, 0, 0.3), (0, 0, 0))
+    box('obi', 'red', (0.24, 0.045, 0.48), (-0.31, 0, 0.3))
+    for i in range(5):
+        box(f'kiri{i}', 'dark', (0.02, 0.05, 0.05), (-0.16, 0, 0.12 + i * 0.09))
+    for i in range(3):
+        box(f'gyo{i}', 'kraftD', (0.36 - i * 0.08, 0.045, 0.04), (0.12 - i * 0.04, 0, 0.42 - i * 0.1))
+    return dict(target=(0, 0, 0.3), scale=1.0, el=6, az=-12, size=32)
+
+
+def new_badge():
+    """はじめて：金にかがやく四つ角のきらめき（大と小）"""
+    for j, (x, z, r) in enumerate(((0.0, 0.45, 0.42), (0.32, 0.78, 0.16))):
+        bm = bmesh.new()
+        pts = [(math.cos(i * math.pi / 4 + math.pi / 2) * (r if i % 2 == 0 else r * 0.28), math.sin(i * math.pi / 4 + math.pi / 2) * (r if i % 2 == 0 else r * 0.28)) for i in range(8)]
+        f = [bm.verts.new((x + px, -0.05, z + pz)) for px, pz in pts]
+        b_ = [bm.verts.new((x + px, 0.05, z + pz)) for px, pz in pts]
+        cf, cb = bm.verts.new((x, -0.12, z)), bm.verts.new((x, 0.12, z))
+        for i in range(8):
+            k = (i + 1) % 8
+            bm.faces.new((f[i], f[k], cf))
+            bm.faces.new((b_[k], b_[i], cb))
+            bm.faces.new((f[i], b_[i], b_[k], f[k]))
+        me = bpy.data.meshes.new(f'kira{j}')
+        bm.to_mesh(me)
+        bm.free()
+        o = bpy.data.objects.new(f'kira{j}', me)
+        bpy.context.scene.collection.objects.link(o)
+        me.materials.append(material('goldL' if j else 'gold'))
+    return dict(target=(0.05, 0, 0.5), scale=1.05, el=6, az=-12, size=32)
+
+
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
-MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock})
+MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock, 'lock': lock, 'ticket': ticket, 'new': new_badge})
 MODELS.update({'btn-globe': btn_globe, 'btn-car': btn_car, 'btn-walker': btn_walker, 'btn-compass': btn_compass})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),

@@ -15,7 +15,7 @@ TMP = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'nsg-dots3d')
 N = 48
 ORDER = ['jissoji', 'kabuse', 'matcha', 'ishiusu', 'tenteko', 'ike', 'unaju', 'kabayaki', 'ebisen', 'asari', 'sakanahiroba', 'fune', 'kurokabe',
          'okinoshima', 'ushitora', 'machiya', 'densha', 'akauma', 'kogane', 'enden', 'gion', 'toba', 'chochin', 'ajisai', 'tanbo']   # dots.js の題材の順（番号）
-CROWD = {'tenteko', 'gion'}   # t（人出）で形がかわる行事
+CROWD = {'tenteko', 'gion', 'toba', 'chochin'}   # t で形がかわる行事（人出、炎の大きさと見物の人）
 
 
 def rgb(c):

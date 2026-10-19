@@ -125,7 +125,7 @@ def sun_light(az=-40, el=40, energy=3.0):
     s.rotation_euler = d.to_track_quat('Z', 'Y').to_euler()
 
 
-# ---------- 題材（build(a, b, s, t)。a 置き方 0〜4・b 小物 0〜4・s 季節（行事は場面）・t 時間帯（人出の行事だけ形がかわる）） ----------
+# ---------- 題材（build(a, b, s, t)。a 置き方 0〜4・b 小物 0〜4・s 季節（行事は場面）・t 時間帯（行事だけ形がかわる：人出や炎の大きさ）） ----------
 MOTIFS = []
 
 
@@ -678,7 +678,7 @@ def gion(a, b, s, t, R):
 
 
 # 鳥羽の火祭り（2月。大たいまつ「すずみ」を燃やし、神男が火の中の神木と十二縄を取り出す）。s は炎の大きさ、t は時間（夕暮れ〜夜ふけ）
-@motif('toba')
+@motif('toba', crowd=True)
 def toba(a, b, s, t, R):
     ground('keidaiY')
     for i in range(2):   # すずみ（竹と茅の大たいまつ）
@@ -699,7 +699,7 @@ def toba(a, b, s, t, R):
 
 
 # 三河一色大提灯まつり（8月、諏訪神社。高さ10m前後の大提灯に武者絵などをえがく）。s は絵、t は時間（夕暮れ〜夜ふけ）
-@motif('chochin')
+@motif('chochin', crowd=True)
 def chochin(a, b, s, t, R):
     ground('keidaiY')
     box('haiden', 'itaD', (12, 2, 1.6), (0, 6, 0.8))

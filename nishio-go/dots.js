@@ -607,14 +607,14 @@
   }
   // No.1〜10000（はじめの25題材の晴れ）は、Blender で立体を作って焼いた絵（tools/blender/dots3d.py）。題材・季節・時間帯ごとのシート（48×48 が 5×5。並びは置き方の番号）を読み、切り出して使う
   // シートが読めないあいだ（読みこみ中・オフライン）は、前からの描き方で描く
-  const SHEETS = new Map();   // '題材-季節-時間帯' → { img, st：0 読みこみ中・1 読めた・2 読めなかった, p }
+  const SHEETS = new Map();   // '題材-季節-時間帯' → { img, st：0 読みこみ中・1 読めた・2 読めなかった, t：読めなかった時刻, p }
   const is3d = id => id >= 0 && id < OLD * PER;
   const sheetOf = id => { const r = id % PER, sl = Math.floor(r / NCOMP); return { key: `${Math.floor(id / PER)}-${sl >> 2}-${sl & 3}`, i: r % NCOMP }; };
   function loadSheet(key) {
     let e = SHEETS.get(key);
-    if (!e) {
-      e = { img: new Image(), st: 0 };
-      e.p = new Promise(res => { e.img.onload = () => { e.st = 1; res(); }; e.img.onerror = () => { e.st = 2; res(); }; });
+    if (!e || (e.st === 2 && Date.now() - e.t > 15000)) {   // 読めなかったシートは、15秒たてば読みなおす（電波が一時とぎれたときなど）
+      e = { img: new Image(), st: 0, t: 0 };
+      e.p = new Promise(res => { e.img.onload = () => { e.st = 1; res(); }; e.img.onerror = () => { e.st = 2; e.t = Date.now(); res(); }; });
       e.img.src = `nishio-go/dots3d/${key}.png`;
       SHEETS.set(key, e);
     }
@@ -622,7 +622,7 @@
   }
   const keysOf = ids => [...new Set(ids.filter(is3d).map(id => sheetOf(id).key))];
   // ready(ids)：絵を出してよいか（シートが読めたか、読めなかったと分かった）。load(ids)：シートを読む（4秒で待つのをやめる）
-  const ready = ids => keysOf(ids).every(k => SHEETS.has(k) && SHEETS.get(k).st !== 0);
+  const ready = ids => keysOf(ids).every(k => SHEETS.has(k) && SHEETS.get(k).st !== 0 && !(SHEETS.get(k).st === 2 && Date.now() - SHEETS.get(k).t > 15000));
   const load = ids => Promise.race([Promise.all(keysOf(ids).map(k => loadSheet(k).p)), new Promise(res => setTimeout(res, 4000))]);
   const sceneOf = (mo, p) => (mo.scene ? mo.scene(p) : { s: p.s, night: p.t === 3 });
   // 天気4つめ：冬の景色は雪、夜は満月、ほかは虹
@@ -655,7 +655,7 @@
     const k = { ...p, wk, R: rndOf(hashStr('dot:' + id)), W: rndOf(hashStr('wx:' + id)) };
     mo.draw(r, h, k);
     if (wk && !mo.indoor) wxOver(r, k, mo.wy || 48);
-    return sh && sh.st === 0 ? cv : keep(id, cv);   // 読みこみ中に描いた代わりの絵は、とっておかない
+    return sh ? cv : keep(id, cv);   // シートが読めないあいだの代わりの絵は、とっておかない（あとで読めたら Blender の絵にする）
   }
   function keep(id, cv) {
     if (cache.size > 300) cache.delete(cache.keys().next().value);

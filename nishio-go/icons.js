@@ -159,9 +159,12 @@
   const url = name => urls[name] || (urls[name] = canvas(name) ? canvas(name).toDataURL() : '');
   // 文字のかわりに置く <img>（alt は読み上げ用の言葉）
   const html = (name, alt = '', cls = '') => (ART[name] ? `<img class="pi${cls ? ' ' + cls : ''}" src="${url(name)}" alt="${alt}" width="12" height="12"/>` : '');
-  // ページに書いてある <i data-pi="…"> を絵にする
+  // ページに書いてある <i data-pi="…"> を絵にする。data-art="…" があれば、Blender で作った大きめの絵（nishio-go/art/…png）にする
   function fill(root = document) {
-    root.querySelectorAll('i[data-pi]').forEach(el => { el.outerHTML = html(el.dataset.pi, el.getAttribute('aria-label') || '', el.className.replace(/\bpi\b/, '').trim()); });
+    root.querySelectorAll('i[data-pi]').forEach(el => {
+      const alt = el.getAttribute('aria-label') || '', cls = el.className.replace(/\bpi\b/, '').trim(), art = el.dataset.art;
+      el.outerHTML = art && /^[a-z0-9-]+$/.test(art) ? `<img class="pi art${cls ? ' ' + cls : ''}" src="nishio-go/art/${art}.png" alt="${alt}" width="32" height="32"/>` : html(el.dataset.pi, alt, cls);
+    });
   }
   // 方角（北・北東…）の矢印：上と右上の絵を90度ずつ回す
   const DIRS = { 北: ['up', 0], 北東: ['upright', 0], 東: ['up', 90], 南東: ['upright', 90], 南: ['up', 180], 南西: ['upright', 180], 西: ['up', 270], 北西: ['upright', 270] };

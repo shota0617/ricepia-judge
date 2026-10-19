@@ -537,3 +537,8 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .intro-shots img{display:block;width:100%;height:auto;aspect-ratio:1/2;object-fit:cover;border-radius:10px;border:2px solid #e9c46a;box-shadow:0 3px 10px rgba(0,0,0,.25);background:#222}
 .intro-shots span{display:block;margin-top:4px;font-size:11px;font-weight:700;white-space:nowrap}
 .popup img.npc-face.art{background:#f3ead2;object-fit:contain;object-position:50% 100%}
+/* 下のタブと上のバーの絵（Blender で作った 32×32） */
+.brand img.pi.art{width:28px;height:28px;vertical-align:-8px}
+.home-btn img.pi.art{width:28px;height:28px}
+.tabs button img.pi.art{width:28px;height:28px}
+.simple .tabs button img.pi.art{width:32px;height:32px}

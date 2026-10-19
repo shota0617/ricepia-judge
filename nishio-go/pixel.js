@@ -1133,7 +1133,7 @@ function loadDeco() {
   DECO.s = s;
   if (!DECO.idx) fetch('nishio-go/deco/deco.json').then(r => r.json()).then(j => { DECO.idx = new Map(j.subjects.map((n, i) => [n, i])); DECO.cols = j.cols; dirty = true; }).catch(() => { DECO.s = -1; });
   const img = new Image();
-  img.onload = () => { if (DECO.s === s) { DECO.img = img; dirty = true; } };
+  img.onload = () => { if (DECO.s === s) { DECO.img = img; decoCache.clear(); dirty = true; } };
   img.onerror = () => { if (DECO.s === s) DECO.s = -1; };   // つぎに季節を確かめるとき、もう一度
   img.src = `nishio-go/deco/deco-${s}.png`;
 }
@@ -1157,8 +1157,18 @@ function drawDeco(code, tx, ty, X, Y, T, now) {
   if (si === undefined) return;
   let k = (u >>> 9) % 6;
   if (DECO_ANIM.has(name)) k = (k & 6) | ((Math.floor(now / 650) + (u >>> 20)) & 1);   // 生きものは2つのポーズをいったりきたり
-  const i = ((si * 6 + k) * 4 + (u >>> 13) % 4) * 8 + (u >>> 16) % 8;
-  ctx.drawImage(DECO.img, (i % DECO.cols) * 16, Math.floor(i / DECO.cols) * 16, 16, 16, X, Y, T, T);
+  ctx.drawImage(decoCanvas(((si * 6 + k) * 4 + (u >>> 13) % 4) * 8 + (u >>> 16) % 8), X, Y, T, T);
+}
+// 小物の絵：シートから使う分だけ 16×16 の canvas に切り出してとっておく（Godot で地図を描くときも、ほかのマスと同じ5つの引数で描けるように）
+const decoCache = new Map();
+function decoCanvas(i) {
+  let c = decoCache.get(i);
+  if (c) return c;
+  c = document.createElement('canvas');
+  c.width = c.height = 16;
+  c.getContext('2d').drawImage(DECO.img, (i % DECO.cols) * 16, Math.floor(i / DECO.cols) * 16, 16, 16, 0, 0, 16, 16);
+  decoCache.set(i, c);
+  return c;
 }
 loadDeco();
 const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f
@@ -4702,7 +4712,7 @@ function checkCar() {
   if (c !== C.X && !CAR_OK.has(c)) setDriving(false, '🚶 道の外へ移動したので、車を降りました');
 }
 $('pxCar').addEventListener('click', toggleCar);
-// 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、左下に「稲刈り」ボタンを出す
+// 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、右上の列に「稲刈り」ボタンを出す（あるいて移動でも見えるよう、スティックの列には置かない）
 const PADDY_CODES = new Set([C.U, C.F]);
 function onPaddy() {
   if (worldMode || driving || (!G.me && !G.demo)) return false;

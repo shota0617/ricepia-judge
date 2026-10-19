@@ -543,3 +543,5 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .tabs button img.pi.art{width:28px;height:28px}
 .simple .tabs button img.pi.art{width:32px;height:32px}
 .stat.pic img.pi.art{width:32px;height:32px}
+.list li .ico img.pi.art{width:32px;height:32px}
+.card.tomorrow .chips img.pi.art{width:32px;height:32px}

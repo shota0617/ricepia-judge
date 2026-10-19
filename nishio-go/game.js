@@ -133,6 +133,7 @@ const track = (name, params) => { if (window.nsgTrack) nsgTrack(name, params); }
 // 文字を少なく（ふだん）：文字のかわりにドット絵（icons.js）。せってい の「文字を多めに出す」で切り替え
 const simple = () => document.body.classList.contains('simple');
 const PI = (n, alt = '') => (window.NSG_ICONS ? NSG_ICONS.html(n, alt) : '');
+const ART32 = (n, alt = '') => `<img class="pi art" src="nishio-go/art/${n}.png" alt="${esc(alt)}" width="32" height="32"/>`;   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
 const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
@@ -1569,12 +1570,12 @@ function renderLog() {
   const day = dayState(), qs = todaysQuests();
   $('questList').innerHTML = qs.map(q => {
     const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
-    if (simple()) return `<li class="${done ? 'done' : ''}"><span class="ico">${PI(done ? 'star' : 'scroll', done ? '達成' : 'クエスト')}</span><span class="main"><b>${esc(q.text)}</b>
+    if (simple()) return `<li class="${done ? 'done' : ''}"><span class="ico">${ART32(done ? 'stat-star' : 'quest', done ? '達成' : 'クエスト')}</span><span class="main"><b>${esc(q.text)}</b>
       <span class="bar" title="${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}"><i style="width:${Math.round(v / q.goal * 100)}%"></i></span></span><span class="num">${PI('coin', 'ポイント')}+${q.pts}</span></li>`;
     return `<li class="${done ? 'done' : ''}"><span class="ico">${done ? '✅' : q.icon}</span><span class="main"><b>${esc(q.text)}</b>
       <small>${done ? '達成！' : `${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}`}${q.sub ? `・${esc(q.sub)}` : ''}</small></span><span class="num">+${q.pts}</span></li>`;
   }).join('') + (simple()
-    ? `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${PI(day.bonus ? 'medal' : 'scroll', '3つぜんぶ達成')}</span><span class="main"><b>3つぜんぶ達成</b></span><span class="num">${PI('coin', 'ポイント')}+${CFG.pts.questAll}</span></li>`
+    ? `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${ART32(day.bonus ? 'stat-medal' : 'quest', '3つぜんぶ達成')}</span><span class="main"><b>3つぜんぶ達成</b></span><span class="num">${PI('coin', 'ポイント')}+${CFG.pts.questAll}</span></li>`
     : `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${day.bonus ? '🏆' : '🎯'}</span><span class="main"><b>3つぜんぶ達成</b><small>${day.bonus ? '達成！あしたも新しいクエストが出ます' : 'あしたは別のクエストになります'}</small></span><span class="num">+${CFG.pts.questAll}</span></li>`);
   const ev = upcomingEvents();
   $('eventList').innerHTML = ev.length ? ev.map(({ e, when, next }) => {
@@ -2024,7 +2025,7 @@ function renderTomorrow() {
   el.hidden = !store.get('nsg_started', false);
   const items = tomorrowItems();
   el.innerHTML = simple()   // 文字を少なく（ふだん）：絵＋数の札（くわしくは長押しで出る名前）
-    ? `<b>${PI('calendar', '')} あした</b><div class="chips">${[['fire', `+${tomorrowBonus()}`, items[0]], ['scroll', '×3', items[1]], ['chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : [])].map(([ic, v, t]) => `<span title="${esc(t)}">${PI(ic, t)}${v}</span>`).join('')}</div>`
+    ? `<b>${PI('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : [])].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
     : `<b>📅 あしたのおたのしみ</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 // ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）

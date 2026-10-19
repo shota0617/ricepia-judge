@@ -558,3 +558,6 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .dot-motifs li.pic img.pi.art.lock{width:48px;height:48px;margin:12px 0;opacity:.6}
 .reward .rw .lvup img.pi.art{width:32px;height:32px;vertical-align:-9px}
 .list li .num img.pi.art{vertical-align:-10px}
+/* 文やボタンの中の小さい絵も Blender の 32×32（16px で出す：こまかい画面では 1点＝2画素でくっきり） */
+.lv-num img.pi.art,.pts img.pi.art,.btn img.pi.art,.popup .ev img.pi.art,.koyomi .ko-where img.pi.art,.simple .guide img.pi.art,details summary img.pi.art,.popup .area-prog img.pi.art{width:16px;height:16px;vertical-align:-3px}
+.fab img.pi.art{width:32px;height:32px}

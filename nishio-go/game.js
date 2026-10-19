@@ -404,11 +404,11 @@ function popupPic(s, c, v, left, d) {
       <span${s.approx ? ' title="位置は概算・広めに判定"' : ''}>${PIA('pin', s.approx ? '現在地から（位置は概算・広めに判定）' : '現在地から')}${s.approx ? '≈' : ''}${d}</span><span>${v ? `${PIA('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PIA('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
-    ${spotEvents(s).map(x => `<p class="ev">${PI('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
+    ${spotEvents(s).map(x => `<p class="ev">${PIA('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     ${spotMeibutsu(s).map(m => `<details class="mb"><summary>${m.icon} <b>${esc(m.name)}</b></summary>${esc(m.note)}</details>`).join('')}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
-    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PI('feet', '')} ここへ</button>` : ''}</div>`;
+    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PIA('feet', '')} ここへ</button>` : ''}</div>`;
 }
 
 function renderMarkers() {
@@ -502,7 +502,7 @@ function talkNpc(id, page = 0) {
     : `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
   if (d > lim) {
     if (pic) return { near: false, html: `${head}<p class="npc-say chips"><span>${PIA('talk', '遠くて声が届かない。近づいて話しかけよう')}</span>${Number.isFinite(d) ? `<span>${PIA('feet', 'あと')}${fmtM(d - lim)}</span>` : ''}</p>
-      ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">${PI('feet', '')} 近くへ</button>` : ''}</div>` };
+      ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">${PIA('feet', '')} 近くへ</button>` : ''}</div>` };
     return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
   }
@@ -1155,7 +1155,7 @@ function renderGuide() {
   el.hidden = false;
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
   const alts = (S.guide && S.guide.alts) || [];
-  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PI('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${fmtM(dist(me, g))}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${fmtM(dist(me, g))}</span>`;
+  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${fmtM(dist(me, g))}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${fmtM(dist(me, g))}</span>`;
   el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
@@ -1214,7 +1214,7 @@ function koyomiPic(now, sk, p, hs, wx, se, pc, SEASON_PI) {
   const seen = hs.map(h => `${h.icon}${esc(h.name)}`).filter((v, i, a) => a.indexOf(v) === i);
   return `<span class="more ko-pic"><span class="ko-cells">${cells}</span>`
     + (seen.length || KO.doyoUshi(now) ? `<span class="chips">${seen.map(x => `<span>${x}</span>`).join('')}${KO.doyoUshi(now) ? '<span>🐟 土用の丑</span>' : ''}</span>` : '')
-    + (pc.city ? `<span class="ko-where">${PI('pin', '')}${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}</span>` : '')
+    + (pc.city ? `<span class="ko-where">${PIA('pin', '')}${esc(pc.city)}${pc.town ? ' ' + esc(pc.town) : ''}</span>` : '')
     + (wx ? '<small>天気の出典：気象庁（アメダス・天気予報）</small>' : '') + '</span>';
 }
 $('koyomi') && $('koyomi').addEventListener('click', () => $('koyomi').classList.toggle('open'));
@@ -1281,7 +1281,7 @@ function refreshNearby() {
   }
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length;
-    msgs.push(simple() ? `${PI('book', 'まちメモ')} <b>${knownFacts()}</b>　${PI('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`);
+    msgs.push(simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`);
   }
   setStatus(msgs.slice(0, 2).join('<br/>'), true);
 }
@@ -1438,7 +1438,7 @@ function renderUps() {
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     if (simple()) return `<li class="up-pic" title="${esc(u.desc)}"><span class="ico">${UP_PI[u.id] ? `<img class="art" src="nishio-go/art/up-${u.id}.png" alt="${esc(u.name)}" width="48" height="48"/>` : PI('up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`
-      + (max ? `<span class="num">${PIA('medal', 'MAX')}</span>` : `<button type="button" class="btn mini" data-up="${u.id}"${S.points < cost ? ' disabled' : ''}>${PI('coin', 'ポイント')}${cost}</button>`) + '</li>';
+      + (max ? `<span class="num">${PIA('medal', 'MAX')}</span>` : `<button type="button" class="btn mini" data-up="${u.id}"${S.points < cost ? ' disabled' : ''}>${PIA('coin', 'ポイント')}${cost}</button>`) + '</li>';
     return `<li><span class="ico">${u.icon}</span><span class="main"><b>${esc(u.name)} <small>Lv${lv}/${u.cost.length}</small></b><small>${esc(u.desc)}</small></span>`
       + (max ? '<span class="num">MAX</span>' : `<button type="button" class="btn mini" data-up="${u.id}"${S.points < cost ? ' disabled' : ''}>${cost}pt</button>`) + '</li>';
   }).join('');
@@ -1717,8 +1717,8 @@ function renderRewards() {
     const why = limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
     if (pic) return `<li class="reward-pic"><span class="ico">${r.art ? `<img class="art" src="nishio-go/art/${r.art}.png" alt="" width="48" height="48"/>` : PIA('gift', '')}</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <span class="chips"><span>${PIA('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PIA('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}</span>
-      ${r.desc ? `<details><summary>${PI('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
-      <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${limit ? `${PI('clock', '')} あした` : short ? `${PI('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
+      ${r.desc ? `<details><summary>${PIA('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
+      <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${limit ? `${PIA('clock', '')} あした` : short ? `${PIA('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
     return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}${r.desc ? '・' + esc(r.desc) : ''}</small></span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''}>${why ? esc(why) : '交換'}</button></li>`;

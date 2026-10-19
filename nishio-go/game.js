@@ -1580,7 +1580,7 @@ function renderLog() {
   const ev = upcomingEvents();
   $('eventList').innerHTML = ev.length ? ev.map(({ e, when, next }) => {
     const s = e.spot && spots.find(x => x.id === evSpotId(e));
-    return `<li class="${next ? 'next' : ''}"><span class="ico">${simple() ? (s ? spotThumb(s) || PI('calendar', '') : PI('calendar', '')) : next ? '🗓️' : '📅'}</span><span class="main"><b>${esc(e.name)}</b>
+    return `<li class="${next ? 'next' : ''}"><span class="ico">${simple() ? (s && spotThumb(s)) || ART32('calendar', '') : next ? '🗓️' : '📅'}</span><span class="main"><b>${esc(e.name)}</b>
       <small>${esc(when)}${simple() ? '' : `・${esc(e.place)}`}</small></span>${s && demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">行く</button>` : s && S.visits[s.id] ? '<span class="num">✓</span>' : ''}</li>`;
   }).join('') : '<li class="empty">今月と来月の行事はありません</li>';
   const facts = factPool();
@@ -2025,7 +2025,7 @@ function renderTomorrow() {
   el.hidden = !store.get('nsg_started', false);
   const items = tomorrowItems();
   el.innerHTML = simple()   // 文字を少なく（ふだん）：絵＋数の札（くわしくは長押しで出る名前）
-    ? `<b>${PI('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : [])].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
+    ? `<b>${ART32('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : [])].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
     : `<b>📅 あしたのおたのしみ</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 // ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）

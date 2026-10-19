@@ -854,7 +854,8 @@ def main():
     if jobs > 1 and part is None:
         extra = ['--force'] if '--force' in args else []   # 描きなおす指定も、分けた先に渡す
         ps = [subprocess.Popen([sys.executable, __file__, *keys, *extra, '--part', f'{i}/{jobs}']) for i in range(jobs)]
-        sys.exit(max(p.wait() for p in ps))
+        codes = [p.wait() for p in ps]
+        sys.exit(1 if any(codes) else 0)   # ひとつでも失敗したら失敗（シグナルで止まると負の数になる）
     i0, n0 = map(int, part.split('/')) if part else (0, 1)
     todo = [j for k, j in enumerate(jobs_for(keys)) if k % n0 == i0]
     for n, (key, fn, a, b, s, t) in enumerate(todo):

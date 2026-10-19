@@ -1109,8 +1109,7 @@ const DECO = { img: null, s: -1, idx: null, cols: 96 };
 const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ）
   [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10',
     'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9', 'kiji', 'usagi', 'tsubame@4-7', 'hotaru@6-6', 'sanpo', 'jogger']],
-  [C.P]: [10, ['picnic@3-11', 'bench', 'inu', 'kodomo', 'hana@3-10', 'choucho@4-10', 'kotori', 'sanrinsha', 'nodate', 'sakura@3-4', 'momiji@11-12', 'tako@1-1',
-    'sanpo', 'jogger', 'fuusen', 'risu', 'tsubame@4-7']],
+  [C.P]: [12, ['kotori', 'karasu', 'hana@3-10', 'choucho@4-10', 'tsubame@4-7', 'kiji', 'usagi']],   // 芝生のマスは公園のほか湿地・運動場・ゴルフ場も同じなので、どこにいてもおかしくない物だけ
   [C.T]: [11, ['neko', 'neko', 'inu', 'jitensha', 'jihanki', 'ueki', 'gomi', 'tanuki', 'chouchin', 'kodomo', 'sanrinsha', 'bench', 'karasu', 'kotori',
     'akauma', 'unaginobori', 'nodate', 'daichouchin@8-8', 'yatai@7-7', 'koinobori@4-5', 'kadomatsu@1-1', 'tsukimi@9-9',
     'monohoshi', 'fuusen', 'basutei', 'bonsai', 'sanpo', 'jogger', 'tsubame@4-7']],

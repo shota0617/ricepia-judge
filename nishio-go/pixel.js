@@ -1026,8 +1026,10 @@ function buildTiles(codes) {
 buildTiles();
 /* ---------- Blender で描いた地図の家と木（tools/blender/maptiles.py → nishio-go/maptiles/ のシート） ----------
    家：50の立体 × 屋根の色10 × 壁の色5 ＝ 2500通りを季節ごとに（4季節で1万マス）。場所ごとにちがう家になる
-   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま */
-const MT = { s: -1, house: null, tree: null };
+   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま
+   公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順） */
+const MT = { s: -1, house: null, tree: null, misc: null };
+const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
   if (KOYO) return 2;
   if (SAKURA) return 0;
@@ -1047,6 +1049,7 @@ function sliceSheet(img, cols, rows) {   // 16×16 の canvas に切り分ける
 function applyMapTiles() {
   if (MT.house) tiles[C.Q] = MT.house;
   if (MT.tree) tiles[C.W] = MT.tree;
+  if (MT.misc) MISC_ROWS.forEach((code, i) => { tiles[code] = MT.misc[i]; });
   dirty = true;
 }
 function loadMapTiles() {
@@ -1061,6 +1064,7 @@ function loadMapTiles() {
   };
   get('house', img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
   get('tree', img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
+  get('misc', img => { const a = sliceSheet(img, 30, MISC_ROWS.length); MT.misc = MISC_ROWS.map((_, r) => a.slice(r * 30, r * 30 + 30).map(c => [c, c])); });
 }
 loadMapTiles();
 const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1 : 0;   // 森は、風がわたるように少しずつずれてゆれる
@@ -1075,7 +1079,7 @@ function refreshSeason(now) {
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;
   buildTiles([C.U, C.F, C.W, C.P]);
-  applyMapTiles();   // Blender の森の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
+  applyMapTiles();   // Blender の森・公園の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
   makeWorldImg();
   dirty = true;
 }

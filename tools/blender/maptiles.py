@@ -3,10 +3,12 @@
 #   → tools/blender/maptiles-sheets.py で 屋根の色10 × 壁の色5 × 季節4 をのせて 1万通り（10000マス）
 # - 木：10の立体（広葉樹・松・杉・竹・植えこみ など）。風でゆれる2コマ目は、シートにする段で葉をずらして作る
 # - 斜め上（南）から見下ろす。4倍の大きさに2回描き（光の当たり具合／材質ごとの色分け）、16×16 の材質の番号と明るさの段を TMP に保存する
-# 使い方：python tools/blender/maptiles.py（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
+# - 公園・ビニールハウス・墓地・工場の敷地・丘・山：それぞれ6つの立体（季節と色はシートにする段で）
+# 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
 import os
+import sys
 
 import numpy as np
 
@@ -122,11 +124,180 @@ def tree(k):
     return dict(target=(0, 0, 0.2))
 
 
+# ---------- 公園・ビニールハウス・墓地・工場の敷地・丘・山（どれも 0〜5 の6通り） ----------
+def park(k):
+    box('jimen', 'shiba', (3.0, 3.0, 0.02), (0, 0, -0.01))
+    # 小道は描かない（となりのマスとつながらず、しまもようになるので）
+
+    def bench(x, y):
+        box(f'bench{x}', 'bench', (0.24, 0.07, 0.02), (x, y, 0.09))
+        box(f'benchB{x}', 'bench', (0.24, 0.02, 0.07), (x, y + 0.04, 0.14))
+        for dx in (-0.1, 0.1):
+            box(f'benchL{x}{dx}', 'kuro', (0.02, 0.06, 0.08), (x + dx, y, 0.04))
+
+    def flowers(x, y, w=0.26):
+        box(f'kadan{x}', 'renga', (w, 0.14, 0.05), (x, y, 0.025))
+        for i in range(5):
+            sphere(f'hana{x}{i}', 'hana' if i % 2 else 'hana2', 0.03, (x - w / 2 + 0.03 + i * (w - 0.06) / 4, y, 0.07))
+
+    def tree(x, y, r=0.2, m='ki'):
+        cyl(f'miki{x}', 'miki', 0.03, 0.22, (x, y, 0.11), verts=6)
+        sphere(f'ha{x}', m, r, (x, y, 0.22 + r * 0.7), (1, 1, 0.85))
+    if k == 0:
+        bench(0.22, -0.2)
+        tree(0.25, 0.25, 0.22, 'sakura')
+        flowers(-0.32, -0.32)
+    elif k == 1:   # すべり台
+        box('dai', 'yugu', (0.12, 0.12, 0.3), (-0.15, 0.1, 0.15))
+        box('suberi', 'yugu2', (0.12, 0.42, 0.015), (-0.15, -0.12, 0.15), (-0.62, 0, 0))
+        tree(0.28, 0.22, 0.18)
+        flowers(0.22, -0.3, 0.22)
+    elif k == 2:   # ブランコ
+        for x in (-0.28, 0.08):
+            cyl(f'po{x}', 'yugu', 0.015, 0.34, (x, 0.05, 0.17), verts=6)
+        cyl('bar', 'yugu', 0.015, 0.4, (-0.1, 0.05, 0.34), (0, math.pi / 2, 0), 6)
+        for x in (-0.2, 0.0):
+            box(f'za{x}', 'bench', (0.08, 0.05, 0.015), (x, 0.05, 0.1))
+        tree(0.3, -0.25, 0.17, 'sakura')
+    elif k == 3:
+        tree(0.22, 0.12, 0.26, 'sakura')
+        bench(-0.32, -0.3)
+    elif k == 4:   # 池と噴水
+        cyl('ike', 'mizu', 0.3, 0.02, (0, 0, 0.01), verts=20)
+        cyl('fuchi', 'iwa', 0.33, 0.015, (0, 0, 0.005), verts=20)
+        cyl('funsui', 'iwa', 0.05, 0.12, (0, 0, 0.06), verts=8)
+        sphere('mizu2', 'mizu', 0.05, (0, 0, 0.15))
+    else:   # 街灯と花だん
+        cyl('toh', 'kuro', 0.015, 0.4, (-0.3, 0.2, 0.2), verts=6)
+        sphere('akari', 'akari', 0.04, (-0.3, 0.2, 0.42))
+        flowers(-0.25, -0.25)
+        tree(-0.15, 0.32, 0.16)
+    return dict(target=(0, 0.06, 0.16))
+
+
+def greenhouse(k):
+    """ビニールハウス（西尾のカーネーションなど）。南北に長いハウスがマスの上下につながる"""
+    box('jimen', 'tsuchi', (3.0, 3.0, 0.02), (0, 0, -0.01))
+    w = (0.78, 0.7, 0.82, 0.74, 0.66, 0.8)[k]
+    h = (0.34, 0.3, 0.38, 0.32, 0.28, 0.36)[k]
+    x0 = (0, -0.04, 0.03, 0.0, -0.06, 0.02)[k]
+    cyl('house', 'vinyl', w / 2, 3.0, (x0, 0, 0), (math.pi / 2, 0, 0), 20)
+    o = bpy.context.object
+    o.scale = (1, h / (w / 2), 1)
+    for i in range(-6, 7):   # 骨組み
+        y = i * 0.25 + (0.12 if k % 2 else 0)
+        cyl(f'hone{i}', 'hone', w / 2 + 0.006, 0.012, (x0, y, 0), (math.pi / 2, 0, 0), 20).scale = (1, h / (w / 2), 1)
+    if k in (1, 4):   # 横の窓をあけている（中のカーネーションが見える）
+        box('mado', 'hana', (0.02, 3.0, 0.06), (x0 - w / 2 + 0.03, 0, 0.06))
+    return dict(target=(0, 0.06, 0.14))
+
+
+def cemetery(k):
+    box('jimen', 'jari', (3.0, 3.0, 0.02), (0, 0, -0.01))
+    rnd = __import__('random').Random(k)
+    rows = (3, 2, 3, 2, 3, 2)[k]
+    for j in range(rows):
+        y = 0.3 - j * (0.6 / max(1, rows - 1)) if rows > 1 else 0
+        for i in range(3):
+            if rnd.random() < 0.15:
+                continue
+            x = -0.3 + i * 0.3 + rnd.uniform(-0.03, 0.03)
+            box(f'dai{j}{i}', 'ishi2', (0.18, 0.14, 0.04), (x, y, 0.02))
+            hgt = rnd.choice((0.16, 0.2, 0.24))
+            box(f'haka{j}{i}', 'ishi' if rnd.random() < 0.7 else 'kuroishi', (0.09, 0.07, hgt), (x, y + 0.02, 0.04 + hgt / 2))
+            if rnd.random() < 0.4:
+                sphere(f'hana{j}{i}', 'hana', 0.025, (x - 0.06, y - 0.05, 0.07))
+    if k in (2, 5):
+        cyl('miki', 'miki', 0.03, 0.2, (0.38, -0.36, 0.1), verts=6)
+        sphere('ha', 'matsu', 0.15, (0.38, -0.36, 0.26), (1.3, 1, 0.6))
+    return dict(target=(0, 0.06, 0.12))
+
+
+def factory(k):
+    """工場の敷地：コンクリートの地面に、コンテナ・タンク・トラック・パレットなど"""
+    box('jimen', 'concrete', (3.0, 3.0, 0.02), (0, 0, -0.01))
+    box('sen', 'sen', (3.0, 0.015, 0.002), (0, -0.42, 0.001))
+    if k == 0:
+        for i, m in enumerate(('container', 'container2')):
+            box(f'cont{i}', m, (0.6, 0.2, 0.2), (0, 0.2 - i * 0.24, 0.1 + 0 * i))
+        box('cont2', 'container3', (0.6, 0.2, 0.2), (0, 0.2, 0.3))
+    elif k == 1:
+        for i, x in enumerate((-0.2, 0.2)):
+            cyl(f'tank{i}', 'tank', 0.17, 0.4, (x, 0.1, 0.2), verts=16)
+            cyl(f'tankU{i}', 'tank', 0.17, 0.04, (x, 0.1, 0.42), verts=16, r2=0.12)
+        box('pipe', 'hone', (0.5, 0.03, 0.03), (0, -0.12, 0.25))
+    elif k == 2:   # トラック
+        box('nidai', 'container', (0.2, 0.46, 0.2), (0.05, 0.1, 0.14))
+        box('cab', 'truck', (0.2, 0.14, 0.16), (0.05, -0.22, 0.12))
+        box('cabM', 'mado', (0.18, 0.01, 0.06), (0.05, -0.295, 0.15))
+        for y in (-0.2, 0.0, 0.24):
+            for x in (-0.06, 0.16):
+                cyl(f'wa{x}{y}', 'kuro', 0.04, 0.03, (x, y, 0.04), (0, math.pi / 2, 0), 8)
+    elif k == 3:   # パレットと荷物
+        for i in range(3):
+            for j in range(2):
+                box(f'pal{i}{j}', 'pallet', (0.2, 0.2, 0.03), (-0.28 + i * 0.26, 0.15 - j * 0.32, 0.015))
+                if (i + j) % 3:
+                    box(f'ni{i}{j}', 'danbo', (0.17, 0.17, 0.12), (-0.28 + i * 0.26, 0.15 - j * 0.32, 0.09))
+    elif k == 4:   # 小屋と煙突
+        box('koya', 'koujou', (0.56, 0.4, 0.26), (0, 0.12, 0.13))
+        for i in range(3):   # のこぎり屋根
+            roof(f'nok{i}', 'yaneK', -0.19 + i * 0.19, 0.12, 0.26, 0.19, 0.4, 0.08)
+        cyl('entotsu', 'renga', 0.04, 0.5, (0.32, 0.3, 0.25), verts=8)
+    else:   # フォークリフト
+        box('fl', 'truck', (0.14, 0.2, 0.1), (0, 0, 0.08))
+        box('flM', 'kuro', (0.12, 0.01, 0.2), (0, -0.12, 0.14))
+        box('flT', 'kuro', (0.12, 0.12, 0.01), (0, -0.18, 0.04))
+        box('flY', 'kuro', (0.14, 0.14, 0.01), (0, 0.02, 0.24))
+        box('pal', 'pallet', (0.2, 0.2, 0.03), (0.3, 0.2, 0.015))
+        box('ni', 'danbo', (0.17, 0.17, 0.14), (0.3, 0.2, 0.1))
+    return dict(target=(0, 0.06, 0.14))
+
+
+def hill(k):
+    box('jimen', 'kusa', (3.0, 3.0, 0.02), (0, 0, -0.01))
+    sphere('oka', 'oka', 0.42, (0, 0.04, -0.06), (1.05, 0.95, (0.5, 0.42, 0.56, 0.46, 0.4, 0.52)[k]))
+    if k in (1, 3, 5):
+        cyl('miki', 'miki', 0.02, 0.14, (0.08, 0.06, 0.2), verts=6)
+        sphere('ha', 'ki', 0.08, (0.08, 0.06, 0.3))
+    if k in (2, 4):
+        for i in range(3):
+            sphere(f'iwa{i}', 'iwa', 0.04, (-0.15 + i * 0.12, -0.12 - (i % 2) * 0.05, 0.1), (1.2, 1, 0.6))
+    return dict(target=(0, 0.04, 0.12))
+
+
+def mountain(k):
+    box('jimen', 'kusa', (3.0, 3.0, 0.02), (0, 0, -0.01))
+    hgt = (0.78, 0.68, 0.86, 0.72, 0.64, 0.8)[k]
+    cyl('yama', 'yama', 0.48, hgt, (0, 0.05, hgt / 2), verts=(7, 9, 8, 6, 10, 7)[k], r2=0.04)
+    o = bpy.context.object
+    o.rotation_euler.z = k * 0.7
+    cyl('iwaU', 'iwayama', 0.14, 0.14, (0, 0.05, hgt - 0.07), verts=7, r2=0.02)
+    rnd = __import__('random').Random(100 + k)
+    for i in range(5):   # すそに木
+        a = rnd.uniform(-2.6, -0.5)
+        x, y = 0.4 * math.cos(a), 0.05 + 0.4 * math.sin(a)
+        sphere(f'ki{i}', 'yamaki', 0.07, (x, y, 0.06), (1, 1, 1.2))
+    return dict(target=(0, 0.06, 0.24))
+
+
+FRAME = {'park', 'cemetery', 'factory', 'hill', 'mountain'}
+MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
+
+
 def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
-    opts = house(*args) if kind == 'house' else tree(*args)
-    PA.add_camera_light(sc, opts['target'], 1.0, el=42, az=0)   # 南の斜め上から（地図の家と同じ向き。前の壁が見えるくらい）
+    opts = house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else MISC[kind](*args)
+    target, scale = opts['target'], 1.0
+    if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
+        el = math.radians(42)
+        vs = [v.co.y * math.sin(el) + v.co.z * math.cos(el) for o in bpy.data.objects if o.type == 'MESH' and o.name != 'jimen'
+              for v in (o.matrix_world @ p.co for p in o.data.vertices) for v in [type('V', (), {'co': v})]]
+        lo, hi = min(vs), max(vs)
+        scale = min(1.0, max(0.8, (hi - lo) + 0.1))
+        target = (0, 0, (lo + hi) / 2 / math.cos(el))
+    PA.add_camera_light(sc, target, scale, el=42, az=0)   # 南の斜め上から（地図の家と同じ向き。前の壁が見えるくらい）
     names = PA.set_materials('id')
     ids = PA.render(sc, os.path.join(TMP, f'_{os.getpid()}-id.png'), 1)
     PA.set_materials('light')
@@ -145,6 +316,10 @@ def render_one(kind, args, out):
 def main():
     os.makedirs(TMP, exist_ok=True)
     jobs = [('house', (s, e, f)) for s in range(5) for e in range(5) for f in range(2)] + [('tree', (k,)) for k in range(10)]
+    jobs += [(m, (k,)) for m in MISC for k in range(6)]
+    only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
+    if only:
+        jobs = [j for j in jobs if j[0] in only]
     for kind, args in jobs:
         render_one(kind, args, os.path.join(TMP, f'{kind}-' + '-'.join(map(str, args)) + '.npz'))
     print('rendered', len(jobs))

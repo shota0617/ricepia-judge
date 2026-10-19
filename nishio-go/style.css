@@ -549,3 +549,6 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 /* きろく の見出しの絵（Blender で作った 32×32。2倍の画面でもぼやけないよう 32px のまま） */
 .panel h3 img.pi.art{width:32px;height:32px;vertical-align:-9px}
 .card.tomorrow > b img.pi.art{width:32px;height:32px;vertical-align:-9px}
+.chips img.pi.art{width:32px;height:32px}
+.reward .rw.hero .sub img.pi.art{width:32px;height:32px;vertical-align:-10px;margin-right:2px}
+.reward .rw .big img.pi.art{width:32px;height:32px;vertical-align:-4px}

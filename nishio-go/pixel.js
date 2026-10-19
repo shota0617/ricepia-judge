@@ -10,7 +10,7 @@ const $ = id => document.getElementById(id);
 /* ---------- 座標 → マス ---------- */
 const TILE_M = 8;          // 1マス = 8m
 const SIMPLE = () => document.body.classList.contains('simple');
-const BTN_ART = { globe: 'btn-globe', feet: 'stat-feet', car: 'btn-car', walker: 'btn-walker', compass: 'btn-compass', flag: 'stat-flag', book: 'stat-book' };   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
+const BTN_ART = { globe: 'btn-globe', feet: 'stat-feet', car: 'btn-car', walker: 'btn-walker', compass: 'btn-compass', flag: 'stat-flag', book: 'stat-book', map: 'tab-map', pixmap: 'pixmap' };   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
 const ICO = (n, emoji, alt) => (BTN_ART[n] ? `<img class="pi art" src="nishio-go/art/${BTN_ART[n]}.png" alt="${alt}" width="32" height="32"/>`
   : window.NSG_ICONS && NSG_ICONS.ART[n] ? NSG_ICONS.html(n, alt) : emoji);   // ボタンの絵（ドット絵。なければ絵文字）   // 文字を少なく（せってい の「文字を多めに出す」がオフ）
 const CHUNK = 128;         // 1区画 = 128×128マス（約1km四方）ごとに地図データを取得

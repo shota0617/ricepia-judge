@@ -949,11 +949,22 @@ def cat_beach():
     return dict(target=(0, 0, 0.32), scale=1.05, el=14, az=-20, size=32)
 
 
+def pixmap():
+    """ドット絵の地図に切りかえる：四角いブロックを並べた小さな地図（田・海・家）"""
+    cols = [['mapG', 'mapG', 'mapB'], ['mapY', 'mapG', 'mapB'], ['mapG', 'yaneR', 'mapG']]
+    for r, row in enumerate(cols):
+        for c, m in enumerate(row):
+            h = 0.18 if m == 'yaneR' else 0.08 if m != 'mapB' else 0.05
+            box(f'b{r}{c}', m, (0.26, 0.26, h), (-0.27 + c * 0.27, -0.27 + r * 0.27, h / 2))
+    box('kabe', 'wall', (0.2, 0.2, 0.12), (0, 0.27, 0.06))
+    return dict(target=(0, 0, 0.06), scale=1.15, el=40, az=-30, size=32)
+
+
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
-MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock, 'lock': lock, 'ticket': ticket, 'new': new_badge})
+MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock, 'lock': lock, 'ticket': ticket, 'new': new_badge, 'pixmap': pixmap})
 MODELS.update({f'cat-{k}': v for k, v in (('shrine', cat_shrine), ('temple', cat_temple), ('worship', cat_worship), ('castle', cat_castle), ('historic', cat_historic),
                ('museum', cat_museum), ('view', cat_view), ('art', cat_art), ('sight', cat_sight), ('park', cat_park), ('library', cat_library),
                ('station', cat_station), ('townhall', cat_townhall), ('beach', cat_beach))})

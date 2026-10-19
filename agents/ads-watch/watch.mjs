@@ -31,7 +31,10 @@ const LIMITS = {
   // 日予算の何倍で知らせるか。Google は1日に日予算の最大2倍、Meta は最大1.75倍まで使うことがあるので、
   // それに近づいたときだけ知らせる。本当の歯止めは全媒体の合計上限（ADS_DAILY_TOTAL_LIMIT_YEN）
   overBudget: { google: num("ADS_OVER_BUDGET_RATIO_GOOGLE", 1.8), meta: num("ADS_OVER_BUDGET_RATIO_META", 1.6) },
-  dailyTotalYen: num("ADS_DAILY_TOTAL_LIMIT_YEN", 0), // 0 なら見ない
+  // 全媒体の1日の合計の上限。空なら自動（直近7日の1日平均の autoLimitRatio 倍。下限 autoLimitMinYen）、0 なら見ない
+  dailyTotalYen: env.ADS_DAILY_TOTAL_LIMIT_YEN ? Number(env.ADS_DAILY_TOTAL_LIMIT_YEN) : null,
+  autoLimitRatio: num("ADS_AUTO_LIMIT_RATIO", 2),
+  autoLimitMinYen: num("ADS_AUTO_LIMIT_MIN_YEN", 3000),
   noConvSpendYen: num("ADS_NO_CONV_SPEND_YEN", 3000), // 今日これだけ使って成果0なら知らせる
   cpaSpikeRatio: num("ADS_CPA_SPIKE_RATIO", 2), // 昨日のCPAが直前7日平均の何倍で知らせるか
   cpaMinConversions: num("ADS_CPA_MIN_CONVERSIONS", 3), // 直前7日の成果がこれ未満なら CPA は比べない
@@ -193,6 +196,18 @@ function sumDays(c, from, to) {
   return s;
 }
 
+// 1日の合計の上限。決まった金額がなければ、直近7日の1日平均の2倍にする。
+// 予算の打ち間違い（桁違い）などで使い方が急に増えたときに気づくため。日予算ではなく実際の費用を基準にするのは、
+// 日予算そのものを間違えたときにも上限が一緒に上がってしまわないようにするため
+function totalLimit(all) {
+  if (LIMITS.dailyTotalYen !== null) return LIMITS.dailyTotalYen;
+  let cost7 = 0;
+  for (const c of all) cost7 += sumDays(c, addDays(YESTERDAY, -6), YESTERDAY).cost;
+  // 始めたばかりで実績がないときだけ、配信中の日予算の合計を基準にする
+  const base = cost7 > 0 ? cost7 / 7 : all.filter((c) => c.active).reduce((s, c) => s + (c.dailyBudgetYen || 0), 0);
+  return Math.max(Math.round(base * LIMITS.autoLimitRatio), LIMITS.autoLimitMinYen);
+}
+
 function judge(all) {
   let total = 0;
   for (const c of all) {
@@ -236,11 +251,12 @@ function judge(all) {
       }
     }
   }
-  if (LIMITS.dailyTotalYen > 0 && total >= LIMITS.dailyTotalYen) {
+  const limit = totalLimit(all);
+  if (limit > 0 && total >= limit) {
     findings.push({
       key: `total:${TODAY}`, urgent: true,
       title: "本日の広告費の合計が上限を超えました",
-      detail: `全媒体の合計 ${yen(total)} / 上限 ${yen(LIMITS.dailyTotalYen)}。必要なら各媒体の管理画面で止めてください`,
+      detail: `全媒体の合計 ${yen(total)} / 上限 ${yen(limit)}${LIMITS.dailyTotalYen === null ? "（直近7日の平均から自動で決めた上限）" : ""}。必要なら各媒体の管理画面で止めてください`,
     });
   }
   return total;
@@ -252,7 +268,7 @@ function digest(all, total, errors) {
   return {
     generatedAt: NOW.toISOString(), today: TODAY, nowHourJst: T.hour,
     totalCostToday: Math.round(total),
-    dailyTotalLimit: LIMITS.dailyTotalYen || null,
+    dailyTotalLimit: totalLimit(all) || null,
     fetchErrors: errors,
     alerts: findings.map(({ title, detail }) => ({ title, detail })),
     campaigns: all.map((c) => {

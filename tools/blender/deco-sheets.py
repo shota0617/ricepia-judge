@@ -1,5 +1,5 @@
 # にしおさんぽGO：地図の小物（tools/blender/deco.py の結果）に色と季節をのせて、シートにまとめる
-# - 題材42 × ポーズ6 × 向き4 × 色8通り ＝ 8064マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて3万枚以上
+# - 題材62 × ポーズ6 × 向き4 × 色8通り ＝ 11904マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて4万枚以上
 #   nishio-go/deco/deco-<季節>.png：16×16 のマスが 96列に並ぶ（背景なし）。番号 i ＝ ((題材 × 6 ＋ ポーズ) × 4 ＋ 向き) × 8 ＋ 色
 # - 季節で変わるもの：草や葉の色、足もとにちる花びら（春）・草（夏）・落ち葉（秋）・雪（冬。上の面に雪がつもる）
 #   水の上の小物は、花びらや落ち葉が水に浮かび、夏は波、冬は白い波
@@ -21,9 +21,11 @@ OUTLINE = (42, 36, 32)
 
 SUBJECTS = ['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'kakashi', 'hazakake', 'warazuka', 'noufu', 'kodomo', 'tsuri',
             'jizo', 'hokora', 'tourou', 'douhyou', 'hana', 'ajisai', 'himawari', 'kosumosu', 'kinoko', 'iwa', 'bench', 'ueki', 'jitensha', 'jihanki',
-            'chouchin', 'gomi', 'sanrinsha', 'kasa', 'fune', 'boto', 'bui', 'hasu', 'kani', 'sunashiro', 'picnic', 'tanuki', 'suimon', 'karasu']
-WATER = {'kamo', 'fune', 'boto', 'bui', 'hasu'}   # 水の上に置く題材
-SAND = {'kamome', 'kani', 'sunashiro', 'kasa', 'tsuri'}
+            'chouchin', 'gomi', 'sanrinsha', 'kasa', 'fune', 'boto', 'bui', 'hasu', 'kani', 'sunashiro', 'picnic', 'tanuki', 'suimon', 'karasu',
+            'chatsumi', 'suisha', 'daichouchin', 'akauma', 'norihibi', 'carnation', 'kame', 'koinobori', 'kadomatsu', 'suika', 'tsukimi', 'kaki',
+            'tractor', 'combine', 'tako', 'nodate', 'unaginobori', 'yatai', 'sakura', 'momiji']
+WATER = {'kamo', 'fune', 'boto', 'bui', 'hasu', 'suisha', 'norihibi'}   # 水の上に置く題材
+SAND = {'kamome', 'kani', 'sunashiro', 'kasa', 'tsuri', 'kame', 'suika'}
 
 
 def rgb(h):
@@ -93,8 +95,28 @@ V8 = {   # 題材ごとの「色8通り」になる材質
     'picnic': ('sheet', ['#2a7ad0', '#e04a3a', '#4aa84a', '#f2c230', '#e88ab0', '#8a5ad0', '#f08030', '#40c0c0']),
     'tanuki': ('kasa', ['#c8a060', '#8a5a3a', '#3a3a40', '#d0b070', '#a07040', '#5a4a3a', '#e0c080', '#6a6a50']),
     'suimon': ('handle', ['#d03a30', '#2a5aa0', '#e8c040', '#3a8a4a', '#f08030', '#8a8a90', '#2a2a2e', '#f0f0f0']),
+    'chatsumi': ('fuku', ['#2a3a6a', '#3a5a9a', '#e8e0d0', '#5a7a5a', '#8a3a3a', '#4a4a6a', '#6a8ab0', '#a08060']),
+    'suisha': ('hane', ['#2a6ad0', '#f2c230', '#f0f0f0', '#f08030', '#3a9a5a', '#e04a3a', '#8a8a90', '#40a0d0']),
+    'daichouchin': ('chouchin', ['#f4e8c8', '#f2c060', '#e86a3a', '#f8d8a0', '#e8a050', '#f0f0e0', '#d84a3a', '#f4b880']),
+    'akauma': ('aka', ['#d23a2e', '#e04a3a', '#c02a2a', '#e8603a', '#b8302a', '#d84a40', '#a82a2a', '#e8503a']),
+    'norihibi': ('ami', ['#3a8a4a', '#2a5aa0', '#2a2a2e', '#e08030', '#5a7a8a', '#4aa84a', '#8a5a3a', '#c04030']),
+    'carnation': ('hana', ['#e03a4a', '#f08ab0', '#f4f4f0', '#f2c230', '#f08030', '#a050c0', '#e86a8a', '#c02a3a']),
+    'kame': ('koura', ['#5a6a3a', '#6a5a3a', '#4a5a4a', '#7a6a4a', '#3a4a3a', '#8a7a50', '#5a5a40', '#6a7a5a']),
+    'koinobori': ('koi', ['#2a2a30', '#e04a3a', '#2a6ad0', '#3aa05a', '#f08030', '#e88ab0', '#8a5ad0', '#f2c230']),
+    'kadomatsu': ('take', ['#4a8a3a', '#5a9a40', '#3a7a34', '#6aa848', '#4a7a3a', '#5a8a48', '#3a8a40', '#6a9a3a']),
+    'suika': ('suika', ['#2a6a2a', '#3a7a30', '#2a5a2a', '#4a8a3a', '#1f5a24', '#3a6a34', '#2f7a2a', '#4a7a40']),
+    'tsukimi': ('dai', ['#a0703c', '#c04030', '#8a5a3a', '#2a2a2e', '#b8864a', '#d8b070', '#6a4a2a', '#a0602a']),
+    'kaki': ('kaki', ['#e8641c', '#f08030', '#e05a20', '#f09040', '#d85a1a', '#f0a050', '#e87028', '#c8501a']),
+    'tractor': ('karada', ['#d03a30', '#f08030', '#2a5aa0', '#3a8a4a', '#e8c040', '#f0f0f0', '#5a5a5a', '#40a0c0']),
+    'combine': ('karada', ['#e0602a', '#d03a30', '#2a5aa0', '#3a8a4a', '#e8c040', '#f0f0f0', '#5a5a5a', '#f09040']),
+    'tako': ('tako', ['#e04a3a', '#2a6ad0', '#f2c230', '#3aa05a', '#f4f4f0', '#8a5ad0', '#f08030', '#e88ab0']),
+    'nodate': ('nodatekasa', ['#d0302a', '#e04a3a', '#b02a2a', '#8a3a7a', '#d85a3a', '#c03040', '#e86a4a', '#a03030']),
+    'unaginobori': ('nobori', ['#d0302a', '#2a5aa0', '#f4f4f0', '#f2c230', '#3a8a4a', '#2a2a2e', '#f08030', '#8a3a7a']),
+    'yatai': ('noren', ['#d0302a', '#2a5aa0', '#f4f4f0', '#f2c230', '#3a8a4a', '#8a3a7a', '#f08030', '#e88ab0']),
+    'sakura': ('sakura', ['#f7b6cc', '#f4a0c0', '#fcd0e0', '#f090b0', '#f8c0d8', '#e88aa8', '#fde0ea', '#f6a8c0']),
+    'momiji': ('momiji', ['#d03a2a', '#e05a2a', '#c02a2a', '#e8802a', '#b8302a', '#e06a30', '#f09030', '#a82a2a']),
 }
-OFFSET = {'hana2': 'hana', 'hako2': 'hako', 'booru': None, 'sheet': None}   # 2つめの色（同じ表を1つずらして使う）
+OFFSET = {'hana2': 'hana', 'hako2': 'hako', 'booru': None, 'sheet': None, 'karada2': 'karada', 'sakura2': 'sakura', 'momiji2': 'momiji'}   # 2つめの色（同じ表を1つずらして使う）
 FIXED = {
     'kuchi': '#e8c040', 'ashi': '#2a2a2a', 'me': '#1a1a1a', 'mimi': '#8a6a50', 'hana': '#e8a0a0', 'bou': '#8a6a40', 'take': '#a08050', 'kao': '#f4e8d0',
     'mugiwara': '#e0c070', 'boushi': '#3a5a9a', 'zubon': '#3a3a4a', 'hada': '#f4c9a0', 'dougu': '#8a6a40', 'baketsu': '#5a8ac0', 'ishi': '#a8a8a0',
@@ -104,6 +126,13 @@ FIXED = {
     'chouchin': '#e04a3a', 'hako': '#3a8a4a', 'ami': '#4a8a5a', 'booru': '#f2c230', 'box': '#f0f0f0', 'sentai': '#f4f4f0', 'kanpan': '#a0703c',
     'hata': '#e04a3a', 'bui': '#f08020', 'tsubomi': '#f4a0c0', 'kara': '#d84a3a', 'suna2': '#e0c890', 'sheet': '#2a7ad0', 'nomimono': '#e8e0d0',
     'tanuki': '#8a6a4a', 'tokkuri': '#7a5a3a', 'concrete': '#a8a8a0', 'handle': '#d03a30', 'ita': '#8a6a40', 'mizu_d': '#6aa8e0', 'hane2': '#8ac8e8',
+    'cha': '#2f7a34', 'waku': '#8a8a90', 'mizu_s': '#cfe9f7', 'happi': '#2a3a6a', 'hachimaki': '#f4f4f0', 'aka': '#d23a2e', 'kin': '#f2c230',
+    'koura': '#5a6a3a', 'koi': '#2a2a30', 'koi2': '#e04a3a', 'koi3': '#2a6ad0', 'fukinagashi': '#f2c230', 'matsu': '#2a6a3a', 'suika': '#2a6a2a',
+    'suikaA': '#e04a4a', 'dango': '#f8f4ec', 'susuki': '#c8b080', 'susukiH': '#e8dcc0', 'kaki': '#e8641c', 'karada': '#d03a30', 'karada2': '#a8401c',
+    'reaper': '#e8c048', 'rotary': '#8a8a90', 'tsuchi': '#7a5a3a', 'tako': '#e04a3a', 'ito': '#f4f4f0', 'takoO': '#f2c230', 'nodatekasa': '#d0302a',
+    'akaMousen': '#c8302a', 'kimono': '#6a4a8a', 'chawan': '#3a3a3a', 'yane_y': '#d0302a', 'noren': '#2a5aa0', 'shina': '#f2c230',
+    'fuku': '#3a5a9a', 'kawa': '#6a7a4a', 'miki': '#6b4a2e', 'atama': '#5a4a38',
+    'sakura': '#f7b6cc', 'sakura2': '#fde0ea', 'momiji': '#d03a2a', 'momiji2': '#f09030', 'wara': '#d8b860', 'kami': '#2a2018', 'kasa_c': '#d8b860',
 }
 PLANTS = {'ha', 'kusa', 'koke', 'kuki'}
 GREEN = [['#5aa84a', '#4f9a3e'], ['#3a8a3a', '#2f7f2e'], ['#8a8a3a', '#a06a2a'], ['#5a6a4a', '#4a5a40']]   # 春夏秋冬の草と葉
@@ -139,11 +168,19 @@ def palette(subj, c, s):
         pal['hako2'] = V8['gomi'][1][(c + 3) % 8]
     if subj == 'tanuki':
         pal['hara'] = '#e8d8b0'
+    if subj == 'koinobori':
+        cols = V8['koinobori'][1]
+        pal['koi2'], pal['koi3'] = cols[(c + 2) % 8], cols[(c + 5) % 8]
+    if subj == 'chatsumi':
+        pal['kasa'] = '#d8b860'
     for p in PLANTS:
         pal[p] = GREEN[s][(c + s) % 2]
     if subj == 'hasu':
         pal['ha'] = ['#5aa84a', '#3a8a3a', '#7a8a3a', '#6a7a4a'][s]
     return pal
+
+
+MISSING = set()
 
 
 def compose(mat, band, names, subj, c, s, seed):
@@ -152,7 +189,10 @@ def compose(mat, band, names, subj, c, s, seed):
     obj = mat != 255
     for y, x in zip(*np.where(obj)):
         n = names[mat[y, x]]
-        col = pal.get(n, '#ff00ff')
+        col = pal.get(n)
+        if col is None:   # 色を決めていない材質（作りなおしのときに気づけるよう、名前を出す）
+            MISSING.add((subj, n))
+            col = '#ff00ff'
         img[y, x, :3] = tones(col)[band[y, x]]
         img[y, x, 3] = 255
     if s == 3:   # 冬：上の面（上にとなりがない、明るい面）に雪
@@ -199,6 +239,8 @@ def main():
         im.save(path, optimize=True)
         print(f'deco-{s}.png', im.size, os.path.getsize(path))
     print('ちがう絵:', len(seen), '/', total * 4)
+    if MISSING:
+        print('色を決めていない材質:', sorted(MISSING))
     with open(os.path.join(OUT, 'deco.json'), 'w') as f:   # pixel.js が読む：題材の順番と、数
         json.dump({'subjects': SUBJECTS, 'poses': 6, 'dirs': 4, 'colors': 8, 'cols': COLS, 'unique': len(seen)}, f, ensure_ascii=False)
 

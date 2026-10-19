@@ -136,7 +136,7 @@ const PI = (n, alt = '') => (window.NSG_ICONS ? NSG_ICONS.html(n, alt) : '');
 const ART32 = (n, alt = '') => `<img class="pi art" src="nishio-go/art/${n}.png" alt="${esc(alt)}" width="32" height="32"/>`;   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
 const ICON_ART = { chest: 'stat-chest', card: 'card', book: 'stat-book', fire: 'stat-fire', home: 'home', star: 'stat-star', bowl: 'bar-bowl', scroll: 'quest', flag: 'stat-flag',
   coin: 'stat-coin', pin: 'stat-pin', feet: 'stat-feet', medal: 'stat-medal', calendar: 'calendar', talk: 'talk', clock: 'clock',
-  car: 'btn-car', walker: 'btn-walker', gift: 'tab-gift', new: 'new' };   // 32×32 の絵があるアイコン
+  car: 'btn-car', walker: 'btn-walker', gift: 'tab-gift', new: 'new', jump: 'ricebag' };   // 32×32 の絵があるアイコン
 const PIA = (ic, alt = '') => ICON_ART[ic] ? ART32(ICON_ART[ic], alt) : PI(ic, alt);   // 札（chips）など、32px で出せるところ用
 const OSM_KEY = 'nsg_osm_v1';
 
@@ -395,6 +395,7 @@ function popupHtml(s) {
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
+    ${jumpHere(s) ? '<button type="button" class="btn mini" data-jump-open>🎮 ミニゲーム「にしおジャンプ」</button>' : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}</div>`;
 }
 
@@ -410,6 +411,7 @@ function popupPic(s, c, v, left, d) {
     ${spotMeibutsu(s).map(m => `<details class="mb"><summary>${m.icon} <b>${esc(m.name)}</b></summary>${esc(m.note)}</details>`).join('')}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
+    ${jumpHere(s) ? `<button type="button" class="btn mini" data-jump-open>${PIA('jump', '')} ミニゲーム</button>` : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PIA('feet', '')} ここへ</button>` : ''}</div>`;
 }
 
@@ -682,6 +684,26 @@ function gainPoints(n) {
   return levelOf(S.total) > before ? levelOf(S.total) : 0;
 }
 
+// ミニゲーム「にしおジャンプ」（runner.js）：名所（注目スポット。当店はのぞく）でチェックインした日にあそべる
+const featuredToday = () => dayState().spots.some(id => { const x = spots.find(z => z.id === id); return x && x.featured && !x.shop; });
+const jumpHere = s => !!(s && s.featured && !s.shop && dayState().spots.includes(s.id));
+function openJump() {
+  if (!featuredToday()) { toast('名所（注目スポット）でチェックインすると、その日ミニゲームであそべます'); return; }
+  if (window.NISHIO_JUMP) NISHIO_JUMP.open();
+}
+// ごほうび：1日1回、コイン1まい1pt＋クリア10pt（30ptまで）。きょうはもうもらっていれば null
+function jumpReward(coins, cleared) {
+  if (S.jumpDay === ymd() || !featuredToday()) return null;
+  const pts = Math.min(30, Math.max(0, coins | 0) + (cleared ? 10 : 0));
+  if (!pts) return 0;
+  S.jumpDay = ymd();
+  gainPoints(pts);
+  S.log.unshift({ type: 'jump', t: Date.now(), pts, name: `ミニゲーム「にしおジャンプ」${cleared ? 'クリア' : ''}（コイン${coins | 0}まい）`, icon: '🎮' });
+  save();
+  renderLog();   // きろく の数字と「最近のポイント」をすぐ新しく
+  return pts;
+}
+
 let selected = null;   // シートに表示中のチェックイン候補
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
@@ -752,9 +774,11 @@ function checkin() {
     track('campaign_bonus', { campaign: c.id, mode: demo ? 'play' : 'walk' });
   }
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
+  const jumpNew = s.featured && !s.shop && !featuredToday();   // きょう はじめての名所：ミニゲームがあそべるようになる
   const day = dayState();   // 今日のクエストの数え上げ
   day.checkins++;
   if (!day.spots.includes(s.id)) day.spots.push(s.id);
+  if (jumpNew) lines.push('🎮 名所でミニゲーム「にしおジャンプ」があそべる（スポットの窓・きろく から）');
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
   // 「はじめてのスポット」：まだ行っていない所がもう無い人は、どのスポットでも達成にする
   if (!v || spots.every(x => x.id === s.id || S.visits[x.id])) day.fresh++;
@@ -1466,7 +1490,7 @@ function toast(msg) {
 }
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
-const CHIP = [['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
+const CHIP = [['🎮', 'jump'], ['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
 function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
@@ -1576,6 +1600,9 @@ $('dotMotifs').addEventListener('click', e => {
 const LOG_PI = { walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
+  const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
+  $('jumpBtn').disabled = !jOk;
+  $('jumpNote').textContent = jOk ? 'コインを集めて西尾城の旗をめざそう（ごほうびは1日1回）' : '名所（注目スポット）でチェックインすると、その日あそべます';
   renderTomorrow();
   renderCampaigns();
   renderUps();
@@ -1627,7 +1654,7 @@ function renderLog() {
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
-    `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? PI(LOG_PI[l.type] || 'flag', '') : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
+    `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
       ${simple() ? '' : `<small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small>`}</span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
     : '<li class="empty">まだありません</li>';
 }
@@ -1958,6 +1985,8 @@ $('anaToggle').checked = !store.get('nsg_noanalytics', false);
 $('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg_noanalytics', e.target.checked ? '0' : '1'); } catch (err) { /* noop */ } toast(e.target.checked ? '📊 アクセス解析をオンにしました（次に開いたときから）' : '📊 アクセス解析をオフにしました（次に開いたときから送りません）'); });
 sound.apply();
 // 文字を多めに出す（オフ＝文字を少なくしてドット絵。はじめはオフ）
+$('jumpBtn').addEventListener('click', openJump);   // ミニゲーム（runner.js）
+document.addEventListener('click', e => { if (e.target.closest('[data-jump-open]')) openJump(); });   // スポットの窓の「ミニゲーム」
 $('textToggle').checked = !simple();
 $('textToggle').addEventListener('change', e => {
   document.body.classList.toggle('simple', !e.target.checked);
@@ -2149,7 +2178,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl,
+  begin, track, utmUrl, jumpReward,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
     if (!demo) setMode(true);

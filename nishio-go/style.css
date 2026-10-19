@@ -562,3 +562,24 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .lv-num img.pi.art,.pts img.pi.art,.btn img.pi.art,.popup .ev img.pi.art,.koyomi .ko-where img.pi.art,.simple .guide img.pi.art,details summary img.pi.art,.popup .area-prog img.pi.art{width:16px;height:16px;vertical-align:-3px}
 .fab img.pi.art{width:32px;height:32px}
 .spot img.pi.art,.spin-ico img.pi.art{width:32px;height:32px;vertical-align:middle}
+/* ミニゲーム「にしおジャンプ」（runner.js） */
+.jump-card{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.jump-card p{margin:0;display:flex;flex-direction:column;gap:2px}
+.jump-card small{color:var(--sub)}
+.jump-card img.pi.art{width:32px;height:32px;vertical-align:-10px}
+body.jump-open{overflow:hidden}
+.jump{position:fixed;inset:0;z-index:3000;background:#16201a;color:#fff;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 8px calc(8px + env(safe-area-inset-bottom))}
+.jump[hidden]{display:none}
+.jump-top{display:flex;align-items:center;justify-content:space-between;padding:8px 4px}
+.jump-top b{font-size:16px;letter-spacing:.05em}
+.jump-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;position:relative}
+.jump-stage canvas{image-rendering:pixelated;image-rendering:crisp-edges;border-radius:6px;box-shadow:0 0 0 3px #e9c46a}
+.jump-result{position:absolute;inset:auto 12px;display:flex;flex-direction:column;align-items:center;gap:6px;background:rgba(20,28,22,.92);border:2px solid #e9c46a;border-radius:10px;padding:14px;text-align:center}
+.jump-result b{font-size:20px;color:#ffd54f}
+.jump-btns{display:flex;gap:8px;margin-top:4px}
+.jump-help{font-size:12px;opacity:.8;margin:6px 4px;text-align:center}
+.jump-pad{display:grid;grid-template-columns:72px 72px 1fr;gap:10px;padding:6px 4px;user-select:none;-webkit-user-select:none;touch-action:none}
+.jump-pad button{height:64px;border-radius:14px;border:2px solid #e9c46a;background:#2a3a2e;color:#fff;font-size:20px;font-weight:800;touch-action:none}
+.jump-pad button.on{background:#4d6a52}
+.jump-pad .jump-a{justify-self:end;width:min(160px,100%);background:#c8402e;border-color:#ffd27a}
+.jump-pad .jump-a.on{background:#e8604e}

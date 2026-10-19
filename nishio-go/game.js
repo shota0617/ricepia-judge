@@ -1524,7 +1524,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
 function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); }
 $('reward').addEventListener('click', hideReward);
 
-/* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。No.1〜10000 は Blender で作った絵） ----------
+/* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。No.1〜50000 は Blender で作った絵） ----------
    西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・天気・日にちで決まる */
 function gainDot(lat, lng, seed, area) {
   const D = window.NISHIO_DOTS;

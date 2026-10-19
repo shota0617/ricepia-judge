@@ -33,13 +33,13 @@
 <script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
 
 <header class="bar">
-  <div class="brand"><i data-pi="castle"></i><span class="tx">にしおさんぽGO</span></div>
+  <div class="brand"><i data-pi="castle" data-art="bar-castle"></i><span class="tx">にしおさんぽGO</span></div>
   <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
     <span class="lv-num"><i data-pi="star"></i><span class="tx">Lv</span><b id="lvNum">1</b></span>
     <span class="lv-bar"><i id="lvFill"></i></span>
   </button>
   <div class="pts" aria-live="polite"><i data-pi="coin"></i><b id="ptsNum">0</b><small class="tx">pt</small></div>
-  <a class="home-btn" href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=home_button" aria-label="当店（らいすぴあ）のホームページへ戻る" title="当店（らいすぴあ）のホームページへ戻る"><i data-pi="bowl"></i><small class="tx">当店HP</small></a>
+  <a class="home-btn" href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=home_button" aria-label="当店（らいすぴあ）のホームページへ戻る" title="当店（らいすぴあ）のホームページへ戻る"><i data-pi="bowl" data-art="bar-bowl"></i><small class="tx">当店HP</small></a>
 </header>
 
 <main id="map" aria-label="西尾市の地図"></main>
@@ -76,10 +76,10 @@
 </section>
 
 <nav class="tabs" aria-label="メニュー">
-  <button type="button" class="on" data-tab="map" aria-label="マップ"><i data-pi="map"></i><span>マップ</span></button>
-  <button type="button" data-tab="log" aria-label="きろく"><i data-pi="note"></i><span>きろく</span></button>
-  <button type="button" data-tab="rewards" id="rewardsTab" hidden aria-label="とくてん"><i data-pi="gift"></i><span>とくてん</span></button>
-  <button type="button" data-tab="settings" aria-label="せってい"><i data-pi="gear"></i><span>せってい</span></button>
+  <button type="button" class="on" data-tab="map" aria-label="マップ"><i data-pi="map" data-art="tab-map"></i><span>マップ</span></button>
+  <button type="button" data-tab="log" aria-label="きろく"><i data-pi="note" data-art="tab-note"></i><span>きろく</span></button>
+  <button type="button" data-tab="rewards" id="rewardsTab" hidden aria-label="とくてん"><i data-pi="gift" data-art="tab-gift"></i><span>とくてん</span></button>
+  <button type="button" data-tab="settings" aria-label="せってい"><i data-pi="gear" data-art="tab-gear"></i><span>せってい</span></button>
 </nav>
 
 <!-- 記録 -->

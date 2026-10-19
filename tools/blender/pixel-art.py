@@ -16,7 +16,7 @@ from mathutils import Vector
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = os.path.join(ROOT, 'nishio-go', 'art')
-SIZE, SS = 48, 4                      # できあがりの大きさと、描くときの倍率
+SIZE, SS = 48, 4                      # できあがりの大きさ（絵ごとに size で変えられる）と、描くときの倍率
 OUTLINE = (0x1a, 0x1a, 0x1a)
 TMP = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'nsg-pixel-art')
 
@@ -43,6 +43,9 @@ MATS = {
     'hairBrown': '#5a3418', 'hairDark': '#1d1d1d', 'hairTea': '#3b2a1a', 'cElder': '#6d5a44', 'cGranny': '#8e5a9e', 'cMan': '#3f7fbf',
     'cWoman': '#e57373', 'cKid': '#ffb300', 'cStudent': '#203a63', 'cFisher': '#3a7bd5', 'cStaff': '#2e7d32', 'cGuide': '#f2c230',
     'cMonk': '#2b2b2b', 'kesa': '#b88a12', 'towel': '#ffffff', 'capY': '#ffcc00', 'collar': '#ffffff',
+    # 下のタブと上のバー
+    'mapG': '#7cc04a', 'mapB': '#5aa9e6', 'mapY': '#f2d36b', 'note': '#2f7a34', 'paper': '#fff8e0', 'ring': '#b8c0c8',
+    'giftR': '#d23a2e', 'giftY': '#ffd54f', 'gear': '#9aa4b0', 'gearD': '#3a3a3a', 'chawan': '#c0392b', 'gohan': '#ffffff', 'hashi': '#8a5a2b',
 }
 
 
@@ -492,6 +495,68 @@ def npc_monk():
     return npc_bust('cMonk', extra=lambda: box('kesa', 'kesa', (0.12, 0.05, 0.62), (0.08, -0.25, -0.26), (0, -0.6, 0)))
 
 
+# ---------- 下のタブ（マップ・きろく・とくてん・せってい）と上のバー（お城・当店）：32×32 ----------
+def tab_map():
+    """マップ：三つ折りの地図（緑の陸・青い川・黄色い道）と赤いピン"""
+    for i, (x, m, a) in enumerate(((-0.30, 'mapG', 0.25), (0.0, 'mapB', -0.25), (0.30, 'mapG', 0.25))):
+        box(f'p{i}', m, (0.30, 0.62, 0.03), (x, 0, 0.05 + (0.04 if i == 1 else 0)), (0, a, 0))
+    box('road', 'mapY', (0.88, 0.06, 0.035), (0, 0.05, 0.08), (0, 0, 0.3))
+    sphere('pin', 'red', 0.10, (0.06, -0.06, 0.34))
+    cyl('pinB', 'red', 0.06, 0.18, (0.06, -0.06, 0.20), verts=12, r2=0.0)
+    return dict(target=(0, 0, 0.12), scale=1.1, el=40, size=32)
+
+
+def tab_note():
+    """きろく：緑の表紙のノート（リングとしおり）"""
+    box('cover', 'note', (0.58, 0.10, 0.78), (0, 0, 0.39), bevel=0.03)
+    box('page', 'paper', (0.50, 0.02, 0.66), (0.03, -0.055, 0.39))
+    for i in range(4):
+        box(f'line{i}', 'note', (0.34, 0.01, 0.025), (0.06, -0.066, 0.56 - i * 0.12))
+    for i in range(4):
+        cyl(f'ring{i}', 'ring', 0.05, 0.12, (-0.28, -0.03, 0.66 - i * 0.18), (0, math.pi / 2, 0), 10)
+    box('shiori', 'red', (0.06, 0.02, 0.12), (0.18, 0.0, 0.80))
+    return dict(target=(0, 0, 0.42), scale=1.05, el=10, az=-20, size=32)
+
+
+def tab_gift():
+    """とくてん：赤いプレゼントの箱と、黄色いリボン"""
+    box('hako', 'giftR', (0.60, 0.60, 0.46), (0, 0, 0.23))
+    box('futa', 'giftR', (0.66, 0.66, 0.12), (0, 0, 0.50))
+    box('rx', 'giftY', (0.14, 0.68, 0.60), (0, 0, 0.29))
+    box('ry', 'giftY', (0.68, 0.14, 0.60), (0, 0, 0.29))
+    for x in (-0.14, 0.14):
+        sphere(f'bow{x}', 'giftY', 0.16, (x * 1.2, 0, 0.66), (1, 0.7, 0.75))
+    return dict(target=(0, 0, 0.34), scale=1.1, size=32)
+
+
+def tab_gear():
+    """せってい：歯車"""
+    rot = (math.pi / 2, 0, 0)
+    cyl('wa', 'gear', 0.34, 0.16, (0, 0, 0), rot, 32)
+    for i in range(8):
+        a = i / 8 * math.tau
+        box(f'ha{i}', 'gear', (0.14, 0.16, 0.14), (0.40 * math.cos(a), 0, 0.40 * math.sin(a)), (0, -a, 0))
+    cyl('ana', 'gearD', 0.12, 0.18, (0, 0, 0), rot, 20)
+    return dict(target=(0, 0, 0), scale=1.15, el=8, az=-15, size=32)
+
+
+def bar_castle():
+    """上のバー：西尾城（石垣に白い壁と屋根）"""
+    opts = area_okazaki()
+    opts['size'] = 32
+    return opts
+
+
+def bar_bowl():
+    """上のバー（当店）：お茶わんに白いごはん、おはし"""
+    cyl('chawan', 'chawan', 0.24, 0.30, (0, 0, 0.15), verts=32, r2=0.40)
+    cyl('dai', 'chawan', 0.16, 0.06, (0, 0, -0.02), verts=24)
+    sphere('gohan', 'gohan', 0.37, (0, 0, 0.30), (1, 1, 0.55))
+    for x in (-0.05, 0.05):
+        cyl(f'hashi{x}', 'hashi', 0.025, 0.62, (x + 0.10, 0.05, 0.46), (0, 0.9, 0), 6)
+    return dict(target=(0, 0, 0.28), scale=1.1, size=32)
+
+
 def medal():
     """バッジのメダル（赤と白のリボンに、金のメダル。まんなかは平らにして、バッジの絵を上にのせる）"""
     rot = (math.pi / 2, 0, 0)
@@ -507,6 +572,7 @@ def medal():
 
 
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
+MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
     ('student', npc_student), ('fisher', npc_fisher), ('staff', npc_staff), ('guide', npc_guide), ('monk', npc_monk))})
 MODELS.update({f'paddy-{k}': v for k, v in (('stubble', paddy_stubble), ('soil', paddy_soil), ('flooded', paddy_flooded), ('green', paddy_green), ('gold', paddy_gold))})
@@ -526,7 +592,6 @@ def setup_scene():
     sc.cycles.samples = 16
     sc.cycles.use_denoising = False
     sc.render.film_transparent = True
-    sc.render.resolution_x = sc.render.resolution_y = SIZE * SS
     sc.render.filter_size = 0.01   # 材質の境目をまぜない
     sc.view_settings.view_transform = 'Standard'
     sc.render.image_settings.file_format = 'PNG'
@@ -587,8 +652,7 @@ def srgb(v):
     return 12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055
 
 
-def to_pixel(light, ids, names):
-    n = SIZE
+def to_pixel(light, ids, names, n=SIZE):
     c = SS // 2   # 4×4 の真ん中の点
     L = light[c::SS, c::SS][:n, :n]
     I = ids[c::SS, c::SS][:n, :n]
@@ -630,6 +694,8 @@ def save_png(arr, path):
 def make(name):
     sc = setup_scene()
     opts = MODELS[name]()
+    n = opts.get('size', SIZE)
+    sc.render.resolution_x = sc.render.resolution_y = n * SS
     add_camera_light(sc, opts['target'], opts['scale'], opts.get('el', 28), opts.get('az', -35))
     os.makedirs(TMP, exist_ok=True)
     names = set_materials('id')
@@ -637,7 +703,7 @@ def make(name):
     ids = render(sc, os.path.join(TMP, f'{name}-id.png'), 1)
     set_materials('light')
     light = render(sc, os.path.join(TMP, f'{name}-light.png'), 64)
-    px = to_pixel(light, ids, names)
+    px = to_pixel(light, ids, names, n)
     os.makedirs(OUT, exist_ok=True)
     save_png(px, os.path.join(OUT, f'{name}.png'))
     print('wrote', os.path.relpath(os.path.join(OUT, f'{name}.png'), ROOT))

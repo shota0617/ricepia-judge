@@ -6,6 +6,7 @@
 # - 芝生（公園など）・ビニールハウス・墓地・工場の敷地・丘・山：それぞれ6つの立体（季節と色はシートにする段で）
 # - 田んぼ：こよみの田んぼのようす5つ（青田・黄金色・田植え・田おこし・刈田）× 3通り。上下左右のマスとつながるよう、景色をマスの大きさでくり返す
 # - 茶畑・畑・砂浜・境内の砂利・草地：茶畑と畑と砂利はくり返す景色（となりとつながる）、砂浜と草地はマスの中の小物
+# - 水：さざ波の列をくり返す景色を3通り × 2コマ（波を半分ずらす）。町なかの地面：6通り（たいていは何もなく、ときどき小物）
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -387,6 +388,41 @@ def grass(k):
     return dict(target=(0, 0, 0))
 
 
+def water(k, f):
+    """水（海・川・池）：さざ波の列をくり返す景色。2コマ目は波を半分ずらして描く"""
+    box('jimen', 'mizu', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    b0 = sphere('nami', 'nami', 0.06, (0, 0, -5), (1.8, 0.9, 0.4))
+    for j in range(-16, 17):
+        y = j * PY / 2
+        sh = ((j * (k + 2)) % 4) * PX / 4 + f * PX / 2   # 列ごとのずれ（k で3通り）と、2コマ目の動き
+        for i in range(-8, 9):
+            if (i + j + k) % 3 == 0:
+                dup(b0, f'nami{i}_{j}', (i * PX + sh, y, 0.012))
+    return dict(target=(0, 0, 0))
+
+
+def town(k):
+    """町なかの地面：たいていは何もなく、ときどきマンホール・植木鉢・自販機・電柱・自転車"""
+    box('jimen', 'machi', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    if k == 1:
+        cyl('manhole', 'manhole', 0.09, 0.006, (0.1, -0.1, 0.003), verts=12)
+    elif k == 2:
+        for i, x in enumerate((-0.3, -0.18)):
+            cyl(f'hachi{i}', 'hachi', 0.05, 0.07, (x, 0.2, 0.035), verts=8)
+            sphere(f'ueki{i}', 'ki', 0.06, (x, 0.2, 0.1))
+    elif k == 3:
+        box('jihan', 'jihan', (0.16, 0.1, 0.3), (0.28, 0.25, 0.15))
+        box('jihanM', 'mado', (0.12, 0.01, 0.12), (0.28, 0.195, 0.2))
+    elif k == 4:
+        cyl('denchu', 'concreteP', 0.03, 0.7, (-0.35, 0.3, 0.35), verts=8)
+        box('udegi', 'kuro', (0.3, 0.02, 0.02), (-0.35, 0.3, 0.66))
+    elif k == 5:
+        box('jitensha', 'kuro', (0.16, 0.02, 0.06), (0.15, -0.2, 0.06))
+        for x in (0.08, 0.22):
+            cyl(f'wa{x}', 'kuro', 0.04, 0.01, (x, -0.2, 0.04), (math.pi / 2, 0, 0), 8)
+    return dict(target=(0, 0, 0.1) if k in (3, 4) else (0, 0, 0))
+
+
 FIELD = {'tea': (tea, 3), 'veg': (veg, 4), 'sand': (sand, 4), 'gravel': (gravel, 3), 'grass': (grass, 6)}
 FRAME = {'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
@@ -396,6 +432,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town'
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], 1.0
     if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
@@ -427,6 +464,7 @@ def main():
     jobs += [(m, (k,)) for m in MISC for k in range(6)]
     jobs += [('paddy', (st, k)) for st in PADDY for k in range(3)]
     jobs += [(f, (k,)) for f, (_, n) in FIELD.items() for k in range(n)]
+    jobs += [('water', (k, f)) for k in range(3) for f in range(2)] + [('town', (k,)) for k in range(6)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

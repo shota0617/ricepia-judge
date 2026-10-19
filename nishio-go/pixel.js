@@ -1030,7 +1030,7 @@ buildTiles();
    公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順）
    茶畑・畑・砂浜・境内の砂利・草地：12通りずつ（field シート）
    田んぼ：こよみの田んぼのようすごとに9通り。青田と黄金色の稲は2コマで風にゆれる。となりのマスとすきまなくつながる */
-const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, paddyU: null, paddyF: null };
+const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, paddyU: null, paddyF: null };
 const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
 const FIELD_ROWS = [C.E, C.V, C.S, C.J, C.G];   // field シート：茶畑・畑・砂浜・境内の砂利・草地（12通りずつ。草地は2コマで草がゆれる）
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
@@ -1054,6 +1054,8 @@ function applyMapTiles() {
   if (MT.tree) tiles[C.W] = MT.tree;
   if (MT.misc) MISC_ROWS.forEach((code, i) => { tiles[code] = MT.misc[i]; });
   if (MT.field) FIELD_ROWS.forEach((code, i) => { tiles[code] = MT.field[i]; });
+  if (MT.water) tiles[C.A] = MT.water;
+  if (MT.town) tiles[C.T] = MT.town;
   if (MT.paddyU) { tiles[C.U] = MT.paddyU; tiles[C.F] = MT.paddyF; }
   dirty = true;
 }
@@ -1071,7 +1073,15 @@ function loadMapTiles() {
     get(`house-${s}`, ok, img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
     get(`tree-${s}`, ok, img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
     get(`misc-${s}`, ok, img => { const a = sliceSheet(img, 30, MISC_ROWS.length); MT.misc = MISC_ROWS.map((_, r) => a.slice(r * 30, r * 30 + 30).map(c => [c, c])); });
+    get(`town-${s}`, ok, img => {   // 町なかの地面：小物（マンホール・植木鉢・自販機・電柱・自転車）は8マスに1つくらい
+      const a = sliceSheet(img, 12, 1).map(c => [c, c]), plain = a.slice(0, 2), deco = a.slice(2);
+      MT.town = [...Array(35).fill(plain).flat(), ...deco];
+    });
     get(`field-${s}`, ok, img => { const a = sliceSheet(img, 12, FIELD_ROWS.length * 2); MT.field = FIELD_ROWS.map((_, r) => a.slice(r * 24, r * 24 + 12).map((c, i) => [c, a[r * 24 + 12 + i]])); });
+  }
+  if (!MT.waterReq) {   // 水（さざ波が2コマで動く）。季節で変わらないので1回だけ
+    MT.waterReq = true;
+    get('water', () => true, img => { const a = sliceSheet(img, 3, 2); MT.water = a.slice(0, 3).map((c, i) => [c, a[3 + i]]); });
   }
   if (pt !== MT.p) {   // 田んぼは、こよみの田んぼのようす（青田・黄金色・田植え・田おこし・刈田）ごとのシート
     MT.p = pt;

@@ -6,6 +6,7 @@
 # - 公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30マスずつを季節4つぶん。nishio-go/maptiles/misc-<季節>.png（30×6。行の順は MISC）
 # - 田んぼ：ようす5つ × 立体3 × 色3。nishio-go/maptiles/paddy-<ようす>.png（9×4。青田と黄金色は2コマ目で風に稲がゆれる）
 # - 茶畑・畑・砂浜・境内の砂利・草地：nishio-go/maptiles/field-<季節>.png（12×10。草地は2コマ目で草がゆれる）
+# - 水：nishio-go/maptiles/water.png（3×2。下の段は波が動いた2コマ目）。町なかの地面：town-<季節>.png（12×1）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 import os
 import random
@@ -228,6 +229,13 @@ def field_pal(kind, s, v):
     }
 
 
+# 水：3通り × 2コマ（nishio-go/maptiles/water.png、3×2）。町なかの地面：6通り × 色2（town-<季節>.png、12×1）
+SPECK.update({'mizu': [['#3a72d9', '#2458b8']] * 4, 'machi': SPECK['jimen']})
+GROUND_BASE.update({'mizu': ['#2a62c9'] * 4, 'machi': GROUND_BASE['jimen']})
+TOWN_PAL = [{'manhole': '#6a6a70', 'hachi': '#b86a3c', 'ki': '#2e8a38', 'jihan': '#d03a30', 'mado': '#cfe0f0', 'concreteP': '#b0b0aa', 'kuro': '#2a2a2e'},
+            {'manhole': '#5a5a60', 'hachi': '#8a5a3c', 'ki': '#3f9b3c', 'jihan': '#2c6aa0', 'mado': '#cfe0f0', 'concreteP': '#a8a8a2', 'kuro': '#3a3a40'}]
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     geos = [f'house-{a}-{e}-{f}' for a in range(5) for e in range(5) for f in range(2)]
@@ -277,6 +285,22 @@ def main():
                         img = color(m, band, names, field_pal(kind, s, v), random.Random(f'f{s}-{kind}-{k}-{v}'), ground, s, outline=None)
                         fsheet.paste(Image.fromarray(img), ((k * (12 // n) + v) * N, (row * 2 + fr) * N))
         save(fsheet, f'field-{s}.png')
+    wsheet = Image.new('RGB', (3 * N, 2 * N))
+    for k in range(3):
+        for f in range(2):
+            mat, band, names = load(f'water-{k}-{f}')
+            img = color(mat, band, names, {'nami': '#6fa3ff'}, random.Random(f'w{k}'), 'mizu', 1, outline=None)
+            wsheet.paste(Image.fromarray(img), (k * N, f * N))
+    save(wsheet, 'water.png')
+    for s in range(4):
+        tsheet = Image.new('RGB', (12 * N, N))
+        for k in range(6):
+            mat, band, names = load(f'town-{k}')
+            for v in range(2):
+                pal = dict(TOWN_PAL[v], ki=LEAF[s][v])
+                img = color(mat, band, names, pal, random.Random(f'tw{s}-{k}-{v}'), 'machi', s, flat=('manhole',))
+                tsheet.paste(Image.fromarray(img), ((k * 2 + v) * N, 0))
+        save(tsheet, f'town-{s}.png')
     for st in PADDY:
         sheet = Image.new('RGB', (9 * N, 4 * N))
         for k in range(3):

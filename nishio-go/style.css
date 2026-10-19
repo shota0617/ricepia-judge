@@ -530,3 +530,5 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .koyomi .ko-where{display:flex;align-items:center;gap:3px;margin:2px 0}
 .koyomi .ko-where img.pi{width:14px;height:14px}
 .koyomi .ko-pic small{display:block;opacity:.7;font-size:10px}
+.list li.up-pic .ico{width:52px;flex:none}
+.list li.up-pic .ico img.art{width:48px;height:48px;image-rendering:pixelated}

@@ -33,6 +33,9 @@ MATS = {
     # こよみ（田んぼと天気）
     'aze': '#8a6a3e', 'soil': '#7a5434', 'soilD': '#5e3f26', 'mizu': '#8cc8ee', 'nae': '#7ccf5a', 'ine': '#4f9e3a', 'inaho': '#e8c048',
     'kabu': '#c9a46a', 'wara': '#e6cf8f', 'sun': '#ffc93c', 'sunR': '#ff9f1c', 'kumo': '#f4f6f8', 'kumoD': '#9aa4b0', 'ame': '#3d8fe0', 'yuki': '#ffffff',
+    # おまかせ強化・たからばこ
+    'shoe': '#2f7fd6', 'sole': '#f2f2f2', 'lace': '#ffffff', 'bag': '#d23a2e', 'bagD': '#8f2018', 'wall': '#f1e6c8', 'yaneR': '#c0392b',
+    'door': '#7a4a2a', 'zzz': '#7ec8ff', 'chest': '#9c5b2e', 'chestD': '#5d3a1a', 'band': '#d8a326', 'gem': '#e94b6a',
 }
 
 
@@ -372,7 +375,58 @@ def wx_snow():
     return dict(target=(0, 0, 0.0), scale=1.15, el=0, az=0)
 
 
-MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin}
+# ---------- おまかせ強化（game.js の IDLE.ups）とたからばこ ----------
+def up_spd():
+    """はやあし：青いスニーカー（白い靴底とひも）"""
+    box('sole', 'sole', (0.80, 0.34, 0.08), (0.02, 0, 0.04), bevel=0.04)
+    body = box('upper', 'shoe', (0.62, 0.30, 0.24), (-0.06, 0, 0.20), bevel=0.08)
+    sphere('toe', 'shoe', 0.17, (0.26, 0, 0.14), (1.2, 0.9, 0.8))
+    box('heel', 'shoe', (0.18, 0.28, 0.34), (-0.30, 0, 0.26), bevel=0.06)
+    for i in range(3):
+        box(f'lace{i}', 'lace', (0.03, 0.22, 0.025), (-0.06 + i * 0.1, 0, 0.33 - i * 0.03))
+    box('stripe', 'sole', (0.30, 0.01, 0.04), (-0.04, -0.155, 0.18), (0, 0, 0))
+    return dict(target=(0, 0, 0.18), scale=1.1, az=-20)
+
+
+def up_bag():
+    """おおきなリュック：赤いリュック（ふたと前ポケット）"""
+    box('body', 'bag', (0.56, 0.34, 0.66), (0, 0, 0.33), bevel=0.10)
+    box('flap', 'bagD', (0.56, 0.36, 0.20), (0, -0.01, 0.62), bevel=0.06)
+    box('pocket', 'bagD', (0.38, 0.10, 0.24), (0, -0.20, 0.22), bevel=0.05)
+    box('buckle', 'band', (0.08, 0.02, 0.06), (0, -0.20, 0.53))
+    tube('handle', 'bagD', [(-0.10, 0.02, 0.70), (0, 0.02, 0.80), (0.10, 0.02, 0.70)], 0.025)
+    return dict(target=(0, 0, 0.38), scale=1.15)
+
+
+def up_nap():
+    """るすばん上手：赤い屋根の家と、すやすや（Zの形の青い札）"""
+    box('kabe', 'wall', (0.56, 0.48, 0.38), (0, 0, 0.19))
+    cyl('yane', 'yaneR', 0.42, 0.26, (0, 0, 0.51), (0, 0, math.pi / 4), 4, r2=0.02)
+    box('door', 'door', (0.14, 0.02, 0.22), (0.08, -0.245, 0.11))
+    box('mado', 'glass', (0.12, 0.02, 0.10), (-0.14, -0.245, 0.22))
+    for i, (x, z, sz) in enumerate(((0.30, 0.66, 0.10), (0.40, 0.80, 0.08), (0.48, 0.92, 0.06))):
+        box(f'z{i}', 'zzz', (sz, 0.02, sz), (x, -0.1, z), (0, math.radians(15), 0))
+    return dict(target=(0.06, 0, 0.42), scale=1.3)
+
+
+def chest():
+    """たからばこ（ふたを少し開けて、中から金色の光）"""
+    box('hako', 'chest', (0.70, 0.44, 0.36), (0, 0, 0.18), bevel=0.02)
+    for x in (-0.24, 0.24):
+        box(f'obi{x}', 'band', (0.07, 0.46, 0.38), (x, 0, 0.19))
+    futa = cyl('futa', 'chest', 0.22, 0.70, (0, 0, 0), (0, math.pi / 2, 0), 16)
+    futa.scale = (1, 1, 1)
+    futa.location = (0, 0.02, 0.40)
+    futa.rotation_euler = (math.radians(-18), math.pi / 2, 0)
+    box('waku', 'chestD', (0.72, 0.46, 0.04), (0, 0, 0.36))
+    box('jo', 'band', (0.10, 0.03, 0.12), (0, -0.235, 0.32))
+    sphere('gem', 'gem', 0.035, (0, -0.255, 0.33))
+    for i, x in enumerate((-0.12, 0.0, 0.14)):
+        sphere(f'kin{i}', 'gold', 0.06, (x, -0.06, 0.40))
+    return dict(target=(0, 0, 0.26), scale=1.15)
+
+
+MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest}
 MODELS.update({f'paddy-{k}': v for k, v in (('stubble', paddy_stubble), ('soil', paddy_soil), ('flooded', paddy_flooded), ('green', paddy_green), ('gold', paddy_gold))})
 MODELS.update({f'wx-{k}': v for k, v in (('sunny', wx_sun), ('cloudy', wx_cloudy), ('rain', wx_rain), ('snow', wx_snow))})
 MODELS.update({f'area-{k}': v for k, v in (

@@ -15,7 +15,7 @@
   const KEYMAP = { ArrowUp: 'up', w: 'up', W: 'up', ArrowRight: 'right', d: 'right', D: 'right', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left' };
 
   let root, cv, ctx, scale = 2, raf = 0, running = false;
-  let lv = 0, F, ox, oy, cut, pos, dir, moves, waste, turns, par, done, anim, queue, parts, msg, msgT;
+  let lv = 0, F, ox, oy, cut, pos, dir, moves, waste, turns, par, done, shown, gen = 0, anim, queue, parts, msg, msgT;   // done：もう動かせない（刈り終わった・おわる）、shown：結果を出した、gen：何回目の田んぼか
   const art = { gold: null, stub: null, spr: null };
 
   /* ---------- 絵（Blender のシートを読む。読めないあいだは色だけで描く） ---------- */
@@ -72,7 +72,7 @@
     ox = Math.floor((12 - F.w) / 2); oy = Math.max(1, Math.floor((8 - F.h) / 2));   // 田んぼの左上（マス）。下に道
     cut = Array.from({ length: F.h }, () => new Array(F.w).fill(false));
     pos = [0, F.h]; dir = 'up';   // 入口：左下のマスの下（道の上）
-    moves = 0; waste = 0; turns = 0; done = false; queue = []; parts = []; anim = null;
+    moves = 0; waste = 0; turns = 0; done = false; shown = false; gen++; queue = []; parts = []; anim = null;
     par = parOf(F.w, F.h);
     say(`${F.name}。曲がる回数を少なく`);
     if (root) root.querySelector('.jump-result').hidden = true;
@@ -94,7 +94,7 @@
     else {
       cut[ny][nx] = true; sound('cut');
       for (let i = 0; i < 6; i++) parts.push({ x: (ox + nx) * T + 8, y: (oy + ny) * T + 8, vx: (Math.random() - 0.5) * 1.6, vy: -Math.random() * 1.6, life: 30 });
-      if (!left()) setTimeout(() => finish(), 260);
+      if (!left()) { done = true; queue = []; const g = gen; setTimeout(() => { if (running && g === gen) finish(); }, 260); }   // 刈り終わり：連打の先行入力が むだ走り にならないように、ここで止める（とじて開きなおしたら出さない）
     }
   }
   function bump() { sound('bump'); }
@@ -110,8 +110,8 @@
     return { ok, rest, stars, reasons };
   }
   function finish(gaveUp) {
-    if (done) return;
-    done = true;
+    if (shown) return;
+    shown = true; done = true;
     const r = judge(), G = window.nishioGo;
     const got = r.ok && G && G.harvestReward ? G.harvestReward(r.stars, lv) : null;
     const res = root.querySelector('.jump-result');

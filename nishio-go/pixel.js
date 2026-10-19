@@ -4592,6 +4592,7 @@ function setWorld(on) {
   if (on) { wcam = worldCamStart(); buildWorld(); }
   try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }
   updatePad();
+  updateHarvestBtn();   // せかいちずでは frame が早く戻るので、稲刈りのボタンをここで消す
 }
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
 // 📍ボタン：せかいちずでは主人公のいる所へ戻す（歩く地図はいつも主人公が真ん中）
@@ -4901,7 +4902,7 @@ $('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId
 window.addEventListener('blur', () => stickEnd());
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); autoPause(); padStep(k); }
+  if (k && active && G.demo && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); autoPause(); padStep(k); }   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
 });
 
 /* ---------- おまかせ歩き（操作して移動） ----------

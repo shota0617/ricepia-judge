@@ -1656,7 +1656,8 @@ async function loadRewards() {
         validMin: Number(j.validMin) > 0 ? Number(j.validMin) : 30,
         rewards: j.rewards.filter(r => r && r.id && r.name && Number(r.cost) > 0)
           .map(r => ({ id: String(r.id), name: String(r.name), cost: Math.round(Number(r.cost)), desc: r.desc ? String(r.desc) : '',
-            perDay: Number(r.perDay) > 0 ? Math.floor(Number(r.perDay)) : 0, active: r.active === true })),
+            perDay: Number(r.perDay) > 0 ? Math.floor(Number(r.perDay)) : 0, active: r.active === true,
+            art: /^[a-z0-9-]+$/.test(r.art || '') ? r.art : '' })),   // 品物のドット絵（nishio-go/art/<art>.png）
       };
     }
   } catch (e) { /* 特典なしで続行 */ }
@@ -1674,13 +1675,18 @@ const usedToday = rid => S.coupons.filter(c => c.rid === rid && ymd(new Date(c.t
 
 function renderRewards() {
   $('walletPts').textContent = S.points.toLocaleString();
+  const pic = simple();   // 文字を少なく（ふだん）：品物のドット絵（Blender で作った絵）と、ポイント・回数の札。くわしい条件はタップで
   $('rewardNote').textContent = demo
-    ? '操作して移動：サンプルの特典で交換の流れを試せます（このクーポンはお店では使えません。お店のとくてんは「あるいて移動」で）。'
-    : `交換すると、その場でクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に交換してください。`;
+    ? (pic ? '操作して移動：サンプル（お店では使えません）' : '操作して移動：サンプルの特典で交換の流れを試せます（このクーポンはお店では使えません。お店のとくてんは「あるいて移動」で）。')
+    : pic ? `有効${rewardCfg.validMin}分。お店で見せる直前に交換` : `交換すると、その場でクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に交換してください。`;
   $('rewardList').innerHTML = visibleRewards().map(r => {
     const limit = r.perDay && usedToday(r.id) >= r.perDay;
     const short = S.points < r.cost;
     const why = limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
+    if (pic) return `<li class="reward-pic"><span class="ico">${r.art ? `<img class="art" src="nishio-go/art/${r.art}.png" alt="" width="48" height="48"/>` : PI('gift', '')}</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
+      <span class="chips"><span>${PI('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PI('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}</span>
+      ${r.desc ? `<details><summary>${PI('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
+      <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${limit ? `${PI('clock', '')} あした` : short ? `${PI('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
     return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}${r.desc ? '・' + esc(r.desc) : ''}</small></span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''}>${why ? esc(why) : '交換'}</button></li>`;
@@ -1689,7 +1695,7 @@ function renderRewards() {
   $('couponList').innerHTML = list.length ? list.map(c => {
     const st = couponState(c);
     const label = st === 'used' ? `使用済み ${fmtTime(c.used)}` : st === 'expired' ? '期限切れ' : `有効 あと${Math.ceil((c.t + c.validMin * 60000 - Date.now()) / 60000)}分`;
-    return `<li data-coupon="${esc(c.id)}" class="${st === 'valid' ? 'now' : ''}"><span class="ico">🎫</span><span class="main"><b>${esc(c.name)}</b>
+    return `<li data-coupon="${esc(c.id)}" class="${st === 'valid' ? 'now' : ''}"><span class="ico">${pic ? PI('card', '') : '🎫'}</span><span class="main"><b>${esc(c.name)}</b>
       <small>${fmtTime(c.t)} 交換・${label}</small></span>${st === 'valid' ? '<span class="num">見せる</span>' : ''}</li>`;
   }).join('') : '<li class="empty">まだありません</li>';
 }

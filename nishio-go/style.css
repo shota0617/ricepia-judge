@@ -487,3 +487,16 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .popup details.mb{margin:4px 0;padding:4px 8px;border-radius:8px;background:#e8f3e0;color:#24502c;font-size:12px}
 .popup details.mb summary{cursor:pointer}
 .px-info .popup details.mb{background:none;border:1px dashed #8fd18a;color:#cfeec9;font-size:14px}
+/* とくてん（文字を少なく：ふだん）：品物のドット絵（tools/blender/pixel-art.py で作った 48×48）と札 */
+.wallet .wallet-art{display:none;width:40px;height:40px;image-rendering:pixelated;margin-right:6px;align-self:center}
+.simple .wallet .wallet-art{display:block}
+.simple .wallet > small:first-of-type{display:none}
+.list li.reward-pic .ico img.art{width:56px;height:56px;image-rendering:pixelated}
+.list li.reward-pic .ico{width:60px;flex:none}
+.list li.reward-pic .chips{justify-content:flex-start;margin:4px 0 2px;font-size:14px}
+.list li.reward-pic details{font-size:12px;color:var(--sub)}
+.list li.reward-pic details summary{cursor:pointer}
+.list li.reward-pic details summary img.pi{width:14px;height:14px;vertical-align:-2px}
+.btn img.pi{width:16px;height:16px;vertical-align:-3px}
+/* せってい（文字を少なく：ふだん）：説明はたたむ。アクセス解析の説明（送り先とプライバシーポリシー）は出したまま */
+.simple #panel-settings label.row:not(:has(#anaToggle)) small{display:none}

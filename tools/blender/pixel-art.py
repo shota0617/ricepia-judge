@@ -46,6 +46,8 @@ MATS = {
     # 下のタブと上のバー
     'mapG': '#7cc04a', 'mapB': '#5aa9e6', 'mapY': '#f2d36b', 'note': '#2f7a34', 'paper': '#fff8e0', 'ring': '#b8c0c8',
     'giftR': '#d23a2e', 'giftY': '#ffd54f', 'gear': '#9aa4b0', 'gearD': '#3a3a3a', 'chawan': '#c0392b', 'gohan': '#ffffff', 'hashi': '#8a5a2b',
+    # きろく の数字の札
+    'hoshi': '#ffd54f', 'hon': '#2f5d9a', 'flagR': '#d23a2e', 'pole': '#8a6a3e', 'pinR': '#e0453a', 'fire': '#ff8a1c', 'fireY': '#ffd54f', 'ashi': '#7a4a2a',
 }
 
 
@@ -557,6 +559,84 @@ def bar_bowl():
     return dict(target=(0, 0, 0.28), scale=1.1, size=32)
 
 
+# ---------- きろく の数字の札（game.js の STAT_PI の順）：32×32 ----------
+def small(fn):
+    """48×48 の絵を、同じ形のまま 32×32 で作る"""
+    def f():
+        opts = fn()
+        opts['size'] = 32
+        return opts
+    return f
+
+
+def stat_star():
+    """レベル：金の星（立体の五角の星）"""
+    bm = bmesh.new()
+    pts = []
+    for i in range(10):
+        a = math.pi / 2 + i * math.pi / 5
+        r = 0.48 if i % 2 == 0 else 0.20
+        pts.append((r * math.cos(a), 0, r * math.sin(a)))
+    top = [bm.verts.new((x, -0.08, z)) for x, _, z in pts]
+    bot = [bm.verts.new((x, 0.08, z)) for x, _, z in pts]
+    cf, cb = bm.verts.new((0, -0.16, 0)), bm.verts.new((0, 0.16, 0))
+    for i in range(10):
+        j = (i + 1) % 10
+        bm.faces.new((top[i], top[j], cf))
+        bm.faces.new((bot[j], bot[i], cb))
+        bm.faces.new((top[i], bot[i], bot[j], top[j]))
+    me = bpy.data.meshes.new('star')
+    bm.to_mesh(me)
+    bm.free()
+    o = bpy.data.objects.new('star', me)
+    bpy.context.scene.collection.objects.link(o)
+    me.materials.append(material('hoshi'))
+    return dict(target=(0, 0, 0), scale=1.1, el=10, az=-15, size=32)
+
+
+def stat_book():
+    """まちメモ：青い表紙の本（ページが見える）"""
+    box('hyoshi', 'hon', (0.58, 0.74, 0.16), (0, 0, 0.08), bevel=0.02)
+    box('pages', 'paper', (0.54, 0.70, 0.12), (0.03, 0, 0.08))
+    box('obi', 'giftY', (0.58, 0.10, 0.165), (0, -0.18, 0.08))
+    return dict(target=(0, 0, 0.06), scale=1.05, el=45, size=32)
+
+
+def stat_flag():
+    """めぐったスポット：赤い旗"""
+    cyl('pole', 'pole', 0.03, 0.90, (-0.22, 0, 0.45), verts=8)
+    sphere('tama', 'giftY', 0.05, (-0.22, 0, 0.92))
+    box('hata', 'flagR', (0.46, 0.03, 0.30), (0.02, 0, 0.72), (0, 0, 0.15))
+    return dict(target=(0, 0, 0.46), scale=1.05, el=10, size=32)
+
+
+def stat_pin():
+    """チェックイン：地図のピン（赤い玉としずくの形）"""
+    sphere('pin', 'pinR', 0.30, (0, 0, 0.52))
+    cyl('saki', 'pinR', 0.26, 0.42, (0, 0, 0.22), (math.pi, 0, 0), 24, r2=0.0)
+    sphere('ana', 'white', 0.11, (0, -0.24, 0.55), (1, 0.4, 1))
+    return dict(target=(0, 0, 0.40), scale=1.0, el=10, size=32)
+
+
+def stat_fire():
+    """連続日数：ほのお（オレンジの外と黄色い中）"""
+    sphere('soto', 'fire', 0.30, (0, 0, 0.26), (1, 0.8, 1.0))
+    cyl('soto2', 'fire', 0.27, 0.44, (0, 0, 0.58), verts=16, r2=0.0)
+    sphere('naka', 'fireY', 0.16, (0, -0.16, 0.24), (1, 0.6, 1))
+    cyl('naka2', 'fireY', 0.14, 0.26, (0, -0.16, 0.44), verts=12, r2=0.0)
+    return dict(target=(0, 0, 0.40), scale=1.0, el=8, size=32)
+
+
+def stat_feet():
+    """歩いた距離：二つの足あと"""
+    for side, (x, y) in ((-1, (-0.16, 0.12)), (1, (0.16, -0.14))):
+        sphere(f'kakato{side}', 'ashi', 0.12, (x, y + 0.14, 0.03), (0.9, 1.1, 0.35))
+        sphere(f'tsuchi{side}', 'ashi', 0.15, (x, y - 0.08, 0.03), (0.9, 1.0, 0.35))
+        for k in range(3):
+            sphere(f'yubi{side}{k}', 'ashi', 0.05, (x - 0.08 + k * 0.08, y - 0.28, 0.03), (1, 1, 0.5))
+    return dict(target=(0, 0, 0.02), scale=1.0, el=60, size=32)
+
+
 def medal():
     """バッジのメダル（赤と白のリボンに、金のメダル。まんなかは平らにして、バッジの絵を上にのせる）"""
     rot = (math.pi / 2, 0, 0)
@@ -572,6 +652,9 @@ def medal():
 
 
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
+MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
+               'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
+               'stat-chest': small(lambda: chest())})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
     ('student', npc_student), ('fisher', npc_fisher), ('staff', npc_staff), ('guide', npc_guide), ('monk', npc_monk))})

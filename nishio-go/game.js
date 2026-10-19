@@ -1461,6 +1461,7 @@ function toast(msg) {
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
 const CHIP = [['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
+const CHIP_ART = { chest: 'stat-chest', card: 'card', book: 'stat-book', fire: 'stat-fire', home: 'home', star: 'stat-star', bowl: 'bar-bowl', scroll: 'quest', flag: 'stat-flag' };   // Blender で作った 32×32 の絵があるもの
 function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
@@ -1473,7 +1474,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
     if (hero && ic === 'card' && !shown) { shown = true; continue; }
     if (hero && ic !== 'card' && v === `+${total}`) continue;
-    out.push(`<span title="${esc(l)}">${PI(ic, l)}${v}</span>`);
+    out.push(`<span title="${esc(l)}">${CHIP_ART[ic] ? ART32(CHIP_ART[ic], l) : PI(ic, l)}${v}</span>`);
   }
   return `<div class="chips">${out.join('')}</div>`;
 }
@@ -1491,10 +1492,10 @@ function showReward(total, name, lines, lvUp, fact, dot) {
       ? `<div class="rw hero long">${dot.fresh ? '<span class="ribbon">NEW</span>' : ''}
         <div class="frame"><img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(f.name)}" width="192" height="192"/></div>
         ${starRow(dotStars(f))}<div class="banner">${esc(f.title)}</div>
-        <div class="sub">${PI('coin', 'ポイント')}<b>+${total}</b>　${esc(name)}</div>
+        <div class="sub">${ART32('stat-coin', 'ポイント')}<b>+${total}</b>　${esc(name)}</div>
         ${rewardChips(lines, fact, total, true)}
         ${lvUp ? `<div class="lvup">${PI('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`
-      : `<div class="rw"><div class="big">${PI('coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
+      : `<div class="rw"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
         ${rewardChips(lines, fact)}
         ${lvUp ? `<div class="lvup">${PI('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);

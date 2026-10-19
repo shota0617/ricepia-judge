@@ -532,3 +532,8 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .koyomi .ko-pic small{display:block;opacity:.7;font-size:10px}
 .list li.up-pic .ico{width:52px;flex:none}
 .list li.up-pic .ico img.art{width:48px;height:48px;image-rendering:pixelated}
+/* はじめの画面のプレイ画面（横にならべ、はみ出す分は横にスクロール） */
+.intro-shots{list-style:none;margin:10px -4px 6px;padding:0 4px 6px;display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.intro-shots li{flex:0 0 31%;min-width:104px;max-width:150px;scroll-snap-align:start;text-align:center}
+.intro-shots img{display:block;width:100%;height:auto;aspect-ratio:1/2;object-fit:cover;border-radius:10px;border:2px solid #e9c46a;box-shadow:0 3px 10px rgba(0,0,0,.25);background:#222}
+.intro-shots span{display:block;margin-top:4px;font-size:11px;font-weight:700;white-space:nowrap}

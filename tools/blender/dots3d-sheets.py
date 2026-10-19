@@ -16,9 +16,10 @@ OUT = os.path.join(ROOT, 'nishio-go', 'dots3d')
 TMP = os.path.join(os.environ.get('TMPDIR', '/tmp'), 'nsg-dots3d')
 N = 48
 ORDER = ['jissoji', 'kabuse', 'matcha', 'ishiusu', 'tenteko', 'ike', 'unaju', 'kabayaki', 'ebisen', 'asari', 'sakanahiroba', 'fune', 'kurokabe',
-         'okinoshima', 'ushitora', 'machiya', 'densha', 'akauma', 'kogane', 'enden', 'gion', 'toba', 'chochin', 'ajisai', 'tanbo']   # dots.js の題材の順（番号）
+         'okinoshima', 'ushitora', 'machiya', 'densha', 'akauma', 'kogane', 'enden', 'gion', 'toba', 'chochin', 'ajisai', 'tanbo',
+         'yatsuomote', 'chujaku', 'konoe', 'iwase', 'carnation', 'chatsumi', 'nori', 'kiraonsen', 'kezoji', 'higata', 'konrenji', 'manzai']   # dots.js の題材の順（番号）
 CROWD = {'tenteko', 'gion', 'toba', 'chochin'}   # t で形がかわる行事（人出、炎の大きさと見物の人）
-INDOOR = {'ishiusu', 'unaju', 'ebisen', 'akauma'}   # 部屋の中の題材（天気は窓の外だけ）
+INDOOR = {'ishiusu', 'unaju', 'ebisen', 'akauma', 'iwase', 'manzai'}   # 部屋の中の題材（天気は窓の外だけ）
 OUTSIDE = {'shiba', 'ki', 'matsu', 'miki'}   # 部屋の中の題材で、窓の外に見えるもの
 WY = {'matcha': 20}   # 雨や雪をかさねる下の端（軒の下はぬれない）
 
@@ -68,6 +69,21 @@ PAL = {
     'ta0': '#7ab0d0', 'ta1': '#3a7a30', 'ta2': '#c8a040', 'ta3': '#a89a7a', 'nae': '#5a9a3a', 'ine': '#4a9a3a', 'inaho': '#d8b040', 'inahoL': '#f0d070',
     'kabu': '#7a6a4a', 'aze': '#8a7a5a',
 }
+PAL.update({   # あとから足した12題材
+    'yamaG': '#4f7a3f', 'yamaG2': '#5f8a4a', 'michiY': '#c8b888', 'itaK': '#5a3a24', 'tobira': '#6a4428', 'shoji': '#f6f4ec', 'kumiko': '#c8c0ac',
+    'ikeAo': '#4f8fae', 'washi': '#f4eedc', 'sumiJ': '#4a4a4a', 'garasu': '#c8d8e0', 'tsuchiH': '#8a7656', 'garasuWaku': '#d8dce0', 'kukiH': '#3f7a3a',
+    'chaShin': '#c4e88a', 'kasuri': '#2a3a6a', 'suge': '#d8c890', 'tasuki': '#d8303a', 'hibi': '#3a3428', 'ami': '#1e2a20', 'onsen': '#8ab8c8',
+    'yuge': '#f4f6f8', 'gaku': '#e8dcb0', 'higataD': '#9a8a6a', 'chidori': '#8a6a4a', 'sagiG': '#9aa0a8', 'itaH': '#a8845e', 'hiwada': '#7a5240',
+    'fusuma': '#e8e2d0', 'saizo': '#8a6a48', 'tsuzumi': '#d8a830',
+})
+for i, c in enumerate(['#2a3a5a', '#6a4a2a', '#a8884a', '#3a4a3a', '#5a2a2a', '#c8b890']):
+    PAL[f'hon{i}'] = c
+for i, (c1, c2) in enumerate([('#d8283a', '#f04a5a'), ('#f08aa8', '#f8b8c8'), ('#f4f2ec', '#e0dcd0'), ('#f0c838', '#f8e070'), ('#e86a2a', '#f49a5a')]):
+    PAL[f'hana{i}'], PAL[f'hanaL{i}'] = c1, c2
+for i, c in enumerate(['#f0ece2', '#e8dcc0', '#d8dce0', '#f4e8d8', '#e0d4c4']):
+    PAL[f'hotel{i}'] = c
+for i, (c1, c2) in enumerate([('#2a4a8a', '#c8a040'), ('#2a6a4a', '#d8302a'), ('#6a2a4a', '#e8c040'), ('#3a3a6a', '#f4f0e8'), ('#5a3a1a', '#3a8ad8')]):
+    PAL[f'mzA{i}'], PAL[f'mzB{i}'] = c1, c2
 for i, c in enumerate(['#2a2624', '#7a4a2a', '#8ab0a0', '#e8e4dc', '#b84a32']):
     PAL[f'chawan{i}'] = c
 for i, c in enumerate(['#1a1a1a', '#8a2a2a', '#c8a040', '#2a4a6a', '#5a3a2a']):
@@ -89,8 +105,8 @@ for i, c in enumerate(['#2a2a3a', '#4a3a3a', '#3a4a5a']):
 for b, cs in enumerate([['#f2a0a8', '#f4e0c8', '#f0b070'], ['#f4e0c8', '#e88a70', '#e8c080'], ['#f6c0c8', '#ffffff', '#d8a070'], ['#e8907a', '#f4d8b0', '#c8604a'], ['#f4e8d8', '#f2b0b8', '#f0c890']]):
     for j, c in enumerate(cs):
         PAL[f'sen{b}{j}'] = c
-FLAT = {'shiba', 'tsuchi', 'suna', 'jari', 'higata', 'umi', 'keidai', 'keidaiY', 'concrete', 'michi', 'michiS', 'tatami', 'ta0', 'ta1', 'ta2', 'ta3', 'enden', 'kawa', 'hori', 'ishiMichi', 'mizutamari', 'endenD', 'heri', 'balast'}   # 地面と海はふちどりしない
-TEXTURE = {'shiba': 0.82, 'tsuchi': 0.8, 'suna': 0.86, 'jari': 0.86, 'higata': 0.85, 'keidai': 0.88, 'michiS': 0.9, 'ta3': 0.85, 'enden': 0.9}   # 広い地面に、少し暗い点をまく
+FLAT = {'tsuchiH', 'higataD', 'shiba', 'tsuchi', 'suna', 'jari', 'higata', 'umi', 'keidai', 'keidaiY', 'concrete', 'michi', 'michiS', 'tatami', 'ta0', 'ta1', 'ta2', 'ta3', 'enden', 'kawa', 'hori', 'ishiMichi', 'mizutamari', 'endenD', 'heri', 'balast'}   # 地面と海はふちどりしない
+TEXTURE = {'tsuchiH': 0.85, 'higataD': 0.86, 'shiba': 0.82, 'tsuchi': 0.8, 'suna': 0.86, 'jari': 0.86, 'higata': 0.85, 'keidai': 0.88, 'michiS': 0.9, 'ta3': 0.85, 'enden': 0.9}   # 広い地面に、少し暗い点をまく
 
 # 行事などの、景色の季節（色）と空と色あい。ふつうは s の季節・t の時間帯
 SCENE = {

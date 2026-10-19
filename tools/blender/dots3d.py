@@ -777,6 +777,281 @@ def tanbo(a, b, s, t, R):
         person(-1.5 + a * 0.6, -1.2, 'fuku1', hat='mugi')
     return dict(cam=((0, 2, 0.4), 9, 14, (a - 2) * 6), sun=(-40, 40))
 
+
+# ---------- あとから足した12題材（No.50001〜74000。dots.js の番号の順） ----------
+@motif('yatsuomote')
+def yatsuomote(a, b, s, t, R):
+    ground('shiba')
+    px = (a - 2) * 0.8
+    sphere('yama', 'yamaG', 6, (px, 12, -0.6), (1.4, 0.9, 0.95))   # 八ツ面山
+    sphere('yama2', 'yamaG2', 3.5, (px + 6, 9, -0.6), (1.2, 0.8, 0.8))
+    for i in range(6):   # 山の道（つづら折り）
+        box(f'michi{i}', 'michiY', (1.4, 0.4, 0.05), (px - 1.6 + (i % 2) * 2.2, 7.2 + i * 0.55, 0.9 + i * 0.7), (0.9, 0, 0))
+    n = 5 + b % 3
+    for i in range(n):   # ふもとの桜並木（季節で色がかわる）
+        tree(-5 + i * (10 / n) + (a % 2) * 0.4, 2.5, s, 1.0)
+    if b >= 3:
+        person(1.5 - a * 0.5, -1.0, 'fuku3')
+    if b == 4:   # ぼんぼり
+        for i in range(8):
+            cyl(f'bonbori{i}', 'akari', 0.08, 0.2, (-4.5 + i * 1.3, 1.6, 1.0), verts=8)
+            cyl(f'boP{i}', 'itaD', 0.02, 0.9, (-4.5 + i * 1.3, 1.6, 0.45), verts=4)
+    return dict(cam=((0, 3, 1.4), 12, 8, (a - 2) * 6), sun=(-40, 40))
+
+
+@motif('chujaku')
+def chujaku(a, b, s, t, R):
+    ground('keidai')
+    open_ = b % 2 == 1
+    for side in (-1, 1):   # 石垣
+        box(f'ishigaki{side}', 'ishigaki', (4, 3, 2.0), (side * 4.2, 3, 1.0))
+    box('ue', 'kabe', (5.2, 2.6, 1.0), (0, 3, 2.5))   # 門の上の櫓（白い壁と窓）
+    for i in range(4):
+        box(f'mado{i}', 'koshi', (0.45, 0.02, 0.45), (-1.8 + i * 1.2, 1.69, 2.5))
+    box('hari', 'koshi', (5.2, 2.62, 0.25), (0, 3, 1.9))
+    roof('yane', 'kawaraL', 0, 3, 3.0, 6.0, 3.4, 0.9, hip=True)
+    for x in (-2.2, 2.2):
+        box(f'hashira{x}', 'itaK', (0.35, 0.35, 1.8), (x, 2.0, 0.9))
+    if open_:   # 門があいている：奥へ道
+        box('oku', 'kuro', (4.0, 0.05, 1.75), (0, 3.4, 0.88))
+        box('michi', 'jari', (1.6, 6, 0.02), (0, 0, 0.01))
+    else:   # 閉じた扉と、金の飾り
+        box('tobira', 'tobira', (4.0, 0.1, 1.75), (0, 2.0, 0.88))
+        box('awase', 'itaD', (0.08, 0.12, 1.75), (0, 1.98, 0.88))
+        for i in range(12):
+            sphere(f'byo{i}', 'kin', 0.04, (-1.6 + (i % 6) * 0.65, 1.93, 0.4 + (i // 6) * 0.8))
+    if b >= 2:
+        tree(-5, 5.5, s, 1.5)
+        tree(5, 5.5, s, 1.5)
+    if b >= 3:
+        person(0.3 + a * 0.2, -1.2, 'fuku1')
+    return dict(cam=((0, 2.5, 1.6), 10, 8, (a - 2) * 7), sun=(-40, 42))
+
+
+@motif('konoe')
+def konoe(a, b, s, t, R):
+    ground('shiba')
+    x = -1.2 + (a - 2) * 0.3   # 茶室（低い屋根・障子・縁側）
+    box('kabe', 'kabeIn', (4.4, 2.4, 1.3), (x, 3, 0.75))
+    for i in range(5):
+        box(f'shoji{i}', 'shoji', (0.75, 0.02, 0.9), (x - 1.7 + i * 0.85, 1.79, 0.75))
+        box(f'sanM{i}', 'kumiko', (0.03, 0.025, 0.9), (x - 1.7 + i * 0.85, 1.78, 0.75))
+    roof('yane', 'kawara', x, 3, 1.4, 5.2, 3.2, 0.8)
+    box('engawa', 'ita', (4.6, 0.6, 0.12), (x, 1.5, 0.3))
+    if b != 1:   # 池
+        sphere('ike', 'ikeAo', 1.6, (2.8 + a * 0.2, -0.4, -0.05), (1.4, 0.9, 0.03))
+    for i in range(4):   # 飛び石
+        cyl(f'tobiishi{i}', 'ishi', 0.25, 0.08, (-1.6 + i * 0.6 + (i % 2) * 0.15, 0.8 - i * 0.6, 0.04), verts=10)
+    if b >= 2:   # 石灯籠（火袋は灯る）
+        cyl('toro', 'ishi', 0.12, 0.6, (-3.4, 0, 0.3), verts=8)
+        box('hibukuro', 'akari', (0.2, 0.2, 0.18), (-3.4, 0, 0.7))
+        cyl('kasa', 'ishi', 0.25, 0.12, (-3.4, 0, 0.86), verts=6, r2=0.05)
+    if b >= 3:
+        tree(3.8 - a * 0.3, 5, s, 1.5)
+    return dict(cam=((0, 1.5, 0.8), 8, 14, (a - 2) * 6), sun=(-40, 40))
+
+
+@motif('iwase')
+def iwase(a, b, s, t, R):
+    box('yuka', 'ita', (8, 6, 0.04), (0, 0, 0.0))
+    left = a < 2   # 本棚と窓は左右に分ける（窓から季節と天気が見えるように）
+    wx = (1.5 + a * 0.3) if left else (-1.8 + (a - 2) * 0.4)
+    wall_window(0, 2.2, 8, 3.0, wx, 1.9, 1.3, 1.1, 'kabeIn2')
+    outside(2.2, s, wx)
+    sx = -1.8 if left else 1.6
+    box('tana', 'itaK', (1.8, 0.5, 2.6), (sx, 1.9, 1.3))
+    for row in range(4):
+        for k in range(8):
+            box(f'hon{row}{k}', f'hon{(k + row + b) % 6}', (0.18, 0.4, 0.42), (sx - 0.7 + k * 0.2, 1.75, 0.35 + row * 0.6))
+    table(0.7, 6, 3, 'tsukueD')
+    bx = -0.4 + (a - 2) * 0.2   # ひらいた古い本
+    box('honL', 'washi', (0.5, 0.7, 0.03), (bx - 0.26, -0.3, 0.73), (0, 0.06, 0))
+    box('honR', 'washi', (0.5, 0.7, 0.03), (bx + 0.26, -0.3, 0.73), (0, -0.06, 0))
+    for i in range(4):
+        box(f'gyo{i}', 'sumiJ', (0.03, 0.5, 0.032), (bx - 0.45 + i * 0.12 + (0.4 if i > 1 else 0), -0.3, 0.75))
+    box('hyoshi', f'hon{b % 6}', (1.1, 0.75, 0.02), (bx, -0.3, 0.715))
+    if b >= 3:   # 虫めがね
+        cyl('megane', 'garasu', 0.15, 0.02, (bx + 0.9, -0.3, 0.75), verts=16)
+        box('e', 'itaD', (0.3, 0.05, 0.03), (bx + 1.15, -0.45, 0.75), (0, 0, 0.6))
+    return dict(cam=((0, 0.3, 1.1), 3.6, 22, (a - 2) * 5), sun=(-30, 40))
+
+
+# 西尾のカーネーション：施設園芸（温室）の生産額が全国トップクラス
+@motif('carnation')
+def carnation(a, b, s, t, R):
+    ground('tsuchiH')
+    for i in range(9):   # 温室の骨組み（屋根はガラスなので空が見える）
+        x = -8 + i * 2 + a * 0.3
+        cyl(f'hashira{i}', 'garasuWaku', 0.04, 3.2, (x, 4, 1.6), verts=6)
+        cyl(f'hari{i}', 'garasuWaku', 0.04, 12, (x, 0, 3.2), (math.pi / 2, 0, 0), 6)
+    box('mune', 'garasuWaku', (20, 0.08, 0.08), (0, 0, 3.6))
+    for k in range(3):
+        box(f'yokoH{k}', 'garasuWaku', (20, 0.05, 0.05), (0, -3 + k * 3.5, 3.2))
+    for row in range(5):   # 花のうね
+        y = -1.8 + row * 1.2
+        box(f'une{row}', 'kukiH', (12, 0.5, 0.45), (0, y, 0.22))
+        for k in range(22):
+            x = -5.5 + k * 0.5 + (row % 2) * 0.25
+            sphere(f'hana{row}{k}', f'hana{b}' if (k + row) % 3 else f'hanaL{b}', 0.11, (x, y + R.uniform(-0.15, 0.15), 0.55 + R.uniform(0, 0.08)))
+    if b % 2 == 0:
+        person(1.5 - a * 0.6, -2.6, 'fuku1', hat='mugi')
+    if b >= 3:   # 摘みとった花のかご
+        box('kago', 'take', (0.6, 0.4, 0.3), (-2 + a * 0.6, -2.8, 0.15))
+        for k in range(4):
+            sphere(f'kagoH{k}', f'hana{b}', 0.09, (-2.2 + a * 0.6 + k * 0.13, -2.8, 0.34))
+    return dict(cam=((0, 1.0, 0.9), 6.5, 16, (a - 2) * 6), sun=(-40, 50))
+
+
+# 稲荷山茶園：西尾市の茶畑約200haの半分（約100ha）。5月ごろの茶摘みには、茶摘み娘（かすり）の衣装の体験も
+@motif('chatsumi')
+def chatsumi(a, b, s, t, R):
+    ground('tsuchi')
+    for i, (x, r_) in enumerate(((-6 + a * 1.5, 7), (8, 5))):   # 茶畑の丘
+        sphere(f'oka{i}', 'cha', r_, (x, 16, -r_ * 0.2), (1.6, 1.0, 0.5))
+    for i in range(9):   # うねった茶のうね
+        y = -3 + i * 1.1
+        tube(f'une{i}', 'cha', [(-8, y, 0.3), (-3, y + 0.4 * math.sin(i + a), 0.3), (2, y - 0.3 * math.sin(i + a), 0.3), (8, y, 0.3)], 0.42)
+        if s == 0:   # 新芽
+            for k in range(10):
+                sphere(f'me{i}{k}', 'chaShin', 0.1, (-7 + k * 1.5 + (i % 2) * 0.7, y - 0.15, 0.68))
+    if s == 0:   # 茶摘みの季節：かすりの着物にたすき・すげ笠の茶摘み娘
+        for i in range(1 + b % 3):
+            x, y = -3 + ((a * 2.2 + i * 3.1) % 6), -2.4 + i * 1.1
+            person(x, y, 'kasuri', hat='suge', scale=0.95)
+            box(f'tasuki{i}', 'tasuki', (0.3, 0.2, 0.05), (x, y - 0.01, 0.72))
+            cyl(f'kago{i}', 'take', 0.16, 0.2, (x + 0.3, y - 0.1, 0.5), verts=10)
+    if b == 4:
+        house(4.5 - a * 0.5, 10, 2.4, 1.6, 1.3, 'kabeM', 'kawara', 0.8)
+    return dict(cam=((0, 2, 0.5), 9, 14, (a - 2) * 6), sun=(-40, 40))
+
+
+@motif('nori')
+def nori(a, b, s, t, R):
+    sea(-30)
+    sphere('yama', 'yamaB', 10, (-6 + a * 3, 60, -3), (1.6, 0.6, 0.35))
+    for row in range(5):   # 海苔ひび（竹の柱と網）
+        y = -1 + row * 2.2
+        for k in range(12):
+            cyl(f'hibi{row}{k}', 'hibi', 0.035, 1.2, (-7 + k * 1.3 + (row % 2) * 0.6 + a * 0.2, y, 0.3), verts=5)
+        box(f'ami{row}', 'ami', (16, 0.6, 0.02), (0, y, 0.05))
+    if b >= 2:   # 摘みとりの船
+        bx = -2 + b * 1.2
+        box('fune', 'shiro', (1.8, 0.7, 0.35), (bx, 2.2, 0.1))
+        person(bx + 0.3, 2.2, 'fuku4', hat='mugi', scale=0.9, z=0.25)
+    if b == 4:
+        sphere('kamome', 'shiro', 0.07, (2, 3, 2.6), (2.5, 0.6, 0.4))
+    return dict(cam=((0, 3, 0.4), 9, 8, (a - 2) * 6), sun=(-40, 38))
+
+
+@motif('kiraonsen')
+def kiraonsen(a, b, s, t, R):
+    sea(4)
+    sphere('yama', 'yama', 6, (8 - a * 1.5, 30, -2), (1.4, 0.7, 0.5))
+    box('kishi', 'concrete', (60, 8, 0.02), (0, -1, 0.0))
+    HC = ['hotel0', 'hotel1', 'hotel2', 'hotel3', 'hotel4']
+    for i in range(2 + b % 2):   # 海ぞいの旅館とホテル（夜は窓が灯る）
+        bx, bh = -5 + i * 3.2 + (a % 2) * 0.4, 2.2 + (i % 2) * 1.0
+        box(f'hotel{i}', HC[(b + i) % 5], (2.6, 2, bh), (bx, 2, bh / 2))
+        for r_ in range(int(bh / 0.5) - 1):
+            for c in range(4):
+                box(f'mado{i}{r_}{c}', 'mado', (0.35, 0.02, 0.25), (bx - 0.9 + c * 0.6, 0.99, 0.5 + r_ * 0.5))
+    px = 1.6 - a * 0.4   # 露天風呂と湯けむり
+    sphere('yu', 'onsen', 1.2, (px, -1.6, 0.0), (1.4, 0.9, 0.05))
+    for i in range(8):
+        ang = i * math.tau / 8
+        sphere(f'iwa{i}', 'ishiD', 0.3, (px + 1.7 * math.cos(ang), -1.6 + 1.1 * math.sin(ang), 0.1), (1.2, 1, 0.6))
+    for i in range(5):
+        sphere(f'yuge{i}', 'yuge', 0.22, (px - 0.6 + i * 0.3, -1.4, 0.4 + (i % 2) * 0.3))
+    return dict(cam=((0, 1.0, 0.8), 9, 14, (a - 2) * 6), sun=(-40, 40))
+
+
+@motif('kezoji')
+def kezoji(a, b, s, t, R):
+    ground('shiba')
+    for i in range(6):   # うしろの林
+        tree(-6 + i * 2.4, 7 + (i % 2) * 0.6, s, 1.5, 'matsu' if i % 2 == 0 else 'ki')
+    box('michi', 'ishiMichi', (1.4, 10, 0.02), (0, -1, 0.01))
+    for x in (-1.6, 1.6):   # 山門（柱・屋根・額）
+        box(f'hashira{x}', 'itaK', (0.3, 0.3, 2.4), (x, 3, 1.2))
+    box('nuki', 'ita', (3.6, 0.3, 0.4), (0, 3, 2.2))
+    box('oku', 'kuro', (2.8, 0.05, 2.0), (0, 3.15, 1.0))
+    roof('yane', 'kawara', 0, 3, 2.4, 5.2, 2.4, 1.0)
+    box('gaku', 'gaku', (0.8, 0.04, 0.35), (0, 2.82, 2.2))
+    box('gakuJ', 'kuro', (0.5, 0.045, 0.05), (0, 2.81, 2.22))
+    if b % 2 == 1:   # 石灯籠
+        for x in (-2.8, 2.8):
+            cyl(f'toro{x}', 'ishi', 0.12, 0.7, (x, 1.2, 0.35), verts=8)
+            box(f'hibukuro{x}', 'akari', (0.2, 0.2, 0.2), (x, 1.2, 0.8))
+            cyl(f'kasa{x}', 'ishi', 0.26, 0.12, (x, 1.2, 0.97), verts=6, r2=0.05)
+    if b >= 3:
+        person(0.2 + a * 0.2, -0.8, 'fuku2')
+    return dict(cam=((0, 2.5, 1.5), 9.5, 9, (a - 2) * 7), sun=(-40, 42))
+
+
+@motif('higata')
+def higata(a, b, s, t, R):
+    sea(3 + (a % 2) * 0.6)
+    box('higata', 'higataD', (60, 30, 0.02), (0, -12 + 3 + (a % 2) * 0.6, 0.0))
+    for i in range(5):   # 潮だまりの筋
+        box(f'suji{i}', 'mizutamari', (R.uniform(2, 4), 0.25, 0.02), (-5 + ((i * 2.7 + a * 1.1) % 8), -2.5 + i * 1.0, 0.012))
+    for i in range(4 + b * 2):   # シギやチドリ
+        x, y = R.uniform(-4, 4), R.uniform(-3, 2)
+        sphere(f'tori{i}', 'chidori', 0.13, (x, y, 0.2), (1.4, 0.8, 0.8))
+        sphere(f'hara{i}', 'shiro', 0.1, (x, y - 0.03, 0.15), (1.3, 0.75, 0.6))
+        sphere(f'atama{i}', 'chidori', 0.07, (x + 0.15, y, 0.3))
+        cyl(f'ashi{i}', 'kuro', 0.012, 0.12, (x, y, 0.06), verts=4)
+    if b >= 2:   # サギ（b=4 は白いサギ）
+        x = 2 - a * 0.8
+        m = 'shiro' if b == 4 else 'sagiG'
+        sphere('sagi', m, 0.2, (x, -0.8, 0.55), (1.6, 0.8, 0.8))
+        cyl('sagiK', m, 0.04, 0.35, (x + 0.25, -0.8, 0.8), (0, 0.3, 0), 6)
+        cyl('sagiA', 'kuro', 0.015, 0.45, (x, -0.8, 0.22), verts=4)
+    return dict(cam=((0, -0.5, 0.3), 6, 16, (a - 2) * 8), sun=(-40, 40))
+
+
+# 金蓮寺弥陀堂：吉良町饗庭。鎌倉時代の阿弥陀堂（方三間・寄棟造・檜皮葺）。国宝、県内最古の木造建築
+@motif('konrenji')
+def konrenji(a, b, s, t, R):
+    ground('shiba')
+    for i in range(6):
+        tree(-7 + i * 2.8, 6 + (i % 2) * 0.8, s, 1.6, 'matsu')
+    box('kidan', 'ishi', (4.6, 4.6, 0.35), (0, 2, 0.17))
+    box('do', 'itaH', (3.6, 3.6, 1.6), (0, 2, 1.15))   # 方三間（正面の柱が4本）
+    for i in range(4):
+        box(f'hashira{i}', 'itaD', (0.14, 0.06, 1.6), (-1.75 + i * 1.17, 0.19, 1.15))
+    for i in range(3):   # 格子の戸
+        box(f'to{i}', 'koshi', (0.8, 0.03, 1.2), (-1.17 + i * 1.17, 0.18, 1.0))
+        for k in range(4):
+            box(f'koshi{i}{k}', 'itaH', (0.8, 0.035, 0.03), (-1.17 + i * 1.17, 0.17, 0.55 + k * 0.3))
+    roof('yane', 'hiwada', 0, 2, 1.95, 5.4, 5.4, 1.6, hip=True)   # 寄棟造・檜皮葺
+    box('michi', 'ishiMichi', (1.2, 6, 0.02), (0, -2.5, 0.01))
+    if b % 2 == 1:
+        cyl('toro', 'ishi', 0.12, 0.7, (-2.6, -0.6, 0.35), verts=8)
+        box('hibukuro', 'akari', (0.2, 0.2, 0.2), (-2.6, -0.6, 0.8))
+        cyl('kasa', 'ishi', 0.26, 0.12, (-2.6, -0.6, 0.97), verts=6, r2=0.05)
+    if b >= 3:
+        person(0.3 + a * 0.2, -1.5, 'fuku2')
+    return dict(cam=((0, 1.5, 1.4), 10, 10, (a - 2) * 8), sun=(-40, 40))
+
+
+# 三河万歳（森下万歳）：国の重要無形民俗文化財。大名屋敷の座敷で舞ったことから「御殿万歳」。太夫と才蔵の2人で舞う
+@motif('manzai')
+def manzai(a, b, s, t, R):
+    box('tatami', 'tatami', (8, 6, 0.04), (0, 0, 0.02))
+    for i in range(4):
+        box(f'heri{i}', 'heri', (8, 0.06, 0.045), (0, -2.2 + i * 1.5, 0.02))
+    wx = -0.4 + (a % 3) * 0.4
+    wall_window(0, 2.5, 8, 3, wx, 1.7, 1.3, 1.1, 'fusuma')
+    outside(2.5, s, wx)
+    x1, x2 = -1.4 + a * 0.15, 1.2 - a * 0.1
+    person(x1, 0.5, f'mzA{b}', leg=f'mzA{b}')   # 太夫：烏帽子、扇
+    cyl('eboshi', 'kuro', 0.1, 0.3, (x1, 0.5, 1.15), verts=8, r2=0.06)
+    box('ogi', f'mzB{b}', (0.4, 0.03, 0.25), (x1 + 0.4, 0.4, 0.95), (0, 0.4, 0))
+    person(x2, 0.6, 'saizo', leg='itaD')   # 才蔵：大黒頭巾、鼓
+    sphere('zukin', 'aka', 0.15, (x2, 0.6, 1.06), (1.1, 1.1, 0.7))
+    cyl('tsuzumi', 'tsuzumi', 0.1, 0.25, (x2 + 0.32, 0.45, 0.7), (0, math.pi / 2, 0), 12, r2=0.06)
+    return dict(cam=((0, 0.7, 0.75), 3.3, 12, (a - 2) * 6), sun=(-30, 35))
+
 # ---------- 描く ----------
 def render_one(key, fn, a, b, s, t, out):
     sc = PA.setup_scene()

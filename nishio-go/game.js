@@ -1484,9 +1484,13 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
 const DOT_TWO_STARS = new Set(['kabuse', 'matcha', 'ishiusu', 'ike', 'unaju', 'kabayaki', 'ebisen', 'asari', 'tanbo', 'carnation']);
 const dotStars = f => (DOT_TWO_STARS.has(f.motif) ? 2 : 3) + (['rainbow', 'snow', 'moon'].includes(f.wk) ? 1 : 0);
 const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i></i>'.repeat(n)}</div>`;
-function showReward(total, name, lines, lvUp, fact, dot) {
-  sound.jingle(lvUp ? 'levelup' : 'checkin');
+function showReward(total, name, lines, lvUp, fact, dot, waited) {
   const el = $('reward'), D = window.NISHIO_DOTS;
+  if (waited !== true) {
+    const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
+    if (dot && D && D.ready && !D.ready([dot.id])) { D.load([dot.id]).then(() => { if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
+  }
+  sound.jingle(lvUp ? 'levelup' : 'checkin');
   if (simple()) {
     // 絵が主役：ドット絵を大きく、金の額縁に。はじめての絵には NEW のリボンと、めずらしさの星
     const f = dot && D ? D.info(dot.id) : null;
@@ -1520,7 +1524,7 @@ function showReward(total, name, lines, lvUp, fact, dot) {
 function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); }
 $('reward').addEventListener('click', hideReward);
 
-/* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 70000枚） ----------
+/* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。No.1〜10000 は Blender で作った絵） ----------
    西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・天気・日にちで決まる */
 function gainDot(lat, lng, seed, area) {
   const D = window.NISHIO_DOTS;
@@ -1540,7 +1544,7 @@ function dotLines(dot) {
   return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`];
 }
 let dotSel = null;   // 絵帳で開いている題材（null は、さいきんもらった絵）
-function renderDots() {
+function renderDots(waited) {
   const D = window.NISHIO_DOTS, grid = $('dotGrid');
   if (!D || !grid) return;
   // 目標は「題材 n/35」と「題材×天気 n/175」。70000枚ぜんぶは目標にしない（置き方のちがいは、見つけるたびの楽しみ）
@@ -1549,9 +1553,11 @@ function renderDots() {
   const nWx = [...wx.values()].reduce((a, x) => a + x.size, 0), WX_ICON = ['☀️', '☁️', '☔', '🌫️', '🌈'];
   $('dotCount').textContent = `題材 ${by.size}/${D.MOTIFS.length}・題材×天気 ${nWx}/${D.MOTIFS.length * 5}・絵 ${have.length.toLocaleString()}枚`;
   const last = new Map(); for (const id of have) last.set(D.info(id).m, id);   // 題材ごとの、さいきんもらった絵
+  const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => D.motifOf(id) === dotSel).sort((a, b) => a - b);
+  const need = [...list, ...(simple() ? last.values() : [])];
+  if (waited !== true && D.ready && !D.ready(need)) { D.load(need).then(() => renderDots(!D.ready(need))); return; }   // Blender の絵のシートを読んでから描く（読めたら、そのあいだに変わった分も見なおす。4秒で読めなければ前の描き方の絵）
   if (simple()) $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="pic${dotSel === i ? ' on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}" title="${esc(m.name)}（${by.get(i) || 0}枚）">${by.has(i) ? `<img src="${D.dataUrl(last.get(i))}" alt="" width="72" height="72" loading="lazy"/>` : PI('lock', 'まだ')}<b>${by.has(i) ? esc(m.name) : '？'}</b><span class="wx">${[0, 1, 2, 3, 4].map(w => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}"></i>`).join('')}</span></button></li>`).join('');
   else $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}"><span>${by.has(i) ? m.icon : '？'}</span><b>${esc(m.name)}</b><small>${WX_ICON.map((c, w) => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}">${c}</i>`).join('')} ${by.get(i) || 0}枚</small></button></li>`).join('');
-  const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => D.motifOf(id) === dotSel).sort((a, b) => a - b);
   $('dotNote').textContent = dotSel == null ? 'さいきんもらった絵（題材を押すと、その題材の絵を番号順に見られます）' : `${D.MOTIFS[dotSel].icon} ${D.MOTIFS[dotSel].name}（もう一度押すと、さいきんもらった絵にもどります）`;
   grid.innerHTML = list.length ? list.map(id => { const f = D.info(id); return `<figure><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96" loading="lazy"/><figcaption>No.${f.no}<br/>${dotSel == null ? esc(f.title) + '<br/>' : ''}${esc(f.label)}</figcaption></figure>`; }).join('')
     : `<p class="empty">${dotSel == null ? 'まだありません。西尾市の中で、たからばこを開けたり、スポットにチェックインしたりしてみよう' : 'この題材の絵は、まだありません'}</p>`;
@@ -2073,13 +2079,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) sessi
 window.addEventListener('pagehide', sessionEnd);
 
 // はじめの画面の絵：いまの季節の、西尾城の丑寅櫓・佐久島の黒壁・稲荷山の茶摘み（西尾ドット絵帳の絵）を3枚、扇のように
-function introHero() {
+function introHero(waited) {
   const D = window.NISHIO_DOTS, el = $('introHero');
   if (!D || !el || !D.idOf) return;
   const mo = new Date().getMonth() + 1, se = mo >= 3 && mo <= 5 ? 0 : mo <= 8 && mo >= 6 ? 1 : mo >= 9 && mo <= 11 ? 2 : 3;
   const keys = ['kurokabe', 'ushitora', 'chatsumi'], idx = keys.map(k => D.MOTIFS.findIndex(m => (m.key || m) === k));
   if (idx.some(i => i < 0)) return;
-  el.innerHTML = idx.map((m, n) => `<img class="hc hc${n}" src="${D.dataUrl(D.idOf(m, 0, se * 4 + 1, [6, 12, 3][n]))}" alt="" width="144" height="144"/>`).join('') + '<i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i>';
+  const ids = idx.map((m, n) => D.idOf(m, 0, se * 4 + 1, [6, 12, 3][n]));
+  if (waited !== true && D.ready && !D.ready(ids)) { D.load(ids).then(() => introHero(true)); return; }   // Blender の絵のシートを読んでから
+  el.innerHTML = ids.map((id, n) => `<img class="hc hc${n}" src="${D.dataUrl(id)}" alt="" width="144" height="144"/>`).join('') + '<i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i>';
 }
 document.addEventListener('DOMContentLoaded', introHero);
 

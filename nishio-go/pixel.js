@@ -4994,6 +4994,7 @@ function autoRead() {   // 人の話のウィンドウ：読む時間をおい�
 function autoTick() {
   setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
   if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
+  if (document.body.classList.contains('jump-open')) return;   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;
   if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }

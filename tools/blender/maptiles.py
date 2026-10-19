@@ -7,6 +7,7 @@
 # - 田んぼ：こよみの田んぼのようす5つ（青田・黄金色・田植え・田おこし・刈田）× 3通り。上下左右のマスとつながるよう、景色をマスの大きさでくり返す
 # - 茶畑・畑・砂浜・境内の砂利・草地：茶畑と畑と砂利はくり返す景色（となりとつながる）、砂浜と草地はマスの中の小物
 # - 水：さざ波の列をくり返す景色を3通り × 2コマ（波を半分ずらす）。町なかの地面：6通り（たいていは何もなく、ときどき小物）
+# - 軽トラ（4方向）・たからばこ：背景なし（地面を置かない）
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -423,6 +424,46 @@ def town(k):
     return dict(target=(0, 0, 0.1) if k in (3, 4) else (0, 0, 0))
 
 
+# ---------- 地図の上を動くもの（背景なし）：軽トラ（4方向）・たからばこ ----------
+def truck(d):
+    """米袋を積んだ白い軽トラ。d：0 上（北へ走る）・1 右・2 下・3 左"""
+    parts = [
+        box('cab', 'truckW', (0.36, 0.26, 0.26), (0, 0.24, 0.2), bevel=0.03),
+        box('glass', 'mado', (0.3, 0.02, 0.1), (0, 0.375, 0.26)),
+        box('bed', 'truckW', (0.38, 0.5, 0.06), (0, -0.14, 0.1)),
+        box('aori1', 'truckW', (0.38, 0.02, 0.08), (0, -0.39, 0.16)),
+        box('aori2', 'truckW', (0.02, 0.5, 0.08), (-0.19, -0.14, 0.16)),
+        box('aori3', 'truckW', (0.02, 0.5, 0.08), (0.19, -0.14, 0.16)),
+    ]
+    for i, (x, y) in enumerate(((-0.08, -0.04), (0.08, -0.04), (-0.08, -0.24), (0.08, -0.24))):
+        parts.append(box(f'kome{i}', 'kome', (0.14, 0.17, 0.08), (x, y, 0.17), bevel=0.02))
+    for i, (x, y) in enumerate(((-0.17, 0.22), (0.17, 0.22), (-0.17, -0.24), (0.17, -0.24))):
+        parts.append(cyl(f'wa{i}', 'kuro', 0.06, 0.05, (x, y, 0.06), (0, math.pi / 2, 0), 10))
+    rot = -d * math.pi / 2
+    for o in parts:
+        o.rotation_euler.z += rot
+        o.location.x, o.location.y = (o.location.x * math.cos(rot) - o.location.y * math.sin(rot), o.location.x * math.sin(rot) + o.location.y * math.cos(rot))
+    return dict(target=(0, 0.0, 0.16), scale=1.12)
+
+
+def chest(k):
+    """たからばこ（木の箱に金のふち）。k=1 はふたが少しあいて光る"""
+    box('hako', 'takara', (0.5, 0.34, 0.26), (0, 0, 0.13), bevel=0.02)
+    for x in (-0.2, 0.2):
+        box(f'obi{x}', 'kin', (0.05, 0.35, 0.27), (x, 0, 0.135))
+    lid = cyl('futa', 'takara', 0.17, 0.5, (0, 0, 0.26), (0, math.pi / 2, 0), 12)
+    lid.scale = (1, 1, 0.7)
+    for x in (-0.2, 0.2):
+        cyl(f'obiF{x}', 'kin', 0.175, 0.05, (x, 0, 0.26), (0, math.pi / 2, 0), 12).scale = (1, 1, 0.7)
+    box('jou', 'kin', (0.08, 0.02, 0.08), (0, -0.175, 0.24))
+    if k:
+        lid.rotation_euler.x = -0.5
+        lid.location.y, lid.location.z = 0.06, 0.3
+        sphere('hikari', 'hikari', 0.12, (0, 0, 0.28), (1.6, 1, 0.4))
+    return dict(target=(0, 0, 0.18), scale=0.8)
+
+
+SPRITES = {'truck': (truck, 4), 'chest': (chest, 2)}
 FIELD = {'tea': (tea, 3), 'veg': (veg, 4), 'sand': (sand, 4), 'gravel': (gravel, 3), 'grass': (grass, 6)}
 FRAME = {'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
@@ -432,9 +473,9 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else SPRITES[kind][0](*args) if kind in SPRITES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
-    target, scale = opts['target'], 1.0
+    target, scale = opts['target'], opts.get('scale', 1.0)
     if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
         el = math.radians(42)
         vs = [v.co.y * math.sin(el) + v.co.z * math.cos(el) for o in bpy.data.objects if o.type == 'MESH' and o.name != 'jimen'
@@ -465,6 +506,7 @@ def main():
     jobs += [('paddy', (st, k)) for st in PADDY for k in range(3)]
     jobs += [(f, (k,)) for f, (_, n) in FIELD.items() for k in range(n)]
     jobs += [('water', (k, f)) for k in range(3) for f in range(2)] + [('town', (k,)) for k in range(6)]
+    jobs += [(sp, (k,)) for sp, (_, n) in SPRITES.items() for k in range(n)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

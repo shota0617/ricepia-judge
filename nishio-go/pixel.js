@@ -1030,7 +1030,7 @@ buildTiles();
    公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順）
    茶畑・畑・砂浜・境内の砂利・草地：12通りずつ（field シート）
    田んぼ：こよみの田んぼのようすごとに9通り。青田と黄金色の稲は2コマで風にゆれる。となりのマスとすきまなくつながる */
-const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, paddyU: null, paddyF: null };
+const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, sprites: null, spriteReq: false, paddyU: null, paddyF: null };
 const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
 const FIELD_ROWS = [C.E, C.V, C.S, C.J, C.G];   // field シート：茶畑・畑・砂浜・境内の砂利・草地（12通りずつ。草地は2コマで草がゆれる）
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
@@ -1056,6 +1056,10 @@ function applyMapTiles() {
   if (MT.field) FIELD_ROWS.forEach((code, i) => { tiles[code] = MT.field[i]; });
   if (MT.water) tiles[C.A] = MT.water;
   if (MT.town) tiles[C.T] = MT.town;
+  if (MT.sprites) {   // 軽トラ（上・右・下・左）と、地図のたからばこ
+    ['up', 'right', 'down', 'left'].forEach((d, i) => { carSprites[d] = MT.sprites[i]; });
+    if (spotSprites.treasure) spotSprites.treasure[0] = MT.sprites[4];
+  }
   if (MT.paddyU) { tiles[C.U] = MT.paddyU; tiles[C.F] = MT.paddyF; }
   dirty = true;
 }
@@ -1078,6 +1082,10 @@ function loadMapTiles() {
       MT.town = [...Array(35).fill(plain).flat(), ...deco];
     });
     get(`field-${s}`, ok, img => { const a = sliceSheet(img, 12, FIELD_ROWS.length * 2); MT.field = FIELD_ROWS.map((_, r) => a.slice(r * 24, r * 24 + 12).map((c, i) => [c, a[r * 24 + 12 + i]])); });
+  }
+  if (!MT.spriteReq) {   // 地図の上を動くもの（Blender の軽トラ・たからばこ）
+    MT.spriteReq = true;
+    get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
   }
   if (!MT.waterReq) {   // 水（さざ波が2コマで動く）。季節で変わらないので1回だけ
     MT.waterReq = true;

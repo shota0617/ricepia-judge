@@ -7,6 +7,7 @@
 # - 田んぼ：ようす5つ × 立体3 × 色3。nishio-go/maptiles/paddy-<ようす>.png（9×4。青田と黄金色は2コマ目で風に稲がゆれる）
 # - 茶畑・畑・砂浜・境内の砂利・草地：nishio-go/maptiles/field-<季節>.png（12×10。草地は2コマ目で草がゆれる）
 # - 水：nishio-go/maptiles/water.png（3×2。下の段は波が動いた2コマ目）。町なかの地面：town-<季節>.png（12×1）
+# - 軽トラ（4方向）・たからばこ：nishio-go/maptiles/sprites.png（6×1、背景なし）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 import os
 import random
@@ -236,6 +237,25 @@ TOWN_PAL = [{'manhole': '#6a6a70', 'hachi': '#b86a3c', 'ki': '#2e8a38', 'jihan':
             {'manhole': '#5a5a60', 'hachi': '#8a5a3c', 'ki': '#3f9b3c', 'jihan': '#2c6aa0', 'mado': '#cfe0f0', 'concreteP': '#a8a8a2', 'kuro': '#3a3a40'}]
 
 
+# 地図の上を動くもの（背景なし）：nishio-go/maptiles/sprites.png（軽トラ 上・右・下・左、たからばこ、ふたのあいたたからばこ）
+SPRITE_PAL = {'truckW': '#f2f2f0', 'mado': '#5f98c8', 'kome': '#d0a860', 'kuro': '#2a2a2e', 'takara': '#a0602a', 'kin': '#f2c230', 'hikari': '#fff6b0'}
+
+
+def sprite_tile(mat, band, names):
+    img = np.zeros((N, N, 4), np.uint8)
+    obj = mat != 255
+    for y, x in zip(*np.where(obj)):
+        img[y, x, :3] = tones(SPRITE_PAL.get(names[mat[y, x]], '#ff00ff'))[band[y, x]]
+        img[y, x, 3] = 255
+    edge = np.zeros_like(obj)   # まわりを黒っぽくふちどる（どの地面の上でも見えるように）
+    edge[1:] |= obj[:-1]
+    edge[:-1] |= obj[1:]
+    edge[:, 1:] |= obj[:, :-1]
+    edge[:, :-1] |= obj[:, 1:]
+    img[edge & ~obj] = (*OUTLINE, 255)
+    return img
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     geos = [f'house-{a}-{e}-{f}' for a in range(5) for e in range(5) for f in range(2)]
@@ -301,6 +321,12 @@ def main():
                 img = color(mat, band, names, pal, random.Random(f'tw{s}-{k}-{v}'), 'machi', s, flat=('manhole',))
                 tsheet.paste(Image.fromarray(img), ((k * 2 + v) * N, 0))
         save(tsheet, f'town-{s}.png')
+    ssheet = Image.new('RGBA', (6 * N, N))
+    for i, name in enumerate(['truck-0', 'truck-1', 'truck-2', 'truck-3', 'chest-0', 'chest-1']):
+        mat, band, names = load(name)
+        ssheet.paste(Image.fromarray(sprite_tile(mat, band, names), 'RGBA'), (i * N, 0))
+    ssheet.save(os.path.join(OUT, 'sprites.png'), optimize=True)
+    print('sprites.png', os.path.getsize(os.path.join(OUT, 'sprites.png')))
     for st in PADDY:
         sheet = Image.new('RGB', (9 * N, 4 * N))
         for k in range(3):

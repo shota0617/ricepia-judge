@@ -519,3 +519,14 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .list li.area-row .ico{width:44px;flex:none}
 .list li .ico img.area-art{width:40px;height:40px}
 .list li .ico img.area-art.done{filter:drop-shadow(0 0 3px #e9c46a)}
+/* こよみを開いたとき（文字を少なく：ふだん）：田んぼと天気の絵（Blender）、節気、見ごろ */
+.koyomi.open .more.ko-pic{font-size:12px}
+.koyomi .ko-cells{display:flex;gap:10px;margin:2px 0 4px}
+.koyomi .ko-cell{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:52px}
+.koyomi .ko-cell img.ko-art{width:48px;height:48px;image-rendering:pixelated}
+.koyomi .ko-cell img.pi{width:30px;height:30px;margin:9px 0}
+.koyomi .ko-cell b{font-weight:400}
+.koyomi .ko-pic .chips{justify-content:flex-start;font-size:12px;font-weight:400;color:inherit;margin:2px 0}
+.koyomi .ko-where{display:flex;align-items:center;gap:3px;margin:2px 0}
+.koyomi .ko-where img.pi{width:14px;height:14px}
+.koyomi .ko-pic small{display:block;opacity:.7;font-size:10px}

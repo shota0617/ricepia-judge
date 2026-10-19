@@ -30,6 +30,9 @@ MATS = {
     'water': '#4aa3df', 'steam': '#f2f2f2', 'leaf': '#3f8f3a', 'ajisai': '#7b7fd6', 'ajisaiP': '#c07ad0', 'sand': '#e8d29a', 'kurokabe': '#2b2b2b',
     'stone': '#9a9a94', 'roof': '#3e4a5a', 'straw': '#e0b84a', 'carrot': '#f07a1e', 'kawara': '#6f7884', 'kaki': '#e8641c', 'sea': '#3d86c6',
     'torii': '#d8402e', 'pine': '#2f6b33',
+    # こよみ（田んぼと天気）
+    'aze': '#8a6a3e', 'soil': '#7a5434', 'soilD': '#5e3f26', 'mizu': '#8cc8ee', 'nae': '#7ccf5a', 'ine': '#4f9e3a', 'inaho': '#e8c048',
+    'kabu': '#c9a46a', 'wara': '#e6cf8f', 'sun': '#ffc93c', 'sunR': '#ff9f1c', 'kumo': '#f4f6f8', 'kumoD': '#9aa4b0', 'ame': '#3d8fe0', 'yuki': '#ffffff',
 }
 
 
@@ -276,7 +279,102 @@ def area_gamagori():
     return dict(target=(0, 0, 0.12), scale=1.35)
 
 
+# ---------- こよみ：田んぼの1年（season.js の PADDY の tile）と天気（weather.js の kind） ----------
+def paddy_field(inner):
+    """あぜに囲まれた四角い田んぼ。inner は中の地面の材質"""
+    box('aze', 'aze', (1.0, 1.0, 0.10), (0, 0, 0.05))
+    box('ta', inner, (0.86, 0.86, 0.10), (0, 0, 0.06))
+    return dict(target=(0, 0, 0.08), scale=1.25, el=38)
+
+
+def grid(n=4, step=0.19):
+    o = (n - 1) * step / 2
+    return [(i * step - o, j * step - o) for i in range(n) for j in range(n)]
+
+
+def paddy_stubble():
+    """冬の田んぼ・刈田：刈ったあとの株と、わらの山"""
+    opts = paddy_field('soil')
+    for i, (x, y) in enumerate(grid()):
+        cyl(f'kabu{i}', 'kabu', 0.035, 0.07, (x, y, 0.14), verts=8)
+    sphere('wara', 'wara', 0.14, (0.22, 0.22, 0.17), (1, 1, 1.1))
+    cyl('waraTop', 'wara', 0.10, 0.14, (0.22, 0.22, 0.30), verts=12, r2=0.0)
+    return opts
+
+
+def paddy_soil():
+    """田おこし：たがやした土のうね"""
+    opts = paddy_field('soil')
+    for i in range(5):
+        box(f'une{i}', 'soilD', (0.84, 0.06, 0.04), (0, -0.34 + i * 0.17, 0.13))
+    return opts
+
+
+def paddy_flooded():
+    """田植え：水をはった田んぼに、植えたばかりの苗"""
+    opts = paddy_field('mizu')
+    for i, (x, y) in enumerate(grid()):
+        cyl(f'nae{i}', 'nae', 0.03, 0.09, (x, y, 0.15), verts=6, r2=0.0)
+    return opts
+
+
+def paddy_green():
+    """青田：緑の稲が育った田んぼ"""
+    opts = paddy_field('mizu')
+    for i, (x, y) in enumerate(grid()):
+        cyl(f'ine{i}', 'ine', 0.08, 0.24, (x, y, 0.22), verts=7, r2=0.01)
+    return opts
+
+
+def paddy_gold():
+    """稲刈り：稲穂が黄金色にみのった田んぼ"""
+    opts = paddy_field('soil')
+    for i, (x, y) in enumerate(grid()):
+        cyl(f'ine{i}', 'kabu', 0.07, 0.22, (x, y, 0.21), verts=7, r2=0.02)
+        sphere(f'ho{i}', 'inaho', 0.06, (x + 0.03, y - 0.02, 0.32), (1.4, 1, 0.8))
+    return opts
+
+
+def wx_sun():
+    """晴れ：お日さまと光"""
+    sphere('hi', 'sun', 0.32, (0, 0, 0))
+    for i in range(8):
+        a = i / 8 * math.tau
+        cyl(f'ray{i}', 'sunR', 0.06, 0.16, (0.46 * math.cos(a), -0.05, 0.46 * math.sin(a)), (0, -a + math.pi / 2, 0), 6, r2=0.0)
+    return dict(target=(0, 0, 0), scale=1.3, el=0, az=0)
+
+
+def cloud(mat='kumo', z=0.0):
+    for i, (x, zz, r) in enumerate(((-0.26, 0.0, 0.20), (0.0, 0.10, 0.27), (0.26, 0.0, 0.20), (0.0, -0.06, 0.22))):
+        sphere(f'kumo{i}', mat, r, (x, 0, z + zz), (1, 0.8, 1))
+
+
+def wx_cloudy():
+    """くもり：くも"""
+    cloud()
+    sphere('kumoB', 'kumoD', 0.18, (0.30, 0.15, 0.12), (1, 0.8, 1))
+    return dict(target=(0, 0, 0.02), scale=1.15, el=0, az=0)
+
+
+def wx_rain():
+    """雨：灰色のくもと雨つぶ"""
+    cloud('kumoD', 0.18)
+    for i, x in enumerate((-0.24, -0.05, 0.14, 0.30)):
+        sphere(f'ame{i}', 'ame', 0.045, (x, -0.2, -0.22 - 0.08 * (i % 2)), (0.7, 0.7, 1.6))
+    return dict(target=(0, 0, 0.0), scale=1.15, el=0, az=0)
+
+
+def wx_snow():
+    """雪：くもと雪のつぶ"""
+    cloud('kumoD', 0.18)
+    for i, (x, z) in enumerate(((-0.26, -0.22), (-0.04, -0.32), (0.16, -0.20), (0.32, -0.34))):
+        sphere(f'yuki{i}', 'yuki', 0.06, (x, -0.2, z))
+    return dict(target=(0, 0, 0.0), scale=1.15, el=0, az=0)
+
+
 MODELS = {'ricebag': ricebag, 'mill': mill, 'coin': coin}
+MODELS.update({f'paddy-{k}': v for k, v in (('stubble', paddy_stubble), ('soil', paddy_soil), ('flooded', paddy_flooded), ('green', paddy_green), ('gold', paddy_gold))})
+MODELS.update({f'wx-{k}': v for k, v in (('sunny', wx_sun), ('cloudy', wx_cloudy), ('rain', wx_rain), ('snow', wx_snow))})
 MODELS.update({f'area-{k}': v for k, v in (
     ('nishio', area_nishio), ('isshiki', area_isshiki), ('kira', area_kira), ('hazu', area_hazu), ('sakushima', area_sakushima),
     ('okazaki', area_okazaki), ('anjo', area_anjo), ('hekinan', area_hekinan), ('takahama', area_takahama), ('kota', area_kota),
@@ -304,12 +402,12 @@ def setup_scene():
     return sc
 
 
-def add_camera_light(sc, target, scale):
+def add_camera_light(sc, target, scale, el=28, az=-35):
     cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam'))
     sc.collection.objects.link(cam)
     cam.data.type = 'ORTHO'
     cam.data.ortho_scale = scale
-    d, el, az = 10, math.radians(28), math.radians(-35)   # 斜め上（左前）から見る
+    d, el, az = 10, math.radians(el), math.radians(az)   # 斜め上（左前）から見る
     cam.location = (target[0] + d * math.cos(el) * math.sin(az), target[1] - d * math.cos(el) * math.cos(az), target[2] + d * math.sin(el))
     cam.rotation_euler = (math.pi / 2 - el, 0, az)
     sc.camera = cam
@@ -396,7 +494,7 @@ def save_png(arr, path):
 def make(name):
     sc = setup_scene()
     opts = MODELS[name]()
-    add_camera_light(sc, opts['target'], opts['scale'])
+    add_camera_light(sc, opts['target'], opts['scale'], opts.get('el', 28), opts.get('az', -35))
     os.makedirs(TMP, exist_ok=True)
     names = set_materials('id')
     sc.view_settings.view_transform = 'Standard'

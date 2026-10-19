@@ -266,7 +266,7 @@ const DB = CHUNK + 2, UNK = -32768;
 
 // OpenStreetMap に何もないマスを土地利用で塗る：田→田んぼ、その他の農用地→畑、森林→森、建物用地→家並み（道に面したマスは家、ほかは4マスに3つが家）、
 // その他の用地・道路・鉄道→町の地面、ゴルフ場→芝生、海浜→砂浜、それ以外（荒地・川・海）→草地。作物の分からない農地（OSM）は、田なら田んぼ、その他の農用地なら畑
-function fillLanduse(g, cx, cy) {
+function fillLanduse(g, cx, cy, real) {
   const x0 = cx * CHUNK, y0 = cy * CHUNK, lats = [], lngs = [];
   for (let k = 0; k < CHUNK; k++) { lats.push(toLatLng(x0, y0 + k + 0.5).lat); lngs.push(toLatLng(x0 + k + 0.5, y0).lng); }
   const road = i => { const c = g[i]; return c === C.R || c === C.H; };
@@ -281,7 +281,7 @@ function fillLanduse(g, cx, cy) {
     else if (u === 'e') {
       const front = (x > 0 && road(i - 1)) || (x < CHUNK - 1 && road(i + 1)) || (y > 0 && road(i - CHUNK)) || (y < CHUNK - 1 && road(i + CHUNK));
       const h = (((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0;
-      g[i] = front || h % 4 ? C.Q : C.T;
+      g[i] = !real && (front || h % 4) ? C.Q : C.T;   // 国土地理院の建物があるときは、本当の家だけを建てる
     } else if (u === 'h' || u === 'f' || u === 'g') g[i] = C.T;
     else if (u === 'l') g[i] = C.P;
     else if (u === 'j') g[i] = C.S;
@@ -289,9 +289,12 @@ function fillLanduse(g, cx, cy) {
   }
   g.lu = !!LU;
 }
-function rasterize(elements, cx, cy, dem) {
+// bld：国土地理院の建物（tools/gsi-buildings.js。区画を用意するときだけ）。あれば OpenStreetMap の建物の代わりに使い、
+// 小さい建物（家）は中心のマスに家の絵、大きい建物は形どおりに屋根を塗る。g.rf に、空中写真で見た屋根の色（マスごと）を入れる
+const HOUSE_M2 = 250, SHED_M2 = 30;
+function rasterize(elements, cx, cy, dem, bld) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
-  const x0 = cx * CHUNK, y0 = cy * CHUNK;
+  const x0 = cx * CHUNK, y0 = cy * CHUNK, real = Array.isArray(bld);
   const ops = [], coasts = [], pois = [];
   for (const el of elements) {
     const kind = poiKind(el.tags || {});
@@ -307,9 +310,21 @@ function rasterize(elements, cx, cy, dem) {
     const f = rings[0][0], l = rings[0][rings[0].length - 1];
     const closed = el.type === 'relation' || (rings[0].length > 3 && f.lat === l.lat && f.lon === l.lon);
     const k = classify(el.tags || {}, closed);
-    if (!k) continue;
+    if (!k || (real && k.c === C.B)) continue;
     const pts = rings.map(r => r.map(p => { const q = toTile(p.lat, p.lon); return [q.x - x0, q.y - y0]; }));
     if (k.coast) coasts.push(...pts); else ops.push({ k, pts });
+  }
+  if (real) {
+    g.rf = new Uint8Array(CHUNK * CHUNK);
+    for (const b of bld) {
+      const r = b.r.map(([lat, lon]) => { const q = toTile(lat, lon); return [q.x - x0, q.y - y0]; });
+      let a = 0;
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += (r[j][0] - r[i][0]) * (r[j][1] + r[i][1]);
+      const m2 = Math.abs(a) / 2 * TILE_M * TILE_M;
+      if (m2 < SHED_M2 || (b.f === 3111 && m2 < HOUSE_M2)) continue;   // 物置・車庫・小さな屋根だけの小屋は描かない
+      if (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1]) r.push(r[0]);
+      ops.push({ k: { a: 1, c: m2 <= HOUSE_M2 && b.f !== 3103 ? C.Q : C.B, p: 30, rc: b.c | 0 }, pts: [r] });
+    }
   }
   g.pois = dedupePois(pois, 4);
   const dh = (x, y) => dem[(y + 1) * DB + (x + 1)];
@@ -319,12 +334,15 @@ function rasterize(elements, cx, cy, dem) {
   for (const o of ops) {
     if (o.k.p >= 18) sea();
     if (o.k.a) {
-      // 1マスより小さい建物も、中心のマスだけは塗る
-      if (!fillPoly(g, o.pts, o.k.c) && o.k.c === C.B) {
+      // 家（国土地理院の小さい建物）は中心のマスだけ。1マスより小さい建物も、中心のマスだけは塗る
+      const center = () => {
         const r = o.pts[0], m = r.reduce((s, p) => [s[0] + p[0] / r.length, s[1] + p[1] / r.length], [0, 0]);
         const mx = Math.floor(m[0]), my = Math.floor(m[1]);
-        if (mx >= 0 && my >= 0 && mx < CHUNK && my < CHUNK) g[my * CHUNK + mx] = C.B;
-      }
+        if (mx >= 0 && my >= 0 && mx < CHUNK && my < CHUNK) { g[my * CHUNK + mx] = o.k.c; if (g.rf) g.rf[my * CHUNK + mx] = o.k.rc; }
+      };
+      if (o.k.c === C.Q) center();
+      else if (!fillPoly(g, o.pts, o.k.c)) { if (o.k.c === C.B) center(); }
+      else if (o.k.rc && g.rf) fillPoly(g.rf, o.pts, o.k.rc);
     } else for (const line of o.pts) strokeLine(g, line, o.k.c, o.k.w);
   }
   sea();
@@ -336,7 +354,7 @@ function rasterize(elements, cx, cy, dem) {
     const isSea = known > CHUNK * CHUNK / 2 ? na > known * 0.9 : toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82;
     if (isSea) g.fill(C.A);
   }
-  fillLanduse(g, cx, cy);
+  fillLanduse(g, cx, cy, real);
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
   const ok = h => Number.isFinite(h) && h > UNK;
   for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
@@ -538,6 +556,7 @@ async function bakedChunk(cx, cy) {
     if (!g) return null;
     g.pois = Array.isArray(j.p) ? j.p : [];
     g.lu = (j.cv || 1) >= 2;   // 版2からは土地利用で塗ってある
+    if (typeof j.r === 'string') g.rf = unrle(j.r);   // 版3から：屋根の色（国土地理院の建物と空中写真）
     return g;
   } catch (e) { return null; }
 }
@@ -1211,6 +1230,22 @@ function roofVar(x, y) {
   if (group < 10) return 10 + (group - 5) * 2 + geo;
   const t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
   return 20 + (group - 10) * 4 + (t % 10 < 7 ? 0 : 1 + ((t >>> 4) % 3));
+}
+// 国土地理院の建物で作った区画では、空中写真で見た屋根の色（g.rf：色の番号1〜13＋形×16）で絵をえらぶ（歩く地図だけ）
+const rfAt = (tx, ty) => { const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), c = chunks.get(cx + '_' + cy); return c && c.g && c.g.rf ? c.g.rf[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)] : 0; };
+const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号 → 家の屋根の色（maptiles-sheets.py の ROOFS）
+function tileVarAt(code, x, y) {
+  const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+  if (!k || k > 13) return tileVar(code, x, y);
+  if (code === C.B) {
+    if (tiles[C.B].length !== 32) return tileVar(code, x, y);
+    const geo = (rc >> 4) & 1;
+    return k <= 5 ? (k - 1) * 2 + geo : k <= 10 ? 10 + (k - 6) * 2 + geo : 20 + (k - 11) * 4 + (t % 10 < 7 ? 0 : 1 + ((t >>> 4) % 3));
+  }
+  if (tiles[C.Q].length !== 2500) return tileVar(code, x, y);
+  let gi = t % 50;                                     // 家の形（形5 × 庭の小物5 × 向き2）
+  if (k >= 11) gi = 30 + gi % 10; else if (gi >= 30 && gi < 40) gi -= 10;   // 白い平らな屋根は陸屋根の家、瓦や金属なら屋根のある家
+  return gi * 50 + HOUSE_ROOF[k] * 5 + (t >>> 8) % 5;
 }
 // 建物のふち：下のマスが建物でなければ、窓のある壁（前の面）を描き、左右と上にかげをつける（建物が立って見えるように）
 const WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080'];
@@ -4232,7 +4267,7 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
-    const v = tileVar(code, tx, ty);
+    const v = tileVarAt(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);

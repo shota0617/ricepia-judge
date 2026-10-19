@@ -1136,6 +1136,10 @@ const DECO_PADDY = {   // 田んぼは、こよみの田んぼのようすで置
 const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri', 'kiji', 'tsubame', 'usagi',
   'hotaru', 'koi', 'hakuchou', 'jogger', 'sanpo', 'risu', 'fukurou', 'cyclist', 'cart', 'randoseru', 'onigokko', 'tanukiy', 'itachi', 'kasahito', 'hiker', 'hatakehito',
   'kitsune', 'tonbi', 'niwatori', 'ushi', 'zarigani', 'taue', 'inekari', 'mushitori', 'yukata']);
+// 水のマスは海も川も池も同じ種類なので、置く物で場所をえらぶ：池のもの（鯉・水車・はす・白鳥のボート）は岸が2マス以内にある水だけ、
+// ヨット・漁船・水上バイクは岸が1マス以内にない（細い川ではない）水だけ。沖に水車、小川にヨット、とちぐはぐにならないように
+const DECO_POND = new Set(['koi', 'suisha', 'hasu', 'swanboat']), DECO_OPEN = new Set(['yacht', 'fune', 'jetski']);
+const landNear = (tx, ty, r) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const c = codeAt(tx + dx, ty + dy); if (c !== C.A && c !== C.X) return true; } return false; };
 const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
 function loadDeco() {
   const s = decoSeason();
@@ -1169,6 +1173,7 @@ function drawDeco(code, tx, ty, X, Y, T, now) {
   if (u % L[0]) return;
   const name = L[1][(u >>> 4) % L[1].length], si = DECO.idx.get(name);
   if (si === undefined) return;
+  if (code === C.A && (DECO_POND.has(name) ? !landNear(tx, ty, 2) : DECO_OPEN.has(name) && landNear(tx, ty, 1))) return;
   let k = (u >>> 9) % 6;
   if (DECO_ANIM.has(name)) k = (k & 6) | ((Math.floor(now / 650) + (u >>> 20)) & 1);   // 生きものは2つのポーズをいったりきたり
   ctx.drawImage(decoCanvas(((si * 6 + k) * 4 + (u >>> 13) % 4) * 8 + (u >>> 16) % 8), X, Y, T, T);

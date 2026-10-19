@@ -852,7 +852,8 @@ def main():
     part = args[args.index('--part') + 1] if '--part' in args else None
     keys = [x for x in args if not x.startswith('-') and not x.replace('/', '').isdigit()]
     if jobs > 1 and part is None:
-        ps = [subprocess.Popen([sys.executable, __file__, *keys, '--part', f'{i}/{jobs}']) for i in range(jobs)]
+        extra = ['--force'] if '--force' in args else []   # 描きなおす指定も、分けた先に渡す
+        ps = [subprocess.Popen([sys.executable, __file__, *keys, *extra, '--part', f'{i}/{jobs}']) for i in range(jobs)]
         sys.exit(max(p.wait() for p in ps))
     i0, n0 = map(int, part.split('/')) if part else (0, 1)
     todo = [j for k, j in enumerate(jobs_for(keys)) if k % n0 == i0]

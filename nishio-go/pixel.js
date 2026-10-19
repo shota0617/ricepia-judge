@@ -1101,7 +1101,7 @@ function loadMapTiles() {
   }
 }
 loadMapTiles();
-/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。題材102、ちがう絵で78336枚） ----------
+/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。題材130、ちがう絵で99840枚） ----------
    生きもの・道ばたの物・水辺や浜の物・西尾らしい物（茶つみ・うなぎ池の水車・大ちょうちん・赤馬・海苔ひび・カーネーション・野点 など）を、
    マスの種類に合わせて、ところどころに置く（場所ごとに決まった物・向き・色）
    季節（春・夏・秋・冬のシート）と月（ひまわりは夏、コスモスは秋 など）で、置く物が変わる。生きものは2つのポーズで少し動く */
@@ -1109,28 +1109,33 @@ const DECO = { img: null, s: -1, idx: null, cols: 96 };
 const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ。名前#rain は、いま雨のときだけ）
   [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10',
     'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9', 'kiji', 'usagi', 'tsubame@4-7', 'hotaru@6-6', 'sanpo', 'jogger',
-    'mujin', 'sudebako', 'tanukiy', 'kasahito#rain']],
-  [C.P]: [12, ['kotori', 'karasu', 'hana@3-10', 'choucho@4-10', 'tsubame@4-7', 'kiji', 'usagi']],   // 芝生のマスは公園のほか湿地・運動場・ゴルフ場も同じなので、どこにいてもおかしくない物だけ
+    'mujin', 'sudebako', 'tanukiy', 'kasahito#rain', 'kitsune', 'tonbi', 'mogura', 'nanohana@3-4', 'higanbana@9-9', 'ume@2-3', 'ichou@11-11',
+    'susuki@9-11', 'mushitori@7-8', 'tsukushi@3-4', 'hanami@4-4', 'semi@7-8', 'kabutomushi@7-8']],
+  [C.P]: [12, ['kotori', 'karasu', 'hana@3-10', 'choucho@4-10', 'tsubame@4-7', 'kiji', 'usagi', 'tonbi']],   // 芝生のマスは公園のほか湿地・運動場・ゴルフ場も同じなので、どこにいてもおかしくない物だけ
   [C.T]: [11, ['neko', 'neko', 'inu', 'jitensha', 'jihanki', 'ueki', 'gomi', 'tanuki', 'chouchin', 'kodomo', 'sanrinsha', 'bench', 'karasu', 'kotori',
     'akauma', 'unaginobori', 'nodate', 'daichouchin@8-8', 'yatai@7-7', 'koinobori@4-5', 'kadomatsu@1-1', 'tsukimi@9-9',
     'monohoshi', 'fuusen', 'basutei', 'bonsai', 'sanpo', 'jogger', 'tsubame@4-7',
-    'keicar', 'keicar', 'scooter', 'cyclist', 'cart', 'randoseru', 'onigokko', 'kasahito#rain', 'kasahito#rain', 'kasahito#rain']],
+    'keicar', 'keicar', 'scooter', 'cyclist', 'cart', 'randoseru', 'onigokko', 'kasahito#rain', 'kasahito#rain', 'kasahito#rain',
+    'tanabata@7-7', 'bonodori@8-8', 'xmas@12-12', 'halloween@10-10', 'yakiimo@11-2', 'kakigori@7-8', 'cone', 'takuhai', 'yukata@7-8', 'kingyo@7-8']],
   [C.A]: [28, ['kamo', 'kamo', 'fune', 'boto', 'bui', 'hasu@6-9', 'kamome', 'suisha', 'norihibi@11-3', 'kame@4-10', 'koi', 'hakuchou@12-2', 'yacht',
     'kayak@5-10', 'swanboat', 'jetski@6-9']],
   [C.S]: [9, ['kamome', 'kani', 'sunashiro@4-10', 'kasa@7-8', 'tsuri', 'boto', 'kame@4-10', 'suika@7-8', 'tetrapod', 'beachball@6-9', 'surfer', 'kaigara@4-9']],
   [C.N]: [8, ['carnation']],
-  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo', 'fukurou', 'risu', 'usagi', 'hiker', 'tanukiy', 'itachi', 'sudebako']],
+  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo', 'fukurou', 'risu', 'usagi', 'hiker', 'tanukiy', 'itachi', 'sudebako', 'kitsune',
+    'semi@7-8', 'kabutomushi@7-8', 'tonbi']],
   [C.J]: [10, ['tourou', 'jizo', 'hokora', 'neko', 'komainu', 'ema', 'omikuji']],
   [C.E]: [16, ['noufu', 'kotori', 'chatsumi@4-6', 'kiji', 'hachibako']],
-  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10', 'hachibako', 'kiji', 'mujin', 'hatakehito', 'sprinkler@5-9']],
+  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10', 'hachibako', 'kiji', 'mujin', 'hatakehito', 'sprinkler@5-9', 'niwatori', 'ushi', 'mogura']],
 };
 const DECO_PADDY = {   // 田んぼは、こよみの田んぼのようすで置く物を変える
-  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon', 'tsubame@4-7'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon', 'tsubame@4-7'],
-  gold: ['kakashi', 'kakashi', 'karasu', 'kotori', 'noufu', 'sagi', 'combine'], stubble: ['hazakake', 'warazuka', 'warazuka', 'karasu', 'sagi', 'kotori'],
+  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon', 'tsubame@4-7', 'taue@5-6', 'taue@5-6', 'zarigani@5-9'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon', 'tsubame@4-7'],
+  gold: ['kakashi', 'kakashi', 'karasu', 'kotori', 'noufu', 'sagi', 'combine', 'inekari', 'tonbi'],
+  stubble: ['hazakake', 'warazuka', 'warazuka', 'karasu', 'sagi', 'kotori', 'tonbi'],
   soil: ['sagi', 'karasu', 'noufu', 'kotori', 'suimon', 'tractor', 'tractor', 'kiji'],
 };
 const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri', 'kiji', 'tsubame', 'usagi',
-  'hotaru', 'koi', 'hakuchou', 'jogger', 'sanpo', 'risu', 'fukurou', 'cyclist', 'cart', 'randoseru', 'onigokko', 'tanukiy', 'itachi', 'kasahito', 'hiker', 'hatakehito']);
+  'hotaru', 'koi', 'hakuchou', 'jogger', 'sanpo', 'risu', 'fukurou', 'cyclist', 'cart', 'randoseru', 'onigokko', 'tanukiy', 'itachi', 'kasahito', 'hiker', 'hatakehito',
+  'kitsune', 'tonbi', 'niwatori', 'ushi', 'zarigani', 'taue', 'inekari', 'mushitori', 'yukata']);
 const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
 function loadDeco() {
   const s = decoSeason();

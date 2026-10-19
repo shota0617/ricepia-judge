@@ -1,6 +1,6 @@
 # にしおさんぽGO：ドット絵の地図に置く小物（生きもの・道ばたの物・水辺や浜の物）を Blender で作る
-# - 題材102 × 向き4 × ポーズ・置き方6 ＝ 2448 の立体を、16×16 の「材質の番号」と「明るさの段」にして TMP に保存する（背景なし）
-#   → tools/blender/deco-sheets.py で 色8通り × 季節4 をのせて、ちがう絵だけで7万枚以上（nishio-go/deco/）
+# - 題材130 × 向き4 × ポーズ・置き方6 ＝ 3120 の立体を、16×16 の「材質の番号」と「明るさの段」にして TMP に保存する（背景なし）
+#   → tools/blender/deco-sheets.py で 色8通り × 季節4 をのせて、ちがう絵だけで約10万枚（nishio-go/deco/）
 # - 色8通りは、その題材らしいちがい（鳥や鴨は種類、猫や犬は毛の色、かかしや人は服、花は花の色、舟は船体の色）
 # - 斜め上（南）から見下ろす。地図のマス（家・木）と同じ向き・同じ光
 # 使い方：python tools/blender/deco.py [--part i/n]（bpy が要る。n 個に分けて並べて動かせる）→ python3 tools/blender/deco-sheets.py
@@ -1157,6 +1157,256 @@ def s_sudebako(k):  # 巣箱と小鳥
             o.location.z += 0.35
 
 
+# ---------- 題材 103〜130：生きもの・季節の花と行事・田んぼの手仕事・町 ----------
+def s_kitsune(k):   # きつね
+    quad(k, 1.15, 'cat', 'dog')
+    Sp('hara', 0.03, (0, 0.24, 0.18 if k not in (2, 3) else 0.06))   # 尾の先の白
+
+
+def s_tonbi(k):     # とんび（空をまう）
+    z = 0.4 + 0.04 * k
+    Sp('hane', 0.06, (0, 0, z), (0.8, 1.6, 0.6))
+    for side in (-1, 1):
+        B('hane', (0.26, 0.1, 0.012), (side * 0.15, 0.02, z), (0, side * (0.1 + 0.05 * (k % 3)), side * 0.1))
+    B('hane', (0.08, 0.1, 0.01), (0, 0.13, z), (0.1, 0, 0))
+    Sp('kage', 0.08, (0.05, 0.1, 0.002), (2.2, 1, 0.05))   # 地面のかげ
+
+
+def s_niwatori(k):  # にわとり
+    for i in range(1 + k % 3):
+        for o in _grab(lambda: bird(i % 3, 1.1, 0.03, 0.06)):
+            o.location.x += -0.15 + i * 0.15
+            o.location.y += 0.04 * (i % 2)
+        Sp('tosaka', 0.02, (-0.15 + i * 0.15, -0.11 + 0.04 * (i % 2), 0.29 if i % 3 != 2 else 0.15))
+
+
+def s_ushi(k):      # うし（牛舎のまわり）
+    quad(k if k not in (3, 4) else 0, 1.7, 'dog', 'dog')
+    Sp('moyou', 0.06, (0.05, 0.03, 0.3 if k != 2 else 0.24), (1, 1.3, 0.5))
+
+
+def s_semi(k):      # せみ（木の幹に）
+    Cy('miki', 0.06, 0.6, (0, 0.05, 0.3), v=10)
+    for i in range(1 + k % 3):
+        Sp('mushi', 0.025, (0, -0.012, 0.2 + 0.12 * i), (0.9, 0.6, 1.4))
+        B('hane_m', (0.05, 0.01, 0.05), (0, -0.03, 0.19 + 0.12 * i))
+
+
+def s_kabutomushi(k):  # かぶとむし・くわがた（木の幹に）
+    Cy('miki', 0.07, 0.55, (0, 0.05, 0.27), v=10)
+    for i in range(1 + k % 2):
+        z = 0.22 + 0.16 * i
+        Sp('mushi', 0.04, (0, -0.03, z), (1, 0.6, 1.3))
+        Cy('mushi', 0.008, 0.07 if k < 3 else 0.05, (0, -0.06, z + 0.06), (0.3, 0, 0), 4)
+    Sp('mitsu', 0.03, (0.04, -0.07, 0.12), (1, 0.4, 1.3))
+
+
+def s_zarigani(k):  # ざりがに（田んぼの水路）
+    for i in range(1 + (k >= 3)):
+        x = (i - 0.5 * (k >= 3)) * 0.2
+        Sp('kara', 0.05, (x, 0, 0.03), (0.8, 1.6, 0.5))
+        for side in (-1, 1):
+            Sp('kara', 0.03, (x + side * 0.06, -0.12, 0.04 + 0.02 * (k % 2)), (1, 1.4, 0.7))
+        Cy('kara', 0.02, 0.06, (x, 0.1, 0.02), (1.57, 0, 0), 5, r2=0.03)
+
+
+def s_tanabata(k):  # 七夕のささかざり（7月）
+    Cy('take', 0.015, 0.7, (0, 0, 0.35), (0, 0.1 * (k % 3 - 1), 0), 5)
+    for i in range(5 + k):
+        a = i * 1.3
+        z = 0.32 + 0.06 * (i % 5)
+        Sp('sasa', 0.04, (0.1 * math.cos(a), 0.05 * math.sin(a), z), (1.4, 1, 0.5))
+        B('tanzaku' if i % 2 else 'tanzaku2', (0.02, 0.01, 0.06), (0.12 * math.cos(a + 0.5), -0.06, z - 0.05))
+
+
+def s_bonodori(k):  # 盆おどりのやぐら（8月）
+    B('yagura', (0.36, 0.36, 0.22), (0, 0, 0.11))
+    B('kouhaku', (0.38, 0.38, 0.06), (0, 0, 0.19))
+    for x in (-0.16, 0.16):
+        for y in (-0.16, 0.16):
+            Cy('bou', 0.012, 0.42, (x, y, 0.33), v=4)
+    B('yane_y', (0.42, 0.42, 0.03), (0, 0, 0.55))
+    for i in range(3 + k % 3):
+        Cy('chouchin', 0.025, 0.05, (-0.2 + i * 0.1, -0.2, 0.5), v=8)
+
+
+def s_xmas(k):      # クリスマスツリー（12月）
+    for j, (r, z) in enumerate(((0.16, 0.12), (0.12, 0.26), (0.08, 0.38))):
+        Cy('momi', r, 0.16, (0, 0, z), v=10, r2=0.02)
+    Sp('kin', 0.03, (0, 0, 0.48))
+    for i in range(4 + k):
+        a = i * 1.7
+        Sp('kazari' if i % 2 else 'kazari2', 0.018, (0.12 * math.cos(a), -0.06 + 0.04 * math.sin(a), 0.12 + 0.05 * (i % 5)))
+    Cy('hachi', 0.06, 0.06, (0, 0, 0.03), v=8)
+
+
+def s_halloween(k):  # ハロウィンのかぼちゃ（10月）
+    for i in range(1 + k % 3):
+        x = -0.12 + i * 0.13
+        Sp('kabocha', 0.07, (x, 0.02 * (i % 2), 0.06), (1.15, 1, 0.85))
+        Cy('miki', 0.01, 0.04, (x, 0.02 * (i % 2), 0.13), v=4)
+        if (i + k) % 2:
+            B('kuro', (0.04, 0.01, 0.02), (x, -0.07, 0.07))
+    if k >= 4:
+        Cy('kasa_w', 0.05, 0.1, (0.2, -0.1, 0.12), v=8, r2=0.0)
+
+
+def s_hanami(k):    # お花見（4月）
+    Cy('miki', 0.03, 0.3, (0.12, 0.08, 0.15), v=6)
+    Sp('sakura', 0.2, (0.12, 0.08, 0.4), (1.1, 1, 0.8))
+    B('sheet', (0.32, 0.22, 0.01), (-0.1, -0.12, 0.005))
+    if k >= 2:
+        for o in _grab(lambda: person(5, 'fuku', 'kami', 0.32)):
+            o.location.x -= 0.15
+            o.location.y -= 0.12
+    if k >= 4:
+        B('bento', (0.08, 0.06, 0.03), (0.0, -0.15, 0.02))
+
+
+def s_yakiimo(k):   # 石焼きいもの軽トラ（冬）
+    s_keicar(0)
+    Cy('entotsu', 0.02, 0.18, (0.06, 0.12, 0.4), v=6)
+    B('noren', (0.24, 0.01, 0.06), (0, -0.22, 0.24))
+    if k >= 3:
+        Sp('kemuri', 0.04, (0.06, 0.12, 0.52), (1, 1, 1.4))
+
+
+def s_kakigori(k):  # かき氷ののぼり（夏）
+    Cy('bou', 0.014, 0.5, (0, 0, 0.25), v=4)
+    B('nobori', (0.14, 0.03, 0.12), (0.07, 0, 0.42))
+    B('nami_k', (0.14, 0.032, 0.04), (0.07, 0, 0.34))
+    if k >= 2:
+        B('dai', (0.2, 0.14, 0.12), (-0.12, 0.05, 0.06))
+        Cy('kori', 0.04, 0.05, (-0.12, 0.05, 0.145), v=8, r2=0.01)
+    if k >= 4:
+        Cy('fuurin', 0.02, 0.03, (0.2, 0, 0.3), v=6)
+
+
+def s_taue(k):      # 田植え（5月の水田）
+    person(2, 'fuku', 'mugiwara', 0.48)
+    for i in range(3 + k % 3):
+        for j in range(2):
+            Cy('nae', 0.008, 0.05, (-0.2 + i * 0.08, -0.12 + j * 0.1, 0.025), v=4)
+    if k >= 3:
+        B('nae_hako', (0.1, 0.08, 0.02), (0.2, 0.1, 0.01))
+
+
+def s_inekari(k):   # 手で稲刈り（黄金色の田）
+    person(2 if k % 2 == 0 else 4, 'fuku', 'mugiwara', 0.48)
+    for i in range(2 + k % 3):
+        Cy('wara', 0.03, 0.12, (-0.2 + i * 0.07, 0.12, 0.06), (0, 0, 0), 6)
+        Sp('ho', 0.025, (-0.2 + i * 0.07, 0.12, 0.13))
+
+
+def s_cone(k):      # 道の工事（コーン）
+    for i in range(2 + k % 3):
+        x = -0.18 + i * 0.12
+        Cy('cone', 0.04, 0.12, (x, 0, 0.06), v=8, r2=0.008)
+        Cy('cone_w', 0.032, 0.02, (x, 0, 0.07), v=8)
+        B('kuro', (0.08, 0.08, 0.01), (x, 0, 0.005))
+    if k >= 3:
+        B('bar', (0.3, 0.01, 0.02), (0, -0.01, 0.1))
+    if k == 5:
+        person(0, 'fuku', 'helmet', 0.42)
+
+
+def s_takuhai(k):   # 宅配のバン
+    B('body', (0.28, 0.5, 0.26), (0, 0.02, 0.16), bevel=0.03)
+    B('mado', (0.24, 0.01, 0.08), (0, -0.23, 0.24))
+    B('line', (0.29, 0.4, 0.04), (0, 0.06, 0.12))
+    for x in (-0.14, 0.14):
+        for y in (-0.15, 0.18):
+            Cy('kuro', 0.05, 0.04, (x, y, 0.05), (0, 1.57, 0), 10)
+    if k >= 3:
+        B('danbo', (0.1, 0.08, 0.08), (0.24, -0.1, 0.04))
+
+
+def s_mogura(k):    # もぐらの土の山（畑・草地）
+    for i in range(1 + k % 4):
+        Sp('tsuchi', 0.06, (-0.15 + i * 0.1, 0.05 * (i % 2), 0.01), (1.2, 1, 0.6))
+    if k >= 4:
+        Sp('ke', 0.03, (0.18, -0.05, 0.04))
+
+
+def s_kingyo(k):    # 金魚のいる たらい
+    Cy('tarai', 0.15, 0.08, (0, 0, 0.04), v=14)
+    Cy('mizu_t', 0.13, 0.01, (0, 0, 0.08), v=14)
+    for i in range(1 + k % 3):
+        a = i * 2.1 + k
+        o = Sp('kingyo', 0.025, (0.06 * math.cos(a), 0.06 * math.sin(a), 0.085), (0.7, 1.4, 0.4))
+        o.rotation_euler.z = a
+    if k >= 4:
+        Cy('dougu', 0.01, 0.15, (0.2, -0.05, 0.08), (0.5, 0, 0), 4)
+
+
+def s_nanohana(k):  # 菜の花（3〜4月）
+    for i in range(6 + k):
+        a = i * 2.2
+        r = 0.05 + 0.04 * (i % 4)
+        x, y = r * math.cos(a), r * math.sin(a)
+        Cy('kuki', 0.008, 0.16, (x, y, 0.08), v=4)
+        Sp('hana', 0.03, (x, y, 0.17), (1, 1, 0.8))
+
+
+def s_higanbana(k):  # 彼岸花（9月）
+    for i in range(3 + k):
+        a = i * 2.4
+        x, y = (0.05 + 0.04 * (i % 3)) * math.cos(a), (0.04 + 0.03 * (i % 3)) * math.sin(a)
+        Cy('kuki', 0.007, 0.2, (x, y, 0.1), v=4)
+        for j in range(4):
+            Cy('hana', 0.006, 0.05, (x + 0.02 * math.cos(j * 1.57), y + 0.02 * math.sin(j * 1.57), 0.21), (0.8, 0, j * 1.57), 4)
+
+
+def s_ume(k):       # 梅の木（2〜3月）
+    Cy('miki', 0.03, 0.28, (0, 0, 0.14), (0, 0.15, 0), 6)
+    for i in range(3):
+        Cy('miki', 0.012, 0.18, (0.05 * (i - 1), 0, 0.32), (0, 0.5 * (i - 1), 0), 4)
+    for i in range(6 + k):
+        a = i * 1.5
+        Sp('hana', 0.025, (0.12 * math.cos(a), -0.05 + 0.03 * math.sin(a), 0.3 + 0.06 * math.sin(i)))
+
+
+def s_ichou(k):     # いちょう（11月）
+    Cy('miki', 0.035, 0.32, (0, 0, 0.16), v=6)
+    Cy('ichou', 0.17, 0.36, (0, 0, 0.42), v=10, r2=0.04)
+    if k >= 3:
+        for i in range(4):
+            Sp('ichou', 0.02, (-0.18 + i * 0.12, -0.15, 0.003), (1.5, 1, 0.3))
+
+
+def s_susuki(k):    # すすき（9〜11月）
+    for i in range(4 + k):
+        a = i * 1.9
+        x = 0.12 * math.cos(a)
+        h = 0.26 + 0.04 * (i % 3)
+        Cy('susuki', 0.007, h, (x, 0.04 * math.sin(a), h / 2), (0, 0.15 * math.cos(a), 0), 4)
+        Sp('hana', 0.025, (x + 0.03 * math.cos(a), 0.04 * math.sin(a), h + 0.02), (0.7, 0.7, 1.6))
+
+
+def s_mushitori(k):  # 虫とりの子ども（夏）
+    person(1 if k % 2 else 3, 'fuku', 'mugiwara', 0.4)
+    Cy('dougu', 0.006, 0.4, (0.15, -0.05, 0.35), (0.4, 0.3, 0), 4)
+    Cy('ami', 0.05, 0.08, (0.22, -0.12, 0.52), (0.4, 0, 0), 8, r2=0.02)
+    B('kago', (0.07, 0.05, 0.06), (-0.12, 0, 0.2))
+
+
+def s_yukata(k):    # ゆかたの二人（夏まつり）
+    for i in range(1 + (k >= 2)):
+        for o in _grab(lambda: person(1 if (k + i) % 2 else 0, 'kimono' if i == 0 else 'kimono2', 'kami', 0.46)):
+            o.location.x += (i - 0.5 * (k >= 2)) * 0.22
+    if k >= 4:
+        B('uchiwa', (0.06, 0.01, 0.06), (0.15, -0.06, 0.32))
+
+
+def s_tsukushi(k):  # つくし（3〜4月）
+    for i in range(4 + k):
+        a = i * 2.3
+        x, y = 0.12 * math.cos(a) * (0.5 + 0.1 * (i % 4)), 0.08 * math.sin(a)
+        Cy('tsukushi', 0.012, 0.12 + 0.02 * (i % 3), (x, y, 0.06), v=5)
+        Sp('tsukushiA', 0.016, (x, y, 0.14 + 0.02 * (i % 3)), (1, 1, 1.6))
+    Sp('kusa', 0.07, (0.1, 0.06, 0.02), (1.5, 1, 0.4))
+
+
 SUBJECTS = [   # （名前、作る関数）— 順番は deco-sheets.py と pixel.js の置き場所の表と同じ
     ('sagi', s_sagi), ('kotori', s_kotori), ('kamo', s_kamo), ('kamome', s_kamome), ('neko', s_neko), ('inu', s_inu),
     ('kaeru', s_kaeru), ('choucho', s_choucho), ('kakashi', s_kakashi), ('hazakake', s_hazakake), ('warazuka', s_warazuka),
@@ -1178,6 +1428,11 @@ SUBJECTS = [   # （名前、作る関数）— 順番は deco-sheets.py と pix
     ('swanboat', s_swanboat), ('kasahito', s_kasahito), ('mujin', s_mujin), ('onigokko', s_onigokko), ('tanukiy', s_tanukiy), ('itachi', s_itachi),
     ('jetski', s_jetski), ('beachball', s_beachball), ('surfer', s_surfer), ('kaigara', s_kaigara), ('hatakehito', s_hatakehito),
     ('sprinkler', s_sprinkler), ('hiker', s_hiker), ('sudebako', s_sudebako),
+    ('kitsune', s_kitsune), ('tonbi', s_tonbi), ('niwatori', s_niwatori), ('ushi', s_ushi), ('semi', s_semi), ('kabutomushi', s_kabutomushi),
+    ('zarigani', s_zarigani), ('tanabata', s_tanabata), ('bonodori', s_bonodori), ('xmas', s_xmas), ('halloween', s_halloween), ('hanami', s_hanami),
+    ('yakiimo', s_yakiimo), ('kakigori', s_kakigori), ('taue', s_taue), ('inekari', s_inekari), ('cone', s_cone), ('takuhai', s_takuhai),
+    ('mogura', s_mogura), ('kingyo', s_kingyo), ('nanohana', s_nanohana), ('higanbana', s_higanbana), ('ume', s_ume), ('ichou', s_ichou),
+    ('susuki', s_susuki), ('mushitori', s_mushitori), ('yukata', s_yukata), ('tsukushi', s_tsukushi),
 ]
 
 
@@ -1195,7 +1450,11 @@ SCALE = {'sagi': 0.72, 'kotori': 0.42, 'kamo': 0.5, 'kamome': 0.48, 'neko': 0.5,
          'risu': 0.4, 'bonsai': 0.56, 'jogger': 0.66, 'sanpo': 0.62,
          'keicar': 0.6, 'scooter': 0.5, 'cyclist': 0.58, 'cart': 0.56, 'randoseru': 0.62, 'kayak': 0.62, 'swanboat': 0.56, 'kasahito': 0.66,
          'mujin': 0.58, 'onigokko': 0.66, 'tanukiy': 0.52, 'itachi': 0.46, 'jetski': 0.56, 'beachball': 0.56, 'surfer': 0.6, 'kaigara': 0.5,
-         'hatakehito': 0.6, 'sprinkler': 0.46, 'hiker': 0.6, 'sudebako': 0.66}
+         'hatakehito': 0.6, 'sprinkler': 0.46, 'hiker': 0.6, 'sudebako': 0.66,
+         'kitsune': 0.54, 'tonbi': 0.66, 'niwatori': 0.56, 'ushi': 0.72, 'semi': 0.6, 'kabutomushi': 0.6, 'zarigani': 0.44, 'tanabata': 0.82,
+         'bonodori': 0.72, 'xmas': 0.6, 'halloween': 0.5, 'hanami': 0.7, 'yakiimo': 0.62, 'kakigori': 0.6, 'taue': 0.6, 'inekari': 0.6,
+         'cone': 0.56, 'takuhai': 0.66, 'mogura': 0.46, 'kingyo': 0.46, 'nanohana': 0.48, 'higanbana': 0.46, 'ume': 0.6, 'ichou': 0.64,
+         'susuki': 0.56, 'mushitori': 0.66, 'yukata': 0.64, 'tsukushi': 0.42}
 
 
 def render_one(fn, k, d, out, scale=0.9):

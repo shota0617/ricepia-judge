@@ -733,11 +733,35 @@ def medal():
     return dict(target=(0, 0, 0.06), scale=1.28, el=8, az=0)
 
 
+def talk():
+    """話しかける：白い吹き出し（下に小さなしっぽ、なかに点が三つ）"""
+    rot = (math.pi / 2, 0, 0)
+    cyl('fukidashi', 'white', 0.42, 0.10, (0, 0, 0.46), rot, 40).scale = (1.0, 0.72, 1.0)   # 横長のだ円に
+    cyl('shippo', 'white', 0.12, 0.30, (-0.20, 0, 0.12), (0, -0.5, 0), 3, r2=0.0)
+    for i, x in enumerate((-0.18, 0, 0.18)):
+        sphere(f'ten{i}', 'dark', 0.07, (x, -0.07, 0.46), (1, 0.6, 1))
+    return dict(target=(0, 0, 0.36), scale=1.0, el=6, az=-12, size=32)
+
+
+def clock():
+    """時間・あした：目ざまし時計（赤いふち、白い文字盤、黒い針、上に金のベル）"""
+    rot = (math.pi / 2, 0, 0)
+    cyl('fuchi', 'red', 0.38, 0.16, (0, 0, 0.42), rot, 40)
+    cyl('ban', 'white', 0.30, 0.17, (0, 0, 0.42), rot, 40)
+    for x in (-0.24, 0.24):
+        sphere(f'bell{x}', 'gold', 0.12, (x, 0, 0.80), (1, 1, 0.8))
+        cyl(f'ashi{x}', 'dark', 0.03, 0.14, (x * 0.9, 0, 0.06), (0, x * 1.6, 0), 8)
+    box('nagai', 'dark', (0.035, 0.02, 0.22), (0, -0.09, 0.51))
+    box('mijikai', 'dark', (0.16, 0.02, 0.035), (0.07, -0.09, 0.42))
+    sphere('jiku', 'red', 0.035, (0, -0.10, 0.42))
+    return dict(target=(0, 0, 0.44), scale=1.0, el=6, az=-12, size=32)
+
+
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
-MODELS.update({'calendar': calendar, 'card': card})
+MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock})
 MODELS.update({'btn-globe': btn_globe, 'btn-car': btn_car, 'btn-walker': btn_walker, 'btn-compass': btn_compass})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),

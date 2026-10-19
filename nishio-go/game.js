@@ -134,6 +134,9 @@ const track = (name, params) => { if (window.nsgTrack) nsgTrack(name, params); }
 const simple = () => document.body.classList.contains('simple');
 const PI = (n, alt = '') => (window.NSG_ICONS ? NSG_ICONS.html(n, alt) : '');
 const ART32 = (n, alt = '') => `<img class="pi art" src="nishio-go/art/${n}.png" alt="${esc(alt)}" width="32" height="32"/>`;   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
+const ICON_ART = { chest: 'stat-chest', card: 'card', book: 'stat-book', fire: 'stat-fire', home: 'home', star: 'stat-star', bowl: 'bar-bowl', scroll: 'quest', flag: 'stat-flag',
+  coin: 'stat-coin', pin: 'stat-pin', feet: 'stat-feet', medal: 'stat-medal', calendar: 'calendar', talk: 'talk', clock: 'clock' };   // 32×32 の絵があるアイコン
+const PIA = (ic, alt = '') => ICON_ART[ic] ? ART32(ICON_ART[ic], alt) : PI(ic, alt);   // 札（chips）など、32px で出せるところ用
 const OSM_KEY = 'nsg_osm_v1';
 
 function freshState() {
@@ -396,8 +399,8 @@ function popupHtml(s) {
 function popupPic(s, c, v, left, d) {
   const th = spotThumb(s).replace('class="gthumb"', 'class="pop-art"').replace(/width="28" height="28"/, 'width="64" height="64"');
   return `<div class="popup pic"><div class="pop-head">${th}<h4>${esc(s.name)}</h4></div>
-    <p class="chips">${s.shop ? `<span>${PI('bowl', '当店')}</span>` : s.featured ? `<span>${PI('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${c.i}</span>`}<span>${PI('coin', 'ポイント')}${ptsOf(s)}</span>
-      <span${s.approx ? ' title="位置は概算・広めに判定"' : ''}>${PI('pin', s.approx ? '現在地から（位置は概算・広めに判定）' : '現在地から')}${s.approx ? '≈' : ''}${d}</span><span>${v ? `${PI('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PI('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
+    <p class="chips">${s.shop ? `<span>${PIA('bowl', '当店')}</span>` : s.featured ? `<span>${PIA('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${c.i}</span>`}<span>${PIA('coin', 'ポイント')}${ptsOf(s)}</span>
+      <span${s.approx ? ' title="位置は概算・広めに判定"' : ''}>${PIA('pin', s.approx ? '現在地から（位置は概算・広めに判定）' : '現在地から')}${s.approx ? '≈' : ''}${d}</span><span>${v ? `${PIA('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PIA('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">${PI('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
@@ -497,7 +500,7 @@ function talkNpc(id, page = 0) {
   if (driving) return { near: false, html: pic ? `${head}<p class="npc-say chips"><span>${PI('car', '車に乗ったままでは話せない')}</span><span>→</span><span>${PI('walker', '車を降りて話しかけよう')}</span></p></div>`
     : `${head}<p class="npc-say">（車に乗ったままでは話せない。車を降りて話しかけてみよう）</p></div>` };
   if (d > lim) {
-    if (pic) return { near: false, html: `${head}<p class="npc-say chips"><span>${PI('talk', '遠くて声が届かない。近づいて話しかけよう')}</span>${Number.isFinite(d) ? `<span>${PI('feet', 'あと')}${fmtM(d - lim)}</span>` : ''}</p>
+    if (pic) return { near: false, html: `${head}<p class="npc-say chips"><span>${PIA('talk', '遠くて声が届かない。近づいて話しかけよう')}</span>${Number.isFinite(d) ? `<span>${PIA('feet', 'あと')}${fmtM(d - lim)}</span>` : ''}</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">${PI('feet', '')} 近くへ</button>` : ''}</div>` };
     return { near: false, html: `${head}<p class="npc-say">（遠くて声が届かない。近づいて話しかけてみよう${Number.isFinite(d) ? `：あと${fmtM(d - lim)}` : ''}）</p>
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
@@ -704,7 +707,7 @@ function renderCampaigns() {
   const list = liveCampaigns();
   el.hidden = !list.length;
   el.innerHTML = list.map(c => `<div class="camp"><b>${esc(c.icon)} ${esc(c.title)}${c.active ? '' : '（サンプル）'}</b><small>${esc(c.from.slice(5).replace('-', '/'))}〜${esc(c.to.slice(5).replace('-', '/'))}</small>
-    ${simple() ? (c.shopBonus ? `<p class="chips"><span>${PI('bowl', '当店でチェックイン')}${PI('coin', 'ポイント')}+${c.shopBonus}</span></p>` : '')
+    ${simple() ? (c.shopBonus ? `<p class="chips"><span>${PIA('bowl', '当店でチェックイン')}${PIA('coin', 'ポイント')}+${c.shopBonus}</span></p>` : '')
       : `${c.text ? `<p>${esc(c.text)}</p>` : ''}${c.shopBonus ? `<p>🍚 期間中、当店でチェックインすると +${c.shopBonus}pt（1日1回）</p>` : ''}`}
     ${c.url ? `<a class="btn mini" href="${esc(utmUrl(c.url, 'campaign_' + c.id))}" target="_blank" rel="noopener" data-camp="${esc(c.id)}">くわしく見る</a>` : ''}</div>`).join('');
 }
@@ -1254,7 +1257,7 @@ function refreshNearby() {
       : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
     btn.disabled = !!why;
     if (why || !simple()) $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
-    else $('spinSub').innerHTML = `${PI('coin', 'ポイント')}+${ptsOf(selected)}${S.visits[selected.id] ? '' : ' ' + PI('new', 'はじめての場所')}`;
+    else $('spinSub').innerHTML = `${PIA('coin', 'ポイント')}+${ptsOf(selected)}${S.visits[selected.id] ? '' : ' ' + PI('new', 'はじめての場所')}`;
   } else {
     btn.hidden = true;
   }
@@ -1461,7 +1464,6 @@ function toast(msg) {
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
 const CHIP = [['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
-const CHIP_ART = { chest: 'stat-chest', card: 'card', book: 'stat-book', fire: 'stat-fire', home: 'home', star: 'stat-star', bowl: 'bar-bowl', scroll: 'quest', flag: 'stat-flag' };   // Blender で作った 32×32 の絵があるもの
 function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
@@ -1474,7 +1476,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
     if (hero && ic === 'card' && !shown) { shown = true; continue; }
     if (hero && ic !== 'card' && v === `+${total}`) continue;
-    out.push(`<span title="${esc(l)}">${CHIP_ART[ic] ? ART32(CHIP_ART[ic], l) : PI(ic, l)}${v}</span>`);
+    out.push(`<span title="${esc(l)}">${PIA(ic, l)}${v}</span>`);
   }
   return `<div class="chips">${out.join('')}</div>`;
 }
@@ -1572,11 +1574,11 @@ function renderLog() {
   $('questList').innerHTML = qs.map(q => {
     const done = day.done.includes(q.id), v = Math.min(q.goal, q.val(day));
     if (simple()) return `<li class="${done ? 'done' : ''}"><span class="ico">${ART32(done ? 'stat-star' : 'quest', done ? '達成' : 'クエスト')}</span><span class="main"><b>${esc(q.text)}</b>
-      <span class="bar" title="${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}"><i style="width:${Math.round(v / q.goal * 100)}%"></i></span></span><span class="num">${PI('coin', 'ポイント')}+${q.pts}</span></li>`;
+      <span class="bar" title="${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}"><i style="width:${Math.round(v / q.goal * 100)}%"></i></span></span><span class="num">${PIA('coin', 'ポイント')}+${q.pts}</span></li>`;
     return `<li class="${done ? 'done' : ''}"><span class="ico">${done ? '✅' : q.icon}</span><span class="main"><b>${esc(q.text)}</b>
       <small>${done ? '達成！' : `${q.unit === 'm' ? fmtM(v) + ' / ' + fmtM(q.goal) : v + ' / ' + q.goal}`}${q.sub ? `・${esc(q.sub)}` : ''}</small></span><span class="num">+${q.pts}</span></li>`;
   }).join('') + (simple()
-    ? `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${ART32(day.bonus ? 'stat-medal' : 'quest', '3つぜんぶ達成')}</span><span class="main"><b>3つぜんぶ達成</b></span><span class="num">${PI('coin', 'ポイント')}+${CFG.pts.questAll}</span></li>`
+    ? `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${ART32(day.bonus ? 'stat-medal' : 'quest', '3つぜんぶ達成')}</span><span class="main"><b>3つぜんぶ達成</b></span><span class="num">${PIA('coin', 'ポイント')}+${CFG.pts.questAll}</span></li>`
     : `<li class="${day.bonus ? 'done' : ''}"><span class="ico">${day.bonus ? '🏆' : '🎯'}</span><span class="main"><b>3つぜんぶ達成</b><small>${day.bonus ? '達成！あしたも新しいクエストが出ます' : 'あしたは別のクエストになります'}</small></span><span class="num">+${CFG.pts.questAll}</span></li>`);
   const ev = upcomingEvents();
   $('eventList').innerHTML = ev.length ? ev.map(({ e, when, next }) => {
@@ -1603,7 +1605,7 @@ function renderLog() {
   const visits = Object.entries(S.visits).sort((a, b) => b[1].last - a[1].last);
   $('visitedList').innerHTML = visits.length ? visits.map(([id, v]) =>
     simple()   // 文字を少なく（ふだん）：名所のドット絵と、行った回数
-      ? `<li data-spot="${esc(id)}"><span class="ico">${spotThumb(spots.find(x => x.id === id)) || PI('pin', '')}</span><span class="main"><b>${esc(v.name)}</b></span><span class="num">${v.featured ? PI('star', '注目スポット') : ''}×${v.n}</span></li>`
+      ? `<li data-spot="${esc(id)}"><span class="ico">${spotThumb(spots.find(x => x.id === id)) || PIA('pin', '')}</span><span class="main"><b>${esc(v.name)}</b></span><span class="num">${v.featured ? PIA('star', '注目スポット') : ''}×${v.n}</span></li>`
       : `<li data-spot="${esc(id)}"><span class="ico">${esc(v.icon || '📍')}</span><span class="main"><b>${esc(v.name)}</b>
       <small>${v.n}回・最後 ${fmtTime(v.last)}</small></span>${v.featured ? '<span class="num">⭐</span>' : ''}</li>`).join('')
     : '<li class="empty">まだありません。地図のスポットへ歩いてみよう！</li>';
@@ -1707,7 +1709,7 @@ function renderRewards() {
     const short = S.points < r.cost;
     const why = limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
     if (pic) return `<li class="reward-pic"><span class="ico">${r.art ? `<img class="art" src="nishio-go/art/${r.art}.png" alt="" width="48" height="48"/>` : PI('gift', '')}</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
-      <span class="chips"><span>${PI('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PI('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}</span>
+      <span class="chips"><span>${PIA('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PIA('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}</span>
       ${r.desc ? `<details><summary>${PI('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${limit ? `${PI('clock', '')} あした` : short ? `${PI('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
     return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>

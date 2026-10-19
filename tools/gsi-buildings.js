@@ -39,11 +39,12 @@ function photoCache() {
 // 写真の色（中央値）を、屋根の色の番号に。灰色っぽいものは明るさで、色のあるものは色あいで分ける
 function roofClass([r, g, b]) {
   const mx = Math.max(r, g, b), mn = Math.min(r, g, b), L = (r + g + b) / 3, ch = mx - mn;
-  if (ch < 16 || ch < mx * 0.1) {
+  // 空中写真は もやで少し青みがかるので、青みの弱いものは灰色とみなす
+  if (ch < 28 || ch < mx * 0.2) {
     if (L > 185) return 13;      // 白い陸屋根
     if (L > 160) return 11;      // 明るい灰色の陸屋根
-    if (L > 125) return 9;       // 銀色の金属屋根
-    if (L > 72) return 1;        // いぶし瓦（灰色）
+    if (L > 128) return 9;       // 銀色の金属屋根
+    if (L > 88) return 1;        // いぶし瓦（灰色）
     return 2;                    // 黒い瓦
   }
   let h = mx === r ? ((g - b) / ch) * 60 : mx === g ? (2 + (b - r) / ch) * 60 : (4 + (r - g) / ch) * 60;

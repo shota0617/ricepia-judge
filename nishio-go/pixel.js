@@ -355,6 +355,14 @@ function rasterize(elements, cx, cy, dem, bld) {
     if (isSea) g.fill(C.A);
   }
   fillLanduse(g, cx, cy, real);
+  if (real) {   // 家のまわりは庭（草と植木）か、駐車場や通路（町の地面）
+    const isQ = (x, y) => x >= 0 && y >= 0 && x < CHUNK && y < CHUNK && g[y * CHUNK + x] === C.Q;
+    for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
+      const i = y * CHUNK + x;
+      if (g[i] !== C.T || (((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0 & 3) === 0) continue;
+      if (isQ(x - 1, y) || isQ(x + 1, y) || isQ(x, y - 1) || isQ(x, y + 1) || isQ(x - 1, y - 1) || isQ(x + 1, y - 1) || isQ(x - 1, y + 1) || isQ(x + 1, y + 1)) g[i] = C.G;
+    }
+  }
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
   const ok = h => Number.isFinite(h) && h > UNK;
   for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {

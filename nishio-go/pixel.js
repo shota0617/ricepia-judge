@@ -1070,12 +1070,12 @@ function refreshSeason(now) {
   if (now - seasonCheckT < 60000) return;
   seasonCheckT = now;
   const k = seasonNow();
+  loadMapTiles();   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
   if (k === seasonKey) return;
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;
   buildTiles([C.U, C.F, C.W, C.P]);
-  applyMapTiles();   // Blender の森の絵を使っていれば、そのまま（季節が変われば、その季節のシートを読む）
-  loadMapTiles();
+  applyMapTiles();   // Blender の森の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
   makeWorldImg();
   dirty = true;
 }

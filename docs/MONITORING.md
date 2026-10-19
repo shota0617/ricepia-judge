@@ -6,7 +6,7 @@
 | 監視対象 | 異常とみなす条件（初期値） | 自動停止 |
 |---|---|---|
 | サイト（ricepia-judge.vercel.app） | HTTP エラー・接続不可 | なし |
-| Anthropic API 利用額 | 本日 $10 超 / 今月 $100 超 | **組織の API キーをすべて無効化** |
+| Anthropic API 利用額 | 本日 $10 超 / 今月 $190 超 | **組織の API キーをすべて無効化** |
 | Cloudflare Workers リクエスト | 1時間 2万 / 24時間 8万 超（合計・Worker ごと） | **その Worker を外部から切り離し** |
 | Cloudflare Workers エラー率 | 1時間で 100件以上かつ 5% 超 | なし（通知のみ） |
 | Cloudflare R2 操作数 | 24時間 30万回超 | なし（通知のみ） |
@@ -48,7 +48,7 @@ Cloudflare トークンの権限:
 | 名前 | 初期値 | 説明 |
 |---|---|---|
 | `ANTHROPIC_DAILY_USD_LIMIT` | 10 | 1日（UTC）の上限ドル |
-| `ANTHROPIC_MONTHLY_USD_LIMIT` | 100 | 1か月（UTC）の上限ドル |
+| `ANTHROPIC_MONTHLY_USD_LIMIT` | 190 | 1か月（UTC）の上限ドル。毎月の API クレジット $200 の手前で止める（15分おきの監視なので少し余裕をみている） |
 | `CF_WORKER_REQ_1H_LIMIT` | 20000 | Workers 1時間のリクエスト上限 |
 | `CF_WORKER_REQ_24H_LIMIT` | 80000 | Workers 24時間のリクエスト上限 |
 | `CF_WORKER_ERROR_RATE_LIMIT` | 0.05 | Worker のエラー率上限 |

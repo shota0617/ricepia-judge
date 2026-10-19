@@ -1,0 +1,42 @@
+# 週刊リサーチ：毎週月曜の朝、Claude の web 検索で米価・販促事例・地域の動きを調べてメールで送る（tools/weekly-research.mjs）
+# Secrets: ANTHROPIC_API_KEY（API クレジットを付けた組織のキー）・RESEND_API_KEY
+name: 週刊リサーチ
+
+on:
+  schedule:
+    - cron: "47 22 * * 0" # 月曜 7:47（日本時間）
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "調べるテーマ（空なら週刊リサーチ）"
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-research
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: リサーチしてメールで送る
+        run: node tools/weekly-research.mjs
+        env:
+          RESEARCH_TOPIC: ${{ inputs.topic }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERT_EMAIL_TO: ${{ vars.ALERT_EMAIL_TO || 'ricepiaricepiaricepia@gmail.com' }}
+          ALERT_EMAIL_FROM: ${{ vars.ALERT_EMAIL_FROM }}
+          RESEARCH_MODEL: ${{ vars.RESEARCH_MODEL }}
+          RESEARCH_MAX_SEARCHES: ${{ vars.RESEARCH_MAX_SEARCHES }}

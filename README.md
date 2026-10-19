@@ -134,6 +134,16 @@
 - 自社ドメイン：**https://go.ricepia.jp/** で公開。`vercel.json` で、`go.ricepia.jp/` を `go.ricepia.jp/nishio-go.html` へ、古いアドレス `ricepia-judge.vercel.app/nishio-go.html` も `go.ricepia.jp/nishio-go.html` へ転送します（クエリ文字列＝utm などはそのまま）。トップに別のアプリの `index.html` があり、Vercel では同じ場所にファイルがあると rewrite が効かないため、転送にしています。DNS はさくらのレンタルサーバのコントロールパネル →「ドメイン/SSL」→ ricepia.jp の「設定」→「DNSレコード設定」に `go` の CNAME（Vercel が示す値）を登録してあります（2026-10-16）。
 - 注意：ポイントは端末内で計算しているため、改ざんは防げません。特典は「動く時計が出ていること（スクリーンショットでないこと）」と残り時間を店頭で確認する運用が前提です。高額な特典にする場合はサーバー側での検証（ログイン・チェックイン記録の照合）を追加してください。
 
+## 週刊リサーチ（メール）
+
+毎週月曜 7:47（日本時間）に `.github/workflows/weekly-research.yml` が `tools/weekly-research.mjs` を実行し、Claude の web 検索で「米価・流通／売り場・販促の事例／愛知・西尾の動きと行事／季節の切り口」を調べて、出典つきの週刊リサーチと「今週の打ち手」を ricepiaricepiaricepia@gmail.com にメールします。
+
+- 設定：GitHub → Settings → Secrets and variables → Actions の Secrets に `ANTHROPIC_API_KEY`（Claude Console で、毎月の API クレジット $200 を付けた組織に作ったキー）を追加。メールは監視と同じ `RESEND_API_KEY` を使います。キーが未設定なら何もしません。
+- 手動実行：Actions →「週刊リサーチ」→ Run workflow。「調べるテーマ」に入れるとそのテーマだけを調べて送ります（例：お歳暮のお米ギフトの売れ筋）。
+- 費用の目安：`claude-opus-5-5`・web 検索 最大8回で、1回あたりおよそ $0.5〜1（月に $2〜4）。Variables の `RESEARCH_MODEL`（例：`claude-sonnet-5-5`）・`RESEARCH_MAX_SEARCHES` で変えられます。
+- 利用額は異常・課金監視（`docs/MONITORING.md`）の上限に含まれます。上限を超えて API キーが止まると、このリサーチも止まります。
+- 公開リポジトリのため、Actions のログには成否と件数だけを出し、本文はメールにだけ書きます。
+
 ## バックアップ（restic）
 
 このリポジトリ（すべての履歴と、まだコミットしていない変更）を [restic](https://restic.net/) で暗号化してバックアップする。スクリプトは `tools/restic-backup.sh`。保存先はクラウドと外付けSSDの2か所にする（GitHub とあわせて3か所。3-2-1ルール）。

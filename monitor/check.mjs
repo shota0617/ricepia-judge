@@ -17,7 +17,7 @@ const REMIND_HOURS = num("ALERT_REMIND_HOURS", 6);
 
 const LIMITS = {
   anthropicDailyUsd: num("ANTHROPIC_DAILY_USD_LIMIT", 10),
-  anthropicMonthlyUsd: num("ANTHROPIC_MONTHLY_USD_LIMIT", 100),
+  anthropicMonthlyUsd: num("ANTHROPIC_MONTHLY_USD_LIMIT", 190),
   cfWorkerReq1h: num("CF_WORKER_REQ_1H_LIMIT", 20000),
   cfWorkerReq24h: num("CF_WORKER_REQ_24H_LIMIT", 80000),
   cfWorkerErrorRate: num("CF_WORKER_ERROR_RATE_LIMIT", 0.05),

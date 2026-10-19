@@ -10,7 +10,7 @@ const $ = id => document.getElementById(id);
 /* ---------- 座標 → マス ---------- */
 const TILE_M = 8;          // 1マス = 8m
 const SIMPLE = () => document.body.classList.contains('simple');
-const BTN_ART = { globe: 'btn-globe', feet: 'stat-feet', car: 'btn-car', walker: 'btn-walker', compass: 'btn-compass' };   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
+const BTN_ART = { globe: 'btn-globe', feet: 'stat-feet', car: 'btn-car', walker: 'btn-walker', compass: 'btn-compass', flag: 'stat-flag', book: 'stat-book', map: 'tab-map', pixmap: 'pixmap' };   // Blender で作った 32×32 の絵（tools/blender/pixel-art.py）
 const ICO = (n, emoji, alt) => (BTN_ART[n] ? `<img class="pi art" src="nishio-go/art/${BTN_ART[n]}.png" alt="${alt}" width="32" height="32"/>`
   : window.NSG_ICONS && NSG_ICONS.ART[n] ? NSG_ICONS.html(n, alt) : emoji);   // ボタンの絵（ドット絵。なければ絵文字）   // 文字を少なく（せってい の「文字を多めに出す」がオフ）
 const CHUNK = 128;         // 1区画 = 128×128マス（約1km四方）ごとに地図データを取得
@@ -4260,9 +4260,9 @@ function areaHtml(a) {
     return `<div class="popup area-card pic"><div class="pop-head">${art ? `<img class="pop-art" src="${art}" alt="" width="64" height="64"/>` : ''}<h4>${esc(a.name)}</h4></div>
     ${a.catch ? `<p class="catch">${esc(a.catch)}</p>` : ''}
     ${(a.specialties || []).length ? `<p class="chips">${a.specialties.map(x => `<span>${esc(String(x).replace(/（.*?）/g, ''))}</span>`).join('')}</p>` : ''}
-    <p class="area-prog">${window.NSG_ICONS ? NSG_ICONS.html('flag', 'めぐった名所') : ''}<span class="bar"><i style="width:${pct}%"></i></span><b>${p.done}/${p.total}</b></p>
+    <p class="area-prog">${ICO('flag', '', 'めぐった名所')}<span class="bar"><i style="width:${pct}%"></i></span><b>${p.done}/${p.total}</b></p>
     <ul class="area-thumbs">${p.list.map(s => { const u = thumb(s); return `<li class="${G.state.visits[s.id] ? 'got' : ''}" title="${esc(s.name)}">${u ? `<img src="${u}" alt="${esc(s.name)}" width="32" height="32"/>` : esc(s.name.slice(0, 1))}</li>`; }).join('')}</ul>
-    ${a.summary || a.trivia || facts.length ? `<details><summary>${window.NSG_ICONS ? NSG_ICONS.html('book', '') : ''} くわしく</summary>${a.summary ? `<p>${esc(a.summary)}</p>` : ''}${facts.length ? `<p>${facts.join('／')}</p>` : ''}${a.trivia ? `<p>${esc(a.trivia)}</p>` : ''}</details>` : ''}
+    ${a.summary || a.trivia || facts.length ? `<details><summary>${ICO('book', '', '')} くわしく</summary>${a.summary ? `<p>${esc(a.summary)}</p>` : ''}${facts.length ? `<p>${facts.join('／')}</p>` : ''}${a.trivia ? `<p>${esc(a.trivia)}</p>` : ''}</details>` : ''}
     ${srcHtml}</div>`;
   }
   return `<div class="popup area-card"><h4>${esc(a.icon || '')} ${esc(a.name)}${a.kana ? `<small>（${esc(a.kana)}）</small>` : ''}</h4>

@@ -49,6 +49,9 @@ MATS = {
     # きろく の数字の札
     'hoshi': '#ffd54f', 'hon': '#2f5d9a', 'flagR': '#d23a2e', 'pole': '#8a6a3e', 'pinR': '#e0453a', 'fire': '#ff8a1c', 'fireY': '#ffd54f', 'ashi': '#7a4a2a',
     # 地図の上のボタン
+    # スポットの種類
+    'hasu': '#f29bbf', 'hasuL': '#ffd0e0', 'hasuHa': '#4f9e3a', 'kamera': '#3a3a3a', 'lens': '#5a8ad0', 'bench': '#a06a3a', 'parasol': '#e8504a', 'parasolW': '#f4f1e8',
+    'zou': '#a8a49a', 'asahi': '#ff9f1c', 'densha': '#c8102e', 'hata': '#2f7a34',
     'umi': '#3d86c6', 'riku': '#6fbf4a', 'truck': '#f4f4f4', 'tire': '#2a2a2a', 'hari': '#d23a2e', 'hariB': '#2f5d9a', 'hairY': '#f2c230', 'shirt': '#3f7fbf', 'pants': '#2d3a55',
 }
 
@@ -799,11 +802,172 @@ def new_badge():
     return dict(target=(0.05, 0, 0.5), scale=1.05, el=6, az=-12, size=32)
 
 
+# ---------- スポットの種類（game.js の CATS）：32×32 ----------
+def cat_shrine():
+    """神社：赤い鳥居"""
+    for x in (-0.3, 0.3):
+        cyl(f'hashira{x}', 'torii', 0.05, 0.8, (x, 0, 0.4), verts=10)
+    box('kasagi', 'torii', (0.9, 0.1, 0.08), (0, 0, 0.84), bevel=0.02)
+    box('kasagiK', 'dark', (0.92, 0.11, 0.03), (0, 0, 0.89))
+    box('nuki', 'torii', (0.72, 0.07, 0.06), (0, 0, 0.66))
+    box('gakuT', 'gold', (0.1, 0.03, 0.12), (0, -0.04, 0.75))
+    return dict(target=(0, 0, 0.45), scale=1.05, el=8, az=-12, size=32)
+
+
+def cat_temple():
+    """お寺：はすの花"""
+    for i in range(8):
+        a = i * math.tau / 8
+        sphere(f'ben{i}', 'hasu', 0.13, (0.18 * math.cos(a), 0.18 * math.sin(a), 0.3), (1.6, 0.7, 0.8)).rotation_euler = (0, 0.5, a)
+    for i in range(5):
+        a = i * math.tau / 5 + 0.3
+        sphere(f'uchi{i}', 'hasuL', 0.1, (0.08 * math.cos(a), 0.08 * math.sin(a), 0.4), (1.3, 0.7, 1.0)).rotation_euler = (0, 0.3, a)
+    sphere('ha', 'hasuHa', 0.42, (0, 0.05, 0.15), (1.2, 1.0, 0.15))
+    sphere('shin', 'gold', 0.06, (0, 0, 0.44))
+    return dict(target=(0, 0, 0.3), scale=1.0, el=30, az=-15, size=32)
+
+
+def cat_worship():
+    """祈りの場：小さなほこら（石の台に木の祠）"""
+    box('dai', 'stone', (0.6, 0.5, 0.16), (0, 0, 0.08))
+    box('hokora', 'wood', (0.4, 0.34, 0.34), (0, 0, 0.33))
+    box('to', 'woodD', (0.2, 0.02, 0.24), (0, -0.17, 0.3))
+    cyl('yane', 'roof', 0.36, 0.22, (0, 0, 0.6), (0, 0, math.pi / 4), 4, r2=0.02)
+    box('shime', 'white', (0.44, 0.02, 0.04), (0, -0.18, 0.47))
+    return dict(target=(0, 0, 0.36), scale=1.0, el=10, az=-20, size=32)
+
+
+def cat_castle():
+    """城跡：石垣の上の白い天守"""
+    box('ishigaki', 'stone', (0.8, 0.6, 0.22), (0, 0, 0.11))
+    box('kai1', 'white', (0.6, 0.44, 0.24), (0, 0, 0.34))
+    cyl('yane1', 'kawara', 0.5, 0.14, (0, 0, 0.52), (0, 0, math.pi / 4), 4, r2=0.3)
+    box('kai2', 'white', (0.36, 0.28, 0.18), (0, 0, 0.66))
+    cyl('yane2', 'kawara', 0.32, 0.18, (0, 0, 0.84), (0, 0, math.pi / 4), 4, r2=0.03)
+    for x in (-0.12, 0.12):
+        box(f'mado{x}', 'dark', (0.06, 0.02, 0.06), (x, -0.23, 0.36))
+    sphere('shachi', 'gold', 0.035, (0, 0, 0.95))
+    return dict(target=(0, 0, 0.48), scale=1.05, el=10, az=-20, size=32)
+
+
+def cat_historic():
+    """史跡：石碑"""
+    box('dai', 'stone', (0.56, 0.4, 0.12), (0, 0, 0.06))
+    box('hi', 'zou', (0.3, 0.14, 0.7), (0, 0, 0.47), bevel=0.03)
+    for i in range(3):
+        box(f'moji{i}', 'dark', (0.04, 0.02, 0.4 - i * 0.1), (-0.07 + i * 0.07, -0.075, 0.5 + i * 0.03))
+    return dict(target=(0, 0, 0.42), scale=1.0, el=10, az=-20, size=32)
+
+
+def cat_museum():
+    """博物館・資料館：柱の並んだ建物と三角の屋根"""
+    box('kidan', 'stone', (0.86, 0.5, 0.1), (0, 0, 0.05))
+    for i in range(4):
+        cyl(f'hashira{i}', 'white', 0.05, 0.42, (-0.3 + i * 0.2, -0.12, 0.31), verts=10)
+    box('oku', 'paper', (0.76, 0.3, 0.42), (0, 0.1, 0.31))
+    box('hari', 'white', (0.86, 0.5, 0.08), (0, 0, 0.56))
+    cyl('sankaku', 'white', 0.5, 0.42, (0, 0, 0.68), (math.pi / 2, 0, 0), 3, r2=0.5).scale = (1, 0.5, 1)
+    return dict(target=(0, 0, 0.42), scale=1.05, el=8, az=-15, size=32)
+
+
+def cat_view():
+    """展望スポット：山と朝日"""
+    sphere('hi', 'asahi', 0.2, (0.12, 0.2, 0.62))
+    sphere('yama', 'riku', 0.45, (-0.15, 0, 0.0), (1.2, 0.6, 1.1))
+    sphere('yama2', 'leaf', 0.35, (0.3, -0.1, 0.0), (1.1, 0.6, 1.0))
+    return dict(target=(0.02, 0, 0.36), scale=1.4, el=6, az=-10, size=32)
+
+
+def cat_art():
+    """アート：台の上の石の像"""
+    box('dai', 'woodD', (0.44, 0.44, 0.24), (0, 0, 0.12))
+    sphere('do', 'zou', 0.18, (0, 0, 0.4), (1, 0.8, 1.2))
+    sphere('atama', 'zou', 0.11, (0, 0, 0.66))
+    return dict(target=(0, 0, 0.4), scale=1.0, el=10, az=-20, size=32)
+
+
+def cat_sight():
+    """名所：カメラ"""
+    box('hontai', 'kamera', (0.7, 0.3, 0.42), (0, 0, 0.3), bevel=0.04)
+    box('ue', 'kamera', (0.24, 0.26, 0.12), (-0.12, 0, 0.56), bevel=0.02)
+    cyl('lens', 'steel', 0.15, 0.14, (0.04, -0.18, 0.3), (math.pi / 2, 0, 0), 20)
+    cyl('lensG', 'lens', 0.1, 0.15, (0.04, -0.19, 0.3), (math.pi / 2, 0, 0), 20)
+    box('flash', 'white', (0.1, 0.02, 0.06), (0.24, -0.16, 0.44))
+    return dict(target=(0, 0, 0.34), scale=1.0, el=10, az=-15, size=32)
+
+
+def cat_park():
+    """公園：木とベンチ"""
+    cyl('miki', 'woodD', 0.05, 0.5, (-0.18, 0.1, 0.25), verts=8)
+    sphere('ha', 'leaf', 0.3, (-0.18, 0.1, 0.62))
+    box('za', 'bench', (0.44, 0.16, 0.04), (0.2, -0.08, 0.2))
+    box('se', 'bench', (0.44, 0.04, 0.14), (0.2, 0.0, 0.3))
+    for x in (0.02, 0.38):
+        box(f'ashi{x}', 'dark', (0.03, 0.14, 0.18), (x, -0.06, 0.09))
+    return dict(target=(0.02, 0, 0.36), scale=1.05, el=12, az=-20, size=32)
+
+
+def cat_library():
+    """図書館：立てて並んだ本"""
+    for i, m in enumerate(('red', 'hon', 'giftY', 'note', 'navy')):
+        h = 0.5 + (i % 3) * 0.08
+        box(f'hon{i}', m, (0.12, 0.4, h), (-0.28 + i * 0.14, 0, h / 2), (0, 0.12 if i == 4 else 0, 0))
+    return dict(target=(0, 0, 0.3), scale=1.0, el=10, az=-25, size=32)
+
+
+def cat_station():
+    """駅：赤い電車の正面"""
+    box('sha', 'densha', (0.6, 0.5, 0.62), (0, 0, 0.36), bevel=0.06)
+    box('mado', 'glass', (0.44, 0.02, 0.2), (0, -0.25, 0.5))
+    for x in (-0.18, 0.18):
+        sphere(f'light{x}', 'yellow', 0.04, (x, -0.26, 0.2))
+    box('obi', 'white', (0.61, 0.51, 0.04), (0, 0, 0.3))
+    box('pan', 'dark', (0.06, 0.06, 0.16), (0, 0, 0.75))
+    box('rail', 'steel', (0.8, 0.06, 0.03), (0, -0.2, 0.02))
+    return dict(target=(0, 0, 0.38), scale=1.0, el=8, az=-15, size=32)
+
+
+def cat_townhall():
+    """市役所・支所：旗の立つ四角い建物"""
+    box('tatemono', 'paper', (0.7, 0.4, 0.5), (0, 0, 0.25))
+    for r in range(2):
+        for c in range(4):
+            box(f'mado{r}{c}', 'glass', (0.1, 0.02, 0.1), (-0.24 + c * 0.16, -0.21, 0.16 + r * 0.18))
+    box('iriguchi', 'dark', (0.14, 0.02, 0.12), (0, -0.21, 0.06))
+    cyl('pole', 'dark', 0.025, 0.42, (0.22, 0, 0.7), verts=6)
+    box('hata', 'hata', (0.2, 0.03, 0.13), (0.32, 0, 0.84))
+    return dict(target=(0, 0, 0.42), scale=1.05, el=10, az=-20, size=32)
+
+
+def cat_beach():
+    """海岸：砂浜と海とパラソル"""
+    box('suna', 'sand', (0.9, 0.5, 0.06), (0, -0.1, 0.03))
+    box('umi', 'sea', (0.9, 0.3, 0.05), (0, 0.3, 0.025))
+    cyl('pole', 'white', 0.015, 0.6, (0.05, -0.1, 0.33), (0, 0.2, 0), 6)
+    cyl('kasa', 'parasol', 0.34, 0.16, (0.1, -0.1, 0.62), (0, 0.2, 0), 8, r2=0.02)
+    cyl('kasaW', 'parasolW', 0.345, 0.04, (0.1, -0.1, 0.56), (0, 0.2, 0), 8)
+    return dict(target=(0, 0, 0.32), scale=1.05, el=14, az=-20, size=32)
+
+
+def pixmap():
+    """ドット絵の地図に切りかえる：四角いブロックを並べた小さな地図（田・海・家）"""
+    cols = [['mapG', 'mapG', 'mapB'], ['mapY', 'mapG', 'mapB'], ['mapG', 'yaneR', 'mapG']]
+    for r, row in enumerate(cols):
+        for c, m in enumerate(row):
+            h = 0.18 if m == 'yaneR' else 0.08 if m != 'mapB' else 0.05
+            box(f'b{r}{c}', m, (0.26, 0.26, h), (-0.27 + c * 0.27, -0.27 + r * 0.27, h / 2))
+    box('kabe', 'wall', (0.2, 0.2, 0.12), (0, 0.27, 0.06))
+    return dict(target=(0, 0, 0.06), scale=1.15, el=40, az=-30, size=32)
+
+
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
-MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock, 'lock': lock, 'ticket': ticket, 'new': new_badge})
+MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock, 'lock': lock, 'ticket': ticket, 'new': new_badge, 'pixmap': pixmap})
+MODELS.update({f'cat-{k}': v for k, v in (('shrine', cat_shrine), ('temple', cat_temple), ('worship', cat_worship), ('castle', cat_castle), ('historic', cat_historic),
+               ('museum', cat_museum), ('view', cat_view), ('art', cat_art), ('sight', cat_sight), ('park', cat_park), ('library', cat_library),
+               ('station', cat_station), ('townhall', cat_townhall), ('beach', cat_beach))})
 MODELS.update({'btn-globe': btn_globe, 'btn-car': btn_car, 'btn-walker': btn_walker, 'btn-compass': btn_compass})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),

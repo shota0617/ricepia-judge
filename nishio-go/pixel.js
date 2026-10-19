@@ -1030,7 +1030,7 @@ buildTiles();
    公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順）
    茶畑・畑・砂浜・境内の砂利・草地：12通りずつ（field シート）
    田んぼ：こよみの田んぼのようすごとに9通り。青田と黄金色の稲は2コマで風にゆれる。となりのマスとすきまなくつながる */
-const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, sprites: null, spriteReq: false, paddyU: null, paddyF: null };
+const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, sprites: null, spriteReq: false, roofs: null, roofReq: false, paddyU: null, paddyF: null };
 const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
 const FIELD_ROWS = [C.E, C.V, C.S, C.J, C.G];   // field シート：茶畑・畑・砂浜・境内の砂利・草地（12通りずつ。草地は2コマで草がゆれる）
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
@@ -1056,6 +1056,7 @@ function applyMapTiles() {
   if (MT.field) FIELD_ROWS.forEach((code, i) => { tiles[code] = MT.field[i]; });
   if (MT.water) tiles[C.A] = MT.water;
   if (MT.town) tiles[C.T] = MT.town;
+  if (MT.roofs) tiles[C.B] = MT.roofs;
   if (MT.sprites) {   // 軽トラ（上・右・下・左）と、地図のたからばこ
     ['up', 'right', 'down', 'left'].forEach((d, i) => { carSprites[d] = MT.sprites[i]; });
     if (spotSprites.treasure) spotSprites.treasure[0] = MT.sprites[4];
@@ -1082,6 +1083,10 @@ function loadMapTiles() {
       MT.town = [...Array(35).fill(plain).flat(), ...deco];
     });
     get(`field-${s}`, ok, img => { const a = sliceSheet(img, 12, FIELD_ROWS.length * 2); MT.field = FIELD_ROWS.map((_, r) => a.slice(r * 24, r * 24 + 12).map((c, i) => [c, a[r * 24 + 12 + i]])); });
+  }
+  if (!MT.roofReq) {   // 建物の屋根（瓦・金属・陸屋根。季節で変わらないので1回だけ）
+    MT.roofReq = true;
+    get('roofs', () => true, img => { MT.roofs = sliceSheet(img, 32, 1).map(c => [c, c]); });
   }
   if (!MT.spriteReq) {   // 地図の上を動くもの（Blender の軽トラ・たからばこ）
     MT.spriteReq = true;
@@ -1196,7 +1201,32 @@ const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f
   : code === C.U || code === C.F ? (Math.floor(now / 900) + ((tx + ty) >> 2)) & 1   // 田んぼの稲は、ななめに風の波がわたる
   : code === C.G ? (Math.floor(now / 800) + ((tx - ty) >> 2)) & 1 : 0;   // 草地の草も、風でそよぐ
 // マスの絵のえらび方：ふつうはマスごと。畑は8×8マスのまとまりで同じ作物にする（マスごとにちがう野菜だと、つぎはぎに見えるので）
-const tileVar = (code, x, y) => code === C.V ? (((x >> 3) * 73856093) ^ ((y >> 3) * 19349663)) >>> 0 : ((x * 73856093) ^ (y * 19349663)) >>> 0;
+const tileVar = (code, x, y) => code === C.V ? (((x >> 3) * 73856093) ^ ((y >> 3) * 19349663)) >>> 0 : code === C.B && tiles[C.B].length === 32 ? roofVar(x, y) : ((x * 73856093) ^ (y * 19349663)) >>> 0;
+// 建物の屋根：4×4マスのまとまりごとに、同じ屋根（瓦5色・金属5色・陸屋根3色のどれか）にする（ひとつの建物がつぎはぎにならないように）。
+// 陸屋根のマスだけは、ところどころに室外機・給水タンク・屋上の出入り口
+const blockHash = (x, y) => (Math.imul(x >> 2, 374761393) ^ Math.imul(y >> 2, 668265263) ^ 0x27d4eb2d) >>> 0;
+function roofVar(x, y) {
+  const b = blockHash(x, y), group = b % 13, geo = (b >>> 5) & 1;
+  if (group < 5) return group * 2 + geo;
+  if (group < 10) return 10 + (group - 5) * 2 + geo;
+  const t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+  return 20 + (group - 10) * 4 + (t % 10 < 7 ? 0 : 1 + ((t >>> 4) % 3));
+}
+// 建物のふち：下のマスが建物でなければ、窓のある壁（前の面）を描き、左右と上にかげをつける（建物が立って見えるように）
+const WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080'];
+function drawWall(tx, ty, X, Y, T) {
+  const u = T / 16, below = codeAt(tx, ty + 1) !== C.B;
+  if (codeAt(tx - 1, ty) !== C.B) { ctx.fillStyle = 'rgba(30,24,20,.45)'; ctx.fillRect(X, Y, Math.ceil(u), T); }
+  if (codeAt(tx + 1, ty) !== C.B) { ctx.fillStyle = 'rgba(30,24,20,.3)'; ctx.fillRect(X + T - Math.ceil(u), Y, Math.ceil(u), T); }
+  if (codeAt(tx, ty - 1) !== C.B) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(X, Y, T, Math.ceil(u)); }
+  if (!below) return;
+  const wall = WALLS[blockHash(tx, ty) % WALLS.length], wy = Y + Math.round(10 * u);
+  ctx.fillStyle = 'rgba(30,24,20,.55)'; ctx.fillRect(X, wy - Math.ceil(u), T, Math.ceil(u));   // のきのかげ
+  ctx.fillStyle = wall; ctx.fillRect(X, wy, T, T - (wy - Y));
+  ctx.fillStyle = '#5a7a9a';
+  for (let wx = 2; wx < 16; wx += 5) ctx.fillRect(X + Math.round(wx * u), wy + Math.round(1.5 * u), Math.round(2 * u), Math.round(2 * u));   // 窓
+  ctx.fillStyle = 'rgba(30,24,20,.6)'; ctx.fillRect(X, Y + T - Math.ceil(u), T, Math.ceil(u));   // 足もとの線
+}
 // 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
 let seasonCheckT = 0;
 function refreshSeason(now) {
@@ -4205,7 +4235,8 @@ function frame(now) {
     const v = tileVar(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
-    drawDeco(code, tx, ty, X, Y, T, now);
+    if (code === C.B) drawWall(tx, ty, X, Y, T);
+    else drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;

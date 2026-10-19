@@ -1486,7 +1486,10 @@ const dotStars = f => (DOT_TWO_STARS.has(f.motif) ? 2 : 3) + (['rainbow', 'snow'
 const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i></i>'.repeat(n)}</div>`;
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
   const el = $('reward'), D = window.NISHIO_DOTS;
-  if (waited !== true && dot && D && D.ready && !D.ready([dot.id])) { D.load([dot.id]).then(() => showReward(total, name, lines, lvUp, fact, dot, true)); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
+  if (waited !== true) {
+    const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
+    if (dot && D && D.ready && !D.ready([dot.id])) { D.load([dot.id]).then(() => { if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
+  }
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   if (simple()) {
     // 絵が主役：ドット絵を大きく、金の額縁に。はじめての絵には NEW のリボンと、めずらしさの星

@@ -1,5 +1,5 @@
 # にしおさんぽGO：地図の小物（tools/blender/deco.py の結果）に色と季節をのせて、シートにまとめる
-# - 題材82 × ポーズ6 × 向き4 × 色8通り ＝ 15744マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて6万枚以上
+# - 題材102 × ポーズ6 × 向き4 × 色8通り ＝ 19584マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて7万枚以上
 #   nishio-go/deco/deco-<季節>.png：16×16 のマスが 96列に並ぶ（背景なし）。番号 i ＝ ((題材 × 6 ＋ ポーズ) × 4 ＋ 向き) × 8 ＋ 色
 # - 季節で変わるもの：草や葉の色、足もとにちる花びら（春）・草（夏）・落ち葉（秋）・雪（冬。上の面に雪がつもる）
 #   水の上の小物は、花びらや落ち葉が水に浮かび、夏は波、冬は白い波
@@ -25,9 +25,11 @@ SUBJECTS = ['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho
             'chatsumi', 'suisha', 'daichouchin', 'akauma', 'norihibi', 'carnation', 'kame', 'koinobori', 'kadomatsu', 'suika', 'tsukimi', 'kaki',
             'tractor', 'combine', 'tako', 'nodate', 'unaginobori', 'yatai', 'sakura', 'momiji',
             'kiji', 'tsubame', 'usagi', 'hotaru', 'koi', 'hakuchou', 'yacht', 'tetrapod', 'monohoshi', 'fuusen', 'basutei', 'komainu', 'ema',
-            'omikuji', 'hachibako', 'fukurou', 'risu', 'bonsai', 'jogger', 'sanpo']
-WATER = {'kamo', 'fune', 'boto', 'bui', 'hasu', 'suisha', 'norihibi', 'koi', 'hakuchou', 'yacht'}   # 水の上に置く題材
-SAND = {'kamome', 'kani', 'sunashiro', 'kasa', 'tsuri', 'kame', 'suika', 'tetrapod'}
+            'omikuji', 'hachibako', 'fukurou', 'risu', 'bonsai', 'jogger', 'sanpo',
+            'keicar', 'scooter', 'cyclist', 'cart', 'randoseru', 'kayak', 'swanboat', 'kasahito', 'mujin', 'onigokko', 'tanukiy', 'itachi',
+            'jetski', 'beachball', 'surfer', 'kaigara', 'hatakehito', 'sprinkler', 'hiker', 'sudebako']
+WATER = {'kamo', 'fune', 'boto', 'bui', 'hasu', 'suisha', 'norihibi', 'koi', 'hakuchou', 'yacht', 'kayak', 'swanboat', 'jetski'}   # 水の上に置く題材
+SAND = {'kamome', 'kani', 'sunashiro', 'kasa', 'tsuri', 'kame', 'suika', 'tetrapod', 'beachball', 'surfer', 'kaigara'}
 
 
 def rgb(h):
@@ -74,6 +76,8 @@ DUCKS = [   # 羽・腹・頭・くちばし（かるがも・まがもの雄・
 COATS = {'neko': ['#e8a050', '#2a2a2a', '#f4f0e8', '#8a8a90', '#a07850', '#d8c0a0', '#5a4a40', '#c8a070'],
          'usagi': ['#a08060', '#8a6a4a', '#c8a880', '#b09070', '#7a6a50', '#d8c8a8', '#9a8a70', '#f0ece4'],
          'risu': ['#a06a3a', '#8a5a3a', '#b8804a', '#7a5a3a', '#c89060', '#6a4a2a', '#9a7050', '#a88a6a'],
+         'tanukiy': ['#7a6248', '#6a5240', '#8a7258', '#5a4a3a', '#9a8268', '#6a5a48', '#7a6a50', '#84684c'],
+         'itachi': ['#c08040', '#a87038', '#d09050', '#b07840', '#c8884a', '#9a6a3a', '#d8a060', '#b88048'],
          'inu': ['#d08040', '#f0ece0', '#2a2a2a', '#a07040', '#e8d0a0', '#6a5040', '#b0b0b0', '#c8a060']}
 V8 = {   # 題材ごとの「色8通り」になる材質
     'kaeru': ('kawa', ['#5aa840', '#3a8a30', '#8a6a40', '#7a9a40', '#4a7a50', '#a0a040', '#6aa860', '#5a6a40']),
@@ -144,10 +148,28 @@ V8 = {   # 題材ごとの「色8通り」になる材質
     'bonsai': ('hachi', ['#8a5a3a', '#3a6aa0', '#2a2a2e', '#b86a3c', '#f0ece0', '#4a8a5a', '#a04a4a', '#6a6a70']),
     'jogger': ('fuku', ['#e04a3a', '#2a7ad0', '#f2c230', '#4aa84a', '#f4f4f0', '#8a5ad0', '#f08030', '#2a2a2e']),
     'sanpo': ('fuku', ['#3a5a9a', '#c04030', '#4a8a4a', '#e0a030', '#8a4a8a', '#5a5a5a', '#e8e0d0', '#3a7ab0']),
+    'keicar': ('body', ['#f4f4f0', '#e04a3a', '#2a6ad0', '#f2c230', '#3a8a4a', '#2a2a2e', '#e88ab0', '#9aa0a8']),
+    'scooter': ('body', ['#e04a3a', '#f4f4f0', '#2a6ad0', '#f2c230', '#3a8a4a', '#2a2a2e', '#f08030', '#8ac8e8']),
+    'cyclist': ('frame', ['#c04030', '#2a5aa0', '#f0f0f0', '#3a8a4a', '#2a2a2e', '#e0a030', '#e88ab0', '#8a8a90']),
+    'cart': ('cart', ['#8a5ad0', '#e04a3a', '#2a6ad0', '#3a8a4a', '#a07040', '#e88ab0', '#5a5a5a', '#f2c230']),
+    'randoseru': ('randoseru', ['#d03030', '#2a2a2e', '#6a3a2a', '#e88ab0', '#2a3a6a', '#8a5ad0', '#3a8a5a', '#a06a3a']),
+    'kayak': ('sentai', ['#e04a3a', '#f2c230', '#2a7ad0', '#3aa05a', '#f08030', '#f4f4f0', '#8a5ad0', '#40c0c0']),
+    'swanboat': ('yane_b', ['#e04a3a', '#2a7ad0', '#f2c230', '#3aa05a', '#e88ab0', '#8a5ad0', '#f08030', '#40c0c0']),
+    'kasahito': ('kasa_h', ['#e04a3a', '#2a7ad0', '#f2c230', '#3aa05a', '#e88ab0', '#8a5ad0', '#f4f4f0', '#2a2a2e']),
+    'mujin': ('yane_m', ['#c04030', '#2a5aa0', '#3a8a4a', '#8a8a90', '#a0703c', '#e0a030', '#5a4a3a', '#f0f0f0']),
+    'onigokko': ('fuku', ['#e04a3a', '#2a7ad0', '#f2c230', '#4aa84a', '#e88ab0', '#f4f4f0', '#8a5ad0', '#f08030']),
+    'jetski': ('body', ['#f4f4f0', '#e04a3a', '#2a6ad0', '#f2c230', '#3aa05a', '#2a2a2e', '#f08030', '#40c0c0']),
+    'beachball': ('booru', ['#e04a3a', '#2a7ad0', '#f2c230', '#3aa05a', '#e88ab0', '#8a5ad0', '#f08030', '#40c0c0']),
+    'surfer': ('board', ['#f4f4f0', '#e04a3a', '#2a7ad0', '#f2c230', '#3aa05a', '#f08030', '#40c0c0', '#e88ab0']),
+    'kaigara': ('fuku', ['#e04a3a', '#2a7ad0', '#f2c230', '#4aa84a', '#e88ab0', '#f4f4f0', '#8a5ad0', '#f08030']),
+    'hatakehito': ('fuku', ['#3a4a8a', '#e8e0d0', '#4a8a4a', '#c04030', '#5a6a7a', '#8a6a4a', '#3a7ab0', '#e0a030']),
+    'sprinkler': ('hose', ['#3a8a4a', '#2a6ad0', '#f2c230', '#e04a3a', '#f08030', '#5a5a5a', '#8a5ad0', '#40c0c0']),
+    'hiker': ('ryukku', ['#e04a3a', '#2a7ad0', '#f2c230', '#3aa05a', '#f08030', '#5a5a5a', '#8a5ad0', '#40c0c0']),
+    'sudebako': ('hako_s', ['#a0703c', '#8a5a3a', '#c8a070', '#3a8a4a', '#2a6ad0', '#e04a3a', '#f4f0e0', '#6a6a70']),
     'momiji': ('momiji', ['#d03a2a', '#e05a2a', '#c02a2a', '#e8802a', '#b8302a', '#e06a30', '#f09030', '#a82a2a']),
 }
 OFFSET = {'hana2': 'hana', 'hako2': 'hako', 'booru': None, 'sheet': None, 'karada2': 'karada', 'sakura2': 'sakura', 'momiji2': 'momiji',
-          'koi2': 'koi', 'sentaku2': 'sentaku', 'fuusen2': 'fuusen', 'ema2': 'ema', 'fuku2': 'fuku'}   # 2つめの色（同じ表を1つずらして使う）
+          'koi2': 'koi', 'sentaku2': 'sentaku', 'fuusen2': 'fuusen', 'ema2': 'ema', 'fuku2': 'fuku', 'randoseru2': 'randoseru', 'booru2': 'booru'}   # 2つめの色（同じ表を1つずらして使う）
 FIXED = {
     'kuchi': '#e8c040', 'ashi': '#2a2a2a', 'me': '#1a1a1a', 'mimi': '#8a6a50', 'hana': '#e8a0a0', 'bou': '#8a6a40', 'take': '#a08050', 'kao': '#f4e8d0',
     'mugiwara': '#e0c070', 'boushi': '#3a5a9a', 'zubon': '#3a3a4a', 'hada': '#f4c9a0', 'dougu': '#8a6a40', 'baketsu': '#5a8ac0', 'ishi': '#a8a8a0',
@@ -167,6 +189,10 @@ FIXED = {
     'sentaku2': '#5a8ad0', 'fuusen': '#e04a3a', 'fuusen2': '#2a7ad0', 'nawa': '#d8c8a0', 'yane_e': '#5a4a3a', 'ema': '#d8b070', 'ema2': '#e04a3a',
     'kami_w': '#f8f8f4', 'hakoH': '#f4f0e0', 'futaH': '#8a8a90', 'hachi_y': '#f2c230', 'eda': '#6b4a2e', 'me_f': '#e8c040', 'donguri': '#8a5a2a',
     'tana': '#a0703c', 'fuku2': '#2a7ad0', 'himo': '#c04030',
+    'kai': '#f6eee0', 'hane': '#8a6a4a', 'hara': '#e8dcc8',
+    'boushi_y': '#f2d040', 'kubi': '#f8f8f8', 'yane_b': '#e04a3a', 'kasa_h': '#e04a3a', 'yane_m': '#c04030', 'yasai': '#e04a3a', 'yasai2': '#5aa840',
+    'nami_j': '#f0f8ff', 'booru2': '#f4f4f0', 'board': '#f4f4f0', 'pipe': '#8a8a90', 'mizu_k': '#8ac8f0', 'hose': '#3a8a4a', 'ryukku': '#e04a3a',
+    'hako_s': '#a0703c', 'yane_s': '#5a4a3a', 'cart': '#8a5ad0', 'randoseru': '#d03030', 'randoseru2': '#2a2a2e', 'body': '#e04a3a',
     'sakura': '#f7b6cc', 'sakura2': '#fde0ea', 'momiji': '#d03a2a', 'momiji2': '#f09030', 'wara': '#d8b860', 'kami': '#2a2018', 'kasa_c': '#d8b860',
 }
 PLANTS = {'ha', 'kusa', 'koke', 'kuki'}
@@ -195,6 +221,8 @@ def palette(subj, c, s):
         for m2, base in OFFSET.items():
             if base == m:
                 pal[m2] = cols[(c + 3) % 8]
+    if subj not in V8 or V8[subj][0] != 'fuku':   # 人が出てくる題材は、服の色もいろいろに（青い服ばかりにならないように）
+        pal['fuku'] = ['#c04030', '#3a5a9a', '#4a8a4a', '#e0a030', '#8a4a8a', '#e8e0d0', '#3a7ab0', '#a06a3a'][(c * 3 + 1) % 8]
     # 2つめに目立つ色（題材の中でとなりの色）
     pal.setdefault('hana2', pal.get('hana'))
     if subj in ('sanrinsha', 'picnic'):
@@ -206,6 +234,10 @@ def palette(subj, c, s):
     if subj == 'sanpo':   # つれている犬
         ke = COATS['inu'][(c + 3) % 8]
         pal.update(ke=ke, ashi=ke, mimi=ke, hana='#2a2a2a', hara='#%02x%02x%02x' % tuple(min(255, int(v * 0.6 + 100)) for v in rgb(ke)))
+    if subj == 'swanboat':
+        pal['sentai'] = '#f8f8f8'
+    if subj == 'beachball':
+        pal['booru2'] = '#f4f4f0'
     if subj == 'fukurou':
         pal['me_f'] = '#e8c040'
     if subj == 'koinobori':

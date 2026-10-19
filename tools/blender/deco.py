@@ -1,6 +1,6 @@
 # にしおさんぽGO：ドット絵の地図に置く小物（生きもの・道ばたの物・水辺や浜の物）を Blender で作る
-# - 題材82 × 向き4 × ポーズ・置き方6 ＝ 1968 の立体を、16×16 の「材質の番号」と「明るさの段」にして TMP に保存する（背景なし）
-#   → tools/blender/deco-sheets.py で 色8通り × 季節4 をのせて、ちがう絵だけで6万枚以上（nishio-go/deco/）
+# - 題材102 × 向き4 × ポーズ・置き方6 ＝ 2448 の立体を、16×16 の「材質の番号」と「明るさの段」にして TMP に保存する（背景なし）
+#   → tools/blender/deco-sheets.py で 色8通り × 季節4 をのせて、ちがう絵だけで7万枚以上（nishio-go/deco/）
 # - 色8通りは、その題材らしいちがい（鳥や鴨は種類、猫や犬は毛の色、かかしや人は服、花は花の色、舟は船体の色）
 # - 斜め上（南）から見下ろす。地図のマス（家・木）と同じ向き・同じ光
 # 使い方：python tools/blender/deco.py [--part i/n]（bpy が要る。n 個に分けて並べて動かせる）→ python3 tools/blender/deco-sheets.py
@@ -992,6 +992,171 @@ def s_sanpo(k):     # 犬の散歩
     Cy('himo', 0.004, 0.25, (0.12, -0.04, 0.18), (0, 1.1, 0.2), 4)
 
 
+# ---------- 題材 83〜102：乗り物・町の人・水辺と浜の遊び・畑と森 ----------
+def s_keicar(k):    # とめてある軽自動車
+    B('body', (0.26, 0.42, 0.14), (0, 0, 0.11), bevel=0.03)
+    B('body', (0.24, 0.26, 0.12), (0, 0.04, 0.24), bevel=0.03)
+    B('mado', (0.2, 0.01, 0.08), (0, -0.095, 0.25))
+    B('mado', (0.2, 0.01, 0.08), (0, 0.175, 0.25))
+    for x in (-0.13, 0.13):
+        for y in (-0.13, 0.13):
+            Cy('kuro', 0.05, 0.04, (x, y, 0.05), (0, 1.57, 0), 10)
+    if k >= 3:
+        B('mado', (0.01, 0.2, 0.07), (0.121, 0.04, 0.25))
+    if k == 5:
+        person(0, 'fuku', 'kami', 0.42)
+
+
+def s_scooter(k):   # 原付
+    for y in (-0.12, 0.12):
+        Cy('kuro', 0.05, 0.03, (0, y, 0.05), (0, 1.57, 0), 10)
+    B('body', (0.1, 0.26, 0.08), (0, 0, 0.1), bevel=0.02)
+    B('body', (0.08, 0.06, 0.16), (0, -0.12, 0.16))
+    B('kuro', (0.16, 0.02, 0.02), (0, -0.14, 0.25))
+    B('za', (0.08, 0.12, 0.03), (0, 0.06, 0.16))
+    if k >= 3:
+        B('box', (0.1, 0.1, 0.08), (0, 0.13, 0.22))
+
+
+def s_cyclist(k):   # 自転車に乗る人
+    s_jitensha(0)
+    person(1, 'fuku', 'boushi' if k % 2 else 'kami', 0.42)
+
+
+def s_cart(k):      # 手おし車のおばあさん
+    person(1 if k % 2 else 0, 'fuku', 'kami', 0.46)
+    B('cart', (0.12, 0.1, 0.14), (0, -0.16, 0.09), bevel=0.02)
+    Cy('kuro', 0.025, 0.02, (-0.05, -0.16, 0.025), (0, 1.57, 0), 8)
+    Cy('kuro', 0.025, 0.02, (0.05, -0.16, 0.025), (0, 1.57, 0), 8)
+
+
+def s_randoseru(k):  # ランドセルの子ども（登下校）
+    n = 1 + (k >= 3)
+    for i in range(n):
+        for o in _grab(lambda: person(1 if (k + i) % 2 else 0, 'fuku', 'boushi_y', 0.4)):
+            o.location.x += (i - (n - 1) / 2) * 0.24
+        B('randoseru' if i == 0 else 'randoseru2', (0.11, 0.07, 0.12), ((i - (n - 1) / 2) * 0.24, 0.07, 0.28))
+
+
+def s_kayak(k):     # カヤック
+    hull = Cy('sentai', 0.07, 0.5, (0, 0, 0.03), (1.57, 0, 0), 10)
+    hull.scale = (1, 0.55, 1)
+    person(5, 'fuku', 'boushi', 0.32)
+    Cy('dougu', 0.008, 0.4, (0, 0, 0.14), (0, 1.57, 0.4 * (k % 3 - 1)), 4)
+
+
+def s_swanboat(k):  # 白鳥のボート（公園の池）
+    B('sentai', (0.26, 0.36, 0.12), (0, 0, 0.06), bevel=0.04)
+    Cy('kubi', 0.035, 0.22, (0, -0.16, 0.2), (0.25, 0, 0), 8)
+    Sp('kubi', 0.05, (0, -0.2, 0.31))
+    Cy('kuchi', 0.015, 0.06, (0, -0.25, 0.3), (1.57, 0, 0), 5, r2=0.004)
+    B('yane_b', (0.24, 0.2, 0.02), (0, 0.06, 0.28))
+    if k >= 3:
+        person(5, 'fuku', 'kami', 0.3)
+
+
+def s_kasahito(k):  # かさをさす人
+    person(1 if k % 2 else 0, 'fuku', 'kami', 0.48)
+    Cy('kasa_h', 0.2, 0.06, (0.04, 0, 0.62), (0.1 * (k % 3 - 1), 0, 0), 10, r2=0.02)
+    Cy('bou', 0.006, 0.25, (0.04, 0, 0.47), v=4)
+    if k >= 4:
+        for o in _grab(lambda: person(0, 'fuku2', 'kami', 0.36)):
+            o.location.x += 0.22
+
+
+def s_mujin(k):     # 無人の野菜売り場
+    B('tana', (0.36, 0.16, 0.02), (0, 0, 0.16))
+    for x in (-0.17, 0.17):
+        Cy('bou', 0.012, 0.36, (x, 0.06, 0.18), v=4)
+    B('yane_m', (0.42, 0.24, 0.02), (0, 0.02, 0.37), (0.25, 0, 0))
+    for i in range(3):
+        Sp('yasai' if i % 2 else 'yasai2', 0.035, (-0.1 + i * 0.1, -0.02, 0.2), (1.2, 1, 0.8))
+    B('box', (0.06, 0.05, 0.06), (0.13, -0.04, 0.2))
+
+
+def s_onigokko(k):  # 鬼ごっこ
+    for i in range(2 + k % 2):
+        for o in _grab(lambda: person(1, 'fuku', 'boushi', 0.36)):
+            o.location.x += (i - 1) * 0.2
+            o.location.y += 0.05 * (i % 2)
+            o.rotation_euler.z += 0.4 * (i - 1)
+
+
+def s_tanukiy(k):   # 野生のたぬき
+    quad(k, 1.0, 'dog', 'dog')
+    Sp('me', 0.03, (0.03, -0.24, 0.24 if k != 2 else 0.29), (1, 0.5, 0.6))
+
+
+def s_itachi(k):    # いたち
+    s = 0.9
+    Sp('ke', 0.06 * s, (0, 0.02, 0.06), (0.8, 2.2, 0.8))
+    Sp('ke', 0.045 * s, (0, -0.15, 0.08 + 0.05 * (k % 2)))
+    Cy('ke', 0.02, 0.15, (0, 0.2, 0.06), (1.3, 0, 0), 5)
+    if k >= 3:
+        Sp('ishi', 0.08, (0.15, 0.05, 0.02), (1.4, 1, 0.5))
+
+
+def s_jetski(k):    # 水上バイク
+    B('body', (0.14, 0.34, 0.08), (0, 0, 0.04), bevel=0.03)
+    B('za', (0.08, 0.12, 0.04), (0, 0.04, 0.1))
+    B('kuro', (0.14, 0.02, 0.02), (0, -0.08, 0.15))
+    if k % 2:
+        person(5, 'fuku', 'kami', 0.32)
+    B('nami_j', (0.12, 0.16, 0.005), (0, 0.24, 0.002))
+
+
+def s_beachball(k):  # ビーチボールで遊ぶ
+    Sp('booru', 0.06, (0.0, 0.0, 0.06 + 0.1 * (k % 2)))
+    Sp('booru2', 0.061, (0.0, 0.0, 0.06 + 0.1 * (k % 2)), (0.5, 1, 1))
+    if k >= 2:
+        for o in _grab(lambda: person(3, 'fuku', 'kami', 0.36)):
+            o.location.x += 0.2
+
+
+def s_surfer(k):    # サーフィン（ボードを持つ人・浜）
+    person(0 if k % 2 else 1, 'fuku', 'kami', 0.46)
+    B('board', (0.06, 0.04, 0.36), (0.16, 0, 0.2), (0, 0.2 * (k % 3 - 1), 0), bevel=0.02)
+
+
+def s_kaigara(k):   # 貝ひろい
+    person(2, 'fuku', 'boushi', 0.38)
+    B('baketsu', (0.07, 0.07, 0.06), (0.15, -0.05, 0.03))
+    for i in range(1 + k % 3):
+        Sp('kai', 0.02, (-0.15 + 0.06 * i, -0.1, 0.01), (1.3, 1, 0.5))
+
+
+def s_hatakehito(k):  # 野菜を運ぶ人
+    person(1 if k % 2 else 0, 'fuku', 'mugiwara', 0.48)
+    B('kago', (0.14, 0.1, 0.08), (0, -0.13, 0.2))
+    for i in range(3):
+        Sp('yasai' if i % 2 else 'yasai2', 0.025, (-0.04 + 0.04 * i, -0.13, 0.25))
+
+
+def s_sprinkler(k):  # 水まき・スプリンクラー
+    Cy('pipe', 0.02, 0.1, (0, 0, 0.05), v=6)
+    for i in range(4 + k):
+        a = i * 1.1
+        Sp('mizu_k', 0.015, (0.12 * math.cos(a), 0.08 * math.sin(a), 0.14 + 0.03 * (i % 2)))
+    Cy('hose', 0.01, 0.3, (0.1, 0.1, 0.01), (0, 1.57, 0.6), 4)
+
+
+def s_hiker(k):     # 山歩きの人
+    person(1 if k % 2 else 0, 'fuku', 'boushi', 0.46)
+    B('ryukku', (0.12, 0.08, 0.14), (0, 0.08, 0.3), bevel=0.02)
+    Cy('dougu', 0.006, 0.36, (0.12, -0.06, 0.18), (0.2, 0, 0), 4)
+
+
+def s_sudebako(k):  # 巣箱と小鳥
+    Cy('bou', 0.015, 0.4, (0, 0, 0.2), v=5)
+    B('hako_s', (0.12, 0.1, 0.12), (0, 0, 0.44))
+    D3.roof('o', 'yane_s', 0, 0, 0.5, 0.16, 0.14, 0.05)
+    Cy('kuro', 0.02, 0.01, (0, -0.051, 0.45), (1.57, 0, 0), 8)
+    if k >= 2:
+        for o in _grab(lambda: bird(k % 3, 0.7, 0, 0.04)):
+            o.location.x += 0.16
+            o.location.z += 0.35
+
+
 SUBJECTS = [   # （名前、作る関数）— 順番は deco-sheets.py と pixel.js の置き場所の表と同じ
     ('sagi', s_sagi), ('kotori', s_kotori), ('kamo', s_kamo), ('kamome', s_kamome), ('neko', s_neko), ('inu', s_inu),
     ('kaeru', s_kaeru), ('choucho', s_choucho), ('kakashi', s_kakashi), ('hazakake', s_hazakake), ('warazuka', s_warazuka),
@@ -1009,6 +1174,10 @@ SUBJECTS = [   # （名前、作る関数）— 順番は deco-sheets.py と pix
     ('yacht', s_yacht), ('tetrapod', s_tetrapod), ('monohoshi', s_monohoshi), ('fuusen', s_fuusen), ('basutei', s_basutei),
     ('komainu', s_komainu), ('ema', s_ema), ('omikuji', s_omikuji), ('hachibako', s_hachibako), ('fukurou', s_fukurou),
     ('risu', s_risu), ('bonsai', s_bonsai), ('jogger', s_jogger), ('sanpo', s_sanpo),
+    ('keicar', s_keicar), ('scooter', s_scooter), ('cyclist', s_cyclist), ('cart', s_cart), ('randoseru', s_randoseru), ('kayak', s_kayak),
+    ('swanboat', s_swanboat), ('kasahito', s_kasahito), ('mujin', s_mujin), ('onigokko', s_onigokko), ('tanukiy', s_tanukiy), ('itachi', s_itachi),
+    ('jetski', s_jetski), ('beachball', s_beachball), ('surfer', s_surfer), ('kaigara', s_kaigara), ('hatakehito', s_hatakehito),
+    ('sprinkler', s_sprinkler), ('hiker', s_hiker), ('sudebako', s_sudebako),
 ]
 
 
@@ -1023,7 +1192,10 @@ SCALE = {'sagi': 0.72, 'kotori': 0.42, 'kamo': 0.5, 'kamome': 0.48, 'neko': 0.5,
          'unaginobori': 0.66, 'yatai': 0.66, 'sakura': 0.62, 'momiji': 0.62,
          'kiji': 0.62, 'tsubame': 0.56, 'usagi': 0.42, 'hotaru': 0.5, 'koi': 0.48, 'hakuchou': 0.66, 'yacht': 0.72, 'tetrapod': 0.56,
          'monohoshi': 0.66, 'fuusen': 0.64, 'basutei': 0.6, 'komainu': 0.58, 'ema': 0.6, 'omikuji': 0.6, 'hachibako': 0.56, 'fukurou': 0.5,
-         'risu': 0.4, 'bonsai': 0.56, 'jogger': 0.66, 'sanpo': 0.62}
+         'risu': 0.4, 'bonsai': 0.56, 'jogger': 0.66, 'sanpo': 0.62,
+         'keicar': 0.6, 'scooter': 0.5, 'cyclist': 0.58, 'cart': 0.56, 'randoseru': 0.62, 'kayak': 0.62, 'swanboat': 0.56, 'kasahito': 0.66,
+         'mujin': 0.58, 'onigokko': 0.66, 'tanukiy': 0.52, 'itachi': 0.46, 'jetski': 0.56, 'beachball': 0.56, 'surfer': 0.6, 'kaigara': 0.5,
+         'hatakehito': 0.6, 'sprinkler': 0.46, 'hiker': 0.6, 'sudebako': 0.66}
 
 
 def render_one(fn, k, d, out, scale=0.9):

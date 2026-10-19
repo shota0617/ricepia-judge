@@ -1024,6 +1024,46 @@ function buildTiles(codes) {
   }
 }
 buildTiles();
+/* ---------- Blender で描いた地図の家と木（tools/blender/maptiles.py → nishio-go/maptiles/ のシート） ----------
+   家：50の立体 × 屋根の色10 × 壁の色5 ＝ 2500通りを季節ごとに（4季節で1万マス）。場所ごとにちがう家になる
+   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま */
+const MT = { s: -1, house: null, tree: null };
+function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
+  if (KOYO) return 2;
+  if (SAKURA) return 0;
+  const m = new Date().getMonth() + 1;
+  return m === 12 || m <= 2 ? 3 : 1;
+}
+function sliceSheet(img, cols, rows) {   // 16×16 の canvas に切り分ける（ほかのマスと同じ形）
+  const out = [];
+  for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 16;
+    c.getContext('2d').drawImage(img, x * 16, y * 16, 16, 16, 0, 0, 16, 16);
+    out.push(c);
+  }
+  return out;
+}
+function applyMapTiles() {
+  if (MT.house) tiles[C.Q] = MT.house;
+  if (MT.tree) tiles[C.W] = MT.tree;
+  dirty = true;
+}
+function loadMapTiles() {
+  const s = mapSeason();
+  if (s === MT.s) return;
+  MT.s = s;
+  const get = (name, fn) => {
+    const img = new Image();
+    img.onload = () => { if (MT.s === s) { fn(img); applyMapTiles(); } };
+    img.onerror = () => { if (MT.s === s) setTimeout(() => { if (MT.s === s) get(name, fn); }, 15000); };   // 読めなければ、しばらくしてもう一度
+    img.src = `nishio-go/maptiles/${name}-${s}.png`;
+  };
+  get('house', img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
+  get('tree', img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
+}
+loadMapTiles();
+const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1 : 0;   // 森は、風がわたるように少しずつずれてゆれる
 // 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
 let seasonCheckT = 0;
 function refreshSeason(now) {
@@ -1034,6 +1074,8 @@ function refreshSeason(now) {
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;
   buildTiles([C.U, C.F, C.W, C.P]);
+  applyMapTiles();   // Blender の森の絵を使っていれば、そのまま（季節が変われば、その季節のシートを読む）
+  loadMapTiles();
   makeWorldImg();
   dirty = true;
 }
@@ -4027,7 +4069,7 @@ function frame(now) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
     const v = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
     const X = ox + tx * T, Y = oy + ty * T;
-    ctx.drawImage(tiles[code][v % tiles[code].length][code === C.A || code === C.X ? f : 0], X, Y, T, T);
+    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
@@ -4305,7 +4347,7 @@ function drawWorld(now, w, h, dpr) {
     const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
     const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
     const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
-    ctx.drawImage(tiles[code][v % tiles[code].length][code === C.A || code === C.X ? f : 0], ox + x * T, oy + y * T, T, T);
+    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], ox + x * T, oy + y * T, T, T);
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();

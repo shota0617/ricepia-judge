@@ -1028,9 +1028,11 @@ buildTiles();
    家：50の立体 × 屋根の色10 × 壁の色5 ＝ 2500通りを季節ごとに（4季節で1万マス）。場所ごとにちがう家になる
    木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま
    公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順）
+   茶畑・畑・砂浜・境内の砂利・草地：12通りずつ（field シート）
    田んぼ：こよみの田んぼのようすごとに9通り。青田と黄金色の稲は2コマで風にゆれる。となりのマスとすきまなくつながる */
-const MT = { s: -1, p: '', house: null, tree: null, misc: null, paddyU: null, paddyF: null };
+const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, paddyU: null, paddyF: null };
 const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
+const FIELD_ROWS = [C.E, C.V, C.S, C.J, C.G];   // field シート：茶畑・畑・砂浜・境内の砂利・草地（12通りずつ。草地は2コマで草がゆれる）
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
   if (KOYO) return 2;
   if (SAKURA) return 0;
@@ -1051,6 +1053,7 @@ function applyMapTiles() {
   if (MT.house) tiles[C.Q] = MT.house;
   if (MT.tree) tiles[C.W] = MT.tree;
   if (MT.misc) MISC_ROWS.forEach((code, i) => { tiles[code] = MT.misc[i]; });
+  if (MT.field) FIELD_ROWS.forEach((code, i) => { tiles[code] = MT.field[i]; });
   if (MT.paddyU) { tiles[C.U] = MT.paddyU; tiles[C.F] = MT.paddyF; }
   dirty = true;
 }
@@ -1068,6 +1071,7 @@ function loadMapTiles() {
     get(`house-${s}`, ok, img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
     get(`tree-${s}`, ok, img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
     get(`misc-${s}`, ok, img => { const a = sliceSheet(img, 30, MISC_ROWS.length); MT.misc = MISC_ROWS.map((_, r) => a.slice(r * 30, r * 30 + 30).map(c => [c, c])); });
+    get(`field-${s}`, ok, img => { const a = sliceSheet(img, 12, FIELD_ROWS.length * 2); MT.field = FIELD_ROWS.map((_, r) => a.slice(r * 24, r * 24 + 12).map((c, i) => [c, a[r * 24 + 12 + i]])); });
   }
   if (pt !== MT.p) {   // 田んぼは、こよみの田んぼのようす（青田・黄金色・田植え・田おこし・刈田）ごとのシート
     MT.p = pt;
@@ -1081,7 +1085,10 @@ function loadMapTiles() {
 loadMapTiles();
 const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f
   : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1   // 森は、風がわたるように少しずつずれてゆれる
-  : code === C.U || code === C.F ? (Math.floor(now / 900) + ((tx + ty) >> 2)) & 1 : 0;   // 田んぼの稲は、ななめに風の波がわたる
+  : code === C.U || code === C.F ? (Math.floor(now / 900) + ((tx + ty) >> 2)) & 1   // 田んぼの稲は、ななめに風の波がわたる
+  : code === C.G ? (Math.floor(now / 800) + ((tx - ty) >> 2)) & 1 : 0;   // 草地の草も、風でそよぐ
+// マスの絵のえらび方：ふつうはマスごと。畑は8×8マスのまとまりで同じ作物にする（マスごとにちがう野菜だと、つぎはぎに見えるので）
+const tileVar = (code, x, y) => code === C.V ? (((x >> 3) * 73856093) ^ ((y >> 3) * 19349663)) >>> 0 : ((x * 73856093) ^ (y * 19349663)) >>> 0;
 // 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
 let seasonCheckT = 0;
 function refreshSeason(now) {
@@ -4085,7 +4092,7 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
-    const v = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
+    const v = tileVar(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
@@ -4364,7 +4371,7 @@ function drawWorld(now, w, h, dpr) {
   } else for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
     const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
-    const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+    const v = tileVar(code, x, y);
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], ox + x * T, oy + y * T, T, T);
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）

@@ -5,6 +5,7 @@
 # - 斜め上（南）から見下ろす。4倍の大きさに2回描き（光の当たり具合／材質ごとの色分け）、16×16 の材質の番号と明るさの段を TMP に保存する
 # - 公園・ビニールハウス・墓地・工場の敷地・丘・山：それぞれ6つの立体（季節と色はシートにする段で）
 # - 田んぼ：こよみの田んぼのようす5つ（青田・黄金色・田植え・田おこし・刈田）× 3通り。上下左右のマスとつながるよう、景色をマスの大きさでくり返す
+# - 茶畑・畑・砂浜・境内の砂利・草地：茶畑と畑と砂利はくり返す景色（となりとつながる）、砂浜と草地はマスの中の小物
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -321,6 +322,104 @@ def paddy(stage, k):
     return dict(target=(0, 0, 0))
 
 
+# ---------- 茶畑・畑・砂浜・境内の砂利・草地 ----------
+def dup(o, name, loc):   # 同じ形をたくさん並べるときは、写しを置く（ひとつずつ作るより速い）
+    c = o.copy()
+    c.name = name
+    c.location = loc
+    bpy.context.scene.collection.objects.link(c)
+    return c
+
+
+def tea(k):
+    """茶畑（西尾の抹茶）：丸く刈りこんだ茶の木の列が、横にどこまでもつづく"""
+    box('jimen', 'tsuchiD', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    for j in range(-6, 7):
+        y = j * PY * 2   # 1マスに2列
+        o = cyl(f'une{j}', 'cha', 0.28, 4.0, (0, y, 0.0), (0, math.pi / 2, 0), 20)   # 丸く刈りこんだ列（あいだに細い通路）
+        o.scale = (0.75, 1.0, 1.0)
+        if k:   # もこもこ（新芽のかたまり）
+            b0 = sphere(f'mo{j}', 'chaS', 0.07, (0, y - 0.06, 0.2), (1.4, 1, 0.5))
+            for i in range(-8, 9):
+                if (i + j * k) % (2 + k) == 0:
+                    dup(b0, f'mo{j}_{i}', (i * PX + k * 0.05, y - 0.06, 0.2))
+    return dict(target=(0, 0, 0))
+
+
+def veg(k):
+    """畑：うねに野菜（キャベツ・ねぎ・にんじん・マルチ）"""
+    box('jimen', 'tsuchi', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    for j in range(-8, 9):
+        y = j * PY
+        box(f'une{j}', 'tsuchiU' if k != 3 else 'maruchi', (4.0, PY * 0.55, 0.04), (0, y, 0.02))
+        if k == 0:
+            b0 = sphere(f'c{j}', 'kyabetsu', 0.07, (0, y, 0.08), (1, 1, 0.8))
+            for i in range(-8, 9):
+                dup(b0, f'c{j}_{i}', (i * PX, y, 0.08))
+        elif k == 1:
+            b0 = cyl(f'n{j}', 'negi', 0.015, 0.18, (0, y, 0.13), verts=5)
+            for i in range(-16, 17):
+                dup(b0, f'n{j}_{i}', (i * PX / 2, y, 0.13))
+        elif k == 2:
+            b0 = sphere(f'h{j}', 'happa', 0.045, (0, y, 0.07), (1.2, 1, 0.7))
+            for i in range(-16, 17):
+                dup(b0, f'h{j}_{i}', (i * PX / 2 + (j % 2) * PX / 4, y, 0.07))
+        elif k == 3 and j % 2 == 0:   # マルチの穴から苗
+            b0 = sphere(f'm{j}', 'happa', 0.035, (0, y, 0.05))
+            for i in range(-8, 9):
+                dup(b0, f'm{j}_{i}', (i * PX, y, 0.05))
+    return dict(target=(0, 0, 0))
+
+
+def sand(k):
+    """砂浜：貝・小石・流木・海草（マスの中におさまる小物）"""
+    box('jimen', 'suna', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    rnd = __import__('random').Random(200 + k)
+    for i in range(3 + k):
+        x, y = rnd.uniform(-0.38, 0.38), rnd.uniform(-0.38, 0.32)
+        if i % 3 == 0:
+            sphere(f'kai{i}', 'kai', 0.035, (x, y, 0.01), (1.3, 1, 0.5))
+        elif i % 3 == 1:
+            sphere(f'ishi{i}', 'koishi', 0.03, (x, y, 0.01), (1.1, 1, 0.6))
+        else:
+            sphere(f'mo{i}', 'kaiso', 0.04, (x, y, 0.005), (1.6, 0.8, 0.25))
+    if k == 2:
+        cyl('ryuboku', 'ryuboku', 0.025, 0.4, (0.0, -0.05, 0.02), (0, math.pi / 2, 0.4), 6)
+    if k == 3:
+        for x in (-0.22, 0.0, 0.22):   # 足あと
+            box(f'ashi{x}', 'sunaK', (0.04, 0.07, 0.005), (x, -0.1 + x * 0.6, 0.002))
+    return dict(target=(0, 0, 0))
+
+
+def gravel(k):
+    """境内の砂利：ほうきの目（横すじ）と、ところどころに飛び石"""
+    box('jimen', 'jari', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    b0 = box('suji', 'jariK', (4.0, 0.07, 0.012), (0, 0, 0.006))
+    for j in range(-16, 17):
+        dup(b0, f'suji{j}', (0, j * PY / 2, 0.003))
+    if k == 1:
+        for i, (x, y) in enumerate(((-0.2, 0.15), (0.05, -0.05), (0.28, -0.25))):
+            cyl(f'tobi{i}', 'tobiishi', 0.09, 0.03, (x, y, 0.015), verts=10)
+    if k == 2:
+        cyl('toro', 'tobiishi', 0.04, 0.2, (0.2, 0.1, 0.1), verts=6)
+        box('toroH', 'tobiishi', (0.12, 0.12, 0.08), (0.2, 0.1, 0.24))
+        box('toroK', 'tobiishi', (0.16, 0.16, 0.03), (0.2, 0.1, 0.3))
+    return dict(target=(0, 0, 0))
+
+
+def grass(k):
+    """草地：草の株と、ときどき花（マスの中におさまる）"""
+    box('jimen', 'kusa', (4.0, 4.0, 0.02), (0, 0, -0.01))
+    rnd = __import__('random').Random(300 + k)
+    b0 = cyl('kabu', 'kusaK', 0.055, 0.13, (0, 0, -5), verts=5, r2=0.0)
+    for i in range(5 + k):
+        dup(b0, f'kabu{i}', (rnd.uniform(-0.4, 0.4), rnd.uniform(-0.4, 0.3), 0.065))
+    for i in range(k % 3):
+        sphere(f'hana{i}', 'hana', 0.025, (rnd.uniform(-0.38, 0.38), rnd.uniform(-0.38, 0.3), 0.06))
+    return dict(target=(0, 0, 0))
+
+
+FIELD = {'tea': (tea, 3), 'veg': (veg, 4), 'sand': (sand, 4), 'gravel': (gravel, 3), 'grass': (grass, 6)}
 FRAME = {'park', 'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
 
@@ -328,7 +427,8 @@ MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory':
 def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
-    opts = house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy' else MISC[kind](*args)
+    opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
+            else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], 1.0
     if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
         el = math.radians(42)
@@ -358,6 +458,7 @@ def main():
     jobs = [('house', (s, e, f)) for s in range(5) for e in range(5) for f in range(2)] + [('tree', (k,)) for k in range(10)]
     jobs += [(m, (k,)) for m in MISC for k in range(6)]
     jobs += [('paddy', (st, k)) for st in PADDY for k in range(3)]
+    jobs += [(f, (k,)) for f, (_, n) in FIELD.items() for k in range(n)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

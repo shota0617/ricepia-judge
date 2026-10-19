@@ -5,6 +5,7 @@
 # - 木（森のマス）：10の立体 × 葉の色3 ＝ 30マス を季節4つぶん。nishio-go/maptiles/tree-<季節>.png（30×2。下の段は風で葉がゆれた2コマ目）
 # - 公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30マスずつを季節4つぶん。nishio-go/maptiles/misc-<季節>.png（30×6。行の順は MISC）
 # - 田んぼ：ようす5つ × 立体3 × 色3。nishio-go/maptiles/paddy-<ようす>.png（9×4。青田と黄金色は2コマ目で風に稲がゆれる）
+# - 茶畑・畑・砂浜・境内の砂利・草地：nishio-go/maptiles/field-<季節>.png（12×10。草地は2コマ目で草がゆれる）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 import os
 import random
@@ -101,7 +102,8 @@ def color(mat, band, names, pal, rnd, ground, s, forest=False, outline=OUTLINE, 
     edge[:-1] |= obj[1:]
     edge[:, 1:] |= obj[:, :-1]
     edge[:, :-1] |= obj[:, 1:]
-    img[edge & gmask] = outline
+    if outline is not None:
+        img[edge & gmask] = outline
     if forest:   # 森のマス：木のまわりを こい緑でふちどって、草の上でも木の形が分かるように
         tree = ~gmask
         e2 = np.zeros_like(tree)
@@ -113,10 +115,10 @@ def color(mat, band, names, pal, rnd, ground, s, forest=False, outline=OUTLINE, 
     return img
 
 
-def sway(mat, names):
+def sway(mat, names, leafy=LEAFY, ground='kusa'):
     """風で葉がゆれた2コマ目：葉の上半分を1つ右へ"""
     leaf = np.zeros_like(mat, bool)
-    for n in LEAFY:
+    for n in leafy:
         if n in names:
             leaf |= mat == names.index(n)
     ys = np.where(leaf.any(axis=1))[0]
@@ -124,7 +126,7 @@ def sway(mat, names):
         return mat.copy()
     out = mat.copy()
     top = ys[0] + (ys[-1] - ys[0]) // 2
-    g = names.index('kusa') if 'kusa' in names else 255
+    g = names.index(ground) if ground in names else 255
     for y in range(ys[0], top + 1):
         row = mat[y].copy()
         lr = leaf[y]
@@ -206,6 +208,25 @@ def paddy_tile(mat, band, names, stage, v, rnd, sway=False, aze=False):
     return img
 
 
+# 茶畑・畑・砂浜・境内の砂利・草地：12マスずつ（立体 × 色）を季節4つぶん。nishio-go/maptiles/field-<季節>.png（12×10。種類ごとに2行：絵・風の2コマ目）
+FIELD = [('tea', 3, 'tsuchiD'), ('veg', 4, 'tsuchi'), ('sand', 4, 'suna'), ('gravel', 3, 'jari'), ('grass', 6, 'kusa')]
+SPECK.update({'tsuchiD': [['#6a4a2e', '#8a6a48']] * 4, 'suna': [['#d2b56a', '#f3e2ae']] * 4})
+GROUND_BASE.update({'tsuchiD': ['#7a5a3a'] * 4, 'tsuchi': ['#9a6b3f'] * 4, 'suna': ['#e7cf8c'] * 4})
+SPECK['tsuchi'] = [['#7a512c', '#a8784a']] * 4
+
+
+def field_pal(kind, s, v):
+    j = lambda h, f: '#%02x%02x%02x' % tuple(min(255, int(c * f)) for c in rgb(h))   # 色を少しかえる
+    f = 1.0 if kind in ('tea', 'gravel') else (0.95, 1.0, 1.05, 0.9)[v % 4]   # 茶畑と砂利は、となりのマスとつながるので色をかえない
+    return {
+        'cha': j(['#4f9a3e', '#2f7a34', '#2a6a30', '#2f5a34'][s], f), 'chaS': j(['#8ccc64', '#4a9a46', '#3f8a40', '#40683f'][s], f),
+        'tsuchiU': '#8a5e36', 'maruchi': ['#2a2a30', '#c8ccd0', '#2a2a30'][v % 3], 'kyabetsu': j('#a8d070', f), 'negi': j('#5aa040', f),
+        'happa': j('#4aa040', f), 'kai': ['#f6eee0', '#f2d8d0', '#e8e0f0'][v % 3], 'koishi': '#9a948a', 'kaiso': '#4a6a3a',
+        'ryuboku': '#a08a6a', 'sunaK': '#d2b56a', 'jariK': j('#c9c2b0', f), 'tobiishi': '#8f8d88',
+        'kusaK': j(['#2f8a2e', '#2f7f2e', '#6a7a2e', '#4a6a40'][s], f), 'hana': VAR['hana'][v % 5],
+    }
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     geos = [f'house-{a}-{e}-{f}' for a in range(5) for e in range(5) for f in range(2)]
@@ -244,6 +265,17 @@ def main():
                                 outline=rgb(MISC_OUTLINE.get(kind, '#2a2420')), flat=MISC_FLAT.get(kind, ()))
                     msheet.paste(Image.fromarray(img), ((k * 5 + v) * N, row * N))
         save(msheet, f'misc-{s}.png')
+    for s in range(4):
+        fsheet = Image.new('RGB', (12 * N, len(FIELD) * 2 * N))
+        for row, (kind, n, ground) in enumerate(FIELD):
+            for k in range(n):
+                mat, band, names = load(f'{kind}-{k}')
+                mat2 = sway(mat, names, {'kusaK', 'hana'}, ground) if kind == 'grass' else mat
+                for v in range(12 // n):
+                    for fr, m in enumerate((mat, mat2)):
+                        img = color(m, band, names, field_pal(kind, s, v), random.Random(f'f{s}-{kind}-{k}-{v}'), ground, s, outline=None)
+                        fsheet.paste(Image.fromarray(img), ((k * (12 // n) + v) * N, (row * 2 + fr) * N))
+        save(fsheet, f'field-{s}.png')
     for st in PADDY:
         sheet = Image.new('RGB', (9 * N, 4 * N))
         for k in range(3):

@@ -1,5 +1,5 @@
 # にしおさんぽGO：地図の小物（tools/blender/deco.py の結果）に色と季節をのせて、シートにまとめる
-# - 題材62 × ポーズ6 × 向き4 × 色8通り ＝ 11904マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて4万枚以上
+# - 題材82 × ポーズ6 × 向き4 × 色8通り ＝ 15744マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて6万枚以上
 #   nishio-go/deco/deco-<季節>.png：16×16 のマスが 96列に並ぶ（背景なし）。番号 i ＝ ((題材 × 6 ＋ ポーズ) × 4 ＋ 向き) × 8 ＋ 色
 # - 季節で変わるもの：草や葉の色、足もとにちる花びら（春）・草（夏）・落ち葉（秋）・雪（冬。上の面に雪がつもる）
 #   水の上の小物は、花びらや落ち葉が水に浮かび、夏は波、冬は白い波
@@ -23,9 +23,11 @@ SUBJECTS = ['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho
             'jizo', 'hokora', 'tourou', 'douhyou', 'hana', 'ajisai', 'himawari', 'kosumosu', 'kinoko', 'iwa', 'bench', 'ueki', 'jitensha', 'jihanki',
             'chouchin', 'gomi', 'sanrinsha', 'kasa', 'fune', 'boto', 'bui', 'hasu', 'kani', 'sunashiro', 'picnic', 'tanuki', 'suimon', 'karasu',
             'chatsumi', 'suisha', 'daichouchin', 'akauma', 'norihibi', 'carnation', 'kame', 'koinobori', 'kadomatsu', 'suika', 'tsukimi', 'kaki',
-            'tractor', 'combine', 'tako', 'nodate', 'unaginobori', 'yatai', 'sakura', 'momiji']
-WATER = {'kamo', 'fune', 'boto', 'bui', 'hasu', 'suisha', 'norihibi'}   # 水の上に置く題材
-SAND = {'kamome', 'kani', 'sunashiro', 'kasa', 'tsuri', 'kame', 'suika'}
+            'tractor', 'combine', 'tako', 'nodate', 'unaginobori', 'yatai', 'sakura', 'momiji',
+            'kiji', 'tsubame', 'usagi', 'hotaru', 'koi', 'hakuchou', 'yacht', 'tetrapod', 'monohoshi', 'fuusen', 'basutei', 'komainu', 'ema',
+            'omikuji', 'hachibako', 'fukurou', 'risu', 'bonsai', 'jogger', 'sanpo']
+WATER = {'kamo', 'fune', 'boto', 'bui', 'hasu', 'suisha', 'norihibi', 'koi', 'hakuchou', 'yacht'}   # 水の上に置く題材
+SAND = {'kamome', 'kani', 'sunashiro', 'kasa', 'tsuri', 'kame', 'suika', 'tetrapod'}
 
 
 def rgb(h):
@@ -49,6 +51,18 @@ BIRDS = {
     'kamome': [('#f0f0f0', '#f8f8f8', '#e8c040', '#e8c040'), ('#9aa0a8', '#f4f4f4', '#e8c040', '#e8a0a0'), ('#d8dce0', '#ffffff', '#e04a3a', '#e04a3a'),
                ('#2a2a2a', '#4a4a4a', '#e8c040', '#2a2a2a'), ('#e8e8ec', '#ffffff', '#c03030', '#c03030'), ('#b8bcc0', '#f0f0f0', '#2a2a2a', '#2a2a2a'),
                ('#a89a88', '#e8e0d0', '#5a5a5a', '#5a5a5a'), ('#f4f4f8', '#ffffff', '#f0a020', '#f0a020')],
+    'kiji': [('#3a6a4a', '#2a4a6a', '#e8c040', '#8a6a40'), ('#a08060', '#c8b090', '#7a6a50', '#8a6a40'), ('#8a4a2a', '#c87a4a', '#e8c040', '#8a6a40'),
+             ('#4a5a3a', '#6a3a2a', '#e8c040', '#8a6a40'), ('#b09070', '#d8c0a0', '#8a7a60', '#8a6a40'), ('#2a5a5a', '#3a3a6a', '#e8c040', '#7a5a40'),
+             ('#7a5a3a', '#a07a50', '#5a4a3a', '#8a6a40'), ('#5a7a4a', '#8a3a2a', '#e8d050', '#8a6a40')],
+    'tsubame': [('#2a2a4a', '#f4f0e8', '#2a2a2a', '#2a2a2a'), ('#3a3a5a', '#e8d8c8', '#2a2a2a', '#2a2a2a'), ('#1a1a3a', '#f8f4f0', '#2a2a2a', '#2a2a2a'),
+                ('#5a4a3a', '#e8dcc8', '#2a2a2a', '#2a2a2a'), ('#2a3a5a', '#f0e8e0', '#2a2a2a', '#2a2a2a'), ('#4a4a5a', '#d8d0c8', '#2a2a2a', '#2a2a2a'),
+                ('#2a2a3a', '#e0c8b0', '#2a2a2a', '#2a2a2a'), ('#3a3a4a', '#f4f4f4', '#2a2a2a', '#2a2a2a')],
+    'hakuchou': [('#f8f8f8', '#ffffff', '#e8c040', '#2a2a2a'), ('#f4f4f0', '#ffffff', '#2a2a2a', '#2a2a2a'), ('#d8d8d8', '#f0f0f0', '#e8a030', '#2a2a2a'),
+                 ('#c8c8c8', '#e8e8e8', '#e8c040', '#2a2a2a'), ('#f0f0f4', '#ffffff', '#f0a020', '#2a2a2a'), ('#e8e8e8', '#f8f8f8', '#3a3a3a', '#2a2a2a'),
+                 ('#b8b8c0', '#d8d8e0', '#e8c040', '#2a2a2a'), ('#ffffff', '#ffffff', '#e8a030', '#2a2a2a')],
+    'fukurou': [('#8a6a4a', '#d8c8a8', '#e8c040', '#2a2a2a'), ('#a08a6a', '#e8dcc8', '#e8c040', '#2a2a2a'), ('#6a5a4a', '#c8b898', '#e8a030', '#2a2a2a'),
+                ('#b8a888', '#f0e8d8', '#2a2a2a', '#2a2a2a'), ('#7a6a5a', '#b8a888', '#e8c040', '#2a2a2a'), ('#e8e8e0', '#ffffff', '#e8c040', '#2a2a2a'),
+                ('#9a7a5a', '#d8c0a0', '#f0a020', '#2a2a2a'), ('#5a4a3a', '#a89878', '#e8c040', '#2a2a2a')],
     'karasu': [('#2a2a30', '#3a3a40', '#1a1a1a', '#2a2a2a'), ('#8a8a98', '#b8b8c8', '#e0a0a0', '#e06060'), ('#3a6a4a', '#7a3a2a', '#e8c040', '#8a6a40'),
                ('#a08060', '#c8b090', '#7a6a50', '#8a6a40'), ('#a08a78', '#d0b8a8', '#5a4a40', '#c08080'), ('#5a4a40', '#8a7a70', '#e8a030', '#e8a030'),
                ('#a07050', '#e8d8c0', '#2a2a2a', '#3a3a3a'), ('#4a4a58', '#8a8aa0', '#2a2a2a', '#c06060')],
@@ -58,6 +72,8 @@ DUCKS = [   # 羽・腹・頭・くちばし（かるがも・まがもの雄・
     ('#c87a3a', '#f0e8d8', '#e8a050', '#e04a3a'), ('#8a8a88', '#e8e0c8', '#8a3a2a', '#2a2a2a'), ('#a8a8a8', '#f0f0f0', '#b06030', '#8a9aa8'),
     ('#2a2a30', '#f4f4f0', '#2a2a30', '#8a9aa8'), ('#f4f4f0', '#ffffff', '#f4f4f0', '#f0a020')]
 COATS = {'neko': ['#e8a050', '#2a2a2a', '#f4f0e8', '#8a8a90', '#a07850', '#d8c0a0', '#5a4a40', '#c8a070'],
+         'usagi': ['#a08060', '#8a6a4a', '#c8a880', '#b09070', '#7a6a50', '#d8c8a8', '#9a8a70', '#f0ece4'],
+         'risu': ['#a06a3a', '#8a5a3a', '#b8804a', '#7a5a3a', '#c89060', '#6a4a2a', '#9a7050', '#a88a6a'],
          'inu': ['#d08040', '#f0ece0', '#2a2a2a', '#a07040', '#e8d0a0', '#6a5040', '#b0b0b0', '#c8a060']}
 V8 = {   # 題材ごとの「色8通り」になる材質
     'kaeru': ('kawa', ['#5aa840', '#3a8a30', '#8a6a40', '#7a9a40', '#4a7a50', '#a0a040', '#6aa860', '#5a6a40']),
@@ -114,9 +130,24 @@ V8 = {   # 題材ごとの「色8通り」になる材質
     'unaginobori': ('nobori', ['#d0302a', '#2a5aa0', '#f4f4f0', '#f2c230', '#3a8a4a', '#2a2a2e', '#f08030', '#8a3a7a']),
     'yatai': ('noren', ['#d0302a', '#2a5aa0', '#f4f4f0', '#f2c230', '#3a8a4a', '#8a3a7a', '#f08030', '#e88ab0']),
     'sakura': ('sakura', ['#f7b6cc', '#f4a0c0', '#fcd0e0', '#f090b0', '#f8c0d8', '#e88aa8', '#fde0ea', '#f6a8c0']),
+    'hotaru': ('hikari', ['#e8f870', '#d0f060', '#f0f890', '#c8e850', '#f8f8a0', '#b8e040', '#e0f080', '#f0ff70']),
+    'koi': ('koi', ['#e04a3a', '#f4f4f0', '#f2c230', '#f08030', '#2a2a30', '#e86a8a', '#d8b060', '#c03030']),
+    'yacht': ('ho', ['#f4f4f0', '#e04a3a', '#2a6ad0', '#f2c230', '#3aa05a', '#f08030', '#8a5ad0', '#e88ab0']),
+    'tetrapod': ('concrete', ['#a8a8a0', '#9a9a94', '#b8b8b0', '#8a8a84', '#a0a098', '#b0aa9a', '#90948c', '#c0bcb0']),
+    'monohoshi': ('sentaku', ['#f4f4f0', '#5a8ad0', '#e88ab0', '#f2c230', '#4aa84a', '#e04a3a', '#8a5ad0', '#f08030']),
+    'fuusen': ('fuusen', ['#e04a3a', '#2a7ad0', '#f2c230', '#4aa84a', '#e88ab0', '#8a5ad0', '#f08030', '#40c0c0']),
+    'basutei': ('kanban', ['#2a6ad0', '#e04a3a', '#3a8a4a', '#f2c230', '#f4f4f0', '#f08030', '#5a5a5a', '#8a5ad0']),
+    'komainu': ('ishi', ['#a8a8a0', '#9a968a', '#b8b4a8', '#8a8a84', '#a0a098', '#b0aa9a', '#90948c', '#c0bcb0']),
+    'ema': ('ema', ['#d8b070', '#e04a3a', '#f4f4f0', '#3a8a4a', '#2a6ad0', '#f2c230', '#e88ab0', '#8a5ad0']),
+    'omikuji': ('kami_w', ['#f8f8f4', '#fce8e8', '#fff8d8', '#e8f0f8', '#f0f8e8', '#f8e8f4', '#fff0e0', '#f0f0f0']),
+    'hachibako': ('hakoH', ['#f4f0e0', '#d8b070', '#5a8ad0', '#3a8a4a', '#e04a3a', '#f2c230', '#a07040', '#8a8a90']),
+    'bonsai': ('hachi', ['#8a5a3a', '#3a6aa0', '#2a2a2e', '#b86a3c', '#f0ece0', '#4a8a5a', '#a04a4a', '#6a6a70']),
+    'jogger': ('fuku', ['#e04a3a', '#2a7ad0', '#f2c230', '#4aa84a', '#f4f4f0', '#8a5ad0', '#f08030', '#2a2a2e']),
+    'sanpo': ('fuku', ['#3a5a9a', '#c04030', '#4a8a4a', '#e0a030', '#8a4a8a', '#5a5a5a', '#e8e0d0', '#3a7ab0']),
     'momiji': ('momiji', ['#d03a2a', '#e05a2a', '#c02a2a', '#e8802a', '#b8302a', '#e06a30', '#f09030', '#a82a2a']),
 }
-OFFSET = {'hana2': 'hana', 'hako2': 'hako', 'booru': None, 'sheet': None, 'karada2': 'karada', 'sakura2': 'sakura', 'momiji2': 'momiji'}   # 2つめの色（同じ表を1つずらして使う）
+OFFSET = {'hana2': 'hana', 'hako2': 'hako', 'booru': None, 'sheet': None, 'karada2': 'karada', 'sakura2': 'sakura', 'momiji2': 'momiji',
+          'koi2': 'koi', 'sentaku2': 'sentaku', 'fuusen2': 'fuusen', 'ema2': 'ema', 'fuku2': 'fuku'}   # 2つめの色（同じ表を1つずらして使う）
 FIXED = {
     'kuchi': '#e8c040', 'ashi': '#2a2a2a', 'me': '#1a1a1a', 'mimi': '#8a6a50', 'hana': '#e8a0a0', 'bou': '#8a6a40', 'take': '#a08050', 'kao': '#f4e8d0',
     'mugiwara': '#e0c070', 'boushi': '#3a5a9a', 'zubon': '#3a3a4a', 'hada': '#f4c9a0', 'dougu': '#8a6a40', 'baketsu': '#5a8ac0', 'ishi': '#a8a8a0',
@@ -132,6 +163,10 @@ FIXED = {
     'reaper': '#e8c048', 'rotary': '#8a8a90', 'tsuchi': '#7a5a3a', 'tako': '#e04a3a', 'ito': '#f4f4f0', 'takoO': '#f2c230', 'nodatekasa': '#d0302a',
     'akaMousen': '#c8302a', 'kimono': '#6a4a8a', 'chawan': '#3a3a3a', 'yane_y': '#d0302a', 'noren': '#2a5aa0', 'shina': '#f2c230',
     'fuku': '#3a5a9a', 'kawa': '#6a7a4a', 'miki': '#6b4a2e', 'atama': '#5a4a38',
+    'o_kiji': '#7a5a3a', 'denkisen': '#3a3a3a', 'hikari': '#e8f870', 'ho': '#f4f4f0', 'kamome_t': '#f0f0f0', 'sao': '#c8c8c8', 'sentaku': '#f4f4f0',
+    'sentaku2': '#5a8ad0', 'fuusen': '#e04a3a', 'fuusen2': '#2a7ad0', 'nawa': '#d8c8a0', 'yane_e': '#5a4a3a', 'ema': '#d8b070', 'ema2': '#e04a3a',
+    'kami_w': '#f8f8f4', 'hakoH': '#f4f0e0', 'futaH': '#8a8a90', 'hachi_y': '#f2c230', 'eda': '#6b4a2e', 'me_f': '#e8c040', 'donguri': '#8a5a2a',
+    'tana': '#a0703c', 'fuku2': '#2a7ad0', 'himo': '#c04030',
     'sakura': '#f7b6cc', 'sakura2': '#fde0ea', 'momiji': '#d03a2a', 'momiji2': '#f09030', 'wara': '#d8b860', 'kami': '#2a2018', 'kasa_c': '#d8b860',
 }
 PLANTS = {'ha', 'kusa', 'koke', 'kuki'}
@@ -168,6 +203,11 @@ def palette(subj, c, s):
         pal['hako2'] = V8['gomi'][1][(c + 3) % 8]
     if subj == 'tanuki':
         pal['hara'] = '#e8d8b0'
+    if subj == 'sanpo':   # つれている犬
+        ke = COATS['inu'][(c + 3) % 8]
+        pal.update(ke=ke, ashi=ke, mimi=ke, hana='#2a2a2a', hara='#%02x%02x%02x' % tuple(min(255, int(v * 0.6 + 100)) for v in rgb(ke)))
+    if subj == 'fukurou':
+        pal['me_f'] = '#e8c040'
     if subj == 'koinobori':
         cols = V8['koinobori'][1]
         pal['koi2'], pal['koi3'] = cols[(c + 2) % 8], cols[(c + 5) % 8]

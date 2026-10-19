@@ -1101,31 +1101,34 @@ function loadMapTiles() {
   }
 }
 loadMapTiles();
-/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。ちがう絵で3万枚以上） ----------
+/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。題材82、ちがう絵で62976枚） ----------
    生きもの・道ばたの物・水辺や浜の物・西尾らしい物（茶つみ・うなぎ池の水車・大ちょうちん・赤馬・海苔ひび・カーネーション・野点 など）を、
    マスの種類に合わせて、ところどころに置く（場所ごとに決まった物・向き・色）
    季節（春・夏・秋・冬のシート）と月（ひまわりは夏、コスモスは秋 など）で、置く物が変わる。生きものは2つのポーズで少し動く */
 const DECO = { img: null, s: -1, idx: null, cols: 96 };
 const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ）
   [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10',
-    'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9']],
-  [C.P]: [10, ['picnic@3-11', 'bench', 'inu', 'kodomo', 'hana@3-10', 'choucho@4-10', 'kotori', 'sanrinsha', 'nodate', 'sakura@3-4', 'momiji@11-12', 'tako@1-1']],
+    'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9', 'kiji', 'usagi', 'tsubame@4-7', 'hotaru@6-6', 'sanpo', 'jogger']],
+  [C.P]: [10, ['picnic@3-11', 'bench', 'inu', 'kodomo', 'hana@3-10', 'choucho@4-10', 'kotori', 'sanrinsha', 'nodate', 'sakura@3-4', 'momiji@11-12', 'tako@1-1',
+    'sanpo', 'jogger', 'fuusen', 'risu', 'tsubame@4-7']],
   [C.T]: [11, ['neko', 'neko', 'inu', 'jitensha', 'jihanki', 'ueki', 'gomi', 'tanuki', 'chouchin', 'kodomo', 'sanrinsha', 'bench', 'karasu', 'kotori',
-    'akauma', 'unaginobori', 'nodate', 'daichouchin@8-8', 'yatai@7-7', 'koinobori@4-5', 'kadomatsu@1-1', 'tsukimi@9-9']],
-  [C.A]: [28, ['kamo', 'kamo', 'fune', 'boto', 'bui', 'hasu@6-9', 'kamome', 'suisha', 'norihibi@11-3', 'kame@4-10']],
-  [C.S]: [9, ['kamome', 'kani', 'sunashiro@4-10', 'kasa@7-8', 'tsuri', 'boto', 'kame@4-10', 'suika@7-8']],
+    'akauma', 'unaginobori', 'nodate', 'daichouchin@8-8', 'yatai@7-7', 'koinobori@4-5', 'kadomatsu@1-1', 'tsukimi@9-9',
+    'monohoshi', 'fuusen', 'basutei', 'bonsai', 'sanpo', 'jogger', 'tsubame@4-7']],
+  [C.A]: [28, ['kamo', 'kamo', 'fune', 'boto', 'bui', 'hasu@6-9', 'kamome', 'suisha', 'norihibi@11-3', 'kame@4-10', 'koi', 'hakuchou@12-2', 'yacht']],
+  [C.S]: [9, ['kamome', 'kani', 'sunashiro@4-10', 'kasa@7-8', 'tsuri', 'boto', 'kame@4-10', 'suika@7-8', 'tetrapod']],
   [C.N]: [8, ['carnation']],
-  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo']],
-  [C.J]: [10, ['tourou', 'jizo', 'hokora', 'neko']],
-  [C.E]: [16, ['noufu', 'kotori', 'chatsumi@4-6']],
-  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10']],
+  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo', 'fukurou', 'risu', 'usagi']],
+  [C.J]: [10, ['tourou', 'jizo', 'hokora', 'neko', 'komainu', 'ema', 'omikuji']],
+  [C.E]: [16, ['noufu', 'kotori', 'chatsumi@4-6', 'kiji', 'hachibako']],
+  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10', 'hachibako', 'kiji']],
 };
 const DECO_PADDY = {   // 田んぼは、こよみの田んぼのようすで置く物を変える
-  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon'],
+  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon', 'tsubame@4-7'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon', 'tsubame@4-7'],
   gold: ['kakashi', 'kakashi', 'karasu', 'kotori', 'noufu', 'sagi', 'combine'], stubble: ['hazakake', 'warazuka', 'warazuka', 'karasu', 'sagi', 'kotori'],
-  soil: ['sagi', 'karasu', 'noufu', 'kotori', 'suimon', 'tractor', 'tractor'],
+  soil: ['sagi', 'karasu', 'noufu', 'kotori', 'suimon', 'tractor', 'tractor', 'kiji'],
 };
-const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri']);
+const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri', 'kiji', 'tsubame', 'usagi',
+  'hotaru', 'koi', 'hakuchou', 'jogger', 'sanpo', 'risu', 'fukurou']);
 const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
 function loadDeco() {
   const s = decoSeason();

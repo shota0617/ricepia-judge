@@ -420,15 +420,15 @@ function renderMarkers() {
     const show = b.contains([s.lat, s.lng]) && (zoomOk || s.featured);
     let m = markers.get(s.id);
     if (show) {
-      const cls = spotState(s);
+      const cls = spotState(s), key = cls + (simple() ? ' simple' : '');   // 「文字を多めに出す」を切りかえたら、印の絵も描きなおす
       if (!m) {
         m = L.marker([s.lat, s.lng], { icon: makeIcon(s, cls), zIndexOffset: s.featured ? 500 : 0, keyboard: false })
           .bindPopup(() => popupHtml(s), { closeButton: true, autoPanPaddingBottomRight: [10, 140] })
           .addTo(map);
-        m._cls = cls;
+        m._cls = key;
         markers.set(s.id, m);
-      } else if (m._cls !== cls) {
-        m.setIcon(makeIcon(s, cls)); m._cls = cls;
+      } else if (m._cls !== key) {
+        m.setIcon(makeIcon(s, cls)); m._cls = key;
       }
     } else if (m) {
       m.remove(); markers.delete(s.id);
@@ -1962,7 +1962,7 @@ $('textToggle').checked = !simple();
 $('textToggle').addEventListener('change', e => {
   document.body.classList.toggle('simple', !e.target.checked);
   try { localStorage.setItem('nsg_text_more', e.target.checked ? '1' : '0'); } catch (err) { /* noop */ }
-  renderKoyomi.key = null; renderKoyomi(); refreshNearby();
+  renderKoyomi.key = null; renderKoyomi(); refreshNearby(); renderMarkers();
   track('text_mode', { more: e.target.checked });
 });
 

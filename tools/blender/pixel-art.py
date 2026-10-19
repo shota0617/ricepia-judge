@@ -637,6 +637,19 @@ def stat_feet():
     return dict(target=(0, 0, 0.02), scale=1.0, el=60, size=32)
 
 
+def quest():
+    """今日のクエスト：ひらいた巻物（上下に木の軸、赤いひも、文字の線）"""
+    box('kami', 'paper', (0.56, 0.03, 0.62), (0, 0, 0.40))
+    for z in (0.08, 0.72):
+        cyl(f'jiku{z}', 'wood', 0.06, 0.72, (0, 0, z), (0, math.pi / 2, 0), 12)
+        for x in (-0.38, 0.38):
+            sphere(f'tama{z}{x}', 'woodD', 0.06, (x, 0, z))
+    for i in range(4):
+        box(f'gyo{i}', 'aze', (0.36 - (0.12 if i == 3 else 0), 0.01, 0.035), (-0.04 if i == 3 else 0, -0.02, 0.58 - i * 0.11))
+    box('himo', 'red', (0.04, 0.02, 0.22), (0.20, -0.03, 0.0))
+    return dict(target=(0, 0, 0.38), scale=1.05, el=8, az=-15, size=32)
+
+
 def medal():
     """バッジのメダル（赤と白のリボンに、金のメダル。まんなかは平らにして、バッジの絵を上にのせる）"""
     rot = (math.pi / 2, 0, 0)
@@ -654,7 +667,7 @@ def medal():
 MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
-               'stat-chest': small(lambda: chest())})
+               'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
     ('student', npc_student), ('fisher', npc_fisher), ('staff', npc_staff), ('guide', npc_guide), ('monk', npc_monk))})

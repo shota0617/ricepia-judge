@@ -704,6 +704,18 @@ function jumpReward(coins, cleared) {
   return pts;
 }
 
+// 稲刈りミニゲーム（harvest.js）のごほうび：成功したとき1日1回、10pt＋星1つ5pt（名人は25pt）。きょうはもうもらっていれば null
+function harvestReward(stars, level) {
+  if (S.harvestDay === ymd()) return null;
+  const pts = 10 + 5 * Math.max(1, Math.min(3, stars | 0));
+  S.harvestDay = ymd();
+  gainPoints(pts);
+  S.log.unshift({ type: 'harvest', t: Date.now(), pts, name: `ミニゲーム「コンバインで稲刈り」${'★'.repeat(Math.max(1, Math.min(3, stars | 0)))}（${(level | 0) + 1}枚目の田んぼ）`, icon: '🌾' });
+  save();
+  renderLog();
+  return pts;
+}
+
 let selected = null;   // シートに表示中のチェックイン候補
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
@@ -2178,7 +2190,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward,
+  begin, track, utmUrl, jumpReward, harvestReward,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
     if (!demo) setMode(true);

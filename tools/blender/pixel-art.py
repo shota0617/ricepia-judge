@@ -52,6 +52,7 @@ MATS = {
     # スポットの種類
     'hasu': '#f29bbf', 'hasuL': '#ffd0e0', 'hasuHa': '#4f9e3a', 'kamera': '#3a3a3a', 'lens': '#5a8ad0', 'bench': '#a06a3a', 'parasol': '#e8504a', 'parasolW': '#f4f1e8',
     'zou': '#a8a49a', 'asahi': '#ff9f1c', 'densha': '#c8102e', 'hata': '#2f7a34',
+    'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
     'umi': '#3d86c6', 'riku': '#6fbf4a', 'truck': '#f4f4f4', 'tire': '#2a2a2a', 'hari': '#d23a2e', 'hariB': '#2f5d9a', 'hairY': '#f2c230', 'shirt': '#3f7fbf', 'pants': '#2d3a55',
 }
 
@@ -677,6 +678,21 @@ def btn_car():
     return dict(target=(0, 0, 0.22), scale=1.0, el=20, az=-40, size=32)
 
 
+def btn_combine():
+    """稲刈り：コンバイン（だいだいの車体と運転席、前に稲を刈る刈り取り部、黒いクローラー）"""
+    for y in (0.2, -0.2):
+        box(f'crawler{y}', 'crawler', (0.66, 0.14, 0.16), (0, y, 0.09), bevel=0.05)
+    box('body', 'combine', (0.56, 0.46, 0.26), (-0.04, 0, 0.3), bevel=0.03)
+    box('tank', 'combineD', (0.26, 0.22, 0.2), (-0.16, -0.1, 0.52), bevel=0.03)
+    box('cab', 'combine', (0.22, 0.2, 0.22), (0.12, 0.12, 0.54), bevel=0.03)
+    box('cabG', 'glass', (0.02, 0.17, 0.15), (0.235, 0.12, 0.56))
+    box('reaper', 'reaper', (0.18, 0.56, 0.08), (0.42, 0, 0.12), (0, -0.35, 0))
+    for y in (-0.22, -0.07, 0.07, 0.22):
+        cyl(f'bunri{y}', 'reaper', 0.025, 0.12, (0.53, y, 0.08), (0, 1.2, 0), 6, r2=0.0)
+    cyl('auger', 'combineD', 0.03, 0.5, (-0.1, -0.2, 0.62), (0, math.pi / 2, 0.3), 8)
+    return dict(target=(0.02, 0, 0.3), scale=1.1, el=22, az=-40, size=32)
+
+
 def btn_walker():
     """降りる（歩く）：黄色い髪に青い服の主人公が歩くところ"""
     sphere('atama', 'skin', 0.13, (0, 0, 0.78))
@@ -968,6 +984,7 @@ MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock,
 MODELS.update({f'cat-{k}': v for k, v in (('shrine', cat_shrine), ('temple', cat_temple), ('worship', cat_worship), ('castle', cat_castle), ('historic', cat_historic),
                ('museum', cat_museum), ('view', cat_view), ('art', cat_art), ('sight', cat_sight), ('park', cat_park), ('library', cat_library),
                ('station', cat_station), ('townhall', cat_townhall), ('beach', cat_beach))})
+MODELS.update({'btn-combine': btn_combine})
 MODELS.update({'btn-globe': btn_globe, 'btn-car': btn_car, 'btn-walker': btn_walker, 'btn-compass': btn_compass})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),

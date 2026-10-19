@@ -1026,8 +1026,13 @@ function buildTiles(codes) {
 buildTiles();
 /* ---------- Blender で描いた地図の家と木（tools/blender/maptiles.py → nishio-go/maptiles/ のシート） ----------
    家：50の立体 × 屋根の色10 × 壁の色5 ＝ 2500通りを季節ごとに（4季節で1万マス）。場所ごとにちがう家になる
-   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま */
-const MT = { s: -1, house: null, tree: null };
+   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま
+   公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順）
+   茶畑・畑・砂浜・境内の砂利・草地：12通りずつ（field シート）
+   田んぼ：こよみの田んぼのようすごとに9通り。青田と黄金色の稲は2コマで風にゆれる。となりのマスとすきまなくつながる */
+const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, sprites: null, spriteReq: false, paddyU: null, paddyF: null };
+const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
+const FIELD_ROWS = [C.E, C.V, C.S, C.J, C.G];   // field シート：茶畑・畑・砂浜・境内の砂利・草地（12通りずつ。草地は2コマで草がゆれる）
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
   if (KOYO) return 2;
   if (SAKURA) return 0;
@@ -1047,35 +1052,165 @@ function sliceSheet(img, cols, rows) {   // 16×16 の canvas に切り分ける
 function applyMapTiles() {
   if (MT.house) tiles[C.Q] = MT.house;
   if (MT.tree) tiles[C.W] = MT.tree;
+  if (MT.misc) MISC_ROWS.forEach((code, i) => { tiles[code] = MT.misc[i]; });
+  if (MT.field) FIELD_ROWS.forEach((code, i) => { tiles[code] = MT.field[i]; });
+  if (MT.water) tiles[C.A] = MT.water;
+  if (MT.town) tiles[C.T] = MT.town;
+  if (MT.sprites) {   // 軽トラ（上・右・下・左）と、地図のたからばこ
+    ['up', 'right', 'down', 'left'].forEach((d, i) => { carSprites[d] = MT.sprites[i]; });
+    if (spotSprites.treasure) spotSprites.treasure[0] = MT.sprites[4];
+  }
+  if (MT.paddyU) { tiles[C.U] = MT.paddyU; tiles[C.F] = MT.paddyF; }
   dirty = true;
 }
 function loadMapTiles() {
-  const s = mapSeason();
-  if (s === MT.s) return;
-  MT.s = s;
-  const get = (name, fn) => {
+  const get = (file, ok, fn) => {
     const img = new Image();
-    img.onload = () => { if (MT.s === s) { fn(img); applyMapTiles(); } };
-    img.onerror = () => { if (MT.s === s) setTimeout(() => { if (MT.s === s) get(name, fn); }, 15000); };   // 読めなければ、しばらくしてもう一度
-    img.src = `nishio-go/maptiles/${name}-${s}.png`;
+    img.onload = () => { if (ok()) { fn(img); applyMapTiles(); } };
+    img.onerror = () => { if (ok()) setTimeout(() => { if (ok()) get(file, ok, fn); }, 15000); };   // 読めなければ、しばらくしてもう一度
+    img.src = `nishio-go/maptiles/${file}.png`;
   };
-  get('house', img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
-  get('tree', img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
+  const s = mapSeason(), pt = PADDY_TILE;
+  if (s !== MT.s) {
+    MT.s = s;
+    const ok = () => MT.s === s;
+    get(`house-${s}`, ok, img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
+    get(`tree-${s}`, ok, img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
+    get(`misc-${s}`, ok, img => { const a = sliceSheet(img, 30, MISC_ROWS.length); MT.misc = MISC_ROWS.map((_, r) => a.slice(r * 30, r * 30 + 30).map(c => [c, c])); });
+    get(`town-${s}`, ok, img => {   // 町なかの地面：小物（マンホール・植木鉢・自販機・電柱・自転車）は8マスに1つくらい
+      const a = sliceSheet(img, 12, 1).map(c => [c, c]), plain = a.slice(0, 2), deco = a.slice(2);
+      MT.town = [...Array(35).fill(plain).flat(), ...deco];
+    });
+    get(`field-${s}`, ok, img => { const a = sliceSheet(img, 12, FIELD_ROWS.length * 2); MT.field = FIELD_ROWS.map((_, r) => a.slice(r * 24, r * 24 + 12).map((c, i) => [c, a[r * 24 + 12 + i]])); });
+  }
+  if (!MT.spriteReq) {   // 地図の上を動くもの（Blender の軽トラ・たからばこ）
+    MT.spriteReq = true;
+    get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
+  }
+  if (!MT.waterReq) {   // 水（さざ波が2コマで動く）。季節で変わらないので1回だけ
+    MT.waterReq = true;
+    get('water', () => true, img => { const a = sliceSheet(img, 3, 2); MT.water = a.slice(0, 3).map((c, i) => [c, a[3 + i]]); });
+  }
+  if (pt !== MT.p) {   // 田んぼは、こよみの田んぼのようす（青田・黄金色・田植え・田おこし・刈田）ごとのシート
+    MT.p = pt;
+    get(`paddy-${pt}`, () => MT.p === pt, img => {
+      const a = sliceSheet(img, 9, 4);
+      MT.paddyU = a.slice(0, 9).map((c, i) => [c, a[9 + i]]);
+      MT.paddyF = a.slice(18, 27).map((c, i) => [c, a[27 + i]]);
+    });
+  }
 }
 loadMapTiles();
-const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1 : 0;   // 森は、風がわたるように少しずつずれてゆれる
+/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。題材130、ちがう絵で99840枚） ----------
+   生きもの・道ばたの物・水辺や浜の物・西尾らしい物（茶つみ・うなぎ池の水車・大ちょうちん・赤馬・海苔ひび・カーネーション・野点 など）を、
+   マスの種類に合わせて、ところどころに置く（場所ごとに決まった物・向き・色）
+   季節（春・夏・秋・冬のシート）と月（ひまわりは夏、コスモスは秋 など）で、置く物が変わる。生きものは2つのポーズで少し動く */
+const DECO = { img: null, s: -1, idx: null, cols: 96, m: new Date().getMonth() + 1 };   // m：いまの月（refreshSeason で1分ごとに確かめる）
+const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ。名前#rain は、いま雨のときだけ）
+  [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10',
+    'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9', 'kiji', 'usagi', 'tsubame@4-7', 'hotaru@6-6', 'sanpo', 'jogger',
+    'mujin', 'sudebako', 'tanukiy', 'kasahito#rain', 'kitsune', 'tonbi', 'mogura', 'nanohana@3-4', 'higanbana@9-9', 'ume@2-3', 'ichou@11-11',
+    'susuki@9-11', 'mushitori@7-8', 'tsukushi@3-4', 'hanami@4-4', 'semi@7-8', 'kabutomushi@7-8']],
+  [C.P]: [12, ['kotori', 'karasu', 'hana@3-10', 'choucho@4-10', 'tsubame@4-7', 'kiji', 'usagi', 'tonbi']],   // 芝生のマスは公園のほか湿地・運動場・ゴルフ場も同じなので、どこにいてもおかしくない物だけ
+  [C.T]: [11, ['neko', 'neko', 'inu', 'jitensha', 'jihanki', 'ueki', 'gomi', 'tanuki', 'chouchin', 'kodomo', 'sanrinsha', 'bench', 'karasu', 'kotori',
+    'akauma', 'unaginobori', 'nodate', 'daichouchin@8-8', 'yatai@7-7', 'koinobori@4-5', 'kadomatsu@1-1', 'tsukimi@9-9',
+    'monohoshi', 'fuusen', 'basutei', 'bonsai', 'sanpo', 'jogger', 'tsubame@4-7',
+    'keicar', 'keicar', 'scooter', 'cyclist', 'cart', 'randoseru', 'onigokko', 'kasahito#rain', 'kasahito#rain', 'kasahito#rain',
+    'tanabata@7-7', 'bonodori@8-8', 'xmas@12-12', 'halloween@10-10', 'yakiimo@11-2', 'kakigori@7-8', 'cone', 'takuhai', 'yukata@7-8', 'kingyo@7-8']],
+  [C.A]: [28, ['kamo', 'kamo', 'fune', 'boto', 'bui', 'hasu@6-9', 'kamome', 'suisha', 'norihibi@11-3', 'kame@4-10', 'koi', 'hakuchou@12-2', 'yacht',
+    'kayak@5-10', 'swanboat', 'jetski@6-9']],
+  [C.S]: [9, ['kamome', 'kani', 'sunashiro@4-10', 'kasa@7-8', 'tsuri', 'boto', 'kame@4-10', 'suika@7-8', 'tetrapod', 'beachball@6-9', 'surfer', 'kaigara@4-9']],
+  [C.N]: [8, ['carnation']],
+  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo', 'fukurou', 'risu', 'usagi', 'hiker', 'tanukiy', 'itachi', 'sudebako', 'kitsune',
+    'semi@7-8', 'kabutomushi@7-8', 'tonbi']],
+  [C.J]: [10, ['tourou', 'jizo', 'hokora', 'neko', 'komainu', 'ema', 'omikuji']],
+  [C.E]: [16, ['noufu', 'kotori', 'chatsumi@4-6', 'kiji', 'hachibako']],
+  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10', 'hachibako', 'kiji', 'mujin', 'hatakehito', 'sprinkler@5-9', 'niwatori', 'ushi', 'mogura']],
+};
+const DECO_PADDY = {   // 田んぼは、こよみの田んぼのようすで置く物を変える
+  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon', 'tsubame@4-7', 'taue@5-6', 'taue@5-6', 'zarigani@5-9'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon', 'tsubame@4-7'],
+  gold: ['kakashi', 'kakashi', 'karasu', 'kotori', 'noufu', 'sagi', 'combine', 'inekari', 'tonbi'],
+  stubble: ['hazakake', 'warazuka', 'warazuka', 'karasu', 'sagi', 'kotori', 'tonbi'],
+  soil: ['sagi', 'karasu', 'noufu', 'kotori', 'suimon', 'tractor', 'tractor', 'kiji'],
+};
+const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri', 'kiji', 'tsubame', 'usagi',
+  'hotaru', 'koi', 'hakuchou', 'jogger', 'sanpo', 'risu', 'fukurou', 'cyclist', 'cart', 'randoseru', 'onigokko', 'tanukiy', 'itachi', 'kasahito', 'hiker', 'hatakehito',
+  'kitsune', 'tonbi', 'niwatori', 'ushi', 'zarigani', 'taue', 'inekari', 'mushitori', 'yukata']);
+// 水のマスは海も川も池も同じ種類なので、置く物で場所をえらぶ：池のもの（鯉・水車・はす・白鳥のボート）は岸が2マス以内にある水だけ、
+// ヨット・漁船・水上バイクは岸が1マス以内にない（細い川ではない）水だけ。沖に水車、小川にヨット、とちぐはぐにならないように
+const DECO_POND = new Set(['koi', 'suisha', 'hasu', 'swanboat']), DECO_OPEN = new Set(['yacht', 'fune', 'jetski']);
+const landNear = (tx, ty, r) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const c = codeAt(tx + dx, ty + dy); if (c !== C.A && c !== C.X) return true; } return false; };
+const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
+function loadDeco() {
+  const s = decoSeason();
+  if (s === DECO.s) return;
+  DECO.s = s;
+  if (!DECO.idx) fetch('nishio-go/deco/deco.json').then(r => r.json()).then(j => { DECO.idx = new Map(j.subjects.map((n, i) => [n, i])); DECO.cols = j.cols; dirty = true; }).catch(() => { DECO.s = -1; });
+  const img = new Image();
+  img.onload = () => { if (DECO.s === s) { DECO.img = img; decoCache.clear(); dirty = true; } };
+  img.onerror = () => { if (DECO.s === s) DECO.s = -1; };   // つぎに季節を確かめるとき、もう一度
+  img.src = `nishio-go/deco/deco-${s}.png`;
+}
+const decoLists = new Map();   // その月に置ける物の表（月が替わったら作りなおす）
+function decoList(code) {
+  const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, rain = !!(wx && wx.kind === 'rain');
+  const m = DECO.m, key = code + ':' + m + ':' + rain + ':' + (code === C.U || code === C.F ? PADDY_TILE : '');
+  if (decoLists.has(key)) return decoLists.get(key);
+  const place = code === C.U || code === C.F ? [14, DECO_PADDY[PADDY_TILE] || DECO_PADDY.green] : DECO_PLACE[code];
+  const inMonths = (a, b) => (a <= b ? m >= a && m <= b : m >= a || m <= b);   // 11-3 のように年をまたぐ月も
+  const list = !place ? null : [place[0], place[1].filter(e => {
+    if (e.endsWith('#rain')) return rain;
+    const [, r] = e.split('@'); if (!r) return true; const [a, b] = r.split('-').map(Number); return inMonths(a, b);
+  }).map(e => e.split(/[@#]/)[0])];
+  decoLists.set(key, list);
+  return list;
+}
+function drawDeco(code, tx, ty, X, Y, T, now) {
+  if (!DECO.img || !DECO.idx) return;
+  const L = decoList(code);
+  if (!L || !L[1].length) return;
+  const h = Math.imul(tx, 2654435761) ^ Math.imul(ty, 40503) ^ 0x5bd1e995, u = (h ^ (h >>> 15)) >>> 0;
+  if (u % L[0]) return;
+  if (code === C.T && tiles[C.T].length === 80 && tileVar(code, tx, ty) % 80 >= 70) return;   // 町なかの地面に自販機や電柱がもう描いてあるマスには置かない
+  const name = L[1][(u >>> 4) % L[1].length], si = DECO.idx.get(name);
+  if (si === undefined) return;
+  if (code === C.A && (DECO_POND.has(name) ? !landNear(tx, ty, 2) : DECO_OPEN.has(name) && landNear(tx, ty, 1))) return;
+  let k = (u >>> 9) % 6;
+  if (DECO_ANIM.has(name)) k = (k & 6) | ((Math.floor(now / 650) + (u >>> 20)) & 1);   // 生きものは2つのポーズをいったりきたり
+  ctx.drawImage(decoCanvas(((si * 6 + k) * 4 + (u >>> 13) % 4) * 8 + (u >>> 16) % 8), X, Y, T, T);
+}
+// 小物の絵：シートから使う分だけ 16×16 の canvas に切り出してとっておく（Godot で地図を描くときも、ほかのマスと同じ5つの引数で描けるように）
+const decoCache = new Map();
+function decoCanvas(i) {
+  let c = decoCache.get(i);
+  if (c) return c;
+  c = document.createElement('canvas');
+  c.width = c.height = 16;
+  c.getContext('2d').drawImage(DECO.img, (i % DECO.cols) * 16, Math.floor(i / DECO.cols) * 16, 16, 16, 0, 0, 16, 16);
+  decoCache.set(i, c);
+  return c;
+}
+loadDeco();
+const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f
+  : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1   // 森は、風がわたるように少しずつずれてゆれる
+  : code === C.U || code === C.F ? (Math.floor(now / 900) + ((tx + ty) >> 2)) & 1   // 田んぼの稲は、ななめに風の波がわたる
+  : code === C.G ? (Math.floor(now / 800) + ((tx - ty) >> 2)) & 1 : 0;   // 草地の草も、風でそよぐ
+// マスの絵のえらび方：ふつうはマスごと。畑は8×8マスのまとまりで同じ作物にする（マスごとにちがう野菜だと、つぎはぎに見えるので）
+const tileVar = (code, x, y) => code === C.V ? (((x >> 3) * 73856093) ^ ((y >> 3) * 19349663)) >>> 0 : ((x * 73856093) ^ (y * 19349663)) >>> 0;
 // 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
 let seasonCheckT = 0;
 function refreshSeason(now) {
   if (now - seasonCheckT < 60000) return;
   seasonCheckT = now;
   const k = seasonNow();
-  loadMapTiles();   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
+  loadMapTiles();
+  loadDeco();
+  DECO.m = new Date().getMonth() + 1;   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
   if (k === seasonKey) return;
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;
   buildTiles([C.U, C.F, C.W, C.P]);
-  applyMapTiles();   // Blender の森の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
+  applyMapTiles();   // Blender の森・公園の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
   makeWorldImg();
   dirty = true;
 }
@@ -4057,7 +4192,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -4067,9 +4202,10 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
-    const v = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
+    const v = tileVar(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
+    drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
@@ -4346,7 +4482,7 @@ function drawWorld(now, w, h, dpr) {
   } else for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
     const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
-    const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+    const v = tileVar(code, x, y);
     ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], ox + x * T, oy + y * T, T, T);
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
@@ -4492,6 +4628,7 @@ function setWorld(on) {
   if (on) { wcam = worldCamStart(); buildWorld(); }
   try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }
   updatePad();
+  updateHarvestBtn();   // せかいちずでは frame が早く戻るので、稲刈りのボタンをここで消す
 }
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
 // 📍ボタン：せかいちずでは主人公のいる所へ戻す（歩く地図はいつも主人公が真ん中）
@@ -4596,6 +4733,15 @@ function checkCar() {
   if (c !== C.X && !CAR_OK.has(c)) setDriving(false, '🚶 道の外へ移動したので、車を降りました');
 }
 $('pxCar').addEventListener('click', toggleCar);
+// 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、右上の列に「稲刈り」ボタンを出す（あるいて移動でも見えるよう、スティックの列には置かない）
+const PADDY_CODES = new Set([C.U, C.F]);
+function onPaddy() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => PADDY_CODES.has(codeAt(x + dx, y + dy)));
+}
+function updateHarvestBtn() { const b = $('pxHarvest'), on = onPaddy(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxHarvest').addEventListener('click', () => { if (window.NISHIO_HARVEST && onPaddy()) NISHIO_HARVEST.open(); });
 
 // いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
 function exitDist(x, y) {
@@ -4792,7 +4938,7 @@ $('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId
 window.addEventListener('blur', () => stickEnd());
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); autoPause(); padStep(k); }
+  if (k && active && G.demo && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); autoPause(); padStep(k); }   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
 });
 
 /* ---------- おまかせ歩き（操作して移動） ----------
@@ -4860,6 +5006,7 @@ function autoRead() {   // 人の話のウィンドウ：読む時間をおい�
 function autoTick() {
   setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
   if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
+  if (document.body.classList.contains('jump-open')) return;   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;
   if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }
@@ -4968,5 +5115,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

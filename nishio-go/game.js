@@ -698,7 +698,9 @@ function jumpReward(coins, cleared) {
   if (!pts) return 0;
   S.jumpDay = ymd();
   gainPoints(pts);
+  S.log.unshift({ type: 'jump', t: Date.now(), pts, name: `ミニゲーム「にしおジャンプ」${cleared ? 'クリア' : ''}（コイン${coins | 0}まい）`, icon: '🎮' });
   save();
+  renderLog();   // きろく の数字と「最近のポイント」をすぐ新しく
   return pts;
 }
 
@@ -1652,7 +1654,7 @@ function renderLog() {
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
-    `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? PI(LOG_PI[l.type] || 'flag', '') : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
+    `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
       ${simple() ? '' : `<small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small>`}</span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
     : '<li class="empty">まだありません</li>';
 }

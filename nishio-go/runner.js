@@ -276,11 +276,13 @@
   }
 
   /* ---------- 画面とループ ---------- */
-  function loop(t) {
+  let acc = 0;
+  function loop(t) {   // 画面の描きかえの回数（60〜144回/秒）にかかわらず、1秒に60回ずつ動かす
     if (!running) return;
-    const dt = Math.min(100, t - last); last = t;
-    let n = Math.round(dt / (1000 / 60)) || 1;
-    while (n-- > 0) step();
+    acc += Math.min(100, t - last); last = t;
+    let n = 0;
+    while (acc >= 1000 / 60 && n < 6) { step(); acc -= 1000 / 60; n++; }
+    if (n === 6) acc = 0;
     draw();
     raf = requestAnimationFrame(loop);
   }
@@ -337,7 +339,7 @@
     root.hidden = false; document.body.classList.add('jump-open');
     root.querySelector('.jump-result').hidden = true;
     fit();
-    running = true; last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
+    running = true; last = performance.now(); acc = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
     const G = window.nishioGo; if (G && G.track) G.track('jump_open', {});
   }
   function close() {

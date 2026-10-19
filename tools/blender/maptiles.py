@@ -446,6 +446,27 @@ def truck(d):
     return dict(target=(0, 0.0, 0.16), scale=1.12)
 
 
+def combine(d):
+    """コンバイン（稲刈りミニゲーム）。d：0 上・1 右・2 下・3 左。前に刈り取り部、後ろにもみのタンク"""
+    parts = []
+    for x in (-0.17, 0.17):
+        parts.append(box(f'crawler{x}', 'crawler', (0.13, 0.56, 0.12), (x, -0.06, 0.06), bevel=0.04))
+    parts += [
+        box('body', 'combine', (0.4, 0.5, 0.2), (0, -0.06, 0.2), bevel=0.03),
+        box('tank', 'combineD', (0.18, 0.22, 0.16), (-0.1, -0.18, 0.37), bevel=0.02),
+        box('cab', 'combine', (0.18, 0.18, 0.18), (0.1, 0.06, 0.38), bevel=0.02),
+        box('cabG', 'mado', (0.15, 0.02, 0.11), (0.1, 0.155, 0.4)),
+        box('reaper', 'reaper', (0.48, 0.16, 0.07), (0, 0.3, 0.07), (0.35, 0, 0)),
+    ]
+    for x in (-0.18, -0.06, 0.06, 0.18):
+        parts.append(cyl(f'bunri{x}', 'reaper', 0.022, 0.1, (x, 0.4, 0.05), (-1.2, 0, 0), 6, r2=0.0))
+    rot = -d * math.pi / 2
+    for o in parts:
+        o.rotation_euler.z += rot
+        o.location.x, o.location.y = (o.location.x * math.cos(rot) - o.location.y * math.sin(rot), o.location.x * math.sin(rot) + o.location.y * math.cos(rot))
+    return dict(target=(0, 0, 0.16), scale=1.1)
+
+
 def chest(k):
     """たからばこ（木の箱に金のふち）。k=1 はふたが少しあいて光る"""
     box('hako', 'takara', (0.5, 0.34, 0.26), (0, 0, 0.13), bevel=0.02)
@@ -463,7 +484,7 @@ def chest(k):
     return dict(target=(0, 0, 0.18), scale=0.8)
 
 
-SPRITES = {'truck': (truck, 4), 'chest': (chest, 2)}
+SPRITES = {'truck': (truck, 4), 'chest': (chest, 2), 'combine': (combine, 4)}
 FIELD = {'tea': (tea, 3), 'veg': (veg, 4), 'sand': (sand, 4), 'gravel': (gravel, 3), 'grass': (grass, 6)}
 FRAME = {'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}

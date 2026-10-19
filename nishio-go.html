@@ -56,6 +56,7 @@
   <div class="px-pad" id="pxPad" hidden>
     <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car" data-art="btn-car"></i></button>
+    <button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button>
     <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）"><i data-pi="compass" data-art="btn-compass"></i></button>
   </div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
@@ -292,6 +293,7 @@
 <script src="nishio-go/osm-query.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/runner.js"></script>
+<script src="nishio-go/harvest.js"></script>
 <script src="nishio-go/landmark-gen.js"></script>
 <script src="nishio-go/pixel.js"></script>
 <script src="nishio-go/dots.js"></script>

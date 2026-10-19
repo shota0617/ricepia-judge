@@ -4100,7 +4100,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -4639,6 +4639,15 @@ function checkCar() {
   if (c !== C.X && !CAR_OK.has(c)) setDriving(false, '🚶 道の外へ移動したので、車を降りました');
 }
 $('pxCar').addEventListener('click', toggleCar);
+// 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、左下に「稲刈り」ボタンを出す
+const PADDY_CODES = new Set([C.U, C.F]);
+function onPaddy() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => PADDY_CODES.has(codeAt(x + dx, y + dy)));
+}
+function updateHarvestBtn() { const b = $('pxHarvest'), on = onPaddy(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxHarvest').addEventListener('click', () => { if (window.NISHIO_HARVEST && onPaddy()) NISHIO_HARVEST.open(); });
 
 // いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
 function exitDist(x, y) {
@@ -5011,5 +5020,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

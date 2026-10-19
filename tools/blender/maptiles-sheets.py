@@ -7,7 +7,7 @@
 # - 田んぼ：ようす5つ × 立体3 × 色3。nishio-go/maptiles/paddy-<ようす>.png（9×4。青田と黄金色は2コマ目で風に稲がゆれる）
 # - 茶畑・畑・砂浜・境内の砂利・草地：nishio-go/maptiles/field-<季節>.png（12×10。草地は2コマ目で草がゆれる）
 # - 水：nishio-go/maptiles/water.png（3×2。下の段は波が動いた2コマ目）。町なかの地面：town-<季節>.png（12×1）
-# - 軽トラ（4方向）・たからばこ：nishio-go/maptiles/sprites.png（6×1、背景なし）
+# - 軽トラ（4方向）・たからばこ・コンバイン（4方向）：nishio-go/maptiles/sprites.png（10×1、背景なし）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 import os
 import random
@@ -238,7 +238,8 @@ TOWN_PAL = [{'manhole': '#6a6a70', 'hachi': '#b86a3c', 'ki': '#2e8a38', 'jihan':
 
 
 # 地図の上を動くもの（背景なし）：nishio-go/maptiles/sprites.png（軽トラ 上・右・下・左、たからばこ、ふたのあいたたからばこ）
-SPRITE_PAL = {'truckW': '#f2f2f0', 'mado': '#5f98c8', 'kome': '#d0a860', 'kuro': '#2a2a2e', 'takara': '#a0602a', 'kin': '#f2c230', 'hikari': '#fff6b0'}
+SPRITE_PAL = {'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
+              'truckW': '#f2f2f0', 'mado': '#5f98c8', 'kome': '#d0a860', 'kuro': '#2a2a2e', 'takara': '#a0602a', 'kin': '#f2c230', 'hikari': '#fff6b0'}
 
 
 def sprite_tile(mat, band, names):
@@ -321,8 +322,8 @@ def main():
                 img = color(mat, band, names, pal, random.Random(f'tw{s}-{k}-{v}'), 'machi', s, flat=('manhole',))
                 tsheet.paste(Image.fromarray(img), ((k * 2 + v) * N, 0))
         save(tsheet, f'town-{s}.png')
-    ssheet = Image.new('RGBA', (6 * N, N))
-    for i, name in enumerate(['truck-0', 'truck-1', 'truck-2', 'truck-3', 'chest-0', 'chest-1']):
+    ssheet = Image.new('RGBA', (10 * N, N))
+    for i, name in enumerate(['truck-0', 'truck-1', 'truck-2', 'truck-3', 'chest-0', 'chest-1', 'combine-0', 'combine-1', 'combine-2', 'combine-3']):
         mat, band, names = load(name)
         ssheet.paste(Image.fromarray(sprite_tile(mat, band, names), 'RGBA'), (i * N, 0))
     ssheet.save(os.path.join(OUT, 'sprites.png'), optimize=True)

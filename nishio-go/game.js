@@ -1591,8 +1591,9 @@ function renderLog() {
     : '<li class="empty">まだありません。地図のスポットへ歩いてみよう！</li>';
 
   $('areaList').innerHTML = areas.length ? areas.map(a => {
+    const art = simple() && areaArt(a.id);
     const p = areaProgress(a.id), pct = p.total ? Math.round(p.done / p.total * 100) : 0;
-    return `<li class="area-row"><span class="ico">${simple() ? PI(p.total && p.done === p.total ? 'medal' : 'flag', '') : esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
+    return `<li class="area-row"><span class="ico">${art ? `<img class="gthumb area-art${p.total && p.done === p.total ? ' done' : ''}" src="${art}" alt="" width="32" height="32"/>` : simple() ? PI(p.total && p.done === p.total ? 'medal' : 'flag', '') : esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
       ${simple() ? '' : `<small>${esc(a.catch || '')}</small>`}<span class="bar"><i style="width:${pct}%"></i></span></span><span class="num">${p.done}/${p.total}</span></li>`;
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
@@ -1601,6 +1602,10 @@ function renderLog() {
       ${simple() ? '' : `<small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small>`}</span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
     : '<li class="empty">まだありません</li>';
 }
+
+// 地区の名物の絵（tools/blender/pixel-art.py で Blender から作った 48×48。絵のない地区は ''）
+const AREA_ART = new Set(['nishio', 'isshiki', 'kira', 'hazu', 'sakushima', 'okazaki', 'anjo', 'hekinan', 'takahama', 'kota', 'gamagori']);
+function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` : ''; }
 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
@@ -2131,7 +2136,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, talkNpc, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

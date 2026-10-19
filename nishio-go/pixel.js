@@ -4251,6 +4251,18 @@ function areaHtml(a) {
   const p = G.areaProgress(a.id), num = v => (Number.isFinite(v) ? v.toLocaleString() : null);
   const facts = [num(a.population) && `人口 ${num(a.population)}人${a.populationAsOf ? `（${esc(a.populationAsOf)}）` : ''}`, num(a.areaKm2) && `面積 約${num(a.areaKm2)}km²`].filter(Boolean);
   const src = (a.sources || []).filter(u => /^https?:\/\//.test(u)).slice(0, 4);
+  const srcHtml = src.length ? `<p class="src">出典：${src.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">${i + 1}</a>`).join(' ')}</p>` : '';
+  if (SIMPLE()) {   // 文字を少なく（ふだん）：名物の大きな絵（Blender で作った絵）、名物の札、めぐった名所のドット絵（まだの所は灰色）。くわしい話はタップで
+    const art = G.areaArt ? G.areaArt(a.id) : '', pct = p.total ? Math.round(p.done / p.total * 100) : 0;
+    const thumb = s => { try { const c = spriteOf(s)[0]; return c ? c.toDataURL() : ''; } catch (e) { return ''; } };
+    return `<div class="popup area-card pic"><div class="pop-head">${art ? `<img class="pop-art" src="${art}" alt="" width="64" height="64"/>` : ''}<h4>${esc(a.name)}</h4></div>
+    ${a.catch ? `<p class="catch">${esc(a.catch)}</p>` : ''}
+    ${(a.specialties || []).length ? `<p class="chips">${a.specialties.map(x => `<span>${esc(String(x).replace(/（.*?）/g, ''))}</span>`).join('')}</p>` : ''}
+    <p class="area-prog">${window.NSG_ICONS ? NSG_ICONS.html('flag', 'めぐった名所') : ''}<span class="bar"><i style="width:${pct}%"></i></span><b>${p.done}/${p.total}</b></p>
+    <ul class="area-thumbs">${p.list.map(s => { const u = thumb(s); return `<li class="${G.state.visits[s.id] ? 'got' : ''}" title="${esc(s.name)}">${u ? `<img src="${u}" alt="${esc(s.name)}" width="32" height="32"/>` : esc(s.name.slice(0, 1))}</li>`; }).join('')}</ul>
+    ${a.summary || a.trivia || facts.length ? `<details><summary>${window.NSG_ICONS ? NSG_ICONS.html('book', '') : ''} くわしく</summary>${a.summary ? `<p>${esc(a.summary)}</p>` : ''}${facts.length ? `<p>${facts.join('／')}</p>` : ''}${a.trivia ? `<p>${esc(a.trivia)}</p>` : ''}</details>` : ''}
+    ${srcHtml}</div>`;
+  }
   return `<div class="popup area-card"><h4>${esc(a.icon || '')} ${esc(a.name)}${a.kana ? `<small>（${esc(a.kana)}）</small>` : ''}</h4>
     ${a.catch ? `<p class="catch">${esc(a.catch)}</p>` : ''}
     ${a.summary ? `<p>${esc(a.summary)}</p>` : ''}
@@ -4259,7 +4271,7 @@ function areaHtml(a) {
     ${a.trivia ? `<p>💡 ${esc(a.trivia)}</p>` : ''}
     <p><span class="tag">めぐった名所</span> ${p.done}/${p.total}</p>
     <ul class="area-spots">${p.list.map(s => `<li>${G.state.visits[s.id] ? '✓' : '・'} ${esc(s.name)}</li>`).join('')}</ul>
-    ${src.length ? `<p class="src">出典：${src.map((u, i) => `<a href="${esc(u)}" target="_blank" rel="noopener">${i + 1}</a>`).join(' ')}</p>` : ''}</div>`;
+    ${srcHtml}</div>`;
 }
 
 /* ---------- せかいちずの表示 ---------- */

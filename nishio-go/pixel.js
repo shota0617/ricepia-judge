@@ -4255,7 +4255,9 @@ function giantTiles(s) {
 // 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
 function giantOf(s, load = true) {
   const n = GIANT_ART[s.id] || (giantIds && giantIds.has(s.id) ? s.id : null);
-  if (!n) return null;
+  return n ? giantImg(n, load) : null;
+}
+function giantImg(n, load = true) {   // nishio-go/art/giant/<n>.png を [ふつう, 灰色] の canvas に
   if (!giants[n]) {
     if (!load) return null;
     giants[n] = 'loading';
@@ -4270,6 +4272,20 @@ function giantOf(s, load = true) {
     img.src = `nishio-go/art/giant/${n}.png`;
   }
   return giants[n] === 'loading' ? null : giants[n];
+}
+// 街の主な建物（学校・病院・交番や警察署・消防署・郵便局・役所・図書館）500か所の特大の絵（tools/blender/giant-poi-list.py・giant-gen.py --poi）。
+// 一覧 nishio-go/art/giant/poi.json は [id, 種類, 名前, マスx, マスy]。目印（区画データの p）と、種類と名前が同じで3マス以内のものに描く
+const giantPois = new Map();   // '種類|名前' → [[id, x, y], …]
+fetch('nishio-go/art/giant/poi.json').then(r => (r.ok ? r.json() : null)).then(j => {
+  for (const [id, kind, name, x, y] of (j && j.items) || []) { const k = kind + '|' + name; if (!giantPois.has(k)) giantPois.set(k, []); giantPois.get(k).push([id, x, y]); }
+  poiCache.key = ''; dirty = true;
+}).catch(() => { /* 特大の絵なしで続ける */ });
+function giantPoiOf(p) {   // その目印の特大の絵の id（なければ ''）。目印ごとに覚えておく
+  if (p.g === undefined && giantPois.size) {
+    const c = (giantPois.get(p[2] + '|' + p[3]) || []).find(q => Math.abs(q[1] - p[0]) < 3 && Math.abs(q[2] - p[1]) < 3);
+    p.g = c ? c[0] : '';
+  }
+  return p.g || '';
 }
 const spriteOf = s => (!LANDMARK_ART[s.id] && !s.featured && GEN[s.id] && genSprite(s.id)) || spotSprites[spotArt(s)];
 
@@ -4522,8 +4538,9 @@ function frame(now) {
   const spots = G.spots;
   const pois = visiblePois(tx0, ty0, tx1, ty1), labelBoxes = [];
   for (const p of pois) {
-    const size = p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * 0.7);
-    ctx.drawImage((spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
+    const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（4マス。読めるまではいつもの絵）
+    const size = giant ? T * 4 : p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
+    ctx.drawImage((giant || spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;

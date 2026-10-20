@@ -1,0 +1,5258 @@
+[
+{
+"id": "poi-townhall-a87e51decf",
+"name": "西尾市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-44de701df3",
+"name": "安城市環境クリーンセンター",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-9cef2ffc2f",
+"name": "碧南市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-15da73f01c",
+"name": "一色町役場",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-b316be1437",
+"name": "西尾市役所吉良支所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-8ac70a189e",
+"name": "高浜市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-b696739fc9",
+"name": "大山公民館",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-9c9ba04c30",
+"name": "幸田町役場",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-c786db04d2",
+"name": "幡豆町役場",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-b6e426d455",
+"name": "安城市役所さくら庁舎",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-b7ec357b11",
+"name": "安城市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-6341172446",
+"name": "北庁舎",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-71be5959c4",
+"name": "西庁舎",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-ab918b45e1",
+"name": "半田市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-6154c24d76",
+"name": "武豊町役場",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-72c45391dc",
+"name": "岡崎市役所矢作支所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-38a69665a1",
+"name": "西部地域交流センターやはぎかん",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-3be317df5a",
+"name": "愛知県西三河総合庁舎",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-e0974f1e2c",
+"name": "安城市北部公民館",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-515d9c91e8",
+"name": "岡崎市役所 (Okazaki City Hall)",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-d0003c0fcf",
+"name": "刈谷市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-1c49c46ed7",
+"name": "阿久比町役場",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-bb2ba66a03",
+"name": "東浦町役場",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-1890a846d8",
+"name": "知立市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-80c9f6ec33",
+"name": "桜市民館",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-fe3fe86bf7",
+"name": "蒲郡市役所 (Gamagori City Hall)",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-d638b52ce4",
+"name": "蒲郡市市役所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-6b0d7cf40f",
+"name": "岡崎市役所東部支所",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-townhall-a1c4811fe7",
+"name": "南知多町　篠島サービスセンター",
+"k": "townhall",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-d6a4a257d9",
+"name": "西尾市立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-1995cb6a31",
+"name": "碧南市民図書館中部分館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-8c867c2bc1",
+"name": "西尾市立吉良図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-0e9d63dc18",
+"name": "碧南市民図書館南部分館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-0de8fdc2d9",
+"name": "一色地域文化広場学びの館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-29044cf43f",
+"name": "碧南市民図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-a8a5007616",
+"name": "高浜市立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-4a8860fad7",
+"name": "亀崎図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-f9bce2b01f",
+"name": "幡豆町立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-34f1805b4f",
+"name": "安城市図書情報館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-ca14529e7a",
+"name": "幸田町立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-e4118a3206",
+"name": "岡崎市　南部市民センター　図書室",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-409b0f3b89",
+"name": "武豊町立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-10bb5a0add",
+"name": "半田市立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-e51537b43f",
+"name": "岡崎情報図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-9f3d5bfe03",
+"name": "岡崎市図書館交流プラザ・りぶら",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-e7cc402ad2",
+"name": "刈谷市中央図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-7b532dc1e8",
+"name": "東浦町中央図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-5cbbaaad34",
+"name": "知立市図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-149400b0c4",
+"name": "阿久比町立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-dc5d2a61bf",
+"name": "蒲郡市立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-6a614852af",
+"name": "森岡公民館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-363f8779b8",
+"name": "額田町立図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-library-c40aed60a5",
+"name": "御津図書館",
+"k": "library",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-66f0ea464d",
+"name": "山尾病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-2749dc0acb",
+"name": "田中会西尾病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-e6ed7827fc",
+"name": "西尾病院西尾市在宅介護支援センターいずみ",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-510d9f0506",
+"name": "西尾病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-7de29d516a",
+"name": "西尾病院 介護老人保健施設いずみ",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-2f17bbdfe2",
+"name": "西尾市民病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-31e0cc1af9",
+"name": "あいちリハビリテーション病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-a912779dd1",
+"name": "純和会矢作川病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-40adb52a0e",
+"name": "碧南市民病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-df319b1368",
+"name": "福祉会高須病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-590508dcde",
+"name": "十喜会加藤病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-d1e73a13fb",
+"name": "愛生館小林記念病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-e700a69946",
+"name": "松和会新川中央病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-40fee9cabf",
+"name": "深見十全会深見病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-4b6302227c",
+"name": "安城更生病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-af23473877",
+"name": "つづき動物病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-cf927ee9af",
+"name": "安祥会松井整形外科病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-ea2627022c",
+"name": "半田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-ab218b3965",
+"name": "京ケ峰岡田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-90400c1972",
+"name": "岡崎共立病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-84a36fe3bb",
+"name": "大朋会岡崎共立病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-e9e18a613b",
+"name": "半田中央病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-c5715f9e83",
+"name": "碧友会堀尾安城病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-a9a8ed5e70",
+"name": "研信会葵セントラル病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-b9e2363c82",
+"name": "山武会岡崎南病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-cc3ec43d3c",
+"name": "整形外科中野病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-d0ba2a3a68",
+"name": "藤田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-d9dd91de3f",
+"name": "石川病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-e23e42d90f",
+"name": "一ノ草病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-43d3367042",
+"name": "刈谷記念病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-5ae2a5b1e5",
+"name": "仁精会三河病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-ea9c9adbfc",
+"name": "赫和会杉石病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-0102177bd7",
+"name": "社会医療法人 財団新和会 八千代病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-27b072b853",
+"name": "豊田会刈谷総合病院東分院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-5175ff15c4",
+"name": "鉄友会宇野病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-031ea8cf43",
+"name": "豊田会刈谷総合病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-09f06f7010",
+"name": "一心会加藤産婦人科病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-bf4b8ef9f6",
+"name": "大山病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-7537898485",
+"name": "九友会榊原病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-b08b8ff7a3",
+"name": "深谷会富士病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-889a8c5de2",
+"name": "北辰会蒲郡厚生館病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-8b84fc93b9",
+"name": "十全会三嶋内科病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-1e589d2bbe",
+"name": "秋田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-b8bfed20bb",
+"name": "博報会岡崎東病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-1f69f1248e",
+"name": "県立愛知病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-a086359092",
+"name": "岡崎市民病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-9097b8ee25",
+"name": "豊和会南豊田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-c6f34c4339",
+"name": "羽栗会羽栗病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-f0ba068d89",
+"name": "共生会南知多病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-20a5aaeec1",
+"name": "寿康会大府病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-95b277b037",
+"name": "愛整会岡崎整形外科病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-1d058111c7",
+"name": "松風会蒲郡クリニック病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-c647b233fb",
+"name": "蒲郡市民病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-81072d9afd",
+"name": "国立長寿医療センター病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-07b978dd5c",
+"name": "愛知会胃腸科肛門科家田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-81f61e8a67",
+"name": "冨田病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-hospital-853f34091d",
+"name": "蒲郡東部病院",
+"k": "hospital",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-aa8c4bb5ad",
+"name": "西尾市消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-0e02165080",
+"name": "西尾市消防本部",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-a3990aab6c",
+"name": "西尾市消防署北出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-17ab02ea1d",
+"name": "西尾市消防署西分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-32332cd886",
+"name": "西尾市消防署東出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-6e10e88155",
+"name": "衣浦東部広域連合消防局碧南消防署東分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-908783dc7e",
+"name": "幡豆郡消防組合消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-6380bcc304",
+"name": "幡豆郡消防組合消防本部",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-0ae668b6e8",
+"name": "衣浦東部広域連合消防局安城消防署南分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-f83ca6c8b4",
+"name": "西尾市消防本部吉良分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-26b4c5a221",
+"name": "衣浦東部広域連合消防局碧南消防署北分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-0164194f10",
+"name": "衣浦東部広域連合消防局碧南消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-c315eaf43b",
+"name": "東消防署青野出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-07c5b1da0c",
+"name": "衣浦東部広域連合消防局高浜消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-b508eb933c",
+"name": "衣浦東部広域連合消防局安城消防署西出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-d7f597b091",
+"name": "幸田町消防署;幸田町消防本部",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-e541f6cfea",
+"name": "幡豆郡消防組合消防署幡豆分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-38efe721e8",
+"name": "衣浦東部広域連合消防局安城消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-9c75a46546",
+"name": "衣浦東部広域連合消防局刈谷消防署南分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-a2a2d04b41",
+"name": "知多中部広域事務組合半田消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-6a30fac114",
+"name": "半田消防署北部出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-40f49a4853",
+"name": "東消防署南分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-ff0e0cd974",
+"name": "西消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-7f1a74ec8c",
+"name": "知多中部広域事務組合半田消防署武豊支署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-a806946727",
+"name": "知多中部広域事務組合半田消防署成岩出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-f778a82013",
+"name": "蒲郡市消防署西部出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-cd5e970f35",
+"name": "衣浦東部広域連合消防局安城消防署北分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-08b8e22aa7",
+"name": "知多中部広域事務組合半田消防署東浦支署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-9e1b6a1f7d",
+"name": "衣浦東部広域連合消防局刈谷消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-fb736aa6f7",
+"name": "岡崎市消防本部",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-ec037860e7",
+"name": "知多中部広域事務組合半田消防署阿久比支署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-7647af2e39",
+"name": "衣浦東部広域連合消防局知立消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-511e3c7145",
+"name": "東消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-ec3f85c464",
+"name": "半田消防署東浦西部出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-7c4a40a6e6",
+"name": "中消防署北分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-35b8a67b12",
+"name": "大府市消防本部",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-5d3eff2e6d",
+"name": "大府市消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-fb2619a998",
+"name": "南消防署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-c8c378c088",
+"name": "南消防署高岡出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-65db94b485",
+"name": "東消防署本宿出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-9afc5e6a4f",
+"name": "蒲郡市消防署東部出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-212c24a512",
+"name": "中消防署花園出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-9385421ac3",
+"name": "南消防署末野原分署",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-fire-85f3b54dcf",
+"name": "東消防署額田出張所",
+"k": "fire",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-police-eb5cf37887",
+"name": "西尾警察署中央交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-a6d9e302f7",
+"name": "西尾警察署",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "station"
+},
+{
+"id": "poi-police-37d00a207a",
+"name": "西尾警察署鶴城交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-dfae887ec4",
+"name": "西尾警察署国森交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-201f2e29d5",
+"name": "西尾警察署鵜ヶ池駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-9679821985",
+"name": "西尾警察署熱池駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-1b4aa5e7c1",
+"name": "西尾警察署 米津交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-183517b2ff",
+"name": "米津交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-af9a29fd18",
+"name": "西尾警察署平板交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-2c830fe4ca",
+"name": "西尾警察署室駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-0995d5d738",
+"name": "西尾警察署米野駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-1cf14ee8e5",
+"name": "安城警察署根崎駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-94527daf23",
+"name": "碧南警察署旭交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-204ab4aad8",
+"name": "西尾警察署東部駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-25cd2ba51e",
+"name": "西尾警察署赤羽駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-c9327799be",
+"name": "西尾警察署一色幹部交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-1a4f3f0848",
+"name": "碧南警察署",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "station"
+},
+{
+"id": "poi-police-2a6087ee85",
+"name": "碧南警察署西端駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-0e2958438c",
+"name": "碧南警察署大浜交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-20e809dbcd",
+"name": "安城警察署 桜井交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-22f9127a94",
+"name": "安城警察署和泉駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-4e510440c3",
+"name": "安城警察署桜井交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-428fa53415",
+"name": "碧南警察署新川交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-137ce23241",
+"name": "西尾警察署吉良交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-753b1ea6c0",
+"name": "西尾警察署松木島駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-f7108f71d3",
+"name": "岡崎警察署野場駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-f9af3e086e",
+"name": "岡崎警察署六ツ美交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-b0c07a9cc5",
+"name": "西尾警察署鳥羽駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-6729ba0cbc",
+"name": "碧南警察署高浜幹部交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-a238a6a618",
+"name": "安城警察署高棚駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-0163831995",
+"name": "安城警察署福釜駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-6e45727579",
+"name": "幸田駅前交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-c38a18de4a",
+"name": "岡崎警察署福岡駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-9b5eb660b5",
+"name": "西尾警察署西幡豆駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-e3ac11b187",
+"name": "愛知県半田警察署衣浦交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-e7b46659ad",
+"name": "岡崎警察署上地駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-a2c05701cf",
+"name": "安城警察署",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "station"
+},
+{
+"id": "poi-police-6706a15148",
+"name": "岡崎警察署坂崎駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-b3f394bea3",
+"name": "安城警察署安城駅前交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-506ef5d199",
+"name": "岡崎警察署大和交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-2efbc0bf0a",
+"name": "半田警察署乙川交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-9c04842f1f",
+"name": "安城警察署大岡駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-e292316f46",
+"name": "岡崎警察署深溝駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-779898e297",
+"name": "安城警察署三河安城駅前交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-ec803958cc",
+"name": "岡崎警察署岡崎駅前交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-7b696764b1",
+"name": "西尾警察署東幡豆駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-c81b179640",
+"name": "末広交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-a9ad20cf02",
+"name": "安城警察署競技場前交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-ffeca8b593",
+"name": "半田警察署藤江駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-c57c43d6ea",
+"name": "刈谷警察署小垣江交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-cfe0981ff5",
+"name": "刈谷警察署東刈谷交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-0b93b0fc62",
+"name": "半田警察署青山交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-2991fc330c",
+"name": "半田警察署",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "station"
+},
+{
+"id": "poi-police-615ea11bf1",
+"name": "半田警察署武豊交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-a2d34684e3",
+"name": "半田警察署冨貴駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-7d8a61ddf8",
+"name": "岡崎警察署矢作交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-dd44fc7329",
+"name": "安城警察署谷田駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-a28e690e17",
+"name": "岡崎警察署竜美ヶ丘交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-cccd91bd2c",
+"name": "半田警察署雁宿交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-424462633c",
+"name": "安城警察署 作野交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-9be8c6ec56",
+"name": "蒲郡警察署形原交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-0b295b0b4a",
+"name": "蒲郡警察署竹谷交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-5875c0a2b9",
+"name": "岡崎警察署岡崎公園交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-de4c12a24d",
+"name": "岡崎警察署明大寺交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-14ac9d2f4b",
+"name": "安城警察署安城北交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-d9b2cb756b",
+"name": "岡崎警察署康生交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-b02d820dc6",
+"name": "半田警察署東浦交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-069f829f5f",
+"name": "岡崎警察署桑谷駐在所",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-8217c3b944",
+"name": "刈谷警察署広小路交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-police-ca6875e34e",
+"name": "安城警察署昭和交番",
+"k": "police",
+"c": [
+0,
+0,
+0
+],
+"sub": "koban"
+},
+{
+"id": "poi-post-70bb971e24",
+"name": "西尾永楽郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-1f8ea69fdd",
+"name": "西尾花ノ木郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-b21fbf4125",
+"name": "西尾郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-2b7e4cff48",
+"name": "西尾鶴舞郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-a7dfdffb02",
+"name": "西尾鶴城郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-f3f6140b35",
+"name": "西尾八ツ面簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-4194a4bced",
+"name": "西尾鵜ケ池簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-7de05f61e8",
+"name": "上矢田簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-8aefa9c6be",
+"name": "西尾福地郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-6a2264cb76",
+"name": "西尾米津郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-9980a600bc",
+"name": "吉良町郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-ccd0044805",
+"name": "平坂郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-e7557060eb",
+"name": "西尾室場郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-4026e1be45",
+"name": "西尾三和郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-71f0907aa4",
+"name": "城ケ入簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-f142f07c73",
+"name": "碧南鷲塚郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-5c29eb6bd8",
+"name": "安城根崎簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-4f0a0cdb57",
+"name": "西尾寺津郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-9b39f40cdd",
+"name": "碧南城山郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-755233cc6d",
+"name": "吉良津平簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-eaa713aaea",
+"name": "西一色郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-3873f3bd33",
+"name": "碧南棚尾郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-a020fada51",
+"name": "桜井郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-a50d6ba7cc",
+"name": "碧南西端郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-c8de343caf",
+"name": "一色郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-682d06d465",
+"name": "明治郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-2c37708df3",
+"name": "碧南辻郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-8984ecbcd9",
+"name": "碧南郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-396442b592",
+"name": "碧南大浜郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-26fe605577",
+"name": "碧南新川郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-81c221d6e2",
+"name": "六ツ美郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-baa2a6ec5c",
+"name": "松木島郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-82e1d58c24",
+"name": "吉良吉田郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-a4befa92d7",
+"name": "碧南北新川郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-bcf5c2b815",
+"name": "豊坂簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-2c60266704",
+"name": "安城赤松簡易郵便局（一時閉鎖中）",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-66699d2dd3",
+"name": "安城古井簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-d19b008356",
+"name": "青野郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-4221e1b006",
+"name": "高棚簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-149ef098c0",
+"name": "高浜郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-e432d3b81b",
+"name": "幡豆鳥羽簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-133c9fb386",
+"name": "高浜馬場郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-8f6043b654",
+"name": "幡豆郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-ff13fd52d7",
+"name": "福岡郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-8e224f0779",
+"name": "安城大山郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-9213ab28a4",
+"name": "半田亀崎郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-6d393f69a4",
+"name": "吉良宮崎郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-5a14d783b0",
+"name": "幸田郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-eceeb2559b",
+"name": "井内簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-0a8999c7f1",
+"name": "安城東明郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-66e39cb5a5",
+"name": "安城箕輪郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-1b747a1d83",
+"name": "半田平地郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-b6db329384",
+"name": "幸田大草郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-2ebd7f2513",
+"name": "岡崎法性寺郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-c796b18acd",
+"name": "高浜吉浜郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-584314e296",
+"name": "安城郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-fb30106aa7",
+"name": "岡崎上地郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-d075d23d95",
+"name": "安城北明治郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-cbd7eb89d2",
+"name": "坂崎簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-7a51bd7930",
+"name": "半田乙川郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-4ef376822a",
+"name": "岡崎大和郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-deee4647a4",
+"name": "半田郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-e5f2f6a3c2",
+"name": "岡崎針崎郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-8abe6ab819",
+"name": "東幡豆郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-c40ba9beb5",
+"name": "幸田深溝郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-c9c349a3e5",
+"name": "半田美原郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-ef71405a5f",
+"name": "岡崎駅前郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-47ac618d6e",
+"name": "半田協和郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-4cbaed08f6",
+"name": "東刈谷郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-7340e788e9",
+"name": "武豊郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-dd2bad6509",
+"name": "刈谷小垣江郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-7836de925b",
+"name": "岡崎六名郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-781e2c388f",
+"name": "半田住吉郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-077b020ecf",
+"name": "東浦生路郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-a31a6fe9de",
+"name": "安城美園郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-6a5cf3664a",
+"name": "半田有楽町郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-ce1fdba908",
+"name": "安城池浦郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-fa7393aa6d",
+"name": "半田成岩郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-a3164c0bb4",
+"name": "岡崎緑丘郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-9ca75e3cf9",
+"name": "岡崎郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-80116310a5",
+"name": "金平簡易郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-f7d5132193",
+"name": "刈谷野田郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-7d55dfac88",
+"name": "岡崎南明大寺郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-2b186af1e6",
+"name": "半田岩滑郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-ec492dde5a",
+"name": "岡崎宇頭郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-93649a3c41",
+"name": "形原郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-36d84ace53",
+"name": "岡崎不吹郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-7b63f218d8",
+"name": "半田花園郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-3d0dd7267c",
+"name": "岡崎矢作郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-post-2e94d44e48",
+"name": "富貴郵便局",
+"k": "post",
+"c": [
+0,
+0,
+0
+]
+},
+{
+"id": "poi-school-ac3fe968f1",
+"name": "市立花ノ木小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-3a90c3c955",
+"name": "西尾市立西尾小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-162d2cdc77",
+"name": "県立鶴城丘高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-ccb8b2b177",
+"name": "市立西尾中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-5cbd8244f9",
+"name": "市立鶴城中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-78bb8816e7",
+"name": "市立西野町小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-e00f98b196",
+"name": "市立鶴城小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-7419774ba5",
+"name": "市立八ツ面小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-8bb6638526",
+"name": "市立福地北部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-a08b241d08",
+"name": "県立西尾高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-66b7ae893f",
+"name": "市立矢田小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-08d231e77b",
+"name": "市立中畑小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-530a515cbc",
+"name": "市立平坂中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-7468c937c3",
+"name": "市立福地南部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-4c5fc44ee5",
+"name": "市立平坂小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-71479e979d",
+"name": "市立福地中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-8dc95ab3e7",
+"name": "市立米津小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-92e11b617e",
+"name": "県立西尾東高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-007e6231a0",
+"name": "市立室場小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-2c6d501aa4",
+"name": "市立東部中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-1073126ff3",
+"name": "西尾市立横須賀小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-eb1a4dca98",
+"name": "市立寺津中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-407136b6e1",
+"name": "市立三和小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-1cb618e8eb",
+"name": "市立鷲塚小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-ac5b12d081",
+"name": "市立寺津小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-4f0f8953dc",
+"name": "西尾市立吉良中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-c6a59ada09",
+"name": "安城市立明和小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-0461aa5397",
+"name": "市立東中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-9ec628d097",
+"name": "市立日進小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-39d5c85ef6",
+"name": "安城市立明祥中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-c434060dea",
+"name": "町立津平小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-a896a2dcb6",
+"name": "桜井小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-39f9bd5a02",
+"name": "県立一色高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-838d2bc1ff",
+"name": "町立一色西部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-1e8cf94801",
+"name": "市立棚尾小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-d5c009e0d7",
+"name": "町立一色中部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-f27508bc7c",
+"name": "市立中央小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-44c65c7d8c",
+"name": "県立碧南高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-88e4ddcd37",
+"name": "安城市立丈山小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-ee6a86b8e1",
+"name": "西尾市立荻原小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-589a736003",
+"name": "市立南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-6021767e93",
+"name": "安城市立桜井中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-d23d06bd32",
+"name": "愛知学泉大学附属桜井幼稚園",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-400b757f87",
+"name": "市立中央中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-b201085086",
+"name": "愛知県立安城南高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-d1a09a7448",
+"name": "岡崎市立六ツ美南部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-692d4113d1",
+"name": "市立大浜小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-9faf542eeb",
+"name": "町立一色南部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-6b62648d3a",
+"name": "市立西端小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-5b1f3b81d2",
+"name": "市立西端中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-a267f1a9cb",
+"name": "碧南市立新川小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-64d3830d63",
+"name": "碧南市立新川中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-996a2e08a3",
+"name": "県立碧南工業高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-1ef006538b",
+"name": "安城市立桜林小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-73700eb97c",
+"name": "西尾市立吉田小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-3fe0e41e23",
+"name": "町立一色東部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-bc163f96a8",
+"name": "岡崎市立六ツ美中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-38be915799",
+"name": "岡崎市立六ツ美中部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-2fa2ac47bb",
+"name": "市立南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-ccedd8ed4b",
+"name": "市立高取小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-fd9ea96bad",
+"name": "白浜小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-7f1466d5c6",
+"name": "安城市立祥南小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-9260573b18",
+"name": "高浜市立港小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b7cbab3017",
+"name": "県立吉良高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-ee7d22f8f8",
+"name": "県立高浜高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-812f0e5508",
+"name": "町立一色中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-ca76cb7a3e",
+"name": "安城市立安城西部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-5dccd9b6be",
+"name": "町立豊坂小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-0666a4ec87",
+"name": "市立高浜小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b9d0eae3fd",
+"name": "安城市立安祥中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-728c5fc2d2",
+"name": "愛知県立安城高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-e0bec082b1",
+"name": "市立翼小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-85d8fcf3b4",
+"name": "安城市立高棚小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-a97722435a",
+"name": "市立高浜中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-f76cd6a4e4",
+"name": "安城市立安城西中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-d751f971ef",
+"name": "町立幡豆小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-9620d7516d",
+"name": "安城市立安城南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-d6da0db5ad",
+"name": "愛知学泉大学附属幼稚園",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-b356bd4701",
+"name": "安城市立安城南部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-c4cf5825b8",
+"name": "岡崎市立福岡中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-bf92ca4b4b",
+"name": "岡崎市立福岡小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-81db9a8313",
+"name": "町立幡豆中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-4f9cf77198",
+"name": "市立六ッ美北中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-09c74fb870",
+"name": "市立吉浜小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-992dfe13b9",
+"name": "市立六ッ美北部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-08b40dbaca",
+"name": "安城市立錦町小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-3c70487adf",
+"name": "町立幸田中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-7c0ae54cf7",
+"name": "市立六ッ美西部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-d7e6973d05",
+"name": "亀崎小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-ff70d29d10",
+"name": "町立北部中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-a366e06904",
+"name": "私立安城学園高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-7505cc6492",
+"name": "愛知学泉短期大学附属幼稚園",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-a1dbce238b",
+"name": "幸田町立南部中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-448013bdc2",
+"name": "県立幸田高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-106273fb72",
+"name": "岡崎市立岡崎小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-f3b6fd105a",
+"name": "町立中央小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-933ea6e091",
+"name": "安城市立三河安城小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-4f7e24be74",
+"name": "町立荻谷小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-2bb9c1a6b4",
+"name": "町立幸田小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-2a9d0ece2d",
+"name": "亀崎中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-ba2dceef19",
+"name": "安城市立桜町小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b57b85e3e8",
+"name": "さくら小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-102e22f4ae",
+"name": "乙川東小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b74d61bbb7",
+"name": "市立矢作南小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-79aa54e145",
+"name": "刈谷市立小垣江東小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-e7a226b76f",
+"name": "乙川中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-7bbacd291a",
+"name": "市立安城東部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-6b3d8a8adf",
+"name": "乙川小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-8ad9fccf9c",
+"name": "岡崎市立翔南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-f5c1b8f479",
+"name": "町立深溝小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-184612430d",
+"name": "市立依佐美中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-26a8b396c0",
+"name": "町立坂崎小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-14cd89c456",
+"name": "安城市立安城中部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-847f7c85f7",
+"name": "日本福祉大学半田キャンパス",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-2820f1afb9",
+"name": "町立東幡豆小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-d785b250fc",
+"name": "岡崎市立上地小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-f276dd4c76",
+"name": "愛知県立安城農林高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-e361b036ca",
+"name": "市立城南小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-49336bfcf3",
+"name": "市立朝日中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-f4814ff005",
+"name": "半田小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-a2afd53ce7",
+"name": "半田東高校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-58b4dd5ed7",
+"name": "刈谷市立朝日小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-ab267e38ef",
+"name": "有脇小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-81d4cc4c3e",
+"name": "愛知県立安城東高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-74bb1bb9f1",
+"name": "安城市立二本木小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-d4f68523da",
+"name": "安城市立安城北中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-6e566552a2",
+"name": "成岩小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-82ee132f8a",
+"name": "安城市立新田小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-c7ffc1e945",
+"name": "岡崎市立羽根小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-6d81a82cbb",
+"name": "横川小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-e6e9c5069b",
+"name": "刈谷市立東刈谷小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-ea70c3a20f",
+"name": "刈谷市立小垣江小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-65b94f10d7",
+"name": "安城市立梨の里小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b4acc39747",
+"name": "町立武豊小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b0b14013d9",
+"name": "半田商業高校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-c2797da437",
+"name": "岡崎市立南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-f075fc1687",
+"name": "愛知県立岡崎工科高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-772576dae2",
+"name": "成岩中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-7e33c411de",
+"name": "町立藤江小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-6d477f1043",
+"name": "半田中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-28b778cd41",
+"name": "市立竜南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-f7d7c58ae0",
+"name": "刈谷市立双葉小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-6e15a35ffd",
+"name": "岡崎市立小豆坂小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-f43e779348",
+"name": "愛知工科大学高度交通システム(ITS)研究所",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-0c8ef17bdd",
+"name": "市立六名小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-bdf1fb5bf7",
+"name": "半田高校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-ef09794e78",
+"name": "愛知工科大学（工学部）",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-8181ef98f0",
+"name": "町立衣浦小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-9dad71b598",
+"name": "町立生路小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-5a58b04029",
+"name": "愛知工科大学自動車短期大学",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-f51a7ad386",
+"name": "県立東浦高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-e71c0bde6f",
+"name": "市立形原北小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-3ad7e11d94",
+"name": "町立武豊中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-96f1988f12",
+"name": "雁宿小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b0b14f0030",
+"name": "安城市立作野小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-acb0d37f9b",
+"name": "安城市立篠目中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-8f84d7de31",
+"name": "半田農業高校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-cc4634d9b5",
+"name": "岡崎市立矢作中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-ea50e806fc",
+"name": "半田市立花園小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-7a8f2c74ae",
+"name": "市立形原中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-bf896e837a",
+"name": "安城市立今池小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-c5386cd318",
+"name": "国立愛知教育大学附属岡崎中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-feea64365e",
+"name": "市立矢作西小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-cb8ac82ea0",
+"name": "岡崎市立竜海中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-c8cc010703",
+"name": "岡崎市立緑丘小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-562f1c0c56",
+"name": "町立富貴中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-75af109885",
+"name": "町立東部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-4d62575049",
+"name": "知立市立南小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-a9611155c8",
+"name": "私立光ヶ丘女子高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-36e16ab1f0",
+"name": "町立富貴小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-0b70d1a97e",
+"name": "半田工業高校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-d7bcc0bc6c",
+"name": "岡崎市立竜美丘小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b603e4f012",
+"name": "岩滑小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-232c2b6ddf",
+"name": "岡崎市立矢作東小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b953784fa9",
+"name": "半田市立青山中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-d0a63e5dc9",
+"name": "愛知県立刈谷東高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-1e734f45ad",
+"name": "宮池小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-92a912334f",
+"name": "総合研究大学院大学",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-5b2f25e97a",
+"name": "知立市立知立南中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
+},
+{
+"id": "poi-school-4d539b01a9",
+"name": "愛知県立岡崎高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-24da41bc3d",
+"name": "市立形原小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-2412840099",
+"name": "愛知県立農業大学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "uni"
+},
+{
+"id": "poi-school-27700c3fce",
+"name": "市立塩津小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-0680a88bb9",
+"name": "刈谷市立衣浦小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-b1a584089b",
+"name": "町立南部小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-efb5cb2dde",
+"name": "安城市立志貴小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+}
+]

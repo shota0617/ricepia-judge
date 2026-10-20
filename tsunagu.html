@@ -34,7 +34,9 @@ button{font-family:inherit;cursor:pointer;}
 #top{position:absolute;left:0;right:0;top:0;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;background:linear-gradient(rgba(0,0,0,.6),transparent);font-size:14px;z-index:3;}
 .dot{width:10px;height:10px;border-radius:50%;background:#9a9a7a;display:inline-block;}
 .dot.on{background:#7cc48e;} .dot.wait{background:#e0b050;animation:pulse 1.4s infinite;}
-#gear{margin-left:auto;background:rgba(0,0,0,.35);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:50%;}
+#topR{margin-left:auto;display:flex;align-items:center;gap:12px;}
+#recDot{width:10px;height:10px;border-radius:50%;background:#ff3b30;box-shadow:0 0 0 3px rgba(255,59,48,.25);animation:pulse 1.6s infinite;}
+#gear{background:rgba(0,0,0,.35);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:50%;}
 #waiting{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;z-index:1;}
 #waiting .msg{font-size:20px;font-weight:700;line-height:1.6;}
 #waiting .sub{font-size:13px;color:#bdbda0;line-height:1.8;}
@@ -71,7 +73,7 @@ button{font-family:inherit;cursor:pointer;}
     <div id="waiting"><div class="spinner"></div><div class="msg" id="waitMsg">準備中…</div><div class="sub" id="waitSub"></div><button class="big" id="zoomHint" hidden>つながらないときは Zoom で</button></div>
     <button class="big" id="tapAudio" hidden>🔊 タップして音を出す</button>
     <video id="self" autoplay playsinline muted></video>
-    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><span id="muteTag" hidden>🔇 ミュート中</span><button id="gear" title="設定">⚙</button></div>
+    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><span id="muteTag" hidden>🔇 ミュート中</span><span id="topR"><span id="recDot" title="録音・文字起こし中（ミーティングの「履歴」に保存）" hidden></span><button id="gear" title="設定">⚙</button></span></div>
   </div>
   <div id="bar">
     <button class="cb" id="micBtn" title="マイク">🎤<small>マイク</small></button>
@@ -110,7 +112,7 @@ const seatOf = id => Number(String(id).slice(ROOM.length + 1)) || 0;
 const DEFAULT_ZOOM = "https://zoom.us/j/5440010563"; // らいすぴあのZoom（パーソナルミーティングID 544 001 0563）
 const LS = "ricepia_tsunagu_zoom";
 
-const S = {seat:0, peer:null, local:null, calls:new Map(), streams:new Map(), stopped:false, retryT:0, hintT:0, wake:null, toastT:0, zoom:""};
+const S = {seat:0, peer:null, local:null, calls:new Map(), streams:new Map(), data:new Map(), stopped:false, retryT:0, hintT:0, wake:null, toastT:0, zoom:""};
 
 function toast(msg, ms){
   const t = $("#toast"); t.textContent = msg; t.hidden = false;
@@ -137,6 +139,7 @@ function render(){
     $("#waiting").hidden = true; clearTimeout(S.hintT); $("#zoomHint").hidden = true;
     keepAwake();
   } else if(!S.stopped && S.seat) waiting("ほかの端末がこのページを開くと、自動でつながります", "最大3台まで入れます");
+  recSync();
 }
 /* page dots: which device is on screen; tap a dot to jump */
 const pageNow = () => { const g = $("#grid"); return g.clientWidth ? Math.round(g.scrollLeft / g.clientWidth) : 0; };
@@ -182,6 +185,7 @@ function toggle(kind){
   const t = S.local && (kind === "audio" ? S.local.getAudioTracks()[0] : S.local.getVideoTracks()[0]);
   if(!t){ toast(kind === "audio" ? "マイクが使えません" : "カメラが使えません"); return; }
   t.enabled = !t.enabled; paintButtons();
+  if(kind === "audio") sttSync();
 }
 
 /* ---------- room ---------- */
@@ -196,6 +200,7 @@ function entry(){
 function choose(muted){
   $("#entry").hidden = true;
   S.startMuted = muted;
+  recAudioContext(); // created inside the tap so the browser lets it run
   join();
 }
 async function join(){
@@ -233,6 +238,7 @@ function takeSeat(n){
   });
 }
 function bind(p){
+  p.on("connection", c => { const s = seatOf(c.peer); if(S.stopped || !s || s > SEATS){ c.close(); return; } dataConn(c); });
   p.on("call", call => {
     const s = seatOf(call.peer);
     if(S.stopped || !s || s > SEATS || call.peer === p.id){ call.close(); return; } // only the room's seats
@@ -266,6 +272,11 @@ function callAll(){
     const c = S.peer.call(id, S.local);
     if(c){ c._out = true; use(c); }
   }
+  // a text channel to each seat, for sharing the transcript
+  for(let n = 1; n <= SEATS; n++){
+    const id = seatId(n);
+    if(n !== S.seat && !S.data.has(id)) dataConn(S.peer.connect(id, {reliable:true}));
+  }
   // catch a device that opened while our calls were in flight (or a sleeping tablet that woke up)
   S.retryT = setTimeout(callAll, 15000);
 }
@@ -291,6 +302,7 @@ function use(c){
 }
 function leaveSeat(){
   S.calls.forEach(c => { try{ c.close(); }catch(e){} }); S.calls.clear(); S.streams.clear();
+  S.data.forEach(c => { try{ c.close(); }catch(e){} }); S.data.clear();
   try{ S.peer && S.peer.destroy(); }catch(e){} S.peer = null; S.seat = 0;
   render();
 }
@@ -302,6 +314,167 @@ function hangUp(){
   if(S.wake){ S.wake.release().catch(() => {}); S.wake = null; }
   waiting("通話を切りました", "もう一度つなぐときは下の「つなぐ」を押してください", "off");
   $("#hangBtn").className = "cb go"; $("#hangBtn").innerHTML = "📞<small>つなぐ</small>";
+}
+
+/* ---------- 記録：録音＋文字起こし（つながっている間は自動。ミーティングの「履歴」に保存） ----------
+   Stored exactly like meeting.html does (localStorage "rmt_meetings", IndexedDB "rmt_audio"), so the records
+   show up in ミーティング → 履歴 / 要望分析, and an interrupted recording is stitched back there.
+   Every device keeps its own complete record: it records everyone's mixed audio, transcribes its own voice
+   and shares those lines with the others over a data channel. A record is split every hour. */
+const REC_KEY = "rmt_meetings", SEGMENT_MS = 60 * 60 * 1000, AUDIO_DAYS = 7, TEXT_DAYS = 60;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const R = {rec:null, ac:null, dest:null, srcs:new Map(), mr:null, mime:"", chunks:[], pending:[], part:0, flushT:0, segT:0, saveT:0,
+  sr:null, srRun:false, srFails:0, seq:0};
+const devName = n => "端末" + n;
+const pad2 = n => String(n).padStart(2, "0");
+
+function loadRecs(){ try{ return JSON.parse(localStorage.getItem(REC_KEY)) || []; }catch(e){ return []; } }
+let quotaWarned = 0;
+function saveRec(rec){
+  const list = loadRecs(), i = list.findIndex(m => m.id === rec.id);
+  if(i >= 0) list[i] = rec; else list.unshift(rec);
+  try{ localStorage.setItem(REC_KEY, JSON.stringify(list.slice(0, 200))); return true; }
+  catch(e){ if(Date.now() - quotaWarned > 60000){ quotaWarned = Date.now(); toast("記録を保存できません（端末の容量不足）。ミーティングの「履歴」で古い記録を消してください", 6000); } return false; }
+}
+const saveSoon = () => { clearTimeout(R.saveT); R.saveT = setTimeout(() => R.rec && saveRec(R.rec), 800); };
+
+/* IndexedDB (same database as meeting.html) */
+let dbp = null;
+const db = () => dbp || (dbp = new Promise((res, rej) => {
+  const r = indexedDB.open("rmt_audio", 1);
+  r.onupgradeneeded = () => r.result.createObjectStore("audio");
+  r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+}));
+const idb = (fn) => db().then(d => new Promise((res, rej) => { const t = d.transaction("audio", "readwrite"); fn(t.objectStore("audio")); t.oncomplete = res; t.onerror = t.onabort = () => rej(t.error); })).catch(() => {});
+const audioPut = (k, v) => idb(st => st.put(v, k));
+const audioDel = id => idb(st => { st.delete(id); st.delete(IDBKeyRange.bound(id + ":", id + ":\uffff")); });
+
+function recAudioContext(){
+  try{ if(!R.ac) R.ac = new (window.AudioContext || window.webkitAudioContext)(); R.ac.resume().catch(() => {}); }catch(e){}
+}
+function mixIn(key, stream){
+  if(!R.mr || !R.dest || R.srcs.has(key) || !stream || !stream.getAudioTracks().length) return;
+  try{ const src = R.ac.createMediaStreamSource(new MediaStream(stream.getAudioTracks())); src.connect(R.dest); R.srcs.set(key, src); }catch(e){}
+}
+function flushParts(){
+  if(!R.pending.length || !R.rec) return;
+  const blob = new Blob(R.pending, {type:R.mime}); R.pending = [];
+  audioPut(R.rec.id + ":part:" + String(R.part++).padStart(6, "0"), blob);
+}
+/** keep the record in step with the room: start when someone is connected, stop when nobody is */
+function recSync(){
+  const on = S.streams.size > 0 && !S.stopped;
+  if(on && !R.rec) recStart();
+  else if(!on && R.rec) recStop();
+  if(R.rec){ S.streams.forEach((st, id) => mixIn(id, st)); R.rec.participants["s" + S.seat] = {name:devName(S.seat), role:""}; S.streams.forEach((st, id) => { R.rec.participants["s" + seatOf(id)] = {name:devName(seatOf(id)), role:""}; }); }
+  $("#recDot").hidden = !R.rec;
+}
+function recStart(){
+  const now = Date.now(), d = new Date(now);
+  R.rec = {id:"m_tsunagu_" + now + "_" + S.seat, code:"", source:"tsunagu", role:"host",
+    title:"つなぐ " + (d.getMonth() + 1) + "/" + d.getDate() + " " + pad2(d.getHours()) + ":" + pad2(d.getMinutes()),
+    customer:"", startedAt:now, endedAt:null, participants:{}, lines:[], chat:[], notes:"", analysis:null};
+  saveRec(R.rec);
+  // audio: everyone's voices mixed
+  try{
+    recAudioContext();
+    R.dest = R.ac.createMediaStreamDestination();
+    R.mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"].find(t => window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) || "";
+    R.mr = new MediaRecorder(R.dest.stream, Object.assign({audioBitsPerSecond:32000}, R.mime ? {mimeType:R.mime} : {}));
+    R.mime = R.mr.mimeType || R.mime || "audio/webm";
+    R.chunks = []; R.pending = []; R.part = 0; R.srcs.clear();
+    R.mr.ondataavailable = e => { if(e.data && e.data.size){ R.chunks.push(e.data); R.pending.push(e.data); } };
+    R.audioStart = now;
+    audioPut(R.rec.id + ":meta", {startedAt:now, mime:R.mime});
+    R.mr.start(1000);
+    const mic = S.local && S.local.getAudioTracks()[0];
+    if(mic) mixIn("me", new MediaStream([mic]));
+    clearInterval(R.flushT); R.flushT = setInterval(flushParts, 10000);
+  }catch(e){ R.mr = null; }
+  clearInterval(R.segT); R.segT = setInterval(() => { if(R.rec && Date.now() - R.rec.startedAt > SEGMENT_MS){ recStop(); recSync(); } }, 60000);
+  sttSync();
+}
+function recStop(){
+  const rec = R.rec, mr = R.mr, chunks = R.chunks, mime = R.mime, start = R.audioStart;
+  R.rec = null; R.mr = null; R.chunks = []; R.pending = [];
+  clearInterval(R.flushT); clearInterval(R.segT); clearTimeout(R.saveT);
+  sttSync();
+  rec.endedAt = Date.now();
+  const finish = async () => {
+    R.srcs.forEach(s => { try{ s.disconnect(); }catch(e){} }); R.srcs.clear();
+    const blob = new Blob(chunks, {type:mime});
+    if(blob.size > 2000){
+      await audioDel(rec.id); await audioPut(rec.id, blob);
+      rec.audio = {startedAt:start, mime, size:blob.size, sec:Math.round((rec.endedAt - start) / 1000), timing:"end"};
+    } else await audioDel(rec.id);
+    if(rec.lines.length || rec.audio) saveRec(rec);
+    else { const list = loadRecs().filter(m => m.id !== rec.id); try{ localStorage.setItem(REC_KEY, JSON.stringify(list)); }catch(e){} }
+  };
+  if(mr && mr.state !== "inactive"){ mr.onstop = finish; try{ mr.stop(); }catch(e){ finish(); } } else finish();
+  $("#recDot").hidden = true;
+}
+function recPagehide(){
+  if(!R.rec) return;
+  try{ if(R.mr) R.mr.requestData(); }catch(e){}
+  flushParts(); // the pieces already saved are stitched together the next time ミーティング is opened
+  R.rec.endedAt = Date.now(); saveRec(R.rec);
+}
+/** Old records are trimmed so a tablet left connected all day doesn't fill up. */
+function recCleanup(){
+  const now = Date.now(), list = loadRecs(); let changed = false;
+  const keep = list.filter(m => {
+    if(m.source !== "tsunagu") return true;
+    if(now - m.startedAt > TEXT_DAYS * 864e5){ audioDel(m.id); changed = true; return false; }
+    if(m.audio && now - m.startedAt > AUDIO_DAYS * 864e5){ audioDel(m.id); m.audio = null; changed = true; }
+    return true;
+  });
+  if(changed) try{ localStorage.setItem(REC_KEY, JSON.stringify(keep)); }catch(e){}
+}
+
+/* transcript lines: my own voice (speech recognition) + lines sent by the other devices */
+function addLine(l){
+  if(!R.rec || !l.text || R.rec.lines.some(x => x.id === l.id)) return;
+  R.rec.lines.push(l); saveSoon();
+}
+function dataConn(c){
+  if(!c) return;
+  c.on("open", () => { const old = S.data.get(c.peer); if(old && old !== c && old.open) return; S.data.set(c.peer, c); });
+  c.on("data", d => {
+    if(!d || d.t !== "line" || !R.rec) return;
+    const n = seatOf(c.peer);
+    addLine({id:c.peer + "-" + String(d.id || "").slice(-40), at:Date.now(), who:devName(n), role:"", pid:c.peer, text:String(d.text || "").slice(0, 2000)});
+  });
+  c.on("close", () => { if(S.data.get(c.peer) === c) S.data.delete(c.peer); });
+  c.on("error", () => {});
+}
+function sttSync(){
+  const mic = S.local && S.local.getAudioTracks()[0];
+  const want = !!(SR && R.rec && mic && mic.enabled && !S.stopped);
+  if(want && !R.srRun) sttRun();
+  if(!want && R.sr){ const r = R.sr; R.sr = null; R.srRun = false; r.onend = null; try{ r.stop(); }catch(e){} }
+}
+function sttRun(){
+  const r = new SR();
+  r.lang = "ja-JP"; r.continuous = true; r.interimResults = false;
+  r.onresult = e => {
+    R.srFails = 0;
+    for(let i = e.resultIndex; i < e.results.length; i++){
+      const res = e.results[i], text = (res[0] && res[0].transcript || "").trim();
+      if(!res.isFinal || !text) continue;
+      const id = "l" + (++R.seq) + "-" + Date.now().toString(36);
+      addLine({id:seatId(S.seat) + "-" + id, at:Date.now(), who:devName(S.seat), role:"", pid:seatId(S.seat), text});
+      S.data.forEach(c => { try{ if(c.open) c.send({t:"line", id, text}); }catch(x){} });
+    }
+  };
+  r.onerror = e => {
+    // silence ("no-speech") just restarts; only real failures count toward giving up
+    if(e.error === "network" || e.error === "audio-capture") R.srFails++;
+    if(e.error === "not-allowed" || e.error === "service-not-allowed" || R.srFails >= 4){
+      R.srGaveUp = true; toast("この端末では文字起こしができませんでした（録音は続けます）", 5000);
+    }
+  };
+  r.onend = () => { R.srRun = false; if(R.sr === r && !R.srGaveUp) setTimeout(sttSync, R.srFails ? 1500 * R.srFails : 300); };
+  try{ r.start(); R.sr = r; R.srRun = true; }catch(e){ R.srRun = false; }
 }
 
 /* ---------- Zoom backup ---------- */
@@ -356,8 +529,9 @@ document.addEventListener("visibilitychange", () => {
 });
 window.addEventListener("online", () => { if(!S.stopped && (!S.peer || S.peer.destroyed)) takeSeat(1); });
 // closing the page frees our seat right away and tells the others
-window.addEventListener("pagehide", () => { try{ S.calls.forEach(c => c.close()); S.peer && S.peer.destroy(); }catch(e){} });
+window.addEventListener("pagehide", () => { recPagehide(); try{ S.calls.forEach(c => c.close()); S.peer && S.peer.destroy(); }catch(e){} });
 
+recCleanup();
 if(location.hash) history.replaceState(null, "", location.pathname); // old setup links (#k=…) are no longer needed
 S.zoom = loadZoom();
 $("#entryOn").onclick = () => choose(false);

@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>らいすぴあ つなぐ</title>
-<meta name="description" content="らいすぴあの店舗どうしをビデオ通話でつなぐページ。開くだけで、最大3台がひとつの部屋に入ります。"/>
+<meta name="description" content="らいすぴあの店舗どうしをビデオ通話でつなぐページ。開くだけで、最大5台がひとつの部屋に入ります。"/>
 <meta name="robots" content="noindex,nofollow"/>
 <meta name="theme-color" content="#1c1c14"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -102,11 +102,11 @@ button{font-family:inherit;cursor:pointer;}
 
 <script>
 "use strict";
-/* らいすぴあ つなぐ — one shared room, up to 3 devices, nothing to set up.
-   Each device takes the first free seat "<ROOM>-1/2/3" on the PeerJS server and calls the other seats;
+/* らいすぴあ つなぐ — one shared room, up to 5 devices, nothing to set up.
+   Each device takes the first free seat "<ROOM>-1…5" on the PeerJS server and calls the other seats;
    whoever opens later makes the calls, and both ends of a doubled call keep the one the lower seat started. */
 const $ = s => document.querySelector(s);
-const ROOM = "ricepia-tsunagu-room", SEATS = 3;
+const ROOM = "ricepia-tsunagu-room", SEATS = 5;
 const seatId = n => ROOM + "-" + n;
 const seatOf = id => Number(String(id).slice(ROOM.length + 1)) || 0;
 const DEFAULT_ZOOM = "https://zoom.us/j/5440010563"; // らいすぴあのZoom（パーソナルミーティングID 544 001 0563）
@@ -138,8 +138,25 @@ function render(){
     $("#state").textContent = (n + 1) + "台でつながっています";
     $("#waiting").hidden = true; clearTimeout(S.hintT); $("#zoomHint").hidden = true;
     keepAwake();
-  } else if(!S.stopped && S.seat) waiting("ほかの端末がこのページを開くと、自動でつながります", "最大3台まで入れます");
+  } else if(!S.stopped && S.seat) waiting("ほかの端末がこのページを開くと、自動でつながります", "最大" + SEATS + "台まで入れます");
   recSync();
+  capVideo();
+}
+/** Every device sends its video to each of the others, so lower the quality per connection as the room fills up
+    (keeps a 5-device room within what a tablet and a shop's line can carry). */
+function capVideo(){
+  const n = S.streams.size, max = n <= 1 ? 1500000 : n === 2 ? 1000000 : n === 3 ? 700000 : 500000;
+  S.calls.forEach(c => {
+    const pc = c.peerConnection; if(!pc) return;
+    pc.getSenders().forEach(sd => {
+      if(!sd.track || sd.track.kind !== "video" || !sd.getParameters) return;
+      const p = sd.getParameters();
+      if(!p.encodings || !p.encodings.length) p.encodings = [{}];
+      if(p.encodings[0].maxBitrate === max) return;
+      p.encodings[0].maxBitrate = max;
+      sd.setParameters(p).catch(() => {});
+    });
+  });
 }
 /* page dots: which device is on screen; tap a dot to jump */
 const pageNow = () => { const g = $("#grid"); return g.clientWidth ? Math.round(g.scrollLeft / g.clientWidth) : 0; };

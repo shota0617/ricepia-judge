@@ -10,7 +10,7 @@
 # - 軽トラ（4方向）・たからばこ・コンバイン（4方向）：nishio-go/maptiles/sprites.png（10×1、背景なし）
 # - 町を走る乗り物：nishio-go/maptiles/vehicles.png（4×8、背景なし。列は 上・右・下・左、行は VEHICLE_ROWS の順）
 # - 建物の屋根：nishio-go/maptiles/roofs.png（32×1。瓦・金属・陸屋根。pixel.js が建物のまとまりごとに同じ屋根をえらぶ）
-# - 線路：nishio-go/maptiles/rail.png（35×1。となりの線路へつながる向き16通り・2つの端をむすぶ10通り・重ねる部品8つとバラスト。pixel.js がまわりのマスから えらぶ）
+# - 線路：nishio-go/maptiles/rail.png（41×1。となりの線路へつながる向き16通り・2つの端をむすぶ10通り・重ねる部品8つとバラスト・複線の帯のななめ6つ。pixel.js がまわりのマスから えらぶ）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 #        乗り物だけ：python tools/blender/maptiles.py train car boat → python3 tools/blender/maptiles-sheets.py vehicles
 import os
@@ -398,9 +398,9 @@ def vehicles():
     print('vehicles.png', os.path.getsize(os.path.join(OUT, 'vehicles.png')))
 
 
-# 線路：nishio-go/maptiles/rail.png（35×1）。0〜15 ＝ つながる向き mask（1 上・2 右・4 下・8 左）、16〜25 ＝ 2つの端をむすぶ線路（maptiles.py の RAIL_EXTRA）、
-# 26〜33 ＝ まん中から1つの端へ向かう部品（背景なし）、34 ＝ バラストだけ
-RAIL_TILES = 35
+# 線路：nishio-go/maptiles/rail.png（41×1）。0〜15 ＝ つながる向き mask（1 上・2 右・4 下・8 左）、16〜25 ＝ 2つの端をむすぶ線路（maptiles.py の RAIL_EXTRA）、
+# 26〜33 ＝ まん中から1つの端へ向かう部品（背景なし）、34 ＝ バラストだけ、35〜40 ＝ 複線の帯のななめ（maptiles.py の RAIL_SPILL）
+RAIL_TILES = 41
 RAIL_PAL = {'balast': '#857d72', 'balastS': '#a29a8c', 'makuragi': '#5a3f28', 'rail': '#dfe3e6'}
 
 

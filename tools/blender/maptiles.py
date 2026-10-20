@@ -11,7 +11,7 @@
 # - 町を走る乗り物：赤い電車（先頭・なか）・乗用車・漁船を4方向ずつ（背景なし）
 # - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
 # - 道：ふつうの道・大きな道・小道 × となりの道へつながる向き16通り × 2（何もなし・小物）。つながっていない辺に縁石・側溝・白線・草のへり
-# - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り。枕木・レール・バラスト
+# - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り、重ねる部品8つ、複線の帯のななめ6つ。枕木・レール・バラスト
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -601,6 +601,9 @@ RAIL_EXTRA = [('SW', 'NE'), ('NW', 'SE'), (1, 'SE'), (1, 'SW'), (2, 'NW'), (2, '
 # 番号 26〜33：まん中から1つの端へ向かう線路だけ（背景なし）。34：バラストだけ。ほかの組み合わせ（3つ以上の端・となり合う角どうし）は、34 の上に 26〜33 を重ねて描く
 RAIL_PORTS = [1, 2, 4, 8, 'NE', 'SE', 'SW', 'NW']
 RAIL_ARM0, RAIL_BASE = 16 + len(RAIL_EXTRA), 16 + len(RAIL_EXTRA) + len(RAIL_PORTS)
+# 番号 35〜40：複線・構内の帯のななめの線路（16・17）に、となりのマスの平行な線路が角をかすめる所も描いたもの（角のレールが切れないように）
+#   35〜37：左下から右上 ＋ 左上の角・右下の角・両方、38〜40：左上から右下 ＋ 右上の角・左下の角・両方。shift：平行な線路をよこにずらす量
+RAIL_SPILL = [(('SW', 'NE'), (-1,)), (('SW', 'NE'), (1,)), (('SW', 'NE'), (-1, 1)), (('NW', 'SE'), (1,)), (('NW', 'SE'), (-1,)), (('NW', 'SE'), (-1, 1))]
 RAIL_G, TIE_W, TIE_L, RAIL_W = 0.19, 0.09, 0.62, 0.075   # レールの太さは 16×16 で1点より太く（細いと縦のレールが消える）
 
 
@@ -638,6 +641,12 @@ def rail(mask):
 
     port = lambda x: RAIL_CORNER[x] if isinstance(x, str) else (RAIL_ARMS[x][0] * 0.5, RAIL_ARMS[x][1] * 0.5)
     if mask == RAIL_BASE:   # バラストだけ
+        return dict(target=(0, 0, 0))
+    if mask > RAIL_BASE:   # 帯のななめの線路 ＋ となりの平行な線路（角をかすめる分）
+        (a, b), shifts = RAIL_SPILL[mask - RAIL_BASE - 1]
+        for sh in (0, *shifts):
+            p0, p1 = port(a), port(b)
+            track((p0[0] + sh, p0[1]), (p1[0] + sh, p1[1]), (0.2, 0.5, 0.8))
         return dict(target=(0, 0, 0))
     if mask >= RAIL_ARM0:   # まん中から1つの端へ（レールは まん中の手前から。重ねたとき まん中で つながるように）
         p = port(RAIL_PORTS[mask - RAIL_ARM0])
@@ -777,7 +786,7 @@ def main():
     jobs += [(sp, (k,)) for sp, (_, n) in SPRITES.items() for k in range(n)]
     jobs += [(v, (*([k] if n > 1 else []), d)) for v, (_, n) in VEHICLES.items() for k in range(n) for d in range(4)]
     jobs += [('roof', (0, g)) for g in range(2)] + [('roof', (1, g)) for g in range(2)] + [('roof', (2, g)) for g in range(4)]
-    jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1)]
+    jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1 + len(RAIL_SPILL))]
     jobs += [('road', (kd, m, k)) for kd in ROAD_KINDS for m in range(16) for k in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:

@@ -1119,9 +1119,9 @@ function loadMapTiles() {
     MT.spriteReq = true;
     get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
   }
-  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。つながる向きの絵35枚（rail.png。railIndex）。季節で変わらない）
+  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。つながる向きの絵41枚（rail.png。railIndex）。季節で変わらない）
     MT.railReq = true;
-    get('rail', () => true, img => { MT.rail = sliceSheet(img, 35, 1); });
+    get('rail', () => true, img => { MT.rail = sliceSheet(img, 41, 1); });
   }
   if (!MT.roadReq) {   // 道（Blender のアスファルト・縁石・側溝・白線、小道の土と草のへり。roadIndex。季節で変わらない）
     MT.roadReq = true;
@@ -1269,10 +1269,32 @@ const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号
 // 線路のマスの絵（rail.png の番号）。0〜15：上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）
 // 16〜25：45度くらいの線路で、マスが角だけで接するとき（ななめのとなりが線路で、そのあいだの2マスはどちらも線路でない）
 //   16 左下から右上・17 左上から右下、18〜25 辺のまん中から反対側の角（上→右下・上→左下・右→左上・右→左下・下→右上・下→左上・左→右上・左→右下）。tools/blender/maptiles.py の RAIL_EXTRA と同じ順
-// 26〜33：まん中から1つの端へ向かう部品（上・右・下・左・右上・右下・左下・左上。背景なし）、34：バラストだけ
+// 26〜33：まん中から1つの端へ向かう部品（上・右・下・左・右上・右下・左下・左上。背景なし）、34：バラストだけ、35〜40：複線の帯のななめ（railBandSpill）
 // どの1枚にもあてはまらない つながり（角が2つ以上の分かれ道など）は、端の番号の配列を返し、34 の上に部品を重ねて描く
 const RAIL_PAIR = { '4,6': 16, '5,7': 17, '0,5': 18, '0,6': 19, '1,7': 20, '1,6': 21, '2,4': 22, '2,7': 23, '3,4': 24, '3,5': 25 };
+// 複線・駅の構内のように線路のマスが2〜3マスの帯になっている所（2×2 がぜんぶ線路）では、上下左右のつながりで選ぶと分かれ道だらけになる。
+// そこは まわり5×5の線路のマスの並ぶ向きから、横・縦・ななめ のまっすぐな線路を描く（となりのマスと平行な線路になり、複線に見える）
+function railBandIndex(x, y) {
+  const L = (a, b) => codeAt(a, b) === C.L;
+  if (![[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([a, b]) => L(x + a, y + b) && L(x + a + 1, y + b) && L(x + a, y + b + 1) && L(x + a + 1, y + b + 1))) return -1;
+  let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (L(x + i, y + j)) { n++; sx += i; sy += j; sxx += i * i; syy += j * j; sxy += i * j; }
+  const cxx = sxx / n - (sx / n) ** 2, cyy = syy / n - (sy / n) ** 2, cxy = sxy / n - (sx / n) * (sy / n);
+  if (Math.abs(cxx - cyy) < 0.05 && Math.abs(cxy) < 0.05) return -1;   // 向きが決まらない（かたまり）
+  const deg = ((Math.atan2(2 * cxy, cxx - cyy) / 2) * 180 / Math.PI + 180) % 180;   // 0 横・90 縦・45 右下がり・135 右上がり（画面の下が y の正）
+  return deg < 22.5 || deg >= 157.5 ? 10 : deg < 67.5 ? 17 : deg < 112.5 ? 5 : 16;
+}
+// 帯のななめの線路は角を通るので、となりのマスの平行な線路のレールが このマスの角をかすめる。となりも同じ向きの帯なら、その分も描いた絵（35〜40）にする
+function railBandSpill(x, y, band) {
+  const same = (a, b) => railBandIndex(a, b) === band;
+  if (band === 16) { const nw = same(x - 1, y) || same(x, y - 1), se = same(x + 1, y) || same(x, y + 1); return nw && se ? 37 : se ? 36 : nw ? 35 : 16; }
+  const ne = same(x + 1, y) || same(x, y - 1), sw = same(x - 1, y) || same(x, y + 1);
+  return ne && sw ? 40 : sw ? 39 : ne ? 38 : 17;
+}
 function railIndex(x, y) {
+  const band = railBandIndex(x, y);
+  if (band === 16 || band === 17) return railBandSpill(x, y, band);
+  if (band >= 0) return band;
   const L = (a, b) => codeAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
   const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0);
   const ports = [up, rt, dn, lf, !up && !rt && L(x + 1, y - 1), !dn && !rt && L(x + 1, y + 1), !dn && !lf && L(x - 1, y + 1), !up && !lf && L(x - 1, y - 1)]
@@ -1281,6 +1303,26 @@ function railIndex(x, y) {
   if (!corners.length) return m;
   if (ports.length === 1) return corners[0] === 4 || corners[0] === 6 ? 16 : 17;   // 角が1つだけ：まっすぐ反対の角へ
   return RAIL_PAIR[ports.join()] || ports;
+}
+// 踏切：道に上書きされて線路のマスが切れている所（道が3マス以内で、両がわに同じ向きへ続く線路がある）は、道の上にレールを重ねる。
+// 返すのは rail.png の「まん中から端へ」の部品2つ（26〜33）。平行に走る線路のあいだの道に はしごを描かないよう、線路がその向きへ続くことも確かめる
+const RAIL_X_DIRS = [[0, 1, 26, 28], [1, 0, 27, 29], [1, -1, 30, 32], [1, 1, 31, 33]];   // [dx, dy, 端の部品（-dy がわ… 上・右・右上・右下）, 反対がわ]
+function railCrossing(x, y) {
+  const L = (a, b) => codeAt(a, b) === C.L, Rd = (a, b) => ROAD_ROW[codeAt(a, b)] !== undefined;
+  for (const [dx, dy, pa, pb] of RAIL_X_DIRS) {
+    const end = s => {   // s の向きへ道をたどり、線路に着いたら道の数を返す（着かなければ -1）
+      const fx = dx * s, fy = dy * s, fwd = fx && fy ? [[fx, fy], [fx, 0], [0, fy]] : [[fx, fy], [fx - fy, fy + fx], [fx + fy, fy - fx]];   // その先へ続く向き（まっすぐ・45度まで）
+      for (let k = 1; k <= 3; k++) {
+        const a = x + dx * s * k, b = y + dy * s * k;
+        if (L(a, b)) return fwd.some(([u, v]) => L(a + u, b + v)) ? k - 1 : -1;
+        if (!Rd(a, b)) return -1;
+      }
+      return -1;
+    };
+    const f = end(-1), g = f < 0 ? -1 : end(1);
+    if (g >= 0 && f + g + 1 <= 3) return [pa, pb];
+  }
+  return null;
 }
 // 道のマスの絵（road.png の 行・列）。行：0 ふつうの道・1 大きな道・2 小道。列：となりの道（どの道・線路の踏切）へつながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物
 // 小物（マンホール・補修のあと）は8マスに1つくらい、小道の水たまりは24マスに1つくらい。つながっていない辺に縁石・側溝・白線・草のへりが描いてある
@@ -4573,7 +4615,11 @@ function frame(now) {
       if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
       else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
     }
-    else if (MT.road && ROAD_ROW[code] !== undefined) ctx.drawImage(MT.road[ROAD_ROW[code]][roadIndex(code, tx, ty)], X, Y, T, T);   // 道は つながる向きの絵（ふちに縁石・白線・草）
+    else if (MT.road && ROAD_ROW[code] !== undefined) {   // 道は つながる向きの絵（ふちに縁石・白線・草）。踏切ではレールを重ねる
+      ctx.drawImage(MT.road[ROAD_ROW[code]][roadIndex(code, tx, ty)], X, Y, T, T);
+      const xr = MT.rail && railCrossing(tx, ty);
+      if (xr) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+    }
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);

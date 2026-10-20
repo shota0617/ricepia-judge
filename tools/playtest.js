@@ -66,9 +66,13 @@ async function walkTo(page, id) {
   for (const k of plan.keys) { await page.keyboard.press(k); await page.waitForTimeout(15); }
   await page.waitForTimeout(500);
   if (id === 'chest') {   // たからばこは近づくと開く：ポイントとまめちしきの知らせが出るか
+    // ようこそ たからばこ では、はじめの1枚を3枚から えらぶ窓が出る（2枚目をえらぶ）
+    await page.waitForTimeout(800);
+    const picks = await page.$$('[data-pick-dot]'), first = { n: picks.length, id: null };
+    if (picks.length) { first.id = Number(await picks[1].getAttribute('data-pick-dot')); await picks[1].click(); await page.waitForTimeout(600); }
     // まめちしき：新しいまちメモが1つ増え、文字を多めに出すときは 💡 の文、文字を少なく（ふだん）のときは本の札（文は きろく の まちメモ に入る）
     const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, book: !!r.querySelector('img[alt^="📖"]'), facts: nishioGo.state.facts.length }; });
-    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: /たからばこ/.test(popup.text) && popup.facts > facts0 && (/💡/.test(popup.text) || popup.book) };
+    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, first, reached: /たからばこ/.test(popup.text) && popup.facts > facts0 && (/💡/.test(popup.text) || popup.book) };
   }
   const spin = await page.evaluate(() => !document.getElementById('spinBtn').hidden && document.getElementById('spinName').textContent);
   return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: spin === plan.name };
@@ -156,6 +160,7 @@ async function walkTo(page, id) {
   await shot(page, '02-operate-start');
   R.checks.chestsNearby = await page.evaluate(() => nishioPixel.chests.length);
   R.walk.push(await walkTo(page, 'chest'));
+  R.checks.firstPickN = R.walk[0].first && R.walk[0].first.n; R.checks.firstPickId = R.walk[0].first && R.walk[0].first.id;
   R.checks.welcomeBag = await page.evaluate(() => (nishioGo.state.bags || []).map(b => b.km).join(','));   // はじめての たからばこ では必ず 1km の おみやげ袋
   // ふつうの地図のタップのような瞬間移動（歩く地図の1歩でない移動）では、袋は進まない（歩いた距離には入る）。行って、もとの所へ戻る
   R.checks.teleportNoBag = await page.evaluate(() => {
@@ -216,6 +221,9 @@ async function walkTo(page, id) {
   await page.click('[data-tab=log]'); await page.waitForTimeout(400); await shot(page, '06-log');
   R.checks.quests = await page.evaluate(() => [...document.querySelectorAll('#questList li')].map(li => (li.classList.contains('done') && !li.innerText.startsWith('✅') ? '✅ ' : '') + li.innerText.replace(/\s+/g, ' ')));   // 文字を少なく（ふだん）では ✅ のかわりに星の絵なので、達成は class で見る
   R.checks.facts = await page.evaluate(() => document.getElementById('factCount').textContent);
+  // 絵帳：まだの題材は影と「どこで見つかるか」の手がかり。えらんだ はじめの1枚が絵帳に入っている
+  R.checks.dotHints = await page.evaluate(() => document.querySelectorAll('#dotMotifs .hint').length);
+  R.checks.firstPickKept = await page.evaluate(id => nishioGo.state.dots.includes(id), R.checks.firstPickId);
   await page.evaluate(() => document.getElementById('badgeHead').scrollIntoView()); await page.waitForTimeout(300); await shot(page, '07-badges');   // バッジは きろく の下
   await page.click('[data-tab=map]'); await page.waitForTimeout(300);
   R.checks.operateFinal = await state(page);
@@ -257,6 +265,8 @@ async function walkTo(page, id) {
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');
   need(typeof c.weekTheme === 'string' && c.weekTheme, '今週のテーマが決まらない');
+  need(c.firstPickN === 3 && c.firstPickKept === true, 'ようこそ たからばこ で はじめの1枚を3枚から えらべないか、えらんだ絵が絵帳に入らない');
+  need(c.dotHints > 0, '絵帳の まだの題材に、どこで見つかるかの手がかりが出ない');
   need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');
   need(Array.isArray(c.quests) && c.quests.length === 4 && c.quests.some(q => q.startsWith('✅')), '今日のクエストが出ないか、1つも達成されない');
   need(/^[1-9]\d*\/[1-9]\d*$/.test(c.facts || ''), 'まめちしきが集まらない');

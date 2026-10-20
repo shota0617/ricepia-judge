@@ -612,3 +612,17 @@ body.jump-open{overflow:hidden}
 .dot-grid figure.kira figcaption::before{content:'✨キラ ';color:#b07800;font-weight:700}
 @keyframes kiraShine{0%{background-position:0% 50%}100%{background-position:100% 50%}}
 @media (prefers-reduced-motion:reduce){.reward .rw.hero.kira .frame{animation:none}}
+/* 絵帳の影と手がかり・はじめの1枚・先週のまとめ・キラの時間 */
+.dot-motifs li.pic img.shadow{filter:grayscale(1) blur(3px) brightness(.9);opacity:.45;box-shadow:0 0 0 2px #ddd6c2}   /* まだの題材：ぼんやりした絵（何の絵かは分からない） */
+.dot-motifs li small.hint{display:block;font-size:10px;line-height:1.3;color:#8a6a2a}
+.simple .dot-motifs li.pic small.hint{max-width:96px}
+.pick-first h4{margin:0 0 4px;font-size:16px}
+.pick-first p{margin:0 0 8px;font-size:12px;opacity:.85}
+.pick-first .pick3{display:flex;gap:8px;justify-content:center}
+.pick-first .pick3 button{flex:1;max-width:110px;background:#fffdf4;border:2px solid #e9c46a;border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#3a2a10;font-size:11px;line-height:1.3;cursor:pointer}
+.pick-first .pick3 button img{width:84px;height:84px;image-rendering:pixelated;border-radius:6px}
+.pick-first .pick3 .stars{transform:scale(.7);margin:-4px 0}
+.card.bags .lastweek,.card.bags .kirahour{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.card.bags .lastweek span{flex-basis:100%;font-size:13px}
+.card.bags .kirahour small{flex-basis:100%;color:var(--sub);font-size:12px}
+.card.bags .kirahour.now b{color:#b07800}

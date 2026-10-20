@@ -652,6 +652,7 @@ function trackWalk(p) {
 
 function addWalk(d, bag = true) {
   dayState().walked += d;
+  weekStat().m += d;
   S.walked += d;
   S.walkCarry += d;
   if (bag) walkBags(d);   // おみやげ袋は、歩いた距離のポイントの1日の上限に届いても進む
@@ -766,7 +767,7 @@ function checkin() {
 
   const v = S.visits[s.id];
   const lines = [];
-  let total = 0;
+  let total = 0, special = null;
   const base = ptsOf(s), theme = weekTheme(), inTheme = inThemeOf(s, theme);
   total += base; lines.push(`${iconOf(s)} スポット +${base}`);
   if (inTheme) { total += base; lines.push(`🎌 今週は${theme.icon}${theme.name}の週（ポイント2倍） +${base}`); }
@@ -781,6 +782,7 @@ function checkin() {
     S.streak.max = Math.max(S.streak.max || 0, S.streak.days);
     const b = CFG.pts.daily + Math.min(S.streak.days - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
     total += b; lines.push(`📅 今日のはじめて（${S.streak.days}日連続） +${b}`);
+    if (S.streak.days % 7 === 0) special = streakDot();   // 7日連続ごとに特別な1枚
   }
   // キャンペーン中は、当店でのチェックインに1日1回ボーナス
   if (s.shop) for (const c of liveCampaigns()) {
@@ -802,6 +804,7 @@ function checkin() {
   if (s.featured && s.area && !day.areas.includes(s.area)) day.areas.push(s.area);
   if (s.shop) day.shop = 1;
   S.checkins++;
+  weekStat().spots++;
   track('checkin', { spot: s.name, featured: !!s.featured, first: !v, theme: inTheme ? theme.key : '', mode: demo ? 'play' : 'walk' });
   // おみやげ袋：はじめての注目スポットと、今週のテーマの名所では必ず（持てる数に空きがあれば。テーマの名所の袋は1日3つまで：公園の週は公園が千か所あるので）
   const themeBag = inTheme && (day.themeBags || 0) < BAG.themeDaily;
@@ -818,7 +821,8 @@ function checkin() {
 
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
-  showReward(total, s.name, s.shop ? [...lines, '🍚 当店に来てくれてありがとう！'] : [...lines, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', dot);
+  const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
+  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot);
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -1001,7 +1005,9 @@ function tryChest() {
   const pick = pickFact(c), newFact = !!pick && !S.facts.includes(pick);
   track('chest_open', { mode: demo ? 'play' : 'walk' });
   if (newFact) S.facts.push(pick);
-  const dot = gainDot(c.lat, c.lng, 'chest:' + c.id);
+  // ようこそ たからばこ（歩く地図）では、はじめの1枚を3枚から えらぶ（「自分の1枚」から絵帳を始める）。ほかは場所で決まる1枚
+  const cands = welcome ? firstCands(c) : [];
+  const dot = cands.length >= 2 ? null : gainDot(c.lat, c.lng, 'chest:' + c.id);
   // その記録（あるいて移動／操作して移動）ではじめて袋が出る たからばこ は、必ず 1km（あるいて移動には ようこそ たからばこ がないので、記録で見る）
   const firstBag = !S.bagFirst;
   const bag = firstBag ? giveBag(c.lat, c.lng, welcome ? 'welcome' : 'first', 1) : Math.random() < BAG.chestRate ? giveBag(c.lat, c.lng, 'chest') : null;
@@ -1009,10 +1015,47 @@ function tryChest() {
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
-  showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...(newFact ? ['📖 まちメモ +1'] : []), ...dotLines(dot), ...(bag ? [`🎒 おみやげ袋（${bag.km}km 歩くと開く）`] : []), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dot);
+  const show = dt => showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...(newFact ? ['📖 まちメモ +1'] : []), ...dotLines(dt), ...(bag ? [`🎒 おみやげ袋（${bag.km}km 歩くと開く）`] : []), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dt);
+  if (cands.length >= 2) pickFirst(cands, show); else show(dot);
   updateQuests(1500);
   refreshNearby();
 }
+// はじめの1枚の候補：その場所で出る絵から、題材のちがう3枚（歩く地図で、絵が出る所のときだけ）
+function firstCands(c) {
+  const D = window.NISHIO_DOTS, out = [];
+  if (!D || !document.body.classList.contains('px')) return out;
+  for (let j = 0; j < 30 && out.length < 3; j++) {
+    const id = D.pick(c.lat, c.lng, `first:${c.id}:${j}`, new Date());
+    if (id == null) break;
+    if (!out.some(x => D.motifOf(x) === D.motifOf(id))) out.push(id);
+  }
+  return out;
+}
+let firstPick = null;   // { cands, done }：えらんでいる途中
+function pickFirst(cands, done) {
+  const D = window.NISHIO_DOTS;
+  firstPick = { cands, done };
+  const open = () => {
+    if (!firstPick || firstPick.cands !== cands) return;
+    $('pxInfoBody').innerHTML = `<div class="pick-first"><h4>${PIA('card', '')} はじめの1枚を えらぼう</h4><p>えらんだ絵が、西尾ドット絵帳の1枚目になります</p>
+      <div class="pick3">${cands.map(id => { const f = D.info(id); return `<button type="button" data-pick-dot="${id}"><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96"/>${starRow(dotStars(f))}<span>${esc(f.title)}</span></button>`; }).join('')}</div></div>`;
+    $('pxInfo').hidden = false;
+  };
+  if (D.ready && !D.ready(cands)) D.load(cands).then(open); else open();
+}
+function finishFirst(id) {
+  const p = firstPick;
+  if (!p) return;
+  firstPick = null;
+  const dot = addDot(p.cands.includes(id) ? id : p.cands[0]);
+  track('first_dot_pick', { picked: p.cands.indexOf(dot.id), mode: demo ? 'play' : 'walk' });
+  save();
+  if (!$('pxInfo').hidden) $('pxInfo').hidden = true;
+  p.done(dot);
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pick-dot]'); if (b) finishFirst(Number(b.dataset.pickDot)); });
+// えらばずに窓を閉じたら（とじる・まわりをタップ）、はじめの1枚にする
+new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });
 
 /* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
    「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
@@ -1288,7 +1331,11 @@ function refreshNearby() {
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
   const wt = weekTheme(), wk = String(weekNo());
-  if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) { store.set('nsg_theme_wk', wk); setTimeout(() => toast(`${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋`), 2500); }   // 週に1回
+  if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
+    store.set('nsg_theme_wk', wk);
+    const lw = lastWeekStat();
+    setTimeout(() => toast(`${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
+  } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toast('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }
   checkGuide();   // 着いたら先に次の行き先へ進めてから、線・矢印・カードを描く（古い行き先を指さないように）
   let best = null, nearest = null, nearestD = Infinity;
   for (const s of spots) {
@@ -1599,16 +1646,33 @@ function gainDot(lat, lng, seed, area) {
 // キラ：もらうたびに 1/32 で、その絵が金色にかがやく「キラ」になる（もう持っている絵でも。キラは絵ごとに1回）。
 // どの絵が出るかは場所・季節・天気で決まるので、運の大当たりはここだけ（docs/location-game-essence.md）
 const KIRA_RATE = 1 / 32;
-function addDot(id) {
+// キラの時間：毎週土曜の10時台（日本時間）は キラが出やすい（2倍）。「この時間だけ」の約束で、みんな同じ時間に遊ぶ理由に
+const kiraHour = (d = new Date()) => { const j = new Date(d.getTime() + 9 * 3600e3); return j.getUTCDay() === 6 && j.getUTCHours() === 10; };
+function addDot(id, forceKira) {   // forceKira：必ずキラに（7日連続のごほうび。もうキラを持っている絵ならふつう）
   const D = window.NISHIO_DOTS;
   if (!Array.isArray(S.dots)) S.dots = [];
   if (!Array.isArray(S.kira)) S.kira = [];
-  const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && Math.random() < KIRA_RATE;
-  if (fresh) S.dots.push(id);
+  const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && (forceKira || Math.random() < KIRA_RATE * (kiraHour() ? 2 : 1));
+  if (fresh) { S.dots.push(id); weekStat().dots++; }
   if (kira) S.kira.push(id);
   track('dot_get', { motif: D.info(id).motif, fresh, kira, mode: demo ? 'play' : 'walk' });
   return { id, fresh, kira };
 }
+// 7日連続（7日・14日…）のごほうび：まだ持っていない題材の、めずらしい天気（雪・満月・虹）のキラの絵。ふだんは場所で決まる絵を、場所によらず1枚
+function streakDot() {
+  const D = window.NISHIO_DOTS;
+  if (!D) return null;
+  const have = new Set((S.dots || []).map(id => D.motifOf(id))), all = D.MOTIFS.map((m, i) => i), pool = all.filter(i => !have.has(i));
+  const list = pool.length ? pool : all, m = list[Math.floor(Math.random() * list.length)];
+  return addDot(D.idOf(m, 4, Math.floor(Math.random() * 16), Math.floor(Math.random() * D.NCOMP)), true);
+}
+// 週の記録（月曜はじまり）：先週のまとめ を きろく に出す
+function weekStat() {
+  const n = weekNo();
+  if (!S.week || S.week.no !== n) { if (S.week) S.lastWeek = S.week; S.week = { no: n, m: 0, spots: 0, dots: 0 }; }
+  return S.week;
+}
+const lastWeekStat = () => { weekStat(); return S.lastWeek && S.lastWeek.no === weekNo() - 1 ? S.lastWeek : null; };
 function dotLines(dot) {
   const D = window.NISHIO_DOTS;
   if (!dot || !D) return [];
@@ -1696,7 +1760,15 @@ const THEMES = [
 const weekNo = (d = new Date()) => Math.floor((Math.floor((d.getTime() + 9 * 3600e3) / 86400000) + 3) / 7);   // 日本時間の週の番号（1970-01-01 は木曜なので +3 で月曜に変わる）
 const weekTheme = (d = new Date()) => THEMES[weekNo(d) % THEMES.length];
 const inThemeOf = (s, theme = weekTheme()) => !s.shop && theme.cats.includes(s.featured ? (s.kind || s.cat) : s.cat);
-let dotSel = null;   // 絵帳で開いている題材（null は、さいきんもらった絵）
+let dotSel = null;
+// 絵帳の手がかり：題材が出る地区と場所（dots.js の areas と lu。lu は国土数値情報の土地利用の1文字）
+const DOT_AREA = { nishio: '西尾', isshiki: '一色', kira: '吉良', hazu: '幡豆', sakushima: '佐久島' };
+const DOT_LU = { a: '田んぼ', b: '畑', c: '森', d: '野原', e: 'まちなか', f: '道ばた', g: '線路ぞい', h: '公園や境内', i: '川や池', j: '海辺', k: '海辺', l: 'ゴルフ場' };
+function dotHint(m) {
+  const as = (m.areas || []).filter(a => DOT_AREA[a]), where = as.length >= 5 ? '西尾市のどこか' : as.map(a => DOT_AREA[a]).join('・');
+  const lu = [...new Set([...(m.lu || '')].map(c => DOT_LU[c]).filter(Boolean))].slice(0, 2).join('・');
+  return `${where}${lu ? 'の ' + lu : ''}で 見つかる`;
+}   // 絵帳で開いている題材（null は、さいきんもらった絵）
 function renderDots(waited) {
   const D = window.NISHIO_DOTS, grid = $('dotGrid');
   if (!D || !grid) return;
@@ -1710,8 +1782,9 @@ function renderDots(waited) {
   const list = dotSel == null ? have.slice(-24).reverse() : have.filter(id => D.motifOf(id) === dotSel).sort((a, b) => a - b);
   const need = [...list, ...(simple() ? last.values() : [])];
   if (waited !== true && D.ready && !D.ready(need)) { D.load(need).then(() => renderDots(!D.ready(need))); return; }   // Blender の絵のシートを読んでから描く（読めたら、そのあいだに変わった分も見なおす。4秒で読めなければ前の描き方の絵）
-  if (simple()) $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="pic${dotSel === i ? ' on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}" title="${esc(m.name)}（${by.get(i) || 0}枚）">${by.has(i) ? `<img src="${D.dataUrl(last.get(i))}" alt="" width="72" height="72" loading="lazy"/>` : `<img class="pi art lock" src="nishio-go/art/lock.png" alt="まだ" width="48" height="48"/>`}<b>${by.has(i) ? esc(m.name) : '？'}</b><span class="wx">${[0, 1, 2, 3, 4].map(w => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}"></i>`).join('')}</span></button></li>`).join('');
-  else $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}"><span>${by.has(i) ? m.icon : '？'}</span><b>${esc(m.name)}</b><small>${WX_ICON.map((c, w) => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}">${c}</i>`).join('')} ${by.get(i) || 0}枚</small></button></li>`).join('');
+  // まだの題材は、絵の影と「どこで出るか」の手がかり（その場所へ行く理由になる）
+  if (simple()) $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="pic${dotSel === i ? ' on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}" title="${by.has(i) ? esc(m.name) : 'まだ：' + esc(dotHint(m))}（${by.get(i) || 0}枚）">${by.has(i) ? `<img src="${D.dataUrl(last.get(i))}" alt="" width="72" height="72" loading="lazy"/>` : `<img class="shadow" src="${D.dataUrl(D.idOf(i, 0, 5, 12))}" alt="まだ" width="72" height="72" loading="lazy"/>`}<b>${by.has(i) ? esc(m.name) : '？'}</b>${by.has(i) ? '' : `<small class="hint">${esc(dotHint(m))}</small>`}<span class="wx">${[0, 1, 2, 3, 4].map(w => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}"></i>`).join('')}</span></button></li>`).join('');
+  else $('dotMotifs').innerHTML = D.MOTIFS.map((m, i) => `<li class="${dotSel === i ? 'on' : ''}${by.has(i) ? '' : ' none'}"><button type="button" data-dotm="${i}"><span>${by.has(i) ? m.icon : '？'}</span><b>${esc(m.name)}</b>${by.has(i) ? '' : `<small class="hint">📍${esc(dotHint(m))}</small>`}<small>${WX_ICON.map((c, w) => `<i class="${wx.has(i) && wx.get(i).has(w) ? 'on' : ''}">${c}</i>`).join('')} ${by.get(i) || 0}枚</small></button></li>`).join('');
   $('dotNote').textContent = dotSel == null ? 'さいきんもらった絵（題材を押すと、その題材の絵を番号順に見られます）' : `${D.MOTIFS[dotSel].icon} ${D.MOTIFS[dotSel].name}（もう一度押すと、さいきんもらった絵にもどります）`;
   grid.innerHTML = list.length ? list.map(id => { const f = D.info(id); return `<figure${kira.has(id) ? ' class="kira" title="キラの絵"' : ''}><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96" loading="lazy"/><figcaption>No.${f.no}<br/>${dotSel == null ? esc(f.title) + '<br/>' : ''}${esc(f.label)}</figcaption></figure>`; }).join('')
     : `<p class="empty">${dotSel == null ? 'まだありません。西尾市の中で、たからばこを開けたり、スポットにチェックインしたりしてみよう' : 'この題材の絵は、まだありません'}</p>`;
@@ -2232,7 +2305,10 @@ function renderBags() {
   if (!el) return;
   const t = weekTheme(), bags = Array.isArray(S.bags) ? S.bags : [];
   const rows = bags.map((b, i) => { const pct = Math.round(b.walked / (b.km * 1000) * 100); return `<li><span class="ico">${PIA('bag', 'おみやげ袋')}</span><span class="main"><b>${b.km}km の袋${i ? '（つぎの番を待っています）' : '（歩くとたまります）'}</b><span class="bar"><i style="width:${i ? 0 : pct}%"></i></span></span><span class="num">${i ? '—' : `${Math.floor(b.walked / 100) / 10}/${b.km}km`}</span></li>`; }).join('');
-  el.innerHTML = `<p class="theme">${PIA('calendar', '今週のテーマ')} <b>今週は ${t.icon} ${esc(t.name)} の週</b><small>${esc(t.name)}でチェックインすると、スポットのポイントが2倍・おみやげ袋がもらえます（月曜に変わります）</small></p>
+  const lw = lastWeekStat();
+  el.innerHTML = `${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
+    <p class="theme">${PIA('calendar', '今週のテーマ')} <b>今週は ${t.icon} ${esc(t.name)} の週</b><small>${esc(t.name)}でチェックインすると、スポットのポイントが2倍・おみやげ袋がもらえます（月曜に変わります）</small></p>
+    <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
     <h4>${PIA('bag', '')} おみやげ袋 <small>${bags.length}/${BAG.max}</small></h4>
     <ul class="list">${rows || '<li class="empty">たからばこ・はじめての注目スポット・今週のテーマの名所で もらえます。歩くと開きます</li>'}</ul>`;
 }

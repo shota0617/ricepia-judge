@@ -8,6 +8,7 @@
 # - 茶畑・畑・砂浜・境内の砂利・草地：茶畑と畑と砂利はくり返す景色（となりとつながる）、砂浜と草地はマスの中の小物
 # - 水：さざ波の列をくり返す景色を3通り × 2コマ（波を半分ずらす）。町なかの地面：6通り（たいていは何もなく、ときどき小物）
 # - 軽トラ（4方向）・たからばこ：背景なし（地面を置かない）
+# - 町を走る乗り物：赤い電車（先頭・なか）・乗用車・漁船を4方向ずつ（背景なし）
 # - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
@@ -528,7 +529,67 @@ def chest(k):
     return dict(target=(0, 0, 0.18), scale=0.8)
 
 
+def turn(d):
+    """いま置いた立体ぜんぶを、上向き（北へ走る）から d の向きへ回す（0 上・1 右・2 下・3 左）"""
+    rot = -d * math.pi / 2
+    for o in bpy.data.objects:
+        if o.type != 'MESH':
+            continue
+        o.rotation_euler.z += rot
+        o.location.x, o.location.y = (o.location.x * math.cos(rot) - o.location.y * math.sin(rot), o.location.x * math.sin(rot) + o.location.y * math.cos(rot))
+
+
+def train(k, d):
+    """町を走る赤い電車の1両（1マスに1両）。k：0 先頭（前に運転席の窓とライト）・1 なか（屋根にパンタグラフ）。d：向き"""
+    box('body', 'denR', (0.4, 0.94, 0.24), (0, 0, 0.16), bevel=0.03)
+    box('obi', 'denW', (0.404, 0.94, 0.03), (0, 0, 0.12))                      # 白い帯
+    box('yane', 'denY', (0.18, 0.86, 0.03), (0, 0, 0.285))                     # 屋根のまん中は灰色（まわりは赤）
+    for x in (-0.201, 0.201):                                                  # 横の窓の列
+        box(f'mado{x}', 'mado', (0.01, 0.76, 0.07), (x, 0, 0.21))
+    if k == 0:
+        box('mae', 'mado', (0.3, 0.01, 0.09), (0, 0.471, 0.21))                # 運転席の窓
+        for x in (-0.13, 0.13):
+            box(f'raito{x}', 'raito', (0.06, 0.01, 0.03), (x, 0.472, 0.11))   # ライト
+    else:
+        box('pan', 'kuro', (0.22, 0.03, 0.05), (0, 0.1, 0.335))                # パンタグラフ
+        for y in (0.05, 0.15):
+            box(f'pan{y}', 'kuro', (0.02, 0.02, 0.06), (0, y, 0.33), (0.6 if y < 0.1 else -0.6, 0, 0))
+    turn(d)
+    return dict(target=(0, 0, 0.16), scale=1.12)
+
+
+def car(d):
+    """町を走る乗用車（色は シートにする段で 白・赤・青・銀・黄に）。d：向き"""
+    box('shatai', 'carB', (0.32, 0.6, 0.14), (0, 0, 0.1), bevel=0.04)
+    box('garasu', 'mado', (0.27, 0.32, 0.08), (0, -0.03, 0.21), bevel=0.02)   # 窓（屋根の下）
+    box('yane', 'carB', (0.26, 0.24, 0.03), (0, -0.04, 0.26), bevel=0.01)
+    for x in (-0.11, 0.11):
+        box(f'raito{x}', 'raito', (0.06, 0.01, 0.03), (x, 0.301, 0.12))
+        box(f'tail{x}', 'tail', (0.06, 0.01, 0.03), (x, -0.301, 0.12))
+    for i, (x, y) in enumerate(((-0.13, 0.18), (0.13, 0.18), (-0.13, -0.18), (0.13, -0.18))):   # タイヤは車体の内側（横から見て足のように出ない）
+        cyl(f'wa{i}', 'kuro', 0.045, 0.06, (x, y, 0.045), (0, math.pi / 2, 0), 10)
+    turn(d)
+    return dict(target=(0, 0, 0.14), scale=1.12)
+
+
+def boat(d):
+    """海や川をゆく小さな漁船（白い船体に青い線、うしろに操舵室）。d：向き"""
+    box('sentai', 'funeW', (0.3, 0.56, 0.12), (0, -0.06, 0.06))
+    box('hesaki', 'funeW', (0.212, 0.212, 0.12), (0, 0.22, 0.06), (0, 0, math.pi / 4))   # とがった へさき
+    box('sen', 'funeB', (0.304, 0.56, 0.025), (0, -0.06, 0.1))
+    box('sen2', 'funeB', (0.216, 0.216, 0.025), (0, 0.22, 0.1), (0, 0, math.pi / 4))
+    box('kanpan', 'kanpan', (0.26, 0.5, 0.01), (0, -0.04, 0.121))
+    box('soda', 'funeW', (0.2, 0.16, 0.14), (0, -0.18, 0.19), bevel=0.01)       # 操舵室
+    box('sodaM', 'mado', (0.16, 0.01, 0.05), (0, -0.099, 0.22))
+    box('yaneF', 'funeB', (0.22, 0.18, 0.02), (0, -0.18, 0.27))
+    cyl('masuto', 'kuro', 0.012, 0.18, (0, -0.2, 0.36), verts=6)
+    turn(d)
+    return dict(target=(0, 0, 0.12), scale=1.0)
+
+
 SPRITES = {'truck': (truck, 4), 'chest': (chest, 2), 'combine': (combine, 4)}
+# 町を走る乗り物（nishio-go/maptiles/vehicles.png）：電車の先頭・なか、漁船、乗用車 を4方向ずつ
+VEHICLES = {'train': (train, 2), 'car': (car, 1), 'boat': (boat, 1)}
 FIELD = {'tea': (tea, 3), 'veg': (veg, 4), 'sand': (sand, 4), 'gravel': (gravel, 3), 'grass': (grass, 6)}
 FRAME = {'cemetery', 'factory', 'hill', 'mountain'}
 MISC = {'park': park, 'greenhouse': greenhouse, 'cemetery': cemetery, 'factory': factory, 'hill': hill, 'mountain': mountain}
@@ -539,7 +600,7 @@ def render_one(kind, args, out):
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
             else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof'
-            else SPRITES[kind][0](*args) if kind in SPRITES
+            else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
     if kind in FRAME:   # 小物のマス：写るものの上下のまん中にカメラを向け、少し大きく写す（マスからはみ出さない大きさまで）
@@ -573,6 +634,7 @@ def main():
     jobs += [(f, (k,)) for f, (_, n) in FIELD.items() for k in range(n)]
     jobs += [('water', (k, f)) for k in range(3) for f in range(2)] + [('town', (k,)) for k in range(6)]
     jobs += [(sp, (k,)) for sp, (_, n) in SPRITES.items() for k in range(n)]
+    jobs += [(v, (*([k] if n > 1 else []), d)) for v, (_, n) in VEHICLES.items() for k in range(n) for d in range(4)]
     jobs += [('roof', (0, g)) for g in range(2)] + [('roof', (1, g)) for g in range(2)] + [('roof', (2, g)) for g in range(4)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:

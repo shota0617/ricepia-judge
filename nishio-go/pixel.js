@@ -1119,6 +1119,13 @@ function loadMapTiles() {
     MT.spriteReq = true;
     get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
   }
+  if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
+    MT.vehReq = true;
+    get('vehicles', () => true, img => {
+      const a = sliceSheet(img, 4, 8), row = r => a.slice(r * 4, r * 4 + 4);
+      MT.veh = { train: [row(0), row(1)], boat: row(2), car: [3, 4, 5, 6, 7].map(row) };
+    });
+  }
   if (!MT.waterReq) {   // 水（さざ波が2コマで動く）。季節で変わらないので1回だけ
     MT.waterReq = true;
     get('water', () => true, img => { const a = sliceSheet(img, 3, 2); MT.water = a.slice(0, 3).map((c, i) => [c, a[3 + i]]); });
@@ -4313,6 +4320,104 @@ function drawWeather(now, w, h, dpr, shadeOnly) {
   ctx.restore();
 }
 function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
+/* ---------- 町を走る乗り物（Blender の絵：tools/blender/maptiles.py → nishio-go/maptiles/vehicles.png） ----------
+   線路には赤い電車（4両）、道には乗用車、ひろい水の上には漁船。見えている所のまわり（画面の外）に出して、マスに沿って走らせる。
+   ただの景色なので、主人公や名所とはぶつからない。進む向きは trafficTurn（これまでの向きに近い向き・まっすぐ・その先も続く道を好む）。
+   行き止まりでは引き返す。動きをへらす設定（prefers-reduced-motion）のときは出さない */
+const VDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // 0 上・1 右・2 下・3 左
+const openWater = (x, y) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (codeAt(x + dx, y + dy) !== C.A) return false; return true; };
+const isRoad = c => c === C.R || c === C.H;
+// 踏切：線路のマスは道に上書きされて切れているので、線路のすぐそばの道のマスは電車も通れる（線路のマスを好む）
+const railOrCrossing = (x, y) => {
+  const c = codeAt(x, y);
+  if (c === C.L) return true;
+  if (!isRoad(c)) return false;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (codeAt(x + dx, y + dy) === C.L) return true;
+  return false;
+};
+const TRAFFIC = {   // ok：走れるマス、home：とくに好むマス、spawn：出してよいマス
+  train: { ok: railOrCrossing, home: (x, y) => codeAt(x, y) === C.L, max: 1, speed: 3.2, cars: 4, spawn: (x, y) => codeAt(x, y) === C.L },
+  car: { ok: (x, y) => isRoad(codeAt(x, y)), max: 6, speed: 2.2, cars: 1, spawn: () => true },
+  boat: { ok: (x, y) => codeAt(x, y) === C.A, max: 3, speed: 0.8, cars: 1, spawn: openWater },
+};
+const calmMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+let traffic = [], trafficSpawnT = 0;
+function trafficTurn(v, x, y) {   // (x, y) に着いたとき、次に進む向き（進めなければ -1）
+  // これまで進んできた向きの平均（heading）に近い向きを選ぶ。ななめの線路や道（マスの階段）でも行ったり来たりしない。
+  // まっすぐ・その先も続く道を少し好み、ゆらぎ（R）で ときどき曲がる。heading と逆の向きは、ほかに行けないときだけ
+  const K = TRAFFIC[v.kind], ok = d => K.ok(x + VDIRS[d][0], y + VDIRS[d][1]);
+  const far = d => K.ok(x + VDIRS[d][0] * 2, y + VDIRS[d][1] * 2), home = d => (K.home ? K.home(x + VDIRS[d][0], y + VDIRS[d][1]) : false);
+  let hx = VDIRS[v.dir][0], hy = VDIRS[v.dir][1];
+  for (const p of v.path.slice(0, 6)) { hx += VDIRS[p.d][0]; hy += VDIRS[p.d][1]; }
+  const hl = Math.hypot(hx, hy) || 1, dot = d => (VDIRS[d][0] * hx + VDIRS[d][1] * hy) / hl;
+  const back = (v.dir + 2) % 4, R = v.kind === 'train' ? 0.4 : 2;
+  let cand = [0, 1, 2, 3].filter(d => d !== back && ok(d));
+  if (cand.some(d => dot(d) >= -0.3)) cand = cand.filter(d => dot(d) >= -0.3);
+  if (!cand.length) return ok(back) ? back : -1;
+  let best = -1, bs = -Infinity;
+  for (const d of cand) {
+    const sc = dot(d) + (d === v.dir ? 0.3 : 0) + (far(d) ? 0.4 : 0) + (home(d) ? 1 : 0) + Math.random() * R;
+    if (sc > bs) { bs = sc; best = d; }
+  }
+  return best;
+}
+function spawnVehicle(kind, x, y) {
+  const K = TRAFFIC[kind], ok = K.ok;
+  const dirs = [0, 1, 2, 3].filter(d => ok(x + VDIRS[d][0], y + VDIRS[d][1]));
+  if (!dirs.length) return;
+  // path：いる場所のマスの列（先頭から）。d はそのマスへ入ってきた向き。うしろの車両は、うしろのマスにならべる
+  const path = [{ x, y, d: dirs[Math.floor(Math.random() * dirs.length)] }];
+  for (let i = 1; i < K.cars + 4; i++) {
+    const p = path[i - 1], back = (p.d + 2) % 4;
+    const nd = [back, (back + 1) % 4, (back + 3) % 4].find(d => ok(p.x + VDIRS[d][0], p.y + VDIRS[d][1]) && !path.some(q => q.x === p.x + VDIRS[d][0] && q.y === p.y + VDIRS[d][1]));
+    if (nd === undefined) { path.push({ ...p }); continue; }
+    path.push({ x: p.x + VDIRS[nd][0], y: p.y + VDIRS[nd][1], d: (nd + 2) % 4 });
+  }
+  traffic.push({ kind, path, dir: path[0].d, t: Math.random(), color: Math.floor(Math.random() * 5) });
+}
+function updateTraffic(dt, now, tx0, ty0, tx1, ty1) {
+  if (calmMotion || !MT.veh) { traffic = []; return; }
+  const M = 8;   // 画面の外のふち（このはばの中に出し、もっと外へ出たら消す）
+  traffic = traffic.filter(v => {
+    v.t += dt * TRAFFIC[v.kind].speed;
+    while (v.t >= 1) {
+      v.t -= 1;
+      const h = v.path[0], x = h.x + VDIRS[v.dir][0], y = h.y + VDIRS[v.dir][1];
+      v.path.unshift({ x, y, d: v.dir }); v.path.length = TRAFFIC[v.kind].cars + 4;
+      v.dir = trafficTurn(v, x, y);
+      if (v.dir < 0) return false;
+    }
+    const h = v.path[0];
+    return h.x > tx0 - M - 4 && h.x < tx1 + M + 4 && h.y > ty0 - M - 4 && h.y < ty1 + M + 4;
+  });
+  if (now - trafficSpawnT < 400) return;
+  trafficSpawnT = now;
+  for (const kind of Object.keys(TRAFFIC)) {
+    if (traffic.filter(v => v.kind === kind).length >= TRAFFIC[kind].max) continue;
+    for (let k = 0; k < 20; k++) {   // 画面の外のふちから、乗り物が走れるマスをさがす
+      const x = tx0 - M + Math.floor(Math.random() * (tx1 - tx0 + M * 2)), y = ty0 - M + Math.floor(Math.random() * (ty1 - ty0 + M * 2));
+      if (x >= tx0 - 1 && x <= tx1 && y >= ty0 - 1 && y <= ty1) continue;
+      if (TRAFFIC[kind].ok(x, y) && TRAFFIC[kind].spawn(x, y)) { spawnVehicle(kind, x, y); break; }
+    }
+  }
+}
+function drawTraffic(ox, oy, T, w, h) {
+  for (const v of traffic) {
+    const n = TRAFFIC[v.kind].cars, seg = j => (j === 0 ? v.dir : v.path[j - 1].d);
+    for (let k = n - 1; k >= 0; k--) {
+      const p = v.path[k], d = seg(k);
+      // 絵の向きは近くの4マスで多い向き（ななめの線路や道の階段で、1マスごとに向きがぱたぱた変わらないように）
+      const cnt = [0, 0, 0, 0];
+      for (let j = Math.max(0, k - 1); j <= k + 2; j++) cnt[seg(j)]++;
+      const face = cnt[d] >= Math.max(...cnt) ? d : cnt.indexOf(Math.max(...cnt));
+      const X = Math.round(ox + (p.x + VDIRS[d][0] * v.t) * T), Y = Math.round(oy + (p.y + VDIRS[d][1] * v.t) * T);
+      if (X > w || Y > h || X + T < 0 || Y + T < 0) continue;
+      const spr = v.kind === 'train' ? MT.veh.train[k === 0 ? 0 : 1] : v.kind === 'car' ? MT.veh.car[v.color] : MT.veh.boat;
+      ctx.drawImage(spr[face], X, Y, T, T);
+    }
+  }
+}
+
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
 
@@ -4394,6 +4499,9 @@ function frame(now) {
       if (land(codeAt(tx + 1, ty))) ctx.fillRect(X + T - u, Y, u, T);
     }
   }
+
+  updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
+  drawTraffic(ox, oy, T, w, h);
 
   // 主要な建物（同じ場所にスポットがあるときはスポットを優先）
   const spots = G.spots;
@@ -5292,5 +5400,5 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

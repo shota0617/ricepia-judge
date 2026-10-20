@@ -24,13 +24,17 @@ BASE = {'shrine': ['#5a6068', '#8a6a4a', '#c8382c'], 'temple': ['#4e535e', '#eee
         'view': ['#5a6068', '#f4f2ec', '#b08850'], 'church': ['#7a4a3a', '#f0ece4', '#6f8fa8']}
 BASE_OF = {'shrine': 'shrine', 'inari': 'shrine', 'temple': 'temple', 'station': 'station', 'castle': 'castle', 'museum': 'public', 'library': 'public',
            'townhall': 'public', 'art': 'public', 'aquarium': 'public', 'onsen': 'public', 'historic': 'historic', 'kofun': 'historic', 'statue': 'historic',
-           'view': 'view', 'hill': 'view', 'park': 'view', 'beach': 'view', 'church': 'church'}
+           'view': 'view', 'hill': 'view', 'park': 'view', 'beach': 'view', 'church': 'church',
+           'playpark': 'view', 'sports': 'view', 'pondpark': 'view', 'forest': 'view', 'garden': 'view', 'lighthouse': 'view'}
+YUGU = ['#d23a2e', '#2f74b8', '#f2c230', '#3f9a4a', '#e8781e', '#8a5ac8']   # 遊具の色
 TRAIN = {'meitetsu': ('#c8162a', '#f4f4f4'), 'jr': ('#c8ccd0', '#e8781e'), 'aikan': ('#c8ccd0', '#8cc63f')}
 
 pa.MATS.update({'gTree': '#4f9a3e', 'gTreeD': '#2f6b33', 'sugi': '#2c5a32', 'momiji': '#c8502e', 'sakura': '#f0b8c8', 'toro': '#a8a49a',
                 'ishi': '#8e8a80', 'asphalt': '#7a7c80', 'shibaG': '#6aa84a', 'kanban': '#f4f2e8', 'kanbanT': '#3a5a8a', 'kitsune': '#f4f0e6',
                 'senro': '#5a4a3a', 'rail': '#9aa0a8', 'umiB': '#3d86c6', 'nami': '#a8d8f0', 'yu': '#e8f4f8', 'kane': '#7a6a3a', 'juji': '#d8b048',
-                'ike': '#4aa3df', 'hasuH': '#4f9e3a', 'benchW': '#a06a3a', 'parasol2': '#2f74b8', 'sakana': '#f2a03a'})
+                'ike': '#4aa3df', 'hasuH': '#4f9e3a', 'benchW': '#a06a3a', 'parasol2': '#2f74b8', 'sakana': '#f2a03a',
+                'sunaba': '#e8d6a6', 'tetsu': '#9aa0a8', 'tsuchiG': '#c8a878', 'net': '#5a6068', 'line': '#f4f4f0', 'toire': '#d8d0c0',
+                'todai': '#f4f4f0', 'todaiR': '#d23a2e', 'teibo': '#b8b4ac', 'hashiR': '#c8382c'})
 
 
 def clamp_hex(h, lo=0, hi=255):
@@ -384,6 +388,148 @@ def m_statue(rng, R, W, A):
     return dict(target=(0, 0, 0.14), scale=0.9, el=rng.uniform(24, 30), az=rng.uniform(-40, -28), size=96)
 
 
+# ---------- 2回目：ふつうの公園・運動場・池・緑地・庭園・灯台 ----------
+def yugu(rng, n, x, y, kind):
+    """遊具（すべり台・ぶらんこ・ジャングルジム・砂場・シーソー・鉄棒）"""
+    c = f'yugu{n}'
+    pa.MATS[c] = rng.choice(YUGU)
+    if kind == 'slide':
+        box(f'sdT{n}', c, (0.08, 0.08, 0.012), (x, y, 0.14))
+        for dx in (-0.035, 0.035):
+            for dy in (-0.035, 0.035):
+                box(f'sdP{n}{dx}{dy}', 'tetsu', (0.008, 0.008, 0.14), (x + dx, y + dy, 0.07))
+        box(f'sdS{n}', c, (0.06, 0.20, 0.01), (x, y - 0.13, 0.075), (math.radians(-38), 0, 0))
+        for i in range(4):
+            box(f'sdL{n}{i}', 'tetsu', (0.06, 0.006, 0.006), (x, y + 0.05, 0.03 + i * 0.03))
+    elif kind == 'swing':
+        for dx in (-0.10, 0.10):
+            for dy in (-0.04, 0.04):
+                box(f'swP{n}{dx}{dy}', c, (0.01, 0.01, 0.17), (x + dx, y + dy * 0.5, 0.085), (math.copysign(0.25, dy), 0, 0))
+        box(f'swT{n}', c, (0.22, 0.012, 0.012), (x, y, 0.17))
+        for dx in (-0.05, 0.05):
+            box(f'swR{n}{dx}', 'tetsu', (0.004, 0.004, 0.11), (x + dx, y, 0.11))
+            box(f'swS{n}{dx}', 'benchW', (0.04, 0.025, 0.008), (x + dx, y, 0.05))
+    elif kind == 'jungle':
+        for i in range(3):
+            for j in range(3):
+                box(f'jgP{n}{i}{j}', c, (0.006, 0.006, 0.14), (x - 0.05 + i * 0.05, y - 0.05 + j * 0.05, 0.07))
+        for k in range(3):
+            z = 0.045 + k * 0.045
+            box(f'jgX{n}{k}', c, (0.11, 0.11, 0.004), (x, y, z))
+    elif kind == 'sand':
+        box(f'snB{n}', 'benchW', (0.18, 0.14, 0.03), (x, y, 0.015))
+        box(f'snS{n}', 'sunaba', (0.16, 0.12, 0.032), (x, y, 0.017))
+        sphere(f'snY{n}', 'sunaba', 0.03, (x + 0.03, y, 0.03), (1.2, 1, 0.6))
+    elif kind == 'seesaw':
+        box(f'ssB{n}', 'tetsu', (0.02, 0.03, 0.04), (x, y, 0.02))
+        box(f'ssI{n}', c, (0.24, 0.025, 0.01), (x, y, 0.045), (0, math.radians(rng.choice((-9, 9))), 0))
+    else:   # 鉄棒
+        for i in range(3):
+            box(f'tbP{n}{i}', 'tetsu', (0.008, 0.008, 0.07 + i * 0.02), (x - 0.08 + i * 0.08, y, (0.07 + i * 0.02) / 2))
+        for i in range(2):
+            box(f'tbB{n}{i}', c, (0.08, 0.005, 0.005), (x - 0.04 + i * 0.08, y, 0.07 + i * 0.02 + 0.005))
+
+
+def bench(n, x, y, rz=0.0):
+    box(f'bS{n}', 'benchW', (0.10, 0.03, 0.01), (x, y, 0.04), (0, 0, rz))
+    box(f'bB{n}', 'benchW', (0.10, 0.01, 0.03), (x - 0.015 * math.sin(rz), y + 0.015 * math.cos(rz), 0.06), (0, 0, rz))
+
+
+def m_playpark(rng, R, W, A):
+    ground('shibaG')
+    if rng.random() < 0.6:
+        box('hiroba', 'tsuchiG', (rng.uniform(0.40, 0.60), rng.uniform(0.30, 0.42), 0.006), (rng.uniform(-0.12, 0.12), rng.uniform(-0.1, 0.05), 0.003))
+    kinds = ['slide', 'swing', 'jungle', 'sand', 'seesaw', 'bar']
+    rng.shuffle(kinds)
+    slots = [(-0.22, 0.12), (0.18, 0.14), (-0.20, -0.14), (0.20, -0.12), (0.0, 0.0)]
+    rng.shuffle(slots)
+    for i in range(rng.randint(2, 4)):
+        yugu(rng, i, slots[i][0], slots[i][1], kinds[i])
+    for i in range(rng.randint(1, 2)):
+        bench(i, rng.choice((-0.36, 0.36)), rng.uniform(-0.28, 0.0) + i * 0.1, math.pi / 2 if rng.random() < 0.5 else 0)
+    if rng.random() < 0.35:   # トイレ
+        tx = rng.choice((-0.34, 0.34))
+        box('toire', 'toire', (0.12, 0.10, 0.10), (tx, 0.26, 0.05))
+        box('toireY', 'roofP', (0.14, 0.12, 0.012), (tx, 0.26, 0.106))
+    if rng.random() < 0.4:   # 時計の柱
+        cyl('tokeiP', 'tetsu', 0.006, 0.24, (0.36 * rng.choice((-1, 1)), -0.30, 0.12), verts=6)
+    trees(rng, rng.randint(2, 5), [(-0.40, 0.28), (0.40, 0.28), (-0.42, -0.04), (0.42, 0.0), (0.0, 0.32), (-0.2, 0.33)], ['round', 'round', 'sakura', 'pine'])
+    return dict(target=(0, 0, 0.08), scale=0.99, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)
+
+
+def m_sports(rng, R, W, A):
+    ground('shibaG')
+    box('ground2', 'tsuchiG', (0.80, 0.56, 0.006), (0, 0.02, 0.003))
+    if rng.random() < 0.5:   # 野球のバックネット
+        for i in range(5):
+            a = math.radians(-45 + i * 22.5)
+            box(f'net{i}', 'net', (0.10, 0.006, 0.16), (-0.30 + 0.12 * math.cos(a), 0.22 - 0.12 * math.sin(a) * -1, 0.08), (0, 0, -a))
+        for i in range(4):
+            box(f'base{i}', 'line', (0.02, 0.02, 0.008), (-0.25 + (i % 2) * 0.18 + (i // 2) * 0.12, 0.16 - (i % 2) * 0.12 - (i // 2) * 0.10, 0.008))
+    else:                    # テニスコートやサッカーの線
+        box('lineA', 'line', (0.60, 0.008, 0.008), (0, 0.24, 0.008))
+        box('lineB', 'line', (0.60, 0.008, 0.008), (0, -0.20, 0.008))
+        box('lineC', 'line', (0.008, 0.44, 0.008), (0, 0.02, 0.008))
+        for dx in (-0.30, 0.30):
+            box(f'goal{dx}', 'line', (0.012, 0.12, 0.07), (dx, 0.02, 0.035))
+    for dx in (-0.40, 0.40):
+        cyl(f'light{dx}', 'tetsu', 0.008, 0.40, (dx, 0.30, 0.20), verts=6)
+        box(f'lightH{dx}', 'line', (0.06, 0.02, 0.04), (dx, 0.30, 0.40))
+    bench(0, 0.1, -0.30)
+    trees(rng, rng.randint(1, 3), [(-0.42, -0.30), (0.42, -0.30), (0.0, 0.34)], ['round', 'sakura'])
+    return dict(target=(0, 0, 0.10), scale=0.99, el=rng.uniform(32, 38), az=rng.uniform(-40, -28), size=96)
+
+
+def m_pondpark(rng, R, W, A):
+    ground('shibaG')
+    px, py = rng.uniform(-0.08, 0.08), rng.uniform(-0.02, 0.08)
+    sphere('ike', 'ike', 0.22, (px, py, 0.0), (1.5, 1.0, 0.05))
+    sphere('kishi', 'ishi', 0.235, (px, py, -0.004), (1.5, 1.0, 0.04))
+    if rng.random() < 0.5:   # 橋
+        box('hashi', 'hashiR', (0.05, 0.30, 0.012), (px + 0.08, py, 0.03), (0.12, 0, 0))
+    if rng.random() < 0.5:   # はすの葉
+        for i in range(4):
+            sphere(f'hasu{i}', 'hasuH', 0.02, (px - 0.15 + i * 0.05, py - 0.06 + (i % 2) * 0.05, 0.012), (1, 1, 0.2))
+    if rng.random() < 0.4:   # 鳥（かも）
+        sphere('kamo', 'kitsune', 0.018, (px - 0.1, py + 0.05, 0.02), (1.4, 1, 0.8))
+    for i in range(rng.randint(1, 2)):
+        bench(i, -0.36 + i * 0.6, -0.30)
+    trees(rng, rng.randint(3, 6), [(-0.40, 0.26), (0.40, 0.26), (-0.42, -0.06), (0.42, -0.10), (0.1, 0.32), (-0.15, 0.32)], ['round', 'pine', 'sakura', 'momiji'])
+    return dict(target=(0, 0, 0.08), scale=0.99, el=rng.uniform(32, 38), az=rng.uniform(-40, -28), size=96)
+
+
+def m_forest(rng, R, W, A):
+    ground('shibaG')
+    box('komichi', 'tsuchiG', (0.08, 0.72, 0.006), (rng.uniform(-0.1, 0.1), 0, 0.003), (0, 0, rng.uniform(-0.4, 0.4)))
+    spots = [(x, y) for x in (-0.36, -0.18, 0.18, 0.36) for y in (-0.24, 0.0, 0.24)]
+    trees(rng, rng.randint(7, 11), spots, ['round', 'sugi', 'round', 'pine'], (0.7, 1.05))
+    bench(0, rng.choice((-0.06, 0.06)), -0.28)
+    return dict(target=(0, 0, 0.12), scale=0.99, el=rng.uniform(28, 34), az=rng.uniform(-40, -28), size=96)
+
+
+def m_garden(rng, R, W, A):
+    ground('jari')
+    sphere('ike', 'ike', 0.18, (-0.06, 0.04, 0.0), (1.6, 1.0, 0.05))
+    box('hashi', 'hashiR', (0.30, 0.05, 0.012), (-0.06, 0.04, 0.03), (0, 0.1, 0))
+    toro(0, 0.22, -0.18, 1.3)
+    for i in range(3):
+        sphere(f'ishi{i}', 'ishi', 0.04, (0.1 + i * 0.07, 0.24, 0.0), (1.3, 1, 0.6))
+    trees(rng, 4, [(-0.38, 0.26), (0.38, 0.26), (-0.40, -0.22), (0.36, 0.06)], ['pine', 'momiji', 'pine'])
+    return dict(target=(0, 0, 0.08), scale=0.99, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)
+
+
+def m_lighthouse(rng, R, W, A):
+    box('umi', 'umiB', (1.0, 0.8, 0.02), (0, 0, -0.01))
+    for i in range(3):
+        box(f'nami{i}', 'nami', (rng.uniform(0.15, 0.3), 0.012, 0.004), (rng.uniform(-0.35, 0.35), -0.3 + i * 0.25, 0.002))
+    box('teibo', 'teibo', (0.80, 0.10, 0.05), (0, -0.02, 0.025), (0, 0, rng.uniform(-0.3, 0.3)))
+    red = rng.random() < 0.5
+    cyl('todai', 'todaiR' if red else 'todai', 0.05, 0.30, (0.18, -0.02, 0.20), verts=12, r2=0.04)
+    box('todaiT', 'mado', (0.07, 0.07, 0.04), (0.18, -0.02, 0.37))
+    cyl('todaiY', 'todaiR' if not red else 'todai', 0.05, 0.03, (0.18, -0.02, 0.405), verts=12, r2=0.0)
+    return dict(target=(0, 0, 0.14), scale=0.95, el=rng.uniform(26, 32), az=rng.uniform(-40, -28), size=96)
+
+
 def build(e):
     rng = random.Random(e['id'])
     base = BASE[BASE_OF.get(e['k'], 'historic')]
@@ -416,6 +562,18 @@ def build(e):
         return m_beach(rng, *cols)
     if k == 'statue':
         return m_statue(rng, *cols)
+    if k == 'playpark':
+        return m_playpark(rng, *cols)
+    if k == 'sports':
+        return m_sports(rng, *cols)
+    if k == 'pondpark':
+        return m_pondpark(rng, *cols)
+    if k == 'forest':
+        return m_forest(rng, *cols)
+    if k == 'garden':
+        return m_garden(rng, *cols)
+    if k == 'lighthouse':
+        return m_lighthouse(rng, *cols)
     return m_historic(rng, *cols)
 
 
@@ -423,6 +581,8 @@ if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('-')]
     part = next((a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('--part=')), None)
     todo = [e for e in LIST if not args or e['id'] in args]
+    if '--new' in sys.argv:   # まだ絵のない名所だけ
+        todo = [e for e in todo if not os.path.exists(os.path.join(pa.OUT, e['id'] + '.png'))]
     if part:
         i, n = map(int, part.split('/'))
         todo = todo[i::n]

@@ -3,6 +3,8 @@
 # 名所の一覧は、ゲームを開いて nishioGo.spots から書き出したもの（id・名前・種類・型の絵のデータ・いまの 48×48 の絵の PNG）。
 # ・いまの絵がある名所（注目スポット・手描き・型の絵 ＝ 1000か所）と、絵がまだない注目スポットが対象（手で作った特大の絵がある所は除く）
 # ・形の種類は、型の絵の種類か spots の種類、それに名前（古墳・稲荷・港・海水浴場・灯台・山・観音・塔・教会・水族館など）で決める
+# ・2回目（--rest）：まだ特大の絵がない ほかのスポット（公園・史跡・山など）を、前の一覧のあとに足す（前の名所の行は変えない）。
+#   公園は名前で 遊具のある公園・運動場・池のある公園・緑地・庭園 に分ける
 # ・色：型の絵はそのデータ（写真から測った屋根・壁・差し色）、それ以外は いまの絵から測る（暗くくすんだ色を屋根、明るい色を壁、あざやかな色を差し色）
 import base64
 import io
@@ -54,6 +56,25 @@ def kind_of(x):
     return k
 
 
+def rest_kind(x):
+    n, c = x['name'], x.get('cat')
+    if c == 'park':
+        if any(w in n for w in ('運動', 'グラウンド', '球場', 'スポーツ', 'テニス', '野球')):
+            return 'sports'
+        if '庭園' in n:
+            return 'garden'
+        if '池' in n:
+            return 'pondpark'
+        if '緑地' in n or '森' in n:
+            return 'forest'
+        return 'playpark'
+    if '灯台' in n:
+        return 'lighthouse'
+    if c in ('view', 'sight') and any(w in n for w in ('山', '峰', '岳', '峠', '富士', 'ヒル', '丘')):
+        return 'hill'
+    return kind_of(x)
+
+
 def train_of(name):
     st = name.split('駅')[0].replace('JR', '').replace('名鉄', '').strip()
     return 'jr' if st in JR else 'aikan' if st in AIKAN else 'meitetsu'
@@ -83,8 +104,22 @@ def measure(png):
     return hexc(roof), hexc(wall), hexc({k: v for k, v in acc.items() if v >= 6})
 
 
-def main(src):
+def main(src, rest=False):
     items = json.load(open(src))
+    path = os.path.join(ROOT, 'tools', 'blender', 'giant-list.json')
+    if rest:
+        out = json.load(open(path))
+        have = {e['id'] for e in out} | HAND
+        for x in items:
+            if x['id'] in have:
+                continue
+            k = rest_kind(x)
+            e = {'id': x['id'], 'name': x['name'], 'k': k, 'c': [0, 0, 0]}
+            if k == 'station':
+                e['train'] = train_of(x['name'])
+            out.append(e)
+            have.add(x['id'])
+        return save(out, path)
     out = []
     for x in items:
         if x['id'] in HAND or not (x['w'] == 48 or x['featured']):
@@ -102,7 +137,10 @@ def main(src):
             e['train'] = train_of(x['name'])
         out.append(e)
     out.sort(key=lambda e: e['id'])
-    path = os.path.join(ROOT, 'tools', 'blender', 'giant-list.json')
+    save(out, path)
+
+
+def save(out, path):
     with open(path, 'w') as f:
         json.dump(out, f, ensure_ascii=False, indent=0)
     kinds = {}
@@ -112,4 +150,4 @@ def main(src):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main([a for a in sys.argv[1:] if not a.startswith('-')][0], '--rest' in sys.argv)

@@ -2181,12 +2181,15 @@ function introHero(waited) {
 document.addEventListener('DOMContentLoaded', introHero);
 
 /* はじめに */
-// 友だちのシェアから来た人（share.js が nsg_friend を立てる）：はじめて遊ぶときに +20pt（1回だけ）
+// 友だちのシェアから来た人（share.js が nsg_friend を立てる）：はじめて遊ぶときに +20pt（1回だけ）。
+// 遊びかた（setMode）を決めてから、ポイントを足して保存し、そのあとで「もらった」にする（とちゅうで閉じても なくならない）。知らせだけ少しあとに
 const FRIEND_BONUS = 20;
 function friendBonus() {
   if (store.get('nsg_friend', 0) !== 1) return;
+  gainPoints(FRIEND_BONUS); save();
   store.set('nsg_friend', 2);
-  setTimeout(() => { gainPoints(FRIEND_BONUS); save(); toast(`👋 友だちのシェアから来てくれた人に +${FRIEND_BONUS}pt`); track('friend_bonus', { mode: demo ? 'play' : 'walk' }); }, 1500);
+  track('friend_bonus', { mode: demo ? 'play' : 'walk' });
+  setTimeout(() => toast(`👋 友だちのシェアから来てくれた人に +${FRIEND_BONUS}pt`), 1500);
 }
 function begin(isDemo) {
   if (!store.get('nsg_started', false)) store.set('nsg_begin_t', Date.now());
@@ -2194,10 +2197,10 @@ function begin(isDemo) {
   store.set('nsg_started', true);
   track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
-  friendBonus();
   // 操作して遊ぶは、スティックで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
   if (isDemo && !document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
   setMode(isDemo);
+  friendBonus();
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')

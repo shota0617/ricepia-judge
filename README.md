@@ -144,6 +144,7 @@
 このリポジトリ（すべての履歴と、まだコミットしていない変更）を [restic](https://restic.net/) で暗号化してバックアップする。スクリプトは `tools/restic-backup.sh`。保存先はクラウドと外付けSSDの2か所にする（GitHub とあわせて3か所。3-2-1ルール）。
 
 - **クラウド（毎日自動）**：`.github/workflows/restic-backup.yml` が毎日 3:17 に動く。GitHub のシークレットに `RESTIC_REPOSITORY`（例 `s3:https://<アカウントID>.r2.cloudflarestorage.com/<バケット>`）と `RESTIC_PASSWORD`、保存先の鍵（R2・S3 は `RESTIC_AWS_ACCESS_KEY_ID`・`RESTIC_AWS_SECRET_ACCESS_KEY`、B2 は `B2_ACCOUNT_ID`・`B2_ACCOUNT_KEY`）を入れる。入れるまでは何もしない
+- **上限**：保存先が 8GB をこえたらバックアップを止め、Actions が失敗になって GitHub からメールが届く（Cloudflare R2 は請求の上限を決められないため。無料枠は 10GB）。変えるときは環境変数 `RESTIC_MAX_GB`（`0` で上限なし）
 - **外付けSSD（自分のパソコンで）**：Mac の例
   ```sh
   brew install restic

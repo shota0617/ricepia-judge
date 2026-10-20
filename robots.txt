@@ -27,3 +27,4 @@ User-agent: Google-Extended
 Allow: /
 
 Sitemap: https://ricepia-judge.vercel.app/sitemap.xml
+Sitemap: https://go.ricepia.jp/sitemap-go.xml

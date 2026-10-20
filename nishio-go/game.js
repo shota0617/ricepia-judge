@@ -1529,6 +1529,10 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
     if (dot && D && D.ready && !D.ready([dot.id])) { D.load([dot.id]).then(() => { if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
   }
   sound.jingle(lvUp ? 'levelup' : 'checkin');
+  // うれしい場面（はじめて見つけた絵・レベルアップ）には「シェア」のボタン（share.js。押すとシェアの窓）
+  const shareKind = dot && dot.fresh && D ? 'dot' : lvUp ? 'lvup' : '';
+  const shareBtn = shareKind ? `<button type="button" class="btn mini rw-share" data-rw-share="${shareKind}"${shareKind === 'dot' ? ` data-dot="${dot.id}"` : ''}>📣 シェア</button>` : '';
+  const stay = shareKind ? 7000 : 0;   // シェアのボタンがあるときは長めに出す（.rw.long の7秒のアニメーションに合わせる）
   if (simple()) {
     // 絵が主役：ドット絵を大きく、金の額縁に。はじめての絵には NEW のリボンと、めずらしさの星
     const f = dot && D ? D.info(dot.id) : null;
@@ -1538,29 +1542,33 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
         ${starRow(dotStars(f))}<div class="banner">${esc(f.title)}</div>
         <div class="sub">${ART32('stat-coin', 'ポイント')}<b>+${total}</b>　${esc(name)}</div>
         ${rewardChips(lines, fact, total, true)}
-        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`
-      : `<div class="rw"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
+        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`
+      : `<div class="rw${shareKind ? ' long' : ''}"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
         ${rewardChips(lines, fact)}
-        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}</div>`;
+        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
     el.classList.add('show');
-    clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, dot ? 5000 : 2700);
+    clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, stay || (dot ? 5000 : 2700));
     afterReward();
     return;
   }
-  el.innerHTML = `<div class="rw${fact || dot ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
+  el.innerHTML = `<div class="rw${fact || dot || shareKind ? ' long' : ''}"><div class="big">+${total}pt</div><div class="nm">${esc(name)}</div>
     ${dot && D ? `<img class="dot-card" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
-    ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}</div>`;
+    ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}${shareBtn}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
   el.classList.add('show');
-  clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, fact || dot ? 7000 : 2700);
+  clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, Math.max(stay, fact || dot ? 7000 : 2700));
   afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
 function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); }
-$('reward').addEventListener('click', hideReward);
+$('reward').addEventListener('click', e => {
+  const b = e.target.closest('[data-rw-share]');
+  hideReward();
+  if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null }); }
+});
 
 /* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。ぜんぶ Blender で作った絵） ----------
    西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると1枚もらえる。どの絵かは場所（地区・土地利用）と季節・時間帯・天気・日にちで決まる */
@@ -2173,12 +2181,20 @@ function introHero(waited) {
 document.addEventListener('DOMContentLoaded', introHero);
 
 /* はじめに */
+// 友だちのシェアから来た人（share.js が nsg_friend を立てる）：はじめて遊ぶときに +20pt（1回だけ）
+const FRIEND_BONUS = 20;
+function friendBonus() {
+  if (store.get('nsg_friend', 0) !== 1) return;
+  store.set('nsg_friend', 2);
+  setTimeout(() => { gainPoints(FRIEND_BONUS); save(); toast(`👋 友だちのシェアから来てくれた人に +${FRIEND_BONUS}pt`); track('friend_bonus', { mode: demo ? 'play' : 'walk' }); }, 1500);
+}
 function begin(isDemo) {
   if (!store.get('nsg_started', false)) store.set('nsg_begin_t', Date.now());
   if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', ymd());
   store.set('nsg_started', true);
   track('game_start', { mode: isDemo ? 'play' : 'walk' });
   $('intro').hidden = true;
+  friendBonus();
   // 操作して遊ぶは、スティックで歩けるドット絵の地図で始める（ふつうの地図にしていた人も）
   if (isDemo && !document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
   setMode(isDemo);
@@ -2227,7 +2243,8 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward,
+  begin, track, utmUrl, jumpReward, harvestReward, FRIEND_BONUS,
+  get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
     if (!demo) setMode(true);

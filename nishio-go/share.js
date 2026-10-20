@@ -15,6 +15,8 @@ const track = (n, p) => { try { G.track(n, p); } catch (e) { /* noop */ } };
 const q = new URLSearchParams(location.search);
 const land = {};
 for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
+// 友だちのシェアから来た、まだ遊んだことのない人：はじめて遊ぶときに game.js が +20pt（nsg_friend：1＝これから、2＝もらった）
+if (land.utm_source === 'share' && !G.started) { try { if (!localStorage.getItem('nsg_friend')) localStorage.setItem('nsg_friend', '1'); } catch (e) { /* noop */ } }
 if (Object.keys(land).length) {
   track('landing', land);
   if (land.c) track('campaign_landing', { campaign: land.c });
@@ -37,9 +39,16 @@ if (Object.keys(land).length) {
 /* ---------- シェア ---------- */
 // 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
 const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+let cur = 'log', curDot = null;
+const D = () => window.NISHIO_DOTS;
 function shareText() {
-  const s = G.stats();
-  return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;
+  const s = G.stats(), tags = `#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;
+  const invite = `このリンクから始めると +${G.FRIEND_BONUS || 20}pt もらえるよ`;
+  if (cur === 'dot' && curDot != null && D()) {   // 見つけたドット絵をシェア
+    const f = D().info(curDot);
+    return `にしおさんぽGOの「西尾ドット絵帳」で「${f.title}」の絵を見つけたよ🖼️（No.${f.no}）\n${invite}\n${tags}`;
+  }
+  return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n${invite}\n${tags}`;
 }
 // シェア用の画像：空と田んぼ（こよみの季節の色）の上に、きろくと当店の名前
 const logo = new Image();
@@ -55,23 +64,37 @@ function drawCard() {
   for (let yy = H * 0.62 + 10; yy < H - 70; yy += 22) { x.fillStyle = field[1]; x.fillRect(0, yy, W, 6); }   // 田んぼのうね
   if (logo.complete && logo.naturalWidth) x.drawImage(logo, 40, 34, 544, 80);
   else { x.fillStyle = '#1f5a25'; x.font = 'bold 64px "DotGothic16", sans-serif'; x.fillText('にしおさんぽGO', 40, 100); }
-  const big = `🚶 Lv${s.lv}「${s.title}」`;
-  x.textAlign = 'left'; x.textBaseline = 'alphabetic';
-  x.font = 'bold 66px "DotGothic16", sans-serif'; x.lineWidth = 10; x.strokeStyle = '#fff'; x.fillStyle = '#2b2b2b';
-  x.strokeText(big, 40, 240); x.fillText(big, 40, 240);
-  x.font = '36px "DotGothic16", sans-serif'; x.lineWidth = 8;
-  const sub = `めぐった名所 ${s.places}か所 ・ 話した人 ${s.met}人 ・ ${s.points.toLocaleString()}pt`;
-  x.strokeText(sub, 40, 310); x.fillText(sub, 40, 310);
-  const season = KO ? KO.line(new Date()) : '';
-  x.font = '30px "DotGothic16", sans-serif'; x.strokeText(season, 40, 362); x.fillText(season, 40, 362);
+  const dc = cur === 'dot' && curDot != null && D() ? D().canvas(curDot) : null;   // 見つけたドット絵（右に金の額縁で大きく）
+  const maxW = dc ? 700 : W - 80;   // 文字は絵にかからないはばに（入らなければ字を小さく）
+  const line = (t, size, y, bold) => {
+    let f = size;
+    do { x.font = `${bold ? 'bold ' : ''}${f}px "DotGothic16", sans-serif`; f -= 2; } while (f > 20 && x.measureText(t).width > maxW);
+    x.lineWidth = Math.max(6, Math.round(f / 6)); x.strokeText(t, 40, y); x.fillText(t, 40, y);
+  };
+  x.textAlign = 'left'; x.textBaseline = 'alphabetic'; x.strokeStyle = '#fff'; x.fillStyle = '#2b2b2b';
+  const lv = `🚶 Lv${s.lv}「${s.title}」`, rec = `めぐった名所 ${s.places}か所 ・ 話した人 ${s.met}人 ・ ${s.points.toLocaleString()}pt`;
+  if (dc) {   // 絵の名前を大きく、そのあとに「見つけた」と きろく
+    const f = D().info(curDot);
+    line(`🖼️ ${f.title}`, 66, 240, true);
+    line(`西尾ドット絵帳で見つけた！（No.${f.no}）`, 36, 310);
+    line(`${lv} ・ ${s.points.toLocaleString()}pt`, 30, 362);
+    const sz = 336, dx = W - sz - 60, dy = 120;
+    x.fillStyle = '#c99a2e'; x.fillRect(dx - 18, dy - 18, sz + 36, sz + 36);
+    x.fillStyle = '#f6d36b'; x.fillRect(dx - 10, dy - 10, sz + 20, sz + 20);
+    x.imageSmoothingEnabled = false; x.drawImage(dc, dx, dy, sz, sz); x.imageSmoothingEnabled = true;
+  } else {
+    line(lv, 66, 240, true);
+    line(rec, 36, 310);
+    if (KO) line(KO.line(new Date()), 30, 362);
+  }
   x.fillStyle = 'rgba(0,0,0,.78)'; x.fillRect(0, H - 70, W, 70);
   x.fillStyle = '#fff'; x.font = '30px "DotGothic16", sans-serif';
   x.fillText((window.NSG_EDITION && window.NSG_EDITION.share) || '西尾のお米屋さん 近藤米穀店・らいすぴあ が つくったお散歩ゲーム', 30, H - 26);
   x.textAlign = 'right'; x.fillStyle = '#ffe27a'; x.fillText('go.ricepia.jp', W - 30, H - 26);
 }
-let cur = 'log';
-function openShare(kind) {
+function openShare(kind, opt) {
   cur = kind;
+  curDot = opt && opt.dot != null ? opt.dot : null;
   const text = shareText(), url = shareUrl(kind);
   drawCard();
   $('shareText').textContent = `${text}\n${url}`;

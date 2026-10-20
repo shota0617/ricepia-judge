@@ -52,7 +52,7 @@ MATS = {
     # スポットの種類
     'hasu': '#f29bbf', 'hasuL': '#ffd0e0', 'hasuHa': '#4f9e3a', 'kamera': '#3a3a3a', 'lens': '#5a8ad0', 'bench': '#a06a3a', 'parasol': '#e8504a', 'parasolW': '#f4f1e8',
     'zou': '#a8a49a', 'asahi': '#ff9f1c', 'densha': '#c8102e', 'hata': '#2f7a34',
-    'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
+    'furoshiki': '#3f9a5a', 'furoshikiD': '#2a6e3e', 'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
     'umi': '#3d86c6', 'riku': '#6fbf4a', 'truck': '#f4f4f4', 'tire': '#2a2a2a', 'hari': '#d23a2e', 'hariB': '#2f5d9a', 'hairY': '#f2c230', 'shirt': '#3f7fbf', 'pants': '#2d3a55',
 }
 
@@ -399,6 +399,17 @@ def up_bag():
     box('buckle', 'band', (0.08, 0.02, 0.06), (0, -0.20, 0.53))
     tube('handle', 'bagD', [(-0.10, 0.02, 0.70), (0, 0.02, 0.80), (0.10, 0.02, 0.70)], 0.025)
     return dict(target=(0, 0, 0.38), scale=1.15)
+
+
+def omiyage():
+    """おみやげ袋：唐草の緑の風呂敷で包んだ箱（上で結んだ耳が2つ）。歩くと開く袋（docs/location-game-essence.md）"""
+    box('hako', 'furoshiki', (0.62, 0.5, 0.4), (0, 0, 0.22), bevel=0.14)
+    for i, x in enumerate((-0.15, 0.15)):   # 結んだ耳（上へぴんと立つ）
+        sphere(f'mimi{i}', 'furoshiki', 0.12, (x, 0, 0.56), (0.7, 0.6, 1.5)).rotation_euler = (0, (-0.7 if x < 0 else 0.7), 0)
+    sphere('musubi', 'furoshikiD', 0.1, (0, -0.02, 0.45), (1.2, 1.0, 0.8))
+    for i, (x, z) in enumerate(((-0.17, 0.3), (0.15, 0.14), (0.05, 0.3), (-0.08, 0.12))):   # 唐草の白いうず
+        sphere(f'uzu{i}', 'white', 0.05, (x, -0.25, z), (1.3, 0.5, 1.0))
+    return dict(target=(0, 0, 0.32), scale=1.0)
 
 
 def up_nap():
@@ -976,7 +987,7 @@ def pixmap():
     return dict(target=(0, 0, 0.06), scale=1.15, el=40, az=-30, size=32)
 
 
-MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
+MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal, 'omiyage': small(omiyage)}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})

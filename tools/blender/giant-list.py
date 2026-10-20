@@ -81,6 +81,14 @@ def rest_kind(x):
             return 'temple'
         if re.search('像$|胸像|観音|地蔵|大仏', n):
             return 'statue'
+    # 花の名所・庭（菖蒲園・かきつばた園・梅林・藤・花時計・〜ガーデン・桜づつみ など）は庭園、街園・緑道は木と小道、〜の里は見どころ
+    if c in ('park', 'view', 'sight') or park:
+        if re.search('庭園|菖蒲|しょうぶ|かきつばた|あじさい|梅林|藤$|花時計|花壇|ガーデン|桜づつみ|植物園|ばら園|バラ園|(葵|.)桜$', n):
+            return 'garden'
+        if re.search('街園|緑道|ロード$', n):
+            return 'forest'
+        if re.search('(の里|のさと|の郷)$', n) and c == 'park':
+            return 'view'
     if c == 'park' or park:
         if any(w in n for w in ('運動', 'グラウンド', 'グランド', '球場', 'スポーツ', 'テニス', '野球', 'ゲートボール', '体育', '競技場', 'サッカー', '多目的広場')):
             return 'sports'

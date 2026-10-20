@@ -536,7 +536,39 @@ def m_forest(rng, R, W, A):
     return dict(target=(0, 0, 0.12), scale=0.99, el=rng.uniform(28, 34), az=rng.uniform(-40, -28), size=96)
 
 
-def m_garden(rng, R, W, A):
+FLOWER = [('菖蒲|しょうぶ|かきつばた|藤', '#8a5ac8'), ('あじさい', '#5a7ad8'), ('梅|桜|さくら', '#f0a8c0'), ('', '#e85a7a')]
+
+
+def m_flower(rng, name):
+    """花の名所（菖蒲園・かきつばた園・あじさい・梅林・藤・花時計・〜ガーデン）：花の畑の列と小道、藤だなや花時計"""
+    ground('shibaG')
+    col = next(c for k, c in FLOWER if not k or __import__('re').search(k, name))
+    pa.MATS['hana'], pa.MATS['hana2'] = col, jitter(col, rng, 30)
+    box('komichi', 'jari', (0.08, 0.72, 0.006), (rng.uniform(-0.05, 0.05), 0, 0.003))
+    for r in range(4):                                     # 花の畑（緑の葉の列に、花の点）
+        y = -0.27 + r * 0.17
+        for side in (-1, 1):
+            x0 = side * 0.24
+            box(f'une{r}{side}', 'hasuH', (0.30, 0.07, 0.03), (x0, y, 0.015))
+            for k in range(6):
+                sphere(f'hana{r}{side}{k}', 'hana' if (k + r) % 2 else 'hana2', 0.018, (x0 - 0.12 + k * 0.048, y + rng.uniform(-0.015, 0.015), 0.04))
+    if '藤' in name:                                        # 藤だな
+        for dx in (-0.1, 0.1):
+            for dy in (0.22, 0.34):
+                box(f'tana{dx}{dy}', 'azumaya', (0.012, 0.012, 0.18), (dx, dy, 0.09))
+        box('tanaY', 'azumaya', (0.26, 0.16, 0.01), (0, 0.28, 0.18))
+        for k in range(8):
+            sphere(f'fuji{k}', 'hana', 0.02, (-0.1 + (k % 4) * 0.066, 0.24 + (k // 4) * 0.08, 0.15), (1, 1, 1.8))
+    elif '時計' in name:                                     # 花時計
+        cyl('dokei', 'hana2', 0.14, 0.03, (0, 0.24, 0.02), verts=24)
+        box('hari1', 'kuro', (0.01, 0.10, 0.01), (0, 0.27, 0.04)); box('hari2', 'kuro', (0.07, 0.01, 0.01), (0.03, 0.24, 0.04))
+    trees(rng, rng.randint(2, 4), [(-0.40, 0.30), (0.40, 0.30), (-0.42, -0.30), (0.42, -0.30)], ['sakura' if '桜' in name or '梅' in name else 'round', 'round'])
+    return dict(target=(0, 0, 0.06), scale=0.95, el=rng.uniform(32, 38), az=rng.uniform(-40, -28), size=96)
+
+
+def m_garden(rng, R, W, A, name=''):
+    if '庭園' not in name:   # 日本庭園でない花の名所は花の畑
+        return m_flower(rng, name)
     ground('jari')
     sphere('ike', 'ike', 0.18, (-0.06, 0.04, 0.0), (1.6, 1.0, 0.05))
     box('hashi', 'hashiR', (0.30, 0.05, 0.012), (-0.06, 0.04, 0.03), (0, 0.1, 0))
@@ -602,7 +634,7 @@ def build(e):
     if k == 'forest':
         return m_forest(rng, *cols)
     if k == 'garden':
-        return m_garden(rng, *cols)
+        return m_garden(rng, *cols, name=e['name'])
     if k == 'lighthouse':
         return m_lighthouse(rng, *cols)
     return m_historic(rng, *cols)

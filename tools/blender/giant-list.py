@@ -36,6 +36,11 @@ def kind_of(x):
         return 'aquarium'
     if '教会' in n or k == 'church':
         return 'church'
+    # 型のデータや OpenStreetMap の分類が神社とお寺で食いちがうことがあるので、名前で正す（「関山神社奥の院」は神社）
+    if k == 'temple' and re.search('神社|鳥居|八幡|天満|神明|(社|宮)$', n):
+        k = 'shrine'
+    elif k == 'shrine' and re.search('(寺|院|庵)$', n) and not re.search('神社|稲荷|宮', n):
+        k = 'temple'
     if k in ('shrine',) and '稲荷' in n:
         return 'inari'
     if k == 'station' or n.endswith('駅'):

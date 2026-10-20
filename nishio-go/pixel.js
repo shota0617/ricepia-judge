@@ -1252,7 +1252,7 @@ function tileVarAt(code, x, y) {
   }
   if (tiles[C.Q].length !== 2500) return tileVar(code, x, y);
   let gi = t % 50;                                     // 家の形（形5 × 庭の小物5 × 向き2）
-  if (k >= 11) gi = 30 + gi % 10; else if (gi >= 30 && gi < 40) gi -= 10;   // 白い平らな屋根は陸屋根の家、瓦や金属なら屋根のある家
+  if (k === 13) gi = 30 + gi % 10; else if (gi >= 30 && gi < 40) gi -= 10;   // 白い屋根は陸屋根の家、ほかは屋根のある家（明るい灰色は銀色の屋根）
   return gi * 50 + HOUSE_ROOF[k] * 5 + (t >>> 8) % 5;
 }
 // 建物のふち：下のマスが建物でなければ、窓のある壁（前の面）を描き、左右と上にかげをつける（建物が立って見えるように）

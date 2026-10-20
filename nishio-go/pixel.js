@@ -584,14 +584,14 @@ async function pump() {
       const pre = await bakedChunk(cx, cy);
       if (pre) {
         // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
-        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois });
+        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); railCache.clear();
         dirty = true;
         continue;
       }
       // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
       const saved = store.get(PX_KEY + k);
       if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] });
+        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); railCache.clear();
         dirty = true;
         continue;
       }
@@ -601,7 +601,7 @@ async function pump() {
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] });
+        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); railCache.clear();
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -1280,7 +1280,7 @@ const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号
 const RAIL_PAIR = { '4,6': 16, '5,7': 17, '0,5': 18, '0,6': 19, '1,7': 20, '1,6': 21, '2,4': 22, '2,7': 23, '3,4': 24, '3,5': 25 };
 // 複線・駅の構内のように線路のマスが2〜3マスの帯になっている所（2×2 がぜんぶ線路）では、上下左右のつながりで選ぶと分かれ道だらけになる。
 // そこは まわり5×5の線路のマスの並ぶ向きから、横・縦・ななめ のまっすぐな線路を描く（となりのマスと平行な線路になり、複線に見える）
-function railBandIndex(x, y) {
+function railBandRaw(x, y) {
   const L = (a, b) => codeAt(a, b) === C.L;
   if (![[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([a, b]) => L(x + a, y + b) && L(x + a + 1, y + b) && L(x + a, y + b + 1) && L(x + a + 1, y + b + 1))) return -1;
   let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
@@ -1290,6 +1290,14 @@ function railBandIndex(x, y) {
   const deg = ((Math.atan2(2 * cxy, cxx - cyy) / 2) * 180 / Math.PI + 180) % 180;   // 0 横・90 縦・45 右下がり・135 右上がり（画面の下が y の正）
   return deg < 22.5 || deg >= 157.5 ? 10 : deg < 67.5 ? 17 : deg < 112.5 ? 5 : 16;
 }
+// 帯の向きは、線の両端のマスが線路で、そのマスも同じ向きの帯か ふつうの線路のときだけ使う（帯が曲がる所で、横の線と ななめの線が切れて並ばないように）。
+// 使えないマスは、ふつうの線路と同じく まわりへの部品を重ねて描く（railIndex）
+const BAND_ENDS = { 10: [[-1, 0], [1, 0]], 5: [[0, -1], [0, 1]], 16: [[1, -1], [-1, 1]], 17: [[-1, -1], [1, 1]] };
+function railBandIndex(x, y) {
+  const d = railBandRaw(x, y);
+  if (d < 0) return -1;
+  return BAND_ENDS[d].every(([a, b]) => { if (codeAt(x + a, y + b) !== C.L) return false; const e = railBandRaw(x + a, y + b); return e === d || e < 0; }) ? d : -1;
+}
 // 帯のななめの線路は角を通るので、となりのマスの平行な線路のレールが このマスの角をかすめる。となりも同じ向きの帯なら、その分も描いた絵（35〜40）にする
 function railBandSpill(x, y, band) {
   const same = (a, b) => railBandIndex(a, b) === band;
@@ -1297,13 +1305,23 @@ function railBandSpill(x, y, band) {
   const ne = same(x + 1, y) || same(x, y - 1), sw = same(x - 1, y) || same(x, y + 1);
   return ne && sw ? 40 : sw ? 39 : ne ? 38 : 17;
 }
+// 線路の絵は まわり数マスを見て決めるので、マスごとに覚えておく（地図のまとまりを読みこむたびに忘れる）
+const railCache = new Map();
 function railIndex(x, y) {
+  const key = x + ',' + y;
+  let r = railCache.get(key);
+  if (r === undefined) { r = railIndexOf(x, y); railCache.set(key, r); }
+  return r;
+}
+function railIndexOf(x, y) {
   const band = railBandIndex(x, y);
   if (band === 16 || band === 17) return railBandSpill(x, y, band);
   if (band >= 0) return band;
   const L = (a, b) => codeAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
   const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0);
-  const ports = [up, rt, dn, lf, !up && !rt && L(x + 1, y - 1), !dn && !rt && L(x + 1, y + 1), !dn && !lf && L(x - 1, y + 1), !up && !lf && L(x - 1, y - 1)]
+  // ななめのとなりが帯のななめの線路で、その線がこのマスの角へ来ているときも、その角へつなぐ
+  const toMe = (a, b) => { const d = railBandIndex(x + a, y + b); return (d === 16 && a === -b) || (d === 17 && a === b); };
+  const ports = [up, rt, dn, lf, (!up && !rt && L(x + 1, y - 1)) || toMe(1, -1), (!dn && !rt && L(x + 1, y + 1)) || toMe(1, 1), (!dn && !lf && L(x - 1, y + 1)) || toMe(-1, 1), (!up && !lf && L(x - 1, y - 1)) || toMe(-1, -1)]
     .flatMap((on, i) => on ? [i] : []);
   const corners = ports.filter(i => i >= 4);
   if (!corners.length) return m;

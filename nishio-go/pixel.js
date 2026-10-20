@@ -5447,7 +5447,8 @@ function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path 
 function tapWalkTick() {
   tapS.timer = null;
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
-  if (!nx || !G.demo || !active || worldMode || driving || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
+  const panel = ['log', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden);   // きろく・とくてん・せってい を開いたら（うしろで歩いて、たからばこなどが進まないように）
+  if (!nx || !G.demo || !active || worldMode || driving || panel || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   autoS.pauseUntil = Date.now() + 3000; autoS.path = [];
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();
   tapS.timer = setTimeout(tapWalkTick, G.autoInterval ? Math.min(180, G.autoInterval()) : 180);

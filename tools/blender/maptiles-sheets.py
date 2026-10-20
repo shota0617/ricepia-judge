@@ -426,6 +426,12 @@ ROAD_PAL = {
 }
 
 
+FACADE_WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080']   # pixel.js の WALLS と同じ
+FACADE_SIGN = ['#c8302a', '#2c6ab0', '#2e8a48', '#e0a020', '#7a3a8a']
+FACADE_PAL = {'noki': '#5a4a40', 'mado': '#5f8fb8', 'madowaku': '#e8e8e4', 'to': '#6a4a30', 'shutter': '#a8acae', 'shutterK': '#8a8e90',
+              'garasu': '#8fc0dc', 'tesuri': '#7a7e82', 'kin': '#e8c040'}
+
+
 def roads():
     kinds = ['futsu', 'oki', 'komichi']   # maptiles.py の ROAD_KINDS（bpy なしで読めないので、ここにも書く）
     sheet = Image.new('RGB', (32 * N, len(kinds) * N))
@@ -443,6 +449,13 @@ def roads():
         rk.paste(Image.fromarray(sprite_tile(mat, band, names, ROAD_PAL), 'RGBA'), (i * N, 0))
     rk.save(os.path.join(OUT, 'rankan.png'), optimize=True)
     print('rankan.png', os.path.getsize(os.path.join(OUT, 'rankan.png')))
+    fc = Image.new('RGBA', (6 * N, len(FACADE_WALLS) * N))   # 建物の前の壁：facade.png（6×5。列：形、行：壁の色。背景なし）
+    for r, wall in enumerate(FACADE_WALLS):
+        for t in range(6):
+            mat, band, names = load(f'facade-{t}')
+            fc.paste(Image.fromarray(sprite_tile(mat, band, names, {**FACADE_PAL, 'kabe': wall, 'kanban': FACADE_SIGN[(r + t) % len(FACADE_SIGN)], 'hiyoke': FACADE_SIGN[(r * 2 + 1) % len(FACADE_SIGN)]}), 'RGBA'), (t * N, r * N))
+    fc.save(os.path.join(OUT, 'facade.png'), optimize=True)
+    print('facade.png', os.path.getsize(os.path.join(OUT, 'facade.png')))
 
 
 # 水べ：nishio-go/maptiles/shore.png（32×3）。行：護岸・土手・浜。列：陸がある辺（1 上・2 右・4 下・8 左）× 2 ＋ コマ。0 の列は ふつうの水

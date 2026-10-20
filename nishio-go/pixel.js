@@ -1127,6 +1127,7 @@ function loadMapTiles() {
     MT.roadReq = true;
     get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
     get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
+    get('facade', () => true, img => { const a = sliceSheet(img, 6, 5); MT.facade = [0, 1, 2, 3, 4].map(r => a.slice(r * 6, r * 6 + 6)); });   // 建物の前の壁（drawWall）
   }
   if (!MT.shoreReq) {   // 水べ（Blender の護岸・草の土手・浜の浅瀬と波。shoreIndex。季節で変わらない）
     MT.shoreReq = true;
@@ -1371,6 +1372,13 @@ function tileVarAt(code, x, y) {
   if (k === 13) gi = 30 + gi % 10; else if (gi >= 30 && gi < 40) gi -= 10;   // 白い屋根は陸屋根の家、ほかは屋根のある家（明るい灰色は銀色の屋根）
   return gi * 50 + HOUSE_ROOF[k] * 5 + (t >>> 8) % 5;
 }
+// 建物の前の壁の形（facade.png の列）：0 窓・1 戸口と窓・2 シャッターと看板・3 ガラスの店先と日よけ・4 アパートの手すり・5 倉庫の戸。
+// 4×4マスのまとまりごとに形を決める（ひとつの建物が つぎはぎにならないように）。道に面していれば お店が多め。窓の壁には ところどころ戸口
+function facadeType(x, y) {
+  const b = blockHash(x, y) >>> 7, onRoad = isRoad(codeAt(x, y + 1));
+  const t = (onRoad ? [2, 3, 2, 0, 4] : [0, 0, 4, 5, 0])[b % 5];
+  return t === 0 && ((Math.imul(x, 2654435761) ^ y) >>> 0) % 4 === 0 ? 1 : t;
+}
 // 建物のふち：下のマスが建物でなければ、窓のある壁（前の面）を描き、左右と上にかげをつける（建物が立って見えるように）
 const WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080'];
 function drawWall(tx, ty, X, Y, T) {
@@ -1379,6 +1387,7 @@ function drawWall(tx, ty, X, Y, T) {
   if (codeAt(tx + 1, ty) !== C.B) { ctx.fillStyle = 'rgba(30,24,20,.3)'; ctx.fillRect(X + T - Math.ceil(u), Y, Math.ceil(u), T); }
   if (codeAt(tx, ty - 1) !== C.B) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(X, Y, T, Math.ceil(u)); }
   if (!below) return;
+  if (MT.facade) { ctx.drawImage(MT.facade[blockHash(tx, ty) % WALLS.length][facadeType(tx, ty)], X, Y, T, T); return; }
   const wall = WALLS[blockHash(tx, ty) % WALLS.length], wy = Y + Math.round(10 * u);
   ctx.fillStyle = 'rgba(30,24,20,.55)'; ctx.fillRect(X, wy - Math.ceil(u), T, Math.ceil(u));   // のきのかげ
   ctx.fillStyle = wall; ctx.fillRect(X, wy, T, T - (wy - Y));

@@ -11,6 +11,7 @@
 # - 町を走る乗り物：赤い電車（先頭・なか）・乗用車・漁船を4方向ずつ（背景なし）
 # - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
 # - 道：ふつうの道・大きな道・小道 × となりの道へつながる向き16通り × 2（何もなし・小物）。つながっていない辺に縁石・側溝・白線・草のへり
+# - 建物の前の壁：窓・戸口・シャッターと看板・ガラスの店先と日よけ・アパートの手すり・倉庫の戸の6通り（背景なし。壁の色はシートで5色）
 # - 橋の欄干：道のマスの水と接する辺に重ねる4方向（背景なし）。水べ：岸の種類3（護岸・土手・浜）× 陸がある辺15通り × 2コマ
 # - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り、重ねる部品8つ、複線の帯のななめ6つ。枕木・レール・バラスト
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
@@ -753,6 +754,50 @@ def rankan(side):
     return dict(target=(0, 0, 0))
 
 
+# ---------- 建物の前の壁（nishio-go/maptiles/facade.png。背景なし）：建物のマスの下のふち（下のマスが建物でない所）に重ねる ----------
+# 0 窓3つ・1 戸口と窓・2 シャッターと看板・3 ガラスの店先と日よけ・4 アパートの手すり・5 倉庫の大きな戸。壁の色はシートにする段で5色
+FACADES = 6
+
+
+def facade(t):
+    Y1, CZ = 1.0 / math.sin(EL), 1.0 / math.cos(EL)
+    y0, h = -0.5 * Y1, 0.36 * CZ   # マスの下のふちに立つ壁（画面で下から 6/16 くらいの高さ）
+    F = lambda u, z: (u, y0 - 0.002, z)   # 壁の前の面に置く小物の位置
+    box('kabe', 'kabe', (1.3, 0.04, h), (0, y0 + 0.02, h / 2))
+    box('nokiK', 'noki', (1.3, 0.06, 0.03), (0, y0 - 0.01, h - 0.015))   # のき
+    if t in (0, 1):
+        for i, u in enumerate((-0.32, 0.0, 0.32)):
+            if t == 1 and i == 0:
+                box('to', 'to', (0.16, 0.02, 0.3 * CZ), F(-0.3, 0.15 * CZ))   # 戸口
+                box('totte', 'kin', (0.02, 0.02, 0.02), F(-0.25, 0.15 * CZ))
+                continue
+            box(f'mado{i}', 'mado', (0.15, 0.02, 0.12 * CZ), F(u, 0.2 * CZ))
+            box(f'madoW{i}', 'madowaku', (0.19, 0.015, 0.02), F(u, 0.13 * CZ))
+    elif t == 2:
+        box('kanban', 'kanban', (1.3, 0.03, 0.08 * CZ), F(0, 0.29 * CZ))
+        box('shutter', 'shutter', (0.82, 0.02, 0.24 * CZ), F(0, 0.12 * CZ))
+        for j in range(5):
+            box(f'suji{j}', 'shutterK', (0.82, 0.025, 0.012), F(0, (0.03 + j * 0.045) * CZ))
+    elif t == 3:
+        box('glass', 'garasu', (1.3, 0.02, 0.2 * CZ), F(0, 0.11 * CZ))
+        for u in (-0.33, 0.0, 0.33):
+            box(f'waku{u}', 'madowaku', (0.03, 0.025, 0.2 * CZ), F(u, 0.11 * CZ))
+        o = box('hiyoke', 'hiyoke', (1.3, 0.16, 0.02))   # 日よけ（前へななめに出る）
+        o.rotation_euler = (math.radians(-35), 0, 0)
+        o.location = (0, y0 - 0.07, 0.26 * CZ)
+    elif t == 4:
+        for i, u in enumerate((-0.25, 0.25)):
+            box(f'mado{i}', 'mado', (0.3, 0.02, 0.14 * CZ), F(u, 0.22 * CZ))
+        box('tesuri', 'tesuri', (1.3, 0.05, 0.02), F(0, 0.15 * CZ))
+        for k in range(-3, 4):
+            box(f'saku{k}', 'tesuri', (0.015, 0.04, 0.09 * CZ), F(k * 0.17, 0.1 * CZ))
+    else:
+        box('ookido', 'shutter', (0.7, 0.02, 0.3 * CZ), F(0, 0.15 * CZ))
+        for k in range(-3, 4):
+            box(f'tate{k}', 'shutterK', (0.015, 0.025, 0.3 * CZ), F(k * 0.1, 0.15 * CZ))
+    return dict(target=(0, 0, 0))
+
+
 # ---------- 水べ（nishio-go/maptiles/shore.png）：陸と接する水のマス。岸の種類3 × 陸がある辺16通り × 2コマ ----------
 # 0 護岸（町なかの川・港のコンクリート）、1 土手（田畑のあいだの川の草の岸）、2 浜（砂浜の浅瀬と白い波。2コマで波が寄せる）
 SHORE_KINDS = ['gogan', 'dote', 'hama']
@@ -805,7 +850,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan' else facade(*args) if kind == 'facade'
             else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
@@ -845,6 +890,7 @@ def main():
     jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1 + len(RAIL_SPILL))]
     jobs += [('road', (kd, m, k)) for kd in ROAD_KINDS for m in range(16) for k in range(2)]
     jobs += [('rankan', (sd,)) for sd in (1, 2, 4, 8)]
+    jobs += [('facade', (t,)) for t in range(FACADES)]
     jobs += [('shore', (kd, m, f)) for kd in SHORE_KINDS for m in range(1, 16) for f in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:

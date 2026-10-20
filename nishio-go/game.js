@@ -22,7 +22,7 @@ const CFG = {
   walkMaxSpeed: 4.5,        // m/s（約16km/h：ジョギングまで）
   walkMaxGapSec: 180,       // 位置の更新がこれ以上途切れたら、その間の移動は数えない
   vehicleSpeed: 8.5,        // m/s（約30km/h：これを超えたら乗り物とみなす）
-  vehicleLockMs: 120000,    // 乗り物判定後、チェックインを止める時間
+  vehicleLockMs: 120000,    // 乗り物判定のあと、歩いた距離を数えない時間（チェックイン・たからばこは乗り物でもできる）
   matchRadius: 1000,        // 注目スポットの名前をOSMから探す範囲（m）：座標が概算のとき
   matchRadiusExact: 300,    //   座標が確かなとき
   osmCacheDays: 7,
@@ -755,7 +755,8 @@ function checkin() {
   if (!s || !me) return;
   if (driving) { toast('🚗 車を降りてからチェックインしてね（スティックのとなりの🚶ボタン）'); return; }
   const now = Date.now();
-  if (!demo && now < vehicleUntil) { toast('乗り物での移動中はチェックインできません。降りて歩いてからどうぞ。'); return; }
+  // 乗り物（電車・バス・車の助手席）で移動中でもチェックインできる。運転している人は操作しないよう、乗り物の判定ごとに1回だけ知らせる
+  if (!demo && now < vehicleUntil && checkin.warned !== vehicleUntil) { checkin.warned = vehicleUntil; toast('🚗 乗り物で移動中です。運転している人は操作しないでください（同乗者・電車・バスならそのまま遊べます）'); }
   if (!demo && me.acc > CFG.maxAccuracy) { toast(`GPSの精度が低いようです（誤差 約${Math.round(me.acc)}m）。少し待ってからもう一度。`); return; }
   if (!inReach(s)) { toast('もう少し近づいてください'); refreshNearby(); return; }
   if (cooldownLeft(s) > 0) { toast(`このスポットは あと${Math.ceil(cooldownLeft(s) / 60000)}分 でまたチェックインできます`); return; }
@@ -981,8 +982,8 @@ function nearestChest() {
 }
 function tryChest() {
   if (driving) return;   // 車に乗っている間は開けない（降りると開く）
-  // あるいて移動では、チェックインと同じく GPS の誤差が大きいときと乗り物で移動中は開けない
-  if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
+  // あるいて移動では、チェックインと同じく GPS の誤差が大きいときは開けない（乗り物で移動中でも開ける）
+  if (!demo && (!me || me.acc > CFG.maxAccuracy)) return;
   const n = nearestChest();
   if (!n || n.d > (demo ? 18 : 30)) return;
   const c = n.c, d = dayState(), welcome = c.id.endsWith(':welcome');
@@ -1020,8 +1021,8 @@ function guideRadius(g) {
 const GUIDE_RECENT = 8;
 const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら（m）、決め直す（人のすすめは10kmまでなので、それより少し遠く）
 // その場にいると認めてよい位置か（チェックイン・たからばこと同じ条件）。車（軽トラ）に乗っているあいだはだめ（降りれば着いたことになる）。
-// あるいて移動では GPS の精度が悪いときと乗り物で移動中もだめ
-const fixOk = () => !!me && !driving && (demo || (me.acc <= CFG.maxAccuracy && Date.now() >= vehicleUntil));   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
+// あるいて移動では GPS の精度が悪いときもだめ（電車・バスなどの乗り物で移動中は、着いたことにしてよい）
+const fixOk = () => !!me && !driving && (demo || me.acc <= CFG.maxAccuracy);   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by, alts }（alts：ほかの候補。札から選べる）
 function decideGuide(from) {
   if (!me) return null;
@@ -1126,7 +1127,7 @@ function weatherGuide() {
   const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
   if (!w) return;   // 天気がまだ届いていない（取れない）ときは、雨宿りの案内も消さない
   if (!g || g.refer || g.mine || /の話$/.test(g.by || '') || !!g.weather === wet) return;
-  if (!fixOk()) return;   // GPS の精度が悪い位置や乗り物で移動中の位置からは決めない（ほかの決め直しと同じ）
+  if (!fixOk()) return;   // GPS の精度が悪い位置からは決めない（ほかの決め直しと同じ）
   const key = `${demo}:${wet}:${spotsVersion}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
   if (weatherGuide.key === key) return;
   weatherGuide.key = key;
@@ -1290,9 +1291,7 @@ function refreshNearby() {
     const th = simple() ? spotThumb(selected) : '';
     if (th) $('spinIco').innerHTML = th; else if (simple()) $('spinIco').innerHTML = catArt(selected); else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
     $('spinName').textContent = selected.name;
-    const lock = demo ? 0 : vehicleUntil - Date.now();
     const why = driving ? '🚗 車を降りるとチェックインできます'
-      : lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
       : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
     btn.disabled = !!why;
     if (why || !simple()) $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
@@ -1310,7 +1309,7 @@ function refreshNearby() {
     msgs.push('📍 遊べる範囲（西尾市と となりの市町、本店から15km）の外です' + (demo ? '' : RESCUE_BTN('range')));
     if (!demo && !refreshNearby.outTracked) { refreshNearby.outTracked = true; track('out_of_range', {}); }
   }
-  if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
+  if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中：運転している人は操作しないでください（同乗者・電車・バスならそのまま遊べます。歩いた距離のポイントは歩いた分だけ）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected && !guideTarget()) {
     if (nearest) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`);
@@ -1713,7 +1712,7 @@ function renderSpotInfo() {
     `その日はじめてのチェックイン +${CFG.pts.daily}pt、連続日数ごとに +${CFG.pts.streakStep}pt（最大 +${CFG.pts.streakStep * CFG.pts.streakMax}pt）`,
     `同じスポットは${CFG.cooldownMin}分ごとにチェックインできます`,
     `${CFG.walkUnitM}m 歩くごとに ${CFG.walkUnitPts}pt（1日 ${CFG.walkDailyCap}ptまで）。数えるのは、このページを開いて画面がついている間に歩いた距離だけです（画面を消す・ほかのアプリを開くと止まります）`,
-    '乗り物での移動（時速約30km以上）中は、チェックインと歩数ポイントが止まります',
+    '乗り物（時速約30km以上）で移動中も、チェックイン・たからばこ・行き先に着くことはできます（運転中の操作はやめましょう）。歩いた距離のポイントは、歩いた分だけ数えます',
   ].map(t => `<li>${esc(t)}</li>`).join('');
 }
 

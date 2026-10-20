@@ -1416,18 +1416,41 @@ const CAR_UP = ['................', '.....kkkkkk.....', '....kywwwwyk....', '...
 const rotCW = rows => rows.map((_, y) => rows.map((__, x) => rows[15 - x][y]).join(''));
 const carSprites = { up: sprite(CAR_UP) };
 carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(CAR_UP))); carSprites.left = sprite(rotCW(rotCW(rotCW(CAR_UP))));
-// ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする
-(() => {
+// ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする（Blender の人の絵が読めたら、それに描きかえる）
+const heroMarkerStyle = document.createElement('style');
+function setHeroMarker() {
   const sheet = document.createElement('canvas');
   sheet.width = 64; sheet.height = 32;
   const x = sheet.getContext('2d');
   x.imageSmoothingEnabled = false;
   heroSprites.down.forEach((c, i) => x.drawImage(c, i * 32, 0, 32, 32));
-  const st = document.createElement('style');
+  const st = heroMarkerStyle;
   st.textContent = `.me,.me.demo{width:32px;height:32px;border:0;border-radius:0;box-shadow:none;background:url(${sheet.toDataURL()}) 0 0/64px 32px no-repeat;image-rendering:pixelated;animation:heroStep .9s steps(1) infinite;filter:drop-shadow(0 2px 1px rgba(0,0,0,.45))}
 @keyframes heroStep{0%{background-position:0 0}50%{background-position:-32px 0}}
 @media (prefers-reduced-motion:reduce){.me{animation:none}}`;
   document.head.appendChild(st);
+}
+setHeroMarker();
+// 歩く地図の人（主人公と西尾の人たち）を、Blender で作った 16×16 の絵（tools/blender/people.py → nishio-go/art/people.png）に。
+// 並びは NPC_COLORS の順に2コマずつ、そのあと主人公の 下・上・横 を2コマずつ（左は横を反転）。読めるまでは上の手描きの絵
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    const cut = (i, flip) => {
+      const c = document.createElement('canvas'); c.width = c.height = 16;
+      const x = c.getContext('2d');
+      if (flip) { x.translate(16, 0); x.scale(-1, 1); }
+      x.drawImage(img, i * 16, 0, 16, 16, 0, 0, 16, 16);
+      return c;
+    };
+    let i = 0;
+    for (const k of Object.keys(NPC_COLORS)) { npcSprites[k] = [cut(i), cut(i + 1)]; i += 2; }
+    for (const d of ['down', 'up', 'right']) { heroSprites[d] = [cut(i), cut(i + 1)]; i += 2; }
+    heroSprites.left = [cut(i - 2, true), cut(i - 1, true)];
+    setHeroMarker();
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/people.png';
 })();
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];

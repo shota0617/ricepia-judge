@@ -1,0 +1,433 @@
+# にしおさんぽGO：名所1011か所の特大のドット絵（96×96）を、Blender の型で作る
+# - 一覧は tools/blender/giant-list.json（giant-list.py が作る：id・名前・形の種類・屋根／壁／差し色）
+# - 種類ごとの型（神社・稲荷・お寺・駅・城跡・博物館など・史跡・古墳・見どころ・山・教会・公園・海水浴場・像・温泉・水族館）に、
+#   名所ごとに決まった乱数（id から）で 大きさ・向き・木や灯籠の数と場所・塔や鐘つき堂のあるなし などを変え、色は写真から測った色。
+#   1枚ずつ全部ちがう絵になる。できた PNG は nishio-go/art/giant/<id>.png
+# 使い方：python tools/blender/giant-gen.py [--part i/n] [id ...]
+import importlib.util
+import json
+import math
+import os
+import random
+import sys
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+spec = importlib.util.spec_from_file_location('giant', os.path.join(HERE, 'giant.py'))
+gi = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(gi)
+pa = gi.pa
+box, cyl, sphere, roof = pa.box, pa.cyl, pa.sphere, gi.roof
+LIST = json.load(open(os.path.join(HERE, 'giant-list.json')))
+
+BASE = {'shrine': ['#5a6068', '#8a6a4a', '#c8382c'], 'temple': ['#4e535e', '#eeeae0', '#7a5a3c'], 'station': ['#6a7480', '#e8e6e0', '#2f74b8'],
+        'castle': ['#4a4f57', '#f3f1ea', '#9b968a'], 'public': ['#7a7e84', '#d8d4cc', '#5e7f99'], 'historic': ['#5a6068', '#e8e2d2', '#8a6a4a'],
+        'view': ['#5a6068', '#f4f2ec', '#b08850'], 'church': ['#7a4a3a', '#f0ece4', '#6f8fa8']}
+BASE_OF = {'shrine': 'shrine', 'inari': 'shrine', 'temple': 'temple', 'station': 'station', 'castle': 'castle', 'museum': 'public', 'library': 'public',
+           'townhall': 'public', 'art': 'public', 'aquarium': 'public', 'onsen': 'public', 'historic': 'historic', 'kofun': 'historic', 'statue': 'historic',
+           'view': 'view', 'hill': 'view', 'park': 'view', 'beach': 'view', 'church': 'church'}
+TRAIN = {'meitetsu': ('#c8162a', '#f4f4f4'), 'jr': ('#c8ccd0', '#e8781e'), 'aikan': ('#c8ccd0', '#8cc63f')}
+
+pa.MATS.update({'gTree': '#4f9a3e', 'gTreeD': '#2f6b33', 'sugi': '#2c5a32', 'momiji': '#c8502e', 'sakura': '#f0b8c8', 'toro': '#a8a49a',
+                'ishi': '#8e8a80', 'asphalt': '#7a7c80', 'shibaG': '#6aa84a', 'kanban': '#f4f2e8', 'kanbanT': '#3a5a8a', 'kitsune': '#f4f0e6',
+                'senro': '#5a4a3a', 'rail': '#9aa0a8', 'umiB': '#3d86c6', 'nami': '#a8d8f0', 'yu': '#e8f4f8', 'kane': '#7a6a3a', 'juji': '#d8b048',
+                'ike': '#4aa3df', 'hasuH': '#4f9e3a', 'benchW': '#a06a3a', 'parasol2': '#2f74b8', 'sakana': '#f2a03a'})
+
+
+def clamp_hex(h, lo=0, hi=255):
+    r, g, b = (int(h[i:i + 2], 16) for i in (1, 3, 5))
+    return '#%02x%02x%02x' % tuple(max(lo, min(hi, c)) for c in (r, g, b))
+
+
+def jitter(h, rng, amt=14):
+    r, g, b = (int(h[i:i + 2], 16) for i in (1, 3, 5))
+    d = rng.randint(-amt, amt)
+    return '#%02x%02x%02x' % tuple(max(0, min(255, c + d + rng.randint(-4, 4))) for c in (r, g, b))
+
+
+def gable(name, mat, length, width, h, zb, x=0.0, y=0.0, rz=0.0):
+    """切妻の屋根（棟は x の向き。rz で回す）"""
+    sx, sy = h / 1.5, width / 1.732
+    o = cyl(name, mat, 1.0, length, (x, y, zb + 0.5 * sx), (0, -math.pi / 2, rz), 3)   # 三角の柱を横にたおす（Y のあと Z で回る）
+    o.scale = (sx, sy, 1)
+    return o
+
+
+def tree(n, x, y, s, kind):
+    if kind == 'sugi':
+        cyl(f'tm{n}', 'miki', 0.02 * s, 0.10 * s, (x, y, 0.05 * s), verts=8)
+        cyl(f'tc{n}', 'sugi', 0.09 * s, 0.42 * s, (x, y, 0.30 * s), verts=10, r2=0.0)
+    elif kind == 'pine':
+        gi.pine(n, x, y, s * 1.1)
+    else:
+        mat = {'momiji': 'momiji', 'sakura': 'sakura'}.get(kind, 'gTree')
+        cyl(f'tm{n}', 'miki', 0.025 * s, 0.16 * s, (x, y, 0.08 * s), verts=8)
+        for i, (dx, dy, dz, r) in enumerate(((0, 0, 0.24, 0.12), (0.07, 0.03, 0.20, 0.09), (-0.06, -0.02, 0.21, 0.09), (0.0, 0.04, 0.31, 0.08))):
+            sphere(f'tl{n}{i}', mat if i else ('gTreeD' if mat == 'gTree' else mat), r * s, (x + dx * s, y + dy * s, dz * s))
+
+
+def trees(rng, n, spots, kinds, s=(0.8, 1.15)):
+    """木を n 本。桜と紅葉はたまにだけ（一年じゅう出るので）"""
+    rng.shuffle(spots)
+    green = [k for k in kinds if k not in ('sakura', 'momiji')] or ['round']
+    for i, (x, y) in enumerate(spots[:n]):
+        k = rng.choice(kinds) if rng.random() < 0.25 else rng.choice(green)
+        tree(i, x * 0.94 + rng.uniform(-0.03, 0.03), y * 0.94 + rng.uniform(-0.03, 0.03), rng.uniform(*s), k)
+
+
+def ground(mat, w=0.92, d=0.72):
+    box('ground', mat, (w, d, 0.03), (0, 0, -0.015))
+
+
+def toro(n, x, y, s=1.0):
+    box(f'toroB{n}', 'toro', (0.04 * s, 0.04 * s, 0.03 * s), (x, y, 0.015 * s))
+    cyl(f'toroP{n}', 'toro', 0.012 * s, 0.10 * s, (x, y, 0.08 * s), verts=6)
+    box(f'toroH{n}', 'toro', (0.05 * s, 0.05 * s, 0.04 * s), (x, y, 0.15 * s))
+    cyl(f'toroK{n}', 'toro', 0.045 * s, 0.03 * s, (x, y, 0.185 * s), (0, 0, math.pi / 4), 4, r2=0.005)
+
+
+def torii(n, x, y, w, h, mat):
+    for dx in (-w / 2, w / 2):
+        cyl(f'trP{n}{dx}', mat, 0.016, h, (x + dx, y, h / 2), verts=8)
+    box(f'trK{n}', mat, (w + 0.10, 0.03, 0.025), (x, y, h + 0.01))
+    box(f'trN{n}', mat, (w + 0.02, 0.02, 0.018), (x, y, h * 0.8))
+    if mat != 'ishi':
+        box(f'trT{n}', 'kuro', (w + 0.11, 0.032, 0.008), (x, y, h + 0.025))
+
+
+def sign(x, y, z=0.0):
+    for dx in (-0.04, 0.04):
+        cyl(f'sgP{dx}', 'miki', 0.006, 0.10, (x + dx, y, z + 0.05), verts=6)
+    box('sgB', 'kanban', (0.11, 0.012, 0.06), (x, y - 0.006, z + 0.10))
+    box('sgT', 'kanbanT', (0.07, 0.014, 0.012), (x, y - 0.008, z + 0.11))
+
+
+def windows_grid(prefix, x0, x1, y, z0, floors, fh, cols, mat='mado'):
+    for f in range(floors):
+        for c in range(cols):
+            x = x0 + (c + 0.5) * (x1 - x0) / cols
+            box(f'{prefix}{f}_{c}', mat, ((x1 - x0) / cols * 0.55, 0.012, fh * 0.45), (x, y, z0 + (f + 0.55) * fh))
+
+
+# ---------- 型 ----------
+def m_shrine(rng, R, W, A, inari=False):
+    ground('jari')
+    box('sando', 'ishi', (0.10, 0.62, 0.012), (0, -0.08, 0.006))
+    s = rng.uniform(0.85, 1.1)
+    hy = rng.uniform(0.10, 0.18)
+    box('kidan', 'ishi', (0.34 * s, 0.26 * s, 0.04), (0, hy, 0.02))
+    box('honden', 'wood', (0.26 * s, 0.18 * s, 0.14 * s), (0, hy, 0.04 + 0.07 * s))
+    box('hondenF', 'kuro', (0.12 * s, 0.01, 0.07 * s), (0, hy - 0.091 * s, 0.04 + 0.06 * s))
+    gable('yane', 'roofP', 0.34 * s, 0.30 * s, 0.12 * s, 0.04 + 0.14 * s, 0, hy)
+    for dx in (-0.06, 0.06):   # 千木
+        cyl(f'chigi{dx}', 'woodD', 0.008, 0.10 * s, (dx * s * 2.2, hy, 0.04 + 0.27 * s), (0, math.copysign(0.5, dx), 0), 6)
+    if rng.random() < 0.6:   # 拝殿
+        py = hy - 0.17 * s
+        box('haiden', 'wallP', (0.30 * s, 0.10 * s, 0.10 * s), (0, py, 0.05 * s + 0.02))
+        gable('yaneH', 'roofP', 0.36 * s, 0.16 * s, 0.08 * s, 0.10 * s + 0.02, 0, py)
+    tmat = 'ishi' if (not inari and rng.random() < 0.3) else 'accP'
+    if inari:
+        for i in range(rng.randint(3, 5)):
+            torii(i, 0, -0.34 + i * 0.07, 0.14, 0.17, 'accP')
+        for dx in (-0.12, 0.12):
+            sphere(f'kitsune{dx}', 'kitsune', 0.025, (dx, -0.12, 0.05), (0.8, 1.2, 1.4))
+            box(f'kitsuneB{dx}', 'ishi', (0.05, 0.05, 0.03), (dx, -0.12, 0.015))
+    else:
+        torii(0, 0, -0.30, rng.uniform(0.16, 0.22), rng.uniform(0.20, 0.26), tmat)
+    if rng.random() < 0.7:
+        for i, dx in enumerate((-0.11, 0.11)):
+            toro(i, dx, -0.18, rng.uniform(0.9, 1.2))
+    trees(rng, rng.randint(2, 5), [(-0.38, 0.22), (0.38, 0.20), (-0.30, 0.32), (0.32, 0.32), (-0.42, -0.05), (0.42, -0.02)], ['sugi', 'sugi', 'round'])
+    return dict(target=(0, 0, 0.16), scale=1.01, el=rng.uniform(26, 32), az=rng.uniform(-40, -28), size=96)
+
+
+def m_temple(rng, R, W, A):
+    ground('jari')
+    s = rng.uniform(0.85, 1.05)
+    hy = rng.uniform(0.04, 0.12)
+    box('kidan', 'ishi', (0.48 * s, 0.36 * s, 0.05), (0, hy, 0.025))
+    box('hondo', 'wallP', (0.38 * s, 0.28 * s, 0.16 * s), (0, hy, 0.05 + 0.08 * s))
+    for i in range(5):
+        box(f'hashira{i}', 'woodD', (0.02, 0.02, 0.16 * s), ((-0.17 + i * 0.085) * s, hy - 0.141 * s, 0.05 + 0.08 * s))
+    box('kosi', 'woodD', (0.38 * s, 0.01, 0.025), (0, hy - 0.142 * s, 0.07))
+    roof('yane', 'roofP', 0.56 * s, 0.46 * s, rng.uniform(0.18, 0.24) * s, 0.05 + 0.16 * s, rng.uniform(0.3, 0.45), y=hy)
+    box('mune', 'munaG', (0.2 * s, 0.03, 0.03), (0, hy, 0.05 + 0.16 * s + 0.21 * s))
+    box('dan', 'ishi', (0.14, 0.08, 0.03), (0, hy - 0.22 * s, 0.015))
+    extra = rng.random()
+    if extra < 0.25:   # 三重塔
+        tx = rng.choice((-0.36, 0.36))
+        for k in range(3):
+            z = 0.02 + k * 0.13
+            box(f'to{k}', 'woodD', (0.10 - k * 0.012, 0.10 - k * 0.012, 0.08), (tx, 0.18, z + 0.04))
+            roof(f'toY{k}', 'roofP', 0.20 - k * 0.02, 0.20 - k * 0.02, 0.05, z + 0.08, 0.3, x=tx, y=0.18)
+        cyl('sorin', 'kane', 0.008, 0.12, (tx, 0.18, 0.53), verts=6)
+    elif extra < 0.6:  # 鐘つき堂
+        tx = rng.choice((-0.34, 0.34))
+        for dx in (-0.05, 0.05):
+            for dy in (-0.05, 0.05):
+                box(f'sh{dx}{dy}', 'woodD', (0.014, 0.014, 0.16), (tx + dx, -0.20 + dy, 0.08))
+        roof('shY', 'roofP', 0.18, 0.18, 0.07, 0.16, 0.2, x=tx, y=-0.20)
+        cyl('kane', 'kane', 0.03, 0.06, (tx, -0.20, 0.12), verts=12)
+    if rng.random() < 0.5:   # 山門
+        box('mon', 'woodD', (0.16, 0.05, 0.10), (0, -0.33, 0.05))
+        box('monD', 'kuro', (0.07, 0.052, 0.08), (0, -0.33, 0.04))
+        roof('monY', 'roofP', 0.24, 0.12, 0.06, 0.10, 0.4, y=-0.33)
+    elif rng.random() < 0.6:
+        toro(0, -0.09, -0.24)
+        toro(1, 0.09, -0.24)
+    trees(rng, rng.randint(2, 4), [(-0.40, 0.25), (0.40, 0.26), (-0.42, -0.25), (0.42, -0.22), (-0.30, 0.34), (0.30, 0.34)], ['pine', 'round', 'momiji', 'pine'])
+    return dict(target=(0, 0, 0.18), scale=1.03, el=rng.uniform(25, 31), az=rng.uniform(-40, -28), size=96)
+
+
+def m_station(rng, R, W, A, train='meitetsu'):
+    ground('asphalt')
+    body, band = TRAIN[train]
+    pa.MATS['trainB'], pa.MATS['trainS'] = body, band
+    box('senro', 'senro', (1.0, 0.16, 0.015), (0, 0.04, 0.008))
+    for dy in (-0.035, 0.035):
+        box(f'rail{dy}', 'rail', (1.0, 0.01, 0.01), (0, 0.04 + dy, 0.02))
+    box('home', 'home', (0.9, 0.14, 0.07), (0, 0.20, 0.035))
+    n = rng.randint(1, 2)
+    L = 0.42 if n == 1 else 0.38
+    for i in range(n):
+        x = (-0.21 + i * 0.40) if n == 2 else rng.uniform(-0.15, 0.15)
+        box(f'train{i}', 'trainB', (L, 0.13, 0.17), (x, 0.04, 0.115), bevel=0.02)
+        box(f'trainS{i}', 'trainS', (L + 0.004, 0.134, 0.02), (x, 0.04, 0.07))
+        for j in range(4):
+            box(f'mado{i}{j}', 'mado', (0.06, 0.01, 0.05), (x - L / 2 + 0.07 + j * (L - 0.14) / 3, -0.027, 0.15))
+    for x in (-0.3, 0.0, 0.3):
+        box(f'hP{x}', 'hashira', (0.015, 0.015, 0.14), (x, 0.24, 0.14))
+    box('hY', 'yane2', (0.86, 0.12, 0.015), (0, 0.22, 0.215), (math.radians(-6), 0, 0))
+    s = rng.uniform(0.8, 1.15)
+    sx = rng.uniform(-0.18, 0.18)
+    style = rng.random()
+    box('eki', 'wallP', (0.36 * s, 0.18, 0.16 * s), (sx, -0.22, 0.08 * s))
+    windows_grid('ekiM', sx - 0.15 * s, sx + 0.15 * s, -0.312, 0.0, 1, 0.16 * s, 4)
+    if style < 0.5:
+        gable('ekiY', 'roofP', 0.42 * s, 0.24, 0.08, 0.16 * s, sx, -0.22)
+    else:
+        box('ekiY', 'roofP', (0.38 * s, 0.20, 0.025), (sx, -0.22, 0.16 * s + 0.012))
+    box('ekiK', 'kanban', (0.16, 0.012, 0.035), (sx, -0.315, 0.13 * s))
+    box('ekiKT', 'accP', (0.04, 0.014, 0.02), (sx - 0.05, -0.316, 0.13 * s))
+    return dict(target=(0, 0, 0.12), scale=1.03, el=rng.uniform(27, 33), az=rng.uniform(-40, -28), size=96)
+
+
+def m_castle(rng, R, W, A):
+    ground('shibaG')
+    s = rng.uniform(0.8, 1.1)
+    k = rng.random()
+    cyl('ishigaki', 'ishigaki', 0.36 * s * math.sqrt(2), 0.12, (0.05, 0.12, 0.06), (0, 0, math.pi / 4), 4, r2=0.31 * s * math.sqrt(2))
+    if k < 0.4:   # 隅櫓か門を復元した所
+        box('yagura', 'wallP', (0.24 * s, 0.20 * s, 0.12), (0.05, 0.12, 0.18))
+        box('yaguraS', 'shitami', (0.244 * s, 0.204 * s, 0.04), (0.05, 0.12, 0.14))
+        roof('yaguraY', 'roofP', 0.34 * s, 0.30 * s, 0.10, 0.24, 0.4, x=0.05, y=0.12)
+    else:          # 石碑と土塁
+        box('hi', 'ishi', (0.06, 0.03, 0.22), (0.0, 0.0, 0.23))
+        box('hiB', 'ishi', (0.12, 0.08, 0.03), (0.0, 0.0, 0.135))
+        box('hiT', 'kuro', (0.012, 0.032, 0.14), (0.0, -0.002, 0.25))
+    sign(-0.25, -0.25)
+    trees(rng, rng.randint(2, 4), [(-0.38, 0.22), (0.40, 0.20), (-0.36, -0.12), (0.40, -0.18), (0.30, 0.34)], ['pine', 'pine', 'sakura', 'round'])
+    return dict(target=(0, 0, 0.14), scale=0.99, el=rng.uniform(25, 31), az=rng.uniform(-40, -28), size=96)
+
+
+def m_public(rng, R, W, A, kind='museum'):
+    ground('jari')
+    floors = rng.randint(1, 3) if kind != 'townhall' else rng.randint(3, 5)
+    fh = 0.075
+    w, d = rng.uniform(0.42, 0.62), rng.uniform(0.26, 0.36)
+    x0 = rng.uniform(-0.08, 0.08)
+    box('tate', 'wallP', (w, d, floors * fh), (x0, 0.06, floors * fh / 2))
+    windows_grid('mado', x0 - w / 2 + 0.03, x0 + w / 2 - 0.03, 0.06 - d / 2 - 0.002, 0, floors, fh, rng.randint(4, 7))
+    box('okujo', 'roofP', (w + 0.02, d + 0.02, 0.02), (x0, 0.06, floors * fh + 0.01))
+    if kind == 'townhall' or rng.random() < 0.25:   # 塔
+        th = rng.uniform(0.10, 0.18)
+        box('to', 'wallP', (0.10, 0.10, th), (x0 + w * 0.3, 0.06, floors * fh + th / 2))
+        box('toY', 'roofP', (0.12, 0.12, 0.02), (x0 + w * 0.3, 0.06, floors * fh + th + 0.01))
+    elif kind in ('museum', 'art') and rng.random() < 0.4:   # 大きな屋根
+        roof('yaneM', 'roofP', w + 0.08, d + 0.08, 0.10, floors * fh, 0.6, x=x0, y=0.06)
+    elif kind == 'aquarium':
+        sphere('dome', 'umiB', 0.14, (x0, 0.06, floors * fh), (1.4, 1, 0.6))
+        box('sakana', 'sakana', (0.12, 0.012, 0.05), (x0 - 0.1, 0.06 - d / 2 - 0.01, floors * fh * 0.6))
+    elif kind == 'onsen':
+        for i in range(3):
+            sphere(f'yuge{i}', 'yu', 0.05, (x0 - 0.08 + i * 0.08, 0.06, floors * fh + 0.08 + 0.04 * (i % 2)), (1, 1, 1.4))
+    box('genkan', 'accP', (0.14, 0.08, 0.015), (x0, 0.06 - d / 2 - 0.04, 0.08))
+    for dx in (-0.06, 0.06):
+        box(f'gP{dx}', 'hashira', (0.01, 0.01, 0.08), (x0 + dx, 0.06 - d / 2 - 0.07, 0.04))
+    if kind == 'townhall' or rng.random() < 0.3:
+        for i in range(rng.randint(1, 3)):
+            cyl(f'pole{i}', 'hashira', 0.006, 0.28, (-0.40 + i * 0.05, -0.28, 0.14), verts=6)
+            box(f'flag{i}', ['accP', 'obi', 'kanbanT'][i % 3], (0.05, 0.005, 0.03), (-0.375 + i * 0.05, -0.28, 0.26))
+    if kind == 'art':
+        sphere('chokoku', 'kane', 0.05, (0.36, -0.26, 0.08), (0.7, 0.7, 1.6))
+    trees(rng, rng.randint(2, 5), [(-0.42, 0.25), (0.42, 0.26), (-0.42, -0.25), (0.42, -0.22), (0.25, -0.32), (-0.25, -0.33)], ['round', 'round', 'sakura', 'pine'])
+    return dict(target=(0, 0, 0.14), scale=1.03, el=rng.uniform(26, 32), az=rng.uniform(-40, -28), size=96)
+
+
+def m_historic(rng, R, W, A):
+    ground('shibaG')
+    k = rng.random()
+    if k < 0.45:   # 石碑
+        h = rng.uniform(0.18, 0.30)
+        box('hiB', 'ishi', (0.16, 0.12, 0.04), (0, 0.05, 0.02))
+        box('hi', 'ishi', (rng.uniform(0.06, 0.10), 0.035, h), (0, 0.05, 0.04 + h / 2))
+        box('hiT', 'kuro', (0.012, 0.037, h * 0.6), (0, 0.048, 0.04 + h / 2))
+    elif k < 0.75:  # 小さなお堂・祠
+        box('hokoraB', 'ishi', (0.14, 0.12, 0.05), (0, 0.06, 0.025))
+        box('hokora', 'woodD', (0.10, 0.08, 0.08), (0, 0.06, 0.09))
+        gable('hokoraY', 'roofP', 0.14, 0.14, 0.06, 0.13, 0, 0.06)
+    else:           # 門（長屋門・山門の跡）
+        box('mon', 'wallP', (0.36, 0.10, 0.12), (0, 0.06, 0.06))
+        box('monD', 'woodD', (0.10, 0.102, 0.10), (0, 0.06, 0.05))
+        roof('monY', 'roofP', 0.44, 0.18, 0.09, 0.12, 0.5, y=0.06)
+    sign(rng.choice((-0.24, 0.24)), -0.22)
+    trees(rng, rng.randint(1, 4), [(-0.38, 0.22), (0.38, 0.20), (-0.36, -0.10), (0.40, -0.10), (0.20, 0.32), (-0.2, 0.32)], ['round', 'pine', 'sakura', 'momiji'])
+    return dict(target=(0, 0, 0.12), scale=0.95, el=rng.uniform(26, 32), az=rng.uniform(-40, -28), size=96)
+
+
+def m_kofun(rng, R, W, A):
+    ground('shibaG')
+    zen = rng.random() < 0.4   # 前方後円墳
+    sphere('fun', 'kusa', 0.30, (0.04, 0.08, 0.0), (1.0, 0.9, 0.42))
+    if zen:
+        cyl('hofun', 'kusa', 0.22, 0.10, (-0.22, -0.12, 0.04), (0, 0, math.pi / 4 + 0.4), 4, r2=0.12)
+    trees(rng, rng.randint(2, 4), [(0.0, 0.10), (0.12, 0.16), (-0.08, 0.18), (0.18, 0.02)], ['round', 'pine'], (0.6, 0.9))
+    sign(0.32, -0.26)
+    return dict(target=(0, 0, 0.10), scale=0.99, el=rng.uniform(28, 34), az=rng.uniform(-40, -28), size=96)
+
+
+def m_view(rng, R, W, A, name=''):
+    tower = any(w in name for w in ('展望', 'タワー', '見晴', '眺望'))
+    ground('shibaG')
+    if tower:
+        for dx in (-0.06, 0.06):
+            for dy in (-0.06, 0.06):
+                box(f'tw{dx}{dy}', 'hashira', (0.015, 0.015, 0.36), (dx, 0.05 + dy, 0.18))
+        box('deck', 'wallP', (0.20, 0.20, 0.03), (0, 0.05, 0.36))
+        roof('twY', 'roofP', 0.24, 0.24, 0.08, 0.40, 0.1, y=0.05)
+    else:   # 庭のある建物（見どころ）
+        s = rng.uniform(0.85, 1.1)
+        box('tate', 'wallP', (0.34 * s, 0.22 * s, 0.13), (0.08, 0.10, 0.065))
+        roof('yane', 'roofP', 0.44 * s, 0.32 * s, 0.12, 0.13, rng.uniform(0.3, 0.6), x=0.08, y=0.10)
+        box('niwa', 'jari', (0.30, 0.20, 0.006), (-0.18, -0.18, 0.003))
+        if rng.random() < 0.5:
+            sphere('ike', 'ike', 0.10, (-0.20, -0.16, 0.0), (1.3, 1, 0.08))
+    trees(rng, rng.randint(2, 5), [(-0.40, 0.22), (0.40, 0.26), (-0.40, -0.05), (0.42, -0.20), (0.28, -0.30), (-0.30, 0.32)], ['round', 'momiji', 'pine', 'sakura'])
+    return dict(target=(0, 0, 0.14), scale=1.01, el=rng.uniform(26, 32), az=rng.uniform(-40, -28), size=96)
+
+
+def m_hill(rng, R, W, A):
+    sphere('yama', 'kusa', 0.48, (0, 0.04, -0.05), (1.0, 0.85, rng.uniform(0.55, 0.75)))
+    trees(rng, rng.randint(4, 7), [(-0.25, 0.10), (0.22, 0.14), (-0.10, 0.25), (0.10, -0.10), (0.30, -0.05), (-0.30, -0.10), (0.0, 0.22)], ['round', 'sugi', 'pine'], (0.6, 0.9))
+    top = 0.04 + 0.48 * 0.65
+    box('choten', 'ishi', (0.04, 0.04, 0.08), (0.0, 0.0, top))
+    if rng.random() < 0.5:
+        box('azumaya', 'azumaya', (0.10, 0.10, 0.06), (0.10, 0.06, top - 0.02))
+        roof('azumayaY', 'yaneA', 0.16, 0.16, 0.05, top + 0.04, 0.05, x=0.10, y=0.06)
+    return dict(target=(0, 0, 0.18), scale=1.03, el=rng.uniform(24, 30), az=rng.uniform(-40, -28), size=96)
+
+
+def m_church(rng, R, W, A):
+    ground('jari')
+    s = rng.uniform(0.85, 1.1)
+    box('do', 'wallP', (0.24 * s, 0.40 * s, 0.16), (0.05, 0.08, 0.08))
+    gable('doY', 'roofP', 0.44 * s, 0.30 * s, 0.12, 0.16, 0.05, 0.08, rz=math.pi / 2)
+    box('to', 'wallP', (0.12, 0.12, 0.28), (0.05, -0.16 * s, 0.14))
+    roof('toY', 'roofP', 0.14, 0.14, 0.14, 0.28, 0.02, x=0.05, y=-0.16 * s)
+    box('juji', 'juji', (0.01, 0.01, 0.07), (0.05, -0.16 * s, 0.46))
+    box('jujiY', 'juji', (0.04, 0.01, 0.01), (0.05, -0.16 * s, 0.47))
+    box('mado', 'accP', (0.04, 0.012, 0.06), (0.05, -0.16 * s - 0.061, 0.20))
+    trees(rng, rng.randint(1, 3), [(-0.36, 0.22), (0.40, 0.25), (-0.38, -0.20), (0.38, -0.22)], ['round', 'sakura'])
+    return dict(target=(0, 0, 0.16), scale=0.99, el=rng.uniform(26, 32), az=rng.uniform(-40, -28), size=96)
+
+
+def m_park(rng, R, W, A):
+    ground('shibaG')
+    sphere('ike', 'ike', 0.16, (rng.uniform(-0.15, 0.15), rng.uniform(-0.05, 0.10), 0.0), (1.5, 1.0, 0.06))
+    box('michi', 'jari', (0.9, 0.07, 0.006), (0, -0.25, 0.003))
+    for i in range(rng.randint(1, 2)):
+        x = -0.25 + i * 0.4
+        box(f'bench{i}', 'benchW', (0.10, 0.03, 0.01), (x, -0.32, 0.04))
+        box(f'benchB{i}', 'benchW', (0.10, 0.01, 0.03), (x, -0.31, 0.06))
+    if rng.random() < 0.5:
+        for dx in (-0.05, 0.05):
+            for dy in (-0.05, 0.05):
+                box(f'az{dx}{dy}', 'azumaya', (0.012, 0.012, 0.12), (0.30 + dx, 0.22 + dy, 0.06))
+        roof('azY', 'yaneA', 0.18, 0.18, 0.06, 0.12, 0.05, x=0.30, y=0.22)
+    trees(rng, rng.randint(4, 7), [(-0.40, 0.25), (0.40, -0.05), (-0.40, -0.05), (-0.15, 0.30), (0.10, 0.32), (0.42, 0.30), (-0.30, 0.10)], ['round', 'sakura', 'momiji', 'round'])
+    return dict(target=(0, 0, 0.10), scale=0.99, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)
+
+
+def m_beach(rng, R, W, A):
+    box('umi', 'umiB', (1.0, 0.40, 0.02), (0, 0.22, -0.01))
+    for i in range(3):
+        box(f'nami{i}', 'nami', (rng.uniform(0.2, 0.4), 0.012, 0.004), (rng.uniform(-0.3, 0.3), 0.10 + i * 0.1, 0.002))
+    box('suna', 'suna', (1.0, 0.44, 0.03), (0, -0.20, -0.015))
+    for i in range(rng.randint(1, 3)):
+        x = -0.28 + i * 0.26 + rng.uniform(-0.04, 0.04)
+        cyl(f'pP{i}', 'hashira', 0.006, 0.14, (x, -0.18, 0.07), verts=6)
+        cyl(f'pK{i}', ['parasol', 'parasol2', 'accP'][i % 3], 0.08, 0.04, (x, -0.18, 0.15), verts=8, r2=0.005)
+    for i in range(rng.randint(1, 3)):
+        sphere(f'iwa{i}', 'ishi', 0.04, (rng.uniform(-0.4, 0.4), rng.uniform(-0.38, -0.28), 0.0), (1.3, 1, 0.7))
+    if rng.random() < 0.5:
+        tree(0, 0.42, -0.32, 0.9, 'pine')
+    return dict(target=(0, 0, 0.04), scale=0.99, el=rng.uniform(32, 38), az=rng.uniform(-40, -28), size=96)
+
+
+def m_statue(rng, R, W, A):
+    ground('shibaG')
+    box('daiza', 'ishi', (0.16, 0.16, 0.10), (0, 0.04, 0.05))
+    mat = 'kane' if rng.random() < 0.6 else 'ishi'
+    cyl('karada', mat, 0.045, 0.16, (0, 0.04, 0.18), verts=12, r2=0.035)
+    sphere('atama', mat, 0.035, (0, 0.04, 0.29))
+    sign(0.25, -0.22)
+    trees(rng, rng.randint(1, 3), [(-0.36, 0.22), (0.36, 0.22), (-0.34, -0.15), (0.36, -0.05)], ['round', 'pine', 'sakura'])
+    return dict(target=(0, 0, 0.14), scale=0.9, el=rng.uniform(24, 30), az=rng.uniform(-40, -28), size=96)
+
+
+def build(e):
+    rng = random.Random(e['id'])
+    base = BASE[BASE_OF.get(e['k'], 'historic')]
+    cols = [c if isinstance(c, str) and len(c) == 7 else base[i] for i, c in enumerate((e['c'] + [0, 0, 0])[:3])]
+    pa.MATS['roofP'], pa.MATS['wallP'], pa.MATS['accP'] = jitter(cols[0], rng), jitter(cols[1], rng, 8), jitter(cols[2], rng, 10)
+    k = e['k']
+    if k == 'shrine':
+        return m_shrine(rng, *cols)
+    if k == 'inari':
+        return m_shrine(rng, *cols, inari=True)
+    if k == 'temple':
+        return m_temple(rng, *cols)
+    if k == 'station':
+        return m_station(rng, *cols, train=e.get('train', 'meitetsu'))
+    if k == 'castle':
+        return m_castle(rng, *cols)
+    if k in ('museum', 'library', 'townhall', 'art', 'aquarium', 'onsen'):
+        return m_public(rng, *cols, kind=k)
+    if k == 'kofun':
+        return m_kofun(rng, *cols)
+    if k == 'view':
+        return m_view(rng, *cols, name=e['name'])
+    if k == 'hill':
+        return m_hill(rng, *cols)
+    if k == 'church':
+        return m_church(rng, *cols)
+    if k == 'park':
+        return m_park(rng, *cols)
+    if k == 'beach':
+        return m_beach(rng, *cols)
+    if k == 'statue':
+        return m_statue(rng, *cols)
+    return m_historic(rng, *cols)
+
+
+if __name__ == '__main__':
+    args = [a for a in sys.argv[1:] if not a.startswith('-')]
+    part = next((a.split('=', 1)[1] for a in sys.argv[1:] if a.startswith('--part=')), None)
+    todo = [e for e in LIST if not args or e['id'] in args]
+    if part:
+        i, n = map(int, part.split('/'))
+        todo = todo[i::n]
+    pa.MODELS.clear()
+    for e in todo:
+        pa.MODELS[e['id']] = (lambda e=e: build(e))
+    for e in todo:
+        pa.make(e['id'])

@@ -708,5 +708,5 @@
     if (kind === 'sunny') return u === 5 && ss !== 3 ? 4 : 0;
     return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4][u];
   }
-  window.NISHIO_DOTS = { COUNT, PER: PERM, MOTIFS: M.map(({ key, name, icon }) => ({ key, name, icon })), info, canvas, dataUrl, pick, areaOf, motifOf, idOf, ready, load };
+  window.NISHIO_DOTS = { COUNT, PER: PERM, NCOMP, MOTIFS: M.map(({ key, name, icon, areas, lu }) => ({ key, name, icon, areas, lu })), info, canvas, dataUrl, pick, areaOf, motifOf, idOf, ready, load };
 })();

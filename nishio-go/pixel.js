@@ -359,7 +359,7 @@ function rasterize(elements, cx, cy, dem, bld) {
     const isQ = (x, y) => x >= 0 && y >= 0 && x < CHUNK && y < CHUNK && g[y * CHUNK + x] === C.Q;
     for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
       const i = y * CHUNK + x;
-      if (g[i] !== C.T || (((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0 & 3) === 0) continue;
+      if (g[i] !== C.T || ((((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0 & 3) === 0) continue;
       if (isQ(x - 1, y) || isQ(x + 1, y) || isQ(x, y - 1) || isQ(x, y + 1) || isQ(x - 1, y - 1) || isQ(x + 1, y - 1) || isQ(x - 1, y + 1) || isQ(x + 1, y + 1)) g[i] = C.G;
     }
   }

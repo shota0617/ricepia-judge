@@ -1126,6 +1126,11 @@ function loadMapTiles() {
   if (!MT.roadReq) {   // 道（Blender のアスファルト・縁石・側溝・白線、小道の土と草のへり。roadIndex。季節で変わらない）
     MT.roadReq = true;
     get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
+    get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
+  }
+  if (!MT.shoreReq) {   // 水べ（Blender の護岸・草の土手・浜の浅瀬と波。shoreIndex。季節で変わらない）
+    MT.shoreReq = true;
+    get('shore', () => true, img => { const a = sliceSheet(img, 32, 3); MT.shore = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
   }
   if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
     MT.vehReq = true;
@@ -1328,6 +1333,19 @@ function railCrossing(x, y) {
 // 線路のマスは、このマスが その向きの踏切（railCrossing）のときだけ つながっているとみなす（線路と並んで走る道の ふちが消えないように）
 // 小物（マンホール・補修のあと）は8マスに1つくらい、小道の水たまりは24マスに1つくらい。つながっていない辺に縁石・側溝・白線・草のへりが描いてある
 const ROAD_ROW = { [C.R]: 0, [C.H]: 1, [C.D]: 2 };
+// 水べのマスの絵（shore.png の 行・列）。陸と接する辺（1 上・2 右・4 下・8 左）が1つもなければ -1（ふつうの水の絵）。
+// 行：砂浜と接していれば 2 浜、町なか（家・建物・町・工場・道・線路）と接していれば 0 護岸、ほか（田畑・草地・森）は 1 土手
+const SHORE_TOWN = new Set([C.T, C.Q, C.B, C.I, C.R, C.H, C.L]);
+function shoreIndex(x, y) {
+  let m = 0, row = 1;
+  [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => {
+    const c = codeAt(x + a, y + b);
+    if (c === C.A || c === C.X) return;
+    m |= 1 << i;
+    if (c === C.S) row = 2; else if (row === 1 && SHORE_TOWN.has(c)) row = 0;
+  });
+  return m ? [row, m * 2] : null;
+}
 function roadIndex(code, x, y) {
   let xr;
   const R = (a, b, arm) => {
@@ -4614,6 +4632,7 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
+    let shoreAt = null;
     const v = tileVarAt(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     if (code === C.L && MT.rail) {   // 線路は つながる向きの絵（縦・横・ななめ・分かれ道）。1枚にない形は部品を重ねる
@@ -4625,7 +4644,9 @@ function frame(now) {
       ctx.drawImage(MT.road[ROAD_ROW[code]][roadIndex(code, tx, ty)], X, Y, T, T);
       const xr = MT.rail && railCrossing(tx, ty);
       if (xr) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+      if (MT.rankan && code !== C.D) [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => { if (codeAt(tx + a, ty + b) === C.A) ctx.drawImage(MT.rankan[i], X, Y, T, T); });   // 水と接する辺に橋の欄干
     }
+    else if (code === C.A && MT.shore && (shoreAt = shoreIndex(tx, ty))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);
@@ -4645,7 +4666,7 @@ function frame(now) {
       if (!road(up) && dn === C.H && hEdgeRun(tx, ty, 1, 0, road) >= 3) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }
       if (!road(lf) && rt === C.H && hEdgeRun(tx, ty, 0, 1, road) >= 3) { ctx.fillRect(X + T - u, Y + u * 2, u, u * 4); ctx.fillRect(X + T - u, Y + u * 10, u, u * 4); }
     }
-    if (code === C.A) {          // 岸に白い波打ち際
+    if (code === C.A && !shoreAt) {          // 岸に白い波打ち際（水べの絵が読めるまで）
       const u = Math.max(1, Math.round(T / 16)), land = c => c !== C.A && c !== C.X;
       ctx.fillStyle = f ? '#e8f2ff' : '#cfe2ff';
       if (land(codeAt(tx, ty - 1))) ctx.fillRect(X, Y, T, u);

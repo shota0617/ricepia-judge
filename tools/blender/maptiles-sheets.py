@@ -422,7 +422,7 @@ ROAD_PAL = {
     'asphalt': '#8c8c87', 'asphaltS': '#7c7c76', 'asphaltD': '#6a6a68', 'asphaltDS': '#5c5c5a', 'asphaltP': '#787872', 'asphaltDP': '#5e5e5b',
     'tsuchiM': '#b39058', 'tsuchiMS': '#9a7844', 'tsuchiD': '#a2804c',
     'enseki': '#c2bfb6', 'sokko': '#9e9b93', 'hakusen': '#f4f4f0', 'manhole': '#5e5a54',
-    'kusaH': '#4f9a3c', 'mizutamari': '#8fb4c8', 'ishikoro': '#9a948a',
+    'kusaH': '#4f9a3c', 'mizutamari': '#8fb4c8', 'ishikoro': '#9a948a', 'rankan': '#d6d8d4', 'rankanK': '#9a9c98',
 }
 
 
@@ -437,6 +437,29 @@ def roads():
                 sheet.paste(Image.fromarray(img, 'RGB'), ((m * 2 + k) * N, r * N))
     sheet.save(os.path.join(OUT, 'road.png'), optimize=True)
     print('road.png', os.path.getsize(os.path.join(OUT, 'road.png')))
+    rk = Image.new('RGBA', (4 * N, N))   # 橋の欄干：rankan.png（4×1。上・右・下・左。背景なし）
+    for i, sd in enumerate((1, 2, 4, 8)):
+        mat, band, names = load(f'rankan-{sd}')
+        rk.paste(Image.fromarray(sprite_tile(mat, band, names, ROAD_PAL), 'RGBA'), (i * N, 0))
+    rk.save(os.path.join(OUT, 'rankan.png'), optimize=True)
+    print('rankan.png', os.path.getsize(os.path.join(OUT, 'rankan.png')))
+
+
+# 水べ：nishio-go/maptiles/shore.png（32×3）。行：護岸・土手・浜。列：陸がある辺（1 上・2 右・4 下・8 左）× 2 ＋ コマ。0 の列は ふつうの水
+SHORE_PAL = {'nami': '#6fa3ff', 'gogan': '#b4b2aa', 'goganK': '#d2d0c8', 'mizuK': '#1f4fa8', 'kusaD': '#4f9a3c', 'awa': '#e8f2ff', 'asase': '#5fa8d8'}
+
+
+def shores():
+    kinds = ['gogan', 'dote', 'hama']   # maptiles.py の SHORE_KINDS
+    sheet = Image.new('RGB', (32 * N, len(kinds) * N))
+    for r, kd in enumerate(kinds):
+        for m in range(16):
+            for f in range(2):
+                mat, band, names = load(f'shore-{kd}-{m}-{f}' if m else f'water-0-{f}')
+                img = color(mat, band, names, SHORE_PAL, random.Random('w0'), 'mizu', 1, outline=None)
+                sheet.paste(Image.fromarray(img), ((m * 2 + f) * N, r * N))
+    sheet.save(os.path.join(OUT, 'shore.png'), optimize=True)
+    print('shore.png', os.path.getsize(os.path.join(OUT, 'shore.png')))
 
 if __name__ == '__main__':
     import sys
@@ -446,8 +469,10 @@ if __name__ == '__main__':
         rails()
     elif sys.argv[1:] == ['road']:
         roads()
+        shores()
     else:
         main()
         vehicles()
         rails()
         roads()
+        shores()

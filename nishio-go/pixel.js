@@ -584,14 +584,14 @@ async function pump() {
       const pre = await bakedChunk(cx, cy);
       if (pre) {
         // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
-        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); railCache.clear();
+        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); nbrCache.clear();
         dirty = true;
         continue;
       }
       // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
       const saved = store.get(PX_KEY + k);
       if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); railCache.clear();
+        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); nbrCache.clear();
         dirty = true;
         continue;
       }
@@ -601,7 +601,7 @@ async function pump() {
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); railCache.clear();
+        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); nbrCache.clear();
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -1306,13 +1306,21 @@ function railBandSpill(x, y, band) {
   const ne = same(x + 1, y) || same(x, y - 1), sw = same(x - 1, y) || same(x, y + 1);
   return ne && sw ? 40 : sw ? 39 : ne ? 38 : 17;
 }
-// 線路の絵は まわり数マスを見て決めるので、マスごとに覚えておく（地図のまとまりを読みこむたびに忘れる）
-const railCache = new Map();
-function railIndex(x, y) {
+// 線路・道・水べの絵は まわりのマスを見て決めるので、マスごとに覚えておく（地図のまとまりを読みこむたびに忘れる）
+const nbrCache = new Map();
+function nbrLook(x, y, fn) {
   const key = x + ',' + y;
-  let r = railCache.get(key);
-  if (r === undefined) { r = railIndexOf(x, y); railCache.set(key, r); }
+  let r = nbrCache.get(key);
+  if (r === undefined) { r = fn(x, y); nbrCache.set(key, r); }
   return r;
+}
+const railIndex = (x, y) => nbrLook(x, y, railIndexOf);
+// 道のマスに描くもの：[道の絵の列, 角の縁石（kado.png の番号）, 踏切のレール（rail.png の番号）, 橋の欄干（rankan.png の番号）]
+function roadLookOf(x, y) {
+  const code = codeAt(x, y), ri = roadIndex(code, x, y), rm = ri >> 1;
+  const kado = ROAD_CORNERS.flatMap(([s1, s2, a, b], i) => (rm & s1) && (rm & s2) && ROAD_ROW[codeAt(x + a, y + b)] === undefined ? [i] : []);
+  const rankan = code === C.D ? [] : [[0, -1], [1, 0], [0, 1], [-1, 0]].flatMap(([a, b], i) => codeAt(x + a, y + b) === C.A ? [i] : []);
+  return [ri, kado, railCrossing(x, y) || [], rankan];
 }
 function railIndexOf(x, y) {
   const band = railBandIndex(x, y);
@@ -4671,14 +4679,13 @@ function frame(now) {
       else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
     }
     else if (MT.road && ROAD_ROW[code] !== undefined) {   // 道は つながる向きの絵（ふちに縁石・白線・草）。踏切ではレールを重ねる
-      const ri = roadIndex(code, tx, ty), rm = ri >> 1;
+      const [ri, kado, xr, rankan] = nbrLook(tx, ty, roadLookOf);
       ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
-      if (MT.kado) ROAD_CORNERS.forEach(([s1, s2, a, b], i) => { if ((rm & s1) && (rm & s2) && ROAD_ROW[codeAt(tx + a, ty + b)] === undefined) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T); });   // 交差点・曲がり角の内がわの縁石
-      const xr = MT.rail && railCrossing(tx, ty);
-      if (xr) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
-      if (MT.rankan && code !== C.D) [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => { if (codeAt(tx + a, ty + b) === C.A) ctx.drawImage(MT.rankan[i], X, Y, T, T); });   // 水と接する辺に橋の欄干
+      if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);   // 交差点・曲がり角の内がわの縁石
+      if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+      if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);   // 水と接する辺に橋の欄干
     }
-    else if (code === C.A && MT.shore && (shoreAt = shoreIndex(tx, ty))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
+    else if (code === C.A && MT.shore && (shoreAt = nbrLook(tx, ty, shoreIndex))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);

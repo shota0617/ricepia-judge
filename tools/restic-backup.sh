@@ -9,7 +9,7 @@
 #     クラウドのときは、その鍵も（S3 / R2 は AWS_ACCESS_KEY_ID・AWS_SECRET_ACCESS_KEY、B2 は B2_ACCOUNT_ID・B2_ACCOUNT_KEY）
 # - 保存先がまだ空なら、はじめに作る（restic init）
 # - 残す数：毎日7・毎週4・毎月12（古いものは消す）
-# - 上限：保存先が RESTIC_MAX_GB（ふだん 8GB）をこえたら止まる（R2 の無料 10GB をこえないため）
+# - 上限：保存先が RESTIC_MAX_GB（ふだん 30GB）をこえたら止まる（急に増えたときに気づくため）
 # 使い方：bash tools/restic-backup.sh            （バックアップ）
 #         restic snapshots / restic restore latest --target ./restore   （一覧・元に戻す）
 set -euo pipefail
@@ -26,11 +26,11 @@ if ! restic cat config >/dev/null 2>&1; then
   restic init
 fi
 
-# 上限：保存先の大きさが RESTIC_MAX_GB（ふだん 8GB）をこえていたら、バックアップせずに止める
-# - Cloudflare R2 は請求の上限を決められない（予算アラートはメールだけ）。無料の 10GB をこえないよう、ここで止める
+# 上限：保存先の大きさが RESTIC_MAX_GB（ふだん 30GB）をこえていたら、バックアップせずに止める
+# - Cloudflare R2 は請求の上限を決められない（予算アラートはメールだけ）。急に増えたら（鍵の漏れ・まちがった送り先など）ここで止める。R2 は無料 10GB、こえた分は 1GB で月 $0.015
 # - 止まると GitHub Actions が失敗になり、GitHub からメールが届く
 # - RESTIC_MAX_GB=0 で上限なし（外付けSSDなど）
-max_gb=${RESTIC_MAX_GB:-8}
+max_gb=${RESTIC_MAX_GB:-30}
 if [ "$max_gb" != 0 ]; then
   used=$(restic stats --mode raw-data --json | sed -n 's/.*"total_size":\([0-9]*\).*/\1/p')
   limit=$((max_gb * 1024 * 1024 * 1024))

@@ -22,10 +22,13 @@ button{font-family:inherit;cursor:pointer;}
 
 #call{position:fixed;inset:0;display:flex;flex-direction:column;}
 #stage{position:relative;flex:1;min-height:0;background:#111;}
-#grid{position:absolute;inset:0;display:grid;gap:4px;grid-template-columns:1fr;}
-#grid.two{grid-template-columns:1fr 1fr;}
-@media (orientation:portrait){ #grid.two{grid-template-columns:1fr;grid-template-rows:1fr 1fr;} }
-#grid video{width:100%;height:100%;min-height:0;object-fit:contain;background:#111;}
+/* one remote device per screen; swipe sideways to switch */
+#grid{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;scrollbar-width:none;}
+#grid::-webkit-scrollbar{display:none;}
+#grid video{flex:0 0 100%;width:100%;height:100%;object-fit:contain;background:#111;scroll-snap-align:center;scroll-snap-stop:always;}
+#pager{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;background:rgba(0,0,0,.45);padding:7px 12px;border-radius:16px;z-index:2;font-size:12px;}
+#pager button{width:11px;height:11px;border-radius:50%;border:none;background:rgba(255,255,255,.4);padding:0;}
+#pager button.on{background:#fff;}
 #self{position:absolute;right:12px;bottom:12px;width:min(28vw,220px);aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:2px solid #3d3d2e;background:#2b2b20;transform:scaleX(-1);z-index:2;}
 #self.off{visibility:hidden;}
 #top{position:absolute;left:0;right:0;top:0;padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top));display:flex;align-items:center;gap:10px;background:linear-gradient(rgba(0,0,0,.6),transparent);font-size:14px;z-index:3;}
@@ -38,6 +41,11 @@ button{font-family:inherit;cursor:pointer;}
 .spinner{width:34px;height:34px;border:3px solid #c8a96e;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;}
 .big{display:block;border:none;border-radius:12px;font-size:16px;font-weight:700;padding:13px 20px;}
 #zoomHint{background:#2d8cff;color:#fff;}
+#entry{position:fixed;inset:0;z-index:15;background:rgba(20,20,12,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;}
+#entry .q{font-size:20px;font-weight:700;margin-bottom:6px;}
+#entry .big{width:min(100%,360px);font-size:18px;padding:18px;}
+#entry .on{background:#3f7050;color:#fff;} #entry .mute{background:#3d3d2e;color:#fff;border:1.5px solid #6a6a54;}
+#muteTag{background:#c94c4c;color:#fff;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700;}
 #tapAudio{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#c8a96e;color:#2d2d1e;z-index:4;}
 #bar{display:flex;justify-content:center;gap:14px;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));background:#24241a;}
 .cb{width:64px;height:64px;border-radius:50%;border:none;background:#3d3d2e;color:#fff;font-size:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
@@ -59,10 +67,11 @@ button{font-family:inherit;cursor:pointer;}
 <div id="call">
   <div id="stage">
     <div id="grid"></div>
+    <div id="pager" hidden></div>
     <div id="waiting"><div class="spinner"></div><div class="msg" id="waitMsg">準備中…</div><div class="sub" id="waitSub"></div><button class="big" id="zoomHint" hidden>つながらないときは Zoom で</button></div>
     <button class="big" id="tapAudio" hidden>🔊 タップして音を出す</button>
     <video id="self" autoplay playsinline muted></video>
-    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><button id="gear" title="設定">⚙</button></div>
+    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><span id="muteTag" hidden>🔇 ミュート中</span><button id="gear" title="設定">⚙</button></div>
   </div>
   <div id="bar">
     <button class="cb" id="micBtn" title="マイク">🎤<small>マイク</small></button>
@@ -80,6 +89,12 @@ button{font-family:inherit;cursor:pointer;}
     <button class="big gold" id="zoomSave">保存</button>
     <button class="big ghost" id="sheetClose">閉じる</button>
   </div>
+</div>
+<div id="entry" hidden>
+  <div class="q">マイクはどうしますか？</div>
+  <button class="big on" id="entryOn">🎤 マイクをオンで入る</button>
+  <button class="big mute" id="entryMute">🔇 ミュートで入る</button>
+  <div style="font-size:12px;color:#bdbda0;">入ったあとも、下の「マイク」ボタンでいつでも切り替えられます</div>
 </div>
 <div id="toast" hidden></div>
 
@@ -108,7 +123,6 @@ function loadZoom(){ try{ return normZoom(localStorage.getItem(LS)) || DEFAULT_Z
 const others = () => Array.from(S.streams.keys());
 function render(){
   const n = S.streams.size, grid = $("#grid");
-  grid.className = n === 2 ? "two" : "";
   // keep video elements stable so playback isn't interrupted
   Array.from(grid.children).forEach(v => { if(!S.streams.has(v.dataset.id)) v.remove(); });
   S.streams.forEach((st, id) => {
@@ -116,6 +130,7 @@ function render(){
     if(!v){ v = document.createElement("video"); v.autoplay = true; v.playsInline = true; v.dataset.id = id; grid.appendChild(v); }
     if(v.srcObject !== st){ v.srcObject = st; v.play().then(() => $("#tapAudio").hidden = true).catch(() => $("#tapAudio").hidden = false); }
   });
+  paintPager();
   if(n){
     $("#dot").className = "dot on";
     $("#state").textContent = (n + 1) + "台でつながっています";
@@ -123,6 +138,20 @@ function render(){
     keepAwake();
   } else if(!S.stopped && S.seat) waiting("ほかの端末がこのページを開くと、自動でつながります", "最大3台まで入れます");
 }
+/* page dots: which device is on screen; tap a dot to jump */
+const pageNow = () => { const g = $("#grid"); return g.clientWidth ? Math.round(g.scrollLeft / g.clientWidth) : 0; };
+function paintPager(){
+  const n = S.streams.size, pg = $("#pager");
+  pg.hidden = n < 2;
+  if(n < 2) return;
+  const cur = Math.min(pageNow(), n - 1);
+  if(pg.children.length !== n + 1){
+    pg.innerHTML = Array.from({length:n}, (_, i) => `<button data-i="${i}" aria-label="${i + 1}台目"></button>`).join("") + '<span id="pagerTxt"></span>';
+  }
+  Array.from(pg.querySelectorAll("button")).forEach((b, i) => b.classList.toggle("on", i === cur));
+  $("#pagerTxt").textContent = "← スワイプ →";
+}
+function goPage(i){ const g = $("#grid"); g.scrollTo({left:i * g.clientWidth, behavior:"smooth"}); }
 function waiting(msg, sub, kind){
   kind = kind || "wait";
   $("#dot").className = "dot " + (kind === "wait" ? "wait" : "");
@@ -145,6 +174,7 @@ async function getMedia(){
 function paintButtons(){
   const a = S.local && S.local.getAudioTracks()[0], v = S.local && S.local.getVideoTracks()[0];
   $("#micBtn").classList.toggle("off", !a || !a.enabled); $("#micBtn").innerHTML = (a && a.enabled ? "🎤" : "🔇") + "<small>マイク</small>";
+  $("#muteTag").hidden = !a || a.enabled;
   $("#camBtn").classList.toggle("off", !v || !v.enabled);
   $("#self").classList.toggle("off", !v || !v.enabled);
 }
@@ -155,6 +185,19 @@ function toggle(kind){
 }
 
 /* ---------- room ---------- */
+/** Ask "mic on or muted?" every time before entering (the tap also lets the browser play the others' sound). */
+function entry(){
+  $("#entry").hidden = false;
+  waiting("", "", "off");
+  clearTimeout(S.hintT); $("#zoomHint").hidden = true;
+  $("#hangBtn").className = "cb go"; $("#hangBtn").innerHTML = "📞<small>つなぐ</small>";
+  S.stopped = true;
+}
+function choose(muted){
+  $("#entry").hidden = true;
+  S.startMuted = muted;
+  join();
+}
 async function join(){
   S.stopped = false;
   $("#hangBtn").className = "cb end"; $("#hangBtn").innerHTML = "✕<small>切る</small>";
@@ -163,8 +206,11 @@ async function join(){
   if(!S.local){
     S.local = await getMedia();
     if(!S.local){ waiting("カメラとマイクが使えません", "ブラウザの設定でこのページのカメラ・マイクを「許可」にして、開き直してください", "off"); return; }
-    $("#self").srcObject = S.local; paintButtons();
+    $("#self").srcObject = S.local;
   }
+  const mic = S.local.getAudioTracks()[0];
+  if(mic) mic.enabled = !S.startMuted;
+  paintButtons();
   takeSeat(1);
 }
 /** Register the first free seat; a taken seat answers "unavailable-id", so try the next one. */
@@ -249,7 +295,7 @@ function leaveSeat(){
   render();
 }
 function hangUp(){
-  if(S.stopped){ join(); return; }
+  if(S.stopped){ entry(); return; }
   S.stopped = true; clearTimeout(S.retryT);
   leaveSeat();
   if(S.local){ S.local.getTracks().forEach(t => t.stop()); S.local = null; $("#self").srcObject = null; }
@@ -283,6 +329,16 @@ $("#camBtn").onclick = () => toggle("video");
 $("#hangBtn").onclick = hangUp;
 $("#zoomBtn").onclick = goZoom;
 $("#zoomHint").onclick = goZoom;
+$("#pager").addEventListener("click", e => { const b = e.target.closest("button[data-i]"); if(b) goPage(+b.dataset.i); });
+// remember which device is on screen, so rotating the tablet keeps it there
+let pagerRaf = 0, lastPage = 0, resizing = false;
+$("#grid").addEventListener("scroll", () => {
+  if(!pagerRaf) pagerRaf = requestAnimationFrame(() => { pagerRaf = 0; if(!resizing) lastPage = pageNow(); paintPager(); });
+}, {passive:true});
+window.addEventListener("resize", () => {
+  resizing = true; const g = $("#grid"); g.scrollLeft = lastPage * g.clientWidth;
+  setTimeout(() => { resizing = false; paintPager(); }, 150);
+});
 $("#tapAudio").onclick = () => { document.querySelectorAll("#grid video").forEach(v => v.play().catch(() => {})); $("#tapAudio").hidden = true; };
 $("#gear").onclick = () => { $("#zoomEdit").value = S.zoom === DEFAULT_ZOOM ? "" : S.zoom; $("#sheet").hidden = false; };
 $("#sheetClose").onclick = () => $("#sheet").hidden = true;
@@ -304,7 +360,9 @@ window.addEventListener("pagehide", () => { try{ S.calls.forEach(c => c.close())
 
 if(location.hash) history.replaceState(null, "", location.pathname); // old setup links (#k=…) are no longer needed
 S.zoom = loadZoom();
-join();
+$("#entryOn").onclick = () => choose(false);
+$("#entryMute").onclick = () => choose(true);
+entry();
 </script>
 </body>
 </html>

@@ -102,6 +102,7 @@
       <p>会議の文字起こしから、AIがお客様のニーズ（はっきり言われたこと／言葉の裏にある本当の困りごと）を、根拠の発言つきで整理します。</p>
     </div>
 
+    <div class="row" style="margin-bottom:12px;"><button class="btn btn-dark btn-sm" id="anAuto">⚡ 自動処理を実行（分析 → バックログ → Issue → 開発依頼）</button><span class="muted small">設定は「開発バックログ」の「⚡ 自動化」。会議が終わると自動で動きます</span></div>
     <div class="card" id="importCard" hidden>
       <div class="ctitle">外部の文字起こしを取り込む（Zoom・Google Meet・Teams・録音アプリなど）</div>
       <div class="grid2">
@@ -136,6 +137,30 @@
     <div class="page-head"><h1>開発バックログ</h1>
       <p>複数の会議から集まったお客様のニーズです。同じ目的の要望は1つにまとまり、言及した会議が多いほど・優先度と影響が大きいほどスコアが上がります。</p></div>
     <div class="kpis" id="blStats"></div>
+    <details class="card" id="autoCard" style="margin-bottom:12px;">
+      <summary>⚡ 自動化：会議が終わったら → 要望分析 → バックログ → GitHub Issue → Claude Code が開発（<span id="au_summary"></span>）</summary>
+      <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;">
+        <label class="chk"><input type="checkbox" id="au_analyze"/> ① 会議が終わったら、自動で要望分析する（APIキーを設定した端末だけ）</label>
+        <label class="chk"><input type="checkbox" id="au_backlog"/> ② 分析したニーズを、自動で開発バックログに入れる（同じ目的の要望は統合）</label>
+        <label class="chk"><input type="checkbox" id="au_issue"/> ③ GitHub Issue を自動で作る　対象：
+          <select id="au_level" class="inp" style="width:auto;padding:4px 8px;font-size:12px;"><option value="Must">Must のみ</option><option value="Should">Must と Should</option><option value="all">すべて</option></select></label>
+        <label class="chk"><input type="checkbox" id="au_dev"/> ④ 作った Issue を Claude Code に渡して、自動で開発してもらう（できた変更は人が確認してから取り込み）</label>
+      </div>
+      <div class="grid2" style="margin-top:12px;">
+        <div class="field"><label for="au_token">GitHub トークン（③④に必要）</label>
+          <input id="au_token" type="password" placeholder="github_pat_…" autocomplete="off" style="font-family:monospace;"/>
+          <label class="chk" style="margin-top:4px;"><input type="checkbox" id="au_remember"/> この端末に記憶する（店内の信頼できる端末のみ）</label>
+          <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="au_tokenSave">保存</button><button class="btn btn-gold btn-sm" id="au_check">接続を確認</button></div>
+          <div class="small" id="au_checkOut" style="margin-top:6px;line-height:1.7;"></div></div>
+        <div class="tip">
+          <b>準備（1回だけ）</b><br/>
+          1. 下の「GitHubリポジトリ」に開発先（例：shota0617/ricepia-judge）を入れる<br/>
+          2. GitHub →「Settings」→「Developer settings」→「Fine-grained tokens」で、そのリポジトリだけ・<b>Issues：Read and write</b> のトークンを作り、左に貼って「接続を確認」<br/>
+          3. ④を使うときは、開発先リポジトリに <code>.github/workflows/claude-dev.yml</code>（このリポジトリにあります）を置き、「Settings」→「Secrets and variables」→「Actions」に <b>ANTHROPIC_API_KEY</b> を登録、<a href="https://github.com/apps/claude" target="_blank" rel="noopener">Claude GitHub App</a> をインストール<br/>
+          公開リポジトリの場合、Issue にはお客様の名前と発言を載せません。
+        </div>
+      </div>
+    </details>
     <details class="card" id="rpCard" style="margin-bottom:12px;">
       <summary>📊 お客様の声レポート（全会議を横断してAIが傾向とロードマップ案をまとめる）</summary>
       <div class="row" style="margin-top:8px;"><button class="btn btn-gold btn-sm" id="rpBtn">✨ レポートを作る／更新</button><span class="spacer"></span>
@@ -284,6 +309,7 @@
 <script src="mtg/recorder.js"></script>
 <script src="mtg/analyze.js"></script>
 <script src="mtg/backlog.js"></script>
+<script src="mtg/auto.js"></script>
 <script src="mtg/sample.js"></script>
 <script>M.boot();</script>
 </body>

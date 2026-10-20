@@ -1181,6 +1181,15 @@ const DECO_POND = new Set(['koi', 'suisha', 'hasu', 'swanboat']), DECO_OPEN = ne
 const landNear = (tx, ty, r) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const c = codeAt(tx + dx, ty + dy); if (c !== C.A && c !== C.X) return true; } return false; };
 const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
 function loadDeco() {
+  // はじめの画面のあいだは読まない（約0.5MB。見るだけで帰る人の通信を減らす）。遊び始めて はじめの画面が閉じたら読む
+  const intro = document.getElementById('intro');
+  if (intro && !intro.hidden) {
+    if (!loadDeco.wait) {
+      loadDeco.wait = new MutationObserver(() => { if (intro.hidden) { loadDeco.wait.disconnect(); loadDeco.wait = null; loadDeco(); } });
+      loadDeco.wait.observe(intro, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    return;
+  }
   const s = decoSeason();
   if (s === DECO.s) return;
   DECO.s = s;
@@ -1188,7 +1197,7 @@ function loadDeco() {
   const img = new Image();
   img.onload = () => { if (DECO.s === s) { DECO.img = img; decoCache.clear(); dirty = true; } };
   img.onerror = () => { if (DECO.s === s) DECO.s = -1; };   // つぎに季節を確かめるとき、もう一度
-  img.src = `nishio-go/deco/deco-${s}.png`;
+  img.src = `nishio-go/deco/deco-${s}.webp`;   // 劣化しない WebP（PNG の4割ほどの大きさ）
 }
 const decoLists = new Map();   // その月に置ける物の表（月が替わったら作りなおす）
 function decoList(code) {

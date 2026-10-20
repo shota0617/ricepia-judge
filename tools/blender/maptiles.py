@@ -10,6 +10,7 @@
 # - 軽トラ（4方向）・たからばこ：背景なし（地面を置かない）
 # - 町を走る乗り物：赤い電車（先頭・なか）・乗用車・漁船を4方向ずつ（背景なし）
 # - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
+# - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り。枕木・レール・バラスト
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -587,6 +588,82 @@ def boat(d):
     return dict(target=(0, 0, 0.12), scale=1.0)
 
 
+# ---------- 線路 ----------
+# となりの線路のマスへつながる向き（mask：1 上・2 右・4 下・8 左）ごとに描く。まっすぐ・曲がり（となり合う2つの向きは ななめの線）・分かれ道・十字
+# 45度くらいの線路は、マスが角だけで接することがある。そのときは角へ向かう絵（RAIL_EXTRA）を使い、3つ以上の端へつながるマスは部品を重ねる
+# 枕木は木、レールは鋼、下はバラスト（砕石）。座標はマスの見た目の大きさ（横 u・たて v、どちらも 1 で1マス）で考えて、たては 1/sin(EL) をかける
+RAIL_ARMS = {1: (0, 1), 2: (1, 0), 4: (0, -1), 8: (-1, 0)}
+RAIL_CORNER = {'NE': (0.5, 0.5), 'SE': (0.5, -0.5), 'SW': (-0.5, -0.5), 'NW': (-0.5, 0.5)}
+# 番号 16〜25（rail.png の 16 番目から）：2つの端をむすぶ線路。角から角（向かい合う2つ）、辺のまん中から反対側の角（8つ）。pixel.js の RAIL_PAIRS と同じ順
+# （となり合う角どうしは、マスの端にそって走る絵になって見にくいので作らない。部品を重ねて「く」の字に描く）
+RAIL_EXTRA = [('SW', 'NE'), ('NW', 'SE'), (1, 'SE'), (1, 'SW'), (2, 'NW'), (2, 'SW'), (4, 'NE'), (4, 'NW'), (8, 'NE'), (8, 'SE')]
+# 番号 26〜33：まん中から1つの端へ向かう線路だけ（背景なし）。34：バラストだけ。ほかの組み合わせ（3つ以上の端・となり合う角どうし）は、34 の上に 26〜33 を重ねて描く
+RAIL_PORTS = [1, 2, 4, 8, 'NE', 'SE', 'SW', 'NW']
+RAIL_ARM0, RAIL_BASE = 16 + len(RAIL_EXTRA), 16 + len(RAIL_EXTRA) + len(RAIL_PORTS)
+RAIL_G, TIE_W, TIE_L, RAIL_W = 0.19, 0.09, 0.62, 0.075   # レールの太さは 16×16 で1点より太く（細いと縦のレールが消える）
+
+
+def rail(mask):
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    if not RAIL_ARM0 <= mask < RAIL_BASE:   # 端へ向かう部品（26〜33）は背景なし
+        box('jimen', 'balast', (4.0, 4.0, 0.02), (0, 0, -0.01))
+        s0 = sphere('ishi', 'balastS', 0.025, (0, 0, -5), (1.3, 1, 0.5))   # バラストのつぶ
+        for i in range(-3, 4):
+            for j in range(-3, 4):
+                if (i * 5 + j * 3) % 4 == 0:
+                    dup(s0, f'ishi{i}_{j}', W(i * 0.15, j * 0.15 + 0.03, 0.005))
+    n = 0
+
+    def seg(name, mat, p, q, w, h, z):   # p→q の向きの細長い箱（見た目の座標で）
+        nonlocal n
+        n += 1
+        (pu, pv), (qu, qv) = p, q
+        a, b2 = W(pu, pv), W(qu, qv)
+        dx, dy = b2[0] - a[0], b2[1] - a[1]
+        o = box(f'{name}{n}', mat, (math.hypot(dx, dy), w, h))   # 原点で作って回してから置く（box は位置を形に焼きこむので）
+        o.rotation_euler = (0, 0, math.atan2(dy, dx))
+        o.location = ((a[0] + b2[0]) / 2, (a[1] + b2[1]) / 2, z)
+
+    def track(p0, p1, ties, back=0.6):   # p0→p1 のまっすぐな線路。レールは長めに（マスの外はカメラに写らない。となりのマスの同じ線とつながる）。back：p0 の手前へのばす長さ
+        du, dv = p1[0] - p0[0], p1[1] - p0[1]
+        L = math.hypot(du, dv)
+        tu, tv, nu, nv = du / L, dv / L, -dv / L, du / L
+        for t in ties:
+            c = (p0[0] + du * t, p0[1] + dv * t)
+            seg('makura', 'makuragi', (c[0] - nu * TIE_L / 2, c[1] - nv * TIE_L / 2), (c[0] + nu * TIE_L / 2, c[1] + nv * TIE_L / 2), TIE_W * 1.2, 0.02, 0.01)
+        for g in (-RAIL_G, RAIL_G):
+            seg('rail', 'rail', (p0[0] + nu * g - tu * back, p0[1] + nv * g - tv * back), (p1[0] + nu * g + tu * 0.6, p1[1] + nv * g + tv * 0.6), RAIL_W * 1.2, 0.035, 0.035)
+
+    port = lambda x: RAIL_CORNER[x] if isinstance(x, str) else (RAIL_ARMS[x][0] * 0.5, RAIL_ARMS[x][1] * 0.5)
+    if mask == RAIL_BASE:   # バラストだけ
+        return dict(target=(0, 0, 0))
+    if mask >= RAIL_ARM0:   # まん中から1つの端へ（レールは まん中の手前から。重ねたとき まん中で つながるように）
+        p = port(RAIL_PORTS[mask - RAIL_ARM0])
+        track((-p[0] * 0.25, -p[1] * 0.25), p, (0.55, 0.85) if isinstance(RAIL_PORTS[mask - RAIL_ARM0], str) else (0.5, 0.85), back=0)
+        return dict(target=(0, 0, 0))
+    if mask >= 16:   # 2つの端をむすぶ線路
+        a, b = RAIL_EXTRA[mask - 16]
+        track(port(a), port(b), (0.2, 0.5, 0.8) if isinstance(a, str) else (0.3, 0.75))
+        return dict(target=(0, 0, 0))
+    arms = [b for b in (1, 2, 4, 8) if mask & b]
+    if len(arms) <= 1:   # つながりがない・片方だけ：まっすぐ通す
+        b = arms[0] if arms else 1
+        arms = [b, {1: 4, 4: 1, 2: 8, 8: 2}[b]]
+    if len(arms) == 2:   # 2つの向き：まっすぐ（向かい合う）か、ななめの線（となり合う。斜めに走る線路はマスの階段になるので、弧だとくねくねする。ななめの線ならつながって1本のまっすぐな線になる）
+        opp = (arms[0] | arms[1]) in (5, 10)
+        track(port(arms[0]), port(arms[1]), (0.125, 0.375, 0.625, 0.875) if opp else (0.25, 0.75))
+    else:   # 分かれ道・十字：向かい合う向きは1本の通しの線、ほかの向きは まん中から外へ（同じ所にレールを重ねると、描くたびにちらつく）
+        through = [p for p in ((1, 4), (2, 8)) if mask & p[0] and mask & p[1]]
+        for a, b in through:
+            track(port(a), port(b), (0.125, 0.375, 0.625, 0.875))
+        used = {x for p in through for x in p}
+        for b in arms:
+            if b not in used:
+                track((RAIL_ARMS[b][0] * RAIL_G, RAIL_ARMS[b][1] * RAIL_G), port(b), (0.5,), back=0)
+    return dict(target=(0, 0, 0))
+
+
 SPRITES = {'truck': (truck, 4), 'chest': (chest, 2), 'combine': (combine, 4)}
 # 町を走る乗り物（nishio-go/maptiles/vehicles.png）：電車の先頭・なか、漁船、乗用車 を4方向ずつ
 VEHICLES = {'train': (train, 2), 'car': (car, 1), 'boat': (boat, 1)}
@@ -599,7 +676,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail'
             else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
@@ -636,6 +713,7 @@ def main():
     jobs += [(sp, (k,)) for sp, (_, n) in SPRITES.items() for k in range(n)]
     jobs += [(v, (*([k] if n > 1 else []), d)) for v, (_, n) in VEHICLES.items() for k in range(n) for d in range(4)]
     jobs += [('roof', (0, g)) for g in range(2)] + [('roof', (1, g)) for g in range(2)] + [('roof', (2, g)) for g in range(4)]
+    jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

@@ -10,6 +10,7 @@
 # - 軽トラ（4方向）・たからばこ・コンバイン（4方向）：nishio-go/maptiles/sprites.png（10×1、背景なし）
 # - 町を走る乗り物：nishio-go/maptiles/vehicles.png（4×8、背景なし。列は 上・右・下・左、行は VEHICLE_ROWS の順）
 # - 建物の屋根：nishio-go/maptiles/roofs.png（32×1。瓦・金属・陸屋根。pixel.js が建物のまとまりごとに同じ屋根をえらぶ）
+# - 線路：nishio-go/maptiles/rail.png（35×1。となりの線路へつながる向き16通り・2つの端をむすぶ10通り・重ねる部品8つとバラスト。pixel.js がまわりのマスから えらぶ）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 #        乗り物だけ：python tools/blender/maptiles.py train car boat → python3 tools/blender/maptiles-sheets.py vehicles
 import os
@@ -397,10 +398,31 @@ def vehicles():
     print('vehicles.png', os.path.getsize(os.path.join(OUT, 'vehicles.png')))
 
 
+# 線路：nishio-go/maptiles/rail.png（35×1）。0〜15 ＝ つながる向き mask（1 上・2 右・4 下・8 左）、16〜25 ＝ 2つの端をむすぶ線路（maptiles.py の RAIL_EXTRA）、
+# 26〜33 ＝ まん中から1つの端へ向かう部品（背景なし）、34 ＝ バラストだけ
+RAIL_TILES = 35
+RAIL_PAL = {'balast': '#857d72', 'balastS': '#a29a8c', 'makuragi': '#5a3f28', 'rail': '#dfe3e6'}
+
+
+def rails():
+    sheet = Image.new('RGBA', (RAIL_TILES * N, N))
+    for m in range(RAIL_TILES):
+        mat, band, names = load(f'rail-{m}')
+        img = np.zeros((N, N, 4), np.uint8)
+        img[..., :3] = roof_tile(mat, band, names, RAIL_PAL, random.Random(f'rl{m}'))
+        img[..., 3] = np.where(mat == 255, 0, 255)   # 端へ向かう部品（26〜33）は背景なし
+        sheet.paste(Image.fromarray(img, 'RGBA'), (m * N, 0))
+    sheet.save(os.path.join(OUT, 'rail.png'), optimize=True)
+    print('rail.png', os.path.getsize(os.path.join(OUT, 'rail.png')))
+
+
 if __name__ == '__main__':
     import sys
     if sys.argv[1:] == ['vehicles']:
         vehicles()
+    elif sys.argv[1:] == ['rail']:
+        rails()
     else:
         main()
         vehicles()
+        rails()

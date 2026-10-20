@@ -4178,9 +4178,9 @@ const giants = {};
 let giantSize = null, giantSizeKey = '';
 function giantTiles(s) {
   const spots = G.spots || [];
-  const key = (G.spotsVersion || 0) + ':' + spots.length + ':' + (giantIds ? giantIds.size : 0);   // スポットの一覧を入れ替えたら（同じ件数でも）数え直す
-  if (!giantSize || giantSizeKey !== key) {
-    giantSizeKey = key;
+  const ver = (G.spotsVersion || 0) + ':' + spots.length + ':' + (giantIds ? giantIds.size : 0);   // スポットの一覧を入れ替えたら（同じ件数でも）数え直す
+  if (!giantSize || giantSizeKey !== ver) {
+    giantSizeKey = ver;
     giantSize = new Map();
     const pts = spots.filter(x => GIANT_ART[x.id] || (giantIds && giantIds.has(x.id))).map(x => { const q = toTile(x.lat, x.lng); return [x.id, q.x, q.y]; });
     const cell = new Map(), key = (x, y) => Math.floor(x / 8) + ',' + Math.floor(y / 8);

@@ -598,3 +598,17 @@ body.jump-open{overflow:hidden}
 .harvest-pad [data-dir=right]{grid-column:3;grid-row:2}
 .harvest-tip{font-size:12px;color:#cfe8c8;max-width:260px}
 .harvest .jump-top .jump-btns{margin:0}
+/* おみやげ袋・今週のテーマ（きろく）と、キラの絵（docs/location-game-essence.md） */
+.card.bags .theme{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.card.bags .theme small{flex-basis:100%;color:var(--sub);font-size:12px}
+.card.bags h4{margin:6px 0;font-size:14px}
+.card.bags h4 small{color:var(--sub);font-weight:400}
+.card.bags .list li .bar{display:block;height:8px;margin-top:5px;border-radius:4px;background:#e6e0cc;overflow:hidden}
+.card.bags .list li .bar i{display:block;height:100%;background:linear-gradient(90deg,#7cc04a,#e9c46a)}
+.reward .ribbon.kira{background:linear-gradient(90deg,#fff3b0,#ffd54f,#fff3b0);color:#7a4a00}
+.reward .rw.hero.kira .frame{background:linear-gradient(135deg,#fff7c8,#ffd54f 30%,#fff 50%,#ffd54f 70%,#fff7c8);background-size:300% 300%;animation:kiraShine 1.6s linear infinite;box-shadow:0 0 26px rgba(255,230,120,.95)}
+.dot-card.kira{box-shadow:0 0 0 4px #ffd54f,0 0 18px rgba(255,213,79,.9);border-radius:6px}
+.dot-grid figure.kira img{box-shadow:0 0 0 3px #ffd54f,0 0 10px rgba(255,213,79,.9);border-radius:4px}
+.dot-grid figure.kira figcaption::before{content:'✨キラ ';color:#b07800;font-weight:700}
+@keyframes kiraShine{0%{background-position:0% 50%}100%{background-position:100% 50%}}
+@media (prefers-reduced-motion:reduce){.reward .rw.hero.kira .frame{animation:none}}

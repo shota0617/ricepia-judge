@@ -156,6 +156,7 @@ async function walkTo(page, id) {
   await shot(page, '02-operate-start');
   R.checks.chestsNearby = await page.evaluate(() => nishioPixel.chests.length);
   R.walk.push(await walkTo(page, 'chest'));
+  R.checks.welcomeBag = await page.evaluate(() => (nishioGo.state.bags || []).map(b => b.km).join(','));   // はじめての たからばこ では必ず 1km の おみやげ袋
   await shot(page, '02b-chest');
   await page.waitForTimeout(7500);   // まめちしきの知らせが消えるのを待つ
   for (const id of ['f-nishio-cityhall', 'f-nishio-station', 'f-ricepia']) {
@@ -164,9 +165,14 @@ async function walkTo(page, id) {
     R.walk.push(w);
   }
   await shot(page, '03-ricepia-checkin');
+  R.checks.weekTheme = await page.evaluate(() => nishioGo.weekTheme().key);
   R.checks.checkinSound = await page.evaluate(() => window.__played.some(f => f === 'checkin.mp3' || f === 'levelup.mp3'));
   // チェックインのほうびの知らせは、タップで消える（消えるまで、下の地図にはタップが届かない）
   R.checks.rewardTapClose = await page.evaluate(() => { const r = document.getElementById('reward'); if (!r.classList.contains('show')) return false; r.click(); return !r.classList.contains('show') && !r.innerHTML; });
+  // おみやげ袋：3か所めぐるあいだに 1km 以上歩くので、はじめの袋が開く（ほかのごほうびが出ている間は待ち、消えたら開く）
+  await page.waitForTimeout(1500);
+  R.checks.bagOpened = await page.evaluate(() => nishioGo.state.log.some(l => l.type === 'bag') && /おみやげ袋/.test(document.getElementById('reward').innerText));
+  await shot(page, '03b-bag-open');
   R.checks.cooldown = await page.evaluate(() => document.getElementById('spinBtn').hidden || !document.getElementById('spinSub').textContent.includes('タップして'));
   // 当店の「当店」の札をタップして、お店の案内（サイト・道案内）が開くか
   // 札がスティックなどの下に隠れていたら、見えるところに来るまで少し歩く
@@ -240,6 +246,8 @@ async function walkTo(page, id) {
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');
+  need(typeof c.weekTheme === 'string' && c.weekTheme, '今週のテーマが決まらない');
   need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');
   need(Array.isArray(c.quests) && c.quests.length === 4 && c.quests.some(q => q.startsWith('✅')), '今日のクエストが出ないか、1つも達成されない');
   need(/^[1-9]\d*\/[1-9]\d*$/.test(c.facts || ''), 'まめちしきが集まらない');

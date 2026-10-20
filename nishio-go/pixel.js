@@ -1324,13 +1324,19 @@ function railCrossing(x, y) {
   }
   return null;
 }
-// 道のマスの絵（road.png の 行・列）。行：0 ふつうの道・1 大きな道・2 小道。列：となりの道（どの道・線路の踏切）へつながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物
+// 道のマスの絵（road.png の 行・列）。行：0 ふつうの道・1 大きな道・2 小道。列：となりの道（どの道でも）へつながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物
+// 線路のマスは、このマスが その向きの踏切（railCrossing）のときだけ つながっているとみなす（線路と並んで走る道の ふちが消えないように）
 // 小物（マンホール・補修のあと）は8マスに1つくらい、小道の水たまりは24マスに1つくらい。つながっていない辺に縁石・側溝・白線・草のへりが描いてある
 const ROAD_ROW = { [C.R]: 0, [C.H]: 1, [C.D]: 2 };
-const ROAD_LINK = new Set([C.R, C.H, C.D, C.L]);
 function roadIndex(code, x, y) {
-  const R = (a, b) => ROAD_LINK.has(codeAt(a, b));
-  const m = (R(x, y - 1) ? 1 : 0) | (R(x + 1, y) ? 2 : 0) | (R(x, y + 1) ? 4 : 0) | (R(x - 1, y) ? 8 : 0);
+  let xr;
+  const R = (a, b, arm) => {
+    const c = codeAt(a, b);
+    if (c !== C.L) return ROAD_ROW[c] !== undefined;
+    if (xr === undefined) xr = railCrossing(x, y);
+    return !!xr && xr.includes(arm);
+  };
+  const m = (R(x, y - 1, 26) ? 1 : 0) | (R(x + 1, y, 27) ? 2 : 0) | (R(x, y + 1, 28) ? 4 : 0) | (R(x - 1, y, 29) ? 8 : 0);
   const h = (Math.imul(x, 668265263) ^ Math.imul(y, 374761393)) >>> 0;
   return m * 2 + ((h >>> 13) % (code === C.D ? 24 : 8) === 0 ? 1 : 0);
 }

@@ -454,7 +454,7 @@ def m_playpark(rng, R, W, A):
     if rng.random() < 0.4:   # 時計の柱
         cyl('tokeiP', 'tetsu', 0.006, 0.24, (0.36 * rng.choice((-1, 1)), -0.30, 0.12), verts=6)
     trees(rng, rng.randint(2, 5), [(-0.40, 0.28), (0.40, 0.28), (-0.42, -0.04), (0.42, 0.0), (0.0, 0.32), (-0.2, 0.33)], ['round', 'round', 'sakura', 'pine'])
-    return dict(target=(0, 0, 0.08), scale=0.99, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)
+    return dict(target=(0, 0, 0.08), scale=0.86, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)   # 遊具が見えるように少し寄る
 
 
 def m_sports(rng, R, W, A):

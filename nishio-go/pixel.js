@@ -493,6 +493,10 @@ function rawAt(tx, ty) {   // 下位5bit＝地形、上位＝陰影
   return c.g[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)];
 }
 const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
+// 線路・道・水べの絵は まわりのマスを見て決めるので、マスごとに覚えておく（nbrLook。地図のまとまりを読みこむたびに忘れる）。
+// せかいちず（1マス100m）でも同じ決め方を使う：描くあいだだけ gridAt と覚えておく場所を せかいちずのものにする（drawWorld）
+const nbrCache = new Map(), worldNbr = new Map();
+let gridAt = codeAt, nbrCur = nbrCache;
 
 // 区画を作るか：西尾市の範囲（佐久島を含む長方形）にかかるか、となりの市町（region.js）の境界から約300m以内にかかるもの
 function chunkInPlay(cx, cy) {
@@ -647,6 +651,7 @@ const WCOL = { [C.G]: '#3f9b3c', [C.F]: PADDY_COL, [C.T]: '#d8ccaa', [C.W]: '#1f
   [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
   [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
+  worldNbr.clear();   // せかいちずが変わったら、つながる向きの絵を決め直す
   if (!world) return;
   const c = document.createElement('canvas');
   c.width = WW; c.height = WH;
@@ -1282,7 +1287,7 @@ const RAIL_PAIR = { '4,6': 16, '5,7': 17, '0,5': 18, '0,6': 19, '1,7': 20, '1,6'
 // 複線・駅の構内のように線路のマスが2〜3マスの帯になっている所（2×2 がぜんぶ線路）では、上下左右のつながりで選ぶと分かれ道だらけになる。
 // そこは まわり5×5の線路のマスの並ぶ向きから、横・縦・ななめ のまっすぐな線路を描く（となりのマスと平行な線路になり、複線に見える）
 function railBandRaw(x, y) {
-  const L = (a, b) => codeAt(a, b) === C.L;
+  const L = (a, b) => gridAt(a, b) === C.L;
   if (![[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([a, b]) => L(x + a, y + b) && L(x + a + 1, y + b) && L(x + a, y + b + 1) && L(x + a + 1, y + b + 1))) return -1;
   let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
   for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (L(x + i, y + j)) { n++; sx += i; sy += j; sxx += i * i; syy += j * j; sxy += i * j; }
@@ -1297,7 +1302,7 @@ const BAND_ENDS = { 10: [[-1, 0], [1, 0]], 5: [[0, -1], [0, 1]], 16: [[1, -1], [
 function railBandIndex(x, y) {
   const d = railBandRaw(x, y);
   if (d < 0) return -1;
-  return BAND_ENDS[d].every(([a, b]) => { if (codeAt(x + a, y + b) !== C.L) return false; const e = railBandRaw(x + a, y + b); return e === d || e < 0; }) ? d : -1;
+  return BAND_ENDS[d].every(([a, b]) => { if (gridAt(x + a, y + b) !== C.L) return false; const e = railBandRaw(x + a, y + b); return e === d || e < 0; }) ? d : -1;
 }
 // 帯のななめの線路は角を通るので、となりのマスの平行な線路のレールが このマスの角をかすめる。となりも同じ向きの帯なら、その分も描いた絵（35〜40）にする
 function railBandSpill(x, y, band) {
@@ -1306,27 +1311,25 @@ function railBandSpill(x, y, band) {
   const ne = same(x + 1, y) || same(x, y - 1), sw = same(x - 1, y) || same(x, y + 1);
   return ne && sw ? 40 : sw ? 39 : ne ? 38 : 17;
 }
-// 線路・道・水べの絵は まわりのマスを見て決めるので、マスごとに覚えておく（地図のまとまりを読みこむたびに忘れる）
-const nbrCache = new Map();
 function nbrLook(x, y, fn) {
-  const key = x + ',' + y;
-  let r = nbrCache.get(key);
-  if (r === undefined) { r = fn(x, y); nbrCache.set(key, r); }
+  const key = x * 1048576 + y;   // 数のかぎ（文字列を作るより速い。マスの番号は ±50万より小さい）
+  let r = nbrCur.get(key);
+  if (r === undefined) { r = fn(x, y); nbrCur.set(key, r); }
   return r;
 }
 const railIndex = (x, y) => nbrLook(x, y, railIndexOf);
 // 道のマスに描くもの：[道の絵の列, 角の縁石（kado.png の番号）, 踏切のレール（rail.png の番号）, 橋の欄干（rankan.png の番号）]
 function roadLookOf(x, y) {
-  const code = codeAt(x, y), ri = roadIndex(code, x, y), rm = ri >> 1;
-  const kado = ROAD_CORNERS.flatMap(([s1, s2, a, b], i) => (rm & s1) && (rm & s2) && ROAD_ROW[codeAt(x + a, y + b)] === undefined ? [i] : []);
-  const rankan = code === C.D ? [] : [[0, -1], [1, 0], [0, 1], [-1, 0]].flatMap(([a, b], i) => codeAt(x + a, y + b) === C.A ? [i] : []);
+  const code = gridAt(x, y), ri = roadIndex(code, x, y), rm = ri >> 1;
+  const kado = ROAD_CORNERS.flatMap(([s1, s2, a, b], i) => (rm & s1) && (rm & s2) && ROAD_ROW[gridAt(x + a, y + b)] === undefined ? [i] : []);
+  const rankan = code === C.D ? [] : [[0, -1], [1, 0], [0, 1], [-1, 0]].flatMap(([a, b], i) => gridAt(x + a, y + b) === C.A ? [i] : []);
   return [ri, kado, railCrossing(x, y) || [], rankan];
 }
 function railIndexOf(x, y) {
   const band = railBandIndex(x, y);
   if (band === 16 || band === 17) return railBandSpill(x, y, band);
   if (band >= 0) return band;
-  const L = (a, b) => codeAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
+  const L = (a, b) => gridAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
   const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0);
   // ななめのとなりが帯のななめの線路で、その線がこのマスの角へ来ているときも、その角へつなぐ
   const toMe = (a, b) => { const d = railBandIndex(x + a, y + b); return (d === 16 && a === -b) || (d === 17 && a === b); };
@@ -1341,7 +1344,7 @@ function railIndexOf(x, y) {
 // 返すのは rail.png の「まん中から端へ」の部品2つ（26〜33）。平行に走る線路のあいだの道に はしごを描かないよう、線路がその向きへ続くことも確かめる
 const RAIL_X_DIRS = [[0, 1, 26, 28], [1, 0, 27, 29], [1, -1, 30, 32], [1, 1, 31, 33]];   // [dx, dy, 端の部品（-dy がわ… 上・右・右上・右下）, 反対がわ]
 function railCrossing(x, y) {
-  const L = (a, b) => codeAt(a, b) === C.L, Rd = (a, b) => ROAD_ROW[codeAt(a, b)] !== undefined;
+  const L = (a, b) => gridAt(a, b) === C.L, Rd = (a, b) => ROAD_ROW[gridAt(a, b)] !== undefined;
   for (const [dx, dy, pa, pb] of RAIL_X_DIRS) {
     const end = s => {   // s の向きへ道をたどり、線路に着いたら道の数を返す（着かなければ -1）
       const fx = dx * s, fy = dy * s, fwd = fx && fy ? [[fx, fy], [fx, 0], [0, fy]] : [[fx, fy], [fx - fy, fy + fx], [fx + fy, fy - fx]];   // その先へ続く向き（まっすぐ・45度まで）
@@ -1367,7 +1370,7 @@ const SHORE_TOWN = new Set([C.T, C.Q, C.B, C.I, C.R, C.H, C.L]);
 function shoreIndex(x, y) {
   let m = 0, row = 1;
   [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => {
-    const c = codeAt(x + a, y + b);
+    const c = gridAt(x + a, y + b);
     if (c === C.A || c === C.X) return;
     m |= 1 << i;
     if (c === C.S) row = 2; else if (row === 1 && SHORE_TOWN.has(c)) row = 0;
@@ -1379,7 +1382,7 @@ const ROAD_CORNERS = [[1, 2, 1, -1], [2, 4, 1, 1], [4, 8, -1, 1], [8, 1, -1, -1]
 function roadIndex(code, x, y) {
   let xr;
   const R = (a, b, arm) => {
-    const c = codeAt(a, b);
+    const c = gridAt(a, b);
     if (c !== C.L) return ROAD_ROW[c] !== undefined;
     if (xr === undefined) xr = railCrossing(x, y);
     return !!xr && xr.includes(arm);
@@ -4970,6 +4973,27 @@ function worldCamStart() {
   if (me && G.inPlay(me.lat, me.lng)) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
+const worldAt = (x, y) => (world && x >= 0 && y >= 0 && x < WW && y < WH ? world[y * WW + x] : C.X);
+// せかいちずの線路・道・水べ：歩く地図と同じく つながる向きの Blender の絵（読めていなければ false を返し、いつもの絵）
+function drawLinked(code, x, y, X, Y, T, f) {
+  if (code === C.L && MT.rail) {
+    const ri = railIndex(x, y);
+    if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
+    else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
+    return true;
+  }
+  if (MT.road && ROAD_ROW[code] !== undefined) {
+    const [ri, kado, xr, rankan] = nbrLook(x, y, roadLookOf);
+    ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+    if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);
+    if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+    if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);
+    return true;
+  }
+  const sh = code === C.A && MT.shore && nbrLook(x, y, shoreIndex);
+  if (sh) { ctx.drawImage(MT.shore[sh[0]][sh[1] + f], X, Y, T, T); return true; }
+  return false;
+}
 function drawWorld(now, w, h, dpr) {
   const T = wT(dpr), f = Math.floor(now / 600) % 2;
   if (!wcam || (wcamOnMe && G.me)) wcam = worldCamStart();
@@ -4981,11 +5005,16 @@ function drawWorld(now, w, h, dpr) {
   if (css <= 6 && worldImg) {   // 引いて見るとき：1マス＝色のブロック
     ctx.fillStyle = WCOL[C.X]; ctx.fillRect(0, 0, w, h);
     ctx.drawImage(worldImg, ox, oy, WW * T, WH * T);
-  } else for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
-    const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
-    const v = tileVar(code, x, y);
-    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], ox + x * T, oy + y * T, T, T);
+  } else {
+    gridAt = worldAt; nbrCur = worldNbr;
+    try {
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
+        const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
+        const v = tileVar(code, x, y), X = ox + x * T, Y = oy + y * T;
+        if (!drawLinked(code, x, y, X, Y, T, f)) ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], X, Y, T, T);
+      }
+    } finally { gridAt = codeAt; nbrCur = nbrCache; }
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();

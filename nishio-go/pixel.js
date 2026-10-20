@@ -1119,9 +1119,9 @@ function loadMapTiles() {
     MT.spriteReq = true;
     get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
   }
-  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。となりの線路へつながる向き16通り。季節で変わらない）
+  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。つながる向きの絵35枚（rail.png。railIndex）。季節で変わらない）
     MT.railReq = true;
-    get('rail', () => true, img => { MT.rail = sliceSheet(img, 26, 1); });
+    get('rail', () => true, img => { MT.rail = sliceSheet(img, 35, 1); });
   }
   if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
     MT.vehReq = true;
@@ -1263,18 +1263,20 @@ function roofVar(x, y) {
 const rfAt = (tx, ty) => { const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), c = chunks.get(cx + '_' + cy); return c && c.g && c.g.rf ? c.g.rf[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)] : 0; };
 const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号 → 家の屋根の色（maptiles-sheets.py の ROOFS）
 // 線路のマスの絵（rail.png の番号）。0〜15：上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）
-// 16〜25：45度くらいの線路で、マスが角だけで接するとき（上下左右のつながりが1つ以下で、ななめのとなりが線路。そのあいだの2マスはどちらも線路でない）
+// 16〜25：45度くらいの線路で、マスが角だけで接するとき（ななめのとなりが線路で、そのあいだの2マスはどちらも線路でない）
 //   16 左下から右上・17 左上から右下、18〜25 辺のまん中から反対側の角（上→右下・上→左下・右→左上・右→左下・下→右上・下→左上・左→右上・左→右下）。tools/blender/maptiles.py の RAIL_EXTRA と同じ順
+// 26〜33：まん中から1つの端へ向かう部品（上・右・下・左・右上・右下・左下・左上。背景なし）、34：バラストだけ
+// どの1枚にもあてはまらない つながり（角が2つ以上の分かれ道など）は、端の番号の配列を返し、34 の上に部品を重ねて描く
+const RAIL_PAIR = { '4,6': 16, '5,7': 17, '0,5': 18, '0,6': 19, '1,7': 20, '1,6': 21, '2,4': 22, '2,7': 23, '3,4': 24, '3,5': 25 };
 function railIndex(x, y) {
   const L = (a, b) => codeAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
-  const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0), n = up + rt + dn + lf;
-  if (n >= 2) return m;
-  const ne = !up && !rt && L(x + 1, y - 1), se = !dn && !rt && L(x + 1, y + 1), sw = !dn && !lf && L(x - 1, y + 1), nw = !up && !lf && L(x - 1, y - 1);
-  if (n === 0) return ne || sw ? 16 : nw || se ? 17 : m;
-  if (up) return se ? 18 : sw ? 19 : m;
-  if (rt) return nw ? 20 : sw ? 21 : m;
-  if (dn) return ne ? 22 : nw ? 23 : m;
-  return ne ? 24 : se ? 25 : m;
+  const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0);
+  const ports = [up, rt, dn, lf, !up && !rt && L(x + 1, y - 1), !dn && !rt && L(x + 1, y + 1), !dn && !lf && L(x - 1, y + 1), !up && !lf && L(x - 1, y - 1)]
+    .flatMap((on, i) => on ? [i] : []);
+  const corners = ports.filter(i => i >= 4);
+  if (!corners.length) return m;
+  if (ports.length === 1) return corners[0] === 4 || corners[0] === 6 ? 16 : 17;   // 角が1つだけ：まっすぐ反対の角へ
+  return RAIL_PAIR[ports.join()] || ports;
 }
 function tileVarAt(code, x, y) {
   const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
@@ -4552,7 +4554,11 @@ function frame(now) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
     const v = tileVarAt(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
-    if (code === C.L && MT.rail) ctx.drawImage(MT.rail[railIndex(tx, ty)], X, Y, T, T);   // 線路は つながる向きの絵（縦・横・ななめ・分かれ道）
+    if (code === C.L && MT.rail) {   // 線路は つながる向きの絵（縦・横・ななめ・分かれ道）。1枚にない形は部品を重ねる
+      const ri = railIndex(tx, ty);
+      if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
+      else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
+    }
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);

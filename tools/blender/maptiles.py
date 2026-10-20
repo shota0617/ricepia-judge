@@ -761,7 +761,7 @@ def kado(kind, corner):
 
 def kawakado(kind, diag, f):
     """角だけで接する水のマスをつなぐ、ななめの細い水路（nishio-go/maptiles/kawakado.png。背景なし）。
-    マスの角を まん中にして重ねる。diag：NE は左下から右上・NW は左上から右下。kind：gogan 護岸・dote 土手。f：さざ波の2コマ"""
+    マスの角を まん中にして重ねる。diag：NE は左下から右上・NW は左上から右下。kind：gogan 護岸・dote 土手・hama 浜（浅瀬）。f：さざ波の2コマ"""
     Y1 = 1.0 / math.sin(EL)
     W = lambda u, v, z=0.0: (u, v * Y1, z)
     sx = 1 if diag == 'NE' else -1
@@ -783,7 +783,8 @@ def kawakado(kind, diag, f):
         sphere(f'nami{t}', 'nami', 0.035, W(c * sx + nu * 0.04, c + nv * 0.04, 0.012), (1.6, 0.8, 0.4))
     for side in (-1, 1):   # 両がわの岸
         o = 0.2 * side
-        seg('gogan' if kind == 'gogan' else 'kusaD', (-0.7 * sx + nu * o, -0.7 + nv * o), (0.7 * sx + nu * o, 0.7 + nv * o), 0.07, 0.06 if kind == 'gogan' else 0.03, 0.03)
+        mat, h = {'gogan': ('gogan', 0.06), 'dote': ('kusaD', 0.03), 'hama': ('asase', 0.004)}[kind]   # 浜は岸のかわりに浅瀬
+        seg(mat, (-0.7 * sx + nu * o, -0.7 + nv * o), (0.7 * sx + nu * o, 0.7 + nv * o), 0.07, h, 0.03 if kind != 'hama' else 0.006)
     return dict(target=(0, 0, 0))
 
 
@@ -941,7 +942,7 @@ def main():
     jobs += [('rankan', (sd,)) for sd in (1, 2, 4, 8)]
     jobs += [('facade', (t,)) for t in range(FACADES)]
     jobs += [('kado', (kd, c)) for kd in ROAD_KINDS for c in ('NE', 'SE', 'SW', 'NW')]
-    jobs += [('kawakado', (kd, dg, f)) for kd in ('gogan', 'dote') for dg in ('NE', 'NW') for f in range(2)]
+    jobs += [('kawakado', (kd, dg, f)) for kd in ('gogan', 'dote', 'hama') for dg in ('NE', 'NW') for f in range(2)]
     jobs += [('shore', (kd, m, f)) for kd in SHORE_KINDS for m in range(1, 16) for f in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     # road は maptiles-sheets.py road が読むものをまとめて描く（道・角の縁石・橋の欄干・建物の前の壁・水べ・水）

@@ -1132,7 +1132,7 @@ function loadMapTiles() {
     MT.roadReq = true;
     get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
     get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
-    get('kawakado', () => true, img => { const a = sliceSheet(img, 4, 2); MT.kawakado = [a.slice(0, 4), a.slice(4, 8)]; });
+    get('kawakado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kawakado = [a.slice(0, 4), a.slice(4, 8), a.slice(8, 12)]; });
     get('kado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kado = [0, 1, 2].map(r => a.slice(r * 4, r * 4 + 4)); });
     get('facade', () => true, img => { const a = sliceSheet(img, 6, 5); MT.facade = [0, 1, 2, 3, 4].map(r => a.slice(r * 6, r * 6 + 6)); });   // 建物の前の壁（drawWall）
   }
@@ -4976,7 +4976,7 @@ function worldCamStart() {
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
 // 角だけで接する水のマス（1マス幅の ななめの用水路など）は、マスを描いたあとで その角を まん中に ななめの水路を重ねてつなぐ（kawakado.png）。
-// どの角も、左下のマスの右上・右下のマスの左上として1回だけ調べる。岸は、あいだの陸のマスに町なかがあれば護岸、なければ土手
+// どの角も、左下のマスの右上・右下のマスの左上として1回だけ調べる。岸は、あいだの陸のマスに砂浜があれば浜（浅瀬）、町なかがあれば護岸、なければ土手
 function drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f) {
   if (!MT.kawakado) return;
   const A = (x, y) => gridAt(x, y) === C.A;
@@ -4984,7 +4984,7 @@ function drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f) {
     if (!A(tx, ty)) continue;
     for (const [dx, col] of [[1, 0], [-1, 2]]) {   // 右上の角（左下から右上の水路）・左上の角（右下から左上の水路）
       if (!A(tx + dx, ty - 1) || A(tx + dx, ty) || A(tx, ty - 1)) continue;
-      const row = SHORE_TOWN.has(gridAt(tx + dx, ty)) || SHORE_TOWN.has(gridAt(tx, ty - 1)) ? 0 : 1;
+      const l1 = gridAt(tx + dx, ty), l2 = gridAt(tx, ty - 1), row = l1 === C.S || l2 === C.S ? 2 : SHORE_TOWN.has(l1) || SHORE_TOWN.has(l2) ? 0 : 1;   // shoreIndex と同じ決め方
       ctx.drawImage(MT.kawakado[row][col + f], ox + tx * T + (dx > 0 ? T : 0) - T / 2, oy + ty * T - T / 2, T, T);
     }
   }

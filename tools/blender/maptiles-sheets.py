@@ -483,8 +483,8 @@ def shores():
                 sheet.paste(Image.fromarray(img), ((m * 2 + f) * N, r * N))
     sheet.save(os.path.join(OUT, 'shore.png'), optimize=True)
     print('shore.png', os.path.getsize(os.path.join(OUT, 'shore.png')))
-    kk = Image.new('RGBA', (4 * N, 2 * N))   # 角だけで接する水をつなぐ水路：kawakado.png（4×2。列：右上がり2コマ・右下がり2コマ、行：護岸・土手。背景なし）
-    for r, kd in enumerate(('gogan', 'dote')):
+    kk = Image.new('RGBA', (4 * N, 3 * N))   # 角だけで接する水をつなぐ水路：kawakado.png（4×3。列：右上がり2コマ・右下がり2コマ、行：護岸・土手・浜。背景なし）
+    for r, kd in enumerate(('gogan', 'dote', 'hama')):
         for i, (dg, f) in enumerate((('NE', 0), ('NE', 1), ('NW', 0), ('NW', 1))):
             mat, band, names = load(f'kawakado-{kd}-{dg}-{f}')
             img = np.zeros((N, N, 4), np.uint8)

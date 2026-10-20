@@ -3,6 +3,7 @@
 // ・主人公を左右に動かしてジャンプ。コインを集め、米俵のブロックを下からたたくとコインが出る。カラスは上からふむと逃げていく
 // ・石灯籠や茶畑の段をこえ、穴に落ちないように、ゴールの西尾城の旗をめざす。3回まで やりなおせる（落ちたりカラスにぶつかったりすると、まん中の旗から）
 // ・操作：画面の ◀ ▶ と「ジャンプ」（長く押すと高く跳ぶ）、キーボードは ← → / A D と スペース・↑・Z
+// ・絵は Blender で作った横向きのドット絵（tools/blender/runner.py → nishio-go/art/runner.png。読めるまでは手描き）。
 // ・絵は 16×16 のマスを、画面の幅に合わせて整数倍で大きくする（にじまない）。ごほうびは game.js の jumpReward（1日1回）
 (() => {
   'use strict';
@@ -38,7 +39,35 @@
     rows.forEach((row, yy) => [...row].forEach((ch, xx) => { if (PAL[ch]) { x.fillStyle = PAL[ch]; x.fillRect(flip ? w - 1 - xx : xx, yy, 1, 1); } }));
     return cv;
   }
+  // Blender で作った絵（tools/blender/runner.py → nishio-go/art/runner.png）。1段目に 16×16 が ART の順、その下に石灯籠とのぼり（16×32）、
+  // その下にゴールののぼりと西尾城（96×96）。右向きの絵だけなので、左向きは反転する。読めるまでは下の手描きの絵
+  const ART = ['stand', 'run1', 'run2', 'jump', 'crow0', 'crow1', 'coin0', 'coin1', 'coin2', 'coin3', 'groundTop', 'ground', 'wall', 'bale', 'baleUsed', 'tea'];
+  let sheet = null;
+  function loadSheet() {
+    if (loadSheet.req) return;
+    loadSheet.req = true;
+    const img = new Image();
+    img.onload = () => {
+      const cut = (sx, sy, w, h, flip) => {
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const x = cv.getContext('2d');
+        if (flip) { x.translate(w, 0); x.scale(-1, 1); }
+        x.drawImage(img, sx, sy, w, h, 0, 0, w, h);
+        return cv;
+      };
+      const at = n => ART.indexOf(n) * 16;
+      for (const k of ['stand', 'run1', 'run2', 'jump']) { sprites[k] = cut(at(k), 0, 16, 16); sprites[k + 'L'] = cut(at(k), 0, 16, 16, true); }
+      sprites.crow = [0, 1].map(i => cut(at('crow' + i), 0, 16, 16, true)); sprites.crowR = [0, 1].map(i => cut(at('crow' + i), 0, 16, 16));
+      sprites.coinF = [0, 1, 2, 3].map(i => cut(at('coin' + i), 0, 16, 16));
+      sprites.coin = sprites.coinF[0];
+      sheet = img;
+    };
+    img.src = 'nishio-go/art/runner.png';
+  }
+  // 絵の位置あわせ：Blender の絵は 16×16（コインはまん中に 約10点、カラスは下のほう）。手描きの絵（コイン 10×10、カラス 16×12）とのずれ
+  const COIN_OFF = () => (sheet ? -3 : 0), CROW_OFF = () => (sheet ? -2 : 0);
   function bakeAll() {
+    loadSheet();
     if (sprites.ok) return;
     for (const k of Object.keys(HERO)) { sprites[k] = bake(HERO[k]); sprites[k + 'L'] = bake(HERO[k], true); }
     sprites.crow = CROW.map(f => bake(f, true)); sprites.crowR = CROW.map(f => bake(f));
@@ -173,6 +202,7 @@
   /* ---------- 描く ---------- */
   function drawTile(ch, x, y) {
     const c = ctx;
+    if (sheet && drawTileArt(ch, x, y)) return;
     if (ch === '#') {
       const top = y === 7 * T;
       c.fillStyle = '#8a5a34'; c.fillRect(x, y, T, T);
@@ -207,6 +237,23 @@
       if (big) drawCastle(x + 28, y + T);
     }
   }
+  function drawTileArt(ch, x, y) {   // Blender の絵で描く（描いたら true）
+    const c = ctx, tile = n => c.drawImage(sheet, ART.indexOf(n) * 16, 0, 16, 16, x, y, T, T);
+    if (ch === '#') tile(y === 7 * T ? 'groundTop' : 'ground');
+    else if (ch === '=') tile('wall');
+    else if (ch === 't') {
+      tile('bale');
+      if (Math.floor(time / 12) % 4 === 0) { c.fillStyle = 'rgba(255,248,210,.35)'; c.fillRect(x + 2, y + 2, T - 4, T - 4); }   // ときどき光る（たたけるしるし）
+    } else if (ch === 'u') tile('baleUsed');
+    else if (ch === 'm') tile('tea');
+    else if (ch === 'l') c.drawImage(sheet, 0, 16, 16, 16, x, y, T, T);   // 石灯籠の上
+    else if (ch === 'L') c.drawImage(sheet, 0, 32, 16, 16, x, y, T, T);   // 石灯籠の下
+    else if (ch === 'c') c.drawImage(sprites.coinF[Math.floor(time / 8) % 4], x, y);
+    else if (ch === '|') c.drawImage(sheet, 16, 16, 16, 32, x, y - T, T, 2 * T);   // まん中ののぼり（2マス）
+    else if (ch === 'F') c.drawImage(sheet, 0, 48, 96, 96, x, y + T - 96, 96, 96);   // ゴールののぼりと西尾城
+    else return false;
+    return true;
+  }
   function drawCastle(x, by) {   // ゴールの西尾城（白い壁に灰色の屋根）
     const c = ctx;
     c.fillStyle = '#9b968a'; c.fillRect(x - 4, by - 18, 64, 18);
@@ -234,11 +281,11 @@
     c.save(); c.translate(-Math.round(camX), 0);
     for (let ty = 0; ty < 9; ty++) for (let tx = x0 - 4; tx <= x1; tx++) { const ch = tileAt(tx, ty); if (ch !== ' ' && ch !== 'e') drawTile(ch, tx * T, ty * T); }
     for (const e of ents) {
-      if (e.k === 'pop') { c.drawImage(sprites.coin, Math.round(e.x), Math.round(e.y)); continue; }
+      if (e.k === 'pop') { c.drawImage(sprites.coin, Math.round(e.x) + COIN_OFF(), Math.round(e.y) + COIN_OFF()); continue; }
       if (!e.alive && !(e.dead > 0)) continue;
       const fr = (e.vx < 0 ? sprites.crow : sprites.crowR)[Math.floor(time / 10) % 2];
       if (e.dead > 0) { c.save(); c.translate(Math.round(e.x) + 8, Math.round(e.y) + 6); c.scale(1, -1); c.drawImage(fr, -8, -6); c.restore(); }
-      else c.drawImage(fr, Math.round(e.x) - 1, Math.round(e.y));
+      else c.drawImage(fr, Math.round(e.x) - 1, Math.round(e.y) + CROW_OFF());
     }
     if (!(pl.inv > 0 && Math.floor(time / 4) % 2) && state !== 'over') {
       const k = !pl.onG ? 'jump' : Math.abs(pl.vx) > 0.2 ? (Math.floor(pl.anim) % 2 ? 'run1' : 'run2') : 'stand';
@@ -246,7 +293,7 @@
     }
     c.restore();
     // 上の札：コインと、のこり
-    c.drawImage(sprites.coin, 6, 5); c.fillStyle = '#fff'; c.font = 'bold 9px sans-serif'; c.textBaseline = 'top';
+    c.drawImage(sprites.coin, 6 + COIN_OFF(), 5 + COIN_OFF()); c.fillStyle = '#fff'; c.font = 'bold 9px sans-serif'; c.textBaseline = 'top';
     text(`×${coins}`, 19, 6); for (let i = 0; i < lives; i++) c.drawImage(sprites.stand, 0, 0, 16, 8, W - 20 - i * 14, 4, 16, 8);
     if (state === 'miss') banner('もういちど！');
     if (state === 'clear') banner('ゴール！ 西尾城に とうちゃく');

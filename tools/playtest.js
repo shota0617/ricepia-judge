@@ -132,12 +132,15 @@ async function walkTo(page, id) {
     await page.waitForTimeout(1200);
     R.checks.tapWalkStopsOnPanel = started && await page.evaluate(at => !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at);
     await page.click('[data-tab=map]'); await page.waitForTimeout(300);
-    // ほうびの知らせが出たときも止まる（たからばこを開けたときと同じく、知らせで地図が隠れる）
-    const fwd = await page.evaluate(() => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) + 3, Math.floor(a.y)); });
-    await page.mouse.click(fwd.x, fwd.y);
-    const at2 = await page.evaluate(() => { document.getElementById('reward').classList.add('show'); return [nishioGo.me.lat, nishioGo.me.lng, !!nishioPixel.tapGoal]; });   // 3つめ：歩きはじめていたか
-    await page.waitForTimeout(1200);
-    R.checks.tapWalkStopsOnReward = await page.evaluate(at => { const ok = at[2] && !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1]; document.getElementById('reward').classList.remove('show'); return ok; }, at2);
+    // ほうびの知らせ（たからばこを開けたとき）や「ホーム画面に追加」の案内が出たときも止まる（行って戻る）
+    R.checks.tapWalkStopsOnCover = [];
+    for (const [dx, cover] of [[3, 'reward'], [-3, 'a2hs']]) {
+      const p = await page.evaluate(dx => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) + dx, Math.floor(a.y)); }, dx);
+      await page.mouse.click(p.x, p.y);
+      const at2 = await page.evaluate(id => { const el = document.getElementById(id); if (id === 'reward') el.classList.add('show'); else el.hidden = false; return [nishioGo.me.lat, nishioGo.me.lng, !!nishioPixel.tapGoal]; }, cover);   // 3つめ：歩きはじめていたか
+      await page.waitForTimeout(1200);
+      R.checks.tapWalkStopsOnCover.push(await page.evaluate(([at, id]) => { const ok = at[2] && !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1]; const el = document.getElementById(id); if (id === 'reward') el.classList.remove('show'); else el.hidden = true; return ok && id; }, [at2, cover]));
+    }
   } else R.checks.tapWalk = 'no-spot';
   R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
   R.checks.bgmStarted = await page.evaluate(() => window.__played.some(f => /^(field[23]?|morning|evening|night|rain|\d{3})\.mp3$/.test(f)));   // ふだんの曲（時間・天気・順番で変わる。アルバムの曲は 001.mp3〜100.mp3）
@@ -223,7 +226,7 @@ async function walkTo(page, id) {
   need(c.stickKnobMoved && c.stickWalkedNorth && c.stickReleased, 'スティックを上へ倒しても北へ歩かない・はなしても戻らない');
   need(c.tapWalk === true, '地面をタップしても、そこまで歩かない');
   need(c.tapWalkStopsOnPanel === true, 'タップした所へ歩くとちゅうで きろく を開いても、うしろで歩きつづける');
-  need(c.tapWalkStopsOnReward === true, 'タップした所へ歩くとちゅうで ほうびの知らせが出ても、うしろで歩きつづける');
+  need(String(c.tapWalkStopsOnCover) === 'reward,a2hs', 'タップした所へ歩くとちゅうで ほうびの知らせや ホーム画面に追加 の案内が出ても、うしろで歩きつづける');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');

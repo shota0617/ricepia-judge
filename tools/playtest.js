@@ -107,7 +107,7 @@ async function walkTo(page, id) {
   R.checks.stickWalkedNorth = await page.evaluate(l => !!nishioGo.me && l != null && nishioGo.me.lat > l, lat0);
   R.checks.stickReleased = await page.evaluate(() => !document.getElementById('pxKnob').style.transform && !document.getElementById('pxStick').classList.contains('on'));
   R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
-  R.checks.bgmStarted = await page.evaluate(() => window.__played.some(f => /^(field[23]?|morning|evening|night|rain)\.mp3$/.test(f)));   // ふだんの曲（時間・天気・順番で変わる）
+  R.checks.bgmStarted = await page.evaluate(() => window.__played.some(f => /^(field[23]?|morning|evening|night|rain|\d{3})\.mp3$/.test(f)));   // ふだんの曲（時間・天気・順番で変わる。アルバムの曲は 001.mp3〜100.mp3）
   await shot(page, '02-operate-start');
   R.checks.chestsNearby = await page.evaluate(() => nishioPixel.chests.length);
   R.walk.push(await walkTo(page, 'chest'));

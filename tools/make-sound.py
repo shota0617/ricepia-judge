@@ -2,8 +2,9 @@
 # ファミコン風のオリジナル曲。矩形波（メロディ・和音）と三角波（ベース）とノイズ（ドラム）だけで鳴らす。
 # 出力：nishio-go/bgm/field.mp3（ふだん）・world.mp3（せかいちず）・checkin.mp3・levelup.mp3（ffmpeg が必要）
 #       バリエーション：field2（まちかど）・field3（おまつり）・morning（朝）・evening（夕方）・night（夜）・rain（雨）
+#       アルバム100曲：nishio-go/bgm/s/001.mp3〜100.mp3 と list.json（python3 tools/make-sound.py album）
 #       python3 tools/make-sound.py field2 night … のように名前を渡すと、その曲だけ作る
-import os, subprocess, wave
+import json, os, subprocess, wave
 import numpy as np
 
 SR = 44100
@@ -81,13 +82,14 @@ class Song:
         save(name, x)
 
 
-def save(name, x):
+def save(name, x, small=False):
+    """small：アルバムの曲は通信量を減らすため 22kHz・48kbps にする"""
     wav = os.path.join(OUT, name + '.wav')
     with wave.open(wav, 'wb') as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
         w.writeframes((np.clip(x, -1, 1) * 32767).astype('<i2').tobytes())
     # ファミコンの音の出口のように、高すぎる音と低すぎる音を少し削って耳あたりをやわらかくする
-    subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', wav, '-af', 'highpass=f=40,lowpass=f=6500', '-ac', '1', '-b:a', '96k',
+    subprocess.run(['ffmpeg', '-loglevel', 'error', '-y', '-i', wav, '-af', 'highpass=f=40,lowpass=f=6500', '-ac', '1', *(['-ar', '22050', '-b:a', '48k'] if small else ['-b:a', '96k']),
                     os.path.join(OUT, name + '.mp3')], check=True)
     os.remove(wav)
     print(f'{name}.mp3: {len(x) / SR:.1f}s')
@@ -362,8 +364,160 @@ def rain():
     s.mp3('rain')
 
 
+# ---------- 100曲のアルバム（nishio-go/bgm/s/001.mp3〜100.mp3 と list.json） ----------
+# 曲ごとに 調（12の音のどれか・長調/短調）・テンポ・曲調（マーチ・はずむ・おまつり・きらきら・スイング・かけあし・ブギ・
+# おだやか・バラード・子守歌・雨）・旋律の楽器（矩形波の太さ・三角波）・こだまの有無を変え、旋律は compose() で作る。
+# 昼60曲・朝10曲・夕方10曲・夜10曲・雨10曲。通信量を減らすため 22kHz・48kbps のモノラル（1曲 200KB くらい）
+for _r, _n in enumerate(SHARPS):                    # 12の音すべての長三和音・短三和音（'C#'・'F#m' など）
+    CHORDS.setdefault(_n, (_n, SHARPS[(_r + 4) % 12], SHARPS[(_r + 7) % 12]))
+    CHORDS.setdefault(_n + 'm', (_n, SHARPS[(_r + 3) % 12], SHARPS[(_r + 7) % 12]))
+DEG = {'I': (0, ''), 'ii': (2, 'm'), 'iii': (4, 'm'), 'IV': (5, ''), 'V': (7, ''), 'vi': (9, 'm'), 'bVII': (10, ''),
+       'i': (0, 'm'), 'iv': (5, 'm'), 'v': (7, 'm'), 'III': (3, ''), 'VI': (8, ''), 'VII': (10, '')}
+PHRASE = {'major': [['I', 'V', 'vi', 'IV'], ['I', 'vi', 'IV', 'V'], ['I', 'IV', 'V', 'I'], ['I', 'iii', 'IV', 'V'], ['IV', 'V', 'iii', 'vi'],
+                    ['I', 'V', 'IV', 'V'], ['vi', 'IV', 'I', 'V'], ['I', 'I', 'IV', 'V'], ['I', 'ii', 'V', 'I'], ['IV', 'I', 'bVII', 'V']],
+          'minor': [['i', 'VI', 'III', 'VII'], ['i', 'iv', 'V', 'i'], ['i', 'VII', 'VI', 'V'], ['i', 'VI', 'iv', 'V'], ['VI', 'VII', 'i', 'i'],
+                    ['i', 'III', 'VII', 'iv'], ['iv', 'v', 'VI', 'V'], ['i', 'i', 'iv', 'V']]}
+CADENCE = {'major': [['IV', 'V', 'I', 'I'], ['ii', 'V', 'I', 'I'], ['vi', 'IV', 'V', 'I'], ['IV', 'ii', 'V', 'I']],
+           'minor': [['iv', 'V', 'i', 'i'], ['VI', 'V', 'i', 'i'], ['VI', 'VII', 'i', 'i'], ['iv', 'VII', 'i', 'i']]}
+SCALE = {'major': [0, 2, 4, 5, 7, 9, 11], 'minor': [0, 2, 3, 5, 7, 8, 10], 'yo': [0, 2, 4, 7, 9], 'minpenta': [0, 3, 5, 7, 10]}
+KEYJ = ['ハ', '変ニ', 'ニ', '変ホ', 'ホ', 'ヘ', '嬰ヘ', 'ト', '変イ', 'イ', '変ロ', 'ロ']
+SWING = [[.75, .25, .75, .25, 1, 1], [1, .75, .25, 2], [.75, .25, 1, .75, .25, 1], [1, 1, .75, .25, 1]]
+MATSURI = [[1, .5, .5, 1, 1], [.5, .5, 1, .5, .5, 1], [1, 1, 1, 1], [1.5, .5, 1, 1], [.5, .5, .5, .5, 2]]
+QUICK = [[.5] * 8, [.5, .5, 1, .5, .5, 1], [.25, .25, .5, 1, 1, 1], [1, .5, .5, 1, 1], [.5, .5, .5, .5, 1, 1]]
+# 曲調：テンポの幅・旋律の音の多さ（busy）・音の長さ（gate）・リズム・題名につける言葉
+STYLE = {'march': (112, 128, 1.0, .88, None, 'マーチ'), 'bounce': (124, 140, 1.0, .8, None, 'ステップ'), 'matsuri': (132, 148, 1.0, .85, MATSURI, 'ばやし'),
+         'sparkle': (104, 120, .9, .9, None, 'きらきら'), 'swing': (116, 132, 1.0, .85, SWING, 'スイング'), 'quick': (150, 168, 1.0, .8, QUICK, 'ダッシュ'),
+         'boogie': (120, 136, 1.0, .82, None, 'ブギ'), 'calm': (96, 112, .8, .92, None, ''), 'ballad': (80, 96, .7, .95, None, ''),
+         'lull': (66, 84, .55, .95, None, ''), 'rainy': (76, 92, .65, .9, None, '')}
+PLACES = ['西尾城', '鶴城', '抹茶畑', '茶つみ', '佐久島', '一色の港', '吉良の浜', '幡豆の海', '三ヶ根山', '矢作川', '矢作古川', '岩瀬文庫', '寺津',
+          '平坂', '米津', '福地', '室場', '三和', '中畑', '八ツ面山', '宮崎海岸', '東幡豆', '西幡豆', '上横須賀', '吉田', '田んぼ道', '商店街',
+          '古い町なみ', '駅前', '用水路', '海辺の道', '菜の花', '梅の花', '菖蒲園', 'あじさい', '秋まつり', 'うなぎ', 'えびせん', 'いちご畑', '島の灯台']
+MOOD_WORD = {'morning': 'の朝', 'evening': 'の夕やけ', 'night': 'の夜', 'rain': 'の雨'}
+
+
+def drums_quick(s, bars):
+    """かけあし：毎拍キック、2・4拍目にスネア、16分のハイハット"""
+    for b in range(bars * 4):
+        s.kick(b, 0.42)
+        if b % 2: s.noise(b, 0.10, 0.14, color=4)
+        for k in range(4): s.noise(b + k * 0.25, 0.02, 0.03 if k % 2 else 0.045)
+
+
+def album_song(i, mood, style, place):
+    """アルバムの i 曲目（1〜100）を作って mp3 にし、一覧の1行を返す"""
+    rng = np.random.default_rng(1000 + i)
+    pick = lambda xs: xs[int(rng.integers(len(xs)))]
+    lo_t, hi_t, busy, gate, rhythms, word = STYLE[style]
+    bpm = int(rng.integers(lo_t, hi_t + 1))
+    minor_p = {'evening': .6, 'night': .8, 'rain': .5}.get(mood, .25 if style in ('march', 'quick', 'sparkle', 'swing') else 0)
+    mode = 'minor' if style != 'matsuri' and rng.random() < minor_p else 'major'
+    root = int(rng.integers(12))
+    # コード進行：4小節の句を4つ（はじめ・つぎ・まんなか・終わり）。終わりの句は主和音で終わる（はじめの句をくり返すことも）
+    a, b, c = pick(PHRASE[mode]), pick(PHRASE[mode]), pick(PHRASE[mode])
+    tonic = 'I' if mode == 'major' else 'i'
+    end = a[:3] + [tonic] if rng.random() < .5 and a[2] in ('V', 'IV', 'ii', 'iv', 'VI') else pick(CADENCE[mode])
+    roman = a + (a if rng.random() < .4 else b) + c + end
+    ch = [SHARPS[(root + DEG[r][0]) % 12] + DEG[r][1] for r in roman]
+    scale = 'yo' if style == 'matsuri' else 'minpenta' if mode == 'minor' and rng.random() < .3 else mode
+    sc = [(x + root) % 12 for x in SCALE[scale]]
+    lo_m = 72 + root - (12 if root > 6 else 0)          # 旋律の音域：主音から上へ 1オクターブ半くらい
+    lo, hi = (name(lo_m - 5), name(lo_m + 10)) if style == 'lull' else (name(lo_m), name(lo_m + 16))
+    s = Song(bpm, 64)
+    mel = compose(ch, sc, 5000 + i, lo, hi, rhythms=rhythms, busy=busy)
+    duty = pick([.25, .5]) if style in ('ballad', 'rainy') else pick([.125, .25, .5])
+    if style == 'lull' or (style in ('ballad', 'rainy') and rng.random() < .3):
+        s.line(mel, tri, 0.30, gate=gate)                # 三角波のやわらかい旋律
+    else:
+        s.line(mel, square, 0.18, gate=gate, duty=duty)
+    if style in ('matsuri', 'ballad', 'calm') or rng.random() < .3:   # こだま
+        s.line(mel, square, 0.05, gate=0.8, start=pick([.5, .75]), duty=.25 if duty == .125 else .125)
+    for bar, cc in enumerate(ch):                        # 和音とベース
+        r3, t0 = CHORDS[cc], bar * 4
+        rt, third, fifth = r3
+        if style == 'bounce':                            # 裏打ちの和音
+            for k in (0.5, 1.5, 2.5, 3.5):
+                for nm in r3: s.line([(f'{nm}4', .5)], square, 0.03, gate=0.5, start=t0 + k, duty=0.5)
+        elif style == 'matsuri':
+            s.line([(f'{rt}2', 1), (f'{rt}3', 1), (f'{rt}2', 1), (f'{rt}3', 1)], tri, 0.3, gate=0.7, start=t0)
+        elif style == 'sparkle':                         # 16分の分散和音
+            for k, j in enumerate([0, 1, 2, 1] * 4): s.line([(f'{r3[j]}5', .25)], tri, 0.08, gate=0.7, start=t0 + k * .25)
+            s.line([(f'{rt}2', 2), (f'{fifth}2', 2)], tri, 0.3, gate=0.9, start=t0)
+        elif style == 'swing':                           # 歩くベースと 2・4拍目の和音
+            s.line([(f'{rt}2', 1), (f'{third}2', 1), (f'{fifth}2', 1), (f'{third}2', 1)], tri, 0.32, gate=0.8, start=t0)
+            for k in (1, 3):
+                for nm in r3: s.line([(f'{nm}4', .5)], square, 0.035, gate=0.5, start=t0 + k, duty=0.5)
+        elif style == 'quick':
+            for k in range(8): s.line([(f'{rt}{2 + k % 2}', .5)], tri, 0.3, gate=0.7, start=t0 + k * .5)
+            for nm in r3: s.line([(f'{nm}4', 2)], square, 0.02, gate=0.9, start=t0, duty=0.5)
+        elif style == 'boogie':                          # ブギのベース（根音・3度・5度・6度・短7度）
+            m0, m3 = midi(f'{rt}2'), 3 if cc.endswith('m') else 4
+            for k, d in enumerate([0, m3, 7, 9, 10, 9, 7, m3]): s.line([(name(m0 + d), .5)], tri, 0.3, gate=0.8, start=t0 + k * .5)
+        elif style == 'calm':
+            s.line([(f'{rt}2', 2), (f'{fifth}2', 2)], tri, 0.3, gate=0.9, start=t0)
+        elif style == 'ballad':
+            for k in range(4):
+                for nm in r3: s.line([(f'{nm}4', 1)], square, 0.025, gate=0.9, start=t0 + k, duty=0.5)
+            s.line([(f'{rt}2', 4)], tri, 0.32, gate=0.95, start=t0)
+        elif style == 'lull':
+            s.line([(f'{rt}2', 4)], tri, 0.22, gate=0.95, start=t0)
+        elif style == 'rainy':
+            for k, j in enumerate([0, 2, 1, 2, 0, 2, 1, 2]): s.line([(f'{r3[j]}5', .5)], tri, 0.10, gate=0.6, start=t0 + k * .5)
+            s.line([(f'{rt}2', 4)], tri, 0.26, gate=0.95, start=t0)
+    if style in ('march', 'calm', 'lull'):
+        arp_eighths(s, ch, vol={'march': 0.06, 'calm': 0.05, 'lull': 0.04}[style])
+    if style in ('march', 'bounce'):
+        bass_eighths(s, ch)
+    if style in ('march', 'bounce', 'swing', 'boogie'):  # ドラム
+        drums_march(s, 16, 0.6 if style == 'swing' else 0.9)
+    elif style == 'quick':
+        drums_quick(s, 16)
+    elif style == 'matsuri':                             # 太鼓とかね
+        for b_ in range(64):
+            s.kick(b_, 0.55 if b_ % 2 == 0 else 0.35)
+            if b_ % 4 == 3: s.kick(b_ + 0.5, 0.4)
+            s.noise(b_ + 0.5, 0.05, 0.06)
+    elif style in ('sparkle', 'calm'):
+        for bar in range(16): s.kick(bar * 4, 0.35); s.noise(bar * 4 + 2, 0.08, 0.06, color=4)
+    elif style == 'ballad':
+        for bar in range(16): s.kick(bar * 4, 0.3)
+    if style == 'lull':                                  # 虫の声
+        for b_ in range(64):
+            if rng.random() < 0.3:
+                for k in range(3): s.line([('E7' if b_ % 2 else 'D#7', 0.05)], square, 0.02, gate=0.6, start=b_ + 0.25 + k * 0.08, duty=0.5)
+    if style == 'rainy':                                 # 雨つぶ
+        for k in range(64 * 6): s.noise(k / 6 + rng.uniform(0, 0.1), 0.015, rng.uniform(0.01, 0.035))
+    f = f'{i:03d}'
+    save(os.path.join('s', f), s.buf / max(1.0, np.abs(s.buf).max() / 0.9), small=True)
+    return {'f': f, 't': place + (MOOD_WORD.get(mood) or word), 'm': mood, 'style': style, 'bpm': bpm,
+            'key': KEYJ[root] + ('短調' if mode == 'minor' else '長調')}
+
+
+def album_plan():
+    """100曲の 時間帯・曲調・題名の場所 を決める（いつも同じ並び。題名は重ならない）"""
+    rng = np.random.default_rng(100)
+    plan, used = [], set()
+    day_styles = ['march', 'bounce', 'matsuri', 'sparkle', 'swing', 'quick', 'boogie']
+    mood_styles = {'morning': ['calm', 'sparkle', 'march'], 'evening': ['ballad', 'calm'], 'night': ['lull', 'ballad'], 'rain': ['rainy']}
+    for n, mood in enumerate(['day'] * 60 + ['morning'] * 10 + ['evening'] * 10 + ['night'] * 10 + ['rain'] * 10):
+        style = day_styles[n % 7] if mood == 'day' else mood_styles[mood][n % len(mood_styles[mood])]
+        while True:
+            p = PLACES[int(rng.integers(len(PLACES)))]
+            t = p + (MOOD_WORD.get(mood) or STYLE[style][5])
+            if t not in used: used.add(t); break
+        plan.append((n + 1, mood, style, p))
+    return plan
+
+
+def album():
+    """100曲を作り、一覧 list.json（ファイル名・題名・時間帯・曲調・テンポ・調）を書く"""
+    os.makedirs(os.path.join(OUT, 's'), exist_ok=True)
+    rows = [album_song(*p) for p in album_plan()]
+    with open(os.path.join(OUT, 'list.json'), 'w') as fp:
+        json.dump(rows, fp, ensure_ascii=False, indent=0)
+    print('list.json:', len(rows), '曲')
+
 SONGS = {'field': field, 'world': world, 'jingles': jingles, 'field2': field2, 'field3': field3,
-         'morning': morning, 'evening': evening, 'night': night, 'rain': rain}
+         'morning': morning, 'evening': evening, 'night': night, 'rain': rain, 'album': album}
 
 if __name__ == '__main__':
     import sys

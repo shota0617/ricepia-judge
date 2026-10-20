@@ -1946,45 +1946,66 @@ $('resetBtn').addEventListener('click', () => {
 });
 
 /* ---------- 音楽（BGM と効果音） ----------
-   nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。field：ふだん（歩く地図・ふつうの地図）、
-   world：せかいちず（無ければ field）、checkin：チェックイン、levelup：レベルアップ。
-   ふだんの曲は、雨なら rain、夜（19〜5時）は night、朝（5〜9時）は morning、夕方（16〜19時）は evening、
-   昼は field・field2（まちかど）・field3（おまつり）を1曲ずつ順に流す（どれも無ければ field）。
+   nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。world：せかいちず、checkin：チェックイン、levelup：レベルアップ。
+   ふだんの曲（歩く地図・ふつうの地図）は、雨なら「雨」、夜（19〜5時）は「夜」、朝（5〜9時）は「朝」、夕方（16〜19時）は「夕方」、
+   それ以外は「昼」の曲から、1曲流し終わるたびに次の曲へ（順番は開くたびにまぜる）。その時間の曲が無ければ昼の曲。
+   曲は field・field2（まちかど）・field3（おまつり）・morning・evening・night・rain と、アルバム100曲（bgm/list.json・bgm/s/）。
    ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
 const sound = (() => {
-  const SRC = { checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
-  const DAY = ['field', 'field2', 'field3'], MOOD = ['morning', 'evening', 'night', 'rain'];
-  for (const k of ['world', ...DAY, ...MOOD]) SRC[k] = `nishio-go/bgm/${k}.mp3`;
-  const VOL = 0.28, SFX_VOL = 0.35, LOOP = new Set(['world', ...DAY, ...MOOD]), els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
-  let day = Math.floor(Math.random() * DAY.length);   // 昼の曲の順番（開くたびに ちがう曲から）
+  const SRC = { checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3', world: 'nishio-go/bgm/world.mp3' };
+  const TITLE = { field: 'にしおさんぽ', field2: 'まちかど', field3: 'おまつり', morning: 'あさ', evening: 'ゆうがた', night: 'よる', rain: 'あめ', world: 'せかいちず' };
+  const POOL = { day: ['field', 'field2', 'field3'], morning: ['morning'], evening: ['evening'], night: ['night'], rain: ['rain'] };
+  const FIELD = new Set(Object.values(POOL).flat()), at = {};   // FIELD：ふだんの曲（1曲流したら次へ）。at：時間帯ごとの いまの曲の番号
+  for (const k of FIELD) SRC[k] = `nishio-go/bgm/${k}.mp3`;
+  const VOL = 0.28, SFX_VOL = 0.35, els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
+  const isBgm = k => k === 'world' || FIELD.has(k);
+  const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  for (const m in POOL) { shuffle(POOL[m]); at[m] = 0; }
   let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null, ducking = 0;   // ducking：鳴っている効果音の数
   const el = k => {
     if (!els[k]) {
-      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k) && !DAY.includes(k); a.volume = LOOP.has(k) ? VOL : SFX_VOL; a.src = SRC[k];
-      if (DAY.includes(k)) a.addEventListener('ended', () => { day = (day + 1) % DAY.length; a.currentTime = 0; apply(); });   // 昼の曲は1回流したら次の曲へ
-      a.addEventListener('error', () => { missing.add(k); if (LOOP.has(k)) apply(); });
+      const a = new Audio(); a.preload = 'none'; a.loop = k === 'world'; a.volume = isBgm(k) ? VOL : SFX_VOL; a.src = SRC[k];
+      if (FIELD.has(k)) a.addEventListener('ended', () => { a.currentTime = 0; next(k); });   // ふだんの曲は1回流したら次の曲へ
+      a.addEventListener('error', () => { missing.add(k); if (isBgm(k)) apply(); });
       els[k] = a;
     }
     return els[k];
   };
-  // ふだんの曲：天気（雨）→ 時間帯 → 昼は順番。無い曲は飛ばし、最後は field
-  const fieldSong = () => {
+  const moodNow = () => {
     const h = new Date().getHours(), w = weatherNow();
-    const mood = w && w.raining ? 'rain' : h >= 19 || h < 5 ? 'night' : h < 9 ? 'morning' : h >= 16 ? 'evening' : null;
-    if (mood && !missing.has(mood)) return mood;
-    for (let i = 0; i < DAY.length; i++) { const k = DAY[(day + i) % DAY.length]; if (!missing.has(k)) return k; }
-    return null;
+    return w && w.raining ? 'rain' : h >= 19 || h < 5 ? 'night' : h < 9 ? 'morning' : h >= 16 ? 'evening' : 'day';
   };
+  const inPool = m => { const P = POOL[m]; for (let i = 0; i < P.length; i++) { const k = P[(at[m] + i) % P.length]; if (!missing.has(k)) return k; } return null; };
+  // ふだんの曲：天気（雨）→ 時間帯 → 昼。無い曲は飛ばす
+  const fieldSong = () => inPool(moodNow()) || inPool('day');
   const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : fieldSong());
+  function next(k) {   // k の次の曲へ（k が入っている時間帯の順番を1つ進める）
+    for (const m in POOL) { const i = POOL[m].indexOf(k); if (i >= 0) at[m] = (i + 1) % POOL[m].length; }
+    apply();
+  }
+  // アルバム100曲の一覧を読んで、時間帯ごとの曲に足す（いま流れている曲は そのまま続ける）
+  fetch('nishio-go/bgm/list.json').then(r => (r.ok ? r.json() : [])).then(list => {
+    for (const x of list) {
+      const k = 's' + x.f, m = POOL[x.m] ? x.m : 'day';
+      SRC[k] = `nishio-go/bgm/s/${x.f}.mp3`; TITLE[k] = x.t; POOL[m].push(k); FIELD.add(k);
+    }
+    for (const m in POOL) { shuffle(POOL[m]); at[m] = Math.max(0, POOL[m].indexOf(cur)); }
+    apply();
+  }).catch(() => {});
   function apply() {
     const live = on && unlocked && !document.hidden, k = live ? pick() : null;
     for (const [n, a] of Object.entries(els)) {
-      if (LOOP.has(n) ? n !== k : !live) a.pause();   // 消したとき・画面を離れたときは効果音も止める
+      if (isBgm(n) ? n !== k : !live) {   // 消したとき・画面を離れたときは効果音も止める
+        a.pause();
+        if (live && n !== k && n[0] === 's') delete els[n];   // 終わったアルバムの曲は手放す（たくさん聞いても重くならないように）
+      }
     }
     if (!live) ducking = 0;
     cur = k;
     if (k) { const a = el(k); a.volume = ducking ? VOL * 0.25 : VOL; if (a.paused) a.play().catch(() => {}); }
     $('bgmToggle').checked = on;
+    $('bgmNow').textContent = k ? `♪ いまの曲：${TITLE[k] || k}` : '';
+    $('bgmNext').hidden = !k || scene === 'world';
   }
   const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
   ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, { once: true, capture: true }));
@@ -1994,6 +2015,7 @@ const sound = (() => {
     apply,
     scene(s) { if (s !== scene) { scene = s; apply(); } },
     toggle(v) { on = v === undefined ? !on : !!v; store.set('nsg_bgm', on); unlocked = true; apply(); },
+    next() { if (cur && FIELD.has(cur)) { el(cur).currentTime = 0; next(cur); } },   // 「次の曲」ボタン
     jingle(k) {   // 効果音のあいだは BGM を小さく（途中で曲が切り替わっても小さいまま）
       if (!on || !unlocked || document.hidden || missing.has(k)) return;
       const a = el(k);
@@ -2006,6 +2028,7 @@ const sound = (() => {
   };
 })();
 $('bgmToggle').addEventListener('change', e => sound.toggle(e.target.checked));
+$('bgmNext').addEventListener('click', () => sound.next());
 // アクセス解析（analytics.js）のオン・オフ。切り替えは次に開いたときから
 $('anaToggle').checked = !store.get('nsg_noanalytics', false);
 $('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg_noanalytics', e.target.checked ? '0' : '1'); } catch (err) { /* noop */ } toast(e.target.checked ? '📊 アクセス解析をオンにしました（次に開いたときから）' : '📊 アクセス解析をオフにしました（次に開いたときから送りません）'); });

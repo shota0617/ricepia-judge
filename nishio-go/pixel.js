@@ -493,6 +493,10 @@ function rawAt(tx, ty) {   // 下位5bit＝地形、上位＝陰影
   return c.g[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)];
 }
 const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
+// 線路・道・水べの絵は まわりのマスを見て決めるので、マスごとに覚えておく（nbrLook。地図のまとまりを読みこむたびに忘れる）。
+// せかいちず（1マス100m）でも同じ決め方を使う：描くあいだだけ gridAt と覚えておく場所を せかいちずのものにする（drawWorld）
+const nbrCache = new Map(), worldNbr = new Map();
+let gridAt = codeAt, nbrCur = nbrCache;
 
 // 区画を作るか：西尾市の範囲（佐久島を含む長方形）にかかるか、となりの市町（region.js）の境界から約300m以内にかかるもの
 function chunkInPlay(cx, cy) {
@@ -584,14 +588,14 @@ async function pump() {
       const pre = await bakedChunk(cx, cy);
       if (pre) {
         // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
-        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois });
+        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); nbrCache.clear();
         dirty = true;
         continue;
       }
       // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
       const saved = store.get(PX_KEY + k);
       if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] });
+        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); nbrCache.clear();
         dirty = true;
         continue;
       }
@@ -601,7 +605,7 @@ async function pump() {
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] });
+        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); nbrCache.clear();
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -647,6 +651,7 @@ const WCOL = { [C.G]: '#3f9b3c', [C.F]: PADDY_COL, [C.T]: '#d8ccaa', [C.W]: '#1f
   [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
   [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
+  worldNbr.clear();   // せかいちずが変わったら、つながる向きの絵を決め直す
   if (!world) return;
   const c = document.createElement('canvas');
   c.width = WW; c.height = WH;
@@ -1119,9 +1124,21 @@ function loadMapTiles() {
     MT.spriteReq = true;
     get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
   }
-  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。つながる向きの絵35枚（rail.png。railIndex）。季節で変わらない）
+  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。つながる向きの絵41枚（rail.png。railIndex）。季節で変わらない）
     MT.railReq = true;
-    get('rail', () => true, img => { MT.rail = sliceSheet(img, 35, 1); });
+    get('rail', () => true, img => { MT.rail = sliceSheet(img, 41, 1); });
+  }
+  if (!MT.roadReq) {   // 道（Blender のアスファルト・縁石・側溝・白線、小道の土と草のへり。roadIndex。季節で変わらない）
+    MT.roadReq = true;
+    get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
+    get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
+    get('kawakado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kawakado = [a.slice(0, 4), a.slice(4, 8), a.slice(8, 12)]; });
+    get('kado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kado = [0, 1, 2].map(r => a.slice(r * 4, r * 4 + 4)); });
+    get('facade', () => true, img => { const a = sliceSheet(img, 6, 5); MT.facade = [0, 1, 2, 3, 4].map(r => a.slice(r * 6, r * 6 + 6)); });   // 建物の前の壁（drawWall）
+  }
+  if (!MT.shoreReq) {   // 水べ（Blender の護岸・草の土手・浜の浅瀬と波。shoreIndex。季節で変わらない）
+    MT.shoreReq = true;
+    get('shore', () => true, img => { const a = sliceSheet(img, 32, 3); MT.shore = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
   }
   if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
     MT.vehReq = true;
@@ -1265,18 +1282,115 @@ const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号
 // 線路のマスの絵（rail.png の番号）。0〜15：上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）
 // 16〜25：45度くらいの線路で、マスが角だけで接するとき（ななめのとなりが線路で、そのあいだの2マスはどちらも線路でない）
 //   16 左下から右上・17 左上から右下、18〜25 辺のまん中から反対側の角（上→右下・上→左下・右→左上・右→左下・下→右上・下→左上・左→右上・左→右下）。tools/blender/maptiles.py の RAIL_EXTRA と同じ順
-// 26〜33：まん中から1つの端へ向かう部品（上・右・下・左・右上・右下・左下・左上。背景なし）、34：バラストだけ
+// 26〜33：まん中から1つの端へ向かう部品（上・右・下・左・右上・右下・左下・左上。背景なし）、34：バラストだけ、35〜40：複線の帯のななめ（railBandSpill）
 // どの1枚にもあてはまらない つながり（角が2つ以上の分かれ道など）は、端の番号の配列を返し、34 の上に部品を重ねて描く
 const RAIL_PAIR = { '4,6': 16, '5,7': 17, '0,5': 18, '0,6': 19, '1,7': 20, '1,6': 21, '2,4': 22, '2,7': 23, '3,4': 24, '3,5': 25 };
-function railIndex(x, y) {
-  const L = (a, b) => codeAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
+// 複線・駅の構内のように線路のマスが2〜3マスの帯になっている所（2×2 がぜんぶ線路）では、上下左右のつながりで選ぶと分かれ道だらけになる。
+// そこは まわり5×5の線路のマスの並ぶ向きから、横・縦・ななめ のまっすぐな線路を描く（となりのマスと平行な線路になり、複線に見える）
+function railBandRaw(x, y) {
+  const L = (a, b) => gridAt(a, b) === C.L;
+  if (![[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([a, b]) => L(x + a, y + b) && L(x + a + 1, y + b) && L(x + a, y + b + 1) && L(x + a + 1, y + b + 1))) return -1;
+  let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (L(x + i, y + j)) { n++; sx += i; sy += j; sxx += i * i; syy += j * j; sxy += i * j; }
+  const cxx = sxx / n - (sx / n) ** 2, cyy = syy / n - (sy / n) ** 2, cxy = sxy / n - (sx / n) * (sy / n);
+  if (Math.abs(cxx - cyy) < 0.05 && Math.abs(cxy) < 0.05) return -1;   // 向きが決まらない（かたまり）
+  const deg = ((Math.atan2(2 * cxy, cxx - cyy) / 2) * 180 / Math.PI + 180) % 180;   // 0 横・90 縦・45 右下がり・135 右上がり（画面の下が y の正）
+  return deg < 22.5 || deg >= 157.5 ? 10 : deg < 67.5 ? 17 : deg < 112.5 ? 5 : 16;
+}
+// 帯の向きは、線の両端のマスが線路で、そのマスも同じ向きの帯か ふつうの線路のときだけ使う（帯が曲がる所で、横の線と ななめの線が切れて並ばないように）。
+// 使えないマスは、ふつうの線路と同じく まわりへの部品を重ねて描く（railIndex）
+const BAND_ENDS = { 10: [[-1, 0], [1, 0]], 5: [[0, -1], [0, 1]], 16: [[1, -1], [-1, 1]], 17: [[-1, -1], [1, 1]] };
+function railBandIndex(x, y) {
+  const d = railBandRaw(x, y);
+  if (d < 0) return -1;
+  return BAND_ENDS[d].every(([a, b]) => { if (gridAt(x + a, y + b) !== C.L) return false; const e = railBandRaw(x + a, y + b); return e === d || e < 0; }) ? d : -1;
+}
+// 帯のななめの線路は角を通るので、となりのマスの平行な線路のレールが このマスの角をかすめる。となりも同じ向きの帯なら、その分も描いた絵（35〜40）にする
+function railBandSpill(x, y, band) {
+  const same = (a, b) => railBandIndex(a, b) === band;
+  if (band === 16) { const nw = same(x - 1, y) || same(x, y - 1), se = same(x + 1, y) || same(x, y + 1); return nw && se ? 37 : se ? 36 : nw ? 35 : 16; }
+  const ne = same(x + 1, y) || same(x, y - 1), sw = same(x - 1, y) || same(x, y + 1);
+  return ne && sw ? 40 : sw ? 39 : ne ? 38 : 17;
+}
+function nbrLook(x, y, fn) {
+  const key = x * 1048576 + y;   // 数のかぎ（文字列を作るより速い。マスの番号は ±50万より小さい）
+  let r = nbrCur.get(key);
+  if (r === undefined) { r = fn(x, y); nbrCur.set(key, r); }
+  return r;
+}
+const railIndex = (x, y) => nbrLook(x, y, railIndexOf);
+// 道のマスに描くもの：[道の絵の列, 角の縁石（kado.png の番号）, 踏切のレール（rail.png の番号）, 橋の欄干（rankan.png の番号）]
+function roadLookOf(x, y) {
+  const code = gridAt(x, y), ri = roadIndex(code, x, y), rm = ri >> 1;
+  const kado = ROAD_CORNERS.flatMap(([s1, s2, a, b], i) => (rm & s1) && (rm & s2) && ROAD_ROW[gridAt(x + a, y + b)] === undefined ? [i] : []);
+  const rankan = code === C.D ? [] : [[0, -1], [1, 0], [0, 1], [-1, 0]].flatMap(([a, b], i) => gridAt(x + a, y + b) === C.A ? [i] : []);
+  return [ri, kado, railCrossing(x, y) || [], rankan];
+}
+function railIndexOf(x, y) {
+  const band = railBandIndex(x, y);
+  if (band === 16 || band === 17) return railBandSpill(x, y, band);
+  if (band >= 0) return band;
+  const L = (a, b) => gridAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
   const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0);
-  const ports = [up, rt, dn, lf, !up && !rt && L(x + 1, y - 1), !dn && !rt && L(x + 1, y + 1), !dn && !lf && L(x - 1, y + 1), !up && !lf && L(x - 1, y - 1)]
+  // ななめのとなりが帯のななめの線路で、その線がこのマスの角へ来ているときも、その角へつなぐ
+  const toMe = (a, b) => { const d = railBandIndex(x + a, y + b); return (d === 16 && a === -b) || (d === 17 && a === b); };
+  const ports = [up, rt, dn, lf, (!up && !rt && L(x + 1, y - 1)) || toMe(1, -1), (!dn && !rt && L(x + 1, y + 1)) || toMe(1, 1), (!dn && !lf && L(x - 1, y + 1)) || toMe(-1, 1), (!up && !lf && L(x - 1, y - 1)) || toMe(-1, -1)]
     .flatMap((on, i) => on ? [i] : []);
   const corners = ports.filter(i => i >= 4);
   if (!corners.length) return m;
   if (ports.length === 1) return corners[0] === 4 || corners[0] === 6 ? 16 : 17;   // 角が1つだけ：まっすぐ反対の角へ
   return RAIL_PAIR[ports.join()] || ports;
+}
+// 踏切：道に上書きされて線路のマスが切れている所（道が3マス以内で、両がわに同じ向きへ続く線路がある）は、道の上にレールを重ねる。
+// 返すのは rail.png の「まん中から端へ」の部品2つ（26〜33）。平行に走る線路のあいだの道に はしごを描かないよう、線路がその向きへ続くことも確かめる
+const RAIL_X_DIRS = [[0, 1, 26, 28], [1, 0, 27, 29], [1, -1, 30, 32], [1, 1, 31, 33]];   // [dx, dy, 端の部品（-dy がわ… 上・右・右上・右下）, 反対がわ]
+function railCrossing(x, y) {
+  const L = (a, b) => gridAt(a, b) === C.L, Rd = (a, b) => ROAD_ROW[gridAt(a, b)] !== undefined;
+  for (const [dx, dy, pa, pb] of RAIL_X_DIRS) {
+    const end = s => {   // s の向きへ道をたどり、線路に着いたら道の数を返す（着かなければ -1）
+      const fx = dx * s, fy = dy * s, fwd = fx && fy ? [[fx, fy], [fx, 0], [0, fy]] : [[fx, fy], [fx - fy, fy + fx], [fx + fy, fy - fx]];   // その先へ続く向き（まっすぐ・45度まで）
+      for (let k = 1; k <= 3; k++) {
+        const a = x + dx * s * k, b = y + dy * s * k;
+        if (L(a, b)) return fwd.some(([u, v]) => L(a + u, b + v)) ? k - 1 : -1;
+        if (!Rd(a, b)) return -1;
+      }
+      return -1;
+    };
+    const f = end(-1), g = f < 0 ? -1 : end(1);
+    if (g >= 0 && f + g + 1 <= 3) return [pa, pb];
+  }
+  return null;
+}
+// 道のマスの絵（road.png の 行・列）。行：0 ふつうの道・1 大きな道・2 小道。列：となりの道（どの道でも）へつながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物
+// 線路のマスは、このマスが その向きの踏切（railCrossing）のときだけ つながっているとみなす（線路と並んで走る道の ふちが消えないように）
+// 小物（マンホール・補修のあと）は8マスに1つくらい、小道の水たまりは24マスに1つくらい。つながっていない辺に縁石・側溝・白線・草のへりが描いてある
+const ROAD_ROW = { [C.R]: 0, [C.H]: 1, [C.D]: 2 };
+// 水べのマスの絵（shore.png の 行・列）。陸と接する辺（1 上・2 右・4 下・8 左）が1つもなければ -1（ふつうの水の絵）。
+// 行：砂浜と接していれば 2 浜、町なか（家・建物・町・工場・道・線路）と接していれば 0 護岸、ほか（田畑・草地・森）は 1 土手
+const SHORE_TOWN = new Set([C.T, C.Q, C.B, C.I, C.R, C.H, C.L]);
+function shoreIndex(x, y) {
+  let m = 0, row = 1;
+  [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => {
+    const c = gridAt(x + a, y + b);
+    if (c === C.A || c === C.X) return;
+    m |= 1 << i;
+    if (c === C.S) row = 2; else if (row === 1 && SHORE_TOWN.has(c)) row = 0;
+  });
+  return m ? [row, m * 2] : null;
+}
+// 道の角の縁石（kado.png）：となり合う2辺がつながっていて、そのあいだのななめのマスが道でない角。[辺, 辺, ななめのマス]。右上・右下・左下・左上
+const ROAD_CORNERS = [[1, 2, 1, -1], [2, 4, 1, 1], [4, 8, -1, 1], [8, 1, -1, -1]];
+function roadIndex(code, x, y) {
+  let xr;
+  const R = (a, b, arm) => {
+    const c = gridAt(a, b);
+    if (c !== C.L) return ROAD_ROW[c] !== undefined;
+    if (xr === undefined) xr = railCrossing(x, y);
+    return !!xr && xr.includes(arm);
+  };
+  const m = (R(x, y - 1, 26) ? 1 : 0) | (R(x + 1, y, 27) ? 2 : 0) | (R(x, y + 1, 28) ? 4 : 0) | (R(x - 1, y, 29) ? 8 : 0);
+  const h = (Math.imul(x, 668265263) ^ Math.imul(y, 374761393)) >>> 0;
+  return m * 2 + ((h >>> 13) % (code === C.D ? 24 : 8) === 0 ? 1 : 0);
 }
 function tileVarAt(code, x, y) {
   const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
@@ -1291,6 +1405,13 @@ function tileVarAt(code, x, y) {
   if (k === 13) gi = 30 + gi % 10; else if (gi >= 30 && gi < 40) gi -= 10;   // 白い屋根は陸屋根の家、ほかは屋根のある家（明るい灰色は銀色の屋根）
   return gi * 50 + HOUSE_ROOF[k] * 5 + (t >>> 8) % 5;
 }
+// 建物の前の壁の形（facade.png の列）：0 窓・1 戸口と窓・2 シャッターと看板・3 ガラスの店先と日よけ・4 アパートの手すり・5 倉庫の戸。
+// 4×4マスのまとまりごとに形を決める（ひとつの建物が つぎはぎにならないように）。道に面していれば お店が多め。窓の壁には ところどころ戸口
+function facadeType(x, y) {
+  const b = blockHash(x, y) >>> 7, onRoad = isRoad(codeAt(x, y + 1));
+  const t = (onRoad ? [2, 3, 2, 0, 4] : [0, 0, 4, 5, 0])[b % 5];
+  return t === 0 && ((Math.imul(x, 2654435761) ^ y) >>> 0) % 4 === 0 ? 1 : t;
+}
 // 建物のふち：下のマスが建物でなければ、窓のある壁（前の面）を描き、左右と上にかげをつける（建物が立って見えるように）
 const WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080'];
 function drawWall(tx, ty, X, Y, T) {
@@ -1299,6 +1420,7 @@ function drawWall(tx, ty, X, Y, T) {
   if (codeAt(tx + 1, ty) !== C.B) { ctx.fillStyle = 'rgba(30,24,20,.3)'; ctx.fillRect(X + T - Math.ceil(u), Y, Math.ceil(u), T); }
   if (codeAt(tx, ty - 1) !== C.B) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(X, Y, T, Math.ceil(u)); }
   if (!below) return;
+  if (MT.facade) { ctx.drawImage(MT.facade[blockHash(tx, ty) % WALLS.length][facadeType(tx, ty)], X, Y, T, T); return; }
   const wall = WALLS[blockHash(tx, ty) % WALLS.length], wy = Y + Math.round(10 * u);
   ctx.fillStyle = 'rgba(30,24,20,.55)'; ctx.fillRect(X, wy - Math.ceil(u), T, Math.ceil(u));   // のきのかげ
   ctx.fillStyle = wall; ctx.fillRect(X, wy, T, T - (wy - Y));
@@ -4552,6 +4674,7 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
+    let shoreAt = null;
     const v = tileVarAt(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
     if (code === C.L && MT.rail) {   // 線路は つながる向きの絵（縦・横・ななめ・分かれ道）。1枚にない形は部品を重ねる
@@ -4559,6 +4682,14 @@ function frame(now) {
       if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
       else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
     }
+    else if (MT.road && ROAD_ROW[code] !== undefined) {   // 道は つながる向きの絵（ふちに縁石・白線・草）。踏切ではレールを重ねる
+      const [ri, kado, xr, rankan] = nbrLook(tx, ty, roadLookOf);
+      ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+      if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);   // 交差点・曲がり角の内がわの縁石
+      if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+      if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);   // 水と接する辺に橋の欄干
+    }
+    else if (code === C.A && MT.shore && (shoreAt = nbrLook(tx, ty, shoreIndex))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);
@@ -4567,16 +4698,18 @@ function frame(now) {
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
       const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);
       ctx.fillStyle = '#f4f4f0';
-      if (!road(up)) ctx.fillRect(X, Y + u, T, u);
-      if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
-      if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
-      if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
+      if (!MT.road) {   // 白線は road.png に描いてある（読めるまでは ここで描く）
+        if (!road(up)) ctx.fillRect(X, Y + u, T, u);
+        if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
+        if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
+        if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
+      }
       // 黄色の線は、道の縁が同じ向きに3マス以上続くところだけ（2マス幅の道の端や、ななめの道の段差に横向きの線を引かない）
       ctx.fillStyle = '#f2c230';
       if (!road(up) && dn === C.H && hEdgeRun(tx, ty, 1, 0, road) >= 3) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }
       if (!road(lf) && rt === C.H && hEdgeRun(tx, ty, 0, 1, road) >= 3) { ctx.fillRect(X + T - u, Y + u * 2, u, u * 4); ctx.fillRect(X + T - u, Y + u * 10, u, u * 4); }
     }
-    if (code === C.A) {          // 岸に白い波打ち際
+    if (code === C.A && !shoreAt) {          // 岸に白い波打ち際（水べの絵が読めるまで）
       const u = Math.max(1, Math.round(T / 16)), land = c => c !== C.A && c !== C.X;
       ctx.fillStyle = f ? '#e8f2ff' : '#cfe2ff';
       if (land(codeAt(tx, ty - 1))) ctx.fillRect(X, Y, T, u);
@@ -4586,6 +4719,7 @@ function frame(now) {
     }
   }
 
+  drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -4841,6 +4975,41 @@ function worldCamStart() {
   if (me && G.inPlay(me.lat, me.lng)) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
+// 角だけで接する水のマス（1マス幅の ななめの用水路など）は、マスを描いたあとで その角を まん中に ななめの水路を重ねてつなぐ（kawakado.png）。
+// どの角も、左下のマスの右上・右下のマスの左上として1回だけ調べる。岸は、あいだの陸のマスに砂浜があれば浜（浅瀬）、町なかがあれば護岸、なければ土手
+function drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f) {
+  if (!MT.kawakado) return;
+  const A = (x, y) => gridAt(x, y) === C.A;
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0 - 1; tx <= tx1; tx++) {
+    if (!A(tx, ty)) continue;
+    for (const [dx, col] of [[1, 0], [-1, 2]]) {   // 右上の角（左下から右上の水路）・左上の角（右下から左上の水路）
+      if (!A(tx + dx, ty - 1) || A(tx + dx, ty) || A(tx, ty - 1)) continue;
+      const l1 = gridAt(tx + dx, ty), l2 = gridAt(tx, ty - 1), row = l1 === C.S || l2 === C.S ? 2 : SHORE_TOWN.has(l1) || SHORE_TOWN.has(l2) ? 0 : 1;   // shoreIndex と同じ決め方
+      ctx.drawImage(MT.kawakado[row][col + f], ox + tx * T + (dx > 0 ? T : 0) - T / 2, oy + ty * T - T / 2, T, T);
+    }
+  }
+}
+const worldAt = (x, y) => (world && x >= 0 && y >= 0 && x < WW && y < WH ? world[y * WW + x] : C.X);
+// せかいちずの線路・道・水べ：歩く地図と同じく つながる向きの Blender の絵（読めていなければ false を返し、いつもの絵）
+function drawLinked(code, x, y, X, Y, T, f) {
+  if (code === C.L && MT.rail) {
+    const ri = railIndex(x, y);
+    if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
+    else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
+    return true;
+  }
+  if (MT.road && ROAD_ROW[code] !== undefined) {
+    const [ri, kado, xr, rankan] = nbrLook(x, y, roadLookOf);
+    ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+    if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);
+    if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+    if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);
+    return true;
+  }
+  const sh = code === C.A && MT.shore && nbrLook(x, y, shoreIndex);
+  if (sh) { ctx.drawImage(MT.shore[sh[0]][sh[1] + f], X, Y, T, T); return true; }
+  return false;
+}
 function drawWorld(now, w, h, dpr) {
   const T = wT(dpr), f = Math.floor(now / 600) % 2;
   if (!wcam || (wcamOnMe && G.me)) wcam = worldCamStart();
@@ -4852,11 +5021,17 @@ function drawWorld(now, w, h, dpr) {
   if (css <= 6 && worldImg) {   // 引いて見るとき：1マス＝色のブロック
     ctx.fillStyle = WCOL[C.X]; ctx.fillRect(0, 0, w, h);
     ctx.drawImage(worldImg, ox, oy, WW * T, WH * T);
-  } else for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
-    const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
-    const v = tileVar(code, x, y);
-    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], ox + x * T, oy + y * T, T, T);
+  } else {
+    gridAt = worldAt; nbrCur = worldNbr;
+    try {
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
+        const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
+        const v = tileVar(code, x, y), X = ox + x * T, Y = oy + y * T;
+        if (!drawLinked(code, x, y, X, Y, T, f)) ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], X, Y, T, T);
+      }
+      drawWaterCorners(x0, y0, x1, y1, ox, oy, T, f);
+    } finally { gridAt = codeAt; nbrCur = nbrCache; }
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();

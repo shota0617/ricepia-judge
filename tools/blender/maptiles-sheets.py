@@ -10,7 +10,7 @@
 # - 軽トラ（4方向）・たからばこ・コンバイン（4方向）：nishio-go/maptiles/sprites.png（10×1、背景なし）
 # - 町を走る乗り物：nishio-go/maptiles/vehicles.png（4×8、背景なし。列は 上・右・下・左、行は VEHICLE_ROWS の順）
 # - 建物の屋根：nishio-go/maptiles/roofs.png（32×1。瓦・金属・陸屋根。pixel.js が建物のまとまりごとに同じ屋根をえらぶ）
-# - 線路：nishio-go/maptiles/rail.png（35×1。となりの線路へつながる向き16通り・2つの端をむすぶ10通り・重ねる部品8つとバラスト。pixel.js がまわりのマスから えらぶ）
+# - 線路：nishio-go/maptiles/rail.png（41×1。となりの線路へつながる向き16通り・2つの端をむすぶ10通り・重ねる部品8つとバラスト・複線の帯のななめ6つ。pixel.js がまわりのマスから えらぶ）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
 #        乗り物だけ：python tools/blender/maptiles.py train car boat → python3 tools/blender/maptiles-sheets.py vehicles
 import os
@@ -398,9 +398,9 @@ def vehicles():
     print('vehicles.png', os.path.getsize(os.path.join(OUT, 'vehicles.png')))
 
 
-# 線路：nishio-go/maptiles/rail.png（35×1）。0〜15 ＝ つながる向き mask（1 上・2 右・4 下・8 左）、16〜25 ＝ 2つの端をむすぶ線路（maptiles.py の RAIL_EXTRA）、
-# 26〜33 ＝ まん中から1つの端へ向かう部品（背景なし）、34 ＝ バラストだけ
-RAIL_TILES = 35
+# 線路：nishio-go/maptiles/rail.png（41×1）。0〜15 ＝ つながる向き mask（1 上・2 右・4 下・8 左）、16〜25 ＝ 2つの端をむすぶ線路（maptiles.py の RAIL_EXTRA）、
+# 26〜33 ＝ まん中から1つの端へ向かう部品（背景なし）、34 ＝ バラストだけ、35〜40 ＝ 複線の帯のななめ（maptiles.py の RAIL_SPILL）
+RAIL_TILES = 41
 RAIL_PAL = {'balast': '#857d72', 'balastS': '#a29a8c', 'makuragi': '#5a3f28', 'rail': '#dfe3e6'}
 
 
@@ -416,13 +416,96 @@ def rails():
     print('rail.png', os.path.getsize(os.path.join(OUT, 'rail.png')))
 
 
+
+# 道：nishio-go/maptiles/road.png（32×3）。行：ふつうの道・大きな道・小道。列：つながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物（0 なし・1 あり）
+ROAD_PAL = {
+    'asphalt': '#8c8c87', 'asphaltS': '#7c7c76', 'asphaltD': '#6a6a68', 'asphaltDS': '#5c5c5a', 'asphaltP': '#787872', 'asphaltDP': '#5e5e5b',
+    'tsuchiM': '#b39058', 'tsuchiMS': '#9a7844', 'tsuchiD': '#a2804c',
+    'enseki': '#c2bfb6', 'sokko': '#9e9b93', 'hakusen': '#f4f4f0', 'manhole': '#5e5a54',
+    'kusaH': '#4f9a3c', 'mizutamari': '#8fb4c8', 'ishikoro': '#9a948a', 'rankan': '#d6d8d4', 'rankanK': '#9a9c98',
+}
+
+
+FACADE_WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080']   # pixel.js の WALLS と同じ
+FACADE_SIGN = ['#c8302a', '#2c6ab0', '#2e8a48', '#e0a020', '#7a3a8a']
+FACADE_PAL = {'noki': '#5a4a40', 'mado': '#5f8fb8', 'madowaku': '#e8e8e4', 'to': '#6a4a30', 'shutter': '#a8acae', 'shutterK': '#8a8e90',
+              'garasu': '#8fc0dc', 'tesuri': '#7a7e82', 'kin': '#e8c040'}
+
+
+def roads():
+    kinds = ['futsu', 'oki', 'komichi']   # maptiles.py の ROAD_KINDS（bpy なしで読めないので、ここにも書く）
+    sheet = Image.new('RGB', (32 * N, len(kinds) * N))
+    for r, kd in enumerate(kinds):
+        for m in range(16):
+            for k in range(2):
+                mat, band, names = load(f'road-{kd}-{m}-{k}')
+                img = roof_tile(mat, band, names, ROAD_PAL, random.Random(f'rd{kd}{m}{k}'))
+                sheet.paste(Image.fromarray(img, 'RGB'), ((m * 2 + k) * N, r * N))
+    sheet.save(os.path.join(OUT, 'road.png'), optimize=True)
+    print('road.png', os.path.getsize(os.path.join(OUT, 'road.png')))
+    rk = Image.new('RGBA', (4 * N, N))   # 橋の欄干：rankan.png（4×1。上・右・下・左。背景なし）
+    for i, sd in enumerate((1, 2, 4, 8)):
+        mat, band, names = load(f'rankan-{sd}')
+        rk.paste(Image.fromarray(sprite_tile(mat, band, names, ROAD_PAL), 'RGBA'), (i * N, 0))
+    rk.save(os.path.join(OUT, 'rankan.png'), optimize=True)
+    print('rankan.png', os.path.getsize(os.path.join(OUT, 'rankan.png')))
+    kd = Image.new('RGBA', (4 * N, 3 * N))   # 道の角の縁石：kado.png（4×3。列：右上・右下・左下・左上、行：ふつうの道・大きな道・小道。背景なし）
+    for r, k in enumerate(kinds):
+        for i, c in enumerate(('NE', 'SE', 'SW', 'NW')):
+            mat, band, names = load(f'kado-{k}-{c}')
+            img = np.zeros((N, N, 4), np.uint8)
+            img[..., :3] = roof_tile(mat, band, names, ROAD_PAL, random.Random('kd'))
+            img[..., 3] = np.where(mat == 255, 0, 255)   # ふちどりなし（道の縁石とつながるように）
+            kd.paste(Image.fromarray(img, 'RGBA'), (i * N, r * N))
+    kd.save(os.path.join(OUT, 'kado.png'), optimize=True)
+    print('kado.png', os.path.getsize(os.path.join(OUT, 'kado.png')))
+    fc = Image.new('RGBA', (6 * N, len(FACADE_WALLS) * N))   # 建物の前の壁：facade.png（6×5。列：形、行：壁の色。背景なし）
+    for r, wall in enumerate(FACADE_WALLS):
+        for t in range(6):
+            mat, band, names = load(f'facade-{t}')
+            fc.paste(Image.fromarray(sprite_tile(mat, band, names, {**FACADE_PAL, 'kabe': wall, 'kanban': FACADE_SIGN[(r + t) % len(FACADE_SIGN)], 'hiyoke': FACADE_SIGN[(r * 2 + 1) % len(FACADE_SIGN)]}), 'RGBA'), (t * N, r * N))
+    fc.save(os.path.join(OUT, 'facade.png'), optimize=True)
+    print('facade.png', os.path.getsize(os.path.join(OUT, 'facade.png')))
+
+
+# 水べ：nishio-go/maptiles/shore.png（32×3）。行：護岸・土手・浜。列：陸がある辺（1 上・2 右・4 下・8 左）× 2 ＋ コマ。0 の列は ふつうの水
+SHORE_PAL = {'nami': '#6fa3ff', 'gogan': '#b4b2aa', 'goganK': '#d2d0c8', 'mizuK': '#1f4fa8', 'kusaD': '#4f9a3c', 'awa': '#e8f2ff', 'asase': '#5fa8d8'}
+
+
+def shores():
+    kinds = ['gogan', 'dote', 'hama']   # maptiles.py の SHORE_KINDS
+    sheet = Image.new('RGB', (32 * N, len(kinds) * N))
+    for r, kd in enumerate(kinds):
+        for m in range(16):
+            for f in range(2):
+                mat, band, names = load(f'shore-{kd}-{m}-{f}' if m else f'water-0-{f}')
+                img = color(mat, band, names, SHORE_PAL, random.Random('w0'), 'mizu', 1, outline=None)
+                sheet.paste(Image.fromarray(img), ((m * 2 + f) * N, r * N))
+    sheet.save(os.path.join(OUT, 'shore.png'), optimize=True)
+    print('shore.png', os.path.getsize(os.path.join(OUT, 'shore.png')))
+    kk = Image.new('RGBA', (4 * N, 3 * N))   # 角だけで接する水をつなぐ水路：kawakado.png（4×3。列：右上がり2コマ・右下がり2コマ、行：護岸・土手・浜。背景なし）
+    for r, kd in enumerate(('gogan', 'dote', 'hama')):
+        for i, (dg, f) in enumerate((('NE', 0), ('NE', 1), ('NW', 0), ('NW', 1))):
+            mat, band, names = load(f'kawakado-{kd}-{dg}-{f}')
+            img = np.zeros((N, N, 4), np.uint8)
+            img[..., :3] = roof_tile(mat, band, names, {**SHORE_PAL, 'mizu': '#2a62c9'}, random.Random('kk'))
+            img[..., 3] = np.where(mat == 255, 0, 255)
+            kk.paste(Image.fromarray(img, 'RGBA'), (i * N, r * N))
+    kk.save(os.path.join(OUT, 'kawakado.png'), optimize=True)
+    print('kawakado.png', os.path.getsize(os.path.join(OUT, 'kawakado.png')))
+
 if __name__ == '__main__':
     import sys
     if sys.argv[1:] == ['vehicles']:
         vehicles()
     elif sys.argv[1:] == ['rail']:
         rails()
+    elif sys.argv[1:] == ['road']:
+        roads()
+        shores()
     else:
         main()
         vehicles()
         rails()
+        roads()
+        shores()

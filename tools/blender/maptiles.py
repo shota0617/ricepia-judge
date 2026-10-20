@@ -10,7 +10,10 @@
 # - 軽トラ（4方向）・たからばこ：背景なし（地面を置かない）
 # - 町を走る乗り物：赤い電車（先頭・なか）・乗用車・漁船を4方向ずつ（背景なし）
 # - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
-# - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り。枕木・レール・バラスト
+# - 道：ふつうの道・大きな道・小道 × となりの道へつながる向き16通り × 2（何もなし・小物）。つながっていない辺に縁石・側溝・白線・草のへり
+# - 建物の前の壁：窓・戸口・シャッターと看板・ガラスの店先と日よけ・アパートの手すり・倉庫の戸の6通り（背景なし。壁の色はシートで5色）
+# - 橋の欄干：道のマスの水と接する辺に重ねる4方向（背景なし）。水べ：岸の種類3（護岸・土手・浜）× 陸がある辺15通り × 2コマ
+# - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り、重ねる部品8つ、複線の帯のななめ6つ。枕木・レール・バラスト
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
 import math
@@ -600,6 +603,9 @@ RAIL_EXTRA = [('SW', 'NE'), ('NW', 'SE'), (1, 'SE'), (1, 'SW'), (2, 'NW'), (2, '
 # 番号 26〜33：まん中から1つの端へ向かう線路だけ（背景なし）。34：バラストだけ。ほかの組み合わせ（3つ以上の端・となり合う角どうし）は、34 の上に 26〜33 を重ねて描く
 RAIL_PORTS = [1, 2, 4, 8, 'NE', 'SE', 'SW', 'NW']
 RAIL_ARM0, RAIL_BASE = 16 + len(RAIL_EXTRA), 16 + len(RAIL_EXTRA) + len(RAIL_PORTS)
+# 番号 35〜40：複線・構内の帯のななめの線路（16・17）に、となりのマスの平行な線路が角をかすめる所も描いたもの（角のレールが切れないように）
+#   35〜37：左下から右上 ＋ 左上の角・右下の角・両方、38〜40：左上から右下 ＋ 右上の角・左下の角・両方。shift：平行な線路をよこにずらす量
+RAIL_SPILL = [(('SW', 'NE'), (-1,)), (('SW', 'NE'), (1,)), (('SW', 'NE'), (-1, 1)), (('NW', 'SE'), (1,)), (('NW', 'SE'), (-1,)), (('NW', 'SE'), (-1, 1))]
 RAIL_G, TIE_W, TIE_L, RAIL_W = 0.19, 0.09, 0.62, 0.075   # レールの太さは 16×16 で1点より太く（細いと縦のレールが消える）
 
 
@@ -638,6 +644,12 @@ def rail(mask):
     port = lambda x: RAIL_CORNER[x] if isinstance(x, str) else (RAIL_ARMS[x][0] * 0.5, RAIL_ARMS[x][1] * 0.5)
     if mask == RAIL_BASE:   # バラストだけ
         return dict(target=(0, 0, 0))
+    if mask > RAIL_BASE:   # 帯のななめの線路 ＋ となりの平行な線路（角をかすめる分）
+        (a, b), shifts = RAIL_SPILL[mask - RAIL_BASE - 1]
+        for sh in (0, *shifts):
+            p0, p1 = port(a), port(b)
+            track((p0[0] + sh, p0[1]), (p1[0] + sh, p1[1]), (0.2, 0.5, 0.8))
+        return dict(target=(0, 0, 0))
     if mask >= RAIL_ARM0:   # まん中から1つの端へ（レールは まん中の手前から。重ねたとき まん中で つながるように）
         p = port(RAIL_PORTS[mask - RAIL_ARM0])
         track((-p[0] * 0.25, -p[1] * 0.25), p, (0.55, 0.85) if isinstance(RAIL_PORTS[mask - RAIL_ARM0], str) else (0.5, 0.85), back=0)
@@ -664,6 +676,218 @@ def rail(mask):
     return dict(target=(0, 0, 0))
 
 
+# ---------- 道（nishio-go/maptiles/road.png）：ふつうの道・大きな道・小道 × となりの道へつながる向き16通り × 2（何もなし・小物） ----------
+# つながっていない辺（道でないマスとの境）に、ふつうの道は縁石とL字の側溝、大きな道は縁石と白い外側線、小道は草のへりをつける
+ROAD_KINDS = ['futsu', 'oki', 'komichi']
+ROAD_SIDE = {1: (0, 1), 2: (1, 0), 4: (0, -1), 8: (-1, 0)}
+
+
+def road(kind, mask, k):
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    base = {'futsu': 'asphalt', 'oki': 'asphaltD', 'komichi': 'tsuchiM'}[kind]
+    box('jimen', base, (4.0, 4.0, 0.02), (0, 0, -0.01))
+    g0 = sphere('tsubu', base + 'S', 0.02, (0, 0, -5), (1.4, 1, 0.4))   # アスファルトの粒・小道の小石（どのマスも同じ並び。となりとつながる）
+    for i in range(-3, 4):
+        for j in range(-3, 4):
+            if (i * 3 + j * 5) % 7 in (0, 3):
+                dup(g0, f'tsubu{i}_{j}', W(i * 0.14 + 0.02, j * 0.14, 0.003))
+    if kind == 'komichi':   # わだち（2本の すじ）。小道は向きがあるので、つながっている向きにそって
+        vert = (mask & 5) and not (mask & 10) or mask in (0, 5, 15)
+        for o in (-0.2, 0.2):
+            size = (0.07, 4.0 * Y1, 0.004) if vert else (4.0, 0.07 * Y1, 0.004)
+            box(f'wadachi{o}', 'tsuchiD', size, W(o, 0, 0.002) if vert else W(0, o, 0.002))
+
+    def strip(name, mat, side, a, b, h):   # 辺 side にそった帯（辺から a〜b の内側）。マスの外へ少しのばす（角でとぎれないように）
+        du, dv = ROAD_SIDE[side]
+        c = 0.5 - (a + b) / 2
+        if du:
+            box(name, mat, (b - a, 1.2 * Y1, h), W(du * c, 0, h / 2))
+        else:
+            box(name, mat, (1.2, (b - a) * Y1, h), W(0, dv * c, h / 2))
+
+    for side in (1, 2, 4, 8):
+        if mask & side:
+            continue
+        if kind == 'futsu':
+            strip(f'enseki{side}', 'enseki', side, 0.0, 0.065, 0.04)
+            strip(f'sokko{side}', 'sokko', side, 0.065, 0.13, 0.006)
+        elif kind == 'oki':
+            strip(f'enseki{side}', 'enseki', side, 0.0, 0.065, 0.04)
+            strip(f'hakusen{side}', 'hakusen', side, 0.125, 0.19, 0.004)
+        else:
+            du, dv = ROAD_SIDE[side]
+            k0 = sphere(f'heri{side}', 'kusaH', 0.07, (0, 0, -5), (1.3, 1, 0.6))
+            for t in range(-4, 5):
+                along = t * 0.12 + (0.03 if t % 2 else 0)
+                inset = 0.46 - (0.04 if (t + side) % 3 == 0 else 0)
+                dup(k0, f'heri{side}_{t}', W(du * inset + (along if not du else 0), dv * inset + (along if du else 0), 0.01))
+    if k:   # 小物（ところどころ）
+        if kind == 'futsu':
+            if mask in (5, 10, 15) or bin(mask).count('1') >= 3:
+                cyl('manhole', 'manhole', 0.11, 0.006, W(0.04, -0.03, 0.003), verts=14)
+            else:
+                box('hoshu', 'asphaltP', (0.34, 0.22 * Y1, 0.004), W(0.05, 0.02, 0.002))   # 補修のあと（色のちがう四角）
+        elif kind == 'oki':
+            if mask in (5, 10, 15) or bin(mask).count('1') >= 3:
+                cyl('manhole', 'manhole', 0.11, 0.006, W(-0.05, 0.04, 0.003), verts=14)
+            else:
+                box('hoshu', 'asphaltDP', (0.3, 0.2 * Y1, 0.004), W(-0.04, 0.03, 0.002))
+        else:
+            sphere('mizutamari', 'mizutamari', 0.16, W(0.05, -0.05, 0.0), (1.4, 0.8 * Y1, 0.05))   # 水たまり
+            sphere('ishikoro', 'ishikoro', 0.04, W(-0.22, 0.18, 0.02), (1.2, 1, 0.7))
+    return dict(target=(0, 0, 0))
+
+
+def kado(kind, corner):
+    """道の角の縁石（nishio-go/maptiles/kado.png。背景なし）：となり合う2辺がつながっていて、そのあいだのななめのマスが道でない角に重ねる"""
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    cu, cv = RAIL_CORNER[corner]
+    sgn = lambda a: 1 if a > 0 else -1
+    if kind == 'komichi':
+        sphere('mo', 'kusaH', 0.07, W(cu - sgn(cu) * 0.05, cv - sgn(cv) * 0.05, 0.01), (1.3, 1, 0.6))
+        return dict(target=(0, 0, 0))
+    a = 0.065
+    box('enseki', 'enseki', (a, a * Y1, 0.04), W(cu - sgn(cu) * a / 2, cv - sgn(cv) * a / 2, 0.02))
+    if kind == 'oki':   # 白い外側線の角（L字）
+        for (w, h, du, dv) in ((0.065, 0.19, 0.157, 0.095), (0.19, 0.065, 0.095, 0.157)):
+            box(f'hakusen{w}', 'hakusen', (w, h * Y1, 0.004), W(cu - sgn(cu) * du, cv - sgn(cv) * dv, 0.002))
+    if kind == 'futsu':   # L字の側溝の角
+        box('sokko', 'sokko', (a, a * Y1, 0.006), W(cu - sgn(cu) * a * 1.5, cv - sgn(cv) * a / 2, 0.003))
+        box('sokko2', 'sokko', (a * 2, a * Y1, 0.006), W(cu - sgn(cu) * a, cv - sgn(cv) * a * 1.5, 0.003))
+    return dict(target=(0, 0, 0))
+
+
+def kawakado(kind, diag, f):
+    """角だけで接する水のマスをつなぐ、ななめの細い水路（nishio-go/maptiles/kawakado.png。背景なし）。
+    マスの角を まん中にして重ねる。diag：NE は左下から右上・NW は左上から右下。kind：gogan 護岸・dote 土手・hama 浜（浅瀬）。f：さざ波の2コマ"""
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    sx = 1 if diag == 'NE' else -1
+    n = 0
+
+    def seg(mat, p, q, w, h, z):
+        nonlocal n
+        n += 1
+        a, b = W(*p), W(*q)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        o = box(f'kk{n}', mat, (math.hypot(dx, dy), w, h))
+        o.rotation_euler = (0, 0, math.atan2(dy, dx))
+        o.location = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, z)
+
+    nu, nv = -sx / math.sqrt(2), 1 / math.sqrt(2)   # 水路と直角の向き
+    seg('mizu', (-0.7 * sx, -0.7), (0.7 * sx, 0.7), 0.34, 0.01, 0.005)
+    for t in (-0.3, 0.0, 0.3):   # さざ波
+        c = t + (0.15 if f else 0)
+        sphere(f'nami{t}', 'nami', 0.035, W(c * sx + nu * 0.04, c + nv * 0.04, 0.012), (1.6, 0.8, 0.4))
+    for side in (-1, 1):   # 両がわの岸
+        o = 0.2 * side
+        mat, h = {'gogan': ('gogan', 0.06), 'dote': ('kusaD', 0.03), 'hama': ('asase', 0.004)}[kind]   # 浜は岸のかわりに浅瀬
+        seg(mat, (-0.7 * sx + nu * o, -0.7 + nv * o), (0.7 * sx + nu * o, 0.7 + nv * o), 0.07, h, 0.03 if kind != 'hama' else 0.006)
+    return dict(target=(0, 0, 0))
+
+
+def rankan(side):
+    """橋の欄干（nishio-go/maptiles/rankan.png。背景なし）：道のマスの、水と接する辺に重ねる。side：1 上・2 右・4 下・8 左"""
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    du, dv = ROAD_SIDE[side]
+    if du:
+        box('tesuri', 'rankan', (0.05, 1.2 * Y1, 0.03), W(du * 0.465, 0, 0.1))
+    else:
+        box('tesuri', 'rankan', (1.2, 0.05 * Y1, 0.03), W(0, dv * 0.465, 0.1))
+    for t in range(-2, 3):
+        pu, pv = (du * 0.465, t * 0.25) if du else (t * 0.25, dv * 0.465)
+        box(f'hashira{t}', 'rankanK', (0.06, 0.06 * Y1, 0.12), W(pu, pv, 0.06))
+    return dict(target=(0, 0, 0))
+
+
+# ---------- 建物の前の壁（nishio-go/maptiles/facade.png。背景なし）：建物のマスの下のふち（下のマスが建物でない所）に重ねる ----------
+# 0 窓3つ・1 戸口と窓・2 シャッターと看板・3 ガラスの店先と日よけ・4 アパートの手すり・5 倉庫の大きな戸。壁の色はシートにする段で5色
+FACADES = 6
+
+
+def facade(t):
+    Y1, CZ = 1.0 / math.sin(EL), 1.0 / math.cos(EL)
+    y0, h = -0.5 * Y1, 0.36 * CZ   # マスの下のふちに立つ壁（画面で下から 6/16 くらいの高さ）
+    F = lambda u, z: (u, y0 - 0.002, z)   # 壁の前の面に置く小物の位置
+    box('kabe', 'kabe', (1.3, 0.04, h), (0, y0 + 0.02, h / 2))
+    box('nokiK', 'noki', (1.3, 0.06, 0.03), (0, y0 - 0.01, h - 0.015))   # のき
+    if t in (0, 1):
+        for i, u in enumerate((-0.32, 0.0, 0.32)):
+            if t == 1 and i == 0:
+                box('to', 'to', (0.16, 0.02, 0.3 * CZ), F(-0.3, 0.15 * CZ))   # 戸口
+                box('totte', 'kin', (0.02, 0.02, 0.02), F(-0.25, 0.15 * CZ))
+                continue
+            box(f'mado{i}', 'mado', (0.15, 0.02, 0.12 * CZ), F(u, 0.2 * CZ))
+            box(f'madoW{i}', 'madowaku', (0.19, 0.015, 0.02), F(u, 0.13 * CZ))
+    elif t == 2:
+        box('kanban', 'kanban', (1.3, 0.03, 0.08 * CZ), F(0, 0.29 * CZ))
+        box('shutter', 'shutter', (0.82, 0.02, 0.24 * CZ), F(0, 0.12 * CZ))
+        for j in range(5):
+            box(f'suji{j}', 'shutterK', (0.82, 0.025, 0.012), F(0, (0.03 + j * 0.045) * CZ))
+    elif t == 3:
+        box('glass', 'garasu', (1.3, 0.02, 0.2 * CZ), F(0, 0.11 * CZ))
+        for u in (-0.33, 0.0, 0.33):
+            box(f'waku{u}', 'madowaku', (0.03, 0.025, 0.2 * CZ), F(u, 0.11 * CZ))
+        o = box('hiyoke', 'hiyoke', (1.3, 0.16, 0.02))   # 日よけ（前へななめに出る）
+        o.rotation_euler = (math.radians(-35), 0, 0)
+        o.location = (0, y0 - 0.07, 0.26 * CZ)
+    elif t == 4:
+        for i, u in enumerate((-0.25, 0.25)):
+            box(f'mado{i}', 'mado', (0.3, 0.02, 0.14 * CZ), F(u, 0.22 * CZ))
+        box('tesuri', 'tesuri', (1.3, 0.05, 0.02), F(0, 0.15 * CZ))
+        for k in range(-3, 4):
+            box(f'saku{k}', 'tesuri', (0.015, 0.04, 0.09 * CZ), F(k * 0.17, 0.1 * CZ))
+    else:
+        box('ookido', 'shutter', (0.7, 0.02, 0.3 * CZ), F(0, 0.15 * CZ))
+        for k in range(-3, 4):
+            box(f'tate{k}', 'shutterK', (0.015, 0.025, 0.3 * CZ), F(k * 0.1, 0.15 * CZ))
+    return dict(target=(0, 0, 0))
+
+
+# ---------- 水べ（nishio-go/maptiles/shore.png）：陸と接する水のマス。岸の種類3 × 陸がある辺16通り × 2コマ ----------
+# 0 護岸（町なかの川・港のコンクリート）、1 土手（田畑のあいだの川の草の岸）、2 浜（砂浜の浅瀬と白い波。2コマで波が寄せる）
+SHORE_KINDS = ['gogan', 'dote', 'hama']
+ROAD_GROUP = ['road', 'kado', 'rankan', 'facade', 'shore', 'water', 'kawakado']   # python tools/blender/maptiles.py road で描くもの（main）
+
+
+def shore(kind, mask, f):
+    water(0, f)
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+
+    def strip(name, mat, side, a, b, h, z=0.0):
+        du, dv = ROAD_SIDE[side]
+        c = 0.5 - (a + b) / 2
+        if du:
+            box(name, mat, (b - a, 1.2 * Y1, h), W(du * c, 0, z + h / 2))
+        else:
+            box(name, mat, (1.2, (b - a) * Y1, h), W(0, dv * c, z + h / 2))
+
+    for side in (1, 2, 4, 8):
+        if not mask & side:
+            continue
+        if kind == 'gogan':   # 水面から立ち上がるコンクリートの壁と、その上の笠石
+            strip(f'kabe{side}', 'gogan', side, 0.0, 0.16, 0.12)
+            strip(f'kasa{side}', 'goganK', side, 0.0, 0.07, 0.13)
+            strip(f'kage{side}', 'mizuK', side, 0.16, 0.22, 0.004)   # 壁の影
+        elif kind == 'dote':   # 草の岸（もこもこ）と、岸にそって白い波
+            strip(f'kishi{side}', 'kusaD', side, 0.0, 0.15, 0.04)
+            du, dv = ROAD_SIDE[side]
+            k0 = sphere(f'mo{side}', 'kusaD', 0.06, (0, 0, -5), (1.3, 1, 0.6))
+            for t in range(-4, 5):
+                along, inset = t * 0.12 + (0.04 if t % 2 else 0), 0.36 - (0.03 if (t + side) % 3 == 0 else 0)
+                dup(k0, f'mo{side}_{t}', W(du * inset + (along if not du else 0), dv * inset + (along if du else 0), 0.03))
+            strip(f'awa{side}', 'awa', side, 0.16 + f * 0.02, 0.2 + f * 0.02, 0.004)
+        else:   # 浅瀬（明るい水）と、寄せる白い波
+            strip(f'asase{side}', 'asase', side, 0.0, 0.2, 0.003)
+            strip(f'awa{side}', 'awa', side, 0.2 - f * 0.05, 0.25 - f * 0.05, 0.005)
+            strip(f'awa2{side}', 'awa', side, 0.06 + f * 0.03, 0.09 + f * 0.03, 0.005)
+    return dict(target=(0, 0, 0))
+
+
 SPRITES = {'truck': (truck, 4), 'chest': (chest, 2), 'combine': (combine, 4)}
 # 町を走る乗り物（nishio-go/maptiles/vehicles.png）：電車の先頭・なか、漁船、乗用車 を4方向ずつ
 VEHICLES = {'train': (train, 2), 'car': (car, 1), 'boat': (boat, 1)}
@@ -676,7 +900,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan' else facade(*args) if kind == 'facade' else kado(*args) if kind == 'kado' else kawakado(*args) if kind == 'kawakado'
             else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
@@ -713,8 +937,16 @@ def main():
     jobs += [(sp, (k,)) for sp, (_, n) in SPRITES.items() for k in range(n)]
     jobs += [(v, (*([k] if n > 1 else []), d)) for v, (_, n) in VEHICLES.items() for k in range(n) for d in range(4)]
     jobs += [('roof', (0, g)) for g in range(2)] + [('roof', (1, g)) for g in range(2)] + [('roof', (2, g)) for g in range(4)]
-    jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1)]
+    jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1 + len(RAIL_SPILL))]
+    jobs += [('road', (kd, m, k)) for kd in ROAD_KINDS for m in range(16) for k in range(2)]
+    jobs += [('rankan', (sd,)) for sd in (1, 2, 4, 8)]
+    jobs += [('facade', (t,)) for t in range(FACADES)]
+    jobs += [('kado', (kd, c)) for kd in ROAD_KINDS for c in ('NE', 'SE', 'SW', 'NW')]
+    jobs += [('kawakado', (kd, dg, f)) for kd in ('gogan', 'dote', 'hama') for dg in ('NE', 'NW') for f in range(2)]
+    jobs += [('shore', (kd, m, f)) for kd in SHORE_KINDS for m in range(1, 16) for f in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
+    # road は maptiles-sheets.py road が読むものをまとめて描く（道・角の縁石・橋の欄干・建物の前の壁・水べ・水）
+    only = [k for o in only for k in (ROAD_GROUP if o == 'road' else [o])]
     if only:
         jobs = [j for j in jobs if j[0] in only]
     for kind, args in jobs:

@@ -4312,6 +4312,7 @@ let active = false, raf = 0, dirty = true, scale = 2;
 const floaters = [];   // 浮かぶ文字 { t, at }
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
 let cover = 0, fieldCy = 0;
+const tapS = { path: [], timer: null, goal: null };   // タップした所へ歩く道すじ（下の tapWalk）
 function updateCover() {
   const sh = $('sheet'), cr = cv.getBoundingClientRect(), sr = sh ? sh.getBoundingClientRect() : null;
   cover = sr && sr.height ? Math.max(0, Math.min(cr.height * 0.6, cr.bottom - sr.top)) : 0;
@@ -4592,6 +4593,12 @@ function frame(now) {
     ctx.fillStyle = target.featured ? '#ffd54f' : '#ffffff';
     const n = Math.max(16, Math.round(2 * Math.PI * r / (dot * 1.6)));   // 点を詰めて円に見えるように
     for (let i = 0; i < n; i++) { if ((i + f) % 3 === 0) continue; const a = i / n * Math.PI * 2; ctx.fillRect(Math.round(cxp + Math.cos(a) * r), Math.round(cyp + Math.sin(a) * r), dot, dot); }
+  }
+
+  // タップした行き先の印（点滅する四角）
+  if (tapS.goal && f) {
+    ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = Math.max(2, Math.round(T / 8));
+    ctx.strokeRect(Math.round(ox + (tapS.goal[0] + 0.15) * T), Math.round(oy + (tapS.goal[1] + 0.15) * T), Math.round(T * 0.7), Math.round(T * 0.7));
   }
 
   // 主人公（車に乗っているときは車）
@@ -5191,6 +5198,7 @@ setInterval(updateChests, 2000);
 
 // スティック・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く。通れなければ ぶるっ
 function padStep(dir) {
+  tapWalkStop();   // スティック・矢印キーをさわったら、タップした所へ歩くのはやめる
   if (worldMode) setWorld(false);
   const ok = step(dir);
   if (!ok && navigator.vibrate) navigator.vibrate(20);
@@ -5271,7 +5279,7 @@ function setAuto(on, quiet) {
   const b = $('pxAuto');
   b.classList.toggle('on', auto); b.setAttribute('aria-pressed', String(auto));
   autoS.path = []; autoS.read = 0;
-  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックをさわると少し休みます）' : '🧭 おまかせ歩き：オフ');
+  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックや地面のタップで動かすと少し休みます）' : '🧭 おまかせ歩き：オフ');
 }
 function autoPause() { autoS.pauseUntil = Date.now() + 8000; autoS.path = []; }
 // (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで
@@ -5430,8 +5438,39 @@ cv.addEventListener('click', e => {
   }
   best = T * 1.2;
   if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
-  if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
+  if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; return; }
+  if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
+// 操作して移動：地面をタップすると、そこまで道を探して1マスずつ歩く（車のときは道だけなので、スティックで）
+//   ・スティック・矢印キーをさわる、窓が開く、着けない所になる、のどれかでやめる。歩いている間は、おまかせ歩きは休む
+// 地図の上に何か開いている（ほうびの知らせ・ミニゲーム・説明の窓・きろく などのパネル・はじめの画面・ダイアログ（シェア・クーポン・ホーム画面に追加 など、role="dialog" のものぜんぶ））：
+// 見ていない間に うしろで歩いて、たからばこなどが進まないように
+function mapCovered() {
+  return $('reward').classList.contains('show') || document.body.classList.contains('jump-open')
+    || !!document.querySelector('#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])');
+}
+function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path = []; tapS.goal = null; }
+// 地図（キャンバス）より外をさわったら（こよみの札・ボタン・タブ など、何を開くときも）やめる。勝手に出てくるもの（ほうびの知らせ・ダイアログ）は mapCovered で
+document.addEventListener('pointerdown', e => { if (tapS.goal && e.target !== cv) tapWalkStop(); }, true);
+function tapWalkTick() {
+  tapS.timer = null;
+  const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
+  if (!nx || !G.demo || !active || worldMode || driving || mapCovered() || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
+  autoS.pauseUntil = Date.now() + 3000; autoS.path = [];
+  if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();
+  tapS.timer = setTimeout(tapWalkTick, G.autoInterval ? Math.min(180, G.autoInterval()) : 180);
+}
+function tapWalk(gx, gy) {
+  tapWalkStop();
+  if (driving) { G.toast('🚗 車は スティックで うごかします'); return; }
+  const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
+  if (sx === gx && sy === gy) return;
+  const avoid = new Set((G.npcs || []).map(n => { const q = npcTile(n); return q.x + ',' + q.y; }));   // 人のマスは通らない（ぶつかると話しかけてしまう）
+  const path = planPath(sx, sy, gx, gy, BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水をタップしたら、そのそばまで
+  if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  tapS.path = path; tapS.goal = path[path.length - 1];
+  tapWalkTick();
+}
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });
 
 G.onModeChange(updatePad);
@@ -5442,5 +5481,9 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; },
+  tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
+    const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+    return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
+  }, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

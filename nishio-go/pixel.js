@@ -1123,6 +1123,10 @@ function loadMapTiles() {
     MT.railReq = true;
     get('rail', () => true, img => { MT.rail = sliceSheet(img, 35, 1); });
   }
+  if (!MT.roadReq) {   // 道（Blender のアスファルト・縁石・側溝・白線、小道の土と草のへり。roadIndex。季節で変わらない）
+    MT.roadReq = true;
+    get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
+  }
   if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
     MT.vehReq = true;
     get('vehicles', () => true, img => {
@@ -1277,6 +1281,16 @@ function railIndex(x, y) {
   if (!corners.length) return m;
   if (ports.length === 1) return corners[0] === 4 || corners[0] === 6 ? 16 : 17;   // 角が1つだけ：まっすぐ反対の角へ
   return RAIL_PAIR[ports.join()] || ports;
+}
+// 道のマスの絵（road.png の 行・列）。行：0 ふつうの道・1 大きな道・2 小道。列：となりの道（どの道・線路の踏切）へつながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物
+// 小物（マンホール・補修のあと）は8マスに1つくらい、小道の水たまりは24マスに1つくらい。つながっていない辺に縁石・側溝・白線・草のへりが描いてある
+const ROAD_ROW = { [C.R]: 0, [C.H]: 1, [C.D]: 2 };
+const ROAD_LINK = new Set([C.R, C.H, C.D, C.L]);
+function roadIndex(code, x, y) {
+  const R = (a, b) => ROAD_LINK.has(codeAt(a, b));
+  const m = (R(x, y - 1) ? 1 : 0) | (R(x + 1, y) ? 2 : 0) | (R(x, y + 1) ? 4 : 0) | (R(x - 1, y) ? 8 : 0);
+  const h = (Math.imul(x, 668265263) ^ Math.imul(y, 374761393)) >>> 0;
+  return m * 2 + ((h >>> 13) % (code === C.D ? 24 : 8) === 0 ? 1 : 0);
 }
 function tileVarAt(code, x, y) {
   const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
@@ -4559,6 +4573,7 @@ function frame(now) {
       if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
       else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
     }
+    else if (MT.road && ROAD_ROW[code] !== undefined) ctx.drawImage(MT.road[ROAD_ROW[code]][roadIndex(code, tx, ty)], X, Y, T, T);   // 道は つながる向きの絵（ふちに縁石・白線・草）
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);
@@ -4567,10 +4582,12 @@ function frame(now) {
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
       const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);
       ctx.fillStyle = '#f4f4f0';
-      if (!road(up)) ctx.fillRect(X, Y + u, T, u);
-      if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
-      if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
-      if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
+      if (!MT.road) {   // 白線は road.png に描いてある（読めるまでは ここで描く）
+        if (!road(up)) ctx.fillRect(X, Y + u, T, u);
+        if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
+        if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
+        if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
+      }
       // 黄色の線は、道の縁が同じ向きに3マス以上続くところだけ（2マス幅の道の端や、ななめの道の段差に横向きの線を引かない）
       ctx.fillStyle = '#f2c230';
       if (!road(up) && dn === C.H && hEdgeRun(tx, ty, 1, 0, road) >= 3) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }

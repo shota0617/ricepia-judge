@@ -10,6 +10,7 @@
 # - 軽トラ（4方向）・たからばこ：背景なし（地面を置かない）
 # - 町を走る乗り物：赤い電車（先頭・なか）・乗用車・漁船を4方向ずつ（背景なし）
 # - 建物の屋根：瓦2通り・金属2通り・陸屋根4通り（室外機・給水タンク・屋上の出入り口）。くり返す景色なので、となりの屋根のマスとつながる
+# - 道：ふつうの道・大きな道・小道 × となりの道へつながる向き16通り × 2（何もなし・小物）。つながっていない辺に縁石・側溝・白線・草のへり
 # - 線路：となりの線路へつながる向き16通り（まっすぐ・曲がりは ななめの線・分かれ道・十字）と、角だけで接するときの角へ向かう10通り。枕木・レール・バラスト
 # 使い方：python tools/blender/maptiles.py [種類…]（bpy が要る）→ python3 tools/blender/maptiles-sheets.py
 import importlib.util
@@ -664,6 +665,69 @@ def rail(mask):
     return dict(target=(0, 0, 0))
 
 
+# ---------- 道（nishio-go/maptiles/road.png）：ふつうの道・大きな道・小道 × となりの道へつながる向き16通り × 2（何もなし・小物） ----------
+# つながっていない辺（道でないマスとの境）に、ふつうの道は縁石とL字の側溝、大きな道は縁石と白い外側線、小道は草のへりをつける
+ROAD_KINDS = ['futsu', 'oki', 'komichi']
+ROAD_SIDE = {1: (0, 1), 2: (1, 0), 4: (0, -1), 8: (-1, 0)}
+
+
+def road(kind, mask, k):
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    base = {'futsu': 'asphalt', 'oki': 'asphaltD', 'komichi': 'tsuchiM'}[kind]
+    box('jimen', base, (4.0, 4.0, 0.02), (0, 0, -0.01))
+    g0 = sphere('tsubu', base + 'S', 0.02, (0, 0, -5), (1.4, 1, 0.4))   # アスファルトの粒・小道の小石（どのマスも同じ並び。となりとつながる）
+    for i in range(-3, 4):
+        for j in range(-3, 4):
+            if (i * 3 + j * 5) % 7 in (0, 3):
+                dup(g0, f'tsubu{i}_{j}', W(i * 0.14 + 0.02, j * 0.14, 0.003))
+    if kind == 'komichi':   # わだち（2本の すじ）。小道は向きがあるので、つながっている向きにそって
+        vert = (mask & 5) and not (mask & 10) or mask in (0, 5, 15)
+        for o in (-0.2, 0.2):
+            size = (0.07, 4.0 * Y1, 0.004) if vert else (4.0, 0.07 * Y1, 0.004)
+            box(f'wadachi{o}', 'tsuchiD', size, W(o, 0, 0.002) if vert else W(0, o, 0.002))
+
+    def strip(name, mat, side, a, b, h):   # 辺 side にそった帯（辺から a〜b の内側）。マスの外へ少しのばす（角でとぎれないように）
+        du, dv = ROAD_SIDE[side]
+        c = 0.5 - (a + b) / 2
+        if du:
+            box(name, mat, (b - a, 1.2 * Y1, h), W(du * c, 0, h / 2))
+        else:
+            box(name, mat, (1.2, (b - a) * Y1, h), W(0, dv * c, h / 2))
+
+    for side in (1, 2, 4, 8):
+        if mask & side:
+            continue
+        if kind == 'futsu':
+            strip(f'enseki{side}', 'enseki', side, 0.0, 0.065, 0.04)
+            strip(f'sokko{side}', 'sokko', side, 0.065, 0.13, 0.006)
+        elif kind == 'oki':
+            strip(f'enseki{side}', 'enseki', side, 0.0, 0.065, 0.04)
+            strip(f'hakusen{side}', 'hakusen', side, 0.125, 0.19, 0.004)
+        else:
+            du, dv = ROAD_SIDE[side]
+            k0 = sphere(f'heri{side}', 'kusaH', 0.07, (0, 0, -5), (1.3, 1, 0.6))
+            for t in range(-4, 5):
+                along = t * 0.12 + (0.03 if t % 2 else 0)
+                inset = 0.46 - (0.04 if (t + side) % 3 == 0 else 0)
+                dup(k0, f'heri{side}_{t}', W(du * inset + (along if not du else 0), dv * inset + (along if du else 0), 0.01))
+    if k:   # 小物（ところどころ）
+        if kind == 'futsu':
+            if mask in (5, 10, 15) or bin(mask).count('1') >= 3:
+                cyl('manhole', 'manhole', 0.11, 0.006, W(0.04, -0.03, 0.003), verts=14)
+            else:
+                box('hoshu', 'asphaltP', (0.34, 0.22 * Y1, 0.004), W(0.05, 0.02, 0.002))   # 補修のあと（色のちがう四角）
+        elif kind == 'oki':
+            if mask in (5, 10, 15) or bin(mask).count('1') >= 3:
+                cyl('manhole', 'manhole', 0.11, 0.006, W(-0.05, 0.04, 0.003), verts=14)
+            else:
+                box('hoshu', 'asphaltDP', (0.3, 0.2 * Y1, 0.004), W(-0.04, 0.03, 0.002))
+        else:
+            sphere('mizutamari', 'mizutamari', 0.16, W(0.05, -0.05, 0.0), (1.4, 0.8 * Y1, 0.05))   # 水たまり
+            sphere('ishikoro', 'ishikoro', 0.04, W(-0.22, 0.18, 0.02), (1.2, 1, 0.7))
+    return dict(target=(0, 0, 0))
+
+
 SPRITES = {'truck': (truck, 4), 'chest': (chest, 2), 'combine': (combine, 4)}
 # 町を走る乗り物（nishio-go/maptiles/vehicles.png）：電車の先頭・なか、漁船、乗用車 を4方向ずつ
 VEHICLES = {'train': (train, 2), 'car': (car, 1), 'boat': (boat, 1)}
@@ -676,7 +740,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road'
             else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
@@ -714,6 +778,7 @@ def main():
     jobs += [(v, (*([k] if n > 1 else []), d)) for v, (_, n) in VEHICLES.items() for k in range(n) for d in range(4)]
     jobs += [('roof', (0, g)) for g in range(2)] + [('roof', (1, g)) for g in range(2)] + [('roof', (2, g)) for g in range(4)]
     jobs += [('rail', (m,)) for m in range(RAIL_BASE + 1)]
+    jobs += [('road', (kd, m, k)) for kd in ROAD_KINDS for m in range(16) for k in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:
         jobs = [j for j in jobs if j[0] in only]

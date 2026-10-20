@@ -236,6 +236,20 @@ async function join(){
   paintButtons();
   takeSeat(1);
 }
+// Routes between devices: several STUN servers to find a direct path; PeerJS's TURN relay as the last resort.
+const ICE = [
+  {urls:["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302"]},
+  {urls:"stun:stun.cloudflare.com:3478"},
+  {urls:["turn:eu-0.turn.peerjs.com:3478", "turn:us-0.turn.peerjs.com:3478"], username:"peerjs", credential:"peerjsp"}
+];
+/** Keep trying to get back to the signalling server. The video/audio between devices doesn't go through it,
+    so the calls carry on meanwhile; only new joins have to wait. */
+function keepSignal(p){
+  clearTimeout(S.sigT);
+  if(S.stopped || p.destroyed || S.peer !== p || !p.disconnected) return;
+  try{ p.reconnect(); }catch(e){}
+  S.sigT = setTimeout(() => keepSignal(p), 4000);
+}
 /** Register the first free seat; a taken seat answers "unavailable-id", so try the next one. */
 function takeSeat(n){
   if(S.stopped) return;
@@ -243,9 +257,11 @@ function takeSeat(n){
     waiting("満室です（" + SEATS + "台まで）", "ほかの端末が1台閉じると、自動で入ります", "wait");
     clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 8000); return;
   }
-  const p = new Peer(seatId(n), {debug:0});
+  const p = new Peer(seatId(n), {debug:0, config:{iceServers:ICE}});
   let opened = false;
-  p.on("open", () => { opened = true; S.peer = p; S.seat = n; bind(p); render(); callAll(); });
+  p.on("open", () => {
+    if(opened){ callAll(); return; } // back after a signalling reconnect: calls kept running, just re-check
+    opened = true; S.peer = p; S.seat = n; bind(p); render(); callAll(); });
   p.on("error", e => {
     if(opened) return;
     p.destroy();
@@ -266,7 +282,7 @@ function bind(p){
     if(cur && cur._out && S.seat < s && !S.streams.has(call.peer)){ call.close(); return; }
     call.answer(S.local); use(call);
   });
-  p.on("disconnected", () => { if(!p.destroyed) setTimeout(() => { try{ p.reconnect(); }catch(e){} }, 2000); });
+  p.on("disconnected", () => { clearTimeout(S.sigT); S.sigT = setTimeout(() => keepSignal(p), 1000); });
   p.on("error", e => {
     if(e.type === "peer-unavailable"){
       // that seat is empty: drop our unanswered call so a later call from it can come in
@@ -275,9 +291,15 @@ function bind(p){
       if(c && c._out && !S.streams.has(id)){ S.calls.delete(id); try{ c.close(); }catch(x){} }
       return;
     }
+    if(e.type === "unavailable-id"){
+      // while we were away from the server our seat was given to another device: take a free one
+      leaveSeat(); clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 1000);
+      return;
+    }
     if(e.type === "network" || e.type === "server-error" || e.type === "socket-error" || e.type === "socket-closed"){
       if(!S.streams.size) waiting("インターネットにつながるのを待っています…", "回線が戻ると自動でつながります");
-      leaveSeat(); clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 5000);
+      if(p.destroyed){ leaveSeat(); clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 5000); }
+      else { clearTimeout(S.sigT); S.sigT = setTimeout(() => keepSignal(p), 2000); } // calls keep running
     }
   });
 }
@@ -312,11 +334,23 @@ function use(c){
     if(S.calls.get(id) !== c) return;
     S.calls.delete(id);
     if(S.streams.delete(id) && !S.stopped) toast("1台が抜けました");
+    // call back soon (if it was a dropped line rather than the device leaving, this reconnects it)
+    if(!S.stopped){ clearTimeout(S.retryT); S.retryT = setTimeout(callAll, 2000 + Math.random() * 2000); }
     render();
   });
   c.on("error", () => {});
   const pc = c.peerConnection; // ICE failure (Wi-Fi switched etc.): treat as closed
-  if(pc) pc.addEventListener("connectionstatechange", () => { if(pc.connectionState === "failed" && S.calls.get(id) === c) c.close(); });
+  if(pc){
+    pc.addEventListener("connectionstatechange", () => { if(pc.connectionState === "failed" && S.calls.get(id) === c) c.close(); });
+    // "disconnected" can linger without ever turning "failed" (seen on iPad after a Wi-Fi switch): give it 8s, then redial
+    let discT = 0;
+    pc.addEventListener("iceconnectionstatechange", () => {
+      clearTimeout(discT);
+      if(pc.iceConnectionState === "disconnected") discT = setTimeout(() => {
+        if(S.calls.get(id) === c && /disconnected|failed/.test(pc.iceConnectionState)) c.close();
+      }, 8000);
+    });
+  }
 }
 function leaveSeat(){
   S.calls.forEach(c => { try{ c.close(); }catch(e){} }); S.calls.clear(); S.streams.clear();

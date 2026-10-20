@@ -1119,6 +1119,10 @@ function loadMapTiles() {
     MT.spriteReq = true;
     get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
   }
+  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。となりの線路へつながる向き16通り。季節で変わらない）
+    MT.railReq = true;
+    get('rail', () => true, img => { MT.rail = sliceSheet(img, 32, 1); });
+  }
   if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
     MT.vehReq = true;
     get('vehicles', () => true, img => {
@@ -1258,6 +1262,8 @@ function roofVar(x, y) {
 // 国土地理院の建物で作った区画では、空中写真で見た屋根の色（g.rf：色の番号1〜13＋形×16）で絵をえらぶ（歩く地図だけ）
 const rfAt = (tx, ty) => { const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), c = chunks.get(cx + '_' + cy); return c && c.g && c.g.rf ? c.g.rf[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)] : 0; };
 const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号 → 家の屋根の色（maptiles-sheets.py の ROOFS）
+// 線路のマスが、上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）。rail.png の番号（× 2）になる
+const railMask = (x, y) => (codeAt(x, y - 1) === C.L ? 1 : 0) | (codeAt(x + 1, y) === C.L ? 2 : 0) | (codeAt(x, y + 1) === C.L ? 4 : 0) | (codeAt(x - 1, y) === C.L ? 8 : 0);
 function tileVarAt(code, x, y) {
   const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
   if (!k || k > 13) return tileVar(code, x, y);
@@ -4534,7 +4540,8 @@ function frame(now) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
     const v = tileVarAt(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
-    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
+    if (code === C.L && MT.rail) ctx.drawImage(MT.rail[railMask(tx, ty) * 2], X, Y, T, T);   // 線路は つながる向きの絵（縦・横・曲がり・分かれ道）
+    else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }

@@ -4255,7 +4255,9 @@ function giantTiles(s) {
 // 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
 function giantOf(s, load = true) {
   const n = GIANT_ART[s.id] || (giantIds && giantIds.has(s.id) ? s.id : null);
-  if (!n) return null;
+  return n ? giantImg(n, load) : null;
+}
+function giantImg(n, load = true) {   // nishio-go/art/giant/<n>.png を [ふつう, 灰色] の canvas に
   if (!giants[n]) {
     if (!load) return null;
     giants[n] = 'loading';
@@ -4270,6 +4272,20 @@ function giantOf(s, load = true) {
     img.src = `nishio-go/art/giant/${n}.png`;
   }
   return giants[n] === 'loading' ? null : giants[n];
+}
+// 街の主な建物（学校・病院・交番や警察署・消防署・郵便局・役所・図書館）500か所の特大の絵（tools/blender/giant-poi-list.py・giant-gen.py --poi）。
+// 一覧 nishio-go/art/giant/poi.json は [id, 種類, 名前, マスx, マスy]。目印（区画データの p）と、種類と名前が同じで3マス以内のものに描く
+const giantPois = new Map();   // '種類|名前' → [[id, x, y], …]
+fetch('nishio-go/art/giant/poi.json').then(r => (r.ok ? r.json() : null)).then(j => {
+  for (const [id, kind, name, x, y] of (j && j.items) || []) { const k = kind + '|' + name; if (!giantPois.has(k)) giantPois.set(k, []); giantPois.get(k).push([id, x, y]); }
+  poiCache.key = ''; dirty = true;
+}).catch(() => { /* 特大の絵なしで続ける */ });
+function giantPoiOf(p) {   // その目印の特大の絵の id（なければ ''）。目印ごとに覚えておく
+  if (p.g === undefined && giantPois.size) {
+    const c = (giantPois.get(p[2] + '|' + p[3]) || []).find(q => Math.abs(q[1] - p[0]) < 3 && Math.abs(q[2] - p[1]) < 3);
+    p.g = c ? c[0] : '';
+  }
+  return p.g || '';
 }
 const spriteOf = s => (!LANDMARK_ART[s.id] && !s.featured && GEN[s.id] && genSprite(s.id)) || spotSprites[spotArt(s)];
 
@@ -4457,6 +4473,7 @@ function frame(now) {
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
   giantHits = [];
+  poiHits = [];
   refreshSeason(now);
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
   if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
@@ -4522,8 +4539,10 @@ function frame(now) {
   const spots = G.spots;
   const pois = visiblePois(tx0, ty0, tx1, ty1), labelBoxes = [];
   for (const p of pois) {
-    const size = p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * 0.7);
-    ctx.drawImage((spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
+    const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（4マス。読めるまではいつもの絵）
+    const size = giant ? T * 4 : p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
+    ctx.drawImage((giant || spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
+    if (giant) poiHits.push([sx, sy, size, p, giant[0]]);   // タップは絵のある所（透明でない点）で決める
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
@@ -4691,12 +4710,14 @@ let poiCache = { key: '', list: [] };
 function visiblePois(tx0, ty0, tx1, ty1) {
   const key = [Math.floor(tx0 / 8), Math.floor(ty0 / 8), Math.floor(tx1 / 8), Math.floor(ty1 / 8), G.spots.length, chunks.size, landmarks.length].join(',');
   if (poiCache.key === key) return poiCache.list;
-  const list = [];
-  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 2) / CHUNK); cy++)
+  tx0 = Math.floor(tx0 / 8) * 8; ty0 = Math.floor(ty0 / 8) * 8;   // 覚えておく間（8マスの区切りが同じ間）に見えうる所ぜんぶ
+  tx1 = Math.floor(tx1 / 8) * 8 + 7; ty1 = Math.floor(ty1 / 8) * 8 + 7;
+  const list = [];   // 下は3マス先まで（特大の絵は4マスで、点より2.88マス上まではみ出すので、画面の下から近づくときに急に出ないように）
+  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 3) / CHUNK); cy++)
     for (let cx = Math.floor((tx0 - 2) / CHUNK); cx <= Math.floor((tx1 + 2) / CHUNK); cx++) {
       const c = chunks.get(cx + '_' + cy);
       for (const p of (c && c.pois) || []) {
-        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 2) continue;
+        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 3) continue;
         const clash = G.spots.some(s => { const q = toTile(s.lat, s.lng), d = Math.hypot(q.x - p[0], q.y - p[1]); return d < (s.featured ? 4 : 2) || (d < 25 && p[3] && s.name.includes(p[3])); });
         if (!clash) list.push(p);
       }
@@ -4828,6 +4849,7 @@ function drawWorld(now, w, h, dpr) {
 // 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
 // (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
 let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポット, 絵の canvas]（描くたびに作り直す）
+let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, 大きさ, 目印, 絵の canvas]
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
 const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
 function drawShopTag(cx, bottom, dpr, s) {
@@ -5401,8 +5423,13 @@ cv.addEventListener('click', e => {
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
   let bp = null;
+  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（4マス）は、絵のある所をタップしたかで
+    const [gx, gy, gs, p, img] = poiHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    if (img.getContext('2d').getImageData(Math.floor((x - gx) / gs * img.width), Math.floor((y - gy) / gs * img.height), 1, 1).data[3] > 0) bp = p;
+  }
   best = T * 1.2;
-  for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
+  if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
   if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
 });
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });

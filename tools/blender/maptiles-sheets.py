@@ -8,8 +8,10 @@
 # - 茶畑・畑・砂浜・境内の砂利・草地：nishio-go/maptiles/field-<季節>.png（12×10。草地は2コマ目で草がゆれる）
 # - 水：nishio-go/maptiles/water.png（3×2。下の段は波が動いた2コマ目）。町なかの地面：town-<季節>.png（12×1）
 # - 軽トラ（4方向）・たからばこ・コンバイン（4方向）：nishio-go/maptiles/sprites.png（10×1、背景なし）
+# - 町を走る乗り物：nishio-go/maptiles/vehicles.png（4×8、背景なし。列は 上・右・下・左、行は VEHICLE_ROWS の順）
 # - 建物の屋根：nishio-go/maptiles/roofs.png（32×1。瓦・金属・陸屋根。pixel.js が建物のまとまりごとに同じ屋根をえらぶ）
 # 使い方：python tools/blender/maptiles.py（bpy）→ python3 tools/blender/maptiles-sheets.py（numpy・Pillow）
+#        乗り物だけ：python tools/blender/maptiles.py train car boat → python3 tools/blender/maptiles-sheets.py vehicles
 import os
 import random
 
@@ -239,15 +241,17 @@ TOWN_PAL = [{'manhole': '#6a6a70', 'hachi': '#b86a3c', 'ki': '#2e8a38', 'jihan':
 
 
 # 地図の上を動くもの（背景なし）：nishio-go/maptiles/sprites.png（軽トラ 上・右・下・左、たからばこ、ふたのあいたたからばこ）
-SPRITE_PAL = {'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
+SPRITE_PAL = {'denR': '#c8302a', 'denW': '#f2f2ee', 'denY': '#8e9094', 'raito': '#fff2a0', 'tail': '#d8342c',
+              'funeW': '#f4f4f0', 'funeB': '#2c6ab0', 'kanpan': '#c8b48a', 'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
               'truckW': '#f2f2f0', 'mado': '#5f98c8', 'kome': '#d0a860', 'kuro': '#2a2a2e', 'takara': '#a0602a', 'kin': '#f2c230', 'hikari': '#fff6b0'}
 
 
-def sprite_tile(mat, band, names):
+def sprite_tile(mat, band, names, pal=None):
     img = np.zeros((N, N, 4), np.uint8)
     obj = mat != 255
+    pal = {**SPRITE_PAL, **(pal or {})}
     for y, x in zip(*np.where(obj)):
-        img[y, x, :3] = tones(SPRITE_PAL.get(names[mat[y, x]], '#ff00ff'))[band[y, x]]
+        img[y, x, :3] = tones(pal.get(names[mat[y, x]], '#ff00ff'))[band[y, x]]
         img[y, x, 3] = 255
     edge = np.zeros_like(obj)   # まわりを黒っぽくふちどる（どの地面の上でも見えるように）
     edge[1:] |= obj[:-1]
@@ -379,5 +383,24 @@ def save(im, name):
     print(name, os.path.getsize(os.path.join(OUT, name)))
 
 
+# 町を走る乗り物の行：（立体の名前、色）。乗用車は色を5つ
+VEHICLE_ROWS = [('train-0', {}), ('train-1', {}), ('boat', {})] + [('car', {'carB': c}) for c in ('#f2f2f0', '#c8302a', '#2c5aa0', '#b8bcc2', '#f2c230')]
+
+
+def vehicles():
+    sheet = Image.new('RGBA', (4 * N, len(VEHICLE_ROWS) * N))
+    for r, (name, pal) in enumerate(VEHICLE_ROWS):
+        for d in range(4):
+            mat, band, names = load(f'{name}-{d}')
+            sheet.paste(Image.fromarray(sprite_tile(mat, band, names, pal), 'RGBA'), (d * N, r * N))
+    sheet.save(os.path.join(OUT, 'vehicles.png'), optimize=True)
+    print('vehicles.png', os.path.getsize(os.path.join(OUT, 'vehicles.png')))
+
+
 if __name__ == '__main__':
-    main()
+    import sys
+    if sys.argv[1:] == ['vehicles']:
+        vehicles()
+    else:
+        main()
+        vehicles()

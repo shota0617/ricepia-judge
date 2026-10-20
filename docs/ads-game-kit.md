@@ -104,7 +104,32 @@ LINE 公式アカウントのリッチメニューは、LINE Official Account Ma
 - ゲームは、遊び始めた端末を `game_start`、その日はじめて遊んだ端末を `play_day` として Google アナリティクス（GA4）に送ります（アクセス解析をオフにした人と、手元の確認は入りません）
 - **累計プレイ人数 ＝ 公開した 2026-10-15 からの `game_start` の数**（端末ごと。同じ人が別の端末やブラウザで遊ぶと2人と数えます）
 - GA4 で見る：レポート → エンゲージメント → イベント → `game_start`（期間を 2026-10-15〜今日に）。広告ごとには「探索」で、イベント名 `game_start` × セッションのソース/メディア
-- 毎日自動で数える：Actions の「Count Nishio players」（`tools/ga4-stats.js`）が `nishio-go/stats.json` に書き、100人をこえたら はじめの画面に「👥 これまでに〇〇人以上が遊んでいます」と出ます。動かすには GitHub の Secrets に次の2つを入れます（値はチャットに書かないでください）
+- 毎日自動で数える：Actions の「Count Nishio players」（`tools/ga4-stats.js`）が `nishio-go/stats.json` に書き、100人をこえたら はじめの画面に「👥 これまでに〇〇人以上が遊んでいます」と出ます。動かすには GitHub の Secrets に次の2つを入れます（**値はチャットに書かないでください**。GitHub の画面に直接入れます）
   - `GA4_PROPERTY_ID`：GA4 → 管理 → プロパティの詳細 の数字
   - `GA4_SERVICE_ACCOUNT_JSON`：Google Cloud でサービスアカウントを作って鍵（JSON）を作り、そのメールアドレスを GA4 → 管理 → プロパティのアクセス管理 で「閲覧者」にする
+
+### 6-1. Secrets を入れる手順（くわしく）
+
+1. **プロパティIDを控える**：[Google アナリティクス](https://analytics.google.com/) → 左下の歯車（管理）→ プロパティの列の「プロパティの詳細」→ 右上の「プロパティ ID」（9〜10けたの数字。`G-` ではじまる測定IDではありません）
+2. **Google Cloud のプロジェクトを用意**：[Google Cloud コンソール](https://console.cloud.google.com/) で、プロジェクトをえらぶ（なければ「新しいプロジェクト」。名前は何でもよい。料金はかかりません）
+3. **API を有効にする**：「API とサービス」→「ライブラリ」で **Google Analytics Data API** を検索して「有効にする」（これを忘れると、鍵があっても数えられません）
+4. **サービスアカウントを作る**：「IAM と管理」→「サービス アカウント」→「サービス アカウントを作成」。名前は `nishio-go-stats` など。ロールは付けなくてよい（「完了」）
+5. **鍵（JSON）を作る**：作ったサービスアカウント → 「鍵」タブ →「鍵を追加」→「新しい鍵を作成」→ JSON →「作成」。JSON ファイルがダウンロードされます（**これは合鍵です。チャット・メール・リポジトリには貼らない**）
+6. **GA4 で閲覧できるようにする**：GA4 → 管理 → プロパティの「プロパティのアクセス管理」→ 右上の「＋」→「ユーザーを追加」。メールアドレスに、サービスアカウントのアドレス（`…@….iam.gserviceaccount.com`。JSON の `client_email`）を入れ、役割は「閲覧者」。「メールで通知」はオフ
+7. **GitHub の Secrets に入れる**：GitHub のリポジトリ → Settings → Secrets and variables → Actions →「New repository secret」を2回
+   - Name `GA4_PROPERTY_ID`、Secret に手順1の数字
+   - Name `GA4_SERVICE_ACCOUNT_JSON`、Secret に手順5の JSON ファイルの中身を全部（`{` から `}` まで）
+8. **動かして確かめる**：Actions →「Count Nishio players」→「Run workflow」。成功して `nishio-go/stats.json` のコミットができれば完了（それからは毎日 0:23 に数えます）。失敗したら、ログの日本語のメッセージ（「アクセストークンを取得できません」＝鍵の貼りまちがい、「GA4 のレポートに失敗」＝手順3か6）を見ます
+9. 使い終わった JSON ファイルは、パソコンから消してよい（なくしても、手順5で作り直せます）
+
+## 7. Google Search Console（検索に出るように）
+
+go.ricepia.jp のページが Google 検索にどう出ているか（検索された言葉・クリック数）を見られ、サイトマップを知らせて早く見つけてもらえます。料金はかかりません。
+
+1. [Search Console](https://search.google.com/search-console) を開き、「プロパティを追加」
+2. どちらかでサイトの持ち主であることを確かめる
+   - **ドメイン**（おすすめ。ricepia.jp と go.ricepia.jp をまとめて見られる）：`ricepia.jp` を入れ、出てきた TXT レコードを、ricepia.jp の DNS（ドメインを管理している会社の画面）に足して「確認」
+   - **URL プレフィックス**（DNS をさわれないとき）：`https://go.ricepia.jp/` を入れ、確認方法は「HTML ファイル」。`google〇〇〇〇.html` という名前のファイルが出るので、**そのファイル名**をチャットで教えてください（中身はファイル名を書いただけの公開してよいもので、秘密ではありません）。リポジトリの一番上に同じ名前で置いて公開し、そのあとで「確認」を押します
+3. 確かめられたら、左の「サイトマップ」に `https://go.ricepia.jp/sitemap-go.xml` を入れて「送信」（サイトマップは PR #90 で足したので、それが公開されてから）
+4. 数日〜数週間で「検索パフォーマンス」に、検索された言葉とクリック数が出ます
 - GA4 で `game_start` を「キーイベント」にしておくと、Google広告でもゲームを始めた数を見られます

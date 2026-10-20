@@ -1121,7 +1121,7 @@ function loadMapTiles() {
   }
   if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。となりの線路へつながる向き16通り。季節で変わらない）
     MT.railReq = true;
-    get('rail', () => true, img => { MT.rail = sliceSheet(img, 32, 1); });
+    get('rail', () => true, img => { MT.rail = sliceSheet(img, 26, 1); });
   }
   if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
     MT.vehReq = true;
@@ -1262,8 +1262,20 @@ function roofVar(x, y) {
 // 国土地理院の建物で作った区画では、空中写真で見た屋根の色（g.rf：色の番号1〜13＋形×16）で絵をえらぶ（歩く地図だけ）
 const rfAt = (tx, ty) => { const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), c = chunks.get(cx + '_' + cy); return c && c.g && c.g.rf ? c.g.rf[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)] : 0; };
 const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号 → 家の屋根の色（maptiles-sheets.py の ROOFS）
-// 線路のマスが、上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）。rail.png の番号（× 2）になる
-const railMask = (x, y) => (codeAt(x, y - 1) === C.L ? 1 : 0) | (codeAt(x + 1, y) === C.L ? 2 : 0) | (codeAt(x, y + 1) === C.L ? 4 : 0) | (codeAt(x - 1, y) === C.L ? 8 : 0);
+// 線路のマスの絵（rail.png の番号）。0〜15：上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）
+// 16〜25：45度くらいの線路で、マスが角だけで接するとき（上下左右のつながりが1つ以下で、ななめのとなりが線路。そのあいだの2マスはどちらも線路でない）
+//   16 左下から右上・17 左上から右下、18〜25 辺のまん中から反対側の角（上→右下・上→左下・右→左上・右→左下・下→右上・下→左上・左→右上・左→右下）。tools/blender/maptiles.py の RAIL_EXTRA と同じ順
+function railIndex(x, y) {
+  const L = (a, b) => codeAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
+  const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0), n = up + rt + dn + lf;
+  if (n >= 2) return m;
+  const ne = !up && !rt && L(x + 1, y - 1), se = !dn && !rt && L(x + 1, y + 1), sw = !dn && !lf && L(x - 1, y + 1), nw = !up && !lf && L(x - 1, y - 1);
+  if (n === 0) return ne || sw ? 16 : nw || se ? 17 : m;
+  if (up) return se ? 18 : sw ? 19 : m;
+  if (rt) return nw ? 20 : sw ? 21 : m;
+  if (dn) return ne ? 22 : nw ? 23 : m;
+  return ne ? 24 : se ? 25 : m;
+}
 function tileVarAt(code, x, y) {
   const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
   if (!k || k > 13) return tileVar(code, x, y);
@@ -4540,7 +4552,7 @@ function frame(now) {
     const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
     const v = tileVarAt(code, tx, ty);
     const X = ox + tx * T, Y = oy + ty * T;
-    if (code === C.L && MT.rail) ctx.drawImage(MT.rail[railMask(tx, ty) * 2], X, Y, T, T);   // 線路は つながる向きの絵（縦・横・曲がり・分かれ道）
+    if (code === C.L && MT.rail) ctx.drawImage(MT.rail[railIndex(tx, ty)], X, Y, T, T);   // 線路は つながる向きの絵（縦・横・ななめ・分かれ道）
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);

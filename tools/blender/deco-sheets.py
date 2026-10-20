@@ -1,6 +1,6 @@
 # にしおさんぽGO：地図の小物（tools/blender/deco.py の結果）に色と季節をのせて、シートにまとめる
 # - 題材130 × ポーズ6 × 向き4 × 色8通り ＝ 24960マス を、季節4つ（春・夏・秋・冬）ぶん。ちがう絵だけを数えて約10万枚
-#   nishio-go/deco/deco-<季節>.png：16×16 のマスが 96列に並ぶ（背景なし）。番号 i ＝ ((題材 × 6 ＋ ポーズ) × 4 ＋ 向き) × 8 ＋ 色
+#   nishio-go/deco/deco-<季節>.webp（劣化しない WebP）：16×16 のマスが 96列に並ぶ（背景なし）。番号 i ＝ ((題材 × 6 ＋ ポーズ) × 4 ＋ 向き) × 8 ＋ 色
 # - 季節で変わるもの：草や葉の色、足もとにちる花びら（春）・草（夏）・落ち葉（秋）・雪（冬。上の面に雪がつもる）
 #   水の上の小物は、花びらや落ち葉が水に浮かび、夏は波、冬は白い波
 # - まわりを黒っぽくふちどる（どの地面の上でも見えるように）
@@ -356,9 +356,9 @@ def main():
                         seen.add(hashlib.md5(img.tobytes()).hexdigest())
                         sheet[(i // COLS) * N:(i // COLS + 1) * N, (i % COLS) * N:(i % COLS + 1) * N] = img
         im = Image.fromarray(sheet, 'RGBA')
-        path = os.path.join(OUT, f'deco-{s}.png')
-        im.save(path, optimize=True)
-        print(f'deco-{s}.png', im.size, os.path.getsize(path))
+        path = os.path.join(OUT, f'deco-{s}.webp')   # 劣化しない WebP（同じ絵の PNG の4割くらいの大きさ。ゲームを開いたときの読みこみを軽く）
+        im.save(path, 'WEBP', lossless=True, quality=100, method=6)
+        print(f'deco-{s}.webp', im.size, os.path.getsize(path))
     print('ちがう絵:', len(seen), '/', total * 4)
     if MISSING:
         print('色を決めていない材質:', sorted(MISSING))

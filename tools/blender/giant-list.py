@@ -82,7 +82,7 @@ def rest_kind(x):
         if re.search('像$|胸像|観音|地蔵|大仏', n):
             return 'statue'
     if c == 'park' or park:
-        if any(w in n for w in ('運動', 'グラウンド', '球場', 'スポーツ', 'テニス', '野球')):
+        if any(w in n for w in ('運動', 'グラウンド', 'グランド', '球場', 'スポーツ', 'テニス', '野球', 'ゲートボール', '体育', '競技場', 'サッカー', '多目的広場')):
             return 'sports'
         if '庭園' in n:
             return 'garden'

@@ -739,6 +739,26 @@ def road(kind, mask, k):
     return dict(target=(0, 0, 0))
 
 
+def kado(kind, corner):
+    """道の角の縁石（nishio-go/maptiles/kado.png。背景なし）：となり合う2辺がつながっていて、そのあいだのななめのマスが道でない角に重ねる"""
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    cu, cv = RAIL_CORNER[corner]
+    sgn = lambda a: 1 if a > 0 else -1
+    if kind == 'komichi':
+        sphere('mo', 'kusaH', 0.07, W(cu - sgn(cu) * 0.05, cv - sgn(cv) * 0.05, 0.01), (1.3, 1, 0.6))
+        return dict(target=(0, 0, 0))
+    a = 0.065
+    box('enseki', 'enseki', (a, a * Y1, 0.04), W(cu - sgn(cu) * a / 2, cv - sgn(cv) * a / 2, 0.02))
+    if kind == 'oki':   # 白い外側線の角（L字）
+        for (w, h, du, dv) in ((0.065, 0.19, 0.157, 0.095), (0.19, 0.065, 0.095, 0.157)):
+            box(f'hakusen{w}', 'hakusen', (w, h * Y1, 0.004), W(cu - sgn(cu) * du, cv - sgn(cv) * dv, 0.002))
+    if kind == 'futsu':   # L字の側溝の角
+        box('sokko', 'sokko', (a, a * Y1, 0.006), W(cu - sgn(cu) * a * 1.5, cv - sgn(cv) * a / 2, 0.003))
+        box('sokko2', 'sokko', (a * 2, a * Y1, 0.006), W(cu - sgn(cu) * a, cv - sgn(cv) * a * 1.5, 0.003))
+    return dict(target=(0, 0, 0))
+
+
 def rankan(side):
     """橋の欄干（nishio-go/maptiles/rankan.png。背景なし）：道のマスの、水と接する辺に重ねる。side：1 上・2 右・4 下・8 左"""
     Y1 = 1.0 / math.sin(EL)
@@ -850,7 +870,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan' else facade(*args) if kind == 'facade'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan' else facade(*args) if kind == 'facade' else kado(*args) if kind == 'kado'
             else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
@@ -891,6 +911,7 @@ def main():
     jobs += [('road', (kd, m, k)) for kd in ROAD_KINDS for m in range(16) for k in range(2)]
     jobs += [('rankan', (sd,)) for sd in (1, 2, 4, 8)]
     jobs += [('facade', (t,)) for t in range(FACADES)]
+    jobs += [('kado', (kd, c)) for kd in ROAD_KINDS for c in ('NE', 'SE', 'SW', 'NW')]
     jobs += [('shore', (kd, m, f)) for kd in SHORE_KINDS for m in range(1, 16) for f in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     if only:

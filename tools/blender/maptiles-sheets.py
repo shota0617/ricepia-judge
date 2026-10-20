@@ -449,6 +449,16 @@ def roads():
         rk.paste(Image.fromarray(sprite_tile(mat, band, names, ROAD_PAL), 'RGBA'), (i * N, 0))
     rk.save(os.path.join(OUT, 'rankan.png'), optimize=True)
     print('rankan.png', os.path.getsize(os.path.join(OUT, 'rankan.png')))
+    kd = Image.new('RGBA', (4 * N, 3 * N))   # 道の角の縁石：kado.png（4×3。列：右上・右下・左下・左上、行：ふつうの道・大きな道・小道。背景なし）
+    for r, k in enumerate(kinds):
+        for i, c in enumerate(('NE', 'SE', 'SW', 'NW')):
+            mat, band, names = load(f'kado-{k}-{c}')
+            img = np.zeros((N, N, 4), np.uint8)
+            img[..., :3] = roof_tile(mat, band, names, ROAD_PAL, random.Random('kd'))
+            img[..., 3] = np.where(mat == 255, 0, 255)   # ふちどりなし（道の縁石とつながるように）
+            kd.paste(Image.fromarray(img, 'RGBA'), (i * N, r * N))
+    kd.save(os.path.join(OUT, 'kado.png'), optimize=True)
+    print('kado.png', os.path.getsize(os.path.join(OUT, 'kado.png')))
     fc = Image.new('RGBA', (6 * N, len(FACADE_WALLS) * N))   # 建物の前の壁：facade.png（6×5。列：形、行：壁の色。背景なし）
     for r, wall in enumerate(FACADE_WALLS):
         for t in range(6):

@@ -1127,6 +1127,7 @@ function loadMapTiles() {
     MT.roadReq = true;
     get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
     get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
+    get('kado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kado = [0, 1, 2].map(r => a.slice(r * 4, r * 4 + 4)); });
     get('facade', () => true, img => { const a = sliceSheet(img, 6, 5); MT.facade = [0, 1, 2, 3, 4].map(r => a.slice(r * 6, r * 6 + 6)); });   // 建物の前の壁（drawWall）
   }
   if (!MT.shoreReq) {   // 水べ（Blender の護岸・草の土手・浜の浅瀬と波。shoreIndex。季節で変わらない）
@@ -1365,6 +1366,8 @@ function shoreIndex(x, y) {
   });
   return m ? [row, m * 2] : null;
 }
+// 道の角の縁石（kado.png）：となり合う2辺がつながっていて、そのあいだのななめのマスが道でない角。[辺, 辺, ななめのマス]。右上・右下・左下・左上
+const ROAD_CORNERS = [[1, 2, 1, -1], [2, 4, 1, 1], [4, 8, -1, 1], [8, 1, -1, -1]];
 function roadIndex(code, x, y) {
   let xr;
   const R = (a, b, arm) => {
@@ -4668,7 +4671,9 @@ function frame(now) {
       else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
     }
     else if (MT.road && ROAD_ROW[code] !== undefined) {   // 道は つながる向きの絵（ふちに縁石・白線・草）。踏切ではレールを重ねる
-      ctx.drawImage(MT.road[ROAD_ROW[code]][roadIndex(code, tx, ty)], X, Y, T, T);
+      const ri = roadIndex(code, tx, ty), rm = ri >> 1;
+      ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+      if (MT.kado) ROAD_CORNERS.forEach(([s1, s2, a, b], i) => { if ((rm & s1) && (rm & s2) && ROAD_ROW[codeAt(tx + a, ty + b)] === undefined) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T); });   // 交差点・曲がり角の内がわの縁石
       const xr = MT.rail && railCrossing(tx, ty);
       if (xr) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
       if (MT.rankan && code !== C.D) [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => { if (codeAt(tx + a, ty + b) === C.A) ctx.drawImage(MT.rankan[i], X, Y, T, T); });   // 水と接する辺に橋の欄干

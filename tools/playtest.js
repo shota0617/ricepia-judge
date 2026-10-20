@@ -157,6 +157,14 @@ async function walkTo(page, id) {
   R.checks.chestsNearby = await page.evaluate(() => nishioPixel.chests.length);
   R.walk.push(await walkTo(page, 'chest'));
   R.checks.welcomeBag = await page.evaluate(() => (nishioGo.state.bags || []).map(b => b.km).join(','));   // はじめての たからばこ では必ず 1km の おみやげ袋
+  // ふつうの地図のタップのような瞬間移動（歩く地図の1歩でない移動）では、袋は進まない（歩いた距離には入る）。行って、もとの所へ戻る
+  R.checks.teleportNoBag = await page.evaluate(() => {
+    const b = nishioGo.state.bags[0], w0 = b.walked, d0 = nishioGo.state.walked, at = { lat: nishioGo.me.lat, lng: nishioGo.me.lng };
+    nishioGo.moveTo(at.lat + 0.0012, at.lng);
+    const ok = nishioGo.state.bags[0].walked === w0 && nishioGo.state.walked > d0;
+    nishioGo.moveTo(at.lat, at.lng);
+    return ok && nishioGo.state.bags[0].walked === w0;
+  });
   await shot(page, '02b-chest');
   await page.waitForTimeout(7500);   // まめちしきの知らせが消えるのを待つ
   for (const id of ['f-nishio-cityhall', 'f-nishio-station', 'f-ricepia']) {
@@ -246,6 +254,7 @@ async function walkTo(page, id) {
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');
   need(typeof c.weekTheme === 'string' && c.weekTheme, '今週のテーマが決まらない');
   need(c.worldLabels && c.worldLabels.rv > 0 && c.worldLabels.tw > 0 && c.worldLabels.st > 0, 'せかいちずに川・町名・駅の名前がない');

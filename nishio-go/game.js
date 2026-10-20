@@ -153,6 +153,7 @@ function loadState() {
   return s && s.v === 1 ? Object.assign(freshState(), s) : freshState();
 }
 let S = loadState();
+let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('記録を保存できませんでした（ブラウザの保存領域を確認してください）'); };
@@ -632,7 +633,8 @@ function stopGps() { if (watchId != null) { navigator.geolocation.clearWatch(wat
 function trackWalk(p) {
   if (demo) {
     // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする（車で走った分は数えない）
-    if (lastWalk && !driving) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d); }
+    // おみやげ袋は、歩く地図の1歩（スティック・タップした所へ歩く・おまかせ歩き）だけ進む。ふつうの地図のタップは瞬間移動なので進めない
+    if (lastWalk && !driving) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d, stepMove && d <= 20); }
     lastWalk = p;
     return;
   }
@@ -648,11 +650,11 @@ function trackWalk(p) {
   addWalk(d);
 }
 
-function addWalk(d) {
+function addWalk(d, bag = true) {
   dayState().walked += d;
   S.walked += d;
   S.walkCarry += d;
-  walkBags(d);   // おみやげ袋は、歩いた距離のポイントの1日の上限に届いても進む
+  if (bag) walkBags(d);   // おみやげ袋は、歩いた距離のポイントの1日の上限に届いても進む
   const today = ymd();
   if (S.walkDay.date !== today) S.walkDay = { date: today, pts: 0 };
   let gained = 0;
@@ -1000,7 +1002,10 @@ function tryChest() {
   track('chest_open', { mode: demo ? 'play' : 'walk' });
   if (newFact) S.facts.push(pick);
   const dot = gainDot(c.lat, c.lng, 'chest:' + c.id);
-  const bag = welcome ? giveBag(c.lat, c.lng, 'welcome', 1) : Math.random() < BAG.chestRate ? giveBag(c.lat, c.lng, 'chest') : null;
+  // その記録（あるいて移動／操作して移動）ではじめて袋が出る たからばこ は、必ず 1km（あるいて移動には ようこそ たからばこ がないので、記録で見る）
+  const firstBag = !S.bagFirst;
+  const bag = firstBag ? giveBag(c.lat, c.lng, welcome ? 'welcome' : 'first', 1) : Math.random() < BAG.chestRate ? giveBag(c.lat, c.lng, 'chest') : null;
+  if (bag && firstBag) S.bagFirst = true;
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
@@ -1281,6 +1286,7 @@ function refreshNearby() {
     setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'), true);
     return;
   }
+  if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
   const wt = weekTheme(), wk = String(weekNo());
   if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) { store.set('nsg_theme_wk', wk); setTimeout(() => toast(`${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋`), 2500); }   // 週に1回
   checkGuide();   // 着いたら先に次の行き先へ進めてから、線・矢印・カードを描く（古い行き先を指さないように）
@@ -1537,8 +1543,9 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
   const el = $('reward'), D = window.NISHIO_DOTS;
   if (waited !== true) {
     const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
-    if (dot && D && D.ready && !D.ready([dot.id])) { D.load([dot.id]).then(() => { if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
+    if (dot && D && D.ready && !D.ready([dot.id])) { showReward.waiting = gen; D.load([dot.id]).then(() => { if (showReward.waiting === gen) showReward.waiting = 0; if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
   }
+  showReward.waiting = 0;
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   // うれしい場面（はじめて見つけた絵・レベルアップ）には「シェア」のボタン（share.js。押すとシェアの窓）
   const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : '';
@@ -1629,9 +1636,19 @@ function walkBags(d) {
   b.walked = Math.min(b.km * 1000, b.walked + d);
   if (b.walked >= b.km * 1000) openBagSoon();
 }
-function openBagSoon() {   // ほかのごほうびが出ている間は待つ（重ならないように）
-  clearTimeout(openBagSoon.t);
-  openBagSoon.t = setTimeout(() => ($('reward').classList.contains('show') ? openBagSoon() : openBag()), 800);
+const bagDone = () => { const b = Array.isArray(S.bags) && S.bags[0]; return !!b && b.walked >= b.km * 1000; };
+// ほかのごほうびが出ている間・絵を読みこんで出るのを待っている間は待つ（重ならないように。消えてしまわないように）
+const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting;
+function openBagSoon() {
+  if (openBagSoon.t) return;
+  const key = stateKey();   // 予約したときの記録。モードを切り替えたら、その記録の袋は戻ったときに開く（refreshNearby がまた予約する）
+  const tick = () => {
+    if (stateKey() !== key) { openBagSoon.t = 0; return; }
+    if (rewardBusy()) { openBagSoon.t = setTimeout(tick, 800); return; }
+    openBagSoon.t = 0;
+    openBag();
+  };
+  openBagSoon.t = setTimeout(tick, 800);
 }
 function bagDot(b, i, taken) {   // まだ持っていない題材 → まだ持っていない絵 → ふつう、の順に、袋をもらった場所の絵から選ぶ
   const D = window.NISHIO_DOTS;
@@ -2368,7 +2385,7 @@ window.nishioGo = {
     return true;
   },
   dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
-  moveTo(lat, lng) { if (!demo) return; follow = false; onFix(lat, lng, 5, Date.now()); },
+  moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,

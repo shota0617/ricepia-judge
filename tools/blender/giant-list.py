@@ -58,10 +58,25 @@ def kind_of(x):
 
 
 def rest_kind(x):
+    """2回目のスポットの形。OpenStreetMap の分類（park・worship など）より先に、名前で決める"""
     n, c = x['name'], x.get('cat')
     if re.search('駐車|駐輪|駅.{0,4}広場|交通広場|ロータリー', n):   # 駐車場・駅前広場は公園の絵にしない
         return 'plaza'
-    if c == 'park':
+    park = re.search('公園|遊園|緑地|街園|広場', n) and (c == 'park' or re.search('(公園|遊園|緑地|街園|広場)$', n))   # 「神明公園」「八幡遊園」のような公園は公園の絵（地名に神社の名前が入っているだけ）
+    if not park:
+        if re.search('碑|記念|顕彰|跡$|跡地|史跡|墓|道標|一里塚|常夜灯|高札|塚$', n):
+            return 'historic'
+        if '古墳' in n:
+            return 'kofun'
+        if '稲荷' in n:
+            return 'inari'
+        if re.search('神社|鳥居|八幡|天満|神明|権現|(社|宮)$', n):
+            return 'shrine'
+        if re.search('(寺|院|庵)$|本堂|山門|鐘楼|お堂|霊場|堂$', n):
+            return 'temple'
+        if re.search('像$|胸像|観音|地蔵|大仏', n):
+            return 'statue'
+    if c == 'park' or park:
         if any(w in n for w in ('運動', 'グラウンド', '球場', 'スポーツ', 'テニス', '野球')):
             return 'sports'
         if '庭園' in n:

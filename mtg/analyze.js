@@ -406,7 +406,7 @@ function renderHistory(){
   el.innerHTML = `<div class="tbl-wrap"><table class="mtable"><tr><th>日時</th><th>会議 / お客様</th><th>長さ</th><th>発言</th><th>状態</th><th></th></tr>` +
     list.map(m => `<tr>
       <td style="white-space:nowrap;">${esc(M.dt(m.startedAt))}</td>
-      <td><b>${esc(m.title)}</b>${m.customer ? `<div class="muted small">${esc(m.customer)}</div>` : ""}${m.source === "import" ? ' <span class="tag">取り込み</span>' : ""}${m.sample ? ' <span class="tag">サンプル</span>' : ""}${m.audio ? ' <span class="tag">🎙 録音あり</span>' : ""}</td>
+      <td><b>${esc(m.title)}</b>${m.customer ? `<div class="muted small">${esc(m.customer)}</div>` : ""}${m.source === "import" ? ' <span class="tag">取り込み</span>' : ""}${m.sample ? ' <span class="tag">サンプル</span>' : ""}${m.audio ? ' <span class="tag">🎙 録音あり</span>' : ""}${m.source === "tsunagu" ? ' <span class="tag">つなぐ</span>' : ""}</td>
       <td style="white-space:nowrap;">${esc(M.dur(m))}</td><td>${m.lines.length}</td>
       <td>${m.analysis ? `<span class="badge b-green">分析済み・ニーズ${m.analysis.needs.length}</span>` : '<span class="badge">未分析</span>'}</td>
       <td style="white-space:nowrap;"><button class="btn btn-gold btn-sm" data-act="an" data-id="${esc(m.id)}">分析</button>

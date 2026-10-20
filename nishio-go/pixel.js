@@ -4169,11 +4169,16 @@ function genSprite(id) {
 // 読めるまでは、いつもの 48×48 の絵。[ふつう, 再チェックイン待ちの灰色] の canvas にしておく（Godot の記録係は canvas を5つの引数で描く）
 const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'okazaki-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji',
   'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };
+// ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
+let giantIds = null;
+fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });
 const giants = {};
-function giantOf(s) {
-  const n = GIANT_ART[s.id];
+// 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
+function giantOf(s, load = true) {
+  const n = GIANT_ART[s.id] || (giantIds && giantIds.has(s.id) ? s.id : null);
   if (!n) return null;
   if (!giants[n]) {
+    if (!load) return null;
     giants[n] = 'loading';
     const img = new Image();
     img.onload = () => {
@@ -4337,7 +4342,8 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const giant = giantOf(s);
+    const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
+    const giant = near ? giantOf(s) : null;
     const size = giant ? T * 6 : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
@@ -5192,7 +5198,7 @@ cv.addEventListener('click', e => {
   let hit = null, best = Infinity;
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
-    const giant = giantOf(s), sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T - (giant ? T * 1.32 : 0);   // 特大の絵は 6T 四方を上へずらして描くので、その真ん中
+    const giant = giantOf(s, false), sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T - (giant ? T * 1.32 : 0);   // 特大の絵は 6T 四方を上へずらして描くので、その真ん中
     const half = (giant ? T * 2.6 : s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }

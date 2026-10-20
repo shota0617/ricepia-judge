@@ -10,6 +10,7 @@ import base64
 import io
 import json
 import os
+import re
 import sys
 
 from PIL import Image
@@ -58,6 +59,8 @@ def kind_of(x):
 
 def rest_kind(x):
     n, c = x['name'], x.get('cat')
+    if re.search('駐車|駐輪|駅.{0,4}広場|交通広場|ロータリー', n):   # 駐車場・駅前広場は公園の絵にしない
+        return 'plaza'
     if c == 'park':
         if any(w in n for w in ('運動', 'グラウンド', '球場', 'スポーツ', 'テニス', '野球')):
             return 'sports'

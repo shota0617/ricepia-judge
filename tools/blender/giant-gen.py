@@ -25,7 +25,7 @@ BASE = {'shrine': ['#5a6068', '#8a6a4a', '#c8382c'], 'temple': ['#4e535e', '#eee
 BASE_OF = {'shrine': 'shrine', 'inari': 'shrine', 'temple': 'temple', 'station': 'station', 'castle': 'castle', 'museum': 'public', 'library': 'public',
            'townhall': 'public', 'art': 'public', 'aquarium': 'public', 'onsen': 'public', 'historic': 'historic', 'kofun': 'historic', 'statue': 'historic',
            'view': 'view', 'hill': 'view', 'park': 'view', 'beach': 'view', 'church': 'church',
-           'playpark': 'view', 'sports': 'view', 'pondpark': 'view', 'forest': 'view', 'garden': 'view', 'lighthouse': 'view'}
+           'playpark': 'view', 'plaza': 'view', 'sports': 'view', 'pondpark': 'view', 'forest': 'view', 'garden': 'view', 'lighthouse': 'view'}
 YUGU = ['#d23a2e', '#2f74b8', '#f2c230', '#3f9a4a', '#e8781e', '#8a5ac8']   # 遊具の色
 TRAIN = {'meitetsu': ('#c8162a', '#f4f4f4'), 'jr': ('#c8ccd0', '#e8781e'), 'aikan': ('#c8ccd0', '#8cc63f')}
 
@@ -457,6 +457,35 @@ def m_playpark(rng, R, W, A):
     return dict(target=(0, 0, 0.08), scale=0.86, el=rng.uniform(30, 36), az=rng.uniform(-40, -28), size=96)   # 遊具が見えるように少し寄る
 
 
+def m_plaza(rng, R, W, A, name=''):
+    """駅前広場・駐車場（しきつめた広場に、植えこみ・ベンチ・時計。駐車場は白い線と車）"""
+    ground('asphalt' if '駐車' in name else 'jari')
+    if '駐車' in name:
+        for i in range(6):
+            box(f'pl{i}', 'line', (0.008, 0.16, 0.006), (-0.30 + i * 0.12, 0.10, 0.003))
+            box(f'plB{i}', 'line', (0.008, 0.16, 0.006), (-0.30 + i * 0.12, -0.16, 0.003))
+        for i in range(rng.randint(2, 5)):
+            c = f'car{i}'
+            pa.MATS[c] = rng.choice(['#f4f4f4', '#2a2a2a', '#c8102e', '#3f7fbf', '#9aa0a8', '#e8c048'])
+            x, y = -0.24 + rng.randrange(5) * 0.12, rng.choice((0.10, -0.16))
+            box(f'carB{i}', c, (0.08, 0.13, 0.04), (x, y, 0.025), bevel=0.01)
+            box(f'carT{i}', 'mado', (0.07, 0.07, 0.03), (x, y + 0.01, 0.06), bevel=0.008)
+    else:
+        for i in range(3):   # しきいしの目地
+            box(f'meji{i}', 'line', (0.80, 0.006, 0.004), (0, -0.2 + i * 0.2, 0.002))
+        box('bus', 'kanban', (0.02, 0.02, 0.14), (0.32, -0.26, 0.07))
+        box('busB', 'kanbanT', (0.06, 0.01, 0.04), (0.32, -0.27, 0.15))
+        for i in range(2):
+            bench(i, -0.2 + i * 0.25, -0.26)
+        cyl('tokeiP', 'tetsu', 0.008, 0.26, (-0.34, 0.20, 0.13), verts=6)
+        cyl('tokei', 'kanban', 0.03, 0.012, (-0.34, 0.19, 0.27), (math.pi / 2, 0, 0), 16)
+    for i, (x, y) in enumerate(((-0.38, -0.30), (0.38, 0.28), (-0.38, 0.28))):   # 植えこみ
+        box(f'ue{i}', 'ishi', (0.12, 0.12, 0.04), (x, y, 0.02))
+        sphere(f'ueK{i}', 'gTree', 0.06, (x, y, 0.06), (1, 1, 0.6))
+    trees(rng, rng.randint(1, 2), [(0.40, -0.30), (0.0, 0.32)], ['round'])
+    return dict(target=(0, 0, 0.06), scale=0.99, el=rng.uniform(32, 38), az=rng.uniform(-40, -28), size=96)
+
+
 def m_sports(rng, R, W, A):
     ground('shibaG')
     box('ground2', 'tsuchiG', (0.80, 0.56, 0.006), (0, 0.02, 0.003))
@@ -566,6 +595,8 @@ def build(e):
         return m_playpark(rng, *cols)
     if k == 'sports':
         return m_sports(rng, *cols)
+    if k == 'plaza':
+        return m_plaza(rng, *cols, name=e['name'])
     if k == 'pondpark':
         return m_pondpark(rng, *cols)
     if k == 'forest':

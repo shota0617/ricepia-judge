@@ -483,6 +483,16 @@ def shores():
                 sheet.paste(Image.fromarray(img), ((m * 2 + f) * N, r * N))
     sheet.save(os.path.join(OUT, 'shore.png'), optimize=True)
     print('shore.png', os.path.getsize(os.path.join(OUT, 'shore.png')))
+    kk = Image.new('RGBA', (4 * N, 2 * N))   # 角だけで接する水をつなぐ水路：kawakado.png（4×2。列：右上がり2コマ・右下がり2コマ、行：護岸・土手。背景なし）
+    for r, kd in enumerate(('gogan', 'dote')):
+        for i, (dg, f) in enumerate((('NE', 0), ('NE', 1), ('NW', 0), ('NW', 1))):
+            mat, band, names = load(f'kawakado-{kd}-{dg}-{f}')
+            img = np.zeros((N, N, 4), np.uint8)
+            img[..., :3] = roof_tile(mat, band, names, {**SHORE_PAL, 'mizu': '#2a62c9'}, random.Random('kk'))
+            img[..., 3] = np.where(mat == 255, 0, 255)
+            kk.paste(Image.fromarray(img, 'RGBA'), (i * N, r * N))
+    kk.save(os.path.join(OUT, 'kawakado.png'), optimize=True)
+    print('kawakado.png', os.path.getsize(os.path.join(OUT, 'kawakado.png')))
 
 if __name__ == '__main__':
     import sys

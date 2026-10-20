@@ -759,6 +759,34 @@ def kado(kind, corner):
     return dict(target=(0, 0, 0))
 
 
+def kawakado(kind, diag, f):
+    """角だけで接する水のマスをつなぐ、ななめの細い水路（nishio-go/maptiles/kawakado.png。背景なし）。
+    マスの角を まん中にして重ねる。diag：NE は左下から右上・NW は左上から右下。kind：gogan 護岸・dote 土手。f：さざ波の2コマ"""
+    Y1 = 1.0 / math.sin(EL)
+    W = lambda u, v, z=0.0: (u, v * Y1, z)
+    sx = 1 if diag == 'NE' else -1
+    n = 0
+
+    def seg(mat, p, q, w, h, z):
+        nonlocal n
+        n += 1
+        a, b = W(*p), W(*q)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        o = box(f'kk{n}', mat, (math.hypot(dx, dy), w, h))
+        o.rotation_euler = (0, 0, math.atan2(dy, dx))
+        o.location = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, z)
+
+    nu, nv = -sx / math.sqrt(2), 1 / math.sqrt(2)   # 水路と直角の向き
+    seg('mizu', (-0.7 * sx, -0.7), (0.7 * sx, 0.7), 0.34, 0.01, 0.005)
+    for t in (-0.3, 0.0, 0.3):   # さざ波
+        c = t + (0.15 if f else 0)
+        sphere(f'nami{t}', 'nami', 0.035, W(c * sx + nu * 0.04, c + nv * 0.04, 0.012), (1.6, 0.8, 0.4))
+    for side in (-1, 1):   # 両がわの岸
+        o = 0.2 * side
+        seg('gogan' if kind == 'gogan' else 'kusaD', (-0.7 * sx + nu * o, -0.7 + nv * o), (0.7 * sx + nu * o, 0.7 + nv * o), 0.07, 0.06 if kind == 'gogan' else 0.03, 0.03)
+    return dict(target=(0, 0, 0))
+
+
 def rankan(side):
     """橋の欄干（nishio-go/maptiles/rankan.png。背景なし）：道のマスの、水と接する辺に重ねる。side：1 上・2 右・4 下・8 左"""
     Y1 = 1.0 / math.sin(EL)
@@ -821,7 +849,7 @@ def facade(t):
 # ---------- 水べ（nishio-go/maptiles/shore.png）：陸と接する水のマス。岸の種類3 × 陸がある辺16通り × 2コマ ----------
 # 0 護岸（町なかの川・港のコンクリート）、1 土手（田畑のあいだの川の草の岸）、2 浜（砂浜の浅瀬と白い波。2コマで波が寄せる）
 SHORE_KINDS = ['gogan', 'dote', 'hama']
-ROAD_GROUP = ['road', 'kado', 'rankan', 'facade', 'shore', 'water']   # python tools/blender/maptiles.py road で描くもの（main）
+ROAD_GROUP = ['road', 'kado', 'rankan', 'facade', 'shore', 'water', 'kawakado']   # python tools/blender/maptiles.py road で描くもの（main）
 
 
 def shore(kind, mask, f):
@@ -871,7 +899,7 @@ def render_one(kind, args, out):
     sc = PA.setup_scene()
     sc.render.resolution_x = sc.render.resolution_y = N * SS
     opts = (house(*args) if kind == 'house' else tree(*args) if kind == 'tree' else paddy(*args) if kind == 'paddy'
-            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan' else facade(*args) if kind == 'facade' else kado(*args) if kind == 'kado'
+            else water(*args) if kind == 'water' else town(*args) if kind == 'town' else roofs(*args) if kind == 'roof' else rail(*args) if kind == 'rail' else road(*args) if kind == 'road' else shore(*args) if kind == 'shore' else rankan(*args) if kind == 'rankan' else facade(*args) if kind == 'facade' else kado(*args) if kind == 'kado' else kawakado(*args) if kind == 'kawakado'
             else SPRITES[kind][0](*args) if kind in SPRITES else VEHICLES[kind][0](*args) if kind in VEHICLES
             else FIELD[kind][0](*args) if kind in FIELD else MISC[kind](*args))
     target, scale = opts['target'], opts.get('scale', 1.0)
@@ -913,6 +941,7 @@ def main():
     jobs += [('rankan', (sd,)) for sd in (1, 2, 4, 8)]
     jobs += [('facade', (t,)) for t in range(FACADES)]
     jobs += [('kado', (kd, c)) for kd in ROAD_KINDS for c in ('NE', 'SE', 'SW', 'NW')]
+    jobs += [('kawakado', (kd, dg, f)) for kd in ('gogan', 'dote') for dg in ('NE', 'NW') for f in range(2)]
     jobs += [('shore', (kd, m, f)) for kd in SHORE_KINDS for m in range(1, 16) for f in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
     # road は maptiles-sheets.py road が読むものをまとめて描く（道・角の縁石・橋の欄干・建物の前の壁・水べ・水）

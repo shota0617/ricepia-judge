@@ -1132,6 +1132,7 @@ function loadMapTiles() {
     MT.roadReq = true;
     get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
     get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
+    get('kawakado', () => true, img => { const a = sliceSheet(img, 4, 2); MT.kawakado = [a.slice(0, 4), a.slice(4, 8)]; });
     get('kado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kado = [0, 1, 2].map(r => a.slice(r * 4, r * 4 + 4)); });
     get('facade', () => true, img => { const a = sliceSheet(img, 6, 5); MT.facade = [0, 1, 2, 3, 4].map(r => a.slice(r * 6, r * 6 + 6)); });   // 建物の前の壁（drawWall）
   }
@@ -4718,6 +4719,7 @@ function frame(now) {
     }
   }
 
+  drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -4973,6 +4975,20 @@ function worldCamStart() {
   if (me && G.inPlay(me.lat, me.lng)) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
+// 角だけで接する水のマス（1マス幅の ななめの用水路など）は、マスを描いたあとで その角を まん中に ななめの水路を重ねてつなぐ（kawakado.png）。
+// どの角も、左下のマスの右上・右下のマスの左上として1回だけ調べる。岸は、あいだの陸のマスに町なかがあれば護岸、なければ土手
+function drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f) {
+  if (!MT.kawakado) return;
+  const A = (x, y) => gridAt(x, y) === C.A;
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0 - 1; tx <= tx1; tx++) {
+    if (!A(tx, ty)) continue;
+    for (const [dx, col] of [[1, 0], [-1, 2]]) {   // 右上の角（左下から右上の水路）・左上の角（右下から左上の水路）
+      if (!A(tx + dx, ty - 1) || A(tx + dx, ty) || A(tx, ty - 1)) continue;
+      const row = SHORE_TOWN.has(gridAt(tx + dx, ty)) || SHORE_TOWN.has(gridAt(tx, ty - 1)) ? 0 : 1;
+      ctx.drawImage(MT.kawakado[row][col + f], ox + tx * T + (dx > 0 ? T : 0) - T / 2, oy + ty * T - T / 2, T, T);
+    }
+  }
+}
 const worldAt = (x, y) => (world && x >= 0 && y >= 0 && x < WW && y < WH ? world[y * WW + x] : C.X);
 // せかいちずの線路・道・水べ：歩く地図と同じく つながる向きの Blender の絵（読めていなければ false を返し、いつもの絵）
 function drawLinked(code, x, y, X, Y, T, f) {
@@ -5014,6 +5030,7 @@ function drawWorld(now, w, h, dpr) {
         const v = tileVar(code, x, y), X = ox + x * T, Y = oy + y * T;
         if (!drawLinked(code, x, y, X, Y, T, f)) ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], X, Y, T, T);
       }
+      drawWaterCorners(x0, y0, x1, y1, ox, oy, T, f);
     } finally { gridAt = codeAt; nbrCur = nbrCache; }
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）

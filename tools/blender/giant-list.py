@@ -3,11 +3,14 @@
 # 名所の一覧は、ゲームを開いて nishioGo.spots から書き出したもの（id・名前・種類・型の絵のデータ・いまの 48×48 の絵の PNG）。
 # ・いまの絵がある名所（注目スポット・手描き・型の絵 ＝ 1000か所）と、絵がまだない注目スポットが対象（手で作った特大の絵がある所は除く）
 # ・形の種類は、型の絵の種類か spots の種類、それに名前（古墳・稲荷・港・海水浴場・灯台・山・観音・塔・教会・水族館など）で決める
+# ・2回目（--rest）：まだ特大の絵がない ほかのスポット（公園・史跡・山など）を、前の一覧のあとに足す（前の名所の行は変えない）。
+#   公園は名前で 遊具のある公園・運動場・池のある公園・緑地・庭園 に分ける
 # ・色：型の絵はそのデータ（写真から測った屋根・壁・差し色）、それ以外は いまの絵から測る（暗くくすんだ色を屋根、明るい色を壁、あざやかな色を差し色）
 import base64
 import io
 import json
 import os
+import re
 import sys
 
 from PIL import Image
@@ -33,6 +36,11 @@ def kind_of(x):
         return 'aquarium'
     if '教会' in n or k == 'church':
         return 'church'
+    # 型のデータや OpenStreetMap の分類が神社とお寺で食いちがうことがあるので、名前で正す（「関山神社奥の院」は神社）
+    if k == 'temple' and re.search('神社|鳥居|八幡|天満|神明|(社|宮)$', n):
+        k = 'shrine'
+    elif k == 'shrine' and re.search('(寺|院|庵)$', n) and not re.search('神社|稲荷|宮', n):
+        k = 'temple'
     if k in ('shrine',) and '稲荷' in n:
         return 'inari'
     if k == 'station' or n.endswith('駅'):
@@ -52,6 +60,50 @@ def kind_of(x):
     if '公園' in n and k in ('park', 'view', 'historic'):
         return 'park'
     return k
+
+
+def rest_kind(x):
+    """2回目のスポットの形。OpenStreetMap の分類（park・worship など）より先に、名前で決める"""
+    n, c = x['name'], x.get('cat')
+    if re.search('駐車|駐輪|駅.{0,4}広場|交通広場|ロータリー', n):   # 駐車場・駅前広場は公園の絵にしない
+        return 'plaza'
+    park = re.search('公園|遊園|緑地|街園|広場', n) and (c == 'park' or re.search('(公園|遊園|緑地|街園|広場)$', n))   # 「神明公園」「八幡遊園」のような公園は公園の絵（地名に神社の名前が入っているだけ）
+    if not park:
+        if re.search('碑|記念|顕彰|跡$|跡地|史跡|墓|道標|一里塚|常夜灯|高札|塚$', n):
+            return 'historic'
+        if '古墳' in n:
+            return 'kofun'
+        if '稲荷' in n:
+            return 'inari'
+        if re.search('神社|鳥居|八幡|天満|神明|権現|(社|宮)$', n):
+            return 'shrine'
+        if re.search('(寺|院|庵)$|本堂|山門|鐘楼|お堂|霊場|堂$', n):
+            return 'temple'
+        if re.search('像$|胸像|観音|地蔵|大仏', n):
+            return 'statue'
+    # 花の名所・庭（菖蒲園・かきつばた園・梅林・藤・花時計・〜ガーデン・桜づつみ など）は庭園、街園・緑道は木と小道、〜の里は見どころ
+    if c in ('park', 'view', 'sight') or park:
+        if re.search('庭園|菖蒲|しょうぶ|かきつばた|あじさい|梅林|藤$|花時計|花壇|ガーデン|桜づつみ|植物園|ばら園|バラ園|(葵|.)桜$', n):
+            return 'garden'
+        if re.search('街園|緑道|ロード$', n):
+            return 'forest'
+        if re.search('(の里|のさと|の郷)$', n) and c == 'park':
+            return 'view'
+    if c == 'park' or park:
+        if any(w in n for w in ('運動', 'グラウンド', 'グランド', '球場', 'スポーツ', 'テニス', '野球', 'ゲートボール', '体育', '競技場', 'サッカー', '多目的広場')):
+            return 'sports'
+        if '庭園' in n:
+            return 'garden'
+        if '池' in n:
+            return 'pondpark'
+        if '緑地' in n or '森' in n:
+            return 'forest'
+        return 'playpark'
+    if '灯台' in n:
+        return 'lighthouse'
+    if c in ('view', 'sight') and any(w in n for w in ('山', '峰', '岳', '峠', '富士', 'ヒル', '丘')):
+        return 'hill'
+    return kind_of(x)
 
 
 def train_of(name):
@@ -83,8 +135,22 @@ def measure(png):
     return hexc(roof), hexc(wall), hexc({k: v for k, v in acc.items() if v >= 6})
 
 
-def main(src):
+def main(src, rest=False):
     items = json.load(open(src))
+    path = os.path.join(ROOT, 'tools', 'blender', 'giant-list.json')
+    if rest:
+        out = json.load(open(path))
+        have = {e['id'] for e in out} | HAND
+        for x in items:
+            if x['id'] in have:
+                continue
+            k = rest_kind(x)
+            e = {'id': x['id'], 'name': x['name'], 'k': k, 'c': [0, 0, 0]}
+            if k == 'station':
+                e['train'] = train_of(x['name'])
+            out.append(e)
+            have.add(x['id'])
+        return save(out, path)
     out = []
     for x in items:
         if x['id'] in HAND or not (x['w'] == 48 or x['featured']):
@@ -102,7 +168,10 @@ def main(src):
             e['train'] = train_of(x['name'])
         out.append(e)
     out.sort(key=lambda e: e['id'])
-    path = os.path.join(ROOT, 'tools', 'blender', 'giant-list.json')
+    save(out, path)
+
+
+def save(out, path):
     with open(path, 'w') as f:
         json.dump(out, f, ensure_ascii=False, indent=0)
     kinds = {}
@@ -112,4 +181,4 @@ def main(src):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    main([a for a in sys.argv[1:] if not a.startswith('-')][0], '--rest' in sys.argv)

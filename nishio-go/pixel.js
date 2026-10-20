@@ -1416,18 +1416,41 @@ const CAR_UP = ['................', '.....kkkkkk.....', '....kywwwwyk....', '...
 const rotCW = rows => rows.map((_, y) => rows.map((__, x) => rows[15 - x][y]).join(''));
 const carSprites = { up: sprite(CAR_UP) };
 carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(CAR_UP))); carSprites.left = sprite(rotCW(rotCW(rotCW(CAR_UP))));
-// ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする
-(() => {
+// ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする（Blender の人の絵が読めたら、それに描きかえる）
+const heroMarkerStyle = document.createElement('style');
+function setHeroMarker() {
   const sheet = document.createElement('canvas');
   sheet.width = 64; sheet.height = 32;
   const x = sheet.getContext('2d');
   x.imageSmoothingEnabled = false;
   heroSprites.down.forEach((c, i) => x.drawImage(c, i * 32, 0, 32, 32));
-  const st = document.createElement('style');
+  const st = heroMarkerStyle;
   st.textContent = `.me,.me.demo{width:32px;height:32px;border:0;border-radius:0;box-shadow:none;background:url(${sheet.toDataURL()}) 0 0/64px 32px no-repeat;image-rendering:pixelated;animation:heroStep .9s steps(1) infinite;filter:drop-shadow(0 2px 1px rgba(0,0,0,.45))}
 @keyframes heroStep{0%{background-position:0 0}50%{background-position:-32px 0}}
 @media (prefers-reduced-motion:reduce){.me{animation:none}}`;
   document.head.appendChild(st);
+}
+setHeroMarker();
+// 歩く地図の人（主人公と西尾の人たち）を、Blender で作った 16×16 の絵（tools/blender/people.py → nishio-go/art/people.png）に。
+// 並びは NPC_COLORS の順に2コマずつ、そのあと主人公の 下・上・横 を2コマずつ（左は横を反転）。読めるまでは上の手描きの絵
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    const cut = (i, flip) => {
+      const c = document.createElement('canvas'); c.width = c.height = 16;
+      const x = c.getContext('2d');
+      if (flip) { x.translate(16, 0); x.scale(-1, 1); }
+      x.drawImage(img, i * 16, 0, 16, 16, 0, 0, 16, 16);
+      return c;
+    };
+    let i = 0;
+    for (const k of Object.keys(NPC_COLORS)) { npcSprites[k] = [cut(i), cut(i + 1)]; i += 2; }
+    for (const d of ['down', 'up', 'right']) { heroSprites[d] = [cut(i), cut(i + 1)]; i += 2; }
+    heroSprites.left = [cut(i - 2, true), cut(i - 1, true)];
+    setHeroMarker();
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/people.png';
 })();
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
@@ -4173,6 +4196,27 @@ const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'oka
 let giantIds = null;
 fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });
 const giants = {};
+// 特大の絵の大きさ（マス）：まわりに特大の絵のスポットがなければ6マス、近くにあれば 4.5マス・3マスに小さくする
+// （同じ境内の碑と本堂のように20mほどしか離れていない所で、絵が重なって道や家並みを隠さないように）
+let giantSize = null, giantSizeKey = '';
+function giantTiles(s) {
+  const spots = G.spots || [];
+  const ver = (G.spotsVersion || 0) + ':' + spots.length + ':' + (giantIds ? giantIds.size : 0);   // スポットの一覧を入れ替えたら（同じ件数でも）数え直す
+  if (!giantSize || giantSizeKey !== ver) {
+    giantSizeKey = ver;
+    giantSize = new Map();
+    const pts = spots.filter(x => GIANT_ART[x.id] || (giantIds && giantIds.has(x.id))).map(x => { const q = toTile(x.lat, x.lng); return [x.id, q.x, q.y]; });
+    const cell = new Map(), key = (x, y) => Math.floor(x / 8) + ',' + Math.floor(y / 8);
+    for (const p of pts) { const k = key(p[1], p[2]); if (!cell.has(k)) cell.set(k, []); cell.get(k).push(p); }
+    for (const p of pts) {
+      let d = Infinity;
+      const cx = Math.floor(p[1] / 8), cy = Math.floor(p[2] / 8);
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) for (const q of cell.get((cx + i) + ',' + (cy + j)) || []) if (q !== p) d = Math.min(d, Math.hypot(q[1] - p[1], q[2] - p[2]));
+      giantSize.set(p[0], d >= 6 ? 6 : d >= 4.5 ? 4.5 : 3);
+    }
+  }
+  return giantSize.get(s.id) || 6;
+}
 // 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
 function giantOf(s, load = true) {
   const n = GIANT_ART[s.id] || (giantIds && giantIds.has(s.id) ? s.id : null);
@@ -4273,6 +4317,7 @@ function frame(now) {
   if (!w || !h) return;
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
+  giantHits = [];
   refreshSeason(now);
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
   if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
@@ -4344,12 +4389,13 @@ function frame(now) {
     const p = toTile(s.lat, s.lng);
     const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
     const giant = near ? giantOf(s) : null;
-    const size = giant ? T * 6 : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
+    const size = giant ? T * giantTiles(s) : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
     ctx.drawImage((giant || spriteOf(s))[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    if (giant) giantHits.push([sx, sy, size, s, giant[0]]);   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = size / 16;
@@ -4639,6 +4685,7 @@ function drawWorld(now, w, h, dpr) {
 }
 // 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
 // (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
+let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポット, 絵の canvas]（描くたびに作り直す）
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
 const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
 function drawShopTag(cx, bottom, dpr, s) {
@@ -5196,10 +5243,18 @@ cv.addEventListener('click', e => {
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }
   let hit = null, best = Infinity;
-  for (const s of G.spots) {
+  // 特大の絵は、手前に描いた絵から順に、絵のある所（透明でない点）をタップしたかで決める
+  for (let i = giantHits.length - 1; i >= 0 && !hit; i--) {
+    const [gx, gy, gs, s, img] = giantHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    const ix = Math.floor((x - gx) / gs * img.width), iy = Math.floor((y - gy) / gs * img.height);
+    if (img.getContext('2d').getImageData(ix, iy, 1, 1).data[3] > 0) hit = s;
+  }
+  if (!hit) for (const s of G.spots) {
+    if (giantOf(s, false)) continue;   // 特大の絵は上で調べた
     const p = toTile(s.lat, s.lng);
-    const giant = giantOf(s, false), sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T - (giant ? T * 1.32 : 0);   // 特大の絵は 6T 四方を上へずらして描くので、その真ん中
-    const half = (giant ? T * 2.6 : s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
+    const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
+    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }

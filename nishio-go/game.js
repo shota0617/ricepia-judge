@@ -22,7 +22,7 @@ const CFG = {
   walkMaxSpeed: 4.5,        // m/s（約16km/h：ジョギングまで）
   walkMaxGapSec: 180,       // 位置の更新がこれ以上途切れたら、その間の移動は数えない
   vehicleSpeed: 8.5,        // m/s（約30km/h：これを超えたら乗り物とみなす）
-  vehicleLockMs: 120000,    // 乗り物判定後、チェックインを止める時間
+  vehicleLockMs: 120000,    // 乗り物判定のあと、歩いた距離を数えない時間（チェックイン・たからばこは乗り物でもできる）
   matchRadius: 1000,        // 注目スポットの名前をOSMから探す範囲（m）：座標が概算のとき
   matchRadiusExact: 300,    //   座標が確かなとき
   osmCacheDays: 7,
@@ -755,7 +755,8 @@ function checkin() {
   if (!s || !me) return;
   if (driving) { toast('🚗 車を降りてからチェックインしてね（スティックのとなりの🚶ボタン）'); return; }
   const now = Date.now();
-  if (!demo && now < vehicleUntil) { toast('乗り物での移動中はチェックインできません。降りて歩いてからどうぞ。'); return; }
+  // 乗り物（電車・バス・車の助手席）で移動中でもチェックインできる。運転している人は操作しないよう、乗り物の判定ごとに1回だけ知らせる
+  if (!demo && now < vehicleUntil && checkin.warned !== vehicleUntil) { checkin.warned = vehicleUntil; toast('🚗 乗り物で移動中です。運転している人は操作しないでください（同乗者・電車・バスならそのまま遊べます）'); }
   if (!demo && me.acc > CFG.maxAccuracy) { toast(`GPSの精度が低いようです（誤差 約${Math.round(me.acc)}m）。少し待ってからもう一度。`); return; }
   if (!inReach(s)) { toast('もう少し近づいてください'); refreshNearby(); return; }
   if (cooldownLeft(s) > 0) { toast(`このスポットは あと${Math.ceil(cooldownLeft(s) / 60000)}分 でまたチェックインできます`); return; }
@@ -981,8 +982,8 @@ function nearestChest() {
 }
 function tryChest() {
   if (driving) return;   // 車に乗っている間は開けない（降りると開く）
-  // あるいて移動では、チェックインと同じく GPS の誤差が大きいときと乗り物で移動中は開けない
-  if (!demo && (!me || me.acc > CFG.maxAccuracy || Date.now() < vehicleUntil)) return;
+  // あるいて移動では、チェックインと同じく GPS の誤差が大きいときは開けない（乗り物で移動中でも開ける）
+  if (!demo && (!me || me.acc > CFG.maxAccuracy)) return;
   const n = nearestChest();
   if (!n || n.d > (demo ? 18 : 30)) return;
   const c = n.c, d = dayState(), welcome = c.id.endsWith(':welcome');
@@ -1020,8 +1021,8 @@ function guideRadius(g) {
 const GUIDE_RECENT = 8;
 const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら（m）、決め直す（人のすすめは10kmまでなので、それより少し遠く）
 // その場にいると認めてよい位置か（チェックイン・たからばこと同じ条件）。車（軽トラ）に乗っているあいだはだめ（降りれば着いたことになる）。
-// あるいて移動では GPS の精度が悪いときと乗り物で移動中もだめ
-const fixOk = () => !!me && !driving && (demo || (me.acc <= CFG.maxAccuracy && Date.now() >= vehicleUntil));   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
+// あるいて移動では GPS の精度が悪いときもだめ（電車・バスなどの乗り物で移動中は、着いたことにしてよい）
+const fixOk = () => !!me && !driving && (demo || me.acc <= CFG.maxAccuracy);   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by, alts }（alts：ほかの候補。札から選べる）
 function decideGuide(from) {
   if (!me) return null;
@@ -1126,7 +1127,7 @@ function weatherGuide() {
   const g = S.guide, w = weatherNow(), wet = !!(w && w.raining);
   if (!w) return;   // 天気がまだ届いていない（取れない）ときは、雨宿りの案内も消さない
   if (!g || g.refer || g.mine || /の話$/.test(g.by || '') || !!g.weather === wet) return;
-  if (!fixOk()) return;   // GPS の精度が悪い位置や乗り物で移動中の位置からは決めない（ほかの決め直しと同じ）
+  if (!fixOk()) return;   // GPS の精度が悪い位置からは決めない（ほかの決め直しと同じ）
   const key = `${demo}:${wet}:${spotsVersion}:${g.id}:${Math.round(me.lat * 550)}:${Math.round(me.lng * 450)}`;
   if (weatherGuide.key === key) return;
   weatherGuide.key = key;
@@ -1290,9 +1291,7 @@ function refreshNearby() {
     const th = simple() ? spotThumb(selected) : '';
     if (th) $('spinIco').innerHTML = th; else if (simple()) $('spinIco').innerHTML = catArt(selected); else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
     $('spinName').textContent = selected.name;
-    const lock = demo ? 0 : vehicleUntil - Date.now();
     const why = driving ? '🚗 車を降りるとチェックインできます'
-      : lock > 0 ? `🚗 乗り物判定中：あと約${Math.ceil(lock / 1000)}秒で押せます`
       : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
     btn.disabled = !!why;
     if (why || !simple()) $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
@@ -1310,7 +1309,7 @@ function refreshNearby() {
     msgs.push('📍 遊べる範囲（西尾市と となりの市町、本店から15km）の外です' + (demo ? '' : RESCUE_BTN('range')));
     if (!demo && !refreshNearby.outTracked) { refreshNearby.outTracked = true; track('out_of_range', {}); }
   }
-  if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中と判定しました（しばらくチェックインできません）');
+  if (!demo && Date.now() < vehicleUntil) msgs.push('🚗 乗り物で移動中：運転している人は操作しないでください（同乗者・電車・バスならそのまま遊べます。歩いた距離のポイントは歩いた分だけ）');
   if (!demo && me.acc > CFG.maxAccuracy) msgs.push(`📡 GPSの誤差が大きめです（約${Math.round(me.acc)}m）`);
   if (!selected && !guideTarget()) {
     if (nearest) msgs.push(`いちばん近いスポット：<b>${esc(nearest.name)}</b>（${fmtM(nearestD)}）`);
@@ -1713,7 +1712,7 @@ function renderSpotInfo() {
     `その日はじめてのチェックイン +${CFG.pts.daily}pt、連続日数ごとに +${CFG.pts.streakStep}pt（最大 +${CFG.pts.streakStep * CFG.pts.streakMax}pt）`,
     `同じスポットは${CFG.cooldownMin}分ごとにチェックインできます`,
     `${CFG.walkUnitM}m 歩くごとに ${CFG.walkUnitPts}pt（1日 ${CFG.walkDailyCap}ptまで）。数えるのは、このページを開いて画面がついている間に歩いた距離だけです（画面を消す・ほかのアプリを開くと止まります）`,
-    '乗り物での移動（時速約30km以上）中は、チェックインと歩数ポイントが止まります',
+    '乗り物（時速約30km以上）で移動中も、チェックイン・たからばこ・行き先に着くことはできます（運転中の操作はやめましょう）。歩いた距離のポイントは、歩いた分だけ数えます',
   ].map(t => `<li>${esc(t)}</li>`).join('');
 }
 
@@ -1949,20 +1948,34 @@ $('resetBtn').addEventListener('click', () => {
 /* ---------- 音楽（BGM と効果音） ----------
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。field：ふだん（歩く地図・ふつうの地図）、
    world：せかいちず（無ければ field）、checkin：チェックイン、levelup：レベルアップ。
+   ふだんの曲は、雨なら rain、夜（19〜5時）は night、朝（5〜9時）は morning、夕方（16〜19時）は evening、
+   昼は field・field2（まちかど）・field3（おまつり）を1曲ずつ順に流す（どれも無ければ field）。
    ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
 const sound = (() => {
-  const SRC = { field: 'nishio-go/bgm/field.mp3', world: 'nishio-go/bgm/world.mp3', checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
-  const VOL = 0.28, SFX_VOL = 0.35, LOOP = new Set(['field', 'world']), els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
+  const SRC = { checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
+  const DAY = ['field', 'field2', 'field3'], MOOD = ['morning', 'evening', 'night', 'rain'];
+  for (const k of ['world', ...DAY, ...MOOD]) SRC[k] = `nishio-go/bgm/${k}.mp3`;
+  const VOL = 0.28, SFX_VOL = 0.35, LOOP = new Set(['world', ...DAY, ...MOOD]), els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
+  let day = Math.floor(Math.random() * DAY.length);   // 昼の曲の順番（開くたびに ちがう曲から）
   let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null, ducking = 0;   // ducking：鳴っている効果音の数
   const el = k => {
     if (!els[k]) {
-      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k); a.volume = LOOP.has(k) ? VOL : SFX_VOL; a.src = SRC[k];
+      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k) && !DAY.includes(k); a.volume = LOOP.has(k) ? VOL : SFX_VOL; a.src = SRC[k];
+      if (DAY.includes(k)) a.addEventListener('ended', () => { day = (day + 1) % DAY.length; a.currentTime = 0; apply(); });   // 昼の曲は1回流したら次の曲へ
       a.addEventListener('error', () => { missing.add(k); if (LOOP.has(k)) apply(); });
       els[k] = a;
     }
     return els[k];
   };
-  const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : missing.has('field') ? null : 'field');
+  // ふだんの曲：天気（雨）→ 時間帯 → 昼は順番。無い曲は飛ばし、最後は field
+  const fieldSong = () => {
+    const h = new Date().getHours(), w = weatherNow();
+    const mood = w && w.raining ? 'rain' : h >= 19 || h < 5 ? 'night' : h < 9 ? 'morning' : h >= 16 ? 'evening' : null;
+    if (mood && !missing.has(mood)) return mood;
+    for (let i = 0; i < DAY.length; i++) { const k = DAY[(day + i) % DAY.length]; if (!missing.has(k)) return k; }
+    return null;
+  };
+  const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : fieldSong());
   function apply() {
     const live = on && unlocked && !document.hidden, k = live ? pick() : null;
     for (const [n, a] of Object.entries(els)) {
@@ -1976,6 +1989,7 @@ const sound = (() => {
   const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
   ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, { once: true, capture: true }));
   document.addEventListener('visibilitychange', apply);
+  setInterval(() => { if (cur && cur !== pick()) apply(); }, 60000);   // 時間帯や天気が変わったら曲を変える（1分ごとに見る）
   return {
     apply,
     scene(s) { if (s !== scene) { scene = s; apply(); } },

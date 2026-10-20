@@ -1490,6 +1490,25 @@ const POI_ORDER = ['townhall', 'hospital', 'school', 'library', 'police', 'fire'
   };
   img.src = 'nishio-go/art/poi.png';
 })();
+// 名所の種類ごとの絵（公園4通り・史跡・展望・名所・アート・海岸・資料館と、注目スポットの型の 鳥居・お寺・城・町）を、
+// Blender で作った 24×24 の絵（tools/blender/spots.py → nishio-go/art/spots.png）に。読めるまでは上の手描きの絵（ふつうの名所は たからばこ）
+const SPOT_ORDER = ['park0', 'park1', 'park2', 'park3', 'historic', 'view', 'sight', 'art', 'beach', 'museum', 'torii', 'temple', 'castle', 'town'];
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    SPOT_ORDER.forEach((k, i) => {
+      const mk = grey => {   // grey：チェックインしたばかり（しばらく休み）の灰色の絵
+        const c = document.createElement('canvas'); c.width = c.height = 24;
+        const x = c.getContext('2d'); x.drawImage(img, i * 24, 0, 24, 24, 0, 0, 24, 24);
+        if (grey) { const d = x.getImageData(0, 0, 24, 24); for (let j = 0; j < d.data.length; j += 4) { const v = (d.data[j] * 0.3 + d.data[j + 1] * 0.59 + d.data[j + 2] * 0.11) * 0.7 + 60; d.data[j] = d.data[j + 1] = d.data[j + 2] = v; } x.putImageData(d, 0, 0); }
+        return c;
+      };
+      spotSprites[k] = [mk(false), mk(true)];
+    });
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/spots.png';
+})();
 // 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。お店から受け取った外観の写真を見て描いたドット絵）
 //   らいすぴあ・秀幸：赤と白の建物、横の壁に白いどんぶりと「米」のマーク、上に白い看板、右に赤い「米のドライブスルー」の屋根と「ドライブスルー IN」の看板
 //   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根
@@ -4301,8 +4320,17 @@ function spotArt(s) {
   if (kind === 'library') return 'library';
   if (kind === 'shrine') return 'torii';
   if (kind === 'temple' || kind === 'worship') return 'temple';
-  return s.featured ? 'town' : 'chest';
+  if (s.featured) return 'town';
+  // ふつうの名所は種類ごとの絵（公園は id で4通り）。Blender の絵が読めるまでは たからばこ
+  let k = SPOT_KIND[kind] || 'sight';
+  if (k === 'park') {   // 毎フレーム呼ばれるので、どの公園の絵かは名所に覚えておく
+    if (s.pk === undefined) { let h = 0; for (const ch of s.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; s.pk = h % 4; }
+    k = 'park' + s.pk;
+  }
+  return spotSprites[k] ? k : 'chest';
 }
+const SPOT_KIND = { park: 'park', historic: 'historic', view: 'view', sight: 'sight', art: 'art', beach: 'beach', museum: 'museum' };
+const spotScale = spr => (spr[0].width === 24 ? 1.5 : 1);   // 24×24 の絵（spots.png）は1.5マスで描く（マスと同じ細かさ）
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
@@ -4551,12 +4579,13 @@ function frame(now) {
     const p = toTile(s.lat, s.lng);
     const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
     const giant = near ? giantOf(s) : null;
-    const size = giant ? T * giantTiles(s) : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
+    const spr = giant || spriteOf(s);
+    const size = giant ? T * giantTiles(s) : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T * spotScale(spr);   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
-    ctx.drawImage((giant || spriteOf(s))[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
     if (giant) giantHits.push([sx, sy, size, s, giant[0]]);   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
@@ -5426,7 +5455,7 @@ cv.addEventListener('click', e => {
     if (giantOf(s, false)) continue;   // 特大の絵は上で調べた
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
+    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2 * spotScale(spriteOf(s))) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }

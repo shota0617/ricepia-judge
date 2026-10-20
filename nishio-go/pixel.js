@@ -4710,12 +4710,14 @@ let poiCache = { key: '', list: [] };
 function visiblePois(tx0, ty0, tx1, ty1) {
   const key = [Math.floor(tx0 / 8), Math.floor(ty0 / 8), Math.floor(tx1 / 8), Math.floor(ty1 / 8), G.spots.length, chunks.size, landmarks.length].join(',');
   if (poiCache.key === key) return poiCache.list;
-  const list = [];
-  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 2) / CHUNK); cy++)
+  tx0 = Math.floor(tx0 / 8) * 8; ty0 = Math.floor(ty0 / 8) * 8;   // 覚えておく間（8マスの区切りが同じ間）に見えうる所ぜんぶ
+  tx1 = Math.floor(tx1 / 8) * 8 + 7; ty1 = Math.floor(ty1 / 8) * 8 + 7;
+  const list = [];   // 下は3マス先まで（特大の絵は4マスで、点より2.88マス上まではみ出すので、画面の下から近づくときに急に出ないように）
+  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 3) / CHUNK); cy++)
     for (let cx = Math.floor((tx0 - 2) / CHUNK); cx <= Math.floor((tx1 + 2) / CHUNK); cx++) {
       const c = chunks.get(cx + '_' + cy);
       for (const p of (c && c.pois) || []) {
-        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 2) continue;
+        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 3) continue;
         const clash = G.spots.some(s => { const q = toTile(s.lat, s.lng), d = Math.hypot(q.x - p[0], q.y - p[1]); return d < (s.featured ? 4 : 2) || (d < 25 && p[3] && s.name.includes(p[3])); });
         if (!clash) list.push(p);
       }

@@ -4473,6 +4473,7 @@ function frame(now) {
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
   giantHits = [];
+  poiHits = [];
   refreshSeason(now);
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
   if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
@@ -4541,6 +4542,7 @@ function frame(now) {
     const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（4マス。読めるまではいつもの絵）
     const size = giant ? T * 4 : p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
     ctx.drawImage((giant || spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
+    if (giant) poiHits.push([sx, sy, size, p, giant[0]]);   // タップは絵のある所（透明でない点）で決める
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
@@ -4845,6 +4847,7 @@ function drawWorld(now, w, h, dpr) {
 // 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
 // (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
 let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポット, 絵の canvas]（描くたびに作り直す）
+let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, 大きさ, 目印, 絵の canvas]
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
 const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
 function drawShopTag(cx, bottom, dpr, s) {
@@ -5418,8 +5421,13 @@ cv.addEventListener('click', e => {
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
   let bp = null;
+  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（4マス）は、絵のある所をタップしたかで
+    const [gx, gy, gs, p, img] = poiHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    if (img.getContext('2d').getImageData(Math.floor((x - gx) / gs * img.width), Math.floor((y - gy) / gs * img.height), 1, 1).data[3] > 0) bp = p;
+  }
   best = T * 1.2;
-  for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
+  if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
   if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
 });
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });

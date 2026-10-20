@@ -3602,17 +3602,6 @@
 "sub": "middle"
 },
 {
-"id": "poi-school-d23d06bd32",
-"name": "愛知学泉大学附属桜井幼稚園",
-"k": "school",
-"c": [
-0,
-0,
-0
-],
-"sub": "uni"
-},
-{
 "id": "poi-school-400b757f87",
 "name": "市立中央中学校",
 "k": "school",
@@ -3987,17 +3976,6 @@
 "sub": "middle"
 },
 {
-"id": "poi-school-d6da0db5ad",
-"name": "愛知学泉大学附属幼稚園",
-"k": "school",
-"c": [
-0,
-0,
-0
-],
-"sub": "uni"
-},
-{
 "id": "poi-school-b356bd4701",
 "name": "安城市立安城南部小学校",
 "k": "school",
@@ -4139,17 +4117,6 @@
 0
 ],
 "sub": "high"
-},
-{
-"id": "poi-school-7505cc6492",
-"name": "愛知学泉短期大学附属幼稚園",
-"k": "school",
-"c": [
-0,
-0,
-0
-],
-"sub": "uni"
 },
 {
 "id": "poi-school-a1dbce238b",
@@ -5261,5 +5228,38 @@
 0
 ],
 "sub": "high"
+},
+{
+"id": "poi-school-e6376d131e",
+"name": "知立市立知立東小学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "elem"
+},
+{
+"id": "poi-school-fbe51a309e",
+"name": "県立刈谷高等学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "high"
+},
+{
+"id": "poi-school-9fe031c69e",
+"name": "岡崎市立矢作北中学校",
+"k": "school",
+"c": [
+0,
+0,
+0
+],
+"sub": "middle"
 }
 ]

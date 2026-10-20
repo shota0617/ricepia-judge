@@ -36,6 +36,7 @@ button{font-family:inherit;cursor:pointer;}
 .dot.on{background:#7cc48e;} .dot.wait{background:#e0b050;animation:pulse 1.4s infinite;}
 #topR{margin-left:auto;display:flex;align-items:center;gap:12px;}
 #recDot{width:10px;height:10px;border-radius:50%;background:#ff3b30;box-shadow:0 0 0 3px rgba(255,59,48,.25);animation:pulse 1.6s infinite;}
+#restartBtn{background:rgba(0,0,0,.35);border:none;color:#fff;font-size:12px;height:38px;padding:0 12px;border-radius:19px;white-space:nowrap;}
 #gear{background:rgba(0,0,0,.35);border:none;color:#fff;font-size:18px;width:38px;height:38px;border-radius:50%;}
 #waiting{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;z-index:1;}
 #waiting .msg{font-size:20px;font-weight:700;line-height:1.6;}
@@ -73,7 +74,7 @@ button{font-family:inherit;cursor:pointer;}
     <div id="waiting"><div class="spinner"></div><div class="msg" id="waitMsg">準備中…</div><div class="sub" id="waitSub"></div><button class="big" id="zoomHint" hidden>つながらないときは Zoom で</button></div>
     <button class="big" id="tapAudio" hidden>🔊 タップして音を出す</button>
     <video id="self" autoplay playsinline muted></video>
-    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><span id="muteTag" hidden>🔇 ミュート中</span><span id="topR"><span id="recDot" title="録音・文字起こし中（ミーティングの「履歴」に保存）" hidden></span><button id="gear" title="設定">⚙</button></span></div>
+    <div id="top"><span class="dot" id="dot"></span><span id="state"></span><span id="muteTag" hidden>🔇 ミュート中</span><span id="topR"><span id="recDot" title="録音・文字起こし中（ミーティングの「履歴」に保存）" hidden></span><button id="restartBtn" title="アプリを再起動">↻ 再起動</button><button id="gear" title="設定">⚙</button></span></div>
   </div>
   <div id="bar">
     <button class="cb" id="micBtn" title="マイク">🎤<small>マイク</small></button>
@@ -411,6 +412,7 @@ function recStart(){
   clearInterval(R.segT); R.segT = setInterval(() => { if(R.rec && Date.now() - R.rec.startedAt > SEGMENT_MS){ recStop(); recSync(); } }, 60000);
   sttSync();
 }
+/** Returns a promise that resolves once the recording and transcript are saved. */
 function recStop(){
   const rec = R.rec, mr = R.mr, chunks = R.chunks, mime = R.mime, start = R.audioStart;
   R.rec = null; R.mr = null; R.chunks = []; R.pending = [];
@@ -427,8 +429,22 @@ function recStop(){
     if(rec.lines.length || rec.audio) saveRec(rec);
     else { const list = loadRecs().filter(m => m.id !== rec.id); try{ localStorage.setItem(REC_KEY, JSON.stringify(list)); }catch(e){} }
   };
-  if(mr && mr.state !== "inactive"){ mr.onstop = finish; try{ mr.stop(); }catch(e){ finish(); } } else finish();
   $("#recDot").hidden = true;
+  return new Promise(res => {
+    const done = () => finish().then(res, res);
+    if(mr && mr.state !== "inactive"){ mr.onstop = done; try{ mr.stop(); }catch(e){ done(); } } else done();
+  });
+}
+
+/* ---------- restart ---------- */
+// The home-screen app has no reload button: this one saves the recording, frees the seat and reopens the latest page.
+async function restartApp(){
+  if(!confirm("アプリを再起動します（つながっている場合は一度切れて、すぐにつなぎ直せます）。よろしいですか？")) return;
+  const btn = $("#restartBtn"); btn.disabled = true; btn.textContent = "再起動中…";
+  try{ if(R.rec) await Promise.race([recStop(), new Promise(r => setTimeout(r, 4000))]); }catch(e){}
+  try{ S.calls.forEach(c => c.close()); S.data.forEach(c => c.close()); S.peer && S.peer.destroy(); }catch(e){}
+  if(S.local) S.local.getTracks().forEach(t => t.stop());
+  location.replace(location.pathname + "?r=" + Date.now()); // a fresh URL so a cached old version isn't reused
 }
 function recPagehide(){
   if(!R.rec) return;
@@ -530,6 +546,7 @@ window.addEventListener("resize", () => {
   setTimeout(() => { resizing = false; paintPager(); }, 150);
 });
 $("#tapAudio").onclick = () => { document.querySelectorAll("#grid video").forEach(v => v.play().catch(() => {})); $("#tapAudio").hidden = true; };
+$("#restartBtn").onclick = restartApp;
 $("#gear").onclick = () => { $("#zoomEdit").value = S.zoom === DEFAULT_ZOOM ? "" : S.zoom; $("#sheet").hidden = false; };
 $("#sheetClose").onclick = () => $("#sheet").hidden = true;
 $("#zoomSave").onclick = () => {
@@ -549,7 +566,7 @@ window.addEventListener("online", () => { if(!S.stopped && (!S.peer || S.peer.de
 window.addEventListener("pagehide", () => { recPagehide(); try{ S.calls.forEach(c => c.close()); S.peer && S.peer.destroy(); }catch(e){} });
 
 recCleanup();
-if(location.hash) history.replaceState(null, "", location.pathname); // old setup links (#k=…) are no longer needed
+if(location.hash || location.search) history.replaceState(null, "", location.pathname); // old setup links (#k=…) and the restart marker (?r=…) are not needed
 S.zoom = loadZoom();
 $("#entryOn").onclick = () => choose(false);
 $("#entryMute").onclick = () => choose(true);

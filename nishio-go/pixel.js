@@ -4165,6 +4165,28 @@ function genSprite(id) {
   return sp;
 }
 // スポットの絵（専用の絵 → 型の絵 → ふつうの絵）
+// 代表的な名所の特大のドット絵（96×96。tools/blender/giant.py で作った nishio-go/art/giant/）。歩く地図で名所のまわり6×6マスに描く。
+// 読めるまでは、いつもの 48×48 の絵。[ふつう, 再チェックイン待ちの灰色] の canvas にしておく（Godot の記録係は canvas を5つの引数で描く）
+const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'okazaki-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji',
+  'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };
+const giants = {};
+function giantOf(s) {
+  const n = GIANT_ART[s.id];
+  if (!n) return null;
+  if (!giants[n]) {
+    giants[n] = 'loading';
+    const img = new Image();
+    img.onload = () => {
+      const mk = grey => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        if (grey) { const d = x.getImageData(0, 0, c.width, c.height); for (let i = 0; i < d.data.length; i += 4) { const v = (d.data[i] * 0.3 + d.data[i + 1] * 0.59 + d.data[i + 2] * 0.11) * 0.7 + 60; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; } x.putImageData(d, 0, 0); }
+        return c; };
+      giants[n] = [mk(false), mk(true)]; dirty = true;
+    };
+    img.onerror = () => { setTimeout(() => { delete giants[n]; }, 15000); };   // 読めなかったら15秒後に読みなおす
+    img.src = `nishio-go/art/giant/${n}.png`;
+  }
+  return giants[n] === 'loading' ? null : giants[n];
+}
 const spriteOf = s => (!LANDMARK_ART[s.id] && !s.featured && GEN[s.id] && genSprite(s.id)) || spotSprites[spotArt(s)];
 
 function spotArt(s) {
@@ -4315,12 +4337,13 @@ function frame(now) {
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）
-    const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
+    const giant = giantOf(s);
+    const size = giant ? T * 6 : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
+    const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
-    ctx.drawImage(spriteOf(s)[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    ctx.drawImage((giant || spriteOf(s))[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = size / 16;
@@ -5169,8 +5192,8 @@ cv.addEventListener('click', e => {
   let hit = null, best = Infinity;
   for (const s of G.spots) {
     const p = toTile(s.lat, s.lng);
-    const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
+    const giant = giantOf(s), sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T - (giant ? T * 1.32 : 0);   // 特大の絵は 6T 四方を上へずらして描くので、その真ん中
+    const half = (giant ? T * 2.6 : s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }

@@ -20,6 +20,7 @@
 例：
 - Meta 広告（家で遊んでもらう）：`https://go.ricepia.jp/?utm_source=meta&utm_medium=paid&utm_campaign=game&play=1`
 - 本店のレジ横のQR：`https://go.ricepia.jp/?from=pop-honten&spot=kondo-beikoku&utm_source=qr&utm_medium=offline&utm_campaign=honten`
+  - 印刷して置けるA4のPOP：`https://go.ricepia.jp/nishio-go/pop.html`（このQRと、ゲームの画面・「スマホのカメラで読みこむだけ／無料・登録なし／家からでも遊べます」。右下の「印刷する」で印刷。検索にはのせない）。QRを作り直すときは `python3 tools/make-pop.py`（segno が要る）
 
 ## 2. 数えられること（計測）
 
@@ -34,7 +35,9 @@
 | `checkin`・`shop_checkin` | 名所・当店にチェックインした（当店は Meta では「Lead」） |
 | `idle_return`・`idle_fact`・`idle_upgrade`・`guide_pick` | るすばんから戻った・おまかせ歩きで まちメモ・おまかせ強化・行き先を自分で変えた |
 | `guide_set`・`guide_arrive`・`npc_talk` | みちしるべ・人との会話 |
-| `share_open`・`share` | シェアの画面を開いた・シェアした（kind：log／rice、via：x／line／facebook／copy／image／native） |
+| `share_open`・`share` | シェアの画面を開いた・シェアした（kind：log（きろく）／dot（見つけたドット絵）／lvup（レベルアップ）、via：x／line／facebook／copy／image／native） |
+| `share_prompt` | ごほうびの画面の「📣 シェア」を押した（kind：dot／lvup） |
+| `friend_bonus` | 友だちのシェアから来た人が、はじめて遊んで +20pt をもらった（シェアから増えた人の数） |
 | `campaign_landing`・`campaign_bonus`・`campaign_link` | キャンペーンのリンクから来た・当店チェックインのボーナス・くわしいページへ |
 | `sponsor_link` | 協賛スポットのサイトへ進んだ |
 
@@ -45,6 +48,15 @@
 「きろく」の 📣 シェア から、X・LINE・Facebook・コピー・端末のシェアができます。
 シェア用の画像（1200×630）は、その人のレベル・めぐった名所・話した人と、こよみ（季節）、当店の名前・go.ricepia.jp をのせて、その場で描きます（どこにも送りません）。
 シェアのリンクには `utm_source=share` が付くので、シェアから来た人を数えられます。
+
+- **うれしい場面でシェアをすすめる**：はじめて見つけたドット絵と、レベルアップのごほうびの画面に「📣 シェア」のボタン（`game.js` の showReward）。ドット絵のときは、シェアの画像の右にその絵を金の額縁で大きく描き、文は「西尾ドット絵帳で「〇〇」の絵を見つけたよ」。
+- **友だちの紹介ボーナス**：シェアのリンク（`utm_source=share`）から来た、まだ遊んだことのない人は、はじめて遊ぶときに +20pt（端末ごとに1回。`share.js` が `nsg_friend` を立て、`game.js` の friendBonus がわたす）。シェアの文にも「このリンクから始めると +20pt もらえるよ」と書く。シェアした人へのごほうびは、サーバーがないので数えられず、まだありません。
+
+## 3b. 検索・AI検索に見つけてもらう
+
+- ゲームのページ（`nishio-go.html`）に schema.org の説明（JSON-LD：VideoGame・無料・西尾市・運営は近藤米穀店 らいすぴあ）。
+- go.ricepia.jp のサイトマップ `sitemap-go.xml`（`robots.txt` から案内。robots.txt は ricepia-judge.vercel.app と同じファイル）。
+- `llms.txt` にゲームの説明（URL・遊び方・無料・運営）。
 
 ## 4. キャンペーン（お店の企画と連動）
 

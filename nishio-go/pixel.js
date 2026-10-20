@@ -4352,6 +4352,12 @@ function trafficTurn(v, x, y) {   // (x, y) に着いたとき、次に進む向
   const hl = Math.hypot(hx, hy) || 1, dot = d => (VDIRS[d][0] * hx + VDIRS[d][1] * hy) / hl;
   const back = (v.dir + 2) % 4, R = v.kind === 'train' ? 0.4 : 2;
   let cand = [0, 1, 2, 3].filter(d => d !== back && ok(d));
+  if (!cand.length && v.kind !== 'boat') {
+    // 1マスはばの線路や道がマスの角でななめにつながっている所（上下左右にはつながっていない）：角のマスを1つ通って、ななめ先へ渡る（電車と車だけ。船は陸を渡らない）。
+    // まっすぐの先がふさがっていて左右ななめ前に道があるか、横のマスの前に道があるとき、そのマスへ（次のマスで道に曲がる）
+    const at = (d, e) => K.ok(x + VDIRS[d][0] + VDIRS[e][0], y + VDIRS[d][1] + VDIRS[e][1]), sides = [(v.dir + 1) % 4, (v.dir + 3) % 4];
+    cand = [v.dir, ...sides].filter(d => !ok(d) && (d === v.dir ? sides.some(e => at(d, e)) : at(d, v.dir)));
+  }
   if (cand.some(d => dot(d) >= -0.3)) cand = cand.filter(d => dot(d) >= -0.3);
   if (!cand.length) return ok(back) ? back : -1;
   let best = -1, bs = -Infinity;

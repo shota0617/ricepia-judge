@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- にしおさんぽGO（go.ricepia.jp）のサイトマップ。robots.txt から案内する -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://go.ricepia.jp/nishio-go.html</loc>
+    <lastmod>2026-10-20</lastmod>
+  </url>
+  <url>
+    <loc>https://go.ricepia.jp/nishio-go/privacy.html</loc>
+    <lastmod>2026-10-20</lastmod>
+  </url>
+</urlset>

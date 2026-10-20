@@ -1455,6 +1455,25 @@ setHeroMarker();
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 spotSprites.store = spotSprites.shop;
+// 街並みの目印（お店・施設）の絵を、Blender で作った 32×32 の絵（tools/blender/poi.py → nishio-go/art/poi.png）に。読めるまでは上の手描きの絵
+const POI_ORDER = ['townhall', 'hospital', 'school', 'library', 'police', 'fire', 'post', 'shop', 'konbini', 'super', 'home', 'drug', 'fuel', 'bank', 'food', 'cafe', 'station'];
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    POI_ORDER.forEach((k, i) => {
+      const mk = grey => {
+        const c = document.createElement('canvas'); c.width = c.height = 32;
+        const x = c.getContext('2d'); x.drawImage(img, i * 32, 0, 32, 32, 0, 0, 32, 32);
+        if (grey) { const d = x.getImageData(0, 0, 32, 32); for (let j = 0; j < d.data.length; j += 4) { const v = (d.data[j] * 0.3 + d.data[j + 1] * 0.59 + d.data[j + 2] * 0.11) * 0.7 + 60; d.data[j] = d.data[j + 1] = d.data[j + 2] = v; } x.putImageData(d, 0, 0); }
+        return c;
+      };
+      spotSprites[k] = [mk(false), mk(true)];
+    });
+    spotSprites.store = spotSprites.shop;
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/poi.png';
+})();
 // 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。お店から受け取った外観の写真を見て描いたドット絵）
 //   らいすぴあ・秀幸：赤と白の建物、横の壁に白いどんぶりと「米」のマーク、上に白い看板、右に赤い「米のドライブスルー」の屋根と「ドライブスルー IN」の看板
 //   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根

@@ -1948,20 +1948,34 @@ $('resetBtn').addEventListener('click', () => {
 /* ---------- 音楽（BGM と効果音） ----------
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。field：ふだん（歩く地図・ふつうの地図）、
    world：せかいちず（無ければ field）、checkin：チェックイン、levelup：レベルアップ。
+   ふだんの曲は、雨なら rain、夜（19〜5時）は night、朝（5〜9時）は morning、夕方（16〜19時）は evening、
+   昼は field・field2（まちかど）・field3（おまつり）を1曲ずつ順に流す（どれも無ければ field）。
    ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
 const sound = (() => {
-  const SRC = { field: 'nishio-go/bgm/field.mp3', world: 'nishio-go/bgm/world.mp3', checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
-  const VOL = 0.28, SFX_VOL = 0.35, LOOP = new Set(['field', 'world']), els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
+  const SRC = { checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3' };
+  const DAY = ['field', 'field2', 'field3'], MOOD = ['morning', 'evening', 'night', 'rain'];
+  for (const k of ['world', ...DAY, ...MOOD]) SRC[k] = `nishio-go/bgm/${k}.mp3`;
+  const VOL = 0.28, SFX_VOL = 0.35, LOOP = new Set(['world', ...DAY, ...MOOD]), els = {}, missing = new Set();   // 音量：BGM 0.28（ひかえめ）、効果音 0.35
+  let day = Math.floor(Math.random() * DAY.length);   // 昼の曲の順番（開くたびに ちがう曲から）
   let on = store.get('nsg_bgm', true), unlocked = false, scene = 'field', cur = null, ducking = 0;   // ducking：鳴っている効果音の数
   const el = k => {
     if (!els[k]) {
-      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k); a.volume = LOOP.has(k) ? VOL : SFX_VOL; a.src = SRC[k];
+      const a = new Audio(); a.preload = 'none'; a.loop = LOOP.has(k) && !DAY.includes(k); a.volume = LOOP.has(k) ? VOL : SFX_VOL; a.src = SRC[k];
+      if (DAY.includes(k)) a.addEventListener('ended', () => { day = (day + 1) % DAY.length; a.currentTime = 0; apply(); });   // 昼の曲は1回流したら次の曲へ
       a.addEventListener('error', () => { missing.add(k); if (LOOP.has(k)) apply(); });
       els[k] = a;
     }
     return els[k];
   };
-  const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : missing.has('field') ? null : 'field');
+  // ふだんの曲：天気（雨）→ 時間帯 → 昼は順番。無い曲は飛ばし、最後は field
+  const fieldSong = () => {
+    const h = new Date().getHours(), w = weatherNow();
+    const mood = w && w.raining ? 'rain' : h >= 19 || h < 5 ? 'night' : h < 9 ? 'morning' : h >= 16 ? 'evening' : null;
+    if (mood && !missing.has(mood)) return mood;
+    for (let i = 0; i < DAY.length; i++) { const k = DAY[(day + i) % DAY.length]; if (!missing.has(k)) return k; }
+    return null;
+  };
+  const pick = () => (scene === 'world' && !missing.has('world') ? 'world' : fieldSong());
   function apply() {
     const live = on && unlocked && !document.hidden, k = live ? pick() : null;
     for (const [n, a] of Object.entries(els)) {
@@ -1975,6 +1989,7 @@ const sound = (() => {
   const unlock = () => { if (unlocked) return; unlocked = true; apply(); };
   ['pointerdown', 'keydown'].forEach(ev => document.addEventListener(ev, unlock, { once: true, capture: true }));
   document.addEventListener('visibilitychange', apply);
+  setInterval(() => { if (cur && cur !== pick()) apply(); }, 60000);   // 時間帯や天気が変わったら曲を変える（1分ごとに見る）
   return {
     apply,
     scene(s) { if (s !== scene) { scene = s; apply(); } },

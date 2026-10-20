@@ -109,7 +109,7 @@ async function walkTo(page, id) {
   // 地面をタップすると、そこまで歩く（通れるマスで、まわりに人や名所がなく、ボタンに隠れていない所を選ぶ）
   const tapAt = await page.evaluate(() => {
     const P = nishioPixel, C = P.C, BL = new Set([C.A, C.B, C.M, C.X]), a = P.toTile(nishioGo.me.lat, nishioGo.me.lng), sx = Math.floor(a.x), sy = Math.floor(a.y);
-    const busy = (x, y) => nishioGo.npcs.some(n => { const q = P.npcTile(n); return Math.abs(q.x - x) < 2 && Math.abs(q.y - y) < 2; }) || nishioGo.spots.some(s => { const q = P.toTile(s.lat, s.lng); return Math.abs(q.x - x - 0.5) < 2 && Math.abs(q.y - y - 0.5) < 2; });
+    const busy = (x, y) => nishioGo.npcs.some(n => { const q = P.npcTile(n); return Math.abs(q.x - x) < 2 && Math.abs(q.y - y) < 2; }) || nishioGo.spots.some(s => { const q = P.toTile(s.lat, s.lng); return Math.abs(q.x - x - 0.5) < 2 && Math.abs(q.y - y - 0.5) < 2; }) || nishioGo.liveChests().some(ch => { const q = P.toTile(ch.lat, ch.lng); return Math.hypot(q.x - x, q.y - y) < 6; });   // たからばこに近いと、開いて知らせが出て止まる
     for (const [dx, dy] of [[3, 0], [-3, 0], [0, -3], [0, 3], [3, -2], [-3, -2], [4, 0], [-4, 0], [2, 2], [-2, 2]]) {
       const x = sx + dx, y = sy + dy;
       if (BL.has(P.codeAt(x, y) & 31) || busy(x, y)) continue;
@@ -125,11 +125,19 @@ async function walkTo(page, id) {
     R.checks.tapWalk = await page.evaluate(([g, t]) => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return !!g && Math.floor(a.x) === g[0] && Math.floor(a.y) === g[1] && Math.abs(g[0] - t.x) + Math.abs(g[1] - t.y) <= 1 && !nishioPixel.tapGoal; }, [goal, tapAt]);
     // 歩いているとちゅうで きろく を開いたら、うしろで歩きつづけない（もとの所へタップして、すぐ きろく）
     const back = await page.evaluate(() => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) - 3, Math.floor(a.y)); });
-    await page.mouse.click(back.x, back.y); await page.click('[data-tab=log]');
+    await page.mouse.click(back.x, back.y);
+    const started = await page.evaluate(() => !!nishioPixel.tapGoal);   // 歩きはじめていたか
+    await page.click('[data-tab=log]');
     const at = await page.evaluate(() => [nishioGo.me.lat, nishioGo.me.lng]);
     await page.waitForTimeout(1200);
-    R.checks.tapWalkStopsOnPanel = await page.evaluate(at => !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at);
+    R.checks.tapWalkStopsOnPanel = started && await page.evaluate(at => !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at);
     await page.click('[data-tab=map]'); await page.waitForTimeout(300);
+    // ほうびの知らせが出たときも止まる（たからばこを開けたときと同じく、知らせで地図が隠れる）
+    const fwd = await page.evaluate(() => { const a = nishioPixel.toTile(nishioGo.me.lat, nishioGo.me.lng); return nishioPixel.tileToClient(Math.floor(a.x) + 3, Math.floor(a.y)); });
+    await page.mouse.click(fwd.x, fwd.y);
+    const at2 = await page.evaluate(() => { document.getElementById('reward').classList.add('show'); return [nishioGo.me.lat, nishioGo.me.lng, !!nishioPixel.tapGoal]; });   // 3つめ：歩きはじめていたか
+    await page.waitForTimeout(1200);
+    R.checks.tapWalkStopsOnReward = await page.evaluate(at => { const ok = at[2] && !nishioPixel.tapGoal && nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1]; document.getElementById('reward').classList.remove('show'); return ok; }, at2);
   } else R.checks.tapWalk = 'no-spot';
   R.checks.operateMode = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
   R.checks.bgmStarted = await page.evaluate(() => window.__played.some(f => /^(field[23]?|morning|evening|night|rain|\d{3})\.mp3$/.test(f)));   // ふだんの曲（時間・天気・順番で変わる。アルバムの曲は 001.mp3〜100.mp3）
@@ -215,6 +223,7 @@ async function walkTo(page, id) {
   need(c.stickKnobMoved && c.stickWalkedNorth && c.stickReleased, 'スティックを上へ倒しても北へ歩かない・はなしても戻らない');
   need(c.tapWalk === true, '地面をタップしても、そこまで歩かない');
   need(c.tapWalkStopsOnPanel === true, 'タップした所へ歩くとちゅうで きろく を開いても、うしろで歩きつづける');
+  need(c.tapWalkStopsOnReward === true, 'タップした所へ歩くとちゅうで ほうびの知らせが出ても、うしろで歩きつづける');
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');

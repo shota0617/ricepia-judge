@@ -5443,12 +5443,16 @@ cv.addEventListener('click', e => {
 });
 // 操作して移動：地面をタップすると、そこまで道を探して1マスずつ歩く（車のときは道だけなので、スティックで）
 //   ・スティック・矢印キーをさわる、窓が開く、着けない所になる、のどれかでやめる。歩いている間は、おまかせ歩きは休む
+// 地図の上に何か開いている（窓・ほうびの知らせ・きろく などのパネル・シェア・クーポン・はじめの画面・ミニゲーム）：見ていない間に うしろで歩いて、たからばこなどが進まないように
+function mapCovered() {
+  return $('reward').classList.contains('show') || document.body.classList.contains('jump-open')
+    || ['pxInfo', 'panel-log', 'panel-rewards', 'panel-settings', 'share', 'coupon', 'intro'].some(id => { const el = $(id); return el && !el.hidden; });
+}
 function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path = []; tapS.goal = null; }
 function tapWalkTick() {
   tapS.timer = null;
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
-  const panel = ['log', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden);   // きろく・とくてん・せってい を開いたら（うしろで歩いて、たからばこなどが進まないように）
-  if (!nx || !G.demo || !active || worldMode || driving || panel || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
+  if (!nx || !G.demo || !active || worldMode || driving || mapCovered() || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   autoS.pauseUntil = Date.now() + 3000; autoS.path = [];
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();
   tapS.timer = setTimeout(tapWalkTick, G.autoInterval ? Math.min(180, G.autoInterval()) : 180);

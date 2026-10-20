@@ -821,6 +821,7 @@ def facade(t):
 # ---------- 水べ（nishio-go/maptiles/shore.png）：陸と接する水のマス。岸の種類3 × 陸がある辺16通り × 2コマ ----------
 # 0 護岸（町なかの川・港のコンクリート）、1 土手（田畑のあいだの川の草の岸）、2 浜（砂浜の浅瀬と白い波。2コマで波が寄せる）
 SHORE_KINDS = ['gogan', 'dote', 'hama']
+ROAD_GROUP = ['road', 'kado', 'rankan', 'facade', 'shore', 'water']   # python tools/blender/maptiles.py road で描くもの（main）
 
 
 def shore(kind, mask, f):
@@ -914,6 +915,8 @@ def main():
     jobs += [('kado', (kd, c)) for kd in ROAD_KINDS for c in ('NE', 'SE', 'SW', 'NW')]
     jobs += [('shore', (kd, m, f)) for kd in SHORE_KINDS for m in range(1, 16) for f in range(2)]
     only = sys.argv[1:]   # 名前を書くと、その種類だけ描く（例：python tools/blender/maptiles.py park cemetery）
+    # road は maptiles-sheets.py road が読むものをまとめて描く（道・角の縁石・橋の欄干・建物の前の壁・水べ・水）
+    only = [k for o in only for k in (ROAD_GROUP if o == 'road' else [o])]
     if only:
         jobs = [j for j in jobs if j[0] in only]
     for kind, args in jobs:

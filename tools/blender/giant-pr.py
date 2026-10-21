@@ -1,5 +1,5 @@
 # にしおさんぽGO：西尾市のPRになる特大ドット絵（96×96）を、名所ごとに 見る向き4 × 季節4 × 時間帯4 ＝ 64枚ずつ作る（1段目：Blender で描く）
-# - 名所は、西尾市（西尾・一色・吉良・幡豆・佐久島）の注目スポット 82か所（spots.json。当店はのぞく）。
+# - 名所は、西尾市（西尾・一色・吉良・幡豆・佐久島）の注目スポット 82か所（spots.json。当店はのぞく）と、名物と景色 8つ（giant-scenes.py）。
 #   形は、歩く地図の特大の絵と同じ型（giant.py の手作りの9か所・giant-gen.py の型）を使い、見る向きだけ変えて描く
 #   見る向き：0 いつもの左前・1 右前・2 高い所から・3 うしろ
 # - 1段目（この道具。bpy が要る）：見る向きごとに Cycles で2回描き（光の当たり具合／材質の色分け）、96×96 の点ごとに
@@ -42,6 +42,17 @@ def subjects():
             out.append((sid, s, (lambda n=HAND[sid]: gi.MODELS[n]())))
         elif sid in gl:
             out.append((sid, s, (lambda e=gl[sid]: gg.build(e))))
+    # 名物と景色（giant-scenes.py。名所ではないので spots.json にはない。名前・地区・説明は nishio-go/art/pr/scenes.json に書く）
+    sp = importlib.util.spec_from_file_location('giant_scenes', os.path.join(HERE, 'giant-scenes.py'))
+    gs = importlib.util.module_from_spec(sp)
+    sp.loader.exec_module(gs)
+    gs.setup(gg)
+    meta = []
+    for sid, (name, area, desc, fn) in gs.SCENES.items():
+        out.append((sid, {'name': name, 'area': area, 'desc': desc}, fn))
+        meta.append({'id': sid, 'name': name, 'area': area, 'desc': desc})
+    os.makedirs(os.path.join(pa.ROOT, 'nishio-go', 'art', 'pr'), exist_ok=True)
+    json.dump(meta, open(os.path.join(pa.ROOT, 'nishio-go', 'art', 'pr', 'scenes.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
     return out
 
 

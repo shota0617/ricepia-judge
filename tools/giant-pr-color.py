@@ -26,10 +26,11 @@ SEASON_COL = {
     'momiji': ['#7fbf4a', '#3f8a3a', None, '#7a6a58'], 'sakura': [None, '#4f9a3e', '#c9783a', '#7a6a58'],
     'shiba': ['#7cc552', None, '#b9a45a', '#dfe6ea'], 'shibaG': ['#7cc552', None, '#b9a45a', '#dfe6ea'], 'kusa': ['#7cc552', None, '#b9a45a', '#dfe6ea'],
     'hasuH': ['#6fbf45', None, '#a8903a', '#8a7a66'],
+    'ine': ['#9ad060', None, '#e0b840', '#b89a60'],   # 田んぼ：春は植えたての苗・夏は青い稲・秋は金色の稲穂・冬は刈りあと
 }
-NO_SNOW = {'umiB', 'nami', 'ike', 'umi', 'yu', 'pool', 'mado', 'glass', 'sash', 'modernB', 'sea', 'suna', 'sand'}
+NO_SNOW = {'higataW', 'mizuta', 'ike', 'umiB', 'nami', 'ike', 'umi', 'yu', 'pool', 'mado', 'glass', 'sash', 'modernB', 'sea', 'suna', 'sand'}
 WINDOW = {'mado', 'glass', 'sash', 'modernB'}
-LAMP = {'toro'}
+LAMP = {'toro', 'chochin'}
 SNOW = '#f2f5f8'
 
 
@@ -120,6 +121,9 @@ def paint(d, s, t, seed=0):
 def main():
     want = set(a for a in sys.argv[1:] if not a.startswith('-'))
     spots = {'f-' + s['id']: s for s in json.load(open(os.path.join(ROOT, 'nishio-go', 'spots.json'), encoding='utf-8'))['spots']}
+    sc = os.path.join(OUT, 'scenes.json')   # 名物と景色（giant-pr.py が書く）
+    if os.path.exists(sc):
+        spots.update({x['id']: x for x in json.load(open(sc, encoding='utf-8'))})
     done = {}
     for path in sorted(glob.glob(os.path.join(TMP, '*.npz'))):
         sid, v = os.path.basename(path)[:-4].rsplit('-', 1)
@@ -138,7 +142,7 @@ def main():
             continue
         views = sorted({int(f.split('-')[0]) for f in os.listdir(os.path.join(OUT, sid)) if f.endswith('.png')})
         s = spots[sid]
-        items.append({'id': sid, 'name': s['name'], 'area': s.get('area', ''), 'desc': s.get('desc', ''), 'views': views})
+        items.append({'id': sid, 'name': s['name'], 'area': s.get('area', ''), 'desc': s.get('desc', ''), 'views': views, **({'scene': True} if sid.startswith('m-') else {})})
     total = sum(len(x['views']) * 16 for x in items)
     json.dump({'_説明': '西尾市のPRになる特大ドット絵（96×96）。<id>/<向き>-<季節>-<時間帯>.png。向き：' + '・'.join(VIEW) + '、季節：' + '・'.join(SEASON) + '、時間帯：' + '・'.join(TIME)
                + '。tools/blender/giant-pr.py と tools/giant-pr-color.py で作る', 'count': total, 'items': items},

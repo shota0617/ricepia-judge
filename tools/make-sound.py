@@ -1,6 +1,6 @@
 # にしおさんぽGO の音楽（BGM と効果音）を作る：python3 tools/make-sound.py
 # ファミコン風のオリジナル曲。矩形波（メロディ・和音）と三角波（ベース）とノイズ（ドラム）だけで鳴らす。
-# 出力：nishio-go/bgm/field.mp3（ふだん）・world.mp3（せかいちず）・checkin.mp3・levelup.mp3（ffmpeg が必要）
+# 出力：nishio-go/bgm/field.mp3（ふだん）・world.mp3（せかいちず）・checkin.mp3・levelup.mp3・eye.mp3（ffmpeg が必要）
 #       バリエーション：field2（まちかど）・field3（おまつり）・morning（朝）・evening（夕方）・night（夜）・rain（雨）
 #       アルバム100曲：nishio-go/bgm/s/001.mp3〜100.mp3 と list.json（python3 tools/make-sound.py album）
 #       python3 tools/make-sound.py field2 night … のように名前を渡すと、その曲だけ作る
@@ -264,6 +264,9 @@ def jingles():
     save('levelup', mix(seq([('C5', .10), ('E5', .10), ('G5', .10), ('C6', .22), (None, .04), ('A5', .10), ('B5', .10), ('C6', .10), ('D6', .10), ('E6', .55)], square, 0.22),
                         seq([('E4', .10), ('G4', .10), ('C5', .10), ('E5', .22), (None, .04), ('F5', .10), ('G5', .10), ('A5', .10), ('B5', .10), ('C6', .55)], square, 0.12, duty=0.5),
                         seq([('C3', .52), (None, .04), ('F3', .20), ('G3', .20), ('C3', .55)], tri, 0.25)))
+    # 呼びとめ：まちの人と目が合って「！」。はね上がる2音を2回と、下の短い合いの手
+    save('eye', mix(seq([('E5', .05), ('B5', .09), (None, .03), ('E5', .05), ('B5', .09), (None, .03), ('A5', .06), ('E6', .22)], square, 0.2, duty=0.125),
+                    seq([('E3', .08), (None, .09), ('E3', .08), (None, .12), ('A3', .28)], tri, 0.25)))
 
 
 # ---------- BGM のバリエーション（時間・天気・ふだんの曲の入れかわり） ----------

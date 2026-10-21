@@ -2105,10 +2105,15 @@ const react = { pending: null, shown: 0, t: 0 };
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
 const medashiOpen = () => !!(window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown);
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
-  if (medashiOpen()) {
-    showReward.deferred = (showReward.deferred || 0) + 1;
-    const again = () => { if (medashiOpen()) { setTimeout(again, 600); return; } showReward.deferred--; showReward(total, name, lines, lvUp, fact, dot, waited); };
-    setTimeout(again, 600);
+  if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
+    const q = showReward.pending || (showReward.pending = []);
+    q.push([total, name, lines, lvUp, fact, dot, waited]);
+    if (q.length === 1) setTimeout(function drain() {
+      if (medashiOpen() || $('reward').classList.contains('show') || showReward.waiting) { setTimeout(drain, 600); return; }
+      const args = q.shift();
+      showReward(...args);
+      if (q.length) setTimeout(drain, 600);
+    }, 600);
     return;
   }
   const el = $('reward'), D = window.NISHIO_DOTS;
@@ -2241,7 +2246,7 @@ function walkBags(d) {
 }
 const bagDone = () => { const b = Array.isArray(S.bags) && S.bags[0]; return !!b && b.walked >= b.km * 1000; };
 // ほかのごほうびが出ている間・絵を読みこんで出るのを待っている間は待つ（重ならないように。消えてしまわないように）
-const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting || !!showReward.deferred;
+const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting || !!(showReward.pending && showReward.pending.length);
 const rewardSoon = () => rewardBusy() || !!openBagSoon.t;   // 開く予約をした おみやげ袋も（田んぼのイベントは、これが済んでから始める）
 function openBagSoon() {
   if (openBagSoon.t) return;

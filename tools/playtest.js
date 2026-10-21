@@ -256,7 +256,8 @@ async function walkTo(page, id) {
     document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     if (G.me.lat + ',' + G.me.lng !== before) bad.push('開いている間に歩いた');
     // 開いている間に来た ごほうびは、閉じるまで出さない
-    G.showReward(1, 'テスト', [], false, '', null);
+    G.showReward(1, 'テスト1', [], false, '', null);
+    G.showReward(2, 'テスト2', [], false, '', null);
     if (rw.classList.contains('show') || !G.rewardBusy()) bad.push('開いている間に ごほうびが出た');
     if (document.querySelectorAll('#medashi .md-seed').length !== 3) bad.push('種もみが3つでない');
     M.pick('ok');
@@ -266,7 +267,10 @@ async function walkTo(page, id) {
     M.close();
     if (G.medashiDue() || M.open()) bad.push('1日に2回');
     await new Promise(r => setTimeout(r, 900));
-    if (!rw.classList.contains('show')) bad.push('閉じたあとに ごほうびが出ない');
+    if (!rw.classList.contains('show') || !/テスト1/.test(rw.textContent)) bad.push('閉じたあとに 1つめの ごほうびが出ない');
+    rw.click();
+    await new Promise(r => setTimeout(r, 1600));
+    if (!rw.classList.contains('show') || !/テスト2/.test(rw.textContent)) bad.push('1つめを閉じたあとに 2つめの ごほうびが出ない');
     rw.click();
     return bad.length ? bad.join(',') : true;
   });

@@ -5,6 +5,7 @@
 // ・話の中身は shizen.js の頭に書いた出典だけ：八ツ面山で雲母がとれた・吉良荘の名前のもと という言い伝え（西尾市の資料）、
 //   寺部・こどもの国の岩の名前に「黒雲母」が入っていること（浅見ほか、1982 に加筆した地質図の凡例）。地質図の絵はなぞらない
 // ・石と雲母石の絵は、ここで描いたもの（写真や図をなぞらない）
+// ・雲母石だけが光るのは目で見える手がかりなので、画面読み上げでも同じ手がかり（「ときどき きらっと光る」）を そのボタンに付ける
 // ・ほかの窓（説明の窓・パネル・ダイアログ・呼びとめ・ごほうび・ミニゲーム・ほかのイベント）の間は待つ（本のできごと bookev.js と同じ）。
 //   「あとで」で閉じたら、3分は出さない
 (() => {
@@ -64,7 +65,7 @@
     root.innerHTML = `<div class="md-card kr-card"><p class="md-head">✨ イベント：雲母石を探せ（${pl.name}）</p>
       <p class="md-say">${pl.who}「${pl.say}」</p>
       <p class="kr-hint">日の光で、ときどき <b>きらっ</b> と光る石があるよ。その石をタップ！</p>
-      <div class="kr-grid">${Array.from({ length: N }, (_, i) => `<button type="button" class="kr-stone${i === mica ? ' mica' : ''}" data-kr="${i}" aria-label="石 ${i + 1}" style="--d:${(Math.random() * 1.4).toFixed(2)}s"><canvas width="24" height="24"></canvas></button>`).join('')}</div>
+      <div class="kr-grid">${Array.from({ length: N }, (_, i) => `<button type="button" class="kr-stone${i === mica ? ' mica' : ''}" data-kr="${i}" aria-label="石 ${i + 1}${i === mica ? '：ときどき きらっと光る' : ''}" style="--d:${(Math.random() * 1.4).toFixed(2)}s"><canvas width="24" height="24"></canvas></button>`).join('')}</div>
       <p class="md-res" hidden></p>
       <button type="button" class="btn mini md-close" data-kr="close">あとで</button></div>`;
     root.querySelectorAll('.kr-stone canvas').forEach((cv, i) => drawStone(cv, pl.tone, seed0 + i, false));   // 見つけるまでは、ほかの石と同じ見た目（光るだけ）

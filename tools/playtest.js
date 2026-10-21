@@ -296,6 +296,15 @@ async function walkTo(page, id) {
     if (!M.shown) return '水べを歩いても開かない';
     p0 = G.state.points;   // 歩いている間に生きものに出会って ふえた分は数えない
     if (document.querySelectorAll('#mushi .mu-bug').length !== 3) bad.push('虫の絵が3つでない');
+    // 画面読み上げでも絵の見た目がわかる（名前は言わない）
+    if ([...document.querySelectorAll('#mushi .mu-bug')].some(b => { const x = M.BUGS.find(y => y.id === b.dataset.mu); return !b.getAttribute('aria-label').includes(x.look) || b.getAttribute('aria-label').includes(x.name); })) bad.push('絵の読み上げ');
+    // 開いてから5分たって「あとで」で閉じても、閉じた時刻から5分は出ない（10分後には また出る）
+    const now0 = Date.now, t0 = now0();
+    Date.now = () => t0 + 6 * 60000; M.close();
+    if (M.open()) bad.push('閉じてすぐ また開いた');
+    Date.now = () => t0 + 12 * 60000;
+    if (!M.open()) bad.push('閉じて6分たっても開かない');
+    Date.now = now0;
     // 絵は ちがう虫ごとに ちがう（描けている）
     const imgs = [...document.querySelectorAll('#mushi .mu-bug canvas')].map(c => c.toDataURL());
     if (new Set(imgs).size !== 3) bad.push('絵が同じ');

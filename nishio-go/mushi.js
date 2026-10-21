@@ -7,17 +7,17 @@
 //   名前のヒントの読み（ミスジ＝三筋 など）は ことばの意味で、本に書いてあることではない
 (() => {
   'use strict';
-  // hint：名前の中の見た目のヒント。not：この虫を問うとき、まちがいの絵に出さない虫（ヒントが同じように当てはまるもの）
+  // hint：名前の中の見た目のヒント。look：絵の見た目（画面読み上げ用。名前は言わない）。not：この虫を問うとき、まちがいの絵に出さない虫（ヒントが同じように当てはまるもの）
   const BUGS = [
-    { id: 'misuji', name: 'ミスジキイロテントウ', hint: 'ミスジ＝3本のすじ、キイロ＝黄色', not: [] },
-    { id: 'mutsuboshi', name: 'ムツボシツヤコツブゲンゴロウ', hint: 'ムツボシ＝6つの星（てん）、ツヤ＝つやつや、コツブ＝小つぶ', not: ['samehada'] },
-    { id: 'haiiro', name: 'ハイイロゲンゴロウ', hint: 'ハイイロ＝灰色', not: [] },
-    { id: 'oomaru', name: 'オオマルケシゲンゴロウ', hint: 'オオマル＝大きくて丸い', not: ['samehada', 'misuji'] },
-    { id: 'samehada', name: 'サメハダマルケシゲンゴロウ', hint: 'サメハダ＝さめの はだのように ざらざら（つぶつぶ）', not: ['mutsuboshi'] },
-    { id: 'kubinaga', name: 'ナガサキクビナガゴミムシ', hint: 'クビナガ＝首が長い', not: [] },
+    { id: 'misuji', name: 'ミスジキイロテントウ', hint: 'ミスジ＝3本のすじ、キイロ＝黄色', look: '黄色い丸い体に、黒い すじが3本', not: [] },
+    { id: 'mutsuboshi', name: 'ムツボシツヤコツブゲンゴロウ', hint: 'ムツボシ＝6つの星（てん）、ツヤ＝つやつや、コツブ＝小つぶ', look: '小さな茶色い体に、うすい色の てんが6つ。つやがある', not: ['samehada'] },
+    { id: 'haiiro', name: 'ハイイロゲンゴロウ', hint: 'ハイイロ＝灰色', look: '灰色の、たて長の体', not: [] },
+    { id: 'oomaru', name: 'オオマルケシゲンゴロウ', hint: 'オオマル＝大きくて丸い', look: '大きくて丸い、黒い体。つやがある', not: ['samehada', 'misuji'] },
+    { id: 'samehada', name: 'サメハダマルケシゲンゴロウ', hint: 'サメハダ＝さめの はだのように ざらざら（つぶつぶ）', look: '丸い茶色の体に、こまかい つぶつぶ', not: ['mutsuboshi'] },
+    { id: 'kubinaga', name: 'ナガサキクビナガゴミムシ', hint: 'クビナガ＝首が長い', look: '細い体に、長い首と小さい頭', not: [] },
   ];
   const ROUNDS = 3;
-  let root = null, qs = [], qi = 0, right = 0, answered = false, done = false, lastOpen = 0;   // lastOpen：「あとで」で閉じたら、5分は出さない
+  let root = null, qs = [], qi = 0, right = 0, answered = false, done = false, lastOpen = 0;   // lastOpen：開いた・閉じた時刻（閉じてから5分は出さない）
 
   // 虫の絵（32×32 のドット）。だ円の体・頭・6本の足に、名前があらわす もようだけを足す
   function drawBug(cv, id) {
@@ -116,8 +116,8 @@
     const q = qs[qi];
     answered = false;
     root.innerHTML = `<div class="md-card"><p class="md-head">🪲 イベント：虫の名前あて <small>${qi + 1}/${ROUNDS}</small></p>
-      <p class="md-say">${qi === 0 ? '水べで虫を見ていた人「西尾の自然の本に、この あたりの虫が いろいろ のっとるよ。名前に見た目のヒントがあるで、当ててみりん」<br>' : ''}<b>「${q.t.name}」は どれ？</b></p>
-      <div class="md-seeds mu-bugs">${q.opts.map(b => `<button type="button" class="md-seed mu-bug" data-mu="${b.id}" aria-label="虫の絵 ${q.opts.indexOf(b) + 1}"><canvas width="32" height="32"></canvas><small>？</small></button>`).join('')}</div>
+      <p class="md-say">${qi === 0 ? '水べで虫を見ていた人「西尾の自然の本には、虫が いろいろ 写真で のっとるよ。名前に見た目のヒントがあるで、当ててみりん」<br>' : ''}<b>「${q.t.name}」は どれ？</b></p>
+      <div class="md-seeds mu-bugs">${q.opts.map(b => `<button type="button" class="md-seed mu-bug" data-mu="${b.id}" aria-label="虫の絵 ${q.opts.indexOf(b) + 1}：${b.look}"><canvas width="32" height="32"></canvas><small>？</small></button>`).join('')}</div>
       <p class="md-res" hidden></p>
       <div class="mu-foot"><button type="button" class="btn mini mu-next" data-mu="next" hidden>${qi + 1 < ROUNDS ? 'つぎの虫' : 'けっか'}</button>
       <button type="button" class="btn mini md-close" data-mu="close">あとで</button></div></div>`;
@@ -152,7 +152,7 @@
       <p class="md-res">${r.pts ? `+${r.pts}pt` : 'ポイントなし'}${r.fresh ? '<br><small>📒 西尾の自然の本にのっている虫の まちメモが ふえました（出典：西尾の自然の本 331ページ）</small>' : ''}</p>
       <button type="button" class="btn mini md-close" data-mu="close">とじる</button></div>`;
   }
-  function close() { if (root) root.hidden = true; }
+  function close() { if (root && !root.hidden) { root.hidden = true; lastOpen = Date.now(); } }   // 「あとで」で閉じた時刻から5分は出さない
 
   // テスト用：開く・えらぶ・つぎへ・ようすを見る
   window.NISHIO_MUSHI = { open, close, pick, next, BUGS, get shown() { return !!root && !root.hidden; }, get q() { return qs[qi] ? { target: qs[qi].t.id, opts: qs[qi].opts.map(b => b.id) } : null; }, get right() { return right; }, get done() { return done; } };

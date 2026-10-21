@@ -241,6 +241,9 @@ async function walkTo(page, id) {
     let hit = null;
     for (let r = 0; r < 120 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) { const c = P.codeAt(x0 + dx, y0 + dy); if (c === P.C.F || c === P.C.U) { hit = [x0 + dx, y0 + dy]; break; } }
     if (!hit) return '近くに田んぼがない';
+    const rb = G.rewardBusy; G.rewardBusy = () => true;   // 絵を読みこんでいて まだ出ていない ごほうびがあるとき
+    if (M.open()) { bad.push('ごほうびを待つ間に出た'); M.close(); }
+    G.rewardBusy = rb;
     document.querySelector('.tabs button[data-tab="log"]').click();
     for (let i = 0; i < 20; i++) P.critterStep(hit[0], hit[1]);
     if (M.shown) bad.push('パネルの上に出た');

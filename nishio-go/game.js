@@ -1748,20 +1748,22 @@ function clearGive(n) {
   S.cleared = { t: Date.now(), rec: clearRecord() };   // 殿堂入りした時点の記録（あとから見ても変わらないように）
   save();
   track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
-  setTimeout(() => endingWhenFree(checkBadges), 900);
+  setTimeout(checkBadges, 800);   // バッジ（殿堂入り）は すぐ。知らせは ごほうびの画面が出ている間は閉じてから出る（toastQ）
+  setTimeout(endingWhenFree, 900);
   return true;
 }
 // ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
-// 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）
-function endingWhenFree(then) {
+// 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）。
+// 予約したときの記録（操作して移動／あるいて移動）に結びつけ、待っている間に記録が切りかわったら取りやめる
+function endingWhenFree() {
   const w = endingWhenFree;
-  if (then) w.then = then;
   if (w.waiting || $('reward').querySelector('.ending')) return;   // もう待っている・もう出ている
+  const key = stateKey();
   w.waiting = true;
   (function go() {
+    if (stateKey() !== key || !S.cleared) { w.waiting = false; return; }
     if (rewardBusy()) return setTimeout(go, 500);
     w.waiting = false; showEnding();
-    const t = w.then; w.then = null; if (t) t();
   })();
 }
 function clearRecord() {

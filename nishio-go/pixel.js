@@ -1719,7 +1719,7 @@ function openNpc(n) {
 const SIGHT = 4, SIGHT_WAIT = 650, SIGHT_STEP = 150;
 const sight = { n: null, t: 0, from: null, to: null, len: 0, opened: false, seen: new Set() };
 function sightCheck() {
-  if (sightBusy() || driving || worldMode || !$('pxInfo').hidden || (!G.demo && !G.me) || document.body.classList.contains('jump-open')) return false;   // ミニゲームの間は呼びとめない
+  if (sightBusy() || driving || worldMode || !$('pxInfo').hidden || (!G.demo && !G.me) || document.body.classList.contains('jump-open') || medashiShown()) return false;   // ミニゲーム・田んぼのイベントの間は呼びとめない
   const t = targetTile(), hx = Math.floor(t.x), hy = Math.floor(t.y);
   for (const n of G.npcs || []) {
     if (G.npcMet(n.id) || sight.seen.has(n.id)) continue;

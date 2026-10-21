@@ -979,6 +979,7 @@ function checkin() {
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
 const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）
 const KOME = window.NISHIO_KOME || [];   // 米づくり（kome.js）
+const SANGYO = window.NISHIO_SANGYO || [];   // むかしの西尾の仕事（sangyo.js）
 const spotShizen = s => SHIZEN.filter(x => x.spots.some(id => 'f-' + id === s.id));
 // イベント「ドット絵ムービー」（movie.js）で見せる話。たからばこ・しらべる などでは出さない（最後まで見ると まちメモ に残る）
 const movieFact = k => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.list.some(m => m.facts.includes(k)));
@@ -1101,6 +1102,7 @@ function factPool() {   // まちメモ：地区の豆知識・紹介文、注�
   for (const x of MEIBUTSU) x.facts.forEach((f, i) => m.set(`m:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   for (const x of SHIZEN) x.facts.forEach((f, i) => m.set(`z:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   for (const x of KOME) x.facts.forEach((f, i) => m.set(`k:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
+  for (const x of SANGYO) x.facts.forEach((f, i) => m.set(`g:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   for (const t of MACHI) t.facts.forEach((f, i) => m.set(`t:${t.id}:${i}`, `${t.icon} ${t.city}：${f}`));
   return m;
 }
@@ -1131,7 +1133,7 @@ function factNear(k) {
   if (kind === 's') return spotNear(id);
   if (kind === 'e') { const e = EVENTS.find(x => x.id === id); return !!e && (e.spot ? spotNear(evSpotId(e)) : areaNear(e.area)); }   // 会場のない行事は、行事の area で
   if (kind === 'm') return !!(MEIBUTSU.find(x => x.id === id) || {}).area;
-  if (kind === 'z' || kind === 'k') return false;   // 西尾の海と大地・米づくりは、西尾市の話
+  if (kind === 'z' || kind === 'k' || kind === 'g') return false;   // 西尾の海と大地・米づくり・むかしの仕事は、西尾市の話
   return true;
 }
 const knownFacts = () => { const pool = factPool(); return S.facts.filter(k => pool.has(k)).length; };

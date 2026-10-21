@@ -640,6 +640,90 @@ const BAKE = !!window.NSG_BAKE;
 const WB = { s: 34.68, w: 136.86, n: 35.05, e: 137.43 }, WT = 100;   // 西尾市と となりの市町（岡崎・安城・碧南・幸田・蒲郡・高浜。region.js の範囲を含む）と、本店から15km（西は半田・武豊まで）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
+
+/* ---------- あしあと（歩いた道を地図に残す） ----------
+ * 歩いたマス（8m）を、区画（128×128マス）ごとのビット列で覚える。ゲームの記録とは別の localStorage（記録のかぎ＋_trail。大きくなるので）。
+ * 歩く地図では歩いたマスに足あと、せかいちずでは歩いたマスのある100mのマスに色をつける。数えるのは歩いた分だけ（game.js の trackWalk から trailWalk）
+ * 記録は「あるいて移動」と「操作して移動」で別（版ごとにも別） */
+const TRAIL = { key: '', map: new Map(), world: new Set(), dirty: 0, timer: 0 };
+const TRAIL_BYTES = CHUNK * CHUNK / 8;
+function trailWorldAdd(tx, ty) { const ll = toLatLng(tx + 0.5, ty + 0.5), w = llToW(ll.lat, ll.lng), wx = Math.floor(w.x), wy = Math.floor(w.y); if (wx >= 0 && wy >= 0 && wx < WW && wy < WH) TRAIL.world.add(wy * WW + wx); }
+function trailLoad() {
+  const key = G.stateKey + '_trail';
+  if (key === TRAIL.key) return;
+  trailSave();
+  TRAIL.key = key; TRAIL.map = new Map(); TRAIL.world = new Set();
+  const raw = store.get(key) || {};
+  for (const [k, b64] of Object.entries(raw)) {
+    const m = /^(-?\d+)_(-?\d+)$/.exec(k);
+    if (!m || typeof b64 !== 'string') continue;
+    let bin;
+    try { bin = atob(b64); } catch (e) { continue; }
+    if (bin.length !== TRAIL_BYTES) continue;
+    const a = new Uint8Array(TRAIL_BYTES);
+    for (let i = 0; i < TRAIL_BYTES; i++) a[i] = bin.charCodeAt(i);
+    TRAIL.map.set(k, a);
+    const cx = +m[1], cy = +m[2];
+    for (let i = 0; i < TRAIL_BYTES; i++) if (a[i]) for (let j = 0; j < 8; j++) if (a[i] & (1 << j)) { const n = i * 8 + j; trailWorldAdd(cx * CHUNK + n % CHUNK, cy * CHUNK + Math.floor(n / CHUNK)); }
+  }
+  dirty = true;
+}
+function trailSave() {
+  clearTimeout(TRAIL.timer); TRAIL.timer = 0;
+  if (!TRAIL.key || !TRAIL.dirty) return;
+  const out = {};
+  for (const [k, a] of TRAIL.map) { let bin = ''; for (let i = 0; i < a.length; i += 4096) bin += String.fromCharCode.apply(null, a.subarray(i, i + 4096)); out[k] = btoa(bin); }
+  if (store.set(TRAIL.key, out)) TRAIL.dirty = 0;
+}
+function trailHas(tx, ty) {
+  const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), a = TRAIL.map.get(cx + '_' + cy);
+  if (!a) return false;
+  const n = (ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK);
+  return !!(a[n >> 3] & (1 << (n & 7)));
+}
+function trailSet(tx, ty) {   // はじめて歩いたマスなら true
+  const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), k = cx + '_' + cy;
+  let a = TRAIL.map.get(k);
+  if (!a) { a = new Uint8Array(TRAIL_BYTES); TRAIL.map.set(k, a); }
+  const n = (ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK);
+  if (a[n >> 3] & (1 << (n & 7))) return false;
+  a[n >> 3] |= 1 << (n & 7);
+  trailWorldAdd(tx, ty);
+  return true;
+}
+// 2つの位置のあいだを歩いた：あいだのマスをぜんぶ足あとにして、はじめて歩いたマスの数を返す（GPS は数十mおきなので、線でつなぐ）
+function trailWalk(lat1, lng1, lat2, lng2) {
+  trailLoad();
+  const a = toTile(lat1, lng1), b = toTile(lat2, lng2);
+  let x = Math.floor(a.x), y = Math.floor(a.y);
+  const x2 = Math.floor(b.x), y2 = Math.floor(b.y), dx = Math.abs(x2 - x), dy = -Math.abs(y2 - y), sx = x < x2 ? 1 : -1, sy = y < y2 ? 1 : -1;
+  if (dx > 80 || -dy > 80) return 0;   // 640m より遠い1歩は数えない（ワープ・GPS の飛び）
+  let err = dx + dy, fresh = 0;
+  for (;;) {
+    if (trailSet(x, y)) fresh++;
+    if (x === x2 && y === y2) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x += sx; }
+    if (e2 <= dx) { err += dx; y += sy; }
+  }
+  if (fresh) {
+    TRAIL.dirty += fresh; dirty = true;
+    if (TRAIL.dirty >= 40) trailSave(); else if (!TRAIL.timer) TRAIL.timer = setTimeout(trailSave, 8000);
+  }
+  return fresh;
+}
+addEventListener('pagehide', trailSave);
+document.addEventListener('visibilitychange', () => { if (document.hidden) trailSave(); });
+// 足あとの絵：マスごとに向きと位置を少しずらした2つの足（地面の色に合わせて、明るい地面にはこげ茶・暗い地面には白っぽく）
+const TRAIL_DARK = new Set([C.H, C.A, C.W, C.M, C.L, C.B]);
+function drawFoot(code, tx, ty, X, Y, T) {
+  const u = T / 16, h = ((tx * 73856093) ^ (ty * 19349663)) >>> 0, ox = (h % 5) - 2, oy = ((h >>> 3) % 5) - 2, flip = (h >>> 6) & 1;
+  ctx.fillStyle = TRAIL_DARK.has(code) ? 'rgba(255,248,230,.55)' : 'rgba(70,45,25,.5)';
+  for (const [fx, fy] of flip ? [[5, 4], [9, 8]] : [[9, 4], [5, 8]]) {
+    ctx.fillRect(X + Math.round((fx + ox) * u), Y + Math.round((fy + oy) * u), Math.ceil(2 * u), Math.ceil(3 * u));
+    ctx.fillRect(X + Math.round((fx + ox) * u), Y + Math.round((fy + oy - 1.5) * u), Math.ceil(2 * u), Math.ceil(u));   // つま先
+  }
+}
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
 // 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
 const WORLD_KEY = 'nsg_world8', WORLD_FILE = 'nishio-go/world.json';
@@ -1560,9 +1644,14 @@ function npcTile(n) {
   return t;
 }
 const npcAt = (tx, ty) => (G.npcs || []).find(n => { const t = npcTile(n); return t.x === tx && t.y === ty; });
+// 話しかけた人の頭の上に、ぽんと気持ちの吹き出し（はじめて会った人は「！」、2回目からは「♪」か「♥」。1.6秒）
+const npcEmotes = new Map();
+const EMOTE_PIX = { '!': ['..#..', '..#..', '..#..', '.....', '..#..'], '♪': ['...##', '..#.#', '..#..', '.##..', '.##..'], '♥': ['.#.#.', '#####', '#####', '.###.', '..#..'] };
 function openNpc(n) {
+  const first = !G.npcMet(n.id);
   const r = G.talkNpc(n.id);
   if (!r) return;
+  npcEmotes.set(n.id, { t: performance.now(), k: first ? '!' : (n.id.length + G.state.met.length) % 2 ? '♪' : '♥' });
   $('pxInfoBody').innerHTML = r.html; $('pxInfo').hidden = false;
 }
 const heroSprites = {};
@@ -4646,6 +4735,7 @@ function frame(now) {
   giantHits = [];
   poiHits = [];
   refreshSeason(now);
+  trailLoad();   // あしあとの記録（あるいて移動／操作して移動・版で別）
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
   if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
   rec = window.NSG_GODOT && NSG_GODOT.on() ? NSG_GODOT.rec : null;   // Godot で描く：ここから frame の終わりまで、描く命令を記録する
@@ -4694,6 +4784,7 @@ function frame(now) {
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
+    if (TRAIL.map.size && trailHas(tx, ty)) drawFoot(code, tx, ty, X, Y, T);   // 歩いた道の足あと
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
       const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);
@@ -4759,7 +4850,16 @@ function frame(now) {
     const t = npcTile(n), sx = Math.round(ox + t.x * T), sy = Math.round(oy + t.y * T - T * 0.25);
     if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
     ctx.drawImage((npcSprites[n.look] || npcSprites.man)[f], sx, sy, T, T);
-    if (!G.npcMet(n.id)) {   // 💬（白い吹き出し）
+    const em = npcEmotes.get(n.id), age = em ? performance.now() - em.t : 1e9;
+    if (age < 1600) {   // 気持ちの吹き出し（ぽんと上がって、少しゆれる）
+      const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.5), by = sy - Math.round(T * 0.55) - Math.round(Math.min(1, age / 150) * 3 * u) + (Math.floor(age / 300) % 2 ? u : 0);
+      ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 9 * u);
+      ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 7 * u); ctx.fillRect(bx + u, by + 7 * u, 2 * u, 2 * u);
+      ctx.fillStyle = em.k === '♥' ? '#e0405a' : '#222';
+      EMOTE_PIX[em.k].forEach((row, y) => { for (let x = 0; x < 5; x++) if (row[x] === '#') ctx.fillRect(bx + (x + 1) * u, by + (y + 1) * u, u, u); });
+      dirty = true;
+    } else if (em) npcEmotes.delete(n.id);
+    else if (!G.npcMet(n.id)) {   // 💬（白い吹き出し）
       const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.55), by = sy - Math.round(T * 0.45) - (f ? u : 0);
       ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 6 * u);
       ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 4 * u); ctx.fillRect(bx + u, by + 4 * u, 2 * u, 2 * u);
@@ -5032,6 +5132,20 @@ function drawWorld(now, w, h, dpr) {
       }
       drawWaterCorners(x0, y0, x1, y1, ox, oy, T, f);
     } finally { gridAt = codeAt; nbrCur = nbrCache; }
+  }
+  // 歩いた所（あしあとのある100mのマス）に、もも色と足あと（地図の黄色・緑・青と まぎれない色）
+  if (TRAIL.world.size) {
+    ctx.fillStyle = 'rgba(255,80,150,.5)';
+    for (const i of TRAIL.world) {
+      const x = i % WW, y = (i - x) / WW;
+      if (x < x0 - 1 || x > x1 || y < y0 - 1 || y > y1) continue;
+      ctx.fillRect(ox + x * T, oy + y * T, T, T);
+    }
+    if (T >= 12) for (const i of TRAIL.world) {
+      const x = i % WW, y = (i - x) / WW;
+      if (x < x0 - 1 || x > x1 || y < y0 - 1 || y > y1) continue;
+      drawFoot(C.H, x, y, ox + x * T, oy + y * T, T);
+    }
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();
@@ -5710,7 +5824,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; },
+window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

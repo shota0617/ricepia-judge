@@ -1498,9 +1498,36 @@ function critterMet(c) {
   if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); badgesSoon(); }   // そろったら賞状
   save();
   track('critter_meet', { critter: c.id, first, mode: demo ? 'play' : 'walk' });
-  toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
+  if (!meetShow(c, first)) toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
   return c;
 }
+// 出会いの場面（昔のドット絵RPGの、敵に出会ったときのしくみ）：画面が2回 ちかっと光り、黒いウィンドウに 生きものの絵と、1文字ずつ出る ことば。
+// 歩く地図を見ているときだけ（ごほうびの画面が出ているときは、いつもの知らせ）。タップで文字を全部出す・もう一度で閉じる。読み終えて3秒で閉じる
+function meetShow(c, first) {
+  const box = $('meetBox'), P = window.nishioPixel, spr = P && P.critterSprite(c.id);
+  if (!box || !spr || !document.body.classList.contains('px') || rewardBusy()) return false;
+  const x = $('meetArt').getContext('2d');
+  x.clearRect(0, 0, 16, 16); x.drawImage(spr, 0, 0);
+  const text = [`${c.name}に であった！`, c.say, ...(first ? [`📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}`] : [])].join('\n'), chars = [...text];
+  const m = meetShow.m = { n: 0, chars, done: false };
+  clearInterval(meetShow.iv); clearTimeout(meetShow.t);
+  $('meetText').textContent = '';
+  document.body.classList.remove('meet-flash'); void document.body.offsetWidth; document.body.classList.add('meet-flash');
+  sound.jingle('eye');
+  setTimeout(() => {
+    box.hidden = false;
+    meetShow.iv = setInterval(() => { if (meetShow.m !== m) return; m.n++; meetType(m); }, 45);
+  }, 420);   // 光りおわってから
+  return true;
+}
+function meetType(m) {
+  $('meetText').textContent = m.chars.slice(0, m.n).join('');
+  if (m.n < m.chars.length) return;
+  clearInterval(meetShow.iv); m.done = true;
+  meetShow.t = setTimeout(meetHide, 3000);
+}
+function meetHide() { clearInterval(meetShow.iv); clearTimeout(meetShow.t); meetShow.m = null; $('meetBox').hidden = true; }
+$('meetBox').addEventListener('click', () => { const m = meetShow.m; if (!m) return meetHide(); if (m.done) meetHide(); else { m.n = m.chars.length; meetType(m); } });
 // しらべる：聞いた名所に着いたら、名所の窓の「🔍 しらべる」で、まだ知らない まちメモが1つ見つかる（すすめた人のことば（hintSay）が手がかり）。
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
@@ -3129,6 +3156,45 @@ $('bgmToggle').addEventListener('change', e => sound.toggle(e.target.checked));
 $('bgmNext').addEventListener('click', () => sound.next());
 // アクセス解析（analytics.js）のオン・オフ。切り替えは次に開いたときから
 $('anaToggle').checked = !store.get('nsg_noanalytics', false);
+// ひきつぎの あいことば（昔のRPGの、続きから遊ぶための文字のしくみ）：いまの記録を縮めて文字にし、別の端末で はりつけると続きから。
+// 中身は記録（S）と はじめた日。縮めるのは deflate（CompressionStream がない古いブラウザでは そのまま）
+const CODE_HEAD = 'NSG1';
+const b64url = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
+const unb64url = t => Uint8Array.from(atob(t.replace(/-/g, '+').replace(/_/g, '/')), ch => ch.charCodeAt(0));
+async function pipeBytes(u8, stream) { return new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(stream)).arrayBuffer()); }
+async function makeCode() {
+  const raw = new TextEncoder().encode(JSON.stringify({ s: S, started: store.get('nsg_started', null) }));
+  const z = window.CompressionStream ? await pipeBytes(raw, new CompressionStream('deflate-raw')) : null;
+  return `${CODE_HEAD}${z ? 'z' : 'p'}.${b64url(z || raw)}`;
+}
+async function readCode(code) {
+  const m = code.replace(/\s+/g, '').match(/^NSG1([zp])\.([\w-]+)$/);
+  if (!m) return null;
+  try {
+    let u8 = unb64url(m[2]);
+    if (m[1] === 'z') { if (!window.DecompressionStream) return null; u8 = await pipeBytes(u8, new DecompressionStream('deflate-raw')); }
+    const o = JSON.parse(new TextDecoder().decode(u8));
+    return o && o.s && o.s.v === 1 && typeof o.s.points === 'number' ? o : null;
+  } catch (e) { return null; }
+}
+$('codeMake').addEventListener('click', async () => {
+  $('codeBox').value = await makeCode();
+  $('codeCopy').hidden = false;
+  track('code_make', { mode: demo ? 'play' : 'walk' });
+});
+$('codeCopy').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('codeBox').value); toast('🔑 あいことばをコピーしました。新しい端末の せってい に はりつけてね'); }
+  catch (e) { $('codeBox').select(); toast('🔑 あいことばを えらんだので、コピーしてね'); }
+});
+$('codeLoad').addEventListener('click', async () => {
+  const o = await readCode($('codeBox').value);
+  if (!o) { toast('🔑 あいことばが ちがうようです（さいごまで コピーできているか たしかめてね）'); return; }
+  if (!confirm(`この端末の いまの記録（${S.points}pt）は、あいことばの記録（${o.s.points}pt・めぐった所 ${Object.keys(o.s.visits || {}).length}か所）に おきかわります。よろしいですか？`)) return;
+  store.set(stateKey(), o.s);
+  if (o.started && !store.get('nsg_started', null)) store.set('nsg_started', o.started);
+  track('code_load', { mode: demo ? 'play' : 'walk' });
+  location.reload();
+});
 $('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg_noanalytics', e.target.checked ? '0' : '1'); } catch (err) { /* noop */ } toast(e.target.checked ? '📊 アクセス解析をオンにしました（次に開いたときから）' : '📊 アクセス解析をオフにしました（次に開いたときから送りません）'); });
 sound.apply();
 // 文字を多めに出す（オフ＝文字を少なくしてドット絵。はじめはオフ）

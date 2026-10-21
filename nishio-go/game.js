@@ -1682,6 +1682,10 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    ...areas.filter(a => SEAL_BY[a.id]).map(a => {   // 地区のしるし：その地区を5か所めぐると、地区の人が認めてくれる（制覇の手前の目標）
+      const p = areaProgress(a.id), goal = Math.min(SEAL_AT, Math.max(p.total, 1)), by = sealBy(a.id);
+      return { id: 'seal-' + a.id, i: '🔖', n: `${a.name}のしるし`, d: `${a.name}の注目スポットを${goal}か所めぐって、${by ? by.name : '地区の人'}に認めてもらう`, cur: p.done, goal, ready: spotMeta.loaded && p.total > 0 };
+    }),
     ...areas.map(a => {
       const p = areaProgress(a.id);
       return { id: 'area-' + a.id, i: a.icon || '🗾', n: `${a.name}制覇`, d: `${a.name}の注目スポット${p.total}か所すべて`, cur: p.done, goal: Math.max(p.total, 1), ready: spotMeta.loaded && p.total > 0 };
@@ -1708,7 +1712,14 @@ function checkBadges() {
   fresh.forEach(b => S.badges.push(b.id));
   save();
   toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
+  for (const b of fresh.filter(x => x.id.startsWith('seal-'))) {   // 地区のしるしは、その地区の人が手わたす
+    const a = areas.find(x => 'seal-' + x.id === b.id), by = a && sealBy(a.id);
+    if (by) toastAfter(`🔖 ${by.name}「${a.name}を${b.goal}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`);
+  }
 }
+// 地区のしるし：地区ごとに、しるしをくれる人（npcs.js の id）。昔のドット絵RPGの、町ごとに認めてもらって集める しくみ
+const SEAL_AT = 5, SEAL_BY = { nishio: 'castle-guide', isshiki: 'sakana-okami', kira: 'kira-history', hazu: 'sangane-hiker', sakushima: 'island-granny' };
+const sealBy = id => (window.NISHIO_NPCS || []).find(n => n.id === SEAL_BY[id]);
 
 /* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら まちメモ ----------
    遊び方は3つ。どれにも出番があるように、集まる速さに差をつけている（3分ずつ遊ばせて確かめた目安）
@@ -2160,7 +2171,7 @@ function renderBadges() {
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
     const done = got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
     const pct = Math.min(100, (b.cur / b.goal) * 100);
-    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
+    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : b.id.startsWith('seal-') ? 'scroll' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
       ${done ? '' : `<div class="bp"><i style="width:${pct}%"></i></div>`}</div>`;
     return `<div class="badge ${done ? 'got' : 'locked'}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
       ${done ? '<small>獲得済み</small>' : `<div class="bp"><i style="width:${pct}%"></i></div><small>${Math.min(b.cur, b.goal)}/${b.goal}</small>`}</div>`;

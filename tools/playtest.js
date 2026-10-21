@@ -1,6 +1,6 @@
 // にしおさんぽGO を通しでプレイして確かめる台本：node tools/playtest.js [出力フォルダ]
 // ヘッドレス Chromium（スマホの画面 390×780）で、はじめの画面 → 操作して移動（スティック・地面をタップ）で3か所めぐり → 当店の案内 →
-// あるいて移動（位置情報）→ せかいちず → きろく・バッジ、の順に遊び、スクリーンショットと結果（playtest.json）を残す。
+// あるいて移動（位置情報）→ せかいちず → きろく・バッジ → 呼びとめ、の順に遊び、スクリーンショットと結果（playtest.json）を残す。
 // 地図は前もって作った nishio-go/world.json と nishio-go/chunks/ を使う（Overpass と標高タイルには問い合わせない）。
 // 環境変数：CHROMIUM=Chromium の場所（省略時は Playwright の既定）、LEAFLET_DIR=Leaflet の dist（ネットにつながらないとき）
 const { chromium } = require('playwright');
@@ -20,6 +20,8 @@ async function newPage(browser, opts = {}) {
     localStorage.setItem('nsg_auto', 'false');   // おまかせ歩きは止めて、台本どおりに歩く
     if (!localStorage.getItem('nsg_view')) { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); }
     window.__played = [];   // 鳴らした音（効果音・BGM）を記録する
+    window.__rewards = [];   // 出たごほうびの知らせ（あとから出たものに消されても、出たことは分かるように）
+    document.addEventListener('DOMContentLoaded', () => { const r = document.getElementById('reward'); new MutationObserver(() => { if (r.innerText) window.__rewards.push(r.innerText.replace(/\s+/g, ' ').slice(0, 80)); }).observe(r, { childList: true }); });
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () { window.__played.push(this.src.split('/').pop()); return play.call(this); };
   });
@@ -198,8 +200,9 @@ async function walkTo(page, id) {
   // チェックインのほうびの知らせは、タップで消える（消えるまで、下の地図にはタップが届かない）
   R.checks.rewardTapClose = await page.evaluate(() => { const r = document.getElementById('reward'); if (!r.classList.contains('show')) return false; r.click(); return !r.classList.contains('show') && !r.innerHTML; });
   // おみやげ袋：3か所めぐるあいだに 1km 以上歩くので、はじめの袋が開く（ほかのごほうびが出ている間は待ち、消えたら開く）
-  await page.waitForTimeout(1500);
-  R.checks.bagOpened = await page.evaluate(() => nishioGo.state.log.some(l => l.type === 'bag') && /おみやげ袋/.test(document.getElementById('reward').innerText));
+  // 袋のごほうびは、ドット絵のシートを読みこんでから出るので、出るまで待つ（8秒まで）。歩き方しだいで店に着く前に開いて、
+  // チェックインの知らせに消されていることもあるので、いま出ているかではなく、一度出たかを見る
+  R.checks.bagOpened = await page.waitForFunction(() => nishioGo.state.log.some(l => l.type === 'bag') && window.__rewards.some(t => /おみやげ袋をあけた/.test(t)), null, { timeout: 8000 }).then(() => true, () => false);
   await shot(page, '03b-bag-open');
   R.checks.cooldown = await page.evaluate(() => document.getElementById('spinBtn').hidden || !document.getElementById('spinSub').textContent.includes('タップして'));
   // 当店の「当店」の札をタップして、お店の案内（サイト・道案内）が開くか
@@ -242,6 +245,40 @@ async function walkTo(page, id) {
   R.checks.firstPickKept = await page.evaluate(id => nishioGo.state.dots.includes(id), R.checks.firstPickId);
   await page.evaluate(() => document.getElementById('badgeHead').scrollIntoView()); await page.waitForTimeout(300); await shot(page, '07-badges');   // バッジは きろく の下
   await page.click('[data-tab=map]'); await page.waitForTimeout(300);
+  // 呼びとめ：まだ話していない人の まっすぐ5マス先に立ち、1歩近づくと「！」→ その人が歩いてきて話しかける（歩いてくる間は動けない）
+  const eye = await page.evaluate(() => {
+    const P = nishioPixel, G = nishioGo, C = P.C, BL = new Set([C.A, C.B, C.M, C.X]);
+    for (const n of G.npcs.filter(x => !G.npcMet(x.id))) {
+      const q = P.npcTile(n);
+      for (const [ux, uy, key] of [[0, 1, 'ArrowUp'], [0, -1, 'ArrowDown'], [1, 0, 'ArrowLeft'], [-1, 0, 'ArrowRight']]) {
+        const line = [1, 2, 3, 4, 5].map(i => [q.x + ux * i, q.y + uy * i]);
+        const others = G.npcs.filter(o => o !== n).map(o => P.npcTile(o));
+        if (line.some(([x, y]) => BL.has(P.codeAt(x, y) & 31) || others.some(o => Math.abs(o.x - x) + Math.abs(o.y - y) <= 5))) continue;
+        const ll = P.toLatLng(line[4][0] + 0.5, line[4][1] + 0.5);
+        G.moveTo(ll.lat, ll.lng);
+        return { id: n.id, name: n.name, key, met0: G.state.met.length };
+      }
+    }
+    return null;
+  });
+  if (eye) {
+    await page.waitForTimeout(700);
+    R.checks.eyeNotYet = await page.evaluate(() => document.getElementById('pxInfo').hidden);   // 5マス先では まだ気づかない
+    await page.keyboard.press(eye.key); await page.waitForTimeout(250);
+    const at = await page.evaluate(() => [nishioGo.me.lat, nishioGo.me.lng]);
+    await page.keyboard.press(eye.key); await page.waitForTimeout(150);
+    R.checks.eyeLocked = await page.evaluate(at => nishioGo.me.lat === at[0] && nishioGo.me.lng === at[1], at);
+    await shot(page, '07b-eye');
+    await page.waitForTimeout(1600);
+    R.checks.eyeTalk = await page.evaluate(e => !document.getElementById('pxInfo').hidden && document.getElementById('pxInfoBody').innerText.includes(e.name) && nishioGo.state.met.length === e.met0 + 1 && nishioGo.npcMet(e.id), eye);
+    // 聞いた名所：その人がすすめた名所（人なら、その人が立っている名所）が、まだ行っていなければ きろく に影の絵で載る
+    R.checks.heard = await page.evaluate(() => { const g = nishioGo.guide, h = nishioGo.state.heard || {}; return !g || Object.values(h).some(x => x.by) && Object.keys(h).length > 0; });
+    await page.evaluate(() => document.querySelector('#pxInfo [data-close]').click()); await page.waitForTimeout(300);
+    await page.keyboard.press(eye.key === 'ArrowUp' ? 'ArrowDown' : eye.key === 'ArrowDown' ? 'ArrowUp' : eye.key === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft'); await page.waitForTimeout(300);
+    R.checks.eyeFree = await page.evaluate(at => nishioGo.me.lat !== at[0] || nishioGo.me.lng !== at[1], at);   // 話が終わったら また歩ける
+  } else R.checks.eyeTalk = 'no-npc';
+  // 生きもの手帳：田んぼで出会うと手帳に載り、その絵がある
+  R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   R.checks.operateFinal = await state(page);
   // せってい の「文字を多めに出す」で、文字が出る（もどすと また少なく）
   await page.click('[data-tab=settings]'); await page.click('#textToggle'); await page.waitForTimeout(200);
@@ -278,6 +315,9 @@ async function walkTo(page, id) {
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
+  need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');
+  need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');

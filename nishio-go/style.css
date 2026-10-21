@@ -461,6 +461,9 @@ body.px .guide small{color:#ddd}
 .reward .rw.hero .frame{display:inline-block;padding:6px;border-radius:12px;background:linear-gradient(135deg,#ffe9a8,#c89a1a 50%,#ffe9a8);box-shadow:0 0 18px rgba(255,213,79,.7)}
 .reward .rw.hero .dot-card{width:192px;height:192px;margin:0;border-radius:8px;box-shadow:none}
 .reward .rw.hero .banner{display:inline-block;margin-top:6px;padding:4px 16px;border-radius:999px;background:#2f6f6a;color:#fff;font-weight:800;font-size:15px;box-shadow:0 0 0 2px #e9c46a}
+.list .ico.heard img{filter:brightness(0) opacity(.35)}   /* 聞いた名所（まだ行っていない）は影の絵 */
+.reward .rw.hero .place{margin:0 0 8px;font-size:17px;font-weight:900;color:var(--ink);line-height:1.3}   /* どこで何があったか（いちばん上） */
+.reward .rw.hero .banner img.pi{width:20px;height:20px;vertical-align:-4px;margin-right:2px}
 .reward .rw.hero .sub{margin-top:6px;font-size:13px;color:var(--sub)}
 .reward .rw.hero .sub b{color:var(--gold);font-size:18px;margin-left:2px}
 .reward .ribbon{position:absolute;top:10px;left:-8px;background:#ffd54f;color:#5d3a1a;font-weight:900;font-size:13px;padding:3px 14px 3px 10px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);box-shadow:0 2px 0 rgba(0,0,0,.2);z-index:2}

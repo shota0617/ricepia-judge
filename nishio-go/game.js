@@ -1281,11 +1281,24 @@ const HINT_SAY = {
   monk: p => `${p}に参られたら、心しずかに よう見てごらんなさい。気づくことがありますよ。`,
 };
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
+// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）はのぞき、①その名所の行事 ②その名所の名物 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
+function searchFact(s) {
+  const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}`);
+  const inArea = id => { const x = spots.find(y => y.id === id); return !!x && !!s.area && x.area === s.area; };
+  const tiers = [
+    k => EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === s.id),
+    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)),
+    k => !!s.area && k.startsWith(`a:${s.area}:`),
+    k => k.startsWith('s:') && inArea(k.slice(2)),
+  ];
+  for (const t of tiers) { const g = fresh.filter(t); if (g.length) return g[hashStr('search:' + s.id) % g.length]; }
+  return pickFact({ id: 'search:' + s.id, lat: s.lat, lng: s.lng, at: s.name });
+}
 function searchSpot(s) {
   if (!canSearch(s)) return;
   if (!inReach(s)) { toast(`🔍 ${s.name}の近くまで行って しらべよう`); return; }
   S.heard[s.id].found = true;
-  const k = pickFact({ id: 'search:' + s.id, lat: s.lat, lng: s.lng, at: s.name }), fresh = !!k && !S.facts.includes(k);
+  const k = searchFact(s), fresh = !!k && !S.facts.includes(k);
   if (fresh) S.facts.push(k);
   const lvUp = gainPoints(SEARCH_PTS);
   S.log.unshift({ type: 'search', t: Date.now(), pts: SEARCH_PTS, name: `しらべた：${s.name}`, icon: '🔍' });

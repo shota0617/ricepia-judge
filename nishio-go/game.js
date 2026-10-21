@@ -1763,12 +1763,15 @@ function badgesSoon() {
 // 予約したときの記録（操作して移動／あるいて移動）に結びつけ、待っている間に記録が切りかわったら取りやめる
 function endingWhenFree(key = stateKey()) {
   const w = endingWhenFree;
-  if (w.waiting || $('reward').querySelector('.ending') || stateKey() !== key) return;   // もう待っている・もう出ている・予約した記録から切りかわった
-  w.waiting = true;
+  if ($('reward').querySelector('.ending') || stateKey() !== key) return;   // もう出ている・予約した記録から切りかわった
+  if (w.key === key) return;   // 同じ記録で もう待っている
+  const gen = w.gen = (w.gen || 0) + 1;   // 別の記録の待ちがあれば、新しい予約に置きかえる（古い待ちは次に見たとき終わる）
+  w.key = key;
   (function go() {
-    if (stateKey() !== key || !S.cleared) { w.waiting = false; return; }
+    if (gen !== w.gen) return;
+    if (stateKey() !== key || !S.cleared) { w.key = null; return; }
     if (rewardBusy()) return setTimeout(go, 500);
-    w.waiting = false; showEnding();
+    w.key = null; showEnding();
   })();
 }
 function clearRecord() {

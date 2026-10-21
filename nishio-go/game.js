@@ -479,6 +479,8 @@ const npcMet = id => (S.met || []).includes(id);
 // area があるのは となりの市町の人（バッジを「西尾の人」と分ける）
 const NPC_NISHIO = (window.NISHIO_NPCS || []).filter(n => !n.area), NPC_NEAR = (window.NISHIO_NPCS || []).filter(n => n.area);
 // 話す中身：その人のことばと、その場所で今月・来月にある行事の話
+// npcJust：いまの会話で起きたこと（しるしを渡した など）の、その人のことば。話のページに入れる（ふだんの表示では、知らせは絵だけになるので）。次に話しかけたら消す
+const npcJust = new Map();
 function npcPages(n) {
   const pages = n.lines.slice(), now = new Date();
   if (KO) {
@@ -494,6 +496,7 @@ function npcPages(n) {
     : wx.kind === 'sunny' ? 'ええ天気だねえ。歩くのにちょうどええわ。' : 'くもっとるけど、歩くにはちょうどええね。');
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
+  if (npcJust.has(n.id)) pages.splice(1, 0, npcJust.get(n.id));   // あいさつのページの次に
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
   const hid = Object.keys(S.heard || {}).filter(id => S.heard[id].byId === n.id && !S.heard[id].found).sort((a, b) => S.heard[b].t - S.heard[a].t)[0];   // いちばん新しく すすめた名所
   const hs = hid && spots.find(x => x.id === hid);
@@ -550,8 +553,9 @@ function talkNpc(id, page = 0) {
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   // GPS の精度が悪いあいだは、話はできても行き先は変えない（精度が上がってから話しかければ、着いたことになる）
   if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
+  if (page === 0) npcJust.delete(n.id);
   const seal = page === 0 ? sealGive(n) : '';   // 地区のしるし（その地区を5か所めぐってから、この人と話した）
-  if (seal) { brief.icons += '🔖'; say.push(seal); }
+  if (seal) { brief.icons += '🔖'; say.push(seal); const w = seal.match(/「(.*)」/); if (w) npcJust.set(n.id, `🔖 ${w[1]}`); }
   if (page === 0 && clearGive(n)) { brief.icons += '🏯'; say.push('🏯 西尾さんぽ 殿堂入り！'); }   // 5つのしるしを そろえて、この人と話した（クリア）
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     const arrived = S.guide && S.guide.kind === 'npc' && S.guide.id === n.id ? S.guide : null;
@@ -919,6 +923,8 @@ function checkin() {
 
 /* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
+const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）
+const spotShizen = s => SHIZEN.filter(x => x.spots.some(id => 'f-' + id === s.id));
 // こよみ（season.js：季節・二十四節気・田んぼのようす・見ごろ・時間帯・土用の丑の日）
 const KO = window.NISHIO_SEASON || null;
 // 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
@@ -1035,6 +1041,7 @@ function factPool() {   // まちメモ：地区の豆知識・紹介文、注�
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
   for (const e of EVENTS) if (e.desc) m.set(`e:${e.id}`, `${e.name}（${e.when}・${e.place}）：${e.desc}`);
   for (const x of MEIBUTSU) x.facts.forEach((f, i) => m.set(`m:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
+  for (const x of SHIZEN) x.facts.forEach((f, i) => m.set(`z:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   for (const t of MACHI) t.facts.forEach((f, i) => m.set(`t:${t.id}:${i}`, `${t.icon} ${t.city}：${f}`));
   return m;
 }
@@ -1049,7 +1056,7 @@ function pickFact(c) {
   const machi = machiAt(c), here = cityAt(c.lat, c.lng), hereNear = !!here && here.name !== '西尾市';
   const tiers = [
     k => machi && k.startsWith(`t:${machi.id}:`),
-    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`))),
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`)) || spotShizen(near).some(x => k.startsWith(`z:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
     k => !k.startsWith('t:') && factNear(k) === hereNear,   // 西尾市にいるなら西尾の話、となりの市町にいるなら となりの市町の話
     k => !k.startsWith('t:'),   // まわりのまち（刈谷・大府など）の話は、そのまちにいるときだけ（西尾で大府の話が出ないように）
@@ -1065,6 +1072,7 @@ function factNear(k) {
   if (kind === 's') return spotNear(id);
   if (kind === 'e') { const e = EVENTS.find(x => x.id === id); return !!e && (e.spot ? spotNear(evSpotId(e)) : areaNear(e.area)); }   // 会場のない行事は、行事の area で
   if (kind === 'm') return !!(MEIBUTSU.find(x => x.id === id) || {}).area;
+  if (kind === 'z') return false;   // 西尾の海と大地は、西尾市の話
   return true;
 }
 const knownFacts = () => { const pool = factPool(); return S.facts.filter(k => pool.has(k)).length; };
@@ -1352,13 +1360,13 @@ function critterMet(c) {
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
-// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）はのぞき、①その名所の行事 ②その名所の名物 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
+// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）はのぞき、①その名所の行事 ②その名所の名物・海と大地の話 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
 function searchFact(s) {
   const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}`);
   const inArea = id => { const x = spots.find(y => y.id === id); return !!x && !!s.area && x.area === s.area; };
   const tiers = [
     k => EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === s.id),
-    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)),
+    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)) || spotShizen(s).some(x => k.startsWith(`z:${x.id}:`)),
     k => !!s.area && k.startsWith(`a:${s.area}:`),
     k => k.startsWith('s:') && inArea(k.slice(2)),
   ];
@@ -1732,7 +1740,7 @@ function checkBadges() {
   if (fresh.length) {
     fresh.forEach(b => S.badges.push(b.id));
     save();
-    toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
+    toastAfter(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);   // いま出ている知らせ（生きものに出会った など）が消えてから
     if (fresh.some(b => b.id === 'critterall')) toastAfter(`📜 ${(sealBy('nishio') || {}).name || 'ガイドさん'}「生きもの手帳が ぜんぶ そろったじゃん！ 1年 歩きとおした あかしだに。賞状を おくるでね」`);   // 図鑑がそろったら 賞状（昔のドット絵RPGの しくみ）
   }
   sealHints();
@@ -1771,7 +1779,7 @@ function badgesSoon() {
   const key = stateKey();
   setTimeout(() => { if (stateKey() === key) checkBadges(); }, 800);
 }
-// ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
+// ごほうびの画面が出ている・絵の読みこみを待っている・人の話の窓が開いている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように。ガイドさんのことばを読む前に かぶさらないように）
 // 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）。
 // 予約したときの記録（操作して移動／あるいて移動）に結びつけ、待っている間に記録が切りかわったら取りやめる
 function endingWhenFree(key = stateKey()) {
@@ -1783,7 +1791,7 @@ function endingWhenFree(key = stateKey()) {
   (function go() {
     if (gen !== w.gen) return;
     if (stateKey() !== key || !S.cleared) { w.key = null; return; }
-    if (rewardBusy()) return setTimeout(go, 500);
+    if (rewardBusy() || !$('pxInfo').hidden) return setTimeout(go, 500);   // 話の窓（しるしを渡すことば）を読んで閉じてから
     w.key = null; showEnding();
   })();
 }
@@ -1953,8 +1961,16 @@ function toastHold() {
   t.classList.remove('show'); clearTimeout(toastTimer);
 }
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
+// 待っている知らせが いくつあっても、来た順に1つずつ（同時に出して、あとのものが上書きしないように）
 function toastAfter(msg) {
-  setTimeout(function show() { if ($('toast').classList.contains('show')) setTimeout(show, 600); else toast(msg); }, 150);
+  const afterQ = toastAfter.q || (toastAfter.q = []);   // 読みこみの とちゅうで呼ばれても使えるよう、関数に持たせる
+  afterQ.push(msg);
+  if (afterQ.length > 1) return;   // もう待っている（前のものを出したあとに出す）
+  setTimeout(function show() {
+    if ($('toast').classList.contains('show')) return setTimeout(show, 600);
+    toast(afterQ.shift());
+    if (afterQ.length) setTimeout(show, 600);
+  }, 150);
 }
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）

@@ -280,6 +280,12 @@ async function loadAreas() {
   if (spotMeta.loaded) renderLog();
 }
 // 地区ごとの注目スポット数と、めぐった数
+// その位置の地区：いちばん近い注目スポットの地区（ふつうのスポットには area がない）
+function areaNear(p) {
+  let best = null, bd = Infinity;
+  for (const x of spots) if (x.featured && x.area) { const d = dist(p, x); if (d < bd) { bd = d; best = x; } }
+  return best ? best.area : '';
+}
 function areaProgress(id) {
   const list = spots.filter(s => s.featured && s.area === id);
   return { list, total: list.length, done: list.filter(s => S.visits[s.id]).length };
@@ -869,7 +875,7 @@ function checkin() {
     track('campaign_bonus', { campaign: c.id, mode: demo ? 'play' : 'walk' });
   }
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
-  if (!v) praiseCheck(s.area);
+  if (!v) praiseCheck(s.area || areaNear(s));   // ふつうのスポットには地区がないので、いちばん近い注目スポットの地区で
   const jumpNew = s.featured && !s.shop && !featuredToday();   // きょう はじめての名所：ミニゲームがあそべるようになる
   const day = dayState();   // 今日のクエストの数え上げ
   day.checkins++;
@@ -1246,7 +1252,8 @@ function decideGuide(from) {
 function heardOf(g, n) {
   const to = g.kind === 'npc' ? placeNpcs().find(x => x.id === g.id) : null, id = to ? 'f-' + to.spot : g.kind === 'spot' ? g.id : null;
   const had = id && (S.heard || {})[id];
-  if (had && !had.byId && had.by === n.name) { had.byId = n.id; save(); }   // 前の版の記録（すすめた人の id がない）は、同じ人が またすすめたときに足す
+  // 同じ人が またすすめた（選び直しも）ときは、いちばん新しい すすめにする（手がかりのページが案内する名所）。前の版の記録（すすめた人の id がない）には id を足す
+  if (had && (had.byId === n.id || (!had.byId && had.by === n.name))) { had.byId = n.id; had.t = Date.now(); save(); }
   if (!id || S.visits[id] || had) return '';
   S.heard = { ...(S.heard || {}), [id]: { by: n.name, byId: n.id, t: Date.now() } };
   save();
@@ -2339,6 +2346,7 @@ $('pxToggle').addEventListener('change', e => { if (window.nishioPixel) nishioPi
   if (!s) return;
   follow = false;
   openTab('map');
+  if (document.body.classList.contains('px')) { $('pxInfoBody').innerHTML = popupHtml(s); $('pxInfo').hidden = false; return; }   // ドット絵の地図では、ふつうの地図は隠れているので、名所の窓を出す
   map.setView([s.lat, s.lng], 17);
   setTimeout(() => markers.get(s.id)?.openPopup(), 300);
 }));

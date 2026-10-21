@@ -7,7 +7,7 @@
 //    {"do":"goto","id":"chest"}, {"do":"auto","sec":30}, {"do":"close"}, {"do":"tap","sel":"[data-tab=log]"}, {"do":"wait","ms":800}, {"do":"eval","js":"nishioGo.state.points"}]
 //   start：「操作して遊ぶ」で始める／walk：矢印キーで n マス／goto：スポット・人（npc:id）・いちばん近いたからばこ まで道を探して歩く／
 //   auto：おまかせ歩きを sec 秒／close：開いている窓とごほうびの画面を閉じる／tap：画面の部品を押す／key：キーを押す／eval：ページの中で式を計算して log に残す
-// 環境変数：CHROMIUM・LEAFLET_DIR（tools/playtest.js と同じ）・PLAY_DATE（日付を固定。省略時は今の時刻）
+// 環境変数：CHROMIUM・LEAFLET_DIR（tools/playtest.js と同じ）・PLAY_DATE（日付を固定。省略時は今の時刻。固定すると時計が止まるので、おまかせ歩きの「少し休む」が終わらず歩かない。おまかせ歩きを見るときは付けない）
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { startServer } = require('./bake-common');

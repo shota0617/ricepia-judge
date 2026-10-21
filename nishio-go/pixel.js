@@ -708,15 +708,17 @@ function trailSet(tx, ty) {   // はじめて歩いたマスなら true
   return true;
 }
 // 2つの位置のあいだを歩いた：あいだのマスをぜんぶ足あとにして、はじめて歩いたマスの数を返す（GPS は数十mおきなので、線でつなぐ）
-function trailWalk(lat1, lng1, lat2, lng2) {
+// each(x, y)：あいだのマスごとに呼ぶ（あるいて移動の生きもの。true を返したら、その回はもう呼ばない）
+function trailWalk(lat1, lng1, lat2, lng2, each) {
   trailLoad();
   const a = toTile(lat1, lng1), b = toTile(lat2, lng2);
   let x = Math.floor(a.x), y = Math.floor(a.y);
   const x2 = Math.floor(b.x), y2 = Math.floor(b.y), dx = Math.abs(x2 - x), dy = -Math.abs(y2 - y), sx = x < x2 ? 1 : -1, sy = y < y2 ? 1 : -1;
   if (Math.hypot(dx, dy) > 80) return 0;   // 640m より遠い1歩は数えない（ワープ・GPS の飛び。ななめも まっすぐの距離で）
-  let err = dx + dy, fresh = 0;
+  let err = dx + dy, fresh = 0, stop = !each;
   for (;;) {
     if (trailSet(x, y)) fresh++;
+    if (!stop && each(x, y)) stop = true;
     if (x === x2 && y === y2) break;
     const e2 = 2 * err;
     if (e2 >= dy) { err += dy; x += sx; }
@@ -1652,6 +1654,9 @@ const CRITTER_ROWS = {
   kamo: ['................', '................', '................', '................', '................', '..........kkk...', '.........knnnk..', '.........knknkyy', '.........knnnk..', '...kkkkkkknnk...', '..knnNnnNnnnnk..', '.knnnnnnnnnnnk..', '..kknnnnnnnkk...', 'bbbbkkkkkkkbbbbb', '.bbbbbbbbbbbbbb.', '................'],
   sakana: ['................', '................', '................', '................', '................', '................', '....kkkkkk..k...', '..kkggggggkkgk..', '.kwkggggggggggk.', '.kgggggggggkgk..', '..kkwwwwwwkk.k..', '....kkkkkk......', '................', '.b..b.....b..b..', '..bb.bb..bb.bb..', '................'],
   kani: ['................', '................', '................', '................', '................', '................', '..kk........kk..', '.krrk......krrk.', '.krrk.k..k.krrk.', '..kk.kwkkwk.kk..', '...kkrrrrrrkk...', '..krrrrrrrrrrk..', '..krrrrrrrrrrk..', '...kkkkkkkkkk...', '..k.k.k..k.k.k..', '................'],
+  keri: ['................', '.....ggg........', '....ggggg.......', 'kyygrgggg.......', '....ggggg.......', '.....ggg........', '.....kkkk.......', '....wkkknnnn....', '....wwnnnnnnnn..', '....wwwnnnnnnnnk', '.....wwwwnnnnk..', '.......y.y......', '.......y.y......', '.......y.y......', '.......y.y......', '......yy.yy.....'],
+  seitaka: ['................', '....kk..........', '...kwwk.........', 'kkkkwkwk........', '...kwwwk........', '....kwwk........', '....kwwwkkkk....', '...kwwwwkkkkkk..', '...kwwwwwkkkkkkk', '....kwwwwkkkkk..', '.....kkkkkkk....', '.......r.r......', '.......r.r......', '.......r.r......', '.......r.r......', '......rr.rr.....'],
+  suzugamo: ['................', '................', '................', '................', '...kkk..........', '..kkkkk.........', 'ggkykkk.........', '..kkkkk.........', '...kkkkkkkkkkk..', '..kkkwwwwwgwgkk.', '..kkwwwwwwwwgkkk', '...kwwwwwwwwwkk.', '....kkkkkkkkkk..', 'bbbbbbbbbbbbbbbb', '.bbbbbbbbbbbbbb.', '................'],
   asari: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kknnnnkk....', '...knnNnnNnnk...', '..knNnnNNnnNnk..', '..knnnNnnNnnnk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................']
 };
 const critterSprites = {};
@@ -1665,10 +1670,11 @@ function critterStep(x, y) {
   if (!where || ++critterS.steps < 25 || Math.random() >= 1 / 40) return;
   critterS.steps = 0;
   const m = G.meetCritter(where);
-  if (!m) return;
+  if (!m) return false;
   const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [x + dx, y + dy]).find(([a, b]) => !npcAt(a, b)) || [x + 1, y];
   critterS.show = { id: m.id, x: spot[0], y: spot[1], t: performance.now() };
   dirty = true;
+  return true;
 }
 const npcSprites = {};
 for (const [k, col] of Object.entries(NPC_COLORS)) {
@@ -5446,6 +5452,10 @@ $('pxZoomOut').addEventListener('click', () => {
   if (worldMode) { wscale = Math.max(0, wscale - 1); return; }
   if (scale > 1) setScale(scale - 1); else { wscale = WSIZES.length - 1; setWorld(true); }
 });
+$('pxZoom').addEventListener('click', () => {   // 🔍：押すたびに大きく。いちばん大きいと、はじめの大きさ（いちばん小さい）へ
+  if (worldMode) { wscale = wscale < WSIZES.length - 1 ? wscale + 1 : 0; return; }
+  setScale(scale < 4 ? scale + 1 : 1);
+});
 function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
@@ -5732,7 +5742,10 @@ function setAuto(on, quiet) {
   const b = $('pxAuto');
   b.classList.toggle('on', auto); b.setAttribute('aria-pressed', String(auto));
   autoS.path = []; autoS.read = 0;
-  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックや地面のタップで動かすと少し休みます）' : '🧭 おまかせ歩き：オフ');
+  // 文字を少なく（ふだん）では、オン・オフはボタンの色で分かるので、くわしい知らせは はじめの1回だけ
+  const simple = document.body.classList.contains('simple'), told = store.get('nsg_auto_told');
+  if (!quiet && (!simple || (auto && !told))) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックや地面のタップで動かすと少し休みます）' : '🧭 おまかせ歩き：オフ');
+  if (!quiet && auto && simple && !told) store.set('nsg_auto_told', '1');
 }
 function autoPause() { autoS.pauseUntil = Date.now() + 8000; autoS.path = []; }
 // (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで
@@ -5769,8 +5782,14 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
   return out.reverse();
 }
+const AUTO_PICK_MS = 15000;
 function autoRead() {   // 人の話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる（スポットやお店の説明は、自分で閉じるまで待つ）
   const body = $('pxInfoBody'), now = Date.now();
+  if (body.querySelector('.pick-first')) {   // はじめの1枚：えらぶ時間（AUTO_PICK_MS）をおいて、えらばなければ閉じる（閉じると1枚目になる）。おまかせ歩きのまま止まらないように
+    if (!autoS.read) autoS.read = now + AUTO_PICK_MS;
+    else if (now >= autoS.read) { autoS.read = 0; $('pxInfo').hidden = true; }
+    return;
+  }
   if (!body.querySelector('.npc-next, .npc-end')) { autoS.read = 0; return; }
   if (!autoS.read) { autoS.read = now + Math.min(6000, 1800 + body.textContent.length * 40); return; }
   if (now < autoS.read) return;
@@ -5937,7 +5956,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

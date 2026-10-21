@@ -2193,7 +2193,7 @@ $('resetBtn').addEventListener('click', () => {
 const FB_MAX = 3;
 const fb = { shown: 0 };
 const fbCount = () => { const c = store.get('nsg_fb', null); return c && c.d === ymd() ? c.n : 0; };
-const fbText = { spot: 'どんな所？（見どころ・場所の目じるしなど）', fix: 'なにがちがう？（正しくはどうか、分かれば）', idea: 'どんなことで こまった？ どうしてほしい？' };
+const fbText = { spot: 'どんな所？（見どころ・場所の目じるしなど）', fix: 'なにがちがう？（正しくはどうか、分かれば）', fun: 'どうすると、もっと楽しくなる？（あったらうれしい遊び・ごほうび・しかけ など）', idea: 'どんなことで こまった？ どうしてほしい？' };
 function fbFill() {   // スポットの選びわけ：チェックインできるスポットを先に、あとは近いじゅん
   const sel = $('fbSpot'), base = me || CFG.home;
   const near = spots.filter(s => s !== selected).map(s => ({ s, d: dist(base, s) })).sort((a, b) => a.d - b.d).slice(0, 12).map(o => o.s);

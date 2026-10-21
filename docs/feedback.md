@@ -1,13 +1,13 @@
 # にしおさんぽGO：おたより（プレイヤーのフィードバック）と自動の直し
 
-プレイヤーが「せってい」→「📮 おたより」から、**こんな名所があるよ／スポットの情報がちがう／こまった・こうしてほしい**を送れます。
+プレイヤーが「せってい」→「📮 おたより」から、**こんな名所があるよ／こうしたらもっと面白い／スポットの情報がちがう／こまった・使いにくい**を送れます。
 届いたおたよりは6時間ごとに自動で仕分けられ、直せるものは PR になります。**マージ（ゲームへの反映）は、いつも人が確かめてから**です。
 
 ```
 ゲームの おたより
    │  POST /api/feedback（api/feedback.js。Vercel の関数）
    ▼
-非公開リポジトリの Issue（ラベル feedback・kind:spot/fix/idea）
+非公開リポジトリの Issue（ラベル feedback・kind:spot/fun/fix/idea）
    │  6時間ごと（.github/workflows/feedback.yml）
    ▼
 tools/feedback-triage.js prepare
@@ -15,7 +15,7 @@ tools/feedback-triage.js prepare
    ├ OpenStreetMap にある名所 → 「毎週の作り直しで出ます」と返事をして閉じる（already）
    └ のこり（1回5件まで） → Claude（tools/feedback-prompt.md）
           ├ 出典（Wikipedia・Wikidata・西尾市・OpenStreetMap）で確かめた小さな直し → PR（fixed）
-          ├ 人が決めること → Issue に提案を書いて開いたまま（proposal）
+          ├ 人が決めること → Issue に提案を書いて開いたまま（proposal）。「もっと面白い」は、遊びの案と作りかた・Issue のたたき台をつける
           └ 対応ずみ・いたずら → 閉じる（already・spam）
 ```
 
@@ -48,6 +48,9 @@ tools/feedback-triage.js prepare
 - **PR**（タイトル「おたよりから直す（自動・要確認）」）：中身を確かめて、よければマージ。おかしければ閉じる
 - **非公開リポジトリの Issue**
   - `proposal`（開いたまま）：Claude の提案を読んで決める。直すなら Claude Code に頼むか手で直す。決めたら閉じる
+  - **「こうしたらもっと面白い」（kind:fun）を作るとき**：提案の「Issue のたたき台」を、このリポジトリ（ricepia-judge）の新しい Issue にはって、
+    ラベル `claude-dev` を付けると、Claude が作って PR にします（.github/workflows/claude-dev.yml）。公開のリポジトリなので、
+    おたよりの文そのものは はらず、たたき台（Claude が自分のことばで書いたもの）だけにする
   - `needs-check`（開いたまま）：自動で読めなかった・終わらなかったもの。人が見る
   - `fixed`・`already`・`spam`（閉じたもの）：見なくてよい（気になるときだけ）
 

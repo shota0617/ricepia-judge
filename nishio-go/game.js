@@ -1752,8 +1752,17 @@ function clearGive(n) {
   return true;
 }
 // ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
+// 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）
 function endingWhenFree(then) {
-  (function go() { if (rewardBusy()) return setTimeout(go, 500); showEnding(); if (then) then(); })();
+  const w = endingWhenFree;
+  if (then) w.then = then;
+  if (w.waiting || $('reward').querySelector('.ending')) return;   // もう待っている・もう出ている
+  w.waiting = true;
+  (function go() {
+    if (rewardBusy()) return setTimeout(go, 500);
+    w.waiting = false; showEnding();
+    const t = w.then; w.then = null; if (t) t();
+  })();
 }
 function clearRecord() {
   return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length };

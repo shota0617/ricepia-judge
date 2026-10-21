@@ -151,6 +151,15 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 label.row{min-height:44px;cursor:pointer}
 .row>span{display:flex;flex-direction:column;min-width:0}
 .row small{color:var(--sub);font-size:12px;margin-top:2px;line-height:1.5}
+/* おたより */
+.fb-form{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.fb-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700}
+.fb-form select,.fb-form input[type=text],.fb-form input[type=url],.fb-form textarea{font:inherit;font-weight:400;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);width:100%;box-sizing:border-box}
+.fb-form textarea{resize:vertical;min-height:84px}
+.fb-form .fb-here{flex-direction:row;align-items:flex-start;gap:8px;font-weight:400;font-size:12px;color:var(--sub);line-height:1.5}
+.fb-form .fb-here input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--green)}
+.fb-form .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.fb-form .btn{align-self:flex-start}
 .row input[type=checkbox]{width:44px;height:26px;flex:none;accent-color:var(--green)}
 .rules{margin:0;padding-left:1.2em;font-size:13px;line-height:1.7}
 .note{font-size:12px;color:var(--sub);line-height:1.7;margin:0}

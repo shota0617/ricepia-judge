@@ -1254,8 +1254,8 @@ function decideGuide(from) {
 function heardOf(g, n) {
   const to = g.kind === 'npc' ? placeNpcs().find(x => x.id === g.id) : null, id = to ? 'f-' + to.spot : g.kind === 'spot' ? g.id : null;
   const had = id && (S.heard || {})[id];
-  // 同じ人が またすすめた（選び直しも）ときは、いちばん新しい すすめにする（手がかりのページが案内する名所）。前の版の記録（すすめた人の id がない）には id を足す
-  if (had && (had.byId === n.id || (!had.byId && had.by === n.name))) { had.byId = n.id; had.t = Date.now(); save(); }
+  // また すすめられた（同じ人でも別の人でも・選び直しも）ときは、いま すすめた人の いちばん新しい すすめにする（手がかりのページは その人の話に出る）
+  if (had) { had.by = n.name; had.byId = n.id; had.t = Date.now(); save(); }
   if (!id || S.visits[id] || had) return '';
   S.heard = { ...(S.heard || {}), [id]: { by: n.name, byId: n.id, t: Date.now() } };
   save();

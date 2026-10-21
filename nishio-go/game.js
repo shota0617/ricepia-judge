@@ -684,15 +684,15 @@ function trackWalk(p) {
   if (v > CFG.vehicleSpeed) { vehicleUntil = Date.now() + CFG.vehicleLockMs; return; }
   if (v > CFG.walkMaxSpeed || Date.now() < vehicleUntil) return;
   addWalk(d);
-  addTrail(prev, p);
+  addTrail(prev, p, true);   // あるいて移動では、通った田んぼ・水べのマスで生きものにも出会う（操作して移動は pixel.js の1歩ごと）
 }
 
 // あしあと（Dig Dug の掘ったトンネルのように、歩いた道が地図に残る）：はじめて歩いたマス（8m）が50ふえるごとに +5pt（1日50ptまで）。
 // 同じ道ばかりより、知らない道を歩くほど得になる。マスの記録は pixel.js（trailWalk）
-function addTrail(a, b) {
+function addTrail(a, b, critters) {
   const P = window.nishioPixel;
   if (!P || !P.trailWalk) return;
-  const n = P.trailWalk(a.lat, a.lng, b.lat, b.lng);
+  const n = P.trailWalk(a.lat, a.lng, b.lat, b.lng, critters && P.critterStep ? (x, y) => P.critterStep(x, y) : null);
   if (!n) return;
   const day = dayState();
   day.trail = (day.trail || 0) + n;
@@ -1455,7 +1455,10 @@ function pickAlt(i) {
   if (!a) return;
   // refer（人のすすめ：遠くても12kmまで決め直さない）・weather（雨宿り）も持ちこす。戻したときに すぐ決め直されないように
   const keep = ({ kind, id, name, lat, lng, why, by, byId, refer, weather }) => ({ kind, id, name, lat, lng, why, by, byId, refer, weather });
-  S.guide = { ...keep(a), mine: true, alts: [keep(g), ...g.alts.filter((_, k) => k !== i).map(keep)], t: Date.now() };   // 前の行き先も候補に残す（戻せる）
+  S.guide = { ...keep(a), byId: a.byId || g.byId, mine: true, alts: [keep(g), ...g.alts.filter((_, k) => k !== i).map(keep)], t: Date.now() };   // 前の行き先も候補に残す（戻せる）
+  // 人のすすめの中から選び直したときも、その人から聞いた名所にする（きろくの影の絵と、その人の話の 🔍 の手がかり）
+  const by = S.guide.byId && placeNpcs().find(n => n.id === S.guide.byId);
+  if (by) heardOf(S.guide, by);
   save();
   $('guide').classList.remove('open');
   renderGuide();

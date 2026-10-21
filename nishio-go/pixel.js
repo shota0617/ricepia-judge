@@ -708,15 +708,17 @@ function trailSet(tx, ty) {   // はじめて歩いたマスなら true
   return true;
 }
 // 2つの位置のあいだを歩いた：あいだのマスをぜんぶ足あとにして、はじめて歩いたマスの数を返す（GPS は数十mおきなので、線でつなぐ）
-function trailWalk(lat1, lng1, lat2, lng2) {
+// each(x, y)：あいだのマスごとに呼ぶ（あるいて移動の生きもの。true を返したら、その回はもう呼ばない）
+function trailWalk(lat1, lng1, lat2, lng2, each) {
   trailLoad();
   const a = toTile(lat1, lng1), b = toTile(lat2, lng2);
   let x = Math.floor(a.x), y = Math.floor(a.y);
   const x2 = Math.floor(b.x), y2 = Math.floor(b.y), dx = Math.abs(x2 - x), dy = -Math.abs(y2 - y), sx = x < x2 ? 1 : -1, sy = y < y2 ? 1 : -1;
   if (Math.hypot(dx, dy) > 80) return 0;   // 640m より遠い1歩は数えない（ワープ・GPS の飛び。ななめも まっすぐの距離で）
-  let err = dx + dy, fresh = 0;
+  let err = dx + dy, fresh = 0, stop = !each;
   for (;;) {
     if (trailSet(x, y)) fresh++;
+    if (!stop && each(x, y)) stop = true;
     if (x === x2 && y === y2) break;
     const e2 = 2 * err;
     if (e2 >= dy) { err += dy; x += sx; }
@@ -1668,10 +1670,11 @@ function critterStep(x, y) {
   if (!where || ++critterS.steps < 25 || Math.random() >= 1 / 40) return;
   critterS.steps = 0;
   const m = G.meetCritter(where);
-  if (!m) return;
+  if (!m) return false;
   const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [x + dx, y + dy]).find(([a, b]) => !npcAt(a, b)) || [x + 1, y];
   critterS.show = { id: m.id, x: spot[0], y: spot[1], t: performance.now() };
   dirty = true;
+  return true;
 }
 const npcSprites = {};
 for (const [k, col] of Object.entries(NPC_COLORS)) {
@@ -5946,7 +5949,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

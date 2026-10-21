@@ -121,6 +121,7 @@
 <nav class="tabs" aria-label="メニュー">
   <button type="button" class="on" data-tab="map" aria-label="マップ"><i data-pi="map" data-art="tab-map"></i><span>マップ</span></button>
   <button type="button" data-tab="log" aria-label="きろく"><i data-pi="note" data-art="tab-note"></i><span>きろく</span></button>
+  <button type="button" data-tab="voice" aria-label="こえ"><i data-pi="talk" data-art="talk"></i><span>こえ</span><b class="tab-dot" id="voiceDot" hidden></b></button>
   <button type="button" data-tab="rewards" id="rewardsTab" hidden aria-label="とくてん"><i data-pi="gift" data-art="tab-gift"></i><span>とくてん</span></button>
   <button type="button" data-tab="settings" aria-label="せってい"><i data-pi="gear" data-art="tab-gear"></i><span>せってい</span></button>
 </nav>
@@ -177,6 +178,55 @@
 </section>
 
 <!-- 設定 -->
+<!-- こえ（プレイヤーの声でそだつ。おたよりを送る・あなたのおたよりの様子・みんなの声で かわったこと） -->
+<section class="panel" id="panel-voice" hidden>
+  <h2>📮 こえ <small>みんなでつくる にしおさんぽGO</small></h2>
+  <div class="card voice-hero">
+    <p><b>このゲームは、あそぶ人の声でそだちます。</b>「こんな名所があるよ」「こうしたらもっと面白い」「ここがちがう」を送ってください。たしかめて、ゲームに反映します。反映されたら、ここでお知らせします。</p>
+    <p class="voice-stats" id="voiceStats" hidden></p>
+  </div>
+  <div class="card voice-me" id="voiceMe">
+    <p class="voice-rank" id="voiceRank"></p>
+    <p class="voice-stamps" id="voiceStamps"></p>
+  </div>
+  <div class="card voice-theme" id="voiceTheme">
+    <p><b>🗓 今週のお題</b><span id="themeDone" class="st reflected" hidden>答えた！</span></p>
+    <p class="voice-q" id="themeQ"></p>
+    <button type="button" class="btn" id="themeBtn">お題に答える</button>
+  </div>
+  <div class="card" id="voiceMineCard" hidden>
+    <h3>あなたのおたより</h3>
+    <ul class="voice-list" id="voiceMine"></ul>
+  </div>
+  <div class="card" id="fbCard">
+    <h3>📮 おたよりを送る</h3>
+    <p class="note">名前・電話番号・住所など、あなたの個人情報は書かないでください。おたよりごとに、この端末で作った でたらめな「受付番号」をつけて送ります（だれが送ったかは分かりません）。たしかめた結果は、この番号で「あなたのおたより」にお知らせします。</p>
+    <form id="fbForm" class="fb-form" novalidate>
+      <label><span>なにについて？</span>
+        <select id="fbKind">
+          <option value="spot">📍 こんな名所があるよ</option>
+          <option value="fun">🎉 こうしたらもっと面白い</option>
+          <option value="fix">✏️ 名所・スポットの情報がちがう</option>
+          <option value="idea">😣 こまった・使いにくい</option>
+        </select></label>
+      <label id="fbSpotRow" hidden><span>どのスポット？（近いじゅん）</span><select id="fbSpot"></select></label>
+      <label id="fbNameRow"><span>名所の名前</span><input id="fbName" type="text" maxlength="40" autocomplete="off" placeholder="れい：○○神社の大くすのき"/></label>
+      <label><span id="fbTextLabel">どんな所？（見どころ・場所の目じるしなど）</span><textarea id="fbText" maxlength="400" rows="4" required></textarea></label>
+      <label><span>くわしく分かるページ（あれば・https）</span><input id="fbUrl" type="url" maxlength="200" inputmode="url" autocomplete="off" placeholder="https://"/></label>
+      <label class="fb-here"><input id="fbHere" type="checkbox"/><span>いまいる場所の近く（だいたいの位置・約100mの細かさをいっしょに送る。操作して移動では、キャラのいる場所）</span></label>
+      <label class="hp" aria-hidden="true">この欄は空のままにしてください<input id="fbHp" type="text" tabindex="-1" autocomplete="off"/></label>
+      <button type="submit" class="btn" id="fbSend">おたよりを送る</button>
+      <p class="note" id="fbMsg" aria-live="polite"></p>
+    </form>
+  </div>
+  <div class="card">
+    <h3>みんなの声で かわったこと</h3>
+    <ul class="voice-list" id="voiceLog"></ul>
+    <p class="note" id="voiceLogEmpty">まだありません。あなたの声が、さいしょの1つになるかもしれません。</p>
+    <p class="note"><a href="nishio-go/minna.html" target="_blank" rel="noopener">🌏 公開ページ「みんなで見つけた西尾」</a>（ゲームを遊んでいない人にも、みんなの声でふえた西尾の名所を見てもらえます）</p>
+  </div>
+</section>
+
 <section class="panel" id="panel-settings" hidden>
   <h2>せってい</h2>
   <div class="card">
@@ -235,28 +285,7 @@
   </div>
   <div class="card">
     <h3>プライバシー（<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>）</h3>
-    <p class="note">現在地の座標そのものは、どこにも送信しません（「📮 おたより」で「いまいる場所の近く」にチェックしたときだけ、約100mの細かさに丸めた位置をおたよりといっしょに送ります）。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
-  </div>
-  <div class="card" id="fbCard">
-    <h3>📮 おたより（名所のおしらせ・もっと面白く・まちがい・ごいけん）</h3>
-    <p class="note">「こんな名所もあるよ」「こうしたらもっと面白い」「この場所の説明がちがう」「ここがこまった」など、気づいたことを運営者に送れます。いただいたおたよりは、たしかめてから地図やゲームに反映します（おへんじはできません）。名前・電話番号・住所など、あなたの個人情報は書かないでください。</p>
-    <form id="fbForm" class="fb-form" novalidate>
-      <label><span>なにについて？</span>
-        <select id="fbKind">
-          <option value="spot">📍 こんな名所があるよ</option>
-          <option value="fun">🎉 こうしたらもっと面白い</option>
-          <option value="fix">✏️ 名所・スポットの情報がちがう</option>
-          <option value="idea">😣 こまった・使いにくい</option>
-        </select></label>
-      <label id="fbSpotRow" hidden><span>どのスポット？（近いじゅん）</span><select id="fbSpot"></select></label>
-      <label id="fbNameRow"><span>名所の名前</span><input id="fbName" type="text" maxlength="40" autocomplete="off" placeholder="れい：○○神社の大くすのき"/></label>
-      <label><span id="fbTextLabel">どんな所？（見どころ・場所の目じるしなど）</span><textarea id="fbText" maxlength="400" rows="4" required></textarea></label>
-      <label><span>くわしく分かるページ（あれば・https）</span><input id="fbUrl" type="url" maxlength="200" inputmode="url" autocomplete="off" placeholder="https://"/></label>
-      <label class="fb-here"><input id="fbHere" type="checkbox"/><span>いまいる場所の近く（だいたいの位置・約100mの細かさをいっしょに送る。操作して移動では、キャラのいる場所）</span></label>
-      <label class="hp" aria-hidden="true">この欄は空のままにしてください<input id="fbHp" type="text" tabindex="-1" autocomplete="off"/></label>
-      <button type="submit" class="btn" id="fbSend">おたよりを送る</button>
-      <p class="note" id="fbMsg" aria-live="polite"></p>
-    </form>
+    <p class="note">現在地の座標そのものは、どこにも送信しません（「こえ」タブのおたよりで「いまいる場所の近く」にチェックしたときだけ、約100mの細かさに丸めた位置をおたよりといっしょに送ります）。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
   </div>
   <div class="card danger">
     <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
@@ -270,6 +299,7 @@
   <div class="intro-box">
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
     <p class="player-count" id="playerCount" hidden></p>
+    <p class="player-count voice-intro" id="voiceIntro" hidden></p>
     <div class="intro-hero" id="introHero" aria-hidden="true"></div>
     <p class="tagline">西尾を さんぽして、ドット絵を あつめよう</p>
     <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>名所に着くとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
@@ -345,6 +375,8 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="reward" id="reward" aria-live="assertive"></div>
+<!-- チェックインのあとの ひとこと（ワンタップ。みんなの声として名所の窓に出る） -->
+<div class="react-bar" id="reactBar" role="group" aria-label="この名所の ひとこと" hidden></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="nishio-go/icons.js"></script>

@@ -1,14 +1,15 @@
-# にしおさんぽGO：プレイヤーのおたより（非公開リポジトリの Issue。api/feedback.js が置く）を6時間ごとに仕分けて、直せるものは PR にする
+# にしおさんぽGO：プレイヤーのおたより（非公開リポジトリの Issue。api/feedback.js が置く）を30分ごとに仕分けて、直せるものは PR にする
 # 1. 決まった手順で片づくもの（もうゲームにある名所・OpenStreetMap にある名所）は、その場で返事をして閉じる
 # 2. のこりは Claude が読み、出典で確かめられた小さな直し（ふつうのスポットを足す・説明のまちがいを直す など）をする。
 #    Claude は シェル・git・トークンを使えず、読み書きと決まったサイトの閲覧だけ。おたよりの文は「データ」として扱う（tools/feedback-prompt.md）
 # 3. 直してよい場所の変更だけを PR にする（マージは人が確かめてから）。結果を Issue に書きもどす
+# 4. 受付番号ごとの返事と、人がマージして反映されたことを nishio-go/voices.json に書いて main にコミットする（ゲームの「こえ」タブで知らせる）
 # 必要な準備：Variables の FEEDBACK_REPO、Secrets の FEEDBACK_TOKEN と ANTHROPIC_API_KEY（無いあいだは なにもしない／決まった手順だけ）。docs/feedback.md
 name: Nishio feedback
 on:
   workflow_dispatch:
   schedule:
-    - cron: '41 */6 * * *'
+    - cron: '11,41 * * * *'   # 30分ごと（プレイヤーの声を早く返す。おたよりが無い回は数十秒で終わる）
 permissions:
   contents: write
   pull-requests: write
@@ -36,34 +37,55 @@ jobs:
         if: steps.cfg.outputs.on
         with:
           node-version: 20
+      # Claude が作業場所のファイルを書きかえても、トークンを使う手順は Claude より前の中身で動かす（作業場所の外にコピーしておく）
+      - name: Keep trusted tools
+        if: steps.cfg.outputs.on
+        run: |
+          mkdir -p "$RUNNER_TEMP/trusted/tools" "$RUNNER_TEMP/trusted/nishio-go"
+          cp tools/feedback-triage.js tools/feedback-report.js tools/make-minna.js tools/feedback-prompt.md tools/feedback-report-prompt.md "$RUNNER_TEMP/trusted/tools/"
+          cp nishio-go/osm-query.js "$RUNNER_TEMP/trusted/nishio-go/"
       - name: Sort feedback
+        id: sort
         if: steps.cfg.outputs.on
         env:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
           CLAUDE_ON: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+          FEEDBACK_ROOT: ${{ github.workspace }}
         run: |
-          node tools/feedback-triage.js prepare
+          node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" prepare
           n=$(node -e "console.log(require('./.feedback/items.json').length)")
           if [ "$n" -gt 0 ]; then echo "ai=1" >> "$GITHUB_OUTPUT"; fi
-        id: sort
+      # Claude：書けるのは nishio-go/ と .feedback/ だけ、読めるのは作業場所の中だけ。動かすあいだ .git は作業場所の外に置く
       - name: Claude reads feedback
         if: steps.sort.outputs.ai
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           npm i -g @anthropic-ai/claude-code@2.1.305 > /dev/null
-          claude -p "$(cat tools/feedback-prompt.md)" --model claude-opus-5-5 --max-turns 40 --permission-mode dontAsk \
-            --allowedTools "Read,Glob,Grep,Edit,Write,WebFetch(domain:ja.wikipedia.org),WebFetch(domain:www.wikidata.org),WebFetch(domain:www.city.nishio.aichi.jp),WebFetch(domain:www.openstreetmap.org),WebFetch(domain:nominatim.openstreetmap.org)" \
-            --disallowedTools "Bash,WebSearch,NotebookEdit,Task" | tail -n 40
+          mv .git "$RUNNER_TEMP/dotgit"
+          claude -p "$(cat "$RUNNER_TEMP/trusted/tools/feedback-prompt.md")" --model claude-opus-5-5 --max-turns 40 --permission-mode dontAsk \
+            --allowedTools "Read(./**),Glob,Grep,Edit(./nishio-go/**),Write(./nishio-go/**),Edit(./nishio-go.html),Write(./.feedback/**),WebFetch(domain:ja.wikipedia.org),WebFetch(domain:www.wikidata.org),WebFetch(domain:www.city.nishio.aichi.jp),WebFetch(domain:www.openstreetmap.org),WebFetch(domain:nominatim.openstreetmap.org)" \
+            --disallowedTools "Bash,WebSearch,NotebookEdit,Task" | tail -n 40 || true
+          if [ -e .git ]; then echo "Claude の手順のあいだに .git ができたので、止めます"; rm -rf .git; mv "$RUNNER_TEMP/dotgit" .git; exit 1; fi
+          mv "$RUNNER_TEMP/dotgit" .git
       - name: Open PR
         id: pr
         if: steps.sort.outputs.ai
         env:
           GH_TOKEN: ${{ github.token }}
-        run: node tools/feedback-triage.js pr
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" pr
       - name: Report to feedback issues
         if: always() && steps.sort.outputs.ai
         env:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
           PR_URL: ${{ steps.pr.outputs.url }}
-        run: node tools/feedback-triage.js report
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" report
+      - name: Tell players (voices.json)
+        if: always() && steps.cfg.outputs.on
+        env:
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" voices

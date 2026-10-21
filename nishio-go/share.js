@@ -1,6 +1,9 @@
 // にしおさんぽGO の宣伝まわり：シェア（SNS・LINE・画像）と、広告・QR・シェアから来た人の受けとり
 // ・シェアのリンクには UTM（utm_source=share）を付けて、シェアから来た人を数えられるようにする
 // ・シェア用の画像（1200×630）は、その人のきろく（レベル・めぐった名所・話した人）と当店の名前をのせて、その場で描く（どこにも送らない）
+// ・西尾のPRになるように：シェアの文に西尾の名物（meibutsu.js。出典のある名前だけ）を入れる。名所のシェア（spot）は ?spot= でその名所を開き、
+//   名所のある市町（region.js の境界）と、地区の ひとこと（areas.json の catch。出典つき）をのせる（名所ごとの説明は出典が名所ごとに無いので のせない）。
+//   おたよりが反映されたシェア（voice）は「みんなの声で名所がふえる」ことを伝える
 // ・広告やQRのリンクのパラメータ：?c=キャンペーンのid ／ ?spot=スポットのid（そのスポットを見せる）／ ?play=1（操作して遊ぶで始める）／ ?from=どこから（チラシ・POP など）
 //   来た人は analytics.js の landing イベントで数える（utm_* もいっしょに）
 (() => {
@@ -38,8 +41,14 @@ if (Object.keys(land).length) {
 
 /* ---------- シェア ---------- */
 // 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
-const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
-let cur = 'log', curDot = null;
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+let cur = 'log', curDot = null, curSpot = null, curVoice = '';
+// 西尾の名物（「抹茶とうなぎのまち」）。名前は meibutsu.js（西尾市観光協会などの出典）から。X の字数に入るよう短く
+const meibutsuShort = () => { const m = (window.NISHIO_MEIBUTSU || []).filter(x => !x.area).slice(0, 2).map(x => x.name.replace(/^(西尾の|一色産)/, '')); return m.length ? `${m.join('と')}のまち・` : ''; };
+// 名所のある市町（西尾市の外の名所を「西尾の」と言わないように）と、その地区（注目スポットの area）
+const cityOf = s => { try { const c = (G.cityNear || G.cityAt)(s.lat, s.lng); return c && c.name ? c.name : ''; } catch (e) { return ''; } };
+const areaOf = s => (s && s.area && Array.isArray(G.areas) ? G.areas.find(a => a.id === s.area) : null) || null;
+const clip = (t, n) => { const a = [...String(t || '')]; return a.length > n ? a.slice(0, n - 1).join('') + '…' : a.join(''); };
 const D = () => window.NISHIO_DOTS;
 function shareText() {
   const s = G.stats(), tags = `#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;
@@ -48,7 +57,14 @@ function shareText() {
     const f = D().info(curDot);
     return `にしおさんぽGOの「西尾ドット絵帳」で「${f.title}」の絵を見つけたよ🖼️（No.${f.no}）\n${invite}\n${tags}`;
   }
-  return `にしおさんぽGOで西尾のまちを歩いて、Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n${invite}\n${tags}`;
+  if (cur === 'spot' && curSpot) {   // 名所をシェア（受け取った人は、その名所が開く）
+    const city = cityOf(curSpot), a = areaOf(curSpot);
+    return `${city ? `${city}の` : ''}「${curSpot.name}」📍${a && a.catch ? `\n${a.name}は「${a.catch}」` : ''}\nにしおさんぽGOで、西尾とまわりのまちの名所をめぐろう\n${tags}`;
+  }
+  if (cur === 'voice' && curVoice) {   // おたよりが反映された
+    return `わたしの声で、にしおさんぽGOが かわりました📮「${clip(curVoice, 34)}」\nみんなの声で、名所がふえていきます\n${tags}`;
+  }
+  return `にしおさんぽGOで、${meibutsuShort()}西尾を歩いて Lv${s.lv}「${s.title}」になったよ🚶\nめぐった名所 ${s.places}か所・話した人 ${s.met}人・まちメモ ${s.memos}こ\n${invite}\n${tags}`;
 }
 // シェア用の画像：空と田んぼ（こよみの季節の色）の上に、きろくと当店の名前
 const logo = new Image();
@@ -82,6 +98,15 @@ function drawCard() {
     x.fillStyle = '#c99a2e'; x.fillRect(dx - 18, dy - 18, sz + 36, sz + 36);
     x.fillStyle = '#f6d36b'; x.fillRect(dx - 10, dy - 10, sz + 20, sz + 20);
     x.imageSmoothingEnabled = false; x.drawImage(dc, dx, dy, sz, sz); x.imageSmoothingEnabled = true;
+  } else if (cur === 'spot' && curSpot) {   // 名所の名前を大きく、市町と地区の ひとこと（areas.json の catch）
+    const city = cityOf(curSpot), a = areaOf(curSpot);
+    line(`📍 ${curSpot.name}`, 66, 240, true);
+    line([city, a && a.catch ? `${a.name}「${a.catch}」` : ''].filter(Boolean).join('・') || 'にしおさんぽGO', 34, 304);
+    line('にしおさんぽGOで、名所をめぐろう', 30, 356);
+  } else if (cur === 'voice' && curVoice) {
+    line('📮 わたしの声が反映されました', 56, 230, true);
+    line(clip(curVoice, 40), 34, 300);
+    line('みんなの声で、名所がふえていく', 30, 352);
   } else {
     line(lv, 66, 240, true);
     line(rec, 36, 310);
@@ -95,6 +120,8 @@ function drawCard() {
 function openShare(kind, opt) {
   cur = kind;
   curDot = opt && opt.dot != null ? opt.dot : null;
+  curSpot = opt && opt.spot ? opt.spot : null;
+  curVoice = opt && opt.voice ? String(opt.voice) : '';
   const text = shareText(), url = shareUrl(kind);
   drawCard();
   $('shareText').textContent = `${text}\n${url}`;
@@ -131,5 +158,12 @@ $('share').addEventListener('click', async e => {
 });
 $('shareLogBtn').addEventListener('click', () => openShare('log'));
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-share-open]'); if (b) openShare(b.dataset.shareOpen); });
+// スポットの窓の「📣 シェア」・こえ タブの反映されたおたより の「📣 シェア」
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-share-spot],[data-share-voice]');
+  if (!b) return;
+  if (b.dataset.shareSpot) { const s = (G.spots || []).find(x => x.id === b.dataset.shareSpot); if (s) openShare('spot', { spot: s }); }
+  else openShare('voice', { voice: b.dataset.shareVoice });
+});
 G.openShare = openShare;
 })();

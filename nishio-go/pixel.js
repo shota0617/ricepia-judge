@@ -1663,7 +1663,7 @@ const CRITTER_ROWS = {
 const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
 // 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
-const critterS = { steps: 0, paddy: 0, show: null };
+const critterS = { steps: 0, paddy: 0, water: 0, show: null };
 function critterStep(x, y) {
   if (driving) return;
   const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
@@ -1671,6 +1671,8 @@ function critterStep(x, y) {
   // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
   //   説明の窓・きろく などのパネル・ダイアログ・呼びとめの最中は始めない（閉じたあとの田んぼの1歩で始まる）
   if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15 && !mapCovered() && !sightBusy() && NISHIO_MEDASHI.open()) { critterS.paddy = 0; return true; }
+  // 水べのイベント「虫の名前あて」（mushi.js）：水べを15歩 歩くと、1日1回（始めない条件は田んぼのイベントと同じ）
+  if (where === 'water' && window.NISHIO_MUSHI && G.mushiDue && G.mushiDue() && ++critterS.water >= 15 && !mapCovered() && !sightBusy() && NISHIO_MUSHI.open()) { critterS.water = 0; return true; }
   if (!where || ++critterS.steps < 25 || Math.random() >= 1 / 40) return;
   critterS.steps = 0;
   const m = G.meetCritter(where);
@@ -5669,7 +5671,7 @@ function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.s
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
+const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・水べ mushi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
   if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   const t = targetTile();

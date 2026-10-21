@@ -4,7 +4,7 @@
 // ・崖の途中の「露頭」（碧海層が見える所）にさわると、まめちしき。上から落ちてくる小石にあたると ♥ がへる（3つ）。時間切れか ♥ がなくなると不成功
 // ・段丘は3つ（だんだん高くなる）：西尾の本で分けた a〜e 地区の名前（a・b 地区の碧海台地 → c・d 地区の碧海台地 → e 地区の段丘）。のぼりきると次の段丘へ
 // ・★：のぼりきった・露頭をぜんぶ見た・時間が3分の1以上のこった
-// ・ことばは shizen.js（西尾の海と大地。出典つき）の「碧海台地と碧海層」「西尾の低い土地」の話だけを使う
+// ・ことばは shizen.js（西尾の海と大地。出典つき）の「碧海台地と碧海層」「西尾の低い土地」「自然堤防の上の集落」の話だけを使う
 // ・主人公と地面の絵は「にしおジャンプ」と同じ Blender の絵（nishio-go/art/runner.png）。ごほうびは game.js の dankyuReward（1日1回）
 // ・操作：◀ ▶ と「ジャンプ」、キーボードは ← → / A D と スペース・↑・Z
 (() => {
@@ -93,7 +93,7 @@
     pl = { x: 3 * T, y: (L.rows - 2) * T, vx: 0, vy: 0, face: 1, ground: true };
     rocks = []; keys = { left: false, right: false, jump: false, jumpWas: false };
     hearts = 3; frames = 0; done = false; shown = false; zone = ''; nextRock = 60; hurtT = 0;
-    seen = { hekkai: facts('hekkai'), teichi: facts('teichi') };
+    seen = { hekkai: facts('hekkai'), teichi: facts('teichi'), atsuike: facts('teichi-atsuike') };
     camY = worldH - H;
     say(`${lv + 1}つ目：${L.name}（${L.where}）。${L.tip}。上の旗まで のぼろう`);
     if (root) root.querySelector('.jump-result').hidden = true;
@@ -110,7 +110,7 @@
   }
   function zoneSay(z) {
     const tei = seen.teichi, hek = seen.hekkai;
-    if (z === 'levee') say(`自然堤防：${tei[2] || '田んぼより少し高い土地'}`);
+    if (z === 'levee') say(`自然堤防：${seen.atsuike[0] || '田んぼより少し高い土地'}`);
     else if (z === 'cliff') say(`段丘崖：${lv === 2 ? L.tip : hek[2] || '台地のへりの崖'}`);   // e 地区は碧海層相当層
     else if (z === 'paddy' && zone) say(`氾濫平野：${tei[0] || 'おもに田んぼ'}`);
   }

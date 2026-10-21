@@ -5480,7 +5480,7 @@ function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.s
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-const medashiShown = () => !!(window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown);   // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている
+const medashiShown = () => !!((window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown) || (window.NISHIO_OLDMAP && NISHIO_OLDMAP.shown));   // イベント（田んぼの「芽出しの見きわめ」medashi.js・「古い地図」oldmap.js）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
   if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   const t = targetTile();
@@ -6002,7 +6002,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, mapCovered, sightBusy, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

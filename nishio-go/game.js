@@ -850,6 +850,23 @@ function medashiReward(choice, pts) {
   return { pts, fresh };
 }
 
+// イベント「古い地図が出てきた」（oldmap.js）：明治39年ごろの村を、はじめて見つけたら +15pt。ぜんぶ見つけるとバッジ
+const OLDMAP_PTS = 15;
+const oldmapHas = id => (S.oldmap || []).includes(id);
+function oldmapFound(id, total) {
+  if (!Array.isArray(S.oldmap)) S.oldmap = [];
+  if (S.oldmap.includes(id)) return null;
+  S.oldmap.push(id);
+  S.oldmapTotal = total;
+  gainPoints(OLDMAP_PTS);
+  S.log.unshift({ type: 'oldmap', t: Date.now(), pts: OLDMAP_PTS, name: `古い地図：明治の村 ${S.oldmap.length}/${total}`, icon: '📜' });
+  save();
+  renderLog();
+  badgesSoon();
+  track('oldmap_found', { village: id, n: S.oldmap.length });
+  return { n: S.oldmap.length, pts: OLDMAP_PTS, all: S.oldmap.length >= total };
+}
+
 // ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
 // 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
@@ -1812,6 +1829,7 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    { id: 'oldmap', i: '🗺️', n: '明治の村あつめ', d: '「古い地図」のイベントで、明治39年ごろの村を ぜんぶ見つける', cur: (S.oldmap || []).length, goal: (window.NISHIO_OLDMAP && NISHIO_OLDMAP.VILLAGES.length) || 11 },
     { id: 'critterall', i: '📜', n: '生きもの手帳の賞状', d: `生きもの手帳の${CRITTERS.length}しゅるい ぜんぶに出会う（季節で出るものもあるので、1年かけて）`, cur: CRITTERS.filter(c => (S.critters || {})[c.id]).length, goal: CRITTERS.length },
     { id: 'clear', i: '👑', n: '殿堂入り', d: '5つの地区のしるしを集めて、西尾城跡のガイドさんに会う（クリア）', cur: S.cleared ? 1 : 0, goal: 1 },
     ...areas.filter(a => SEAL_BY[a.id] && (!SEAL_POST.has(a.id) || S.cleared)).map(a => {   // となりの市町のしるしは、クリアしてから出す   // 地区のしるし：その地区を5か所めぐると、地区の人が認めてくれる（制覇の手前の目標）
@@ -2105,7 +2123,7 @@ const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i
 // チェックインのあとの ひとこと：ごほうびの画面が消えたら、下に小さく出す（react.pending）
 const react = { pending: null, shown: 0, t: 0 };
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
-const medashiOpen = () => !!(window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown);
+const medashiOpen = () => !!((window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown) || (window.NISHIO_OLDMAP && NISHIO_OLDMAP.shown));   // 古い地図のイベントも同じ
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
   if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
     const q = showReward.pending || (showReward.pending = []);
@@ -3268,7 +3286,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, oldmapFound, oldmapHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

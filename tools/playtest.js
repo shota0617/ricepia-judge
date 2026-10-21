@@ -274,6 +274,23 @@ async function walkTo(page, id) {
     rw.click();
     return bad.length ? bad.join(',') : true;
   });
+  // イベント「古い地図が出てきた」：町名から明治の村がわかり、村の地図が描け、はじめての村で +15pt。2回目は出ない
+  R.checks.oldmap = await page.evaluate(() => {
+    const O = window.NISHIO_OLDMAP, G = nishioGo, bad = [];
+    if (!O) return 'none';
+    const v = O.villageOf('一色町味浜', '西尾市'), k = O.villageOf('八ケ尻町', '西尾市'), z = O.villageOf('中野町', '豊橋市');
+    if (!v || v.id !== 'isshiki') bad.push('一色町味浜→一色村');
+    if (z) bad.push('ほかの市の同じ町名');
+    if (!/^data:image\/png/.test(O.villageMap(0) || '')) bad.push('村の地図が描けない');
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    const p0 = G.state.points;
+    if (!O.open(O.VILLAGES[2], '平坂町') || !O.shown) return '開かない';
+    if (G.state.points - p0 !== 15) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!/平坂村/.test(document.getElementById('oldmap').textContent)) bad.push('村の名前');
+    O.close();
+    if (O.open(O.VILLAGES[2], '平坂町')) bad.push('同じ村で2回');
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -439,6 +456,7 @@ async function walkTo(page, id) {
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
+  need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');

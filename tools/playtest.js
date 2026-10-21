@@ -356,6 +356,35 @@ async function walkTo(page, id) {
     K.close();
     return bad.length ? bad.join(',') : true;
   });
+  // イベント「八ツ面山の昆虫さがし」：1日1回。ちがう場所では その場所の虫が見られ（虫手帳に入る）、きょうの虫の場所で見つける。+15pt と はじめての虫 +5pt
+  R.checks.yatsumushi = await page.evaluate(async () => {
+    const Y = window.NISHIO_YATSUMUSHI, G = nishioGo, bad = [];
+    if (!Y) return 'none';
+    const s = G.spots.find(x => x.id === 'f-yatsuomote');
+    if (!s || !Y.here({ lat: s.lat + 0.001, lng: s.lng })) bad.push('八ツ面山の近くで here が偽');
+    if (Y.here({ lat: 35.17, lng: 136.88 })) bad.push('名古屋で here が真');
+    // 虫は本に書いてある場所のどれか・場所ごとに1ぴきはいる・絵が描ける
+    if (Y.BUGS.some(b => !Y.PLACES.some(p => p.id === b.at)) || Y.PLACES.some(p => !Y.BUGS.some(b => b.at === p.id))) bad.push('虫と場所');
+    const cv = document.createElement('canvas'); cv.width = cv.height = 32;
+    const pics = new Set(Y.BUGS.map(b => { Y.drawBug(cv, b); return cv.toDataURL(); }));
+    if (pics.size < 10) bad.push(`絵の種類 ${pics.size}`);
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    const p0 = G.state.points, t = Y.BUGS.find(b => b.id === 'kabuto');
+    if (!Y.open('kabuto') || !Y.shown) return '開かない';
+    Y.look('kusa');   // ちがう場所：草むらの虫が見られる
+    if (Y.found || Y.left !== 2) bad.push('ちがう場所で見つかった');
+    if (!/草むら/.test(document.querySelector('#yatsumushi .ym-log').textContent)) bad.push('草むらの虫');
+    Y.look('kusa');   // 同じ場所は2回えらべない
+    if (Y.left !== 2) bad.push('同じ場所を2回');
+    Y.look(t.at);
+    if (!Y.found || !Y.done) bad.push('樹液の木で見つからない');
+    if (G.state.points - p0 !== 15 + 10) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!G.state.facts.includes('z:yatsu-mushi:0')) bad.push('まちメモ');
+    if (!G.yatsuMushiSeen().includes('kabuto')) bad.push('虫手帳');
+    Y.close();
+    if (G.yatsuMushiDue() || Y.open()) bad.push('1日に2回');
+    return bad.length ? bad.join(',') : true;
+  });
   // イベント「古い地図が出てきた」：町名から明治の村がわかり、村の地図が描け、はじめての村で +15pt。2回目は出ない
   R.checks.oldmap = await page.evaluate(async () => {
     const O = window.NISHIO_OLDMAP, G = nishioGo, P = nishioPixel, bad = [];
@@ -598,6 +627,7 @@ async function walkTo(page, id) {
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.mushi === true, `水べのイベント 虫の名前あて：${c.mushi}`);
   need(c.kirara === true, `イベント 雲母石を探せ：${c.kirara}`);
+  need(c.yatsumushi === true, `イベント 八ツ面山の昆虫さがし：${c.yatsumushi}`);
   need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');

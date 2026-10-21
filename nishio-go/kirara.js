@@ -106,5 +106,5 @@
   }
   setInterval(tick, 2000);
   // テスト用
-  window.NISHIO_KIRARA = { PLACES, open, tap, close, tick, here, get shown() { return shown(); }, get mica() { return mica; }, get found() { return found; } };
+  window.NISHIO_KIRARA = { PLACES, open, tap, close, tick, here, get shown() { return shown(); }, get mica() { return mica; }, get found() { return found; }, get closedAt() { return closedAt; } };
 })();

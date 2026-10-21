@@ -937,6 +937,27 @@ function kiraraFound(id, first, facts, total) {
   return { pts, n: S.kirara.length, all, fresh };
 }
 
+// イベント「八ツ面山の昆虫さがし」（yatsumushi.js）：1日1回。きょうの虫を見つけたら +15pt、はじめて見た虫は1ぴき +5pt（虫手帳 S.yatsuMushi に残る）。
+// 八ツ面山の虫の まちメモ（shizen.js の yatsu-mushi）を、まだのものから1つ
+const yatsuMushiDue = () => S.yatsuMushiDay !== ymd() && SHIZEN.some(x => x.id === 'yatsu-mushi');
+const yatsuMushiSeen = () => (S.yatsuMushi || []).slice();
+function yatsuMushiReward(gotTarget, seenIds) {
+  if (!yatsuMushiDue()) return { pts: 0, fresh: false, newOnes: 0, total: (S.yatsuMushi || []).length };
+  S.yatsuMushiDay = ymd();
+  if (!Array.isArray(S.yatsuMushi)) S.yatsuMushi = [];
+  const newOnes = [...new Set(seenIds || [])].filter(id => typeof id === 'string' && !S.yatsuMushi.includes(id)).slice(0, 5);
+  S.yatsuMushi.push(...newOnes);
+  const g = SHIZEN.find(x => x.id === 'yatsu-mushi'), k = g.facts.map((f, i) => `z:yatsu-mushi:${i}`).find(x => !S.facts.includes(x)), fresh = !!k;
+  if (fresh) S.facts.push(k);
+  const pts = (gotTarget ? 15 : 0) + newOnes.length * 5;
+  if (pts) gainPoints(pts);
+  S.log.unshift({ type: 'yatsumushi', t: Date.now(), pts, name: `八ツ面山の昆虫さがし${gotTarget ? '（見つけた）' : ''}`, icon: '🪲' });
+  save();
+  renderLog();
+  track('yatsumushi_done', { got: !!gotTarget, fresh: newOnes.length });
+  return { pts, fresh, newOnes: newOnes.length, total: S.yatsuMushi.length };
+}
+
 // ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
 // 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
@@ -3404,7 +3425,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

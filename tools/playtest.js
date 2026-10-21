@@ -230,7 +230,7 @@ async function walkTo(page, id) {
   await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   await page.click('#pxWorld');
   await page.waitForFunction(() => nishioPixel.worldState === 'ok', null, { timeout: 30000 });
-  for (let i = 0; i < 3; i++) await page.click('#pxZoomIn');
+  for (let i = 0; i < 3; i++) await page.$eval('#pxZoomIn', b => b.click());   // 文字を少なく（ふだん）では ＋ は隠れて 🔍 になる
   await page.waitForTimeout(800);
   R.checks.worldLabels = await page.evaluate(() => { const c = { rv: 0, tw: 0, st: 0 }; for (const l of nishioPixel.worldLabels) if (c[l[4]] !== undefined) c[l[4]]++; return c; });
   R.checks.worldBgm = await page.evaluate(() => window.__played.includes('world.mp3'));

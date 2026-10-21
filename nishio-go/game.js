@@ -1440,7 +1440,9 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  toast(`${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
+  // 文字を少なく（ふだん）：次の行き先は下の札に出るので、知らせは「着いた・ポイント・次の名前」だけ
+  toast(simple() ? `${g.byId ? '🎉' : '🧭'} ${g.name}${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.name}` : ''}`
+    : `${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
   rivalSay(g, next);
 }
 // さんぽ仲間（ライバル）：行き先（名所・すすめられた人）に3回着くごとに1回、同じくらいの年の さんぽ好きが先に来ていて、次の行き先へ先回りする。
@@ -1588,7 +1590,7 @@ function refreshNearby() {
   if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
     store.set('nsg_theme_wk', wk);
     const lw = lastWeekStat();
-    setTimeout(() => toast(`${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
+    setTimeout(() => toast(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
   } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toast('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }
   checkGuide();   // 着いたら先に次の行き先へ進めてから、線・矢印・カードを描く（古い行き先を指さないように）
   let best = null, nearest = null, nearestD = Infinity;
@@ -1633,6 +1635,7 @@ function refreshNearby() {
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
+  if (!msgs.length && simple()) { setStatus(''); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length, bl = bagLine();
     const bag = bl ? (simple() ? `　${PIA('bag', 'おみやげ袋')} <b>${bl.done}</b>/${bl.b.km}km` : `　🎒 袋 <b>${bl.done}</b>/${bl.b.km}km`) : '';
@@ -1840,7 +1843,7 @@ function renderUps() {
 }
 
 /* ---------- 画面 ---------- */
-function setStatus(html, isHtml) { const el = $('status'); if (isHtml) el.innerHTML = html; else el.textContent = html; }
+function setStatus(html, isHtml) { const el = $('status'); if (isHtml) el.innerHTML = html; else el.textContent = html; el.hidden = !html; }   // 空のときは段ごと隠す
 
 function renderHeader() {
   const lv = levelOf(S.total);

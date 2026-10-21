@@ -5452,6 +5452,10 @@ $('pxZoomOut').addEventListener('click', () => {
   if (worldMode) { wscale = Math.max(0, wscale - 1); return; }
   if (scale > 1) setScale(scale - 1); else { wscale = WSIZES.length - 1; setWorld(true); }
 });
+$('pxZoom').addEventListener('click', () => {   // 🔍：押すたびに大きく。いちばん大きいと、はじめの大きさ（いちばん小さい）へ
+  if (worldMode) { wscale = wscale < WSIZES.length - 1 ? wscale + 1 : 0; return; }
+  setScale(scale < 4 ? scale + 1 : 1);
+});
 function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
@@ -5738,7 +5742,10 @@ function setAuto(on, quiet) {
   const b = $('pxAuto');
   b.classList.toggle('on', auto); b.setAttribute('aria-pressed', String(auto));
   autoS.path = []; autoS.read = 0;
-  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックや地面のタップで動かすと少し休みます）' : '🧭 おまかせ歩き：オフ');
+  // 文字を少なく（ふだん）では、オン・オフはボタンの色で分かるので、くわしい知らせは はじめの1回だけ
+  const simple = document.body.classList.contains('simple'), told = store.get('nsg_auto_told');
+  if (!quiet && (!simple || (auto && !told))) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックや地面のタップで動かすと少し休みます）' : '🧭 おまかせ歩き：オフ');
+  if (!quiet && auto && simple && !told) store.set('nsg_auto_told', '1');
 }
 function autoPause() { autoS.pauseUntil = Date.now() + 8000; autoS.path = []; }
 // (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで

@@ -635,6 +635,10 @@ body.jump-open{overflow:hidden}
 /* 稲刈りミニゲーム（harvest.js）：十字の矢印 */
 .px-zoom .h{margin-top:6px}   /* 稲刈りのボタン（あるいて移動でも見えるよう、右上の列に） */
 .px-zoom button[hidden]{display:none}
+/* 文字を少なく（ふだん）：＋ と － のかわりに 🔍 を1つ（押すたびに大きく、いちばん大きいと はじめの大きさへ） */
+.px-zoom .zc{display:none}
+body.simple .px-zoom .zc{display:block}
+body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .harvest-pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:8px;justify-content:center;padding:6px 4px;user-select:none;-webkit-user-select:none;touch-action:none}
 .harvest-pad button{border-radius:14px;border:2px solid #e9c46a;background:#2a3a2e;color:#fff;font-size:22px;font-weight:800;touch-action:none}
 .harvest-pad button.on{background:#4d6a52}

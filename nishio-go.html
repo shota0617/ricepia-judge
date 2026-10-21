@@ -183,6 +183,15 @@
     <p><b>このゲームは、あそぶ人の声でそだちます。</b>「こんな名所があるよ」「こうしたらもっと面白い」「ここがちがう」を送ってください。たしかめて、ゲームに反映します。反映されたら、ここでお知らせします。</p>
     <p class="voice-stats" id="voiceStats" hidden></p>
   </div>
+  <div class="card voice-me" id="voiceMe">
+    <p class="voice-rank" id="voiceRank"></p>
+    <p class="voice-stamps" id="voiceStamps"></p>
+  </div>
+  <div class="card voice-theme" id="voiceTheme">
+    <p><b>🗓 今週のお題</b><span id="themeDone" class="st reflected" hidden>答えた！</span></p>
+    <p class="voice-q" id="themeQ"></p>
+    <button type="button" class="btn" id="themeBtn">お題に答える</button>
+  </div>
   <div class="card" id="voiceMineCard" hidden>
     <h3>あなたのおたより</h3>
     <ul class="voice-list" id="voiceMine"></ul>
@@ -364,6 +373,8 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="reward" id="reward" aria-live="assertive"></div>
+<!-- チェックインのあとの ひとこと（ワンタップ。みんなの声として名所の窓に出る） -->
+<div class="react-bar" id="reactBar" role="group" aria-label="この名所の ひとこと" hidden></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="nishio-go/icons.js"></script>

@@ -394,6 +394,7 @@ function popupHtml(s) {
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">📅 ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     ${spotMeibutsu(s).map(m => `<p class="mb">${m.icon} <b>${esc(m.name)}</b>：${esc(m.note)}</p>`).join('')}
+    ${reactLine(s)}
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
@@ -412,6 +413,7 @@ function popupPic(s, c, v, left, d) {
     <p class="chips">${s.shop ? `<span>${PIA('bowl', '当店')}</span>` : s.featured ? `<span>${PIA('star', '注目スポット')}</span>` : `<span title="${esc(c.n)}">${catArt(s)}</span>`}<span>${PIA('coin', 'ポイント')}${ptsOf(s)}</span>
       <span${s.approx ? ' title="位置は概算・広めに判定"' : ''}>${PIA('pin', s.approx ? '現在地から（位置は概算・広めに判定）' : '現在地から')}${s.approx ? '≈' : ''}${d}</span><span>${v ? `${PIA('flag', '行った回数')}×${v.n}` : PI('new', 'まだ行ったことがない')}</span>${left ? `<span>${PIA('clock', '再チェックインまで')}${Math.ceil(left / 60000)}分</span>` : ''}</p>
     ${s.desc ? `<p>${esc(s.desc)}</p>` : ''}
+    ${reactLine(s)}
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">${PIA('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     ${spotMeibutsu(s).map(m => `<details class="mb"><summary>${m.icon} <b>${esc(m.name)}</b></summary>${esc(m.note)}</details>`).join('')}
@@ -874,6 +876,7 @@ function checkin() {
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
   const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
   showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot);
+  reactAsk(s);
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -1462,6 +1465,9 @@ const fbMine = () => { const m = store.get('nsg_fb_mine', []); return Array.isAr
 const voice = { data: null, at: 0 };
 const replyOf = rid => (voice.data && voice.data.replies && voice.data.replies[rid]) || null;
 const voicesReflected = () => fbMine().filter(m => (replyOf(m.rid) || {}).s === 'reflected').length;
+// おたより手帳の数（この端末だけ）：sent 送ったおたより・react ひとこと・themes 答えたお題・wk 答えた週
+const fbStats = () => { const x = store.get('nsg_fb_stats', null) || {}; return { sent: x.sent | 0, react: x.react | 0, themes: x.themes | 0, wk: Array.isArray(x.wk) ? x.wk : [] }; };
+const fbStatsAdd = f => { const x = fbStats(); f(x); x.wk = x.wk.slice(-60); store.set('nsg_fb_stats', x); };
 function badgeDefs() {
   const uniq = Object.keys(S.visits).length;
   // 「注目スポット制覇」は西尾市の中だけ（となりの市町は、市町ごとの制覇バッジ）
@@ -1493,6 +1499,7 @@ function badgeDefs() {
     { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${NPC_NISHIO.length}人みんなと話す`, cur: NPC_NISHIO.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NISHIO.length, 1) },
     { id: 'voice1', i: '📮', n: 'まちづくりの仲間', d: 'あなたのおたよりが ゲームに反映される', cur: voicesReflected(), goal: 1 },
     { id: 'voice3', i: '🏘️', n: 'まちの声の名人', d: 'あなたのおたよりが3つ ゲームに反映される', cur: voicesReflected(), goal: 3 },
+    { id: 'react10', i: '💬', n: 'ひとこと名人', d: 'チェックインのあとの ひとこと を10回送る', cur: fbStats().react, goal: 10 },
     { id: 'npcnear', i: '🧭', n: 'となりまちの顔なじみ', d: `となりの市町の人${NPC_NEAR.length}人みんなと話す`, cur: NPC_NEAR.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NEAR.length, 1), ready: NPC_NEAR.length > 0 },
   ];
 }
@@ -1648,6 +1655,8 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
 const DOT_TWO_STARS = new Set(['kabuse', 'matcha', 'ishiusu', 'ike', 'unaju', 'kabayaki', 'ebisen', 'asari', 'tanbo', 'carnation']);
 const dotStars = f => (DOT_TWO_STARS.has(f.motif) ? 2 : 3) + (['rainbow', 'snow', 'moon'].includes(f.wk) ? 1 : 0);
 const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i></i>'.repeat(n)}</div>`;
+// チェックインのあとの ひとこと：ごほうびの画面が消えたら、下に小さく出す（react.pending）
+const react = { pending: null, shown: 0, t: 0 };
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
   const el = $('reward'), D = window.NISHIO_DOTS;
   if (waited !== true) {
@@ -1690,7 +1699,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
   afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
-function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); }
+function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow(); }
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');
   hideReward();
@@ -1928,7 +1937,7 @@ function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` 
 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
-  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home' };
+  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk' };
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
@@ -2205,7 +2214,7 @@ $('resetBtn').addEventListener('click', () => {
    おたよりごとに、この端末で でたらめな受付番号（rid）を作って送り、送ったものは この端末にだけ覚えておく（nsg_fb_mine）。
    たしかめた結果（受付番号ごとの返事）と、反映されたことは nishio-go/voices.json（tools/feedback-triage.js voices が30分ごとに書く）で知る */
 const FB_MAX = 3;
-const fb = { shown: 0 };
+const fb = { shown: 0, theme: '' };
 const fbCount = () => { const c = store.get('nsg_fb', null); return c && c.d === ymd() ? c.n : 0; };
 const newRid = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('');
 const fbText = { spot: 'どんな所？（見どころ・場所の目じるしなど）', fix: 'なにがちがう？（正しくはどうか、分かれば）', fun: 'どうすると、もっと楽しくなる？（あったらうれしい遊び・ごほうび・しかけ など）', idea: 'どんなことで こまった？ どうしてほしい？' };
@@ -2234,8 +2243,9 @@ $('fbForm').addEventListener('submit', async e => {
   const here = $('fbHere').checked;
   if (here && !me) return msg('いまの場所が分からないので、チェックを外して送るか、場所が出てからもう一度送ってください。');
   const sp = kind === 'fix' ? spots.find(s => s.id === $('fbSpot').value) : null;
-  const rid = newRid();
+  const rid = newRid(), th = fb.theme && VOICE_THEMES.find(x => x.id === fb.theme && x.kind === kind);
   const body = { kind, name: kind === 'spot' ? name : '', text, url, rid, hp: $('fbHp').value, t: fb.shown ? Date.now() - fb.shown : 0, mode: demo ? 'demo' : 'real', ed: ED.id || '' };
+  if (th) body.theme = th.id;
   if (here) { body.lat = Math.round(me.lat * 1000) / 1000; body.lng = Math.round(me.lng * 1000) / 1000; }
   if (sp) body.spot = { id: sp.id, name: sp.name };
   const btn = $('fbSend');
@@ -2247,7 +2257,10 @@ $('fbForm').addEventListener('submit', async e => {
       // この端末にだけ覚えておく（あなたのおたより）。見出しは この端末の中だけで使う
       const head = kind === 'spot' ? name : sp ? sp.name : [...text.replace(/\s+/g, ' ')].slice(0, 24).join('');
       store.set('nsg_fb_mine', [{ rid, kind, head, t: Date.now() }, ...fbMine()].slice(0, 30));
-      $('fbForm').reset(); fbKind(); fb.shown = 0;
+      const wk = String(weekNo()), firstTheme = th && !fbStats().wk.includes(wk);
+      fbStatsAdd(x => { x.sent++; if (firstTheme) { x.themes++; x.wk.push(wk); } });
+      if (firstTheme) { const lv = gainPoints(20); save(); toastAfter(`🗓 今週のお題に答えた！ お題スタンプ +1（20pt）${lv ? ` レベル${lv}！` : ''}`); }
+      $('fbForm').reset(); fb.theme = ''; $('fbText').placeholder = ''; fbKind(); fb.shown = 0;
       renderVoice();
       msg(`とどきました。ありがとう！（受付番号 ${rid.slice(0, 4)}…）たしかめたら「あなたのおたより」でお知らせします。`);
       toast('📮 おたよりを送りました。ありがとう！');
@@ -2310,6 +2323,7 @@ function renderVoice() {
   $('voiceIntro').textContent = parts.length ? `📮 みんなの声で ${parts.join('・')}` : '';
   $('voiceIntro').hidden = !parts.length;
   $('voiceMineCard').hidden = !mine.length;
+  renderVoiceMe();
   const seen = voiceSeen();
   $('voiceMine').innerHTML = mine.map(m => {
     const r = replyOf(m.rid), st = r ? r.s : 'sent', [label, note] = VOICE_ST[st] || VOICE_ST.checking;
@@ -2336,6 +2350,98 @@ document.addEventListener('click', e => {
 });
 loadVoices(true);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) loadVoices(); });
+
+/* 楽しく声を送る：チェックインのあとの ひとこと・今週のお題・記者のランクと おたより手帳 */
+const REACTS = [['love', '😍', 'よかった'], ['photo', '📷', '映える'], ['calm', '🍵', 'ほっこり'], ['hard', '🤔', 'わかりにくい'], ['access', '🚧', '行きにくい']];
+// 名所の窓の「みんなの声」（voices.json の reactions。多いじゅんに3つ）
+function reactLine(s) {
+  const c = voice.data && voice.data.reactions && voice.data.reactions[s.id];
+  if (!c) return '';
+  const top = REACTS.map(([k, e, n]) => [e, n, c[k] | 0]).filter(x => x[2] > 0).sort((a, b) => b[2] - a[2]).slice(0, 3);
+  return top.length ? `<p class="react-line">みんなの声：${top.map(([e, n, k]) => `<span title="${esc(n)}">${e} ${k}</span>`).join(' ')}</p>` : '';
+}
+// 聞くのは、同じ名所は30日に1回、1日に3回まで
+function reactAsk(s) {
+  const seen = store.get('nsg_react', {}), day = store.get('nsg_react_day', null) || {};
+  if (seen[s.id] && Date.now() - seen[s.id] < 30 * 86400e3) return;
+  if (day.d === ymd() && day.n >= 3) return;
+  react.pending = s;
+}
+function reactHide() { clearTimeout(react.t); $('reactBar').hidden = true; $('reactBar').innerHTML = ''; }
+function reactShow() {
+  const s = react.pending; react.pending = null;
+  if (!s) return;
+  const day = store.get('nsg_react_day', null) || {};
+  store.set('nsg_react_day', { d: ymd(), n: day.d === ymd() ? (day.n | 0) + 1 : 1 });
+  react.shown = Date.now();
+  $('reactBar').innerHTML = `<p>💬 <b>${esc(s.name)}</b>、どうだった？ <small>タップで みんなの声に（+5pt）</small></p>
+    <div class="react-chips">${REACTS.map(([k, e, n]) => `<button type="button" data-react="${k}" data-spot="${esc(s.id)}"><span>${e}</span>${esc(n)}</button>`).join('')}</div>
+    <button type="button" class="react-x" data-react-x aria-label="とじる">×</button>`;
+  $('reactBar').hidden = false;
+  clearTimeout(react.t); react.t = setTimeout(reactHide, 15000);
+}
+$('reactBar').addEventListener('click', async e => {
+  if (e.target.closest('[data-react-x]')) return reactHide();
+  const b = e.target.closest('[data-react]');
+  if (!b) return;
+  const s = spots.find(x => x.id === b.dataset.spot);
+  if (!s) return reactHide();
+  $('reactBar').querySelectorAll('button').forEach(x => { x.disabled = true; });
+  let r = null;
+  try { r = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'react', spot: { id: s.id, name: s.name }, r: b.dataset.react, t: Date.now() - react.shown, hp: '' }) }); } catch (_) { /* 通信できない */ }
+  reactHide();
+  if (r && r.ok) {
+    const seen = store.get('nsg_react', {}); seen[s.id] = Date.now();
+    for (const [k, t] of Object.entries(seen)) if (Date.now() - t > 30 * 86400e3) delete seen[k];
+    store.set('nsg_react', seen);
+    fbStatsAdd(x => { x.react++; });
+    const lv = gainPoints(5); save();
+    toast(`💬 ひとこと ありがとう！ +5pt（${esc(s.name)}の みんなの声に入ります）${lv ? ` レベル${lv}！` : ''}`);
+    track('feedback_react', { r: b.dataset.react });
+    checkBadges();
+  } else toast(r && (r.status === 503 || r.status === 404) ? 'ひとこと は まだ受けつけていません。ごめんなさい。' : 'ひとこと を送れませんでした。また こんど おねがいします。');
+});
+
+// 今週のお題（週ごとに かわる。答えると お題スタンプ）
+const VOICE_THEMES = [
+  { id: 'asa', kind: 'spot', q: 'あなたの好きな「朝の西尾」は どこ？' },
+  { id: 'yuuhi', kind: 'spot', q: '夕日や夜景が きれいな場所を教えて' },
+  { id: 'shashin', kind: 'spot', q: '写真をとりたくなる場所は？' },
+  { id: 'himitsu', kind: 'spot', q: '地元の人しか知らない、ひみつの名所は？' },
+  { id: 'kodomo', kind: 'spot', q: '子どもと いっしょに楽しめる場所は？' },
+  { id: 'umi', kind: 'spot', q: '海や川の近くで好きな場所は？' },
+  { id: 'asobi', kind: 'fun', q: 'このゲームに あったら うれしい遊びは？' },
+  { id: 'ame', kind: 'fun', q: '雨の日も楽しくなる しかけを考えて！' },
+  { id: 'gohoubi', kind: 'fun', q: 'こんな ごほうびが ほしい！' },
+  { id: 'aruku', kind: 'fun', q: 'もっと歩きたくなる しかけは？' },
+  { id: 'matsuri', kind: 'fun', q: 'お祭りや行事の日に ゲームで何がおきたら楽しい？' },
+  { id: 'nakama', kind: 'fun', q: '家族や友だちと いっしょに遊ぶなら、どんな遊びがいい？' },
+];
+const themeNow = () => VOICE_THEMES[((weekNo() % VOICE_THEMES.length) + VOICE_THEMES.length) % VOICE_THEMES.length];
+$('themeBtn').addEventListener('click', () => {
+  const th = themeNow();
+  fb.theme = th.id;
+  $('fbKind').value = th.kind; fbKind();
+  $('fbText').placeholder = th.q;
+  $('fbCard').scrollIntoView({ block: 'start' });
+  $(th.kind === 'spot' ? 'fbName' : 'fbText').focus({ preventScroll: true });
+});
+// 記者のランク（反映された数・送った数・ひとこと の数から）と、おたより手帳のスタンプ
+const RANKS = [
+  { n: '📰 西尾通信の編集長', ok: (x, r) => r >= 10 },
+  { n: '🗞 名物記者', ok: (x, r) => r >= 3, next: 'あなたの声が10こ反映されると「西尾通信の編集長」' },
+  { n: '📝 まちの記者', ok: (x, r) => r >= 1 || x.react >= 20, next: 'あなたの声が3つ反映されると「名物記者」' },
+  { n: '✏️ 見習い記者', ok: x => x.sent >= 1 || x.react >= 3, next: 'あなたの声が1つ反映される（か、ひとこと を20回）と「まちの記者」' },
+  { n: '🌱 たんけんの はじまり', ok: () => true, next: 'おたより を1通送る（か、ひとこと を3回）と「見習い記者」' },
+];
+function renderVoiceMe() {
+  const x = fbStats(), r = voicesReflected(), i = RANKS.findIndex(k => k.ok(x, r)), k = RANKS[i];
+  $('voiceRank').innerHTML = `あなたは <b>${esc(k.n)}</b>${k.next ? `<small>つぎは：${esc(k.next)}</small>` : ''}`;
+  $('voiceStamps').textContent = `📮 おたより ${x.sent} ・ 💬 ひとこと ${x.react} ・ 🗓 お題 ${x.themes} ・ 🎉 反映 ${r}`;
+  const th = themeNow();
+  $('themeQ').textContent = th.q;
+  $('themeDone').hidden = !x.wk.includes(String(weekNo()));
+}
 
 /* ---------- 音楽（BGM と効果音） ----------
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。world：せかいちず、checkin：チェックイン、levelup：レベルアップ。

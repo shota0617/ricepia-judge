@@ -113,7 +113,7 @@ async function findOsm(f) {
 }
 
 // 仕分けで使うラベル（無ければ作る。もうあれば 422 で、それでよい）
-const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced', 'told'];
+const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced', 'told', 'reactions', 'counted'];
 async function ensureLabels() {
   for (const name of LABELS) {
     try { await gh('/labels', { method: 'POST', body: JSON.stringify({ name, color: name === 'feedback' ? 'f9d0c4' : name === 'needs-check' ? 'e99695' : 'ededed' }) }); }
@@ -312,7 +312,9 @@ async function pr() {
 // replies：受付番号 → { s, t, d }（いまの様子）。log：みんなの声で かわったこと（新しいじゅん）。counts：反映した数（種類ごと）
 const VOICES = 'nishio-go/voices.json';
 const today = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
-function applyVoices(v, status, logs, d = today()) {
+// reacts：ひとこと（チェックインのあとのワンタップ）の1日ぶんの Issue ごとの数 [{ n: Issue の番号, counts: { スポットの id: { love: 3, … } } }]
+const REACT_KEYS = new Set(['love', 'photo', 'calm', 'hard', 'access']);
+function applyVoices(v, status, logs, d = today(), reacts = []) {
   v = v && typeof v === 'object' ? v : {};
   v._説明 = 'にしおさんぽGO のプレイヤーの声（おたより）の公開データ。tools/feedback-triage.js voices が作る。replies は受付番号（端末で作った でたらめな番号）ごとの いまの様子、log は反映されたこと。おたよりの文・送った人の位置は入れない';
   v.replies = v.replies || {}; v.log = Array.isArray(v.log) ? v.log : []; v.counts = v.counts || {};
@@ -328,6 +330,16 @@ function applyVoices(v, status, logs, d = today()) {
     v.log.unshift({ ...(l.id ? { id: l.id } : {}), d, kind: l.kind, text: l.text }); v.counts[l.kind] = (v.counts[l.kind] || 0) + 1; changed = true;
   }
   v.log = v.log.slice(0, 200);
+  v.reactions = v.reactions || {}; v.reactedIssues = Array.isArray(v.reactedIssues) ? v.reactedIssues : [];
+  for (const x of reacts) {   // 同じ日の Issue は1回だけ数える（counted のラベルが付かなくても二重にならない）
+    if (v.reactedIssues.includes(x.n)) continue;
+    for (const [id, c] of Object.entries(x.counts)) {
+      const o = v.reactions[id] = v.reactions[id] || {};
+      for (const [k, n] of Object.entries(c)) if (REACT_KEYS.has(k)) o[k] = (o[k] || 0) + n;
+    }
+    v.reactedIssues.push(x.n); changed = true;
+  }
+  v.reactedIssues = v.reactedIssues.slice(-500);
   const old = new Date(Date.now() + 9 * 3600e3 - 120 * 86400e3).toISOString().slice(0, 10);
   for (const [rid, x] of Object.entries(v.replies)) if (!(x.d >= old)) { delete v.replies[rid]; changed = true; }   // 120日より前の返事は消す
   if (changed || !v.updated) v.updated = d;
@@ -348,6 +360,34 @@ async function searchIssues(q) {
   return out;
 }
 const comments = n => gh(`/issues/${n}/comments?per_page=100`);
+async function allComments(n) {
+  const out = [];
+  for (let page = 1; page <= 60; page++) {
+    const list = await gh(`/issues/${n}/comments?per_page=100&page=${page}`);
+    out.push(...list);
+    if (list.length < 100) break;
+  }
+  return out;
+}
+// 終わった日（日本時間のきのうまで）の ひとこと の Issue を数える
+async function reactionsToCount() {
+  const out = [], d = today();
+  for (const i of await searchIssues(`repo:${REPO} is:issue label:reactions -label:counted`)) {
+    const m = /^\[ひとこと\] (\d{4}-\d{2}-\d{2})$/.exec(i.title || '');
+    if (!m || m[1] >= d) continue;   // きょうの分は、まだ ふえるので あした数える
+    const counts = {};
+    for (const c of await allComments(i.number)) {
+      const k = /<!-- nsg-react:([A-Za-z0-9+/=]+) -->/.exec(c.body || '');
+      if (!k) continue;
+      let x; try { x = JSON.parse(Buffer.from(k[1], 'base64').toString('utf8')); } catch (_) { continue; }
+      if (!x || typeof x.spot !== 'string' || !/^[\w-]{1,60}$/.test(x.spot) || !REACT_KEYS.has(x.r)) continue;
+      const o = counts[x.spot] = counts[x.spot] || {};
+      o[x.r] = (o[x.r] || 0) + 1;
+    }
+    out.push({ n: i.number, counts });
+  }
+  return out;
+}
 
 // 反映されたもの：fixed（自動で作った PR）のうち、人がマージしたもの。reflected（運営が手で反映し「公開: …」とコメントしたもの）
 async function announcements() {
@@ -398,11 +438,12 @@ async function voices() {
     try { const x = JSON.parse(Buffer.from(m[1], 'base64').toString('utf8')); if (RID.test(x.rid || '')) rebuilt[x.rid] = { s: x.s, t: x.t || '' }; } catch (_) { /* よめない しるし */ }
   }
   const status = { ...rebuilt, ...readJson('status.json', {}), ...a.status };
-  if (!Object.keys(status).length && !a.logs.length) { for (const n of toldNow) await addLabels(n, ['told']); console.log('ゲームに知らせることはありません'); return; }
+  const reacts = await reactionsToCount();
+  if (!Object.keys(status).length && !a.logs.length && !reacts.length) { for (const n of toldNow) await addLabels(n, ['told']); console.log('ゲームに知らせることはありません'); return; }
   for (let tries = 1; ; tries++) {
     if (tries > 1) checkoutMain();
     const f = path.join(ROOT, VOICES);
-    const v = applyVoices(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null, status, a.logs);
+    const v = applyVoices(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null, status, a.logs, today(), reacts);
     fs.writeFileSync(f, JSON.stringify(v, null, 1) + '\n');
     const page = require('./make-minna.js').write();   // 公開ページ「みんなで見つけた西尾」も作りなおす
     git('add', VOICES, page);
@@ -413,7 +454,8 @@ async function voices() {
   }
   for (const n of a.done) await addLabels(n, ['announced']);
   for (const n of toldNow) await addLabels(n, ['told']);   // main に入った（か、もう入っていた）返事
-  console.log(`返事 ${Object.keys(status).length}件・反映 ${a.logs.length}件`);
+  for (const x of reacts) { await addLabels(x.n, ['counted']); await close(x.n, 'completed'); }   // 数えた ひとこと の日
+  console.log(`返事 ${Object.keys(status).length}件・反映 ${a.logs.length}件・ひとこと ${reacts.length}日ぶん`);
 }
 
 if (require.main === module) {
@@ -421,4 +463,4 @@ if (require.main === module) {
   if (!run) { console.error('使いかた：node tools/feedback-triage.js prepare|report|pr|voices'); process.exit(2); }
   run().catch(e => { console.error(e.message); process.exit(1); });
 }
-module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, leaks, safePublic, publicText, applyVoices, announcements, searchIssues, gh, dist, prepare, report, voices };
+module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, leaks, safePublic, publicText, applyVoices, announcements, reactionsToCount, searchIssues, gh, dist, prepare, report, voices };

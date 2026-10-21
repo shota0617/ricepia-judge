@@ -20,8 +20,8 @@
     try {
       window.gtag && gtag('event', name, params);
       if (window.fbq) {
-        // 当店のサイト・道案内へ進んだら「見込み客」、それ以外はカスタムイベント
-        if (name === 'shop_link' || name === 'shop_checkin') fbq('track', 'Lead', params);
+        // 当店の LINE・サイト・道案内へ進んだら「見込み客」、それ以外はカスタムイベント
+        if (name === 'shop_link' || name === 'shop_checkin' || name === 'line_add') fbq('track', 'Lead', params);
         else fbq('trackCustom', name, params);
       }
     } catch (e) { queue.push([name, params]); }
@@ -51,10 +51,15 @@
   }
   queue.splice(0).forEach(([n, p]) => window.nsgTrack(n, p));
 
-  // 当店のサイト・道案内のリンクを押したら記録（ポップアップ・はじめの画面・ドット絵のウィンドウのどれでも）
+  // 当店の LINE・サイト・道案内のリンクを押したら記録（ポップアップ・はじめの画面・ドット絵のウィンドウのどれでも）
   document.addEventListener('click', e => {
     const a = e.target.closest && e.target.closest('a[href]');
     if (!a) return;
+    if (/lin\.ee\//.test(a.href)) {   // 当店の LINE の友だち追加：ricepia.jp と同じ広告の成果（LINE友だち追加クリック）にも数える
+      window.nsgTrack('line_add', { from: (a.href.match(/from=([\w-]+)/) || [])[1] || '', transport_type: 'beacon' });
+      if (window.gtag) gtag('event', 'conversion', { send_to: `${CFG.ads}/_h7ZCO-av9gcELzJjp5E`, transport_type: 'beacon' });
+      return;
+    }
     if (/ricepia\.jp/.test(a.href)) window.nsgTrack('shop_link', { link: 'site', transport_type: 'beacon' });
     else if (/google\.com\/maps\/dir/.test(a.href) && a.closest('.shop-links')) window.nsgTrack('shop_link', { link: 'directions', transport_type: 'beacon' });
   }, true);

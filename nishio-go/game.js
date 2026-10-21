@@ -489,6 +489,8 @@ function npcPages(n) {
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
+  const hid = Object.keys(S.heard || {}).find(id => S.heard[id].byId === n.id && !S.heard[id].found), hs = hid && spots.find(x => x.id === hid);
+  if (hs) pages.push(`🔍 ${hintSay(n, hs.name)}`);   // この人がくれた、しらべるの手がかり（まだ しらべていないあいだ）
   return pages;
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
@@ -548,7 +550,7 @@ function talkNpc(id, page = 0) {
     if (g) {
       setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(simple() ? `📜 → ${g.name}` : `📜 イベント発生：${g.name}へ行ってみて`);
       const hid = heardOf(g, n), hs = hid && spots.find(x => x.id === hid);
-      if (hs) say.push(simple() ? `🔍 ${hs.name}` : `🔍 「${hs.name}に着いたら、よう しらべてみりん」`);
+      if (hs) say.push(simple() ? `🔍 ${hs.name}` : `🔍 「${hintSay(n, hs.name)}」`);
     }
     else if (arrived) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
     if (arrived) rivalSay({ ...arrived, name: n.spotName }, g);
@@ -1222,14 +1224,35 @@ function decideGuide(from) {
 function heardOf(g, n) {
   const to = g.kind === 'npc' ? placeNpcs().find(x => x.id === g.id) : null, id = to ? 'f-' + to.spot : g.kind === 'spot' ? g.id : null;
   if (!id || S.visits[id] || (S.heard || {})[id]) return '';
-  S.heard = { ...(S.heard || {}), [id]: { by: n.name, t: Date.now() } };
+  S.heard = { ...(S.heard || {}), [id]: { by: n.name, byId: n.id, t: Date.now() } };
   save();
   return id;
 }
+// しらべるの手がかりの言い方：人の見た目（npcs.js の look）ごとに2つずつ。どちらを言うかは人ごとに決まっている（id から）。
+// 名所の名前だけを入れて、名所についての事実は言わない（見つかる まちメモ は出典つきのもの）
+const HINT_SAY = {
+  elder: ['{s}に着いたら、よう しらべてみりん。なんか見つかるかもしれんで', '{s}はな、すみずみまで よう見るもんだに'],
+  granny: ['{s}へ行ったら、すみっこまで よう見てってね', '{s}に着いたら、あわてんと ゆっくり しらべりんね'],
+  man: ['{s}に着いたら、ちょっと しらべてみるといいよ', '{s}は、よう見ると おもしろいもんがあるだに'],
+  woman: ['{s}に行ったら、よく見てみて。きっと何か見つかるよ', '{s}に着いたら、まわりも しらべてみりん'],
+  kid: ['{s}って、しらべると なんか出てくるんだって！', '{s}に行ったら、たんけんしてみてね！'],
+  student: ['{s}は、しらべがいがあるよ', '{s}に着いたら、調べてみなよ。メモしとくといいじゃん'],
+  fisher: ['{s}に行ったら、目を こらしてみりん', '{s}に着いたら、よう見ときん。見とるもんが見つけるだに'],
+  staff: ['{s}に寄ったら、ぜひ しらべてってくださいね', '{s}に着いたら、まわりも見てみてください'],
+  guide: ['{s}に着いたら、ぜひ しらべてみてください。歩いてこそ見つかる話がありますよ', '{s}では、足をとめて よく見てみてください'],
+  monk: ['{s}では、心しずかに よう見てごらんなさい', '{s}に着いたら、ゆっくり しらべてごらんなさい'],
+};
+function hintSay(n, name) {
+  const list = HINT_SAY[n.look] || HINT_SAY.man, h = [...String(n.id)].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return list[h % list.length].replace('{s}', () => name);
+}
 // 生きもの手帳：歩く地図の田んぼ・水べで、ときどき生きものに出会う（pixel.js の critterStep）。はじめて出会うと手帳に載って +10pt。1日5回まで。
-// どこの田んぼ・川・海べりでも ふつうに見られるものだけで、場面のひとことだけ（大きさ・数・西尾にいた記録などの豆知識は書かない）。
+// ふつうは、どこの田んぼ・川・海べりでも見られるものの場面のひとことだけ（豆知識は書かない）。
+// 西尾ならではの生きもの（note のあるもの）は、出典（src）で確かめた事実だけを note に書き、手帳に出典といっしょに出す。
 // where：paddy 田んぼ／water 川・池・海の水べ／higata 水べのうち、一色干潟（衣崎海岸）・トンボロ干潟から1.5km以内。months：出る月（ないときは1年じゅう）
+// IBA：日本野鳥の会「重要野鳥生息地（IBA）矢作川河口」（矢作川の河口と、矢作古川の河口沖に広がる一色の干潟。西尾市・碧南市にまたがる）
 // 昔のドット絵RPGの「草むらを歩くと出会う」しくみ
+const IBA_SRC = 'https://ftp.wbsj.org/nature/hogo/others/iba/search/sites/toukai-cyubu/imgs/JP109.pdf';
 const CRITTERS = [
   { id: 'sagi', name: 'サギ', where: 'paddy', say: '田んぼで、白いサギが じっと えものを ねらっとる。' },
   { id: 'kaeru', name: 'カエル', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: 'あぜから、カエルが ぴょんと はねた。' },
@@ -1237,6 +1260,12 @@ const CRITTERS = [
   { id: 'kamo', name: 'カモ', where: 'water', say: '水の上を、カモが すいすい およいどる。' },
   { id: 'sakana', name: '魚', where: 'water', months: [4, 5, 6, 7, 8, 9, 10], say: '水の中で、魚が ぱしゃっと はねた。' },
   { id: 'kani', name: 'カニ', where: 'water', months: [5, 6, 7, 8, 9, 10], say: '水べの石のあいだを、小さなカニが よこ歩きしとる。' },
+  { id: 'keri', name: 'ケリ', where: 'paddy', say: '田んぼから、鳥が「ケリリッ」と鳴きながら とびあがった。',
+    note: '矢作川の河口は、ケリの大切なすみかとして「重要野鳥生息地（IBA）」に選ばれとる。', src: IBA_SRC },
+  { id: 'seitaka', name: 'セイタカシギ', where: 'higata', say: '干潟を、足の長い白黒の鳥が すっすっと歩いとる。',
+    note: '一色の干潟がある矢作川の河口は、セイタカシギの国内でいちばん大きな繁殖地とされとる（重要野鳥生息地 IBA）。', src: IBA_SRC },
+  { id: 'suzugamo', name: 'スズガモ', where: 'higata', months: [11, 12, 1, 2, 3], say: '沖のほうに、白と黒のカモが たくさん うかんどる。',
+    note: '矢作川の河口は、スズガモが たくさん集まる所として「重要野鳥生息地（IBA）」に選ばれとる。', src: IBA_SRC },
   { id: 'asari', name: 'アサリ', where: 'higata', months: (EVENTS.find(e => e.id === 'shiohigari') || {}).months || [3, 4, 5], say: '干潟の砂に、貝の小さな穴を見つけた。潮干狩りの季節だね。' },
 ];
 const CRITTER_DAILY = 5, CRITTER_PTS = 10, HIGATA = ['f-koromozaki', 'f-tombolo'];
@@ -1258,10 +1287,10 @@ function critterMet(c) {
   if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); }
   save();
   track('critter_meet', { critter: c.id, first, mode: demo ? 'play' : 'walk' });
-  toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt` : ''}`);
+  toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
   return c;
 }
-// しらべる：聞いた名所に着いたら、名所の窓の「🔍 しらべる」で、まだ知らない まちメモが1つ見つかる（すすめた人の「よう しらべてみりん」が手がかり）。
+// しらべる：聞いた名所に着いたら、名所の窓の「🔍 しらべる」で、まだ知らない まちメモが1つ見つかる（すすめた人のことば（hintSay）が手がかり）。
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
@@ -2036,7 +2065,7 @@ function renderLog() {
   const book = S.critters || {}, cimg = id => { try { const c = window.nishioPixel && nishioPixel.critterSprite(id); return c ? `<img class="gthumb" src="${c.toDataURL()}" alt="" width="28" height="28"/>` : ''; } catch (e) { return ''; } };
   $('critterCount').textContent = `${CRITTERS.filter(c => book[c.id]).length}/${CRITTERS.length}`;
   $('critterList').innerHTML = CRITTERS.map(c => book[c.id]
-    ? `<li><span class="ico">${cimg(c.id) || '🐾'}</span><span class="main"><b>${esc(c.name)}</b>${simple() ? '' : `<small>${esc(c.say)}</small>`}</span><span class="num">×${book[c.id].n}</span></li>`
+    ? `<li><span class="ico">${cimg(c.id) || '🐾'}</span><span class="main"><b>${esc(c.name)}</b>${simple() && !c.note ? '' : `<small>${esc(c.note || c.say)}${c.src ? ` <a href="${esc(c.src)}" target="_blank" rel="noopener">出典</a>` : ''}</small>`}</span><span class="num">×${book[c.id].n}</span></li>`
     : `<li><span class="ico heard">${cimg(c.id) || '❔'}</span><span class="main"><b>？？？</b><small>${WHERE_NAME[c.where]}${c.months ? `・${c.months[0]}〜${c.months[c.months.length - 1]}月` : ''}</small></span></li>`).join('');
 
   const visits = Object.entries(S.visits).sort((a, b) => b[1].last - a[1].last);

@@ -105,21 +105,6 @@ def steps(n, mat, x, y, w, k, run=0.04, rise=0.025):
         box(f'dan{n}{i}', mat, (w, run, rise * (i + 1)), (x, y + i * run, rise * (i + 1) / 2))
 
 
-def train(n, body, band, x, y, length, z=0.02, w=0.16, h=0.20, win='mado'):
-    box(f'tr{n}', body, (length, w, h), (x, y, z + h / 2 + 0.02), bevel=0.02)
-    box(f'trb{n}', band, (length + 0.004, w + 0.004, 0.022), (x, y, z + h * 0.28 + 0.02))
-    k = max(2, int(length / 0.12))
-    windows(f'trw{n}', win, [x - length / 2 + (i + 0.5) * length / k for i in range(k)], y - w / 2 - 0.003, z + h * 0.66 + 0.02, 0.07, 0.055)
-    box(f'trs{n}', 'shitami', (length, w + 0.04, 0.02), (x, y, z + 0.01))
-
-
-def platform(n, x, y, w, d=0.16, h=0.08, roof_h=0.24):
-    box(f'pf{n}', 'home', (w, d, h), (x, y, h / 2))
-    for i in range(3):
-        box(f'pfh{n}{i}', 'hashira', (0.018, 0.018, roof_h), (x - w * 0.35 + i * w * 0.35, y + d * 0.2, h + roof_h / 2))
-    box(f'pfy{n}', 'yane2', (w * 0.92, d * 1.1, 0.02), (x, y, h + roof_h), (math.radians(-6), 0, 0))
-
-
 def office(n, x, y, w, d, h, floors, wall='modern', win='mado', z=0.0):
     box(f'of{n}', wall, (w, d, h), (x, y, z + h / 2))
     cols = max(2, int(w / 0.07))
@@ -413,8 +398,8 @@ def okazaki_museum():
 
 
 def okazaki_higashi_okazaki_sta():
-    """名鉄 東岡崎駅：灰色の駅ビル（窓の列）と色とりどりの看板の帯、1階の店の入口と街路樹。うしろのホームに赤い電車"""
-    ground('asphalt')
+    """名鉄 東岡崎駅：灰色の駅ビル（窓の列）と色とりどりの看板の帯、1階の店の入口と街路樹"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'concrete', (0.66, 0.24, 0.30), (-0.06, -0.14, 0.15))
     windows('w', 'mado', [-0.34 + i * 0.08 for i in range(8)], -0.262, 0.24, 0.05, 0.04)
     for i, m in enumerate(('red', 'blue', 'yellow', 'green', 'red', 'blue', 'jrOrange')):
@@ -422,23 +407,19 @@ def okazaki_higashi_okazaki_sta():
     windows('mise', 'glassB', [-0.28, -0.12, 0.04, 0.18], -0.262, 0.05, 0.10, 0.08)
     box('meitetsu', 'meitetsu', (0.20, 0.01, 0.04), (-0.06, -0.262, 0.32))
     tree('g', 0.36, -0.32, 0.6)
-    platform('p', 0.04, 0.16, 0.90)
-    train('t', 'meitetsu', 'obi', 0.04, 0.32, 0.86)
-    return dict(target=(0, 0.04, 0.18), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.18), scale=0.92, el=28, size=96)
 
 
 def okazaki_okazaki_sta():
-    """JR 岡崎駅：銀色のパネルの駅舎と、ガラスの階段室、白い駅名の看板にオレンジの JR マーク。うしろのホームに電車"""
-    ground('asphalt')
+    """JR 岡崎駅：銀色のパネルの駅舎と、ガラスの階段室、白い駅名の看板にオレンジの JR マーク"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'jrSilver', (0.44, 0.24, 0.28), (-0.16, -0.14, 0.14))
     for i in range(5):
         box(f'panel{i}', 'concrete', (0.006, 0.01, 0.26), (-0.34 + i * 0.09, -0.262, 0.14))
     box('kaidan', 'glassB', (0.16, 0.16, 0.34), (0.16, -0.16, 0.17))
     box('kanban', 'shikkui', (0.24, 0.012, 0.05), (-0.16, -0.264, 0.24))
     box('jr', 'jrOrange', (0.05, 0.014, 0.035), (-0.24, -0.266, 0.24))
-    platform('p', 0.04, 0.16, 0.90)
-    train('t', 'jrSilver', 'jrOrange', 0.04, 0.32, 0.86)
-    return dict(target=(0, 0.04, 0.18), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.18), scale=0.92, el=28, size=96)
 
 
 def okazaki_shooji():
@@ -659,29 +640,20 @@ def anjo_himeogawa_kofun():
 
 
 def anjo_station():
-    """JR 安城駅：茶色とクリーム色の駅舎（大きなガラスの入り口）と、銀色にオレンジの帯の電車"""
-    ground('asphalt')
+    """JR 安城駅：茶色とクリーム色の低い駅舎（大きなガラスの入り口）、「JR」の看板、背の高い街灯"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'renga', (0.50, 0.22, 0.22), (-0.14, -0.16, 0.11))
     box('bldgW', 'cream', (0.20, 0.224, 0.22), (0.06, -0.16, 0.11))
     box('glass', 'glassB', (0.14, 0.01, 0.12), (-0.24, -0.272, 0.07))
     box('kanban', 'jrOrange', (0.14, 0.01, 0.035), (-0.06, -0.272, 0.18))
     cyl('tou', 'hashira', 0.01, 0.30, (0.30, -0.26, 0.15), verts=8)
     sphere('tou2', 'shikkui', 0.025, (0.30, -0.26, 0.31))
-    platform('p', 0.04, 0.14, 0.90)
-    train('t', 'jrSilver', 'jrOrange', 0.04, 0.30, 0.86)
-    return dict(target=(0, 0.04, 0.16), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.16), scale=0.92, el=28, size=96)
 
 
 def anjo_mikawa_anjo_station():
-    """三河安城駅：東海道新幹線の高架ホーム（白い車体に青い帯の新幹線）。駅舎は茶色の長い屋根にアーチの入口、白い時計塔に赤い四角すいの屋根"""
-    ground('asphalt')
-    box('koka', 'concrete', (0.96, 0.24, 0.20), (0, 0.20, 0.10))
-    for x in (-0.36, -0.12, 0.12, 0.36):
-        box(f'kyaku{x}', 'concrete', (0.04, 0.24, 0.20), (x, 0.20, 0.10))
-    box('shin', 'shinkansen', (0.90, 0.15, 0.13), (0, 0.20, 0.27), bevel=0.04)
-    box('shinB', 'shinB', (0.904, 0.154, 0.018), (0, 0.20, 0.23))
-    windows('sw', 'mado', [-0.36 + i * 0.09 for i in range(9)], 0.123, 0.29, 0.05, 0.03)
-    box('yane', 'yane2', (0.96, 0.24, 0.02), (0, 0.20, 0.40))
+    """三河安城駅：茶色の長い屋根にとんがった白い屋根窓、まん中はアーチの入口、白い時計塔に赤い四角すいの屋根"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('ekisha', 'cream', (0.56, 0.16, 0.14), (0.0, -0.16, 0.07))
     roof('ekishaY', 'kijiD', 0.60, 0.20, 0.06, 0.14, 0.6, 0.0, -0.16)
     for x in (-0.18, 0.18):
@@ -690,16 +662,15 @@ def anjo_mikawa_anjo_station():
     box('tokei', 'shikkui', (0.07, 0.07, 0.30), (0.34, -0.20, 0.15))
     cyl('tokeiF', 'mado', 0.022, 0.01, (0.34, -0.237, 0.26), (math.pi / 2, 0, 0), 12)
     cyl('tokeiY', 'yaneR', 0.07, 0.08, (0.34, -0.20, 0.34), (0, 0, math.pi / 4), 4, r2=0.002)
-    return dict(target=(0, 0.02, 0.20), scale=1.12, el=24, size=96)
+    return dict(target=(0, -0.14, 0.20), scale=0.92, el=24, size=96)
 
 
 def anjo_minami_anjo_station():
-    """名鉄 南安城駅（西尾線）：高架の線路の下の駅。コンクリートの高架と架線柱、茶色の板張りの棟、赤いポスト。高架に赤い電車"""
+    """名鉄 南安城駅（西尾線）：高架の線路の下の駅。コンクリートの高架と架線柱、茶色の板張りの棟、赤いポスト"""
     ground('asphalt')
     box('koka', 'concrete', (0.96, 0.22, 0.04), (0, 0.12, 0.24))
     for x in (-0.36, 0.0, 0.36):
         box(f'kyaku{x}', 'concrete', (0.06, 0.16, 0.22), (x, 0.12, 0.11))
-    train('t', 'meitetsu', 'obi', 0.0, 0.12, 0.80, 0.24, 0.15, 0.16)
     for x in (-0.44, 0.44):
         box(f'kasen{x}', 'hashira', (0.015, 0.015, 0.28), (x, 0.22, 0.40))
     box('mune', 'kiji', (0.30, 0.14, 0.16), (-0.18, -0.16, 0.08))
@@ -874,8 +845,8 @@ def hekinan_oninji():
     return dict(target=(0, 0.02, 0.22), scale=1.08, el=26, size=96)
 
 def hekinan_station():
-    """名鉄 碧南駅（三河線）：灰色の高い箱に駅名の看板、手前に低くて長い黒っぽい屋根の駅舎、前の横断歩道。うしろに赤い電車"""
-    ground('asphalt')
+    """名鉄 碧南駅（三河線）：灰色の高い箱に駅名の看板、手前に低くて長い黒っぽい屋根の駅舎、前の横断歩道"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('takai', 'concrete', (0.20, 0.16, 0.36), (0.10, -0.06, 0.18))
     box('kanban', 'shikkui', (0.14, 0.01, 0.04), (0.10, -0.142, 0.30))
     box('bldg', 'shikkui', (0.56, 0.16, 0.12), (-0.12, -0.20, 0.06))
@@ -883,14 +854,12 @@ def hekinan_station():
     windows('w', 'glassB', [-0.32, -0.20, -0.08, 0.04], -0.282, 0.06, 0.08, 0.07)
     for i in range(5):
         box(f'oudan{i}', 'shikkui', (0.04, 0.10, 0.004), (-0.30 + i * 0.08, -0.36, 0.012))
-    platform('p', 0.04, 0.18, 0.90)
-    train('t', 'meitetsu', 'obi', 0.04, 0.33, 0.80)
-    return dict(target=(0, 0.02, 0.16), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.16), scale=0.92, el=28, size=96)
 
 
 def hekinan_chuo_station():
     """名鉄 碧南中央駅：白い駅ビルに、サーモン色の丸いアーチの入口の屋根、2階の白いアーチ窓。前の歩道に黄色い点字ブロック"""
-    ground('asphalt')
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'shikkui', (0.56, 0.24, 0.28), (-0.06, -0.12, 0.14))
     o = cyl('arch', 'salmon', 0.10, 0.22, (-0.06, -0.26, 0.12), (0, math.pi / 2, 0), 16)
     o.scale = (0.6, 1, 1)
@@ -899,9 +868,7 @@ def hekinan_chuo_station():
         box(f'w{x}', 'mado', (0.05, 0.01, 0.06), (x, -0.242, 0.20))
         cyl(f'wa{x}', 'mado', 0.025, 0.01, (x, -0.242, 0.23), (math.pi / 2, 0, 0), 12)
     box('tenji', 'yellow', (0.60, 0.03, 0.004), (-0.06, -0.34, 0.012))
-    platform('p', 0.04, 0.22, 0.90)
-    train('t', 'meitetsu', 'obi', 0.04, 0.36, 0.80)
-    return dict(target=(0, 0.02, 0.16), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.16), scale=0.92, el=28, size=96)
 
 
 def hekinan_cityhall():
@@ -936,9 +903,7 @@ def takahama_kawara_museum():
 
 def takahama_minato_station():
     """名鉄 高浜港駅：「鬼みち」の出発点。白い漆喰に黒い瓦屋根の蔵づくりの駅舎（腰はなまこ壁）と、駅前の日本一大きいとされる古代鬼面の鬼瓦"""
-    ground('asphalt')
-    platform('p', 0.04, 0.18, 0.90)
-    train('t', 'meitetsu', 'obi', 0.04, 0.33, 0.80)
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'shikkui', (0.30, 0.16, 0.16), (0.24, -0.10, 0.08))
     box('namako', 'sumi', (0.304, 0.164, 0.06), (0.24, -0.10, 0.03))
     for i in range(6):
@@ -952,7 +917,7 @@ def takahama_minato_station():
     box('kuchi', 'sumi', (0.10, 0.01, 0.025), (-0.22, -0.235, 0.13))
     for x in (-0.09, 0.09):
         cyl(f'tsuno{x}', 'onigawara', 0.022, 0.08, (-0.22 + x, -0.20, 0.34), (0, -x * 4, 0), 6, r2=0.004)
-    return dict(target=(0, 0.02, 0.16), scale=1.08, el=26, size=96)
+    return dict(target=(0, -0.14, 0.16), scale=0.92, el=26, size=96)
 
 
 def takahama_kasuga():
@@ -995,8 +960,8 @@ def takahama_mikawa_takahama_station():
 
 
 def takahama_yoshihama_station():
-    """名鉄 吉浜駅：かまぼこ形の屋根の白い小さな駅舎に駅名の看板、赤・白・青の自動販売機、右に「人形小路」の赤いのぼり。うしろに赤い電車"""
-    ground('asphalt')
+    """名鉄 吉浜駅：かまぼこ形の屋根の白い小さな駅舎に駅名の看板、赤・白・青の自動販売機、右に「人形小路」の赤いのぼり"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'shikkui', (0.30, 0.18, 0.12), (-0.16, -0.18, 0.06))
     o = cyl('kamaboko', 'concrete', 0.09, 0.32, (-0.16, -0.18, 0.12), (0, math.pi / 2, 0), 16)
     o.scale = (0.5, 1, 1)
@@ -1005,9 +970,7 @@ def takahama_yoshihama_station():
         box(f'jihan{i}', m, (0.05, 0.04, 0.10), (0.04 + i * 0.055, -0.22, 0.05))
     cyl('nobori', 'hashira', 0.006, 0.26, (0.26, -0.26, 0.13), verts=6)
     box('noboriF', 'red', (0.04, 0.006, 0.16), (0.285, -0.26, 0.17))
-    platform('p', 0.04, 0.12, 0.90)
-    train('t', 'meitetsu', 'obi', 0.04, 0.28, 0.80)
-    return dict(target=(0, 0.04, 0.14), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.14), scale=0.92, el=28, size=96)
 
 
 def takahama_cityhall():
@@ -1137,8 +1100,8 @@ def kota_townhall():
 
 
 def kota_station():
-    """JR 幸田駅：白い駅舎にガラスの正面と薄いひさし、赤いポスト・自動販売機、ヤシの木。うしろのホームに電車"""
-    ground('asphalt')
+    """JR 幸田駅：白い駅舎にガラスの正面と薄いひさし、赤いポスト・自動販売機、ヤシの木"""
+    ground('asphalt', 0.96, 0.56, 0, -0.14)
     box('bldg', 'shikkui', (0.36, 0.20, 0.20), (-0.16, -0.18, 0.10))
     box('glass', 'glassB', (0.24, 0.01, 0.14), (-0.16, -0.282, 0.07))
     box('hisashi', 'concrete', (0.40, 0.08, 0.01), (-0.16, -0.31, 0.15))
@@ -1149,16 +1112,15 @@ def kota_station():
         for j in range(5):
             a = j * 2 * math.pi / 5
             box(f'yashiH{i}{j}', 'gTree', (0.10, 0.02, 0.008), (x + math.cos(a) * 0.04, -0.26 + math.sin(a) * 0.04, 0.26), (0, 0.3, a))
-    platform('p', 0.04, 0.12, 0.90)
-    train('t', 'jrSilver', 'jrOrange', 0.04, 0.28, 0.84)
-    return dict(target=(0, 0.04, 0.14), scale=1.08, el=28, size=96)
+    return dict(target=(0, -0.14, 0.14), scale=0.92, el=28, size=96)
 
 
 def kota_sangane_station():
-    """JR 三ケ根駅：線路の上をまたぐ、クリーム色の壁と赤茶の屋根の橋上駅舎と、両側の白い階段。下を電車が通る"""
+    """JR 三ケ根駅：線路の上をまたぐ、クリーム色の壁と赤茶の屋根の橋上駅舎と、両側の白い階段"""
     ground('asphalt')
-    platform('p', 0.04, 0.10, 0.90, 0.10, 0.06, 0.14)
-    train('t', 'jrSilver', 'jrOrange', 0.04, 0.24, 0.84)
+    box('senro', 'senro', (0.96, 0.22, 0.015), (0, 0.12, 0.01))
+    for y in (0.07, 0.17):
+        box(f'rail{y}', 'rail', (0.96, 0.012, 0.012), (0, y, 0.02))
     box('kyo', 'cream', (0.30, 0.54, 0.14), (-0.10, 0.10, 0.40))
     windows('w', 'mado', [-0.20, -0.10, 0.0], -0.173, 0.42, 0.05, 0.05)
     roof('kyoY', 'yaneR', 0.34, 0.58, 0.07, 0.47, 0.5, -0.10, 0.10)
@@ -1168,10 +1130,8 @@ def kota_sangane_station():
 
 
 def kota_aimi_station():
-    """JR 相見駅（2012年開業）：ガラスばりの明るい駅舎と白い大きな箱の建物、前に並ぶ黒い柱。うしろのホームに電車"""
+    """JR 相見駅（2012年開業）：ガラスばりの明るい駅舎と白い大きな箱の建物、前に並ぶ黒い柱"""
     ground('asphalt')
-    platform('p', 0.04, 0.14, 0.90)
-    train('t', 'jrSilver', 'jrOrange', 0.04, 0.30, 0.84)
     box('glass', 'glassB', (0.30, 0.20, 0.24), (-0.22, -0.16, 0.12))
     box('hako', 'shikkui', (0.24, 0.20, 0.30), (0.10, -0.14, 0.15))
     box('yane', 'shikkui', (0.34, 0.24, 0.02), (-0.22, -0.16, 0.25))
@@ -1220,7 +1180,6 @@ def gamagori_station():
     cyl('yama', 'matsu', 0.40, 0.30, (0.10, 0.44, 0.15), verts=20, r2=0.08)
     ground('jari')
     box('koka', 'concrete', (0.96, 0.24, 0.18), (0, 0.20, 0.09))
-    train('t', 'jrSilver', 'jrOrange', 0.0, 0.20, 0.80, 0.18, 0.15, 0.15)
     box('yane', 'shikkui', (0.96, 0.30, 0.03), (0, 0.20, 0.42))
     for x in (-0.40, 0.0, 0.40):
         box(f'h{x}', 'hashira', (0.02, 0.02, 0.24), (x, 0.06, 0.30))

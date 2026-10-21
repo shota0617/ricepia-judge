@@ -673,7 +673,15 @@ function trailSave() {
   if (!TRAIL.key || !TRAIL.dirty) return;
   const out = {};
   for (const [k, a] of TRAIL.map) { let bin = ''; for (let i = 0; i < a.length; i += 4096) bin += String.fromCharCode.apply(null, a.subarray(i, i + 4096)); out[k] = btoa(bin); }
-  if (store.set(TRAIL.key, out)) TRAIL.dirty = 0;
+  if (store.set(TRAIL.key, out)) { TRAIL.dirty = 0; return; }
+  // 保存領域がいっぱい：読みなおせる地図の区画のとっておきを古いものから消して、もう一度（あしあとは消えると戻せないので先にとる）
+  const idx = store.get(PX_IDX) || [];
+  while (idx.length) {
+    store.del(PX_KEY + idx.shift());
+    if (store.set(TRAIL.key, out)) { store.set(PX_IDX, idx); TRAIL.dirty = 0; return; }
+  }
+  store.set(PX_IDX, idx);
+  if (!TRAIL.warned) { TRAIL.warned = true; G.toast('保存領域がいっぱいで、あしあとを保存できませんでした（ブラウザの保存領域を確認してください）'); }
 }
 // 記録を消す（せってい）：いまのモードのあしあとを、保存したものごと消す
 function trailClear() {

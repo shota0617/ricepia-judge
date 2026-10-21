@@ -144,7 +144,7 @@
   // 1.5秒ごとに、いまいる町を見て、まだ見つけていない村なら出す（ほかの窓が出ている間は待つ）
   function tick() {
     const G = window.nishioGo, P = window.nishioPixel;
-    if (!G || !P || !P.here || shown() || Date.now() - closedAt < 3000) return;
+    if (!G || !P || !P.here || !P.hereFresh || shown() || Date.now() - closedAt < 3000) return;   // 古い町名（地図を切り替えたあと・位置がまだない）では出さない
     const town = P.here.town, city = P.here.city, v = villageOf(town, city);
     if (!v || (G.oldmapHas && G.oldmapHas(v.id))) return;
     if (document.body.classList.contains('jump-open') || (G.rewardSoon && G.rewardSoon())) return;

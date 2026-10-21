@@ -124,7 +124,7 @@
     const G = window.nishioGo, P = window.nishioPixel, O = window.NISHIO_OLDMAP, me = G && G.me, w = ev.where;
     if (!me) return false;
     if (w.spot) { const s = (G.spots || []).find(x => x.id === 'f-' + w.spot); return !!s && G.dist(me, s) <= w.r; }
-    const town = P && P.here && P.here.town;
+    const town = P && P.here && P.hereFresh && P.here.town;   // 古い町名（地図を切り替えたあと）では判定しない
     if (!town) return false;
     if (w.town) return w.town.test(town);
     if (w.village && O) { const v = O.villageOf(town, P.here.city); return !!v && w.village.includes(v.id); }

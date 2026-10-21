@@ -275,8 +275,15 @@ async function walkTo(page, id) {
     return bad.length ? bad.join(',') : true;
   });
   // イベント「古い地図が出てきた」：町名から明治の村がわかり、村の地図が描け、はじめての村で +15pt。2回目は出ない
-  R.checks.oldmap = await page.evaluate(() => {
-    const O = window.NISHIO_OLDMAP, G = nishioGo, bad = [];
+  R.checks.oldmap = await page.evaluate(async () => {
+    const O = window.NISHIO_OLDMAP, G = nishioGo, P = nishioPixel, bad = [];
+    // 町名は歩く地図を描いている間だけ新しい。せかいちずに切り替えると、古い町名ではイベントを出さない
+    if (!P.hereFresh) bad.push('歩く地図で町名が新しくない');
+    P.setWorld(true);
+    await new Promise(r => setTimeout(r, 2300));
+    if (P.hereFresh) bad.push('せかいちずでも町名が新しいまま');
+    P.setWorld(false);
+    await new Promise(r => setTimeout(r, 800));
     if (!O) return 'none';
     const v = O.villageOf('一色町味浜', '西尾市'), k = O.villageOf('八ケ尻町', '西尾市'), z = O.villageOf('中野町', '豊橋市');
     if (!v || v.id !== 'isshiki') bad.push('一色町味浜→一色村');

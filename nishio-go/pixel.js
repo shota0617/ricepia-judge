@@ -4868,7 +4868,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -5421,6 +5421,7 @@ function setWorld(on) {
   try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }
   updatePad();
   updateHarvestBtn();   // せかいちずでは frame が早く戻るので、稲刈りのボタンをここで消す
+  updateDankyuBtn();
 }
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
 // 📍ボタン：せかいちずでは主人公のいる所へ戻す（歩く地図はいつも主人公が真ん中）
@@ -5540,6 +5541,16 @@ function onPaddy() {
 }
 function updateHarvestBtn() { const b = $('pxHarvest'), on = onPaddy(); if (b && b.hidden === on) b.hidden = !on; }
 $('pxHarvest').addEventListener('click', () => { if (window.NISHIO_HARVEST && onPaddy()) NISHIO_HARVEST.open(); });
+// 段丘をのぼるミニゲーム（dankyu.js）：急な坂のマス（またはすぐとなり）にいるときだけ、右上の列に「段丘をのぼる」ボタンを出す
+// 急な坂＝標高から作った陰影がいちばん明るいか暗いマス（となりのマスと約3m以上ちがう）。山・丘のマスはのぞく（段丘のへりの崖だけ）
+const steepAt = (x, y) => { const r = rawAt(x, y), sh = (r >> 5) & 7, c = r & 31; return (sh === 0 || sh === 4) && c !== C.M && c !== C.K && c !== C.A; };
+function onSlope() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => steepAt(x + dx, y + dy));
+}
+function updateDankyuBtn() { const b = $('pxDankyu'), on = onSlope(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxDankyu').addEventListener('click', () => { if (window.NISHIO_DANKYU && onSlope()) NISHIO_DANKYU.open(); });
 
 // いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
 function exitDist(x, y) {

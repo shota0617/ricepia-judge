@@ -173,6 +173,25 @@ async function walkTo(page, id) {
     return ok && nishioGo.state.bags[0].walked === w0;
   });
   // あしあと：歩く地図の1歩で歩いたマスが残り、同じ道をもう一度歩いても ふえず、瞬間移動では残らない
+  // ミニゲーム「段丘をのぼる」：3つの段丘とも、自然堤防から台地まで 1回のジャンプ（たて3マス・横2マスのすきままで）で届く段がつながり、露頭がある
+  R.checks.dankyu = await page.evaluate(() => {
+    const D = window.NISHIO_DANKYU;
+    if (!D) return 'none';
+    D.open();
+    const bad = [];
+    for (let l = 0; l < D.LEVELS.length; l++) {
+      D.reset(l);
+      const i = D.info, ps = i.plats.filter(p => p.kind !== 'paddy');
+      const gap = (p, q) => Math.max(0, q.x - (p.x + p.w), p.x - (q.x + q.w));
+      const start = ps.find(p => p.kind === 'levee'), seen = new Set([start]), q = [start];
+      while (q.length) { const p = q.shift(); for (const n of ps) if (!seen.has(n) && n.y < p.y && p.y - n.y <= 3 && gap(p, n) <= 2) { seen.add(n); q.push(n); } }
+      if (![...seen].some(p => p.kind === 'top')) bad.push(`${l + 1}:届かない`);
+      if (i.outcrops.length < 2) bad.push(`${l + 1}:露頭`);
+      if (!/地区/.test(D.LEVELS[l].name)) bad.push(`${l + 1}:名前`);
+    }
+    D.close();
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -326,6 +345,7 @@ async function walkTo(page, id) {
   need(c.heardHint !== false, 'しらべるの手がかり：名所をすすめた人の話に、🔍 の手がかりのページが出ない');
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
+  need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');
   need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');

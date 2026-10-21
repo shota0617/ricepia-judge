@@ -1636,6 +1636,40 @@ const NPC_COLORS = {
   guide:   { h: '#3b2a1a', c: '#f2c230', p: '#4a4a4a', a: '#d23a2e' },
   monk:    { h: '#f4c58f', c: '#2b2b2b', p: '#2b2b2b', a: '#b88a12' },
 };
+// さんぽ仲間のライバル（game.js の rivalSay）：赤い服の男の子。people.png の並びに入れないよう、NPC_COLORS とは別に作る
+const RIVAL_PAL = { ...PAL, h: '#2b2018', c: '#e53935', p: '#1e3a8a', a: '#e53935' };
+const rivalSprites = [sprite(NPC_ROWS, false, RIVAL_PAL), sprite(NPC_ROWS.map((r, i) => i === 9 ? r.replace('a', 'c') : r), false, RIVAL_PAL)];
+const rivalTile = () => { const r = G.rival; return r ? npcTile({ id: 'rival:' + r.at, lat: r.lat, lng: r.lng }) : null; };
+function rivalTalk() {   // ライバルをタップする：ひとこと（先回りした所の名前で）。おまかせ歩き・タップで歩く道をふさがないよう、ぶつかっても止めない
+  const r = G.rival;
+  if (r) G.toast(`🏃 ${G.RIVAL}「先に来とったよ。${r.name}、ゆっくり見ていきん」`);
+}
+// 生きもの（game.js の CRITTERS）：歩く地図の田んぼ・水べを歩いていると、ときどき出会う。16×16 の手描き
+const CRITTER_ROWS = {
+  sagi: ['................', '........kkk.....', '.......kwwwk....', '.......kwkwkyyy.', '.......kwwwkkk..', '........kwk.....', '........kwk.....', '.......kwwk.....', '.....kkwwwwk....', '....kwwwwwwwk...', '...kwwwwwwwwk...', '....kkwwwwwk....', '......kkkkk.....', '.......k.k......', '.......k.k......', '......kk.kk.....'],
+  kaeru: ['................', '................', '................', '................', '....kkk..kkk....', '...kwkkllkkwk...', '...kllllllllk...', '..kllllllllllk..', '..kllkkkkkkllk..', '.kllllllllllllk.', '.kllGllllllGllk.', 'kllkkllllllkkllk', 'kllk.kkkkkk.kllk', '.kk..........kk.', '................', '................'],
+  tonbo: ['................', '.......kk.......', '......kRRk......', '.gggg.kRRk.gggg.', 'gwwwwgkrrkgwwwwg', 'gwwwwwgrrgwwwwwg', '.ggggggrrgggggg.', 'gwwwwwgrrgwwwwwg', 'gwwwwgkrrkgwwwwg', '.gggg.krrk.gggg.', '.......rr.......', '.......rr.......', '.......rr.......', '.......rr.......', '.......kk.......', '................'],
+  kamo: ['................', '................', '................', '................', '................', '..........kkk...', '.........knnnk..', '.........knknkyy', '.........knnnk..', '...kkkkkkknnk...', '..knnNnnNnnnnk..', '.knnnnnnnnnnnk..', '..kknnnnnnnkk...', 'bbbbkkkkkkkbbbbb', '.bbbbbbbbbbbbbb.', '................'],
+  sakana: ['................', '................', '................', '................', '................', '................', '....kkkkkk..k...', '..kkggggggkkgk..', '.kwkggggggggggk.', '.kgggggggggkgk..', '..kkwwwwwwkk.k..', '....kkkkkk......', '................', '.b..b.....b..b..', '..bb.bb..bb.bb..', '................'],
+  kani: ['................', '................', '................', '................', '................', '................', '..kk........kk..', '.krrk......krrk.', '.krrk.k..k.krrk.', '..kk.kwkkwk.kk..', '...kkrrrrrrkk...', '..krrrrrrrrrrk..', '..krrrrrrrrrrk..', '...kkkkkkkkkk...', '..k.k.k..k.k.k..', '................'],
+  asari: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kknnnnkk....', '...knnNnnNnnk...', '..knNnnNNnnNnk..', '..knnnNnnNnnnk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................']
+};
+const critterSprites = {};
+for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
+// 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
+const critterS = { steps: 0, show: null };
+function critterStep(x, y) {
+  if (driving) return;
+  const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
+  const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
+  if (!where || ++critterS.steps < 25 || Math.random() >= 1 / 40) return;
+  critterS.steps = 0;
+  const m = G.meetCritter(where);
+  if (!m) return;
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [x + dx, y + dy]).find(([a, b]) => !npcAt(a, b)) || [x + 1, y];
+  critterS.show = { id: m.id, x: spot[0], y: spot[1], t: performance.now() };
+  dirty = true;
+}
 const npcSprites = {};
 for (const [k, col] of Object.entries(NPC_COLORS)) {
   const pal = { ...PAL, ...col };
@@ -4927,6 +4961,22 @@ function frame(now) {
       ctx.fillStyle = '#000'; ctx.fillRect(bx + u, by + 2 * u, u, u); ctx.fillRect(bx + 3 * u, by + 2 * u, u, u); ctx.fillRect(bx + 5 * u, by + 2 * u, u, u);
     }
   }
+  // 出会った生きもの（3秒。ぴょこぴょこ動く）
+  if (critterS.show) {
+    const c = critterS.show, age = now - c.t;
+    if (age > 3000) critterS.show = null;
+    else {
+      const hop = Math.floor(age / 250) % 2 ? Math.round(T / 16) : 0;
+      ctx.drawImage(critterSprites[c.id], Math.round(ox + c.x * T), Math.round(oy + c.y * T) - hop, T, T);
+      dirty = true;
+    }
+  }
+  // 先回りしたライバル
+  const rt = rivalTile();
+  if (rt && rt.ok) {
+    const sx = Math.round(ox + rt.x * T), sy = Math.round(oy + rt.y * T - T * 0.25);
+    if (sx < w && sy < h && sx + T > 0 && sy + T > 0) ctx.drawImage(rivalSprites[f], sx, sy, T, T);
+  }
   // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
   for (const c of G.liveChests()) {
     const p = toTile(c.lat, c.lng), hop = f ? Math.round(T / 8) : 0, sh = c.at ? T * 0.9 : 0;   // スポットに置いたものは右上にずらす
@@ -5421,6 +5471,7 @@ function step(dir) {   // 1マス進めたら（人に話しかけたときも�
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
   sightCheck();
+  critterStep(nx, ny);
   return true;
 }
 // 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
@@ -5817,6 +5868,8 @@ cv.addEventListener('click', e => {
   const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }
+  const rt = rivalTile();
+  if (rt && rt.x === ttx && (rt.y === tty || rt.y === tty - 1)) { rivalTalk(); return; }
   let hit = null, best = Infinity;
   // 特大の絵は、手前に描いた絵から順に、絵のある所（透明でない点）をタップしたかで決める
   for (let i = giantHits.length - 1; i >= 0 && !hit; i--) {
@@ -5884,7 +5937,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+window.nishioPixel = { critterSprite: id => critterSprites[id], spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

@@ -21,7 +21,10 @@ const STORE = path.join(OUT, 'storage.json');
 
 // いまの様子（AI が次の手を考えるための材料）
 const look = page => page.evaluate(() => {
-  const G = nishioGo, P = nishioPixel, txt = id => { const e = document.getElementById(id); return e && !e.hidden && e.offsetParent !== null ? e.innerText.replace(/\s+/g, ' ').trim().slice(0, 300) : ''; };
+  const G = nishioGo, P = nishioPixel, txt = id => {   // 知らせ（toast）・ごほうび（reward）は position:fixed で offsetParent がないので、show が付いているかで見る
+    const e = document.getElementById(id), on = e && !e.hidden && (id === 'toast' || id === 'reward' ? e.classList.contains('show') : e.offsetParent !== null);
+    return on ? e.innerText.replace(/\s+/g, ' ').trim().slice(0, 300) : '';
+  };
   const me = G.me, t = me && P.toTile(me.lat, me.lng);
   const near = me ? G.npcs.map(n => ({ id: n.id, name: n.name, m: Math.round(G.dist(me, n)), met: G.npcMet(n.id) })).sort((a, b) => a.m - b.m).slice(0, 3) : [];
   const spots = me ? G.spots.map(s => ({ id: s.id, name: s.name, m: Math.round(G.dist(me, s)), visited: !!G.state.visits[s.id] })).sort((a, b) => a.m - b.m).slice(0, 4) : [];

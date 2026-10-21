@@ -674,6 +674,7 @@ function trackWalk(p) {
   if (v > CFG.walkMaxSpeed || Date.now() < vehicleUntil) return;
   addWalk(d);
   addTrail(prev, p);
+  if (window.nishioPixel && nishioPixel.critterWalk) nishioPixel.critterWalk(prev, p);   // 田んぼ・水べを歩くと、ときどき生きもの
 }
 
 // あしあと（Dig Dug の掘ったトンネルのように、歩いた道が地図に残る）：はじめて歩いたマス（8m）が50ふえるごとに +5pt（1日50ptまで）。

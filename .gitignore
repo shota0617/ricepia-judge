@@ -1,2 +1,7 @@
 .monitor-state/
 .feedback/
+.play/
+node_modules/
+gb-play-out/
+*.gb
+*.gbc

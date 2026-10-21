@@ -1670,6 +1670,50 @@ function openNpc(n) {
   npcEmotes.set(n.id, { t: performance.now(), k: first ? '!' : (n.id.length + G.state.met.length) % 2 ? '♪' : '♥' });
   $('pxInfoBody').innerHTML = r.html; $('pxInfo').hidden = false;
 }
+// 呼びとめ（昔のドット絵RPGの「目が合ったら勝負」を、話しかけに）：まだ話していない人の まっすぐ前後左右 SIGHT マス以内に入り、
+// あいだに建物・水・ほかの人がなければ、頭に「！」が出て、その人のほうから歩いてきて話しかけてくる（行き先も その人のすすめに変わる）。
+// 歩いてくる間と話の間は、主人公は動けない。同じ人が呼びとめるのは、開いている間に1回だけ
+const SIGHT = 4, SIGHT_WAIT = 650, SIGHT_STEP = 150;
+const sight = { n: null, t: 0, from: null, to: null, len: 0, opened: false, seen: new Set() };
+function sightCheck() {
+  if (sightBusy() || driving || worldMode || !$('pxInfo').hidden || (!G.demo && !G.me) || document.body.classList.contains('jump-open')) return false;   // ミニゲームの間は呼びとめない
+  const t = targetTile(), hx = Math.floor(t.x), hy = Math.floor(t.y);
+  for (const n of G.npcs || []) {
+    if (G.npcMet(n.id) || sight.seen.has(n.id)) continue;
+    const q = npcTile(n);
+    if (!q.ok) continue;
+    const dx = hx - q.x, dy = hy - q.y, d = Math.abs(dx) + Math.abs(dy);
+    if ((dx && dy) || d < 2 || d > SIGHT) continue;   // となり（1マス）なら、ぶつかって話しかける ふつうのやり方で
+    const ux = Math.sign(dx), uy = Math.sign(dy);
+    let clear = true;
+    for (let i = 1; i < d && clear; i++) { const x = q.x + ux * i, y = q.y + uy * i; if (BLOCK.has(codeAt(x, y)) || npcAt(x, y)) clear = false; }
+    if (!clear) continue;
+    sight.seen.add(n.id);
+    Object.assign(sight, { n, t: performance.now(), from: { x: q.x, y: q.y }, to: { x: hx - ux, y: hy - uy }, len: d - 1, opened: false });
+    facing = dx ? (dx > 0 ? 'left' : 'right') : (dy > 0 ? 'up' : 'down');   // 主人公も その人のほうを向く
+    npcEmotes.set(n.id, { t: sight.t, k: '!' });
+    tapWalkStop();
+    G.sound.jingle('eye');
+    dirty = true;
+    return true;
+  }
+  return false;
+}
+// 呼びとめの途中か。せかいちずに切りかえた などで止まったままにならないよう、時間がすぎて話も閉じていれば終わりにする
+function sightBusy() {
+  if (sight.n && $('pxInfo').hidden && performance.now() - sight.t > SIGHT_WAIT + sight.len * SIGHT_STEP + 1500) sightEnd();
+  return !!sight.n;
+}
+function sightEnd() { sight.n = null; G.callNpc(null); dirty = true; }   // 話が終わったら、その人は もとの場所へ
+// 呼びとめた人の いまの位置（「！」のあと、主人公のとなりまで歩いてくる）。話が終わったら もとの場所へ
+function sightTick(now) {
+  if (!sight.n) return null;
+  const k = Math.max(0, Math.min(1, (now - sight.t - SIGHT_WAIT) / (sight.len * SIGHT_STEP)));
+  if (k >= 1 && !sight.opened) { sight.opened = true; G.callNpc(sight.n.id); if ($('pxInfo').hidden) openNpc(sight.n); }
+  else if (sight.opened && $('pxInfo').hidden) { sightEnd(); return null; }
+  if (k < 1) dirty = true;
+  return { x: sight.from.x + (sight.to.x - sight.from.x) * k, y: sight.from.y + (sight.to.y - sight.from.y) * k, walking: k > 0 && k < 1 };
+}
 const heroSprites = {};
 for (const dir of ['down', 'up', 'right']) heroSprites[dir] = [sprite([...HERO_TOP, ...HERO[dir], ...LEGS_A]), sprite([...HERO_TOP, ...HERO[dir], ...LEGS_B])];
 heroSprites.left = heroSprites.right.map((_, i) => sprite(mirror([...HERO_TOP, ...HERO.right, ...(i ? LEGS_B : LEGS_A)])));
@@ -4770,7 +4814,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -4861,11 +4905,12 @@ function frame(now) {
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
-  // 西尾の人たち（まだ話していない人の上には吹き出し）
+  // 西尾の人たち（まだ話していない人の上には吹き出し）。呼びとめた人は、歩いてくる途中の位置に（歩く間は足を速く動かす）
+  const sp = sightTick(now);
   for (const n of G.npcs || []) {
-    const t = npcTile(n), sx = Math.round(ox + t.x * T), sy = Math.round(oy + t.y * T - T * 0.25);
+    const t = sp && sight.n === n ? sp : npcTile(n), sx = Math.round(ox + t.x * T), sy = Math.round(oy + t.y * T - T * 0.25);
     if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
-    ctx.drawImage((npcSprites[n.look] || npcSprites.man)[f], sx, sy, T, T);
+    ctx.drawImage((npcSprites[n.look] || npcSprites.man)[sp && sp.walking && sight.n === n ? Math.floor(now / 120) % 2 : f], sx, sy, T, T);
     const em = npcEmotes.get(n.id), age = em ? performance.now() - em.t : 1e9;
     if (age < 1600) {   // 気持ちの吹き出し（ぽんと上がって、少しゆれる）
       const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.5), by = sy - Math.round(T * 0.55) - Math.round(Math.min(1, age / 150) * 3 * u) + (Math.floor(age / 300) % 2 ? u : 0);
@@ -5356,7 +5401,7 @@ function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.s
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
-  if (!G.demo) return false;
+  if (!G.demo || sightBusy()) return false;   // 呼びとめられている間は動けない
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
@@ -5375,6 +5420,7 @@ function step(dir) {   // 1マス進めたら（人に話しかけたときも�
   if (who) { if ($('pxInfo').hidden) openNpc(who); return true; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
+  sightCheck();
   return true;
 }
 // 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
@@ -5685,6 +5731,7 @@ function autoTick() {
   setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
   if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
   if (document.body.classList.contains('jump-open')) return;   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
+  if (sightBusy() && !sight.opened) return;   // 呼びとめた人が歩いてくるのを待つ
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;
   if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }

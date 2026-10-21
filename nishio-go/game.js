@@ -1060,7 +1060,7 @@ function factNear(k) {
   const [kind, id] = k.split(':'), areaNear = a => !!(areas.find(x => x.id === a) || {}).near, spotNear = sid => { const sp = spots.find(x => x.id === sid); return !!sp && areaNear(sp.area); };
   if (kind === 'a') return areaNear(id);
   if (kind === 's') return spotNear(id);
-  if (kind === 'e') { const e = EVENTS.find(x => x.id === id); return !!e && !!e.spot && spotNear(evSpotId(e)); }
+  if (kind === 'e') { const e = EVENTS.find(x => x.id === id); return !!e && (e.spot ? spotNear(evSpotId(e)) : areaNear(e.area)); }   // 会場のない行事は、行事の area で
   if (kind === 'm') return !!(MEIBUTSU.find(x => x.id === id) || {}).area;
   return true;
 }

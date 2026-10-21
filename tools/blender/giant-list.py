@@ -1,11 +1,12 @@
 # にしおさんぽGO：特大のドット絵（Blender）を作る名所の一覧 tools/blender/giant-list.json を作る
 #   python3 tools/blender/giant-list.py <名所の一覧 JSON>
 # 名所の一覧は、ゲームを開いて nishioGo.spots から書き出したもの（id・名前・種類・型の絵のデータ・いまの 48×48 の絵の PNG）。
-# ・いまの絵がある名所（注目スポット・手描き・型の絵 ＝ 1000か所）と、絵がまだない注目スポットが対象（手で作った特大の絵がある所は除く）
+# ・いまの絵がある名所（注目スポット・手描き・型の絵 ＝ 1000か所）と、絵がまだない注目スポットが対象（手で作った特大の絵がある所＝giant.py・giant-neighbors.py は除く）
 # ・形の種類は、型の絵の種類か spots の種類、それに名前（古墳・稲荷・港・海水浴場・灯台・山・観音・塔・教会・水族館など）で決める
 # ・2回目（--rest）：まだ特大の絵がない ほかのスポット（公園・史跡・山など）を、前の一覧のあとに足す（前の名所の行は変えない）。
 #   公園は名前で 遊具のある公園・運動場・池のある公園・緑地・庭園 に分ける
 # ・色：型の絵はそのデータ（写真から測った屋根・壁・差し色）、それ以外は いまの絵から測る（暗くくすんだ色を屋根、明るい色を壁、あざやかな色を差し色）
+import ast
 import base64
 import io
 import json
@@ -17,6 +18,21 @@ from PIL import Image
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 HAND = {'f-nishio-castle', 'f-okazaki-castle', 'f-iwase-bunko', 'f-konrenji', 'f-nishio-station', 'f-jofukuji', 'f-ohirune-house', 'f-kurokabe', 'f-inariyama-chaen'}
+# となりの市町の注目スポット65か所も、手で形を作った特大の絵（giant-neighbors.py の MODELS。名前は spots.json の id）があるので除く
+
+
+def neighbor_models():
+    """giant-neighbors.py の MODELS のキー（Blender なしで読めるように、実行せずに構文として読む）"""
+    src = os.path.join(ROOT, 'tools', 'blender', 'giant-neighbors.py')
+    for node in ast.parse(open(src, encoding='utf-8').read()).body:
+        if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'MODELS' for t in node.targets) and isinstance(node.value, ast.Dict):
+            keys = [k.value for k in node.value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)]
+            if keys:
+                return keys
+    raise SystemExit('giant-neighbors.py に MODELS = {...} が見つからない')
+
+
+HAND |= {'f-' + n for n in neighbor_models()}
 GEN_KIND = {'s': 'shrine', 't': 'temple', 'e': 'station', 'c': 'castle', 'p': 'museum', 'h': 'historic', 'v': 'view', 'w': 'church'}
 CAT_KIND = {'shrine': 'shrine', 'temple': 'temple', 'worship': 'temple', 'station': 'station', 'castle': 'castle', 'museum': 'museum', 'library': 'library',
             'townhall': 'townhall', 'art': 'art', 'historic': 'historic', 'sight': 'view', 'view': 'view', 'park': 'park', 'beach': 'beach'}

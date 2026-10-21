@@ -2183,6 +2183,7 @@ $('reloadSpots').addEventListener('click', async e => {
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`「${demo ? '操作して移動' : 'あるいて移動'}」のポイントと記録をすべて削除します。よろしいですか？`)) return;
   S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
+  if (window.nishioPixel && nishioPixel.trailClear) nishioPixel.trailClear();   // あしあと（別のかぎに保存）も消す
   toast('記録を削除しました');
 });
 

@@ -817,6 +817,18 @@ function harvestReward(stars, level) {
   return pts;
 }
 
+// 段丘をのぼるミニゲーム（dankyu.js）のごほうび：のぼりきったとき1日1回、10pt＋星1つ5pt。きょうはもうもらっていれば null
+function dankyuReward(stars, level) {
+  if (S.dankyuDay === ymd()) return null;
+  const st = Math.max(1, Math.min(3, stars | 0)), pts = 10 + 5 * st;
+  S.dankyuDay = ymd();
+  gainPoints(pts);
+  S.log.unshift({ type: 'dankyu', t: Date.now(), pts, name: `ミニゲーム「段丘をのぼる」${'★'.repeat(st)}（${(level | 0) + 1}つ目の段丘）`, icon: '⛰️' });
+  save();
+  renderLog();
+  return pts;
+}
+
 let selected = null;   // シートに表示中のチェックイン候補
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
@@ -932,7 +944,10 @@ function checkin() {
 
 /* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
-const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）。たからばこ などでは出さず、イベント「ドット絵ムービー」で見せる（movie.js）
+const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）
+const spotShizen = s => SHIZEN.filter(x => x.spots.some(id => 'f-' + id === s.id));
+// イベント「ドット絵ムービー」（movie.js）で見せる話。たからばこ・しらべる などでは出さない（最後まで見ると まちメモ に残る）
+const movieFact = k => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.list.some(m => m.facts.includes(k)));
 // こよみ（season.js：季節・二十四節気・田んぼのようす・見ごろ・時間帯・土用の丑の日）
 const KO = window.NISHIO_SEASON || null;
 // 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
@@ -1055,7 +1070,7 @@ function factPool() {   // まちメモ：地区の豆知識・紹介文、注�
 }
 // 出すまちメモ：まだ持っていないものから、①7市町の外なら そのまちの話 ②そのスポットの話・そこでの行事 ③同じ地区の話 ④まわりのまち以外のほか ⑤ほか の順に選ぶ
 function pickFact(c) {
-  const pool = factPool(), keys = [...pool.keys()].filter(k => !k.startsWith('z:')), fresh = keys.filter(k => !S.facts.includes(k));   // 海と大地の話（z:）は ムービーで見せる
+  const pool = factPool(), keys = [...pool.keys()].filter(k => !movieFact(k)), fresh = keys.filter(k => !S.facts.includes(k));   // ムービーで見せる話はのぞく
   const list = fresh.length ? fresh : keys;
   if (!list.length) return '';
   let near = null, nd = Infinity;
@@ -1064,7 +1079,7 @@ function pickFact(c) {
   const machi = machiAt(c), here = cityAt(c.lat, c.lng), hereNear = !!here && here.name !== '西尾市';
   const tiers = [
     k => machi && k.startsWith(`t:${machi.id}:`),
-    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`))),
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`)) || spotShizen(near).some(x => k.startsWith(`z:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
     k => !k.startsWith('t:') && factNear(k) === hereNear,   // 西尾市にいるなら西尾の話、となりの市町にいるなら となりの市町の話
     k => !k.startsWith('t:'),   // まわりのまち（刈谷・大府など）の話は、そのまちにいるときだけ（西尾で大府の話が出ないように）
@@ -1368,13 +1383,13 @@ function critterMet(c) {
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
-// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）と、ムービーで見せる海と大地の話はのぞき、①その名所の行事 ②その名所の名物 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
+// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）と、ムービーで見せる話はのぞき、①その名所の行事 ②その名所の名物・海と大地の話 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
 function searchFact(s) {
-  const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}` && !k.startsWith('z:'));   // 海と大地の話はムービーで
+  const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}` && !movieFact(k));   // ムービーで見せる話はのぞく
   const inArea = id => { const x = spots.find(y => y.id === id); return !!x && !!s.area && x.area === s.area; };
   const tiers = [
     k => EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === s.id),
-    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)),
+    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)) || spotShizen(s).some(x => k.startsWith(`z:${x.id}:`)),
     k => !!s.area && k.startsWith(`a:${s.area}:`),
     k => k.startsWith('s:') && inArea(k.slice(2)),
   ];
@@ -3174,7 +3189,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

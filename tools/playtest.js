@@ -289,6 +289,9 @@ async function walkTo(page, id) {
     if (!/平坂村/.test(document.getElementById('oldmap').textContent)) bad.push('村の名前');
     O.close();
     if (O.open(O.VILLAGES[2], '平坂町')) bad.push('同じ村で2回');
+    if (!O.view() || !/平坂村/.test(document.getElementById('oldmap').textContent) || !/1\/11/.test(document.getElementById('oldmap').textContent)) bad.push('きろく の明治の村の地図');
+    O.close();
+    if (O.villageOf('中根町', '西尾市').id !== 'terazu' || O.villageOf('南中根町', '西尾市').id !== 'meiji') bad.push('中根と南中根');
     return bad.length ? bad.join(',') : true;
   });
   R.checks.trail = await page.evaluate(() => {

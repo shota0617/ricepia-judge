@@ -8,23 +8,25 @@
 //    運営者から受けとった、西尾の歴史の資料集のページの写真（2026年10月）。書名は確かめ中
 //      地図「（平）成23）年の合併直前」：□ でかこんだ村名が1906（明治39）年の村。そのころの村と、合併直前の町・大字の名前
 //      注：室村・花蔵寺村・善明村・平原村・家武村などは1884（明治17）年に組合村をつくった。豊坂村は いまは幸田町にふくまれる
-// ・村ごとの大字は、地図で その村の中にはっきり書いてあるものだけ（境の近くで分かりにくいものは入れない）
+// ・村ごとの大字は、地図で その村の太い線の中に書いてあるもの（村の名前の □ がない所＝西浅井・東浅井・新村・高落・小島・志籠谷・八幡川田・上羽角・下羽角 などは、どの村か読みとれないので入れない）
 // ・ほかの窓（説明の窓・パネル・ダイアログ・呼びとめ・ごほうび・ミニゲーム・田んぼのイベント）が出ている間は待つ。開いている間は歩かない（pixel.js の eventShown）
 (() => {
   'use strict';
   const VILLAGES = [
-    { id: 'nishio', name: '西尾町', city: '西尾市', ooaza: ['上町', '下町', '伊藤', '寄住', '戸ケ崎'] },
-    { id: 'meiji', name: '明治村', city: '西尾市', ooaza: ['米津'] },
-    { id: 'hirasaka', name: '平坂村', city: '西尾市', ooaza: ['平坂', '中畑', '楠', '富山', '羽塚'] },
-    { id: 'terazu', name: '寺津村', city: '西尾市', ooaza: ['寺津', '巨海'] },
-    { id: 'fukuchi', name: '福地村', city: '西尾市', ooaza: ['下道目記', '上道目記', '市子', '熱池', '須脇', '野々宮', '平口', '笹曽根', '天竹'] },
-    { id: 'isshiki', name: '一色村', city: '西尾市', ooaza: ['一色', '味浜', '赤羽', '前野', '対米', '池田', '野田', '酒手島', '松木島', '大塚', '藤江', '生田', '千間', '坂田新田', '中外沢', '治明', '小薮', '細川', '養ケ島', '惣五郎'] },
-    { id: 'yoshida', name: '吉田村', city: '西尾市', ooaza: ['吉田', '白浜新田', '富好新田', '宮崎', '乙川', '小山田'] },
-    { id: 'yokosuka', name: '横須賀村', city: '西尾市', ooaza: ['上横須賀', '中野', '木田', '寺嶋', '友国', '瀬戸', '駮馬', '津平'] },
-    { id: 'sanwa', name: '三和村', city: '西尾市', ooaza: ['江原', '岡島', '尾花', '下永良', '上永良', '室', '花蔵寺', '善明', '家武', '駒場', '平原', '貝吹'],
+    { id: 'nishio', name: '西尾町', city: '西尾市', ooaza: ['新渡場', '伊藤', '上町', '小間', '法光寺', '下町', '西尾町', '道光寺', '戸ケ崎', '寄住', '丁田', '住崎', '新在家', '矢曽根', '今川'] },
+    { id: 'meiji', name: '明治村', city: '西尾市', ooaza: ['米津', '南中根'],
+      note: '明治村は、中根村・米津村のほかに、碧海郡の7か村をふくんでいた。' },
+    { id: 'hirasaka', name: '平坂村', city: '西尾市', ooaza: ['中畑', '田貫', '平坂', '羽塚', '国森', '楠', '富山', '上矢田', '西小梛新田'] },
+    { id: 'terazu', name: '寺津村', city: '西尾市', ooaza: ['寺津', '徳永', '巨海', '中根', '刈宿'] },
+    { id: 'fukuchi', name: '福地村', city: '西尾市', ooaza: ['針曽根', '行用', '上道目記', '下道目記', '八ケ尻', '市子', '長縄', '菱池', '熱池', '深池', '川口', '細池', '鵜ケ池', '鎌谷', '須脇', '十郎島', '斉藤', '野々宮', '横手', '天竹', '平口', '笹曽根'] },
+    { id: 'isshiki', name: '一色村', city: '西尾市', ooaza: ['開正', '治明', '赤羽', '味浜', '養ケ島', '細川', '中外沢', '一色', '前野', '対米', '池田', '大塚', '野田', '惣五郎', '松木島', '藤江', '酒手島', '小薮', '坂田新田', '生田', '千間'] },
+    { id: 'yoshida', name: '吉田村', city: '西尾市', ooaza: ['吉田', '大島', '富田', '荻原', '小山田', '富好新田', '白浜新田', '乙川', '宮崎'] },
+    { id: 'yokosuka', name: '横須賀村', city: '西尾市', ooaza: ['上横須賀', '下横須賀', '岡山', '瀬戸', '駮馬', '木田', '寺嶋', '寺島', '小牧', '中野', '津平', '酒井', '友国', '饗庭'] },
+    { id: 'sanwa', name: '三和村', city: '西尾市', ooaza: ['米野', '上永良', '下永良', '尾花', '江原', '和気', '大和田', '岡島', '駒場', '家武', '室', '高河原', '花蔵寺', '善明', '平原', '貝吹'],
       note: '室村・花蔵寺村・善明村・平原村・家武村などは、1884年（明治17年）に組合村をつくっていた。' },
-    { id: 'hazu', name: '幡豆村', city: '西尾市', ooaza: ['西幡豆', '東幡豆', '鳥羽', '宮迫', '寺部'] },
-    { id: 'toyosaka', name: '豊坂村', city: '幸田町', ooaza: ['須美', '野場', '永野', '桐山', '逆川', '上六栗', '六栗', '上羽角', '下羽角'],
+    { id: 'hazu', name: '幡豆村', city: '西尾市', ooaza: ['西幡豆', '東幡豆', '鳥羽', '宮迫', '寺部'],
+      note: '地図には参考として、明治のはじめの村の名前（西幡豆のあたりの八幡・小野谷・欠・門内、東幡豆のあたりの桑畑・洲崎・鹿川 など）も書かれている。' },
+    { id: 'toyosaka', name: '豊坂村', city: '幸田町', ooaza: ['須美', '野場', '永野', '六栗', '上六栗', '桐山', '逆川'],
       note: '豊坂村は、いまは幸田町にふくまれている。' },
   ];
   // 地図の町名（OpenStreetMap）を大字の名前に：「一色町味浜」→「味浜」、「八ケ尻町」→「八ケ尻」、ヶ・が → ケ
@@ -79,7 +81,7 @@
     for (let k = 0; k < N * N; k++) if (idx[k] >= 0) { const s2 = sum[idx[k]]; s2[0] += k % N; s2[1] += Math.floor(k / N); s2[2]++; }
     return { idx, label: sum.map(s2 => (s2[2] ? [s2[0] / s2[2], s2[1] / s2[2]] : null)) };
   }
-  function villageMap(cur) {
+  function villageMap(cur, found) {
     try {
       if (!base) base = buildBase();
       if (!base) return '';
@@ -88,8 +90,9 @@
       const x = c.getContext('2d'), im = x.createImageData(N, N), d = im.data, { idx } = base;
       for (let k = 0; k < N * N; k++) {
         const v = idx[k], i = k % N, j = Math.floor(k / N);
-        let col = v === -2 ? [196, 206, 210] : v === -1 ? PAPER : COLS[v % COLS.length];
-        if (v >= 0 && v !== cur) col = col.map((q, n) => Math.round(q * 0.55 + PAPER[n] * 0.45));   // いまの村だけ はっきり
+        const hid = v >= 0 && found && !found.has(VILLAGES[v].id);   // まだ見つけていない村は灰色
+        let col = v === -2 ? [196, 206, 210] : v === -1 ? PAPER : hid ? [200, 194, 182] : COLS[v % COLS.length];
+        if (v >= 0 && !hid && cur >= 0 && v !== cur) col = col.map((q, n) => Math.round(q * 0.55 + PAPER[n] * 0.45));   // いまの村だけ はっきり
         const edge = v >= -1 && ((i + 1 < N && idx[k + 1] !== v && idx[k + 1] >= -1) || (j + 1 < N && idx[k + N] !== v && idx[k + N] >= -1));
         if (edge && (v >= 0 || idx[k + 1] >= 0 || (k + N < N * N && idx[k + N] >= 0))) col = INK;
         d[k * 4] = col[0]; d[k * 4 + 1] = col[1]; d[k * 4 + 2] = col[2]; d[k * 4 + 3] = 255;
@@ -97,7 +100,7 @@
       x.putImageData(im, 0, 0);
       x.textAlign = 'center'; x.textBaseline = 'middle';
       base.label.forEach((p, n) => {
-        if (!p) return;
+        if (!p || (found && !found.has(VILLAGES[n].id))) return;
         x.font = `${n === cur ? 'bold 15' : '11'}px serif`;
         x.lineWidth = 3; x.strokeStyle = 'rgba(244,234,210,.9)'; x.strokeText(VILLAGES[n].name, p[0], p[1]);
         x.fillStyle = n === cur ? '#9a2a1a' : '#5c3e1e'; x.fillText(VILLAGES[n].name, p[0], p[1]);
@@ -123,6 +126,21 @@
     return true;
   }
   function close() { if (root) root.hidden = true; closedAt = Date.now(); }
+  // きろく の「🗺️ 明治の村の地図」：見つけた村だけ色と名前。ポイントは出ない
+  function view() {
+    const G = window.nishioGo;
+    if (!root) build();
+    const got = new Set(VILLAGES.filter(v => G && G.oldmapHas && G.oldmapHas(v.id)).map(v => v.id)), img = villageMap(-1, got);
+    root.innerHTML = `<div class="md-card om-card"><p class="md-head">🗺️ 明治の村の地図（明治39年ごろ）</p>
+      <div class="om-map">${img ? `<img src="${img}" alt="明治39年ごろの村の地図（見つけた村だけ色つき）" width="240"/>` : '<p>地図を読みこんでいます。ドット絵の地図を開いてから、もう一度どうぞ</p>'}</div>
+      <p class="om-count">明治の村 ${got.size}/${VILLAGES.length}</p>
+      <p class="md-say">${VILLAGES.map(v => got.has(v.id) ? `<b>${v.name}</b>` : '？？村').join('・')}<br><small>町を歩くと「古い地図」が出て、その町の村が地図に色づきます</small></p>
+      <p class="om-src">出典：西尾の歴史の資料集の地図（平成23年の合併直前の町と、1906年の村）。絵は、いまの町名の位置（OpenStreetMap）から描いた おおよその村の形（色のない所は、村が読みとれなかった所）</p>
+      <button type="button" class="btn mini md-close" data-om="close">とじる</button></div>`;
+    root.hidden = false;
+    return true;
+  }
+  document.addEventListener('click', e => { if (e.target.closest && e.target.closest('[data-oldmap-view]')) view(); });
   // 1.5秒ごとに、いまいる町を見て、まだ見つけていない村なら出す（ほかの窓が出ている間は待つ）
   function tick() {
     const G = window.nishioGo, P = window.nishioPixel;
@@ -136,5 +154,5 @@
   }
   setInterval(tick, 1500);
   // テスト用
-  window.NISHIO_OLDMAP = { VILLAGES, villageOf, villageMap, open, close, tick, get shown() { return shown(); } };
+  window.NISHIO_OLDMAP = { VILLAGES, villageOf, villageMap, open, view, close, tick, get shown() { return shown(); } };
 })();

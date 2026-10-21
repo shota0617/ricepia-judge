@@ -5,7 +5,9 @@
 // ・手順の例：
 //   [{"do":"start"}, {"do":"walk","dir":"up","n":5}, {"do":"goto","id":"f-nishio-station"}, {"do":"goto","id":"npc:station-student"},
 //    {"do":"goto","id":"chest"}, {"do":"auto","sec":30}, {"do":"close"}, {"do":"tap","sel":"[data-tab=log]"}, {"do":"wait","ms":800}, {"do":"eval","js":"nishioGo.state.points"}]
-//   start：「操作して遊ぶ」で始める／walk：矢印キーで n マス／goto：スポット・人（npc:id）・いちばん近いたからばこ まで道を探して歩く／
+//   start：「操作して遊ぶ」で始める／walkstart：「あるいて遊ぶ」で始める（位置情報。はじめは西尾駅の近く）／gps：位置を lat・lng へ／
+//   gpswalk：位置を スポット・人（id に npc:id）・マス（tile:[x,y]）へ歩く速さで動かす（speed m/秒。fast で待ち時間を縮めると、速すぎて歩いた数に入らない）／
+//   gps は lat・lng のかわりに tile:[x,y] でもよい／walk：矢印キーで n マス／goto：スポット・人（npc:id）・いちばん近いたからばこ まで道を探して歩く／
 //   auto：おまかせ歩きを sec 秒／close：開いている窓とごほうびの画面を閉じる／tap：画面の部品を押す／key：キーを押す／eval：ページの中で式を計算して log に残す
 // 環境変数：CHROMIUM・LEAFLET_DIR（tools/playtest.js と同じ）・PLAY_DATE（日付を固定。省略時は今の時刻。固定すると時計が止まるので、おまかせ歩きの「少し休む」が終わらず歩かない。おまかせ歩きを見るときは付けない）
 const { chromium } = require('playwright');
@@ -90,7 +92,9 @@ async function keys(page, list) {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2 });
+  // 位置情報は許可しておく（あるいて遊ぶ：はじめは名鉄 西尾駅の近く。gps・gpswalk で動かす）
+  let here = { latitude: 34.8640, longitude: 137.0560, accuracy: 10 };
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, permissions: ['geolocation'], geolocation: here });
   const saved = !RESET && fs.existsSync(STORE) ? fs.readFileSync(STORE, 'utf8') : null;
   await ctx.addInitScript(s => {
     if (sessionStorage.getItem('aiplay')) return;   // 読みこみ直したときは、ゲームが書いた記録のまま
@@ -114,7 +118,29 @@ async function keys(page, list) {
     i++;
     const r = { n: i, do: a };
     try {
-      if (a.do === 'start') {
+      if (a.do === 'walkstart') {   // 「あるいて遊ぶ」で始める
+        if (await page.isVisible('#startBtn')) { await page.click('#startBtn'); await page.waitForTimeout(2500); }
+        else r.note = '「あるいて遊ぶ」が見つからない';
+      } else if (a.do === 'gps') {
+        const ll = a.tile ? await page.evaluate(t => nishioPixel.toLatLng(t[0] + 0.5, t[1] + 0.5), a.tile) : { lat: a.lat, lng: a.lng };
+        here = { ...here, latitude: ll.lat, longitude: ll.lng }; await ctx.setGeolocation(here); await page.waitForTimeout(800);
+      }
+      else if (a.do === 'gpswalk') {   // 位置情報を、スポット・人（npc:id）へ まっすぐ歩く速さ（speed m/秒、ふつう1.4）で動かす。reach m 手前で止まる
+        const to = a.tile ? await page.evaluate(t => nishioPixel.toLatLng(t[0] + 0.5, t[1] + 0.5), a.tile)
+          : await page.evaluate(id => { const G = nishioGo, x = id.startsWith('npc:') ? G.npcs.find(n => n.id === id.slice(4)) : G.spots.find(s => s.id === id); return x && { lat: x.lat, lng: x.lng }; }, a.id);
+        if (!to) r.note = 'そんな行き先はない';
+        else {
+          const sp = a.speed || 1.4, stop = a.reach == null ? 10 : a.reach, mlat = 111320, mlng = 111320 * Math.cos(to.lat * Math.PI / 180);
+          for (let k = 0; k < 900; k++) {
+            const dy = (to.lat - here.latitude) * mlat, dx = (to.lng - here.longitude) * mlng, d = Math.hypot(dx, dy);
+            if (d <= stop) break;
+            const f = Math.min(1, (sp * 2) / d);   // 2秒ごとに進める
+            here = { ...here, latitude: here.latitude + (to.lat - here.latitude) * f, longitude: here.longitude + (to.lng - here.longitude) * f };
+            await ctx.setGeolocation(here); await page.waitForTimeout(2000 / (a.fast || 1));
+          }
+          r.at = [here.latitude, here.longitude];
+        }
+      } else if (a.do === 'start') {
         if (await page.isVisible('#demoBtn')) { await page.click('#demoBtn'); await page.waitForTimeout(2500); }
         else if (!(await page.evaluate(() => nishioGo.demo))) r.note = '「操作して遊ぶ」が見つからない（あるいて移動のまま）';
       } else if (a.do === 'walk') r.moved = await keys(page, Array(a.n || 1).fill({ up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }[a.dir]));

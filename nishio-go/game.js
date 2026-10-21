@@ -923,6 +923,8 @@ function checkin() {
 
 /* ---------- 西尾の名物（meibutsu.js：観光協会と市の資料から） ---------- */
 const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
+const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）
+const spotShizen = s => SHIZEN.filter(x => x.spots.some(id => 'f-' + id === s.id));
 // こよみ（season.js：季節・二十四節気・田んぼのようす・見ごろ・時間帯・土用の丑の日）
 const KO = window.NISHIO_SEASON || null;
 // 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
@@ -1039,6 +1041,7 @@ function factPool() {   // まちメモ：地区の豆知識・紹介文、注�
   for (const s of spots) if (s.featured && s.desc) m.set(`s:${s.id}`, `${s.name}：${s.desc}`);
   for (const e of EVENTS) if (e.desc) m.set(`e:${e.id}`, `${e.name}（${e.when}・${e.place}）：${e.desc}`);
   for (const x of MEIBUTSU) x.facts.forEach((f, i) => m.set(`m:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
+  for (const x of SHIZEN) x.facts.forEach((f, i) => m.set(`z:${x.id}:${i}`, `${x.icon} ${x.name}：${f}`));
   for (const t of MACHI) t.facts.forEach((f, i) => m.set(`t:${t.id}:${i}`, `${t.icon} ${t.city}：${f}`));
   return m;
 }
@@ -1053,7 +1056,7 @@ function pickFact(c) {
   const machi = machiAt(c), here = cityAt(c.lat, c.lng), hereNear = !!here && here.name !== '西尾市';
   const tiers = [
     k => machi && k.startsWith(`t:${machi.id}:`),
-    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`))),
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`)) || spotShizen(near).some(x => k.startsWith(`z:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
     k => !k.startsWith('t:') && factNear(k) === hereNear,   // 西尾市にいるなら西尾の話、となりの市町にいるなら となりの市町の話
     k => !k.startsWith('t:'),   // まわりのまち（刈谷・大府など）の話は、そのまちにいるときだけ（西尾で大府の話が出ないように）
@@ -1069,6 +1072,7 @@ function factNear(k) {
   if (kind === 's') return spotNear(id);
   if (kind === 'e') { const e = EVENTS.find(x => x.id === id); return !!e && (e.spot ? spotNear(evSpotId(e)) : areaNear(e.area)); }   // 会場のない行事は、行事の area で
   if (kind === 'm') return !!(MEIBUTSU.find(x => x.id === id) || {}).area;
+  if (kind === 'z') return false;   // 西尾の海と大地は、西尾市の話
   return true;
 }
 const knownFacts = () => { const pool = factPool(); return S.facts.filter(k => pool.has(k)).length; };
@@ -1356,13 +1360,13 @@ function critterMet(c) {
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
-// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）はのぞき、①その名所の行事 ②その名所の名物 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
+// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）はのぞき、①その名所の行事 ②その名所の名物・海と大地の話 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
 function searchFact(s) {
   const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}`);
   const inArea = id => { const x = spots.find(y => y.id === id); return !!x && !!s.area && x.area === s.area; };
   const tiers = [
     k => EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === s.id),
-    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)),
+    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)) || spotShizen(s).some(x => k.startsWith(`z:${x.id}:`)),
     k => !!s.area && k.startsWith(`a:${s.area}:`),
     k => k.startsWith('s:') && inArea(k.slice(2)),
   ];

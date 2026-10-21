@@ -1945,7 +1945,7 @@ function renderHeader() {
 }
 
 let toastTimer;
-// ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてからまとめて出す（toastQ）
+// ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてから1つずつ順に出す（toastQ）
 const toastQ = [];
 function toast(msg) {
   const el = $('toast');
@@ -2043,7 +2043,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
 function hideReward() {
   clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
-  if (toastQ.length) toast(toastQ.splice(0).join('　'));
+  toastQ.splice(0).forEach(toastAfter);   // たまった知らせは、1つずつ順に（つなげて1つにすると長すぎて読めなかった）
 }
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');

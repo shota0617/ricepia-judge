@@ -4713,7 +4713,12 @@ function giantTiles(s) {
   return giantSize.get(s.id) || 6;
 }
 // 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
+// 西尾の四季ドット絵（tools/blender/giant-pr.py → nishio-go/art/pr/）がある名所は、いまの季節（mapSeason）と時間帯（日本時間）の絵にする（いつもの左前の向き）
+let prIds = null;
+fetch('nishio-go/art/pr/list.json').then(r => (r.ok ? r.json() : null)).then(j => { prIds = new Set(((j && j.items) || []).filter(x => x.views.includes(0)).map(x => x.id)); dirty = true; }).catch(() => { prIds = new Set(); });
+const prTime = () => { const hr = new Date(Date.now() + 9 * 3600000).getUTCHours(); return hr >= 5 && hr < 10 ? 0 : hr >= 10 && hr < 16 ? 1 : hr >= 16 && hr < 19 ? 2 : 3; };
 function giantOf(s, load = true) {
+  if (prIds && prIds.has(s.id)) return giantImg(`../pr/${s.id}/0-${mapSeason()}-${prTime()}`, load);
   const n = GIANT_ART[s.id] || (giantIds && giantIds.has(s.id) ? s.id : null);
   return n ? giantImg(n, load) : null;
 }

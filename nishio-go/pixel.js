@@ -4677,6 +4677,8 @@ function spotArt(s) {
 const SPOT_KIND = { park: 'park', historic: 'historic', view: 'view', sight: 'sight', art: 'art', beach: 'beach', museum: 'museum' };
 // 特大の絵（96×96）は6マスで描く（ドットの細かさをマスとそろえる）。となりの名所と6マスあかない所は、ふつうの絵にする（小さく縮めて描かない）
 const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null);
+// 名所の絵の大きさ：絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）。当店（32×32 の絵）だけは ちょうど2倍の4マスで、遠くからも見つけやすく
+const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop ? 2 : 1);
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
@@ -4744,8 +4746,9 @@ const gbColor = (() => {   // 塗る色（'#xxxxxx'・'rgba(…)' など）→ 4
     return r;
   };
 })();
+let gbPause = 0;   // 0 でないあいだは4色にしない（当店の建物と看板は、4色の画面の中で ただ1つ色のまま目立たせる）
 {   // 歩く地図の canvas に描く絵と色を、4色に（せかいちずは そのまま）
-  const gbField = () => gbOn && !worldMode;
+  const gbField = () => gbOn && !worldMode && !gbPause;
   const draw0 = ctx0.drawImage;
   ctx0.drawImage = function (src, ...a) { return draw0.call(this, gbField() && src.width <= 512 ? gbOf(src) : src, ...a); };
   for (const prop of ['fillStyle', 'strokeStyle']) {
@@ -5016,12 +5019,14 @@ function frame(now) {
     const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
     const giant = near ? bigOf(s) : null;
     const spr = giant || spriteOf(s);
-    const size = dotSize(spr[0], T);   // 絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）
+    const size = spotSize(s, spr, T);
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
+    if (s.shop) gbPause++;
     ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    if (s.shop) gbPause--;
     if (giant) giantHits.push([sx, sy, size, s, giant[0]]);   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
@@ -5403,6 +5408,10 @@ let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, �
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
 const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
 function drawShopTag(cx, bottom, dpr, s) {
+  gbPause++;
+  try { return shopTag(cx, bottom, dpr, s); } finally { gbPause--; }   // 看板も本物の色のまま
+}
+function shopTag(cx, bottom, dpr, s) {
   const [text, bg, fg] = SHOP_SIGN[s && s.id] || ['当店', '#d23a2e', '#ffffff'];
   const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
   ctx.font = `${fs}px "DotGothic16", monospace`;
@@ -6017,7 +6026,7 @@ cv.addEventListener('click', e => {
     if (bigOf(s, false)) continue;   // 特大の絵は上で調べた
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = dotSize(spriteOf(s)[0], T) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
+    const half = spotSize(s, spriteOf(s), T) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }

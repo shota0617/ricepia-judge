@@ -1,5 +1,5 @@
 {
-  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、shop: true は当店（地図で本物の看板と同じ色の店名の札と、本物の外観に近づけた専用の絵（pixel.js の spotSprites.ricepia・kondo）、お店のサイト url と道案内を出す）、area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島、となりの市町は okazaki 岡崎／anjo 安城／hekinan 碧南／takahama 高浜／kota 幸田／gamagori 蒲郡。地区ガイドと地区制覇バッジに使う）を指定できます。normal: true はふつうのスポット（注目スポットではない。OpenStreetMap にない社寺を Wikidata から足したものと、プレイヤーのおたよりから出典で確かめて足したもの（id が fb- で始まり、src に出典））。",
+  "_説明": "注目スポット（ボーナス対象）の一覧。座標は Wikipedia・マピオン・NAVITIME などの公開情報から調べた値（2026年10月）。match の名前で OpenStreetMap を探し、近く（approx: false なら300m、true なら1km以内）に一致する場所があればその位置に補正します（先頭に = で完全一致）。approx: true は代表点・秒単位の値など少し不確かな座標で、OSMで見つからないときはチェックイン範囲を120mに広げます。lat / lng が null のスポットは名前だけで探し、1か所に絞れたときだけ地図に出します。reach（m）でチェックインできる距離、cat で神社めぐり等のバッジの種類、shop: true は当店（地図で本物の看板と同じ色の店名の札と、本物の外観に近づけた専用の絵（pixel.js の spotSprites.ricepia・kondo）、お店のサイト url と道案内を出す）、hours は当店の営業時間（open・close、closed は休みの曜日 0=日曜。ricepia.jp の店舗情報 2026年10月）、tel は電話。area で地区（nishio 西尾／isshiki 一色／kira 吉良／hazu 幡豆／sakushima 佐久島、となりの市町は okazaki 岡崎／anjo 安城／hekinan 碧南／takahama 高浜／kota 幸田／gamagori 蒲郡。地区ガイドと地区制覇バッジに使う）を指定できます。normal: true はふつうのスポット（注目スポットではない。OpenStreetMap にない社寺を Wikidata から足したものと、プレイヤーのおたよりから出典で確かめて足したもの（id が fb- で始まり、src に出典））。",
   "spots": [
     {
       "id": "kondo-beikoku",
@@ -13,7 +13,9 @@
       "approx": false,
       "reach": 70,
       "points": 50,
-      "desc": "明治25年創業、西尾のお米屋さん。米津町蓮台3-1、名鉄米津駅の西口から歩いて約2分。"
+      "desc": "明治25年創業、西尾のお米屋さん。米津町蓮台3-1、名鉄米津駅の西口から歩いて約2分。",
+      "hours": { "open": "9:00", "close": "19:30", "closed": [0] },
+      "tel": "0563-54-4001"
     },
     {
       "id": "ricepia",
@@ -27,7 +29,9 @@
       "approx": false,
       "reach": 70,
       "points": 50,
-      "desc": "近藤米穀店のお店。ドライブスルーでお米が買えます。永吉4丁目62。"
+      "desc": "近藤米穀店のお店。ドライブスルーでお米が買えます。永吉4丁目62。",
+      "hours": { "open": "10:00", "close": "19:00", "closed": [] },
+      "tel": "0563-54-4001"
     },
     {
       "id": "nishio-castle",

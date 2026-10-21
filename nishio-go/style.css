@@ -65,6 +65,17 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .spot.shop-kondo::after{background:#f3ead0;color:#111}
 .shop-links{display:flex;gap:6px;flex-wrap:wrap}
 .shop-links .btn{text-decoration:none}
+.shop-info p{margin:4px 0}
+.shop-info .open{color:#1b8a3a}
+.shop-info .shut{color:#b23a2e}
+.shop-info .shop-line{background:#eefaf0;border-radius:8px;padding:6px 8px}
+.btn.line{background:#06c755;color:#fff;border-color:#06c755;text-decoration:none}
+.px-info .shop-info .shop-line{background:rgba(6,199,85,.15)}
+.px-info .btn.line{background:#06c755;border-color:#06c755;color:#fff}
+.px-info .shop-info .open{color:#7ee2a0}
+.px-info .shop-info .shut{color:#ff8a80}
+.px-info .shop-info a[href^="tel"]{color:inherit}
+.rw.ending .btn.line{display:inline-block;margin-top:4px}
 .spot.near{transform:scale(1.15);animation:pulse 1.2s infinite}
 .spot.visited{border-color:var(--matcha)}
 .spot.cool{border-color:#aaa;background:#eee;filter:grayscale(.9);opacity:.75;animation:none}

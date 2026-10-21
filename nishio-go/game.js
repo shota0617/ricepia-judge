@@ -226,6 +226,8 @@ function buildSpots(config, osmItems) {
       points: num(c.points, 500), reach: num(c.reach, 300), desc: c.desc ? String(c.desc) : '',
       area: typeof c.area === 'string' ? c.area : null,
       shop: !!c.shop, url: typeof c.url === 'string' && /^https:\/\//.test(c.url) ? c.url : '',
+      hours: c.hours && /^\d{1,2}:\d\d$/.test(c.hours.open) && /^\d{1,2}:\d\d$/.test(c.hours.close) ? { open: c.hours.open, close: c.hours.close, closed: (c.hours.closed || []).filter(w => w >= 0 && w <= 6) } : null,
+      tel: typeof c.tel === 'string' && /^[\d-]+$/.test(c.tel) ? c.tel : '',
       // 協賛スポット（地元のお店など）：名前・ひとこと・サイト（https のみ）
       sponsor: c.sponsor && typeof c.sponsor.name === 'string' ? { name: String(c.sponsor.name), text: c.sponsor.text ? String(c.sponsor.text) : '', url: typeof c.sponsor.url === 'string' && /^https:\/\//.test(c.sponsor.url) ? c.sponsor.url : '' } : null };
     const match = matchesOf(c);
@@ -410,6 +412,7 @@ function popupHtml(s) {
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
+    ${s.shop ? shopInfoHtml(s) : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? '<button type="button" class="btn mini" data-jump-open>🎮 ミニゲーム「にしおジャンプ」</button>' : ''}
@@ -431,6 +434,7 @@ function popupPic(s, c, v, left, d) {
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">${PIA('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     ${spotMeibutsu(s).map(m => `<details class="mb"><summary>${m.icon} <b>${esc(m.name)}</b></summary>${esc(m.note)}</details>`).join('')}
+    ${s.shop ? shopInfoHtml(s) : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? `<button type="button" class="btn mini" data-jump-open>${PIA('jump', '')} ミニゲーム</button>` : ''}
@@ -863,6 +867,31 @@ function renderCampaigns() {
 }
 
 const SHOP_NOTE = '西尾のお米屋さん（明治25年創業）。車に乗ったままお米を受け取れるドライブスルーや、24時間つかえるコイン精米所もあります。くわしくは ricepia.jp で。';
+// 当店の LINE（常連さまポイント：1日1回の来店で+1pt、10ptで100円引き。LINE の友だち登録から。ricepia.jp と同じ）。from でゲームのどこから来たかを分ける
+const SHOP_LINE = 'https://ricepia.jp/go/lin.ee/uPhkiiv';
+const lineUrl = from => `${SHOP_LINE}?from=game-${from}`;
+const hm = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+function shopOpen(s, t = Date.now()) {   // 当店の いま営業中か（spots.json の hours。お店の時刻＝日本時間で）。次にあく時刻も
+  const h = s.hours;
+  if (!h) return null;
+  const d = new Date(t + 9 * 3600000), day = d.getUTCDay();
+  const now = d.getUTCHours() * 60 + d.getUTCMinutes(), closedDay = w => (h.closed || []).includes(w);
+  if (!closedDay(day) && now >= hm(h.open) && now < hm(h.close)) return { open: true, text: `いま営業中（${h.close}まで）` };
+  for (let i = now < hm(h.open) ? 0 : 1; i <= 7; i++) {
+    const w = (day + i) % 7;
+    if (!closedDay(w)) return { open: false, text: `いまは閉まっています（${i === 0 ? 'きょう' : i === 1 ? 'あす' : WEEK[w] + '曜'}${h.open}から）` };
+  }
+  return { open: false, text: 'いまは閉まっています' };
+}
+function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店スタンプ・LINE の常連さまポイント
+  const h = s.hours, o = shopOpen(s), n = (S.shopDays || []).length;
+  return `<div class="shop-info">
+    ${h ? `<p>🕘 ${esc(h.open)}〜${esc(h.close)}（${(h.closed || []).length ? (h.closed || []).map(w => WEEK[w]).join('・') + '曜休み' : '年中無休'}）　<b class="${o.open ? 'open' : 'shut'}">${esc(o.text)}</b></p>` : ''}
+    ${s.tel ? `<p>📞 <a href="tel:${esc(s.tel.replace(/-/g, ''))}">${esc(s.tel)}</a>${n ? `　🍚 来店スタンプ ${n}こ` : ''}</p>` : ''}
+    <p class="shop-line">📱 <b>常連さまポイント</b>：お店で1日1回の来店で+1pt、10ptで100円引き（LINE の友だち登録から）<br>
+      <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;
+}
+const SHOP_STAMP = { 3: 100, 5: 200, 10: 500 };   // 来店スタンプ（当店に来た日の数）のごほうびポイント
 function checkin() {
   const s = selected;
   if (!s || !me) return;
@@ -923,6 +952,13 @@ function checkin() {
   if (bag && !(s.featured && !v)) day.themeBags = (day.themeBags || 0) + 1;
   if (bag) lines.push(`🎒 おみやげ袋（${bag.km}km 歩くと開く）`);
   if (s.shop) track('shop_checkin', { spot: s.name, mode: demo ? 'play' : 'walk' });
+  if (s.shop && !(S.shopDays || []).includes(today)) {   // 来店スタンプ：当店（どちらのお店でも）に来た日を1日1こ。3・5・10こで ごほうび
+    S.shopDays = [...(S.shopDays || []), today].slice(-400);
+    const n = S.shopDays.length, b = SHOP_STAMP[n] || 0;
+    lines.push(`🍚 来店スタンプ ${n}こめ`);
+    if (b) { total += b; lines.push(`🎁 来店スタンプ ${n}こ たまった！ +${b}`); }
+    track('shop_stamp', { n, spot: s.name, mode: demo ? 'play' : 'walk' });
+  }
   S.log.unshift({ type: 'spot', t: now, pts: total, name: s.name, icon: iconOf(s), id: s.id });
   // その場所の話（まだ知らないまちメモがあれば。ないときは ほかの話）
   const fk = s.shop ? '' : learnFact('c:' + s.id + ':' + S.checkins);
@@ -933,8 +969,9 @@ function checkin() {
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
   const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
-  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot);
+  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot);
   reactAsk(s);
+  if (s.shop) shopAfter(s);   // ごほうびのあと、当店の窓（営業時間・LINE の常連さまポイント）を出す
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -1423,6 +1460,14 @@ function movieCheck(s) {
   movieWhenFree(m.id);
 }
 // ごほうびの画面・人の話・ミニゲーム・殿堂入りの画面が出ている間は待ってから（予約したときの記録が切りかわったら やめる）
+function shopAfter(s, key = stateKey(), t0 = Date.now()) {   // 当店でチェックインしたあと：ごほうびが閉じたら、当店の窓を出す（ほかの窓を開いた・30秒すぎた ときは出さない）
+  (function go() {
+    if (stateKey() !== key || !$('pxInfo').hidden || Date.now() - t0 > 30000) return;
+    if (rewardBusy() || document.body.classList.contains('jump-open')) return setTimeout(go, 600);
+    if (document.body.classList.contains('px')) { $('pxInfoBody').innerHTML = popupHtml(s); $('pxInfo').hidden = false; }
+    else markers.get(s.id)?.openPopup();
+  })();
+}
 function movieWhenFree(id, key = stateKey()) {
   if (movieWhenFree.wait) return;
   movieWhenFree.wait = true;
@@ -1873,6 +1918,8 @@ function showEnding() {
     <ul class="rec">${rows.map(([k, v]) => `<li>${esc(k)} <b>${esc(v)}</b></li>`).join('')}</ul>
     <ul class="seals">${seals}</ul>
     <p class="say">🏃 ${esc(RIVAL)}「おめでとう！ つぎは となりの市町も いっしょに歩こまい」</p>
+    ${ED.shops ? `<p class="say">🍚 お米屋さん（らいすぴあ・近藤米穀店）「西尾を歩いてくれて ありがとう。おなかが すいたら、お米を買いに 寄ってってね」</p>
+    <p><a class="btn mini line" href="${esc(lineUrl('ending'))}" target="_blank" rel="noopener">LINEで友だち追加（常連さまポイント）</a></p>` : ''}
     <p class="note">このあとも そのまま遊べます。きろく の バッジ「👑 殿堂入り」から、いつでも この記録を見られます</p></div>`;
   toastHold(); el.classList.add('show'); clearTimeout(showReward.t);
 }
@@ -2469,6 +2516,7 @@ function redeem(rid) {
   S.points -= r.cost;
   S.coupons.push(c);
   S.coupons = S.coupons.slice(-50);
+  track('coupon_get', { reward: r.id || r.name, mode: demo ? 'play' : 'walk' });
   S.log.unshift({ type: 'use', t: c.t, pts: -r.cost, name: `${r.name} と交換` });
   save();
   renderHeader();
@@ -2509,6 +2557,7 @@ $('cpUse').addEventListener('click', () => {
   if (!c || couponState(c) !== 'valid') return;
   c.used = Date.now();
   save();
+  track('coupon_use', { reward: c.rid || c.name || '', mode: demo ? 'play' : 'walk' });
   tickCoupon();
 });
 $('cpClose').addEventListener('click', closeCoupon);

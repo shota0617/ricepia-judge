@@ -82,6 +82,14 @@ async function gh(path, opt = {}) {
   return r.json();
 }
 
+// ラベルが無いリポジトリでは Issue につかないことがあるので、無ければ作る（もうあれば 422 で、それでよい）
+async function ensureLabels(names) {
+  for (const name of names) {
+    try { await gh('/labels', { method: 'POST', body: JSON.stringify({ name, color: name === 'feedback' ? 'f9d0c4' : 'ededed' }) }); }
+    catch (e) { if (!/ 422$/.test(e.message)) throw e; }
+  }
+}
+
 // 24時間に受けつけた数（新しいじゅんに並べて数える。上限より多くは数えない）
 async function recentCount(max, now) {
   const list = await gh(`/issues?labels=feedback&state=all&sort=created&direction=desc&per_page=${Math.min(100, max)}`);
@@ -108,7 +116,12 @@ module.exports = async function handler(req, res) {
   const max = Math.max(1, Math.min(100, Number(process.env.FEEDBACK_DAILY_MAX) || 40));
   try {
     if (await recentCount(max, now) >= max) return res.status(429).json({ error: 'daily' });
-    await gh('/issues', { method: 'POST', body: JSON.stringify(issueOf(f)) });
+    const is = issueOf(f), made = await gh('/issues', { method: 'POST', body: JSON.stringify(is) });
+    // ラベルがつかなかったら（はじめての空のリポジトリなど）、ラベルを作ってつけなおす。仕分けは feedback ラベルで探すので
+    if (!(made.labels || []).some(l => (l.name || l) === 'feedback')) {
+      await ensureLabels(is.labels);
+      await gh(`/issues/${made.number}/labels`, { method: 'POST', body: JSON.stringify({ labels: is.labels }) });
+    }
   } catch (e) {
     console.error('feedback:', e.message);
     return res.status(502).json({ error: 'store' });

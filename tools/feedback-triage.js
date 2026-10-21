@@ -89,10 +89,25 @@ async function findOsm(f) {
   return null;   // 調べられなかった
 }
 
+// 仕分けで使うラベル（無ければ作る。もうあれば 422 で、それでよい）
+const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam'];
+async function ensureLabels() {
+  for (const name of LABELS) {
+    try { await gh('/labels', { method: 'POST', body: JSON.stringify({ name, color: name === 'feedback' ? 'f9d0c4' : name === 'needs-check' ? 'e99695' : 'ededed' }) }); }
+    catch (e) { if (!/^GitHub 422 /.test(e.message)) throw e; }
+  }
+}
+
+// まだ仕分けていないおたより（古いじゅん）。開いたままの提案（triaged）・人が見るもの（needs-check）は、検索の側で外す
+// （開いた提案がたまっても、新しいおたよりが取得の範囲から押し出されないように）
 async function openIssues() {
-  const out = [];
-  for (let page = 1; page <= 5; page++) {
-    const list = await gh(`/issues?labels=feedback&state=open&sort=created&direction=asc&per_page=50&page=${page}`);
+  const out = [], q = encodeURIComponent(`repo:${REPO} is:issue is:open label:feedback -label:triaged -label:needs-check`);
+  for (let page = 1; page <= 10; page++) {
+    const r = await fetch(`https://api.github.com/search/issues?q=${q}&sort=created&order=asc&per_page=50&page=${page}`, {
+      headers: { Authorization: 'Bearer ' + TOKEN, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'User-Agent': 'nishio-go-feedback' },
+    });
+    if (!r.ok) throw new Error(`GitHub ${r.status} search`);
+    const list = (await r.json()).items || [];
     out.push(...list.filter(i => !i.pull_request));
     if (list.length < 50) break;
   }
@@ -103,6 +118,7 @@ async function prepare() {
   fs.mkdirSync(DIR, { recursive: true });
   const items = [];
   if (!REPO || !TOKEN) { console.log('FEEDBACK_REPO / FEEDBACK_TOKEN が無いので、なにもしません'); fs.writeFileSync(path.join(DIR, 'items.json'), '[]\n'); return; }
+  await ensureLabels();
   const list = known();
   for (const i of await openIssues()) {
     const labels = new Set(i.labels.map(l => l.name));
@@ -147,11 +163,18 @@ async function report() {
   const read = f => { try { return JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8')); } catch (_) { return null; } };
   const items = read('items.json') || [], results = read('results.json');
   const pr = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(process.env.PR_URL || '') ? process.env.PR_URL : '';
+  const blocked = fs.existsSync(path.join(DIR, 'blocked.txt'));   // 直した内容に おたよりの文・位置が入っていて、公開を止めた
   if (!REPO || !TOKEN || !items.length) return;
   for (const it of items) {
     const r = Array.isArray(results) ? results.find(x => x && x.n === it.n) : null;
     if (!r || !Object.hasOwn(LABEL, r.action)) continue;   // 結果が無いものは、次の回に「人が見る」にまわる（claude-try）
     let action = r.action, text = String(r.reply || '').slice(0, 3000);
+    if (action === 'fixed' && blocked) {
+      await comment(it.n, `直した内容に おたよりの文や位置がそのまま入っていたので、公開せずに止めました。人が見てください。\n\n${text}`);
+      await addLabels(it.n, ['triaged', 'needs-check']);
+      console.log(`#${it.n} 止めた`);
+      continue;
+    }
     if (action === 'fixed' && !pr) { action = 'proposal'; text += '\n\n（直した内容は確認で取りこめなかったので、提案として残します）'; }
     const head = { fixed: `直しました。取りこみ（マージ）を待っています：${pr}`, proposal: '提案です。人が決めてください。', done: 'もう対応ずみ／いまのままで問題ありません。', skip: '反映しないおたよりとして閉じます。' }[action];
     await comment(it.n, `${head}\n\n${text}`);
@@ -183,6 +206,21 @@ function intact(p) {
     return true;
   } catch (_) { return false; }
 }
+// 公開してよいか：おたよりの文の切れはし（そろえた文字で12文字つづけて同じ）と、送った人の位置（丸めた緯度と経度の両方）が入っていないか
+// （Claude が指示に反したり、おたよりに操られたりしても、公開の PR に出さないように、ここで決まった手順で止める）
+const LEAK_RUN = 12;
+function leaks(text, items) {
+  const t = norm(text), raw = String(text || '');
+  for (const it of items) {
+    const s = norm(it.text);
+    for (let i = 0; i + LEAK_RUN <= s.length; i++) if (t.includes(s.slice(i, i + LEAK_RUN))) return `#${it.n} の文`;
+    const num = v => new RegExp(`(^|[^\\d.])${String(v).replace('.', '\\.')}(?!\\d)`);
+    if (it.lat != null && it.lng != null && num(it.lat).test(raw) && num(it.lng).test(raw)) return `#${it.n} の位置`;
+  }
+  return '';
+}
+// PR の本文に出す要約：位置のような数・アドレスがあるもの、おたよりの文の切れはしを含むものは出さない
+const safePublic = (s, items) => /\d+\.\d{2,}|https?:|www\./i.test(String(s || '')) || leaks(s, items) ? '' : s;
 const oneLine = s => String(s || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/@/g, '＠').replace(/#(?=\d)/g, '＃').replace(/\s+/g, ' ').trim().slice(0, 200);
 async function pr() {
   // 直してよい場所の外の変更は、まだ記録していないファイルも消して戻すので、GitHub Actions の使い捨ての作業場所でだけ動かす
@@ -193,6 +231,17 @@ async function pr() {
   files = changedFiles();
   if (files.some(c => !intact(c.path))) { console.log('こわれたファイルがあるので、ぜんぶ戻す'); files.forEach(revert); files = []; }
   if (!files.length) { console.log('PR にする変更はありません'); return; }
+  const items = (() => { try { return JSON.parse(fs.readFileSync(path.join(DIR, 'items.json'), 'utf8')); } catch (_) { return null; } })();
+  // 足した行（新しいファイルは中身ぜんぶ）に、おたよりの文・位置がそのまま入っていたら、公開せずに止めて人にまわす
+  const added = git('diff', 'HEAD', '-U0', '--no-color').split('\n').filter(l => l.startsWith('+') && !l.startsWith('+++')).join('\n') + '\n' +
+    files.filter(c => c.code === '??').map(c => fs.readFileSync(path.join(ROOT, c.path), 'utf8')).join('\n');
+  const leak = Array.isArray(items) ? leaks(added, items) : '確かめるための items.json が読めない';
+  if (leak) {
+    console.log(`公開できない変更（${leak}）なので、ぜんぶ戻して人にまわす`);
+    files.forEach(revert);
+    fs.writeFileSync(path.join(DIR, 'blocked.txt'), leak + '\n');
+    return;
+  }
   const results = (() => { try { return JSON.parse(fs.readFileSync(path.join(DIR, 'results.json'), 'utf8')); } catch (_) { return []; } })();
   const fixed = (Array.isArray(results) ? results : []).filter(r => r && r.action === 'fixed');
   const branch = `feedback/run-${process.env.GITHUB_RUN_ID || Date.now()}`;
@@ -201,7 +250,7 @@ async function pr() {
   git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', 'にしおさんぽGO: おたよりから直す（自動・要確認）');
   git('push', '-q', `https://x-access-token:${process.env.GH_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`, `HEAD:refs/heads/${branch}`);
   const body = ['プレイヤーからのおたより（非公開の置き場の Issue）を Claude が読んで直した案です。**内容を確かめてからマージしてください。**', '',
-    ...(fixed.length ? fixed.map(r => `- ${oneLine(r.public) || '（要約なし）'}`) : ['- （要約なし）']), '',
+    ...(fixed.length ? fixed.map(r => `- ${oneLine(safePublic(r.public, items)) || '（要約なし）'}`) : ['- （要約なし）']), '',
     '変更してよいのは nishio-go/ の遊びのデータと画面の文だけで、それ以外の変更は自動で取りのぞいています（tools/feedback-triage.js）。',
     'おたよりの文そのもの・送った人の位置は、このPRには書きません。'].join('\n');
   const bodyFile = path.join(DIR, 'pr-body.md');
@@ -217,4 +266,4 @@ if (require.main === module) {
   if (!run) { console.error('使いかた：node tools/feedback-triage.js prepare|report|pr'); process.exit(2); }
   run().catch(e => { console.error(e.message); process.exit(1); });
 }
-module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, prepare, report };
+module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, leaks, safePublic, prepare, report };

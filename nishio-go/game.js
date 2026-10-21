@@ -1342,7 +1342,7 @@ function critterMet(c) {
   const book = S.critters, first = !book[c.id], day = dayState();
   day.critters = (day.critters || 0) + 1;
   book[c.id] = { n: (book[c.id] ? book[c.id].n : 0) + 1, first: book[c.id] ? book[c.id].first : Date.now() };
-  if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); setTimeout(checkBadges, 800); }   // そろったら賞状
+  if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); badgesSoon(); }   // そろったら賞状
   save();
   track('critter_meet', { critter: c.id, first, mode: demo ? 'play' : 'walk' });
   toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
@@ -1748,17 +1748,22 @@ function clearGive(n) {
   S.cleared = { t: Date.now(), rec: clearRecord() };   // 殿堂入りした時点の記録（あとから見ても変わらないように）
   save();
   track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
-  setTimeout(checkBadges, 800);   // バッジ（殿堂入り）は すぐ。知らせは ごほうびの画面が出ている間は閉じてから出る（toastQ）
-  setTimeout(endingWhenFree, 900);
+  const key = stateKey();
+  badgesSoon();   // バッジ（殿堂入り）は すぐ。知らせは ごほうびの画面が出ている間は閉じてから出る（toastQ）
+  setTimeout(() => endingWhenFree(key), 900);
   return true;
+}
+// 少しあとでバッジを確かめる（知らせの順番のため）。そのあいだに記録（操作して移動／あるいて移動）が切りかわったら、ここでは確かめない（次の機会に確かめる）
+function badgesSoon() {
+  const key = stateKey();
+  setTimeout(() => { if (stateKey() === key) checkBadges(); }, 800);
 }
 // ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
 // 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）。
 // 予約したときの記録（操作して移動／あるいて移動）に結びつけ、待っている間に記録が切りかわったら取りやめる
-function endingWhenFree() {
+function endingWhenFree(key = stateKey()) {
   const w = endingWhenFree;
-  if (w.waiting || $('reward').querySelector('.ending')) return;   // もう待っている・もう出ている
-  const key = stateKey();
+  if (w.waiting || $('reward').querySelector('.ending') || stateKey() !== key) return;   // もう待っている・もう出ている・予約した記録から切りかわった
   w.waiting = true;
   (function go() {
     if (stateKey() !== key || !S.cleared) { w.waiting = false; return; }
@@ -1791,7 +1796,7 @@ function sealGive(n) {
   const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
   if (!a || (S.seals || []).includes(id) || !sealReady(id)) return '';
   S.seals = [...(S.seals || []), id]; save();
-  setTimeout(checkBadges, 800);   // バッジの知らせ
+  badgesSoon();   // バッジの知らせ
   track('seal_get', { area: id, mode: demo ? 'play' : 'walk' });
   return `🔖 ${n.name}「${a.name}を${sealGoal(id)}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`;
 }

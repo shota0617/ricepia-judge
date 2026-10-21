@@ -821,6 +821,18 @@ function harvestReward(stars, level) {
   return pts;
 }
 
+// 肥料山の草刈り（hiryoyama.js）のごほうび：★がついたとき1日1回、10pt＋星1つ5pt。きょうはもうもらっていれば null
+function hiryoReward(stars) {
+  if (S.hiryoDay === ymd()) return null;
+  const st = Math.max(1, Math.min(3, stars | 0)), pts = 10 + 5 * st;
+  S.hiryoDay = ymd();
+  gainPoints(pts);
+  S.log.unshift({ type: 'hiryo', t: Date.now(), pts, name: `ミニゲーム「肥料山の草刈り」${'★'.repeat(st)}`, icon: '🌿' });
+  save();
+  renderLog();
+  return pts;
+}
+
 // 段丘をのぼるミニゲーム（dankyu.js）のごほうび：のぼりきったとき1日1回、10pt＋星1つ5pt。きょうはもうもらっていれば null
 function dankyuReward(stars, level) {
   if (S.dankyuDay === ymd()) return null;
@@ -3306,7 +3318,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

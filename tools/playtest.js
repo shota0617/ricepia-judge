@@ -311,6 +311,33 @@ async function walkTo(page, id) {
     if (B.open(ev)) bad.push('2回起きた');
     return bad.length ? bad.join(',') : true;
   });
+  // ミニゲーム「肥料山の草刈り」：草を刈って5束で かごがいっぱい、田んぼでおろす。持ち主に「知事の許可」と答えると +10秒、本のできごとも見たことに
+  R.checks.hiryo = await page.evaluate(async () => {
+    const Y = window.NISHIO_HIRYO, G = nishioGo, B = window.NISHIO_BOOKEV, bad = [];
+    if (!Y) return 'none';
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    Y.open(true);
+    let i = Y.info;
+    const col = [...Array(12).keys()].find(x => i.map.slice(0, 7).every(r => r[x] === 'g'));
+    if (col === undefined) { Y.close(); return 'まっすぐ刈れる列がない'; }
+    while (Y.info.pos[0] !== col) Y.move(Y.info.pos[0] < col ? 'right' : 'left');
+    for (let k = 0; k < 6; k++) Y.move('up');
+    if (Y.info.carry !== 5) bad.push(`かご ${Y.info.carry}`);
+    for (let k = 0; k < 7; k++) Y.move('down');
+    if (Y.info.total !== 5 || Y.info.carry !== 0) bad.push(`おろす ${Y.info.total}`);
+    Y.setLeft(30.2);
+    await new Promise(r => setTimeout(r, 600));
+    if (!Y.info.owner) bad.push('持ち主が来ない');
+    const l0 = Y.info.left;
+    Y.answer('ok');
+    if (Y.info.left < l0 + 9) bad.push('+10秒');
+    Y.finish('time');
+    if (!G.bookEvHas('hiryoyama')) bad.push('本のできごと');
+    if (!/草刈り|時間切れ/.test(document.querySelector('#hiryo .jump-result').textContent)) bad.push('結果');
+    Y.close();
+    if (document.body.classList.contains('jump-open')) bad.push('閉じない');
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -476,6 +503,7 @@ async function walkTo(page, id) {
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
+  need(c.hiryo === true, `ミニゲーム 肥料山の草刈り：${c.hiryo}`);
   need(c.bookev === true, `イベント 本のできごと：${c.bookev}`);
   need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);

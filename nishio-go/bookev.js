@@ -40,8 +40,8 @@
       a: ['農商務大臣（榎本武揚）', '愛知県知事', '村長'],
       why: '幡豆郡厨村大字駮馬にあった幡豆製糸株式会社は、明治29年上半季の第1回の報告を、1897年2月18日に農商務大臣の榎本武揚あてに出した。明治26年の農商務省令による報告だった。',
       facts: ['g:seishi:0', 'g:seishi:1', 'g:seishi:2'] },
-    { id: 'hiryoyama', title: '肥料山の取り上げ', when: '1948年（昭和23年）', where: { village: ['hazu', 'sanwa', 'toyosaka'] },
-      scene: '農家の人「農地改革で田んぼは買収されたけど、草を刈る肥料山を、持ち主が返せと言ってきた。こまったなあ」',
+    { id: 'hiryoyama', title: '肥料山の取り上げ', when: '1948年（昭和23年）', where: { village: ['hazu', 'sanwa', 'toyosaka'] }, game: true,
+      scene: '農家の人「田んぼにいれる草を、肥料山で刈らんといかん。手伝ってくれん？　そういえば、山の持ち主が肥料山を返せと言いに来るかもしれん…」',
       q: '1948年の方針では、のこった肥料山を持ち主が勝手に取り上げてもいい？',
       a: ['だめ。知事の許可がいる', 'いい。持ち主が決めてよい', '村長がきめる'],
       why: '1948年5月21日の幡豆地方事務所長の方針では、田畑だけが買収されても、のこった肥料山の草刈りには小作の権利があるとされた。持ち主が勝手に取り上げたり売ったりはできず、知事の許可がいるとされた。',
@@ -79,6 +79,7 @@
       const b = e.target.closest('[data-be]');
       if (!b) return;
       if (b.dataset.be === 'close') close();
+      else if (b.dataset.be === 'game') { close(); if (window.NISHIO_HIRYO) NISHIO_HIRYO.open(true); }
       else pick(+b.dataset.be);
     });
     window.addEventListener('keydown', e => { if (shown() && e.key === 'Escape') close(); });
@@ -89,6 +90,15 @@
     if (!root) build();
     cur = ev; picked = false;
     order = ev.a.map((t, i) => i).sort(() => Math.random() - 0.5);
+    if (ev.game) {   // ミニゲームで起きるできごと（肥料山の草刈り。持ち主に答えると、見たことになる）
+      root.innerHTML = `<div class="md-card be-card"><p class="md-head">📖 本のできごと：${esc(ev.title)}<small>（${esc(ev.when)}）</small></p>
+        <p class="md-say">${esc(ev.scene)}</p>
+        <div class="be-a"><button type="button" class="btn be-btn" data-be="game">🌿 手伝う（ミニゲーム）</button></div>
+        <button type="button" class="btn mini md-close" data-be="close">あとで</button></div>`;
+      root.hidden = false;
+      if (G.track) G.track('bookev_open', { ev: ev.id });
+      return true;
+    }
     root.innerHTML = `<div class="md-card be-card"><p class="md-head">📖 本のできごと：${esc(ev.title)}<small>（${esc(ev.when)}）</small></p>
       <p class="md-say">${esc(ev.scene)}</p>
       <p class="be-q"><b>${esc(ev.q)}</b></p>

@@ -736,3 +736,5 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .be-a .be-btn.wrong{background:#8a2a22;color:#fff}
 .be-a .be-btn.other{background:#6a7a6e;color:#eee}
 .be-a .be-btn:disabled{opacity:1}
+.jump-result .hy-ans{display:flex;flex-direction:column;align-items:stretch;gap:6px;width:100%}
+.jump-result .hy-ans .btn{white-space:normal;font-size:14px}

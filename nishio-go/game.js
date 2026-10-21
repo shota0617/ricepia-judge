@@ -919,6 +919,24 @@ function bookEvDone(id, ok, facts, total) {
   return { pts, n: S.bookEv.length, all: S.bookEv.length >= total };
 }
 
+// イベント「雲母石を探せ」（kirara.js）：場所ごとに1回。石の中から雲母石を見つけると +15pt（1回目で見つけたら +20pt）と、その場所の まちメモ。
+// ぜんぶの場所で見つけると、もう +30pt
+const kiraraHas = id => (S.kirara || []).includes(id);
+function kiraraFound(id, first, facts, total) {
+  if (!Array.isArray(S.kirara)) S.kirara = [];
+  if (S.kirara.includes(id)) return null;
+  S.kirara.push(id);
+  const all = S.kirara.length >= total, pts = (first ? 20 : 15) + (all ? 30 : 0);
+  let fresh = false;
+  for (const k of facts || []) if (!S.facts.includes(k)) { S.facts.push(k); fresh = true; }
+  gainPoints(pts);
+  S.log.unshift({ type: 'kirara', t: Date.now(), pts, name: `雲母石を探せ ${S.kirara.length}/${total}${all ? '（ぜんぶ見つけた）' : ''}`, icon: '✨' });
+  save();
+  renderLog();
+  track('kirara_found', { at: id, first, n: S.kirara.length });
+  return { pts, n: S.kirara.length, all, fresh };
+}
+
 // ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
 // 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
@@ -3386,7 +3404,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

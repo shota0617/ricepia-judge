@@ -282,7 +282,7 @@ async function walkTo(page, id) {
     const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
     await new Promise(r => setTimeout(r, 1700));   // 芽出しのあとの ごほうびが消えるまで
     if (rw.classList.contains('show')) rw.click();
-    const p0 = G.state.points;
+    let p0 = G.state.points;
     const t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
     const N = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]], walk = new Set([C.A, C.B, C.M, C.X]);
     let hit = null;
@@ -294,6 +294,7 @@ async function walkTo(page, id) {
     if (!hit) return '近くに水べがない';
     for (let i = 0; i < 20 && !M.shown; i++) P.critterStep(hit[0], hit[1]);
     if (!M.shown) return '水べを歩いても開かない';
+    p0 = G.state.points;   // 歩いている間に生きものに出会って ふえた分は数えない
     if (document.querySelectorAll('#mushi .mu-bug').length !== 3) bad.push('虫の絵が3つでない');
     // 絵は ちがう虫ごとに ちがう（描けている）
     const imgs = [...document.querySelectorAll('#mushi .mu-bug canvas')].map(c => c.toDataURL());
@@ -313,6 +314,37 @@ async function walkTo(page, id) {
     if (!/3\/3/.test(document.getElementById('mushi').textContent)) bad.push('けっか');
     M.close();
     if (G.mushiDue() || M.open()) bad.push('1日に2回');
+    return bad.length ? bad.join(',') : true;
+  });
+  // イベント「雲母石を探せ」：場所ごとに1回。ちがう石は「ただの石」、雲母石で +15pt（1回目なら +20pt）と まちメモ。3か所ぜんぶで もう +30pt
+  R.checks.kirara = await page.evaluate(async () => {
+    const K = window.NISHIO_KIRARA, G = nishioGo, bad = [];
+    if (!K) return 'none';
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    const s = G.spots.find(x => x.id === 'f-yatsuomote');
+    if (!s) return '八ツ面山のスポットがない';
+    if (!K.here(K.PLACES[0], { lat: s.lat + 0.001, lng: s.lng })) bad.push('八ツ面山の近くで here が偽');
+    if (K.here(K.PLACES[0], { lat: 35.17, lng: 136.88 })) bad.push('名古屋で here が真');
+    const p0 = G.state.points;
+    if (!K.open(K.PLACES[0]) || !K.shown) return '開かない';
+    if (document.querySelectorAll('#kirara .kr-stone').length !== 20) bad.push('石が20個でない');
+    if (document.querySelectorAll('#kirara .kr-stone.mica').length !== 1) bad.push('雲母石が1つでない');
+    const wrong = (K.mica + 1) % 20;
+    K.tap(wrong);
+    if (K.found || !document.querySelector(`#kirara .kr-stone[data-kr="${wrong}"]`).disabled) bad.push('ちがう石で見つかった・押せたまま');
+    K.tap(K.mica);
+    if (!K.found) bad.push('雲母石で見つからない');
+    if (G.state.points - p0 !== 15) bad.push(`ポイント（2回目）${G.state.points - p0}`);
+    if (!G.state.facts.includes('z:kirara:0') || !G.state.facts.includes('z:kirara:1')) bad.push('まちメモ');
+    if (!/1\/3/.test(document.getElementById('kirara').textContent)) bad.push('1/3');
+    K.close();
+    if (K.open(K.PLACES[0])) bad.push('同じ場所で2回');
+    const p1 = G.state.points;
+    K.open(K.PLACES[1]); K.tap(K.mica); K.close();
+    K.open(K.PLACES[2]); K.tap(K.mica);
+    if (G.state.points - p1 !== 20 + 20 + 30) bad.push(`ポイント（1回目・ぜんぶ）${G.state.points - p1}`);
+    if (!/ぜんぶの場所/.test(document.getElementById('kirara').textContent)) bad.push('ぜんぶ見つけた');
+    K.close();
     return bad.length ? bad.join(',') : true;
   });
   // イベント「古い地図が出てきた」：町名から明治の村がわかり、村の地図が描け、はじめての村で +15pt。2回目は出ない
@@ -556,6 +588,7 @@ async function walkTo(page, id) {
   need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.mushi === true, `水べのイベント 虫の名前あて：${c.mushi}`);
+  need(c.kirara === true, `イベント 雲母石を探せ：${c.kirara}`);
   need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');

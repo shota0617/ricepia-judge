@@ -1342,7 +1342,7 @@ function critterMet(c) {
   const book = S.critters, first = !book[c.id], day = dayState();
   day.critters = (day.critters || 0) + 1;
   book[c.id] = { n: (book[c.id] ? book[c.id].n : 0) + 1, first: book[c.id] ? book[c.id].first : Date.now() };
-  if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); }
+  if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); setTimeout(checkBadges, 800); }   // そろったら賞状
   save();
   track('critter_meet', { critter: c.id, first, mode: demo ? 'play' : 'walk' });
   toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
@@ -1748,9 +1748,12 @@ function clearGive(n) {
   S.cleared = { t: Date.now(), rec: clearRecord() };   // 殿堂入りした時点の記録（あとから見ても変わらないように）
   save();
   track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
-  // ごほうびの画面が出ている・絵の読みこみを待っている間は待つ（あとから出たごほうびに上書きされないように）
-  setTimeout(function go() { if (rewardBusy()) return setTimeout(go, 500); showEnding(); checkBadges(); }, 900);
+  setTimeout(() => endingWhenFree(checkBadges), 900);
   return true;
+}
+// ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
+function endingWhenFree(then) {
+  (function go() { if (rewardBusy()) return setTimeout(go, 500); showEnding(); if (then) then(); })();
 }
 function clearRecord() {
   return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length };
@@ -2249,7 +2252,7 @@ function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { critterall: 'book', first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
   walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk' };
-$('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) showEnding(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
+$('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) endingWhenFree(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {

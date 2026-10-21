@@ -400,7 +400,8 @@ function popupHtml(s) {
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? '<button type="button" class="btn mini" data-jump-open>🎮 ミニゲーム「にしおジャンプ」</button>' : ''}
-    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}</div>`;
+    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}
+    <button type="button" class="btn mini voice-btn" data-voice-spot="${esc(s.id)}">📮 この名所のことを教える</button></div>`;
 }
 
 // 文字を少なく（ふだん）：名所の大きなドット絵と、絵の札（種類・ポイント・きょり・行った回数）。説明の文・行事はそのまま、名物は名前（タップで説明）
@@ -416,7 +417,8 @@ function popupPic(s, c, v, left, d) {
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? `<button type="button" class="btn mini" data-jump-open>${PIA('jump', '')} ミニゲーム</button>` : ''}
-    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PIA('feet', '')} ここへ</button>` : ''}</div>`;
+    ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PIA('feet', '')} ここへ</button>` : ''}
+    <button type="button" class="btn mini voice-btn" data-voice-spot="${esc(s.id)}" aria-label="この名所のことを教える">${PIA('talk', '')} 教える</button></div>`;
 }
 
 function renderMarkers() {
@@ -1453,6 +1455,11 @@ function showGuide(s) {
 
 /* ---------- バッジ ---------- */
 function countVisits(fn) { return Object.values(S.visits).filter(fn).length; }
+// こえ：この端末で送ったおたより（受付番号つき）と、nishio-go/voices.json の返事。バッジ（まちづくりの仲間）でも使うので、ここで先に用意する
+const fbMine = () => { const m = store.get('nsg_fb_mine', []); return Array.isArray(m) ? m.filter(x => x && /^[0-9a-f]{12}$/.test(x.rid)) : []; };
+const voice = { data: null, at: 0 };
+const replyOf = rid => (voice.data && voice.data.replies && voice.data.replies[rid]) || null;
+const voicesReflected = () => fbMine().filter(m => (replyOf(m.rid) || {}).s === 'reflected').length;
 function badgeDefs() {
   const uniq = Object.keys(S.visits).length;
   // 「注目スポット制覇」は西尾市の中だけ（となりの市町は、市町ごとの制覇バッジ）
@@ -1482,6 +1489,8 @@ function badgeDefs() {
     { id: 'memo50', i: '📚', n: 'まち博士', d: 'まちメモを50こ集める', cur: knownFacts(), goal: 50 },
     { id: 'npc5', i: '💬', n: 'ご近所さん', d: '西尾の人5人と話す', cur: NPC_NISHIO.filter(n => npcMet(n.id)).length, goal: 5 },
     { id: 'npcall', i: '🤝', n: '西尾の顔なじみ', d: `西尾の人${NPC_NISHIO.length}人みんなと話す`, cur: NPC_NISHIO.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NISHIO.length, 1) },
+    { id: 'voice1', i: '📮', n: 'まちづくりの仲間', d: 'あなたのおたよりが ゲームに反映される', cur: voicesReflected(), goal: 1 },
+    { id: 'voice3', i: '🏘️', n: 'まちの声の名人', d: 'あなたのおたよりが3つ ゲームに反映される', cur: voicesReflected(), goal: 3 },
     { id: 'npcnear', i: '🧭', n: 'となりまちの顔なじみ', d: `となりの市町の人${NPC_NEAR.length}人みんなと話す`, cur: NPC_NEAR.filter(n => npcMet(n.id)).length, goal: Math.max(NPC_NEAR.length, 1), ready: NPC_NEAR.length > 0 },
   ];
 }
@@ -1917,7 +1926,7 @@ function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` 
 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
-  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face' };
+  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home' };
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
@@ -2092,7 +2101,8 @@ $('copyGps').addEventListener('click', async () => {
 function openTab(tab) {
   hideReward();   // ほかのタブを開いたら、ポイントの知らせは消す
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  ['log', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
+  ['log', 'voice', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
+  if (tab === 'voice') { renderVoice(); voiceMarkSeen(); loadVoices(); }
   if (tab === 'rewards') renderRewards();
   if (tab === 'log') { renderLog(); renderBadges(); }   // バッジは きろく の下に
   if (tab === 'settings') { renderSpotInfo(); renderGpsInfo(); $('pxToggle').checked = document.body.classList.contains('px'); }
@@ -2187,12 +2197,15 @@ $('resetBtn').addEventListener('click', () => {
   toast('記録を削除しました');
 });
 
-/* ---------- おたより（名所のおしらせ・まちがい・ごいけん） ----------
+/* ---------- こえ（プレイヤーの声でそだつ）：おたよりを送る・あなたのおたよりの様子・みんなの声で かわったこと ----------
    /api/feedback（api/feedback.js）に送ると、運営者の非公開の置き場（GitHub の非公開リポジトリの Issue）に届く。
-   位置は「いまいる場所の近く」にチェックしたときだけ、0.001度（約100m）に丸めて送る。1日3通まで（docs/feedback.md） */
+   位置は「いまいる場所の近く」にチェックしたときだけ、0.001度（約100m）に丸めて送る。1日3通まで（docs/feedback.md）
+   おたよりごとに、この端末で でたらめな受付番号（rid）を作って送り、送ったものは この端末にだけ覚えておく（nsg_fb_mine）。
+   たしかめた結果（受付番号ごとの返事）と、反映されたことは nishio-go/voices.json（tools/feedback-triage.js voices が30分ごとに書く）で知る */
 const FB_MAX = 3;
 const fb = { shown: 0 };
 const fbCount = () => { const c = store.get('nsg_fb', null); return c && c.d === ymd() ? c.n : 0; };
+const newRid = () => Array.from(crypto.getRandomValues(new Uint8Array(6)), b => b.toString(16).padStart(2, '0')).join('');
 const fbText = { spot: 'どんな所？（見どころ・場所の目じるしなど）', fix: 'なにがちがう？（正しくはどうか、分かれば）', fun: 'どうすると、もっと楽しくなる？（あったらうれしい遊び・ごほうび・しかけ など）', idea: 'どんなことで こまった？ どうしてほしい？' };
 function fbFill() {   // スポットの選びわけ：チェックインできるスポットを先に、あとは近いじゅん
   const sel = $('fbSpot'), base = me || CFG.home;
@@ -2219,7 +2232,8 @@ $('fbForm').addEventListener('submit', async e => {
   const here = $('fbHere').checked;
   if (here && !me) return msg('いまの場所が分からないので、チェックを外して送るか、場所が出てからもう一度送ってください。');
   const sp = kind === 'fix' ? spots.find(s => s.id === $('fbSpot').value) : null;
-  const body = { kind, name: kind === 'spot' ? name : '', text, url, hp: $('fbHp').value, t: fb.shown ? Date.now() - fb.shown : 0, mode: demo ? 'demo' : 'real', ed: ED.id || '' };
+  const rid = newRid();
+  const body = { kind, name: kind === 'spot' ? name : '', text, url, rid, hp: $('fbHp').value, t: fb.shown ? Date.now() - fb.shown : 0, mode: demo ? 'demo' : 'real', ed: ED.id || '' };
   if (here) { body.lat = Math.round(me.lat * 1000) / 1000; body.lng = Math.round(me.lng * 1000) / 1000; }
   if (sp) body.spot = { id: sp.id, name: sp.name };
   const btn = $('fbSend');
@@ -2228,8 +2242,12 @@ $('fbForm').addEventListener('submit', async e => {
     const r = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
     if (r.ok) {
       store.set('nsg_fb', { d: ymd(), n: fbCount() + 1 });
+      // この端末にだけ覚えておく（あなたのおたより）。見出しは この端末の中だけで使う
+      const head = kind === 'spot' ? name : sp ? sp.name : [...text.replace(/\s+/g, ' ')].slice(0, 24).join('');
+      store.set('nsg_fb_mine', [{ rid, kind, head, t: Date.now() }, ...fbMine()].slice(0, 30));
       $('fbForm').reset(); fbKind(); fb.shown = 0;
-      msg('とどきました。ありがとう！');
+      renderVoice();
+      msg(`とどきました。ありがとう！（受付番号 ${rid.slice(0, 4)}…）たしかめたら「あなたのおたより」でお知らせします。`);
       toast('📮 おたよりを送りました。ありがとう！');
       track('feedback_send', { kind });
     } else msg(r.status === 429 ? 'いまは おたよりが多くて受けつけられません。時間をおいて送ってください。'
@@ -2238,6 +2256,77 @@ $('fbForm').addEventListener('submit', async e => {
   } catch (_) { msg('送れませんでした。通信環境を確かめて、もう一度お試しください。'); }
   finally { btn.disabled = false; }
 });
+
+const VOICE_KIND = { spot: '📍 名所', fun: '🎉 もっと面白く', fix: '✏️ まちがい', idea: '😣 こまった' };
+const VOICE_ST = { sent: ['📨 とどきました', 'たしかめるまで、少し待ってね'], checking: ['🔍 たしかめています', ''], soon: ['🗓 もうすぐ出ます', ''], already: ['✅ もうありました', ''],
+  proposal: ['🗂 運営で検討中', 'すぐには決められないので、運営が考えています'], done: ['👍 いまのままで大丈夫', ''], skip: ['— 反映できませんでした', ''], reflected: ['🎉 反映されました', ''] };
+const voiceSeen = () => store.get('nsg_voice_seen', {});   // 受付番号 → 見た返事（s）。反映のお礼は1回だけ（あるいて移動・操作して移動の両方で1回）
+function loadVoices(force) {
+  if (!force && Date.now() - voice.at < 60000) return Promise.resolve(voice.data);
+  voice.at = Date.now();
+  return fetch('nishio-go/voices.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).catch(() => null).then(j => {
+    if (j && typeof j === 'object') { voice.data = j; voiceNews(); renderVoice(); }
+    return voice.data;
+  });
+}
+// 新しい返事があれば知らせる（タブの赤い点・反映されたら お礼とバッジ）
+function voiceNews() {
+  const seen = voiceSeen(), news = [];
+  for (const m of fbMine()) {
+    const r = replyOf(m.rid);
+    if (!r || seen[m.rid] === r.s) continue;
+    news.push({ m, r });
+  }
+  $('voiceDot').hidden = !news.length;
+  for (const { m, r } of news) {
+    if (r.s === 'reflected') {
+      const lv = gainPoints(50); save();
+      toastAfter(`🎉 あなたの声が反映されました：${r.t || m.head}（お礼 50pt）${lv ? ` レベル${lv}！` : ''}`);
+      track('feedback_reflected', { kind: m.kind });
+    } else if (r.s === 'already' || r.s === 'soon') toastAfter(`📮 ${r.t || 'おたよりの返事がとどきました'}（教えてくれてありがとう！）`);
+  }
+  if (news.some(n => n.r.s === 'reflected')) checkBadges();
+  if (!$('panel-voice').hidden) voiceMarkSeen();
+}
+function voiceMarkSeen() {
+  const seen = voiceSeen();
+  for (const m of fbMine()) { const r = replyOf(m.rid); if (r) seen[m.rid] = r.s; }
+  store.set('nsg_voice_seen', seen);
+  $('voiceDot').hidden = true;
+}
+function renderVoice() {
+  const v = voice.data, c = (v && v.counts) || {}, mine = fbMine();
+  const parts = [c.spot && `名所 ${c.spot}か所`, c.fix && `直したこと ${c.fix}件`, c.fun && `新しい遊び ${c.fun}つ`, c.idea && `使いやすく ${c.idea}件`].filter(Boolean);
+  $('voiceStats').textContent = parts.length ? `みんなの声で：${parts.join('・')}` : '';
+  $('voiceStats').hidden = !parts.length;
+  $('voiceIntro').textContent = parts.length ? `📮 みんなの声で ${parts.join('・')}` : '';
+  $('voiceIntro').hidden = !parts.length;
+  $('voiceMineCard').hidden = !mine.length;
+  const seen = voiceSeen();
+  $('voiceMine').innerHTML = mine.map(m => {
+    const r = replyOf(m.rid), st = r ? r.s : 'sent', [label, note] = VOICE_ST[st] || VOICE_ST.checking;
+    return `<li class="${r && seen[m.rid] !== r.s ? 'new' : ''}"><span class="st ${esc(st)}">${esc(label)}</span>${esc(VOICE_KIND[m.kind] || '')}「${esc(m.head)}」
+      <small>${esc((r && r.t) || note)}${(r && r.t) || note ? '・' : ''}${fmtTime(m.t)}に送った・受付番号 ${esc(m.rid.slice(0, 4))}…</small></li>`;
+  }).join('');
+  const log = (v && Array.isArray(v.log) ? v.log : []).slice(0, 30);
+  $('voiceLog').innerHTML = log.map(l => `<li>${esc(VOICE_KIND[l.kind] || '📮')} ${esc(l.text)}<small>${esc(String(l.d || '').slice(5).replace('-', '/'))}</small></li>`).join('');
+  $('voiceLogEmpty').hidden = log.length > 0;
+}
+// スポットの窓の「この名所のことを教える」：こえ タブで、そのスポットのまちがいを知らせる形にして開く
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-voice-spot]');
+  if (!b) return;
+  const s = spots.find(x => x.id === b.dataset.voiceSpot);
+  map.closePopup();
+  const pi = document.getElementById('pxInfo'); if (pi) pi.hidden = true;
+  openTab('voice');
+  $('fbKind').value = 'fix'; fbKind();
+  if (s) { if (![...$('fbSpot').options].some(o => o.value === s.id)) $('fbSpot').prepend(new Option(s.name, s.id)); $('fbSpot').value = s.id; }
+  $('fbCard').scrollIntoView({ block: 'start' });
+  $('fbText').focus({ preventScroll: true });
+});
+loadVoices(true);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadVoices(); });
 
 /* ---------- 音楽（BGM と効果音） ----------
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。world：せかいちず、checkin：チェックイン、levelup：レベルアップ。

@@ -151,6 +151,22 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 label.row{min-height:44px;cursor:pointer}
 .row>span{display:flex;flex-direction:column;min-width:0}
 .row small{color:var(--sub);font-size:12px;margin-top:2px;line-height:1.5}
+/* こえ（プレイヤーの声） */
+.tabs button{position:relative}
+.tab-dot{position:absolute;top:6px;left:calc(50% + 8px);width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid #fff}
+.panel h2 small{font-size:12px;font-weight:400;color:var(--sub);margin-left:6px}
+.voice-hero{background:#fff8e6;border-color:#f0dca0}
+.voice-hero p{margin:0;font-size:14px;line-height:1.7}
+.voice-stats{margin-top:8px!important;font-weight:700;color:#1f5a25}
+.voice-list{list-style:none;margin:0;padding:0}
+.voice-list li{padding:8px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.6}
+.voice-list li:first-child{border-top:0}
+.voice-list small{display:block;color:var(--sub);font-size:12px}
+.voice-list .st{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:1px 6px;margin-right:6px;background:#eef1ea;color:var(--sub)}
+.voice-list .st.reflected{background:#e3f4d7;color:#1f5a25}
+.voice-list .st.proposal,.voice-list .st.soon{background:#fff1cc;color:#7a5a00}
+.voice-list li.new{background:linear-gradient(90deg,#fff6d6,transparent)}
+.voice-intro{margin-top:6px}
 /* おたより */
 .fb-form{display:flex;flex-direction:column;gap:10px;margin-top:10px}
 .fb-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:700}

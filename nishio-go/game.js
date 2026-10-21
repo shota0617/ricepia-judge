@@ -489,7 +489,8 @@ function npcPages(n) {
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
-  const hid = Object.keys(S.heard || {}).find(id => S.heard[id].byId === n.id && !S.heard[id].found), hs = hid && spots.find(x => x.id === hid);
+  const hid = Object.keys(S.heard || {}).filter(id => S.heard[id].byId === n.id && !S.heard[id].found).sort((a, b) => S.heard[b].t - S.heard[a].t)[0];   // いちばん新しく すすめた名所
+  const hs = hid && spots.find(x => x.id === hid);
   if (hs) pages.push(`🔍 ${hintSay(n, hs.name)}`);   // この人がくれた、しらべるの手がかり（まだ しらべていないあいだ）
   return pages;
 }
@@ -1223,7 +1224,9 @@ function decideGuide(from) {
 // きろくに影の絵で載り、行くと「めぐったスポット」に入る（昔のドット絵RPGの図鑑の「見た／つかまえた」の2段のしくみ。話を聞くと、行きたい所がふえる）
 function heardOf(g, n) {
   const to = g.kind === 'npc' ? placeNpcs().find(x => x.id === g.id) : null, id = to ? 'f-' + to.spot : g.kind === 'spot' ? g.id : null;
-  if (!id || S.visits[id] || (S.heard || {})[id]) return '';
+  const had = id && (S.heard || {})[id];
+  if (had && !had.byId && had.by === n.name) { had.byId = n.id; save(); }   // 前の版の記録（すすめた人の id がない）は、同じ人が またすすめたときに足す
+  if (!id || S.visits[id] || had) return '';
   S.heard = { ...(S.heard || {}), [id]: { by: n.name, byId: n.id, t: Date.now() } };
   save();
   return id;
@@ -1250,6 +1253,7 @@ function hintSay(n, name) {
 // ふつうは、どこの田んぼ・川・海べりでも見られるものの場面のひとことだけ（豆知識は書かない）。
 // 西尾ならではの生きもの（note のあるもの）は、出典（src）で確かめた事実だけを note に書き、手帳に出典といっしょに出す。
 // where：paddy 田んぼ／water 川・池・海の水べ／higata 水べのうち、一色干潟（衣崎海岸）・トンボロ干潟から1.5km以内。months：出る月（ないときは1年じゅう）
+// at：出る干潟をしぼる（出典の範囲の干潟だけ。IBA の範囲は一色・吉良までで、幡豆のトンボロ干潟は入らない）
 // IBA：日本野鳥の会「重要野鳥生息地（IBA）矢作川河口」（矢作川の河口と、矢作古川の河口沖に広がる一色の干潟。西尾市・碧南市にまたがる）
 // 昔のドット絵RPGの「草むらを歩くと出会う」しくみ
 const IBA_SRC = 'https://ftp.wbsj.org/nature/hogo/others/iba/search/sites/toukai-cyubu/imgs/JP109.pdf';
@@ -1262,9 +1266,9 @@ const CRITTERS = [
   { id: 'kani', name: 'カニ', where: 'water', months: [5, 6, 7, 8, 9, 10], say: '水べの石のあいだを、小さなカニが よこ歩きしとる。' },
   { id: 'keri', name: 'ケリ', where: 'paddy', say: '田んぼから、鳥が「ケリリッ」と鳴きながら とびあがった。',
     note: '矢作川の河口は、ケリの大切なすみかとして「重要野鳥生息地（IBA）」に選ばれとる。', src: IBA_SRC },
-  { id: 'seitaka', name: 'セイタカシギ', where: 'higata', say: '干潟を、足の長い白黒の鳥が すっすっと歩いとる。',
-    note: '一色の干潟がある矢作川の河口は、セイタカシギの国内でいちばん大きな繁殖地とされとる（重要野鳥生息地 IBA）。', src: IBA_SRC },
-  { id: 'suzugamo', name: 'スズガモ', where: 'higata', months: [11, 12, 1, 2, 3], say: '沖のほうに、白と黒のカモが たくさん うかんどる。',
+  { id: 'seitaka', name: 'セイタカシギ', where: 'higata', at: ['f-koromozaki'], say: '干潟を、足の長い白黒の鳥が すっすっと歩いとる。',
+    note: '2017年には、一色町の竹生新田で繁殖したセイタカシギの数が、国内でいちばん多かったと記録されとる（重要野鳥生息地 IBA の資料）。', src: IBA_SRC },
+  { id: 'suzugamo', name: 'スズガモ', where: 'higata', at: ['f-koromozaki'], months: [11, 12, 1, 2, 3], say: '沖のほうに、白と黒のカモが たくさん うかんどる。',
     note: '矢作川の河口は、スズガモが たくさん集まる所として「重要野鳥生息地（IBA）」に選ばれとる。', src: IBA_SRC },
   { id: 'asari', name: 'アサリ', where: 'higata', months: (EVENTS.find(e => e.id === 'shiohigari') || {}).months || [3, 4, 5], say: '干潟の砂に、貝の小さな穴を見つけた。潮干狩りの季節だね。' },
 ];
@@ -1273,8 +1277,9 @@ const WHERE_NAME = { paddy: '田んぼ', water: '水べ', higata: '干潟' };
 function meetCritter(where) {
   const day = dayState(), m = new Date().getMonth() + 1;
   if ((day.critters || 0) >= CRITTER_DAILY || !me) return null;
-  const higata = where === 'water' && spots.some(s => HIGATA.includes(s.id) && dist(me, s) < 1500);
-  const ok = CRITTERS.filter(c => (c.where === where || (higata && c.where === 'higata')) && (!c.months || c.months.includes(m)));
+  const nearIds = where === 'water' ? spots.filter(s => HIGATA.includes(s.id) && dist(me, s) < 1500).map(s => s.id) : [];
+  const higata = c => c.where === 'higata' && nearIds.some(id => !c.at || c.at.includes(id));
+  const ok = CRITTERS.filter(c => (c.where === where || higata(c)) && (!c.months || c.months.includes(m)));
   if (!ok.length) return null;
   const book = S.critters || (S.critters = {}), fresh = ok.filter(c => !book[c.id]);
   const pool = fresh.length && Math.random() < 0.6 ? fresh : ok;   // まだ手帳にないものに出会いやすく

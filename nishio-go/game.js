@@ -715,7 +715,7 @@ function walkBest() {
   if (day.walked <= b.m) return;
   if (b.date !== day.date && b.m >= 300 && !day.bestToast) {
     day.bestToast = true;
-    toast(`👟 自己ベスト！ きょうは ${fmtM(day.walked)}（これまでは ${fmtM(b.m)}）`);
+    toastAfter(`👟 自己ベスト！ きょうは ${fmtM(day.walked)}（これまでは ${fmtM(b.m)}）`);   // 同じ1歩で出るクエスト達成の知らせに上書きされないように
     track('walk_best', { m: Math.round(day.walked) });
   }
   S.best = { m: day.walked, date: day.date };
@@ -1609,6 +1609,10 @@ function toast(msg) {
   const el = $('toast');
   el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+}
+// いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
+function toastAfter(msg) {
+  setTimeout(function show() { if ($('toast').classList.contains('show')) setTimeout(show, 600); else toast(msg); }, 150);
 }
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）

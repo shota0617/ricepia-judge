@@ -697,7 +697,7 @@ function trailWalk(lat1, lng1, lat2, lng2) {
   const a = toTile(lat1, lng1), b = toTile(lat2, lng2);
   let x = Math.floor(a.x), y = Math.floor(a.y);
   const x2 = Math.floor(b.x), y2 = Math.floor(b.y), dx = Math.abs(x2 - x), dy = -Math.abs(y2 - y), sx = x < x2 ? 1 : -1, sy = y < y2 ? 1 : -1;
-  if (dx > 80 || -dy > 80) return 0;   // 640m より遠い1歩は数えない（ワープ・GPS の飛び）
+  if (Math.hypot(dx, dy) > 80) return 0;   // 640m より遠い1歩は数えない（ワープ・GPS の飛び。ななめも まっすぐの距離で）
   let err = dx + dy, fresh = 0;
   for (;;) {
     if (trailSet(x, y)) fresh++;
@@ -5134,18 +5134,15 @@ function drawWorld(now, w, h, dpr) {
     } finally { gridAt = codeAt; nbrCur = nbrCache; }
   }
   // 歩いた所（あしあとのある100mのマス）に、もも色と足あと（地図の黄色・緑・青と まぎれない色）
+  // 調べるのは、歩いた所の数と画面に見えるマスの数の少ないほう（記録が何万マスにふえても、毎フレームの手間が画面の広さをこえない）
   if (TRAIL.world.size) {
+    const vx0 = Math.max(0, x0), vy0 = Math.max(0, y0), vx1 = Math.min(WW - 1, x1), vy1 = Math.min(WH - 1, y1), seen = [];
+    if (TRAIL.world.size <= (vx1 - vx0 + 1) * (vy1 - vy0 + 1)) {
+      for (const i of TRAIL.world) { const x = i % WW, y = (i - x) / WW; if (x >= vx0 && x <= vx1 && y >= vy0 && y <= vy1) seen.push(x, y); }
+    } else for (let y = vy0; y <= vy1; y++) for (let x = vx0; x <= vx1; x++) if (TRAIL.world.has(y * WW + x)) seen.push(x, y);
     ctx.fillStyle = 'rgba(255,80,150,.5)';
-    for (const i of TRAIL.world) {
-      const x = i % WW, y = (i - x) / WW;
-      if (x < x0 - 1 || x > x1 || y < y0 - 1 || y > y1) continue;
-      ctx.fillRect(ox + x * T, oy + y * T, T, T);
-    }
-    if (T >= 12) for (const i of TRAIL.world) {
-      const x = i % WW, y = (i - x) / WW;
-      if (x < x0 - 1 || x > x1 || y < y0 - 1 || y > y1) continue;
-      drawFoot(C.H, x, y, ox + x * T, oy + y * T, T);
-    }
+    for (let k = 0; k < seen.length; k += 2) ctx.fillRect(ox + seen[k] * T, oy + seen[k + 1] * T, T, T);
+    if (T >= 12) for (let k = 0; k < seen.length; k += 2) drawFoot(C.H, seen[k], seen[k + 1], ox + seen[k] * T, oy + seen[k + 1] * T, T);
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();

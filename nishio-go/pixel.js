@@ -5542,8 +5542,23 @@ function onPaddy() {
 function updateHarvestBtn() { const b = $('pxHarvest'), on = onPaddy(); if (b && b.hidden === on) b.hidden = !on; }
 $('pxHarvest').addEventListener('click', () => { if (window.NISHIO_HARVEST && onPaddy()) NISHIO_HARVEST.open(); });
 // 段丘をのぼるミニゲーム（dankyu.js）：急な坂のマス（またはすぐとなり）にいるときだけ、右上の列に「段丘をのぼる」ボタンを出す
-// 急な坂＝標高から作った陰影がいちばん明るいか暗いマス（となりのマスと約3m以上ちがう）。山・丘のマスはのぞく（段丘のへりの崖だけ）
-const steepAt = (x, y) => { const r = rawAt(x, y), sh = (r >> 5) & 7, c = r & 31; return (sh === 0 || sh === 4) && c !== C.M && c !== C.K && c !== C.A; };
+// 急な坂＝標高から作った陰影がいちばん明るいか暗いマス（となりのマスと約3m以上ちがう）。段丘のへりの崖だけにするため、次の所はのぞく
+//  ・山・丘・海のマス。まわり9×9マスに山・丘のマスが8つ以上ある所（山の中の道や畑。道や建物は山・丘のマスに塗りかえないので）
+//  ・まわり9×9マスに急な坂のマスが25以上ある所（丘の斜面は面に広がる。段丘のへりは線なので少ない）
+//  標高そのものは区画に残していないので完全には見分けられない（西尾駅の北や西の台地のへりでは残り、山の中の区画では 1248→9マス、東の丘の区画では 9160→157マスに減る）
+const HILLY = new Set([C.M, C.K]);
+const isSteep = r => { const sh = (r >> 5) & 7; return sh === 0 || sh === 4; };
+function steepAt(x, y) {
+  const r = rawAt(x, y), c = r & 31;
+  if (!isSteep(r) || HILLY.has(c) || c === C.A) return false;
+  let hills = 0, steep = 0;
+  for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+    const v = rawAt(x + dx, y + dy);
+    if (HILLY.has(v & 31) && ++hills >= 8) return false;
+    if (isSteep(v) && ++steep >= 25) return false;
+  }
+  return true;
+}
 function onSlope() {
   if (worldMode || driving || (!G.me && !G.demo)) return false;
   const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);

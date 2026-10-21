@@ -294,6 +294,23 @@ async function walkTo(page, id) {
     if (O.villageOf('中根町', '西尾市').id !== 'terazu' || O.villageOf('南中根町', '西尾市').id !== 'meiji') bad.push('中根と南中根');
     return bad.length ? bad.join(',') : true;
   });
+  // イベント「本のできごと」：本に出てくる場所の近くで起き、正解で +20pt と まちメモ。同じできごとは2回起きない
+  R.checks.bookev = await page.evaluate(() => {
+    const B = window.NISHIO_BOOKEV, G = nishioGo, bad = [];
+    if (!B) return 'none';
+    const pool = B.EVENTS.flatMap(e => e.facts);
+    if (pool.some(k => !/^g:[a-z-]+:\d$/.test(k))) bad.push('まちメモの鍵');
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    const ev = B.EVENTS.find(e => e.id === 'shisei'), p0 = G.state.points;
+    if (!B.open(ev) || !B.shown) return '開かない';
+    B.pick(0);
+    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!ev.facts.every(k => G.state.facts.includes(k))) bad.push('まちメモ');
+    if (!/正解/.test(document.getElementById('bookev').textContent)) bad.push('こたえ');
+    B.close();
+    if (B.open(ev)) bad.push('2回起きた');
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -459,6 +476,7 @@ async function walkTo(page, id) {
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
+  need(c.bookev === true, `イベント 本のできごと：${c.bookev}`);
   need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);

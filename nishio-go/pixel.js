@@ -5480,7 +5480,7 @@ function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.s
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-const medashiShown = () => !!((window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown) || (window.NISHIO_OLDMAP && NISHIO_OLDMAP.shown));   // イベント（田んぼの「芽出しの見きわめ」medashi.js・「古い地図」oldmap.js）が開いている
+const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
   if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   const t = targetTile();

@@ -867,6 +867,23 @@ function oldmapFound(id, total) {
   return { n: S.oldmap.length, pts: OLDMAP_PTS, all: S.oldmap.length >= total };
 }
 
+// イベント「本のできごと」（bookev.js）：できごとごとに1回。正解 +20pt・ちがっても +5pt、そのできごとの まちメモ。ぜんぶ見るとバッジ
+const bookEvHas = id => (S.bookEv || []).includes(id);
+function bookEvDone(id, ok, facts, total) {
+  if (!Array.isArray(S.bookEv)) S.bookEv = [];
+  if (S.bookEv.includes(id)) return null;
+  S.bookEv.push(id);
+  const pts = ok ? 20 : 5;
+  for (const k of facts || []) if (!S.facts.includes(k)) S.facts.push(k);
+  gainPoints(pts);
+  S.log.unshift({ type: 'bookev', t: Date.now(), pts, name: `本のできごと ${S.bookEv.length}/${total}${ok ? '（正解）' : ''}`, icon: '📖' });
+  save();
+  renderLog();
+  badgesSoon();
+  track('bookev_done', { ev: id, ok, n: S.bookEv.length });
+  return { pts, n: S.bookEv.length, all: S.bookEv.length >= total };
+}
+
 // ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
 // 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
@@ -1830,6 +1847,7 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    { id: 'bookev', i: '📖', n: '西尾の歴史はかせ', d: '「本のできごと」を ぜんぶ見る（本に出てくる場所へ行くと起きる）', cur: (S.bookEv || []).length, goal: (window.NISHIO_BOOKEV && NISHIO_BOOKEV.EVENTS.length) || 7 },
     { id: 'oldmap', i: '🗺️', n: '明治の村あつめ', d: '「古い地図」のイベントで、明治39年ごろの村を ぜんぶ見つける', cur: (S.oldmap || []).length, goal: (window.NISHIO_OLDMAP && NISHIO_OLDMAP.VILLAGES.length) || 11 },
     { id: 'critterall', i: '📜', n: '生きもの手帳の賞状', d: `生きもの手帳の${CRITTERS.length}しゅるい ぜんぶに出会う（季節で出るものもあるので、1年かけて）`, cur: CRITTERS.filter(c => (S.critters || {})[c.id]).length, goal: CRITTERS.length },
     { id: 'clear', i: '👑', n: '殿堂入り', d: '5つの地区のしるしを集めて、西尾城跡のガイドさんに会う（クリア）', cur: S.cleared ? 1 : 0, goal: 1 },
@@ -2124,7 +2142,7 @@ const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i
 // チェックインのあとの ひとこと：ごほうびの画面が消えたら、下に小さく出す（react.pending）
 const react = { pending: null, shown: 0, t: 0 };
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
-const medashiOpen = () => !!((window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown) || (window.NISHIO_OLDMAP && NISHIO_OLDMAP.shown));   // 古い地図のイベントも同じ
+const medashiOpen = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ・古い地図・本のできごと。どれも .medashi）
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
   if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
     const q = showReward.pending || (showReward.pending = []);
@@ -3288,7 +3306,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, oldmapFound, oldmapHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

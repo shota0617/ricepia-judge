@@ -729,3 +729,10 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .om-stamp b{display:block;font-size:22px;letter-spacing:.1em}
 .om-count{margin:6px 0 0;font-weight:700}
 .om-src{margin:4px 0 0;font-size:11px;color:#6a5a40}
+.be-card .md-head small{font-weight:normal;color:var(--sub);margin-left:4px}
+.be-q{margin:8px 0 6px}
+.be-a{display:flex;flex-direction:column;gap:6px}
+.be-a .be-btn.right{background:#2f8a3a;color:#fff;outline:3px solid #f2c200}
+.be-a .be-btn.wrong{background:#8a2a22;color:#fff}
+.be-a .be-btn.other{background:#6a7a6e;color:#eee}
+.be-a .be-btn:disabled{opacity:1}

@@ -1513,7 +1513,7 @@ function movieWhenFree(id, key = stateKey()) {
   movieWhenFree.wait = true;
   (function go() {
     if (stateKey() !== key) { movieWhenFree.wait = false; return; }
-    if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) return setTimeout(go, 600);
+    if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || medashiOpen()) return setTimeout(go, 600);   // イベントの窓（.medashi）が開いている間も待つ
     movieWhenFree.wait = false; playMovie(id);
   })();
 }
@@ -2298,7 +2298,7 @@ function walkBags(d) {
 const bagDone = () => { const b = Array.isArray(S.bags) && S.bags[0]; return !!b && b.walked >= b.km * 1000; };
 // ほかのごほうびが出ている間・絵を読みこんで出るのを待っている間は待つ（重ならないように。消えてしまわないように）
 const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting || !!(showReward.pending && showReward.pending.length);
-const rewardSoon = () => rewardBusy() || !!openBagSoon.t;   // 開く予約をした おみやげ袋も（田んぼのイベントは、これが済んでから始める）
+const rewardSoon = () => rewardBusy() || !!openBagSoon.t || !!movieWhenFree.wait;   // 開く予約をした おみやげ袋・ムービーも（田んぼ・旧地図・本のできごとのイベントは、これが済んでから始める）
 function openBagSoon() {
   if (openBagSoon.t) return;
   const key = stateKey();   // 予約したときの記録。モードを切り替えたら、その記録の袋は戻ったときに開く（refreshNearby がまた予約する）

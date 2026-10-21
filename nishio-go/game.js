@@ -479,6 +479,8 @@ const npcMet = id => (S.met || []).includes(id);
 // area があるのは となりの市町の人（バッジを「西尾の人」と分ける）
 const NPC_NISHIO = (window.NISHIO_NPCS || []).filter(n => !n.area), NPC_NEAR = (window.NISHIO_NPCS || []).filter(n => n.area);
 // 話す中身：その人のことばと、その場所で今月・来月にある行事の話
+// npcJust：いまの会話で起きたこと（しるしを渡した など）の、その人のことば。話のページに入れる（ふだんの表示では、知らせは絵だけになるので）。次に話しかけたら消す
+const npcJust = new Map();
 function npcPages(n) {
   const pages = n.lines.slice(), now = new Date();
   if (KO) {
@@ -494,6 +496,7 @@ function npcPages(n) {
     : wx.kind === 'sunny' ? 'ええ天気だねえ。歩くのにちょうどええわ。' : 'くもっとるけど、歩くにはちょうどええね。');
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
+  if (npcJust.has(n.id)) pages.splice(1, 0, npcJust.get(n.id));   // あいさつのページの次に
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
   const hid = Object.keys(S.heard || {}).filter(id => S.heard[id].byId === n.id && !S.heard[id].found).sort((a, b) => S.heard[b].t - S.heard[a].t)[0];   // いちばん新しく すすめた名所
   const hs = hid && spots.find(x => x.id === hid);
@@ -550,8 +553,9 @@ function talkNpc(id, page = 0) {
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   // GPS の精度が悪いあいだは、話はできても行き先は変えない（精度が上がってから話しかければ、着いたことになる）
   if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
+  if (page === 0) npcJust.delete(n.id);
   const seal = page === 0 ? sealGive(n) : '';   // 地区のしるし（その地区を5か所めぐってから、この人と話した）
-  if (seal) { brief.icons += '🔖'; say.push(seal); }
+  if (seal) { brief.icons += '🔖'; say.push(seal); const w = seal.match(/「(.*)」/); if (w) npcJust.set(n.id, `🔖 ${w[1]}`); }
   if (page === 0 && clearGive(n)) { brief.icons += '🏯'; say.push('🏯 西尾さんぽ 殿堂入り！'); }   // 5つのしるしを そろえて、この人と話した（クリア）
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     const arrived = S.guide && S.guide.kind === 'npc' && S.guide.id === n.id ? S.guide : null;
@@ -1771,7 +1775,7 @@ function badgesSoon() {
   const key = stateKey();
   setTimeout(() => { if (stateKey() === key) checkBadges(); }, 800);
 }
-// ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
+// ごほうびの画面が出ている・絵の読みこみを待っている・人の話の窓が開いている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように。ガイドさんのことばを読む前に かぶさらないように）
 // 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）。
 // 予約したときの記録（操作して移動／あるいて移動）に結びつけ、待っている間に記録が切りかわったら取りやめる
 function endingWhenFree(key = stateKey()) {
@@ -1783,7 +1787,7 @@ function endingWhenFree(key = stateKey()) {
   (function go() {
     if (gen !== w.gen) return;
     if (stateKey() !== key || !S.cleared) { w.key = null; return; }
-    if (rewardBusy()) return setTimeout(go, 500);
+    if (rewardBusy() || !$('pxInfo').hidden) return setTimeout(go, 500);   // 話の窓（しるしを渡すことば）を読んで閉じてから
     w.key = null; showEnding();
   })();
 }

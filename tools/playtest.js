@@ -274,6 +274,47 @@ async function walkTo(page, id) {
     rw.click();
     return bad.length ? bad.join(',') : true;
   });
+  // 水べのイベント「虫の名前あて」：水べを歩くと始まり、3問。名前の絵を3びきから えらぶ。3問当たると +20pt と虫の まちメモ。1日1回
+  R.checks.mushi = await page.evaluate(async () => {
+    const M = window.NISHIO_MUSHI, G = nishioGo, P = nishioPixel, C = P.C, bad = [];
+    if (!M) return 'none';
+    if (G.state.mushiDay === G.ymd()) return 'もう今日は遊んだことになっている';
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    await new Promise(r => setTimeout(r, 1700));   // 芽出しのあとの ごほうびが消えるまで
+    if (rw.classList.contains('show')) rw.click();
+    const p0 = G.state.points;
+    const t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    const N = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]], walk = new Set([C.A, C.B, C.M, C.X]);
+    let hit = null;
+    for (let r = 0; r < 200 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) {
+      const x = x0 + dx, y = y0 + dy;
+      if (walk.has(P.codeAt(x, y)) || !N.some(([a, b]) => P.codeAt(x + a, y + b) === C.A) || N.some(([a, b]) => [C.U, C.F].includes(P.codeAt(x + a, y + b)))) continue;
+      hit = [x, y]; break;
+    }
+    if (!hit) return '近くに水べがない';
+    for (let i = 0; i < 20 && !M.shown; i++) P.critterStep(hit[0], hit[1]);
+    if (!M.shown) return '水べを歩いても開かない';
+    if (document.querySelectorAll('#mushi .mu-bug').length !== 3) bad.push('虫の絵が3つでない');
+    // 絵は ちがう虫ごとに ちがう（描けている）
+    const imgs = [...document.querySelectorAll('#mushi .mu-bug canvas')].map(c => c.toDataURL());
+    if (new Set(imgs).size !== 3) bad.push('絵が同じ');
+    for (let i = 0; i < 3; i++) {
+      const q = M.q;
+      if (!q || !q.opts.includes(q.target) || new Set(q.opts).size !== 3) { bad.push('問いの えらぶもの'); break; }
+      const B = M.BUGS.find(b => b.id === q.target);
+      if (q.opts.some(o => B.not.includes(o))) bad.push('ヒントが当てはまる虫が まちがいに出た');
+      M.pick(q.target);
+      if (!/正解/.test(document.querySelector('#mushi .md-res').textContent)) bad.push('こたえ');
+      M.next();
+    }
+    if (!M.done || M.right !== 3) bad.push(`当たり ${M.right}`);
+    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!G.state.facts.includes('z:mushi:0')) bad.push('まちメモ');
+    if (!/3\/3/.test(document.getElementById('mushi').textContent)) bad.push('けっか');
+    M.close();
+    if (G.mushiDue() || M.open()) bad.push('1日に2回');
+    return bad.length ? bad.join(',') : true;
+  });
   // イベント「古い地図が出てきた」：町名から明治の村がわかり、村の地図が描け、はじめての村で +15pt。2回目は出ない
   R.checks.oldmap = await page.evaluate(async () => {
     const O = window.NISHIO_OLDMAP, G = nishioGo, P = nishioPixel, bad = [];
@@ -514,6 +555,7 @@ async function walkTo(page, id) {
   need(c.bookev === true, `イベント 本のできごと：${c.bookev}`);
   need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
+  need(c.mushi === true, `水べのイベント 虫の名前あて：${c.mushi}`);
   need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');

@@ -866,6 +866,25 @@ function medashiReward(choice, pts) {
   return { pts, fresh };
 }
 
+// 水べのイベント「虫の名前あて」（mushi.js）：1日1回。3問のうち当たった数で ポイント（0・6・12・20）と、
+// 西尾の自然の本にのっている虫の まちメモ（shizen.js の mushi。まだのものから1つ）
+const MUSHI_PTS = [0, 6, 12, 20];
+const mushiDue = () => S.mushiDay !== ymd() && SHIZEN.some(x => x.id === 'mushi');
+function mushiReward(right) {
+  if (!mushiDue()) return { pts: 0, fresh: false };
+  S.mushiDay = ymd();
+  right = Math.max(0, Math.min(3, right | 0));
+  const g = SHIZEN.find(x => x.id === 'mushi'), k = g.facts.map((f, i) => `z:mushi:${i}`).find(x => !S.facts.includes(x)), fresh = !!k;
+  if (fresh) S.facts.push(k);
+  const pts = MUSHI_PTS[right];
+  if (pts) gainPoints(pts);
+  S.log.unshift({ type: 'mushi', t: Date.now(), pts, name: `イベント「虫の名前あて」${right}/3`, icon: '🪲' });
+  save();
+  renderLog();
+  track('mushi_done', { right, mode: demo ? 'play' : 'walk' });
+  return { pts, fresh };
+}
+
 // イベント「古い地図が出てきた」（oldmap.js）：明治39年ごろの村を、はじめて見つけたら +15pt。ぜんぶ見つけるとバッジ
 const OLDMAP_PTS = 15;
 const oldmapHas = id => (S.oldmap || []).includes(id);
@@ -3367,7 +3386,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

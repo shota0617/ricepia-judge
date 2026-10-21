@@ -730,6 +730,16 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .md-seed:disabled{opacity:1}
 .md-res{margin:10px 0 0;font-size:14px;line-height:1.5}
 .md-close{margin-top:10px;width:100%}
+.mu-bugs{grid-template-columns:repeat(3,minmax(0,1fr))}   /* 長い名前でも はみ出さない */
+.mu-bug{background:#eef3e6;color:#222;min-width:0}   /* 黒い虫も見えるよう、明るい地に */
+.mu-bug small{word-break:break-all}
+.mu-bug canvas{width:96px;height:96px;max-width:100%}
+.mu-bug.right{background:#d6efd6}
+.mu-bug.wrong{background:#f6d6d4}
+.mu-foot{display:flex;gap:8px;margin-top:10px}
+.mu-foot .btn{margin-top:0}
+.mu-next[hidden]{display:none}
+.mu-foot .btn{flex:1}
 .shop-pic{margin:6px 0;text-align:center}
 .shop-pic img{image-rendering:pixelated;width:192px;height:192px;max-width:100%}
 .shop-pic figcaption{font-size:12px;color:var(--sub)}

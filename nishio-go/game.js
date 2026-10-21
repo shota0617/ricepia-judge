@@ -1736,7 +1736,7 @@ function checkBadges() {
   if (fresh.length) {
     fresh.forEach(b => S.badges.push(b.id));
     save();
-    toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
+    toastAfter(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);   // いま出ている知らせ（生きものに出会った など）が消えてから
     if (fresh.some(b => b.id === 'critterall')) toastAfter(`📜 ${(sealBy('nishio') || {}).name || 'ガイドさん'}「生きもの手帳が ぜんぶ そろったじゃん！ 1年 歩きとおした あかしだに。賞状を おくるでね」`);   // 図鑑がそろったら 賞状（昔のドット絵RPGの しくみ）
   }
   sealHints();
@@ -1957,8 +1957,16 @@ function toastHold() {
   t.classList.remove('show'); clearTimeout(toastTimer);
 }
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
+// 待っている知らせが いくつあっても、来た順に1つずつ（同時に出して、あとのものが上書きしないように）
 function toastAfter(msg) {
-  setTimeout(function show() { if ($('toast').classList.contains('show')) setTimeout(show, 600); else toast(msg); }, 150);
+  const afterQ = toastAfter.q || (toastAfter.q = []);   // 読みこみの とちゅうで呼ばれても使えるよう、関数に持たせる
+  afterQ.push(msg);
+  if (afterQ.length > 1) return;   // もう待っている（前のものを出したあとに出す）
+  setTimeout(function show() {
+    if ($('toast').classList.contains('show')) return setTimeout(show, 600);
+    toast(afterQ.shift());
+    if (afterQ.length) setTimeout(show, 600);
+  }, 150);
 }
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）

@@ -24,7 +24,7 @@ pa.MATS.update({
     'stoneR': '#9a958a', 'kayabuki': '#b89a5a', 'ajisaiB': '#6a7fd6', 'ajisaiP': '#b07ad0', 'kaki': '#e8641c', 'tulipR': '#e8443a',
     'tulipY': '#f2c230', 'fusha': '#8a5a3a', 'hane': '#f0ece0', 'navy': '#203a63', 'onigawara': '#5a5048', 'cream': '#ece0c4',
     'yaneR': '#b8483a', 'pink': '#f0a8b8', 'whale': '#3f78c8', 'koshi2': '#3a3430', 'sl': '#2a2a2a', 'slR': '#c8302a', 'zou': '#a8a49a',
-    'murasaki': '#7a4a8a', 'renga': '#a8483a', 'haka': '#9aa0a8', 'senro': '#5a4a3a', 'rail': '#9aa0a8', 'sugi': '#2c5a32', 'kanban': '#f4f2e8', 'kane': '#7a6a3a', 'doban': '#6fa89a', 'midoriY': '#2f6b4a', 'salmon': '#f0a088', 'tanuki': '#8a5a34', 'tsutsuji': '#e84a8a', 'yakiita': '#2e2a28',
+    'renga': '#a8483a', 'haka': '#9aa0a8', 'senro': '#5a4a3a', 'rail': '#9aa0a8', 'sugi': '#2c5a32', 'kanban': '#f4f2e8', 'kane': '#7a6a3a', 'doban': '#6fa89a', 'midoriY': '#2f6b4a', 'salmon': '#f0a088', 'tanuki': '#8a5a34', 'tsutsuji': '#e84a8a', 'yakiita': '#2e2a28',
 })
 
 
@@ -199,7 +199,6 @@ def okazaki_daijuji():
         box(f'koshi{i}', 'koshi2', (0.012, 0.01, 0.09), (-0.20 + i * 0.067, -0.123, 0.47))
     roof('yane2', 'kawaraG', 0.72, 0.42, 0.24, 0.54, 0.45, 0, -0.01)
     box('mune', 'munaG', (0.34, 0.03, 0.03), (0, -0.01, 0.79))
-    pine('a', 0.44, 0.28, 0.9)
     return dict(target=(0, 0.02, 0.36), scale=1.12, el=22, size=96)
 
 
@@ -256,8 +255,6 @@ def okazaki_iga_hachimangu():
     for i, m in enumerate(('doban', 'kin', 'blue', 'kin', 'doban')):   # 色あざやかな組物
         box(f'kumi{i}', m, (0.10, 0.012, 0.03), (-0.20 + i * 0.10, 0.096, 0.25))
     irimoya('yane', 'hiwada', 0.68, 0.34, 0.22, 0.26, 0, 0.20)
-    for x in (-0.42, 0.42):
-        tree(f't{x}', x, 0.28, 1.0)
     return dict(target=(0, 0, 0.20), scale=1.08, el=28, size=96)
 
 
@@ -272,10 +269,7 @@ def okazaki_takisanji():
     roof('yane', 'hiwada', 0.74, 0.54, 0.30, 0.28, 0.3, 0, 0.08)
     for i, m in enumerate(('navy', 'yellow', 'red', 'white', 'green')):
         box(f'maku{i}', m, (0.108, 0.008, 0.035), (-0.216 + i * 0.108, -0.096, 0.255))
-    steps('s', 'ishi', 0, -0.30, 0.20, 3)
     box('oke', 'taru', (0.06, 0.06, 0.05), (0.22, -0.22, 0.025))
-    tree('a', -0.40, -0.10, 1.0, 'momiji')
-    pine('b', 0.42, 0.24, 0.9)
     return dict(target=(0, 0.02, 0.26), scale=1.08, el=24, size=96)
 
 
@@ -334,7 +328,6 @@ def okazaki_okudono_jinya():
     for i, y in enumerate((-0.30, -0.14, 0.12)):   # 緑のトンネル
         for k in (-1, 1):
             tree(f't{i}{k}', k * 0.26, y, 1.0)
-    tree('m', 0.42, 0.30, 0.8, 'momiji')
     return dict(target=(0, 0.02, 0.16), scale=1.08, el=28, size=96)
 
 
@@ -374,8 +367,6 @@ def okazaki_honda_tei():
     cyl('tou', 'cream', 0.07, 0.36, (0.24, -0.06, 0.18), verts=16)
     cyl('touY', 'yaneR', 0.09, 0.12, (0.24, -0.06, 0.42), verts=16, r2=0.005)
     windows('wr', 'mado', [0.24], -0.131, 0.22, 0.04, 0.07)
-    tree('a', 0.44, 0.26, 0.9)
-    pine('b', -0.44, 0.22, 0.9)
     return dict(target=(0, 0, 0.22), scale=1.08, el=26, size=96)
 
 
@@ -402,7 +393,6 @@ def okazaki_minami_park():
     o.scale = (1.4, 0.35, 1)
     for i, (x, y, m) in enumerate(((-0.30, -0.30, 'red'), (0.20, -0.33, 'yellow'), (0.36, -0.20, 'blue'))):
         box(f'kart{i}', m, (0.06, 0.035, 0.025), (x, y, 0.03), bevel=0.008)
-    tree('a', -0.44, 0.30, 0.8)
     return dict(target=(0, 0, 0.12), scale=1.08, el=30, size=96)
 
 
@@ -419,7 +409,6 @@ def okazaki_museum():
     for x in (-0.40, -0.26):
         cyl(f'hashira{x}', 'hashira', 0.008, 0.16, (x, -0.04, 0.08), verts=6)
     box('usuyane', 'concrete', (0.24, 0.16, 0.012), (-0.33, 0.0, 0.16))
-    tree('a', 0.42, -0.24, 0.8)
     return dict(target=(0, 0.04, 0.18), scale=1.08, el=28, size=96)
 
 
@@ -474,15 +463,12 @@ def okazaki_hozoji():
         box(f'koshi{i}', 'koshi2', (0.01, 0.01, 0.14), (-0.10 + i * 0.04, -0.112, 0.19))
     roof('yane', 'kawaraG', 0.62, 0.56, 0.24, 0.30, 0.03, 0, 0.06)
     sphere('hoju', 'kin', 0.03, (0, 0.06, 0.57))
-    steps('s', 'ishi', 0, -0.30, 0.14, 3, 0.04, 0.03)
-    tree('a', 0.42, -0.22, 0.9, 'momiji')
-    tree('b', -0.42, 0.24, 1.0)
     return dict(target=(0, 0.02, 0.24), scale=1.08, el=26, size=96)
 
 
 def okazaki_fujikawa_shuku():
-    """道の駅 藤川宿：黒い瓦の長い屋根に破風が2つ、白い壁と木の柱の軒下。手前に特産のむらさき麦の畑"""
-    ground('shibaG')
+    """道の駅 藤川宿：黒い瓦の長い屋根に破風が2つ、白い壁と木の柱の軒下、手前の駐車場"""
+    ground('jari')
     box('kan', 'shikkui', (0.72, 0.26, 0.20), (0, 0.18, 0.10))
     for i in range(7):
         box(f'h{i}', 'kijiD', (0.02, 0.02, 0.18), (-0.33 + i * 0.11, 0.035, 0.09))
@@ -491,8 +477,12 @@ def okazaki_fujikawa_shuku():
     for x in (-0.20, 0.20):
         gable_y(f'hafu{x}', 'sumi', 0.18, 0.14, 0.10, 0.22, x, 0.04)
         box(f'hafuW{x}', 'shikkui', (0.10, 0.01, 0.03), (x, -0.032, 0.25))
-    for i in range(4):   # むらさき麦の畝
-        box(f'mugi{i}', 'murasaki', (0.80, 0.04, 0.05), (0, -0.30 + i * 0.07, 0.035))
+    box('chusha', 'asphalt', (0.96, 0.36, 0.012), (0, -0.20, 0.012))   # 手前の駐車場
+    for i in range(7):
+        box(f'waku{i}', 'shikkui', (0.008, 0.14, 0.004), (-0.36 + i * 0.12, -0.24, 0.019))
+    for i, (x, m) in enumerate(((-0.30, 'white'), (-0.06, 'red'), (0.18, 'jrSilver'))):
+        box(f'kuruma{i}', m, (0.08, 0.12, 0.05), (x, -0.24, 0.045), bevel=0.015)
+        box(f'kurumaW{i}', 'mado', (0.07, 0.05, 0.025), (x, -0.25, 0.075))
     return dict(target=(0, 0, 0.16), scale=1.08, el=30, size=96)
 
 
@@ -564,18 +554,17 @@ def anjo_jozanen():
     for i, (x, y) in enumerate(((0.30, -0.22), (0.38, -0.06), (-0.40, -0.10))):
         sphere(f'karikomi{i}', 'gTree', 0.06, (x, y, 0.04), (1.3, 1, 0.7))
     sphere('niwaishi', 'ishi', 0.04, (0.14, -0.20, 0.02), (1.3, 1, 0.7))
-    tree('m1', 0.40, 0.18, 0.8, 'momiji')
     return dict(target=(0, 0.02, 0.16), scale=1.08, el=30, size=96)
 
 
 def anjo_honshoji():
-    """本證寺：二重の堀と土塁にかこまれた「城郭寺院」。石垣の上の鼓楼（下の重は黒い板壁、上の重は白い漆喰、千鳥破風）と、堀"""
+    """本證寺：二重の堀と土塁にかこまれた「城郭寺院」。石垣の上の鼓楼（下の重は黒い板壁、上の重は白い漆喰、千鳥破風）と、手前と奥の堀・土塁"""
     ground('kusa')
     water('ike', 0.96, 0.16, 0, -0.30)
     box('ishigaki', 'ishigaki', (0.96, 0.06, 0.06), (0, -0.20, 0.03))
-    box('hondo', 'kiji', (0.46, 0.28, 0.14), (0.20, 0.20, 0.12))
-    box('hondoK', 'kidan', (0.52, 0.34, 0.05), (0.20, 0.20, 0.025))
-    irimoya('hondoY', 'kawaraG', 0.62, 0.44, 0.28, 0.19, 0.20, 0.20)
+    o = cyl('dorui', 'gTree', 0.10, 0.92, (0, 0.30, 0.05), (0, math.pi / 2, 0), 3)   # 堀の内がわの土塁（かまぼこ形の土手）
+    o.scale = (0.7, 1.4, 1)
+    water('ike', 0.96, 0.08, 0, 0.42)   # もう1重の堀
     box('koD', 'ishigaki', (0.30, 0.28, 0.10), (-0.20, -0.02, 0.05))
     box('ko1', 'yakiita', (0.22, 0.20, 0.13), (-0.20, -0.02, 0.165))
     roof('koY1', 'kawaraG', 0.32, 0.30, 0.05, 0.23, 0.6, -0.20, -0.02, flat=True)
@@ -583,7 +572,6 @@ def anjo_honshoji():
     windows('kow', 'yakiita', [-0.24, -0.16], -0.092, 0.33, 0.03, 0.04)
     roof('koY2', 'kawaraG', 0.26, 0.24, 0.10, 0.38, 0.2, -0.20, -0.02)
     gable_y('chidori', 'kawaraG', 0.12, 0.06, 0.05, 0.26, -0.20, -0.14)
-    pine('a', 0.44, -0.10, 0.8)
     return dict(target=(0, 0.02, 0.22), scale=1.08, el=26, size=96)
 
 
@@ -758,7 +746,6 @@ def hekinan_aquarium():
         box(f'pg{x}', 'sumi', (0.015, 0.015, 0.12), (x, -0.16, 0.06))
     for y in (-0.16, -0.08):
         box(f'pgY{y}', 'sumi', (0.40, 0.015, 0.015), (-0.12, y, 0.125))
-    tree('b', 0.42, -0.24, 0.8)
     return dict(target=(0, 0.04, 0.16), scale=1.08, el=26, size=96)
 
 
@@ -777,7 +764,6 @@ def hekinan_rinkai_park():
     for x in (0.26, 0.40):
         box(f'yugu{x}', 'red', (0.02, 0.02, 0.22), (x, 0.30, 0.11))
     box('yuguT', 'red', (0.16, 0.02, 0.02), (0.33, 0.30, 0.22))
-    tree('a', -0.42, 0.28, 0.8)
     return dict(target=(0, 0, 0.12), scale=1.08, el=28, size=96)
 
 
@@ -864,7 +850,6 @@ def hekinan_kumano():
     for x in (-0.24, 0.24):
         box(f'komaD{x}', 'ishi', (0.07, 0.07, 0.06), (x, -0.02, 0.03))
         sphere(f'koma{x}', 'ishi', 0.035, (x, -0.02, 0.09), (1, 1, 1.2))
-    tree('a', -0.42, 0.26, 0.9)
     return dict(target=(0, 0, 0.20), scale=1.08, el=24, size=96)
 
 
@@ -932,7 +917,6 @@ def hekinan_cityhall():
     box('tei', 'cream', (0.36, 0.30, 0.14), (-0.20, 0.04, 0.07))
     roof('teiY', 'kawaraG', 0.42, 0.36, 0.20, 0.14, 0.02, -0.20, 0.04)
     box('genkan', 'glassB', (0.12, 0.01, 0.08), (-0.20, -0.112, 0.04))
-    tree('a', -0.42, -0.26, 0.8)
     return dict(target=(0, 0.04, 0.24), scale=1.08, el=26, size=96)
 
 
@@ -986,8 +970,6 @@ def takahama_kasuga():
     box('toroP', 'shu', (0.03, 0.03, 0.26), (-0.30, -0.20, 0.13))
     box('toroH', 'shikkui', (0.06, 0.06, 0.06), (-0.30, -0.20, 0.27))
     box('sando', 'ishi', (0.12, 0.26, 0.01), (0, -0.24, 0.012))
-    tree('a', -0.42, 0.26, 1.0)
-    tree('b', 0.42, 0.24, 0.9)
     return dict(target=(0, 0, 0.18), scale=1.08, el=26, size=96)
 
 
@@ -1049,7 +1031,6 @@ def takahama_cityhall():
     cyl('para', 'shikkui', 0.05, 0.02, (0.16, 0.18, 0.40), (math.radians(60), 0, 0), 16)
     box('genkan', 'kiji', (0.18, 0.10, 0.08), (-0.10, -0.06, 0.04))
     gable('genkanY', 'kawaraG', 0.22, 0.14, 0.05, 0.08, -0.10, -0.06)
-    tree('a', 0.42, -0.24, 0.8)
     return dict(target=(0, 0.04, 0.20), scale=1.08, el=26, size=96)
 
 
@@ -1256,8 +1237,6 @@ def gamagori_station():
     o = cyl('rotary', 'shibaG', 0.16, 0.02, (0, -0.22, 0.012), verts=20)
     mesh('ho', 'shikkui', [(-0.02, -0.22, 0.03), (0.08, -0.22, 0.05), (0.0, -0.22, 0.30)], [(0, 1, 2)])   # 白い帆
     mesh('ho2', 'shikkui', [(-0.04, -0.21, 0.03), (-0.12, -0.21, 0.05), (-0.03, -0.21, 0.24)], [(0, 1, 2)])
-    for x in (-0.40, 0.40):
-        tree(f't{x}', x, -0.24, 0.7, 'gTree')
     return dict(target=(0, 0.02, 0.18), scale=1.08, el=26, size=96)
 
 

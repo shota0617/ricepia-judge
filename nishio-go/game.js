@@ -1855,10 +1855,20 @@ function renderHeader() {
 }
 
 let toastTimer;
+// ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてからまとめて出す（toastQ）
+const toastQ = [];
 function toast(msg) {
   const el = $('toast');
-  el.textContent = msg; el.classList.add('show');
+  if ($('reward').classList.contains('show')) { toastQ.push(msg); return; }
+  el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+}
+// ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
+function toastHold() {
+  const t = $('toast');
+  if (!t.classList.contains('show')) return;
+  if (Date.now() - (toast.at || 0) < 1500) toastQ.push(t.textContent);
+  t.classList.remove('show'); clearTimeout(toastTimer);
 }
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
 function toastAfter(msg) {
@@ -1917,7 +1927,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
         ${rewardChips(lines, fact)}
         ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-    el.classList.add('show');
+    toastHold(); el.classList.add('show');
     clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, stay || (dot ? 5000 : 2700));
     afterReward();
     return;
@@ -1928,12 +1938,15 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
     ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}${shareBtn}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  el.classList.add('show');
+  toastHold(); el.classList.add('show');
   clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, Math.max(stay, fact || dot ? 7000 : 2700));
   afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
-function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow(); }
+function hideReward() {
+  clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
+  if (toastQ.length) toast(toastQ.splice(0).join('　'));
+}
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');
   hideReward();
@@ -2833,12 +2846,13 @@ function afterReward() {
     if (t0) track('first_reward', { secs: Math.round((Date.now() - t0) / 1000), mode: demo ? 'play' : 'walk' });   // はじめた時刻がわからない人（前から遊んでいる人）は数えない
   }
   // 1日1回：その日2回目のごほうびのあと、ごほうびの画面が消えてから「あしたのおたのしみ」。そのあと ホーム画面に追加のおすすめ
+  // （ごほうびの間に たまった知らせ（バッジなど）が先に出るので、それが消えてから）
   // （その日のごほうびの数は、画面を閉じたりモードを切り替えたりしても続けて数える。session.rewards は1回に遊んだ間の計測だけ）
   const rd = store.get('nsg_rw_day', null), today = ymd(), n = (rd && rd.date === today ? rd.n : 0) + 1;
   store.set('nsg_rw_day', { date: today, n });
   if (n < 2) return;
   afterRewardClosed(() => {
-    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toast(simple() ? `📅 あしたも来ると +${tomorrowBonus()}pt` : `📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
+    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toastAfter(simple() ? `📅 あしたも来ると +${tomorrowBonus()}pt` : `📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
     setTimeout(a2hsOffer, 4200);
   });
 }

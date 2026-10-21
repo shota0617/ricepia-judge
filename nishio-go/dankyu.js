@@ -22,7 +22,7 @@
   const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ' ': 'jump', ArrowUp: 'jump', z: 'jump', Z: 'jump', w: 'jump', W: 'jump' };
 
   let root, cv, ctx, scale = 2, raf = 0, running = false, last = 0, acc = 0;
-  let lv = 0, L, worldH, plats, outcrops, rocks, pl, camY, keys, hearts, frames, done, shown, seen, msg, msgT, zone, nextRock, rnd, hurtT;
+  let lv = 0, gen = 0, L, worldH, plats, outcrops, rocks, pl, camY, keys, hearts, frames, done, shown, seen, msg, msgT, zone, nextRock, rnd, hurtT;
   const art = { sheet: null, spr: {} };
 
   /* ---------- 絵（にしおジャンプの Blender の絵を借りる。読めないあいだは四角） ---------- */
@@ -94,7 +94,7 @@
     build(lv);
     pl = { x: 3 * T, y: (L.rows - 2) * T, vx: 0, vy: 0, face: 1, ground: true };
     rocks = []; keys = { left: false, right: false, jump: false, jumpWas: false };
-    hearts = 3; frames = 0; done = false; shown = false; zone = ''; nextRock = 60; hurtT = 0;
+    hearts = 3; frames = 0; done = false; shown = false; zone = ''; nextRock = 60; hurtT = 0; gen++;   // gen：前のプレイの結果のタイマーを捨てる
     seen = { hekkai: facts('hekkai'), teichi: facts('teichi'), atsuike: facts('teichi-atsuike') };
     camY = worldH - H;
     say(`${lv + 1}つ目：${L.name}（${L.where}）。${L.tip}。上の旗まで のぼろう`);
@@ -172,8 +172,9 @@
     const all = outcrops.every(o => o.got), fast = timeLeft() >= L.time / 3;
     return 1 + (all ? 1 : 0) + (fast ? 1 : 0);
   }
-  function clear() { done = true; sound('clear'); setTimeout(() => result(true), 300); }
-  function fail(why) { done = true; sound('fail'); setTimeout(() => result(false, why), 300); }
+  function later(fn) { const g = gen; setTimeout(() => { if (running && g === gen) fn(); }, 300); }   // 閉じた・やりなおしたあとに前のプレイの結果を出さない
+  function clear() { done = true; sound('clear'); later(() => result(true)); }
+  function fail(why) { done = true; sound('fail'); later(() => result(false, why)); }
   function result(ok, why) {
     if (shown) return;
     shown = true;
@@ -335,7 +336,7 @@
     const G = window.nishioGo; if (G && G.track) G.track('dankyu_open', {});
   }
   function close() {
-    running = false; cancelAnimationFrame(raf);
+    running = false; gen++; cancelAnimationFrame(raf);
     if (root) root.hidden = true;
     document.body.classList.remove('jump-open');
   }

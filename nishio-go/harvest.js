@@ -183,7 +183,7 @@
     if (anim) {
       const k = Math.min(1, (now - anim.t0) / 120);
       px = anim.from[0] + (anim.to[0] - anim.from[0]) * k; py = anim.from[1] + (anim.to[1] - anim.from[1]) * k;
-      if (k >= 1) { anim = null; if (queue.length) setTimeout(() => move(queue.shift()), 0); }
+      if (k >= 1) { anim = null; if (queue.length) setTimeout(() => { if (queue.length) move(queue.shift()); }, 0); }   // 予約のあとに もどす・やりなおし で列が空になっていたら動かさない
     }
     const X = Math.round((ox + px) * T), Y = Math.round((oy + py) * T);
     if (art.spr) ctx.drawImage(art.spr, (6 + ORDER.indexOf(dir)) * T, 0, T, T, X, Y - 2, T, T);

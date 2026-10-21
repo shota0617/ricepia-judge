@@ -997,6 +997,7 @@ const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
 const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）
 const KOME = window.NISHIO_KOME || [];   // 米づくり（kome.js）
 const SANGYO = window.NISHIO_SANGYO || [];   // むかしの西尾の仕事（sangyo.js）
+const spotSangyo = s => SANGYO.filter(x => (x.spots || []).some(id => 'f-' + id === s.id));
 const spotShizen = s => SHIZEN.filter(x => x.spots.some(id => 'f-' + id === s.id));
 // イベント「ドット絵ムービー」（movie.js）で見せる話。たからばこ・しらべる などでは出さない（最後まで見ると まちメモ に残る）
 const movieFact = k => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.list.some(m => m.facts.includes(k)));
@@ -1134,7 +1135,7 @@ function pickFact(c) {
   const machi = machiAt(c), here = cityAt(c.lat, c.lng), hereNear = !!here && here.name !== '西尾市';
   const tiers = [
     k => machi && k.startsWith(`t:${machi.id}:`),
-    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`)) || spotShizen(near).some(x => k.startsWith(`z:${x.id}:`))),
+    k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`)) || spotShizen(near).some(x => k.startsWith(`z:${x.id}:`)) || spotSangyo(near).some(x => k.startsWith(`g:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
     k => !k.startsWith('t:') && factNear(k) === hereNear,   // 西尾市にいるなら西尾の話、となりの市町にいるなら となりの市町の話
     k => !k.startsWith('t:'),   // まわりのまち（刈谷・大府など）の話は、そのまちにいるときだけ（西尾で大府の話が出ないように）
@@ -1444,7 +1445,7 @@ function searchFact(s) {
   const inArea = id => { const x = spots.find(y => y.id === id); return !!x && !!s.area && x.area === s.area; };
   const tiers = [
     k => EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === s.id),
-    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)) || spotShizen(s).some(x => k.startsWith(`z:${x.id}:`)),
+    k => spotMeibutsu(s).some(m => k.startsWith(`m:${m.id}:`)) || spotShizen(s).some(x => k.startsWith(`z:${x.id}:`)) || spotSangyo(s).some(x => k.startsWith(`g:${x.id}:`)),
     k => !!s.area && k.startsWith(`a:${s.area}:`),
     k => k.startsWith('s:') && inArea(k.slice(2)),
   ];

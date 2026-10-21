@@ -145,6 +145,10 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .badge .bp i{display:block;height:100%;background:var(--matcha)}
 .badge.locked .bi{filter:grayscale(1);opacity:.35}
 .badge.got{border-color:var(--gold);background:#fffaf0}
+#badgeCount{font-weight:normal;color:var(--sub);font-size:13px}
+.badge-soon{margin:0 0 8px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font-size:13px}
+.badge-soon span{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:2px 8px}
+.badge-soon small{display:block;font-size:11px;color:var(--sub)}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px}
 .card.danger{border-color:#f0c9c4}
 .row{display:flex;align-items:center;gap:12px;justify-content:space-between}
@@ -651,6 +655,9 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .harvest-pad{display:grid;grid-template-columns:repeat(3,64px);grid-template-rows:repeat(2,56px);gap:8px;justify-content:center;padding:6px 4px;user-select:none;-webkit-user-select:none;touch-action:none}
 .harvest-pad button{border-radius:14px;border:2px solid #e9c46a;background:#2a3a2e;color:#fff;font-size:22px;font-weight:800;touch-action:none}
 .harvest-pad button.on{background:#4d6a52}
+.harvest-pad .hv-undo{grid-column:1;grid-row:1;font-size:20px;border-color:#9aa;background:#33403a}
+.mini-levels{display:flex;flex-wrap:wrap;gap:4px;justify-content:center}
+.mini-levels .btn.now{outline:2px solid #e9c46a}
 .harvest-pad [data-dir=up]{grid-column:2;grid-row:1}
 .harvest-pad [data-dir=left]{grid-column:1;grid-row:2}
 .harvest-pad [data-dir=down]{grid-column:2;grid-row:2}

@@ -194,6 +194,41 @@ async function walkTo(page, id) {
     D.close();
     return bad.length ? bad.join(',') : true;
   });
+  // 第4弾（ほかのゲームを遊んで）：稲刈りの ↶ もどす・ミニゲームの面ごとの自己ベストと つづき・同じ知らせを重ねない・前回のさんぽ・バッジの達成率
+  R.checks.fourth = await page.evaluate(async () => {
+    const H = window.NISHIO_HARVEST, G = nishioGo, bad = [];
+    if (!H) return 'none';
+    H.open(); H.reset(0);
+    const i0 = H.info; H.move('up'); H.move('right'); const i1 = H.info; H.undo(); const i2 = H.info;
+    if (!(i1.moves === 2 && i1.turns === 1 && i2.moves === 1 && i2.turns === 0 && i2.left === i0.left - 1 && i2.pos[0] === 0 && i2.dir === 'up')) bad.push('もどす');
+    H.reset(0);
+    const { w, h } = H.info, cands = [H.spiral(w, h, 'up', 1), H.spiral(w, h, 'right', 3), H.serpentine(w, h, true), H.serpentine(w, h, false)].filter(p => p && p.length === w * h);
+    const path = cands.sort((a, b) => H.turnsOf([[0, h], ...a], 'up') - H.turnsOf([[0, h], ...b], 'up'))[0];
+    let at = [0, h];
+    for (const p of path) { H.move(p[0] > at[0] ? 'right' : p[0] < at[0] ? 'left' : p[1] > at[1] ? 'down' : 'up'); at = p; }
+    await new Promise(r => setTimeout(r, 500));
+    const rec = G.miniRecords('harvest')[0], res = document.querySelector('#harvest .jump-result');
+    if (!(rec && rec.s === 3 && /自己ベスト/.test(res.textContent) && res.querySelector('[data-lv="1"]') && !res.querySelector('[data-lv="2"]'))) bad.push('自己ベスト');
+    const worse = G.miniBest('harvest', 0, 2, 99, true);
+    if (worse.fresh || G.miniRecords('harvest')[0].s !== 3) bad.push('悪い記録で上書き');
+    H.close(); H.open();
+    if (H.info.level !== 1) bad.push('つづき');
+    H.close();
+    // 同じ知らせ：続けて3回出しても、待ちの列に重ならない
+    G.toast('テストの知らせ'); G.toastAfter('テストの知らせ'); G.toastAfter('テストの知らせ'); G.toastAfter('テストの知らせ2'); G.toastAfter('テストの知らせ2');
+    const q = G.toastAfter.q || [], n1 = q.filter(m => m === 'テストの知らせ').length, n2 = q.filter(m => m === 'テストの知らせ2').length;
+    if (n1 > 1 || n2 !== 1) bad.push(`知らせ ${n1}・${n2}`);
+    // 前回のさんぽ：きのうの記録が きろく に出る
+    const d = G.state.day, y = new Date(); y.setDate(y.getDate() - 1);
+    const keep = JSON.stringify(d);
+    G.state.day = { ...d, date: G.ymd(y), walked: 640, checkins: 2, dots: 1 };
+    G.renderLog();
+    const box = document.getElementById('bagBox').textContent;
+    if (!/きのうのさんぽ/.test(box) || !/640m/.test(box)) bad.push('前回のさんぽ');
+    G.state.day = { ...JSON.parse(keep), date: G.ymd() }; G.state.prevDay = null; G.renderLog();
+    if (!/^\d+\/\d+（\d+%）$/.test(document.getElementById('badgeCount').textContent)) bad.push('バッジの達成率');
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -348,6 +383,7 @@ async function walkTo(page, id) {
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
+  need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');
   need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');

@@ -821,6 +821,18 @@ function dankyuReward(stars, level) {
   return pts;
 }
 
+// ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
+// 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
+function miniBest(game, level, stars, v, lower) {
+  const all = S.mini || (S.mini = {}), list = all[game] || (all[game] = []), old = list[level] || null;
+  const better = stars > 0 && (!old || stars > old.s || (stars === old.s && (lower ? v < old.v : v > old.v)));
+  if (better) { list[level] = { s: stars, v }; save(); }
+  return { old, best: list[level] || null, fresh: better && !!old };
+}
+const miniRecords = game => ((S.mini || {})[game] || []).map(r => r || null);
+// ミニゲームを開いたときの面：まだ成功していない いちばん前の面（ぜんぶ成功していれば1つ目）
+const miniStart = (game, n) => { const r = miniRecords(game); for (let i = 0; i < n; i++) if (!r[i]) return i; return 0; };
+
 let selected = null;   // シートに表示中のチェックイン候補
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
@@ -980,6 +992,7 @@ const QUEST_AREAS = [{ id: 'nishio', name: '西尾', icon: '🍵' }, { id: 'issh
 const hashStr = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
 const seeded = seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t ^= t + Math.imul(t ^ (t >>> 7), 61 | t); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 function dayState() {
+  if (S.day && S.day.date && S.day.date !== ymd()) S.prevDay = { date: S.day.date, walked: S.day.walked || 0, trail: S.day.trail || 0, checkins: S.day.checkins || 0, dots: S.day.dots || 0 };   // 前回のさんぽ（日がかわったときの知らせ・きろく）
   if (!S.day || S.day.date !== ymd()) S.day = { date: ymd(), walked: 0, checkins: 0, spots: [], shrine: 0, fresh: 0, areas: [], shop: 0, chests: [], done: [], bonus: false };
   if (!S.day.spots) S.day.spots = [];
   return S.day;
@@ -1626,6 +1639,11 @@ function refreshNearby() {
     const lw = lastWeekStat();
     setTimeout(() => toast(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
   } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toast('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }
+  else if (store.get('nsg_started', false) && store.get('nsg_prev_day', '') !== ymd()) {   // 日に1回：前回のさんぽ
+    store.set('nsg_prev_day', ymd());
+    const p = prevDayStat();
+    if (p) setTimeout(() => toastAfter(`👣 ${p.label}のさんぽ：${prevDayText(p)}`), 2500);
+  }
   checkGuide();   // 着いたら先に次の行き先へ進めてから、線・矢印・カードを描く（古い行き先を指さないように）
   let best = null, nearest = null, nearestD = Infinity;
   for (const s of spots) {
@@ -1959,9 +1977,12 @@ function renderHeader() {
 let toastTimer;
 // ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてからまとめて出す（toastQ）
 const toastQ = [];
+// 同じ知らせが続けて来ても、重ねて出さない（農場のゲームで、同じ知らせが何枚も積み上がって畑が見えなくなったので）
+const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
 function toast(msg) {
   const el = $('toast');
-  if ($('reward').classList.contains('show')) { toastQ.push(msg); return; }
+  if ($('reward').classList.contains('show')) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }
+  if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800); return; }   // いま出ている：のばすだけ
   el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
 }
@@ -1969,13 +1990,14 @@ function toast(msg) {
 function toastHold() {
   const t = $('toast');
   if (!t.classList.contains('show')) return;
-  if (Date.now() - (toast.at || 0) < 1500) toastQ.push(t.textContent);
+  if (Date.now() - (toast.at || 0) < 1500 && !toastQ.includes(t.textContent)) toastQ.push(t.textContent);
   t.classList.remove('show'); clearTimeout(toastTimer);
 }
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
 // 待っている知らせが いくつあっても、来た順に1つずつ（同時に出して、あとのものが上書きしないように）
 function toastAfter(msg) {
   const afterQ = toastAfter.q || (toastAfter.q = []);   // 読みこみの とちゅうで呼ばれても使えるよう、関数に持たせる
+  if (afterQ.includes(msg) || toastShowing(msg)) return;   // 同じ知らせが待っている・いま出ている
   afterQ.push(msg);
   if (afterQ.length > 1) return;   // もう待っている（前のものを出したあとに出す）
   setTimeout(function show() {
@@ -2081,7 +2103,7 @@ function addDot(id, forceKira) {   // forceKira：必ずキラに（7日連続�
   if (!Array.isArray(S.dots)) S.dots = [];
   if (!Array.isArray(S.kira)) S.kira = [];
   const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && (forceKira || Math.random() < KIRA_RATE * (kiraHour() ? 2 : 1));
-  if (fresh) { S.dots.push(id); weekStat().dots++; }
+  if (fresh) { S.dots.push(id); weekStat().dots++; dayState().dots = (dayState().dots || 0) + 1; }
   if (kira) S.kira.push(id);
   track('dot_get', { motif: D.info(id).motif, fresh, kira, mode: demo ? 'play' : 'walk' });
   return { id, fresh, kira };
@@ -2101,6 +2123,16 @@ function weekStat() {
   return S.week;
 }
 const lastWeekStat = () => { weekStat(); return S.lastWeek && S.lastWeek.no === weekNo() - 1 ? S.lastWeek : null; };
+// 前回のさんぽ（農場のゲームの「朝のお知らせ」のように、日がかわって はじめて開いたときに、前に遊んだ日のことを1回だけ）。少しも歩いていない・チェックインしていない日は出さない
+function prevDayStat() {
+  dayState();
+  const p = S.prevDay;
+  if (!p || !(p.walked >= 30 || p.checkins > 0 || p.dots > 0)) return null;
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const [, m, d] = p.date.split('-').map(Number);
+  return { ...p, label: p.date === ymd(y) ? 'きのう' : `前回（${m}月${d}日）` };
+}
+const prevDayText = p => `${fmtM(p.walked)}・チェックイン ${p.checkins}回・新しい絵 ${p.dots}枚`;
 function dotLines(dot) {
   const D = window.NISHIO_DOTS;
   if (!dot || !D) return [];
@@ -2314,8 +2346,15 @@ const BADGE_PI = { critterall: 'book', first: 'feet', spot10: 'map', spot30: 'co
   walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk' };
 $('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) endingWhenFree(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
 function renderBadges() {
-  const got = new Set(S.badges);
-  $('badgeGrid').innerHTML = badgeDefs().map(b => {
+  const got = new Set(S.badges), defs = badgeDefs();
+  // 達成率と「もうすぐ」（農場のゲームの実績の画面のように、全体で どこまで来たかと、次に取れそうなもの）
+  const isDone = b => got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
+  const nDone = defs.filter(isDone).length;
+  $('badgeCount').textContent = defs.length ? `${nDone}/${defs.length}（${Math.floor(nDone / defs.length * 100)}%）` : '';
+  const soon = defs.filter(b => !isDone(b) && b.ready !== false && b.cur > 0).sort((a, b) => b.cur / b.goal - a.cur / a.goal).slice(0, 2);
+  $('badgeSoon').hidden = !soon.length;
+  $('badgeSoon').innerHTML = soon.length ? `<b>もうすぐ</b>${soon.map(b => `<span>${simple() ? '' : b.i + ' '}${esc(b.n)}（あと ${(b.goal - b.cur).toLocaleString()}）${simple() ? '' : `<small>${esc(b.d)}</small>`}</span>`).join('')}` : '';
+  $('badgeGrid').innerHTML = defs.map(b => {
     const done = got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
     const pct = Math.min(100, (b.cur / b.goal) * 100);
     if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" data-badge="${esc(b.id)}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : b.id.startsWith('seal-') ? 'scroll' : b.id === 'clear' ? 'castle' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
@@ -2991,7 +3030,8 @@ function renderBags() {
   const t = weekTheme(), bags = Array.isArray(S.bags) ? S.bags : [];
   const rows = bags.map((b, i) => { const pct = Math.round(b.walked / (b.km * 1000) * 100); return `<li><span class="ico">${PIA('bag', 'おみやげ袋')}</span><span class="main"><b>${b.km}km の袋${i ? '（つぎの番を待っています）' : '（歩くとたまります）'}</b><span class="bar"><i style="width:${i ? 0 : pct}%"></i></span></span><span class="num">${i ? '—' : `${Math.floor(b.walked / 100) / 10}/${b.km}km`}</span></li>`; }).join('');
   const lw = lastWeekStat();
-  el.innerHTML = `${todayWalkCard()}${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
+  const pd = prevDayStat();
+  el.innerHTML = `${todayWalkCard()}${pd ? `<p class="lastweek">${PIA('feet', pd.label)} <b>${esc(pd.label)}のさんぽ</b><span>${prevDayText(pd)}</span></p>` : ''}${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
     <p class="theme">${PIA('calendar', '今週のテーマ')} <b>今週は ${t.icon} ${esc(t.name)} の週</b><small>${esc(t.name)}でチェックインすると、スポットのポイントが2倍・おみやげ袋がもらえます（月曜に変わります）</small></p>
     <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
     <h4>${PIA('bag', '')} おみやげ袋 <small>${bags.length}/${BAG.max}</small></h4>
@@ -3141,7 +3181,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
@@ -3160,7 +3200,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

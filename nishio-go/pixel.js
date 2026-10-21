@@ -4577,6 +4577,20 @@ function genSprite(id) {
 // 読めるまでは、いつもの 48×48 の絵。[ふつう, 再チェックイン待ちの灰色] の canvas にしておく（Godot の記録係は canvas を5つの引数で描く）
 const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'okazaki-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji',
   'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };
+// となりの市町（岡崎・安城・碧南・高浜・幸田・蒲郡）の注目スポット65か所も、1か所ずつ手で形を作った特大の絵（tools/blender/giant-neighbors.py。絵の名前は spots.json の id）
+[
+  'okazaki-daijuji', 'okazaki-kakukyu', 'okazaki-maruya', 'okazaki-iga-hachimangu', 'okazaki-takisanji', 'okazaki-iwazu-tenmangu',
+  'okazaki-rokusho-jinja', 'okazaki-okudono-jinya', 'okazaki-higashi-park', 'okazaki-honda-tei', 'okazaki-minami-park', 'okazaki-museum',
+  'okazaki-higashi-okazaki-sta', 'okazaki-okazaki-sta', 'okazaki-shooji', 'okazaki-hozoji', 'okazaki-fujikawa-shuku', 'okazaki-kuragari',
+  'okazaki-hongusan', 'anjo-denpark', 'anjo-jozanen', 'anjo-honshoji', 'anjo-castle', 'anjo-museum', 'anjo-horiuchi-park', 'anjo-park',
+  'anjo-futago-kofun', 'anjo-himeogawa-kofun', 'anjo-station', 'anjo-mikawa-anjo-station', 'anjo-minami-anjo-station', 'anjo-cityhall',
+  'hekinan-aquarium', 'hekinan-rinkai-park', 'hekinan-akashi-park', 'hekinan-shomyoji', 'hekinan-kaitokuji', 'hekinan-kokonoe-mirin',
+  'hekinan-fujii-museum', 'hekinan-kumano', 'hekinan-mugaen', 'hekinan-oninji', 'hekinan-station', 'hekinan-chuo-station', 'hekinan-cityhall',
+  'takahama-kawara-museum', 'takahama-minato-station', 'takahama-kasuga', 'takahama-oyama', 'takahama-mikawa-takahama-station',
+  'takahama-yoshihama-station', 'takahama-cityhall', 'kota-honkoji', 'kota-kyodo-shiryokan', 'kota-bunka-hiroba', 'kota-michinoeki', 'kota-hishiike',
+  'kota-happiness-hill', 'kota-townhall', 'kota-station', 'kota-sangane-station', 'kota-aimi-station', 'gamagori-takeshima', 'gamagori-aquarium',
+  'gamagori-station',
+].forEach(n => { GIANT_ART['f-' + n] = n; });
 // ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
 let giantIds = null;
 fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });

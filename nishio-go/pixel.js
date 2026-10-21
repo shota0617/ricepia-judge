@@ -121,7 +121,7 @@ function loadTowns() {
   townsLoad = fetch(WORLD_FILE).then(r => (r.ok ? r.json() : null)).then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });
 }
 // いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
-const here = { town: '', city: '', banner: '', bannerAt: 0 };
+const here = { town: '', city: '', banner: '', bannerAt: 0, at: 0 };   // at：町名を最後に確かめた時刻（歩く地図を描いている間だけ更新される）
 function updateHere() {
   const t = targetTile(), me = G.me, c = me && (G.placeAt || G.cityAt)(me.lat, me.lng), city = c ? c.name : '';
   // 同じ市町の町名だけから選ぶ（境のそばで「西尾市 金平町（蒲郡市）」のようにならないように）
@@ -130,6 +130,7 @@ function updateHere() {
   const town = best ? best[2] : '';
   if (town && here.town && town !== here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
   here.town = town;   // 近くに町名がない（田畑や山の中）ときは消す
+  here.at = performance.now();
   here.city = city;
   if (G.setPlace) G.setPlace(city, town);   // 左上の こよみ の札に「📍町名」として出す
 }
@@ -1662,11 +1663,14 @@ const CRITTER_ROWS = {
 const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
 // 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
-const critterS = { steps: 0, show: null };
+const critterS = { steps: 0, paddy: 0, show: null };
 function critterStep(x, y) {
   if (driving) return;
   const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
   const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
+  // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
+  //   説明の窓・きろく などのパネル・ダイアログ・呼びとめの最中は始めない（閉じたあとの田んぼの1歩で始まる）
+  if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15 && !mapCovered() && !sightBusy() && NISHIO_MEDASHI.open()) { critterS.paddy = 0; return true; }
   if (!where || ++critterS.steps < 25 || Math.random() >= 1 / 40) return;
   critterS.steps = 0;
   const m = G.meetCritter(where);
@@ -1716,7 +1720,7 @@ function openNpc(n) {
 const SIGHT = 4, SIGHT_WAIT = 650, SIGHT_STEP = 150;
 const sight = { n: null, t: 0, from: null, to: null, len: 0, opened: false, seen: new Set() };
 function sightCheck() {
-  if (sightBusy() || driving || worldMode || !$('pxInfo').hidden || (!G.demo && !G.me) || document.body.classList.contains('jump-open')) return false;   // ミニゲームの間は呼びとめない
+  if (sightBusy() || driving || worldMode || !$('pxInfo').hidden || (!G.demo && !G.me) || document.body.classList.contains('jump-open') || medashiShown()) return false;   // ミニゲーム・田んぼのイベントの間は呼びとめない
   const t = targetTile(), hx = Math.floor(t.x), hy = Math.floor(t.y);
   for (const n of G.npcs || []) {
     if (G.npcMet(n.id) || sight.seen.has(n.id)) continue;
@@ -4577,6 +4581,8 @@ function genSprite(id) {
 // 読めるまでは、いつもの 48×48 の絵。[ふつう, 再チェックイン待ちの灰色] の canvas にしておく（Godot の記録係は canvas を5つの引数で描く）
 const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'okazaki-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji',
   'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };
+// 当店（らいすぴあ・秀幸）も特大の絵に：運営者が撮った写真から、店・米のドライブスルー・軽トラ・コイン精米所（tools/blender/giant-shop.py）
+GIANT_ART['f-ricepia'] = 'ricepia';
 // となりの市町（岡崎・安城・碧南・高浜・幸田・蒲郡）の注目スポット65か所も、1か所ずつ手で形を作った特大の絵（tools/blender/giant-neighbors.py。絵の名前は spots.json の id）
 [
   'okazaki-daijuji', 'okazaki-kakukyu', 'okazaki-maruya', 'okazaki-iga-hachimangu', 'okazaki-takisanji', 'okazaki-iwazu-tenmangu',
@@ -4943,7 +4949,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -5560,8 +5566,9 @@ function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.s
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
-  if (!G.demo || sightBusy()) return false;   // 呼びとめられている間は動けない
+  if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
@@ -5651,6 +5658,15 @@ function onSlope() {
 }
 function updateDankyuBtn() { const b = $('pxDankyu'), on = onSlope(); if (b && b.hidden === on) b.hidden = !on; }
 $('pxDankyu').addEventListener('click', () => { if (window.NISHIO_DANKYU && onSlope()) NISHIO_DANKYU.open(); });
+// 肥料山の草刈り（hiryoyama.js）：丘・山のマス（またはすぐとなり）にいるときだけ、右上の列に 🌿 のボタン
+const HILL_CODES = new Set([C.K, C.M]);
+function onHill() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => HILL_CODES.has(codeAt(x + dx, y + dy)));
+}
+function updateHiryoBtn() { const b = $('pxHiryo'), on = onHill(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxHiryo').addEventListener('click', () => { if (window.NISHIO_HIRYO && onHill()) NISHIO_HIRYO.open(); });
 
 // いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
 function exitDist(x, y) {
@@ -5925,7 +5941,7 @@ function autoRead() {   // 人の話のウィンドウ：読む時間をおい�
 function autoTick() {
   setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
   if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
-  if (document.body.classList.contains('jump-open')) return;   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
+  if (document.body.classList.contains('jump-open') || medashiShown()) return;   // ミニゲーム（にしおジャンプ・稲刈り）・田んぼのイベントのあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
   if (sightBusy() && !sight.opened) return;   // 呼びとめた人が歩いてくるのを待つ
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;
@@ -6081,7 +6097,9 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, mapCovered, sightBusy,
+  // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
+  get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

@@ -93,7 +93,7 @@
 <!-- ドット絵の地図 -->
 <section id="pxView" aria-label="ドット絵の地図">
   <canvas id="pxCanvas"></canvas>
-  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button><button type="button" id="pxZoom" class="zc" aria-label="大きさを変える" title="大きさを変える">🔍</button><button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button><button type="button" id="pxDankyu" class="h" hidden aria-label="段丘をのぼる（急な坂のそばで）" title="段丘をのぼる（急な坂のそばで）">⛰️</button></div>
+  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button><button type="button" id="pxZoom" class="zc" aria-label="大きさを変える" title="大きさを変える">🔍</button><button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button><button type="button" id="pxDankyu" class="h" hidden aria-label="段丘をのぼる（急な坂のそばで）" title="段丘をのぼる（急な坂のそばで）">⛰️</button><button type="button" id="pxHiryo" class="h" hidden aria-label="肥料山の草刈り（丘や山のそばで）" title="肥料山の草刈り（丘や山のそばで）">🌿</button></div>
   <div class="dq px-msg" id="pxMsg" hidden></div>
   <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
   <div class="px-pad" id="pxPad" hidden>
@@ -161,7 +161,8 @@
   <ul class="list" id="visitedList"></ul>
   <h3><i data-pi="coin" data-art="stat-coin"></i> 最近のポイント</h3>
   <ul class="list" id="logList"></ul>
-  <h3 id="badgeHead"><i data-pi="medal" data-art="stat-medal"></i> バッジ</h3>
+  <h3 id="badgeHead"><i data-pi="medal" data-art="stat-medal"></i> バッジ <small id="badgeCount"></small></h3>
+  <p class="badge-soon" id="badgeSoon" hidden></p>
   <div class="badges" id="badgeGrid"></div>
   <h3><i data-pi="star" data-art="stat-star"></i> レベルと称号</h3>
   <ul class="list" id="titleList"></ul>
@@ -391,6 +392,8 @@
 <script src="nishio-go/npcs.js"></script>
 <script src="nishio-go/meibutsu.js"></script>
 <script src="nishio-go/shizen.js"></script>
+<script src="nishio-go/kome.js"></script>
+<script src="nishio-go/sangyo.js"></script>
 <script src="nishio-go/machi.js"></script>
 <script src="nishio-go/edition.js"></script>
 <script src="nishio-go/region.js"></script>
@@ -402,6 +405,10 @@
 <script src="nishio-go/harvest.js"></script>
 <script src="nishio-go/movie.js"></script>
 <script src="nishio-go/dankyu.js"></script>
+<script src="nishio-go/hiryoyama.js"></script>
+<script src="nishio-go/medashi.js"></script>
+<script src="nishio-go/oldmap.js"></script>
+<script src="nishio-go/bookev.js"></script>
 <script src="nishio-go/landmark-gen.js"></script>
 <script src="nishio-go/pixel.js"></script>
 <script src="nishio-go/dots.js"></script>

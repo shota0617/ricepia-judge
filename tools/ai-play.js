@@ -8,8 +8,8 @@
 //   start：「操作して遊ぶ」で始める／walkstart：「あるいて遊ぶ」で始める（位置情報。はじめは西尾駅の近く）／gps：位置を lat・lng へ／
 //   gpswalk：位置を スポット・人（id に npc:id）・マス（tile:[x,y]）へ歩く速さで動かす（speed m/秒。fast で待ち時間を縮めると、速すぎて歩いた数に入らない）／
 //   gps は lat・lng のかわりに tile:[x,y] でもよい／walk：矢印キーで n マス／goto：スポット・人（npc:id）・いちばん近いたからばこ まで道を探して歩く／
-//   auto：おまかせ歩きを sec 秒／close：開いている窓とごほうびの画面を閉じる／tap：画面の部品を押す／key：キーを押す／eval：ページの中で式を計算して log に残す
-// 環境変数：CHROMIUM・LEAFLET_DIR（tools/playtest.js と同じ）・PLAY_DATE（日付を固定。省略時は今の時刻。固定すると時計が止まるので、おまかせ歩きの「少し休む」が終わらず歩かない。おまかせ歩きを見るときは付けない）
+//   auto：おまかせ歩きを sec 秒／close：開いている窓とごほうびの画面を閉じる／tap：画面の部品を押す／click：画面の位置 x・y をタップ／key：キーを押す／eval：ページの中で式を計算して log に残す
+// 環境変数：CHROMIUM・LEAFLET_DIR（tools/playtest.js と同じ）・PLAY_QUERY（ページにつける ?…。ed=city で西尾市版）・PLAY_DATE（日付を固定。省略時は今の時刻。固定すると時計が止まるので、おまかせ歩きの「少し休む」が終わらず歩かない。おまかせ歩きを見るときは付けない）
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { startServer } = require('./bake-common');
@@ -18,7 +18,7 @@ const [OUT_ARG, PLAN_ARG] = process.argv.slice(2).filter(a => !a.startsWith('--'
 if (!OUT_ARG || !PLAN_ARG) { console.error('使いかた：node tools/ai-play.js <出力フォルダ> <手順.json | 手順のJSON> [--reset]'); process.exit(2); }
 const OUT = path.resolve(OUT_ARG), RESET = process.argv.includes('--reset');
 const PLAN = JSON.parse(fs.existsSync(PLAN_ARG) ? fs.readFileSync(PLAN_ARG, 'utf8') : PLAN_ARG);
-const PORT = Number(process.env.PLAYTEST_PORT) || 8898, URL = `http://localhost:${PORT}/nishio-go.html`;
+const PORT = Number(process.env.PLAYTEST_PORT) || 8898, URL = `http://localhost:${PORT}/nishio-go.html${process.env.PLAY_QUERY ? '?' + process.env.PLAY_QUERY : ''}`;   // PLAY_QUERY=ed=city で西尾市版
 const STORE = path.join(OUT, 'storage.json');
 
 // いまの様子（AI が次の手を考えるための材料）
@@ -157,8 +157,10 @@ async function keys(page, list) {
       } else if (a.do === 'close') await page.evaluate(() => {   // 人やスポットの窓と、ごほうびの画面（タップで とじる）
         const b = document.querySelector('#pxInfo:not([hidden]) [data-close]'); if (b) b.click();
         const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        if (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) NISHIO_MOVIE.close();   // ドット絵ムービー（最後まで見ずに閉じると、まちメモ には残らない）
       });
       else if (a.do === 'tap') await page.click(a.sel, { timeout: 3000 });
+      else if (a.do === 'click') await page.mouse.click(a.x, a.y);   // 画面の位置（CSS ピクセル。スクリーンショットは2倍なので、その半分）をタップ
       else if (a.do === 'key') await page.keyboard.press(a.key);
       else if (a.do === 'wait') await page.waitForTimeout(a.ms || 1000);
       else if (a.do === 'eval') r.value = await page.evaluate(a.js);

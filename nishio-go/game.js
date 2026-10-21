@@ -489,6 +489,8 @@ function npcPages(n) {
   const ev = spotEvents({ id: 'f-' + n.spot });
   if (ev.length) pages.push(`そうそう、${ev.map(x => `${x.when}に「${x.e.name}」`).join('、')}があるもんで、よかったら来てみりん。`);
   if (S.guide && S.guide.byId === n.id) pages.push(`🧭 ${S.guide.why}`);   // この人がすすめた次の行き先
+  const hint = Object.entries(S.heard || {}).find(([, h]) => h.byId === n.id && !h.found), hs = hint && spots.find(x => x.id === hint[0]);
+  if (hs) pages.push(`🔍 ${(HINT_SAY[n.look] || HINT_SAY.man)(hs.name)}`);   // しらべるの手がかり（その人の言い方で）
   return pages;
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
@@ -548,7 +550,7 @@ function talkNpc(id, page = 0) {
     if (g) {
       setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(simple() ? `📜 → ${g.name}` : `📜 イベント発生：${g.name}へ行ってみて`);
       const hid = heardOf(g, n), hs = hid && spots.find(x => x.id === hid);
-      if (hs) say.push(simple() ? `🔍 ${hs.name}` : `🔍 「${hs.name}に着いたら、よう しらべてみりん」`);
+      if (hs) say.push(simple() ? `🔍 ${hs.name}` : `🔍 手がかり：${hs.name}`);   // 手がかりのことばは、話の最後のページ（npcPages）
     }
     else if (arrived) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
     if (arrived) rivalSay({ ...arrived, name: n.spotName }, g);
@@ -1222,7 +1224,7 @@ function decideGuide(from) {
 function heardOf(g, n) {
   const to = g.kind === 'npc' ? placeNpcs().find(x => x.id === g.id) : null, id = to ? 'f-' + to.spot : g.kind === 'spot' ? g.id : null;
   if (!id || S.visits[id] || (S.heard || {})[id]) return '';
-  S.heard = { ...(S.heard || {}), [id]: { by: n.name, t: Date.now() } };
+  S.heard = { ...(S.heard || {}), [id]: { by: n.name, byId: n.id, t: Date.now() } };
   save();
   return id;
 }
@@ -1264,6 +1266,19 @@ function critterMet(c) {
 // しらべる：聞いた名所に着いたら、名所の窓の「🔍 しらべる」で、まだ知らない まちメモが1つ見つかる（すすめた人の「よう しらべてみりん」が手がかり）。
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
+// 手がかりの言い方（人の見た目ごと。場所についての事実は言わない）
+const HINT_SAY = {
+  elder: p => `${p}に行ったら、まわりを よう見てみりん。わしも若いころは、歩くたびに いろいろ見つけたもんだに。`,
+  granny: p => `${p}に着いたら、ちょっと しらべてみりんね。ええことが わかるかもしれんよ。`,
+  man: p => `${p}に行ったら、しらべてみるといいよ。けっこう おもしろい話が見つかるじゃん。`,
+  woman: p => `${p}に着いたら、よう見てまわってね。思いがけない発見があるかもよ。`,
+  kid: p => `${p}で しらべてみて！ なにか見つかるかもしれんよ！`,
+  student: p => `${p}は、しらべがいがあるじゃん。行ったら よう見てみて。`,
+  fisher: p => `${p}に行ったら、よう目をこらしてみりん。見とる人には、ちゃんと見つかるもんだに。`,
+  staff: p => `${p}に行かれたら、ぜひ しらべてみてください。新しい発見があるかもしれません。`,
+  guide: p => `${p}では、ゆっくり しらべてみりん。まだまだ知らん話があるでね。`,
+  monk: p => `${p}に参られたら、心しずかに よう見てごらんなさい。気づくことがありますよ。`,
+};
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
 function searchSpot(s) {
   if (!canSearch(s)) return;
@@ -1733,10 +1748,20 @@ function renderHeader() {
 }
 
 let toastTimer;
+// ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてからまとめて出す（toastQ）
+const toastQ = [];
 function toast(msg) {
   const el = $('toast');
-  el.textContent = msg; el.classList.add('show');
+  if ($('reward').classList.contains('show')) { toastQ.push(msg); return; }
+  el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+}
+// ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
+function toastHold() {
+  const t = $('toast');
+  if (!t.classList.contains('show')) return;
+  if (Date.now() - (toast.at || 0) < 1500) toastQ.push(t.textContent);
+  t.classList.remove('show'); clearTimeout(toastTimer);
 }
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
 function toastAfter(msg) {
@@ -1795,7 +1820,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
         ${rewardChips(lines, fact)}
         ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-    el.classList.add('show');
+    toastHold(); el.classList.add('show');
     clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, stay || (dot ? 5000 : 2700));
     afterReward();
     return;
@@ -1806,12 +1831,15 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
     ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}${shareBtn}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
-  el.classList.add('show');
+  toastHold(); el.classList.add('show');
   clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, Math.max(stay, fact || dot ? 7000 : 2700));
   afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
-function hideReward() { clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow(); }
+function hideReward() {
+  clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
+  if (toastQ.length) toast(toastQ.splice(0).join('　'));
+}
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');
   hideReward();
@@ -2710,12 +2738,13 @@ function afterReward() {
     if (t0) track('first_reward', { secs: Math.round((Date.now() - t0) / 1000), mode: demo ? 'play' : 'walk' });   // はじめた時刻がわからない人（前から遊んでいる人）は数えない
   }
   // 1日1回：その日2回目のごほうびのあと、ごほうびの画面が消えてから「あしたのおたのしみ」。そのあと ホーム画面に追加のおすすめ
+  // （ごほうびの間に たまった知らせ（バッジなど）が先に出るので、それが消えてから）
   // （その日のごほうびの数は、画面を閉じたりモードを切り替えたりしても続けて数える。session.rewards は1回に遊んだ間の計測だけ）
   const rd = store.get('nsg_rw_day', null), today = ymd(), n = (rd && rd.date === today ? rd.n : 0) + 1;
   store.set('nsg_rw_day', { date: today, n });
   if (n < 2) return;
   afterRewardClosed(() => {
-    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toast(simple() ? `📅 あしたも来ると +${tomorrowBonus()}pt` : `📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
+    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toastAfter(simple() ? `📅 あしたも来ると +${tomorrowBonus()}pt` : `📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
     setTimeout(a2hsOffer, 4200);
   });
 }

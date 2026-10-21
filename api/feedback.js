@@ -54,6 +54,7 @@ function parse(b) {
   }
   if (kind === 'fix' && b.spot && typeof b.spot === 'object' && typeof b.spot.id === 'string' && /^[\w-]{1,60}$/.test(b.spot.id))
     out.spot = { id: b.spot.id, name: clean(b.spot.name, 60) };
+  if (typeof b.rid === 'string' && /^[0-9a-f]{12}$/.test(b.rid)) out.rid = b.rid;   // 受付番号（端末で作った でたらめな番号。返事をゲームで知らせるのに使う）
   out.mode = b.mode === 'demo' ? 'demo' : 'real';
   out.ed = typeof b.ed === 'string' && /^[\w-]{0,20}$/.test(b.ed) ? b.ed : '';
   return out;
@@ -67,6 +68,7 @@ function issueOf(f) {
   if (f.spot) lines.push(`- スポット：${f.spot.name}（${f.spot.id}）`);
   if (f.lat != null) lines.push(`- だいたいの位置（約100m）：[${f.lat}, ${f.lng}](https://www.openstreetmap.org/?mlat=${f.lat}&mlon=${f.lng}#map=17/${f.lat}/${f.lng})`);
   if (f.url) lines.push(`- ページ：<${f.url}>`);
+  if (f.rid) lines.push(`- 受付番号：${f.rid}`);
   lines.push(`- 遊びかた：${f.mode === 'demo' ? '操作して移動' : 'あるいて移動'}${f.ed ? `（${f.ed} 版）` : ''}`, '', quote(f.text), '',
     '<!-- nsg-feedback:' + Buffer.from(JSON.stringify(f)).toString('base64') + ' -->');
   return { title: `[おたより] ${KINDS[f.kind]}：${head}`, body: lines.join('\n'), labels: ['feedback', 'kind:' + f.kind] };

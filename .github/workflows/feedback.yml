@@ -1,14 +1,15 @@
-# にしおさんぽGO：プレイヤーのおたより（非公開リポジトリの Issue。api/feedback.js が置く）を6時間ごとに仕分けて、直せるものは PR にする
+# にしおさんぽGO：プレイヤーのおたより（非公開リポジトリの Issue。api/feedback.js が置く）を30分ごとに仕分けて、直せるものは PR にする
 # 1. 決まった手順で片づくもの（もうゲームにある名所・OpenStreetMap にある名所）は、その場で返事をして閉じる
 # 2. のこりは Claude が読み、出典で確かめられた小さな直し（ふつうのスポットを足す・説明のまちがいを直す など）をする。
 #    Claude は シェル・git・トークンを使えず、読み書きと決まったサイトの閲覧だけ。おたよりの文は「データ」として扱う（tools/feedback-prompt.md）
 # 3. 直してよい場所の変更だけを PR にする（マージは人が確かめてから）。結果を Issue に書きもどす
+# 4. 受付番号ごとの返事と、人がマージして反映されたことを nishio-go/voices.json に書いて main にコミットする（ゲームの「こえ」タブで知らせる）
 # 必要な準備：Variables の FEEDBACK_REPO、Secrets の FEEDBACK_TOKEN と ANTHROPIC_API_KEY（無いあいだは なにもしない／決まった手順だけ）。docs/feedback.md
 name: Nishio feedback
 on:
   workflow_dispatch:
   schedule:
-    - cron: '41 */6 * * *'
+    - cron: '11,41 * * * *'   # 30分ごと（プレイヤーの声を早く返す。おたよりが無い回は数十秒で終わる）
 permissions:
   contents: write
   pull-requests: write
@@ -67,3 +68,9 @@ jobs:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
           PR_URL: ${{ steps.pr.outputs.url }}
         run: node tools/feedback-triage.js report
+      - name: Tell players (voices.json)
+        if: always() && steps.cfg.outputs.on
+        env:
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: node tools/feedback-triage.js voices

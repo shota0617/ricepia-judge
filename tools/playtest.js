@@ -229,6 +229,23 @@ async function walkTo(page, id) {
     if (!/^\d+\/\d+（\d+%）$/.test(document.getElementById('badgeCount').textContent)) bad.push('バッジの達成率');
     return bad.length ? bad.join(',') : true;
   });
+  // 田んぼのイベント「芽出しの見きわめ」：種もみが3つ出て、OK をえらぶと +20pt と米づくりの まちメモ。1日1回
+  R.checks.medashi = await page.evaluate(() => {
+    const M = window.NISHIO_MEDASHI, G = nishioGo, bad = [];
+    if (!M) return 'none';
+    if (G.state.medashiDay === G.ymd()) return 'もう今日は遊んだことになっている';
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();   // ごほうびの画面の上には出ないので、閉じてから
+    const p0 = G.state.points;
+    if (!M.shown && !M.open()) return `開かない（${document.body.classList.contains('jump-open') ? 'ミニゲーム中' : document.getElementById('reward').classList.contains('show') ? 'ごほうびの画面' : 'ほか'}）`;
+    if (document.querySelectorAll('#medashi .md-seed').length !== 3) bad.push('種もみが3つでない');
+    M.pick('ok');
+    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!G.state.facts.includes('k:tanemomi:0')) bad.push('まちメモ');
+    if (!/正解/.test(document.querySelector('#medashi .md-res').textContent)) bad.push('こたえ');
+    M.close();
+    if (G.medashiDue() || M.open()) bad.push('1日に2回');
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -383,6 +400,7 @@ async function walkTo(page, id) {
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
+  need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');

@@ -821,6 +821,23 @@ function dankyuReward(stars, level) {
   return pts;
 }
 
+// 田んぼのイベント「芽出しの見きわめ」（medashi.js）：1日1回。えらんだ種もみで ポイント（OK 20・ギリギリOK 10・伸び過ぎ 0）と、
+// そのわけの 米づくりの まちメモ（kome.js。OK・ギリギリOK は「いちばんよい芽出し」、伸び過ぎは「伸びすぎるわけ」）
+const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0;
+function medashiReward(choice, pts) {
+  if (!medashiDue()) return { pts: 0, fresh: false };
+  S.medashiDay = ymd();
+  const k = `k:tanemomi:${choice === 'nobisugi' ? 2 : 0}`, fresh = !S.facts.includes(k);
+  if (fresh) S.facts.push(k);
+  pts = Math.max(0, Math.min(20, pts | 0));
+  if (pts) gainPoints(pts);
+  S.log.unshift({ type: 'medashi', t: Date.now(), pts, name: `イベント「芽出しの見きわめ」${choice === 'ok' ? '正解' : ''}`, icon: '🌱' });
+  save();
+  renderLog();
+  track('medashi_pick', { choice, mode: demo ? 'play' : 'walk' });
+  return { pts, fresh };
+}
+
 // ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
 // 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
@@ -3183,7 +3200,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

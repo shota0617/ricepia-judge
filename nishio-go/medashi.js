@@ -55,7 +55,7 @@
     if (!G || !G.medashiDue || !G.medashiDue() || Date.now() - lastOpen < 5 * 60000) return false;
     if (document.body.classList.contains('jump-open')) return false;   // ミニゲームの最中は出さない
     const rw = document.getElementById('reward');
-    if ((rw && rw.classList.contains('show')) || (G.rewardBusy && G.rewardBusy())) return false;   // ごほうびの画面の上には出さない（絵を読みこんでいて、まだ出ていない ごほうびも待つ）
+    if ((rw && rw.classList.contains('show')) || (G.rewardSoon && G.rewardSoon())) return false;   // ごほうびの画面の上には出さない（絵を読みこんでいて まだ出ていない ごほうび・開く予約をした おみやげ袋も待つ）
     if (!root) build();
     order = SEEDS.slice().sort(() => Math.random() - 0.5);
     done = false; lastOpen = Date.now();

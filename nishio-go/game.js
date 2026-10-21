@@ -2054,7 +2054,15 @@ const dotStars = f => (DOT_TWO_STARS.has(f.motif) ? 2 : 3) + (['rainbow', 'snow'
 const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i></i>'.repeat(n)}</div>`;
 // チェックインのあとの ひとこと：ごほうびの画面が消えたら、下に小さく出す（react.pending）
 const react = { pending: null, shown: 0, t: 0 };
+// 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
+const medashiOpen = () => !!(window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown);
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
+  if (medashiOpen()) {
+    showReward.deferred = (showReward.deferred || 0) + 1;
+    const again = () => { if (medashiOpen()) { setTimeout(again, 600); return; } showReward.deferred--; showReward(total, name, lines, lvUp, fact, dot, waited); };
+    setTimeout(again, 600);
+    return;
+  }
   const el = $('reward'), D = window.NISHIO_DOTS;
   if (waited !== true) {
     const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
@@ -2185,13 +2193,14 @@ function walkBags(d) {
 }
 const bagDone = () => { const b = Array.isArray(S.bags) && S.bags[0]; return !!b && b.walked >= b.km * 1000; };
 // ほかのごほうびが出ている間・絵を読みこんで出るのを待っている間は待つ（重ならないように。消えてしまわないように）
-const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting;
+const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting || !!showReward.deferred;
+const rewardSoon = () => rewardBusy() || !!openBagSoon.t;   // 開く予約をした おみやげ袋も（田んぼのイベントは、これが済んでから始める）
 function openBagSoon() {
   if (openBagSoon.t) return;
   const key = stateKey();   // 予約したときの記録。モードを切り替えたら、その記録の袋は戻ったときに開く（refreshNearby がまた予約する）
   const tick = () => {
     if (stateKey() !== key) { openBagSoon.t = 0; return; }
-    if (rewardBusy()) { openBagSoon.t = setTimeout(tick, 800); return; }
+    if (rewardBusy() || medashiOpen()) { openBagSoon.t = setTimeout(tick, 800); return; }
     openBagSoon.t = 0;
     openBag();
   };
@@ -3204,7 +3213,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, rewardBusy, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, medashiDue, medashiReward, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

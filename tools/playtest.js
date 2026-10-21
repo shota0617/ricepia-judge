@@ -230,7 +230,7 @@ async function walkTo(page, id) {
     return bad.length ? bad.join(',') : true;
   });
   // 田んぼのイベント「芽出しの見きわめ」：種もみが3つ出て、OK をえらぶと +20pt と米づくりの まちメモ。1日1回
-  R.checks.medashi = await page.evaluate(() => {
+  R.checks.medashi = await page.evaluate(async () => {
     const M = window.NISHIO_MEDASHI, G = nishioGo, bad = [];
     if (!M) return 'none';
     if (G.state.medashiDay === G.ymd()) return 'もう今日は遊んだことになっている';
@@ -241,9 +241,9 @@ async function walkTo(page, id) {
     let hit = null;
     for (let r = 0; r < 120 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) { const c = P.codeAt(x0 + dx, y0 + dy); if (c === P.C.F || c === P.C.U) { hit = [x0 + dx, y0 + dy]; break; } }
     if (!hit) return '近くに田んぼがない';
-    const rb = G.rewardBusy; G.rewardBusy = () => true;   // 絵を読みこんでいて まだ出ていない ごほうびがあるとき
+    const rb = G.rewardSoon; G.rewardSoon = () => true;   // 絵を読みこんでいて まだ出ていない ごほうび・開く予約をした おみやげ袋があるとき
     if (M.open()) { bad.push('ごほうびを待つ間に出た'); M.close(); }
-    G.rewardBusy = rb;
+    G.rewardSoon = rb;
     document.querySelector('.tabs button[data-tab="log"]').click();
     for (let i = 0; i < 20; i++) P.critterStep(hit[0], hit[1]);
     if (M.shown) bad.push('パネルの上に出た');
@@ -254,6 +254,9 @@ async function walkTo(page, id) {
     const before = G.me.lat + ',' + G.me.lng;
     document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     if (G.me.lat + ',' + G.me.lng !== before) bad.push('開いている間に歩いた');
+    // 開いている間に来た ごほうびは、閉じるまで出さない
+    G.showReward(1, 'テスト', [], false, '', null);
+    if (rw.classList.contains('show') || !G.rewardBusy()) bad.push('開いている間に ごほうびが出た');
     if (document.querySelectorAll('#medashi .md-seed').length !== 3) bad.push('種もみが3つでない');
     M.pick('ok');
     if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
@@ -261,6 +264,9 @@ async function walkTo(page, id) {
     if (!/正解/.test(document.querySelector('#medashi .md-res').textContent)) bad.push('こたえ');
     M.close();
     if (G.medashiDue() || M.open()) bad.push('1日に2回');
+    await new Promise(r => setTimeout(r, 900));
+    if (!rw.classList.contains('show')) bad.push('閉じたあとに ごほうびが出ない');
+    rw.click();
     return bad.length ? bad.join(',') : true;
   });
   R.checks.trail = await page.evaluate(() => {

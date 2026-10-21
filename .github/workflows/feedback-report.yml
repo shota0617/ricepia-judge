@@ -37,22 +37,35 @@ jobs:
         if: steps.cfg.outputs.on
         with:
           node-version: 20
+      - name: Keep trusted tools
+        if: steps.cfg.outputs.on
+        run: |
+          mkdir -p "$RUNNER_TEMP/trusted/tools" "$RUNNER_TEMP/trusted/nishio-go"
+          cp tools/feedback-triage.js tools/feedback-report.js tools/make-minna.js tools/feedback-prompt.md tools/feedback-report-prompt.md "$RUNNER_TEMP/trusted/tools/"
+          cp nishio-go/osm-query.js "$RUNNER_TEMP/trusted/nishio-go/"
       - name: Count feedback
         id: count
         if: steps.cfg.outputs.on
         env:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
-        run: node tools/feedback-report.js prepare
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-report.js" prepare
+      # Claude：読めるのは .feedback/ だけ、書けるのは要約のファイルだけ。動かすあいだ .git は作業場所の外に置く
       - name: Claude summarizes
         if: steps.count.outputs.ai && env.HAS_KEY == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           npm i -g @anthropic-ai/claude-code@2.1.305 > /dev/null
-          claude -p "$(cat tools/feedback-report-prompt.md)" --model claude-opus-5-5 --max-turns 15 --permission-mode dontAsk \
-            --allowedTools "Read,Write" --disallowedTools "Bash,Edit,WebFetch,WebSearch,NotebookEdit,Task,Glob,Grep" | tail -n 20
+          mv .git "$RUNNER_TEMP/dotgit"
+          claude -p "$(cat "$RUNNER_TEMP/trusted/tools/feedback-report-prompt.md")" --model claude-opus-5-5 --max-turns 15 --permission-mode dontAsk \
+            --allowedTools "Read(./.feedback/**),Write(./.feedback/report-themes.md)" --disallowedTools "Bash,Edit,WebFetch,WebSearch,NotebookEdit,Task,Glob,Grep" | tail -n 20 || true
+          if [ -e .git ]; then rm -rf .git; fi
+          mv "$RUNNER_TEMP/dotgit" .git
+      # 要約が失敗しても、集計だけのレポートは出す（スクリプトは Claude より前の中身で動かす）
       - name: Post report
-        if: steps.cfg.outputs.on
+        if: always() && steps.count.outcome == 'success'
         env:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
-        run: node tools/feedback-report.js post
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-report.js" post

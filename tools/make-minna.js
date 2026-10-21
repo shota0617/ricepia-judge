@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = process.env.FEEDBACK_ROOT || path.join(__dirname, '..');
 const read = f => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const CAT = { shrine: '⛩️ 神社', temple: '🪷 お寺', historic: '📜 史跡', castle: '🏯 城跡', museum: '🏛 資料館・美術館', park: '🌳 公園', view: '🌅 ながめのよい所', sight: '📍 名所', art: '🎨 アート', beach: '🏖 海岸' };

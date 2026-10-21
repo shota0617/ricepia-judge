@@ -13,7 +13,8 @@ const fs = require('fs');
 const path = require('path');
 const OSM = require('../nishio-go/osm-query.js');
 
-const ROOT = path.join(__dirname, '..');
+// FEEDBACK_ROOT：作業場所（ワークフローは、Claude が触れない場所にコピーしたこのスクリプトから、作業場所を指して動かす）
+const ROOT = process.env.FEEDBACK_ROOT || path.join(__dirname, '..');
 const DIR = path.join(ROOT, '.feedback');
 const REPO = process.env.FEEDBACK_REPO || '';
 const TOKEN = process.env.FEEDBACK_TOKEN || '';
@@ -31,7 +32,11 @@ async function gh(p, opt = {}) {
   if (!r.ok) throw new Error(`GitHub ${r.status} ${p}`);
   return r.status === 204 ? null : r.json();
 }
-const comment = (n, text) => gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: text + FOOT }) });
+// 返事のしるし（nsg-status）をつけたら、told（その返事はゲームの公開データに入った）を外す。voices が次に公開データへ入れて、また付ける
+async function comment(n, text) {
+  await gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: text + FOOT }) });
+  if (text.includes('<!-- nsg-status:')) { try { await gh(`/issues/${n}/labels/told`, { method: 'DELETE' }); } catch (e) { if (!/^GitHub 404 /.test(e.message)) throw e; } }
+}
 const addLabels = (n, labels) => gh(`/issues/${n}/labels`, { method: 'POST', body: JSON.stringify({ labels }) });
 const close = (n, reason = 'completed') => gh(`/issues/${n}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: reason }) });
 
@@ -108,7 +113,7 @@ async function findOsm(f) {
 }
 
 // 仕分けで使うラベル（無ければ作る。もうあれば 422 で、それでよい）
-const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced'];
+const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced', 'told'];
 async function ensureLabels() {
   for (const name of LABELS) {
     try { await gh('/labels', { method: 'POST', body: JSON.stringify({ name, color: name === 'feedback' ? 'f9d0c4' : name === 'needs-check' ? 'e99695' : 'ededed' }) }); }
@@ -217,7 +222,7 @@ async function report() {
 // Claude が直してよいファイル（遊びのデータと画面の文。OpenStreetMap などから作るもの・お店のキャンペーンとごほうび・解析・焼いた絵は除く）
 const EDITABLE = p => (p === 'nishio-go.html' || /^nishio-go\/[\w-]+\.(js|json|css)$/.test(p)) &&
   !/^nishio-go\/(osm-spots|landmarks|stats|world|landuse|campaigns|rewards|voices)\.json$|^nishio-go\/(analytics|share)\.js$/.test(p);
-const git = (...a) => require('child_process').execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' });
+const git = (...a) => require('child_process').execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...a], { cwd: ROOT, encoding: 'utf8' });   // フックは動かさない
 function changedFiles() {
   return git('status', '--porcelain=v1', '-uall', '-z').split('\0').filter(Boolean)
     .map(l => ({ code: l.slice(0, 2), path: l.slice(3) })).filter(c => !c.path.startsWith('.feedback/'));
@@ -383,16 +388,17 @@ async function voices() {
   const checkoutMain = () => { git('fetch', '-q', pub, base); git('checkout', '-q', '-f', '-B', 'voices-update', 'FETCH_HEAD'); };
   checkoutMain();   // いまの main（人がマージした名所も入っている）で確かめる
   const a = await announcements();
-  // ここ3日に動いた Issue のコメントの しるし（nsg-status）から返事を作りなおす（前の回の push が失敗していても、返事が消えないように）
-  const rebuilt = {};
-  const since = new Date(Date.now() + 9 * 3600e3 - 3 * 86400e3).toISOString().slice(0, 10);
-  for (const i of await searchIssues(`repo:${REPO} is:issue label:feedback updated:>=${since}`)) {
+  // まだ公開データに入っていない（told の無い）Issue の、いちばん新しい返事のしるし（nsg-status）から返事を作りなおす。
+  // 前の回の push が失敗していても、何日たっていても、返事が消えないように。入れたら told を付ける
+  const rebuilt = {}, toldNow = [];
+  for (const i of await searchIssues(`repo:${REPO} is:issue label:feedback -label:told`)) {
     const m = (await comments(i.number)).map(c => /<!-- nsg-status:([A-Za-z0-9+/=]+) -->/.exec(c.body || '')).filter(Boolean).pop();
+    toldNow.push(i.number);
     if (!m) continue;
     try { const x = JSON.parse(Buffer.from(m[1], 'base64').toString('utf8')); if (RID.test(x.rid || '')) rebuilt[x.rid] = { s: x.s, t: x.t || '' }; } catch (_) { /* よめない しるし */ }
   }
   const status = { ...rebuilt, ...readJson('status.json', {}), ...a.status };
-  if (!Object.keys(status).length && !a.logs.length) { console.log('ゲームに知らせることはありません'); return; }
+  if (!Object.keys(status).length && !a.logs.length) { for (const n of toldNow) await addLabels(n, ['told']); console.log('ゲームに知らせることはありません'); return; }
   for (let tries = 1; ; tries++) {
     if (tries > 1) checkoutMain();
     const f = path.join(ROOT, VOICES);
@@ -406,6 +412,7 @@ async function voices() {
     catch (e) { if (tries >= 3) throw e; console.log('main が先に進んだので、もう一度'); }
   }
   for (const n of a.done) await addLabels(n, ['announced']);
+  for (const n of toldNow) await addLabels(n, ['told']);   // main に入った（か、もう入っていた）返事
   console.log(`返事 ${Object.keys(status).length}件・反映 ${a.logs.length}件`);
 }
 

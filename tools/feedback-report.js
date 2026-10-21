@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const T = require('./feedback-triage.js');
 
-const ROOT = path.join(__dirname, '..');
+const ROOT = process.env.FEEDBACK_ROOT || path.join(__dirname, '..');
 const DIR = path.join(ROOT, '.feedback');
 const REPO = process.env.FEEDBACK_REPO || '';
 const KIND = { spot: '📍 こんな名所があるよ', fun: '🎉 こうしたらもっと面白い', fix: '✏️ スポットの情報がちがう', idea: '😣 こまった・使いにくい' };
@@ -87,6 +87,19 @@ function markdown(data, themes) {
   return lines.join('\n');
 }
 
+// まとめに おたよりの中身がそのまま入っていないか：本文は10文字の切れはし（Claude への指示と同じ）、名所の名前欄・スポット欄は
+// 2文字以上がそのまま出ていたら（ゲームの名所に同じ名前があるもの＝ゲームのデータにある名前は のぞく）。電話・メール・郵便番号も
+function themeLeak(themes, input) {
+  const names = new Set(T.known().flatMap(k => k.names).map(T.norm).filter(Boolean)), t = T.norm(themes);
+  if (/0\d{1,4}[-‐ー−－]?\d{1,4}[-‐ー−－]?\d{3,4}|[\w.+-]+[@＠][\w-]+\.|〒|\d{3}[-－]\d{4}/.test(themes)) return '電話・メール・郵便番号';
+  for (const i of input) {
+    for (const f of [i.name, i.spot]) { const n = T.norm(f); if (n.length >= 2 && !names.has(n) && t.includes(n)) return `#${i.n} の名前欄`; }
+    const hit = T.leaks(themes, [{ n: i.n, text: i.text }], 10);
+    if (hit) return hit;
+  }
+  return '';
+}
+
 async function post() {
   const data = readJson(path.join(DIR, 'report-data.json'), null);
   if (!data || !REPO) { console.log('集計がないので、なにもしません'); return; }
@@ -94,7 +107,7 @@ async function post() {
   let themes = '';
   try { themes = fs.readFileSync(path.join(DIR, 'report-themes.md'), 'utf8').slice(0, 12000); } catch (_) { /* まとめ無し */ }
   // まとめに おたよりの文がそのまま入っていたら載せない（市に見せる資料のもとなので）
-  const leak = themes && T.leaks(themes, input.map(i => ({ n: i.n, text: i.text })));
+  const leak = themes && themeLeak(themes, input);
   if (leak) { console.log(`まとめに おたよりの文が入っていた（${leak}）ので、まとめは載せない`); themes = '（まとめに おたよりの文がそのまま入っていたので、載せませんでした）'; }
   const ym = `${data.month.slice(0, 4)}年${Number(data.month.slice(5))}月`, title = `【西尾市への提案レポート】${ym} プレイヤーの声`;
   const dup = await T.searchIssues(`repo:${REPO} is:issue in:title "${title}"`);

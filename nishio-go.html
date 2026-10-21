@@ -233,7 +233,28 @@
   </div>
   <div class="card">
     <h3>プライバシー（<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>）</h3>
-    <p class="note">現在地の座標そのものは、どこにも送信しません。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
+    <p class="note">現在地の座標そのものは、どこにも送信しません（「📮 おたより」で「いまいる場所の近く」にチェックしたときだけ、約100mの細かさに丸めた位置をおたよりといっしょに送ります）。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
+  </div>
+  <div class="card" id="fbCard">
+    <h3>📮 おたより（名所のおしらせ・もっと面白く・まちがい・ごいけん）</h3>
+    <p class="note">「こんな名所もあるよ」「こうしたらもっと面白い」「この場所の説明がちがう」「ここがこまった」など、気づいたことを運営者に送れます。いただいたおたよりは、たしかめてから地図やゲームに反映します（おへんじはできません）。名前・電話番号・住所など、あなたの個人情報は書かないでください。</p>
+    <form id="fbForm" class="fb-form" novalidate>
+      <label><span>なにについて？</span>
+        <select id="fbKind">
+          <option value="spot">📍 こんな名所があるよ</option>
+          <option value="fun">🎉 こうしたらもっと面白い</option>
+          <option value="fix">✏️ 名所・スポットの情報がちがう</option>
+          <option value="idea">😣 こまった・使いにくい</option>
+        </select></label>
+      <label id="fbSpotRow" hidden><span>どのスポット？（近いじゅん）</span><select id="fbSpot"></select></label>
+      <label id="fbNameRow"><span>名所の名前</span><input id="fbName" type="text" maxlength="40" autocomplete="off" placeholder="れい：○○神社の大くすのき"/></label>
+      <label><span id="fbTextLabel">どんな所？（見どころ・場所の目じるしなど）</span><textarea id="fbText" maxlength="400" rows="4" required></textarea></label>
+      <label><span>くわしく分かるページ（あれば・https）</span><input id="fbUrl" type="url" maxlength="200" inputmode="url" autocomplete="off" placeholder="https://"/></label>
+      <label class="fb-here"><input id="fbHere" type="checkbox"/><span>いまいる場所の近く（だいたいの位置・約100mの細かさをいっしょに送る。操作して移動では、キャラのいる場所）</span></label>
+      <label class="hp" aria-hidden="true">この欄は空のままにしてください<input id="fbHp" type="text" tabindex="-1" autocomplete="off"/></label>
+      <button type="submit" class="btn" id="fbSend">おたよりを送る</button>
+      <p class="note" id="fbMsg" aria-live="polite"></p>
+    </form>
   </div>
   <div class="card danger">
     <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>

@@ -2187,6 +2187,58 @@ $('resetBtn').addEventListener('click', () => {
   toast('記録を削除しました');
 });
 
+/* ---------- おたより（名所のおしらせ・まちがい・ごいけん） ----------
+   /api/feedback（api/feedback.js）に送ると、運営者の非公開の置き場（GitHub の非公開リポジトリの Issue）に届く。
+   位置は「いまいる場所の近く」にチェックしたときだけ、0.001度（約100m）に丸めて送る。1日3通まで（docs/feedback.md） */
+const FB_MAX = 3;
+const fb = { shown: 0 };
+const fbCount = () => { const c = store.get('nsg_fb', null); return c && c.d === ymd() ? c.n : 0; };
+const fbText = { spot: 'どんな所？（見どころ・場所の目じるしなど）', fix: 'なにがちがう？（正しくはどうか、分かれば）', fun: 'どうすると、もっと楽しくなる？（あったらうれしい遊び・ごほうび・しかけ など）', idea: 'どんなことで こまった？ どうしてほしい？' };
+function fbFill() {   // スポットの選びわけ：チェックインできるスポットを先に、あとは近いじゅん
+  const sel = $('fbSpot'), base = me || CFG.home;
+  const near = spots.filter(s => s !== selected).map(s => ({ s, d: dist(base, s) })).sort((a, b) => a.d - b.d).slice(0, 12).map(o => o.s);
+  sel.replaceChildren(...(selected ? [selected] : []).concat(near).map(s => new Option(s.name, s.id)));
+}
+function fbKind() {
+  const k = $('fbKind').value;
+  $('fbSpotRow').hidden = k !== 'fix';
+  $('fbNameRow').hidden = k !== 'spot';
+  $('fbTextLabel').textContent = fbText[k];
+  if (k === 'fix') fbFill();
+}
+$('fbKind').addEventListener('change', fbKind);
+$('fbForm').addEventListener('focusin', () => { if (!fb.shown) fb.shown = Date.now(); });
+$('fbForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = t => { $('fbMsg').textContent = t; };
+  const kind = $('fbKind').value, name = $('fbName').value.trim(), text = $('fbText').value.trim(), url = $('fbUrl').value.trim();
+  if (fbCount() >= FB_MAX) return msg(`おたよりは1日${FB_MAX}通までです。また明日おねがいします。`);
+  if (!text) return msg('内容を書いてください。');
+  if (kind === 'spot' && !name) return msg('名所の名前を書いてください。');
+  if (url && !/^https:\/\/[^\s]+$/.test(url)) return msg('ページは https:// ではじまるアドレスを書いてください。');
+  const here = $('fbHere').checked;
+  if (here && !me) return msg('いまの場所が分からないので、チェックを外して送るか、場所が出てからもう一度送ってください。');
+  const sp = kind === 'fix' ? spots.find(s => s.id === $('fbSpot').value) : null;
+  const body = { kind, name: kind === 'spot' ? name : '', text, url, hp: $('fbHp').value, t: fb.shown ? Date.now() - fb.shown : 0, mode: demo ? 'demo' : 'real', ed: ED.id || '' };
+  if (here) { body.lat = Math.round(me.lat * 1000) / 1000; body.lng = Math.round(me.lng * 1000) / 1000; }
+  if (sp) body.spot = { id: sp.id, name: sp.name };
+  const btn = $('fbSend');
+  btn.disabled = true; msg('送っています…');
+  try {
+    const r = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (r.ok) {
+      store.set('nsg_fb', { d: ymd(), n: fbCount() + 1 });
+      $('fbForm').reset(); fbKind(); fb.shown = 0;
+      msg('とどきました。ありがとう！');
+      toast('📮 おたよりを送りました。ありがとう！');
+      track('feedback_send', { kind });
+    } else msg(r.status === 429 ? 'いまは おたよりが多くて受けつけられません。時間をおいて送ってください。'
+      : r.status === 503 || r.status === 404 ? 'おたよりは まだ受けつけていません。ごめんなさい。'
+      : '送れませんでした。内容を確かめて、もう一度お試しください。');
+  } catch (_) { msg('送れませんでした。通信環境を確かめて、もう一度お試しください。'); }
+  finally { btn.disabled = false; }
+});
+
 /* ---------- 音楽（BGM と効果音） ----------
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。world：せかいちず、checkin：チェックイン、levelup：レベルアップ。
    ふだんの曲（歩く地図・ふつうの地図）は、雨なら「雨」、夜（19〜5時）は「夜」、朝（5〜9時）は「朝」、夕方（16〜19時）は「夕方」、

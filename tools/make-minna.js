@@ -23,9 +23,26 @@ function meibutsu() {
   return { list: (box.window.NISHIO_MEIBUTSU || []).filter(m => !m.area), sources };   // area があるのは となりの市町の名物（八丁味噌など）なので外す
 }
 
+// 名所のある市町（region.js の境界。game.js の cityAt と同じ判定）。西尾市の外の名所を「西尾の名所」に入れないように
+function cityOf(regionSrc) {
+  const box = { globalThis: {} };
+  vm.runInNewContext(regionSrc.replace(/^globalThis\./m, 'globalThis.'), box);
+  const R = box.globalThis.NISHIO_REGION || {}, list = [...(R.cities || []), ...(R.around || [])];
+  const inRing = (lat, lng, r) => { let inside = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) if ((r[i][0] > lat) !== (r[j][0] > lat) && lng < (r[j][1] - r[i][1]) * (lat - r[i][0]) / (r[j][0] - r[i][0]) + r[i][1]) inside = !inside; return inside; };
+  return (lat, lng) => {
+    for (const c of list) {
+      if (c.bbox && (lat < c.bbox[0][0] || lat > c.bbox[1][0] || lng < c.bbox[0][1] || lng > c.bbox[1][1])) continue;
+      if ((c.rings || []).some(r => inRing(lat, lng, r))) return c.name || '';
+    }
+    return '';
+  };
+}
+
 function build() {
   const areas = JSON.parse(read('nishio-go/areas.json')).areas.filter(a => !a.near);
-  const spots = JSON.parse(read('nishio-go/spots.json')).spots.filter(s => s.normal && /^fb-/.test(s.id || ''));
+  const city = cityOf(read('nishio-go/region.js'));
+  const spots = JSON.parse(read('nishio-go/spots.json')).spots.filter(s => s.normal && /^fb-/.test(s.id || '')).map(s => ({ ...s, city: city(s.lat, s.lng) }));
+  const inNishio = spots.filter(s => s.city === '西尾市'), nearby = spots.filter(s => s.city !== '西尾市');
   let v = {};
   try { v = JSON.parse(read('nishio-go/voices.json')); } catch (_) { /* まだ無い */ }
   const log = (Array.isArray(v.log) ? v.log : []).slice(0, 50), c = v.counts || {};
@@ -38,12 +55,12 @@ function build() {
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>みんなで見つけた西尾｜にしおさんぽGO</title>
-<meta name="description" content="西尾市（愛知県）を歩くお散歩ゲーム「にしおさんぽGO」のプレイヤーが教えてくれた西尾の名所と、みんなの声でよくなったこと。抹茶とうなぎのまち・西尾の5つの地区も紹介します。"/>
+<meta name="description" content="西尾市（愛知県）を歩くお散歩ゲーム「にしおさんぽGO」のプレイヤーが教えてくれた西尾と まわりのまちの名所と、みんなの声でよくなったこと。抹茶とうなぎのまち・西尾の5つの地区も紹介します。"/>
 <meta name="theme-color" content="#2f5d3a"/>
 <link rel="canonical" href="https://go.ricepia.jp/nishio-go/minna.html"/>
 <meta property="og:type" content="website"/>
 <meta property="og:title" content="みんなで見つけた西尾｜にしおさんぽGO"/>
-<meta property="og:description" content="プレイヤーの声で ふえていく、西尾の名所。"/>
+<meta property="og:description" content="プレイヤーの声で ふえていく、西尾と まわりのまちの名所。"/>
 <meta property="og:url" content="https://go.ricepia.jp/nishio-go/minna.html"/>
 <meta property="og:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
 <meta name="twitter:card" content="summary_large_image"/>
@@ -88,11 +105,12 @@ ${areas.map(a => `    <div class="card"><b>${esc(a.icon)} ${esc(a.name)}（${esc
       <small>出典：${(a.sources || []).map((u, i) => `<a href="${esc(u)}" rel="noopener" target="_blank">${i + 1}</a>`).join(' ')}</small></div>`).join('\n')}
   </div>
 
-  <h2>みんなの声で ふえた名所</h2>
-${spots.length ? `  <div class="grid">
-${spots.map(s => `    <div class="card"><b>${esc(s.name)}</b> <small>${esc(CAT[s.cat] || '📍 名所')}</small>
-      <small><a href="${GAME}?spot=n-${encodeURIComponent(s.id)}&amp;utm_source=minna">ゲームの地図で見る</a>${s.src ? `・<a href="${esc(s.src)}" rel="noopener" target="_blank">出典</a>` : ''}</small></div>`).join('\n')}
-  </div>` : '  <p>まだありません。あなたが知っている西尾の名所を、ゲームの「📮 こえ」から教えてください。</p>'}
+  <h2>みんなの声で ふえた西尾市の名所</h2>
+${inNishio.length ? spotGrid(inNishio) : '  <p>まだありません。あなたが知っている西尾の名所を、ゲームの「📮 こえ」から教えてください。</p>'}
+${nearby.length ? `
+  <h2>みんなの声で ふえた まわりのまちの名所</h2>
+  <p class="note">にしおさんぽGO は、西尾市と まわりの市町も歩けます。</p>
+${spotGrid(nearby)}` : ''}
 
   <h2>みんなの声で かわったこと</h2>
 ${log.length ? `  <ul class="log">
@@ -105,6 +123,13 @@ ${log.map(l => `    <li>${esc(KIND[l.kind] || '📮')} ${esc(l.text)} <small cla
 </body>
 </html>
 `;
+}
+
+function spotGrid(list) {
+  return `  <div class="grid">
+${list.map(s => `    <div class="card"><b>${esc(s.name)}</b> <small>${esc([s.city, CAT[s.cat] || '📍 名所'].filter(Boolean).join('・'))}</small>
+      <small><a href="${GAME}?spot=n-${encodeURIComponent(s.id)}&amp;utm_source=minna">ゲームの地図で見る</a>${s.src ? `・<a href="${esc(s.src)}" rel="noopener" target="_blank">出典</a>` : ''}</small></div>`).join('\n')}
+  </div>`;
 }
 
 function write() {

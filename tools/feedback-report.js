@@ -37,7 +37,14 @@ async function prepare() {
   fs.mkdirSync(DIR, { recursive: true });
   const m = month();
   if (!REPO || !process.env.FEEDBACK_TOKEN) { console.log('FEEDBACK_REPO / FEEDBACK_TOKEN が無いので、なにもしません'); return; }
-  const issues = await T.searchIssues(`repo:${REPO} is:issue label:feedback created:${m}-01..${m}-${String(lastDay(m)).padStart(2, '0')}`);
+  // 日本時間の1日ずつ検索する（月のさかいめを日本時間にそろえる。1日の上限は api/feedback.js で40通なので、1回の検索の上限250件に十分おさまる）
+  const issues = [];
+  for (let d = 1; d <= lastDay(m); d++) {
+    const day = `${m}-${String(d).padStart(2, '0')}`;
+    const got = await T.searchIssues(`repo:${REPO} is:issue label:feedback created:${day}T00:00:00+09:00..${day}T23:59:59+09:00`);
+    if (got.length >= 250) throw new Error(`${day} のおたよりが多すぎて数えきれません（250件以上）`);
+    issues.push(...got);
+  }
   const areas = readJson(path.join(ROOT, 'nishio-go/areas.json'), { areas: [] }).areas.filter(a => !a.near);
   const data = { month: m, total: 0, kinds: {}, outcomes: {}, areas: {}, withPlace: 0 }, input = [];
   for (const i of issues) {

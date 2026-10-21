@@ -552,6 +552,7 @@ function talkNpc(id, page = 0) {
   if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
   const seal = page === 0 ? sealGive(n) : '';   // 地区のしるし（その地区を5か所めぐってから、この人と話した）
   if (seal) { brief.icons += '🔖'; say.push(seal); }
+  if (page === 0 && clearGive(n)) { brief.icons += '🏯'; say.push('🏯 西尾さんぽ 殿堂入り！'); }   // 5つのしるしを そろえて、この人と話した（クリア）
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     const arrived = S.guide && S.guide.kind === 'npc' && S.guide.id === n.id ? S.guide : null;
     if (arrived) {   // すすめられた人に会えた
@@ -1341,7 +1342,7 @@ function critterMet(c) {
   const book = S.critters, first = !book[c.id], day = dayState();
   day.critters = (day.critters || 0) + 1;
   book[c.id] = { n: (book[c.id] ? book[c.id].n : 0) + 1, first: book[c.id] ? book[c.id].first : Date.now() };
-  if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); }
+  if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); badgesSoon(); }   // そろったら賞状
   save();
   track('critter_meet', { critter: c.id, first, mode: demo ? 'play' : 'walk' });
   toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
@@ -1700,7 +1701,9 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
-    ...areas.filter(a => SEAL_BY[a.id]).map(a => {   // 地区のしるし：その地区を5か所めぐると、地区の人が認めてくれる（制覇の手前の目標）
+    { id: 'critterall', i: '📜', n: '生きもの手帳の賞状', d: `生きもの手帳の${CRITTERS.length}しゅるい ぜんぶに出会う（季節で出るものもあるので、1年かけて）`, cur: CRITTERS.filter(c => (S.critters || {})[c.id]).length, goal: CRITTERS.length },
+    { id: 'clear', i: '👑', n: '殿堂入り', d: '5つの地区のしるしを集めて、西尾城跡のガイドさんに会う（クリア）', cur: S.cleared ? 1 : 0, goal: 1 },
+    ...areas.filter(a => SEAL_BY[a.id] && (!SEAL_POST.has(a.id) || S.cleared)).map(a => {   // となりの市町のしるしは、クリアしてから出す   // 地区のしるし：その地区を5か所めぐると、地区の人が認めてくれる（制覇の手前の目標）
       const p = areaProgress(a.id), goal = Math.min(SEAL_AT, Math.max(p.total, 1)), by = sealBy(a.id);
       return { id: 'seal-' + a.id, i: '🔖', n: `${a.name}のしるし`, d: `${a.name}の注目スポットを${goal}か所めぐって、${by ? by.name : '地区の人'}に認めてもらう`, cur: p.done, goal, ready: (S.seals || []).includes(a.id) };   // 数がそろっても、その人と話すまでは もらえない
     }),
@@ -1730,6 +1733,7 @@ function checkBadges() {
     fresh.forEach(b => S.badges.push(b.id));
     save();
     toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
+    if (fresh.some(b => b.id === 'critterall')) toastAfter(`📜 ${(sealBy('nishio') || {}).name || 'ガイドさん'}「生きもの手帳が ぜんぶ そろったじゃん！ 1年 歩きとおした あかしだに。賞状を おくるでね」`);   // 図鑑がそろったら 賞状（昔のドット絵RPGの しくみ）
   }
   sealHints();
 }
@@ -1742,20 +1746,85 @@ function sealHints() {
     S.sealHint = [...(S.sealHint || []), id]; save();
     toastAfter(`🔖 ${a.name}を${sealGoal(id)}か所めぐった！ ${by.spotName ? `${by.spotName}の` : ''}${by.name}に会いに行くと、${a.name}のしるしが もらえるよ`);
   }
+  if (clearReady() && !S.cleared && !S.clearHint) {
+    const by = placeNpcs().find(n => n.id === CLEAR_BY);
+    S.clearHint = true; save();
+    toastAfter(`🏯 5つのしるしが そろった！ ${by ? `${by.spotName ? `${by.spotName}の` : ''}${by.name}` : '西尾城跡のガイドさん'}に会いに行こう`);
+  }
+}
+// クリア（殿堂入り）：5つの地区のしるしを そろえて、西尾城跡のガイドさんに会うと、エンディング（ここまでの さんぽの記録）。そのあとも そのまま遊べる（クリア後は となりの市町へ）
+// 昔のドット絵RPGの、町ごとの しるしを集めて 最後に認めてもらい、記録が残るしくみ
+const CLEAR_BY = 'castle-guide';
+const clearReady = () => SEAL_MAIN.every(id => (S.seals || []).includes(id));
+function clearGive(n) {
+  if (n.id !== CLEAR_BY || S.cleared || !clearReady()) return false;
+  S.cleared = { t: Date.now(), rec: clearRecord() };   // 殿堂入りした時点の記録（あとから見ても変わらないように）
+  save();
+  track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
+  const key = stateKey();
+  badgesSoon();   // バッジ（殿堂入り）は すぐ。知らせは ごほうびの画面が出ている間は閉じてから出る（toastQ）
+  setTimeout(() => endingWhenFree(key), 900);
+  return true;
+}
+// 少しあとでバッジを確かめる（知らせの順番のため）。そのあいだに記録（操作して移動／あるいて移動）が切りかわったら、ここでは確かめない（次の機会に確かめる）
+function badgesSoon() {
+  const key = stateKey();
+  setTimeout(() => { if (stateKey() === key) checkBadges(); }, 800);
+}
+// ごほうびの画面が出ている・絵の読みこみを待っている間は待ってから エンディングを出す（あとから出たごほうびに上書きされないように）
+// 待っている予約は1つだけ（バッジを何回押しても、クリア直後の表示と重なっても、エンディングは1回）。
+// 予約したときの記録（操作して移動／あるいて移動）に結びつけ、待っている間に記録が切りかわったら取りやめる
+function endingWhenFree(key = stateKey()) {
+  const w = endingWhenFree;
+  if ($('reward').querySelector('.ending') || stateKey() !== key) return;   // もう出ている・予約した記録から切りかわった
+  if (w.key === key) return;   // 同じ記録で もう待っている
+  const gen = w.gen = (w.gen || 0) + 1;   // 別の記録の待ちがあれば、新しい予約に置きかえる（古い待ちは次に見たとき終わる）
+  w.key = key;
+  (function go() {
+    if (gen !== w.gen) return;
+    if (stateKey() !== key || !S.cleared) { w.key = null; return; }
+    if (rewardBusy()) return setTimeout(go, 500);
+    w.key = null; showEnding();
+  })();
+}
+function clearRecord() {
+  return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length };
+}
+function showEnding() {
+  const npcs = window.NISHIO_NPCS || [], by = npcs.find(n => n.id === CLEAR_BY);
+  const r = (S.cleared && S.cleared.rec) || clearRecord(), when = S.cleared && S.cleared.t ? new Date(S.cleared.t) : null;
+  const rows = [
+    ...(when ? [['殿堂入りした日', `${when.getFullYear()}/${when.getMonth() + 1}/${when.getDate()}`]] : []),
+    ['めぐった名所', `${r.spots}か所`], ['話した人', `${r.met}人`], ['歩いた道のり', `${r.km}km`],
+    ['西尾ドット絵', `${r.dots}枚`], ['まちメモ', `${r.facts}こ`], ['生きもの', `${r.critters}しゅるい`],
+  ];
+  const seals = SEAL_MAIN.map(id => { const a = areas.find(x => x.id === id), p = npcs.find(n => n.id === SEAL_BY[id]); return a ? `<li>🔖 ${esc(a.name)}のしるし <small>${esc(p ? p.name : '')}</small></li>` : ''; }).join('');
+  const el = $('reward');
+  el.innerHTML = `<div class="rw ending"><div class="big">🏯</div><div class="nm">西尾さんぽ 殿堂入り</div>
+    <p class="say">${esc(by ? by.name : 'ガイドさん')}「5つの地区を ぜんぶ歩いてくれたじゃん。あんたは もう 西尾さんぽの名人だに！」</p>
+    <ul class="rec">${rows.map(([k, v]) => `<li>${esc(k)} <b>${esc(v)}</b></li>`).join('')}</ul>
+    <ul class="seals">${seals}</ul>
+    <p class="say">🏃 ${esc(RIVAL)}「おめでとう！ つぎは となりの市町も いっしょに歩こまい」</p>
+    <p class="note">このあとも そのまま遊べます。きろく の バッジ「👑 殿堂入り」から、いつでも この記録を見られます</p></div>`;
+  toastHold(); el.classList.add('show'); clearTimeout(showReward.t);
 }
 function sealGive(n) {
   const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
   if (!a || (S.seals || []).includes(id) || !sealReady(id)) return '';
   S.seals = [...(S.seals || []), id]; save();
-  setTimeout(checkBadges, 800);   // バッジの知らせ
+  badgesSoon();   // バッジの知らせ
   track('seal_get', { area: id, mode: demo ? 'play' : 'walk' });
   return `🔖 ${n.name}「${a.name}を${sealGoal(id)}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`;
 }
 // 地区のしるし：地区ごとに、しるしをくれる人（npcs.js の id）。昔のドット絵RPGの、町ごとに認めてもらって集める しくみ
-const SEAL_AT = 5, SEAL_BY = { nishio: 'castle-guide', isshiki: 'sakana-okami', kira: 'kira-history', hazu: 'sangane-hiker', sakushima: 'island-granny' };
+const SEAL_AT = 5, SEAL_BY = { nishio: 'castle-guide', isshiki: 'sakana-okami', kira: 'kira-history', hazu: 'sangane-hiker', sakushima: 'island-granny',
+  // クリア後（殿堂入りのあと）だけ：となりの市町のしるし（昔のドット絵RPGの、クリアすると行ける所が ふえる しくみ）
+  okazaki: 'okazaki-castle-guide', anjo: 'anjo-museum-guide', hekinan: 'hekinan-philosophy-guide', takahama: 'takahama-oni-guide', kota: 'kota-shiryokan-guide', gamagori: 'gamagori-takeshima-guide' };
+const SEAL_POST = new Set(['okazaki', 'anjo', 'hekinan', 'takahama', 'kota', 'gamagori']);
+const SEAL_MAIN = Object.keys(SEAL_BY).filter(id => !SEAL_POST.has(id));
 const sealBy = id => (window.NISHIO_NPCS || []).find(n => n.id === SEAL_BY[id]);
 const sealGoal = id => Math.min(SEAL_AT, Math.max(areaProgress(id).total, 1));
-const sealReady = id => spotMeta.loaded && areaProgress(id).total > 0 && areaProgress(id).done >= sealGoal(id);
+const sealReady = id => (!SEAL_POST.has(id) || !!S.cleared) && spotMeta.loaded && areaProgress(id).total > 0 && areaProgress(id).done >= sealGoal(id);
 
 /* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら まちメモ ----------
    遊び方は3つ。どれにも出番があるように、集まる速さに差をつけている（3分ずつ遊ばせて確かめた目安）
@@ -2213,16 +2282,17 @@ const AREA_ART = new Set(['nishio', 'isshiki', 'kira', 'hazu', 'sakushima', 'oka
 function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` : ''; }
 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
-const BADGE_PI = { first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
+const BADGE_PI = { critterall: 'book', first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
   walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk' };
+$('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) endingWhenFree(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
     const done = got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
     const pct = Math.min(100, (b.cur / b.goal) * 100);
-    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : b.id.startsWith('seal-') ? 'scroll' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
+    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" data-badge="${esc(b.id)}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : b.id.startsWith('seal-') ? 'scroll' : b.id === 'clear' ? 'castle' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
       ${done ? '' : `<div class="bp"><i style="width:${pct}%"></i></div>`}</div>`;
-    return `<div class="badge ${done ? 'got' : 'locked'}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
+    return `<div class="badge ${done ? 'got' : 'locked'}" data-badge="${esc(b.id)}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
       ${done ? '<small>獲得済み</small>' : `<div class="bp"><i style="width:${pct}%"></i></div><small>${Math.min(b.cur, b.goal)}/${b.goal}</small>`}</div>`;
   }).join('');
   const lv = levelOf(S.total);

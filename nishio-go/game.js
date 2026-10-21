@@ -809,6 +809,18 @@ function harvestReward(stars, level) {
   return pts;
 }
 
+// 段丘をのぼるミニゲーム（dankyu.js）のごほうび：のぼりきったとき1日1回、10pt＋星1つ5pt。きょうはもうもらっていれば null
+function dankyuReward(stars, level) {
+  if (S.dankyuDay === ymd()) return null;
+  const st = Math.max(1, Math.min(3, stars | 0)), pts = 10 + 5 * st;
+  S.dankyuDay = ymd();
+  gainPoints(pts);
+  S.log.unshift({ type: 'dankyu', t: Date.now(), pts, name: `ミニゲーム「段丘をのぼる」${'★'.repeat(st)}（${(level | 0) + 1}つ目の段丘）`, icon: '⛰️' });
+  save();
+  renderLog();
+  return pts;
+}
+
 let selected = null;   // シートに表示中のチェックイン候補
 
 // 当店にチェックインしたときの一言（ricepia.jp の内容から）
@@ -3129,7 +3141,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, FRIEND_BONUS,
+  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); },
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

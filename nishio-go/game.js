@@ -550,6 +550,8 @@ function talkNpc(id, page = 0) {
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   // GPS の精度が悪いあいだは、話はできても行き先は変えない（精度が上がってから話しかければ、着いたことになる）
   if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
+  const seal = page === 0 ? sealGive(n) : '';   // 地区のしるし（その地区を5か所めぐってから、この人と話した）
+  if (seal) { brief.icons += '🔖'; say.push(seal); }
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     const arrived = S.guide && S.guide.kind === 'npc' && S.guide.id === n.id ? S.guide : null;
     if (arrived) {   // すすめられた人に会えた
@@ -1684,7 +1686,7 @@ function badgeDefs() {
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
     ...areas.filter(a => SEAL_BY[a.id]).map(a => {   // 地区のしるし：その地区を5か所めぐると、地区の人が認めてくれる（制覇の手前の目標）
       const p = areaProgress(a.id), goal = Math.min(SEAL_AT, Math.max(p.total, 1)), by = sealBy(a.id);
-      return { id: 'seal-' + a.id, i: '🔖', n: `${a.name}のしるし`, d: `${a.name}の注目スポットを${goal}か所めぐって、${by ? by.name : '地区の人'}に認めてもらう`, cur: p.done, goal, ready: spotMeta.loaded && p.total > 0 };
+      return { id: 'seal-' + a.id, i: '🔖', n: `${a.name}のしるし`, d: `${a.name}の注目スポットを${goal}か所めぐって、${by ? by.name : '地区の人'}に認めてもらう`, cur: p.done, goal, ready: (S.seals || []).includes(a.id) };   // 数がそろっても、その人と話すまでは もらえない
     }),
     ...areas.map(a => {
       const p = areaProgress(a.id);
@@ -1708,18 +1710,36 @@ function badgeDefs() {
 function checkBadges() {
   const got = new Set(S.badges);
   const fresh = badgeDefs().filter(b => b.ready !== false && b.cur >= b.goal && !got.has(b.id));
-  if (!fresh.length) return;
-  fresh.forEach(b => S.badges.push(b.id));
-  save();
-  toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
-  for (const b of fresh.filter(x => x.id.startsWith('seal-'))) {   // 地区のしるしは、その地区の人が手わたす
-    const a = areas.find(x => 'seal-' + x.id === b.id), by = a && sealBy(a.id);
-    if (by) toastAfter(`🔖 ${by.name}「${a.name}を${b.goal}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`);
+  if (fresh.length) {
+    fresh.forEach(b => S.badges.push(b.id));
+    save();
+    toast(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);
   }
+  sealHints();
+}
+// 地区のしるしは、数がそろったら その地区の人に会いに行く（話しかけると talkNpc の sealGive で もらえる）。そろったときに1回だけ知らせる
+function sealHints() {
+  for (const id of Object.keys(SEAL_BY)) {
+    if ((S.seals || []).includes(id) || (S.sealHint || []).includes(id) || !sealReady(id)) continue;
+    const a = areas.find(x => x.id === id), by = placeNpcs().find(n => n.id === SEAL_BY[id]);
+    if (!a || !by) continue;
+    S.sealHint = [...(S.sealHint || []), id]; save();
+    toastAfter(`🔖 ${a.name}を${sealGoal(id)}か所めぐった！ ${by.spotName ? `${by.spotName}の` : ''}${by.name}に会いに行くと、${a.name}のしるしが もらえるよ`);
+  }
+}
+function sealGive(n) {
+  const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
+  if (!a || (S.seals || []).includes(id) || !sealReady(id)) return '';
+  S.seals = [...(S.seals || []), id]; save();
+  setTimeout(checkBadges, 800);   // バッジの知らせ
+  track('seal_get', { area: id, mode: demo ? 'play' : 'walk' });
+  return `🔖 ${n.name}「${a.name}を${sealGoal(id)}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`;
 }
 // 地区のしるし：地区ごとに、しるしをくれる人（npcs.js の id）。昔のドット絵RPGの、町ごとに認めてもらって集める しくみ
 const SEAL_AT = 5, SEAL_BY = { nishio: 'castle-guide', isshiki: 'sakana-okami', kira: 'kira-history', hazu: 'sangane-hiker', sakushima: 'island-granny' };
 const sealBy = id => (window.NISHIO_NPCS || []).find(n => n.id === SEAL_BY[id]);
+const sealGoal = id => Math.min(SEAL_AT, Math.max(areaProgress(id).total, 1));
+const sealReady = id => spotMeta.loaded && areaProgress(id).total > 0 && areaProgress(id).done >= sealGoal(id);
 
 /* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら まちメモ ----------
    遊び方は3つ。どれにも出番があるように、集まる速さに差をつけている（3分ずつ遊ばせて確かめた目安）

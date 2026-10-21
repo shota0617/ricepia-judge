@@ -708,3 +708,12 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .card.bags .lastweek span{flex-basis:100%;font-size:13px}
 .card.bags .kirahour small{flex-basis:100%;color:var(--sub);font-size:12px}
 .card.bags .kirahour.now b{color:#b07800}
+/* 出会いの場面：画面が ちかっと光り、黒いウィンドウに生きものの絵と ことば */
+.meet{position:absolute;left:16px;right:16px;top:22%;display:flex;justify-content:center;z-index:30}
+.meet .dq{width:100%;max-width:420px;display:flex;gap:12px;align-items:flex-start}
+.meet canvas{width:64px;height:64px;image-rendering:pixelated;flex:none;background:#000}
+.meet p{margin:0;white-space:pre-wrap;font-size:15px;color:#fff;min-height:3.4em}
+body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
+@keyframes meetFlash{0%{filter:invert(1)}25%{filter:none}50%{filter:invert(1)}75%{filter:none}}
+@media (prefers-reduced-motion:reduce){body.meet-flash #pxCanvas{animation:none}}
+#codeBox{width:100%;box-sizing:border-box;font-family:monospace;font-size:12px;margin:6px 0;word-break:break-all}

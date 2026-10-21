@@ -101,6 +101,7 @@
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car" data-art="btn-car"></i></button>
     <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）"><i data-pi="compass" data-art="btn-compass"></i></button>
   </div>
+  <div class="meet" id="meetBox" hidden><div class="dq"><canvas id="meetArt" width="16" height="16"></canvas><p id="meetText"></p></div></div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
 </section>
 
@@ -261,6 +262,12 @@
       <span><b>📊 アクセス解析</b><small>どの画面を見たか・どのボタンを押したかを、Google・LINEヤフー・Meta の解析に送ります（現在地の座標は送りません）。オフにすると送りません。くわしくは<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>。</small></span>
       <input type="checkbox" id="anaToggle"/>
     </label>
+  </div>
+  <div class="card" id="codeCard">
+    <p><b>🔑 ひきつぎの あいことば</b><small>機種を変えるときや、別の端末で続きを遊ぶときに使います。「あいことばを出す」でコピーして、新しい端末の ここに はりつけると、ポイント・めぐった所・ドット絵などが そのまま移ります（あるいて移動・操作して移動 は別の記録です）。</small></p>
+    <div class="row"><button type="button" class="btn mini" id="codeMake">あいことばを出す</button><button type="button" class="btn mini" id="codeCopy" hidden>コピー</button></div>
+    <textarea id="codeBox" rows="3" spellcheck="false" placeholder="ここに あいことば を はりつけて、下のボタン"></textarea>
+    <button type="button" class="btn mini" id="codeLoad">この あいことばで続ける</button>
   </div>
   <div class="card">
     <div class="row"><span><b>いまのGPS</b><small id="gpsInfo">—</small></span>

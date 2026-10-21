@@ -236,7 +236,21 @@ async function walkTo(page, id) {
     if (G.state.medashiDay === G.ymd()) return 'もう今日は遊んだことになっている';
     const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();   // ごほうびの画面の上には出ないので、閉じてから
     const p0 = G.state.points;
-    if (!M.shown && !M.open()) return `開かない（${document.body.classList.contains('jump-open') ? 'ミニゲーム中' : document.getElementById('reward').classList.contains('show') ? 'ごほうびの画面' : 'ほか'}）`;
+    // 田んぼを歩いて始まる。きろく のパネルを開いている間は始まらず、閉じたあとの1歩で始まる
+    const P = nishioPixel, t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    let hit = null;
+    for (let r = 0; r < 120 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) { const c = P.codeAt(x0 + dx, y0 + dy); if (c === P.C.F || c === P.C.U) { hit = [x0 + dx, y0 + dy]; break; } }
+    if (!hit) return '近くに田んぼがない';
+    document.querySelector('.tabs button[data-tab="log"]').click();
+    for (let i = 0; i < 20; i++) P.critterStep(hit[0], hit[1]);
+    if (M.shown) bad.push('パネルの上に出た');
+    document.querySelector('.tabs button[data-tab="map"]').click();
+    for (let i = 0; i < 3 && !M.shown; i++) P.critterStep(hit[0], hit[1]);
+    if (!M.shown) return `田んぼを歩いても開かない（${document.body.classList.contains('jump-open') ? 'ミニゲーム中' : document.getElementById('reward').classList.contains('show') ? 'ごほうびの画面' : 'ほか'}）${bad.join(',')}`;
+    // 開いている間は、矢印キーで主人公が動かない
+    const before = G.me.lat + ',' + G.me.lng;
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    if (G.me.lat + ',' + G.me.lng !== before) bad.push('開いている間に歩いた');
     if (document.querySelectorAll('#medashi .md-seed').length !== 3) bad.push('種もみが3つでない');
     M.pick('ok');
     if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);

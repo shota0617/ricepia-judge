@@ -1668,7 +1668,8 @@ function critterStep(x, y) {
   const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
   const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
   // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
-  if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15) { critterS.paddy = 0; if (NISHIO_MEDASHI.open()) return true; }
+  //   説明の窓・きろく などのパネル・ダイアログ・呼びとめの最中は始めない（閉じたあとの田んぼの1歩で始まる）
+  if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15 && !mapCovered() && !sightBusy() && NISHIO_MEDASHI.open()) { critterS.paddy = 0; return true; }
   if (!where || ++critterS.steps < 25 || Math.random() >= 1 / 40) return;
   critterS.steps = 0;
   const m = G.meetCritter(where);
@@ -5479,8 +5480,9 @@ function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.s
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+const medashiShown = () => !!(window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown);   // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
-  if (!G.demo || sightBusy()) return false;   // 呼びとめられている間は動けない
+  if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
@@ -5844,7 +5846,7 @@ function autoRead() {   // 人の話のウィンドウ：読む時間をおい�
 function autoTick() {
   setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
   if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
-  if (document.body.classList.contains('jump-open')) return;   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
+  if (document.body.classList.contains('jump-open') || medashiShown()) return;   // ミニゲーム（にしおジャンプ・稲刈り）・田んぼのイベントのあいだは、うしろで歩かない（チェックインやたからばこが勝手に進まないように）
   if (sightBusy() && !sight.opened) return;   // 呼びとめた人が歩いてくるのを待つ
   if (!$('pxInfo').hidden) { autoRead(); return; }
   autoS.read = 0;

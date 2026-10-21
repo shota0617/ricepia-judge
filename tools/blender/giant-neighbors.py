@@ -39,10 +39,17 @@ def mesh(name, mat, verts, faces):
     return o
 
 
-def roof(name, mat, w, d, h, z, top=0.25, x=0.0, y=0.0):
-    """寄棟の屋根。四方から同じ角度で上り、棟は長いほうの向き（giant.py の roof は細長いとひし形にゆがむので、ここでは面を直に作る）"""
-    inset = min(w, d) * (1 - top) / 2
-    tw, td = max(w - 2 * inset, 0.002), max(d - 2 * inset, 0.002)
+def roof(name, mat, w, d, h, z, top=0.25, x=0.0, y=0.0, flat=False):
+    """寄棟の屋根。短いほうの向きは棟まで閉じ、棟は長いほうの向き（長さは 長い辺−短い辺 ＋ 短い辺×top）。
+    flat=True は入母屋の下の段や裳階（もこし）のように、上に別の屋根や建物がのる段：四方から同じだけ内へ入った平らな上面。
+    （giant.py の roof は細長いとひし形にゆがむので、ここでは面を直に作る）"""
+    if flat:
+        inset = min(w, d) * (1 - top) / 2
+        tw, td = max(w - 2 * inset, 0.002), max(d - 2 * inset, 0.002)
+    else:
+        short = min(w, d)
+        ridge = abs(w - d) + short * top
+        tw, td = (ridge, 0.002) if w >= d else (0.002, ridge)
     v = [(x - w / 2, y - d / 2, z), (x + w / 2, y - d / 2, z), (x + w / 2, y + d / 2, z), (x - w / 2, y + d / 2, z),
          (x - tw / 2, y - td / 2, z + h), (x + tw / 2, y - td / 2, z + h), (x + tw / 2, y + td / 2, z + h), (x - tw / 2, y + td / 2, z + h)]
     return mesh(name, mat, v, [(0, 3, 2, 1), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7), (4, 5, 6, 7)])
@@ -64,7 +71,7 @@ def gable_y(name, mat, w, d, h, z, x=0.0, y=0.0):
 
 def irimoya(name, mat, w, d, h, z, x=0.0, y=0.0):
     """入母屋の屋根（下は寄棟、上に小さな切妻）"""
-    roof(name, mat, w, d, h * 0.62, z, 0.55, x, y)
+    roof(name, mat, w, d, h * 0.62, z, 0.55, x, y, flat=True)
     gable(name + 'g', mat, w * 0.55, d * 0.42, h * 0.5, z + h * 0.5, x, y)
 
 
@@ -182,7 +189,7 @@ def okazaki_daijuji():
     for x in (-0.27, -0.09, 0.09, 0.27):
         for y in (-0.14, 0.10):
             box(f'hashira{x}{y}', 'kijiD', (0.04, 0.04, 0.24), (x, y, 0.17))
-    roof('yane1', 'kawaraG', 0.74, 0.44, 0.08, 0.29, 0.75, 0, -0.02)
+    roof('yane1', 'kawaraG', 0.74, 0.44, 0.08, 0.29, 0.75, 0, -0.02, flat=True)
     box('en', 'kijiD', (0.58, 0.30, 0.02), (0, -0.02, 0.39))
     for i in range(8):
         box(f'koran{i}', 'kijiD', (0.01, 0.01, 0.05), (-0.27 + i * 0.077, -0.17, 0.42))
@@ -446,12 +453,10 @@ def okazaki_okazaki_sta():
 
 
 def okazaki_shooji():
-    """松應寺：瓦の大屋根の本堂（正面に白い破風）、木の柱の正面、左に松。前に石灯籠と参道"""
+    """松應寺：瓦の大屋根の本堂（正面に白い破風）、木の柱の正面、左に松"""
     ground('jari')
     hall('h', 0.04, 0.12, 0.46, 0.30, 0.18, 'kiji', 'kawaraG', 0.26)
     gable_y('hafu', 'shikkui', 0.16, 0.02, 0.07, 0.31, 0.04, -0.07)
-    toro('b', 0.30, -0.22)
-    box('sando', 'ishi', (0.12, 0.30, 0.01), (0.04, -0.24, 0.012))
     pine('p', -0.38, -0.04, 1.2)
     return dict(target=(0, 0.02, 0.22), scale=1.08, el=26, size=96)
 
@@ -573,7 +578,7 @@ def anjo_honshoji():
     irimoya('hondoY', 'kawaraG', 0.62, 0.44, 0.28, 0.19, 0.20, 0.20)
     box('koD', 'ishigaki', (0.30, 0.28, 0.10), (-0.20, -0.02, 0.05))
     box('ko1', 'yakiita', (0.22, 0.20, 0.13), (-0.20, -0.02, 0.165))
-    roof('koY1', 'kawaraG', 0.32, 0.30, 0.05, 0.23, 0.6, -0.20, -0.02)
+    roof('koY1', 'kawaraG', 0.32, 0.30, 0.05, 0.23, 0.6, -0.20, -0.02, flat=True)
     box('ko2', 'shikkui', (0.16, 0.14, 0.10), (-0.20, -0.02, 0.33))
     windows('kow', 'yakiita', [-0.24, -0.16], -0.092, 0.33, 0.03, 0.04)
     roof('koY2', 'kawaraG', 0.26, 0.24, 0.10, 0.38, 0.2, -0.20, -0.02)
@@ -614,17 +619,15 @@ def anjo_museum():
 
 
 def anjo_horiuchi_park():
-    """堀内公園：高さ35mの大観覧車（白い輪に色とりどりのゴンドラ）と池"""
+    """堀内公園：高さ35mの大観覧車（色とりどりのゴンドラ・白い支柱）と、ふもとの木立、電動汽車「メルヘン号」"""
     ground('shibaG')
-    o = cyl('ike', 'ike', 0.22, 0.01, (-0.24, -0.20, 0.012), verts=20)
-    o.scale = (1.3, 0.7, 1)
     ferris('f', 0.08, 0.12, 0.30, 0.38, ['red', 'yellow', 'blue', 'green', 'pink', 'jrOrange'])
     box('noriba', 'yaneR', (0.14, 0.10, 0.06), (0.08, 0.06, 0.03))
     for i, m in enumerate(('red', 'yellow')):
-        box(f'kisha{i}', m, (0.08, 0.05, 0.05), (-0.36 + i * 0.10, 0.20, 0.035), bevel=0.01)
-    tree('a', 0.42, -0.26, 0.8)
+        box(f'kisha{i}', m, (0.08, 0.05, 0.05), (-0.30 + i * 0.10, -0.24, 0.035), bevel=0.01)
+    for i, (x, y) in enumerate(((-0.40, 0.20), (-0.30, 0.32), (0.42, 0.26), (0.40, -0.24), (-0.42, -0.06))):
+        tree(i, x, y, 0.9)
     return dict(target=(0.02, 0.02, 0.34), scale=1.12, el=18, size=96)
-
 
 def anjo_park():
     """安城公園：池にかかる朱色の太鼓橋と、まわりのソメイヨシノ（約170本の桜の名所）"""
@@ -799,10 +802,9 @@ def hekinan_shomyoji():
     box('do', 'shikkui', (0.52, 0.32, 0.20), (0, 0.10, 0.15))
     for i in range(7):
         box(f'koshi{i}', 'kijiD', (0.01, 0.01, 0.14), (-0.18 + i * 0.06, -0.062, 0.14))
-    roof('hisashi', 'kawaraG', 0.66, 0.46, 0.06, 0.25, 0.75, 0, 0.10)
+    roof('hisashi', 'kawaraG', 0.66, 0.46, 0.06, 0.25, 0.75, 0, 0.10, flat=True)
     irimoya('ue', 'doban', 0.50, 0.32, 0.24, 0.31, 0, 0.10)
     steps('s', 'ishi', 0, -0.26, 0.16, 3)
-    pine('a', -0.42, -0.18, 1.0)
     return dict(target=(0, 0.02, 0.24), scale=1.08, el=26, size=96)
 
 
@@ -813,7 +815,7 @@ def hekinan_kaitokuji():
     box('do', 'kijiD', (0.46, 0.34, 0.18), (-0.04, 0.10, 0.14))
     for i in range(7):
         box(f'koshi{i}', 'koshi2', (0.01, 0.01, 0.12), (-0.22 + i * 0.06, -0.072, 0.13))
-    roof('yaneS', 'yaneB', 0.60, 0.48, 0.06, 0.23, 0.8, -0.04, 0.10)
+    roof('yaneS', 'yaneB', 0.60, 0.48, 0.06, 0.23, 0.8, -0.04, 0.10, flat=True)
     gable_y('yane', 'yaneB', 0.56, 0.50, 0.28, 0.27, -0.04, 0.10)
     gable_y('hafu', 'kijiD', 0.30, 0.01, 0.14, 0.29, -0.04, -0.148)
     box('oni', 'onigawara', (0.06, 0.04, 0.06), (-0.04, -0.15, 0.56))
@@ -999,8 +1001,6 @@ def takahama_oyama():
     for x in (-0.04, 0.04):
         sphere(f'mimi{x}', 'tanuki', 0.02, (x, 0.0, 0.36))
         sphere(f'me{x}', 'sumi', 0.01, (x * 0.6, -0.065, 0.31))
-    cyl('kasa', 'kiji', 0.10, 0.03, (0, 0.02, 0.38), verts=16, r2=0.06)
-    box('tokkuri', 'kiji', (0.04, 0.04, 0.06), (0.09, -0.05, 0.12))
     for i, (x, y) in enumerate(((-0.38, 0.26), (-0.20, 0.34), (0.20, 0.34), (0.40, 0.20), (-0.40, -0.12), (0.38, -0.22), (-0.24, -0.30))):
         tree(i, x, y, 0.9, 'sakura')
     return dict(target=(0, 0.02, 0.18), scale=1.08, el=24, size=96)

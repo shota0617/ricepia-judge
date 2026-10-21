@@ -9,6 +9,9 @@
 //      地図「（平）成23）年の合併直前」：□ でかこんだ村名が1906（明治39）年の村。そのころの村と、合併直前の町・大字の名前
 //      注：室村・花蔵寺村・善明村・平原村・家武村などは1884（明治17）年に組合村をつくった。豊坂村は いまは幸田町にふくまれる
 // ・村ごとの大字は、地図で その村の太い線の中に書いてあるもの（村の名前の □ がない所＝西浅井・東浅井・新村・高落・小島・志籠谷・八幡川田・上羽角・下羽角 などは、どの村か読みとれないので入れない）
+// ・本物の古い地図：運営者が持っている「愛知県幡豆郡全図」（縮尺三万八千分之一）と「碧海郡全図」の写真から、村のあたりを切りぬいたもの
+//   （nishio-go/art/oldmap/<村の id>.jpg。明治村は碧海郡全図、ほかは幡豆郡全図）。地図をつくった年は、写真に写っている所には書かれていない
+//   （村の名前の書き方から、明治の終わり〜大正ごろのものと見られる）。写真を切りぬいて小さくしただけで、絵や線は変えていない
 // ・ほかの窓（説明の窓・パネル・ダイアログ・呼びとめ・ごほうび・ミニゲーム・田んぼのイベント）が出ている間は待つ。開いている間は歩かない（pixel.js の eventShown）
 (() => {
   'use strict';
@@ -116,7 +119,9 @@
     if (!r) return false;
     const img = villageMap(VILLAGES.indexOf(v)), others = v.ooaza.filter(o => kana(o) !== kana(String(town).replace(/^(一色町|吉良町|幡豆町)(?=.)/, '').replace(/町$/, ''))).slice(0, 8);
     root.innerHTML = `<div class="md-card om-card"><p class="md-head">📜 イベント：古い地図が出てきた！</p>
-      <div class="om-map">${img ? `<img src="${img}" alt="明治39年ごろの村の地図（いまの町名から描いた おおよその形）" width="240"/>` : ''}<span class="om-stamp">明治39年ごろ<b>${v.name}</b></span></div>
+      <figure class="om-real"><img src="nishio-go/art/oldmap/${v.id}.jpg" alt="本物の古い地図（${v.id === 'meiji' ? '碧海郡全図' : '愛知県幡豆郡全図'}）の${v.name}のあたり" width="300" height="300"/><span class="om-stamp">明治39年ごろ<b>${v.name}</b></span>
+        <figcaption>本物の古い地図「${v.id === 'meiji' ? '碧海郡全図' : '愛知県幡豆郡全図'}」の、${v.name}のあたり（写真）</figcaption></figure>
+      <div class="om-map om-small">${img ? `<img src="${img}" alt="明治39年ごろの村の地図（いまの町名から描いた おおよその形）" width="160"/>` : ''}<small>いまの地図の上では、このあたり</small></div>
       <p class="md-say">いまの「${esc(town)}」は、明治39年（1906年）のころ「${v.name}」だった。${others.length ? `同じ村だった所：${others.join('・')}${v.ooaza.length - 1 > others.length ? ' など' : ''}。` : ''}${v.note ? `<br>${v.note}` : ''}</p>
       <p class="om-count">明治の村 ${r.n}/${VILLAGES.length}${r.pts ? `　+${r.pts}pt` : ''}${r.all ? '　🏅 ぜんぶ見つけた！' : ''}</p>
       <p class="om-src">出典：西尾の歴史の資料集の地図（平成23年の合併直前の町と、1906年の村）。絵は、いまの町名の位置（OpenStreetMap）から描いた おおよその村の形（色のない所は、村が読みとれなかった所）</p>

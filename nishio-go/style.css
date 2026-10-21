@@ -738,3 +738,9 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .be-a .be-btn:disabled{opacity:1}
 .jump-result .hy-ans{display:flex;flex-direction:column;align-items:stretch;gap:6px;width:100%}
 .jump-result .hy-ans .btn{white-space:normal;font-size:14px}
+.om-real{position:relative;margin:4px 0 6px;text-align:center}
+.om-real img{width:100%;max-width:300px;height:auto;border:3px double #8a6a3a;border-radius:4px}
+.om-real figcaption{font-size:11px;color:#6a5a40}
+.om-map.om-small img{max-width:160px}
+.om-map.om-small small{display:block;font-size:11px;color:#6a5a40}
+.medashi .md-card{max-height:calc(100vh - 32px);overflow:auto}

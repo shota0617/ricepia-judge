@@ -492,6 +492,7 @@ function npcPages(n) {
   const hid = Object.keys(S.heard || {}).filter(id => S.heard[id].byId === n.id && !S.heard[id].found).sort((a, b) => S.heard[b].t - S.heard[a].t)[0];   // いちばん新しく すすめた名所
   const hs = hid && spots.find(x => x.id === hid);
   if (hs) pages.push(`🔍 ${hintSay(n, hs.name)}`);   // この人がくれた、しらべるの手がかり（まだ しらべていないあいだ）
+  if (S.parcel && S.parcel.from === n.id) pages.push(`📦 ${S.parcel.toName}に、その${S.parcel.item}を よろしくね。`);   // あずけた おとどけもの（届けるまで）
   return pages;
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
@@ -528,35 +529,44 @@ function talkNpc(id, page = 0) {
       ${demo ? `<button type="button" class="btn mini" data-move-npc="${esc(n.id)}">近くへ移動（操作モード）</button>` : ''}</div>` };
   }
   const say = [];   // 知らせ（はじめて話した・イベント達成・イベント）はまとめて1つに
+  // 文字を少なく（ふだん）：ポイントは合わせて1つ、あずかった荷物・手がかりは 📦🔍 の印だけ（1行か2行に）
+  const brief = { icons: '', marks: '', next: '', t0: S.total, lv0: levelOf(S.total) };
   if (page === 0 && !npcMet(n.id)) {
     S.met = [...(S.met || []), n.id];
     S.log.unshift({ type: 'npc', t: Date.now(), pts: 10, name: `${n.name}と話した`, icon: NPC_LOOK[n.look] || '💬' });
     const lvUp = gainPoints(10);
     save();
     sound.jingle(lvUp ? 'levelup' : 'checkin');
-    say.push(simple() ? `💬 +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}` : `💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
+    brief.icons += '💬'; say.push(`💬 はじめて話した：${n.name} +10pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`);
     track('npc_talk', { npc: n.id, mode: demo ? 'play' : 'walk' });
     setTimeout(checkBadges, 800);
   }
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   // GPS の精度が悪いあいだは、話はできても行き先は変えない（精度が上がってから話しかければ、着いたことになる）
+  if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     const arrived = S.guide && S.guide.kind === 'npc' && S.guide.id === n.id ? S.guide : null;
     if (arrived) {   // すすめられた人に会えた
       const pts = guideReward(S.guide);
+      brief.icons += '🎉';
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
     }
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
     const g = decideGuide(n);
     if (g) {
-      setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(simple() ? `📜 → ${g.name}` : `📜 イベント発生：${g.name}へ行ってみて`);
+      setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 イベント発生：${g.name}へ行ってみて`); brief.next = g.name;
       const hid = heardOf(g, n), hs = hid && spots.find(x => x.id === hid);
-      if (hs) say.push(simple() ? `🔍 ${hs.name}` : `🔍 「${hintSay(n, hs.name)}」`);
+      if (hs) { brief.marks += '🔍'; say.push(`🔍 「${hintSay(n, hs.name)}」`); }
+      const pc = g.kind === 'npc' && giveParcel(n, g.id);
+      if (pc) { brief.marks += '📦'; say.push(`📦 「${pc.toName}に、この${pc.item}を届けてくれん？」`); }
     }
     else if (arrived) setGuide(null);   // 着いた行き先は、次がなくても消す（話しかけ直しでくり返し着かないように）
     if (arrived) rivalSay({ ...arrived, name: n.spotName }, g);
   }
-  if (say.length) toast(say.join('　'));
+  if (say.length && simple()) {
+    const got = S.total - brief.t0, lv = levelOf(S.total) > brief.lv0 ? levelOf(S.total) : 0;
+    toast([brief.icons && `${brief.icons}${got ? ` +${got}pt` : ''}${lv ? ` Lv${lv}` : ''}`, brief.next && `📜 → ${brief.next}${brief.marks ? ` ${brief.marks}` : ''}`].filter(Boolean).join('　'));
+  } else if (say.length) toast(say.join('　'));
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
   if (pic) {
     const dots = `<span class="pg">${pages.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</span>`;
@@ -1245,6 +1255,28 @@ const HINT_SAY = {
   guide: ['{s}に着いたら、ぜひ しらべてみてください。歩いてこそ見つかる話がありますよ', '{s}では、足をとめて よく見てみてください'],
   monk: ['{s}では、心しずかに よう見てごらんなさい', '{s}に着いたら、ゆっくり しらべてごらんなさい'],
 };
+// おとどけもの：人が次の人をすすめたとき、ときどき「この○○を届けてくれん？」と荷物をあずける（1つずつ・1日3回まで）。
+// すすめられた人に話しかけると届けられて +10pt。荷物はどこにでもある物だけ（中身や、その人についての事実は言わない）
+// 昔のドット絵RPGの、はじめの町で荷物を あずかって届ける しくみ。人の話で進む、を「人と人をつなぐ」にも
+const PARCEL_PTS = 10, PARCEL_DAILY = 3, PARCEL_RATE = 0.5, PARCEL_ITEMS = ['手紙', 'ふろしき包み', '回覧板', 'おすそわけの包み', 'かりていた本'];
+function giveParcel(n, toId) {
+  const to = placeNpcs().find(x => x.id === toId), day = dayState();
+  if (!to || S.parcel || (day.parcels || 0) >= PARCEL_DAILY || Math.random() >= PARCEL_RATE) return null;
+  day.parcels = (day.parcels || 0) + 1;
+  S.parcel = { from: n.id, fromName: n.name, to: to.id, toName: to.name, item: PARCEL_ITEMS[Math.floor(Math.random() * PARCEL_ITEMS.length)], t: Date.now() };
+  save();
+  track('parcel_give', { from: n.id, to: to.id, mode: demo ? 'play' : 'walk' });
+  return S.parcel;
+}
+function deliverParcel(n) {
+  const p = S.parcel;
+  S.parcel = null;
+  S.log.unshift({ type: 'parcel', t: Date.now(), pts: PARCEL_PTS, name: `おとどけもの：${p.fromName}から${n.name}へ`, icon: '📦' });
+  const lvUp = gainPoints(PARCEL_PTS);
+  save();
+  track('parcel_done', { from: p.from, to: n.id, mins: Math.round((Date.now() - p.t) / 60000), mode: demo ? 'play' : 'walk' });
+  return `📦 ${n.name}「${p.fromName}から${p.item}？ わざわざ ありがとうね」 +${PARCEL_PTS}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`;
+}
 function hintSay(n, name) {
   const list = HINT_SAY[n.look] || HINT_SAY.man, h = [...String(n.id)].reduce((a, c) => a + c.charCodeAt(0), 0);
   return list[h % list.length].replace('{s}', () => name);
@@ -1332,6 +1364,7 @@ function setGuide(g) {
   S.guide = g ? { ...g, t: Date.now() } : null;
   if (g) S.guides = (S.guides || 0) + 1;
   save();
+  renderGuide();   // 人の話で行き先が変わったら、話の窓が開いているあいだも 下の行き先の札をすぐ書きかえる
 }
 const guideTarget = () => {
   const g = S.guide;
@@ -2014,7 +2047,7 @@ $('dotMotifs').addEventListener('click', e => {
   renderDots();
 });
 
-const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet' };   // 最近のポイントの絵
+const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら

@@ -5772,8 +5772,14 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
   return out.reverse();
 }
+const AUTO_PICK_MS = 15000;
 function autoRead() {   // 人の話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる（スポットやお店の説明は、自分で閉じるまで待つ）
   const body = $('pxInfoBody'), now = Date.now();
+  if (body.querySelector('.pick-first')) {   // はじめの1枚：えらぶ時間（AUTO_PICK_MS）をおいて、えらばなければ閉じる（閉じると1枚目になる）。おまかせ歩きのまま止まらないように
+    if (!autoS.read) autoS.read = now + AUTO_PICK_MS;
+    else if (now >= autoS.read) { autoS.read = 0; $('pxInfo').hidden = true; }
+    return;
+  }
   if (!body.querySelector('.npc-next, .npc-end')) { autoS.read = 0; return; }
   if (!autoS.read) { autoS.read = now + Math.min(6000, 1800 + body.textContent.length * 40); return; }
   if (now < autoS.read) return;

@@ -4675,12 +4675,21 @@ function spotArt(s) {
   return spotSprites[k] ? k : 'chest';
 }
 const SPOT_KIND = { park: 'park', historic: 'historic', view: 'view', sight: 'sight', art: 'art', beach: 'beach', museum: 'museum' };
-const spotScale = spr => (spr[0].width === 24 ? 1.5 : 1);   // 24×24 の絵（spots.png）は1.5マスで描く（マスと同じ細かさ）
+// 特大の絵（96×96）は6マスで描く（ドットの細かさをマスとそろえる）。となりの名所と6マスあかない所は、ふつうの絵にする（小さく縮めて描かない）
+const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null);
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
 // 歩く地図を Godot で描くとき（せってい の試作。nishio-go/godot-field.js）は、描く命令を ctx の代わりの記録係に書いて Godot に渡す
 let ctx = ctx0, rec = null;
+// ドットの細かさ：ポケモン赤・緑（ゲームボーイの画面 160×144 ドット）と同じに。画面の横に約160ドット（10マス）が入る大きさを、
+// 1ドット＝画面の点のちょうど整数こ にして、どのマスも人も建物も同じ大きさのドットで描く。scale は 🔍 の大きさ（2 がポケモンと同じ・1 は半分・3 は1.5倍・4 は2倍）
+function fieldT(dpr) {
+  const cw = cv.clientWidth || 390, ch = cv.clientHeight || 780;
+  return 16 * Math.max(1, Math.round(Math.min(cw / 160, ch / 144) * dpr * scale / 2));
+}
+// 絵を描く大きさ：絵の1点が、マスの1ドットと同じ大きさになるように（16×16 の絵は1マス、24×24 は1.5マス、48×48 は3マス、96×96 は6マス）
+const dotSize = (img, T) => img.width * T / 16;
 let active = false, raf = 0, dirty = true, scale = 2;
 const floaters = [];   // 浮かぶ文字 { t, at }
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
@@ -4854,7 +4863,7 @@ function frame(now) {
   if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
   rec = window.NSG_GODOT && NSG_GODOT.on() ? NSG_GODOT.rec : null;   // Godot で描く：ここから frame の終わりまで、描く命令を記録する
   if (rec) { ctx = rec; rec.begin(w, h); }
-  const T = Math.round(16 * scale * dpr);
+  const T = fieldT(dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
   lastT = now;
 
@@ -4932,9 +4941,9 @@ function frame(now) {
   const spots = G.spots;
   const pois = visiblePois(tx0, ty0, tx1, ty1), labelBoxes = [];
   for (const p of pois) {
-    const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（4マス。読めるまではいつもの絵）
-    const size = giant ? T * 4 : p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
-    ctx.drawImage((giant || spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
+    const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（読めるまではいつもの絵）
+    const img = (giant || spotSprites[p[2]] || spotSprites.shop)[0], size = dotSize(img, T), sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
+    ctx.drawImage(img, sx, sy, size, size);
     if (giant) poiHits.push([sx, sy, size, p, giant[0]]);   // タップは絵のある所（透明でない点）で決める
   }
   const me = G.me;
@@ -4942,9 +4951,9 @@ function frame(now) {
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
     const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
-    const giant = near ? giantOf(s) : null;
+    const giant = near ? bigOf(s) : null;
     const spr = giant || spriteOf(s);
-    const size = giant ? T * giantTiles(s) : s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T * spotScale(spr);   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）。特大の絵は6マス
+    const size = dotSize(spr[0], T);   // 絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
@@ -5920,7 +5929,7 @@ cv.addEventListener('click', e => {
     if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
     return;
   }
-  const T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3));
+  const T = fieldT(Math.min(window.devicePixelRatio || 1, 3));
   const c = camTile();
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
@@ -5938,15 +5947,15 @@ cv.addEventListener('click', e => {
     if (img.getContext('2d').getImageData(ix, iy, 1, 1).data[3] > 0) hit = s;
   }
   if (!hit) for (const s of G.spots) {
-    if (giantOf(s, false)) continue;   // 特大の絵は上で調べた
+    if (bigOf(s, false)) continue;   // 特大の絵は上で調べた
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2 * spotScale(spriteOf(s))) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
+    const half = dotSize(spriteOf(s)[0], T) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
   let bp = null;
-  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（4マス）は、絵のある所をタップしたかで
+  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（6マス）は、絵のある所をタップしたかで
     const [gx, gy, gs, p, img] = poiHits[i];
     if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
     if (img.getContext('2d').getImageData(Math.floor((x - gx) / gs * img.width), Math.floor((y - gy) / gs * img.height), 1, 1).data[3] > 0) bp = p;
@@ -5998,7 +6007,7 @@ if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 // テスト用
 window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
-    const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+    const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
   }, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

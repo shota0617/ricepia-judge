@@ -1749,6 +1749,44 @@ function dogBark(now) {
     return;
   }
 }
+// 夜のさんぽ（昔のRPGの、暗い洞窟を たいまつで照らして進む しくみ）：日本時間の19時〜5時は、歩く地図を暗くして、
+// 主人公のまわり（3マスほど）と、お店・駅などの建物の明かり、当店（いちばん明るい）、たからばこ だけが見える。夕方・明け方（18時台・5時台）は半分の暗さ。
+// せってい「🌙 夜は地図を暗く」でオフにできる。看板・町名は暗くしない（あとから描く）
+let nightOn = true;
+try { nightOn = localStorage.getItem('nsg_night') !== '0'; } catch (e) { /* 既定 */ }
+const nightCv = document.createElement('canvas');
+function nightLevel(t = Date.now()) {
+  const q = new URLSearchParams(location.search).get('night');
+  if (q) return +q;   // 確かめ用（?night=1 で夜・0.5 で夕方）
+  const hr = new Date(t + 9 * 3600000).getUTCHours();
+  return hr >= 19 || hr < 5 ? 1 : hr === 18 || hr === 5 ? 0.5 : 0;
+}
+function drawNight(w, h, ox, oy, T, cy, pois, now) {
+  const lv = nightOn && !worldMode ? nightLevel() : 0;
+  if (!lv) return;
+  if (nightCv.width !== w || nightCv.height !== h) { nightCv.width = w; nightCv.height = h; }
+  const x = nightCv.getContext('2d');
+  x.globalCompositeOperation = 'source-over';
+  x.clearRect(0, 0, w, h);
+  x.fillStyle = `rgba(8,12,36,${0.62 * lv})`; x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = 'destination-out';   // 明かりの所を くりぬく
+  const light = (px, py, r, k = 1) => {
+    if (px < -r || py < -r || px > w + r || py > h + r) return;
+    const g = x.createRadialGradient(px, py, r * 0.25, px, py, r);
+    g.addColorStop(0, `rgba(0,0,0,${k})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
+  };
+  const flick = 1 + Math.sin(now / 180) * 0.03;   // たいまつのように、少し ゆらぐ
+  if (G.me || G.demo) light(w / 2, cy - T * 0.25, T * 3.4 * flick);
+  for (const p of pois) light(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * (p[4] === 'lm' ? 1.6 : 1.3), 0.85);   // お店・駅・建物の窓の明かり
+  for (const s of G.spots || []) if (s.shop) { const p = toTile(s.lat, s.lng); light(ox + p.x * T, oy + p.y * T - T, T * 3.2); }   // 当店は いちばん明るく
+  for (const c of G.liveChests()) { const p = toTile(c.lat, c.lng); light(ox + p.x * T, oy + p.y * T, T * 0.9, 0.7); }
+  gbPause++;
+  ctx.drawImage(nightCv, 0, 0);
+  gbPause--;
+  if (!nightNote.done && lv === 1) { nightNote.done = true; G.toast('🌙 夜のさんぽ。明かりの まわりしか見えないよ。たからばこは ほんのり光っとる'); }
+}
+const nightNote = { done: false };
 const dogAt = (tx, ty) => dog.trail.length && Math.floor(dog.x) === tx && Math.floor(dog.y + 0.25) === ty;
 function dogPet(now) {
   const say = ['しっぽを ぶんぶん ふっとる', 'くんくん……地面の においを かいどる', '「わんっ！」 うれしそう', 'こっちを見上げて、つぎは どこ行く？って顔しとる'];
@@ -5156,6 +5194,7 @@ function frame(now) {
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
+  if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える
   {   // 看板は人や建物の上に出す（主人公には重ねない）
     // 町名の札（青地に白い字。電柱の町名表示のように）・駅名標（白地に黒い字と青い線）・お店の看板（その店らしい色に白い字）
     // 重ならないように、町名 → 駅 → 大きなお店 → ほかのお店 の順に場所を取る
@@ -5607,6 +5646,10 @@ $('pxZoom').addEventListener('click', () => {   // 🔍：押すたびに大き�
   if (worldMode) { wscale = wscale < WSIZES.length - 1 ? wscale + 1 : 0; return; }
   setScale(scale < 4 ? scale + 1 : 1);
 });
+{   // せってい「夜は地図を暗く」
+  const t = $('nightToggle');
+  if (t) { t.checked = nightOn; t.addEventListener('change', () => { nightOn = t.checked; try { localStorage.setItem('nsg_night', nightOn ? '1' : '0'); } catch (e) { /* noop */ } dirty = true; }); }
+}
 {   // せってい「ゲームボーイの4色」
   const t = $('gbToggle');
   if (t) { t.checked = gbOn; t.addEventListener('change', () => { gbOn = t.checked; try { localStorage.setItem('nsg_gb', gbOn ? '1' : '0'); } catch (e) { /* noop */ } dirty = true; }); }

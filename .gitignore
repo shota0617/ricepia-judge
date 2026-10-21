@@ -8,3 +8,4 @@ gb-play-out/
 __pycache__/
 *.nes
 *.fds
+nethack-play-out/

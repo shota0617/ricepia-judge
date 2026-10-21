@@ -1703,6 +1703,58 @@ const npcAt = (tx, ty) => (G.npcs || []).find(n => { const t = npcTile(n); retur
 // 話しかけた人の頭の上に、ぽんと気持ちの吹き出し（はじめて会った人は「！」、2回目からは「♪」か「♥」。1.6秒）
 const npcEmotes = new Map();
 const EMOTE_PIX = { '!': ['..#..', '..#..', '..#..', '.....', '..#..'], '♪': ['...##', '..#.#', '..#..', '.##..', '.##..'], '♥': ['.#.#.', '#####', '#####', '.###.', '..#..'] };
+function emoteAt(sx, sy, T, k, age) {   // 頭の上の吹き出し（ぽんと上がって、少しゆれる）
+  const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.5), by = sy - Math.round(T * 0.55) - Math.round(Math.min(1, age / 150) * 3 * u) + (Math.floor(age / 300) % 2 ? u : 0);
+  ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 9 * u);
+  ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 7 * u); ctx.fillRect(bx + u, by + 7 * u, 2 * u, 2 * u);
+  ctx.fillStyle = k === '♥' ? '#e0405a' : '#222';
+  EMOTE_PIX[k].forEach((row, y) => { for (let x = 0; x < 5; x++) if (row[x] === '#') ctx.fillRect(bx + (x + 1) * u, by + (y + 1) * u, u, u); });
+  dirty = true;
+}
+// さんぽ犬（昔のRPGの、ついてくるペットのしくみ）：主人公の通った道を、1マスうしろから ついて歩く。
+// 少しはなれた たからばこ（4〜14マス）に気づくと「！」と ほえて、どっちのほうか教える（1つに1回）。タップすると しっぽを ふる
+const DOG_ROWS = [
+  ['................', '................', '...........k.k..', '..........kokok.', '..kk......kooook', '.kook.....kookok', '.kOok.....kowwwk', '..kOk.....kowwk.',
+    '..kOkkkkkkoowk..', '...koooooooowk..', '...koooooooOOk..', '...kowwwwwwOk...', '...kok.kok.ok...', '...kk..kk..kk...', '................', '................'],
+];
+DOG_ROWS.push([...DOG_ROWS[0].slice(0, 12), '...kok..ko.kok..', '...kk...kk..kk..', '................', '................']);   // 歩く2コマめ（足を入れかえる）
+const DOG_PAL = { ...PAL, o: '#d9822b', O: '#a05616' };
+const dogSprites = { right: DOG_ROWS.map(r => sprite(r, false, DOG_PAL)), left: DOG_ROWS.map(r => sprite(mirror(r), false, DOG_PAL)) };
+const dog = { trail: [], x: 0, y: 0, face: 'right', moving: false, barked: new Set(), bark: -1e9, k: '!' };
+function dogStep(c) {
+  const t = dog.trail, last = t[t.length - 1], d0 = last ? Math.hypot(c.x - last.x, c.y - last.y) : Infinity;
+  if (d0 > 6) dog.trail = [{ x: c.x, y: c.y + 1 }, { x: c.x, y: c.y }];   // はじめと、ひとっとびしたときは、主人公の下に
+  else if (d0 > 0.05) { t.push({ x: c.x, y: c.y }); if (t.length > 120) t.shift(); }
+  const tr = dog.trail;
+  let need = 1, p = tr[0];
+  for (let i = tr.length - 1; i > 0; i--) {   // 通った道のりで1マスうしろ
+    const a = tr[i], b = tr[i - 1], d = Math.hypot(a.x - b.x, a.y - b.y);
+    if (d >= need) { p = { x: a.x + (b.x - a.x) * need / d, y: a.y + (b.y - a.y) * need / d }; break; }
+    need -= d;
+  }
+  dog.moving = Math.hypot(p.x - dog.x, p.y - dog.y) > 0.01;
+  if (Math.abs(p.x - dog.x) > 0.01) dog.face = p.x > dog.x ? 'right' : 'left';
+  dog.x = p.x; dog.y = p.y;
+}
+function dogBark(now) {
+  if (driving || worldMode || !dog.trail.length) return;
+  const c = camTile();
+  for (const ch of G.liveChests()) {
+    if (dog.barked.has(ch.id)) continue;
+    const p = toTile(ch.lat, ch.lng), dx = p.x - c.x, dy = p.y - c.y, d = Math.hypot(dx, dy);
+    if (d < 4 || d > 14) continue;
+    dog.barked.add(ch.id); dog.bark = now; dog.k = '!'; dirty = true;
+    const dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'みぎ' : 'ひだり') : (dy > 0 ? 'した' : 'うえ');
+    G.toast(`🐕 さんぽ犬「わんっ！」……${dir}のほうから、たからばこの においが するみたい`);
+    return;
+  }
+}
+const dogAt = (tx, ty) => dog.trail.length && Math.floor(dog.x) === tx && Math.floor(dog.y + 0.25) === ty;
+function dogPet(now) {
+  const say = ['しっぽを ぶんぶん ふっとる', 'くんくん……地面の においを かいどる', '「わんっ！」 うれしそう', 'こっちを見上げて、つぎは どこ行く？って顔しとる'];
+  dog.bark = now; dog.k = '♥';
+  G.toast(`🐕 さんぽ犬：${say[Math.floor(now / 1000) % say.length]}`);
+}
 function openNpc(n) {
   const first = !G.npcMet(n.id);
   const r = G.talkNpc(n.id);
@@ -4943,7 +4995,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); dogBark(now); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
@@ -5043,14 +5095,8 @@ function frame(now) {
     if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
     ctx.drawImage((npcSprites[n.look] || npcSprites.man)[sp && sp.walking && sight.n === n ? Math.floor(now / 120) % 2 : f], sx, sy, T, T);
     const em = npcEmotes.get(n.id), age = em ? performance.now() - em.t : 1e9;
-    if (age < 1600) {   // 気持ちの吹き出し（ぽんと上がって、少しゆれる）
-      const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.5), by = sy - Math.round(T * 0.55) - Math.round(Math.min(1, age / 150) * 3 * u) + (Math.floor(age / 300) % 2 ? u : 0);
-      ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 9 * u);
-      ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 7 * u); ctx.fillRect(bx + u, by + 7 * u, 2 * u, 2 * u);
-      ctx.fillStyle = em.k === '♥' ? '#e0405a' : '#222';
-      EMOTE_PIX[em.k].forEach((row, y) => { for (let x = 0; x < 5; x++) if (row[x] === '#') ctx.fillRect(bx + (x + 1) * u, by + (y + 1) * u, u, u); });
-      dirty = true;
-    } else if (em) npcEmotes.delete(n.id);
+    if (age < 1600) emoteAt(sx, sy, T, em.k, age);   // 気持ちの吹き出し
+    else if (em) npcEmotes.delete(n.id);
     else if (!G.npcMet(n.id)) {   // 💬（白い吹き出し）
       const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.55), by = sy - Math.round(T * 0.45) - (f ? u : 0);
       ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 6 * u);
@@ -5097,6 +5143,15 @@ function frame(now) {
     ctx.strokeRect(Math.round(ox + (tapS.goal[0] + 0.15) * T), Math.round(oy + (tapS.goal[1] + 0.15) * T), Math.round(T * 0.7), Math.round(T * 0.7));
   }
 
+  // さんぽ犬（車のときは乗っている）
+  if (!driving && (me || G.demo)) {
+    dogStep(cam);
+    const sx = Math.round(ox + dog.x * T - T / 2), sy = Math.round(oy + dog.y * T - T * 0.6);
+    if (sx < w && sy < h && sx + T > 0 && sy + T > 0) {
+      ctx.drawImage(dogSprites[dog.face][dog.moving ? f : 0], sx, sy, T, T);
+      if (now - dog.bark < 1800) emoteAt(sx, sy, T, dog.k, now - dog.bark);
+    }
+  }
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
@@ -6039,6 +6094,8 @@ cv.addEventListener('click', e => {
   best = T * 1.2;
   if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
   if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; return; }
+  const dtx = Math.floor(c.x + (x - cv.width / 2) / T), dty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
+  if (!driving && dogAt(dtx, dty)) { dogPet(performance.now()); return; }   // さんぽ犬をなでる
   if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
 // 操作して移動：地面をタップすると、そこまで道を探して1マスずつ歩く（車のときは道だけなので、スティックで）
@@ -6081,7 +6138,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, get dog() { return { x: dog.x, y: dog.y, face: dog.face, barked: dog.barked.size, trail: dog.trail.length }; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };

@@ -552,6 +552,7 @@ function talkNpc(id, page = 0) {
   if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
   const seal = page === 0 ? sealGive(n) : '';   // 地区のしるし（その地区を5か所めぐってから、この人と話した）
   if (seal) { brief.icons += '🔖'; say.push(seal); }
+  if (page === 0 && clearGive(n)) { brief.icons += '🏯'; say.push('🏯 西尾さんぽ 殿堂入り！'); }   // 5つのしるしを そろえて、この人と話した（クリア）
   if (page === 0 && fixOk() && !(S.guide && S.guide.byId === n.id)) {
     const arrived = S.guide && S.guide.kind === 'npc' && S.guide.id === n.id ? S.guide : null;
     if (arrived) {   // すすめられた人に会えた
@@ -1687,6 +1688,7 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
+    { id: 'clear', i: '👑', n: '殿堂入り', d: '5つの地区のしるしを集めて、西尾城跡のガイドさんに会う（クリア）', cur: S.cleared ? 1 : 0, goal: 1 },
     ...areas.filter(a => SEAL_BY[a.id]).map(a => {   // 地区のしるし：その地区を5か所めぐると、地区の人が認めてくれる（制覇の手前の目標）
       const p = areaProgress(a.id), goal = Math.min(SEAL_AT, Math.max(p.total, 1)), by = sealBy(a.id);
       return { id: 'seal-' + a.id, i: '🔖', n: `${a.name}のしるし`, d: `${a.name}の注目スポットを${goal}か所めぐって、${by ? by.name : '地区の人'}に認めてもらう`, cur: p.done, goal, ready: (S.seals || []).includes(a.id) };   // 数がそろっても、その人と話すまでは もらえない
@@ -1729,6 +1731,39 @@ function sealHints() {
     S.sealHint = [...(S.sealHint || []), id]; save();
     toastAfter(`🔖 ${a.name}を${sealGoal(id)}か所めぐった！ ${by.spotName ? `${by.spotName}の` : ''}${by.name}に会いに行くと、${a.name}のしるしが もらえるよ`);
   }
+  if (clearReady() && !S.cleared && !S.clearHint) {
+    const by = placeNpcs().find(n => n.id === CLEAR_BY);
+    S.clearHint = true; save();
+    toastAfter(`🏯 5つのしるしが そろった！ ${by ? `${by.spotName ? `${by.spotName}の` : ''}${by.name}` : '西尾城跡のガイドさん'}に会いに行こう`);
+  }
+}
+// クリア（殿堂入り）：5つの地区のしるしを そろえて、西尾城跡のガイドさんに会うと、エンディング（ここまでの さんぽの記録）。そのあとも そのまま遊べる（クリア後は となりの市町へ）
+// 昔のドット絵RPGの、町ごとの しるしを集めて 最後に認めてもらい、記録が残るしくみ
+const CLEAR_BY = 'castle-guide';
+const clearReady = () => Object.keys(SEAL_BY).every(id => (S.seals || []).includes(id));
+function clearGive(n) {
+  if (n.id !== CLEAR_BY || S.cleared || !clearReady()) return false;
+  S.cleared = { t: Date.now() };
+  save();
+  track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
+  setTimeout(() => { showEnding(); checkBadges(); }, 900);
+  return true;
+}
+function showEnding() {
+  const npcs = window.NISHIO_NPCS || [], by = npcs.find(n => n.id === CLEAR_BY);
+  const rows = [
+    ['めぐった名所', `${Object.keys(S.visits).length}か所`], ['話した人', `${(S.met || []).length}人`], ['歩いた道のり', `${Math.floor(S.walked / 100) / 10}km`],
+    ['西尾ドット絵', `${(S.dots || []).length}枚`], ['まちメモ', `${knownFacts()}こ`], ['生きもの', `${Object.keys(S.critters || {}).length}しゅるい`],
+  ];
+  const seals = Object.keys(SEAL_BY).map(id => { const a = areas.find(x => x.id === id), p = npcs.find(n => n.id === SEAL_BY[id]); return a ? `<li>🔖 ${esc(a.name)}のしるし <small>${esc(p ? p.name : '')}</small></li>` : ''; }).join('');
+  const el = $('reward');
+  el.innerHTML = `<div class="rw ending"><div class="big">🏯</div><div class="nm">西尾さんぽ 殿堂入り</div>
+    <p class="say">${esc(by ? by.name : 'ガイドさん')}「5つの地区を ぜんぶ歩いてくれたじゃん。あんたは もう 西尾さんぽの名人だに！」</p>
+    <ul class="rec">${rows.map(([k, v]) => `<li>${esc(k)} <b>${esc(v)}</b></li>`).join('')}</ul>
+    <ul class="seals">${seals}</ul>
+    <p class="say">🏃 ${esc(RIVAL)}「おめでとう！ つぎは となりの市町も いっしょに歩こまい」</p>
+    <p class="note">このあとも そのまま遊べます。きろく の バッジ「👑 殿堂入り」から、いつでも この記録を見られます</p></div>`;
+  toastHold(); el.classList.add('show'); clearTimeout(showReward.t);
 }
 function sealGive(n) {
   const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
@@ -2202,14 +2237,15 @@ function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
   walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk' };
+$('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) showEnding(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
 function renderBadges() {
   const got = new Set(S.badges);
   $('badgeGrid').innerHTML = badgeDefs().map(b => {
     const done = got.has(b.id) || (b.ready !== false && b.cur >= b.goal);
     const pct = Math.min(100, (b.cur / b.goal) * 100);
-    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : b.id.startsWith('seal-') ? 'scroll' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
+    if (simple()) return `<div class="badge pic ${done ? 'got' : 'locked'}" data-badge="${esc(b.id)}" title="${esc(b.d)}（${done ? '獲得済み' : `${Math.min(b.cur, b.goal)}/${b.goal}`}）"><div class="medal">${PI(BADGE_PI[b.id] || (b.id.startsWith('area-') ? 'flag' : b.id.startsWith('seal-') ? 'scroll' : b.id === 'clear' ? 'castle' : 'star'), b.n)}</div><b>${esc(b.n)}</b>
       ${done ? '' : `<div class="bp"><i style="width:${pct}%"></i></div>`}</div>`;
-    return `<div class="badge ${done ? 'got' : 'locked'}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
+    return `<div class="badge ${done ? 'got' : 'locked'}" data-badge="${esc(b.id)}"><div class="bi">${b.i}</div><b>${esc(b.n)}</b><small>${esc(b.d)}</small>
       ${done ? '<small>獲得済み</small>' : `<div class="bp"><i style="width:${pct}%"></i></div><small>${Math.min(b.cur, b.goal)}/${b.goal}</small>`}</div>`;
   }).join('');
   const lv = levelOf(S.total);

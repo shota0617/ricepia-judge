@@ -389,6 +389,12 @@ function makeIcon(s, cls) {
 
 // 当店の「お店のなか」の絵（運営者が撮った写真から Blender で作った お米の売り場。tools/blender/giant-shop.py）
 const shopInside = s => s.id === 'f-ricepia' ? '<figure class="shop-pic"><img src="nishio-go/art/giant/ricepia-uriba.png" alt="らいすぴあのお米の売り場（ドット絵）" width="192" height="192" loading="lazy"/><figcaption>お店のなか：銘柄ごとの お米がならぶ売り場</figcaption></figure>' : '';
+// 名所の窓の「📽️ ムービー」：その名所のムービーを見たことがあるか、いま その名所にいるとき
+function movieBtn(s, pic) {
+  const m = movieOf(s);
+  if (!m || s.shop || !((S.movies || []).includes(m.id) || inReach(s))) return '';
+  return `<button type="button" class="btn mini" data-movie="${esc(m.id)}" aria-label="ドット絵ムービー「${esc(m.title)}」">📽️ ${pic ? 'ムービー' : esc(m.title)}</button>`;
+}
 function popupHtml(s) {
   const c = s.featured ? null : (CATS[s.cat] || CATS.sight);
   const v = S.visits[s.id];
@@ -411,6 +417,7 @@ function popupHtml(s) {
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? '<button type="button" class="btn mini" data-jump-open>🎮 ミニゲーム「にしおジャンプ」</button>' : ''}
     ${canSearch(s) ? `<button type="button" class="btn mini" data-search="${esc(s.id)}">🔍 しらべる（${esc(S.heard[s.id].by)}の手がかり）</button>` : ''}
+    ${movieBtn(s, false)}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}
     <button type="button" class="btn mini" data-share-spot="${esc(s.id)}">📣 この名所をシェア</button>
     <button type="button" class="btn mini voice-btn" data-voice-spot="${esc(s.id)}">📮 この名所のことを教える</button></div>`;
@@ -432,6 +439,7 @@ function popupPic(s, c, v, left, d) {
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? `<button type="button" class="btn mini" data-jump-open>${PIA('jump', '')} ミニゲーム</button>` : ''}
     ${canSearch(s) ? `<button type="button" class="btn mini" data-search="${esc(s.id)}" aria-label="しらべる（${esc(S.heard[s.id].by)}の手がかり）">🔍 しらべる</button>` : ''}
+    ${movieBtn(s, true)}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PIA('feet', '')} ここへ</button>` : ''}
     <button type="button" class="btn mini" data-share-spot="${esc(s.id)}" aria-label="この名所をシェア">📣 シェア</button>
     <button type="button" class="btn mini voice-btn" data-voice-spot="${esc(s.id)}" aria-label="この名所のことを教える">${PIA('talk', '')} 教える</button></div>`;
@@ -928,6 +936,7 @@ function checkin() {
   }
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
   if (!v) praiseCheck(s.area || areaNear(s));   // ふつうのスポットには地区がないので、いちばん近い注目スポットの地区で
+  movieCheck(s);   // その名所の イベント「ドット絵ムービー」（まだ見ていなければ）
   const jumpNew = s.featured && !s.shop && !featuredToday();   // きょう はじめての名所：ミニゲームがあそべるようになる
   const day = dayState();   // 今日のクエストの数え上げ
   day.checkins++;
@@ -971,6 +980,8 @@ const MEIBUTSU = window.NISHIO_MEIBUTSU || [];
 const SHIZEN = window.NISHIO_SHIZEN || [];   // 西尾の海と大地（shizen.js）
 const KOME = window.NISHIO_KOME || [];   // 米づくり（kome.js）
 const spotShizen = s => SHIZEN.filter(x => x.spots.some(id => 'f-' + id === s.id));
+// イベント「ドット絵ムービー」（movie.js）で見せる話。たからばこ・しらべる などでは出さない（最後まで見ると まちメモ に残る）
+const movieFact = k => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.list.some(m => m.facts.includes(k)));
 // こよみ（season.js：季節・二十四節気・田んぼのようす・見ごろ・時間帯・土用の丑の日）
 const KO = window.NISHIO_SEASON || null;
 // 天気（weather.js：気象庁のアメダスと きょうの予報）。取れないときは null
@@ -1095,7 +1106,7 @@ function factPool() {   // まちメモ：地区の豆知識・紹介文、注�
 }
 // 出すまちメモ：まだ持っていないものから、①7市町の外なら そのまちの話 ②そのスポットの話・そこでの行事 ③同じ地区の話 ④まわりのまち以外のほか ⑤ほか の順に選ぶ
 function pickFact(c) {
-  const pool = factPool(), keys = [...pool.keys()], fresh = keys.filter(k => !S.facts.includes(k));
+  const pool = factPool(), keys = [...pool.keys()].filter(k => !movieFact(k)), fresh = keys.filter(k => !S.facts.includes(k));   // ムービーで見せる話はのぞく
   const list = fresh.length ? fresh : keys;
   if (!list.length) return '';
   let near = null, nd = Infinity;
@@ -1408,9 +1419,9 @@ function critterMet(c) {
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
 const canSearch = s => { const h = (S.heard || {})[s.id]; return !!h && !h.found; };
-// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）はのぞき、①その名所の行事 ②その名所の名物・海と大地の話 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
+// しらべて見つかる まちメモ：名所の窓に出ている説明（s:その名所）と、ムービーで見せる話はのぞき、①その名所の行事 ②その名所の名物・海と大地の話 ③その地区の話 ④同じ地区のほかの名所 の順に、まだ知らないものから
 function searchFact(s) {
-  const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}`);
+  const pool = factPool(), fresh = [...pool.keys()].filter(k => !S.facts.includes(k) && k !== `s:${s.id}` && !movieFact(k));   // ムービーで見せる話はのぞく
   const inArea = id => { const x = spots.find(y => y.id === id); return !!x && !!s.area && x.area === s.area; };
   const tiers = [
     k => EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === s.id),
@@ -1438,6 +1449,43 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-search]');
   const s = b && spots.find(x => x.id === b.dataset.search);
   if (s) { e.stopPropagation(); searchSpot(s); }
+});
+// イベント「ドット絵ムービー」（movie.js）：西尾の海と大地の話（shizen.js）は、文で ばらばらに出すのではなく、ゆかりの名所に着いたときに ムービーで見せる。
+// 最後まで見ると、その話が まちメモ に残る。途中で閉じたら、次に着いたとき（名所の窓の「📽️ ムービー」からも）また見られる
+const movieOf = s => (window.NISHIO_MOVIE && s ? NISHIO_MOVIE.movieAt(s.id, s.area) : null);
+function movieCheck(s) {
+  const m = movieOf(s);
+  if (!m || (S.movies || []).includes(m.id) || s.shop) return;
+  movieWhenFree(m.id);
+}
+// ごほうびの画面・人の話・ミニゲーム・殿堂入りの画面が出ている間は待ってから（予約したときの記録が切りかわったら やめる）
+function movieWhenFree(id, key = stateKey()) {
+  if (movieWhenFree.wait) return;
+  movieWhenFree.wait = true;
+  (function go() {
+    if (stateKey() !== key) { movieWhenFree.wait = false; return; }
+    if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) return setTimeout(go, 600);
+    movieWhenFree.wait = false; playMovie(id);
+  })();
+}
+function playMovie(id) {
+  if (!window.NISHIO_MOVIE) return;
+  map.closePopup(); $('pxInfo').hidden = true;
+  track('movie_play', { movie: id, mode: demo ? 'play' : 'walk' });
+  NISHIO_MOVIE.play(id, movieEnd);
+}
+function movieEnd(m, done) {
+  if (!done) return;
+  if (!(S.movies || []).includes(m.id)) S.movies = [...(S.movies || []), m.id];
+  const pool = factPool(), got = m.facts.filter(k => pool.has(k) && !S.facts.includes(k));
+  got.forEach(k => S.facts.push(k));
+  save();
+  toast(`📽️ ${m.title}${got.length ? `　📖 まちメモ +${got.length}` : ''}`);
+  renderLog();
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-movie]');
+  if (b) { e.stopPropagation(); playMovie(b.dataset.movie); }
 });
 // めぐったスポットが区切りの数（PRAISE_AT）になったら、西尾城跡のガイドさんが ほめて、いまいる地区のほかで、めぐった割合がいちばん低い地区をすすめる
 const PRAISE_AT = [5, 10, 20, 30, 50, 100];
@@ -1998,7 +2046,7 @@ function renderHeader() {
 }
 
 let toastTimer;
-// ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてからまとめて出す（toastQ）
+// ごほうびの画面が出ている間の知らせは、画面のいちばん上（着いた所の名前）に重ならないよう、閉じてから1つずつ順に出す（toastQ）
 const toastQ = [];
 // 同じ知らせが続けて来ても、重ねて出さない（農場のゲームで、同じ知らせが何枚も積み上がって畑が見えなくなったので）
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
@@ -2108,7 +2156,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
 function hideReward() {
   clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
-  if (toastQ.length) toast(toastQ.splice(0).join('　'));
+  toastQ.splice(0).forEach(toastAfter);   // たまった知らせは、1つずつ順に（つなげて1つにすると長すぎて読めなかった）
 }
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');

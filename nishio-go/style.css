@@ -638,6 +638,10 @@ body.jump-open{overflow:hidden}
 /* 稲刈り：数字と ひとこと（絵の上下。ドット文字を読める大きさで） */
 .harvest-hud{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;font-family:"DotGothic16",monospace;font-size:15px;margin:2px 4px 6px}
 .harvest-hud .warn{color:#ff8a80}
+.movie-cap{min-height:3.2em;margin:8px 6px 4px;font-family:"DotGothic16",monospace;font-size:16px;line-height:1.6;text-align:center}   /* ドット絵ムービーの字幕 */
+.movie-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 6px 6px}
+.movie-dots i{display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:2px;background:#4d6a52}
+.movie-dots i.on{background:#ffd54f}
 .harvest-msg{min-height:1.5em;margin:6px 4px 0;font-family:"DotGothic16",monospace;font-size:15px;color:#ffe27a;text-align:center}
 .jump-pad{display:grid;grid-template-columns:72px 72px 1fr;gap:10px;padding:6px 4px;user-select:none;-webkit-user-select:none;touch-action:none}
 .jump-pad button{height:64px;border-radius:14px;border:2px solid #e9c46a;background:#2a3a2e;color:#fff;font-size:20px;font-weight:800;touch-action:none}

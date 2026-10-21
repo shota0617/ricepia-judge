@@ -173,7 +173,7 @@ async function walkTo(page, id) {
     return ok && nishioGo.state.bags[0].walked === w0;
   });
   // あしあと：歩く地図の1歩で歩いたマスが残り、同じ道をもう一度歩いても ふえず、瞬間移動では残らない
-  // ミニゲーム「段丘をのぼる」：3つの段丘とも、自然堤防から台地まで 1回のジャンプ（たて3マス・横2マスのすきままで）で届く段がつながり、露頭がある
+  // ミニゲーム「段丘をのぼる」：3つの段丘とも、自然堤防から台地まで 1回のジャンプ（実際の物理で上がれる高さ・横2マスのすきままで）で届く段がつながり、露頭がある
   R.checks.dankyu = await page.evaluate(() => {
     const D = window.NISHIO_DANKYU;
     if (!D) return 'none';
@@ -184,7 +184,9 @@ async function walkTo(page, id) {
       const i = D.info, ps = i.plats.filter(p => p.kind !== 'paddy');
       const gap = (p, q) => Math.max(0, q.x - (p.x + p.w), p.x - (q.x + q.w));
       const start = ps.find(p => p.kind === 'levee'), seen = new Set([start]), q = [start];
-      while (q.length) { const p = q.shift(); for (const n of ps) if (!seen.has(n) && n.y < p.y && p.y - n.y <= 3 && gap(p, n) <= 2) { seen.add(n); q.push(n); } }
+      const reach = Math.floor((D.maxRise() - 4) / 16);   // 実際のジャンプで上がれるマス（4点のゆとり）
+      if (reach < 3) bad.push(`ジャンプ ${D.maxRise().toFixed(1)}点：3マスに届かない`);
+      while (q.length) { const p = q.shift(); for (const n of ps) if (!seen.has(n) && n.y < p.y && p.y - n.y <= reach && gap(p, n) <= 2) { seen.add(n); q.push(n); } }
       if (![...seen].some(p => p.kind === 'top')) bad.push(`${l + 1}:届かない`);
       if (i.outcrops.length < 2) bad.push(`${l + 1}:露頭`);
       if (!/地区/.test(D.LEVELS[l].name)) bad.push(`${l + 1}:名前`);

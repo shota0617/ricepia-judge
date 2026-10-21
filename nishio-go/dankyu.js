@@ -15,7 +15,9 @@
   const LEVELS = [{ rows: 30, time: 45, rock: 150, name: 'a・b 地区の碧海台地', where: '八ツ面山の西〜矢作川ぞい', tip: '田んぼの低い土地と、段丘のへりの崖のようすが分かりやすい所' },
     { rows: 42, time: 60, rock: 120, name: 'c・d 地区の碧海台地', where: '五砂山のあたりと、南西の矢作川の河口に近いあたり', tip: 'a〜d 地区は古くから人が住み、土地が大きく変えられた所' },
     { rows: 56, time: 75, rock: 95, name: 'e 地区の段丘', where: '幡豆山地のふもと', tip: 'ここで見える地層は「碧海層相当層」' }];
-  const GRAV = 0.28, JUMP = -5.3, RUN = 1.6, ACC = 0.3;   // 1回のジャンプで約3マス上がる。でっぱりの間は2〜2.5マス
+  const GRAV = 0.28, JUMP = -5.8, RUN = 1.6, ACC = 0.3;   // 1回のジャンプで約57点（3.5マス）上がる。でっぱりの間は たて2〜3マス（48点まで）
+  // 1回のジャンプで上がる高さ（step と同じ順：速さに重さを足してから動く）
+  const maxRise = () => { let v = JUMP, y = 0, top = 0; for (let i = 0; i < 200; i++) { v = Math.min(6, v + GRAV); y += v; top = Math.min(top, y); if (v > 0) break; } return -top; };
   const ART = ['stand', 'run1', 'run2', 'jump'];
   const KEYMAP = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ' ': 'jump', ArrowUp: 'jump', z: 'jump', Z: 'jump', w: 'jump', W: 'jump' };
 
@@ -342,6 +344,6 @@
     open, close, reset, press(k, on) { if (keys) keys[k] = on; },
     warp(px, py) { if (pl) { pl.x = px; pl.y = py; pl.vy = 0; } },
     get info() { return pl ? { level: lv, rows: L.rows, x: pl.x, y: pl.y, ground: pl.ground, hearts, time: timeLeft(), outcrops: outcrops.map(o => ({ x: o.x, y: o.y, got: o.got })), plats: plats.map(p => ({ ...p })), done, zone } : null; },
-    LEVELS,
+    LEVELS, maxRise,
   };
 })();

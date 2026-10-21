@@ -4690,6 +4690,69 @@ function fieldT(dpr) {
 }
 // 絵を描く大きさ：絵の1点が、マスの1ドットと同じ大きさになるように（16×16 の絵は1マス、24×24 は1.5マス、48×48 は3マス、96×96 は6マス）
 const dotSize = (img, T) => img.width * T / 16;
+// ポケモン赤・緑（ゲームボーイ）の4色：歩く地図を 白・うす・こい・黒 の4つの色（緑がかったゲームボーイの画面の色）だけで描く。
+// せってい「ゲームボーイの4色」で切りかえ（はじめはオン）。絵は はじめて描くときに4色に直してとっておき、塗る色も4色のどれかにする
+const GB_COLS = ['#e0f8d0', '#88c070', '#346856', '#081820'];
+const GB_RGB = GB_COLS.map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
+let gbOn = true;
+try { gbOn = localStorage.getItem('nsg_gb') !== '0'; } catch (e) { /* 既定 */ }
+const gbLum = (r, g, b) => (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+const gbAbs = L => (L > 0.62 ? 0 : L > 0.42 ? 1 : L > 0.2 ? 2 : 3);   // 塗る色：明るさで4つに
+const gbSpr = L => (L > 0.8 ? 0 : L > 0.55 ? 1 : L > 0.25 ? 2 : 3);    // 人・建物の絵：ポケモンの人のように 顔は白・服や髪は こい色 になるよう、暗めに分ける
+const gbCache = new WeakMap();
+function gbOf(src) {
+  const hit = gbCache.get(src);
+  if (hit) return hit;
+  const w = src.width, h = src.height;
+  if (!w || !h || (src.complete === false)) return src;   // まだ読めていない絵
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.drawImage(src, 0, 0);
+  const d = x.getImageData(0, 0, w, h), p = d.data, cnt = new Map();
+  let opaque = 0, bg = 0, most = 0;
+  for (let i = 0; i < p.length; i += 4) if (p[i + 3] > 128) { const k = p[i] << 16 | p[i + 1] << 8 | p[i + 2], n = (cnt.get(k) || 0) + 1; cnt.set(k, n); opaque++; if (n > most) { most = n; bg = k; } }
+  // マスの絵（すきまのない絵）は、いちばん多い色（地面）を ゲームボーイの地面の色に：たいていは白、水はうす、森はこい。ほかの色は地面より暗いか明るいかで決める
+  const br = bg >> 16, bgg = bg >> 8 & 255, bb = bg & 255, bgL = gbLum(br, bgg, bb);
+  const base = opaque < w * h ? -1 : bb > br + 30 && bb >= bgg ? 1 : bgL >= 0.42 ? 0 : bgL >= 0.25 ? 1 : 2;
+  const memo = new Map();
+  for (let i = 0; i < p.length; i += 4) {
+    if (!p[i + 3]) continue;
+    const k = p[i] << 16 | p[i + 1] << 8 | p[i + 2];
+    let sh = memo.get(k);
+    if (sh === undefined) {
+      const L = gbLum(p[i], p[i + 1], p[i + 2]), dl = L - bgL;
+      sh = L < 0.16 ? 3 : base < 0 ? gbSpr(L) : Math.max(0, Math.min(3, base + (dl < -0.3 ? 2 : dl < -0.07 ? 1 : dl > 0.1 ? -1 : 0)));
+      memo.set(k, sh);
+    }
+    [p[i], p[i + 1], p[i + 2]] = GB_RGB[sh];
+  }
+  x.putImageData(d, 0, 0);
+  gbCache.set(src, c);
+  return c;
+}
+const gbColor = (() => {   // 塗る色（'#xxxxxx'・'rgba(…)' など）→ 4色のどれか（すきとおりはそのまま）
+  const memo = new Map(), sc = document.createElement('canvas').getContext('2d');
+  return v => {
+    let r = memo.get(v);
+    if (r) return r;
+    sc.fillStyle = '#000'; sc.fillStyle = v;
+    const n = sc.fillStyle, m = n.match(/^#(..)(..)(..)$/), a = n.match(/rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/);
+    const rgb = m ? m.slice(1).map(t => parseInt(t, 16)) : a ? a.slice(1, 4).map(Number) : null;
+    if (!rgb) return v;
+    const g = GB_RGB[gbAbs(gbLum(...rgb))], al = a && a[4] !== undefined ? +a[4] : 1;
+    r = al < 1 ? `rgba(${g.join(',')},${al})` : GB_COLS[GB_RGB.indexOf(g)];
+    memo.set(v, r);
+    return r;
+  };
+})();
+{   // 歩く地図の canvas に描く絵と色を、4色に（せかいちずは そのまま）
+  const gbField = () => gbOn && !worldMode;
+  const draw0 = ctx0.drawImage;
+  ctx0.drawImage = function (src, ...a) { return draw0.call(this, gbField() && src.width <= 512 ? gbOf(src) : src, ...a); };
+  for (const prop of ['fillStyle', 'strokeStyle']) {
+    const pd = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, prop);
+    Object.defineProperty(ctx0, prop, { get() { return pd.get.call(this); }, set(v) { pd.set.call(this, gbField() && typeof v === 'string' ? gbColor(v) : v); } });
+  }
+}
 let active = false, raf = 0, dirty = true, scale = 2;
 const floaters = [];   // 浮かぶ文字 { t, at }
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
@@ -4906,7 +4969,7 @@ function frame(now) {
     else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
     if (code === C.B) drawWall(tx, ty, X, Y, T);
     else drawDeco(code, tx, ty, X, Y, T, now);
-    if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
+    if (sh !== 2 && !gbOn) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }   // 土地の高さの影（ゲームボーイの4色では つけない）
     if (TRAIL.map.size && trailHas(tx, ty)) drawFoot(code, tx, ty, X, Y, T);   // 歩いた道の足あと
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
@@ -5480,6 +5543,10 @@ $('pxZoom').addEventListener('click', () => {   // 🔍：押すたびに大き�
   if (worldMode) { wscale = wscale < WSIZES.length - 1 ? wscale + 1 : 0; return; }
   setScale(scale < 4 ? scale + 1 : 1);
 });
+{   // せってい「ゲームボーイの4色」
+  const t = $('gbToggle');
+  if (t) { t.checked = gbOn; t.addEventListener('change', () => { gbOn = t.checked; try { localStorage.setItem('nsg_gb', gbOn ? '1' : '0'); } catch (e) { /* noop */ } dirty = true; }); }
+}
 function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）

@@ -4,7 +4,8 @@
 //   node tools/feedback-triage.js report    … Claude の結果（.feedback/results.json）と、できたPR（環境変数 PR_URL）を Issue に書く
 //   node tools/feedback-triage.js pr        … Claude が直したファイルを確かめて（直してよい場所だけ・JSON と JS が壊れていないか）、PR を作る（マージは人）
 //   node tools/feedback-triage.js voices    … プレイヤーへの返事（受付番号ごとの いまの様子）と、反映されたこと（人がマージした PR）を
-//                                             nishio-go/voices.json に書いて main にコミットする（ゲームの「こえ」タブが読む）
+//                                             nishio-go/voices.json に書いて main にコミットする（ゲームの「こえ」タブが読む）。
+//                                             公開ページ nishio-go/minna.html（tools/make-minna.js）も いっしょに作りなおす
 // 環境変数：FEEDBACK_REPO（owner/name）、FEEDBACK_TOKEN（そのリポジトリの Issues を読み書きできるトークン）、FEEDBACK_MAX（1回に Claude にわたす数。ふだん5）、
 //           CLAUDE_ON（'true' なら Claude にわたす）。pr は GH_TOKEN（このリポジトリに PR を作れるトークン）・GITHUB_REPOSITORY・GITHUB_REF_NAME・GITHUB_RUN_ID・GITHUB_OUTPUT
 'use strict';
@@ -12,7 +13,8 @@ const fs = require('fs');
 const path = require('path');
 const OSM = require('../nishio-go/osm-query.js');
 
-const ROOT = path.join(__dirname, '..');
+// FEEDBACK_ROOT：作業場所（ワークフローは、Claude が触れない場所にコピーしたこのスクリプトから、作業場所を指して動かす）
+const ROOT = process.env.FEEDBACK_ROOT || path.join(__dirname, '..');
 const DIR = path.join(ROOT, '.feedback');
 const REPO = process.env.FEEDBACK_REPO || '';
 const TOKEN = process.env.FEEDBACK_TOKEN || '';
@@ -30,7 +32,11 @@ async function gh(p, opt = {}) {
   if (!r.ok) throw new Error(`GitHub ${r.status} ${p}`);
   return r.status === 204 ? null : r.json();
 }
-const comment = (n, text) => gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: text + FOOT }) });
+// 返事のしるし（nsg-status）をつけたら、told（その返事はゲームの公開データに入った）を外す。voices が次に公開データへ入れて、また付ける
+async function comment(n, text) {
+  await gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: text + FOOT }) });
+  if (text.includes('<!-- nsg-status:')) { try { await gh(`/issues/${n}/labels/told`, { method: 'DELETE' }); } catch (e) { if (!/^GitHub 404 /.test(e.message)) throw e; } }
+}
 const addLabels = (n, labels) => gh(`/issues/${n}/labels`, { method: 'POST', body: JSON.stringify({ labels }) });
 const close = (n, reason = 'completed') => gh(`/issues/${n}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: reason }) });
 
@@ -39,6 +45,8 @@ const close = (n, reason = 'completed') => gh(`/issues/${n}`, { method: 'PATCH',
 // t：公開してよい短い文（ゲームのデータやスポット名など、こちらで作った文だけ。おたよりの文は入れない）
 const RID = /^[0-9a-f]{12}$/;
 const readJson = (f, d) => { try { return JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8')); } catch (_) { return d; } };
+// Issue のコメントにも返事のしるしを残す（voices の push が失敗しても、あとで Issue から返事を作りなおせるように）
+const statusMark = (rid, s, t = '') => RID.test(rid || '') ? `\n\n<!-- nsg-status:${Buffer.from(JSON.stringify({ rid, s, t: String(t).slice(0, 120) })).toString('base64')} -->` : '';
 function setStatus(rid, s, t = '') {
   if (!RID.test(rid || '')) return;
   fs.mkdirSync(DIR, { recursive: true });
@@ -105,7 +113,7 @@ async function findOsm(f) {
 }
 
 // 仕分けで使うラベル（無ければ作る。もうあれば 422 で、それでよい）
-const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced'];
+const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced', 'told'];
 async function ensureLabels() {
   for (const name of LABELS) {
     try { await gh('/labels', { method: 'POST', body: JSON.stringify({ name, color: name === 'feedback' ? 'f9d0c4' : name === 'needs-check' ? 'e99695' : 'ededed' }) }); }
@@ -143,14 +151,14 @@ async function prepare() {
     if (labels.has('claude-try')) {   // 前の回に Claude にわたしたが、結果が書かれなかった（もう一度はわたさない）
       setStatus(f.rid, 'checking');
       await addLabels(i.number, ['needs-check']);
-      await comment(i.number, '自動での確認が終わらなかったので、人が見てください。');
+      await comment(i.number, '自動での確認が終わらなかったので、人が見てください。' + statusMark(f.rid, 'checking'));
       continue;
     }
     const hint = {};
     if (f.kind === 'spot') {
       const k = findKnown(f, list);
       if (k) {
-        await comment(i.number, `「${f.name}」は、もうゲームにあります（${k.where}：${k.name}${Number.isFinite(k.lat) ? `・${k.lat}, ${k.lng}` : ''}）。`);
+        await comment(i.number, `「${f.name}」は、もうゲームにあります（${k.where}：${k.name}${Number.isFinite(k.lat) ? `・${k.lat}, ${k.lng}` : ''}）。` + statusMark(f.rid, 'already', `「${k.name}」は もうゲームにあります`));
         await addLabels(i.number, ['triaged', 'already']); await close(i.number, 'not_planned');
         setStatus(f.rid, 'already', `「${k.name}」は もうゲームにあります`);
         console.log(`#${i.number} もうある：${k.name}`);
@@ -159,7 +167,7 @@ async function prepare() {
       if (f.lat != null) {
         const o = await findOsm(f);
         if (o && SPOT_CATS.has(o.cat)) {
-          await comment(i.number, `「${f.name}」は OpenStreetMap にあります（${o.name}・約${o.d}m・${o.url}）。毎週月曜のスポットの作り直し（.github/workflows/bake-spots.yml）で地図に出ます。`);
+          await comment(i.number, `「${f.name}」は OpenStreetMap にあります（${o.name}・約${o.d}m・${o.url}）。毎週月曜のスポットの作り直し（.github/workflows/bake-spots.yml）で地図に出ます。` + statusMark(f.rid, 'soon', `「${o.name}」は つぎの月曜の更新で地図に出ます`));
           await addLabels(i.number, ['triaged', 'already']); await close(i.number, 'completed');
           setStatus(f.rid, 'soon', `「${o.name}」は つぎの月曜の更新で地図に出ます`);
           console.log(`#${i.number} OSMにある：${o.name}`);
@@ -191,7 +199,7 @@ async function report() {
     if (!r || !Object.hasOwn(LABEL, r.action)) continue;   // 結果が無いものは、次の回に「人が見る」にまわる（claude-try）
     let action = r.action, text = String(r.reply || '').slice(0, 3000);
     if (action === 'fixed' && blocked) {
-      await comment(it.n, `直した内容に おたよりの文や位置がそのまま入っていたので、公開せずに止めました。人が見てください。\n\n${text}`);
+      await comment(it.n, `直した内容に おたよりの文や位置がそのまま入っていたので、公開せずに止めました。人が見てください。\n\n${text}` + statusMark(rids[it.n], 'checking'));
       await addLabels(it.n, ['triaged', 'needs-check']);
       setStatus(rids[it.n], 'checking');
       console.log(`#${it.n} 止めた`);
@@ -200,11 +208,12 @@ async function report() {
     if (action === 'fixed' && !pr) { action = 'proposal'; text += '\n\n（直した内容は確認で取りこめなかったので、提案として残します）'; }
     const head = { fixed: `直しました。取りこみ（マージ）を待っています：${pr}`, proposal: '提案です。人が決めてください。', done: 'もう対応ずみ／いまのままで問題ありません。', skip: '反映しないおたよりとして閉じます。' }[action];
     // 反映されたら（人が PR をマージしたら）voices がゲームで知らせる。そのときに出す文（公開してよいと確かめたもの）を、しるしとして残す
-    const pub = action === 'fixed' ? oneLine(safePublic(r.public, items)) : '';
+    const pub = action === 'fixed' ? publicText(r.public, it, knownNames()) : '';
     const mark = action === 'fixed' ? `\n\n<!-- nsg-public:${Buffer.from(JSON.stringify({ pr, text: pub, kind: it.kind })).toString('base64')} -->` : '';
-    await comment(it.n, `${head}\n\n${text}${mark}`);
+    const st = { fixed: 'checking', proposal: 'proposal', done: 'done', skip: 'skip' }[action];
+    await comment(it.n, `${head}\n\n${text}${mark}${statusMark(rids[it.n], st)}`);
     await addLabels(it.n, ['triaged', LABEL[action]]);
-    setStatus(rids[it.n], { fixed: 'checking', proposal: 'proposal', done: 'done', skip: 'skip' }[action]);
+    setStatus(rids[it.n], st);
     if (action !== 'proposal') await close(it.n, action === 'fixed' || action === 'done' ? 'completed' : 'not_planned');
     console.log(`#${it.n} ${action}`);
   }
@@ -213,7 +222,7 @@ async function report() {
 // Claude が直してよいファイル（遊びのデータと画面の文。OpenStreetMap などから作るもの・お店のキャンペーンとごほうび・解析・焼いた絵は除く）
 const EDITABLE = p => (p === 'nishio-go.html' || /^nishio-go\/[\w-]+\.(js|json|css)$/.test(p)) &&
   !/^nishio-go\/(osm-spots|landmarks|stats|world|landuse|campaigns|rewards|voices)\.json$|^nishio-go\/(analytics|share)\.js$/.test(p);
-const git = (...a) => require('child_process').execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' });
+const git = (...a) => require('child_process').execFileSync('git', ['-c', 'core.hooksPath=/dev/null', ...a], { cwd: ROOT, encoding: 'utf8' });   // フックは動かさない
 function changedFiles() {
   return git('status', '--porcelain=v1', '-uall', '-z').split('\0').filter(Boolean)
     .map(l => ({ code: l.slice(0, 2), path: l.slice(3) })).filter(c => !c.path.startsWith('.feedback/'));
@@ -235,11 +244,11 @@ function intact(p) {
 // 公開してよいか：おたよりの文の切れはし（そろえた文字で12文字つづけて同じ）と、送った人の位置（丸めた緯度と経度の両方）が入っていないか
 // （Claude が指示に反したり、おたよりに操られたりしても、公開の PR に出さないように、ここで決まった手順で止める）
 const LEAK_RUN = 12;
-function leaks(text, items) {
+function leaks(text, items, run = LEAK_RUN) {
   const t = norm(text), raw = String(text || '');
   for (const it of items) {
     const s = norm(it.text);
-    for (let i = 0; i + LEAK_RUN <= s.length; i++) if (t.includes(s.slice(i, i + LEAK_RUN))) return `#${it.n} の文`;
+    for (let i = 0; i + run <= s.length; i++) if (t.includes(s.slice(i, i + run))) return `#${it.n} の文`;
     const num = v => new RegExp(`(^|[^\\d.])${String(v).replace('.', '\\.')}(?!\\d)`);
     if (it.lat != null && it.lng != null && num(it.lat).test(raw) && num(it.lng).test(raw)) return `#${it.n} の位置`;
   }
@@ -248,6 +257,18 @@ function leaks(text, items) {
 // PR の本文に出す要約：位置のような数・アドレスがあるもの、おたよりの文の切れはしを含むものは出さない
 const safePublic = (s, items) => /\d+\.\d{2,}|https?:|www\./i.test(String(s || '')) || leaks(s, items) ? '' : s;
 const oneLine = s => String(s || '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/@/g, '＠').replace(/#(?=\d)/g, '＃').replace(/\s+/g, ' ').trim().slice(0, 200);
+// ゲームの公開データ・公開の PR に出す一文（反映のお知らせ）。出さないもの：位置のような数・アドレス・電話番号・メール・郵便番号、
+// おたよりの文の切れはし（そろえた文字で8文字つづけて同じ）、名所の名前欄の文字（ゲームの名所に同じ名前があるとき＝出典で確かめて足したときだけ出してよい）
+const PII = /0\d{1,4}[-‐ー−－]?\d{1,4}[-‐ー−－]?\d{3,4}|[\w.+-]+[@＠][\w-]+\.|〒|\d{3}[-－]\d{4}/;
+const knownNames = () => { try { return new Set(known().flatMap(k => k.names).map(norm).filter(Boolean)); } catch (_) { return new Set(); } };
+function publicText(s, f, names) {
+  s = oneLine(s);
+  if (!s || /\d+\.\d{2,}|https?:|www\./i.test(s) || PII.test(s)) return '';
+  const nm = norm(f.name), nameOk = !nm || (f.kind === 'spot' && names && names.has(nm));
+  if (!nameOk && nm.length >= 2 && norm(s).includes(nm)) return '';
+  if (leaks(s, [{ n: f.n || 0, text: [f.text, nameOk ? '' : f.name].join(' '), lat: f.lat, lng: f.lng }], 8)) return '';
+  return s;
+}
 async function pr() {
   // 直してよい場所の外の変更は、まだ記録していないファイルも消して戻すので、GitHub Actions の使い捨ての作業場所でだけ動かす
   if (process.env.GITHUB_ACTIONS !== 'true') throw new Error('pr は GitHub Actions の中でだけ動かします（手元のファイルを消さないように）');
@@ -276,7 +297,7 @@ async function pr() {
   git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', 'にしおさんぽGO: おたよりから直す（自動・要確認）');
   git('push', '-q', `https://x-access-token:${process.env.GH_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`, `HEAD:refs/heads/${branch}`);
   const body = ['プレイヤーからのおたより（非公開の置き場の Issue）を Claude が読んで直した案です。**内容を確かめてからマージしてください。**', '',
-    ...(fixed.length ? fixed.map(r => `- ${oneLine(safePublic(r.public, items)) || '（要約なし）'}`) : ['- （要約なし）']), '',
+    ...(fixed.length ? fixed.map(r => `- ${publicText(r.public, items.find(it => it.n === r.n) || { text: items.map(it => it.text).join(' ') }, knownNames()) || '（要約なし）'}`) : ['- （要約なし）']), '',
     '変更してよいのは nishio-go/ の遊びのデータと画面の文だけで、それ以外の変更は自動で取りのぞいています（tools/feedback-triage.js）。',
     'おたよりの文そのもの・送った人の位置は、このPRには書きません。'].join('\n');
   const bodyFile = path.join(DIR, 'pr-body.md');
@@ -295,15 +316,21 @@ function applyVoices(v, status, logs, d = today()) {
   v = v && typeof v === 'object' ? v : {};
   v._説明 = 'にしおさんぽGO のプレイヤーの声（おたより）の公開データ。tools/feedback-triage.js voices が作る。replies は受付番号（端末で作った でたらめな番号）ごとの いまの様子、log は反映されたこと。おたよりの文・送った人の位置は入れない';
   v.replies = v.replies || {}; v.log = Array.isArray(v.log) ? v.log : []; v.counts = v.counts || {};
+  let changed = false;
   for (const [rid, x] of Object.entries(status)) {
-    if (!RID.test(rid) || (v.replies[rid] && v.replies[rid].s === 'reflected' && x.s !== 'reflected')) continue;   // 反映ずみを戻さない
-    v.replies[rid] = { s: x.s, ...(x.t ? { t: x.t } : {}), d };
+    const was = v.replies[rid];
+    if (!RID.test(rid) || (was && was.s === 'reflected' && x.s !== 'reflected')) continue;   // 反映ずみを戻さない
+    if (was && was.s === x.s && (was.t || '') === (x.t || '')) continue;   // 同じ返事は書きなおさない（毎回コミットしないように）
+    v.replies[rid] = { s: x.s, ...(x.t ? { t: x.t } : {}), d }; changed = true;
   }
-  for (const l of logs) { v.log.unshift({ d, kind: l.kind, text: l.text }); v.counts[l.kind] = (v.counts[l.kind] || 0) + 1; }
+  for (const l of logs) {   // 同じ Issue の反映は1回だけ（id：i＋Issue の番号）
+    if (l.id && v.log.some(x => x.id === l.id)) continue;
+    v.log.unshift({ ...(l.id ? { id: l.id } : {}), d, kind: l.kind, text: l.text }); v.counts[l.kind] = (v.counts[l.kind] || 0) + 1; changed = true;
+  }
   v.log = v.log.slice(0, 200);
   const old = new Date(Date.now() + 9 * 3600e3 - 120 * 86400e3).toISOString().slice(0, 10);
-  for (const [rid, x] of Object.entries(v.replies)) if (!(x.d >= old)) delete v.replies[rid];   // 120日より前の返事は消す
-  v.updated = d;
+  for (const [rid, x] of Object.entries(v.replies)) if (!(x.d >= old)) { delete v.replies[rid]; changed = true; }   // 120日より前の返事は消す
+  if (changed || !v.updated) v.updated = d;
   return v;
 }
 
@@ -324,7 +351,7 @@ const comments = n => gh(`/issues/${n}/comments?per_page=100`);
 
 // 反映されたもの：fixed（自動で作った PR）のうち、人がマージしたもの。reflected（運営が手で反映し「公開: …」とコメントしたもの）
 async function announcements() {
-  const status = {}, logs = [], done = [];
+  const status = {}, logs = [], done = [], names = knownNames();   // names：いまの main のゲームの名所（voices が main を取ってから呼ぶ）
   for (const i of await searchIssues(`repo:${REPO} is:issue label:feedback -label:announced label:fixed`)) {
     const f = payloadOf(i.body) || {};
     const m = (await comments(i.number)).map(c => /<!-- nsg-public:([A-Za-z0-9+/=]+) -->/.exec(c.body || '')).filter(Boolean).pop();
@@ -335,9 +362,9 @@ async function announcements() {
     const p = await fetch(`https://api.github.com/repos/${pm[1]}/pulls/${pm[2]}`, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'nishio-go-feedback', ...(process.env.GH_TOKEN ? { Authorization: 'Bearer ' + process.env.GH_TOKEN } : {}) } }).then(r => (r.ok ? r.json() : null));
     if (!p || p.state !== 'closed') continue;   // まだマージを待っている
     if (p.merged_at) {
-      const text = safePublic(info.text, [{ n: i.number, text: f.text || '', lat: f.lat, lng: f.lng }]) || 'おたよりをもとに、ゲームを直しました';
+      const text = publicText(info.text, { ...f, n: i.number }, names) || 'おたよりをもとに、ゲームを直しました';
       if (RID.test(f.rid || '')) status[f.rid] = { s: 'reflected', t: text };
-      logs.push({ kind: f.kind || info.kind || 'idea', text });
+      logs.push({ id: 'i' + i.number, kind: f.kind || info.kind || 'idea', text });
     } else if (RID.test(f.rid || '')) status[f.rid] = { s: 'proposal' };   // PR を閉じた（運営の判断へ）
     done.push(i.number);
   }
@@ -345,10 +372,10 @@ async function announcements() {
     const f = payloadOf(i.body) || {};
     const c = (await comments(i.number)).map(c => /^公開[:：]\s*(.+)$/m.exec(c.body || '')).filter(Boolean).pop();
     if (!c) continue;   // 「公開: みんなに見せる一文」のコメントが付くまで待つ
-    const text = oneLine(safePublic(c[1], [{ n: i.number, text: f.text || '', lat: f.lat, lng: f.lng }]));
+    const text = publicText(c[1], { ...f, n: i.number }, names);
     if (!text) continue;
     if (RID.test(f.rid || '')) status[f.rid] = { s: 'reflected', t: text };
-    logs.push({ kind: f.kind || 'idea', text });
+    logs.push({ id: 'i' + i.number, kind: f.kind || 'idea', text });
     done.push(i.number);
   }
   return { status, logs, done };
@@ -357,23 +384,35 @@ async function announcements() {
 async function voices() {
   if (process.env.GITHUB_ACTIONS !== 'true') throw new Error('voices は GitHub Actions の中でだけ動かします（main にコミットするので）');
   if (!REPO || !TOKEN) return;
-  const a = await announcements();
-  const status = { ...readJson('status.json', {}), ...a.status };
-  if (!Object.keys(status).length && !a.logs.length) { console.log('ゲームに知らせることはありません'); return; }
   const base = process.env.GITHUB_REF_NAME || 'main', pub = `https://github.com/${process.env.GITHUB_REPOSITORY}.git`;
+  const checkoutMain = () => { git('fetch', '-q', pub, base); git('checkout', '-q', '-f', '-B', 'voices-update', 'FETCH_HEAD'); };
+  checkoutMain();   // いまの main（人がマージした名所も入っている）で確かめる
+  const a = await announcements();
+  // まだ公開データに入っていない（told の無い）Issue の、いちばん新しい返事のしるし（nsg-status）から返事を作りなおす。
+  // 前の回の push が失敗していても、何日たっていても、返事が消えないように。入れたら told を付ける
+  const rebuilt = {}, toldNow = [];
+  for (const i of await searchIssues(`repo:${REPO} is:issue label:feedback -label:told`)) {
+    const m = (await comments(i.number)).map(c => /<!-- nsg-status:([A-Za-z0-9+/=]+) -->/.exec(c.body || '')).filter(Boolean).pop();
+    toldNow.push(i.number);
+    if (!m) continue;
+    try { const x = JSON.parse(Buffer.from(m[1], 'base64').toString('utf8')); if (RID.test(x.rid || '')) rebuilt[x.rid] = { s: x.s, t: x.t || '' }; } catch (_) { /* よめない しるし */ }
+  }
+  const status = { ...rebuilt, ...readJson('status.json', {}), ...a.status };
+  if (!Object.keys(status).length && !a.logs.length) { for (const n of toldNow) await addLabels(n, ['told']); console.log('ゲームに知らせることはありません'); return; }
   for (let tries = 1; ; tries++) {
-    git('fetch', '-q', pub, base);
-    git('checkout', '-q', '-f', '-B', 'voices-update', 'FETCH_HEAD');
+    if (tries > 1) checkoutMain();
     const f = path.join(ROOT, VOICES);
     const v = applyVoices(fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : null, status, a.logs);
     fs.writeFileSync(f, JSON.stringify(v, null, 1) + '\n');
-    git('add', VOICES);
-    if (!git('status', '--porcelain', VOICES).trim()) break;
+    const page = require('./make-minna.js').write();   // 公開ページ「みんなで見つけた西尾」も作りなおす
+    git('add', VOICES, page);
+    if (!git('status', '--porcelain', VOICES, page).trim()) break;
     git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', 'にしおさんぽGO: プレイヤーの声の返事と反映を更新（自動）');
     try { git('push', '-q', `https://x-access-token:${process.env.GH_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`, `HEAD:refs/heads/${base}`); break; }
     catch (e) { if (tries >= 3) throw e; console.log('main が先に進んだので、もう一度'); }
   }
   for (const n of a.done) await addLabels(n, ['announced']);
+  for (const n of toldNow) await addLabels(n, ['told']);   // main に入った（か、もう入っていた）返事
   console.log(`返事 ${Object.keys(status).length}件・反映 ${a.logs.length}件`);
 }
 
@@ -382,4 +421,4 @@ if (require.main === module) {
   if (!run) { console.error('使いかた：node tools/feedback-triage.js prepare|report|pr|voices'); process.exit(2); }
   run().catch(e => { console.error(e.message); process.exit(1); });
 }
-module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, leaks, safePublic, applyVoices, announcements, prepare, report, voices };
+module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, leaks, safePublic, publicText, applyVoices, announcements, searchIssues, gh, dist, prepare, report, voices };

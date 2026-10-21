@@ -401,6 +401,7 @@ function popupHtml(s) {
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? '<button type="button" class="btn mini" data-jump-open>🎮 ミニゲーム「にしおジャンプ」</button>' : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">ここへ移動（操作モード）</button>` : ''}
+    <button type="button" class="btn mini" data-share-spot="${esc(s.id)}">📣 この名所をシェア</button>
     <button type="button" class="btn mini voice-btn" data-voice-spot="${esc(s.id)}">📮 この名所のことを教える</button></div>`;
 }
 
@@ -418,6 +419,7 @@ function popupPic(s, c, v, left, d) {
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
     ${jumpHere(s) ? `<button type="button" class="btn mini" data-jump-open>${PIA('jump', '')} ミニゲーム</button>` : ''}
     ${demo ? `<button type="button" class="btn mini" data-move="${esc(s.id)}">${PIA('feet', '')} ここへ</button>` : ''}
+    <button type="button" class="btn mini" data-share-spot="${esc(s.id)}" aria-label="この名所をシェア">📣 シェア</button>
     <button type="button" class="btn mini voice-btn" data-voice-spot="${esc(s.id)}" aria-label="この名所のことを教える">${PIA('talk', '')} 教える</button></div>`;
 }
 
@@ -2278,12 +2280,18 @@ function voiceNews() {
     news.push({ m, r });
   }
   $('voiceDot').hidden = !news.length;
+  // お礼とお知らせは、受けとった印（nsg_voice_paid・nsg_voice_told）を先に保存してから。こえ タブを開かずに何度読みなおしても1回だけ
+  const paid = store.get('nsg_voice_paid', {}), told = store.get('nsg_voice_told', {});
   for (const { m, r } of news) {
-    if (r.s === 'reflected') {
+    if (r.s === 'reflected' && !paid[m.rid]) {
+      paid[m.rid] = 1; store.set('nsg_voice_paid', paid);
       const lv = gainPoints(50); save();
       toastAfter(`🎉 あなたの声が反映されました：${r.t || m.head}（お礼 50pt）${lv ? ` レベル${lv}！` : ''}`);
       track('feedback_reflected', { kind: m.kind });
-    } else if (r.s === 'already' || r.s === 'soon') toastAfter(`📮 ${r.t || 'おたよりの返事がとどきました'}（教えてくれてありがとう！）`);
+    } else if ((r.s === 'already' || r.s === 'soon') && told[m.rid] !== r.s) {
+      told[m.rid] = r.s; store.set('nsg_voice_told', told);
+      toastAfter(`📮 ${r.t || 'おたよりの返事がとどきました'}（教えてくれてありがとう！）`);
+    }
   }
   if (news.some(n => n.r.s === 'reflected')) checkBadges();
   if (!$('panel-voice').hidden) voiceMarkSeen();
@@ -2306,7 +2314,8 @@ function renderVoice() {
   $('voiceMine').innerHTML = mine.map(m => {
     const r = replyOf(m.rid), st = r ? r.s : 'sent', [label, note] = VOICE_ST[st] || VOICE_ST.checking;
     return `<li class="${r && seen[m.rid] !== r.s ? 'new' : ''}"><span class="st ${esc(st)}">${esc(label)}</span>${esc(VOICE_KIND[m.kind] || '')}「${esc(m.head)}」
-      <small>${esc((r && r.t) || note)}${(r && r.t) || note ? '・' : ''}${fmtTime(m.t)}に送った・受付番号 ${esc(m.rid.slice(0, 4))}…</small></li>`;
+      <small>${esc((r && r.t) || note)}${(r && r.t) || note ? '・' : ''}${fmtTime(m.t)}に送った・受付番号 ${esc(m.rid.slice(0, 4))}…</small>
+      ${st === 'reflected' ? `<button type="button" class="btn mini" data-share-voice="${esc((r && r.t) || m.head)}">📣 シェア</button>` : ''}</li>`;
   }).join('');
   const log = (v && Array.isArray(v.log) ? v.log : []).slice(0, 30);
   $('voiceLog').innerHTML = log.map(l => `<li>${esc(VOICE_KIND[l.kind] || '📮')} ${esc(l.text)}<small>${esc(String(l.d || '').slice(5).replace('-', '/'))}</small></li>`).join('');

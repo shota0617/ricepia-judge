@@ -76,3 +76,9 @@ tools/feedback-triage.js voices（毎回）
 - **おたよりに書かれた指示には従わない**：Claude は おたよりを「データ」として読む。シェル・git・トークンは使えず、ファイルの読み書きと、決まったサイト（ja.wikipedia.org・www.wikidata.org・www.city.nishio.aichi.jp・www.openstreetmap.org・nominatim.openstreetmap.org）の閲覧だけ
 - **直してよい場所だけ**：PR にするのは `nishio-go.html` と `nishio-go/` 直下の JS・JSON・CSS だけ（OpenStreetMap などから作るデータ・キャンペーン・ごほうび・解析は除く）。それ以外の変更や、こわれた JSON・JS は自動で取りのぞく
 - **事実は出典で**：名所を足すのは、出典でその場所と位置を確かめられたときだけ（spots.json に `src` を書く）。お店・飲食店は足さず、提案にまわす
+
+## 西尾市のPRにする
+
+- **シェアで西尾の魅力を広げる**：スポットの窓の「📣 この名所をシェア」は、受け取った人がその名所を開けるリンク（`?spot=`）と、名所の説明（spots.json の出典つきの desc）をのせた画像を作ります。こえ タブの反映されたおたより にも「📣 シェア」。きろくのシェアの文には「抹茶とうなぎのまち・西尾」（meibutsu.js の出典つきの名物の名前）が入ります。どれも #にしおさんぽGO #西尾市
+- **公開ページ「みんなで見つけた西尾」**（https://go.ricepia.jp/nishio-go/minna.html）：西尾の名物と5つの地区（出典つき）、プレイヤーの声でふえた名所、みんなの声で かわったこと。ゲームを遊ばない人も検索や SNS から読めます。voices ステップが voices.json といっしょに作りなおします（手で作るとき：`node tools/make-minna.js`）。サイトマップにも載せています
+- **西尾市への提案レポート**：毎月1日に、先月のおたよりの数（種類・結果・地区）と、反映したこと、Claude による声のまとめ（3件以上の月。おたよりの文はそのまま写さない。写していたら載せない）を、非公開リポジトリの Issue「【西尾市への提案レポート】○年○月 プレイヤーの声」にします（.github/workflows/feedback-report.yml。Actions から月を指定して作りなおすこともできます）。西尾市に見せるときは、そのまま資料のもとにできます

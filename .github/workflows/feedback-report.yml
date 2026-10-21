@@ -1,0 +1,71 @@
+# にしおさんぽGO：毎月1日に、先月のプレイヤーの声を「西尾市への提案レポート」にまとめて、非公開リポジトリの Issue にする
+# 数の集計（種類・結果・地区）と、この月にゲームに反映したこと、Claude による声のまとめ（3件以上の月だけ。おたよりの文はそのまま写さない）
+# Claude は シェル・git・トークン・ウェブを使えず、.feedback の読み書きだけ（tools/feedback-report-prompt.md）。docs/feedback.md
+name: Nishio feedback report
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'まとめる月（YYYY-MM。空なら先月）'
+        required: false
+  schedule:
+    - cron: '17 0 1 * *'   # 毎月1日 9:17（日本時間）
+permissions:
+  contents: read
+concurrency:
+  group: feedback-report
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FEEDBACK_REPO: ${{ vars.FEEDBACK_REPO }}
+      REPORT_MONTH: ${{ github.event.inputs.month }}
+      HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+    steps:
+      - name: Check settings
+        id: cfg
+        env:
+          T: ${{ secrets.FEEDBACK_TOKEN }}
+        run: |
+          if [ -n "$T" ] && [ -n "$FEEDBACK_REPO" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "FEEDBACK_REPO / FEEDBACK_TOKEN が無いので、なにもしません"; fi
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.on
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        if: steps.cfg.outputs.on
+        with:
+          node-version: 20
+      - name: Keep trusted tools
+        if: steps.cfg.outputs.on
+        run: |
+          mkdir -p "$RUNNER_TEMP/trusted/tools" "$RUNNER_TEMP/trusted/nishio-go"
+          cp tools/feedback-triage.js tools/feedback-report.js tools/make-minna.js tools/feedback-prompt.md tools/feedback-report-prompt.md "$RUNNER_TEMP/trusted/tools/"
+          cp nishio-go/osm-query.js "$RUNNER_TEMP/trusted/nishio-go/"
+      - name: Count feedback
+        id: count
+        if: steps.cfg.outputs.on
+        env:
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-report.js" prepare
+      # Claude：読めるのは .feedback/ だけ、書けるのは要約のファイルだけ。動かすあいだ .git は作業場所の外に置く
+      - name: Claude summarizes
+        if: steps.count.outputs.ai && env.HAS_KEY == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          npm i -g @anthropic-ai/claude-code@2.1.305 > /dev/null
+          mv .git "$RUNNER_TEMP/dotgit"
+          claude -p "$(cat "$RUNNER_TEMP/trusted/tools/feedback-report-prompt.md")" --model claude-opus-5-5 --max-turns 15 --permission-mode dontAsk \
+            --allowedTools "Read(./.feedback/**),Write(./.feedback/report-themes.md)" --disallowedTools "Bash,Edit,WebFetch,WebSearch,NotebookEdit,Task,Glob,Grep" | tail -n 20 || true
+          if [ -e .git ]; then rm -rf .git; fi
+          mv "$RUNNER_TEMP/dotgit" .git
+      # 要約が失敗しても、集計だけのレポートは出す（スクリプトは Claude より前の中身で動かす）
+      - name: Post report
+        if: always() && steps.count.outcome == 'success'
+        env:
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+          FEEDBACK_ROOT: ${{ github.workspace }}
+        run: node "$RUNNER_TEMP/trusted/tools/feedback-report.js" post

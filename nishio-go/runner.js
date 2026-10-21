@@ -292,8 +292,10 @@
       c.drawImage(sprites[k + (pl.face < 0 ? 'L' : '')], Math.round(pl.x) - 3, Math.round(pl.y) - 1);
     }
     c.restore();
-    // 上の札：コインと、のこり
-    c.drawImage(sprites.coin, 6 + COIN_OFF(), 5 + COIN_OFF()); c.fillStyle = '#fff'; c.font = 'bold 9px sans-serif'; c.textBaseline = 'top';
+    // 上の札：コインと、のこり（雲の白に重なっても読めるよう、うすい黒の下地）
+    c.font = 'bold 9px sans-serif'; c.textBaseline = 'top';
+    c.fillStyle = 'rgba(0,0,0,.45)'; c.fillRect(3, 3, 20 + Math.ceil(c.measureText(`×${coins}`).width), 13);
+    c.drawImage(sprites.coin, 6 + COIN_OFF(), 5 + COIN_OFF()); c.fillStyle = '#fff';
     text(`×${coins}`, 19, 6); for (let i = 0; i < lives; i++) c.drawImage(sprites.stand, 0, 0, 16, 8, W - 20 - i * 14, 4, 16, 8);
     if (state === 'miss') banner('もういちど！');
     if (state === 'clear') banner('ゴール！ 西尾城に とうちゃく');

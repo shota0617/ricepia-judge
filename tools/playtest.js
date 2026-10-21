@@ -195,6 +195,156 @@ async function walkTo(page, id) {
     D.close();
     return bad.length ? bad.join(',') : true;
   });
+  // 第4弾（ほかのゲームを遊んで）：稲刈りの ↶ もどす・ミニゲームの面ごとの自己ベストと つづき・同じ知らせを重ねない・前回のさんぽ・バッジの達成率
+  R.checks.fourth = await page.evaluate(async () => {
+    const H = window.NISHIO_HARVEST, G = nishioGo, bad = [];
+    if (!H) return 'none';
+    H.open(); H.reset(0);
+    const i0 = H.info; H.move('up'); H.move('right'); const i1 = H.info; H.undo(); const i2 = H.info;
+    if (!(i1.moves === 2 && i1.turns === 1 && i2.moves === 1 && i2.turns === 0 && i2.left === i0.left - 1 && i2.pos[0] === 0 && i2.dir === 'up')) bad.push('もどす');
+    H.reset(0);
+    const { w, h } = H.info, cands = [H.spiral(w, h, 'up', 1), H.spiral(w, h, 'right', 3), H.serpentine(w, h, true), H.serpentine(w, h, false)].filter(p => p && p.length === w * h);
+    const path = cands.sort((a, b) => H.turnsOf([[0, h], ...a], 'up') - H.turnsOf([[0, h], ...b], 'up'))[0];
+    let at = [0, h];
+    for (const p of path) { H.move(p[0] > at[0] ? 'right' : p[0] < at[0] ? 'left' : p[1] > at[1] ? 'down' : 'up'); at = p; }
+    await new Promise(r => setTimeout(r, 500));
+    const rec = G.miniRecords('harvest')[0], res = document.querySelector('#harvest .jump-result');
+    if (!(rec && rec.s === 3 && /自己ベスト/.test(res.textContent) && res.querySelector('[data-lv="1"]') && !res.querySelector('[data-lv="2"]'))) bad.push('自己ベスト');
+    const worse = G.miniBest('harvest', 0, 2, 99, true);
+    if (worse.fresh || G.miniRecords('harvest')[0].s !== 3) bad.push('悪い記録で上書き');
+    H.close(); H.open();
+    if (H.info.level !== 1) bad.push('つづき');
+    H.close();
+    // 同じ知らせ：続けて3回出しても、待ちの列に重ならない
+    G.toast('テストの知らせ'); G.toastAfter('テストの知らせ'); G.toastAfter('テストの知らせ'); G.toastAfter('テストの知らせ2'); G.toastAfter('テストの知らせ2');
+    const q = G.toastAfter.q || [], n1 = q.filter(m => m === 'テストの知らせ').length, n2 = q.filter(m => m === 'テストの知らせ2').length;
+    if (n1 > 1 || n2 !== 1) bad.push(`知らせ ${n1}・${n2}`);
+    // 前回のさんぽ：きのうの記録が きろく に出る
+    const d = G.state.day, y = new Date(); y.setDate(y.getDate() - 1);
+    const keep = JSON.stringify(d);
+    G.state.day = { ...d, date: G.ymd(y), walked: 640, checkins: 2, dots: 1 };
+    G.renderLog();
+    const box = document.getElementById('bagBox').textContent;
+    if (!/きのうのさんぽ/.test(box) || !/640m/.test(box)) bad.push('前回のさんぽ');
+    G.state.day = { ...JSON.parse(keep), date: G.ymd() }; G.state.prevDay = null; G.renderLog();
+    if (!/^\d+\/\d+（\d+%）$/.test(document.getElementById('badgeCount').textContent)) bad.push('バッジの達成率');
+    return bad.length ? bad.join(',') : true;
+  });
+  // 田んぼのイベント「芽出しの見きわめ」：種もみが3つ出て、OK をえらぶと +20pt と米づくりの まちメモ。1日1回
+  R.checks.medashi = await page.evaluate(async () => {
+    const M = window.NISHIO_MEDASHI, G = nishioGo, bad = [];
+    if (!M) return 'none';
+    if (G.state.medashiDay === G.ymd()) return 'もう今日は遊んだことになっている';
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();   // ごほうびの画面の上には出ないので、閉じてから
+    const p0 = G.state.points;
+    // 田んぼを歩いて始まる。きろく のパネルを開いている間は始まらず、閉じたあとの1歩で始まる
+    const P = nishioPixel, t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    let hit = null;
+    for (let r = 0; r < 120 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) { const c = P.codeAt(x0 + dx, y0 + dy); if (c === P.C.F || c === P.C.U) { hit = [x0 + dx, y0 + dy]; break; } }
+    if (!hit) return '近くに田んぼがない';
+    const rb = G.rewardSoon; G.rewardSoon = () => true;   // 絵を読みこんでいて まだ出ていない ごほうび・開く予約をした おみやげ袋があるとき
+    if (M.open()) { bad.push('ごほうびを待つ間に出た'); M.close(); }
+    G.rewardSoon = rb;
+    document.querySelector('.tabs button[data-tab="log"]').click();
+    for (let i = 0; i < 20; i++) P.critterStep(hit[0], hit[1]);
+    if (M.shown) bad.push('パネルの上に出た');
+    document.querySelector('.tabs button[data-tab="map"]').click();
+    for (let i = 0; i < 3 && !M.shown; i++) P.critterStep(hit[0], hit[1]);
+    if (!M.shown) return `田んぼを歩いても開かない（${document.body.classList.contains('jump-open') ? 'ミニゲーム中' : document.getElementById('reward').classList.contains('show') ? 'ごほうびの画面' : 'ほか'}）${bad.join(',')}`;
+    // 開いている間は、矢印キーで主人公が動かない
+    const before = G.me.lat + ',' + G.me.lng;
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    if (G.me.lat + ',' + G.me.lng !== before) bad.push('開いている間に歩いた');
+    // 開いている間に来た ごほうびは、閉じるまで出さない
+    G.showReward(1, 'テスト1', [], false, '', null);
+    G.showReward(2, 'テスト2', [], false, '', null);
+    if (rw.classList.contains('show') || !G.rewardBusy()) bad.push('開いている間に ごほうびが出た');
+    if (document.querySelectorAll('#medashi .md-seed').length !== 3) bad.push('種もみが3つでない');
+    M.pick('ok');
+    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!G.state.facts.includes('k:tanemomi:0')) bad.push('まちメモ');
+    if (!/正解/.test(document.querySelector('#medashi .md-res').textContent)) bad.push('こたえ');
+    M.close();
+    if (G.medashiDue() || M.open()) bad.push('1日に2回');
+    await new Promise(r => setTimeout(r, 900));
+    if (!rw.classList.contains('show') || !/テスト1/.test(rw.textContent)) bad.push('閉じたあとに 1つめの ごほうびが出ない');
+    rw.click();
+    await new Promise(r => setTimeout(r, 1600));
+    if (!rw.classList.contains('show') || !/テスト2/.test(rw.textContent)) bad.push('1つめを閉じたあとに 2つめの ごほうびが出ない');
+    rw.click();
+    return bad.length ? bad.join(',') : true;
+  });
+  // イベント「古い地図が出てきた」：町名から明治の村がわかり、村の地図が描け、はじめての村で +15pt。2回目は出ない
+  R.checks.oldmap = await page.evaluate(async () => {
+    const O = window.NISHIO_OLDMAP, G = nishioGo, P = nishioPixel, bad = [];
+    // 町名は歩く地図を描いている間だけ新しい。せかいちずに切り替えると、古い町名ではイベントを出さない
+    if (!P.hereFresh) bad.push('歩く地図で町名が新しくない');
+    P.setWorld(true);
+    await new Promise(r => setTimeout(r, 2300));
+    if (P.hereFresh) bad.push('せかいちずでも町名が新しいまま');
+    P.setWorld(false);
+    await new Promise(r => setTimeout(r, 800));
+    if (!O) return 'none';
+    const v = O.villageOf('一色町味浜', '西尾市'), k = O.villageOf('八ケ尻町', '西尾市'), z = O.villageOf('中野町', '豊橋市');
+    if (!v || v.id !== 'isshiki') bad.push('一色町味浜→一色村');
+    if (z) bad.push('ほかの市の同じ町名');
+    if (!/^data:image\/png/.test(O.villageMap(0) || '')) bad.push('村の地図が描けない');
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    const p0 = G.state.points;
+    if (!O.open(O.VILLAGES[2], '平坂町') || !O.shown) return '開かない';
+    if (G.state.points - p0 !== 15) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!/平坂村/.test(document.getElementById('oldmap').textContent)) bad.push('村の名前');
+    O.close();
+    if (O.open(O.VILLAGES[2], '平坂町')) bad.push('同じ村で2回');
+    if (!O.view() || !/平坂村/.test(document.getElementById('oldmap').textContent) || !/1\/11/.test(document.getElementById('oldmap').textContent)) bad.push('きろく の明治の村の地図');
+    O.close();
+    if (O.villageOf('中根町', '西尾市').id !== 'terazu' || O.villageOf('南中根町', '西尾市').id !== 'meiji') bad.push('中根と南中根');
+    return bad.length ? bad.join(',') : true;
+  });
+  // イベント「本のできごと」：本に出てくる場所の近くで起き、正解で +20pt と まちメモ。同じできごとは2回起きない
+  R.checks.bookev = await page.evaluate(() => {
+    const B = window.NISHIO_BOOKEV, G = nishioGo, bad = [];
+    if (!B) return 'none';
+    const pool = B.EVENTS.flatMap(e => e.facts);
+    if (pool.some(k => !/^g:[a-z-]+:\d$/.test(k))) bad.push('まちメモの鍵');
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    const ev = B.EVENTS.find(e => e.id === 'shisei'), p0 = G.state.points;
+    if (!B.open(ev) || !B.shown) return '開かない';
+    B.pick(0);
+    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
+    if (!ev.facts.every(k => G.state.facts.includes(k))) bad.push('まちメモ');
+    if (!/正解/.test(document.getElementById('bookev').textContent)) bad.push('こたえ');
+    B.close();
+    if (B.open(ev)) bad.push('2回起きた');
+    return bad.length ? bad.join(',') : true;
+  });
+  // ミニゲーム「肥料山の草刈り」：草を刈って5束で かごがいっぱい、田んぼでおろす。持ち主に「知事の許可」と答えると +10秒、本のできごとも見たことに
+  R.checks.hiryo = await page.evaluate(async () => {
+    const Y = window.NISHIO_HIRYO, G = nishioGo, B = window.NISHIO_BOOKEV, bad = [];
+    if (!Y) return 'none';
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    Y.open(true);
+    let i = Y.info;
+    const col = [...Array(12).keys()].find(x => i.map.slice(0, 7).every(r => r[x] === 'g'));
+    if (col === undefined) { Y.close(); return 'まっすぐ刈れる列がない'; }
+    while (Y.info.pos[0] !== col) Y.move(Y.info.pos[0] < col ? 'right' : 'left');
+    for (let k = 0; k < 6; k++) Y.move('up');
+    if (Y.info.carry !== 5) bad.push(`かご ${Y.info.carry}`);
+    for (let k = 0; k < 7; k++) Y.move('down');
+    if (Y.info.total !== 5 || Y.info.carry !== 0) bad.push(`おろす ${Y.info.total}`);
+    Y.setLeft(30.2);
+    await new Promise(r => setTimeout(r, 600));
+    if (!Y.info.owner) bad.push('持ち主が来ない');
+    const l0 = Y.info.left;
+    Y.answer('ok');
+    if (Y.info.left < l0 + 9) bad.push('+10秒');
+    Y.finish('time');
+    if (!G.bookEvHas('hiryoyama')) bad.push('本のできごと');
+    if (!/草刈り|時間切れ/.test(document.querySelector('#hiryo .jump-result').textContent)) bad.push('結果');
+    Y.close();
+    if (document.body.classList.contains('jump-open')) bad.push('閉じない');
+    return bad.length ? bad.join(',') : true;
+  });
   R.checks.trail = await page.evaluate(() => {
     const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
     let t = P.toTile(at.lat, at.lng);
@@ -362,6 +512,11 @@ async function walkTo(page, id) {
   need(c.eyeNotYet === true && c.eyeLocked === true && c.eyeTalk === true && c.eyeFree === true, '呼びとめ：まだ話していない人の まっすぐ4マス以内に入っても、その人が歩いてきて話しかけない（または、歩いてくる間に動ける・話のあとに動けない）');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
   need(c.dankyu === true, `段丘をのぼる：${c.dankyu}`);
+  need(c.hiryo === true, `ミニゲーム 肥料山の草刈り：${c.hiryo}`);
+  need(c.bookev === true, `イベント 本のできごと：${c.bookev}`);
+  need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
+  need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
+  need(c.fourth === true, `第4弾（もどす・自己ベスト・知らせ・前回のさんぽ・バッジ）：${c.fourth}`);
   need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
   need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');
   need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');

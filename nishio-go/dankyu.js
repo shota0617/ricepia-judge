@@ -7,6 +7,7 @@
 // ・ことばは shizen.js（西尾の海と大地。出典つき）の「碧海台地と碧海層」「西尾の低い土地」「自然堤防の上の集落」の話だけを使う
 // ・主人公と地面の絵は「にしおジャンプ」と同じ Blender の絵（nishio-go/art/runner.png）。ごほうびは game.js の dankyuReward（1日1回）
 // ・操作：◀ ▶ と「ジャンプ」、キーボードは ← → / A D と スペース・↑・Z
+// ・段丘ごとの自己ベスト（★、★が同じなら のこり時間）を残し、開くと まだのぼりきっていない段丘から。結果の画面で えらべる（game.js の miniBest）
 (() => {
   'use strict';
   const W = 192, H = 144, T = 16, COLS = W / T;   // 画面（12×9マス）
@@ -175,16 +176,27 @@
   function later(fn) { const g = gen; setTimeout(() => { if (running && g === gen) fn(); }, 300); }   // 閉じた・やりなおしたあとに前のプレイの結果を出さない
   function clear() { done = true; sound('clear'); later(() => result(true)); }
   function fail(why) { done = true; sound('fail'); later(() => result(false, why)); }
+  // 段丘をえらぶボタン：のぼりきった段丘と、その次の段丘（★は自己ベスト）
+  function levelBtns() {
+    const G = window.nishioGo;
+    if (!G || !G.miniRecords) return '';
+    const rec = G.miniRecords('dankyu');
+    let open = 0; while (open < LEVELS.length - 1 && rec[open]) open++;   // えらべるのは、まだのぼりきっていない いちばん前の段丘まで
+    return `<span class="mini-levels">${LEVELS.map((l, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-dk="lv" data-lv="${i}" aria-label="${i + 1}つ目の段丘 ${l.name}">${i + 1} ${rec[i] ? '★'.repeat(rec[i].s) + '☆'.repeat(3 - rec[i].s) : '—'}</button>`).join('')}</span>`;
+  }
   function result(ok, why) {
     if (shown) return;
     shown = true;
     const G = window.nishioGo, st = ok ? stars() : 0;
     const got = ok && G && G.dankyuReward ? G.dankyuReward(st, lv) : null;
+    const mb = ok && G && G.miniBest ? G.miniBest('dankyu', lv, st, Math.ceil(timeLeft()), false) : null;
     const n = outcrops.filter(o => o.got).length;
     const res = root.querySelector('.jump-result');
     res.innerHTML = `<b>${ok ? `${L.name}に のぼりきった！` : '不成功'}</b><span>${lv + 1}つ目の段丘：${L.name}（${L.where}）</span>`
       + (ok ? `<span>${'★'.repeat(st)}${'☆'.repeat(3 - st)}　露頭 ${n}/${outcrops.length}・のこり ${Math.ceil(timeLeft())}秒</span>` : `<span>${why}</span>`)
+      + (mb && mb.best ? `<span>${mb.fresh ? '自己ベスト更新！ ' : '自己ベスト '}${'★'.repeat(mb.best.s)}${'☆'.repeat(3 - mb.best.s)}　のこり ${mb.best.v}秒</span>` : '')
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : ok && got === null && G && G.dankyuReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
+      + levelBtns()
       + `<span class="jump-btns"><button type="button" class="btn" data-dk="again">もういちど</button>${ok && lv < LEVELS.length - 1 ? '<button type="button" class="btn" data-dk="next">つぎの段丘</button>' : ''}<button type="button" class="btn" data-dk="close">もどる</button></span>`;
     res.hidden = false;
     if (G && G.track) G.track(ok ? 'dankyu_clear' : 'dankyu_fail', { level: lv + 1, stars: st, outcrops: n, left: Math.ceil(timeLeft()) });
@@ -314,6 +326,7 @@
       if (a === 'close') close();
       else if (a === 'again') reset(lv);
       else if (a === 'next') reset(Math.min(LEVELS.length - 1, lv + 1));
+      else if (a === 'lv') reset(Math.max(0, Math.min(LEVELS.length - 1, +b.dataset.lv || 0)));
     });
     root.querySelectorAll('[data-key]').forEach(b => {
       const k = b.dataset.key;
@@ -329,11 +342,12 @@
   function open() {
     if (!root) buildUi();
     loadArt();
-    reset(0);
+    const G = window.nishioGo;
+    reset(G && G.miniStart ? G.miniStart('dankyu', LEVELS.length) : 0);   // まだのぼりきっていない段丘から
     root.hidden = false; document.body.classList.add('jump-open');
     fit();
     running = true; last = performance.now(); acc = 0; cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
-    const G = window.nishioGo; if (G && G.track) G.track('dankyu_open', {});
+    if (G && G.track) G.track('dankyu_open', {});
   }
   function close() {
     running = false; gen++; cancelAnimationFrame(raf);

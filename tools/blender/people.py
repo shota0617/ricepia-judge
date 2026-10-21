@@ -2,6 +2,7 @@
 # - 2頭身の立体（大きな頭・胴・腕・足）。歩く2コマ（足と腕を前後に）。主人公は 下・上・横 の3方向
 # - 色は pixel.js の NPC_COLORS と主人公の色に合わせる。人ごとの小物：おじいさんの杖・おばあさんのおだんご髪・子どもの帽子・
 #   学生の帽子とえり・漁師さんの はちまき・お店の人のエプロン・ガイドさんの旗・お坊さんの袈裟
+# - 目は焼いたあと people-eyes.py で ポケモン（赤・緑）の歩く人と同じ「黒・横1×縦2」に描きなおす
 # - できた絵は1枚のシート nishio-go/art/people.png（16×16 が横に並ぶ。並びは pixel.js の PEOPLE_ORDER）
 # 使い方：python tools/blender/people.py
 import importlib.util
@@ -92,6 +93,7 @@ def compose():
         'W.save(dst)\n')
     dst = os.path.join(pa.ROOT, 'nishio-go', 'art', 'people.png')
     subprocess.run(['python3', '-c', script, TMPD, dst, ','.join(ORDER)], check=True)
+    subprocess.run(['python3', os.path.join(HERE, 'people-eyes.py'), dst], check=True)   # 目をポケモンの大きさ（黒・横1×縦2）に
     print('wrote', os.path.relpath(dst, pa.ROOT), len(ORDER), 'sprites')
 
 

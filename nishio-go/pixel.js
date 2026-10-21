@@ -1618,13 +1618,13 @@ const HERO_TOP = ['................', '.....kkkkkk.....', '....kyyyyyyk....', '.
 const LEGS_A = ['....kBBkkBBk....', '....knnk.knnk...', '.....kk...kk....'];
 const LEGS_B = ['....kBBkkBBk....', '...knnk..knnk...', '....kk....kk....'];
 const HERO = {
-  down: ['...kyykkkkyyk...', '...kyksssskyk...', '....kskssksk....', '....kssssssk....', '...kkbkkkkbkk...', '..kssbbbbbbssk..', '..kssbbyybbssk..', '...kkbbbbbbkk...', '....kbbbbbbk....'],
+  down: ['...kyykkkkyyk...', '...kyksssskyk...', '....kskssksk....', '....kskssksk....', '...kkbkkkkbkk...', '..kssbbbbbbssk..', '..kssbbyybbssk..', '...kkbbbbbbkk...', '....kbbbbbbk....'],
   up: ['...kyyyyyyyyk...', '...kyyyyyyyyk...', '....kyyyyyyk....', '....kssssssk....', '...kkbkkkkbkk...', '..kssbbbbbbssk..', '..kssbbbbbbssk..', '...kkbbbbbbkk...', '....kbbbbbbk....'],
-  right: ['...kyyyykkkkk...', '...kyyyksssk....', '...kyyksskssk...', '....kksssssk....', '....kkbbbbkk....', '....kbbbbsssk...', '....kbbbbsssk...', '....kbbbbbbk....', '....kbbbbbbk....'],
+  right: ['...kyyyykkkkk...', '...kyyyksssk....', '...kyyksskssk...', '....kksssksk....', '....kkbbbbkk....', '....kbbbbsssk...', '....kbbbbsssk...', '....kbbbbbbk....', '....kbbbbbbk....'],
 };
 const mirror = rows => rows.map(r => [...r].reverse().join(''));
-// 西尾の人たち（npcs.js）：同じ形で、髪・服・ズボンの色を変える（h 髪、c 服、p ズボン、a 小物）
-const NPC_ROWS = ['................', '.....kkkkkk.....', '....khhhhhhk....', '...khhhhhhhhk...', '...khsssssshk...', '...kskssssksk...', '....kssssssk....', '.....kssssk.....',
+// 西尾の人たち（npcs.js）：同じ形で（目はポケモンの歩く人と同じ 黒・横1×縦2）、髪・服・ズボンの色を変える（h 髪、c 服、p ズボン、a 小物）
+const NPC_ROWS = ['................', '.....kkkkkk.....', '....khhhhhhk....', '...khhhhhhhhk...', '...khsssssshk...', '...kssksskssk...', '....kskssksk....', '.....kssssk.....',
   '....kkcccckk....', '...kccccccccak..', '..ksccccccccsk..', '..ksccccccccsk..', '...kcccccccck...', '....kppppppk....', '....kppkkppk....', '....kkk..kkk....'];
 const NPC_COLORS = {
   elder:   { h: '#c8c8c8', c: '#6d5a44', p: '#4a4a4a', a: '#6d5a44' },

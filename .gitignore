@@ -6,3 +6,6 @@ gb-play-out/
 *.gb
 *.gbc
 __pycache__/
+*.nes
+*.fds
+nethack-play-out/

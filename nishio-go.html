@@ -101,6 +101,7 @@
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car" data-art="btn-car"></i></button>
     <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）"><i data-pi="compass" data-art="btn-compass"></i></button>
   </div>
+  <div class="meet" id="meetBox" hidden><div class="dq"><canvas id="meetArt" width="16" height="16"></canvas><p id="meetText"></p></div></div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
 </section>
 
@@ -226,6 +227,7 @@
     <h3>みんなの声で かわったこと</h3>
     <ul class="voice-list" id="voiceLog"></ul>
     <p class="note" id="voiceLogEmpty">まだありません。あなたの声が、さいしょの1つになるかもしれません。</p>
+    <p class="note"><a href="nishio-go/pr.html" target="_blank" rel="noopener">🖼 公開ページ「西尾の四季ドット絵」</a>（西尾の名所を、春夏秋冬・朝昼夕夜・4つの向きで描いた特大ドット絵。保存して西尾の紹介に使えます）</p>
     <p class="note"><a href="nishio-go/minna.html" target="_blank" rel="noopener">🌏 公開ページ「みんなで見つけた西尾」</a>（ゲームを遊んでいない人にも、みんなの声でふえた西尾の名所を見てもらえます）</p>
   </div>
 </section>
@@ -240,6 +242,10 @@
     <label class="row">
       <span><b>👾 ドット絵の地図</b><small>オフにすると、ふつうの地図（地理院タイル）で遊べます。</small></span>
       <input type="checkbox" id="pxToggle"/>
+    </label>
+    <label class="row">
+      <span><b>🌙 夜は地図を暗く</b><small>オン（はじめ）は、夜（19時〜5時）のドット絵の地図が暗くなり、主人公のまわりと お店・建物の明かりだけが見えます（夕方・明け方は半分）。</small></span>
+      <input type="checkbox" id="nightToggle"/>
     </label>
     <label class="row">
       <span><b>🟩 ゲームボーイの4色</b><small>オンにすると、ドット絵の地図を ポケモン赤・緑のころの ゲームボーイと同じ4つの色で描きます。オフ（はじめ）は 色のついたドット絵です。</small></span>
@@ -262,6 +268,12 @@
       <span><b>📊 アクセス解析</b><small>どの画面を見たか・どのボタンを押したかを、Google・LINEヤフー・Meta の解析に送ります（現在地の座標は送りません）。オフにすると送りません。くわしくは<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>。</small></span>
       <input type="checkbox" id="anaToggle"/>
     </label>
+  </div>
+  <div class="card" id="codeCard">
+    <p><b>🔑 ひきつぎの あいことば</b><small>機種を変えるときや、別の端末で続きを遊ぶときに使います。「あいことばを出す」でコピーして、新しい端末の ここに はりつけると、ポイント・めぐった所・ドット絵などが そのまま移ります（あるいて移動・操作して移動 は別の記録です）。</small></p>
+    <div class="row"><button type="button" class="btn mini" id="codeMake">あいことばを出す</button><button type="button" class="btn mini" id="codeCopy" hidden>コピー</button></div>
+    <textarea id="codeBox" rows="3" spellcheck="false" placeholder="ここに あいことば を はりつけて、下のボタン"></textarea>
+    <button type="button" class="btn mini" id="codeLoad">この あいことばで続ける</button>
   </div>
   <div class="card">
     <div class="row"><span><b>いまのGPS</b><small id="gpsInfo">—</small></span>

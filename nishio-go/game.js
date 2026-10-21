@@ -1029,7 +1029,7 @@ function factPool() {   // まちメモ：地区の豆知識・紹介文、注�
   for (const t of MACHI) t.facts.forEach((f, i) => m.set(`t:${t.id}:${i}`, `${t.icon} ${t.city}：${f}`));
   return m;
 }
-// 出すまちメモ：まだ持っていないものから、①7市町の外なら そのまちの話 ②そのスポットの話・そこでの行事 ③同じ地区の話 ④ほか の順に選ぶ
+// 出すまちメモ：まだ持っていないものから、①7市町の外なら そのまちの話 ②そのスポットの話・そこでの行事 ③同じ地区の話 ④まわりのまち以外のほか ⑤ほか の順に選ぶ
 function pickFact(c) {
   const pool = factPool(), keys = [...pool.keys()], fresh = keys.filter(k => !S.facts.includes(k));
   const list = fresh.length ? fresh : keys;
@@ -1037,15 +1037,26 @@ function pickFact(c) {
   let near = null, nd = Infinity;
   for (const s of spots) { const d = dist(c, s); if ((c.at ? s.name === c.at : true) && d < nd) { near = s; nd = d; } }
   const area = near && near.area, inArea = id => { const s = spots.find(x => x.id === id); return s && s.area === area; };
-  const machi = machiAt(c);
+  const machi = machiAt(c), here = cityAt(c.lat, c.lng), hereNear = !!here && here.name !== '西尾市';
   const tiers = [
     k => machi && k.startsWith(`t:${machi.id}:`),
     k => near && (k === `s:${near.id}` || EVENTS.some(e => k === `e:${e.id}` && evSpotId(e) === near.id) || spotMeibutsu(near).some(x => k.startsWith(`m:${x.id}:`))),
     k => area && (k.startsWith(`a:${area}:`) || (k.startsWith('s:') && inArea(k.slice(2))) || EVENTS.some(e => k === `e:${e.id}` && e.spot && inArea(evSpotId(e)))),
+    k => !k.startsWith('t:') && factNear(k) === hereNear,   // 西尾市にいるなら西尾の話、となりの市町にいるなら となりの市町の話
+    k => !k.startsWith('t:'),   // まわりのまち（刈谷・大府など）の話は、そのまちにいるときだけ（西尾で大府の話が出ないように）
     () => true,
   ];
   for (const t of tiers) { const g = list.filter(t); if (g.length) return g[hashStr(c.id) % g.length]; }
   return '';
+}
+// まちメモが、となりの市町（areas.json の near の地区・area のある名物）の話か
+function factNear(k) {
+  const [kind, id] = k.split(':'), areaNear = a => !!(areas.find(x => x.id === a) || {}).near, spotNear = sid => { const sp = spots.find(x => x.id === sid); return !!sp && areaNear(sp.area); };
+  if (kind === 'a') return areaNear(id);
+  if (kind === 's') return spotNear(id);
+  if (kind === 'e') { const e = EVENTS.find(x => x.id === id); return !!e && !!e.spot && spotNear(evSpotId(e)); }
+  if (kind === 'm') return !!(MEIBUTSU.find(x => x.id === id) || {}).area;
+  return true;
 }
 const knownFacts = () => { const pool = factPool(); return S.facts.filter(k => pool.has(k)).length; };
 // いまのモード・今日のたからばこで、まだ開けていないもの（モードを切り替えた直後や日付が変わった直後に、

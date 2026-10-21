@@ -1745,17 +1745,23 @@ const CLEAR_BY = 'castle-guide';
 const clearReady = () => SEAL_MAIN.every(id => (S.seals || []).includes(id));
 function clearGive(n) {
   if (n.id !== CLEAR_BY || S.cleared || !clearReady()) return false;
-  S.cleared = { t: Date.now() };
+  S.cleared = { t: Date.now(), rec: clearRecord() };   // 殿堂入りした時点の記録（あとから見ても変わらないように）
   save();
   track('game_clear', { days: dayN(), spots: Object.keys(S.visits).length, mode: demo ? 'play' : 'walk' });
-  setTimeout(() => { showEnding(); checkBadges(); }, 900);
+  // ごほうびの画面が出ている・絵の読みこみを待っている間は待つ（あとから出たごほうびに上書きされないように）
+  setTimeout(function go() { if (rewardBusy()) return setTimeout(go, 500); showEnding(); checkBadges(); }, 900);
   return true;
+}
+function clearRecord() {
+  return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length };
 }
 function showEnding() {
   const npcs = window.NISHIO_NPCS || [], by = npcs.find(n => n.id === CLEAR_BY);
+  const r = (S.cleared && S.cleared.rec) || clearRecord(), when = S.cleared && S.cleared.t ? new Date(S.cleared.t) : null;
   const rows = [
-    ['めぐった名所', `${Object.keys(S.visits).length}か所`], ['話した人', `${(S.met || []).length}人`], ['歩いた道のり', `${Math.floor(S.walked / 100) / 10}km`],
-    ['西尾ドット絵', `${(S.dots || []).length}枚`], ['まちメモ', `${knownFacts()}こ`], ['生きもの', `${Object.keys(S.critters || {}).length}しゅるい`],
+    ...(when ? [['殿堂入りした日', `${when.getFullYear()}/${when.getMonth() + 1}/${when.getDate()}`]] : []),
+    ['めぐった名所', `${r.spots}か所`], ['話した人', `${r.met}人`], ['歩いた道のり', `${r.km}km`],
+    ['西尾ドット絵', `${r.dots}枚`], ['まちメモ', `${r.facts}こ`], ['生きもの', `${r.critters}しゅるい`],
   ];
   const seals = SEAL_MAIN.map(id => { const a = areas.find(x => x.id === id), p = npcs.find(n => n.id === SEAL_BY[id]); return a ? `<li>🔖 ${esc(a.name)}のしるし <small>${esc(p ? p.name : '')}</small></li>` : ''; }).join('');
   const el = $('reward');

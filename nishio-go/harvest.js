@@ -168,17 +168,17 @@
     // わらくず
     parts = parts.filter(p => p.life-- > 0);
     for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.08; ctx.fillStyle = p.life % 2 ? '#f2d36b' : '#cdbf8e'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
-    // 上の数字
-    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(0, 0, W, 11);
-    ctx.fillStyle = '#fff'; ctx.font = '8px "DotGothic16", monospace'; ctx.textBaseline = 'top';
+    // 数字と ひとこと は、絵の上下の文字で（絵の中の 8px の文字では、ドット文字の漢字がつぶれて読めなかった）
     const total = F.w * F.h;
-    ctx.fillText(`刈った ${total - left()}/${total}`, 3, 2);
-    ctx.fillStyle = turns > par + SLACK ? '#ff8a80' : '#fff'; ctx.fillText(`曲がる ${turns}（目安${par}）`, 66, 2);
-    ctx.fillStyle = waste ? '#ff8a80' : '#fff'; ctx.fillText(`むだ ${waste}`, 150, 2);
-    if (msg && now - msgT < 2600) {
-      ctx.fillStyle = 'rgba(0,0,0,.65)'; ctx.fillRect(0, H - 11, W, 11);
-      ctx.fillStyle = '#ffe27a'; ctx.fillText(msg, 3, H - 9);
-    }
+    hud('cut', `刈った ${total - left()}/${total}`, false);
+    hud('turn', `曲がる ${turns}（目安${par}）`, turns > par + SLACK);
+    hud('waste', `むだ ${waste}`, !!waste);
+    hud('msg', msg && now - msgT < 2600 ? msg : '', false);
+  }
+  function hud(k, text, warn) {   // 変わったときだけ書きかえる
+    const el = root.querySelector(`[data-h="${k}"]`);
+    if (el.textContent !== text) el.textContent = text;
+    el.classList.toggle('warn', warn);
   }
   function loop(now) {
     if (!running) return;
@@ -197,7 +197,9 @@
     root = document.createElement('div');
     root.className = 'jump harvest'; root.id = 'harvest'; root.hidden = true;
     root.innerHTML = `<div class="jump-top"><b>コンバインで稲刈り</b><span class="jump-btns"><button type="button" class="btn mini" data-hv="end" aria-label="ここで終える">おわる</button><button type="button" class="btn mini" data-hv="close" aria-label="とじる">とじる</button></span></div>
+      <div class="harvest-hud"><span data-h="cut"></span><span data-h="turn"></span><span data-h="waste"></span></div>
       <div class="jump-stage"><canvas width="${W}" height="${H}" aria-label="ミニゲーム コンバインで稲刈り"></canvas><div class="jump-result" hidden></div></div>
+      <p class="harvest-msg" data-h="msg"></p>
       <p class="jump-help">矢印で1マスずつ進んで刈る。刈り残し・刈ったあとを走る・曲がりすぎ は不成功。長い辺にそって進むのがコツ</p>
       <div class="harvest-pad"><button type="button" data-dir="up" aria-label="上へ">▲</button><button type="button" data-dir="left" aria-label="左へ">◀</button><button type="button" data-dir="down" aria-label="下へ">▼</button><button type="button" data-dir="right" aria-label="右へ">▶</button></div>`;
     document.body.appendChild(root);

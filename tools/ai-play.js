@@ -157,6 +157,7 @@ async function keys(page, list) {
       } else if (a.do === 'close') await page.evaluate(() => {   // 人やスポットの窓と、ごほうびの画面（タップで とじる）
         const b = document.querySelector('#pxInfo:not([hidden]) [data-close]'); if (b) b.click();
         const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        if (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) NISHIO_MOVIE.close();   // ドット絵ムービー（最後まで見ずに閉じると、まちメモ には残らない）
       });
       else if (a.do === 'tap') await page.click(a.sel, { timeout: 3000 });
       else if (a.do === 'click') await page.mouse.click(a.x, a.y);   // 画面の位置（CSS ピクセル。スクリーンショットは2倍なので、その半分）をタップ

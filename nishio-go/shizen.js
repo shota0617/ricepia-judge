@@ -3,7 +3,8 @@
 //  ・運営者から受けとった、西尾市の自然についての本のページの写真（2026年10月）。書名は確かめ中
 //      147ページ「1 地形・地質」「2 漁業・漁港」（図3-2-1 伊勢湾・三河湾）
 //      第1章 第3節「西尾市の地質」1「西尾市と周辺地域の地質の概要」
-// spots：その話にゆかりのある注目スポット（spots.json の id）。その名所の近くで出やすく、「しらべる」でも見つかる
+// spots：その話にゆかりのある注目スポット（spots.json の id）。
+// この話は、たからばこ や しらべる で ばらばらに出すのではなく、その名所に はじめて着いたときの イベント「ドット絵ムービー」（movie.js）で見せる。見おわると まちメモ に残る
 window.NISHIO_SHIZEN = [
   { id: 'mikawawan', icon: '🌊', name: '三河湾',
     spots: ['koromozaki', 'tombolo', 'isshiki-port', 'sakushima-nishi', 'sakushima-higashi', 'oura-beach', 'kira-waikiki', 'ebisu-beach', 'terabe-beach'],
@@ -22,6 +23,8 @@ window.NISHIO_SHIZEN = [
     spots: ['yatsuomote', 'tombolo', 'sangane-kannon', 'terabe-jo', 'terabe-beach'],
     facts: [
       '幡豆山地や八ツ面山、前島・沖島・梶島とそのまわりの岩場は、中生代の変成岩や深成岩でできている（領家変成帯）。',
+      '変成岩のもとは、大洋の底に積もったものが、中生代ジュラ紀に海のプレートの沈みこみで大陸のふちにくっついたもの（美濃帯）と考えられている。',
+      '白亜紀に上ってきた花崗岩のマグマの熱で、まわりの岩は変成岩に変わった。マグマは冷えて固まり、深成岩になった。',
     ] },
   { id: 'sakushima', icon: '🪨', name: '佐久島の地層',
     spots: ['sakushima-nishi', 'sakushima-higashi', 'oura-beach', 'kurokabe', 'ohirune-house', 'yatsurugi'],

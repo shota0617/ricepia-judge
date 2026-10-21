@@ -1847,7 +1847,7 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
-    { id: 'bookev', i: '📖', n: '西尾の歴史はかせ', d: '「本のできごと」を ぜんぶ見る（本に出てくる場所へ行くと起きる）', cur: (S.bookEv || []).length, goal: (window.NISHIO_BOOKEV && NISHIO_BOOKEV.EVENTS.length) || 7 },
+    { id: 'bookev', i: '📖', n: '西尾の歴史はかせ', d: '「本のできごと」を ぜんぶ見る（本に出てくる場所へ行くと起きる）', cur: (S.bookEv || []).length, goal: (window.NISHIO_BOOKEV && NISHIO_BOOKEV.EVENTS.length) || 9 },
     { id: 'oldmap', i: '🗺️', n: '明治の村あつめ', d: '「古い地図」のイベントで、明治39年ごろの村を ぜんぶ見つける', cur: (S.oldmap || []).length, goal: (window.NISHIO_OLDMAP && NISHIO_OLDMAP.VILLAGES.length) || 11 },
     { id: 'critterall', i: '📜', n: '生きもの手帳の賞状', d: `生きもの手帳の${CRITTERS.length}しゅるい ぜんぶに出会う（季節で出るものもあるので、1年かけて）`, cur: CRITTERS.filter(c => (S.critters || {})[c.id]).length, goal: CRITTERS.length },
     { id: 'clear', i: '👑', n: '殿堂入り', d: '5つの地区のしるしを集めて、西尾城跡のガイドさんに会う（クリア）', cur: S.cleared ? 1 : 0, goal: 1 },

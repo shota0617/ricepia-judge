@@ -18,6 +18,9 @@ const CFG = {
   walkUnitM: 100,           // 100m 歩くごとに
   walkUnitPts: 1,           //   1pt
   walkDailyCap: 100,        // 歩数ポイントは1日100ptまで
+  trailUnit: 50,            // はじめて歩いた道（あしあと）が50マス（約400m）ふえるごとに
+  trailPts: 5,              //   5pt
+  trailDailyCap: 50,        // はじめての道のポイントは1日50ptまで（約4km）
   walkMaxAcc: 35,           // 歩数計測に使うGPS精度の上限（m）
   walkMaxSpeed: 4.5,        // m/s（約16km/h：ジョギングまで）
   walkMaxGapSec: 180,       // 位置の更新がこれ以上途切れたら、その間の移動は数えない
@@ -634,7 +637,11 @@ function trackWalk(p) {
   if (demo) {
     // 操作して移動：タップで移動した距離のうち 500m 以内の移動だけを歩いた扱いにする（車で走った分は数えない）
     // おみやげ袋は、歩く地図の1歩（スティック・タップした所へ歩く・おまかせ歩き）だけ進む。ふつうの地図のタップは瞬間移動なので進めない
-    if (lastWalk && !driving) { const d = dist(lastWalk, p); if (d <= 500) addWalk(d, stepMove && d <= 20); }
+    if (lastWalk && !driving) {
+      const d = dist(lastWalk, p);
+      if (d <= 500) addWalk(d, stepMove && d <= 20);
+      if (stepMove && d <= 20) addTrail(lastWalk, p);   // 足あとも、歩く地図の1歩だけ（タップの瞬間移動は残さない）
+    }
     lastWalk = p;
     return;
   }
@@ -642,16 +649,44 @@ function trackWalk(p) {
   if (!lastWalk) { lastWalk = p; return; }
   const d = dist(lastWalk, p), dt = (p.t - lastWalk.t) / 1000;
   if (dt <= 0 || d < Math.max(8, p.acc * 0.5)) return; // GPSのゆらぎは無視
-  const v = d / dt;
+  const v = d / dt, prev = lastWalk;
   lastWalk = p;
   if (dt > CFG.walkMaxGapSec) return;                   // 画面を閉じていた間の移動は数えない
   if (v > CFG.vehicleSpeed) { vehicleUntil = Date.now() + CFG.vehicleLockMs; return; }
   if (v > CFG.walkMaxSpeed || Date.now() < vehicleUntil) return;
   addWalk(d);
+  addTrail(prev, p);
+}
+
+// あしあと（Dig Dug の掘ったトンネルのように、歩いた道が地図に残る）：はじめて歩いたマス（8m）が50ふえるごとに +5pt（1日50ptまで）。
+// 同じ道ばかりより、知らない道を歩くほど得になる。マスの記録は pixel.js（trailWalk）
+function addTrail(a, b) {
+  const P = window.nishioPixel;
+  if (!P || !P.trailWalk) return;
+  const n = P.trailWalk(a.lat, a.lng, b.lat, b.lng);
+  if (!n) return;
+  const day = dayState();
+  day.trail = (day.trail || 0) + n;
+  S.trail = (S.trail || 0) + n;
+  S.trailCarry = (S.trailCarry || 0) + n;
+  let gained = 0;
+  while (S.trailCarry >= CFG.trailUnit) {
+    S.trailCarry -= CFG.trailUnit;
+    if ((day.trailPts || 0) < CFG.trailDailyCap) { day.trailPts = (day.trailPts || 0) + CFG.trailPts; gained += CFG.trailPts; }
+  }
+  if (gained) {
+    const top = S.log[0], today = ymd();
+    if (top && top.type === 'trail' && top.date === today) { top.pts += gained; top.t = Date.now(); }
+    else S.log.unshift({ type: 'trail', date: today, t: Date.now(), pts: gained, name: 'はじめて歩いた道' });
+    gainPoints(gained);
+    if (P.floatText) P.floatText('👣+' + gained);
+  }
+  save();
 }
 
 function addWalk(d, bag = true) {
   dayState().walked += d;
+  walkBest();
   weekStat().m += d;
   S.walked += d;
   S.walkCarry += d;
@@ -672,6 +707,18 @@ function addWalk(d, bag = true) {
   save();
   updateQuests();
   checkBadges();
+}
+
+// 自己ベスト（いちばん歩いた日）：ほかの日の記録（300m以上）をこえたら、その日1回だけ知らせる
+function walkBest() {
+  const day = dayState(), b = S.best || { m: 0, date: '' };
+  if (day.walked <= b.m) return;
+  if (b.date !== day.date && b.m >= 300 && !day.bestToast) {
+    day.bestToast = true;
+    toastAfter(`👟 自己ベスト！ きょうは ${fmtM(day.walked)}（これまでは ${fmtM(b.m)}）`);   // 同じ1歩で出るクエスト達成の知らせに上書きされないように
+    track('walk_best', { m: Math.round(day.walked) });
+  }
+  S.best = { m: day.walked, date: day.date };
 }
 
 /* ---------- ポイント ---------- */
@@ -1563,6 +1610,10 @@ function toast(msg) {
   el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
 }
+// いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
+function toastAfter(msg) {
+  setTimeout(function show() { if ($('toast').classList.contains('show')) setTimeout(show, 600); else toast(msg); }, 150);
+}
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
 const CHIP = [['🎮', 'jump'], ['🎒', 'bag'], ['🎌', 'calendar'], ['✨', 'star'], ['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
@@ -2132,6 +2183,7 @@ $('reloadSpots').addEventListener('click', async e => {
 $('resetBtn').addEventListener('click', () => {
   if (!confirm(`「${demo ? '操作して移動' : 'あるいて移動'}」のポイントと記録をすべて削除します。よろしいですか？`)) return;
   S = freshState(); save(); renderHeader(); renderLog(); renderMarkers(); refreshNearby(); closeCoupon();
+  if (window.nishioPixel && nishioPixel.trailClear) nishioPixel.trailClear();   // あしあと（別のかぎに保存）も消す
   toast('記録を削除しました');
 });
 
@@ -2306,11 +2358,26 @@ function renderBags() {
   const t = weekTheme(), bags = Array.isArray(S.bags) ? S.bags : [];
   const rows = bags.map((b, i) => { const pct = Math.round(b.walked / (b.km * 1000) * 100); return `<li><span class="ico">${PIA('bag', 'おみやげ袋')}</span><span class="main"><b>${b.km}km の袋${i ? '（つぎの番を待っています）' : '（歩くとたまります）'}</b><span class="bar"><i style="width:${i ? 0 : pct}%"></i></span></span><span class="num">${i ? '—' : `${Math.floor(b.walked / 100) / 10}/${b.km}km`}</span></li>`; }).join('');
   const lw = lastWeekStat();
-  el.innerHTML = `${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
+  el.innerHTML = `${todayWalkCard()}${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
     <p class="theme">${PIA('calendar', '今週のテーマ')} <b>今週は ${t.icon} ${esc(t.name)} の週</b><small>${esc(t.name)}でチェックインすると、スポットのポイントが2倍・おみやげ袋がもらえます（月曜に変わります）</small></p>
     <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
     <h4>${PIA('bag', '')} おみやげ袋 <small>${bags.length}/${BAG.max}</small></h4>
     <ul class="list">${rows || '<li class="empty">たからばこ・はじめての注目スポット・今週のテーマの名所で もらえます。歩くと開きます</li>'}</ul>`;
+}
+// きょうのさんぽ（ゲームのおわりに出る「この試合のハイライト」のように）：歩いた距離・はじめて歩いた道・チェックインの3つと、ひとこと
+const TRAIL_M = 8;   // 足あとの1マス（pixel.js の TILE_M）
+function todayWalkCard() {
+  const day = dayState(), walked = day.walked || 0, fresh = (day.trail || 0) * TRAIL_M, best = S.best || { m: 0, date: '' };
+  const isBest = best.date === day.date && walked >= 300 && day.bestToast;
+  const word = walked < 30 ? 'まだ歩いていません。きょうは どの道を歩こう？'
+    : isBest ? '自己ベストの日！ よく歩きました'
+    : fresh >= walked * 0.5 ? '知らない道をたくさん歩きました。地図に足あとが ふえています'
+    : '地図の足あとの外へ出ると、はじめての道のポイントがもらえます';
+  const cell = (label, v) => `<span><small>${label}</small><b>${v}</b></span>`;
+  return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
+    <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
+    <p class="word">${esc(word)}</p>
+    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}</small></div>`;
 }
 function renderTomorrow() {
   const el = $('tomorrowBox');
@@ -2437,7 +2504,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
   sound,
-  get state() { return S; }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
+  get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う

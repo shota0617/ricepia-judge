@@ -170,6 +170,21 @@ async function walkTo(page, id) {
     nishioGo.moveTo(at.lat, at.lng);
     return ok && nishioGo.state.bags[0].walked === w0;
   });
+  // あしあと：歩く地図の1歩で歩いたマスが残り、同じ道をもう一度歩いても ふえず、瞬間移動では残らない
+  R.checks.trail = await page.evaluate(() => {
+    const P = nishioPixel, G = nishioGo, at = { lat: G.me.lat, lng: G.me.lng }, n0 = G.state.trail || 0;
+    let t = P.toTile(at.lat, at.lng);
+    const x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    const step = (dx, dy) => { t = { x: t.x + dx, y: t.y + dy }; const ll = P.toLatLng(t.x, t.y); G.moveTo(ll.lat, ll.lng, 'step'); };
+    for (let i = 0; i < 12; i++) step(1, 0);
+    const n1 = G.state.trail || 0, path = Array.from({ length: 13 }, (_, i) => P.trailHas(x0 + i, y0)).every(Boolean);
+    for (let i = 0; i < 12; i++) step(-1, 0);
+    const n2 = G.state.trail || 0;
+    G.moveTo(at.lat + 0.003, at.lng);
+    const n3 = G.state.trail || 0, jump = P.toTile(at.lat + 0.003, at.lng), jumped = P.trailHas(Math.floor(jump.x), Math.floor(jump.y));
+    G.moveTo(at.lat, at.lng);
+    return { total: n1, path, again: n2 - n1, teleport: n3 - n2, jumped, saved: !!localStorage.getItem(G.stateKey + '_trail') || n1 - n0 < 40 };
+  });
   await shot(page, '02b-chest');
   await page.waitForTimeout(7500);   // まめちしきの知らせが消えるのを待つ
   for (const id of ['f-nishio-cityhall', 'f-nishio-station', 'f-ricepia']) {
@@ -221,6 +236,7 @@ async function walkTo(page, id) {
   await page.click('[data-tab=log]'); await page.waitForTimeout(400); await shot(page, '06-log');
   R.checks.quests = await page.evaluate(() => [...document.querySelectorAll('#questList li')].map(li => (li.classList.contains('done') && !li.innerText.startsWith('✅') ? '✅ ' : '') + li.innerText.replace(/\s+/g, ' ')));   // 文字を少なく（ふだん）では ✅ のかわりに星の絵なので、達成は class で見る
   R.checks.facts = await page.evaluate(() => document.getElementById('factCount').textContent);
+  R.checks.todayWalk = await page.evaluate(() => { const el = document.querySelector('#bagBox .todaywalk'); return el ? el.innerText.replace(/\s+/g, ' ') : null; });
   // 絵帳：まだの題材は影と「どこで見つかるか」の手がかり。えらんだ はじめの1枚が絵帳に入っている
   R.checks.dotHints = await page.evaluate(() => document.querySelectorAll('#dotMotifs .hint').length);
   R.checks.firstPickKept = await page.evaluate(id => nishioGo.state.dots.includes(id), R.checks.firstPickId);
@@ -263,6 +279,8 @@ async function walkTo(page, id) {
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
   need(c.teleportNoBag === true, '歩く地図の1歩でない瞬間移動で、おみやげ袋が進んだ');
+  need(c.trail && c.trail.total > 0 && c.trail.path && c.trail.again === 0 && c.trail.teleport === 0 && !c.trail.jumped, 'あしあと：歩く地図の1歩で歩いた道が残らないか、同じ道でふえる・瞬間移動で残る');
+  need(typeof c.todayWalk === 'string' && /きょうのさんぽ/.test(c.todayWalk) && /はじめての道/.test(c.todayWalk), 'きろく に きょうのさんぽ（歩いた・はじめての道）が出ない');
   need(c.welcomeBag === '1' && c.bagOpened === true, 'はじめての たからばこ で 1km の おみやげ袋がもらえないか、1km 歩いても開かない');
   need(typeof c.weekTheme === 'string' && c.weekTheme, '今週のテーマが決まらない');
   need(c.firstPickN === 3 && c.firstPickKept === true, 'ようこそ たからばこ で はじめの1枚を3枚から えらべないか、えらんだ絵が絵帳に入らない');

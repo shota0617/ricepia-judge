@@ -5,3 +5,4 @@ node_modules/
 gb-play-out/
 *.gb
 *.gbc
+__pycache__/

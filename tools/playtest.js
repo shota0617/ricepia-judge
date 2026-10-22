@@ -857,14 +857,24 @@ async function walkTo(page, id) {
     }
     if (!hit || !off) return { ok: true, skipped: 'no-paddy' };
     const book0 = st.critters, n0 = day.critters, rnd = Math.random;
+    Math.random = () => 0.99;   // 運は いつも外れ（かならずの出会いだけが起きる）
+    // きろく を開いたまま田んぼに入ると 知らせは出ず、閉じたあとの田んぼの1歩で出る（手帳は そのまま・歩数は0から）
+    P.critterState.told = {}; P.critterState.steps = 0;
+    const nTold = () => P.floats().filter(f => /田んぼ：まだ会っていない生きもの/.test(f)).length, f0 = nTold();
+    P.critterStep(off[0], off[1]);
+    document.querySelector('.tabs button[data-tab="log"]').click();
+    P.critterStep(hit[0], hit[1]); const underPanel = nTold() - f0;
+    document.querySelector('.tabs button[data-tab="map"]').click();
+    P.critterStep(hit[0], hit[1]); const afterPanel = nTold() - f0;
     st.critters = {}; day.critters = 0;
+    P.critterState.told = {}; P.critterState.steps = 0;
     P.critterStep(off[0], off[1]);   // 田んぼの外から入る
     const left = G.critterLeft('paddy');
-    Math.random = () => 0.99;
     let first = 0, told = '';
+    const f1 = nTold();
     for (let i = 1; i <= 30 && !first; i++) {
       P.critterStep(hit[0], hit[1]);
-      if (i === 1) told = P.floats().find(f => /田んぼ：まだ会っていない生きもの/.test(f)) || '';
+      if (i === 1 && nTold() > f1) told = P.floats().filter(f => /田んぼ：まだ会っていない生きもの/.test(f)).pop();
       if (day.critters === 1) first = i;
     }
     let next = 0; for (let i = 1; i <= 120 && !next; i++) { P.critterStep(hit[0], hit[1]); if (day.critters === 2) next = i; }
@@ -872,7 +882,7 @@ async function walkTo(page, id) {
     const all = G.critterLeft('paddy');
     day.critters = 5; const capped = G.critterLeft('paddy');
     st.critters = Object.assign(book0 || {}, st.critters); day.critters = n0 || 0;
-    return { left, told, first, next, capped, ok: !!left && left.left === left.all && left.all > 0 && told.endsWith(' ' + left.all) && first > 0 && first <= 25 && next === 100 && all.left < left.all && capped === null };
+    return { left, told, first, next, capped, underPanel, afterPanel, ok: underPanel === 0 && afterPanel === 1 && !!left && left.left === left.all && left.all > 0 && told.endsWith(' ' + left.all) && first === 25 && next === 100 && all.left < left.all && capped === null };
   });
   R.errors.push(...errors);
   await ctx.close();

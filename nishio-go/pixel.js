@@ -1728,15 +1728,18 @@ const CRITTER_SURE = 100;
 // のこりの数（マインスイーパーの「まわりに いくつ あるかの数字」から。数字があると 運まかせでなく 考えて開けられる）：
 // 田んぼ・水べに入ったとき、いまの季節に そこで会える生きもののうち まだ手帳にない数を出す（どこに いるかは言わない）。
 // 0 なら「ぜんぶ会えた」で、ほかの場所へ行く目安になる。同じ場所の知らせは 10分に1回まで。その日の出会いが おわったら出さない
+// 知らせを出せた（または出すものがない）ら true。歩く地図が見えていない・窓やパネルの下・運転中なら false（次の1歩で もう一度）
 function critterCount(where) {
   const now = performance.now();
-  if (!G.critterLeft || driving || mapCovered() || sightBusy() || now - (critterS.told[where] || -6e5) < 6e5) return;
+  if (!G.critterLeft || !active || worldMode || driving || mapCovered() || sightBusy()) return false;
+  if (now - (critterS.told[where] || -6e5) < 6e5) return true;
   const c = G.critterLeft(where);
-  if (!c || !c.all) return;
+  if (!c || !c.all) return true;
   critterS.told[where] = now;
   const name = where === 'paddy' ? '🌾 田んぼ' : '💧 水べ';
   floatText(c.left ? `${name}：まだ会っていない生きもの ${c.left}` : `${name}：いまの季節の生きものは ぜんぶ会えた`);
   dirty = true;
+  return true;
 }
 // 路地の行き止まり（NetHack の「通路が ぷつっと終わる所を しらべると 隠し扉が見つかる」）：道（C.R）が その マスで終わっている（大きな道・小道へも続いていない）。
 // まわり8マスを ひとまわり見て、道が 1かたまり（となり合う2マスまで）だけなら 行き止まり。斜めに描いた道（strokeLine）は 角だけで つながるので、
@@ -1787,17 +1790,20 @@ function critterStep(x, y) {
   if (alleyEnd(x, y) && G.alleyFind && !mapCovered() && !sightBusy() && G.alleyFind(x, y, toLatLng(x + 0.5, y + 0.5))) { floatText('🔍 路地の奥'); dirty = true; }
   const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
   const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
+  if (where) critterS.steps++;   // 田んぼ・水べのイベントが始まる1歩も 出会いまでの歩数に数える
+  if (where !== critterS.where && (!where || critterCount(where))) critterS.where = where;   // 知らせを出せなかったら、次の1歩で もう一度
   // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
   //   説明の窓・きろく などのパネル・ダイアログ・呼びとめの最中は始めない（閉じたあとの田んぼの1歩で始まる）
   if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15 && !mapCovered() && !sightBusy() && NISHIO_MEDASHI.open()) { critterS.paddy = 0; return true; }
   // 水べのイベント「虫の名前あて」（mushi.js）：水べを15歩 歩くと、1日1回（始めない条件は田んぼのイベントと同じ）
   if (where === 'water' && window.NISHIO_MUSHI && G.mushiDue && G.mushiDue() && ++critterS.water >= 15 && !mapCovered() && !sightBusy() && NISHIO_MUSHI.open()) { critterS.water = 0; return true; }
-  if (where && where !== critterS.where) critterCount(where);
-  critterS.where = where;
   // はじめての出会いは かならず・待ちすぎない（マインスイーパーの「1手目で地雷を ふんで終わる」・ブロックくずしの「打ちだしてすぐ落とす」から。
   // はじめの1回の運の悪さで やめてしまわないように）：まだ1回も会っていなければ 25歩目で、会ったことがあっても 100歩で かならず出会う
   // （1/40 の運だけだと、10人に1人は 115歩より長く待っていた）
-  if (!where || ++critterS.steps < 25 || (critterS.steps < CRITTER_SURE && !(G.critterFirst && G.critterFirst()) && Math.random() >= 1 / 40)) return;
+  if (!where || critterS.steps < 25) return;
+  const sure = critterS.steps >= CRITTER_SURE || !!(G.critterFirst && G.critterFirst());
+  if (!sure && Math.random() >= 1 / 40) return;
+  if (sure && (mapCovered() || sightBusy())) return;   // かならずの出会いは、窓・パネルを閉じたあとの1歩へ持ちこす
   critterS.steps = 0;
   const m = G.meetCritter(where);
   if (!m) return false;
@@ -6994,7 +7000,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; },
 };
-window.nishioPixel = { meiroApi, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
+window.nishioPixel = { meiroApi, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

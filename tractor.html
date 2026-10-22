@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>トラクターで田んぼを耕そう（試作版） - らいすぴあ（近藤米穀店）</title>
+<meta name="description" content="60馬力のキャビン付きトラクターの運転席に座って、ロータリーで田んぼを耕すブラウザのゲーム。春の田んぼ・秋の稲刈りあと・水を張った代かきの3つの季節。らいすぴあ（近藤米穀店）の試作版です。"/>
+<meta name="theme-color" content="#2d2d1e"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="ja_JP"/>
+<meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
+<meta property="og:title" content="トラクターで田んぼを耕そう（試作版）"/>
+<meta property="og:description" content="運転席に座って、ロータリーで田んぼを耕すブラウザのゲーム。3つの季節。"/>
+<meta property="og:image" content="https://go.ricepia.jp/tractor/shots/cockpit.webp"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%9C%3C/text%3E%3C/svg%3E"/>
+<style>
+  :root { --ink: #1a1814; --paper: #fbf8f0; --green: #1f4d2b; --gold: #b8893a; --red: #c3141b; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #9fb9d6; color: var(--ink);
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP", Meiryo, sans-serif; }
+  canvas#view { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
+  .hidden { display: none !important; }
+  /* 上の計器（速さ・前後・ロータリー・耕した割合） */
+  #hud { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
+  .chip { padding: 5px 10px; border-radius: 999px; background: rgba(20, 18, 14, .62); color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
+  .chip b { font-size: 16px; }
+  .chip.on { background: rgba(195, 20, 27, .85); }
+  #bar { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 8px; display: flex; gap: 6px; }
+  #bar button, .pad button { border: 0; border-radius: 12px; background: rgba(251, 248, 240, .9); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
+  #bar button { min-width: 44px; height: 40px; padding: 0 10px; font-size: 14px; }
+  #hud { right: 220px; }
+  /* さわる操作（スマホ）。パソコンでも押せる */
+  .pad { position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 10px; user-select: none; -webkit-user-select: none; }
+  .pad button { width: 74px; height: 74px; font-size: 26px; touch-action: none; }
+  .pad button.active { background: var(--gold); color: #fff; }
+  #padL { left: 14px; }
+  #padR { right: 14px; }
+  #padC { right: 14px; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 86px); }
+  #padC button { width: auto; height: 56px; padding: 0 18px; font-size: 16px; border-radius: 999px; }
+  #padC button.down { background: var(--red); color: #fff; }
+  /* はじめの画面・読みこみ・おわり */
+  .sheet { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 24, 20, .55); }
+  .card { width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 20px; border-radius: 18px; background: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align: center; }
+  .card h1 { margin: 0 0 4px; font-size: 22px; }
+  .card .tag { display: inline-block; margin-bottom: 10px; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 999px; color: #8a6423; font-size: 12px; font-weight: 700; }
+  .card p { margin: 8px 0; font-size: 14px; line-height: 1.7; }
+  .seasons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+  .seasons button { padding: 10px 4px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .seasons button span { display: block; font-size: 24px; }
+  .seasons button.sel { border-color: var(--green); background: #e8efdf; }
+  .go { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 36px; border: 0; border-radius: 999px; background: var(--green); color: #fff; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+  .go:disabled { opacity: .5; cursor: default; }
+  .how { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.8; text-align: left; }
+  .how kbd { padding: 0 5px; border: 1px solid #ccc; border-bottom-width: 2px; border-radius: 4px; background: #f6f6f6; font-size: 12px; }
+  .prog { height: 8px; margin: 14px 0 6px; border-radius: 99px; background: #e2dccb; overflow: hidden; }
+  .prog i { display: block; height: 100%; width: 0; background: var(--green); transition: width .2s; }
+  .small { color: #736c5e; font-size: 12px !important; }
+  a { color: var(--green); }
+  #toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
+  @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
+  #rotateHint { display: none; }
+  @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+</head>
+<body>
+<canvas id="view"></canvas>
+
+<div id="hud" class="hidden">
+  <span class="chip"><b id="spd">0.0</b> km/h</span>
+  <span class="chip" id="gear">前進</span>
+  <span class="chip" id="rot">ロータリー 上</span>
+  <span class="chip">耕した <b id="pct">0</b>%</span>
+  <span class="chip" id="time">0:00</span>
+</div>
+<div id="bar" class="hidden">
+  <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
+  <button id="bSnd" title="音（M）">🔇</button>
+  <button id="bMenu" title="はじめの画面へ">≡</button>
+</div>
+<div class="pad hidden" id="padL"><button data-k="left" aria-label="左へ切る">◀</button><button data-k="right" aria-label="右へ切る">▶</button></div>
+<div class="pad hidden" id="padC"><button id="bRot" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
+<div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
+<div id="toast" style="opacity:0"></div>
+
+<div class="sheet" id="start">
+  <div class="card">
+    <span class="tag">🧪 試作版</span>
+    <h1>🚜 トラクターで田んぼを耕そう</h1>
+    <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで田んぼを耕します。30m×50m の田んぼを、ぜんぶ耕せたらクリア。</p>
+    <div class="seasons" id="seasons">
+      <button data-s="haru"><span>🌸</span>春<br>耕す前の田んぼ</button>
+      <button data-s="aki"><span>🌾</span>秋<br>稲刈りのあと</button>
+      <button data-s="shirokaki"><span>💧</span>代かき<br>水を張った田んぼ</button>
+    </div>
+    <div class="prog"><i id="progBar"></i></div>
+    <p class="small" id="progText">読みこみ中…</p>
+    <button class="go" id="bStart" disabled>▶ 運転する</button>
+    <p class="small" id="rotateHint">📱 スマホは横向きにすると広く見えます</p>
+    <div class="how">
+      <b>うごかし方</b><br>
+      ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
+      ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
+      ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
+      ・スマホは画面の下のボタンで操作します。
+    </div>
+    <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
+  </div>
+</div>
+
+<div class="sheet hidden" id="done">
+  <div class="card">
+    <h1>🎉 耕し終わりました！</h1>
+    <p id="doneText"></p>
+    <button class="go" id="bAgain">もう一度</button>
+    <p class="small"><a href="https://ricepia.jp/" target="_blank" rel="noopener">らいすぴあ（近藤米穀店）のお米を見る</a></p>
+  </div>
+</div>
+
+<script>
+// トラクター運転ゲーム（試作版）。three.js r128 と、tools/tractor の glb（Blender で作ったトラクターと田んぼ）を使う
+// 座標：メートル。田んぼのまん中の地面が原点。トラクターの原点は後輪車軸の真下の地面で、前が +Z
+'use strict';
+const ASSET = 'tools/tractor/';
+const FIELD = { haru: 'field_tanbo.glb', aki: 'field_tanbo_aki.glb', shirokaki: 'field_tanbo_shirokaki.glb' };
+const HX = 15, HZ = 25;                       // 耕す田んぼの半分の幅・長さ
+const WB = 2.15, TRACK = 0.66, R_REAR = 0.66, R_FRONT = 0.445;
+const EYE = new THREE.Vector3(0, 2.27, -0.46);
+const ROTARY_Z = -1.38, TILL_W = 2.2;
+const CELL = 0.2, NX = Math.round(2 * HX / CELL), NZ = Math.round(2 * HZ / CELL);
+const MOBILE = matchMedia('(pointer: coarse)').matches;
+const params = new URLSearchParams(location.search);
+let season = FIELD[params.get('season')] ? params.get('season') : 'haru';
+const SHIRO = season === 'shirokaki';
+const TILL_Y = SHIRO ? 0.045 : 0.035;
+
+const $ = id => document.getElementById(id);
+document.querySelectorAll('#seasons button').forEach(b => {
+  if (b.dataset.s === season) b.classList.add('sel');
+  b.onclick = () => { if (b.dataset.s !== season) location.search = '?season=' + b.dataset.s; };
+});
+
+// ---- 描くしくみ ----
+const canvas = $('view');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.physicallyCorrectLights = true;
+renderer.shadowMap.enabled = !params.has('noshadow');
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 2500);
+const SKY = { haru: [0x5f8fd0, 0xc9d8e6], aki: [0x5684c4, 0xd8d6c8], shirokaki: [0x5a90d6, 0xcfdeea] }[season];
+scene.fog = new THREE.Fog(SKY[1], 160, 1100);
+
+// 空（上は青、地平は白っぽい。太陽のまわりは明るい）。同じ空から環境マップを作り、水や金属に映す
+const SUN_DIR = new THREE.Vector3(-0.45, season === 'aki' ? 0.45 : 0.7, -0.55).normalize();
+function skyMesh(r) {
+  const m = new THREE.ShaderMaterial({
+    side: THREE.BackSide, depthWrite: false, fog: false,
+    uniforms: { top: { value: new THREE.Color(SKY[0]) }, hor: { value: new THREE.Color(SKY[1]) }, sun: { value: SUN_DIR } },
+    vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 sun; varying vec3 vD;' +
+      'void main(){ float h = max(vD.y, 0.0); vec3 c = mix(hor, top, pow(h, 0.55));' +
+      ' if (vD.y < 0.0) c = hor * 0.9; float s = max(dot(vD, sun), 0.0);' +
+      ' c += vec3(1.0, 0.95, 0.85) * (pow(s, 800.0) * 4.0 + pow(s, 12.0) * 0.25); gl_FragColor = vec4(c, 1.0); }'
+  });
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), m);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = -1;
+  return mesh;
+}
+const sky = skyMesh(2000);
+scene.add(sky);
+{
+  // 環境マップ：空の色の帯（エクイレクタングラー）の絵から作る。水や金属・ガラスに空が映る
+  const cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 128;
+  const g = cv.getContext('2d'), top = new THREE.Color(SKY[0]), hor = new THREE.Color(SKY[1]);
+  const gr = g.createLinearGradient(0, 0, 0, 128);
+  gr.addColorStop(0, '#' + top.getHexString());
+  gr.addColorStop(0.48, '#' + hor.getHexString());
+  gr.addColorStop(0.52, '#7a6e58');
+  gr.addColorStop(1, '#4e4536');
+  g.fillStyle = gr; g.fillRect(0, 0, 256, 128);
+  const t = new THREE.CanvasTexture(cv);
+  t.mapping = THREE.EquirectangularReflectionMapping;
+  t.encoding = THREE.sRGBEncoding;
+  if (!params.has('noenv')) {
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromEquirectangular(t).texture;
+    pm.dispose();
+  }
+}
+const hemi = new THREE.HemisphereLight(0xdfe9f5, 0x6b5a40, 0.35);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff3e2, 3.2);
+sun.castShadow = true;
+sun.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
+Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 80 });
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+
+// ---- 読みこみ ----
+const loader = new THREE.GLTFLoader();
+const prog = { t: 0, f: 0 };
+function showProg() {
+  const p = Math.round((prog.t + prog.f) / 2 * 100);
+  $('progBar').style.width = p + '%';
+  $('progText').textContent = p < 100 ? `読みこみ中… ${p}%（はじめは 8MB ほど）` : '準備ができました';
+}
+function load(url, key) {
+  return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { if (e.total) { prog[key] = e.loaded / e.total; showProg(); } }, ng));
+}
+const rig = new THREE.Group();                 // トラクター（とロータリー）全体。position＝後輪車軸の真下
+scene.add(rig);
+const P = {};                                  // 動く部品
+let field, tilled, stubble = null, stubbleGeo, stubbleMat;
+
+Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f')]).then(([t, f]) => {
+  prog.t = prog.f = 1; showProg();
+  setupTractor(t.scene);
+  setupField(f.scene);
+  resetPos();
+  $('bStart').disabled = false;
+}).catch(e => { $('progText').textContent = '読みこめませんでした。通信のよい所で、もう一度ひらいてください（' + e.message + '）'; });
+
+function setupTractor(root) {
+  rig.add(root);
+  root.traverse(o => {
+    if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
+  });
+  for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'SteerFL', 'SteerFR', 'SteeringWheel', 'Rotary', 'Rotor', 'Flap',
+    'LeverJoy', 'LeverShuttle', 'PedalBrakeL', 'PedalBrakeR', 'PedalClutch', 'MeterScreen', 'MonitorScreen', 'Glass']) P[n] = root.getObjectByName(n);
+  P.sw0 = P.SteeringWheel.quaternion.clone();
+  P.rotY0 = P.Rotary.position.y;
+  P.flap0 = P.Flap.rotation.x;
+  P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
+  // メーター・モニターは絵を描きかえる
+  meter.tex = canvasTex(meter.cv);
+  monitor.tex = canvasTex(monitor.cv);
+  for (const [node, tex] of [[P.MeterScreen, meter.tex], [P.MonitorScreen, monitor.tex]]) {
+    const m = (node.isMesh ? node : node.children[0]).material;
+    m.map = tex; m.emissiveMap = tex; m.emissive.set(0xffffff); m.emissiveIntensity = 0.9; m.needsUpdate = true;
+  }
+}
+function canvasTex(cv) {
+  const t = new THREE.CanvasTexture(cv);
+  t.flipY = false;                             // glTF の UV に合わせる
+  t.encoding = THREE.sRGBEncoding;
+  return t;
+}
+
+function setupField(root) {
+  field = root;
+  scene.add(root);
+  root.traverse(o => {
+    if (o.isMesh) o.receiveShadow = true;
+    if (o.isMesh && /water/.test(o.material.name)) o.material.envMapIntensity = 0.55;   // 水に映る空を少しおさえる
+    if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
+  });
+  // 耕した所：0.2m のます目ごとの四角を先に用意し、耕したら地面に出す（UV＝x/2, −z/2）
+  const ft = root.getObjectByName('FieldTilled');
+  ft.visible = false;
+  const mat = (ft.isMesh ? ft : ft.children[0]).material.clone();
+  mat.vertexColors = false;
+  const n = NX * NZ, pos = new Float32Array(n * 12), uv = new Float32Array(n * 8), nor = new Float32Array(n * 12), idx = new Uint32Array(n * 6);
+  for (let i = 0; i < n; i++) {
+    for (let k = 0; k < 4; k++) nor[i * 12 + k * 3 + 1] = 1;
+    idx.set([i * 4, i * 4 + 2, i * 4 + 1, i * 4, i * 4 + 3, i * 4 + 2], i * 6);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  tilled = new THREE.Mesh(g, mat);
+  tilled.frustumCulled = false;
+  tilled.receiveShadow = true;
+  scene.add(tilled);
+  // 切り株（型 StubbleHill を、運転席のまわりだけ並べる。代かきには無い）
+  const hill = root.getObjectByName('StubbleHill');
+  if (hill) {
+    hill.visible = false;
+    const hm = hill.isMesh ? hill : hill.children[0];
+    stubbleGeo = hm.geometry;
+    stubbleGeo = hm.geometry.clone();            // 茎の数を減らした軽い型にする（パソコン 6 本・スマホ 4 本）
+    stubbleGeo.setIndex(Array.from(hm.geometry.index.array).slice(0, 3 * (MOBILE ? 40 : 60)));
+    stubbleMat = hm.material;
+    buildHills();
+  }
+}
+
+// ---- 地面の高さと、走れる所 ----
+const RAMP = [[12, 0], [15.3, 0.36], [15.85, 0.48], [16.9, 0.5]];
+function ground(x, z) {
+  if (z >= 18 && z <= 22 && x >= 12 && x <= 16.9) {   // 田んぼから農道へ上がる坂
+    for (let i = 0; i < 3; i++) if (x <= RAMP[i + 1][0]) {
+      const [x0, h0] = RAMP[i], [x1, h1] = RAMP[i + 1];
+      return h0 + (h1 - h0) * (x - x0) / (x1 - x0);
+    }
+  }
+  if (Math.abs(x) <= HX && Math.abs(z) <= HZ) return SHIRO ? -0.07 : 0;
+  if (x >= 16.7 && x <= 20.7 && Math.abs(z) <= 400) return 0.5 + 0.03 * (1 - Math.abs(x - 18.7) / 2);
+  return null;                                  // 畦・水路・となりの田んぼ：入れない
+}
+
+// ---- 耕したます目と、切り株 ----
+const tilledMask = new Uint8Array(NX * NZ);
+let tilledCount = 0, workCount = 0;
+for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+  const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL;
+  if (Math.abs(x) < HX - 0.5 && Math.abs(z) < HZ - 0.5) workCount++;     // 畦ぎわ 50cm は数えない
+}
+const jitter = (x, z) => 0.006 * Math.sin(x * 12.9898 + z * 78.233) * Math.sin(x * 3.7 - z * 5.1);
+let dirtyLo = Infinity, dirtyHi = -1;
+function tillCell(i, j) {
+  if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
+  const c = i * NZ + j;
+  if (tilledMask[c]) return;
+  tilledMask[c] = 1;
+  const x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
+  if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
+  const pos = tilled.geometry.attributes.position.array, uv = tilled.geometry.attributes.uv.array;
+  const pts = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
+  pts.forEach(([x, z], k) => {
+    pos.set([x, TILL_Y + (SHIRO ? 0 : jitter(x, z)), z], c * 12 + k * 3);
+    uv.set([x / 2, -z / 2], c * 8 + k * 2);
+  });
+  dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
+  hillsDirty = true;
+}
+function flushTilled() {
+  if (dirtyHi < 0) return;
+  const g = tilled.geometry;
+  for (const [name, w] of [['position', 12], ['uv', 8]]) {
+    const a = g.attributes[name];
+    a.updateRange.offset = dirtyLo * w;
+    a.updateRange.count = (dirtyHi - dirtyLo + 1) * w;
+    a.needsUpdate = true;
+  }
+  dirtyLo = Infinity; dirtyHi = -1;
+}
+
+// 切り株の並び（条間 30cm・株間 3/17m）。秋はコンバインのクローラの跡の上は無い
+const HILLS = [];
+{
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const tracks = [];
+  for (let k = 0; k < 14; k++) tracks.push(-13 + 2 * k - 0.575, -13 + 2 * k + 0.575);
+  for (let x = -HX + 0.15; x < HX; x += 0.30) for (let z = -HZ + 3 / 34; z < HZ; z += 3 / 17) {
+    if (season === 'aki' && ((Math.abs(z) < HZ - 3 && tracks.some(t => Math.abs(x - t) < 0.24)) ||
+      [1.0, 2.2].some(d => Math.abs(Math.abs(z) - (HZ - d)) < 0.24 || Math.abs(Math.abs(x) - (HX - d)) < 0.24))) continue;
+    HILLS.push([x + (rnd() - 0.5) * 0.024, z + (rnd() - 0.5) * 0.024, rnd() * 6.283, 0.85 + rnd() * 0.3]);
+  }
+}
+const HILL_R = MOBILE ? 8 : 11;                   // 切り株を並べる半径（遠くは土の絵に描いてある）
+let hillsCenter = new THREE.Vector3(1e9, 0, 0), hillsDirty = false;
+function buildHills() {
+  if (!stubbleGeo) return;
+  const c = rig.position, r2 = HILL_R * HILL_R;
+  const list = [];
+  for (const h of HILLS) {
+    const dx = h[0] - c.x, dz = h[1] - c.z;
+    if (dx * dx + dz * dz > r2) continue;
+    const i = Math.floor((h[0] + HX) / CELL), j = Math.floor((h[1] + HZ) / CELL);
+    if (tilledMask[i * NZ + j]) continue;
+    list.push(h);
+  }
+  if (!stubble || stubble.instanceMatrix.count < list.length) {
+    if (stubble) scene.remove(stubble);
+    stubble = new THREE.InstancedMesh(stubbleGeo, stubbleMat, Math.max(list.length, 4000) + 2000);
+    stubble.castShadow = false;
+    stubble.receiveShadow = true;
+    stubble.frustumCulled = false;
+    scene.add(stubble);
+  }
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  list.forEach((h, k) => stubble.setMatrixAt(k, m.compose(p.set(h[0], 0, h[1]), q.setFromAxisAngle(up, h[2]), s.setScalar(h[3]))));
+  stubble.count = list.length;
+  stubble.instanceMatrix.needsUpdate = true;
+  hillsCenter.copy(c);
+  hillsDirty = false;
+}
+
+// ---- 運転 ----
+const S = { x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
+const key = { fwd: 0, back: 0, left: 0, right: 0 };
+const MAX_STEER = 0.62;
+function resetPos() {
+  Object.assign(S, { x: 11, z: 20.3, yaw: -Math.PI / 2, v: 0, steer: 0 });
+  placeRig(0);
+  buildHills();
+}
+function wheelPoints(x, z, yaw) {               // 地面の高さを見る所（後輪・前輪・前のおもり・ロータリーの両はし）
+  const s = Math.sin(yaw), c = Math.cos(yaw);
+  const w = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
+  return { rl: w(TRACK, 0), rr: w(-TRACK, 0), fl: w(TRACK, WB), fr: w(-TRACK, WB), nose: w(0, 3.05), rotL: w(1.16, -1.62), rotR: w(-1.16, -1.62), w };
+}
+function canBe(x, z, yaw) {
+  const p = wheelPoints(x, z, yaw);
+  return ['rl', 'rr', 'fl', 'fr', 'nose', 'rotL', 'rotR'].every(k => ground(p[k][0], p[k][1]) !== null);
+}
+function placeRig(dt) {
+  const p = wheelPoints(S.x, S.z, S.yaw);
+  const h = k => ground(p[k][0], p[k][1]) ?? 0;
+  const hr = (h('rl') + h('rr')) / 2, hf = (h('fl') + h('fr')) / 2;
+  rig.position.set(S.x, hr, S.z);
+  rig.rotation.set(-Math.atan2(hf - hr, WB), S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5, 'YXZ');
+}
+
+function step(dt) {
+  // 目標の速さ：耕しているときは 6km/h、ロータリーを上げると 12km/h、うしろは 5km/h
+  const vmax = S.rotDown ? 1.7 : 3.3;
+  const want = key.fwd ? vmax : key.back ? -1.4 : 0;
+  const acc = want === 0 ? 2.5 : (Math.sign(want) !== Math.sign(S.v) && Math.abs(S.v) > 0.05 ? 3.0 : 1.2);
+  S.v += Math.max(-acc * dt, Math.min(acc * dt, want - S.v));
+  const sIn = key.right - key.left;
+  if (sIn) S.steer = Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn * 1.1 * dt));
+  else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
+  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * dt;
+  const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
+  if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
+  else { if (Math.abs(S.v) > 0.5) toast('畦（あぜ）です。もどってください'); S.v = 0; }
+  placeRig(dt);
+  // ロータリー：下げると爪が回り、通ったところを耕す
+  S.rotPos += Math.max(-dt * 1.2, Math.min(dt * 1.2, (S.rotDown ? 0 : 1) - S.rotPos));
+  P.Rotary.position.y = P.rotY0 - 0.06 + S.rotPos * 0.42;
+  P.Rotary.rotation.x = -S.rotPos * 0.12;
+  const working = S.rotDown && S.rotPos < 0.08;
+  P.Rotor.rotation.x += (working ? 19 : S.rotDown ? 8 : 0) * dt;
+  P.Flap.rotation.x = P.flap0 + (working && S.v > 0.1 ? 0.06 + 0.03 * Math.sin(performance.now() / 70) : 0);
+  if (working && S.v > 0.05) {
+    const p = wheelPoints(S.x, S.z, S.yaw);
+    for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
+      const [wx, wz] = p.w(lx, lz);
+      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL));
+    }
+  }
+  // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
+  P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
+  P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
+  P.SteerFL.rotation.y = P.SteerFR.rotation.y = -S.steer;
+  P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
+  P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
+  P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
+  const brake = !key.fwd && !key.back && Math.abs(S.v) > 0.05 ? 1 : 0;
+  P.PedalBrakeL.rotation.x = P.PedalBrakeR.rotation.x = -0.22 * brake;
+  // かかった時間・耕した割合
+  if (S.started && !S.done) S.elapsed += dt;
+  const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
+  if (pct >= 95 && !S.done) finish();
+  if (hillsDirty || rig.position.distanceTo(hillsCenter) > 2.5) {
+    hillsTimer -= dt;
+    if (hillsTimer <= 0) { buildHills(); hillsTimer = 0.25; }
+  }
+  return pct;
+}
+let hillsTimer = 0;
+
+// ---- 視点 ----
+const CAMS = ['運転席', 'うしろから', '上から'];
+let camMode = 0;
+const look = { yaw: 0, pitch: 0 };
+const chase = new THREE.Vector3(), tmpV = new THREE.Vector3();
+function updateCamera(dt) {
+  if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
+    if (camera.parent !== rig) rig.add(camera);
+    camera.position.copy(EYE);
+    camera.rotation.set((camera.aspect < 1 ? -0.42 : -0.21) + look.pitch, Math.PI + look.yaw, 0, 'YXZ');   // 縦長の画面は天井が多いので下を向く
+    camera.near = 0.05;
+  } else {
+    if (camera.parent !== scene) scene.add(camera);
+    const back = camMode === 1 ? new THREE.Vector3(0, 4.2, -9.5) : new THREE.Vector3(0, 26, -6);
+    back.applyAxisAngle(new THREE.Vector3(0, 1, 0), S.yaw + look.yaw);
+    tmpV.copy(rig.position).add(back);
+    if (chase.lengthSq() === 0) chase.copy(tmpV);
+    chase.lerp(tmpV, Math.min(1, dt * 3));
+    camera.position.copy(chase);
+    camera.lookAt(tmpV.copy(rig.position).add(new THREE.Vector3(Math.sin(S.yaw) * 2, 1.2, Math.cos(S.yaw) * 2)));
+    camera.near = 0.2;
+  }
+  camera.updateProjectionMatrix();
+  sun.position.copy(rig.position).addScaledVector(SUN_DIR, 40);
+  sun.target.position.copy(rig.position);
+  sky.position.copy(camera.getWorldPosition(tmpV));
+}
+function resize() {
+  const w = innerWidth, h = innerHeight;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.fov = w / h < 1 ? Math.min(82, 2 * Math.atan(Math.tan(32 * Math.PI / 180) / (w / h)) * 180 / Math.PI) : 60;   // 縦長の画面でも横が見えるように
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+// ---- メーター（速さ・前後・PTO）とモニター（田んぼの地図） ----
+const meter = { cv: document.createElement('canvas') };
+meter.cv.width = meter.cv.height = 256;
+function drawMeter() {
+  const g = meter.cv.getContext('2d'), r = 128;
+  g.fillStyle = '#050506'; g.fillRect(0, 0, 256, 256);
+  g.beginPath(); g.arc(r, r, 124, 0, 7); g.fillStyle = '#8b8e93'; g.fill();
+  g.beginPath(); g.arc(r, r, 118, 0, 7); g.fillStyle = '#0b0b0c'; g.fill();
+  g.beginPath(); g.arc(r, r, 112, 0.75 * Math.PI, 2.25 * Math.PI); g.arc(r, r, 68, 2.25 * Math.PI, 0.75 * Math.PI, true); g.closePath(); g.fillStyle = '#dcdde0'; g.fill();
+  g.strokeStyle = '#111'; g.lineCap = 'round';
+  for (let k = 0; k <= 30; k++) {                // 0〜30 km/h の目盛り
+    const a = 0.75 * Math.PI + k / 30 * 1.5 * Math.PI, L = k % 5 ? 12 : 24;
+    g.lineWidth = k % 5 ? 2 : 4;
+    g.beginPath(); g.moveTo(r + Math.cos(a) * 110, r + Math.sin(a) * 110); g.lineTo(r + Math.cos(a) * (110 - L), r + Math.sin(a) * (110 - L)); g.stroke();
+    if (k % 10 === 0) { g.fillStyle = '#111'; g.font = 'bold 18px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(k, r + Math.cos(a) * 80, r + Math.sin(a) * 80); }
+  }
+  const kmh = Math.abs(S.v) * 3.6, a = 0.75 * Math.PI + Math.min(kmh, 30) / 30 * 1.5 * Math.PI;
+  g.strokeStyle = '#ff5a14'; g.lineWidth = 5;
+  g.beginPath(); g.moveTo(r + Math.cos(a) * 62, r + Math.sin(a) * 62); g.lineTo(r + Math.cos(a) * 112, r + Math.sin(a) * 112); g.stroke();
+  g.beginPath(); g.arc(r, r, 64, 0, 7); g.fillStyle = '#0d1214'; g.fill();
+  g.fillStyle = '#bfe7ee'; g.font = 'bold 34px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.fillText(kmh.toFixed(1), r, r - 8);
+  g.font = 'bold 15px sans-serif';
+  g.fillText((S.v < -0.05 ? 'R' : 'F') + '  km/h', r, r + 20);
+  g.fillStyle = S.rotDown ? '#ffb020' : '#2c3438'; g.fillText('PTO', r, r + 42);
+  g.beginPath(); g.arc(46, 214, 9, 0, 7); g.fillStyle = '#20d050'; g.fill();
+  g.beginPath(); g.arc(210, 214, 9, 0, 7); g.fillStyle = S.rotDown ? '#ffb020' : '#3a2a10'; g.fill();
+  meter.tex && (meter.tex.needsUpdate = true);
+}
+const monitor = { cv: document.createElement('canvas'), map: document.createElement('canvas') };
+monitor.cv.width = 512; monitor.cv.height = 314;
+monitor.map.width = NZ; monitor.map.height = NX;
+function drawMonitor(pct) {
+  const g = monitor.cv.getContext('2d');
+  g.fillStyle = '#071019'; g.fillRect(0, 0, 512, 314);
+  g.fillStyle = '#12202e'; g.fillRect(0, 0, 512, 34);
+  g.fillStyle = '#d9e6f2'; g.font = 'bold 18px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
+  g.fillText('直進アシスト  耕うん ' + pct + '%', 12, 18);
+  // 田んぼの地図（長い向きを横に）。耕した所は緑
+  const mg = monitor.map.getContext('2d'), img = mg.createImageData(NZ, NX);
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+    const o = ((NX - 1 - i) * NZ + j) * 4, t = tilledMask[i * NZ + j];
+    img.data[o] = t ? 70 : 92; img.data[o + 1] = t ? 140 : 74; img.data[o + 2] = t ? 60 : 52; img.data[o + 3] = 255;
+  }
+  mg.putImageData(img, 0, 0);
+  const X0 = 14, Y0 = 46, W = 360, H = W * NX / NZ;
+  g.imageSmoothingEnabled = false;
+  g.drawImage(monitor.map, X0, Y0, W, H);
+  g.strokeStyle = '#8fb4d0'; g.lineWidth = 2; g.strokeRect(X0, Y0, W, H);
+  const px = X0 + (S.z + HZ) / (2 * HZ) * W, py = Y0 + (1 - (S.x + HX) / (2 * HX)) * H;
+  g.save(); g.translate(px, py); g.rotate(-S.yaw + Math.PI / 2 + Math.PI);
+  g.fillStyle = '#ff8a1a'; g.beginPath(); g.moveTo(0, -12); g.lineTo(8, 9); g.lineTo(-8, 9); g.closePath(); g.fill();
+  g.restore();
+  g.fillStyle = '#1c3348';
+  for (let k = 0; k < 4; k++) { g.fillRect(392, 52 + k * 58, 108, 46); }
+  g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
+  ['耕うん', (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? '作業中' : '移動', fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+  monitor.tex && (monitor.tex.needsUpdate = true);
+}
+const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
+
+// ---- 音（エンジン） ----
+let audio = null, soundOn = false;
+function toggleSound() {
+  soundOn = !soundOn;
+  $('bSnd').textContent = soundOn ? '🔊' : '🔇';
+  if (soundOn && !audio) {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), gain = ac.createGain();
+    o1.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = -1200;
+    lp.type = 'lowpass'; lp.frequency.value = 380;
+    gain.gain.value = 0;
+    o1.connect(lp); o2.connect(lp); lp.connect(gain); gain.connect(ac.destination);
+    o1.start(); o2.start();
+    audio = { ac, o1, o2, gain };
+  }
+  if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
+}
+function updateSound() {
+  if (!audio || !soundOn) return;
+  const f = 34 + Math.abs(S.v) * 9 + (S.rotDown ? 7 : 0) + (key.fwd || key.back ? 5 : 0);
+  audio.o1.frequency.setTargetAtTime(f, audio.ac.currentTime, 0.2);
+  audio.o2.frequency.setTargetAtTime(f, audio.ac.currentTime, 0.2);
+  audio.gain.gain.setTargetAtTime(0.05, audio.ac.currentTime, 0.3);
+}
+
+// ---- 操作 ----
+const KEYS = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
+addEventListener('keydown', e => {
+  if (KEYS[e.code]) { key[KEYS[e.code]] = 1; e.preventDefault(); }
+  else if (e.code === 'Space') { toggleRotary(); e.preventDefault(); }
+  else if (e.code === 'KeyC') nextCam();
+  else if (e.code === 'KeyM') toggleSound();
+  else if (e.code === 'KeyR') resetPos();
+});
+addEventListener('keyup', e => { if (KEYS[e.code]) key[KEYS[e.code]] = 0; });
+document.querySelectorAll('.pad button[data-k]').forEach(b => {
+  const on = e => { e.preventDefault(); key[b.dataset.k] = 1; b.classList.add('active'); };
+  const off = e => { e.preventDefault(); key[b.dataset.k] = 0; b.classList.remove('active'); };
+  b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
+});
+function toggleRotary() {
+  S.rotDown = !S.rotDown;
+  $('bRot').textContent = S.rotDown ? 'ロータリーを上げる' : 'ロータリーを下げる';
+  $('bRot').classList.toggle('down', S.rotDown);
+  toast(S.rotDown ? 'ロータリーを下げました。前へ走ると耕せます' : 'ロータリーを上げました');
+}
+$('bRot').onclick = toggleRotary;
+function nextCam() { camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
+$('bCam').onclick = nextCam;
+$('bSnd').onclick = toggleSound;
+$('bMenu').onclick = () => { $('start').classList.remove('hidden'); };
+$('bAgain').onclick = () => location.reload();
+// ドラッグでまわりを見る（はなすと前にもどる）
+let drag = null;
+canvas.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  look.yaw = Math.max(-2.2, Math.min(2.2, drag.yaw - (e.clientX - drag.x) * 0.005));
+  look.pitch = Math.max(-0.6, Math.min(0.5, drag.pitch - (e.clientY - drag.y) * 0.004));
+});
+const endDrag = () => { drag = null; };
+canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
+let toastT = 0;
+function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; toastT = 2.2; }
+
+$('bStart').onclick = () => {
+  $('start').classList.add('hidden');
+  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
+  if (!S.started) { S.started = true; toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'); }
+  if (!soundOn && !audio) toggleSound();
+};
+function finish() {
+  S.done = true;
+  $('doneText').textContent = `${{ haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season]}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
+  $('done').classList.remove('hidden');
+}
+
+// ---- まわす ----
+let last = performance.now(), hudT = 0, meterT = 0, monT = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now;
+  if (!P.Rotary) { renderer.render(scene, camera); return; }
+  const running = S.started && $('start').classList.contains('hidden') && !S.done;
+  if (!running) { key.fwd = key.back = key.left = key.right = 0; }
+  if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
+  const pct = step(dt);
+  updateCamera(dt);
+  updateSound();
+  if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
+  if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
+  if ((hudT -= dt) <= 0) {
+    $('spd').textContent = (Math.abs(S.v) * 3.6).toFixed(1);
+    $('gear').textContent = S.v < -0.05 ? '後進' : '前進';
+    $('rot').textContent = S.rotDown ? 'ロータリー 下（耕す）' : 'ロータリー 上';
+    $('rot').classList.toggle('on', S.rotDown);
+    $('pct').textContent = pct;
+    $('time').textContent = fmtTime(S.elapsed);
+    hudT = 0.15;
+  }
+  if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
+  flushTilled();                                // 耕した四角は描く直前にまとめて送る
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(frame);
+// 試験用：window.game から状態をのぞける
+window.game = { S, key, toggleRotary, nextCam, tilledMask, P, renderer, scene, sim: sec => { for (let t = 0; t < sec; t += 0.05) step(0.05); buildHills(); } };
+</script>
+</body>
+</html>

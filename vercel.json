@@ -4,7 +4,9 @@
   "headers": [
     { "source": "/nishio-go/(art|maptiles|deco|bgm|shots|dots3d|chunks)/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
     { "source": "/nishio-go/(landuse|landmarks|world)\\.json", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
-    { "source": "/nishio-go/([^/]+)\\.(js|css|svg|png)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }] }
+    { "source": "/nishio-go/([^/]+)\\.(js|css|svg|png)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }] },
+    { "source": "/tools/tractor/(.*)\\.glb", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/tractor/shots/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] }
   ],
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "go.ricepia.jp" }], "destination": "/nishio-go.html", "permanent": false },

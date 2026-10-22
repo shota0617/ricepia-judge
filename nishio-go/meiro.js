@@ -103,18 +103,19 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     if (bfs(B, goal)[start[1] * tw + start[0]] <= 0) B.holes.delete(i);   // 道が ふさがったら やめる
   }
   // 金の米つぶ（3つまで）：ゴールへの 近道から はずれた 行き止まりの 床に。たがいに はなれた所から 先に えらぶ（寄り道すると とれる）
-  const fromS = bfs(B, start), onPath = new Set();
-  for (let i = 0; i < dist.length; i++) if (dist[i] && fromS[i] && dist[i] + fromS[i] - 1 === len) onPath.add(i);
+  // 穴を置いたあとの 歩数で えらぶ（穴で ふさがった 行き止まりには 置かない。とれない 米つぶを 出さない）
+  const toG = bfs(B, goal), fromS = bfs(B, start), L = toG[start[1] * tw + start[0]], onPath = new Set();
+  for (let i = 0; i < toG.length; i++) if (toG[i] && fromS[i] && toG[i] + fromS[i] - 1 === L) onPath.add(i);
   const ends = [];
-  for (let i = 0; i < dist.length; i++) {
-    if (!dist[i] || onPath.has(i) || B.holes.has(i)) continue;
+  for (let i = 0; i < toG.length; i++) {
+    if (!toG[i] || !fromS[i] || onPath.has(i) || B.holes.has(i)) continue;
     const x = i % tw, y = (i / tw) | 0, ways = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => pass(B, x, y, dx, dy) && cell[(y + dy) * tw + x + dx] === 1).length;
     if (ways === 1) ends.push(i);
   }
   const grains = [];
   while (grains.length < 3 && ends.length) {
     let bi = 0, bd = -1;
-    ends.forEach((i, k) => { const d = grains.length ? Math.min(...grains.map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))) : dist[i]; if (d > bd) { bd = d; bi = k; } });
+    ends.forEach((i, k) => { const d = grains.length ? Math.min(...grains.map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))) : toG[i]; if (d > bd) { bd = d; bi = k; } });
     grains.push(ends.splice(bi, 1)[0]);
   }
   return Object.assign(B, { start, len, grains });

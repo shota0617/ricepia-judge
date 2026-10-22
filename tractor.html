@@ -299,6 +299,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   MIRROR.setup(t.scene);
   resetPos();
   setRotBtn();
+  CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   $('bStart').disabled = false;
 }).catch(e => { $('progText').textContent = '読みこめませんでした。通信のよい所で、もう一度ひらいてください（' + e.message + '）'; });
 
@@ -917,6 +918,48 @@ function addWind(mat, amp) {
   };
   mat.needsUpdate = true;
 }
+
+// 雲の影：晴れた日の積雲の影が、田んぼの上を風下へ流れていく（雲の高さの風で 6m/s くらい。トラクターの何倍も速い）。
+// 太陽の光（平行光）だけを弱めるので、影の中でも空の明るさは残る。トラクターや畦も、影に入ると いっしょに暗くなる
+const CLOUD_T = { value: 0 };
+const CLOUDS = (() => {
+  const A = { haru: 0.56, aki: 0.59, shirokaki: 0.55 }[season];   // 影がかかる割合：春 3 割・秋 2 割ほど（空の雲の量にあわせる）
+  const GLSL = 'uniform float cloudT;\n' +
+    'float clH(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 15731.743); }\n' +
+    'float clN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
+    ' return mix(mix(clH(i), clH(i + vec2(1.0, 0.0)), f.x), mix(clH(i + vec2(0.0, 1.0)), clH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
+    // カメラから見た位置 → 世界の位置（viewMatrix は回転＋平行移動なので、転置をかけてもどす）
+    'float cloudSh(vec3 vp){ vec3 w = (vp - viewMatrix[3].xyz) * mat3(viewMatrix);' +
+    ' vec2 p = (w.xz - vec2(cloudT * 6.0, cloudT * 1.2)) * 0.011;' +
+    ' float n = clN(p) * 0.55 + clN(p * 2.13 + 3.7) * 0.3 + clN(p * 4.37 + 1.3) * 0.15;' +
+    ' return 1.0 - 0.8 * smoothstep(' + A.toFixed(3) + ', ' + (A + 0.08).toFixed(3) + ', n); }\n';
+  const DIR_F = 'getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );';
+  const DIR_V = 'getDirectionalDirectLightIrradiance( directionalLights[ i ], geometry, directLight );';
+  function patch(m) {
+    if (m.userData.cloud || !(m.isMeshStandardMaterial || m.isMeshLambertMaterial || m.isMeshPhongMaterial)) return;
+    m.userData.cloud = 1;
+    const prev = m.onBeforeCompile, key = m.customProgramCacheKey();   // 前からの細工（風・ガラスのよごれ）はそのまま残す
+    m.onBeforeCompile = (sh, r) => {
+      prev.call(m, sh, r);
+      sh.uniforms.cloudT = CLOUD_T;
+      if (m.isMeshLambertMaterial) {               // ランバートは光を頂点で計算する
+        sh.vertexShader = GLSL + sh.vertexShader.replace('#include <lights_lambert_vertex>',
+          THREE.ShaderChunk.lights_lambert_vertex.replace(DIR_V, DIR_V + ' directLight.color *= cloudSh(geometry.position);'));
+      } else {
+        sh.fragmentShader = GLSL + sh.fragmentShader.replace('#include <lights_fragment_begin>',
+          THREE.ShaderChunk.lights_fragment_begin.replace(DIR_F, DIR_F + ' directLight.color *= cloudSh(geometry.position);'));
+      }
+    };
+    m.customProgramCacheKey = () => key + '|cloud';
+    m.needsUpdate = true;
+  }
+  return {
+    apply(root) {
+      if (params.has('nocloud')) return;
+      root.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); });
+    }
+  };
+})();
 
 // となりの田んぼ（北）で、行ったり来たりして耕しているトラクター
 const NB = (() => {
@@ -2461,6 +2504,7 @@ function frame(now) {
   NB.update(dt);
   LIFE.update(dt);
   WIND_T.value += dt;
+  CLOUD_T.value += dt;
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -2489,7 +2533,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

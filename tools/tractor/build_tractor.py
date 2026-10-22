@@ -39,6 +39,28 @@ EYE = Vector((0.0, 0.46, 2.27))   # 運転者の目
 ROTARY_Y = 1.38                   # ロータリーの原点（後輪車軸の後ろ）
 TILL_W = 2.2                      # 耕うん幅
 
+DOOR_BULGE = 0.05                 # ドアの曲面一枚ガラスの外へのふくらみ
+
+
+def front_y(x):
+    """前ガラスの Y（まん中が前へ出て、両はしの A ピラーへ回りこむ）"""
+    return GLASS_F_SIDE + (GLASS_F - GLASS_F_SIDE) * (1 - (abs(x) / CAB_X) ** 2.4)
+
+
+DOOR_Y0, DOOR_Y1 = front_y(CAB_X) + 0.03, GLASS_R - 0.03
+
+
+def door_x(y):
+    """ドアのガラスの X の大きさ（前後のはしは柱の所、まん中ほど外へふくらむ）"""
+    t = min(1.0, max(0.0, (y - DOOR_Y0) / (DOOR_Y1 - DOOR_Y0)))
+    return CAB_X + DOOR_BULGE * math.sin(math.pi * t)
+
+
+def door_bottom(y):
+    """ドアのガラスの下の線（前は低く、後輪の上は高い）"""
+    return 1.37 + (1.625 - 1.37) * min(1.0, max(0.0, (y + 0.28) / 0.06))
+
+
 # ---- 色と材質（名前はそのまま glTF の材質名になる） ----
 PAL = {
     'paint_red': dict(c='#c3141b', r=0.28, coat=0.5),
@@ -547,20 +569,23 @@ def hood():
 
 def cab():
     """4 本柱のキャビン・屋根・ガラス・ライト・排気管・ステップ"""
-    fy = lambda x: GLASS_F_SIDE + (GLASS_F - GLASS_F_SIDE) * (1 - (abs(x) / CAB_X) ** 2.4)   # 前ガラスの曲がり
+    fy = front_y
     # 柱（黒）
     for s in (1, -1):
         pipe('black', [(s * CAB_X, fy(CAB_X) + 0.01, FLOOR + 0.02), (s * CAB_X, fy(CAB_X) + 0.01, ROOF_IN)], 0.03, 8)
         box('black', (0.06, 0.06, ROOF_IN - FLOOR - 0.04), (s * CAB_X, GLASS_R - 0.01, (FLOOR + ROOF_IN) / 2 + 0.01), bev=(0.01,))
         # 横の下の板（後輪の上）
         prism('black', [(-0.25, FLOOR), (GLASS_R, FLOOR), (GLASS_R, 1.62), (-0.25, 1.62)], 0.03, T((s * CAB_X, 0, 0), (90, 0, 90)))
-        # ドアの枠
-        pipe('black', [(s * CAB_X, -0.50, 1.36), (s * CAB_X, -0.28, 1.36), (s * CAB_X, -0.22, 1.62), (s * CAB_X, GLASS_R - 0.03, 1.62)], 0.012, 6, cap=False)
-        pipe('black', [(s * CAB_X, -0.50, ROOF_IN - 0.02), (s * CAB_X, GLASS_R - 0.03, ROOF_IN - 0.02)], 0.012, 6)
+        # ドアの枠（曲面ガラスのふちに沿う）
+        ys = [DOOR_Y0 + (DOOR_Y1 - DOOR_Y0) * i / 24 for i in range(25)]
+        pipe('black', [(s * door_x(y), y, door_bottom(y) - 0.01) for y in ys], 0.012, 6, cap=False)
+        pipe('black', [(s * door_x(y), y, ROOF_IN - 0.02) for y in ys], 0.012, 6)
+        for z in (door_bottom, lambda y: ROOF_IN - 0.012):                    # ふくらんだガラスと柱の線のあいだのふさぎ
+            loft('black', [[(s * CAB_X, y, z(y) - 0.012), (s * door_x(y), y, z(y) - 0.012)] for y in ys], smooth=60)
         # ドアの取っ手・ちょうつがい
-        box('black', (0.03, 0.12, 0.025), (s * (CAB_X + 0.02), -0.40, 1.80), bev=(0.006,))
+        box('black', (0.03, 0.12, 0.025), (s * (door_x(-0.40) + 0.02), -0.40, 1.80), bev=(0.006,))
         for z in (1.75, 2.25):
-            box('black', (0.03, 0.04, 0.06), (s * (CAB_X + 0.015), GLASS_R - 0.05, z))
+            box('black', (0.03, 0.04, 0.06), (s * (door_x(GLASS_R - 0.05) + 0.015), GLASS_R - 0.05, z))
     # 前の下（ボンネットとガラスのあいだ）
     box('black', (1.24, 0.06, 0.08), (0, GLASS_F_SIDE + 0.02, FLOOR + 0.04))
     box('black', (0.60, 0.06, 0.30), (0, GLASS_F + 0.02, FLOOR + 0.15))
@@ -604,8 +629,8 @@ def cab():
 
 
 def glass():
-    """曲面一枚の前ガラス・ドアのガラス・後ガラス（材質 glass）"""
-    fy = lambda x: GLASS_F_SIDE + (GLASS_F - GLASS_F_SIDE) * (1 - (abs(x) / CAB_X) ** 2.4)
+    """継ぎ目のない曲面一枚の前ガラスと両ドアのガラス・後ガラス（材質 glass）"""
+    fy = front_y
     secs = []
     for i in range(25):
         x = -CAB_X + 2 * CAB_X * i / 24
@@ -614,8 +639,8 @@ def glass():
     with part('Glass'):
         loft('glass', secs, smooth=60)
         for s in (1, -1):
-            prism('glass', [(fy(CAB_X) + 0.03, 1.37), (-0.28, 1.37), (-0.22, 1.625), (GLASS_R - 0.03, 1.625), (GLASS_R - 0.03, ROOF_IN - 0.01),
-                            (fy(CAB_X) + 0.03, ROOF_IN - 0.01)], 0.008, T((s * CAB_X, 0, 0), (90, 0, 90)))
+            ys = [DOOR_Y0 + (DOOR_Y1 - DOOR_Y0) * i / 24 for i in range(25)]
+            loft('glass', [[(s * door_x(y), y, door_bottom(y)), (s * door_x(y), y, ROOF_IN - 0.01)] for y in ys], smooth=60)
         box('glass', (2 * CAB_X - 0.04, 0.008, ROOF_IN - 1.62), (0, GLASS_R, (ROOF_IN + 1.61) / 2))
 
 
@@ -750,8 +775,15 @@ def interior():
     cyl('black', 0.02, 0.004, (-0.325, 0.31, top + 0.001), n=20)
     for k in range(3):                                                         # 緑の LED
         box('led_green', (0.008, 0.006, 0.004), (-0.33 + k * 0.0 - 0.02 * k, 0.255, top + 0.002))
-    for k in range(4):                                                         # 小さいスイッチ
-        box('gray', (0.022, 0.016, 0.008), (-0.395 + (k % 2) * 0.04, 0.10 + (k // 2) * 0.03 + 0.24, top + 0.004))
+    # 作業機昇降スイッチ（前後に倒す黒いシーソー）と、チョイ上げ・チョイ下げのボタン
+    box('darkgray', (0.045, 0.07, 0.008), (-0.305, 0.215, top + 0.004), bev=(0.004,))
+    box('black', (0.032, 0.055, 0.016), (-0.305, 0.215, top + 0.014), (8, 0, 0), bev=(0.008, 2))
+    box('gray', (0.022, 0.006, 0.004), (-0.305, 0.195, top + 0.023), (8, 0, 0))
+    for k, c in enumerate(('gray', 'gray')):
+        cyl(c, 0.009, 0.01, (-0.395 + 0.03 * k, 0.335, top + 0.006), n=14)
+        cyl('black', 0.012, 0.003, (-0.395 + 0.03 * k, 0.335, top + 0.0015), n=14)
+    for k in range(2):                                                         # 小さいスイッチ
+        box('gray', (0.022, 0.016, 0.008), (-0.395 + k * 0.04, 0.37, top + 0.004))
     # 右前のタッチモニター（支柱付き）
     MON = Vector((-0.43, -0.20, 1.97))
     nrm = (EYE - MON).normalized()
@@ -772,8 +804,8 @@ def interior():
     RM = Vector((0, -0.48, ROOF_IN - 0.11))
     rn = (EYE - RM).normalized()
     rmm = face_mtx(RM, rn)
-    box('black', (0.23, 0.075, 0.025), (0, 0, -0.012), mtx=rmm, bev=(0.01, 2))
-    screen('RoomMirror', 0.21, 0.058, rmm @ Vector((0, 0, 0.002)), rn, (0, 0, 1), 'mirror')
+    box('black', (0.32, 0.085, 0.025), (0, 0, -0.012), mtx=rmm, bev=(0.012, 2))         # 大型ルームミラー
+    screen('RoomMirror', 0.30, 0.068, rmm @ Vector((0, 0, 0.002)), rn, (0, 0, 1), 'mirror')
     box('black', (0.46, 0.18, 0.04), (-0.05, -0.30, ROOF_IN - 0.03), bev=(0.012, 2))   # エアコン操作部
     for k in range(3):
         cyl('silver', 0.016, 0.014, (-0.20 + k * 0.08, -0.30, ROOF_IN - 0.055), n=16)

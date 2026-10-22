@@ -6,7 +6,7 @@
 | ファイル | 中身 |
 |---|---|
 | `build_tractor.py` | 生成スクリプト（Blender の Python 版 bpy 5.2.2） |
-| `tractor_yt.glb` | 書き出したモデル（約 1.4MB・三角形 約 4.8 万・Draco なし・テクスチャ 512px×2 枚を埋め込み） |
+| `tractor_yt.glb` | 書き出したモデル（約 1.4MB・三角形 約 4.9 万・Draco なし・テクスチャ 512px×2 枚を埋め込み） |
 | `preview_exterior.png` | 斜め前の外観（Cycles） |
 | `preview_driver.png` | 運転者の目（左右 0・後輪車軸の 0.46m 後ろ・高さ 2.27m）から前方 12° 下向き・縦の画角 60° |
 | `preview_console.png` | 右の操作盤のアップ |
@@ -84,7 +84,7 @@ function setSteer(a) {            // a > 0 で右へ切る
 | `MeterScreen` | 0.18 × 0.18 | `meter_screen` | 丸型メーター全体。仮の絵（512px）が入っているので、`material.map`・`emissiveMap` を CanvasTexture に差しかえてよい |
 | `MonitorScreen` | 0.22 × 0.135 | `monitor_screen` | 右前のタッチモニター。仮の絵入り |
 | `MirrorL` `MirrorR` | 0.105 × 0.18 | `mirror` | 外の左右のミラー |
-| `RoomMirror` | 0.21 × 0.058 | `mirror` | ルームミラー |
+| `RoomMirror` | 0.30 × 0.068 | `mirror` | 大型ルームミラー |
 
 ## 材質
 
@@ -98,3 +98,4 @@ function setSteer(a) {            // a > 0 で右へ切る
 - Khronos の glTF Validator：エラー 0・警告 0。
 - three.js r128 の `GLTFLoader`（headless Chromium）で読み込み、名前・寸法（全長 3.964・全幅 1.85・全高 2.635）・ハンドルの法線・前輪の切れる向きを確認した。
 - 公式「快適性」ページ（運転席の写真）はこのクラウド環境から開けなかったので、諸元の数字と依頼文の部品の説明から形を決めた。写真と見比べて、ちがう所があれば `build_tractor.py` の数字を直す。
+- 公式の説明（検索結果の抜き書き）から入れたもの：前面と両ドアの継ぎ目のない曲面一枚ガラス（ドアは外へ 0.05 ふくらむ）、段差のない足元、大型ルームミラー、右手に集めた主変速・PTO 入/切・作業機昇降・チョイ上げ/チョイ下げ・サブコンレバー。

@@ -2185,6 +2185,13 @@ function step(dt) {
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
+  // 軽油：エンジンが出している力（kW）× 燃料消費率 約 0.25kg/kWh ÷ 軽油の重さ 0.83kg/L。60 馬力＝44kW。
+  // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
+  if (S.started && !(S.crank > 0)) {
+    const sp = Math.min(1, Math.abs(S.v) / 0.78);
+    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.3 + 0.7 * sp) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
+    S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
+  }
   if (working && Math.abs(S.v) > 0.1) {
     S.pitch = tillPitch();
     S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
@@ -2332,6 +2339,10 @@ function drawMeter() {
   g.fillText(Math.round(engineRpm(performance.now() / 1000) / 10) * 10 + 'rpm', r + 22, r + 42);
   g.beginPath(); g.arc(46, 214, 9, 0, 7); g.fillStyle = '#20d050'; g.fill();
   g.beginPath(); g.arc(210, 214, 9, 0, 7); g.fillStyle = S.rotDown ? '#ffb020' : '#3a2a10'; g.fill();
+  const fuelL = Math.max(0, 0.82 - (S.fuel || 0) / 50);   // 燃料計（E〜F。始めは 8 分目くらい）
+  g.fillStyle = '#20282c'; g.fillRect(80, 226, 96, 9);
+  g.fillStyle = fuelL < 0.15 ? '#ff6a2a' : '#9fd2dc'; g.fillRect(80, 226, 96 * fuelL, 9);
+  g.fillStyle = '#9fd2dc'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText('E', 72, 231); g.fillText('F', 184, 231);
   meter.tex && (meter.tex.needsUpdate = true);
 }
 const monitor = { cv: document.createElement('canvas'), map: document.createElement('canvas') };
@@ -2689,7 +2700,8 @@ function finish() {
   g.imageSmoothingEnabled = false; g.drawImage(tmp, 0, 0, W, H);
   const area = left * CELL * CELL;
   $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
-    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span><br>`;
+    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
+    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span><br>`;
   $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');
 }
@@ -2751,7 +2763,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

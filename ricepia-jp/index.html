@@ -4574,6 +4574,40 @@
   </div>
 </section>
 <!-- nishio-go:end -->
+<!-- tractor:start トラクターで田んぼを耕そう（試作版）のお知らせ。にしおさんぽGO の欄のすぐ下（「動画で見る らいすぴあ」の上）に入れる（tools/build-ricepia-jp.py） -->
+<style id="tractor-style">
+  #tractor-game { background: #f4efe2; padding: clamp(2.5rem, 6vw, 4rem) 1.25rem; text-align: center; }
+  #tractor-game .tg-inner { max-width: 720px; margin: 0 auto; }
+  #tractor-game .tg-tag { display: inline-block; margin: 0 0 .9rem; padding: .15em .9em; border: 1px solid var(--gold, #b8893a); border-radius: 999px; background: #fff; color: var(--gold-text, #8a6423); font-size: .85rem; font-weight: 700; }
+  #tractor-game .sec-title { margin-bottom: .9rem; }
+  #tractor-game .tg-nb { display: inline-block; }
+  #tractor-game .sec-lead { margin: 0 auto 1.6rem; }
+  #tractor-game .tg-hero { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; margin: 0 0 1rem; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.18); background: #c9d8e6; object-fit: cover; }
+  #tractor-game .tg-shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 1.8rem; padding: 0; list-style: none; }
+  #tractor-game .tg-shots img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 10px; object-fit: cover; background: #c9d8e6; }
+  #tractor-game .tg-shots span { display: block; margin-top: .4rem; color: var(--ink, #1a1814); font-size: .85rem; font-weight: 700; }
+  #tractor-game .tg-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 14px 40px; border-radius: 999px; background: var(--green-deep, #1f4d2b); color: #fff; font-size: 1.05rem; font-weight: 700; letter-spacing: .05em; text-decoration: none; transition: background .15s; }
+  #tractor-game .tg-btn:hover { background: #173e2d; }
+  #tractor-game .tg-btn:focus-visible { outline: 3px solid var(--gold, #b8893a); outline-offset: 4px; }
+  #tractor-game .tg-note { margin: 1rem 0 0; color: var(--text-muted, #736c5e); font-size: .85rem; line-height: 1.7; }
+  @media (max-width: 599px) { #tractor-game .tg-btn { width: 100%; } #tractor-game .tg-shots { gap: 6px; } #tractor-game .tg-shots span { font-size: .75rem; } }
+</style>
+<section id="tractor-game" aria-labelledby="tractor-game-title">
+  <div class="tg-inner">
+    <span class="tg-tag">🧪 試作版</span>
+    <h2 id="tractor-game-title" class="sec-title"><span class="tg-nb">トラクターの</span><span class="tg-nb">運転席から、</span><br><span class="em">田んぼを耕す</span>ゲーム。</h2>
+    <p class="sec-lead">お米ができるまでの最初のしごと「田んぼを耕す」を、ブラウザで体験できます。60 馬力のキャビン付きトラクターに乗って、うしろのロータリーで 30m×50m の田んぼを耕しましょう。</p>
+    <img class="tg-hero" src="https://go.ricepia.jp/tractor/shots/cockpit.webp" alt="トラクターの運転席から見た田んぼ。左は切り株の残る田んぼ、右は耕したあとの土" width="960" height="540" loading="lazy">
+    <ul class="tg-shots" aria-label="3つの季節">
+      <li><img src="https://go.ricepia.jp/tractor/shots/field.webp" alt="春の田んぼを、赤いトラクターが半分ほど耕したところ" width="960" height="540" loading="lazy"><span>🌸 春の田んぼ</span></li>
+      <li><img src="https://go.ricepia.jp/tractor/shots/aki.webp" alt="稲刈りのあとの田んぼと、まだ刈っていない黄金色の稲" width="960" height="540" loading="lazy"><span>🌾 秋の稲刈りあと</span></li>
+      <li><img src="https://go.ricepia.jp/tractor/shots/shirokaki.webp" alt="水を張った田んぼで代かきをしている運転席からのながめ" width="960" height="540" loading="lazy"><span>💧 代かき</span></li>
+    </ul>
+    <a class="tg-btn" href="https://go.ricepia.jp/tractor.html?utm_source=ricepia.jp&amp;utm_medium=referral&amp;utm_campaign=homepage" target="_blank" rel="noopener">▶ 運転してみる</a>
+    <p class="tg-note">パソコン・スマホのブラウザで遊べます（無料・インストール不要）。<br>はじめに 8MB ほど読みこむので、Wi-Fi のある所がおすすめです。</p>
+  </div>
+</section>
+<!-- tractor:end -->
 <!-- ▼ 動画コーナー（ここから） -->
 <section id="videos" class="section rp-videos" aria-labelledby="rp-videos-title">
   <div class="rp-videos__inner section-inner">

@@ -276,6 +276,7 @@ function waitChunks(spot, done) {
   const A = api, t = A.toTile(spot.lat, spot.lng), need = [], r = 32 * K;   // いちばん広い盤が 入る はんい
   for (let cy = Math.floor((t.y - r) / A.CHUNK); cy <= Math.floor((t.y + r) / A.CHUNK); cy++)
     for (let cx = Math.floor((t.x - r) / A.CHUNK); cx <= Math.floor((t.x + r) / A.CHUNK); cx++) need.push([cx, cy]);
+  need.forEach(([cx, cy]) => A.forgetChunk(cx, cy));   // 前に 読めなかった区画は、面を つくりなおす（やりなおし）たびに 読みなおす
   const t0 = Date.now();
   (function poll() {
     if (!ui || ui.el.hidden) return;

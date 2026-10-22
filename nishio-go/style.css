@@ -460,6 +460,7 @@ body.px .guide small{color:#ddd}
 /* ---------- 絵が主役（文字を少なく：body.simple） ---------- */
 /* はじめの画面：ドット絵帳の絵を3枚、扇のように。きらきら */
 .intro-hero{display:none}
+.intro-roll{display:block;width:100%;max-width:320px;height:auto;aspect-ratio:160/72;margin:4px auto 8px;image-rendering:pixelated;border-radius:12px}
 .simple .intro-hero{display:block;position:relative;height:170px;margin:4px auto 6px;max-width:320px}
 .intro-hero .hc{position:absolute;top:10px;left:50%;width:132px;height:132px;image-rendering:pixelated;border-radius:10px;border:3px solid #e9c46a;box-shadow:0 0 0 2px #fff8e0,0 6px 16px rgba(0,0,0,.3)}
 .intro-hero .hc0{transform:translateX(-118%) rotate(-12deg) scale(.86);opacity:.95}

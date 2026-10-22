@@ -2791,6 +2791,7 @@ $('copyGps').addEventListener('click', async () => {
 /* タブ */
 function openTab(tab) {
   hideReward();   // ほかのタブを開いたら、ポイントの知らせは消す
+  if (tab !== 'map') reactHide();   // 「どうだった？」も（きろく・バッジの下の方を ふさいでいた）
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   ['log', 'voice', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
   if (tab === 'voice') { renderVoice(); voiceMarkSeen(); loadVoices(); }

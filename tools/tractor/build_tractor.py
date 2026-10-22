@@ -111,36 +111,36 @@ def make_tex(kind):
     yy, xx = np.mgrid[0:S, 0:S].astype(np.float32)
     img = np.zeros((S, S, 4), np.float32)
     img[..., 3] = 1
-    if kind == 'meter':
+    if kind == 'meter':                                                 # 黒い縁、白い輪に黒い目盛り、まん中に黒い液晶（公式写真の形）
         u, v = (xx + 0.5) / S * 2 - 1, (yy + 0.5) / S * 2 - 1
         rr, ang = np.hypot(u, v), np.degrees(np.arctan2(v, u))
-        img[..., :3] = 0.0
-        img[rr < 0.98, :3] = (0.012, 0.014, 0.018)
-        img[(rr > 0.94) & (rr < 0.98), :3] = (0.5, 0.52, 0.55)        # 銀の縁
-        sweep = (ang < 225) & (ang > -45) | (ang > 135) | (ang < -45)
-        arc = (rr > 0.80) & (rr < 0.84)
         a2 = np.where(ang < -45, ang + 360, ang)                       # 225°（左下）から -45°（右下）へ 270° の目盛り
-        on = arc & (a2 <= 225) & (a2 >= -45)
-        img[on, :3] = (0.75, 0.78, 0.8)
-        red = arc & (a2 >= -45) & (a2 < 0)
-        img[red, :3] = (0.9, 0.08, 0.05)
-        for k in range(28):                                             # 目盛り
-            a = math.radians(225 - k * 10)
-            L = 0.12 if k % 3 == 0 else 0.06
-            for t in np.linspace(0.82 - L, 0.84, 30):
+        img[..., :3] = 0.0
+        img[rr < 0.98, :3] = (0.02, 0.02, 0.025)
+        img[(rr > 0.93) & (rr < 0.98), :3] = (0.55, 0.57, 0.6)         # 銀の縁
+        ring = (rr > 0.52) & (rr < 0.88)
+        img[ring, :3] = (0.86, 0.87, 0.88)                              # 白い目盛りの輪
+        for k in range(55):                                             # 黒い目盛り（5 本ごとに長い）
+            a = math.radians(225 - k * 5)
+            L0 = 0.70 if k % 5 == 0 else 0.78
+            for t in np.linspace(L0, 0.87, 24):
                 px, py = int((math.cos(a) * t + 1) / 2 * S), int((math.sin(a) * t + 1) / 2 * S)
-                img[max(py - 2, 0):py + 2, max(px - 2, 0):px + 2, :3] = (0.85, 0.86, 0.88)
-        lcd = (np.abs(u) < 0.42) & (v > -0.62) & (v < -0.18)            # まん中下の液晶
-        img[lcd, :3] = (0.05, 0.11, 0.13)
-        img[lcd & (np.abs(u) < 0.36) & (np.abs(v + 0.40) < 0.05), :3] = (0.35, 0.8, 0.9)
-        a = math.radians(160)                                           # 針
-        for t in np.linspace(0, 0.78, 160):
+                w = 3 if k % 5 == 0 else 2
+                img[max(py - w, 0):py + w, max(px - w, 0):px + w, :3] = (0.05, 0.05, 0.06)
+        red = ring & (rr > 0.80) & (a2 >= -45) & (a2 < -5)
+        img[red, :3] = (0.85, 0.08, 0.05)
+        img[ring & ((a2 < -45) | (a2 > 225)) & (v < 0), :3] = (0.02, 0.02, 0.025)   # 下のすきま
+        lcd = rr < 0.50                                                 # まん中の黒い液晶
+        img[lcd, :3] = (0.03, 0.04, 0.045)
+        for (cx, cy, w, h) in ((0.0, 0.18, 0.26, 0.10), (-0.12, -0.05, 0.08, 0.05), (0.12, -0.05, 0.08, 0.05), (0.0, -0.25, 0.30, 0.04)):
+            seg = (np.abs(u - cx) < w / 2) & (np.abs(v - cy) < h / 2)
+            img[seg & lcd, :3] = (0.7, 0.74, 0.76)                     # 数字の板
+        a = math.radians(170)                                           # 赤い針
+        for t in np.linspace(0.50, 0.86, 80):
             px, py = int((math.cos(a) * t + 1) / 2 * S), int((math.sin(a) * t + 1) / 2 * S)
-            img[py - 3:py + 3, px - 3:px + 3, :3] = (1.0, 0.25, 0.05)
-        img[rr < 0.07, :3] = (0.2, 0.2, 0.22)
-        for i, (cx, cy, col) in enumerate([(-0.55, 0.45, (0.1, 0.8, 0.2)), (0.55, 0.45, (0.1, 0.8, 0.2)),
-                                           (-0.25, 0.55, (0.95, 0.6, 0.05)), (0.25, 0.55, (0.2, 0.5, 1.0))]):
-            img[np.hypot(u - cx, v - cy) < 0.05, :3] = col              # 表示灯
+            img[py - 3:py + 3, px - 3:px + 3, :3] = (0.95, 0.2, 0.05)
+        for cx, cy, col in ((-0.62, -0.62, (0.1, 0.8, 0.2)), (0.62, -0.62, (0.95, 0.6, 0.05))):
+            img[np.hypot(u - cx, v - cy) < 0.06, :3] = col              # 表示灯
     else:
         u, v = (xx + 0.5) / S, (yy + 0.5) / S
         img[..., :3] = (0.02, 0.05, 0.09)
@@ -741,8 +741,11 @@ def interior():
     # 床とゴムマット（溝）
     box('trim', (1.24, 1.30, 0.02), (0, 0.13, FLOOR - 0.01))
     box('rubber_mat', (0.84, 0.72, 0.008), (0, -0.16, FLOOR + 0.004))
-    for k in range(18):
-        box('rubber_mat', (0.80, 0.012, 0.007), (0, -0.50 + k * 0.038, FLOOR + 0.011))
+    for k in range(17):                                                          # 短い出っぱりを互い違いに並べた滑り止め
+        for j in range(12):
+            x = -0.38 + j * 0.066 + (0.033 if k % 2 else 0.0)
+            if abs(x) < 0.40:
+                box('rubber_mat', (0.05, 0.011, 0.006), (x, -0.49 + k * 0.04, FLOOR + 0.011), (0, 0, 20 if k % 2 else -20))
     # 座席横のタイヤハウス内張り
     for s in (1, -1):
         ph = math.degrees(math.acos((FLOOR - RZ) / 0.80))
@@ -753,48 +756,77 @@ def interior():
     # 内側の壁・天井
     box('headliner', (2 * CAB_X - 0.04, 1.32, 0.02), (0, 0.14, ROOF_IN - 0.01))
     box('trim', (2 * CAB_X - 0.06, 0.02, 0.26), (0, GLASS_R - 0.03, FLOOR + 0.14))
-    # 前のコンソール（ハンドル柱の根元）
-    box('trim', (0.30, 0.24, 0.24), (0, -0.48, FLOOR + 0.12), bev=(0.02,))
-    box('black', (0.26, 0.20, 0.06), (0, -0.46, FLOOR + 0.27), (-20, 0, 0), bev=(0.015,))
-    # チルトハンドル柱（赤い側面カバー）
+    # 前の塔（床からメーターまで。黒い芯の左右を、運転者へ少し向いた大きな赤いカバーがはさむ）
+    tower = [(-0.60, FLOOR), (-0.28, FLOOR), (-0.24, 1.47), (-0.13, 1.66), (-0.17, 1.80), (-0.30, 1.88), (-0.46, 1.74), (-0.60, 1.52)]
+    prism('black', tower, 0.28, T((0, 0, 0), (90, 0, 90)), bev=(0.02, 3))
+    YC, YAW = -0.32, 30.0                                                        # 赤いカバーのまん中の Y と、運転者へ向ける角度
+    for s in (1, -1):
+        red = [(-0.56 - YC, 1.44), (-0.27 - YC, 1.44), (-0.13 - YC, 1.64), (-0.14 - YC, 1.80), (-0.21 - YC, 1.93), (-0.36 - YC, 1.93), (-0.47 - YC, 1.74)]
+        rm = T((s * 0.185, YC, 0), (0, 0, s * YAW)) @ T((0, 0, 0), (90, 0, 90))  # まん中を軸に、後ろのはしを内へ回す
+        prism('paint_red', red, 0.024, rm, bev=(0.008, 3))
+        # 赤いカバーの上の黒いスイッチ板（左：N/R の表示とハザード、右：赤い丸ボタンと四角いスイッチ）
+        pm = rm @ T((0.10, 1.70, s * 0.016))
+        box('black', (0.10, 0.075, 0.012), (0, 0, s * 0.008), mtx=pm, bev=(0.004,))
+        if s > 0:
+            prism('paint_red', [(-0.016, -0.012), (0.016, -0.012), (0.0, 0.016)], 0.008, pm @ T((0.02, 0.0, 0.018)))
+            box('white', (0.022, 0.03, 0.006), (-0.025, 0.0, 0.018), mtx=pm)
+        else:
+            cyl('paint_red', 0.014, 0.012, (0.025, 0.0, -0.02), mtx=pm, n=16)
+            for k in range(2):
+                box('gray', (0.018, 0.018, 0.008), (-0.02 - k * 0.024, 0.0, -0.018), mtx=pm, bev=(0.003,))
+    # ハンドルの下の丸いスイッチ（左右に 2 段ずつ）
+    for s in (1, -1):
+        for r in range(2):
+            for k in range(2):
+                p = Vector((s * (0.055 + k * 0.03), -0.150 - r * 0.02, 1.70 - r * 0.035))
+                cyl('gray', 0.011, 0.01, p, (55, 0, 0), n=14)
+                cyl('led_green' if (r + k) % 3 == 0 else 'white', 0.006, 0.012, p + Vector((0, 0.002, 0.001)), (55, 0, 0), n=10)
+    # ハンドル柱（チルト）：塔から出て、ゴムの蛇腹と、ペダルのばね
     col_m = Matrix.Translation(WHEEL_C) @ Euler((math.radians(-COL_TILT), 0, 0)).to_matrix().to_4x4()
-    box('black', (0.17, 0.13, 0.42), (0, 0, -0.30), mtx=col_m, bev=(0.025, 3))
-    for s in (1, -1):
-        box('paint_red', (0.012, 0.12, 0.34), (s * 0.088, -0.005, -0.30), mtx=col_m, bev=(0.004,))
-    box('black', (0.26, 0.17, 0.10), (0, -0.04, -0.10), mtx=col_m, bev=(0.03, 3))       # 上のふくらみ（メーターの台）
-    cyl('black', 0.03, 0.10, (0, 0, -0.06), mtx=col_m, n=12)
-    # スイッチ列（柱の左右の肩）
-    for s in (1, -1):
-        for k in range(3):
-            box('gray', (0.022, 0.016, 0.03), (s * (0.07 + k * 0.027), 0.035, -0.07), mtx=col_m, bev=(0.004,))
-        box('black', (0.10, 0.012, 0.04), (s * 0.095, 0.03, -0.07), mtx=col_m)
-    pipe('black', [col_m @ Vector((0.09, 0.02, -0.36)), col_m @ Vector((0.15, 0.05, -0.33))], 0.006, 6)   # チルトレバー
-    sph('black', 0.014, col_m @ Vector((0.155, 0.052, -0.33)), (1.4, 1, 1), n=10)
-    # 丸型メーター：目からハンドルの上の窓を通して見える所に置く
+    cyl('black', 0.035, 0.22, (0, 0, -0.14), mtx=col_m, n=14)
+    for k in range(5):
+        tor('black', 0.05 - 0.003 * (k % 2), 0.012, col_m @ Matrix.Translation((0, 0, -0.27 - k * 0.022)), 20, 6)
+    pipe('black', [col_m @ Vector((0.09, 0.02, -0.33)), col_m @ Vector((0.15, 0.05, -0.30))], 0.006, 6)   # チルトレバー
+    sph('black', 0.014, col_m @ Vector((0.155, 0.052, -0.30)), (1.4, 1, 1), n=10)
+    for x in (0.12, -0.12):
+        pts = [(x + 0.016 * math.sin(t), -0.46 + 0.016 * math.cos(t), 1.36 + 0.13 * t / (8 * math.pi)) for t in np.linspace(0, 8 * math.pi, 49)]
+        pipe('black', pts, 0.003, 5, smooth=60)
+    # 右のコンビネーションスイッチ（ライト・ウインカーのレバー）
+    sp = col_m @ Vector((-0.07, -0.02, -0.10))
+    pipe('black', [sp, sp + Vector((-0.10, 0.03, 0.02))], 0.008, 8)
+    cyl('black', 0.012, 0.04, sp + Vector((-0.115, 0.034, 0.022)), (0, 90, -15), n=10)
+    # メーター：幅の広い黒い枠に、まん中の丸いメーターと左右の小さな計器。上に黒い庇。ハンドルの上の窓から見える
     P = WHEEL_C + W_UP * (WHEEL_R * 0.56)
     d = (P - EYE).normalized()
     MC = P + d * 0.17
     up = Vector((0, 0, 1)) - d * d.z
     mm = face_mtx(MC, -d, up)
-    cyl('black', 0.098, 0.06, (0, 0, -0.03), mtx=mm, n=32)
-    tor('silver', 0.096, 0.006, mm @ Matrix.Translation((0, 0, 0.002)), 40, 6)
-    tor('black_gloss', 0.105, 0.012, mm @ Matrix.Translation((0, 0, -0.004)), 40, 6, 200, 340)
-    # メーターフード（黒い庇）
-    bm = bmesh.new()
+    box('black', (0.32, 0.17, 0.10), (0, -0.01, -0.055), mtx=mm, bev=(0.03, 3))
+    cyl('black_gloss', 0.098, 0.012, (0, 0, -0.004), mtx=mm, n=40)
+    tor('silver', 0.096, 0.006, mm @ Matrix.Translation((0, 0, 0.003)), 40, 6)
+    for sx in (1, -1):                                                           # 左右の小さな計器（燃料・水温）
+        g = mm @ Matrix.Translation((sx * 0.128, -0.015, 0.0))
+        cyl('black_gloss', 0.032, 0.01, (0, 0, -0.002), mtx=g, n=24)
+        tor('white', 0.025, 0.002, g @ Matrix.Translation((0, 0, 0.004)), 16, 4, 200, 340)
+        tor('paint_red', 0.025, 0.0025, g @ Matrix.Translation((0, 0, 0.004)), 4, 4, 200, 225)
+        box('orange', (0.003, 0.022, 0.002), (0.006, 0.008, 0.006), (0, 0, 30), mtx=g)
+        tor('silver', 0.032, 0.003, g @ Matrix.Translation((0, 0, 0.003)), 24, 4)
+    bm = bmesh.new()                                                             # 庇：横に長い半円の筒
     rows = []
-    for i in range(17):
-        a = math.radians(-20 + 220 * i / 16)
-        rows.append([bm.verts.new(mm @ Vector((0.115 * math.cos(a), 0.115 * math.sin(a), z))) for z in (-0.05, 0.035 + 0.035 * math.sin(a))])
+    for i in range(21):
+        a = math.radians(-8 + 196 * i / 20)
+        rows.append([bm.verts.new(mm @ Vector((0.17 * math.cos(a), 0.012 + 0.10 * math.sin(a), z))) for z in (-0.07, 0.03 + 0.03 * math.sin(a))])
     for a, b in zip(rows, rows[1:]):
         bm.faces.new((a[0], b[0], b[1], a[1]))
     _obj(bm, 'black', smooth=60)
-    screen('MeterScreen', 0.18, 0.18, mm @ Vector((0, 0, 0.004)), -d, up, 'meter_screen')
-    # ペダル軸・アクセル（床から生える）
-    cyl_x('darkgray', 0.012, -0.36, 0.30, -0.52, FLOOR + 0.27, 10)
-    mt = T((-0.40, -0.40, FLOOR + 0.07), (-55, 0, 0))
-    box('black', (0.07, 0.20, 0.015), (0, 0, 0), mtx=mt, bev=(0.005,))
-    for k in range(6):
-        box('rubber_mat', (0.06, 0.008, 0.006), (0, -0.08 + k * 0.032, 0.009), mtx=mt)
+    screen('MeterScreen', 0.18, 0.18, mm @ Vector((0, 0, 0.005)), -d, up, 'meter_screen')
+    # ペダル軸・アクセル（床から生える、銀色の穴あき板）
+    cyl_x('darkgray', 0.012, -0.34, 0.28, -0.50, 1.58, 10)
+    mt = T((-0.40, -0.24, FLOOR + 0.07), (-52, 0, 0))
+    box('silver', (0.085, 0.22, 0.012), (0, 0, 0), mtx=mt, bev=(0.006,))
+    for k in range(5):
+        box('black', (0.05, 0.012, 0.004), (0, -0.08 + k * 0.04, 0.007), mtx=mt)
+    box('darkgray', (0.07, 0.05, 0.05), (-0.40, -0.32, FLOOR + 0.025))
     # シート（サスペンション付き）
     box('darkgray', (0.40, 0.46, 0.04), (0, 0.42, FLOOR + 0.03), bev=(0.01,))
     for k in range(5):
@@ -817,9 +849,6 @@ def interior():
     for x in (0.45, -0.45):                                                       # 天井のスピーカー
         cyl('black', 0.065, 0.01, (x, 0.50, ROOF_IN - 0.022), n=24)
         tor('darkgray', 0.065, 0.005, T((x, 0.50, ROOF_IN - 0.028)), 24, 5)
-    for s_ in (1, -1):                                                            # ドアの内側のレバー
-        box('black', (0.03, 0.05, 0.08), (s_ * (CAB_X - 0.025), -0.44, 1.78), bev=(0.008,))
-        pipe('silver', [(s_ * (CAB_X - 0.04), -0.44, 1.80), (s_ * (CAB_X - 0.055), -0.38, 1.80)], 0.006, 6)
     # 左のひじかけ（はね上げ式）
     box('seat', (0.07, 0.30, 0.05), (0.28, 0.53, FLOOR + 0.48), bev=(0.02, 2))
     box('darkgray', (0.03, 0.04, 0.18), (0.28, 0.66, FLOOR + 0.40))
@@ -834,14 +863,16 @@ def interior():
     for k in range(10):
         a = 2 * math.pi * k / 10
         box('silver', (0.004, 0.006, 0.02), (-0.41 + 0.022 * math.cos(a), 0.22 + 0.022 * math.sin(a), top + 0.012), (0, 0, math.degrees(a)))
-    for k, (x, y, c) in enumerate(((-0.42, 0.29, 'beige'), (-0.42, 0.335, 'blue'))):   # サブコンレバー
-        box('black', (0.03, 0.06, 0.006), (x, y, top + 0.003))
-        pipe('silver', [(x, y, top), (x, y - 0.012, top + 0.05)], 0.004, 6)
-        box(c, (0.03, 0.022, 0.018), (x, y - 0.014, top + 0.058), bev=(0.007, 2))
+    for k, (x, y, c) in enumerate(((-0.43, 0.30, 'beige'), (-0.43, 0.355, 'blue'))):   # サブコンレバー（長い柄に色のつまみ）
+        box('black', (0.03, 0.07, 0.006), (x, y, top + 0.003))
+        pipe('black', [(x, y, top), (x - 0.004, y - 0.01, top + 0.12), (x - 0.006, y - 0.014, top + 0.15)], 0.006, 8)
+        cyl(c, 0.014, 0.05, (x - 0.007, y - 0.016, top + 0.17), (-8, 0, 0), n=14)
+        sph(c, 0.014, (x - 0.007, y - 0.019, top + 0.195), n=12)
     cyl('yellow', 0.016, 0.02, (-0.325, 0.31, top + 0.01), n=20)               # 黄色い PTO つまみ
     cyl('black', 0.02, 0.004, (-0.325, 0.31, top + 0.001), n=20)
-    for k in range(3):                                                         # 緑の LED
-        box('led_green', (0.008, 0.006, 0.004), (-0.33 + k * 0.0 - 0.02 * k, 0.255, top + 0.002))
+    for k in range(5):                                                         # 緑の LED（縦に並ぶ）
+        box('led_green', (0.007, 0.006, 0.004), (-0.355, 0.17 + k * 0.012, top + 0.002))
+    box('darkgray', (0.06, 0.09, 0.03), (-0.315, 0.07, top - 0.01), bev=(0.006,))   # 前の物入れ
     # 作業機昇降スイッチ（前後に倒す黒いシーソー）と、チョイ上げ・チョイ下げのボタン
     box('darkgray', (0.045, 0.07, 0.008), (-0.305, 0.215, top + 0.004), bev=(0.004,))
     box('black', (0.032, 0.055, 0.016), (-0.305, 0.215, top + 0.014), (8, 0, 0), bev=(0.008, 2))
@@ -851,20 +882,32 @@ def interior():
         cyl('black', 0.012, 0.003, (-0.395 + 0.03 * k, 0.335, top + 0.0015), n=14)
     for k in range(2):                                                         # 小さいスイッチ
         box('gray', (0.022, 0.016, 0.008), (-0.395 + k * 0.04, 0.37, top + 0.004))
-    # 右前のタッチモニター（支柱付き）
-    MON = Vector((-0.43, -0.20, 1.97))
+    # 右のタッチモニター：操作盤の前のはしに台で立てる。上のふちに青いボタン 5 つ、右上に回すつまみ
+    MON = Vector((-0.45, -0.02, 1.96))
     nrm = (EYE - MON).normalized()
     mon = face_mtx(MON, nrm)
-    pipe('black', [(-0.47, -0.30, FLOOR + 0.02), (-0.47, -0.30, 1.80), (-0.45, -0.24, 1.90), MON - nrm * 0.03], 0.016, 8)
-    box('black', (0.25, 0.165, 0.03), (0, 0, -0.012), mtx=mon, bev=(0.01, 2))
-    screen('MonitorScreen', 0.22, 0.135, mon @ Vector((0, 0, 0.0045)), nrm, (0, 0, 1), 'monitor_screen')
+    box('black', (0.10, 0.12, 0.10), (-0.40, 0.06, FLOOR + 0.50), bev=(0.02, 3))          # 操作盤の前の台
+    pipe('black', [(-0.40, 0.06, FLOOR + 0.54), (-0.42, 0.03, 1.86), MON - nrm * 0.04], 0.022, 10)
+    box('black', (0.26, 0.19, 0.04), (0, -0.005, -0.017), mtx=mon, bev=(0.015, 3))
+    for k in range(5):
+        cyl('blue', 0.009, 0.012, (-0.08 + k * 0.035, 0.083, 0.004), mtx=mon, n=12)
+        cyl('room_lamp', 0.006, 0.014, (-0.08 + k * 0.035, 0.083, 0.004), mtx=mon, n=10)
+    cyl('black', 0.022, 0.03, (0.115, 0.085, 0.012), (-60, 0, 0), mtx=mon, n=16)
+    for k in range(12):
+        a = 2 * math.pi * k / 12
+        box('darkgray', (0.004, 0.004, 0.028), (0.115 + 0.022 * math.cos(a), 0.085 + 0.011 * math.sin(a), 0.012 + 0.019 * math.sin(a)), (-60, 0, 0), mtx=mon)
+    screen('MonitorScreen', 0.22, 0.135, mon @ Vector((0, -0.012, 0.0045)), nrm, (0, 0, 1), 'monitor_screen')
     # 左の副変速まわり：台とカップホルダー
     box('trim', (0.14, 0.46, 0.22), (0.35, 0.24, FLOOR + 0.11), bev=(0.02,))
     box('black', (0.04, 0.16, 0.006), (0.35, 0.24, FLOOR + 0.222))
     cyl('black', 0.042, 0.09, (0.35, 0.42, FLOOR + 0.20), n=24, caps=False)
     cyl('black', 0.036, 0.004, (0.35, 0.42, FLOOR + 0.17), n=24)
     # 乗降グリップ（左 A ピラー）・サンバイザ・ルームミラー・天井のエアコン・室内灯
-    pipe('black', [(0.60, -0.50, 1.70), (0.585, -0.48, 1.75), (0.585, -0.48, 2.12), (0.60, -0.50, 2.17)], 0.013, 8)
+    for s in (1, -1):
+        gx = s * (CAB_X - 0.05)
+        pipe('silver', [(s * (CAB_X - 0.015), -0.50, 1.58), (gx, -0.47, 1.62), (gx, -0.47, 2.26), (s * (CAB_X - 0.015), -0.50, 2.30)], 0.014, 10)
+        box('black', (0.05, 0.07, 0.16), (s * (CAB_X - 0.03), -0.44, 1.88), bev=(0.012, 2))    # ドアの取っ手（受け）
+        pipe('black', [(s * (CAB_X - 0.045), -0.42, 1.86), (s * (door_x(-0.1) - 0.05), -0.10, 1.80), (s * (door_x(0.2) - 0.05), 0.20, 1.74)], 0.012, 8)
     box('visor', (0.80, 0.24, 0.006), (0.12, -0.45, ROOF_IN - 0.05), (25, 0, 0))
     pipe('black', [(-0.30, -0.56, ROOF_IN - 0.015), (-0.30, -0.54, ROOF_IN - 0.05)], 0.006, 6)
     pipe('black', [(0, -0.50, ROOF_IN - 0.01), (0, -0.49, ROOF_IN - 0.08)], 0.008, 6)
@@ -887,15 +930,26 @@ def interior():
 def steering_wheel():
     with part('SteeringWheel'):
         L = W_MTX
-        tor('black', WHEEL_R, 0.019, L, 56, 12)                                   # 黒い太いリム
-        for a in (35, 145, 270):                                                   # Y 字の 3 本スポーク（赤）
+        tor('black', WHEEL_R, 0.021, L, 64, 12)                                   # 黒い太いリム
+        for k in range(24):                                                        # 握りの凹凸
+            a = 2 * math.pi * (k + 0.5) / 24
+            tor('black_gloss', 0.0215, 0.003, L @ Matrix.Translation((WHEEL_R * math.cos(a), WHEEL_R * math.sin(a), 0))
+                @ Matrix.Rotation(a, 4, 'Z') @ Matrix.Rotation(math.pi / 2, 4, 'X'), 10, 4, 200, 340)
+        for a in (40, 140, 270):                                                   # Y 字の 3 本スポーク（赤・ハブで太く、リムで細い）
             r = math.radians(a)
-            p1 = L @ Vector((math.cos(r) * (WHEEL_R - 0.01), math.sin(r) * (WHEEL_R - 0.01), 0))
-            p0 = L @ Vector((math.cos(r) * 0.04, math.sin(r) * 0.04, -0.03))
-            m = along(p0, p1, WN)
-            box('paint_red', (0.036, 0.011, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=m, bev=(0.005,))
-        cyl('paint_red', 0.048, 0.04, (0, 0, -0.026), mtx=L, n=28)
-        cyl('black', 0.034, 0.012, (0, 0, -0.004), mtx=L, n=24)
+            dl = Vector((math.cos(r), math.sin(r), 0))
+            p0, p1 = L @ (dl * 0.045 + Vector((0, 0, -0.028))), L @ (dl * (WHEEL_R - 0.012))
+            y = (p1 - p0).normalized()
+            z = (L.to_3x3() @ Vector((0, 0, 1))).normalized()
+            x = y.cross(z).normalized()
+            z = x.cross(y)
+            m = Matrix((x, y, z)).transposed().to_4x4()
+            m.translation = p0
+            ln = (p1 - p0).length
+            prism('paint_red', [(-0.036, 0.0), (0.036, 0.0), (0.018, ln), (-0.018, ln)], 0.016, m, bev=(0.006, 3))
+        cyl('black', 0.064, 0.02, (0, 0, -0.04), mtx=L, n=32)
+        sph('paint_red', 0.062, (0, 0, -0.028), (1, 1, 0.5), mtx=L, n=32)                # 大きな赤いハブ
+        tor('paint_red', 0.058, 0.008, L @ Matrix.Translation((0, 0, -0.03)), 32, 6)
 
 
 def levers_pedals():
@@ -936,31 +990,36 @@ def levers_pedals():
         box('black', (0.03, 0.03, 0.02), root + Vector((0, 0, 0.01)), bev=(0.006,))
     LEVERS['LeverRange'] = root
     # ペダル（クラッチ 1 ＋ ブレーキ 2）。原点は支点（X まわりに回る）
-    for nm, x in (('PedalClutch', 0.24), ('PedalBrakeL', -0.20), ('PedalBrakeR', -0.29)):
-        piv = Vector((x, -0.52, FLOOR + 0.27))
+    for nm, x in (('PedalClutch', 0.20), ('PedalBrakeL', -0.135), ('PedalBrakeR', -0.262)):
+        piv = Vector((x, -0.50, 1.58))
         with part(nm):
-            pad = piv + Vector((0, 0.13, -0.19))
+            pad = piv + Vector((0, 0.19, -0.16))
             cyl_x('darkgray', 0.02, x - 0.025, x + 0.025, piv.y, piv.z, 12)
-            pipe('darkgray', [piv, piv + Vector((0, 0.03, -0.10)), pad], 0.011, 8)
-            mt = Matrix.Translation(pad) @ Euler((math.radians(-40), 0, 0)).to_matrix().to_4x4()
-            box('black', (0.075, 0.10, 0.018), (0, 0, 0), mtx=mt, bev=(0.006,))
-            for k in range(5):
-                box('rubber_mat', (0.065, 0.007, 0.006), (0, -0.04 + k * 0.02, 0.011), mtx=mt)
+            pipe('darkgray', [piv, piv + Vector((0, 0.05, -0.09)), pad + Vector((0, -0.02, 0.0))], 0.012, 8)
+            mt = Matrix.Translation(pad) @ Euler((math.radians(-62), 0, 0)).to_matrix().to_4x4()
+            box('black', (0.12, 0.09, 0.016), (0, 0, 0), mtx=mt, bev=(0.006,))
+            for i in range(6):                                                     # 菱形の滑り止め
+                for j in range(4):
+                    box('rubber_mat', (0.014, 0.014, 0.005), (-0.05 + i * 0.02 + (0.01 if j % 2 else 0), -0.03 + j * 0.02, 0.009), (0, 0, 45), mtx=mt)
             if nm == 'PedalBrakeL':
-                box('silver', (0.06, 0.012, 0.012), pad + Vector((-0.045, 0.02, 0.03)))   # 左右ブレーキの連結
+                box('silver', (0.05, 0.012, 0.012), pad + Vector((-0.063, 0.02, 0.03)))   # 左右ブレーキの連結
         LEVERS[nm] = piv
 
 
 LEVERS = {}
 
 
+WIPER_REST = 90.0                 # ふだんは根元から右（-X）へ横に寝かせる
+
+
 def wiper():
-    W0 = Vector((0.0, GLASS_F - 0.035, ROOF_IN - 0.06))
+    """前ガラスの左下が根元（外側）。腕は根元から真下に作り、ふだんの向きはオブジェクトの回転で持つ"""
+    W0 = Vector((0.46, front_y(0.46) - 0.035, 1.62))
     with part('Wiper'):
         cyl('black', 0.022, 0.03, W0, (90, 0, 0), n=14)
-        pipe('black', [W0 + Vector((0, -0.02, 0)), W0 + Vector((0, -0.03, -0.60))], 0.006, 6)
-        box('black', (0.02, 0.012, 0.52), W0 + Vector((0, -0.024, -0.36)))
-        box('rubber_mat', (0.008, 0.008, 0.50), W0 + Vector((0, -0.014, -0.36)))
+        pipe('black', [W0 + Vector((0, -0.02, 0)), W0 + Vector((0, -0.03, -0.48))], 0.006, 6)
+        box('black', (0.02, 0.012, 0.42), W0 + Vector((0, -0.024, -0.28)))
+        box('rubber_mat', (0.008, 0.008, 0.40), W0 + Vector((0, -0.014, -0.28)))
     return W0
 
 
@@ -1095,7 +1154,7 @@ def build():
     for nm, p in LEVERS.items():
         finalize(nm, Matrix.Translation(p), root)
     wp = finalize('Wiper', Matrix.Translation(w0), root)
-    wp.matrix_world = Matrix.Translation(w0) @ Matrix.Rotation(math.radians(85), 4, 'Y')   # ふだんは右へ寝かせておく
+    wp.matrix_world = Matrix.Translation(w0) @ Matrix.Rotation(math.radians(WIPER_REST), 4, 'Y')   # ふだんは右へ寝かせておく
     rot = finalize('Rotary', Matrix.Translation(rot_o))
     finalize('Rotor', Matrix.Translation(rotor_o), rot)
     finalize('Flap', Matrix.Translation(flap_o), rot)
@@ -1128,12 +1187,14 @@ def bake_ao():
         o.select_set(True)
     bpy.context.view_layer.objects.active = targets[0]
     bpy.ops.object.bake(type='AO', target='VERTEX_COLORS')
-    for o in targets:                                                          # 真っ黒にしない（0.3〜1）
+    small = {'SteeringWheel', 'PedalClutch', 'PedalBrakeL', 'PedalBrakeR', 'LeverJoy', 'LeverRange', 'LeverShuttle', 'LeverPtoSel', 'Wiper'}
+    for o in targets:                                                          # 真っ黒にしない（0.3〜1。手で触る小さな部品は 0.65〜1）
         a = o.data.color_attributes['ao']
         v = np.empty(len(a.data) * 4, np.float32)
         a.data.foreach_get('color', v)
         v = v.reshape(-1, 4)
-        v[:, :3] = 0.3 + 0.7 * np.clip(v[:, :3], 0, 1) ** 1.2
+        lo = 0.65 if o.name in small else 0.3
+        v[:, :3] = lo + (1 - lo) * np.clip(v[:, :3], 0, 1) ** 1.2
         v[:, 3] = 1
         a.data.foreach_set('color', v.ravel())
     for o in sc.objects:
@@ -1174,7 +1235,7 @@ def preview():
     sc.camera = cam
     tmp.append(cam)
 
-    def shot(fn, loc, target=None, rot=None, lens=None, fov_v=None):
+    def shot(fn, loc, target=None, rot=None, lens=None, fov_v=None, fov_h=None):
         cam.location = loc
         if target is not None:
             cam.rotation_euler = (Vector(target) - Vector(loc)).to_track_quat('-Z', 'Y').to_euler()
@@ -1182,7 +1243,10 @@ def preview():
             cam.rotation_euler = rot
         cd = cam.data
         cd.clip_start = 0.02
-        if fov_v:
+        if fov_h:
+            cd.sensor_fit = 'HORIZONTAL'
+            cd.angle_x = math.radians(fov_h)
+        elif fov_v:
             cd.sensor_fit = 'VERTICAL'
             cd.angle_y = math.radians(fov_v)
         else:
@@ -1197,6 +1261,8 @@ def preview():
         # 運転者の目から：前（-Y）を向いて 12°下・縦の画角 60°
         'driver': dict(loc=EYE, rot=Euler((math.radians(90 - 12), 0, math.pi)), fov_v=60),
         'console': dict(loc=(-0.12, 0.60, 2.08), target=(-0.37, 0.24, 1.80), lens=28),
+        # 公式「快適性」の運転席の写真に近い所から（頭のうしろ・横の画角 88°・21°下向き。ペダルまで入る）
+        'cockpit': dict(loc=(0.0, 0.62, 2.21), rot=Euler((math.radians(90 - 21), 0, math.pi)), fov_h=88),
     }
     extra = {   # 直すとき用（--shot=名前 で出す。preview_ には残さない）
         'front': dict(loc=(0.9, -4.6, 1.5), target=(0, -2.8, 1.0), lens=50),
@@ -1207,7 +1273,7 @@ def preview():
     }
     only = [a.split('=', 1)[1] for a in sys.argv if a.startswith('--shot=')]
     for k, v in ({k: v for k, v in {**shots, **extra}.items() if k in only} if only else shots).items():
-        shot(f'preview_{k}.png' if k in shots else f'_debug_{k}.png', v['loc'], v.get('target'), v.get('rot'), v.get('lens'), v.get('fov_v'))
+        shot(f'preview_{k}.png' if k in shots else f'_debug_{k}.png', v['loc'], v.get('target'), v.get('rot'), v.get('lens'), v.get('fov_v'), v.get('fov_h'))
     for o in tmp:
         bpy.data.objects.remove(o, do_unlink=True)
 

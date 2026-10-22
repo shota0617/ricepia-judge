@@ -371,6 +371,60 @@ def tex_higanbana(n=512):
     return out
 
 
+def tex_tree(kind, n=512):
+    """遠くの木の板（アルファで切り抜く）。kind：broad（広葉樹のこんもりした木）・cedar（杉）。上から光が当たる"""
+    out = np.zeros((n, n, 4), np.float32)
+    rng = np.random.default_rng(201 if kind == 'broad' else 202)
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
+    trunk = (np.abs(xx - n / 2) < n * 0.022) & (yy < n * 0.45)
+    out[trunk, :3] = hexc('#4a3a2c')
+    out[trunk, 3] = 1
+    blobs = []
+    if kind == 'broad':
+        for _ in range(320):
+            a, r = rng.uniform(0, 2 * math.pi), math.sqrt(rng.random())
+            cx, cy = n / 2 + math.cos(a) * r * n * 0.43, n * 0.6 + math.sin(a) * r * n * 0.37
+            blobs.append((rng.random(), cx, cy, rng.uniform(0.035, 0.075) * n,
+                          hexc(['#3f6a2c', '#4d7a34', '#36592a', '#5a843a', '#2f5226'][rng.integers(5)])))
+    else:
+        for _ in range(1100):
+            y = rng.uniform(0.12, 0.98)
+            hw = 0.30 * (1 - (y - 0.12) / 0.86) ** 0.9 + 0.015
+            blobs.append((rng.random(), n / 2 + rng.uniform(-hw, hw) * n, y * n, rng.uniform(0.012, 0.03) * n,
+                          hexc(['#23361f', '#2c4426', '#344f2c', '#1d2e1b'][rng.integers(4)])))
+    for z, cx, cy, r, c in sorted(blobs):                                  # 奥（暗い）から手前へ重ねる
+        x0, x1, y0, y1 = int(max(cx - r, 0)), int(min(cx + r + 1, n)), int(max(cy - r, 0)), int(min(cy + r + 1, n))
+        nx, ny = (xx[y0:y1, x0:x1] - cx) / r, (yy[y0:y1, x0:x1] - cy) / r
+        d2 = nx * nx + ny * ny
+        m = d2 < 1
+        lit = np.clip(0.35 * -nx + 0.55 * ny + 0.6 * np.sqrt(np.clip(1 - d2, 0, 1)), 0, 1)
+        shade = (0.45 + 0.6 * lit) * (0.65 + 0.45 * z) * (0.75 + 0.3 * cy / n)
+        reg = out[y0:y1, x0:x1]
+        reg[m, :3] = (c[None, :] * shade[m][:, None])
+        reg[m, 3] = 1
+    return np.clip(out, 0, 1)
+
+
+def tex_forest(n=512):
+    """山の森を遠くから（木のかたまりの粒。少しかすんだ色）"""
+    f1, _, idx = voronoi(n, 650, 211)
+    rng = np.random.default_rng(212)
+    tone = rng.uniform(0.75, 1.2, 650).astype(np.float32)[idx]
+    crown = np.clip(1 - (f1 * n / 13) ** 2, 0, 1)
+    col = lerp_col('#33472f', '#577553', np.clip(0.25 + 0.5 * crown * tone + 0.1 * fnoise(n, 1.4, 213), 0, 1))
+    return np.clip(col, 0, 1), normal_from(crown, 3.0)
+
+
+def tex_kawara(n=512):
+    """瓦屋根（いぶし銀。縦の山と横の段）"""
+    u = (np.arange(n)[None, :] + 0.5) / n
+    v = (np.arange(n)[:, None] + 0.5) / n
+    ridge = 0.5 + 0.5 * np.cos(u * 2 * math.pi * 4)
+    step = (np.mod(v * 5, 1.0) < 0.12).astype(np.float32)
+    col = lerp_col('#3a3f46', '#626a73', np.clip(0.3 + 0.5 * ridge - 0.4 * step + 0.08 * fnoise(n, 1.3, 214), 0, 1))
+    return np.clip(col, 0, 1), normal_from(0.8 * ridge - 0.8 * step, 3.0)
+
+
 def save_img(name, arr, fmt='JPEG', q=85):
     """numpy の絵を JPEG／PNG のファイルにして読みこみ、glb に埋めこめるよう pack する"""
     os.makedirs(TEXDIR, exist_ok=True)
@@ -382,9 +436,7 @@ def save_img(name, arr, fmt='JPEG', q=85):
     path = os.path.join(TEXDIR, name + ('.jpg' if fmt == 'JPEG' else '.png'))
     im.filepath_raw = path
     im.file_format = fmt
-    sc = bpy.context.scene
-    sc.render.image_settings.quality = q
-    im.save()
+    im.save(quality=q)
     im.pack()
     return im
 
@@ -483,8 +535,24 @@ def make_materials():
     mat_flat('tree', '#3f5a30', 0.9)
     mat_flat('cedar', '#2a3d27', 0.9)
     mat_flat('trunk', '#4a3a2c', 0.9)
-    mat_flat('hill', {'haru': '#5c7564', 'aki': '#66704f', 'shirokaki': '#557a5a'}[SEASON], 1.0)
-    mat_flat('hill_far', '#8395a0', 1.0)
+    c, n = tex_forest()
+    if SEASON == 'aki':                                                 # 秋は森が少し黄みがかる
+        c = c * np.array([1.08, 1.0, 0.82], np.float32)
+    mat_tex('hill', save_img('forest', np.clip(c, 0, 1)), None, 0.95, macro=True)              # 遠いので凹凸の絵は無し
+    mat_flat('hill_far', '#8a9ba6', 1.0)
+    mat_tex('tree_card', save_img('tree_broad', tex_tree('broad')[::2, ::2], 'PNG'), None, 0.9, clip=True)   # 遠くの木は 256px
+    mat_tex('cedar_card', save_img('tree_cedar', tex_tree('cedar')[::2, ::2], 'PNG'), None, 0.9, clip=True)
+    c, n = tex_kawara()
+    mat_tex('kawara', save_img('kawara', c[::2, ::2]), None, 0.55)
+    mat_flat('wall_white', '#e9e5da', 0.8)
+    mat_flat('wall_wood', '#6b4f36', 0.85)
+    mat_flat('house_base', '#5d5a55', 0.9)
+    mat_flat('window', '#23282d', 0.15)
+    mat_flat('roof_black', '#2b2e33', 0.6)
+    mat_flat('roof_metal', '#61717c', 0.45, 0.4)
+    mat_flat('roof_rust', '#7f4e34', 0.75, 0.2)
+    mat_flat('shed_wall', '#8d9296', 0.6, 0.3)
+    mat_flat('vinyl', '#eef1f1', 0.3, alpha=0.5)
 
 
 # ================================================================
@@ -872,41 +940,153 @@ def build_surroundings():
             for dx in (-0.65, 0.0, 0.65):
                 pts = [(x0 + dx, y0 + (y1 - y0) * t, z0 - 0.45 * 4 * t * (1 - t)) for t in np.linspace(0, 1, 9)]
                 bt.pipe('wire', pts, 0.008, 4, cap=False, smooth=None)
+    build_landscape()
+
+
+def tree_cards(bm, uv, x, y, z0, h, w, normals):
+    """木 1 本＝3 枚の板（60°ずつ）。法線は木のまん中から外へ向け、丸く見えるように"""
+    c = Vector((x, y, z0 + h * 0.58))
+    for k in range(3):
+        a = math.pi * k / 3
+        dx, dy = math.cos(a) * w / 2, math.sin(a) * w / 2
+        q = [bm.verts.new(p) for p in ((x - dx, y - dy, z0), (x + dx, y + dy, z0), (x + dx, y + dy, z0 + h), (x - dx, y - dy, z0 + h))]
+        f = bm.faces.new(q)
+        for lp, t in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+            lp[uv].uv = t
+        for v in q:
+            nrm = (v.co - c)
+            nrm.z = nrm.z * 0.5 + h * 0.25
+            normals.append(nrm.normalized())
+
+
+def forest(spots, seed):
+    """木立（広葉樹と杉の板）。spots：[(x, y, z0, 本数, 広がり, 杉の割合)]"""
+    rng = np.random.default_rng(seed)
+    for mat, cedar in (('tree_card', False), ('cedar_card', True)):
+        bm = bmesh.new()
+        uv = bm.loops.layers.uv.new('UVMap')
+        normals = []
+        for cx, cy, z0, cnt, spread, ratio in spots:
+            for _ in range(cnt):
+                if (rng.random() < ratio) != cedar:
+                    continue
+                x, y = cx + rng.normal(0, spread), cy + rng.normal(0, spread)
+                h = rng.uniform(11, 19) if cedar else rng.uniform(7, 14)
+                tree_cards(bm, uv, x, y, z0, h, h * (0.62 if cedar else 0.95), normals)
+        if not normals:
+            bm.free()
+            continue
+        ob = new_obj(bm, mat, smooth=80, face_up=False)
+        ob.data.normals_split_custom_set_from_vertices([tuple(n) for n in normals])
+
+
+def gable_roof(mat, M, w, d, z, pitch, o):
+    """切妻の屋根（棟は局所 X の向き）。o は軒の出"""
+    rh = (d / 2 + o) * pitch
+    R = M @ Matrix(((0, 0, 1, 0), (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))   # 局所 (X,Y,Z) → (y, z, x)
+    bt.prism(mat, [(-d / 2 - o, z - o * pitch), (d / 2 + o, z - o * pitch), (0, z + d / 2 * pitch)], w + 2 * o, R)
+    return rh
+
+
+def building(kind, x, y, rot, z0, rng):
+    M = T3((x, y, 0), rot)
+    if kind == 'house':                                               # 母屋：白い壁に木の帯・瓦屋根
+        w, d, h = rng.uniform(11, 15), rng.uniform(8, 10), 5.4
+        bt.box('house_base', (w + 0.1, d + 0.1, 0.6), (0, 0, z0 + 0.3), mtx=M)
+        bt.box('wall_white', (w, d, h - 0.6), (0, 0, z0 + 0.6 + (h - 0.6) / 2), mtx=M)
+        bt.box('wall_wood', (w + 0.05, d + 0.05, 0.35), (0, 0, z0 + 2.9), mtx=M)
+        bt.box('window', (w * 0.7, 0.06, 1.9), (0, -d / 2, z0 + 1.6), mtx=M)          # 南：掃き出しのガラス戸が並ぶ
+        bt.box('window', (w * 0.5, 0.06, 1.0), (0, d / 2, z0 + 1.8), mtx=M)           # 北
+        bt.box('window', (w * 0.55, 0.06, 0.9), (0, -d / 2, z0 + 4.2), mtx=M)         # 二階
+        bt.box('kawara', (w + 1.6, 0.9, 0.12), (0, -d / 2 - 0.5, z0 + 3.2), (-25, 0, 0), mtx=M)   # 一階の庇
+        gable_roof('kawara', M, w, d, z0 + h, 0.5, 0.9)
+        bt.box('roof_black', (w + 1.9, 0.35, 0.3), (0, 0, z0 + h + d / 2 * 0.5 + 0.1), mtx=M)    # 棟
+    elif kind == 'kura':                                              # 蔵：白い壁・黒い腰と屋根
+        w, d, h = 6.5, 5.0, 6.5
+        bt.box('roof_black', (w + 0.1, d + 0.1, 1.4), (0, 0, z0 + 0.7), mtx=M)
+        bt.box('wall_white', (w, d, h - 1.4), (0, 0, z0 + 1.4 + (h - 1.4) / 2), mtx=M)
+        bt.box('window', (0.8, 0.06, 0.8), (1.2, -d / 2, z0 + 4.8), mtx=M)
+        gable_roof('roof_black', M, w, d, z0 + h, 0.55, 0.6)
+    elif kind == 'shed':                                              # 納屋・作業場：トタン屋根と壁、大きな入口
+        w, d, h = rng.uniform(9, 14), rng.uniform(6, 8), 4.2
+        bt.box('shed_wall', (w, d, h), (0, 0, z0 + h / 2), mtx=M)
+        bt.box('window', (w * 0.55, 0.06, 3.2), (-w * 0.15, -d / 2, z0 + 1.6), mtx=M)
+        gable_roof('roof_rust' if rng.random() < 0.5 else 'roof_metal', M, w, d, z0 + h, 0.3, 0.5)
+    else:                                                             # ビニールハウス（かまぼこ形）
+        L, r = rng.uniform(25, 40), 2.7
+        bm = bmesh.new()
+        rings = []
+        for t in (-L / 2, L / 2):
+            rings.append([bm.verts.new(M @ Vector((t, r * math.cos(a), z0 + r * 1.1 * math.sin(a)))) for a in np.linspace(0, math.pi, 13)])
+        for k in range(12):
+            bm.faces.new((rings[0][k], rings[0][k + 1], rings[1][k + 1], rings[1][k]))
+        for ring in rings:
+            bm.faces.new(ring)
+        new_obj(bm, 'vinyl', smooth=60, face_up=False)
+
+
+def T3(loc, rot_deg):
+    return Matrix.Translation(loc) @ Matrix.Rotation(math.radians(rot_deg), 4, 'Z')
+
+
+VILLAGES = [(-120.0, 128.0, 8.0), (128.0, 108.0, -6.0), (-165.0, -70.0, 84.0), (190.0, -125.0, 2.0), (55.0, -205.0, 28.0), (-55.0, 215.0, -3.0)]
+
+
+def build_landscape():
+    """遠くの景色：集落（屋敷林・母屋・蔵・納屋・ビニールハウス）・木立・山並み"""
+    with bt.part('Houses'):
+        rng = np.random.default_rng(301)
+        for k, (vx, vy, rot) in enumerate(VILLAGES):
+            z0 = 0.45                                                   # 屋敷は田んぼより少し高い
+            grid('grass', vx - 38, vx + 38, vy - 30, vy + 30, 8.0, T_GRASS, lambda x, y: z0 - 0.02)
+            M = T3((vx, vy, 0), rot)
+            lots = [(-20, 4), (6, 8), (24, -6), (-8, -16)][:2 + k % 3]
+            for lx, ly in lots:
+                p = M @ Vector((lx, ly, 0))
+                building('house', p.x, p.y, rot + rng.normal(0, 4), z0, rng)
+                q = M @ Vector((lx + 11, ly + 9, 0))
+                building('kura' if rng.random() < 0.5 else 'shed', q.x, q.y, rot + 90 * rng.integers(2), z0, rng)
+            for g in range(k % 3):                                      # ビニールハウス
+                p = M @ Vector((-26 + 7 * g, -24, 0))
+                building('greenhouse', p.x, p.y, rot, z0, rng)
     with bt.part('Trees'):
-        rng = np.random.default_rng(81)
-        spots = [(-95, 140), (-60, 175), (110, 120), (150, 60), (-170, -40), (-130, -150), (90, -170), (200, -110), (-210, 70), (40, 230), (-30, -240)]
-        for cx, cy in spots:
-            cedar = rng.random() < 0.5
-            for k in range(rng.integers(5, 12)):
-                x, y = cx + rng.normal(0, 8), cy + rng.normal(0, 8)
-                h = rng.uniform(12, 22) if cedar else rng.uniform(7, 13)
-                bt.cyl('trunk', 0.22, h * 0.5, (x, y, h * 0.25), n=6, smooth=None)
-                if cedar:                                                         # 杉（細長い円すい）
-                    bt.cyl('cedar', h * 0.17, h * 0.8, (x, y, h * 0.58), n=8, r2=0.0, smooth=None)
-                else:                                                             # 広葉樹（いくつかの丸いかたまり）
-                    for m in range(4):
-                        bt.sph('tree', h * rng.uniform(0.18, 0.28), (x + rng.normal(0, h * 0.12), y + rng.normal(0, h * 0.12), h * rng.uniform(0.5, 0.8)),
-                               (1, 1, 0.85), n=7)
+        spots = []
+        for vx, vy, rot in VILLAGES:                                    # 屋敷林（北と西を杉で囲う）
+            M = T3((vx, vy, 0), rot)
+            for t in np.linspace(-34, 34, 8):
+                for p in (M @ Vector((t, 26, 0)), M @ Vector((-34, t * 0.8, 0))):
+                    spots.append((p.x, p.y, 0.43, 3, 2.5, 0.8))
+            spots.append((vx, vy, 0.43, 6, 14, 0.2))
+        for cx, cy in ((-95, 140), (-60, 175), (110, 120), (150, 60), (-170, -40), (-130, -150), (90, -170), (200, -110),
+                       (-210, 70), (40, 230), (-30, -240), (-240, 160), (240, 30), (-80, -300), (160, 260), (300, -230)):
+            spots.append((cx, cy, 0.0, 14, 9, 0.5))
+        forest(spots, 81)
     with bt.part('Hills'):
-        # 遠くの山並み（二重。外はかすんだ色）
+        # 遠くの山並み（森の絵・尾根と谷の明暗）と、そのむこうのかすんだ山
         rng = np.random.default_rng(91)
-        for R, H, mat in ((520.0, 55.0, 'hill'), (690.0, 130.0, 'hill_far')):
-            n = 240
+        for R, H, mat in ((520.0, 60.0, 'hill'), (700.0, 135.0, 'hill_far')):
+            n = 360
             a = np.linspace(0, 2 * math.pi, n, endpoint=False)
             hs = np.zeros(n)
-            for k, amp in ((3, 0.5), (7, 0.3), (17, 0.15), (41, 0.07)):      # 大きなうねりに小さな峰を重ねる
+            for k, amp in ((3, 0.5), (7, 0.3), (17, 0.15), (41, 0.08), (97, 0.04)):
                 hs += amp * np.sin(k * a + rng.uniform(0, 6.3)) + amp * 0.6 * np.sin((k + 1) * a + rng.uniform(0, 6.3))
-            hs = np.clip(0.55 + hs, 0.08, 1.4)
+            hs = np.clip(0.55 + hs, 0.08, 1.45)
+            fr = (0.0, 0.22, 0.45, 0.68, 0.86, 1.0)
             bm = bmesh.new()
+            uvl = bm.loops.layers.uv.new('UVMap')
             rows = []
-            for f in (0.0, 0.55, 1.0):                                        # すそ・中腹・峰
-                rows.append([bm.verts.new(((R + H * hs[i] * 2.2 * f) * math.cos(a[i]), (R + H * hs[i] * 2.2 * f) * math.sin(a[i]),
-                                           -3.0 + (H * hs[i] + 3.0) * (f ** 0.7 if f < 1 else 1.0)))
+            for f in fr:                                                 # すそから峰へ。中腹は谷・尾根で少し出入り
+                wob = rng.normal(0, 0.05, n) * (f * (1 - f)) * 4
+                rows.append([bm.verts.new(((R + H * hs[i] * 2.2 * (f + wob[i])) * math.cos(a[i]),
+                                           (R + H * hs[i] * 2.2 * (f + wob[i])) * math.sin(a[i]),
+                                           -3.0 + (H * hs[i] + 3.0) * (f ** 0.75 if f < 1 else 1.0) * (1 + 0.6 * wob[i])))
                              for i in range(n)])
             for r0, r1 in zip(rows, rows[1:]):
                 for i in range(n):
                     j = (i + 1) % n
-                    bm.faces.new((r0[i], r1[i], r1[j], r0[j]))
+                    fc = bm.faces.new((r0[i], r1[i], r1[j], r0[j]))
+                    for lp in fc.loops:
+                        lp[uvl].uv = (math.atan2(lp.vert.co.y, lp.vert.co.x) * R / 25.0, lp.vert.co.z / 25.0)
             new_obj(bm, mat, smooth=50, face_up=False)
 
 
@@ -1143,6 +1323,7 @@ def preview():
 
 def build():
     bpy.ops.wm.read_factory_settings(use_empty=True)
+    bt.GRID = 1e6                                                       # 田んぼでは箱を細かく割らない（AO を焼かない）
     make_materials()
     build_field()
     build_surroundings()
@@ -1154,7 +1335,7 @@ def build():
     root = bpy.data.objects.new('Tanbo', None)
     bpy.context.scene.collection.objects.link(root)
     I = Matrix()
-    for nm in ('Field', 'FieldTilled', 'Levees', 'Road', 'Canal', 'Facilities', 'Neighbors', 'NeighborsTilled', 'Poles', 'Trees', 'Hills', 'GrassTufts', 'Tracks'):
+    for nm in ('Field', 'FieldTilled', 'Levees', 'Road', 'Canal', 'Facilities', 'Neighbors', 'NeighborsTilled', 'Poles', 'Trees', 'Houses', 'Hills', 'GrassTufts', 'Tracks'):
         if nm in bt.GROUPS:
             bt.finalize(nm, I, root)
     ob = bpy.data.objects
@@ -1169,6 +1350,12 @@ def build():
     add_macro(ob['Levees'], lambda x, y: (0.9 + 0.1 * low_noise(x, y, 5.0),) * 3)
     road_macro = lambda x, y: (0.85 if any(abs(x - r) < 0.35 for r in (ROAD_X0 + 1.1, ROAD_X1 - 1.1)) else 1.0,) * 3   # 車の通る 2 本の筋
     add_macro(ob['Road'], road_macro)
+    add_macro(ob['Houses'], lambda x, y: (0.85 + 0.12 * low_noise(x, y, 6.0),) * 3)
+    def hill_macro(x, y):                                               # 山：谷は暗く、ところどころ色のちがう林
+        a = math.atan2(y, x)
+        v = 0.78 + 0.16 * math.sin(a * 23 + 1.3) * math.sin(a * 7.1) + 0.06 * math.sin(a * 61)
+        return (v, v, v * 1.02)
+    add_macro(ob['Hills'], hill_macro)
     print('triangles', bt.tri_count())
 
 

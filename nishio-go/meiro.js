@@ -209,6 +209,9 @@ function build() {
   });
   document.addEventListener('keyup', e => { const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key]; if (k) keys[k] = 0; });
   window.addEventListener('resize', () => { if (game && game.board && !ui.el.hidden) fit(); });
+  const letGo = () => { for (const k in keys) keys[k] = 0; drag.on = false; drag.x = drag.y = 0; };   // ほかの 窓へ うつると keyup が とどかないので、おしっぱなしを とく
+  window.addEventListener('blur', letGo);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) letGo(); });
 }
 
 function open(n) {

@@ -157,15 +157,27 @@ const SKY = { haru: [0x5f8fd0, 0xc9d8e6], aki: [0x5684c4, 0xd8d6c8], shirokaki: 
 scene.fog = new THREE.Fog(SKY[1], 160, 1100);
 
 // 空（上は青、地平は白っぽい。太陽のまわりは明るい）。同じ空から環境マップを作り、水や金属に映す
+const SKY_TIME = { value: 0 };
 const SUN_DIR = new THREE.Vector3(-0.45, season === 'aki' ? 0.45 : 0.7, -0.55).normalize();
 function skyMesh(r) {
   const m = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
-    uniforms: { top: { value: new THREE.Color(SKY[0]) }, hor: { value: new THREE.Color(SKY[1]) }, sun: { value: SUN_DIR } },
+    uniforms: { top: { value: new THREE.Color(SKY[0]) }, hor: { value: new THREE.Color(SKY[1]) }, sun: { value: SUN_DIR }, time: SKY_TIME,
+      cover: { value: { haru: 0.48, aki: 0.38, shirokaki: 0.55 }[season] } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
-    fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 sun; varying vec3 vD;' +
+    // 雲：空を平らな天井とみなし、そこに重ねた雑音（fbm）で白い雲を描く。ゆっくり流れる。太陽の側は明るく、下は少し暗い
+    fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 sun; uniform float time; uniform float cover; varying vec3 vD;' +
+      'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }' +
+      'float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
+      ' return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }' +
+      'float fbm(vec2 p){ float v = 0.0, a = 0.5; for (int k = 0; k < 5; k++) { v += a * noise(p); p = p * 2.03 + 7.1; a *= 0.5; } return v; }' +
       'void main(){ float h = max(vD.y, 0.0); vec3 c = mix(hor, top, pow(h, 0.55));' +
       ' if (vD.y < 0.0) c = hor * 0.9; float s = max(dot(vD, sun), 0.0);' +
+      ' if (vD.y > 0.015) { vec2 uv = vD.xz / (vD.y + 0.08) * 0.9 + vec2(time * 0.006, time * 0.002);' +
+      '  float n = fbm(uv), d = fbm(uv + sun.xz * 0.06);' +
+      '  float cl = smoothstep(1.0 - cover, 1.0 - cover + 0.28, n) * smoothstep(0.015, 0.22, vD.y);' +
+      '  vec3 cc = mix(vec3(0.72, 0.75, 0.80), vec3(1.0, 0.99, 0.96), clamp(0.55 + (n - d) * 4.0 + s * 0.3, 0.0, 1.0));' +
+      '  c = mix(c, cc, cl * 0.92); }' +
       ' c += vec3(1.0, 0.95, 0.85) * (pow(s, 800.0) * 4.0 + pow(s, 12.0) * 0.25); gl_FragColor = vec4(c, 1.0); }'
   });
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), m);
@@ -316,7 +328,9 @@ for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
   const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL;
   if (Math.abs(x) < HX - 0.5 && Math.abs(z) < HZ - 0.5) workCount++;     // 畦ぎわ 50cm は数えない
 }
-const jitter = (x, z) => 0.006 * Math.sin(x * 12.9898 + z * 78.233) * Math.sin(x * 3.7 - z * 5.1);
+// 耕した土の高さ（耕すとふわっと盛り上がり、土くれで凸凹する）と、ふちをます目に見せないための横のゆがみ
+const jitter = (x, z) => 0.012 * Math.sin(x * 12.9898 + z * 78.233) * Math.sin(x * 3.7 - z * 5.1) + 0.008 * Math.sin(x * 23.1 + 1.3) * Math.sin(z * 19.7 - 0.4) + 0.012;
+const warp = (x, z) => [x + 0.06 * Math.sin(z * 9.3 + x * 2.1) + 0.035 * Math.sin(z * 23.7), z + 0.06 * Math.sin(x * 8.1 - z * 1.7) + 0.035 * Math.sin(x * 21.3)];
 let dirtyLo = Infinity, dirtyHi = -1;
 function tillCell(i, j) {
   if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
@@ -327,10 +341,12 @@ function tillCell(i, j) {
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
   const pos = tilled.geometry.attributes.position.array, uv = tilled.geometry.attributes.uv.array;
   const pts = [[x0, z0], [x1, z0], [x1, z1], [x0, z1]];
-  pts.forEach(([x, z], k) => {
-    pos.set([x, TILL_Y + (SHIRO ? 0 : jitter(x, z)), z], c * 12 + k * 3);
+  pts.forEach(([x0_, z0_], k) => {
+    const [x, z] = warp(x0_, z0_);
+    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z)), z], c * 12 + k * 3);
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
   });
+  eraseTracks(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
 }
@@ -388,6 +404,224 @@ function buildHills() {
   hillsDirty = false;
 }
 
+// ---- 土くれ・土ぼこり・水しぶき（点の粒）。耕しているとロータリーのうしろから飛ぶ ----
+const FX = (() => {
+  const N = MOBILE ? 500 : 1100;
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), size = new Float32Array(N), alpha = new Float32Array(N);
+  const vel = new Float32Array(N * 3), life = new Float32Array(N), max = new Float32Array(N), kind = new Uint8Array(N);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('size', new THREE.BufferAttribute(size, 1).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('alpha', new THREE.BufferAttribute(alpha, 1).setUsage(THREE.DynamicDrawUsage));
+  const m = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false,
+    uniforms: { scale: { value: 500 } },
+    vertexShader: 'attribute float size; attribute float alpha; attribute vec3 color; varying vec3 vC; varying float vA;' +
+      'uniform float scale; void main(){ vC = color; vA = alpha; vec4 mv = modelViewMatrix * vec4(position, 1.0);' +
+      ' gl_PointSize = size * scale / -mv.z; gl_Position = projectionMatrix * mv; }',
+    fragmentShader: 'varying vec3 vC; varying float vA; void main(){ vec2 d = gl_PointCoord - 0.5; float r = dot(d, d) * 4.0;' +
+      ' if (r > 1.0) discard; gl_FragColor = vec4(vC * (1.0 - 0.25 * r), vA * (1.0 - r * r)); }'
+  });
+  const pts = new THREE.Points(g, m);
+  pts.frustumCulled = false;
+  pts.renderOrder = 3;
+  scene.add(pts);
+  let next = 0;
+  const SOIL = SHIRO ? [0.36, 0.29, 0.21] : season === 'aki' ? [0.24, 0.18, 0.13] : [0.30, 0.23, 0.16];
+  function emit(x, y, z, vx, vy, vz, k) {
+    const i = next; next = (next + 1) % N;
+    pos.set([x, y, z], i * 3); vel.set([vx, vy, vz], i * 3);
+    kind[i] = k;
+    const t = 0.8 + Math.random() * 0.35;
+    if (k === 0) { col.set(SOIL.map(v => v * t), i * 3); size[i] = 0.05 + Math.random() * 0.07; max[i] = 0.7 + Math.random() * 0.5; }
+    else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
+    else { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
+    life[i] = max[i];
+  }
+  function update(dt) {
+    for (let i = 0; i < N; i++) {
+      if (life[i] <= 0) { alpha[i] = 0; continue; }
+      life[i] -= dt;
+      const t = 1 - life[i] / max[i];
+      if (kind[i] === 1) {                     // 土ぼこり：ふわっと広がって風に流れる
+        vel[i * 3] += 0.25 * dt; vel[i * 3 + 1] *= 1 - dt * 0.8;
+        size[i] += dt * 0.9;
+        alpha[i] = 0.3 * Math.sin(Math.PI * Math.min(1, t * 1.4)) * (1 - t);
+      } else {                                  // 土くれ・しぶき：重さで落ちる
+        vel[i * 3 + 1] -= 9.8 * dt;
+        alpha[i] = kind[i] === 2 ? 0.75 * (1 - t) : 1;
+      }
+      pos[i * 3] += vel[i * 3] * dt; pos[i * 3 + 1] += vel[i * 3 + 1] * dt; pos[i * 3 + 2] += vel[i * 3 + 2] * dt;
+      if (kind[i] !== 1 && pos[i * 3 + 1] < TILL_Y) life[i] = 0;
+    }
+    for (const a of ['position', 'color', 'size', 'alpha']) g.attributes[a].needsUpdate = true;
+  }
+  return { emit, update, mat: m };
+})();
+let emitAcc = 0;
+function emitTilling(dt) {
+  // ロータリーのうしろ（カバーと均平板のすき間）から、走る速さに合わせて出す
+  emitAcc += dt * (SHIRO ? 170 : 150) * Math.min(1, Math.abs(S.v) / 1.2 + 0.25);
+  const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
+  while (emitAcc >= 1) {
+    emitAcc -= 1;
+    const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.55 - Math.random() * 0.15;
+    const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
+    const back = -(0.6 + Math.random() * 1.2), up = 0.6 + Math.random() * 1.6, side = (Math.random() - 0.5) * 0.6;
+    const vx = side * c + back * s + Math.sin(S.yaw) * S.v * 0.8, vz = -side * s + back * c + Math.cos(S.yaw) * S.v * 0.8;
+    FX.emit(x, TILL_Y + 0.15, z, vx, up, vz, SHIRO ? 2 : 0);
+    if (!SHIRO && Math.random() < (season === 'aki' ? 0.05 : 0.12)) FX.emit(x, 0.35, z, vx * 0.3, 0.3, vz * 0.3, 1);
+  }
+}
+
+// ---- タイヤの跡（ロータリーを上げて走ったとき。あとで耕すと消える） ----
+const TR = (() => {
+  const N = 2400;                                // 四角の数（古いものから上書き）
+  const pos = new Float32Array(N * 12), uv = new Float32Array(N * 8), idx = new Uint32Array(N * 6), cell = new Int32Array(N).fill(-1);
+  for (let i = 0; i < N; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2).setUsage(THREE.DynamicDrawUsage));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  // 跡の絵：ハイラグの V 字の溝（縦に並ぶ）
+  const cv = document.createElement('canvas');
+  cv.width = 64; cv.height = 128;
+  const x2 = cv.getContext('2d');
+  x2.fillStyle = 'rgba(40,30,20,0.35)'; x2.fillRect(0, 0, 64, 128);
+  x2.strokeStyle = 'rgba(25,18,12,0.75)'; x2.lineWidth = 9;
+  for (let k = 0; k < 4; k++) { const y = k * 32 + 4; x2.beginPath(); x2.moveTo(2, y + 18); x2.lineTo(32, y); x2.lineTo(62, y + 18); x2.stroke(); }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapT = THREE.RepeatWrapping;
+  const m = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  if (SHIRO) m.color.set(0x8a7a66);
+  const mesh = new THREE.Mesh(g, m);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 1;
+  scene.add(mesh);
+  let next = 0, dirty = false;
+  const last = {};                               // 車輪ごとの前の点と、跡の長さ（絵の v）
+  function add(key, x, z, w) {
+    const L = last[key];
+    if (!L) { last[key] = { x, z, v: 0 }; return; }
+    const dx = x - L.x, dz = z - L.z, d = Math.hypot(dx, dz);
+    if (d < 0.25) return;
+    if (d > 1.5 || ground(x, z) === null || Math.abs(x) > HX || Math.abs(z) > HZ) { last[key] = { x, z, v: 0 }; return; }
+    const nx = -dz / d * w / 2, nz = dx / d * w / 2;
+    const ci = Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL);
+    const y = tilledMask[ci] ? TILL_Y + 0.025 : 0.028;     // 田んぼの面の凸凹（±2cm）より上
+    const i = next; next = (next + 1) % N;
+    pos.set([L.x + nx, y, L.z + nz, L.x - nx, y, L.z - nz, x - nx, y, z - nz, x + nx, y, z + nz], i * 12);
+    const v1 = L.v + d / 0.5;
+    uv.set([0, L.v, 1, L.v, 1, v1, 0, v1], i * 8);
+    cell[i] = ci;
+    last[key] = { x, z, v: v1 };
+    dirty = true;
+  }
+  function erase(ci) {                           // 耕した所の跡を消す（四角をつぶす）
+    for (let i = 0; i < N; i++) if (cell[i] === ci) { pos.fill(0, i * 12, i * 12 + 12); cell[i] = -1; dirty = true; }
+  }
+  function flush() { if (dirty) { g.attributes.position.needsUpdate = true; g.attributes.uv.needsUpdate = true; dirty = false; } }
+  function reset() { for (const k in last) delete last[k]; }
+  return { add, erase, flush, reset, cell };
+})();
+const trackCells = new Set();
+function eraseTracks(c) { if (trackCells.has(c)) { TR.erase(c); trackCells.delete(c); } }
+function laySomeTracks(working) {
+  const p = wheelPoints(S.x, S.z, S.yaw);
+  const list = working || SHIRO ? [] : [['rl', 0.38], ['rr', 0.38], ['fl', 0.21], ['fr', 0.21]];   // 耕しているときは、すぐうしろのロータリーが跡を消す。代かきは水の下
+  for (const [k, w] of list) {
+    TR.add(k, p[k][0], p[k][1], w);
+    const ci = Math.floor((p[k][0] + HX) / CELL) * NZ + Math.floor((p[k][1] + HZ) / CELL);
+    trackCells.add(ci);
+  }
+  if (working) TR.reset();
+}
+
+// ---- シラサギ（耕しているとうしろについてきて、土から出た虫をついばむ） ----
+const BIRDS = (() => {
+  const white = new THREE.MeshLambertMaterial({ color: 0xf6f6f2 }), yellow = new THREE.MeshLambertMaterial({ color: 0xe8b400 }), black = new THREE.MeshLambertMaterial({ color: 0x1b1b1b });
+  function make() {
+    const b = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), white);
+    body.scale.set(0.75, 0.75, 1.6); body.position.y = 0.42; b.add(body);
+    const neck = new THREE.Group(); neck.position.set(0, 0.47, 0.13); b.add(neck);
+    const n1 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.26, 6), white);
+    n1.position.set(0, 0.11, 0.03); n1.rotation.x = 0.35; neck.add(n1);
+    const head = new THREE.Group(); head.position.set(0, 0.24, 0.07); neck.add(head);
+    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), white));
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.12, 6), yellow);
+    beak.rotation.x = Math.PI / 2; beak.position.z = 0.08; head.add(beak);
+    const legs = [];
+    for (const s of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.34, 4), black);
+      leg.position.set(s * 0.035, 0.17, -0.02); b.add(leg); legs.push(leg);
+    }
+    const wings = [];
+    for (const s of [-1, 1]) {
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.2), white);
+      w.material = white.clone(); w.material.side = THREE.DoubleSide;
+      w.geometry.translate(s * 0.21, 0, 0);
+      w.position.set(s * 0.05, 0.45, 0); w.rotation.x = -Math.PI / 2; w.visible = false;
+      b.add(w); wings.push(w);
+    }
+    b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0 };
+    return b;
+  }
+  const list = [];
+  for (let k = 0; k < (MOBILE ? 4 : 6); k++) { const b = make(); b.visible = false; scene.add(b); list.push(b); }
+  let workT = 0;
+  function update(dt, working) {
+    workT = working && Math.abs(S.v) > 0.2 ? workT + dt : Math.max(0, workT - dt * 0.2);
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
+    list.forEach((b, k) => {
+      const u = b.userData;
+      u.t += dt;
+      const want = workT > 4 + k * 3;            // 耕しはじめて少しずつ集まってくる
+      if (!b.visible && want) {                  // 遠くから飛んでくる
+        const a = Math.random() * 6.28;
+        b.position.set(S.x + Math.cos(a) * 40, 9, S.z + Math.sin(a) * 40);
+        b.visible = true; u.state = 'fly';
+      }
+      if (!b.visible) return;
+      // うしろの耕した所のどこかをめざす
+      if (u.t > 2.5 || u.state === 'fly' && Math.random() < 0.01) {
+        u.t = Math.random();
+        const lx = (Math.random() - 0.5) * 5, lz = ROTARY_Z - 2.5 - Math.random() * 6;
+        u.tx = S.x + lx * c + lz * s; u.tz = S.z - lx * s + lz * c;
+      }
+      const dx = u.tx - b.position.x, dz = u.tz - b.position.z, d = Math.hypot(dx, dz);
+      const dTractor = Math.hypot(b.position.x - S.x - s * -0.5, b.position.z - S.z - c * -0.5);
+      if (u.state !== 'fly' && (d > 7 || dTractor < 2.6)) u.state = 'fly';
+      if (u.state === 'fly') {
+        const sp = 5.5, gy = TILL_Y + (SHIRO ? -0.06 : 0);
+        b.position.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt);
+        b.position.z += dz / Math.max(d, 0.01) * Math.min(d, sp * dt);
+        const hy = Math.min(3, d * 0.4) + gy;
+        b.position.y += (hy - b.position.y) * Math.min(1, dt * 2);
+        if (d < 0.3) { u.state = 'walk'; b.position.y = gy; }
+        b.rotation.y = Math.atan2(dx, dz);
+        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / 110) * 0.7; });
+        u.legs.forEach(l => { l.rotation.x = 1.2; });
+      } else {
+        u.wings.forEach(w => { w.visible = false; });
+        const walking = d > 0.15;
+        if (walking) {
+          b.position.x += dx / d * 0.5 * dt; b.position.z += dz / d * 0.5 * dt;
+          b.rotation.y += ((Math.atan2(dx, dz) - b.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 4);
+        }
+        const step = Math.sin(u.t * 9);
+        u.legs.forEach((l, i) => { l.rotation.x = walking ? (i ? step : -step) * 0.35 : 0; });
+        const peck = !walking && Math.sin(u.t * 3.3 + k) > 0.6;   // ついばむ
+        u.neck.rotation.x = peck ? 1.25 : 0.05 * Math.sin(u.t * 9);
+      }
+      if (!want && dTractor > 30) b.visible = false;
+    });
+  }
+  return { update };
+})();
+
 // ---- 運転 ----
 const S = { x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
 const key = { fwd: 0, back: 0, left: 0, right: 0 };
@@ -435,6 +669,8 @@ function step(dt) {
   const working = S.rotDown && S.rotPos < 0.08;
   P.Rotor.rotation.x += (working ? 19 : S.rotDown ? 8 : 0) * dt;
   P.Flap.rotation.x = P.flap0 + (working && S.v > 0.1 ? 0.06 + 0.03 * Math.sin(performance.now() / 70) : 0);
+  if (working && S.v > 0.05) emitTilling(dt);
+  if (Math.abs(S.v) > 0.05) laySomeTracks(working);
   if (working && S.v > 0.05) {
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
@@ -468,11 +704,17 @@ const CAMS = ['運転席', 'うしろから', '上から'];
 let camMode = 0;
 const look = { yaw: 0, pitch: 0 };
 const chase = new THREE.Vector3(), tmpV = new THREE.Vector3();
+let headLag = 0, lastV = 0;
 function updateCamera(dt) {
   if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
     if (camera.parent !== rig) rig.add(camera);
-    camera.position.copy(EYE);
-    camera.rotation.set((camera.aspect < 1 ? -0.42 : -0.21) + look.pitch, Math.PI + look.yaw, 0, 'YXZ');   // 縦長の画面は天井が多いので下を向く
+    const tt = performance.now() / 1000, rough = (S.rotDown && S.rotPos < 0.1 ? 1.6 : 1) * Math.min(1, Math.abs(S.v) / 1.5);
+    const shake = 0.0012 + 0.0035 * rough;       // エンジンの細かいふるえと、土の凸凹のゆっくりしたゆれ
+    camera.position.set(EYE.x + shake * Math.sin(tt * 47.3), EYE.y + shake * Math.sin(tt * 53.1 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7), EYE.z);
+    headLag += ((S.v - lastV) / Math.max(dt, 0.001) * 0.006 - headLag) * Math.min(1, dt * 4);
+    lastV = S.v;
+    camera.rotation.set((camera.aspect < 1 ? -0.42 : -0.21) + look.pitch + headLag + 0.006 * rough * Math.sin(tt * 3.1),
+      Math.PI + look.yaw + 0.004 * rough * Math.sin(tt * 2.2), 0.006 * rough * Math.sin(tt * 1.9), 'YXZ');   // 縦長の画面は天井が多いので下を向く
     camera.near = 0.05;
   } else {
     if (camera.parent !== scene) scene.add(camera);
@@ -561,29 +803,50 @@ function drawMonitor(pct) {
 }
 const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
-// ---- 音（エンジン） ----
+// ---- 音（ディーゼルエンジンと、ロータリーの爪が土をかく音） ----
 let audio = null, soundOn = false;
 function toggleSound() {
   soundOn = !soundOn;
   $('bSnd').textContent = soundOn ? '🔊' : '🔇';
   if (soundOn && !audio) {
     const ac = new (window.AudioContext || window.webkitAudioContext)();
-    const o1 = ac.createOscillator(), o2 = ac.createOscillator(), lp = ac.createBiquadFilter(), gain = ac.createGain();
-    o1.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = -1200;
-    lp.type = 'lowpass'; lp.frequency.value = 380;
-    gain.gain.value = 0;
-    o1.connect(lp); o2.connect(lp); lp.connect(gain); gain.connect(ac.destination);
-    o1.start(); o2.start();
-    audio = { ac, o1, o2, gain };
+    const out = ac.createGain(); out.gain.value = 0; out.connect(ac.destination);
+    // エンジン：のこぎり波を、点火の回数（4 気筒で 回転数÷30 回/秒）でふるわせた低い音に、ガラガラという雑音をまぜる
+    const o1 = ac.createOscillator(); o1.type = 'sawtooth';
+    const o2 = ac.createOscillator(); o2.type = 'triangle';
+    const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 1.2;
+    const am = ac.createGain(); am.gain.value = 0.55;
+    const lfo = ac.createOscillator(); lfo.type = 'square';
+    const lfoG = ac.createGain(); lfoG.gain.value = 0.45;
+    lfo.connect(lfoG); lfoG.connect(am.gain);
+    o1.connect(lp); o2.connect(lp); lp.connect(am); am.connect(out);
+    const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const noise = ac.createBufferSource(); noise.buffer = buf; noise.loop = true;
+    const nf = ac.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.8;
+    const ng = ac.createGain(); ng.gain.value = 0.18;
+    noise.connect(nf); nf.connect(ng); ng.connect(am);
+    // 耕す音：低めの雑音（ザーッ）。耕しているときだけ大きく
+    const tf = ac.createBiquadFilter(); tf.type = 'lowpass'; tf.frequency.value = SHIRO ? 1400 : 650;
+    const tg = ac.createGain(); tg.gain.value = 0;
+    noise.connect(tf); tf.connect(tg); tg.connect(out);
+    o1.start(); o2.start(); lfo.start(); noise.start();
+    audio = { ac, o1, o2, lfo, lp, out, tg };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
 function updateSound() {
   if (!audio || !soundOn) return;
-  const f = 34 + Math.abs(S.v) * 9 + (S.rotDown ? 7 : 0) + (key.fwd || key.back ? 5 : 0);
-  audio.o1.frequency.setTargetAtTime(f, audio.ac.currentTime, 0.2);
-  audio.o2.frequency.setTargetAtTime(f, audio.ac.currentTime, 0.2);
-  audio.gain.gain.setTargetAtTime(0.05, audio.ac.currentTime, 0.3);
+  const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
+  const rpm = 900 + Math.abs(S.v) * 350 + load * 350 + (S.rotDown ? 250 : 0);   // アイドル 900 回転、耕すと 2000 回転くらい
+  const fire = rpm / 30;
+  audio.o1.frequency.setTargetAtTime(fire, t, 0.25);
+  audio.o2.frequency.setTargetAtTime(fire * 0.5, t, 0.25);
+  audio.lfo.frequency.setTargetAtTime(fire, t, 0.25);
+  audio.lp.frequency.setTargetAtTime(380 + load * 260, t, 0.3);
+  audio.out.gain.setTargetAtTime(camMode === 0 ? 0.07 : 0.11, t, 0.3);         // 運転席はキャビンで少し静か
+  const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
+  audio.tg.gain.setTargetAtTime(till, t, 0.2);
 }
 
 // ---- 操作 ----
@@ -651,6 +914,10 @@ function frame(now) {
   const pct = step(dt);
   updateCamera(dt);
   updateSound();
+  SKY_TIME.value += dt;
+  FX.update(dt);
+  FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
+  BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -664,11 +931,12 @@ function frame(now) {
   }
   if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
+  TR.flush();
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { S, key, toggleRotary, nextCam, tilledMask, P, renderer, scene, sim: sec => { for (let t = 0; t < sec; t += 0.05) step(0.05); buildHills(); } };
+window.game = { S, key, toggleRotary, nextCam, tilledMask, P, renderer, scene, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); } buildHills(); } };
 </script>
 </body>
 </html>

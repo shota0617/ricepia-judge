@@ -725,7 +725,7 @@ function addTrail(a, b, critters) {
   if (!n) return;
   const day = dayState();
   day.trail = (day.trail || 0) + n;
-  trailMiles(S.trail || 0, (S.trail || 0) + n);
+  trailMiles((S.trail || 0) + n);
   S.trail = (S.trail || 0) + n;
   S.trailCarry = (S.trailCarry || 0) + n;
   let gained = 0;
@@ -746,8 +746,12 @@ function addTrail(a, b, critters) {
 // 歩いた道の節目（2048 の「倍々で大きくなる数字」から）：これまでに歩いた道が 500m・1km・2km・4km… と倍ごとの節目に届くたびに、お祝いと
 // ポイント（30・60・90…）。節目は だんだん遠くなるので、ずっと先まで 次の目当てがある。はじめて この しくみに会った人は、もう越えた節目は配らず そこから数える
 const trailMile = k => 500 * 2 ** k;
-function trailMiles(before, after) {
-  if (S.trailMile == null) { S.trailMile = 0; while (before * TRAIL_M >= trailMile(S.trailMile)) S.trailMile++; }
+function trailMileNext() {   // つぎの節目の番号。はじめてのときは、いま歩いた道までの節目を すんだものにする（さかのぼって配らない）
+  if (S.trailMile == null) { S.trailMile = 0; while ((S.trail || 0) * TRAIL_M >= trailMile(S.trailMile)) S.trailMile++; }
+  return S.trailMile;
+}
+function trailMiles(after) {   // 歩いた道が after マスになる前に呼ぶ（S.trail は まだ前の値）
+  trailMileNext();
   while (after * TRAIL_M >= trailMile(S.trailMile)) {
     const k = S.trailMile++, pts = 30 * (k + 1), m = trailMile(k);
     S.log.unshift({ type: 'trailmile', t: Date.now(), pts, icon: '👣', name: `歩いた道 ${fmtM(m)} の節目` });
@@ -1967,13 +1971,14 @@ function refreshNearby() {
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  if (!msgs.length && simple()) { setStatus(''); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
+  // めぐりの れんさ：つながっている間は、文字を少なく（ふだん）でも のこり時間を出す（次の名所に間に合うか分かるように）
+  const cl = chainLeft(), chain = cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : '';
+  if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length, bl = bagLine();
     const bag = bl ? (simple() ? `　${PIA('bag', 'おみやげ袋')} <b>${bl.done}</b>/${bl.b.km}km` : `　🎒 袋 <b>${bl.done}</b>/${bl.b.km}km`) : '';
-    const cl = chainLeft(), chain = cl ? `　🔗 れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : '';   // 次の名所に着けば れんさが つながる
-    msgs.push((simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`) + bag + chain);
-  }
+    msgs.push((simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`) + bag + (chain ? '　' + chain : ''));
+  } else if (chain) msgs.push(chain);
   setStatus(msgs.slice(0, 2).join('<br/>'), true);
 }
 
@@ -3390,7 +3395,7 @@ function todayWalkCard() {
   return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
     <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
     <p class="word">${esc(word)}</p>
-    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}${S.trailMile != null ? `（つぎの節目 ${fmtM(trailMile(S.trailMile))} まで あと ${fmtM(Math.max(0, trailMile(S.trailMile) - (S.trail || 0) * TRAIL_M))}）` : ''}${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}</small></div>`;
+    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}（つぎの節目 ${fmtM(trailMile(trailMileNext()))} まで あと ${fmtM(Math.max(0, trailMile(trailMileNext()) - (S.trail || 0) * TRAIL_M))}）${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}</small></div>`;
 }
 function renderTomorrow() {
   const el = $('tomorrowBox');

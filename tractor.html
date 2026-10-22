@@ -121,7 +121,7 @@
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
       ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
-      ・直進アシスト <kbd>G</kbd>（本物と同じく、始点 A で G → 5m 以上まっすぐ走って終点 B で G。A・B を結んだ基準線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>・ボタンの長押しで登録しなおし）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）<br>
+      ・直進アシスト <kbd>G</kbd>（本物と同じく、始点 A で G → 5m 以上まっすぐ走って終点 B で G。A・B を結んだ基準線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>・ボタンの長押しで登録しなおし。アシストで耕しているときにハンドルを切ると、ロータリーが自動で上がる「旋回連動」つき。回ったら下げるとアシストがまた入る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）<br>
       ・スマホは画面の下のボタンで操作します。
     </div>
     <div class="how">
@@ -1440,7 +1440,8 @@ const SCORE = (() => {
     st.tillT += dt;
     const kmh = S.v * 3.6;
     if (kmh >= 1.9 && kmh <= 3.3) st.goodT += dt;
-    if (Math.abs(Math.cos(S.yaw)) > 0.966 && Math.abs(S.steer) < 0.3 && st.lastYaw !== null) {   // 長い向き（±15°）をまっすぐ耕しているとき（旋回は数えない）
+    // 長い向き（±15°）をまっすぐ耕しているとき（旋回と、直進アシストが線へ寄せている所は数えない）
+    if (Math.abs(Math.cos(S.yaw)) > 0.966 && Math.abs(S.steer) < 0.3 && !ASSIST.active && st.lastYaw !== null) {
       const m = S.v * dt, d = (S.yaw - st.lastYaw) * 180 / Math.PI;
       st.yawSq += d * d / Math.max(m, 1e-3); st.yawM += m;
     }
@@ -1616,7 +1617,7 @@ function placeRig(dt) {
 // 直進アシスト（本物と同じ手順）：G で始点 A を登録 → 5m 以上まっすぐ走って G で終点 B を登録 → A と B を結んだ基準線と
 // 平行に、耕幅 2.2m から 10cm 重ねた 2.1m おきのガイドの線ができる。ハンドルから手をはなすと、いちばん近い線にそってまっすぐ走る。
 // そのあと G で入切、Shift+G で登録しなおし
-const ASSIST = { mode: 'none', on: false, active: false, A: null, B: null, aDist: 0, d: [0, 1], n: [1, 0], dir: 1, k: 0, off: 0 };
+const ASSIST = { mode: 'none', paused: false, on: false, active: false, A: null, B: null, aDist: 0, d: [0, 1], n: [1, 0], dir: 1, k: 0, off: 0 };
 // PTO：耕うんは 1 速、代かきは 2 速で爪を速く回す（同じ YT4 シリーズの仕様：エンジン 2600 回転で 1 速 561・2 速 784 回転）
 const PTO_RATIO = (SHIRO ? 784 : 561) / 2600;
 const PITCH = TILL_W - 0.1;
@@ -1663,6 +1664,13 @@ function step(dt) {
   else if (ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
   else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
   // オートブレーキ：ロータリーを上げて大きく切ると、内側の後輪に半ブレーキがかかって小さく回れる（枕地での旋回）
+  // 旋回連動（直進アシスト仕様）：直進アシストで耕したあと、旋回でハンドルを切ると作業機が自動で上がり、アシストも切れる。
+  // 旋回のあとロータリーを下げると、アシストがまた入る
+  if (ASSIST.on && S.rotDown && sIn && Math.abs(S.steer) > 0.26 && S.v > 0.05) {
+    S.rotDown = false; ASSIST.on = false; ASSIST.mode = 'off'; ASSIST.paused = true;
+    setRotBtn(); setAssistBtn();
+    toast('旋回連動：ハンドルを切ったので、ロータリーが自動で上がり、直進アシストが切れました。回ったら下げる');
+  }
   S.autoBrake = !S.rotDown && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;
   const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
@@ -1933,6 +1941,12 @@ function toggleRotary() {
   S.rotDown = !S.rotDown;
   S.autoUp = false;
   setRotBtn();
+  if (S.rotDown && ASSIST.paused) {               // 旋回連動：下げると直進アシストがまた入る
+    ASSIST.paused = false; ASSIST.on = true; ASSIST.mode = 'on'; setAssistBtn();
+    toast('ロータリーを下げました。直進アシストがまた入りました');
+    return;
+  }
+  ASSIST.paused = false;
   toast(S.rotDown ? 'ロータリーを下げました（PTO 入）。前へ走ると耕せます' : 'ロータリーを上げました（PTO 切）');
 }
 function toggleAssist() {
@@ -1946,13 +1960,13 @@ function toggleAssist() {
     A.B = [S.x, S.z]; A.d = [dx / L, dz / L]; A.n = [dz / L, -dx / L]; A.mode = 'on'; A.on = true;
     toast('終点 B を登録しました。基準線と平行にまっすぐ走ります（ハンドルから手をはなす）');
   } else {
-    A.on = !A.on; A.mode = A.on ? 'on' : 'off';
+    A.on = !A.on; A.mode = A.on ? 'on' : 'off'; A.paused = false;
     toast(A.on ? '直進アシスト 入：ハンドルから手をはなすと、ガイドの線にそってまっすぐ走ります' : '直進アシスト 切（Shift+G で A・B を登録しなおし）');
   }
   setAssistBtn();
 }
 function resetAssist() {
-  Object.assign(ASSIST, { mode: 'none', on: false, active: false, A: null, B: null });
+  Object.assign(ASSIST, { mode: 'none', on: false, paused: false, active: false, A: null, B: null });
   setAssistBtn();
   toast('直進アシストの基準線を消しました。G で始点 A から登録しなおします');
 }

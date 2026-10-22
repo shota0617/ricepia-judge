@@ -161,6 +161,16 @@ def tex_untilled(n=1024):
                 c = hexc('#d4cf8c' if aki else '#d9c58c') * rng.uniform(0.8, 1.05)
                 col[np.ix_(np.arange(sy - 2, sy + 2) % n, np.arange(sx - 2, sx + 2) % n)] = c
                 hgt[np.ix_(np.arange(sy - 2, sy + 2) % n, np.arange(sx - 2, sx + 2) % n)] = 1.2
+            if not aki and rng.random() < 0.18:                     # 春：冬を越したスズメノテッポウの株（株のあいだに、ところどころ）
+                wx, wy = cx + rng.uniform(-0.5, 0.5) * ROW * px_m, cy + rng.uniform(-0.5, 0.5) * HILL * px_m
+                for k in range(rng.integers(8, 14)):
+                    a = rng.uniform(0, 2 * math.pi)
+                    L = rng.uniform(0.03, 0.08) * px_m
+                    c = hexc(('#5a8a32', '#6d9a3c', '#4f7a2a', '#86a25a')[rng.integers(4)]) * rng.uniform(0.85, 1.1)
+                    for t in np.linspace(0.1, 1, max(2, int(L))):
+                        sx, sy = int(wx + math.cos(a) * L * t), int(wy + math.sin(a) * L * t)
+                        col[np.ix_(np.arange(sy - 1, sy + 1) % n, np.arange(sx - 1, sx + 1) % n)] = c
+                        hgt[np.ix_(np.arange(sy - 1, sy + 1) % n, np.arange(sx - 1, sx + 1) % n)] = 0.9
             if aki:                                                   # ひこばえ：株から外へ開く青い葉（上から見た形）
                 for k in range(rng.integers(11, 17)):
                     a = rng.uniform(0, 2 * math.pi)
@@ -573,7 +583,13 @@ def make_materials():
     mat_flat('water', '#3c4a42', 0.04, alpha=0.78)
     mat_flat('stubble', '#b3a466' if SEASON == 'aki' else '#a28f63', 0.85)
     if SEASON == 'aki':
-        mat_flat('hikobae', '#4a7a22', 0.85)                           # 刈り株から伸びた青い芽（ひこばえ）
+        mat_flat('hikobae', '#4a7a22', 0.85)
+        mat_flat('haze_wood', '#6b5a44', 0.9)                         # はざかけ：古い杭
+        mat_flat('haze_bamboo', '#b9a77a', 0.7)                       # 竹の横木
+        mat_flat('haze_rice', '#b49a50', 0.85)                        # 干している稲の束（金色が少し落ちついた色）
+    if SEASON == 'haru':
+        mat_flat('weed', '#5c9433', 0.8)                             # スズメノテッポウの葉
+        mat_flat('weed_spike', '#a3ad7e', 0.8)                        # 円柱形の穂（白っぽい緑・黄色い葯）                           # 刈り株から伸びた青い芽（ひこばえ）
     mat_flat('pole', '#a4a49c', 0.75)
     mat_flat('wire', '#1c1c1c', 0.5)
     mat_flat('pvc', '#7f8f99', 0.4)
@@ -885,6 +901,33 @@ def in_track(x, y):
         any(abs(abs(y) - (HY - d)) < 0.24 or abs(abs(x) - (HX - d)) < 0.24 for d in (1.0, 2.2))
 
 
+def haze_row(x, y0, y1, seed):
+    """はざかけ（稲架掛け）ひと列：木の杭（2m おき、両側にななめの支え）に横木をわたし、刈った稲の束を二つに割って掛けて天日で干す
+    （乾くまで 2〜3 週間）。束は横木から両側へ穂を下にして垂れる。高さ 1.3m"""
+    rng = np.random.default_rng(seed)
+    H = 1.32
+    n = int((y1 - y0) / 2.0)
+    for k in range(n + 1):                                             # 杭とななめの支え
+        y = y0 + k * (y1 - y0) / n
+        bt.cyl('haze_wood', 0.035, H + 0.25, (x, y, (H + 0.25) / 2 - 0.05), (rng.uniform(-3, 3), rng.uniform(-3, 3), 0), n=6)
+        for s in (1, -1):
+            bt.pipe('haze_wood', [(x + s * 0.55, y, 0.0), (x, y, H - 0.15)], 0.025, 5)
+    for h in (H, H - 0.55):                                            # 横木（竹）
+        bt.cyl('haze_bamboo', 0.025, y1 - y0, (x, (y0 + y1) / 2, h), (90, 0, 0), n=6)
+    bm = bmesh.new()                                                   # 稲の束（上の横木に 1 段）
+    yb = y0 + 0.05
+    while yb < y1 - 0.08:
+        w = rng.uniform(0.09, 0.13)
+        L = rng.uniform(0.62, 0.78)
+        for s in (1, -1):
+            sp = rng.uniform(0.10, 0.16)
+            q = [bm.verts.new(p) for p in ((x, yb, H + 0.03), (x, yb + w, H + 0.03),
+                                            (x + s * sp, yb + w + rng.uniform(-0.01, 0.02), H - L), (x + s * sp, yb - rng.uniform(-0.01, 0.02), H - L))]
+            bm.faces.new(q)
+        yb += w * rng.uniform(0.82, 0.95)                                  # すき間なく重ねて掛ける
+    new_obj(bm, 'haze_rice', smooth=None, face_up=False)
+
+
 def rice_block(x0, x1, y0, y1, seed):
     """まだ刈っていない実った稲（上の面と、まわりの横の面）。高さ 0.85m くらい"""
     rng = np.random.default_rng(seed)
@@ -984,6 +1027,8 @@ def build_surroundings():
                 grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
             for k, ((x0, x1), (y0, y1)) in enumerate(((W1, MID), (C, S1), (E2, MID), (W2, N1), (E1, S1))):
                 rice_block(x0 + 0.35, x1 - 0.35, y0 + 0.35, y1 - 0.35, 90 + k)
+            for k, dx in enumerate((4.0, 8.0, 12.0)):                    # 南西の刈ったあとの田んぼに、はざかけの列（手で刈った分を天日干し）
+                haze_row(W1[1] - dx, S1[1] - 16.0 + k * 1.5, S1[1] - 3.0, 120 + k)
         else:                                                           # 代かき：どこも水を張り、何枚かは代かき済み・田植え済み
             for x0, x1, y0, y1 in regions:
                 grid('paddy_water', x0, x1, y0, y1, 20.0, 20.0, lambda x, y: PADDY_WATER_Z)
@@ -1308,6 +1353,40 @@ def hikobae_mesh():
     return np.array(V, np.float32), F
 
 
+def weed_parts():
+    """スズメノテッポウひと株：細い葉 9 枚（12〜24cm）と、穂の茎 3 本（25〜38cm）の先に長さ 5cm の円柱形の穂"""
+    rng = np.random.default_rng(113)
+    LV, LF, SV, SF = [], [], [], []
+    for k in range(9):
+        a = 2 * math.pi * k / 9 + rng.uniform(-0.3, 0.3)
+        L, lean = rng.uniform(0.12, 0.24), rng.uniform(0.2, 0.7)
+        ca, sa = math.cos(a), math.sin(a)
+        b = len(LV)
+        for t, w in ((0.0, 0.0045), (0.6, 0.0040), (1.0, 0.0006)):
+            r = 0.006 + L * lean * 0.6 * t * t
+            z = L * t * (1 - 0.3 * lean * t)
+            LV += [(ca * r - sa * w, sa * r + ca * w, z), (ca * r + sa * w, sa * r - ca * w, z)]
+        LF += [(b, b + 1, b + 3, b + 2), (b + 2, b + 3, b + 5, b + 4)]
+    for k in range(3):
+        a = rng.uniform(0, 2 * math.pi)
+        H, lean = rng.uniform(0.25, 0.38), rng.uniform(0.02, 0.10)
+        tx, ty = math.cos(a) * H * lean, math.sin(a) * H * lean
+        b = len(SV)
+        for zz, ox, oy in ((0.0, 0, 0), (H, tx, ty)):                # 茎（細い四角の筒）
+            for j in range(4):
+                t = 2 * math.pi * j / 4
+                SV.append((ox + 0.0012 * math.cos(t), oy + 0.0012 * math.sin(t), zz))
+        SF += [(b + j, b + (j + 1) % 4, b + 4 + (j + 1) % 4, b + 4 + j) for j in range(4)]
+        b = len(SV)
+        for zz in (H, H + 0.055):                                      # 穂（円柱形）
+            for j in range(6):
+                t = 2 * math.pi * j / 6
+                SV.append((tx + 0.005 * math.cos(t), ty + 0.005 * math.sin(t), zz))
+        SF += [(b + j, b + (j + 1) % 6, b + 6 + (j + 1) % 6, b + 6 + j) for j in range(6)]
+        SF.append(tuple(b + 6 + j for j in range(6)))
+    return (np.array(LV, np.float32), LF), (np.array(SV, np.float32), SF)
+
+
 def stubble_template():
     V, F = stubble_mesh()
     bm = bmesh.new()
@@ -1316,6 +1395,14 @@ def stubble_template():
         bm.faces.new([vs[i] for i in f])
     with bt.part('StubbleHill'):
         new_obj(bm, 'stubble', smooth=None)
+    if SEASON == 'haru':                                                # 春：スズメノテッポウの型（ゲームでところどころに並べる）
+        with bt.part('WeedHill'):
+            for (V, F), mat in zip(weed_parts(), ('weed', 'weed_spike')):
+                bm = bmesh.new()
+                vs = [bm.verts.new(v) for v in V]
+                for f in F:
+                    bm.faces.new([vs[i] for i in f])
+                new_obj(bm, mat, smooth=None, face_up=False)
     if SEASON == 'aki':
         V, F = hikobae_mesh()
         bm = bmesh.new()
@@ -1430,7 +1517,7 @@ def preview():
     bg = w.node_tree.nodes['Background']
     w.node_tree.links.new(sky.outputs['Color'], bg.inputs['Color'])
     bg.inputs['Strength'].default_value = bt.SKY_STRENGTH
-    hide = [bpy.data.objects[n] for n in ('FieldTilled', 'StubbleHill', 'HikobaeHill') if n in bpy.data.objects]
+    hide = [bpy.data.objects[n] for n in ('FieldTilled', 'StubbleHill', 'HikobaeHill', 'WeedHill') if n in bpy.data.objects]
     for o in hide:
         o.hide_render = True
     tmp = preview_scene()
@@ -1486,10 +1573,11 @@ def build():
     ob = bpy.data.objects
     if 'StubbleHill' in bt.GROUPS:
         bt.finalize('StubbleHill', Matrix(), root).location.z = -5.0     # 型（ゲームで並べる。原点＝株の根元）。地面の下にしまっておく
-    if 'HikobaeHill' in bt.GROUPS:                                       # ひこばえの型も同じ。法線は上へ向けて草と同じ明るさに
-        h = bt.finalize('HikobaeHill', Matrix(), root)
-        h.location.z = -5.0
-        h.data.normals_split_custom_set_from_vertices([(0.0, 0.0, 1.0)] * len(h.data.vertices))
+    for nm in ('HikobaeHill', 'WeedHill'):                               # ひこばえ・スズメノテッポウの型も同じ。法線は上へ向けて草と同じ明るさに
+        if nm in bt.GROUPS:
+            h = bt.finalize(nm, Matrix(), root)
+            h.location.z = -5.0
+            h.data.normals_split_custom_set_from_vertices([(0.0, 0.0, 1.0)] * len(h.data.vertices))
     me = ob['GrassTufts'].data                                           # 草の板は法線を上に向け、地面と同じように明るくする
     me.normals_split_custom_set_from_vertices([(0.0, 0.0, 1.0)] * len(me.vertices))
     add_macro(ob['Field'], untilled_macro)

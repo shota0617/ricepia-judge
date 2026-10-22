@@ -2313,10 +2313,12 @@ const toastShowing = msg => $('toast').classList.contains('show') && $('toast').
 function toast(msg) {
   const el = $('toast');
   if ($('reward').classList.contains('show')) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }
-  if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800); return; }   // いま出ている：のばすだけ
+  if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
   el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
+// 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
+function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
   const t = $('toast');

@@ -738,10 +738,11 @@ async function walkTo(page, id) {
   R.checks.sealPage = await page.evaluate(async () => {
     const n = nishioGo.npcs.find(x => x.id === 'sakana-okami');
     if (!n) return { ok: false, why: 'no-npc' };
-    nishioGo.moveTo(n.lat, n.lng); await new Promise(r => setTimeout(r, 400));
-    const html = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (nishioGo.talkNpc(n.id, p) || {}).html || '').join('');
+    let near = false;
+    for (let k = 0; k < 10 && !near; k++) { nishioGo.moveTo(n.lat, n.lng); await new Promise(r => setTimeout(r, 400)); near = !!(nishioGo.talkNpc(n.id, 1) || {}).near; }   // 地図を読みこむと 立つマスが ずれることがあるので、話せる所まで
+    const html = Array.from({ length: 15 }, (_, i) => (nishioGo.talkNpc(n.id, i + 1) || {}).html || '').join('');
     const m = html.match(/🔖 一色の注目スポットを あと(\d)か所 めぐったら、一色のしるしを わたすでね（いま (\d)\/(\d)）/);
-    return { text: m ? m[0] : '', ok: !!m && +m[1] + +m[2] === +m[3] };
+    return { near, text: m ? m[0] : html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(-200), ok: !!m && +m[1] + +m[2] === +m[3] };
   });
   // 遠いほど めずらしい：西尾城跡から 8km をこえた所（吉良の南）へ行くと、その日1回「キラの絵が 2倍 出やすい」と知らせる
   R.checks.kiraFar = await page.evaluate(async () => {

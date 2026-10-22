@@ -7,6 +7,7 @@
 |---|---|
 | `build_tractor.py` | 生成スクリプト（Blender の Python 版 bpy 5.2.2） |
 | `tractor_yt.glb` | 書き出したモデル（約 3.4MB・三角形 約 8.7 万・Draco なし・テクスチャ 512px×2 枚を埋め込み・AO を頂点色に焼きこみ） |
+| `harrow_yt.glb` | 代かき用のウイングハロー（`build_tractor.py --harrow`。作業幅 3.4m＝まん中 1.6m＋翼 0.9m×2、約 0.3MB・三角形 約 6,800）。ロータリーと同じ名前 `Rotary`・`Rotor`・`Flap` に、翼 `WingL`・`WingR`（原点＝ちょうつがい。three の Z 軸まわりに ±1.7rad で上へ折りたたむ）と翼の爪軸 `RotorL`・`RotorR`。ゲームは代かきのときだけ、トラクターの `Rotary` をこれにつけかえる |
 | `preview_exterior.png` | 斜め前の外観（Cycles） |
 | `preview_driver.png` | 運転者の目（左右 0・後輪車軸の 0.46m 後ろ・高さ 2.27m）から前方 12° 下向き・縦の画角 60° |
 | `preview_console.png` | 右の操作盤のアップ |

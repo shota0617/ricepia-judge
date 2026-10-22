@@ -1026,6 +1026,18 @@ def wiper():
 # ================================================================
 #  ロータリー（別オブジェクト）
 # ================================================================
+def implement_lamps(xs, y0, z0):
+    """作業機用の灯火器：作業機をつけて道を走るとトラクターのうしろの灯火が かくれるので、作業機のうしろの両はしにも
+    テール（上）・ウインカー（下）・赤い反射器をつける（農水省の公道走行ガイドブック）。カバーの上から立てた支柱の先"""
+    for x in xs:
+        s = 1 if x > 0 else -1
+        pipe('darkgray', [(x, y0 - 0.08, z0 - 0.02), (x, y0, z0 + 0.16)], 0.014, 8)
+        box('black', (0.11, 0.035, 0.17), (x, y0 + 0.015, z0 + 0.23), bev=(0.01,))
+        box('tail', (0.09, 0.012, 0.065), (x, y0 + 0.035, z0 + 0.265), bev=(0.004,))
+        box('winker_L' if s > 0 else 'winker_R', (0.09, 0.012, 0.045), (x, y0 + 0.035, z0 + 0.195), bev=(0.004,))
+        cyl('reflector', 0.03, 0.01, (x, y0 + 0.036, z0 + 0.12), (90, 0, 0), 16)   # 丸い反射器（支柱）
+
+
 def rotary():
     oy = ROTARY_Y
     ay, az = oy, 0.25                    # 爪軸
@@ -1055,6 +1067,7 @@ def rotary():
         cyl('silver', 0.03, 0.10, (0, 0.92, 0.66), (90, 0, 0), 12)
         cyl('darkgray', 0.022, 0.40, (0, 0.88, 0.65), (93, 0, 0), 12)
         cyl('black', 0.045, 0.30, (0, 0.86, 0.65), (93, 0, 0), 14)               # 軸の覆い
+        implement_lamps((TILL_W / 2 - 0.12, -TILL_W / 2 + 0.12), ay + 0.12, az + 0.30)
     with part('Rotor'):
         cyl_x('darkgray', 0.032, -TILL_W / 2, TILL_W / 2, ay, az, 16)
         nf = 17
@@ -1082,6 +1095,94 @@ def rotary():
             box('paint_red', (0.03, 0.04, L * 0.9), (x, -0.02, L / 2), mtx=m)
         cyl_x('darkgray', 0.018, -TILL_W / 2, TILL_W / 2, flap_h.y, flap_h.z, 10)
     return Vector((0, oy, 0)), Vector((0, ay, az)), flap_h
+
+
+# ================================================================
+#  代かき用のウイングハロー（別の glb：harrow_yt.glb）。作業幅 3.4m（60 馬力向けの一般的な幅の例）。
+#  まん中 1.6m と左右の翼 0.9m ずつ。道を走るときは翼を上へ折りたたむ。名前はロータリーと同じ Rotary・Rotor・Flap
+#  （ゲームで差しかえる）に、翼の WingL・WingR（ちょうつがいが原点）と翼の爪軸 RotorL・RotorR
+# ================================================================
+HARROW_W, HARROW_C = 3.4, 1.6
+
+
+def harrow():
+    oy = ROTARY_Y
+    ay, az, R = oy + 0.02, 0.21, 0.25                # 爪軸と、カバーの半径
+    wc, ww = HARROW_C / 2, (HARROW_W - HARROW_C) / 2
+    hz = az + R + 0.02                               # ちょうつがいの高さ
+
+    def cover(x0, x1):
+        lathe('paint_red', [(x0 + (x1 - x0) * k / 8, R) for k in range(9)], ay, az, n=20, a0=-70, a1=70, smooth=50)
+        box('paint_red', (x1 - x0, 0.08, 0.025), ((x0 + x1) / 2, ay - 0.27, az + 0.12), (-60, 0, 0))   # 前の泥よけ
+
+    def tines(x0, x1, nf):
+        cyl_x('darkgray', 0.028, x0, x1, ay, az, 14)
+        for i in range(nf):
+            x = x0 + 0.05 + i * (x1 - x0 - 0.10) / (nf - 1)
+            for j in range(3):                       # 代かき爪は短くて幅が広い
+                a = 2 * math.pi * (j / 3 + i * 0.211)
+                ca, sa = math.cos(a), math.sin(a)
+                p0 = Vector((x, ay + 0.05 * sa, az + 0.05 * ca))
+                p1 = Vector((x, ay + 0.20 * sa, az + 0.20 * ca))
+                box('silver', (0.010, 0.07, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=along(p0, p1, Vector((0, ca, -sa))))
+
+    def board(x0, x1):                               # 均平板（うしろの長い板）とレーキ
+        y0 = ay + R * math.sin(math.radians(68))
+        box('paint_red', (x1 - x0, 0.36, 0.012), ((x0 + x1) / 2, y0 + 0.16, 0.06), (-14, 0, 0))
+        box('darkgray', (x1 - x0, 0.03, 0.03), ((x0 + x1) / 2, y0 + 0.34, 0.025))
+        for k in range(int((x1 - x0) / 0.12)):
+            x = x0 + 0.06 + k * 0.12
+            pipe('silver', [(x, y0 + 0.30, 0.07), (x, y0 + 0.44, -0.02)], 0.006, 5)
+
+    with part('Rotary'):
+        cover(-wc, wc)
+        for s in (1, -1):
+            box('darkgray', (0.04, 0.10, 0.10), (s * wc, ay - 0.05, hz), bev=(0.01,))           # ちょうつがい
+            pipe('darkgray', [(s * 0.35, ay - 0.15, hz + 0.05), (s * 0.70, ay - 0.10, hz + 0.45)], 0.03, 8)   # 翼を上げる油圧シリンダー
+            cyl('silver', 0.018, 0.30, (s * 0.60, ay - 0.115, hz + 0.33), (0, s * 48, 0), 8)
+        box('paint_red', (0.30, 0.30, 0.26), (0, ay - 0.10, 0.64), bev=(0.03,))                  # まん中のギヤボックス
+        cyl('darkgray', 0.045, 0.08, (0, ay - 0.28, 0.64), (90, 0, 0), 14)
+        for s in (1, -1):                                                                        # マストと三点リンク
+            pipe('paint_red', [(s * 0.42, oy - 0.26, 0.42), (s * 0.20, oy - 0.20, 0.82), (0, oy - 0.26, 0.96)], 0.025, 8)
+            pipe('paint_red', [(s * 0.42, oy - 0.26, 0.42), (s * 0.45, oy - 0.05, hz)], 0.025, 8)
+            cyl_x('silver', 0.016, s * 0.39, s * 0.47, oy - 0.26, 0.42, 8)
+            pipe('darkgray', [(s * 0.30, 0.48, 0.45), (s * 0.43, oy - 0.26, 0.42)], 0.022, 8)
+        pipe('darkgray', [(0, 0.56, 1.00), (0, oy - 0.26, 0.96)], 0.022, 8)
+        box('paint_red', (HARROW_C, 0.06, 0.05), (0, ay - 0.08, hz), bev=(0.01,))                 # 横のはり
+        cyl('silver', 0.03, 0.10, (0, 0.92, 0.66), (90, 0, 0), 12)
+        cyl('darkgray', 0.022, 0.40, (0, 0.88, 0.65), (93, 0, 0), 12)
+        cyl('black', 0.045, 0.30, (0, 0.86, 0.65), (93, 0, 0), 14)
+        implement_lamps((wc - 0.12, -wc + 0.12), ay + 0.10, az + R + 0.01)
+    with part('Rotor'):
+        tines(-wc + 0.02, wc - 0.02, 12)
+    with part('Flap'):
+        board(-wc, wc)
+    for nm, s in (('WingL', 1), ('WingR', -1)):
+        x0, x1 = sorted((s * wc, s * (wc + ww)))
+        with part(nm):
+            cover(x0, x1)
+            board(x0, x1)
+            box('paint_red', (x1 - x0, 0.06, 0.05), ((x0 + x1) / 2, ay - 0.08, hz), bev=(0.01,))
+            xe = s * (wc + ww + 0.015)
+            arc = [(0.27 * math.sin(math.radians(a)), az + 0.27 * math.cos(math.radians(a))) for a in range(-80, 81, 10)]
+            prism('paint_red', [(p[0], p[1]) for p in arc] + [(0.27, 0.02), (-0.27, 0.02)], 0.012, T((xe, ay, 0), (90, 0, 90)))   # はしの板
+            box('darkgray', (0.03, 0.55, 0.04), (xe, ay + 0.02, 0.03), bev=(0.01,))   # そり
+        with part('Rotor' + nm[-1]):
+            tines(x0 + 0.02, x1 - 0.02, 7)
+    return Vector((0, oy, 0)), Vector((0, ay, az)), Vector((0, ay + R * math.sin(math.radians(68)), 0.06)), hz, wc
+
+
+def build_harrow():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    rot_o, rotor_o, flap_o, hz, wc = harrow()
+    rot = finalize('Rotary', Matrix.Translation(rot_o))
+    finalize('Rotor', Matrix.Translation(rotor_o), rot)
+    finalize('Flap', Matrix.Translation(flap_o), rot)
+    for nm, s in (('WingL', 1), ('WingR', -1)):
+        w = finalize(nm, Matrix.Translation((s * wc, rotor_o.y - 0.05, hz)), rot)
+        finalize('Rotor' + nm[-1], Matrix.Translation(rotor_o), w)
+    assert not GROUPS, GROUPS.keys()
+    return rot
 
 
 # ================================================================
@@ -1287,9 +1388,16 @@ def export():
 
 
 if __name__ == '__main__':
-    build()
-    print('triangles', tri_count())
-    bake_ao()
-    if RENDER:
-        preview()
-    export()
+    if '--harrow' in sys.argv:                       # 代かき用のウイングハローだけを harrow_yt.glb に
+        OUT_GLB = os.path.join(HERE, 'harrow_yt.glb')
+        build_harrow()
+        print('triangles', tri_count())
+        bake_ao()
+        export()
+    else:
+        build()
+        print('triangles', tri_count())
+        bake_ao()
+        if RENDER:
+            preview()
+        export()

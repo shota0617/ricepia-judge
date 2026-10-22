@@ -419,27 +419,27 @@ class JSong(Song):
         n = int(SR * 0.35)
         t = np.arange(n) / SR
         f = 90 * np.exp(-t * 12) + 48
-        self.put(beat, np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9) * vol)
+        self.put(beat, np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9) * env(n, 0.001, 0.05) * vol)   # 終わりは 0 まで消してから切る（プチッという音を出さない）
 
     def shime(self, beat, vol=0.18):
         """締太鼓：高く短い「テン」"""
         n = int(SR * 0.08)
         t = np.arange(n) / SR
         f = 260 * np.exp(-t * 20) + 190
-        self.put(beat, np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 45) * vol)
+        self.put(beat, np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 45) * env(n, 0.001, 0.02) * vol)
 
     def kane(self, beat, vol=0.06):
         """鉦（チャンチキ）：金属の高い音（倍音の合わない正弦波を重ねる）"""
         n = int(SR * 0.22)
         t = np.arange(n) / SR
         w = sum(np.sin(2 * np.pi * 1800 * r * t) * a for r, a in ((1, 1), (2.76, .6), (5.4, .35)))
-        self.put(beat, w * np.exp(-t * 22) * vol)
+        self.put(beat, w * np.exp(-t * 22) * env(n, 0.001, 0.03) * vol)
 
     def hyoshigi(self, beat, vol=0.1):
         """拍子木：かたく短い「カッ」"""
         n = int(SR * 0.03)
         t = np.arange(n) / SR
-        self.put(beat, np.sin(2 * np.pi * 2400 * t) * np.exp(-t * 160) * vol)
+        self.put(beat, np.sin(2 * np.pi * 2400 * t) * np.exp(-t * 160) * env(n, 0.0005, 0.01) * vol)
 
     def waves(self, beats, vol=0.05, seed=1):
         """三河湾の波：ゆっくり大きくなったり小さくなったりする、こもったノイズ"""
@@ -450,14 +450,16 @@ class JSong(Song):
         self.buf += w * (0.5 + 0.5 * np.sin(2 * np.pi * t / (self.spb * 8))) * vol * 4
 
 
-def compose_jp(scale, seed, lo, hi, rhythms, bars=16, ornament=0.0):
+def compose_jp(scale, seed, lo, hi, rhythms, bars=16, ornament=0.0, tonic=None):
     """日本の音階の旋律（16小節）。4小節の句を A・A'・B・A に並べる。動きはとなりの音へ（ときどき跳ぶ）。
-    句の終わりは「核音」（主音・4度・5度）でのばし、最後は主音で終わる。ornament：前打音（となりの上の音を短く）をつける割合"""
+    句の終わりは「核音」（主音・4度・5度）でのばし、最後は主音で終わる。ornament：前打音（となりの上の音を短く）をつける割合。
+    tonic：主音（MIDI の音の高さ。音域の下限 lo とは別。省くと lo を主音にする）"""
     rng = np.random.default_rng(seed)
     lo_m, hi_m = midi(lo), midi(hi)
-    pitches = [m for m in range(lo_m, hi_m + 1) if (m - lo_m) % 12 in scale]
-    tonic_ix = [k for k, m in enumerate(pitches) if (m - lo_m) % 12 == 0]
-    nucl_ix = [k for k, m in enumerate(pitches) if (m - lo_m) % 12 in (0, 5, 7)]
+    t0 = lo_m if tonic is None else tonic
+    pitches = [m for m in range(lo_m, hi_m + 1) if (m - t0) % 12 in scale]
+    tonic_ix = [k for k, m in enumerate(pitches) if (m - t0) % 12 == 0]
+    nucl_ix = [k for k, m in enumerate(pitches) if (m - t0) % 12 in (0, 5, 7)]
     cur = [len(pitches) // 2]
 
     def step():
@@ -553,7 +555,7 @@ def album_song(i, mood, style, motif):
     base = 72 + root - (12 if root > 5 else 0)        # 旋律の音域（主音から上へ）
     lo, hi = (name(base - 5), name(base + 12)) if inst in (shaku, koto) else (name(base), name(base + 17))
     s = JSong(bpm, 64)
-    mel = compose_jp(sc, 9000 + i, lo, hi, JR[rk], ornament=orn)
+    mel = compose_jp(sc, 9000 + i, lo, hi, JR[rk], ornament=orn, tonic=base)   # 音域を下げても、主音は base（伴奏と list.json の調と同じ）
     vol = {fue: 0.26, koto: 0.34, shamisen: 0.24, shaku: 0.28}[inst]
     s.line(mel, inst, vol, gate=0.95 if inst in (fue, shaku) else 1.0)
     if style in ('minyo', 'hayabiki') or (style == 'ondo' and rng.random() < .5):   # 笛が少しおくれて同じ旋律をなぞる（ヘテロフォニー）

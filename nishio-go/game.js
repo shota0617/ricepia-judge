@@ -1491,7 +1491,7 @@ function sealPickCheck() {
     S.sealPicks = (S.sealPicks || []).filter(x => x.area !== p.area); save();   // 地区で消す（モードを行き来すると 記録は読み直されて 別のものになる）
     toastAfter(`🔖 ${p.name}のしるしの1枚：「${window.NISHIO_DOTS.info(dot.id).title}」が キラで 絵帳に入った！`);
     const pl = $('panel-log'); if (pl && !pl.hidden) renderLog();
-  }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません）', kira: true, ev: 'seal_dot_pick', key: stateKey() });
+  }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません。えらばずに とじると、左の1枚）', kira: true, ev: 'seal_dot_pick', key: stateKey() });
 }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pick-dot]'); if (b) finishFirst(Number(b.dataset.pickDot)); });
 // えらばずに窓を閉じたら（とじる・まわりをタップ）、はじめの1枚にする

@@ -1077,22 +1077,66 @@ def srgb(v):
     return 12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055
 
 
-def to_pixel(light, ids, names, n=SIZE):
+def tones5(h):   # 5段（影・影より・ふつう・明るめ・明るい）：細かく作りこむ絵（当店など）用
+    t = tones(h)
+    return [t[0], [(a + b) / 2 for a, b in zip(t[0], t[1])], t[1], [(a + b) / 2 for a, b in zip(t[1], t[2])], t[2]]
+
+
+def to_pixel(light, ids, names, n=SIZE, opts=None):
+    # opts（細かく作りこむ絵だけ）：vote 4×4 の中で いちばん多い材質にする（細い字や線が 消えたり 出たりしない）・
+    #   bands 5 なら 5段の明るさ・inner 材質の さかいの点を 少し暗く（窓・看板・ひさしの くぎりが 見えるように）
+    opts = opts or {}
     c = SS // 2   # 4×4 の真ん中の点
     L = light[c::SS, c::SS][:n, :n]
     I = ids[c::SS, c::SS][:n, :n]
     alpha = (I[..., 3] > 0.5)
     id_srgb = np.array([srgb((i + 1) / (len(names) + 1)) for i in range(len(names))])   # 材質の色分けが PNG に入ったときの値
     lum = L[..., :3].mean(axis=2) / np.maximum(L[..., 3], 1e-4)
+    kmap = np.full((n, n), -1, dtype=np.int32)
+    if opts.get('vote'):
+        B = ids[:n * SS, :n * SS]
+        kk = np.abs(id_srgb[None, None, :] - B[..., 0:1]).argmin(axis=2)
+        kk[B[..., 3] <= 0.5] = -1
+        Lb = light[:n * SS, :n * SS]
+        lumb = Lb[..., :3].mean(axis=2) / np.maximum(Lb[..., 3], 1e-4)
+        kk = kk.reshape(n, SS, n, SS).transpose(0, 2, 1, 3).reshape(n, n, SS * SS)
+        lumb = lumb.reshape(n, SS, n, SS).transpose(0, 2, 1, 3).reshape(n, n, SS * SS)
+        for y in range(n):
+            for x in range(n):
+                v = kk[y, x]
+                op = v[v >= 0]
+                if len(op) * 2 < len(v):
+                    alpha[y, x] = False
+                    continue
+                alpha[y, x] = True
+                k = int(np.bincount(op).argmax())
+                kmap[y, x] = k
+                lum[y, x] = float(lumb[y, x][v == k].mean())
     out = np.zeros((n, n, 4), dtype=np.uint8)
+    five = opts.get('bands') == 5
     for y in range(n):
         for x in range(n):
             if not alpha[y, x]:
                 continue
-            k = int(np.argmin(np.abs(id_srgb - I[y, x, 0])))
-            band = 0 if lum[y, x] < 0.28 else 1 if lum[y, x] < 0.70 else 2
-            out[y, x, :3] = tones(MATS[names[k]])[band]
+            k = kmap[y, x] if kmap[y, x] >= 0 else int(np.argmin(np.abs(id_srgb - I[y, x, 0])))
+            kmap[y, x] = k
+            if five:
+                l = lum[y, x]
+                band = 0 if l < 0.24 else 1 if l < 0.42 else 2 if l < 0.66 else 3 if l < 0.80 else 4
+                out[y, x, :3] = [int(v) for v in tones5(MATS[names[k]])[band]]
+            else:
+                band = 0 if lum[y, x] < 0.28 else 1 if lum[y, x] < 0.70 else 2
+                out[y, x, :3] = tones(MATS[names[k]])[band]
             out[y, x, 3] = 255
+    if opts.get('inner'):   # 材質の さかい（上か左が ちがう材質）の点を 少し暗く
+        f = opts['inner'] if isinstance(opts['inner'], float) else 0.86
+        for y in range(n):
+            for x in range(n):
+                if not alpha[y, x]:
+                    continue
+                k = kmap[y, x]
+                if (y > 0 and alpha[y - 1, x] and kmap[y - 1, x] != k) or (x > 0 and alpha[y, x - 1] and kmap[y, x - 1] != k):
+                    out[y, x, :3] = (out[y, x, :3] * f).astype(np.uint8)
     # ふちどり：絵のすぐ外側の点を黒く
     a = out[..., 3] > 0
     edge = np.zeros_like(a)
@@ -1128,7 +1172,7 @@ def make(name):
     ids = render(sc, os.path.join(TMP, f'{name}-id.png'), 1)
     set_materials('light')
     light = render(sc, os.path.join(TMP, f'{name}-light.png'), 64)
-    px = to_pixel(light, ids, names, n)
+    px = to_pixel(light, ids, names, n, opts)
     os.makedirs(OUT, exist_ok=True)
     save_png(px, os.path.join(OUT, f'{name}.png'))
     print('wrote', os.path.relpath(os.path.join(OUT, f'{name}.png'), ROOT))

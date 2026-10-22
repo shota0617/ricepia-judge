@@ -4669,6 +4669,14 @@ GIANT_ART['f-ricepia'] = 'ricepia';
   'kota-happiness-hill', 'kota-townhall', 'kota-station', 'kota-sangane-station', 'kota-aimi-station', 'gamagori-takeshima', 'gamagori-aquarium',
   'gamagori-station',
 ].forEach(n => { GIANT_ART['f-' + n] = n; });
+// 西尾市の注目スポットも、1か所ずつ手で形を作った特大の絵に（tools/blender/giant-nishio.py。絵の名前は spots.json の id）
+[
+  'konoe-tei', 'shokoso', 'ibun-jinja', 'kozenji', 'kumaku-jinja', 'yatsuomote', 'wakuwaku',
+  'jissoji', 'choenji', 'glass-museum', 'yojuji', 'terazu-hachiman', 'michinoeki-okanoyama', 'nishio-cityhall',
+  'hirabara-taki', 'kojuin', 'isshiki-sakana', 'isshiki-port', 'isshiki-suwa', 'ankyuji', 'isshiki-manabi',
+  'sakushima-nishi', 'sakushima-higashi', 'suunji', 'kamome-parking', 'oura-beach', 'yatsurugi', 'kezoji',
+  'kogane-zutsumi', 'tojo-jo', 'gentokuji', 'ozaki-shiro',
+].forEach(n => { GIANT_ART['f-' + n] = n; });
 // ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
 let giantIds = null;
 fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });

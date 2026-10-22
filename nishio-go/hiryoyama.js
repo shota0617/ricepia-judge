@@ -18,6 +18,10 @@
   let root, cv, ctx, scale = 2, raf = 0, running = false, last = 0;
   let map, pos, carry, done, shown, gen = 0, left, owner, ownerAsked, ownerOk = false, total = 0, msg, msgT, fromEvent = false, parts;
   const art = { me: null, owner: null };
+  // マスの絵は Blender で焼いたシート（tools/blender/hiryo-art.py → nishio-go/art/ev/hiryo.png：草・草（ゆれ）・刈ったあと・田んぼ・あぜ道・岩・木・草の束）。読めるまでは手描き
+  const TILE_AT = { g: 0, c: 2, f: 3, p: 4, r: 5, t: 6 }, BUNDLE = 7;
+  let tiles = null;
+  const tilesReady = () => { if (!tiles) { tiles = new Image(); tiles.src = 'nishio-go/art/ev/hiryo.png'; } return tiles.complete && tiles.naturalWidth > 0; };
 
   function layout() {   // 日ごとに岩と木の場所がかわる（その日のうちは同じ）
     const d = new Date(), seed0 = d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate();
@@ -115,9 +119,10 @@
 
   /* ---------- 描く ---------- */
   function draw(now) {
-    const sway = Math.floor(now / 400) & 1;
+    const sway = Math.floor(now / 400) & 1, sheet = tilesReady();
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const X = x * T, Y = y * T, c = map[y][x], k = (x * 7 + y * 3) % 5;
+      if (sheet && c in TILE_AT) { const i = c === 'g' && sway && (x + y) % 2 ? 1 : TILE_AT[c]; ctx.drawImage(tiles, i * 16, 0, 16, 16, X, Y, T, T); continue; }   // 草は1マスおきに ゆれる
       if (c === 'f') { ctx.fillStyle = '#7a9a3a'; ctx.fillRect(X, Y, T, T); ctx.fillStyle = '#5c7a2a'; for (let i = 2; i < T; i += 4) ctx.fillRect(X + i, Y + 3, 1, 10); continue; }
       if (c === 'p') { ctx.fillStyle = '#c8b48a'; ctx.fillRect(X, Y, T, T); ctx.fillStyle = '#b09c72'; ctx.fillRect(X + k * 3, Y + 6, 2, 1); continue; }
       ctx.fillStyle = c === 'c' ? '#9cc46a' : '#4f8e34'; ctx.fillRect(X, Y, T, T);   // 山の斜面
@@ -132,7 +137,7 @@
     // 主人公（せおった束を背中に）
     const [px, py] = pos, X = px * T, Y = py * T;
     if (art.me) ctx.drawImage(art.me, X, Y - 2, T, T); else { ctx.fillStyle = '#e0602a'; ctx.fillRect(X + 4, Y + 2, 8, 12); }
-    for (let i = 0; i < carry; i++) { ctx.fillStyle = '#a8c050'; ctx.fillRect(X + 12, Y + 12 - i * 2, 4, 2); }
+    for (let i = 0; i < carry; i++) { if (sheet) ctx.drawImage(tiles, BUNDLE * 16, 0, 16, 16, X + 9, Y + 8 - i * 3, 8, 8); else { ctx.fillStyle = '#a8c050'; ctx.fillRect(X + 12, Y + 12 - i * 2, 4, 2); } }
     if (owner) { const ox = Math.min(COLS - 1, px + 1) * T; if (art.owner) ctx.drawImage(art.owner, ox, Y - 2, T, T); else { ctx.fillStyle = '#556'; ctx.fillRect(ox + 4, Y + 2, 8, 12); } }
     hud('time', `のこり ${Math.ceil(left)}秒`, left < 10);
     hud('carry', `かご ${carry}/${CARRY}`, carry >= CARRY);

@@ -15,11 +15,19 @@
     { id: 'nobisugi', name: '伸び過ぎ', look: '芽が、長く 伸びている', kind: 2, pts: 0,
       say: 'それは伸び過ぎだに。酸素が足りんまま芽を出させたり、温める時間が長すぎたりすると、芽だけ伸びて 根の張りが悪くなりやすいだよ。' },
   ];
+  // 種もみの絵は Blender で焼いたシート（tools/blender/hiryo-art.py → nishio-go/art/ev/seeds.png：OK・ギリギリOK・伸び過ぎ。32×32）。読めるまでは手描き
+  let seedSheet = null;
+  function paintSeed(cv, kind) {
+    if (!seedSheet) { seedSheet = new Image(); seedSheet.src = 'nishio-go/art/ev/seeds.png'; }
+    const go = () => { if (!seedSheet.naturalWidth) return; const c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.drawImage(seedSheet, kind * 32, 0, 32, 32, 0, 0, cv.width, cv.height); };
+    if (seedSheet.complete && seedSheet.naturalWidth) go(); else seedSheet.addEventListener('load', go, { once: true });
+  }
   let root = null, order = [], done = false, lastOpen = 0;   // lastOpen：「あとで」で閉じたら、5分は出さない
 
   // 種もみの絵（24×32 のドット。だ円のもみ・たてのすじ・上に白い芽）
   function drawSeed(cv, kind) {
     const c = cv.getContext('2d'), W = 24, H = 32;
+    c.setTransform(1, 0, 0, 1, (cv.width - W) / 2, 0);   // 手描きは 24×32。32×32 の まん中に
     c.clearRect(0, 0, W, H);
     const cx = 12, cy = 20, rx = 7, ry = 10;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -61,10 +69,10 @@
     done = false; lastOpen = Date.now();
     root.innerHTML = `<div class="md-card"><p class="md-head">📜 イベント：芽出しの見きわめ</p>
       <p class="md-say">田んぼの人「ちょっと見てってくれん？ 苗をつくる前に、種もみの芽を出させる（催芽）だよ。この3つのうち、苗づくりに いちばんええのは どれだと思う？」</p>
-      <div class="md-seeds">${order.map(s => `<button type="button" class="md-seed" data-md="${s.id}" aria-label="${s.look}"><canvas width="24" height="32"></canvas><small>${s.look}</small></button>`).join('')}</div>
+      <div class="md-seeds">${order.map(s => `<button type="button" class="md-seed" data-md="${s.id}" aria-label="${s.look}"><canvas width="32" height="32"></canvas><small>${s.look}</small></button>`).join('')}</div>
       <p class="md-res" hidden></p>
       <button type="button" class="btn mini md-close" data-md="close">あとで</button></div>`;
-    root.querySelectorAll('.md-seed canvas').forEach((cv, i) => drawSeed(cv, order[i].kind));
+    root.querySelectorAll('.md-seed canvas').forEach((cv, i) => { drawSeed(cv, order[i].kind); paintSeed(cv, order[i].kind); });
     root.hidden = false;
     if (G.track) G.track('medashi_open', {});
     return true;

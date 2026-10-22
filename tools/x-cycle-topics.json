@@ -1,0 +1,19 @@
+{
+  "_説明": "X の発信から ゲームを直すサイクル（.github/workflows/x-cycle.yml・tools/x-cycle.js）の、ゲームごとの設定。search：Grok に X でさがしてもらうこと／read：Claude と Codex が はじめに読むファイル／editable：Claude が変えてよいファイル（正規表現。ここに合わない変更は自動で戻す）／globs：同じ範囲を Claude Code の Edit・Write の許可の形で／deny：editable の中でも変えてはいけないもの",
+  "tractor": {
+    "name": "トラクターのゲーム（tractor.html）",
+    "search": "日本の米農家・農業法人・農機の販売店が X に投稿した、田んぼでのトラクター作業のようす。耕うん（秋起こし・春の田起こし）・代かき・あぜ塗り・田植え・稲刈りのあとの田んぼ。とくに愛知県（西三河・西尾市・安城市・岡崎市）の田んぼ。作業の手順・コツ・機械の設定（回転数・PTO・耕深・速度）・土や水のようす・田んぼに来る鳥や生きもの・天気や時間帯による違い・作業中に困ること。写真や動画から分かる見た目（土の色、くれ、水の濁り、わだち、あぜ）も",
+    "read": ["tractor.html", "tools/tractor/README.md"],
+    "editable": ["^tractor\\.html$", "^tractor/"],
+    "globs": ["./tractor.html", "./tractor/**"],
+    "deny": []
+  },
+  "nishio-go": {
+    "name": "にしおさんぽGO（nishio-go.html）",
+    "search": "愛知県西尾市（一色・吉良・幡豆をふくむ）と まわりのまちについて、住んでいる人・お店・観光協会・市が X に投稿した、いまの季節の話題。行事・祭り・見ごろの花や景色・名所のいまのようす・まちの人がよく話す名物や昔話・散歩して気づいたこと。ゲームの「まちメモ」や人のセリフ、季節の行き先に使えそうな、出どころのはっきりした話",
+    "read": ["docs/fun-core.md", "nishio-go.html", "nishio-go/game.js", "nishio-go/npcs.js", "nishio-go/season.js"],
+    "editable": ["^nishio-go\\.html$", "^nishio-go/[^/]+\\.(js|json)$"],
+    "globs": ["./nishio-go.html", "./nishio-go/*.js", "./nishio-go/*.json"],
+    "deny": ["^nishio-go/(world|osm-spots|landmarks|landuse|areas)\\.json$", "^nishio-go/analytics\\.js$"]
+  }
+}

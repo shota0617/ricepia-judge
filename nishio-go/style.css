@@ -739,6 +739,43 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .md-seed:disabled{opacity:1}
 .md-res{margin:10px 0 0;font-size:14px;line-height:1.5}
 .md-close{margin-top:10px;width:100%}
+.mu-bugs{grid-template-columns:repeat(3,minmax(0,1fr))}   /* 長い名前でも はみ出さない */
+.mu-bug{background:#eef3e6;color:#222;min-width:0}   /* 黒い虫も見えるよう、明るい地に */
+.mu-bug small{word-break:break-all}
+.mu-bug canvas{width:96px;height:96px;max-width:100%}
+.mu-bug.right{background:#d6efd6}
+.mu-bug.wrong{background:#f6d6d4}
+.mu-foot{display:flex;gap:8px;margin-top:10px}
+.mu-foot .btn{margin-top:0}
+.mu-next[hidden]{display:none}
+.mu-foot .btn{flex:1}
+.kr-hint{margin:0 0 8px;font-size:13px}
+.kr-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.kr-stone{position:relative;aspect-ratio:1;padding:2px;border:2px solid var(--line);border-radius:10px;background:#e9e4d6;display:flex;align-items:center;justify-content:center}
+.kr-stone canvas{width:100%;height:100%;image-rendering:pixelated}
+.kr-stone.plain{opacity:.35}
+.kr-stone.got{border-color:#5cb85c;background:#d6efd6}
+.kr-stone:disabled{cursor:default}
+/* 雲母石だけ、ときどき きらっと光る（光る時間は石ごとに ずらす） */
+.kr-stone.mica::after{content:"";position:absolute;top:18%;left:52%;width:9px;height:9px;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,#fff 0 28%,rgba(255,255,255,0) 30%),linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat;
+  animation:kr-glint 1.6s var(--d,0s) infinite}
+.kr-stone.mica.got::after{animation:none;opacity:1}
+@keyframes kr-glint{0%,78%,100%{opacity:0;transform:scale(.4)}86%{opacity:1;transform:scale(1.15)}92%{opacity:.6;transform:scale(.8)}}
+@media (prefers-reduced-motion:reduce){.kr-stone.mica::after{animation:none;opacity:.7}}
+.ym-target{display:flex;align-items:center;gap:10px;padding:8px;border:2px solid var(--gold);border-radius:12px;background:#f6f1e2;margin-bottom:8px}
+.ym-target canvas{width:64px;height:64px;image-rendering:pixelated;flex:none}
+.ym-left{margin:0 0 6px;font-size:13px}
+.ym-places{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.ym-place{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border:2px solid var(--line);border-radius:10px;background:#eef3e6;color:#222;font:inherit;min-width:0}
+.ym-place canvas{width:44px;height:44px;max-width:100%;image-rendering:pixelated}
+.ym-place small{font-size:10px;line-height:1.25;word-break:break-all}
+.ym-place:disabled{opacity:.45}
+.ym-log{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.ym-log li{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.45;padding:6px;border-radius:8px;background:#f3f1ea}
+.ym-log li.hit{background:#d6efd6}
+.ym-log canvas{width:40px;height:40px;image-rendering:pixelated;flex:none;background:#eef3e6;border-radius:6px}
+.ym-log em{color:#c0392b;font-style:normal;font-weight:700}
 .shop-pic{margin:6px 0;text-align:center}
 .shop-pic img{image-rendering:pixelated;width:192px;height:192px;max-width:100%}
 .shop-pic figcaption{font-size:12px;color:var(--sub)}

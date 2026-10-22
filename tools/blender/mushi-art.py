@@ -55,9 +55,10 @@ def bug(body, length=0.62, width=0.42, pron=None, pron_w=None, pron_l=0.16, head
     """虫：うしろの羽（だ円）・前胸（pron）・頭。上から見て頭が上"""
     by = -0.10
     sphere('elytra', body, 1.0, (0, by, 0.10 * flat), (width / 2, length / 2, 0.14 * flat))
-    if stripes:   # すじ（たて）
-        for i, x in enumerate(stripes):
-            box(f'st{i}', 'mBlack', (0.05, length * 0.78, 0.04), (x * width / 2, by - 0.02, 0.21 * flat))
+    if stripes:   # すじ（たて）：羽と同じ だ円で、横だけ細く、上へ少しだけ出す（羽の丸みに沿って、上から見て1本のすじに見える）
+        for i, f in enumerate(stripes):
+            k = math.sqrt(max(0.0, 1 - f * f))   # 羽の まん中から はなれるほど、羽は低く短い
+            sphere(f'st{i}', 'mBlack', 1.0, (f * width / 2, by, 0.10 * flat), (0.036, length / 2 * k * 0.97, 0.14 * flat * k + 0.03))
     if striae:    # こまかい たてみぞ
         for i in range(-2, 3):
             box(f'sr{i}', striae, (0.018, length * 0.75, 0.02), (i * width * 0.17, by, 0.235 * flat))
@@ -96,7 +97,7 @@ def bug(body, length=0.62, width=0.42, pron=None, pron_w=None, pron_l=0.16, head
 
 # 並びは mushi.js の BUGS → yatsumushi.js の BUGS（JS の BUG_SHEET と同じ）
 BUGS = [
-    ('misuji', lambda: bug('mYellow', 0.56, 0.52, pron='mHead', stripes=(-0.5, 0, 0.5))),
+    ('misuji', lambda: bug('mYellow', 0.56, 0.52, pron='mHead', stripes=(-0.55, 0, 0.55))),
     ('mutsuboshi', lambda: bug('mBrown', 0.46, 0.34, dots=((-0.5, 0.4), (0.5, 0.4), (-0.5, -0.05), (0.5, -0.05), (-0.35, -0.5), (0.35, -0.5)), gloss=True)),
     ('haiiro', lambda: bug('mGray', 0.62, 0.40)),
     ('oomaru', lambda: bug('mBlackR', 0.66, 0.64, gloss=True)),

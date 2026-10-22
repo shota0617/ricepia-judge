@@ -298,7 +298,7 @@ const DRIVER = (() => {
   const M = { jacket: mat(0x1b2436), glove: mat(0xcfc8b4), cuff: mat(0x6d6858), pants: mat(0x3d3a2c), boot: mat(SHIRO ? 0x2b3a2a : 0x3a3530), skin: mat(0xd9ae8c), cap: mat(0x2c3a52), edge: mat(0x2f5aa8) };
   M.jacket.bumpMap = clothTex('twill'); M.jacket.bumpScale = 0.0015;
   M.glove.bumpMap = clothTex('knit'); M.glove.bumpScale = 0.002;
-  M.dirt = M.glove.clone(); M.dirt.color.set(0xa49a82);       // 指先は土で少し汚れる
+  M.dirt = M.glove.clone(); M.dirt.color.set(0xbcb39c);       // 指先は土で少し汚れる
   const Y = new THREE.Vector3(0, 1, 0);
   let box = null, arms = [], legs = [], body = null, head = null, sw = null, joy = null;
   const st = { off: 0, lastPhi: 0, reach: 0, rightOnWheel: 0, brake: 0 };
@@ -312,45 +312,78 @@ const DRIVER = (() => {
   }
   function ball(r, m, sx = 1, sy = 1, sz = 1) {
     const o = new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), m);
-    o.scale.set(sx, sy, sz); o.castShadow = true; box.add(o);
+    o.scale.set(sx, sy, sz); o.castShadow = o.receiveShadow = true; box.add(o);
     return o;
   }
   function limb(rA, rB, mA, mB, endMesh) { return { a: seg(rA, rA * 0.85, mA), b: seg(rB, rB * 0.85, mB), j: ball(rA * 0.95, mA), end: endMesh }; }
-  function lathe(profile, m) {                   // 長さ 1 のろくろ形（根元が原点、+Y へ）。profile：[[0〜1 の位置, 半径]…]
-    const o = new THREE.Mesh(new THREE.LatheGeometry(profile.map(([y, r]) => new THREE.Vector2(r, y)), 20), m);
-    o.castShadow = true;
-    box.add(o);
+  // 太さの変わる管：中心線 pts（n 個）にそって、半径 rad(t, 角度) の輪をつなぐ。update で形を作り直せる（そでは毎コマ）
+  function flexTube(NS, NR, m) {
+    const nv = (NS + 1) * (NR + 1), pos = new Float32Array(nv * 3), uv = new Float32Array(nv * 2), idx = [];
+    for (let i = 0; i < NS; i++) for (let j = 0; j < NR; j++) {
+      const a = i * (NR + 1) + j, b = a + NR + 1;
+      idx.push(a, a + 1, b, b, a + 1, b + 1);     // 外向きの面（T×B ではなく B×T）
+    }
+    for (let i = 0; i <= NS; i++) for (let j = 0; j <= NR; j++) uv.set([j / NR, i / NS], (i * (NR + 1) + j) * 2);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    g.setIndex(idx);
+    const o = new THREE.Mesh(g, m);
+    o.castShadow = o.receiveShadow = true;
+    o.frustumCulled = false;
+    const P = new THREE.Vector3(), Tn = new THREE.Vector3(), N = new THREE.Vector3(), B = new THREE.Vector3();
+    o.userData.update = (curve, ref, rad) => {     // ref：輪の 0°の向きのめやす（ひじの内側など）
+      for (let i = 0; i <= NS; i++) {
+        const t = i / NS;
+        curve.getPointAt(t, P); curve.getTangentAt(t, Tn);
+        N.copy(ref).addScaledVector(Tn, -ref.dot(Tn)).normalize();
+        B.crossVectors(Tn, N);
+        for (let j = 0; j <= NR; j++) {
+          const th = j / NR * Math.PI * 2, c = Math.cos(th), sn = Math.sin(th), r = rad(t, th);
+          pos.set([P.x + (N.x * c + B.x * sn) * r, P.y + (N.y * c + B.y * sn) * r, P.z + (N.z * c + B.z * sn) * r], (i * (NR + 1) + j) * 3);
+        }
+      }
+      g.attributes.position.needsUpdate = true;
+      g.computeVertexNormals();
+      g.computeBoundingSphere();
+    };
     return o;
   }
-  const UPPER = [[0, 0.061], [0.12, 0.065], [0.35, 0.067], [0.6, 0.062], [0.78, 0.057], [0.84, 0.061], [0.89, 0.055], [0.94, 0.059], [1, 0.054]];
-  const FORE = [[0, 0.055], [0.05, 0.058], [0.1, 0.053], [0.16, 0.056], [0.3, 0.054], [0.6, 0.049], [0.84, 0.045], [0.9, 0.049], [1, 0.048]];
   const GR = 0.026;                              // にぎる物（ハンドルのリム・ジョイスティック）の半径
   function makeHand(mirror) {
-    // 手の向き：にぎる物の軸が局所 Z、手首・手の甲の側が局所 +X
+    // 手の向き：にぎる物の軸が局所 Z（親指・人さし指の側が +Z）、手首（腕）の側が局所 +X、手の甲が局所 +Y
+    // 指は手の甲の側（+Y）から、にぎる物の向こう側（−X）をまわって、手のひらの側（−Y）で曲がりこむ。親指は手のひらの側から指先にかぶさる
     const g = new THREE.Group();
-    const add = (geo, m, p, sc) => { const o = new THREE.Mesh(geo, m); if (p) o.position.set(...p); if (sc) o.scale.set(...sc); o.castShadow = true; g.add(o); return o; };
-    add(new THREE.SphereGeometry(1, 18, 12), M.glove, [GR + 0.032, 0.004, 0], [0.03, 0.052, 0.05]);          // 手のひら・手の甲
-    const fz = [0.032, 0.0107, -0.0107, -0.031], arc = [3.3, 3.75, 3.6, 3.05], fr = [0.0098, 0.0108, 0.0104, 0.0088];
+    const add = (geo, m, p, sc) => { const o = new THREE.Mesh(geo, m); if (p) o.position.set(...p); if (sc) o.scale.set(...sc); o.castShadow = o.receiveShadow = true; g.add(o); return o; };
+    add(new THREE.SphereGeometry(1, 18, 12), M.glove, [0.048, 0.014, 0], [0.05, 0.03, 0.048]);               // 手のひら・手の甲
+    const fz = [0.032, 0.0107, -0.0107, -0.031], arc = [3.0, 3.3, 3.2, 2.85], fr = [0.0098, 0.0108, 0.0104, 0.0088];
     fz.forEach((z, k) => {                       // 人さし指〜小指：手の甲の上のはしから、にぎる物のまわりを巻く
-      const rad = GR + fr[k] * 0.95, pts = [new THREE.Vector3(GR + 0.045, 0.038, z)];
-      for (let i = 0; i <= 8; i++) { const a = 0.95 - arc[k] * i / 8; pts.push(new THREE.Vector3(rad * Math.cos(a), rad * Math.sin(a), z * (1 - 0.15 * i / 8))); }
+      const rad = GR + fr[k] * 0.95, pts = [new THREE.Vector3(0.034, GR + 0.012, z)];
+      for (let i = 0; i <= 8; i++) { const a = 1.25 + arc[k] * i / 8; pts.push(new THREE.Vector3(rad * Math.cos(a), rad * Math.sin(a), z * (1 - 0.15 * i / 8))); }
       const c = new THREE.CatmullRomCurve3(pts);
-      add(new THREE.TubeGeometry(c, 16, fr[k], 7, false), M.glove);
-      add(new THREE.SphereGeometry(fr[k], 8, 6), M.dirt, pts[pts.length - 1].toArray());                     // 指先
-      add(new THREE.SphereGeometry(fr[k] * 1.25, 8, 6), M.glove, pts[0].toArray());                          // 指のつけ根
+      const fg = flexTube(18, 8, M.glove);
+      fg.userData.update(c, new THREE.Vector3(0, 0, 1), (t, th) => fr[k] * (1.06 + 0.07 * Math.exp(-(((t - 0.08) / 0.08) ** 2)) + 0.06 * Math.exp(-(((t - 0.45) / 0.07) ** 2))
+        + 0.05 * Math.exp(-(((t - 0.75) / 0.06) ** 2)) - 0.1 * t) * (1 + 0.02 * Math.sin(th * 6)));
+      g.add(fg);
+      add(new THREE.SphereGeometry(fr[k] * 0.9, 8, 6), M.dirt, pts[pts.length - 1].toArray());               // 指先（管の先の太さに合わせる）
+      add(new THREE.SphereGeometry(fr[k] * 1.12, 8, 6), M.glove, pts[0].toArray());                          // 指のつけ根
     });
-    const tp = [new THREE.Vector3(GR + 0.03, -0.035, 0.05), new THREE.Vector3(GR + 0.012, -0.03, 0.058)];   // 親指：反対側から、指の上にかぶさる
-    for (let i = 0; i <= 5; i++) { const a = -0.9 - 1.5 * i / 5; tp.push(new THREE.Vector3((GR + 0.011) * Math.cos(a), (GR + 0.011) * Math.sin(a), 0.052 - 0.008 * i / 5)); }
-    add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(tp), 14, 0.0115, 7, false), M.glove);
-    add(new THREE.SphereGeometry(0.0115, 8, 6), M.dirt, tp[tp.length - 1].toArray());
+    const tp = [new THREE.Vector3(GR + 0.04, -0.02, 0.042), new THREE.Vector3(GR + 0.018, -0.03, 0.052)];   // 親指：手のひらの側から、指先にかぶさる
+    for (let i = 0; i <= 5; i++) { const a = -0.95 - 1.45 * i / 5; tp.push(new THREE.Vector3((GR + 0.011) * Math.cos(a), (GR + 0.011) * Math.sin(a), 0.052 - 0.008 * i / 5)); }
+    const tg = flexTube(14, 8, M.glove);
+    tg.userData.update(new THREE.CatmullRomCurve3(tp), new THREE.Vector3(0, 0, 1), t => 0.0118 * (1 + 0.15 * Math.exp(-(((t - 0.4) / 0.08) ** 2)) - 0.1 * t));
+    g.add(tg);
+    const seam = add(new THREE.TorusGeometry(0.05, 0.0016, 4, 16, 1.1), M.cuff, [0.048, -0.004, 0]);    // 手の甲のぬい目
+    seam.rotation.z = 0.25;
+    add(new THREE.SphereGeometry(0.0105, 8, 6), M.dirt, tp[tp.length - 1].toArray());
     // 手首の編んだそで口（すじ）と、青いふちの糸
     const rib = [];
-    for (let i = 0; i <= 12; i++) rib.push([i / 12, 0.041 + (i % 2 ? 0.0018 : 0)]);
-    const cuff = add(new THREE.LatheGeometry(rib.map(([y, r]) => new THREE.Vector2(r, y * 0.05)), 18), M.glove, [GR + 0.06, -0.004, 0]);
+    for (let i = 0; i <= 12; i++) rib.push([i / 12, 0.034 + (i % 2 ? 0.0016 : 0)]);
+    const cuff = add(new THREE.LatheGeometry(rib.map(([y, r]) => new THREE.Vector2(r, y * 0.05)), 18), M.glove, [GR + 0.03, 0.006, 0]);
     cuff.rotation.z = -Math.PI / 2;
-    const edge = add(new THREE.TorusGeometry(0.0415, 0.0028, 6, 18), M.edge, [GR + 0.11, -0.004, 0]);
+    const edge = add(new THREE.TorusGeometry(0.0345, 0.0025, 6, 18), M.edge, [GR + 0.074, 0.006, 0]);   // そでの中にかくれる
     edge.rotation.y = Math.PI / 2;
-    if (mirror) g.scale.z = -1;                  // 右手は左手の鏡うつし
+    if (mirror) g.scale.z = -1;                  // 左手は右手の鏡うつし
     box.add(g);
     return g;
   }
@@ -379,7 +412,11 @@ const DRIVER = (() => {
     box = new THREE.Group(); parent.add(box);
     sw = parent.getObjectByName('SteeringWheel'); joy = parent.getObjectByName('LeverJoy');
     st.sw0 = sw.quaternion.clone();
-    for (let i = 0; i < 2; i++) arms.push({ a: lathe(UPPER, M.jacket), b: lathe(FORE, M.jacket), j: ball(0.056, M.jacket), s: ball(0.064, M.jacket), end: makeHand(i === 1) });
+    for (let i = 0; i < 2; i++) {
+      const sl = flexTube(34, 20, M.jacket);
+      box.add(sl);
+      arms.push({ sl, s: ball(0.066, M.jacket), end: makeHand(i === 0) });
+    }
     for (let i = 0; i < 2; i++) legs.push(limb(0.075, 0.06, M.pants, M.pants, boot(M.boot)));
     body = new THREE.Group(); box.add(body);
     const chest = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.15, 0.42, 14), M.jacket); chest.scale.z = 0.7; chest.position.y = 1.88; body.add(chest);
@@ -398,9 +435,9 @@ const DRIVER = (() => {
     return out;
   }
   const SH = [new THREE.Vector3(0.20, 2.02, -0.50), new THREE.Vector3(-0.20, 2.02, -0.50)];   // 左・右の肩
-  const HIP = [new THREE.Vector3(0.10, 1.70, -0.40), new THREE.Vector3(-0.10, 1.70, -0.40)];
+  const HIP = [new THREE.Vector3(0.10, 1.69, -0.36), new THREE.Vector3(-0.10, 1.69, -0.36)];
   const T = [new THREE.Vector3(), new THREE.Vector3()], E = new THREE.Vector3(), F = new THREE.Vector3();
-  const AX = [new THREE.Vector3(), new THREE.Vector3()], MAT = new THREE.Matrix4(), tmp4 = new THREE.Vector3(), tmp5 = new THREE.Vector3();
+  const AX = [new THREE.Vector3(), new THREE.Vector3()], UV = new THREE.Vector3(), MAT = new THREE.Matrix4(), tmp4 = new THREE.Vector3(), tmp5 = new THREE.Vector3();
   function rimTangent(clock, out) {              // リムの向き（にぎる物の軸）
     return out.set(Math.cos(clock), 0, Math.sin(clock)).applyQuaternion(st.sw0).normalize();
   }
@@ -415,7 +452,7 @@ const DRIVER = (() => {
     // 右手：ふだんは主変速のジョイスティック。大きく切るときはハンドルの 2 時へ。ロータリーを上げ下げするときは昇降スイッチへ
     st.rightOnWheel += ((Math.abs(phi) > 1.2 ? 1 : 0) - st.rightOnWheel) * Math.min(1, dt * 5);
     st.reach = Math.max(0, st.reach - dt);
-    const joyP = tmp1.set(0, 0.07, 0.0).applyEuler(joy.rotation).add(joy.position);
+    const joyP = tmp1.set(0, 0.082, 0.0).applyEuler(joy.rotation).add(joy.position);
     const wheelP = rimPoint(1.05 - st.off, F);
     T[1].copy(joyP).lerp(wheelP, st.rightOnWheel);
     AX[1].set(0, 1, 0).applyEuler(joy.rotation).lerp(rimTangent(1.05 - st.off, tmp2), st.rightOnWheel).normalize();
@@ -429,14 +466,33 @@ const DRIVER = (() => {
       const a = arms[i], side = i ? -1 : 1;
       const S0 = tmp4.copy(SH[i]).add(tmp3.set(0, 0.004 * Math.sin(sh * 1.6), 0.002 * Math.sin(sh * 47 + i)));
       // 手首の向き：にぎる物の軸に直角で、肩のほうを向く
-      const u = tmp1.subVectors(S0, T[i]);
+      const u = UV.subVectors(S0, T[i]);           // （ほかの計算で上書きされないよう、専用の入れ物）
       u.addScaledVector(AX[i], -u.dot(AX[i])).normalize();
       const W = tmp5.copy(T[i]).addScaledVector(u, 0.115);
       ik(S0, W, 0.30, 0.26, tmp2.set(side * 0.75, -1, -0.3), E);
-      place(a.a, S0, E); place(a.b, E, W); a.j.position.copy(E); a.s.position.copy(S0);
+      // そで：肩→ひじ→手首を通るなめらかな線にそって。ひじが曲がるほど内側にしわが寄る
+      const bend = 1 - tmp1.subVectors(E, S0).normalize().dot(tmp2.subVectors(W, E).normalize());   // 0（まっすぐ）〜2
+      const inner = tmp3.subVectors(S0, E).normalize().add(tmp2.subVectors(W, E).normalize()).normalize();   // ひじの内側
+      const te = 0.30 / 0.56;
+      const curve = new THREE.CatmullRomCurve3([S0.clone(), S0.clone().lerp(E, 0.55), E.clone(), E.clone().lerp(W, 0.5), W.clone()], false, 'centripetal');
+      a.sl.userData.update(curve, inner, (t, th) => {
+        const c = Math.cos(th);                  // c＝1 がひじの内側
+        let r = t < te ? 0.064 + 0.006 * Math.sin(Math.min(1, t / te) * Math.PI) - 0.008 * (t / te) : 0.057 - 0.011 * ((t - te) / (1 - te));
+        if (t > 0.9) r += 0.008 * (t - 0.9) / 0.1;                                                            // そで口（少し広がる）
+        const near = Math.exp(-(((t - te) / 0.07) ** 2));
+        r += near * bend * (0.007 * Math.max(0, c) * Math.sin(t * 140) - 0.006 * Math.max(0, c));                 // ひじの内側のしわ
+        r += 0.0018 * Math.sin(t * 46 + th * 2 + i) + 0.0012 * Math.sin(th * 5 + t * 13);                       // 布のゆるいしわ
+        r *= 1 - 0.08 * Math.sin(th) ** 2 * (t > te ? 1 : 0.4);                                                 // 前腕は少し平たい
+        return r;
+      });
+      a.s.position.copy(S0);
       a.end.position.copy(T[i]);
-      const yv = tmp3.crossVectors(AX[i], u);
-      a.end.quaternion.setFromRotationMatrix(MAT.makeBasis(u, yv, AX[i]));
+      // 手の甲の向き：ハンドルでは上、ジョイスティックでは外（右）
+      const back = tmp3.set(0, 1, 0);
+      if (i === 1) back.lerp(tmp2.set(-1, 0.3, 0), 1 - st.rightOnWheel).normalize();
+      back.addScaledVector(AX[i], -back.dot(AX[i])).addScaledVector(u, -back.dot(u)).normalize();
+      const zv = tmp2.crossVectors(u, back);
+      a.end.quaternion.setFromRotationMatrix(MAT.makeBasis(u, back, zv));
     }
     // 足：右はアクセル（止まるときはブレーキ）、左は床
     st.brake += ((!key.fwd && !key.back && Math.abs(S.v) > 0.05 ? 1 : 0) - st.brake) * Math.min(1, dt * 6);
@@ -444,12 +500,12 @@ const DRIVER = (() => {
     for (let i = 0; i < 2; i++) {
       const l = legs[i];
       const ankle = FOOT[i].clone().add(tmp3.set(0, 0.06, -0.08));
-      ik(HIP[i], ankle, 0.45, 0.45, tmp1.set(i ? -0.15 : 0.15, 1, 0.6), E);
+      ik(HIP[i], ankle, 0.43, 0.44, tmp1.set(i ? -0.2 : 0.2, 0.35, 1), E);   // ひざは上より前へ（もも はほぼ水平）
       place(l.a, HIP[i], E); place(l.b, E, ankle); l.j.position.copy(E);
       l.end.position.copy(ankle); l.end.rotation.set(-0.35, 0, 0);
     }
   }
-  return { setup, update, st };
+  return { setup, update, st, dbg: () => arms.map(a => [a.end.position.toArray().map(v => +v.toFixed(3)), a.end.scale.z]) };
 })();
 
 // ---- ミラーに うしろが映る（トラクターのうしろ上の点から、まわりを小さな立方体の絵に描いてミラーに貼る） ----
@@ -1011,6 +1067,7 @@ let camMode = 0;
 const look = { yaw: 0, pitch: 0 };
 const chase = new THREE.Vector3(), tmpV = new THREE.Vector3();
 let headLag = 0, lastV = 0;
+const DBG = {};
 function updateCamera(dt) {
   if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
     if (camera.parent !== rig) rig.add(camera);
@@ -1032,6 +1089,11 @@ function updateCamera(dt) {
     camera.position.copy(chase);
     camera.lookAt(tmpV.copy(rig.position).add(new THREE.Vector3(Math.sin(S.yaw) * 2, 1.2, Math.cos(S.yaw) * 2)));
     camera.near = 0.2;
+  }
+  if (DBG.cam) {                                 // 試験用：トラクターの中の好きな所から見る
+    if (camera.parent !== rig) rig.add(camera);
+    camera.position.fromArray(DBG.cam[0]); camera.lookAt(rig.localToWorld(tmpV.fromArray(DBG.cam[1])));
+    camera.near = 0.01;
   }
   camera.updateProjectionMatrix();
   sun.position.copy(rig.position).addScaledVector(SUN_DIR, 40);
@@ -1249,7 +1311,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { S, key, DRIVER, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { S, key, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -18,6 +18,14 @@ const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // �
 // stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
 const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
 const st = load();
+// 👻 ゴースト：ベストの ときの 走り（0.1秒ごとの 位置）。記録と 同じ キーで、べつの 場所に のこす（大きいので st には 入れない）
+const GKEY = 'nsg_meiro_ghost', GSTEP = 0.1;
+const ghosts = (() => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}') || {}; } catch (e) { return {}; } })();
+function saveGhost(k, gh) {
+  delete ghosts[k]; ghosts[k] = gh;
+  const ks = Object.keys(ghosts); for (let i = 0; i < ks.length - 40; i++) delete ghosts[ks[i]];   // 新しい 40面ぶんまで
+  try { localStorage.setItem(GKEY, JSON.stringify(ghosts)); } catch (e) { /* いっぱいなら のこさない */ }
+}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } note(); };
 function note() {   // きろく の 札に すすみぐあい（何面まで・★の合計）
   const el = document.getElementById('meiroNote');
@@ -281,6 +289,8 @@ function startStage(n, daily = false) {
       return;
     }
     g.board = b;
+    const gh = ghosts[recKey(g)];   // 盤が かわっていたら（地図の 作りなおし など）つかわない
+    g.ghost = gh && gh.w === b.tw && gh.s === b.start[1] * b.tw + b.start[0] && gh.e === b.goal[1] * b.tw + b.goal[0] && gh.p && gh.p.length >= 4 ? gh : null;
     ui.load.hidden = true;
     fit();
     restart();
@@ -305,7 +315,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0; game.got = new Set();
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -428,7 +438,7 @@ function step(dt) {
   g.th += (g.vx >= 0 ? 1 : -1) * Math.hypot(g.vx, g.vy) * dt / 0.32;   // 転がった道のりで 回す
   g.sq = Math.max(0, g.sq - dt * 1.5); g.ouch = Math.max(0, g.ouch - dt); g.happy = Math.max(0, g.happy - dt);
   if (!g.go && Math.hypot(g.vx, g.vy) > 0.3) g.go = true;   // タイムは お米が 動きだしてから（盤を 見て 考える あいだは 数えない）
-  if (g.go) g.t += dt;
+  if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); }   // ゴーストの ための 走りの きろく（1/20マス）
   const ci = Math.floor(g.x), cj = Math.floor(g.y), idx = cj * b.tw + ci;
   const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && Math.hypot(g.x - ci - 0.5, g.y - cj - 0.5) < 0.3;
   if (water || inHole) {   // おちた
@@ -449,6 +459,7 @@ function win() {
   const sec = Math.round(g.t * 10) / 10, par = (b.len * 0.45 + 3) * (st.slow ? 1.6 : 1);   // 目やすの時間（道のりから。ゆっくりでは 長め）
   const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
   const prev = st.best[recKey(g)], newBest = !prev || sec < prev.t;
+  if (newBest) { g.ghost = { s: b.start[1] * b.tw + b.start[0], e: b.goal[1] * b.tw + b.goal[0], w: b.tw, p: g.rec }; saveGhost(recKey(g), g.ghost); }   // つぎの「もういちど」から この走りと きそう
   st.best[recKey(g)] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   if (!g.daily) st.stage = Math.max(st.stage, g.n + 1);   // きょうの めいろ では 面を すすめない
   save();
@@ -556,7 +567,17 @@ function draw(now) {
     x.fillStyle = '#fff6c0'; x.beginPath(); x.ellipse(cx - rw * 0.35, cy - rh * 0.35, rw * 0.3, rh * 0.3, 0.35, 0, Math.PI * 2); x.fill();
   }
   // お米
-  const u = T * 0.031;   // お米の 点の大きさ（はばが マスの 6割ほど。当たりの 半径 R と 見た目を そろえる）
+  const u = T * 0.031;
+  const gh = g.ghost;
+  if (gh && !g.done) {   // 👻 ベストの 自分（うすく。タイムが 動きだしてから いっしょに 走る。ゴールに ついたら 消える）
+    const f = g.t / GSTEP, i = Math.min(Math.floor(f), gh.p.length / 2 - 1), j = Math.min(i + 1, gh.p.length / 2 - 1), k = f - Math.floor(f);
+    if (f < gh.p.length / 2 + 2) {
+      const hx = (gh.p[i * 2] + (gh.p[j * 2] - gh.p[i * 2]) * k) / 20, hy = (gh.p[i * 2 + 1] + (gh.p[j * 2 + 1] - gh.p[i * 2 + 1]) * k) / 20;
+      x.fillStyle = 'rgba(110,190,255,.35)'; x.strokeStyle = 'rgba(60,140,230,.7)'; x.lineWidth = Math.max(1, T / 16);   // 灰色の 道でも わかるように 水色の わ
+      x.beginPath(); x.arc(hx * T, hy * T, T * 0.34, 0, Math.PI * 2); x.fill(); x.stroke();
+      x.globalAlpha = 0.5; nishioPixel.drawRice(x, hx * T, hy * T, (g.t * 6) % (Math.PI * 2), 0, 'smile', 0, '', u); x.globalAlpha = 1;
+    }
+  }   // お米の 点の大きさ（はばが マスの 6割ほど。当たりの 半径 R と 見た目を そろえる）
   if (g.fall > 0) {   // おちていく：くるくる 小さく
     const k = g.fall / 0.8, [fx, fy] = g.fallAt;
     if (g.fallWater) { x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = Math.max(1, T / 14); x.beginPath(); x.arc(fx * T, fy * T, T * (0.5 - k * 0.3), 0, Math.PI * 2); x.stroke(); }

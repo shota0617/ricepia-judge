@@ -1507,7 +1507,7 @@ const BIRDS = (() => {
     b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0 };
     return b;
   }
-  // ハシボソガラス：サギといっしょに耕したあとへ来る（いちばん早く来ることが多い）。全身まっ黒・太いくちばし・短い脚。
+  // ハシボソガラス：サギといっしょに耕したあとへ来る（いちばん早く来ることが多い）。全身まっ黒・ハシブトより細いくちばし・なだらかな額・短い脚。
   // 人や機械を用心して、サギより少しはなれた所を歩く。水を張った代かきの田んぼには あまり来ない
   const crowM = new THREE.MeshStandardMaterial({ color: 0x101116, roughness: 0.45, metalness: 0.1, envMapIntensity: 0.6 });   // 羽はつやがある
   function makeCrow() {
@@ -1520,7 +1520,7 @@ const BIRDS = (() => {
     const neck = new THREE.Group(); neck.position.set(0, 0.2, 0.08); b.add(neck);
     const head = new THREE.Group(); head.position.set(0, 0.03, 0.04); neck.add(head);
     head.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), crowM));
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.017, 0.065, 6), crowM);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.065, 6), crowM);
     beak.rotation.x = Math.PI / 2; beak.position.set(0, -0.005, 0.07); head.add(beak);
     const legs = [];
     for (const sx of [-1, 1]) {
@@ -1589,6 +1589,7 @@ const BIRDS = (() => {
         if (u.crow) u.neck.position.y = 0.2 + (walking ? 0.008 * Math.abs(step) : 0);   // 首をふりながら のしのし歩く
         const peck = !walking && Math.sin(u.t * 3.3 + k) > 0.6;   // ついばむ
         u.neck.rotation.x = peck ? 1.25 : 0.05 * Math.sin(u.t * 9);
+        if (u.callT > 0) { u.callT -= dt; u.neck.rotation.x = 0.7 * Math.max(0, Math.sin(u.callT / 0.42 * Math.PI * 2)); }   // 鳴きながら おじぎ
       }
       if (!want && dTractor > 30) b.visible = false;
     });
@@ -2383,7 +2384,8 @@ function startAmbient(ac) {
   amb.tick = tick;                                // 試験用
   return amb;
 }
-// カラスの声「カァ、カァ」：しわがれた声（のこぎり波を 2 つの帯域でしぼる）。1 声 0.25 秒で少し下がる。2〜4 声つづける
+// ハシボソガラスの声「ガァ、ガァ」：濁った声（のこぎり波を 2 つの帯域でしぼる）。1 声 0.25 秒で少し下がる。2〜4 声つづける。
+// 鳴くときは おじぎをするように頭を上下させる（ハシブトの「カー」は澄んだ声）
 function caw(ac, dest, t0, n) {
   for (let i = 0; i < n; i++) {
     const t = t0 + i * 0.42, o = ac.createOscillator(), b1 = ac.createBiquadFilter(), b2 = ac.createBiquadFilter(), g = ac.createGain();
@@ -2426,10 +2428,12 @@ function updateSound(dt = 0) {
     audio.crowT = 5 + Math.random() * 10;
     const cs = BIRDS.list.filter(b => b.userData.crow && b.visible);
     if (cs.length) {
-      const [pan, d] = panTo(cs[Math.floor(Math.random() * cs.length)].position);
+      const c0 = cs[Math.floor(Math.random() * cs.length)], [pan, d] = panTo(c0.position);
       if (audio.crowP) audio.crowP.pan.setValueAtTime(pan * 0.8, t);
       audio.crowG.gain.setValueAtTime(Math.min(0.06, 0.6 / Math.max(d, 6)) * inCab, t);
-      caw(audio.ac, audio.crowG, t + 0.05, 2 + Math.floor(Math.random() * 3));
+      const n = 2 + Math.floor(Math.random() * 3);
+      caw(audio.ac, audio.crowG, t + 0.05, n);
+      c0.userData.callT = n * 0.42;                // 鳴いているあいだ おじぎ
     }
   }
 }

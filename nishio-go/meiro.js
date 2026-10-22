@@ -249,6 +249,7 @@ function waitChunks(spot, done) {
 }
 function restart() {
   const b = game.board;
+  clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
   game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = [];
   ui.clear.hidden = true;
@@ -364,7 +365,7 @@ function win() {
   const sec = Math.round(g.t * 10) / 10, par = b.len * 0.45 + 3;   // 目やすの時間（道のりから）
   const stars = g.falls === 0 && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;
   const prev = st.best[g.n], newBest = !prev || sec < prev.t;
-  if (newBest) st.best[g.n] = { t: sec, s: Math.max(stars, prev ? prev.s : 0) };
+  st.best[g.n] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   st.stage = Math.max(st.stage, g.n + 1);
   save();
   if (root.nsgTrack) root.nsgTrack('meiro_clear', { stage: g.n + 1, sec, falls: g.falls, stars });
@@ -378,7 +379,8 @@ function win() {
   for (let i = 0; i < 46; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 5; g.fx.push({ x: gx, y: gy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 3, c: cols[i % cols.length], t: 0, life: 0.9 + Math.random() * 0.7 }); }
   [0, 110, 220, 380].forEach((ms, i) => setTimeout(() => api.koto(0.5 + i * 0.15, i === 3), ms));
   if (navigator.vibrate) try { navigator.vibrate([30, 40, 30, 40, 80]); } catch (e) { /* noop */ }
-  setTimeout(() => { if (game === g) ui.clear.hidden = false; }, 1100);
+  clearTimeout(g.cardT);
+  g.cardT = setTimeout(() => { if (game === g && g.done) ui.clear.hidden = false; }, 1100);   // 紙ふぶきの あいだに やりなおしたら 出さない
 }
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);

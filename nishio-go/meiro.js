@@ -139,9 +139,9 @@ const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradie
 #meiro .mz-btns{display:flex;gap:10px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
 #meiro .mz-btns button,#meiro .mz-clear button{border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:15px;background:#ffe680;color:#2a2410;box-shadow:0 3px 0 #b59a2a}
 #meiro .mz-btns button.sub{background:rgba(255,255,255,.2);color:#fff;box-shadow:none}
-#meiro .mz-clear{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(10,30,40,.55)}
+#meiro .mz-clear{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;background:rgba(10,30,40,.55);padding:12px;box-sizing:border-box}   /* 盤の わくの外（低い画面でも 切れない） */
 #meiro .mz-clear[hidden]{display:none}
-#meiro .mz-card{background:#fffdf2;color:#2a2a20;border-radius:18px;padding:18px 20px;text-align:center;width:min(86%,340px);box-shadow:0 8px 24px rgba(0,0,0,.4)}
+#meiro .mz-card{background:#fffdf2;color:#2a2a20;border-radius:18px;padding:18px 20px;text-align:center;width:min(86%,340px);max-height:100%;overflow-y:auto;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 #meiro .mz-card h3{margin:0 0 6px;font-size:24px;color:#d0402a}
 #meiro .mz-card p{margin:6px 0;font-size:15px;line-height:1.5}
 #meiro .mz-card .mz-stars{font-size:28px;letter-spacing:4px;color:#f0b020}
@@ -155,8 +155,8 @@ function build() {
   el.id = 'meiro'; el.hidden = true;
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '西尾めいろ');
   el.innerHTML = `<div class="mz-top"><div class="mz-st"></div><div class="mz-time">0.0</div><button type="button" class="mz-x" data-mz="close" aria-label="めいろを とじる">✕</button></div>
-    <div class="mz-bezel"><div class="mz-glass"><canvas aria-label="迷路の盤"></canvas><div class="mz-load">めいろを つくっています…</div>
-      <div class="mz-clear" hidden><div class="mz-card"></div></div></div></div>
+    <div class="mz-bezel"><div class="mz-glass"><canvas aria-label="迷路の盤"></canvas><div class="mz-load">めいろを つくっています…</div></div></div>
+    <div class="mz-clear" hidden><div class="mz-card"></div></div>
     <p class="mz-hint">📱 スマホを 傾けて、お米を 🏁 まで ころがそう（パソコンは 矢印キー・盤を なぞっても）。<br/>黒い穴と 水に おちると スタートに もどるよ</p>
     <div class="mz-btns"><button type="button" class="sub" data-mz="retry">↺ やりなおし</button><button type="button" class="sub" data-mz="list">めいろ の いちらん</button></div>`;
   document.body.appendChild(el);

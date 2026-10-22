@@ -516,7 +516,7 @@ def m_worship(st):
         torii_at(st, gate, f, 'accP', rng.randint(3, 4))
         d = (cells[1][0] - gate[0], cells[1][1] - gate[1]) if len(cells) > 1 else (f[0], -f[1])   # 入口から出ていく参道の向き
         for s in (-1, 1):   # 狐の像は、その向きの両わき（参道のはば 0.07 にかからない）
-            sphere(f'kitsune{s}', 'kitsune', 0.016, (xy(*gate)[0] + s * 0.05 * abs(d[1]), xy(*gate)[1] + s * 0.05 * abs(d[0]), 0.035), (0.8, 1.2, 1.4))
+            sphere(f'kitsune{s}', 'kitsune', 0.016, (xy(*gate)[0] + s * 0.05 * abs(d[1]), xy(*gate)[1] + s * 0.05 * abs(d[0]), 0.035), (0.8, 0.8, 1.4))
     elif k == 'shrine':
         torii_at(st, gate, f, 'ishi' if rng.random() < 0.3 else 'accP')
         if front_cell and rng.random() < 0.7:   # 灯籠は参道の両わきのマスのまん中（参道・建物・お墓のないマスのときだけ。そのマスには木を植えない）

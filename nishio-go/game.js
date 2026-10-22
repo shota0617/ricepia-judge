@@ -1443,6 +1443,7 @@ function finishFirst(id) {
   const p = firstPick;
   if (!p) return;
   firstPick = null;
+  if (p.opt.key && p.opt.key !== stateKey()) { if (!$('pxInfo').hidden) $('pxInfo').hidden = true; return; }   // えらんでいる間に 移動のしかた（記録）を切り替えた：渡さない（予約は もとの記録に残り、もどったとき また出る）
   const dot = addDot(p.cands.includes(id) ? id : p.cands[0], !!p.opt.kira);
   track(p.opt.ev || 'first_dot_pick', { picked: p.cands.indexOf(dot.id), mode: demo ? 'play' : 'walk' });
   save();
@@ -1466,12 +1467,13 @@ function sealCands(areaId) {
 function sealPickCheck() {
   const p = (S.sealPicks || [])[0];
   if (!p || firstPick || !document.body.classList.contains('px') || !$('pxInfo').hidden || rewardBusy() || !window.NISHIO_DOTS) return;
+  if (['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden)) return;   // ほかのタブ（せってい など）を開いている間は 出さない（地図にもどってから）
   if (document.body.classList.contains('jump-open') || medashiOpen() || (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) || (window.nishioPixel && nishioPixel.sightBusy && nishioPixel.sightBusy())) return;   // ミニゲーム・イベント・ムービー・呼びとめの最中は出さない
   pickFirst(p.cands, dot => {
     S.sealPicks = (S.sealPicks || []).filter(x => x !== p); save();
     toastAfter(`🔖 ${p.name}のしるしの1枚：「${window.NISHIO_DOTS.info(dot.id).title}」が キラで 絵帳に入った！`);
     const pl = $('panel-log'); if (pl && !pl.hidden) renderLog();
-  }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません）', kira: true, ev: 'seal_dot_pick' });
+  }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません）', kira: true, ev: 'seal_dot_pick', key: stateKey() });
 }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pick-dot]'); if (b) finishFirst(Number(b.dataset.pickDot)); });
 // えらばずに窓を閉じたら（とじる・まわりをタップ）、はじめの1枚にする

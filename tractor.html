@@ -124,7 +124,8 @@
       ・エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
-      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽集まってくる
+      ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
+      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる
     </div>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -782,6 +783,7 @@ function setupField(root) {
     stubbleGeo = hm.geometry.clone();            // 茎の数を減らした軽い型にする（パソコン 6 本・スマホ 4 本）
     stubbleGeo.setIndex(Array.from(hm.geometry.index.array).slice(0, 3 * (MOBILE ? 40 : 60)));
     stubbleMat = hm.material;
+    HEAPS.setup();
     const hk = root.getObjectByName('HikobaeHill');   // 秋：刈り株から伸びた青い芽（ひこばえ）。切り株と同じ所に並べる
     if (hk) {
       hk.visible = false;
@@ -1210,6 +1212,214 @@ const BIRDS = (() => {
   return { update };
 })();
 
+// ---- セキレイ（ハクセキレイ）：耕した土の上を小走りしては止まり、長い尾を上下にふって虫をついばむ。近づくと波をえがいて飛ぶ
+const WAGTAILS = (() => {
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const grey = lam(0x6f7276), white = lam(0xf2f2ee), black = lam(0x161616);
+  function make() {
+    const b = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), grey);
+    body.scale.set(0.85, 0.85, 1.7); body.position.y = 0.055; b.add(body);
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.027, 8, 6), white);
+    belly.scale.set(0.9, 0.75, 1.4); belly.position.set(0, 0.047, 0.008); b.add(belly);
+    for (const sx of [-1, 1]) {                   // たたんだ翼：黒に白い帯
+      const wg = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), black);
+      wg.scale.set(0.45, 0.7, 1.9); wg.position.set(sx * 0.02, 0.06, -0.008); b.add(wg);
+      const bar = new THREE.Mesh(new THREE.SphereGeometry(0.012, 6, 4), white);
+      bar.scale.set(0.5, 0.6, 1.8); bar.position.set(sx * 0.029, 0.062, 0.0); b.add(bar);
+    }
+    const head = new THREE.Group(); head.position.set(0, 0.085, 0.045); b.add(head);
+    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), white));
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0205, 8, 6, 0, Math.PI * 2, 0, 1.1), black);
+    cap.rotation.x = -0.5; head.add(cap);
+    const bib = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), black);
+    bib.scale.set(1, 1, 0.6); bib.position.set(0, -0.02, 0.012); head.add(bib);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.004, 0.018, 4), black);
+    beak.rotation.x = Math.PI / 2; beak.position.z = 0.025; head.add(beak);
+    const tail = new THREE.Group(); tail.position.set(0, 0.06, -0.045); b.add(tail);
+    const tm = new THREE.Mesh(new THREE.BoxGeometry(0.016, 0.004, 0.1), black);
+    tm.position.z = -0.05; tail.add(tm);
+    for (const sx of [-1, 1]) {                   // 尾の両はしは白
+      const e = new THREE.Mesh(new THREE.BoxGeometry(0.003, 0.0045, 0.09), white);
+      e.position.set(sx * 0.009, 0, -0.05); tail.add(e);
+    }
+    const wings = [];
+    for (const s of [-1, 1]) {
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.05), black);
+      w.geometry.translate(s * 0.06, 0, 0);
+      w.position.set(0, 0.07, 0); w.rotation.x = -Math.PI / 2; w.visible = false;
+      w.material = black.clone(); w.material.side = THREE.DoubleSide;
+      b.add(w); wings.push(w);
+    }
+    for (const s of [-1, 1]) {
+      const l = new THREE.Mesh(new THREE.CylinderGeometry(0.0018, 0.0018, 0.04, 4), black);
+      l.position.set(s * 0.01, 0.02, 0); b.add(l);
+    }
+    b.userData = { head, tail, wings, state: 'fly', t: 0, run: 0, tx: 0, tz: 0, ph: Math.random() * 6 };
+    return b;
+  }
+  const list = [];
+  for (let k = 0; k < (MOBILE ? 2 : 3); k++) { const b = make(); b.visible = false; scene.add(b); list.push(b); }
+  let workT = 0;
+  function pick(u) {                              // うしろの耕した所（ときどき耕す前の所）のどこか
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
+    const lx = (Math.random() - 0.5) * 6, lz = ROTARY_Z - 1.5 - Math.random() * 7;
+    u.tx = S.x + lx * c + lz * s; u.tz = S.z - lx * s + lz * c;
+  }
+  function update(dt, working) {
+    workT = working && Math.abs(S.v) > 0.2 ? workT + dt : Math.max(0, workT - dt * 0.15);
+    list.forEach((b, k) => {
+      const u = b.userData;
+      u.t += dt;
+      const want = workT > 8 + k * 6;
+      if (!b.visible && want) {
+        const a = Math.random() * 6.28;
+        b.position.set(S.x + Math.cos(a) * 30, 4, S.z + Math.sin(a) * 30);
+        b.visible = true; u.state = 'fly'; pick(u);
+      }
+      if (!b.visible) return;
+      const dT = Math.hypot(b.position.x - S.x, b.position.z - S.z);
+      if (u.state !== 'fly' && (dT < 3.2 || (dT > 14 && want) || Math.hypot(u.tx - b.position.x, u.tz - b.position.z) > 9)) { u.state = 'fly'; pick(u); }   // 近づかれたら・はなれすぎたら飛ぶ
+      const dx = u.tx - b.position.x, dz = u.tz - b.position.z, d = Math.hypot(dx, dz);
+      const gy = TILL_Y + 0.01;
+      if (u.state === 'fly') {                     // 波をえがいて飛ぶ（はばたいては、とじて落ちる）
+        const sp = 6;
+        b.position.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt);
+        b.position.z += dz / Math.max(d, 0.01) * Math.min(d, sp * dt);
+        const flap = Math.sin(u.t * 2.6 * Math.PI) > -0.2;
+        const hy = gy + Math.min(2.2, d * 0.35) + 0.25 * Math.sin(u.t * 2.6 * Math.PI);
+        b.position.y += (hy - b.position.y) * Math.min(1, dt * 4);
+        b.rotation.y = Math.atan2(dx, dz);
+        u.wings.forEach((w, i) => { w.visible = flap; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / 45) * 0.9; });
+        if (d < 0.1) { u.state = 'stop'; u.run = 0.4 + Math.random(); b.position.y = gy; }
+      } else {
+        u.wings.forEach(w => { w.visible = false; });
+        u.run -= dt;
+        if (u.run <= 0) {                          // 小走り ↔ 止まる をくりかえす
+          if (u.state === 'run') { u.state = 'stop'; u.run = 0.5 + Math.random() * 1.2; }
+          else {
+            u.state = 'run'; u.run = 0.3 + Math.random() * 0.6;
+            const a = Math.random() * 6.28, r = 0.3 + Math.random() * 0.8;
+            u.tx = b.position.x + Math.cos(a) * r; u.tz = b.position.z + Math.sin(a) * r;
+          }
+        }
+        if (u.state === 'run' && d > 0.03) {
+          b.position.x += dx / d * 1.4 * dt; b.position.z += dz / d * 1.4 * dt;
+          b.rotation.y = Math.atan2(dx, dz);
+          b.position.y = gy + 0.004 * Math.abs(Math.sin(u.t * 40));
+        }
+        const stop = u.state === 'stop';
+        u.tail.rotation.x = stop ? 0.35 * Math.max(0, Math.sin(u.t * 14 + u.ph)) : 0.05;   // 止まると尾を上下にふる
+        u.head.rotation.x = stop && Math.sin(u.t * 2.1 + u.ph) > 0.75 ? 0.9 : 0;           // ついばむ
+      }
+      if (!want && dT > 25) b.visible = false;
+    });
+  }
+  return { update, list };
+})();
+
+// ---- 四隅の土の盛り上がり：ロータリーを下げたまま大きく曲がると、ロータリーが横へ振られて外側に土が寄る
+// （農家さんの悩みとしてよく挙がる。まっすぐ耕しなおすと均平板で少しずつならされる）。代かきは水の下なので出さない
+const HEAPS = (() => {
+  const N = 80, RING = 4, SEG = 10, NV = 1 + RING * SEG;
+  const list = [];
+  let mesh = null, dirty = false, acc = 0, told = false, rebuildT = 0;
+  function setup() {
+    if (SHIRO || !tilled) return;
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * NV * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(N * NV * 2), 2).setUsage(THREE.DynamicDrawUsage));
+    g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(N * NV * 3), 3).setUsage(THREE.DynamicDrawUsage));
+    const idx = [];
+    for (let k = 0; k < N; k++) {
+      const b = k * NV;
+      for (let s = 0; s < SEG; s++) idx.push(b, b + 1 + (s + 1) % SEG, b + 1 + s);
+      for (let r = 0; r < RING - 1; r++) for (let s = 0; s < SEG; s++) {
+        const a0 = b + 1 + r * SEG + s, a1 = b + 1 + r * SEG + (s + 1) % SEG;
+        idx.push(a0, a1, a0 + SEG, a1, a1 + SEG, a0 + SEG);
+      }
+    }
+    g.setIndex(idx);
+    g.setDrawRange(0, 0);
+    mesh = new THREE.Mesh(g, tilled.material);
+    mesh.frustumCulled = false;
+    mesh.receiveShadow = true;
+    scene.add(mesh);
+  }
+  const prof = d => d >= 1 ? 0 : Math.pow(1 - d * d, 1.6);
+  function at(x, z) {
+    let y = 0;
+    for (const h of list) { const d = Math.hypot(x - h.x, z - h.z) / h.r; if (d < 1) y += h.h * prof(d); }
+    return y;
+  }
+  function rebuild() {
+    const g = mesh.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nor = g.attributes.normal.array;
+    list.forEach((h, k) => {
+      for (let v = 0; v < NV; v++) {
+        const r = v ? Math.ceil(v / SEG) / RING : 0, a = v ? ((v - 1) % SEG) / SEG * Math.PI * 2 + h.seed : 0;
+        const wob = 1 + 0.18 * Math.sin(a * 3 + h.seed * 5) + 0.1 * Math.sin(a * 5 - h.seed);   // ふちはでこぼこ
+        const x = h.x + Math.cos(a) * r * h.r * wob * h.sx, z = h.z + Math.sin(a) * r * h.r * wob;
+        const y = TILL_Y - 0.012 + h.h * prof(r) + (r < 1 ? jitter(x, z) * 0.8 : 0);
+        pos.set([x, y, z], (k * NV + v) * 3);
+        uv.set([x / 2, -z / 2], (k * NV + v) * 2);
+        const sl = h.h / h.r * 3.2 * r * Math.pow(Math.max(0, 1 - r * r), 0.6);   // 傾き → 法線
+        const n = Math.hypot(sl, 1);
+        nor.set([Math.cos(a) * sl / n, 1 / n, Math.sin(a) * sl / n], (k * NV + v) * 3);
+      }
+    });
+    for (const a of ['position', 'uv', 'normal']) g.attributes[a].needsUpdate = true;
+    g.setDrawRange(0, list.length * (SEG + (RING - 1) * SEG * 2) * 3);
+    dirty = false;
+  }
+  function work(dt, working) {
+    if (!mesh || !working || Math.abs(S.v) < 0.08) return;
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
+    // まっすぐ耕すと、ロータリーの下の山は少しずつならされる
+    if (Math.abs(S.steer) < 0.15) {
+      for (let k = list.length - 1; k >= 0; k--) {
+        const h = list[k], dx = h.x - S.x, dz = h.z - S.z;
+        const lx = dx * c - dz * s, lz = dx * s + dz * c;
+        if (Math.abs(lx) < TILL_W / 2 - 0.1 && Math.abs(lz - ROTARY_Z) < 0.5) {
+          h.h *= 1 - Math.min(1, dt * 0.3 * Math.abs(S.v) / 0.78);
+          dirty = true;
+          if (h.h < 0.012) list.splice(k, 1);
+        }
+      }
+      return;
+    }
+    if (Math.abs(S.steer) < 0.32) return;
+    // 大きく曲がっている：曲がる向きと反対（外側）のロータリーのはしに土が寄る
+    acc += dt * Math.abs(S.v);
+    if (acc < 0.2) return;
+    acc = 0;
+    const lx = Math.sign(S.steer) * Math.sign(S.v) * (TILL_W / 2 + 0.05), lz = ROTARY_Z - 0.1;
+    const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
+    if (Math.abs(x) > HX + 0.3 || Math.abs(z) > HZ + 0.3) return;
+    let best = null, bd = 0.75;
+    for (const h of list) { const d = Math.hypot(h.x - x, h.z - z); if (d < bd) { bd = d; best = h; } }
+    if (best) {
+      best.h = Math.min(0.2, best.h + 0.022);
+      best.r = Math.min(1.1, best.r + 0.035);
+      best.x += (x - best.x) * 0.25; best.z += (z - best.z) * 0.25;
+    } else {
+      if (list.length >= N) list.shift();
+      list.push({ x, z, h: 0.05, r: 0.5, sx: 0.8 + Math.random() * 0.4, seed: Math.random() * 6.28 });
+    }
+    dirty = true;
+    if (!told && list.some(h => h.h > 0.07)) {
+      told = true;
+      toast('ロータリーを下げたまま大きく曲がると、土が寄って盛り上がります。角では上げてから回ろう');
+    }
+  }
+  function flush(dt) {
+    if (!dirty || !mesh) return;
+    if ((rebuildT -= dt) > 0) return;
+    rebuildT = 0.15;
+    rebuild();
+  }
+  return { setup, at, work, flush, list };
+})();
+
 // ---- 運転 ----
 const S = { x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
 const key = { fwd: 0, back: 0, left: 0, right: 0 };
@@ -1230,7 +1440,7 @@ function canBe(x, z, yaw) {
 }
 function placeRig(dt) {
   const p = wheelPoints(S.x, S.z, S.yaw);
-  const h = k => ground(p[k][0], p[k][1]) ?? 0;
+  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8;   // 盛り上がった土の上では傾く
   const hr = (h('rl') + h('rr')) / 2, hf = (h('fl') + h('fr')) / 2;
   rig.position.set(S.x, hr, S.z);
   S.dist = (S.dist || 0) + Math.abs(S.v) * dt;   // 走った道のり（凸凹のゆれに使う）
@@ -1299,6 +1509,7 @@ function step(dt) {
   if (working && S.v > 0.05) emitTilling(dt);
   if (Math.abs(S.v) > 0.05) laySomeTracks(working);
   if (S.v > 0.05) STREAK.add(working); else if (!working) STREAK.add(false);
+  HEAPS.work(dt, working);
   if (working && S.v > 0.05) {
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
@@ -1595,6 +1806,7 @@ function frame(now) {
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);
+  WAGTAILS.update(dt, S.rotDown && S.rotPos < 0.08);
   emitExhaust(dt);
   DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
   MIRROR.update(dt, camMode === 0);
@@ -1615,6 +1827,7 @@ function frame(now) {
   }
   if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
+  HEAPS.flush(dt);
   TR.flush();
   STREAK.flush();
   SUN_VIEW.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);
@@ -1622,7 +1835,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

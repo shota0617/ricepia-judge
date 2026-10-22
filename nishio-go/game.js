@@ -1401,13 +1401,14 @@ function firstCands(c) {
   }
   return out;
 }
-let firstPick = null;   // { cands, done }：えらんでいる途中
-function pickFirst(cands, done) {
+let firstPick = null;   // { cands, done, opt }：えらんでいる途中
+// opt：{ title, sub, kira（えらんだ絵を キラに）, ev（GA4 の名前） }。ふだんは はじめの1枚
+function pickFirst(cands, done, opt = {}) {
   const D = window.NISHIO_DOTS;
-  firstPick = { cands, done };
+  firstPick = { cands, done, opt };
   const open = () => {
     if (!firstPick || firstPick.cands !== cands) return;
-    $('pxInfoBody').innerHTML = `<div class="pick-first"><h4>${PIA('card', '')} はじめの1枚を えらぼう</h4><p>えらんだ絵が、西尾ドット絵帳の1枚目になります</p>
+    $('pxInfoBody').innerHTML = `<div class="pick-first"><h4>${PIA('card', '')} ${esc(opt.title || 'はじめの1枚を えらぼう')}</h4><p>${esc(opt.sub || 'えらんだ絵が、西尾ドット絵帳の1枚目になります')}</p>
       <div class="pick3">${cands.map(id => { const f = D.info(id); return `<button type="button" data-pick-dot="${id}"><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96"/>${starRow(dotStars(f))}<span>${esc(f.title)}</span></button>`; }).join('')}</div></div>`;
     $('pxInfo').hidden = false;
   };
@@ -1417,15 +1418,36 @@ function finishFirst(id) {
   const p = firstPick;
   if (!p) return;
   firstPick = null;
-  const dot = addDot(p.cands.includes(id) ? id : p.cands[0]);
-  track('first_dot_pick', { picked: p.cands.indexOf(dot.id), mode: demo ? 'play' : 'walk' });
+  const dot = addDot(p.cands.includes(id) ? id : p.cands[0], !!p.opt.kira);
+  track(p.opt.ev || 'first_dot_pick', { picked: p.cands.indexOf(dot.id), mode: demo ? 'play' : 'walk' });
   save();
   if (!$('pxInfo').hidden) $('pxInfo').hidden = true;
   p.done(dot);
 }
+// しるしの2枚（昔のドット絵RPGの「2つのうち 1つだけ もらえる」）：地区のしるしを もらったら、その地区の題材の めずらしい天気（雪・満月・虹）の絵を
+// 2枚見せて、えらんだ1枚が キラで もらえる（もう1枚は もらえない）。人の話の窓を閉じてから出す。えらぶ前に閉じたアプリでも、次に開いたとき出す
+function sealCands(areaId) {
+  const D = window.NISHIO_DOTS;
+  if (!D) return [];
+  const have = new Set((S.dots || []).map(id => D.motifOf(id))), all = D.MOTIFS.map((m, i) => i);
+  const here = all.filter(i => (D.MOTIFS[i].areas || []).includes(areaId)), base = here.length >= 2 ? here : all;
+  const fresh = base.filter(i => !have.has(i)), pool = (fresh.length >= 2 ? fresh : base).slice();
+  const out = [];
+  while (out.length < 2 && pool.length) { const m = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; out.push(D.idOf(m, 4, Math.floor(Math.random() * 16), Math.floor(Math.random() * D.NCOMP))); }
+  return out;
+}
+function sealPickCheck() {
+  const p = S.sealPick;
+  if (!p || firstPick || !document.body.classList.contains('px') || !$('pxInfo').hidden || rewardBusy() || !window.NISHIO_DOTS) return;
+  pickFirst(p.cands, dot => {
+    S.sealPick = null; save();
+    toastAfter(`🔖 ${p.name}のしるしの1枚：「${window.NISHIO_DOTS.info(dot.id).title}」が キラで 絵帳に入った！`);
+    const pl = $('panel-log'); if (pl && !pl.hidden) renderLog();
+  }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません）', kira: true, ev: 'seal_dot_pick' });
+}
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pick-dot]'); if (b) finishFirst(Number(b.dataset.pickDot)); });
 // えらばずに窓を閉じたら（とじる・まわりをタップ）、はじめの1枚にする
-new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); else if (S.sealPick && $('pxInfo').hidden) setTimeout(sealPickCheck, 500); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });   // 人の話の窓を閉じたら、しるしの2枚
 
 /* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
    「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
@@ -2184,7 +2206,10 @@ function showEnding() {
 function sealGive(n) {
   const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
   if (!a || (S.seals || []).includes(id) || !sealReady(id)) return '';
-  S.seals = [...(S.seals || []), id]; save();
+  S.seals = [...(S.seals || []), id];
+  const cands = sealCands(id);
+  if (cands.length === 2) S.sealPick = { area: id, name: a.name, cands };   // 話の窓を閉じたら 2枚から えらぶ（sealPickCheck）
+  save();
   badgesSoon();   // バッジの知らせ
   track('seal_get', { area: id, mode: demo ? 'play' : 'walk' });
   return `🔖 ${n.name}「${a.name}を${sealGoal(id)}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`;
@@ -3590,6 +3615,7 @@ function begin(isDemo) {
   if (isDemo) toast(document.body.classList.contains('px')
     ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ 左下のスティック（矢印キー）で近づくと開きます') : '🎮 左下のスティック（矢印キー）で歩きます')
     : '🎮 地図をタップするとその場所へ移動します');
+  setTimeout(sealPickCheck, 3000);   // えらぶ前に閉じた しるしの2枚
 }
 document.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('[data-sponsor],[data-camp]');
@@ -3649,7 +3675,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, alleyFind, get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, alleyFind, sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

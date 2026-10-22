@@ -756,6 +756,25 @@ async function walkTo(page, id) {
     const again = rw.classList.contains('show') && /路地の行き止まり/.test(rw.innerText);
     return { at, shown, got, again, ok: shown && got >= 3 && !again && nishioGo.state.log.some(l => l.type === 'alley') };
   });
+  // しるしの2枚：地区のしるしを もらったら（ここでは 待ちの記録を直接つくる）、その地区の題材の 2枚から えらんだ1枚だけが キラで入る
+  R.checks.sealPick = await page.evaluate(async () => {
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    document.getElementById('pxInfo').hidden = true; await new Promise(r => setTimeout(r, 700));
+    const D = window.NISHIO_DOTS, cands = nishioGo.sealCands('nishio');
+    const inArea = cands.every(id => (D.MOTIFS[D.motifOf(id)].areas || []).includes('nishio')), two = cands.length === 2 && D.motifOf(cands[0]) !== D.motifOf(cands[1]);
+    nishioGo.state.sealPick = { area: 'nishio', name: '西尾', cands };
+    nishioGo.sealPickCheck();
+    for (let i = 0; i < 20 && document.getElementById('pxInfo').hidden; i++) await new Promise(r => setTimeout(r, 200));
+    const body = document.getElementById('pxInfoBody'), shown = !document.getElementById('pxInfo').hidden && /西尾のしるしの1枚を えらぼう/.test(body.innerText) && body.querySelectorAll('[data-pick-dot]').length === 2;
+    return { shown, inArea, two, cands };
+  });
+  await shot(page, '09-seal-pick');
+  R.checks.sealPick = await page.evaluate(async c => {
+    const btn = document.querySelectorAll('#pxInfoBody [data-pick-dot]')[1]; if (btn) btn.click();
+    await new Promise(r => setTimeout(r, 300));
+    const st = nishioGo.state, k = c.cands;
+    return { shown: c.shown, inArea: c.inArea, two: c.two, ok: c.shown && c.inArea && c.two && !st.sealPick && st.kira.includes(k[1]) && !st.kira.includes(k[0]) && st.dots.includes(k[1]) };
+  }, R.checks.sealPick);
   R.errors.push(...errors);
   await ctx.close();
 
@@ -782,6 +801,7 @@ async function walkTo(page, id) {
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');
   need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');
+  need(c.sealPick && c.sealPick.ok, 'しるしの2枚：2枚から えらぶ窓が出ない、または えらんだ1枚が キラで入らない');
   need(c.chain && c.chain.ok, 'めぐりの れんさ：30分以内に ちがう名所でチェックインしても れんさが つながらない');
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

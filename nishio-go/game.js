@@ -1682,6 +1682,24 @@ document.addEventListener('click', e => {
   const s = b && spots.find(x => x.id === b.dataset.search);
   if (s) { e.stopPropagation(); searchSpot(s); }
 });
+// 路地の行き止まり（NetHack の、通路が ぷつっと終わる所を しらべると 隠し扉が見つかる しくみ）：歩く地図で 道が終わる マス（pixel.js の alleyEnd）に
+// 入ると、その あたりの まちメモが1つ見つかる（+3pt）。地形そのものが「ここを しらべて」と教える。1マス1回・1日3回まで（ごほうびの画面が出ている間は数えない）
+const ALLEY = { pts: 3, daily: 3, keep: 400 };
+function alleyFind(x, y, ll) {
+  const key = `${x},${y}`, day = dayState();
+  if (!Array.isArray(S.alleys)) S.alleys = [];
+  if (S.alleys.includes(key) || (day.alleys || 0) >= ALLEY.daily || rewardBusy()) return false;
+  S.alleys.push(key); if (S.alleys.length > ALLEY.keep) S.alleys.shift();
+  day.alleys = (day.alleys || 0) + 1;
+  const k = pickFact({ id: 'alley:' + key, lat: ll.lat, lng: ll.lng }), fresh = !!k && !S.facts.includes(k);
+  if (fresh) S.facts.push(k);
+  const lvUp = gainPoints(ALLEY.pts);
+  S.log.unshift({ type: 'alley', t: Date.now(), pts: ALLEY.pts, name: '路地の行き止まりを しらべた', icon: '🔍' });
+  save();
+  track('alley_find', { fresh, mode: demo ? 'play' : 'walk' });
+  showReward(ALLEY.pts, '🔍 路地の行き止まりを しらべたら 見つかった！', fresh ? ['📖 まちメモ +1'] : [], lvUp, fresh ? factPool().get(k) : '', null);
+  return true;
+}
 // イベント「ドット絵ムービー」（movie.js）：西尾の海と大地の話（shizen.js）は、文で ばらばらに出すのではなく、ゆかりの名所に着いたときに ムービーで見せる。
 // 最後まで見ると、その話が まちメモ に残る。途中で閉じたら、次に着いたとき（名所の窓の「📽️ ムービー」からも）また見られる
 const movieOf = s => (window.NISHIO_MOVIE && s ? NISHIO_MOVIE.movieAt(s.id, s.area) : null);
@@ -2585,7 +2603,7 @@ $('dotMotifs').addEventListener('click', e => {
   renderDots();
 });
 
-const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift', trail: 'feet', trailmile: 'feet' };   // 最近のポイントの絵
+const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift', trail: 'feet', trailmile: 'feet', alley: 'book' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
@@ -3629,7 +3647,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, alleyFind, get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

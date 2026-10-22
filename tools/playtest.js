@@ -735,10 +735,26 @@ async function walkTo(page, id) {
   R.checks.kiraFar = await page.evaluate(async () => {
     const seen = [], el = document.getElementById('toast'), ob = new MutationObserver(() => seen.push(el.textContent)); ob.observe(el, { childList: true, characterData: true, subtree: true });
     nishioGo.moveTo(34.79, 137.10);
-    for (let i = 0; i < 60 && !seen.some(t => /8km こえた/.test(t)); i++) { await new Promise(r => setTimeout(r, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }   // ほかの知らせの あとに出る
+    const queued = () => (nishioGo.toastAfter.q || []).some(t => /8km こえた！.*2倍/.test(t));   // 知らせは ほかの知らせの あとに順に出る（待ちの列に入っていれば よい）
+    for (let i = 0; i < 10 && !queued() && !seen.some(t => /8km こえた/.test(t)); i++) { await new Promise(r => setTimeout(r, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }   // ほかの知らせの あとに出る
     ob.disconnect();
-    const told = (nishioGo.state.day || {}).farTold, said = seen.some(t => /8km こえた！.*2倍/.test(t));
+    const told = (nishioGo.state.day || {}).farTold, said = seen.some(t => /8km こえた！.*2倍/.test(t)) || queued();
     return { told, said, seen: [...new Set(seen)].slice(-6), showing: el.classList.contains('show') ? el.textContent : '', ok: told === 2 && said };
+  });
+  // 路地の行き止まり：近くで 道が終わるマスを探し、そこへの1歩（critterStep）で「🔍 路地の行き止まりを しらべたら 見つかった！」と +3pt。同じマスは2回目は出ない
+  R.checks.alley = await page.evaluate(async () => {
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); await new Promise(r => setTimeout(r, 400));
+    const P = nishioPixel, me = nishioGo.me, t = P.toTile(me.lat, me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    let at = null;
+    for (let r = 1; r < 80 && !at; r++) for (let dy = -r; dy <= r && !at; dy++) for (let dx = -r; dx <= r; dx++) if ((Math.abs(dx) === r || Math.abs(dy) === r) && P.alleyEnd(x0 + dx, y0 + dy)) { at = [x0 + dx, y0 + dy]; break; }
+    if (!at) return { ok: true, skipped: 'no-alley' };
+    const p0 = nishioGo.state.points;
+    P.critterStep(at[0], at[1]); await new Promise(r => setTimeout(r, 600));
+    const shown = rw.classList.contains('show') && /路地の行き止まり/.test(rw.innerText), got = nishioGo.state.points - p0;
+    if (rw.classList.contains('show')) rw.click(); await new Promise(r => setTimeout(r, 400));
+    P.critterStep(at[0], at[1]); await new Promise(r => setTimeout(r, 300));
+    const again = rw.classList.contains('show') && /路地の行き止まり/.test(rw.innerText);
+    return { at, shown, got, again, ok: shown && got >= 3 && !again && nishioGo.state.log.some(l => l.type === 'alley') };
   });
   R.errors.push(...errors);
   await ctx.close();
@@ -765,6 +781,7 @@ async function walkTo(page, id) {
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');
+  need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');
   need(c.chain && c.chain.ok, 'めぐりの れんさ：30分以内に ちがう名所でチェックインしても れんさが つながらない');
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

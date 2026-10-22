@@ -243,6 +243,10 @@
       <span><b>👾 ドット絵の地図</b><small>オフにすると、ふつうの地図（地理院タイル）で遊べます。</small></span>
       <input type="checkbox" id="pxToggle"/>
     </label>
+    <div class="row">
+      <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
+      <button type="button" id="koroOpen" class="btn" style="flex:none">ずかん</button>
+    </div>
     <label class="row">
       <span><b>🌙 夜は地図を暗く</b><small>オン（はじめ）は、夜（19時〜5時）のドット絵の地図が暗くなり、主人公のまわりと お店・建物の明かりだけが見えます（夕方・明け方は半分）。</small></span>
       <input type="checkbox" id="nightToggle"/>
@@ -425,6 +429,7 @@
 <script src="nishio-go/kirara.js"></script>
 <script src="nishio-go/yatsumushi.js"></script>
 <script src="nishio-go/landmark-gen.js"></script>
+<script src="nishio-go/korostyle.js"></script>
 <script src="nishio-go/pixel.js"></script>
 <script src="nishio-go/dots.js"></script>
 <script src="nishio-go/godot-field.js"></script>

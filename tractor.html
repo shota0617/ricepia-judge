@@ -543,10 +543,12 @@ const MIRROR = (() => {
 
 // ガラスのよごれ：点々のほこり・うすいくもり・下のほうの土ぼこり。前ガラスはワイパーがふいた半円だけきれい
 // （ガラスには UV が無いので、トラクターの中の位置から計算する。前＝+Z・左＝+X・上＝+Y）
+const SUN_VIEW = { value: new THREE.Vector3(0, 0, 1) };   // 太陽の向き（カメラから見た向き）。毎コマ更新
 function dustyGlass(m) {
   m.onBeforeCompile = sh => {
+    sh.uniforms.sunView = SUN_VIEW;
     sh.vertexShader = 'varying vec3 vObjP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vObjP = position;');
-    sh.fragmentShader = 'varying vec3 vObjP;\n' +
+    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\n' +
       'float gH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n' +
       'float gN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
       ' return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
@@ -555,7 +557,7 @@ function dustyGlass(m) {
   float haze = gN(q * 5.0) * 0.6 + gN(q * 13.0) * 0.4;
   float speck = step(0.986, gH(floor(q * 260.0))) * (0.5 + 0.5 * gH(floor(q * 260.0) + 3.1));
   float low = smoothstep(1.95, 1.42, vObjP.y);                       // 下のほうほど土ぼこり
-  float dust = 0.07 + 0.10 * haze + 0.35 * low * (0.6 + 0.4 * haze) + speck * 0.5;
+  float dust = 0.09 + 0.13 * haze + 0.38 * low * (0.6 + 0.4 * haze) + speck * 0.5;
   if (vObjP.z > 0.45) {                                               // 前ガラス：ワイパーがふいた半円（根元は左下）
     float d = length(vec2(vObjP.x - 0.46, vObjP.y - 1.62));
     float wiped = smoothstep(0.50, 0.47, d) * step(1.60, vObjP.y);
@@ -563,7 +565,10 @@ function dustyGlass(m) {
     dust += 0.18 * smoothstep(0.035, 0.0, abs(d - 0.49)) * step(1.6, vObjP.y);   // ふいたふちに たまった すじ
   }
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.60, 0.54, 0.44), clamp(dust * 1.6, 0.0, 1.0));
-  diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));`);
+  diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));`).replace('#include <output_fragment>', `#include <output_fragment>
+  float glare = pow(max(dot(normalize(-vViewPosition), sunView), 0.0), 3.0);   // 太陽のほうを見ると、ガラスのよごれが白く光る
+  gl_FragColor.rgb += vec3(1.0, 0.95, 0.85) * glare * (0.15 + 2.2 * dust);
+  gl_FragColor.a = max(gl_FragColor.a, glare * clamp(dust * 2.5, 0.0, 0.7));`);
   };
   m.needsUpdate = true;
 }
@@ -987,6 +992,56 @@ const TR = (() => {
 })();
 const trackCells = new Set();
 function eraseTracks(c) { if (trackCells.has(c)) { TR.erase(c); trackCells.delete(c); } }
+// 均平板のすじ：耕しているとき、ロータリーのうしろに進む向きの細いすじを残す（幅 2.1m の帯）
+const STREAK = (() => {
+  const N = 3000;
+  const pos = new Float32Array(N * 12), uv = new Float32Array(N * 8), idx = new Uint32Array(N * 6), nor = new Float32Array(N * 12);
+  for (let i = 0; i < N; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
+  for (let i = 0; i < N * 4; i++) nor[i * 3 + 1] = 1;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2).setUsage(THREE.DynamicDrawUsage));
+  g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  const cv = document.createElement('canvas');
+  cv.width = 256; cv.height = 16;
+  const x2 = cv.getContext('2d');
+  let x = 0;
+  while (x < 256) {                                // 横（幅の向き）に、幅 3〜7cm のすじ（みぞは暗く、山は明るい）
+    const w = 4 + Math.floor(Math.random() * 6), groove = Math.random() < 0.5;
+    const a = 0.18 + Math.random() * 0.22;
+    x2.fillStyle = groove ? `rgba(18,12,6,${a.toFixed(3)})` : `rgba(170,150,118,${(a * 0.7).toFixed(3)})`;
+    x2.fillRect(x, 0, w, 16);
+    x += w;
+  }
+  const tex = new THREE.CanvasTexture(cv);
+  tex.wrapT = THREE.RepeatWrapping;
+  const m = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 });
+  const mesh = new THREE.Mesh(g, m);
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 1;
+  scene.add(mesh);
+  let next = 0, last = null, dirty = false;
+  const y = TILL_Y + (SHIRO ? 0.003 : 0.034);
+  function add(working) {
+    if (!working) { last = null; return; }
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z - 0.62;
+    const x = S.x + lz * s, z = S.z + lz * c;
+    if (!last) { last = { x, z }; return; }
+    const d = Math.hypot(x - last.x, z - last.z);
+    if (d < 0.2) return;
+    if (d > 1.5) { last = { x, z }; return; }
+    const hw = 1.05, nx = -(z - last.z) / d * hw, nz = (x - last.x) / d * hw;
+    const i = next; next = (next + 1) % N;
+    pos.set([last.x + nx, y, last.z + nz, last.x - nx, y, last.z - nz, x - nx, y, z - nz, x + nx, y, z + nz], i * 12);
+    uv.set([0, 0, 1, 0, 1, 1, 0, 1], i * 8);
+    last = { x, z };
+    dirty = true;
+  }
+  function flush() { if (dirty) { g.attributes.position.needsUpdate = true; g.attributes.uv.needsUpdate = true; dirty = false; } }
+  return { add, flush };
+})();
+
 function laySomeTracks(working) {
   const p = wheelPoints(S.x, S.z, S.yaw);
   const list = working || SHIRO ? [] : [['rl', 0.38], ['rr', 0.38], ['fl', 0.21], ['fr', 0.21]];   // 耕しているときは、すぐうしろのロータリーが跡を消す。代かきは水の下
@@ -1135,6 +1190,7 @@ function step(dt) {
   P.Flap.rotation.x = P.flap0 + (working && S.v > 0.1 ? 0.06 + 0.03 * Math.sin(performance.now() / 70) : 0);
   if (working && S.v > 0.05) emitTilling(dt);
   if (Math.abs(S.v) > 0.05) laySomeTracks(working);
+  if (S.v > 0.05) STREAK.add(working); else if (!working) STREAK.add(false);
   if (working && S.v > 0.05) {
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
@@ -1410,6 +1466,8 @@ function frame(now) {
   if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
   TR.flush();
+  STREAK.flush();
+  SUN_VIEW.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);
   renderer.render(scene, camera);
 }
 requestAnimationFrame(frame);

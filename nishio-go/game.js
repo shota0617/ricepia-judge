@@ -683,6 +683,21 @@ function onFix(lat, lng, acc, t) {
   refreshNearby();
   tryChest();
   welcomeWalk();
+  farNotice();
+}
+// 遠いほど めずらしい（昔のドット絵RPGの「城から遠いほど 強い敵・よい宝」）：西尾城跡のあたり（CFG.center）から 4km で 1.5倍・8km で 2倍
+// （一色・吉良・幡豆・佐久島まで足をのばすと 出やすい）。キラの時間とは かけあわせる
+const KIRA_FAR = [[8000, 2], [4000, 1.5]];
+const kiraFar = () => { if (!me) return 1; const d = dist(me, { lat: CFG.center[0], lng: CFG.center[1] }); return (KIRA_FAR.find(([m]) => d >= m) || [0, 1])[1]; };
+// 遠いほど めずらしい：西尾城跡から 4km・8km の さかいを こえたら、その日 1回ずつ知らせる（ここから先は キラが出やすい）
+function farNotice() {
+  if (!me || !store.get('nsg_started', false) || (!demo && me.acc > CFG.maxAccuracy)) return;
+  const far = kiraFar(), day = dayState();
+  if (far <= (day.farTold || 1)) return;
+  day.farTold = far; save();
+  const km = (KIRA_FAR.find(([, f]) => f === far) || [0])[0] / 1000;
+  toastAfter(`✨ 西尾城跡から ${km}km こえた！ ここから先は キラの絵が ${far}倍 出やすい`);
+  track('kira_far', { far });
 }
 
 function startGps() {
@@ -2413,11 +2428,12 @@ function addDot(id, forceKira) {   // forceKira：必ずキラに（7日連続�
   const D = window.NISHIO_DOTS;
   if (!Array.isArray(S.dots)) S.dots = [];
   if (!Array.isArray(S.kira)) S.kira = [];
-  const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && (forceKira || Math.random() < KIRA_RATE * (kiraHour() ? 2 : 1));
+  const far = kiraFar(), rate = KIRA_RATE * (kiraHour() ? 2 : 1) * far;
+  const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && (forceKira || Math.random() < rate);
   if (fresh) { S.dots.push(id); weekStat().dots++; dayState().dots = (dayState().dots || 0) + 1; }
   if (kira) S.kira.push(id);
-  track('dot_get', { motif: D.info(id).motif, fresh, kira, mode: demo ? 'play' : 'walk' });
-  return { id, fresh, kira };
+  track('dot_get', { motif: D.info(id).motif, fresh, kira, far, mode: demo ? 'play' : 'walk' });
+  return { id, fresh, kira, rate: forceKira ? 0 : rate, far };
 }
 // 7日連続（7日・14日…）のごほうび：まだ持っていない題材の、めずらしい天気（雪・満月・虹）のキラの絵。ふだんは場所で決まる絵を、場所によらず1枚
 function streakDot() {
@@ -2448,7 +2464,7 @@ function dotLines(dot) {
   const D = window.NISHIO_DOTS;
   if (!dot || !D) return [];
   const f = D.info(dot.id);
-  return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`, ...(dot.kira ? ['✨ キラの絵！（32回に1回）'] : [])];
+  return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`, ...(dot.kira ? [`✨ キラの絵！（${(r => r ? `${Math.round(1 / r)}回に1回${dot.far > 1 ? '・遠くまで来たので 出やすい' : ''}` : '特別な1枚')(dot.rate === undefined ? KIRA_RATE : dot.rate)}）`] : [])];
 }
 
 /* ---------- おみやげ袋（歩くと開く。docs/location-game-essence.md） ----------
@@ -3390,7 +3406,7 @@ function renderBags() {
   const pd = prevDayStat();
   el.innerHTML = `${todayWalkCard()}${pd ? `<p class="lastweek">${PIA('feet', pd.label)} <b>${esc(pd.label)}のさんぽ</b><span>${prevDayText(pd)}</span></p>` : ''}${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
     <p class="theme">${PIA('calendar', '今週のテーマ')} <b>今週は ${t.icon} ${esc(t.name)} の週</b><small>${esc(t.name)}でチェックインすると、スポットのポイントが2倍・おみやげ袋がもらえます（月曜に変わります）</small></p>
-    <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
+    <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。西尾城跡から遠くへ行くほど出やすい（4kmで1.5倍・8kmで2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
     ${window.NISHIO_OLDMAP ? `<p class="oldmap-row"><button type="button" class="btn mini" data-oldmap-view>🗺️ 明治の村の地図 ${(S.oldmap || []).length}/${NISHIO_OLDMAP.VILLAGES.length}</button></p>` : ''}
     <h4>${PIA('bag', '')} おみやげ袋 <small>${bags.length}/${BAG.max}</small></h4>
     <ul class="list">${rows || '<li class="empty">たからばこ・はじめての注目スポット・今週のテーマの名所で もらえます。歩くと開きます</li>'}</ul>`;

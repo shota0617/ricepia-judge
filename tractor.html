@@ -267,7 +267,7 @@ function load(url, key) {
 const rig = new THREE.Group();                 // トラクター（とロータリー）全体。position＝後輪車軸の真下
 scene.add(rig);
 const P = {};                                  // 動く部品
-let field, tilled, stubble = null, stubbleGeo, stubbleMat;
+let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikobaeGeo = null, hikobaeMat;
 
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f')]).then(([t, f]) => {
   prog.t = prog.f = 1; showProg();
@@ -565,12 +565,14 @@ const MIRROR = (() => {
     t = MOBILE ? 0.35 : 0.15;
     rig.localToWorld(cam.position.set(0, 2.15, -1.05));   // 屋根のうしろのはしの下（キャビンの外）
     cam.updateMatrixWorld();
-    const sv = stubble && stubble.visible;          // 切り株はミラーの小さな絵には要らない（重いので消して描く）
+    const sv = stubble && stubble.visible;          // 切り株・ひこばえはミラーの小さな絵には要らない（重いので消して描く）
     if (stubble) stubble.visible = false;
+    if (hikobae) hikobae.visible = false;
     meshes.forEach(o => { o.visible = false; });     // ミラー自身は描かない（自分の絵を読みながら描くことになる）
     cam.update(renderer, scene);
     meshes.forEach(o => { o.visible = true; });
     if (stubble) stubble.visible = sv;
+    if (hikobae) hikobae.visible = true;
   }
   return { setup, update };
 })();
@@ -779,6 +781,14 @@ function setupField(root) {
     stubbleGeo = hm.geometry.clone();            // 茎の数を減らした軽い型にする（パソコン 6 本・スマホ 4 本）
     stubbleGeo.setIndex(Array.from(hm.geometry.index.array).slice(0, 3 * (MOBILE ? 40 : 60)));
     stubbleMat = hm.material;
+    const hk = root.getObjectByName('HikobaeHill');   // 秋：刈り株から伸びた青い芽（ひこばえ）。切り株と同じ所に並べる
+    if (hk) {
+      hk.visible = false;
+      const km = hk.isMesh ? hk : hk.children[0];
+      hikobaeGeo = km.geometry.clone();            // 葉の数を減らす（パソコン 6 枚・スマホ 4 枚）
+      hikobaeGeo.setIndex(Array.from(km.geometry.index.array).slice(0, 3 * 4 * (MOBILE ? 4 : 6)));
+      hikobaeMat = km.material;
+    }
     buildHills();
   }
 }
@@ -876,6 +886,19 @@ function buildHills() {
   list.forEach((h, k) => stubble.setMatrixAt(k, m.compose(p.set(h[0], 0, h[1]), q.setFromAxisAngle(up, h[2]), s.setScalar(h[3]))));
   stubble.count = list.length;
   stubble.instanceMatrix.needsUpdate = true;
+  if (hikobaeGeo) {
+    if (!hikobae || hikobae.instanceMatrix.count !== stubble.instanceMatrix.count) {
+      if (hikobae) scene.remove(hikobae);
+      hikobae = new THREE.InstancedMesh(hikobaeGeo, hikobaeMat, stubble.instanceMatrix.count);
+      hikobae.castShadow = false;
+      hikobae.receiveShadow = true;
+      hikobae.frustumCulled = false;
+      scene.add(hikobae);
+    }
+    hikobae.instanceMatrix.array.set(stubble.instanceMatrix.array.subarray(0, list.length * 16));
+    hikobae.count = list.length;
+    hikobae.instanceMatrix.needsUpdate = true;
+  }
   hillsCenter.copy(c);
   hillsDirty = false;
 }
@@ -910,7 +933,12 @@ const FX = (() => {
     pos.set([x, y, z], i * 3); vel.set([vx, vy, vz], i * 3);
     kind[i] = k;
     const t = 0.8 + Math.random() * 0.35;
-    if (k === 0) { col.set(SOIL.map(v => v * t), i * 3); size[i] = 0.05 + Math.random() * 0.07; max[i] = 0.7 + Math.random() * 0.5; }
+    if (k === 0) {
+      // 秋は、すきこまれるひこばえの青い切れはしと藁も少し飛ぶ
+      const r = season === 'aki' ? Math.random() : 1;
+      col.set(r < 0.08 ? [0.30 * t, 0.42 * t, 0.16 * t] : r < 0.14 ? [0.62 * t, 0.55 * t, 0.36 * t] : SOIL.map(v => v * t), i * 3);
+      size[i] = 0.05 + Math.random() * 0.07; max[i] = 0.7 + Math.random() * 0.5;
+    }
     else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
     else if (k === 2) { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
     else { col.set([0.18 * t, 0.18 * t, 0.19 * t], i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }
@@ -1530,7 +1558,7 @@ $('bStart').onclick = () => {
   if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
-  if (!S.started) { S.started = true; setTimeout(() => toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'), 1800); }
+  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'); }, 1800); }
   if (!soundOn && !audio) toggleSound();
 };
 function finish() {

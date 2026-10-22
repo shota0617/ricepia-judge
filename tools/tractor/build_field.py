@@ -135,8 +135,8 @@ def tex_untilled(n=1024):
     crack = np.clip(1 - (f2 - f1) * n / 3.0, 0, 1) * (np.clip(lo, -1, 2) * 0.3 + 0.7) * (0.15 if aki else 1.0)
     col *= (1 - 0.35 * crack)[..., None]
     hgt -= 0.6 * crack
-    if aki:                                                            # 刻んだ新しい藁（金色・少し青み）
-        strokes(col, hgt, n, 2600, (20, 95), (1.6, 3.2), ('#d9c27f', '#c9ad62', '#e6d59c', '#b5a35c', '#a9a868', '#8f7c4a'), 5, h=0.9)
+    if aki:                                                            # 刻んだ藁（刈って 2〜3 週間。金色が少し抜けて灰色がかる）
+        strokes(col, hgt, n, 2300, (20, 95), (1.6, 3.2), ('#cdb980', '#b9a368', '#d9cc9e', '#a8996a', '#9d9a70', '#857550'), 5, h=0.9)
     else:
         strokes(col, hgt, n, 900, (15, 80), (1.5, 3.0), ('#c9b27a', '#b49c63', '#d8c894', '#8f7c52'), 5, h=0.8)   # 藁
     rng = np.random.default_rng(6)
@@ -161,27 +161,40 @@ def tex_untilled(n=1024):
                 c = hexc('#d4cf8c' if aki else '#d9c58c') * rng.uniform(0.8, 1.05)
                 col[np.ix_(np.arange(sy - 2, sy + 2) % n, np.arange(sx - 2, sx + 2) % n)] = c
                 hgt[np.ix_(np.arange(sy - 2, sy + 2) % n, np.arange(sx - 2, sx + 2) % n)] = 1.2
+            if aki:                                                   # ひこばえ：株から外へ開く青い葉（上から見た形）
+                for k in range(rng.integers(11, 17)):
+                    a = rng.uniform(0, 2 * math.pi)
+                    L = rng.uniform(0.06, 0.16) * px_m
+                    c = hexc(('#5f8f2e', '#73a03a', '#4d7a26', '#86ad45', '#679836')[rng.integers(5)]) * rng.uniform(0.85, 1.1)
+                    for t in np.linspace(0.15, 1, int(L)):
+                        wd = 1 if t > 0.7 else 2
+                        sx, sy = int(cx + math.cos(a) * L * t), int(cy + math.sin(a) * L * t + 0.25 * L * t * t)
+                        col[np.ix_(np.arange(sy - wd + 1, sy + wd) % n, np.arange(sx - wd + 1, sx + wd) % n)] = c * (0.8 + 0.3 * t)
+                        hgt[np.ix_(np.arange(sy - wd + 1, sy + wd) % n, np.arange(sx - wd + 1, sx + wd) % n)] = 1.0
     return np.clip(col, 0, 1), normal_from(hgt, 3.0)
 
 
 def tex_tilled(n=1024):
     """耕したあと：湿った濃い茶色の土のかたまり（上は少し乾いて明るい）・混ざった藁"""
-    f1, _, idx = voronoi(n, 700, 11)
+    aki = SEASON == 'aki'                                               # 秋起こしは、刈り株とひこばえをすきこむので土くれが大きい（動画で見た荒さ）
+    nc, rad = (430, 31) if aki else (700, 24)
+    f1, _, idx = voronoi(n, nc, 11)
     rng = np.random.default_rng(12)
-    ch = rng.uniform(0.3, 1.0, 700).astype(np.float32)[idx]
-    cs = rng.uniform(0.6, 1.4, 700).astype(np.float32)[idx]
+    ch = rng.uniform(0.3, 1.0, nc).astype(np.float32)[idx]
+    cs = rng.uniform(0.6, 1.4, nc).astype(np.float32)[idx]
     fine = fnoise(n, 0.7, 13)
     mid = fnoise(n, 1.3, 14)
-    lump = ch * np.clip(1 - (f1 * n / (24 * cs)) ** 2, 0, 1)            # 土くれ
+    lump = ch * np.clip(1 - (f1 * n / (rad * cs)) ** 2, 0, 1)           # 土くれ
     hgt = 0.9 * lump + 0.12 * fine + 0.25 * mid
     t = np.clip(0.35 + 0.5 * lump + 0.08 * fine + 0.1 * mid, 0, 1)
-    col = lerp_col('#30231a', '#6a543d', t)
+    col = lerp_col(*(('#2b2018', '#77614a') if aki else ('#30231a', '#6a543d')), t)   # 秋は土くれの上が乾いて明るい
     col *= (1 - 0.3 * np.clip(-mid, 0, 1))[..., None]
     if SEASON == 'aki':                                                 # 秋起こし：すきこんだ新しい藁がよく見える
         strokes(col, hgt, n, 700, (12, 60), (1.5, 2.8), ('#c9ad62', '#b39a58', '#d8c27f', '#8f7c4a'), 15, h=0.9)
+        strokes(col, hgt, n, 260, (8, 30), (1.4, 2.4), ('#6f9a3a', '#5c8530', '#83aa45', '#4f6f2c'), 16, h=0.8)   # ひこばえの切れはし
     else:
         strokes(col, hgt, n, 260, (10, 45), (1.5, 2.5), ('#9a8456', '#8a764c', '#b09a66'), 15, h=0.9)   # 藁のかけら
-    return np.clip(col, 0, 1), normal_from(hgt, 5.0)
+    return np.clip(col, 0, 1), normal_from(hgt, 6.5 if aki else 5.0)
 
 
 def tex_grass(n=1024):
@@ -303,10 +316,11 @@ def tex_track(n=512):
     lo = fnoise(n, 1.4, 75)
     v = np.arange(n)[:, None] / n
     lug = (np.sin(v * 2 * math.pi * 11) > 0.55).astype(np.float32)    # 9cm ごとの横の溝
-    col = lerp_col('#3a2e22', '#55452f', np.clip(0.5 + 0.2 * lo, 0, 1))
-    col = col * (1 - 0.3 * lug[..., None] * np.ones((1, n, 1)))
+    col = lerp_col('#4a3c2c', '#64533c', np.clip(0.5 + 0.2 * lo, 0, 1))   # 刈って 2〜3 週間。表は少し乾いている
+    col = col * (1 - 0.25 * lug[..., None] * np.ones((1, n, 1)))
     hgt = -0.6 * np.broadcast_to(lug, (n, n)) + 0.1 * lo
     strokes(col, hgt, n, 160, (10, 40), (1.5, 2.5), ('#9c8a58', '#7f6f46'), 76, angle=(0.0, 0.25), h=0.6)
+    strokes(col, hgt, n, 90, (8, 26), (1.4, 2.2), ('#5f8f2e', '#4d7a26', '#73a03a'), 77, h=0.5)   # つぶされたひこばえ
     return np.clip(col, 0, 1), normal_from(hgt, 2.5)
 
 
@@ -526,6 +540,8 @@ def make_materials():
     mat_tex('grass_tuft', save_img('grass_tuft', tex_tuft(), 'PNG'), None, 0.85, clip=True)
     mat_flat('water', '#3c4a42', 0.04, alpha=0.78)
     mat_flat('stubble', '#b3a466' if SEASON == 'aki' else '#a28f63', 0.85)
+    if SEASON == 'aki':
+        mat_flat('hikobae', '#4a7a22', 0.85)                           # 刈り株から伸びた青い芽（ひこばえ）
     mat_flat('pole', '#a4a49c', 0.75)
     mat_flat('wire', '#1c1c1c', 0.5)
     mat_flat('pvc', '#7f8f99', 0.4)
@@ -1176,6 +1192,25 @@ def stubble_mesh():
     return np.array(V, np.float32), F
 
 
+def hikobae_mesh():
+    """ひこばえひと株：刈った茎のあいだから外へ大きく開いて伸びる葉 8 枚（長さ 10〜24cm）。四角 2 枚ずつ、先は細い。
+    苗のように立たず、株のまわりにふさっと広がる。ゲームでは型の先頭から何枚かだけ使う（パソコン 6 枚・スマホ 4 枚）"""
+    rng = np.random.default_rng(112)
+    V, F = [], []
+    for k in range(8):
+        a = 2 * math.pi * (k * 3 % 8) / 8 + rng.uniform(-0.35, 0.35)   # 先頭の何枚かでも、まわりに散らばるように
+        L = rng.uniform(0.10, 0.24)
+        lean = rng.uniform(0.6, 1.3)                                   # 根元から外へたおれる大きさ
+        ca, sa = math.cos(a), math.sin(a)
+        b = len(V)
+        for t, w in ((0.0, 0.0045), (0.55, 0.0040), (1.0, 0.0006)):
+            r = 0.012 + L * lean * 0.55 * t * t                         # 外へ（先ほど寝る）
+            z = 0.015 + L * t * (1 - 0.35 * lean * t)
+            V += [(ca * r - sa * w, sa * r + ca * w, z), (ca * r + sa * w, sa * r - ca * w, z)]
+        F += [(b, b + 1, b + 3, b + 2), (b + 2, b + 3, b + 5, b + 4)]
+    return np.array(V, np.float32), F
+
+
 def stubble_template():
     V, F = stubble_mesh()
     bm = bmesh.new()
@@ -1184,6 +1219,14 @@ def stubble_template():
         bm.faces.new([vs[i] for i in f])
     with bt.part('StubbleHill'):
         new_obj(bm, 'stubble', smooth=None)
+    if SEASON == 'aki':
+        V, F = hikobae_mesh()
+        bm = bmesh.new()
+        vs = [bm.verts.new(v) for v in V]
+        for f in F:
+            bm.faces.new([vs[i] for i in f])
+        with bt.part('HikobaeHill'):
+            new_obj(bm, 'hikobae', smooth=None, face_up=False)
 
 
 # ================================================================
@@ -1215,8 +1258,9 @@ def preview_scene():
     V, F = stubble_mesh()
     if SEASON == 'shirokaki':
         V = V[:0]
+    HV, HF = hikobae_mesh() if SEASON == 'aki' else (V[:0], [])
     rng = np.random.default_rng(5)
-    allV, allF = [], []
+    allV, allF, hV, hF = [], [], [], []
     nv = len(V)
     xs = np.arange(-HX + ROW / 2, HX, ROW)
     ys = np.arange(-HY + HILL / 2, HY, HILL)
@@ -1234,23 +1278,27 @@ def preview_scene():
             R = np.array([[ca, -sa, 0], [sa, ca, 0], [0, 0, 1]], np.float32) * s
             allV.append(V @ R.T + np.array([px, py, field_height(px, py)], np.float32))
             allF.append(np.array(F, np.int64) + k * nv)
+            if len(HV):
+                hV.append(HV @ R.T + np.array([px, py, field_height(px, py)], np.float32))
+                hF.append(np.array(HF, np.int64) + k * len(HV))
             k += 1
-    me = bpy.data.meshes.new('_stubble')
-    if not allV:
-        allV, allF = [np.zeros((0, 3), np.float32)], [np.zeros((0, 4), np.int64)]
-    Vs = np.concatenate(allV)
-    me.vertices.add(len(Vs))
-    me.vertices.foreach_set('co', Vs.ravel())
-    Fs = np.concatenate(allF)
-    me.loops.add(Fs.size)
-    me.loops.foreach_set('vertex_index', Fs.ravel().astype(np.int32))
-    me.polygons.add(len(Fs))
-    me.polygons.foreach_set('loop_start', np.arange(0, Fs.size, 4, dtype=np.int32))
-    me.update()
-    me.materials.append(bpy.data.materials['stubble'])
-    st = bpy.data.objects.new('_stubble', me)
-    sc.collection.objects.link(st)
-    tmp.append(st)
+    for name, mat, Vl, Fl in (('_stubble', 'stubble', allV, allF), ('_hikobae', 'hikobae', hV, hF)):
+        if not Vl:
+            continue
+        me = bpy.data.meshes.new(name)
+        Vs = np.concatenate(Vl)
+        me.vertices.add(len(Vs))
+        me.vertices.foreach_set('co', Vs.ravel())
+        Fs = np.concatenate(Fl)
+        me.loops.add(Fs.size)
+        me.loops.foreach_set('vertex_index', Fs.ravel().astype(np.int32))
+        me.polygons.add(len(Fs))
+        me.polygons.foreach_set('loop_start', np.arange(0, Fs.size, 4, dtype=np.int32))
+        me.update()
+        me.materials.append(bpy.data.materials[mat])
+        st = bpy.data.objects.new(name, me)
+        sc.collection.objects.link(st)
+        tmp.append(st)
     print('preview stubble hills', k)
     # トラクター（tractor_yt.glb）を置く
     before = set(bpy.data.objects)
@@ -1285,7 +1333,7 @@ def preview():
     bg = w.node_tree.nodes['Background']
     w.node_tree.links.new(sky.outputs['Color'], bg.inputs['Color'])
     bg.inputs['Strength'].default_value = bt.SKY_STRENGTH
-    hide = [bpy.data.objects[n] for n in ('FieldTilled', 'StubbleHill') if n in bpy.data.objects]
+    hide = [bpy.data.objects[n] for n in ('FieldTilled', 'StubbleHill', 'HikobaeHill') if n in bpy.data.objects]
     for o in hide:
         o.hide_render = True
     tmp = preview_scene()
@@ -1341,6 +1389,10 @@ def build():
     ob = bpy.data.objects
     if 'StubbleHill' in bt.GROUPS:
         bt.finalize('StubbleHill', Matrix(), root).location.z = -5.0     # 型（ゲームで並べる。原点＝株の根元）。地面の下にしまっておく
+    if 'HikobaeHill' in bt.GROUPS:                                       # ひこばえの型も同じ。法線は上へ向けて草と同じ明るさに
+        h = bt.finalize('HikobaeHill', Matrix(), root)
+        h.location.z = -5.0
+        h.data.normals_split_custom_set_from_vertices([(0.0, 0.0, 1.0)] * len(h.data.vertices))
     me = ob['GrassTufts'].data                                           # 草の板は法線を上に向け、地面と同じように明るくする
     me.normals_split_custom_set_from_vertices([(0.0, 0.0, 1.0)] * len(me.vertices))
     add_macro(ob['Field'], untilled_macro)

@@ -5662,9 +5662,9 @@ function frame(now) {
     if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
-      const u = size / 16;
-      ctx.fillRect(Math.round(sx + 13 * u), Math.round(sy + 1 * u), Math.ceil(u), Math.ceil(u * 3));
-      ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
+      const u = Math.min(size, 3 * T) / 16, kx = sx + size * 13 / 16, ky = sy + size / 16;   // 大きさは いつもの絵（3マス）まで。特大の絵の大きさに合わせると 1マスより大きな 十字になっていた
+      ctx.fillRect(Math.round(kx), Math.round(ky), Math.ceil(u), Math.ceil(u * 3));
+      ctx.fillRect(Math.round(kx - u), Math.round(ky + u), Math.ceil(u * 3), Math.ceil(u));
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }

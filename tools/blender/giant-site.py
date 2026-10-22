@@ -19,7 +19,31 @@ spec = importlib.util.spec_from_file_location('giant_gen', os.path.join(HERE, 'g
 gg = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(gg)
 pa, gi = gg.pa, gg.gi
-box, cyl, sphere, roof, gable = pa.box, pa.cyl, pa.sphere, gi.roof, gg.gable
+box, cyl, sphere = pa.box, pa.cyl, pa.sphere
+
+
+def roof(name, mat, w, d, h, z, top=0.25, x=0.0, y=0.0):
+    """寄棟の屋根（台形の錐。横 w・奥 d の長方形の上に、高さ h。top は上の面の大きさの割合）。
+    giant.py の roof は 四角を45度回してから のばすので、w と d がちがうと ひし形にゆがむ。ここでは回した形を先に固定してから のばす"""
+    import bpy
+    o = cyl(name, mat, math.sqrt(0.5), 1, (0, 0, 0), (0, 0, math.pi / 4), 4, r2=math.sqrt(0.5) * top)
+    bpy.ops.object.select_all(action='DESELECT')
+    o.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+    o.scale = (w, d, h)
+    o.location = (x, y, z + h / 2)
+    return o
+
+
+def gable(name, mat, length, width, h, zb, x=0.0, y=0.0, rz=0.0):
+    """切妻の屋根（棟は x の向き、rz で回す）。三角の柱の頂点を真上に向ける
+    （giant-gen.py の gable は三角が横にねて 片側へかたむいた屋根になるので、ここでは使わない）"""
+    from mathutils import Matrix
+    rot = Matrix.Rotation(rz, 3, 'Z') @ Matrix(((0, 0, 1), (1, 0, 0), (0, 1, 0)))   # 円柱の軸 → x、三角の頂点（+y）→ 上
+    o = cyl(name, mat, 1.0, length, (x, y, zb + h / 3), rot.to_euler('XYZ'), 3)
+    o.scale = (width / math.sqrt(3), h / 1.5, 1)
+    return o
 LIST = json.load(open(os.path.join(HERE, 'giant-site.json')))
 
 N, U = 7, 0.13                     # 7×7 マス、1マスの大きさ（絵の中の長さ）
@@ -327,13 +351,13 @@ def shrine_bldg(w, d, inari=False):
     h = min(0.16, 0.08 + w * 0.12)
     box('kidan', 'ishi', (w * 0.8, hd * 0.98, 0.03), (0, hy, 0.015))   # 基壇は本殿の場所の中に（敷地の外にはみ出さない）
     box('honden', 'wood', (w * 0.55, hd * 0.75, h), (0, hy, 0.03 + h / 2))
-    gable('yane', 'roofP', w * 0.75, hd * 1.05, h * 0.8, 0.03 + h, 0, hy)
+    gable('yane', 'roofP', w * 0.75, hd, h * 0.8, 0.03 + h, 0, hy)
     for dx in (-1, 1):   # 千木
         cyl(f'chigi{dx}', 'woodD', 0.007, 0.08, (dx * w * 0.32, hy, 0.03 + h * 1.75), (0, 0.5 * dx, 0), 6)
     if d > 0.18:   # 拝殿
         py = -d / 2 + (d - hd) / 2
         box('haiden', 'wallP', (w * 0.8, (d - hd) * 0.7, h * 0.7), (0, py, h * 0.35))
-        gable('yaneH', 'roofP', w * 0.95, (d - hd) * 1.05, h * 0.6, h * 0.7, 0, py)
+        gable('yaneH', 'roofP', w * 0.95, d - hd, h * 0.6, h * 0.7, 0, py)
         box('haidenF', 'kuro', (w * 0.3, 0.008, h * 0.4), (0, py - (d - hd) * 0.35 - 0.004, h * 0.22))
     else:
         box('hondenF', 'kuro', (w * 0.25, 0.008, h * 0.5), (0, hy - hd * 0.375 - 0.004, 0.03 + h * 0.4))
@@ -350,7 +374,7 @@ def temple_bldg(w, d, rng, flat=False):
     else:
         roof('yane', 'roofP', w * 1.0, d * 0.95, h * 1.1, 0.04 + h, rng.uniform(0.3, 0.45))
         box('mune', 'munaG', (w * 0.35, 0.025, 0.025), (0, 0, 0.04 + h * 2.1))
-    box('dan', 'ishi', (0.10, 0.06, 0.025), (0, -d * 0.46 - 0.02, 0.0125))
+    box('dan', 'ishi', (0.10, 0.05, 0.025), (0, -d / 2 + 0.025, 0.0125))   # 階段は長方形の中（正面の辺まで）
 
 
 def windows_ring(w, d, floors, fh):
@@ -380,7 +404,7 @@ def hall(w, d, roofcol, rng, floors=None, gablek=False):
         gable('yane', 'roofP', w * 0.98, d * 0.98, 0.06, hgt, 0, 0)
     else:
         box('okujo', 'roofP', (w * 0.88, d * 0.88, 0.016), (0, 0, hgt + 0.008))
-    box('genkan', 'accP', (min(0.12, w * 0.4), 0.05, 0.012), (0, -d * 0.43 - 0.025, min(hgt, 0.07)))
+    box('genkan', 'accP', (min(0.12, w * 0.4), 0.05, 0.012), (0, max(-d * 0.43 - 0.025, -d / 2 + 0.025), min(hgt, 0.07)))   # ひさしは長方形の中
     return hgt
 
 
@@ -436,6 +460,7 @@ def m_worship(st):
     ang = angle_of(f)
     others = {p for b in blobs[1:4] for p in b}
     rect = grow(st, inner(main), others | {gate})   # 本殿・本堂を置く長方形（敷地の中で 2×2 まで広げる。入口のマスは使わない）
+    used |= set(rect)   # 広げたマスにも木を植えない
     x, y, w, d = bbox(rect)
     w, d = fit(w, d, ang)   # 長方形より大きくしない（敷地の外にはみ出さない）
     rc = st.roof_of(main)
@@ -447,10 +472,11 @@ def m_worship(st):
     elif k == 'church':
         box('do', 'wallP', (w * 0.7, d * 0.8, 0.13), (0, 0, 0.065))
         gable('doY', 'roofP', d * 0.85, w * 0.8, 0.09, 0.13, 0, 0, rz=math.pi / 2)
-        box('to', 'wallP', (0.09, 0.09, 0.24), (0, -d * 0.4, 0.12))
-        roof('toY', 'roofP', 0.11, 0.11, 0.11, 0.24, 0.02, y=-d * 0.4)
-        box('juji', 'juji', (0.008, 0.008, 0.06), (0, -d * 0.4, 0.38))
-        box('jujiY', 'juji', (0.035, 0.008, 0.008), (0, -d * 0.4, 0.39))
+        ty = max(-d * 0.4, -d / 2 + 0.056)   # 塔は長方形の中
+        box('to', 'wallP', (0.09, 0.09, 0.24), (0, ty, 0.12))
+        roof('toY', 'roofP', 0.11, 0.11, 0.11, 0.24, 0.02, y=ty)
+        box('juji', 'juji', (0.008, 0.008, 0.06), (0, ty, 0.38))
+        box('jujiY', 'juji', (0.035, 0.008, 0.008), (0, ty, 0.39))
     else:
         temple_bldg(min(w, 0.5), min(d, 0.45), rng, flat=rc in FLAT)
     g.place(ang, x, y)
@@ -473,7 +499,7 @@ def m_worship(st):
         st.clear |= set(cells)
     else:
         front_cell = None
-    st.clear_front(main)
+    st.clear_front(rect)
     if k == 'inari':
         torii_at(st, gate, f, 'accP', rng.randint(3, 4))
         for s in (-1, 1):
@@ -511,12 +537,13 @@ def m_building(st):
         main = blobs[0]
     else:
         main = cap(inner([p for p in st.mask if st.at(*p) != A]), 3)   # 建物のマスがない：敷地の中の長方形に（3×3 まで）
-    used |= set(main)
-    st.clear_front(main)
     f, gate = st.front(main)
     ang = angle_of(f)
     others = {p for b in blobs[1:4] for p in b}
-    x, y, w, d = bbox(grow(st, inner(main), others | {gate}))   # 敷地の中で 2×2 まで広げた長方形より大きくしない
+    rect = grow(st, inner(main), others | {gate})   # 敷地の中で 2×2 まで広げた長方形（これより大きくしない）
+    used |= set(main) | set(rect)   # 広げたマスにも木を植えない
+    st.clear_front(rect)
+    x, y, w, d = bbox(rect)
     w, d = fit(w, d, ang)
     w, d = min(w, 0.8), min(d, 0.7)
     rc = st.roof_of(main)
@@ -532,9 +559,10 @@ def m_building(st):
     elif st.k == 'onsen':
         for i in range(3):
             sphere(f'yuge{i}', 'yu', 0.035, (-0.06 + i * 0.06, 0, hgt + 0.05 + 0.03 * (i % 2)), (1, 1, 1.4))
-    elif st.k == 'art':
-        sphere('chokoku', 'kane', 0.035, (w * 0.5 + 0.05, -d * 0.5 - 0.05, 0.06), (0.7, 0.7, 1.6))
     g.place(ang, x, y)
+    if st.k == 'art':   # 入口のマスに像（アート）
+        gx, gy = xy(*gate)
+        sphere('chokoku', 'kane', 0.035, (gx, gy, 0.06), (0.7, 0.7, 1.6))
     for n, b in enumerate(blobs[1:4]):
         small_bldg(st, b, n, 'flat')
         used |= set(b)
@@ -590,13 +618,14 @@ def m_station(st):
         b = blobs[0]
         f, _ = st.front(b)
         ang = angle_of(f)
-        x, y, w, d = bbox(inner(b))
+        rect = grow(st, inner(b), {p for p in st.mask if st.at(*p) == L})   # 線路のマスには広げない
+        x, y, w, d = bbox(rect)
         w, d = fit(w, d, ang)
         rc = st.roof_of(b)
         if rc:
             pa.MATS['roofP'] = gg.jitter(ROOFC[rc], rng, 5)
         g = Group()
-        hall(min(max(w, 0.16), 0.5), min(max(d, 0.13), 0.4), rc, rng, 1 if w * d < 0.1 else 2, gablek=bool(rc) and rc not in FLAT)
+        hall(min(w, 0.5), min(d, 0.4), rc, rng, 1 if w * d < 0.1 else 2, gablek=bool(rc) and rc not in FLAT)
         g.place(ang, x, y)
         used |= set(b)
         st.clear_front(b)
@@ -663,13 +692,13 @@ def m_monument(st):
         b = blobs[0]
         f, _ = st.front(b)
         ang = angle_of(f)
-        bx, by, w, d = bbox(inner(b))
+        bx, by, w, d = bbox(grow(st, inner(b)))
         w, d = fit(w, d, ang)
         rc = st.roof_of(b)
         if rc:
             pa.MATS['roofP'] = gg.jitter(ROOFC[rc], rng, 5)
         g = Group()
-        w, d = min(max(w, 0.16), 0.45), min(max(d, 0.14), 0.4)
+        w, d = min(w, 0.45), min(d, 0.4)   # 敷地の中で 2×2 まで広げた長方形より大きくしない
         if k == 'castle':
             pa.cyl('ishigaki', 'ishigaki', max(w, d) * 0.62, 0.08, (0, 0, 0.04), (0, 0, math.pi / 4), 4, r2=max(w, d) * 0.55)
             box('yagura', 'shikkui', (w * 0.6, d * 0.6, 0.09), (0, 0, 0.125))

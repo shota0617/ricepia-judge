@@ -230,7 +230,7 @@ function close() {
   if (!ui) return;
   ui.el.hidden = true;
   cancelAnimationFrame(raf); raf = 0;
-  if (api) api.pause(false);
+  if (api) { api.rumble(0); api.pause(false); }
 }
 
 /* ---------- 面 ---------- */
@@ -478,6 +478,7 @@ function tick(now) {
   else if (g.done) { g.happy = 99; g.th += dt * 3; }
   for (const p of g.fx || []) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.vx *= 1 - dt * 1.5; }
   if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
+  api.rumble(g.done || g.fall > 0 || !ui.clear.hidden ? 0 : Math.hypot(g.vx, g.vy) * K);   // 転がる音（歩く地図と同じ。速いほど 大きく 高く）
   if (api.demGen !== g.dem && (!g.demT || now - g.demT > 1500)) { g.demT = now; g.dem = api.demGen; g.bg = paintBoard(g.board, g.T); }
   draw(now);
   ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + g.t.toFixed(1);

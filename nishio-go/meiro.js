@@ -31,12 +31,12 @@ const bad = new Set(st.skip || []);   // めいろが つくれなかった名�
 const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
 
-function goalList() {
+function goalList(all = false) {   // all：はずした名所も 入れる（きょうの めいろ は だれでも 同じ ならびから えらぶ）
   const G = root.nishioGo, spots = (G && G.spots) || [];
   const byId = new Map(spots.map(s => [s.id, s]));
-  const first = GOALS.map(id => byId.get(id)).filter(s => s && !bad.has(s.id));
+  const first = GOALS.map(id => byId.get(id)).filter(s => s && (all || !bad.has(s.id)));
   const castle = byId.get('f-nishio-castle') || first[0];
-  const rest = castle ? spots.filter(s => s.featured && !bad.has(s.id) && !first.includes(s) && G.dist(castle, s) < 9000).sort((a, b) => G.dist(castle, a) - G.dist(castle, b)) : [];
+  const rest = castle ? spots.filter(s => s.featured && (all || !bad.has(s.id)) && !first.includes(s) && G.dist(castle, s) < 9000).sort((a, b) => G.dist(castle, a) - G.dist(castle, b)) : [];
   return [...first, ...rest];
 }
 const boardSize = n => ({ tw: 13 + Math.min(4, Math.floor(n / 3)) * 1, th: 19 + Math.min(6, Math.floor(n / 3)) * 1.5 | 0 });   // 面が進むと 盤が少し広く
@@ -200,11 +200,11 @@ function build() {
     else if (k === 'retry') { if (game && game.board) restart(); else if (game) startStage(game.n, game.daily); }
     else if (k === 'next') startStage(game.n + 1);
     else if (k === 'again') startStage(game.n, game.daily);
-    else if (k === 'daily') startStage(dailyIndex(), true);
+    else if (k === 'daily') { const d = dailyIndex(); if (d >= 0) startStage(d, true); }
     else if (k === 'resume') resume();
     else if (k === 'hint') hint();
     else if (k === 'slow') { st.slow = !st.slow; save(); b.setAttribute('aria-pressed', String(!!st.slow)); }
-    else if (k === 'map') { const id = game && game.spot.id; close(); if (id && root.nishioGo && root.nishioGo.focusSpot) root.nishioGo.focusSpot(id); }   // ゴールの名所を 歩く地図で
+    else if (k === 'map') { const id = game && game.spot.id; close(); if (id && root.nishioGo && root.nishioGo.focusSpot) { if (root.nishioGo.openTab) root.nishioGo.openTab('map'); root.nishioGo.focusSpot(id); } }   // きろく の 札から 来たときも 地図の タブへ   // ゴールの名所を 歩く地図で
     else if (k === 'list') showList();
     else if (k.startsWith('go:')) startStage(+k.slice(3));
   });
@@ -248,15 +248,19 @@ function close() {
 /* ---------- 面 ---------- */
 // ☀️ きょうの めいろ：日本時間の 日づけで きまる 名所（だれでも 同じ。はじめの やさしい面は のぞく）。とけても 面は すすまない
 const DAILY_LV = 6;   // 盤 15×22・穴 8つ
+// えらぶのは はずした名所も 入れた ならび（goalList(true)）から。その端末で はずした名所に 左右されない
+const dayMiss = new Set();   // この むずかしさでは めいろが つくれなかった名所（地図は みんな 同じなので、つぎの名所も みんな 同じに なる）
 function dailyIndex() {
-  const list = goalList(), d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  const list = goalList(true), d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
   let h = 2166136261; for (const c of 'meiro:' + d) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
-  return list.length > 3 ? 3 + h % (list.length - 3) : 0;
+  if (list.length <= 3) return 0;
+  for (let i = 0; i < list.length - 3; i++) { const k = 3 + (h + i) % (list.length - 3); if (!dayMiss.has(list[k].id)) return k; }
+  return -1;
 }
 // 記録は 名所ごと。きょうの めいろ は 盤の むずかしさが ちがうので 'day:' を つけて べつに のこす
 const recKey = g => (g.daily ? 'day:' : '') + g.spot.id;
 function startStage(n, daily = false) {
-  const list = goalList();
+  const list = goalList(daily);
   if (!list.length) { ui.load.hidden = false; ui.load.textContent = '名所を よみこみ中…'; setTimeout(() => !ui.el.hidden && startStage(n, daily), 600); return; }
   n = Math.max(0, Math.min(n, list.length - 1));
   game = { n, daily, spot: list[n], board: null, t: 0, falls: 0, done: false };
@@ -271,8 +275,9 @@ function startStage(n, daily = false) {
     if (!allOk) { ui.load.textContent = '地図が よみこめなかった。「↺ やりなおし」で もういちど'; return; }   // 地図が そろっていないと 読めない所が 壁になり、ちがう めいろに なる（記録が まざる）。名所も はずさない
     const b = makeBoard(daily ? DAILY_LV : n, g.spot);   // きょうの めいろ は いつも 中くらいの むずかしさ
     if (!b) {   // 道が少ない所なら、その名所を はずして 同じ面を つくりなおす（つぎの名所が この面に）
+      if (daily) { dayMiss.add(g.spot.id); const k = dailyIndex(); if (k >= 0) startStage(k, true); else ui.load.textContent = 'きょうの めいろが つくれなかった'; return; }   // ふつうの面の ならびは かえない
       bad.add(g.spot.id); st.skip = [...bad]; save();
-      if (daily) startStage(dailyIndex(), true); else if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';
+      if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';
       return;
     }
     g.board = b;
@@ -485,7 +490,7 @@ function resume() {   // いちらんから もどる：とちゅうなら そ�
 }
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
-  const ds = list[dailyIndex()], db = ds && st.best['day:' + ds.id];
+  const ds = goalList(true)[dailyIndex()], db = ds && st.best['day:' + ds.id];
   ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3>${ds ? `<div class="mz-row"><button type="button" data-mz="daily">☀️ きょうの めいろ<br/><small>${esc(ds.name)}${db ? `　${'★'.repeat(db.s)} ${db.t.toFixed(1)}秒` : ''}</small></button></div>` : ''}<div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
     const b = st.best[s.id];
     return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}${b ? `<br/><small>${'★'.repeat(b.s)} ${b.t.toFixed(1)}秒</small>` : ''}</button>`;

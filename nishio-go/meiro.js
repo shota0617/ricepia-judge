@@ -126,7 +126,8 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;user-select:none;-webkit-user-select:none;overflow-y:auto;overscroll-behavior:contain}   /* 横向きなど 低い画面では 下のボタンまで スクロールできる */
 #meiro[hidden]{display:none}
 #meiro .mz-top{width:min(100%,520px);box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 6px;display:flex;align-items:center;gap:8px}
-#meiro .mz-st{font-size:15px;line-height:1.3;flex:1}
+#meiro .mz-st{font-size:15px;line-height:1.3;flex:1;min-width:0}
+#meiro .mz-goal{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
 #meiro .mz-st b{font-size:18px;color:#ffe680}
 #meiro .mz-st small{font-size:12px;opacity:.85}
 #meiro .mz-time{font-size:20px;font-variant-numeric:tabular-nums;min-width:4.5em;text-align:right}
@@ -215,7 +216,7 @@ function startStage(n) {
   ui.clear.hidden = true;
   ui.load.hidden = false; ui.load.textContent = 'めいろを つくっています…';
   const bt = st.best[n];
-  ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>　🏁 ${esc(game.spot.name)}${bt ? `<br/><small>ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}`;
+  ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>${bt ? `<small>　ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面と ベスト・2行め：ゴール（長い名前は …）
   ui.time.textContent = '0.0';
   const g = game;
   waitChunks(g.spot, () => {
@@ -420,7 +421,7 @@ function draw(now) {
   }
   x.globalAlpha = 1;
   // お米
-  const u = T * 0.028;
+  const u = T * 0.031;   // お米の 点の大きさ（はばが マスの 6割ほど。当たりの 半径 R と 見た目を そろえる）
   if (g.fall > 0) {   // おちていく：くるくる 小さく
     const k = g.fall / 0.8, [fx, fy] = g.fallAt;
     if (g.fallWater) { x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = Math.max(1, T / 14); x.beginPath(); x.arc(fx * T, fy * T, T * (0.5 - k * 0.3), 0, Math.PI * 2); x.stroke(); }

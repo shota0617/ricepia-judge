@@ -319,16 +319,16 @@
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
     <p class="player-count" id="playerCount" hidden></p>
     <p class="player-count voice-intro" id="voiceIntro" hidden></p>
-    <div class="intro-hero" id="introHero" aria-hidden="true"></div>
-    <p class="tagline">西尾を さんぽして、ドット絵を あつめよう</p>
-    <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>名所に着くとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
+    <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="お米が 田んぼの あぜ道を ころころ転がって、にっこり"></canvas>
+    <p class="tagline">お米を ころころ 転がして、西尾をめぐろう</p>
+    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
-    <button type="button" class="btn big mode-pick" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small>位置情報を使って、実際に西尾のまちを歩きます</small></button>
-    <button type="button" class="btn big mode-pick alt" id="demoBtn"><span class="mp-t">🎮 操作して遊ぶ</span><small>スティックか、地面をタップして動かして、家からでも西尾めぐり</small></button>
-    <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
+    <button type="button" class="btn big mode-pick" id="demoBtn"><span class="mp-t">📱 傾けて遊ぶ</span><small>スマホを傾けると お米が ころころ。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
+    <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
     <ul class="intro-shots" aria-label="プレイ画面">
-      <li><img src="nishio-go/shots/walk.webp" alt="ドット絵の西尾の町を歩く画面" width="540" height="1080" loading="lazy" decoding="async"/><span>西尾を歩く</span></li>
+      <li><img src="nishio-go/shots/roll.webp" alt="ドット絵の西尾の町を お米が転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>お米を転がす</span></li>
       <li><img src="nishio-go/shots/reward.webp" alt="たからばこからドット絵が出た画面" width="540" height="1080" loading="lazy" decoding="async"/><span>ドット絵をあつめる</span></li>
       <li><img src="nishio-go/shots/world.webp" alt="西尾とまわりのまちの、せかいちず" width="540" height="1080" loading="lazy" decoding="async"/><span>名所をめぐる</span></li>
       <li><img src="nishio-go/shots/badges.webp" alt="バッジの画面" width="540" height="1080" loading="lazy" decoding="async"/><span>バッジをそろえる</span></li>

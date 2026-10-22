@@ -135,6 +135,7 @@
       ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす（道に泥を落とさない。ゲームでは耕していない固い所を少し走ると落ちる）<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
+      ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
       ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
     </div>
@@ -847,6 +848,37 @@ const MIST = (() => {
 })();
 
 
+// ---- 初霜：秋の晴れた朝は、刈りあとの切り株・ひこばえ・畦の草・耕していない土の表面が霜で白い（山形では 10 月下旬に初霜。
+// 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける。
+// 春の田起こしのころ（4 月）も、放射冷却の朝は遅霜がおりる（山形県の凍霜害の注意）。春はうすく、早くとける
+const FROST = (() => {
+  const on = (season === 'aki' || season === 'haru') && TOD === 'asa', list = [], S0 = season === 'aki' ? 1 : 0.6, T = season === 'aki' ? 150 : 100;
+  let t = 0;
+  const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7, weed: 0.6, renge: 0.5 };
+  const add = m => {
+    if (!m || !(m.name in K) || list.some(e => e.m === m)) return;
+    list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name] });
+  };
+  function apply() {
+    const f = Math.max(0, 1 - t / T) * S0;
+    for (const e of list) {
+      const a = e.k * f;
+      e.m.color.copy(e.c).lerp(new THREE.Color(1.35, 1.4, 1.5), a);   // 白くきらっと（少し青み）
+      if (e.e) e.m.emissive.copy(e.e).lerp(new THREE.Color(0.10, 0.11, 0.13), a);
+    }
+  }
+  return {
+    setup(root) {
+      if (!on) return;
+      root.traverse(o => { if (o.isMesh) add(o.material); });
+      add(stubbleMat); add(hikobaeMat);
+      apply();
+    },
+    update(dt) { if (!on || !list.length || t > T) return; t += dt; apply(); },
+    get list() { return list; }
+  };
+})();
+
 // ---- 畦を見回る人：田んぼの水や畦は毎日のように見回る（山形県・農林水産省の資料）。北の畦（となりの田んぼとのあいだ）を
 // スコップをかついで歩き、ときどき立ち止まって田んぼをのぞく。トラクターが近いと止まって待つ
 const FARMER = (() => {
@@ -1067,6 +1099,7 @@ function setupField(root) {
     }
     buildHills();
   }
+  FROST.setup(root);
 }
 
 // ---- 地面の高さと、走れる所 ----
@@ -2193,6 +2226,7 @@ function step(dt) {
     S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
   }
   if (working && Math.abs(S.v) > 0.1) {
+    S.workT = (S.workT || 0) + dt;                // 耕している時間（ほ場作業効率に使う）
     S.pitch = tillPitch();
     S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
     // DPF の自動再生：耕しているとフィルターにすすがたまり、ある程度たまると作業しながら自動で燃やす（本物は 30 分ほど。ゲームは 1 分半）
@@ -2701,6 +2735,7 @@ function finish() {
   const area = left * CELL * CELL;
   $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
+    `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
     `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span><br>`;
   $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');
@@ -2753,6 +2788,7 @@ function frame(now) {
   RIPPLE.update(dt);
   GOSSAMER.update(dt);
   MIST.update(dt);
+  FROST.update(dt * SPEEDUP);
   FARMER.update(dt);
   FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
@@ -2763,7 +2799,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -252,8 +252,8 @@ function startStage(n) {
   const g = game;
   waitChunks(g.spot, allOk => {
     if (game !== g) return;
+    if (!allOk) { ui.load.textContent = '地図が よみこめなかった。「↺ やりなおし」で もういちど'; return; }   // 地図が そろっていないと 読めない所が 壁になり、ちがう めいろに なる（記録が まざる）。名所も はずさない
     const b = makeBoard(n, g.spot);
-    if (!b && !allOk) { ui.load.textContent = '地図が よみこめなかった。「↺ やりなおし」で もういちど'; return; }   // 地図が よめていないだけなら はずさない
     if (!b) {   // 道が少ない所なら、その名所を はずして 同じ面を つくりなおす（つぎの名所が この面に）
       bad.add(g.spot.id); st.skip = [...bad]; save();
       if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';

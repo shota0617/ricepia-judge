@@ -291,6 +291,17 @@ function paintBoard(b, T) {
     if (!lf) x.fillRect(X - lw / 2, Y - lw / 2, lw, T + lw);
     if (!pass(b, i, j, 1, 0)) x.fillRect(X + T - lw / 2, Y - lw / 2, lw, T + lw);
   }
+  // 水の ふち：床から 入れる 水との さかいに、黄色と黒の しま（ここから先は 落ちる）
+  const sw = Math.max(2, Math.round(T / 10));
+  const stripes = (X, Y, w, h) => { for (let k = 0; k * sw < Math.max(w, h); k++) { x.fillStyle = k % 2 ? '#1a1a1a' : '#f2c200'; if (w > h) x.fillRect(X + k * sw, Y, Math.min(sw, w - k * sw), h); else x.fillRect(X, Y + k * sw, w, Math.min(sw, h - k * sw)); } };
+  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
+    if (at(i, j) !== 1) continue;
+    const X = i * T, Y = j * T;
+    if (at(i, j - 1) === 2 && pass(b, i, j, 0, -1)) stripes(X, Y - sw / 2, T, sw);
+    if (at(i, j + 1) === 2 && pass(b, i, j, 0, 1)) stripes(X, Y + T - sw / 2, T, sw);
+    if (at(i - 1, j) === 2 && pass(b, i, j, -1, 0)) stripes(X - sw / 2, Y, sw, T);
+    if (at(i + 1, j) === 2 && pass(b, i, j, 1, 0)) stripes(X + T - sw / 2, Y, sw, T);
+  }
   for (const i of b.holes) hole(x, (i % b.tw + 0.5) * T, (((i / b.tw) | 0) + 0.5) * T, T);
   // スタート
   const sx = (b.start[0] + 0.5) * T, sy = (b.start[1] + 0.5) * T;
@@ -331,6 +342,14 @@ function step(dt) {
   }
   const [ax, ay] = input();
   g.vx += ax * ACC * dt; g.vy += ay * ACC * dt;
+  {   // マンホールの ふちに 近づくと、まん中へ すいこまれる（玉ころがし迷路の 穴のように）
+    const ci = Math.floor(g.x), cj = Math.floor(g.y);
+    for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
+      if (!b.holes.has(j * b.tw + i)) continue;
+      const dx = i + 0.5 - g.x, dy = j + 0.5 - g.y, d = Math.hypot(dx, dy);
+      if (d < 0.62 && d > 0.01) { const k = (0.62 - d) * 22 * dt / d; g.vx += dx * k; g.vy += dy * k; }
+    }
+  }
   const sp = Math.hypot(g.vx, g.vy);
   if (sp > 0) { const k = Math.max(0, sp - (CRR + LIN * sp) * dt) / sp * (sp > MAX ? MAX / sp : 1); g.vx *= k; g.vy *= k; }
   for (const axis of ['x', 'y']) {   // たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す（角を すべるように）

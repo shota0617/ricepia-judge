@@ -1749,6 +1749,22 @@ function drawAlleyHint(X, Y, T, now) {
   ctx.fillStyle = '#000'; for (const [dx, dy] of [[-u, 0], [u, 0], [0, -u], [0, u]]) ctx.fillText('?', X + T / 2 + dx, Y + T * 0.42 + bob + dy);
   ctx.fillStyle = '#ffe066'; ctx.fillText('?', X + T / 2, Y + T * 0.42 + bob);
 }
+// 水べで じっと見る（ポケモンの「釣りざおで、水べで出会えるものが ふえる」）：水の となりのマスで 4秒 止まっていると、水の中の生きものに出会う。
+// 1.5秒で「👀 水の中を じっと見とる…」。動くまでは1回だけ。1日2回まで（生きもの手帳の1日の数にも入る。game.js の watchWater）
+const watchS = { key: '', t: 0, done: false, told: false };
+function waterWatch(tgt, dt) {
+  const tx = Math.floor(tgt.x), ty = Math.floor(tgt.y), key = `${tx},${ty}`;
+  if (key !== watchS.key) { Object.assign(watchS, { key, t: 0, done: false, told: false }); return; }
+  if (watchS.done || driving || mapCovered() || sightBusy() || BLOCK.has(codeAt(tx, ty)) || !G.watchOpen || !G.watchOpen()) return;
+  const wet = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => codeAt(tx + dx, ty + dy) === C.A);
+  if (!wet) return;
+  watchS.t += dt;
+  if (!watchS.told && watchS.t > 1.5) { watchS.told = true; floatText('👀 水の中を じっと見とる…'); }
+  if (watchS.t < 4) return;
+  watchS.done = true;
+  const m = G.watchWater();
+  if (m) { critterS.show = { id: m.id, x: tx + wet[0], y: ty + wet[1], t: performance.now() }; dirty = true; }
+}
 function critterStep(x, y) {
   if (driving) return;
   if (alleyEnd(x, y) && G.alleyFind && !mapCovered() && !sightBusy() && G.alleyFind(x, y, toLatLng(x + 0.5, y + 0.5))) { floatText('🔍 路地の奥'); dirty = true; }
@@ -5566,6 +5582,7 @@ function frame(now) {
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
   }
+  waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
   const rolling = rollOn && G.demo && rp.x !== null && !driving;

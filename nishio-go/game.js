@@ -1636,6 +1636,15 @@ function meetCritter(where) {
   const pool = fresh.length && Math.random() < 0.6 ? fresh : ok;   // まだ手帳にないものに出会いやすく
   return critterMet(pool[Math.floor(Math.random() * pool.length)]);
 }
+// 水べで じっと見る（pixel.js の waterWatch）：1日2回まで、水の生きものに出会う（歩いて出会う 1/40 の運を待たずに）
+const WATCH_DAILY = 2;
+const watchOpen = () => (dayState().watch || 0) < WATCH_DAILY && (dayState().critters || 0) < CRITTER_DAILY && !!me;
+function watchWater() {
+  if (!watchOpen()) return null;
+  const m = meetCritter('water');
+  if (m) { const day = dayState(); day.watch = (day.watch || 0) + 1; save(); track('water_watch', { critter: m.id, mode: demo ? 'play' : 'walk' }); }
+  return m;
+}
 function critterMet(c) {
   const book = S.critters, first = !book[c.id], day = dayState();
   day.critters = (day.critters || 0) + 1;
@@ -3681,7 +3690,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

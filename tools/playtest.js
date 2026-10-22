@@ -783,6 +783,25 @@ async function walkTo(page, id) {
     const st = nishioGo.state, k = c.cands;
     return { shown: c.shown, inArea: c.inArea, two: c.two, queued: (st.sealPicks || []).map(x => x.area), ok: c.shown && c.inArea && c.two && (st.sealPicks || []).length === 1 && st.sealPicks[0].area === 'isshiki' && st.kira.includes(k[1]) && !st.kira.includes(k[0]) && st.dots.includes(k[1]) };
   }, R.checks.sealPick);
+  // 水べで じっと見る：水の となりのマスへ行って 5秒 止まっていると、水の中の生きものに出会う（1日2回まで）
+  R.checks.waterWatch = await page.evaluate(async () => {
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    document.getElementById('pxInfo').hidden = true;
+    const P = nishioPixel, C = P.C, me = nishioGo.me, t = P.toTile(me.lat, me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    let at = null;
+    for (let r = 1; r < 120 && !at; r++) for (let dy = -r; dy <= r && !at; dy++) for (let dx = -r; dx <= r; dx++) {
+      if (Math.abs(dx) !== r && Math.abs(dy) !== r) continue;
+      const x = x0 + dx, y = y0 + dy;
+      if (!P.blockedAt(x + 0.5, y + 0.5) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => P.codeAt(x + a, y + b) === C.A)) { at = [x, y]; break; }
+    }
+    if (!at) return { ok: true, skipped: 'no-water' };
+    const day = nishioGo.state.day || {}, c0 = day.critters || 0;
+    if (c0 >= 5) return { ok: true, skipped: 'critter-cap' };
+    const ll = P.toLatLng(at[0] + 0.5, at[1] + 0.5); nishioGo.moveTo(ll.lat, ll.lng);
+    await new Promise(r => setTimeout(r, 5500));
+    const d = nishioGo.state.day || {};
+    return { at, watch: d.watch || 0, critters: (d.critters || 0) - c0, ok: d.watch === 1 && (d.critters || 0) === c0 + 1 };
+  });
   R.errors.push(...errors);
   await ctx.close();
 
@@ -810,6 +829,7 @@ async function walkTo(page, id) {
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');
   need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');
   need(c.sealPick && c.sealPick.ok, 'しるしの2枚：2枚から えらぶ窓が出ない、または えらんだ1枚が キラで入らない');
+  need(c.waterWatch && c.waterWatch.ok, '水べで じっと見る：水の となりで 止まっていても 生きものに出会わない');
   need(c.chain && c.chain.ok, 'めぐりの れんさ：30分以内に ちがう名所でチェックインしても れんさが つながらない');
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

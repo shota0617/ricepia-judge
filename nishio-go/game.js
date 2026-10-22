@@ -783,13 +783,13 @@ function addTrail(a, b, critters) {
 
 // きょうの100歩たんけん（ポケモンの「歩数の決まった場所で、めずらしいものを探す」）：その日 はじめて歩きだしたら始まり、100歩（1歩＝1マス 8m）のうちに
 // はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）と、自己ベストなら お祝い。1日1回（記録は モードごと）
-const H100 = { steps: 100, cap: 30 };
+const H100 = { steps: 100, cap: 30, win: 5 };   // win：さんぽ仲間（ライバル）より多いと
 function hundred(meters, fresh) {   // meters：この1回で動いた距離。転がすと 1マスより小さい動きが何度も来るので、ためてから歩数にする
   if (driving || store.get('nsg_first_day', '') === ymd()) return;   // 遊びはじめた日は しない（はじめの日は ようこそ・はじめの1枚・週の知らせで いっぱいなので、次の日から）
   const day = dayState();
   let h = day.h100;
   if (h && h.done) return;
-  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな${S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`); }
+  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0, rival: 20 + hashStr('h100:' + ymd()) % 41 }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな（🏃 ${RIVAL}は きょう ${h.rival}マス${S.h100best ? `・自己ベスト ${S.h100best}マス` : ''}）`); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
   const rest = H100.steps * TRAIL_M - (h.m || 0), part = meters > rest ? Math.max(0, rest) / meters : 1;   // 100歩（800m）を またぐ1回は、800m までの分だけ
   h.m = (h.m || 0) + meters;
   const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
@@ -800,12 +800,13 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100（はじめての道 ${h.fresh}）`); save(); }
   if (h.steps < H100.steps) return;
   h.done = true;
-  const pts = Math.min(H100.cap, h.fresh), best = h.fresh > (S.h100best || 0);
+  const win = !!h.rival && h.fresh > h.rival, pts = Math.min(H100.cap, h.fresh) + (win ? H100.win : 0), best = h.fresh > (S.h100best || 0);   // さんぽ仲間に勝つと +5
   if (best) S.h100best = h.fresh;
   if (pts) { gainPoints(pts); S.log.unshift({ type: 'h100', t: Date.now(), pts, icon: '👣', name: `100歩たんけん：はじめての道 ${h.fresh}マス` }); }
   save(); badgesSoon();   // たんけん名人
   toastAfter(`🏁 100歩たんけん おわり！ はじめての道 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}${best && h.fresh ? '　🎉 自己ベスト！' : S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`);
-  track('h100', { fresh: h.fresh, best, mode: demo ? 'play' : 'walk' });
+  if (h.rival) toastAfter(win ? `🏃 ${RIVAL}「まけた！ ${h.fresh}マスは すごいじゃん。おれは ${h.rival}マスだったよ」` : `🏃 ${RIVAL}「おれは ${h.rival}マスだったよ。あしたは 知らん道を ねらってみりん」`);
+  track('h100', { fresh: h.fresh, best, win, mode: demo ? 'play' : 'walk' });
 }
 
 // 歩いた道の節目（2048 の「倍々で大きくなる数字」から）：これまでに歩いた道が 500m・1km・2km・4km… と倍ごとの節目に届くたびに、お祝いと

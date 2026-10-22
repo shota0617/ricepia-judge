@@ -42,6 +42,7 @@ SITE = {
 GROUND = {J: 'jari', W: 'kusa', P: 'shibaG', G: 'shibaG', D: 'michi', K: 'kusa', M: 'kusa', Y: 'jari', B: 'jari', T: 'asphalt',
           Q: 'jari', L: 'senro', S: 'suna', A: 'ike', E: 'cha', F: 'kusa', V: 'tsuchiG'}
 STEPS = ((1, 0), (-1, 0), (0, 1), (0, -1))
+PARKS = {'pondpark', 'garden', 'sports', 'park', 'plaza', 'beach', 'forest', 'hill', 'kofun'}
 pa.MATS.update({'bochi': '#9a968c', 'bochiD': '#6e6a62', 'kawara1': '#555c67'})
 
 
@@ -55,6 +56,12 @@ class Site:
         self.e, self.k = e, e['k']
         self.d = [(ord(c) - 48) & 31 for c in e['d']]
         self.r = [ord(c) - 48 for c in e['r']]
+        if self.k not in PARKS:   # 名所の場所（まん中の 3×3）にある小さな本当の建物（250㎡以下で Q になったもの。屋根の色がある）も建物にする
+            c = N // 2
+            for j in range(c - 1, c + 2):
+                for i in range(c - 1, c + 2):
+                    if self.d[j * N + i] == Q and self.r[j * N + i] & 15:
+                        self.d[j * N + i] = B
         self.rng = random.Random('site:' + e['id'])
         self.mask = self.region()
         self.clear = set()   # 木を植えないマス
@@ -167,6 +174,31 @@ def inner(blob):
     return [(i, j) for i in range(i0, i1 + 1) for j in range(j0, j1 + 1)]
 
 
+def grow(st, rect, avoid=()):
+    """1マスの長方形などを、敷地の中だけで たて・よこ 2マスまで広げる（建物が敷地の外にはみ出さない大きさにするため）"""
+    i0, i1 = min(i for i, _ in rect), max(i for i, _ in rect)
+    j0, j1 = min(j for _, j in rect), max(j for _, j in rect)
+    best = rect
+    for a in range(i1 - 1, i0 + 1):
+        for b in range(j1 - 1, j0 + 1):
+            ii, jj = (a, a + max(2, i1 - i0 + 1) - 1), (b, b + max(2, j1 - j0 + 1) - 1)
+            if ii[0] > i0 or ii[1] < i1 or jj[0] > j0 or jj[1] < j1:
+                continue
+            cells = [(i, j) for i in range(ii[0], ii[1] + 1) for j in range(jj[0], jj[1] + 1)]
+            if all(c in st.mask and (c in rect or c not in avoid) for c in cells) and len(cells) > len(best):
+                best = cells
+    return best
+
+
+def cap(rect, n):
+    """長方形を、まん中を残して たて・よこ n マスまでに"""
+    i0, i1 = min(i for i, _ in rect), max(i for i, _ in rect)
+    j0, j1 = min(j for _, j in rect), max(j for _, j in rect)
+    a = i0 + max(0, (i1 - i0 + 1 - n) // 2)
+    b = j0 + max(0, (j1 - j0 + 1 - n) // 2)
+    return [(i, j) for i in range(a, min(i1, a + n - 1) + 1) for j in range(b, min(j1, b + n - 1) + 1)]
+
+
 def bbox(blob):
     i0, i1 = min(i for i, _ in blob), max(i for i, _ in blob)
     j0, j1 = min(j for _, j in blob), max(j for _, j in blob)
@@ -261,21 +293,39 @@ def graves(st, used):
         used.add((i, j))
 
 
-def path(st, a, b, mat='ishi', w=0.07):
-    """マス a から b へ、まっすぐ（L 字）の参道・小道"""
-    (x0, y0), (x1, y1) = xy(*a), xy(*b)
-    if abs(x1 - x0) > 1e-6:
-        box('sandoX', mat, (abs(x1 - x0) + w, w, 0.008), ((x0 + x1) / 2, y0, 0.004))
-    if abs(y1 - y0) > 1e-6:
-        box('sandoY', mat, (w, abs(y1 - y0) + w, 0.008), (x1, (y0 + y1) / 2, 0.004))
+def route(st, a, b, block=()):
+    """マス a から b へ、敷地の中のマスだけをたどる いちばん短い道（なければ []）"""
+    prev, todo = {a: None}, [a]
+    for p in todo:
+        if p == b:
+            break
+        for da, db in STEPS:
+            q = (p[0] + da, p[1] + db)
+            if q in st.mask and q not in prev and (q not in block or q == b):
+                prev[q] = p
+                todo.append(q)
+    if b not in prev:
+        return []
+    out, p = [], b
+    while p is not None:
+        out.append(p)
+        p = prev[p]
+    return out[::-1]
+
+
+def path(cells, mat='ishi', w=0.07):
+    """マスの並びをつなぐ参道・小道（となりどうしのマスの中心を結ぶ）"""
+    for n, (a, b) in enumerate(zip(cells, cells[1:])):
+        (x0, y0), (x1, y1) = xy(*a), xy(*b)
+        box(f'sando{n}', mat, (abs(x1 - x0) + w, abs(y1 - y0) + w, 0.008), ((x0 + x1) / 2, (y0 + y1) / 2, 0.004))
 
 
 # ---------- 建物（正面を -y にして、幅 w・奥行き d の中に作る） ----------
 def shrine_bldg(w, d, inari=False):
-    hd = max(0.10, d * 0.5)
+    hd = d * 0.5 if d > 0.18 else d * 0.85   # 本殿の奥行き（拝殿を置けないほど小さいときは本殿だけ）
     hy = d / 2 - hd / 2
     h = min(0.16, 0.08 + w * 0.12)
-    box('kidan', 'ishi', (w * 0.8, hd * 1.1, 0.03), (0, hy, 0.015))
+    box('kidan', 'ishi', (w * 0.8, hd * 0.98, 0.03), (0, hy, 0.015))   # 基壇は本殿の場所の中に（敷地の外にはみ出さない）
     box('honden', 'wood', (w * 0.55, hd * 0.75, h), (0, hy, 0.03 + h / 2))
     gable('yane', 'roofP', w * 0.75, hd * 1.05, h * 0.8, 0.03 + h, 0, hy)
     for dx in (-1, 1):   # 千木
@@ -384,9 +434,10 @@ def m_worship(st):
         used.add(p)
     f, gate = st.front(main)
     ang = angle_of(f)
-    x, y, w, d = bbox(inner(main))
-    w, d = fit(w, d, ang)
-    w, d = max(w, 0.16), max(d, 0.16)
+    others = {p for b in blobs[1:4] for p in b}
+    rect = grow(st, inner(main), others | {gate})   # 本殿・本堂を置く長方形（敷地の中で 2×2 まで広げる。入口のマスは使わない）
+    x, y, w, d = bbox(rect)
+    w, d = fit(w, d, ang)   # 長方形より大きくしない（敷地の外にはみ出さない）
     rc = st.roof_of(main)
     if rc:
         pa.MATS['roofP'] = gg.jitter(ROOFC[rc], rng, 5)
@@ -394,8 +445,8 @@ def m_worship(st):
     if k in ('shrine', 'inari'):
         shrine_bldg(min(w, 0.42), min(d, 0.42), k == 'inari')
     elif k == 'church':
-        box('do', 'wallP', (w * 0.7, d * 0.8, 0.13), (0, 0.02, 0.065))
-        gable('doY', 'roofP', d * 0.9, w * 0.8, 0.09, 0.13, 0, 0.02, rz=math.pi / 2)
+        box('do', 'wallP', (w * 0.7, d * 0.8, 0.13), (0, 0, 0.065))
+        gable('doY', 'roofP', d * 0.85, w * 0.8, 0.09, 0.13, 0, 0, rz=math.pi / 2)
         box('to', 'wallP', (0.09, 0.09, 0.24), (0, -d * 0.4, 0.12))
         roof('toY', 'roofP', 0.11, 0.11, 0.11, 0.24, 0.02, y=-d * 0.4)
         box('juji', 'juji', (0.008, 0.008, 0.06), (0, -d * 0.4, 0.38))
@@ -410,13 +461,18 @@ def m_worship(st):
     graves(st, used)
     # 入口から正面への参道と、鳥居・山門
     used.add(gate)
-    fx, fy = round(sum(i for i, _ in main) / len(main)), round(sum(j for _, j in main) / len(main))
-    front_cell = (fx + f[0] * (1 + (len(main) > 3)), fy + f[1] * (1 + (len(main) > 3)))
-    if front_cell in st.mask:
-        path(st, gate, front_cell)
+    # 参道の終わり：置いた長方形の正面の辺のまん中の、すぐ前のマス
+    i0, i1 = min(i for i, _ in rect), max(i for i, _ in rect)
+    j0, j1 = min(j for _, j in rect), max(j for _, j in rect)
+    front_cell = {(0, 1): ((i0 + i1) // 2, j1 + 1), (0, -1): ((i0 + i1) // 2, j0 - 1),
+                  (1, 0): (i1 + 1, (j0 + j1) // 2), (-1, 0): (i0 - 1, (j0 + j1) // 2)}[f]
+    cells = route(st, gate, front_cell, block=set(main) | set(rect) | others) if front_cell in st.mask else []
+    if cells:   # 敷地の中だけを通る参道
+        path(cells)
         used.add(front_cell)
-        st.clear |= {(i, gate[1]) for i in range(min(gate[0], front_cell[0]), max(gate[0], front_cell[0]) + 1)}
-        st.clear |= {(front_cell[0], j) for j in range(min(gate[1], front_cell[1]), max(gate[1], front_cell[1]) + 1)}
+        st.clear |= set(cells)
+    else:
+        front_cell = None
     st.clear_front(main)
     if k == 'inari':
         torii_at(st, gate, f, 'accP', rng.randint(3, 4))
@@ -424,7 +480,7 @@ def m_worship(st):
             sphere(f'kitsune{s}', 'kitsune', 0.02, (xy(*gate)[0] + s * 0.06, xy(*gate)[1], 0.04), (0.8, 1.2, 1.4))
     elif k == 'shrine':
         torii_at(st, gate, f, 'ishi' if rng.random() < 0.3 else 'accP')
-        if front_cell in st.mask and rng.random() < 0.7:
+        if front_cell and rng.random() < 0.7:
             fx2, fy2 = xy(*front_cell)
             for s in (-1, 1):
                 gg.toro(f'{s}', fx2 + s * 0.05 * (1 if f[1] else 0), fy2 + s * 0.05 * (1 if f[0] else 0), 0.8)
@@ -454,14 +510,15 @@ def m_building(st):
     if blobs:
         main = blobs[0]
     else:
-        main = [(i, j) for i in range(2, 5) for j in range(2, 5)]
+        main = cap(inner([p for p in st.mask if st.at(*p) != A]), 3)   # 建物のマスがない：敷地の中の長方形に（3×3 まで）
     used |= set(main)
     st.clear_front(main)
     f, gate = st.front(main)
     ang = angle_of(f)
-    x, y, w, d = bbox(inner(main))
+    others = {p for b in blobs[1:4] for p in b}
+    x, y, w, d = bbox(grow(st, inner(main), others | {gate}))   # 敷地の中で 2×2 まで広げた長方形より大きくしない
     w, d = fit(w, d, ang)
-    w, d = min(max(w, 0.2), 0.8), min(max(d, 0.18), 0.7)
+    w, d = min(w, 0.8), min(d, 0.7)
     rc = st.roof_of(main)
     if rc:
         pa.MATS['roofP'] = gg.jitter(ROOFC[rc], rng, 5)
@@ -742,6 +799,9 @@ def build(e):
         st.k = 'museum' if st.blobs() else 'historic'
     elif re.search('碑|記念塔|顕彰|跡$|址$', name) and st.k not in ('shrine', 'inari', 'temple', 'church', 'castle', 'kofun', 'statue'):
         st.k = 'historic'   # 「〜温泉 湧出の碑」のような碑は、館でなく石碑
+    elif st.k == 'church' and not re.search('キリスト|カトリック|ルーテル|福音|バプテスト|ホーリネス|ハリストス|基督|リバイバル|アドベンチスト', name):
+        # 「教会」でもキリスト教でない所（立正佼成会・金光教・御嶽教・観音・大師・寺・PL・イスラム など）には十字架を描かない
+        st.k = 'temple' if re.search('寺|観音|薬師|大師|佼成|金光|御嶽|天理', name) else 'museum'
     elif st.k == 'view' and st.blobs() and len(st.blobs()[0]) >= 4:
         st.k = 'museum'     # 体育館・会館のような大きな建物の見どころは、窓のある館に
     if st.k != e['k']:

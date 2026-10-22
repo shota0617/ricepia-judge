@@ -18,6 +18,7 @@ const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // �
 // stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
 const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
 const st = load();
+if (st.ver !== 2) { st.best = {}; st.skip = []; st.ver = 2; }   // めいろの 作り方を かえた（2：1本道の 迷路）。前の 盤の ベスト・はずした名所は つかわない
 // 👻 ゴースト：ベストの ときの 走り（0.1秒ごとの 位置）。記録と 同じ キーで、べつの 場所に のこす（大きいので st には 入れない）
 const GKEY = 'nsg_meiro_ghost', GSTEP = 0.1;
 const ghosts = (() => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}') || {}; } catch (e) { return {}; } })();
@@ -34,7 +35,7 @@ function note() {   // きろく の 札に すすみぐあい（何面まで・
   el.textContent = `${st.stage + 1}面まで あそべる・★${stars}`;
 }
 
-let api = null, ui = null, game = null, raf = 0;
+let api = null, ui = null, game = null, raf = 0, wantDaily = false;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
 const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
@@ -98,15 +99,45 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     if (y + 1 < th) ed[y * tw + x] = link(x, y, 0, 1);
   }
   const at = (x, y) => (x < 0 || y < 0 || x >= tw || y >= th ? 0 : cell[y * tw + x]);
+  // 迷路に する：道が つながる さかい（er・ed）の 中から、穴ほりで 1本道の 木を えらび、のこりは 細い壁で ふさぐ。
+  // 広い道・駅前の 広場が「部屋」に ならず、キーホルダーの 迷路のように 通路と 行き止まりに なる（通れるのは 本当の 道が つながる 所だけ）。
+  // 面が はじめの うちは ぬけ道（ふさいだ さかいを すこし あけなおす）を 多めに して やさしく
+  {
+    let sd = ((tx0 * 73856093) ^ (ty0 * 19349663) ^ (tw * 83492791) ^ (th * 2654435761)) >>> 0 || 1;   // 盤ごとに きまる（だれでも 同じ めいろ）
+    const rn = () => { sd ^= sd << 13; sd >>>= 0; sd ^= sd >>> 17; sd ^= sd << 5; sd >>>= 0; return sd / 4294967296; };
+    const floor = i => cell[i] === 1, cand = [];   // 床どうしの 通れる さかい [a, b, 'r'|'d', i]
+    for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
+      const i = y * tw + x;
+      if (er[i] && floor(i) && floor(i + 1)) cand.push([i, i + 1, 'r', i]);
+      if (ed[i] && floor(i) && floor(i + tw)) cand.push([i, i + tw, 'd', i]);
+    }
+    const nb = new Map();
+    for (const e of cand) { for (const [u, v] of [[e[0], e[1]], [e[1], e[0]]]) { if (!nb.has(u)) nb.set(u, []); nb.get(u).push([v, e]); } }
+    for (const e of cand) (e[2] === 'r' ? er : ed)[e[3]] = 0;   // いったん ぜんぶ ふさぐ
+    const seen = new Uint8Array(tw * th), tree = new Set();
+    for (const s0 of nb.keys()) {   // つながりごとに 穴ほり（くねくね 長い 通路が できる）
+      if (seen[s0]) continue;
+      const stack = [s0]; seen[s0] = 1;
+      while (stack.length) {
+        const u = stack[stack.length - 1], opts = (nb.get(u) || []).filter(([v]) => !seen[v]);
+        if (!opts.length) { stack.pop(); continue; }
+        const [v, e] = opts[(rn() * opts.length) | 0];
+        seen[v] = 1; tree.add(e); (e[2] === 'r' ? er : ed)[e[3]] = 1; stack.push(v);
+      }
+    }
+    const braid = Math.max(0.06, 0.3 - n * 0.04);   // ぬけ道の わりあい（1面 3割 → 7面から 6%）
+    for (const e of cand) if (!tree.has(e) && rn() < braid) (e[2] === 'r' ? er : ed)[e[3]] = 1;
+  }
   // ゴール：名所に いちばん近い 床
   let goal = null, gd = 1e9;
   for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (at(x, y) === 1) { const d = Math.hypot(tx0 + x - gx, ty0 + y - gy); if (d < gd) { gd = d; goal = [x, y]; } }
   if (!goal || gd > 4) return null;   // 名所の そばに 床が なければ、この置き方は やめる
   const B = { n, tx0, ty0, tw, th, cell, er, ed, goal, holes: new Set() };
   const dist = bfs(B, goal);
-  // スタート：ゴールから いちばん遠い 床
+  // スタート：ゴールから 道のりが めやす（面が 進むと 長く）までで いちばん遠い 床（1本道の めいろは とても 長く なるので）
+  const aim = 28 + Math.min(n, 10) * 5;
   let start = null, len = 0;
-  for (let i = 0; i < dist.length; i++) if (dist[i] > len) { len = dist[i]; start = [i % tw, (i / tw) | 0]; }
+  for (let i = 0; i < dist.length; i++) if (dist[i] > len && dist[i] <= aim) { len = dist[i]; start = [i % tw, (i / tw) | 0]; }
   if (!start || len < 10) return null;
   // マンホールの穴：面が進むと ふえる。ゴール・スタートの そばと、穴があると たどりつけなくなる所には 置かない
   const want = Math.min(8, Math.max(0, n - 1) * 2), cand = [];
@@ -201,6 +232,7 @@ function build() {
   document.body.appendChild(el);
   ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'), bezel: el.querySelector('.mz-bezel'),
     load: el.querySelector('.mz-load'), clear: el.querySelector('.mz-clear'), card: el.querySelector('.mz-card') };
+  ['click', 'touchend'].forEach(ev => el.addEventListener(ev, () => { if (api) api.tiltAsk(); }, { passive: true }));   // iPhone の 傾きの 許可（リンクから すぐ ひらいた ときは、めいろを さわった ときに 聞く。2回めからは 何もしない）
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-mz]');
     if (!b) return;
@@ -238,7 +270,7 @@ function build() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) letGo(); });
 }
 
-function open(n) {
+function open(n, daily = false) {   // daily：☀️ きょうの めいろ を ひらく（シェアの リンク ?meiro=daily から）
   api = root.nishioPixel && root.nishioPixel.meiroApi;
   if (!api) return false;
   if (!ui) build();
@@ -246,7 +278,7 @@ function open(n) {
   ui.el.querySelector('[data-mz=slow]').setAttribute('aria-pressed', String(!!st.slow));
   api.pause(true);
   api.tiltAsk(); api.tiltReset();   // いまの持ち方を「まっすぐ」に
-  startStage(typeof n === 'number' ? n : Math.min(st.stage, goalList().length - 1));
+  startStage(daily ? null : typeof n === 'number' ? n : Math.min(st.stage, goalList().length - 1), daily);
   if (root.nsgTrack) root.nsgTrack('meiro_open', { stage: (game && game.n + 1) || 0 });
   return true;
 }
@@ -275,6 +307,7 @@ const recKey = g => (g.daily ? 'day:' : '') + g.spot.id;
 function startStage(n, daily = false) {
   const list = goalList(daily);
   if (!list.length) { ui.load.hidden = false; ui.load.textContent = '名所を よみこみ中…'; setTimeout(() => !ui.el.hidden && startStage(n, daily), 600); return; }
+  if (n == null) { n = dailyIndex(); if (n < 0) { ui.load.hidden = false; ui.load.textContent = 'きょうの めいろが つくれなかった'; return; } }   // 名所が よめてから えらぶ
   n = Math.max(0, Math.min(n, list.length - 1));
   game = { n, daily, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
@@ -295,7 +328,7 @@ function startStage(n, daily = false) {
     }
     g.board = b;
     const gh = ghosts[recKey(g)];   // 盤が かわっていたら（地図の 作りなおし など）つかわない
-    g.ghost = gh && gh.w === b.tw && gh.s === b.start[1] * b.tw + b.start[0] && gh.e === b.goal[1] * b.tw + b.goal[0] && gh.p && gh.p.length >= 4 ? gh : null;
+    g.ghost = gh && gh.v === 2 && gh.w === b.tw && gh.s === b.start[1] * b.tw + b.start[0] && gh.e === b.goal[1] * b.tw + b.goal[0] && gh.p && gh.p.length >= 4 ? gh : null;
     ui.load.hidden = true;
     fit();
     restart();
@@ -341,11 +374,13 @@ function paintBoard(b, T) {
   const x = c.getContext('2d');
   api.paintRegion(x, b.tx0 * K, b.ty0 * K, b.tw * K, b.th * K, T / K);
   const at = (i, j) => (i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i]);
-  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(2, Math.round(T / 8));
+  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(2, Math.round(T / 6));
+  const reach = bfs(b, b.goal);   // ゴールへ つながらない 床は 通路に 見えないよう 暗く（迷路の 通路が うかんで 見える）
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    const X = i * T, Y = j * T;
-    if (at(i, j)) { x.fillStyle = 'rgba(255,250,235,.22)'; x.fillRect(X, Y, T, T); }   // 床：少し明るく
-    else { x.fillStyle = 'rgba(16,28,22,.66)'; x.fillRect(X, Y, T, T); }   // 壁の かたまり：暗く
+    const X = i * T, Y = j * T, v = at(i, j);
+    if (v === 1 && reach[j * b.tw + i]) { x.fillStyle = 'rgba(255,250,235,.42)'; x.fillRect(X, Y, T, T); }   // 通路：明るく
+    else if (v === 1) { x.fillStyle = 'rgba(16,28,22,.55)'; x.fillRect(X, Y, T, T); }
+    else if (!v) { x.fillStyle = 'rgba(16,28,22,.78)'; x.fillRect(X, Y, T, T); }   // 壁の かたまり：暗く
   }
   // かべの線：通れない さかい（床と 壁の かたまり、道が つながっていない 床どうし）に 黒い太い線（キーホルダーの 迷路の 線のように）。
   // 上と左の かべの下には 明るい ふちで、少し 立体に
@@ -464,7 +499,7 @@ function win() {
   const sec = Math.round(g.t * 10) / 10, par = (b.len * 0.45 + 3) * (st.slow ? 1.6 : 1);   // 目やすの時間（道のりから。ゆっくりでは 長め）
   const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
   const prev = st.best[recKey(g)], newBest = !prev || sec < prev.t;
-  if (newBest) { g.ghost = { s: b.start[1] * b.tw + b.start[0], e: b.goal[1] * b.tw + b.goal[0], w: b.tw, p: g.rec }; saveGhost(recKey(g), g.ghost); }   // つぎの「もういちど」から この走りと きそう
+  if (newBest) { g.ghost = { v: 2, s: b.start[1] * b.tw + b.start[0], e: b.goal[1] * b.tw + b.goal[0], w: b.tw, p: g.rec }; saveGhost(recKey(g), g.ghost); }   // つぎの「もういちど」から この走りと きそう
   st.best[recKey(g)] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   if (!g.daily) st.stage = Math.max(st.stage, g.n + 1);   // きょうの めいろ では 面を すすめない
   save();
@@ -618,8 +653,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const P = root.nishioPixel && root.nishioPixel.meiroApi;
     if (P) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
     const d = $('demoBtn'); if (d) d.click();
-    setTimeout(() => open(), 60);
+    setTimeout(() => open(undefined, wantDaily), 60);
   });
+  // シェアの リンク（?meiro=daily：きょうの めいろ・?meiro=1：めいろ）から 来た人
+  const want = new URLSearchParams(location.search).get('meiro');
+  if (want === 'daily' || want === '1') {
+    wantDaily = want === 'daily';
+    const intro = $('intro'), t = b && b.querySelector('.mp-t');
+    if (intro && !intro.hidden && b) { if (t && wantDaily) t.textContent = '☀️ きょうの めいろ に ちょうせん'; }   // はじめての人：いちばん上の ボタンで（iPhone の 傾きの 許可は タップの その場で）
+    else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
+  }
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）

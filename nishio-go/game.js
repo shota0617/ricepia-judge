@@ -1637,6 +1637,7 @@ function deliverParcel(n) {
   return `📦 ${n.name}「${p.fromName}から${p.item}？ わざわざ ありがとうね」 +${PARCEL_PTS}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`;
 }
 function hintSay(n, name) {
+  if (n.hint) return n.hint.replace('{s}', () => name);   // 目立つ人は、その人だけの言い方（npcs.js の hint。その人の仕事・好みに たとえるだけで、事実は言わない）
   const list = HINT_SAY[n.look] || HINT_SAY.man, h = [...String(n.id)].reduce((a, c) => a + c.charCodeAt(0), 0);
   return list[h % list.length].replace('{s}', () => name);
 }

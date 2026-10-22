@@ -25,6 +25,11 @@
   let root, cv, ctx, scale = 2, raf = 0, running = false, last = 0, acc = 0;
   let lv = 0, gen = 0, L, worldH, plats, outcrops, rocks, pl, camY, keys, hearts, frames, done, shown, seen, msg, msgT, zone, nextRock, rnd, hurtT;
   const art = { sheet: null, spr: {} };
+  // 家・露頭・田んぼ・旗・小石は Blender で焼いた絵（tools/blender/dankyu-art.py → nishio-go/art/ev/）。読めるまでは手描き
+  const ev = {};
+  for (const [k, src] of [['sheet', 'dankyu.png'], ['flag', 'dankyu-flag.png'], ['rock', 'dankyu-rock.png']]) { const im = new Image(); im.onload = () => { ev[k] = im; }; im.src = 'nishio-go/art/ev/' + src; }
+  const EV = { house0: 0, house1: 1, outcrop: 2, paddy: 3 };   // dankyu.png の並び（16×16）
+  const evDraw = (c, k, X, Y) => c.drawImage(ev.sheet, EV[k] * 16, 0, 16, 16, X, Y, 16, 16);
 
   /* ---------- 絵（にしおジャンプの Blender の絵を借りる。読めないあいだは四角） ---------- */
   function loadArt() {
@@ -235,17 +240,18 @@
     const tY = top * T - cy;
     if (tY > -T * 4) {
       c.fillStyle = '#6aa84a'; c.fillRect(0, tY - 2, W, 2);
-      for (let i = 0; i < 4; i++) { const X = 12 + i * 46; c.fillStyle = '#f1e6c8'; c.fillRect(X, tY - 14, 16, 12); c.fillStyle = '#59606a'; c.fillRect(X - 2, tY - 18, 20, 5); }
-      c.fillStyle = '#8a6a3e'; c.fillRect(W - 22, tY - 30, 2, 30); c.fillStyle = '#d23a2e'; c.fillRect(W - 20, tY - 30, 12, 8);   // ゴールの旗
+      for (let i = 0; i < 4; i++) { const X = 12 + i * 46; if (ev.sheet) evDraw(c, i % 2 ? 'house1' : 'house0', X, tY - 18); else { c.fillStyle = '#f1e6c8'; c.fillRect(X, tY - 14, 16, 12); c.fillStyle = '#59606a'; c.fillRect(X - 2, tY - 18, 20, 5); } }
+      if (ev.flag) c.drawImage(ev.flag, W - 28, tY - 32);   // ゴールの旗
+      else { c.fillStyle = '#8a6a3e'; c.fillRect(W - 22, tY - 30, 2, 30); c.fillStyle = '#d23a2e'; c.fillRect(W - 20, tY - 30, 12, 8); }
     }
     // 自然堤防の上の家（集落）と、下の田んぼ
     const lY = levee * T - cy;
     if (lY < H + T) {
       c.fillStyle = '#c8b48a'; c.fillRect(0, lY, W, (L.rows - 1 - levee) * T);
-      for (const X of [8, 40, 128, 160]) { c.fillStyle = '#f1e6c8'; c.fillRect(X, lY - 12, 14, 12); c.fillStyle = '#59606a'; c.fillRect(X - 2, lY - 16, 18, 5); }
+      for (const [j, X] of [8, 40, 128, 160].entries()) { if (ev.sheet) evDraw(c, j % 2 ? 'house0' : 'house1', X, lY - 16); else { c.fillStyle = '#f1e6c8'; c.fillRect(X, lY - 12, 14, 12); c.fillStyle = '#59606a'; c.fillRect(X - 2, lY - 16, 18, 5); } }
     }
     const pY = (L.rows - 1) * T - cy;
-    if (pY < H) { c.fillStyle = '#d8c060'; c.fillRect(0, pY, W, T); for (let x = 2; x < W; x += 6) { c.fillStyle = '#b89a3a'; c.fillRect(x, pY + 2, 1, 6); } }
+    if (pY < H) { if (ev.sheet) for (let x = 0; x < W; x += T) evDraw(c, 'paddy', x, pY); else { c.fillStyle = '#d8c060'; c.fillRect(0, pY, W, T); for (let x = 2; x < W; x += 6) { c.fillStyle = '#b89a3a'; c.fillRect(x, pY + 2, 1, 6); } } }
     // でっぱり
     for (const p of plats) {
       const Y = p.y * T - cy;
@@ -261,13 +267,13 @@
     for (const o of outcrops) {
       const Y = Math.round(o.y - cy);
       if (Y < -T || Y > H) continue;
-      c.fillStyle = o.got ? '#e8e2d2' : '#f4f0e0'; c.fillRect(o.x, Y + 2, 16, 12);
-      for (let k = 0; k < 3; k++) { c.fillStyle = ['#c8a870', '#a88a5a', '#d8c090'][k]; c.fillRect(o.x + 1, Y + 4 + k * 3, 14, 2); }
+      if (ev.sheet) { c.globalAlpha = o.got ? 0.8 : 1; evDraw(c, 'outcrop', o.x, Y); c.globalAlpha = 1; }   // 見つけたあとは少し うすく
+      else { c.fillStyle = o.got ? '#e8e2d2' : '#f4f0e0'; c.fillRect(o.x, Y + 2, 16, 12); for (let k = 0; k < 3; k++) { c.fillStyle = ['#c8a870', '#a88a5a', '#d8c090'][k]; c.fillRect(o.x + 1, Y + 4 + k * 3, 14, 2); } }
       if (!o.got && Math.floor(now / 300) % 2) { c.fillStyle = '#fff'; c.fillRect(o.x + 7, Y - 2, 2, 2); }
       if (o.got) { c.fillStyle = '#f2c230'; c.fillRect(o.x + 6, Y - 4, 4, 4); }
     }
     // 小石
-    for (const r of rocks) { const Y = Math.round(r.y - cy); c.fillStyle = '#7a7268'; c.fillRect(Math.round(r.x), Y, 6, 6); c.fillStyle = '#a8a094'; c.fillRect(Math.round(r.x) + 1, Y + 1, 2, 2); }
+    for (const r of rocks) { const Y = Math.round(r.y - cy); if (ev.rock) c.drawImage(ev.rock, Math.round(r.x) - 1, Y - 1, 8, 8); else { c.fillStyle = '#7a7268'; c.fillRect(Math.round(r.x), Y, 6, 6); c.fillStyle = '#a8a094'; c.fillRect(Math.round(r.x) + 1, Y + 1, 2, 2); } }   // 小石（当たりの大きさは 6×6 のまま）
     // 主人公（あたったあとは点めつ）
     if (!(hurtT > 0 && Math.floor(hurtT / 4) % 2)) {
       const k = !pl.ground ? 'jump' : Math.abs(pl.vx) > 0.3 ? (Math.floor(frames / 6) % 2 ? 'run1' : 'run2') : 'stand';

@@ -166,9 +166,9 @@ class Site:
             else:
                 mx, my = 0, 1
         f = (1 if mx > 0 else -1, 0) if abs(mx) > abs(my) else (0, 1 if my > 0 else -1)
-        edge = [p for p in self.mask if (p[0] + f[0], p[1] + f[1]) not in self.mask and p not in blob]
+        edge = [p for p in self.mask if (p[0] + f[0], p[1] + f[1]) not in self.mask and p not in blob and self.at(*p) != B]   # 入口は建物のマスでない所
         if not edge:
-            edge = [p for p in self.mask if p not in blob] or list(self.mask)
+            edge = [p for p in self.mask if p not in blob and self.at(*p) != B] or [p for p in self.mask if p not in blob] or list(self.mask)
         def score(p):   # 道に面している・建物の正面の延長に近い・建物から離れている（3マスまで）
             along = (p[0] - cx) * f[0] + (p[1] - cy) * f[1]
             side = abs((p[0] - cx) * f[1]) + abs((p[1] - cy) * f[0])
@@ -495,34 +495,36 @@ def m_worship(st):
     for n, b in enumerate(blobs[1:4]):
         small_bldg(st, b, n, 'flat' if st.roof_of(b) in FLAT else 'gable')
         used |= set(b)
-    graves(st, used)
-    # 入口から正面への参道と、鳥居・山門
+    # 入口から正面への参道と、鳥居・山門（お墓より先に決めて、参道と入口のマスにはお墓を置かない）
     used.add(gate)
     # 参道の終わり：置いた長方形の正面の辺のまん中の、すぐ前のマス
     i0, i1 = min(i for i, _ in rect), max(i for i, _ in rect)
     j0, j1 = min(j for _, j in rect), max(j for _, j in rect)
     front_cell = {(0, 1): ((i0 + i1) // 2, j1 + 1), (0, -1): ((i0 + i1) // 2, j0 - 1),
                   (1, 0): (i1 + 1, (j0 + j1) // 2), (-1, 0): (i0 - 1, (j0 + j1) // 2)}[f]
-    cells = route(st, gate, front_cell, block=set(main) | set(rect) | others) if front_cell in st.mask else []
+    blocked = set(main) | set(rect) | others
+    cells = route(st, gate, front_cell, block=blocked) if front_cell in st.mask and front_cell not in blocked else []   # 参道の終わりが ほかの建物のマスなら参道なし
     if cells:   # 敷地の中だけを通る参道
         path(cells)
-        used.add(front_cell)
+        used |= set(cells)
         st.clear |= set(cells)
     else:
         front_cell = None
+    graves(st, used)
     st.clear_front(rect)
     if k == 'inari':
         torii_at(st, gate, f, 'accP', rng.randint(3, 4))
-        for s in (-1, 1):
-            sphere(f'kitsune{s}', 'kitsune', 0.016, (xy(*gate)[0] + s * 0.045 * abs(f[1]), xy(*gate)[1] + s * 0.045 * abs(f[0]), 0.035), (0.8, 1.2, 1.4))
+        d = (cells[1][0] - gate[0], cells[1][1] - gate[1]) if len(cells) > 1 else (f[0], -f[1])   # 入口から出ていく参道の向き
+        for s in (-1, 1):   # 狐の像は、その向きの両わき（参道のはば 0.07 にかからない）
+            sphere(f'kitsune{s}', 'kitsune', 0.016, (xy(*gate)[0] + s * 0.05 * abs(d[1]), xy(*gate)[1] + s * 0.05 * abs(d[0]), 0.035), (0.8, 1.2, 1.4))
     elif k == 'shrine':
         torii_at(st, gate, f, 'ishi' if rng.random() < 0.3 else 'accP')
-        if front_cell and rng.random() < 0.7:   # 灯籠は参道の両わき（となりのマスも敷地のときだけ）
-            fx2, fy2 = xy(*front_cell)
+        if front_cell and rng.random() < 0.7:   # 灯籠は参道の両わきのマスのまん中（参道・建物・お墓のないマスのときだけ。そのマスには木を植えない）
             sides = [(front_cell[0] + s * abs(f[1]), front_cell[1] + s * abs(f[0])) for s in (-1, 1)]
-            if all(p in st.mask for p in sides):
-                for s in (-1, 1):
-                    gg.toro(f'{s}', fx2 + s * 0.06 * abs(f[1]), fy2 + s * 0.06 * abs(f[0]), 0.8)
+            if all(p in st.mask and p not in used and p not in blocked for p in sides):
+                for s, p in zip((-1, 1), sides):
+                    gg.toro(f'{s}', *xy(*p), 0.8)
+                    used.add(p)
     elif k == 'temple':
         if len(st.mask) >= 16 and rng.random() < 0.6:
             gate_at(st, gate, f, 'mon')
@@ -573,7 +575,7 @@ def m_building(st):
         for i in range(3):
             sphere(f'yuge{i}', 'yu', 0.035, (-0.06 + i * 0.06, 0, hgt + 0.05 + 0.03 * (i % 2)), (1, 1, 1.4))
     g.place(ang, x, y)
-    if st.k == 'art':   # 入口のマスに像（アート）
+    if st.k == 'art' and gate not in rect:   # 入口のマスに像（アート）
         gx, gy = xy(*gate)
         sphere('chokoku', 'kane', 0.035, (gx, gy, 0.06), (0.7, 0.7, 1.6))
     for n, b in enumerate(blobs[1:4]):
@@ -886,6 +888,8 @@ def build(e):
     elif st.k == 'church' and not re.search('キリスト|カトリック|ルーテル|福音|バプテスト|ホーリネス|ハリストス|基督|リバイバル|アドベンチスト', name):
         # 「教会」でもキリスト教でない所（立正佼成会・金光教・御嶽教・観音・大師・寺・PL・イスラム など）には十字架を描かない
         st.k = 'temple' if re.search('寺|観音|薬師|大師|佼成|金光|御嶽|天理', name) else 'museum'
+    elif st.k == 'art' and not st.blobs():
+        st.k = 'statue'     # 建物のマスがないアート（「大狸」のような大きな像）は、館でなく像に
     elif st.k == 'view' and st.blobs() and len(st.blobs()[0]) >= 4:
         st.k = 'museum'     # 体育館・会館のような大きな建物の見どころは、窓のある館に
     if st.k != e['k']:

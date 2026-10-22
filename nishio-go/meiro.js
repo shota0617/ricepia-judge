@@ -48,6 +48,7 @@ function makeBoard(n, spot) {
     const b = layout(n, tx0, ty0, tw, th, gx, gy, PATH);
     if (b && (!best || b.len > best.len)) best = b;
   }
+  if (best && best.len < 14 + Math.min(n, 12)) return null;   // 道のりが みじかすぎる（前の面より ずっと かんたん）名所は はずす
   if (best) best.spot = spot;
   return best;
 }

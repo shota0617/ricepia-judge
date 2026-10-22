@@ -1820,7 +1820,7 @@ const heroMarkerStyle = document.createElement('style');
 // 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：32×32 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。歩く地図には 2マスで描く（ドットの大きさは ほかの絵と同じ）。
 // 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
 const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
-const roll = { d: 0, last: null };
+const roll = { d: 0, last: null, ang: 0, av: 0 };   // d：転がった道のり（マス）・ang：いまの回り（ラジアン）・av：回る速さ
 (() => {
   const img = new Image();
   img.onload = () => {
@@ -1841,6 +1841,23 @@ const roll = { d: 0, last: null };
   img.src = 'nishio-go/art/rice.png';
 })();
 const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
+// なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
+// 止まると、起き上がりこぼしのように ゆらゆらして、立って こっちを見る
+const RICE_R = 0.42;   // 回る半径（マス）。1マス進むと 約136度まわる
+function riceSpin(dx, dy, dt) {
+  const d = Math.hypot(dx, dy);
+  if (d > 0.002 && d < 3 && d / Math.max(dt, 1e-3) > 0.15) {
+    const sg = Math.abs(dx) >= Math.abs(dy) ? Math.sign(dx) : Math.sign(dy);
+    roll.av = sg * d / RICE_R / Math.max(dt, 1e-3);
+    roll.ang += sg * d / RICE_R;
+    return;
+  }
+  const up = Math.round(roll.ang / (Math.PI * 2)) * Math.PI * 2;   // いちばん近い「立った」向きへ、ばねで もどる
+  roll.av += (up - roll.ang) * 70 * dt;
+  roll.av *= Math.pow(0.86, dt * 60);
+  roll.ang += roll.av * dt;
+  if (Math.abs(up - roll.ang) < 0.002 && Math.abs(roll.av) < 0.01) { roll.ang = up; roll.av = 0; }
+}
 function setHeroMarker() {
   const sheet = document.createElement('canvas');
   sheet.width = 64; sheet.height = 32;
@@ -5027,7 +5044,7 @@ function frame(now) {
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
   if (rollOn && G.demo && rp.x !== null && !driving) { cam.x = rp.x; cam.y = rp.y; }   // 転がしているときは、お米の位置にぴったり
-  if (roll.last) { const d = Math.hypot(cam.x - roll.last.x, cam.y - roll.last.y); if (d < 3) roll.d += d; }
+  if (roll.last) { const ddx = cam.x - roll.last.x, ddy = cam.y - roll.last.y, d = Math.hypot(ddx, ddy); if (d < 3) roll.d += d; riceSpin(ddx, ddy, dt); }
   roll.last = { x: cam.x, y: cam.y };
 
   if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
@@ -5181,9 +5198,11 @@ function frame(now) {
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if ((me || G.demo) && riceSprites.ready) {   // お米（影をつけて、転がった道のりで回す）
-    const img = riceFrame(), sz = dotSize(img, T);
+    const img = riceSprites.right[0], sz = dotSize(img, T), mid = cy + T * 0.4 - sz / 2;
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(w / 2 - sz * 0.24), Math.round(cy + T * 0.3), Math.round(sz * 0.48), Math.max(2, Math.round(T / 8)));
-    ctx.drawImage(img, Math.round(w / 2 - sz / 2), Math.round(cy + T * 0.4 - sz), sz, sz);
+    ctx.save(); ctx.translate(Math.round(w / 2), Math.round(mid)); ctx.rotate(roll.ang % (Math.PI * 2));
+    ctx.drawImage(img, -Math.round(sz / 2), -Math.round(sz / 2), sz, sz);
+    ctx.restore();
   } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
   if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える
@@ -5699,7 +5718,7 @@ window.addEventListener('deviceorientation', e => {
   }
   const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
   const dz = v => (Math.abs(v) < 0.08 ? 0 : v);   // 手のふるえは無視
-  tiltG.x = dz(c(lr - tiltG.base.lr)); tiltG.y = dz(c(fb - tiltG.base.fb));
+  tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * 0.35; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * 0.35;   // センサーの細かいゆれを ならす
   if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {   // あるいて移動で傾けたとき：1回だけ教える
     tiltG.walkTold = true;
     G.toast('🍚 あるいて移動では、歩いた所へ お米が転がるよ。傾けて転がすのは「操作して遊ぶ」で');
@@ -5743,9 +5762,10 @@ function rollStep(dt) {
     rp.tile = key;
     sightCheck(); critterStep(tx, ty);
   }
-  if (Math.hypot(rp.x - rp.sent.x, rp.y - rp.sent.y) > 0.2) {
+  const far = Math.hypot(rp.x - rp.sent.x, rp.y - rp.sent.y), nowMs = performance.now();
+  if (far > 0.45 || (far > 0.05 && nowMs - (rp.sentAt || 0) > 250)) {   // 位置を game.js へ（多すぎると重くなるので、0.45マスごとか 0.25秒ごと）
     const ll = toLatLng(rp.x, rp.y);
-    rp.sent = { x: rp.x, y: rp.y };
+    rp.sent = { x: rp.x, y: rp.y }; rp.sentAt = nowMs;
     G.moveTo(ll.lat, ll.lng, 'step');
   }
 }

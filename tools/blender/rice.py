@@ -32,7 +32,7 @@ CENTER_Z = 0.43   # つぶのまん中の高さ（立って地面につく高さ
 
 def grain():
     """立った お米のつぶ（たて長の だ円。右上の かたに 胚芽のところの くぼみ）。顔は手前（-y）の面に：丸い目2つと、にっこりの口"""
-    kome = smooth_sphere('kome', 'kome', 0.30, (0, 0, 0), (1.0, 0.85, 1.42))   # なめらかな丸み（細かい球）
+    kome = smooth_sphere('kome', 'kome', 0.31, (0, 0, 0), (1.0, 0.88, 1.32))   # なめらかな丸み（細かい球）。少し ずんぐりで かわいく
     cut = smooth_sphere('cut', 'kome', 0.19, (0.22, 0, 0.47), (1, 1.6, 1.15))   # 胚芽のところの くぼみ（右上を けずる）
     m = kome.modifiers.new('notch', 'BOOLEAN')
     m.operation, m.object = 'DIFFERENCE', cut
@@ -75,7 +75,7 @@ def rolled(kind, i):
 ORDER = [f'{k}-{i}' for k in ('side', 'front') for i in range(FRAMES)]
 
 
-# 止まっている絵（side・front の1コマめ）の顔は、見本のイメージどおりに 点で描く：丸い目2つ（2×2）と、はしが上がった 細くて広い にっこりの口
+# 止まっている絵（side・front の1コマめ）は、右上に 胚芽が欠けた所の凹み（まるく えぐって影）をつけ、顔を 点で描く：たて長の まっ黒な目2つ・うすいピンクのほっぺ・はしが上がった にっこりの口（ゲームでは この絵を回して転がす）
 FACE = r"""
 im = Image.open(dst).convert('RGBA'); px = im.load()
 EYE = (14, 14, 14, 255); BODY = (246, 245, 238, 255); OUT = (26, 26, 26, 255)
@@ -107,10 +107,34 @@ for r in (0, 1):
             if px[x, y] == EYE: px[x, y] = BODY
     body = [(x, y) for y in range(y0, y0 + N) for x in range(x0, x0 + N) if px[x, y][3] and px[x, y][:3] != OUT[:3]]
     xs = [p[0] for p in body]; ys = [p[1] for p in body]
-    cx = (min(xs) + max(xs)) // 2 - 1; ey = min(ys) + (max(ys) - min(ys)) * 50 // 100
-    for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1)):   # 目
-        px[cx - 3 + dx, ey + dy] = EYE; px[cx + 3 + dx, ey + dy] = EYE
-    for dx, dy in ((-4, 3), (-3, 4), (-2, 5), (-1, 5), (0, 5), (1, 5), (2, 5), (3, 5), (4, 4), (5, 3)):   # にっこりの口
+    # 胚芽が欠けた所の凹み：右上の かたを まるく えぐり（ふちどりを描きなおす）、えぐった内がわに うすい影
+    L, R_, T_, B_ = min(xs), max(xs), min(ys), max(ys)
+    ncx, ncy, nr = R_ + 1.0, T_ + (B_ - T_) * 0.20, (R_ - L) * 0.26
+    for (x, y) in body:
+        if (x - ncx) ** 2 + (y - ncy) ** 2 <= nr * nr: px[x, y] = (0, 0, 0, 0)
+    for y in range(y0, y0 + N):   # ふちどりを描きなおす（えぐった所に はみ出した古い線は消す）
+        for x in range(x0, x0 + N):
+            if px[x, y][:3] == OUT[:3] and px[x, y][3] and not any(px[x + i, y + j][3] and px[x + i, y + j][:3] != OUT[:3] for i, j in ((1, 0), (-1, 0), (0, 1), (0, -1)) if x0 <= x + i < x0 + N and y0 <= y + j < y0 + N):
+                px[x, y] = (0, 0, 0, 0)
+    edge = []
+    for y in range(y0, y0 + N):
+        for x in range(x0, x0 + N):
+            if not px[x, y][3] and any(px[x + i, y + j][3] and px[x + i, y + j][:3] != OUT[:3] for i, j in ((1, 0), (-1, 0), (0, 1), (0, -1)) if x0 <= x + i < x0 + N and y0 <= y + j < y0 + N):
+                edge.append((x, y))
+    for x, y in edge: px[x, y] = OUT
+    SHADE = (214, 218, 230, 255)
+    for (x, y) in body:   # えぐった ふちの すぐ内がわ（1点）に影
+        if px[x, y][3] and px[x, y][:3] != OUT[:3] and nr * nr < (x - ncx) ** 2 + (y - ncy) ** 2 <= (nr + 1.5) ** 2: px[x, y] = SHADE
+    body = [(x, y) for y in range(y0, y0 + N) for x in range(x0, x0 + N) if px[x, y][3] and px[x, y][:3] != OUT[:3]]
+    xs = [p[0] for p in body]; ys = [p[1] for p in body]
+    cx = (min(xs) + max(xs)) // 2 - 1; ey = min(ys) + (max(ys) - min(ys)) * 52 // 100
+    PINK = (246, 160, 176, 255)
+    for ex in (cx - 4, cx + 3):   # 目（たて長の まっ黒な丸）
+        for dx, dy in ((0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2)):
+            px[ex + dx, ey + dy] = EYE
+    for dx in (-7, -6, 6, 7):   # ほっぺ（うすいピンク）
+        px[cx + dx, ey + 3] = PINK; px[cx + dx, ey + 4] = PINK
+    for dx, dy in ((-3, 4), (-2, 5), (-1, 5), (0, 5), (1, 5), (2, 5), (3, 4)):   # にっこりの口（はしが上がった弧）
         px[cx + dx, ey + dy] = EYE
 im.save(dst)
 """

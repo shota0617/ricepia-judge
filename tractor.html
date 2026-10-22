@@ -914,6 +914,11 @@ function setupField(root) {
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  // 土の湿り：耕した直後は下の湿った土が出て黒っぽく、表面が乾くと明るくなる（ゲームでは 2 分半で乾く。代かきの泥水は乾かない）
+  if (!SHIRO) {
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 12).fill(1), 3).setUsage(THREE.DynamicDrawUsage));
+    mat.vertexColors = true;
+  }
   g.setIndex(new THREE.BufferAttribute(idx, 1));
   tilled = new THREE.Mesh(g, mat);
   tilled.frustumCulled = false;
@@ -987,14 +992,38 @@ function tillCell(i, j) {
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
   });
   eraseTracks(c);
+  DRY.wet(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
   return 1;
 }
+const DRY = (() => {
+  const WET = season === 'aki' ? 0.68 : 0.6, T = 150, list = [];
+  let clock = 0, acc = 0;
+  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v, c * 12, c * 12 + 12); };
+  return {
+    wet(c) { if (SHIRO) return; set(c, WET); list.push([c, clock]); },
+    update(dt) {                                  // 2 秒ごとに、耕して 2 分半までの所を少しずつ明るくする
+      clock += dt;
+      if (SHIRO || (acc += dt) < 2 || !list.length) return;
+      acc = 0;
+      const a = tilled.geometry.attributes.color;
+      let lo = Infinity, hi = -1, k = 0;
+      for (const e of list) {
+        const f = Math.min(1, (clock - e[1]) / T), v = WET + (1 - WET) * Math.pow(f, 0.7);
+        set(e[0], v); lo = Math.min(lo, e[0]); hi = Math.max(hi, e[0]);
+        if (f < 1) list[k++] = e;
+      }
+      list.length = k;
+      a.updateRange.offset = lo * 12; a.updateRange.count = (hi - lo + 1) * 12; a.needsUpdate = true;
+    }
+  };
+})();
 function flushTilled() {
   if (dirtyHi < 0) return;
   const g = tilled.geometry;
-  for (const [name, w] of [['position', 12], ['uv', 8]]) {
+  for (const [name, w] of [['position', 12], ['uv', 8], ['color', 12]]) {
+    if (!g.attributes[name]) continue;
     const a = g.attributes[name];
     a.updateRange.offset = dirtyLo * w;
     a.updateRange.count = (dirtyHi - dirtyLo + 1) * w;
@@ -1642,7 +1671,8 @@ const HEAPS = (() => {
     }
     g.setIndex(idx);
     g.setDrawRange(0, 0);
-    mesh = new THREE.Mesh(g, tilled.material);
+    const hm = tilled.material.clone(); hm.vertexColors = false;   // 盛り上がりは乾いた色のまま
+    mesh = new THREE.Mesh(g, hm);
     mesh.frustumCulled = false;
     mesh.receiveShadow = true;
     scene.add(mesh);
@@ -2282,6 +2312,7 @@ function frame(now) {
   HEAPS.flush(dt);
   TURBID.update(dt);
   MIST.update(dt);
+  DRY.update(dt * SPEEDUP);
   TR.flush();
   STREAK.flush();
   SUN_VIEW.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);
@@ -2289,7 +2320,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -1278,6 +1278,19 @@ function emitExhaust(dt) {
   }
 }
 let lastExhV = 0;
+// 後輪がはね上げる泥：タイヤのうしろ上から、うしろへ飛ぶ。代かきの泥田でいちばん多い
+let tireAcc = 0;
+function emitTireMud(dt, slip) {
+  tireAcc += dt * (SHIRO ? 16 : MUD.level * 8) * Math.min(1, Math.abs(S.v) / 1.2) * (0.5 + slip * 8);
+  const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw), back = Math.sign(S.v) || 1;
+  while (tireAcc >= 1) {
+    tireAcc -= 1;
+    const lx = (Math.random() < 0.5 ? 1 : -1) * (TRACK + (Math.random() - 0.5) * 0.25), lz = -back * (0.35 + Math.random() * 0.2), y = R_REAR * (1.3 + Math.random() * 0.5);
+    const x = S.x + lx * cs + lz * sn, z = S.z - lx * sn + lz * cs;
+    const bv = -back * (1.2 + Math.random() * 1.6), up = 0.8 + Math.random() * 1.6, sd = (Math.random() - 0.5) * 0.5;
+    FX.emit(x, y, z, sd * cs + bv * sn + sn * S.v * 0.6, up, -sd * sn + bv * cs + cs * S.v * 0.6, 0);
+  }
+}
 function emitTilling(dt) {
   // ロータリーのうしろ（カバーと均平板のすき間）から、走る速さに合わせて出す
   emitAcc += dt * (SHIRO ? 170 : 150) * Math.min(1, Math.abs(S.v) / 1.2 + 0.25);
@@ -2006,7 +2019,11 @@ function step(dt) {
   }
   if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); }
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
-  P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
+  // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
+  const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
+  const slip = !inField ? 0 : (SHIRO ? 0.09 : 0.03) + (working ? 0.025 : 0) + 0.01 * Math.min(1, Math.abs(S.v));
+  P.WheelRL.rotation.x += S.v * (1 + slip) * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
+  if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
   {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
     const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);

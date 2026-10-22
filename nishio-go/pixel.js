@@ -1751,10 +1751,13 @@ function drawAlleyHint(X, Y, T, now) {
 }
 // 水べで じっと見る（ポケモンの「釣りざおで、水べで出会えるものが ふえる」）：水の となりのマスで 4秒 止まっていると、水の中の生きものに出会う。
 // 1.5秒で「👀 水の中を じっと見とる…」。動くまでは1回だけ。1日2回まで（生きもの手帳の1日の数にも入る。game.js の watchWater）
-const watchS = { key: '', t: 0, done: false, told: false };
+// 止まっているかは、見はじめた所から 半マス（4m）以上 動いていないか・転がしているなら お米が止まっているか で見る
+// （同じマスの中を ゆっくり転がっていても 数えない。GPS の小さなゆれ では やりなおさない）
+const watchS = { key: '', t: 0, done: false, told: false, ax: 0, ay: 0 };
 function waterWatch(tgt, dt) {
   const tx = Math.floor(tgt.x), ty = Math.floor(tgt.y), key = `${tx},${ty}`;
-  if (key !== watchS.key) { Object.assign(watchS, { key, t: 0, done: false, told: false }); return; }
+  if (key !== watchS.key) { Object.assign(watchS, { key, t: 0, done: false, told: false, ax: tgt.x, ay: tgt.y }); return; }
+  if (Math.hypot(tgt.x - watchS.ax, tgt.y - watchS.ay) > 0.5 || (rollOn && roll.v > 0.1)) { Object.assign(watchS, { t: 0, told: false, ax: tgt.x, ay: tgt.y }); return; }
   if (watchS.done || driving || mapCovered() || sightBusy() || BLOCK.has(codeAt(tx, ty)) || !G.watchOpen || !G.watchOpen()) return;
   const wet = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => codeAt(tx + dx, ty + dy) === C.A);
   if (!wet) return;

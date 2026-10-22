@@ -790,6 +790,54 @@ const MUDDROP = (() => {
   return { step, mesh };
 })();
 
+
+// ---- 朝霧（放射霧）：晴れて風の弱い朝、冷えた地面や水面の上に低くたまる霧。秋と、水を張った代かきの田んぼで濃い。
+// 高さのちがう うすい板を何枚か重ね、ゆっくり流す。日がのぼると少しずつ薄くなる（ゲームの時間で 3 分くらい）
+const MIST = (() => {
+  if (TOD !== 'asa') return { update() {} };
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = 256;
+  const g = cv.getContext('2d');
+  g.fillStyle = 'rgba(255,255,255,0)'; g.fillRect(0, 0, 256, 256);
+  let seed = 5;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let k = 0; k < 45; k++) {                  // やわらかい霧のかたまり（つなぎ目なく並ぶように、はしは反対側にも描く）
+    const x = rnd() * 256, y = rnd() * 256, r = 25 + rnd() * 55, a = 0.18 + rnd() * 0.32;
+    for (const dx of [-256, 0, 256]) for (const dy of [-256, 0, 256]) {
+      const gr = g.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+      gr.addColorStop(0, `rgba(255,255,255,${a})`); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(x + dx - r, y + dy - r, 2 * r, 2 * r);
+    }
+  }
+  const dense = { haru: 0.8, aki: 1.25, shirokaki: 1.35 }[season];
+  const layers = [];
+  for (const [h, op, rep, sp] of [[0.3, 0.30, 6, 0.010], [0.8, 0.22, 5, 0.014], [1.6, 0.13, 4, 0.019], [2.8, 0.07, 3, 0.024]]) {
+    const tex = new THREE.CanvasTexture(cv);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(rep, rep);
+    const m = new THREE.MeshBasicMaterial({ map: tex, color: 0xf6ece2, transparent: true, opacity: Math.min(0.6, op * dense), depthWrite: false, side: THREE.DoubleSide });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(420, 420), m);
+    mesh.rotation.x = -Math.PI / 2;
+    mesh.position.y = h;
+    mesh.renderOrder = 4;
+    scene.add(mesh);
+    layers.push({ mesh, tex, op: m.opacity, sp });
+  }
+  let t = 0;
+  function update(dt) {
+    t += dt;
+    const fade = Math.max(0.35, 1 - t / 180);       // 日がのぼると薄くなる
+    for (const L of layers) {
+      L.drift = (L.drift || 0) + L.sp * dt;          // 東からのそよ風でゆっくり流れる
+      // 板はトラクターについてくる。絵は世界に止まって見えるよう、動いた分だけ UV をずらす（420m に repeat 回）
+      L.mesh.position.x = rig.position.x; L.mesh.position.z = rig.position.z;
+      L.tex.offset.set((rig.position.x / 420 * L.tex.repeat.x + L.drift) % 1, (-rig.position.z / 420 * L.tex.repeat.y + L.drift * 0.3) % 1);
+      L.mesh.material.opacity = L.op * fade;
+    }
+  }
+  return { update, layers };
+})();
+
 // 風：畦の草・彼岸花・実った稲・遠くの木を、上のほうだけゆらす（絵の v が高いほど大きく）
 const WIND_T = { value: 0 };
 function addWind(mat, amp) {
@@ -2171,6 +2219,7 @@ function frame(now) {
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
   HEAPS.flush(dt);
   TURBID.update(dt);
+  MIST.update(dt);
   TR.flush();
   STREAK.flush();
   SUN_VIEW.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);

@@ -20,6 +20,7 @@ sys.path.insert(0, HERE)
 import build_tractor as bt  # noqa: E402  部品の関数（pipe・box・cyl・part・finalize など）を借りる
 
 TRACTOR_GLB = os.path.join(HERE, 'tractor_yt.glb')
+HARROW_GLB = os.path.join(HERE, 'harrow_yt.glb')       # 代かきの確認の絵につける
 TEXDIR = os.path.join(bpy.app.tempdir or '/tmp', 'tanbo_tex')
 RENDER = '--no-render' not in sys.argv
 FAST = '--fast' in sys.argv
@@ -1502,6 +1503,17 @@ def preview_scene():
             o.location = TRACTOR_AT + Vector((0, 0, -0.09 if SEASON == 'shirokaki' else 0.0))   # 代かきは泥に少し沈む
         if o.parent is None and o.name.startswith('Rotary'):
             o.location = TRACTOR_AT + Vector((0, bt.ROTARY_Y, -0.12 if SEASON == 'shirokaki' else -0.06))
+            if SEASON == 'shirokaki':                                   # 代かきはウイングハロー（harrow_yt.glb）につけかえる
+                for c in [o] + list(o.children_recursive):
+                    c.hide_render = True
+    if SEASON == 'shirokaki' and os.path.exists(HARROW_GLB):
+        before = set(bpy.data.objects)
+        bpy.ops.import_scene.gltf(filepath=HARROW_GLB)
+        new = [o for o in bpy.data.objects if o not in before]
+        tmp += new
+        for o in new:
+            if o.parent is None and o.name.startswith('Rotary'):
+                o.location = TRACTOR_AT + Vector((0, bt.ROTARY_Y, -0.11))
     bpy.context.view_layer.update()
     return tmp
 

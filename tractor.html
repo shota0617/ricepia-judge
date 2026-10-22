@@ -134,7 +134,7 @@
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
       ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす（道に泥を落とさない。ゲームでは耕していない固い所を少し走ると落ちる）<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
-      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる<br>
+      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
       ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
     </div>
@@ -299,13 +299,15 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   MIRROR.setup(t.scene);
   resetPos();
   setRotBtn();
+  CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   $('bStart').disabled = false;
 }).catch(e => { $('progText').textContent = '読みこめませんでした。通信のよい所で、もう一度ひらいてください（' + e.message + '）'; });
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
+// テール：ライトといっしょに点く。作業機のうしろの灯火器も同じ
 const LAMPS = (() => {
-  const mats = [], spots = [];
+  const mats = [], spots = [], tails = [];
   let on = false;
   function setup(root) {
     const box = new THREE.Box3(), inv = new THREE.Matrix4();
@@ -313,6 +315,7 @@ const LAMPS = (() => {
     inv.copy(rig.matrixWorld).invert();
     const found = { lamp_head: null, lamp_work: null };
     root.traverse(o => {
+      if (o.isMesh && o.material.name === 'tail' && !tails.includes(o.material)) tails.push(o.material);   // テール（トラクターと作業機の灯火器）
       if (!o.isMesh || !(o.material.name in found)) return;
       if (!mats.includes(o.material)) mats.push(o.material);
       o.geometry.computeBoundingBox();
@@ -338,6 +341,7 @@ const LAMPS = (() => {
   function set(v) {
     on = v;
     for (const m of mats) { m.emissive.set(on ? 0xfff4e6 : 0x000000); m.emissiveIntensity = on ? 2.2 : 1; }
+    for (const m of tails) { m.emissive.set(on ? 0xff0000 : 0x000000); m.emissiveIntensity = on ? 0.6 : 1; }   // ライトをつけるとテールも赤く点く
     for (const l of spots) l.intensity = on ? l.userData.i : 0;
   }
   function toggle() { set(!on); toast(on ? 'ヘッドライトと作業灯をつけました（L）' : 'ライトを消しました（L）'); }
@@ -918,6 +922,48 @@ function addWind(mat, amp) {
   mat.needsUpdate = true;
 }
 
+// 雲の影：晴れた日の積雲の影が、田んぼの上を風下へ流れていく（雲の高さの風で 6m/s くらい。トラクターの何倍も速い）。
+// 太陽の光（平行光）だけを弱めるので、影の中でも空の明るさは残る。トラクターや畦も、影に入ると いっしょに暗くなる
+const CLOUD_T = { value: 0 };
+const CLOUDS = (() => {
+  const A = { haru: 0.56, aki: 0.59, shirokaki: 0.55 }[season];   // 影がかかる割合：春 3 割・秋 2 割ほど（空の雲の量にあわせる）
+  const GLSL = 'uniform float cloudT;\n' +
+    'float clH(vec2 p){ return fract(sin(dot(p, vec2(41.3, 289.1))) * 15731.743); }\n' +
+    'float clN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
+    ' return mix(mix(clH(i), clH(i + vec2(1.0, 0.0)), f.x), mix(clH(i + vec2(0.0, 1.0)), clH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
+    // カメラから見た位置 → 世界の位置（viewMatrix は回転＋平行移動なので、転置をかけてもどす）
+    'float cloudSh(vec3 vp){ vec3 w = (vp - viewMatrix[3].xyz) * mat3(viewMatrix);' +
+    ' vec2 p = (w.xz - vec2(cloudT * 6.0, cloudT * 1.2)) * 0.011;' +
+    ' float n = clN(p) * 0.55 + clN(p * 2.13 + 3.7) * 0.3 + clN(p * 4.37 + 1.3) * 0.15;' +
+    ' return 1.0 - 0.8 * smoothstep(' + A.toFixed(3) + ', ' + (A + 0.08).toFixed(3) + ', n); }\n';
+  const DIR_F = 'getDirectionalDirectLightIrradiance( directionalLight, geometry, directLight );';
+  const DIR_V = 'getDirectionalDirectLightIrradiance( directionalLights[ i ], geometry, directLight );';
+  function patch(m) {
+    if (m.userData.cloud || !(m.isMeshStandardMaterial || m.isMeshLambertMaterial || m.isMeshPhongMaterial)) return;
+    m.userData.cloud = 1;
+    const prev = m.onBeforeCompile, key = m.customProgramCacheKey();   // 前からの細工（風・ガラスのよごれ）はそのまま残す
+    m.onBeforeCompile = (sh, r) => {
+      prev.call(m, sh, r);
+      sh.uniforms.cloudT = CLOUD_T;
+      if (m.isMeshLambertMaterial) {               // ランバートは光を頂点で計算する
+        sh.vertexShader = GLSL + sh.vertexShader.replace('#include <lights_lambert_vertex>',
+          THREE.ShaderChunk.lights_lambert_vertex.replace(DIR_V, DIR_V + ' directLight.color *= cloudSh(geometry.position);'));
+      } else {
+        sh.fragmentShader = GLSL + sh.fragmentShader.replace('#include <lights_fragment_begin>',
+          THREE.ShaderChunk.lights_fragment_begin.replace(DIR_F, DIR_F + ' directLight.color *= cloudSh(geometry.position);'));
+      }
+    };
+    m.customProgramCacheKey = () => key + '|cloud';
+    m.needsUpdate = true;
+  }
+  return {
+    apply(root) {
+      if (params.has('nocloud')) return;
+      root.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); });
+    }
+  };
+})();
+
 // となりの田んぼ（北）で、行ったり来たりして耕しているトラクター
 const NB = (() => {
   // 耕すときは時速 2.8km、はしで回るときは作業機を上げて少し速く（本物のように、旋回のあいだは上げる）
@@ -952,7 +998,7 @@ const NB = (() => {
     parts.WheelFL.rotation.x = parts.WheelFR.rotation.x = s / R_FRONT;
     if (parts.lift < 0.1) for (const n of ['Rotor', 'RotorL', 'RotorR']) if (parts[n]) parts[n].rotation.x += 19 * dt;   // 上げると PTO が止まる
   }
-  return { setup, update };
+  return { setup, update, get root() { return root; }, get lift() { return parts.lift; } };
 })();
 
 function canvasTex(cv) {
@@ -1064,15 +1110,24 @@ function tillCell(i, j) {
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
   });
   eraseTracks(c);
+  ROUGH[c] = 1.04 - 0.16 * Math.max(0, Math.min(1, ((S.pitch || 9) - 6) / 7));
   DRY.wet(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
   return 1;
 }
+// 耕うんピッチ（爪が 1 回土に入るあいだに進む長さ）＝ 走る速さ ÷（爪軸の回転数 × 1 回転で同じ所に入る爪の数 2）。
+// 爪軸はおよそ PTO の 0.42 倍で回る。ピッチが大きい（速く走る）ほど土くれが大きく粗くなり、小さいほど細かく砕ける。
+// 田起こしは 10cm くらいまでがよい。粗い所は土くれの影で暗く、細かい所は少し明るく見える
+const ROUGH = new Float32Array(NX * NZ).fill(1);
+function tillPitch() {
+  const rotor = engineRpm(performance.now() / 1000) * PTO_RATIO * 0.42;
+  return Math.abs(S.v) * 6000 / Math.max(60, rotor * 2);
+}
 const DRY = (() => {
   const WET = season === 'aki' ? 0.68 : 0.6, T = 150, list = [];
   let clock = 0, acc = 0;
-  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v, c * 12, c * 12 + 12); };
+  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v * ROUGH[c], c * 12, c * 12 + 12); };
   return {
     wet(c) { if (SHIRO) return; set(c, WET); list.push([c, clock]); },
     update(dt) {                                  // 2 秒ごとに、耕して 2 分半までの所を少しずつ明るくする
@@ -1230,11 +1285,11 @@ const FX = (() => {
       // 秋は、すきこまれるひこばえの青い切れはしと藁も少し飛ぶ
       const r = season === 'aki' ? Math.random() : 1;
       col.set(r < 0.08 ? [0.30 * t, 0.42 * t, 0.16 * t] : r < 0.14 ? [0.62 * t, 0.55 * t, 0.36 * t] : SOIL.map(v => v * t), i * 3);
-      size[i] = 0.05 + Math.random() * 0.07; max[i] = 0.7 + Math.random() * 0.5;
+      size[i] = (0.05 + Math.random() * 0.07) * Math.max(0.7, Math.min(1.8, (S.pitch || 9) / 9)); max[i] = 0.7 + Math.random() * 0.5;   // 速く走るほど大きな土くれ
     }
     else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
     else if (k === 2) { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
-    else { col.set([0.18 * t, 0.18 * t, 0.19 * t], i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }
+    else { col.set(EXH.col.map(v => v * t), i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }
     life[i] = max[i];
     exhaustA[i] = k === 3 ? EXH.dark : 0;
   }
@@ -1263,12 +1318,14 @@ const FX = (() => {
   return { emit, update, mat: m };
 })();
 let emitAcc = 0, exhAcc = 0;
-const EXH = { p: new THREE.Vector3(-0.80, 2.50, 0.645), w: new THREE.Vector3(), dark: 0.3 };   // 右 A ピラーの排気管の先
+// 排気：このトラクターのエンジンは DPF（すすをこしとるフィルター）つきなので、黒い煙はほとんど出ない。
+// 冷えた朝は、排気の水蒸気が白い湯気になって見える
+const EXH = { p: new THREE.Vector3(-0.80, 2.50, 0.645), w: new THREE.Vector3(), dark: 0.05, col: TOD === 'asa' ? [0.92, 0.92, 0.93] : [0.5, 0.5, 0.52] };   // 右 A ピラーの排気管の先
 function emitExhaust(dt) {
   if (S.crank > 0.6) return;
   const load = (key.fwd || key.back ? 0.6 : 0) + (S.rotDown && S.rotPos < 0.1 ? 0.6 : 0) + Math.abs(S.v - lastExhV) / Math.max(dt, 1e-3) * 0.3;
   lastExhV = S.v;
-  EXH.dark = Math.min(0.55, 0.12 + load * 0.25 + (S.flare || 0) * 0.3);
+  EXH.dark = Math.min(0.2, (0.025 + load * 0.03 + (S.flare || 0) * 0.08) * (TOD === 'asa' ? 3 : 1));
   exhAcc += dt * (5 + load * 14);
   rig.localToWorld(EXH.w.copy(EXH.p));
   while (exhAcc >= 1) {
@@ -1278,6 +1335,19 @@ function emitExhaust(dt) {
   }
 }
 let lastExhV = 0;
+// 後輪がはね上げる泥：タイヤのうしろ上から、うしろへ飛ぶ。代かきの泥田でいちばん多い
+let tireAcc = 0;
+function emitTireMud(dt, slip) {
+  tireAcc += dt * (SHIRO ? 16 : MUD.level * 8) * Math.min(1, Math.abs(S.v) / 1.2) * (0.5 + slip * 8);
+  const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw), back = Math.sign(S.v) || 1;
+  while (tireAcc >= 1) {
+    tireAcc -= 1;
+    const lx = (Math.random() < 0.5 ? 1 : -1) * (TRACK + (Math.random() - 0.5) * 0.25), lz = -back * (0.35 + Math.random() * 0.2), y = R_REAR * (1.3 + Math.random() * 0.5);
+    const x = S.x + lx * cs + lz * sn, z = S.z - lx * sn + lz * cs;
+    const bv = -back * (1.2 + Math.random() * 1.6), up = 0.8 + Math.random() * 1.6, sd = (Math.random() - 0.5) * 0.5;
+    FX.emit(x, y, z, sd * cs + bv * sn + sn * S.v * 0.6, up, -sd * sn + bv * cs + cs * S.v * 0.6, 0);
+  }
+}
 function emitTilling(dt) {
   // ロータリーのうしろ（カバーと均平板のすき間）から、走る速さに合わせて出す
   emitAcc += dt * (SHIRO ? 170 : 150) * Math.min(1, Math.abs(S.v) / 1.2 + 0.25);
@@ -1448,8 +1518,42 @@ const BIRDS = (() => {
     b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0 };
     return b;
   }
+  // ハシボソガラス：サギといっしょに耕したあとへ来る（いちばん早く来ることが多い）。全身まっ黒・ハシブトより細いくちばし・なだらかな額・短い脚。
+  // 人や機械を用心して、サギより少しはなれた所を歩く。水を張った代かきの田んぼには あまり来ない
+  const crowM = new THREE.MeshStandardMaterial({ color: 0x101116, roughness: 0.45, metalness: 0.1, envMapIntensity: 0.6 });   // 羽はつやがある
+  function makeCrow() {
+    const b = new THREE.Group();
+    b.scale.setScalar(0.95 + Math.random() * 0.1);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), crowM);
+    body.scale.set(0.85, 0.85, 1.75); body.position.set(0, 0.17, -0.01); body.rotation.x = -0.25; b.add(body);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.012, 0.15), crowM);
+    tail.position.set(0, 0.14, -0.17); tail.rotation.x = -0.3; b.add(tail);
+    const neck = new THREE.Group(); neck.position.set(0, 0.2, 0.08); b.add(neck);
+    const head = new THREE.Group(); head.position.set(0, 0.03, 0.04); neck.add(head);
+    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), crowM));
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.065, 6), crowM);
+    beak.rotation.x = Math.PI / 2; beak.position.set(0, -0.005, 0.07); head.add(beak);
+    const legs = [];
+    for (const sx of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.12, 4), crowM);
+      leg.position.set(sx * 0.025, 0.06, 0); b.add(leg); legs.push(leg);
+    }
+    const wings = [];
+    for (const sx of [-1, 1]) {
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.17), crowM.clone());
+      w.material.side = THREE.DoubleSide;
+      w.geometry.translate(sx * 0.21, 0, 0);
+      w.position.set(sx * 0.03, 0.19, 0); w.rotation.x = -Math.PI / 2; w.visible = false;
+      b.add(w); wings.push(w);
+    }
+    b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0, crow: true };
+    return b;
+  }
   const list = [];
-  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : k % 3 === 1 ? 'ko' : 'dai'); b.visible = false; scene.add(b); list.push(b); }
+  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : k % 3 === 1 ? 'ko' : 'dai'); b.userData.delay = 3 + k * 2.2; b.visible = false; scene.add(b); list.push(b); }
+  const NCROW = { haru: 3, aki: 4, shirokaki: 1 }[season] - (MOBILE ? 1 : 0);
+  for (let k = 0; k < NCROW; k++) { const b = makeCrow(); b.userData.delay = 1.5 + k * 3.5; b.visible = false; scene.add(b); list.push(b); }
   let workT = 0;
   function update(dt, working) {
     workT = working && Math.abs(S.v) > 0.2 ? workT + dt : Math.max(0, workT - dt * 0.2);
@@ -1457,7 +1561,7 @@ const BIRDS = (() => {
     list.forEach((b, k) => {
       const u = b.userData;
       u.t += dt;
-      const want = workT > 3 + k * 2.2;          // 耕しはじめて少しずつ集まってくる
+      const want = workT > u.delay;              // 耕しはじめて少しずつ集まってくる
       if (!b.visible && want) {                  // 遠くから飛んでくる
         const a = Math.random() * 6.28;
         b.position.set(S.x + Math.cos(a) * 40, 9, S.z + Math.sin(a) * 40);
@@ -1467,12 +1571,12 @@ const BIRDS = (() => {
       // うしろの耕した所のどこかをめざす
       if (u.t > 2.5 || u.state === 'fly' && Math.random() < 0.01) {
         u.t = Math.random();
-        const lx = (Math.random() - 0.5) * 4, lz = ROTARY_Z - 1.6 - Math.random() * 4.5;   // ロータリーのすぐうしろ（出てきた虫をねらう）
+        const lx = (Math.random() - 0.5) * (u.crow ? 6 : 4), lz = ROTARY_Z - (u.crow ? 3.2 : 1.6) - Math.random() * 4.5;   // ロータリーのすぐうしろ（出てきた虫をねらう）。カラスは少しはなれて
         u.tx = S.x + lx * c + lz * s; u.tz = S.z - lx * s + lz * c;
       }
       const dx = u.tx - b.position.x, dz = u.tz - b.position.z, d = Math.hypot(dx, dz);
       const dTractor = Math.hypot(b.position.x - S.x - s * -0.5, b.position.z - S.z - c * -0.5);
-      if (u.state !== 'fly' && (d > 7 || dTractor < 2.6)) u.state = 'fly';
+      if (u.state !== 'fly' && (d > 7 || dTractor < (u.crow ? 3.8 : 2.6))) u.state = 'fly';
       if (u.state === 'fly') {
         const sp = 5.5, gy = TILL_Y + (SHIRO ? -0.06 : 0);
         b.position.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt);
@@ -1481,7 +1585,7 @@ const BIRDS = (() => {
         b.position.y += (hy - b.position.y) * Math.min(1, dt * 2);
         if (d < 0.3) { u.state = 'walk'; b.position.y = gy; }
         b.rotation.y = Math.atan2(dx, dz);
-        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / 110) * 0.7; });
+        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / (u.crow ? 80 : 110)) * 0.7; });   // カラスは はばたきが速い
         u.legs.forEach(l => { l.rotation.x = 1.2; });
       } else {
         u.wings.forEach(w => { w.visible = false; });
@@ -1491,15 +1595,17 @@ const BIRDS = (() => {
           b.position.x += dx / d * ws * dt; b.position.z += dz / d * ws * dt;
           b.rotation.y += ((Math.atan2(dx, dz) - b.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 4);
         }
-        const step = Math.sin(u.t * 9);
+        const step = Math.sin(u.t * (u.crow ? 13 : 9));
         u.legs.forEach((l, i) => { l.rotation.x = walking ? (i ? step : -step) * 0.35 : 0; });
+        if (u.crow) u.neck.position.y = 0.2 + (walking ? 0.008 * Math.abs(step) : 0);   // 首をふりながら のしのし歩く
         const peck = !walking && Math.sin(u.t * 3.3 + k) > 0.6;   // ついばむ
         u.neck.rotation.x = peck ? 1.25 : 0.05 * Math.sin(u.t * 9);
+        if (u.callT > 0) { u.callT -= dt; u.neck.rotation.x = 0.7 * Math.max(0, Math.sin(u.callT / 0.42 * Math.PI * 2)); }   // 鳴きながら おじぎ
       }
       if (!want && dTractor > 30) b.visible = false;
     });
   }
-  return { update };
+  return { update, list };
 })();
 
 // ---- セキレイ（ハクセキレイ）：耕した土の上を小走りしては止まり、長い尾を上下にふって虫をついばむ。近づくと波をえがいて飛ぶ
@@ -1660,6 +1766,93 @@ const TURBID = (() => {
     dirty = any;
   }
   return { add, update, a };
+})();
+
+// ---- 代かきの波：タイヤが水を押して、輪の波がひろがる。浅い水の波の速さは √(重力×水深)。水深 3cm で約 0.54m/s。
+// トラクター（時速 2.8km＝0.78m/s）のほうが速いので、波は追いつけず、うしろへ V の字にひらく（船のひき波と同じ）
+const RIPPLE = (() => {
+  if (!SHIRO) return { update() {} };
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const g = cv.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(40,30,20,0)'); gr.addColorStop(0.72, 'rgba(40,30,20,0)'); gr.addColorStop(0.8, 'rgba(40,30,20,0.35)');   // 谷は暗く
+  gr.addColorStop(0.9, 'rgba(255,250,240,0.9)'); gr.addColorStop(1, 'rgba(255,250,240,0)');   // 山は空を映して明るい
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(cv), geo = new THREE.PlaneGeometry(2, 2).rotateX(-Math.PI / 2);
+  const C = Math.sqrt(9.8 * 0.03), N = MOBILE ? 28 : 48, pool = [];
+  for (let k = 0; k < N; k++) {
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 }));
+    m.visible = false; m.renderOrder = 3; m.userData.t = 9; scene.add(m); pool.push(m);
+  }
+  let next = 0;
+  const acc = { rl: 0, rr: 0, fl: 0, fr: 0 };
+  function update(dt) {
+    const sp = Math.abs(S.v);
+    if (sp > 0.15) {
+      const p = wheelPoints(S.x, S.z, S.yaw);
+      for (const k in acc) {
+        const [x, z] = p[k];
+        if (Math.abs(x) > HX - 0.2 || Math.abs(z) > HZ - 0.2) continue;
+        if ((acc[k] += dt * sp * 2.6) < 1) continue;
+        acc[k] = 0;
+        const m = pool[next]; next = (next + 1) % N;
+        const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+        m.position.set(x, tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.019, z);   // かいた所は泥の面、まだの所は水たまりの面
+        m.userData.t = 0; m.userData.a = Math.min(0.9, 0.45 + sp * 0.4); m.visible = true;
+      }
+    }
+    for (const m of pool) {
+      if (!m.visible) continue;
+      const t = (m.userData.t += dt), L = 1.7;
+      if (t > L) { m.visible = false; continue; }
+      const r = 0.2 + C * t;                       // 半径は波の速さでひろがる
+      m.scale.set(r, 1, r);
+      m.material.opacity = m.userData.a * (1 - t / L) * Math.min(1, t * 8);   // ひろがるほど うすく
+    }
+  }
+  return { update, pool, C };
+})();
+
+// ---- 秋のクモの糸（バルーニング）：晴れて風の弱い秋の日、子グモが糸を風に流して空をわたる。刈りあとの田んぼの上を、
+// 長い糸がゆっくり風下（東）へただよい、太陽のほうを見ると光って見える（ふだんはほとんど見えない）
+const GOSSAMER = (() => {
+  if (season !== 'aki') return { update() {} };
+  const N = MOBILE ? 10 : 18, K = 10, list = [];
+  const mat = new THREE.LineBasicMaterial({ color: 0xfffaf0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
+  const R = (a, b) => a + Math.random() * (b - a);
+  for (let n = 0; n < N; n++) {
+    const pos = new Float32Array(K * 3), g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3).setUsage(THREE.DynamicDrawUsage));
+    const line = new THREE.Line(g, mat.clone());
+    line.frustumCulled = false; line.renderOrder = 5;
+    scene.add(line);
+    list.push({ line, pos, p: new THREE.Vector3(), L: 0, ph: R(0, 6), dz: 0, rise: 0 });
+  }
+  const cw = new THREE.Vector3();
+  const place = (u, first) => {
+    const c = camera.getWorldPosition(cw);
+    u.p.set(c.x + (first ? R(-30, 30) : R(-38, -18)), R(0.8, 7), c.z + R(-30, 30));   // 風上（西）から流れてくる
+    u.L = R(1.5, 4.5); u.dz = R(-0.25, 0.25); u.rise = R(-0.05, 0.08);
+  };
+  list.forEach(u => place(u, true));
+  const v = new THREE.Vector3();
+  function update(dt) {
+    const t = performance.now() / 1000, c = camera.getWorldPosition(cw).clone();
+    for (const u of list) {
+      u.p.x += 0.7 * dt; u.p.z += u.dz * dt; u.p.y = Math.max(0.4, u.p.y + u.rise * dt);
+      if (u.p.x - c.x > 40 || Math.abs(u.p.z - c.z) > 45) place(u, false);
+      for (let k = 0; k < K; k++) {                // 風下へのびる糸。ゆるくたわんで、ゆらゆらゆれる
+        const f = k / (K - 1);
+        u.pos[k * 3] = u.p.x + f * u.L;
+        u.pos[k * 3 + 1] = u.p.y - 0.25 * Math.sin(f * Math.PI) * u.L / 4 + 0.08 * Math.sin(t * 1.3 + u.ph + f * 5) * f;
+        u.pos[k * 3 + 2] = u.p.z + 0.15 * Math.sin(t * 0.9 + u.ph * 2 + f * 3) * f;
+      }
+      u.line.geometry.attributes.position.needsUpdate = true;
+      v.copy(u.p).sub(c);
+      const d = v.length(), glint = Math.max(0, v.dot(SUN_DIR) / Math.max(d, 0.01));   // 太陽のほうにあるほど光る
+      u.line.material.opacity = (0.04 + 0.9 * Math.pow(glint, 3)) * Math.min(1, 14 / Math.max(d, 1));
+    }
+  }
+  return { update, list };
 })();
 
 // ---- 操縦の点数（リアルタイム・100 点）：本物の耕し方の目安で採点する ----
@@ -1895,9 +2088,20 @@ function canBe(x, z, yaw) {
   const p = wheelPoints(x, z, yaw);
   return ['rl', 'rr', 'fl', 'fr', 'nose', 'rotL', 'rotR'].every(k => ground(p[k][0], p[k][1]) !== null);
 }
+// 耕したあとのふかふかの土にタイヤが乗ると沈む（春は深く 15cm 耕すので 6cm ほど・秋は浅いので 3〜4cm。前輪は軽いので少し）。
+// 片側だけ乗ると傾く。代かきは田んぼ全体がやわらかい泥なので、地面の高さのほうで沈めてある
+const SINK = { haru: 0.06, aki: 0.035, shirokaki: 0 }[season], sinkW = { rl: 0, rr: 0, fl: 0, fr: 0 };
+function softAt(x, z) {
+  const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+  return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? 1 : 0;
+}
 function placeRig(dt) {
   const p = wheelPoints(S.x, S.z, S.yaw);
-  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8;   // 盛り上がった土の上では傾く
+  if (SINK) for (const k in sinkW) {                 // タイヤはじわっと沈み、かたい所へ出るとすっと上がる
+    const t = softAt(p[k][0], p[k][1]) * SINK * (k[0] === 'f' ? 0.6 : 1);
+    sinkW[k] += (t - sinkW[k]) * Math.min(1, dt * (t > sinkW[k] ? 3 : 6));
+  }
+  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8 - (sinkW[k] || 0);   // 盛り上がった土の上では傾く
   const hr = (h('rl') + h('rr')) / 2, hf = (h('fl') + h('fr')) / 2;
   rig.position.set(S.x, hr, S.z);
   S.dist = (S.dist || 0) + Math.abs(S.v) * dt;   // 走った道のり（凸凹のゆれに使う）
@@ -1905,6 +2109,11 @@ function placeRig(dt) {
   const pitchB = bump * (0.008 * Math.sin(S.dist * 1.9) + 0.004 * Math.sin(S.dist * 4.7 + 1.1));
   const rollB = bump * (0.010 * Math.sin(S.dist * 1.3 + 0.5) + 0.004 * Math.sin(S.dist * 3.9));
   rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB, S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
+  // 作業機の自動水平：耕しているあいだは、トラクターが左右に傾いても ロータリー（ハロー）は田んぼの面と平行に保つ。
+  // 油圧で動くので少しおくれる。上げているときはトラクターといっしょに傾く
+  const lv = S.rotDown ? -rig.rotation.z : 0;
+  S.rotLevel = (S.rotLevel || 0) + (lv - (S.rotLevel || 0)) * Math.min(1, dt * 2.5);
+  if (P.Rotary) P.Rotary.rotation.z = S.rotLevel;
 }
 
 // 直進アシスト（本物と同じ手順）：G で始点 A を登録 → 5m 以上まっすぐ走って G で終点 B を登録 → A と B を結んだ基準線と
@@ -1935,13 +2144,13 @@ function step(dt) {
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
   const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
   const vmax = GEARS[S.gear - 1] * (S.rotDown ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
-  if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に黒い煙
+  if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に排気がふっと出る
     const before = S.crank;
     S.crank = Math.max(0, S.crank - dt);
     if (before > 0.6 && S.crank <= 0.6) {
       S.flare = 1;
       rig.localToWorld(EXH.w.copy(EXH.p));
-      EXH.dark = 0.75;
+      EXH.dark = TOD === 'asa' ? 0.4 : 0.15;     // かけたときも DPF で黒煙は出ない（朝は白い湯気）
       for (let k = 0; k < 26; k++) FX.emit(EXH.w.x, EXH.w.y, EXH.w.z, (Math.random() - 0.5) * 0.6, 1.4 + Math.random() * 1.4, (Math.random() - 0.5) * 0.6, 3);
     }
   }
@@ -1976,6 +2185,21 @@ function step(dt) {
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
+  // 軽油：エンジンが出している力（kW）× 燃料消費率 約 0.25kg/kWh ÷ 軽油の重さ 0.83kg/L。60 馬力＝44kW。
+  // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
+  if (S.started && !(S.crank > 0)) {
+    const sp = Math.min(1, Math.abs(S.v) / 0.78);
+    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.3 + 0.7 * sp) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
+    S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
+  }
+  if (working && Math.abs(S.v) > 0.1) {
+    S.pitch = tillPitch();
+    S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
+    // DPF の自動再生：耕しているとフィルターにすすがたまり、ある程度たまると作業しながら自動で燃やす（本物は 30 分ほど。ゲームは 1 分半）
+    if (S.dpfT > 0) { if ((S.dpfT -= dt) <= 0) S.dpfLoad = 0; }
+    else if ((S.dpfLoad = (S.dpfLoad || 0) + dt) > 200) { S.dpfT = 90; if (!S.dpfTold) { S.dpfTold = true; toast('DPF（排気のすすをこしとるフィルター）を自動で再生しています。そのまま作業できます'); } }
+    if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
+  }
   P.Rotor.rotation.x += (working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 8 : 0) * dt;
   if (P.WingL) {                                  // ハロー：上げると翼を上へ折りたたみ、下げると広げる
     const fold = Math.max(0, Math.min(1, (S.rotPos - 0.25) / 0.6)) * 1.72;
@@ -2006,7 +2230,11 @@ function step(dt) {
   }
   if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); }
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
-  P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
+  // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
+  const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
+  const slip = !inField ? 0 : (SHIRO ? 0.09 : 0.03) + (working ? 0.025 : 0) + 0.01 * Math.min(1, Math.abs(S.v));
+  P.WheelRL.rotation.x += S.v * (1 + slip) * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
+  if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
   {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
     const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);
@@ -2111,6 +2339,10 @@ function drawMeter() {
   g.fillText(Math.round(engineRpm(performance.now() / 1000) / 10) * 10 + 'rpm', r + 22, r + 42);
   g.beginPath(); g.arc(46, 214, 9, 0, 7); g.fillStyle = '#20d050'; g.fill();
   g.beginPath(); g.arc(210, 214, 9, 0, 7); g.fillStyle = S.rotDown ? '#ffb020' : '#3a2a10'; g.fill();
+  const fuelL = Math.max(0, 0.82 - (S.fuel || 0) / 50);   // 燃料計（E〜F。始めは 8 分目くらい）
+  g.fillStyle = '#20282c'; g.fillRect(80, 226, 96, 9);
+  g.fillStyle = fuelL < 0.15 ? '#ff6a2a' : '#9fd2dc'; g.fillRect(80, 226, 96 * fuelL, 9);
+  g.fillStyle = '#9fd2dc'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText('E', 72, 231); g.fillText('F', 184, 231);
   meter.tex && (meter.tex.needsUpdate = true);
 }
 const monitor = { cv: document.createElement('canvas'), map: document.createElement('canvas') };
@@ -2121,7 +2353,7 @@ function drawMonitor(pct) {
   g.fillStyle = '#071019'; g.fillRect(0, 0, 512, 314);
   g.fillStyle = '#12202e'; g.fillRect(0, 0, 512, 34);
   g.fillStyle = '#d9e6f2'; g.font = 'bold 18px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
-  g.fillText('直進アシスト  耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm', 12, 18);
+  g.fillText((S.rotDown && S.pitch ? '耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm  ピッチ ' + Math.round(S.pitch) + 'cm' : '直進アシスト  耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm'), 12, 18);
   // 田んぼの地図（長い向きを横に）。耕した所は緑
   const mg = monitor.map.getContext('2d'), img = mg.createImageData(NZ, NX);
   for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
@@ -2161,6 +2393,11 @@ function drawMonitor(pct) {
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
   ['直進 ' + (ASSIST.on ? (ASSIST.active ? (ASSIST.off >= 0 ? '左' : '右') + Math.abs(ASSIST.off * 100).toFixed(0) + 'cm' : '入') : ASSIST.mode === 'a' ? 'A点' : ASSIST.B ? '切' : '未登録'),
     (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (SHIRO ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * PTO_RATIO / 10) * 10 : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+  if (S.dpfT > 0) {                               // DPF 自動再生中のしるし
+    g.fillStyle = '#3a2a08'; g.fillRect(14, 272, 200, 32);
+    g.fillStyle = Math.floor(performance.now() / 600) % 2 ? '#ffb020' : '#d08a10'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.fillText('DPF 自動再生中', 24, 289);
+  }
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
 const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -2193,7 +2430,18 @@ function toggleSound() {
     const tg = ac.createGain(); tg.gain.value = 0;
     noise.connect(tf); tf.connect(tg); tg.connect(out);
     o1.start(); o2.start(); lfo.start(); noise.start();
-    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac) };
+    // となりの田んぼのトラクター：遠くの低いエンジンの音。近づくと大きく、見ている向きで左右に分ける
+    const nbO = ac.createOscillator(); nbO.type = 'sawtooth'; nbO.frequency.value = 76;
+    const nbL = ac.createBiquadFilter(); nbL.type = 'lowpass'; nbL.frequency.value = 260;
+    const nbG = ac.createGain(); nbG.gain.value = 0;
+    const nbP = ac.createStereoPanner ? ac.createStereoPanner() : null;
+    nbO.connect(nbL); nbL.connect(nbG);
+    if (nbP) { nbG.connect(nbP); nbP.connect(ac.destination); } else nbG.connect(ac.destination);
+    nbO.start();
+    const crowP = ac.createStereoPanner ? ac.createStereoPanner() : null, crowG = ac.createGain();
+    crowG.gain.value = 0.05;
+    if (crowP) { crowG.connect(crowP); crowP.connect(ac.destination); } else crowG.connect(ac.destination);
+    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4 };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -2258,7 +2506,27 @@ function startAmbient(ac) {
   amb.tick = tick;                                // 試験用
   return amb;
 }
-function updateSound() {
+// ハシボソガラスの声「ガァ、ガァ」：濁った声（のこぎり波を 2 つの帯域でしぼる）。1 声 0.25 秒で少し下がる。2〜4 声つづける。
+// 鳴くときは おじぎをするように頭を上下させる（ハシブトの「カー」は澄んだ声）
+function caw(ac, dest, t0, n) {
+  for (let i = 0; i < n; i++) {
+    const t = t0 + i * 0.42, o = ac.createOscillator(), b1 = ac.createBiquadFilter(), b2 = ac.createBiquadFilter(), g = ac.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(560, t); o.frequency.linearRampToValueAtTime(450, t + 0.26);
+    b1.type = 'bandpass'; b1.frequency.value = 1150; b1.Q.value = 1.6;
+    b2.type = 'bandpass'; b2.frequency.value = 2300; b2.Q.value = 2.5;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 0.03); g.gain.setValueAtTime(1, t + 0.18); g.gain.linearRampToValueAtTime(0, t + 0.27);
+    o.connect(b1); o.connect(b2); b1.connect(g); b2.connect(g); g.connect(dest);
+    o.start(t); o.stop(t + 0.3);
+  }
+}
+const _v = new THREE.Vector3();
+function panTo(pos) {                             // 見ている向きから見た左右（-1〜1）と距離
+  _v.copy(pos).applyMatrix4(camera.matrixWorldInverse);
+  const d = _v.length();
+  return [Math.max(-1, Math.min(1, _v.x / Math.max(d, 1))), d];
+}
+function updateSound(dt = 0) {
   if (!audio || !soundOn) return;
   const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
   let rpm = engineRpm(t);
@@ -2271,6 +2539,25 @@ function updateSound() {
   audio.amb.gain.setTargetAtTime((camMode === 0 ? 0.01 : 0.04) * (SHIRO ? 1.2 : 1), t, 0.5);   // 生きものの声はキャビンの中だとほとんど聞こえない
   const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
   audio.tg.gain.setTargetAtTime(till, t, 0.2);
+  const inCab = camMode === 0 ? 0.35 : 1;         // キャビンの中では外の音は小さい
+  if (NB.root) {
+    const [pan, d] = panTo(NB.root.position);
+    audio.nbG.gain.setTargetAtTime(Math.min(0.03, 0.75 / Math.max(d, 8)) * inCab, t, 0.4);
+    if (audio.nbP) audio.nbP.pan.setTargetAtTime(pan * 0.8, t, 0.4);
+    audio.nbO.frequency.setTargetAtTime((NB.lift > 0.5 ? 1800 : 2300) / 30, t, 0.8);   // 旋回で作業機を上げると回転を下げる
+  }
+  if ((audio.crowT -= dt) <= 0) {                // 来ているカラスのどれかが ときどき鳴く
+    audio.crowT = 5 + Math.random() * 10;
+    const cs = BIRDS.list.filter(b => b.userData.crow && b.visible);
+    if (cs.length) {
+      const c0 = cs[Math.floor(Math.random() * cs.length)], [pan, d] = panTo(c0.position);
+      if (audio.crowP) audio.crowP.pan.setValueAtTime(pan * 0.8, t);
+      audio.crowG.gain.setValueAtTime(Math.min(0.06, 0.6 / Math.max(d, 6)) * inCab, t);
+      const n = 2 + Math.floor(Math.random() * 3);
+      caw(audio.ac, audio.crowG, t + 0.05, n);
+      c0.userData.callT = n * 0.42;                // 鳴いているあいだ おじぎ
+    }
+  }
 }
 
 // エンジンの回転数：アイドル 900、走ると上がる。耕すとき（PTO 入）は 2300 くらいに上げて、土の重さで少し下がる
@@ -2413,7 +2700,8 @@ function finish() {
   g.imageSmoothingEnabled = false; g.drawImage(tmp, 0, 0, W, H);
   const area = left * CELL * CELL;
   $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
-    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span><br>`;
+    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
+    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span><br>`;
   $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');
 }
@@ -2431,7 +2719,7 @@ function frame(now) {
   let pct = 0;
   for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt);   // 早送り
   updateCamera(dt);
-  updateSound();
+  updateSound(dt);
   SKY_TIME.value += dt;
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
@@ -2444,6 +2732,7 @@ function frame(now) {
   NB.update(dt);
   LIFE.update(dt);
   WIND_T.value += dt;
+  CLOUD_T.value += dt;
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -2461,6 +2750,8 @@ function frame(now) {
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
   HEAPS.flush(dt);
   TURBID.update(dt);
+  RIPPLE.update(dt);
+  GOSSAMER.update(dt);
   MIST.update(dt);
   FARMER.update(dt);
   FLOAT.update(dt * SPEEDUP);
@@ -2472,7 +2763,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

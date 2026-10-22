@@ -22,7 +22,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catc
 function note() {   // きろく の 札に すすみぐあい（何面まで・★の合計）
   const el = document.getElementById('meiroNote');
   if (!el || !st.stage) return;
-  const stars = Object.values(st.best).reduce((a, b) => a + (b && b.s ? b.s : 0), 0);
+  const stars = Object.entries(st.best).reduce((a, [k, b]) => a + (!k.startsWith('day:') && b && b.s ? b.s : 0), 0);   // ★の合計は ふつうの面だけ
   el.textContent = `${st.stage + 1}面まで あそべる・★${stars}`;
 }
 
@@ -253,6 +253,8 @@ function dailyIndex() {
   let h = 2166136261; for (const c of 'meiro:' + d) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
   return list.length > 3 ? 3 + h % (list.length - 3) : 0;
 }
+// 記録は 名所ごと。きょうの めいろ は 盤の むずかしさが ちがうので 'day:' を つけて べつに のこす
+const recKey = g => (g.daily ? 'day:' : '') + g.spot.id;
 function startStage(n, daily = false) {
   const list = goalList();
   if (!list.length) { ui.load.hidden = false; ui.load.textContent = '名所を よみこみ中…'; setTimeout(() => !ui.el.hidden && startStage(n, daily), 600); return; }
@@ -260,7 +262,7 @@ function startStage(n, daily = false) {
   game = { n, daily, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
   ui.load.hidden = false; ui.load.textContent = 'めいろを つくっています…';
-  const bt = st.best[game.spot.id];
+  const bt = st.best[recKey(game)];
   ui.st.innerHTML = `${daily ? '☀️ <b>きょうの めいろ</b>' : `🌀 めいろ <b>${n + 1}</b>`}${bt ? `<small>　ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面と ベスト・2行め：ゴール（長い名前は …）
   ui.time.textContent = '0.0';
   const g = game;
@@ -441,8 +443,8 @@ function win() {
   g.done = true; g.happy = 99;
   const sec = Math.round(g.t * 10) / 10, par = (b.len * 0.45 + 3) * (st.slow ? 1.6 : 1);   // 目やすの時間（道のりから。ゆっくりでは 長め）
   const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
-  const prev = st.best[g.spot.id], newBest = !prev || sec < prev.t;
-  st.best[g.spot.id] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
+  const prev = st.best[recKey(g)], newBest = !prev || sec < prev.t;
+  st.best[recKey(g)] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   if (!g.daily) st.stage = Math.max(st.stage, g.n + 1);   // きょうの めいろ では 面を すすめない
   save();
   if (root.nsgTrack) root.nsgTrack('meiro_clear', { stage: g.n + 1, sec, falls: g.falls, stars });
@@ -483,7 +485,7 @@ function resume() {   // いちらんから もどる：とちゅうなら そ�
 }
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
-  const ds = list[dailyIndex()], db = ds && st.best[ds.id];
+  const ds = list[dailyIndex()], db = ds && st.best['day:' + ds.id];
   ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3>${ds ? `<div class="mz-row"><button type="button" data-mz="daily">☀️ きょうの めいろ<br/><small>${esc(ds.name)}${db ? `　${'★'.repeat(db.s)} ${db.t.toFixed(1)}秒` : ''}</small></button></div>` : ''}<div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
     const b = st.best[s.id];
     return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}${b ? `<br/><small>${'★'.repeat(b.s)} ${b.t.toFixed(1)}秒</small>` : ''}</button>`;

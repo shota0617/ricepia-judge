@@ -37,6 +37,25 @@
     { id: 'kiiro-atokiri', name: 'キイロアトキリゴミムシ', at: 'kinoue', when: null, months: null, note: '樹上を好むアトキリゴミムシの仲間', form: 'gomi', col: ['#c9a04a', '#8a6a2a'] },
   ];
   const TRIES = 3;
+  // Blender で焼いた絵のシート（tools/blender/mushi-art.py → nishio-go/art/ev/）。読みこめたら、手描きの絵の上に描きなおす（読みこむまで・読めないときは手描きのまま）
+  const SHEET_SRC = 'nishio-go/art/ev/bugs.png', SHEET_N = 32;
+  let sheet = null;
+  function paintSheet(cv, idx) {
+    if (idx < 0) return;
+    if (!sheet) { sheet = new Image(); sheet.src = SHEET_SRC; }
+    const go = () => { if (!sheet.naturalWidth) return; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.drawImage(sheet, idx * SHEET_N, 0, SHEET_N, SHEET_N, 0, 0, cv.width, cv.height); };
+    if (sheet.complete && sheet.naturalWidth) go(); else sheet.addEventListener('load', go, { once: true });
+  }
+  const BUG_SHEET = ['misuji', 'mutsuboshi', 'haiiro', 'oomaru', 'samehada', 'kubinaga', 'hime-kobusuji', 'mikawa-osamushi', 'ookurotsuya', 'seaka', 'atowa', 'kubiboso', 'arame', 'oohiratashide', 'kabuto', 'kokuwa', 'hiratakuwa', 'chibikuwa', 'kinoko-akamaru', 'kiiro-atokiri'];   // シートの並び（mushi-art.py の BUGS）
+  const PLACE_SHEET = ['ground', 'grass', 'sap', 'log', 'tree'];   // places.png の並び（mushi-art.py の PLACES）
+  let psheet = null;
+  function paintPlace(cv, icon) {
+    const idx = PLACE_SHEET.indexOf(icon);
+    if (idx < 0) return;
+    if (!psheet) { psheet = new Image(); psheet.src = 'nishio-go/art/ev/places.png'; }
+    const go = () => { if (!psheet.naturalWidth) return; const c = cv.getContext('2d'); c.setTransform(1, 0, 0, 1, 0, 0); c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.drawImage(psheet, idx * 32, 0, 32, 32, 0, 0, cv.width, cv.height); };
+    if (psheet.complete && psheet.naturalWidth) go(); else psheet.addEventListener('load', go, { once: true });
+  }
   let root = null, target = null, left = 0, seen = [], found = false, done = false, closedAt = 0;
   const shown = () => !!root && !root.hidden;
   const GAP = 3 * 60000;
@@ -108,6 +127,7 @@
   // 場所の絵（24×24）
   function drawPlace(cv, kind) {
     const c = cv.getContext('2d'), W = 24, px = (x, y, col) => { c.fillStyle = col; c.fillRect(x, y, 1, 1); };
+    c.setTransform(cv.width / W, 0, 0, cv.height / W, 0, 0);   // 手描きは 24×24 の目盛りで描く
     c.clearRect(0, 0, W, W);
     const fill = (x0, y0, w, h, col) => { c.fillStyle = col; c.fillRect(x0, y0, w, h); };
     if (kind === 'ground') { fill(0, 12, 24, 12, '#7a5a3a'); for (let i = 0; i < 18; i++) px((i * 7) % 24, 13 + (i * 5) % 10, i % 2 ? '#a0703a' : '#c08a3a'); fill(4, 15, 3, 2, '#b5522a'); fill(15, 19, 3, 2, '#c99a3a'); }
@@ -145,12 +165,13 @@
       <p class="md-say">虫にくわしい人「八ツ面山の林は、落葉樹と常緑樹にスギも混ざって、コウチュウの なかまが いろいろ見られるだよ。西尾の自然の本を見ながら、きょうは この虫を探してみりん」</p>
       <div class="ym-target"><canvas width="32" height="32" aria-hidden="true"></canvas><div><b>${esc(target.name)}</b><br><small>${esc(whenText(target))}${book.includes(target.id) ? '・虫手帳にある虫' : ''}</small></div></div>
       <p class="ym-left">どこを探す？ のこり <b>${left}</b> 回</p>
-      <div class="ym-places">${PLACES.map(p => `<button type="button" class="ym-place" data-ym="${p.id}"><canvas width="24" height="24" aria-hidden="true"></canvas><small>${esc(p.name)}</small></button>`).join('')}</div>
+      <div class="ym-places">${PLACES.map(p => `<button type="button" class="ym-place" data-ym="${p.id}"><canvas width="32" height="32" aria-hidden="true"></canvas><small>${esc(p.name)}</small></button>`).join('')}</div>
       <ul class="ym-log"></ul>
       <p class="md-res" hidden></p>
       <button type="button" class="btn mini md-close" data-ym="close">あとで</button></div>`;
     drawBug(root.querySelector('.ym-target canvas'), target);
-    root.querySelectorAll('.ym-place canvas').forEach((cv, i) => drawPlace(cv, PLACES[i].icon));
+    paintSheet(root.querySelector('.ym-target canvas'), BUG_SHEET.indexOf(target.id));
+    root.querySelectorAll('.ym-place canvas').forEach((cv, i) => { drawPlace(cv, PLACES[i].icon); paintPlace(cv, PLACES[i].icon); });
     root.hidden = false;
     if (G.track) G.track('yatsumushi_open', { target: target.id });
     return true;
@@ -174,6 +195,7 @@
     li.className = found && b === target ? 'hit' : '';
     li.innerHTML = `<canvas width="32" height="32" aria-hidden="true"></canvas><span><b>${esc(p.name)}</b>：本では、ここで <b>${esc(b.name)}</b> が見られる（${esc(b.when || '季節は書かれていない')}）。${esc(b.note)}${book.includes(b.id) ? '' : ' <em>はじめて！</em>'}</span>`;
     drawBug(li.querySelector('canvas'), b);
+    paintSheet(li.querySelector('canvas'), BUG_SHEET.indexOf(b.id));
     root.querySelector('.ym-log').appendChild(li);
     root.querySelector('.ym-left b').textContent = left;
     if (found || left <= 0) finish();

@@ -22,6 +22,16 @@
       facts: ['z:kirara-ryoke:0', 'z:kirara-ryoke:1'] },
   ];
   const N = 20;
+  // Blender で焼いた絵のシート（tools/blender/mushi-art.py → nishio-go/art/ev/）。読みこめたら、手描きの絵の上に描きなおす（読みこむまで・読めないときは手描きのまま）
+  const SHEET_SRC = 'nishio-go/art/ev/stones.png', SHEET_N = 24;
+  let sheet = null;
+  function paintSheet(cv, idx) {
+    if (idx < 0) return;
+    if (!sheet) { sheet = new Image(); sheet.src = SHEET_SRC; }
+    const go = () => { if (!sheet.naturalWidth) return; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.drawImage(sheet, idx * SHEET_N, 0, SHEET_N, SHEET_N, 0, 0, cv.width, cv.height); };
+    if (sheet.complete && sheet.naturalWidth) go(); else sheet.addEventListener('load', go, { once: true });
+  }
+  const stoneIdx = (pl, seed, isMica) => isMica ? 12 : PLACES.indexOf(pl) * 4 + (seed % 4);   // stones.png：場所3つ×4形、13こめが雲母石
   let root = null, cur = null, mica = -1, tries = 0, found = false, closedAt = 0;
   const shown = () => !!root && !root.hidden;
   const GAP = 3 * 60000;
@@ -68,7 +78,7 @@
       <div class="kr-grid">${Array.from({ length: N }, (_, i) => `<button type="button" class="kr-stone${i === mica ? ' mica' : ''}" data-kr="${i}" aria-label="石 ${i + 1}${i === mica ? '：ときどき きらっと光る' : ''}" style="--d:${(Math.random() * 1.4).toFixed(2)}s"><canvas width="24" height="24"></canvas></button>`).join('')}</div>
       <p class="md-res" hidden></p>
       <button type="button" class="btn mini md-close" data-kr="close">あとで</button></div>`;
-    root.querySelectorAll('.kr-stone canvas').forEach((cv, i) => drawStone(cv, pl.tone, seed0 + i, false));   // 見つけるまでは、ほかの石と同じ見た目（光るだけ）
+    root.querySelectorAll('.kr-stone canvas').forEach((cv, i) => { drawStone(cv, pl.tone, seed0 + i, false); paintSheet(cv, stoneIdx(pl, seed0 + i, false)); });   // 見つけるまでは、ほかの石と同じ見た目（光るだけ）
     root.hidden = false;
     if (G.track) G.track('kirara_open', { at: pl.id });
     return true;
@@ -81,6 +91,7 @@
     if (i !== mica) { b.disabled = true; b.classList.add('plain'); b.setAttribute('aria-label', `石 ${i + 1}：ただの石`); return; }
     found = true;
     drawStone(b.querySelector('canvas'), cur.tone, 7, true);
+    paintSheet(b.querySelector('canvas'), stoneIdx(cur, 0, true));
     b.classList.add('got');
     root.querySelectorAll('.kr-stone').forEach(x => { x.disabled = true; });
     const G = window.nishioGo, r = G.kiraraFound(cur.id, tries === 1, cur.facts, PLACES.length) || { pts: 0, n: 0 };

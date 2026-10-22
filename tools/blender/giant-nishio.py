@@ -538,6 +538,461 @@ def ozaki_shiro():
     return view(0.24)
 
 
+# ---------- 2回目：吉良・幡豆・西尾の町なかの25か所 ----------
+pa.MATS.update({
+    'enden': '#c8bca4', 'endenD': '#a89c84', 'shio': '#fafaf6', 'mizuiro': '#9cc4d8', 'seaL': '#4ab8c8',
+    'paraR': '#e04a3a', 'paraY': '#f2c230', 'paraB': '#3a7fd0', 'kofunG': '#8a9e3e', 'kofunD': '#6e8230', 'shime': '#d8c890',
+    'kabochaG': '#3f5f2e', 'kabochaY': '#e8a030', 'pengin': '#262a30', 'penginW': '#f4f4f0', 'penginY': '#f2b030',
+    'wata': '#fafaf4', 'wataG': '#4f8a3a', 'uma': '#7a4a2a', 'umaR': '#c8302a', 'umaK': '#e8b830', 'shiiG': '#3a6a30',
+    'shiiM': '#5a4430', 'sakuraS': '#f4c0d0', 'maroon': '#5a2a2a', 'jizo': '#a8a49a', 'hadaK': '#f0c8a0',
+})
+
+
+def train(n, x, y, z=0.0, cars=2, mat='meitetsu', l=0.34):
+    """名鉄の赤い電車（白い帯・黒い窓）。cars 両を x の向きに"""
+    for c in range(cars):
+        cx = x + (c - (cars - 1) / 2) * (l + 0.02)
+        box(f'tr{n}{c}', mat, (l, 0.13, 0.15), (cx, y, z + 0.09), bevel=0.02)
+        box(f'tro{n}{c}', 'obi', (l + 0.004, 0.134, 0.014), (cx, y, z + 0.055))
+        windows(f'trw{n}{c}', 'mado', [cx - l / 2 + (i + 0.5) * l / 4 for i in range(4)], y - 0.066, z + 0.115, l / 4 * 0.6, 0.045)
+
+
+def parasol(n, x, y, mat, h=0.16):
+    cyl(f'pp{n}', 'shikkui', 0.006, h, (x, y, h / 2), verts=6)
+    cyl(f'pk{n}', mat, 0.07, 0.04, (x, y, h), verts=8, r2=0.004)
+
+
+def jizo(n, x, y, s=1.0):
+    """お地蔵さま（灰色の石の姿に赤い前かけ）"""
+    box(f'jzd{n}', 'kidan', (0.07 * s, 0.06 * s, 0.03 * s), (x, y, 0.015 * s))
+    sphere(f'jzb{n}', 'jizo', 0.032 * s, (x, y, 0.07 * s), (1, 0.8, 1.3))
+    sphere(f'jzh{n}', 'jizo', 0.024 * s, (x, y, 0.13 * s))
+    sphere(f'jzm{n}', 'umaR', 0.03 * s, (x, y - 0.006 * s, 0.085 * s), (1.05, 0.7, 0.55))
+
+
+def shimenawa(n, x, y, z, w, s=1.0):
+    """しめなわ（わらの太いなわと白い紙垂）"""
+    cyl(f'snw{n}', 'shime', 0.014 * s, w, (x, y, z), (0, math.pi / 2, 0), 8)
+    for i in range(3):
+        box(f'sd{n}{i}', 'shikkui', (0.014 * s, 0.006, 0.04 * s), (x - w / 3 + i * w / 3, y - 0.004, z - 0.03 * s))
+
+
+def kira_yoshida():
+    """名鉄 吉良吉田駅：白い駅舎に水色の屋根のふち、青い戸と窓。うしろのホームに赤い電車、前の道"""
+    ground('asphalt')
+    box('home', 'home', (0.96, 0.18, 0.06), (0, 0.27, 0.03))
+    train('t', 0.14, 0.27, 0.06, 2, l=0.28)   # 奥の左は、ななめから見ると絵のふちを越えるので右へ寄せる
+    box('eki', 'shikkui', (0.56, 0.24, 0.2), (-0.1, 0.0, 0.1))
+    box('fuchi', 'mizuiro', (0.6, 0.28, 0.04), (-0.1, 0.0, 0.22))
+    box('fuchi2', 'mizuiro', (0.62, 0.06, 0.02), (-0.1, -0.15, 0.17), (math.radians(-20), 0, 0))
+    for x in (-0.26, -0.18):
+        box(f'to{x}', 'parkB', (0.06, 0.01, 0.12), (x, -0.121, 0.07))
+    windows('w', 'glassB', [-0.04, 0.06], -0.121, 0.11, 0.07, 0.07)
+    box('tou', 'shikkui', (0.12, 0.12, 0.3), (0.26, -0.02, 0.15))
+    box('touA', 'paraY', (0.03, 0.01, 0.1), (0.26, -0.081, 0.2))
+    box('post', 'post', (0.03, 0.03, 0.08), (0.12, -0.18, 0.04))
+    box('sen', 'line2', (0.96, 0.01, 0.004), (0, -0.3, 0.012))
+    return view(0.2)
+
+
+def shohoji_kofun():
+    """正法寺古墳：草と木におおわれた大きな前方後円墳（まるい後円部と、台形の前方部）"""
+    ground('kusa')
+    sphere('enbu', 'kofunG', 0.26, (0.16, 0.12, 0.0), (1, 1, 0.62))
+    gn.mesh('hobu', 'kofunG', [(-0.42, -0.14, 0.0), (-0.42, 0.3, 0.0), (0.08, 0.24, 0.0), (0.08, -0.0, 0.0),
+                               (-0.36, -0.08, 0.1), (-0.36, 0.24, 0.1), (0.04, 0.18, 0.12), (0.04, 0.06, 0.12)],
+            [(0, 3, 2, 1), (0, 1, 5, 4), (1, 2, 6, 5), (2, 3, 7, 6), (3, 0, 4, 7), (4, 5, 6, 7)])
+    for i, (x, y, z) in enumerate(((0.12, 0.14, 0.15), (0.24, 0.1, 0.12), (-0.18, 0.1, 0.1), (0.02, 0.2, 0.12))):
+        cyl(f'mk{i}', 'miki', 0.012, 0.14, (x, y, z + 0.07), verts=6)
+        sphere(f'kz{i}', 'kofunD', 0.07, (x, y, z + 0.15), (1, 1, 0.7))
+    box('michi', 'jari', (0.12, 0.2, 0.008), (0.3, -0.26, 0.012))
+    return view(0.14)
+
+
+def shio_no_sato():
+    """吉良饗庭塩の里：塩田（ならした砂の上の すじ）と、柱だけの屋根の小屋・黒い板張りの小屋、木の柄の道具と塩の山"""
+    ground('enden')
+    for i in range(7):
+        box(f'suji{i}', 'endenD', (0.9, 0.012, 0.006), (0, -0.34 + i * 0.07, 0.012))
+    for x, y in ((-0.38, 0.12), (-0.06, 0.12), (-0.38, 0.32), (-0.06, 0.32)):
+        box(f'ha{x}{y}', 'kijiD', (0.02, 0.02, 0.18), (x, y, 0.09))
+    gable('koyaY', 'kawaraG', 0.4, 0.28, 0.08, 0.18, -0.22, 0.22)
+    box('kuro', 'kuroita', (0.28, 0.2, 0.18), (0.22, 0.24, 0.09))
+    gable('kuroY', 'kawaraG', 0.32, 0.24, 0.07, 0.18, 0.22, 0.24)
+    box('e', 'kiji', (0.36, 0.014, 0.014), (0.06, -0.14, 0.02), (0, 0, math.radians(-35)))
+    box('eH', 'kijiD', (0.014, 0.12, 0.02), (0.2, -0.24, 0.016), (0, 0, math.radians(-35)))
+    for i, x in enumerate((-0.3, -0.18)):
+        cyl(f'shio{i}', 'shio', 0.05, 0.06, (x, -0.06, 0.04), verts=10, r2=0.006)
+    return view(0.18)
+
+
+def kira_onsen():
+    """吉良温泉：三河湾の岸に白い宿の建物（高さちがい）、うしろの緑の山、手前の海"""
+    water('umiB', 1.0, 0.3, 0, -0.25, 0.008)
+    box('kishi', 'kidan', (1.0, 0.5, 0.03), (0, 0.15, 0.015))
+    sphere('yama', 'kusa', 0.5, (0.06, 0.4, 0.0), (0.82, 0.4, 0.6))
+    office('h1', -0.16, 0.12, 0.3, 0.2, 0.42, 6, 'shikkui', 'glassB', 0.03)
+    office('h2', 0.16, 0.14, 0.22, 0.18, 0.28, 4, 'cream', 'glassB', 0.03)
+    box('ie', 'shikkui', (0.12, 0.12, 0.1), (0.36, 0.02, 0.08))
+    roof('ieY', 'yaneR', 0.16, 0.16, 0.05, 0.13, 0.3, 0.36, 0.02)
+    tree('t', -0.36, -0.04, 1.0)
+    return view(0.24)
+
+
+def kira_waikiki():
+    """吉良ワイキキビーチ：青緑の海と白い波、砂浜に赤・黄・青のパラソル、うしろに白い建物"""
+    water('seaL', 1.0, 0.36, 0, -0.22, 0.008)
+    for i in range(3):
+        box(f'nami{i}', 'line2', (0.24, 0.02, 0.004), (-0.3 + i * 0.3, -0.12 + (i % 2) * -0.1, 0.013))
+    box('suna', 'sunaB', (1.0, 0.44, 0.02), (0, 0.18, 0.01))
+    for i, (x, y, m) in enumerate(((-0.28, 0.04, 'paraR'), (-0.04, 0.08, 'paraY'), (0.2, 0.02, 'paraB'), (0.36, 0.1, 'paraR'))):
+        parasol(i, x, y, m)
+    office('b1', -0.2, 0.32, 0.22, 0.12, 0.26, 4, 'shikkui', 'glassB', 0.02)
+    office('b2', 0.12, 0.34, 0.18, 0.1, 0.18, 3, 'shikkui', 'glassB', 0.02)
+    tree('t', 0.34, 0.32, 0.9)
+    return view(0.16)
+
+
+def hazu_jinja():
+    """幡頭神社：石の鳥居から、森の中を長い石段が社殿へのぼる"""
+    ground('jari')
+    box('oka', 'kusa', (0.84, 0.36, 0.26), (0.04, 0.24, 0.13))
+    steps('s', 'stoneR', 0, -0.2, 0.16, 9, 0.04, 0.03)
+    hall('h', 0, 0.26, 0.3, 0.16, 0.1, 'kiji', 'kawaraG', z=0.27, kidan=False)
+    for x, y in ((-0.26, 0.2), (0.3, 0.2), (0.2, 0.38)):   # 社殿が見えるように、木は左右と右奥に
+        tree(f'm{x}', x, y, 1.1, 'sugi')
+        for o in bpy.context.scene.objects:
+            if o.name.startswith((f'mikim{x}', f'ham{x}')):
+                o.location.z += 0.26
+    torii('t', 0, -0.28, 1.2, 'stoneR')
+    box('nobori', 'shikkui', (0.008, 0.008, 0.36), (0.22, -0.28, 0.18))
+    box('noboriH', 'shikkui', (0.04, 0.004, 0.22), (0.24, -0.28, 0.22))
+    return view(0.3, 1.26)
+
+
+def nishi_hazu():
+    """名鉄 西幡豆駅：ベージュの小さな木の駅舎（こげ茶の屋根、白い横板）、青と白の看板、赤いポスト"""
+    ground('asphalt')
+    box('eki', 'beige', (0.56, 0.26, 0.2), (-0.04, 0.06, 0.1))
+    for i in range(5):
+        box(f'ita{i}', 'cream', (0.56, 0.004, 0.006), (-0.04, -0.072, 0.03 + i * 0.035))
+    roof('yane', 'kijiD', 0.68, 0.36, 0.1, 0.2, 0.6, -0.04, 0.06)
+    box('to', 'glassB', (0.12, 0.01, 0.13), (-0.04, -0.074, 0.065))
+    windows('w', 'glassB', [-0.22, 0.14], -0.074, 0.11, 0.07, 0.06)
+    sign_board('k', 0.06, -0.08, 0.17, 0.14, 0.03, 'kanbanW2', 'parkB')
+    box('post', 'post', (0.04, 0.04, 0.09), (0.32, -0.16, 0.045))
+    sphere('ueki', 'gTree', 0.05, (-0.36, -0.12, 0.05))
+    return view(0.2)
+
+
+def terabe_jo():
+    """寺部城址：公園の中に立つ、背の高い黒っぽい石の碑（台の上）、うしろの木立"""
+    ground('shibaG')
+    box('dai', 'kidan', (0.22, 0.18, 0.04), (0, 0.0, 0.02))
+    box('dai2', 'stoneR', (0.14, 0.11, 0.03), (0, 0.0, 0.055))
+    box('hi', 'iwaGD', (0.08, 0.06, 0.42), (0, 0.0, 0.28))
+    cyl('hiT', 'iwaGD', 0.04, 0.03, (0, 0.0, 0.5), (0, 0, math.pi / 4), 4, r2=0.01)
+    for x, y in ((-0.26, 0.24), (0.32, 0.24), (0.12, 0.34)):
+        tree(f't{x}', x, y, 1.5, 'sugi')
+    for x in (-0.3, 0.3):
+        sphere(f'ueki{x}', 'gTree', 0.07, (x, -0.16, 0.04), (1.4, 1, 0.6))
+    ishidatami('s', 0, -0.38, -0.1, 0.12)
+    return view(0.24)
+
+
+def higashi_hazu():
+    """名鉄 東幡豆駅：白い駅舎に赤い屋根の帯、窓と戸、緑と白の看板、赤いポスト"""
+    ground('asphalt')
+    box('eki', 'shikkui', (0.6, 0.26, 0.2), (-0.02, 0.06, 0.1))
+    box('obi', 'yaneR', (0.64, 0.3, 0.04), (-0.02, 0.06, 0.22))
+    box('obiF', 'yaneR', (0.66, 0.05, 0.02), (-0.02, -0.1, 0.18), (math.radians(-22), 0, 0))
+    windows('w', 'glassB', [-0.24, -0.12, 0.14, 0.24], -0.074, 0.12, 0.07, 0.07)
+    box('to', 'kuro', (0.08, 0.01, 0.14), (0.01, -0.074, 0.07))
+    sign_board('k', 0.01, -0.08, 0.17, 0.12, 0.03, 'kanbanW2', 'matchaG')
+    box('post', 'post', (0.04, 0.04, 0.09), (0.34, -0.16, 0.045))
+    box('sen', 'line2', (0.96, 0.01, 0.004), (0, -0.3, 0.012))
+    return view(0.2)
+
+
+def myozenji():
+    """妙善寺（かぼちゃ寺）：こげ茶の木のお堂（大きな戸口の奥に金色）、灰色の瓦、左の木、手前に かぼちゃ"""
+    ground('jari')
+    box('kidan', 'kidan', (0.56, 0.36, 0.05), (0, 0.06, 0.025))
+    box('kabe', 'kijiD', (0.48, 0.28, 0.18), (0, 0.06, 0.14))
+    box('iri', 'kuro', (0.2, 0.01, 0.14), (0, -0.081, 0.12))
+    box('kin', 'kin', (0.08, 0.01, 0.06), (0, -0.083, 0.12))
+    irimoya('yane', 'kawaraG', 0.66, 0.46, 0.24, 0.23, 0, 0.06)
+    tree('t', -0.34, 0.06, 1.6)
+    box('kabe2', 'shikkui', (0.12, 0.2, 0.14), (0.36, 0.1, 0.07))
+    for i, (x, y) in enumerate(((-0.12, -0.26), (0.02, -0.28), (0.16, -0.25))):
+        sphere(f'kb{i}', 'kabochaG' if i != 1 else 'kabochaY', 0.045, (x, y, 0.03), (1.2, 1.2, 0.7))
+        cyl(f'kbh{i}', 'kijiD', 0.006, 0.02, (x, y, 0.065), verts=6)
+    ishidatami('s', 0, -0.38, -0.12, 0.12)
+    return view(0.22)
+
+
+def kodomonokuni_st():
+    """名鉄 こどもの国駅：灰色のコンクリートの高いホームと駅舎、色の帯の看板、階段、うしろに赤い電車"""
+    ground('asphalt')
+    box('home', 'concrete', (0.96, 0.22, 0.18), (0, 0.24, 0.09))
+    train('t', 0.12, 0.26, 0.18, 2, l=0.28)
+    box('eki', 'concrete', (0.4, 0.18, 0.2), (-0.14, -0.02, 0.1))
+    box('kb', 'kanbanW2', (0.2, 0.01, 0.05), (-0.14, -0.112, 0.16))
+    for i, m in enumerate(('paraR', 'paraY', 'paraB')):
+        box(f'kbc{i}', m, (0.04, 0.012, 0.03), (-0.2 + i * 0.05, -0.114, 0.16))
+    box('to', 'glassB', (0.1, 0.01, 0.1), (-0.14, -0.112, 0.05))
+    steps('k', 'concrete', 0.22, -0.12, 0.12, 6, 0.04, 0.03)
+    sphere('ueki', 'gTree', 0.05, (-0.38, -0.14, 0.05))
+    for i in range(3):
+        box(f'sen{i}', 'line2', (0.08, 0.01, 0.004), (-0.3 + i * 0.2, -0.32, 0.012))
+    return view(0.2)
+
+
+def aichi_kodomo():
+    """愛知こどもの国：白い汽車（えんとつ・黒い窓）と、子どもが乗る白い客車、線路、うしろの緑の丘"""
+    ground('shibaG')
+    sphere('oka', 'kusa', 0.5, (0.08, 0.4, 0.0), (0.8, 0.36, 0.5))
+    for y in (-0.08, 0.02):
+        box(f'rail{y}', 'rail', (1.0, 0.012, 0.012), (0, y, 0.016))
+    box('makuragi', 'senro', (1.0, 0.14, 0.006), (0, -0.03, 0.012))
+    box('kama', 'shikkui', (0.16, 0.1, 0.14), (0.3, -0.03, 0.1))
+    cyl('boira', 'shikkui', 0.05, 0.16, (0.18, -0.03, 0.09), (0, math.pi / 2, 0), 12)
+    cyl('entotsu', 'kuro', 0.016, 0.07, (0.14, -0.03, 0.17), verts=8)
+    box('kmado', 'mado', (0.08, 0.01, 0.05), (0.3, -0.081, 0.13))
+    box('kyane', 'kuro', (0.18, 0.12, 0.012), (0.3, -0.03, 0.175))
+    for c, cx in enumerate((-0.04, -0.3)):
+        box(f'kyaku{c}', 'shikkui', (0.22, 0.1, 0.08), (cx, -0.03, 0.07))
+        box(f'kyY{c}', 'paraR' if c else 'paraB', (0.24, 0.12, 0.012), (cx, -0.03, 0.17))
+        for k in (-1, 1):
+            box(f'kyH{c}{k}', 'shikkui', (0.01, 0.01, 0.06), (cx + k * 0.1, -0.075, 0.14))
+        for i, m in enumerate(('paraY', 'hadaK', 'paraR')):
+            sphere(f'ko{c}{i}', m, 0.018, (cx - 0.06 + i * 0.06, -0.03, 0.125))
+    for k in range(5):
+        cyl(f'sh{k}', 'kuro', 0.022, 0.01, (0.3 - k * 0.13, -0.085, 0.03), (math.pi / 2, 0, 0), 10)
+    tree('t', 0.34, 0.26, 1.2)
+    return view(0.14)
+
+
+def toba_shinmei():
+    """鳥羽神明社：石段の上の社殿（灰色の屋根、白い幕に黒い四角の紋）、両わきの白いのぼり"""
+    ground('jari')
+    steps('s', 'stoneR', 0, -0.22, 0.3, 4, 0.04, 0.025)
+    box('dan', 'kidan', (0.62, 0.3, 0.1), (0, 0.12, 0.05))
+    box('kabe', 'kiji', (0.46, 0.22, 0.16), (0, 0.12, 0.18))
+    box('maku', 'shikkui', (0.42, 0.01, 0.07), (0, 0.009, 0.21))
+    for x in (-0.12, 0, 0.12):
+        box(f'mon{x}', 'kuro', (0.04, 0.012, 0.035), (x, 0.007, 0.21))
+    irimoya('yane', 'kawaraG', 0.62, 0.38, 0.2, 0.26, 0, 0.12)
+    for x in (-0.4, 0.4):
+        box(f'nb{x}', 'kijiD', (0.008, 0.008, 0.4), (x, -0.06, 0.2))
+        box(f'nbH{x}', 'shikkui', (0.05, 0.004, 0.26), (x + 0.03, -0.06, 0.24))
+    return view(0.24)
+
+
+def antaiji():
+    """安泰寺：白い壁に黒い木組みのお堂（三角の妻に飾り）、手前に柵でかこった古い松の根、紫の花、うしろの木"""
+    ground('jari')
+    box('kabe', 'shikkui', (0.5, 0.28, 0.2), (0, 0.12, 0.1))
+    for x in (-0.25, -0.08, 0.08, 0.25):
+        box(f'kumi{x}', 'kijiD', (0.016, 0.01, 0.2), (x, -0.021, 0.1))
+    box('kumiH', 'kijiD', (0.5, 0.01, 0.016), (0, -0.021, 0.12))
+    gable_y('yane', 'kawaraG', 0.62, 0.38, 0.18, 0.2, 0, 0.12)
+    gable_y('tsuma', 'kiji', 0.4, 0.3, 0.1, 0.2, 0, 0.1)
+    tree('t1', 0.32, 0.3, 1.6, 'sugi')
+    tree('t2', -0.22, 0.32, 1.3, 'sugi')
+    cyl('ne', 'miki', 0.05, 0.08, (-0.12, -0.2, 0.04), verts=10, r2=0.03)
+    for i in range(4):
+        a = i * math.pi / 2 + 0.4
+        box(f'neb{i}', 'miki', (0.1, 0.02, 0.02), (-0.12 + math.cos(a) * 0.06, -0.2 + math.sin(a) * 0.06, 0.015), (0, 0, a))
+    fence('f', 'kijiD', -0.26, 0.02, -0.32, 0.05, 6)
+    for i, x in enumerate((0.1, 0.18, 0.26, 0.34)):
+        sphere(f'hana{i}', 'ajisaiP', 0.03, (x, -0.26, 0.03))
+    return view(0.22)
+
+
+def fukusenji():
+    """福泉寺：こげ茶の木のお堂（大きな戸、灰色の瓦）、両わきの石灯籠、石段、右に白い塀、手前に文学碑"""
+    ground('jari')
+    hall('h', 0, 0.08, 0.44, 0.26, 0.16, 'kijiD', 'kawaraG', z=0.06)
+    box('to', 'kiji', (0.18, 0.01, 0.12), (0, -0.054, 0.12))
+    for x in (-0.32, 0.32):
+        toro(f'r{x}', x, -0.16, 1.1)
+    steps('s', 'stoneR', 0, -0.2, 0.2, 2, 0.04, 0.03)
+    box('hei', 'shikkui', (0.08, 0.36, 0.16), (0.44, 0.1, 0.08))
+    box('hi', 'stoneR', (0.08, 0.04, 0.12), (-0.2, -0.3, 0.06), bevel=0.01)
+    return view(0.24)
+
+
+def genkuin():
+    """源空院：白壁に木組みのお堂（茶色の戸、灰色の瓦）、左に赤い板、右に枝垂れ桜の古木"""
+    ground('jari')
+    box('kabe', 'shikkui', (0.46, 0.28, 0.18), (-0.06, 0.1, 0.09))
+    for x in (-0.29, -0.13, 0.01, 0.17):
+        box(f'kumi{x}', 'kijiD', (0.014, 0.01, 0.18), (x, -0.041, 0.09))
+    box('to', 'kiji', (0.14, 0.012, 0.12), (-0.06, -0.042, 0.06))
+    irimoya('yane', 'kawaraG', 0.6, 0.42, 0.22, 0.18, -0.06, 0.1)
+    box('akaita', 'kanbanR', (0.03, 0.01, 0.16), (-0.36, -0.1, 0.08))
+    cyl('miki', 'miki', 0.03, 0.26, (0.3, -0.1, 0.13), verts=8)
+    for i in range(8):
+        a = i * math.pi / 4
+        sphere(f'shidare{i}', 'sakuraS' if i % 2 else 'sakuraP', 0.06, (0.3 + math.cos(a) * 0.09, -0.1 + math.sin(a) * 0.07, 0.17), (0.7, 0.7, 1.6))
+    sphere('shT', 'sakuraP', 0.1, (0.3, -0.1, 0.27), (1, 1, 0.6))
+    ishidatami('s', -0.06, -0.38, -0.06, 0.12)
+    return view(0.22)
+
+
+def kasuya_tei():
+    """旧糟谷邸：黒い板張りと白い壁の長屋門（まん中に門の口）、奥の主屋の屋根、右に枝を広げた大きな木、白い案内板"""
+    ground('jari')
+    irimoya('omoya', 'kawaraG', 0.56, 0.3, 0.2, 0.18, -0.04, 0.26)
+    box('omoyaK', 'shikkui', (0.48, 0.24, 0.18), (-0.04, 0.26, 0.09))
+    box('nagaya', 'kuroita', (0.66, 0.18, 0.12), (-0.06, -0.02, 0.06))
+    box('nagayaU', 'shikkui', (0.66, 0.18, 0.06), (-0.06, -0.02, 0.15))
+    box('mon', 'kuro', (0.12, 0.01, 0.15), (-0.06, -0.112, 0.075))
+    for x in (-0.12, 0.0):
+        box(f'monH{x}', 'kijiD', (0.02, 0.02, 0.17), (x, -0.112, 0.085))
+    gable('nagayaY', 'kawaraG', 0.72, 0.26, 0.08, 0.18, -0.06, -0.02)
+    cyl('miki', 'miki', 0.03, 0.22, (0.34, -0.14, 0.11), verts=8)
+    for i, (dx, dy, r) in enumerate(((0, 0, 0.14), (-0.1, 0.02, 0.09), (0.06, -0.04, 0.1))):
+        sphere(f'ha{i}', 'gTree', r, (0.34 + dx, -0.14 + dy, 0.28 + i * 0.02), (1, 1, 0.6))
+    box('annai', 'kanbanW2', (0.06, 0.01, 0.05), (0.18, -0.3, 0.08))
+    box('annaiA', 'kijiD', (0.01, 0.01, 0.06), (0.18, -0.3, 0.03))
+    return view(0.2)
+
+
+def kaminagara_shinmei():
+    """上永良神明社：しめなわを巻いた大シイの巨木（太い幹・大きな こい緑の葉）、手前の白い柵、奥の小さな社"""
+    ground('jari')
+    box('yashiro', 'kiji', (0.16, 0.14, 0.1), (0.32, 0.26, 0.05))
+    gable('yashiroY', 'kawaraG', 0.2, 0.2, 0.06, 0.1, 0.32, 0.26)
+    cyl('miki', 'shiiM', 0.11, 0.3, (-0.04, 0.06, 0.15), verts=12, r2=0.08)
+    for i in range(4):
+        a = i * math.pi / 2 + 0.6
+        box(f'ne{i}', 'shiiM', (0.14, 0.04, 0.04), (-0.04 + math.cos(a) * 0.1, 0.06 + math.sin(a) * 0.1, 0.02), (0, 0, a))
+    cyl('nawa', 'shime', 0.118, 0.025, (-0.04, 0.06, 0.16), verts=14)
+    for i in range(3):
+        box(f'shide{i}', 'shikkui', (0.016, 0.006, 0.04), (-0.12 + i * 0.08, -0.06, 0.13))
+    for i, (dx, dy, dz, r) in enumerate(((0, 0, 0.42, 0.24), (-0.16, 0.04, 0.36, 0.14), (0.16, 0.0, 0.36, 0.15), (0.0, 0.08, 0.54, 0.14))):
+        sphere(f'ha{i}', 'shiiG', r, (-0.04 + dx, 0.06 + dy, dz), (1, 1, 0.7))
+    fence('f', 'shikkui', -0.36, 0.3, -0.24, 0.06, 10)
+    return view(0.28, 1.2)
+
+
+def shozanji():
+    """勝山寺：こげ茶のお堂（黒っぽい瓦の反った屋根）、正面の白い額、右に赤いのぼり、左の松"""
+    ground('jari')
+    hall('h', 0, 0.08, 0.44, 0.26, 0.16, 'kijiD', 'yaneB', z=0.06)
+    box('gaku', 'kanbanW2', (0.16, 0.012, 0.04), (0, -0.054, 0.19))
+    box('gakuF', 'kuro', (0.18, 0.01, 0.05), (0, -0.052, 0.19))
+    box('nb', 'kijiD', (0.008, 0.008, 0.34), (0.36, -0.12, 0.17))
+    box('nbH', 'kanbanR', (0.04, 0.004, 0.22), (0.38, -0.12, 0.2))
+    pine('p', -0.36, -0.08, 1.1)
+    ishidatami('s', 0, -0.38, -0.08, 0.12)
+    return view(0.24)
+
+
+def sairinji():
+    """西林寺：台の上の白っぽい石の墓碑（まるい頭）、両わきの黄色い花、手前にペンギンの像"""
+    ground('jari')
+    box('dai1', 'kidan', (0.44, 0.3, 0.05), (0, 0.06, 0.025))
+    box('dai2', 'stoneR', (0.3, 0.2, 0.05), (0, 0.06, 0.075))
+    box('hi', 'toro', (0.14, 0.08, 0.3), (0, 0.06, 0.25))
+    cyl('hiT', 'toro', 0.07, 0.08, (0, 0.06, 0.4), (math.pi / 2, 0, 0), 14)
+    for x in (-0.15, 0.15):
+        box(f'hanaD{x}', 'stoneR', (0.05, 0.05, 0.12), (x, -0.02, 0.16))
+        for k in range(3):
+            sphere(f'hana{x}{k}', 'paraY', 0.024, (x + (k - 1) * 0.022, -0.02, 0.24))
+    sphere('pB', 'pengin', 0.05, (0.3, -0.24, 0.07), (0.9, 0.8, 1.4))
+    sphere('pW', 'penginW', 0.04, (0.3, -0.27, 0.065), (0.8, 0.5, 1.2))
+    sphere('pH', 'pengin', 0.032, (0.3, -0.24, 0.15))
+    cyl('pK', 'penginY', 0.012, 0.03, (0.3, -0.275, 0.15), (math.pi / 2, 0, 0), 6, r2=0.002)
+    for x in (-0.28, 0.36):
+        tree(f't{x}', x, 0.26, 1.2)
+    return view(0.22)
+
+
+def tenjiku_jinja():
+    """天竹神社：木の社殿（灰色の瓦）、両わきの石灯籠、手前に白い綿の実がなる棉の畑"""
+    ground('jari')
+    hall('h', 0, 0.14, 0.4, 0.22, 0.14, 'kiji', 'kawaraG', z=0.05)
+    for x in (-0.3, 0.3):
+        toro(f'r{x}', x, -0.04, 1.1)
+    ishidatami('s', 0, -0.38, -0.02, 0.12)
+    for r in range(2):
+        for i in range(4):
+            x, y = (-0.4 + i * 0.08 if r == 0 else 0.16 + i * 0.08), -0.24
+            sphere(f'wg{r}{i}', 'wataG', 0.035, (x, y, 0.05), (1, 1, 1.2))
+            sphere(f'wt{r}{i}', 'wata', 0.016, (x + 0.01, y - 0.03, 0.07))
+    return view(0.22)
+
+
+def semon_jinja():
+    """瀬門神社：こい茶（えんじ）の社殿にしめなわ、灰色の瓦。手前に飾り馬（赤と金の馬具）"""
+    ground('jari')
+    box('dan', 'kidan', (0.56, 0.32, 0.04), (0, 0.12, 0.02))
+    box('kabe', 'maroon', (0.48, 0.26, 0.2), (0, 0.12, 0.14))
+    for x in (-0.16, 0, 0.16):
+        box(f'to{x}', 'kijiD', (0.012, 0.01, 0.16), (x, -0.011, 0.12))
+    shimenawa('s', 0, -0.016, 0.22, 0.4)
+    irimoya('yane', 'kawaraG', 0.64, 0.42, 0.2, 0.24, 0, 0.12)
+    ux, uy = -0.16, -0.24
+    box('umaB', 'uma', (0.18, 0.06, 0.07), (ux, uy, 0.12))
+    for dx in (-0.07, 0.07):
+        for dy in (-0.02, 0.02):
+            box(f'umaL{dx}{dy}', 'uma', (0.02, 0.02, 0.09), (ux + dx, uy + dy, 0.045))
+    box('umaN', 'uma', (0.04, 0.04, 0.09), (ux + 0.1, uy, 0.17), (0, math.radians(-30), 0))
+    box('umaH', 'uma', (0.07, 0.035, 0.035), (ux + 0.14, uy, 0.22))
+    box('kura', 'umaR', (0.08, 0.07, 0.03), (ux - 0.01, uy, 0.16))
+    box('kuraK', 'umaK', (0.04, 0.072, 0.03), (ux - 0.01, uy, 0.185))
+    box('shippo', 'kuro', (0.012, 0.012, 0.07), (ux - 0.1, uy, 0.1), (0, math.radians(20), 0))
+    return view(0.22)
+
+
+def kagakuji():
+    """花岳寺：白い しっくいに こげ茶の柱の大きな本堂（大きな灰色の瓦）、右に高い杉、左に小さな木、石段"""
+    ground('jari')
+    hall('h', 0, 0.1, 0.46, 0.26, 0.16, 'shikkui', 'kawaraG', z=0.06)
+    for x in (-0.12, 0.0, 0.12):
+        box(f'h{x}', 'kijiD', (0.014, 0.01, 0.16), (x, -0.034, 0.14))
+    box('to', 'kuro', (0.08, 0.01, 0.1), (0, -0.036, 0.11))
+    cyl('sugiM', 'miki', 0.016, 0.14, (0.38, -0.02, 0.07), verts=6)
+    cyl('sugi', 'sugi', 0.07, 0.36, (0.38, -0.02, 0.3), verts=10, r2=0.006)
+    sphere('ki', 'gTree', 0.07, (-0.38, -0.12, 0.07))
+    steps('s', 'stoneR', 0, -0.2, 0.2, 2, 0.04, 0.03)
+    return view(0.24)
+
+
+def ennyuji():
+    """円融寺：門前の「吉良の五本松」（ななめにのびる松が5本）、奥に小さなお堂"""
+    ground('jari')
+    box('kabe', 'kiji', (0.26, 0.18, 0.12), (-0.18, 0.28, 0.06))
+    roof('yane', 'kawaraG', 0.34, 0.26, 0.1, 0.12, 0.4, -0.18, 0.28)
+    for i, (x, y, s, lean) in enumerate(((-0.3, -0.04, 1.2, 0), (-0.1, -0.16, 1.0, 0.25), (0.08, -0.02, 1.4, -0.2), (0.24, -0.18, 1.0, 0.3), (0.34, 0.12, 1.3, -0.25))):
+        pine(f'go{i}', x, y, s)
+        for o in bpy.context.scene.objects:
+            if o.name.startswith(f'matsugo{i}'):
+                o.location.x += lean * (o.location.z / 0.3) * 0.2
+            if o.name.startswith(f'mikigo{i}'):
+                o.rotation_euler = (0, lean * 0.6, 0)
+                o.location.x += lean * 0.03
+    return view(0.2)
+
+
+def shorakuji():
+    """勝楽寺（小山田地蔵尊）：左の石段と木、白い妻に こげ茶の壁のお堂（灰色の瓦）、手前に赤い前かけのお地蔵さま"""
+    ground('jari')
+    box('kabe', 'kijiD', (0.44, 0.28, 0.18), (0.06, 0.1, 0.09))
+    gable_y('tsuma', 'shikkui', 0.4, 0.28, 0.12, 0.18, 0.06, 0.1)
+    gable_y('yane', 'kawaraG', 0.56, 0.38, 0.17, 0.18, 0.06, 0.1)
+    windows('w', 'shoji', [-0.04, 0.16], -0.041, 0.1, 0.08, 0.08)
+    box('to', 'kuro', (0.06, 0.01, 0.12), (0.06, -0.041, 0.06))
+    steps('k', 'stoneR', -0.3, -0.1, 0.1, 7, 0.04, 0.03)
+    tree('t', -0.3, 0.26, 1.5, 'sugi')
+    for i, x in enumerate((-0.04, 0.06, 0.16)):
+        jizo(i, x, -0.24, 1.1)
+    return view(0.22)
+
+
 MODELS = {
     'konoe-tei': konoe_tei, 'shokoso': shokoso, 'ibun-jinja': ibun_jinja, 'kozenji': kozenji, 'kumaku-jinja': kumaku_jinja,
     'yatsuomote': yatsuomote, 'wakuwaku': wakuwaku, 'jissoji': jissoji, 'choenji': choenji, 'glass-museum': glass_museum,
@@ -547,6 +1002,12 @@ MODELS = {
     'sakushima-higashi': sakushima_higashi, 'suunji': suunji, 'kamome-parking': kamome_parking, 'oura-beach': oura_beach,
     'yatsurugi': yatsurugi, 'kezoji': kezoji, 'kogane-zutsumi': kogane_zutsumi, 'tojo-jo': tojo_jo, 'gentokuji': gentokuji,
     'ozaki-shiro': ozaki_shiro,
+    'kira-yoshida': kira_yoshida, 'shohoji-kofun': shohoji_kofun, 'shio-no-sato': shio_no_sato, 'kira-onsen': kira_onsen,
+    'kira-waikiki': kira_waikiki, 'hazu-jinja': hazu_jinja, 'nishi-hazu': nishi_hazu, 'terabe-jo': terabe_jo, 'higashi-hazu': higashi_hazu,
+    'myozenji': myozenji, 'kodomonokuni-st': kodomonokuni_st, 'aichi-kodomo': aichi_kodomo, 'toba-shinmei': toba_shinmei, 'antaiji': antaiji,
+    'fukusenji': fukusenji, 'genkuin': genkuin, 'kasuya-tei': kasuya_tei, 'kaminagara-shinmei': kaminagara_shinmei, 'shozanji': shozanji,
+    'sairinji': sairinji, 'tenjiku-jinja': tenjiku_jinja, 'semon-jinja': semon_jinja, 'kagakuji': kagakuji, 'ennyuji': ennyuji,
+    'shorakuji': shorakuji,
 }
 pa.MODELS.clear()
 pa.MODELS.update(MODELS)

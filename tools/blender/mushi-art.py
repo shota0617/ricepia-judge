@@ -91,7 +91,7 @@ def bug(body, length=0.62, width=0.42, pron=None, pron_w=None, pron_l=0.16, head
     legs(0, by + length * 0.30, by - length * 0.28, width / 2)
     if ant and not horn and not jaws:
         antennae(hy + head_r * 0.6)
-    return dict(target=(0, 0.02, 0.05), scale=1.15, el=78, az=0, size=32)
+    return dict(target=(0, 0.02, 0.05), scale=1.15, el=78, az=0, size=32, fit=True)
 
 
 # 並びは mushi.js の BUGS → yatsumushi.js の BUGS（JS の BUG_SHEET と同じ）
@@ -195,9 +195,35 @@ PLACES = [('ground', place_ground), ('grass', place_grass), ('sap', place_sap), 
 SHEETS = {'bugs': BUGS, 'stones': STONES, 'places': PLACES}
 
 
+def fit_view(opts, margin=1.12):
+    """虫は、角・大あご・触角・足の先まで枠に入れる：ほぼ真上から見た x・y の広がりのまん中に向け、
+    ふつうの大きさ（scale）に入らないときだけ枠を広げる（入るものは みな同じ縮尺のまま。小さい虫は小さく見える）"""
+    from mathutils import Vector
+    dg = bpy.context.evaluated_depsgraph_get()
+    xs, ys = [], []
+    for o in bpy.context.scene.objects:
+        if o.type not in ('MESH', 'CURVE'):
+            continue
+        if o.type == 'CURVE':   # 曲線の bound_box は まわりに余白がつくので、点の位置（＋太さ）から取る
+            r = o.data.bevel_depth
+            pts = [(o.matrix_world @ bp.co) + Vector((dx, dy, 0)) for sp in o.data.splines for bp in sp.bezier_points for dx in (-r, r) for dy in (-r, r)]
+        else:
+            ev = o.evaluated_get(dg)
+            pts = [ev.matrix_world @ Vector(c) for c in ev.bound_box]
+        for w in pts:
+            xs.append(w.x)
+            ys.append(w.y + w.z * math.cos(math.radians(opts.get('el', 78))))   # 少し斜めから見るぶん、高い所は上へずれる
+    cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+    ext = max(max(xs) - min(xs), max(ys) - min(ys)) * margin
+    opts['target'] = (cx, cy, 0.05)
+    opts['scale'] = max(opts['scale'], ext)
+
+
 def bake(fn, tag):
     sc = pa.setup_scene()
     opts = fn()
+    if opts.get('fit'):
+        fit_view(opts)
     n = opts.get('size', 32)
     sc.render.resolution_x = sc.render.resolution_y = n * pa.SS
     pa.add_camera_light(sc, opts['target'], opts['scale'], opts.get('el', 28), opts.get('az', -35))

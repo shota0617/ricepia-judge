@@ -12,6 +12,7 @@ const KEY = 'nsg_meiro';
 // 面のゴール（名所の id）。この順に。あとは 西尾の注目スポットを 西尾城跡から近い順に
 const GOALS = ['f-nishio-station', 'f-nishio-castle', 'f-ricepia', 'f-iwase-bunko', 'f-kondo-beikoku', 'f-konrenji', 'f-jofukuji', 'f-kurokabe', 'f-inariyama-chaen'];
 const K = 3;   // めいろの1マス = 地図の K×K マス
+const CD = 2.4;   // はじめの 3・2・1（秒）。「1」の あいだに いまの持ち方を「まっすぐ」に しなおす
 const SLOPE = 2;   // 坂の 引っぱりの つよさ（めいろの ころがり抵抗に かつのは 5%より 急な坂：台地の ふちなど）
 const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // マス/秒²・いちばん速い速さ・ころがり抵抗・速さに比べて へる分・はね返り・お米の半径（マス）
 // stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
@@ -282,6 +283,7 @@ function restart() {
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
   game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0; game.got = new Set();
+  game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
 
@@ -479,7 +481,11 @@ function tick(now) {
   raf = requestAnimationFrame(tick);
   const g = game, dt = Math.min(0.05, g.last ? (now - g.last) / 1000 : 0);
   g.last = now;
-  if (!g.done && ui.clear.hidden) { g.acc = (g.acc || 0) + dt; while (g.acc >= 1 / 120) { g.acc -= 1 / 120; step(1 / 120); if (g.done) break; } }
+  if (g.cd > 0 && ui.clear.hidden) {   // 3・2・1：スマホを まっすぐ 持ってもらい、「1」で 傾きを 合わせなおす
+    g.cd -= dt;
+    if (!g.cdReset && g.cd < 0.9) { g.cdReset = true; api.tiltReset(); }
+    if (g.cd <= 0) api.koto(0.9, false);
+  } else if (!g.done && ui.clear.hidden) { g.acc = (g.acc || 0) + dt; while (g.acc >= 1 / 120) { g.acc -= 1 / 120; step(1 / 120); if (g.done) break; } }
   else if (g.done) { g.happy = 99; g.th += dt * 3; }
   for (const p of g.fx || []) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.vx *= 1 - dt * 1.5; }
   if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
@@ -537,6 +543,16 @@ function draw(now) {
   x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(X, Y + T * 0.3, T * 0.26, T * 0.09, 0, 0, Math.PI * 2); x.fill();
   const mood = g.happy > 0 ? 'happy' : g.ouch > 0 ? 'ouch' : Math.hypot(g.vx, g.vy) > 4 ? 'excited' : 'smile';
   nishioPixel.drawRice(x, X, Y, g.th % (Math.PI * 2), g.sq, mood, 0, '', u);
+  if (g.cd > 0) {   // 3・2・1 と「スマホを まっすぐ」
+    const W = b.tw * T, H = b.th * T, n = Math.ceil(g.cd / (CD / 3)), big = Math.round(T * 3.2);
+    x.fillStyle = 'rgba(10,30,40,.35)'; x.fillRect(0, 0, W, H);
+    x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
+    x.font = `bold ${big}px "DotGothic16", sans-serif`; x.lineWidth = Math.max(4, T / 4); x.strokeStyle = '#123247'; x.fillStyle = '#ffe680';
+    x.strokeText(String(n), W / 2, H / 2); x.fillText(String(n), W / 2, H / 2);
+    const msg = 'スマホを まっすぐ 持ってね';
+    x.font = `bold ${Math.round(Math.min(T * 0.8, W * 0.8 / 12))}px "DotGothic16", sans-serif`; x.fillStyle = '#ffffff';   // 盤の はばに おさまる 大きさ（12字ぶん）
+    x.strokeText(msg, W / 2, H / 2 + big * 0.8); x.fillText(msg, W / 2, H / 2 + big * 0.8);
+  }
 }
 function flag(x, X, Y, T) {   // 🏁 の旗（白黒の市松）
   const u = Math.max(1, Math.round(T / 16));

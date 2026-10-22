@@ -29,7 +29,8 @@
   #bar { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 8px; display: flex; gap: 6px; }
   #bar button, .pad button { border: 0; border-radius: 12px; background: rgba(251, 248, 240, .9); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   #bar button { min-width: 44px; height: 40px; padding: 0 10px; font-size: 14px; }
-  #hud { right: 220px; }
+  #bar button.on { background: var(--green); color: #fff; }
+  #hud { right: 400px; }
   /* さわる操作（スマホ）。パソコンでも押せる */
   .pad { position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 10px; user-select: none; -webkit-user-select: none; }
   .pad button { width: 74px; height: 74px; font-size: 26px; touch-action: none; }
@@ -49,6 +50,9 @@
   .seasons button { padding: 10px 4px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
   .seasons button span { display: block; font-size: 24px; }
   .seasons button.sel { border-color: var(--green); background: #e8efdf; }
+  .times { margin-top: -6px; }
+  .times button { padding: 6px 4px; }
+  .times button span { display: inline; font-size: 18px; margin-right: 4px; }
   .go { display: inline-flex; align-items: center; justify-content: center; min-height: 52px; padding: 0 36px; border: 0; border-radius: 999px; background: var(--green); color: #fff; font: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
   .go:disabled { opacity: .5; cursor: default; }
   .how { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.8; text-align: left; }
@@ -79,6 +83,8 @@
 <div id="bar" class="hidden">
   <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
+  <button id="bAssist" title="直進アシスト（G）">直進 切</button>
+  <button id="bFast" title="早送り（F）">⏩ ×1</button>
   <button id="bMenu" title="はじめの画面へ">≡</button>
 </div>
 <div class="pad hidden" id="padL"><button data-k="left" aria-label="左へ切る">◀</button><button data-k="right" aria-label="右へ切る">▶</button></div>
@@ -96,6 +102,11 @@
       <button data-s="aki"><span>🌾</span>秋<br>稲刈りのあと</button>
       <button data-s="shirokaki"><span>💧</span>代かき<br>水を張った田んぼ</button>
     </div>
+    <div class="seasons times" id="times">
+      <button data-t="asa"><span>🌅</span>朝</button>
+      <button data-t="hiru"><span>☀️</span>昼</button>
+      <button data-t="yu"><span>🌇</span>夕方</button>
+    </div>
     <div class="prog"><i id="progBar"></i></div>
     <p class="small" id="progText">読みこみ中…</p>
     <button class="go" id="bStart" disabled>▶ 運転する</button>
@@ -105,7 +116,14 @@
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
       ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
+      ・直進アシスト <kbd>G</kbd>（ハンドルから手をはなすと、ガイドの線にそってまっすぐ走る）／早送り <kbd>F</kbd><br>
       ・スマホは画面の下のボタンで操作します。
+    </div>
+    <div class="how">
+      <b>本物の耕し方</b><br>
+      ・ロータリー耕うんは 時速 2〜3km くらいでゆっくり。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
+      ・まず田んぼのまん中を<b>往復</b>して耕し、両はしの枕地（まくらじ）は残しておく。最後に<b>外周を 2〜3 周</b>して仕上げる<br>
+      ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない
     </div>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -138,10 +156,25 @@ const SHIRO = season === 'shirokaki';
 const TILL_Y = SHIRO ? 0.045 : 0.035;
 
 const $ = id => document.getElementById(id);
+// 時間：朝・昼・夕方（太陽の高さと向き・光の色・空・もや）
+const TOD = { asa: 1, hiru: 1, yu: 1 }[params.get('time')] ? params.get('time') : 'hiru';
+const go = (s_, t_) => { location.search = '?season=' + s_ + '&time=' + t_; };
 document.querySelectorAll('#seasons button').forEach(b => {
   if (b.dataset.s === season) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.s !== season) location.search = '?season=' + b.dataset.s; };
+  b.onclick = () => { if (b.dataset.s !== season) go(b.dataset.s, TOD); };
 });
+document.querySelectorAll('#times button').forEach(b => {
+  if (b.dataset.t === TOD) b.classList.add('sel');
+  b.onclick = () => { if (b.dataset.t !== TOD) go(season, b.dataset.t); };
+});
+const LIGHT = {
+  hiru: { sky: null, sun: [-0.45, season === 'aki' ? 0.45 : 0.7, -0.55], sunC: 0xfff3e2, sunI: 3.2, hemi: [0xdfe9f5, 0x6b5a40, 0.35], fog: [160, 1100],
+    cLit: [1.0, 0.99, 0.96], cDark: [0.72, 0.75, 0.80], disk: [1.0, 0.95, 0.85], exp: 1.0 },
+  asa: { sky: [0x7aa2d8, 0xf1dccb], sun: [0.78, 0.2, 0.3], sunC: 0xffd6a4, sunI: 2.6, hemi: [0xcad8ea, 0x5a4a36, 0.32], fog: [50, 650],   // 朝もや
+    cLit: [1.0, 0.9, 0.8], cDark: [0.62, 0.65, 0.74], disk: [1.0, 0.85, 0.65], exp: 1.0 },
+  yu: { sky: [0x4d6ba8, 0xf0a46c], sun: [-0.8, 0.12, 0.42], sunC: 0xffa25a, sunI: 2.8, hemi: [0xb6a6c6, 0x4a3a2c, 0.26], fog: [120, 900],
+    cLit: [1.0, 0.70, 0.48], cDark: [0.48, 0.42, 0.52], disk: [1.0, 0.65, 0.35], exp: 0.95 },
+}[TOD];
 
 // ---- 描くしくみ ----
 const canvas = $('view');
@@ -149,26 +182,27 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPref
 renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.0;
+renderer.toneMappingExposure = LIGHT.exp;
 renderer.physicallyCorrectLights = true;
 renderer.shadowMap.enabled = !params.has('noshadow');
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 2500);
-const SKY = { haru: [0x5f8fd0, 0xc9d8e6], aki: [0x5684c4, 0xd8d6c8], shirokaki: [0x5a90d6, 0xcfdeea] }[season];
-scene.fog = new THREE.Fog(SKY[1], 160, 1100);
+const SKY = LIGHT.sky || { haru: [0x5f8fd0, 0xc9d8e6], aki: [0x5684c4, 0xd8d6c8], shirokaki: [0x5a90d6, 0xcfdeea] }[season];
+scene.fog = new THREE.Fog(SKY[1], LIGHT.fog[0], LIGHT.fog[1]);
 
 // 空（上は青、地平は白っぽい。太陽のまわりは明るい）。同じ空から環境マップを作り、水や金属に映す
 const SKY_TIME = { value: 0 };
-const SUN_DIR = new THREE.Vector3(-0.45, season === 'aki' ? 0.45 : 0.7, -0.55).normalize();
+const SUN_DIR = new THREE.Vector3(...LIGHT.sun).normalize();
 function skyMesh(r) {
   const m = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { top: { value: new THREE.Color(SKY[0]) }, hor: { value: new THREE.Color(SKY[1]) }, sun: { value: SUN_DIR }, time: SKY_TIME,
-      cover: { value: { haru: 0.48, aki: 0.38, shirokaki: 0.55 }[season] } },
+      cover: { value: { haru: 0.48, aki: 0.38, shirokaki: 0.55 }[season] },
+      cLit: { value: new THREE.Vector3(...LIGHT.cLit) }, cDark: { value: new THREE.Vector3(...LIGHT.cDark) }, disk: { value: new THREE.Vector3(...LIGHT.disk) } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     // 雲：空を平らな天井とみなし、そこに重ねた雑音（fbm）で白い雲を描く。ゆっくり流れる。太陽の側は明るく、下は少し暗い
-    fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 sun; uniform float time; uniform float cover; varying vec3 vD;' +
+    fragmentShader: 'uniform vec3 top; uniform vec3 hor; uniform vec3 sun; uniform float time; uniform float cover; uniform vec3 cLit; uniform vec3 cDark; uniform vec3 disk; varying vec3 vD;' +
       'float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }' +
       'float noise(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
       ' return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }' +
@@ -178,9 +212,9 @@ function skyMesh(r) {
       ' if (vD.y > 0.015) { vec2 uv = vD.xz / (vD.y + 0.08) * 0.9 + vec2(time * 0.006, time * 0.002);' +
       '  float n = fbm(uv), d = fbm(uv + sun.xz * 0.06);' +
       '  float cl = smoothstep(1.0 - cover, 1.0 - cover + 0.28, n) * smoothstep(0.015, 0.22, vD.y);' +
-      '  vec3 cc = mix(vec3(0.72, 0.75, 0.80), vec3(1.0, 0.99, 0.96), clamp(0.55 + (n - d) * 4.0 + s * 0.3, 0.0, 1.0));' +
+      '  vec3 cc = mix(cDark, cLit, clamp(0.55 + (n - d) * 4.0 + s * 0.3, 0.0, 1.0));' +
       '  c = mix(c, cc, cl * 0.92); }' +
-      ' c += vec3(1.0, 0.95, 0.85) * (pow(s, 800.0) * 4.0 + pow(s, 12.0) * 0.25); gl_FragColor = vec4(c, 1.0); }'
+      ' c += disk * (pow(s, 800.0) * 4.0 + pow(s, 12.0) * 0.25 + pow(s, 3.0) * 0.12 * (1.0 - h)); gl_FragColor = vec4(c, 1.0); }'
   });
   const mesh = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16), m);
   mesh.frustumCulled = false;
@@ -209,12 +243,12 @@ scene.add(sky);
     pm.dispose();
   }
 }
-const hemi = new THREE.HemisphereLight(0xdfe9f5, 0x6b5a40, 0.35);
+const hemi = new THREE.HemisphereLight(...LIGHT.hemi);
 scene.add(hemi);
-const sun = new THREE.DirectionalLight(0xfff3e2, 3.2);
+const sun = new THREE.DirectionalLight(LIGHT.sunC, LIGHT.sunI);
 sun.castShadow = true;
 sun.shadow.mapSize.set(MOBILE ? 1024 : 2048, MOBILE ? 1024 : 2048);
-Object.assign(sun.shadow.camera, { left: -14, right: 14, top: 14, bottom: -14, near: 1, far: 80 });
+Object.assign(sun.shadow.camera, { left: -16, right: 16, top: 16, bottom: -16, near: 1, far: 90 });   // 朝夕は影が長い
 sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.02;
 scene.add(sun, sun.target);
@@ -910,9 +944,10 @@ const FX = (() => {
 let emitAcc = 0, exhAcc = 0;
 const EXH = { p: new THREE.Vector3(-0.80, 2.50, 0.645), w: new THREE.Vector3(), dark: 0.3 };   // 右 A ピラーの排気管の先
 function emitExhaust(dt) {
+  if (S.crank > 0.6) return;
   const load = (key.fwd || key.back ? 0.6 : 0) + (S.rotDown && S.rotPos < 0.1 ? 0.6 : 0) + Math.abs(S.v - lastExhV) / Math.max(dt, 1e-3) * 0.3;
   lastExhV = S.v;
-  EXH.dark = Math.min(0.55, 0.12 + load * 0.25);
+  EXH.dark = Math.min(0.55, 0.12 + load * 0.25 + (S.flare || 0) * 0.3);
   exhAcc += dt * (5 + load * 14);
   rig.localToWorld(EXH.w.copy(EXH.p));
   while (exhAcc >= 1) {
@@ -1167,16 +1202,51 @@ function placeRig(dt) {
   rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB, S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
 }
 
+// 直進アシスト：田んぼの長い向き（z）にそって、耕幅 2.2m から 10cm 重ねた 2.1m おきのガイドの線を引き、
+// ハンドルから手をはなすと、いちばん近い線にそってまっすぐ走る（本物は GNSS で基準の線を決める）
+const ASSIST = { on: false, active: false, line: 0, dir: 1 };
+const LINE0 = -HX + TILL_W / 2, PITCH = TILL_W - 0.1;
+function assistSteer(dt) {
+  const fz = Math.cos(S.yaw);
+  if (Math.abs(fz) < 0.9) return false;            // 長い向きに近いときだけ
+  ASSIST.dir = Math.sign(fz);
+  ASSIST.line = LINE0 + Math.round((S.x - LINE0) / PITCH) * PITCH;
+  const off = S.x - ASSIST.line;                   // 線からのずれ（m）。左が＋
+  // ずれと、線へ寄っていく向き（sin(yaw)）の両方を見て切る。うしろ向き（dir=-1）は左右が逆になる
+  const target = Math.max(-0.3, Math.min(0.3, ASSIST.dir * (off * 0.9 + Math.sin(S.yaw) * 2.2)));
+  S.steer += Math.max(-0.8 * dt, Math.min(0.8 * dt, target - S.steer));
+  return true;
+}
 function step(dt) {
-  // 目標の速さ：耕しているときは 6km/h、ロータリーを上げると 12km/h、うしろは 5km/h
-  const vmax = S.rotDown ? 1.7 : 3.3;
-  const want = key.fwd ? vmax : key.back ? -1.4 : 0;
+  // 目標の速さ：耕しているときは 2.8km/h（本物のロータリー耕うんは 2〜3km/h）、ロータリーを上げると 9km/h（田んぼの中の移動）、
+  // 農道は 14km/h、うしろは 3km/h。大きく切っているときは ゆっくり
+  const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
+  const vmax = (S.rotDown ? 0.78 : onRoad ? 3.9 : 2.5) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
+  if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に黒い煙
+    const before = S.crank;
+    S.crank = Math.max(0, S.crank - dt);
+    if (before > 0.6 && S.crank <= 0.6) {
+      S.flare = 1;
+      rig.localToWorld(EXH.w.copy(EXH.p));
+      EXH.dark = 0.75;
+      for (let k = 0; k < 26; k++) FX.emit(EXH.w.x, EXH.w.y, EXH.w.z, (Math.random() - 0.5) * 0.6, 1.4 + Math.random() * 1.4, (Math.random() - 0.5) * 0.6, 3);
+    }
+  }
+  S.flare = Math.max(0, (S.flare || 0) - dt * 0.9);
+  // バックアップ：耕しているときにバックすると、ロータリーが自動で上がる（前へ走りだすと下がる）
+  if (key.back && S.rotDown && S.v < 0.3) { S.rotDown = false; S.autoUp = true; setRotBtn(); toast('バックしたので、ロータリーが自動で上がりました'); }
+  if (key.fwd && S.autoUp && S.v >= 0) { S.rotDown = true; S.autoUp = false; setRotBtn(); }
+  const want = S.crank > 0 ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
   const acc = want === 0 ? 2.5 : (Math.sign(want) !== Math.sign(S.v) && Math.abs(S.v) > 0.05 ? 3.0 : 1.2);
   S.v += Math.max(-acc * dt, Math.min(acc * dt, want - S.v));
   const sIn = key.right - key.left;
+  ASSIST.active = false;
   if (sIn) S.steer = Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn * 1.1 * dt));
+  else if (ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
   else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
-  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * dt;
+  // オートブレーキ：ロータリーを上げて大きく切ると、内側の後輪に半ブレーキがかかって小さく回れる（枕地での旋回）
+  S.autoBrake = !S.rotDown && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;
+  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
   else { if (Math.abs(S.v) > 0.5) toast('畦（あぜ）です。もどってください'); S.v = 0; }
@@ -1206,7 +1276,8 @@ function step(dt) {
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
   const brake = !key.fwd && !key.back && Math.abs(S.v) > 0.05 ? 1 : 0;
-  P.PedalBrakeL.rotation.x = P.PedalBrakeR.rotation.x = -0.22 * brake;
+  P.PedalBrakeL.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer < 0 ? 0.5 : 0);   // オートブレーキは内側だけ
+  P.PedalBrakeR.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer > 0 ? 0.5 : 0);
   // かかった時間・耕した割合
   if (S.started && !S.done) S.elapsed += dt;
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
@@ -1230,7 +1301,8 @@ function updateCamera(dt) {
   if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
     if (camera.parent !== rig) rig.add(camera);
     const tt = performance.now() / 1000, rough = (S.rotDown && S.rotPos < 0.1 ? 1.6 : 1) * Math.min(1, Math.abs(S.v) / 1.5);
-    const shake = 0.0012 + 0.0035 * rough;       // エンジンの細かいふるえと、土の凸凹のゆっくりしたゆれ
+    const crankShake = S.crank > 0.6 ? 0.004 * (Math.sin(tt * 38) > 0 ? 1 : -0.6) : 0;   // セルの がくがく
+    const shake = (S.crank > 0.6 ? 0 : 0.0012) + 0.0035 * rough + crankShake + 0.006 * (S.flare || 0);   // エンジンの細かいふるえと、土の凸凹のゆっくりしたゆれ
     camera.position.set(EYE.x + shake * Math.sin(tt * 47.3), EYE.y + shake * Math.sin(tt * 53.1 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7), EYE.z);
     headLag += ((S.v - lastV) / Math.max(dt, 0.001) * 0.006 - headLag) * Math.min(1, dt * 4);
     lastV = S.v;
@@ -1292,7 +1364,9 @@ function drawMeter() {
   g.fillText(kmh.toFixed(1), r, r - 8);
   g.font = 'bold 15px sans-serif';
   g.fillText((S.v < -0.05 ? 'R' : 'F') + '  km/h', r, r + 20);
-  g.fillStyle = S.rotDown ? '#ffb020' : '#2c3438'; g.fillText('PTO', r, r + 42);
+  g.fillStyle = S.rotDown ? '#ffb020' : '#2c3438'; g.fillText('PTO', r - 22, r + 42);
+  g.fillStyle = '#9fd2dc'; g.font = 'bold 13px sans-serif';
+  g.fillText(Math.round(engineRpm(performance.now() / 1000) / 10) * 10 + 'rpm', r + 22, r + 42);
   g.beginPath(); g.arc(46, 214, 9, 0, 7); g.fillStyle = '#20d050'; g.fill();
   g.beginPath(); g.arc(210, 214, 9, 0, 7); g.fillStyle = S.rotDown ? '#ffb020' : '#3a2a10'; g.fill();
   meter.tex && (meter.tex.needsUpdate = true);
@@ -1317,6 +1391,13 @@ function drawMonitor(pct) {
   g.imageSmoothingEnabled = false;
   g.drawImage(monitor.map, X0, Y0, W, H);
   g.strokeStyle = '#8fb4d0'; g.lineWidth = 2; g.strokeRect(X0, Y0, W, H);
+  if (ASSIST.on) {                                // 直進アシストのガイドの線（耕幅ごと）
+    for (let gx = LINE0; gx < HX; gx += PITCH) {
+      const ly = Y0 + (1 - (gx + HX) / (2 * HX)) * H, cur = ASSIST.active && Math.abs(gx - ASSIST.line) < 0.01;
+      g.strokeStyle = cur ? '#4fe0ff' : 'rgba(150,200,230,0.35)'; g.lineWidth = cur ? 3 : 1;
+      g.beginPath(); g.moveTo(X0, ly); g.lineTo(X0 + W, ly); g.stroke();
+    }
+  }
   const px = X0 + (S.z + HZ) / (2 * HZ) * W, py = Y0 + (1 - (S.x + HX) / (2 * HX)) * H;
   g.save(); g.translate(px, py); g.rotate(-S.yaw + Math.PI / 2 + Math.PI);
   g.fillStyle = '#ff8a1a'; g.beginPath(); g.moveTo(0, -12); g.lineTo(8, 9); g.lineTo(-8, 9); g.closePath(); g.fill();
@@ -1324,7 +1405,8 @@ function drawMonitor(pct) {
   g.fillStyle = '#1c3348';
   for (let k = 0; k < 4; k++) { g.fillRect(392, 52 + k * 58, 108, 46); }
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
-  ['耕うん', (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? '作業中' : '移動', fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+  ['直進 ' + (ASSIST.on ? (ASSIST.active ? (S.x - ASSIST.line >= 0 ? '左' : '右') + Math.abs((S.x - ASSIST.line) * 100).toFixed(0) + 'cm' : '入') : '切'),
+    (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO 入' : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
 const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -1364,7 +1446,7 @@ function toggleSound() {
 function updateSound() {
   if (!audio || !soundOn) return;
   const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
-  const rpm = 900 + Math.abs(S.v) * 350 + load * 350 + (S.rotDown ? 250 : 0);   // アイドル 900 回転、耕すと 2000 回転くらい
+  let rpm = engineRpm(t);
   const fire = rpm / 30;
   audio.o1.frequency.setTargetAtTime(fire, t, 0.25);
   audio.o2.frequency.setTargetAtTime(fire * 0.5, t, 0.25);
@@ -1375,6 +1457,15 @@ function updateSound() {
   audio.tg.gain.setTargetAtTime(till, t, 0.2);
 }
 
+// エンジンの回転数：アイドル 900、走ると上がる。耕すとき（PTO 入）は 2300 くらいに上げて、土の重さで少し下がる
+function engineRpm(t) {
+  const load = (key.fwd || key.back ? 1 : 0), work = S.rotDown && S.rotPos < 0.1;
+  let rpm = work ? 2300 - 120 * Math.min(1, Math.abs(S.v) / 0.8) + 40 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
+  if (S.crank > 0.6) rpm = 160 + 70 * Math.sin(t * 34);
+  rpm += 900 * (S.flare || 0);
+  return rpm;
+}
+
 // ---- 操作 ----
 const KEYS = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
 addEventListener('keydown', e => {
@@ -1383,6 +1474,8 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyC') nextCam();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyR') resetPos();
+  else if (e.code === 'KeyG') toggleAssist();
+  else if (e.code === 'KeyF') toggleFast();
 });
 addEventListener('keyup', e => { if (KEYS[e.code]) key[KEYS[e.code]] = 0; });
 document.querySelectorAll('.pad button[data-k]').forEach(b => {
@@ -1390,14 +1483,31 @@ document.querySelectorAll('.pad button[data-k]').forEach(b => {
   const off = e => { e.preventDefault(); key[b.dataset.k] = 0; b.classList.remove('active'); };
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
 });
+function setRotBtn() {
+  $('bRot').textContent = S.rotDown ? 'ロータリーを上げる' : 'ロータリーを下げる';
+  $('bRot').classList.toggle('down', S.rotDown);
+}
 function toggleRotary() {
   DRIVER.st.reach = 0.8;
   S.rotDown = !S.rotDown;
-  $('bRot').textContent = S.rotDown ? 'ロータリーを上げる' : 'ロータリーを下げる';
-  $('bRot').classList.toggle('down', S.rotDown);
-  toast(S.rotDown ? 'ロータリーを下げました。前へ走ると耕せます' : 'ロータリーを上げました');
+  S.autoUp = false;
+  setRotBtn();
+  toast(S.rotDown ? 'ロータリーを下げました（PTO 入）。前へ走ると耕せます' : 'ロータリーを上げました（PTO 切）');
+}
+function toggleAssist() {
+  ASSIST.on = !ASSIST.on;
+  $('bAssist').textContent = ASSIST.on ? '直進 入' : '直進 切';
+  $('bAssist').classList.toggle('on', ASSIST.on);
+  toast(ASSIST.on ? '直進アシスト 入：ハンドルから手をはなすと、ガイドの線にそってまっすぐ走ります' : '直進アシスト 切');
+}
+let SPEEDUP = 1;
+function toggleFast() {
+  SPEEDUP = SPEEDUP === 1 ? 2 : SPEEDUP === 2 ? 4 : 1;
+  $('bFast').textContent = '⏩ ×' + SPEEDUP;
 }
 $('bRot').onclick = toggleRotary;
+$('bAssist').onclick = toggleAssist;
+$('bFast').onclick = toggleFast;
 function nextCam() { camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
@@ -1417,9 +1527,10 @@ let toastT = 0;
 function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; toastT = 2.2; }
 
 $('bStart').onclick = () => {
+  if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
-  if (!S.started) { S.started = true; toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'); }
+  if (!S.started) { S.started = true; setTimeout(() => toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'), 1800); }
   if (!soundOn && !audio) toggleSound();
 };
 function finish() {
@@ -1438,7 +1549,8 @@ function frame(now) {
   const running = S.started && $('start').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; }
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
-  const pct = step(dt);
+  let pct = 0;
+  for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt);   // 早送り
   updateCamera(dt);
   updateSound();
   SKY_TIME.value += dt;
@@ -1472,7 +1584,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { S, key, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

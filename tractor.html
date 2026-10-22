@@ -287,11 +287,11 @@ let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikob
 
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load('harrow_yt.glb', 'h') : null]).then(([t, f, h]) => {
   prog.t = prog.f = 1; showProg();
-  NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形）
   if (h) {                                     // 代かき：ロータリーをウイングハローにつけかえる（原点は同じ）
     const old = t.scene.getObjectByName('Rotary'), hr = h.scene.getObjectByName('Rotary');
     old.parent.add(hr); old.parent.remove(old);
   }
+  NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形。代かきはハロー）
   setupTractor(t.scene);
   setupField(f.scene);
   DRIVER.setup(P.SteeringWheel.parent);
@@ -919,21 +919,26 @@ function addWind(mat, amp) {
 
 // となりの田んぼ（北）で、行ったり来たりして耕しているトラクター
 const NB = (() => {
-  const LANE0 = -13, LANES = 13, Z0 = -73, Z1 = -29, R = 1.1, V = 1.5;
+  // 耕すときは時速 2.8km、はしで回るときは作業機を上げて少し速く（本物のように、旋回のあいだは上げる）
+  const LANE0 = -13, LANES = 13, Z0 = -73, Z1 = -29, R = 1.05, V = 0.78, VT = 1.1;
   const LEN = Z1 - Z0, CYCLE = LEN + Math.PI * R;
   let root = null, parts = {}, s = 0;
   function setup(r) {
     root = r;
     root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; if (o.material.name === 'mirror') o.material = o.material.clone(); } });   // ミラーは自分のトラクターと分ける
-    for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'Rotor', 'Rotary']) parts[n] = root.getObjectByName(n);
-    parts.Rotary.position.y -= 0.06;
+    for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'Rotor', 'Rotary', 'RotorL', 'RotorR']) parts[n] = root.getObjectByName(n);
+    parts.y0 = parts.Rotary.position.y - 0.06; parts.lift = 0;
     scene.add(root);
     s = CYCLE * 4.3;
   }
   function update(dt) {
     if (!root) return;
-    s = (s + V * dt) % (CYCLE * LANES);
-    const k = Math.floor(s / CYCLE), u = s - k * CYCLE, dir = k % 2 ? -1 : 1, x = LANE0 + 2.2 * k;
+    const u0 = s % CYCLE;
+    s = (s + (u0 < LEN ? V : VT) * dt) % (CYCLE * LANES);
+    const k = Math.floor(s / CYCLE), u = s - k * CYCLE, dir = k % 2 ? -1 : 1, x = LANE0 + 2.1 * k;
+    const turning = u > LEN - 0.4 || u < 0.3;     // はしの手前で上げ、回って下ろす
+    parts.lift += Math.max(-dt * 1.2, Math.min(dt * 1.2, (turning ? 1 : 0) - parts.lift));
+    parts.Rotary.position.y = parts.y0 + parts.lift * 0.4;
     let px, pz, yaw;
     if (u < LEN) { px = x; pz = dir > 0 ? Z0 + u : Z1 - u; yaw = dir > 0 ? 0 : Math.PI; }
     else {                                       // はしでぐるっと回って、となりの列へ
@@ -944,7 +949,7 @@ const NB = (() => {
     root.rotation.y = yaw;
     parts.WheelRL.rotation.x = parts.WheelRR.rotation.x = s / R_REAR;
     parts.WheelFL.rotation.x = parts.WheelFR.rotation.x = s / R_FRONT;
-    parts.Rotor.rotation.x += 19 * dt;
+    if (parts.lift < 0.1) for (const n of ['Rotor', 'RotorL', 'RotorR']) if (parts[n]) parts[n].rotation.x += 19 * dt;   // 上げると PTO が止まる
   }
   return { setup, update };
 })();
@@ -2370,7 +2375,7 @@ $('bStart').onclick = () => {
   if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
-  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'); }, 1800); }
+  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800); }
   if (!soundOn && !audio) toggleSound();
 };
 function finish() {

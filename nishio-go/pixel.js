@@ -1805,7 +1805,7 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
     x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
   };
   const flick = 1 + Math.sin(now / 180) * 0.03;   // たいまつのように、少し ゆらぐ
-  if (G.me || G.demo) light(w / 2, cy - T * 0.25, T * 3.4 * flick);
+  if (G.me || G.demo) light(w / 2 + heroScr.x, cy + heroScr.y - T * 0.25, T * 3.4 * flick);
   for (const p of pois) light(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * (p[4] === 'lm' ? 1.6 : 1.3), 0.85);   // お店・駅・建物の窓の明かり
   for (const s of G.spots || []) if (s.shop) { const p = toTile(s.lat, s.lng); light(ox + p.x * T, oy + p.y * T - T, T * 3.2); }   // 当店は いちばん明るく
   for (const c of G.liveChests()) { const p = toTile(c.lat, c.lng); light(ox + p.x * T, oy + p.y * T, T * 0.9, 0.7); }
@@ -1880,7 +1880,7 @@ const heroMarkerStyle = document.createElement('style');
 // 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：32×32 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。歩く地図には 2マスで描く（ドットの大きさは ほかの絵と同じ）。
 // 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
 const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
-const roll = { d: 0, last: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: false, shake: 0, dust: [], dustT: 0, kind: 'stop', wad: 0, spin: 0, sv: 0, h: 0, hv: 0, gnd: null, back: null, v: 0, peak: 0, idle: 0, ouchT: 0, happyT: 0, spinT: 0, dizzyT: 0 };   // d：転がった道のり（マス）・ang：いまの回り（ラジアン）・av：回る速さ・side：寝た回数（コトン）・sq：つぶれ・shake：画面のゆれ・dust：土ぼこり
+const roll = { d: 0, last: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: false, shake: 0, dust: [], dustT: 0, kind: 'stop', wad: 0, spin: 0, sv: 0, h: 0, hv: 0, gnd: null, back: null, trail: [], v: 0, peak: 0, idle: 0, ouchT: 0, happyT: 0, spinT: 0, dizzyT: 0 };   // d：転がった道のり（マス）・ang：いまの回り（ラジアン）・av：回る速さ・side：寝た回数（コトン）・sq：つぶれ・shake：画面のゆれ・dust：土ぼこり
 // v：いまの速さ・peak：止まるまでの いちばんの速さ・idle：止まっている時間・ouchT・happyT・dizzyT：表情（いたい・うれしい・目が回る）の のこり時間・spinT：くるくるしている時間
 // kind：いまの転がり方（stop・よちよち waddle・ころころ tumble・くるくる spin・ぴょん hop）・wad：よちよちの ゆれ・spin：くるくるの回り・sv：その速さ・h：とんだ高さ（マス）・gnd：足もとの地面・back：うしろ姿の絵
 (() => {
@@ -2028,7 +2028,7 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
   }
   gbPause++;
   try { dst.drawImage(rb.cv, Math.round(X - H * u), Math.round(Y - H * u), RB * u, RB * u); } finally { gbPause--; }
-  if (cs > 0.12) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
+  if (cs > 0.12 && mood) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
     dst.save(); dst.translate(Math.round(X), Math.round(Y)); dst.scale(sx, sy); dst.rotate(th);
     dst.translate(sn * rb.a * 0.7 * u, 0); dst.scale(Math.max(0.25, cs), 1);
     const fc = (rb.faces && rb.faces[mood]) || rb.face;
@@ -2045,12 +2045,12 @@ const RICE_R = 0.42;   // 回る半径（マス）。1マス進むと 約136度�
 // 足もとの地面で 転がり方が変わる：道は するする（よく転がる・コトンが はっきり）、草や田んぼは もさもさ（止まりやすい・緑の葉っぱが とぶ）、
 // 砂浜は ずぶずぶ（すぐ止まる・音が こもる・砂けむり）、水を張った田んぼは ぱしゃぱしゃ（しぶき）
 const GROUND = {
-  road: { drag: 0.72, dust: '205,200,190', dv: 2.6, snd: 1 },
-  dirt: { drag: 1, dust: '235,228,205', dv: 2.2, snd: 0.9 },
-  grass: { drag: 1.35, dust: '104,178,72', dv: 1.4, snd: 0.55, bit: true },
-  mud: { drag: 1.6, dust: '138,106,68', dv: 1.2, snd: 0.5, bit: true },
-  water: { drag: 1.7, dust: '160,205,232', dv: 0.9, snd: 0.4, bit: true, splash: true },
-  sand: { drag: 1.9, dust: '231,207,140', dv: 0.9, snd: 0.3, big: true },
+  road: { drag: 0.72, crr: 1, dust: '205,200,190', dv: 2.6, snd: 1, hz: 900 },   // crr：ころがり抵抗（道を1）・hz：転がる音の高さ
+  dirt: { drag: 1, crr: 1.6, dust: '235,228,205', dv: 2.2, snd: 0.9, hz: 650 },
+  grass: { drag: 1.35, crr: 2.6, dust: '104,178,72', dv: 1.4, snd: 0.55, bit: true, hz: 2600 },
+  mud: { drag: 1.6, crr: 3.2, dust: '138,106,68', dv: 1.2, snd: 0.5, bit: true, hz: 420 },
+  water: { drag: 1.7, crr: 3.5, dust: '160,205,232', dv: 0.9, snd: 0.4, bit: true, splash: true, hz: 1500 },
+  sand: { drag: 1.9, crr: 4.5, dust: '231,207,140', dv: 0.9, snd: 0.3, big: true, hz: 380 },
 };
 function groundAt(x, y) {
   const c = codeAt(Math.floor(x), Math.floor(y));
@@ -2110,10 +2110,31 @@ function kotoSound(v, low) {   // 木の小さな「コトン」（音の設定�
 //   くるくる … たて（上・下）へは、立ったまま こまのように回る（顔 → よこ → うしろ姿 → 顔）
 //   ぴょん   … とても速いと、コトンの2回に1回 とびはねる（つくと ぺたっ）
 const WADDLE_V = 1.1, HOP_V = 4.2;   // マス/秒
+// 転がる音（ころころ…）：小さな ざらざらの音を ずっと流し、速さで大きく、地面で音の高さを かえる（道は かるく・草は さらさら・砂は こもる）。音の設定がオフ・画面が かくれているときは 鳴らさない
+const rumble = { g: null, f: null };
+function rumbleTick(v, g) {
+  const ctxA = kotoCtx;
+  if (!ctxA || ctxA.state !== 'running') return;   // コトンを鳴らしたあと（画面をさわったあと）から
+  try {
+    if (!rumble.g) {
+      const buf = ctxA.createBuffer(1, ctxA.sampleRate, ctxA.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctxA.createBufferSource(); src.buffer = buf; src.loop = true;
+      rumble.f = ctxA.createBiquadFilter(); rumble.f.type = 'bandpass'; rumble.f.Q.value = 1.2;
+      rumble.g = ctxA.createGain(); rumble.g.gain.value = 0;
+      src.connect(rumble.f); rumble.f.connect(rumble.g); rumble.g.connect(ctxA.destination); src.start();
+    }
+    let off = document.hidden; try { off = off || localStorage.getItem('nsg_bgm') === 'false'; } catch (e) { /* noop */ }
+    const t = ctxA.currentTime, vol = off || v < 0.3 ? 0 : Math.min(1, (v - 0.3) / 5) * 0.035 * (0.5 + g.snd / 2);
+    rumble.g.gain.setTargetAtTime(vol, t, 0.05);
+    rumble.f.frequency.setTargetAtTime(g.hz * (0.8 + Math.min(v, 6) / 15), t, 0.08);
+  } catch (e) { /* 音が出せない端末 */ }
+}
 function riceSpin(dx, dy, dt) {
   const d = Math.hypot(dx, dy), v = d / Math.max(dt, 1e-3);
   riceFeel(dt, v);
   roll.v += ((d < 3 ? v : 0) - roll.v) * Math.min(1, dt * 8);   // 表情のための速さ（ならす）
+  rumbleTick(roll.v, roll.gnd || GROUND.dirt);
   if (roll.kind === 'stop') { roll.idle += dt; if (roll.peak > 2.5) roll.happyT = 1.6; roll.peak = 0; }   // 速く転がって止まったら うれしい
   else { roll.idle = 0; roll.peak = Math.max(roll.peak, roll.v); }
   if (roll.kind === 'spin') { roll.spinT += dt; if (roll.spinT > 1.2) roll.dizzyT = 1; } else roll.spinT = Math.max(0, roll.spinT - dt * 2);   // くるくるが続くと 目が回る
@@ -5304,6 +5325,8 @@ function drawTraffic(ox, oy, T, w, h) {
 }
 
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
+const camLead = { x: 0, y: 0 };   // 転がしているときに 少し先を見る分（マス）
+let heroScr = { x: 0, y: 0 };   // お米の画面での位置（まん中から どれだけ ずれているか。夜の明かり・札に使う）
 try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
 
 function targetTile() {
@@ -5348,9 +5371,16 @@ function frame(now) {
   if (G.demo && rollOn && !driving) rollStep(dt);   // かたむけて転がす（勢い・はね返り）
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
-  if (rollOn && G.demo && rp.x !== null && !driving) { cam.x = rp.x; cam.y = rp.y; }   // 転がしているときは、お米の位置にぴったり
-  if (roll.last) { const ddx = cam.x - roll.last.x, ddy = cam.y - roll.last.y, d = Math.hypot(ddx, ddy); if (d < 3) roll.d += d; riceSpin(ddx, ddy, dt); }
-  roll.last = { x: cam.x, y: cam.y };
+  const rolling = rollOn && G.demo && rp.x !== null && !driving;
+  if (rolling) {   // 転がしているときは、お米の少し先を見る（進む向きが よく見えて、速さも感じられる）
+    const k = Math.min(1, dt * 2.5);
+    camLead.x += (Math.max(-1.1, Math.min(1.1, rp.vx * 0.2)) - camLead.x) * k; camLead.y += (Math.max(-1.1, Math.min(1.1, rp.vy * 0.2)) - camLead.y) * k;
+    cam.x = rp.x + camLead.x; cam.y = rp.y + camLead.y;
+  } else camLead.x = camLead.y = 0;
+  const hp = rolling ? { x: rp.x, y: rp.y } : { x: cam.x, y: cam.y };   // お米のいる所（転がす：rp・ほかは 画面のまん中）
+  if (roll.last) { const ddx = hp.x - roll.last.x, ddy = hp.y - roll.last.y, d = Math.hypot(ddx, ddy); if (d < 3) roll.d += d; riceSpin(ddx, ddy, dt); }
+  roll.last = hp;
+  roll.trail.push({ x: hp.x, y: hp.y, th: roll.ang }); if (roll.trail.length > 8) roll.trail.shift();   // のこりかげ用
 
   if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
 
@@ -5506,8 +5536,10 @@ function frame(now) {
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if ((me || G.demo) && riceSprites.ready) {   // お米（影をつけて、転がった道のりで回す）
     const img = riceSprites.right[0], sz = dotSize(img, T), u = sz / 32;
+    const hx = ox + roll.last.x * T, hcy = oy + roll.last.y * T;   // お米の画面での位置（転がしているときは 少し まん中から ずれる）
+    heroScr = { x: hx - w / 2 - shk, y: hcy - cy };
     const A = 10 * u, B = 13.5 * u, th = roll.ang;   // つぶの よこ・たての半分（絵の点で）。寝ころぶほど まん中が下がる
-    const low = Math.sqrt((A * Math.sin(th)) ** 2 + (B * Math.cos(th)) ** 2), ground = cy + T * 0.4 - sz / 2 + B, hop = roll.h * T, mid = ground - low - hop;
+    const low = Math.sqrt((A * Math.sin(th)) ** 2 + (B * Math.cos(th)) ** 2), ground = hcy + T * 0.4 - sz / 2 + B, hop = roll.h * T, mid = ground - low - hop;
     for (const p of roll.dust) {   // 土ぼこり（うしろに ふわっと。地面の色。葉っぱ・しぶきは はねて落ちる）
       const a = 1 - p.t / 0.45, r = Math.max(1, Math.round(T * (p.bit ? 0.07 : 0.12) * p.s * (1 + (p.bit ? 0 : p.t * 2))));
       const up = p.bit ? (p.t * 2.2 - p.t * p.t * 9) * T : p.t * T * 0.4;
@@ -5515,22 +5547,31 @@ function frame(now) {
       ctx.fillRect(Math.round(ox + (p.x + (p.vx || 0) * p.t) * T - r), Math.round(oy + p.y * T + T * 0.3 - r - up), r * 2, r * 2);
     }
     const shw = sz * 0.48 / (1 + roll.h * 3);   // 影（とぶと小さく）
-    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(w / 2 - shw / 2 + shk), Math.round(cy + T * 0.3), Math.round(shw), Math.max(2, Math.round(T / 8)));
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(hx - shw / 2), Math.round(hcy + T * 0.3), Math.round(shw), Math.max(2, Math.round(T / 8)));
     const sq = roll.sq, sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる
     const by = sy !== 1 ? ground - low * sy - hop : mid;
     const mood = riceMood(now);
-    if (riceBall.cv) drawRiceBall(w / 2 + shk, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood);   // 光を当てなおして 丸く。表情つき
+    if (riceBall.cv && roll.v > 3.4) {   // のこりかげ：速いと、うしろに うすい お米が2つ
+      for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
+        const p = roll.trail[roll.trail.length - 1 - k];
+        if (!p) continue;
+        ctx.globalAlpha = al;
+        drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null);
+        ctx.globalAlpha = 1;
+      }
+    }
+    if (riceBall.cv) drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood);   // 光を当てなおして 丸く。表情つき
     if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
       ctx.fillStyle = '#34407a';
       for (let k = 0; k < 2; k++) {
-        const t = ((now / 1600) + k / 2) % 1, zx = Math.round(w / 2 + 9 * u + t * 6 * u + k * 3 * u), zy = Math.round(by - 14 * u - t * 10 * u), q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
+        const t = ((now / 1600) + k / 2) % 1, zx = Math.round(hx + 9 * u + t * 6 * u + k * 3 * u), zy = Math.round(by - 14 * u - t * 10 * u), q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
         ctx.globalAlpha = 1 - t; ctx.fillRect(zx, zy, 5 * q, q); for (let j = 1; j < 4; j++) ctx.fillRect(zx + (4 - j) * q, zy + j * q, q, q); ctx.fillRect(zx, zy + 4 * q, 5 * q, q);   // 5×5 の Z
       }
       ctx.globalAlpha = 1;
     }
     else {
       const cs = Math.cos(roll.spin);
-      ctx.save(); ctx.translate(Math.round(w / 2 + shk), Math.round(by));
+      ctx.save(); ctx.translate(Math.round(hx), Math.round(by));
       ctx.scale((cs < 0 ? -sx : sx) * Math.max(0.18, Math.abs(cs)), sy); ctx.rotate(th % (Math.PI * 2));
       ctx.drawImage(cs < 0 && roll.back ? roll.back : img, -Math.round(sz / 2), -Math.round(sz / 2), sz, sz);
       ctx.restore();
@@ -5542,7 +5583,7 @@ function frame(now) {
     // 町名の札（青地に白い字。電柱の町名表示のように）・駅名標（白地に黒い字と青い線）・お店の看板（その店らしい色に白い字）
     // 重ならないように、町名 → 駅 → 大きなお店 → ほかのお店 の順に場所を取る
     const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), bw = Math.max(1, Math.round(dpr));
-    labelBoxes.push([w / 2 - T, cy - T * 1.6, w / 2 + T, cy + T * 0.8]);   // 主人公のところ
+    labelBoxes.push([w / 2 + heroScr.x - T, cy + heroScr.y - T * 1.6, w / 2 + heroScr.x + T, cy + heroScr.y + T * 0.8]);   // 主人公のところ
     ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const board = (X, Y, text, bg, fg, line) => {
       const tw = ctx.measureText(text).width, bx = Math.round(X - tw / 2 - pad), by = Math.round(Y), bwid = Math.round(tw + pad * 2), bh = fs + pad * 2;
@@ -5559,7 +5600,7 @@ function frame(now) {
     if (hm !== null) {
       const sl = slopeAt(cam.x, cam.y), pct = Math.round(sl.g * 100);
       const arrow = pct < 2 ? '' : ' ' + '→↘↓↙←↖↑↗'[((Math.round(Math.atan2(sl.y, sl.x) / (Math.PI / 4)) % 8) + 8) % 8] + pct + '%';
-      board(Math.round(w / 2 + T * 1.9), Math.round(cy - T * 1.5), `⛰${hm < 10 ? hm.toFixed(1) : Math.round(hm)}m${arrow}`, '#fffbe8', '#5a3a18');
+      board(Math.round(w / 2 + heroScr.x + T * 1.9), Math.round(cy + heroScr.y - T * 1.5), `⛰${hm < 10 ? hm.toFixed(1) : Math.round(hm)}m${arrow}`, '#fffbe8', '#5a3a18');
     }
     // 文字を少なく（ふだん）：町名・駅名・お店の看板は出さない（当店の札はスポットの絵の上に出す。いまいる町名は こよみ の札をタップ）
     if (!SIMPLE()) for (const x of towns) {
@@ -6040,7 +6081,9 @@ let rollOn = (() => { try { return localStorage.getItem('nsg_roll') !== '0'; } c
 const rp = { x: null, y: null, vx: 0, vy: 0, sent: null, tile: '', bump: 0 };
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
-const ROLL_ACC = 9, ROLL_MAX = 5.5, ROLL_DRAG = 1.6, ROLL_BOUNCE = 0.42;   // マス/秒² ・ マス/秒 ・ 1秒あたりの減り ・ はね返り
+const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
+// へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
+const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
 // 傾き：はじめに読めた持ち方を「まっすぐ」にする（寝かせて持っても、立てて持っても、その持ち方から傾けた分だけ転がる）。📱 を押しなおすと やりなおす。
 // 画面を横にしているときは、左右と前後を入れかえる
 window.addEventListener('deviceorientation', e => {
@@ -6055,7 +6098,7 @@ window.addEventListener('deviceorientation', e => {
     return;
   }
   const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
-  const dz = v => (Math.abs(v) < 0.08 ? 0 : v);   // 手のふるえは無視
+  const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
   tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * 0.35; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * 0.35;   // センサーの細かいゆれを ならす
   if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {   // あるいて移動で傾けたとき：1回だけ教える
     tiltG.walkTold = true;
@@ -6080,20 +6123,45 @@ function rollStep(dt) {
   }
   if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) { rp.vx = rp.vy = 0; return; }
   const ax = (tiltG.x + stick.x + rk.right - rk.left), ay = (tiltG.y + stick.y + rk.down - rk.up);
-  const sl = slopeAt(rp.x, rp.y), sa = Math.hypot(sl.x, sl.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
-  const push = Math.hypot(ax, ay) + sa;
-  rp.vx += (Math.max(-1, Math.min(1, ax)) * ROLL_ACC + sl.x) * dt; rp.vy += (Math.max(-1, Math.min(1, ay)) * ROLL_ACC + sl.y) * dt;
-  const drag = Math.max(0, 1 - ROLL_DRAG * groundAt(rp.x, rp.y).drag * dt);   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
-  rp.vx *= drag; rp.vy *= drag;
-  const sp = Math.hypot(rp.vx, rp.vy);
-  const vmax = ROLL_MAX * (1 + 0.35 * Math.min(1, sa / ROLL_ACC));   // 下り坂では いつもより速くなる
-  if (sp > vmax) { rp.vx *= vmax / sp; rp.vy *= vmax / sp; }
-  if (sp < 0.02 && push < 0.15) { rp.vx = rp.vy = 0; return; }
-  const R = 0.3;   // つぶの大きさ（マス）
-  const nx = rp.x + rp.vx * dt;
-  if (rollBlocked(nx + Math.sign(rp.vx) * R, rp.y)) { bumpFx(Math.abs(rp.vx), true); rp.vx *= -ROLL_BOUNCE; } else rp.x = nx;
-  const ny = rp.y + rp.vy * dt;
-  if (rollBlocked(rp.x, ny + Math.sign(rp.vy) * R)) { bumpFx(Math.abs(rp.vy), false); rp.vy *= -ROLL_BOUNCE; } else rp.y = ny;
+  const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
+  const gnd = groundAt(rp.x, rp.y), crr = ROLL_CRR * gnd.crr;   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
+  const fx = Math.max(-1, Math.min(1, ax)) * ROLL_ACC + sl.x, fy = Math.max(-1, Math.min(1, ay)) * ROLL_ACC + sl.y, fp = Math.hypot(fx, fy);   // 押す力（傾き・坂）
+  let sp = Math.hypot(rp.vx, rp.vy);
+  if (sp < 0.05) {   // 止まっている：押す力が ころがり抵抗より弱ければ 動かない（ゆるい坂では 止まっていられる）
+    if (fp <= crr) { rp.vx = rp.vy = 0; return; }
+    rp.vx += fx / fp * (fp - crr) * dt; rp.vy += fy / fp * (fp - crr) * dt;
+  } else {
+    rp.vx += fx * dt; rp.vy += fy * dt;
+    sp = Math.hypot(rp.vx, rp.vy);
+    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (crr + ROLL_LIN * gnd.drag * sp + ROLL_AIR * sp * sp) * dt));
+    rp.vx *= ns / sp; rp.vy *= ns / sp;
+  }
+  const R = 0.3, RS = R * 0.6;   // つぶの大きさ（マス）。かべは つぶの まん中と 両はしの3か所で調べる（建物の かどに めりこまないように）
+  const hit = (vin, horiz) => {   // かべに当たった：おそければ ぴたっと止まる（押しつけても がたがたしない）。速ければ はね返って ぺたっ
+    if (vin < ROLL_STICK) return 0;
+    bumpFx(vin, horiz);
+    return -ROLL_BOUNCE;
+  };
+  const nx = rp.x + rp.vx * dt, ex = nx + Math.sign(rp.vx) * R;
+  const xa = rollBlocked(ex, rp.y - RS), xb = rollBlocked(ex, rp.y + RS);
+  if (rp.vx && (rollBlocked(ex, rp.y) || (xa && xb))) {   // かべに ぴったり つけてから はね返す（すきまが残ると、押しつづけたときに すきまで また速くなって がたがたする）
+    rp.x = rp.vx > 0 ? Math.floor(ex) - R - 1e-3 : Math.floor(ex) + 1 + R + 1e-3;
+    const k = hit(Math.abs(rp.vx), true); rp.vx *= k; if (k) rp.vy *= 0.85;
+  }
+  else {
+    rp.x = nx;
+    if (rp.vx && (xa || xb) && !rollBlocked(rp.x, rp.y + (xa ? 1 : -1) * (R + 0.05))) rp.y += (xa ? 1 : -1) * Math.abs(rp.vx) * dt * 0.7;   // かどに かすった：すべって よける
+  }
+  const ny = rp.y + rp.vy * dt, ey = ny + Math.sign(rp.vy) * R;
+  const ya = rollBlocked(rp.x - RS, ey), yb = rollBlocked(rp.x + RS, ey);
+  if (rp.vy && (rollBlocked(rp.x, ey) || (ya && yb))) {
+    rp.y = rp.vy > 0 ? Math.floor(ey) - R - 1e-3 : Math.floor(ey) + 1 + R + 1e-3;
+    const k = hit(Math.abs(rp.vy), false); rp.vy *= k; if (k) rp.vx *= 0.85;
+  }
+  else {
+    rp.y = ny;
+    if (rp.vy && (ya || yb) && !rollBlocked(rp.x + (ya ? 1 : -1) * (R + 0.05), rp.y)) rp.x += (ya ? 1 : -1) * Math.abs(rp.vy) * dt * 0.7;
+  }
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
   if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
@@ -6548,7 +6616,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, mood: riceMood(performance.now()), idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile') => { if (!riceBall.cv) return false; drawRiceBall(X, Y, 1, th, 1 + sq, 1 - sq, 0, dst, false, mood); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, mood: riceMood(performance.now()), idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), drawRice: (dst, X, Y, th, sq = 0, mood = 'smile') => { if (!riceBall.cv) return false; drawRiceBall(X, Y, 1, th, 1 + sq, 1 - sq, 0, dst, false, mood); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

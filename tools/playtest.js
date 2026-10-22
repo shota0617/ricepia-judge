@@ -643,6 +643,27 @@ async function walkTo(page, id) {
     nishioPixel.setHeightFn(null); nishioPixel.setRoll(false);
     return { flat: +flat.toFixed(2), downhill: +best.toFixed(2), ok: flat < 0.1 && best > 0.8 };
   });
+  // 転がり方の みがき：はなすと 3.5秒のうちに ぴたっと止まる（いつまでも じわじわ動かない）。かべに押しつけても がたがたしない（さいごの1秒は 止まっている）
+  R.checks.rollFeel = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const look = () => page.evaluate(() => { const r = nishioPixel.roll, out = []; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 9 && !nishioPixel.blockedAt(r.x + dx * d, r.y + dy * d)) d++; out.push([k, d, dx, dy]); } return out.sort((p, q) => q[1] - p[1]); });
+    const [open] = await look();
+    await page.keyboard.down(open[0]); await page.waitForTimeout(900); await page.keyboard.up(open[0]);
+    const t0 = Date.now(); let stopped = false;
+    while (Date.now() - t0 < 4000) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); if (r.vx === 0 && r.vy === 0) { stopped = true; break; } }
+    const stopS = +((Date.now() - t0) / 1000).toFixed(1);
+    let still = 'no-wall';
+    const wall = (await look()).pop();   // 止まった所から いちばん近い かべ
+    if (wall[1] < 9) {
+      await page.keyboard.down(wall[0]); await page.waitForTimeout(4500);   // かべまで転がって、はね返りが おさまるまで
+      const vs = [];
+      for (let i = 0; i < 10; i++) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); vs.push(Math.abs(wall[2] ? r.vx : r.vy)); }
+      await page.keyboard.up(wall[0]);
+      still = vs.every(v => v < 0.05);
+    }
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { stopS, still, ok: stopped && stopS <= 3.5 && still !== false };
+  })();
   R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   // イベント「ドット絵ムービー」：八ツ面山でチェックインすると、ごほうびの画面のあとに「山の岩のなりたち」が流れ、最後まで見ると まちメモ に残る
   await page.evaluate(() => { window.__keepMovie = true; const s = nishioGo.spots.find(x => x.id === 'f-yatsuomote'); nishioGo.moveTo(s.lat, s.lng); });
@@ -693,6 +714,7 @@ async function walkTo(page, id) {
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
+  need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');
   need(c.parcel !== false, 'おとどけもの：あずかった荷物の あて先の人と話しても、届けられない');

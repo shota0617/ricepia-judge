@@ -436,6 +436,8 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 /* はじめの画面やスポットの説明ウィンドウが出ている間は、知らせ（トースト）を下に出して文字に重ねない */
 body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
 body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}
+/* きろく・こえ・とくてん・せってい のタブでは、上の見出し（バッジの達成率・もうすぐ など）に重ねないよう 下に */
+body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .toast,body:has(#panel-rewards:not([hidden])) .toast,body:has(#panel-settings:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}
 /* 西尾の人たち（話しかけられる町の人） */
 .popup.npc .npc-at{margin:0 0 6px;font-size:12px;color:var(--sub)}
 .popup.npc .npc-say{margin:6px 0;font-size:14px;line-height:1.7}
@@ -735,6 +737,10 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .card.bags .todaywalk .tw3 small{font-size:11px;color:var(--sub)}
 .card.bags .todaywalk .tw3 b{font-size:17px}
 .card.bags .todaywalk .word{font-size:13px}
+.card.bags .todaywalk .tw-goals{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
+.card.bags .todaywalk .tw-goals span{background:#fff;border-radius:999px;padding:2px 8px;font-size:12px;border:1px solid #f0d9a0}
+.card.bags .todaywalk .tw-goals span.done{background:#e8f5e0;border-color:#a9d18e}
+.card.bags .todaywalk .tw-goals small{color:var(--sub);font-size:11px}
 .card.bags .todaywalk>small{display:block;margin-top:2px;color:var(--sub);font-size:12px}
 .card.bags .lastweek,.card.bags .kirahour{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 .card.bags .lastweek span{flex-basis:100%;font-size:13px}

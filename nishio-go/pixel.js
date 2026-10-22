@@ -1724,8 +1724,53 @@ const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
 // 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
 const critterS = { steps: 0, paddy: 0, water: 0, show: null };
+// 路地の行き止まり（NetHack の「通路が ぷつっと終わる所を しらべると 隠し扉が見つかる」）：道（C.R）が その マスで終わっている（大きな道・小道へも続いていない）。
+// まわり8マスを ひとまわり見て、道が 1かたまり（となり合う2マスまで）だけなら 行き止まり。斜めに描いた道（strokeLine）は 角だけで つながるので、
+// 上下左右だけで数えると 道のとちゅうも 行き止まりに見えてしまう（まわりが まだ読み込んでいない所なら 数えない）
+const RING8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+function alleyEnd(x, y) {
+  if (codeAt(x, y) !== C.R) return false;
+  const on = [];
+  for (const [dx, dy] of RING8) { const c = codeAt(x + dx, y + dy); if (c === C.X) return false; on.push(c === C.R || c === C.H || c === C.D); }   // 小道（C.D）へ続く所も つながっている
+  const n = on.filter(Boolean).length, groups = on.filter((v, i) => v && !on[(i + 7) % 8]).length;   // ひとまわりで 道が始まる所の数＝かたまりの数
+  return n >= 1 && n <= 2 && groups === 1;
+}
+// まだ しらべていない 行き止まりに、小さく はねる「？」（地形が「ここを しらべて」と教える）。見分けは まとまりを読みこむまで覚えておく（nbrCache）。
+// その日の分（1日3回）を見つけおわったら出さない
+function alleyHint(tx, ty) {
+  const k = `alley:${tx},${ty}`;
+  let e = nbrCache.get(k);
+  if (e === undefined) { e = alleyEnd(tx, ty); nbrCache.set(k, e); }
+  return e && !!G.alleyOpen && G.alleyOpen(tx, ty);
+}
+function drawAlleyHint(X, Y, T, now) {
+  const u = Math.max(1, Math.round(T / 16)), bob = Math.round(Math.sin(now / 260) * u);
+  ctx.font = `bold ${Math.round(T * 0.55)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000'; for (const [dx, dy] of [[-u, 0], [u, 0], [0, -u], [0, u]]) ctx.fillText('?', X + T / 2 + dx, Y + T * 0.42 + bob + dy);
+  ctx.fillStyle = '#ffe066'; ctx.fillText('?', X + T / 2, Y + T * 0.42 + bob);
+}
+// 水べで じっと見る（ポケモンの「釣りざおで、水べで出会えるものが ふえる」）：水の となりのマスで 4秒 止まっていると、水の中の生きものに出会う。
+// 1.5秒で「👀 水の中を じっと見とる…」。動くまでは1回だけ。1日2回まで（生きもの手帳の1日の数にも入る。game.js の watchWater）
+// 止まっているかは、見はじめた所から 半マス（4m）以上 動いていないか・転がしているなら お米が止まっているか で見る
+// （同じマスの中を ゆっくり転がっていても 数えない。GPS の小さなゆれ では やりなおさない）
+const watchS = { key: '', t: 0, done: false, told: false, ax: 0, ay: 0 };
+function waterWatch(tgt, dt) {
+  const tx = Math.floor(tgt.x), ty = Math.floor(tgt.y), key = `${tx},${ty}`;
+  if (key !== watchS.key) { Object.assign(watchS, { key, t: 0, done: false, told: false, ax: tgt.x, ay: tgt.y }); return; }
+  if (Math.hypot(tgt.x - watchS.ax, tgt.y - watchS.ay) > 0.5 || (rollOn && roll.v > 0.1)) { Object.assign(watchS, { t: 0, told: false, ax: tgt.x, ay: tgt.y }); return; }
+  if (watchS.done || driving || mapCovered() || sightBusy() || BLOCK.has(codeAt(tx, ty)) || !G.watchOpen || !G.watchOpen()) return;
+  const wet = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => codeAt(tx + dx, ty + dy) === C.A);
+  if (!wet) return;
+  watchS.t += dt;
+  if (!watchS.told && watchS.t > 1.5) { watchS.told = true; floatText('👀 水の中を じっと見とる…'); }
+  if (watchS.t < 4) return;
+  watchS.done = true;
+  const m = G.watchWater();
+  if (m) { critterS.show = { id: m.id, x: tx + wet[0], y: ty + wet[1], t: performance.now() }; dirty = true; }
+}
 function critterStep(x, y) {
   if (driving) return;
+  if (alleyEnd(x, y) && G.alleyFind && !mapCovered() && !sightBusy() && G.alleyFind(x, y, toLatLng(x + 0.5, y + 0.5))) { floatText('🔍 路地の奥'); dirty = true; }
   const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
   const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
   // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
@@ -5540,6 +5585,7 @@ function frame(now) {
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
   }
+  waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
   const rolling = rollOn && G.demo && rp.x !== null && !driving;
@@ -5585,6 +5631,7 @@ function frame(now) {
     else drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2 && !gbOn) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }   // 土地の高さの影（ゲームボーイの4色では つけない）
     if (TRAIL.map.size && trailHas(tx, ty)) drawFoot(code, tx, ty, X, Y, T);   // 歩いた道の足あと
+    if (code === C.R && alleyHint(tx, ty)) drawAlleyHint(X, Y, T, now);   // まだ しらべていない 路地の行き止まり
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
       const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);
@@ -6067,6 +6114,9 @@ function drawWorld(now, w, h, dpr) {
     }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
+  // 殿堂入りの場所（昔のドット絵RPGの「城を出ると、最後の城が はじめから見えている」）：殿堂入りするまで、西尾城跡の上に 金色の札「👑 しるし ○/5」
+  const ci = G.clearInfo && G.clearInfo(), castle = ci && !ci.cleared && G.spots.find(s => s.id === 'f-nishio-castle');
+  if (castle) { const p = llToW(castle.lat, castle.lng); goalTag(ox + p.x * T, oy + p.y * T - size / 2, dpr, `👑 しるし ${ci.got}/${ci.need}`); }
   for (const [x, y, sz, s] of shopTags) {   // 当店の札（店名）は地名より上に。札も絵もタップできる
     const t = drawShopTag(x, y, dpr, s);
     shopHits.push([Math.min(t[0], x - sz / 2), t[1], Math.max(t[2], x + sz / 2), y + sz, s]);
@@ -6103,6 +6153,15 @@ function shopTag(cx, bottom, dpr, s) {
   ctx.fillStyle = bg; ctx.fillRect(x, y, bw, bh);
   ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
+}
+function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所の札：こい紺に金色の字（当店の札とは ちがう色）
+  const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
+  ctx.font = `${fs}px "DotGothic16", monospace`;
+  const tw = Math.ceil(ctx.measureText(text).width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
+  ctx.fillStyle = '#ffd54f'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
+  ctx.fillStyle = '#1b2a4a'; ctx.fillRect(x, y, bw, bh);
+  ctx.fillStyle = '#ffd54f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
 }
 function worldSpotShown(s) {
   return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
@@ -6866,7 +6925,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '') => { if (!riceBall.cv) return false; drawRiceBall(X, Y, 1, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '') => { if (!riceBall.cv) return false; drawRiceBall(X, Y, 1, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

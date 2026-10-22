@@ -667,6 +667,18 @@ async function walkTo(page, id) {
     const flatGrew = (await page.evaluate(() => nishioPixel.roll.flat)) - rr.f0;   // 丸いお米が描けるのに、古い絵（平らな お米）を重ねて描いていないか
     return { stopS, still, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
   })();
+  // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
+  R.checks.heightJump = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const pick = await page.evaluate(() => { const r = nishioPixel.roll; let best = null; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 14 && !nishioPixel.blockedAt(r.x + dx * d, r.y + dy * d)) d++; if (!best || d > best[1]) best = [k, d, dx, dy]; } return { best, x: r.x, y: r.y, j: r.jumps }; });
+    const [k, d, dx, dy] = pick.best;
+    if (d < 6) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-room', d }; }
+    await page.evaluate(([x0, y0, dx, dy]) => nishioPixel.setHeightFn((x, y) => { const s = (x - x0) * dx + (y - y0) * dy; return s < 2 ? 15 : 15 - (s - 2) * 1.6; }), [pick.x, pick.y, dx, dy]);
+    await page.keyboard.down(k); await page.waitForTimeout(2200); await page.keyboard.up(k);
+    const j = await page.evaluate(() => nishioPixel.roll.jumps);
+    await page.evaluate(() => { nishioPixel.setHeightFn(null); nishioPixel.setRoll(false); });
+    return { room: d, jumps: j - pick.j, ok: j - pick.j >= 1 };
+  })();
   R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   // イベント「ドット絵ムービー」：八ツ面山でチェックインすると、ごほうびの画面のあとに「山の岩のなりたち」が流れ、最後まで見ると まちメモ に残る
   await page.evaluate(() => { window.__keepMovie = true; const s = nishioGo.spots.find(x => x.id === 'f-yatsuomote'); nishioGo.moveTo(s.lat, s.lng); });
@@ -718,6 +730,7 @@ async function walkTo(page, id) {
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
+  need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');
   need(c.parcel !== false, 'おとどけもの：あずかった荷物の あて先の人と話しても、届けられない');

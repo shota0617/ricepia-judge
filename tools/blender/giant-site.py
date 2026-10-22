@@ -422,27 +422,38 @@ def small_bldg(st, blob, n, style):
         gable(f'sbY{n}', mat, max(w, d) * 0.95, min(w, d) * 0.95, 0.05, h, x, y, rz)
 
 
+def torii(n, w, h, mat):
+    """鳥居（笠木の幅は w＋0.03。入口のマスの中に入る大きさ）"""
+    for dx in (-w / 2, w / 2):
+        cyl(f'trP{n}{dx}', mat, 0.012, h, (dx, 0, h / 2), verts=8)
+    box(f'trK{n}', mat, (w + 0.03, 0.022, 0.02), (0, 0, h + 0.008))
+    box(f'trN{n}', mat, (w + 0.01, 0.016, 0.014), (0, 0, h * 0.8))
+    if mat != 'ishi':
+        box(f'trT{n}', 'kuro', (w + 0.034, 0.024, 0.006), (0, 0, h + 0.021))
+
+
 def torii_at(st, cell, f, mat='accP', n=1):
+    """入口のマスの中に鳥居（稲荷は n 基を参道の向きに並べる）"""
     x, y = xy(*cell)
     ang = angle_of(f)
     for k in range(n):
         g = Group()
-        gg.torii(f'{k}', 0, 0, 0.10, 0.13, mat)
-        ox, oy = f[0] * U * 0.3 - f[0] * k * 0.05, -f[1] * U * 0.3 + f[1] * k * 0.05
-        g.place(ang, x + ox, y + oy)
+        torii(k, 0.09, 0.12, mat)
+        t = (k - (n - 1) / 2) * 0.035   # マスのまん中から、参道の向きに少しずつ
+        g.place(ang, x - f[0] * t, y + f[1] * t)
 
 
 def gate_at(st, cell, f, kind='mon'):
     x, y = xy(*cell)
     g = Group()
-    if kind == 'mon':   # 山門
-        box('mon', 'woodD', (0.12, 0.05, 0.09), (0, 0, 0.045))
-        box('monD', 'kuro', (0.05, 0.052, 0.07), (0, 0, 0.035))
-        roof('monY', 'roofP', 0.18, 0.10, 0.05, 0.09, 0.4)
+    if kind == 'mon':   # 山門（入口のマスの中に入る大きさ）
+        box('mon', 'woodD', (0.10, 0.05, 0.08), (0, 0, 0.04))
+        box('monD', 'kuro', (0.045, 0.052, 0.06), (0, 0, 0.03))
+        roof('monY', 'roofP', 0.12, 0.08, 0.045, 0.08, 0.4)
     else:               # 門柱
-        for dx in (-0.05, 0.05):
+        for dx in (-0.045, 0.045):
             box(f'monP{dx}', 'ishi', (0.02, 0.02, 0.06), (dx, 0, 0.03))
-    g.place(angle_of(f), x + f[0] * U * 0.3, y - f[1] * U * 0.3)
+    g.place(angle_of(f), x, y)
 
 
 # ---------- 種類ごと ----------
@@ -503,13 +514,15 @@ def m_worship(st):
     if k == 'inari':
         torii_at(st, gate, f, 'accP', rng.randint(3, 4))
         for s in (-1, 1):
-            sphere(f'kitsune{s}', 'kitsune', 0.02, (xy(*gate)[0] + s * 0.06, xy(*gate)[1], 0.04), (0.8, 1.2, 1.4))
+            sphere(f'kitsune{s}', 'kitsune', 0.016, (xy(*gate)[0] + s * 0.045 * abs(f[1]), xy(*gate)[1] + s * 0.045 * abs(f[0]), 0.035), (0.8, 1.2, 1.4))
     elif k == 'shrine':
         torii_at(st, gate, f, 'ishi' if rng.random() < 0.3 else 'accP')
-        if front_cell and rng.random() < 0.7:
+        if front_cell and rng.random() < 0.7:   # 灯籠は参道の両わき（となりのマスも敷地のときだけ）
             fx2, fy2 = xy(*front_cell)
-            for s in (-1, 1):
-                gg.toro(f'{s}', fx2 + s * 0.05 * (1 if f[1] else 0), fy2 + s * 0.05 * (1 if f[0] else 0), 0.8)
+            sides = [(front_cell[0] + s * abs(f[1]), front_cell[1] + s * abs(f[0])) for s in (-1, 1)]
+            if all(p in st.mask for p in sides):
+                for s in (-1, 1):
+                    gg.toro(f'{s}', fx2 + s * 0.06 * abs(f[1]), fy2 + s * 0.06 * abs(f[0]), 0.8)
     elif k == 'temple':
         if len(st.mask) >= 16 and rng.random() < 0.6:
             gate_at(st, gate, f, 'mon')
@@ -582,22 +595,9 @@ def m_station(st):
     used = set(rails)
     pa.MATS['trainB'], pa.MATS['trainS'] = gg.TRAIN[st.e.get('train', 'meitetsu')]
     blobs = st.blobs()
-    if len(rails) >= 2:
-        pts = [xy(*p) for p in rails]
-        mx, my = sum(x for x, _ in pts) / len(pts), sum(y for _, y in pts) / len(pts)
-        sxx = sum((x - mx) ** 2 for x, _ in pts)
-        syy = sum((y - my) ** 2 for _, y in pts)
-        sxy = sum((x - mx) * (y - my) for x, y in pts)
-        th = 0.5 * math.atan2(2 * sxy, sxx - syy)   # 線路の向き（主成分）
-        proj = [(x - mx) * math.cos(th) + (y - my) * math.sin(th) for x, y in pts]
-        ln = min(max(proj) - min(proj) + U, N * U)
-        mid = (max(proj) + min(proj)) / 2
-        cx, cy = mx + mid * math.cos(th), my + mid * math.sin(th)
-        # ホームは駅舎のある側（なければ南側）
-        side = -1
-        if blobs:
-            bx, by, _, _ = bbox(blobs[0])
-            side = 1 if (-(bx - cx) * math.sin(th) + (by - cy) * math.cos(th)) > 0 else -1
+    tr = st.tr
+    if tr:
+        cx, cy, th, ln, side = tr
         g = Group()
         box('senro', 'senro', (ln, 0.07, 0.012), (0, 0, 0.006))
         for t in (-0.022, 0.022):
@@ -635,6 +635,51 @@ def m_station(st):
     woods(st, used | {p for p in st.mask if st.at(*p) == L}, 0.1, ('round', 'sakura'))
 
 
+def track(st):
+    """駅の線路：線路のマスの並びに合わせた1本のまっすぐな線路（中心・向き・長さ・ホームの側）。線路のマスが2つないときは None"""
+    rails = [p for p in sorted(st.mask) if st.at(*p) == L]
+    if len(rails) < 2:
+        return None
+    pts = [xy(*p) for p in rails]
+    mx, my = sum(x for x, _ in pts) / len(pts), sum(y for _, y in pts) / len(pts)
+    sxx = sum((x - mx) ** 2 for x, _ in pts)
+    syy = sum((y - my) ** 2 for _, y in pts)
+    sxy = sum((x - mx) * (y - my) for x, y in pts)
+    th = 0.5 * math.atan2(2 * sxy, sxx - syy)   # 線路の向き（主成分）
+    proj = [(x - mx) * math.cos(th) + (y - my) * math.sin(th) for x, y in pts]
+    ln = min(max(proj) - min(proj) + U, N * U)
+    mid = (max(proj) + min(proj)) / 2
+    cx, cy = mx + mid * math.cos(th), my + mid * math.sin(th)
+    edge = N * U / 2 - 0.01   # 線路の両はし（幅を入れて）が 7×7 マスの外に出ないように短くする
+    while ln > U and any(abs(cx + math.cos(th) * t - math.sin(th) * o) > edge or abs(cy + math.sin(th) * t + math.cos(th) * o) > edge
+                         for t in (-ln / 2, ln / 2) for o in (-0.045, 0.045, -0.115, 0.115)):
+        ln -= U / 8
+    side = -1   # ホームは駅舎のある側（なければ南側）
+    blobs = st.blobs()
+    if blobs:
+        bx, by, _, _ = bbox(blobs[0])
+        side = 1 if (-(bx - cx) * math.sin(th) + (by - cy) * math.cos(th)) > 0 else -1
+    return cx, cy, th, ln, side
+
+
+def track_cells(st, tr):
+    """線路・ホーム・電車が通るマス（地面を描く前に敷地に足す。ななめの線路が地面のないマスを通らないように）"""
+    if not tr:
+        return set()
+    cx, cy, th, ln, side = tr
+    c, s_ = math.cos(th), math.sin(th)
+    out = set()
+    steps = int(ln / (U / 6)) + 1
+    for k in range(steps + 1):   # 両はしもふくめて、1/6 マスごとに
+        t = -ln / 2 + ln * k / steps
+        for off in (-0.045, 0.0, 0.045, side * 0.075, side * 0.115):
+            x, y = cx + c * t - s_ * off, cy + s_ * t + c * off
+            i, j = round(x / U) + N // 2, N // 2 - round(y / U)
+            if 0 <= i < N and 0 <= j < N:
+                out.add((i, j))
+    return out
+
+
 def center_cell(st, used=()):
     c = N // 2
     cells = [p for p in st.mask if p not in used and st.at(*p) not in (A, B, L)] or sorted(st.mask)
@@ -642,9 +687,20 @@ def center_cell(st, used=()):
 
 
 def sign_at(x, y):
-    for dx in (-0.025, 0.025):
+    for dx in (-0.022, 0.022):
         cyl(f'sgP{dx}', 'miki', 0.005, 0.08, (x + dx, y, 0.04), verts=6)
-    box('sgB', 'kanban', (0.08, 0.01, 0.045), (x, y, 0.08))
+    box('sgB', 'kanban', (0.07, 0.01, 0.045), (x, y, 0.08))
+
+
+def sign_near(st, c, used):
+    """名所のマスのとなり（手前・右を先に）の敷地のマスに案内板。なければ同じマスの手前のすみに"""
+    for a, b in ((0, 1), (1, 0), (-1, 0), (0, -1), (1, 1), (-1, 1)):
+        q = (c[0] + a, c[1] + b)
+        if q in st.mask and q not in used and st.at(*q) not in (A, B):
+            used.add(q)
+            return sign_at(*xy(*q))
+    x, y = xy(*c)
+    sign_at(x + 0.02, y - 0.05)
 
 
 def m_monument(st):
@@ -662,19 +718,19 @@ def m_monument(st):
         sphere('atama', mat, 0.024, (x, y, 0.2))
     elif k == 'kofun':   # 墳丘：森・草のマスのかたまりに合わせた大きさ
         mound = [p for p in st.mask if st.at(*p) in (W, G, K, M)] or [c]
-        mx, my, mw, md = bbox(mound)
-        if max(mw, md) < 0.3:   # 森・草のマスが少ないときは、名所のマスを中心に小さな墳丘
-            (mx, my), mw, md = xy(*c), 0.3, 0.3
+        mx, my, mw, md = bbox(inner(mound))   # 墳丘は、森・草のマスに入るいちばん大きな長方形の中の だ円
+        if max(mw, md) < 0.25:   # 小さすぎるときは、敷地の中のいちばん大きな長方形に
+            mx, my, mw, md = bbox(inner(sorted(st.mask)))
         r = min(max(mw, md) / 2, 0.36)
         sphere('fun', 'kusa', r, (mx, my, 0.0), (mw / max(mw, md), md / max(mw, md), 0.45))
         for n in range(rng.randint(2, 5)):
             a = rng.uniform(0, math.tau)
             gg.tree(f'k{n}', mx + math.cos(a) * r * 0.4, my + math.sin(a) * r * 0.4, rng.uniform(0.6, 0.85), rng.choice(('round', 'pine')))
         used |= set(mound)
-        sign_at(*xy(*min(st.mask, key=lambda p: (-p[1], p[0]))))
+        sign_near(st, min(st.mask, key=lambda p: (-p[1], p[0])), used)
     elif k in ('hill', 'view') and not blobs:
         hill = [p for p in st.mask if st.at(*p) in (W, K, M, G)] or [c]
-        mx, my, mw, md = bbox(hill)
+        mx, my, mw, md = bbox(inner(hill))   # 山は、そのマスに入るいちばん大きな長方形の中の だ円
         r = min(max(mw, md) / 2, 0.42)
         hz = 0.8
         sphere('yama', 'kusa', r, (mx, my, -0.04), (mw / max(mw, md), md / max(mw, md), hz))
@@ -727,11 +783,11 @@ def m_monument(st):
             box('hokora', 'woodD', (0.065, 0.055, 0.055), (x, y, 0.062))
             gable('hokoraY', 'roofP', 0.09, 0.09, 0.04, 0.09, x, y)
         else:
-            box('mon', 'wallP', (0.22, 0.07, 0.08), (x, y, 0.04))
-            box('monD', 'woodD', (0.07, 0.072, 0.07), (x, y, 0.035))
-            roof('monY', 'roofP', 0.28, 0.12, 0.06, 0.08, 0.5, y=y, x=x)
+            box('mon', 'wallP', (0.11, 0.06, 0.08), (x, y, 0.04))   # 門（マスの中に入る大きさ）
+            box('monD', 'woodD', (0.05, 0.062, 0.07), (x, y, 0.035))
+            roof('monY', 'roofP', 0.125, 0.10, 0.05, 0.08, 0.5, y=y, x=x)
         if k != 'statue':
-            sign_at(x + 0.09, y - 0.07)
+            sign_near(st, c, used)
         for n, b2 in enumerate(blobs[:2]):
             small_bldg(st, b2, n, 'gable')
             used |= set(b2)
@@ -750,16 +806,15 @@ def m_park(st):
     used = set()
     water = [p for p in st.mask if st.at(*p) == A]
     used |= set(water)
-    if k in ('pondpark', 'garden', 'park') and not water:   # 池がマスにないときは、いちばん広い芝生のまん中に小さな池
-        c = center_cell(st)
-        x, y = xy(*c)
-        sphere('ike', 'ike', 0.09, (x, y, 0.0), (1.4, 1.0, 0.06))
-        used.add(c)
+    if k in ('pondpark', 'garden', 'park') and not water:   # 池がマスにないときは、芝生に入る長方形（2×2 まで）の中に小さな池
+        rect = cap(inner([p for p in st.mask if st.at(*p) in (P, G, J)] or sorted(st.mask)), 2)
+        x, y, w, d = bbox(rect)
+        sphere('ike', 'ike', 0.5, (x, y, 0.0), (w * 0.8, d * 0.8, 0.012))   # だ円は長方形の中
+        used |= set(rect)
     if k == 'sports':
         open_ = [p for p in st.mask if st.at(*p) in (P, G)]
         if open_:
-            x, y, w, d = bbox(open_)
-            w, d = min(w, 0.7), min(d, 0.6)
+            x, y, w, d = bbox(inner(open_))   # 競技場は芝生のマスに入るいちばん大きな長方形の中
             box('field', 'tsuchiG', (w * 0.9, d * 0.9, 0.006), (x, y, 0.003))
             box('lineX', 'line', (w * 0.8, 0.006, 0.002), (x, y, 0.007))
             box('lineY', 'line', (0.006, d * 0.8, 0.002), (x, y, 0.007))
@@ -835,6 +890,9 @@ def build(e):
         st.k = 'museum'     # 体育館・会館のような大きな建物の見どころは、窓のある館に
     if st.k != e['k']:
         st.mask = st.region()
+    if st.k == 'station':   # 線路・ホームが通るマスも地面に（線路は敷地を広げる前に1度だけ決める）
+        st.tr = track(st)
+        st.mask |= track_cells(st, st.tr)
     ground(st)
     k = st.k
     if k in ('shrine', 'inari', 'temple', 'church'):

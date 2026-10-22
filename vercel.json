@@ -1,5 +1,11 @@
 {
   "git": { "deploymentEnabled": { "main": true, "claude/**": false, "codex/**": false, "play-improve/**": false } },
+  "functions": { "api/feedback.js": { "maxDuration": 10 } },
+  "headers": [
+    { "source": "/nishio-go/(art|maptiles|deco|bgm|shots|dots3d|chunks)/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/nishio-go/(landuse|landmarks|world)\\.json", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/nishio-go/([^/]+)\\.(js|css|svg|png)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }] }
+  ],
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "go.ricepia.jp" }], "destination": "/nishio-go.html", "permanent": false },
     { "source": "/nishio-go.html", "has": [{ "type": "host", "value": "ricepia-judge.vercel.app" }], "destination": "https://go.ricepia.jp/nishio-go.html", "permanent": true }

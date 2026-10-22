@@ -1901,10 +1901,89 @@ const roll = { d: 0, last: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: fal
     const bx = roll.back.getContext('2d'), bd = bx.getImageData(0, 0, N, N), q = bd.data;
     for (let i = 0; i < q.length; i += 4) if (q[i + 3] && ((q[i] === 14 && q[i + 1] === 14 && q[i + 2] === 14) || (q[i] === 246 && q[i + 1] === 160 && q[i + 2] === 176))) { q[i] = 246; q[i + 1] = 245; q[i + 2] = 238; }
     bx.putImageData(bd, 0, 0);
+    riceBallInit(cut(0, 0));
     riceSprites.ready = true; setHeroMarker(); dirty = true;
   };
   img.src = 'nishio-go/art/rice.png';
 })();
+// 丸く見せる：お米を 点の大きさ（1点＝絵の1点）のまま回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
+// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は5段（さかいは 点をまぜて なめらかに）、ふちどりは回したあとに描きなおす
+const riceBall = { fill: null, face: null, cv: null, x: null, gx: 0, gy: 0, a: 1, b: 1, nx: 0, ny: 0, nr: 0 };
+const RB = 48;   // 回した絵を描く場所の大きさ（点）
+const RICE_TONE = [[172, 180, 204], [204, 210, 228], [230, 232, 238], [246, 245, 238], [253, 253, 250], [255, 255, 255]];   // 深い影・影・なか・つぶの色・明るい・てかり
+const RICE_LIGHT = (() => { const v = [-0.5, -0.7, 0.75], n = Math.hypot(...v); return v.map(c => c / n); })();
+const RICE_HALF = (() => { const v = [RICE_LIGHT[0], RICE_LIGHT[1], RICE_LIGHT[2] + 1], n = Math.hypot(...v); return v.map(c => c / n); })();
+function riceBallInit(src) {
+  const N = src.width, sd = src.getContext('2d').getImageData(0, 0, N, N).data;
+  const fill = document.createElement('canvas'), face = document.createElement('canvas');
+  fill.width = fill.height = face.width = face.height = N;
+  const fx = fill.getContext('2d'), gx = face.getContext('2d'), fd = fx.createImageData(N, N), gd = gx.createImageData(N, N);
+  let L = N, R = -1, T = N, B = -1;
+  for (let i = 0; i < N * N; i++) {
+    const r = sd[i * 4], g = sd[i * 4 + 1], b = sd[i * 4 + 2];
+    if (!sd[i * 4 + 3] || (r === 26 && g === 26 && b === 26)) continue;   // まわりの線は のぞく（回したあとに描きなおす）
+    fd.data.set([255, 255, 255, 255], i * 4);
+    if ((r === 14 && g === 14 && b === 14) || (r === 246 && g === 160 && b === 176)) gd.data.set([r, g, b, 255], i * 4);   // 顔（目・口・ほっぺ）
+    const x = i % N, y = (i - x) / N;
+    L = Math.min(L, x); R = Math.max(R, x); T = Math.min(T, y); B = Math.max(B, y);
+  }
+  fx.putImageData(fd, 0, 0); gx.putImageData(gd, 0, 0);
+  const cv = document.createElement('canvas'); cv.width = cv.height = RB;
+  Object.assign(riceBall, { fill, face, cv, x: cv.getContext('2d', { willReadFrequently: true }), gx: (L + R + 1) / 2, gy: (T + B + 1) / 2, a: (R - L + 1) / 2, b: (B - T + 1) / 2,
+    nx: R + 1.5, ny: T + (B - T) * 0.2 + 0.5, nr: (R - L) * 0.26 });   // 胚芽の くぼみ（tools/blender/rice.py と同じ場所）
+}
+// お米を描く：(X, Y) まん中（画面の点）・u：絵の1点の大きさ・th：回り・sx, sy：つぶれ・spin：くるくるの回り
+function drawRiceBall(X, Y, u, th, sx, sy, spin) {
+  const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin);
+  const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
+  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, RB, RB); o.imageSmoothingEnabled = true;   // なめらかに回してから、半分より濃い所を つぶにする（ふちが がたがたしない）
+  o.setTransform(kx * Math.cos(th), sy * Math.sin(th), -kx * Math.sin(th), sy * Math.cos(th), H, H);
+  o.drawImage(rb.fill, -rb.gx, -rb.gy);
+  o.setTransform(1, 0, 0, 1, 0, 0);
+  const img = o.getImageData(0, 0, RB, RB), d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
+  const [lx0, ly0, lz0] = RICE_LIGHT, [hx, hy, hz] = RICE_HALF, gb = gbOn && !worldMode;
+  const solid = new Uint8Array(RB * RB);
+  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {
+    const k = j * RB + i;
+    if (d[k * 4 + 3] < 128) { d[k * 4 + 3] = 0; continue; }
+    solid[k] = 1;
+    const ux = (i + 0.5 - H) / kx, uy = (j + 0.5 - H) / sy, px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
+    const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
+    let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
+    const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy);
+    if (qd < rb.nr + 1.6) { nx = -qx / (qd || 1) * 0.8; ny = -qy / (qd || 1) * 0.8; nz = 0.6; }   // くぼみの内がわは 中へ向く（光の当たらない がわが 影になる）
+    let wx = (c * nx - s * ny) * mx, wy = s * nx + c * ny;   // 面の向きを 画面の向きに
+    const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
+    const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
+    const v = 0.28 + 0.76 * dif + ((i + j) & 1 ? 0.035 : -0.035) * ((i ^ j) & 2 ? 1 : 0.4);   // 点をまぜて さかいを なめらかに
+    const t = spec > 0.55 ? 5 : v < 0.42 ? 0 : v < 0.58 ? 1 : v < 0.74 ? 2 : v < 0.9 ? 3 : 4;
+    const col = RICE_TONE[t];
+    d[k * 4] = col[0]; d[k * 4 + 1] = col[1]; d[k * 4 + 2] = col[2];
+  }
+  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {   // ふちどり（回したあとに、つぶのすぐ外がわの点を黒く）
+    const k = j * RB + i;
+    if (solid[k] || !((i > 0 && solid[k - 1]) || (i < RB - 1 && solid[k + 1]) || (j > 0 && solid[k - RB]) || (j < RB - 1 && solid[k + RB]))) continue;
+    d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 26; d[k * 4 + 3] = 255;
+  }
+  o.putImageData(img, 0, 0);
+  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる）
+    const g = o.getImageData(0, 0, RB, RB), q = g.data;
+    for (let k = 0; k < q.length; k += 4) {
+      if (!q[k + 3]) continue;
+      const L = gbLum(q[k], q[k + 1], q[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
+      q[k] = col[0]; q[k + 1] = col[1]; q[k + 2] = col[2]; q[k + 3] = 255;
+    }
+    o.putImageData(g, 0, 0);
+  }
+  gbPause++;
+  try { ctx.drawImage(rb.cv, Math.round(X - H * u), Math.round(Y - H * u), RB * u, RB * u); } finally { gbPause--; }
+  if (cs > 0.12) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
+    ctx.save(); ctx.translate(Math.round(X), Math.round(Y)); ctx.scale(sx, sy); ctx.rotate(th);
+    ctx.translate(sn * rb.a * 0.7 * u, 0); ctx.scale(Math.max(0.25, cs), 1);
+    ctx.drawImage(rb.face, -rb.gx * u, -rb.gy * u, rb.face.width * u, rb.face.height * u);
+    ctx.restore();
+  }
+}
 const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
 // なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
 // 止まると、起き上がりこぼしのように ゆらゆらして、立って こっちを見る
@@ -5380,12 +5459,16 @@ function frame(now) {
     }
     const shw = sz * 0.48 / (1 + roll.h * 3);   // 影（とぶと小さく）
     ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(w / 2 - shw / 2 + shk), Math.round(cy + T * 0.3), Math.round(shw), Math.max(2, Math.round(T / 8)));
-    const sq = roll.sq, cs = Math.cos(roll.spin), sx = (roll.sqx ? 1 - sq : 1 + sq) * Math.max(0.18, Math.abs(cs)), sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // くるくる：よこ向きは細く
-    ctx.save(); ctx.translate(Math.round(w / 2 + shk), Math.round(sy !== 1 ? ground - low * sy - hop : mid));
-    if (sx !== 1 || sy !== 1 || cs < 0) ctx.scale(cs < 0 ? -sx : sx, sy);   // ぺたっと つぶれて ぷるんと もどる
-    ctx.rotate(th % (Math.PI * 2));
-    ctx.drawImage(cs < 0 && roll.back ? roll.back : img, -Math.round(sz / 2), -Math.round(sz / 2), sz, sz);   // うしろを向いたら うしろ姿
-    ctx.restore();
+    const sq = roll.sq, sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる
+    const by = sy !== 1 ? ground - low * sy - hop : mid;
+    if (riceBall.cv) drawRiceBall(w / 2 + shk, by, u, th % (Math.PI * 2), sx, sy, roll.spin);   // 光を当てなおして 丸く
+    else {
+      const cs = Math.cos(roll.spin);
+      ctx.save(); ctx.translate(Math.round(w / 2 + shk), Math.round(by));
+      ctx.scale((cs < 0 ? -sx : sx) * Math.max(0.18, Math.abs(cs)), sy); ctx.rotate(th % (Math.PI * 2));
+      ctx.drawImage(cs < 0 && roll.back ? roll.back : img, -Math.round(sz / 2), -Math.round(sz / 2), sz, sz);
+      ctx.restore();
+    }
   } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
   if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える

@@ -995,6 +995,299 @@ def shorakuji():
     return view(0.22)
 
 
+# ---------- 3回目：48×48 の絵がない17か所（形は説明文から。写真はなぞらない） ----------
+pa.MATS.update({
+    'higata': '#a89a80', 'higataD': '#8a7c64', 'mizoB': '#6a9ac6', 'shimaG': '#4f8a3e', 'kayaB': '#a8884a', 'kayaD': '#7a6230',
+    'enku': '#a8784a', 'enkuD': '#7a5232', 'tengu': '#d23a2e', 'tenguK': '#2a2a2e', 'bonsho': '#6a5a3a', 'sekkan': '#c8b48a',
+    'hito': '#3a4a7a', 'hadaH': '#f0c8a0', 'oke': '#3a7fd0', 'kumade': '#e8b830',
+})
+
+
+def horse(n, x, y, z=0.0, run=False, mat='uma'):
+    """馬（横向き。run=True は前足をあげて駆ける）"""
+    box(f'hB{n}', mat, (0.18, 0.06, 0.07), (x, y, z + 0.12))
+    for i, dx in enumerate((-0.07, 0.07)):
+        for dy in (-0.02, 0.02):
+            tilt = (math.radians(30) if dx > 0 else math.radians(-20)) if run else 0
+            box(f'hL{n}{i}{dy}', mat, (0.02, 0.02, 0.09), (x + dx + (0.02 if run and dx > 0 else 0), y + dy, z + 0.05), (0, tilt, 0))
+    box(f'hN{n}', mat, (0.04, 0.04, 0.09), (x + 0.1, y, z + 0.17), (0, math.radians(-30), 0))
+    box(f'hH{n}', mat, (0.07, 0.035, 0.035), (x + 0.14, y, z + 0.22))
+    box(f'hT{n}', 'kuro', (0.012, 0.012, 0.07), (x - 0.1, y, z + 0.1), (0, math.radians(20), 0))
+
+
+def person(n, x, y, z=0.0, body='hito', s=1.0):
+    box(f'pb{n}', body, (0.04 * s, 0.03 * s, 0.07 * s), (x, y, z + 0.075 * s))
+    for dx in (-0.01, 0.01):
+        box(f'pl{n}{dx}', 'kuro', (0.014 * s, 0.014 * s, 0.04 * s), (x + dx * s, y, z + 0.02 * s))
+    sphere(f'ph{n}', 'hadaH', 0.018 * s, (x, y, z + 0.13 * s))
+
+
+def nishio_shiryokan():
+    """西尾市資料館：歴史公園の中の、白い壁に灰色の瓦の二階建て（低い石垣の上）、手前の松と石だたみ"""
+    ground('jari')
+    box('ishigaki', 'ishigaki', (0.66, 0.36, 0.06), (0, 0.1, 0.03))
+    box('ichi', 'shikkui', (0.56, 0.28, 0.14), (0, 0.1, 0.13))
+    box('koshi', 'shitami', (0.564, 0.284, 0.05), (0, 0.1, 0.085))
+    roof('yane1', 'kawaraG', 0.68, 0.4, 0.05, 0.2, 0.7, 0, 0.1, flat=True)
+    box('ni', 'shikkui', (0.36, 0.22, 0.1), (0, 0.12, 0.3))
+    irimoya('yane2', 'kawaraG', 0.48, 0.32, 0.16, 0.35, 0, 0.12)
+    box('iri', 'kijiD', (0.1, 0.01, 0.1), (0, -0.041, 0.11))
+    windows('w', 'kuro', [-0.2, -0.1, 0.1, 0.2], -0.041, 0.15, 0.04, 0.04)
+    pine('p', -0.34, -0.18, 1.2)
+    ishidatami('s', 0, -0.38, -0.08, 0.14)
+    return view(0.24)
+
+
+def seiganji():
+    """盛巌寺：禅宗の お寺。灰色の瓦の本堂と、手前の山門、松"""
+    ground('jari')
+    hall('h', 0.04, 0.16, 0.42, 0.22, 0.14, 'kiji', 'kawaraG', z=0.05)
+    for x in (-0.1, 0.1):
+        box(f'monH{x}', 'kijiD', (0.024, 0.024, 0.16), (x, -0.18, 0.08))
+    box('monN', 'kijiD', (0.24, 0.03, 0.02), (0, -0.18, 0.15))
+    gable('monY', 'kawaraG', 0.34, 0.16, 0.07, 0.16, 0, -0.18)
+    for x in (-0.24, 0.24):
+        box(f'hei{x}', 'shikkui', (0.24, 0.03, 0.1), (x + (0.1 if x > 0 else -0.1) * 0.2, -0.18, 0.05))
+    pine('p', -0.36, 0.02, 1.2)
+    ishidatami('s', 0, -0.38, -0.2, 0.12)
+    return view(0.22)
+
+
+def ikimono_sato():
+    """西尾いきものふれあいの里：丘の里山の林、小さな池と木の板の歩道、木の観察小屋"""
+    ground('shibaG')
+    sphere('oka', 'kusa', 0.5, (0.06, 0.38, 0.0), (0.82, 0.34, 0.4))
+    for i, (x, y, s) in enumerate(((-0.24, 0.2, 1.3), (0.06, 0.3, 1.5), (0.32, 0.2, 1.2), (-0.06, 0.12, 1.0))):
+        tree(f't{i}', x, y, s)
+    water('ike', 0.34, 0.2, -0.18, -0.16, 0.014)
+    for i in range(5):
+        box(f'ita{i}', 'kiji', (0.05, 0.08, 0.012), (0.02 + i * 0.06, -0.14, 0.03))
+    box('koya', 'kiji', (0.16, 0.12, 0.1), (0.3, -0.06, 0.05))
+    gable('koyaY', 'kijiD', 0.2, 0.16, 0.06, 0.1, 0.3, -0.06)
+    box('mado', 'kuro', (0.08, 0.01, 0.03), (0.3, -0.121, 0.07))
+    return view(0.16)
+
+
+def atsuike_hachiman():
+    """熱池八幡社：鳥居と石だたみの先の社殿（灰色の瓦）、両わきの石灯籠と白いのぼり"""
+    ground('jari')
+    hall('h', 0, 0.16, 0.38, 0.22, 0.14, 'kiji', 'kawaraG', z=0.05)
+    for x in (-0.24, 0.24):
+        toro(f'r{x}', x, -0.02, 1.0)
+        box(f'nb{x}', 'kijiD', (0.008, 0.008, 0.36), (x * 1.55, -0.04, 0.18))
+        box(f'nbH{x}', 'shikkui', (0.04, 0.004, 0.24), (x * 1.55 + 0.025, -0.04, 0.22))
+    torii('t', 0, -0.2, 1.1)
+    ishidatami('s', 0, -0.38, 0.04, 0.12)
+    return view(0.22)
+
+
+def koromozaki():
+    """衣崎海岸（一色干潟）：潮が引いた広い干潟（水の すじ）、潮干狩りの人と青い おけ、奥の海"""
+    water('umiB', 1.0, 0.24, 0, 0.28, 0.006)
+    box('higata', 'higata', (1.0, 0.56, 0.02), (0, -0.12, 0.004))
+    for i, (x, y, w) in enumerate(((-0.2, 0.0, 0.5), (0.18, -0.16, 0.4), (-0.1, -0.28, 0.3))):
+        box(f'mizo{i}', 'mizoB', (w, 0.03, 0.006), (x, y, 0.016), (0, 0, math.radians(8 - i * 6)))
+    for i in range(14):
+        sphere(f'ana{i}', 'higataD', 0.008, (-0.4 + (i * 0.37) % 0.8, -0.34 + (i * 0.23) % 0.5, 0.016))
+    for i, (x, y) in enumerate(((-0.26, -0.1), (0.1, -0.04), (0.3, -0.26))):
+        person(i, x, y, 0.014, ('hito', 'paraR', 'paraY')[i])
+        box(f'oke{i}', 'oke', (0.04, 0.04, 0.03), (x + 0.05, y - 0.02, 0.03))
+    box('kumade', 'kumade', (0.012, 0.1, 0.008), (0.06, -0.08, 0.022), (0, 0, math.radians(30)))
+    return view(0.1)
+
+
+def benten_salon():
+    """佐久島弁天サロン：西港のそばの木の平屋（灰色の瓦）と、休憩所の前のベンチ、手前の海（説明文にない桟橋や船は描かない）"""
+    water('umiB', 1.0, 0.3, 0, -0.26, 0.006)
+    box('kishi', 'kidan', (1.0, 0.5, 0.03), (0, 0.15, 0.015))
+    box('tate', 'kiji', (0.48, 0.24, 0.16), (-0.02, 0.18, 0.11))
+    gable('yane', 'kawaraG', 0.56, 0.32, 0.1, 0.19, -0.02, 0.18)
+    box('to', 'glassB', (0.14, 0.01, 0.1), (-0.06, 0.059, 0.08))
+    box('mado', 'glassB', (0.1, 0.01, 0.06), (0.14, 0.059, 0.11))
+    for x in (-0.24, 0.12):
+        box(f'bench{x}', 'kijiD', (0.14, 0.04, 0.012), (x, -0.02, 0.06))
+        for dx in (-0.05, 0.05):
+            box(f'benchA{x}{dx}', 'kijiD', (0.01, 0.03, 0.03), (x + dx, -0.02, 0.045))
+    return view(0.18)
+
+
+def tombolo():
+    """トンボロ干潟（前島）：潮が引くと現れる砂の道が、木の茂る小さな島（前島）へつづく。まわりは海"""
+    water('umiB', 1.0, 0.8, 0, 0, 0.006)
+    box('kishi', 'sunaB', (1.0, 0.18, 0.03), (0, -0.31, 0.015))
+    box('michi', 'sunaB', (0.14, 0.44, 0.02), (0.04, -0.02, 0.01), (0, 0, math.radians(-8)))   # 潮が引くと現れる砂の道
+    sphere('shima', 'iwaG', 0.2, (0.1, 0.24, 0.0), (1.1, 0.8, 0.5))
+    for i, (x, y, s) in enumerate(((0.02, 0.24, 1.0), (0.14, 0.28, 1.2), (0.2, 0.2, 0.9))):
+        tree(f't{i}', x, y, s, 'shimaG')
+        for o in bpy.context.scene.objects:
+            if o.name.startswith((f'mikit{i}', f'hat{i}')):
+                o.location.z += 0.08
+    person(0, 0.02, -0.06, 0.012, 'paraR')
+    return view(0.14)
+
+
+def sangane_kannon():
+    """三ヶ根観音：山の上の お堂（灰色の瓦）と、台の上に立つ石の観音さま、まわりの木。手前の下に三河湾"""
+    water('umiB', 1.0, 0.2, 0, -0.3, 0.006)
+    box('yama', 'kusa', (1.0, 0.6, 0.1), (0, 0.1, 0.05))
+    hall('h', 0.12, 0.2, 0.34, 0.2, 0.12, 'kiji', 'kawaraG', z=0.15)
+    box('dai', 'kidan', (0.1, 0.1, 0.06), (-0.2, 0.0, 0.13))
+    box('kB', 'hiseki', (0.05, 0.04, 0.16), (-0.2, 0.0, 0.24), bevel=0.012)
+    sphere('kH', 'hiseki', 0.025, (-0.2, 0.0, 0.34))
+    for x, y in ((-0.34, 0.24), (0.36, 0.06), (-0.04, 0.34)):
+        tree(f't{x}', x, y, 1.2)
+        for o in bpy.context.scene.objects:
+            if o.name.startswith((f'mikit{x}', f'hat{x}')):
+                o.location.z += 0.1
+    return view(0.24)
+
+
+def jomyoji():
+    """浄名寺：戸を開けたお堂（灰色の瓦）の中に、背の高い木の円空仏（観音菩薩立像）"""
+    ground('jari')
+    box('kidan', 'kidan', (0.5, 0.34, 0.05), (0, 0.1, 0.025))
+    for x in (-0.22, 0.22):
+        box(f'kabe{x}', 'kiji', (0.06, 0.26, 0.3), (x, 0.1, 0.2))
+    box('ura', 'kijiD', (0.4, 0.04, 0.3), (0, 0.21, 0.2))
+    box('ten', 'kiji', (0.5, 0.26, 0.02), (0, 0.1, 0.36))   # 天井（鴨居は前の細い横木だけにして、入口ごしに像の頭まで見えるように）
+    box('kamoi', 'kiji', (0.5, 0.03, 0.03), (0, -0.015, 0.335))
+    irimoya('yane', 'kawaraG', 0.62, 0.44, 0.2, 0.37, 0, 0.1)
+    box('daiza', 'kijiD', (0.1, 0.07, 0.03), (0, 0.0, 0.065))
+    box('butsu', 'enku', (0.08, 0.05, 0.15), (0, 0.0, 0.155), bevel=0.012)   # 円空仏：お堂の中に立つ、背の高い木の立像
+    sphere('butsuH', 'enku', 0.03, (0, 0.0, 0.25))
+    box('kesa', 'enkuD', (0.082, 0.052, 0.02), (0, 0.0, 0.18), (0, math.radians(20), 0))
+    toro('r', 0.34, -0.14, 1.0)
+    ishidatami('s', 0, -0.38, -0.06, 0.12)
+    return view(0.22)
+
+
+def anakobo():
+    """見影山穴弘法：ふもとから山頂へ、じぐざぐの小道にそって小さな石の弘法さんがならぶ八十八ヶ所めぐり"""
+    ground('shibaG')
+    sphere('yama', 'kusa', 0.5, (0.04, 0.2, 0.0), (0.84, 0.56, 0.6))
+    h = lambda x, y: 0.3 * max(0.0, 1 - ((x - 0.04) / 0.42) ** 2 - ((y - 0.2) / 0.28) ** 2) ** 0.5   # 山肌の高さ（上の球と同じ形）
+    pts = [(-0.3, -0.24), (0.2, -0.06), (-0.16, 0.12), (0.12, 0.28), (0.02, 0.38)]
+    for i in range(len(pts) - 1):
+        (x0, y0), (x1, y1) = pts[i], pts[i + 1]
+        for k in range(8):   # 小道は短く分けて、ひとつずつ山肌の傾きにそわせる（とぎれず ふもとから山頂へつづくように）
+            ax, ay = x0 + (x1 - x0) * k / 8, y0 + (y1 - y0) * k / 8
+            bx, by = x0 + (x1 - x0) * (k + 1) / 8, y0 + (y1 - y0) * (k + 1) / 8
+            az, bz = h(ax, ay) + 0.01, h(bx, by) + 0.01
+            run = math.hypot(bx - ax, by - ay)
+            box(f'michi{i}{k}', 'jari', (math.hypot(run, bz - az) + 0.006, 0.04, 0.01), ((ax + bx) / 2, (ay + by) / 2, (az + bz) / 2),
+                (0, -math.atan2(bz - az, run), math.atan2(by - ay, bx - ax)))
+        for k in range(3):
+            f = (k + 0.5) / 3
+            x, y = x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - 0.04
+            jizo(f'{i}{k}', x, y, 0.7)
+            for o in bpy.context.scene.objects:
+                if o.name.startswith(('jzd', 'jzb', 'jzh', 'jzm')) and o.name.endswith(f'{i}{k}'):
+                    o.location.z += h(x, y)
+    tree('t1', -0.3, 0.24, 1.2)
+    tree('t2', 0.36, 0.1, 1.1)
+    return view(0.18)
+
+
+def munosato():
+    """無の里休憩所：急な かやぶき屋根の合掌造りの家（三角の大きな屋根、妻に窓）、まわりの木"""
+    ground('shibaG')
+    box('kabe', 'kijiD', (0.4, 0.3, 0.1), (0, 0.06, 0.05))
+    gable_y('kaya', 'kayaB', 0.5, 0.4, 0.42, 0.1, 0, 0.06)
+    gable_y('tsuma', 'kiji', 0.34, 0.012, 0.3, 0.1, 0, -0.146)   # 妻の木の壁は、かやの屋根の前の面（y=-0.14）より手前に（閉じた三角の屋根に隠れないように）
+    for i, z in enumerate((0.16, 0.26)):
+        box(f'tm{i}', 'shoji', (0.12 - i * 0.04, 0.01, 0.04), (0, -0.154, z))
+    box('mune', 'kayaD', (0.04, 0.42, 0.03), (0, 0.06, 0.52))
+    box('to', 'shoji', (0.1, 0.01, 0.07), (0, -0.091, 0.04))
+    tree('t1', -0.34, 0.1, 1.4)
+    tree('t2', 0.34, 0.2, 1.2)
+    ishidatami('s', 0, -0.38, -0.1, 0.12)
+    return view(0.26)
+
+
+def nakahata_hachiman():
+    """中畑八幡社：社殿（灰色の瓦）の前の馬場を、首につかまった人と駆ける馬（おまんと祭）"""
+    ground('jari')
+    hall('h', 0, 0.22, 0.36, 0.18, 0.12, 'kiji', 'kawaraG', z=0.05)
+    box('baba', 'suna', (0.9, 0.2, 0.008), (0, -0.14, 0.012))
+    fence('f', 'kijiD', -0.44, 0.44, -0.26, 0.05, 12)
+    horse('u', -0.04, -0.14, 0.0, run=True)
+    box('kazari', 'umaR', (0.08, 0.07, 0.03), (-0.05, -0.14, 0.16))
+    person('p', 0.1, -0.18, 0.06, 'shikkui')
+    toro('r', 0.34, 0.02, 1.0)
+    return view(0.2)
+
+
+def takakura_jinja():
+    """高倉神社：社殿（灰色の瓦）と、戸を開けた天狗堂の中の大きな赤い天狗の面"""
+    ground('jari')
+    hall('h', -0.12, 0.18, 0.34, 0.2, 0.13, 'kiji', 'kawaraG', z=0.05)
+    box('do', 'kijiD', (0.22, 0.18, 0.18), (0.26, -0.02, 0.09))
+    box('doF', 'kuro', (0.16, 0.01, 0.13), (0.26, -0.111, 0.08))
+    gable('doY', 'kawaraG', 0.28, 0.24, 0.08, 0.18, 0.26, -0.02)
+    sphere('tenguF', 'tengu', 0.045, (0.26, -0.12, 0.09), (1, 0.4, 1.2))
+    cyl('tenguN', 'tengu', 0.012, 0.07, (0.26, -0.15, 0.09), (math.pi / 2, 0, 0), 8, r2=0.004)
+    box('tenguM', 'tenguK', (0.05, 0.006, 0.008), (0.26, -0.139, 0.11))
+    torii('t', -0.12, -0.18, 1.0)
+    ishidatami('s', -0.12, -0.38, -0.02, 0.12)
+    return view(0.2)
+
+
+def toteiyama():
+    """とうてい山古墳：草におおわれた円墳（てっぺんに砂岩の石棺）、うしろに三河湾と島々"""
+    water('umiB', 1.0, 0.3, 0, 0.26, 0.006)
+    for i, (x, r) in enumerate(((-0.24, 0.07), (0.1, 0.05), (0.34, 0.06))):
+        sphere(f'shima{i}', 'shimaG', r, (x, 0.34, 0.0), (1.6, 0.8, 0.6))
+    box('oka', 'kusa', (1.0, 0.52, 0.02), (0, -0.14, 0.01))
+    sphere('fun', 'kofunG', 0.26, (0, -0.08, 0.0), (1, 0.9, 0.72))
+    box('sekkan', 'sekkan', (0.18, 0.08, 0.05), (0, -0.08, 0.2))
+    box('futa', 'sekkan', (0.19, 0.09, 0.02), (0.01, -0.08, 0.235), (0, 0, math.radians(8)))
+    tree('t', -0.36, -0.2, 1.0)
+    return view(0.14)
+
+
+def saifukuji():
+    """西福寺鐘楼：石の基壇の上に4本柱、灰色の瓦の入母屋屋根、つり下げた梵鐘"""
+    ground('jari')
+    box('kidan', 'ishigaki', (0.4, 0.4, 0.08), (0, 0.04, 0.04))
+    for dx in (-0.14, 0.14):
+        for dy in (-0.1, 0.18):
+            box(f'hashira{dx}{dy}', 'kijiD', (0.03, 0.03, 0.26), (dx, dy, 0.21))
+    box('nuki', 'kijiD', (0.32, 0.03, 0.02), (0, -0.1, 0.3))
+    box('nukiB', 'kijiD', (0.32, 0.03, 0.02), (0, 0.18, 0.3))
+    irimoya('yane', 'kawaraG', 0.5, 0.48, 0.2, 0.34, 0, 0.04)
+    cyl('kane', 'bonsho', 0.07, 0.14, (0, 0.04, 0.24), verts=14, r2=0.06)
+    sphere('kaneT', 'bonsho', 0.04, (0, 0.04, 0.31), (1, 1, 0.5))
+    box('shumoku', 'kiji', (0.12, 0.016, 0.016), (0.14, 0.04, 0.23))
+    pine('p', 0.36, 0.22, 1.1)   # 鐘が見えるように、松は右奥に
+    return view(0.24)
+
+
+def ebisu_beach():
+    """恵比寿海水浴場：きめの細かい長い砂浜、おだやかな波、パラソル、うしろの松の並び"""
+    water('umiB', 1.0, 0.3, 0, -0.26, 0.006)
+    for i in range(3):
+        box(f'nami{i}', 'line2', (0.2, 0.014, 0.004), (-0.3 + i * 0.32, -0.14, 0.011))
+    box('suna', 'sunaB', (1.0, 0.5, 0.02), (0, 0.14, 0.01))
+    for i, (x, y, m) in enumerate(((-0.2, 0.02, 'paraB'), (0.12, 0.06, 'paraY'))):
+        parasol(i, x, y, m)
+    for i in range(5):
+        pine(f'm{i}', -0.3 + i * 0.16, 0.3, 0.9)
+    return view(0.14)
+
+
+def terabe_beach():
+    """寺部海水浴場：波の静かな小さな浜、岩場、うしろの木々"""
+    water('umiB', 1.0, 0.34, 0, -0.24, 0.006)
+    box('suna', 'sunaB', (1.0, 0.46, 0.02), (0, 0.16, 0.01))
+    for i, (x, y, r) in enumerate(((0.3, -0.06, 0.06), (0.38, 0.02, 0.05), (0.24, 0.04, 0.04))):
+        sphere(f'iwa{i}', 'iwaG', r, (x, y, 0.02), (1.3, 1, 0.8))
+    sphere('oka', 'kusa', 0.5, (0.04, 0.42, 0.0), (0.8, 0.3, 0.4))
+    for i, (x, y, s) in enumerate(((-0.26, 0.3, 1.3), (0.02, 0.34, 1.5), (0.28, 0.28, 1.2))):
+        tree(f't{i}', x, y, s)
+    box('nami', 'line2', (0.4, 0.014, 0.004), (-0.1, -0.08, 0.011))
+    return view(0.14)
+
+
 MODELS = {
     'konoe-tei': konoe_tei, 'shokoso': shokoso, 'ibun-jinja': ibun_jinja, 'kozenji': kozenji, 'kumaku-jinja': kumaku_jinja,
     'yatsuomote': yatsuomote, 'wakuwaku': wakuwaku, 'jissoji': jissoji, 'choenji': choenji, 'glass-museum': glass_museum,
@@ -1010,7 +1303,32 @@ MODELS = {
     'fukusenji': fukusenji, 'genkuin': genkuin, 'kasuya-tei': kasuya_tei, 'kaminagara-shinmei': kaminagara_shinmei, 'shozanji': shozanji,
     'sairinji': sairinji, 'tenjiku-jinja': tenjiku_jinja, 'semon-jinja': semon_jinja, 'kagakuji': kagakuji, 'ennyuji': ennyuji,
     'shorakuji': shorakuji,
+    'nishio-shiryokan': nishio_shiryokan, 'seiganji': seiganji, 'ikimono-sato': ikimono_sato, 'atsuike-hachiman': atsuike_hachiman,
+    'koromozaki': koromozaki, 'benten-salon': benten_salon, 'tombolo': tombolo, 'sangane-kannon': sangane_kannon, 'jomyoji': jomyoji,
+    'anakobo': anakobo, 'munosato': munosato, 'nakahata-hachiman': nakahata_hachiman, 'takakura-jinja': takakura_jinja,
+    'toteiyama': toteiyama, 'saifukuji': saifukuji, 'ebisu-beach': ebisu_beach, 'terabe-beach': terabe_beach,
 }
+
+
+def flat_bottom(fn, z0=-0.01):
+    """丘や古墳は球をつぶして作るので、下半分が地面の板（厚さ 0.02）の下から のぞく。板の下の面より下にある点を、板の下の面までもちあげる"""
+    def build():
+        opts = fn()
+        for o in bpy.context.scene.objects:
+            if o.type != 'MESH':
+                continue
+            mw = o.matrix_world
+            inv = mw.inverted()
+            for v in o.data.vertices:
+                w = mw @ v.co
+                if w.z < z0:
+                    w.z = z0
+                    v.co = inv @ w
+        return opts
+    return build
+
+
+MODELS = {k: flat_bottom(f) for k, f in MODELS.items()}   # giant-list.py は上の MODELS = {...} の名前だけを読む
 pa.MODELS.clear()
 pa.MODELS.update(MODELS)
 

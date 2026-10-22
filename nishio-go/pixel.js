@@ -4990,6 +4990,9 @@ GIANT_ART['f-ricepia'] = 'ricepia';
   'terabe-jo', 'higashi-hazu', 'myozenji', 'kodomonokuni-st', 'aichi-kodomo', 'toba-shinmei', 'antaiji',
   'fukusenji', 'genkuin', 'kasuya-tei', 'kaminagara-shinmei', 'shozanji', 'sairinji', 'tenjiku-jinja',
   'semon-jinja', 'kagakuji', 'ennyuji', 'shorakuji',
+  'nishio-shiryokan', 'seiganji', 'ikimono-sato', 'atsuike-hachiman', 'koromozaki', 'benten-salon', 'tombolo',
+  'sangane-kannon', 'jomyoji', 'anakobo', 'munosato', 'nakahata-hachiman', 'takakura-jinja', 'toteiyama',
+  'saifukuji', 'ebisu-beach', 'terabe-beach',
 ].forEach(n => { GIANT_ART['f-' + n] = n; });
 // ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
 let giantIds = null;

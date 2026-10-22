@@ -644,7 +644,7 @@ def add_macro(ob, fn):
     mw = ob.matrix_world
     v = np.array([fn(*(mw @ Vector(p)).xy) for p in co], np.float32).reshape(-1, 3)
     out = np.ones((len(co), 4), np.float32)
-    out[:, :3] = np.clip(v, 0, 1.5)
+    out[:, :3] = np.clip(v, 0, 1.0)                                          # glTF の頂点色は 0〜1
     a.data.foreach_set('color', out.ravel())
 
 

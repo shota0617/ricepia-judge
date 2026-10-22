@@ -6,7 +6,7 @@
 | ファイル | 中身 |
 |---|---|
 | `build_tractor.py` | 生成スクリプト（Blender の Python 版 bpy 5.2.2） |
-| `tractor_yt.glb` | 書き出したモデル（約 2.9MB・三角形 約 7.7 万・Draco なし・テクスチャ 512px×2 枚を埋め込み・AO を頂点色に焼きこみ） |
+| `tractor_yt.glb` | 書き出したモデル（約 3.4MB・三角形 約 8.7 万・Draco なし・テクスチャ 512px×2 枚を埋め込み・AO を頂点色に焼きこみ） |
 | `preview_exterior.png` | 斜め前の外観（Cycles） |
 | `preview_driver.png` | 運転者の目（左右 0・後輪車軸の 0.46m 後ろ・高さ 2.27m）から前方 12° 下向き・縦の画角 60° |
 | `preview_console.png` | 右の操作盤のアップ |
@@ -118,7 +118,7 @@ function setSteer(a) {            // a > 0 で右へ切る
 | ファイル | 中身 |
 |---|---|
 | `build_field.py` | 生成スクリプト（bpy 5.2.2。`build_tractor.py` の部品の関数を借りる） |
-| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 5.0MB・三角形 約 5.8 万、秋 約 5.4MB・約 6.9 万、代かき 約 4.8MB・約 6.9 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
+| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 4.5MB・三角形 約 5.8 万、秋 約 5.2MB・約 6.9 万、代かき 約 4.6MB・約 6.9 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
 | `preview_field.png`・`preview_field_aki.png`・`preview_field_shirokaki.png` | 農道から見た田んぼ（トラクターが半分ほど耕したところ） |
 | `preview_field*_driver.png` | 運転席から（左はまだ、右は耕したあと） |
 | `preview_field*_ground.png` | ロータリーのうしろ：耕した所とまだの所の境目 |

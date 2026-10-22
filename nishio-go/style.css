@@ -224,6 +224,7 @@ label.row{min-height:44px;cursor:pointer}
 .btn.mode-pick{display:flex;flex-direction:column;align-items:center;gap:2px;white-space:normal}
 .btn.mode-pick small{font-size:12px;font-weight:400;opacity:.9}
 .btn.mode-pick.alt{margin-top:10px;background:#3a4f8f;box-shadow:0 3px 0 #22305a}
+.btn.mode-pick.meiro{margin-bottom:10px;background:#1f8fc8;box-shadow:0 3px 0 #145a80}   /* 西尾めいろ（キーホルダーの 玉ころがし迷路の 水色） */
 .btn:disabled{opacity:.5}
 .btn.mini{margin-top:6px;padding:6px 10px;font-size:12px;min-height:36px}
 
@@ -502,6 +503,7 @@ body.px .guide small{color:#ddd}
 .simple .intro .pitch,.simple .intro .mode-q{display:none}
 .simple .btn.mode-pick{border-radius:999px;box-shadow:0 0 0 3px #e9c46a,0 4px 0 #1f3f27}
 .simple .btn.mode-pick.alt{box-shadow:0 0 0 3px #e9c46a,0 4px 0 #22305a}
+.simple .btn.mode-pick.meiro{box-shadow:0 0 0 3px #e9c46a,0 4px 0 #145a80}
 .simple .btn.mode-pick small{display:none}
 .simple .btn.mode-pick .mp-t{font-size:18px}
 /* ごほうび：金の額縁のドット絵、めずらしさの星、名前の帯、NEW のリボン */

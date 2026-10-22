@@ -5388,6 +5388,24 @@ function drawWeather(now, w, h, dpr, shadeOnly) {
   if (wx.kind === 'rain') ctx.stroke();
   ctx.restore();
 }
+// 奥行き：お米の足もと（footY）が 特大の絵の地面より奥（画面の上）にあって 重なっているときは、その絵を お米の まわりだけ描きなおして かくし、
+// かくれた お米は うすく すけて見せる（建物の うしろを通っても 見うしなわない）。前は いつも絵の上に描いていたので、屋根に のっているように見えた
+function occludeRice(hx, by, footY, u, again) {
+  const r = 17 * u, box = [hx - r, by - r, hx + r, by + r];
+  let hid = false;
+  for (const [img, x, y, size, gy, shop] of depthArt) {
+    if (footY >= gy - u * 4 || box[2] < x || box[0] > x + size || box[3] < y || box[1] > y + size) continue;
+    ctx.save(); ctx.beginPath(); ctx.rect(Math.floor(box[0]), Math.floor(box[1]), Math.ceil(2 * r) + 1, Math.ceil(2 * r) + 1); ctx.clip();
+    if (shop) gbPause++;
+    ctx.drawImage(img, x, y, size, size);
+    if (shop) gbPause--;
+    ctx.restore();
+    hid = true;
+  }
+  if (!hid) return false;
+  ctx.globalAlpha = 0.5; again(); ctx.globalAlpha = 1;
+  return true;
+}
 function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
 /* ---------- 町を走る乗り物（Blender の絵：tools/blender/maptiles.py → nishio-go/maptiles/vehicles.png） ----------
    線路には赤い電車（4両）、道には乗用車、ひろい水の上には漁船。見えている所のまわり（画面の外）に出して、マスに沿って走らせる。
@@ -5520,6 +5538,7 @@ function frame(now) {
   shopHits = [];
   giantHits = [];
   poiHits = [];
+  depthArt.length = 0;
   refreshSeason(now);
   trailLoad();   // あしあとの記録（あるいて移動／操作して移動・版で別）
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
@@ -5623,7 +5642,7 @@ function frame(now) {
     const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（読めるまではいつもの絵）
     const img = (giant || spotSprites[p[2]] || spotSprites.shop)[0], size = dotSize(img, T), sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
     ctx.drawImage(img, sx, sy, size, size);
-    if (giant) poiHits.push([sx, sy, size, p, giant[0]]);   // タップは絵のある所（透明でない点）で決める
+    if (giant) { poiHits.push([sx, sy, size, p, giant[0]]); depthArt.push([img, sx, sy, size, sy + size * 0.72, false]); }   // タップは絵のある所（透明でない点）で決める
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
@@ -5640,7 +5659,7 @@ function frame(now) {
     if (s.shop) gbPause++;
     ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
     if (s.shop) gbPause--;
-    if (giant) giantHits.push([sx, sy, size, s, giant[0]]);   // タップは、描いた順の逆（手前の絵から）に調べる
+    if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
       const u = size / 16;
@@ -5774,6 +5793,7 @@ function frame(now) {
       ctx.drawImage(cs < 0 && roll.back ? roll.back : img, -Math.round(sz / 2), -Math.round(sz / 2), sz, sz);
       ctx.restore();
     }
+    if (riceBall.cv && !rec) occludeRice(hx, by, hcy + T * 0.3, u, () => drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol));
   } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
   if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える
@@ -6086,6 +6106,8 @@ function drawWorld(now, w, h, dpr) {
 }
 // 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
 // (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
+// 奥行き：描いた特大の絵 [絵, 左, 上, 大きさ, 地面の高さ（画面）, 当店か]。お米が その絵より奥（北）にいるときに、お米の上に描きなおす（occludeRice）
+const depthArt = [];
 let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポット, 絵の canvas]（描くたびに作り直す）
 let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, 大きさ, 目印, 絵の canvas]
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）

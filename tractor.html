@@ -1951,9 +1951,20 @@ function canBe(x, z, yaw) {
   const p = wheelPoints(x, z, yaw);
   return ['rl', 'rr', 'fl', 'fr', 'nose', 'rotL', 'rotR'].every(k => ground(p[k][0], p[k][1]) !== null);
 }
+// 耕したあとのふかふかの土にタイヤが乗ると沈む（春は深く 15cm 耕すので 6cm ほど・秋は浅いので 3〜4cm。前輪は軽いので少し）。
+// 片側だけ乗ると傾く。代かきは田んぼ全体がやわらかい泥なので、地面の高さのほうで沈めてある
+const SINK = { haru: 0.06, aki: 0.035, shirokaki: 0 }[season], sinkW = { rl: 0, rr: 0, fl: 0, fr: 0 };
+function softAt(x, z) {
+  const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+  return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? 1 : 0;
+}
 function placeRig(dt) {
   const p = wheelPoints(S.x, S.z, S.yaw);
-  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8;   // 盛り上がった土の上では傾く
+  if (SINK) for (const k in sinkW) {                 // タイヤはじわっと沈み、かたい所へ出るとすっと上がる
+    const t = softAt(p[k][0], p[k][1]) * SINK * (k[0] === 'f' ? 0.6 : 1);
+    sinkW[k] += (t - sinkW[k]) * Math.min(1, dt * (t > sinkW[k] ? 3 : 6));
+  }
+  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8 - (sinkW[k] || 0);   // 盛り上がった土の上では傾く
   const hr = (h('rl') + h('rr')) / 2, hf = (h('fl') + h('fr')) / 2;
   rig.position.set(S.x, hr, S.z);
   S.dist = (S.dist || 0) + Math.abs(S.v) * dt;   // 走った道のり（凸凹のゆれに使う）
@@ -1961,6 +1972,11 @@ function placeRig(dt) {
   const pitchB = bump * (0.008 * Math.sin(S.dist * 1.9) + 0.004 * Math.sin(S.dist * 4.7 + 1.1));
   const rollB = bump * (0.010 * Math.sin(S.dist * 1.3 + 0.5) + 0.004 * Math.sin(S.dist * 3.9));
   rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB, S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
+  // 作業機の自動水平：耕しているあいだは、トラクターが左右に傾いても ロータリー（ハロー）は田んぼの面と平行に保つ。
+  // 油圧で動くので少しおくれる。上げているときはトラクターといっしょに傾く
+  const lv = S.rotDown ? -rig.rotation.z : 0;
+  S.rotLevel = (S.rotLevel || 0) + (lv - (S.rotLevel || 0)) * Math.min(1, dt * 2.5);
+  if (P.Rotary) P.Rotary.rotation.z = S.rotLevel;
 }
 
 // 直進アシスト（本物と同じ手順）：G で始点 A を登録 → 5m 以上まっすぐ走って G で終点 B を登録 → A と B を結んだ基準線と
@@ -2533,7 +2549,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -166,6 +166,8 @@ async function walkTo(page, id) {
   R.walk.push(await walkTo(page, 'chest'));
   R.checks.firstPickN = R.walk[0].first && R.walk[0].first.n; R.checks.firstPickId = R.walk[0].first && R.walk[0].first.id;
   R.checks.welcomeBag = await page.evaluate(() => (nishioGo.state.bags || []).map(b => b.km).join(','));   // はじめての たからばこ では必ず 1km の おみやげ袋
+  R.checks.h100FirstDay = await page.evaluate(() => !(nishioGo.state.day || {}).h100);   // きょうの100歩たんけんは、遊びはじめた日には始まらない
+  await page.evaluate(() => localStorage.setItem('nsg_first_day', JSON.stringify('2026-10-15')));   // ここからは 2日目の人として（100歩たんけんを見る）
   // ふつうの地図のタップのような瞬間移動（歩く地図の1歩でない移動）では、袋は進まない（歩いた距離には入る）。行って、もとの所へ戻る
   R.checks.teleportNoBag = await page.evaluate(() => {
     const b = nishioGo.state.bags[0], w0 = b.walked, d0 = nishioGo.state.walked, at = { lat: nishioGo.me.lat, lng: nishioGo.me.lng };
@@ -831,6 +833,7 @@ async function walkTo(page, id) {
   need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');
   need(c.sealPick && c.sealPick.ok, 'しるしの2枚：2枚から えらぶ窓が出ない、または えらんだ1枚が キラで入らない');
   need(c.waterWatch && c.waterWatch.ok, '水べで じっと見る：水の となりで 止まっていても 生きものに出会わない');
+  need(c.h100FirstDay === true, 'きょうの100歩たんけん：遊びはじめた日に始まった');
   need(c.h100 && c.h100.ok, 'きょうの100歩たんけん：100歩 歩いても おわらない、または はじめての道の数・自己ベストが残らない');
   need(c.chain && c.chain.ok, 'めぐりの れんさ：30分以内に ちがう名所でチェックインしても れんさが つながらない');
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');

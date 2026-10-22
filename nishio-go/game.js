@@ -775,7 +775,7 @@ function addTrail(a, b, critters) {
 // はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）と、自己ベストなら お祝い。1日1回（記録は モードごと）
 const H100 = { steps: 100, cap: 30 };
 function hundred(steps, fresh) {
-  if (driving) return;
+  if (driving || store.get('nsg_first_day', '') === ymd()) return;   // 遊びはじめた日は しない（はじめの日は ようこそ・はじめの1枚・週の知らせで いっぱいなので、次の日から）
   const day = dayState();
   let h = day.h100;
   if (h && h.done) return;
@@ -2024,11 +2024,12 @@ function refreshNearby() {
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
   const wt = weekTheme(), wk = String(weekNo());
-  if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
+  if (welcomeDue() || firstPick || rewardBusy()) { /* はじめての人は「🎁 すぐ近くに たからばこ！」を読んでもらう：ようこそ たからばこ を開けて、はじめの1枚を えらんで、ごほうびを閉じてから、週の知らせを出す */ }
+  else if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
     store.set('nsg_theme_wk', wk);
     const lw = lastWeekStat();
-    setTimeout(() => toast(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
-  } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toast('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }
+    setTimeout(() => toastAfter(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
+  } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toastAfter('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }   // 前の知らせ（はじめの案内など）を上書きしないよう、あとに
   else if (store.get('nsg_started', false) && S.prevToast !== ymd() && prevDayStat()) {   // 日に1回：前回のさんぽ（知らせたかは記録ごと＝モード・版ごとに。知らせることがない日は使わない）
     const p = prevDayStat();
     S.prevToast = ymd(); save();

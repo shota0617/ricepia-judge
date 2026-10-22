@@ -679,6 +679,14 @@ async function walkTo(page, id) {
     await page.evaluate(() => { nishioPixel.setHeightFn(null); nishioPixel.setRoll(false); });
     return { room: d, jumps: j - pick.j, ok: j - pick.j >= 1 };
   })();
+  // 転がり方 200：名前が ぜんぶ ちがい、きょうの転がり方が えらべて、ずかんが 開く
+  R.checks.koroStyles = await page.evaluate(() => {
+    const K = window.NISHIO_KOROSTYLE; if (!K) return { ok: false };
+    const L = K.list(), uniq = new Set(L.map(x => x.name)).size;
+    const sel = K.select('daily'), cur = K.current();
+    K.open(); const cells = document.querySelectorAll('#koroDex .kd-cell').length; K.close();
+    return { n: L.length, uniq, daily: cur && cur.name, cells, ok: L.length === 200 && uniq === 200 && sel && !!cur && cells === 200 };
+  });
   R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   // イベント「ドット絵ムービー」：八ツ面山でチェックインすると、ごほうびの画面のあとに「山の岩のなりたち」が流れ、最後まで見ると まちメモ に残る
   await page.evaluate(() => { window.__keepMovie = true; const s = nishioGo.spots.find(x => x.id === 'f-yatsuomote'); nishioGo.moveTo(s.lat, s.lng); });
@@ -731,6 +739,7 @@ async function walkTo(page, id) {
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');
+  need(c.koroStyles && c.koroStyles.ok, '転がり方 200：数・名前・ずかん が おかしい');
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');
   need(c.parcel !== false, 'おとどけもの：あずかった荷物の あて先の人と話しても、届けられない');

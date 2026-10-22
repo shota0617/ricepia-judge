@@ -368,8 +368,9 @@ def rain():
 
 
 # ---------- アルバム「西尾の音」100曲（nishio-go/bgm/s/001.mp3〜100.mp3 と list.json） ----------
-# 西尾らしい曲：日本の音階（ヨナ抜き・民謡音階・律音階・都節）と、篠笛・琴・三味線・尺八・太鼓・鉦に似せたファミコン風の音で作る。
-# 和音の進行ではなく、主音と5度の持続音（ドローン）の上に旋律をのせる（日本の音楽によくある形）。旋律は compose_jp() が作る。
+# 明るく西尾らしい曲：ヨナ抜き（長調の5音）の旋律を、篠笛・三味線・琴に似せたファミコン風の音と矩形波で鳴らし、
+# 長調の和音の進行（I・IV・V・vi など）のはずむベースとうら拍の和音、祭りの太鼓（大太鼓・締太鼓・鉦・拍子木）を合わせる。
+# 夜は夜まつり、夕方は盆おどり、雨は雨あがり（運営者のことば「落ち着いた感じではなく、明るく西尾らしい bgm」）。旋律は compose_jp() が作る。
 # 題名は、ゲームの名所・名物・祭り（spots.json などにあるもの）の名前に曲調の言葉をつけたもの。どれもオリジナルの曲で、
 # その祭りや土地で実際に演奏される音楽ではない。昼60曲・朝10曲・夕方10曲・夜10曲・雨10曲。22kHz・48kbps のモノラル（1曲 200KB くらい）
 JP_SCALE = {'yo': [0, 2, 4, 7, 9], 'minyo': [0, 3, 5, 7, 10], 'ritsu': [0, 2, 5, 7, 9], 'miyako': [0, 1, 5, 7, 8]}
@@ -450,10 +451,11 @@ class JSong(Song):
         self.buf += w * (0.5 + 0.5 * np.sin(2 * np.pi * t / (self.spb * 8))) * vol * 4
 
 
-def compose_jp(scale, seed, lo, hi, rhythms, bars=16, ornament=0.0, tonic=None):
+def compose_jp(scale, seed, lo, hi, rhythms, bars=16, ornament=0.0, tonic=None, chords=None):
     """日本の音階の旋律（16小節）。4小節の句を A・A'・B・A に並べる。動きはとなりの音へ（ときどき跳ぶ）。
     句の終わりは「核音」（主音・4度・5度）でのばし、最後は主音で終わる。ornament：前打音（となりの上の音を短く）をつける割合。
-    tonic：主音（MIDI の音の高さ。音域の下限 lo とは別。省くと lo を主音にする）"""
+    tonic：主音（MIDI の音の高さ。音域の下限 lo とは別。省くと lo を主音にする）
+    chords：16小節ぶんの和音の音（主音からの半音の数の集合）。あれば、小節の頭と句の終わりの音を和音の音にする（明るい伴奏に合う旋律）"""
     rng = np.random.default_rng(seed)
     lo_m, hi_m = midi(lo), midi(hi)
     t0 = lo_m if tonic is None else tonic
@@ -475,26 +477,37 @@ def compose_jp(scale, seed, lo, hi, rhythms, bars=16, ornament=0.0, tonic=None):
         cur[0] = k
         return pitches[k]
 
-    def phrase(final=False):
-        """4小節（小節ごとの音の並びのリスト）。4小節目の終わりは核音（最後の句は主音）でのばす"""
+    def chord_ix(bar):
+        if not chords:
+            return None
+        ix = [k for k, m in enumerate(pitches) if (m - t0) % 12 in chords[bar]]
+        return ix or None
+
+    def phrase(p0, final=False):
+        """4小節（小節ごとの音の並びのリスト）。4小節目の終わりは核音（最後の句は主音）でのばす。p0：はじめの小節の番号"""
         bars_ = []
         for b in range(4):
             r = rhythms[int(rng.integers(len(rhythms)))]
+            ci = chord_ix(p0 + b)
             out = []
-            if b == 3:
-                for d in r[:-1]: out.append((name(step()), d))
-                out.append((name(land(tonic_ix if final else nucl_ix)), r[-1]))
-            else:
-                for d in r: out.append((name(step()), d))
+            for k, d in enumerate(r):
+                last = b == 3 and k == len(r) - 1
+                if last:
+                    m = land(tonic_ix if final else (ci or nucl_ix))
+                elif ci and (k == 0 or d >= 1.5):   # 小節の頭と長い音は和音の音
+                    m = land(ci) if rng.random() < .85 else step()
+                else:
+                    m = step()
+                out.append((name(m), d))
             bars_.append(out)
         return bars_
 
-    a = phrase()
+    a = phrase(0)
     cur[0] = len(pitches) // 2
-    a2 = a[:2] + phrase()[2:]                          # A'：はじめの2小節は A と同じ、あとの2小節を変える
-    b = phrase()
+    a2 = a[:2] + phrase(4)[2:]                         # A'：はじめの2小節は A と同じ、あとの2小節を変える
+    b = phrase(8)
     cur[0] = len(pitches) // 2
-    fixed = [x for bar in a + a2 + b + phrase(final=True) for x in bar]
+    fixed = [x for bar in a + a2 + b + phrase(12, final=True) for x in bar]
     assert abs(sum(d for _, d in fixed) - 64) < 1e-9
     if ornament:                                       # 前打音：のばす音の前に、となりの上の音を短く
         orn = []
@@ -515,19 +528,22 @@ JR = {   # 曲調のリズム（1小節＝4拍）
     'slow': [[2, 2], [3, 1], [4], [2, 1, 1], [1, 1, 2]],
     'quick': [[.5] * 8, [.5, .5, 1, .5, .5, 1], [.25, .25, .5, 1, 1, 1], [.5, .5, .5, .5, 1, 1], [1, .5, .5, 1, 1]],
 }
-# 曲調：テンポの幅・音階の候補・旋律の楽器・リズム・前打音・題名の言葉
+# 曲調：テンポの幅・旋律の楽器・リズム・前打音・題名の言葉。どれも明るい曲（ヨナ抜きの長調の旋律に、長調の和音の伴奏）
 JSTYLE = {
-    'hayashi': ((128, 146), ['yo', 'minyo'], fue, 'lively', .25, 'まつり気分'),
-    'ondo': ((104, 118), ['yo', 'minyo'], fue, 'ondo', .2, 'おどり'),
-    'chatsumi': ((96, 112), ['yo', 'ritsu'], fue, 'even', .15, 'さんぽ'),
-    'minyo': ((100, 124), ['minyo', 'yo'], shamisen, 'lively', 0, 'うた'),
-    'umi': ((76, 92), ['yo', 'ritsu'], fue, 'slow', .2, 'の波'),
-    'hayabiki': ((150, 168), ['minyo'], shamisen, 'quick', 0, 'かけあし'),
-    'asa': ((92, 108), ['ritsu', 'yo'], fue, 'even', .1, 'の朝'),
-    'koto': ((72, 92), ['miyako', 'ritsu'], koto, 'even', 0, 'の夕ぐれ'),
-    'yoru': ((60, 76), ['miyako', 'minyo'], shaku, 'slow', 0, 'の夜'),
-    'ame': ((70, 86), ['miyako'], koto, 'even', 0, 'の雨'),
+    'hayashi': ((136, 152), fue, 'lively', .25, 'ばやし'),          # 祭りのはやし（大太鼓・締太鼓・鉦）
+    'ondo': ((118, 130), shamisen, 'ondo', 0, 'おどり'),             # 音頭（ドン・ドドン、拍子木、手拍子）
+    'chatsumi': ((122, 136), fue, 'even', .15, 'さんぽ'),            # 茶摘みの道をあるく行進
+    'umi': ((116, 128), fue, 'lively', .2, 'の風'),                  # 三河湾の海風（波の音と、はずむリズム）
+    'hayabiki': ((152, 168), shamisen, 'quick', 0, 'かけあし'),      # 早弾き
+    'asa': ((118, 130), fue, 'even', .1, 'の朝'),                    # 朝（鳥の声）
+    'bon': ((114, 126), shamisen, 'ondo', 0, 'のぼんおどり'),        # 夕方の盆おどり
+    'yomatsuri': ((126, 140), fue, 'lively', .2, 'の夜まつり'),      # 夜まつり（一色大提灯・鳥羽の火祭り のような夏の夜の祭り）
+    'ameagari': ((114, 126), koto, 'even', 0, 'の雨あがり'),         # 雨あがり（琴の分散音と、小さな雨つぶ）
 }
+# 和音の進行（主音からの半音の数と、長三和音 M・短三和音 m）。4小節ずつ。最後の句は主音の和音で終わる
+CH = {'I': (0, 'M'), 'ii': (2, 'm'), 'iii': (4, 'm'), 'IV': (5, 'M'), 'V': (7, 'M'), 'vi': (9, 'm')}
+PROG_A = [['I', 'IV', 'V', 'I'], ['I', 'vi', 'IV', 'V'], ['I', 'V', 'vi', 'IV'], ['IV', 'V', 'iii', 'vi'], ['I', 'IV', 'I', 'V']]
+PROG_END = [['IV', 'V', 'I', 'I'], ['vi', 'IV', 'V', 'I'], ['ii', 'V', 'I', 'I'], ['IV', 'V', 'iii', 'I']]
 # 題名につかう西尾の名所・名物・祭り（ゲームの spots.json・名物の説明にあるもの）。曲調に合うものだけを組みあわせる
 MOTIF = {
     'umi': ['三河湾', '佐久島', '一色の港', '宮崎海岸', '大浦海岸', 'トンボロ干潟', '幡豆', 'カモメ', 'あさり', '吉良温泉', '寺津', '平坂'],
@@ -537,74 +553,85 @@ MOTIF = {
     'shizen': ['八ツ面山', '雲母', '矢作川', '黄金堤', '三ヶ根', '平原の滝', 'あじさい', '茶畑', 'トンボロ干潟', '佐久島'],
 }
 JMOTIF = {'hayashi': ['matsuri', 'machi'], 'ondo': ['matsuri', 'machi', 'umi'], 'chatsumi': ['cha', 'shizen', 'machi'],
-          'minyo': ['machi', 'umi', 'cha', 'matsuri'], 'umi': ['umi'], 'hayabiki': ['matsuri', 'machi', 'umi'],
-          'asa': ['cha', 'shizen', 'machi'], 'koto': ['machi', 'shizen'], 'yoru': ['machi', 'shizen', 'umi'], 'ame': ['shizen', 'machi', 'cha']}
-JMOOD = {'day': ['hayashi'] * 12 + ['ondo'] * 12 + ['chatsumi'] * 12 + ['minyo'] * 12 + ['umi'] * 6 + ['hayabiki'] * 6,
-         'morning': ['asa'] * 6 + ['chatsumi'] * 4, 'evening': ['koto'] * 6 + ['umi'] * 4, 'night': ['yoru'] * 7 + ['koto'] * 3, 'rain': ['ame'] * 10}
-JMOOD_WORD = {'morning': 'の朝', 'evening': 'の夕ぐれ', 'night': 'の夜', 'rain': 'の雨'}
+          'umi': ['umi'], 'hayabiki': ['matsuri', 'machi', 'umi'], 'asa': ['cha', 'shizen', 'machi'], 'bon': ['matsuri', 'machi', 'umi'],
+          'yomatsuri': ['matsuri', 'machi'], 'ameagari': ['shizen', 'machi', 'cha']}
+JMOOD = {'day': ['hayashi'] * 14 + ['ondo'] * 12 + ['chatsumi'] * 12 + ['umi'] * 10 + ['hayabiki'] * 12,
+         'morning': ['asa'] * 6 + ['chatsumi'] * 4, 'evening': ['bon'] * 6 + ['ondo'] * 4, 'night': ['yomatsuri'] * 7 + ['hayashi'] * 3,
+         'rain': ['ameagari'] * 10}
+
+
+def triad(root, q):
+    return {root % 12, (root + (4 if q == 'M' else 3)) % 12, (root + 7) % 12}
 
 
 def album_song(i, mood, style, motif):
-    """「西尾の音」の i 曲目（1〜100）を作って mp3 にし、一覧の1行を返す"""
+    """「西尾の音」の i 曲目（1〜100）を作って mp3 にし、一覧の1行を返す。明るい曲：
+    ヨナ抜き（長調の5音）の旋律を、長調の和音の進行（I・IV・V・vi など）に合わせ、はずむベース（根音と5度）と、うら拍の和音、
+    曲調ごとの太鼓（大太鼓・締太鼓・鉦・拍子木・手拍子）で鳴らす。旋律は篠笛・三味線・琴に、ファミコン風の矩形波を重ねてきらきらさせる"""
     rng = np.random.default_rng(7000 + i)
-    (t_lo, t_hi), scales, inst, rk, orn, word = JSTYLE[style]
+    (t_lo, t_hi), inst, rk, orn, word = JSTYLE[style]
     bpm = int(rng.integers(t_lo, t_hi + 1))
-    scale = scales[int(rng.integers(len(scales)))]
     root = int(rng.integers(12))
-    sc = JP_SCALE[scale]
-    base = 72 + root - (12 if root > 5 else 0)        # 旋律の音域（主音から上へ）
-    lo, hi = (name(base - 5), name(base + 12)) if inst in (shaku, koto) else (name(base), name(base + 17))
+    base = 72 + root - (12 if root > 5 else 0)        # 旋律の主音（ここから上へ）
+    pa = PROG_A[int(rng.integers(len(PROG_A)))]
+    pb = PROG_A[int(rng.integers(len(PROG_A)))]
+    pe = PROG_END[int(rng.integers(len(PROG_END)))]
+    prog = pa + pa + pb + pe                          # A・A'・B・A の句に、和音の進行を合わせる
+    chords = [triad(*CH[c]) for c in prog]
+    lo, hi = (name(base - 5), name(base + 12)) if inst is koto else (name(base), name(base + 16))
     s = JSong(bpm, 64)
-    mel = compose_jp(sc, 9000 + i, lo, hi, JR[rk], ornament=orn, tonic=base)   # 音域を下げても、主音は base（伴奏と list.json の調と同じ）
-    vol = {fue: 0.26, koto: 0.34, shamisen: 0.24, shaku: 0.28}[inst]
-    s.line(mel, inst, vol, gate=0.95 if inst in (fue, shaku) else 1.0)
-    if style in ('minyo', 'hayabiki') or (style == 'ondo' and rng.random() < .5):   # 笛が少しおくれて同じ旋律をなぞる（ヘテロフォニー）
-        s.line(mel, fue, 0.08, gate=0.9, start=0.5)
-    tn, fifth = name(base - 24), name(base - 24 + 7)
-    for bar in range(16):                             # 持続音（主音と5度）と、曲調ごとの伴奏
+    mel = compose_jp(JP_SCALE['yo'], 9000 + i, lo, hi, JR[rk], ornament=orn, tonic=base, chords=chords)
+    vol = {fue: 0.24, koto: 0.30, shamisen: 0.22}[inst]
+    s.line(mel, inst, vol, gate=0.95 if inst is fue else 1.0)
+    s.line(mel, square, 0.045, gate=0.7, duty=0.25)   # 同じ旋律を矩形波で重ねる（明るく、きらきら）
+    if inst is shamisen:                              # 三味線の曲は、笛が少しおくれて同じ旋律をなぞる（ヘテロフォニー）
+        s.line(mel, fue, 0.07, gate=0.9, start=0.5)
+    for bar, c in enumerate(prog):                    # 伴奏：はずむベースと、うら拍の和音
         t0 = bar * 4
-        if style in ('yoru', 'ame', 'koto', 'umi'):
-            s.line([(tn, 4)], tri, 0.18, gate=0.98, start=t0)
-        else:
-            s.line([(tn, 2), (fifth, 2)], tri, 0.24, gate=0.9, start=t0)
-        if style in ('chatsumi', 'asa', 'koto', 'umi', 'ame'):   # 琴の分散音（主音・5度・オクターブ）
-            pat = [0, 7, 12, 7] * 2 if style != 'ame' else [0, 7, 12, 14, 12, 7, 5, 7]
-            for k, d in enumerate(pat):
-                s.line([(name(base - 12 + d), .5)], koto, 0.09, start=t0 + k * .5)
-        if style == 'ondo':                           # 三味線のかき鳴らし（主音と5度を1拍目と3拍目のうらに）
-            for k in (0, 1.5, 2, 3.5):
-                for d in (0, 7): s.line([(name(base - 12 + d), .5)], shamisen, 0.06, start=t0 + k)
-    if style == 'hayashi':                            # 祭りのはやし：大太鼓・締太鼓・鉦
-        for b in range(64):
-            if b % 4 in (0, 2): s.taiko(b, 0.5)
-            for k in (0, .5, .75): s.shime(b + k, 0.14)
-            if b % 2 == 1: s.kane(b, 0.05); s.kane(b + .5, 0.035)
-    elif style == 'ondo':                             # 音頭：ドン・ドドン と拍子木
-        for b in range(0, 64, 2):
-            s.taiko(b, 0.5); s.taiko(b + 1, 0.3); s.taiko(b + 1.5, 0.35)
-            s.hyoshigi(b + 1, 0.06)
-    elif style in ('minyo', 'hayabiki'):
-        for b in range(64):
+        r0, q = CH[c]
+        rt = base - 24 + r0 - (12 if r0 > 6 else 0)
+        s.line([(name(rt), 1), (name(rt + 7), .5), (name(rt), .5), (name(rt + 12), 1), (name(rt + 7), 1)], tri, 0.26, gate=0.8, start=t0)
+        notes = sorted(base - 12 + pc for pc in triad(r0, q))   # 主音の1オクターブ下から
+        for k in (0.5, 1.5, 2.5, 3.5):
+            for n_ in notes:
+                s.line([(name(n_), .5)], square, 0.022, gate=0.4, start=t0 + k, duty=0.125)
+        if style in ('chatsumi', 'asa', 'ameagari', 'umi'):   # 琴の分散和音
+            arp = notes + [notes[0] + 12, notes[1] + 12, notes[2] + 12, notes[0] + 24, notes[2] + 12]
+            for k, n_ in enumerate(arp[:8]):
+                s.line([(name(n_), .5)], koto, 0.07, start=t0 + k * .5)
+    for b in range(64):                               # 太鼓（曲調ごと）
+        bar_end = b % 16 == 15
+        if style in ('hayashi', 'yomatsuri'):         # 祭りのはやし：大太鼓・締太鼓・鉦（チャンチキ）
+            if b % 2 == 0: s.taiko(b, 0.5)
+            if b % 4 == 3: s.taiko(b + .5, 0.35)
+            for k in (0, .5, .75): s.shime(b + k, 0.13)
+            if b % 2 == 1: s.kane(b, 0.05); s.kane(b + .5, 0.04)
+            s.noise(b + .5, 0.03, 0.025)
+        elif style == 'hayabiki':
+            s.taiko(b, 0.45)
+            for k in (0, .25, .5, .75): s.shime(b + k, 0.09 if k else 0.14)
+            if b % 2 == 1: s.kane(b + .5, 0.04)
+        elif style in ('ondo', 'bon'):                # 音頭：ドン・ドドン、拍子木、手拍子
+            if b % 2 == 0: s.taiko(b, 0.5)
+            else: s.taiko(b, 0.3); s.taiko(b + .5, 0.36)
+            if b % 2 == 1: s.hyoshigi(b, 0.07); s.noise(b, 0.05, 0.05, color=3)
+        else:                                         # 行進：大太鼓は1・3拍、締太鼓は2・4拍、うら拍に小さなシャカ
             if b % 2 == 0: s.taiko(b, 0.42)
-            s.shime(b + .5, 0.12)
-            if style == 'hayabiki': s.shime(b + .25, 0.07); s.shime(b + .75, 0.07)
-    elif style in ('chatsumi', 'asa'):                # 手びょうし
-        for b in range(1, 64, 2): s.hyoshigi(b, 0.05)
-        if style == 'asa':                            # 朝の鳥の声
-            for b in range(0, 64, 8):
-                for k in range(3): s.line([('E7' if k % 2 else 'G7', 0.06)], square, 0.025, gate=.6, start=b + 3 + k * .1, duty=.5)
+            else: s.shime(b, 0.16)
+            s.noise(b + .5, 0.025, 0.02)
+        if bar_end and style != 'ameagari':           # 4小節ごとのおかず（締太鼓の連打）
+            for k in (0.5, 0.625, 0.75, 0.875): s.shime(b + k, 0.1)
+    if style == 'asa':                                # 朝の鳥の声
+        for b in range(0, 64, 8):
+            for k in range(3): s.line([('E7' if k % 2 else 'G7', 0.06)], square, 0.025, gate=.6, start=b + 3 + k * .1, duty=.5)
     elif style == 'umi':
-        s.waves(64, 0.045, seed=i)
-    elif style == 'yoru':                             # 虫の声
-        for b in range(64):
-            if rng.random() < 0.3:
-                for k in range(3): s.line([('E7' if b % 2 else 'D#7', 0.05)], square, 0.02, gate=0.6, start=b + 0.25 + k * 0.08, duty=0.5)
-    elif style == 'ame':                              # 雨つぶ
-        for k in range(64 * 6): s.noise(k / 6 + rng.uniform(0, 0.1), 0.015, rng.uniform(0.01, 0.035))
+        s.waves(64, 0.03, seed=i)
+    elif style == 'ameagari':                         # 雨あがり：はじめの4小節だけ小さな雨つぶ
+        for k in range(16 * 4): s.noise(k / 4 + rng.uniform(0, 0.1), 0.012, rng.uniform(0.008, 0.02))
     f = f'{i:03d}'
     save(os.path.join('s', f), s.buf / max(1.0, np.abs(s.buf).max() / 0.9), small=True)
-    return {'f': f, 't': motif + (JMOOD_WORD.get(mood) or word), 'm': mood, 'style': style, 'bpm': bpm,
-            'key': KEYJ[root] + 'の' + JP_SCALE_J[scale]}
+    return {'f': f, 't': motif + word, 'm': mood, 'style': style, 'bpm': bpm,
+            'key': KEYJ[root] + '長調のヨナ抜き'}
 
 
 def album_plan():
@@ -617,7 +644,9 @@ def album_plan():
             pool = sorted({m for g in JMOTIF[style] for m in MOTIF[g]})
             while True:
                 m = pool[int(rng.integers(len(pool)))]
-                t = m + (JMOOD_WORD.get(mood) or JSTYLE[style][5])
+                t = m + JSTYLE[style][4]
+                if '祭' in m and 'まつり' in t:   # 「てんてこ祭の夜まつり」のように祭が重なる題名にしない
+                    continue
                 if t not in used: used.add(t); break
             n += 1
             plan.append((n, mood, style, m))

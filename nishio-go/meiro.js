@@ -158,7 +158,8 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 }
 
 /* ---------- 画面 ---------- */
-const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;user-select:none;-webkit-user-select:none;overflow-y:auto;overscroll-behavior:contain}   /* 横向きなど 低い画面では 下のボタンまで スクロールできる */
+const CSS = `.share.over-meiro{z-index:3600}
+#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;user-select:none;-webkit-user-select:none;overflow-y:auto;overscroll-behavior:contain}   /* 横向きなど 低い画面では 下のボタンまで スクロールできる */
 #meiro[hidden]{display:none}
 #meiro .mz-top{width:min(100%,520px);box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 6px;display:flex;align-items:center;gap:8px}
 #meiro .mz-st{font-size:15px;line-height:1.3;flex:1;min-width:0}
@@ -212,6 +213,7 @@ function build() {
     else if (k === 'resume') resume();
     else if (k === 'hint') hint();
     else if (k === 'slow') { st.slow = !st.slow; save(); b.setAttribute('aria-pressed', String(!!st.slow)); }
+    else if (k === 'share') { const sh = $('share'); if (sh) sh.classList.add('over-meiro'); if (game && game.result) root.nishioGo.openShare('meiro', { meiro: Object.assign({ img: ui.cv }, game.result) }); }   // シェアの 窓は めいろの 上に
     else if (k === 'map') { const id = game && game.spot.id; close(); if (id && root.nishioGo && root.nishioGo.focusSpot) { if (root.nishioGo.openTab) root.nishioGo.openTab('map'); root.nishioGo.focusSpot(id); } }   // きろく の 札から 来たときも 地図の タブへ   // ゴールの名所を 歩く地図で
     else if (k === 'list') showList();
     else if (k.startsWith('go:')) startStage(+k.slice(3));
@@ -223,6 +225,8 @@ function build() {
   ui.cv.addEventListener('pointerup', up); ui.cv.addEventListener('pointercancel', up);
   document.addEventListener('keydown', e => {
     if (!ui || ui.el.hidden) return;
+    const sh = $('share');
+    if (sh && !sh.hidden) { if (e.key === 'Escape') sh.hidden = true; return; }   // 📣 シェアの 窓が 上に あるときは、Esc で その窓だけ とじる（ゴールの カードに もどる）
     const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
     if (k) { keys[k] = 1; e.preventDefault(); }
     else if (e.key === 'Escape') close();
@@ -249,6 +253,7 @@ function open(n) {
 function close() {
   if (!ui) return;
   ui.el.hidden = true;
+  const sh = $('share'); if (sh) sh.classList.remove('over-meiro');
   cancelAnimationFrame(raf); raf = 0;
   if (api) { api.rumble(0); api.pause(false); }
 }
@@ -470,7 +475,8 @@ function win() {
     <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
     ${b.grains.length ? `<p>🌾 金の米つぶ ${g.got.size} / ${b.grains.length}${g.got.size === b.grains.length ? '　ぜんぶ とれた！' : ''}</p>` : ''}
     ${g.spot.desc ? `<p class="mz-memo">📖 ${esc(g.spot.desc.length > 70 ? g.spot.desc.slice(0, 69) + '…' : g.spot.desc)}</p>` : ''}
-    <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button><button type="button" class="sub" data-mz="map">🗺 地図で見る</button></div>`;
+    <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button><button type="button" class="sub" data-mz="map">🗺 地図で見る</button>${root.nishioGo && root.nishioGo.openShare ? '<button type="button" class="sub" data-mz="share">📣 シェア</button>' : ''}</div>`;
+  g.result = { name: g.spot.name, sec, stars, daily: !!g.daily, n: g.n + 1, got: g.got.size, grains: b.grains.length };   // 📣 シェア の 文と 絵に
   g.cardHtml = ui.card.innerHTML;   // いちらんを 見て もどったときに 出しなおす
   // 紙ふぶき：ゴールから ごはんつぶ・星・桜が はじける。音は コトンを 4つ 上がっていく
   const gx = b.goal[0] + 0.5, gy = b.goal[1] + 0.5, cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];

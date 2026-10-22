@@ -459,6 +459,66 @@ async function demFor(cx, cy) {
   return { h, partial };
 }
 
+// いまいる所の まわりの標高（転がる坂・等高線に使う）。タイルを読みこんだら同期で読める（読めていない所は null）
+const demLive = new Map();   // タイル番号 → 標高（Float32Array）・'sea'・読みこみ中は null
+let demGen = 0, heightFn = null;   // demGen：タイルが届くたびに増える（等高線を描きなおす）。heightFn：確かめるときに差しかえる標高
+function demPx(X, Y) {   // ズーム14の画素の標高（m）。海は 0、読めていない・不明は null
+  const tx = Math.floor(X / 256), ty = Math.floor(Y / 256), k = tx * 65536 + ty;
+  if (!demLive.has(k)) {
+    demLive.set(k, null);
+    demTile(tx, ty).then(t => { demLive.set(k, t); demGen++; dirty = true; }, () => setTimeout(() => demLive.delete(k), 30000));   // 取れなければ 30秒後に もう一度
+  }
+  const t = demLive.get(k);
+  if (t == null) return null;
+  if (t === 'sea') return 0;
+  const v = t[(Y - ty * 256) * 256 + (X - tx * 256)];
+  return Number.isNaN(v) ? 0 : v <= UNK ? null : v;
+}
+function heightAt(x, y) {   // マスの座標 → 標高（m。となりの画素となめらかに まぜる）
+  if (heightFn) return heightFn(x, y);
+  const ll = toLatLng(x, y), m = merc(ll.lat, ll.lng), px = m.x - 0.5, py = m.y - 0.5, X = Math.floor(px), Y = Math.floor(py), fx = px - X, fy = py - Y;
+  const a = demPx(X, Y), b = demPx(X + 1, Y), c = demPx(X, Y + 1), d = demPx(X + 1, Y + 1);
+  if (a === null || b === null || c === null || d === null) return null;
+  return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+}
+// 坂：その場所の傾き（となりの マスとの標高の差。勾配 g：1なら 45度）と、下る向きへの加速（マス/秒²）。
+// 西尾の平野は ほとんど平ら（0.1%くらい）で、碧海台地のへり（段丘の崖）や 幡豆の山・八ツ面山で急になる。ゲームでは本当より強く転がす
+const SLOPE_K = 45, SLOPE_MIN = 0.015, SLOPE_MAXA = 12;   // 勾配1あたりの加速・これより ゆるい坂では止まっていられる・いちばん強い加速
+function slopeAt(x, y) {
+  const e = heightAt(x + 1, y), w = heightAt(x - 1, y), so = heightAt(x, y + 1), n = heightAt(x, y - 1);
+  if (e === null || w === null || so === null || n === null) return { x: 0, y: 0, g: 0, known: false };
+  const gx = (e - w) / (2 * TILE_M), gy = (so - n) / (2 * TILE_M), g = Math.hypot(gx, gy);
+  if (g < SLOPE_MIN) return { x: 0, y: 0, g, known: true };
+  const a = Math.min(SLOPE_MAXA, (g - SLOPE_MIN) * SLOPE_K);
+  return { x: -gx / g * a, y: -gy / g * a, g, known: true };
+}
+// 等高線の段：30mまでは 2mごと、150mまでは 10mごと、それより上は 25mごと（平野の小さな高低差も、山の急な坂も 見やすく）
+const contourLvl = h => (h < 30 ? Math.floor(h / 2) : h < 150 ? 15 + Math.floor((h - 30) / 10) : 27 + Math.floor((h - 150) / 25));
+const contourMajor = l => (l < 15 ? l % 5 === 0 : l < 27 ? (l - 15) % 5 === 2 : (l - 27) % 2 === 0);   // 計曲線（10m・50mごと）は こく
+const contour = { key: '', L: null };
+const CONTOUR_COL = ['', 'rgba(92,52,18,.42)', 'rgba(92,52,18,.62)'];   // 1：ふつうの線（1点）・2：計曲線（2点）
+function drawContours(tx0, ty0, tx1, ty1, ox, oy, T) {   // 等高線（半マスごとに標高の段を調べ、段が変わる さかいに 点の線）
+  const S = 2, nx = (tx1 - tx0) * S, ny = (ty1 - ty0) * S, key = `${tx0},${ty0},${tx1},${ty1},${demGen},${heightFn ? 1 : 0}`;
+  if (contour.key !== key) {
+    const L = new Int16Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const x = tx0 + (i + 0.5) / S, y = ty0 + (j + 0.5) / S, c = codeAt(Math.floor(x), Math.floor(y));
+      const h = c === C.A || c === C.B || c === C.X ? null : heightAt(x, y);
+      L[j * nx + i] = h === null ? -1 : contourLvl(Math.max(0, h));
+    }
+    contour.key = key; contour.L = L;
+  }
+  const L = contour.L, u = Math.max(1, Math.round(T / 16)), half = T / S;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const a = L[j * nx + i];
+    if (a < 0) continue;
+    const X = Math.round(ox + (tx0 + i / S) * T), Y = Math.round(oy + (ty0 + j / S) * T);
+    const r = i + 1 < nx ? L[j * nx + i + 1] : -1, d = j + 1 < ny ? L[(j + 1) * nx + i] : -1;
+    if (r >= 0 && r !== a) { const k = contourMajor(Math.max(a, r)) ? 2 : 1; ctx.fillStyle = CONTOUR_COL[k]; ctx.fillRect(Math.round(X + half - u * k / 2), Y, u * k, Math.ceil(half)); }
+    if (d >= 0 && d !== a) { const k = contourMajor(Math.max(a, d)) ? 2 : 1; ctx.fillStyle = CONTOUR_COL[k]; ctx.fillRect(X, Math.round(Y + half - u * k / 2), Math.ceil(half), u * k); }
+  }
+}
+
 /* ---------- 地図データの取得と保存 ---------- */
 const PX_KEY = 'nsg_px7_', PX_IDX = 'nsg_px7_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
@@ -5202,6 +5262,7 @@ function frame(now) {
   }
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
+  if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -5333,6 +5394,12 @@ function frame(now) {
       ctx.fillStyle = fg; ctx.fillText(text, X, by + bh / 2 - (line ? dpr : 0));
     };
     const short = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+    const hm = (me || G.demo) && !driving ? heightAt(cam.x, cam.y) : null;   // いまいる所の標高と坂（お米の右上に小さく）
+    if (hm !== null) {
+      const sl = slopeAt(cam.x, cam.y), pct = Math.round(sl.g * 100);
+      const arrow = pct < 2 ? '' : ' ' + '→↘↓↙←↖↑↗'[((Math.round(Math.atan2(sl.y, sl.x) / (Math.PI / 4)) % 8) + 8) % 8] + pct + '%';
+      board(Math.round(w / 2 + T * 1.9), Math.round(cy - T * 1.5), `⛰${hm < 10 ? hm.toFixed(1) : Math.round(hm)}m${arrow}`, '#fffbe8', '#5a3a18');
+    }
     // 文字を少なく（ふだん）：町名・駅名・お店の看板は出さない（当店の札はスポットの絵の上に出す。いまいる町名は こよみ の札をタップ）
     if (!SIMPLE()) for (const x of towns) {
       if (x[0] < tx0 - 4 || x[0] > tx1 + 4 || x[1] < ty0 - 2 || x[1] > ty1 + 2) continue;
@@ -5852,12 +5919,14 @@ function rollStep(dt) {
   }
   if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) { rp.vx = rp.vy = 0; return; }
   const ax = (tiltG.x + stick.x + rk.right - rk.left), ay = (tiltG.y + stick.y + rk.down - rk.up);
-  const push = Math.hypot(ax, ay);
-  rp.vx += Math.max(-1, Math.min(1, ax)) * ROLL_ACC * dt; rp.vy += Math.max(-1, Math.min(1, ay)) * ROLL_ACC * dt;
+  const sl = slopeAt(rp.x, rp.y), sa = Math.hypot(sl.x, sl.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
+  const push = Math.hypot(ax, ay) + sa;
+  rp.vx += (Math.max(-1, Math.min(1, ax)) * ROLL_ACC + sl.x) * dt; rp.vy += (Math.max(-1, Math.min(1, ay)) * ROLL_ACC + sl.y) * dt;
   const drag = Math.max(0, 1 - ROLL_DRAG * groundAt(rp.x, rp.y).drag * dt);   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
   rp.vx *= drag; rp.vy *= drag;
   const sp = Math.hypot(rp.vx, rp.vy);
-  if (sp > ROLL_MAX) { rp.vx *= ROLL_MAX / sp; rp.vy *= ROLL_MAX / sp; }
+  const vmax = ROLL_MAX * (1 + 0.35 * Math.min(1, sa / ROLL_ACC));   // 下り坂では いつもより速くなる
+  if (sp > vmax) { rp.vx *= vmax / sp; rp.vy *= vmax / sp; }
   if (sp < 0.02 && push < 0.15) { rp.vx = rp.vy = 0; return; }
   const R = 0.3;   // つぶの大きさ（マス）
   const nx = rp.x + rp.vx * dt;
@@ -6317,7 +6386,7 @@ try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, spin: roll.spin, h: roll.h, ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, setRoll, mapCovered, sightBusy,
+window.nishioPixel = { critterSprite: id => critterSprites[id], critterStep, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

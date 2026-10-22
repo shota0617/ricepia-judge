@@ -1859,18 +1859,19 @@ const carSprites = { up: sprite(CAR_UP) };
 carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(CAR_UP))); carSprites.left = sprite(rotCW(rotCW(rotCW(CAR_UP))));
 // ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする（Blender の人の絵が読めたら、それに描きかえる）
 const heroMarkerStyle = document.createElement('style');
-// 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：16×16 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。
+// 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：24×24 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。歩く地図には 1.5マスで描く（ドットの大きさは ほかの絵と同じ）。
 // 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
 const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
 const roll = { d: 0, last: null };
 (() => {
   const img = new Image();
   img.onload = () => {
+    const N = img.height / 2;   // 1コマの大きさ
     const cut = (i, r, flip) => {
-      const c = document.createElement('canvas'); c.width = c.height = 16;
+      const c = document.createElement('canvas'); c.width = c.height = N;
       const x = c.getContext('2d');
-      if (flip) { x.translate(16, 0); x.scale(-1, 1); }
-      x.drawImage(img, i * 16, r * 16, 16, 16, 0, 0, 16, 16);
+      if (flip) { x.translate(N, 0); x.scale(-1, 1); }
+      x.drawImage(img, i * N, r * N, N, N, 0, 0, N, N);
       return c;
     };
     for (let i = 0; i < 8; i++) {
@@ -5231,8 +5232,9 @@ function frame(now) {
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
   else if ((me || G.demo) && riceSprites.ready) {   // お米（影をつけて、転がった道のりで回す）
-    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(w / 2 - T * 0.32), Math.round(cy + T * 0.12), Math.round(T * 0.64), Math.max(2, Math.round(T / 8)));
-    ctx.drawImage(riceFrame(), Math.round(w / 2 - T / 2), Math.round(cy - T * 0.6), T, T);
+    const img = riceFrame(), sz = dotSize(img, T);
+    ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(Math.round(w / 2 - T * 0.36), Math.round(cy + T * 0.22), Math.round(T * 0.72), Math.max(2, Math.round(T / 8)));
+    ctx.drawImage(img, Math.round(w / 2 - sz / 2), Math.round(cy + T * 0.4 - sz), sz, sz);
   } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
   if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える

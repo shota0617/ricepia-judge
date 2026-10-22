@@ -121,9 +121,10 @@
     </div>
     <div class="how">
       <b>本物の耕し方</b><br>
-      ・ロータリー耕うんは 時速 2〜3km くらいでゆっくり。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
-      ・まず田んぼのまん中を<b>往復</b>して耕し、両はしの枕地（まくらじ）は残しておく。最後に<b>外周を 2〜3 周</b>して仕上げる<br>
-      ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない
+      ・エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
+      ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
+      ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
+      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽集まってくる
     </div>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -1118,16 +1119,24 @@ function laySomeTracks(working) {
 
 // ---- シラサギ（耕しているとうしろについてきて、土から出た虫をついばむ） ----
 const BIRDS = (() => {
-  const white = new THREE.MeshLambertMaterial({ color: 0xf6f6f2 }), yellow = new THREE.MeshLambertMaterial({ color: 0xe8b400 }), black = new THREE.MeshLambertMaterial({ color: 0x1b1b1b });
-  function make() {
+  // 耕していると十数羽が集まってくる（掘り起こされたミミズや虫をねらう）。ダイサギ・コサギ（小さく、くちばしが黒い）・アオサギ（灰色で大きい）
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const KIND = {
+    dai: { body: lam(0xf6f6f2), neck: lam(0xf6f6f2), beak: lam(0xe8b400), leg: lam(0x1b1b1b), s: 1 },
+    ko: { body: lam(0xf8f8f6), neck: lam(0xf8f8f6), beak: lam(0x1b1b1b), leg: lam(0x2a2a22), s: 0.72 },
+    ao: { body: lam(0x8a9199), neck: lam(0xcfd2d5), beak: lam(0xc99a2e), leg: lam(0x6e6040), s: 1.15 }
+  };
+  function make(kind) {
+    const { body: white, neck: neckM, beak: yellow, leg: black } = KIND[kind];
     const b = new THREE.Group();
+    b.scale.setScalar(KIND[kind].s * (0.93 + Math.random() * 0.14));
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), white);
     body.scale.set(0.75, 0.75, 1.6); body.position.y = 0.42; b.add(body);
     const neck = new THREE.Group(); neck.position.set(0, 0.47, 0.13); b.add(neck);
-    const n1 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.26, 6), white);
+    const n1 = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.26, 6), neckM);
     n1.position.set(0, 0.11, 0.03); n1.rotation.x = 0.35; neck.add(n1);
     const head = new THREE.Group(); head.position.set(0, 0.24, 0.07); neck.add(head);
-    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), white));
+    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.04, 8, 6), neckM));
     const beak = new THREE.Mesh(new THREE.ConeGeometry(0.014, 0.12, 6), yellow);
     beak.rotation.x = Math.PI / 2; beak.position.z = 0.08; head.add(beak);
     const legs = [];
@@ -1148,7 +1157,7 @@ const BIRDS = (() => {
     return b;
   }
   const list = [];
-  for (let k = 0; k < (MOBILE ? 4 : 6); k++) { const b = make(); b.visible = false; scene.add(b); list.push(b); }
+  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : k % 3 === 1 ? 'ko' : 'dai'); b.visible = false; scene.add(b); list.push(b); }
   let workT = 0;
   function update(dt, working) {
     workT = working && Math.abs(S.v) > 0.2 ? workT + dt : Math.max(0, workT - dt * 0.2);
@@ -1156,7 +1165,7 @@ const BIRDS = (() => {
     list.forEach((b, k) => {
       const u = b.userData;
       u.t += dt;
-      const want = workT > 4 + k * 3;            // 耕しはじめて少しずつ集まってくる
+      const want = workT > 3 + k * 2.2;          // 耕しはじめて少しずつ集まってくる
       if (!b.visible && want) {                  // 遠くから飛んでくる
         const a = Math.random() * 6.28;
         b.position.set(S.x + Math.cos(a) * 40, 9, S.z + Math.sin(a) * 40);
@@ -1166,7 +1175,7 @@ const BIRDS = (() => {
       // うしろの耕した所のどこかをめざす
       if (u.t > 2.5 || u.state === 'fly' && Math.random() < 0.01) {
         u.t = Math.random();
-        const lx = (Math.random() - 0.5) * 5, lz = ROTARY_Z - 2.5 - Math.random() * 6;
+        const lx = (Math.random() - 0.5) * 4, lz = ROTARY_Z - 1.6 - Math.random() * 4.5;   // ロータリーのすぐうしろ（出てきた虫をねらう）
         u.tx = S.x + lx * c + lz * s; u.tz = S.z - lx * s + lz * c;
       }
       const dx = u.tx - b.position.x, dz = u.tz - b.position.z, d = Math.hypot(dx, dz);
@@ -1186,7 +1195,8 @@ const BIRDS = (() => {
         u.wings.forEach(w => { w.visible = false; });
         const walking = d > 0.15;
         if (walking) {
-          b.position.x += dx / d * 0.5 * dt; b.position.z += dz / d * 0.5 * dt;
+          const ws = Math.min(1.0, 0.45 + d * 0.25);   // 遅れると早足で追いかける
+          b.position.x += dx / d * ws * dt; b.position.z += dz / d * ws * dt;
           b.rotation.y += ((Math.atan2(dx, dz) - b.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 4);
         }
         const step = Math.sin(u.t * 9);
@@ -1434,7 +1444,7 @@ function drawMonitor(pct) {
   for (let k = 0; k < 4; k++) { g.fillRect(392, 52 + k * 58, 108, 46); }
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
   ['直進 ' + (ASSIST.on ? (ASSIST.active ? (S.x - ASSIST.line >= 0 ? '左' : '右') + Math.abs((S.x - ASSIST.line) * 100).toFixed(0) + 'cm' : '入') : '切'),
-    (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO 入' : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+    (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO ' + Math.round(engineRpm(performance.now() / 1000) * 540 / 2500 / 10) * 10 : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
 const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -1488,7 +1498,7 @@ function updateSound() {
 // エンジンの回転数：アイドル 900、走ると上がる。耕すとき（PTO 入）は 2300 くらいに上げて、土の重さで少し下がる
 function engineRpm(t) {
   const load = (key.fwd || key.back ? 1 : 0), work = S.rotDown && S.rotPos < 0.1;
-  let rpm = work ? 2300 - 120 * Math.min(1, Math.abs(S.v) / 0.8) + 40 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
+  let rpm = work ? 2500 - 90 * Math.min(1, Math.abs(S.v) / 0.8) + 30 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
   if (S.crank > 0.6) rpm = 160 + 70 * Math.sin(t * 34);
   rpm += 900 * (S.flare || 0);
   return rpm;

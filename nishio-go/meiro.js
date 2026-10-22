@@ -161,7 +161,7 @@ function build() {
     <div class="mz-bezel"><div class="mz-glass"><canvas aria-label="迷路の盤"></canvas><div class="mz-load">めいろを つくっています…</div></div></div>
     <div class="mz-clear" hidden><div class="mz-card"></div></div>
     <p class="mz-hint">📱 スマホを 傾けて、お米を 🏁 まで ころがそう（パソコンは 矢印キー・盤を なぞっても）。<br/>黒い穴と 水に おちると スタートに もどるよ</p>
-    <div class="mz-btns"><button type="button" class="sub" data-mz="retry">↺ やりなおし</button><button type="button" class="sub" data-mz="list">めいろ の いちらん</button></div>`;
+    <div class="mz-btns"><button type="button" class="sub" data-mz="retry">↺ やりなおし</button><button type="button" class="sub" data-mz="hint">💡 ヒント</button><button type="button" class="sub" data-mz="list">いちらん</button></div>`;
   document.body.appendChild(el);
   ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'), bezel: el.querySelector('.mz-bezel'),
     load: el.querySelector('.mz-load'), clear: el.querySelector('.mz-clear'), card: el.querySelector('.mz-card') };
@@ -174,6 +174,7 @@ function build() {
     else if (k === 'next') startStage(game.n + 1);
     else if (k === 'again') startStage(game.n);
     else if (k === 'resume') resume();
+    else if (k === 'hint') hint();
     else if (k === 'list') showList();
     else if (k.startsWith('go:')) startStage(+k.slice(3));
   });
@@ -255,7 +256,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0;
   ui.clear.hidden = true;
 }
 
@@ -386,7 +387,7 @@ function win() {
   const g = game, b = g.board;
   g.done = true; g.happy = 99;
   const sec = Math.round(g.t * 10) / 10, par = b.len * 0.45 + 3;   // 目やすの時間（道のりから）
-  const stars = g.falls === 0 && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;
+  const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
   const prev = st.best[g.spot.id], newBest = !prev || sec < prev.t;
   st.best[g.spot.id] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   st.stage = Math.max(st.stage, g.n + 1);
@@ -405,6 +406,19 @@ function win() {
   if (navigator.vibrate) try { navigator.vibrate([30, 40, 30, 40, 80]); } catch (e) { /* noop */ }
   clearTimeout(g.cardT);
   g.cardT = setTimeout(() => { if (game === g && g.done) ui.clear.hidden = false; }, 1100);   // 紙ふぶきの あいだに やりなおしたら 出さない
+}
+function hint() {   // いまの マスから ゴールまでの 道すじの 先 8マスを、3秒 点で 見せる
+  const g = game;
+  if (!g || !g.board || g.done || g.fall > 0) return;
+  const b = g.board, d = bfs(b, b.goal), path = [];
+  let x = Math.floor(g.x), y = Math.floor(g.y);
+  for (let k = 0; k < 8 && d[y * b.tw + x] > 1; k++) {
+    let nx = -1, ny = -1, best = d[y * b.tw + x];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const v = pass(b, x, y, dx, dy) ? d[(y + dy) * b.tw + x + dx] : 0; if (v && v < best) { best = v; nx = x + dx; ny = y + dy; } }
+    if (nx < 0) break;
+    x = nx; y = ny; path.push([x, y]);
+  }
+  g.hint = { path, until: performance.now() + 3000 }; g.hints++;
 }
 function resume() {   // いちらんから もどる：とちゅうなら そのまま つづき、ゴールのあとなら 結果の カードへ
   if (!game) return;
@@ -451,6 +465,13 @@ function draw(now) {
   const spr = api.spriteOf(g.spot);
   if (spr) { const s = T * 1.5; x.drawImage(spr, Math.round(gx - s / 2), Math.round(gy - s * 0.95), s, s); }
   flag(x, gx + T * 0.18, gy - T * 0.1, T);
+  if (g.hint && now < g.hint.until) {   // ヒントの 道すじ（白い 点が 順に ぴかぴか）
+    g.hint.path.forEach(([i, j], k) => {
+      const on = Math.floor(now / 120) % 8 === k % 8, r = T * (on ? 0.16 : 0.11);
+      x.fillStyle = '#1a1a1a'; x.beginPath(); x.arc((i + 0.5) * T, (j + 0.5) * T, r + Math.max(1, T / 24), 0, Math.PI * 2); x.fill();
+      x.fillStyle = on ? '#fff59d' : '#ffffff'; x.beginPath(); x.arc((i + 0.5) * T, (j + 0.5) * T, r, 0, Math.PI * 2); x.fill();
+    });
+  }
   for (const p of g.fx || []) {   // 紙ふぶき（点の大きさの 四角。終わりに うすく）
     const q = Math.max(2, Math.round(T / 9));
     x.globalAlpha = Math.max(0, 1 - p.t / p.life); x.fillStyle = '#222'; x.fillRect(Math.round(p.x * T) - 1, Math.round(p.y * T) - 1, q + 2, q + 2);

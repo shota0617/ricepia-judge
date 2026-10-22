@@ -123,7 +123,7 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 }
 
 /* ---------- 画面 ---------- */
-const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;user-select:none;-webkit-user-select:none;overflow-y:auto;overscroll-behavior:contain}   /* 横向きなど 低い画面では 下のボタンまで スクロールできる */
 #meiro[hidden]{display:none}
 #meiro .mz-top{width:min(100%,520px);box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 6px;display:flex;align-items:center;gap:8px}
 #meiro .mz-st{font-size:15px;line-height:1.3;flex:1}
@@ -132,7 +132,7 @@ const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradie
 #meiro .mz-x{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 10px;font:inherit;font-size:14px}
 #meiro .mz-bezel{position:relative;margin:4px auto 0;padding:14px;border-radius:30px;background:linear-gradient(145deg,#7fd8f6,#2fa6dc 45%,#1a7fb6);box-shadow:0 10px 24px rgba(0,0,0,.45),inset 0 3px 0 rgba(255,255,255,.55),inset 0 -4px 0 rgba(0,0,0,.25)}
 #meiro .mz-glass{position:relative;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 0 3px #c9d4da,inset 0 0 18px rgba(0,0,0,.35);background:#ddd}
-#meiro canvas{display:block;image-rendering:pixelated}
+#meiro canvas{display:block;image-rendering:pixelated;touch-action:none}   /* 盤を なぞる あいだは 画面を動かさない */
 #meiro .mz-glass::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:18px;background:linear-gradient(155deg,rgba(255,255,255,.32),rgba(255,255,255,0) 32%,rgba(255,255,255,0) 70%,rgba(255,255,255,.12));box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
 #meiro .mz-hint{font-size:13px;opacity:.9;margin:10px 14px 4px;text-align:center;line-height:1.5}
 #meiro .mz-btns{display:flex;gap:10px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
@@ -255,7 +255,7 @@ function restart() {
 function fit() {
   const b = game.board, dpr = Math.min(root.devicePixelRatio || 1, 3);
   const maxW = Math.min(innerWidth, 520) - 28 - 28, maxH = innerHeight - 190;   // わく と 上下の文字のぶん
-  const css = Math.max(14, Math.floor(Math.min(maxW / b.tw, maxH / b.th)));   // 1マスの大きさ（画面の点）
+  const css = Math.max(6, Math.floor(Math.min(maxW / b.tw, Math.max(120, maxH) / b.th)));   // 1マスの大きさ（画面の点）。横向きの 低い画面でも 盤ぜんたいが 入るように 小さくできる
   const T = Math.max(K, Math.round(css * dpr / K) * K);   // 地図の1マス（T/K 点）が きっちり 入るように
   game.T = T; game.dpr = dpr;
   ui.cv.width = b.tw * T; ui.cv.height = b.th * T;

@@ -100,3 +100,95 @@ function setSteer(a) {            // a > 0 で右へ切る
 - three.js r128 の `GLTFLoader`（headless Chromium）で読み込み、名前・寸法（全長 3.964・全幅 1.85・全高 2.635）・ハンドルの法線・前輪の切れる向きを確認した。
 - 公式「快適性」ページ（運転席の写真）はこのクラウド環境から開けなかったので、諸元の数字と依頼文の部品の説明から形を決めた。写真と見比べて、ちがう所があれば `build_tractor.py` の数字を直す。
 - 公式の説明（検索結果の抜き書き）から入れたもの：前面と両ドアの継ぎ目のない曲面一枚ガラス（ドアは外へ 0.05 ふくらむ）、段差のない足元、大型ルームミラー、右手に集めた主変速・PTO 入/切・作業機昇降・チョイ上げ/チョイ下げ・サブコンレバー。
+
+---
+
+# 田んぼ（field_tanbo.glb）
+
+トラクターを走らせる田んぼとそのまわり。耕す前（切り株と藁の残った灰色がかった土）と、耕したあと（湿った濃い土くれ）の 2 つの土を用意した。
+
+| ファイル | 中身 |
+|---|---|
+| `build_field.py` | 生成スクリプト（bpy 5.2.2。`build_tractor.py` の部品の関数を借りる） |
+| `field_tanbo.glb` | 約 5.3MB・三角形 約 6.8 万・Draco なし。土・草・砂利・コンクリートの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ |
+| `preview_field.png` | 農道から見た田んぼ（半分ほど耕したところ） |
+| `preview_field_driver.png` | 運転席から（左は切り株、右は耕したあと） |
+| `preview_field_ground.png` | ロータリーのうしろ：耕した所と切り株の境目 |
+
+```sh
+bpyenv/bin/python tools/tractor/build_field.py              # 先に build_tractor.py で tractor_yt.glb を作っておく（絵に使う）
+bpyenv/bin/python tools/tractor/build_field.py --no-render  # glb だけ
+```
+
+## 並びと寸法（three.js の座標。原点＝耕す田んぼのまん中の地面）
+
+- 耕す田んぼ：x −15〜15・z −25〜25（30m×50m、18 アール）。面の高さ y＝0（±2cm のわずかな凸凹）。稲の列は z の向き（条間 30cm・株間 約 17.6cm）。
+- 畦：高さ 0.30・下の幅 1.1・上の幅 0.45。草むら（十字の板）つき。
+- 東（+x）：畦 → コンクリートの U 字の用水路（x 15.85〜16.45、水面 y 0.12）→ 砂利の農道（x 16.7〜20.7、y 0.50）→ 電柱と電線 → となりの田んぼ。
+- 進入路：農道から田んぼへ下りる坂（z 18〜22、x 12〜16.9）。用水路はふたの下をくぐる。水口（z −18）と落水口（西、z 20）もある。
+- 西（−x）：畦 → 土の排水路（底 y −0.45）→ となりの田んぼ。
+- まわり：±420m まで田んぼが続く（何枚かは耕してあり、2 枚は水を張ってある）。木立と、520〜900m に山並み。カメラの `far` は 1000 以上、`scene.fog`（150〜900m くらい）を入れると自然。
+- トラクターは `tractor.position.set(x, 0, z)` で田んぼの上に置ける（どちらも原点が地面）。
+
+## 中の並び
+
+```
+Tanbo
+├ Field            耕す前の田んぼ（材質 soil_untilled）
+├ FieldTilled      耕したあとの田んぼを全面に（材質 soil_tilled、3cm 上）。全部耕した見た目に使うか、隠して下の帯の材質の元にする
+├ Levees           畦・土手（grass）
+├ Road             農道・進入路（gravel・grass・concrete_box）
+├ Canal            用水路と排水路の水（concrete・water）
+├ Facilities       水口・落水口・水たまり
+├ GrassTufts       草むら（grass_tuft、アルファで切り抜き）
+├ Neighbors・NeighborsTilled   まわりの田んぼ
+├ Poles・Trees・Hills
+└ StubbleHill      切り株ひと株の型（約 100 三角形・原点＝株の根元）。y −5 にしまってある
+```
+
+- 土・草・砂利には、場所ごとのムラ（湿った所・わだち）を頂点色 `COLOR_0` に入れてある（three は自動で使う）。
+- 水 `water` は半透明（BLEND）。草むら `grass_tuft` は alphaMode MASK。
+
+## 耕した所を出す（おすすめ）
+
+`FieldTilled` を隠し、ロータリーが通った所に帯（四角）を足していく。UV は **(x / 2, −z / 2)**（土の絵が 2m 四方なので、どこに足してもつながる）。材質は `FieldTilled` のものを複製し、**`vertexColors = false`** にする（頂点色の無い形に頂点色の材質を使うと黒くなる）。
+
+```js
+const tilled = gltf.scene.getObjectByName('FieldTilled');
+tilled.visible = false;
+const tilledMat = tilled.material.clone();
+tilledMat.vertexColors = false;
+function addTilled(x0, x1, z0, z1) {          // 田んぼの座標で四角を足す（ロータリーの幅 2.2m ずつ）
+  const y = 0.035, g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute([x0,y,z0, x1,y,z0, x1,y,z1, x0,y,z1], 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([x0/2,-z0/2, x1/2,-z0/2, x1/2,-z1/2, x0/2,-z1/2], 2));
+  g.setIndex([0, 2, 1, 0, 3, 2]);
+  g.computeVertexNormals();
+  scene.add(new THREE.Mesh(g, tilledMat));
+}
+```
+
+## 切り株を並べる
+
+```js
+const hill = gltf.scene.getObjectByName('StubbleHill');
+hill.visible = false;
+const spots = [];
+for (let x = -15 + 0.15; x < 15; x += 0.30)
+  for (let z = -25 + 3 / 34; z < 25; z += 3 / 17) spots.push([x, z]);   // 約 1.4 万株
+const stubble = new THREE.InstancedMesh(hill.geometry, hill.material, spots.length);
+const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+spots.forEach(([x, z], i) => {
+  q.setFromAxisAngle(up, Math.random() * 6.28);
+  stubble.setMatrixAt(i, m.compose(p.set(x, 0, z), q, s.setScalar(0.85 + Math.random() * 0.3)));
+});
+scene.add(stubble);
+// 耕した株は大きさ 0 にして消す：stubble.setMatrixAt(i, zeroMatrix); stubble.instanceMatrix.needsUpdate = true;
+```
+
+（全部で 約 140 万三角形になる。重いときは運転席から 20〜30m の所だけ並べる。遠くは `Field` の絵に切り株の列が描いてある）
+
+## 確かめたこと（田んぼ）
+
+- glTF Validator：エラー 0。警告 9 は「法線の絵に接線が入っていない」というもので、three.js は自分で計算するので問題ない。
+- three.js r128 の `GLTFLoader` で、田んぼ・トラクターをいっしょに読みこみ、上の 2 つのやり方（耕した帯・切り株の InstancedMesh）で表示できることを確認した。

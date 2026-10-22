@@ -665,7 +665,7 @@ document.addEventListener('click', e => {
 /* ---------- 現在地 ---------- */
 let me = null;          // {lat,lng,acc,t}
 let meMarker = null, accCircle = null, spotRing = null;
-let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '';
+let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '', gpsSlow = false;
 let driving = false;   // 操作して移動で、ドット絵の地図の車（軽トラ）に乗っている（pixel.js が切り替える）
 
 function placeMe() {
@@ -686,7 +686,8 @@ function placeMe() {
 function onFix(lat, lng, acc, t) {
   const p = { lat, lng, acc, t };
   me = p;
-  gpsError = '';
+  gpsError = ''; gpsSlow = false;
+  waitDone();
   placeMe();
   if (!$('panel-settings').hidden) renderGpsInfo();
   trackWalk(p);
@@ -711,6 +712,26 @@ function farNotice() {
   track('kira_far', { far });
 }
 
+// 位置を待つ間の まちメモ（ブロックくずしの「読みこみを待つ間も遊べて、できたら『READY』と小さく知らせる。遊んでいる手は止めない」から）：
+// あるいて移動で 位置が届くまで（時間がかかっているときも）、下のパネルに 知っている まちメモの おさらいを 7秒ごとに出す（3つより少なければ 地区の豆知識も）。
+// 位置が届いたら、4秒以上 待たせたときだけ「📍 いまの場所が わかった」と知らせる（はじめから すぐ届いたときは出さない）
+const waitS = { i: -1, timer: null, since: 0 };
+function waitLine() {
+  if (demo || me || (gpsError && !gpsSlow)) { if (waitS.timer) { clearInterval(waitS.timer); waitS.timer = null; } return ''; }   // 位置情報が使えないときは、待っても届かない
+  if (!waitS.since) waitS.since = Date.now();
+  if (!waitS.timer) waitS.timer = setInterval(() => { if (me || demo) { clearInterval(waitS.timer); waitS.timer = null; return; } waitS.i++; refreshNearby(); }, 7000);
+  const pool = factPool(), known = (S.facts || []).filter(k => pool.has(k)), keys = known.length >= 3 ? known : [...known, ...[...pool.keys()].filter(k => /^a:.*:t$/.test(k))];
+  if (!keys.length) return '';
+  if (waitS.i < 0) waitS.i = Math.floor(Math.random() * keys.length);
+  const k = keys[waitS.i % keys.length], t = pool.get(k);
+  return `<small class="wait-fact">${known.includes(k) ? '📖 まちメモの おさらい' : '📖 まめちしき'}：${esc(t.length > 80 ? t.slice(0, 79) + '…' : t)}</small>`;
+}
+function waitDone() {
+  if (waitS.timer) { clearInterval(waitS.timer); waitS.timer = null; }
+  if (waitS.since && !demo && Date.now() - waitS.since >= 4000) toastAfter('📍 いまの場所が わかった！ さんぽを はじめよう');
+  waitS.since = 0;
+}
+
 function startGps() {
   if (!('geolocation' in navigator)) { gpsError = 'この端末・ブラウザは位置情報に対応していません。'; refreshNearby(); return; }
   stopGps();
@@ -719,6 +740,7 @@ function startGps() {
     pos => { if (!demo) onFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp || Date.now()); },
     err => {
       if (!gpsError) track('geo_error', { code: err.code });
+      gpsSlow = err.code === 3;   // 時間切れは、そのまま待てば届くことがある（待つ間の まちメモは続ける）
       gpsError = err.code === 1
         ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「🎮 操作して移動」なら位置情報なしで遊べます）。'
         : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報を取得できませんでした。電波の良い屋外でお試しください。';
@@ -1671,12 +1693,23 @@ const CRITTERS = [
 ];
 const CRITTER_DAILY = 5, CRITTER_PTS = 10, HIGATA = ['f-koromozaki', 'f-tombolo'];
 const WHERE_NAME = { paddy: '田んぼ', water: '水べ', higata: '干潟' };
-function meetCritter(where) {
-  const day = dayState(), m = new Date().getMonth() + 1;
-  if ((day.critters || 0) >= CRITTER_DAILY || !me) return null;
+// いま ここ（田んぼ・水べ）で会える生きもの（季節・干潟の近く）
+function critterPool(where) {
+  const m = new Date().getMonth() + 1;
   const nearIds = where === 'water' ? spots.filter(s => HIGATA.includes(s.id) && dist(me, s) < 1500).map(s => s.id) : [];
   const higata = c => c.where === 'higata' && nearIds.some(id => !c.at || c.at.includes(id));
-  const ok = CRITTERS.filter(c => (c.where === where || higata(c)) && (!c.months || c.months.includes(m)));
+  return CRITTERS.filter(c => (c.where === where || higata(c)) && (!c.months || c.months.includes(m)));
+}
+// のこりの数（pixel.js の critterCount）：いま ここで会えるうち、まだ手帳にない数。その日の出会いが おわっていたら null
+function critterLeft(where) {
+  if ((dayState().critters || 0) >= CRITTER_DAILY || !me) return null;
+  const ok = critterPool(where), book = S.critters || {};
+  return { left: ok.filter(c => !book[c.id]).length, all: ok.length };
+}
+function meetCritter(where) {
+  const day = dayState();
+  if ((day.critters || 0) >= CRITTER_DAILY || !me) return null;
+  const ok = critterPool(where);
   if (!ok.length) return null;
   const book = S.critters || (S.critters = {}), fresh = ok.filter(c => !book[c.id]);
   const pool = fresh.length && Math.random() < 0.6 ? fresh : ok;   // まだ手帳にないものに出会いやすく
@@ -2039,7 +2072,7 @@ function refreshNearby() {
     showRing(null);
     showGuide(null);
     // 位置情報が使えないときは、その場で「操作して遊ぶ」に切り替えられるボタンを出す（ここで閉じられてしまわないように）
-    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'), true);
+    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…' + waitLine()), true);
     return;
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
@@ -3758,7 +3791,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

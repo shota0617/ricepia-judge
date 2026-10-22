@@ -815,8 +815,64 @@ async function walkTo(page, id) {
     const d = nishioGo.state.day || {};
     return { at, watch: d.watch || 0, critters: (d.critters || 0) - c0, ok: d.watch === 1 && (d.critters || 0) === c0 + 1 };
   });
+  // はじめての出会いは かならず・待ちすぎない：まだ1回も会っていなければ 田んぼの25歩目までに、会ったことがあれば 100歩目で かならず出会う（運は いつも外れにしておく）
+  // のこりの数：田んぼに入ると「🌾 田んぼ：まだ会っていない生きもの N」（N は いまの季節に会えて 手帳にない数）
+  R.checks.critterSure = await page.evaluate(() => {
+    const G = nishioGo, P = nishioPixel, C = P.C, st = G.state, day = st.day || (st.day = {});
+    const t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
+    let hit = null, off = null;
+    for (let r = 0; r < 160 && !(hit && off); r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+      const c = P.codeAt(x0 + dx, y0 + dy);
+      if (!hit && (c === C.F || c === C.U)) hit = [x0 + dx, y0 + dy];
+      if (!off && c === C.R && ![[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => [C.F, C.U, C.A].includes(P.codeAt(x0 + dx + a, y0 + dy + b)))) off = [x0 + dx, y0 + dy];
+    }
+    if (!hit || !off) return { ok: true, skipped: 'no-paddy' };
+    const book0 = st.critters, n0 = day.critters, rnd = Math.random;
+    st.critters = {}; day.critters = 0;
+    P.critterStep(off[0], off[1]);   // 田んぼの外から入る
+    const left = G.critterLeft('paddy');
+    Math.random = () => 0.99;
+    let first = 0, told = '';
+    for (let i = 1; i <= 30 && !first; i++) {
+      P.critterStep(hit[0], hit[1]);
+      if (i === 1) told = P.floats().find(f => /田んぼ：まだ会っていない生きもの/.test(f)) || '';
+      if (day.critters === 1) first = i;
+    }
+    let next = 0; for (let i = 1; i <= 120 && !next; i++) { P.critterStep(hit[0], hit[1]); if (day.critters === 2) next = i; }
+    Math.random = rnd;
+    const all = G.critterLeft('paddy');
+    day.critters = 5; const capped = G.critterLeft('paddy');
+    st.critters = Object.assign(book0 || {}, st.critters); day.critters = n0 || 0;
+    return { left, told, first, next, capped, ok: !!left && left.left === left.all && left.all > 0 && told.endsWith(' ' + left.all) && first > 0 && first <= 25 && next === 100 && all.left < left.all && capped === null };
+  });
   R.errors.push(...errors);
   await ctx.close();
+
+  // 位置を待つ間の まちメモ：あるいて移動で 位置が届かない間は、下のパネルに まちメモ（はじめは地区の豆知識）が出て 7秒ごとに かわる。4秒より長く待ったあとに届いたら「📍 いまの場所が わかった」
+  {
+    const w = await newPage(browser);
+    await w.ctx.addInitScript(() => {
+      localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_mode', '"real"');
+      navigator.geolocation.watchPosition = ok => { window.__geo = ok; return 1; }; navigator.geolocation.clearWatch = () => {};
+      window.__toasts = [];
+      document.addEventListener('DOMContentLoaded', () => { const el = document.getElementById('toast'); new MutationObserver(() => window.__toasts.push(el.textContent)).observe(el, { childList: true, characterData: true, subtree: true }); });
+    });
+    await w.page.goto(URL); await w.page.waitForTimeout(2500);
+    const fact = () => w.page.evaluate(() => { const f = document.querySelector('#status .wait-fact'); return f ? f.textContent : ''; });
+    const f1 = await fact(); await shot(w.page, '11-wait-fact'); await w.page.waitForTimeout(7500); const f2 = await fact();
+    await w.page.clock.setFixedTime(new Date(new Date(PLAY_DATE).getTime() + 6000));
+    await w.page.evaluate(([la, lo]) => window.__geo({ coords: { latitude: la, longitude: lo, accuracy: 10 }, timestamp: Date.now() }), STATION);
+    await w.page.waitForTimeout(2500);
+    for (let i = 0; i < 4; i++) {   // ようこそ たからばこ の知らせが先に出たら、閉じたあとに出る
+      if (await w.page.evaluate(() => window.__toasts.some(t => /いまの場所が わかった/.test(t)))) break;
+      await w.page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); });
+      await w.page.waitForTimeout(1500);
+    }
+    const after = await w.page.evaluate(() => ({ fact: !!document.querySelector('#status .wait-fact'), ready: window.__toasts.some(t => /いまの場所が わかった/.test(t)), toasts: window.__toasts.slice(-4), me: !!nishioGo.me, reward: document.getElementById('reward').classList.contains('show') }));
+    R.checks.waitFact = { f1, f2, ...after, ok: !!f1 && !!f2 && f1 !== f2 && !after.fact && after.ready };
+    R.errors.push(...w.errors);
+    await w.ctx.close();
+  }
 
   await browser.close(); server.close();
   // 合格の条件：どれか1つでも外れたら、理由を failures に書いて終了コード1
@@ -842,6 +898,8 @@ async function walkTo(page, id) {
   need(c.kiraFar && c.kiraFar.ok, '遠いほど めずらしい：西尾城跡から 8km をこえても、キラが出やすい知らせが出ない');
   need(c.alley && c.alley.ok, '路地の行き止まり：道が終わるマスに入っても 見つけものが出ない（または 同じマスで2回出る）');
   need(c.sealPick && c.sealPick.ok, 'しるしの2枚：2枚から えらぶ窓が出ない、または えらんだ1枚が キラで入らない');
+  need(c.critterSure && c.critterSure.ok, 'はじめての出会い・のこりの数：まだ会っていないのに25歩で出会わない、100歩で出会わない、または 田んぼに入っても のこりの数が出ない');
+  need(c.waitFact && c.waitFact.ok, '位置を待つ間の まちメモ：位置を待つ間に まちメモが出ない・かわらない、または 届いたあとも残る・届いた知らせが出ない');
   need(c.waterWatch && c.waterWatch.ok, '水べで じっと見る：水の となりで 止まっていても 生きものに出会わない');
   need(c.h100FirstDay === true, 'きょうの100歩たんけん：遊びはじめた日に始まった');
   need(c.h100 && c.h100.ok, 'きょうの100歩たんけん：100歩 歩いても おわらない、または はじめての道の数・自己ベストが残らない');

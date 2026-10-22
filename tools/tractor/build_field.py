@@ -584,6 +584,9 @@ def make_materials():
     mat_flat('stubble', '#b3a466' if SEASON == 'aki' else '#a28f63', 0.85)
     if SEASON == 'aki':
         mat_flat('hikobae', '#4a7a22', 0.85)
+        mat_flat('haze_wood', '#6b5a44', 0.9)                         # はざかけ：古い杭
+        mat_flat('haze_bamboo', '#b9a77a', 0.7)                       # 竹の横木
+        mat_flat('haze_rice', '#b49a50', 0.85)                        # 干している稲の束（金色が少し落ちついた色）
     if SEASON == 'haru':
         mat_flat('weed', '#5c9433', 0.8)                             # スズメノテッポウの葉
         mat_flat('weed_spike', '#a3ad7e', 0.8)                        # 円柱形の穂（白っぽい緑・黄色い葯）                           # 刈り株から伸びた青い芽（ひこばえ）
@@ -898,6 +901,33 @@ def in_track(x, y):
         any(abs(abs(y) - (HY - d)) < 0.24 or abs(abs(x) - (HX - d)) < 0.24 for d in (1.0, 2.2))
 
 
+def haze_row(x, y0, y1, seed):
+    """はざかけ（稲架掛け）ひと列：木の杭（2m おき、両側にななめの支え）に横木をわたし、刈った稲の束を二つに割って掛けて天日で干す
+    （乾くまで 2〜3 週間）。束は横木から両側へ穂を下にして垂れる。高さ 1.3m"""
+    rng = np.random.default_rng(seed)
+    H = 1.32
+    n = int((y1 - y0) / 2.0)
+    for k in range(n + 1):                                             # 杭とななめの支え
+        y = y0 + k * (y1 - y0) / n
+        bt.cyl('haze_wood', 0.035, H + 0.25, (x, y, (H + 0.25) / 2 - 0.05), (rng.uniform(-3, 3), rng.uniform(-3, 3), 0), n=6)
+        for s in (1, -1):
+            bt.pipe('haze_wood', [(x + s * 0.55, y, 0.0), (x, y, H - 0.15)], 0.025, 5)
+    for h in (H, H - 0.55):                                            # 横木（竹）
+        bt.cyl('haze_bamboo', 0.025, y1 - y0, (x, (y0 + y1) / 2, h), (90, 0, 0), n=6)
+    bm = bmesh.new()                                                   # 稲の束（上の横木に 1 段）
+    yb = y0 + 0.05
+    while yb < y1 - 0.08:
+        w = rng.uniform(0.09, 0.13)
+        L = rng.uniform(0.62, 0.78)
+        for s in (1, -1):
+            sp = rng.uniform(0.10, 0.16)
+            q = [bm.verts.new(p) for p in ((x, yb, H + 0.03), (x, yb + w, H + 0.03),
+                                            (x + s * sp, yb + w + rng.uniform(-0.01, 0.02), H - L), (x + s * sp, yb - rng.uniform(-0.01, 0.02), H - L))]
+            bm.faces.new(q)
+        yb += w * rng.uniform(0.82, 0.95)                                  # すき間なく重ねて掛ける
+    new_obj(bm, 'haze_rice', smooth=None, face_up=False)
+
+
 def rice_block(x0, x1, y0, y1, seed):
     """まだ刈っていない実った稲（上の面と、まわりの横の面）。高さ 0.85m くらい"""
     rng = np.random.default_rng(seed)
@@ -997,6 +1027,8 @@ def build_surroundings():
                 grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
             for k, ((x0, x1), (y0, y1)) in enumerate(((W1, MID), (C, S1), (E2, MID), (W2, N1), (E1, S1))):
                 rice_block(x0 + 0.35, x1 - 0.35, y0 + 0.35, y1 - 0.35, 90 + k)
+            for k, dx in enumerate((4.0, 8.0, 12.0)):                    # 南西の刈ったあとの田んぼに、はざかけの列（手で刈った分を天日干し）
+                haze_row(W1[1] - dx, S1[1] - 16.0 + k * 1.5, S1[1] - 3.0, 120 + k)
         else:                                                           # 代かき：どこも水を張り、何枚かは代かき済み・田植え済み
             for x0, x1, y0, y1 in regions:
                 grid('paddy_water', x0, x1, y0, y1, 20.0, 20.0, lambda x, y: PADDY_WATER_Z)

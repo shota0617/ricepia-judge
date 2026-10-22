@@ -1365,6 +1365,7 @@ function nearestChest() {
 }
 function tryChest() {
   if (driving) return;   // 車に乗っている間は開けない（降りると開く）
+  if (rewardBusy()) return;   // ほかの ごほうび（同じ位置の知らせで見つけた 路地の行き止まり など）を上書きしない。閉じたら もう一度 調べる（hideReward）
   // あるいて移動では、チェックインと同じく GPS の誤差が大きいときは開けない（乗り物で移動中でも開ける）
   if (!demo && (!me || me.acc > CFG.maxAccuracy)) return;
   const n = nearestChest();
@@ -2449,6 +2450,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
 function hideReward() {
   clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
   toastQ.splice(0).forEach(toastAfter);   // たまった知らせは、1つずつ順に（つなげて1つにすると長すぎて読めなかった）
+  setTimeout(tryChest, 300);   // ごほうびの間に着いていた たからばこ を開ける
 }
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');

@@ -1724,13 +1724,16 @@ const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
 // 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
 const critterS = { steps: 0, paddy: 0, water: 0, show: null };
-// 路地の行き止まり（NetHack の「通路が ぷつっと終わる所を しらべると 隠し扉が見つかる」）：道（C.R）が その マスで終わっている
-// （となり4マスのうち 道は1つだけ。まわりが まだ読み込んでいない所なら 数えない）
+// 路地の行き止まり（NetHack の「通路が ぷつっと終わる所を しらべると 隠し扉が見つかる」）：道（C.R）が その マスで終わっている。
+// まわり8マスを ひとまわり見て、道が 1かたまり（となり合う2マスまで）だけなら 行き止まり。斜めに描いた道（strokeLine）は 角だけで つながるので、
+// 上下左右だけで数えると 道のとちゅうも 行き止まりに見えてしまう（まわりが まだ読み込んでいない所なら 数えない）
+const RING8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
 function alleyEnd(x, y) {
   if (codeAt(x, y) !== C.R) return false;
-  let n = 0;
-  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const c = codeAt(x + dx, y + dy); if (c === C.X) return false; if (c === C.R || c === C.H) n++; }
-  return n === 1;
+  const on = [];
+  for (const [dx, dy] of RING8) { const c = codeAt(x + dx, y + dy); if (c === C.X) return false; on.push(c === C.R || c === C.H); }
+  const n = on.filter(Boolean).length, groups = on.filter((v, i) => v && !on[(i + 7) % 8]).length;   // ひとまわりで 道が始まる所の数＝かたまりの数
+  return n >= 1 && n <= 2 && groups === 1;
 }
 function critterStep(x, y) {
   if (driving) return;

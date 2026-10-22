@@ -540,7 +540,8 @@ function guideRecord() {
     .filter(x => x.a && x.p.total > 0).map(x => ({ ...x, left: Math.max(0, x.goal - x.p.done) })).sort((a, b) => a.left - b.left)[0];
   const seal = got >= [...ids].length ? (S.cleared ? 'となりの市町のしるしも ぜんぶ そろったね。' : '5つのしるしが そろっとるよ。わしに話しかけてくれりゃあ 殿堂入りだに。')
     : `しるしは ${got}/${[...ids].length}。${near ? (near.left ? `いちばん近いのは ${near.a.name}のしるしで、あと${near.left}か所めぐると もらえるよ。` : `${near.a.name}のしるしは もう もらえるで、${sealBy(near.id) ? sealBy(near.id).name : '地区の人'}に会いに行きりん。`) : ''}`;
-  return `📒 記録しといたよ。つぎの レベル${lv + 1}まで あと${need}pt。${seal}`;
+  const day = dayState(), h = day.h100, left = [h && h.done ? '' : store.get('nsg_first_day', '') === ymd() ? '' : '100歩たんけん', (day.alleys || 0) < ALLEY.daily ? `路地の行き止まり あと${ALLEY.daily - (day.alleys || 0)}か所` : '', (day.watch || 0) < WATCH_DAILY ? '水べで じっと見る' : ''].filter(Boolean);
+  return `📒 記録しといたよ。つぎの レベル${lv + 1}まで あと${need}pt。${seal}${left.length ? `きょうは まだ ${left.join('・')}が のこっとるに。` : 'きょうの お楽しみは ぜんぶ すんだね。'}`;   // 毎日の しくみの のこり
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
 function npcSpot(n) {

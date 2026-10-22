@@ -162,6 +162,7 @@ const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradie
 #meiro .mz-card{background:#fffdf2;color:#2a2a20;border-radius:18px;padding:18px 20px;text-align:center;width:min(86%,340px);max-height:100%;overflow-y:auto;box-sizing:border-box;box-shadow:0 8px 24px rgba(0,0,0,.4)}
 #meiro .mz-card h3{margin:0 0 6px;font-size:24px;color:#d0402a}
 #meiro .mz-card p{margin:6px 0;font-size:15px;line-height:1.5}
+#meiro .mz-card .mz-memo{font-size:13px;color:#4a5040;background:#f1eedd;border-radius:10px;padding:8px 10px;text-align:left}
 #meiro .mz-card .mz-stars{font-size:28px;letter-spacing:4px;color:#f0b020}
 #meiro .mz-card .mz-row{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
 #meiro .mz-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;background:rgba(0,0,0,.35)}
@@ -190,6 +191,7 @@ function build() {
     else if (k === 'again') startStage(game.n);
     else if (k === 'resume') resume();
     else if (k === 'hint') hint();
+    else if (k === 'map') { const id = game && game.spot.id; close(); if (id && root.nishioGo && root.nishioGo.focusSpot) root.nishioGo.focusSpot(id); }   // ゴールの名所を 歩く地図で
     else if (k === 'list') showList();
     else if (k.startsWith('go:')) startStage(+k.slice(3));
   });
@@ -417,7 +419,8 @@ function win() {
     <div class="mz-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
     <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
     ${b.grains.length ? `<p>🌾 金の米つぶ ${g.got.size} / ${b.grains.length}${g.got.size === b.grains.length ? '　ぜんぶ とれた！' : ''}</p>` : ''}
-    <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button></div>`;
+    ${g.spot.desc ? `<p class="mz-memo">📖 ${esc(g.spot.desc.length > 70 ? g.spot.desc.slice(0, 69) + '…' : g.spot.desc)}</p>` : ''}
+    <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button><button type="button" class="sub" data-mz="map">🗺 地図で見る</button></div>`;
   g.cardHtml = ui.card.innerHTML;   // いちらんを 見て もどったときに 出しなおす
   // 紙ふぶき：ゴールから ごはんつぶ・星・桜が はじける。音は コトンを 4つ 上がっていく
   const gx = b.goal[0] + 0.5, gy = b.goal[1] + 0.5, cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];

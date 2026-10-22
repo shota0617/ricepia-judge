@@ -20,6 +20,7 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catc
 
 let api = null, ui = null, game = null, raf = 0;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
+const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
 
 function goalList() {
@@ -162,7 +163,7 @@ function build() {
     <p class="mz-hint">📱 スマホを 傾けて、お米を 🏁 まで ころがそう（パソコンは 矢印キー・盤を なぞっても）。<br/>黒い穴と 水に おちると スタートに もどるよ</p>
     <div class="mz-btns"><button type="button" class="sub" data-mz="retry">↺ やりなおし</button><button type="button" class="sub" data-mz="list">めいろ の いちらん</button></div>`;
   document.body.appendChild(el);
-  ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'),
+  ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'), bezel: el.querySelector('.mz-bezel'),
     load: el.querySelector('.mz-load'), clear: el.querySelector('.mz-clear'), card: el.querySelector('.mz-card') };
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-mz]');
@@ -425,6 +426,11 @@ function tick(now) {
   if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
   draw(now);
   ui.time.textContent = g.t.toFixed(1);
+  // 盤を 傾けて見せる：矢印キー・なぞる で 動かすと、わくごと 少し 傾く（キーホルダーを 傾けたように）。スマホの傾きでは 手の中の 本物が 傾くので 小さく
+  const t = api.tilt(), kx = keys.right - keys.left + drag.x, ky = keys.down - keys.up + drag.y, sx = kx * 5 + t.x * 2, sy = ky * 5 + t.y * 2;
+  g.bx = (g.bx || 0) + (sx - (g.bx || 0)) * Math.min(1, dt * 10); g.by = (g.by || 0) + (sy - (g.by || 0)) * Math.min(1, dt * 10);
+  const tf = !calm && Math.abs(g.bx) + Math.abs(g.by) > 0.05 ? `perspective(900px) rotateX(${(-g.by).toFixed(2)}deg) rotateY(${g.bx.toFixed(2)}deg)` : '';
+  if (ui.bezel.style.transform !== tf) ui.bezel.style.transform = tf;
 }
 function draw(now) {
   const g = game, b = g.board, T = g.T, x = ui.cv.getContext('2d');

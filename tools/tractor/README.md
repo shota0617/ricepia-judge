@@ -175,7 +175,7 @@ const hill = gltf.scene.getObjectByName('StubbleHill');
 hill.visible = false;
 const spots = [];
 for (let x = -15 + 0.15; x < 15; x += 0.30)
-  for (let z = -25 + 3 / 34; z < 25; z += 3 / 17) spots.push([x, z]);   // 約 1.4 万株
+  for (let z = -25 + 3 / 34; z < 25; z += 3 / 17) spots.push([x, z]);   // 約 2.8 万株
 const stubble = new THREE.InstancedMesh(hill.geometry, hill.material, spots.length);
 const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
 spots.forEach(([x, z], i) => {
@@ -186,7 +186,7 @@ scene.add(stubble);
 // 耕した株は大きさ 0 にして消す：stubble.setMatrixAt(i, zeroMatrix); stubble.instanceMatrix.needsUpdate = true;
 ```
 
-（全部で 約 140 万三角形になる。重いときは運転席から 20〜30m の所だけ並べる。遠くは `Field` の絵に切り株の列が描いてある）
+（田んぼ全部で 約 280 万三角形になる。重いときは運転席から 20〜30m の所だけ並べる。遠くは `Field` の絵に切り株の列が描いてある）
 
 ## 確かめたこと（田んぼ）
 

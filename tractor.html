@@ -27,6 +27,7 @@
   .chip b { font-size: 16px; }
   .chip.on { background: rgba(195, 20, 27, .85); }
   .chip.score { background: rgba(31, 77, 43, .82); }
+  .doneMap { display: block; width: 100%; max-width: 300px; margin: 8px auto 0; border-radius: 8px; image-rendering: pixelated; }
   #scorePop { align-self: center; color: #ffd84a; font-size: 14px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.8); opacity: 0; transition: opacity .4s; white-space: nowrap; }
   #bar { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 8px; display: flex; gap: 6px; }
   #bar button, .pad button { border: 0; border-radius: 12px; background: rgba(251, 248, 240, .9); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
@@ -128,13 +129,14 @@
     </div>
     <div class="how">
       <b>本物の耕し方</b><br>
-      ・エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは幅 3.4m のウイングハロー（道では翼を折りたたむ）を PTO 2 速で回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
+      ・耕す深さ（耕深）は、春は 15cm くらい深く、秋起こしは 5cm くらい浅く（藁と土を軽くまぜる）。エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは幅 3.4m のウイングハロー（道では翼を折りたたむ）を PTO 2 速で回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
       ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす（道に泥を落とさない。ゲームでは耕していない固い所を少し走ると落ちる）<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる<br>
-      ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎると減る
+      ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
+      ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
     </div>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -165,6 +167,8 @@ const params = new URLSearchParams(location.search);
 let season = FIELD[params.get('season')] ? params.get('season') : 'haru';
 const SHIRO = season === 'shirokaki';
 const IMPL = SHIRO ? 'ハロー' : 'ロータリー';   // 作業機の呼び名
+// 耕深（cm）：春の田起こしは 15cm くらい深く（根を張らせる）、秋起こしは 5cm くらい浅く藁と土をまぜる、代かきは浅く
+const DEPTH = { haru: 15, aki: 6, shirokaki: 8 }[season];
 const ROTARY_Z = -1.38, TILL_W = SHIRO ? 3.4 : 2.2;   // 代かきは幅 3.4m のウイングハロー（tools/tractor/harrow_yt.glb）
 const TILL_Y = SHIRO ? 0.045 : 0.035;
 
@@ -284,11 +288,11 @@ let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikob
 
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load('harrow_yt.glb', 'h') : null]).then(([t, f, h]) => {
   prog.t = prog.f = 1; showProg();
-  NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形）
   if (h) {                                     // 代かき：ロータリーをウイングハローにつけかえる（原点は同じ）
     const old = t.scene.getObjectByName('Rotary'), hr = h.scene.getObjectByName('Rotary');
     old.parent.add(hr); old.parent.remove(old);
   }
+  NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形。代かきはハロー）
   setupTractor(t.scene);
   setupField(f.scene);
   DRIVER.setup(P.SteeringWheel.parent);
@@ -916,21 +920,26 @@ function addWind(mat, amp) {
 
 // となりの田んぼ（北）で、行ったり来たりして耕しているトラクター
 const NB = (() => {
-  const LANE0 = -13, LANES = 13, Z0 = -73, Z1 = -29, R = 1.1, V = 1.5;
+  // 耕すときは時速 2.8km、はしで回るときは作業機を上げて少し速く（本物のように、旋回のあいだは上げる）
+  const LANE0 = -13, LANES = 13, Z0 = -73, Z1 = -29, R = 1.05, V = 0.78, VT = 1.1;
   const LEN = Z1 - Z0, CYCLE = LEN + Math.PI * R;
   let root = null, parts = {}, s = 0;
   function setup(r) {
     root = r;
     root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; if (o.material.name === 'mirror') o.material = o.material.clone(); } });   // ミラーは自分のトラクターと分ける
-    for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'Rotor', 'Rotary']) parts[n] = root.getObjectByName(n);
-    parts.Rotary.position.y -= 0.06;
+    for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'Rotor', 'Rotary', 'RotorL', 'RotorR']) parts[n] = root.getObjectByName(n);
+    parts.y0 = parts.Rotary.position.y - 0.06; parts.lift = 0;
     scene.add(root);
     s = CYCLE * 4.3;
   }
   function update(dt) {
     if (!root) return;
-    s = (s + V * dt) % (CYCLE * LANES);
-    const k = Math.floor(s / CYCLE), u = s - k * CYCLE, dir = k % 2 ? -1 : 1, x = LANE0 + 2.2 * k;
+    const u0 = s % CYCLE;
+    s = (s + (u0 < LEN ? V : VT) * dt) % (CYCLE * LANES);
+    const k = Math.floor(s / CYCLE), u = s - k * CYCLE, dir = k % 2 ? -1 : 1, x = LANE0 + 2.1 * k;
+    const turning = u > LEN - 0.4 || u < 0.3;     // はしの手前で上げ、回って下ろす
+    parts.lift += Math.max(-dt * 1.2, Math.min(dt * 1.2, (turning ? 1 : 0) - parts.lift));
+    parts.Rotary.position.y = parts.y0 + parts.lift * 0.4;
     let px, pz, yaw;
     if (u < LEN) { px = x; pz = dir > 0 ? Z0 + u : Z1 - u; yaw = dir > 0 ? 0 : Math.PI; }
     else {                                       // はしでぐるっと回って、となりの列へ
@@ -941,7 +950,7 @@ const NB = (() => {
     root.rotation.y = yaw;
     parts.WheelRL.rotation.x = parts.WheelRR.rotation.x = s / R_REAR;
     parts.WheelFL.rotation.x = parts.WheelFR.rotation.x = s / R_FRONT;
-    parts.Rotor.rotation.x += 19 * dt;
+    if (parts.lift < 0.1) for (const n of ['Rotor', 'RotorL', 'RotorR']) if (parts[n]) parts[n].rotation.x += 19 * dt;   // 上げると PTO が止まる
   }
   return { setup, update };
 })();
@@ -1657,7 +1666,7 @@ const TURBID = (() => {
 // 速さ 20：耕すときは時速 2〜3km／まっすぐ 30：長い向きを耕すとき 1m あたりの向きのぶれ／
 // 重ね 25：となりと 10cm ほど重ねるのがよい（重ねすぎはむだ）／旋回 25：ロータリーを上げて回る・畦にぶつけない
 const SCORE = (() => {
-  const st = { tillT: 0, goodT: 0, yawSq: 0, yawM: 0, swept: 0, newA: 0, turnsDown: 0, levee: 0, lastYaw: null, turning: false, leveeT: 0 };
+  const st = { safety: 0, tillT: 0, goodT: 0, yawSq: 0, yawM: 0, swept: 0, newA: 0, turnsDown: 0, levee: 0, lastYaw: null, turning: false, leveeT: 0 };
   let parts = { spd: 20, straight: 30, overlap: 25, turn: 25 }, total = 100, popT = 0;
   function pop(t) {
     const el = $('scorePop');
@@ -1684,13 +1693,24 @@ const SCORE = (() => {
     if (st.leveeT > 0) return;
     st.leveeT = 2; st.levee++; pop('−2　畦にぶつかった');
   }
+  // 安全：トラクターの死亡事故の多くは転倒・転落。坂（田んぼの出入り）は低速で、坂に対してまっすぐ上り下りする
+  let onRamp = false, rampBad = 0;
+  function ramp(dt) {
+    const on = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;
+    if (on && !onRamp) rampBad = 0;
+    if (on && Math.abs(S.v) > 0.3) {
+      if (Math.abs(S.v) > 1.6 && !(rampBad & 1)) { rampBad |= 1; st.safety++; pop('−2　坂は低速で（時速 6km 以下）'); toast('坂は 1 速の低速で（Q で変速を下げる）。トラクターの事故は転倒・転落が多い'); }
+      if (Math.abs(Math.sin(S.yaw)) < 0.9 && !(rampBad & 2)) { rampBad |= 2; st.safety++; pop('−2　坂にはまっすぐ出入りする'); toast('坂は、ななめに通ると横に倒れやすい。坂に対してまっすぐ上り下りする'); }
+    }
+    onRamp = on;
+  }
   function calc() {
     const spd = st.tillT > 2 ? 20 * Math.min(1, st.goodT / st.tillT / 0.9) : 20;
     const rms = st.yawM > 3 ? Math.sqrt(st.yawSq / st.yawM) : 0;      // 1m あたりの向きのぶれ（度）
     const straight = 30 * Math.max(0, Math.min(1, 1 - (rms - 0.6) / 5));
     const dup = st.swept > 8 ? 1 - st.newA / st.swept : 0;            // 重なった割合（10cm 重ねで約 5%）
     const overlap = 25 * Math.max(0, Math.min(1, 1 - (dup - 0.12) / 0.45));
-    const turn = Math.max(0, 25 - 3 * st.turnsDown - 2 * st.levee);
+    const turn = Math.max(0, 25 - 3 * st.turnsDown - 2 * st.levee - 2 * st.safety);
     parts = { spd, straight, overlap, turn, rms, dup };
     total = Math.round(spd + straight + overlap + turn);
     return total;
@@ -1704,11 +1724,51 @@ const SCORE = (() => {
     const tips = [];
     if (parts.straight < 24) tips.push('長い向きはハンドルを小さく、遠くの目印を見てまっすぐ（直進アシスト G も使える）');
     if (parts.overlap < 20) tips.push('となりの耕した跡には 10cm ほど重ねるくらいで。重ねすぎると時間と燃料がむだに');
-    if (parts.turn < 20) tips.push('枕地で回るときはロータリーを上げてから。下げたままだと四隅に土が寄る');
+    if (st.turnsDown + st.levee >= 2) tips.push('枕地で回るときはロータリーを上げてから。下げたままだと四隅に土が寄る');
     if (parts.spd < 16) tips.push('耕すときは時速 2〜3km（歩くくらい）で');
-    return { total, text: `速さ ${r(parts.spd)}/20・まっすぐ ${r(parts.straight)}/30・重ね ${r(parts.overlap)}/25・旋回 ${r(parts.turn)}/25`, tips };
+    if (st.safety) tips.push('田んぼの出入りの坂は、1 速の低速で、坂に対してまっすぐ（転倒・転落を防ぐ）');
+    return { total, text: `速さ ${r(parts.spd)}/20・まっすぐ ${r(parts.straight)}/30・重ね ${r(parts.overlap)}/25・旋回と安全 ${r(parts.turn)}/25`, tips };
   }
-  return { step, levee, calc, update, summary, st, get parts() { return parts; } };
+  return { ramp, step, levee, calc, update, summary, st, get parts() { return parts; } };
+})();
+
+
+// ---- 代かきの浮きわら：かいたあとに浮いた藁くずが、そよ風で少しずつ風下（東）へ流れ、畦ぎわに吹き寄せられる
+// （本物は浅水でかいて藁を埋め、畦ぎわにたまった浮きわらは取りのぞく：富山県・鳥取県の資料）
+const FLOAT = (() => {
+  if (!SHIRO) return { spawn() {}, update() {} };
+  const N = MOBILE ? 500 : 900;
+  const geo = new THREE.PlaneGeometry(1, 1); geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xb59c62, side: THREE.DoubleSide });
+  const mesh = new THREE.InstancedMesh(geo, mat, N);
+  mesh.count = 0; mesh.frustumCulled = false; mesh.renderOrder = 3;
+  scene.add(mesh);
+  const st = []; let next = 0, acc = 0;
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  function spawn(dt) {                            // ハローのうしろから浮いてくる
+    acc += dt * 7 * Math.min(1, Math.abs(S.v) / 0.6);
+    const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
+    while (acc >= 1) {
+      acc -= 1;
+      const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.7 - Math.random() * 0.8;
+      st[next] = { x: S.x + lx * cs + lz * sn, z: S.z - lx * sn + lz * cs, a: Math.random() * 6.28, L: 0.07 + Math.random() * 0.1, vx: 0.03 + Math.random() * 0.04, vz: (Math.random() - 0.5) * 0.02, stuck: false };
+      next = (next + 1) % N; mesh.count = Math.min(N, mesh.count + 1);
+    }
+  }
+  function update(dt) {
+    if (!mesh.count) return;
+    for (let i = 0; i < mesh.count; i++) {
+      const f = st[i];
+      if (!f.stuck) {
+        f.x += f.vx * dt; f.z += f.vz * dt; f.a += (Math.random() - 0.5) * dt * 0.3;
+        if (f.x > HX - 0.18 - Math.random() * 0.25 || Math.abs(f.z) > HZ - 0.2) f.stuck = true;   // 畦ぎわにたまる
+      }
+      m.compose(p.set(f.x, TILL_Y + 0.006, f.z), q.setFromAxisAngle(up, f.a), sc.set(0.006, 1, f.L));
+      mesh.setMatrixAt(i, m);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+  return { spawn, update, mesh, st };
 })();
 
 // ---- 四隅の土の盛り上がり：ロータリーを下げたまま大きく曲がると、ロータリーが横へ振られて外側に土が寄る
@@ -1817,7 +1877,8 @@ const HEAPS = (() => {
 // ---- 運転 ----
 const S = { gear: 3, x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
 const key = { fwd: 0, back: 0, left: 0, right: 0 };
-const MAX_STEER = 0.62;
+// 前輪の切れ角の最大：外側の前輪の通る円が半径 3.3m（ヤンマー YT460A の最小旋回半径）になるように。後輪の車軸のまん中では半径 1.84m
+const MAX_STEER = Math.atan(WB / (Math.sqrt(3.3 * 3.3 - WB * WB) - TRACK));
 function resetPos() {
   Object.assign(S, { x: 11, z: 20.3, yaw: -Math.PI / 2, v: 0, steer: 0 });
   placeRig(0);
@@ -1872,7 +1933,8 @@ function step(dt) {
   // 目標の速さ：主変速（1〜4 速）で決まる。耕すとき（副変速は低速）は 1.6・2.2・2.8・3.6km/h（本物のロータリー耕うんは 2〜3km/h）、
   // 上げて田んぼの中を移動するときは その 3.2 倍、農道は 5 倍。うしろは 3km/h。大きく切っているときは ゆっくり
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
-  const vmax = GEARS[S.gear - 1] * (S.rotDown ? 1 : onRoad ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
+  const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
+  const vmax = GEARS[S.gear - 1] * (S.rotDown ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
   if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に黒い煙
     const before = S.crank;
     S.crank = Math.max(0, S.crank - dt);
@@ -1903,7 +1965,7 @@ function step(dt) {
     setRotBtn(); setAssistBtn();
     toast('旋回連動：ハンドルを切ったので、ロータリーが自動で上がり、直進アシストが切れました。回ったら下げる');
   }
-  S.autoBrake = !S.rotDown && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;
+  S.autoBrake = !S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;   // 道では左右のブレーキを連結するので片ブレーキはきかない
   const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
@@ -1911,7 +1973,7 @@ function step(dt) {
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
   S.rotPos += Math.max(-dt * 1.2, Math.min(dt * 1.2, (S.rotDown ? 0 : 1) - S.rotPos));
-  P.Rotary.position.y = P.rotY0 - 0.06 + S.rotPos * 0.42;
+  P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
   P.Rotor.rotation.x += (working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 8 : 0) * dt;
@@ -1926,6 +1988,7 @@ function step(dt) {
   if (S.v > 0.05) STREAK.add(working); else if (!working) STREAK.add(false);
   HEAPS.work(dt, working);
   MUDDROP.step(dt, onRoad && !(S.x > 11.5 && S.x < 17 && S.z > 17.8 && S.z < 22.2));   // 進入路の坂はまだ田んぼの土
+  if (SHIRO && working && Math.abs(S.v) > 0.05) FLOAT.spawn(dt);
   if (SHIRO && working && Math.abs(S.v) > 0.05) {   // ロータリーのうしろ（両はし寄り）から濁りが出る
     const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
     for (const lx of [-TILL_W / 2, 0, TILL_W / 2]) {
@@ -1941,11 +2004,16 @@ function step(dt) {
       if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL)) || 0;
     }
   }
-  if (S.started && !S.done) SCORE.step(dt, working, newCells);
+  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); }
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
-  P.SteerFL.rotation.y = P.SteerFR.rotation.y = -S.steer;
+  {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
+    const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);
+    const inner = Math.min(0.96, Math.atan(WB / Math.max(0.2, R - TRACK))), outer = Math.atan(WB / (R + TRACK));   // 内側は 55° まで（見た目）
+    P.SteerFL.rotation.y = -sg * (sg > 0 ? outer : inner);   // 右へ切る（steer＞0）と右（FR）が内側
+    P.SteerFR.rotation.y = -sg * (sg > 0 ? inner : outer);
+  }
   P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
@@ -2053,7 +2121,7 @@ function drawMonitor(pct) {
   g.fillStyle = '#071019'; g.fillRect(0, 0, 512, 314);
   g.fillStyle = '#12202e'; g.fillRect(0, 0, 512, 34);
   g.fillStyle = '#d9e6f2'; g.font = 'bold 18px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
-  g.fillText('直進アシスト  耕うん ' + pct + '%', 12, 18);
+  g.fillText('直進アシスト  耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm', 12, 18);
   // 田んぼの地図（長い向きを横に）。耕した所は緑
   const mg = monitor.map.getContext('2d'), img = mg.createImageData(NZ, NX);
   for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
@@ -2208,7 +2276,8 @@ function updateSound() {
 // エンジンの回転数：アイドル 900、走ると上がる。耕すとき（PTO 入）は 2300 くらいに上げて、土の重さで少し下がる
 function engineRpm(t) {
   const load = (key.fwd || key.back ? 1 : 0), work = S.rotDown && S.rotPos < 0.1;
-  let rpm = work ? 2500 - 90 * Math.min(1, Math.abs(S.v) / 0.8) + 30 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
+  // 深く・速く耕すほど重くて回転が落ちる
+  let rpm = work ? 2500 - (40 + DEPTH * 5) * Math.min(1, Math.abs(S.v) / 0.8) * (0.8 + 0.08 * S.gear) + 30 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
   if (S.crank > 0.6) rpm = 160 + 70 * Math.sin(t * 34);
   rpm += 900 * (S.flare || 0);
   return rpm;
@@ -2320,14 +2389,32 @@ $('bStart').onclick = () => {
   if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
-  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）でロータリーを下げて、前へ走ろう'); }, 1800); }
+  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800); }
   if (!soundOn && !audio) toggleSound();
 };
 function finish() {
   S.done = true;
   $('doneText').textContent = `${{ haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season]}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
   const sm = SCORE.summary();
-  $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '');
+  // 耕し残し：田んぼの中（畦から 50cm より内）で耕していないます目を数え、地図に赤でしるす（本物は外周を 3 周して、やり残しなく仕上げる）
+  let left = 0;
+  const cv = document.createElement('canvas'), W = 300, H = Math.round(W * NX / NZ);
+  cv.width = W; cv.height = H; cv.className = 'doneMap';
+  const g = cv.getContext('2d'), img = g.createImageData(NZ, NX);
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+    const t = tilledMask[i * NZ + j], x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL;
+    const inner = Math.abs(x) < HX - 0.5 && Math.abs(z) < HZ - 0.5;
+    if (!t && inner) left++;
+    const o = ((NX - 1 - i) * NZ + j) * 4;
+    const c = t ? [92, 70, 50] : inner ? [214, 58, 46] : [150, 140, 110];
+    img.data.set([...c, 255], o);
+  }
+  const tmp = document.createElement('canvas'); tmp.width = NZ; tmp.height = NX; tmp.getContext('2d').putImageData(img, 0, 0);
+  g.imageSmoothingEnabled = false; g.drawImage(tmp, 0, 0, W, H);
+  const area = left * CELL * CELL;
+  $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
+    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span><br>`;
+  $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');
 }
 
@@ -2376,6 +2463,7 @@ function frame(now) {
   TURBID.update(dt);
   MIST.update(dt);
   FARMER.update(dt);
+  FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
   TR.flush();
   STREAK.flush();
@@ -2384,7 +2472,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

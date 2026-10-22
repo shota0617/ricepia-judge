@@ -128,6 +128,7 @@ const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradie
 #meiro .mz-top{width:min(100%,520px);box-sizing:border-box;padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 6px;display:flex;align-items:center;gap:8px}
 #meiro .mz-st{font-size:15px;line-height:1.3;flex:1}
 #meiro .mz-st b{font-size:18px;color:#ffe680}
+#meiro .mz-st small{font-size:12px;opacity:.85}
 #meiro .mz-time{font-size:20px;font-variant-numeric:tabular-nums;min-width:4.5em;text-align:right}
 #meiro .mz-x{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 10px;font:inherit;font-size:14px}
 #meiro .mz-bezel{position:relative;margin:4px auto 0;padding:14px;border-radius:30px;background:linear-gradient(145deg,#7fd8f6,#2fa6dc 45%,#1a7fb6);box-shadow:0 10px 24px rgba(0,0,0,.45),inset 0 3px 0 rgba(255,255,255,.55),inset 0 -4px 0 rgba(0,0,0,.25)}
@@ -213,7 +214,8 @@ function startStage(n) {
   game = { n, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
   ui.load.hidden = false; ui.load.textContent = 'めいろを つくっています…';
-  ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>　🏁 ${esc(game.spot.name)}`;
+  const bt = st.best[n];
+  ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>　🏁 ${esc(game.spot.name)}${bt ? `<br/><small>ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}`;
   ui.time.textContent = '0.0';
   const g = game;
   waitChunks(g.spot, () => {
@@ -247,7 +249,7 @@ function waitChunks(spot, done) {
 function restart() {
   const b = game.board;
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0;
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = [];
   ui.clear.hidden = true;
 }
 
@@ -343,7 +345,8 @@ function step(dt) {
   }
   g.th += (g.vx >= 0 ? 1 : -1) * Math.hypot(g.vx, g.vy) * dt / 0.32;   // 転がった道のりで 回す
   g.sq = Math.max(0, g.sq - dt * 1.5); g.ouch = Math.max(0, g.ouch - dt); g.happy = Math.max(0, g.happy - dt);
-  g.t += dt;
+  if (!g.go && Math.hypot(g.vx, g.vy) > 0.3) g.go = true;   // タイムは お米が 動きだしてから（盤を 見て 考える あいだは 数えない）
+  if (g.go) g.t += dt;
   const ci = Math.floor(g.x), cj = Math.floor(g.y), idx = cj * b.tw + ci;
   const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && Math.hypot(g.x - ci - 0.5, g.y - cj - 0.5) < 0.3;
   if (water || inHole) {   // おちた
@@ -369,7 +372,12 @@ function win() {
     <div class="mz-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
     <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
     <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button></div>`;
-  setTimeout(() => { if (game === g) ui.clear.hidden = false; }, 700);
+  // 紙ふぶき：ゴールから ごはんつぶ・星・桜が はじける。音は コトンを 4つ 上がっていく
+  const gx = b.goal[0] + 0.5, gy = b.goal[1] + 0.5, cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];
+  for (let i = 0; i < 46; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 5; g.fx.push({ x: gx, y: gy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 3, c: cols[i % cols.length], t: 0, life: 0.9 + Math.random() * 0.7 }); }
+  [0, 110, 220, 380].forEach((ms, i) => setTimeout(() => api.koto(0.5 + i * 0.15, i === 3), ms));
+  if (navigator.vibrate) try { navigator.vibrate([30, 40, 30, 40, 80]); } catch (e) { /* noop */ }
+  setTimeout(() => { if (game === g) ui.clear.hidden = false; }, 1100);
 }
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
@@ -389,6 +397,8 @@ function tick(now) {
   g.last = now;
   if (!g.done && ui.clear.hidden) { g.acc = (g.acc || 0) + dt; while (g.acc >= 1 / 120) { g.acc -= 1 / 120; step(1 / 120); if (g.done) break; } }
   else if (g.done) { g.happy = 99; g.th += dt * 3; }
+  for (const p of g.fx || []) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.vx *= 1 - dt * 1.5; }
+  if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
   draw(now);
   ui.time.textContent = g.t.toFixed(1);
 }
@@ -403,6 +413,12 @@ function draw(now) {
   const spr = api.spriteOf(g.spot);
   if (spr) { const s = T * 1.5; x.drawImage(spr, Math.round(gx - s / 2), Math.round(gy - s * 0.95), s, s); }
   flag(x, gx + T * 0.18, gy - T * 0.1, T);
+  for (const p of g.fx || []) {   // 紙ふぶき（点の大きさの 四角。終わりに うすく）
+    const q = Math.max(2, Math.round(T / 9));
+    x.globalAlpha = Math.max(0, 1 - p.t / p.life); x.fillStyle = '#222'; x.fillRect(Math.round(p.x * T) - 1, Math.round(p.y * T) - 1, q + 2, q + 2);
+    x.fillStyle = p.c; x.fillRect(Math.round(p.x * T), Math.round(p.y * T), q, q);
+  }
+  x.globalAlpha = 1;
   // お米
   const u = T * 0.028;
   if (g.fall > 0) {   // おちていく：くるくる 小さく

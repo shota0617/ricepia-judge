@@ -1735,6 +1735,20 @@ function alleyEnd(x, y) {
   const n = on.filter(Boolean).length, groups = on.filter((v, i) => v && !on[(i + 7) % 8]).length;   // ひとまわりで 道が始まる所の数＝かたまりの数
   return n >= 1 && n <= 2 && groups === 1;
 }
+// まだ しらべていない 行き止まりに、小さく はねる「？」（地形が「ここを しらべて」と教える）。見分けは まとまりを読みこむまで覚えておく（nbrCache）。
+// その日の分（1日3回）を見つけおわったら出さない
+function alleyHint(tx, ty) {
+  const k = `alley:${tx},${ty}`;
+  let e = nbrCache.get(k);
+  if (e === undefined) { e = alleyEnd(tx, ty); nbrCache.set(k, e); }
+  return e && !!G.alleyOpen && G.alleyOpen(tx, ty);
+}
+function drawAlleyHint(X, Y, T, now) {
+  const u = Math.max(1, Math.round(T / 16)), bob = Math.round(Math.sin(now / 260) * u);
+  ctx.font = `bold ${Math.round(T * 0.55)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000'; for (const [dx, dy] of [[-u, 0], [u, 0], [0, -u], [0, u]]) ctx.fillText('?', X + T / 2 + dx, Y + T * 0.42 + bob + dy);
+  ctx.fillStyle = '#ffe066'; ctx.fillText('?', X + T / 2, Y + T * 0.42 + bob);
+}
 function critterStep(x, y) {
   if (driving) return;
   if (alleyEnd(x, y) && G.alleyFind && !mapCovered() && !sightBusy() && G.alleyFind(x, y, toLatLng(x + 0.5, y + 0.5))) { floatText('🔍 路地の奥'); dirty = true; }
@@ -5597,6 +5611,7 @@ function frame(now) {
     else drawDeco(code, tx, ty, X, Y, T, now);
     if (sh !== 2 && !gbOn) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }   // 土地の高さの影（ゲームボーイの4色では つけない）
     if (TRAIL.map.size && trailHas(tx, ty)) drawFoot(code, tx, ty, X, Y, T);   // 歩いた道の足あと
+    if (code === C.R && alleyHint(tx, ty)) drawAlleyHint(X, Y, T, now);   // まだ しらべていない 路地の行き止まり
     if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
       const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
       const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);

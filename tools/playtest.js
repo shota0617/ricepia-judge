@@ -748,6 +748,14 @@ async function walkTo(page, id) {
     let at = null;
     for (let r = 1; r < 80 && !at; r++) for (let dy = -r; dy <= r && !at; dy++) for (let dx = -r; dx <= r; dx++) if ((Math.abs(dx) === r || Math.abs(dy) === r) && P.alleyEnd(x0 + dx, y0 + dy)) { at = [x0 + dx, y0 + dy]; break; }
     if (!at) return { ok: true, skipped: 'no-alley' };
+    window.__alleyAt = at;
+    const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [at[0] + dx, at[1] + dy]).find(([x, y]) => !P.blockedAt(x + 0.5, y + 0.5) && !P.alleyEnd(x, y)) || at;
+    const ll = P.toLatLng(nb[0] + 0.5, nb[1] + 0.5); nishioGo.moveTo(ll.lat, ll.lng); P.centerOnMe && P.centerOnMe();   // となりのマスへ（タップの移動なので 足あとは つかない）
+    return { at, pending: true };
+  });
+  await page.waitForTimeout(800); await shot(page, '10-alley');   // まだ しらべていない 行き止まりに「？」
+  if (R.checks.alley.pending) R.checks.alley = await page.evaluate(async () => {
+    const rw = document.getElementById('reward'), P = nishioPixel, at = window.__alleyAt;
     const p0 = nishioGo.state.points;
     P.critterStep(at[0], at[1]); await new Promise(r => setTimeout(r, 600));
     const shown = rw.classList.contains('show') && /路地の行き止まり/.test(rw.innerText), got = nishioGo.state.points - p0;

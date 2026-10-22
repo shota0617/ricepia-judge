@@ -405,14 +405,14 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 .px-info .area-card .src{font-size:11px;color:#bbb}
 .px-info .area-card .src a{color:#9cd2ff;margin-right:4px}
 .intro-box h1.logo{margin:4px 0 2px;line-height:0;position:relative;padding-bottom:32px}
-/* タイトルロゴの下を、主人公のお米（art/rice.png の1行め：右へ でんぐり返る 32×32 の8コマ）が ころころ転がっていく。
+/* タイトルロゴの下を、主人公のお米（art/rice-logo.png の1行め：右へ でんぐり返る 32×32 の8コマ。歩く地図と同じ 丸く見える描き方で tools/make-rice-logo.js が作る）が ころころ転がっていく。
    左の外から出てきて右の外へ消え、少し間をおいて くり返す。コマは steps(8) で切りかえ、ドットはぼかさない */
 .logo-lane{position:absolute;left:0;right:0;bottom:0;height:56px;overflow:hidden;pointer-events:none}
 /* お米：左から転がってきて、まん中で止まり、こっちを向いて ぴょんぴょん はねて、ハートを出して、また右へ転がっていく（8秒でくり返す） */
 .logo-rice{position:absolute;bottom:0;left:-36px;width:32px;height:32px;animation:logo-rice-go 8s linear infinite}
-.logo-rice::before,.logo-rice::after{content:"";position:absolute;inset:0;background:url(art/rice.png) 0 0/256px 64px no-repeat;image-rendering:pixelated}
+.logo-rice::before,.logo-rice::after{content:"";position:absolute;inset:0;background:url(art/rice-logo.png) 0 0/256px 64px no-repeat;image-rendering:pixelated}
 .logo-rice::before{animation:logo-rice-spin .9s steps(8) infinite,logo-rice-roll 8s steps(1) infinite}   /* 転がるコマ */
-.logo-rice::after{opacity:0;transform-origin:50% 100%;animation:logo-rice-hop 8s linear infinite}         /* 止まって、ほっぺの赤い笑顔（1コマめ） */
+.logo-rice::after{opacity:0;transform-origin:50% 100%;background-position:0 -32px;animation:logo-rice-hop 8s linear infinite}         /* 止まって、口をあけた にっこり顔（2行めの1コマめ） */
 .logo-heart{position:absolute;left:9px;top:-10px;width:14px;height:12px;opacity:0;image-rendering:pixelated;animation:logo-rice-heart 8s linear infinite;filter:drop-shadow(1px 0 #6b2a40) drop-shadow(-1px 0 #6b2a40) drop-shadow(0 1px #6b2a40) drop-shadow(0 -1px #6b2a40);
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 6' shape-rendering='crispEdges'%3E%3Cpath fill='%23ff6f9f' d='M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z'/%3E%3Cpath fill='%23ffd3e2' d='M1 1h1v1H1z'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
 @keyframes logo-rice-go{0%{left:-36px}34%,62%{left:calc(50% - 16px)}92%,100%{left:calc(100% + 4px)}}

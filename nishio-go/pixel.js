@@ -2336,7 +2336,8 @@ function setHeroMarker() {
   sheet.width = 64; sheet.height = 32;
   const x = sheet.getContext('2d');
   x.imageSmoothingEnabled = false;
-  (riceSprites.ready ? [riceSprites.right[0], riceSprites.right[1]] : heroSprites.down).forEach((c, i) => x.drawImage(c, i * 32, 0, 32, 32));   // ふつうの地図の主人公も お米
+  if (riceBall.cv) [-0.14, 0.14].forEach((th, i) => drawRiceBall(i * 32 + 16, 17.5, 1, th, 1, 1, 0, x, false));   // ふつうの地図の主人公も お米（丸く見える描き方で、左右に ゆらゆら）
+  else (riceSprites.ready ? [riceSprites.right[0], riceSprites.right[1]] : heroSprites.down).forEach((c, i) => x.drawImage(c, i * 32, 0, 32, 32));
   const st = heroMarkerStyle;
   st.textContent = `.me,.me.demo{width:32px;height:32px;border:0;border-radius:0;box-shadow:none;background:url(${sheet.toDataURL()}) 0 0/64px 32px no-repeat;image-rendering:pixelated;animation:heroStep .9s steps(1) infinite;filter:drop-shadow(0 2px 1px rgba(0,0,0,.45))}
 @keyframes heroStep{0%{background-position:0 0}50%{background-position:-32px 0}}
@@ -5270,7 +5271,8 @@ const SPOT_KIND = { park: 'park', historic: 'historic', view: 'view', sight: 'si
 // 特大の絵（96×96）は6マスで描く（ドットの細かさをマスとそろえる）。となりの名所と6マスあかない所は、ふつうの絵にする（小さく縮めて描かない）
 const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null);
 // 名所の絵の大きさ：絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）。当店（32×32 の絵）だけは ちょうど2倍の4マスで、遠くからも見つけやすく
-const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop ? 2 : 1);
+// 当店の特大の絵は 12×12 マス（絵を 128×128 に細かくしても、大きさは 96×96 のときと同じ。そのままの倍だと 16 マスで画面より大きくなる）
+const spotSize = (s, spr, T) => (s.shop && spr[0].width > 48 ? 12 * T : dotSize(spr[0], T) * (s.shop ? 2 : 1));
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
@@ -6073,7 +6075,8 @@ function drawWorld(now, w, h, dpr) {
   const me = G.me;
   if (me) {
     const p = llToW(me.lat, me.lng), hs = Math.max(T * 2, 18 * dpr);
-    ctx.drawImage(riceSprites.ready ? riceSprites.right[f] : heroSprites.down[f], Math.round(ox + p.x * T - hs / 2), Math.round(oy + p.y * T - hs * 0.8), hs, hs);
+    if (riceBall.cv) drawRiceBall(ox + p.x * T, oy + p.y * T - hs * 0.8 + hs * 17.5 / 32, hs / 32, f ? 0.14 : -0.14, 1, 1, 0);   // 歩く地図と同じ 丸いお米（左右に ゆらゆら）
+    else ctx.drawImage(riceSprites.ready ? riceSprites.right[f] : heroSprites.down[f], Math.round(ox + p.x * T - hs / 2), Math.round(oy + p.y * T - hs * 0.8), hs, hs);
   }
   const msg = worldState === 'building' || worldState === 'none' ? 'せかいちずを つくっています…\n（はじめの1回だけ 少し時間がかかります）'
     : worldState === 'fail' ? 'せかいちずを つくれなかった。\nしばらくして もういちど ためしてね。' : '';

@@ -24,6 +24,7 @@ pa.MATS.update({
     'teal': '#2f7f86', 'beige': '#d8c6ae', 'beigeD': '#b8a68e', 'aoJi': '#2a3f9a', 'kiiro': '#f2c200', 'line': '#e8b020',
     'nedan': '#fbfbf6', 'nedanM': '#222222', 'momo': '#f4c8d4', 'kabe': '#cdd5cd', 'tenjo': '#4a5a52', 'dai': '#e8dcc0', 'daiK': '#2a2a2a',
     'pinkF': '#e8a0b4', 'paret': '#b8915a', 'cream': '#f1e08e', 'creamD': '#d8c46c', 'roadG': '#6a6a6a', 'gTreeD': '#3f7f34', 'riceR': '#d8262f', 'riceRD': '#a91c23',
+    'yukaW': '#a87a4a', 'yukaWD': '#7a5432', 'kabeU': '#e6d6b0',
 })
 
 
@@ -221,30 +222,37 @@ def kondo():
 
 def ricepia_uriba():
     """お店のなかの お米の売り場：白い袋（10kg）が段に積まれ、袋ごとに色のちがう札（赤・青・緑・オレンジ）。
-    上の棒に、銘柄ごとの白い値札（上にピンクの見出し）がずらりとさがる。左に紙袋の30kgのお米（ひもでしばった口）。字は描かない"""
-    box('yuka', 'concrete', (1.2, 0.8, 0.02), (0, 0, -0.01))
-    box('kabe', 'kabe', (1.2, 0.02, 0.60), (0, 0.32, 0.30))
+    上の棒に、銘柄ごとの白い値札（上にピンクの見出し）がずらりとさがる。左に紙袋の30kgのお米（ひもでしばった口）。字は描かない
+    - 2026-10-23：白と うすい灰色ばかりで ぼやけて見えたので、床を木の色・壁を うすい黄土色・天井の はりを こい色にし、
+      札と値札の見出しを大きく、値札は壁ぎわに さげて（影が まだらにならないように）、袋のあいだに すきまの影を入れ、5段の明るさで 細い札が消えないようにした。画面いっぱいに寄る"""
+    box('yuka', 'yukaW', (1.2, 0.8, 0.02), (0, 0, -0.01))
+    for i in range(7):   # 床板の すじ
+        box(f'yukaS{i}', 'yukaWD', (1.2, 0.006, 0.021), (0, -0.30 + i * 0.1, -0.01))
+    box('kabe', 'kabeU', (1.2, 0.02, 0.60), (0, 0.32, 0.30))
+    box('habaki', 'yukaWD', (1.2, 0.024, 0.04), (0, 0.31, 0.02))
+    box('hari', 'tenjo', (1.2, 0.04, 0.05), (0, 0.29, 0.585))
     box('dai', 'dai', (0.80, 0.30, 0.04), (0.06, 0.06, 0.02))
     box('daiK', 'daiK', (0.80, 0.004, 0.04), (0.06, -0.092, 0.02))
-    labels = ['labelR', 'labelB', 'labelG', 'labelR', 'labelB']
+    labels = ['labelR', 'labelB', 'labelG', 'labelO', 'labelR']
     for c in range(5):   # 銘柄ごとの袋の山
         x = -0.26 + c * 0.16
         rows = 6 - abs(c - 1) if c < 3 else 5
+        box(f'suki{c}', 'daiK', (0.012, 0.18, rows * 0.036), (x + 0.075, 0.07, 0.04 + rows * 0.018))   # 山と山の すきま（影）
         for k in range(rows):
             box(f'bag{c}{k}', 'kome' if k % 2 else 'komeKage', (0.13, 0.20, 0.032), (x, 0.06, 0.06 + k * 0.036), (0, 0, math.radians(3 if k % 2 else -3)))
-            box(f'lab{c}{k}', labels[c], (0.03, 0.004, 0.02), (x - 0.035, -0.043, 0.06 + k * 0.036))
-            box(f'ao{c}{k}', 'labelB', (0.06, 0.004, 0.006), (x + 0.025, -0.043, 0.065 + k * 0.036))   # 袋の青い印刷
-    cyl('bou', 'hashira', 0.006, 1.0, (0.0, 0.18, 0.50), (0, math.pi / 2, 0), 8)
+            box(f'lab{c}{k}', labels[c], (0.045, 0.004, 0.026), (x - 0.03, -0.043, 0.06 + k * 0.036))
+            box(f'ao{c}{k}', 'labelB', (0.05, 0.004, 0.008), (x + 0.03, -0.043, 0.066 + k * 0.036))   # 袋の青い印刷
+    cyl('bou', 'hashira', 0.006, 1.0, (0.0, 0.295, 0.50), (0, math.pi / 2, 0), 8)
     for i in range(8):   # さがる値札
         x = -0.42 + i * 0.12
-        box(f'mido{i}', 'momo', (0.10, 0.006, 0.05), (x, 0.17, 0.47))
-        box(f'nedan{i}', 'nedan', (0.10, 0.006, 0.07), (x, 0.17, 0.41))
-        box(f'nedanM{i}', 'nedanM', (0.07, 0.007, 0.016), (x, 0.168, 0.41))
+        box(f'mido{i}', 'pinkF', (0.10, 0.006, 0.05), (x, 0.29, 0.47))
+        box(f'nedan{i}', 'nedan', (0.10, 0.006, 0.07), (x, 0.29, 0.41))
+        box(f'nedanM{i}', 'nedanM', (0.07, 0.007, 0.016), (x, 0.286, 0.41))
     for k in range(3):   # 紙袋の30kgのお米
         box(f'kami{k}', 'kamibukuro', (0.16, 0.12, 0.07), (-0.48, -0.08, 0.035 + k * 0.072))
         box(f'kamiL{k}', 'nedan', (0.05, 0.004, 0.03), (-0.47, -0.141, 0.04 + k * 0.072))
         box(f'himo{k}', 'himo', (0.004, 0.122, 0.072), (-0.42, -0.08, 0.035 + k * 0.072))
-    return dict(target=(-0.02, 0.04, 0.22), scale=1.0, el=14, az=-20, size=96)
+    return dict(target=(-0.03, 0.04, 0.27), scale=0.98, el=14, az=-20, size=96, vote=True, bands=5)
 
 
 MODELS = {'ricepia': ricepia, 'kondo': kondo, 'ricepia-uriba': ricepia_uriba}

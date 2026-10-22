@@ -82,7 +82,8 @@ function addDist(d) {   // 転がった道のり（マス）。40マスごとに
   const got = left[hash('koro-get:' + st.n++) % left.length];
   st.u.push(got.id); st.sel = got.id; save(); paint();
   const G = root.nishioGo;
-  if (G && G.toast) G.toast(`🍚 あたらしい転がり方「${got.name}」（${got.no}）！ ${got.motion.desc}（せってい の ずかんで えらべます）`);
+  // 知らせは1行で短く（40マスごとに出るので、3行だと 地図の上が いつも ふさがる）。どう転がるかは ずかんで
+  if (G && G.toast) G.toast(`🍚 転がり方「${got.name}」GET！`);
   if (root.nsgTrack) root.nsgTrack('koro_unlock', { id: got.id + 1, count: st.u.length });
 }
 
@@ -98,9 +99,11 @@ css.textContent = `#koroDex{position:fixed;inset:0;z-index:2000;background:rgba(
 #koroDex .kd-top button,#koroDex .kd-close{border:2px solid #2f5d34;background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:.85rem}
 #koroDex button[aria-pressed=true]{background:#2f5d34;color:#fff}
 #koroDex .kd-grid{overflow:auto;padding:10px 12px 18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
-#koroDex .kd-cell{border:2px solid #d8d0b8;border-radius:12px;background:#fff;padding:6px 6px 8px;font:inherit;font-size:.72rem;line-height:1.35;text-align:left;min-height:64px}
+#koroDex .kd-cell{border:2px solid #d8d0b8;border-radius:12px;background:#fff;padding:6px 6px 8px;font:inherit;font-size:.72rem;line-height:1.35;text-align:left;min-height:100px;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-start}   /* ボタンは 中身の高さで のびないので、絵と2行の名前が入る高さにする */
 #koroDex .kd-cell b{display:block;font-size:.66rem;color:#8a8270}
 #koroDex .kd-cell i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+#koroDex .kd-cell img{display:block;width:48px;height:32px;image-rendering:pixelated;margin:2px 0}
+#koroDex .kd-desc{margin-top:4px;font-size:.8rem;color:#4a5a40}
 #koroDex .kd-cell[aria-pressed=true] b{color:#d8ecd8}
 #koroDex .kd-cell[disabled]{background:#eeeae0;color:#aaa29a;border-style:dashed}
 #koroDex .kd-cell.on{border-color:#2f5d34;box-shadow:0 0 0 2px #2f5d34 inset}
@@ -112,7 +115,7 @@ function build() {
   dex = document.createElement('div');
   dex.id = 'koroDex'; dex.hidden = true;
   dex.setAttribute('role', 'dialog'); dex.setAttribute('aria-modal', 'true'); dex.setAttribute('aria-label', '転がり方ずかん');
-  dex.innerHTML = `<div class="kd"><header><h3>🍚 転がり方ずかん</h3><div class="kd-cnt"></div>
+  dex.innerHTML = `<div class="kd"><header><h3>🍚 転がり方ずかん</h3><div class="kd-cnt"></div><div class="kd-desc"></div>
     <div class="kd-top"><button type="button" data-sel="daily"></button><button type="button" data-sel="none">ふつう</button></div></header>
     <div class="kd-grid"></div><footer><span>転がった道のり 約320mごとに 1つ もらえます</span><button type="button" class="kd-close">とじる</button></footer></div>`;
   dex.addEventListener('click', e => {
@@ -125,6 +128,30 @@ function build() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && dex && !dex.hidden) close(); });
   document.body.appendChild(dex);
 }
+// ずかんの絵（48×32）：お米（歩く地図と同じ 丸く見える描き方）と、うしろに のこる かざりの つぶ。まだのものは 灰色の かげだけ。かざりごとに 1枚つくって とっておく
+const icons = {};
+function icon(t, locked) {
+  const k = locked ? 'x' : t;
+  if (icons[k]) return icons[k];
+  const P = root.nishioPixel;
+  if (!P || !P.drawRice) return '';
+  const c = document.createElement('canvas'); c.width = 48; c.height = 32;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  if (!P.drawRice(x, 33, 17.5, locked ? 0 : 0.35, 0, 'smile')) return '';
+  if (locked) { x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#cfc8b8'; x.fillRect(0, 0, 48, 32); x.globalCompositeOperation = 'source-over'; }
+  else {
+    const tr = TRAILS[t];
+    [[2, 19], [10, 9], [14, 23]].forEach(([ox, oy], i) => {
+      const col = tr.cols[i % tr.cols.length];
+      tr.g.forEach((row, yy) => [...row].forEach((ch, xx) => {
+        if (ch === '.') return;
+        x.fillStyle = ch === 'w' ? '#ffffff' : ch === 'o' ? (tr.dark || col) : col;
+        x.fillRect(ox + xx, oy + yy, 1, 1);
+      }));
+    });
+  }
+  return (icons[k] = c.toDataURL());
+}
 function paint() {
   const row = document.getElementById('koroName');
   const cur = current();
@@ -132,6 +159,7 @@ function paint() {
   if (!dex || dex.hidden) return;
   const today = dailyId();
   dex.querySelector('.kd-cnt').textContent = `あつめた ${st.u.length} / ${N}　いま：${cur ? cur.name : 'ふつう'}`;
+  dex.querySelector('.kd-desc').textContent = cur ? cur.desc : 'いままでの転がり方';   // どう転がるか（スマホでは title が見えないので、いまの転がり方だけ ここに）
   const tb = dex.querySelector('[data-sel=daily]');
   tb.textContent = `☀️ きょうの転がり方（${LIST[today].name}）`;
   tb.setAttribute('aria-pressed', String(st.sel === 'daily'));
@@ -139,9 +167,9 @@ function paint() {
   const curId = cur ? cur.id : -1;
   dex.querySelector('.kd-grid').innerHTML = LIST.map(x => {
     const open = has(x.id) || x.id === today;
-    const col = x.trail.cols[0];
+    const col = x.trail.cols[0], im = icon(x.id % TRAILS.length, !open);   // 絵が まだ描けないときは、色の四角
     return `<button type="button" class="kd-cell${x.id === curId ? ' on' : ''}${x.id === today ? ' today' : ''}" data-id="${x.id}"${open ? '' : ' disabled'} aria-pressed="${x.id === curId}" title="${open ? x.desc : 'まだ'}">
-      <b>${x.no}${x.id === today ? ' ☀️' : ''}</b>${open ? `<i style="background:${col}"></i>${x.name}` : '？？？'}</button>`;
+      <b>${x.no}${x.id === today ? ' ☀️' : ''}</b>${im ? `<img src="${im}" alt=""/>` : ''}${open ? (im ? '' : `<i style="background:${col}"></i>`) + x.name : '？？？'}</button>`;
   }).join('');
 }
 function open() { if (!dex) build(); dex.hidden = false; paint(); const c = dex.querySelector('.kd-close'); if (c) c.focus(); }

@@ -518,7 +518,19 @@ function npcPages(n) {
   const hs = hid && spots.find(x => x.id === hid);
   if (hs) pages.push(`🔍 ${hintSay(n, hs.name)}`);   // この人がくれた、しらべるの手がかり（まだ しらべていないあいだ）
   if (S.parcel && S.parcel.from === n.id) pages.push(`📦 ${S.parcel.toName}に、その${S.parcel.item}を よろしくね。`);   // あずけた おとどけもの（届けるまで）
+  if (n.id === SEAL_BY.nishio) pages.push(guideRecord());   // 西尾城跡のガイドさんは、会うたびに ここまでの記録と「あと いくつ」を教えてくれる
   return pages;
+}
+// ガイドさんの記録（昔のドット絵RPGの、城の王様に話すと「次のレベルまで あと○」と記録してくれる しくみ）：
+// 次のレベルまでの ポイントと、しるしの数・いちばん近い しるしまでの あと何か所。戻ってくるたびに「あと少し」が分かる
+function guideRecord() {
+  const lv = levelOf(S.total), need = needFor(lv + 1) - S.total;
+  const ids = S.cleared ? SEAL_POST : SEAL_MAIN, own = (S.seals || []), got = [...ids].filter(id => own.includes(id)).length;
+  const near = [...ids].filter(id => !own.includes(id)).map(id => ({ id, a: areas.find(x => x.id === id), p: areaProgress(id), goal: sealGoal(id) }))
+    .filter(x => x.a && x.p.total > 0).map(x => ({ ...x, left: Math.max(0, x.goal - x.p.done) })).sort((a, b) => a.left - b.left)[0];
+  const seal = got >= [...ids].length ? (S.cleared ? 'となりの市町のしるしも ぜんぶ そろったね。' : '5つのしるしが そろっとるよ。わしに話しかけてくれりゃあ 殿堂入りだに。')
+    : `しるしは ${got}/${[...ids].length}。${near ? (near.left ? `いちばん近いのは ${near.a.name}のしるしで、あと${near.left}か所めぐると もらえるよ。` : `${near.a.name}のしるしは もう もらえるで、${sealBy(near.id) ? sealBy(near.id).name : '地区の人'}に会いに行きりん。`) : ''}`;
+  return `📒 記録しといたよ。つぎの レベル${lv + 1}まで あと${need}pt。${seal}`;
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
 function npcSpot(n) {

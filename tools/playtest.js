@@ -721,6 +721,16 @@ async function walkTo(page, id) {
   await shot(page, '08-walk-mode');
   await page.click('[data-tab=settings]'); await page.click('.mode-sw [data-mode=demo]'); await page.click('[data-tab=map]'); await page.waitForTimeout(1000);
   R.checks.operatePointsKept = await page.evaluate(() => nishioGo.state.points);
+  // ガイドさんの記録：西尾城跡のガイドさんの話に「📒 記録しといたよ。つぎの レベル○まで あと○pt。しるしは ○/5 …」（2ページ目から読むので、行き先などは変わらない）
+  R.checks.guideRecord = await page.evaluate(async () => {
+    const g = nishioGo.npcs.find(n => n.id === 'castle-guide');
+    if (!g) return { ok: false, why: 'no-guide' };
+    nishioGo.moveTo(g.lat, g.lng); await new Promise(r => setTimeout(r, 400));
+    const html = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (nishioGo.talkNpc(g.id, p) || {}).html || '').join('');
+    const m = html.match(/📒 記録しといたよ。つぎの レベル(\d+)まで あと(\d+)pt。しるしは (\d)\/5/);
+    const st = nishioGo.stats();
+    return { text: m ? html.slice(html.indexOf('📒'), html.indexOf('📒') + 120).replace(/<[^>]+>.*/, '') : html.replace(/<[^>]+>/g, ' ').slice(0, 160), ok: !!m && +m[1] === st.lv + 1 && +m[2] > 0 };
+  });
   R.errors.push(...errors);
   await ctx.close();
 
@@ -744,6 +754,7 @@ async function walkTo(page, id) {
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
+  need(c.guideRecord && c.guideRecord.ok, 'ガイドさんの記録：西尾城跡のガイドさんの話に、つぎのレベルまでの ポイントと しるしの数が出ない');
   need(c.chain && c.chain.ok, 'めぐりの れんさ：30分以内に ちがう名所でチェックインしても れんさが つながらない');
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

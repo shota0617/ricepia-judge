@@ -3128,7 +3128,8 @@ function renderVoiceMe() {
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。world：せかいちず、checkin：チェックイン、levelup：レベルアップ。
    ふだんの曲（歩く地図・ふつうの地図）は、雨なら「雨」、夜（19〜5時）は「夜」、朝（5〜9時）は「朝」、夕方（16〜19時）は「夕方」、
    それ以外は「昼」の曲から、1曲流し終わるたびに次の曲へ（順番は開くたびにまぜる）。その時間の曲が無ければ昼の曲。
-   曲は field・field2（まちかど）・field3（おまつり）・morning・evening・night・rain と、アルバム「西尾の音」100曲（bgm/list.json・bgm/s/）。
+   曲は field・field2（まちかど）・field3（おまつり）・morning・evening・night・rain と、アルバム「西尾の音」100曲（bgm/list.json・bgm/s/。明るい曲）。
+   アルバムが読めたら、朝・夕方・夜・雨は もとの静かな曲を外して アルバムの明るい曲だけにする
    ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
 const sound = (() => {
   const SRC = { checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3', eye: 'nishio-go/bgm/eye.mp3', world: 'nishio-go/bgm/world.mp3' };
@@ -3164,6 +3165,8 @@ const sound = (() => {
   }
   // アルバム100曲の一覧を読んで、時間帯ごとの曲に足す（いま流れている曲は そのまま続ける）
   fetch('nishio-go/bgm/list.json').then(r => (r.ok ? r.json() : [])).then(list => {
+    // アルバムの曲がある時間帯は、もとの静かな朝・夕方・夜・雨の曲を外す（明るい曲だけにする。アルバムが読めないときの代わりには残る）
+    for (const m of ['morning', 'evening', 'night', 'rain']) if (list.some(x => x.m === m)) POOL[m] = POOL[m].filter(k => k !== m);
     for (const x of list) {
       const k = 's' + x.f, m = POOL[x.m] ? x.m : 'day';
       SRC[k] = `nishio-go/bgm/s/${x.f}.mp3`; TITLE[k] = x.t; POOL[m].push(k); FIELD.add(k);

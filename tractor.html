@@ -257,6 +257,7 @@ function setupTractor(root) {
   P.rotY0 = P.Rotary.position.y;
   P.flap0 = P.Flap.rotation.x;
   P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
+  P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
   for (const [n, k] of [['WheelRL', 1], ['WheelRR', 1], ['WheelFL', 1], ['WheelFR', 1], ['Rotary', 0.75]]) {
     P[n].traverse(o => {
       if (!o.isMesh) return;
@@ -515,8 +516,7 @@ const MIRROR = (() => {
     rt = new THREE.WebGLCubeRenderTarget(MOBILE ? 64 : 128, { format: THREE.RGBFormat, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter });
     rt.texture.encoding = THREE.sRGBEncoding;
     cam = new THREE.CubeCamera(0.3, 900, rt);
-    cam.position.set(0, 2.15, -1.05);           // 屋根のうしろのはしの下（キャビンの外）
-    rig.add(cam);
+    scene.add(cam);                              // 向きは回さない（立方体の絵は世界の向きで描く。位置だけトラクターについていく）
     root.traverse(o => {
       if (o.isMesh && o.material.name === 'mirror') meshes.push(o);
       if (o.isMesh && o.material.name === 'mirror' && !mats.includes(o.material)) {
@@ -529,6 +529,8 @@ const MIRROR = (() => {
   function update(dt, inCab) {
     if (!cam || !inCab || (t -= dt) > 0) return;
     t = MOBILE ? 0.35 : 0.15;
+    rig.localToWorld(cam.position.set(0, 2.15, -1.05));   // 屋根のうしろのはしの下（キャビンの外）
+    cam.updateMatrixWorld();
     const sv = stubble && stubble.visible;          // 切り株はミラーの小さな絵には要らない（重いので消して描く）
     if (stubble) stubble.visible = false;
     meshes.forEach(o => { o.visible = false; });     // ミラー自身は描かない（自分の絵を読みながら描くことになる）
@@ -537,6 +539,106 @@ const MIRROR = (() => {
     if (stubble) stubble.visible = sv;
   }
   return { setup, update };
+})();
+
+// ガラスのよごれ：点々のほこり・うすいくもり・下のほうの土ぼこり。前ガラスはワイパーがふいた半円だけきれい
+// （ガラスには UV が無いので、トラクターの中の位置から計算する。前＝+Z・左＝+X・上＝+Y）
+function dustyGlass(m) {
+  m.onBeforeCompile = sh => {
+    sh.vertexShader = 'varying vec3 vObjP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vObjP = position;');
+    sh.fragmentShader = 'varying vec3 vObjP;\n' +
+      'float gH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n' +
+      'float gN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
+      ' return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
+      sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+  vec2 q = abs(vObjP.z) > 0.45 ? vObjP.xy : vObjP.zy;                 // 前後のガラスは xy、横のガラスは zy
+  float haze = gN(q * 5.0) * 0.6 + gN(q * 13.0) * 0.4;
+  float speck = step(0.986, gH(floor(q * 260.0))) * (0.5 + 0.5 * gH(floor(q * 260.0) + 3.1));
+  float low = smoothstep(1.95, 1.42, vObjP.y);                       // 下のほうほど土ぼこり
+  float dust = 0.07 + 0.10 * haze + 0.35 * low * (0.6 + 0.4 * haze) + speck * 0.5;
+  if (vObjP.z > 0.45) {                                               // 前ガラス：ワイパーがふいた半円（根元は左下）
+    float d = length(vec2(vObjP.x - 0.46, vObjP.y - 1.62));
+    float wiped = smoothstep(0.50, 0.47, d) * step(1.60, vObjP.y);
+    dust *= 1.0 - 0.8 * wiped;
+    dust += 0.18 * smoothstep(0.035, 0.0, abs(d - 0.49)) * step(1.6, vObjP.y);   // ふいたふちに たまった すじ
+  }
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.60, 0.54, 0.44), clamp(dust * 1.6, 0.0, 1.0));
+  diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));`);
+  };
+  m.needsUpdate = true;
+}
+
+// 季節の生き物：春と代かきはツバメがトラクターのまわりを低く飛びまわる。秋は赤とんぼが窓の高さでホバリング
+const LIFE = (() => {
+  const list = [];
+  const aki = season === 'aki';
+  const dark = new THREE.MeshLambertMaterial({ color: 0x1a1d2a, side: THREE.DoubleSide });
+  const belly = new THREE.MeshLambertMaterial({ color: 0xe8e2d4 });
+  const red = new THREE.MeshLambertMaterial({ color: 0xc8361c });
+  const wingM = new THREE.MeshBasicMaterial({ color: 0xdfe8ee, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false });
+  function swallow() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.03, 8, 6), dark); body.scale.set(0.8, 0.7, 2.6); g.add(body);
+    const b2 = new THREE.Mesh(new THREE.SphereGeometry(0.022, 8, 6), belly); b2.scale.set(0.9, 0.6, 2.0); b2.position.set(0, -0.008, 0.01); g.add(b2);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.12, 3), dark); tail.rotation.x = -Math.PI / 2; tail.scale.x = 1.6; tail.position.z = -0.1; g.add(tail);
+    const wings = [];
+    for (const s of [1, -1]) {                   // 細長くとがった つばさ
+      const sh = new THREE.Shape(); sh.moveTo(0, 0.02); sh.lineTo(s * 0.17, -0.03); sh.lineTo(s * 0.06, -0.05); sh.lineTo(0, -0.03);
+      const w = new THREE.Mesh(new THREE.ShapeGeometry(sh), dark); w.rotation.x = Math.PI / 2; g.add(w); wings.push(w);
+    }
+    g.userData = { wings, a: Math.random() * 6.3, r: 4 + Math.random() * 5, h: 0.6 + Math.random() * 1.2, w: (Math.random() < 0.5 ? 1 : -1) * (1.3 + Math.random() * 0.6), ph: Math.random() * 9 };
+    return g;
+  }
+  function dragonfly() {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.0025, 0.045, 6), red); body.rotation.x = Math.PI / 2; body.position.z = -0.012; g.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.006, 6, 5), red); head.position.z = 0.014; g.add(head);
+    const wings = [];
+    for (const z of [0.006, -0.002]) for (const s of [1, -1]) {
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.034, 0.008), wingM); w.position.set(s * 0.017, 0.002, z); w.rotation.x = -Math.PI / 2; g.add(w); wings.push(w);
+    }
+    g.scale.setScalar(1.6);
+    g.userData = { wings, p: new THREE.Vector3(), tgt: new THREE.Vector3(), t: 0, ph: Math.random() * 9 };
+    return g;
+  }
+  const n = aki ? (MOBILE ? 6 : 10) : (MOBILE ? 3 : 5);
+  for (let k = 0; k < n; k++) { const o = aki ? dragonfly() : swallow(); o.traverse(m => { if (m.isMesh) m.castShadow = false; }); scene.add(o); list.push(o); }
+  const up = new THREE.Vector3(0, 1, 0), tmp = new THREE.Vector3();
+  function update(dt) {
+    const tt = performance.now() / 1000, cx = S.x, cz = S.z;
+    for (const o of list) {
+      const u = o.userData;
+      if (!aki) {                                // ツバメ：輪をえがいて速く飛び、ときどき地面すれすれに急降下
+        u.a += u.w * dt * (1 + 0.3 * Math.sin(tt * 0.7 + u.ph));
+        const r = u.r + 1.5 * Math.sin(tt * 0.5 + u.ph);
+        const y = Math.max(0.25, u.h + 0.6 * Math.sin(tt * 1.3 + u.ph) - (Math.sin(tt * 0.4 + u.ph) > 0.85 ? 0.7 : 0));
+        tmp.set(cx + Math.cos(u.a) * r, y, cz + Math.sin(u.a) * r);
+        const dir = tmp.clone().sub(o.position);
+        o.position.copy(tmp);
+        if (dir.lengthSq() > 1e-6) o.lookAt(tmp.add(dir));
+        o.rotateZ(-u.w * 0.5);                   // 旋回でかたむく
+        const flap = Math.sin(tt * 18 + u.ph) > 0.2 ? Math.sin(tt * 30 + u.ph) * 0.6 : 0.05;   // はばたき と すべり
+        u.wings[0].rotation.y = flap; u.wings[1].rotation.y = -flap;
+      } else {                                   // 赤とんぼ：止まって ホバリング → すっと次の所へ
+        u.t -= dt;
+        if (u.t <= 0) {
+          u.t = 0.8 + Math.random() * 2.2;
+          const a = Math.random() * 6.3, r = 2.2 + Math.random() * 6;
+          u.tgt.set(cx + Math.cos(a) * r, 1.0 + Math.random() * 1.6, cz + Math.sin(a) * r);
+          if (o.position.lengthSq() === 0) o.position.copy(u.tgt);
+        }
+        tmp.subVectors(u.tgt, o.position);
+        const d = tmp.length();
+        if (d > 0.02) {
+          o.position.addScaledVector(tmp, Math.min(1, dt * 3.5));
+          o.rotation.y += ((Math.atan2(tmp.x, tmp.z) - o.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 8);
+        }
+        o.position.y += 0.004 * Math.sin(tt * 9 + u.ph);
+        u.wings.forEach((w, i) => { w.rotation.y = Math.sin(tt * 60 + i * 1.7) * 0.35; });
+      }
+    }
+  }
+  return { update };
 })();
 
 // 泥：耕すほど車輪とロータリーに泥がつく（代かきは早い）
@@ -1292,6 +1394,7 @@ function frame(now) {
   MIRROR.update(dt, camMode === 0);
   updateMud(dt, S.rotDown && S.rotPos < 0.08);
   NB.update(dt);
+  LIFE.update(dt);
   WIND_T.value += dt;
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }

@@ -384,18 +384,19 @@ function paintBoard(b, T) {
   }
   // かべの線：通れない さかい（床と 壁の かたまり、道が つながっていない 床どうし）に 黒い太い線（キーホルダーの 迷路の 線のように）。
   // 上と左の かべの下には 明るい ふちで、少し 立体に
+  // 立った 壁に 見せる（玉ころがし迷路の プラスチックの 壁）：右下に 影 → 紺の 壁 → 上・左の ふちに 光。さかいごとに 1回だけ 描く
+  const segs = new Map();   // 'h,i,j'：マス(i, j) の 上の 辺・'v,i,j'：左の 辺
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
     if (!at(i, j)) continue;
-    const X = i * T, Y = j * T, up = pass(b, i, j, 0, -1), lf = pass(b, i, j, -1, 0);
-    x.fillStyle = 'rgba(255,255,255,.4)';
-    if (!up) x.fillRect(X, Y + lw / 2, T, u);
-    if (!lf) x.fillRect(X + lw / 2, Y, u, T);
-    x.fillStyle = '#141414';
-    if (!up) x.fillRect(X - lw / 2, Y - lw / 2, T + lw, lw);
-    if (!pass(b, i, j, 0, 1)) x.fillRect(X - lw / 2, Y + T - lw / 2, T + lw, lw);
-    if (!lf) x.fillRect(X - lw / 2, Y - lw / 2, lw, T + lw);
-    if (!pass(b, i, j, 1, 0)) x.fillRect(X + T - lw / 2, Y - lw / 2, lw, T + lw);
+    if (!pass(b, i, j, 0, -1)) segs.set(`h,${i},${j}`, [i * T - lw / 2, j * T - lw / 2, T + lw, lw]);
+    if (!pass(b, i, j, 0, 1)) segs.set(`h,${i},${j + 1}`, [i * T - lw / 2, (j + 1) * T - lw / 2, T + lw, lw]);
+    if (!pass(b, i, j, -1, 0)) segs.set(`v,${i},${j}`, [i * T - lw / 2, j * T - lw / 2, lw, T + lw]);
+    if (!pass(b, i, j, 1, 0)) segs.set(`v,${i + 1},${j}`, [(i + 1) * T - lw / 2, j * T - lw / 2, lw, T + lw]);
   }
+  const o = Math.max(1, Math.round(T / 10));
+  x.fillStyle = 'rgba(0,0,0,.38)'; for (const [X, Y, w, h] of segs.values()) x.fillRect(X + o, Y + o, w, h);   // 影
+  x.fillStyle = '#10283a'; for (const [X, Y, w, h] of segs.values()) x.fillRect(X, Y, w, h);   // 壁
+  x.fillStyle = '#5b93bd'; for (const [X, Y, w, h] of segs.values()) { x.fillRect(X, Y, w, u); x.fillRect(X, Y, u, h); }   // 上・左の ふちの 光
   // 水の ふち：床から 入れる 水との さかいに、黄色と黒の しま（ここから先は 落ちる）
   const sw = Math.max(2, Math.round(T / 10));
   const stripes = (X, Y, w, h) => { for (let k = 0; k * sw < Math.max(w, h); k++) { x.fillStyle = k % 2 ? '#1a1a1a' : '#f2c200'; if (w > h) x.fillRect(X + k * sw, Y, Math.min(sw, w - k * sw), h); else x.fillRect(X, Y + k * sw, w, Math.min(sw, h - k * sw)); } };

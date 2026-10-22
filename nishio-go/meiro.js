@@ -532,7 +532,12 @@ function flag(x, X, Y, T) {   // 🏁 の旗（白黒の市松）
 // はじめの画面の「🌀 傾けて めいろ」：操作して遊ぶ で始めてから めいろを開く。地図の 🌀 ボタンでも開く
 document.addEventListener('DOMContentLoaded', () => {
   const b = $('meiroBtn');
-  if (b) b.addEventListener('click', () => { const d = $('demoBtn'); if (d) d.click(); setTimeout(() => open(), 60); });
+  if (b) b.addEventListener('click', () => {
+    const P = root.nishioPixel && root.nishioPixel.meiroApi;
+    if (P) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
+    const d = $('demoBtn'); if (d) d.click();
+    setTimeout(() => open(), 60);
+  });
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
 });

@@ -1110,15 +1110,24 @@ function tillCell(i, j) {
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
   });
   eraseTracks(c);
+  ROUGH[c] = 1.04 - 0.16 * Math.max(0, Math.min(1, ((S.pitch || 9) - 6) / 7));
   DRY.wet(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
   return 1;
 }
+// 耕うんピッチ（爪が 1 回土に入るあいだに進む長さ）＝ 走る速さ ÷（爪軸の回転数 × 1 回転で同じ所に入る爪の数 2）。
+// 爪軸はおよそ PTO の 0.42 倍で回る。ピッチが大きい（速く走る）ほど土くれが大きく粗くなり、小さいほど細かく砕ける。
+// 田起こしは 10cm くらいまでがよい。粗い所は土くれの影で暗く、細かい所は少し明るく見える
+const ROUGH = new Float32Array(NX * NZ).fill(1);
+function tillPitch() {
+  const rotor = engineRpm(performance.now() / 1000) * PTO_RATIO * 0.42;
+  return Math.abs(S.v) * 6000 / Math.max(60, rotor * 2);
+}
 const DRY = (() => {
   const WET = season === 'aki' ? 0.68 : 0.6, T = 150, list = [];
   let clock = 0, acc = 0;
-  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v, c * 12, c * 12 + 12); };
+  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v * ROUGH[c], c * 12, c * 12 + 12); };
   return {
     wet(c) { if (SHIRO) return; set(c, WET); list.push([c, clock]); },
     update(dt) {                                  // 2 秒ごとに、耕して 2 分半までの所を少しずつ明るくする
@@ -1276,7 +1285,7 @@ const FX = (() => {
       // 秋は、すきこまれるひこばえの青い切れはしと藁も少し飛ぶ
       const r = season === 'aki' ? Math.random() : 1;
       col.set(r < 0.08 ? [0.30 * t, 0.42 * t, 0.16 * t] : r < 0.14 ? [0.62 * t, 0.55 * t, 0.36 * t] : SOIL.map(v => v * t), i * 3);
-      size[i] = 0.05 + Math.random() * 0.07; max[i] = 0.7 + Math.random() * 0.5;
+      size[i] = (0.05 + Math.random() * 0.07) * Math.max(0.7, Math.min(1.8, (S.pitch || 9) / 9)); max[i] = 0.7 + Math.random() * 0.5;   // 速く走るほど大きな土くれ
     }
     else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
     else if (k === 2) { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
@@ -2087,6 +2096,11 @@ function step(dt) {
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
+  if (working && Math.abs(S.v) > 0.1) {
+    S.pitch = tillPitch();
+    S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
+    if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
+  }
   P.Rotor.rotation.x += (working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 8 : 0) * dt;
   if (P.WingL) {                                  // ハロー：上げると翼を上へ折りたたみ、下げると広げる
     const fold = Math.max(0, Math.min(1, (S.rotPos - 0.25) / 0.6)) * 1.72;
@@ -2236,7 +2250,7 @@ function drawMonitor(pct) {
   g.fillStyle = '#071019'; g.fillRect(0, 0, 512, 314);
   g.fillStyle = '#12202e'; g.fillRect(0, 0, 512, 34);
   g.fillStyle = '#d9e6f2'; g.font = 'bold 18px sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'left';
-  g.fillText('直進アシスト  耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm', 12, 18);
+  g.fillText((S.rotDown && S.pitch ? '耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm  ピッチ ' + Math.round(S.pitch) + 'cm' : '直進アシスト  耕うん ' + pct + '%  耕深 ' + DEPTH + 'cm'), 12, 18);
   // 田んぼの地図（長い向きを横に）。耕した所は緑
   const mg = monitor.map.getContext('2d'), img = mg.createImageData(NZ, NX);
   for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
@@ -2638,7 +2652,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

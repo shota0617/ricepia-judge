@@ -131,6 +131,7 @@
       ・エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは幅 3.4m のウイングハロー（道では翼を折りたたむ）を PTO 2 速で回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
+      ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす（道に泥を落とさない。ゲームでは耕していない固い所を少し走ると落ちる）<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎると減る
@@ -748,10 +749,46 @@ const LIFE = (() => {
 const MUD = { level: 0, mats: [], t: 0, col: new THREE.Color(SHIRO ? 0x5a4a38 : 0x4a3a2a) };
 function updateMud(dt, working) {
   if (working && Math.abs(S.v) > 0.1) MUD.level = Math.min(1, MUD.level + dt * (SHIRO ? 0.03 : 0.015));
+  else if (!SHIRO && !S.rotDown && Math.abs(S.v) > 0.5 && Math.abs(S.x) < HX && Math.abs(S.z) < HZ &&
+    !tilledMask[Math.floor((S.x + HX) / CELL) * NZ + Math.floor((S.z + HZ) / CELL)]) {
+    MUD.level = Math.max(0, MUD.level - dt * 0.02);   // 耕していない固い所（枕地）を走ると、タイヤの泥が少しずつ落ちる
+  }
   if ((MUD.t -= dt) > 0) return;
   MUD.t = 0.5;
   for (const e of MUD.mats) e.m.color.copy(e.base).lerp(MUD.col, e.w * MUD.level);
 }
+
+// 道に落ちる泥：耕してタイヤに泥がついたまま農道を走ると、うしろのタイヤから泥のかたまりが落ちる（タイヤの泥はへる）。
+// 本物は田んぼから道へ出る前に泥を落とす（自治体の「道路に泥を落とさないで」のお願い）
+const MUDDROP = (() => {
+  const N = 260;
+  const geo = new THREE.SphereGeometry(1, 7, 4, 0, Math.PI * 2, 0, Math.PI / 2);
+  const mat = new THREE.MeshStandardMaterial({ color: SHIRO ? 0x2e2419 : 0x241b13, roughness: 0.75, envMapIntensity: 0.25 });   // ぬれた黒っぽい泥
+  const mesh = new THREE.InstancedMesh(geo, mat, N);
+  mesh.count = 0; mesh.receiveShadow = true; mesh.frustumCulled = false;
+  scene.add(mesh);
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  let next = 0, acc = 0, told = false;
+  function step(dt, onRoad) {
+    if (!onRoad || Math.abs(S.v) < 0.3 || MUD.level < 0.12) return;
+    acc += dt * Math.abs(S.v);
+    if (acc < 0.5) return;
+    acc = 0;
+    const w = wheelPoints(S.x, S.z, S.yaw);
+    for (const k of ['rl', 'rr']) {
+      if (Math.random() > 0.3 + MUD.level * 0.7) continue;
+      const x = w[k][0] + (Math.random() - 0.5) * 0.4, z = w[k][1] + (Math.random() - 0.5) * 0.4, y = ground(x, z);
+      if (y === null) continue;
+      const r = 0.07 + Math.random() * 0.12 * (0.5 + MUD.level);
+      mesh.setMatrixAt(next, m.compose(p.set(x, y - 0.005, z), q.setFromAxisAngle(up, Math.random() * 6.28), s.set(r, 0.022 + Math.random() * 0.02, r * (0.7 + Math.random() * 0.5))));
+      next = (next + 1) % N; mesh.count = Math.min(N, mesh.count + 1);
+      MUD.level = Math.max(0, MUD.level - 0.006);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    if (!told && mesh.count > 6) { told = true; toast('タイヤの泥が道に落ちています。本物は田んぼを出る前に泥を落とします'); }
+  }
+  return { step, mesh };
+})();
 
 // 風：畦の草・彼岸花・実った稲・遠くの木を、上のほうだけゆらす（絵の v が高いほど大きく）
 const WIND_T = { value: 0 };
@@ -1747,6 +1784,7 @@ function step(dt) {
   if (Math.abs(S.v) > 0.05) laySomeTracks(working);
   if (S.v > 0.05) STREAK.add(working); else if (!working) STREAK.add(false);
   HEAPS.work(dt, working);
+  MUDDROP.step(dt, onRoad && !(S.x > 11.5 && S.x < 17 && S.z > 17.8 && S.z < 22.2));   // 進入路の坂はまだ田んぼの土
   if (SHIRO && working && Math.abs(S.v) > 0.05) {   // ロータリーのうしろ（両はし寄り）から濁りが出る
     const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
     for (const lx of [-TILL_W / 2, 0, TILL_W / 2]) {
@@ -2140,7 +2178,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

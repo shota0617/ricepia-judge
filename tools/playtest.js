@@ -734,6 +734,15 @@ async function walkTo(page, id) {
     const st = nishioGo.stats();
     return { text: m ? html.slice(html.indexOf('📒'), html.indexOf('📒') + 120).replace(/<[^>]+>.*/, '') : html.replace(/<[^>]+>/g, ' ').slice(0, 160), ok: !!m && +m[1] === st.lv + 1 && +m[2] > 0 };
   });
+  // しるしをくれる人：一色の魚屋のおかみさんの話に「🔖 一色の注目スポットを あと○か所 めぐったら…（いま ○/5）」
+  R.checks.sealPage = await page.evaluate(async () => {
+    const n = nishioGo.npcs.find(x => x.id === 'sakana-okami');
+    if (!n) return { ok: false, why: 'no-npc' };
+    nishioGo.moveTo(n.lat, n.lng); await new Promise(r => setTimeout(r, 400));
+    const html = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(p => (nishioGo.talkNpc(n.id, p) || {}).html || '').join('');
+    const m = html.match(/🔖 一色の注目スポットを あと(\d)か所 めぐったら、一色のしるしを わたすでね（いま (\d)\/(\d)）/);
+    return { text: m ? m[0] : '', ok: !!m && +m[1] + +m[2] === +m[3] };
+  });
   // 遠いほど めずらしい：西尾城跡から 8km をこえた所（吉良の南）へ行くと、その日1回「キラの絵が 2倍 出やすい」と知らせる
   R.checks.kiraFar = await page.evaluate(async () => {
     const seen = [], el = document.getElementById('toast'), ob = new MutationObserver(() => seen.push(el.textContent)); ob.observe(el, { childList: true, characterData: true, subtree: true });
@@ -835,6 +844,7 @@ async function walkTo(page, id) {
   need(c.waterWatch && c.waterWatch.ok, '水べで じっと見る：水の となりで 止まっていても 生きものに出会わない');
   need(c.h100FirstDay === true, 'きょうの100歩たんけん：遊びはじめた日に始まった');
   need(c.h100 && c.h100.ok, 'きょうの100歩たんけん：100歩 歩いても おわらない、または はじめての道の数・自己ベストが残らない');
+  need(c.sealPage && c.sealPage.ok, 'しるしをくれる人：一色の おかみさんの話に、しるしまで あと何か所かが出ない');
   need(c.chain && c.chain.ok, 'めぐりの れんさ：30分以内に ちがう名所でチェックインしても れんさが つながらない');
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

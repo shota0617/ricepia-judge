@@ -519,7 +519,17 @@ function npcPages(n) {
   if (hs) pages.push(`🔍 ${hintSay(n, hs.name)}`);   // この人がくれた、しらべるの手がかり（まだ しらべていないあいだ）
   if (S.parcel && S.parcel.from === n.id) pages.push(`📦 ${S.parcel.toName}に、その${S.parcel.item}を よろしくね。`);   // あずけた おとどけもの（届けるまで）
   if (n.id === SEAL_BY.nishio) pages.push(guideRecord());   // 西尾城跡のガイドさんは、会うたびに ここまでの記録と「あと いくつ」を教えてくれる
+  else { const sp = sealPage(n); if (sp) pages.push(sp); }   // ほかの地区の しるしをくれる人は、その地区の「あと いくつ」
   return pages;
+}
+// しるしをくれる人（西尾城跡のガイドさん のほか）：まだ しるしを わたしていない人は、その地区を「あと何か所」めぐれば わたすかを話す。
+// クリア後の となりの市町のしるしは、殿堂入りのあとだけ
+function sealPage(n) {
+  const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
+  if (!a || (S.seals || []).includes(id) || (SEAL_POST.has(id) && !S.cleared)) return '';
+  const p = areaProgress(id), goal = sealGoal(id), left = Math.max(0, goal - p.done);
+  if (!p.total || !left) return '';
+  return `🔖 ${a.name}の注目スポットを あと${left}か所 めぐったら、${a.name}のしるしを わたすでね（いま ${Math.min(p.done, goal)}/${goal}）。`;
 }
 // ガイドさんの記録（昔のドット絵RPGの、城の王様に話すと「次のレベルまで あと○」と記録してくれる しくみ）：
 // 次のレベルまでの ポイントと、しるしの数・いちばん近い しるしまでの あと何か所。戻ってくるたびに「あと少し」が分かる

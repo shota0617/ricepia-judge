@@ -780,9 +780,10 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   let h = day.h100;
   if (h && h.done) return;
   if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな${S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`); }
+  const rest = H100.steps * TRAIL_M - (h.m || 0), part = meters > rest ? Math.max(0, rest) / meters : 1;   // 100歩（800m）を またぐ1回は、800m までの分だけ
   h.m = (h.m || 0) + meters;
   const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
-  h.fresh += Math.min(fresh, H100.steps - h.fresh);   // はじめての道は、たんけんの間に ふえたマス（100まで）
+  h.fresh += Math.min(Math.round(fresh * part), H100.steps - h.fresh);   // はじめての道は、たんけんの間に ふえたマス（100まで。またぐ1回は 距離の わりあいで）
   if (take <= 0) return;
   h.steps += take;
   const P = window.nishioPixel;
@@ -1473,7 +1474,7 @@ function sealPickCheck() {
   if (['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden)) return;   // ほかのタブ（せってい など）を開いている間は 出さない（地図にもどってから）
   if (document.body.classList.contains('jump-open') || medashiOpen() || (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) || (window.nishioPixel && nishioPixel.sightBusy && nishioPixel.sightBusy())) return;   // ミニゲーム・イベント・ムービー・呼びとめの最中は出さない
   pickFirst(p.cands, dot => {
-    S.sealPicks = (S.sealPicks || []).filter(x => x !== p); save();
+    S.sealPicks = (S.sealPicks || []).filter(x => x.area !== p.area); save();   // 地区で消す（モードを行き来すると 記録は読み直されて 別のものになる）
     toastAfter(`🔖 ${p.name}のしるしの1枚：「${window.NISHIO_DOTS.info(dot.id).title}」が キラで 絵帳に入った！`);
     const pl = $('panel-log'); if (pl && !pl.hidden) renderLog();
   }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません）', kira: true, ev: 'seal_dot_pick', key: stateKey() });

@@ -749,7 +749,7 @@ function addTrail(a, b, critters) {
   const P = window.nishioPixel;
   if (!P || !P.trailWalk) return;
   const n = P.trailWalk(a.lat, a.lng, b.lat, b.lng, critters && P.critterStep ? (x, y) => P.critterStep(x, y) : null);
-  hundred(Math.max(1, Math.round(dist(a, b) / TRAIL_M)), n);   // きょうの100歩たんけん（1歩＝1マス）
+  hundred(dist(a, b), n);   // きょうの100歩たんけん（動いた距離を ためて 8m ごとに1歩）
   if (!n) return;
   const day = dayState();
   day.trail = (day.trail || 0) + n;
@@ -774,14 +774,17 @@ function addTrail(a, b, critters) {
 // きょうの100歩たんけん（ポケモンの「歩数の決まった場所で、めずらしいものを探す」）：その日 はじめて歩きだしたら始まり、100歩（1歩＝1マス 8m）のうちに
 // はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）と、自己ベストなら お祝い。1日1回（記録は モードごと）
 const H100 = { steps: 100, cap: 30 };
-function hundred(steps, fresh) {
+function hundred(meters, fresh) {   // meters：この1回で動いた距離。転がすと 1マスより小さい動きが何度も来るので、ためてから歩数にする
   if (driving || store.get('nsg_first_day', '') === ymd()) return;   // 遊びはじめた日は しない（はじめの日は ようこそ・はじめの1枚・週の知らせで いっぱいなので、次の日から）
   const day = dayState();
   let h = day.h100;
   if (h && h.done) return;
-  if (!h) { h = day.h100 = { steps: 0, fresh: 0 }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな${S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`); }
-  const take = Math.min(steps, H100.steps - h.steps), before = h.steps;
-  h.steps += take; h.fresh += Math.min(fresh, take);
+  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな${S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`); }
+  h.m = (h.m || 0) + meters;
+  const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
+  h.fresh += Math.min(fresh, H100.steps - h.fresh);   // はじめての道は、たんけんの間に ふえたマス（100まで）
+  if (take <= 0) return;
+  h.steps += take;
   const P = window.nishioPixel;
   if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100（はじめての道 ${h.fresh}）`); save(); }
   if (h.steps < H100.steps) return;

@@ -838,6 +838,69 @@ const MIST = (() => {
   return { update, layers };
 })();
 
+
+// ---- 畦を見回る人：田んぼの水や畦は毎日のように見回る（山形県・農林水産省の資料）。北の畦（となりの田んぼとのあいだ）を
+// スコップをかついで歩き、ときどき立ち止まって田んぼをのぞく。トラクターが近いと止まって待つ
+const FARMER = (() => {
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const M = { cloth: lam(0x3b5f86), pants: lam(0x4a4c52), boot: lam(SHIRO ? 0x2b2b2b : 0xe8e8e2), skin: lam(0xc99a78), cap: lam(season === 'aki' ? 0xd9c48a : 0xe9e4d6), wood: lam(0x8a6a44), steel: lam(0x8c9298), towel: lam(0xf2f2ee) };
+  const box = (w, h, d, m) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+  const cyl = (r1, r2, h, m, n = 8) => new THREE.Mesh(new THREE.CylinderGeometry(r1, r2, h, n), m);
+  const root = new THREE.Group();
+  const legs = [], arms = [];
+  for (const s of [-1, 1]) {                      // 脚（ももとすね）と長靴
+    const hip = new THREE.Group(); hip.position.set(s * 0.09, 0.86, 0); root.add(hip);
+    const th = cyl(0.07, 0.06, 0.44, M.pants); th.position.y = -0.22; hip.add(th);
+    const knee = new THREE.Group(); knee.position.y = -0.44; hip.add(knee);
+    const sh = cyl(0.058, 0.05, 0.42, M.boot); sh.position.y = -0.21; knee.add(sh);
+    const foot = box(0.1, 0.06, 0.24, M.boot); foot.position.set(0, -0.41, 0.05); knee.add(foot);
+    legs.push({ hip, knee });
+  }
+  const body = cyl(0.17, 0.15, 0.6, M.cloth, 10); body.position.y = 1.16; body.scale.z = 0.7; root.add(body);
+  const towel = cyl(0.09, 0.1, 0.07, M.towel, 10); towel.position.y = 1.48; root.add(towel);   // 首にタオル
+  const head = new THREE.Group(); head.position.y = 1.62; root.add(head);
+  const face = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), M.skin); face.scale.set(0.9, 1.05, 0.95); head.add(face);
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.105, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), M.cap); cap.position.y = 0.02; head.add(cap);
+  const brim = cyl(0.13, 0.13, 0.012, M.cap, 12); brim.position.set(0, 0.03, 0.06); brim.scale.z = 0.7; head.add(brim);
+  for (const s of [-1, 1]) {                      // 腕
+    const sh = new THREE.Group(); sh.position.set(s * 0.2, 1.42, 0); root.add(sh);
+    const ua = cyl(0.05, 0.045, 0.32, M.cloth); ua.position.y = -0.16; sh.add(ua);
+    const el = new THREE.Group(); el.position.y = -0.32; sh.add(el);
+    const fa = cyl(0.045, 0.04, 0.28, M.cloth); fa.position.y = -0.14; el.add(fa);
+    arms.push({ sh, el });
+  }
+  const shovel = new THREE.Group();               // 右の肩にかついだスコップ
+  const handle = cyl(0.016, 0.016, 1.0, M.wood); shovel.add(handle);
+  const blade = box(0.2, 0.26, 0.015, M.steel); blade.position.y = -0.6; shovel.add(blade);
+  shovel.position.set(-0.22, 1.48, -0.05); shovel.rotation.set(1.05, 0, 0.15); root.add(shovel);
+  arms[0].sh.rotation.x = -1.0; arms[0].el.rotation.x = -1.0;   // 右手は胸の前でスコップの柄を持つ
+  root.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  scene.add(root);
+  const Z = -(HZ + 0.55), Y = 0.3, X0 = -HX + 1, X1 = HX - 1;   // 北の畦の上（高さ 30cm）
+  const st = { x: X0 + 4, dir: 1, t: 0, pause: 0, phase: 0 };
+  root.position.set(st.x, Y, Z);
+  function update(dt) {
+    st.t += dt;
+    const near = Math.hypot(S.x - st.x, S.z - Z) < 6;
+    let moving = false;
+    if (st.pause > 0) st.pause -= dt;
+    else if (!near) {
+      st.x += st.dir * 0.9 * dt; moving = true;     // ゆっくり歩く（0.9m/秒）
+      if (st.x > X1 || st.x < X0) { st.dir *= -1; st.pause = 2.5; }
+      else if (Math.random() < dt * 0.06) st.pause = 3 + Math.random() * 4;   // 立ち止まって田んぼを見る
+    }
+    st.phase += moving ? dt * 6.2 : 0;
+    const sw = moving ? Math.sin(st.phase) : 0;
+    legs.forEach((l, i) => { const a = (i ? -1 : 1) * sw * 0.45; l.hip.rotation.x = a; l.knee.rotation.x = Math.max(0, -a) * 0.9 + (moving ? 0.1 : 0); });
+    arms[1].sh.rotation.x = -sw * 0.4;
+    root.position.set(st.x, Y + (moving ? Math.abs(Math.cos(st.phase)) * 0.025 : 0), Z);
+    const look = !moving ? 0 : (st.dir > 0 ? Math.PI / 2 : -Math.PI / 2);   // 止まると南（耕す田んぼ）を向く
+    root.rotation.y += ((look - root.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 3);
+    head.rotation.y = !moving && near ? Math.atan2(S.x - st.x, S.z - Z) - root.rotation.y : 0;   // トラクターを目で追う
+  }
+  return { update, root, st };
+})();
+
 // 風：畦の草・彼岸花・実った稲・遠くの木を、上のほうだけゆらす（絵の v が高いほど大きく）
 const WIND_T = { value: 0 };
 function addWind(mat, amp) {
@@ -2312,6 +2375,7 @@ function frame(now) {
   HEAPS.flush(dt);
   TURBID.update(dt);
   MIST.update(dt);
+  FARMER.update(dt);
   DRY.update(dt * SPEEDUP);
   TR.flush();
   STREAK.flush();
@@ -2320,7 +2384,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

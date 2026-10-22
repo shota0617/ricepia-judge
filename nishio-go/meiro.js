@@ -13,12 +13,13 @@ const KEY = 'nsg_meiro';
 const GOALS = ['f-nishio-station', 'f-nishio-castle', 'f-ricepia', 'f-iwase-bunko', 'f-kondo-beikoku', 'f-konrenji', 'f-jofukuji', 'f-kurokabe', 'f-inariyama-chaen'];
 const K = 3;   // めいろの1マス = 地図の K×K マス
 const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // マス/秒²・いちばん速い速さ・ころがり抵抗・速さに比べて へる分・はね返り・お米の半径（マス）
-const load = () => { try { return Object.assign({ stage: 0, best: {} }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {} }; } };
+// stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
+const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
 const st = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } };
 
 let api = null, ui = null, game = null, raf = 0;
-const bad = new Set();   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末で 開いている あいだ）
+const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
 
 function goalList() {
@@ -168,7 +169,7 @@ function build() {
     if (!b) return;
     const k = b.dataset.mz;
     if (k === 'close') close();
-    else if (k === 'retry') { if (game && game.board) restart(); }
+    else if (k === 'retry') { if (game && game.board) restart(); else if (game) startStage(game.n); }
     else if (k === 'next') startStage(game.n + 1);
     else if (k === 'again') startStage(game.n);
     else if (k === 'list') showList();
@@ -215,15 +216,16 @@ function startStage(n) {
   game = { n, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
   ui.load.hidden = false; ui.load.textContent = 'めいろを つくっています…';
-  const bt = st.best[n];
+  const bt = st.best[game.spot.id];
   ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>${bt ? `<small>　ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面と ベスト・2行め：ゴール（長い名前は …）
   ui.time.textContent = '0.0';
   const g = game;
-  waitChunks(g.spot, () => {
+  waitChunks(g.spot, allOk => {
     if (game !== g) return;
     const b = makeBoard(n, g.spot);
+    if (!b && !allOk) { ui.load.textContent = '地図が よみこめなかった。「↺ やりなおし」で もういちど'; return; }   // 地図が よめていないだけなら はずさない
     if (!b) {   // 道が少ない所なら、その名所を はずして 同じ面を つくりなおす（つぎの名所が この面に）
-      bad.add(g.spot.id);
+      bad.add(g.spot.id); st.skip = [...bad]; save();
       if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';
       return;
     }
@@ -243,7 +245,7 @@ function waitChunks(spot, done) {
     if (!ui || ui.el.hidden) return;
     need.forEach(([cx, cy]) => A.ensureChunk(cx, cy));
     const left = need.filter(([cx, cy]) => !['ok', 'out', 'fail'].includes(A.chunkState(cx, cy))).length;
-    if (!left || Date.now() - t0 > 20000) done();
+    if (!left || Date.now() - t0 > 20000) done(need.every(([cx, cy]) => ['ok', 'out'].includes(A.chunkState(cx, cy))));
     else setTimeout(poll, 250);
   })();
 }
@@ -383,8 +385,8 @@ function win() {
   g.done = true; g.happy = 99;
   const sec = Math.round(g.t * 10) / 10, par = b.len * 0.45 + 3;   // 目やすの時間（道のりから）
   const stars = g.falls === 0 && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;
-  const prev = st.best[g.n], newBest = !prev || sec < prev.t;
-  st.best[g.n] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
+  const prev = st.best[g.spot.id], newBest = !prev || sec < prev.t;
+  st.best[g.spot.id] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   st.stage = Math.max(st.stage, g.n + 1);
   save();
   if (root.nsgTrack) root.nsgTrack('meiro_clear', { stage: g.n + 1, sec, falls: g.falls, stars });
@@ -404,7 +406,7 @@ function win() {
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
   ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3><div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
-    const b = st.best[i];
+    const b = st.best[s.id];
     return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}${b ? `<br/><small>${'★'.repeat(b.s)} ${b.t.toFixed(1)}秒</small>` : ''}</button>`;
   }).join('')}</div><div class="mz-row"><button type="button" data-mz="again">もどる</button></div>`;
   ui.clear.hidden = false;

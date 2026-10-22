@@ -3463,7 +3463,8 @@ function introHero() {
     const gy = gY(st.x), th = st.ang, low = Math.sqrt((10 * Math.sin(th)) ** 2 + (13.5 * Math.cos(th)) ** 2);   // たて長のつぶ：寝ころぶと低く
     x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(Math.round(st.x - 8), Math.round(gy) + 1, 16, 2);
     const cy = gy - low * (1 - st.sq);
-    if (!(window.nishioPixel && nishioPixel.drawRice && nishioPixel.drawRice(x, st.x, cy, th % (Math.PI * 2), st.sq)) && img.complete && img.naturalWidth) {   // 丸く見える描き方（pixel.js）。読めるまでは 絵を回す
+    const mood = st.mode === 'free' && st.v > 45 ? 'excited' : st.mode === 'rest' && st.rest > 0.7 ? 'happy' : st.mode === 'rest' && now % 3700 < 140 ? 'blink' : 'smile';   // 表情：坂で速いと ><、止まると ^^
+    if (!(window.nishioPixel && nishioPixel.drawRice && nishioPixel.drawRice(x, st.x, cy, th % (Math.PI * 2), st.sq, mood)) && img.complete && img.naturalWidth) {   // 丸く見える描き方（pixel.js）。読めるまでは 絵を回す
       x.save(); x.translate(Math.round(st.x), Math.round(cy)); x.rotate(th % (Math.PI * 2));
       x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 32, 32, -16, -16, 32, 32);
       x.restore();

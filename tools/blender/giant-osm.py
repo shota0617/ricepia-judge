@@ -26,13 +26,14 @@ pa.MATS.update({
     'tealR': '#4f9a8e', 'tileBr': '#8a5a3a', 'vendR': '#d23a2e', 'vendB': '#3a6ad0', 'vendO': '#e8862a', 'shutter': '#a0a0a0',
     'kokaC': '#b8b4ac', 'kokaD': '#8a8680', 'akaEki': '#d22a2a', 'tileRed': '#a8583a', 'tileRedD': '#7a3a26', 'doban3': '#5f9a7a',
     'kuroki': '#4a3628', 'tinR': '#9a4a32', 'ekiBeige': '#e8dcc4', 'ninjin': '#e87a1e', 'ninjinH': '#4f9a3a', 'hatake': '#8a6a44',
-    'house': '#f0f4f4', 'ningyo1': '#d23a6a', 'ningyo2': '#3a7fd0', 'ningyo3': '#e8b830', 'ekiSign': '#f4f4f0', 'ekiSignR': '#c8162a',
+    'aikanG': '#7ac043', 'ningyo1': '#d23a6a', 'ningyo2': '#3a7fd0', 'ningyo3': '#e8b830', 'ekiSign': '#f4f4f0', 'ekiSignR': '#c8162a',
 })
 
 
 # ---------- 部品 ----------
 def eki_sign(n, x, y, z, w=0.14):
     """駅名板（白い板に赤い帯。字は描かない）"""
+    box(f'esf{n}', 'kokaD', (w + 0.014, 0.01, 0.054), (x, y + 0.002, z))   # 白い壁でも見えるように、灰色のわく
     box(f'es{n}', 'ekiSign', (w, 0.012, 0.04), (x, y, z))
     box(f'esr{n}', 'ekiSignR', (w * 0.3, 0.014, 0.012), (x - w * 0.3, y - 0.002, z))
 
@@ -46,17 +47,41 @@ def kamaboko_eki(n='k', x=0.0, y=0.06, w=0.52, d=0.24, h=0.18, door_x=None):
     """名鉄の小さな駅舎：白い壁、下は茶色のタイル、青緑のかまぼこ屋根（ゆるい丸）"""
     box(f'kb{n}', 'shikkui', (w, d, h), (x, y, h / 2))
     box(f'kt{n}', 'tileBr', (w + 0.004, d + 0.004, h * 0.32), (x, y, h * 0.16))
-    o = cyl(f'kr{n}', 'tealR', d / 2 + 0.03, w + 0.06, (x, y, h - 0.01), (0, math.pi / 2, 0), 20)
+    o = cyl(f'kr{n}', 'tealR', d / 2 + 0.03, w + 0.06, (x, y, h), (0, math.pi / 2, 0), 20)
     o.scale = (0.45, 1, 1)
+    bpy.context.view_layer.update()
+    half_top(o, h)
     dx = x - w * 0.3 if door_x is None else door_x
     box(f'kd{n}', 'kuro', (0.1, 0.01, 0.12), (dx, y - d / 2 - 0.004, 0.06))
-    eki_sign(n, x + w * 0.12, y - d / 2 - 0.006, h * 0.78)
+    eki_sign(n, x + w * 0.16, y - d / 2 - 0.006, h * 0.62, 0.18)
 
 
-def platform(n='p', y=0.3, train_on=True, z=0.05):
+def train2(n, x, y, z=0.0, cars=2, l=0.28, body='meitetsu', band='obi'):
+    """電車（路線の色：名鉄は赤に白い帯、JR は銀にオレンジの帯、愛知環状鉄道は銀に黄緑の帯）"""
+    train(n, x, y, z, cars, mat=body, l=l)
+    for o in bpy.context.scene.objects:
+        if o.name.startswith(f'tro{n}'):
+            o.data.materials[0] = pa.material(band)
+
+
+LINE = {'meitetsu': ('meitetsu', 'obi'), 'jr': ('jrSilver', 'jrOrange'), 'aikan': ('jrSilver', 'aikanG')}
+
+
+def platform(n='p', y=0.3, train_on=True, z=0.05, line='meitetsu'):
     box(f'pf{n}', 'home', (0.96, 0.16, z), (0, y, z / 2))
     if train_on:
-        train(n, 0.12, y, z, 2, l=0.28)
+        train2(n, 0.12, y, z, 2, 0.28, *LINE[line])
+
+
+def half_top(o, zc):
+    """かまぼこ屋根：円柱の下半分（zc より下）を zc までもちあげ、上の半分だけの形にする（下の壁や駅名板を隠さないように）"""
+    mw = o.matrix_world
+    inv = mw.inverted()
+    for v in o.data.vertices:
+        w = mw @ v.co
+        if w.z < zc:
+            w.z = zc
+            v.co = inv @ w
 
 
 # ---------- のこりの注目スポット（説明文から） ----------
@@ -73,13 +98,15 @@ def hekinan_saihoji():
 
 
 def hekinan_aoi_park():
-    """あおいパーク：直売所の建物（三角屋根）、にんじんの畑（オレンジのにんじんがのぞく）、もぎとりのビニールハウス"""
+    """あおいパーク：野菜の直売所の建物（三角屋根）、もぎとり体験の農園の畝、にんじんの畑（オレンジのにんじんがのぞく）。説明文にない設備は描かない"""
     ground('shibaG')
     box('chok', 'cream', (0.36, 0.2, 0.14), (-0.18, 0.18, 0.07))
     gable('chokY', 'yaneR', 0.42, 0.26, 0.09, 0.14, -0.18, 0.18)
     box('chokD', 'glassB', (0.14, 0.01, 0.09), (-0.18, 0.079, 0.05))
-    o = cyl('house', 'house', 0.08, 0.3, (0.24, 0.22, 0.02), (0, math.pi / 2, 0), 16)
-    o.scale = (1.4, 1, 1)
+    for i in range(3):   # もぎとり体験の農園（野菜の畝）
+        box(f'une{i}', 'hatake', (0.3, 0.05, 0.03), (0.24, 0.12 + i * 0.08, 0.015))
+        for k in range(5):
+            sphere(f'yasai{i}{k}', 'ninjinH', 0.022, (0.12 + k * 0.06, 0.12 + i * 0.08, 0.045))
     box('hata', 'hatake', (0.7, 0.26, 0.02), (0, -0.2, 0.01))
     for r in range(3):
         for i in range(8):
@@ -96,10 +123,10 @@ def takahama_ningyo_koji():
     box('michi', 'michi', (1.0, 0.16, 0.008), (0, -0.2, 0.012))
     for i, (x, m) in enumerate(((-0.28, 'ningyo1'), (0.04, 'ningyo2'), (0.34, 'ningyo3'))):
         box(f'dai{i}', 'kiji', (0.22, 0.16, 0.04), (x, 0.08, 0.02))
-        box(f'ura{i}', 'kijiD', (0.22, 0.02, 0.2), (x, 0.15, 0.12))
+        box(f'ura{i}', 'kijiD', (0.22, 0.02, 0.28), (x, 0.15, 0.16))
         for dx in (-0.1, 0.1):
-            box(f'ha{i}{dx}', 'kijiD', (0.016, 0.016, 0.2), (x + dx, 0.02, 0.12))
-        gable(f'yane{i}', 'kawaraG', 0.28, 0.22, 0.06, 0.22, x, 0.08)
+            box(f'ha{i}{dx}', 'kijiD', (0.016, 0.016, 0.28), (x + dx, 0.02, 0.16))
+        gable(f'yane{i}', 'kawaraG', 0.28, 0.22, 0.06, 0.3, x, 0.08)   # 屋根は人形の頭より上に（顔が見えるように）
         person(f'n{i}a', x - 0.04, 0.08, 0.04, m, 1.4)
         person(f'n{i}b', x + 0.05, 0.1, 0.04, ('ningyo2', 'ningyo3', 'ningyo1')[i], 1.3)
     return view(0.18)
@@ -193,9 +220,9 @@ def mikawa_toba():
     box('eki', 'akaEki', (0.5, 0.26, 0.22), (0.04, 0.04, 0.11))
     box('ekiY', 'kuro', (0.54, 0.3, 0.02), (0.04, 0.04, 0.23))
     box('door', 'kuro', (0.08, 0.01, 0.13), (0.06, -0.093, 0.065))
-    for i, (x, z) in enumerate(((-0.14, 0.16), (-0.06, 0.08), (0.18, 0.15), (0.22, 0.06))):
-        bpy.ops.mesh.primitive_torus_add(major_radius=0.024, minor_radius=0.006, location=(x, -0.094, z), rotation=(math.pi / 2, 0, 0))
-        bpy.context.object.data.materials.append(pa.material('shikkui'))
+    for i, (x, z, s) in enumerate(((-0.13, 0.14, 1), (0.2, 0.12, -1))):   # 白いうずまき（はしの開いた渦。2つを大きく）
+        pts = [(x + s * 0.0042 * t * math.cos(t), -0.096, z + 0.0042 * t * math.sin(t)) for t in [k * 0.45 for k in range(3, 34)]]
+        pa.tube(f'uzu{i}', 'shikkui', pts, 0.006)
     box('waki', 'shikkui', (0.12, 0.2, 0.12), (-0.32, 0.04, 0.06))
     box('kiiro', 'paraY', (0.02, 0.01, 0.14), (0.27, -0.093, 0.1))
     return view(0.2)
@@ -391,9 +418,9 @@ def kamezaki():
 
 
 def okkawa():
-    """名鉄 乙川駅：灰色の小さな駅舎、右に斜めに張り出した屋根、白とオレンジの自動販売機"""
+    """JR 乙川駅：灰色の小さな駅舎、右に斜めに張り出した屋根、白とオレンジの自動販売機"""
     ground('asphalt')
-    platform()
+    platform(line='jr')   # 乙川駅は JR 武豊線（銀にオレンジの帯）
     box('eki', 'kokaD', (0.28, 0.22, 0.18), (-0.14, 0.04, 0.09))
     box('door', 'kuro', (0.08, 0.01, 0.12), (-0.18, -0.073, 0.06))
     eki_sign('s', -0.06, -0.074, 0.15, 0.1)
@@ -447,7 +474,7 @@ def mutsuna():
     for x in (-0.3, 0.0, 0.3):
         box(f'hh{x}', 'hashira', (0.012, 0.012, 0.12), (x, 0.18, 0.39))
     box('hy', 'yane2', (0.9, 0.1, 0.012), (0, 0.18, 0.455))
-    train('t', 0.1, 0.08, 0.31, 2, l=0.3)
+    train2('t', 0.1, 0.08, 0.31, 2, 0.3, *LINE['aikan'])   # 六名駅は愛知環状鉄道（銀に黄緑の帯）
     eki_sign('s', -0.3, -0.004, 0.2, 0.08)
     box('sen', 'line2', (0.96, 0.012, 0.004), (0, -0.2, 0.012))
     return view(0.24)

@@ -8,7 +8,7 @@
 //   start：「操作して遊ぶ」で始める／walkstart：「あるいて遊ぶ」で始める（位置情報。はじめは西尾駅の近く）／gps：位置を lat・lng へ／
 //   gpswalk：位置を スポット・人（id に npc:id）・マス（tile:[x,y]）へ歩く速さで動かす（speed m/秒。fast で待ち時間を縮めると、速すぎて歩いた数に入らない）／
 //   gps は lat・lng のかわりに tile:[x,y] でもよい／walk：矢印キーで n マス／goto：スポット・人（npc:id）・いちばん近いたからばこ まで道を探して歩く／
-//   auto：おまかせ歩きを sec 秒／close：開いている窓とごほうびの画面を閉じる／tap：画面の部品を押す／click：画面の位置 x・y をタップ／key：キーを押す／eval：ページの中で式を計算して log に残す
+//   tilt：スマホを傾けて sec 秒 お米を転がす（x：左右・y：前後 -1〜1）／close：開いている窓とごほうびの画面を閉じる／tap：画面の部品を押す／click：画面の位置 x・y をタップ／key：キーを押す／eval：ページの中で式を計算して log に残す
 // 環境変数：CHROMIUM・LEAFLET_DIR（tools/playtest.js と同じ）・PLAY_QUERY（ページにつける ?…。ed=city で西尾市版）・PLAY_DATE（日付を固定。省略時は今の時刻。固定すると時計が止まるので、おまかせ歩きの「少し休む」が終わらず歩かない。おまかせ歩きを見るときは付けない）
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
@@ -100,7 +100,7 @@ async function keys(page, list) {
     if (sessionStorage.getItem('aiplay')) return;   // 読みこみ直したときは、ゲームが書いた記録のまま
     sessionStorage.setItem('aiplay', '1');
     if (s) { localStorage.clear(); for (const [k, v] of Object.entries(JSON.parse(s))) localStorage.setItem(k, v); }
-    else { localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); }
+    else { localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_roll', '0'); }   // walk の手順は1マスずつ（転がすのは eval で nishioPixel.setRoll(true)）
   }, saved);
   const page = await ctx.newPage();
   if (process.env.PLAY_DATE) await page.clock.setFixedTime(new Date(process.env.PLAY_DATE));
@@ -150,10 +150,13 @@ async function keys(page, list) {
         else if (!k.length) r.note = '道が見つからない';
         else { r.steps = k.length; r.arrived = await keys(page, k); }
         await page.waitForTimeout(600);
-      } else if (a.do === 'auto') {
-        await page.evaluate(() => { if (localStorage.getItem('nsg_auto') === 'false') document.getElementById('pxAuto').click(); });
-        await page.waitForTimeout((a.sec || 20) * 1000);
-        await page.evaluate(() => { if (localStorage.getItem('nsg_auto') !== 'false') document.getElementById('pxAuto').click(); });
+      } else if (a.do === 'tilt') {   // スマホを傾けたことにする（x：左右・y：前後。-1〜1。20度で1）。sec 秒のあいだ傾けて、お米を転がす
+        await page.evaluate(() => { nishioPixel.setRoll(true); for (let i = 0; i < 10; i++) window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })); });
+        const end = Date.now() + (a.sec || 1) * 1000;
+        while (Date.now() < end) { await page.evaluate(([x, y]) => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40 + y * 20, gamma: x * 20 })), [a.x || 0, a.y || 0]); await page.waitForTimeout(50); }
+        await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })));
+        await page.waitForTimeout(800);
+        r.roll = await page.evaluate(() => nishioPixel.roll);
       } else if (a.do === 'close') await page.evaluate(() => {   // 人やスポットの窓と、ごほうびの画面（タップで とじる）
         const b = document.querySelector('#pxInfo:not([hidden]) [data-close]'); if (b) b.click();
         const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();

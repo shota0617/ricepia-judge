@@ -18,6 +18,7 @@ async function newPage(browser, opts = {}) {
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...opts });
   await ctx.addInitScript(() => {
     localStorage.setItem('nsg_auto', 'false');   // おまかせ歩きは止めて、台本どおりに歩く
+    if (!localStorage.getItem('nsg_roll')) localStorage.setItem('nsg_roll', '0');   // 台本は1マスずつ歩く（かたむけて転がすのは、下の roll のチェックで）
     if (!localStorage.getItem('nsg_view')) { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); }
     window.__played = [];   // 鳴らした音（効果音・BGM）を記録する
     window.__rewards = [];   // 出たごほうびの知らせ（あとから出たものに消されても、出たことは分かるように）
@@ -606,7 +607,23 @@ async function walkTo(page, id) {
     R.checks.eyeFree = await page.evaluate(at => nishioGo.me.lat !== at[0] || nishioGo.me.lng !== at[1], at);   // 話が終わったら また歩ける
   } else R.checks.eyeTalk = 'no-npc';
   // 生きもの手帳：田んぼで出会うと手帳に載り、その絵がある
-  R.checks.dog = await page.evaluate(() => nishioPixel.dog.trail > 0);   // さんぽ犬が ついて歩いている
+  // かたむけて転がす：右の矢印キーを1秒おすと、お米が勢いをつけて右へ転がり（1マスより先へ）、転がった分だけ絵が回る。スマホを左へ傾けても転がる
+  R.checks.roll = await (async () => {
+    const before = await page.evaluate(() => { nishioPixel.setRoll(true); return null; });
+    await page.waitForTimeout(300);
+    const a = await page.evaluate(() => nishioPixel.roll);
+    await page.keyboard.down('ArrowRight'); await page.waitForTimeout(1000); await page.keyboard.up('ArrowRight');
+    await page.waitForTimeout(600);
+    const b = await page.evaluate(() => nishioPixel.roll);
+    // スマホの傾き：はじめの持ち方（40度）を まっすぐにして、左へ20度傾けると 左へ転がる
+    await page.evaluate(() => { for (let i = 0; i < 10; i++) window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })); });
+    for (let i = 0; i < 20; i++) { await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: -20 }))); await page.waitForTimeout(50); }
+    await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })));
+    await page.waitForTimeout(600);
+    const c = await page.evaluate(() => nishioPixel.roll);
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ready: a.ready, moved: +(b.x - a.x).toFixed(2), rolled: +(b.d - a.d).toFixed(2), tilt: +(c.x - b.x).toFixed(2), ok: !!(a.ready && (b.d - a.d > 0.8) && (Math.abs(b.x - a.x) > 0.8 || Math.abs(b.y - a.y) > 0.3) && (c.d - b.d > 0.5)) };
+  })();
   R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   // イベント「ドット絵ムービー」：八ツ面山でチェックインすると、ごほうびの画面のあとに「山の岩のなりたち」が流れ、最後まで見ると まちメモ に残る
   await page.evaluate(() => { window.__keepMovie = true; const s = nishioGo.spots.find(x => x.id === 'f-yatsuomote'); nishioGo.moveTo(s.lat, s.lng); });
@@ -655,7 +672,7 @@ async function walkTo(page, id) {
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
-  need(c.dog === true, 'さんぽ犬が 主人公について歩かない');
+  need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');
   need(c.parcel !== false, 'おとどけもの：あずかった荷物の あて先の人と話しても、届けられない');

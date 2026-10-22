@@ -2118,17 +2118,13 @@ const sealBy = id => (window.NISHIO_NPCS || []).find(n => n.id === SEAL_BY[id]);
 const sealGoal = id => Math.min(SEAL_AT, Math.max(areaProgress(id).total, 1));
 const sealReady = id => (!SEAL_POST.has(id) || !!S.cleared) && spotMeta.loaded && areaProgress(id).total > 0 && areaProgress(id).done >= sealGoal(id);
 
-/* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら まちメモ ----------
-   遊び方は3つ。どれにも出番があるように、集まる速さに差をつけている（3分ずつ遊ばせて確かめた目安）
-   ・自分で操作：いちばんたくさん集まる。たからばこ（ドット絵とまちメモが出る）を自由に探せるのは、自分で動かしたときだけ
-   ・おまかせ歩き：見ているだけで、行き先へ歩いてチェックインし、人の話を読む。集まるのは自分で操作したときの半分くらい。たからばこは、すぐ近くのものだけ寄り道して開ける
+/* ---------- 放置（操作して移動だけ）：るすばん強化・おかえり ----------
+   ・自分で転がす：いちばんたくさん集まる。たからばこ（ドット絵とまちメモが出る）を自由に探せる
    ・るすばん：アプリを閉じていた間も、主人公が西尾やとなりのまちをさんぽして ポイント・まちメモ・ドット絵 を集めてくる（10分から。上限はふつう4時間）。
      ポイントはレベルが上がるほど多い（1時間に 60＋レベル×6）。遊んでいる間ほどは集まらないが、閉じていてもゼロにはならない
-   ・ポイントで「おまかせ強化」：おまかせ歩きを速く／るすばん中に集まるポイントを多く／るすばんの上限を長く。自分で操作して集めたポイントで、放置を強くする目標になる値段にしてある
-   ・おまかせ歩きで約150マス進むごとに、まだ知らない まちメモ を1つ（いまいる市町の話から）。チェックインしたところの話も */
+   ・ポイントで「るすばん強化」：るすばん中に集まるポイントを多く／るすばんの上限を長く（おまかせ歩きは なくした。運営者の決定 2026年10月） */
 const IDLE = { minMin: 10, baseH: 4, napH: 2, ptPerHour: lv => 60 + 6 * lv, maxFacts: 3, dotMin: 120, maxDots: 2,
   ups: [
-    { id: 'spd', icon: '👟', name: 'はやあし', desc: 'おまかせ歩きが速くなる', cost: [300, 1000, 3000] },
     { id: 'bag', icon: '🎒', name: 'おおきなリュック', desc: 'るすばん中に集まるポイントが1.5倍・2倍・2.5倍', cost: [400, 1200, 3600] },
     { id: 'nap', icon: '🏠', name: 'るすばん上手', desc: 'るすばんで集まる時間が2時間ずつのびて、まちメモとドット絵も1つずつ多く持ち帰る', cost: [500, 1500, 4500] },
   ] };
@@ -2201,12 +2197,12 @@ function buyUp(id) {
   toast(`${u.icon} ${u.name}が Lv${lv + 1} になりました`);
   track('idle_upgrade', { id, lv: lv + 1 });
 }
-const UP_PI = { spd: 'feet', bag: 'bag', nap: 'home' };   // おまかせ強化の絵（文字を少なく：ふだん）。Blender で作った nishio-go/art/up-<id>.png があるもの
+const UP_PI = { bag: 'bag', nap: 'home' };   // るすばん強化の絵（文字を少なく：ふだん）。Blender で作った nishio-go/art/up-<id>.png があるもの
 function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
   const lv = levelOf(S.total), perH = Math.floor(IDLE.ptPerHour(lv) * (1 + 0.5 * upLv('bag')));
-  $('upNote').textContent = `🎮 自分で操作：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🧭 おまかせ歩き：見ているだけで行き先へ（集まるのは半分くらい。たからばこは すぐ近くのものだけ）。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
+  $('upNote').textContent = `🍚 自分で転がす：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     if (simple()) return `<li class="up-pic" title="${esc(u.desc)}"><span class="ico">${UP_PI[u.id] ? `<img class="art" src="nishio-go/art/up-${u.id}.png" alt="${esc(u.name)}" width="48" height="48"/>` : PI('up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`

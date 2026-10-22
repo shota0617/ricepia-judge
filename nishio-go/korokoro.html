@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>お米ころころ（試作）｜にしおさんぽGO</title>
+<meta name="robots" content="noindex"/>
+<meta name="theme-color" content="#2f5d3a"/>
+<style>
+  :root { --green: #2f5d3a; --ink: #1f2a22; --bg: #1b2a1e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: #fff; font-family: "DotGothic16", system-ui, "Hiragino Sans", sans-serif; overscroll-behavior: none; }
+  body { display: flex; flex-direction: column; align-items: center; touch-action: none; user-select: none; -webkit-user-select: none; }
+  header { width: 100%; max-width: 480px; display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; font-size: 14px; }
+  header a { color: #cfe8d0; }
+  #cv { width: min(100vw, 480px, calc((100vh - 150px) * 2 / 3)); aspect-ratio: 2 / 3; image-rendering: pixelated; background: #6aa84a; display: block; }
+  .modes { display: flex; gap: 6px; padding: 8px; flex-wrap: wrap; justify-content: center; }
+  .modes button { font: inherit; font-size: 14px; border: 2px solid #fff; background: #000; color: #fff; border-radius: 6px; padding: 6px 10px; }
+  .modes button[aria-pressed="true"] { background: #f2c230; color: #000; border-color: #f2c230; }
+  #msg { font-size: 13px; min-height: 2.6em; text-align: center; padding: 0 12px; max-width: 480px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<header><a href="../nishio-go.html">← もどる</a><span id="hud">お米ころころ（試作）</span></header>
+<canvas id="cv" width="160" height="240"></canvas>
+<div class="modes" role="group" aria-label="操作">
+  <button type="button" data-m="tilt">📱 かたむける</button>
+  <button type="button" data-m="flick">👆 はじく</button>
+  <button type="button" data-m="drag">✋ なぞる</button>
+  <button type="button" id="retry">↺ はじめから</button>
+</div>
+<p id="msg"></p>
+<script>
+// にしおさんぽGO：お米ころころ（操作性の試作）
+// ・童謡「どんぐりころころ」の どんぐりのように、ひと粒のお米が ころころ転がる。台地の茶畑から坂を下り、田んぼのあぜ道をぬけて、ごはん茶わんへ
+//   池（どじょうのいる池）に落ちると、どじょうが「こんにちは」と出てきて、ひとつ前の旗から。坂は下り（下へ ひっぱられる）
+// ・操作を3つためして、くらべる：
+//   📱 かたむける：スマホを傾けた向きへ転がる（DeviceOrientation。iPhone は はじめに許可がいる）。キーボードの矢印キーでも
+//   👆 はじく：はじいた向きと強さで、1回ずつ ころがす（ゴルフのように、はじいた回数を数える）
+//   ✋ なぞる：指のある所へ向かって転がる（はなすと、勢いで転がりつづける）
+// ・お米は たて長のつぶ。転がった道のりだけ回って見え（ころころ）、速いほど よく回る。かべに当たると少しはねる
+(() => {
+  'use strict';
+  const W = 160, H = 240, cv = document.getElementById('cv'), x = cv.getContext('2d');
+  const $ = id => document.getElementById(id);
+  x.imageSmoothingEnabled = false;
+  // コース（160×240 の点）。かべ（あぜ・石垣）、池、坂（下り）、旗、ゴール
+  const WALLS = [[0, 0, 160, 4], [0, 0, 4, 240], [156, 0, 4, 240], [0, 236, 160, 4],
+    [4, 52, 110, 6], [46, 104, 110, 6], [4, 156, 100, 6], [60, 200, 6, 36]];
+  const PONDS = [[110, 120, 40, 28], [14, 172, 36, 22]];
+  const SLOPES = [[4, 58, 152, 46, 0, 0.05], [4, 110, 152, 46, 0, 0.04]];   // [x, y, w, h, ax, ay]：坂の下り（台地から田んぼへ）
+  const FLAGS = [[18, 20], [140, 80], [18, 132], [130, 184]];
+  const GOAL = [100, 214, 14];   // ごはん茶わん（まん中と半径）
+  const TEA = [[10, 10, 40, 30], [64, 8, 70, 14]];   // 茶畑（台地の上）
+  const st = { mode: 'tilt', px: 18, py: 20, vx: 0, vy: 0, roll: 0, ang: 0, flag: 0, t0: 0, flicks: 0, fall: 0, goal: false, tilt: [0, 0], keys: {}, finger: null, drag: null, msgT: 0 };
+  const R = 3;   // 当たりの半径
+  const msg = (t, ms = 2500) => { $('msg').textContent = t; st.msgT = performance.now() + ms; };
+  function reset(all = true) {
+    const f = FLAGS[all ? 0 : st.flag];
+    Object.assign(st, { px: f[0], py: f[1], vx: 0, vy: 0 });
+    if (all) Object.assign(st, { flag: 0, t0: performance.now(), flicks: 0, fall: 0, goal: false });
+  }
+  function setMode(m) {
+    st.mode = m;
+    document.querySelectorAll('[data-m]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === m)));
+    const help = { tilt: 'スマホを かたむけると、その向きへ ころころ。（パソコンは矢印キー）', flick: '画面を はじくと、その向きと強さで ころがる。はじいた回数を数えるよ', drag: '指のある所へ向かって ころがる。はなすと勢いで ころころ' };
+    msg(help[m], 4000);
+    if (m === 'tilt' && window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission().catch(() => msg('傾きを使う許可がないので、矢印キーか ほかの操作で ためしてね'));
+    }
+  }
+  window.addEventListener('deviceorientation', e => { if (e.gamma != null) st.tilt = [Math.max(-30, Math.min(30, e.gamma)) / 30, Math.max(-30, Math.min(30, (e.beta || 0) - 30)) / 30]; });
+  addEventListener('keydown', e => { st.keys[e.key] = true; });
+  addEventListener('keyup', e => { st.keys[e.key] = false; });
+  const toCv = e => { const r = cv.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H]; };
+  cv.addEventListener('pointerdown', e => { cv.setPointerCapture(e.pointerId); const p = toCv(e); st.finger = p; st.drag = { p, t: performance.now() }; });
+  cv.addEventListener('pointermove', e => { if (st.finger) st.finger = toCv(e); });
+  cv.addEventListener('pointerup', e => {
+    const p = toCv(e), d = st.drag;
+    if (st.mode === 'flick' && d) {   // はじく：指の動きの向きと速さ
+      const dt = Math.max(40, performance.now() - d.t), k = Math.min(5, 140 / dt);
+      const dx = p[0] - d.p[0], dy = p[1] - d.p[1];
+      if (Math.hypot(dx, dy) > 4) { st.vx += dx / 12 * k; st.vy += dy / 12 * k; st.flicks++; }
+    }
+    st.finger = null; st.drag = null;
+  });
+  document.querySelectorAll('[data-m]').forEach(b => b.addEventListener('click', () => setMode(b.dataset.m)));
+  $('retry').onclick = () => reset(true);
+  const inRect = (px, py, r, pad = 0) => px > r[0] - pad && px < r[0] + r[2] + pad && py > r[1] - pad && py < r[1] + r[3] + pad;
+  function step() {
+    if (st.goal) return;
+    let ax = 0, ay = 0;
+    if (st.mode === 'tilt') {
+      ax = st.tilt[0] * 0.09 + ((st.keys.ArrowRight ? 1 : 0) - (st.keys.ArrowLeft ? 1 : 0)) * 0.09;
+      ay = st.tilt[1] * 0.09 + ((st.keys.ArrowDown ? 1 : 0) - (st.keys.ArrowUp ? 1 : 0)) * 0.09;
+    } else if (st.mode === 'drag' && st.finger) {
+      const dx = st.finger[0] - st.px, dy = st.finger[1] - st.py, d = Math.hypot(dx, dy) || 1;
+      ax = dx / d * Math.min(0.12, d / 200); ay = dy / d * Math.min(0.12, d / 200);
+    }
+    for (const s of SLOPES) if (inRect(st.px, st.py, s)) { ax += s[4]; ay += s[5]; }   // 坂は下りへ
+    st.vx = (st.vx + ax) * 0.985; st.vy = (st.vy + ay) * 0.985;   // ころがり抵抗
+    const sp = Math.hypot(st.vx, st.vy);
+    if (sp > 3.2) { st.vx *= 3.2 / sp; st.vy *= 3.2 / sp; }
+    // かべ：x と y を分けて動かし、当たったら少しはねる
+    st.px += st.vx;
+    for (const w of WALLS) if (inRect(st.px, st.py, w, R)) { st.px -= st.vx; st.vx *= -0.45; }
+    st.py += st.vy;
+    for (const w of WALLS) if (inRect(st.px, st.py, w, R)) { st.py -= st.vy; st.vy *= -0.45; }
+    st.roll += Math.hypot(st.vx, st.vy) / R;   // 転がった道のりだけ回る
+    if (sp > 0.05) st.ang = Math.atan2(st.vy, st.vx);
+    FLAGS.forEach((f, i) => { if (i > st.flag && Math.hypot(st.px - f[0], st.py - f[1]) < 8) { st.flag = i; msg('🚩 旗にとうちゃく。池に落ちたら、ここから'); } });
+    if (PONDS.some(p => inRect(st.px, st.py, p, -1))) {   // 池にはまった
+      st.fall++; msg('💦 お池に はまって さあ大変！ どじょうが出てきて「こんにちは」…旗から もういちど');
+      reset(false);
+    }
+    if (Math.hypot(st.px - GOAL[0], st.py - GOAL[1]) < GOAL[2] - 4) {
+      st.goal = true;
+      const sec = ((performance.now() - st.t0) / 1000).toFixed(1);
+      msg(`🍚 ごはん茶わんに とうちゃく！ ${sec}秒・池に ${st.fall}回${st.mode === 'flick' ? `・はじいた ${st.flicks}回` : ''}（↺ で もういちど）`, 1e9);
+    }
+  }
+  // ---------- 描く ----------
+  const rect = (r, c) => { x.fillStyle = c; x.fillRect(r[0], r[1], r[2], r[3]); };
+  function drawCourse(now) {
+    x.fillStyle = '#7cc552'; x.fillRect(0, 0, W, H);   // 田んぼのあぜの草
+    x.fillStyle = '#a8c870'; x.fillRect(4, 4, 152, 48);   // 台地の上
+    for (const t of TEA) { rect(t, '#3f8a3a'); for (let y = t[1] + 2; y < t[1] + t[3]; y += 5) { x.fillStyle = '#7fbf4a'; x.fillRect(t[0], y, t[2], 1); } }
+    for (const s of SLOPES) { rect(s, '#c8b078'); x.fillStyle = '#b09860'; for (let y = s[1] + 3; y < s[1] + s[3]; y += 6) for (let xx = s[0] + ((y / 6) % 2) * 4; xx < s[0] + s[2]; xx += 8) x.fillRect(xx, y, 3, 1); }   // 坂（下りのしま）
+    x.fillStyle = '#5a9e3a'; for (let y = 166; y < 236; y += 6) for (let xx = 8; xx < 152; xx += 6) if (!PONDS.some(p => inRect(xx, y, p, 2))) x.fillRect(xx, y, 2, 3);   // 稲
+    for (const p of PONDS) {
+      rect(p, '#3d86c6'); x.fillStyle = '#a8d8f0';
+      for (let i = 0; i < 3; i++) x.fillRect(p[0] + 4 + ((now / 300 + i * 9) % (p[2] - 10)), p[1] + 5 + i * 7, 4, 1);
+      x.fillStyle = '#6a5a3a'; const k = Math.floor(now / 500) % 2; x.fillRect(p[0] + p[2] / 2 - 4, p[1] + p[3] / 2 + k, 8, 2);   // どじょう
+    }
+    for (const w of WALLS) rect(w, '#8a7a58');
+    FLAGS.forEach((f, i) => { x.fillStyle = '#5a4a3a'; x.fillRect(f[0], f[1] - 8, 1, 9); x.fillStyle = i <= st.flag ? '#d23a2e' : '#f4f4f0'; x.fillRect(f[0] + 1, f[1] - 8, 5, 3); });
+    // ごはん茶わん
+    x.fillStyle = '#2f5d9a'; x.beginPath(); x.ellipse(GOAL[0], GOAL[1] + 2, GOAL[2], GOAL[2] * 0.55, 0, 0, Math.PI); x.fill();
+    x.fillStyle = '#ffffff'; x.beginPath(); x.ellipse(GOAL[0], GOAL[1], GOAL[2] - 2, 4, 0, 0, Math.PI * 2); x.fill();
+  }
+  function drawRice() {
+    // たて長のつぶを、進む向きに寝かせて、転がった分だけ回す（回ると たての長さが ちぢんで見える＝ころころ）
+    const squash = Math.abs(Math.cos(st.roll)) * 0.5 + 0.5;
+    x.save(); x.translate(Math.round(st.px), Math.round(st.py)); x.rotate(st.ang + Math.PI / 2);
+    x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(1, 2, 3, 4 * squash, 0, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#1a1a1a'; x.beginPath(); x.ellipse(0, 0, 3.6, 5 * squash + 0.6, 0, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#fbfaf2'; x.beginPath(); x.ellipse(0, 0, 2.8, 4.2 * squash, 0, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#e8e2c8'; x.fillRect(-1, Math.round(2 * squash) - 1, 2, 1);   // 胚芽のくぼみ
+    x.restore();
+    if (st.mode === 'drag' && st.finger) { x.strokeStyle = 'rgba(255,255,255,.6)'; x.strokeRect(Math.round(st.finger[0]) - 3, Math.round(st.finger[1]) - 3, 6, 6); }
+  }
+  function loop(now) {
+    step();
+    drawCourse(now); drawRice();
+    const sec = st.goal ? '' : ((now - st.t0) / 1000).toFixed(0) + '秒';
+    $('hud').textContent = `お米ころころ（試作）${sec ? ' ' + sec : ''}`;
+    if (st.msgT && now > st.msgT) { $('msg').textContent = ''; st.msgT = 0; }
+    requestAnimationFrame(loop);
+  }
+  reset(true); setMode('tilt');
+  requestAnimationFrame(loop);
+  window.korokoro = st;   // 確かめ用
+})();
+</script>
+</body>
+</html>

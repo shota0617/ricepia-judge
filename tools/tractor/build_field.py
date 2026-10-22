@@ -181,6 +181,14 @@ def tex_untilled(n=1024):
                         sx, sy = int(cx + math.cos(a) * L * t), int(cy + math.sin(a) * L * t + 0.25 * L * t * t)
                         col[np.ix_(np.arange(sy - wd + 1, sy + wd) % n, np.arange(sx - wd + 1, sx + wd) % n)] = c * (0.8 + 0.3 * t)
                         hgt[np.ix_(np.arange(sy - wd + 1, sy + wd) % n, np.arange(sx - wd + 1, sx + wd) % n)] = 1.0
+    if aki:                                                            # 秋起こしの前にまいた粒状の土壌改良材（珪酸石灰など 200kg/10a くらい：1m² に 1,000 粒ほど、白っぽい 2〜4mm の粒）
+        g = np.random.default_rng(71)
+        m = n * n // 70
+        ys, xs = g.integers(0, n, m), g.integers(0, n, m)
+        c = np.array([hexc('#ecebe4'), hexc('#d8d6cd'), hexc('#f4f2ec')])[g.integers(0, 3, m)] * g.uniform(0.9, 1.05, (m, 1))
+        for dy, dx in ((0, 0), (0, 1), (1, 0), (1, 1)):
+            col[(ys + dy) % n, (xs + dx) % n] = c
+            hgt[(ys + dy) % n, (xs + dx) % n] = 0.8
     return np.clip(col, 0, 1), normal_from(hgt, 3.0)
 
 

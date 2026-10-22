@@ -1,4 +1,6 @@
-# にしおさんぽGO：当店「らいすぴあ・秀幸」の特大のドット絵（96×96）と、お店のなかの絵を Blender で作る
+# にしおさんぽGO：当店「らいすぴあ・秀幸」「近藤米穀店（本店）」の特大のドット絵（128×128。ほかの名所の 96 より細かく）と、お店のなかの絵を Blender で作る
+# - 2026-10-22：運営者の写真（らいすぴあ：赤白の店・白いどんぶりに赤い米のマーク・米のドライブスルー／近藤米穀店：クリーム色の店・大きな赤い米）で作りなおした。
+#   大きな「米」と 看板の字は、日本語の書体（IPAゴシック）で 字の形の板にする（小さい字は 点になる）。書体がなければ 字は描かない
 # - 形と色は、運営者が撮った お店の写真4枚（2026年10月：店の正面とドライブスルー・お米の売り場・紙袋の30kgのお米・駐車場のコイン精米所）から。
 #   写っている字（店名・値段・銘柄）は絵にしない（色の帯だけ）。となりのお店・止まっている車・ナンバーも描かない
 # - giant-neighbors.py と同じ部品と焼き方。できた PNG は nishio-go/art/giant/ricepia.png（歩く地図で pixel.js の GIANT_ART）と
@@ -21,70 +23,158 @@ pa.MATS.update({
     'labelR': '#e8384a', 'labelB': '#2f5fc8', 'labelG': '#3a9a4a', 'labelO': '#f0902a', 'kamibukuro': '#d2ab72', 'himo': '#8a6a4a',
     'teal': '#2f7f86', 'beige': '#d8c6ae', 'beigeD': '#b8a68e', 'aoJi': '#2a3f9a', 'kiiro': '#f2c200', 'line': '#e8b020',
     'nedan': '#fbfbf6', 'nedanM': '#222222', 'momo': '#f4c8d4', 'kabe': '#cdd5cd', 'tenjo': '#4a5a52', 'dai': '#e8dcc0', 'daiK': '#2a2a2a',
-    'pinkF': '#e8a0b4', 'paret': '#b8915a',
+    'pinkF': '#e8a0b4', 'paret': '#b8915a', 'cream': '#f1e08e', 'creamD': '#d8c46c', 'roadG': '#6a6a6a', 'gTreeD': '#3f7f34',
 })
 
 
+FONT = next((f for f in ('/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf', '/usr/share/fonts/truetype/fonts-japanese-gothic.ttf') if os.path.exists(f)), None)
+
+
+def moji(name, mat, text, size, loc, face='-y', bold=0.0):
+    """壁に はった 字（Blender の文字を うすい板にする）。face：字の向き（-y 正面・-x 左の壁）。日本語の書体がなければ 何もしない"""
+    if not FONT:
+        return None
+    rot = (math.pi / 2, 0, 0) if face == '-y' else (math.pi / 2, 0, -math.pi / 2)
+    bpy.ops.object.text_add(location=loc, rotation=rot)
+    o = bpy.context.object
+    o.name = name
+    o.data.body = text
+    o.data.font = bpy.data.fonts.load(FONT, check_existing=True)
+    o.data.size = size
+    o.data.extrude = 0.002
+    o.data.offset = bold   # 字を太く（小さい絵でも つぶれないように）
+    o.data.align_x, o.data.align_y = 'CENTER', 'CENTER'
+    bpy.ops.object.convert(target='MESH')
+    o.data.materials.clear()
+    o.data.materials.append(pa.material(mat))
+    return o
+
+
+import bpy  # noqa: E402  （pixel-art.py が先に読み込んでいる）
+
+
 def ricepia():
-    """らいすぴあ・秀幸：赤い波板の店（下に白い帯・ガラスの入口・左は開いた倉庫で、お米の袋が積んである）、屋根の上の白い横長の看板（ピンクの字の帯）、
-    右に白い屋根の「米のドライブスルー」（前の白い板に赤い帯と赤い矢印、白い柱、黄色の車止め、屋根の上の照明）。
-    左前に荷台にピンクの柵の白い軽トラ（木のパレット）、右の駐車場に コイン精米所（ベージュの小屋に青緑の看板、白い「P」の看板の塔）"""
-    ground('concrete')
-    box('line', 'line', (0.012, 0.50, 0.004), (0.02, -0.20, 0.004), (0, 0, math.radians(8)))   # 黄色い線
-    # 店：赤い波板の建物
-    box('mise', 'akaR', (0.46, 0.30, 0.24), (-0.20, 0.16, 0.12))
-    for i in range(12):   # 波板のすじ
-        box(f'nami{i}', 'akaRD', (0.006, 0.302, 0.20), (-0.42 + i * 0.04, 0.16, 0.12))
-    box('obi', 'kanbanW', (0.464, 0.304, 0.03), (-0.20, 0.16, 0.075))   # 白い帯
-    box('kurai', 'sumi', (0.16, 0.02, 0.16), (-0.33, 0.006, 0.08))   # 左の開いた倉庫（中は暗い）
-    for x in (-0.41, -0.25):
-        box(f'hashiraW{x}', 'kanbanW', (0.02, 0.03, 0.17), (x, 0.0, 0.085))
-    for k in range(3):   # 倉庫の中のお米の袋
-        for j in range(2):
-            box(f'fukuro{k}{j}', 'kome', (0.05, 0.03, 0.022), (-0.37 + j * 0.06, 0.03, 0.015 + k * 0.024))
-    box('garasu', 'glassB', (0.18, 0.012, 0.11), (-0.12, 0.004, 0.055))   # ガラスの入口
-    for x in (-0.18, -0.12, -0.06):
-        box(f'harigami{x}', 'nedan', (0.03, 0.014, 0.03), (x, 0.002, 0.08))   # 値段の貼り紙（字は描かない）
-    # 屋根の上の白い横長の看板（ピンクの字の帯）
-    box('kanban', 'kanbanW', (0.44, 0.03, 0.09), (-0.20, 0.0, 0.30))
-    box('kanbanM', 'moji', (0.36, 0.032, 0.035), (-0.20, 0.0, 0.30))
-    box('kanbanB', 'hashira', (0.44, 0.05, 0.012), (-0.20, 0.01, 0.25))
-    # 米のドライブスルー：白い屋根・前の板・柱
-    box('dtYane', 'kanbanW', (0.40, 0.32, 0.03), (0.23, 0.10, 0.215))
-    box('dtIta', 'kanbanW', (0.42, 0.03, 0.08), (0.23, -0.06, 0.20))
-    box('dtObi', 'akaR', (0.27, 0.032, 0.05), (0.29, -0.062, 0.20))   # 赤い帯（「米のドライブスルー」の字のところ）
-    box('dtYa', 'akaR', (0.05, 0.032, 0.04), (0.07, -0.062, 0.205))   # 赤い矢印（IN）
-    box('dtKao', 'kanbanW', (0.03, 0.034, 0.03), (0.13, -0.062, 0.20))   # 白い顔の車のマーク（形だけ）
-    for x, y in ((0.40, -0.04), (0.40, 0.24)):
-        cyl(f'dtHashira{y}', 'kanbanW', 0.014, 0.19, (x, y, 0.095), verts=10)
-    box('kurumadome', 'kiiro', (0.03, 0.03, 0.05), (0.42, -0.06, 0.025))
-    for i in range(4):   # 屋根の上の照明
-        x = 0.08 + i * 0.10
-        box(f'shomei{i}', 'hashira', (0.03, 0.02, 0.02), (x, -0.06, 0.25))
-    box('kiiroKanban', 'kiiro', (0.06, 0.006, 0.04), (0.20, 0.25, 0.07))   # 奥の黄色い案内板（白線まで前に）
-    # 白い軽トラ（荷台にピンクの柵と木のパレット）
-    box('trCab', 'kome', (0.07, 0.09, 0.07), (-0.36, -0.30, 0.05), (0, 0, math.radians(90)))
-    box('trMado', 'glassB', (0.062, 0.002, 0.03), (-0.36, -0.346, 0.07), (0, 0, 0))
-    box('trNi', 'kome', (0.08, 0.15, 0.02), (-0.36, -0.18, 0.03), (0, 0, 0))
-    for dx in (-0.04, 0.04):
-        box(f'trSaku{dx}', 'pinkF', (0.004, 0.15, 0.06), (-0.36 + dx, -0.18, 0.07))
-    box('trSakuU', 'pinkF', (0.08, 0.004, 0.06), (-0.36, -0.105, 0.07))
-    box('paret', 'paret', (0.06, 0.08, 0.05), (-0.36, -0.17, 0.065), (math.radians(-10), 0, 0))
-    for x in (-0.395, -0.325):
-        for y in (-0.32, -0.14):
-            cyl(f'tire{x}{y}', 'sumi', 0.014, 0.012, (x, y, 0.014), (0, math.pi / 2, 0), 10)
-    # コイン精米所：ベージュの小屋に青緑の看板、白い「P」の看板の塔
-    # 右前の駐車場（写真では店の横の駐車場）に置く。ドライブスルーの屋根にかくれないように
-    mx, my = 0.12, -0.34
-    box('seimai', 'beige', (0.16, 0.10, 0.10), (mx, my, 0.05))
-    box('seimaiTo', 'glassB', (0.04, 0.006, 0.07), (mx - 0.05, my - 0.052, 0.035))
-    box('seimaiK', 'teal', (0.12, 0.012, 0.035), (mx, my - 0.056, 0.115))
-    box('tou', 'beigeD', (0.06, 0.06, 0.22), (mx + 0.11, my + 0.02, 0.11))
-    box('touK', 'kanbanW', (0.062, 0.004, 0.07), (mx + 0.11, my - 0.012, 0.17))
-    box('touKj', 'aoJi', (0.05, 0.005, 0.014), (mx + 0.11, my - 0.013, 0.19))   # 青い字（店名）の帯
-    box('touP', 'akaR', (0.024, 0.005, 0.03), (mx + 0.11, my - 0.013, 0.16))   # 赤い P
-    box('touY', 'yaneB', (0.08, 0.08, 0.008), (mx + 0.11, my + 0.02, 0.225), (math.radians(8), 0, 0))
-    return dict(target=(0.02, 0.0, 0.12), scale=1.04, el=28, size=96)
+    """らいすぴあ・秀幸（運営者の写真 2026年10月：店の正面とドライブスルー）。
+    赤い2階ぶんの高さの店。左の壁に 白いどんぶりに赤い「米」のマーク、壁は赤い板を白いすじで区切った もよう。
+    正面の上に 白い看板（赤い字の「らいすぴあ・秀幸」）、1階は ガラスの売り場（ポスターが はってある）と入口。
+    右に 白い屋根の「米のドライブスルー」（赤い帯に白い字・左はしに IN の矢印と車のマーク・白い柱）。前は コンクリートの駐車場"""
+    ground('concrete', 1.2, 0.9)
+    for i in range(3):   # 駐車場の白線
+        box(f'sen{i}', 'kanbanW', (0.012, 0.22, 0.004), (0.30 + i * 0.13, -0.30, 0.004))
+    W, D, H, X0 = 0.46, 0.40, 0.40, -0.25   # 店の はば・おくゆき・高さ・まん中
+    box('mise', 'akaR', (W, D, H), (X0, 0.10, H / 2))
+    box('yaneF', 'kanbanW', (W + 0.02, D + 0.02, 0.012), (X0, 0.10, H + 0.006))   # 屋根の白いふち
+    box('yane', 'kabe', (W - 0.02, D - 0.02, 0.016), (X0, 0.10, H + 0.010))   # 屋根（うすい灰色）
+    for i, (x, y) in enumerate(((X0 - 0.10, 0.18), (X0 + 0.05, 0.22), (X0 + 0.12, 0.05))):   # 屋根の上の 室外機
+        box(f'shitsugai{i}', 'concrete', (0.05, 0.04, 0.03), (x, y, H + 0.03))
+    # 左の壁（-x）：白いすじの もよう と、どんぶりの マーク
+    lx = X0 - W / 2 - 0.002
+    for y in (-0.06, 0.10, 0.26):
+        box(f'lsenT{y}', 'kanbanW', (0.006, 0.018, H - 0.02), (lx, y, H / 2))
+    box('lsenY', 'kanbanW', (0.006, D, 0.022), (lx, 0.10, 0.12))
+    cyl('donburi', 'kanbanW', 0.085, 0.006, (lx - 0.002, 0.10, 0.27), (0, math.pi / 2, 0), 32)   # 白い まるの上に どんぶり
+    box('donburiF', 'akaR', (0.006, 0.17, 0.05), (lx - 0.004, 0.10, 0.215))   # どんぶりの ふち（下の半分を赤く くぎる）
+    moji('komeL', 'akaR', '米', 0.11, (lx - 0.006, 0.10, 0.285), face='-x', bold=0.003)
+    # 正面（-y）：上に 白い看板、すじの もよう、1階は ガラスの売り場
+    fy = 0.10 - D / 2 - 0.002
+    box('kanban', 'kanbanW', (W - 0.04, 0.012, 0.075), (X0, fy - 0.004, H - 0.05))
+    moji('kanbanJ', 'akaR', 'らいすぴあ・秀幸', 0.042, (X0, fy - 0.011, H - 0.05), bold=0.001)
+    for x in (X0 - W / 2 + 0.01, X0 + W / 2 - 0.01):
+        box(f'fsenT{x}', 'kanbanW', (0.018, 0.006, H - 0.10), (x, fy, (H - 0.10) / 2))
+    box('fsenY', 'kanbanW', (W, 0.006, 0.02), (X0, fy, 0.21))
+    box('garasu', 'glassB', (W - 0.10, 0.008, 0.15), (X0 + 0.02, fy - 0.002, 0.09))   # 売り場の ガラス
+    for i, (x, m) in enumerate(((-0.40, 'nedan'), (-0.33, 'kiiro'), (-0.26, 'nedan'), (-0.19, 'momo'), (-0.13, 'nedan'))):
+        box(f'poster{i}', m, (0.045, 0.006, 0.06), (x + 0.04, fy - 0.006, 0.11))   # ポスター（字は描かない）
+    box('iriguchi', 'sumi', (0.06, 0.006, 0.14), (X0 + W / 2 - 0.06, fy - 0.004, 0.07))   # 入口
+    box('hisashi', 'kanbanW', (W - 0.04, 0.05, 0.012), (X0, fy - 0.025, 0.185))   # 入口の上の 白いひさし
+    # 米のドライブスルー：店の右に 白い屋根、前の板に 赤い帯（白い字）、左はしに IN の矢印と 車のマーク
+    rx0, rx1, ry = X0 + W / 2, 0.42, 0.08
+    box('dtYane', 'kanbanW', (rx1 - rx0, 0.36, 0.025), ((rx0 + rx1) / 2, ry, 0.27))
+    box('dtIta', 'kanbanW', (rx1 - rx0, 0.012, 0.075), ((rx0 + rx1) / 2, ry - 0.18, 0.245))
+    box('dtObi', 'akaR', (rx1 - rx0 - 0.10, 0.014, 0.05), ((rx0 + rx1) / 2 + 0.05, ry - 0.187, 0.245))
+    moji('dtJi', 'kanbanW', '米のドライブスルー', 0.036, ((rx0 + rx1) / 2 + 0.05, ry - 0.195, 0.245))
+    box('dtIN', 'akaR', (0.07, 0.014, 0.05), (rx0 + 0.05, ry - 0.187, 0.245))
+    moji('dtINj', 'kanbanW', 'IN', 0.034, (rx0 + 0.045, ry - 0.195, 0.245))
+    for x in (rx0 + 0.15, rx1 - 0.01):
+        for y in (ry - 0.16, ry + 0.16):
+            box(f'dtHashira{x}{y}', 'kanbanW', (0.022, 0.022, 0.26), (x, y, 0.13))
+    box('dtMado', 'glassB', (0.006, 0.20, 0.10), (rx0 + 0.002, ry + 0.02, 0.10))   # ドライブスルーの 受けわたしの窓
+    box('aoKanban', 'labelB', (0.05, 0.008, 0.07), (rx1 - 0.01, ry - 0.175, 0.13))   # 柱の 青い看板
+    box('kurumadome', 'kiiro', (0.03, 0.03, 0.04), (rx1 + 0.03, ry - 0.20, 0.02))
+    # 左前の 白い立て看板
+    box('tate', 'kanbanW', (0.06, 0.012, 0.11), (X0 - W / 2 + 0.06, -0.26, 0.075))
+    box('tateA', 'akaR', (0.05, 0.014, 0.02), (X0 - W / 2 + 0.06, -0.26, 0.11))
+    return dict(target=(0.02, 0.0, 0.16), scale=1.12, el=28, size=128)
+
+
+def kondo():
+    """近藤米穀店（本店。運営者の写真）：クリーム色の 2階建ての店。左の高い棟に 大きな赤い「米」と 電話番号（黒い2行）、
+    1階は ガラスのシャッターと 緑のひさし。まん中に「近藤米穀店」の看板（クリーム地に黒い字）と ガラス戸、
+    右の棟は 2階建てで 青い窓が ならび、1階に 青いひさしと 赤い「たばこ」の札、青緑の のぼり。
+    左に「米のドライブスルー」の看板（白に 青い まるの 米）と 屋根。前に まるい木と 生けがき、街灯"""
+    ground('concrete', 1.2, 0.9)
+    box('michi', 'roadG', (1.2, 0.16, 0.004), (0, -0.40, 0.004))   # 前の道
+    box('hodo', 'concrete', (1.2, 0.04, 0.012), (0, -0.30, 0.006))
+    cream = 'cream'
+    # 左の 高い棟
+    lx, lw, ld, lh = -0.20, 0.28, 0.30, 0.46
+    box('hidari', cream, (lw, ld, lh), (lx, 0.12, lh / 2))
+    box('hidariY', 'creamD', (lw + 0.01, ld + 0.01, 0.012), (lx, 0.12, lh + 0.006))
+    box('entotsu', 'kanbanW', (0.04, 0.04, 0.06), (lx - 0.03, 0.14, lh + 0.03))
+    fy = 0.12 - ld / 2 - 0.002
+    moji('kome', 'akaR', '米', 0.21, (lx - 0.02, fy - 0.004, 0.325), bold=0.006)
+    for i, z in enumerate((0.205, 0.18)):   # 電話番号（黒い字の2行。細かいので 帯に）
+        box(f'tel{i}', 'sumi', (0.07, 0.006, 0.012), (lx - 0.02, fy - 0.003, z))
+    for x in (lx + 0.07, lx + 0.11):
+        box(f'mado2{x}', 'glassB', (0.03, 0.006, 0.03), (x, fy - 0.002, 0.40))
+    box('shutter', 'glassB', (0.16, 0.006, 0.11), (lx + 0.02, fy - 0.003, 0.055))   # ガラスのシャッター
+    for i in range(4):
+        box(f'shK{i}', 'creamD', (0.16, 0.007, 0.004), (lx + 0.02, fy - 0.004, 0.02 + i * 0.03))
+    box('midoriH', 'labelG', (0.18, 0.05, 0.014), (lx + 0.02, fy - 0.025, 0.125))   # 緑のひさし
+    # まん中：入口と看板
+    mx, mw = -0.01, 0.12
+    box('naka', cream, (mw, 0.26, 0.30), (mx, 0.11, 0.15))
+    fy2 = 0.11 - 0.13 - 0.002
+    box('kanbanW', 'kanbanW', (0.20, 0.03, 0.06), (mx + 0.03, fy2 - 0.03, 0.18))
+    box('kanbanC', cream, (0.19, 0.032, 0.05), (mx + 0.03, fy2 - 0.031, 0.18))
+    moji('kanbanJ', 'sumi', '近藤米穀店', 0.034, (mx + 0.03, fy2 - 0.048, 0.18), bold=0.001)
+    box('to', 'glassB', (0.11, 0.006, 0.12), (mx + 0.03, fy2 - 0.002, 0.06))   # ガラス戸
+    box('toW', 'kanbanW', (0.004, 0.007, 0.12), (mx + 0.03, fy2 - 0.003, 0.06))
+    box('poster', 'kiiro', (0.025, 0.007, 0.05), (mx - 0.01, fy2 - 0.004, 0.07))
+    # 右の 2階建ての棟
+    rx, rw, rh = 0.26, 0.42, 0.36
+    box('migi', cream, (rw, 0.30, rh), (rx, 0.12, rh / 2))
+    box('migiY', 'creamD', (rw + 0.01, 0.31, 0.012), (rx, 0.12, rh + 0.006))
+    fy3 = 0.12 - 0.15 - 0.002
+    for i, x in enumerate((0.12, 0.20, 0.28, 0.36, 0.44)):   # 2階の 青い窓（白い わく）
+        box(f'w2{i}', 'kanbanW', (0.05, 0.006, 0.06), (x, fy3, 0.27))
+        box(f'g2{i}', 'glassB', (0.04, 0.007, 0.05), (x, fy3 - 0.001, 0.27))
+    for i, x in enumerate((0.30, 0.38)):
+        box(f'w1{i}', 'kanbanW', (0.05, 0.006, 0.06), (x, fy3, 0.12))
+        box(f'g1{i}', 'glassB', (0.04, 0.007, 0.05), (x, fy3 - 0.001, 0.12))
+    box('aoH', 'labelB', (0.12, 0.05, 0.014), (0.12, fy3 - 0.025, 0.15))   # 青いひさし
+    box('tabako', 'akaR', (0.05, 0.008, 0.025), (0.14, fy3 - 0.004, 0.11))   # 赤い「たばこ」の札
+    box('nobori', 'teal', (0.025, 0.006, 0.12), (0.20, fy3 - 0.03, 0.09))   # 青緑の のぼり
+    cyl('noboriB', 'hashira', 0.004, 0.16, (0.188, fy3 - 0.03, 0.08), verts=6)
+    for i, x in enumerate((0.40, 0.45)):   # エアコンの 室外機
+        box(f'ac{i}', 'kabe', (0.04, 0.03, 0.035), (x, fy3 - 0.02, 0.02))
+    # 左：米のドライブスルー（屋根と、白に 青い まるの 米の看板）
+    box('dtYane', 'kanbanW', (0.12, 0.26, 0.02), (lx - lw / 2 - 0.06, 0.10, 0.20))
+    box('dtOku', 'sumi', (0.10, 0.006, 0.17), (lx - lw / 2 - 0.06, 0.20, 0.085))
+    cyl('dtPole', 'hashira', 0.006, 0.30, (lx - lw / 2 - 0.11, -0.10, 0.15), verts=6)
+    box('dtKanban', 'kanbanW', (0.16, 0.012, 0.05), (lx - lw / 2 - 0.05, -0.10, 0.30))
+    cyl('dtMaru', 'labelB', 0.018, 0.006, (lx - lw / 2 - 0.115, -0.108, 0.30), (math.pi / 2, 0, 0), 16)
+    box('dtAka', 'akaR', (0.03, 0.013, 0.012), (lx - lw / 2 + 0.02, -0.10, 0.285))
+    # 前：まるい木・生けがき・街灯・軽トラ
+    gn.tree('ki', -0.56, 0.06, 0.95)   # 写真では 左はし（ドライブスルーの となり。店を かくさないように 少し おく）
+    for i, x in enumerate((-0.38, -0.24, -0.10)):
+        box(f'ikegaki{i}', 'gTreeD', (0.12, 0.05, 0.05), (x, -0.27, 0.025))
+    box('ikegakiR', 'gTreeD', (0.08, 0.05, 0.05), (0.08, -0.27, 0.025))
+    cyl('gaito', 'hashira', 0.006, 0.36, (0.15, -0.24, 0.18), verts=6)
+    box('gaitoL', 'kanbanW', (0.03, 0.02, 0.012), (0.15, -0.25, 0.36))
+    box('kei', 'kome', (0.10, 0.06, 0.05), (-0.42, 0.02, 0.035))   # 白い軽バン
+    box('keiM', 'glassB', (0.04, 0.062, 0.02), (-0.385, 0.02, 0.055))
+    return dict(target=(0.02, 0.0, 0.16), scale=1.16, el=24, size=128)
 
 
 def ricepia_uriba():
@@ -115,7 +205,7 @@ def ricepia_uriba():
     return dict(target=(-0.02, 0.04, 0.22), scale=1.0, el=14, az=-20, size=96)
 
 
-MODELS = {'ricepia': ricepia, 'ricepia-uriba': ricepia_uriba}
+MODELS = {'ricepia': ricepia, 'kondo': kondo, 'ricepia-uriba': ricepia_uriba}
 pa.MODELS.clear()
 pa.MODELS.update(MODELS)
 

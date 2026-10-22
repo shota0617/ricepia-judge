@@ -5145,6 +5145,7 @@ const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'oka
   'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };
 // 当店（らいすぴあ・秀幸）も特大の絵に：運営者が撮った写真から、店・米のドライブスルー・軽トラ・コイン精米所（tools/blender/giant-shop.py）
 GIANT_ART['f-ricepia'] = 'ricepia';
+GIANT_ART['f-kondo-beikoku'] = 'kondo';   // 近藤米穀店（本店）も：運営者の写真から（クリーム色の店・大きな赤い「米」・看板・緑と青の ひさし）。2つの お店は 128×128 で 細かく
 // となりの市町（岡崎・安城・碧南・高浜・幸田・蒲郡）の注目スポット65か所も、1か所ずつ手で形を作った特大の絵（tools/blender/giant-neighbors.py。絵の名前は spots.json の id）
 [
   'okazaki-daijuji', 'okazaki-kakukyu', 'okazaki-maruya', 'okazaki-iga-hachimangu', 'okazaki-takisanji', 'okazaki-iwazu-tenmangu',

@@ -118,7 +118,7 @@ function setSteer(a) {            // a > 0 で右へ切る
 | ファイル | 中身 |
 |---|---|
 | `build_field.py` | 生成スクリプト（bpy 5.2.2。`build_tractor.py` の部品の関数を借りる） |
-| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 4.5MB・三角形 約 5.8 万、秋 約 5.2MB・約 6.9 万、代かき 約 5.0MB・約 8.4 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
+| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 4.6MB・三角形 約 6.0 万、秋 約 5.3MB・約 7.1 万、代かき 約 5.1MB・約 8.7 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
 | `preview_field.png`・`preview_field_aki.png`・`preview_field_shirokaki.png` | 農道から見た田んぼ（トラクターが半分ほど耕したところ） |
 | `preview_field*_driver.png` | 運転席から（左はまだ、右は耕したあと） |
 | `preview_field*_ground.png` | ロータリーのうしろ：耕した所とまだの所の境目 |

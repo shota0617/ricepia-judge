@@ -26,6 +26,8 @@
   .chip { padding: 5px 10px; border-radius: 999px; background: rgba(20, 18, 14, .62); color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
   .chip b { font-size: 16px; }
   .chip.on { background: rgba(195, 20, 27, .85); }
+  .chip.score { background: rgba(31, 77, 43, .82); }
+  #scorePop { align-self: center; color: #ffd84a; font-size: 14px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.8); opacity: 0; transition: opacity .4s; white-space: nowrap; }
   #bar { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 8px; display: flex; gap: 6px; }
   #bar button, .pad button { border: 0; border-radius: 12px; background: rgba(251, 248, 240, .9); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   #bar button { min-width: 44px; height: 40px; padding: 0 10px; font-size: 14px; }
@@ -79,6 +81,8 @@
   <span class="chip" id="rot">ロータリー 上</span>
   <span class="chip">耕した <b id="pct">0</b>%</span>
   <span class="chip" id="time">0:00</span>
+  <span class="chip score">点数 <b id="sc">100</b></span>
+  <span id="scorePop"></span>
 </div>
 <div id="bar" class="hidden">
   <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
@@ -125,7 +129,8 @@
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
-      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる
+      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる<br>
+      ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎると減る
     </div>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -135,6 +140,7 @@
   <div class="card">
     <h1>🎉 耕し終わりました！</h1>
     <p id="doneText"></p>
+    <p id="doneScore"></p>
     <button class="go" id="bAgain">もう一度</button>
     <p class="small"><a href="https://ricepia.jp/" target="_blank" rel="noopener">らいすぴあ（近藤米穀店）のお米を見る</a></p>
   </div>
@@ -868,7 +874,7 @@ let dirtyLo = Infinity, dirtyHi = -1;
 function tillCell(i, j) {
   if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
   const c = i * NZ + j;
-  if (tilledMask[c]) return;
+  if (tilledMask[c]) return 0;
   tilledMask[c] = 1;
   const x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
@@ -882,6 +888,7 @@ function tillCell(i, j) {
   eraseTracks(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
+  return 1;
 }
 function flushTilled() {
   if (dirtyHi < 0) return;
@@ -1416,6 +1423,63 @@ const TURBID = (() => {
   return { add, update, a };
 })();
 
+// ---- 操縦の点数（リアルタイム・100 点）：本物の耕し方の目安で採点する ----
+// 速さ 20：耕すときは時速 2〜3km／まっすぐ 30：長い向きを耕すとき 1m あたりの向きのぶれ／
+// 重ね 25：となりと 10cm ほど重ねるのがよい（重ねすぎはむだ）／旋回 25：ロータリーを上げて回る・畦にぶつけない
+const SCORE = (() => {
+  const st = { tillT: 0, goodT: 0, yawSq: 0, yawM: 0, swept: 0, newA: 0, turnsDown: 0, levee: 0, lastYaw: null, turning: false, leveeT: 0 };
+  let parts = { spd: 20, straight: 30, overlap: 25, turn: 25 }, total = 100, popT = 0;
+  function pop(t) {
+    const el = $('scorePop');
+    el.textContent = t; el.style.opacity = 1; popT = 1.8;
+  }
+  function step(dt, working, newCells) {
+    st.leveeT = Math.max(0, st.leveeT - dt);
+    if (!working || S.v < 0.1) { st.lastYaw = null; if (Math.abs(S.steer) < 0.15) st.turning = false; return; }
+    st.tillT += dt;
+    const kmh = S.v * 3.6;
+    if (kmh >= 1.9 && kmh <= 3.3) st.goodT += dt;
+    if (Math.abs(Math.cos(S.yaw)) > 0.966 && Math.abs(S.steer) < 0.3 && st.lastYaw !== null) {   // 長い向き（±15°）をまっすぐ耕しているとき（旋回は数えない）
+      const m = S.v * dt, d = (S.yaw - st.lastYaw) * 180 / Math.PI;
+      st.yawSq += d * d / Math.max(m, 1e-3); st.yawM += m;
+    }
+    st.lastYaw = S.yaw;
+    st.swept += (TILL_W + CELL) * S.v * dt;                         // 耕すます目（20cm）の分だけ広めに数える
+    st.newA += newCells * CELL * CELL;
+    if (Math.abs(S.steer) > 0.32 && !st.turning) { st.turning = true; st.turnsDown++; pop('−3　ロータリーを下げたまま旋回'); }
+    else if (Math.abs(S.steer) < 0.15) st.turning = false;
+  }
+  function levee() {
+    if (st.leveeT > 0) return;
+    st.leveeT = 2; st.levee++; pop('−2　畦にぶつかった');
+  }
+  function calc() {
+    const spd = st.tillT > 2 ? 20 * Math.min(1, st.goodT / st.tillT / 0.9) : 20;
+    const rms = st.yawM > 3 ? Math.sqrt(st.yawSq / st.yawM) : 0;      // 1m あたりの向きのぶれ（度）
+    const straight = 30 * Math.max(0, Math.min(1, 1 - (rms - 0.6) / 5));
+    const dup = st.swept > 8 ? 1 - st.newA / st.swept : 0;            // 重なった割合（10cm 重ねで約 5%）
+    const overlap = 25 * Math.max(0, Math.min(1, 1 - (dup - 0.12) / 0.45));
+    const turn = Math.max(0, 25 - 3 * st.turnsDown - 2 * st.levee);
+    parts = { spd, straight, overlap, turn, rms, dup };
+    total = Math.round(spd + straight + overlap + turn);
+    return total;
+  }
+  function update(dt) {
+    if (popT > 0 && (popT -= dt) <= 0) $('scorePop').style.opacity = 0;
+  }
+  function summary() {
+    calc();
+    const r = x => Math.round(x);
+    const tips = [];
+    if (parts.straight < 24) tips.push('長い向きはハンドルを小さく、遠くの目印を見てまっすぐ（直進アシスト G も使える）');
+    if (parts.overlap < 20) tips.push('となりの耕した跡には 10cm ほど重ねるくらいで。重ねすぎると時間と燃料がむだに');
+    if (parts.turn < 20) tips.push('枕地で回るときはロータリーを上げてから。下げたままだと四隅に土が寄る');
+    if (parts.spd < 16) tips.push('耕すときは時速 2〜3km（歩くくらい）で');
+    return { total, text: `速さ ${r(parts.spd)}/20・まっすぐ ${r(parts.straight)}/30・重ね ${r(parts.overlap)}/25・旋回 ${r(parts.turn)}/25`, tips };
+  }
+  return { step, levee, calc, update, summary, st, get parts() { return parts; } };
+})();
+
 // ---- 四隅の土の盛り上がり：ロータリーを下げたまま大きく曲がると、ロータリーが横へ振られて外側に土が寄る
 // （農家さんの悩みとしてよく挙がる。まっすぐ耕しなおすと均平板で少しずつならされる）。代かきは水の下なので出さない
 const HEAPS = (() => {
@@ -1597,7 +1661,7 @@ function step(dt) {
   const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
-  else { if (Math.abs(S.v) > 0.5) toast('畦（あぜ）です。もどってください'); S.v = 0; }
+  else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
   S.rotPos += Math.max(-dt * 1.2, Math.min(dt * 1.2, (S.rotDown ? 0 : 1) - S.rotPos));
@@ -1617,13 +1681,15 @@ function step(dt) {
       TURBID.add(S.x + lx * cs + lz * sn, S.z - lx * sn + lz * cs, dt * 0.9);
     }
   }
+  let newCells = 0;
   if (working && S.v > 0.05) {
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
       const [wx, wz] = p.w(lx, lz);
-      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL));
+      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL)) || 0;
     }
   }
+  if (S.started && !S.done) SCORE.step(dt, working, newCells);
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
@@ -1893,6 +1959,8 @@ $('bStart').onclick = () => {
 function finish() {
   S.done = true;
   $('doneText').textContent = `${{ haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season]}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
+  const sm = SCORE.summary();
+  $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '');
   $('done').classList.remove('hidden');
 }
 
@@ -1931,9 +1999,11 @@ function frame(now) {
     $('rot').classList.toggle('on', S.rotDown);
     $('pct').textContent = pct;
     $('time').textContent = fmtTime(S.elapsed);
+    $('sc').textContent = SCORE.calc();
     hudT = 0.15;
   }
   if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
+  SCORE.update(dt);
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
   HEAPS.flush(dt);
   TURBID.update(dt);
@@ -1944,7 +2014,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

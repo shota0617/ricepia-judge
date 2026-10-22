@@ -1,4 +1,5 @@
 {
+  "git": { "deploymentEnabled": { "main": true, "claude/**": false, "codex/**": false, "play-improve/**": false } },
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "go.ricepia.jp" }], "destination": "/nishio-go.html", "permanent": false },
     { "source": "/nishio-go.html", "has": [{ "type": "host", "value": "ricepia-judge.vercel.app" }], "destination": "https://go.ricepia.jp/nishio-go.html", "permanent": true }

@@ -228,6 +228,35 @@ def tex_concrete(n=512):
     return np.clip(col, 0, 1), normal_from(0.1 * hi - 1.0 * joint, 2.0)
 
 
+def tex_renge(n=1024):
+    """春の緑肥のレンゲ畑（上から）：みっしりした丸い小葉と、赤紫の花。2m 四方"""
+    rng = np.random.default_rng(81)
+    lo = fnoise(n, 1.4, 82)
+    col = lerp_col('#3e6424', '#5c8a32', np.clip(0.5 + 0.25 * lo, 0, 1))
+    hgt = 0.3 * lo
+    yy, xx = np.mgrid[0:n, 0:n]
+    def dots(count, rmin, rmax, colors, h, seed):
+        r_ = np.random.default_rng(seed)
+        for _ in range(count):
+            cx, cy, r = r_.uniform(0, n), r_.uniform(0, n), r_.uniform(rmin, rmax)
+            x0, y0 = int(cx - r - 1), int(cy - r - 1)
+            X = np.arange(x0, x0 + int(2 * r + 3)) % n
+            Y = np.arange(y0, y0 + int(2 * r + 3)) % n
+            gx, gy = np.meshgrid(np.arange(x0, x0 + int(2 * r + 3)), np.arange(y0, y0 + int(2 * r + 3)))
+            m = (gx - cx) ** 2 + (gy - cy) ** 2 <= r * r
+            c = hexc(colors[r_.integers(len(colors))]) * r_.uniform(0.85, 1.1)
+            sub = col[np.ix_(Y, X)]
+            sub[m] = c
+            col[np.ix_(Y, X)] = sub
+            hs = hgt[np.ix_(Y, X)]
+            hs[m] = np.maximum(hs[m], h)
+            hgt[np.ix_(Y, X)] = hs
+    dots(16000, 2.0, 4.0, ('#4f7d2a', '#679637', '#5a8a30', '#76a640', '#456f26'), 0.8, 83)   # 小葉
+    dots(4200, 4.5, 8.0, ('#c4609f', '#d27fb7', '#b04c8f', '#dc95c4'), 1.2, 84)               # 花（輪になった赤紫。花の時期）
+    dots(1500, 1.5, 2.5, ('#f3e6ef', '#efd4e6'), 1.3, 85)                                      # 花のまん中の白
+    return np.clip(col, 0, 1), normal_from(hgt, 2.0)
+
+
 def tex_tuft(n=512):
     """草むらの板（アルファで切り抜く）"""
     col = np.zeros((n, n, 4), np.float32)
@@ -531,6 +560,9 @@ def make_materials():
         mat_tex('rice_top', save_img('rice_top', c[::2, ::2]), save_img('rice_top_n', n[::2, ::2], q=72), 0.85, 1.0)
         mat_tex('rice_side', save_img('rice_side', tex_rice_side(), 'PNG'), None, 0.85, clip=True)
         mat_tex('higanbana', save_img('higanbana', tex_higanbana(), 'PNG'), None, 0.6, clip=True)
+    if SEASON == 'haru':
+        c, n = tex_renge()
+        mat_tex('renge', save_img('renge', c), save_img('renge_n', n[::2, ::2], q=72), 0.85, 1.0, macro=True)
     c, n = tex_grass()
     mat_tex('grass', save_img('grass', c), save_img('grass_n', n[::2, ::2], q=72), 0.9, 0.8, macro=True)   # 草の凹凸は 512px で足りる
     c, n = tex_gravel()
@@ -941,6 +973,12 @@ def build_surroundings():
                 grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
             for (x0, x1), (y0, y1) in ((E1, MID), (W2, N1)):
                 grid('water', x0, x1, y0, y1, 10.0, 10.0, lambda x, y: 0.06)
+            # 緑肥のレンゲ畑（花の時期にすき込む。高さ 15cm くらい、畦ぎわは低い）
+            for (x0, x1), (y0, y1) in ((C, S1), (W2, MID), (E2, MID)):
+                def rh(x, y, x0=x0, x1=x1, y0=y0, y1=y1):
+                    e = min(x - x0, x1 - x, y - y0, y1 - y)
+                    return 0.02 + (0.13 + 0.03 * low_noise(x, y, 3.0)) * min(1.0, max(0.0, e) / 0.5)
+                grid('renge', x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, 1.0, 2.0, rh)
         elif SEASON == 'aki':                                           # 秋起こしした田んぼと、まだ刈っていない田んぼ
             for (x0, x1), (y0, y1) in ((C, N1), (E1, N1)):
                 grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
@@ -1061,7 +1099,7 @@ def T3(loc, rot_deg):
 VILLAGES = [(-120.0, 128.0, 8.0), (128.0, 108.0, -6.0), (-165.0, -70.0, 84.0), (190.0, -125.0, 2.0), (55.0, -205.0, 28.0), (-55.0, 215.0, -3.0)]
 
 
-KEI_AT = (19.65, -27.0)                   # 軽トラを止めておく所（農道の東より・進入路の少し北。ゲームでは x 19.65・z 27）
+KEI_AT = (19.65, -14.0)                   # 軽トラを止めておく所（農道の東より・進入路の少し南。ゲームでは x 19.65・z 14）
 
 
 def kei_truck():

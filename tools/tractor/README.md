@@ -111,14 +111,14 @@ function setSteer(a) {            // a > 0 で右へ切る
 
 | 季節 | ファイル | Field（耕す前） | FieldTilled（耕したあと） | まわり |
 |---|---|---|---|---|
-| 春（耕す前） | `field_tanbo.glb` | 乾きかけの灰色がかった土・古い藁・低い切り株 | 湿った濃い土くれ | 耕した田んぼ・水を張った田んぼ |
+| 春（耕す前） | `field_tanbo.glb` | 乾きかけの灰色がかった土・古い藁・低い切り株 | 湿った濃い土くれ | 耕した田んぼ・水を張った田んぼ・花の時期の緑肥のレンゲ畑（renge） |
 | 秋（稲刈りから 2〜3 週間） | `field_tanbo_aki.glb` | 湿った土・コンバインがまいた藁・高い切り株と、株から伸びた青いひこばえ・少し乾いたクローラの跡（`Tracks`）と水たまり | 藁とひこばえをすきこんだ、土くれの大きい土（秋起こし） | まだ刈っていない実った稲（倒れた所もある）・秋起こしした田んぼ・畦の彼岸花 |
 | 代かき（水を張った田んぼ） | `field_tanbo_shirokaki.glb` | 浅水（水面 y 0.006）から 7〜8 割が頭を出す荒く起こした土（「土が 8 割・水が 2 割見える」浅水）・浮いた藁 | 代かきしたにごった泥水（水面より 2cm 上） | どこも水を張り、何枚かは代かき済み・田植え済み（苗の列）。畦の内側は畦塗りの泥。用水路は満水 |
 
 | ファイル | 中身 |
 |---|---|
 | `build_field.py` | 生成スクリプト（bpy 5.2.2。`build_tractor.py` の部品の関数を借りる） |
-| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 4.6MB・三角形 約 6.0 万、秋 約 5.3MB・約 7.1 万、代かき 約 5.1MB・約 8.7 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
+| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 5.3MB・三角形 約 6.9 万、秋 約 5.3MB・約 7.1 万、代かき 約 5.1MB・約 8.7 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
 | `preview_field.png`・`preview_field_aki.png`・`preview_field_shirokaki.png` | 農道から見た田んぼ（トラクターが半分ほど耕したところ） |
 | `preview_field*_driver.png` | 運転席から（左はまだ、右は耕したあと） |
 | `preview_field*_ground.png` | ロータリーのうしろ：耕した所とまだの所の境目 |

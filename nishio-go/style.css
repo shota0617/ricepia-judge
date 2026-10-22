@@ -107,6 +107,7 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .mode-sw button[aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .status{font-size:13px;color:var(--sub);line-height:1.5}
 .status b{color:var(--ink)}
+.status .wait-fact{display:block;margin-top:3px;font-size:12px;line-height:1.45}
 .spin{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:14px;padding:10px 12px;background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;text-align:left;box-shadow:0 3px 0 #1f3f27}
 .spin:active{transform:translateY(2px);box-shadow:0 1px 0 #1f3f27}
 .spin:disabled{filter:grayscale(.7);opacity:.7;transform:none;cursor:default}

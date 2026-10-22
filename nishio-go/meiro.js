@@ -102,7 +102,22 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     B.holes.add(i);
     if (bfs(B, goal)[start[1] * tw + start[0]] <= 0) B.holes.delete(i);   // 道が ふさがったら やめる
   }
-  return Object.assign(B, { start, len });
+  // 金の米つぶ（3つまで）：ゴールへの 近道から はずれた 行き止まりの 床に。たがいに はなれた所から 先に えらぶ（寄り道すると とれる）
+  const fromS = bfs(B, start), onPath = new Set();
+  for (let i = 0; i < dist.length; i++) if (dist[i] && fromS[i] && dist[i] + fromS[i] - 1 === len) onPath.add(i);
+  const ends = [];
+  for (let i = 0; i < dist.length; i++) {
+    if (!dist[i] || onPath.has(i) || B.holes.has(i)) continue;
+    const x = i % tw, y = (i / tw) | 0, ways = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => pass(B, x, y, dx, dy) && cell[(y + dy) * tw + x + dx] === 1).length;
+    if (ways === 1) ends.push(i);
+  }
+  const grains = [];
+  while (grains.length < 3 && ends.length) {
+    let bi = 0, bd = -1;
+    ends.forEach((i, k) => { const d = grains.length ? Math.min(...grains.map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))) : dist[i]; if (d > bd) { bd = d; bi = k; } });
+    grains.push(ends.splice(bi, 1)[0]);
+  }
+  return Object.assign(B, { start, len, grains });
 }
 const pass = (b, x, y, dx, dy) => {   // (x, y) から となりへ 通れるか
   if (dx === 1) return x + 1 < b.tw && b.er[y * b.tw + x] === 1;
@@ -256,7 +271,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0;
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0; game.got = new Set();
   ui.clear.hidden = true;
 }
 
@@ -381,6 +396,10 @@ function step(dt) {
     if (navigator.vibrate) try { navigator.vibrate(60); } catch (e) { /* noop */ }
     return;
   }
+  for (const i of b.grains) if (!g.got.has(i) && Math.hypot(g.x - i % b.tw - 0.5, g.y - ((i / b.tw) | 0) - 0.5) < 0.45) {   // 金の米つぶを とった
+    g.got.add(i); api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, c: k % 2 ? '#ffe066' : '#fff4b0', t: 0, life: 0.6 }); }
+  }
   if (Math.hypot(g.x - b.goal[0] - 0.5, g.y - b.goal[1] - 0.5) < 0.42) win();
 }
 function win() {
@@ -397,6 +416,7 @@ function win() {
   ui.card.innerHTML = `<h3>🏁 ゴール！</h3><p>${esc(g.spot.name)} に ついた</p>
     <div class="mz-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
     <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
+    ${b.grains.length ? `<p>🌾 金の米つぶ ${g.got.size} / ${b.grains.length}${g.got.size === b.grains.length ? '　ぜんぶ とれた！' : ''}</p>` : ''}
     <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button></div>`;
   g.cardHtml = ui.card.innerHTML;   // いちらんを 見て もどったときに 出しなおす
   // 紙ふぶき：ゴールから ごはんつぶ・星・桜が はじける。音は コトンを 4つ 上がっていく
@@ -447,7 +467,7 @@ function tick(now) {
   for (const p of g.fx || []) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.vx *= 1 - dt * 1.5; }
   if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
   draw(now);
-  ui.time.textContent = g.t.toFixed(1);
+  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + g.t.toFixed(1);
   // 盤を 傾けて見せる：矢印キー・なぞる で 動かすと、わくごと 少し 傾く（キーホルダーを 傾けたように）。スマホの傾きでは 手の中の 本物が 傾くので 小さく
   const t = api.tilt(), kx = keys.right - keys.left + drag.x, ky = keys.down - keys.up + drag.y, sx = kx * 5 + t.x * 2, sy = ky * 5 + t.y * 2;
   g.bx = (g.bx || 0) + (sx - (g.bx || 0)) * Math.min(1, dt * 10); g.by = (g.by || 0) + (sy - (g.by || 0)) * Math.min(1, dt * 10);
@@ -478,6 +498,14 @@ function draw(now) {
     x.fillStyle = p.c; x.fillRect(Math.round(p.x * T), Math.round(p.y * T), q, q);
   }
   x.globalAlpha = 1;
+  for (const i of b.grains) {   // 金の米つぶ（ふわふわ うく。とったら 消える）
+    if (g.got.has(i)) continue;
+    const cx = (i % b.tw + 0.5) * T, cy = (((i / b.tw) | 0) + 0.5) * T + Math.sin(now / 300 + i) * T * 0.05, rw = T * 0.15, rh = T * 0.22;
+    x.fillStyle = 'rgba(0,0,0,.25)'; x.beginPath(); x.ellipse(cx, (((i / b.tw) | 0) + 0.5) * T + T * 0.22, rw, rw * 0.4, 0, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#3a2a08'; x.beginPath(); x.ellipse(cx, cy, rw + Math.max(1, T / 24), rh + Math.max(1, T / 24), 0.35, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#f2c230'; x.beginPath(); x.ellipse(cx, cy, rw, rh, 0.35, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#fff6c0'; x.beginPath(); x.ellipse(cx - rw * 0.35, cy - rh * 0.35, rw * 0.3, rh * 0.3, 0.35, 0, Math.PI * 2); x.fill();
+  }
   // お米
   const u = T * 0.031;   // お米の 点の大きさ（はばが マスの 6割ほど。当たりの 半径 R と 見た目を そろえる）
   if (g.fall > 0) {   // おちていく：くるくる 小さく

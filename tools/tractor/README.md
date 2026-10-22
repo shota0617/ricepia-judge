@@ -103,22 +103,36 @@ function setSteer(a) {            // a > 0 で右へ切る
 
 ---
 
-# 田んぼ（field_tanbo.glb）
+# 田んぼ（field_tanbo*.glb）
 
-トラクターを走らせる田んぼとそのまわり。耕す前（切り株と藁の残った灰色がかった土）と、耕したあと（湿った濃い土くれ）の 2 つの土を用意した。
+トラクターを走らせる田んぼとそのまわり。**季節ごとに 3 つ**あり、中の名前・並び・寸法は同じなので、ゲームでは読みこむファイルを替えるだけでよい。
+
+| 季節 | ファイル | Field（耕す前） | FieldTilled（耕したあと） | まわり |
+|---|---|---|---|---|
+| 春（耕す前） | `field_tanbo.glb` | 乾きかけの灰色がかった土・古い藁・低い切り株 | 湿った濃い土くれ | 耕した田んぼ・水を張った田んぼ |
+| 秋（稲刈り直後） | `field_tanbo_aki.glb` | 湿った土・コンバインがまいた新しい藁・高い切り株・クローラの跡（`Tracks`）と水たまり | 藁をすきこんだ土（秋起こし） | まだ刈っていない実った稲（倒れた所もある）・秋起こしした田んぼ・畦の彼岸花 |
+| 代かき（水を張った田んぼ） | `field_tanbo_shirokaki.glb` | 水の下の荒く起こした土（ところどころ水面から出る）・浮いた藁 | 代かきしたにごった泥水（水面より 2cm 上） | どこも水を張り、何枚かは代かき済み・田植え済み（苗の列）。畦の内側は畦塗りの泥。用水路は満水 |
 
 | ファイル | 中身 |
 |---|---|
 | `build_field.py` | 生成スクリプト（bpy 5.2.2。`build_tractor.py` の部品の関数を借りる） |
-| `field_tanbo.glb` | 約 5.3MB・三角形 約 6.8 万・Draco なし。土・草・砂利・コンクリートの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ |
-| `preview_field.png` | 農道から見た田んぼ（半分ほど耕したところ） |
-| `preview_field_driver.png` | 運転席から（左は切り株、右は耕したあと） |
-| `preview_field_ground.png` | ロータリーのうしろ：耕した所と切り株の境目 |
+| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | SIZES。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
+| `preview_field.png`・`preview_field_aki.png`・`preview_field_shirokaki.png` | 農道から見た田んぼ（トラクターが半分ほど耕したところ） |
+| `preview_field*_driver.png` | 運転席から（左はまだ、右は耕したあと） |
+| `preview_field*_ground.png` | ロータリーのうしろ：耕した所とまだの所の境目 |
 
 ```sh
-bpyenv/bin/python tools/tractor/build_field.py              # 先に build_tractor.py で tractor_yt.glb を作っておく（絵に使う）
-bpyenv/bin/python tools/tractor/build_field.py --no-render  # glb だけ
+bpyenv/bin/python tools/tractor/build_field.py                       # 3 つの季節を全部（先に build_tractor.py で tractor_yt.glb を作っておく。絵に使う）
+bpyenv/bin/python tools/tractor/build_field.py --season=aki           # 1 つだけ（haru・aki・shirokaki）
+bpyenv/bin/python tools/tractor/build_field.py --no-render            # glb だけ
 ```
+
+季節ごとのちがい（ゲームで気をつける所）：
+
+- **代かき**には `StubbleHill`（切り株の型）が無い。切り株は並べない。トラクターは泥に少し沈めると自然（確認の絵では 9cm）。水面は y 0.025、代かきした泥水（`FieldTilled` と帯）は y 0.045 なので、帯は `y = 0.045` で足す。
+- **秋**の切り株は高い（12〜19cm）。クローラの跡（`Tracks`。x ＝ −13＋2k（k＝0〜13）の ±0.575 に 2 本ずつ、幅 0.4m、z −22〜22。枕地は外から 1.0m と 2.2m を一周）の上の株はつぶれているので、並べないとそれらしい。
+- 用水路の水面は 春 0.12・秋 −0.05（ほとんど空）・代かき 0.25。
+- 水の材質（`water`・`paddy_water`）は three では反射が出ないので、`scene.environment` に空の環境マップを入れると代かきの田んぼが見ちがえる。
 
 ## 並びと寸法（three.js の座標。原点＝耕す田んぼのまん中の地面）
 
@@ -140,14 +154,15 @@ Tanbo
 ├ Road             農道・進入路（gravel・grass・concrete_box）
 ├ Canal            用水路と排水路の水（concrete・water）
 ├ Facilities       水口・落水口・水たまり
+├ Tracks           （秋だけ）コンバインのクローラの跡（track）
 ├ GrassTufts       草むら（grass_tuft、アルファで切り抜き）
-├ Neighbors・NeighborsTilled   まわりの田んぼ
+├ Neighbors・NeighborsTilled   まわりの田んぼ（秋の実った稲は rice_top・rice_side、代かきの水は paddy_water、苗は seedlings）
 ├ Poles・Trees・Hills
-└ StubbleHill      切り株ひと株の型（約 100 三角形・原点＝株の根元）。y −5 にしまってある
+└ StubbleHill      切り株ひと株の型（約 100 三角形・原点＝株の根元）。y −5 にしまってある（代かきには無い）
 ```
 
 - 土・草・砂利には、場所ごとのムラ（湿った所・わだち）を頂点色 `COLOR_0` に入れてある（three は自動で使う）。
-- 水 `water` は半透明（BLEND）。草むら `grass_tuft` は alphaMode MASK。
+- 水 `water`・`paddy_water` は半透明（BLEND）。草むら `grass_tuft`・彼岸花 `higanbana`・苗 `seedlings`・浮いた藁 `straw_float`・稲の横 `rice_side` は alphaMode MASK。
 
 ## 耕した所を出す（おすすめ）
 
@@ -190,5 +205,5 @@ scene.add(stubble);
 
 ## 確かめたこと（田んぼ）
 
-- glTF Validator：エラー 0。警告 9 は「法線の絵に接線が入っていない」というもので、three.js は自分で計算するので問題ない。
-- three.js r128 の `GLTFLoader` で、田んぼ・トラクターをいっしょに読みこみ、上の 2 つのやり方（耕した帯・切り株の InstancedMesh）で表示できることを確認した。
+- glTF Validator：3 つともエラー 0。警告は「法線の絵に接線が入っていない」というもので、three.js は自分で計算するので問題ない。
+- three.js r128 の `GLTFLoader` で、3 つの季節それぞれ田んぼ・トラクターをいっしょに読みこみ、上のやり方（耕した帯・切り株の InstancedMesh）で表示できることを確認した。

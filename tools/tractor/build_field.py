@@ -4,7 +4,8 @@
 #   （トラクターの原点を田んぼの地面に置けばそのまま走れる。three.js では X はそのまま、Blender の Y が -Z になる）
 # - 土・草・砂利・コンクリートの絵は numpy で作る（つなぎ目なく並ぶ 1024px 以下。JPEG で埋めこむ）
 # - 確認の絵 preview_field*.png は、トラクター（tractor_yt.glb）を置き、半分ほど耕した様子を Cycles で出す
-# 使い方：python tools/tractor/build_field.py [--no-render | --fast]（先に build_tractor.py で tractor_yt.glb を作っておく）
+# 使い方：python tools/tractor/build_field.py [--season=haru|aki|shirokaki|all] [--no-render | --fast]
+#   （先に build_tractor.py で tractor_yt.glb を作っておく。季節を省くと 3 つとも作る）
 import math
 import os
 import sys
@@ -18,11 +19,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import build_tractor as bt  # noqa: E402  部品の関数（pipe・box・cyl・part・finalize など）を借りる
 
-OUT_GLB = os.path.join(HERE, 'field_tanbo.glb')
 TRACTOR_GLB = os.path.join(HERE, 'tractor_yt.glb')
 TEXDIR = os.path.join(bpy.app.tempdir or '/tmp', 'tanbo_tex')
 RENDER = '--no-render' not in sys.argv
 FAST = '--fast' in sys.argv
+# 季節：haru（春・耕す前の切り株の田んぼ）・aki（秋・稲刈り直後）・shirokaki（水を張った代かきの田んぼ）
+SEASONS = {'haru': '', 'aki': '_aki', 'shirokaki': '_shirokaki'}   # 書き出す名前につける文字
+_arg = next((a.split('=', 1)[1] for a in sys.argv if a.startswith('--season=')), 'all')
+SEASON_LIST = list(SEASONS) if _arg == 'all' else [_arg]
+SEASON = 'haru'
 
 # ---- 田んぼの寸法 ----
 FW, FL = 30.0, 50.0               # 耕す田んぼ（X 幅 30m・Y 長さ 50m。18 アール）
@@ -118,17 +123,22 @@ def normal_from(h, strength):
 
 
 def tex_untilled(n=1024):
-    """耕す前：乾きかけの灰色がかった土・ひび・切り株の列・散らばった藁"""
+    """耕す前：土・ひび・切り株の列・散らばった藁。
+    春は乾きかけの灰色がかった土に古い藁、秋は刈ったばかりで湿った土にコンバインがまいた新しい藁がたくさん"""
+    aki = SEASON == 'aki'
     lo, hi = fnoise(n, 1.4, 1), fnoise(n, 0.9, 2)
     damp = np.clip(fnoise(n, 1.8, 3) * 0.5 + 0.5, 0, 1)
-    col = lerp_col('#7a6d5a', '#94866e', np.clip(0.5 + 0.18 * lo + 0.08 * hi, 0, 1))
+    col = lerp_col(*(('#5c4f3d', '#76664e') if aki else ('#7a6d5a', '#94866e')), np.clip(0.5 + 0.18 * lo + 0.08 * hi, 0, 1))
     col *= (1 - 0.18 * damp)[..., None]
     hgt = 0.15 * lo + 0.05 * hi
-    f1, f2, _ = voronoi(n, 70, 4)                                     # 乾いてできたひび
-    crack = np.clip(1 - (f2 - f1) * n / 3.0, 0, 1) * (np.clip(lo, -1, 2) * 0.3 + 0.7)
+    f1, f2, _ = voronoi(n, 70, 4)                                     # 乾いてできたひび（秋はまだ湿っていてほとんど無い）
+    crack = np.clip(1 - (f2 - f1) * n / 3.0, 0, 1) * (np.clip(lo, -1, 2) * 0.3 + 0.7) * (0.15 if aki else 1.0)
     col *= (1 - 0.35 * crack)[..., None]
     hgt -= 0.6 * crack
-    strokes(col, hgt, n, 900, (15, 80), (1.5, 3.0), ('#c9b27a', '#b49c63', '#d8c894', '#8f7c52'), 5, h=0.8)   # 藁
+    if aki:                                                            # 刻んだ新しい藁（金色・少し青み）
+        strokes(col, hgt, n, 2600, (20, 95), (1.6, 3.2), ('#d9c27f', '#c9ad62', '#e6d59c', '#b5a35c', '#a9a868', '#8f7c4a'), 5, h=0.9)
+    else:
+        strokes(col, hgt, n, 900, (15, 80), (1.5, 3.0), ('#c9b27a', '#b49c63', '#d8c894', '#8f7c52'), 5, h=0.8)   # 藁
     rng = np.random.default_rng(6)
     px_m = n / T_UNTILLED
     nr, nh = int(round(T_UNTILLED / ROW)), int(round(T_UNTILLED / HILL))
@@ -148,7 +158,7 @@ def tex_untilled(n=1024):
             for k in range(rng.integers(9, 15)):                     # 刈った茎の切り口
                 a, rr = rng.uniform(0, 2 * math.pi), rng.uniform(0, 0.022) * px_m
                 sx, sy = int(cx + math.cos(a) * rr), int(cy + math.sin(a) * rr)
-                c = hexc('#d9c58c') * rng.uniform(0.8, 1.05)
+                c = hexc('#d4cf8c' if aki else '#d9c58c') * rng.uniform(0.8, 1.05)
                 col[np.ix_(np.arange(sy - 2, sy + 2) % n, np.arange(sx - 2, sx + 2) % n)] = c
                 hgt[np.ix_(np.arange(sy - 2, sy + 2) % n, np.arange(sx - 2, sx + 2) % n)] = 1.2
     return np.clip(col, 0, 1), normal_from(hgt, 3.0)
@@ -167,14 +177,17 @@ def tex_tilled(n=1024):
     t = np.clip(0.35 + 0.5 * lump + 0.08 * fine + 0.1 * mid, 0, 1)
     col = lerp_col('#30231a', '#6a543d', t)
     col *= (1 - 0.3 * np.clip(-mid, 0, 1))[..., None]
-    strokes(col, hgt, n, 260, (10, 45), (1.5, 2.5), ('#9a8456', '#8a764c', '#b09a66'), 15, h=0.9)   # 藁のかけら
+    if SEASON == 'aki':                                                 # 秋起こし：すきこんだ新しい藁がよく見える
+        strokes(col, hgt, n, 700, (12, 60), (1.5, 2.8), ('#c9ad62', '#b39a58', '#d8c27f', '#8f7c4a'), 15, h=0.9)
+    else:
+        strokes(col, hgt, n, 260, (10, 45), (1.5, 2.5), ('#9a8456', '#8a764c', '#b09a66'), 15, h=0.9)   # 藁のかけら
     return np.clip(col, 0, 1), normal_from(hgt, 5.0)
 
 
 def tex_grass(n=1024):
     """畦・土手の草（春の若草に枯れ草が混ざる）"""
     lo = fnoise(n, 1.5, 21)
-    dry = np.clip(fnoise(n, 1.7, 22) * 0.6 + 0.1, 0, 1)
+    dry = np.clip(fnoise(n, 1.7, 22) * 0.6 + (0.35 if SEASON == 'aki' else 0.1), 0, 1)
     col = lerp_col('#4c6b2c', '#76913f', np.clip(0.5 + 0.25 * lo, 0, 1))
     col = col * (1 - dry[..., None]) + hexc('#a39a63') * dry[..., None]
     hgt = 0.2 * lo
@@ -223,7 +236,142 @@ def tex_tuft(n=512):
     return col
 
 
-def save_img(name, arr, fmt='JPEG'):
+def tex_clods_wet(n=1024):
+    """代かき前：水の下の荒く起こした土（濡れて黒っぽい）"""
+    f1, _, idx = voronoi(n, 500, 61)
+    rng = np.random.default_rng(62)
+    ch = rng.uniform(0.3, 1.0, 500).astype(np.float32)[idx]
+    lump = ch * np.clip(1 - (f1 * n / 30) ** 2, 0, 1)
+    fine = fnoise(n, 0.8, 63)
+    hgt = 0.9 * lump + 0.1 * fine
+    col = lerp_col('#251c14', '#4e3d2c', np.clip(0.3 + 0.5 * lump + 0.1 * fine, 0, 1))
+    strokes(col, hgt, n, 250, (12, 50), (1.5, 2.5), ('#6e5e3c', '#857248', '#5a4c32'), 64, h=0.9)
+    return np.clip(col, 0, 1), normal_from(hgt, 4.0)
+
+
+def tex_mud_water(n=1024):
+    """代かきしたあと：にごった泥水（渦を巻いた濃淡・細かい波）"""
+    wx, wy = fnoise(n, 1.8, 65) * 18, fnoise(n, 1.8, 66) * 18          # 雑音で雑音をゆがめて渦のように
+    base = fnoise(n, 1.5, 67)
+    yy, xx = np.mgrid[0:n, 0:n]
+    warped = base[(yy + wy.astype(int)) % n, (xx + wx.astype(int)) % n]
+    col = lerp_col('#4b3b2a', '#7a6650', np.clip(0.5 + 0.22 * warped, 0, 1))
+    silt = np.clip(fnoise(n, 1.1, 68) - 1.2, 0, 1)                      # 浮いた細かい泥のすじ
+    col = col * (1 - 0.5 * silt[..., None]) + hexc('#9b8a70') * 0.5 * silt[..., None]
+    hgt = 0.05 * fnoise(n, 0.9, 69)
+    strokes(col, hgt, n, 120, (10, 40), (1.5, 2.2), ('#8c7a50', '#a08c5e'), 70, h=0.3)   # 浮いた藁くず
+    return np.clip(col, 0, 1), normal_from(hgt, 1.0)
+
+
+def tex_levee_mud(n=512):
+    """畦塗り：塗りつけた濡れた泥（こてのすじ）"""
+    lo = fnoise(n, 1.5, 71)
+    streak = np.sin((np.arange(n)[:, None] / n) * 2 * math.pi * 9 + fnoise(n, 1.6, 72) * 1.2) * 0.5 + 0.5
+    col = lerp_col('#2e2319', '#4a3a2a', np.clip(0.4 + 0.2 * lo + 0.2 * streak, 0, 1))
+    return np.clip(col, 0, 1), normal_from(0.3 * streak + 0.1 * lo, 2.0)
+
+
+def tex_straw_float(n=1024):
+    """水に浮いた藁（アルファで切り抜く）"""
+    col = np.zeros((n, n, 3), np.float32)
+    hgt = np.zeros((n, n), np.float32)
+    strokes(col, hgt, n, 380, (15, 70), (1.6, 3.0), ('#a8935e', '#8f7c4e', '#bda86e'), 73, h=1.0)
+    return np.dstack([col, (hgt > 0).astype(np.float32)])
+
+
+def tex_seedlings(n=1024):
+    """田植えしたばかりの苗の列（上から見た株。アルファで切り抜く）。並びは切り株と同じ"""
+    out = np.zeros((n, n, 4), np.float32)
+    rng = np.random.default_rng(74)
+    px_m = n / T_UNTILLED
+    for i in range(int(round(T_UNTILLED / ROW))):
+        for j in range(int(round(T_UNTILLED / HILL))):
+            cx, cy = ((i + 0.5) * ROW + rng.normal(0, 0.01)) * px_m, ((j + 0.5) * HILL + rng.normal(0, 0.01)) * px_m
+            for k in range(rng.integers(6, 10)):
+                a = rng.uniform(0, 2 * math.pi)
+                L = rng.uniform(0.04, 0.085) * px_m
+                c = hexc(['#4f8a2c', '#6aa53a', '#86b84c', '#3f7224'][rng.integers(4)])
+                for t in np.linspace(0, 1, int(L)):
+                    x, y = int(cx + math.cos(a) * L * t) % n, int(cy + math.sin(a) * L * t) % n
+                    out[y - 1:y + 1, x - 1:x + 1, :3] = c * (0.7 + 0.4 * t)
+                    out[y - 1:y + 1, x - 1:x + 1, 3] = 1
+    return out
+
+
+def tex_track(n=512):
+    """コンバインのクローラの跡（固められた濃い土に横の溝・つぶれた藁）。1m 四方"""
+    lo = fnoise(n, 1.4, 75)
+    v = np.arange(n)[:, None] / n
+    lug = (np.sin(v * 2 * math.pi * 11) > 0.55).astype(np.float32)    # 9cm ごとの横の溝
+    col = lerp_col('#3a2e22', '#55452f', np.clip(0.5 + 0.2 * lo, 0, 1))
+    col = col * (1 - 0.3 * lug[..., None] * np.ones((1, n, 1)))
+    hgt = -0.6 * np.broadcast_to(lug, (n, n)) + 0.1 * lo
+    strokes(col, hgt, n, 160, (10, 40), (1.5, 2.5), ('#9c8a58', '#7f6f46'), 76, angle=(0.0, 0.25), h=0.6)
+    return np.clip(col, 0, 1), normal_from(hgt, 2.5)
+
+
+T_RICE = 2.1                      # 実った稲の絵の大きさ（条間 30cm の 7 列）
+
+
+def tex_rice_top(n=1024):
+    """実った稲を上から（垂れた金色の穂と葉。列のあいだは暗い）"""
+    col = lerp_col('#6e6430', '#8c7d3c', np.clip(0.5 + 0.2 * fnoise(n, 1.3, 77), 0, 1))
+    u = (np.arange(n)[None, :] + 0.5) / n * (T_RICE / ROW)
+    gap = np.broadcast_to(np.clip(1 - np.abs(np.sin(math.pi * u)) * 1.6, 0, 1), (n, n))   # 列のあいだ
+    hgt = np.zeros((n, n), np.float32)
+    strokes(col, hgt, n, 1800, (10, 40), (1.5, 3.0), ('#93964a', '#7c8740', '#a8a157'), 78, bend=0.6, h=0.5)   # 葉
+    strokes(col, hgt, n, 4200, (8, 26), (2.5, 4.5), ('#d8b75a', '#c9a24a', '#e3c873', '#b8913c'), 79, bend=0.9, h=1.0)   # 穂
+    col *= (1 - 0.55 * gap)[..., None]
+    hgt = hgt - 1.2 * gap
+    return np.clip(col, 0, 1), normal_from(hgt, 3.0)
+
+
+def tex_rice_side(n=512):
+    """実った稲を横から（下は茎、上 1/3 に垂れた穂。上のふちはアルファでぎざぎざに）。v＝0 が根元・1 が穂先"""
+    out = np.zeros((n, n, 4), np.float32)
+    rng = np.random.default_rng(80)
+    v = (np.arange(n)[:, None] + 0.5) / n
+    out[..., :3] = lerp_col('#3c3a1e', '#7a6f34', np.broadcast_to(v, (n, n)) ** 0.8)
+    out[..., 3] = 1
+    top = 0.86 + 0.08 * np.convolve(rng.uniform(-1, 1, n + 16), np.ones(9) / 9, 'same')[8:8 + n]
+    out[np.arange(n)[:, None] > (top * n)[None, :], 3] = 0              # 上のふち
+    for _ in range(900):                                                # 茎と穂
+        x = rng.uniform(0, n)
+        lean = rng.normal(0, 18)
+        c = hexc(['#cfae54', '#bf9c45', '#ddc06c'][rng.integers(3)])
+        for t in np.linspace(0.55, 0.95, 40):
+            y = int(t * n)
+            xx = int(x + lean * (t - 0.55) ** 2 * 3) % n
+            if out[min(y, n - 1), xx, 3] > 0:
+                out[max(y - 2, 0):y + 1, xx:xx + 2, :3] = c * (0.8 + 0.3 * t)
+    return out
+
+
+def tex_higanbana(n=512):
+    """彼岸花（緑の茎の先に赤い花。アルファで切り抜く）"""
+    out = np.zeros((n, n, 4), np.float32)
+    rng = np.random.default_rng(81)
+    for _ in range(7):
+        x0, top = n / 2 + rng.normal(0, n * 0.14), rng.uniform(0.55, 0.85) * n
+        lean = rng.normal(0, n * 0.04)
+        for y in range(int(top)):                                       # 茎（葉は無い）
+            x = int(x0 + lean * y / top)
+            out[y, x - 2:x + 2, :3] = hexc('#4e7a2a')
+            out[y, x - 2:x + 2, 3] = 1
+        cx, cy = x0 + lean, top
+        for k in range(14):                                             # 反り返った花びらと長いしべ
+            a = 2 * math.pi * k / 14 + rng.normal(0, 0.2)
+            L = rng.uniform(0.07, 0.13) * n * (1.5 if k % 2 else 1.0)
+            for t in np.linspace(0, 1, int(L)):
+                x = int(cx + math.cos(a) * L * t)
+                y = int(cy + math.sin(a) * L * t * 0.7 + (t * t) * L * 0.4)
+                if 0 <= x < n - 2 and 0 <= y < n - 2:
+                    out[y:y + 2, x:x + 2, :3] = hexc('#d0141c') * (0.75 + 0.35 * (1 - t))
+                    out[y:y + 2, x:x + 2, 3] = 1
+    return out
+
+
+def save_img(name, arr, fmt='JPEG', q=85):
     """numpy の絵を JPEG／PNG のファイルにして読みこみ、glb に埋めこめるよう pack する"""
     os.makedirs(TEXDIR, exist_ok=True)
     h, w = arr.shape[:2]
@@ -235,7 +383,7 @@ def save_img(name, arr, fmt='JPEG'):
     im.filepath_raw = path
     im.file_format = fmt
     sc = bpy.context.scene
-    sc.render.image_settings.quality = 85
+    sc.render.image_settings.quality = q
     im.save()
     im.pack()
     return im
@@ -292,19 +440,40 @@ def mat_flat(name, hexcol, rough=0.8, metal=0.0, alpha=None):
 
 
 def make_materials():
-    c, n = tex_untilled()
-    mat_tex('soil_untilled', save_img('soil_untilled', c), save_img('soil_untilled_n', n), 0.92, 1.0, macro=True)
-    c, n = tex_tilled()
-    mat_tex('soil_tilled', save_img('soil_tilled', c), save_img('soil_tilled_n', n), 0.95, 1.8, macro=True)
+    """材質。名前は季節で変えない（ゲームのコードを同じにするため）。中の絵だけ季節で変わる"""
+    shiro = SEASON == 'shirokaki'
+    if shiro:                                                          # Field＝水の下の荒い土、FieldTilled＝代かきした泥水
+        c, n = tex_clods_wet()
+        mat_tex('soil_untilled', save_img('soil_untilled', c), save_img('soil_untilled_n', n, q=72), 0.55, 1.2, macro=True)
+        c, n = tex_mud_water()
+        mat_tex('soil_tilled', save_img('soil_tilled', c), save_img('soil_tilled_n', n[::2, ::2], q=72), 0.16, 0.5, macro=True)
+        c, n = tex_levee_mud()
+        mat_tex('levee_mud', save_img('levee_mud', c), save_img('levee_mud_n', n, q=72), 0.35, 1.0, macro=True)
+        mat_tex('straw_float', save_img('straw_float', tex_straw_float(), 'PNG'), None, 0.7, clip=True)
+        mat_tex('seedlings', save_img('seedlings', tex_seedlings(), 'PNG'), None, 0.7, clip=True)
+        mat_flat('paddy_water', '#7d8f98', 0.03, alpha=0.62)            # 空を映した色（環境マップが無くても水らしく）
+    else:
+        k = 2 if SEASON == 'aki' else 1                                 # 秋は絵が多いので土の凹凸は 512px にして軽くする
+        c, n = tex_untilled()
+        mat_tex('soil_untilled', save_img('soil_untilled', c), save_img('soil_untilled_n', n[::k, ::k], q=72), 0.92, 1.0, macro=True)
+        c, n = tex_tilled()
+        mat_tex('soil_tilled', save_img('soil_tilled', c), save_img('soil_tilled_n', n[::k, ::k], q=72), 0.95, 1.8, macro=True)
+    if SEASON == 'aki':
+        c, n = tex_track()
+        mat_tex('track', save_img('track', c), save_img('track_n', n, q=72), 0.8, 1.2)
+        c, n = tex_rice_top()
+        mat_tex('rice_top', save_img('rice_top', c[::2, ::2]), save_img('rice_top_n', n[::2, ::2], q=72), 0.85, 1.0)
+        mat_tex('rice_side', save_img('rice_side', tex_rice_side(), 'PNG'), None, 0.85, clip=True)
+        mat_tex('higanbana', save_img('higanbana', tex_higanbana(), 'PNG'), None, 0.6, clip=True)
     c, n = tex_grass()
-    mat_tex('grass', save_img('grass', c), save_img('grass_n', n[::2, ::2]), 0.9, 0.8, macro=True)   # 草の凹凸は 512px で足りる
+    mat_tex('grass', save_img('grass', c), save_img('grass_n', n[::2, ::2], q=72), 0.9, 0.8, macro=True)   # 草の凹凸は 512px で足りる
     c, n = tex_gravel()
-    mat_tex('gravel', save_img('gravel', c), save_img('gravel_n', n), 0.85, 1.0, macro=True)
+    mat_tex('gravel', save_img('gravel', c), save_img('gravel_n', n, q=72), 0.85, 1.0, macro=True)
     c, n = tex_concrete()
-    mat_tex('concrete', save_img('concrete', c), save_img('concrete_n', n), 0.85, 0.6)
+    mat_tex('concrete', save_img('concrete', c), save_img('concrete_n', n, q=72), 0.85, 0.6)
     mat_tex('grass_tuft', save_img('grass_tuft', tex_tuft(), 'PNG'), None, 0.85, clip=True)
     mat_flat('water', '#3c4a42', 0.04, alpha=0.78)
-    mat_flat('stubble', '#a28f63', 0.85)
+    mat_flat('stubble', '#b3a466' if SEASON == 'aki' else '#a28f63', 0.85)
     mat_flat('pole', '#a4a49c', 0.75)
     mat_flat('wire', '#1c1c1c', 0.5)
     mat_flat('pvc', '#7f8f99', 0.4)
@@ -314,7 +483,7 @@ def make_materials():
     mat_flat('tree', '#3f5a30', 0.9)
     mat_flat('cedar', '#2a3d27', 0.9)
     mat_flat('trunk', '#4a3a2c', 0.9)
-    mat_flat('hill', '#5c7564', 1.0)
+    mat_flat('hill', {'haru': '#5c7564', 'aki': '#66704f', 'shirokaki': '#557a5a'}[SEASON], 1.0)
     mat_flat('hill_far', '#8395a0', 1.0)
 
 
@@ -437,11 +606,31 @@ def untilled_macro(x, y):
     return (v, v * 0.98, v * 0.95)
 
 
+CANAL_Z = {'haru': 0.12, 'aki': -0.05, 'shirokaki': 0.25}        # 用水路の水面（秋は水を止めてほとんど空）
+DITCH_Z = {'haru': -0.36, 'aki': -0.40, 'shirokaki': -0.25}
+PADDY_WATER_Z = 0.025                                              # 代かきの田んぼの水面
+MUD_Z = 0.045                                                      # 代かきしたあとの泥水の面（FieldTilled）
+
+
+def clod_height(x, y):
+    """代かき前の荒い土の凸凹（水面から頭を出す所がある）"""
+    return field_height(x, y) + 0.03 * math.sin(x * 3.1 + 0.7 * math.sin(y * 1.9)) * math.sin(y * 2.7 + x * 0.6) + 0.012 * low_noise(x, y, 1.5)
+
+
 def build_field():
+    shiro = SEASON == 'shirokaki'
     with bt.part('Field'):
-        grid('soil_untilled', -HX, HX, -HY, HY, 1.0, T_UNTILLED, field_height)
+        if shiro:                                                      # 水の下の荒い土・水面・浮いた藁
+            grid('soil_untilled', -HX, HX, -HY, HY, 0.5, T_TILLED, clod_height)
+            grid('paddy_water', -HX, HX, -HY, HY, 5.0, 5.0, lambda x, y: PADDY_WATER_Z)
+            grid('straw_float', -HX, HX, -HY, HY, 5.0, T_UNTILLED, lambda x, y: PADDY_WATER_Z + 0.002)
+        else:
+            grid('soil_untilled', -HX, HX, -HY, HY, 1.0, T_UNTILLED, field_height)
     with bt.part('FieldTilled'):
-        grid('soil_tilled', -HX, HX, -HY, HY, 1.0, T_TILLED, lambda x, y: field_height(x, y) + 0.03)
+        if shiro:
+            grid('soil_tilled', -HX, HX, -HY, HY, 5.0, T_TILLED, lambda x, y: MUD_Z)
+        else:
+            grid('soil_tilled', -HX, HX, -HY, HY, 1.0, T_TILLED, lambda x, y: field_height(x, y) + 0.03)
     with bt.part('Levees'):
         # 北・南の畦（となりの田んぼと共有）
         for sy in (1, -1):
@@ -456,6 +645,16 @@ def build_field():
         east = [(0.0, 0.0), (0.33, LEVEE_H), (0.77, LEVEE_H), (0.85, 0.33)]
         for y0, y1 in ((-EXT, RAMP_Y0), (RAMP_Y1, EXT)):
             sweep('grass', line((HX, y0), (HX, y1), 4.0), [(-d, z) for d, z in east], T_GRASS, wob=0.03, seed=7)
+        if shiro:                                                      # 畦塗り：内側の斜面と上を塗った泥（草より 1cm 上）
+            mud = [(0.555, 0.004), (0.215, LEVEE_H + 0.012), (-0.06, LEVEE_H + 0.012)]
+            for sy in (1, -1):
+                y = sy * (HY + 0.55)
+                path = line((-HX - 0.3, y), (HX + 0.3, y), 2.0)
+                sweep('levee_mud', path if sy > 0 else path[::-1], mud, T_GRASS, seed=11)
+            wm = [(0.004, 0.004), (-0.335, LEVEE_H + 0.012), (-0.61, LEVEE_H + 0.012)]
+            sweep('levee_mud', line((-HX, HY + 0.3), (-HX, -HY - 0.3), 2.0), wm, T_GRASS, seed=12)
+            for y0, y1 in ((-HY - 0.3, RAMP_Y0), (RAMP_Y1, HY + 0.3)):
+                sweep('levee_mud', line((HX, y0), (HX, y1), 2.0), wm, T_GRASS, seed=13)
         # 農道の両側の土手（用水路側・東の田んぼ側）
         sweep('grass', line((HX, -EXT), (HX, EXT), 8.0), [(-1.45, 0.35), (-1.7, ROAD_Z)], T_GRASS)
         sweep('grass', line((HX, -EXT), (HX, EXT), 8.0),
@@ -490,12 +689,15 @@ def build_field():
         u = [(0.0, 0.35), (0.0, -0.2), (0.6, -0.2), (0.6, 0.35), (0.52, 0.35), (0.52, -0.12), (0.08, -0.12), (0.08, 0.35)]
         sweep('concrete', line((cx0, -EXT), (cx0, EXT), 6.0), [(-d, z) for d, z in u], T_CONC, closed=True)
         bm = bmesh.new()
-        vs = [bm.verts.new(p) for p in ((cx0 + 0.08, -EXT, 0.12), (cx0 + 0.52, -EXT, 0.12), (cx0 + 0.52, EXT, 0.12), (cx0 + 0.08, EXT, 0.12))]
+        cz = CANAL_Z[SEASON]
+        vs = [bm.verts.new(p) for p in ((cx0 + 0.08, -EXT, cz), (cx0 + 0.52, -EXT, cz), (cx0 + 0.52, EXT, cz), (cx0 + 0.08, EXT, cz))]
         bm.faces.new(vs)
         new_obj(bm, 'water', smooth=None)
         # 排水路の水
         bm = bmesh.new()
-        vs = [bm.verts.new(p) for p in ((-HX - 1.45, -EXT, -0.36), (-HX - 1.75, -EXT, -0.36), (-HX - 1.75, EXT, -0.36), (-HX - 1.45, EXT, -0.36))][::-1]
+        dz = DITCH_Z[SEASON]
+        w = 0.15 + 0.5 * (dz + 0.45)                                     # 水が多いほど水面が広い
+        vs = [bm.verts.new(p) for p in ((-HX - 1.6 + w, -EXT, dz), (-HX - 1.6 - w, -EXT, dz), (-HX - 1.6 - w, EXT, dz), (-HX - 1.6 + w, EXT, dz))][::-1]
         bm.faces.new(vs)
         new_obj(bm, 'water', smooth=None)
     with bt.part('Facilities'):
@@ -510,17 +712,92 @@ def build_field():
         for k in range(3):
             bt.box('wood', (0.03, 0.40, 0.09), (-HX - 0.30, y, 0.06 + k * 0.095))
         bt.pipe('pvc', [(-HX - 0.75, y, -0.15), (-HX - 1.35, y, -0.30)], 0.08, 14)
-        # 水たまり（わだちの低い所）
+        # 水たまり（わだちの低い所。秋はコンバインのクローラの跡に）
         rng = np.random.default_rng(71)
-        for cx, cy, r in ((12.6, -14.0, 0.5), (11.2, -11.5, 0.35), (12.5, -9.0, 0.3), (-13.8, 22.5, 0.7), (-14.2, -23.6, 0.6)):
+        pud = {'haru': ((12.6, -14.0, 0.5), (11.2, -11.5, 0.35), (12.5, -9.0, 0.3), (-13.8, 22.5, 0.7), (-14.2, -23.6, 0.6)),
+               'aki': tuple((tx, ty, rng.uniform(0.25, 0.55)) for tx in track_xs()[::5] for ty in rng.uniform(-20, 20, 2)) + ((-13.8, 22.5, 0.9),),
+               'shirokaki': ()}[SEASON]
+        for cx, cy, r in pud:
             bm = bmesh.new()
             pts = []
             for k in range(14):
                 a = 2 * math.pi * k / 14
                 rr = r * (1 + 0.3 * rng.normal())
-                pts.append(bm.verts.new((cx + rr * math.cos(a) * 0.6, cy + rr * math.sin(a) * 1.6, 0.012)))
+                pts.append(bm.verts.new((cx + rr * math.cos(a) * (0.35 if SEASON == 'aki' else 0.6), cy + rr * math.sin(a) * 1.6, 0.014)))
             bm.faces.new(pts)
             new_obj(bm, 'water', smooth=None)
+
+
+def track_xs():
+    """コンバインのクローラの跡の X（刈り幅 2m ごとに左右 2 本）"""
+    out = []
+    for k in range(14):
+        xc = -HX + 2.0 + k * 2.0
+        out += [xc - 0.575, xc + 0.575]
+    return out
+
+
+def build_tracks():
+    """秋：コンバインが走った跡（固められた溝）。田んぼの長い向きに往復し、枕地はぐるりと回る"""
+    with bt.part('Tracks'):
+        for x in track_xs():
+            grid('track', x - 0.2, x + 0.2, -HY + 3.0, HY - 3.0, 2.0, 1.0, lambda x_, y_: field_height(x_, y_) + 0.006)
+        for d in (1.0, 2.2):                                            # 枕地を回った跡
+            for sy in (1, -1):
+                y = sy * (HY - d)
+                grid('track', -HX + d - 0.2, HX - d + 0.2, y - 0.2, y + 0.2, 2.0, 1.0, lambda x_, y_: field_height(x_, y_) + 0.007)
+            for sx in (1, -1):
+                x = sx * (HX - d)
+                grid('track', x - 0.2, x + 0.2, -HY + d - 0.2, HY - d + 0.2, 2.0, 1.0, lambda x_, y_: field_height(x_, y_) + 0.007)
+
+
+def in_track(x, y):
+    return any(abs(x - t) < 0.24 for t in track_xs()) and abs(y) < HY - 3.0 or \
+        any(abs(abs(y) - (HY - d)) < 0.24 or abs(abs(x) - (HX - d)) < 0.24 for d in (1.0, 2.2))
+
+
+def rice_block(x0, x1, y0, y1, seed):
+    """まだ刈っていない実った稲（上の面と、まわりの横の面）。高さ 0.85m くらい"""
+    rng = np.random.default_rng(seed)
+    lodge = [(rng.uniform(x0 + 3, x1 - 3), rng.uniform(y0 + 3, y1 - 3), rng.uniform(1.5, 3.5)) for _ in range(3)]   # 倒れた所
+
+    def hgt(x, y):
+        h = 0.84 + 0.05 * low_noise(x * 3, y * 3, 4.0) + 0.02 * math.sin(x * 4.1) * math.sin(y * 3.7)
+        for lx, ly, lr in lodge:
+            d = math.hypot((x - lx) / lr, (y - ly) / (lr * 1.6))
+            if d < 1:
+                h -= 0.45 * (1 - d * d)
+        return h
+    grid('rice_top', x0, x1, y0, y1, 1.5, T_RICE, hgt)
+    bm = bmesh.new()
+    uv = bm.loops.layers.uv.new('UVMap')
+    ring = [(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]
+    s = 0.0
+    for (ax, ay), (bx, by) in zip(ring, ring[1:]):
+        L = math.hypot(bx - ax, by - ay)
+        n = max(1, round(L / 2.0))
+        for k in range(n):
+            p0 = (ax + (bx - ax) * k / n, ay + (by - ay) * k / n)
+            p1 = (ax + (bx - ax) * (k + 1) / n, ay + (by - ay) * (k + 1) / n)
+            h0, h1 = hgt(*p0) + 0.06, hgt(*p1) + 0.06
+            q = [bm.verts.new((*p0, 0.0)), bm.verts.new((*p1, 0.0)), bm.verts.new((*p1, h1)), bm.verts.new((*p0, h0))]
+            f = bm.faces.new(q)
+            u0, u1 = s + L * k / n, s + L * (k + 1) / n
+            for lp, c in zip(f.loops, ((u0, 0), (u1, 0), (u1, 1), (u0, 1))):
+                lp[uv].uv = c
+        s += L
+    for (ax, ay), (bx, by) in zip(ring, ring[1:]):                       # ふちの少し内側に穂の並び（上のぎざぎざ）
+        L = math.hypot(bx - ax, by - ay)
+        nx, ny = -(by - ay) / L * 0.3, (bx - ax) / L * 0.3
+        n = max(1, round(L / 2.0))
+        for k in range(n):
+            p0 = (ax + (bx - ax) * k / n + nx, ay + (by - ay) * k / n + ny)
+            p1 = (ax + (bx - ax) * (k + 1) / n + nx, ay + (by - ay) * (k + 1) / n + ny)
+            q = [bm.verts.new((*p0, 0.5)), bm.verts.new((*p1, 0.5)), bm.verts.new((*p1, hgt(*p1) + 0.12)), bm.verts.new((*p0, hgt(*p0) + 0.12))]
+            f = bm.faces.new(q)
+            for lp, c in zip(f.loops, ((k * 2.0, 0.45), ((k + 1) * 2.0, 0.45), ((k + 1) * 2.0, 1), (k * 2.0, 1))):
+                lp[uv].uv = c
+    new_obj(bm, 'rice_side', smooth=None, face_up=False)
 
 
 def plots_x(sign):
@@ -540,7 +817,7 @@ def build_surroundings():
         # 地面（耕す田んぼ・道・水路の所はあける）
         regions = [(-EXT, -HX - 3.3, -EXT, EXT), (HX + 7.5, EXT, -EXT, EXT), (-HX, HX, HY + 1.1, EXT), (-HX, HX, -EXT, -HY - 1.1)]
         for x0, x1, y0, y1 in regions:
-            grid('soil_untilled', x0, x1, y0, y1, 10.0, T_UNTILLED)
+            grid('soil_untilled', x0, x1, y0, y1, 20.0, T_UNTILLED)
         # となりの田んぼの畦
         for sgn in (1, -1):
             xs = plots_x(sgn)
@@ -555,12 +832,31 @@ def build_surroundings():
             for sy in (1, -1):
                 y = sy * ((HY + 0.55) + k * PLOT_PITCH_Y)
                 sweep('grass', line((-HX - 0.4, y), (HX + 0.4, y), 3.0), levee_prof(), T_GRASS)
-    with bt.part('NeighborsTilled'):                                        # 何枚かは耕してある・水を張ってある
-        for x0, x1, y0, y1 in ((-HX - 3.3 - FW, -HX - 3.3, -HY, HY), (-HX, HX, HY + 1.1, HY + 1.1 + FL),
-                               (HX + 7.5 + FW + 1.1, HX + 7.5 + 2 * FW + 1.1, HY + 1.1, HY + 1.1 + FL)):
-            grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
-        for x0, x1, y0, y1 in ((HX + 7.5, HX + 7.5 + FW, -HY, HY), (-HX - 3.3 - 2 * FW - 1.1, -HX - 3.3 - FW - 1.1, HY + 1.1, HY + 1.1 + FL)):
-            grid('water', x0, x1, y0, y1, 10.0, 10.0, lambda x, y: 0.06)
+    W1 = (-HX - 3.3 - FW, -HX - 3.3)                                    # となりの田んぼの X の範囲（西 1・2 枚目、東 1・2 枚目）
+    W2 = (-HX - 3.3 - 2 * FW - 1.1, -HX - 3.3 - FW - 1.1)
+    E1 = (HX + 7.5, HX + 7.5 + FW)
+    E2 = (HX + 7.5 + FW + 1.1, HX + 7.5 + 2 * FW + 1.1)
+    C = (-HX, HX)
+    MID, N1, S1 = (-HY, HY), (HY + 1.1, HY + 1.1 + FL), (-HY - 1.1 - FL, -HY - 1.1)
+    with bt.part('NeighborsTilled'):                                    # 何枚かは耕してある・水を張ってある・稲が立っている
+        if SEASON == 'haru':
+            for (x0, x1), (y0, y1) in ((W1, MID), (C, N1), (E2, N1)):
+                grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
+            for (x0, x1), (y0, y1) in ((E1, MID), (W2, N1)):
+                grid('water', x0, x1, y0, y1, 10.0, 10.0, lambda x, y: 0.06)
+        elif SEASON == 'aki':                                           # 秋起こしした田んぼと、まだ刈っていない田んぼ
+            for (x0, x1), (y0, y1) in ((C, N1), (E1, N1)):
+                grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: 0.03)
+            for k, ((x0, x1), (y0, y1)) in enumerate(((W1, MID), (C, S1), (E2, MID), (W2, N1), (E1, S1))):
+                rice_block(x0 + 0.35, x1 - 0.35, y0 + 0.35, y1 - 0.35, 90 + k)
+        else:                                                           # 代かき：どこも水を張り、何枚かは代かき済み・田植え済み
+            for x0, x1, y0, y1 in regions:
+                grid('paddy_water', x0, x1, y0, y1, 20.0, 20.0, lambda x, y: PADDY_WATER_Z)
+            for (x0, x1), (y0, y1) in ((W1, MID), (C, N1), (E2, MID)):
+                grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: MUD_Z)
+            for (x0, x1), (y0, y1) in ((E1, MID), (W2, N1), (C, S1), (E1, N1)):
+                grid('soil_tilled', x0, x1, y0, y1, 5.0, T_TILLED, lambda x, y: MUD_Z)
+                grid('seedlings', x0 + 0.2, x1 - 0.2, y0 + 0.2, y1 - 0.2, 5.0, T_UNTILLED, lambda x, y: MUD_Z + 0.07)
     with bt.part('Poles'):
         # 電柱（農道の東の肩。35m ごと）と電線
         tops = []
@@ -648,6 +944,34 @@ def grass_tufts():
                 for lp, c in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
                     lp[uv].uv = c
         new_obj(bm, 'grass_tuft', smooth=None)
+    if SEASON != 'aki':
+        return
+    with bt.part('GrassTufts'):                                        # 秋：畦に彼岸花のかたまり
+        rng = np.random.default_rng(102)
+        bm = bmesh.new()
+        uv = bm.loops.layers.uv.new('UVMap')
+        for k in range(160):
+            side = rng.integers(4)
+            t = rng.uniform(-0.95, 0.95)
+            d = rng.uniform(0.4, 1.0)
+            if side < 2:
+                x, y = t * HX, (1 if side else -1) * (HY + d)
+            else:
+                x, y = (1 if side == 2 else -1) * (HX + d), t * HY
+                if side == 2 and RAMP_Y0 - 0.5 < y < RAMP_Y1 + 0.5:
+                    continue
+            z = LEVEE_H * min(1.0, d / 0.33, max(0.0, (1.1 - d) / 0.33)) - 0.02
+            for m in range(rng.integers(1, 4)):
+                xx, yy = x + rng.normal(0, 0.15), y + rng.normal(0, 0.15)
+                sz = rng.uniform(0.35, 0.5)
+                a = rng.uniform(0, math.pi)
+                for b in (a, a + math.pi / 2):
+                    dx, dy = math.cos(b) * sz / 2, math.sin(b) * sz / 2
+                    q = [bm.verts.new(p) for p in ((xx - dx, yy - dy, z), (xx + dx, yy + dy, z), (xx + dx, yy + dy, z + sz), (xx - dx, yy - dy, z + sz))]
+                    f = bm.faces.new(q)
+                    for lp, c in zip(f.loops, ((0, 0), (1, 0), (1, 1), (0, 1))):
+                        lp[uv].uv = c
+        new_obj(bm, 'higanbana', smooth=None)
 
 
 def stubble_mesh():
@@ -657,7 +981,7 @@ def stubble_mesh():
     for k in range(10):
         a, rr = rng.uniform(0, 2 * math.pi), rng.uniform(0, 0.022)
         cx, cy = rr * math.cos(a), rr * math.sin(a)
-        h = rng.uniform(0.06, 0.12)
+        h = rng.uniform(0.12, 0.19) if SEASON == 'aki' else rng.uniform(0.06, 0.12)   # 秋は刈ったばかりで高い
         lx, ly = rng.normal(0, 0.015) + cx * 0.8, rng.normal(0, 0.015) + cy * 0.8   # 外へ少し開く
         r = 0.0028
         b = len(V)
@@ -699,13 +1023,18 @@ def preview_scene():
     # 耕した所（見本）：ふちを少しぎざぎざに
     with bt.part('_tilled'):
         for x0, x1, y0, y1 in TILLED:
-            grid('soil_tilled', x0, x1, y0, y1, 0.25, T_TILLED,
-                 lambda x, y: field_height(x, y) + 0.035 + 0.012 * math.sin(x * 9.1 + y * 3.3) * math.sin(y * 7.7))
+            if SEASON == 'shirokaki':
+                grid('soil_tilled', x0, x1, y0, y1, 0.5, T_TILLED, lambda x, y: MUD_Z)
+            else:
+                grid('soil_tilled', x0, x1, y0, y1, 0.25, T_TILLED,
+                     lambda x, y: field_height(x, y) + 0.035 + 0.012 * math.sin(x * 9.1 + y * 3.3) * math.sin(y * 7.7))
     t = bt.finalize('_tilled', Matrix())
     add_macro(t, lambda x, y: (0.9 + 0.08 * low_noise(x, y, 4.0),) * 3)
     tmp.append(t)
-    # 切り株（耕していない所）
+    # 切り株（耕していない所。代かきの田んぼには無い・秋はクローラの跡でつぶれている）
     V, F = stubble_mesh()
+    if SEASON == 'shirokaki':
+        V = V[:0]
     rng = np.random.default_rng(5)
     allV, allF = [], []
     nv = len(V)
@@ -714,7 +1043,9 @@ def preview_scene():
     k = 0
     for x in xs:
         for y in ys:
-            if tilled_here(x, y, 0.05) or (abs(x - 12.6) < 0.25 or abs(x - 11.2) < 0.25) and y < -8:
+            if len(V) == 0 or tilled_here(x, y, 0.05) or (abs(x - 12.6) < 0.25 or abs(x - 11.2) < 0.25) and y < -8 and SEASON == 'haru':
+                continue
+            if SEASON == 'aki' and in_track(x, y):
                 continue
             a = rng.uniform(0, 2 * math.pi)
             ca, sa = math.cos(a), math.sin(a)
@@ -725,6 +1056,8 @@ def preview_scene():
             allF.append(np.array(F, np.int64) + k * nv)
             k += 1
     me = bpy.data.meshes.new('_stubble')
+    if not allV:
+        allV, allF = [np.zeros((0, 3), np.float32)], [np.zeros((0, 4), np.int64)]
     Vs = np.concatenate(allV)
     me.vertices.add(len(Vs))
     me.vertices.foreach_set('co', Vs.ravel())
@@ -746,9 +1079,9 @@ def preview_scene():
     tmp += new
     for o in new:
         if o.parent is None and o.name.startswith('Tractor'):
-            o.location = TRACTOR_AT
+            o.location = TRACTOR_AT + Vector((0, 0, -0.09 if SEASON == 'shirokaki' else 0.0))   # 代かきは泥に少し沈む
         if o.parent is None and o.name.startswith('Rotary'):
-            o.location = TRACTOR_AT + Vector((0, bt.ROTARY_Y, -0.06))
+            o.location = TRACTOR_AT + Vector((0, bt.ROTARY_Y, -0.12 if SEASON == 'shirokaki' else -0.06))
     bpy.context.view_layer.update()
     return tmp
 
@@ -767,12 +1100,12 @@ def preview():
     sc.world = w
     sky = w.node_tree.nodes.new('ShaderNodeTexSky')
     sky.sky_type = 'MULTIPLE_SCATTERING'
-    sky.sun_elevation = math.radians(38)
+    sky.sun_elevation = math.radians({'haru': 38, 'aki': 27, 'shirokaki': 52}[SEASON])
     sky.sun_rotation = math.radians(bt.SUN_ROT)
     bg = w.node_tree.nodes['Background']
     w.node_tree.links.new(sky.outputs['Color'], bg.inputs['Color'])
     bg.inputs['Strength'].default_value = bt.SKY_STRENGTH
-    hide = [bpy.data.objects[n] for n in ('FieldTilled', 'StubbleHill')]
+    hide = [bpy.data.objects[n] for n in ('FieldTilled', 'StubbleHill') if n in bpy.data.objects]
     for o in hide:
         o.hide_render = True
     tmp = preview_scene()
@@ -799,7 +1132,7 @@ def preview():
             cam.rotation_euler = v['rot']
             cam.data.sensor_fit, cam.data.angle_y = 'VERTICAL', math.radians(v['fov_v'])
         cam.data.clip_start = 0.02
-        sc.render.filepath = os.path.join(HERE, f'preview_{k}.png')
+        sc.render.filepath = os.path.join(HERE, 'preview_' + k.replace('field', 'field' + SEASONS[SEASON], 1) + '.png')
         bpy.ops.render.render(write_still=True)
         print('wrote', k)
     for o in tmp:
@@ -814,14 +1147,19 @@ def build():
     build_field()
     build_surroundings()
     grass_tufts()
-    stubble_template()
+    if SEASON == 'aki':
+        build_tracks()
+    if SEASON != 'shirokaki':                                           # 代かきの田んぼには切り株は無い
+        stubble_template()
     root = bpy.data.objects.new('Tanbo', None)
     bpy.context.scene.collection.objects.link(root)
     I = Matrix()
-    for nm in ('Field', 'FieldTilled', 'Levees', 'Road', 'Canal', 'Facilities', 'Neighbors', 'NeighborsTilled', 'Poles', 'Trees', 'Hills', 'GrassTufts'):
-        bt.finalize(nm, I, root)
+    for nm in ('Field', 'FieldTilled', 'Levees', 'Road', 'Canal', 'Facilities', 'Neighbors', 'NeighborsTilled', 'Poles', 'Trees', 'Hills', 'GrassTufts', 'Tracks'):
+        if nm in bt.GROUPS:
+            bt.finalize(nm, I, root)
     ob = bpy.data.objects
-    bt.finalize('StubbleHill', Matrix(), root).location.z = -5.0         # 型（ゲームで並べる。原点＝株の根元）。地面の下にしまっておく
+    if 'StubbleHill' in bt.GROUPS:
+        bt.finalize('StubbleHill', Matrix(), root).location.z = -5.0     # 型（ゲームで並べる。原点＝株の根元）。地面の下にしまっておく
     me = ob['GrassTufts'].data                                           # 草の板は法線を上に向け、地面と同じように明るくする
     me.normals_split_custom_set_from_vertices([(0.0, 0.0, 1.0)] * len(me.vertices))
     add_macro(ob['Field'], untilled_macro)
@@ -835,15 +1173,18 @@ def build():
 
 
 def export():
+    out = os.path.join(HERE, f'field_tanbo{SEASONS[SEASON]}.glb')
     bpy.ops.object.select_all(action='SELECT')
-    bpy.ops.export_scene.gltf(filepath=OUT_GLB, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
+    bpy.ops.export_scene.gltf(filepath=out, export_format='GLB', use_selection=True, export_apply=True, export_yup=True,
                               export_draco_mesh_compression_enable=False, export_cameras=False, export_lights=False,
                               export_animations=False, export_image_format='AUTO')
-    print('glb', os.path.getsize(OUT_GLB), 'bytes')
+    print('glb', os.path.basename(out), os.path.getsize(out), 'bytes')
 
 
 if __name__ == '__main__':
-    build()
-    if RENDER:
-        preview()
-    export()
+    for SEASON in SEASON_LIST:
+        print('season', SEASON)
+        build()
+        if RENDER:
+            preview()
+        export()

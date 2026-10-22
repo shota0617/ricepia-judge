@@ -3128,7 +3128,7 @@ function renderVoiceMe() {
    nishio-go/bgm/ に mp3 を置くと流れる（無い曲は鳴らさないだけ）。world：せかいちず、checkin：チェックイン、levelup：レベルアップ。
    ふだんの曲（歩く地図・ふつうの地図）は、雨なら「雨」、夜（19〜5時）は「夜」、朝（5〜9時）は「朝」、夕方（16〜19時）は「夕方」、
    それ以外は「昼」の曲から、1曲流し終わるたびに次の曲へ（順番は開くたびにまぜる）。その時間の曲が無ければ昼の曲。
-   曲は field・field2（まちかど）・field3（おまつり）・morning・evening・night・rain と、アルバム100曲（bgm/list.json・bgm/s/）。
+   曲は field・field2（まちかど）・field3（おまつり）・morning・evening・night・rain と、アルバム「西尾の音」100曲（bgm/list.json・bgm/s/）。
    ブラウザは最初のタップまで音を出せないので、最初のタップ（はじめの画面のボタンなど）で流し始める */
 const sound = (() => {
   const SRC = { checkin: 'nishio-go/bgm/checkin.mp3', levelup: 'nishio-go/bgm/levelup.mp3', eye: 'nishio-go/bgm/eye.mp3', world: 'nishio-go/bgm/world.mp3' };

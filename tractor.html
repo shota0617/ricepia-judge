@@ -305,8 +305,9 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
+// テール：ライトといっしょに点く。作業機のうしろの灯火器も同じ
 const LAMPS = (() => {
-  const mats = [], spots = [];
+  const mats = [], spots = [], tails = [];
   let on = false;
   function setup(root) {
     const box = new THREE.Box3(), inv = new THREE.Matrix4();
@@ -314,6 +315,7 @@ const LAMPS = (() => {
     inv.copy(rig.matrixWorld).invert();
     const found = { lamp_head: null, lamp_work: null };
     root.traverse(o => {
+      if (o.isMesh && o.material.name === 'tail' && !tails.includes(o.material)) tails.push(o.material);   // テール（トラクターと作業機の灯火器）
       if (!o.isMesh || !(o.material.name in found)) return;
       if (!mats.includes(o.material)) mats.push(o.material);
       o.geometry.computeBoundingBox();
@@ -339,6 +341,7 @@ const LAMPS = (() => {
   function set(v) {
     on = v;
     for (const m of mats) { m.emissive.set(on ? 0xfff4e6 : 0x000000); m.emissiveIntensity = on ? 2.2 : 1; }
+    for (const m of tails) { m.emissive.set(on ? 0xff0000 : 0x000000); m.emissiveIntensity = on ? 0.6 : 1; }   // ライトをつけるとテールも赤く点く
     for (const l of spots) l.intensity = on ? l.userData.i : 0;
   }
   function toggle() { set(!on); toast(on ? 'ヘッドライトと作業灯をつけました（L）' : 'ライトを消しました（L）'); }

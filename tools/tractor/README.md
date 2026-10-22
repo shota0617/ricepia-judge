@@ -6,7 +6,7 @@
 | ファイル | 中身 |
 |---|---|
 | `build_tractor.py` | 生成スクリプト（Blender の Python 版 bpy 5.2.2） |
-| `tractor_yt.glb` | 書き出したモデル（約 1.4MB・三角形 約 4.9 万・Draco なし・テクスチャ 512px×2 枚を埋め込み） |
+| `tractor_yt.glb` | 書き出したモデル（約 2.9MB・三角形 約 7.7 万・Draco なし・テクスチャ 512px×2 枚を埋め込み・AO を頂点色に焼きこみ） |
 | `preview_exterior.png` | 斜め前の外観（Cycles） |
 | `preview_driver.png` | 運転者の目（左右 0・後輪車軸の 0.46m 後ろ・高さ 2.27m）から前方 12° 下向き・縦の画角 60° |
 | `preview_console.png` | 右の操作盤のアップ |
@@ -15,7 +15,7 @@
 
 ```sh
 python3.13 -m venv bpyenv && bpyenv/bin/pip install bpy==5.2.2
-bpyenv/bin/python tools/tractor/build_tractor.py            # 確認の絵 3 枚と glb（絵は 4 分ほど）
+bpyenv/bin/python tools/tractor/build_tractor.py            # AO を焼き、確認の絵 3 枚と glb（4 分ほど）
 bpyenv/bin/python tools/tractor/build_tractor.py --no-render  # glb だけ（数秒）
 bpyenv/bin/python tools/tractor/build_tractor.py --fast       # 荒い絵で試す
 ```
@@ -91,6 +91,7 @@ function setSteer(a) {            // a > 0 で右へ切る
 - ガラス：`glass`（alphaMode BLEND・不透明度 0.16・両面）。サンバイザは `visor`。
 - ライト：`lamp_head`（吊り目ヘッドライト）・`lamp_work`（屋根の LED ワークランプ 前後 2 灯ずつ）・`winker_L` `winker_R`（前は A ピラーの下、後ろはスマートリヤコンビランプの下半分）・`tail`（スマートリヤコンビランプの上半分）・`room_lamp`（室内灯）。ふだんは光っていないので、点けるときは `material.emissive` を設定する（同じ名前の材質は 1 つを共有）。
 - 緑の LED（右操作盤）は `led_green` で最初から光っている。
+- **AO（すき間や奥の暗さ）を頂点色 `COLOR_0` に焼いてある**（Cycles。0.3〜1 の明るさ）。three.js r128 の `GLTFLoader` は頂点色があると自動で `vertexColors` を入れ、地の色にかける。ガラス・表示面・光る材質には入れていない。消したいときは `material.vertexColors = false; material.needsUpdate = true`。
 - 使っている拡張は `KHR_materials_clearcoat`（赤い塗装のつや。r128 対応）と `KHR_materials_emissive_strength`（r128 は無視するだけ）。どちらも必須ではない。
 
 ## 確かめたこと

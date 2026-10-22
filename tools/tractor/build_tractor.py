@@ -189,6 +189,15 @@ def M(name):
         nt.links.new(tn.outputs['Color'], bs.inputs['Base Color'])
         nt.links.new(tn.outputs['Color'], bs.inputs['Emission Color'])
         bs.inputs['Emission Strength'].default_value = 1.0
+    if not ({'a', 'e', 'tex'} & p.keys()) and name != 'mirror':
+        va = nt.nodes.new('ShaderNodeVertexColor')
+        va.layer_name = 'ao'
+        mix = nt.nodes.new('ShaderNodeMix')
+        mix.data_type, mix.blend_type = 'RGBA', 'MULTIPLY'
+        mix.inputs['Factor'].default_value = 1.0
+        mix.inputs['A'].default_value = (*lin(p['c']), 1)
+        nt.links.new(va.outputs['Color'], mix.inputs['B'])
+        nt.links.new(mix.outputs['Result'], bs.inputs['Base Color'])
     m.diffuse_color = (*lin(p['c']), p.get('a', 1))
     return m
 
@@ -252,9 +261,17 @@ def along(p0, p1, roll_up=(0, 0, 1)):
     return m
 
 
+GRID = 0.12                       # 大きい面はこの間隔で割る（頂点に焼く AO が面の中でも変わるように）
+
+
 def box(mat, size, loc, rot=(0, 0, 0), bev=None, mtx=None):
     bm = bmesh.new()
     bmesh.ops.create_cube(bm, size=1.0)
+    for a in range(3):
+        cuts = math.ceil(size[a] / GRID) - 1
+        if cuts > 0:
+            es = [e for e in bm.edges if abs(e.verts[0].co[a] - e.verts[1].co[a]) > 1e-6]
+            bmesh.ops.subdivide_edges(bm, edges=es, cuts=min(cuts, 14), use_grid_fill=True)
     m = (T(loc, rot) if mtx is None else mtx @ T(loc, rot)) @ Matrix.Diagonal((*size, 1))
     bmesh.ops.transform(bm, matrix=m, verts=bm.verts)
     return _obj(bm, mat, bevel=bev)
@@ -492,6 +509,17 @@ def wheel(cx, cy, cz, OD, W, rim, rear):
     hub_x = cx + off + 0.05 * s
     cyl_x('wheel_cream', 0.11 if rear else 0.075, hub_x, hub_x + 0.07 * s, cy, cz, 24)
     cyl_x('darkgray', 0.06 if rear else 0.045, hub_x + 0.07 * s, hub_x + 0.11 * s, cy, cz, 16)
+    for f in (0.30, 0.78):                          # サイドウォール（外側）の筋
+        xf = 0.5 if f < 0.5 else 0.47
+        tor('tire', rim + f * (ro - rim), 0.0045, T((cx + s * xf * W, cy, cz), (0, 90, 0)), 72, 5)
+    nb = 12 if rear else 8                          # 皿とリムをとめるボルト
+    for k in range(nb):
+        a = 2 * math.pi * (k + 0.25) / nb
+        rr = rim - 0.065
+        cyl_x('silver', 0.011, cx + off + 0.0 * s, cx + off + 0.035 * s, cy + rr * math.sin(a), cz + rr * math.cos(a), 6)
+    a = math.radians(200)                           # 空気を入れるバルブ
+    pipe('black', [(cx + off, cy + (rim - 0.03) * math.sin(a), cz + (rim - 0.03) * math.cos(a)),
+                   (cx + off + 0.05 * s, cy + (rim - 0.035) * math.sin(a), cz + (rim - 0.035) * math.cos(a))], 0.006, 6)
     for k in range(8 if rear else 6):              # ナット
         a = 2 * math.pi * k / (8 if rear else 6)
         rr = 0.085 if rear else 0.058
@@ -502,14 +530,17 @@ def wheel(cx, cy, cz, OD, W, rim, rear):
 #  外装
 # ================================================================
 def hood_sec(y, w, t, b, rc, n=6):
-    pts = [(-w, b)]
+    pts = [(-w, b + (t - rc - b) * k / 4) for k in range(4)]
     for i in range(n + 1):
         a = math.pi - (math.pi / 2) * i / n
         pts.append((-w + rc + rc * math.cos(a), t - rc + rc * math.sin(a)))
+    for k in range(1, 8):                           # 上の面はまん中が少し盛り上がる
+        x = -(w - rc) + 2 * (w - rc) * k / 8
+        pts.append((x, t + 0.022 * (1 - (x / (w - rc)) ** 2)))
     for i in range(n + 1):
         a = math.pi / 2 - (math.pi / 2) * i / n
         pts.append((w - rc + rc * math.cos(a), t - rc + rc * math.sin(a)))
-    pts.append((w, b))
+    pts += [(w, b + (t - rc - b) * k / 4) for k in (3, 2, 1, 0)]
     return [(x, y, z) for x, z in pts]
 
 
@@ -521,7 +552,7 @@ def hood():
     for i in range(N):
         s = i / (N - 1)
         y = y0 + (y1 - y0) * s
-        secs.append((y, 0.385 - 0.04 * s, 1.585 - 0.20 * s - 0.06 * s ** 2.5, 0.86, 0.15 - 0.04 * s))
+        secs.append((y, 0.385 - 0.04 * s, 1.565 - 0.20 * s - 0.06 * s ** 2.5, 0.86, 0.12 - 0.03 * s))
     for dy, dt, dw in ((0.04, 0.012, 0.006), (0.07, 0.035, 0.018), (0.085, 0.065, 0.034)):   # 鼻先を丸める
         y, w, t, b, rc = secs[N - 1]
         secs.append((y1 - dy, w - dw, t - dt, b, rc))
@@ -565,6 +596,14 @@ def hood():
     sph('darkgray', 0.15, (0, FY, FZ), (1.0, 1.1, 0.95))
     cyl('darkgray', 0.03, 1.2, (0, -1.5, 0.47), (90, 0, 0), 12)                   # 前輪へのシャフト
     box('darkgray', (0.20, 0.30, 0.10), (0, FY, FZ + 0.12))
+    cyl_x('darkgray', 0.03, -0.36, 0.36, FY + 0.13, FZ + 0.03, 12)                 # ステアリングシリンダ
+    cyl_x('silver', 0.014, -0.50, 0.50, FY + 0.13, FZ + 0.03, 8)
+    cyl('silver', 0.06, 0.09, (0.30, -2.30, 0.76), (90, 0, 0), 18)                 # オルタネータ
+    cyl('white', 0.045, 0.11, (-0.31, -1.70, 0.68), (0, 90, 0), 16)                # オイルフィルタ
+    pipe('black', [(-0.26, -2.55, 1.00), (-0.31, -2.40, 0.98), (-0.31, -1.95, 0.95)], 0.03, 10)   # 吸気のホース
+    for k in range(4):                                                            # 燃料噴射の管
+        pipe('silver', [(0.25, -1.55 - 0.12 * k, 1.00), (0.29, -1.50 - 0.12 * k, 0.92), (0.29, -1.40, 0.82)], 0.005, 5)
+    box('black', (0.20, 0.36, 0.30), (0.40, -0.42, 1.06), bev=(0.04, 3))          # 燃料タンク（左のステップの奥）
 
 
 def cab():
@@ -593,6 +632,8 @@ def cab():
     # 屋根（赤）と黒い庇
     box('paint_red', (1.48, 1.62, 0.10), (0, 0.06, ROOF_IN + 0.055), bev=(0.045, 3))
     box('paint_red', (1.30, 1.32, 0.03), (0, 0.08, ROOF_IN + 0.10), bev=(0.015, 2))
+    x, y0, y1 = 0.728, -0.74, 0.86                                                # 屋根のふちの雨どい
+    pipe('black', [(-x, y0, ROOF_IN + 0.012), (x, y0, ROOF_IN + 0.012), (x, y1, ROOF_IN + 0.012), (-x, y1, ROOF_IN + 0.012), (-x, y0, ROOF_IN + 0.012)], 0.009, 6)
     box('black', (1.46, 0.15, 0.03), (0, -0.80, ROOF_IN + 0.03), (-10, 0, 0), bev=(0.01,))
     box('black', (1.50, 0.05, 0.05), (0, 0.85, ROOF_IN + 0.03), bev=(0.01,))
     # GNSS アンテナ（白い傘）
@@ -669,11 +710,20 @@ def fenders_lamps():
         cyl_x('darkgray', 0.13, s * 0.28, s * 0.42, 0, RZ, 24)
         cyl_x('darkgray', 0.19, s * 0.40, s * 0.47, 0, RZ, 28)
         pipe('paint_red', [(s * 0.20, 0.35, 0.98), (s * 0.24, 0.62, 0.92)], 0.03, 8)
-        pipe('darkgray', [(s * 0.24, 0.62, 0.90), (s * 0.27, 0.66, 0.62)], 0.018, 8)
+        pipe('darkgray', [(s * 0.24, 0.62, 0.90), (s * 0.29, 0.68, 0.47)], 0.016, 8)        # リフトロッド
+        cyl('silver', 0.024, 0.12, (s * 0.265, 0.65, 0.70), (5, -s * 6, 0), 10)           # 長さの調整
+
     box('darkgray', (0.30, 0.20, 0.22), (0, 0.50, 0.95), bev=(0.02,))
     cyl('silver', 0.018, 0.12, (0, 0.62, 0.62), (90, 0, 0), 10)
     box('darkgray', (0.12, 0.30, 0.04), (0, 0.72, 0.40))
     box('black', (0.30, 0.05, 0.20), (0, 0.64, 0.70), (20, 0, 0))                 # PTO カバー
+    for k, c in enumerate(('paint_red', 'paint_red', 'blue', 'blue')):           # 油圧の取り出し口
+        x = -0.135 + 0.09 * k
+        box('darkgray', (0.07, 0.05, 0.05), (x, 0.58, 1.04))
+        cyl('silver', 0.016, 0.06, (x, 0.63, 1.04), (90, 0, 0), 10)
+        cyl(c, 0.02, 0.02, (x, 0.665, 1.04), (90, 0, 0), 10)
+    cyl('silver', 0.016, 0.12, (0, 0.80, 0.42), n=10)                             # けん引ピン
+
 
 
 # ================================================================
@@ -718,6 +768,8 @@ def interior():
         for k in range(3):
             box('gray', (0.022, 0.016, 0.03), (s * (0.07 + k * 0.027), 0.035, -0.07), mtx=col_m, bev=(0.004,))
         box('black', (0.10, 0.012, 0.04), (s * 0.095, 0.03, -0.07), mtx=col_m)
+    pipe('black', [col_m @ Vector((0.09, 0.02, -0.36)), col_m @ Vector((0.15, 0.05, -0.33))], 0.006, 6)   # チルトレバー
+    sph('black', 0.014, col_m @ Vector((0.155, 0.052, -0.33)), (1.4, 1, 1), n=10)
     # 丸型メーター：目からハンドルの上の窓を通して見える所に置く
     P = WHEEL_C + W_UP * (WHEEL_R * 0.56)
     d = (P - EYE).normalized()
@@ -753,6 +805,21 @@ def interior():
     box('seat', (0.48, 0.11, 0.56), (0, 0.69, FLOOR + 0.58), (-12, 0, 0), bev=(0.04, 3))
     box('seat', (0.28, 0.08, 0.13), (0, 0.765, FLOOR + 0.94), (-12, 0, 0), bev=(0.03, 3))
     box('trim', (0.08, 0.06, 0.30), (0, 0.66, FLOOR + 0.16))
+    for x in (0.205, -0.205):                                                      # 座面・背もたれの横のふくらみ
+        box('seat', (0.07, 0.40, 0.05), (x, 0.42, FLOOR + 0.33), bev=(0.02, 2))
+        box('seat', (0.07, 0.10, 0.44), (x, 0.665, FLOOR + 0.60), (-12, 0, 0), bev=(0.025, 2))
+    bk = T((0, 0.69, FLOOR + 0.58), (-12, 0, 0))
+    for z in (-0.12, 0.08):                                                       # 背もたれの縫い目
+        box('black', (0.32, 0.006, 0.008), (0, -0.056, z), mtx=bk)
+    box('black', (0.05, 0.03, 0.025), (0.27, 0.56, FLOOR + 0.34), bev=(0.006,))   # シートベルトの留め具
+    box('silver', (0.03, 0.035, 0.012), (0.27, 0.54, FLOOR + 0.355))
+    pipe('silver', [(-0.12, 0.19, FLOOR + 0.215), (-0.02, 0.17, FLOOR + 0.215), (0.12, 0.19, FLOOR + 0.215)], 0.006, 6)   # 前後調整のレバー
+    for x in (0.45, -0.45):                                                       # 天井のスピーカー
+        cyl('black', 0.065, 0.01, (x, 0.50, ROOF_IN - 0.022), n=24)
+        tor('darkgray', 0.065, 0.005, T((x, 0.50, ROOF_IN - 0.028)), 24, 5)
+    for s_ in (1, -1):                                                            # ドアの内側のレバー
+        box('black', (0.03, 0.05, 0.08), (s_ * (CAB_X - 0.025), -0.44, 1.78), bev=(0.008,))
+        pipe('silver', [(s_ * (CAB_X - 0.04), -0.44, 1.80), (s_ * (CAB_X - 0.055), -0.38, 1.80)], 0.006, 6)
     # 左のひじかけ（はね上げ式）
     box('seat', (0.07, 0.30, 0.05), (0.28, 0.53, FLOOR + 0.48), bev=(0.02, 2))
     box('darkgray', (0.03, 0.04, 0.18), (0.28, 0.66, FLOOR + 0.40))
@@ -905,7 +972,7 @@ def rotary():
     ay, az = oy, 0.25                    # 爪軸
     with part('Rotary'):
         # 赤いカバー（爪のまわりの半円筒）・両側の板
-        lathe('paint_red', [(-TILL_W / 2 - 0.02, 0.31), (TILL_W / 2 + 0.02, 0.31)], ay, az, n=24, a0=-75, a1=60, smooth=50)
+        lathe('paint_red', [(-TILL_W / 2 - 0.02 + (TILL_W + 0.04) * k / 16, 0.31) for k in range(17)], ay, az, n=24, a0=-75, a1=60, smooth=50)
         for s in (1, -1):
             arc = [(0.33 * math.sin(math.radians(a)), az + 0.33 * math.cos(math.radians(a))) for a in range(-80, 66, 10)]
             prism('paint_red', [(0.0 + p[0], p[1]) for p in arc] + [(0.25, 0.02), (-0.25, 0.02)], 0.012,
@@ -1036,6 +1103,44 @@ def build():
     return root, rot
 
 
+SUN_ROT = 150.0
+SKY_STRENGTH = 0.06
+
+
+def bake_ao():
+    """すき間や奥の暗さ（AO）を頂点色 'ao' に焼く。three.js には AO が無いので、これで影の感じを出す"""
+    sc = bpy.context.scene
+    sc.render.engine = 'CYCLES'
+    sc.cycles.device = 'CPU'
+    sc.cycles.samples = 64 if FAST else 256
+    w = bpy.data.worlds.new('ao')
+    sc.world = w
+    w.light_settings.distance = 0.45
+    skip = {'Glass', 'MeterScreen', 'MonitorScreen', 'MirrorL', 'MirrorR', 'RoomMirror'}
+    targets = [o for o in sc.objects if o.type == 'MESH' and o.name not in skip]
+    for o in sc.objects:
+        if o.name in skip:
+            o.hide_render = True
+    bpy.ops.object.select_all(action='DESELECT')
+    for o in targets:
+        a = o.data.color_attributes.new('ao', 'FLOAT_COLOR', 'POINT')
+        o.data.color_attributes.active_color = a
+        o.select_set(True)
+    bpy.context.view_layer.objects.active = targets[0]
+    bpy.ops.object.bake(type='AO', target='VERTEX_COLORS')
+    for o in targets:                                                          # 真っ黒にしない（0.3〜1）
+        a = o.data.color_attributes['ao']
+        v = np.empty(len(a.data) * 4, np.float32)
+        a.data.foreach_get('color', v)
+        v = v.reshape(-1, 4)
+        v[:, :3] = 0.3 + 0.7 * np.clip(v[:, :3], 0, 1) ** 1.2
+        v[:, 3] = 1
+        a.data.foreach_set('color', v.ravel())
+    for o in sc.objects:
+        o.hide_render = False
+    print('baked AO', len(targets), 'objects')
+
+
 def preview():
     sc = bpy.context.scene
     sc.render.engine = 'CYCLES'
@@ -1050,19 +1155,17 @@ def preview():
     w = bpy.data.worlds.new('sky')
     sc.world = w
     bg = w.node_tree.nodes['Background']
-    bg.inputs['Color'].default_value = (0.55, 0.70, 0.95, 1)
-    bg.inputs['Strength'].default_value = 0.9
+    sky = w.node_tree.nodes.new('ShaderNodeTexSky')                              # 晴れた昼の空（太陽つき）
+    sky.sky_type = 'MULTIPLE_SCATTERING'
+    sky.sun_elevation = math.radians(48)
+    sky.sun_rotation = math.radians(SUN_ROT)
+    w.node_tree.links.new(sky.outputs['Color'], bg.inputs['Color'])
+    bg.inputs['Strength'].default_value = SKY_STRENGTH
     tmp = []
-    sun = bpy.data.objects.new('sun', bpy.data.lights.new('sun', 'SUN'))
-    sun.data.energy = 4.0
-    sun.data.angle = math.radians(3)
-    sun.rotation_euler = Euler((math.radians(42), math.radians(-18), math.radians(-35)))
-    sc.collection.objects.link(sun)
-    tmp.append(sun)
     gm = bpy.data.materials.new('ground')
     gm.node_tree.nodes['Principled BSDF'].inputs['Base Color'].default_value = (*lin('#6b5a3e'), 1)
     gm.node_tree.nodes['Principled BSDF'].inputs['Roughness'].default_value = 0.95
-    bpy.ops.mesh.primitive_plane_add(size=60)
+    bpy.ops.mesh.primitive_plane_add(size=600)
     g = bpy.context.active_object
     g.data.materials.append(gm)
     tmp.append(g)
@@ -1120,6 +1223,7 @@ def export():
 if __name__ == '__main__':
     build()
     print('triangles', tri_count())
+    bake_ao()
     if RENDER:
         preview()
     export()

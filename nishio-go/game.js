@@ -2083,7 +2083,8 @@ function refreshNearby() {
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
   // めぐりの れんさ：つながっている間は、文字を少なく（ふだん）でも のこり時間を出す（次の名所に間に合うか分かるように）
-  const cl = chainLeft(), chain = cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : '';
+  const cl = chainLeft(), h1 = dayState().h100, chain = [cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : '',
+    h1 && !h1.done ? `${simple() ? PIA('feet', '100歩たんけん') : '👣'} たんけん <b>${h1.steps}</b>/100` : ''].filter(Boolean).join('　');   // 100歩たんけんの とちゅうも（何歩目か）
   if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length, bl = bagLine();

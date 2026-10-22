@@ -197,9 +197,10 @@ function build() {
     if (!b) return;
     const k = b.dataset.mz;
     if (k === 'close') close();
-    else if (k === 'retry') { if (game && game.board) restart(); else if (game) startStage(game.n); }
+    else if (k === 'retry') { if (game && game.board) restart(); else if (game) startStage(game.n, game.daily); }
     else if (k === 'next') startStage(game.n + 1);
-    else if (k === 'again') startStage(game.n);
+    else if (k === 'again') startStage(game.n, game.daily);
+    else if (k === 'daily') startStage(dailyIndex(), true);
     else if (k === 'resume') resume();
     else if (k === 'hint') hint();
     else if (k === 'slow') { st.slow = !st.slow; save(); b.setAttribute('aria-pressed', String(!!st.slow)); }
@@ -245,24 +246,31 @@ function close() {
 }
 
 /* ---------- 面 ---------- */
-function startStage(n) {
+// ☀️ きょうの めいろ：日本時間の 日づけで きまる 名所（だれでも 同じ。はじめの やさしい面は のぞく）。とけても 面は すすまない
+const DAILY_LV = 6;   // 盤 15×22・穴 8つ
+function dailyIndex() {
+  const list = goalList(), d = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  let h = 2166136261; for (const c of 'meiro:' + d) h = Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0;
+  return list.length > 3 ? 3 + h % (list.length - 3) : 0;
+}
+function startStage(n, daily = false) {
   const list = goalList();
-  if (!list.length) { ui.load.hidden = false; ui.load.textContent = '名所を よみこみ中…'; setTimeout(() => !ui.el.hidden && startStage(n), 600); return; }
+  if (!list.length) { ui.load.hidden = false; ui.load.textContent = '名所を よみこみ中…'; setTimeout(() => !ui.el.hidden && startStage(n, daily), 600); return; }
   n = Math.max(0, Math.min(n, list.length - 1));
-  game = { n, spot: list[n], board: null, t: 0, falls: 0, done: false };
+  game = { n, daily, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
   ui.load.hidden = false; ui.load.textContent = 'めいろを つくっています…';
   const bt = st.best[game.spot.id];
-  ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>${bt ? `<small>　ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面と ベスト・2行め：ゴール（長い名前は …）
+  ui.st.innerHTML = `${daily ? '☀️ <b>きょうの めいろ</b>' : `🌀 めいろ <b>${n + 1}</b>`}${bt ? `<small>　ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面と ベスト・2行め：ゴール（長い名前は …）
   ui.time.textContent = '0.0';
   const g = game;
   waitChunks(g.spot, allOk => {
     if (game !== g) return;
     if (!allOk) { ui.load.textContent = '地図が よみこめなかった。「↺ やりなおし」で もういちど'; return; }   // 地図が そろっていないと 読めない所が 壁になり、ちがう めいろに なる（記録が まざる）。名所も はずさない
-    const b = makeBoard(n, g.spot);
+    const b = makeBoard(daily ? DAILY_LV : n, g.spot);   // きょうの めいろ は いつも 中くらいの むずかしさ
     if (!b) {   // 道が少ない所なら、その名所を はずして 同じ面を つくりなおす（つぎの名所が この面に）
       bad.add(g.spot.id); st.skip = [...bad]; save();
-      if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';
+      if (daily) startStage(dailyIndex(), true); else if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';
       return;
     }
     g.board = b;
@@ -435,11 +443,11 @@ function win() {
   const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
   const prev = st.best[g.spot.id], newBest = !prev || sec < prev.t;
   st.best[g.spot.id] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
-  st.stage = Math.max(st.stage, g.n + 1);
+  if (!g.daily) st.stage = Math.max(st.stage, g.n + 1);   // きょうの めいろ では 面を すすめない
   save();
   if (root.nsgTrack) root.nsgTrack('meiro_clear', { stage: g.n + 1, sec, falls: g.falls, stars });
-  const has = g.n + 1 < goalList().length;
-  ui.card.innerHTML = `<h3>🏁 ゴール！</h3><p>${esc(g.spot.name)} に ついた</p>
+  const has = !g.daily && g.n + 1 < goalList().length;
+  ui.card.innerHTML = `<h3>🏁 ゴール！</h3><p>${g.daily ? '☀️ きょうの めいろ ' : ''}${esc(g.spot.name)} に ついた${g.daily ? '<br/><small>あしたは べつの 名所だよ</small>' : ''}</p>
     <div class="mz-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
     <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
     ${b.grains.length ? `<p>🌾 金の米つぶ ${g.got.size} / ${b.grains.length}${g.got.size === b.grains.length ? '　ぜんぶ とれた！' : ''}</p>` : ''}
@@ -471,11 +479,12 @@ function resume() {   // いちらんから もどる：とちゅうなら そ�
   if (!game) return;
   if (game.done && game.cardHtml) { ui.card.innerHTML = game.cardHtml; ui.clear.hidden = false; return; }
   ui.clear.hidden = true; game.last = 0;
-  if (!game.board) startStage(game.n);
+  if (!game.board) startStage(game.n, game.daily);
 }
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
-  ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3><div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
+  const ds = list[dailyIndex()], db = ds && st.best[ds.id];
+  ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3>${ds ? `<div class="mz-row"><button type="button" data-mz="daily">☀️ きょうの めいろ<br/><small>${esc(ds.name)}${db ? `　${'★'.repeat(db.s)} ${db.t.toFixed(1)}秒` : ''}</small></button></div>` : ''}<div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
     const b = st.best[s.id];
     return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}${b ? `<br/><small>${'★'.repeat(b.s)} ${b.t.toFixed(1)}秒</small>` : ''}</button>`;
   }).join('')}</div><div class="mz-row"><button type="button" data-mz="resume">もどる</button></div>`;

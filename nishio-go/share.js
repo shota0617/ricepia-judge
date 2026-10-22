@@ -4,7 +4,7 @@
 // ・西尾のPRになるように：シェアの文に西尾の名物（meibutsu.js。出典のある名前だけ）を入れる。名所のシェア（spot）は ?spot= でその名所を開き、
 //   名所のある市町（region.js の境界）と、地区の ひとこと（areas.json の catch。出典つき）をのせる（名所ごとの説明は出典が名所ごとに無いので のせない）。
 //   おたよりが反映されたシェア（voice）は「みんなの声で名所がふえる」ことを伝える
-// ・広告やQRのリンクのパラメータ：?c=キャンペーンのid ／ ?spot=スポットのid（そのスポットを見せる）／ ?play=1（操作して遊ぶで始める）／ ?from=どこから（チラシ・POP など）
+// ・広告やQRのリンクのパラメータ：?c=キャンペーンのid ／ ?spot=スポットのid（そのスポットを見せる）／ ?play=1（操作して遊ぶで始める）／ ?meiro=daily（☀️ きょうの めいろ。meiro.js が ひらく）・?meiro=1（めいろ）／ ?from=どこから（チラシ・POP など）
 //   来た人は analytics.js の landing イベントで数える（utm_* もいっしょに）
 (() => {
 'use strict';
@@ -17,7 +17,7 @@ const track = (n, p) => { try { G.track(n, p); } catch (e) { /* noop */ } };
 /* ---------- 広告・QR・シェアから来た人 ---------- */
 const q = new URLSearchParams(location.search);
 const land = {};
-for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
+for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play', 'meiro']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
 // 友だちのシェアから来た、まだ遊んだことのない人：はじめて遊ぶときに game.js が +20pt（nsg_friend：1＝これから、2＝もらった）
 if (land.utm_source === 'share' && !G.started) { try { if (!localStorage.getItem('nsg_friend')) localStorage.setItem('nsg_friend', '1'); } catch (e) { /* noop */ } }
 if (Object.keys(land).length) {
@@ -41,7 +41,7 @@ if (Object.keys(land).length) {
 
 /* ---------- シェア ---------- */
 // 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
-const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
 let cur = 'log', curDot = null, curSpot = null, curVoice = '', curMeiro = null;
 // 西尾の名物（「抹茶とうなぎのまち」）。名前は meibutsu.js（西尾市観光協会などの出典）から。X の字数に入るよう短く
 const meibutsuShort = () => { const m = (window.NISHIO_MEIBUTSU || []).filter(x => !x.area).slice(0, 2).map(x => x.name.replace(/^(西尾の|一色産)/, '')); return m.length ? `${m.join('と')}のまち・` : ''; };

@@ -34,7 +34,7 @@ function note() {   // きろく の 札に すすみぐあい（何面まで・
   el.textContent = `${st.stage + 1}面まで あそべる・★${stars}`;
 }
 
-let api = null, ui = null, game = null, raf = 0;
+let api = null, ui = null, game = null, raf = 0, wantDaily = false;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
 const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
@@ -201,6 +201,7 @@ function build() {
   document.body.appendChild(el);
   ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'), bezel: el.querySelector('.mz-bezel'),
     load: el.querySelector('.mz-load'), clear: el.querySelector('.mz-clear'), card: el.querySelector('.mz-card') };
+  ['click', 'touchend'].forEach(ev => el.addEventListener(ev, () => { if (api) api.tiltAsk(); }, { passive: true }));   // iPhone の 傾きの 許可（リンクから すぐ ひらいた ときは、めいろを さわった ときに 聞く。2回めからは 何もしない）
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-mz]');
     if (!b) return;
@@ -238,7 +239,7 @@ function build() {
   document.addEventListener('visibilitychange', () => { if (document.hidden) letGo(); });
 }
 
-function open(n) {
+function open(n, daily = false) {   // daily：☀️ きょうの めいろ を ひらく（シェアの リンク ?meiro=daily から）
   api = root.nishioPixel && root.nishioPixel.meiroApi;
   if (!api) return false;
   if (!ui) build();
@@ -246,7 +247,7 @@ function open(n) {
   ui.el.querySelector('[data-mz=slow]').setAttribute('aria-pressed', String(!!st.slow));
   api.pause(true);
   api.tiltAsk(); api.tiltReset();   // いまの持ち方を「まっすぐ」に
-  startStage(typeof n === 'number' ? n : Math.min(st.stage, goalList().length - 1));
+  startStage(daily ? null : typeof n === 'number' ? n : Math.min(st.stage, goalList().length - 1), daily);
   if (root.nsgTrack) root.nsgTrack('meiro_open', { stage: (game && game.n + 1) || 0 });
   return true;
 }
@@ -275,6 +276,7 @@ const recKey = g => (g.daily ? 'day:' : '') + g.spot.id;
 function startStage(n, daily = false) {
   const list = goalList(daily);
   if (!list.length) { ui.load.hidden = false; ui.load.textContent = '名所を よみこみ中…'; setTimeout(() => !ui.el.hidden && startStage(n, daily), 600); return; }
+  if (n == null) { n = dailyIndex(); if (n < 0) { ui.load.hidden = false; ui.load.textContent = 'きょうの めいろが つくれなかった'; return; } }   // 名所が よめてから えらぶ
   n = Math.max(0, Math.min(n, list.length - 1));
   game = { n, daily, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
@@ -618,8 +620,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const P = root.nishioPixel && root.nishioPixel.meiroApi;
     if (P) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
     const d = $('demoBtn'); if (d) d.click();
-    setTimeout(() => open(), 60);
+    setTimeout(() => open(undefined, wantDaily), 60);
   });
+  // シェアの リンク（?meiro=daily：きょうの めいろ・?meiro=1：めいろ）から 来た人
+  const want = new URLSearchParams(location.search).get('meiro');
+  if (want === 'daily' || want === '1') {
+    wantDaily = want === 'daily';
+    const intro = $('intro'), t = b && b.querySelector('.mp-t');
+    if (intro && !intro.hidden && b) { if (t && wantDaily) t.textContent = '☀️ きょうの めいろ に ちょうせん'; }   // はじめての人：いちばん上の ボタンで（iPhone の 傾きの 許可は タップの その場で）
+    else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
+  }
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）

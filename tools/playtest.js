@@ -699,11 +699,22 @@ async function walkTo(page, id) {
     const k = await page.evaluate(() => { const b = NISHIO_MEIRO.game.board, [x, y] = b.start, i = y * b.tw + x; return b.er[i] ? 'ArrowRight' : x > 0 && b.er[i - 1] ? 'ArrowLeft' : b.ed[i] ? 'ArrowDown' : 'ArrowUp'; });   // スタートから 通れる向き
     await page.keyboard.down(k); await page.waitForTimeout(400); await page.keyboard.up(k);
     const moved = await page.evaluate(([x0, y0]) => { const g = NISHIO_MEIRO.game; return Math.hypot(g.x - x0, g.y - y0); }, [b.x, b.y]);
+    // 金の米つぶは ぜんぶ スタートから とれる所・💡 ヒントで 道すじが出る・いちらんから「もどる」で つづき（位置が かわらない）
+    const extra = await page.evaluate(() => {
+      const g = NISHIO_MEIRO.game, b = g.board, tw = b.tw, d = new Uint8Array(tw * b.th), q = [b.start[1] * tw + b.start[0]];
+      const pass = (x, y, dx, dy) => (dx === 1 ? x + 1 < tw && b.er[y * tw + x] : dx === -1 ? x > 0 && b.er[y * tw + x - 1] : dy === 1 ? y + 1 < b.th && b.ed[y * tw + x] : y > 0 && b.ed[(y - 1) * tw + x]);
+      d[q[0]] = 1;
+      for (let h = 0; h < q.length; h++) { const i = q[h], x = i % tw, y = (i / tw) | 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const j = (y + dy) * tw + x + dx; if (!pass(x, y, dx, dy) || d[j] || b.cell[j] !== 1 || b.holes.has(j)) continue; d[j] = 1; q.push(j); } }
+      document.querySelector('#meiro [data-mz=hint]').click();
+      const hint = g.hint ? g.hint.path.length : 0, x0 = g.x, y0 = g.y;
+      document.querySelector('#meiro [data-mz=list]').click(); document.querySelector('#meiro [data-mz=resume]').click();
+      return { grains: b.grains.length, grainsOk: b.grains.every(i => d[i]), hint, resume: NISHIO_MEIRO.game === g && g.x === x0 && g.y === y0 && document.querySelector('#meiro .mz-clear').hidden };
+    });
     await page.evaluate(() => { const g = NISHIO_MEIRO.game; NISHIO_MEIRO.warp(g.board.goal[0] + 0.5, g.board.goal[1] + 0.5); });
     const goal = await page.waitForFunction(() => !document.querySelector('#meiro .mz-clear').hidden && /ゴール/.test(document.querySelector('#meiro .mz-card').innerText), null, { timeout: 5000 }).then(() => true, () => false);
     await page.evaluate(() => NISHIO_MEIRO.close());
     const back = await page.evaluate(() => document.getElementById('meiro').hidden);
-    return { ...b, moved: +moved.toFixed(2), goal, back, ok: b.len >= 8 && moved > 0.3 && goal && back };
+    return { ...b, ...extra, moved: +moved.toFixed(2), goal, back, ok: b.len >= 8 && moved > 0.3 && goal && back && extra.grainsOk && extra.hint > 0 && extra.resume };
   })();
   R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   // イベント「ドット絵ムービー」：八ツ面山でチェックインすると、ごほうびの画面のあとに「山の岩のなりたち」が流れ、最後まで見ると まちメモ に残る

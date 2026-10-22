@@ -2237,7 +2237,8 @@ function endingWhenFree(key = stateKey()) {
   })();
 }
 function clearRecord() {
-  return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length };
+  return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length,
+    chain: (S.chain && S.chain.best) || 0, h100: S.h100best || 0, alleys: (S.alleys || []).length };   // 夜の開発の記録（いちばんの れんさ・100歩たんけんの自己ベスト・しらべた行き止まり）
 }
 function showEnding() {
   const npcs = window.NISHIO_NPCS || [], by = npcs.find(n => n.id === CLEAR_BY);
@@ -2246,6 +2247,7 @@ function showEnding() {
     ...(when ? [['殿堂入りした日', `${when.getFullYear()}/${when.getMonth() + 1}/${when.getDate()}`]] : []),
     ['めぐった名所', `${r.spots}か所`], ['話した人', `${r.met}人`], ['歩いた道のり', `${r.km}km`],
     ['西尾ドット絵', `${r.dots}枚`], ['まちメモ', `${r.facts}こ`], ['生きもの', `${r.critters}しゅるい`],
+    ...(r.chain >= 2 ? [['いちばんの れんさ', `${r.chain}か所`]] : []), ...(r.h100 ? [['100歩たんけんの自己ベスト', `${r.h100}マス`]] : []), ...(r.alleys ? [['しらべた路地の行き止まり', `${r.alleys}か所`]] : []),   // 前に殿堂入りした人の記録には ないので、あるものだけ
   ];
   const seals = SEAL_MAIN.map(id => { const a = areas.find(x => x.id === id), p = npcs.find(n => n.id === SEAL_BY[id]); return a ? `<li>🔖 ${esc(a.name)}のしるし <small>${esc(p ? p.name : '')}</small></li>` : ''; }).join('');
   const el = $('reward');

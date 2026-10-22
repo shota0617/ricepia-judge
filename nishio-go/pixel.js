@@ -2078,6 +2078,9 @@ const GROUND = {
 };
 // いまの天気（weather.js。気象庁）：雨の日は 地面が ぬれて すべる（はなしても 長く転がる・土ぼこりの代わりに 水しぶき）、雪の日は もっと すべる（雪が はねる・音が こもる）
 const wxKind = () => { const w = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current; return (w && w.kind) || ''; };
+// 季節の葉：紅葉のころは 草の上で 赤・だいだい・黄色の 落ち葉が、桜のころは 花びらが はねる（ふだんは 草の色）
+const LEAF_BITS = { koyo: ['200,100,30', '176,58,36', '201,154,30', '216,138,58'], sakura: ['246,168,192', '251,208,221', '255,236,242'] };
+const groundBit = g => (g === GROUND.grass && (KOYO || SAKURA) ? (KOYO ? LEAF_BITS.koyo : LEAF_BITS.sakura)[(Math.random() * (KOYO ? 4 : 3)) | 0] : g.dust);
 const WX_ROLL = { rain: { crr: 0.7, lin: 0.75, bit: '170,210,240', hz: 1.4 }, snow: { crr: 0.5, lin: 0.55, bit: '245,248,255', hz: 0.6 } };   // crr・lin：ころがり抵抗・速さに比べて へる分に かける数
 // よごれ：砂・土の道・どろの田んぼを転がると、お米に 小さな しみ（地面の色）。草で 少しずつ・雨で だんだん・水に ぽちゃんで いっぺんに きれいになる
 const DIRT_RATE = { sand: 0.22, dirt: 0.06, mud: 0.3, grass: -0.05, road: -0.01, water: -0.2 };
@@ -2113,7 +2116,7 @@ function riceFeel(dt, speed) {
       roll.h = 0; roll.hv = 0; roll.sq = Math.min(0.3, 0.1 + imp * 0.03); roll.sqv = 0; roll.sqx = false;
       if (imp > 4) roll.shake = Math.min(1, (imp - 4) * 0.12);
       kotoSound(Math.min(1, 0.5 + imp / 10) * g.snd, imp > 5);
-      for (let i = 0; i < 3; i++) roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: 0.5 + Math.random() * 0.5, vx: (i - 1) * 0.9, c: g.dust });
+      for (let i = 0; i < 3; i++) roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: 0.5 + Math.random() * 0.5, vx: (i - 1) * 0.9, c: groundBit(g), bit: g.bit && (KOYO || SAKURA) });
     }
   }
   if (KP.trip && speed > 2 && roll.h <= 0 && Math.random() < KP.trip * dt) { roll.hv = 1.8; roll.h = 0.001; roll.dizzyT = 0.8; kotoSound(0.6, true); }   // すってんころりん：つまずいて ころぶ
@@ -2128,7 +2131,7 @@ function riceFeel(dt, speed) {
   roll.dustT -= dt;
   if (speed > g.dv && roll.h <= 0 && roll.dustT <= 0) {   // 土ぼこり（地面の色。草・田んぼは葉っぱや どろ、水は しぶきが はねる）
     roll.dustT = g.big ? 0.04 : 0.06;
-    roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: (g.big ? 0.9 : 0.6) + Math.random() * 0.6, c: wx && !g.splash ? wx.bit : g.dust, bit: wx ? true : g.bit, vx: (Math.random() - 0.5) * 1.2 });   // 雨・雪の日は 水しぶき・雪
+    roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: (g.big ? 0.9 : 0.6) + Math.random() * 0.6, c: wx && !g.splash ? wx.bit : groundBit(g), bit: wx ? true : g.bit, vx: (Math.random() - 0.5) * 1.2 });   // 雨・雪の日は 水しぶき・雪
   }
   for (const p of roll.dust) p.t += dt;
   roll.dust = roll.dust.filter(p => p.t < 0.45);

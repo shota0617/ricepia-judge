@@ -725,6 +725,7 @@ function addTrail(a, b, critters) {
   if (!n) return;
   const day = dayState();
   day.trail = (day.trail || 0) + n;
+  trailMiles(S.trail || 0, (S.trail || 0) + n);
   S.trail = (S.trail || 0) + n;
   S.trailCarry = (S.trailCarry || 0) + n;
   let gained = 0;
@@ -740,6 +741,20 @@ function addTrail(a, b, critters) {
     if (P.floatText) P.floatText('👣+' + gained);
   }
   save();
+}
+
+// 歩いた道の節目（2048 の「倍々で大きくなる数字」から）：これまでに歩いた道が 500m・1km・2km・4km… と倍ごとの節目に届くたびに、お祝いと
+// ポイント（30・60・90…）。節目は だんだん遠くなるので、ずっと先まで 次の目当てがある。はじめて この しくみに会った人は、もう越えた節目は配らず そこから数える
+const trailMile = k => 500 * 2 ** k;
+function trailMiles(before, after) {
+  if (S.trailMile == null) { S.trailMile = 0; while (before * TRAIL_M >= trailMile(S.trailMile)) S.trailMile++; }
+  while (after * TRAIL_M >= trailMile(S.trailMile)) {
+    const k = S.trailMile++, pts = 30 * (k + 1), m = trailMile(k);
+    S.log.unshift({ type: 'trailmile', t: Date.now(), pts, icon: '👣', name: `歩いた道 ${fmtM(m)} の節目` });
+    gainPoints(pts);
+    toastAfter(`👣 これまでに歩いた道が ${fmtM(m)} に！ +${pts}pt（つぎの節目は ${fmtM(trailMile(k + 1))}）`);
+    track('trail_mile', { m });
+  }
 }
 
 function addWalk(d, bag = true) {
@@ -1029,6 +1044,19 @@ function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店ス
       <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;
 }
 const SHOP_STAMP = { 3: 100, 5: 200, 10: 500 };   // 来店スタンプ（当店に来た日の数）のごほうびポイント
+// めぐりの れんさ（落ちものパズルの「まとめて消すほど 大きく得をする」から）：チェックインのあと30分以内に、ちがう名所でチェックインすると
+// れんさが つながり、2つめは ×1.2・3つめは ×1.5・4つめからは ×2（スポットのポイントに）。30分あくと 1 からやりなおし。いちばん長い れんさを覚える
+const CHAIN = { ms: 30 * 60000, mult: [1, 1, 1.2, 1.5, 2] };
+const chainMult = n => CHAIN.mult[Math.min(Math.max(n, 0), CHAIN.mult.length - 1)];
+const chainLeft = () => { const c = S.chain; return c && c.last ? Math.max(0, CHAIN.ms - (Date.now() - c.last)) : 0; };
+function chainStep(s, now) {
+  const c = S.chain || { n: 0, last: 0, id: '', best: 0 };
+  c.n = c.last && now - c.last <= CHAIN.ms && c.id !== s.id ? c.n + 1 : 1;
+  c.last = now; c.id = s.id; c.best = Math.max(c.best || 0, c.n);
+  S.chain = c;
+  return { n: c.n, bonus: c.n >= 2 ? Math.round(ptsOf(s) * (chainMult(c.n) - 1)) : 0 };
+}
+
 function checkin() {
   const s = selected;
   if (!s || !me) return;
@@ -1046,6 +1074,8 @@ function checkin() {
   const base = ptsOf(s), theme = weekTheme(), inTheme = inThemeOf(s, theme);
   total += base; lines.push(`${iconOf(s)} スポット +${base}`);
   if (inTheme) { total += base; lines.push(`🎌 今週は${theme.icon}${theme.name}の週（ポイント2倍） +${base}`); }
+  const ch = chainStep(s, now);   // めぐりの れんさ：30分以内に ちがう名所へ着くと、スポットのポイントが ×1.2・×1.5・×2
+  if (ch.bonus) { total += ch.bonus; lines.push(`🔗 めぐりの れんさ ${ch.n}（30分以内に次の名所） ×${chainMult(ch.n)} +${ch.bonus}`); }
   if (!v) {
     const b = s.featured ? CFG.pts.firstFeatured : CFG.pts.first;
     total += b; lines.push(`🆕 はじめての訪問 +${b}`);
@@ -1082,7 +1112,7 @@ function checkin() {
   if (s.shop) day.shop = 1;
   S.checkins++;
   weekStat().spots++;
-  track('checkin', { spot: s.name, featured: !!s.featured, first: !v, theme: inTheme ? theme.key : '', mode: demo ? 'play' : 'walk' });
+  track('checkin', { spot: s.name, featured: !!s.featured, first: !v, theme: inTheme ? theme.key : '', chain: ch.n, mode: demo ? 'play' : 'walk' });
   // おみやげ袋：はじめての注目スポットと、今週のテーマの名所では必ず（持てる数に空きがあれば。テーマの名所の袋は1日3つまで：公園の週は公園が千か所あるので）
   const themeBag = inTheme && (day.themeBags || 0) < BAG.themeDaily;
   const bag = !s.shop && ((s.featured && !v) || themeBag) ? giveBag(s.lat, s.lng, s.featured && !v ? 'featured' : 'theme') : null;
@@ -1941,7 +1971,8 @@ function refreshNearby() {
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length, bl = bagLine();
     const bag = bl ? (simple() ? `　${PIA('bag', 'おみやげ袋')} <b>${bl.done}</b>/${bl.b.km}km` : `　🎒 袋 <b>${bl.done}</b>/${bl.b.km}km`) : '';
-    msgs.push((simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`) + bag);
+    const cl = chainLeft(), chain = cl ? `　🔗 れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : '';   // 次の名所に着けば れんさが つながる
+    msgs.push((simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`) + bag + chain);
   }
   setStatus(msgs.slice(0, 2).join('<br/>'), true);
 }
@@ -2258,7 +2289,7 @@ function toastAfter(msg) {
 }
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
-const CHIP = [['🎮', 'jump'], ['🎒', 'bag'], ['🎌', 'calendar'], ['✨', 'star'], ['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
+const CHIP = [['🎮', 'jump'], ['🎒', 'bag'], ['🎌', 'calendar'], ['✨', 'star'], ['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll'], ['🔗', 'compass']];
 function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
@@ -2267,7 +2298,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
     if (ic === 'book') book = true;
     const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
-    const v = ic === 'card' ? (/もう持っている/.test(l) ? '' : PIA('new', 'はじめての絵')) : ic === 'bag' && !plus ? ((l.match(/(\d+)km/) || [])[1] || '') + 'km' : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
+    const v = l.startsWith('🔗') ? `×${(l.match(/×([\d.]+)/) || [])[1] || ''} ${plus}` : ic === 'card' ? (/もう持っている/.test(l) ? '' : PIA('new', 'はじめての絵')) : ic === 'bag' && !plus ? ((l.match(/(\d+)km/) || [])[1] || '') + 'km' : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
     // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
     if (hero && ic === 'card' && !shown) { shown = true; continue; }
     if (hero && ic !== 'card' && v === `+${total}`) continue;
@@ -2521,7 +2552,7 @@ $('dotMotifs').addEventListener('click', e => {
   renderDots();
 });
 
-const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift' };   // 最近のポイントの絵
+const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift', trail: 'feet', trailmile: 'feet' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
@@ -3359,7 +3390,7 @@ function todayWalkCard() {
   return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
     <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
     <p class="word">${esc(word)}</p>
-    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}</small></div>`;
+    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}${S.trailMile != null ? `（つぎの節目 ${fmtM(trailMile(S.trailMile))} まで あと ${fmtM(Math.max(0, trailMile(S.trailMile) - (S.trail || 0) * TRAIL_M))}）` : ''}${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}</small></div>`;
 }
 function renderTomorrow() {
   const el = $('tomorrowBox');

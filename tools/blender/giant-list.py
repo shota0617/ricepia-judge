@@ -22,7 +22,7 @@ HAND = {'f-nishio-castle', 'f-okazaki-castle', 'f-iwase-bunko', 'f-konrenji', 'f
 
 
 def neighbor_models(name='giant-neighbors.py'):
-    """giant-neighbors.py（と giant-nishio.py）の MODELS のキー（Blender なしで読めるように、実行せずに構文として読む）"""
+    """giant-neighbors.py（と giant-nishio.py・giant-osm.py）の MODELS のキー（Blender なしで読めるように、実行せずに構文として読む）"""
     src = os.path.join(ROOT, 'tools', 'blender', name)
     for node in ast.parse(open(src, encoding='utf-8').read()).body:
         if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'MODELS' for t in node.targets) and isinstance(node.value, ast.Dict):
@@ -35,6 +35,8 @@ def neighbor_models(name='giant-neighbors.py'):
 HAND |= {'f-' + n for n in neighbor_models()}
 # 西尾市の注目スポットも、手で形を作った特大の絵（giant-nishio.py の MODELS）がある所は除く（型の絵で上書きしない）
 HAND |= {'f-' + n for n in neighbor_models('giant-nishio.py')}
+# 48×48 の手描きの絵がある OpenStreetMap の名所と、のこりの注目スポット（giant-osm.py の MODELS。n/w/r＋数字は OpenStreetMap の id のまま、ほかは spots.json の id）
+HAND |= {n if re.fullmatch(r'[nwr]\d+', n) else 'f-' + n for n in neighbor_models('giant-osm.py')}
 GEN_KIND = {'s': 'shrine', 't': 'temple', 'e': 'station', 'c': 'castle', 'p': 'museum', 'h': 'historic', 'v': 'view', 'w': 'church'}
 CAT_KIND = {'shrine': 'shrine', 'temple': 'temple', 'worship': 'temple', 'station': 'station', 'castle': 'castle', 'museum': 'museum', 'library': 'library',
             'townhall': 'townhall', 'art': 'art', 'historic': 'historic', 'sight': 'view', 'view': 'view', 'park': 'park', 'beach': 'beach'}

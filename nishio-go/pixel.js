@@ -4994,6 +4994,9 @@ GIANT_ART['f-ricepia'] = 'ricepia';
   'sangane-kannon', 'jomyoji', 'anakobo', 'munosato', 'nakahata-hachiman', 'takakura-jinja', 'toteiyama',
   'saifukuji', 'ebisu-beach', 'terabe-beach',
 ].forEach(n => { GIANT_ART['f-' + n] = n; });
+// のこりの注目スポット（となりの市町）も手で形を作った特大の絵に（tools/blender/giant-osm.py）。
+// そこで手で作った OpenStreetMap の名所は、前の型の絵と同じ名前（<id>.png）に上書きしてあるので、下の list.json のまま描く
+['hekinan-saihoji', 'hekinan-aoi-park', 'takahama-ningyo-koji'].forEach(n => { GIANT_ART['f-' + n] = n; });
 // ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
 let giantIds = null;
 fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });

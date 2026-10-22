@@ -32,6 +32,7 @@
   #bar button, .pad button { border: 0; border-radius: 12px; background: rgba(251, 248, 240, .9); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
   #bar button { min-width: 44px; height: 40px; padding: 0 10px; font-size: 14px; }
   #bar button.on { background: var(--green); color: #fff; }
+  #bar button.wait { background: #ffd84a; color: #1a1814; }
   #hud { right: 400px; }
   /* さわる操作（スマホ）。パソコンでも押せる */
   .pad { position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 10px; user-select: none; -webkit-user-select: none; }
@@ -87,7 +88,7 @@
 <div id="bar" class="hidden">
   <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
-  <button id="bAssist" title="直進アシスト（G）">直進 切</button>
+  <button id="bAssist" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
   <button id="bFast" title="早送り（F）">⏩ ×1</button>
   <button id="bMenu" title="はじめの画面へ">≡</button>
 </div>
@@ -120,7 +121,7 @@
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
       ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
-      ・直進アシスト <kbd>G</kbd>（ハンドルから手をはなすと、ガイドの線にそってまっすぐ走る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）<br>
+      ・直進アシスト <kbd>G</kbd>（本物と同じく、始点 A で G → 5m 以上まっすぐ走って終点 B で G。A・B を結んだ基準線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>・ボタンの長押しで登録しなおし）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）<br>
       ・スマホは画面の下のボタンで操作します。
     </div>
     <div class="how">
@@ -1612,20 +1613,25 @@ function placeRig(dt) {
   rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB, S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
 }
 
-// 直進アシスト：田んぼの長い向き（z）にそって、耕幅 2.2m から 10cm 重ねた 2.1m おきのガイドの線を引き、
-// ハンドルから手をはなすと、いちばん近い線にそってまっすぐ走る（本物は GNSS で基準の線を決める）
-const ASSIST = { on: false, active: false, line: 0, dir: 1 };
+// 直進アシスト（本物と同じ手順）：G で始点 A を登録 → 5m 以上まっすぐ走って G で終点 B を登録 → A と B を結んだ基準線と
+// 平行に、耕幅 2.2m から 10cm 重ねた 2.1m おきのガイドの線ができる。ハンドルから手をはなすと、いちばん近い線にそってまっすぐ走る。
+// そのあと G で入切、Shift+G で登録しなおし
+const ASSIST = { mode: 'none', on: false, active: false, A: null, B: null, aDist: 0, d: [0, 1], n: [1, 0], dir: 1, k: 0, off: 0 };
 // PTO：耕うんは 1 速、代かきは 2 速で爪を速く回す（同じ YT4 シリーズの仕様：エンジン 2600 回転で 1 速 561・2 速 784 回転）
 const PTO_RATIO = (SHIRO ? 784 : 561) / 2600;
-const LINE0 = -HX + TILL_W / 2, PITCH = TILL_W - 0.1;
+const PITCH = TILL_W - 0.1;
 function assistSteer(dt) {
-  const fz = Math.cos(S.yaw);
-  if (Math.abs(fz) < 0.9) return false;            // 長い向きに近いときだけ
-  ASSIST.dir = Math.sign(fz);
-  ASSIST.line = LINE0 + Math.round((S.x - LINE0) / PITCH) * PITCH;
-  const off = S.x - ASSIST.line;                   // 線からのずれ（m）。左が＋
-  // ずれと、線へ寄っていく向き（sin(yaw)）の両方を見て切る。うしろ向き（dir=-1）は左右が逆になる
-  const target = Math.max(-0.3, Math.min(0.3, ASSIST.dir * (off * 0.9 + Math.sin(S.yaw) * 2.2)));
+  if (!ASSIST.on) return false;
+  const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), [dx, dz] = ASSIST.d, [nx, nz] = ASSIST.n;
+  const along = fx * dx + fz * dz;
+  if (Math.abs(along) < 0.9) return false;         // 基準線の向きに近いときだけ（枕地の旋回は自分で）
+  ASSIST.dir = Math.sign(along);
+  const o = (S.x - ASSIST.A[0]) * nx + (S.z - ASSIST.A[1]) * nz;   // 基準線からの横の位置（左が＋）
+  ASSIST.k = Math.round(o / PITCH);
+  const off = ASSIST.off = o - ASSIST.k * PITCH;   // いちばん近いガイドの線からのずれ（m）
+  const lat = fx * nx + fz * nz;                   // 線へ寄っていく向き
+  // ずれと寄っていく向きの両方を見て切る。基準線と逆向き（dir=-1）は左右が逆になる
+  const target = Math.max(-0.3, Math.min(0.3, ASSIST.dir * (off * 0.9 + lat * 2.2)));
   S.steer += Math.max(-0.8 * dt, Math.min(0.8 * dt, target - S.steer));
   return true;
 }
@@ -1813,12 +1819,24 @@ function drawMonitor(pct) {
   g.imageSmoothingEnabled = false;
   g.drawImage(monitor.map, X0, Y0, W, H);
   g.strokeStyle = '#8fb4d0'; g.lineWidth = 2; g.strokeRect(X0, Y0, W, H);
-  if (ASSIST.on) {                                // 直進アシストのガイドの線（耕幅ごと）
-    for (let gx = LINE0; gx < HX; gx += PITCH) {
-      const ly = Y0 + (1 - (gx + HX) / (2 * HX)) * H, cur = ASSIST.active && Math.abs(gx - ASSIST.line) < 0.01;
-      g.strokeStyle = cur ? '#4fe0ff' : 'rgba(150,200,230,0.35)'; g.lineWidth = cur ? 3 : 1;
-      g.beginPath(); g.moveTo(X0, ly); g.lineTo(X0 + W, ly); g.stroke();
+  const mp = (x, z) => [X0 + (z + HZ) / (2 * HZ) * W, Y0 + (1 - (x + HX) / (2 * HX)) * H];
+  if (ASSIST.B) {                                 // 直進アシストのガイドの線（基準線と平行に耕幅ごと）
+    g.save(); g.beginPath(); g.rect(X0, Y0, W, H); g.clip();
+    const [ax, az] = ASSIST.A, [dx, dz] = ASSIST.d, [nx, nz] = ASSIST.n;
+    for (let k = -30; k <= 30; k++) {
+      const cx = ax + nx * k * PITCH, cz = az + nz * k * PITCH;
+      const [x1, y1] = mp(cx - dx * 80, cz - dz * 80), [x2, y2] = mp(cx + dx * 80, cz + dz * 80);
+      const cur = ASSIST.active && k === ASSIST.k;
+      g.strokeStyle = k === 0 ? (ASSIST.on ? '#ffd84a' : 'rgba(255,216,74,0.4)') : cur ? '#4fe0ff' : ASSIST.on ? 'rgba(150,200,230,0.35)' : 'rgba(150,200,230,0.15)';
+      g.lineWidth = cur || k === 0 ? 3 : 1;
+      g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
     }
+    g.restore();
+  }
+  for (const [pt, label] of [[ASSIST.A, 'A'], [ASSIST.B, 'B']]) if (pt) {   // 始点 A・終点 B の印
+    const [qx, qy] = mp(pt[0], pt[1]);
+    g.fillStyle = '#ffd84a'; g.beginPath(); g.arc(qx, qy, 8, 0, 7); g.fill();
+    g.fillStyle = '#10202c'; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, qx, qy + 1);
   }
   const px = X0 + (S.z + HZ) / (2 * HZ) * W, py = Y0 + (1 - (S.x + HX) / (2 * HX)) * H;
   g.save(); g.translate(px, py); g.rotate(-S.yaw + Math.PI / 2 + Math.PI);
@@ -1827,7 +1845,7 @@ function drawMonitor(pct) {
   g.fillStyle = '#1c3348';
   for (let k = 0; k < 4; k++) { g.fillRect(392, 52 + k * 58, 108, 46); }
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
-  ['直進 ' + (ASSIST.on ? (ASSIST.active ? (S.x - ASSIST.line >= 0 ? '左' : '右') + Math.abs((S.x - ASSIST.line) * 100).toFixed(0) + 'cm' : '入') : '切'),
+  ['直進 ' + (ASSIST.on ? (ASSIST.active ? (ASSIST.off >= 0 ? '左' : '右') + Math.abs(ASSIST.off * 100).toFixed(0) + 'cm' : '入') : ASSIST.mode === 'a' ? 'A点' : ASSIST.B ? '切' : '未登録'),
     (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (SHIRO ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * PTO_RATIO / 10) * 10 : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
@@ -1896,7 +1914,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyC') nextCam();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyR') resetPos();
-  else if (e.code === 'KeyG') toggleAssist();
+  else if (e.code === 'KeyG') e.shiftKey ? resetAssist() : toggleAssist();
   else if (e.code === 'KeyF') toggleFast();
   else if (e.code === 'KeyL') LAMPS.toggle();
 });
@@ -1918,10 +1936,30 @@ function toggleRotary() {
   toast(S.rotDown ? 'ロータリーを下げました（PTO 入）。前へ走ると耕せます' : 'ロータリーを上げました（PTO 切）');
 }
 function toggleAssist() {
-  ASSIST.on = !ASSIST.on;
-  $('bAssist').textContent = ASSIST.on ? '直進 入' : '直進 切';
+  const A = ASSIST;
+  if (A.mode === 'none') {                        // 始点 A を登録
+    A.A = [S.x, S.z]; A.aDist = S.dist || 0; A.mode = 'a';
+    toast('直進アシスト：始点 A を登録しました。5m 以上まっすぐ走ってから、もう一度 G で終点 B');
+  } else if (A.mode === 'a') {                    // 終点 B を登録して、基準線を作る
+    const dx = S.x - A.A[0], dz = S.z - A.A[1], L = Math.hypot(dx, dz);
+    if ((S.dist || 0) - A.aDist < 5 || L < 5) { toast('終点 B は、A から 5m 以上走ってから登録してください（いま ' + L.toFixed(1) + 'm）'); return; }
+    A.B = [S.x, S.z]; A.d = [dx / L, dz / L]; A.n = [dz / L, -dx / L]; A.mode = 'on'; A.on = true;
+    toast('終点 B を登録しました。基準線と平行にまっすぐ走ります（ハンドルから手をはなす）');
+  } else {
+    A.on = !A.on; A.mode = A.on ? 'on' : 'off';
+    toast(A.on ? '直進アシスト 入：ハンドルから手をはなすと、ガイドの線にそってまっすぐ走ります' : '直進アシスト 切（Shift+G で A・B を登録しなおし）');
+  }
+  setAssistBtn();
+}
+function resetAssist() {
+  Object.assign(ASSIST, { mode: 'none', on: false, active: false, A: null, B: null });
+  setAssistBtn();
+  toast('直進アシストの基準線を消しました。G で始点 A から登録しなおします');
+}
+function setAssistBtn() {
+  $('bAssist').textContent = { none: '直進 A点', a: '直進 B点', on: '直進 入', off: '直進 切' }[ASSIST.mode];
   $('bAssist').classList.toggle('on', ASSIST.on);
-  toast(ASSIST.on ? '直進アシスト 入：ハンドルから手をはなすと、ガイドの線にそってまっすぐ走ります' : '直進アシスト 切');
+  $('bAssist').classList.toggle('wait', ASSIST.mode === 'a');
 }
 let SPEEDUP = 1;
 function toggleFast() {
@@ -1929,7 +1967,12 @@ function toggleFast() {
   $('bFast').textContent = '⏩ ×' + SPEEDUP;
 }
 $('bRot').onclick = toggleRotary;
-$('bAssist').onclick = toggleAssist;
+{                                                // 直進ボタン：押すと A・B 登録／入切、長押し（0.8 秒）で登録しなおし
+  let lp = null, longDone = false;
+  $('bAssist').addEventListener('pointerdown', () => { longDone = false; lp = setTimeout(() => { longDone = true; resetAssist(); }, 800); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) $('bAssist').addEventListener(ev, () => clearTimeout(lp));
+  $('bAssist').onclick = () => { if (!longDone) toggleAssist(); };
+}
 $('bFast').onclick = toggleFast;
 function nextCam() { camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
 $('bCam').onclick = nextCam;
@@ -2014,7 +2057,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

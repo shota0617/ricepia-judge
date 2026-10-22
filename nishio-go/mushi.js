@@ -17,6 +17,16 @@
     { id: 'kubinaga', name: 'ナガサキクビナガゴミムシ', hint: 'クビナガ＝首が長い', look: '細い体に、長い首と小さい頭', not: [] },
   ];
   const ROUNDS = 3;
+  // Blender で焼いた絵のシート（tools/blender/mushi-art.py → nishio-go/art/ev/）。読みこめたら、手描きの絵の上に描きなおす（読みこむまで・読めないときは手描きのまま）
+  const SHEET_SRC = 'nishio-go/art/ev/bugs.png', SHEET_N = 32;
+  let sheet = null;
+  function paintSheet(cv, idx) {
+    if (idx < 0) return;
+    if (!sheet) { sheet = new Image(); sheet.src = SHEET_SRC; }
+    const go = () => { if (!sheet.naturalWidth) return; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.clearRect(0, 0, cv.width, cv.height); c.drawImage(sheet, idx * SHEET_N, 0, SHEET_N, SHEET_N, 0, 0, cv.width, cv.height); };
+    if (sheet.complete && sheet.naturalWidth) go(); else sheet.addEventListener('load', go, { once: true });
+  }
+  const BUG_SHEET = ['misuji', 'mutsuboshi', 'haiiro', 'oomaru', 'samehada', 'kubinaga', 'hime-kobusuji', 'mikawa-osamushi', 'ookurotsuya', 'seaka', 'atowa', 'kubiboso', 'arame', 'oohiratashide', 'kabuto', 'kokuwa', 'hiratakuwa', 'chibikuwa', 'kinoko-akamaru', 'kiiro-atokiri'];   // シートの並び（mushi-art.py の BUGS）
   let root = null, qs = [], qi = 0, right = 0, answered = false, done = false, lastOpen = 0;   // lastOpen：開いた・閉じた時刻（閉じてから5分は出さない）
 
   // 虫の絵（32×32 のドット）。だ円の体・頭・6本の足に、名前があらわす もようだけを足す
@@ -121,7 +131,7 @@
       <p class="md-res" hidden></p>
       <div class="mu-foot"><button type="button" class="btn mini mu-next" data-mu="next" hidden>${qi + 1 < ROUNDS ? 'つぎの虫' : 'けっか'}</button>
       <button type="button" class="btn mini md-close" data-mu="close">あとで</button></div></div>`;
-    root.querySelectorAll('.mu-bug canvas').forEach((cv, i) => drawBug(cv, q.opts[i].id));
+    root.querySelectorAll('.mu-bug canvas').forEach((cv, i) => { drawBug(cv, q.opts[i].id); paintSheet(cv, BUG_SHEET.indexOf(q.opts[i].id)); });
   }
   function pick(id) {
     if (answered || done || !qs[qi]) return;

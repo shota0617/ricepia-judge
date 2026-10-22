@@ -628,11 +628,13 @@ const MIRROR = (() => {
     const sv = stubble && stubble.visible;          // 切り株・ひこばえはミラーの小さな絵には要らない（重いので消して描く）
     if (stubble) stubble.visible = false;
     if (hikobae) hikobae.visible = false;
+    WEEDS.parts.forEach(pt => { if (pt.mesh) pt.mesh.visible = false; });
     meshes.forEach(o => { o.visible = false; });     // ミラー自身は描かない（自分の絵を読みながら描くことになる）
     cam.update(renderer, scene);
     meshes.forEach(o => { o.visible = true; });
     if (stubble) stubble.visible = sv;
     if (hikobae) hikobae.visible = true;
+    WEEDS.parts.forEach(pt => { if (pt.mesh) pt.mesh.visible = true; });
   }
   return { setup, update };
 })();
@@ -850,6 +852,11 @@ function setupField(root) {
       hikobaeGeo.setIndex(Array.from(km.geometry.index.array).slice(0, 3 * 4 * (MOBILE ? 4 : 6)));
       hikobaeMat = km.material;
     }
+    const wh = root.getObjectByName('WeedHill');      // 春：冬を越したスズメノテッポウ（葉と穂の 2 つの材質）
+    if (wh) {
+      wh.visible = false;
+      wh.traverse(o => { if (o.isMesh) WEEDS.parts.push({ geo: o.geometry, mat: o.material, mesh: null }); });
+    }
     buildHills();
   }
 }
@@ -962,9 +969,46 @@ function buildHills() {
     hikobae.count = list.length;
     hikobae.instanceMatrix.needsUpdate = true;
   }
+  WEEDS.build(c);
   hillsCenter.copy(c);
   hillsDirty = false;
 }
+// 春の田んぼのスズメノテッポウ：秋に芽を出して冬を越し、春に穂を出す雑草。ところどころに株のかたまり（耕すと消える）
+const WEEDS = (() => {
+  const parts = [], pts = [];
+  let seed = 11;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const patch = (x, z) => Math.sin(x * 0.41 + 1.3) * Math.sin(z * 0.33 - 0.4) + 0.6 * Math.sin((x + 2 * z) * 0.23 + 2.1) + 0.35 * Math.sin(x * 1.7 - z * 1.3);
+  if (season === 'haru') {
+    for (let x = -HX + 0.3; x < HX - 0.2; x += 0.32) for (let z = -HZ + 0.3; z < HZ - 0.2; z += 0.32) {
+      const px = x + (rnd() - 0.5) * 0.3, pz = z + (rnd() - 0.5) * 0.3;
+      if (patch(px, pz) > 0.4 && rnd() < 0.85) pts.push([px, pz, rnd() * 6.283, 0.85 + rnd() * 0.6]);
+    }
+  }
+  function build(c) {
+    if (!parts.length) return;
+    const r2 = HILL_R * HILL_R, list = [];
+    for (const h of pts) {
+      const dx = h[0] - c.x, dz = h[1] - c.z;
+      if (dx * dx + dz * dz > r2) continue;
+      if (tilledMask[Math.floor((h[0] + HX) / CELL) * NZ + Math.floor((h[1] + HZ) / CELL)]) continue;
+      list.push(h);
+    }
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), s = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    for (const pt of parts) {
+      if (!pt.mesh || pt.mesh.instanceMatrix.count < list.length) {
+        if (pt.mesh) scene.remove(pt.mesh);
+        pt.mesh = new THREE.InstancedMesh(pt.geo, pt.mat, Math.max(list.length, 800) + 400);
+        pt.mesh.castShadow = false; pt.mesh.receiveShadow = true; pt.mesh.frustumCulled = false;
+        scene.add(pt.mesh);
+      }
+      list.forEach((h, k) => pt.mesh.setMatrixAt(k, m.compose(p.set(h[0], 0, h[1]), q.setFromAxisAngle(up, h[2]), s.setScalar(h[3]))));
+      pt.mesh.count = list.length;
+      pt.mesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+  return { parts, pts, build };
+})();
 
 // ---- 土くれ・土ぼこり・水しぶき（点の粒）。耕しているとロータリーのうしろから飛ぶ ----
 const FX = (() => {
@@ -2096,7 +2140,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -1437,18 +1437,21 @@ function sealCands(areaId) {
   while (out.length < 2 && pool.length) { const m = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; out.push(D.idOf(m, 4, Math.floor(Math.random() * 16), Math.floor(Math.random() * D.NCOMP))); }
   return out;
 }
+// えらぶ予定は 地区ごとに列（S.sealPicks）に積む（ふつうの地図では 窓が出せないので、歩く地図にしたとき 順に出す）。
+// 起動したとき・歩く地図にしたとき・位置が かわったとき（refreshNearby）・窓を閉じたときに 調べる
 function sealPickCheck() {
-  const p = S.sealPick;
+  const p = (S.sealPicks || [])[0];
   if (!p || firstPick || !document.body.classList.contains('px') || !$('pxInfo').hidden || rewardBusy() || !window.NISHIO_DOTS) return;
+  if (document.body.classList.contains('jump-open') || medashiOpen() || (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) || (window.nishioPixel && nishioPixel.sightBusy && nishioPixel.sightBusy())) return;   // ミニゲーム・イベント・ムービー・呼びとめの最中は出さない
   pickFirst(p.cands, dot => {
-    S.sealPick = null; save();
+    S.sealPicks = (S.sealPicks || []).filter(x => x !== p); save();
     toastAfter(`🔖 ${p.name}のしるしの1枚：「${window.NISHIO_DOTS.info(dot.id).title}」が キラで 絵帳に入った！`);
     const pl = $('panel-log'); if (pl && !pl.hidden) renderLog();
   }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません）', kira: true, ev: 'seal_dot_pick' });
 }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pick-dot]'); if (b) finishFirst(Number(b.dataset.pickDot)); });
 // えらばずに窓を閉じたら（とじる・まわりをタップ）、はじめの1枚にする
-new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); else if (S.sealPick && $('pxInfo').hidden) setTimeout(sealPickCheck, 500); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });   // 人の話の窓を閉じたら、しるしの2枚
+new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); else if ((S.sealPicks || []).length && $('pxInfo').hidden) setTimeout(sealPickCheck, 500); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });   // 人の話の窓を閉じたら、しるしの2枚
 
 /* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
    「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
@@ -2024,6 +2027,7 @@ function refreshNearby() {
   }
 
   renderGuide();
+  if ((S.sealPicks || []).length) sealPickCheck();   // まだ えらんでいない しるしの2枚（起動したとき・歩く地図にしたときも ここで出る）
   // 画面をすっきりさせるため、案内パネルは1〜2行だけ：気をつけること（車・範囲外・GPS など）があればそれを、なければ まちメモ とクエストの数
   const msgs = [];
   if (driving) msgs.push('🚗 軽トラで移動中（チェックインは降りてから）');
@@ -2209,7 +2213,7 @@ function sealGive(n) {
   if (!a || (S.seals || []).includes(id) || !sealReady(id)) return '';
   S.seals = [...(S.seals || []), id];
   const cands = sealCands(id);
-  if (cands.length === 2) S.sealPick = { area: id, name: a.name, cands };   // 話の窓を閉じたら 2枚から えらぶ（sealPickCheck）
+  if (cands.length === 2) S.sealPicks = [...(S.sealPicks || []), { area: id, name: a.name, cands }];   // 話の窓を閉じたら 2枚から えらぶ（sealPickCheck）
   save();
   badgesSoon();   // バッジの知らせ
   track('seal_get', { area: id, mode: demo ? 'play' : 'walk' });

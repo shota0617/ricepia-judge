@@ -770,7 +770,7 @@ async function walkTo(page, id) {
     document.getElementById('pxInfo').hidden = true; await new Promise(r => setTimeout(r, 700));
     const D = window.NISHIO_DOTS, cands = nishioGo.sealCands('nishio');
     const inArea = cands.every(id => (D.MOTIFS[D.motifOf(id)].areas || []).includes('nishio')), two = cands.length === 2 && D.motifOf(cands[0]) !== D.motifOf(cands[1]);
-    nishioGo.state.sealPick = { area: 'nishio', name: '西尾', cands };
+    nishioGo.state.sealPicks = [{ area: 'nishio', name: '西尾', cands }, { area: 'isshiki', name: '一色', cands: nishioGo.sealCands('isshiki') }];   // 2地区ぶん 積む（1つめを えらぶと、2つめが残る）
     nishioGo.sealPickCheck();
     for (let i = 0; i < 20 && document.getElementById('pxInfo').hidden; i++) await new Promise(r => setTimeout(r, 200));
     const body = document.getElementById('pxInfoBody'), shown = !document.getElementById('pxInfo').hidden && /西尾のしるしの1枚を えらぼう/.test(body.innerText) && body.querySelectorAll('[data-pick-dot]').length === 2;
@@ -781,7 +781,7 @@ async function walkTo(page, id) {
     const btn = document.querySelectorAll('#pxInfoBody [data-pick-dot]')[1]; if (btn) btn.click();
     await new Promise(r => setTimeout(r, 300));
     const st = nishioGo.state, k = c.cands;
-    return { shown: c.shown, inArea: c.inArea, two: c.two, ok: c.shown && c.inArea && c.two && !st.sealPick && st.kira.includes(k[1]) && !st.kira.includes(k[0]) && st.dots.includes(k[1]) };
+    return { shown: c.shown, inArea: c.inArea, two: c.two, queued: (st.sealPicks || []).map(x => x.area), ok: c.shown && c.inArea && c.two && (st.sealPicks || []).length === 1 && st.sealPicks[0].area === 'isshiki' && st.kira.includes(k[1]) && !st.kira.includes(k[0]) && st.dots.includes(k[1]) };
   }, R.checks.sealPick);
   R.errors.push(...errors);
   await ctx.close();

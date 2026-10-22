@@ -545,6 +545,7 @@ pa.MATS.update({
     'kabochaG': '#3f5f2e', 'kabochaY': '#e8a030', 'pengin': '#262a30', 'penginW': '#f4f4f0', 'penginY': '#f2b030',
     'wata': '#fafaf4', 'wataG': '#4f8a3a', 'uma': '#7a4a2a', 'umaR': '#c8302a', 'umaK': '#e8b830', 'shiiG': '#3a6a30',
     'shiiM': '#5a4430', 'sakuraS': '#f4c0d0', 'maroon': '#5a2a2a', 'jizo': '#a8a49a', 'hadaK': '#f0c8a0',
+    'hiseki': '#a8a49a',   # 碑の石（灯籠の 'toro' は夜に明かりがつくので使わない）
 })
 
 
@@ -896,8 +897,8 @@ def sairinji():
     ground('jari')
     box('dai1', 'kidan', (0.44, 0.3, 0.05), (0, 0.06, 0.025))
     box('dai2', 'stoneR', (0.3, 0.2, 0.05), (0, 0.06, 0.075))
-    box('hi', 'toro', (0.14, 0.08, 0.3), (0, 0.06, 0.25))
-    cyl('hiT', 'toro', 0.07, 0.08, (0, 0.06, 0.4), (math.pi / 2, 0, 0), 14)
+    box('hi', 'hiseki', (0.14, 0.08, 0.3), (0, 0.06, 0.25))
+    cyl('hiT', 'hiseki', 0.07, 0.08, (0, 0.06, 0.4), (math.pi / 2, 0, 0), 14)
     for x in (-0.15, 0.15):
         box(f'hanaD{x}', 'stoneR', (0.05, 0.05, 0.12), (x, -0.02, 0.16))
         for k in range(3):

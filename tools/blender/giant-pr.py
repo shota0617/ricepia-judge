@@ -1,6 +1,6 @@
 # にしおさんぽGO：西尾市のPRになる特大ドット絵（96×96）を、名所ごとに 見る向き4 × 季節4 × 時間帯4 ＝ 64枚ずつ作る（1段目：Blender で描く）
 # - 名所は、西尾市（西尾・一色・吉良・幡豆・佐久島）の注目スポット 82か所（spots.json。当店はのぞく）と、名物と景色 8つ（giant-scenes.py）。
-#   形は、歩く地図の特大の絵と同じ型（giant.py の手作りの9か所・giant-gen.py の型）を使い、見る向きだけ変えて描く
+#   形は、歩く地図の特大の絵と同じ型（giant.py の手作りの9か所・giant-nishio.py の手作りの所・giant-gen.py の型）を使い、見る向きだけ変えて描く
 #   見る向き：0 いつもの左前・1 右前・2 高い所から・3 うしろ
 # - 1段目（この道具。bpy が要る）：見る向きごとに Cycles で2回描き（光の当たり具合／材質の色分け）、96×96 の点ごとに
 #   「材質の番号」と「明るさの段（影・ふつう・明るい）」を TMP/<id>-<向き>.npz に保存する（材質の色も いっしょに）
@@ -27,6 +27,10 @@ VIEWS = [(0, 0), (70, 0), (0, 18), (180, 0)]   # いつもの向きからの （
 NIS = {'nishio', 'isshiki', 'kira', 'hazu', 'sakushima'}
 HAND = {'f-nishio-castle': 'nishio-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji', 'f-nishio-station': 'nishio-station',
         'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen'}   # pixel.js の GIANT_ART と同じ
+# 西尾市の注目スポットで、1か所ずつ手で形を作った特大の絵（giant-nishio.py の MODELS）がある所は、その形で描く（歩く地図ではこの四季の絵が先に出るので）
+spec = importlib.util.spec_from_file_location('giant_nishio', os.path.join(HERE, 'giant-nishio.py'))
+gnis = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(gnis)
 
 
 def subjects():
@@ -40,6 +44,8 @@ def subjects():
         sid = 'f-' + s['id']
         if sid in HAND:
             out.append((sid, s, (lambda n=HAND[sid]: gi.MODELS[n]())))
+        elif s['id'] in gnis.MODELS:
+            out.append((sid, s, (lambda n=s['id']: gnis.MODELS[n]())))
         elif sid in gl:
             out.append((sid, s, (lambda e=gl[sid]: gg.build(e))))
     # 名物と景色（giant-scenes.py。名所ではないので spots.json にはない。名前・地区・説明は nishio-go/art/pr/scenes.json に書く）
@@ -76,7 +82,8 @@ def render_view(sid, build, v):
     mat[alpha] = np.abs(id_srgb[None, :] - I[alpha][:, :1]).argmin(axis=1)
     lum = L[..., :3].mean(axis=2) / np.maximum(L[..., 3], 1e-4)
     band = np.where(lum < 0.28, 0, np.where(lum < 0.70, 1, 2)).astype(np.int8)
-    np.savez_compressed(os.path.join(TMP, f'{sid}-{v}.npz'), mat=mat, band=band, names=np.array(names), cols=np.array([pa.MATS[k] for k in names]))
+    mats = gnis.pa.MATS if sid not in HAND and sid[2:] in gnis.MODELS else pa.MATS   # 材質の色は、形を作った道具のもの
+    np.savez_compressed(os.path.join(TMP, f'{sid}-{v}.npz'), mat=mat, band=band, names=np.array(names), cols=np.array([mats[k] for k in names]))
     for k in ('id', 'light'):
         os.remove(os.path.join(TMP, f'{sid}-{v}-{k}.png'))
 

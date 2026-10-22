@@ -100,7 +100,7 @@ async function keys(page, list) {
     if (sessionStorage.getItem('aiplay')) return;   // 読みこみ直したときは、ゲームが書いた記録のまま
     sessionStorage.setItem('aiplay', '1');
     if (s) { localStorage.clear(); for (const [k, v] of Object.entries(JSON.parse(s))) localStorage.setItem(k, v); }
-    else { localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); }
+    else { localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_roll', '0'); }   // walk の手順は1マスずつ（転がすのは eval で nishioPixel.setRoll(true)）
   }, saved);
   const page = await ctx.newPage();
   if (process.env.PLAY_DATE) await page.clock.setFixedTime(new Date(process.env.PLAY_DATE));

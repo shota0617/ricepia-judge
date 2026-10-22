@@ -696,7 +696,7 @@ async function walkTo(page, id) {
     if (!built) { await page.evaluate(() => NISHIO_MEIRO.close()); return { ok: false, built }; }
     const b = await page.evaluate(() => { const g = NISHIO_MEIRO.game, b = g.board; return { spot: g.spot.name, len: b.len, tw: b.tw, th: b.th, x: g.x, y: g.y }; });
     await shot(page, '07d-meiro');
-    const k = await page.evaluate(() => { const g = NISHIO_MEIRO.game, b = g.board, at = (x, y) => x >= 0 && y >= 0 && x < b.tw && y < b.th && b.cell[y * b.tw + x] === 1; const [x, y] = b.start; return at(x + 1, y) ? 'ArrowRight' : at(x - 1, y) ? 'ArrowLeft' : at(x, y + 1) ? 'ArrowDown' : 'ArrowUp'; });
+    const k = await page.evaluate(() => { const b = NISHIO_MEIRO.game.board, [x, y] = b.start, i = y * b.tw + x; return b.er[i] ? 'ArrowRight' : x > 0 && b.er[i - 1] ? 'ArrowLeft' : b.ed[i] ? 'ArrowDown' : 'ArrowUp'; });   // スタートから 通れる向き
     await page.keyboard.down(k); await page.waitForTimeout(400); await page.keyboard.up(k);
     const moved = await page.evaluate(([x0, y0]) => { const g = NISHIO_MEIRO.game; return Math.hypot(g.x - x0, g.y - y0); }, [b.x, b.y]);
     await page.evaluate(() => { const g = NISHIO_MEIRO.game; NISHIO_MEIRO.warp(g.board.goal[0] + 0.5, g.board.goal[1] + 0.5); });

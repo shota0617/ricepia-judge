@@ -1,6 +1,6 @@
 // にしおさんぽGO：西尾めいろ（スマホを傾けて、お米を 西尾の地図の迷路の ゴールまで ころがす。キーホルダーの 玉ころがし迷路のように）
 // ・盤は 本物の西尾の地図の一部（ドット絵の地図と同じ絵。pixel.js の paintRegion）。めいろの1マスは 地図の 3×3マス（約24m）。
-//   まん中のマスを 道が 通っている所（道が6つ以上の 広い道・広場も）が 通路、そのほか（家の かたまり・田畑など）は 壁。町の 通りが そのまま 迷路になる
+//   まん中のマスを 道が 通っている所（道が6つ以上の 広い道・広場、公園・境内も）が 通路、そのほか（家の かたまり・田畑など）は 壁。町の 通りが そのまま 迷路になる
 // ・川や池（水のマス）と、面が進むと ふえる マンホールの 穴は「落とし穴」：おちると スタートに もどる
 // ・ゴールは 西尾の名所（1面 西尾駅 → 2面 西尾城跡 → らいすぴあ …）。スタートは ゴールから 道を たどって いちばん遠い所
 // ・傾き（pixel.js の傾きを そのまま使う）・矢印キー・盤を なぞる で 転がす。ベストタイムは この端末（localStorage nsg_meiro）
@@ -18,14 +18,15 @@ const st = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } };
 
 let api = null, ui = null, game = null, raf = 0;
+const bad = new Set();   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末で 開いている あいだ）
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
 
 function goalList() {
   const G = root.nishioGo, spots = (G && G.spots) || [];
   const byId = new Map(spots.map(s => [s.id, s]));
-  const first = GOALS.map(id => byId.get(id)).filter(Boolean);
+  const first = GOALS.map(id => byId.get(id)).filter(s => s && !bad.has(s.id));
   const castle = byId.get('f-nishio-castle') || first[0];
-  const rest = castle ? spots.filter(s => s.featured && !first.includes(s) && G.dist(castle, s) < 9000).sort((a, b) => G.dist(castle, a) - G.dist(castle, b)) : [];
+  const rest = castle ? spots.filter(s => s.featured && !bad.has(s.id) && !first.includes(s) && G.dist(castle, s) < 9000).sort((a, b) => G.dist(castle, a) - G.dist(castle, b)) : [];
   return [...first, ...rest];
 }
 const boardSize = n => ({ tw: 13 + Math.min(4, Math.floor(n / 3)) * 1, th: 19 + Math.min(6, Math.floor(n / 3)) * 1.5 | 0 });   // 面が進むと 盤が少し広く
@@ -36,55 +37,85 @@ function makeBoard(n, spot) {
   const { tw, th } = boardSize(n);
   const g = A.toTile(spot.lat, spot.lng), gx = Math.floor(g.x / K), gy = Math.floor(g.y / K);   // めいろの マス
   // ゴールを 盤の 上・下・左・右 寄りに置いて、いちばん長い道のりが とれる置き方にする
+  // 9とおりの置き方（ゴールが 上・まん中・下 × 左・まん中・右 寄り）から、いちばん長い道のりが とれるものを えらぶ
   let best = null;
-  for (const [fx, fy] of [[0.5, 0.22], [0.5, 0.78], [0.25, 0.5], [0.75, 0.5], [0.5, 0.5]]) {
+  for (const fy of [0.2, 0.8, 0.5]) for (const fx of [0.5, 0.25, 0.75]) {
     const tx0 = gx - Math.floor(tw * fx), ty0 = gy - Math.floor(th * fy);
     const b = layout(n, tx0, ty0, tw, th, gx, gy, PATH);
     if (b && (!best || b.len > best.len)) best = b;
-    if (best && best.len >= 18 + n * 3) break;
   }
   if (best) best.spot = spot;
   return best;
 }
 function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
-  const A = api, C = A.C, cell = new Uint8Array(tw * th);   // 0 壁・1 道・2 水（落とし穴）。tx0・ty0 は めいろの マス
+  // cell：0 壁の かたまり（道が ない）・1 床（道がある）・2 水（落とし穴）。tx0・ty0 は めいろの マス
+  // er・ed：右・下の となりへ 通れるか（1 通れる）。床どうしでも、さかいを 道が またいでいなければ 細い壁（キーホルダーの 迷路の 線）
+  const A = api, C = A.C, cell = new Uint8Array(tw * th), er = new Uint8Array(tw * th), ed = new Uint8Array(tw * th);
+  const W = tw * K, H = th * K, kind = new Uint8Array(W * H);   // 地図のマス：0 そのほか・1 道・2 水
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = A.codeAt(tx0 * K + x, ty0 * K + y); kind[y * W + x] = PATH.has(c) ? 1 : c === C.A ? 2 : 0; }
   for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
-    let road = 0, water = 0, mid = false;
-    for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) { const c = A.codeAt((tx0 + x) * K + i, (ty0 + y) * K + j); if (PATH.has(c)) { road++; if (i === 1 && j === 1) mid = true; } else if (c === C.A) water++; }
-    cell[y * tw + x] = water >= 5 ? 2 : (mid && road >= 3) || road >= 6 ? 1 : 0;   // まん中を 道が 通る所（広場は 道が6つ以上）
+    let road = 0, water = 0, park = 0;
+    for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) {
+      const v = kind[(y * K + j) * W + x * K + i];
+      if (v === 1) road++; else if (v === 2) water++;
+      else { const c = A.codeAt((tx0 + x) * K + i, (ty0 + y) * K + j); if (c === C.P || c === C.J) park++; }
+    }
+    cell[y * tw + x] = water >= 5 && road < 2 ? 2 : road >= 2 || park >= 7 ? 1 : 0;   // 公園・境内は 広場として 床に
+    if (park >= 7 && road < 2) for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) { const q = (y * K + j) * W + x * K + i; if (!kind[q]) kind[q] = 1; }
+  }
+  // さかいを またいで となりあう 地図のマスが（床どうしは 道と道・床と水は 道と水）あれば 通れる
+  const link = (x, y, dx, dy) => {
+    const a = cell[y * tw + x], b = cell[(y + dy) * tw + x + dx];
+    if (!a || !b) return 0;
+    if (a === 2 && b === 2) return 1;
+    for (let k = 0; k < K; k++) {
+      const p = dx ? (y * K + k) * W + x * K + K - 1 : (y * K + K - 1) * W + x * K + k, q = dx ? p + 1 : p + W;
+      if ((kind[p] === 1 || kind[q] === 1) && kind[p] && kind[q]) return 1;
+    }
+    return 0;
+  };
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
+    if (x + 1 < tw) er[y * tw + x] = link(x, y, 1, 0);
+    if (y + 1 < th) ed[y * tw + x] = link(x, y, 0, 1);
   }
   const at = (x, y) => (x < 0 || y < 0 || x >= tw || y >= th ? 0 : cell[y * tw + x]);
-  // ゴール：名所に いちばん近い 道のマス
+  // ゴール：名所に いちばん近い 床
   let goal = null, gd = 1e9;
   for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (at(x, y) === 1) { const d = Math.hypot(tx0 + x - gx, ty0 + y - gy); if (d < gd) { gd = d; goal = [x, y]; } }
-  if (!goal || gd > 2.5) return null;
-  const dist = bfs(cell, tw, th, goal, null);
-  // スタート：ゴールから いちばん遠い 道のマス
+  if (!goal || gd > 4) return null;   // 名所の そばに 床が なければ、この置き方は やめる
+  const B = { n, tx0, ty0, tw, th, cell, er, ed, goal, holes: new Set() };
+  const dist = bfs(B, goal);
+  // スタート：ゴールから いちばん遠い 床
   let start = null, len = 0;
   for (let i = 0; i < dist.length; i++) if (dist[i] > len) { len = dist[i]; start = [i % tw, (i / tw) | 0]; }
-  if (!start || len < 8) return null;
+  if (!start || len < 10) return null;
   // マンホールの穴：面が進むと ふえる。ゴール・スタートの そばと、穴があると たどりつけなくなる所には 置かない
-  const holes = new Set(), want = Math.min(8, Math.max(0, n - 1) * 2);
-  const cand = [];
+  const want = Math.min(8, Math.max(0, n - 1) * 2), cand = [];
   for (let i = 0; i < dist.length; i++) if (dist[i] > 2 && dist[i] < len - 2) cand.push(i);
   let seed = (n + 1) * 2654435761 >>> 0;
   const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
-  for (let k = 0; k < cand.length * 3 && holes.size < want; k++) {
+  for (let k = 0; k < cand.length * 3 && B.holes.size < want; k++) {
     const i = cand[(rnd() * cand.length) | 0];
-    if (holes.has(i) || [...holes].some(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)) < 3)) continue;
-    holes.add(i);
-    if (bfs(cell, tw, th, goal, holes)[start[1] * tw + start[0]] <= 0) holes.delete(i);   // 道が ふさがったら やめる
+    if (B.holes.has(i) || [...B.holes].some(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)) < 3)) continue;
+    B.holes.add(i);
+    if (bfs(B, goal)[start[1] * tw + start[0]] <= 0) B.holes.delete(i);   // 道が ふさがったら やめる
   }
-  return { n, tx0, ty0, tw, th, cell, goal, start, len, holes };
+  return Object.assign(B, { start, len });
 }
-function bfs(cell, tw, th, from, holes) {   // 道のマスだけを たどった 歩数（たどれない所は 0。はじめのマスは 1）
-  const d = new Int32Array(tw * th), q = [from[1] * tw + from[0]];
+const pass = (b, x, y, dx, dy) => {   // (x, y) から となりへ 通れるか
+  if (dx === 1) return x + 1 < b.tw && b.er[y * b.tw + x] === 1;
+  if (dx === -1) return x > 0 && b.er[y * b.tw + x - 1] === 1;
+  if (dy === 1) return y + 1 < b.th && b.ed[y * b.tw + x] === 1;
+  return y > 0 && b.ed[(y - 1) * b.tw + x] === 1;
+};
+function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数（たどれない所は 0。はじめのマスは 1。水・穴は 通らない）
+  const { tw, th, cell, holes } = b, d = new Int32Array(tw * th), q = [from[1] * tw + from[0]];
   d[q[0]] = 1;
   for (let h = 0; h < q.length; h++) {
     const i = q[h], x = i % tw, y = (i / tw) | 0;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nx = x + dx, ny = y + dy, j = ny * tw + nx;
-      if (nx < 0 || ny < 0 || nx >= tw || ny >= th || d[j] || cell[j] !== 1 || (holes && holes.has(j))) continue;
+      const j = (y + dy) * tw + x + dx;
+      if (!pass(b, x, y, dx, dy) || d[j] || cell[j] !== 1 || holes.has(j)) continue;
       d[j] = d[i] + 1; q.push(j);
     }
   }
@@ -187,9 +218,12 @@ function startStage(n) {
   const g = game;
   waitChunks(g.spot, () => {
     if (game !== g) return;
-    let b = makeBoard(n, g.spot);
-    for (let k = 1; !b && k < 4; k++) { const alt = list[(n + k) % list.length]; b = makeBoard(n, alt); if (b) { g.spot = alt; ui.st.innerHTML = `🌀 めいろ <b>${n + 1}</b>　🏁 ${esc(alt.name)}`; } }   // 道が少ない所なら つぎの名所で
-    if (!b) { ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった'; return; }
+    const b = makeBoard(n, g.spot);
+    if (!b) {   // 道が少ない所なら、その名所を はずして 同じ面を つくりなおす（つぎの名所が この面に）
+      bad.add(g.spot.id);
+      if (goalList().length > n) startStage(n); else ui.load.textContent = 'この あたりは 道が すくなくて、めいろが つくれなかった';
+      return;
+    }
     g.board = b;
     ui.load.hidden = true;
     fit();
@@ -234,24 +268,24 @@ function paintBoard(b, T) {
   api.paintRegion(x, b.tx0 * K, b.ty0 * K, b.tw * K, b.th * K, T / K);
   const at = (i, j) => (i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i]);
   const u = Math.max(1, Math.round(T / 16)), lw = Math.max(2, Math.round(T / 8));
-  const open = (i, j) => at(i, j) !== 0;   // 通れる（道・水）
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
     const X = i * T, Y = j * T;
-    if (open(i, j)) { x.fillStyle = 'rgba(255,250,235,.22)'; x.fillRect(X, Y, T, T); }   // 通路：少し明るく
-    else { x.fillStyle = 'rgba(16,28,22,.66)'; x.fillRect(X, Y, T, T); }   // 壁：暗く
+    if (at(i, j)) { x.fillStyle = 'rgba(255,250,235,.22)'; x.fillRect(X, Y, T, T); }   // 床：少し明るく
+    else { x.fillStyle = 'rgba(16,28,22,.66)'; x.fillRect(X, Y, T, T); }   // 壁の かたまり：暗く
   }
-  // かべの線：通路と 壁の さかいに 黒い太い線（キーホルダーの 迷路の 線のように）。下と右には 明るい ふちで 少し 立体に
+  // かべの線：通れない さかい（床と 壁の かたまり、道が つながっていない 床どうし）に 黒い太い線（キーホルダーの 迷路の 線のように）。
+  // 上と左の かべの下には 明るい ふちで、少し 立体に
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    if (!open(i, j)) continue;
-    const X = i * T, Y = j * T;
+    if (!at(i, j)) continue;
+    const X = i * T, Y = j * T, up = pass(b, i, j, 0, -1), lf = pass(b, i, j, -1, 0);
     x.fillStyle = 'rgba(255,255,255,.4)';
-    if (!open(i, j - 1)) x.fillRect(X, Y + lw / 2, T, u);
-    if (!open(i - 1, j)) x.fillRect(X + lw / 2, Y, u, T);
+    if (!up) x.fillRect(X, Y + lw / 2, T, u);
+    if (!lf) x.fillRect(X + lw / 2, Y, u, T);
     x.fillStyle = '#141414';
-    if (!open(i, j - 1)) x.fillRect(X - lw / 2, Y - lw / 2, T + lw, lw);
-    if (!open(i, j + 1)) x.fillRect(X - lw / 2, Y + T - lw / 2, T + lw, lw);
-    if (!open(i - 1, j)) x.fillRect(X - lw / 2, Y - lw / 2, lw, T + lw);
-    if (!open(i + 1, j)) x.fillRect(X + T - lw / 2, Y - lw / 2, lw, T + lw);
+    if (!up) x.fillRect(X - lw / 2, Y - lw / 2, T + lw, lw);
+    if (!pass(b, i, j, 0, 1)) x.fillRect(X - lw / 2, Y + T - lw / 2, T + lw, lw);
+    if (!lf) x.fillRect(X - lw / 2, Y - lw / 2, lw, T + lw);
+    if (!pass(b, i, j, 1, 0)) x.fillRect(X + T - lw / 2, Y - lw / 2, lw, T + lw);
   }
   for (const i of b.holes) hole(x, (i % b.tw + 0.5) * T, (((i / b.tw) | 0) + 0.5) * T, T);
   // スタート
@@ -267,12 +301,14 @@ function hole(x, cx, cy, T) {   // マンホールの穴：灰色の ふちと �
 }
 
 /* ---------- うごき ---------- */
-function blocked(b, px, py) {   // お米（半径 R）が 壁に かかるか（盤の外も 壁）
-  for (let j = Math.floor(py - R); j <= Math.floor(py + R); j++) for (let i = Math.floor(px - R); i <= Math.floor(px + R); i++) {
-    const v = i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i];
-    if (v !== 0) continue;
-    const nx = Math.max(i, Math.min(px, i + 1)), ny = Math.max(j, Math.min(py, j + 1));
-    if ((px - nx) ** 2 + (py - ny) ** 2 < R * R) return true;
+const WALL = 0.07;   // 細い壁の 半分の あつさ（マス）
+function blocked(b, px, py) {   // お米（半径 R）が 壁に かかるか（壁の かたまり・盤の外・通れない さかいの 細い壁）
+  const hitRect = (x0, y0, x1, y1) => { const nx = Math.max(x0, Math.min(px, x1)), ny = Math.max(y0, Math.min(py, y1)); return (px - nx) ** 2 + (py - ny) ** 2 < R * R; };
+  const solid = (i, j) => i < 0 || j < 0 || i >= b.tw || j >= b.th || b.cell[j * b.tw + i] === 0;
+  for (let j = Math.floor(py - R) - 1; j <= Math.floor(py + R); j++) for (let i = Math.floor(px - R) - 1; i <= Math.floor(px + R); i++) {
+    if (solid(i, j)) { if (hitRect(i, j, i + 1, j + 1)) return true; continue; }
+    if (!solid(i + 1, j) && !pass(b, i, j, 1, 0) && hitRect(i + 1 - WALL, j, i + 1 + WALL, j + 1)) return true;
+    if (!solid(i, j + 1) && !pass(b, i, j, 0, 1) && hitRect(i, j + 1 - WALL, i + 1, j + 1 + WALL)) return true;
   }
   return false;
 }

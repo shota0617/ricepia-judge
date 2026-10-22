@@ -116,7 +116,7 @@
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
       ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
-      ・直進アシスト <kbd>G</kbd>（ハンドルから手をはなすと、ガイドの線にそってまっすぐ走る）／早送り <kbd>F</kbd><br>
+      ・直進アシスト <kbd>G</kbd>（ハンドルから手をはなすと、ガイドの線にそってまっすぐ走る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）<br>
       ・スマホは画面の下のボタンで操作します。
     </div>
     <div class="how">
@@ -282,6 +282,48 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f')]).then(([t, f
   $('bStart').disabled = false;
 }).catch(e => { $('progText').textContent = '読みこめませんでした。通信のよい所で、もう一度ひらいてください（' + e.message + '）'; });
 
+
+// ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
+const LAMPS = (() => {
+  const mats = [], spots = [];
+  let on = false;
+  function setup(root) {
+    const box = new THREE.Box3(), inv = new THREE.Matrix4();
+    rig.updateMatrixWorld(true);
+    inv.copy(rig.matrixWorld).invert();
+    const found = { lamp_head: null, lamp_work: null };
+    root.traverse(o => {
+      if (!o.isMesh || !(o.material.name in found)) return;
+      if (!mats.includes(o.material)) mats.push(o.material);
+      o.geometry.computeBoundingBox();
+      const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).applyMatrix4(inv);
+      found[o.material.name] = found[o.material.name] ? found[o.material.name].union(b) : b;
+    });
+    if (!found.lamp_head) return;
+    const h = found.lamp_head.getCenter(new THREE.Vector3());
+    // 前：2 灯のまん中から前の地面へ（ロービーム）。うしろ：屋根のうしろの作業灯からロータリーのうしろへ
+    const add = (pos, target, angle, intensity) => {
+      const l = new THREE.SpotLight(0xf4f7ff, 0, 0, angle, 0.65, 2);   // 約 5500K の白
+      l.position.copy(pos); l.target.position.copy(target);
+      l.userData.i = intensity;
+      rig.add(l); rig.add(l.target); spots.push(l);
+    };
+    add(new THREE.Vector3(0, h.y, h.z + 0.05), new THREE.Vector3(0, -0.6, h.z + 14), 0.5, 160);
+    if (found.lamp_work) {
+      const w = found.lamp_work;
+      add(new THREE.Vector3(0, w.max.y, w.min.z), new THREE.Vector3(0, 0, ROTARY_Z - 3.5), 0.95, 22);
+    }
+    set(TOD === 'yu');
+  }
+  function set(v) {
+    on = v;
+    for (const m of mats) { m.emissive.set(on ? 0xfff4e6 : 0x000000); m.emissiveIntensity = on ? 2.2 : 1; }
+    for (const l of spots) l.intensity = on ? l.userData.i : 0;
+  }
+  function toggle() { set(!on); toast(on ? 'ヘッドライトと作業灯をつけました（L）' : 'ライトを消しました（L）'); }
+  return { setup, toggle, get on() { return on; } };
+})();
+
 function setupTractor(root) {
   rig.add(root);
   root.traverse(o => {
@@ -292,6 +334,7 @@ function setupTractor(root) {
   P.sw0 = P.SteeringWheel.quaternion.clone();
   P.rotY0 = P.Rotary.position.y;
   P.flap0 = P.Flap.rotation.x;
+  LAMPS.setup(root);
   P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
   P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
   for (const [n, k] of [['WheelRL', 1], ['WheelRR', 1], ['WheelFL', 1], ['WheelFR', 1], ['Rotary', 0.75]]) {
@@ -1788,6 +1831,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyR') resetPos();
   else if (e.code === 'KeyG') toggleAssist();
   else if (e.code === 'KeyF') toggleFast();
+  else if (e.code === 'KeyL') LAMPS.toggle();
 });
 addEventListener('keyup', e => { if (KEYS[e.code]) key[KEYS[e.code]] = 0; });
 document.querySelectorAll('.pad button[data-k]').forEach(b => {
@@ -1899,7 +1943,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -18,7 +18,13 @@ const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // �
 // stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
 const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
 const st = load();
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } note(); };
+function note() {   // きろく の 札に すすみぐあい（何面まで・★の合計）
+  const el = document.getElementById('meiroNote');
+  if (!el || !st.stage) return;
+  const stars = Object.values(st.best).reduce((a, b) => a + (b && b.s ? b.s : 0), 0);
+  el.textContent = `${st.stage + 1}面まで あそべる・★${stars}`;
+}
 
 let api = null, ui = null, game = null, raf = 0;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
@@ -572,6 +578,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
+  const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）
+  if (c) c.addEventListener('click', () => open());
+  note();
 });
 
 root.NISHIO_MEIRO = { open, close, get state() { return st; }, get game() { return game; }, goalList, makeBoard: (n, s) => makeBoard(n, s),

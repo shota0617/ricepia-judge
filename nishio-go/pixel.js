@@ -5270,7 +5270,8 @@ const SPOT_KIND = { park: 'park', historic: 'historic', view: 'view', sight: 'si
 // 特大の絵（96×96）は6マスで描く（ドットの細かさをマスとそろえる）。となりの名所と6マスあかない所は、ふつうの絵にする（小さく縮めて描かない）
 const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null);
 // 名所の絵の大きさ：絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）。当店（32×32 の絵）だけは ちょうど2倍の4マスで、遠くからも見つけやすく
-const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop ? 2 : 1);
+// 当店の特大の絵は 12×12 マス（絵を 128×128 に細かくしても、大きさは 96×96 のときと同じ。そのままの倍だと 16 マスで画面より大きくなる）
+const spotSize = (s, spr, T) => (s.shop && spr[0].width > 48 ? 12 * T : dotSize(spr[0], T) * (s.shop ? 2 : 1));
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');

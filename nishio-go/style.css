@@ -404,7 +404,15 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 .px-info .area-card .area-spots{list-style:none;margin:4px 0 6px;padding:0;color:#fff;font-size:13px;columns:2;column-gap:12px}
 .px-info .area-card .src{font-size:11px;color:#bbb}
 .px-info .area-card .src a{color:#9cd2ff;margin-right:4px}
-.intro-box h1.logo{margin:4px 0 12px;line-height:0}
+.intro-box h1.logo{margin:4px 0 4px;line-height:0;position:relative;padding-bottom:24px}
+/* タイトルロゴの下を、主人公のお米（art/rice.png の1行め：右へ でんぐり返る 32×32 の8コマ）が ころころ転がっていく。
+   左の外から出てきて右の外へ消え、少し間をおいて くり返す。コマは steps(8) で切りかえ、ドットはぼかさない */
+.logo-lane{position:absolute;left:0;right:0;bottom:0;height:32px;overflow:hidden;pointer-events:none}
+.logo-rice{position:absolute;bottom:0;left:-36px;width:32px;height:32px;background:url(art/rice.png) 0 0/256px 64px no-repeat;image-rendering:pixelated;
+  animation:logo-rice-go 7s linear infinite,logo-rice-spin .9s steps(8) infinite}
+@keyframes logo-rice-go{0%{left:-36px}72%{left:calc(100% + 4px)}100%{left:calc(100% + 4px)}}
+@keyframes logo-rice-spin{from{background-position-x:0}to{background-position-x:-256px}}
+@media (prefers-reduced-motion:reduce){.logo-rice{animation:none;left:auto;right:6px}}   /* 動きを減らす設定の人には、右はしで止まって座っている */
 .intro-box h1.logo img{display:block;width:100%;max-width:100%;height:auto;margin:0 auto;image-rendering:pixelated}
 
 /* せまい画面：ポイントが4けたになっても、タイトルと「試作版」が切れないように */

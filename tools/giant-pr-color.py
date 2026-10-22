@@ -24,12 +24,13 @@ SEASON, TIME, VIEW = ['春', '夏', '秋', '冬'], ['朝', '昼', '夕方', '夜
 SEASON_COL = {
     'gTree': ['#6fbf45', None, '#d9a132', '#8a7a66'], 'gTreeD': ['#3f8f3a', None, '#c0612b', '#6b5c4c'], 'leaf': ['#6fbf45', None, '#d9a132', '#8a7a66'],
     'momiji': ['#7fbf4a', '#3f8a3a', None, '#7a6a58'], 'sakura': [None, '#4f9a3e', '#c9783a', '#7a6a58'],
+    'sakuraHa': [None, '#4f9a3e', '#c9783a', '#7a6a58'], 'sakuraHaL': [None, '#5faa4a', '#d98a44', '#8a7a68'],   # giant-nishio.py の桜の木（花の色の材質 sakuraP は看板にも使うので分けた）
     'shiba': ['#7cc552', None, '#b9a45a', '#dfe6ea'], 'shibaG': ['#7cc552', None, '#b9a45a', '#dfe6ea'], 'kusa': ['#7cc552', None, '#b9a45a', '#dfe6ea'],
     'hasuH': ['#6fbf45', None, '#a8903a', '#8a7a66'],
     'ine': ['#9ad060', None, '#e0b840', '#b89a60'],   # 田んぼ：春は植えたての苗・夏は青い稲・秋は金色の稲穂・冬は刈りあと
 }
-NO_SNOW = {'higataW', 'mizuta', 'ike', 'umiB', 'nami', 'ike', 'umi', 'yu', 'pool', 'mado', 'glass', 'sash', 'modernB', 'sea', 'suna', 'sand'}
-WINDOW = {'mado', 'glass', 'sash', 'modernB'}
+NO_SNOW = {'higataW', 'mizuta', 'ike', 'umiB', 'nami', 'ike', 'umi', 'yu', 'pool', 'mado', 'glass', 'sash', 'modernB', 'glassB', 'glassC', 'seaL', 'sea', 'suna', 'sand'}
+WINDOW = {'mado', 'glass', 'sash', 'modernB', 'glassB', 'glassC'}   # glassB・glassC は手作りの特大の絵（giant-neighbors.py・giant-nishio.py）の窓
 LAMP = {'toro', 'chochin'}
 SNOW = '#f2f5f8'
 

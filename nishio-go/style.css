@@ -460,6 +460,7 @@ body.px .guide small{color:#ddd}
 /* ---------- 絵が主役（文字を少なく：body.simple） ---------- */
 /* はじめの画面：ドット絵帳の絵を3枚、扇のように。きらきら */
 .intro-hero{display:none}
+.intro-roll{display:block;width:100%;max-width:320px;height:auto;aspect-ratio:160/72;margin:4px auto 8px;image-rendering:pixelated;border-radius:12px}
 .simple .intro-hero{display:block;position:relative;height:170px;margin:4px auto 6px;max-width:320px}
 .intro-hero .hc{position:absolute;top:10px;left:50%;width:132px;height:132px;image-rendering:pixelated;border-radius:10px;border:3px solid #e9c46a;box-shadow:0 0 0 2px #fff8e0,0 6px 16px rgba(0,0,0,.3)}
 .intro-hero .hc0{transform:translateX(-118%) rotate(-12deg) scale(.86);opacity:.95}
@@ -732,7 +733,7 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .md-say{margin:0 0 10px;font-size:14px;line-height:1.5}
 .md-seeds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .md-seed{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border:2px solid var(--line);border-radius:12px;background:#1f2a22;color:#fff;font:inherit}
-.md-seed canvas{width:72px;height:96px;image-rendering:pixelated}
+.md-seed canvas{width:84px;height:84px;max-width:100%;image-rendering:pixelated}
 .md-seed small{font-size:11px;line-height:1.3}
 .md-seed.right{border-color:#5cb85c;background:#24402a}
 .md-seed.wrong{border-color:#d9534f;background:#402424}

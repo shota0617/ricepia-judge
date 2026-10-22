@@ -21,18 +21,20 @@ HAND = {'f-nishio-castle', 'f-okazaki-castle', 'f-iwase-bunko', 'f-konrenji', 'f
 # となりの市町の注目スポット65か所も、手で形を作った特大の絵（giant-neighbors.py の MODELS。名前は spots.json の id）があるので除く
 
 
-def neighbor_models():
-    """giant-neighbors.py の MODELS のキー（Blender なしで読めるように、実行せずに構文として読む）"""
-    src = os.path.join(ROOT, 'tools', 'blender', 'giant-neighbors.py')
+def neighbor_models(name='giant-neighbors.py'):
+    """giant-neighbors.py（と giant-nishio.py）の MODELS のキー（Blender なしで読めるように、実行せずに構文として読む）"""
+    src = os.path.join(ROOT, 'tools', 'blender', name)
     for node in ast.parse(open(src, encoding='utf-8').read()).body:
         if isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'MODELS' for t in node.targets) and isinstance(node.value, ast.Dict):
             keys = [k.value for k in node.value.keys if isinstance(k, ast.Constant) and isinstance(k.value, str)]
             if keys:
                 return keys
-    raise SystemExit('giant-neighbors.py に MODELS = {...} が見つからない')
+    raise SystemExit(f'{name} に MODELS = {{...}} が見つからない')
 
 
 HAND |= {'f-' + n for n in neighbor_models()}
+# 西尾市の注目スポットも、手で形を作った特大の絵（giant-nishio.py の MODELS）がある所は除く（型の絵で上書きしない）
+HAND |= {'f-' + n for n in neighbor_models('giant-nishio.py')}
 GEN_KIND = {'s': 'shrine', 't': 'temple', 'e': 'station', 'c': 'castle', 'p': 'museum', 'h': 'historic', 'v': 'view', 'w': 'church'}
 CAT_KIND = {'shrine': 'shrine', 'temple': 'temple', 'worship': 'temple', 'station': 'station', 'castle': 'castle', 'museum': 'museum', 'library': 'library',
             'townhall': 'townhall', 'art': 'art', 'historic': 'historic', 'sight': 'view', 'view': 'view', 'park': 'park', 'beach': 'beach'}

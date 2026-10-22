@@ -2118,17 +2118,13 @@ const sealBy = id => (window.NISHIO_NPCS || []).find(n => n.id === SEAL_BY[id]);
 const sealGoal = id => Math.min(SEAL_AT, Math.max(areaProgress(id).total, 1));
 const sealReady = id => (!SEAL_POST.has(id) || !!S.cleared) && spotMeta.loaded && areaProgress(id).total > 0 && areaProgress(id).done >= sealGoal(id);
 
-/* ---------- 放置（操作して移動だけ）：おまかせ強化・おかえり・歩きながら まちメモ ----------
-   遊び方は3つ。どれにも出番があるように、集まる速さに差をつけている（3分ずつ遊ばせて確かめた目安）
-   ・自分で操作：いちばんたくさん集まる。たからばこ（ドット絵とまちメモが出る）を自由に探せるのは、自分で動かしたときだけ
-   ・おまかせ歩き：見ているだけで、行き先へ歩いてチェックインし、人の話を読む。集まるのは自分で操作したときの半分くらい。たからばこは、すぐ近くのものだけ寄り道して開ける
+/* ---------- 放置（操作して移動だけ）：るすばん強化・おかえり ----------
+   ・自分で転がす：いちばんたくさん集まる。たからばこ（ドット絵とまちメモが出る）を自由に探せる
    ・るすばん：アプリを閉じていた間も、主人公が西尾やとなりのまちをさんぽして ポイント・まちメモ・ドット絵 を集めてくる（10分から。上限はふつう4時間）。
      ポイントはレベルが上がるほど多い（1時間に 60＋レベル×6）。遊んでいる間ほどは集まらないが、閉じていてもゼロにはならない
-   ・ポイントで「おまかせ強化」：おまかせ歩きを速く／るすばん中に集まるポイントを多く／るすばんの上限を長く。自分で操作して集めたポイントで、放置を強くする目標になる値段にしてある
-   ・おまかせ歩きで約150マス進むごとに、まだ知らない まちメモ を1つ（いまいる市町の話から）。チェックインしたところの話も */
+   ・ポイントで「るすばん強化」：るすばん中に集まるポイントを多く／るすばんの上限を長く（おまかせ歩きは なくした。運営者の決定 2026年10月） */
 const IDLE = { minMin: 10, baseH: 4, napH: 2, ptPerHour: lv => 60 + 6 * lv, maxFacts: 3, dotMin: 120, maxDots: 2,
   ups: [
-    { id: 'spd', icon: '👟', name: 'はやあし', desc: 'おまかせ歩きが速くなる', cost: [300, 1000, 3000] },
     { id: 'bag', icon: '🎒', name: 'おおきなリュック', desc: 'るすばん中に集まるポイントが1.5倍・2倍・2.5倍', cost: [400, 1200, 3600] },
     { id: 'nap', icon: '🏠', name: 'るすばん上手', desc: 'るすばんで集まる時間が2時間ずつのびて、まちメモとドット絵も1つずつ多く持ち帰る', cost: [500, 1500, 4500] },
   ] };
@@ -2201,12 +2197,12 @@ function buyUp(id) {
   toast(`${u.icon} ${u.name}が Lv${lv + 1} になりました`);
   track('idle_upgrade', { id, lv: lv + 1 });
 }
-const UP_PI = { spd: 'feet', bag: 'bag', nap: 'home' };   // おまかせ強化の絵（文字を少なく：ふだん）。Blender で作った nishio-go/art/up-<id>.png があるもの
+const UP_PI = { bag: 'bag', nap: 'home' };   // るすばん強化の絵（文字を少なく：ふだん）。Blender で作った nishio-go/art/up-<id>.png があるもの
 function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
   const lv = levelOf(S.total), perH = Math.floor(IDLE.ptPerHour(lv) * (1 + 0.5 * upLv('bag')));
-  $('upNote').textContent = `🎮 自分で操作：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🧭 おまかせ歩き：見ているだけで行き先へ（集まるのは半分くらい。たからばこは すぐ近くのものだけ）。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
+  $('upNote').textContent = `🍚 自分で転がす：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     if (simple()) return `<li class="up-pic" title="${esc(u.desc)}"><span class="ico">${UP_PI[u.id] ? `<img class="art" src="nishio-go/art/up-${u.id}.png" alt="${esc(u.name)}" width="48" height="48"/>` : PI('up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`
@@ -3412,16 +3408,70 @@ function sessionStart() { Object.assign(session, { start: Date.now(), on: true, 
 document.addEventListener('visibilitychange', () => { if (document.hidden) sessionEnd(); else if (store.get('nsg_started', false)) sessionStart(); });   // はじめの画面のあいだは数えない
 window.addEventListener('pagehide', sessionEnd);
 
-// はじめの画面の絵：いまの季節の、西尾城の丑寅櫓・佐久島の黒壁・稲荷山の茶摘み（西尾ドット絵帳の絵）を3枚、扇のように
-function introHero(waited) {
-  const D = window.NISHIO_DOTS, el = $('introHero');
-  if (!D || !el || !D.idOf) return;
-  const mo = new Date().getMonth() + 1, se = mo >= 3 && mo <= 5 ? 0 : mo <= 8 && mo >= 6 ? 1 : mo >= 9 && mo <= 11 ? 2 : 3;
-  const keys = ['kurokabe', 'ushitora', 'chatsumi'], idx = keys.map(k => D.MOTIFS.findIndex(m => (m.key || m) === k));
-  if (idx.some(i => i < 0)) return;
-  const ids = idx.map((m, n) => D.idOf(m, 0, se * 4 + 1, [6, 12, 3][n]));
-  if (waited !== true && D.ready && !D.ready(ids)) { D.load(ids).then(() => introHero(true)); return; }   // Blender の絵のシートを読んでから
-  el.innerHTML = ids.map((id, n) => `<img class="hc hc${n}" src="${D.dataUrl(id)}" alt="" width="144" height="144"/>`).join('') + '<i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i>';
+// はじめの画面の絵：お米が 田んぼの あぜ道を コロン、コロンと転がってきて、まん中で止まると ゆらゆらして こっちを見て にっこり、また転がっていく
+// （歩く地図と同じ お米の絵・同じ でこぼこの転がり方。pixel.js の riceSpin・riceFeel）。はじめの画面を閉じたら止める
+// はじめの画面のアニメーション：お米が 台地の上を ころころ進み、坂（本当の高低差のように）を ひとりでに速くなって転がり下りる。
+// 下で ぺたっ、田んぼの あぜ道で ゆっくり止まって、起き上がりこぼしのように ゆらゆら立って にっこり。また右へ転がっていく
+function introHero() {
+  const cv = $('introHero');
+  if (!cv || !cv.getContext) return;
+  const x = cv.getContext('2d'), img = new Image(), W = cv.width, H = cv.height;
+  const TOP = 46, LOW = 62, S0 = 56, S1 = 96;   // 台地の高さ・下の あぜ道の高さ・坂のはじまりと おわり（点）
+  const gY = px => { const t = Math.min(1, Math.max(0, (px - S0) / (S1 - S0))); return TOP + (LOW - TOP) * t * t * (3 - 2 * t); };   // 地面の高さ
+  const K = 280, FR = 52, DRAG = 0.3, DRIVE = 32, LEAVE = 40;   // 坂の強さ・ころがり抵抗・空気・台地で押す速さ・出ていく速さ（点/秒）
+  const st = { x: -24, v: DRIVE, ang: 0, av: 0, rest: 0, mode: 'drive', sq: 0, sqv: 0, last: 0 };
+  const scene = now => {
+    const sky = x.createLinearGradient(0, 0, 0, 40);
+    sky.addColorStop(0, '#8fd0f4'); sky.addColorStop(1, '#d8f0fb');
+    x.fillStyle = sky; x.fillRect(0, 0, W, 40);
+    x.fillStyle = '#7fa8c8'; x.fillRect(0, 30, W, 4);   // 遠くの山なみ
+    x.fillStyle = '#6dbb4c'; x.fillRect(0, 34, W, H - 34);   // 田んぼ（あぜ道の下まで）
+    x.fillStyle = '#4f9a3e';
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 20; c++) x.fillRect(((c * 8 + r * 4 - now / 90) % (W + 8) + W + 8) % (W + 8) - 4, 37 + r * 5, 3, 3);   // 稲（風で ゆれて流れる）
+    for (let c = 0; c < W; c++) {   // 地面：台地の土手 → 坂 → 田んぼの あぜ道
+      const y = Math.round(gY(c + 0.5));
+      x.fillStyle = '#c8b078'; x.fillRect(c, y, 1, H - y);
+      if (y < LOW) {   // 台地の土手（高い所）：こい土の色に、等高線のような 点の線
+        x.fillStyle = '#a8905c'; x.fillRect(c, y + 3, 1, LOW + 3 - (y + 3));
+        x.fillStyle = '#86703f'; for (let k = 50; k < LOW + 3; k += 5) if (k > y + 3 && c % 3 !== 0) x.fillRect(c, k, 1, 1);
+        if (c < S0 && c % 7 === 2) { x.fillStyle = '#4f9a3e'; x.fillRect(c, y - 2, 2, 2); }   // 台地の上の草
+      }
+    }
+    x.fillStyle = '#b09860'; for (let c = 0; c < 20; c++) { const sx = c * 9 + 3; if (sx > S1) x.fillRect(sx, 64 + (c % 2) * 3, 3, 1); }
+  };
+  const step = now => {
+    if ($('intro').hidden) return;
+    const dt = Math.min(0.05, (now - (st.last || now)) / 1000);
+    st.last = now;
+    const x0 = st.x;
+    if (st.mode === 'drive') { st.x += DRIVE * dt; if (st.x >= S0 - 6) { st.mode = 'free'; st.v = DRIVE; } }   // 台地の上は 押して進む
+    else if (st.mode === 'free') {   // 坂：ひとりでに速くなり、下りきると ころがり抵抗で ゆっくり止まる
+      st.v += (K * (gY(st.x + 0.5) - gY(st.x - 0.5)) - FR - DRAG * st.v) * dt;
+      if (st.v <= 0) { st.v = 0; st.mode = 'rest'; st.rest = 2; }
+      else { st.x += st.v * dt; if (x0 < S1 && st.x >= S1) { st.sq = 0.14; st.sqv = 0; } }   // 下りきって ぺたっ
+    } else if (st.mode === 'rest') { st.rest -= dt; if (st.rest <= 0) st.mode = 'leave'; }
+    else { st.x += LEAVE * dt; if (st.x > W + 24) { st.x = -24; st.mode = 'drive'; } }
+    const dx = st.x - x0;
+    if (dx > 0.001) { st.ang += dx / 9; st.av = dx / 9 / Math.max(dt, 1e-3); }   // 進んだ分だけ回る（半径9点）
+    else {   // 止まっている：起き上がりこぼし
+      const up = Math.round(st.ang / (Math.PI * 2)) * Math.PI * 2;
+      st.av += (up - st.ang) * 70 * dt; st.av *= Math.pow(0.86, dt * 60); st.ang += st.av * dt;
+    }
+    st.sqv += (-st.sq * 260 - st.sqv * 14) * dt; st.sq += st.sqv * dt;   // つぶれの ばね
+    scene(now);
+    x.imageSmoothingEnabled = false;
+    const gy = gY(st.x), th = st.ang, low = Math.sqrt((10 * Math.sin(th)) ** 2 + (13.5 * Math.cos(th)) ** 2);   // たて長のつぶ：寝ころぶと低く
+    x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(Math.round(st.x - 8), Math.round(gy) + 1, 16, 2);
+    const cy = gy - low * (1 - st.sq);
+    if (!(window.nishioPixel && nishioPixel.drawRice && nishioPixel.drawRice(x, st.x, cy, th % (Math.PI * 2), st.sq)) && img.complete && img.naturalWidth) {   // 丸く見える描き方（pixel.js）。読めるまでは 絵を回す
+      x.save(); x.translate(Math.round(st.x), Math.round(cy)); x.rotate(th % (Math.PI * 2));
+      x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 32, 32, -16, -16, 32, 32);
+      x.restore();
+    }
+    requestAnimationFrame(step);
+  };
+  img.src = 'nishio-go/art/rice.png';
+  requestAnimationFrame(step);
 }
 document.addEventListener('DOMContentLoaded', introHero);
 

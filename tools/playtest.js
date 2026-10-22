@@ -389,7 +389,7 @@ async function walkTo(page, id) {
   // イベントの絵（Blender のシート）：3まいとも読める・大きさが並びと合う・開いた窓の絵がシートの絵に描きかわる
   R.checks.evart = await page.evaluate(async () => {
     const bad = [], load = src => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
-    const want = { 'nishio-go/art/ev/bugs.png': [640, 32], 'nishio-go/art/ev/stones.png': [312, 24], 'nishio-go/art/ev/places.png': [160, 32] };
+    const want = { 'nishio-go/art/ev/bugs.png': [640, 32], 'nishio-go/art/ev/stones.png': [312, 24], 'nishio-go/art/ev/places.png': [160, 32], 'nishio-go/art/ev/hiryo.png': [128, 16], 'nishio-go/art/ev/seeds.png': [96, 32], 'nishio-go/art/ev/dankyu.png': [64, 16], 'nishio-go/art/ev/dankyu-flag.png': [16, 32], 'nishio-go/art/ev/dankyu-rock.png': [8, 8] };
     for (const [src, [w, h]] of Object.entries(want)) { const im = await load(src); if (!im || im.naturalWidth !== w || im.naturalHeight !== h) bad.push(`${src} ${im ? im.naturalWidth + 'x' + im.naturalHeight : 'なし'}`); }
     // 虫は角・大あご・触角・足の先まで枠に入っている（どの絵も、ふちの1列は すきとおっている）
     const bugs = await load('nishio-go/art/ev/bugs.png');
@@ -413,6 +413,15 @@ async function walkTo(page, id) {
       if (blobs(0, '#25272b') !== 3) bad.push(`ミスジのすじ ${blobs(0, '#25272b')}本`);
       if (blobs(1, '#ecd59a') !== 6) bad.push(`ムツボシの点 ${blobs(1, '#ecd59a')}こ`);
     }
+    // 草刈りのマスは地面がマスいっぱい（すきまがない）。種もみ3つは ちがう絵
+    const hi = await load('nishio-go/art/ev/hiryo.png'), se = await load('nishio-go/art/ev/seeds.png');
+    if (hi) { const cv = document.createElement('canvas'); cv.width = 128; cv.height = 16; const c = cv.getContext('2d'); c.drawImage(hi, 0, 0); const d = c.getImageData(0, 0, 112, 16).data; for (let i = 3; i < d.length; i += 4) if (d[i] < 255) { bad.push('草刈りのマスに すきま'); break; } }
+    if (se) { const cv = document.createElement('canvas'); cv.width = 96; cv.height = 32; const c = cv.getContext('2d'); c.drawImage(se, 0, 0); const u = [0, 1, 2].map(i => c.getImageData(i * 32, 0, 32, 32).data.join()); if (new Set(u).size !== 3) bad.push('種もみの絵が同じ'); }
+    // OK の種もみ（1つめ）には、芽のほかに根（材質 ne の色）が見える
+    if (se) { const cv = document.createElement('canvas'); cv.width = 96; cv.height = 32; const c = cv.getContext('2d'); c.drawImage(se, 0, 0); const d = c.getImageData(0, 0, 32, 32).data;
+      const ne = (() => { const r = 0xec, g = 0xec, b = 0xe4; return [[Math.floor(r * 0.62), Math.floor(g * 0.62), Math.floor(Math.min(255, b * 0.72 + 12))], [r, g, b], [r, g, b].map(v => Math.floor(v + (255 - v) * 0.38))].map(x => x.join()); })();
+      let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && ne.includes([d[i], d[i + 1], d[i + 2]].join())) n++;
+      if (!n) bad.push('OK の種もみに根が見えない'); }
     const Y = window.NISHIO_YATSUMUSHI;
     if (Y && Y.BUGS.length + 6 !== 20) bad.push('虫の数とシート');
     return bad.length ? bad.join(',') : true;
@@ -598,8 +607,7 @@ async function walkTo(page, id) {
     R.checks.eyeFree = await page.evaluate(at => nishioGo.me.lat !== at[0] || nishioGo.me.lng !== at[1], at);   // 話が終わったら また歩ける
   } else R.checks.eyeTalk = 'no-npc';
   // 生きもの手帳：田んぼで出会うと手帳に載り、その絵がある
-  R.checks.dog = await page.evaluate(() => nishioPixel.dog.trail > 0);   // さんぽ犬が ついて歩いている
-  // かたむけて転がす：右の矢印キーを1秒おすと、お米が勢いをつけて右へ転がり（1マスより先へ）、転がった分だけ絵が回る
+  // かたむけて転がす：右の矢印キーを1秒おすと、お米が勢いをつけて右へ転がり（1マスより先へ）、転がった分だけ絵が回る。スマホを左へ傾けても転がる
   R.checks.roll = await (async () => {
     const before = await page.evaluate(() => { nishioPixel.setRoll(true); return null; });
     await page.waitForTimeout(300);
@@ -607,9 +615,34 @@ async function walkTo(page, id) {
     await page.keyboard.down('ArrowRight'); await page.waitForTimeout(1000); await page.keyboard.up('ArrowRight');
     await page.waitForTimeout(600);
     const b = await page.evaluate(() => nishioPixel.roll);
+    // スマホの傾き：はじめの持ち方（40度）を まっすぐにして、左へ20度傾けると 左へ転がる
+    await page.evaluate(() => { for (let i = 0; i < 10; i++) window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })); });
+    for (let i = 0; i < 20; i++) { await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: -20 }))); await page.waitForTimeout(50); }
+    await page.evaluate(() => window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 })));
+    await page.waitForTimeout(600);
+    const c = await page.evaluate(() => nishioPixel.roll);
     await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ready: a.ready, moved: +(b.x - a.x).toFixed(2), rolled: +(b.d - a.d).toFixed(2), ok: !!(a.ready && (b.d - a.d > 0.8) && (Math.abs(b.x - a.x) > 0.8 || Math.abs(b.y - a.y) > 0.3)) };
+    return { ready: a.ready, moved: +(b.x - a.x).toFixed(2), rolled: +(b.d - a.d).toFixed(2), tilt: +(c.x - b.x).toFixed(2), ok: !!(a.ready && (b.d - a.d > 0.8) && (Math.abs(b.x - a.x) > 0.8 || Math.abs(b.y - a.y) > 0.3) && (c.d - b.d > 0.5)) };
   })();
+  // 坂（本当の高低差）：平らなら さわらなくても動かない。東西南北のどれかに 10% 下る坂を差しこむと、さわらなくても 下る向きへ転がる（かべのない向きで確かめる）
+  R.checks.slope = await page.evaluate(async () => {
+    nishioPixel.setRoll(true);
+    const wait = ms => new Promise(r => setTimeout(r, ms)), at = () => nishioPixel.roll;
+    for (let i = 0; i < 20; i++) window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 40, gamma: 0 }));   // スマホを まっすぐに もどす（上の傾けたチェックの あと）
+    await wait(800);
+    nishioPixel.setHeightFn(() => 5);
+    const f0 = at(); await wait(1200); const f1 = at();
+    const flat = Math.hypot(f1.x - f0.x, f1.y - f0.y);
+    let best = 0;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      nishioPixel.setHeightFn((x, y) => 50 - 0.8 * (x * dx + y * dy));
+      const a = at(); await wait(1200); const b = at();
+      best = Math.max(best, (b.x - a.x) * dx + (b.y - a.y) * dy);
+      if (best > 0.8) break;
+    }
+    nishioPixel.setHeightFn(null); nishioPixel.setRoll(false);
+    return { flat: +flat.toFixed(2), downhill: +best.toFixed(2), ok: flat < 0.1 && best > 0.8 };
+  });
   R.checks.critter = await page.evaluate(() => { const c = nishioGo.meetCritter('paddy'); return !!c && !!nishioPixel.critterSprite(c.id) && !!nishioGo.state.critters[c.id]; });
   // イベント「ドット絵ムービー」：八ツ面山でチェックインすると、ごほうびの画面のあとに「山の岩のなりたち」が流れ、最後まで見ると まちメモ に残る
   await page.evaluate(() => { window.__keepMovie = true; const s = nishioGo.spots.find(x => x.id === 'f-yatsuomote'); nishioGo.moveTo(s.lat, s.lng); });
@@ -658,8 +691,8 @@ async function walkTo(page, id) {
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
-  need(c.dog === true, 'さんぽ犬が 主人公について歩かない');
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
+  need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');
   need(c.parcel !== false, 'おとどけもの：あずかった荷物の あて先の人と話しても、届けられない');

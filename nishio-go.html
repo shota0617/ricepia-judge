@@ -100,7 +100,6 @@
     <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます。地図の地面をタップすると、そこまで歩きます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
     <button type="button" id="pxRoll" class="c" aria-pressed="true" aria-label="かたむけて転がす（お米が勢いをつけて転がる）" title="かたむけて転がす">📱</button>
     <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car" data-art="btn-car"></i></button>
-    <button type="button" id="pxAuto" class="a" aria-pressed="true" aria-label="おまかせ歩き（行き先へ自動で歩く）" title="おまかせ歩き（行き先へ自動で歩く）"><i data-pi="compass" data-art="btn-compass"></i></button>
   </div>
   <div class="meet" id="meetBox" hidden><div class="dq"><canvas id="meetArt" width="16" height="16"></canvas><p id="meetText"></p></div></div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
@@ -136,7 +135,7 @@
   <div class="card bags" id="bagBox"></div>
   <div class="campaigns" id="campaignBox" hidden></div>
   <div id="upBox" hidden>
-    <h3><i data-pi="compass" data-art="btn-compass"></i> おまかせ強化 <small>操作して移動</small></h3>
+    <h3><i data-pi="home" data-art="home"></i> るすばん強化 <small>操作して移動</small></h3>
     <p class="note" id="upNote"></p>
     <ul class="list" id="upList"></ul>
   </div>
@@ -320,16 +319,16 @@
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/></h1>
     <p class="player-count" id="playerCount" hidden></p>
     <p class="player-count voice-intro" id="voiceIntro" hidden></p>
-    <div class="intro-hero" id="introHero" aria-hidden="true"></div>
-    <p class="tagline">西尾を さんぽして、ドット絵を あつめよう</p>
-    <p class="pitch"><b>🧭 西尾と まわりのまちを、さんぽして知る。</b><br/>名所に着くとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
+    <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="お米が 台地から 坂を ころころ転がり下りて、田んぼの あぜ道で にっこり"></canvas>
+    <p class="tagline">お米を ころころ 転がして、西尾をめぐろう</p>
+    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
-    <button type="button" class="btn big mode-pick" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small>位置情報を使って、実際に西尾のまちを歩きます</small></button>
-    <button type="button" class="btn big mode-pick alt" id="demoBtn"><span class="mp-t">🎮 操作して遊ぶ</span><small>スティックか、地面をタップして動かして、家からでも西尾めぐり</small></button>
-    <p class="warn">⚠️ 歩きスマホはやめましょう。立ち止まって操作してください。</p>
+    <button type="button" class="btn big mode-pick" id="demoBtn"><span class="mp-t">📱 傾けて遊ぶ</span><small>スマホを傾けると お米が ころころ。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
+    <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
     <ul class="intro-shots" aria-label="プレイ画面">
-      <li><img src="nishio-go/shots/walk.webp" alt="ドット絵の西尾の町を歩く画面" width="540" height="1080" loading="lazy" decoding="async"/><span>西尾を歩く</span></li>
+      <li><img src="nishio-go/shots/roll.webp" alt="ドット絵の西尾の町を お米が転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>お米を転がす</span></li>
       <li><img src="nishio-go/shots/reward.webp" alt="たからばこからドット絵が出た画面" width="540" height="1080" loading="lazy" decoding="async"/><span>ドット絵をあつめる</span></li>
       <li><img src="nishio-go/shots/world.webp" alt="西尾とまわりのまちの、せかいちず" width="540" height="1080" loading="lazy" decoding="async"/><span>名所をめぐる</span></li>
       <li><img src="nishio-go/shots/badges.webp" alt="バッジの画面" width="540" height="1080" loading="lazy" decoding="async"/><span>バッジをそろえる</span></li>
@@ -339,7 +338,7 @@
       <ol class="core">
         <li><b>聞く</b>：まちの人に話しかけると「📜 イベント」。たのまれた所へ行ってみよう</li>
         <li><b>知る</b>：着いた所・たからばこ・歩いた道すがらで「📖 まちメモ」が集まる</li>
-        <li><b>おまかせ</b>：操作して遊ぶときは、🧭おまかせ歩きで放っておいても、主人公が歩いて、話して、まちを知っていく。閉じている間も るすばん でさんぽ</li>
+        <li><b>ころころ</b>：操作して遊ぶときは、スマホを傾けると お米が ころころ転がる。閉じている間も るすばん でさんぽ</li>
       </ol>
       <ul>
         <li>⭐ 西尾の名所に着いたらチェックインでポイント（はじめての場所はボーナス）</li>

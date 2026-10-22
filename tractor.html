@@ -2032,9 +2032,70 @@ function toggleSound() {
     const tg = ac.createGain(); tg.gain.value = 0;
     noise.connect(tf); tf.connect(tg); tg.connect(out);
     o1.start(); o2.start(); lfo.start(); noise.start();
-    audio = { ac, o1, o2, lfo, lp, out, tg };
+    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac) };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
+}
+// まわりの生きものの声（音をつけたときだけ）。代かき：水が入ると鳴きだすアマガエルの「グワッグワッ」と
+// シュレーゲルアオガエルの「コロロ…」の合唱、春：空高くでさえずり続けるヒバリ、秋：夕方ほど大きいコオロギの「コロコロリー」
+function startAmbient(ac) {
+  const amb = ac.createGain(); amb.gain.value = 0; amb.connect(ac.destination);
+  const voice = (pan, vol) => {
+    const g = ac.createGain(); g.gain.value = 0;
+    const p = ac.createStereoPanner ? ac.createStereoPanner() : null;
+    if (p) { p.pan.value = pan; g.connect(p); p.connect(amb); } else g.connect(amb);
+    return { g, vol };
+  };
+  const osc = (type, f, dest) => { const o = ac.createOscillator(); o.type = type; o.frequency.value = f; o.connect(dest); o.start(); return o; };
+  const R = (a, b) => a + Math.random() * (b - a);
+  const voices = [];
+  if (season === 'shirokaki') {
+    for (let k = 0; k < 7; k++) {               // カエル：遠い所・近い所に 7 匹
+      const v = voice(R(-0.9, 0.9), R(0.25, 1)), bp = ac.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = R(1300, 2300); bp.Q.value = 6;
+      osc(k % 3 ? 'square' : 'sawtooth', bp.frequency.value * 0.5, bp); bp.connect(v.g);
+      v.kind = k % 3 ? 'ama' : 'koro'; voices.push(v);
+    }
+  } else if (season === 'haru') {               // ヒバリ：1 羽、高い声を早口で
+    const v = voice(R(-0.4, 0.4), 0.6); v.o = osc('sine', 3500, v.g); v.kind = 'hibari'; voices.push(v);
+  } else {
+    for (let k = 0; k < 4; k++) { const v = voice(R(-0.9, 0.9), R(0.3, 1)); v.o = osc('sine', R(4300, 4800), v.g); v.kind = 'korogi'; voices.push(v); }
+  }
+  // 鳴き方を 0.4 秒先まで予約する
+  const tick = force => {
+    if (!force && ac.state !== 'running') return;
+    const now = ac.currentTime, end = now + 0.6;
+    for (const v of voices) {
+      v.t = Math.max(v.t || now, now);
+      while (v.t < end) {
+        const g = v.g.gain, a = v.vol * (TOD === 'hiru' && v.kind === 'korogi' ? 0.4 : 1);
+        if (v.kind === 'ama') {                   // グワッグワッ…（1 秒くらい続けて休む）
+          if (Math.random() < 0.35) { v.t += R(0.8, 3); continue; }
+          const n = Math.floor(R(4, 10));
+          for (let i = 0; i < n; i++) { const t0 = v.t + i * 0.13; g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.015); g.linearRampToValueAtTime(0, t0 + 0.07); }
+          v.t += n * 0.13 + R(0.3, 1.5);
+        } else if (v.kind === 'koro') {          // コロロ…（ふるえる声）
+          if (Math.random() < 0.5) { v.t += R(1, 4); continue; }
+          for (let i = 0; i < 14; i++) { const t0 = v.t + i * 0.035; g.setValueAtTime(a * 0.8, t0); g.setValueAtTime(0, t0 + 0.02); }
+          v.t += 0.5 + R(0.6, 2);
+        } else if (v.kind === 'hibari') {        // ピーチュクチュク…（さえずり続け、ときどき休む）
+          if (Math.random() < 0.04) { g.setValueAtTime(0, v.t); v.t += R(3, 8); continue; }
+          const d = R(0.05, 0.11);
+          v.o.frequency.setValueAtTime(R(2600, 5200), v.t); v.o.frequency.linearRampToValueAtTime(R(2600, 5200), v.t + d);
+          g.setValueAtTime(a * R(0.3, 1), v.t); g.setValueAtTime(Math.random() < 0.25 ? 0 : a * 0.5, v.t + d * 0.8);
+          v.t += d;
+        } else {                                  // コロコロリー（短い 3 つと、のばす 1 つ）
+          if (Math.random() < 0.3) { v.t += R(0.5, 2); continue; }
+          for (let i = 0; i < 3; i++) { const t0 = v.t + i * 0.09; g.setValueAtTime(a, t0); g.setValueAtTime(0, t0 + 0.045); }
+          const t1 = v.t + 0.3; g.setValueAtTime(a, t1); g.linearRampToValueAtTime(a * 0.6, t1 + 0.45); g.setValueAtTime(0, t1 + 0.5);
+          v.t += 0.9 + R(0.2, 0.8);
+        }
+      }
+    }
+  };
+  setInterval(tick, 300);
+  amb.tick = tick;                                // 試験用
+  return amb;
 }
 function updateSound() {
   if (!audio || !soundOn) return;
@@ -2046,6 +2107,7 @@ function updateSound() {
   audio.lfo.frequency.setTargetAtTime(fire, t, 0.25);
   audio.lp.frequency.setTargetAtTime(380 + load * 260, t, 0.3);
   audio.out.gain.setTargetAtTime(camMode === 0 ? 0.07 : 0.11, t, 0.3);         // 運転席はキャビンで少し静か
+  audio.amb.gain.setTargetAtTime((camMode === 0 ? 0.01 : 0.04) * (SHIRO ? 1.2 : 1), t, 0.5);   // 生きものの声はキャビンの中だとほとんど聞こえない
   const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
   audio.tg.gain.setTargetAtTime(till, t, 0.2);
 }
@@ -2227,7 +2289,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

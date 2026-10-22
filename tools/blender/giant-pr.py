@@ -62,6 +62,22 @@ def subjects():
     return out
 
 
+def fit_camera(sc, margin=0.03):
+    """手作りの形は いつもの向き（0）に合わせて組んであるので、ほかの向きで部品（地面の板と水はのぞく）が絵のふちから出るときだけ、引いて収める"""
+    from bpy_extras.object_utils import world_to_camera_view
+    cam = sc.camera
+    pa.bpy.context.view_layer.update()
+    ext = 0.0
+    for o in sc.objects:
+        if o.type != 'MESH' or o.name.startswith(('ji', 'mz')):
+            continue
+        for vt in o.data.vertices:
+            q = world_to_camera_view(sc, cam, o.matrix_world @ vt.co)
+            ext = max(ext, abs(q.x - 0.5), abs(q.y - 0.5))
+    if ext > 0.5 - margin:
+        cam.data.ortho_scale *= ext / (0.5 - margin)
+
+
 def render_view(sid, build, v):
     sc = pa.setup_scene()
     opts = build()
@@ -69,6 +85,8 @@ def render_view(sid, build, v):
     sc.render.resolution_x = sc.render.resolution_y = n * pa.SS
     da, de = VIEWS[v]
     pa.add_camera_light(sc, opts['target'], opts['scale'], opts.get('el', 28) + de, opts.get('az', -35) + da)
+    if v and sid not in HAND and sid[2:] in gnis.MODELS:
+        fit_camera(sc)
     os.makedirs(TMP, exist_ok=True)
     names = pa.set_materials('id')
     ids = pa.render(sc, os.path.join(TMP, f'{sid}-{v}-id.png'), 1)

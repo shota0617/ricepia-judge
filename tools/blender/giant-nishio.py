@@ -414,7 +414,7 @@ def suunji():
     irimoya('yane', 'kawaraG', 0.64, 0.42, 0.22, 0.2, 0, 0.08)
     toro('a', 0.3, -0.2, 1.0)
     for i, (x, z) in enumerate(((-0.34, 0.12), (-0.3, 0.2))):
-        sphere(f'sakura{i}', 'sakuraP', 0.07, (x, -0.16, z))
+        sphere(f'sakura{i}', 'sakuraHa', 0.07, (x, -0.16, z))
     cyl('miki', 'miki', 0.015, 0.12, (-0.32, -0.16, 0.06), verts=8)
     return view(0.22)
 
@@ -544,8 +544,9 @@ pa.MATS.update({
     'paraR': '#e04a3a', 'paraY': '#f2c230', 'paraB': '#3a7fd0', 'kofunG': '#8a9e3e', 'kofunD': '#6e8230', 'shime': '#d8c890',
     'kabochaG': '#3f5f2e', 'kabochaY': '#e8a030', 'pengin': '#262a30', 'penginW': '#f4f4f0', 'penginY': '#f2b030',
     'wata': '#fafaf4', 'wataG': '#4f8a3a', 'uma': '#7a4a2a', 'umaR': '#c8302a', 'umaK': '#e8b830', 'shiiG': '#3a6a30',
-    'shiiM': '#5a4430', 'sakuraS': '#f4c0d0', 'maroon': '#5a2a2a', 'jizo': '#a8a49a', 'hadaK': '#f0c8a0',
+    'shiiM': '#5a4430', 'maroon': '#5a2a2a', 'jizo': '#a8a49a', 'hadaK': '#f0c8a0',
     'hiseki': '#a8a49a',   # 碑の石（灯籠の 'toro' は夜に明かりがつくので使わない）
+    'sakuraHa': '#f0b8c8', 'sakuraHaL': '#f4c0d0',   # 桜の木の花（四季の絵で季節の色に変わる。看板やのぼりのピンクは sakuraP）
 })
 
 
@@ -836,8 +837,8 @@ def genkuin():
     cyl('miki', 'miki', 0.03, 0.26, (0.3, -0.1, 0.13), verts=8)
     for i in range(8):
         a = i * math.pi / 4
-        sphere(f'shidare{i}', 'sakuraS' if i % 2 else 'sakuraP', 0.06, (0.3 + math.cos(a) * 0.09, -0.1 + math.sin(a) * 0.07, 0.17), (0.7, 0.7, 1.6))
-    sphere('shT', 'sakuraP', 0.1, (0.3, -0.1, 0.27), (1, 1, 0.6))
+        sphere(f'shidare{i}', 'sakuraHaL' if i % 2 else 'sakuraHa', 0.06, (0.3 + math.cos(a) * 0.09, -0.1 + math.sin(a) * 0.07, 0.17), (0.7, 0.7, 1.6))
+    sphere('shT', 'sakuraHa', 0.1, (0.3, -0.1, 0.27), (1, 1, 0.6))
     ishidatami('s', -0.06, -0.38, -0.06, 0.12)
     return view(0.22)
 

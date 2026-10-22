@@ -134,7 +134,7 @@
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
       ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす（道に泥を落とさない。ゲームでは耕していない固い所を少し走ると落ちる）<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
-      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる<br>
+      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
       ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
     </div>
@@ -1504,8 +1504,42 @@ const BIRDS = (() => {
     b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0 };
     return b;
   }
+  // ハシボソガラス：サギといっしょに耕したあとへ来る（いちばん早く来ることが多い）。全身まっ黒・太いくちばし・短い脚。
+  // 人や機械を用心して、サギより少しはなれた所を歩く。水を張った代かきの田んぼには あまり来ない
+  const crowM = new THREE.MeshStandardMaterial({ color: 0x101116, roughness: 0.45, metalness: 0.1, envMapIntensity: 0.6 });   // 羽はつやがある
+  function makeCrow() {
+    const b = new THREE.Group();
+    b.scale.setScalar(0.95 + Math.random() * 0.1);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.07, 10, 8), crowM);
+    body.scale.set(0.85, 0.85, 1.75); body.position.set(0, 0.17, -0.01); body.rotation.x = -0.25; b.add(body);
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.012, 0.15), crowM);
+    tail.position.set(0, 0.14, -0.17); tail.rotation.x = -0.3; b.add(tail);
+    const neck = new THREE.Group(); neck.position.set(0, 0.2, 0.08); b.add(neck);
+    const head = new THREE.Group(); head.position.set(0, 0.03, 0.04); neck.add(head);
+    head.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), crowM));
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.017, 0.065, 6), crowM);
+    beak.rotation.x = Math.PI / 2; beak.position.set(0, -0.005, 0.07); head.add(beak);
+    const legs = [];
+    for (const sx of [-1, 1]) {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.12, 4), crowM);
+      leg.position.set(sx * 0.025, 0.06, 0); b.add(leg); legs.push(leg);
+    }
+    const wings = [];
+    for (const sx of [-1, 1]) {
+      const w = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.17), crowM.clone());
+      w.material.side = THREE.DoubleSide;
+      w.geometry.translate(sx * 0.21, 0, 0);
+      w.position.set(sx * 0.03, 0.19, 0); w.rotation.x = -Math.PI / 2; w.visible = false;
+      b.add(w); wings.push(w);
+    }
+    b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0, crow: true };
+    return b;
+  }
   const list = [];
-  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : k % 3 === 1 ? 'ko' : 'dai'); b.visible = false; scene.add(b); list.push(b); }
+  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : k % 3 === 1 ? 'ko' : 'dai'); b.userData.delay = 3 + k * 2.2; b.visible = false; scene.add(b); list.push(b); }
+  const NCROW = { haru: 3, aki: 4, shirokaki: 1 }[season] - (MOBILE ? 1 : 0);
+  for (let k = 0; k < NCROW; k++) { const b = makeCrow(); b.userData.delay = 1.5 + k * 3.5; b.visible = false; scene.add(b); list.push(b); }
   let workT = 0;
   function update(dt, working) {
     workT = working && Math.abs(S.v) > 0.2 ? workT + dt : Math.max(0, workT - dt * 0.2);
@@ -1513,7 +1547,7 @@ const BIRDS = (() => {
     list.forEach((b, k) => {
       const u = b.userData;
       u.t += dt;
-      const want = workT > 3 + k * 2.2;          // 耕しはじめて少しずつ集まってくる
+      const want = workT > u.delay;              // 耕しはじめて少しずつ集まってくる
       if (!b.visible && want) {                  // 遠くから飛んでくる
         const a = Math.random() * 6.28;
         b.position.set(S.x + Math.cos(a) * 40, 9, S.z + Math.sin(a) * 40);
@@ -1523,12 +1557,12 @@ const BIRDS = (() => {
       // うしろの耕した所のどこかをめざす
       if (u.t > 2.5 || u.state === 'fly' && Math.random() < 0.01) {
         u.t = Math.random();
-        const lx = (Math.random() - 0.5) * 4, lz = ROTARY_Z - 1.6 - Math.random() * 4.5;   // ロータリーのすぐうしろ（出てきた虫をねらう）
+        const lx = (Math.random() - 0.5) * (u.crow ? 6 : 4), lz = ROTARY_Z - (u.crow ? 3.2 : 1.6) - Math.random() * 4.5;   // ロータリーのすぐうしろ（出てきた虫をねらう）。カラスは少しはなれて
         u.tx = S.x + lx * c + lz * s; u.tz = S.z - lx * s + lz * c;
       }
       const dx = u.tx - b.position.x, dz = u.tz - b.position.z, d = Math.hypot(dx, dz);
       const dTractor = Math.hypot(b.position.x - S.x - s * -0.5, b.position.z - S.z - c * -0.5);
-      if (u.state !== 'fly' && (d > 7 || dTractor < 2.6)) u.state = 'fly';
+      if (u.state !== 'fly' && (d > 7 || dTractor < (u.crow ? 3.8 : 2.6))) u.state = 'fly';
       if (u.state === 'fly') {
         const sp = 5.5, gy = TILL_Y + (SHIRO ? -0.06 : 0);
         b.position.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt);
@@ -1537,7 +1571,7 @@ const BIRDS = (() => {
         b.position.y += (hy - b.position.y) * Math.min(1, dt * 2);
         if (d < 0.3) { u.state = 'walk'; b.position.y = gy; }
         b.rotation.y = Math.atan2(dx, dz);
-        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / 110) * 0.7; });
+        u.wings.forEach((w, i) => { w.visible = true; w.rotation.z = (i ? -1 : 1) * Math.sin(performance.now() / (u.crow ? 80 : 110)) * 0.7; });   // カラスは はばたきが速い
         u.legs.forEach(l => { l.rotation.x = 1.2; });
       } else {
         u.wings.forEach(w => { w.visible = false; });
@@ -1547,15 +1581,16 @@ const BIRDS = (() => {
           b.position.x += dx / d * ws * dt; b.position.z += dz / d * ws * dt;
           b.rotation.y += ((Math.atan2(dx, dz) - b.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 4);
         }
-        const step = Math.sin(u.t * 9);
+        const step = Math.sin(u.t * (u.crow ? 13 : 9));
         u.legs.forEach((l, i) => { l.rotation.x = walking ? (i ? step : -step) * 0.35 : 0; });
+        if (u.crow) u.neck.position.y = 0.2 + (walking ? 0.008 * Math.abs(step) : 0);   // 首をふりながら のしのし歩く
         const peck = !walking && Math.sin(u.t * 3.3 + k) > 0.6;   // ついばむ
         u.neck.rotation.x = peck ? 1.25 : 0.05 * Math.sin(u.t * 9);
       }
       if (!want && dTractor > 30) b.visible = false;
     });
   }
-  return { update };
+  return { update, list };
 })();
 
 // ---- セキレイ（ハクセキレイ）：耕した土の上を小走りしては止まり、長い尾を上下にふって虫をついばむ。近づくと波をえがいて飛ぶ
@@ -2549,7 +2584,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -998,7 +998,7 @@ const NB = (() => {
     parts.WheelFL.rotation.x = parts.WheelFR.rotation.x = s / R_FRONT;
     if (parts.lift < 0.1) for (const n of ['Rotor', 'RotorL', 'RotorR']) if (parts[n]) parts[n].rotation.x += 19 * dt;   // 上げると PTO が止まる
   }
-  return { setup, update };
+  return { setup, update, get root() { return root; }, get lift() { return parts.lift; } };
 })();
 
 function canvasTex(cv) {
@@ -1507,7 +1507,7 @@ const BIRDS = (() => {
     b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0 };
     return b;
   }
-  // ハシボソガラス：サギといっしょに耕したあとへ来る（いちばん早く来ることが多い）。全身まっ黒・太いくちばし・短い脚。
+  // ハシボソガラス：サギといっしょに耕したあとへ来る（いちばん早く来ることが多い）。全身まっ黒・ハシブトより細いくちばし・なだらかな額・短い脚。
   // 人や機械を用心して、サギより少しはなれた所を歩く。水を張った代かきの田んぼには あまり来ない
   const crowM = new THREE.MeshStandardMaterial({ color: 0x101116, roughness: 0.45, metalness: 0.1, envMapIntensity: 0.6 });   // 羽はつやがある
   function makeCrow() {
@@ -1520,7 +1520,7 @@ const BIRDS = (() => {
     const neck = new THREE.Group(); neck.position.set(0, 0.2, 0.08); b.add(neck);
     const head = new THREE.Group(); head.position.set(0, 0.03, 0.04); neck.add(head);
     head.add(new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6), crowM));
-    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.017, 0.065, 6), crowM);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.013, 0.065, 6), crowM);
     beak.rotation.x = Math.PI / 2; beak.position.set(0, -0.005, 0.07); head.add(beak);
     const legs = [];
     for (const sx of [-1, 1]) {
@@ -1589,6 +1589,7 @@ const BIRDS = (() => {
         if (u.crow) u.neck.position.y = 0.2 + (walking ? 0.008 * Math.abs(step) : 0);   // 首をふりながら のしのし歩く
         const peck = !walking && Math.sin(u.t * 3.3 + k) > 0.6;   // ついばむ
         u.neck.rotation.x = peck ? 1.25 : 0.05 * Math.sin(u.t * 9);
+        if (u.callT > 0) { u.callT -= dt; u.neck.rotation.x = 0.7 * Math.max(0, Math.sin(u.callT / 0.42 * Math.PI * 2)); }   // 鳴きながら おじぎ
       }
       if (!want && dTractor > 30) b.visible = false;
     });
@@ -2307,7 +2308,18 @@ function toggleSound() {
     const tg = ac.createGain(); tg.gain.value = 0;
     noise.connect(tf); tf.connect(tg); tg.connect(out);
     o1.start(); o2.start(); lfo.start(); noise.start();
-    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac) };
+    // となりの田んぼのトラクター：遠くの低いエンジンの音。近づくと大きく、見ている向きで左右に分ける
+    const nbO = ac.createOscillator(); nbO.type = 'sawtooth'; nbO.frequency.value = 76;
+    const nbL = ac.createBiquadFilter(); nbL.type = 'lowpass'; nbL.frequency.value = 260;
+    const nbG = ac.createGain(); nbG.gain.value = 0;
+    const nbP = ac.createStereoPanner ? ac.createStereoPanner() : null;
+    nbO.connect(nbL); nbL.connect(nbG);
+    if (nbP) { nbG.connect(nbP); nbP.connect(ac.destination); } else nbG.connect(ac.destination);
+    nbO.start();
+    const crowP = ac.createStereoPanner ? ac.createStereoPanner() : null, crowG = ac.createGain();
+    crowG.gain.value = 0.05;
+    if (crowP) { crowG.connect(crowP); crowP.connect(ac.destination); } else crowG.connect(ac.destination);
+    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4 };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -2372,7 +2384,27 @@ function startAmbient(ac) {
   amb.tick = tick;                                // 試験用
   return amb;
 }
-function updateSound() {
+// ハシボソガラスの声「ガァ、ガァ」：濁った声（のこぎり波を 2 つの帯域でしぼる）。1 声 0.25 秒で少し下がる。2〜4 声つづける。
+// 鳴くときは おじぎをするように頭を上下させる（ハシブトの「カー」は澄んだ声）
+function caw(ac, dest, t0, n) {
+  for (let i = 0; i < n; i++) {
+    const t = t0 + i * 0.42, o = ac.createOscillator(), b1 = ac.createBiquadFilter(), b2 = ac.createBiquadFilter(), g = ac.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(560, t); o.frequency.linearRampToValueAtTime(450, t + 0.26);
+    b1.type = 'bandpass'; b1.frequency.value = 1150; b1.Q.value = 1.6;
+    b2.type = 'bandpass'; b2.frequency.value = 2300; b2.Q.value = 2.5;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + 0.03); g.gain.setValueAtTime(1, t + 0.18); g.gain.linearRampToValueAtTime(0, t + 0.27);
+    o.connect(b1); o.connect(b2); b1.connect(g); b2.connect(g); g.connect(dest);
+    o.start(t); o.stop(t + 0.3);
+  }
+}
+const _v = new THREE.Vector3();
+function panTo(pos) {                             // 見ている向きから見た左右（-1〜1）と距離
+  _v.copy(pos).applyMatrix4(camera.matrixWorldInverse);
+  const d = _v.length();
+  return [Math.max(-1, Math.min(1, _v.x / Math.max(d, 1))), d];
+}
+function updateSound(dt = 0) {
   if (!audio || !soundOn) return;
   const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
   let rpm = engineRpm(t);
@@ -2385,6 +2417,25 @@ function updateSound() {
   audio.amb.gain.setTargetAtTime((camMode === 0 ? 0.01 : 0.04) * (SHIRO ? 1.2 : 1), t, 0.5);   // 生きものの声はキャビンの中だとほとんど聞こえない
   const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
   audio.tg.gain.setTargetAtTime(till, t, 0.2);
+  const inCab = camMode === 0 ? 0.35 : 1;         // キャビンの中では外の音は小さい
+  if (NB.root) {
+    const [pan, d] = panTo(NB.root.position);
+    audio.nbG.gain.setTargetAtTime(Math.min(0.03, 0.75 / Math.max(d, 8)) * inCab, t, 0.4);
+    if (audio.nbP) audio.nbP.pan.setTargetAtTime(pan * 0.8, t, 0.4);
+    audio.nbO.frequency.setTargetAtTime((NB.lift > 0.5 ? 1800 : 2300) / 30, t, 0.8);   // 旋回で作業機を上げると回転を下げる
+  }
+  if ((audio.crowT -= dt) <= 0) {                // 来ているカラスのどれかが ときどき鳴く
+    audio.crowT = 5 + Math.random() * 10;
+    const cs = BIRDS.list.filter(b => b.userData.crow && b.visible);
+    if (cs.length) {
+      const c0 = cs[Math.floor(Math.random() * cs.length)], [pan, d] = panTo(c0.position);
+      if (audio.crowP) audio.crowP.pan.setValueAtTime(pan * 0.8, t);
+      audio.crowG.gain.setValueAtTime(Math.min(0.06, 0.6 / Math.max(d, 6)) * inCab, t);
+      const n = 2 + Math.floor(Math.random() * 3);
+      caw(audio.ac, audio.crowG, t + 0.05, n);
+      c0.userData.callT = n * 0.42;                // 鳴いているあいだ おじぎ
+    }
+  }
 }
 
 // エンジンの回転数：アイドル 900、走ると上がる。耕すとき（PTO 入）は 2300 くらいに上げて、土の重さで少し下がる
@@ -2545,7 +2596,7 @@ function frame(now) {
   let pct = 0;
   for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt);   // 早送り
   updateCamera(dt);
-  updateSound();
+  updateSound(dt);
   SKY_TIME.value += dt;
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
@@ -2587,7 +2638,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

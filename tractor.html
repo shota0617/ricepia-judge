@@ -849,17 +849,18 @@ const MIST = (() => {
 
 
 // ---- 初霜：秋の晴れた朝は、刈りあとの切り株・ひこばえ・畦の草・耕していない土の表面が霜で白い（山形では 10 月下旬に初霜。
-// 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける
+// 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける。
+// 春の田起こしのころ（4 月）も、放射冷却の朝は遅霜がおりる（山形県の凍霜害の注意）。春はうすく、早くとける
 const FROST = (() => {
-  const on = season === 'aki' && TOD === 'asa', list = [];
+  const on = (season === 'aki' || season === 'haru') && TOD === 'asa', list = [], S0 = season === 'aki' ? 1 : 0.6, T = season === 'aki' ? 150 : 100;
   let t = 0;
-  const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7 };
+  const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7, weed: 0.6, renge: 0.5 };
   const add = m => {
     if (!m || !(m.name in K) || list.some(e => e.m === m)) return;
     list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name] });
   };
   function apply() {
-    const f = Math.max(0, 1 - t / 150);
+    const f = Math.max(0, 1 - t / T) * S0;
     for (const e of list) {
       const a = e.k * f;
       e.m.color.copy(e.c).lerp(new THREE.Color(1.35, 1.4, 1.5), a);   // 白くきらっと（少し青み）
@@ -873,7 +874,7 @@ const FROST = (() => {
       add(stubbleMat); add(hikobaeMat);
       apply();
     },
-    update(dt) { if (!on || !list.length || t > 150) return; t += dt; apply(); },
+    update(dt) { if (!on || !list.length || t > T) return; t += dt; apply(); },
     get list() { return list; }
   };
 })();

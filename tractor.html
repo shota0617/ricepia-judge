@@ -1856,7 +1856,8 @@ const HEAPS = (() => {
 // ---- 運転 ----
 const S = { gear: 3, x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
 const key = { fwd: 0, back: 0, left: 0, right: 0 };
-const MAX_STEER = 0.62;
+// 前輪の切れ角の最大：外側の前輪の通る円が半径 3.3m（ヤンマー YT460A の最小旋回半径）になるように。後輪の車軸のまん中では半径 1.84m
+const MAX_STEER = Math.atan(WB / (Math.sqrt(3.3 * 3.3 - WB * WB) - TRACK));
 function resetPos() {
   Object.assign(S, { x: 11, z: 20.3, yaw: -Math.PI / 2, v: 0, steer: 0 });
   placeRig(0);
@@ -1985,7 +1986,12 @@ function step(dt) {
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
-  P.SteerFL.rotation.y = P.SteerFR.rotation.y = -S.steer;
+  {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
+    const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);
+    const inner = Math.min(0.96, Math.atan(WB / Math.max(0.2, R - TRACK))), outer = Math.atan(WB / (R + TRACK));   // 内側は 55° まで（見た目）
+    P.SteerFL.rotation.y = -sg * (sg > 0 ? outer : inner);   // 右へ切る（steer＞0）と右（FR）が内側
+    P.SteerFR.rotation.y = -sg * (sg > 0 ? inner : outer);
+  }
   P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);

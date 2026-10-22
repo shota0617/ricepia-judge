@@ -735,6 +735,10 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .card.bags .todaywalk .tw3 small{font-size:11px;color:var(--sub)}
 .card.bags .todaywalk .tw3 b{font-size:17px}
 .card.bags .todaywalk .word{font-size:13px}
+.card.bags .todaywalk .tw-goals{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
+.card.bags .todaywalk .tw-goals span{background:#fff;border-radius:999px;padding:2px 8px;font-size:12px;border:1px solid #f0d9a0}
+.card.bags .todaywalk .tw-goals span.done{background:#e8f5e0;border-color:#a9d18e}
+.card.bags .todaywalk .tw-goals small{color:var(--sub);font-size:11px}
 .card.bags .todaywalk>small{display:block;margin-top:2px;color:var(--sub);font-size:12px}
 .card.bags .lastweek,.card.bags .kirahour{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 .card.bags .lastweek span{flex-basis:100%;font-size:13px}

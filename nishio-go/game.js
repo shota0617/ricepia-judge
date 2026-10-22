@@ -3516,7 +3516,18 @@ function todayWalkCard() {
   return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
     <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
     <p class="word">${esc(word)}</p>
-    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}（つぎの節目 ${fmtM(trailMile(trailMileNext()))} まで あと ${fmtM(Math.max(0, trailMile(trailMileNext()) - (S.trail || 0) * TRAIL_M))}）${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}${day.h100 ? `・100歩たんけん ${day.h100.done ? '' : `${day.h100.steps}/100歩 `}はじめての道 ${day.h100.fresh}マス` : ''}${S.h100best ? `（自己ベスト ${S.h100best}）` : ''}</small></div>`;
+    ${dayGoals(day)}
+    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}（つぎの節目 ${fmtM(trailMile(trailMileNext()))} まで あと ${fmtM(Math.max(0, trailMile(trailMileNext()) - (S.trail || 0) * TRAIL_M))}）${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}${S.h100best ? `・100歩たんけんの自己ベスト ${S.h100best}マス` : ''}</small></div>`;   // きょうの数は 上の札に
+}
+// きょうの小さなお楽しみ（毎日の約束）：100歩たんけん・路地の行き止まり・水べで じっと見る の、きょうの進み具合を札で
+function dayGoals(day) {
+  const h = day.h100, first = store.get('nsg_first_day', '') === ymd();
+  const g = [
+    ['👣', '100歩たんけん', h && h.done ? `${h.fresh}マス` : h ? `${h.steps}/100歩` : first ? 'あしたから' : 'まだ', !!(h && h.done)],
+    ['🔍', '路地の行き止まり', `${day.alleys || 0}/${ALLEY.daily}`, (day.alleys || 0) >= ALLEY.daily],
+    ['👀', '水べで じっと見る', `${day.watch || 0}/${WATCH_DAILY}`, (day.watch || 0) >= WATCH_DAILY],
+  ];
+  return `<div class="tw-goals">${g.map(([i, n, v, done]) => `<span class="${done ? 'done' : ''}" title="${esc(n)}">${i} <small>${esc(n)}</small> <b>${esc(v)}</b>${done ? ' ✓' : ''}</span>`).join('')}</div>`;
 }
 function renderTomorrow() {
   const el = $('tomorrowBox');

@@ -2194,6 +2194,7 @@ function step(dt) {
     S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
   }
   if (working && Math.abs(S.v) > 0.1) {
+    S.workT = (S.workT || 0) + dt;                // 耕している時間（ほ場作業効率に使う）
     S.pitch = tillPitch();
     S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
     // DPF の自動再生：耕しているとフィルターにすすがたまり、ある程度たまると作業しながら自動で燃やす（本物は 30 分ほど。ゲームは 1 分半）
@@ -2702,6 +2703,7 @@ function finish() {
   const area = left * CELL * CELL;
   $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
+    `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
     `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span><br>`;
   $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');

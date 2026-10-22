@@ -82,7 +82,8 @@ function addDist(d) {   // 転がった道のり（マス）。40マスごとに
   const got = left[hash('koro-get:' + st.n++) % left.length];
   st.u.push(got.id); st.sel = got.id; save(); paint();
   const G = root.nishioGo;
-  if (G && G.toast) G.toast(`🍚 あたらしい転がり方「${got.name}」（${got.no}）！ ${got.motion.desc}（せってい の ずかんで えらべます）`);
+  // 知らせは1行で短く（40マスごとに出るので、3行だと 地図の上が いつも ふさがる）。どう転がるかは ずかんで
+  if (G && G.toast) G.toast(`🍚 転がり方「${got.name}」GET！`);
   if (root.nsgTrack) root.nsgTrack('koro_unlock', { id: got.id + 1, count: st.u.length });
 }
 

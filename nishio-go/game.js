@@ -3408,16 +3408,49 @@ function sessionStart() { Object.assign(session, { start: Date.now(), on: true, 
 document.addEventListener('visibilitychange', () => { if (document.hidden) sessionEnd(); else if (store.get('nsg_started', false)) sessionStart(); });   // はじめの画面のあいだは数えない
 window.addEventListener('pagehide', sessionEnd);
 
-// はじめの画面の絵：いまの季節の、西尾城の丑寅櫓・佐久島の黒壁・稲荷山の茶摘み（西尾ドット絵帳の絵）を3枚、扇のように
-function introHero(waited) {
-  const D = window.NISHIO_DOTS, el = $('introHero');
-  if (!D || !el || !D.idOf) return;
-  const mo = new Date().getMonth() + 1, se = mo >= 3 && mo <= 5 ? 0 : mo <= 8 && mo >= 6 ? 1 : mo >= 9 && mo <= 11 ? 2 : 3;
-  const keys = ['kurokabe', 'ushitora', 'chatsumi'], idx = keys.map(k => D.MOTIFS.findIndex(m => (m.key || m) === k));
-  if (idx.some(i => i < 0)) return;
-  const ids = idx.map((m, n) => D.idOf(m, 0, se * 4 + 1, [6, 12, 3][n]));
-  if (waited !== true && D.ready && !D.ready(ids)) { D.load(ids).then(() => introHero(true)); return; }   // Blender の絵のシートを読んでから
-  el.innerHTML = ids.map((id, n) => `<img class="hc hc${n}" src="${D.dataUrl(id)}" alt="" width="144" height="144"/>`).join('') + '<i class="sp s1"></i><i class="sp s2"></i><i class="sp s3"></i>';
+// はじめの画面の絵：お米が 田んぼの あぜ道を コロン、コロンと転がってきて、まん中で止まると ゆらゆらして こっちを見て にっこり、また転がっていく
+// （歩く地図と同じ お米の絵・同じ でこぼこの転がり方。pixel.js の riceSpin・riceFeel）。はじめの画面を閉じたら止める
+function introHero() {
+  const cv = $('introHero');
+  if (!cv || !cv.getContext) return;
+  const x = cv.getContext('2d'), img = new Image(), W = cv.width, H = cv.height, G0 = 62;   // G0：あぜ道の高さ
+  const st = { x: -20, ang: 0, av: 0, rest: 0, t: 0, last: 0 };
+  const scene = now => {
+    const sky = x.createLinearGradient(0, 0, 0, 40);
+    sky.addColorStop(0, '#8fd0f4'); sky.addColorStop(1, '#d8f0fb');
+    x.fillStyle = sky; x.fillRect(0, 0, W, 40);
+    x.fillStyle = '#7fa8c8'; x.fillRect(0, 30, W, 4);   // 遠くの山なみ
+    x.fillStyle = '#6dbb4c'; x.fillRect(0, 34, W, 22);   // 田んぼ
+    x.fillStyle = '#4f9a3e';
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 20; c++) x.fillRect(((c * 8 + r * 4 - now / 90) % (W + 8) + W + 8) % (W + 8) - 4, 37 + r * 5, 3, 3);   // 稲（風で ゆれて流れる）
+    x.fillStyle = '#c8b078'; x.fillRect(0, 56, W, 16);   // あぜ道
+    x.fillStyle = '#b09860'; for (let c = 0; c < 20; c++) x.fillRect(c * 9 + 3, 64 + (c % 2) * 3, 3, 1);
+  };
+  const step = now => {
+    if ($('intro').hidden) return;
+    const dt = Math.min(0.05, (now - (st.last || now)) / 1000);
+    st.last = now;
+    const mid = W / 2, sp = 44;   // 点/秒
+    let dx = 0;
+    if (st.rest > 0) st.rest -= dt;
+    else { dx = sp * dt; st.x += dx; if (st.x >= mid && st.x - dx < mid) st.rest = 1.8; if (st.x > W + 24) st.x = -24; }
+    if (dx) { st.ang += dx / 9; st.av = sp / 9; }   // 進んだ分だけ回る（半径9点）
+    else {   // 止まっている：起き上がりこぼし
+      const up = Math.round(st.ang / (Math.PI * 2)) * Math.PI * 2;
+      st.av += (up - st.ang) * 70 * dt; st.av *= Math.pow(0.86, dt * 60); st.ang += st.av * dt;
+    }
+    scene(now);
+    if (img.complete && img.naturalWidth) {
+      const th = st.ang, low = Math.sqrt((10 * Math.sin(th)) ** 2 + (13.5 * Math.cos(th)) ** 2);   // たて長のつぶ：寝ころぶと低く
+      x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(Math.round(st.x - 8), G0 + 1, 16, 2);
+      x.save(); x.translate(Math.round(st.x), Math.round(G0 - low)); x.rotate(th % (Math.PI * 2));
+      x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 32, 32, -16, -16, 32, 32);
+      x.restore();
+    }
+    requestAnimationFrame(step);
+  };
+  img.src = 'nishio-go/art/rice.png';
+  requestAnimationFrame(step);
 }
 document.addEventListener('DOMContentLoaded', introHero);
 

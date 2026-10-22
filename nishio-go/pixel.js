@@ -4744,7 +4744,7 @@ spotSprites.osmN8241972430 = hiCanvas((r, h) => {
   r(5, 30, 2, 6, '#d23a2e'); r(38, 29, 4, 7, '#e8e8e8'); r(39, 30, 2, 3, '#3a6ac0');
   r(0, 36, 48, 6, '#9a9a96'); h(36, 0, 47, '#b8b8b4'); for (let x = 3; x < 48; x += 8) r(x, 39, 5, 1, '#f4f4f4');
 });
-// 名鉄 乙川駅：灰色の小さな駅舎、右に斜めに張り出した屋根、白とオレンジの自動販売機
+// JR 乙川駅（武豊線）：灰色の小さな駅舎、右に斜めに張り出した屋根、白とオレンジの自動販売機
 spotSprites.osmN8241891774 = hiCanvas((r, h) => {
   r(6, 14, 24, 22, '#5a5e64'); h(13, 5, 30, '#3a3e44'); r(9, 17, 7, 8, '#2a2e34'); r(9, 17, 7, 2, '#ffffff'); r(10, 18, 5, 1, '#d23a2e');
   spanRows(h, 10, [[28, 36], [28, 39], [28, 42], [28, 45]], '#c8ccd0'); r(30, 14, 1, 22, '#8a8e94'); r(44, 14, 1, 22, '#8a8e94'); h(14, 28, 46, '#6a6e74');
@@ -5015,6 +5015,9 @@ GIANT_ART['f-ricepia'] = 'ricepia';
   'sangane-kannon', 'jomyoji', 'anakobo', 'munosato', 'nakahata-hachiman', 'takakura-jinja', 'toteiyama',
   'saifukuji', 'ebisu-beach', 'terabe-beach',
 ].forEach(n => { GIANT_ART['f-' + n] = n; });
+// のこりの注目スポット（となりの市町）も手で形を作った特大の絵に（tools/blender/giant-osm.py）。
+// そこで手で作った OpenStreetMap の名所は、前の型の絵と同じ名前（<id>.png）に上書きしてあるので、下の list.json のまま描く
+['hekinan-saihoji', 'hekinan-aoi-park', 'takahama-ningyo-koji'].forEach(n => { GIANT_ART['f-' + n] = n; });
 // ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
 let giantIds = null;
 fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });

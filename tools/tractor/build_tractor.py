@@ -655,10 +655,10 @@ def fenders_lamps():
 #  運転席（いちばん大事）
 # ================================================================
 COL_TILT = 35.0
-WHEEL_C = Vector((0.0, 0.02, 1.90))
+WHEEL_C = Vector((0.0, 0.0, 1.89))
 WN = Vector((0, math.sin(math.radians(COL_TILT)), math.cos(math.radians(COL_TILT))))   # ハンドル面の法線（運転者のほう）
 W_UP = Vector((0, -math.cos(math.radians(COL_TILT)), math.sin(math.radians(COL_TILT))))  # ハンドルの 12 時の向き
-WHEEL_R = 0.19
+WHEEL_R = 0.165                   # リムの中心までの半径（外径 約 0.37）
 W_MTX = Matrix.Translation(WHEEL_C) @ Euler((math.radians(-COL_TILT), 0, 0)).to_matrix().to_4x4() @ Matrix.Rotation(math.pi, 4, 'Z')
 
 
@@ -694,7 +694,7 @@ def interior():
             box('gray', (0.022, 0.016, 0.03), (s * (0.07 + k * 0.027), 0.035, -0.07), mtx=col_m, bev=(0.004,))
         box('black', (0.10, 0.012, 0.04), (s * 0.095, 0.03, -0.07), mtx=col_m)
     # 丸型メーター：目からハンドルの上の窓を通して見える所に置く
-    P = WHEEL_C + W_UP * (WHEEL_R * 0.48)
+    P = WHEEL_C + W_UP * (WHEEL_R * 0.56)
     d = (P - EYE).normalized()
     MC = P + d * 0.17
     up = Vector((0, 0, 1)) - d * d.z
@@ -788,15 +788,15 @@ def interior():
 def steering_wheel():
     with part('SteeringWheel'):
         L = W_MTX
-        tor('black', WHEEL_R, 0.022, L, 56, 12)                                   # 黒い太いリム
+        tor('black', WHEEL_R, 0.019, L, 56, 12)                                   # 黒い太いリム
         for a in (35, 145, 270):                                                   # Y 字の 3 本スポーク（赤）
             r = math.radians(a)
             p1 = L @ Vector((math.cos(r) * (WHEEL_R - 0.01), math.sin(r) * (WHEEL_R - 0.01), 0))
-            p0 = L @ Vector((math.cos(r) * 0.045, math.sin(r) * 0.045, -0.035))
+            p0 = L @ Vector((math.cos(r) * 0.04, math.sin(r) * 0.04, -0.03))
             m = along(p0, p1, WN)
-            box('paint_red', (0.042, 0.012, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=m, bev=(0.005,))
-        cyl('paint_red', 0.055, 0.045, (0, 0, -0.03), mtx=L, n=28)
-        cyl('black', 0.04, 0.012, (0, 0, -0.004), mtx=L, n=24)
+            box('paint_red', (0.036, 0.011, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=m, bev=(0.005,))
+        cyl('paint_red', 0.048, 0.04, (0, 0, -0.026), mtx=L, n=28)
+        cyl('black', 0.034, 0.012, (0, 0, -0.004), mtx=L, n=24)
 
 
 def levers_pedals():

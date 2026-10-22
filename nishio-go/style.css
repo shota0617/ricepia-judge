@@ -404,7 +404,7 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 .px-info .area-card .area-spots{list-style:none;margin:4px 0 6px;padding:0;color:#fff;font-size:13px;columns:2;column-gap:12px}
 .px-info .area-card .src{font-size:11px;color:#bbb}
 .px-info .area-card .src a{color:#9cd2ff;margin-right:4px}
-.intro-box h1.logo{margin:4px 0 2px;line-height:0;position:relative;padding-bottom:30px}
+.intro-box h1.logo{margin:4px 0 2px;line-height:0;position:relative;padding-bottom:32px}
 /* タイトルロゴの下を、主人公のお米（art/rice.png の1行め：右へ でんぐり返る 32×32 の8コマ）が ころころ転がっていく。
    左の外から出てきて右の外へ消え、少し間をおいて くり返す。コマは steps(8) で切りかえ、ドットはぼかさない */
 .logo-lane{position:absolute;left:0;right:0;bottom:0;height:56px;overflow:hidden;pointer-events:none}

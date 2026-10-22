@@ -22,7 +22,7 @@
 - 公開ページ：`nishio-go/pr.html`（地区・季節・時間帯でえらぶ。大きく見て、空の色つきの 1080×1080 の画像を保存できる。リンクで その1枚を開ける）。ゲームの「せってい」からも開ける
 - 季節：春（若葉・桜の花びら）・夏（濃い緑）・秋（紅葉・落ち葉）・冬（雪・葉の落ちた木）。時間帯：朝・昼・夕方（窓に明かり）・夜（月あかり・窓と灯籠に明かり）
 - 歩く地図でも、その82か所の特大の絵は、いまの季節と時間帯の絵になる（いつもの左前の向き）
-- 作り方：形は歩く地図の特大の絵と同じ型（`tools/blender/giant.py`・`giant-gen.py`）を、`tools/blender/giant-pr.py`（Blender。向きを変えて描く）→ `tools/giant-pr-color.py`（季節と時間帯の色をのせる）。82か所 × 4向きの描きに約13分、色のせに約1分。一覧は `nishio-go/art/pr/list.json`
+- 作り方：形は歩く地図の特大の絵と同じ型（`tools/blender/giant.py`・手作りの `giant-nishio.py`・`giant-gen.py`）を、`tools/blender/giant-pr.py`（Blender。向きを変えて描く）→ `tools/giant-pr-color.py`（季節と時間帯の色をのせる）。82か所 × 4向きの描きに約13分、色のせに約1分。一覧は `nishio-go/art/pr/list.json`
 - 名所の説明はゲームの名所の窓と同じ文（spots.json）。絵は形の型から作ったもので、本物の建物の細かい所までは同じではない
 
 ## 1. 広告のリンク（どの広告から来たかを数える）

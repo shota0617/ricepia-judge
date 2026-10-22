@@ -848,6 +848,36 @@ const MIST = (() => {
 })();
 
 
+// ---- 初霜：秋の晴れた朝は、刈りあとの切り株・ひこばえ・畦の草・耕していない土の表面が霜で白い（山形では 10 月下旬に初霜。
+// 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける
+const FROST = (() => {
+  const on = season === 'aki' && TOD === 'asa', list = [];
+  let t = 0;
+  const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7 };
+  const add = m => {
+    if (!m || !(m.name in K) || list.some(e => e.m === m)) return;
+    list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name] });
+  };
+  function apply() {
+    const f = Math.max(0, 1 - t / 150);
+    for (const e of list) {
+      const a = e.k * f;
+      e.m.color.copy(e.c).lerp(new THREE.Color(1.35, 1.4, 1.5), a);   // 白くきらっと（少し青み）
+      if (e.e) e.m.emissive.copy(e.e).lerp(new THREE.Color(0.10, 0.11, 0.13), a);
+    }
+  }
+  return {
+    setup(root) {
+      if (!on) return;
+      root.traverse(o => { if (o.isMesh) add(o.material); });
+      add(stubbleMat); add(hikobaeMat);
+      apply();
+    },
+    update(dt) { if (!on || !list.length || t > 150) return; t += dt; apply(); },
+    get list() { return list; }
+  };
+})();
+
 // ---- 畦を見回る人：田んぼの水や畦は毎日のように見回る（山形県・農林水産省の資料）。北の畦（となりの田んぼとのあいだ）を
 // スコップをかついで歩き、ときどき立ち止まって田んぼをのぞく。トラクターが近いと止まって待つ
 const FARMER = (() => {
@@ -1068,6 +1098,7 @@ function setupField(root) {
     }
     buildHills();
   }
+  FROST.setup(root);
 }
 
 // ---- 地面の高さと、走れる所 ----
@@ -2756,6 +2787,7 @@ function frame(now) {
   RIPPLE.update(dt);
   GOSSAMER.update(dt);
   MIST.update(dt);
+  FROST.update(dt * SPEEDUP);
   FARMER.update(dt);
   FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
@@ -2766,7 +2798,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

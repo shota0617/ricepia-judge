@@ -173,6 +173,7 @@ function build() {
     else if (k === 'retry') { if (game && game.board) restart(); else if (game) startStage(game.n); }
     else if (k === 'next') startStage(game.n + 1);
     else if (k === 'again') startStage(game.n);
+    else if (k === 'resume') resume();
     else if (k === 'list') showList();
     else if (k.startsWith('go:')) startStage(+k.slice(3));
   });
@@ -396,6 +397,7 @@ function win() {
     <div class="mz-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
     <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
     <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button></div>`;
+  g.cardHtml = ui.card.innerHTML;   // いちらんを 見て もどったときに 出しなおす
   // 紙ふぶき：ゴールから ごはんつぶ・星・桜が はじける。音は コトンを 4つ 上がっていく
   const gx = b.goal[0] + 0.5, gy = b.goal[1] + 0.5, cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];
   for (let i = 0; i < 46; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 5; g.fx.push({ x: gx, y: gy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 3, c: cols[i % cols.length], t: 0, life: 0.9 + Math.random() * 0.7 }); }
@@ -404,12 +406,18 @@ function win() {
   clearTimeout(g.cardT);
   g.cardT = setTimeout(() => { if (game === g && g.done) ui.clear.hidden = false; }, 1100);   // 紙ふぶきの あいだに やりなおしたら 出さない
 }
+function resume() {   // いちらんから もどる：とちゅうなら そのまま つづき、ゴールのあとなら 結果の カードへ
+  if (!game) return;
+  if (game.done && game.cardHtml) { ui.card.innerHTML = game.cardHtml; ui.clear.hidden = false; return; }
+  ui.clear.hidden = true; game.last = 0;
+  if (!game.board) startStage(game.n);
+}
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
   ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3><div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
     const b = st.best[s.id];
     return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}${b ? `<br/><small>${'★'.repeat(b.s)} ${b.t.toFixed(1)}秒</small>` : ''}</button>`;
-  }).join('')}</div><div class="mz-row"><button type="button" data-mz="again">もどる</button></div>`;
+  }).join('')}</div><div class="mz-row"><button type="button" data-mz="resume">もどる</button></div>`;
   ui.clear.hidden = false;
   if (game) game.paused = true;
 }

@@ -26,10 +26,14 @@
   .chip { padding: 5px 10px; border-radius: 999px; background: rgba(20, 18, 14, .62); color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
   .chip b { font-size: 16px; }
   .chip.on { background: rgba(195, 20, 27, .85); }
+  .chip.score { background: rgba(31, 77, 43, .82); }
+  #scorePop { align-self: center; color: #ffd84a; font-size: 14px; font-weight: 800; text-shadow: 0 1px 3px rgba(0,0,0,.8); opacity: 0; transition: opacity .4s; white-space: nowrap; }
   #bar { position: fixed; top: max(8px, env(safe-area-inset-top)); right: 8px; display: flex; gap: 6px; }
   #bar button, .pad button { border: 0; border-radius: 12px; background: rgba(251, 248, 240, .9); color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.25); }
-  #bar button { min-width: 44px; height: 40px; padding: 0 10px; font-size: 14px; }
+  #bar button { min-width: 44px; height: 40px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
+  @media (max-width: 640px) { #bar { left: 8px; justify-content: flex-end; gap: 4px; } #bar button { min-width: 36px; height: 36px; padding: 0 7px; font-size: 12px; } }
   #bar button.on { background: var(--green); color: #fff; }
+  #bar button.wait { background: #ffd84a; color: #1a1814; }
   #hud { right: 400px; }
   /* さわる操作（スマホ）。パソコンでも押せる */
   .pad { position: fixed; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 10px; user-select: none; -webkit-user-select: none; }
@@ -79,11 +83,14 @@
   <span class="chip" id="rot">ロータリー 上</span>
   <span class="chip">耕した <b id="pct">0</b>%</span>
   <span class="chip" id="time">0:00</span>
+  <span class="chip score">点数 <b id="sc">100</b></span>
+  <span id="scorePop"></span>
 </div>
 <div id="bar" class="hidden">
   <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
-  <button id="bAssist" title="直進アシスト（G）">直進 切</button>
+  <button id="bAssist" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
+  <button id="bGear" title="主変速（Q で下げる・E で上げる）">変速 3</button>
   <button id="bFast" title="早送り（F）">⏩ ×1</button>
   <button id="bMenu" title="はじめの画面へ">≡</button>
 </div>
@@ -116,16 +123,17 @@
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
       ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
-      ・直進アシスト <kbd>G</kbd>（ハンドルから手をはなすと、ガイドの線にそってまっすぐ走る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）<br>
+      ・直進アシスト <kbd>G</kbd>（本物と同じく、始点 A で G → 5m 以上まっすぐ走って終点 B で G。A・B を結んだ基準線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>・ボタンの長押しで登録しなおし。アシストで耕しているときにハンドルを切ると、ロータリーが自動で上がる「旋回連動」つき。回ったら下げるとアシストがまた入る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）／主変速 <kbd>Q</kbd> <kbd>E</kbd>（1〜4 速。耕すのは 2〜3 速）<br>
       ・スマホは画面の下のボタンで操作します。
     </div>
     <div class="how">
       <b>本物の耕し方</b><br>
-      ・エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは PTO 2 速で爪を速く回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
+      ・エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは幅 3.4m のウイングハロー（道では翼を折りたたむ）を PTO 2 速で回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
-      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる
+      ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、セキレイも集まってくる<br>
+      ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎると減る
     </div>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -135,6 +143,7 @@
   <div class="card">
     <h1>🎉 耕し終わりました！</h1>
     <p id="doneText"></p>
+    <p id="doneScore"></p>
     <button class="go" id="bAgain">もう一度</button>
     <p class="small"><a href="https://ricepia.jp/" target="_blank" rel="noopener">らいすぴあ（近藤米穀店）のお米を見る</a></p>
   </div>
@@ -149,12 +158,13 @@ const FIELD = { haru: 'field_tanbo.glb', aki: 'field_tanbo_aki.glb', shirokaki: 
 const HX = 15, HZ = 25;                       // 耕す田んぼの半分の幅・長さ
 const WB = 2.15, TRACK = 0.66, R_REAR = 0.66, R_FRONT = 0.445;
 const EYE = new THREE.Vector3(0, 2.27, -0.46);
-const ROTARY_Z = -1.38, TILL_W = 2.2;
 const CELL = 0.2, NX = Math.round(2 * HX / CELL), NZ = Math.round(2 * HZ / CELL);
 const MOBILE = matchMedia('(pointer: coarse)').matches;
 const params = new URLSearchParams(location.search);
 let season = FIELD[params.get('season')] ? params.get('season') : 'haru';
 const SHIRO = season === 'shirokaki';
+const IMPL = SHIRO ? 'ハロー' : 'ロータリー';   // 作業機の呼び名
+const ROTARY_Z = -1.38, TILL_W = SHIRO ? 3.4 : 2.2;   // 代かきは幅 3.4m のウイングハロー（tools/tractor/harrow_yt.glb）
 const TILL_Y = SHIRO ? 0.045 : 0.035;
 
 const $ = id => document.getElementById(id);
@@ -271,14 +281,19 @@ scene.add(rig);
 const P = {};                                  // 動く部品
 let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikobaeGeo = null, hikobaeMat;
 
-Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f')]).then(([t, f]) => {
+Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load('harrow_yt.glb', 'h') : null]).then(([t, f, h]) => {
   prog.t = prog.f = 1; showProg();
   NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形）
+  if (h) {                                     // 代かき：ロータリーをウイングハローにつけかえる（原点は同じ）
+    const old = t.scene.getObjectByName('Rotary'), hr = h.scene.getObjectByName('Rotary');
+    old.parent.add(hr); old.parent.remove(old);
+  }
   setupTractor(t.scene);
   setupField(f.scene);
   DRIVER.setup(P.SteeringWheel.parent);
   MIRROR.setup(t.scene);
   resetPos();
+  setRotBtn();
   $('bStart').disabled = false;
 }).catch(e => { $('progText').textContent = '読みこめませんでした。通信のよい所で、もう一度ひらいてください（' + e.message + '）'; });
 
@@ -329,7 +344,7 @@ function setupTractor(root) {
   root.traverse(o => {
     if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
   });
-  for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'SteerFL', 'SteerFR', 'SteeringWheel', 'Rotary', 'Rotor', 'Flap',
+  for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'SteerFL', 'SteerFR', 'SteeringWheel', 'Rotary', 'Rotor', 'Flap', 'WingL', 'WingR', 'RotorL', 'RotorR',
     'LeverJoy', 'LeverShuttle', 'PedalBrakeL', 'PedalBrakeR', 'PedalClutch', 'MeterScreen', 'MonitorScreen', 'Glass']) P[n] = root.getObjectByName(n);
   P.sw0 = P.SteeringWheel.quaternion.clone();
   P.rotY0 = P.Rotary.position.y;
@@ -849,7 +864,7 @@ function ground(x, z) {
     }
   }
   if (Math.abs(x) <= HX && Math.abs(z) <= HZ) return SHIRO ? -0.07 : 0;
-  if (x > 18.85 && x < 20.45 && z > 25.2 && z < 28.8) return null;   // 農道に止めてある軽トラ
+  if (x > 18.85 && x < 20.45 && z > 12.2 && z < 15.8) return null;   // 農道に止めてある軽トラ
   if (x >= 16.7 && x <= 20.7 && Math.abs(z) <= 400) return 0.5 + 0.03 * (1 - Math.abs(x - 18.7) / 2);
   return null;                                  // 畦・水路・となりの田んぼ：入れない
 }
@@ -868,7 +883,7 @@ let dirtyLo = Infinity, dirtyHi = -1;
 function tillCell(i, j) {
   if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
   const c = i * NZ + j;
-  if (tilledMask[c]) return;
+  if (tilledMask[c]) return 0;
   tilledMask[c] = 1;
   const x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
@@ -882,6 +897,7 @@ function tillCell(i, j) {
   eraseTracks(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   hillsDirty = true;
+  return 1;
 }
 function flushTilled() {
   if (dirtyHi < 0) return;
@@ -1102,7 +1118,7 @@ const TR = (() => {
 })();
 const trackCells = new Set();
 function eraseTracks(c) { if (trackCells.has(c)) { TR.erase(c); trackCells.delete(c); } }
-// 均平板のすじ：耕しているとき、ロータリーのうしろに進む向きの細いすじを残す（幅 2.1m の帯）
+// 均平板のすじ：耕しているとき、ロータリーのうしろに進む向きの細いすじを残す（耕幅より 10cm せまい帯）
 const STREAK = (() => {
   const N = 3000;
   const pos = new Float32Array(N * 12), uv = new Float32Array(N * 8), idx = new Uint32Array(N * 6), nor = new Float32Array(N * 12);
@@ -1141,7 +1157,7 @@ const STREAK = (() => {
     const d = Math.hypot(x - last.x, z - last.z);
     if (d < 0.2) return;
     if (d > 1.5) { last = { x, z }; return; }
-    const hw = 1.05, nx = -(z - last.z) / d * hw, nz = (x - last.x) / d * hw;
+    const hw = TILL_W / 2 - 0.05, nx = -(z - last.z) / d * hw, nz = (x - last.x) / d * hw;
     const i = next; next = (next + 1) % N;
     pos.set([last.x + nx, y, last.z + nz, last.x - nx, y, last.z - nz, x - nx, y, z - nz, x + nx, y, z + nz], i * 12);
     uv.set([0, 0, 1, 0, 1, 1, 0, 1], i * 8);
@@ -1416,6 +1432,64 @@ const TURBID = (() => {
   return { add, update, a };
 })();
 
+// ---- 操縦の点数（リアルタイム・100 点）：本物の耕し方の目安で採点する ----
+// 速さ 20：耕すときは時速 2〜3km／まっすぐ 30：長い向きを耕すとき 1m あたりの向きのぶれ／
+// 重ね 25：となりと 10cm ほど重ねるのがよい（重ねすぎはむだ）／旋回 25：ロータリーを上げて回る・畦にぶつけない
+const SCORE = (() => {
+  const st = { tillT: 0, goodT: 0, yawSq: 0, yawM: 0, swept: 0, newA: 0, turnsDown: 0, levee: 0, lastYaw: null, turning: false, leveeT: 0 };
+  let parts = { spd: 20, straight: 30, overlap: 25, turn: 25 }, total = 100, popT = 0;
+  function pop(t) {
+    const el = $('scorePop');
+    el.textContent = t; el.style.opacity = 1; popT = 1.8;
+  }
+  function step(dt, working, newCells) {
+    st.leveeT = Math.max(0, st.leveeT - dt);
+    if (!working || S.v < 0.1) { st.lastYaw = null; if (Math.abs(S.steer) < 0.15) st.turning = false; return; }
+    st.tillT += dt;
+    const kmh = S.v * 3.6;
+    st.goodT += dt * Math.max(0, 1 - Math.max(1.9 - kmh, kmh - 3.3, 0) / 0.6);   // 時速 1.9〜3.3km は満点、はずれると少しずつ減る
+    // 長い向き（±15°）をまっすぐ耕しているとき（旋回と、直進アシストが線へ寄せている所は数えない）
+    if (Math.abs(Math.cos(S.yaw)) > 0.966 && Math.abs(S.steer) < 0.3 && !ASSIST.active && st.lastYaw !== null) {
+      const m = S.v * dt, d = (S.yaw - st.lastYaw) * 180 / Math.PI;
+      st.yawSq += d * d / Math.max(m, 1e-3); st.yawM += m;
+    }
+    st.lastYaw = S.yaw;
+    st.swept += (TILL_W + CELL) * S.v * dt;                         // 耕すます目（20cm）の分だけ広めに数える
+    st.newA += newCells * CELL * CELL;
+    if (Math.abs(S.steer) > 0.32 && !st.turning) { st.turning = true; st.turnsDown++; pop('−3　ロータリーを下げたまま旋回'); }
+    else if (Math.abs(S.steer) < 0.15) st.turning = false;
+  }
+  function levee() {
+    if (st.leveeT > 0) return;
+    st.leveeT = 2; st.levee++; pop('−2　畦にぶつかった');
+  }
+  function calc() {
+    const spd = st.tillT > 2 ? 20 * Math.min(1, st.goodT / st.tillT / 0.9) : 20;
+    const rms = st.yawM > 3 ? Math.sqrt(st.yawSq / st.yawM) : 0;      // 1m あたりの向きのぶれ（度）
+    const straight = 30 * Math.max(0, Math.min(1, 1 - (rms - 0.6) / 5));
+    const dup = st.swept > 8 ? 1 - st.newA / st.swept : 0;            // 重なった割合（10cm 重ねで約 5%）
+    const overlap = 25 * Math.max(0, Math.min(1, 1 - (dup - 0.12) / 0.45));
+    const turn = Math.max(0, 25 - 3 * st.turnsDown - 2 * st.levee);
+    parts = { spd, straight, overlap, turn, rms, dup };
+    total = Math.round(spd + straight + overlap + turn);
+    return total;
+  }
+  function update(dt) {
+    if (popT > 0 && (popT -= dt) <= 0) $('scorePop').style.opacity = 0;
+  }
+  function summary() {
+    calc();
+    const r = x => Math.round(x);
+    const tips = [];
+    if (parts.straight < 24) tips.push('長い向きはハンドルを小さく、遠くの目印を見てまっすぐ（直進アシスト G も使える）');
+    if (parts.overlap < 20) tips.push('となりの耕した跡には 10cm ほど重ねるくらいで。重ねすぎると時間と燃料がむだに');
+    if (parts.turn < 20) tips.push('枕地で回るときはロータリーを上げてから。下げたままだと四隅に土が寄る');
+    if (parts.spd < 16) tips.push('耕すときは時速 2〜3km（歩くくらい）で');
+    return { total, text: `速さ ${r(parts.spd)}/20・まっすぐ ${r(parts.straight)}/30・重ね ${r(parts.overlap)}/25・旋回 ${r(parts.turn)}/25`, tips };
+  }
+  return { step, levee, calc, update, summary, st, get parts() { return parts; } };
+})();
+
 // ---- 四隅の土の盛り上がり：ロータリーを下げたまま大きく曲がると、ロータリーが横へ振られて外側に土が寄る
 // （農家さんの悩みとしてよく挙がる。まっすぐ耕しなおすと均平板で少しずつならされる）。代かきは水の下なので出さない
 const HEAPS = (() => {
@@ -1519,7 +1593,7 @@ const HEAPS = (() => {
 })();
 
 // ---- 運転 ----
-const S = { x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
+const S = { gear: 3, x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
 const key = { fwd: 0, back: 0, left: 0, right: 0 };
 const MAX_STEER = 0.62;
 function resetPos() {
@@ -1527,10 +1601,12 @@ function resetPos() {
   placeRig(0);
   buildHills();
 }
+// 作業機のはしの横の位置：ハローは翼を折りたたむとせまくなる
+const ROT_HALF = () => SHIRO ? (S.rotPos > 0.6 ? 0.95 : TILL_W / 2 + 0.06) : 1.16;
 function wheelPoints(x, z, yaw) {               // 地面の高さを見る所（後輪・前輪・前のおもり・ロータリーの両はし）
   const s = Math.sin(yaw), c = Math.cos(yaw);
   const w = (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c];
-  return { rl: w(TRACK, 0), rr: w(-TRACK, 0), fl: w(TRACK, WB), fr: w(-TRACK, WB), nose: w(0, 3.05), rotL: w(1.16, -1.62), rotR: w(-1.16, -1.62), w };
+  return { rl: w(TRACK, 0), rr: w(-TRACK, 0), fl: w(TRACK, WB), fr: w(-TRACK, WB), nose: w(0, 3.05), rotL: w(ROT_HALF(), -1.62), rotR: w(-ROT_HALF(), -1.62), w };
 }
 function canBe(x, z, yaw) {
   const p = wheelPoints(x, z, yaw);
@@ -1548,28 +1624,33 @@ function placeRig(dt) {
   rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB, S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
 }
 
-// 直進アシスト：田んぼの長い向き（z）にそって、耕幅 2.2m から 10cm 重ねた 2.1m おきのガイドの線を引き、
-// ハンドルから手をはなすと、いちばん近い線にそってまっすぐ走る（本物は GNSS で基準の線を決める）
-const ASSIST = { on: false, active: false, line: 0, dir: 1 };
+// 直進アシスト（本物と同じ手順）：G で始点 A を登録 → 5m 以上まっすぐ走って G で終点 B を登録 → A と B を結んだ基準線と
+// 平行に、耕幅から 10cm 重ねた間隔（ロータリー 2.1m・ハロー 3.3m）でガイドの線ができる。ハンドルから手をはなすと、いちばん近い線にそってまっすぐ走る。
+// そのあと G で入切、Shift+G で登録しなおし
+const ASSIST = { mode: 'none', paused: false, on: false, active: false, A: null, B: null, aDist: 0, d: [0, 1], n: [1, 0], dir: 1, k: 0, off: 0 };
 // PTO：耕うんは 1 速、代かきは 2 速で爪を速く回す（同じ YT4 シリーズの仕様：エンジン 2600 回転で 1 速 561・2 速 784 回転）
 const PTO_RATIO = (SHIRO ? 784 : 561) / 2600;
-const LINE0 = -HX + TILL_W / 2, PITCH = TILL_W - 0.1;
+const PITCH = TILL_W - 0.1;
 function assistSteer(dt) {
-  const fz = Math.cos(S.yaw);
-  if (Math.abs(fz) < 0.9) return false;            // 長い向きに近いときだけ
-  ASSIST.dir = Math.sign(fz);
-  ASSIST.line = LINE0 + Math.round((S.x - LINE0) / PITCH) * PITCH;
-  const off = S.x - ASSIST.line;                   // 線からのずれ（m）。左が＋
-  // ずれと、線へ寄っていく向き（sin(yaw)）の両方を見て切る。うしろ向き（dir=-1）は左右が逆になる
-  const target = Math.max(-0.3, Math.min(0.3, ASSIST.dir * (off * 0.9 + Math.sin(S.yaw) * 2.2)));
+  if (!ASSIST.on) return false;
+  const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), [dx, dz] = ASSIST.d, [nx, nz] = ASSIST.n;
+  const along = fx * dx + fz * dz;
+  if (Math.abs(along) < 0.9) return false;         // 基準線の向きに近いときだけ（枕地の旋回は自分で）
+  ASSIST.dir = Math.sign(along);
+  const o = (S.x - ASSIST.A[0]) * nx + (S.z - ASSIST.A[1]) * nz;   // 基準線からの横の位置（左が＋）
+  ASSIST.k = Math.round(o / PITCH);
+  const off = ASSIST.off = o - ASSIST.k * PITCH;   // いちばん近いガイドの線からのずれ（m）
+  const lat = fx * nx + fz * nz;                   // 線へ寄っていく向き
+  // ずれと寄っていく向きの両方を見て切る。基準線と逆向き（dir=-1）は左右が逆になる
+  const target = Math.max(-0.3, Math.min(0.3, ASSIST.dir * (off * 0.9 + lat * 2.2)));
   S.steer += Math.max(-0.8 * dt, Math.min(0.8 * dt, target - S.steer));
   return true;
 }
 function step(dt) {
-  // 目標の速さ：耕しているときは 2.8km/h（本物のロータリー耕うんは 2〜3km/h）、ロータリーを上げると 9km/h（田んぼの中の移動）、
-  // 農道は 14km/h、うしろは 3km/h。大きく切っているときは ゆっくり
+  // 目標の速さ：主変速（1〜4 速）で決まる。耕すとき（副変速は低速）は 1.6・2.2・2.8・3.6km/h（本物のロータリー耕うんは 2〜3km/h）、
+  // 上げて田んぼの中を移動するときは その 3.2 倍、農道は 5 倍。うしろは 3km/h。大きく切っているときは ゆっくり
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
-  const vmax = (S.rotDown ? 0.78 : onRoad ? 3.9 : 2.5) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
+  const vmax = GEARS[S.gear - 1] * (S.rotDown ? 1 : onRoad ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
   if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に黒い煙
     const before = S.crank;
     S.crank = Math.max(0, S.crank - dt);
@@ -1593,11 +1674,18 @@ function step(dt) {
   else if (ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
   else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
   // オートブレーキ：ロータリーを上げて大きく切ると、内側の後輪に半ブレーキがかかって小さく回れる（枕地での旋回）
+  // 旋回連動（直進アシスト仕様）：直進アシストで耕したあと、旋回でハンドルを切ると作業機が自動で上がり、アシストも切れる。
+  // 旋回のあとロータリーを下げると、アシストがまた入る
+  if (ASSIST.on && S.rotDown && sIn && Math.abs(S.steer) > 0.26 && S.v > 0.05) {
+    S.rotDown = false; ASSIST.on = false; ASSIST.mode = 'off'; ASSIST.paused = true;
+    setRotBtn(); setAssistBtn();
+    toast('旋回連動：ハンドルを切ったので、ロータリーが自動で上がり、直進アシストが切れました。回ったら下げる');
+  }
   S.autoBrake = !S.rotDown && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;
   const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
-  else { if (Math.abs(S.v) > 0.5) toast('畦（あぜ）です。もどってください'); S.v = 0; }
+  else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
   S.rotPos += Math.max(-dt * 1.2, Math.min(dt * 1.2, (S.rotDown ? 0 : 1) - S.rotPos));
@@ -1605,6 +1693,11 @@ function step(dt) {
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
   P.Rotor.rotation.x += (working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 8 : 0) * dt;
+  if (P.WingL) {                                  // ハロー：上げると翼を上へ折りたたみ、下げると広げる
+    const fold = Math.max(0, Math.min(1, (S.rotPos - 0.25) / 0.6)) * 1.72;
+    P.WingL.rotation.z = fold; P.WingR.rotation.z = -fold;
+    P.RotorL.rotation.x = P.RotorR.rotation.x = P.Rotor.rotation.x;
+  }
   P.Flap.rotation.x = P.flap0 + (working && S.v > 0.1 ? 0.06 + 0.03 * Math.sin(performance.now() / 70) : 0);
   if (working && S.v > 0.05) emitTilling(dt);
   if (Math.abs(S.v) > 0.05) laySomeTracks(working);
@@ -1617,13 +1710,15 @@ function step(dt) {
       TURBID.add(S.x + lx * cs + lz * sn, S.z - lx * sn + lz * cs, dt * 0.9);
     }
   }
+  let newCells = 0;
   if (working && S.v > 0.05) {
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
       const [wx, wz] = p.w(lx, lz);
-      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL));
+      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL)) || 0;
     }
   }
+  if (S.started && !S.done) SCORE.step(dt, working, newCells);
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   P.WheelRL.rotation.x += S.v * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
@@ -1719,7 +1814,7 @@ function drawMeter() {
   g.fillStyle = '#bfe7ee'; g.font = 'bold 34px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(kmh.toFixed(1), r, r - 8);
   g.font = 'bold 15px sans-serif';
-  g.fillText((S.v < -0.05 ? 'R' : 'F') + '  km/h', r, r + 20);
+  g.fillText((S.v < -0.05 ? 'R' : 'F' + S.gear) + '  km/h', r, r + 20);
   g.fillStyle = S.rotDown ? '#ffb020' : '#2c3438'; g.fillText('PTO', r - 22, r + 42);
   g.fillStyle = '#9fd2dc'; g.font = 'bold 13px sans-serif';
   g.fillText(Math.round(engineRpm(performance.now() / 1000) / 10) * 10 + 'rpm', r + 22, r + 42);
@@ -1747,12 +1842,24 @@ function drawMonitor(pct) {
   g.imageSmoothingEnabled = false;
   g.drawImage(monitor.map, X0, Y0, W, H);
   g.strokeStyle = '#8fb4d0'; g.lineWidth = 2; g.strokeRect(X0, Y0, W, H);
-  if (ASSIST.on) {                                // 直進アシストのガイドの線（耕幅ごと）
-    for (let gx = LINE0; gx < HX; gx += PITCH) {
-      const ly = Y0 + (1 - (gx + HX) / (2 * HX)) * H, cur = ASSIST.active && Math.abs(gx - ASSIST.line) < 0.01;
-      g.strokeStyle = cur ? '#4fe0ff' : 'rgba(150,200,230,0.35)'; g.lineWidth = cur ? 3 : 1;
-      g.beginPath(); g.moveTo(X0, ly); g.lineTo(X0 + W, ly); g.stroke();
+  const mp = (x, z) => [X0 + (z + HZ) / (2 * HZ) * W, Y0 + (1 - (x + HX) / (2 * HX)) * H];
+  if (ASSIST.B) {                                 // 直進アシストのガイドの線（基準線と平行に耕幅ごと）
+    g.save(); g.beginPath(); g.rect(X0, Y0, W, H); g.clip();
+    const [ax, az] = ASSIST.A, [dx, dz] = ASSIST.d, [nx, nz] = ASSIST.n;
+    for (let k = -30; k <= 30; k++) {
+      const cx = ax + nx * k * PITCH, cz = az + nz * k * PITCH;
+      const [x1, y1] = mp(cx - dx * 80, cz - dz * 80), [x2, y2] = mp(cx + dx * 80, cz + dz * 80);
+      const cur = ASSIST.active && k === ASSIST.k;
+      g.strokeStyle = k === 0 ? (ASSIST.on ? '#ffd84a' : 'rgba(255,216,74,0.4)') : cur ? '#4fe0ff' : ASSIST.on ? 'rgba(150,200,230,0.35)' : 'rgba(150,200,230,0.15)';
+      g.lineWidth = cur || k === 0 ? 3 : 1;
+      g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
     }
+    g.restore();
+  }
+  for (const [pt, label] of [[ASSIST.A, 'A'], [ASSIST.B, 'B']]) if (pt) {   // 始点 A・終点 B の印
+    const [qx, qy] = mp(pt[0], pt[1]);
+    g.fillStyle = '#ffd84a'; g.beginPath(); g.arc(qx, qy, 8, 0, 7); g.fill();
+    g.fillStyle = '#10202c'; g.font = 'bold 12px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(label, qx, qy + 1);
   }
   const px = X0 + (S.z + HZ) / (2 * HZ) * W, py = Y0 + (1 - (S.x + HX) / (2 * HX)) * H;
   g.save(); g.translate(px, py); g.rotate(-S.yaw + Math.PI / 2 + Math.PI);
@@ -1761,7 +1868,7 @@ function drawMonitor(pct) {
   g.fillStyle = '#1c3348';
   for (let k = 0; k < 4; k++) { g.fillRect(392, 52 + k * 58, 108, 46); }
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
-  ['直進 ' + (ASSIST.on ? (ASSIST.active ? (S.x - ASSIST.line >= 0 ? '左' : '右') + Math.abs((S.x - ASSIST.line) * 100).toFixed(0) + 'cm' : '入') : '切'),
+  ['直進 ' + (ASSIST.on ? (ASSIST.active ? (ASSIST.off >= 0 ? '左' : '右') + Math.abs(ASSIST.off * 100).toFixed(0) + 'cm' : '入') : ASSIST.mode === 'a' ? 'A点' : ASSIST.B ? '切' : '未登録'),
     (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (SHIRO ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * PTO_RATIO / 10) * 10 : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
@@ -1830,9 +1937,11 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyC') nextCam();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyR') resetPos();
-  else if (e.code === 'KeyG') toggleAssist();
+  else if (e.code === 'KeyG') e.shiftKey ? resetAssist() : toggleAssist();
   else if (e.code === 'KeyF') toggleFast();
   else if (e.code === 'KeyL') LAMPS.toggle();
+  else if (e.code === 'KeyQ') shiftGear(-1);
+  else if (e.code === 'KeyE') shiftGear(1);
 });
 addEventListener('keyup', e => { if (KEYS[e.code]) key[KEYS[e.code]] = 0; });
 document.querySelectorAll('.pad button[data-k]').forEach(b => {
@@ -1841,7 +1950,7 @@ document.querySelectorAll('.pad button[data-k]').forEach(b => {
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
 });
 function setRotBtn() {
-  $('bRot').textContent = S.rotDown ? 'ロータリーを上げる' : 'ロータリーを下げる';
+  $('bRot').textContent = S.rotDown ? IMPL + 'を上げる' : IMPL + 'を下げる';
   $('bRot').classList.toggle('down', S.rotDown);
 }
 function toggleRotary() {
@@ -1849,22 +1958,61 @@ function toggleRotary() {
   S.rotDown = !S.rotDown;
   S.autoUp = false;
   setRotBtn();
-  toast(S.rotDown ? 'ロータリーを下げました（PTO 入）。前へ走ると耕せます' : 'ロータリーを上げました（PTO 切）');
+  if (S.rotDown && ASSIST.paused) {               // 旋回連動：下げると直進アシストがまた入る
+    ASSIST.paused = false; ASSIST.on = true; ASSIST.mode = 'on'; setAssistBtn();
+    toast(IMPL + 'を下げました。直進アシストがまた入りました');
+    return;
+  }
+  ASSIST.paused = false;
+  toast(S.rotDown ? IMPL + 'を下げました（PTO 入）。前へ走ると' + (SHIRO ? '代かきできます' : '耕せます') : IMPL + 'を上げました（PTO 切）' + (SHIRO ? '。翼を折りたたみます' : ''));
 }
 function toggleAssist() {
-  ASSIST.on = !ASSIST.on;
-  $('bAssist').textContent = ASSIST.on ? '直進 入' : '直進 切';
+  const A = ASSIST;
+  if (A.mode === 'none') {                        // 始点 A を登録
+    A.A = [S.x, S.z]; A.aDist = S.dist || 0; A.mode = 'a';
+    toast('直進アシスト：始点 A を登録しました。5m 以上まっすぐ走ってから、もう一度 G で終点 B');
+  } else if (A.mode === 'a') {                    // 終点 B を登録して、基準線を作る
+    const dx = S.x - A.A[0], dz = S.z - A.A[1], L = Math.hypot(dx, dz);
+    if ((S.dist || 0) - A.aDist < 5 || L < 5) { toast('終点 B は、A から 5m 以上走ってから登録してください（いま ' + L.toFixed(1) + 'm）'); return; }
+    A.B = [S.x, S.z]; A.d = [dx / L, dz / L]; A.n = [dz / L, -dx / L]; A.mode = 'on'; A.on = true;
+    toast('終点 B を登録しました。基準線と平行にまっすぐ走ります（ハンドルから手をはなす）');
+  } else {
+    A.on = !A.on; A.mode = A.on ? 'on' : 'off'; A.paused = false;
+    toast(A.on ? '直進アシスト 入：ハンドルから手をはなすと、ガイドの線にそってまっすぐ走ります' : '直進アシスト 切（Shift+G で A・B を登録しなおし）');
+  }
+  setAssistBtn();
+}
+function resetAssist() {
+  Object.assign(ASSIST, { mode: 'none', on: false, paused: false, active: false, A: null, B: null });
+  setAssistBtn();
+  toast('直進アシストの基準線を消しました。G で始点 A から登録しなおします');
+}
+function setAssistBtn() {
+  $('bAssist').textContent = { none: '直進 A点', a: '直進 B点', on: '直進 入', off: '直進 切' }[ASSIST.mode];
   $('bAssist').classList.toggle('on', ASSIST.on);
-  toast(ASSIST.on ? '直進アシスト 入：ハンドルから手をはなすと、ガイドの線にそってまっすぐ走ります' : '直進アシスト 切');
+  $('bAssist').classList.toggle('wait', ASSIST.mode === 'a');
 }
 let SPEEDUP = 1;
+// 主変速（1〜4 速）。本物の YT460A のマニュアルシフトは主変速 4 段×副変速 4 段（前進 16 段）。ここでは副変速は自動
+const GEARS = [1.6, 2.2, 2.8, 3.6].map(k => k / 3.6);
+function shiftGear(d) {
+  S.gear = Math.max(1, Math.min(4, (S.gear || 3) + d));
+  $('bGear').textContent = '変速 ' + S.gear;
+  toast('主変速 ' + S.gear + ' 速（耕すとき 時速 ' + (GEARS[S.gear - 1] * 3.6).toFixed(1) + 'km）' + (S.gear === 4 ? '。速すぎると土が細かく砕けない' : S.gear === 1 ? '。ていねいだが時間がかかる' : ''));
+}
 function toggleFast() {
   SPEEDUP = SPEEDUP === 1 ? 2 : SPEEDUP === 2 ? 4 : 1;
   $('bFast').textContent = '⏩ ×' + SPEEDUP;
 }
 $('bRot').onclick = toggleRotary;
-$('bAssist').onclick = toggleAssist;
+{                                                // 直進ボタン：押すと A・B 登録／入切、長押し（0.8 秒）で登録しなおし
+  let lp = null, longDone = false;
+  $('bAssist').addEventListener('pointerdown', () => { longDone = false; lp = setTimeout(() => { longDone = true; resetAssist(); }, 800); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) $('bAssist').addEventListener(ev, () => clearTimeout(lp));
+  $('bAssist').onclick = () => { if (!longDone) toggleAssist(); };
+}
 $('bFast').onclick = toggleFast;
+$('bGear').onclick = () => shiftGear(S.gear >= 4 ? -3 : 1);   // ボタンは 1→2→3→4→1
 function nextCam() { camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
@@ -1893,6 +2041,8 @@ $('bStart').onclick = () => {
 function finish() {
   S.done = true;
   $('doneText').textContent = `${{ haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season]}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
+  const sm = SCORE.summary();
+  $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '');
   $('done').classList.remove('hidden');
 }
 
@@ -1927,13 +2077,15 @@ function frame(now) {
   if ((hudT -= dt) <= 0) {
     $('spd').textContent = (Math.abs(S.v) * 3.6).toFixed(1);
     $('gear').textContent = S.v < -0.05 ? '後進' : '前進';
-    $('rot').textContent = S.rotDown ? 'ロータリー 下（耕す）' : 'ロータリー 上';
+    $('rot').textContent = S.rotDown ? IMPL + ' 下（' + (SHIRO ? 'かく' : '耕す') + '）' : IMPL + ' 上';
     $('rot').classList.toggle('on', S.rotDown);
     $('pct').textContent = pct;
     $('time').textContent = fmtTime(S.elapsed);
+    $('sc').textContent = SCORE.calc();
     hudT = 0.15;
   }
   if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
+  SCORE.update(dt);
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
   HEAPS.flush(dt);
   TURBID.update(dt);
@@ -1944,7 +2096,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

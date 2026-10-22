@@ -7,6 +7,7 @@
 |---|---|
 | `build_tractor.py` | 生成スクリプト（Blender の Python 版 bpy 5.2.2） |
 | `tractor_yt.glb` | 書き出したモデル（約 3.4MB・三角形 約 8.7 万・Draco なし・テクスチャ 512px×2 枚を埋め込み・AO を頂点色に焼きこみ） |
+| `harrow_yt.glb` | 代かき用のウイングハロー（`build_tractor.py --harrow`。作業幅 3.4m＝まん中 1.6m＋翼 0.9m×2、約 0.3MB・三角形 約 6,800）。ロータリーと同じ名前 `Rotary`・`Rotor`・`Flap` に、翼 `WingL`・`WingR`（原点＝ちょうつがい。three の Z 軸まわりに ±1.7rad で上へ折りたたむ）と翼の爪軸 `RotorL`・`RotorR`。ゲームは代かきのときだけ、トラクターの `Rotary` をこれにつけかえる |
 | `preview_exterior.png` | 斜め前の外観（Cycles） |
 | `preview_driver.png` | 運転者の目（左右 0・後輪車軸の 0.46m 後ろ・高さ 2.27m）から前方 12° 下向き・縦の画角 60° |
 | `preview_console.png` | 右の操作盤のアップ |
@@ -111,14 +112,14 @@ function setSteer(a) {            // a > 0 で右へ切る
 
 | 季節 | ファイル | Field（耕す前） | FieldTilled（耕したあと） | まわり |
 |---|---|---|---|---|
-| 春（耕す前） | `field_tanbo.glb` | 乾きかけの灰色がかった土・古い藁・低い切り株 | 湿った濃い土くれ | 耕した田んぼ・水を張った田んぼ |
+| 春（耕す前） | `field_tanbo.glb` | 乾きかけの灰色がかった土・古い藁・低い切り株 | 湿った濃い土くれ | 耕した田んぼ・水を張った田んぼ・花の時期の緑肥のレンゲ畑（renge） |
 | 秋（稲刈りから 2〜3 週間） | `field_tanbo_aki.glb` | 湿った土・コンバインがまいた藁・高い切り株と、株から伸びた青いひこばえ・少し乾いたクローラの跡（`Tracks`）と水たまり | 藁とひこばえをすきこんだ、土くれの大きい土（秋起こし） | まだ刈っていない実った稲（倒れた所もある）・秋起こしした田んぼ・畦の彼岸花 |
 | 代かき（水を張った田んぼ） | `field_tanbo_shirokaki.glb` | 浅水（水面 y 0.006）から 7〜8 割が頭を出す荒く起こした土（「土が 8 割・水が 2 割見える」浅水）・浮いた藁 | 代かきしたにごった泥水（水面より 2cm 上） | どこも水を張り、何枚かは代かき済み・田植え済み（苗の列）。畦の内側は畦塗りの泥。用水路は満水 |
 
 | ファイル | 中身 |
 |---|---|
 | `build_field.py` | 生成スクリプト（bpy 5.2.2。`build_tractor.py` の部品の関数を借りる） |
-| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 4.6MB・三角形 約 6.0 万、秋 約 5.3MB・約 7.1 万、代かき 約 5.1MB・約 8.7 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
+| `field_tanbo.glb`・`field_tanbo_aki.glb`・`field_tanbo_shirokaki.glb` | 春 約 5.3MB・三角形 約 6.9 万、秋 約 5.3MB・約 7.1 万、代かき 約 5.1MB・約 8.7 万。Draco なし。土・草・砂利・コンクリート・稲などの絵（numpy で作った、つなぎ目なく並ぶ 1024px／512px）を JPEG で埋めこみ（切り抜きの絵は PNG） |
 | `preview_field.png`・`preview_field_aki.png`・`preview_field_shirokaki.png` | 農道から見た田んぼ（トラクターが半分ほど耕したところ） |
 | `preview_field*_driver.png` | 運転席から（左はまだ、右は耕したあと） |
 | `preview_field*_ground.png` | ロータリーのうしろ：耕した所とまだの所の境目 |

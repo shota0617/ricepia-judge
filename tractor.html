@@ -1711,6 +1711,45 @@ const SCORE = (() => {
   return { step, levee, calc, update, summary, st, get parts() { return parts; } };
 })();
 
+
+// ---- 代かきの浮きわら：かいたあとに浮いた藁くずが、そよ風で少しずつ風下（東）へ流れ、畦ぎわに吹き寄せられる
+// （本物は浅水でかいて藁を埋め、畦ぎわにたまった浮きわらは取りのぞく：富山県・鳥取県の資料）
+const FLOAT = (() => {
+  if (!SHIRO) return { spawn() {}, update() {} };
+  const N = MOBILE ? 500 : 900;
+  const geo = new THREE.PlaneGeometry(1, 1); geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshLambertMaterial({ color: 0xb59c62, side: THREE.DoubleSide });
+  const mesh = new THREE.InstancedMesh(geo, mat, N);
+  mesh.count = 0; mesh.frustumCulled = false; mesh.renderOrder = 3;
+  scene.add(mesh);
+  const st = []; let next = 0, acc = 0;
+  const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+  function spawn(dt) {                            // ハローのうしろから浮いてくる
+    acc += dt * 7 * Math.min(1, Math.abs(S.v) / 0.6);
+    const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
+    while (acc >= 1) {
+      acc -= 1;
+      const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.7 - Math.random() * 0.8;
+      st[next] = { x: S.x + lx * cs + lz * sn, z: S.z - lx * sn + lz * cs, a: Math.random() * 6.28, L: 0.07 + Math.random() * 0.1, vx: 0.03 + Math.random() * 0.04, vz: (Math.random() - 0.5) * 0.02, stuck: false };
+      next = (next + 1) % N; mesh.count = Math.min(N, mesh.count + 1);
+    }
+  }
+  function update(dt) {
+    if (!mesh.count) return;
+    for (let i = 0; i < mesh.count; i++) {
+      const f = st[i];
+      if (!f.stuck) {
+        f.x += f.vx * dt; f.z += f.vz * dt; f.a += (Math.random() - 0.5) * dt * 0.3;
+        if (f.x > HX - 0.18 - Math.random() * 0.25 || Math.abs(f.z) > HZ - 0.2) f.stuck = true;   // 畦ぎわにたまる
+      }
+      m.compose(p.set(f.x, TILL_Y + 0.006, f.z), q.setFromAxisAngle(up, f.a), sc.set(0.006, 1, f.L));
+      mesh.setMatrixAt(i, m);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+  return { spawn, update, mesh, st };
+})();
+
 // ---- 四隅の土の盛り上がり：ロータリーを下げたまま大きく曲がると、ロータリーが横へ振られて外側に土が寄る
 // （農家さんの悩みとしてよく挙がる。まっすぐ耕しなおすと均平板で少しずつならされる）。代かきは水の下なので出さない
 const HEAPS = (() => {
@@ -1926,6 +1965,7 @@ function step(dt) {
   if (S.v > 0.05) STREAK.add(working); else if (!working) STREAK.add(false);
   HEAPS.work(dt, working);
   MUDDROP.step(dt, onRoad && !(S.x > 11.5 && S.x < 17 && S.z > 17.8 && S.z < 22.2));   // 進入路の坂はまだ田んぼの土
+  if (SHIRO && working && Math.abs(S.v) > 0.05) FLOAT.spawn(dt);
   if (SHIRO && working && Math.abs(S.v) > 0.05) {   // ロータリーのうしろ（両はし寄り）から濁りが出る
     const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
     for (const lx of [-TILL_W / 2, 0, TILL_W / 2]) {
@@ -2376,6 +2416,7 @@ function frame(now) {
   TURBID.update(dt);
   MIST.update(dt);
   FARMER.update(dt);
+  FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
   TR.flush();
   STREAK.flush();
@@ -2384,7 +2425,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
+window.game = { FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

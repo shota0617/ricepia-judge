@@ -3410,40 +3410,61 @@ window.addEventListener('pagehide', sessionEnd);
 
 // はじめの画面の絵：お米が 田んぼの あぜ道を コロン、コロンと転がってきて、まん中で止まると ゆらゆらして こっちを見て にっこり、また転がっていく
 // （歩く地図と同じ お米の絵・同じ でこぼこの転がり方。pixel.js の riceSpin・riceFeel）。はじめの画面を閉じたら止める
+// はじめの画面のアニメーション：お米が 台地の上を ころころ進み、坂（本当の高低差のように）を ひとりでに速くなって転がり下りる。
+// 下で ぺたっ、田んぼの あぜ道で ゆっくり止まって、起き上がりこぼしのように ゆらゆら立って にっこり。また右へ転がっていく
 function introHero() {
   const cv = $('introHero');
   if (!cv || !cv.getContext) return;
-  const x = cv.getContext('2d'), img = new Image(), W = cv.width, H = cv.height, G0 = 62;   // G0：あぜ道の高さ
-  const st = { x: -20, ang: 0, av: 0, rest: 0, t: 0, last: 0 };
+  const x = cv.getContext('2d'), img = new Image(), W = cv.width, H = cv.height;
+  const TOP = 46, LOW = 62, S0 = 56, S1 = 96;   // 台地の高さ・下の あぜ道の高さ・坂のはじまりと おわり（点）
+  const gY = px => { const t = Math.min(1, Math.max(0, (px - S0) / (S1 - S0))); return TOP + (LOW - TOP) * t * t * (3 - 2 * t); };   // 地面の高さ
+  const K = 280, FR = 52, DRAG = 0.3, DRIVE = 32, LEAVE = 40;   // 坂の強さ・ころがり抵抗・空気・台地で押す速さ・出ていく速さ（点/秒）
+  const st = { x: -24, v: DRIVE, ang: 0, av: 0, rest: 0, mode: 'drive', sq: 0, sqv: 0, last: 0 };
   const scene = now => {
     const sky = x.createLinearGradient(0, 0, 0, 40);
     sky.addColorStop(0, '#8fd0f4'); sky.addColorStop(1, '#d8f0fb');
     x.fillStyle = sky; x.fillRect(0, 0, W, 40);
     x.fillStyle = '#7fa8c8'; x.fillRect(0, 30, W, 4);   // 遠くの山なみ
-    x.fillStyle = '#6dbb4c'; x.fillRect(0, 34, W, 22);   // 田んぼ
+    x.fillStyle = '#6dbb4c'; x.fillRect(0, 34, W, H - 34);   // 田んぼ（あぜ道の下まで）
     x.fillStyle = '#4f9a3e';
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 20; c++) x.fillRect(((c * 8 + r * 4 - now / 90) % (W + 8) + W + 8) % (W + 8) - 4, 37 + r * 5, 3, 3);   // 稲（風で ゆれて流れる）
-    x.fillStyle = '#c8b078'; x.fillRect(0, 56, W, 16);   // あぜ道
-    x.fillStyle = '#b09860'; for (let c = 0; c < 20; c++) x.fillRect(c * 9 + 3, 64 + (c % 2) * 3, 3, 1);
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 20; c++) x.fillRect(((c * 8 + r * 4 - now / 90) % (W + 8) + W + 8) % (W + 8) - 4, 37 + r * 5, 3, 3);   // 稲（風で ゆれて流れる）
+    for (let c = 0; c < W; c++) {   // 地面：台地の土手 → 坂 → 田んぼの あぜ道
+      const y = Math.round(gY(c + 0.5));
+      x.fillStyle = '#c8b078'; x.fillRect(c, y, 1, H - y);
+      if (y < LOW) {   // 台地の土手（高い所）：こい土の色に、等高線のような 点の線
+        x.fillStyle = '#a8905c'; x.fillRect(c, y + 3, 1, LOW + 3 - (y + 3));
+        x.fillStyle = '#86703f'; for (let k = 50; k < LOW + 3; k += 5) if (k > y + 3 && c % 3 !== 0) x.fillRect(c, k, 1, 1);
+        if (c < S0 && c % 7 === 2) { x.fillStyle = '#4f9a3e'; x.fillRect(c, y - 2, 2, 2); }   // 台地の上の草
+      }
+    }
+    x.fillStyle = '#b09860'; for (let c = 0; c < 20; c++) { const sx = c * 9 + 3; if (sx > S1) x.fillRect(sx, 64 + (c % 2) * 3, 3, 1); }
   };
   const step = now => {
     if ($('intro').hidden) return;
     const dt = Math.min(0.05, (now - (st.last || now)) / 1000);
     st.last = now;
-    const mid = W / 2, sp = 44;   // 点/秒
-    let dx = 0;
-    if (st.rest > 0) st.rest -= dt;
-    else { dx = sp * dt; st.x += dx; if (st.x >= mid && st.x - dx < mid) st.rest = 1.8; if (st.x > W + 24) st.x = -24; }
-    if (dx) { st.ang += dx / 9; st.av = sp / 9; }   // 進んだ分だけ回る（半径9点）
+    const x0 = st.x;
+    if (st.mode === 'drive') { st.x += DRIVE * dt; if (st.x >= S0 - 6) { st.mode = 'free'; st.v = DRIVE; } }   // 台地の上は 押して進む
+    else if (st.mode === 'free') {   // 坂：ひとりでに速くなり、下りきると ころがり抵抗で ゆっくり止まる
+      st.v += (K * (gY(st.x + 0.5) - gY(st.x - 0.5)) - FR - DRAG * st.v) * dt;
+      if (st.v <= 0) { st.v = 0; st.mode = 'rest'; st.rest = 2; }
+      else { st.x += st.v * dt; if (x0 < S1 && st.x >= S1) { st.sq = 0.14; st.sqv = 0; } }   // 下りきって ぺたっ
+    } else if (st.mode === 'rest') { st.rest -= dt; if (st.rest <= 0) st.mode = 'leave'; }
+    else { st.x += LEAVE * dt; if (st.x > W + 24) { st.x = -24; st.mode = 'drive'; } }
+    const dx = st.x - x0;
+    if (dx > 0.001) { st.ang += dx / 9; st.av = dx / 9 / Math.max(dt, 1e-3); }   // 進んだ分だけ回る（半径9点）
     else {   // 止まっている：起き上がりこぼし
       const up = Math.round(st.ang / (Math.PI * 2)) * Math.PI * 2;
       st.av += (up - st.ang) * 70 * dt; st.av *= Math.pow(0.86, dt * 60); st.ang += st.av * dt;
     }
+    st.sqv += (-st.sq * 260 - st.sqv * 14) * dt; st.sq += st.sqv * dt;   // つぶれの ばね
     scene(now);
-    if (img.complete && img.naturalWidth) {
-      const th = st.ang, low = Math.sqrt((10 * Math.sin(th)) ** 2 + (13.5 * Math.cos(th)) ** 2);   // たて長のつぶ：寝ころぶと低く
-      x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(Math.round(st.x - 8), G0 + 1, 16, 2);
-      x.save(); x.translate(Math.round(st.x), Math.round(G0 - low)); x.rotate(th % (Math.PI * 2));
+    x.imageSmoothingEnabled = false;
+    const gy = gY(st.x), th = st.ang, low = Math.sqrt((10 * Math.sin(th)) ** 2 + (13.5 * Math.cos(th)) ** 2);   // たて長のつぶ：寝ころぶと低く
+    x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(Math.round(st.x - 8), Math.round(gy) + 1, 16, 2);
+    const cy = gy - low * (1 - st.sq);
+    if (!(window.nishioPixel && nishioPixel.drawRice && nishioPixel.drawRice(x, st.x, cy, th % (Math.PI * 2), st.sq)) && img.complete && img.naturalWidth) {   // 丸く見える描き方（pixel.js）。読めるまでは 絵を回す
+      x.save(); x.translate(Math.round(st.x), Math.round(cy)); x.rotate(th % (Math.PI * 2));
       x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 32, 32, -16, -16, 32, 32);
       x.restore();
     }

@@ -1289,7 +1289,7 @@ const FX = (() => {
     }
     else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
     else if (k === 2) { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
-    else { col.set([0.18 * t, 0.18 * t, 0.19 * t], i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }
+    else { col.set(EXH.col.map(v => v * t), i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }
     life[i] = max[i];
     exhaustA[i] = k === 3 ? EXH.dark : 0;
   }
@@ -1318,12 +1318,14 @@ const FX = (() => {
   return { emit, update, mat: m };
 })();
 let emitAcc = 0, exhAcc = 0;
-const EXH = { p: new THREE.Vector3(-0.80, 2.50, 0.645), w: new THREE.Vector3(), dark: 0.3 };   // 右 A ピラーの排気管の先
+// 排気：このトラクターのエンジンは DPF（すすをこしとるフィルター）つきなので、黒い煙はほとんど出ない。
+// 冷えた朝は、排気の水蒸気が白い湯気になって見える
+const EXH = { p: new THREE.Vector3(-0.80, 2.50, 0.645), w: new THREE.Vector3(), dark: 0.05, col: TOD === 'asa' ? [0.92, 0.92, 0.93] : [0.5, 0.5, 0.52] };   // 右 A ピラーの排気管の先
 function emitExhaust(dt) {
   if (S.crank > 0.6) return;
   const load = (key.fwd || key.back ? 0.6 : 0) + (S.rotDown && S.rotPos < 0.1 ? 0.6 : 0) + Math.abs(S.v - lastExhV) / Math.max(dt, 1e-3) * 0.3;
   lastExhV = S.v;
-  EXH.dark = Math.min(0.55, 0.12 + load * 0.25 + (S.flare || 0) * 0.3);
+  EXH.dark = Math.min(0.2, (0.025 + load * 0.03 + (S.flare || 0) * 0.08) * (TOD === 'asa' ? 3 : 1));
   exhAcc += dt * (5 + load * 14);
   rig.localToWorld(EXH.w.copy(EXH.p));
   while (exhAcc >= 1) {
@@ -2142,13 +2144,13 @@ function step(dt) {
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
   const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
   const vmax = GEARS[S.gear - 1] * (S.rotDown ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
-  if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に黒い煙
+  if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に排気がふっと出る
     const before = S.crank;
     S.crank = Math.max(0, S.crank - dt);
     if (before > 0.6 && S.crank <= 0.6) {
       S.flare = 1;
       rig.localToWorld(EXH.w.copy(EXH.p));
-      EXH.dark = 0.75;
+      EXH.dark = TOD === 'asa' ? 0.4 : 0.15;     // かけたときも DPF で黒煙は出ない（朝は白い湯気）
       for (let k = 0; k < 26; k++) FX.emit(EXH.w.x, EXH.w.y, EXH.w.z, (Math.random() - 0.5) * 0.6, 1.4 + Math.random() * 1.4, (Math.random() - 0.5) * 0.6, 3);
     }
   }
@@ -2186,6 +2188,9 @@ function step(dt) {
   if (working && Math.abs(S.v) > 0.1) {
     S.pitch = tillPitch();
     S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
+    // DPF の自動再生：耕しているとフィルターにすすがたまり、ある程度たまると作業しながら自動で燃やす（本物は 30 分ほど。ゲームは 1 分半）
+    if (S.dpfT > 0) { if ((S.dpfT -= dt) <= 0) S.dpfLoad = 0; }
+    else if ((S.dpfLoad = (S.dpfLoad || 0) + dt) > 200) { S.dpfT = 90; if (!S.dpfTold) { S.dpfTold = true; toast('DPF（排気のすすをこしとるフィルター）を自動で再生しています。そのまま作業できます'); } }
     if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
   }
   P.Rotor.rotation.x += (working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 8 : 0) * dt;
@@ -2377,6 +2382,11 @@ function drawMonitor(pct) {
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
   ['直進 ' + (ASSIST.on ? (ASSIST.active ? (ASSIST.off >= 0 ? '左' : '右') + Math.abs(ASSIST.off * 100).toFixed(0) + 'cm' : '入') : ASSIST.mode === 'a' ? 'A点' : ASSIST.B ? '切' : '未登録'),
     (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (SHIRO ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * PTO_RATIO / 10) * 10 : (S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+  if (S.dpfT > 0) {                               // DPF 自動再生中のしるし
+    g.fillStyle = '#3a2a08'; g.fillRect(14, 272, 200, 32);
+    g.fillStyle = Math.floor(performance.now() / 600) % 2 ? '#ffb020' : '#d08a10'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.fillText('DPF 自動再生中', 24, 289);
+  }
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
 const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');

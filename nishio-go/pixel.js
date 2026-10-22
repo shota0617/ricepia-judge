@@ -5446,7 +5446,9 @@ function frame(now) {
     facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
   }
   last = tgt;
-  if (G.demo && rollOn && !driving) rollStep(dt);   // かたむけて転がす（勢い・はね返り）
+  if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
+    for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
+  }
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
   const rolling = rollOn && G.demo && rp.x !== null && !driving;
@@ -6195,11 +6197,18 @@ window.addEventListener('deviceorientation', e => {
   if (!tiltG.base || tiltG.n < 8) {   // はじめの8回の平均を まっすぐに
     tiltG.n++;
     tiltG.base = tiltG.base ? { lr: tiltG.base.lr + (lr - tiltG.base.lr) / tiltG.n, fb: tiltG.base.fb + (fb - tiltG.base.fb) / tiltG.n } : { lr, fb };
+    if (tiltG.n === 8 && tiltG.announce) {   // 📱 を押したときの 知らせを 読みおえたころに
+      const wait = Math.max(0, 2600 - (performance.now() - tiltG.announce));
+      tiltG.announce = 0;
+      setTimeout(() => G.toast('📱 いまの持ち方を「まっすぐ」にしました（📱 を押すと 合わせなおせます）'), wait);
+    }
     return;
   }
   const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
   const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
-  tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * 0.35; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * 0.35;   // センサーの細かいゆれを ならす
+  const te = e.timeStamp || performance.now(), k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - (tiltG.t || te - 16)) / 1000)) / 0.035);   // センサーの細かいゆれを ならす（届く回数が ちがう スマホでも 同じ なめらかさ：時間で まぜる）
+  tiltG.t = te;
+  tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * k; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * k;
   if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {   // あるいて移動で傾けたとき：1回だけ教える
     tiltG.walkTold = true;
     G.toast('🍚 あるいて移動では、歩いた所へ お米が転がるよ。傾けて転がすのは「操作して遊ぶ」で');
@@ -6333,7 +6342,7 @@ if ($('pxRoll')) {
   setRoll(rollOn);
   $('pxRoll').addEventListener('click', () => {
     const want = !rollOn;
-    if (want) { tiltG.asked = false; tiltAsk(); tiltReset(); }   // オンにしたら、いまの持ち方を まっすぐに
+    if (want) { tiltG.asked = false; tiltAsk(); tiltReset(); tiltG.announce = performance.now(); }   // オンにしたら、いまの持ち方を まっすぐに（合わせたら 知らせる）
     setRoll(want);
     G.toast(want ? '🍚 スマホを傾けると、お米が ころころ転がるよ（スティック・矢印キーでも）' : '🚶 1マスずつ進むようにしました');
   });

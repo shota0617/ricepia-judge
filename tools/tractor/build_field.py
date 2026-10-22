@@ -694,20 +694,22 @@ CANAL_Z = {'haru': 0.12, 'aki': -0.05, 'shirokaki': 0.25}        # 用水路の�
 DITCH_Z = {'haru': -0.36, 'aki': -0.40, 'shirokaki': -0.25}
 PADDY_WATER_Z = 0.025                                              # 代かきの田んぼの水面
 MUD_Z = 0.045                                                      # 代かきしたあとの泥水の面（FieldTilled）
+FIELD_WATER_Z = 0.006                                              # 耕す田んぼの代かき前の水面：浅水で「土が 8 割・水が 2 割見える」くらい
 
 
 def clod_height(x, y):
-    """代かき前の荒い土の凸凹（水面から頭を出す所がある）"""
-    return field_height(x, y) + 0.03 * math.sin(x * 3.1 + 0.7 * math.sin(y * 1.9)) * math.sin(y * 2.7 + x * 0.6) + 0.012 * low_noise(x, y, 1.5)
+    """代かき前の荒い土の凸凹。浅い水から 7〜8 割が頭を出す（代かきしたあとの泥水 MUD_Z より下におさえる）"""
+    return min(MUD_Z - 0.005, field_height(x, y) + 0.016 + 0.024 * math.sin(x * 3.1 + 0.7 * math.sin(y * 1.9)) * math.sin(y * 2.7 + x * 0.6)
+               + 0.008 * low_noise(x, y, 1.5))
 
 
 def build_field():
     shiro = SEASON == 'shirokaki'
     with bt.part('Field'):
         if shiro:                                                      # 水の下の荒い土・水面・浮いた藁
-            grid('soil_untilled', -HX, HX, -HY, HY, 0.5, T_TILLED, clod_height)
-            grid('paddy_water', -HX, HX, -HY, HY, 5.0, 5.0, lambda x, y: PADDY_WATER_Z)
-            grid('straw_float', -HX, HX, -HY, HY, 5.0, T_UNTILLED, lambda x, y: PADDY_WATER_Z + 0.002)
+            grid('soil_untilled', -HX, HX, -HY, HY, 0.33, T_TILLED, clod_height)   # 土くれの山がわかる細かさ
+            grid('paddy_water', -HX, HX, -HY, HY, 5.0, 5.0, lambda x, y: FIELD_WATER_Z)
+            grid('straw_float', -HX, HX, -HY, HY, 5.0, T_UNTILLED, lambda x, y: FIELD_WATER_Z + 0.002)
         else:
             grid('soil_untilled', -HX, HX, -HY, HY, 1.0, T_UNTILLED, field_height)
     with bt.part('FieldTilled'):

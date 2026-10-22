@@ -225,6 +225,8 @@ function build() {
   ui.cv.addEventListener('pointerup', up); ui.cv.addEventListener('pointercancel', up);
   document.addEventListener('keydown', e => {
     if (!ui || ui.el.hidden) return;
+    const sh = $('share');
+    if (sh && !sh.hidden) { if (e.key === 'Escape') sh.hidden = true; return; }   // 📣 シェアの 窓が 上に あるときは、Esc で その窓だけ とじる（ゴールの カードに もどる）
     const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
     if (k) { keys[k] = 1; e.preventDefault(); }
     else if (e.key === 'Escape') close();

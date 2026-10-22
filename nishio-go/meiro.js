@@ -151,6 +151,7 @@ const CSS = `#meiro{position:fixed;inset:0;z-index:3500;background:radial-gradie
 #meiro .mz-st small{font-size:12px;opacity:.85}
 #meiro .mz-time{font-size:20px;font-variant-numeric:tabular-nums;min-width:4.5em;text-align:right}
 #meiro .mz-x{border:0;background:rgba(255,255,255,.18);color:#fff;border-radius:10px;padding:6px 10px;font:inherit;font-size:14px}
+#meiro .mz-slow[aria-pressed=true]{background:#ffe680;color:#2a2410}
 #meiro .mz-bezel{position:relative;margin:4px auto 0;padding:14px;border-radius:30px;background:linear-gradient(145deg,#7fd8f6,#2fa6dc 45%,#1a7fb6);box-shadow:0 10px 24px rgba(0,0,0,.45),inset 0 3px 0 rgba(255,255,255,.55),inset 0 -4px 0 rgba(0,0,0,.25)}
 #meiro .mz-glass{position:relative;border-radius:18px;overflow:hidden;box-shadow:inset 0 0 0 3px #c9d4da,inset 0 0 18px rgba(0,0,0,.35);background:#ddd}
 #meiro canvas{display:block;image-rendering:pixelated;touch-action:none}   /* 盤を なぞる あいだは 画面を動かさない */
@@ -175,7 +176,7 @@ function build() {
   const el = document.createElement('div');
   el.id = 'meiro'; el.hidden = true;
   el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', '西尾めいろ');
-  el.innerHTML = `<div class="mz-top"><div class="mz-st"></div><div class="mz-time">0.0</div><button type="button" class="mz-x" data-mz="close" aria-label="めいろを とじる">✕</button></div>
+  el.innerHTML = `<div class="mz-top"><div class="mz-st"></div><div class="mz-time">0.0</div><button type="button" class="mz-x mz-slow" data-mz="slow" aria-pressed="false" aria-label="ゆっくり転がる" title="ゆっくり">🐢</button><button type="button" class="mz-x" data-mz="close" aria-label="めいろを とじる">✕</button></div>
     <div class="mz-bezel"><div class="mz-glass"><canvas aria-label="迷路の盤"></canvas><div class="mz-load">めいろを つくっています…</div></div></div>
     <div class="mz-clear" hidden><div class="mz-card"></div></div>
     <p class="mz-hint">📱 スマホを 傾けて、お米を 🏁 まで ころがそう（パソコンは 矢印キー・盤を なぞっても）。<br/>黒い穴と 水に おちると スタートに もどるよ</p>
@@ -193,6 +194,7 @@ function build() {
     else if (k === 'again') startStage(game.n);
     else if (k === 'resume') resume();
     else if (k === 'hint') hint();
+    else if (k === 'slow') { st.slow = !st.slow; save(); b.setAttribute('aria-pressed', String(!!st.slow)); }
     else if (k === 'map') { const id = game && game.spot.id; close(); if (id && root.nishioGo && root.nishioGo.focusSpot) root.nishioGo.focusSpot(id); }   // ゴールの名所を 歩く地図で
     else if (k === 'list') showList();
     else if (k.startsWith('go:')) startStage(+k.slice(3));
@@ -220,6 +222,7 @@ function open(n) {
   if (!api) return false;
   if (!ui) build();
   ui.el.hidden = false;
+  ui.el.querySelector('[data-mz=slow]').setAttribute('aria-pressed', String(!!st.slow));
   api.pause(true);
   api.tiltAsk(); api.tiltReset();   // いまの持ち方を「まっすぐ」に
   startStage(typeof n === 'number' ? n : Math.min(st.stage, goalList().length - 1));
@@ -368,7 +371,8 @@ function step(dt) {
     return;
   }
   const [ax, ay] = input();
-  g.vx += ax * ACC * dt; g.vy += ay * ACC * dt;
+  const acc = ACC * (st.slow ? 0.55 : 1);   // 🐢 ゆっくり：押す強さと いちばん速い速さを 落とす（傾きに なれていない人・小さな子）
+  g.vx += ax * acc * dt; g.vy += ay * acc * dt;
   {   // 本当の高低差（国土地理院の標高。歩く地図と同じ）：下り坂へ ひとりでに 引っぱられる（めいろの マスは 地図の K マスぶん）
     const sl = api.slopeAt((b.tx0 + g.x) * K, (b.ty0 + g.y) * K);
     if (sl.known) { g.vx += sl.x / K * SLOPE * dt; g.vy += sl.y / K * SLOPE * dt; }
@@ -382,7 +386,8 @@ function step(dt) {
     }
   }
   const sp = Math.hypot(g.vx, g.vy);
-  if (sp > 0) { const k = Math.max(0, sp - (CRR + LIN * sp) * dt) / sp * (sp > MAX ? MAX / sp : 1); g.vx *= k; g.vy *= k; }
+  const max = MAX * (st.slow ? 0.6 : 1);
+  if (sp > 0) { const k = Math.max(0, sp - (CRR + LIN * sp) * dt) / sp * (sp > max ? max / sp : 1); g.vx *= k; g.vy *= k; }
   for (const axis of ['x', 'y']) {   // たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す（角を すべるように）
     const v = axis === 'x' ? g.vx : g.vy;
     if (!v) continue;
@@ -416,7 +421,7 @@ function step(dt) {
 function win() {
   const g = game, b = g.board;
   g.done = true; g.happy = 99;
-  const sec = Math.round(g.t * 10) / 10, par = b.len * 0.45 + 3;   // 目やすの時間（道のりから）
+  const sec = Math.round(g.t * 10) / 10, par = (b.len * 0.45 + 3) * (st.slow ? 1.6 : 1);   // 目やすの時間（道のりから。ゆっくりでは 長め）
   const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
   const prev = st.best[g.spot.id], newBest = !prev || sec < prev.t;
   st.best[g.spot.id] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす

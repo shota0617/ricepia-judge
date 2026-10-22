@@ -5586,6 +5586,7 @@ function paintRegion(dst, tx0, ty0, tw, th, T) {
     ctx.imageSmoothingEnabled = false;
     for (let ty = ty0; ty < ty0 + th; ty++) for (let tx = tx0; tx < tx0 + tw; tx++) drawTile(tx, ty, (tx - tx0) * T, (ty - ty0) * T, T, 0, now);
     drawWaterCorners(tx0, ty0, tx0 + tw, ty0 + th, -tx0 * T, -ty0 * T, T, 0);
+    drawContours(tx0, ty0, tx0 + tw, ty0 + th, -tx0 * T, -ty0 * T, T);   // 本当の高低差の 等高線（標高が 読めていれば）
   } finally { ctx = keep; }
 }
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
@@ -6908,6 +6909,7 @@ if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 // めいろ（meiro.js）が使うもの：地図のマス・盤の絵・区画の読みこみ・傾き・音・うしろの地図を止める
 const meiroApi = {
   C, CHUNK, codeAt, paintRegion, ensureChunk, chunkState, toTile, toLatLng, spriteOf: sp => spriteOf(sp)[0],
+  slopeAt: (x, y) => slopeAt(x, y), get demGen() { return demGen; },   // 坂（マス/秒² の加速）と、標高が とどくたびに ふえる数（盤を 描きなおす）
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v),
   pause(on) { meiroPause = !!on; dirty = true; },
 };

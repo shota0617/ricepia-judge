@@ -12,6 +12,7 @@ const KEY = 'nsg_meiro';
 // 面のゴール（名所の id）。この順に。あとは 西尾の注目スポットを 西尾城跡から近い順に
 const GOALS = ['f-nishio-station', 'f-nishio-castle', 'f-ricepia', 'f-iwase-bunko', 'f-kondo-beikoku', 'f-konrenji', 'f-jofukuji', 'f-kurokabe', 'f-inariyama-chaen'];
 const K = 3;   // めいろの1マス = 地図の K×K マス
+const SLOPE = 2;   // 坂の 引っぱりの つよさ（めいろの ころがり抵抗に かつのは 5%より 急な坂：台地の ふちなど）
 const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // マス/秒²・いちばん速い速さ・ころがり抵抗・速さに比べて へる分・はね返り・お米の半径（マス）
 // stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
 const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
@@ -290,7 +291,7 @@ function fit() {
   game.T = T; game.dpr = dpr;
   ui.cv.width = b.tw * T; ui.cv.height = b.th * T;
   ui.cv.style.width = b.tw * T / dpr + 'px'; ui.cv.style.height = b.th * T / dpr + 'px';
-  game.bg = paintBoard(b, T);
+  game.bg = paintBoard(b, T); game.dem = api.demGen;   // 標高が あとから とどいたら 等高線を 描きなおす（tick）
 }
 function paintBoard(b, T) {
   const c = document.createElement('canvas'); c.width = b.tw * T; c.height = b.th * T;
@@ -368,6 +369,10 @@ function step(dt) {
   }
   const [ax, ay] = input();
   g.vx += ax * ACC * dt; g.vy += ay * ACC * dt;
+  {   // 本当の高低差（国土地理院の標高。歩く地図と同じ）：下り坂へ ひとりでに 引っぱられる（めいろの マスは 地図の K マスぶん）
+    const sl = api.slopeAt((b.tx0 + g.x) * K, (b.ty0 + g.y) * K);
+    if (sl.known) { g.vx += sl.x / K * SLOPE * dt; g.vy += sl.y / K * SLOPE * dt; }
+  }
   {   // マンホールの ふちに 近づくと、まん中へ すいこまれる（玉ころがし迷路の 穴のように）
     const ci = Math.floor(g.x), cj = Math.floor(g.y);
     for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
@@ -473,6 +478,7 @@ function tick(now) {
   else if (g.done) { g.happy = 99; g.th += dt * 3; }
   for (const p of g.fx || []) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.vx *= 1 - dt * 1.5; }
   if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
+  if (api.demGen !== g.dem && (!g.demT || now - g.demT > 1500)) { g.demT = now; g.dem = api.demGen; g.bg = paintBoard(g.board, g.T); }
   draw(now);
   ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + g.t.toFixed(1);
   // 盤を 傾けて見せる：矢印キー・なぞる で 動かすと、わくごと 少し 傾く（キーホルダーを 傾けたように）。スマホの傾きでは 手の中の 本物が 傾くので 小さく

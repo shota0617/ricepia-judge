@@ -3,7 +3,7 @@
 # 2. Claude Code が 1〜3 つ選んで実装する。Claude は シェル・git・ウェブを使えず、決まったファイルの読み書きと node --check だけ。発信は「データ」として扱う（tools/x-cycle-prompt.md）
 # 3. Codex（openai/codex-action・読むだけ）がレビューし、must の指摘があれば Claude が直して、もう一度レビュー（2回まで）
 # 4. 変えてよい場所の変更だけを PR にする（tools/x-cycle.js guard）。マージは人が遊んで確かめてから
-# 必要な準備：Secrets の XAI_API_KEY と ANTHROPIC_API_KEY（無いあいだは なにもしない）、OPENAI_API_KEY（無ければレビューなしで PR）。
+# 必要な準備：Secrets の XAI_API_KEY と、ANTHROPIC_API_KEY または CLAUDE_CODE_OAUTH_TOKEN（Claude の Pro・Max の契約で動かすとき。claude setup-token で作る）。無いあいだは なにもしない。OPENAI_API_KEY（無ければレビューなしで PR）。
 #            Variables の XAI_MODEL・CODEX_MODEL で モデルを変えられる。くわしくは docs/x-cycle.md
 name: X cycle (Grok → Claude → Codex)
 on:
@@ -40,9 +40,9 @@ jobs:
         id: cfg
         env:
           X: ${{ secrets.XAI_API_KEY }}
-          A: ${{ secrets.ANTHROPIC_API_KEY }}
+          A: ${{ secrets.ANTHROPIC_API_KEY }}${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
-          if [ -n "$X" ] && [ -n "$A" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "XAI_API_KEY / ANTHROPIC_API_KEY が無いので、なにもしません"; fi
+          if [ -n "$X" ] && [ -n "$A" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "XAI_API_KEY と、ANTHROPIC_API_KEY か CLAUDE_CODE_OAUTH_TOKEN が無いので、なにもしません"; fi
       - uses: actions/checkout@v4
         if: steps.cfg.outputs.on
         with:
@@ -77,6 +77,7 @@ jobs:
         if: steps.research.outputs.items > 0
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: node "$RUNNER_TEMP/trusted/x-cycle.js" claude 0
       - name: Guard (0)
         id: guard0
@@ -104,6 +105,7 @@ jobs:
         if: steps.verdict1.outputs.fix
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: node "$RUNNER_TEMP/trusted/x-cycle.js" claude 1
       - name: Guard (1)
         id: guard1
@@ -129,6 +131,7 @@ jobs:
         if: steps.verdict2.outputs.fix
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: node "$RUNNER_TEMP/trusted/x-cycle.js" claude 2
       - name: Guard (2)
         id: guard2

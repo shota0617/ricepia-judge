@@ -32,7 +32,8 @@ Settings → Secrets and variables → Actions：
 | 名前 | 種類 | 中身 |
 | --- | --- | --- |
 | `XAI_API_KEY` | Secret | xAI の API キー（console.x.ai）。無いあいだは なにもしない |
-| `ANTHROPIC_API_KEY` | Secret | Claude 用（ほかのワークフローと同じもの）。無いあいだは なにもしない |
+| `ANTHROPIC_API_KEY` | Secret | Claude 用の API キー（使った分だけ課金）。下の `CLAUDE_CODE_OAUTH_TOKEN` とどちらか1つ |
+| `CLAUDE_CODE_OAUTH_TOKEN` | Secret | Claude の Pro・Max の契約で動かすときのトークン（追加の課金なし・契約の利用枠を使う）。Claude Code を入れたパソコンで `claude setup-token` を動かすと出る。どちらも無いあいだは なにもしない |
 | `OPENAI_API_KEY` | Secret | Codex 用。無ければレビューなしで PR にする（PR に「レビューは動いていません」と出る） |
 | `XAI_MODEL` | Variable（なくてよい） | Grok のモデル。ふだん `grok-latest` |
 | `CODEX_MODEL` | Variable（なくてよい） | Codex のモデル。ふだん codex-action の既定 |

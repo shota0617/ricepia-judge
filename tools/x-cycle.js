@@ -8,7 +8,7 @@
 // 設定は tools/x-cycle-topics.json（ゲームごとに、さがすこと・読むファイル・変えてよいファイル）。docs/x-cycle.md
 // 環境変数：XCYCLE_ROOT（作業場所。ワークフローは、Claude が触れない場所にコピーしたこのスクリプトから、作業場所を指して動かす）、
 //           TARGET（tractor / nishio-go。空なら週ごとに交代）、FOCUS（今回とくにさがすこと）、DAYS（さかのぼる日数。ふだん14）、
-//           XAI_API_KEY・XAI_MODEL、ANTHROPIC_API_KEY・CLAUDE_BIN・CLAUDE_MODEL、pr は GH_TOKEN・GITHUB_REPOSITORY・GITHUB_REF_NAME・GITHUB_RUN_ID・GITHUB_OUTPUT
+//           XAI_API_KEY・XAI_MODEL、ANTHROPIC_API_KEY か CLAUDE_CODE_OAUTH_TOKEN・CLAUDE_BIN・CLAUDE_MODEL、pr は GH_TOKEN・GITHUB_REPOSITORY・GITHUB_REF_NAME・GITHUB_RUN_ID・GITHUB_OUTPUT
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -159,6 +159,12 @@ function fill(file, t, round) {
     .replace(/\{\{READ\}\}/g, t.read.map(f => '`' + f + '`').join('・'))
     .replace(/\{\{EDITABLE\}\}/g, t.globs.map(g => '`' + g.replace(/^\.\//, '') + '`').join('・'));
 }
+// Claude のキー：API キー（ANTHROPIC_API_KEY）か、Pro・Max の契約のトークン（CLAUDE_CODE_OAUTH_TOKEN。claude setup-token で作る）のどちらか。空のものは渡さない
+function claudeEnv() {
+  const env = { ...process.env };
+  for (const k of ['ANTHROPIC_API_KEY', 'CLAUDE_CODE_OAUTH_TOKEN']) if (!env[k]) delete env[k];
+  return env;
+}
 function claude(round) {
   const t = target();
   let prompt = round > 0 ? fill('x-cycle-fix-prompt.md', t, round) : fill('x-cycle-prompt.md', t, round);
@@ -171,7 +177,7 @@ function claude(round) {
     const r = cp.spawnSync(process.env.CLAUDE_BIN || 'claude', ['-p', prompt, '--model', process.env.CLAUDE_MODEL || 'claude-opus-5-5',
       '--max-turns', round > 0 ? '60' : '100', '--permission-mode', 'dontAsk',
       '--allowedTools', allow.join(','), '--disallowedTools', 'WebFetch,WebSearch,NotebookEdit,Task'],
-    { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 << 20, timeout: 50 * 60e3 });
+    { cwd: ROOT, env: claudeEnv(), encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 64 << 20, timeout: 50 * 60e3 });
     console.log(String(r.stdout || '').split('\n').slice(-40).join('\n'));
     if (r.status !== 0) console.log(`Claude が止まった（${r.status ?? r.signal}）。ここまでの変更で続ける`);
   } finally {

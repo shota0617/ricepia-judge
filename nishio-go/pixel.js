@@ -6335,8 +6335,6 @@ function setActive(on) {
   if (!on && driving) setDriving(false);   // ふつうの地図では車に乗れない
   document.body.classList.toggle('px', on);
   try { localStorage.setItem('nsg_view', on ? 'px' : 'map'); } catch (e) { /* noop */ }
-  $('viewBtn').innerHTML = on ? ICO('map', '🗺️', 'ふつうの地図') : ICO('pixmap', '👾', 'ドット絵の地図');
-  $('viewBtn').title = on ? 'ふつうの地図にする' : 'ドット絵の地図にする';
   updatePad();
   cancelAnimationFrame(raf);
   if (on) { lastT = 0; raf = requestAnimationFrame(frame); }
@@ -6347,7 +6345,6 @@ function updatePad() {
   $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
 }
-$('viewBtn').addEventListener('click', () => setActive(!active));
 // せかいちずをいちばん大きくしてさらに拡大すると歩く地図へ、歩く地図をいちばん小さくしてさらに縮小するとせかいちずへ
 $('pxZoomIn').addEventListener('click', () => {
   if (!worldMode) return setScale(curScale() + 1);
@@ -6410,7 +6407,11 @@ function step(dir) {   // 1マス進めたら（人に話しかけたときも�
 // ・押すのをやめても すぐには止まらない（ころがり抵抗で ゆっくりになる）。建物・水には入れず、当たると少し はね返る。人にぶつかると話しかける
 // ・新しいマスに入るたびに、1歩と同じこと（呼びとめ・生きもの・チェックインの範囲など）が起きる。位置は 少し動くたびに game.js へ（moveTo の 'step'）
 // ・📱 ボタンで オン・オフ（端末に覚える）。タップで歩く・車は いままでどおり
-let rollOn = (() => { try { return localStorage.getItem('nsg_roll') !== '0'; } catch (e) { return true; } })();
+let rollOn = (() => { try {
+  // 地図が めいろに なって「📱 転がす」の 切りかえを はずした：前に 切っていた人も 1回だけ 転がすに もどす（もう 切りかえられないので）
+  if (!localStorage.getItem('nsg_roll_v2')) { localStorage.setItem('nsg_roll_v2', '1'); localStorage.setItem('nsg_roll', '1'); }
+  return localStorage.getItem('nsg_roll') !== '0';
+} catch (e) { return true; } })();
 const rp = { x: null, y: null, vx: 0, vy: 0, sent: null, tile: '', bump: 0 };
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
@@ -6449,7 +6450,7 @@ function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.x = tiltG.y = 0; }
 function tiltAsk() {   // iPhone：傾きを使う許可（画面をさわったときにしか聞けない）
   if (tiltG.asked || !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) return;
   tiltG.asked = true;
-  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、スティックで転がしてね'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
+  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、地図を タップした所へ 転がしてね（矢印キーでも）'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
 }
 ['click', 'touchend'].forEach(ev => document.addEventListener(ev, () => { if (rollOn) tiltAsk(); }, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tiltReset(); });
@@ -6689,8 +6690,7 @@ function rollStep(dt) {
   }
   if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) { rp.vx = rp.vy = 0; return; }
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
-  const soft = v => Math.sign(v) * Math.pow(Math.abs(v), 1.35);   // スティックも 少し倒したときは やさしく（傾きと同じ）
-  const ax = (tiltG.x + soft(stick.x) + rk.right - rk.left), ay = (tiltG.y + soft(stick.y) + rk.down - rk.up);
+  const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
   const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1);   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
   const up = rp.vx * sl.x + rp.vy * sl.y < 0 ? 0.6 : 1;   // 上り坂は、下りより ゆるく おそくなる（いきおいで 堤防や 坂を のぼれる）
@@ -6806,26 +6806,19 @@ function setRoll(on) {
   const b = $('pxRoll');
   if (b) { b.classList.toggle('on', rollOn); b.setAttribute('aria-pressed', String(rollOn)); }
 }
-if ($('pxRoll')) {
-  setRoll(rollOn);
-  $('pxRoll').addEventListener('click', () => {
-    const want = !rollOn;
-    if (want) { tiltG.asked = false; tiltAsk(); tiltReset(); tiltG.announce = performance.now(); }   // オンにしたら、いまの持ち方を まっすぐに（合わせたら 知らせる）
-    setRoll(want);
-    G.toast(want ? '🍚 スマホを傾けると、お米が ころころ転がるよ（スティック・矢印キーでも）' : '🚶 1マスずつ進むようにしました');
-  });
-}
 // 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
 // 乗っている間は、歩いた距離・チェックイン・たからばこ・話しかけはお休み（降りるとできる）
 const CAR_OK = new Set([C.R, C.H]);
 let driving = false;
 function setDriving(on, msg) {
   driving = !!on;
-  const b = $('pxCar');
-  b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
-  b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
-  b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
-  b.classList.toggle('on', driving);
+  const b = $('pxCar');   // 地図が めいろに なったので 車の ボタンは はずした（車では めいろの 壁が きかない）
+  if (b) {
+    b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
+    b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
+    b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
+    b.classList.toggle('on', driving);
+  }
   G.setDriving(driving);
   if (msg) G.toast(msg);
   dirty = true;
@@ -6847,7 +6840,7 @@ function checkCar() {
   const t = targetTile(), c = codeAt(Math.floor(t.x), Math.floor(t.y));
   if (c !== C.X && !CAR_OK.has(c)) setDriving(false, '🚶 道の外へ移動したので、車を降りました');
 }
-$('pxCar').addEventListener('click', toggleCar);
+if ($('pxCar')) $('pxCar').addEventListener('click', toggleCar);
 // 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、右上の列に「稲刈り」ボタンを出す（あるいて移動でも見えるよう、スティックの列には置かない）
 const PADDY_CODES = new Set([C.U, C.F]);
 function onPaddy() {
@@ -7033,59 +7026,7 @@ function padStep(dir) {
   if (!ok && navigator.vibrate) navigator.vibrate(20);
   return ok;
 }
-// スティック：さわったまま動かすと、倒した向きへ歩きつづける。
-//   ・まん中の少しは遊び（動かない）。大きく倒すと速く歩く（車はもっと速い）
-//   ・ななめに倒すと、2つの向きを交互に1マスずつ（片方が通れなければ、もう片方へ）
-const stick = { id: null, x: 0, y: 0, dirs: [], turn: 0, timer: null, key: '' };
-const STICK_DEAD = 0.28, STICK_FAST = 0.75, STICK_DIAG = Math.tan(Math.PI / 8);
-function stickDirs(x, y) {   // x, y は -1〜1（半径で割った値）
-  const ax = Math.abs(x), ay = Math.abs(y);
-  if (Math.hypot(x, y) < STICK_DEAD) return [];
-  const h = x < 0 ? 'left' : 'right', v = y < 0 ? 'up' : 'down';
-  if (Math.min(ax, ay) > Math.max(ax, ay) * STICK_DIAG) return ay >= ax ? [v, h] : [h, v];
-  return [ax > ay ? h : v];
-}
-function stickTick() {
-  stick.timer = null;
-  if (!stick.dirs.length || (G.demo && rollOn && !driving)) return;   // 転がすときは、スティックの倒し具合が そのまま傾き（rollStep）
-  const n = stick.dirs.length, first = stick.dirs[stick.turn % n];
-  if (!padStep(first) && n > 1) padStep(stick.dirs[(stick.turn + 1) % n]);
-  stick.turn++;
-  const fast = Math.hypot(stick.x, stick.y) >= STICK_FAST;
-  stick.timer = setTimeout(stickTick, driving ? (fast ? 70 : 120) : (fast ? 130 : 230));
-}
-function stickMove(e) {
-  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 8;
-  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-  const d = Math.hypot(dx, dy);
-  if (d > R) { dx *= R / d; dy *= R / d; }
-  stick.x = dx / R; stick.y = dy / R;
-  $('pxKnob').style.transform = `translate(${dx}px,${dy}px)`;
-  const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
-  for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
-  if (key === stick.key) return;
-  stick.key = key; stick.dirs = dirs; stick.turn = 0;
-  clearTimeout(stick.timer); stick.timer = null;
-  if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
-}
-function stickEnd(e) {
-  if (e && stick.id !== e.pointerId) return;
-  stick.id = null; stick.dirs = []; stick.key = ''; stick.x = stick.y = 0;
-  clearTimeout(stick.timer); stick.timer = null;
-  $('pxStick').classList.remove('on');
-  $('pxKnob').style.transform = '';
-  $('pxStick').querySelectorAll('i').forEach(i => i.classList.remove('lit'));
-}
-$('pxStick').addEventListener('pointerdown', e => {
-  e.preventDefault();
-  stick.id = e.pointerId;
-  try { $('pxStick').setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
-  $('pxStick').classList.add('on');
-  stickMove(e);
-});
-$('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId) stickMove(e); });
-['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => $('pxStick').addEventListener(ev, stickEnd));
-window.addEventListener('blur', () => stickEnd());
+// 画面の スティックは、地図が めいろに なったので はずした（傾き・矢印キー・地図を タップで 動かす）
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
   if (k && active && G.demo && !meiroPause && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); if (rollOn && !driving) rk[k] = 1; else padStep(k); }   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
@@ -7224,7 +7165,7 @@ G.onModeChange(updatePad);
 G.onModeChange(() => { if (driving) setDriving(false); });
 // はじめての人はドット絵（ダンジョン風）のせかいちずから
 let initial = 'px', worldOn = '1';
-try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
+try { initial = 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用

@@ -1156,7 +1156,7 @@ function chainStep(s, now) {
 function checkin() {
   const s = selected;
   if (!s || !me) return;
-  if (driving) { toast('🚗 車を降りてからチェックインしてね（スティックのとなりの🚶ボタン）'); return; }
+  if (driving) { toast('🚗 車を降りてからチェックインしてね'); return; }
   const now = Date.now();
   // 乗り物（電車・バス・車の助手席）で移動中でもチェックインできる。運転している人は操作しないよう、乗り物の判定ごとに1回だけ知らせる
   if (!demo && now < vehicleUntil && checkin.warned !== vehicleUntil) { checkin.warned = vehicleUntil; toast('🚗 乗り物で移動中です。運転している人は操作しないでください（同乗者・電車・バスならそのまま遊べます）'); }
@@ -3010,12 +3010,11 @@ function openTab(tab) {
   if (tab === 'voice') { renderVoice(); voiceMarkSeen(); loadVoices(); }
   if (tab === 'rewards') renderRewards();
   if (tab === 'log') { renderLog(); renderBadges(); }   // バッジは きろく の下に
-  if (tab === 'settings') { renderSpotInfo(); renderGpsInfo(); $('pxToggle').checked = document.body.classList.contains('px'); }
+  if (tab === 'settings') { renderSpotInfo(); renderGpsInfo(); }
   if (tab === 'map') setTimeout(() => map.invalidateSize(), 0);
 }
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => openTab(b.dataset.tab)));
 $('lvBtn').addEventListener('click', () => { openTab('log'); $('badgeHead').scrollIntoView(); });
-$('pxToggle').addEventListener('change', e => { if (window.nishioPixel) nishioPixel.setActive(e.target.checked); });
 
 ['visitedList', 'heardList'].forEach(id => $(id).addEventListener('click', e => {
   const li = e.target.closest('li[data-spot]');
@@ -3082,7 +3081,7 @@ function switchMode(isDemo) {
   if (isDemo === demo) return;
   setMode(isDemo);
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
-  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スティックで歩きます' : '地図をタップした所へ移動します'}。記録は別です）`
+  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けて 迷路を 転がします' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
 document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode === 'demo')));
@@ -3731,7 +3730,7 @@ function begin(isDemo) {
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ 左下のスティック（矢印キー）で近づくと開きます') : '🎮 左下のスティック（矢印キー）で歩きます')
+    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 転がそう（矢印キー・地図を タップでも）')
     : '🎮 地図をタップするとその場所へ移動します');
   setTimeout(sealPickCheck, 3000);   // えらぶ前に閉じた しるしの2枚
 }

@@ -6004,7 +6004,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now) drawMzMap(gt, w, vh, cy, dpr, now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now && !rec) drawMzMap(gt, w, vh, cy, dpr, now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -6830,28 +6830,30 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   const bx = qx - Math.cos(a) * U * 1.3, by = qy - Math.sin(a) * U * 1.3;   // 矢印の 内がわに 🏁 と 道のり
   flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
   label(dist, bx + U * 0.45, by, Math.round(U * 0.5), '#ffffff');
+  if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは めいろ図を 出さない
   label('🗺 タップ', bx, by + U * 0.62, Math.round(U * 0.36), '#bfefff');   // 矢印を タップすると めいろ図
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
 // ゴールまでの めいろ図：運営者の声「ゴールをわかりやすく」。地図を 小さく しても ゴールは 画面の 外（めいろで 2km など）なので、
 // お米と ゴールが 入る はんいの めいろを 上から 見た 小さな 図に して 画面の 上に 出す（1マス＝数点。通路は 明るく・壁の かたまりは 暗い 緑・水は 青・まだ 読めていない 所は 灰色）。
 // 足あとの マスは 黄色、お米は 白い 点、ゴールは 黄色い わと 🏁。新しい ゴールの 知らせの あとに 6秒、縁の 矢印を タップしても 出る（図を タップで とじる）。道すじは 出さない（とく 楽しみを のこす）
+// Godot で 描く（?godot=1 の 試作）ときは 出さない（記録係は 絵を 1回だけ 送るので、かきかえる 図が かわらない）
 const mzMap = { until: 0, t0: 0, last: 0, cv: null, at: 0, key: '', box: null, rect: null, arrow: null };
 function mzMapOpen(now, ms) { if (mzMap.until <= now) { mzMap.t0 = now; mzMap.last = 0; } mzMap.until = now + ms; mzMap.at = 0; }
 function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
   const g = toTile(gt.lat, gt.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(g.x / MZ_K), gr = Math.floor(g.y / MZ_K);
   const pad = 4, x0 = Math.min(a, gc) - pad, y0 = Math.min(b, gr) - pad, cols = Math.max(a, gc) + pad - x0 + 1, rows = Math.max(b, gr) + pad - y0 + 1;
   const c = Math.min(Math.round(12 * dpr), Math.floor(Math.min((w - 104 * dpr) / cols, H0 / rows)));   // 1マスの 点の 大きさ（左右は 地図の ボタンを よける）
-  if (c < 2) return null;   // 遠すぎる（図が 小さく なりすぎる）
+  if (c < 3) return null;   // 遠すぎる（図が 小さく なりすぎて、通路どうしの 細い壁が 描けない）
   const cv = mzMap.cv || (mzMap.cv = document.createElement('canvas')), x = cv.getContext('2d');
   cv.width = cols * c; cv.height = rows * c;
-  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy), wl = c >= 4 ? Math.max(1, Math.round(c / 4)) : 0;
+  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy), wl = Math.max(1, Math.round(c / 4));   // 細い壁は いつも 1点 以上（とじた さかいを 通れる ように 見せない）
   for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
     const cx = x0 + i, cy = y0 + j, t = mzType(cx, cy);
     x.fillStyle = t < 0 ? ((i + j) & 1 ? '#4a4a4a' : '#3e3e3e') : go(cx, cy) ? (mzTrail.has(cx + ',' + cy) ? '#f3e08a' : '#ddd6b6') : t === 2 ? '#2f6aa0' : '#1d4434';
     x.fillRect(i * c, j * c, c, c);
   }
-  if (wl) {   // 通路どうしの あいだの 細い壁
+  {   // 通路どうしの あいだの 細い壁
     x.fillStyle = '#1d4434';
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
       const cx = x0 + i, cy = y0 + j;

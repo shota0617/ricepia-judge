@@ -38,6 +38,16 @@ Settings → Secrets and variables → Actions：
 | `XAI_MODEL` | Variable（なくてよい） | Grok のモデル。ふだん `grok-latest` |
 | `CODEX_MODEL` | Variable（なくてよい） | Codex のモデル。ふだん codex-action の既定 |
 
+## Grok を呼ぶ係（調べるだけ）
+
+`.github/workflows/grok-research.yml`（Actions の「Grok research (X)」）は、Grok に X の投稿を調べてもらうだけで、ゲームは変えません。
+結果は、実行の Summary・ログ（「Grok searches X」）・artifact（grok-research の research.md / research.json）に出ます。
+Claude Code のセッションに「トラクターを調べて」と頼むと、これを動かしてログを読み、Blender の車体（`tools/tractor/build_tractor.py`）などの開発に使います。
+
+- 何を調べるか：`tractor-model`（トラクターの 3D 車体の形・部品・使われ方）・`tractor`（田んぼでの作業）・`nishio-go`（西尾の話題）。中身は `tools/x-cycle-topics.json`
+- `tractor-model` は `research_only`（調べるだけ）なので、X サイクルの週ごとの交代には入らず、Claude にも変えさせません。車体は Blender で作り直して確かめる必要があるため、人か Claude Code のセッションで作ります
+- xAI のクレジットが要ります（console.x.ai の Billing で入金。**自動チャージ（Auto top-up）はオフに**）。クレジットが無いときは失敗として止まります
+
 ## 無料で動かす（無料の Grok に聞いて、はりつける）
 
 xAI の API は、新しいチームでもクレジットを買わないと使えません（2026-10、無料のクレジットは付かなかった）。

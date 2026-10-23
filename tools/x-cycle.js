@@ -1,7 +1,7 @@
 // X の発信から ゲームを直すサイクル：Grok が X でさがす → Claude が実装する → Codex がレビューする（.github/workflows/x-cycle.yml から使う）
 //   node tools/x-cycle.js research          … Grok（xAI の x_search）で、ゲームに取り入れられそうな発信をさがして .xcycle/research.md に書く。
 //                                             RESEARCH（無料の Grok に手で聞いた答え）があれば、API は使わずそれを使う
-//   node tools/x-cycle.js ask <ゲーム>      … 無料の Grok に手で聞くときの頼み方を表示する
+//   node tools/x-cycle.js ask <ゲーム>      … 無料の Grok に手で聞くときの頼み方を表示する（.github/workflows/grok-research.yml は research だけを動かす）
 //   node tools/x-cycle.js claude <回>       … Claude Code が実装する（0 回め）／Codex の指摘を直す（1 回め〜）。動かすあいだ .git は作業場所の外に置く
 //   node tools/x-cycle.js check <ファイル> … JSON・JS・HTML の中のスクリプトの文法を確かめる（Claude が自分で使う）
 //   node tools/x-cycle.js guard             … 変えてよい場所の外の変更を戻し、こわれていないか確かめて、.xcycle/diff.patch を書く
@@ -108,7 +108,7 @@ function ask() {
 }
 
 async function research() {
-  const keys = Object.keys(TOPICS).filter(k => !k.startsWith('_'));
+  const keys = Object.keys(TOPICS).filter(k => !k.startsWith('_') && !TOPICS[k].research_only);   // 調べるだけのもの（research_only）は交代に入れない
   const week = Math.floor(Date.now() / (7 * 86400e3));
   const key = process.env.TARGET && TOPICS[process.env.TARGET] ? process.env.TARGET : keys[week % keys.length];   // 空なら週ごとに交代
   const t = TOPICS[key], focus = oneLine(process.env.FOCUS, 300);
@@ -150,7 +150,7 @@ async function research() {
       }
     } catch (e) {
       // クレジットが無い・キーが使えないときは、失敗にせず止める（無料の Grok の答えをはりつければ動く。docs/x-cycle.md）
-      if (e.status !== 401 && e.status !== 402 && e.status !== 403) throw e;
+      if (process.env.GROK_STRICT || (e.status !== 401 && e.status !== 402 && e.status !== 403)) throw e;   // 調べるだけのとき（GROK_STRICT）は失敗として見せる
       console.log(`Grok の API が使えないので、なにもしません（${e.message}）。無料の Grok に聞いた答えを「Grok の答え」にはりつけて動かしてください`);
       out('items', 0);
       return;
@@ -202,6 +202,7 @@ function claudeEnv() {
 }
 function claude(round) {
   const t = target();
+  if (t.research_only) throw new Error(`${t.key} は調べるだけの設定なので、Claude は動かしません`);
   let prompt = round > 0 ? fill('x-cycle-fix-prompt.md', t, round) : fill('x-cycle-prompt.md', t, round);
   if (round === 0 && t.focus) prompt += `\n\n今回とくに見てほしいこと（運営者から）：${t.focus}`;
   // ファイルの読み書きの許可は Edit(…) だけで Write も含む。文法の確かめは check（HTML の中のスクリプトも見る）と node --check だけ

@@ -11,7 +11,7 @@ const PORT = 8898, URL = `http://localhost:${PORT}/nishio-go.html`, OUT = path.j
   const server = await startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2 });
-  await ctx.addInitScript(() => { localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '1'); localStorage.setItem('nsg_mode', '"demo"'); localStorage.setItem('nsg_bgm', 'false'); });
+  await ctx.addInitScript(() => { localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '1'); localStorage.setItem('nsg_mode', '"demo"'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_howto', '1'); });
   const page = await ctx.newPage();
   if (process.env.LEAFLET_DIR) await page.route('https://unpkg.com/**', r => {
     const f = r.request().url().endsWith('.css') ? 'leaflet.css' : 'leaflet.js';

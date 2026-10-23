@@ -5695,11 +5695,25 @@ function paintRegion(dst, tx0, ty0, tw, th, T) {
     drawContours(tx0, ty0, tx0 + tw, ty0 + th, -tx0 * T, -ty0 * T, T);   // 本当の高低差の 等高線（標高が 読めていれば）
   } finally { ctx = keep; regionPaint = false; }
 }
+// あそびかた：はじめて めいろに 入った 人に 1回だけ（運営者の声「ゲームをわかりやすく」）。せっていの「❓ あそびかた」で もう一度
+const howtoEl = $('howto');
+let howtoSeen = (() => { try { return localStorage.getItem('nsg_howto') === '1'; } catch (e) { return false; } })();
+function howtoShow() {
+  const k = $('howtoKey'), pc = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+  if (k) k.textContent = pc ? 'パソコンは 矢印キー。地図を クリックした所へも 向かう' : '傾けにくい ときは、地図を タップした所へ 向かう';
+  howtoEl.hidden = false; howtoSeen = true;
+  try { localStorage.setItem('nsg_howto', '1'); } catch (e) { /* noop */ }
+  setTimeout(() => { const b = $('howtoOk'); if (b && !howtoEl.hidden) b.focus(); }, 50);
+}
+function howtoTick() { if (!howtoSeen && mazeOn() && !mapCovered() && !sightBusy()) howtoShow(); }
+$('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; });   // いまの 持ち方を「まっすぐ」に して はじめる
+$('howtoOpen').addEventListener('click', howtoShow);
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
 function frame(now) {
   if (!active) return;
   raf = requestAnimationFrame(frame);
   if (meiroPause) { lastT = 0; return; }
+  howtoTick();
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
   if (!w || !h) return;
@@ -5727,7 +5741,7 @@ function frame(now) {
   }
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
-    for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
+    if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
     if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); }
   }
   waterWatch(tgt, dt);

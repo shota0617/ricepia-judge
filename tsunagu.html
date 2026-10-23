@@ -54,7 +54,7 @@ button{font-family:inherit;cursor:pointer;}
 .cb{width:64px;height:64px;border-radius:50%;border:none;background:#3d3d2e;color:#fff;font-size:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .cb small{font-size:9px;margin-top:2px;}
 .cb.off{background:#c94c4c;} .cb.end{background:#c94c4c;} .cb.go{background:#3f7050;} .cb.zoom{background:#2d8cff;}
-#sheet{position:fixed;inset:0;background:rgba(20,20,12,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;}
+#sheet,#pass{position:fixed;inset:0;background:rgba(20,20,12,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20;}
 .box{background:#fff;color:#2d2d1e;border-radius:16px;padding:22px 20px;max-width:440px;width:100%;}
 .box h1{font-size:17px;margin-bottom:6px;}
 .box label{display:block;font-size:12px;font-weight:700;color:#5a5a4a;margin:12px 0 4px;}
@@ -90,7 +90,16 @@ button{font-family:inherit;cursor:pointer;}
     <input id="zoomEdit" inputmode="url" placeholder="空欄なら Zoom ID 544 001 0563" autocomplete="off"/>
     <div class="hint">空欄のときは らいすぴあのZoom（ID 544 001 0563）を開きます。Zoomの「招待リンクをコピー」で取れる pwd= 付きのリンクを入れると、パスコードの入力が要らなくなります（この端末にだけ保存）。</div>
     <button class="big gold" id="zoomSave">保存</button>
+    <button class="big ghost" id="passReset">🔑 合言葉を入れなおす</button>
     <button class="big ghost" id="sheetClose">閉じる</button>
+  </div>
+</div>
+<div id="pass" hidden>
+  <div class="box">
+    <h1>🔑 お店の合言葉</h1>
+    <div class="hint">店内の端末どうしで、同じ合言葉を入れた端末だけがつながります。はじめに1回だけ入れてください（この端末に保存します。合言葉は店の外に出さないでください）。</div>
+    <input id="passEdit" type="password" autocomplete="off" placeholder="合言葉（6文字以上）"/>
+    <button class="big gold" id="passSave">保存してはじめる</button>
   </div>
 </div>
 <div id="entry" hidden>
@@ -107,9 +116,17 @@ button{font-family:inherit;cursor:pointer;}
    Each device takes the first free seat "<ROOM>-1…5" on the PeerJS server and calls the other seats;
    whoever opens later makes the calls, and both ends of a doubled call keep the one the lower seat started. */
 const $ = s => document.querySelector(s);
-const ROOM = "ricepia-tsunagu-room", SEATS = 5;
+// The room name comes from a passphrase typed once on each device (only its hash is kept, in localStorage).
+// Devices with the same passphrase find each other; anyone who just opens this page can't guess the seats.
+const SEATS = 5, PASS_LS = "ricepia_tsunagu_room";
+let ROOM = "";
 const seatId = n => ROOM + "-" + n;
-const seatOf = id => Number(String(id).slice(ROOM.length + 1)) || 0;
+const seatOf = id => { const s = String(id); return ROOM && s.startsWith(ROOM + "-") ? Number(s.slice(ROOM.length + 1)) || 0 : 0; }; // only our room's seats
+function loadRoom(){ try{ const r = localStorage.getItem(PASS_LS); return /^ricepia-tsunagu-[0-9a-f]{24}$/.test(r || "") ? r : ""; }catch(e){ return ""; } }
+async function roomOf(pass){
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("ricepia-tsunagu:" + pass)));
+  return "ricepia-tsunagu-" + [...h.slice(0, 12)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
 const DEFAULT_ZOOM = "https://zoom.us/j/5440010563"; // らいすぴあのZoom（パーソナルミーティングID 544 001 0563）
 const LS = "ricepia_tsunagu_zoom";
 
@@ -252,7 +269,7 @@ function keepSignal(p){
 }
 /** Register the first free seat; a taken seat answers "unavailable-id", so try the next one. */
 function takeSeat(n){
-  if(S.stopped) return;
+  if(S.stopped || !ROOM) return; // no passphrase yet: never take a seat in an empty room
   if(n > SEATS){
     waiting("満室です（" + SEATS + "台まで）", "ほかの端末が1台閉じると、自動で入ります", "wait");
     clearTimeout(S.retryT); S.retryT = setTimeout(() => takeSeat(1), 8000); return;
@@ -286,7 +303,7 @@ function bind(p){
   p.on("error", e => {
     if(e.type === "peer-unavailable"){
       // that seat is empty: drop our unanswered call so a later call from it can come in
-      const id = (String(e.message).match(/ricepia-tsunagu-room-\d/) || [])[0];
+      const id = ROOM && (String(e.message).match(new RegExp(ROOM + "-\\d+")) || [])[0]; // our room's seat id in the message (the room name is letters, digits and "-" only)
       const c = id && S.calls.get(id);
       if(c && c._out && !S.streams.has(id)){ S.calls.delete(id); try{ c.close(); }catch(x){} }
       return;
@@ -604,7 +621,16 @@ if(location.hash || location.search) history.replaceState(null, "", location.pat
 S.zoom = loadZoom();
 $("#entryOn").onclick = () => choose(false);
 $("#entryMute").onclick = () => choose(true);
-entry();
+$("#passSave").onclick = async () => {
+  const v = $("#passEdit").value.trim();
+  if(v.length < 6){ toast("合言葉は6文字以上にしてください"); return; }
+  ROOM = await roomOf(v);
+  try{ localStorage.setItem(PASS_LS, ROOM); }catch(e){}
+  $("#passEdit").value = ""; $("#pass").hidden = true; entry();
+};
+$("#passReset").onclick = () => { try{ localStorage.removeItem(PASS_LS); }catch(e){} location.reload(); };
+ROOM = loadRoom();
+if(ROOM) entry(); else { $("#pass").hidden = false; waiting("", "", "off"); }
 </script>
 </body>
 </html>

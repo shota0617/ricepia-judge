@@ -3,6 +3,7 @@
 # - Issue やPRのコメントで「@claude …」と書くと、追加の指示・質問に答える
 # 必要な準備：リポジトリの Settings → Secrets and variables → Actions に ANTHROPIC_API_KEY、Claude GitHub App（https://github.com/apps/claude）のインストール
 # 起動できるのは、このリポジトリに書き込み権限のある人（ラベル付け・コメント）だけ。できた変更の取り込み（マージ）は人が確認してから行う
+#   コメントでの起動は、ここでも リポジトリの持ち主・メンバー・共同作業者の コメントだけに しぼる（公開リポジトリなので、だれでも コメントは書ける。アクションの中の確かめに たよりきらない）
 name: Claude 開発（お客様の要望から）
 on:
   issues:
@@ -24,7 +25,8 @@ jobs:
   develop:
     if: >-
       (github.event_name == 'issues' && github.event.label.name == 'claude-dev') ||
-      (github.event_name != 'issues' && contains(github.event.comment.body, '@claude'))
+      (github.event_name != 'issues' && contains(github.event.comment.body, '@claude') &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

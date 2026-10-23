@@ -314,14 +314,16 @@ const VOICES = 'nishio-go/voices.json';
 const today = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 // reacts：ひとこと（チェックインのあとのワンタップ）の1日ぶんの Issue ごとの数 [{ n: Issue の番号, counts: { スポットの id: { love: 3, … } } }]
 const REACT_KEYS = new Set(['love', 'photo', 'calm', 'hard', 'access']);
+const STATUS_S = new Set(['checking', 'soon', 'already', 'proposal', 'done', 'skip', 'reflected']);   // 返事の 様子（上の setStatus の s）
 function applyVoices(v, status, logs, d = today(), reacts = []) {
   v = v && typeof v === 'object' ? v : {};
   v._説明 = 'にしおさんぽGO のプレイヤーの声（おたより）の公開データ。tools/feedback-triage.js voices が作る。replies は受付番号（端末で作った でたらめな番号）ごとの いまの様子、log は反映されたこと。おたよりの文・送った人の位置は入れない';
   v.replies = v.replies || {}; v.log = Array.isArray(v.log) ? v.log : []; v.counts = v.counts || {};
   let changed = false;
-  for (const [rid, x] of Object.entries(status)) {
+  for (let [rid, x] of Object.entries(status)) {
     const was = v.replies[rid];
-    if (!RID.test(rid) || (was && was.s === 'reflected' && x.s !== 'reflected')) continue;   // 反映ずみを戻さない
+    if (!RID.test(rid) || !x || !STATUS_S.has(x.s) || (was && was.s === 'reflected' && x.s !== 'reflected')) continue;   // 反映ずみを戻さない。知らない様子は入れない
+    x = { s: x.s, t: String(x.t || '').slice(0, 120) };   // 公開する 短い文は 120字まで（setStatus と同じ）
     if (was && was.s === x.s && (was.t || '') === (x.t || '')) continue;   // 同じ返事は書きなおさない（毎回コミットしないように）
     v.replies[rid] = { s: x.s, ...(x.t ? { t: x.t } : {}), d }; changed = true;
   }

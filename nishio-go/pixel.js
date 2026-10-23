@@ -6392,8 +6392,11 @@ function step(dir) {   // 1マス進めたら（人に話しかけたときも�
   // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
   // いちばん近い歩けるマスへ近づく向きにだけ動ける（出口へ向かうとき以外は、ふだんどおり通れない）
   const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
-  const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
-  if (BLOCK.has(codeAt(nx, ny)) && !escape) return false;
+  if (mazeOn()) { if (mzBlocked(cx0 + 0.5, cy0 + 0.5, nx + 0.5, ny + 0.5)) return false; }   // めいろ：タップ歩き・おまかせ歩きも めいろの 壁だけに 当たる（通路の 中の 建物は 通れる）
+  else {
+    const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
+    if (BLOCK.has(codeAt(nx, ny)) && !escape) return false;
+  }
   const who = npcAt(nx, ny);
   if (who) { if ($('pxInfo').hidden) openNpc(who); return true; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
@@ -6975,7 +6978,7 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   const hx = [], hf = [];   // 二分ヒープ（f の小さい順）
   const push = (i, f) => { hx.push(i); hf.push(f); let k = hx.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (hf[p] <= hf[k]) break; [hx[p], hx[k]] = [hx[k], hx[p]]; [hf[p], hf[k]] = [hf[k], hf[p]]; k = p; } };
   const pop = () => { const top = hx[0], li = hx.pop(), lf = hf.pop(); if (hx.length) { hx[0] = li; hf[0] = lf; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < hx.length && hf[a] < hf[m]) m = a; if (b < hx.length && hf[b] < hf[m]) m = b; if (m === k) break; [hx[m], hx[k]] = [hx[k], hx[m]]; [hf[m], hf[k]] = [hf[k], hf[m]]; k = m; } } return top; };
-  const h = (x, y) => (Math.abs(x - gx) + Math.abs(y - gy)) * 0.9;
+  const h = (x, y) => (Math.abs(x - gx) + Math.abs(y - gy)) * 0.9, mz = mazeOn();
   const start = (sy - y0) * W + (sx - x0);
   g[start] = 0; push(start, h(sx, sy));
   let best = start, bestH = h(sx, sy), found = -1, n = 0;
@@ -6992,7 +6995,7 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
       const j = ly * W + lx;
       if (done[j]) continue;
       const c = codeAt(nx, ny), isGoal = goalR === 0 && nx === gx && ny === gy;
-      if (!isGoal && (c !== C.X && BLOCK.has(c) || avoid.has(nx + ',' + ny))) continue;
+      if (mz ? mzBlocked(x + 0.5, y + 0.5, nx + 0.5, ny + 0.5) || avoid.has(nx + ',' + ny) : !isGoal && (c !== C.X && BLOCK.has(c) || avoid.has(nx + ',' + ny))) continue;   // めいろでは めいろの 壁で 道を さがす
       const cost = c === C.X ? 4 : AUTO_ROADS.has(c) ? 1 : 1.6;
       if (g[i] + cost < g[j]) { g[j] = g[i] + cost; from[j] = i; push(j, g[j] + h(nx, ny)); }
     }
@@ -7087,7 +7090,7 @@ function tapWalk(gx, gy) {
   const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
   if (sx === gx && sy === gy) return;
   const avoid = new Set((G.npcs || []).map(n => { const q = npcTile(n); return q.x + ',' + q.y; }));   // 人のマスは通らない（ぶつかると話しかけてしまう）
-  const path = planPath(sx, sy, gx, gy, BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水をタップしたら、そのそばまで
+  const path = planPath(sx, sy, gx, gy, mazeOn() ? (mzType(Math.floor(gx / MZ_K), Math.floor(gy / MZ_K)) === 1 ? 0 : 2) : BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水（めいろでは 壁の かたまり）をタップしたら、そのそばまで
   if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return; }
   tapS.path = path; tapS.goal = path[path.length - 1];
   tapWalkTick();

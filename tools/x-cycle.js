@@ -3,6 +3,7 @@
 //                                             RESEARCH（無料の Grok に手で聞いた答え）があれば、API は使わずそれを使う
 //   node tools/x-cycle.js ask <ゲーム>      … 無料の Grok に手で聞くときの頼み方を表示する
 //   node tools/x-cycle.js claude <回>       … Claude Code が実装する（0 回め）／Codex の指摘を直す（1 回め〜）。動かすあいだ .git は作業場所の外に置く
+//   node tools/x-cycle.js check <ファイル> … JSON・JS・HTML の中のスクリプトの文法を確かめる（Claude が自分で使う）
 //   node tools/x-cycle.js guard             … 変えてよい場所の外の変更を戻し、こわれていないか確かめて、.xcycle/diff.patch を書く
 //   node tools/x-cycle.js review-prompt <回> … Codex へのレビューの依頼文（.xcycle/review-prompt-<回>.md）を作る
 //   node tools/x-cycle.js verdict <回>      … Codex のレビュー（.xcycle/review-<回>.json）に must があれば fix=1
@@ -203,8 +204,9 @@ function claude(round) {
   const t = target();
   let prompt = round > 0 ? fill('x-cycle-fix-prompt.md', t, round) : fill('x-cycle-prompt.md', t, round);
   if (round === 0 && t.focus) prompt += `\n\n今回とくに見てほしいこと（運営者から）：${t.focus}`;
-  const allow = ['Read(./**)', 'Glob', 'Grep', 'Bash(node --check:*)', 'Edit(./.xcycle/notes.md)', 'Write(./.xcycle/notes.md)',
-    ...t.globs.flatMap(g => [`Edit(${g})`, `Write(${g})`])];
+  // ファイルの読み書きの許可は Edit(…) だけで Write も含む。文法の確かめは check（HTML の中のスクリプトも見る）と node --check だけ
+  const allow = ['Read(./**)', 'Glob', 'Grep', 'Edit(./.xcycle/notes.md)', ...t.globs.map(g => `Edit(${g})`),
+    'Bash(node tools/x-cycle.js check:*)', 'Bash(node tools/x-cycle.js check *)', 'Bash(node --check:*)', 'Bash(node --check *)'];
   const dotgit = path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'xcycle-dotgit');
   fs.renameSync(path.join(ROOT, '.git'), dotgit);   // Claude が動くあいだ、git の中身（と履歴）にさわれないように
   try {
@@ -259,6 +261,19 @@ function intact(p) {
     }
     return true;
   } catch (_) { return false; }
+}
+// Claude が書いたあとに自分で確かめる：node tools/x-cycle.js check tractor.html …（読むだけ。こわれていれば終了コード 1）
+function check() {
+  const files = process.argv.slice(3);
+  let bad = 0;
+  for (const f of files) {
+    const p = path.relative(ROOT, path.resolve(ROOT, f));
+    const ok = !p.startsWith('..') && intact(p);
+    console.log(`${ok ? 'OK' : 'こわれている'}：${p}`);
+    if (!ok) bad++;
+  }
+  if (!files.length) console.log('使い方：node tools/x-cycle.js check <ファイル>…');
+  if (bad || !files.length) process.exitCode = 1;
 }
 function guard() {
   // 変えてよい場所の外の変更は、まだ記録していないファイルも消して戻すので、GitHub Actions の使い捨ての作業場所でだけ動かす
@@ -345,8 +360,8 @@ async function pr() {
 const [cmd, arg] = process.argv.slice(2);
 const n = Math.max(0, Math.min(3, Number(arg) || 0));
 const run = {
-  research, guard, pr, ask,
+  research, guard, pr, ask, check,
   claude: () => claude(n), 'review-prompt': () => reviewPrompt(n), verdict: () => verdict(n),
 }[cmd];
-if (!run) { console.log('使い方：node tools/x-cycle.js research|ask <ゲーム>|claude <回>|guard|review-prompt <回>|verdict <回>|pr'); process.exit(2); }
+if (!run) { console.log('使い方：node tools/x-cycle.js research|ask <ゲーム>|check <ファイル>|claude <回>|guard|review-prompt <回>|verdict <回>|pr'); process.exit(2); }
 Promise.resolve().then(run).catch(e => { console.error(e.message); process.exit(1); });

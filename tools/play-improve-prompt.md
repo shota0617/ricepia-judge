@@ -24,12 +24,12 @@
 - ほかのゲームの名前・キャラクター・絵・音楽・文章はまねしません。持ちこむのは遊びの「しくみ」だけです
 - 名所・人の話・まちメモなど、西尾の事実にかかわる文は、出典のないことを書き足しません
 - 当店のキャンペーン・ごほうび（`nishio-go/campaigns.json`・`rewards.json`）、解析（`analytics.js`）、地図から作るデータ（`world.json`・`chunks/`・`osm-spots.json`・`landuse.json`・`landmarks.json`）は変えません
-- 直したら `node --check` で文法を確かめます
+- 直したら `node tools/x-cycle.js check nishio-go/game.js` のように、変えたファイルの文法を確かめます（シェルで動かせるのは この確かめと `tools/ai-play.js`・`tools/playtest.js` だけです）
 
 ## 3. 遊んで確かめる
 - 直したところを `tools/ai-play.js` でもう一度遊び、スクリーンショットで確かめます
 - `node tools/playtest.js .play/after` が `"ok": true` になることを確かめます（落ちたら直すか、変更を元に戻します）
-- 直したしくみが、ほかの人が直すときにも確かめられるとよいものなら、`tools/playtest.js` にチェックを足します
+- 直したしくみが、ほかの人が直すときにも確かめられるとよいものなら、足したいチェックを `docs/play-improve.md` に書いておきます（`tools/playtest.js` は 人が足します）
 
 ## 4. 記録する
 `docs/play-improve.md` の「周回の記録」のいちばん上に、今回の周回を足します（遊んで気づいたこと・直したこと・確かめたこと・見送ったこと）。

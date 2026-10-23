@@ -26,9 +26,11 @@ const LIMITS = {
   cfD1SizeMb: num("CF_D1_SIZE_MB_LIMIT", 400),
 };
 
-// 自動停止。AUTO_STOP=false で無効化（通知のみ）
-const AUTO_STOP = env.AUTO_STOP !== "false";
+// 自動停止。AUTO_STOP=true のときだけ（未設定は通知のみ。ほかの仕事で使うキーや Worker まで止めないように）
+// AUTO_STOP_ANTHROPIC_KEY_IDS・AUTO_STOP_WORKERS を入れると、止めるのは そこに書いたものだけ
+const AUTO_STOP = env.AUTO_STOP === "true";
 const list = (k) => (env[k] || "").split(",").map((x) => x.trim()).filter(Boolean);
+const stoppable = (onlyKey, excludeKey, id) => (!list(onlyKey).length || list(onlyKey).includes(id)) && !list(excludeKey).includes(id);
 
 const findings = []; // { key, title, detail }
 const stops = new Map(); // key -> { label, fn }  fn は実行した操作の説明配列を返す
@@ -161,11 +163,10 @@ async function checkCloudflare() {
       `合計 ${sum(h24)} / 上限 ${LIMITS.cfWorkerReq24h}\n${top(h24)}`);
   }
   // 個別の Worker が上限を超えたら、その Worker を外部から呼べなくする
-  const exclude = list("AUTO_STOP_EXCLUDE_WORKERS");
   for (const name of new Set([...Object.keys(h1), ...Object.keys(h24)])) {
     const r1 = h1[name]?.requests || 0;
     const r24 = h24[name]?.requests || 0;
-    if ((r1 > LIMITS.cfWorkerReq1h || r24 > LIMITS.cfWorkerReq24h) && !exclude.includes(name)) {
+    if ((r1 > LIMITS.cfWorkerReq1h || r24 > LIMITS.cfWorkerReq24h) && stoppable("AUTO_STOP_WORKERS", "AUTO_STOP_EXCLUDE_WORKERS", name)) {
       stops.set(`cf:${name}`, { label: `Worker「${name}」を停止（1h ${r1} / 24h ${r24} req）`, fn: () => stopWorker(name) });
     }
   }
@@ -209,7 +210,6 @@ async function checkCloudflare() {
 // Anthropic: 組織内の有効な API キーを inactive にする（Admin キー自体は対象外なので監視は続く）
 async function stopAnthropicKeys() {
   const h = { "x-api-key": env.ANTHROPIC_ADMIN_KEY, "anthropic-version": "2023-06-01", "Content-Type": "application/json" };
-  const exclude = list("AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS");
   const done = [];
   let after = null;
   for (let i = 0; i < 20; i++) {
@@ -218,7 +218,7 @@ async function stopAnthropicKeys() {
     const r = await http(`https://api.anthropic.com/v1/organizations/api_keys?${q}`, { headers: h });
     if (!r.ok) throw new Error(`api_keys list HTTP ${r.status}`);
     for (const k of r.json.data || []) {
-      if (exclude.includes(k.id)) continue;
+      if (!stoppable("AUTO_STOP_ANTHROPIC_KEY_IDS", "AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS", k.id)) continue;
       const u = await http(`https://api.anthropic.com/v1/organizations/api_keys/${k.id}`, {
         method: "POST", headers: h, body: JSON.stringify({ status: "inactive" }),
       });
@@ -361,7 +361,7 @@ await runCheck("各社障害情報", true, checkStatusPages);
 console.log(report.join("\n"));
 
 const stopResults = []; // 実際に何かを止めたものだけ
-if (stops.size && !AUTO_STOP) console.log("- 自動停止: 無効（AUTO_STOP=false）");
+if (stops.size && !AUTO_STOP) console.log("- 自動停止: 無効（AUTO_STOP=true にしたときだけ止める）");
 if (AUTO_STOP) {
   for (const [key, s] of stops) {
     try {

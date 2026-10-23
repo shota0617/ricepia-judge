@@ -205,9 +205,10 @@ function claude(round) {
   if (t.research_only) throw new Error(`${t.key} は調べるだけの設定なので、Claude は動かしません`);
   let prompt = round > 0 ? fill('x-cycle-fix-prompt.md', t, round) : fill('x-cycle-prompt.md', t, round);
   if (round === 0 && t.focus) prompt += `\n\n今回とくに見てほしいこと（運営者から）：${t.focus}`;
-  // ファイルの読み書きの許可は Edit(…) だけで Write も含む。文法の確かめは check（HTML の中のスクリプトも見る）と node --check だけ
+  // ファイルの読み書きの許可は Edit(…) だけで Write も含む。文法の確かめは check（HTML の中のスクリプトも見る）だけ。
+  // node をじかに動かす許可は出さない（指定しだいで、Claude が書いたスクリプトを秘密のある所で動かせてしまう）
   const allow = ['Read(./**)', 'Glob', 'Grep', 'Edit(./.xcycle/notes.md)', ...t.globs.map(g => `Edit(${g})`),
-    'Bash(node tools/x-cycle.js check:*)', 'Bash(node tools/x-cycle.js check *)', 'Bash(node --check:*)', 'Bash(node --check *)'];
+    'Bash(node tools/x-cycle.js check:*)', 'Bash(node tools/x-cycle.js check *)'];
   const dotgit = path.join(process.env.RUNNER_TEMP || os.tmpdir(), 'xcycle-dotgit');
   fs.renameSync(path.join(ROOT, '.git'), dotgit);   // Claude が動くあいだ、git の中身（と履歴）にさわれないように
   try {

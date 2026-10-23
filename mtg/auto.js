@@ -1,6 +1,7 @@
-/* らいすぴあ ミーティング — automation: meeting ends → needs analysis → backlog → GitHub Issue → Claude Code develops
-   The last step only labels the Issue "claude-dev"; .github/workflows/claude-dev.yml in the target repository
-   runs Claude Code, which implements it on a branch for a person to review and merge. */
+/* らいすぴあ ミーティング — automation: meeting ends → needs analysis → backlog → GitHub Issue
+   Claude Code に開発を頼む（Issue に "claude-dev" を付ける）のは、いつも人が Issue の文を確かめてから、バックログのボタンで1件ずつ。
+   会議の発言から作った文に まぎれた指示で、書きこみ権限のある AI が動かないように、自動では頼まない。
+   .github/workflows/claude-dev.yml in the target repository runs Claude Code, which implements it on a branch for a person to review and merge. */
 (function(){
 "use strict";
 const {$, esc} = M;
@@ -9,7 +10,7 @@ const TOKEN = "ricepia_gh_token"; // kept outside the rmt_ prefix so backups nev
 const LEVELS = {Must:["Must"], Should:["Must","Should"], all:["Must","Should","Could"]};
 
 const A = M.auto = {};
-A.settings = () => Object.assign({analyze:true, backlog:true, issue:false, dev:false, level:"Must"}, M.settings().auto || {});
+A.settings = () => Object.assign({analyze:true, backlog:true, issue:false, level:"Must"}, M.settings().auto || {}, {dev:false});   // dev（自動で開発を頼む）は いつもオフ
 A.save = patch => M.saveSettings({auto:Object.assign(A.settings(), patch)});
 
 /* ---------- GitHub (fine-grained token in this browser only) ---------- */
@@ -63,6 +64,7 @@ A.requestDev = async function(id){
   const b = M.backlog().find(x => x.id === id);
   if(!b || !issueNo(b)) throw new Error("先にGitHub Issueを作ってください");
   if(!A.getToken() || !repoOk()) throw new Error("「⚡ 自動化」でGitHubのリポジトリとトークンを設定してください");
+  if(!confirm("Issue #" + issueNo(b) + " の文を GitHub で読んで確かめましたか？\n\nClaude Code は この Issue の文のとおりに開発します。会議の発言から作った文に、開発とは関係のない指示（秘密を書き出す・ほかのファイルを変える など）が まぎれていないか確かめてから依頼してください。")) return false;
   await requestDev(b);
   patchItem(id, {devRequested:Date.now(), status:"dev"});
 };
@@ -142,16 +144,7 @@ A.run = async function(m, quiet){
       (anonymous ? '<div class="small muted">公開リポジトリのため、お客様の名前と発言の引用は載せていません</div>' : ""));
     // 4. development by Claude Code
     const s4 = step("Claude Code に開発を依頼");
-    if(!st.dev){ s4.set("skip", "自動依頼はオフです（バックログの「🤖 開発を依頼」で個別に頼めます）"); return; }
-    const asked = [];
-    for(const x of made){
-      if(x.b.devRequested) continue;
-      await requestDev(x.b);
-      asked.push(patchItem(x.b.id, {devRequested:Date.now(), status:"dev"}));
-    }
-    s4.set("ok", asked.length
-      ? asked.map(b => link(b.issueUrl, "#" + issueNo(b) + " " + b.title)).join("<br/>") + '<div class="small muted">数分〜数十分で Issue に進み具合と結果が書き込まれます。できた変更を確認してから取り込んでください。</div>'
-      : "依頼済みです");
+    s4.set("skip", "自動では頼みません。Issue の文を確かめてから、バックログの「🤖 開発を依頼」で1件ずつ頼んでください");
   }catch(e){
     const last = steps[steps.length - 1], msg = esc(e.message || String(e)) + "<br/>「⚡ 自動処理を実行」で続きからやり直せます";
     if(last && last.state === "wait"){ last.state = "err"; last.text = msg; }
@@ -173,15 +166,15 @@ A.afterMeeting = function(id){
 /* ---------- settings card (開発バックログ) ---------- */
 function paintSettings(){
   const st = A.settings();
-  ["analyze","backlog","issue","dev"].forEach(k => { $("#au_" + k).checked = !!st[k]; });
+  ["analyze","backlog","issue"].forEach(k => { $("#au_" + k).checked = !!st[k]; });
   $("#au_level").value = st.level;
   $("#au_token").value = A.getToken();
-  const on = [st.analyze && "分析", st.backlog && "バックログ", st.issue && "Issue", st.dev && "開発依頼"].filter(Boolean);
+  const on = [st.analyze && "分析", st.backlog && "バックログ", st.issue && "Issue"].filter(Boolean);
   $("#au_summary").textContent = on.length ? "オン：" + on.join(" → ") : "オフ";
 }
 M.mod.auto = {
   init(){
-    ["analyze","backlog","issue","dev"].forEach(k => $("#au_" + k).addEventListener("change", e => { A.save({[k]:e.target.checked}); paintSettings(); }));
+    ["analyze","backlog","issue"].forEach(k => $("#au_" + k).addEventListener("change", e => { A.save({[k]:e.target.checked}); paintSettings(); }));
     $("#au_level").onchange = e => { A.save({level:e.target.value}); paintSettings(); };
     $("#au_tokenSave").onclick = () => { setToken($("#au_token").value.trim()); M.toast($("#au_token").value.trim() ? "トークンを保存しました" : "トークンを消去しました", "ok"); };
     $("#au_check").onclick = async () => {

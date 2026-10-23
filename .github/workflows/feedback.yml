@@ -2,7 +2,8 @@
 # 1. 決まった手順で片づくもの（もうゲームにある名所・OpenStreetMap にある名所）は、その場で返事をして閉じる
 # 2. のこりは Claude が読み、出典で確かめられた小さな直し（ふつうのスポットを足す・説明のまちがいを直す など）をする。
 #    Claude は シェル・git・トークンを使えず、読み書きと決まったサイトの閲覧だけ。おたよりの文は「データ」として扱う（tools/feedback-prompt.md）
-# 3. 直してよい場所の変更だけを PR にする（マージは人が確かめてから）。結果を Issue に書きもどす
+# 3. 直してよい場所の変更だけを、非公開の置き場の「公開前の確認」Issue に置く（公開のリポジトリには まだ出さない）。結果を Issue に書きもどす
+#    人が中身を確かめて「Nishio feedback publish」（feedback-publish.yml）を動かしたときだけ PR になる（マージも人）
 # 4. 受付番号ごとの返事と、人がマージして反映されたことを nishio-go/voices.json に書いて main にコミットする（ゲームの「こえ」タブで知らせる）
 # 必要な準備：Variables の FEEDBACK_REPO、Secrets の FEEDBACK_TOKEN と ANTHROPIC_API_KEY（無いあいだは なにもしない／決まった手順だけ）。docs/feedback.md
 name: Nishio feedback
@@ -11,8 +12,7 @@ on:
   schedule:
     - cron: '11,41 * * * *'   # 30分ごと（プレイヤーの声を早く返す。おたよりが無い回は数十秒で終わる）
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write   # voices.json を main にコミットするため（PR は feedback-publish.yml が作る）
 concurrency:
   group: feedback
   cancel-in-progress: false
@@ -80,18 +80,18 @@ jobs:
           for f in items.json rids.json status.json; do
             if [ -f "$RUNNER_TEMP/trusted/feedback/$f" ]; then cp "$RUNNER_TEMP/trusted/feedback/$f" ".feedback/$f"; else rm -f ".feedback/$f"; fi
           done
-      - name: Open PR
+      - name: Hand to review (private)
         id: pr
         if: steps.sort.outputs.ai
         env:
-          GH_TOKEN: ${{ github.token }}
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
           FEEDBACK_ROOT: ${{ github.workspace }}
         run: node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" pr
       - name: Report to feedback issues
         if: always() && steps.sort.outputs.ai
         env:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
-          PR_URL: ${{ steps.pr.outputs.url }}
+          REVIEW_URL: ${{ steps.pr.outputs.url }}
           FEEDBACK_ROOT: ${{ github.workspace }}
         run: node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" report
       - name: Tell players (voices.json)

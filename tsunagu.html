@@ -97,8 +97,9 @@ button{font-family:inherit;cursor:pointer;}
 <div id="pass" hidden>
   <div class="box">
     <h1>🔑 お店の合言葉</h1>
-    <div class="hint">店内の端末どうしで、同じ合言葉を入れた端末だけがつながります。はじめに1回だけ入れてください（この端末に保存します。合言葉は店の外に出さないでください）。</div>
-    <input id="passEdit" type="password" autocomplete="off" placeholder="合言葉（6文字以上）"/>
+    <div class="hint">店内の端末どうしで、同じ合言葉を入れた端末だけがつながります。はじめに1回だけ入れてください（この端末に保存します。合言葉は店の外に出さないでください）。<br/>はじめての端末では「🎲 合言葉を作る」で作り、ほかの端末にも同じものを入れてください。言葉や名前ではなく、でたらめな文字にします。</div>
+    <input id="passEdit" type="password" autocomplete="off" placeholder="合言葉（12文字以上）"/>
+    <button class="big ghost" id="passGen">🎲 合言葉を作る</button>
     <button class="big gold" id="passSave">保存してはじめる</button>
   </div>
 </div>
@@ -118,15 +119,19 @@ button{font-family:inherit;cursor:pointer;}
 const $ = s => document.querySelector(s);
 // The room name comes from a passphrase typed once on each device (only its hash is kept, in localStorage).
 // Devices with the same passphrase find each other; anyone who just opens this page can't guess the seats.
-const SEATS = 5, PASS_LS = "ricepia_tsunagu_room";
+// 合言葉は12文字以上（「合言葉を作る」は でたらめな16文字）。部屋の名前は 何十万回も くりかえす計算（PBKDF2）で作り、候補を ためしにくくする
+const SEATS = 5, PASS_LS = "ricepia_tsunagu_room2";
 let ROOM = "";
 const seatId = n => ROOM + "-" + n;
 const seatOf = id => { const s = String(id); return ROOM && s.startsWith(ROOM + "-") ? Number(s.slice(ROOM.length + 1)) || 0 : 0; }; // only our room's seats
-function loadRoom(){ try{ const r = localStorage.getItem(PASS_LS); return /^ricepia-tsunagu-[0-9a-f]{24}$/.test(r || "") ? r : ""; }catch(e){ return ""; } }
+try{ localStorage.removeItem("ricepia_tsunagu_room"); }catch(e){} // 前の 短い合言葉の部屋は使わない（入れなおしてもらう）
+function loadRoom(){ try{ const r = localStorage.getItem(PASS_LS); return /^ricepia-tsunagu2-[0-9a-f]{32}$/.test(r || "") ? r : ""; }catch(e){ return ""; } }
 async function roomOf(pass){
-  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("ricepia-tsunagu:" + pass)));
-  return "ricepia-tsunagu-" + [...h.slice(0, 12)].map(b => b.toString(16).padStart(2, "0")).join("");
+  const enc = new TextEncoder(), key = await crypto.subtle.importKey("raw", enc.encode(pass), "PBKDF2", false, ["deriveBits"]);
+  const h = new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2", hash:"SHA-256", salt:enc.encode("ricepia-tsunagu-room-v2"), iterations:600000}, key, 128));
+  return "ricepia-tsunagu2-" + [...h].map(b => b.toString(16).padStart(2, "0")).join("");
 }
+function genPass(){ const a = "abcdefghjkmnpqrstuvwxyz23456789"; let s = ""; crypto.getRandomValues(new Uint8Array(16)).forEach((x, i) => { s += (i && i % 4 === 0 ? "-" : "") + a[x % a.length]; }); return s; }
 const DEFAULT_ZOOM = "https://zoom.us/j/5440010563"; // らいすぴあのZoom（パーソナルミーティングID 544 001 0563）
 const LS = "ricepia_tsunagu_zoom";
 
@@ -623,11 +628,13 @@ $("#entryOn").onclick = () => choose(false);
 $("#entryMute").onclick = () => choose(true);
 $("#passSave").onclick = async () => {
   const v = $("#passEdit").value.trim();
-  if(v.length < 6){ toast("合言葉は6文字以上にしてください"); return; }
-  ROOM = await roomOf(v);
+  if(v.replace(/[\s-]/g, "").length < 12){ toast("合言葉は12文字以上にしてください（「合言葉を作る」で作れます）"); return; }
+  $("#passSave").disabled = true;
+  try{ ROOM = await roomOf(v); }finally{ $("#passSave").disabled = false; }
   try{ localStorage.setItem(PASS_LS, ROOM); }catch(e){}
   $("#passEdit").value = ""; $("#pass").hidden = true; entry();
 };
+$("#passGen").onclick = () => { const e = $("#passEdit"); e.type = "text"; e.value = genPass(); e.select(); toast("この合言葉を ほかの端末にも入れてください（メモは店の中だけに）", 6000); };
 $("#passReset").onclick = () => { try{ localStorage.removeItem(PASS_LS); }catch(e){} location.reload(); };
 ROOM = loadRoom();
 if(ROOM) entry(); else { $("#pass").hidden = false; waiting("", "", "off"); }

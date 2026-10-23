@@ -138,16 +138,16 @@
       <p>複数の会議から集まったお客様のニーズです。同じ目的の要望は1つにまとまり、言及した会議が多いほど・優先度と影響が大きいほどスコアが上がります。</p></div>
     <div class="kpis" id="blStats"></div>
     <details class="card" id="autoCard" style="margin-bottom:12px;">
-      <summary>⚡ 自動化：会議が終わったら → 要望分析 → バックログ → GitHub Issue → Claude Code が開発（<span id="au_summary"></span>）</summary>
+      <summary>⚡ 自動化：会議が終わったら → 要望分析 → バックログ → GitHub Issue（<span id="au_summary"></span>）</summary>
       <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px;">
         <label class="chk"><input type="checkbox" id="au_analyze"/> ① 会議が終わったら、自動で要望分析する（APIキーを設定した端末だけ）</label>
         <label class="chk"><input type="checkbox" id="au_backlog"/> ② 分析したニーズを、自動で開発バックログに入れる（同じ目的の要望は統合）</label>
         <label class="chk"><input type="checkbox" id="au_issue"/> ③ GitHub Issue を自動で作る　対象：
           <select id="au_level" class="inp" style="width:auto;padding:4px 8px;font-size:12px;"><option value="Must">Must のみ</option><option value="Should">Must と Should</option><option value="all">すべて</option></select></label>
-        <label class="chk"><input type="checkbox" id="au_dev"/> ④ 作った Issue を Claude Code に渡して、自動で開発してもらう（できた変更は人が確認してから取り込み）</label>
+        <div class="small muted">④ Claude Code への開発の依頼は、自動ではしません。Issue の文を確かめてから、バックログの「🤖 開発を依頼」で1件ずつ頼みます（会議の発言から作った文に まぎれた指示で AI が動かないように）</div>
       </div>
       <div class="grid2" style="margin-top:12px;">
-        <div class="field"><label for="au_token">GitHub トークン（③④に必要）</label>
+        <div class="field"><label for="au_token">GitHub トークン（③と④の依頼に必要）</label>
           <input id="au_token" type="password" placeholder="github_pat_…" autocomplete="off" style="font-family:monospace;"/>
           <div class="hint" style="margin-top:4px;font-size:12px;color:#8a8a70;">このタブを閉じると消えます（ブラウザには のこしません）</div>
           <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="au_tokenSave">保存</button><button class="btn btn-gold btn-sm" id="au_check">接続を確認</button></div>

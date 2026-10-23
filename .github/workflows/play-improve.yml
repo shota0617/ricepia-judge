@@ -2,7 +2,8 @@
 # 1. 通しのプレイテスト（tools/playtest.js）を動かす
 # 2. Claude Code が tools/ai-play.js で自分で遊び、気づいたことを1つ直して、もう一度遊んで確かめる（tools/play-improve-prompt.md）
 # 3. 1〜2 を cycles 回くり返し、最後のプレイテストが通ったときだけ PR にする（マージは人が確かめてから）
-#    Claude が書けるのは nishio-go/・nishio-go.html・docs/play-improve.md・tools/playtest.js だけ（tools/ai-play.js・.github などは書けない）。PR にも その場所だけ
+#    Claude が書けるのは nishio-go/・nishio-go.html・docs/play-improve.md だけ（tools/・.github などは書けない）。PR にも その場所だけ
+#    Claude が動かせるのは、Claude が書きかえられない tools/ の道具（ai-play・playtest・文法の確かめ）だけ。書きかえたコードを node で動かす道はつくらない（秘密を読まれないように）
 # 必要な準備：Secrets の ANTHROPIC_API_KEY（無いあいだは なにもしない）。くわしくは docs/play-improve.md
 name: Nishio play-improve
 on:
@@ -56,7 +57,7 @@ jobs:
 
           今回は $n 回のうちの $i 回めです。通しのプレイテストの結果は .play/before-$i/ にあります。" \
               --model claude-opus-5-5 --max-turns 120 --permission-mode dontAsk \
-              --allowedTools "Read,Glob,Grep,Edit(./nishio-go/**),Write(./nishio-go/**),Edit(./nishio-go.html),Edit(./docs/play-improve.md),Edit(./tools/playtest.js),Bash(node tools/ai-play.js:*),Bash(node tools/playtest.js:*),Bash(node --check:*)" \
+              --allowedTools "Read,Glob,Grep,Edit(./nishio-go/**),Write(./nishio-go/**),Edit(./nishio-go.html),Edit(./docs/play-improve.md),Bash(node tools/ai-play.js:*),Bash(node tools/playtest.js:*),Bash(node tools/x-cycle.js check:*)" \
               --disallowedTools "WebFetch,WebSearch,NotebookEdit,Task" | tail -n 40
             echo "::endgroup::"
           done
@@ -75,19 +76,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           CYCLES: ${{ inputs.cycles }}
         run: |
-          # PR にするのは 直してよい場所（ゲーム・遊んだ記録・プレイテスト）だけ。ほかの場所が かわっていたら 止める（.github・tools などを PR に まぜない）
-          ALLOW='^(nishio-go/|nishio-go\.html$|docs/play-improve\.md$|tools/playtest\.js$)'
+          # PR にするのは 直してよい場所（ゲーム・遊んだ記録）だけ。ほかの場所が かわっていたら 止める（.github・tools などを PR に まぜない）
+          ALLOW='^(nishio-go/|nishio-go\.html$|docs/play-improve\.md$)'
           git reset -q   # だれかが先に ステージした 内容は 使わない（コミットするのは この下で 足したものだけ）
           # 名前の かわった ファイルは もとの名前と 新しい名前を べつべつに 見る（--no-renames）。-z で 名前を そのまま 読む
           other=$(git status --porcelain --no-renames --untracked-files=all -z | tr '\0' '\n' | cut -c4- | grep -v '^\.play/' | grep -Ev "$ALLOW" || true)
           if [ -n "$other" ]; then echo "::error::直してよい場所の外が かわっていたので、PR にしません：$other"; exit 1; fi
-          if [ -z "$(git status --porcelain -- nishio-go nishio-go.html docs/play-improve.md tools/playtest.js)" ]; then echo "PR にする変更はありません"; exit 0; fi
+          if [ -z "$(git status --porcelain -- nishio-go nishio-go.html docs/play-improve.md)" ]; then echo "PR にする変更はありません"; exit 0; fi
           branch="play-improve/run-${GITHUB_RUN_ID}"
           git checkout -q -b "$branch"
-          git add -A -- nishio-go nishio-go.html docs/play-improve.md tools/playtest.js
+          git add -A -- nishio-go nishio-go.html docs/play-improve.md
           staged=$(git diff --cached --name-only --no-renames -z | tr '\0' '\n' | grep -Ev "$ALLOW" || true)   # コミットする 直前にも もう一度
           if [ -n "$staged" ]; then echo "::error::コミットする内容に 直してよい場所の外が 入っていたので、PR にしません：$staged"; exit 1; fi
-          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "にしおさんぽGO: 遊んで直す（自動・要確認）"
-          git push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
+          git -c core.hooksPath=/dev/null -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "にしおさんぽGO: 遊んで直す（自動・要確認）"
+          git -c core.hooksPath=/dev/null push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
           gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" --title "遊んで直す（自動・要確認）" \
             --body "Claude Code が にしおさんぽGO を遊んで、気づいたことを直した案です（周回：${CYCLES}）。何を遊んで何を直したかは docs/play-improve.md の「周回の記録」、スクリーンショットはこの実行の artifact（play-improve）にあります。**遊んで確かめてからマージしてください。**"

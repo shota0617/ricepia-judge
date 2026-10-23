@@ -170,7 +170,7 @@ async function keys(page, list) {
       else r.note = 'しらない手順';
     } catch (e) { r.error = e.message.split('\n')[0]; }
     await page.waitForTimeout(a.do === 'wait' ? 0 : 300);
-    r.shot = `${String(i).padStart(2, '0')}-${a.do}.png`;
+    r.shot = `${String(i).padStart(2, '0')}-${String(a.do).replace(/[^a-z]/g, '')}.png`;   // 手順の名前は英字だけ（出力フォルダの外に書かない）
     await page.screenshot({ path: path.join(OUT, r.shot) });
     r.after = await look(page);
     log.push(r);

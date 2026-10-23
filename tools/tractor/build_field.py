@@ -636,6 +636,7 @@ def make_materials():
     mat_flat('roof_rust', '#7f4e34', 0.75, 0.2)
     mat_flat('shed_wall', '#8d9296', 0.6, 0.3)
     mat_flat('vinyl', '#eef1f1', 0.3, alpha=0.5)
+    mat_flat('seedling', '#74b43c', 0.85)                             # 育苗ハウスの中の苗（春・代かき）
 
 
 # ================================================================
@@ -1135,16 +1136,25 @@ def building(kind, x, y, rot, z0, rng):
         bt.box('window', (w * 0.55, 0.06, 3.2), (-w * 0.15, -d / 2, z0 + 1.6), mtx=M)
         gable_roof('roof_rust' if rng.random() < 0.5 else 'roof_metal', M, w, d, z0 + h, 0.3, 0.5)
     else:                                                             # ビニールハウス（かまぼこ形）
+        # 春・代かきのころは育苗ハウス：中に苗の床が並び、昼は横のビニールを巻き上げて換気する（栃木県・福井県・長野県の育苗の注意）
         L, r = rng.uniform(25, 40), 2.7
+        nursery = SEASON in ('haru', 'shirokaki')
+        a0 = 0.33 if nursery else 0.0                                 # 巻き上げた所（地面から 1m くらい）は開いている
         bm = bmesh.new()
         rings = []
         for t in (-L / 2, L / 2):
-            rings.append([bm.verts.new(M @ Vector((t, r * math.cos(a), z0 + r * 1.1 * math.sin(a)))) for a in np.linspace(0, math.pi, 13)])
+            rings.append([bm.verts.new(M @ Vector((t, r * math.cos(a), z0 + r * 1.1 * math.sin(a)))) for a in np.linspace(a0, math.pi - a0, 13)])
         for k in range(12):
             bm.faces.new((rings[0][k], rings[0][k + 1], rings[1][k + 1], rings[1][k]))
         for ring in rings:
             bm.faces.new(ring)
         new_obj(bm, 'vinyl', smooth=60, face_up=False)
+        if nursery:
+            for sy in (1, -1):                                        # 巻き上げたビニール（筒）
+                y, z = sy * r * math.cos(a0), z0 + r * 1.1 * math.sin(a0)
+                bt.box('white_insulator', (L, 0.12, 0.12), (0, y, z), mtx=M)
+            for y in (-1.45, 0.0, 1.45):                              # 苗の床（育苗箱を並べた緑の帯）
+                bt.box('seedling', (L - 1.5, 1.15, 0.07), (0, y, z0 + 0.10), mtx=M)
 
 
 def T3(loc, rot_deg):

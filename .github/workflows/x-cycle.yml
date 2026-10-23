@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       target:
-        description: 'どのゲームか（空なら週ごとに交代）'
+        description: 'どれを直すか（ゲーム・marketing＝今週の投稿案と企画。空なら週ごとに交代）'
         type: choice
-        options: ['', tractor, nishio-go]
+        options: ['', tractor, nishio-go, marketing]
         default: ''
       research:
         description: 'Grok の答え（無料の Grok に聞いた1行の JSON をはりつける。あれば Grok の API は使わない。docs/x-cycle.md）'
@@ -63,7 +63,7 @@ jobs:
         if: steps.cfg.outputs.on
         run: |
           mkdir -p "$RUNNER_TEMP/trusted"
-          cp tools/x-cycle.js tools/x-cycle-topics.json tools/x-cycle-prompt.md tools/x-cycle-fix-prompt.md tools/x-cycle-review-prompt.md tools/x-cycle-review-schema.json "$RUNNER_TEMP/trusted/"
+          cp tools/x-cycle.js tools/x-cycle-topics.json tools/x-cycle*.md tools/x-cycle-review-schema.json "$RUNNER_TEMP/trusted/"
           npm i -g --prefix "$RUNNER_TEMP/cc" @anthropic-ai/claude-code@2.1.305 > /dev/null
           echo "CLAUDE_BIN=$RUNNER_TEMP/cc/bin/claude" >> "$GITHUB_ENV"
 

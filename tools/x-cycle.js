@@ -190,7 +190,7 @@ function readJsonText(s) { try { return JSON.parse(s); } catch (_) { return {}; 
 // ---------- Claude が実装する・直す ----------
 function fill(file, t, round) {
   return fs.readFileSync(path.join(__dirname, file), 'utf8')
-    .replace(/\{\{NAME\}\}/g, t.name).replace(/\{\{ROUND\}\}/g, String(round))
+    .replace(/\{\{NAME\}\}/g, t.name).replace(/\{\{ROUND\}\}/g, String(round)).replace(/\{\{DATE\}\}/g, today())
     .replace(/\{\{READ\}\}/g, t.read.map(f => '`' + f + '`').join('・'))
     .replace(/\{\{EDITABLE\}\}/g, t.globs.map(g => '`' + g.replace(/^\.\//, '') + '`').join('・'));
 }
@@ -203,7 +203,8 @@ function claudeEnv() {
 function claude(round) {
   const t = target();
   if (t.research_only) throw new Error(`${t.key} は調べるだけの設定なので、Claude は動かしません`);
-  let prompt = round > 0 ? fill('x-cycle-fix-prompt.md', t, round) : fill('x-cycle-prompt.md', t, round);
+  // 頼み方のファイルは行き先ごとに変えられる（tools/x-cycle-topics.json の prompt・fix_prompt・review_prompt。無ければゲーム用）
+  let prompt = round > 0 ? fill(t.fix_prompt || 'x-cycle-fix-prompt.md', t, round) : fill(t.prompt || 'x-cycle-prompt.md', t, round);
   if (round === 0 && t.focus) prompt += `\n\n今回とくに見てほしいこと（運営者から）：${t.focus}`;
   // ファイルの読み書きの許可は Edit(…) だけで Write も含む。文法の確かめは check（HTML の中のスクリプトも見る）だけ。
   // node をじかに動かす許可は出さない（指定しだいで、Claude が書いたスクリプトを秘密のある所で動かせてしまう）
@@ -294,7 +295,8 @@ function guard() {
 
 // ---------- Codex のレビュー ----------
 function reviewPrompt(round) {
-  fs.writeFileSync(path.join(DIR, `review-prompt-${round}.md`), fill('x-cycle-review-prompt.md', target(), round));
+  const t = target();
+  fs.writeFileSync(path.join(DIR, `review-prompt-${round}.md`), fill(t.review_prompt || 'x-cycle-review-prompt.md', t, round));
 }
 function review(round) {
   let text = '';
@@ -333,7 +335,7 @@ async function pr() {
 
   const SEV = { must: '🔴 must', should: '🟡 should', nit: '⚪ nit' };
   const body = [
-    `Grok が X でさがした発信をもとに、Claude が ${t.name} を直し、Codex がレビューした案です。**遊んで確かめてからマージしてください。**`,
+    t.pr_intro || `Grok が X でさがした発信をもとに、Claude が ${t.name} を直し、Codex がレビューした案です。**遊んで確かめてからマージしてください。**`,
     open.length ? `\n> ⚠️ 最後のレビューで must の指摘が ${open.length} 件のこっています。` : (last ? '' : '\n> ⚠️ Codex のレビューは動いていません（OPENAI_API_KEY が無い、または失敗）。'),
     '', block(notes) || '（Claude のメモなし）', '',
     `<details><summary>もとにした X の発信（${res.from}〜${res.to}・${res.items.length} 件）</summary>`, '',
@@ -349,12 +351,13 @@ async function pr() {
   const branch = `x-cycle/${t.key}-${process.env.GITHUB_RUN_ID || Date.now()}`;
   git('checkout', '-q', '-b', branch);
   git('add', '--', ...files.map(c => c.path), SEEN);
-  git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', `${t.name.replace(/（.*$/, '')}：X の発信に合わせる（自動・要確認）`);
+  const title = `${t.name.replace(/（.*$/, '')}：${t.pr_title || 'X の発信に合わせる'}（自動・要確認）`;
+  git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', title);
   git('push', '-q', `https://x-access-token:${process.env.GH_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`, `HEAD:refs/heads/${branch}`);
   const bodyFile = path.join(DIR, 'pr-body.md');
   fs.writeFileSync(bodyFile, body);
   const url = cp.execFileSync('gh', ['pr', 'create', '--base', process.env.GITHUB_REF_NAME || 'main', '--head', branch,
-    '--title', `${t.name.replace(/（.*$/, '')}：X の発信に合わせる（自動・要確認）${open.length ? '・指摘のこり' : ''}`, '--body-file', bodyFile], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n').pop();
+    '--title', `${title}${open.length ? '・指摘のこり' : ''}`, '--body-file', bodyFile], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n').pop();
   console.log(url);
   out('url', url);
 }

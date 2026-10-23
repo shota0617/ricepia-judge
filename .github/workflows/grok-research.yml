@@ -10,7 +10,7 @@ on:
       topic:
         description: '何を調べるか'
         type: choice
-        options: [tractor-model, tractor, nishio-go]
+        options: [tractor-model, tractor, nishio-go, marketing]
         default: tractor-model
       focus:
         description: '今回とくにさがすこと（例：ロータリーの後付けの灯火器・ナンバープレートの位置）'

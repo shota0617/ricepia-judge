@@ -6753,7 +6753,9 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = Math.max(2, U * 0.1); ctx.strokeStyle = `rgba(255,213,79,${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
     flag(ex, ey - U * 0.3, U * 1.3);
-    label('ゴール', ex, ey - U * 2.1 - pulse * U * 0.12, Math.round(U * 0.62), '#ffe680');
+    label('ゴール', ex, ey - U * 2.75 - pulse * U * 0.12, Math.round(U * 0.62), '#ffe680');
+    { let nm = gt.name || ''; ctx.font = `bold ${Math.round(U * 0.45)}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
+      if (nm) label(nm, ex, ey - U * 2.15 - pulse * U * 0.12, Math.round(U * 0.45), '#ffffff'); }   // 旗の 上
     return;
   }
   const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6;

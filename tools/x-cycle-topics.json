@@ -1,5 +1,5 @@
 {
-  "_説明": "X の発信から ゲームを直すサイクル（.github/workflows/x-cycle.yml・tools/x-cycle.js）の、ゲームごとの設定。search：Grok に X でさがしてもらうこと／read：Claude と Codex が はじめに読むファイル／editable：Claude が変えてよいファイル（正規表現。ここに合わない変更は自動で戻す）／globs：同じ範囲を Claude Code の Edit・Write の許可の形で／deny：editable の中でも変えてはいけないもの／research_only：調べるだけ（.github/workflows/grok-research.yml で使う。X サイクルの週ごとの交代には入れず、Claude にも変えさせない）",
+  "_説明": "X の発信から ゲームを直すサイクル（.github/workflows/x-cycle.yml・tools/x-cycle.js）の、ゲームごとの設定。search：Grok に X でさがしてもらうこと／read：Claude と Codex が はじめに読むファイル／editable：Claude が変えてよいファイル（正規表現。ここに合わない変更は自動で戻す）／globs：同じ範囲を Claude Code の Edit・Write の許可の形で／deny：editable の中でも変えてはいけないもの／prompt・fix_prompt・review_prompt：Claude と Codex への頼み方のファイル（無ければゲーム用）／pr_title・pr_intro：PR の題と本文の書き出し／research_only：調べるだけ（.github/workflows/grok-research.yml で使う。X サイクルの週ごとの交代には入れず、Claude にも変えさせない）",
   "tractor": {
     "name": "トラクターのゲーム（tractor.html）",
     "search": "日本の米農家・農業法人・農機の販売店が X に投稿した、田んぼでのトラクター作業のようす。耕うん（秋起こし・春の田起こし）・代かき・あぜ塗り・田植え・稲刈りのあとの田んぼ。とくに愛知県（西三河・西尾市・安城市・岡崎市）の田んぼ。作業の手順・コツ・機械の設定（回転数・PTO・耕深・速度）・土や水のようす・田んぼに来る鳥や生きもの・天気や時間帯による違い・作業中に困ること。写真や動画から分かる見た目（土の色、くれ、水の濁り、わだち、あぜ）も",
@@ -24,5 +24,17 @@
     "editable": [],
     "globs": [],
     "deny": []
+  },
+  "marketing": {
+    "name": "らいすぴあのマーケティング（X・Instagram・LINE の投稿案と企画の週報。docs/marketing-weekly/）",
+    "search": "日本の人が X に投稿した、お米とお米屋さんの話題。新米・米の値段・お米の保存や炊き方の困りごと・お米のギフトやふるさと納税・精米したての味・お米屋さんやお米農家の投稿で反応（いいね・リポスト・返信）が多いもの（写真・動画・クイズ・季節の話）とその形。愛知県西尾市と西三河のいまの季節の話題（行事・祭り・名所）。お散歩・位置情報ゲーム・ドット絵ゲームの話題。お店の発信のヒントになる、お客さまの声と季節の流れ",
+    "read": ["llms.txt", "docs/marketing.md", "docs/insta-post.md", "docs/ads-game-kit.md"],
+    "editable": ["^docs/marketing-weekly/[^/]+\\.md$"],
+    "globs": ["./docs/marketing-weekly/*.md"],
+    "deny": [],
+    "prompt": "x-cycle-marketing-prompt.md",
+    "review_prompt": "x-cycle-marketing-review-prompt.md",
+    "pr_title": "今週の投稿案と企画",
+    "pr_intro": "Grok が X でさがした話題をもとに、Claude がらいすぴあのマーケティング週報（投稿案・企画案）を書き、Codex が表示のリスクと事実をレビューした下書きです。**自動では投稿しません。** 投稿する前に、価格・日付・在庫など、お店のいまの事実を人が確かめてください。マージすると docs/marketing-weekly/ に残ります。"
   }
 }

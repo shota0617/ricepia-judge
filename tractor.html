@@ -656,11 +656,13 @@ const MIRROR = (() => {
 // ガラスのよごれ：点々のほこり・うすいくもり・下のほうの土ぼこり。前ガラスはワイパーがふいた半円だけきれい
 // （ガラスには UV が無いので、トラクターの中の位置から計算する。前＝+Z・左＝+X・上＝+Y）
 const SUN_VIEW = { value: new THREE.Vector3(0, 0, 1) };   // 太陽の向き（カメラから見た向き）。毎コマ更新
+const GLASS_MUD = { value: 0 };   // ガラスの泥はねの量（代かきで耕していると ふえる）
 function dustyGlass(m) {
   m.onBeforeCompile = sh => {
     sh.uniforms.sunView = SUN_VIEW;
+    sh.uniforms.glassMud = GLASS_MUD;
     sh.vertexShader = 'varying vec3 vObjP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vObjP = position;');
-    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\n' +
+    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\nuniform float glassMud;\n' +
       'float gH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n' +
       'float gN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
       ' return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
@@ -677,7 +679,14 @@ function dustyGlass(m) {
     dust += 0.18 * smoothstep(0.035, 0.0, abs(d - 0.49)) * step(1.6, vObjP.y);   // ふいたふちに たまった すじ
   }
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.60, 0.54, 0.44), clamp(dust * 1.6, 0.0, 1.0));
-  diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));`).replace('#include <output_fragment>', `#include <output_fragment>
+  diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));
+  // 代かきの泥はね：うしろのタイヤがはね上げた泥が、うしろのガラスと横のガラスのうしろ下に はねてこびりつく（だんだんふえる）
+  float rearW = vObjP.z < -0.45 ? 1.0 : smoothstep(0.1, -0.45, vObjP.z) * step(abs(vObjP.z), 0.45) * 0.7;
+  float lowM = smoothstep(2.05, 1.5, vObjP.y);
+  float blot = gN(q * 21.0) * 0.75 + gN(q * 63.0) * 0.25;
+  float mud = smoothstep(1.0 - glassMud * lowM * rearW * 0.62, 1.04 - glassMud * lowM * rearW * 0.62, blot);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.24, 0.17), mud);
+  diffuseColor.a = max(diffuseColor.a, mud * 0.9);`).replace('#include <output_fragment>', `#include <output_fragment>
   float glare = pow(max(dot(normalize(-vViewPosition), sunView), 0.0), 3.0);   // 太陽のほうを見ると、ガラスのよごれが白く光る
   gl_FragColor.rgb += vec3(1.0, 0.95, 0.85) * glare * (0.15 + 2.2 * dust);
   gl_FragColor.a = max(gl_FragColor.a, glare * clamp(dust * 2.5, 0.0, 0.7));`);
@@ -762,6 +771,7 @@ const LIFE = (() => {
 const MUD = { level: 0, mats: [], t: 0, col: new THREE.Color(SHIRO ? 0x5a4a38 : 0x4a3a2a) };
 function updateMud(dt, working) {
   if (working && Math.abs(S.v) > 0.1) MUD.level = Math.min(1, MUD.level + dt * (SHIRO ? 0.03 : 0.015));
+  if (SHIRO && Math.abs(S.v) > 0.3 && Math.abs(S.x) < HX && Math.abs(S.z) < HZ) GLASS_MUD.value = Math.min(1, GLASS_MUD.value + dt * 0.004 * Math.min(1, Math.abs(S.v)));
   else if (!SHIRO && !S.rotDown && Math.abs(S.v) > 0.5 && Math.abs(S.x) < HX && Math.abs(S.z) < HZ &&
     !tilledMask[Math.floor((S.x + HX) / CELL) * NZ + Math.floor((S.z + HZ) / CELL)]) {
     MUD.level = Math.max(0, MUD.level - dt * 0.02);   // 耕していない固い所（枕地）を走ると、タイヤの泥が少しずつ落ちる
@@ -2423,7 +2433,13 @@ function step(dt) {
   // バックアップ：耕しているときにバックすると、ロータリーが自動で上がる（前へ走りだすと下がる）
   if (key.back && S.rotDown && S.v < 0.3) { S.rotDown = false; S.autoUp = true; setRotBtn(); toast('バックしたので、ロータリーが自動で上がりました'); }
   if (key.fwd && S.autoUp && S.v >= 0) { S.rotDown = true; S.autoUp = false; setRotBtn(); }
-  const want = S.crank > 0 ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
+  let want = S.crank > 0 ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
+  // 前後の切りかえ（シャトル）：止まってから逆へ入れると、一瞬まって「ごとん」とつながる
+  if (want !== 0 && Math.abs(S.v) < 0.05 && S.lastDir && Math.sign(want) !== S.lastDir && !(S.shuttleT > 0)) {
+    S.shuttleT = 0.35; S.lastDir = Math.sign(want); S.ppv = (S.ppv || 0) + 0.04 * S.lastDir; if (audio && soundOn) thud(audio.ac, audio.out, 0.5);
+  }
+  if (Math.abs(S.v) > 0.05) S.lastDir = Math.sign(S.v);
+  if (S.shuttleT > 0) { S.shuttleT -= dt; want = 0; }
   const acc = want === 0 ? 2.5 : (Math.sign(want) !== Math.sign(S.v) && Math.abs(S.v) > 0.05 ? 3.0 : 1.2);
   S.v += Math.max(-acc * dt, Math.min(acc * dt, want - S.v));
   const sIn = key.right - key.left;
@@ -2834,10 +2850,10 @@ function caw(ac, dest, t0, n) {
   }
 }
 // 土くれに当たった ごつっという低い音（短く下がる）
-function thud(ac, dest) {
+function thud(ac, dest, vol = 1) {
   const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
   o.type = 'triangle'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6, t + 0.01); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6 * vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
   o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.2);
 }
 const _v = new THREE.Vector3();
@@ -3103,7 +3119,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

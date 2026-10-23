@@ -5694,7 +5694,7 @@ function frame(now) {
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
-    if (mazeOn()) { mzSpotUpdate(now); mzRoute(now); mzHintTick(now); }
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); }
   }
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
@@ -6578,7 +6578,7 @@ function mzOpen(cx, cy, dx, dy) {   // (cx, cy) から となりの マスへ �
   if (!A || !B) return true;
   const ia = (cy - A.y0) * MZ_R + cx - A.x0, ib = (cy + dy - B.y0) * MZ_R + cx + dx - B.x0;
   const sa = mzSpotCell(cx, cy), sb = mzSpotCell(cx + dx, cy + dy);
-  if (A.t[ia] !== 1 && !sa) return true;   // 壁の かたまりの 中（始めた 所が 建物の 中 など）から 出るときは 通す（とじこめない）
+  if (A.t[ia] !== 1 && !sa) return B.t[ib] === 1 || sb;   // 壁の かたまりの 中（始めた 所が 建物の 中 など）からは 通路・参道へ だけ 出られる（かたまりの 中を 通りぬけない。ふつうは mzSnap で 通路へ もどす）
   if (B.t[ib] !== 1) return sb;   // 参道には 通路・参道から 入れる。ほかの 壁の かたまりには 入れない
   if (A.t[ia] !== 1) return true;   // 参道から 通路へ
   if (A === B) return (dx ? A.er : A.ed)[dx + dy > 0 ? ia : ib] === 1;
@@ -6641,6 +6641,27 @@ function drawMzHint(ox, oy, T, now) {
     ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(X, Y, r + Math.max(1, T / 6), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = on ? '#fff59d' : '#ffffff'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
   });
+}
+// 壁の かたまりの 中に いる（始めた 所・ひとっとび の 行き先が 道の ない 区画 など）：いちばん近い 通路・参道の まん中へ うつす（0.5秒ごと）
+let mzSnapT = 0;
+function mzSnap(now) {
+  if (now - mzSnapT < 500 || rp.x === null) return;
+  mzSnapT = now;
+  const go = (x, y) => mzType(x, y) === 1 || mzSpotCell(x, y), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), t0 = mzType(a, b);
+  if (t0 < 0 || go(a, b)) return;
+  const seen = new Set([a + ',' + b]), q = [[a, b]];
+  for (let h = 0; h < q.length && h < 900; h++) {
+    const [x, y] = q[h];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      const ty = mzType(nx, ny);
+      if (ty < 0) continue;
+      if (go(nx, ny)) { const ll = toLatLng(nx * MZ_K + 1.5, ny * MZ_K + 1.5); G.moveTo(ll.lat, ll.lng); return; }
+      q.push([nx, ny]);
+    }
+  }
 }
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：右下に 影・紺の 壁・上と左の ふちに 光（玉ころがし迷路の プラスチックの 壁）。壁の かたまりは 少し 暗く
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
@@ -6894,9 +6915,9 @@ function snapDemoStart() {
   if (!G.demo || !G.me || worldMode) return;
   const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y), key = x + ',' + y, c = codeAt(x, y);
   if (key === snapKey || c === C.X) return;
+  if (mazeOn() && mzType(Math.floor(t.x / MZ_K), Math.floor(t.y / MZ_K)) >= 0) return;   // めいろの ときは 建物の マスでも 動かさない（通路・参道の 中は 通れる。壁の かたまりの 中なら mzSnap が 通路へ もどす）。snapKey は おぼえない（転がすを 切ったら しらべなおす）
   snapKey = key;
   if (!BLOCK.has(c)) return;
-  if (mazeOn() && mzType(Math.floor(t.x / MZ_K), Math.floor(t.y / MZ_K)) === 1) return;   // めいろの 通路の 中の 建物の マスは 通れる（壁を こえて 動かさない）
   const seen = new Set([key]);
   let frontier = [[x, y]];
   for (let d = 1; d <= 40 && frontier.length; d++) {

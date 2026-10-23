@@ -63,7 +63,7 @@ def door_bottom(y):
 
 # ---- 色と材質（名前はそのまま glTF の材質名になる） ----
 PAL = {
-    'paint_red': dict(c='#c3141b', r=0.28, coat=0.5),
+    'paint_red': dict(c='#a3122a', r=0.26, coat=0.6),   # 実車の写真のような、深いワインがかった赤（つやのあるメタリック）
     'black': dict(c='#161616', r=0.55),
     'black_gloss': dict(c='#0c0c0c', r=0.22),
     'darkgray': dict(c='#35383b', r=0.5, m=0.3),
@@ -72,7 +72,7 @@ PAL = {
     'wheel_cream': dict(c='#e6d9b0', r=0.35),
     'tire': dict(c='#1b1b1b', r=0.85),
     'white': dict(c='#f2f2ef', r=0.3),
-    'glass': dict(c='#b4c6c4', r=0.04, a=0.16),
+    'glass': dict(c='#8fb3a2', r=0.04, a=0.2),            # 少し緑がかった色ガラス
     'visor': dict(c='#202a2a', r=0.1, a=0.65),
     'lamp_head': dict(c='#e9eef2', r=0.06, m=0.3),
     'lamp_work': dict(c='#e9eef2', r=0.06, m=0.3),
@@ -94,6 +94,8 @@ PAL = {
     'blue': dict(c='#1f5fc4', r=0.35),
     'led_green': dict(c='#2cff5a', r=0.3, e=3.0),
     'mirror': dict(c='#dfe3e6', r=0.02, m=1.0),
+    'pet': dict(c='#e4eef2', r=0.05, a=0.35),          # ペットボトル（すきとおったプラスチック）
+    'tea': dict(c='#b8a24a', r=0.1, a=0.75),           # 中のお茶
     'meter_screen': dict(c='#ffffff', r=0.25, tex='meter'),
     'monitor_screen': dict(c='#ffffff', r=0.15, tex='monitor'),
 }
@@ -575,6 +577,15 @@ def hood():
         rim_ = [(0.055, 1.112), (0.285, 1.165), (0.29, 1.218), (0.05, 1.167)]
         prism('black_gloss', [(s * x, z) for x, z in rim_], 0.012, T((0, gy + 0.002, 0), (90, 0, 0)))
         prism('lamp_head', [(s * x, z) for x, z in poly], 0.012, T((0, gy - 0.003, 0), (90, 0, 0)))
+    # ボンネットの横の下半分は黒いパネル（実車は赤い上半分と黒い下半分の 2 色。境目は前で低く、運転席のほうへ上がる）
+    for sd in (1, -1):
+        rows = []
+        for i in range(N):
+            y, w, t, bb, rc = secs[i]
+            ztop = 1.03 + 0.13 * (1 - i / (N - 1)) ** 1.3
+            rows.append([(sd * (w + 0.004), y, bb + 0.005), (sd * (w + 0.004), y, ztop)])
+        loft('black', rows if sd > 0 else [r[::-1] for r in rows], smooth=50)
+        pipe('black_gloss', [(sd * (secs[i][1] + 0.006), secs[i][0], 1.03 + 0.13 * (1 - i / (N - 1)) ** 1.3) for i in range(N)], 0.006, 6)   # 境目の線
     # ボンネット横の通気口
     for s in (1, -1):
         for k in range(5):
@@ -630,15 +641,15 @@ def cab():
     box('black', (0.60, 0.06, 0.30), (0, GLASS_F + 0.02, FLOOR + 0.15))
     box('black', (1.28, 0.08, 0.30), (0, GLASS_R, FLOOR + 0.14))                  # 後ろの下
     # 屋根（赤）と黒い庇
-    box('paint_red', (1.48, 1.62, 0.10), (0, 0.06, ROOF_IN + 0.055), bev=(0.045, 3))
-    box('paint_red', (1.30, 1.32, 0.03), (0, 0.08, ROOF_IN + 0.10), bev=(0.015, 2))
+    box('paint_red', (1.50, 1.64, 0.16), (0, 0.06, ROOF_IN + 0.085), bev=(0.07, 4))   # 実車の屋根は厚みのある丸い赤い殻
+    box('paint_red', (1.30, 1.32, 0.03), (0, 0.08, ROOF_IN + 0.165), bev=(0.015, 2))
     x, y0, y1 = 0.728, -0.74, 0.86                                                # 屋根のふちの雨どい
     pipe('black', [(-x, y0, ROOF_IN + 0.012), (x, y0, ROOF_IN + 0.012), (x, y1, ROOF_IN + 0.012), (-x, y1, ROOF_IN + 0.012), (-x, y0, ROOF_IN + 0.012)], 0.009, 6)
     box('black', (1.46, 0.15, 0.03), (0, -0.80, ROOF_IN + 0.03), (-10, 0, 0), bev=(0.01,))
     box('black', (1.50, 0.05, 0.05), (0, 0.85, ROOF_IN + 0.03), bev=(0.01,))
     # GNSS アンテナ（白い傘）
-    cyl('white', 0.05, 0.04, (0, -0.25, ROOF_IN + 0.135), n=20)
-    sph('white', 0.085, (0, -0.25, ROOF_IN + 0.13), (1, 1, 0.41), n=24)
+    cyl('white', 0.05, 0.04, (0, -0.25, ROOF_IN + 0.195), n=20)
+    sph('white', 0.085, (0, -0.25, ROOF_IN + 0.19), (1, 1, 0.41), n=24)
     # LED ワークランプ（前後 2 灯ずつ）
     for s in (1, -1):
         box('black', (0.11, 0.06, 0.06), (s * 0.48, -0.79, ROOF_IN - 0.01), (-10, 0, 0), bev=(0.008,))
@@ -647,10 +658,12 @@ def cab():
         box('lamp_work', (0.09, 0.008, 0.04), (s * 0.52, 0.877, ROOF_IN - 0.03), (10, 0, 0))
     # 右 A ピラーに沿う黒い排気管（ボンネットの右から上へ）
     ex = -CAB_X - 0.07
-    pipe('black', [(-0.33, -0.95, 1.12), (-0.50, -0.80, 1.14), (ex, -0.66, 1.30), (ex, -0.64, 1.55), (ex, -0.64, 2.30), (ex - 0.005, -0.645, 2.42)], 0.035, 14)
-    cyl('black', 0.058, 0.55, (ex, -0.64, 1.86), n=18)                         # マフラーのカバー
-    for z in (1.62, 2.10):
-        box('black', (0.07, 0.03, 0.02), (ex + 0.035, -0.62, z))
+    # （右のステップの前を通るよう、前で外へ出してから A ピラーの前を上がる。実車は太いマフラーが屋根の高さまで立つ）
+    pipe('black', [(-0.33, -0.95, 1.12), (-0.55, -0.94, 1.14), (ex, -0.87, 1.24), (ex, -0.72, 1.48), (ex, -0.64, 1.62), (ex, -0.64, 2.30), (ex - 0.005, -0.645, 2.44)], 0.042, 14)
+    cyl('black', 0.075, 0.80, (ex, -0.64, 1.98), n=20)                         # マフラーの太いカバー
+    cyl('black_gloss', 0.05, 0.05, (ex, -0.645, 2.45), n=16)                   # 先の口
+    for z in (1.70, 2.28):
+        box('black', (0.07, 0.03, 0.02), (ex + 0.045, -0.615, z))
     # 前のウインカー（Aピラーの下の外）
     for s, nm in ((1, 'winker_L'), (-1, 'winker_R')):
         box('black', (0.07, 0.07, 0.08), (s * (CAB_X + 0.05), fy(CAB_X) - 0.02, 1.46), bev=(0.01,))
@@ -659,12 +672,13 @@ def cab():
     for s in (1, -1):
         pipe('black', [(s * (CAB_X + 0.02), fy(CAB_X) + 0.02, 2.30), (s * 0.80, fy(CAB_X) + 0.0, 2.26), (s * 0.86, fy(CAB_X) + 0.03, 2.17)], 0.012, 8)
         box('black', (0.13, 0.035, 0.21), (s * 0.861, fy(CAB_X) + 0.05, 2.06), (0, 0, s * 12), bev=(0.015,))
-    # 左の乗降ステップ
-    for z, y in ((0.48, -0.78), (0.86, -0.77), (1.25, -0.70)):
-        box('darkgray', (0.27, 0.13 if z < 1 else 0.17, 0.025), (0.68, y, z), bev=(0.006,))
-    for x in (0.545, 0.815):
-        prism('black', [(-0.86, 0.44), (-0.70, 0.44), (-0.60, FLOOR), (-0.80, FLOOR)], 0.012, T((x, 0, 0), (90, 0, 90)))
-    pipe('black', [(0.71, -0.62, 1.45), (0.73, -0.62, 1.60), (0.73, -0.60, 2.15), (0.70, -0.58, 2.22)], 0.015, 8)   # 乗降グリップ（外）
+    # 乗降ステップ（左右とも。ドアは両側にある）
+    for s in (1, -1):
+        for z, y in ((0.48, -0.78), (0.86, -0.77), (1.25, -0.70)):
+            box('darkgray', (0.27, 0.13 if z < 1 else 0.17, 0.025), (s * 0.68, y, z), bev=(0.006,))
+        for x in (0.545, 0.815):
+            prism('black', [(-0.86, 0.44), (-0.70, 0.44), (-0.60, FLOOR), (-0.80, FLOOR)], 0.012, T((s * x, 0, 0), (90, 0, 90)))
+        pipe('black', [(s * 0.71, -0.62, 1.45), (s * 0.73, -0.62, 1.60), (s * 0.73, -0.60, 2.15), (s * 0.70, -0.58, 2.22)], 0.015, 8)   # 乗降グリップ（外）
     # 床の下
     box('darkgray', (1.20, 1.38, 0.10), (0, 0.13, FLOOR - 0.06))
 
@@ -902,6 +916,21 @@ def interior():
     box('black', (0.04, 0.16, 0.006), (0.35, 0.24, FLOOR + 0.222))
     cyl('black', 0.042, 0.09, (0.35, 0.42, FLOOR + 0.20), n=24, caps=False)
     cyl('black', 0.036, 0.004, (0.35, 0.42, FLOOR + 0.17), n=24)
+    # カップホルダーのペットボトルのお茶（農家さんの運転席にはたいてい飲みものがある）
+    b0 = FLOOR + 0.175
+    cyl('tea', 0.029, 0.15, (0.35, 0.42, b0 + 0.075), n=20)
+    cyl('pet', 0.031, 0.17, (0.35, 0.42, b0 + 0.085), n=20)
+    cyl('blue', 0.0315, 0.06, (0.35, 0.42, b0 + 0.11), n=20, caps=False)           # 帯のラベル
+    cyl('pet', 0.031, 0.04, (0.35, 0.42, b0 + 0.19), n=20, r2=0.013)              # 肩
+    cyl('white', 0.015, 0.02, (0.35, 0.42, b0 + 0.22), n=16)                       # キャップ
+    # 右のうしろの柱の内側に、安全の注意ラベル（字は描かず、色の帯と灰色の行だけ）
+    lx = -CAB_X + 0.033
+    for k, (h, head) in enumerate(((0.12, 'orange'), (0.08, 'yellow'), (0.10, 'orange'), (0.07, 'yellow'))):
+        zc = 2.28 - sum((0.12, 0.08, 0.10, 0.07)[:k]) - 0.015 * k - h / 2
+        box('white', (0.003, 0.05, h), (lx, GLASS_R - 0.01, zc))
+        box(head, (0.004, 0.05, 0.016), (lx + 0.0005, GLASS_R - 0.01, zc + h / 2 - 0.008))
+        for r in range(int((h - 0.03) / 0.012)):
+            box('gray', (0.004, 0.038, 0.004), (lx + 0.0005, GLASS_R - 0.01, zc + h / 2 - 0.026 - r * 0.012))
     # 乗降グリップ（左 A ピラー）・サンバイザ・ルームミラー・天井のエアコン・室内灯
     for s in (1, -1):
         gx = s * (CAB_X - 0.05)
@@ -1026,6 +1055,18 @@ def wiper():
 # ================================================================
 #  ロータリー（別オブジェクト）
 # ================================================================
+def implement_lamps(xs, y0, z0):
+    """作業機用の灯火器：作業機をつけて道を走るとトラクターのうしろの灯火が かくれるので、作業機のうしろの両はしにも
+    テール（上）・ウインカー（下）・赤い反射器をつける（農水省の公道走行ガイドブック）。カバーの上から立てた支柱の先"""
+    for x in xs:
+        s = 1 if x > 0 else -1
+        pipe('darkgray', [(x, y0 - 0.08, z0 - 0.02), (x, y0, z0 + 0.16)], 0.014, 8)
+        box('black', (0.11, 0.035, 0.17), (x, y0 + 0.015, z0 + 0.23), bev=(0.01,))
+        box('tail', (0.09, 0.012, 0.065), (x, y0 + 0.035, z0 + 0.265), bev=(0.004,))
+        box('winker_L' if s > 0 else 'winker_R', (0.09, 0.012, 0.045), (x, y0 + 0.035, z0 + 0.195), bev=(0.004,))
+        cyl('reflector', 0.03, 0.01, (x, y0 + 0.036, z0 + 0.12), (90, 0, 0), 16)   # 丸い反射器（支柱）
+
+
 def rotary():
     oy = ROTARY_Y
     ay, az = oy, 0.25                    # 爪軸
@@ -1055,6 +1096,7 @@ def rotary():
         cyl('silver', 0.03, 0.10, (0, 0.92, 0.66), (90, 0, 0), 12)
         cyl('darkgray', 0.022, 0.40, (0, 0.88, 0.65), (93, 0, 0), 12)
         cyl('black', 0.045, 0.30, (0, 0.86, 0.65), (93, 0, 0), 14)               # 軸の覆い
+        implement_lamps((TILL_W / 2 - 0.12, -TILL_W / 2 + 0.12), ay + 0.12, az + 0.30)
     with part('Rotor'):
         cyl_x('darkgray', 0.032, -TILL_W / 2, TILL_W / 2, ay, az, 16)
         nf = 17
@@ -1082,6 +1124,94 @@ def rotary():
             box('paint_red', (0.03, 0.04, L * 0.9), (x, -0.02, L / 2), mtx=m)
         cyl_x('darkgray', 0.018, -TILL_W / 2, TILL_W / 2, flap_h.y, flap_h.z, 10)
     return Vector((0, oy, 0)), Vector((0, ay, az)), flap_h
+
+
+# ================================================================
+#  代かき用のウイングハロー（別の glb：harrow_yt.glb）。作業幅 3.4m（60 馬力向けの一般的な幅の例）。
+#  まん中 1.6m と左右の翼 0.9m ずつ。道を走るときは翼を上へ折りたたむ。名前はロータリーと同じ Rotary・Rotor・Flap
+#  （ゲームで差しかえる）に、翼の WingL・WingR（ちょうつがいが原点）と翼の爪軸 RotorL・RotorR
+# ================================================================
+HARROW_W, HARROW_C = 3.4, 1.6
+
+
+def harrow():
+    oy = ROTARY_Y
+    ay, az, R = oy + 0.02, 0.21, 0.25                # 爪軸と、カバーの半径
+    wc, ww = HARROW_C / 2, (HARROW_W - HARROW_C) / 2
+    hz = az + R + 0.02                               # ちょうつがいの高さ
+
+    def cover(x0, x1):
+        lathe('paint_red', [(x0 + (x1 - x0) * k / 8, R) for k in range(9)], ay, az, n=20, a0=-70, a1=70, smooth=50)
+        box('paint_red', (x1 - x0, 0.08, 0.025), ((x0 + x1) / 2, ay - 0.27, az + 0.12), (-60, 0, 0))   # 前の泥よけ
+
+    def tines(x0, x1, nf):
+        cyl_x('darkgray', 0.028, x0, x1, ay, az, 14)
+        for i in range(nf):
+            x = x0 + 0.05 + i * (x1 - x0 - 0.10) / (nf - 1)
+            for j in range(3):                       # 代かき爪は短くて幅が広い
+                a = 2 * math.pi * (j / 3 + i * 0.211)
+                ca, sa = math.cos(a), math.sin(a)
+                p0 = Vector((x, ay + 0.05 * sa, az + 0.05 * ca))
+                p1 = Vector((x, ay + 0.20 * sa, az + 0.20 * ca))
+                box('silver', (0.010, 0.07, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=along(p0, p1, Vector((0, ca, -sa))))
+
+    def board(x0, x1):                               # 均平板（うしろの長い板）とレーキ
+        y0 = ay + R * math.sin(math.radians(68))
+        box('paint_red', (x1 - x0, 0.36, 0.012), ((x0 + x1) / 2, y0 + 0.16, 0.06), (-14, 0, 0))
+        box('darkgray', (x1 - x0, 0.03, 0.03), ((x0 + x1) / 2, y0 + 0.34, 0.025))
+        for k in range(int((x1 - x0) / 0.12)):
+            x = x0 + 0.06 + k * 0.12
+            pipe('silver', [(x, y0 + 0.30, 0.07), (x, y0 + 0.44, -0.02)], 0.006, 5)
+
+    with part('Rotary'):
+        cover(-wc, wc)
+        for s in (1, -1):
+            box('darkgray', (0.04, 0.10, 0.10), (s * wc, ay - 0.05, hz), bev=(0.01,))           # ちょうつがい
+            pipe('darkgray', [(s * 0.35, ay - 0.15, hz + 0.05), (s * 0.70, ay - 0.10, hz + 0.45)], 0.03, 8)   # 翼を上げる油圧シリンダー
+            cyl('silver', 0.018, 0.30, (s * 0.60, ay - 0.115, hz + 0.33), (0, s * 48, 0), 8)
+        box('paint_red', (0.30, 0.30, 0.26), (0, ay - 0.10, 0.64), bev=(0.03,))                  # まん中のギヤボックス
+        cyl('darkgray', 0.045, 0.08, (0, ay - 0.28, 0.64), (90, 0, 0), 14)
+        for s in (1, -1):                                                                        # マストと三点リンク
+            pipe('paint_red', [(s * 0.42, oy - 0.26, 0.42), (s * 0.20, oy - 0.20, 0.82), (0, oy - 0.26, 0.96)], 0.025, 8)
+            pipe('paint_red', [(s * 0.42, oy - 0.26, 0.42), (s * 0.45, oy - 0.05, hz)], 0.025, 8)
+            cyl_x('silver', 0.016, s * 0.39, s * 0.47, oy - 0.26, 0.42, 8)
+            pipe('darkgray', [(s * 0.30, 0.48, 0.45), (s * 0.43, oy - 0.26, 0.42)], 0.022, 8)
+        pipe('darkgray', [(0, 0.56, 1.00), (0, oy - 0.26, 0.96)], 0.022, 8)
+        box('paint_red', (HARROW_C, 0.06, 0.05), (0, ay - 0.08, hz), bev=(0.01,))                 # 横のはり
+        cyl('silver', 0.03, 0.10, (0, 0.92, 0.66), (90, 0, 0), 12)
+        cyl('darkgray', 0.022, 0.40, (0, 0.88, 0.65), (93, 0, 0), 12)
+        cyl('black', 0.045, 0.30, (0, 0.86, 0.65), (93, 0, 0), 14)
+        implement_lamps((wc - 0.12, -wc + 0.12), ay + 0.10, az + R + 0.01)
+    with part('Rotor'):
+        tines(-wc + 0.02, wc - 0.02, 12)
+    with part('Flap'):
+        board(-wc, wc)
+    for nm, s in (('WingL', 1), ('WingR', -1)):
+        x0, x1 = sorted((s * wc, s * (wc + ww)))
+        with part(nm):
+            cover(x0, x1)
+            board(x0, x1)
+            box('paint_red', (x1 - x0, 0.06, 0.05), ((x0 + x1) / 2, ay - 0.08, hz), bev=(0.01,))
+            xe = s * (wc + ww + 0.015)
+            arc = [(0.27 * math.sin(math.radians(a)), az + 0.27 * math.cos(math.radians(a))) for a in range(-80, 81, 10)]
+            prism('paint_red', [(p[0], p[1]) for p in arc] + [(0.27, 0.02), (-0.27, 0.02)], 0.012, T((xe, ay, 0), (90, 0, 90)))   # はしの板
+            box('darkgray', (0.03, 0.55, 0.04), (xe, ay + 0.02, 0.03), bev=(0.01,))   # そり
+        with part('Rotor' + nm[-1]):
+            tines(x0 + 0.02, x1 - 0.02, 7)
+    return Vector((0, oy, 0)), Vector((0, ay, az)), Vector((0, ay + R * math.sin(math.radians(68)), 0.06)), hz, wc
+
+
+def build_harrow():
+    bpy.ops.wm.read_factory_settings(use_empty=True)
+    rot_o, rotor_o, flap_o, hz, wc = harrow()
+    rot = finalize('Rotary', Matrix.Translation(rot_o))
+    finalize('Rotor', Matrix.Translation(rotor_o), rot)
+    finalize('Flap', Matrix.Translation(flap_o), rot)
+    for nm, s in (('WingL', 1), ('WingR', -1)):
+        w = finalize(nm, Matrix.Translation((s * wc, rotor_o.y - 0.05, hz)), rot)
+        finalize('Rotor' + nm[-1], Matrix.Translation(rotor_o), w)
+    assert not GROUPS, GROUPS.keys()
+    return rot
 
 
 # ================================================================
@@ -1270,6 +1400,10 @@ def preview():
         'side': dict(loc=(7.0, -0.8, 1.3), target=(0, -0.8, 1.1), lens=35),
         'top': dict(loc=(0.0, -0.3, 9.0), target=(0, -0.3, 0), lens=35),
         'left': dict(loc=(0.15, 0.40, 2.2), target=(0.4, 0.1, 1.6), lens=24),
+        'photo': dict(loc=(-4.4, -5.6, 1.45), target=(0, -1.0, 1.25), lens=30),   # 右の前ななめ・人の目の高さ（実車の写真とくらべる）
+        'seat': dict(loc=(0.42, -0.52, 2.20), target=(-0.20, 0.40, 1.55), lens=16),   # キャビンの中、左前から座席と右のコンソール
+        'pillar': dict(loc=(0.15, 0.05, 2.05), target=(-0.62, 0.80, 2.0), lens=24),
+        'cup': dict(loc=(0.05, -0.05, 2.0), target=(0.35, 0.42, 1.58), lens=30),
     }
     only = [a.split('=', 1)[1] for a in sys.argv if a.startswith('--shot=')]
     for k, v in ({k: v for k, v in {**shots, **extra}.items() if k in only} if only else shots).items():
@@ -1287,9 +1421,16 @@ def export():
 
 
 if __name__ == '__main__':
-    build()
-    print('triangles', tri_count())
-    bake_ao()
-    if RENDER:
-        preview()
-    export()
+    if '--harrow' in sys.argv:                       # 代かき用のウイングハローだけを harrow_yt.glb に
+        OUT_GLB = os.path.join(HERE, 'harrow_yt.glb')
+        build_harrow()
+        print('triangles', tri_count())
+        bake_ao()
+        export()
+    else:
+        build()
+        print('triangles', tri_count())
+        bake_ao()
+        if RENDER:
+            preview()
+        export()

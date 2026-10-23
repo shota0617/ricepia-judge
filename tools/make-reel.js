@@ -62,7 +62,7 @@ async function endCard(page) {
   // 1) はじめの画面
   await caption(page, '西尾のまちを歩く<br>ドット絵のお散歩ゲーム', 'にしおさんぽGO'); await sleep(2800); mark('intro');
   await caption(page, '');
-  await page.click('#demoBtn'); await sleep(600);
+  await page.click('#meiroBtn'); await sleep(600);
   // 2) スティックで歩く（西尾市歴史公園＝西尾城跡のあたり）
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-nishio-castle'); nishioGo.moveTo(s.lat - 0.0007, s.lng + 0.0004); });
   await sleep(1800);

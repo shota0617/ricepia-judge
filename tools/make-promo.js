@@ -65,7 +65,7 @@ async function endCard(page) {
   await shot('01-intro');
   // 2) 操作して遊ぶで、西尾城跡のあたりを歩く
   await caption(page, '');
-  await page.click('#demoBtn'); await sleep(800);
+  await page.click('#meiroBtn'); await sleep(800);
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-nishio-castle'); nishioGo.moveTo(s.lat - 0.0006, s.lng + 0.0006); });
   await sleep(2500);
   await caption(page, '西尾のまちを、ドット絵で歩こう', 'スティックで、家からでも西尾めぐり');

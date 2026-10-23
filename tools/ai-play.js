@@ -141,7 +141,7 @@ async function keys(page, list) {
           r.at = [here.latitude, here.longitude];
         }
       } else if (a.do === 'start') {
-        if (await page.isVisible('#demoBtn')) { await page.click('#demoBtn'); await page.waitForTimeout(2500); }
+        if (await page.isVisible('#meiroBtn')) { await page.click('#meiroBtn'); await page.waitForTimeout(2500); }
         else if (!(await page.evaluate(() => nishioGo.demo))) r.note = '「操作して遊ぶ」が見つからない（あるいて移動のまま）';
       } else if (a.do === 'walk') r.moved = await keys(page, Array(a.n || 1).fill({ up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' }[a.dir]));
       else if (a.do === 'goto') {

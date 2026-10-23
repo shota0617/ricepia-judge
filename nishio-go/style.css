@@ -107,6 +107,7 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .mode-sw button[aria-pressed="true"]{background:var(--green);color:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
 .status{font-size:13px;color:var(--sub);line-height:1.5}
 .status b{color:var(--ink)}
+.status .wait-fact{display:block;margin-top:3px;font-size:12px;line-height:1.45}
 .spin{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:14px;padding:10px 12px;background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;text-align:left;box-shadow:0 3px 0 #1f3f27}
 .spin:active{transform:translateY(2px);box-shadow:0 1px 0 #1f3f27}
 .spin:disabled{filter:grayscale(.7);opacity:.7;transform:none;cursor:default}
@@ -223,6 +224,7 @@ label.row{min-height:44px;cursor:pointer}
 .btn.mode-pick{display:flex;flex-direction:column;align-items:center;gap:2px;white-space:normal}
 .btn.mode-pick small{font-size:12px;font-weight:400;opacity:.9}
 .btn.mode-pick.alt{margin-top:10px;background:#3a4f8f;box-shadow:0 3px 0 #22305a}
+.btn.mode-pick.meiro{margin-bottom:10px;background:#1f8fc8;box-shadow:0 3px 0 #145a80}   /* 西尾めいろ（キーホルダーの 玉ころがし迷路の 水色） */
 .btn:disabled{opacity:.5}
 .btn.mini{margin-top:6px;padding:6px 10px;font-size:12px;min-height:36px}
 
@@ -436,6 +438,8 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 /* はじめの画面やスポットの説明ウィンドウが出ている間は、知らせ（トースト）を下に出して文字に重ねない */
 body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
 body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}
+/* きろく・こえ・とくてん・せってい のタブでは、上の見出し（バッジの達成率・もうすぐ など）に重ねないよう 下に */
+body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .toast,body:has(#panel-rewards:not([hidden])) .toast,body:has(#panel-settings:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}
 /* 西尾の人たち（話しかけられる町の人） */
 .popup.npc .npc-at{margin:0 0 6px;font-size:12px;color:var(--sub)}
 .popup.npc .npc-say{margin:6px 0;font-size:14px;line-height:1.7}
@@ -499,6 +503,7 @@ body.px .guide small{color:#ddd}
 .simple .intro .pitch,.simple .intro .mode-q{display:none}
 .simple .btn.mode-pick{border-radius:999px;box-shadow:0 0 0 3px #e9c46a,0 4px 0 #1f3f27}
 .simple .btn.mode-pick.alt{box-shadow:0 0 0 3px #e9c46a,0 4px 0 #22305a}
+.simple .btn.mode-pick.meiro{box-shadow:0 0 0 3px #e9c46a,0 4px 0 #145a80}
 .simple .btn.mode-pick small{display:none}
 .simple .btn.mode-pick .mp-t{font-size:18px}
 /* ごほうび：金の額縁のドット絵、めずらしさの星、名前の帯、NEW のリボン */
@@ -735,6 +740,10 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .card.bags .todaywalk .tw3 small{font-size:11px;color:var(--sub)}
 .card.bags .todaywalk .tw3 b{font-size:17px}
 .card.bags .todaywalk .word{font-size:13px}
+.card.bags .todaywalk .tw-goals{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 2px}
+.card.bags .todaywalk .tw-goals span{background:#fff;border-radius:999px;padding:2px 8px;font-size:12px;border:1px solid #f0d9a0}
+.card.bags .todaywalk .tw-goals span.done{background:#e8f5e0;border-color:#a9d18e}
+.card.bags .todaywalk .tw-goals small{color:var(--sub);font-size:11px}
 .card.bags .todaywalk>small{display:block;margin-top:2px;color:var(--sub);font-size:12px}
 .card.bags .lastweek,.card.bags .kirahour{margin:0 0 8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
 .card.bags .lastweek span{flex-basis:100%;font-size:13px}

@@ -48,7 +48,7 @@ function parse(b) {
   if (typeof b.url === 'string' && b.url.trim()) {
     const u = b.url.trim();
     if (u.length > 200 || !/^https:\/\/[^\s<>"]+$/.test(u)) return null;
-    try { out.url = new URL(u).href; } catch (_) { return null; }
+    try { const x = new URL(u); if (x.username || x.password) return null; out.url = x.href; } catch (_) { return null; }   // https://本物のサイト@べつのサイト/ のような 見まちがえる URL は うけない
   }
   if (b.lat != null || b.lng != null) {
     const lat = Number(b.lat), lng = Number(b.lng);

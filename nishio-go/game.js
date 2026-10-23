@@ -518,7 +518,30 @@ function npcPages(n) {
   const hs = hid && spots.find(x => x.id === hid);
   if (hs) pages.push(`🔍 ${hintSay(n, hs.name)}`);   // この人がくれた、しらべるの手がかり（まだ しらべていないあいだ）
   if (S.parcel && S.parcel.from === n.id) pages.push(`📦 ${S.parcel.toName}に、その${S.parcel.item}を よろしくね。`);   // あずけた おとどけもの（届けるまで）
+  if (n.id === SEAL_BY.nishio) pages.push(guideRecord());   // 西尾城跡のガイドさんは、会うたびに ここまでの記録と「あと いくつ」を教えてくれる
+  else { const sp = sealPage(n); if (sp) pages.push(sp); }   // ほかの地区の しるしをくれる人は、その地区の「あと いくつ」
   return pages;
+}
+// しるしをくれる人（西尾城跡のガイドさん のほか）：まだ しるしを わたしていない人は、その地区を「あと何か所」めぐれば わたすかを話す。
+// クリア後の となりの市町のしるしは、殿堂入りのあとだけ
+function sealPage(n) {
+  const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
+  if (!a || (S.seals || []).includes(id) || (SEAL_POST.has(id) && !S.cleared)) return '';
+  const p = areaProgress(id), goal = sealGoal(id), left = Math.max(0, goal - p.done);
+  if (!p.total || !left) return '';
+  return `🔖 ${a.name}の注目スポットを あと${left}か所 めぐったら、${a.name}のしるしを わたすでね（いま ${Math.min(p.done, goal)}/${goal}）。`;
+}
+// ガイドさんの記録（昔のドット絵RPGの、城の王様に話すと「次のレベルまで あと○」と記録してくれる しくみ）：
+// 次のレベルまでの ポイントと、しるしの数・いちばん近い しるしまでの あと何か所。戻ってくるたびに「あと少し」が分かる
+function guideRecord() {
+  const lv = levelOf(S.total), need = needFor(lv + 1) - S.total;
+  const ids = S.cleared ? SEAL_POST : SEAL_MAIN, own = (S.seals || []), got = [...ids].filter(id => own.includes(id)).length;
+  const near = [...ids].filter(id => !own.includes(id)).map(id => ({ id, a: areas.find(x => x.id === id), p: areaProgress(id), goal: sealGoal(id) }))
+    .filter(x => x.a && x.p.total > 0).map(x => ({ ...x, left: Math.max(0, x.goal - x.p.done) })).sort((a, b) => a.left - b.left)[0];
+  const seal = got >= [...ids].length ? (S.cleared ? 'となりの市町のしるしも ぜんぶ そろったね。' : '5つのしるしが そろっとるよ。わしに話しかけてくれりゃあ 殿堂入りだに。')
+    : `しるしは ${got}/${[...ids].length}。${near ? (near.left ? `いちばん近いのは ${near.a.name}のしるしで、あと${near.left}か所めぐると もらえるよ。` : `${near.a.name}のしるしは もう もらえるで、${sealBy(near.id) ? sealBy(near.id).name : '地区の人'}に会いに行きりん。`) : ''}`;
+  const day = dayState(), h = day.h100, left = [h && h.done ? '' : store.get('nsg_first_day', '') === ymd() ? '' : '100歩たんけん', (day.alleys || 0) < ALLEY.daily ? `路地の行き止まり あと${ALLEY.daily - (day.alleys || 0)}か所` : '', (day.watch || 0) < WATCH_DAILY ? '水べで じっと見る' : ''].filter(Boolean);
+  return `📒 記録しといたよ。つぎの レベル${lv + 1}まで あと${need}pt。${seal}${left.length ? `きょうは まだ ${left.join('・')}が のこっとるに。` : 'きょうの お楽しみは ぜんぶ すんだね。'}`;   // 毎日の しくみの のこり
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
 function npcSpot(n) {
@@ -642,7 +665,7 @@ document.addEventListener('click', e => {
 /* ---------- 現在地 ---------- */
 let me = null;          // {lat,lng,acc,t}
 let meMarker = null, accCircle = null, spotRing = null;
-let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '';
+let lastWalk = null, vehicleUntil = 0, watchId = null, gpsError = '', gpsSlow = false;
 let driving = false;   // 操作して移動で、ドット絵の地図の車（軽トラ）に乗っている（pixel.js が切り替える）
 
 function placeMe() {
@@ -663,7 +686,8 @@ function placeMe() {
 function onFix(lat, lng, acc, t) {
   const p = { lat, lng, acc, t };
   me = p;
-  gpsError = '';
+  gpsError = ''; gpsSlow = false;
+  waitDone();
   placeMe();
   if (!$('panel-settings').hidden) renderGpsInfo();
   trackWalk(p);
@@ -671,6 +695,41 @@ function onFix(lat, lng, acc, t) {
   refreshNearby();
   tryChest();
   welcomeWalk();
+  farNotice();
+}
+// 遠いほど めずらしい（昔のドット絵RPGの「城から遠いほど 強い敵・よい宝」）：西尾城跡のあたり（CFG.center）から 4km で 1.5倍・8km で 2倍
+// （一色・吉良・幡豆・佐久島まで足をのばすと 出やすい）。キラの時間とは かけあわせる
+const KIRA_FAR = [[8000, 2], [4000, 1.5]];
+const kiraFar = () => { if (!me) return 1; const d = dist(me, { lat: CFG.center[0], lng: CFG.center[1] }); return (KIRA_FAR.find(([m]) => d >= m) || [0, 1])[1]; };
+// 遠いほど めずらしい：西尾城跡から 4km・8km の さかいを こえたら、その日 1回ずつ知らせる（ここから先は キラが出やすい）
+function farNotice() {
+  if (!me || !store.get('nsg_started', false) || (!demo && me.acc > CFG.maxAccuracy)) return;
+  const far = kiraFar(), day = dayState();
+  if (far <= (day.farTold || 1)) return;
+  day.farTold = far; save();
+  const km = (KIRA_FAR.find(([, f]) => f === far) || [0])[0] / 1000;
+  toastAfter(`✨ 西尾城跡から ${km}km こえた！ ここから先は キラの絵が ${far}倍 出やすい`);
+  track('kira_far', { far });
+}
+
+// 位置を待つ間の まちメモ（ブロックくずしの「読みこみを待つ間も遊べて、できたら『READY』と小さく知らせる。遊んでいる手は止めない」から）：
+// あるいて移動で 位置が届くまで（時間がかかっているときも）、下のパネルに 知っている まちメモの おさらいを 7秒ごとに出す（3つより少なければ 地区の豆知識も）。
+// 位置が届いたら、4秒以上 待たせたときだけ「📍 いまの場所が わかった」と知らせる（はじめから すぐ届いたときは出さない）
+const waitS = { i: -1, timer: null, since: 0 };
+function waitLine() {
+  if (demo || me || (gpsError && !gpsSlow)) { if (waitS.timer) { clearInterval(waitS.timer); waitS.timer = null; } return ''; }   // 位置情報が使えないときは、待っても届かない
+  if (!waitS.since) waitS.since = Date.now();
+  if (!waitS.timer) waitS.timer = setInterval(() => { if (me || demo) { clearInterval(waitS.timer); waitS.timer = null; return; } waitS.i++; refreshNearby(); }, 7000);
+  const pool = factPool(), known = (S.facts || []).filter(k => pool.has(k)), keys = known.length >= 3 ? known : [...known, ...[...pool.keys()].filter(k => /^a:.*:t$/.test(k))];
+  if (!keys.length) return '';
+  if (waitS.i < 0) waitS.i = Math.floor(Math.random() * keys.length);
+  const k = keys[waitS.i % keys.length], t = pool.get(k);
+  return `<small class="wait-fact">${known.includes(k) ? '📖 まちメモの おさらい' : '📖 まめちしき'}：${esc(t.length > 80 ? t.slice(0, 79) + '…' : t)}</small>`;
+}
+function waitDone() {
+  if (waitS.timer) { clearInterval(waitS.timer); waitS.timer = null; }
+  if (waitS.since && !demo && Date.now() - waitS.since >= 4000) toastAfter('📍 いまの場所が わかった！ さんぽを はじめよう');
+  waitS.since = 0;
 }
 
 function startGps() {
@@ -681,6 +740,7 @@ function startGps() {
     pos => { if (!demo) onFix(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy, pos.timestamp || Date.now()); },
     err => {
       if (!gpsError) track('geo_error', { code: err.code });
+      gpsSlow = err.code === 3;   // 時間切れは、そのまま待てば届くことがある（待つ間の まちメモは続ける）
       gpsError = err.code === 1
         ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「🎮 操作して移動」なら位置情報なしで遊べます）。'
         : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報を取得できませんでした。電波の良い屋外でお試しください。';
@@ -722,9 +782,11 @@ function addTrail(a, b, critters) {
   const P = window.nishioPixel;
   if (!P || !P.trailWalk) return;
   const n = P.trailWalk(a.lat, a.lng, b.lat, b.lng, critters && P.critterStep ? (x, y) => P.critterStep(x, y) : null);
+  hundred(dist(a, b), n);   // きょうの100歩たんけん（動いた距離を ためて 8m ごとに1歩）
   if (!n) return;
   const day = dayState();
   day.trail = (day.trail || 0) + n;
+  trailMiles((S.trail || 0) + n);
   S.trail = (S.trail || 0) + n;
   S.trailCarry = (S.trailCarry || 0) + n;
   let gained = 0;
@@ -740,6 +802,55 @@ function addTrail(a, b, critters) {
     if (P.floatText) P.floatText('👣+' + gained);
   }
   save();
+}
+
+// きょうの100歩たんけん（ポケモンの「歩数の決まった場所で、めずらしいものを探す」）：その日 はじめて歩きだしたら始まり、100歩（1歩＝1マス 8m）のうちに
+// はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）と、自己ベストなら お祝い。1日1回（記録は モードごと）
+const H100 = { steps: 100, cap: 30, win: 5 };   // win：さんぽ仲間（ライバル）より多いと
+function hundred(meters, fresh) {   // meters：この1回で動いた距離。転がすと 1マスより小さい動きが何度も来るので、ためてから歩数にする
+  if (driving || store.get('nsg_first_day', '') === ymd()) return;   // 遊びはじめた日は しない（はじめの日は ようこそ・はじめの1枚・週の知らせで いっぱいなので、次の日から）
+  const day = dayState();
+  let h = day.h100;
+  if (h && h.done) return;
+  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0, rival: h100Rival(ymd()) }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな（🏃 ${RIVAL}は きょう ${h.rival}マス${S.h100best ? `・自己ベスト ${S.h100best}マス` : ''}）`); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
+  const rest = H100.steps * TRAIL_M - (h.m || 0), part = meters > rest ? Math.max(0, rest) / meters : 1;   // 100歩（800m）を またぐ1回は、800m までの分だけ
+  h.m = (h.m || 0) + meters;
+  const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
+  h.fresh += Math.min(Math.round(fresh * part), H100.steps - h.fresh);   // はじめての道は、たんけんの間に ふえたマス（100まで。またぐ1回は 距離の わりあいで）
+  if (take <= 0) return;
+  h.steps += take;
+  const P = window.nishioPixel;
+  if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100（はじめての道 ${h.fresh}）`); save(); }
+  if (h.steps < H100.steps) return;
+  h.done = true;
+  const win = !!h.rival && h.fresh > h.rival, pts = Math.min(H100.cap, h.fresh) + (win ? H100.win : 0), best = h.fresh > (S.h100best || 0);   // さんぽ仲間に勝つと +5
+  if (best) S.h100best = h.fresh;
+  weekStat().h100 = (weekStat().h100 || 0) + 1;   // 先週のさんぽ に「100歩たんけん ○回」
+  if (pts) { gainPoints(pts); S.log.unshift({ type: 'h100', t: Date.now(), pts, icon: '👣', name: `100歩たんけん：はじめての道 ${h.fresh}マス` }); }
+  save(); badgesSoon();   // たんけん名人
+  toastAfter(`🏁 100歩たんけん おわり！ はじめての道 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}${best && h.fresh ? '　🎉 自己ベスト！' : S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`);
+  if (h.rival) toastAfter(win ? `🏃 ${RIVAL}「まけた！ ${h.fresh}マスは すごいじゃん。おれは ${h.rival}マスだったよ」` : `🏃 ${RIVAL}「おれは ${h.rival}マスだったよ。あしたは 知らん道を ねらってみりん」`);
+  track('h100', { fresh: h.fresh, best, win, mode: demo ? 'play' : 'walk' });
+}
+
+// 歩いた道の節目（2048 の「倍々で大きくなる数字」から）：これまでに歩いた道が 500m・1km・2km・4km… と倍ごとの節目に届くたびに、お祝いと
+// ポイント（30・60・90…）。節目は だんだん遠くなるので、ずっと先まで 次の目当てがある。はじめて この しくみに会った人は、もう越えた節目は配らず そこから数える
+const trailMile = k => 500 * 2 ** k;
+function trailMileNext() {   // つぎの節目の番号。はじめてのときは、いま歩いた道までの節目を すんだものにする（さかのぼって配らない）
+  if (S.trailMile == null) { S.trailMile = 0; while ((S.trail || 0) * TRAIL_M >= trailMile(S.trailMile)) S.trailMile++; }
+  return S.trailMile;
+}
+function trailMiles(after) {   // 歩いた道が after マスになる前に呼ぶ（S.trail は まだ前の値）
+  trailMileNext();
+  while (after * TRAIL_M >= trailMile(S.trailMile)) {
+    const k = S.trailMile++, pts = 30 * (k + 1), m = trailMile(k);
+    S.log.unshift({ type: 'trailmile', t: Date.now(), pts, icon: '👣', name: `歩いた道 ${fmtM(m)} の節目` });
+    gainPoints(pts);
+    const q = toastAfter.q || [];   // まだ出ていない前の節目の知らせは、新しい節目に まとめる（おくれて「1.0km に！」と出ないように。ポイントと記録は そのまま）
+    for (let i = q.length - 1; i >= 0; i--) if (q[i].startsWith('👣 これまでに歩いた道が')) q.splice(i, 1);   // 待っている処理が 同じ列を見ているので、その場で取りのぞく
+    toastAfter(`👣 これまでに歩いた道が ${fmtM(m)} に！ +${pts}pt（つぎの節目は ${fmtM(trailMile(k + 1))}）`);
+    track('trail_mile', { m });
+  }
 }
 
 function addWalk(d, bag = true) {
@@ -1029,6 +1140,19 @@ function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店ス
       <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;
 }
 const SHOP_STAMP = { 3: 100, 5: 200, 10: 500 };   // 来店スタンプ（当店に来た日の数）のごほうびポイント
+// めぐりの れんさ（落ちものパズルの「まとめて消すほど 大きく得をする」から）：チェックインのあと30分以内に、ちがう名所でチェックインすると
+// れんさが つながり、2つめは ×1.2・3つめは ×1.5・4つめからは ×2（スポットのポイントに）。30分あくと 1 からやりなおし。いちばん長い れんさを覚える
+const CHAIN = { ms: 30 * 60000, mult: [1, 1, 1.2, 1.5, 2] };
+const chainMult = n => CHAIN.mult[Math.min(Math.max(n, 0), CHAIN.mult.length - 1)];
+const chainLeft = () => { const c = S.chain; return c && c.last ? Math.max(0, CHAIN.ms - (Date.now() - c.last)) : 0; };
+function chainStep(s, now) {
+  const c = S.chain || { n: 0, last: 0, id: '', best: 0 };
+  c.n = c.last && now - c.last <= CHAIN.ms && c.id !== s.id ? c.n + 1 : 1;
+  c.last = now; c.id = s.id; c.best = Math.max(c.best || 0, c.n);
+  S.chain = c;
+  return { n: c.n, bonus: c.n >= 2 ? Math.round(ptsOf(s) * (chainMult(c.n) - 1)) : 0 };
+}
+
 function checkin() {
   const s = selected;
   if (!s || !me) return;
@@ -1046,6 +1170,8 @@ function checkin() {
   const base = ptsOf(s), theme = weekTheme(), inTheme = inThemeOf(s, theme);
   total += base; lines.push(`${iconOf(s)} スポット +${base}`);
   if (inTheme) { total += base; lines.push(`🎌 今週は${theme.icon}${theme.name}の週（ポイント2倍） +${base}`); }
+  const ch = chainStep(s, now);   // めぐりの れんさ：30分以内に ちがう名所へ着くと、スポットのポイントが ×1.2・×1.5・×2
+  if (ch.bonus) { total += ch.bonus; lines.push(`🔗 めぐりの れんさ ${ch.n}（30分以内に次の名所） ×${chainMult(ch.n)} +${ch.bonus}`); }
   if (!v) {
     const b = s.featured ? CFG.pts.firstFeatured : CFG.pts.first;
     total += b; lines.push(`🆕 はじめての訪問 +${b}`);
@@ -1082,7 +1208,7 @@ function checkin() {
   if (s.shop) day.shop = 1;
   S.checkins++;
   weekStat().spots++;
-  track('checkin', { spot: s.name, featured: !!s.featured, first: !v, theme: inTheme ? theme.key : '', mode: demo ? 'play' : 'walk' });
+  track('checkin', { spot: s.name, featured: !!s.featured, first: !v, theme: inTheme ? theme.key : '', chain: ch.n, mode: demo ? 'play' : 'walk' });
   // おみやげ袋：はじめての注目スポットと、今週のテーマの名所では必ず（持てる数に空きがあれば。テーマの名所の袋は1日3つまで：公園の週は公園が千か所あるので）
   const themeBag = inTheme && (day.themeBags || 0) < BAG.themeDaily;
   const bag = !s.shop && ((s.featured && !v) || themeBag) ? giveBag(s.lat, s.lng, s.featured && !v ? 'featured' : 'theme') : null;
@@ -1304,6 +1430,7 @@ function nearestChest() {
 }
 function tryChest() {
   if (driving) return;   // 車に乗っている間は開けない（降りると開く）
+  if (rewardBusy()) return;   // ほかの ごほうび（同じ位置の知らせで見つけた 路地の行き止まり など）を上書きしない。閉じたら もう一度 調べる（hideReward）
   // あるいて移動では、チェックインと同じく GPS の誤差が大きいときは開けない（乗り物で移動中でも開ける）
   if (!demo && (!me || me.acc > CFG.maxAccuracy)) return;
   const n = nearestChest();
@@ -1340,13 +1467,14 @@ function firstCands(c) {
   }
   return out;
 }
-let firstPick = null;   // { cands, done }：えらんでいる途中
-function pickFirst(cands, done) {
+let firstPick = null;   // { cands, done, opt }：えらんでいる途中
+// opt：{ title, sub, kira（えらんだ絵を キラに）, ev（GA4 の名前） }。ふだんは はじめの1枚
+function pickFirst(cands, done, opt = {}) {
   const D = window.NISHIO_DOTS;
-  firstPick = { cands, done };
+  firstPick = { cands, done, opt };
   const open = () => {
     if (!firstPick || firstPick.cands !== cands) return;
-    $('pxInfoBody').innerHTML = `<div class="pick-first"><h4>${PIA('card', '')} はじめの1枚を えらぼう</h4><p>えらんだ絵が、西尾ドット絵帳の1枚目になります</p>
+    $('pxInfoBody').innerHTML = `<div class="pick-first"><h4>${PIA('card', '')} ${esc(opt.title || 'はじめの1枚を えらぼう')}</h4><p>${esc(opt.sub || 'えらんだ絵が、西尾ドット絵帳の1枚目になります')}</p>
       <div class="pick3">${cands.map(id => { const f = D.info(id); return `<button type="button" data-pick-dot="${id}"><img src="${D.dataUrl(id)}" alt="${esc(f.name)}" width="96" height="96"/>${starRow(dotStars(f))}<span>${esc(f.title)}</span></button>`; }).join('')}</div></div>`;
     $('pxInfo').hidden = false;
   };
@@ -1356,15 +1484,41 @@ function finishFirst(id) {
   const p = firstPick;
   if (!p) return;
   firstPick = null;
-  const dot = addDot(p.cands.includes(id) ? id : p.cands[0]);
-  track('first_dot_pick', { picked: p.cands.indexOf(dot.id), mode: demo ? 'play' : 'walk' });
+  if (p.opt.key && p.opt.key !== stateKey()) { if (!$('pxInfo').hidden) $('pxInfo').hidden = true; return; }   // えらんでいる間に 移動のしかた（記録）を切り替えた：渡さない（予約は もとの記録に残り、もどったとき また出る）
+  const dot = addDot(p.cands.includes(id) ? id : p.cands[0], !!p.opt.kira);
+  track(p.opt.ev || 'first_dot_pick', { picked: p.cands.indexOf(dot.id), mode: demo ? 'play' : 'walk' });
   save();
   if (!$('pxInfo').hidden) $('pxInfo').hidden = true;
   p.done(dot);
 }
+// しるしの2枚（昔のドット絵RPGの「2つのうち 1つだけ もらえる」）：地区のしるしを もらったら、その地区の題材の めずらしい天気（雪・満月・虹）の絵を
+// 2枚見せて、えらんだ1枚が キラで もらえる（もう1枚は もらえない）。人の話の窓を閉じてから出す。えらぶ前に閉じたアプリでも、次に開いたとき出す
+function sealCands(areaId) {
+  const D = window.NISHIO_DOTS;
+  if (!D) return [];
+  const have = new Set((S.dots || []).map(id => D.motifOf(id))), all = D.MOTIFS.map((m, i) => i);
+  const here = all.filter(i => (D.MOTIFS[i].areas || []).includes(areaId)), base = here.length >= 2 ? here : all;
+  const fresh = base.filter(i => !have.has(i)), pool = (fresh.length >= 2 ? fresh : base).slice();
+  const out = [];
+  while (out.length < 2 && pool.length) { const m = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; out.push(D.idOf(m, 4, Math.floor(Math.random() * 16), Math.floor(Math.random() * D.NCOMP))); }
+  return out;
+}
+// えらぶ予定は 地区ごとに列（S.sealPicks）に積む（ふつうの地図では 窓が出せないので、歩く地図にしたとき 順に出す）。
+// 起動したとき・歩く地図にしたとき・位置が かわったとき（refreshNearby）・窓を閉じたときに 調べる
+function sealPickCheck() {
+  const p = (S.sealPicks || [])[0];
+  if (!p || firstPick || !document.body.classList.contains('px') || !$('pxInfo').hidden || rewardBusy() || !window.NISHIO_DOTS) return;
+  if (['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden)) return;   // ほかのタブ（せってい など）を開いている間は 出さない（地図にもどってから）
+  if (document.body.classList.contains('jump-open') || medashiOpen() || (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) || (window.nishioPixel && nishioPixel.sightBusy && nishioPixel.sightBusy())) return;   // ミニゲーム・イベント・ムービー・呼びとめの最中は出さない
+  pickFirst(p.cands, dot => {
+    S.sealPicks = (S.sealPicks || []).filter(x => x.area !== p.area); save();   // 地区で消す（モードを行き来すると 記録は読み直されて 別のものになる）
+    toastAfter(`🔖 ${p.name}のしるしの1枚：「${window.NISHIO_DOTS.info(dot.id).title}」が キラで 絵帳に入った！`);
+    const pl = $('panel-log'); if (pl && !pl.hidden) renderLog();
+  }, { title: `${p.name}のしるしの1枚を えらぼう`, sub: '2枚のうち、えらんだ1枚だけが キラで もらえます（もう1枚は もらえません。えらばずに とじると、左の1枚）', kira: true, ev: 'seal_dot_pick', key: stateKey() });
+}
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-pick-dot]'); if (b) finishFirst(Number(b.dataset.pickDot)); });
 // えらばずに窓を閉じたら（とじる・まわりをタップ）、はじめの1枚にする
-new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });
+new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(firstPick.cands[0]); else if ((S.sealPicks || []).length && $('pxInfo').hidden) setTimeout(sealPickCheck, 500); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });   // 人の話の窓を閉じたら、しるしの2枚
 
 /* ---------- みちしるべ（このゲームの面白さの核：docs/fun-core.md） ----------
    「人生は自分で決めるものではなく、まわりの環境や人の話を聞いて進んでいくもの」。
@@ -1510,6 +1664,7 @@ function deliverParcel(n) {
   return `📦 ${n.name}「${p.fromName}から${p.item}？ わざわざ ありがとうね」 +${PARCEL_PTS}pt${lvUp ? `　🎉 Lv${lvUp}` : ''}`;
 }
 function hintSay(n, name) {
+  if (n.hint) return n.hint.replace('{s}', () => name);   // 目立つ人は、その人だけの言い方（npcs.js の hint。その人の仕事・好みに たとえるだけで、事実は言わない）
   const list = HINT_SAY[n.look] || HINT_SAY.man, h = [...String(n.id)].reduce((a, c) => a + c.charCodeAt(0), 0);
   return list[h % list.length].replace('{s}', () => name);
 }
@@ -1538,16 +1693,36 @@ const CRITTERS = [
 ];
 const CRITTER_DAILY = 5, CRITTER_PTS = 10, HIGATA = ['f-koromozaki', 'f-tombolo'];
 const WHERE_NAME = { paddy: '田んぼ', water: '水べ', higata: '干潟' };
-function meetCritter(where) {
-  const day = dayState(), m = new Date().getMonth() + 1;
-  if ((day.critters || 0) >= CRITTER_DAILY || !me) return null;
+// いま ここ（田んぼ・水べ）で会える生きもの（季節・干潟の近く）
+function critterPool(where) {
+  const m = new Date().getMonth() + 1;
   const nearIds = where === 'water' ? spots.filter(s => HIGATA.includes(s.id) && dist(me, s) < 1500).map(s => s.id) : [];
   const higata = c => c.where === 'higata' && nearIds.some(id => !c.at || c.at.includes(id));
-  const ok = CRITTERS.filter(c => (c.where === where || higata(c)) && (!c.months || c.months.includes(m)));
+  return CRITTERS.filter(c => (c.where === where || higata(c)) && (!c.months || c.months.includes(m)));
+}
+// のこりの数（pixel.js の critterCount）：いま ここで会えるうち、まだ手帳にない数。その日の出会いが おわっていたら null
+function critterLeft(where) {
+  if ((dayState().critters || 0) >= CRITTER_DAILY || !me) return null;
+  const ok = critterPool(where), book = S.critters || {};
+  return { left: ok.filter(c => !book[c.id]).length, all: ok.length };
+}
+function meetCritter(where) {
+  const day = dayState();
+  if ((day.critters || 0) >= CRITTER_DAILY || !me) return null;
+  const ok = critterPool(where);
   if (!ok.length) return null;
   const book = S.critters || (S.critters = {}), fresh = ok.filter(c => !book[c.id]);
   const pool = fresh.length && Math.random() < 0.6 ? fresh : ok;   // まだ手帳にないものに出会いやすく
   return critterMet(pool[Math.floor(Math.random() * pool.length)]);
+}
+// 水べで じっと見る（pixel.js の waterWatch）：1日2回まで、水の生きものに出会う（歩いて出会う 1/40 の運を待たずに）
+const WATCH_DAILY = 2;
+const watchOpen = () => (dayState().watch || 0) < WATCH_DAILY && (dayState().critters || 0) < CRITTER_DAILY && !!me;
+function watchWater() {
+  if (!watchOpen()) return null;
+  const m = meetCritter('water');
+  if (m) { const day = dayState(); day.watch = (day.watch || 0) + 1; save(); track('water_watch', { critter: m.id, mode: demo ? 'play' : 'walk' }); }
+  return m;
 }
 function critterMet(c) {
   const book = S.critters, first = !book[c.id], day = dayState();
@@ -1621,6 +1796,24 @@ document.addEventListener('click', e => {
   const s = b && spots.find(x => x.id === b.dataset.search);
   if (s) { e.stopPropagation(); searchSpot(s); }
 });
+// 路地の行き止まり（NetHack の、通路が ぷつっと終わる所を しらべると 隠し扉が見つかる しくみ）：歩く地図で 道が終わる マス（pixel.js の alleyEnd）に
+// 入ると、その あたりの まちメモが1つ見つかる（+3pt）。地形そのものが「ここを しらべて」と教える。1マス1回・1日3回まで（ごほうびの画面が出ている間は数えない）
+const ALLEY = { pts: 3, daily: 3, keep: 400 };
+function alleyFind(x, y, ll) {
+  const key = `${x},${y}`, day = dayState();
+  if (!Array.isArray(S.alleys)) S.alleys = [];
+  if (S.alleys.includes(key) || (day.alleys || 0) >= ALLEY.daily || rewardBusy()) return false;
+  S.alleys.push(key); if (S.alleys.length > ALLEY.keep) S.alleys.shift();
+  day.alleys = (day.alleys || 0) + 1;
+  const k = pickFact({ id: 'alley:' + key, lat: ll.lat, lng: ll.lng }), fresh = !!k && !S.facts.includes(k);
+  if (fresh) S.facts.push(k);
+  const lvUp = gainPoints(ALLEY.pts);
+  S.log.unshift({ type: 'alley', t: Date.now(), pts: ALLEY.pts, name: '路地の行き止まりを しらべた', icon: '🔍' });
+  save(); badgesSoon();   // 路地はかせ
+  track('alley_find', { fresh, mode: demo ? 'play' : 'walk' });
+  showReward(ALLEY.pts, '🔍 路地の行き止まりを しらべたら 見つかった！', fresh ? ['📖 まちメモ +1'] : [], lvUp, fresh ? factPool().get(k) : '', null);
+  return true;
+}
 // イベント「ドット絵ムービー」（movie.js）：西尾の海と大地の話（shizen.js）は、文で ばらばらに出すのではなく、ゆかりの名所に着いたときに ムービーで見せる。
 // 最後まで見ると、その話が まちメモ に残る。途中で閉じたら、次に着いたとき（名所の窓の「📽️ ムービー」からも）また見られる
 const movieOf = s => (window.NISHIO_MOVIE && s ? NISHIO_MOVIE.movieAt(s.id, s.area) : null);
@@ -1803,7 +1996,9 @@ function renderGuide() {
   el.hidden = false;
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
   const alts = (S.guide && S.guide.alts) || [];
-  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${fmtM(dist(me, g))}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${fmtM(dist(me, g))}</span>`;
+  const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
+  const far = mr ? `🌀${fmtM(mr.m)}` : fmtM(dist(me, g));   // 🌀：めいろの 道のり（名前が 長くても 入るように みじかく）
+  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${far}</span>`;
   el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
@@ -1879,16 +2074,17 @@ function refreshNearby() {
     showRing(null);
     showGuide(null);
     // 位置情報が使えないときは、その場で「操作して遊ぶ」に切り替えられるボタンを出す（ここで閉じられてしまわないように）
-    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…'), true);
+    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…' + waitLine()), true);
     return;
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
   const wt = weekTheme(), wk = String(weekNo());
-  if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
+  if (welcomeDue() || firstPick || rewardBusy()) { /* はじめての人は「🎁 すぐ近くに たからばこ！」を読んでもらう：ようこそ たからばこ を開けて、はじめの1枚を えらんで、ごほうびを閉じてから、週の知らせを出す */ }
+  else if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
     store.set('nsg_theme_wk', wk);
     const lw = lastWeekStat();
-    setTimeout(() => toast(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
-  } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toast('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }
+    setTimeout(() => toastAfter(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
+  } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toastAfter('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }   // 前の知らせ（はじめの案内など）を上書きしないよう、あとに
   else if (store.get('nsg_started', false) && S.prevToast !== ymd() && prevDayStat()) {   // 日に1回：前回のさんぽ（知らせたかは記録ごと＝モード・版ごとに。知らせることがない日は使わない）
     const p = prevDayStat();
     S.prevToast = ymd(); save();
@@ -1922,6 +2118,7 @@ function refreshNearby() {
   }
 
   renderGuide();
+  if ((S.sealPicks || []).length) sealPickCheck();   // まだ えらんでいない しるしの2枚（起動したとき・歩く地図にしたときも ここで出る）
   // 画面をすっきりさせるため、案内パネルは1〜2行だけ：気をつけること（車・範囲外・GPS など）があればそれを、なければ まちメモ とクエストの数
   const msgs = [];
   if (driving) msgs.push('🚗 軽トラで移動中（チェックインは降りてから）');
@@ -1937,12 +2134,15 @@ function refreshNearby() {
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  if (!msgs.length && simple()) { setStatus(''); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
+  // めぐりの れんさ：つながっている間は、文字を少なく（ふだん）でも のこり時間を出す（次の名所に間に合うか分かるように）
+  const cl = chainLeft(), h1 = dayState().h100, chain = [cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} ${S.chain.n >= 2 ? `れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : `のこり${Math.ceil(cl / 60000)}分で 次の名所 → れんさ`}` : '',   // 1か所目は まだ つながっていないので「次の名所で れんさ」
+    h1 && !h1.done ? `${simple() ? PIA('feet', '100歩たんけん') : '👣'} たんけん <b>${h1.steps}</b>/100` : ''].filter(Boolean).join('　');   // 100歩たんけんの とちゅうも（何歩目か）
+  if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
     const qd = todaysQuests().filter(q => dayState().done.includes(q.id)).length, bl = bagLine();
     const bag = bl ? (simple() ? `　${PIA('bag', 'おみやげ袋')} <b>${bl.done}</b>/${bl.b.km}km` : `　🎒 袋 <b>${bl.done}</b>/${bl.b.km}km`) : '';
-    msgs.push((simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`) + bag);
-  }
+    msgs.push((simple() ? `${PIA('book', 'まちメモ')} <b>${knownFacts()}</b>　${PIA('scroll', '今日のクエスト')} <b>${qd}</b>/3` : `📖 まちメモ <b>${knownFacts()}</b>　📜 クエスト <b>${qd}</b>/3`) + bag + (chain ? '　' + chain : ''));
+  } else if (chain) msgs.push(chain);
   setStatus(msgs.slice(0, 2).join('<br/>'), true);
 }
 
@@ -2003,6 +2203,9 @@ function badgeDefs() {
     }),
     { id: 'walk5', i: '🚶', n: '5kmウォーカー', d: '合計5km歩く', cur: km, goal: 5 },
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
+    { id: 'alley10', i: '🔍', n: '路地はかせ', d: '歩く地図で、路地の行き止まりを10か所 しらべる', cur: (S.alleys || []).length, goal: 10 },   // 夜の開発の しくみのバッジ
+    { id: 'h100', i: '👣', n: 'たんけん名人', d: '100歩たんけんで、はじめての道を50マス 歩く', cur: S.h100best || 0, goal: 50 },
+    { id: 'chain4', i: '🔗', n: 'めぐりの達人', d: '30分以内に つぎの名所へ、4か所つづけて めぐる（めぐりの れんさ 4）', cur: (S.chain && S.chain.best) || 0, goal: 4 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
     { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MB_NISHIO.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NISHIO.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NISHIO.length, 1) },
     { id: 'meibutsu2', i: '🧭', n: 'となりまちの名物めぐり', d: `${MB_NEAR.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NEAR.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NEAR.length, 1), ready: MB_NEAR.length > 0 },
@@ -2078,7 +2281,8 @@ function endingWhenFree(key = stateKey()) {
   })();
 }
 function clearRecord() {
-  return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length };
+  return { spots: Object.keys(S.visits).length, met: (S.met || []).length, km: Math.floor(S.walked / 100) / 10, dots: (S.dots || []).length, facts: knownFacts(), critters: Object.keys(S.critters || {}).length,
+    chain: (S.chain && S.chain.best) || 0, h100: S.h100best || 0, alleys: (S.alleys || []).length };   // 夜の開発の記録（いちばんの れんさ・100歩たんけんの自己ベスト・しらべた行き止まり）
 }
 function showEnding() {
   const npcs = window.NISHIO_NPCS || [], by = npcs.find(n => n.id === CLEAR_BY);
@@ -2087,6 +2291,7 @@ function showEnding() {
     ...(when ? [['殿堂入りした日', `${when.getFullYear()}/${when.getMonth() + 1}/${when.getDate()}`]] : []),
     ['めぐった名所', `${r.spots}か所`], ['話した人', `${r.met}人`], ['歩いた道のり', `${r.km}km`],
     ['西尾ドット絵', `${r.dots}枚`], ['まちメモ', `${r.facts}こ`], ['生きもの', `${r.critters}しゅるい`],
+    ...(r.chain >= 2 ? [['いちばんの れんさ', `${r.chain}か所`]] : []), ...(r.h100 ? [['100歩たんけんの自己ベスト', `${r.h100}マス`]] : []), ...(r.alleys ? [['しらべた路地の行き止まり', `${r.alleys}か所`]] : []),   // 前に殿堂入りした人の記録には ないので、あるものだけ
   ];
   const seals = SEAL_MAIN.map(id => { const a = areas.find(x => x.id === id), p = npcs.find(n => n.id === SEAL_BY[id]); return a ? `<li>🔖 ${esc(a.name)}のしるし <small>${esc(p ? p.name : '')}</small></li>` : ''; }).join('');
   const el = $('reward');
@@ -2103,7 +2308,10 @@ function showEnding() {
 function sealGive(n) {
   const id = Object.keys(SEAL_BY).find(k => SEAL_BY[k] === n.id), a = id && areas.find(x => x.id === id);
   if (!a || (S.seals || []).includes(id) || !sealReady(id)) return '';
-  S.seals = [...(S.seals || []), id]; save();
+  S.seals = [...(S.seals || []), id];
+  const cands = sealCands(id);
+  if (cands.length === 2) S.sealPicks = [...(S.sealPicks || []), { area: id, name: a.name, cands }];   // 話の窓を閉じたら 2枚から えらぶ（sealPickCheck）
+  save();
   badgesSoon();   // バッジの知らせ
   track('seal_get', { area: id, mode: demo ? 'play' : 'walk' });
   return `🔖 ${n.name}「${a.name}を${sealGoal(id)}か所も歩いてくれたじゃん！ ${a.name}のしるし、持ってってちょう」`;
@@ -2232,10 +2440,12 @@ const toastShowing = msg => $('toast').classList.contains('show') && $('toast').
 function toast(msg) {
   const el = $('toast');
   if ($('reward').classList.contains('show')) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }
-  if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800); return; }   // いま出ている：のばすだけ
+  if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
   el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3800);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
+// 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
+function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
   const t = $('toast');
@@ -2252,13 +2462,14 @@ function toastAfter(msg) {
   if (afterQ.length > 1) return;   // もう待っている（前のものを出したあとに出す）
   setTimeout(function show() {
     if ($('toast').classList.contains('show')) return setTimeout(show, 600);
-    toast(afterQ.shift());
+    const m = afterQ.shift();
+    if (m) toast(m);   // 待っている間に 取りのぞかれて 空になっていることがある
     if (afterQ.length) setTimeout(show, 600);
   }, 150);
 }
 
 // 文字を少なく（ふだん）：ごほうびの行を「絵＋数」の札にする（まちメモの文は きろく で読める）
-const CHIP = [['🎮', 'jump'], ['🎒', 'bag'], ['🎌', 'calendar'], ['✨', 'star'], ['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll']];
+const CHIP = [['🎮', 'jump'], ['🎒', 'bag'], ['🎌', 'calendar'], ['✨', 'star'], ['🎁', 'chest'], ['🖼', 'card'], ['📖', 'book'], ['📅', 'fire'], ['🆕', 'new'], ['🏠', 'home'], ['⏱️', 'clock'], ['🎉', 'star'], ['🍚', 'bowl'], ['📜', 'scroll'], ['🔗', 'compass']];
 function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出すとき（絵の札と、合計と同じ数の札は出さない）
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
@@ -2267,7 +2478,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
     if (ic === 'book') book = true;
     const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
-    const v = ic === 'card' ? (/もう持っている/.test(l) ? '' : PIA('new', 'はじめての絵')) : ic === 'bag' && !plus ? ((l.match(/(\d+)km/) || [])[1] || '') + 'km' : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
+    const v = l.startsWith('🔗') ? `×${(l.match(/×([\d.]+)/) || [])[1] || ''} ${plus}` : ic === 'card' ? (/もう持っている/.test(l) ? '' : PIA('new', 'はじめての絵')) : ic === 'bag' && !plus ? ((l.match(/(\d+)km/) || [])[1] || '') + 'km' : ic === 'fire' ? `${days || ''}${plus ? ' ' + plus : ''}` : ic === 'clock' ? (time || '') : plus;
     // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
     if (hero && ic === 'card' && !shown) { shown = true; continue; }
     if (hero && ic !== 'card' && v === `+${total}`) continue;
@@ -2341,6 +2552,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
 function hideReward() {
   clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
   toastQ.splice(0).forEach(toastAfter);   // たまった知らせは、1つずつ順に（つなげて1つにすると長すぎて読めなかった）
+  setTimeout(tryChest, 300);   // ごほうびの間に着いていた たからばこ を開ける
 }
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');
@@ -2365,11 +2577,12 @@ function addDot(id, forceKira) {   // forceKira：必ずキラに（7日連続�
   const D = window.NISHIO_DOTS;
   if (!Array.isArray(S.dots)) S.dots = [];
   if (!Array.isArray(S.kira)) S.kira = [];
-  const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && (forceKira || Math.random() < KIRA_RATE * (kiraHour() ? 2 : 1));
+  const far = kiraFar(), rate = KIRA_RATE * (kiraHour() ? 2 : 1) * far;
+  const fresh = !S.dots.includes(id), kira = !S.kira.includes(id) && (forceKira || Math.random() < rate);
   if (fresh) { S.dots.push(id); weekStat().dots++; dayState().dots = (dayState().dots || 0) + 1; }
   if (kira) S.kira.push(id);
-  track('dot_get', { motif: D.info(id).motif, fresh, kira, mode: demo ? 'play' : 'walk' });
-  return { id, fresh, kira };
+  track('dot_get', { motif: D.info(id).motif, fresh, kira, far, mode: demo ? 'play' : 'walk' });
+  return { id, fresh, kira, rate: forceKira ? 0 : rate, far };
 }
 // 7日連続（7日・14日…）のごほうび：まだ持っていない題材の、めずらしい天気（雪・満月・虹）のキラの絵。ふだんは場所で決まる絵を、場所によらず1枚
 function streakDot() {
@@ -2400,7 +2613,7 @@ function dotLines(dot) {
   const D = window.NISHIO_DOTS;
   if (!dot || !D) return [];
   const f = D.info(dot.id);
-  return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`, ...(dot.kira ? ['✨ キラの絵！（32回に1回）'] : [])];
+  return [`🖼 西尾ドット絵 No.${f.no}「${f.name}」${dot.fresh ? '' : '（もう持っている絵）'}`, ...(dot.kira ? [`✨ キラの絵！（${(r => r ? `${Math.round(1 / r)}回に1回${dot.far > 1 ? '・遠くまで来たので 出やすい' : ''}` : '特別な1枚')(dot.rate === undefined ? KIRA_RATE : dot.rate)}）`] : [])];
 }
 
 /* ---------- おみやげ袋（歩くと開く。docs/location-game-essence.md） ----------
@@ -2521,7 +2734,7 @@ $('dotMotifs').addEventListener('click', e => {
   renderDots();
 });
 
-const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift' };   // 最近のポイントの絵
+const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift', trail: 'feet', trailmile: 'feet', alley: 'book', h100: 'feet' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 function renderLog() {
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
@@ -2607,7 +2820,7 @@ function areaArt(id) { return AREA_ART.has(id) ? `nishio-go/art/area-${id}.png` 
 
 // バッジのメダルの絵（文字を少なく：ふだん）。地区の制覇は旗
 const BADGE_PI = { critterall: 'book', first: 'feet', spot10: 'map', spot30: 'compass', spot100: 'medal', shrine: 'torii', temple: 'temple', park: 'tree', castle: 'castle', featall: 'star',
-  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk' };
+  walk5: 'walker', walk42: 'walker', streak7: 'fire', meibutsu: 'tea', meibutsu2: 'tea', memo10: 'book', memo50: 'book', npc5: 'talk', npcall: 'face', npcnear: 'face', voice1: 'talk', voice3: 'home', react10: 'talk', alley10: 'book', h100: 'feet', chain4: 'compass' };
 $('badgeGrid').addEventListener('click', e => { const b = e.target.closest('[data-badge="clear"]'); if (b && S.cleared) endingWhenFree(); });   // 殿堂入りのバッジから、エンディングの記録をもう一度
 function renderBadges() {
   const got = new Set(S.badges), defs = badgeDefs();
@@ -3330,8 +3543,11 @@ function tomorrowItems() {
   const done = S.streak.last === ymd(), d = done ? S.streak.days + 1 : S.streak.last === yesterday() ? S.streak.days + 1 : 1;
   const out = [done ? `名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt` : `きょう名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt。あしたも続けると +${bonus(d + 1)}pt`, '新しい「今日のクエスト」3つ（達成でポイント）', '新しい たからばこ（日によって置き場所が変わる）'];
   if (demo) out.push('閉じている間も るすばん でさんぽ（おかえりのポイントとドット絵）');
+  out.push(`あしたの 100歩たんけん：${RIVAL}は ${h100Rival(tomorrow())}マス（勝つと +${H100.win}pt）`);   // さんぽ仲間の あしたの数は 日で決まるので、前もって見せる
   return out;
 }
+function tomorrow() { const d = new Date(); d.setDate(d.getDate() + 1); return ymd(d); }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
+function h100Rival(date) { return 20 + hashStr('h100:' + date) % 41; }   // さんぽ仲間の 100歩たんけん（日で決まる 20〜60マス）
 // きろく：今週のテーマ と おみやげ袋
 function renderBags() {
   const el = $('bagBox');
@@ -3340,9 +3556,9 @@ function renderBags() {
   const rows = bags.map((b, i) => { const pct = Math.round(b.walked / (b.km * 1000) * 100); return `<li><span class="ico">${PIA('bag', 'おみやげ袋')}</span><span class="main"><b>${b.km}km の袋${i ? '（つぎの番を待っています）' : '（歩くとたまります）'}</b><span class="bar"><i style="width:${i ? 0 : pct}%"></i></span></span><span class="num">${i ? '—' : `${Math.floor(b.walked / 100) / 10}/${b.km}km`}</span></li>`; }).join('');
   const lw = lastWeekStat();
   const pd = prevDayStat();
-  el.innerHTML = `${todayWalkCard()}${pd ? `<p class="lastweek">${PIA('feet', pd.label)} <b>${esc(pd.label)}のさんぽ</b><span>${prevDayText(pd)}</span></p>` : ''}${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚</span></p>` : ''}
+  el.innerHTML = `${todayWalkCard()}${pd ? `<p class="lastweek">${PIA('feet', pd.label)} <b>${esc(pd.label)}のさんぽ</b><span>${prevDayText(pd)}</span></p>` : ''}${lw ? `<p class="lastweek">${PIA('feet', '先週')} <b>先週のさんぽ</b><span>${fmtM(lw.m)}・チェックイン ${lw.spots}回・新しい絵 ${lw.dots}枚${lw.h100 ? `・100歩たんけん ${lw.h100}回` : ''}</span></p>` : ''}
     <p class="theme">${PIA('calendar', '今週のテーマ')} <b>今週は ${t.icon} ${esc(t.name)} の週</b><small>${esc(t.name)}でチェックインすると、スポットのポイントが2倍・おみやげ袋がもらえます（月曜に変わります）</small></p>
-    <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
+    <p class="kirahour${kiraHour() ? ' now' : ''}">${PIA('star', 'キラ')} <b>${kiraHour() ? 'いま キラの時間！' : 'キラの時間'}</b><small>毎週土曜の10時台は、キラの絵が出やすい（2倍）。西尾城跡から遠くへ行くほど出やすい（4kmで1.5倍・8kmで2倍）。7日続けて来ると、めずらしい天気のキラの絵</small></p>
     ${window.NISHIO_OLDMAP ? `<p class="oldmap-row"><button type="button" class="btn mini" data-oldmap-view>🗺️ 明治の村の地図 ${(S.oldmap || []).length}/${NISHIO_OLDMAP.VILLAGES.length}</button></p>` : ''}
     <h4>${PIA('bag', '')} おみやげ袋 <small>${bags.length}/${BAG.max}</small></h4>
     <ul class="list">${rows || '<li class="empty">たからばこ・はじめての注目スポット・今週のテーマの名所で もらえます。歩くと開きます</li>'}</ul>`;
@@ -3360,7 +3576,18 @@ function todayWalkCard() {
   return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
     <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
     <p class="word">${esc(word)}</p>
-    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}</small></div>`;
+    ${dayGoals(day)}
+    <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}（つぎの節目 ${fmtM(trailMile(trailMileNext()))} まで あと ${fmtM(Math.max(0, trailMile(trailMileNext()) - (S.trail || 0) * TRAIL_M))}）${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}${S.h100best ? `・100歩たんけんの自己ベスト ${S.h100best}マス` : ''}</small></div>`;   // きょうの数は 上の札に
+}
+// きょうの小さなお楽しみ（毎日の約束）：100歩たんけん・路地の行き止まり・水べで じっと見る の、きょうの進み具合を札で
+function dayGoals(day) {
+  const h = day.h100, first = store.get('nsg_first_day', '') === ymd();
+  const g = [
+    ['👣', '100歩たんけん', h && h.done ? `${h.fresh}マス` : h ? `${h.steps}/100歩` : first ? 'あしたから' : 'まだ', !!(h && h.done)],
+    ['🔍', '路地の行き止まり', `${day.alleys || 0}/${ALLEY.daily}`, (day.alleys || 0) >= ALLEY.daily],
+    ['👀', '水べで じっと見る', `${day.watch || 0}/${WATCH_DAILY}`, (day.watch || 0) >= WATCH_DAILY],
+  ];
+  return `<div class="tw-goals">${g.map(([i, n, v, done]) => `<span class="${done ? 'done' : ''}" title="${esc(n)}">${i} <small>${esc(n)}</small> <b>${esc(v)}</b>${done ? ' ✓' : ''}</span>`).join('')}</div>`;
 }
 function renderTomorrow() {
   const el = $('tomorrowBox');
@@ -3368,7 +3595,7 @@ function renderTomorrow() {
   el.hidden = !store.get('nsg_started', false);
   const items = tomorrowItems();
   el.innerHTML = simple()   // 文字を少なく（ふだん）：絵＋数の札（くわしくは長押しで出る名前）
-    ? `<b>${ART32('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : [])].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
+    ? `<b>${ART32('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : []), ['stat-feet', `vs${h100Rival(tomorrow())}`, items[items.length - 1]]].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
     : `<b>📅 あしたのおたのしみ</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 // ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）
@@ -3506,6 +3733,7 @@ function begin(isDemo) {
   if (isDemo) toast(document.body.classList.contains('px')
     ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ 左下のスティック（矢印キー）で近づくと開きます') : '🎮 左下のスティック（矢印キー）で歩きます')
     : '🎮 地図をタップするとその場所へ移動します');
+  setTimeout(sealPickCheck, 3000);   // えらぶ前に閉じた しるしの2枚
 }
 document.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('[data-sponsor],[data-camp]');
@@ -3547,7 +3775,7 @@ window.nishioGo = {
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, miniBest, miniRecords, miniStart, FRIEND_BONUS,
-  get started() { return store.get('nsg_started', false); },
+  get started() { return store.get('nsg_started', false); }, openTab,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
     if (!demo) setMode(true);
@@ -3565,7 +3793,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

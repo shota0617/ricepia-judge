@@ -29,11 +29,11 @@ jobs:
           T: ${{ secrets.FEEDBACK_TOKEN }}
         run: |
           if [ -n "$T" ] && [ -n "$FEEDBACK_REPO" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "FEEDBACK_REPO / FEEDBACK_TOKEN が無いので、なにもしません"; fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.cfg.outputs.on
         with:
           persist-credentials: false   # Claude が動くあいだ、git の認証情報を置かない（PR を作るときだけ渡す）
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.cfg.outputs.on
         with:
           node-version: 20
@@ -55,7 +55,10 @@ jobs:
           node "$RUNNER_TEMP/trusted/tools/feedback-triage.js" prepare
           n=$(node -e "console.log(require('./.feedback/items.json').length)")
           if [ "$n" -gt 0 ]; then echo "ai=1" >> "$GITHUB_OUTPUT"; fi
-      # Claude：書けるのは nishio-go/ と .feedback/ だけ、読めるのは作業場所の中だけ。動かすあいだ .git は作業場所の外に置く
+          # このあとの手順（転載の確かめ・Issue への返事・voices）が読む データの 正本は、作業場所の外に 置いておく（Claude の あとで もどす）
+          mkdir -p "$RUNNER_TEMP/trusted/feedback"
+          for f in items.json rids.json status.json; do if [ -f ".feedback/$f" ]; then cp ".feedback/$f" "$RUNNER_TEMP/trusted/feedback/"; fi; done
+      # Claude：書けるのは nishio-go/ と .feedback/results.json だけ、読めるのは作業場所の中だけ。動かすあいだ .git は作業場所の外に置く
       - name: Claude reads feedback
         if: steps.sort.outputs.ai
         env:
@@ -64,10 +67,19 @@ jobs:
           npm i -g @anthropic-ai/claude-code@2.1.305 > /dev/null
           mv .git "$RUNNER_TEMP/dotgit"
           claude -p "$(cat "$RUNNER_TEMP/trusted/tools/feedback-prompt.md")" --model claude-opus-5-5 --max-turns 40 --permission-mode dontAsk \
-            --allowedTools "Read(./**),Glob,Grep,Edit(./nishio-go/**),Write(./nishio-go/**),Edit(./nishio-go.html),Write(./.feedback/**),WebFetch(domain:ja.wikipedia.org),WebFetch(domain:www.wikidata.org),WebFetch(domain:www.city.nishio.aichi.jp),WebFetch(domain:www.openstreetmap.org),WebFetch(domain:nominatim.openstreetmap.org)" \
+            --allowedTools "Read(./**),Glob,Grep,Edit(./nishio-go/**),Write(./nishio-go/**),Edit(./nishio-go.html),Write(./.feedback/results.json),WebFetch(domain:ja.wikipedia.org),WebFetch(domain:www.wikidata.org),WebFetch(domain:www.city.nishio.aichi.jp),WebFetch(domain:www.openstreetmap.org),WebFetch(domain:nominatim.openstreetmap.org)" \
             --disallowedTools "Bash,WebSearch,NotebookEdit,Task" | tail -n 40 || true
           if [ -e .git ]; then echo "Claude の手順のあいだに .git ができたので、止めます"; rm -rf .git; mv "$RUNNER_TEMP/dotgit" .git; exit 1; fi
           mv "$RUNNER_TEMP/dotgit" .git
+      # Claude が書いてよいのは results.json だけ。ほかの .feedback のファイルは 正本で 上書きし、あとの手順が 作る ファイルは 消しておく
+      # （おたよりの文に まぎれた 指示で、転載の確かめ・返事・voices の もとが 書きかえられないように）
+      - name: Restore trusted feedback data
+        if: steps.sort.outputs.ai
+        run: |
+          rm -f .feedback/blocked.txt .feedback/pr-body.md
+          for f in items.json rids.json status.json; do
+            if [ -f "$RUNNER_TEMP/trusted/feedback/$f" ]; then cp "$RUNNER_TEMP/trusted/feedback/$f" ".feedback/$f"; else rm -f ".feedback/$f"; fi
+          done
       - name: Open PR
         id: pr
         if: steps.sort.outputs.ai

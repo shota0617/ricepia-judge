@@ -115,9 +115,6 @@ async function overLimit(n, max, now) {
   }
   return true;   // 24時間に500件より多い
 }
-// この関数（Vercel のひとつのインスタンス）の中では、おたよりを1件ずつ順に置く（数えてから置くまでのあいだに ほかの送信が割りこまないように）
-let queue = Promise.resolve();
-const oneByOne = fn => { const run = queue.then(fn); queue = run.catch(() => {}); return run; };
 
 function parseReact(b) {
   if (!b || typeof b !== 'object' || !b.spot || typeof b.spot !== 'object') return null;
@@ -171,7 +168,8 @@ module.exports = async function handler(req, res) {
   if (!rateOk(ip, now)) return res.status(429).json({ error: 'rate' });
   const max = Math.max(1, Math.min(100, Number(process.env.FEEDBACK_DAILY_MAX) || 40));
   try {
-    const over = await oneByOne(async () => {
+    // 1件ずつ順に置くことはしない（待つあいだに 関数の時間の上限 10秒をこえるので）。置いたあとの数えなおし（overLimit）で上限を守る
+    const over = await (async () => {
       if (await recentCount(max, now) >= max) return true;
       const is = issueOf(f), made = await gh('/issues', { method: 'POST', body: JSON.stringify(is) });
       // ラベルがつかなかったら（はじめての空のリポジトリなど）、ラベルを作ってつけなおす。仕分けは feedback ラベルで探すので
@@ -184,7 +182,7 @@ module.exports = async function handler(req, res) {
         return true;
       }
       return false;
-    });
+    })();
     if (over) return res.status(429).json({ error: 'daily' });
   } catch (e) {
     console.error('feedback:', e.message);

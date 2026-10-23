@@ -303,7 +303,7 @@ function bind(p){
   p.on("error", e => {
     if(e.type === "peer-unavailable"){
       // that seat is empty: drop our unanswered call so a later call from it can come in
-      const id = (String(e.message).match(/ricepia-tsunagu-room-\d/) || [])[0];
+      const id = ROOM && (String(e.message).match(new RegExp(ROOM + "-\\d+")) || [])[0]; // our room's seat id in the message (the room name is letters, digits and "-" only)
       const c = id && S.calls.get(id);
       if(c && c._out && !S.streams.has(id)){ S.calls.delete(id); try{ c.close(); }catch(x){} }
       return;

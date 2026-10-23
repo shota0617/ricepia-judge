@@ -8,6 +8,7 @@
 //     node tools/google-ads-run.js --job game      にしおさんぽGO のサイトリンク・コールアウトを検証だけ（--apply で反映）
 //     node tools/google-ads-run.js --job game-campaign  にしおさんぽGO 専用キャンペーン（一時停止で作る）を検証だけ（--apply で反映）
 //     node tools/google-ads-run.js --job serving --out ads.md  配信中の広告をぜんぶ書き出す（読むだけ。3社のAIのレビュー用）
+//     node tools/google-ads-run.js --job effect --out effect.txt  広告の効果を見る数字を書き出す（読むだけ。週ごとの LINE 1件の費用・変更履歴など）
 //   読む環境変数（値はチャットやリポジトリに書かない）:
 //     GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN,
 //     GOOGLE_ADS_CUSTOMER_ID（広告アカウントのお客様ID）, GOOGLE_ADS_LOGIN_CUSTOMER_ID（MCC経由のときだけ）,
@@ -101,6 +102,7 @@ const JOBS = {
   game: ['./google-ads-game-2026-10.js', 'にしおさんぽGO（サイトリンク・コールアウト）'],
   'game-campaign': ['./google-ads-game-campaign-2026-10.js', 'にしおさんぽGO 専用キャンペーン'],
   serving: ['./google-ads-serving-2026-10.js', '配信中の広告の書き出し（読むだけ）'],
+  effect: ['./google-ads-effect-2026-10.js', '広告の効果の書き出し（読むだけ）'],
 };
 if (JOB && !JOBS[JOB]) { console.error('--job は ' + Object.keys(JOBS).join(' / ') + ' のどれか'); process.exit(2); }
 const job = require(JOB ? JOBS[JOB][0] : './google-ads-apply-2026-10.js');

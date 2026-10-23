@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 20
 
       # 前回までの通知状態（同じ異常を15分ごとに何度も送らないため）
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: .monitor-state
           key: monitor-state-${{ github.run_id }}
@@ -58,9 +58,11 @@ jobs:
           ALERT_REMIND_HOURS: ${{ vars.ALERT_REMIND_HOURS }}
           AUTO_STOP: ${{ vars.AUTO_STOP }}
           AUTO_STOP_EXCLUDE_WORKERS: ${{ vars.AUTO_STOP_EXCLUDE_WORKERS }}
+          AUTO_STOP_WORKERS: ${{ vars.AUTO_STOP_WORKERS }}
+          AUTO_STOP_ANTHROPIC_KEY_IDS: ${{ vars.AUTO_STOP_ANTHROPIC_KEY_IDS }}
           AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS: ${{ vars.AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS }}
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         if: always()
         with:
           path: .monitor-state

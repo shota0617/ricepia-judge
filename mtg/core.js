@@ -148,7 +148,9 @@ M.md = function(src){
 
 /* ================= API key (shared with Marketing Studio: rpm_key) ================= */
 const KEY = "rpm_key";
-M.getKey = () => { try{ return sessionStorage.getItem(KEY) || localStorage.getItem(KEY) || ""; }catch(e){ return ""; } };
+// キーは このタブの あいだだけ（sessionStorage）。ブラウザには のこさない（同じサイトの ほかのページに 穴があっても ぬすまれないように）。前に「記憶」したものは 消す
+try{ localStorage.removeItem(KEY); }catch(e){}
+M.getKey = () => { try{ return sessionStorage.getItem(KEY) || ""; }catch(e){ return ""; } };
 M.renderKey = function(){
   const b = M.$("#keyBtn"), k = M.getKey();
   b.textContent = k ? "🔑 設定済み" : "🔑 APIキー";
@@ -156,7 +158,6 @@ M.renderKey = function(){
 };
 M.keyModal = function(){
   M.$("#keyInput").value = M.getKey();
-  try{ M.$("#keyRemember").checked = !!localStorage.getItem(KEY); }catch(e){}
   M.modal("keyModal", true);
   setTimeout(() => M.$("#keyInput").focus(), 50);
 };
@@ -165,7 +166,6 @@ M.saveKey = function(){
   if(v.length < 10){ M.toast("APIキーを入力してください", "err"); return; }
   try{
     sessionStorage.setItem(KEY, v);
-    if(M.$("#keyRemember").checked) localStorage.setItem(KEY, v); else localStorage.removeItem(KEY);
   }catch(e){}
   const w = M._keyWaiter; M._keyWaiter = null;
   M.modal("keyModal", false); M.renderKey(); M.toast("APIキーを設定しました", "ok");

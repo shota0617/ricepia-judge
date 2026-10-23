@@ -121,7 +121,7 @@ function loadTowns() {
   townsLoad = fetch(WORLD_FILE).then(r => (r.ok ? r.json() : null)).then(j => use(j && j.l)).catch(() => {}).finally(() => { townsLoad = null; });
 }
 // いまいる町（いちばん近い町名。約1.2km以内）と、町が変わったときの知らせ（RPG の地名の出しかた）
-const here = { town: '', city: '', banner: '', bannerAt: 0 };
+const here = { town: '', city: '', banner: '', bannerAt: 0, at: 0 };   // at：町名を最後に確かめた時刻（歩く地図を描いている間だけ更新される）
 function updateHere() {
   const t = targetTile(), me = G.me, c = me && (G.placeAt || G.cityAt)(me.lat, me.lng), city = c ? c.name : '';
   // 同じ市町の町名だけから選ぶ（境のそばで「西尾市 金平町（蒲郡市）」のようにならないように）
@@ -130,6 +130,7 @@ function updateHere() {
   const town = best ? best[2] : '';
   if (town && here.town && town !== here.town) { here.banner = town; here.bannerAt = performance.now(); if (G.onTownEnter) G.onTownEnter(town, city); }
   here.town = town;   // 近くに町名がない（田畑や山の中）ときは消す
+  here.at = performance.now();
   here.city = city;
   if (G.setPlace) G.setPlace(city, town);   // 左上の こよみ の札に「📍町名」として出す
 }
@@ -266,7 +267,7 @@ const DB = CHUNK + 2, UNK = -32768;
 
 // OpenStreetMap に何もないマスを土地利用で塗る：田→田んぼ、その他の農用地→畑、森林→森、建物用地→家並み（道に面したマスは家、ほかは4マスに3つが家）、
 // その他の用地・道路・鉄道→町の地面、ゴルフ場→芝生、海浜→砂浜、それ以外（荒地・川・海）→草地。作物の分からない農地（OSM）は、田なら田んぼ、その他の農用地なら畑
-function fillLanduse(g, cx, cy) {
+function fillLanduse(g, cx, cy, real) {
   const x0 = cx * CHUNK, y0 = cy * CHUNK, lats = [], lngs = [];
   for (let k = 0; k < CHUNK; k++) { lats.push(toLatLng(x0, y0 + k + 0.5).lat); lngs.push(toLatLng(x0 + k + 0.5, y0).lng); }
   const road = i => { const c = g[i]; return c === C.R || c === C.H; };
@@ -281,7 +282,7 @@ function fillLanduse(g, cx, cy) {
     else if (u === 'e') {
       const front = (x > 0 && road(i - 1)) || (x < CHUNK - 1 && road(i + 1)) || (y > 0 && road(i - CHUNK)) || (y < CHUNK - 1 && road(i + CHUNK));
       const h = (((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0;
-      g[i] = front || h % 4 ? C.Q : C.T;
+      g[i] = !real && (front || h % 4) ? C.Q : C.T;   // 国土地理院の建物があるときは、本当の家だけを建てる
     } else if (u === 'h' || u === 'f' || u === 'g') g[i] = C.T;
     else if (u === 'l') g[i] = C.P;
     else if (u === 'j') g[i] = C.S;
@@ -289,9 +290,12 @@ function fillLanduse(g, cx, cy) {
   }
   g.lu = !!LU;
 }
-function rasterize(elements, cx, cy, dem) {
+// bld：国土地理院の建物（tools/gsi-buildings.js。区画を用意するときだけ）。あれば OpenStreetMap の建物の代わりに使い、
+// 小さい建物（家）は中心のマスに家の絵、大きい建物は形どおりに屋根を塗る。g.rf に、空中写真で見た屋根の色（マスごと）を入れる
+const HOUSE_M2 = 250, SHED_M2 = 30;
+function rasterize(elements, cx, cy, dem, bld) {
   const g = new Uint8Array(CHUNK * CHUNK).fill(UNSET);
-  const x0 = cx * CHUNK, y0 = cy * CHUNK;
+  const x0 = cx * CHUNK, y0 = cy * CHUNK, real = Array.isArray(bld);
   const ops = [], coasts = [], pois = [];
   for (const el of elements) {
     const kind = poiKind(el.tags || {});
@@ -307,9 +311,21 @@ function rasterize(elements, cx, cy, dem) {
     const f = rings[0][0], l = rings[0][rings[0].length - 1];
     const closed = el.type === 'relation' || (rings[0].length > 3 && f.lat === l.lat && f.lon === l.lon);
     const k = classify(el.tags || {}, closed);
-    if (!k) continue;
+    if (!k || (real && k.c === C.B)) continue;
     const pts = rings.map(r => r.map(p => { const q = toTile(p.lat, p.lon); return [q.x - x0, q.y - y0]; }));
     if (k.coast) coasts.push(...pts); else ops.push({ k, pts });
+  }
+  if (real) {
+    g.rf = new Uint8Array(CHUNK * CHUNK);
+    for (const b of bld) {
+      const r = b.r.map(([lat, lon]) => { const q = toTile(lat, lon); return [q.x - x0, q.y - y0]; });
+      let a = 0;
+      for (let i = 0, j = r.length - 1; i < r.length; j = i++) a += (r[j][0] - r[i][0]) * (r[j][1] + r[i][1]);
+      const m2 = Math.abs(a) / 2 * TILE_M * TILE_M;
+      if (m2 < SHED_M2 || (b.f === 3111 && m2 < HOUSE_M2)) continue;   // 物置・車庫・小さな屋根だけの小屋は描かない
+      if (r[0][0] !== r[r.length - 1][0] || r[0][1] !== r[r.length - 1][1]) r.push(r[0]);
+      ops.push({ k: { a: 1, c: m2 <= HOUSE_M2 && b.f !== 3103 ? C.Q : C.B, p: 30, rc: b.c | 0 }, pts: [r] });
+    }
   }
   g.pois = dedupePois(pois, 4);
   const dh = (x, y) => dem[(y + 1) * DB + (x + 1)];
@@ -319,12 +335,15 @@ function rasterize(elements, cx, cy, dem) {
   for (const o of ops) {
     if (o.k.p >= 18) sea();
     if (o.k.a) {
-      // 1マスより小さい建物も、中心のマスだけは塗る
-      if (!fillPoly(g, o.pts, o.k.c) && o.k.c === C.B) {
+      // 家（国土地理院の小さい建物）は中心のマスだけ。1マスより小さい建物も、中心のマスだけは塗る
+      const center = () => {
         const r = o.pts[0], m = r.reduce((s, p) => [s[0] + p[0] / r.length, s[1] + p[1] / r.length], [0, 0]);
         const mx = Math.floor(m[0]), my = Math.floor(m[1]);
-        if (mx >= 0 && my >= 0 && mx < CHUNK && my < CHUNK) g[my * CHUNK + mx] = C.B;
-      }
+        if (mx >= 0 && my >= 0 && mx < CHUNK && my < CHUNK) { g[my * CHUNK + mx] = o.k.c; if (g.rf) g.rf[my * CHUNK + mx] = o.k.rc; }
+      };
+      if (o.k.c === C.Q) center();
+      else if (!fillPoly(g, o.pts, o.k.c)) { if (o.k.c === C.B) center(); }
+      else if (o.k.rc && g.rf) fillPoly(g.rf, o.pts, o.k.rc);
     } else for (const line of o.pts) strokeLine(g, line, o.k.c, o.k.w);
   }
   sea();
@@ -336,7 +355,15 @@ function rasterize(elements, cx, cy, dem) {
     const isSea = known > CHUNK * CHUNK / 2 ? na > known * 0.9 : toLatLng((cx + 0.5) * CHUNK, (cy + 0.5) * CHUNK).lat < 34.82;
     if (isSea) g.fill(C.A);
   }
-  fillLanduse(g, cx, cy);
+  fillLanduse(g, cx, cy, real);
+  if (real) {   // 家のまわりは庭（草と植木）か、駐車場や通路（町の地面）
+    const isQ = (x, y) => x >= 0 && y >= 0 && x < CHUNK && y < CHUNK && g[y * CHUNK + x] === C.Q;
+    for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
+      const i = y * CHUNK + x;
+      if (g[i] !== C.T || ((((x0 + x) * 73856093) ^ ((y0 + y) * 19349663)) >>> 0 & 3) === 0) continue;
+      if (isQ(x - 1, y) || isQ(x + 1, y) || isQ(x, y - 1) || isQ(x, y + 1) || isQ(x - 1, y - 1) || isQ(x + 1, y - 1) || isQ(x - 1, y + 1) || isQ(x + 1, y + 1)) g[i] = C.G;
+    }
+  }
   if (!dem) { for (let i = 0; i < g.length; i++) g[i] |= 2 << 5; return g; }
   const ok = h => Number.isFinite(h) && h > UNK;
   for (let y = 0; y < CHUNK; y++) for (let x = 0; x < CHUNK; x++) {
@@ -432,6 +459,66 @@ async function demFor(cx, cy) {
   return { h, partial };
 }
 
+// いまいる所の まわりの標高（転がる坂・等高線に使う）。タイルを読みこんだら同期で読める（読めていない所は null）
+const demLive = new Map();   // タイル番号 → 標高（Float32Array）・'sea'・読みこみ中は null
+let demGen = 0, heightFn = null;   // demGen：タイルが届くたびに増える（等高線を描きなおす）。heightFn：確かめるときに差しかえる標高
+function demPx(X, Y) {   // ズーム14の画素の標高（m）。海は 0、読めていない・不明は null
+  const tx = Math.floor(X / 256), ty = Math.floor(Y / 256), k = tx * 65536 + ty;
+  if (!demLive.has(k)) {
+    demLive.set(k, null);
+    demTile(tx, ty).then(t => { demLive.set(k, t); demGen++; dirty = true; }, () => setTimeout(() => demLive.delete(k), 30000));   // 取れなければ 30秒後に もう一度
+  }
+  const t = demLive.get(k);
+  if (t == null) return null;
+  if (t === 'sea') return 0;
+  const v = t[(Y - ty * 256) * 256 + (X - tx * 256)];
+  return Number.isNaN(v) ? 0 : v <= UNK ? null : v;
+}
+function heightAt(x, y) {   // マスの座標 → 標高（m。となりの画素となめらかに まぜる）
+  if (heightFn) return heightFn(x, y);
+  const ll = toLatLng(x, y), m = merc(ll.lat, ll.lng), px = m.x - 0.5, py = m.y - 0.5, X = Math.floor(px), Y = Math.floor(py), fx = px - X, fy = py - Y;
+  const a = demPx(X, Y), b = demPx(X + 1, Y), c = demPx(X, Y + 1), d = demPx(X + 1, Y + 1);
+  if (a === null || b === null || c === null || d === null) return null;
+  return (a * (1 - fx) + b * fx) * (1 - fy) + (c * (1 - fx) + d * fx) * fy;
+}
+// 坂：その場所の傾き（となりの マスとの標高の差。勾配 g：1なら 45度）と、下る向きへの加速（マス/秒²）。
+// 西尾の平野は ほとんど平ら（0.1%くらい）で、碧海台地のへり（段丘の崖）や 幡豆の山・八ツ面山で急になる。ゲームでは本当より強く転がす
+const SLOPE_K = 45, SLOPE_MIN = 0.015, SLOPE_MAXA = 12;   // 勾配1あたりの加速・これより ゆるい坂では止まっていられる・いちばん強い加速
+function slopeAt(x, y) {
+  const e = heightAt(x + 1, y), w = heightAt(x - 1, y), so = heightAt(x, y + 1), n = heightAt(x, y - 1);
+  if (e === null || w === null || so === null || n === null) return { x: 0, y: 0, g: 0, known: false };
+  const gx = (e - w) / (2 * TILE_M), gy = (so - n) / (2 * TILE_M), g = Math.hypot(gx, gy);
+  if (g < SLOPE_MIN) return { x: 0, y: 0, g, known: true };
+  const a = Math.min(SLOPE_MAXA, (g - SLOPE_MIN) * SLOPE_K);
+  return { x: -gx / g * a, y: -gy / g * a, g, known: true };
+}
+// 等高線の段：30mまでは 2mごと、150mまでは 10mごと、それより上は 25mごと（平野の小さな高低差も、山の急な坂も 見やすく）
+const contourLvl = h => (h < 30 ? Math.floor(h / 2) : h < 150 ? 15 + Math.floor((h - 30) / 10) : 27 + Math.floor((h - 150) / 25));
+const contourMajor = l => (l < 15 ? l % 5 === 0 : l < 27 ? (l - 15) % 5 === 2 : (l - 27) % 2 === 0);   // 計曲線（10m・50mごと）は こく
+const contour = { key: '', L: null };
+const CONTOUR_COL = ['', 'rgba(92,52,18,.42)', 'rgba(92,52,18,.62)'];   // 1：ふつうの線（1点）・2：計曲線（2点）
+function drawContours(tx0, ty0, tx1, ty1, ox, oy, T) {   // 等高線（半マスごとに標高の段を調べ、段が変わる さかいに 点の線）
+  const S = 2, nx = (tx1 - tx0) * S, ny = (ty1 - ty0) * S, key = `${tx0},${ty0},${tx1},${ty1},${demGen},${heightFn ? 1 : 0}`;
+  if (contour.key !== key) {
+    const L = new Int16Array(nx * ny);
+    for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+      const x = tx0 + (i + 0.5) / S, y = ty0 + (j + 0.5) / S, c = codeAt(Math.floor(x), Math.floor(y));
+      const h = c === C.A || c === C.B || c === C.X ? null : heightAt(x, y);
+      L[j * nx + i] = h === null ? -1 : contourLvl(Math.max(0, h));
+    }
+    contour.key = key; contour.L = L;
+  }
+  const L = contour.L, u = Math.max(1, Math.round(T / 16)), half = T / S;
+  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
+    const a = L[j * nx + i];
+    if (a < 0) continue;
+    const X = Math.round(ox + (tx0 + i / S) * T), Y = Math.round(oy + (ty0 + j / S) * T);
+    const r = i + 1 < nx ? L[j * nx + i + 1] : -1, d = j + 1 < ny ? L[(j + 1) * nx + i] : -1;
+    if (r >= 0 && r !== a) { const k = contourMajor(Math.max(a, r)) ? 2 : 1; ctx.fillStyle = CONTOUR_COL[k]; ctx.fillRect(Math.round(X + half - u * k / 2), Y, u * k, Math.ceil(half)); }
+    if (d >= 0 && d !== a) { const k = contourMajor(Math.max(a, d)) ? 2 : 1; ctx.fillStyle = CONTOUR_COL[k]; ctx.fillRect(X, Math.round(Y + half - u * k / 2), Math.ceil(half), u * k); }
+  }
+}
+
 /* ---------- 地図データの取得と保存 ---------- */
 const PX_KEY = 'nsg_px7_', PX_IDX = 'nsg_px7_idx', PX_DAYS = 30, PX_KEEP = 60;
 const store = {
@@ -467,6 +554,10 @@ function rawAt(tx, ty) {   // 下位5bit＝地形、上位＝陰影
   return c.g[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)];
 }
 const codeAt = (tx, ty) => rawAt(tx, ty) & 31;
+// 線路・道・水べの絵は まわりのマスを見て決めるので、マスごとに覚えておく（nbrLook。地図のまとまりを読みこむたびに忘れる）。
+// せかいちず（1マス100m）でも同じ決め方を使う：描くあいだだけ gridAt と覚えておく場所を せかいちずのものにする（drawWorld）
+const nbrCache = new Map(), worldNbr = new Map();
+let gridAt = codeAt, nbrCur = nbrCache;
 
 // 区画を作るか：西尾市の範囲（佐久島を含む長方形）にかかるか、となりの市町（region.js）の境界から約300m以内にかかるもの
 function chunkInPlay(cx, cy) {
@@ -538,6 +629,7 @@ async function bakedChunk(cx, cy) {
     if (!g) return null;
     g.pois = Array.isArray(j.p) ? j.p : [];
     g.lu = (j.cv || 1) >= 2;   // 版2からは土地利用で塗ってある
+    if (typeof j.r === 'string') g.rf = unrle(j.r);   // 版3から：屋根の色（国土地理院の建物と空中写真）
     return g;
   } catch (e) { return null; }
 }
@@ -557,14 +649,14 @@ async function pump() {
       const pre = await bakedChunk(cx, cy);
       if (pre) {
         // 土地利用で塗ってある区画（版2から）はそのまま。古い区画だけ、道の多い草地に家を並べる
-        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois });
+        chunks.set(k, { state: 'ok', g: pre.lu ? pre : townify(pre), pois: pre.pois }); nbrCache.clear();
         dirty = true;
         continue;
       }
       // 2) 用意した区画がなければ、前にブラウザで作って端末に保存した区画
       const saved = store.get(PX_KEY + k);
       if (saved && saved.d && saved.d.length === CHUNK * CHUNK && Date.now() - saved.t < (saved.days || PX_DAYS) * 864e5) {
-        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] });
+        chunks.set(k, { state: 'ok', g: saved.lu ? dec(saved.d) : townify(dec(saved.d)), pois: saved.p || [] }); nbrCache.clear();
         dirty = true;
         continue;
       }
@@ -574,7 +666,7 @@ async function pump() {
         const [json, dem] = await Promise.all([overpass(chunkQuery(chunkBox(cx, cy))), demFor(cx, cy).catch(() => null), luReady]);
         const g = rasterize(json.elements || [], cx, cy, dem && dem.h);
         saveChunk(k, g, dem && !dem.partial ? PX_DAYS : 1);   // 標高が欠けた区画は1日で取り直す
-        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] });
+        chunks.set(k, { state: 'ok', g: BAKE || g.lu ? g : townify(g), pois: g.pois || [] }); nbrCache.clear();
       } catch (e) {
         chunks.set(k, { state: 'fail', t: Date.now() });
       }
@@ -609,6 +701,108 @@ const BAKE = !!window.NSG_BAKE;
 const WB = { s: 34.68, w: 136.86, n: 35.05, e: 137.43 }, WT = 100;   // 西尾市と となりの市町（岡崎・安城・碧南・幸田・蒲郡・高浜。region.js の範囲を含む）と、本店から15km（西は半田・武豊まで）
 const WW = Math.ceil((WB.e - WB.w) * M_LNG / WT), WH = Math.ceil((WB.n - WB.s) * M_LAT / WT);
 const llToW = (lat, lng) => ({ x: (lng - WB.w) * M_LNG / WT, y: (WB.n - lat) * M_LAT / WT });
+
+/* ---------- あしあと（歩いた道を地図に残す） ----------
+ * 歩いたマス（8m）を、区画（128×128マス）ごとのビット列で覚える。ゲームの記録とは別の localStorage（記録のかぎ＋_trail。大きくなるので）。
+ * 歩く地図では歩いたマスに足あと、せかいちずでは歩いたマスのある100mのマスに色をつける。数えるのは歩いた分だけ（game.js の trackWalk から trailWalk）
+ * 記録は「あるいて移動」と「操作して移動」で別（版ごとにも別） */
+const TRAIL = { key: '', map: new Map(), world: new Set(), dirty: 0, timer: 0 };
+const TRAIL_BYTES = CHUNK * CHUNK / 8;
+function trailWorldAdd(tx, ty) { const ll = toLatLng(tx + 0.5, ty + 0.5), w = llToW(ll.lat, ll.lng), wx = Math.floor(w.x), wy = Math.floor(w.y); if (wx >= 0 && wy >= 0 && wx < WW && wy < WH) TRAIL.world.add(wy * WW + wx); }
+function trailLoad() {
+  const key = G.stateKey + '_trail';
+  if (key === TRAIL.key) return;
+  trailSave();
+  TRAIL.key = key; TRAIL.map = new Map(); TRAIL.world = new Set();
+  const raw = store.get(key) || {};
+  for (const [k, b64] of Object.entries(raw)) {
+    const m = /^(-?\d+)_(-?\d+)$/.exec(k);
+    if (!m || typeof b64 !== 'string') continue;
+    let bin;
+    try { bin = atob(b64); } catch (e) { continue; }
+    if (bin.length !== TRAIL_BYTES) continue;
+    const a = new Uint8Array(TRAIL_BYTES);
+    for (let i = 0; i < TRAIL_BYTES; i++) a[i] = bin.charCodeAt(i);
+    TRAIL.map.set(k, a);
+    const cx = +m[1], cy = +m[2];
+    for (let i = 0; i < TRAIL_BYTES; i++) if (a[i]) for (let j = 0; j < 8; j++) if (a[i] & (1 << j)) { const n = i * 8 + j; trailWorldAdd(cx * CHUNK + n % CHUNK, cy * CHUNK + Math.floor(n / CHUNK)); }
+  }
+  dirty = true;
+}
+function trailSave() {
+  clearTimeout(TRAIL.timer); TRAIL.timer = 0;
+  if (!TRAIL.key || !TRAIL.dirty) return;
+  const out = {};
+  for (const [k, a] of TRAIL.map) { let bin = ''; for (let i = 0; i < a.length; i += 4096) bin += String.fromCharCode.apply(null, a.subarray(i, i + 4096)); out[k] = btoa(bin); }
+  if (store.set(TRAIL.key, out)) { TRAIL.dirty = 0; return; }
+  // 保存領域がいっぱい：読みなおせる地図の区画のとっておきを古いものから消して、もう一度（あしあとは消えると戻せないので先にとる）
+  const idx = store.get(PX_IDX) || [];
+  while (idx.length) {
+    store.del(PX_KEY + idx.shift());
+    if (store.set(TRAIL.key, out)) { store.set(PX_IDX, idx); TRAIL.dirty = 0; return; }
+  }
+  store.set(PX_IDX, idx);
+  if (!TRAIL.warned) { TRAIL.warned = true; G.toast('保存領域がいっぱいで、あしあとを保存できませんでした（ブラウザの保存領域を確認してください）'); }
+}
+// 記録を消す（せってい）：いまのモードのあしあとを、保存したものごと消す
+function trailClear() {
+  trailLoad();
+  clearTimeout(TRAIL.timer); TRAIL.timer = 0; TRAIL.dirty = 0;
+  TRAIL.map = new Map(); TRAIL.world = new Set();
+  store.del(TRAIL.key);
+  dirty = true;
+}
+function trailHas(tx, ty) {
+  const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), a = TRAIL.map.get(cx + '_' + cy);
+  if (!a) return false;
+  const n = (ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK);
+  return !!(a[n >> 3] & (1 << (n & 7)));
+}
+function trailSet(tx, ty) {   // はじめて歩いたマスなら true
+  const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), k = cx + '_' + cy;
+  let a = TRAIL.map.get(k);
+  if (!a) { a = new Uint8Array(TRAIL_BYTES); TRAIL.map.set(k, a); }
+  const n = (ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK);
+  if (a[n >> 3] & (1 << (n & 7))) return false;
+  a[n >> 3] |= 1 << (n & 7);
+  trailWorldAdd(tx, ty);
+  return true;
+}
+// 2つの位置のあいだを歩いた：あいだのマスをぜんぶ足あとにして、はじめて歩いたマスの数を返す（GPS は数十mおきなので、線でつなぐ）
+// each(x, y)：あいだのマスごとに呼ぶ（あるいて移動の生きもの。true を返したら、その回はもう呼ばない）
+function trailWalk(lat1, lng1, lat2, lng2, each) {
+  trailLoad();
+  const a = toTile(lat1, lng1), b = toTile(lat2, lng2);
+  let x = Math.floor(a.x), y = Math.floor(a.y);
+  const x2 = Math.floor(b.x), y2 = Math.floor(b.y), dx = Math.abs(x2 - x), dy = -Math.abs(y2 - y), sx = x < x2 ? 1 : -1, sy = y < y2 ? 1 : -1;
+  if (Math.hypot(dx, dy) > 80) return 0;   // 640m より遠い1歩は数えない（ワープ・GPS の飛び。ななめも まっすぐの距離で）
+  let err = dx + dy, fresh = 0, stop = !each;
+  for (;;) {
+    if (trailSet(x, y)) fresh++;
+    if (!stop && each(x, y)) stop = true;
+    if (x === x2 && y === y2) break;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x += sx; }
+    if (e2 <= dx) { err += dx; y += sy; }
+  }
+  if (fresh) {
+    TRAIL.dirty += fresh; dirty = true;
+    if (TRAIL.dirty >= 40) trailSave(); else if (!TRAIL.timer) TRAIL.timer = setTimeout(trailSave, 8000);
+  }
+  return fresh;
+}
+addEventListener('pagehide', trailSave);
+document.addEventListener('visibilitychange', () => { if (document.hidden) trailSave(); });
+// 足あとの絵：マスごとに向きと位置を少しずらした2つの足（地面の色に合わせて、明るい地面にはこげ茶・暗い地面には白っぽく）
+const TRAIL_DARK = new Set([C.H, C.A, C.W, C.M, C.L, C.B]);
+function drawFoot(code, tx, ty, X, Y, T) {
+  const u = T / 16, h = ((tx * 73856093) ^ (ty * 19349663)) >>> 0, ox = (h % 5) - 2, oy = ((h >>> 3) % 5) - 2, flip = (h >>> 6) & 1;
+  ctx.fillStyle = TRAIL_DARK.has(code) ? 'rgba(255,248,230,.55)' : 'rgba(70,45,25,.5)';
+  for (const [fx, fy] of flip ? [[5, 4], [9, 8]] : [[9, 4], [5, 8]]) {
+    ctx.fillRect(X + Math.round((fx + ox) * u), Y + Math.round((fy + oy) * u), Math.ceil(2 * u), Math.ceil(3 * u));
+    ctx.fillRect(X + Math.round((fx + ox) * u), Y + Math.round((fy + oy - 1.5) * u), Math.ceil(2 * u), Math.ceil(u));   // つま先
+  }
+}
 const wToLL = (x, y) => ({ lat: WB.n - y * WT / M_LAT, lng: WB.w + x * WT / M_LNG });
 // 名前の表の中身（川・町名）を変えたら番号を上げる。古い番号の保存分は消して、新しい地図を取り直してもらう
 const WORLD_KEY = 'nsg_world8', WORLD_FILE = 'nishio-go/world.json';
@@ -620,6 +814,7 @@ const WCOL = { [C.G]: '#3f9b3c', [C.F]: PADDY_COL, [C.T]: '#d8ccaa', [C.W]: '#1f
   [C.B]: '#b4472f', [C.R]: '#f1e6c4', [C.H]: '#f6c34a', [C.L]: '#4a3a2a', [C.D]: '#c9a66b', [C.X]: '#0d1418', [C.M]: '#8d6e4f', [C.K]: '#6cc35a',
   [C.E]: '#2f7a34', [C.V]: '#9a6b3f', [C.I]: '#a3a8ab', [C.J]: '#e4dfd2', [C.Y]: '#4a9a46', [C.N]: '#dfe9ee', [C.U]: PADDY_COL, [C.Q]: '#c9a27a' };
 function makeWorldImg() {
+  worldNbr.clear();   // せかいちずが変わったら、つながる向きの絵を決め直す
   if (!world) return;
   const c = document.createElement('canvas');
   c.width = WW; c.height = WH;
@@ -1026,8 +1221,13 @@ function buildTiles(codes) {
 buildTiles();
 /* ---------- Blender で描いた地図の家と木（tools/blender/maptiles.py → nishio-go/maptiles/ のシート） ----------
    家：50の立体 × 屋根の色10 × 壁の色5 ＝ 2500通りを季節ごとに（4季節で1万マス）。場所ごとにちがう家になる
-   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま */
-const MT = { s: -1, house: null, tree: null };
+   木（森のマス）：10の立体 × 葉の色3。2コマで、風で葉がゆれる。シートが読めないあいだは、上の描き方のまま
+   公園・ビニールハウス・墓地・工場の敷地・丘・山：6つの立体 × 色5 ＝ 30通りずつ（misc シートの行の順）
+   茶畑・畑・砂浜・境内の砂利・草地：12通りずつ（field シート）
+   田んぼ：こよみの田んぼのようすごとに9通り。青田と黄金色の稲は2コマで風にゆれる。となりのマスとすきまなくつながる */
+const MT = { s: -1, p: '', house: null, tree: null, misc: null, field: null, town: null, water: null, waterReq: false, sprites: null, spriteReq: false, roofs: null, roofReq: false, paddyU: null, paddyF: null };
+const MISC_ROWS = [C.P, C.N, C.Y, C.I, C.K, C.M];
+const FIELD_ROWS = [C.E, C.V, C.S, C.J, C.G];   // field シート：茶畑・畑・砂浜・境内の砂利・草地（12通りずつ。草地は2コマで草がゆれる）
 function mapSeason() {   // 0 桜のころ・1 ふだん（緑）・2 紅葉のころ・3 冬（12月〜2月）。こよみ（season.js）の見ごろに合わせる
   if (KOYO) return 2;
   if (SAKURA) return 0;
@@ -1047,35 +1247,364 @@ function sliceSheet(img, cols, rows) {   // 16×16 の canvas に切り分ける
 function applyMapTiles() {
   if (MT.house) tiles[C.Q] = MT.house;
   if (MT.tree) tiles[C.W] = MT.tree;
+  if (MT.misc) MISC_ROWS.forEach((code, i) => { tiles[code] = MT.misc[i]; });
+  if (MT.field) FIELD_ROWS.forEach((code, i) => { tiles[code] = MT.field[i]; });
+  if (MT.water) tiles[C.A] = MT.water;
+  if (MT.town) tiles[C.T] = MT.town;
+  if (MT.roofs) tiles[C.B] = MT.roofs;
+  if (MT.sprites) {   // 軽トラ（上・右・下・左）と、地図のたからばこ
+    ['up', 'right', 'down', 'left'].forEach((d, i) => { carSprites[d] = MT.sprites[i]; });
+    if (spotSprites.treasure) spotSprites.treasure[0] = MT.sprites[4];
+  }
+  if (MT.paddyU) { tiles[C.U] = MT.paddyU; tiles[C.F] = MT.paddyF; }
   dirty = true;
 }
 function loadMapTiles() {
-  const s = mapSeason();
-  if (s === MT.s) return;
-  MT.s = s;
-  const get = (name, fn) => {
+  const get = (file, ok, fn) => {
     const img = new Image();
-    img.onload = () => { if (MT.s === s) { fn(img); applyMapTiles(); } };
-    img.onerror = () => { if (MT.s === s) setTimeout(() => { if (MT.s === s) get(name, fn); }, 15000); };   // 読めなければ、しばらくしてもう一度
-    img.src = `nishio-go/maptiles/${name}-${s}.png`;
+    img.onload = () => { if (ok()) { fn(img); applyMapTiles(); } };
+    img.onerror = () => { if (ok()) setTimeout(() => { if (ok()) get(file, ok, fn); }, 15000); };   // 読めなければ、しばらくしてもう一度
+    img.src = `nishio-go/maptiles/${file}.png`;
   };
-  get('house', img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
-  get('tree', img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
+  const s = mapSeason(), pt = PADDY_TILE;
+  if (s !== MT.s) {
+    MT.s = s;
+    const ok = () => MT.s === s;
+    get(`house-${s}`, ok, img => { MT.house = sliceSheet(img, 50, 50).map(c => [c, c]); });
+    get(`tree-${s}`, ok, img => { const a = sliceSheet(img, 30, 2); MT.tree = a.slice(0, 30).map((c, i) => [c, a[30 + i]]); });
+    get(`misc-${s}`, ok, img => { const a = sliceSheet(img, 30, MISC_ROWS.length); MT.misc = MISC_ROWS.map((_, r) => a.slice(r * 30, r * 30 + 30).map(c => [c, c])); });
+    get(`town-${s}`, ok, img => {   // 町なかの地面：小物（マンホール・植木鉢・自販機・電柱・自転車）は8マスに1つくらい
+      const a = sliceSheet(img, 12, 1).map(c => [c, c]), plain = a.slice(0, 2), deco = a.slice(2);
+      MT.town = [...Array(35).fill(plain).flat(), ...deco];
+    });
+    get(`field-${s}`, ok, img => { const a = sliceSheet(img, 12, FIELD_ROWS.length * 2); MT.field = FIELD_ROWS.map((_, r) => a.slice(r * 24, r * 24 + 12).map((c, i) => [c, a[r * 24 + 12 + i]])); });
+  }
+  if (!MT.roofReq) {   // 建物の屋根（瓦・金属・陸屋根。季節で変わらないので1回だけ）
+    MT.roofReq = true;
+    get('roofs', () => true, img => { MT.roofs = sliceSheet(img, 32, 1).map(c => [c, c]); });
+  }
+  if (!MT.spriteReq) {   // 地図の上を動くもの（Blender の軽トラ・たからばこ）
+    MT.spriteReq = true;
+    get('sprites', () => true, img => { MT.sprites = sliceSheet(img, 6, 1); });
+  }
+  if (!MT.railReq) {   // 線路（Blender の枕木・レール・バラスト。つながる向きの絵41枚（rail.png。railIndex）。季節で変わらない）
+    MT.railReq = true;
+    get('rail', () => true, img => { MT.rail = sliceSheet(img, 41, 1); });
+  }
+  if (!MT.roadReq) {   // 道（Blender のアスファルト・縁石・側溝・白線、小道の土と草のへり。roadIndex。季節で変わらない）
+    MT.roadReq = true;
+    get('road', () => true, img => { const a = sliceSheet(img, 32, 3); MT.road = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
+    get('rankan', () => true, img => { MT.rankan = sliceSheet(img, 4, 1); });
+    get('kawakado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kawakado = [a.slice(0, 4), a.slice(4, 8), a.slice(8, 12)]; });
+    get('kado', () => true, img => { const a = sliceSheet(img, 4, 3); MT.kado = [0, 1, 2].map(r => a.slice(r * 4, r * 4 + 4)); });
+    get('facade', () => true, img => { const a = sliceSheet(img, 6, 5); MT.facade = [0, 1, 2, 3, 4].map(r => a.slice(r * 6, r * 6 + 6)); });   // 建物の前の壁（drawWall）
+  }
+  if (!MT.shoreReq) {   // 水べ（Blender の護岸・草の土手・浜の浅瀬と波。shoreIndex。季節で変わらない）
+    MT.shoreReq = true;
+    get('shore', () => true, img => { const a = sliceSheet(img, 32, 3); MT.shore = [0, 1, 2].map(r => a.slice(r * 32, r * 32 + 32)); });
+  }
+  if (!MT.vehReq) {   // 町を走る乗り物（Blender の赤い電車の先頭・なか、漁船、乗用車5色。4方向ずつ）
+    MT.vehReq = true;
+    get('vehicles', () => true, img => {
+      const a = sliceSheet(img, 4, 8), row = r => a.slice(r * 4, r * 4 + 4);
+      MT.veh = { train: [row(0), row(1)], boat: row(2), car: [3, 4, 5, 6, 7].map(row) };
+    });
+  }
+  if (!MT.waterReq) {   // 水（さざ波が2コマで動く）。季節で変わらないので1回だけ
+    MT.waterReq = true;
+    get('water', () => true, img => { const a = sliceSheet(img, 3, 2); MT.water = a.slice(0, 3).map((c, i) => [c, a[3 + i]]); });
+  }
+  if (pt !== MT.p) {   // 田んぼは、こよみの田んぼのようす（青田・黄金色・田植え・田おこし・刈田）ごとのシート
+    MT.p = pt;
+    get(`paddy-${pt}`, () => MT.p === pt, img => {
+      const a = sliceSheet(img, 9, 4);
+      MT.paddyU = a.slice(0, 9).map((c, i) => [c, a[9 + i]]);
+      MT.paddyF = a.slice(18, 27).map((c, i) => [c, a[27 + i]]);
+    });
+  }
 }
 loadMapTiles();
-const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1 : 0;   // 森は、風がわたるように少しずつずれてゆれる
+/* ---------- 地図の小物（tools/blender/deco.py → nishio-go/deco/ のシート。題材130、ちがう絵で99840枚） ----------
+   生きもの・道ばたの物・水辺や浜の物・西尾らしい物（茶つみ・うなぎ池の水車・大ちょうちん・赤馬・海苔ひび・カーネーション・野点 など）を、
+   マスの種類に合わせて、ところどころに置く（場所ごとに決まった物・向き・色）
+   季節（春・夏・秋・冬のシート）と月（ひまわりは夏、コスモスは秋 など）で、置く物が変わる。生きものは2つのポーズで少し動く */
+const DECO = { img: null, s: -1, idx: null, cols: 96, m: new Date().getMonth() + 1 };   // m：いまの月（refreshSeason で1分ごとに確かめる）
+const DECO_PLACE = {   // マスの種類 → 何マスに1つ置くか と、置く物（名前@月-月 は、その月だけ。名前#rain は、いま雨のときだけ）
+  [C.G]: [12, ['kotori', 'karasu', 'neko', 'inu', 'choucho@4-10', 'jizo', 'hokora', 'douhyou', 'hana@3-10', 'ajisai@6-7', 'himawari@7-8', 'kosumosu@9-10',
+    'kinoko@6-11', 'iwa', 'kaki@10-11', 'tako@1-1', 'sakura@3-4', 'momiji@11-12', 'tsukimi@9-9', 'kiji', 'usagi', 'tsubame@4-7', 'hotaru@6-6', 'sanpo', 'jogger',
+    'mujin', 'sudebako', 'tanukiy', 'kasahito#rain', 'kitsune', 'tonbi', 'mogura', 'nanohana@3-4', 'higanbana@9-9', 'ume@2-3', 'ichou@11-11',
+    'susuki@9-11', 'mushitori@7-8', 'tsukushi@3-4', 'hanami@4-4', 'semi@7-8', 'kabutomushi@7-8']],
+  [C.P]: [12, ['kotori', 'karasu', 'hana@3-10', 'choucho@4-10', 'tsubame@4-7', 'kiji', 'usagi', 'tonbi']],   // 芝生のマスは公園のほか湿地・運動場・ゴルフ場も同じなので、どこにいてもおかしくない物だけ
+  [C.T]: [11, ['neko', 'neko', 'inu', 'jitensha', 'jihanki', 'ueki', 'gomi', 'tanuki', 'chouchin', 'kodomo', 'sanrinsha', 'bench', 'karasu', 'kotori',
+    'akauma', 'unaginobori', 'nodate', 'daichouchin@8-8', 'yatai@7-7', 'koinobori@4-5', 'kadomatsu@1-1', 'tsukimi@9-9',
+    'monohoshi', 'fuusen', 'basutei', 'bonsai', 'sanpo', 'jogger', 'tsubame@4-7',
+    'keicar', 'keicar', 'scooter', 'cyclist', 'cart', 'randoseru', 'onigokko', 'kasahito#rain', 'kasahito#rain', 'kasahito#rain',
+    'tanabata@7-7', 'bonodori@8-8', 'xmas@12-12', 'halloween@10-10', 'yakiimo@11-2', 'kakigori@7-8', 'cone', 'takuhai', 'yukata@7-8', 'kingyo@7-8']],
+  [C.A]: [28, ['kamo', 'kamo', 'fune', 'boto', 'bui', 'hasu@6-9', 'kamome', 'suisha', 'norihibi@11-3', 'kame@4-10', 'koi', 'hakuchou@12-2', 'yacht',
+    'kayak@5-10', 'swanboat', 'jetski@6-9']],
+  [C.S]: [9, ['kamome', 'kani', 'sunashiro@4-10', 'kasa@7-8', 'tsuri', 'boto', 'kame@4-10', 'suika@7-8', 'tetrapod', 'beachball@6-9', 'surfer', 'kaigara@4-9']],
+  [C.N]: [8, ['carnation']],
+  [C.W]: [14, ['kinoko@6-11', 'kotori', 'iwa', 'hokora', 'jizo', 'fukurou', 'risu', 'usagi', 'hiker', 'tanukiy', 'itachi', 'sudebako', 'kitsune',
+    'semi@7-8', 'kabutomushi@7-8', 'tonbi']],
+  [C.J]: [10, ['tourou', 'jizo', 'hokora', 'neko', 'komainu', 'ema', 'omikuji']],
+  [C.E]: [16, ['noufu', 'kotori', 'chatsumi@4-6', 'kiji', 'hachibako']],
+  [C.V]: [12, ['noufu', 'kakashi', 'karasu', 'kotori', 'choucho@4-10', 'hachibako', 'kiji', 'mujin', 'hatakehito', 'sprinkler@5-9', 'niwatori', 'ushi', 'mogura']],
+};
+const DECO_PADDY = {   // 田んぼは、こよみの田んぼのようすで置く物を変える
+  flooded: ['sagi', 'sagi', 'kamo', 'kaeru', 'karasu', 'suimon', 'tsubame@4-7', 'taue@5-6', 'taue@5-6', 'zarigani@5-9'], green: ['sagi', 'kaeru', 'kakashi', 'noufu', 'karasu', 'choucho', 'suimon', 'tsubame@4-7'],
+  gold: ['kakashi', 'kakashi', 'karasu', 'kotori', 'noufu', 'sagi', 'combine', 'inekari', 'tonbi'],
+  stubble: ['hazakake', 'warazuka', 'warazuka', 'karasu', 'sagi', 'kotori', 'tonbi'],
+  soil: ['sagi', 'karasu', 'noufu', 'kotori', 'suimon', 'tractor', 'tractor', 'kiji'],
+};
+const DECO_ANIM = new Set(['sagi', 'kotori', 'kamo', 'kamome', 'neko', 'inu', 'kaeru', 'choucho', 'karasu', 'noufu', 'kodomo', 'tsuri', 'kiji', 'tsubame', 'usagi',
+  'hotaru', 'koi', 'hakuchou', 'jogger', 'sanpo', 'risu', 'fukurou', 'cyclist', 'cart', 'randoseru', 'onigokko', 'tanukiy', 'itachi', 'kasahito', 'hiker', 'hatakehito',
+  'kitsune', 'tonbi', 'niwatori', 'ushi', 'zarigani', 'taue', 'inekari', 'mushitori', 'yukata']);
+// 水のマスは海も川も池も同じ種類なので、置く物で場所をえらぶ：池のもの（鯉・水車・はす・白鳥のボート）は岸が2マス以内にある水だけ、
+// ヨット・漁船・水上バイクは岸が1マス以内にない（細い川ではない）水だけ。沖に水車、小川にヨット、とちぐはぐにならないように
+const DECO_POND = new Set(['koi', 'suisha', 'hasu', 'swanboat']), DECO_OPEN = new Set(['yacht', 'fune', 'jetski']);
+const landNear = (tx, ty, r) => { for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const c = codeAt(tx + dx, ty + dy); if (c !== C.A && c !== C.X) return true; } return false; };
+const decoSeason = () => { const m = new Date().getMonth() + 1; return m >= 3 && m <= 5 ? 0 : m >= 6 && m <= 8 ? 1 : m >= 9 && m <= 11 ? 2 : 3; };
+function loadDeco() {
+  // はじめの画面のあいだは読まない（約0.5MB。見るだけで帰る人の通信を減らす）。遊び始めて はじめの画面が閉じたら読む
+  const intro = document.getElementById('intro');
+  if (intro && !intro.hidden) {
+    if (!loadDeco.wait) {
+      loadDeco.wait = new MutationObserver(() => { if (intro.hidden) { loadDeco.wait.disconnect(); loadDeco.wait = null; loadDeco(); } });
+      loadDeco.wait.observe(intro, { attributes: true, attributeFilter: ['hidden'] });
+    }
+    return;
+  }
+  const s = decoSeason();
+  if (s === DECO.s) return;
+  DECO.s = s;
+  if (!DECO.idx) fetch('nishio-go/deco/deco.json').then(r => r.json()).then(j => { DECO.idx = new Map(j.subjects.map((n, i) => [n, i])); DECO.cols = j.cols; dirty = true; }).catch(() => { DECO.s = -1; });
+  const img = new Image();
+  img.onload = () => { if (DECO.s === s) { DECO.img = img; decoCache.clear(); dirty = true; } };
+  img.onerror = () => { if (DECO.s === s) DECO.s = -1; };   // つぎに季節を確かめるとき、もう一度
+  img.src = `nishio-go/deco/deco-${s}.webp`;   // 劣化しない WebP（PNG の4割ほどの大きさ）
+}
+const decoLists = new Map();   // その月に置ける物の表（月が替わったら作りなおす）
+function decoList(code) {
+  const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, rain = !!(wx && wx.kind === 'rain');
+  const m = DECO.m, key = code + ':' + m + ':' + rain + ':' + (code === C.U || code === C.F ? PADDY_TILE : '');
+  if (decoLists.has(key)) return decoLists.get(key);
+  const place = code === C.U || code === C.F ? [14, DECO_PADDY[PADDY_TILE] || DECO_PADDY.green] : DECO_PLACE[code];
+  const inMonths = (a, b) => (a <= b ? m >= a && m <= b : m >= a || m <= b);   // 11-3 のように年をまたぐ月も
+  const list = !place ? null : [place[0], place[1].filter(e => {
+    if (e.endsWith('#rain')) return rain;
+    const [, r] = e.split('@'); if (!r) return true; const [a, b] = r.split('-').map(Number); return inMonths(a, b);
+  }).map(e => e.split(/[@#]/)[0])];
+  decoLists.set(key, list);
+  return list;
+}
+function drawDeco(code, tx, ty, X, Y, T, now) {
+  if (!DECO.img || !DECO.idx) return;
+  const L = decoList(code);
+  if (!L || !L[1].length) return;
+  const h = Math.imul(tx, 2654435761) ^ Math.imul(ty, 40503) ^ 0x5bd1e995, u = (h ^ (h >>> 15)) >>> 0;
+  if (u % L[0]) return;
+  if (code === C.T && tiles[C.T].length === 80 && tileVar(code, tx, ty) % 80 >= 70) return;   // 町なかの地面に自販機や電柱がもう描いてあるマスには置かない
+  const name = L[1][(u >>> 4) % L[1].length], si = DECO.idx.get(name);
+  if (si === undefined) return;
+  if (code === C.A && (DECO_POND.has(name) ? !landNear(tx, ty, 2) : DECO_OPEN.has(name) && landNear(tx, ty, 1))) return;
+  let k = (u >>> 9) % 6;
+  if (DECO_ANIM.has(name)) k = (k & 6) | ((Math.floor(now / 650) + (u >>> 20)) & 1);   // 生きものは2つのポーズをいったりきたり
+  ctx.drawImage(decoCanvas(((si * 6 + k) * 4 + (u >>> 13) % 4) * 8 + (u >>> 16) % 8), X, Y, T, T);
+}
+// 小物の絵：シートから使う分だけ 16×16 の canvas に切り出してとっておく（Godot で地図を描くときも、ほかのマスと同じ5つの引数で描けるように）
+const decoCache = new Map();
+function decoCanvas(i) {
+  let c = decoCache.get(i);
+  if (c) return c;
+  c = document.createElement('canvas');
+  c.width = c.height = 16;
+  c.getContext('2d').drawImage(DECO.img, (i % DECO.cols) * 16, Math.floor(i / DECO.cols) * 16, 16, 16, 0, 0, 16, 16);
+  decoCache.set(i, c);
+  return c;
+}
+loadDeco();
+const tileFrame = (code, f, tx, ty, now) => code === C.A || code === C.X ? f
+  : code === C.W ? (Math.floor(now / 700) + (tx >> 1) + (ty >> 2)) & 1   // 森は、風がわたるように少しずつずれてゆれる
+  : code === C.U || code === C.F ? (Math.floor(now / 900) + ((tx + ty) >> 2)) & 1   // 田んぼの稲は、ななめに風の波がわたる
+  : code === C.G ? (Math.floor(now / 800) + ((tx - ty) >> 2)) & 1 : 0;   // 草地の草も、風でそよぐ
+// マスの絵のえらび方：ふつうはマスごと。畑は8×8マスのまとまりで同じ作物にする（マスごとにちがう野菜だと、つぎはぎに見えるので）
+const tileVar = (code, x, y) => code === C.V ? (((x >> 3) * 73856093) ^ ((y >> 3) * 19349663)) >>> 0 : code === C.B && tiles[C.B].length === 32 ? roofVar(x, y) : ((x * 73856093) ^ (y * 19349663)) >>> 0;
+// 建物の屋根：4×4マスのまとまりごとに、同じ屋根（瓦5色・金属5色・陸屋根3色のどれか）にする（ひとつの建物がつぎはぎにならないように）。
+// 陸屋根のマスだけは、ところどころに室外機・給水タンク・屋上の出入り口
+const blockHash = (x, y) => (Math.imul(x >> 2, 374761393) ^ Math.imul(y >> 2, 668265263) ^ 0x27d4eb2d) >>> 0;
+function roofVar(x, y) {
+  const b = blockHash(x, y), group = b % 13, geo = (b >>> 5) & 1;
+  if (group < 5) return group * 2 + geo;
+  if (group < 10) return 10 + (group - 5) * 2 + geo;
+  const t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+  return 20 + (group - 10) * 4 + (t % 10 < 7 ? 0 : 1 + ((t >>> 4) % 3));
+}
+// 国土地理院の建物で作った区画では、空中写真で見た屋根の色（g.rf：色の番号1〜13＋形×16）で絵をえらぶ（歩く地図だけ）
+const rfAt = (tx, ty) => { const cx = Math.floor(tx / CHUNK), cy = Math.floor(ty / CHUNK), c = chunks.get(cx + '_' + cy); return c && c.g && c.g.rf ? c.g.rf[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)] : 0; };
+const HOUSE_ROOF = [0, 0, 7, 3, 2, 1, 2, 9, 8, 5, 6, 5, 5, 5];   // 色の番号 → 家の屋根の色（maptiles-sheets.py の ROOFS）
+// 線路のマスの絵（rail.png の番号）。0〜15：上下左右のどの線路のマスとつながるか（1 上・2 右・4 下・8 左）
+// 16〜25：45度くらいの線路で、マスが角だけで接するとき（ななめのとなりが線路で、そのあいだの2マスはどちらも線路でない）
+//   16 左下から右上・17 左上から右下、18〜25 辺のまん中から反対側の角（上→右下・上→左下・右→左上・右→左下・下→右上・下→左上・左→右上・左→右下）。tools/blender/maptiles.py の RAIL_EXTRA と同じ順
+// 26〜33：まん中から1つの端へ向かう部品（上・右・下・左・右上・右下・左下・左上。背景なし）、34：バラストだけ、35〜40：複線の帯のななめ（railBandSpill）
+// どの1枚にもあてはまらない つながり（角が2つ以上の分かれ道など）は、端の番号の配列を返し、34 の上に部品を重ねて描く
+const RAIL_PAIR = { '4,6': 16, '5,7': 17, '0,5': 18, '0,6': 19, '1,7': 20, '1,6': 21, '2,4': 22, '2,7': 23, '3,4': 24, '3,5': 25 };
+// 複線・駅の構内のように線路のマスが2〜3マスの帯になっている所（2×2 がぜんぶ線路）では、上下左右のつながりで選ぶと分かれ道だらけになる。
+// そこは まわり5×5の線路のマスの並ぶ向きから、横・縦・ななめ のまっすぐな線路を描く（となりのマスと平行な線路になり、複線に見える）
+function railBandRaw(x, y) {
+  const L = (a, b) => gridAt(a, b) === C.L;
+  if (![[0, 0], [-1, 0], [0, -1], [-1, -1]].some(([a, b]) => L(x + a, y + b) && L(x + a + 1, y + b) && L(x + a, y + b + 1) && L(x + a + 1, y + b + 1))) return -1;
+  let n = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (let j = -2; j <= 2; j++) for (let i = -2; i <= 2; i++) if (L(x + i, y + j)) { n++; sx += i; sy += j; sxx += i * i; syy += j * j; sxy += i * j; }
+  const cxx = sxx / n - (sx / n) ** 2, cyy = syy / n - (sy / n) ** 2, cxy = sxy / n - (sx / n) * (sy / n);
+  if (Math.abs(cxx - cyy) < 0.05 && Math.abs(cxy) < 0.05) return -1;   // 向きが決まらない（かたまり）
+  const deg = ((Math.atan2(2 * cxy, cxx - cyy) / 2) * 180 / Math.PI + 180) % 180;   // 0 横・90 縦・45 右下がり・135 右上がり（画面の下が y の正）
+  return deg < 22.5 || deg >= 157.5 ? 10 : deg < 67.5 ? 17 : deg < 112.5 ? 5 : 16;
+}
+// 帯の向きは、線の両端のマスが線路で、そのマスも同じ向きの帯か ふつうの線路のときだけ使う（帯が曲がる所で、横の線と ななめの線が切れて並ばないように）。
+// 使えないマスは、ふつうの線路と同じく まわりへの部品を重ねて描く（railIndex）
+const BAND_ENDS = { 10: [[-1, 0], [1, 0]], 5: [[0, -1], [0, 1]], 16: [[1, -1], [-1, 1]], 17: [[-1, -1], [1, 1]] };
+function railBandIndex(x, y) {
+  const d = railBandRaw(x, y);
+  if (d < 0) return -1;
+  return BAND_ENDS[d].every(([a, b]) => { if (gridAt(x + a, y + b) !== C.L) return false; const e = railBandRaw(x + a, y + b); return e === d || e < 0; }) ? d : -1;
+}
+// 帯のななめの線路は角を通るので、となりのマスの平行な線路のレールが このマスの角をかすめる。となりも同じ向きの帯なら、その分も描いた絵（35〜40）にする
+function railBandSpill(x, y, band) {
+  const same = (a, b) => railBandIndex(a, b) === band;
+  if (band === 16) { const nw = same(x - 1, y) || same(x, y - 1), se = same(x + 1, y) || same(x, y + 1); return nw && se ? 37 : se ? 36 : nw ? 35 : 16; }
+  const ne = same(x + 1, y) || same(x, y - 1), sw = same(x - 1, y) || same(x, y + 1);
+  return ne && sw ? 40 : sw ? 39 : ne ? 38 : 17;
+}
+function nbrLook(x, y, fn) {
+  const key = x * 1048576 + y;   // 数のかぎ（文字列を作るより速い。マスの番号は ±50万より小さい）
+  let r = nbrCur.get(key);
+  if (r === undefined) { r = fn(x, y); nbrCur.set(key, r); }
+  return r;
+}
+const railIndex = (x, y) => nbrLook(x, y, railIndexOf);
+// 道のマスに描くもの：[道の絵の列, 角の縁石（kado.png の番号）, 踏切のレール（rail.png の番号）, 橋の欄干（rankan.png の番号）]
+function roadLookOf(x, y) {
+  const code = gridAt(x, y), ri = roadIndex(code, x, y), rm = ri >> 1;
+  const kado = ROAD_CORNERS.flatMap(([s1, s2, a, b], i) => (rm & s1) && (rm & s2) && ROAD_ROW[gridAt(x + a, y + b)] === undefined ? [i] : []);
+  const rankan = code === C.D ? [] : [[0, -1], [1, 0], [0, 1], [-1, 0]].flatMap(([a, b], i) => gridAt(x + a, y + b) === C.A ? [i] : []);
+  return [ri, kado, railCrossing(x, y) || [], rankan];
+}
+function railIndexOf(x, y) {
+  const band = railBandIndex(x, y);
+  if (band === 16 || band === 17) return railBandSpill(x, y, band);
+  if (band >= 0) return band;
+  const L = (a, b) => gridAt(a, b) === C.L, up = L(x, y - 1), rt = L(x + 1, y), dn = L(x, y + 1), lf = L(x - 1, y);
+  const m = (up ? 1 : 0) | (rt ? 2 : 0) | (dn ? 4 : 0) | (lf ? 8 : 0);
+  // ななめのとなりが帯のななめの線路で、その線がこのマスの角へ来ているときも、その角へつなぐ
+  const toMe = (a, b) => { const d = railBandIndex(x + a, y + b); return (d === 16 && a === -b) || (d === 17 && a === b); };
+  const ports = [up, rt, dn, lf, (!up && !rt && L(x + 1, y - 1)) || toMe(1, -1), (!dn && !rt && L(x + 1, y + 1)) || toMe(1, 1), (!dn && !lf && L(x - 1, y + 1)) || toMe(-1, 1), (!up && !lf && L(x - 1, y - 1)) || toMe(-1, -1)]
+    .flatMap((on, i) => on ? [i] : []);
+  const corners = ports.filter(i => i >= 4);
+  if (!corners.length) return m;
+  if (ports.length === 1) return corners[0] === 4 || corners[0] === 6 ? 16 : 17;   // 角が1つだけ：まっすぐ反対の角へ
+  return RAIL_PAIR[ports.join()] || ports;
+}
+// 踏切：道に上書きされて線路のマスが切れている所（道が3マス以内で、両がわに同じ向きへ続く線路がある）は、道の上にレールを重ねる。
+// 返すのは rail.png の「まん中から端へ」の部品2つ（26〜33）。平行に走る線路のあいだの道に はしごを描かないよう、線路がその向きへ続くことも確かめる
+const RAIL_X_DIRS = [[0, 1, 26, 28], [1, 0, 27, 29], [1, -1, 30, 32], [1, 1, 31, 33]];   // [dx, dy, 端の部品（-dy がわ… 上・右・右上・右下）, 反対がわ]
+function railCrossing(x, y) {
+  const L = (a, b) => gridAt(a, b) === C.L, Rd = (a, b) => ROAD_ROW[gridAt(a, b)] !== undefined;
+  for (const [dx, dy, pa, pb] of RAIL_X_DIRS) {
+    const end = s => {   // s の向きへ道をたどり、線路に着いたら道の数を返す（着かなければ -1）
+      const fx = dx * s, fy = dy * s, fwd = fx && fy ? [[fx, fy], [fx, 0], [0, fy]] : [[fx, fy], [fx - fy, fy + fx], [fx + fy, fy - fx]];   // その先へ続く向き（まっすぐ・45度まで）
+      for (let k = 1; k <= 3; k++) {
+        const a = x + dx * s * k, b = y + dy * s * k;
+        if (L(a, b)) return fwd.some(([u, v]) => L(a + u, b + v)) ? k - 1 : -1;
+        if (!Rd(a, b)) return -1;
+      }
+      return -1;
+    };
+    const f = end(-1), g = f < 0 ? -1 : end(1);
+    if (g >= 0 && f + g + 1 <= 3) return [pa, pb];
+  }
+  return null;
+}
+// 道のマスの絵（road.png の 行・列）。行：0 ふつうの道・1 大きな道・2 小道。列：となりの道（どの道でも）へつながる向き（1 上・2 右・4 下・8 左）× 2 ＋ 小物
+// 線路のマスは、このマスが その向きの踏切（railCrossing）のときだけ つながっているとみなす（線路と並んで走る道の ふちが消えないように）
+// 小物（マンホール・補修のあと）は8マスに1つくらい、小道の水たまりは24マスに1つくらい。つながっていない辺に縁石・側溝・白線・草のへりが描いてある
+const ROAD_ROW = { [C.R]: 0, [C.H]: 1, [C.D]: 2 };
+// 水べのマスの絵（shore.png の 行・列）。陸と接する辺（1 上・2 右・4 下・8 左）が1つもなければ -1（ふつうの水の絵）。
+// 行：砂浜と接していれば 2 浜、町なか（家・建物・町・工場・道・線路）と接していれば 0 護岸、ほか（田畑・草地・森）は 1 土手
+const SHORE_TOWN = new Set([C.T, C.Q, C.B, C.I, C.R, C.H, C.L]);
+function shoreIndex(x, y) {
+  let m = 0, row = 1;
+  [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([a, b], i) => {
+    const c = gridAt(x + a, y + b);
+    if (c === C.A || c === C.X) return;
+    m |= 1 << i;
+    if (c === C.S) row = 2; else if (row === 1 && SHORE_TOWN.has(c)) row = 0;
+  });
+  return m ? [row, m * 2] : null;
+}
+// 道の角の縁石（kado.png）：となり合う2辺がつながっていて、そのあいだのななめのマスが道でない角。[辺, 辺, ななめのマス]。右上・右下・左下・左上
+const ROAD_CORNERS = [[1, 2, 1, -1], [2, 4, 1, 1], [4, 8, -1, 1], [8, 1, -1, -1]];
+function roadIndex(code, x, y) {
+  let xr;
+  const R = (a, b, arm) => {
+    const c = gridAt(a, b);
+    if (c !== C.L) return ROAD_ROW[c] !== undefined;
+    if (xr === undefined) xr = railCrossing(x, y);
+    return !!xr && xr.includes(arm);
+  };
+  const m = (R(x, y - 1, 26) ? 1 : 0) | (R(x + 1, y, 27) ? 2 : 0) | (R(x, y + 1, 28) ? 4 : 0) | (R(x - 1, y, 29) ? 8 : 0);
+  const h = (Math.imul(x, 668265263) ^ Math.imul(y, 374761393)) >>> 0;
+  return m * 2 + ((h >>> 13) % (code === C.D ? 24 : 8) === 0 ? 1 : 0);
+}
+function tileVarAt(code, x, y) {
+  const rc = code === C.Q || code === C.B ? rfAt(x, y) : 0, k = rc & 15, t = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+  if (!k || k > 13) return tileVar(code, x, y);
+  if (code === C.B) {
+    if (tiles[C.B].length !== 32) return tileVar(code, x, y);
+    const geo = (rc >> 4) & 1;
+    return k <= 5 ? (k - 1) * 2 + geo : k <= 10 ? 10 + (k - 6) * 2 + geo : 20 + (k - 11) * 4 + (t % 10 < 7 ? 0 : 1 + ((t >>> 4) % 3));
+  }
+  if (tiles[C.Q].length !== 2500) return tileVar(code, x, y);
+  let gi = t % 50;                                     // 家の形（形5 × 庭の小物5 × 向き2）
+  if (k === 13) gi = 30 + gi % 10; else if (gi >= 30 && gi < 40) gi -= 10;   // 白い屋根は陸屋根の家、ほかは屋根のある家（明るい灰色は銀色の屋根）
+  return gi * 50 + HOUSE_ROOF[k] * 5 + (t >>> 8) % 5;
+}
+// 建物の前の壁の形（facade.png の列）：0 窓・1 戸口と窓・2 シャッターと看板・3 ガラスの店先と日よけ・4 アパートの手すり・5 倉庫の戸。
+// 4×4マスのまとまりごとに形を決める（ひとつの建物が つぎはぎにならないように）。道に面していれば お店が多め。窓の壁には ところどころ戸口
+function facadeType(x, y) {
+  const b = blockHash(x, y) >>> 7, onRoad = isRoad(codeAt(x, y + 1));
+  const t = (onRoad ? [2, 3, 2, 0, 4] : [0, 0, 4, 5, 0])[b % 5];
+  return t === 0 && ((Math.imul(x, 2654435761) ^ y) >>> 0) % 4 === 0 ? 1 : t;
+}
+// 建物のふち：下のマスが建物でなければ、窓のある壁（前の面）を描き、左右と上にかげをつける（建物が立って見えるように）
+const WALLS = ['#e8e0d0', '#f0ece4', '#d8c8a8', '#c8ccd0', '#b8a080'];
+function drawWall(tx, ty, X, Y, T) {
+  const u = T / 16, below = codeAt(tx, ty + 1) !== C.B;
+  if (codeAt(tx - 1, ty) !== C.B) { ctx.fillStyle = 'rgba(30,24,20,.45)'; ctx.fillRect(X, Y, Math.ceil(u), T); }
+  if (codeAt(tx + 1, ty) !== C.B) { ctx.fillStyle = 'rgba(30,24,20,.3)'; ctx.fillRect(X + T - Math.ceil(u), Y, Math.ceil(u), T); }
+  if (codeAt(tx, ty - 1) !== C.B) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(X, Y, T, Math.ceil(u)); }
+  if (!below) return;
+  if (MT.facade) { ctx.drawImage(MT.facade[blockHash(tx, ty) % WALLS.length][facadeType(tx, ty)], X, Y, T, T); return; }
+  const wall = WALLS[blockHash(tx, ty) % WALLS.length], wy = Y + Math.round(10 * u);
+  ctx.fillStyle = 'rgba(30,24,20,.55)'; ctx.fillRect(X, wy - Math.ceil(u), T, Math.ceil(u));   // のきのかげ
+  ctx.fillStyle = wall; ctx.fillRect(X, wy, T, T - (wy - Y));
+  ctx.fillStyle = '#5a7a9a';
+  for (let wx = 2; wx < 16; wx += 5) ctx.fillRect(X + Math.round(wx * u), wy + Math.round(1.5 * u), Math.round(2 * u), Math.round(2 * u));   // 窓
+  ctx.fillStyle = 'rgba(30,24,20,.6)'; ctx.fillRect(X, Y + T - Math.ceil(u), T, Math.ceil(u));   // 足もとの線
+}
 // 季節が変わったら（月が替わる・紅葉や桜のころに入る）、田畑・森・公園のタイルとせかいちずの色を作り直す。1分ごとに確かめる
 let seasonCheckT = 0;
 function refreshSeason(now) {
   if (now - seasonCheckT < 60000) return;
   seasonCheckT = now;
   const k = seasonNow();
-  loadMapTiles();   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
+  loadMapTiles();
+  loadDeco();
+  DECO.m = new Date().getMonth() + 1;   // 家と森のシートは、こよみの見ごろのほかに月でも替わる（2月→3月で冬からふだんへ）ので、ここで毎回確かめる
   if (k === seasonKey) return;
   seasonKey = k;
   WCOL[C.U] = WCOL[C.F] = PADDY_COL;
   buildTiles([C.U, C.F, C.W, C.P]);
-  applyMapTiles();   // Blender の森の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
+  applyMapTiles();   // Blender の森・公園の絵を使っていれば、そのまま（季節のシートは上の loadMapTiles が読む）
   makeWorldImg();
   dirty = true;
 }
@@ -1150,13 +1679,13 @@ const HERO_TOP = ['................', '.....kkkkkk.....', '....kyyyyyyk....', '.
 const LEGS_A = ['....kBBkkBBk....', '....knnk.knnk...', '.....kk...kk....'];
 const LEGS_B = ['....kBBkkBBk....', '...knnk..knnk...', '....kk....kk....'];
 const HERO = {
-  down: ['...kyykkkkyyk...', '...kyksssskyk...', '....kskssksk....', '....kssssssk....', '...kkbkkkkbkk...', '..kssbbbbbbssk..', '..kssbbyybbssk..', '...kkbbbbbbkk...', '....kbbbbbbk....'],
+  down: ['...kyykkkkyyk...', '...kyksssskyk...', '....kskssksk....', '....kskssksk....', '...kkbkkkkbkk...', '..kssbbbbbbssk..', '..kssbbyybbssk..', '...kkbbbbbbkk...', '....kbbbbbbk....'],
   up: ['...kyyyyyyyyk...', '...kyyyyyyyyk...', '....kyyyyyyk....', '....kssssssk....', '...kkbkkkkbkk...', '..kssbbbbbbssk..', '..kssbbbbbbssk..', '...kkbbbbbbkk...', '....kbbbbbbk....'],
-  right: ['...kyyyykkkkk...', '...kyyyksssk....', '...kyyksskssk...', '....kksssssk....', '....kkbbbbkk....', '....kbbbbsssk...', '....kbbbbsssk...', '....kbbbbbbk....', '....kbbbbbbk....'],
+  right: ['...kyyyykkkkk...', '...kyyyksssk....', '...kyyksskssk...', '....kksssksk....', '....kkbbbbkk....', '....kbbbbsssk...', '....kbbbbsssk...', '....kbbbbbbk....', '....kbbbbbbk....'],
 };
 const mirror = rows => rows.map(r => [...r].reverse().join(''));
-// 西尾の人たち（npcs.js）：同じ形で、髪・服・ズボンの色を変える（h 髪、c 服、p ズボン、a 小物）
-const NPC_ROWS = ['................', '.....kkkkkk.....', '....khhhhhhk....', '...khhhhhhhhk...', '...khsssssshk...', '...kskssssksk...', '....kssssssk....', '.....kssssk.....',
+// 西尾の人たち（npcs.js）：同じ形で（目はポケモンの歩く人と同じ 黒・横1×縦2）、髪・服・ズボンの色を変える（h 髪、c 服、p ズボン、a 小物）
+const NPC_ROWS = ['................', '.....kkkkkk.....', '....khhhhhhk....', '...khhhhhhhhk...', '...khsssssshk...', '...kssksskssk...', '....kskssksk....', '.....kssssk.....',
   '....kkcccckk....', '...kccccccccak..', '..ksccccccccsk..', '..ksccccccccsk..', '...kcccccccck...', '....kppppppk....', '....kppkkppk....', '....kkk..kkk....'];
 const NPC_COLORS = {
   elder:   { h: '#c8c8c8', c: '#6d5a44', p: '#4a4a4a', a: '#6d5a44' },
@@ -1170,6 +1699,119 @@ const NPC_COLORS = {
   guide:   { h: '#3b2a1a', c: '#f2c230', p: '#4a4a4a', a: '#d23a2e' },
   monk:    { h: '#f4c58f', c: '#2b2b2b', p: '#2b2b2b', a: '#b88a12' },
 };
+// さんぽ仲間のライバル（game.js の rivalSay）：赤い服の男の子。people.png の並びに入れないよう、NPC_COLORS とは別に作る
+const RIVAL_PAL = { ...PAL, h: '#2b2018', c: '#e53935', p: '#1e3a8a', a: '#e53935' };
+const rivalSprites = [sprite(NPC_ROWS, false, RIVAL_PAL), sprite(NPC_ROWS.map((r, i) => i === 9 ? r.replace('a', 'c') : r), false, RIVAL_PAL)];
+const rivalTile = () => { const r = G.rival; return r ? npcTile({ id: 'rival:' + r.at, lat: r.lat, lng: r.lng }) : null; };
+function rivalTalk() {   // ライバルをタップする：ひとこと（先回りした所の名前で）。おまかせ歩き・タップで歩く道をふさがないよう、ぶつかっても止めない
+  const r = G.rival;
+  if (r) G.toast(`🏃 ${G.RIVAL}「先に来とったよ。${r.name}、ゆっくり見ていきん」`);
+}
+// 生きもの（game.js の CRITTERS）：歩く地図の田んぼ・水べを歩いていると、ときどき出会う。16×16 の手描き
+const CRITTER_ROWS = {
+  sagi: ['................', '........kkk.....', '.......kwwwk....', '.......kwkwkyyy.', '.......kwwwkkk..', '........kwk.....', '........kwk.....', '.......kwwk.....', '.....kkwwwwk....', '....kwwwwwwwk...', '...kwwwwwwwwk...', '....kkwwwwwk....', '......kkkkk.....', '.......k.k......', '.......k.k......', '......kk.kk.....'],
+  kaeru: ['................', '................', '................', '................', '....kkk..kkk....', '...kwkkllkkwk...', '...kllllllllk...', '..kllllllllllk..', '..kllkkkkkkllk..', '.kllllllllllllk.', '.kllGllllllGllk.', 'kllkkllllllkkllk', 'kllk.kkkkkk.kllk', '.kk..........kk.', '................', '................'],
+  tonbo: ['................', '.......kk.......', '......kRRk......', '.gggg.kRRk.gggg.', 'gwwwwgkrrkgwwwwg', 'gwwwwwgrrgwwwwwg', '.ggggggrrgggggg.', 'gwwwwwgrrgwwwwwg', 'gwwwwgkrrkgwwwwg', '.gggg.krrk.gggg.', '.......rr.......', '.......rr.......', '.......rr.......', '.......rr.......', '.......kk.......', '................'],
+  kamo: ['................', '................', '................', '................', '................', '..........kkk...', '.........knnnk..', '.........knknkyy', '.........knnnk..', '...kkkkkkknnk...', '..knnNnnNnnnnk..', '.knnnnnnnnnnnk..', '..kknnnnnnnkk...', 'bbbbkkkkkkkbbbbb', '.bbbbbbbbbbbbbb.', '................'],
+  sakana: ['................', '................', '................', '................', '................', '................', '....kkkkkk..k...', '..kkggggggkkgk..', '.kwkggggggggggk.', '.kgggggggggkgk..', '..kkwwwwwwkk.k..', '....kkkkkk......', '................', '.b..b.....b..b..', '..bb.bb..bb.bb..', '................'],
+  kani: ['................', '................', '................', '................', '................', '................', '..kk........kk..', '.krrk......krrk.', '.krrk.k..k.krrk.', '..kk.kwkkwk.kk..', '...kkrrrrrrkk...', '..krrrrrrrrrrk..', '..krrrrrrrrrrk..', '...kkkkkkkkkk...', '..k.k.k..k.k.k..', '................'],
+  keri: ['................', '.....ggg........', '....ggggg.......', 'kyygrgggg.......', '....ggggg.......', '.....ggg........', '.....kkkk.......', '....wkkknnnn....', '....wwnnnnnnnn..', '....wwwnnnnnnnnk', '.....wwwwnnnnk..', '.......y.y......', '.......y.y......', '.......y.y......', '.......y.y......', '......yy.yy.....'],
+  seitaka: ['................', '....kk..........', '...kwwk.........', 'kkkkwkwk........', '...kwwwk........', '....kwwk........', '....kwwwkkkk....', '...kwwwwkkkkkk..', '...kwwwwwkkkkkkk', '....kwwwwkkkkk..', '.....kkkkkkk....', '.......r.r......', '.......r.r......', '.......r.r......', '.......r.r......', '......rr.rr.....'],
+  suzugamo: ['................', '................', '................', '................', '...kkk..........', '..kkkkk.........', 'ggkykkk.........', '..kkkkk.........', '...kkkkkkkkkkk..', '..kkkwwwwwgwgkk.', '..kkwwwwwwwwgkkk', '...kwwwwwwwwwkk.', '....kkkkkkkkkk..', 'bbbbbbbbbbbbbbbb', '.bbbbbbbbbbbbbb.', '................'],
+  asari: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kknnnnkk....', '...knnNnnNnnk...', '..knNnnNNnnNnk..', '..knnnNnnNnnnk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................']
+};
+const critterSprites = {};
+for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
+// 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
+const critterS = { steps: 0, paddy: 0, water: 0, show: null, where: '', told: {} };
+const CRITTER_SURE = 100;
+// のこりの数（マインスイーパーの「まわりに いくつ あるかの数字」から。数字があると 運まかせでなく 考えて開けられる）：
+// 田んぼ・水べに入ったとき、いまの季節に そこで会える生きもののうち まだ手帳にない数を出す（どこに いるかは言わない）。
+// 0 なら「ぜんぶ会えた」で、ほかの場所へ行く目安になる。同じ場所の知らせは 10分に1回まで。その日の出会いが おわったら出さない
+// 知らせを出せた（または出すものがない）ら true。歩く地図が見えていない・窓やパネルの下・運転中なら false（次の1歩で もう一度）
+function critterCount(where) {
+  const now = performance.now();
+  if (!G.critterLeft || !active || worldMode || driving || mapCovered() || sightBusy()) return false;
+  if (now - (critterS.told[where] || -6e5) < 6e5) return true;
+  const c = G.critterLeft(where);
+  if (!c || !c.all) return true;
+  critterS.told[where] = now;
+  const name = where === 'paddy' ? '🌾 田んぼ' : '💧 水べ';
+  floatText(c.left ? `${name}：まだ会っていない生きもの ${c.left}` : `${name}：いまの季節の生きものは ぜんぶ会えた`);
+  dirty = true;
+  return true;
+}
+// 路地の行き止まり（NetHack の「通路が ぷつっと終わる所を しらべると 隠し扉が見つかる」）：道（C.R）が その マスで終わっている（大きな道・小道へも続いていない）。
+// まわり8マスを ひとまわり見て、道が 1かたまり（となり合う2マスまで）だけなら 行き止まり。斜めに描いた道（strokeLine）は 角だけで つながるので、
+// 上下左右だけで数えると 道のとちゅうも 行き止まりに見えてしまう（まわりが まだ読み込んでいない所なら 数えない）
+const RING8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+function alleyEnd(x, y) {
+  if (codeAt(x, y) !== C.R) return false;
+  const on = [];
+  for (const [dx, dy] of RING8) { const c = codeAt(x + dx, y + dy); if (c === C.X) return false; on.push(c === C.R || c === C.H || c === C.D); }   // 小道（C.D）へ続く所も つながっている
+  const n = on.filter(Boolean).length, groups = on.filter((v, i) => v && !on[(i + 7) % 8]).length;   // ひとまわりで 道が始まる所の数＝かたまりの数
+  return n >= 1 && n <= 2 && groups === 1;
+}
+// まだ しらべていない 行き止まりに、小さく はねる「？」（地形が「ここを しらべて」と教える）。見分けは まとまりを読みこむまで覚えておく（nbrCache）。
+// その日の分（1日3回）を見つけおわったら出さない
+function alleyHint(tx, ty) {
+  const k = `alley:${tx},${ty}`;
+  let e = nbrCache.get(k);
+  if (e === undefined) { e = alleyEnd(tx, ty); nbrCache.set(k, e); }
+  return e && !!G.alleyOpen && G.alleyOpen(tx, ty);
+}
+function drawAlleyHint(X, Y, T, now) {
+  const u = Math.max(1, Math.round(T / 16)), bob = Math.round(Math.sin(now / 260) * u);
+  ctx.font = `bold ${Math.round(T * 0.55)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#000'; for (const [dx, dy] of [[-u, 0], [u, 0], [0, -u], [0, u]]) ctx.fillText('?', X + T / 2 + dx, Y + T * 0.42 + bob + dy);
+  ctx.fillStyle = '#ffe066'; ctx.fillText('?', X + T / 2, Y + T * 0.42 + bob);
+}
+// 水べで じっと見る（ポケモンの「釣りざおで、水べで出会えるものが ふえる」）：水の となりのマスで 4秒 止まっていると、水の中の生きものに出会う。
+// 1.5秒で「👀 水の中を じっと見とる…」。動くまでは1回だけ。1日2回まで（生きもの手帳の1日の数にも入る。game.js の watchWater）
+// 止まっているかは、見はじめた所から 半マス（4m）以上 動いていないか・転がしているなら お米が止まっているか で見る
+// （同じマスの中を ゆっくり転がっていても 数えない。GPS の小さなゆれ では やりなおさない）
+const watchS = { key: '', t: 0, done: false, told: false, ax: 0, ay: 0 };
+function waterWatch(tgt, dt) {
+  const tx = Math.floor(tgt.x), ty = Math.floor(tgt.y), key = `${tx},${ty}`;
+  if (key !== watchS.key) { Object.assign(watchS, { key, t: 0, done: false, told: false, ax: tgt.x, ay: tgt.y }); return; }
+  if (Math.hypot(tgt.x - watchS.ax, tgt.y - watchS.ay) > 0.5 || (rollOn && roll.v > 0.1)) { Object.assign(watchS, { t: 0, told: false, ax: tgt.x, ay: tgt.y }); return; }
+  if (watchS.done || driving || mapCovered() || sightBusy() || BLOCK.has(codeAt(tx, ty)) || !G.watchOpen || !G.watchOpen()) return;
+  const wet = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => codeAt(tx + dx, ty + dy) === C.A);
+  if (!wet) return;
+  watchS.t += dt;
+  if (!watchS.told && watchS.t > 1.5) { watchS.told = true; floatText('👀 水の中を じっと見とる…'); }
+  if (watchS.t < 4) return;
+  watchS.done = true;
+  const m = G.watchWater();
+  if (m) { critterS.show = { id: m.id, x: tx + wet[0], y: ty + wet[1], t: performance.now() }; dirty = true; }
+}
+function critterStep(x, y) {
+  if (driving) return;
+  if (alleyEnd(x, y) && G.alleyFind && !mapCovered() && !sightBusy() && G.alleyFind(x, y, toLatLng(x + 0.5, y + 0.5))) { floatText('🔍 路地の奥'); dirty = true; }
+  const near = codes => [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => codes.has(codeAt(x + dx, y + dy)));
+  const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
+  if (where) critterS.steps++;   // 田んぼ・水べのイベントが始まる1歩も 出会いまでの歩数に数える
+  if (where !== critterS.where && (!where || critterCount(where))) critterS.where = where;   // 知らせを出せなかったら、次の1歩で もう一度
+  // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
+  //   説明の窓・きろく などのパネル・ダイアログ・呼びとめの最中は始めない（閉じたあとの田んぼの1歩で始まる）
+  if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15 && !mapCovered() && !sightBusy() && NISHIO_MEDASHI.open()) { critterS.paddy = 0; return true; }
+  // 水べのイベント「虫の名前あて」（mushi.js）：水べを15歩 歩くと、1日1回（始めない条件は田んぼのイベントと同じ）
+  if (where === 'water' && window.NISHIO_MUSHI && G.mushiDue && G.mushiDue() && ++critterS.water >= 15 && !mapCovered() && !sightBusy() && NISHIO_MUSHI.open()) { critterS.water = 0; return true; }
+  // はじめての出会いは かならず・待ちすぎない（マインスイーパーの「1手目で地雷を ふんで終わる」・ブロックくずしの「打ちだしてすぐ落とす」から。
+  // はじめの1回の運の悪さで やめてしまわないように）：まだ1回も会っていなければ 25歩目で、会ったことがあっても 100歩で かならず出会う
+  // （1/40 の運だけだと、10人に1人は 115歩より長く待っていた）
+  if (!where || critterS.steps < 25) return;
+  const sure = critterS.steps >= CRITTER_SURE || !!(G.critterFirst && G.critterFirst());
+  if (!sure && Math.random() >= 1 / 40) return;
+  if (sure && (mapCovered() || sightBusy())) return;   // かならずの出会いは、窓・パネルを閉じたあとの1歩へ持ちこす
+  critterS.steps = 0;
+  const m = G.meetCritter(where);
+  if (!m) return false;
+  const spot = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [x + dx, y + dy]).find(([a, b]) => !npcAt(a, b)) || [x + 1, y];
+  critterS.show = { id: m.id, x: spot[0], y: spot[1], t: performance.now() };
+  dirty = true;
+  return true;
+}
 const npcSprites = {};
 for (const [k, col] of Object.entries(NPC_COLORS)) {
   const pal = { ...PAL, ...col };
@@ -1194,10 +1836,109 @@ function npcTile(n) {
   return t;
 }
 const npcAt = (tx, ty) => (G.npcs || []).find(n => { const t = npcTile(n); return t.x === tx && t.y === ty; });
+// 話しかけた人の頭の上に、ぽんと気持ちの吹き出し（はじめて会った人は「！」、2回目からは「♪」か「♥」。1.6秒）
+const npcEmotes = new Map();
+const EMOTE_PIX = { '!': ['..#..', '..#..', '..#..', '.....', '..#..'], '♪': ['...##', '..#.#', '..#..', '.##..', '.##..'], '♥': ['.#.#.', '#####', '#####', '.###.', '..#..'] };
+function emoteAt(sx, sy, T, k, age) {   // 頭の上の吹き出し（ぽんと上がって、少しゆれる）
+  const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.5), by = sy - Math.round(T * 0.55) - Math.round(Math.min(1, age / 150) * 3 * u) + (Math.floor(age / 300) % 2 ? u : 0);
+  ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 9 * u);
+  ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 7 * u); ctx.fillRect(bx + u, by + 7 * u, 2 * u, 2 * u);
+  ctx.fillStyle = k === '♥' ? '#e0405a' : '#222';
+  EMOTE_PIX[k].forEach((row, y) => { for (let x = 0; x < 5; x++) if (row[x] === '#') ctx.fillRect(bx + (x + 1) * u, by + (y + 1) * u, u, u); });
+  dirty = true;
+}
+// 夜のさんぽ（昔のRPGの、暗い洞窟を たいまつで照らして進む しくみ）：日本時間の19時〜5時は、歩く地図を暗くして、
+// 主人公のまわり（3マスほど）と、お店・駅などの建物の明かり、当店（いちばん明るい）、たからばこ だけが見える。夕方・明け方（18時台・5時台）は半分の暗さ。
+// せってい「🌙 夜は地図を暗く」でオフにできる。看板・町名は暗くしない（あとから描く）
+let nightOn = true;
+try { nightOn = localStorage.getItem('nsg_night') !== '0'; } catch (e) { /* 既定 */ }
+const nightCv = document.createElement('canvas');
+function nightLevel(t = Date.now()) {
+  const q = new URLSearchParams(location.search).get('night');
+  if (q) return +q;   // 確かめ用（?night=1 で夜・0.5 で夕方）
+  const hr = new Date(t + 9 * 3600000).getUTCHours();
+  return hr >= 19 || hr < 5 ? 1 : hr === 18 || hr === 5 ? 0.5 : 0;
+}
+function drawNight(w, h, ox, oy, T, cy, pois, now) {
+  const lv = nightOn && !worldMode ? nightLevel() : 0;
+  if (!lv) return;
+  if (nightCv.width !== w || nightCv.height !== h) { nightCv.width = w; nightCv.height = h; }
+  const x = nightCv.getContext('2d');
+  x.globalCompositeOperation = 'source-over';
+  x.clearRect(0, 0, w, h);
+  x.fillStyle = `rgba(8,12,36,${0.62 * lv})`; x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = 'destination-out';   // 明かりの所を くりぬく
+  const light = (px, py, r, k = 1) => {
+    if (px < -r || py < -r || px > w + r || py > h + r) return;
+    const g = x.createRadialGradient(px, py, r * 0.25, px, py, r);
+    g.addColorStop(0, `rgba(0,0,0,${k})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.fillStyle = g; x.fillRect(px - r, py - r, r * 2, r * 2);
+  };
+  const flick = 1 + Math.sin(now / 180) * 0.03;   // たいまつのように、少し ゆらぐ
+  if (G.me || G.demo) light(w / 2 + heroScr.x, cy + heroScr.y - T * 0.25, T * 3.4 * flick);
+  for (const p of pois) light(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * (p[4] === 'lm' ? 1.6 : 1.3), 0.85);   // お店・駅・建物の窓の明かり
+  for (const s of G.spots || []) if (s.shop) { const p = toTile(s.lat, s.lng); light(ox + p.x * T, oy + p.y * T - T, T * 3.2); }   // 当店は いちばん明るく
+  for (const c of G.liveChests()) { const p = toTile(c.lat, c.lng); light(ox + p.x * T, oy + p.y * T, T * 0.9, 0.7); }
+  gbPause++;
+  ctx.drawImage(nightCv, 0, 0);
+  gbPause--;
+  if (!nightNote.done && lv === 1) { nightNote.done = true; G.toast('🌙 夜のさんぽ。明かりの まわりしか見えないよ。たからばこは ほんのり光っとる'); }
+}
+const nightNote = { done: false };
+// 人の話で 次の転がり先が決まる：転がしているとき、話で 行き先が決まったら、話を とじたときに その人が お米を 行き先のほうへ ころん と押してくれる
+let npcSend = null;
 function openNpc(n) {
+  const first = !G.npcMet(n.id);
   const r = G.talkNpc(n.id);
   if (!r) return;
+  const gs = G.state.guide;
+  npcSend = rollOn && G.demo && gs && gs.byId === n.id && Date.now() - (gs.t || 0) < 3000 ? { n, name: gs.name } : null;
+  npcEmotes.set(n.id, { t: performance.now(), k: first ? '!' : (n.id.length + G.state.met.length) % 2 ? '♪' : '♥' });
   $('pxInfoBody').innerHTML = r.html; $('pxInfo').hidden = false;
+}
+// 呼びとめ（昔のドット絵RPGの「目が合ったら勝負」を、話しかけに）：まだ話していない人の まっすぐ前後左右 SIGHT マス以内に入り、
+// あいだに建物・水・ほかの人がなければ、頭に「！」が出て、その人のほうから歩いてきて話しかけてくる（行き先も その人のすすめに変わる）。
+// 歩いてくる間と話の間は、主人公は動けない。同じ人が呼びとめるのは、開いている間に1回だけ
+const SIGHT = 4, SIGHT_WAIT = 650, SIGHT_STEP = 150;
+const sight = { n: null, t: 0, from: null, to: null, len: 0, opened: false, seen: new Set() };
+function sightCheck() {
+  if (sightBusy() || driving || worldMode || !$('pxInfo').hidden || (!G.demo && !G.me) || document.body.classList.contains('jump-open') || medashiShown()) return false;   // ミニゲーム・田んぼのイベントの間は呼びとめない
+  const t = targetTile(), hx = Math.floor(t.x), hy = Math.floor(t.y);
+  for (const n of G.npcs || []) {
+    if (G.npcMet(n.id) || sight.seen.has(n.id)) continue;
+    const q = npcTile(n);
+    if (!q.ok) continue;
+    const dx = hx - q.x, dy = hy - q.y, d = Math.abs(dx) + Math.abs(dy);
+    if ((dx && dy) || d < 2 || d > SIGHT) continue;   // となり（1マス）なら、ぶつかって話しかける ふつうのやり方で
+    const ux = Math.sign(dx), uy = Math.sign(dy);
+    let clear = true;
+    for (let i = 1; i < d && clear; i++) { const x = q.x + ux * i, y = q.y + uy * i; if (BLOCK.has(codeAt(x, y)) || npcAt(x, y)) clear = false; }
+    if (!clear) continue;
+    sight.seen.add(n.id);
+    Object.assign(sight, { n, t: performance.now(), from: { x: q.x, y: q.y }, to: { x: hx - ux, y: hy - uy }, len: d - 1, opened: false });
+    facing = dx ? (dx > 0 ? 'left' : 'right') : (dy > 0 ? 'up' : 'down');   // 主人公も その人のほうを向く
+    npcEmotes.set(n.id, { t: sight.t, k: '!' });
+    tapWalkStop();
+    G.sound.jingle('eye');
+    dirty = true;
+    return true;
+  }
+  return false;
+}
+// 呼びとめの途中か。せかいちずに切りかえた などで止まったままにならないよう、時間がすぎて話も閉じていれば終わりにする
+function sightBusy() {
+  if (sight.n && $('pxInfo').hidden && performance.now() - sight.t > SIGHT_WAIT + sight.len * SIGHT_STEP + 1500) sightEnd();
+  return !!sight.n;
+}
+function sightEnd() { sight.n = null; G.callNpc(null); dirty = true; }   // 話が終わったら、その人は もとの場所へ
+// 呼びとめた人の いまの位置（「！」のあと、主人公のとなりまで歩いてくる）。話が終わったら もとの場所へ
+function sightTick(now) {
+  if (!sight.n) return null;
+  const k = Math.max(0, Math.min(1, (now - sight.t - SIGHT_WAIT) / (sight.len * SIGHT_STEP)));
+  if (k >= 1 && !sight.opened) { sight.opened = true; G.callNpc(sight.n.id); if ($('pxInfo').hidden) openNpc(sight.n); }
+  else if (sight.opened && $('pxInfo').hidden) { sightEnd(); return null; }
+  if (k < 1) dirty = true;
+  return { x: sight.from.x + (sight.to.x - sight.from.x) * k, y: sight.from.y + (sight.to.y - sight.from.y) * k, walking: k > 0 && k < 1 };
 }
 const heroSprites = {};
 for (const dir of ['down', 'up', 'right']) heroSprites[dir] = [sprite([...HERO_TOP, ...HERO[dir], ...LEGS_A]), sprite([...HERO_TOP, ...HERO[dir], ...LEGS_B])];
@@ -1208,22 +1949,537 @@ const CAR_UP = ['................', '.....kkkkkk.....', '....kywwwwyk....', '...
 const rotCW = rows => rows.map((_, y) => rows.map((__, x) => rows[15 - x][y]).join(''));
 const carSprites = { up: sprite(CAR_UP) };
 carSprites.right = sprite(rotCW(CAR_UP)); carSprites.down = sprite(rotCW(rotCW(CAR_UP))); carSprites.left = sprite(rotCW(rotCW(rotCW(CAR_UP))));
-// ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする
+// ふつうの地図の現在地マーカーも、同じ勇者のドット絵（2コマで足ぶみ）にする（Blender の人の絵が読めたら、それに描きかえる）
+const heroMarkerStyle = document.createElement('style');
+// 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：32×32 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。歩く地図には 2マスで描く（ドットの大きさは ほかの絵と同じ）。
+// 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
+const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
+const roll = { d: 0, last: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: false, shake: 0, dust: [], dustT: 0, kind: 'stop', wad: 0, spin: 0, sv: 0, h: 0, hv: 0, gnd: null, back: null, trail: [], fx: [], fxAcc: 0, fxN: 0, sendT: 0, sendA: 0, sends: 0, flat: 0, wetT: 0, jumpCd: 0, zg: null, jumps: 0, look: 0, dirt: 0, dirtCol: '150,120,80', v: 0, peak: 0, idle: 0, ouchT: 0, happyT: 0, spinT: 0, dizzyT: 0 };   // d：転がった道のり（マス）・ang：いまの回り（ラジアン）・av：回る速さ・side：寝た回数（コトン）・sq：つぶれ・shake：画面のゆれ・dust：土ぼこり
+// v：いまの速さ・peak：止まるまでの いちばんの速さ・idle：止まっている時間・ouchT・happyT・dizzyT：表情（いたい・うれしい・目が回る）の のこり時間・spinT：くるくるしている時間
+// kind：いまの転がり方（stop・よちよち waddle・ころころ tumble・くるくる spin・ぴょん hop）・wad：よちよちの ゆれ・spin：くるくるの回り・sv：その速さ・h：とんだ高さ（マス）・gnd：足もとの地面・back：うしろ姿の絵
 (() => {
+  const img = new Image();
+  img.onload = () => {
+    const N = img.height / 2;   // 1コマの大きさ
+    const cut = (i, r, flip) => {
+      const c = document.createElement('canvas'); c.width = c.height = N;
+      const x = c.getContext('2d');
+      if (flip) { x.translate(N, 0); x.scale(-1, 1); }
+      x.drawImage(img, i * N, r * N, N, N, 0, 0, N, N);
+      return c;
+    };
+    for (let i = 0; i < 8; i++) {
+      riceSprites.right.push(cut(i, 0)); riceSprites.left.push(cut(i, 0, true));
+      riceSprites.down.push(cut(i, 1)); riceSprites.up.push(cut((8 - i) % 8, 1));
+    }
+    roll.back = cut(0, 0);   // うしろ姿（くるくる回るときに見える）：顔（まっ黒な目と口・ピンクのほっぺ）を つぶの色でぬる
+    const bx = roll.back.getContext('2d'), bd = bx.getImageData(0, 0, N, N), q = bd.data;
+    for (let i = 0; i < q.length; i += 4) if (q[i + 3] && ((q[i] === 14 && q[i + 1] === 14 && q[i + 2] === 14) || (q[i] === 246 && q[i + 1] === 160 && q[i + 2] === 176))) { q[i] = 246; q[i + 1] = 245; q[i + 2] = 238; }
+    bx.putImageData(bd, 0, 0);
+    riceBallInit(cut(0, 0));
+    riceSprites.ready = true; setHeroMarker(); dirty = true;
+  };
+  img.src = 'nishio-go/art/rice.png';
+})();
+// 丸く見せる：お米を 点の大きさ（1点＝絵の1点）のまま回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
+// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は5段（さかいは 点をまぜて なめらかに）、ふちどりは回したあとに描きなおす
+const riceBall = { fill: null, face: null, cv: null, x: null, gx: 0, gy: 0, a: 1, b: 1, nx: 0, ny: 0, nr: 0 };
+const RB = 48;   // 回した絵を描く場所の大きさ（点）
+const RICE_TONE = [[172, 180, 204], [204, 210, 228], [230, 232, 238], [246, 245, 238], [253, 253, 250], [255, 255, 255]];   // 深い影・影・なか・つぶの色・明るい・てかり
+const RICE_LIGHT = (() => { const v = [-0.5, -0.7, 0.75], n = Math.hypot(...v); return v.map(c => c / n); })();
+const RICE_HALF = (() => { const v = [RICE_LIGHT[0], RICE_LIGHT[1], RICE_LIGHT[2] + 1], n = Math.hypot(...v); return v.map(c => c / n); })();
+function riceBallInit(src) {
+  const N = src.width, sd = src.getContext('2d').getImageData(0, 0, N, N).data;
+  const fill = document.createElement('canvas'), face = document.createElement('canvas');
+  fill.width = fill.height = face.width = face.height = N;
+  const fx = fill.getContext('2d'), gx = face.getContext('2d'), fd = fx.createImageData(N, N), gd = gx.createImageData(N, N);
+  let L = N, R = -1, T = N, B = -1;
+  for (let i = 0; i < N * N; i++) {
+    const r = sd[i * 4], g = sd[i * 4 + 1], b = sd[i * 4 + 2];
+    if (!sd[i * 4 + 3] || (r === 26 && g === 26 && b === 26)) continue;   // まわりの線は のぞく（回したあとに描きなおす）
+    fd.data.set([255, 255, 255, 255], i * 4);
+    if ((r === 14 && g === 14 && b === 14) || (r === 246 && g === 160 && b === 176)) gd.data.set([r, g, b, 255], i * 4);   // 顔（目・口・ほっぺ）
+    const x = i % N, y = (i - x) / N;
+    L = Math.min(L, x); R = Math.max(R, x); T = Math.min(T, y); B = Math.max(B, y);
+  }
+  fx.putImageData(fd, 0, 0); gx.putImageData(gd, 0, 0);
+  const cv = document.createElement('canvas'); cv.width = cv.height = RB;
+  riceBall.faces = riceFaces(face, sd, N);
+  {   // よごれの しみの場所（つぶの中・顔と ふちを よけて、きまった ばらばらの10か所）
+    const pts = [], fd2 = face.getContext('2d').getImageData(0, 0, N, N).data;
+    let h = 2166136261;
+    for (let tries = 0; tries < 400 && pts.length < 10; tries++) {
+      h = Math.imul(h ^ (tries + 1), 16777619) >>> 0;
+      const x = h % N, y = (h >>> 8) % N, i = y * N + x;
+      if (!fd.data[i * 4 + 3] || fd2[i * 4 + 3]) continue;
+      if (![[1, 0], [-1, 0], [0, 1], [0, -1]].every(([a, b]) => fd.data[((y + b) * N + x + a) * 4 + 3])) continue;   // ふちの すぐ内がわは よける
+      if (pts.some(p => Math.abs(p[0] - x) + Math.abs(p[1] - y) < 4)) continue;
+      pts.push([x, y]);
+    }
+    riceBall.spots = pts;
+  }
+  Object.assign(riceBall, { fill, face, cv, x: cv.getContext('2d', { willReadFrequently: true }), gx: (L + R + 1) / 2, gy: (T + B + 1) / 2, a: (R - L + 1) / 2, b: (B - T + 1) / 2,
+    nx: R + 1.5, ny: T + (B - T) * 0.2 + 0.5, nr: (R - L) * 0.26 });   // 胚芽の くぼみ（tools/blender/rice.py と同じ場所）
+}
+// 表情：ふだんの にっこり（絵のまま）のほかに、点で描いた顔。目・ほっぺ・口の場所は 絵の顔（左の目の左上）に合わせる
+//   blink まばたき・happy ^^ うれしい・excited ><（速くて たのしい）・wow びっくり（とんでいる）・ouch いたい・dizzy ×× 目が回る・sleepy すやすや
+const FACE_COL = { E: [14, 14, 14], P: [246, 160, 176], R: [184, 52, 64], T: [240, 124, 140] };
+const FACE_PARTS = {
+  eyes: 'E 0,0 1,0 0,1 1,1 0,2 1,2 7,0 8,0 7,1 8,1 7,2 8,2',
+  shut: 'E 0,2 1,2 7,2 8,2',
+  arcUp: 'E -1,1 0,0 1,0 2,1 6,1 7,0 8,0 9,1',
+  arcDown: 'E -1,1 0,2 1,2 2,1 6,1 7,2 8,2 9,1',
+  gtlt: 'E 0,0 1,1 0,2 8,0 7,1 8,2',
+  big: 'E 0,-1 1,-1 0,0 1,0 0,1 1,1 0,2 1,2 7,-1 8,-1 7,0 8,0 7,1 8,1 7,2 8,2',
+  cross: 'E -1,0 1,0 0,1 -1,2 1,2 7,0 9,0 8,1 7,2 9,2',
+  cheeks: 'P -2,3 -1,3 -2,4 -1,4 11,3 12,3 11,4 12,4',
+  cheeksBig: 'P -3,3 -2,3 -1,3 -2,4 -1,4 -2,5 11,3 12,3 13,3 11,4 12,4 11,5',
+  smile: 'E 1,4 2,5 3,5 4,5 5,5 6,5 7,4',
+  open: 'E 1,4 2,4 3,4 4,4 5,4 6,4 7,4 1,5 7,5 2,6 6,6 3,7 4,7 5,7|R 2,5 3,5 4,5 5,5 6,5|T 3,6 4,6 5,6',
+  o: 'E 3,5 4,5 2,6 5,6 3,7 4,7|R 3,6 4,6',
+  wave: 'E 1,5 2,4 3,5 4,4 5,5 6,4 7,5',
+  tiny: 'E 3,5 4,5',
+};
+const FACE_SET = {
+  blink: 'shut cheeks smile', happy: 'arcUp cheeks open', excited: 'gtlt cheeksBig open', wow: 'big cheeks o',
+  ouch: 'gtlt cheeks wave', dizzy: 'cross wave', sleepy: 'arcDown cheeks tiny',
+};
+function riceFaces(face, sd, N) {
+  let ex = N, ey = N;
+  for (let i = 0; i < N * N; i++) if (sd[i * 4 + 3] && sd[i * 4] === 14 && sd[i * 4 + 1] === 14 && sd[i * 4 + 2] === 14) { const x = i % N, y = (i - x) / N; if (y < ey || (y === ey && x < ex)) { ey = y; ex = x; } }   // 左の目の左上
+  const out = { smile: face };
+  for (const [k, parts] of Object.entries(FACE_SET)) {
+    const c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d'), d = g.createImageData(N, N);
+    for (const part of parts.split(' ')) for (const run of FACE_PARTS[part].split('|')) {
+      const [col, ...pts] = run.split(' ');
+      for (const pt of pts) { const [dx, dy] = pt.split(',').map(Number), x = ex + dx, y = ey + dy; if (x >= 0 && y >= 0 && x < N && y < N) d.data.set([...FACE_COL[col], 255], (y * N + x) * 4); }
+    }
+    g.putImageData(d, 0, 0); out[k] = c;
+  }
+  return out;
+}
+// いまの表情（転がり方・できごとから）
+function riceMood(now) {
+  if (roll.ouchT > 0) return 'ouch';
+  if (roll.wetT > 0.7) return 'wow';   // 水に ぽちゃん：びっくり
+  if (roll.h > 0) return 'wow';
+  if (roll.dizzyT > 0) return 'dizzy';
+  if (roll.v > 3.4) return 'excited';
+  if (roll.happyT > 0) return 'happy';
+  if (roll.kind === 'stop' && roll.idle > 12) return 'sleepy';
+  if (roll.kind === 'stop' && now % 3700 < 140) return 'blink';
+  return 'smile';
+}
+// お米を描く：(X, Y) まん中（画面の点）・u：絵の1点の大きさ・th：回り・sx, sy：つぶれ・spin：くるくるの回り・dst：描く先（はじめの画面のアニメーションにも使う）・gb：ゲームボーイの4色で
+function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldMode, mood = 'smile', look = 0, dirt = 0, dirtCol = '') {
+  const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin);
+  const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
+  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, RB, RB); o.imageSmoothingEnabled = true;   // なめらかに回してから、半分より濃い所を つぶにする（ふちが がたがたしない）
+  o.setTransform(kx * Math.cos(th), sy * Math.sin(th), -kx * Math.sin(th), sy * Math.cos(th), H, H);
+  o.drawImage(rb.fill, -rb.gx, -rb.gy);
+  o.setTransform(1, 0, 0, 1, 0, 0);
+  const img = o.getImageData(0, 0, RB, RB), d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
+  const [lx0, ly0, lz0] = RICE_LIGHT, [hx, hy, hz] = RICE_HALF;
+  const solid = new Uint8Array(RB * RB), nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
+  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {
+    const k = j * RB + i;
+    if (d[k * 4 + 3] < 128) { d[k * 4 + 3] = 0; continue; }
+    solid[k] = 1;
+    const ux = (i + 0.5 - H) / kx, uy = (j + 0.5 - H) / sy, px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
+    const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
+    let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
+    const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy);
+    if (qd < rb.nr + 1.6) { nx = -qx / (qd || 1) * 0.8; ny = -qy / (qd || 1) * 0.8; nz = 0.6; }   // くぼみの内がわは 中へ向く（光の当たらない がわが 影になる）
+    let wx = (c * nx - s * ny) * mx, wy = s * nx + c * ny;   // 面の向きを 画面の向きに
+    const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
+    const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
+    const v = 0.28 + 0.76 * dif + ((i + j) & 1 ? 0.035 : -0.035) * ((i ^ j) & 2 ? 1 : 0.4);   // 点をまぜて さかいを なめらかに
+    const t = spec > 0.55 ? 5 : v < 0.42 ? 0 : v < 0.58 ? 1 : v < 0.74 ? 2 : v < 0.9 ? 3 : 4;
+    let col = RICE_TONE[t];
+    if (nDirt) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
+      const qx = Math.floor(rb.gx + px), qy = Math.floor(rb.gy + py);
+      for (let m = 0; m < nDirt; m++) if (rb.spots[m][0] === qx && rb.spots[m][1] === qy) { const f = 0.55 + 0.3 * dif; col = [dc[0] * f, dc[1] * f, dc[2] * f]; break; }
+    }
+    d[k * 4] = col[0]; d[k * 4 + 1] = col[1]; d[k * 4 + 2] = col[2];
+  }
+  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {   // ふちどり（回したあとに、つぶのすぐ外がわの点を黒く）
+    const k = j * RB + i;
+    if (solid[k] || !((i > 0 && solid[k - 1]) || (i < RB - 1 && solid[k + 1]) || (j > 0 && solid[k - RB]) || (j < RB - 1 && solid[k + RB]))) continue;
+    d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 26; d[k * 4 + 3] = 255;
+  }
+  o.putImageData(img, 0, 0);
+  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる）
+    const g = o.getImageData(0, 0, RB, RB), q = g.data;
+    for (let k = 0; k < q.length; k += 4) {
+      if (!q[k + 3]) continue;
+      const L = gbLum(q[k], q[k + 1], q[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
+      q[k] = col[0]; q[k + 1] = col[1]; q[k + 2] = col[2]; q[k + 3] = 255;
+    }
+    o.putImageData(g, 0, 0);
+  }
+  gbPause++;
+  try { dst.drawImage(rb.cv, Math.round(X - H * u), Math.round(Y - H * u), RB * u, RB * u); } finally { gbPause--; }
+  if (cs > 0.12 && mood) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
+    dst.save(); dst.translate(Math.round(X), Math.round(Y)); dst.scale(sx, sy); dst.rotate(th);
+    dst.translate((sn * rb.a * 0.7 + look) * u, 0); dst.scale(Math.max(0.25, cs), 1);   // look：きょろきょろ（顔を 少し よこへ）
+    const fc = (rb.faces && rb.faces[mood]) || rb.face;
+    dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    dst.restore();
+  }
+}
+const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
+// なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
+// 止まると、起き上がりこぼしのように ゆらゆらして、立って こっちを見る
+const RICE_R = 0.42;   // 回る半径（マス）。1マス進むと 約136度まわる
+// 転がり方のバリエーション（korostyle.js。200 ＝ うごき20 × かざり10）：koro いまの転がり方（ふつうは null）・KP その うごきの数（書いていないものは ふつう）。毎こま はじめに読む
+let koro = null, KP = {};
+// クセになる転がり方：たて長のつぶは、寝ころぶと まん中が下がり、立つと上がる（コロン、コロンと でこぼこ転がる）。寝ころぶたびに「コトン」と小さな音。
+// かべに当たると ぺたっと つぶれて ぷるんと もどり、画面が少しゆれる。速いと うしろに土ぼこり
+// 足もとの地面で 転がり方が変わる：道は するする（よく転がる・コトンが はっきり）、草や田んぼは もさもさ（止まりやすい・緑の葉っぱが とぶ）、
+// 砂浜は ずぶずぶ（すぐ止まる・音が こもる・砂けむり）、水を張った田んぼは ぱしゃぱしゃ（しぶき）
+const GROUND = {
+  road: { drag: 0.72, crr: 1, dust: '205,200,190', dv: 2.6, snd: 1, hz: 900 },   // crr：ころがり抵抗（道を1）・hz：転がる音の高さ
+  dirt: { drag: 1, crr: 1.6, dust: '235,228,205', dv: 2.2, snd: 0.9, hz: 650 },
+  grass: { drag: 1.35, crr: 2.6, dust: '104,178,72', dv: 1.4, snd: 0.55, bit: true, hz: 2600 },
+  mud: { drag: 1.6, crr: 3.2, dust: '138,106,68', dv: 1.2, snd: 0.5, bit: true, hz: 420 },
+  water: { drag: 1.7, crr: 3.5, dust: '160,205,232', dv: 0.9, snd: 0.4, bit: true, splash: true, hz: 1500 },
+  sand: { drag: 1.9, crr: 4.5, dust: '231,207,140', dv: 0.9, snd: 0.3, big: true, hz: 380 },
+};
+// いまの天気（weather.js。気象庁）：雨の日は 地面が ぬれて すべる（はなしても 長く転がる・土ぼこりの代わりに 水しぶき）、雪の日は もっと すべる（雪が はねる・音が こもる）
+const wxKind = () => { const w = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current; return (w && w.kind) || ''; };
+// 季節の葉：紅葉のころは 草の上で 赤・だいだい・黄色の 落ち葉が、桜のころは 花びらが はねる（ふだんは 草の色）
+const LEAF_BITS = { koyo: ['200,100,30', '176,58,36', '201,154,30', '216,138,58'], sakura: ['246,168,192', '251,208,221', '255,236,242'] };
+const groundBit = g => (g === GROUND.grass && (KOYO || SAKURA) ? (KOYO ? LEAF_BITS.koyo : LEAF_BITS.sakura)[(Math.random() * (KOYO ? 4 : 3)) | 0] : g.dust);
+const WX_ROLL = { rain: { crr: 0.7, lin: 0.75, bit: '170,210,240', hz: 1.4 }, snow: { crr: 0.5, lin: 0.55, bit: '245,248,255', hz: 0.6 } };   // crr・lin：ころがり抵抗・速さに比べて へる分に かける数
+// よごれ：砂・土の道・どろの田んぼを転がると、お米に 小さな しみ（地面の色）。草で 少しずつ・雨で だんだん・水に ぽちゃんで いっぺんに きれいになる
+const DIRT_RATE = { sand: 0.22, dirt: 0.06, mud: 0.3, grass: -0.05, road: -0.01, water: -0.2 };
+function groundAt(x, y) {
+  const c = codeAt(Math.floor(x), Math.floor(y));
+  if (c === C.R || c === C.H || c === C.L || c === C.T || c === C.Q || c === C.I) return GROUND.road;
+  if (c === C.S) return GROUND.sand;
+  if (c === C.F) return PADDY_TILE === 'flooded' ? GROUND.water : PADDY_TILE === 'soil' ? GROUND.mud : GROUND.grass;
+  if (c === C.G || c === C.P || c === C.W || c === C.K || c === C.V || c === C.E || c === C.U || c === C.Y) return GROUND.grass;
+  return GROUND.dirt;
+}
+function riceFeel(dt, speed) {
+  const g = roll.gnd = roll.last ? groundAt(roll.last.x, roll.last.y) : GROUND.dirt, wx = WX_ROLL[wxKind()];
+  {   // よごれ（速く転がるほど つく）
+    const key = Object.keys(GROUND).find(k => GROUND[k] === g) || 'dirt', r = DIRT_RATE[key] || 0;
+    const add = r > 0 ? r * Math.min(1, speed / 4) : r;
+    if (r > 0 && speed > 0.3) roll.dirtCol = g.dust;
+    roll.dirt = Math.max(0, Math.min(1, roll.dirt + (r > 0 && speed <= 0.3 ? 0 : add) * dt - (wxKind() === 'rain' ? 0.08 * dt : 0)));
+  }
+  const ka = Math.floor((roll.ang + Math.PI / 2) / Math.PI), ks = Math.floor((roll.spin + Math.PI / 2) / Math.PI), k = ka * 4096 + ks;   // 寝ころんだ回数（くるくるは 横を向いた回数）
+  if (k !== roll.side) {
+    const n = ka + ks; roll.side = k;
+    if (speed > 0.6 && roll.h <= 0) {
+      kotoSound(Math.min(1, speed / 5) * g.snd); roll.sq = Math.max(roll.sq, 0.06 * (KP.kotoSq || 1)); roll.sqx = false;
+      const hopV = KP.hopV || HOP_V;
+      if (speed > hopV && (KP.hopEvery === 1 || (n & 1))) { roll.hv = (2.2 + (speed - hopV) * 0.4) * (KP.hopPow || 1); roll.h = 0.001; roll.kind = 'hop'; }   // ぴょん：速いと、2回に1回 とびはねる（転がり方で かわる）
+    }
+  }
+  if (roll.h > 0) {   // とんでいる：落ちてきて、ついたら ぺたっ
+    roll.hv -= 22 * (KP.grav || 1) * dt; roll.h += roll.hv * dt;
+    if (roll.h <= 0) {   // 強く落ちるほど ぺたっと つぶれて、画面も ゆれる
+      const imp = Math.abs(roll.hv);
+      roll.h = 0; roll.hv = 0; roll.sq = Math.min(0.3, 0.1 + imp * 0.03); roll.sqv = 0; roll.sqx = false;
+      if (imp > 4) roll.shake = Math.min(1, (imp - 4) * 0.12);
+      kotoSound(Math.min(1, 0.5 + imp / 10) * g.snd, imp > 5);
+      for (let i = 0; i < 3; i++) roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: 0.5 + Math.random() * 0.5, vx: (i - 1) * 0.9, c: groundBit(g), bit: g.bit && (KOYO || SAKURA) });
+    }
+  }
+  if (KP.trip && speed > 2 && roll.h <= 0 && Math.random() < KP.trip * dt) { roll.hv = 1.8; roll.h = 0.001; roll.dizzyT = 0.8; kotoSound(0.6, true); }   // すってんころりん：つまずいて ころぶ
+  koroTrail(dt, speed);
+  roll.sqv += (-roll.sq * 260 - roll.sqv * 14) * dt; roll.sq += roll.sqv * dt;   // つぶれの ばね
+  if (Math.abs(roll.sq) < 0.002 && Math.abs(roll.sqv) < 0.02) { roll.sq = 0; roll.sqv = 0; }
+  roll.shake = Math.max(0, roll.shake - dt * 3);
+  roll.ouchT = Math.max(0, roll.ouchT - dt); roll.happyT = Math.max(0, roll.happyT - dt); roll.dizzyT = Math.max(0, roll.dizzyT - dt);
+  roll.wetT = Math.max(0, roll.wetT - dt); roll.jumpCd = Math.max(0, roll.jumpCd - dt); roll.sendT = Math.max(0, roll.sendT - dt);
+  const glance = roll.kind === 'stop' && roll.idle > 2.5 && roll.idle < 12 ? [0, -1.5, 0, 1.5][Math.floor(roll.idle / 2.2) % 4] : 0;   // 止まって しばらくすると、きょろきょろ（右・左を見る）
+  roll.look += (glance - roll.look) * Math.min(1, dt * 8);
+  roll.dustT -= dt;
+  if (speed > g.dv && roll.h <= 0 && roll.dustT <= 0) {   // 土ぼこり（地面の色。草・田んぼは葉っぱや どろ、水は しぶきが はねる）
+    roll.dustT = g.big ? 0.04 : 0.06;
+    roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: (g.big ? 0.9 : 0.6) + Math.random() * 0.6, c: wx && !g.splash ? wx.bit : groundBit(g), bit: wx ? true : g.bit, vx: (Math.random() - 0.5) * 1.2 });   // 雨・雪の日は 水しぶき・雪
+  }
+  for (const p of roll.dust) p.t += dt;
+  roll.dust = roll.dust.filter(p => p.t < 0.45);
+}
+let kotoCtx = null;
+function kotoSound(v, low) {   // 木の小さな「コトン」（音の設定がオフなら鳴らさない）
+  try {
+    if (localStorage.getItem('nsg_bgm') === 'false' || document.hidden) return;
+    kotoCtx = kotoCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (kotoCtx.state === 'suspended') kotoCtx.resume();
+    const t = kotoCtx.currentTime, o = kotoCtx.createOscillator(), g = kotoCtx.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(low ? 170 : 620 + Math.random() * 120, t);
+    o.frequency.exponentialRampToValueAtTime(low ? 90 : 330, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime((low ? 0.16 : 0.05) * (0.5 + v / 2), t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + (low ? 0.16 : 0.09));
+    o.connect(g); g.connect(kotoCtx.destination); o.start(t); o.stop(t + 0.2);
+  } catch (e) { /* 音が出せない端末 */ }
+}
+// 転がり方のバリエーション（速さと向きで かわる）：
+//   よちよち … ゆっくりのときは 転がらずに、左右に ゆれながら進む（起き上がりこぼしの まま）
+//   ころころ … 横へは でんぐり返って転がる（いままでの転がり方）
+//   くるくる … たて（上・下）へは、立ったまま こまのように回る（顔 → よこ → うしろ姿 → 顔）
+//   ぴょん   … とても速いと、コトンの2回に1回 とびはねる（つくと ぺたっ）
+const WADDLE_V = 1.1, HOP_V = 4.2;   // マス/秒
+// 転がる音（ころころ…）：小さな ざらざらの音を ずっと流し、速さで大きく、地面で音の高さを かえる（道は かるく・草は さらさら・砂は こもる）。音の設定がオフ・画面が かくれているときは 鳴らさない
+const rumble = { g: null, f: null };
+function rumbleTick(v, g) {
+  const ctxA = kotoCtx;
+  if (!ctxA || ctxA.state !== 'running') return;   // コトンを鳴らしたあと（画面をさわったあと）から
+  try {
+    if (!rumble.g) {
+      const buf = ctxA.createBuffer(1, ctxA.sampleRate, ctxA.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctxA.createBufferSource(); src.buffer = buf; src.loop = true;
+      rumble.f = ctxA.createBiquadFilter(); rumble.f.type = 'bandpass'; rumble.f.Q.value = 1.2;
+      rumble.g = ctxA.createGain(); rumble.g.gain.value = 0;
+      src.connect(rumble.f); rumble.f.connect(rumble.g); rumble.g.connect(ctxA.destination); src.start();
+    }
+    let off = document.hidden; try { off = off || localStorage.getItem('nsg_bgm') === 'false'; } catch (e) { /* noop */ }
+    const t = ctxA.currentTime, vol = off || v < 0.3 ? 0 : Math.min(1, (v - 0.3) / 5) * 0.035 * (0.5 + g.snd / 2);
+    rumble.g.gain.setTargetAtTime(vol, t, 0.05);
+    const wx = WX_ROLL[wxKind()];
+    rumble.f.frequency.setTargetAtTime(g.hz * (wx ? wx.hz : 1) * (0.8 + Math.min(v, 6) / 15), t, 0.08);
+  } catch (e) { /* 音が出せない端末 */ }
+}
+// 水に ぽちゃん・線路で ガタン の音（コトンと同じく Web Audio で作る。音の設定がオフなら鳴らさない）
+function sfxCtx() {
+  try {
+    if (localStorage.getItem('nsg_bgm') === 'false' || document.hidden) return null;
+    kotoCtx = kotoCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (kotoCtx.state === 'suspended') kotoCtx.resume();
+    return kotoCtx;
+  } catch (e) { return null; }
+}
+function splashSound(v) {   // ぽちゃん：上がる「ぽ」と、しぶきの ざっ
+  const a = sfxCtx();
+  if (!a) return;
+  try {
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(320, t); o.frequency.exponentialRampToValueAtTime(980, t + 0.09);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09 * (0.5 + v / 2), t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.16);
+    const buf = a.createBuffer(1, Math.floor(a.sampleRate * 0.3), a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3);
+    const n = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+    n.buffer = buf; f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.8; ng.gain.value = 0.07 * (0.5 + v / 2);
+    n.connect(f); f.connect(ng); ng.connect(a.destination); n.start(t + 0.02);
+  } catch (e) { /* noop */ }
+}
+function clackSound(v) {   // ガタン ゴトン：線路の つぎめを 2回
+  const a = sfxCtx();
+  if (!a) return;
+  try {
+    for (const [dt, hz] of [[0, 210], [0.1, 160]]) {
+      const t = a.currentTime + dt, o = a.createOscillator(), g = a.createGain();
+      o.type = 'square'; o.frequency.setValueAtTime(hz, t); o.frequency.exponentialRampToValueAtTime(hz * 0.55, t + 0.06);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.035 * (0.5 + v / 2), t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.08);
+    }
+  } catch (e) { /* noop */ }
+}
+// 話を とじたら、行き先への道（A*）の 少し先へ向けて 押す。お米の となりに しばらく 行き先を指す 矢印
+function npcSendOff() {
+  const s = npcSend; npcSend = null;
+  const g = G.guide;
+  if (!s || !g || rp.x === null) return;
+  const p = toTile(g.lat, g.lng), sx = Math.floor(rp.x), sy = Math.floor(rp.y), gx = Math.floor(p.x), gy = Math.floor(p.y);
+  const avoid = new Set((G.npcs || []).map(n => { const q = npcTile(n); return q.x + ',' + q.y; }));
+  const path = sx === gx && sy === gy ? [] : planPath(sx, sy, gx, gy, BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);
+  const aim = path.length ? path[Math.min(4, path.length - 1)] : [gx, gy];
+  let dx = aim[0] + 0.5 - rp.x, dy = aim[1] + 0.5 - rp.y;
+  const d = Math.hypot(dx, dy);
+  if (d < 0.2) return;
+  dx /= d; dy /= d;
+  rp.vx = dx * 3.4; rp.vy = dy * 3.4;   // ころん と押す
+  roll.sendT = 4; roll.sends++; roll.happyT = 1.4;
+  kotoSound(0.7);
+  npcEmotes.set(s.n.id, { t: performance.now(), k: '♪' });
+  floatText(`→ ${s.name}へ ころころ`);
+}
+function drawSendArrow(hx, hcy, T, u) {   // お米の まわりに 行き先を指す 点の矢印（話で決まってから 4秒）
+  if (roll.sendT <= 0 || !G.guide || !roll.last) return;
+  const p = toTile(G.guide.lat, G.guide.lng), a = Math.atan2(p.y - roll.last.y, p.x - roll.last.x), r = T * 1.5, q = Math.max(1, Math.round(u * 1.6));
+  const cx = hx + Math.cos(a) * r, cy = hcy + Math.sin(a) * r * 1.1;   // hcy：お米の まん中（たて長なので 上下は 少し遠く）
+  ctx.save(); ctx.globalAlpha = Math.min(1, roll.sendT * 1.5); ctx.translate(Math.round(cx), Math.round(cy)); ctx.rotate(Math.round(a / (Math.PI / 4)) * (Math.PI / 4));   // 8方向（点の絵が くずれないように）
+  const rows = ['...o....', '...oo...', 'ooo#oo..', 'o####oo.', 'ooo#oo..', '...oo...', '...o....'];
+  for (let j = 0; j < rows.length; j++) for (let i = 0; i < rows[j].length; i++) {
+    const ch = rows[j][i]; if (ch === '.') continue;
+    ctx.fillStyle = ch === 'o' ? '#1a1a1a' : '#7ee0ff';
+    ctx.fillRect((i - 4) * q, (j - 3) * q, q, q);
+  }
+  ctx.restore();
+}
+// かざり：転がった あとに のこる つぶ（さくら・ほし・にじ…）。1マスに rate こ。落ちる・のぼる・その場・はねる
+function koroTrail(dt, speed) {
+  const tr = koro && koro.trail;
+  if (tr && speed > 0.6 && roll.last) {
+    roll.fxAcc += Math.min(3, speed * dt) * tr.rate * 2.2;
+    while (roll.fxAcc >= 1 && roll.fx.length < 70) {
+      roll.fxAcc -= 1;
+      const r = Math.random, c = tr.cycle ? tr.cols[roll.fxN++ % tr.cols.length] : tr.cols[Math.floor(r() * tr.cols.length)];
+      const p = { x: roll.last.x + (r() - 0.5) * 0.4, y: roll.last.y + (r() - 0.5) * 0.25, t: 0, life: tr.life * (0.8 + r() * 0.4), c, ph: r() * 6.3, z: 0, vz: 0, vx: 0 };
+      if (tr.move === 'fall') { p.z = 0.6 + r() * 0.4; p.vz = -0.35 - r() * 0.2; }
+      else if (tr.move === 'up') { p.z = 0.3 + r() * 0.2; p.vz = 0.5 + r() * 0.4; }
+      else if (tr.move === 'stay') p.z = tr.cycle ? 0.05 : 0.1 + r() * 0.5;
+      else { p.z = 0.35; p.vz = 1.4 + r() * 0.6; p.vx = (r() - 0.5) * 1.6; }
+      roll.fx.push(p);
+    }
+    if (roll.fxAcc > 1) roll.fxAcc = 1;
+  }
+  for (const p of roll.fx) {
+    p.t += dt; p.x += p.vx * dt;
+    if (tr && tr.move === 'bounce') { p.vz -= 6 * dt; p.z += p.vz * dt; if (p.z < 0) { p.z = 0; p.vz = -p.vz * 0.4; p.vx *= 0.6; } }
+    else p.z = Math.max(0, p.z + p.vz * dt);
+  }
+  roll.fx = tr ? roll.fx.filter(p => p.t < p.life) : [];
+}
+function drawKoroTrail(ox, oy, T, u) {
+  const tr = koro && koro.trail;
+  if (!tr || !roll.fx.length) return;
+  const q = Math.max(1, Math.round(u * 1.5)), rows = tr.g, gw = rows[0].length, gh = rows.length;   // 絵の点の 1.5ばいで 描く（小さすぎて 見えないので）
+  for (const p of roll.fx) {
+    const a = Math.min(1, (p.life - p.t) / (p.life * 0.35));
+    const sway = tr.move === 'fall' ? Math.sin(p.t * 4 + p.ph) * 0.12 : tr.move === 'up' ? Math.sin(p.t * 5 + p.ph) * 0.06 : 0;
+    const X = Math.round(ox + (p.x + sway) * T - gw * q / 2), Y = Math.round(oy + p.y * T + T * 0.3 - p.z * T - gh * q / 2);
+    if (tr.name === 'きらきら' && Math.floor(p.t * 10 + p.ph) % 2) continue;   // ちかちか
+    ctx.globalAlpha = Math.max(0, a);
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+      const ch = rows[j][i];
+      if (ch === '.') continue;
+      ctx.fillStyle = ch === '#' ? p.c : ch === 'o' ? (tr.dark || p.c) : '#ffffff';
+      ctx.fillRect(X + i * q, Y + j * q, q, q);
+    }
+  }
+  ctx.globalAlpha = 1;
+}
+function riceSpin(dx, dy, dt) {
+  const d = Math.hypot(dx, dy), v = d / Math.max(dt, 1e-3);
+  riceFeel(dt, v);
+  roll.v += ((d < 3 ? v : 0) - roll.v) * Math.min(1, dt * 8);   // 表情のための速さ（ならす）
+  rumbleTick(roll.v, roll.gnd || GROUND.dirt);
+  if (roll.kind === 'stop') { roll.idle += dt; if (roll.peak > 2.5) roll.happyT = 1.6; roll.peak = 0; }   // 速く転がって止まったら うれしい
+  else { roll.idle = 0; roll.peak = Math.max(roll.peak, roll.v); }
+  if (roll.kind === 'spin') { roll.spinT += dt; if (roll.spinT > 1.2) roll.dizzyT = 1; } else roll.spinT = Math.max(0, roll.spinT - dt * 2);   // くるくるが続くと 目が回る
+  const moving = d > 0.002 && d < 3 && v > 0.15, up = Math.round(roll.ang / (Math.PI * 2)) * Math.PI * 2, R2 = RICE_R * (KP.radius || 1);   // R2：回る半径（転がり方で かわる）
+  let target = up;
+  if (moving && v >= (KP.waddleV || WADDLE_V)) {
+    const vert = KP.spinAlways || (roll.kind === 'spin' ? Math.abs(dy) > Math.abs(dx) * 0.75 : Math.abs(dy) > Math.abs(dx) * 1.35);   // ななめで ころころ・くるくるが 入れかわりつづけないように
+    if (!vert) {   // ころころ
+      const sg = Math.sign(dx), wt = sg * d / R2 / Math.max(dt, 1e-3);   // すべらずに転がるときの 回る速さ
+      const slip = wt - roll.av;   // 回りの いきおいは すぐには かわらない：はね返ったあとは 少しのあいだ 前の向きに回りつづけて、地面で こすれて合っていく（ズザッと 土ぼこり）。とんでいる間は そのまま回る
+      if (roll.h <= 0) roll.av += slip * Math.min(1, dt * 9);
+      roll.ang += roll.av * dt;
+      if (Math.abs(slip) > 8 && roll.h <= 0 && Math.random() < dt * 40) roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: 0.7 + Math.random() * 0.5, vx: -Math.sign(roll.av) * 0.8, c: (roll.gnd || GROUND.dirt).dust });
+      if (roll.h <= 0) roll.kind = 'tumble';
+      if (KP.spinMix) roll.spin += d / R2 * 0.5;   // ねじねじ：ころころしながら ひねる
+      else settleSpin(dt);
+      return;
+    }
+    if (roll.h <= 0) roll.kind = 'spin';   // くるくる（下へは右まわり・上へは左まわりに見える）
+    const wt = (Math.sign(dy) || Math.sign(dx)) * d / R2 * 0.9 / Math.max(dt, 1e-3);
+    if (roll.h <= 0) roll.sv += (wt - roll.sv) * Math.min(1, dt * 14);   // くるくるも 回りの いきおいが残る
+    roll.spin += roll.sv * dt;
+  } else {
+    settleSpin(dt);
+    if (moving) {   // よちよち
+      if (roll.h <= 0) roll.kind = 'waddle';
+      roll.wad += d * 11;
+      target = up + Math.sin(roll.wad) * (KP.sway || 0.3);
+    } else if (roll.h <= 0 && Math.abs(roll.av) < 0.05) roll.kind = 'stop';
+  }
+  roll.av += (target - roll.ang) * 70 * dt;   // いちばん近い「立った」向き（よちよちは ゆれる向き）へ、ばねで もどる
+  roll.av *= Math.pow(0.86, dt * 60);
+  roll.ang += roll.av * dt;
+  if (!moving && Math.abs(up - roll.ang) < 0.002 && Math.abs(roll.av) < 0.01) { roll.ang = up; roll.av = 0; }
+}
+function settleSpin(dt) {   // くるくるを やめたら、こっちを向いて止まる
+  const front = Math.round(roll.spin / (Math.PI * 2)) * Math.PI * 2;
+  roll.sv += (front - roll.spin) * 40 * dt; roll.sv *= Math.pow(0.84, dt * 60);
+  roll.spin += roll.sv * dt;
+  if (Math.abs(front - roll.spin) < 0.002 && Math.abs(roll.sv) < 0.01) { roll.spin = front; roll.sv = 0; }
+}
+function setHeroMarker() {
   const sheet = document.createElement('canvas');
   sheet.width = 64; sheet.height = 32;
   const x = sheet.getContext('2d');
   x.imageSmoothingEnabled = false;
-  heroSprites.down.forEach((c, i) => x.drawImage(c, i * 32, 0, 32, 32));
-  const st = document.createElement('style');
+  if (riceBall.cv) [-0.14, 0.14].forEach((th, i) => drawRiceBall(i * 32 + 16, 17.5, 1, th, 1, 1, 0, x, false));   // ふつうの地図の主人公も お米（丸く見える描き方で、左右に ゆらゆら）
+  else (riceSprites.ready ? [riceSprites.right[0], riceSprites.right[1]] : heroSprites.down).forEach((c, i) => x.drawImage(c, i * 32, 0, 32, 32));
+  const st = heroMarkerStyle;
   st.textContent = `.me,.me.demo{width:32px;height:32px;border:0;border-radius:0;box-shadow:none;background:url(${sheet.toDataURL()}) 0 0/64px 32px no-repeat;image-rendering:pixelated;animation:heroStep .9s steps(1) infinite;filter:drop-shadow(0 2px 1px rgba(0,0,0,.45))}
 @keyframes heroStep{0%{background-position:0 0}50%{background-position:-32px 0}}
 @media (prefers-reduced-motion:reduce){.me{animation:none}}`;
   document.head.appendChild(st);
+}
+setHeroMarker();
+// 歩く地図の人（主人公と西尾の人たち）を、Blender で作った 16×16 の絵（tools/blender/people.py → nishio-go/art/people.png）に。
+// 並びは NPC_COLORS の順に2コマずつ、そのあと主人公の 下・上・横 を2コマずつ（左は横を反転）。読めるまでは上の手描きの絵
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    const cut = (i, flip) => {
+      const c = document.createElement('canvas'); c.width = c.height = 16;
+      const x = c.getContext('2d');
+      if (flip) { x.translate(16, 0); x.scale(-1, 1); }
+      x.drawImage(img, i * 16, 0, 16, 16, 0, 0, 16, 16);
+      return c;
+    };
+    let i = 0;
+    for (const k of Object.keys(NPC_COLORS)) { npcSprites[k] = [cut(i), cut(i + 1)]; i += 2; }
+    for (const d of ['down', 'up', 'right']) { heroSprites[d] = [cut(i), cut(i + 1)]; i += 2; }
+    heroSprites.left = [cut(i - 2, true), cut(i - 1, true)];
+    setHeroMarker();
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/people.png';
 })();
 const spotSprites = {};
 for (const [k, rows] of Object.entries({ ...ART, ...BUILDING_ART })) spotSprites[k] = [sprite(rows), sprite(rows, true)];
 spotSprites.store = spotSprites.shop;
+// 街並みの目印（お店・施設）の絵を、Blender で作った 32×32 の絵（tools/blender/poi.py → nishio-go/art/poi.png）に。読めるまでは上の手描きの絵
+const POI_ORDER = ['townhall', 'hospital', 'school', 'library', 'police', 'fire', 'post', 'shop', 'konbini', 'super', 'home', 'drug', 'fuel', 'bank', 'food', 'cafe', 'station'];
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    POI_ORDER.forEach((k, i) => {
+      const mk = grey => {
+        const c = document.createElement('canvas'); c.width = c.height = 32;
+        const x = c.getContext('2d'); x.drawImage(img, i * 32, 0, 32, 32, 0, 0, 32, 32);
+        if (grey) { const d = x.getImageData(0, 0, 32, 32); for (let j = 0; j < d.data.length; j += 4) { const v = (d.data[j] * 0.3 + d.data[j + 1] * 0.59 + d.data[j + 2] * 0.11) * 0.7 + 60; d.data[j] = d.data[j + 1] = d.data[j + 2] = v; } x.putImageData(d, 0, 0); }
+        return c;
+      };
+      spotSprites[k] = [mk(false), mk(true)];
+    });
+    spotSprites.store = spotSprites.shop;
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/poi.png';
+})();
+// 名所の種類ごとの絵（公園4通り・史跡・展望・名所・アート・海岸・資料館と、注目スポットの型の 鳥居・お寺・城・町）を、
+// Blender で作った 24×24 の絵（tools/blender/spots.py → nishio-go/art/spots.png）に。読めるまでは上の手描きの絵（ふつうの名所は たからばこ）
+const SPOT_ORDER = ['park0', 'park1', 'park2', 'park3', 'historic', 'view', 'sight', 'art', 'beach', 'museum', 'torii', 'temple', 'castle', 'town'];
+(() => {
+  const img = new Image();
+  img.onload = () => {
+    SPOT_ORDER.forEach((k, i) => {
+      const mk = grey => {   // grey：チェックインしたばかり（しばらく休み）の灰色の絵
+        const c = document.createElement('canvas'); c.width = c.height = 24;
+        const x = c.getContext('2d'); x.drawImage(img, i * 24, 0, 24, 24, 0, 0, 24, 24);
+        if (grey) { const d = x.getImageData(0, 0, 24, 24); for (let j = 0; j < d.data.length; j += 4) { const v = (d.data[j] * 0.3 + d.data[j + 1] * 0.59 + d.data[j + 2] * 0.11) * 0.7 + 60; d.data[j] = d.data[j + 1] = d.data[j + 2] = v; } x.putImageData(d, 0, 0); }
+        return c;
+      };
+      spotSprites[k] = [mk(false), mk(true)];
+    });
+    dirty = true;
+  };
+  img.src = 'nishio-go/art/spots.png';
+})();
 // 当店の2店舗は、本物の見た目に近づけた専用の絵（32×32。お店から受け取った外観の写真を見て描いたドット絵）
 //   らいすぴあ・秀幸：赤と白の建物、横の壁に白いどんぶりと「米」のマーク、上に白い看板、右に赤い「米のドライブスルー」の屋根と「ドライブスルー IN」の看板
 //   近藤米穀店（本店）：クリーム色の建物、壁に大きな赤い「米」、1階に「近藤米穀店」の看板とガラス戸・緑のひさし、左に「米のドライブスルー」の屋根
@@ -3721,7 +4977,7 @@ spotSprites.osmN8241972430 = hiCanvas((r, h) => {
   r(5, 30, 2, 6, '#d23a2e'); r(38, 29, 4, 7, '#e8e8e8'); r(39, 30, 2, 3, '#3a6ac0');
   r(0, 36, 48, 6, '#9a9a96'); h(36, 0, 47, '#b8b8b4'); for (let x = 3; x < 48; x += 8) r(x, 39, 5, 1, '#f4f4f4');
 });
-// 名鉄 乙川駅：灰色の小さな駅舎、右に斜めに張り出した屋根、白とオレンジの自動販売機
+// JR 乙川駅（武豊線）：灰色の小さな駅舎、右に斜めに張り出した屋根、白とオレンジの自動販売機
 spotSprites.osmN8241891774 = hiCanvas((r, h) => {
   r(6, 14, 24, 22, '#5a5e64'); h(13, 5, 30, '#3a3e44'); r(9, 17, 7, 8, '#2a2e34'); r(9, 17, 7, 2, '#ffffff'); r(10, 18, 5, 1, '#d23a2e');
   spanRows(h, 10, [[28, 36], [28, 39], [28, 42], [28, 45]], '#c8ccd0'); r(30, 14, 1, 22, '#8a8e94'); r(44, 14, 1, 22, '#8a8e94'); h(14, 28, 46, '#6a6e74');
@@ -3957,6 +5213,110 @@ function genSprite(id) {
   return sp;
 }
 // スポットの絵（専用の絵 → 型の絵 → ふつうの絵）
+// 代表的な名所の特大のドット絵（96×96。tools/blender/giant.py で作った nishio-go/art/giant/）。歩く地図で名所のまわり6×6マスに描く。
+// 読めるまでは、いつもの 48×48 の絵。[ふつう, 再チェックイン待ちの灰色] の canvas にしておく（Godot の記録係は canvas を5つの引数で描く）
+const GIANT_ART = { 'f-nishio-castle': 'nishio-castle', 'f-okazaki-castle': 'okazaki-castle', 'f-iwase-bunko': 'iwase-bunko', 'f-konrenji': 'konrenji',
+  'f-nishio-station': 'nishio-station', 'f-jofukuji': 'daibutsu', 'f-ohirune-house': 'ohirune', 'f-kurokabe': 'kurokabe', 'f-inariyama-chaen': 'chaen' };
+// 当店（らいすぴあ・秀幸）も特大の絵に：運営者が撮った写真から、店・米のドライブスルー・軽トラ・コイン精米所（tools/blender/giant-shop.py）
+GIANT_ART['f-ricepia'] = 'ricepia';
+GIANT_ART['f-kondo-beikoku'] = 'kondo';   // 近藤米穀店（本店）も：運営者の写真から（クリーム色の店・大きな赤い「米」・看板・緑と青の ひさし）。2つの お店は 128×128 で 細かく
+// となりの市町（岡崎・安城・碧南・高浜・幸田・蒲郡）の注目スポット65か所も、1か所ずつ手で形を作った特大の絵（tools/blender/giant-neighbors.py。絵の名前は spots.json の id）
+[
+  'okazaki-daijuji', 'okazaki-kakukyu', 'okazaki-maruya', 'okazaki-iga-hachimangu', 'okazaki-takisanji', 'okazaki-iwazu-tenmangu',
+  'okazaki-rokusho-jinja', 'okazaki-okudono-jinya', 'okazaki-higashi-park', 'okazaki-honda-tei', 'okazaki-minami-park', 'okazaki-museum',
+  'okazaki-higashi-okazaki-sta', 'okazaki-okazaki-sta', 'okazaki-shooji', 'okazaki-hozoji', 'okazaki-fujikawa-shuku', 'okazaki-kuragari',
+  'okazaki-hongusan', 'anjo-denpark', 'anjo-jozanen', 'anjo-honshoji', 'anjo-castle', 'anjo-museum', 'anjo-horiuchi-park', 'anjo-park',
+  'anjo-futago-kofun', 'anjo-himeogawa-kofun', 'anjo-station', 'anjo-mikawa-anjo-station', 'anjo-minami-anjo-station', 'anjo-cityhall',
+  'hekinan-aquarium', 'hekinan-rinkai-park', 'hekinan-akashi-park', 'hekinan-shomyoji', 'hekinan-kaitokuji', 'hekinan-kokonoe-mirin',
+  'hekinan-fujii-museum', 'hekinan-kumano', 'hekinan-mugaen', 'hekinan-oninji', 'hekinan-station', 'hekinan-chuo-station', 'hekinan-cityhall',
+  'takahama-kawara-museum', 'takahama-minato-station', 'takahama-kasuga', 'takahama-oyama', 'takahama-mikawa-takahama-station',
+  'takahama-yoshihama-station', 'takahama-cityhall', 'kota-honkoji', 'kota-kyodo-shiryokan', 'kota-bunka-hiroba', 'kota-michinoeki', 'kota-hishiike',
+  'kota-happiness-hill', 'kota-townhall', 'kota-station', 'kota-sangane-station', 'kota-aimi-station', 'gamagori-takeshima', 'gamagori-aquarium',
+  'gamagori-station',
+].forEach(n => { GIANT_ART['f-' + n] = n; });
+// 西尾市の注目スポットも、1か所ずつ手で形を作った特大の絵に（tools/blender/giant-nishio.py。絵の名前は spots.json の id）
+[
+  'konoe-tei', 'shokoso', 'ibun-jinja', 'kozenji', 'kumaku-jinja', 'yatsuomote', 'wakuwaku',
+  'jissoji', 'choenji', 'glass-museum', 'yojuji', 'terazu-hachiman', 'michinoeki-okanoyama', 'nishio-cityhall',
+  'hirabara-taki', 'kojuin', 'isshiki-sakana', 'isshiki-port', 'isshiki-suwa', 'ankyuji', 'isshiki-manabi',
+  'sakushima-nishi', 'sakushima-higashi', 'suunji', 'kamome-parking', 'oura-beach', 'yatsurugi', 'kezoji',
+  'kogane-zutsumi', 'tojo-jo', 'gentokuji', 'ozaki-shiro',
+  'kira-yoshida', 'shohoji-kofun', 'shio-no-sato', 'kira-onsen', 'kira-waikiki', 'hazu-jinja', 'nishi-hazu',
+  'terabe-jo', 'higashi-hazu', 'myozenji', 'kodomonokuni-st', 'aichi-kodomo', 'toba-shinmei', 'antaiji',
+  'fukusenji', 'genkuin', 'kasuya-tei', 'kaminagara-shinmei', 'shozanji', 'sairinji', 'tenjiku-jinja',
+  'semon-jinja', 'kagakuji', 'ennyuji', 'shorakuji',
+  'nishio-shiryokan', 'seiganji', 'ikimono-sato', 'atsuike-hachiman', 'koromozaki', 'benten-salon', 'tombolo',
+  'sangane-kannon', 'jomyoji', 'anakobo', 'munosato', 'nakahata-hachiman', 'takakura-jinja', 'toteiyama',
+  'saifukuji', 'ebisu-beach', 'terabe-beach',
+].forEach(n => { GIANT_ART['f-' + n] = n; });
+// のこりの注目スポット（となりの市町）も手で形を作った特大の絵に（tools/blender/giant-osm.py）。
+// そこで手で作った OpenStreetMap の名所は、前の型の絵と同じ名前（<id>.png）に上書きしてあるので、下の list.json のまま描く
+['hekinan-saihoji', 'hekinan-aoi-park', 'takahama-ningyo-koji'].forEach(n => { GIANT_ART['f-' + n] = n; });
+// ほかの名所（約1000か所）は、型で作った特大の絵（tools/blender/giant-gen.py。nishio-go/art/giant/<id>.png、一覧は list.json）
+let giantIds = null;
+fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });
+const giants = {};
+// 特大の絵の大きさ（マス）：まわりに特大の絵のスポットがなければ6マス、近くにあれば 4.5マス・3マスに小さくする
+// （同じ境内の碑と本堂のように20mほどしか離れていない所で、絵が重なって道や家並みを隠さないように）
+let giantSize = null, giantSizeKey = '';
+function giantTiles(s) {
+  const spots = G.spots || [];
+  const ver = (G.spotsVersion || 0) + ':' + spots.length + ':' + (giantIds ? giantIds.size : 0);   // スポットの一覧を入れ替えたら（同じ件数でも）数え直す
+  if (!giantSize || giantSizeKey !== ver) {
+    giantSizeKey = ver;
+    giantSize = new Map();
+    const pts = spots.filter(x => GIANT_ART[x.id] || (giantIds && giantIds.has(x.id))).map(x => { const q = toTile(x.lat, x.lng); return [x.id, q.x, q.y]; });
+    const cell = new Map(), key = (x, y) => Math.floor(x / 8) + ',' + Math.floor(y / 8);
+    for (const p of pts) { const k = key(p[1], p[2]); if (!cell.has(k)) cell.set(k, []); cell.get(k).push(p); }
+    for (const p of pts) {
+      let d = Infinity;
+      const cx = Math.floor(p[1] / 8), cy = Math.floor(p[2] / 8);
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) for (const q of cell.get((cx + i) + ',' + (cy + j)) || []) if (q !== p) d = Math.min(d, Math.hypot(q[1] - p[1], q[2] - p[2]));
+      giantSize.set(p[0], d >= 6 ? 6 : d >= 4.5 ? 4.5 : 3);
+    }
+  }
+  return giantSize.get(s.id) || 6;
+}
+// 特大の絵（読めていなければ null）。load が false なら読みはじめない（タップの判定など、画面の外の名所にも使うとき）
+// 西尾の四季ドット絵（tools/blender/giant-pr.py → nishio-go/art/pr/）がある名所は、いまの季節（mapSeason）と時間帯（日本時間）の絵にする（いつもの左前の向き）
+let prIds = null;
+fetch('nishio-go/art/pr/list.json').then(r => (r.ok ? r.json() : null)).then(j => { prIds = new Set(((j && j.items) || []).filter(x => x.views.includes(0)).map(x => x.id)); dirty = true; }).catch(() => { prIds = new Set(); });
+const prTime = () => { const hr = new Date(Date.now() + 9 * 3600000).getUTCHours(); return hr >= 5 && hr < 10 ? 0 : hr >= 10 && hr < 16 ? 1 : hr >= 16 && hr < 19 ? 2 : 3; };
+function giantOf(s, load = true) {
+  if (prIds && prIds.has(s.id)) return giantImg(`../pr/${s.id}/0-${mapSeason()}-${prTime()}`, load);
+  const n = GIANT_ART[s.id] || (giantIds && giantIds.has(s.id) ? s.id : null);
+  return n ? giantImg(n, load) : null;
+}
+function giantImg(n, load = true) {   // nishio-go/art/giant/<n>.png を [ふつう, 灰色] の canvas に
+  if (!giants[n]) {
+    if (!load) return null;
+    giants[n] = 'loading';
+    const img = new Image();
+    img.onload = () => {
+      const mk = grey => { const c = document.createElement('canvas'); c.width = img.width; c.height = img.height; const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+        if (grey) { const d = x.getImageData(0, 0, c.width, c.height); for (let i = 0; i < d.data.length; i += 4) { const v = (d.data[i] * 0.3 + d.data[i + 1] * 0.59 + d.data[i + 2] * 0.11) * 0.7 + 60; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; } x.putImageData(d, 0, 0); }
+        return c; };
+      giants[n] = [mk(false), mk(true)]; dirty = true;
+    };
+    img.onerror = () => { setTimeout(() => { delete giants[n]; }, 15000); };   // 読めなかったら15秒後に読みなおす
+    img.src = `nishio-go/art/giant/${n}.png`;
+  }
+  return giants[n] === 'loading' ? null : giants[n];
+}
+// 街の主な建物（学校・病院・交番や警察署・消防署・郵便局・役所・図書館）500か所の特大の絵（tools/blender/giant-poi-list.py・giant-gen.py --poi）。
+// 一覧 nishio-go/art/giant/poi.json は [id, 種類, 名前, マスx, マスy]。目印（区画データの p）と、種類と名前が同じで3マス以内のものに描く
+const giantPois = new Map();   // '種類|名前' → [[id, x, y], …]
+fetch('nishio-go/art/giant/poi.json').then(r => (r.ok ? r.json() : null)).then(j => {
+  for (const [id, kind, name, x, y] of (j && j.items) || []) { const k = kind + '|' + name; if (!giantPois.has(k)) giantPois.set(k, []); giantPois.get(k).push([id, x, y]); }
+  poiCache.key = ''; dirty = true;
+}).catch(() => { /* 特大の絵なしで続ける */ });
+function giantPoiOf(p) {   // その目印の特大の絵の id（なければ ''）。目印ごとに覚えておく
+  if (p.g === undefined && giantPois.size) {
+    const c = (giantPois.get(p[2] + '|' + p[3]) || []).find(q => Math.abs(q[1] - p[0]) < 3 && Math.abs(q[2] - p[1]) < 3);
+    p.g = c ? c[0] : '';
+  }
+  return p.g || '';
+}
 const spriteOf = s => (!LANDMARK_ART[s.id] && !s.featured && GEN[s.id] && genSprite(s.id)) || spotSprites[spotArt(s)];
 
 function spotArt(s) {
@@ -3971,17 +5331,104 @@ function spotArt(s) {
   if (kind === 'library') return 'library';
   if (kind === 'shrine') return 'torii';
   if (kind === 'temple' || kind === 'worship') return 'temple';
-  return s.featured ? 'town' : 'chest';
+  if (s.featured) return 'town';
+  // ふつうの名所は種類ごとの絵（公園は id で4通り）。Blender の絵が読めるまでは たからばこ
+  let k = SPOT_KIND[kind] || 'sight';
+  if (k === 'park') {   // 毎フレーム呼ばれるので、どの公園の絵かは名所に覚えておく
+    if (s.pk === undefined) { let h = 0; for (const ch of s.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0; s.pk = h % 4; }
+    k = 'park' + s.pk;
+  }
+  return spotSprites[k] ? k : 'chest';
 }
+const SPOT_KIND = { park: 'park', historic: 'historic', view: 'view', sight: 'sight', art: 'art', beach: 'beach', museum: 'museum' };
+// 特大の絵（96×96）は6マスで描く（ドットの細かさをマスとそろえる）。となりの名所と6マスあかない所は、ふつうの絵にする（小さく縮めて描かない）
+const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null);
+// 名所の絵の大きさ：絵の細かさのまま（特大の絵は6マス・専用の絵は3マス・型の絵は1.5マス）。当店（32×32 の絵）だけは ちょうど2倍の4マスで、遠くからも見つけやすく
+// 当店の特大の絵（128×128）は、地図と同じ点の細かさ（1点＝マスの 1/16）で 8×8 マス。ほかの名所の特大の絵（6マス）より大きい。
+// 倍にすると 点が地図の1.5〜2倍に粗くなり（細かく作りこんだのが見えない）、12〜16 マスで画面を ほぼ おおってしまう。読めるまでの 48×48 の絵は 倍の 6 マス
+const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop && spr[0].width <= 48 ? 2 : 1);
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
 // 歩く地図を Godot で描くとき（せってい の試作。nishio-go/godot-field.js）は、描く命令を ctx の代わりの記録係に書いて Godot に渡す
 let ctx = ctx0, rec = null;
-let active = false, raf = 0, dirty = true, scale = 2;
+// ドットの細かさ：ポケモン赤・緑（ゲームボーイの画面 160×144 ドット）と同じに。画面の横に約160ドット（10マス）が入る大きさを、
+// 1ドット＝画面の点のちょうど整数こ にして、どのマスも人も建物も同じ大きさのドットで描く。scale は 🔍 の大きさ（2 がポケモンと同じ・1 は半分・3 は1.5倍・4 は2倍）
+function fieldT(dpr) {
+  const cw = cv.clientWidth || 390, ch = cv.clientHeight || 780;
+  return 16 * Math.max(1, Math.round(Math.min(cw / 160, ch / 144) * dpr * curScale() / 2));
+}
+// 絵を描く大きさ：絵の1点が、マスの1ドットと同じ大きさになるように（16×16 の絵は1マス、24×24 は1.5マス、48×48 は3マス、96×96 は6マス）
+const dotSize = (img, T) => img.width * T / 16;
+// ポケモン赤・緑（ゲームボーイ）の4色：歩く地図を 白・うす・こい・黒 の4つの色（緑がかったゲームボーイの画面の色）だけで描く。
+// せってい「ゲームボーイの4色」で切りかえ（はじめはオフ＝色つき）。絵は はじめて描くときに4色に直してとっておき、塗る色も4色のどれかにする
+const GB_COLS = ['#e0f8d0', '#88c070', '#346856', '#081820'];
+const GB_RGB = GB_COLS.map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
+let gbOn = false;
+try { gbOn = localStorage.getItem('nsg_gb') === '1'; } catch (e) { /* 既定 */ }
+const gbLum = (r, g, b) => (0.3 * r + 0.59 * g + 0.11 * b) / 255;
+const gbAbs = L => (L > 0.62 ? 0 : L > 0.42 ? 1 : L > 0.2 ? 2 : 3);   // 塗る色：明るさで4つに
+const gbSpr = L => (L > 0.8 ? 0 : L > 0.55 ? 1 : L > 0.25 ? 2 : 3);    // 人・建物の絵：ポケモンの人のように 顔は白・服や髪は こい色 になるよう、暗めに分ける
+const gbCache = new WeakMap();
+function gbOf(src) {
+  const hit = gbCache.get(src);
+  if (hit) return hit;
+  const w = src.width, h = src.height;
+  if (!w || !h || (src.complete === false)) return src;   // まだ読めていない絵
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.drawImage(src, 0, 0);
+  const d = x.getImageData(0, 0, w, h), p = d.data, cnt = new Map();
+  let opaque = 0, bg = 0, most = 0;
+  for (let i = 0; i < p.length; i += 4) if (p[i + 3] > 128) { const k = p[i] << 16 | p[i + 1] << 8 | p[i + 2], n = (cnt.get(k) || 0) + 1; cnt.set(k, n); opaque++; if (n > most) { most = n; bg = k; } }
+  // マスの絵（すきまのない絵）は、いちばん多い色（地面）を ゲームボーイの地面の色に：たいていは白、水はうす、森はこい。ほかの色は地面より暗いか明るいかで決める
+  const br = bg >> 16, bgg = bg >> 8 & 255, bb = bg & 255, bgL = gbLum(br, bgg, bb);
+  const base = opaque < w * h ? -1 : bb > br + 30 && bb >= bgg ? 1 : bgL >= 0.42 ? 0 : bgL >= 0.25 ? 1 : 2;
+  const memo = new Map();
+  for (let i = 0; i < p.length; i += 4) {
+    if (!p[i + 3]) continue;
+    const k = p[i] << 16 | p[i + 1] << 8 | p[i + 2];
+    let sh = memo.get(k);
+    if (sh === undefined) {
+      const L = gbLum(p[i], p[i + 1], p[i + 2]), dl = L - bgL;
+      sh = L < 0.16 ? 3 : base < 0 ? gbSpr(L) : Math.max(0, Math.min(3, base + (dl < -0.3 ? 2 : dl < -0.07 ? 1 : dl > 0.1 ? -1 : 0)));
+      memo.set(k, sh);
+    }
+    [p[i], p[i + 1], p[i + 2]] = GB_RGB[sh];
+  }
+  x.putImageData(d, 0, 0);
+  gbCache.set(src, c);
+  return c;
+}
+const gbColor = (() => {   // 塗る色（'#xxxxxx'・'rgba(…)' など）→ 4色のどれか（すきとおりはそのまま）
+  const memo = new Map(), sc = document.createElement('canvas').getContext('2d');
+  return v => {
+    let r = memo.get(v);
+    if (r) return r;
+    sc.fillStyle = '#000'; sc.fillStyle = v;
+    const n = sc.fillStyle, m = n.match(/^#(..)(..)(..)$/), a = n.match(/rgba?\((\d+), (\d+), (\d+)(?:, ([\d.]+))?\)/);
+    const rgb = m ? m.slice(1).map(t => parseInt(t, 16)) : a ? a.slice(1, 4).map(Number) : null;
+    if (!rgb) return v;
+    const g = GB_RGB[gbAbs(gbLum(...rgb))], al = a && a[4] !== undefined ? +a[4] : 1;
+    r = al < 1 ? `rgba(${g.join(',')},${al})` : GB_COLS[GB_RGB.indexOf(g)];
+    memo.set(v, r);
+    return r;
+  };
+})();
+let gbPause = 0;   // 0 でないあいだは4色にしない（当店の建物と看板は、4色の画面の中で ただ1つ色のまま目立たせる）
+{   // 歩く地図の canvas に描く絵と色を、4色に（せかいちずは そのまま）
+  const gbField = () => gbOn && !worldMode && !gbPause;
+  const draw0 = ctx0.drawImage;
+  ctx0.drawImage = function (src, ...a) { return draw0.call(this, gbField() && src.width <= 512 ? gbOf(src) : src, ...a); };
+  for (const prop of ['fillStyle', 'strokeStyle']) {
+    const pd = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, prop);
+    Object.defineProperty(ctx0, prop, { get() { return pd.get.call(this); }, set(v) { pd.set.call(this, gbField() && typeof v === 'string' ? gbColor(v) : v); } });
+  }
+}
+let active = false, raf = 0, dirty = true, scale = 2, mzScale = 1;   // mzScale：めいろの ときの 大きさ（はじめは いちばん小さく：先の 道まで 見える）
 const floaters = [];   // 浮かぶ文字 { t, at }
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
 let cover = 0, fieldCy = 0;
+const tapS = { path: [], timer: null, goal: null };   // タップした所へ歩く道すじ（下の tapWalk）
 function updateCover() {
   const sh = $('sheet'), cr = cv.getBoundingClientRect(), sr = sh ? sh.getBoundingClientRect() : null;
   cover = sr && sr.height ? Math.max(0, Math.min(cr.height * 0.6, cr.bottom - sr.top)) : 0;
@@ -4014,9 +5461,133 @@ function drawWeather(now, w, h, dpr, shadeOnly) {
   if (wx.kind === 'rain') ctx.stroke();
   ctx.restore();
 }
+// 奥行き：お米の足もと（footY）が 特大の絵の地面より奥（画面の上）にあって 重なっているときは、その絵を お米の まわりだけ描きなおして かくし、
+// かくれた お米は うすく すけて見せる（建物の うしろを通っても 見うしなわない）。前は いつも絵の上に描いていたので、屋根に のっているように見えた
+function occludeRice(hx, by, footY, u, again) {
+  const r = 17 * u, box = [hx - r, by - r, hx + r, by + r];
+  let hid = false;
+  for (const [img, x, y, size, gy, shop] of depthArt) {
+    if (footY >= gy - u * 4 || box[2] < x || box[0] > x + size || box[3] < y || box[1] > y + size) continue;
+    ctx.save(); ctx.beginPath(); ctx.rect(Math.floor(box[0]), Math.floor(box[1]), Math.ceil(2 * r) + 1, Math.ceil(2 * r) + 1); ctx.clip();
+    if (shop) gbPause++;
+    ctx.drawImage(img, x, y, size, size);
+    if (shop) gbPause--;
+    ctx.restore();
+    hid = true;
+  }
+  if (!hid) return false;
+  ctx.globalAlpha = 0.5; again(); ctx.globalAlpha = 1;
+  return true;
+}
 function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
+/* ---------- 町を走る乗り物（Blender の絵：tools/blender/maptiles.py → nishio-go/maptiles/vehicles.png） ----------
+   線路には赤い電車（4両）、道には乗用車、ひろい水の上には漁船。見えている所のまわり（画面の外）に出して、マスに沿って走らせる。
+   ただの景色なので、主人公や名所とはぶつからない。進む向きは trafficTurn（これまでの向きに近い向き・まっすぐ・その先も続く道を好む）。
+   行き止まりでは引き返す。動きをへらす設定（prefers-reduced-motion）のときは出さない */
+const VDIRS = [[0, -1], [1, 0], [0, 1], [-1, 0]];   // 0 上・1 右・2 下・3 左
+const openWater = (x, y) => { for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (codeAt(x + dx, y + dy) !== C.A) return false; return true; };
+const isRoad = c => c === C.R || c === C.H;
+// 踏切：線路のマスは道に上書きされて切れているので、線路のすぐそばの道のマスは電車も通れる（線路のマスを好む）
+const railOrCrossing = (x, y) => {
+  const c = codeAt(x, y);
+  if (c === C.L) return true;
+  if (!isRoad(c)) return false;
+  for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (codeAt(x + dx, y + dy) === C.L) return true;
+  return false;
+};
+const TRAFFIC = {   // ok：走れるマス、home：とくに好むマス、spawn：出してよいマス
+  train: { ok: railOrCrossing, home: (x, y) => codeAt(x, y) === C.L, max: 1, speed: 3.2, cars: 4, spawn: (x, y) => codeAt(x, y) === C.L },
+  car: { ok: (x, y) => isRoad(codeAt(x, y)), max: 6, speed: 2.2, cars: 1, spawn: () => true },
+  boat: { ok: (x, y) => codeAt(x, y) === C.A, max: 3, speed: 0.8, cars: 1, spawn: openWater },
+};
+const calmMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+let traffic = [], trafficSpawnT = 0;
+function trafficTurn(v, x, y) {   // (x, y) に着いたとき、次に進む向き（進めなければ -1）
+  // これまで進んできた向きの平均（heading）に近い向きを選ぶ。ななめの線路や道（マスの階段）でも行ったり来たりしない。
+  // まっすぐ・その先も続く道を少し好み、ゆらぎ（R）で ときどき曲がる。heading と逆の向きは、ほかに行けないときだけ
+  const K = TRAFFIC[v.kind], ok = d => K.ok(x + VDIRS[d][0], y + VDIRS[d][1]);
+  const far = d => K.ok(x + VDIRS[d][0] * 2, y + VDIRS[d][1] * 2), home = d => (K.home ? K.home(x + VDIRS[d][0], y + VDIRS[d][1]) : false);
+  let hx = VDIRS[v.dir][0], hy = VDIRS[v.dir][1];
+  for (const p of v.path.slice(0, 6)) { hx += VDIRS[p.d][0]; hy += VDIRS[p.d][1]; }
+  const hl = Math.hypot(hx, hy) || 1, dot = d => (VDIRS[d][0] * hx + VDIRS[d][1] * hy) / hl;
+  const back = (v.dir + 2) % 4, R = v.kind === 'train' ? 0.4 : 2;
+  let cand = [0, 1, 2, 3].filter(d => d !== back && ok(d));
+  if (!cand.length && v.kind !== 'boat') {
+    // 1マスはばの線路や道がマスの角でななめにつながっている所（上下左右にはつながっていない）：角のマスを1つ通って、ななめ先へ渡る（電車と車だけ。船は陸を渡らない）。
+    // まっすぐの先がふさがっていて左右ななめ前に道があるか、横のマスの前に道があるとき、そのマスへ（次のマスで道に曲がる）
+    const at = (d, e) => K.ok(x + VDIRS[d][0] + VDIRS[e][0], y + VDIRS[d][1] + VDIRS[e][1]), sides = [(v.dir + 1) % 4, (v.dir + 3) % 4];
+    cand = [v.dir, ...sides].filter(d => !ok(d) && (d === v.dir ? sides.some(e => at(d, e)) : at(d, v.dir)));
+  }
+  if (cand.some(d => dot(d) >= -0.3)) cand = cand.filter(d => dot(d) >= -0.3);
+  if (!cand.length) return ok(back) ? back : -1;
+  let best = -1, bs = -Infinity;
+  for (const d of cand) {
+    const sc = dot(d) + (d === v.dir ? 0.3 : 0) + (far(d) ? 0.4 : 0) + (home(d) ? 1 : 0) + Math.random() * R;
+    if (sc > bs) { bs = sc; best = d; }
+  }
+  return best;
+}
+function spawnVehicle(kind, x, y) {
+  const K = TRAFFIC[kind], ok = K.ok;
+  const dirs = [0, 1, 2, 3].filter(d => ok(x + VDIRS[d][0], y + VDIRS[d][1]));
+  if (!dirs.length) return;
+  // path：いる場所のマスの列（先頭から）。d はそのマスへ入ってきた向き。うしろの車両は、うしろのマスにならべる
+  const path = [{ x, y, d: dirs[Math.floor(Math.random() * dirs.length)] }];
+  for (let i = 1; i < K.cars + 4; i++) {
+    const p = path[i - 1], back = (p.d + 2) % 4;
+    const nd = [back, (back + 1) % 4, (back + 3) % 4].find(d => ok(p.x + VDIRS[d][0], p.y + VDIRS[d][1]) && !path.some(q => q.x === p.x + VDIRS[d][0] && q.y === p.y + VDIRS[d][1]));
+    if (nd === undefined) { path.push({ ...p }); continue; }
+    path.push({ x: p.x + VDIRS[nd][0], y: p.y + VDIRS[nd][1], d: (nd + 2) % 4 });
+  }
+  traffic.push({ kind, path, dir: path[0].d, t: Math.random(), color: Math.floor(Math.random() * 5) });
+}
+function updateTraffic(dt, now, tx0, ty0, tx1, ty1) {
+  if (calmMotion || !MT.veh) { traffic = []; return; }
+  const M = 8;   // 画面の外のふち（このはばの中に出し、もっと外へ出たら消す）
+  traffic = traffic.filter(v => {
+    v.t += dt * TRAFFIC[v.kind].speed;
+    while (v.t >= 1) {
+      v.t -= 1;
+      const h = v.path[0], x = h.x + VDIRS[v.dir][0], y = h.y + VDIRS[v.dir][1];
+      v.path.unshift({ x, y, d: v.dir }); v.path.length = TRAFFIC[v.kind].cars + 4;
+      v.dir = trafficTurn(v, x, y);
+      if (v.dir < 0) return false;
+    }
+    const h = v.path[0];
+    return h.x > tx0 - M - 4 && h.x < tx1 + M + 4 && h.y > ty0 - M - 4 && h.y < ty1 + M + 4;
+  });
+  if (now - trafficSpawnT < 400) return;
+  trafficSpawnT = now;
+  for (const kind of Object.keys(TRAFFIC)) {
+    if (traffic.filter(v => v.kind === kind).length >= TRAFFIC[kind].max) continue;
+    for (let k = 0; k < 20; k++) {   // 画面の外のふちから、乗り物が走れるマスをさがす
+      const x = tx0 - M + Math.floor(Math.random() * (tx1 - tx0 + M * 2)), y = ty0 - M + Math.floor(Math.random() * (ty1 - ty0 + M * 2));
+      if (x >= tx0 - 1 && x <= tx1 && y >= ty0 - 1 && y <= ty1) continue;
+      if (TRAFFIC[kind].ok(x, y) && TRAFFIC[kind].spawn(x, y)) { spawnVehicle(kind, x, y); break; }
+    }
+  }
+}
+function drawTraffic(ox, oy, T, w, h) {
+  for (const v of traffic) {
+    const n = TRAFFIC[v.kind].cars, seg = j => (j === 0 ? v.dir : v.path[j - 1].d);
+    for (let k = n - 1; k >= 0; k--) {
+      const p = v.path[k], d = seg(k);
+      // 絵の向きは近くの4マスで多い向き（ななめの線路や道の階段で、1マスごとに向きがぱたぱた変わらないように）
+      const cnt = [0, 0, 0, 0];
+      for (let j = Math.max(0, k - 1); j <= k + 2; j++) cnt[seg(j)]++;
+      const face = cnt[d] >= Math.max(...cnt) ? d : cnt.indexOf(Math.max(...cnt));
+      const X = Math.round(ox + (p.x + VDIRS[d][0] * v.t) * T), Y = Math.round(oy + (p.y + VDIRS[d][1] * v.t) * T);
+      if (X > w || Y > h || X + T < 0 || Y + T < 0) continue;
+      const spr = v.kind === 'train' ? MT.veh.train[k === 0 ? 0 : 1] : v.kind === 'car' ? MT.veh.car[v.color] : MT.veh.boat;
+      ctx.drawImage(spr[face], X, Y, T, T);
+    }
+  }
+}
+
 let cam = null, last = null, facing = 'down', lastT = 0, lastEnsure = 0;
-try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); } catch (e) { /* 既定 */ }
+const camLead = { x: 0, y: 0 };   // 転がしているときに 少し先を見る分（マス）
+let heroScr = { x: 0, y: 0 };   // お米の画面での位置（まん中から どれだけ ずれているか。夜の明かり・札に使う）
+try { scale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_px_scale') || 2)); mzScale = Math.min(4, Math.max(1, +localStorage.getItem('nsg_mz_scale') || 1)); } catch (e) { /* 既定 */ }
 
 function targetTile() {
   const me = G.me;
@@ -4030,21 +5601,88 @@ function ensureVisible(w, h, T) {
     for (let cx = Math.floor((c.x - mx) / CHUNK); cx <= Math.floor((c.x + mx) / CHUNK); cx++) ensureChunk(cx, cy);
 }
 
+// 1マスを描く（地形の絵・道のつながり・建物の壁・かざり・高さの影・足あと）。歩く地図（frame）と、めいろ（meiro.js の paintRegion）で使う
+function drawTile(tx, ty, X, Y, T, f, now) {
+  const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
+  let shoreAt = null;
+  const v = tileVarAt(code, tx, ty);
+  if (code === C.L && MT.rail) {   // 線路は つながる向きの絵（縦・横・ななめ・分かれ道）。1枚にない形は部品を重ねる
+    const ri = railIndex(tx, ty);
+    if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
+    else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
+  }
+  else if (MT.road && ROAD_ROW[code] !== undefined) {   // 道は つながる向きの絵（ふちに縁石・白線・草）。踏切ではレールを重ねる
+    const [ri, kado, xr, rankan] = nbrLook(tx, ty, roadLookOf);
+    ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+    if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);   // 交差点・曲がり角の内がわの縁石
+    if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+    if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);   // 水と接する辺に橋の欄干
+  }
+  else if (code === C.A && MT.shore && (shoreAt = nbrLook(tx, ty, shoreIndex))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
+  else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
+  if (code === C.B) drawWall(tx, ty, X, Y, T);
+  else drawDeco(code, tx, ty, X, Y, T, now);
+  if (sh !== 2 && !gbOn) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }   // 土地の高さの影（ゲームボーイの4色では つけない）
+  if (TRAIL.map.size && trailHas(tx, ty)) drawFoot(code, tx, ty, X, Y, T);   // 歩いた道の足あと
+  if (code === C.R && !regionPaint && alleyHint(tx, ty)) drawAlleyHint(X, Y, T, now);   // まだ しらべていない 路地の行き止まり（めいろの 盤には 描かない）
+  if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
+    const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
+    const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);
+    ctx.fillStyle = '#f4f4f0';
+    if (!MT.road) {   // 白線は road.png に描いてある（読めるまでは ここで描く）
+      if (!road(up)) ctx.fillRect(X, Y + u, T, u);
+      if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
+      if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
+      if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
+    }
+    // 黄色の線は、道の縁が同じ向きに3マス以上続くところだけ（2マス幅の道の端や、ななめの道の段差に横向きの線を引かない）
+    ctx.fillStyle = '#f2c230';
+    if (!road(up) && dn === C.H && hEdgeRun(tx, ty, 1, 0, road) >= 3) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }
+    if (!road(lf) && rt === C.H && hEdgeRun(tx, ty, 0, 1, road) >= 3) { ctx.fillRect(X + T - u, Y + u * 2, u, u * 4); ctx.fillRect(X + T - u, Y + u * 10, u, u * 4); }
+  }
+  if (code === C.A && !shoreAt) {          // 岸に白い波打ち際（水べの絵が読めるまで）
+    const u = Math.max(1, Math.round(T / 16)), land = c => c !== C.A && c !== C.X;
+    ctx.fillStyle = f ? '#e8f2ff' : '#cfe2ff';
+    if (land(codeAt(tx, ty - 1))) ctx.fillRect(X, Y, T, u);
+    if (land(codeAt(tx, ty + 1))) ctx.fillRect(X, Y + T - u, T, u);
+    if (land(codeAt(tx - 1, ty))) ctx.fillRect(X, Y, u, T);
+    if (land(codeAt(tx + 1, ty))) ctx.fillRect(X + T - u, Y, u, T);
+  }
+}
+// めいろ（meiro.js）の盤：マス (tx0, ty0) から tw×th マスを、dst に 1マス T 点で描く（夜・天気・人は描かない）
+let regionPaint = false;   // paintRegion（めいろの 盤）を 描いている あいだ
+function paintRegion(dst, tx0, ty0, tw, th, T) {
+  const keep = ctx, now = performance.now();
+  ctx = dst; regionPaint = true;
+  try {
+    ctx.imageSmoothingEnabled = false;
+    for (let ty = ty0; ty < ty0 + th; ty++) for (let tx = tx0; tx < tx0 + tw; tx++) drawTile(tx, ty, (tx - tx0) * T, (ty - ty0) * T, T, 0, now);
+    drawWaterCorners(tx0, ty0, tx0 + tw, ty0 + th, -tx0 * T, -ty0 * T, T, 0);
+    drawContours(tx0, ty0, tx0 + tw, ty0 + th, -tx0 * T, -ty0 * T, T);   // 本当の高低差の 等高線（標高が 読めていれば）
+  } finally { ctx = keep; regionPaint = false; }
+}
+let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
 function frame(now) {
   if (!active) return;
   raf = requestAnimationFrame(frame);
+  if (meiroPause) { lastT = 0; return; }
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
   if (!w || !h) return;
   if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; dirty = true; }
   shopHits = [];
+  giantHits = [];
+  poiHits = [];
+  depthArt.length = 0;
   refreshSeason(now);
+  trailLoad();   // あしあとの記録（あるいて移動／操作して移動・版で別）
   if (rec) { rec.end(); rec = null; ctx = ctx0; }
   if (worldMode) { if (window.NSG_GODOT) NSG_GODOT.idle(); drawWorld(now, w, h, dpr); return; }
   rec = window.NSG_GODOT && NSG_GODOT.on() ? NSG_GODOT.rec : null;   // Godot で描く：ここから frame の終わりまで、描く命令を記録する
   if (rec) { ctx = rec; rec.begin(w, h); }
-  const T = Math.round(16 * scale * dpr);
+  const T = fieldT(dpr);
   const dt = Math.min(0.1, (now - (lastT || now)) / 1000);
+  koro = window.NISHIO_KOROSTYLE ? window.NISHIO_KOROSTYLE.current() : null; KP = koro ? koro.motion.p : {};   // いまの転がり方
   lastT = now;
 
   // カメラ（＝主人公）を目標へなめらかに動かす。向きは移動方向から
@@ -4054,82 +5692,105 @@ function frame(now) {
     facing = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
   }
   last = tgt;
+  if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
+    for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); }
+  }
+  waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
-  else { const k = Math.min(1, dt * 6); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
+  else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
+  const rolling = rollOn && G.demo && rp.x !== null && !driving;
+  if (rolling) {   // 転がしているときは、お米の少し先を見る（進む向きが よく見えて、速さも感じられる）
+    const k = Math.min(1, dt * 2.5);
+    camLead.x += (Math.max(-1.1, Math.min(1.1, rp.vx * 0.2)) - camLead.x) * k; camLead.y += (Math.max(-1.1, Math.min(1.1, rp.vy * 0.2)) - camLead.y) * k;
+    cam.x = rp.x + camLead.x; cam.y = rp.y + camLead.y;
+  } else camLead.x = camLead.y = 0;
+  const hp = rolling ? { x: rp.x, y: rp.y } : { x: cam.x, y: cam.y };   // お米のいる所（転がす：rp・ほかは 画面のまん中）
+  if (roll.last) { const ddx = hp.x - roll.last.x, ddy = hp.y - roll.last.y, d = Math.hypot(ddx, ddy); if (d < 3) { roll.d += d; if (window.NISHIO_KOROSTYLE) window.NISHIO_KOROSTYLE.addDist(d); } riceSpin(ddx, ddy, dt); }   // 転がった道のりで 転がり方を もらう
+  roll.last = hp;
+  roll.trail.push({ x: hp.x, y: hp.y, th: roll.ang }); if (roll.trail.length > 8) roll.trail.shift();   // のこりかげ用
 
-  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); updateCover(); loadTowns(); updateHere(); }
+  if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
 
   const f = Math.floor(now / 450) % 2;
   ctx.imageSmoothingEnabled = false;
   const vh = h - Math.round(cover * dpr), cy = Math.round(vh / 2);   // 見えている所の高さと、そのまん中
   fieldCy = cy;
-  const ox = Math.round(w / 2 - cam.x * T), oy = Math.round(cy - cam.y * T);
+  const shk = roll.shake > 0 ? Math.round(Math.sin(now / 18) * roll.shake * T * 0.12) : 0;   // かべに当たったときの ゆれ
+  const ox = Math.round(w / 2 - cam.x * T) + shk, oy = Math.round(cy - cam.y * T);
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
-  for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) {
-    const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
-    const v = ((tx * 73856093) ^ (ty * 19349663)) >>> 0;
-    const X = ox + tx * T, Y = oy + ty * T;
-    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
-    if (sh !== 2) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }
-    if (code === C.H) {          // 大きな道（国道・県道）：外側に白線、2車線の真ん中に黄色の破線
-      const u = Math.max(1, Math.round(T / 16)), road = c => c === C.H || c === C.R || c === C.D;
-      const up = codeAt(tx, ty - 1), dn = codeAt(tx, ty + 1), lf = codeAt(tx - 1, ty), rt = codeAt(tx + 1, ty);
-      ctx.fillStyle = '#f4f4f0';
-      if (!road(up)) ctx.fillRect(X, Y + u, T, u);
-      if (!road(dn)) ctx.fillRect(X, Y + T - 2 * u, T, u);
-      if (!road(lf)) ctx.fillRect(X + u, Y, u, T);
-      if (!road(rt)) ctx.fillRect(X + T - 2 * u, Y, u, T);
-      // 黄色の線は、道の縁が同じ向きに3マス以上続くところだけ（2マス幅の道の端や、ななめの道の段差に横向きの線を引かない）
-      ctx.fillStyle = '#f2c230';
-      if (!road(up) && dn === C.H && hEdgeRun(tx, ty, 1, 0, road) >= 3) { ctx.fillRect(X + u * 2, Y + T - u, u * 4, u); ctx.fillRect(X + u * 10, Y + T - u, u * 4, u); }
-      if (!road(lf) && rt === C.H && hEdgeRun(tx, ty, 0, 1, road) >= 3) { ctx.fillRect(X + T - u, Y + u * 2, u, u * 4); ctx.fillRect(X + T - u, Y + u * 10, u, u * 4); }
-    }
-    if (code === C.A) {          // 岸に白い波打ち際
-      const u = Math.max(1, Math.round(T / 16)), land = c => c !== C.A && c !== C.X;
-      ctx.fillStyle = f ? '#e8f2ff' : '#cfe2ff';
-      if (land(codeAt(tx, ty - 1))) ctx.fillRect(X, Y, T, u);
-      if (land(codeAt(tx, ty + 1))) ctx.fillRect(X, Y + T - u, T, u);
-      if (land(codeAt(tx - 1, ty))) ctx.fillRect(X, Y, u, T);
-      if (land(codeAt(tx + 1, ty))) ctx.fillRect(X + T - u, Y, u, T);
-    }
-  }
+  for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) drawTile(tx, ty, ox + tx * T, oy + ty * T, T, f, now);
+
+  drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
+  if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
+  if (mazeOn()) { drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzHint(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
+  drawTraffic(ox, oy, T, w, h);
 
   // 主要な建物（同じ場所にスポットがあるときはスポットを優先）
   const spots = G.spots;
   const pois = visiblePois(tx0, ty0, tx1, ty1), labelBoxes = [];
   for (const p of pois) {
-    const size = p[4] === 'lm' ? Math.round(T * 1.5) : T * 2, sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * 0.7);
-    ctx.drawImage((spotSprites[p[2]] || spotSprites.shop)[0], sx, sy, size, size);
+    const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（読めるまではいつもの絵）
+    const img = (giant || spotSprites[p[2]] || spotSprites.shop)[0], size = dotSize(img, T), sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
+    ctx.drawImage(img, sx, sy, size, size);
+    if (giant) { poiHits.push([sx, sy, size, p, giant[0]]); depthArt.push([img, sx, sy, size, sy + size * 0.72, false]); }   // タップは絵のある所（透明でない点）で決める
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
   for (const s of spots) {
     const p = toTile(s.lat, s.lng);
-    const size = s.shop ? Math.round(T * 3.5) : LANDMARK_ART[s.id] ? T * 3 : s.featured || GEN[s.id] ? T * 2 : T;   // 当店と専用の絵がある名所は、本物の建物に合わせて大きめに（型の絵の名所は注目スポットと同じ2マス）
-    const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size / 2;
+    const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
+    const giant = near ? bigOf(s) : null;
+    const spr = giant || spriteOf(s);
+    const size = spotSize(s, spr, T);
+    const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
-    ctx.drawImage(spriteOf(s)[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    if (s.shop) gbPause++;
+    ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
+    if (s.shop) gbPause--;
+    if (giant) { giantHits.push([sx, sy, size, s, giant[0]]); depthArt.push([spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, sy + size * 0.72, !!s.shop]); }   // タップは、描いた順の逆（手前の絵から）に調べる
     if (s.featured && !cool && f) {   // 注目スポットはきらきら
       ctx.fillStyle = '#fff59d';
-      const u = size / 16;
-      ctx.fillRect(Math.round(sx + 13 * u), Math.round(sy + 1 * u), Math.ceil(u), Math.ceil(u * 3));
-      ctx.fillRect(Math.round(sx + 12 * u), Math.round(sy + 2 * u), Math.ceil(u * 3), Math.ceil(u));
+      const u = Math.min(size, 3 * T) / 16, kx = sx + size * 13 / 16, ky = sy + size / 16;   // 大きさは いつもの絵（3マス）まで。特大の絵の大きさに合わせると 1マスより大きな 十字になっていた
+      ctx.fillRect(Math.round(kx), Math.round(ky), Math.ceil(u), Math.ceil(u * 3));
+      ctx.fillRect(Math.round(kx - u), Math.round(ky + u), Math.ceil(u * 3), Math.ceil(u));
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }
-  // 西尾の人たち（まだ話していない人の上には吹き出し）
+  // 西尾の人たち（まだ話していない人の上には吹き出し）。呼びとめた人は、歩いてくる途中の位置に（歩く間は足を速く動かす）
+  const sp = sightTick(now);
   for (const n of G.npcs || []) {
-    const t = npcTile(n), sx = Math.round(ox + t.x * T), sy = Math.round(oy + t.y * T - T * 0.25);
+    const t = sp && sight.n === n ? sp : npcTile(n), sx = Math.round(ox + t.x * T), sy = Math.round(oy + t.y * T - T * 0.25);
     if (sx > w || sy > h || sx + T < 0 || sy + T < 0) continue;
-    ctx.drawImage((npcSprites[n.look] || npcSprites.man)[f], sx, sy, T, T);
-    if (!G.npcMet(n.id)) {   // 💬（白い吹き出し）
+    ctx.drawImage((npcSprites[n.look] || npcSprites.man)[sp && sp.walking && sight.n === n ? Math.floor(now / 120) % 2 : f], sx, sy, T, T);
+    const em = npcEmotes.get(n.id), age = em ? performance.now() - em.t : 1e9;
+    if (age < 1600) emoteAt(sx, sy, T, em.k, age);   // 気持ちの吹き出し
+    else if (em) npcEmotes.delete(n.id);
+    else if (!G.npcMet(n.id)) {   // 💬（白い吹き出し）
       const u = Math.max(1, Math.round(T / 16)), bx = sx + Math.round(T * 0.55), by = sy - Math.round(T * 0.45) - (f ? u : 0);
       ctx.fillStyle = '#000'; ctx.fillRect(bx - u, by - u, 9 * u, 6 * u);
       ctx.fillStyle = '#fff'; ctx.fillRect(bx, by, 7 * u, 4 * u); ctx.fillRect(bx + u, by + 4 * u, 2 * u, 2 * u);
       ctx.fillStyle = '#000'; ctx.fillRect(bx + u, by + 2 * u, u, u); ctx.fillRect(bx + 3 * u, by + 2 * u, u, u); ctx.fillRect(bx + 5 * u, by + 2 * u, u, u);
     }
+  }
+  // 出会った生きもの（3秒。ぴょこぴょこ動く）
+  if (critterS.show) {
+    const c = critterS.show, age = now - c.t;
+    if (age > 3000) critterS.show = null;
+    else {
+      const hop = Math.floor(age / 250) % 2 ? Math.round(T / 16) : 0;
+      ctx.drawImage(critterSprites[c.id], Math.round(ox + c.x * T), Math.round(oy + c.y * T) - hop, T, T);
+      dirty = true;
+    }
+  }
+  // 先回りしたライバル
+  const rt = rivalTile();
+  if (rt && rt.ok) {
+    const sx = Math.round(ox + rt.x * T), sy = Math.round(oy + rt.y * T - T * 0.25);
+    if (sx < w && sy < h && sx + T > 0 && sy + T > 0) ctx.drawImage(rivalSprites[f], sx, sy, T, T);
   }
   // 道ばたのたからばこ（開けたものは出さない）。ぴょんと跳ねて目立たせる
   for (const c of G.liveChests()) {
@@ -4148,15 +5809,91 @@ function frame(now) {
     for (let i = 0; i < n; i++) { if ((i + f) % 3 === 0) continue; const a = i / n * Math.PI * 2; ctx.fillRect(Math.round(cxp + Math.cos(a) * r), Math.round(cyp + Math.sin(a) * r), dot, dot); }
   }
 
+  // タップした行き先の印（点滅する四角）
+  if (tapS.goal && f) {
+    ctx.strokeStyle = '#ffd54f'; ctx.lineWidth = Math.max(2, Math.round(T / 8));
+    ctx.strokeRect(Math.round(ox + (tapS.goal[0] + 0.15) * T), Math.round(oy + (tapS.goal[1] + 0.15) * T), Math.round(T * 0.7), Math.round(T * 0.7));
+  }
+
   // 主人公（車に乗っているときは車）
   if (driving) ctx.drawImage(carSprites[facing], Math.round(w / 2 - T / 2), Math.round(cy - T / 2), T, T);
-  else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
+  else if ((me || G.demo) && riceSprites.ready) {   // お米（影をつけて、転がった道のりで回す）
+    const img = riceSprites.right[0], sz = dotSize(img, T), u = sz / 32;
+    let hx = ox + roll.last.x * T, hcy = oy + roll.last.y * T;   // お米の画面での位置（転がしているときは 少し まん中から ずれる）
+    if (KP.wobble && roll.v > 0.5) hx += Math.sin(roll.d * 2.4) * KP.wobble * T * Math.min(1, roll.v / 2);   // くねくね
+    if (KP.shake && roll.v > 0.5) { hx += Math.round((Math.random() - 0.5) * u * 1.6 * KP.shake); hcy += Math.round((Math.random() - 0.5) * u * 1.2 * KP.shake); }   // ぶるぶる
+    heroScr = { x: hx - w / 2 - shk, y: hcy - cy };
+    const A = 10 * u, B = 13.5 * u, th = roll.ang;   // つぶの よこ・たての半分（絵の点で）。寝ころぶほど まん中が下がる
+    const low = Math.sqrt((A * Math.sin(th)) ** 2 + (B * Math.cos(th)) ** 2), ground = hcy + T * 0.4 - sz / 2 + B, hop = roll.h * T, mid = ground - low - hop;
+    for (const p of roll.dust) {   // 土ぼこり（うしろに ふわっと。地面の色。葉っぱ・しぶきは はねて落ちる）
+      const a = 1 - p.t / 0.45, r = Math.max(1, Math.round(T * (p.bit ? 0.07 : 0.12) * p.s * (1 + (p.bit ? 0 : p.t * 2))));
+      const up = p.bit ? (p.t * 2.2 - p.t * p.t * 9) * T : p.t * T * 0.4;
+      ctx.fillStyle = `rgba(${p.c || '235,228,205'},${((p.bit ? 0.9 : 0.55) * a).toFixed(2)})`;
+      ctx.fillRect(Math.round(ox + (p.x + (p.vx || 0) * p.t) * T - r), Math.round(oy + p.y * T + T * 0.3 - r - up), r * 2, r * 2);
+    }
+    {   // 影：つぶの いまの はば（寝ころぶと広い）に合わせた、まるい点の だ円。とぶと小さく
+      const wv = Math.sqrt((A * Math.cos(th)) ** 2 + (B * Math.sin(th)) ** 2), shw = wv * 1.8 / (1 + roll.h * 3), q = Math.max(1, Math.round(u)), sy0 = Math.round(hcy + T * 0.3);
+      ctx.fillStyle = 'rgba(0,0,0,.28)';
+      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
+      ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
+      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+    }
+    const sq = roll.sq;
+    let sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる
+    const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
+    if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる
+    else if (t0 && t1 && roll.v > 2) {   // 速いと、進む向きに 少し のびる
+      const st = Math.min(0.09 * (KP.stretch || 1), (roll.v - 2) * 0.025 * (KP.stretch || 1)), horiz = Math.abs(t1.x - t0.x) >= Math.abs(t1.y - t0.y);
+      if (horiz) { sx *= 1 + st; sy *= 1 - st * 0.5; } else { sy *= 1 + st; sx *= 1 - st * 0.5; }
+    }
+    const by = sy !== 1 ? ground - low * sy - hop : mid;
+    const mood = roll.drawn = riceMood(now);
+    drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
+    if (riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
+      for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
+        const p = roll.trail[roll.trail.length - 1 - k];
+        if (!p) continue;
+        ctx.globalAlpha = al;
+        drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null);
+        ctx.globalAlpha = 1;
+      }
+    }
+    if (riceBall.cv) {
+      drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol);   // 光を当てなおして 丸く。表情つき・きょろきょろ
+      drawSendArrow(hx, by, T, u);   // お米の まん中から
+      if (roll.wetT > 0) {   // ぽちゃん のあと：頭の左上に 水の しずく
+        const q = Math.max(1, Math.round(u)), dx0 = Math.round(hx - 11 * u), dy0 = Math.round(by - 12 * u + (1.4 - roll.wetT) * 3 * u);
+        ctx.globalAlpha = Math.min(1, roll.wetT * 2);
+        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(dx0 + q, dy0 - q, q, q); ctx.fillRect(dx0, dy0, 3 * q, 3 * q); ctx.fillRect(dx0 - q, dy0 + q, 5 * q, 2 * q); ctx.fillRect(dx0, dy0 + 3 * q, 3 * q, q);
+        ctx.fillStyle = '#8fd0f4'; ctx.fillRect(dx0 + q, dy0, q, q); ctx.fillRect(dx0, dy0 + q, 3 * q, 2 * q);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(dx0, dy0 + q, q, q);
+        ctx.globalAlpha = 1;
+      }
+      if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
+        ctx.fillStyle = '#34407a';
+        for (let k = 0; k < 2; k++) {
+          const t = ((now / 1600) + k / 2) % 1, zx = Math.round(hx + 9 * u + t * 6 * u + k * 3 * u), zy = Math.round(by - 14 * u - t * 10 * u), q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
+          ctx.globalAlpha = 1 - t; ctx.fillRect(zx, zy, 5 * q, q); for (let j = 1; j < 4; j++) ctx.fillRect(zx + (4 - j) * q, zy + j * q, q, q); ctx.fillRect(zx, zy + 4 * q, 5 * q, q);   // 5×5 の Z
+        }
+        ctx.globalAlpha = 1;
+      }
+    } else {   // 丸く描く用意が できるまでは、絵を回す
+      roll.flat++;
+      const cs = Math.cos(roll.spin);
+      ctx.save(); ctx.translate(Math.round(hx), Math.round(by));
+      ctx.scale((cs < 0 ? -sx : sx) * Math.max(0.18, Math.abs(cs)), sy); ctx.rotate(th % (Math.PI * 2));
+      ctx.drawImage(cs < 0 && roll.back ? roll.back : img, -Math.round(sz / 2), -Math.round(sz / 2), sz, sz);
+      ctx.restore();
+    }
+    if (riceBall.cv && !rec) occludeRice(hx, by, hcy + T * 0.3, u, () => drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol));
+  } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
+  if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える
   {   // 看板は人や建物の上に出す（主人公には重ねない）
     // 町名の札（青地に白い字。電柱の町名表示のように）・駅名標（白地に黒い字と青い線）・お店の看板（その店らしい色に白い字）
     // 重ならないように、町名 → 駅 → 大きなお店 → ほかのお店 の順に場所を取る
     const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), bw = Math.max(1, Math.round(dpr));
-    labelBoxes.push([w / 2 - T, cy - T * 1.6, w / 2 + T, cy + T * 0.8]);   // 主人公のところ
+    labelBoxes.push([w / 2 + heroScr.x - T, cy + heroScr.y - T * 1.6, w / 2 + heroScr.x + T, cy + heroScr.y + T * 0.8]);   // 主人公のところ
     ctx.font = `${fs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const board = (X, Y, text, bg, fg, line) => {
       const tw = ctx.measureText(text).width, bx = Math.round(X - tw / 2 - pad), by = Math.round(Y), bwid = Math.round(tw + pad * 2), bh = fs + pad * 2;
@@ -4169,6 +5906,12 @@ function frame(now) {
       ctx.fillStyle = fg; ctx.fillText(text, X, by + bh / 2 - (line ? dpr : 0));
     };
     const short = (t, n) => (t.length > n ? t.slice(0, n - 1) + '…' : t);
+    const hm = (me || G.demo) && !driving ? heightAt(cam.x, cam.y) : null;   // いまいる所の標高と坂（お米の右上に小さく）
+    if (hm !== null) {
+      const sl = slopeAt(cam.x, cam.y), pct = Math.round(sl.g * 100);
+      const arrow = pct < 2 ? '' : ' ' + '→↘↓↙←↖↑↗'[((Math.round(Math.atan2(sl.y, sl.x) / (Math.PI / 4)) % 8) + 8) % 8] + pct + '%';
+      board(Math.round(w / 2 + heroScr.x + T * 1.9), Math.round(cy + heroScr.y - T * 1.5), `⛰${hm < 10 ? hm.toFixed(1) : Math.round(hm)}m${arrow}`, '#fffbe8', '#5a3a18');
+    }
     // 文字を少なく（ふだん）：町名・駅名・お店の看板は出さない（当店の札はスポットの絵の上に出す。いまいる町名は こよみ の札をタップ）
     if (!SIMPLE()) for (const x of towns) {
       if (x[0] < tx0 - 4 || x[0] > tx1 + 4 || x[1] < ty0 - 2 || x[1] > ty1 + 2) continue;
@@ -4225,7 +5968,10 @@ function frame(now) {
       ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
     }
   }
-  if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
+  if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
+  if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
+  if (mazeOn() && gt) drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now);   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
+  else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
     if (ex < 0 || ey < 0 || ex > w || ey > vh) {   // 見えている所（パネルの上）の外なら、その縁に矢印
@@ -4264,12 +6010,14 @@ let poiCache = { key: '', list: [] };
 function visiblePois(tx0, ty0, tx1, ty1) {
   const key = [Math.floor(tx0 / 8), Math.floor(ty0 / 8), Math.floor(tx1 / 8), Math.floor(ty1 / 8), G.spots.length, chunks.size, landmarks.length].join(',');
   if (poiCache.key === key) return poiCache.list;
-  const list = [];
-  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 2) / CHUNK); cy++)
+  tx0 = Math.floor(tx0 / 8) * 8; ty0 = Math.floor(ty0 / 8) * 8;   // 覚えておく間（8マスの区切りが同じ間）に見えうる所ぜんぶ
+  tx1 = Math.floor(tx1 / 8) * 8 + 7; ty1 = Math.floor(ty1 / 8) * 8 + 7;
+  const list = [];   // 下は3マス先まで（特大の絵は4マスで、点より2.88マス上まではみ出すので、画面の下から近づくときに急に出ないように）
+  for (let cy = Math.floor((ty0 - 2) / CHUNK); cy <= Math.floor((ty1 + 3) / CHUNK); cy++)
     for (let cx = Math.floor((tx0 - 2) / CHUNK); cx <= Math.floor((tx1 + 2) / CHUNK); cx++) {
       const c = chunks.get(cx + '_' + cy);
       for (const p of (c && c.pois) || []) {
-        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 2) continue;
+        if (p[0] < tx0 - 2 || p[0] > tx1 + 2 || p[1] < ty0 - 2 || p[1] > ty1 + 3) continue;
         const clash = G.spots.some(s => { const q = toTile(s.lat, s.lng), d = Math.hypot(q.x - p[0], q.y - p[1]); return d < (s.featured ? 4 : 2) || (d < 25 && p[3] && s.name.includes(p[3])); });
         if (!clash) list.push(p);
       }
@@ -4332,6 +6080,41 @@ function worldCamStart() {
   if (me && G.inPlay(me.lat, me.lng)) return llToW(me.lat, me.lng);
   return llToW(34.825, 137.07);   // 西尾市のまんなかあたり
 }
+// 角だけで接する水のマス（1マス幅の ななめの用水路など）は、マスを描いたあとで その角を まん中に ななめの水路を重ねてつなぐ（kawakado.png）。
+// どの角も、左下のマスの右上・右下のマスの左上として1回だけ調べる。岸は、あいだの陸のマスに砂浜があれば浜（浅瀬）、町なかがあれば護岸、なければ土手
+function drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f) {
+  if (!MT.kawakado) return;
+  const A = (x, y) => gridAt(x, y) === C.A;
+  for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0 - 1; tx <= tx1; tx++) {
+    if (!A(tx, ty)) continue;
+    for (const [dx, col] of [[1, 0], [-1, 2]]) {   // 右上の角（左下から右上の水路）・左上の角（右下から左上の水路）
+      if (!A(tx + dx, ty - 1) || A(tx + dx, ty) || A(tx, ty - 1)) continue;
+      const l1 = gridAt(tx + dx, ty), l2 = gridAt(tx, ty - 1), row = l1 === C.S || l2 === C.S ? 2 : SHORE_TOWN.has(l1) || SHORE_TOWN.has(l2) ? 0 : 1;   // shoreIndex と同じ決め方
+      ctx.drawImage(MT.kawakado[row][col + f], ox + tx * T + (dx > 0 ? T : 0) - T / 2, oy + ty * T - T / 2, T, T);
+    }
+  }
+}
+const worldAt = (x, y) => (world && x >= 0 && y >= 0 && x < WW && y < WH ? world[y * WW + x] : C.X);
+// せかいちずの線路・道・水べ：歩く地図と同じく つながる向きの Blender の絵（読めていなければ false を返し、いつもの絵）
+function drawLinked(code, x, y, X, Y, T, f) {
+  if (code === C.L && MT.rail) {
+    const ri = railIndex(x, y);
+    if (typeof ri === 'number') ctx.drawImage(MT.rail[ri], X, Y, T, T);
+    else { ctx.drawImage(MT.rail[34], X, Y, T, T); for (const p of ri) ctx.drawImage(MT.rail[26 + p], X, Y, T, T); }
+    return true;
+  }
+  if (MT.road && ROAD_ROW[code] !== undefined) {
+    const [ri, kado, xr, rankan] = nbrLook(x, y, roadLookOf);
+    ctx.drawImage(MT.road[ROAD_ROW[code]][ri], X, Y, T, T);
+    if (MT.kado) for (const i of kado) ctx.drawImage(MT.kado[ROAD_ROW[code]][i], X, Y, T, T);
+    if (MT.rail) for (const p of xr) ctx.drawImage(MT.rail[p], X, Y, T, T);
+    if (MT.rankan) for (const i of rankan) ctx.drawImage(MT.rankan[i], X, Y, T, T);
+    return true;
+  }
+  const sh = code === C.A && MT.shore && nbrLook(x, y, shoreIndex);
+  if (sh) { ctx.drawImage(MT.shore[sh[0]][sh[1] + f], X, Y, T, T); return true; }
+  return false;
+}
 function drawWorld(now, w, h, dpr) {
   const T = wT(dpr), f = Math.floor(now / 600) % 2;
   if (!wcam || (wcamOnMe && G.me)) wcam = worldCamStart();
@@ -4343,11 +6126,28 @@ function drawWorld(now, w, h, dpr) {
   if (css <= 6 && worldImg) {   // 引いて見るとき：1マス＝色のブロック
     ctx.fillStyle = WCOL[C.X]; ctx.fillRect(0, 0, w, h);
     ctx.drawImage(worldImg, ox, oy, WW * T, WH * T);
-  } else for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
-    const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
-    const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
-    const v = ((x * 73856093) ^ (y * 19349663)) >>> 0;
-    ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], ox + x * T, oy + y * T, T, T);
+  } else {
+    gridAt = worldAt; nbrCur = worldNbr;
+    try {
+      for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+        const inside = world && x >= 0 && y >= 0 && x < WW && y < WH;
+        const code = inside ? world[y * WW + x] : C.X;   // 西尾市の範囲の外は霧（地図の端）
+        const v = tileVar(code, x, y), X = ox + x * T, Y = oy + y * T;
+        if (!drawLinked(code, x, y, X, Y, T, f)) ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, x, y, now)], X, Y, T, T);
+      }
+      drawWaterCorners(x0, y0, x1, y1, ox, oy, T, f);
+    } finally { gridAt = codeAt; nbrCur = nbrCache; }
+  }
+  // 歩いた所（あしあとのある100mのマス）に、もも色と足あと（地図の黄色・緑・青と まぎれない色）
+  // 調べるのは、歩いた所の数と画面に見えるマスの数の少ないほう（記録が何万マスにふえても、毎フレームの手間が画面の広さをこえない）
+  if (TRAIL.world.size) {
+    const vx0 = Math.max(0, x0), vy0 = Math.max(0, y0), vx1 = Math.min(WW - 1, x1), vy1 = Math.min(WH - 1, y1), seen = [];
+    if (TRAIL.world.size <= (vx1 - vx0 + 1) * (vy1 - vy0 + 1)) {
+      for (const i of TRAIL.world) { const x = i % WW, y = (i - x) / WW; if (x >= vx0 && x <= vx1 && y >= vy0 && y <= vy1) seen.push(x, y); }
+    } else for (let y = vy0; y <= vy1; y++) for (let x = vx0; x <= vx1; x++) if (TRAIL.world.has(y * WW + x)) seen.push(x, y);
+    ctx.fillStyle = 'rgba(255,80,150,.5)';
+    for (let k = 0; k < seen.length; k += 2) ctx.fillRect(ox + seen[k] * T, oy + seen[k + 1] * T, T, T);
+    if (T >= 12) for (let k = 0; k < seen.length; k += 2) drawFoot(C.H, seen[k], seen[k + 1], ox + seen[k] * T, oy + seen[k + 1] * T, T);
   }
   // 市町の境（region.js）：黒いふちどりの上に白い点線（どの地形の上でも見えるように）
   ctx.save();
@@ -4383,6 +6183,9 @@ function drawWorld(now, w, h, dpr) {
     }
   }
   drawWorldLabels(ox, oy, T, w, h, dpr, css);
+  // 殿堂入りの場所（昔のドット絵RPGの「城を出ると、最後の城が はじめから見えている」）：殿堂入りするまで、西尾城跡の上に 金色の札「👑 しるし ○/5」
+  const ci = G.clearInfo && G.clearInfo(), castle = ci && !ci.cleared && G.spots.find(s => s.id === 'f-nishio-castle');
+  if (castle) { const p = llToW(castle.lat, castle.lng); goalTag(ox + p.x * T, oy + p.y * T - size / 2, dpr, `👑 しるし ${ci.got}/${ci.need}`); }
   for (const [x, y, sz, s] of shopTags) {   // 当店の札（店名）は地名より上に。札も絵もタップできる
     const t = drawShopTag(x, y, dpr, s);
     shopHits.push([Math.min(t[0], x - sz / 2), t[1], Math.max(t[2], x + sz / 2), y + sz, s]);
@@ -4391,7 +6194,8 @@ function drawWorld(now, w, h, dpr) {
   const me = G.me;
   if (me) {
     const p = llToW(me.lat, me.lng), hs = Math.max(T * 2, 18 * dpr);
-    ctx.drawImage(heroSprites.down[f], Math.round(ox + p.x * T - hs / 2), Math.round(oy + p.y * T - hs * 0.8), hs, hs);
+    if (riceBall.cv) drawRiceBall(ox + p.x * T, oy + p.y * T - hs * 0.8 + hs * 17.5 / 32, hs / 32, f ? 0.14 : -0.14, 1, 1, 0);   // 歩く地図と同じ 丸いお米（左右に ゆらゆら）
+    else ctx.drawImage(riceSprites.ready ? riceSprites.right[f] : heroSprites.down[f], Math.round(ox + p.x * T - hs / 2), Math.round(oy + p.y * T - hs * 0.8), hs, hs);
   }
   const msg = worldState === 'building' || worldState === 'none' ? 'せかいちずを つくっています…\n（はじめの1回だけ 少し時間がかかります）'
     : worldState === 'fail' ? 'せかいちずを つくれなかった。\nしばらくして もういちど ためしてね。' : '';
@@ -4400,9 +6204,17 @@ function drawWorld(now, w, h, dpr) {
 }
 // 当店の札：お店の本物の看板と同じ色で店名を出す（らいすぴあ・秀幸＝白地に赤い字、近藤米穀店＝クリーム地に黒い字）。
 // (cx, bottom) は札の下のまん中。札の外わく [左, 上, 右, 下] を返す
+// 奥行き：描いた特大の絵 [絵, 左, 上, 大きさ, 地面の高さ（画面）, 当店か]。お米が その絵より奥（北）にいるときに、お米の上に描きなおす（occludeRice）
+const depthArt = [];
+let giantHits = [];   // 描いた特大の絵 [左, 上, 大きさ, スポット, 絵の canvas]（描くたびに作り直す）
+let poiHits = [];     // 描いた街の主な建物の特大の絵 [左, 上, 大きさ, 目印, 絵の canvas]
 let shopHits = [];   // 当店の札と絵のタップ範囲 [左, 上, 右, 下, スポット]（描くたびに作り直す）
 const SHOP_SIGN = { 'f-ricepia': ['らいすぴあ・秀幸', '#ffffff', '#d7262e'], 'f-kondo-beikoku': ['近藤米穀店', '#f3ead0', '#111111'] };
 function drawShopTag(cx, bottom, dpr, s) {
+  gbPause++;
+  try { return shopTag(cx, bottom, dpr, s); } finally { gbPause--; }   // 看板も本物の色のまま
+}
+function shopTag(cx, bottom, dpr, s) {
   const [text, bg, fg] = SHOP_SIGN[s && s.id] || ['当店', '#d23a2e', '#ffffff'];
   const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
   ctx.font = `${fs}px "DotGothic16", monospace`;
@@ -4412,6 +6224,15 @@ function drawShopTag(cx, bottom, dpr, s) {
   ctx.fillStyle = bg; ctx.fillRect(x, y, bw, bh);
   ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
+}
+function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所の札：こい紺に金色の字（当店の札とは ちがう色）
+  const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
+  ctx.font = `${fs}px "DotGothic16", monospace`;
+  const tw = Math.ceil(ctx.measureText(text).width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
+  ctx.fillStyle = '#ffd54f'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
+  ctx.fillStyle = '#1b2a4a'; ctx.fillRect(x, y, bw, bh);
+  ctx.fillStyle = '#ffd54f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
 }
 function worldSpotShown(s) {
   return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
@@ -4492,6 +6313,8 @@ function setWorld(on) {
   if (on) { wcam = worldCamStart(); buildWorld(); }
   try { localStorage.setItem('nsg_world_on', on ? '1' : '0'); } catch (e) { /* noop */ }
   updatePad();
+  updateHarvestBtn();   // せかいちずでは frame が早く戻るので、稲刈りのボタンをここで消す
+  updateDankyuBtn();
 }
 $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
 // 📍ボタン：せかいちずでは主人公のいる所へ戻す（歩く地図はいつも主人公が真ん中）
@@ -4515,8 +6338,6 @@ function setActive(on) {
   if (!on && driving) setDriving(false);   // ふつうの地図では車に乗れない
   document.body.classList.toggle('px', on);
   try { localStorage.setItem('nsg_view', on ? 'px' : 'map'); } catch (e) { /* noop */ }
-  $('viewBtn').innerHTML = on ? ICO('map', '🗺️', 'ふつうの地図') : ICO('pixmap', '👾', 'ドット絵の地図');
-  $('viewBtn').title = on ? 'ふつうの地図にする' : 'ドット絵の地図にする';
   updatePad();
   cancelAnimationFrame(raf);
   if (on) { lastT = 0; raf = requestAnimationFrame(frame); }
@@ -4527,22 +6348,39 @@ function updatePad() {
   $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
 }
-$('viewBtn').addEventListener('click', () => setActive(!active));
 // せかいちずをいちばん大きくしてさらに拡大すると歩く地図へ、歩く地図をいちばん小さくしてさらに縮小するとせかいちずへ
 $('pxZoomIn').addEventListener('click', () => {
-  if (!worldMode) return setScale(scale + 1);
+  if (!worldMode) return setScale(curScale() + 1);
   if (wscale < WSIZES.length - 1) wscale++; else { setScale(1); setWorld(false); }
 });
 $('pxZoomOut').addEventListener('click', () => {
   if (worldMode) { wscale = Math.max(0, wscale - 1); return; }
-  if (scale > 1) setScale(scale - 1); else { wscale = WSIZES.length - 1; setWorld(true); }
+  if (curScale() > 1) setScale(curScale() - 1); else { wscale = WSIZES.length - 1; setWorld(true); }
 });
-function setScale(v) { scale = Math.min(4, Math.max(1, v)); try { localStorage.setItem('nsg_px_scale', scale); } catch (e) { /* noop */ } }
+$('pxZoom').addEventListener('click', () => {   // 🔍：押すたびに大きく。いちばん大きいと、はじめの大きさ（いちばん小さい）へ
+  if (worldMode) { wscale = wscale < WSIZES.length - 1 ? wscale + 1 : 0; return; }
+  setScale(curScale() < 4 ? curScale() + 1 : 1);
+});
+{   // せってい「夜は地図を暗く」
+  const t = $('nightToggle');
+  if (t) { t.checked = nightOn; t.addEventListener('change', () => { nightOn = t.checked; try { localStorage.setItem('nsg_night', nightOn ? '1' : '0'); } catch (e) { /* noop */ } dirty = true; }); }
+}
+{   // せってい「ゲームボーイの4色」
+  const t = $('gbToggle');
+  if (t) { t.checked = gbOn; t.addEventListener('change', () => { gbOn = t.checked; try { localStorage.setItem('nsg_gb', gbOn ? '1' : '0'); } catch (e) { /* noop */ } dirty = true; }); }
+}
+function setScale(v) {   // めいろの ときと そうでない ときで、大きさを べつべつに おぼえる
+  const k = Math.min(4, Math.max(1, v)), mz = mazeOn();
+  if (mz) mzScale = k; else scale = k;
+  try { localStorage.setItem(mz ? 'nsg_mz_scale' : 'nsg_px_scale', k); } catch (e) { /* noop */ }
+}
+function curScale() { return mazeOn() ? mzScale : scale; }
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・水べ mushi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
-  if (!G.demo) return false;
+  if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
@@ -4555,13 +6393,523 @@ function step(dir) {   // 1マス進めたら（人に話しかけたときも�
   // 建物や水の上に立っているとき（実際の地図で、始めた場所が建物の中だったなど）は、
   // いちばん近い歩けるマスへ近づく向きにだけ動ける（出口へ向かうとき以外は、ふだんどおり通れない）
   const cx0 = Math.floor(t.x), cy0 = Math.floor(t.y);
-  const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
-  if (BLOCK.has(codeAt(nx, ny)) && !escape) return false;
+  if (mazeOn()) { if (mzBlocked(cx0 + 0.5, cy0 + 0.5, nx + 0.5, ny + 0.5)) return false; }   // めいろ：タップ歩き・おまかせ歩きも めいろの 壁だけに 当たる（通路の 中の 建物は 通れる）
+  else {
+    const escape = BLOCK.has(codeAt(cx0, cy0)) && codeAt(nx, ny) !== C.X && exitDist(nx, ny) < exitDist(cx0, cy0);
+    if (BLOCK.has(codeAt(nx, ny)) && !escape) return false;
+  }
   const who = npcAt(nx, ny);
   if (who) { if ($('pxInfo').hidden) openNpc(who); return true; }   // 人にぶつかったら話しかける（ドラクエ風）
   const ll = toLatLng(nx + 0.5, ny + 0.5);
   G.moveTo(ll.lat, ll.lng, 'step');   // スティックの1歩
+  sightCheck();
+  critterStep(nx, ny);
   return true;
+}
+// かたむけて転がす（操作して移動。はじめはオン）：ひと粒のお米が、スマホを傾けた向き（ない端末はスティック・矢印キー）へ、勢いをつけて ころころ転がる。
+// ・押すのをやめても すぐには止まらない（ころがり抵抗で ゆっくりになる）。建物・水には入れず、当たると少し はね返る。人にぶつかると話しかける
+// ・新しいマスに入るたびに、1歩と同じこと（呼びとめ・生きもの・チェックインの範囲など）が起きる。位置は 少し動くたびに game.js へ（moveTo の 'step'）
+// ・📱 ボタンで オン・オフ（端末に覚える）。タップで歩く・車は いままでどおり
+let rollOn = (() => { try {
+  // 地図が めいろに なって「📱 転がす」の 切りかえを はずした：前に 切っていた人も 1回だけ 転がすに もどす（もう 切りかえられないので）
+  if (!localStorage.getItem('nsg_roll_v2')) { localStorage.setItem('nsg_roll_v2', '1'); localStorage.setItem('nsg_roll', '1'); }
+  return localStorage.getItem('nsg_roll') !== '0';
+} catch (e) { return true; } })();
+const rp = { x: null, y: null, vx: 0, vy: 0, sent: null, tile: '', bump: 0 };
+const rk = { up: 0, down: 0, left: 0, right: 0 };
+const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
+const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
+// へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
+const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
+// 傾き：はじめに読めた持ち方を「まっすぐ」にする（寝かせて持っても、立てて持っても、その持ち方から傾けた分だけ転がる）。📱 を押しなおすと やりなおす。
+// 画面を横にしているときは、左右と前後を入れかえる
+window.addEventListener('deviceorientation', e => {
+  if (e.gamma == null || e.beta == null) return;
+  tiltG.on = true;
+  const ang = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+  let lr = e.gamma, fb = e.beta;
+  if (ang === 90) { lr = e.beta; fb = -e.gamma; } else if (ang === -90 || ang === 270) { lr = -e.beta; fb = e.gamma; }
+  if (!tiltG.base || tiltG.n < 8) {   // はじめの8回の平均を まっすぐに
+    tiltG.n++;
+    tiltG.base = tiltG.base ? { lr: tiltG.base.lr + (lr - tiltG.base.lr) / tiltG.n, fb: tiltG.base.fb + (fb - tiltG.base.fb) / tiltG.n } : { lr, fb };
+    if (tiltG.n === 8 && tiltG.announce) {   // 📱 を押したときの 知らせを 読みおえたころに
+      const wait = Math.max(0, 2600 - (performance.now() - tiltG.announce));
+      tiltG.announce = 0;
+      setTimeout(() => G.toast('📱 いまの持ち方を「まっすぐ」にしました（📱 を押すと 合わせなおせます）'), wait);
+    }
+    return;
+  }
+  const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
+  const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
+  const te = e.timeStamp || performance.now(), k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - (tiltG.t || te - 16)) / 1000)) / 0.035);   // センサーの細かいゆれを ならす（届く回数が ちがう スマホでも 同じ なめらかさ：時間で まぜる）
+  tiltG.t = te;
+  tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * k; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * k;
+  if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {   // あるいて移動で傾けたとき：1回だけ教える
+    tiltG.walkTold = true;
+    G.toast('🍚 あるいて移動では、歩いた所へ お米が転がるよ。傾けて転がすのは「操作して遊ぶ」で');
+  }
+});
+function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.x = tiltG.y = 0; }
+function tiltAsk() {   // iPhone：傾きを使う許可（画面をさわったときにしか聞けない）
+  if (tiltG.asked || !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) return;
+  tiltG.asked = true;
+  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、地図を タップした所へ 転がしてね（矢印キーでも）'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
+}
+['click', 'touchend'].forEach(ev => document.addEventListener(ev, () => { if (rollOn) tiltAsk(); }, { capture: true, passive: true }));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tiltReset(); });
+document.addEventListener('keyup', e => { const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key]; if (k) rk[k] = 0; });
+window.addEventListener('blur', () => { for (const k in rk) rk[k] = 0; });
+const rollBlocked = (x, y) => { const c = codeAt(Math.floor(x), Math.floor(y)); return BLOCK.has(c) && c !== C.X; };
+/* ---------- 地図の めいろ（傾けて 転がすときの メインの 遊び） ---------- */
+// 運営者の指示「転がす迷路はミニゲームではなくメインのゲームに」「歩く地図を めいろに」（2026-10-23）
+// ・めいろの 1マス＝地図の 3×3マス。道が 2つ以上ある マス（公園・境内も）が 通路、ない マスは 壁の かたまり、水の マスも 通れない
+// ・通路どうしは、さかいを 本当の 道が またいでいる ときだけ 通れる。そのうえで 32×32マスの 区域ごとに 穴ほりで 1本道の 木を えらび、
+//   のこりは 細い壁で ふさぐ（ぬけ道 12%）。区域の さかいは 道が つながれば いつも 通れる（区域どうしは かならず つながる）
+// ・壁が きくのは 操作して遊ぶ で 転がしている ときだけ（あるいて遊ぶ・車・せかいちず では きかない）。
+//   地図が まだ 読めていない 区域と、壁の かたまりの 中から 出るときは 壁なし（とじこめない）。通路の 中の 建物の マスには ぶつからない
+const MZ_K = 3, MZ_R = 32, MZ_BRAID = 0.12, MZ_PATH = new Set([C.R, C.H, C.D]);
+const mzAreas = new Map();
+function mazeOn() { try { return !!(G.demo && rollOn && !driving && !worldMode); } catch (e) { return false; } }   // 読みこみの とちゅう（変数が まだ ない）なら めいろに しない
+function mzArea(cx, cy) {   // めいろの マス (cx, cy) を ふくむ 区域（読めていなければ null）
+  const rx = Math.floor(cx / MZ_R), ry = Math.floor(cy / MZ_R), key = rx + '_' + ry;
+  let a = mzAreas.get(key);
+  if (a) return a;
+  const t0x = rx * MZ_R * MZ_K - MZ_K, t0y = ry * MZ_R * MZ_K - MZ_K, t1x = (rx + 1) * MZ_R * MZ_K + MZ_K, t1y = (ry + 1) * MZ_R * MZ_K + MZ_K;
+  let ready = true;
+  for (let gy = Math.floor(t0y / CHUNK); gy <= Math.floor((t1y - 1) / CHUNK); gy++) for (let gx = Math.floor(t0x / CHUNK); gx <= Math.floor((t1x - 1) / CHUNK); gx++) {
+    const st = chunkState(gx, gy);
+    if (st !== 'ok' && st !== 'out') { ready = false; ensureChunk(gx, gy); }   // 区域に いる 区画を 読みに いく（見えている 所の 読みこみだけでは 足りない ことがある）
+  }
+  if (!ready) return null;
+  a = mzBuild(rx, ry); mzAreas.set(key, a);
+  return a;
+}
+function mzCell(cx, cy) {   // マスの 種類 0 壁・1 通路・2 水 と、公園・境内の 広場か（その マスの 道で ない 地図の マスも 道あつかい）
+  let road = 0, water = 0, park = 0;
+  for (let j = 0; j < MZ_K; j++) for (let i = 0; i < MZ_K; i++) {
+    const c = codeAt(cx * MZ_K + i, cy * MZ_K + j);
+    if (MZ_PATH.has(c)) road++; else if (c === C.A) water++; else if (c === C.P || c === C.J) park++;
+  }
+  return { t: water >= 5 && road < 1 ? 2 : road >= 1 || park >= 7 ? 1 : 0, plaza: park >= 7 && road < 1 };   // 道が 1つでも あれば 通路（ななめの 道で 通路が とぎれて はなれ島に ならないように）
+}
+function mzLinkRaw(ca, cb, ax, ay, dx, dy) {   // となりの 通路へ、さかいを 道が またいでいるか（ca・cb は mzCell）
+  if (ca.t !== 1 || cb.t !== 1) return false;
+  const kind = (tx, ty, cell) => { const c = codeAt(tx, ty); return MZ_PATH.has(c) ? 1 : c === C.A ? 2 : cell.plaza ? 1 : 0; };
+  for (let k = 0; k < MZ_K; k++) {
+    const px = dx ? ax * MZ_K + MZ_K - 1 : ax * MZ_K + k, py = dx ? ay * MZ_K + k : ay * MZ_K + MZ_K - 1;
+    const kp = kind(px, py, ca), kq = kind(px + dx, py + dy, cb);
+    if ((kp === 1 || kq === 1) && kp && kq) return true;
+  }
+  return false;
+}
+function mzBuild(rx, ry) {   // 区域の マスの 種類と、穴ほりで えらんだ 通れる さかい（er：右・ed：下）
+  const N = MZ_R, x0 = rx * N, y0 = ry * N, cells = [], t = new Uint8Array(N * N), er = new Uint8Array(N * N), ed = new Uint8Array(N * N);
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const c = mzCell(x0 + i, y0 + j); cells.push(c); t[j * N + i] = c.t; }
+  const cand = [], nb = new Map();
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    if (i + 1 < N && mzLinkRaw(cells[k], cells[k + 1], x0 + i, y0 + j, 1, 0)) cand.push([k, k + 1, er]);
+    if (j + 1 < N && mzLinkRaw(cells[k], cells[k + N], x0 + i, y0 + j, 0, 1)) cand.push([k, k + N, ed]);
+  }
+  for (const e of cand) for (const [u, v] of [[e[0], e[1]], [e[1], e[0]]]) { if (!nb.has(u)) nb.set(u, []); nb.get(u).push([v, e]); }
+  let sd = ((rx * 73856093) ^ (ry * 19349663) ^ 0x5bd1e995) >>> 0 || 1;   // 区域ごとに きまる（だれでも 同じ めいろ）
+  const rn = () => { sd ^= sd << 13; sd >>>= 0; sd ^= sd >>> 17; sd ^= sd << 5; sd >>>= 0; return sd / 4294967296; };
+  const seen = new Uint8Array(N * N), tree = new Set();
+  for (const s0 of nb.keys()) {
+    if (seen[s0]) continue;
+    const stack = [s0]; seen[s0] = 1;
+    while (stack.length) {
+      const u = stack[stack.length - 1], opts = nb.get(u).filter(([v]) => !seen[v]);
+      if (!opts.length) { stack.pop(); continue; }
+      const [v, e] = opts[(rn() * opts.length) | 0];
+      seen[v] = 1; tree.add(e); e[2][Math.min(e[0], e[1])] = 1; stack.push(v);
+    }
+  }
+  for (const e of cand) if (!tree.has(e) && rn() < MZ_BRAID) e[2][Math.min(e[0], e[1])] = 1;
+  // はなれ島を つなぐ：道の 絵が マスの さかいで そろわず、どこにも つながらない 通路の かたまりが できる（名所に とどかない）。
+  // となりあう 通路どうしの さかいを、ちがう かたまりを つなぐ ときだけ あける（1本ずつ。迷路の 形は ほぼ そのまま）
+  const par = new Int32Array(N * N).map((_, i) => i), find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+  for (let k = 0; k < N * N; k++) { if (er[k] && t[k] === 1 && t[k + 1] === 1) par[find(k)] = find(k + 1); if (ed[k] && t[k] === 1 && k + N < N * N && t[k + N] === 1) par[find(k)] = find(k + N); }
+  const extra = [];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    if (t[k] !== 1) continue;
+    if (i + 1 < N && t[k + 1] === 1 && !er[k]) extra.push([k, k + 1, er]);
+    if (j + 1 < N && t[k + N] === 1 && !ed[k]) extra.push([k, k + N, ed]);
+  }
+  for (let k = extra.length - 1; k > 0; k--) { const m = (rn() * (k + 1)) | 0; [extra[k], extra[m]] = [extra[m], extra[k]]; }
+  for (const [u, v, arr] of extra) { const a = find(u), b = find(v); if (a !== b) { par[a] = b; arr[u] = 1; } }
+  return { rx, ry, x0, y0, cells, t, er, ed };
+}
+// 名所への 参道：道の ない 区画の 中の 名所にも とどくように、名所の マスから いちばん近い 通路まで（5マスまで）を「参道」に して 入れる。
+// 参道は 通路と 参道から だけ 入れる（壁の かたまりの 中を 自由に 通りぬけない）。区域が 読めてから つくる（まだなら あとで）
+let mzSpotV = -1, mzSpotCells = new Set(), mzSpotTodo = [];
+function mzSpotCell(cx, cy) { return mzSpotCells.has(cx + ',' + cy); }
+let mzSpotT = 0;
+function mzSpotUpdate(now) {
+  if (now - mzSpotT < 500) return;   // 0.5秒ごと
+  mzSpotT = now;
+  if (G.spotsVersion !== mzSpotV) { mzSpotV = G.spotsVersion; mzSpotCells = new Set(); mzSpotTodo = (G.spots || []).map(sp => { const t = toTile(sp.lat, sp.lng); return [Math.floor(t.x / MZ_K), Math.floor(t.y / MZ_K)]; }); }
+  if (!mzSpotTodo.length || rp.x === null) return;
+  const rc = Math.floor(rp.x / MZ_K), rr = Math.floor(rp.y / MZ_K), later = [];
+  for (const [sx, sy] of mzSpotTodo) {
+    if (Math.abs(sx - rc) > 60 || Math.abs(sy - rr) > 60) { later.push([sx, sy]); continue; }   // 近くの 名所だけ（区域を 読みに いきすぎない）
+    const t0 = mzType(sx, sy);
+    if (t0 < 0) { later.push([sx, sy]); continue; }
+    if (t0 === 1) continue;
+    const from = new Map([[sx + ',' + sy, null]]), q = [[sx, sy, 0]];
+    let end = null, wait = false;
+    for (let h = 0; h < q.length && !end; h++) {
+      const [x, y, d] = q[h];
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+        if (from.has(k)) continue;
+        const ty = mzType(nx, ny);
+        if (ty < 0) { wait = true; continue; }
+        from.set(k, x + ',' + y);
+        if (ty === 1) { end = x + ',' + y; break; }
+        if (d < 5) q.push([nx, ny, d + 1]);
+      }
+    }
+    if (!end && wait) { later.push([sx, sy]); continue; }
+    for (let k = end; k; k = from.get(k)) mzSpotCells.add(k);   // 名所の マス から 通路の となり まで
+  }
+  mzSpotTodo = later;
+}
+function mzType(cx, cy) { const a = mzArea(cx, cy); return a ? a.t[(cy - a.y0) * MZ_R + cx - a.x0] : -1; }   // -1：まだ 読めていない
+function mzOpen(cx, cy, dx, dy) {   // (cx, cy) から となりの マスへ 転がって 行けるか
+  const A = mzArea(cx, cy), B = mzArea(cx + dx, cy + dy);
+  if (!A || !B) return true;
+  const ia = (cy - A.y0) * MZ_R + cx - A.x0, ib = (cy + dy - B.y0) * MZ_R + cx + dx - B.x0;
+  const sa = mzSpotCell(cx, cy), sb = mzSpotCell(cx + dx, cy + dy);
+  if (A.t[ia] !== 1 && !sa) return B.t[ib] === 1 || sb;   // 壁の かたまりの 中（始めた 所が 建物の 中 など）からは 通路・参道へ だけ 出られる（かたまりの 中を 通りぬけない。ふつうは mzSnap で 通路へ もどす）
+  if (B.t[ib] !== 1) return sb;   // 参道には 通路・参道から 入れる。ほかの 壁の かたまりには 入れない
+  if (A.t[ia] !== 1) return true;   // 参道から 通路へ
+  if (A === B) return (dx ? A.er : A.ed)[dx + dy > 0 ? ia : ib] === 1;
+  return true;   // 区域の さかい：となりあう 通路どうしは いつも 通れる（区域の 中の はなれ島も さかいで つながる）
+}
+function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マス）へ 動くと 壁に 当たるか
+  const a = Math.floor(fx / MZ_K), b = Math.floor(fy / MZ_K), c = Math.floor(x / MZ_K), d = Math.floor(y / MZ_K), dx = c - a, dy = d - b;
+  if (!dx && !dy) return false;
+  if (Math.abs(dx) + Math.abs(dy) === 1) return !mzOpen(a, b, dx, dy);
+  if (Math.abs(dx) === 1 && Math.abs(dy) === 1) return !((mzOpen(a, b, dx, 0) && mzOpen(a + dx, b, 0, dy)) || (mzOpen(a, b, 0, dy) && mzOpen(a, b + dy, dx, 0)));
+  return false;
+}
+// 道しるべ：お米の マスから 行き先（G.guide）の そばの 通路まで、めいろの 道すじ（マスの 幅さがし）。お米の マスか 行き先が かわったときだけ さがす。
+// 案内の 札の 道のり（めいろで 何m）に 使い、25秒 近づけなければ 道すじの 先 8マスを 6秒 光る 点で 見せる（ふだんは 見せない：迷路を とく 楽しみを のこす）
+const mzRt = { key: '', path: null, best: Infinity, bestT: 0, showUntil: 0, gkey: '', retry: 0, t0: 0, len0: 0 };   // t0・len0：いまの ゴールに なった 時刻と、そのときの めいろの 道のり（ゴールの 知らせに）
+function mzRoute(now) {
+  const g = G.guide;
+  if (!g || rp.x === null) { mzRt.path = null; return; }
+  const p = toTile(g.lat, g.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(p.x / MZ_K), gr = Math.floor(p.y / MZ_K);
+  const near = ((G.reachOf ? G.reachOf(g) : 40) || 40) * 0.8 / TILE_M;   // 着いたと みなす 近さ（チェックインの 半径より 少し 内がわ。マス）
+  const inReach = (x, y) => Math.hypot(Math.max(x * MZ_K - p.x, 0, p.x - (x + 1) * MZ_K), Math.max(y * MZ_K - p.y, 0, p.y - (y + 1) * MZ_K)) <= near;   // マスの いちばん 近い 所が その 近さに 入る
+  const gkey = gc + ',' + gr, key = a + ',' + b + '>' + gkey;
+  if (gkey !== mzRt.gkey) {   // ゴールが かわった（着いて 次の 行き先に なった など）：前の ゴールも 2分 おぼえる（チェックインは 行き先が かわった あとに なる）
+    if (mzRt.gid) mzRt.prev = { id: mzRt.gid, t0: mzRt.t0, len0: mzRt.len0, at: now };
+    mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.t0 = now; mzRt.len0 = 0;
+    mzNext.name = g.name || ''; mzNext.want = true;   // 「🏁 つぎの ゴール」を 出す（道のりが 分かってから）
+  }
+  mzRt.gid = g.id || g.name;
+  if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
+  mzRt.key = key; mzRt.retry = 0;
+  const pad = 30, x0 = Math.min(a, gc) - pad, x1 = Math.max(a, gc) + pad, y0 = Math.min(b, gr) - pad, y1 = Math.max(b, gr) + pad, W = x1 - x0 + 1;
+  if (W * (y1 - y0 + 1) > 160000) { mzRt.path = null; return; }   // 遠すぎる（10km ほど）：さがさない
+  const from = new Int32Array(W * (y1 - y0 + 1)).fill(-2), q = [(b - y0) * W + a - x0];
+  from[q[0]] = -1;
+  let end = -1, unk = false;
+  for (let h = 0; h < q.length && h < 60000; h++) {
+    const i = q[h], x = i % W + x0, y = (i / W | 0) + y0;
+    if (inReach(x, y)) { end = i; break; }   // 行き先の チェックインの 近さに 入る マスまで
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy;
+      if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
+      const j = (ny - y0) * W + nx - x0;
+      if (from[j] !== -2) continue;
+      if (mzType(nx, ny) < 0) { unk = true; continue; }   // まだ 読めていない 区域は 通らない（道のりが 分からない。読みに いって あとで さがしなおす）
+      if (!mzOpen(x, y, dx, dy)) continue;
+      from[j] = i; q.push(j);
+    }
+  }
+  if (end < 0) { mzRt.path = null; if (unk) mzRt.retry = now + 1500; return; }
+  const path = [];
+  for (let i = end; i >= 0; i = from[i]) path.push([i % W + x0, (i / W | 0) + y0]);
+  mzRt.path = path.reverse();
+  const L = mzRt.path.length;
+  if (!mzRt.len0) mzRt.len0 = L;
+  if (L !== mzRt.shownLen && G.renderGuide) { mzRt.shownLen = L; G.renderGuide(); }   // 案内の 札の 道のり（🌀）を すぐ かえる
+  if (L < mzRt.best) { mzRt.best = L; mzRt.bestT = now; }
+}
+function mzHintTick(now) {   // 25秒 行き先に 近づけていない（めいろの 道のりが へらない）ときだけ 道すじを 見せる
+  if (!mzRt.path || mzRt.path.length < 3 || now < mzRt.showUntil) return;
+  if (now - mzRt.bestT > 25000) { mzRt.showUntil = now + 6000; mzRt.bestT = now; G.toast('💡 道しるべ：光る 点の ほうへ ころがそう'); }
+}
+function drawMzHint(ox, oy, T, now) {
+  if (!mzRt.path || now >= mzRt.showUntil) return;
+  const S = MZ_K * T, pts = mzRt.path.slice(1, 9);
+  pts.forEach(([cx, cy], k) => {
+    const on = Math.floor(now / 120) % 8 === k, r = T * (on ? 0.55 : 0.38), X = ox + cx * S + S / 2, Y = oy + cy * S + S / 2;
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(X, Y, r + Math.max(1, T / 6), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = on ? '#fff59d' : '#ffffff'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
+  });
+}
+// 壁の かたまりの 中に いる（始めた 所・ひとっとび の 行き先が 道の ない 区画 など）：いちばん近い 通路・参道の まん中へ うつす（0.5秒ごと）
+let mzSnapT = 0;
+function mzSnap(now) {
+  if (now - mzSnapT < 500 || rp.x === null) return;
+  mzSnapT = now;
+  const go = (x, y) => mzType(x, y) === 1 || mzSpotCell(x, y), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), t0 = mzType(a, b);
+  if (t0 < 0 || go(a, b)) return;
+  const seen = new Set([a + ',' + b]), q = [[a, b]];
+  for (let h = 0; h < q.length && h < 900; h++) {
+    const [x, y] = q[h];
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+      if (seen.has(k)) continue;
+      seen.add(k);
+      const ty = mzType(nx, ny);
+      if (ty < 0) continue;
+      if (go(nx, ny)) { const ll = toLatLng(nx * MZ_K + 1.5, ny * MZ_K + 1.5); G.moveTo(ll.lat, ll.lng); return; }
+      q.push([nx, ny]);
+    }
+  }
+}
+// めいろの ゴール（行き先 G.guide）：運営者の声「迷路のゴールがわからない」
+// ・画面の 中：チェックインの 近さの 光る わ（ふくらんだり ちぢんだり）と、🏁 の 旗、「ゴール」の 文字
+// ・画面の 外：縁に 大きな 矢印と、🏁 と めいろの 道のり（なければ まっすぐの きょり）の 札
+// ゴールに 着いた：お米の まわりに 紙ふぶき（ごはんつぶ・星・桜の 色。盤の めいろと 同じ）
+const mzFx = [], mzBanner = { t0: 0, text: '' };
+const mzNext = { t0: 0, name: '', want: false };   // 新しい ゴールの 知らせ（3秒）
+function mzGoalFx(text) {
+  const now = performance.now(), cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];
+  for (let i = 0; i < 60; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6; mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, c: cols[i % cols.length], life: 1 + Math.random() * 0.8 }); }
+  mzBanner.t0 = now; mzBanner.text = text || '';   // 「🏁 ゴール！」の 大きな 文字（4秒。ごほうびの 窓を とじても 見える ように 長め）
+}
+function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
+  if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
+  const ba = (now - mzBanner.t0) / 1000;
+  if (mzBanner.t0 && ba < 4) {   // 大きな「🏁 ゴール！」と 時間（さいごの 0.5秒で うすく）
+    ctx.globalAlpha = Math.min(1, (4 - ba) / 0.5);
+    const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
+    ctx.strokeText('🏁 ゴール！', w / 2, y); ctx.fillText('🏁 ゴール！', w / 2, y);
+    if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; ctx.strokeText(mzBanner.text, w / 2, y + big * 0.95); ctx.fillText(mzBanner.text, w / 2, y + big * 0.95); }
+    ctx.globalAlpha = 1;
+  } else if (mzBanner.t0) mzBanner.t0 = 0;
+  for (let i = mzFx.length - 1; i >= 0; i--) {
+    const p = mzFx[i], a = (now - p.t0) / 1000;
+    if (a > p.life) { mzFx.splice(i, 1); continue; }
+    const x = w / 2 + (p.vx * a) * T, y = cy + (p.vy * a + 4.5 * a * a) * T, q = Math.max(2, Math.round(T / 5));
+    ctx.globalAlpha = Math.max(0, 1 - a / p.life);
+    ctx.fillStyle = '#222'; ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, q + 2, q + 2);
+    ctx.fillStyle = p.c; ctx.fillRect(Math.round(x), Math.round(y), q, q);
+  }
+  ctx.globalAlpha = 1;
+}
+// 新しい ゴールが きまった：画面の 上に「🏁 つぎの ゴール」と 名所の 名前・めいろの 道のりを 3秒（運営者の声「ゴールのわかりやすさを磨く」）
+// 「🏁 ゴール！」の あと・窓が 開いている 間は 待つ。道のりが 分かってから（2秒 待っても 分からなければ 名前だけ）
+function drawMzNext(w, cy, U, now) {
+  if (mapCovered() || mzBanner.t0) { if (mzNext.t0) mzNext.t0 = now; return; }
+  if (mzNext.want) {
+    if (!mzRt.path && now - mzRt.t0 < 2000) return;
+    mzNext.want = false; mzNext.t0 = now;
+    mzNext.dist = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : 0;
+  }
+  const a = (now - mzNext.t0) / 1000;
+  if (a > 3) { mzNext.t0 = 0; return; }
+  const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
+  ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  const lines = [['🏁 つぎの ゴール', Math.round(big * 0.8), '#ffe680'], [mzNext.name, big, '#ffffff'], [dist, Math.round(big * 0.7), '#bfefff']].filter(l => l[0]);
+  let yy = y;
+  ctx.fillStyle = 'rgba(10,20,30,.62)';
+  const bw = Math.min(w - U, Math.max(...lines.map(([t, sz]) => { ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; return ctx.measureText(t).width; })) + U * 1.2);
+  const bh = lines.reduce((s, l) => s + l[1] * 1.35, 0) + U * 0.5;
+  ctx.fillRect(Math.round(w / 2 - bw / 2), Math.round(y - lines[0][1] * 0.9), Math.round(bw), Math.round(bh));
+  for (const [t, sz, col] of lines) {
+    ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sz / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = col;
+    let tt = t; while (ctx.measureText(tt).width > w - U * 2 && tt.length > 2) tt = tt.slice(0, -2) + '…';   // 長い 名前は 「…」
+    ctx.strokeText(tt, w / 2, yy); ctx.fillText(tt, w / 2, yy); yy += sz * 1.35;
+  }
+  ctx.globalAlpha = 1;
+}
+function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
+  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.min(Math.max(T, Math.round(24 * dpr)), Math.round(32 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ。大きく しても 画面の 32点まで）
+  const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
+  const dist = far < 1000 ? `${Math.round(far / 10) * 10}m` : `${(far / 1000).toFixed(1)}km`;
+  const label = (t, x, y, size, col) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#1a1a1a'; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); };
+  const flag = (x, y, s) => {   // 白黒の 市松の 旗（x, y：さおの 下）
+    const q = Math.max(1, Math.round(s / 8));
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(x) - q, Math.round(y - s * 1.1), q * 2 + 1, Math.round(s * 1.1));
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(Math.round(x), Math.round(y - s * 1.1), q, Math.round(s * 1.1));
+    const fw = s * 0.9, fh = s * 0.6, cw = fw / 4, ch = fh / 3, fx = x + q, fy = y - s * 1.1;
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(fx), Math.round(fy) - q, Math.round(fw) + q, Math.round(fh) + 2 * q);
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) { ctx.fillStyle = (i + j) % 2 ? '#1a1a1a' : '#ffffff'; ctx.fillRect(Math.round(fx + i * cw), Math.round(fy + j * ch), Math.ceil(cw), Math.ceil(ch)); }
+  };
+  if (ex >= 0 && ey >= 0 && ex <= w && ey <= vh) {
+    const r = Math.max(U * 0.8, G.reachOf(gt) / TILE_M * T) * (0.92 + pulse * 0.12);
+    ctx.lineWidth = Math.max(3, U * 0.16);
+    ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = Math.max(2, U * 0.1); ctx.strokeStyle = `rgba(255,213,79,${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+    flag(ex, ey - U * 0.3, U * 1.3);
+    label('ゴール', ex, ey - U * 2.75 - pulse * U * 0.12, Math.round(U * 0.62), '#ffe680');
+    { let nm = gt.name || ''; ctx.font = `bold ${Math.round(U * 0.45)}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
+      if (nm) label(nm, ex, ey - U * 2.15 - pulse * U * 0.12, Math.round(U * 0.45), '#ffffff'); }   // 旗の 上
+    return;
+  }
+  const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6;
+  const px = Math.min(Math.abs((w / 2 - m) / Math.cos(a)), Math.abs((vh / 2 - m) / Math.sin(a)));
+  const qx = w / 2 + Math.cos(a) * px, qy = cy + Math.sin(a) * px, k = 1 + pulse * 0.08;
+  ctx.save(); ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
+  ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.moveTo(U * 1.1, 0); ctx.lineTo(-U * 0.2, -U * 0.75); ctx.lineTo(-U * 0.2, U * 0.75); ctx.fill();
+  ctx.fillStyle = '#ffd54f'; ctx.beginPath(); ctx.moveTo(U * 0.85, 0); ctx.lineTo(-U * 0.05, -U * 0.5); ctx.lineTo(-U * 0.05, U * 0.5); ctx.fill();
+  ctx.restore();
+  const bx = qx - Math.cos(a) * U * 1.3, by = qy - Math.sin(a) * U * 1.3;   // 矢印の 内がわに 🏁 と 道のり
+  flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
+  label(dist, bx + U * 0.45, by, Math.round(U * 0.5), '#ffffff');
+}
+function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
+  const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
+  const lw = Math.max(2, Math.round(T / 2)), u = Math.max(1, Math.round(T / 8)), o = Math.max(1, Math.round(T / 4)), segs = [];
+  for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
+    const ty = mzType(cx, cy);
+    if (ty < 0) continue;
+    const X = ox + cx * S, Y = oy + cy * S, go = (x, y) => mzType(x, y) === 1 || mzSpotCell(x, y);   // 入れる マス（通路・名所への 参道）
+    if (!go(cx, cy)) { if (ty === 0) { ctx.fillStyle = 'rgba(28,70,52,.4)'; ctx.fillRect(X, Y, S, S); } continue; }   // 台（地図は 見える こさ）
+    if (!mzOpen(cx, cy, 1, 0)) segs.push([X + S - lw / 2, Y - lw / 2, lw, S + lw]);
+    if (!mzOpen(cx, cy, 0, 1)) segs.push([X - lw / 2, Y + S - lw / 2, S + lw, lw]);
+    if (!go(cx - 1, cy) && mzType(cx - 1, cy) >= 0) segs.push([X - lw / 2, Y - lw / 2, lw, S + lw]);   // 左・上は となりが 入れない マスの ときだけ（入れる マスどうしは 左・上の マスが 描く）
+    if (!go(cx, cy - 1) && mzType(cx, cy - 1) >= 0) segs.push([X - lw / 2, Y - lw / 2, S + lw, lw]);
+  }
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + o, Y + o, w, h);   // 影
+  ctx.fillStyle = '#0d2219'; for (const [X, Y, w, h] of segs) ctx.fillRect(X, Y, w, h);   // 黒い ふち
+  ctx.fillStyle = '#2f7a58'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + u, Y + u, w - 2 * u, h - 2 * u);   // 緑の 壁
+  ctx.fillStyle = 'rgba(200,255,220,.55)'; for (const [X, Y, w, h] of segs) { if (w > h) ctx.fillRect(X + u, Y + u, w - 2 * u, u); else ctx.fillRect(X + u, Y + u, u, h - 2 * u); }   // 上・左の 面の てかり
+}
+function rollStep(dt) {
+  const t = targetTile();
+  const x0 = rp.x, y0 = rp.y;   // この1こま前の位置（人に ぶつかったら ここで止まる）
+  if (rp.x === null || (rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 0.6)) {   // はじめ・ほかの動き（おまかせ歩き・タップ・ひとっとび）のあとは、そこから
+    Object.assign(rp, { x: t.x, y: t.y, vx: 0, vy: 0, sent: { x: t.x, y: t.y }, tile: `${Math.floor(t.x)},${Math.floor(t.y)}` });
+  }
+  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) { rp.vx = rp.vy = 0; return; }
+  if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
+  const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
+  const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
+  const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1);   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
+  const up = rp.vx * sl.x + rp.vy * sl.y < 0 ? 0.6 : 1;   // 上り坂は、下りより ゆるく おそくなる（いきおいで 堤防や 坂を のぼれる）
+  const acc = ROLL_ACC * (KP.accel || 1);
+  const fx = Math.max(-1, Math.min(1, ax)) * acc + sl.x * up, fy = Math.max(-1, Math.min(1, ay)) * acc + sl.y * up, fp = Math.hypot(fx, fy);   // 押す力（傾き・坂）
+  let sp = Math.hypot(rp.vx, rp.vy);
+  if (sp < 0.05) {   // 止まっている：押す力が ころがり抵抗より弱ければ 動かない（ゆるい坂では 止まっていられる）
+    const c0 = crr * (KP.crr || 1);
+    if (fp <= c0) { rp.vx = rp.vy = 0; return; }
+    rp.vx += fx / fp * (fp - c0) * dt; rp.vy += fy / fp * (fp - c0) * dt;
+  } else {
+    rp.vx += fx * dt; rp.vy += fy * dt;
+    sp = Math.hypot(rp.vx, rp.vy);
+    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (crr * (KP.crr || 1) + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
+    rp.vx *= ns / sp; rp.vy *= ns / sp;
+  }
+  const mz = mazeOn(), rb = mz ? (x, y) => mzBlocked(rp.x, rp.y, x, y) : rollBlocked;   // めいろの ときは めいろの 壁だけに 当たる
+  const R = 0.3, RS = R * 0.6;   // つぶの大きさ（マス）。かべは つぶの まん中と 両はしの3か所で調べる（建物の かどに めりこまないように）
+  const hit = (vin, horiz, wet) => {   // かべに当たった：おそければ ぴたっと止まる（押しつけても がたがたしない）。速ければ はね返って ぺたっ。水なら ぽちゃん（やわらかく はね返る）
+    if (vin < ROLL_STICK) return 0;
+    bumpFx(vin, horiz, wet);
+    return wet ? -0.25 : -(KP.bounce !== undefined ? KP.bounce : ROLL_BOUNCE);
+  };
+  const wetAt = (x, ys, xs) => (xs || [x]).some(px => (ys || []).some(py => codeAt(Math.floor(px), Math.floor(py)) === C.A));   // 当たったのは 水か
+  const nx = rp.x + rp.vx * dt, ex = nx + Math.sign(rp.vx) * R;
+  const xa = rb(ex, rp.y - RS), xb = rb(ex, rp.y + RS);
+  if (rp.vx && (rb(ex, rp.y) || (xa && xb))) {   // かべに ぴったり つけてから はね返す（すきまが残ると、押しつづけたときに すきまで また速くなって がたがたする）
+    rp.x = rp.vx > 0 ? Math.floor(ex) - R - 1e-3 : Math.floor(ex) + 1 + R + 1e-3;
+    const k = hit(Math.abs(rp.vx), true, wetAt(ex, [rp.y, rp.y - RS, rp.y + RS])); rp.vx *= k; if (k) rp.vy *= 0.85;
+  }
+  else {
+    rp.x = nx;
+    if (rp.vx && (xa || xb) && !rb(rp.x, rp.y + (xa ? 1 : -1) * (R + 0.05))) rp.y += (xa ? 1 : -1) * Math.abs(rp.vx) * dt * 0.7;   // かどに かすった：すべって よける
+  }
+  const ny = rp.y + rp.vy * dt, ey = ny + Math.sign(rp.vy) * R;
+  const ya = rb(rp.x - RS, ey), yb = rb(rp.x + RS, ey);
+  if (rp.vy && (rb(rp.x, ey) || (ya && yb))) {
+    rp.y = rp.vy > 0 ? Math.floor(ey) - R - 1e-3 : Math.floor(ey) + 1 + R + 1e-3;
+    const k = hit(Math.abs(rp.vy), false, wetAt(0, [ey], [rp.x, rp.x - RS, rp.x + RS])); rp.vy *= k; if (k) rp.vx *= 0.85;
+  }
+  else {
+    rp.y = ny;
+    if (rp.vy && (ya || yb) && !rb(rp.x + (ya ? 1 : -1) * (R + 0.05), rp.y)) rp.x += (ya ? 1 : -1) * Math.abs(rp.vy) * dt * 0.7;
+  }
+  if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
+  const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
+  if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
+    const who = npcAt(tx, ty);
+    if (who) {   // 人に こつん：前のマスの まん中へ とばずに、その場で ぽよんと止まって にっこり あいさつ
+      if (x0 !== null) { rp.x = x0; rp.y = y0; }
+      const hard = Math.hypot(rp.vx, rp.vy);
+      rp.vx = rp.vy = 0;
+      if (hard > 0.6) { roll.sq = Math.min(0.2, 0.08 + hard * 0.03); roll.sqv = 0; roll.sqx = Math.abs(rp.x - (tx + 0.5)) > Math.abs(rp.y - (ty + 0.5)); kotoSound(Math.min(1, hard / 5)); }
+      roll.happyT = 1.4;
+      if ($('pxInfo').hidden) openNpc(who);
+      return;
+    }
+    const [px0, py0] = rp.tile.split(',').map(Number), wasRail = codeAt(px0, py0) === C.L;
+    rp.tile = key;
+    sightCheck(); critterStep(tx, ty);
+    const spd = Math.hypot(rp.vx, rp.vy);
+    if (codeAt(tx, ty) === C.L && !wasRail && spd > 1.2 && roll.h <= 0) { roll.hv = 1.1 + spd * 0.12; roll.h = 0.001; clackSound(Math.min(1, spd / 5)); }   // 線路に のる：ガタン と小さく はねる（線路にそって転がるときは 1回だけ）
+  }
+  {   // 高低差で とぶ：坂の前と うしろ（1.2マス＝約10m）の 傾きを くらべる
+    //   ・上り坂を いきおいよく のぼって、上が 平らになる所（堤防の上・坂の上）→ 上へ とびだす
+    //   ・急に 下り坂になる所（段丘の崖の上のへり）→ 地面が 足もとから にげて とぶ
+    //   ・急に 平らになる所（坂の下）→ ずしん
+    const spd = Math.hypot(rp.vx, rp.vy), zg = (() => { const h = heightAt(rp.x, rp.y); return h === null ? null : h / TILE_M; })();   // 地面の高さ（マス）
+    if (roll.h > 0 && zg !== null && roll.zg !== null) roll.h = Math.max(0.001, roll.h - (zg - roll.zg));   // とんでいる間に 地面が 下がれば、そのぶん 高く（長く とぶ）
+    roll.zg = zg;
+    if (spd > 2.2 && roll.h <= 0 && !roll.jumpCd && zg !== null) {
+      const W = 1.2, ux = rp.vx / spd, uy = rp.vy / spd, hb = heightAt(rp.x - ux * W, rp.y - uy * W), hf = heightAt(rp.x + ux * W, rp.y + uy * W);
+      if (hb !== null && hf !== null) {
+        const gb = (zg * TILE_M - hb) / (W * TILE_M), gf = (hf - zg * TILE_M) / (W * TILE_M), bend = gb - gf;   // うしろの坂・前の坂（上りが ＋）。bend：前が どれだけ 下がって見えるか
+        if (bend > 0.07) {
+          roll.hv = Math.min(5.5, spd * (Math.max(0, gb) * 1.6 + bend * 1.4)); roll.h = 0.001; roll.jumpCd = 0.5; roll.jumps++;
+          kotoSound(Math.min(1, spd / 5));
+        } else if (bend < -0.12) { roll.sq = Math.max(roll.sq, 0.14); roll.sqv = 0; roll.sqx = false; roll.jumpCd = 0.4; kotoSound(Math.min(1, spd / 5), true); }
+      }
+    }
+  }
+  const far = Math.hypot(rp.x - rp.sent.x, rp.y - rp.sent.y), nowMs = performance.now();
+  if (far > 0.45 || (far > 0.05 && nowMs - (rp.sentAt || 0) > 250)) {   // 位置を game.js へ（多すぎると重くなるので、0.45マスごとか 0.25秒ごと）
+    const ll = toLatLng(rp.x, rp.y);
+    rp.sent = { x: rp.x, y: rp.y }; rp.sentAt = nowMs;
+    G.moveTo(ll.lat, ll.lng, 'step');
+  }
+}
+function bumpFx(hard = 1, horiz = true, wet = false) {
+  const now = performance.now();
+  if (now - rp.bump < 160) return;
+  rp.bump = now;
+  if (hard < 0.25) return;
+  if (wet) {   // 水に ぽちゃん：しぶきが はねて、あせの しずく。画面は ほとんど ゆれない
+    roll.sq = Math.min(0.18, 0.06 + hard * 0.03); roll.sqv = 0; roll.sqx = horiz;
+    roll.wetT = 1.4; roll.shake = 0.12; roll.dirt = 0;   // 水で あらわれて きれいに
+    const sx = Math.sign(rp.vx) * (horiz ? 0.35 : 0), sy = Math.sign(rp.vy) * (horiz ? 0 : 0.35);
+    for (let i = 0; i < 7; i++) roll.dust.push({ x: rp.x + sx, y: rp.y + sy, t: 0, s: 0.6 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.4, c: '150,200,240', bit: true });
+    splashSound(Math.min(1, hard / 4));
+    if (navigator.vibrate) navigator.vibrate(6);
+    return;
+  }
+  roll.sq = Math.min(0.32, 0.1 + hard * 0.06); roll.sqv = 0; roll.sqx = horiz;   // ぺたっと つぶれる（当たった向きに）
+  roll.ouchT = 0.7;   // いたい
+  roll.shake = Math.min(1, 0.3 + hard * 0.15);
+  kotoSound(Math.min(1, hard / 4), true);
+  if (navigator.vibrate) navigator.vibrate(Math.round(8 + hard * 4));
+}
+function setRoll(on) {
+  rollOn = !!on;
+  try { localStorage.setItem('nsg_roll', rollOn ? '1' : '0'); } catch (e) { /* noop */ }
+  rp.x = null; for (const k in rk) rk[k] = 0;
+  const b = $('pxRoll');
+  if (b) { b.classList.toggle('on', rollOn); b.setAttribute('aria-pressed', String(rollOn)); }
 }
 // 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
 // 乗っている間は、歩いた距離・チェックイン・たからばこ・話しかけはお休み（降りるとできる）
@@ -4569,11 +6917,13 @@ const CAR_OK = new Set([C.R, C.H]);
 let driving = false;
 function setDriving(on, msg) {
   driving = !!on;
-  const b = $('pxCar');
-  b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
-  b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
-  b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
-  b.classList.toggle('on', driving);
+  const b = $('pxCar');   // 地図が めいろに なったので 車の ボタンは はずした（車では めいろの 壁が きかない）
+  if (b) {
+    b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
+    b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
+    b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
+    b.classList.toggle('on', driving);
+  }
   G.setDriving(driving);
   if (msg) G.toast(msg);
   dirty = true;
@@ -4595,7 +6945,50 @@ function checkCar() {
   const t = targetTile(), c = codeAt(Math.floor(t.x), Math.floor(t.y));
   if (c !== C.X && !CAR_OK.has(c)) setDriving(false, '🚶 道の外へ移動したので、車を降りました');
 }
-$('pxCar').addEventListener('click', toggleCar);
+if ($('pxCar')) $('pxCar').addEventListener('click', toggleCar);
+// 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、右上の列に「稲刈り」ボタンを出す（あるいて移動でも見えるよう、スティックの列には置かない）
+const PADDY_CODES = new Set([C.U, C.F]);
+function onPaddy() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => PADDY_CODES.has(codeAt(x + dx, y + dy)));
+}
+function updateHarvestBtn() { const b = $('pxHarvest'), on = onPaddy(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxHarvest').addEventListener('click', () => { if (window.NISHIO_HARVEST && onPaddy()) NISHIO_HARVEST.open(); });
+// 段丘をのぼるミニゲーム（dankyu.js）：急な坂のマス（またはすぐとなり）にいるときだけ、右上の列に「段丘をのぼる」ボタンを出す
+// 急な坂＝標高から作った陰影がいちばん明るいか暗いマス（となりのマスと約3m以上ちがう）。段丘のへりの崖だけにするため、次の所はのぞく
+//  ・山・丘・海のマス。まわり9×9マスに山・丘のマスが8つ以上ある所（山の中の道や畑。道や建物は山・丘のマスに塗りかえないので）
+//  ・まわり9×9マスに急な坂のマスが25以上ある所（丘の斜面は面に広がる。段丘のへりは線なので少ない）
+//  標高そのものは区画に残していないので完全には見分けられない（西尾駅の北や西の台地のへりでは残り、山の中の区画では 1248→9マス、東の丘の区画では 9160→157マスに減る）
+const HILLY = new Set([C.M, C.K]);
+const isSteep = r => { const sh = (r >> 5) & 7; return sh === 0 || sh === 4; };
+function steepAt(x, y) {
+  const r = rawAt(x, y), c = r & 31;
+  if (!isSteep(r) || HILLY.has(c) || c === C.A) return false;
+  let hills = 0, steep = 0;
+  for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+    const v = rawAt(x + dx, y + dy);
+    if (HILLY.has(v & 31) && ++hills >= 8) return false;
+    if (isSteep(v) && ++steep >= 25) return false;
+  }
+  return true;
+}
+function onSlope() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => steepAt(x + dx, y + dy));
+}
+function updateDankyuBtn() { const b = $('pxDankyu'), on = onSlope(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxDankyu').addEventListener('click', () => { if (window.NISHIO_DANKYU && onSlope()) NISHIO_DANKYU.open(); });
+// 肥料山の草刈り（hiryoyama.js）：丘・山のマス（またはすぐとなり）にいるときだけ、右上の列に 🌿 のボタン
+const HILL_CODES = new Set([C.K, C.M]);
+function onHill() {
+  if (worldMode || driving || (!G.me && !G.demo)) return false;
+  const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y);
+  return [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => HILL_CODES.has(codeAt(x + dx, y + dy)));
+}
+function updateHiryoBtn() { const b = $('pxHiryo'), on = onHill(); if (b && b.hidden === on) b.hidden = !on; }
+$('pxHiryo').addEventListener('click', () => { if (window.NISHIO_HIRYO && onHill()) NISHIO_HIRYO.open(); });
 
 // いちばん近い歩けるマスまでの歩数（歩けないマスを通ってよい。未読込は通らない。遠すぎたら Infinity）
 function exitDist(x, y) {
@@ -4621,6 +7014,7 @@ function snapDemoStart() {
   if (!G.demo || !G.me || worldMode) return;
   const t = targetTile(), x = Math.floor(t.x), y = Math.floor(t.y), key = x + ',' + y, c = codeAt(x, y);
   if (key === snapKey || c === C.X) return;
+  if (mazeOn() && mzType(Math.floor(t.x / MZ_K), Math.floor(t.y / MZ_K)) >= 0) return;   // めいろの ときは 建物の マスでも 動かさない（通路・参道の 中は 通れる。壁の かたまりの 中なら mzSnap が 通路へ もどす）。snapKey は おぼえない（転がすを 切ったら しらべなおす）
   snapKey = key;
   if (!BLOCK.has(c)) return;
   const seen = new Set([key]);
@@ -4731,98 +7125,29 @@ setInterval(updateChests, 2000);
 
 // スティック・矢印キー：せかいちずを見ているときは、歩く地図にもどってから歩く。通れなければ ぶるっ
 function padStep(dir) {
+  tapWalkStop();   // スティック・矢印キーをさわったら、タップした所へ歩くのはやめる
   if (worldMode) setWorld(false);
   const ok = step(dir);
   if (!ok && navigator.vibrate) navigator.vibrate(20);
   return ok;
 }
-// スティック：さわったまま動かすと、倒した向きへ歩きつづける。
-//   ・まん中の少しは遊び（動かない）。大きく倒すと速く歩く（車はもっと速い）
-//   ・ななめに倒すと、2つの向きを交互に1マスずつ（片方が通れなければ、もう片方へ）
-const stick = { id: null, x: 0, y: 0, dirs: [], turn: 0, timer: null, key: '' };
-const STICK_DEAD = 0.28, STICK_FAST = 0.75, STICK_DIAG = Math.tan(Math.PI / 8);
-function stickDirs(x, y) {   // x, y は -1〜1（半径で割った値）
-  const ax = Math.abs(x), ay = Math.abs(y);
-  if (Math.hypot(x, y) < STICK_DEAD) return [];
-  const h = x < 0 ? 'left' : 'right', v = y < 0 ? 'up' : 'down';
-  if (Math.min(ax, ay) > Math.max(ax, ay) * STICK_DIAG) return ay >= ax ? [v, h] : [h, v];
-  return [ax > ay ? h : v];
-}
-function stickTick() {
-  stick.timer = null;
-  if (!stick.dirs.length) return;
-  const n = stick.dirs.length, first = stick.dirs[stick.turn % n];
-  if (!padStep(first) && n > 1) padStep(stick.dirs[(stick.turn + 1) % n]);
-  stick.turn++;
-  const fast = Math.hypot(stick.x, stick.y) >= STICK_FAST;
-  stick.timer = setTimeout(stickTick, driving ? (fast ? 70 : 120) : (fast ? 130 : 230));
-}
-function stickMove(e) {
-  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 8;
-  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-  const d = Math.hypot(dx, dy);
-  if (d > R) { dx *= R / d; dy *= R / d; }
-  stick.x = dx / R; stick.y = dy / R;
-  $('pxKnob').style.transform = `translate(${dx}px,${dy}px)`;
-  const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
-  for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
-  if (key === stick.key) return;
-  if (dirs.length) autoPause();   // 自分で動かしたら、おまかせ歩きは少し休む
-  stick.key = key; stick.dirs = dirs; stick.turn = 0;
-  clearTimeout(stick.timer); stick.timer = null;
-  if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
-}
-function stickEnd(e) {
-  if (e && stick.id !== e.pointerId) return;
-  stick.id = null; stick.dirs = []; stick.key = ''; stick.x = stick.y = 0;
-  clearTimeout(stick.timer); stick.timer = null;
-  $('pxStick').classList.remove('on');
-  $('pxKnob').style.transform = '';
-  $('pxStick').querySelectorAll('i').forEach(i => i.classList.remove('lit'));
-}
-$('pxStick').addEventListener('pointerdown', e => {
-  e.preventDefault();
-  stick.id = e.pointerId;
-  try { $('pxStick').setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
-  $('pxStick').classList.add('on');
-  stickMove(e);
-});
-$('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId) stickMove(e); });
-['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => $('pxStick').addEventListener(ev, stickEnd));
-window.addEventListener('blur', () => stickEnd());
+// 画面の スティックは、地図が めいろに なったので はずした（傾き・矢印キー・地図を タップで 動かす）
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !e.target.closest('input,textarea')) { e.preventDefault(); autoPause(); padStep(k); }
+  if (k && active && G.demo && !meiroPause && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); if (rollOn && !driving) { if (worldMode) setWorld(false); rk[k] = 1; } else padStep(k); }   // 転がす ときも、せかいちずなら 歩く地図に もどってから   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
 });
 
-/* ---------- おまかせ歩き（操作して移動） ----------
-   みちしるべの行き先まで、道を探して自動で歩く（ほぼ放っておいてもゲームが進む）。
-   ・人が行き先なら、その人まで歩いて話しかけ、話を読み進める（その人の話で次のイベントが決まる）
-   ・名所が行き先なら、着いたところでチェックインする（とちゅうの まだ行っていない所も）
-   ・道（ふつうの道・大きな道・小道）を通りやすく、水・建物・山は通らない。まだ読み込んでいない所は通れるとみなし、近づいたら探し直す
-   ・スティック・矢印キーをさわると8秒休む。🧭ボタンでオン・オフ（端末に覚える。はじめはオン）。車に乗っていたら降りて歩く */
-let auto = (() => { try { return localStorage.getItem('nsg_auto') !== 'false'; } catch (e) { return true; } })();
-const autoS = { path: [], goal: '', steps: 0, stuck: 0, pauseUntil: 0, read: 0, walked: 0, skip: new Set(), chest: '', chestTicks: 0 };
-const AUTO_CHEST_M = 60;   // おまかせ歩きが寄り道する たからばこ の近さ（m）
-const AUTO_ROADS = new Set([C.R, C.H, C.D]);
-function setAuto(on, quiet) {
-  auto = !!on;
-  try { localStorage.setItem('nsg_auto', String(auto)); } catch (e) { /* noop */ }
-  const b = $('pxAuto');
-  b.classList.toggle('on', auto); b.setAttribute('aria-pressed', String(auto));
-  autoS.path = []; autoS.read = 0;
-  if (!quiet) G.toast(auto ? '🧭 おまかせ歩き：オン（行き先へ自動で歩きます。スティックをさわると少し休みます）' : '🧭 おまかせ歩き：オフ');
-}
-function autoPause() { autoS.pauseUntil = Date.now() + 8000; autoS.path = []; }
+/* ---------- タップした所へ歩く：道すじ ---------- */
+const AUTO_ROADS = new Set([C.R, C.H, C.D]);   // 通りやすい道（ふつうの道・大きな道・小道）
 // (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで
 function planPath(sx, sy, gx, gy, goalR, avoid) {
-  const pad = 40, x0 = Math.min(sx, gx) - pad, y0 = Math.min(sy, gy) - pad, W = Math.abs(gx - sx) + pad * 2 + 1, H = Math.abs(gy - sy) + pad * 2 + 1;
+  const pad = mazeOn() ? 150 : 40, x0 = Math.min(sx, gx) - pad, y0 = Math.min(sy, gy) - pad, W = Math.abs(gx - sx) + pad * 2 + 1, H = Math.abs(gy - sy) + pad * 2 + 1;   // めいろは 大回りが いるので 広く さがす（50マスぶん）
   if (W * H > 700000) return [];
   const N = W * H, g = new Float32Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
   const hx = [], hf = [];   // 二分ヒープ（f の小さい順）
   const push = (i, f) => { hx.push(i); hf.push(f); let k = hx.length - 1; while (k > 0) { const p = (k - 1) >> 1; if (hf[p] <= hf[k]) break; [hx[p], hx[k]] = [hx[k], hx[p]]; [hf[p], hf[k]] = [hf[k], hf[p]]; k = p; } };
   const pop = () => { const top = hx[0], li = hx.pop(), lf = hf.pop(); if (hx.length) { hx[0] = li; hf[0] = lf; let k = 0; for (;;) { const a = 2 * k + 1, b = a + 1; let m = k; if (a < hx.length && hf[a] < hf[m]) m = a; if (b < hx.length && hf[b] < hf[m]) m = b; if (m === k) break; [hx[m], hx[k]] = [hx[k], hx[m]]; [hf[m], hf[k]] = [hf[k], hf[m]]; k = m; } } return top; };
-  const h = (x, y) => (Math.abs(x - gx) + Math.abs(y - gy)) * 0.9;
+  const h = (x, y) => (Math.abs(x - gx) + Math.abs(y - gy)) * 0.9, mz = mazeOn();
   const start = (sy - y0) * W + (sx - x0);
   g[start] = 0; push(start, h(sx, sy));
   let best = start, bestH = h(sx, sy), found = -1, n = 0;
@@ -4839,7 +7164,7 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
       const j = ly * W + lx;
       if (done[j]) continue;
       const c = codeAt(nx, ny), isGoal = goalR === 0 && nx === gx && ny === gy;
-      if (!isGoal && (c !== C.X && BLOCK.has(c) || avoid.has(nx + ',' + ny))) continue;
+      if (mz ? mzBlocked(x + 0.5, y + 0.5, nx + 0.5, ny + 0.5) || avoid.has(nx + ',' + ny) : !isGoal && (c !== C.X && BLOCK.has(c) || avoid.has(nx + ',' + ny))) continue;   // めいろでは めいろの 壁で 道を さがす
       const cost = c === C.X ? 4 : AUTO_ROADS.has(c) ? 1 : 1.6;
       if (g[i] + cost < g[j]) { g[j] = g[i] + cost; from[j] = i; push(j, g[j] + h(nx, ny)); }
     }
@@ -4848,70 +7173,6 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
   for (let i = found >= 0 ? found : best; i !== start && i >= 0; i = from[i]) out.push([i % W + x0, (i / W | 0) + y0]);
   return out.reverse();
 }
-function autoRead() {   // 人の話のウィンドウ：読む時間をおいて「つぎへ」、最後まで読んだら閉じる（スポットやお店の説明は、自分で閉じるまで待つ）
-  const body = $('pxInfoBody'), now = Date.now();
-  if (!body.querySelector('.npc-next, .npc-end')) { autoS.read = 0; return; }
-  if (!autoS.read) { autoS.read = now + Math.min(6000, 1800 + body.textContent.length * 40); return; }
-  if (now < autoS.read) return;
-  autoS.read = 0;
-  const next = body.querySelector('.npc-next');
-  if (next) next.click(); else $('pxInfo').hidden = true;
-}
-function autoTick() {
-  setTimeout(autoTick, G.autoInterval ? G.autoInterval() : 230);   // おまかせ強化「はやあし」で速くなる
-  if (!auto || !active || worldMode || !G.demo || !G.me || Date.now() < autoS.pauseUntil) return;   // せかいちずでは歩く地図の区画を読まないので休む
-  if (!$('pxInfo').hidden) { autoRead(); return; }
-  autoS.read = 0;
-  if (driving) { setDriving(false, '🚶 おまかせ歩きなので、車を降りて歩きます'); return; }
-  const g = G.guide;
-  // 着いた名所（行き先か、まだ行っていない所）でチェックイン
-  const sel = G.selected;
-  if (sel && G.inReach(sel) && G.cooldownLeft(sel) <= 0 && (!G.state.visits[sel.id] || (g && g.id === sel.id))) { G.checkin(); autoS.pauseUntil = Date.now() + 2500; return; }
-  const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
-  let gx, gy, goalR, gid;
-  // すぐ近く（約60m）のたからばこには寄り道する。遠くのたからばこは、自分で操作して探す楽しみ（行けなかったものは、もう狙わない）
-  // はじめての人の「ようこそ たからばこ」は、少し遠くても（150mまで）先に開けに行く
-  const near = c => G.dist(G.me, c) < (c.id.endsWith(':welcome') ? 150 : AUTO_CHEST_M);
-  const ch = G.liveChests().filter(c => !autoS.skip.has(c.id) && near(c)).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
-  if (ch) {
-    const q = toTile(ch.lat, ch.lng); gx = Math.floor(q.x); gy = Math.floor(q.y); goalR = 1; gid = 'chest:' + ch.id;
-    if (autoS.chest !== ch.id) { autoS.chest = ch.id; autoS.chestTicks = 0; }
-    if (++autoS.chestTicks > 40) { autoS.skip.add(ch.id); autoS.path = []; return; }   // 40歩で着けなければ あきらめる（回り道が長い所など）
-  } else if (!g) return;   // 行き先が決まるのを待つ（まわりのようすで決まる）
-  else if (g.kind === 'npc') {   // 人：その人のマスへ歩いていくと話しかける
-    const nn = (G.npcs || []).find(x => x.id === g.id);
-    if (!nn) return;
-    const q = npcTile(nn); gx = q.x; gy = q.y; goalR = 0; gid = g.id;
-  } else {
-    const q = toTile(g.lat, g.lng); gx = Math.floor(q.x); gy = Math.floor(q.y); gid = g.id;
-    goalR = Math.max(1, Math.floor(G.guideRadius(g) / TILE_M * 0.6));
-  }
-  const key = `${gid}:${gx}:${gy}`;
-  if (key !== autoS.goal || !autoS.path.length || autoS.steps >= 40) {
-    // ほかの人のマスは通らない（ぶつかると話しかけてしまう）
-    const avoid = new Set((G.npcs || []).filter(x => x.id !== gid).map(x => { const q = npcTile(x); return q.x + ',' + q.y; }));
-    autoS.goal = key; autoS.steps = 0; autoS.path = planPath(sx, sy, gx, gy, goalR, avoid);
-    if (!autoS.path.length && Math.hypot(sx - gx, sy - gy) > goalR) {
-      // 近づけない（まわりが通れない所ばかり）：しばらく待っても動けなければ、別の行き先にしてもらう
-      if (ch) { autoS.skip.add(ch.id); return; }
-      if (++autoS.stuck > 25) { autoS.stuck = 0; G.setGuide(null); }
-      return;
-    }
-  }
-  const nx = autoS.path.shift();
-  if (!nx) return;
-  if (Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) { autoS.path = []; return; }   // 道すじからずれた（タップで移動など）：探し直す
-  const dir = nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up';
-  autoS.steps++;
-  if (step(dir)) {
-    autoS.stuck = 0;
-    if (++autoS.walked % 150 === 0 && G.autoLearn) G.autoLearn();   // 歩いているだけで西尾のことが分かる
-  } else autoS.path = [];   // 通れなかった（読み込んだら建物だった など）：探し直す
-}
-$('pxAuto').addEventListener('click', () => setAuto(!auto));
-setAuto(auto, true);
-setTimeout(autoTick, 1500);
-
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
@@ -4938,35 +7199,99 @@ cv.addEventListener('click', e => {
     if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
     return;
   }
-  const T = Math.round(16 * scale * Math.min(window.devicePixelRatio || 1, 3));
+  const T = fieldT(Math.min(window.devicePixelRatio || 1, 3));
   const c = camTile();
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
   const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }
+  const rt = rivalTile();
+  if (rt && rt.x === ttx && (rt.y === tty || rt.y === tty - 1)) { rivalTalk(); return; }
   let hit = null, best = Infinity;
-  for (const s of G.spots) {
+  // 特大の絵は、手前に描いた絵から順に、絵のある所（透明でない点）をタップしたかで決める
+  for (let i = giantHits.length - 1; i >= 0 && !hit; i--) {
+    const [gx, gy, gs, s, img] = giantHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    const ix = Math.floor((x - gx) / gs * img.width), iy = Math.floor((y - gy) / gs * img.height);
+    if (img.getContext('2d').getImageData(ix, iy, 1, 1).data[3] > 0) hit = s;
+  }
+  if (!hit) for (const s of G.spots) {
+    if (bigOf(s, false)) continue;   // 特大の絵は上で調べた
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = (s.shop ? T * 1.25 : LANDMARK_ART[s.id] ? T * 1.5 : s.featured || GEN[s.id] ? T : T / 2) + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 専用の絵の名所は 3T 四方に描くので、その半分
+    const half = spotSize(s, spriteOf(s), T) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }
   let bp = null;
+  for (let i = poiHits.length - 1; i >= 0 && !bp; i--) {   // 街の主な建物の特大の絵（6マス）は、絵のある所をタップしたかで
+    const [gx, gy, gs, p, img] = poiHits[i];
+    if (x < gx || y < gy || x >= gx + gs || y >= gy + gs) continue;
+    if (img.getContext('2d').getImageData(Math.floor((x - gx) / gs * img.width), Math.floor((y - gy) / gs * img.height), 1, 1).data[3] > 0) bp = p;
+  }
   best = T * 1.2;
-  for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
-  if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; }
+  if (!bp) for (const p of poiCache.list) { const d = Math.hypot(x - (cv.width / 2 + (p[0] - c.x) * T), y - (fieldCy + (p[1] - c.y) * T - T * 0.2)); if (d < best) { bp = p; best = d; } }
+  if (bp) { $('pxInfoBody').innerHTML = poiHtml(bp); $('pxInfo').hidden = false; return; }
+  if (G.demo) tapWalk(Math.floor(c.x + (x - cv.width / 2) / T), Math.floor(c.y + (y - fieldCy) / T));   // 何もない所：そこまで歩く
 });
+// 操作して移動：地面をタップすると、そこまで道を探して1マスずつ歩く（車のときは道だけなので、スティックで）
+//   ・スティック・矢印キーをさわる、窓が開く、着けない所になる、のどれかでやめる。歩いている間は、おまかせ歩きは休む
+// 地図の上に何か開いている（ほうびの知らせ・ミニゲーム・説明の窓・きろく などのパネル・はじめの画面・ダイアログ（シェア・クーポン・ホーム画面に追加 など、role="dialog" のものぜんぶ））：
+// 見ていない間に うしろで歩いて、たからばこなどが進まないように
+function mapCovered() {
+  return $('reward').classList.contains('show') || document.body.classList.contains('jump-open')
+    || !!document.querySelector('#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])');
+}
+function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path = []; tapS.goal = null; }
+// 地図（キャンバス）より外をさわったら（こよみの札・ボタン・タブ など、何を開くときも）やめる。勝手に出てくるもの（ほうびの知らせ・ダイアログ）は mapCovered で
+document.addEventListener('pointerdown', e => { if (tapS.goal && e.target !== cv) tapWalkStop(); }, true);
+function tapWalkTick() {
+  tapS.timer = null;
+  const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
+  if (!nx || !G.demo || !active || worldMode || driving || mapCovered() || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
+  if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();
+  tapS.timer = setTimeout(tapWalkTick, G.autoInterval ? Math.min(180, G.autoInterval()) : 180);
+}
+function tapWalk(gx, gy) {
+  tapWalkStop();
+  if (driving) { G.toast('🚗 車は スティックで うごかします'); return; }
+  const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
+  if (sx === gx && sy === gy) return;
+  const avoid = new Set((G.npcs || []).map(n => { const q = npcTile(n); return q.x + ',' + q.y; }));   // 人のマスは通らない（ぶつかると話しかけてしまう）
+  const path = planPath(sx, sy, gx, gy, mazeOn() ? (mzType(Math.floor(gx / MZ_K), Math.floor(gy / MZ_K)) === 1 ? 0 : 2) : BLOCK.has(codeAt(gx, gy)) ? 1 : 0, avoid);   // 建物や水（めいろでは 壁の かたまり）をタップしたら、そのそばまで
+  if (!path.length) { if (navigator.vibrate) navigator.vibrate(20); return; }
+  tapS.path = path; tapS.goal = path[path.length - 1];
+  tapWalkTick();
+}
 $('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });
 
 G.onModeChange(updatePad);
 G.onModeChange(() => { if (driving) setDriving(false); });
 // はじめての人はドット絵（ダンジョン風）のせかいちずから
 let initial = 'px', worldOn = '1';
-try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
+try { initial = 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用
-window.nishioPixel = { spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get driving() { return driving; }, toggleCar, floatText, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+// めいろ（meiro.js）が使うもの：地図のマス・盤の絵・区画の読みこみ・傾き・音・うしろの地図を止める
+const meiroApi = {
+  C, CHUNK, codeAt, paintRegion, ensureChunk, chunkState,
+  toTile, toLatLng, spriteOf: sp => spriteOf(sp)[0],
+  forgetChunk(cx, cy) { const k = cx + '_' + cy, c = chunks.get(k); if (c && c.state === 'fail') chunks.delete(k); },   // 読めなかった区画を わすれる（やりなおしで すぐ 読みなおす。ふだんは 60秒 待つ）
+  slopeAt: (x, y) => slopeAt(x, y), get demGen() { return demGen; },   // 坂（マス/秒² の加速）と、標高が とどくたびに ふえる数（盤を 描きなおす）
+  tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
+  pause(on) { meiroPause = !!on; dirty = true; },
+};
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+    if (!mazeOn()) return null;
+    const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0 } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
+    return g && g.t0 ? { sec: (now - g.t0) / 1000, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M } : null;
+  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
+  // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
+  get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
+  tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）
+    const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
+    return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
+  }, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
 })();

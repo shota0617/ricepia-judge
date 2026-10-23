@@ -1,0 +1,94 @@
+# にしおさんぽGO：AI が遊んでは直す（プレイ→改善のループ）を、指定した回数だけまわして PR にする
+# 1. 通しのプレイテスト（tools/playtest.js）を動かす
+# 2. Claude Code が tools/ai-play.js で自分で遊び、気づいたことを1つ直して、もう一度遊んで確かめる（tools/play-improve-prompt.md）
+# 3. 1〜2 を cycles 回くり返し、最後のプレイテストが通ったときだけ PR にする（マージは人が確かめてから）
+#    Claude が書けるのは nishio-go/・nishio-go.html・docs/play-improve.md だけ（tools/・.github などは書けない）。PR にも その場所だけ
+#    Claude が動かせるのは、Claude が書きかえられない tools/ の道具（ai-play・playtest・文法の確かめ）だけ。書きかえたコードを node で動かす道はつくらない（秘密を読まれないように）
+# 必要な準備：Secrets の ANTHROPIC_API_KEY（無いあいだは なにもしない）。くわしくは docs/play-improve.md
+name: Nishio play-improve
+on:
+  workflow_dispatch:
+    inputs:
+      cycles:
+        description: 'まわす回数（1回で「遊ぶ→1つ直す→確かめる」）'
+        default: '1'
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: play-improve
+  cancel-in-progress: false
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Check settings
+        id: cfg
+        env:
+          K: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "$K" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "ANTHROPIC_API_KEY が無いので、なにもしません"; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.cfg.outputs.on
+        with:
+          persist-credentials: false   # Claude が動くあいだ、git の認証情報を置かない（PR を作るときだけ渡す）
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.cfg.outputs.on
+        with:
+          node-version: 20
+      - name: Install Playwright and Claude Code
+        if: steps.cfg.outputs.on
+        run: |
+          npm install --no-save --no-package-lock playwright@1.48.2
+          npx playwright install --with-deps chromium
+          npm i -g @anthropic-ai/claude-code@2.1.305 > /dev/null
+      - name: Play and improve
+        if: steps.cfg.outputs.on
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CYCLES: ${{ inputs.cycles }}
+        run: |
+          n=$(( ${CYCLES:-1} )); [ "$n" -ge 1 ] && [ "$n" -le 5 ] || n=1   # 1回で数十分かかるので、5回まで
+          for i in $(seq 1 "$n"); do
+            echo "::group::周回 $i / $n"
+            node tools/playtest.js ".play/before-$i" > /dev/null || echo "プレイテストが落ちている（Claude に直してもらう）"
+            claude -p "$(cat tools/play-improve-prompt.md)
+
+          今回は $n 回のうちの $i 回めです。通しのプレイテストの結果は .play/before-$i/ にあります。" \
+              --model claude-opus-5-5 --max-turns 120 --permission-mode dontAsk \
+              --allowedTools "Read,Glob,Grep,Edit(./nishio-go/**),Write(./nishio-go/**),Edit(./nishio-go.html),Edit(./docs/play-improve.md),Bash(node tools/ai-play.js:*),Bash(node tools/playtest.js:*),Bash(node tools/x-cycle.js check:*)" \
+              --disallowedTools "WebFetch,WebSearch,NotebookEdit,Task" | tail -n 40
+            echo "::endgroup::"
+          done
+      - name: Final playtest
+        if: steps.cfg.outputs.on
+        run: node tools/playtest.js .play/final > /dev/null && echo "プレイテスト：通った"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always() && steps.cfg.outputs.on
+        with:
+          name: play-improve
+          path: .play/
+          retention-days: 14
+      - name: Open PR
+        if: steps.cfg.outputs.on
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CYCLES: ${{ inputs.cycles }}
+        run: |
+          # PR にするのは 直してよい場所（ゲーム・遊んだ記録）だけ。ほかの場所が かわっていたら 止める（.github・tools などを PR に まぜない）
+          ALLOW='^(nishio-go/|nishio-go\.html$|docs/play-improve\.md$)'
+          git reset -q   # だれかが先に ステージした 内容は 使わない（コミットするのは この下で 足したものだけ）
+          # 名前の かわった ファイルは もとの名前と 新しい名前を べつべつに 見る（--no-renames）。-z で 名前を そのまま 読む
+          other=$(git status --porcelain --no-renames --untracked-files=all -z | tr '\0' '\n' | cut -c4- | grep -v '^\.play/' | grep -Ev "$ALLOW" || true)
+          if [ -n "$other" ]; then echo "::error::直してよい場所の外が かわっていたので、PR にしません：$other"; exit 1; fi
+          if [ -z "$(git status --porcelain -- nishio-go nishio-go.html docs/play-improve.md)" ]; then echo "PR にする変更はありません"; exit 0; fi
+          branch="play-improve/run-${GITHUB_RUN_ID}"
+          git checkout -q -b "$branch"
+          git add -A -- nishio-go nishio-go.html docs/play-improve.md
+          staged=$(git diff --cached --name-only --no-renames -z | tr '\0' '\n' | grep -Ev "$ALLOW" || true)   # コミットする 直前にも もう一度
+          if [ -n "$staged" ]; then echo "::error::コミットする内容に 直してよい場所の外が 入っていたので、PR にしません：$staged"; exit 1; fi
+          git -c core.hooksPath=/dev/null -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "にしおさんぽGO: 遊んで直す（自動・要確認）"
+          git -c core.hooksPath=/dev/null push -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
+          gh pr create --base "${GITHUB_REF_NAME}" --head "$branch" --title "遊んで直す（自動・要確認）" \
+            --body "Claude Code が にしおさんぽGO を遊んで、気づいたことを直した案です（周回：${CYCLES}）。何を遊んで何を直したかは docs/play-improve.md の「周回の記録」、スクリーンショットはこの実行の artifact（play-improve）にあります。**遊んで確かめてからマージしてください。**"

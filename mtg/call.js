@@ -10,6 +10,8 @@ const C = {
   peer:null, isHost:false, code:"", myId:"", name:"", role:"当社", hostConn:null, inRoom:false, joining:false,
   local:null, mic:null, cam:null, placeholder:null, phTimer:0, screen:null, camBeforeShare:null,
   conns:new Map(), calls:new Map(), remote:new Map(), names:new Map(), roles:new Map(), states:new Map(), seen:new Set(),
+  // 参加を認めた相手（主催者が許可した人。参加者は、主催者と、主催者から知らされた人）。認める前は 映像・音声・会議の記録を返さない
+  allowed:new Set(), pendIntro:new Map(), pendCall:new Map(), asking:new Set(),
   muted:false, camOff:false, sharing:false, rec:null, seq:0, timer:0, saveT:0, unread:0, pane:"", clockOffset:0,
   stt:{want:false, running:false, r:null, lang:"ja-JP", lastErr:"", interimT:0, fails:0}
 };
@@ -174,7 +176,9 @@ async function joinRoom(){
     await new Promise((res, rej) => {
       C.joining = {res, rej};
       C.hostConn = connectTo(PREFIX + code);
-      setTimeout(() => { if(C.joining){ C.joining = false; rej(new Error("主催者からの応答がありません。コードを確認してください")); } }, 15000);
+      // 主催者が「許可」を押すまで待つ（つながったら ボタンの文を かえる）
+      setTimeout(() => { if(C.joining && C.hostConn && C.hostConn.open) btn.innerHTML = '<span class="spinner"></span>主催者の許可を待っています…'; }, 3000);
+      setTimeout(() => { if(C.joining){ C.joining = false; rej(new Error(C.hostConn && C.hostConn.open ? "主催者が参加を許可しませんでした（時間切れ）" : "主催者からの応答がありません。コードを確認してください")); } }, 120000);
     });
     enterRoom();
   }catch(e){ M.errorBox(err, e); destroyPeer(); }
@@ -182,7 +186,13 @@ async function joinRoom(){
 }
 function bindPeer(p){
   p.on("connection", conn => setupConn(conn));
-  p.on("call", call => { call.answer(C.local); setupCall(call); });
+  p.on("call", call => {
+    if(C.allowed.has(call.peer)){ call.answer(C.local); setupCall(call); return; }
+    // まだ参加を認めていない相手：認めるまで応答しない（しばらく認められなければ切る）
+    const old = C.pendCall.get(call.peer); if(old) try{ old.close(); }catch(e){}
+    C.pendCall.set(call.peer, call);
+    setTimeout(() => { if(C.pendCall.get(call.peer) === call){ C.pendCall.delete(call.peer); try{ call.close(); }catch(e){} } }, 120000);
+  });
   p.on("disconnected", () => { if(C.inRoom && !p.destroyed){ setTimeout(() => { try{ p.reconnect(); }catch(e){} }, 1500); } });
   p.on("error", e => {
     if(e.type === "peer-unavailable"){
@@ -195,6 +205,49 @@ function bindPeer(p){
 function destroyPeer(){
   try{ C.peer && C.peer.destroy(); }catch(e){}
   C.peer = null; C.conns.clear(); C.calls.clear(); C.hostConn = null; C.joining = false;
+  C.allowed.clear(); C.pendIntro.clear(); C.pendCall.forEach(c => { try{ c.close(); }catch(e){} }); C.pendCall.clear(); C.asking.clear();
+  $$(".admitAsk").forEach(e => e.remove());
+}
+// 参加を認める：とっておいた自己紹介と着信を いま受けとる
+function allow(pid){
+  if(C.allowed.has(pid)) return;
+  C.allowed.add(pid);
+  const conn = C.conns.get(pid);
+  if(conn && conn.open) send(conn, {type:"intro", name:C.name, role:C.role, state:myState()});
+  const intro = C.pendIntro.get(pid); C.pendIntro.delete(pid);
+  if(intro) onData(pid, intro);
+  const call = C.pendCall.get(pid); C.pendCall.delete(pid);
+  if(call){ call.answer(C.local); setupCall(call); }
+}
+// 主催者：参加を希望した人を 許可するか きく（許可するまで 会議の中身は 何も送らない）
+function askAdmit(pid){
+  if(C.asking.has(pid)) return;
+  C.asking.add(pid);
+  const intro = C.pendIntro.get(pid) || {};
+  const nm = String(intro.name || "名前なし").slice(0, 40), role = intro.role === "お客様" ? "お客様" : "当社";
+  const box = document.createElement("div");
+  box.className = "admitAsk";
+  box.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:" + (150 + 64 * $$(".admitAsk").length) + "px;z-index:450;background:#fff;color:#222;border-radius:12px;box-shadow:0 4px 18px rgba(0,0,0,.3);padding:10px 12px;display:flex;gap:8px;align-items:center;max-width:92vw;";
+  box.innerHTML = '<span style="font-size:14px;"><b>' + esc(nm) + "</b>さん（" + esc(role) + "）が参加を希望しています</span>" +
+    '<button class="btn btn-gold btn-sm" data-a="ok">許可</button><button class="btn btn-ghost btn-sm" data-a="no">拒否</button>';
+  document.body.appendChild(box);
+  const done = ok => {
+    box.remove(); C.asking.delete(pid);
+    const conn = C.conns.get(pid);
+    if(!conn || !conn.open){ C.pendIntro.delete(pid); return; }
+    if(!ok){ send(conn, {type:"deny"}); C.pendIntro.delete(pid); const call = C.pendCall.get(pid); C.pendCall.delete(pid); try{ call && call.close(); }catch(e){} setTimeout(() => { try{ conn.close(); }catch(e){} }, 300); return; }
+    C.allowed.forEach(id => { if(id !== pid) send(C.conns.get(id), {type:"admit", id:pid}); });   // 参加している人にも 知らせる（そのあと直接つながってくる）
+    allow(pid);
+    sendWelcome(pid);
+  };
+  box.querySelector('[data-a="ok"]').onclick = () => done(true);
+  box.querySelector('[data-a="no"]').onclick = () => done(false);
+}
+function sendWelcome(pid){
+  send(C.conns.get(pid), {type:"welcome",
+    peers: Array.from(C.conns.keys()).filter(id => id !== pid && C.allowed.has(id)).map(id => ({id, name:C.names.get(id) || ""})),
+    meeting:{title:C.rec.title, customer:C.rec.customer, startedAt:C.rec.startedAt, code:C.code},
+    lines:C.rec.lines, chat:C.rec.chat, now:Date.now()});
 }
 
 function resetRoom(){
@@ -243,7 +296,10 @@ function leave(notify){
     M.download(M.safeName(rec.title) + "_議事録.md", M.minutesMd(rec), "text/markdown;charset=utf-8");
     M.toast("ブラウザの保存容量が足りず記録を保存できなかったため、文字起こしをファイルに書き出しました。「履歴」で古い会議を削除してください", "err");
   }
-  recDone.then(() => M.go(rec.lines.length || rec.notes || rec.audio ? "analyze" : "history", {meetingId:rec.id}));
+  recDone.then(() => {
+    M.go(rec.lines.length || rec.notes || rec.audio ? "analyze" : "history", {meetingId:rec.id});
+    if(saved && M.auto) M.auto.afterMeeting(rec.id); // analysis → backlog → Issue → development, as configured
+  });
 }
 // Notices about recording / transcription are shown locally; peers derive their own from our `state`.
 C.notifyAll = text => addSys(text);
@@ -261,7 +317,7 @@ const starter = c => c._out ? C.myId : c.peer;
 function connectTo(id){ const c = C.peer.connect(id, {reliable:true}); c._out = true; setupConn(c); return c; }
 function callTo(id){ const c = C.peer.call(id, C.local, {metadata:{name:C.name}}); if(c){ c._out = true; setupCall(c); } }
 function send(conn, msg){ try{ if(conn && conn.open) conn.send(msg); }catch(e){} }
-function broadcast(msg){ C.conns.forEach(c => send(c, msg)); }
+function broadcast(msg){ C.conns.forEach((c, pid) => { if(C.allowed.has(pid)) send(c, msg); }); }
 function setupConn(conn){
   conn.on("open", () => {
     const ex = C.conns.get(conn.peer);
@@ -269,7 +325,8 @@ function setupConn(conn){
       if(starter(conn) > starter(ex)){ conn.close(); return; }
       C.conns.set(conn.peer, conn); ex.close();
     } else C.conns.set(conn.peer, conn);
-    send(conn, {type:"intro", name:C.name, role:C.role, state:myState()});
+    if(conn === C.hostConn) C.allowed.add(conn.peer);   // 参加者から見た主催者（コードで決まる相手）
+    if(C.allowed.has(conn.peer)) send(conn, {type:"intro", name:C.name, role:C.role, state:myState()});
     if(conn === C.hostConn) send(conn, {type:"hello"});
   });
   conn.on("data", d => { try{ onData(conn.peer, d); }catch(e){ console.error(e); } });
@@ -282,13 +339,23 @@ function setupConn(conn){
 }
 function onData(pid, d){
   if(!d || typeof d !== "object") return;
+  if(!C.allowed.has(pid)){
+    // まだ参加を認めていない相手：自己紹介だけ とっておき（主催者は 参加の希望として きく）、ほかは 受けとらない
+    if(d.type === "intro") C.pendIntro.set(pid, {type:"intro", name:String(d.name || "").slice(0, 40), role:d.role, state:d.state});
+    else if(d.type === "hello" && C.isHost && C.inRoom) askAdmit(pid);
+    return;
+  }
   switch(d.type){
     case "hello":
       if(!C.isHost) return;
-      send(C.conns.get(pid), {type:"welcome",
-        peers: Array.from(C.conns.keys()).filter(id => id !== pid).map(id => ({id, name:C.names.get(id) || ""})),
-        meeting:{title:C.rec.title, customer:C.rec.customer, startedAt:C.rec.startedAt, code:C.code},
-        lines:C.rec.lines, chat:C.rec.chat, now:Date.now()});
+      sendWelcome(pid);
+      break;
+    case "admit":
+      if(C.isHost || !C.hostConn || pid !== C.hostConn.peer) break;   // 知らせてよいのは主催者だけ
+      if(typeof d.id === "string" && d.id && d.id !== C.myId) allow(d.id.slice(0, 80));
+      break;
+    case "deny":
+      if(C.joining && C.hostConn && pid === C.hostConn.peer){ const j = C.joining; C.joining = false; j.rej(new Error("主催者が参加を許可しませんでした")); }
       break;
     case "welcome": {
       if(!C.joining || !C.hostConn || pid !== C.hostConn.peer) return;
@@ -305,7 +372,8 @@ function onData(pid, d){
       (Array.isArray(d.chat) ? d.chat : []).forEach(c => { if(c && typeof c === "object"){ const x = cleanChat(c, startedAt); if(x.text && !C.rec.chat.some(y => y.id === x.id)) C.rec.chat.push(x); } });
       const j = C.joining; C.joining = false; j.res();
       // mesh: open data + media to everyone already in the room (the host included)
-      const others = (Array.isArray(d.peers) ? d.peers : []).map(p => String(p && p.id || "")).filter(x => x && x !== C.myId);
+      const others = (Array.isArray(d.peers) ? d.peers : []).map(p => String(p && p.id || "").slice(0, 80)).filter(x => x && x !== C.myId);
+      others.forEach(allow);   // 主催者が知らせた人だけ
       others.forEach(x => { if(!C.conns.has(x)) connectTo(x); });
       [C.hostConn.peer].concat(others).forEach(callTo);
       break;
@@ -370,6 +438,7 @@ function cleanLine(l, base){
 }
 function cleanChat(c, base){ const at = Number(c.at); return {id:String(c.id || M.uid()).slice(0, 120), at:Number.isFinite(at) ? at : base, who:String(c.who || "").slice(0, 40), pid:String(c.pid || "").slice(0, 80), text:String(c.text || "").slice(0, 2000)}; }
 function dropPeer(pid){
+  C.pendIntro.delete(pid);
   if(!C.seen.has(pid) && !C.conns.has(pid) && !C.calls.has(pid)) return;
   const c = C.conns.get(pid); C.conns.delete(pid); try{ c && c.close(); }catch(e){}
   const call = C.calls.get(pid); C.calls.delete(pid); try{ call && call.close(); }catch(e){}

@@ -1,0 +1,64 @@
+# Grok を呼ぶ係：Grok（xAI の x_search）に X の投稿を調べてもらうだけ（ゲームは変えない）
+# - 結果は、この実行の Summary と、ログの「Grok searches X」と、artifact（grok-research）の research.md・research.json に出る
+#   Claude Code のセッションはログを読んで、Blender の車体（tools/tractor/build_tractor.py）などの開発に使う
+# - 何を調べるかは tools/x-cycle-topics.json（tractor-model＝トラクターの 3D 車体・tractor＝田んぼでの作業・nishio-go＝西尾の話題）
+# 必要な準備：Secrets の XAI_API_KEY と、xAI のクレジット（console.x.ai の Billing。自動チャージはオフに）。docs/x-cycle.md
+name: Grok research (X)
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: '何を調べるか'
+        type: choice
+        options: [tractor-model, tractor, nishio-go]
+        default: tractor-model
+      focus:
+        description: '今回とくにさがすこと（例：ロータリーの後付けの灯火器・ナンバープレートの位置）'
+        required: false
+      days:
+        description: 'さかのぼる日数（60 まで）'
+        default: '60'
+permissions:
+  contents: read
+concurrency:
+  group: grok-research
+  cancel-in-progress: false
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check settings
+        env:
+          X: ${{ secrets.XAI_API_KEY }}
+        run: |
+          if [ -z "$X" ]; then echo "::error::Secrets に XAI_API_KEY がありません"; exit 1; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Grok searches X
+        env:
+          XCYCLE_ROOT: ${{ github.workspace }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: ${{ vars.XAI_MODEL }}
+          GROK_STRICT: '1'
+          TARGET: ${{ inputs.topic }}
+          FOCUS: ${{ inputs.focus }}
+          DAYS: ${{ inputs.days }}
+        run: node tools/x-cycle.js research
+      - name: Summary
+        if: always()
+        run: |
+          [ -f .xcycle/research.md ] && cat .xcycle/research.md >> "$GITHUB_STEP_SUMMARY"
+          [ -f .xcycle/research.json ] && { echo '----- research.json -----'; cat .xcycle/research.json; }
+          true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: grok-research
+          path: .xcycle/
+          include-hidden-files: true
+          retention-days: 30

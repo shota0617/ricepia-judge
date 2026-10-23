@@ -182,7 +182,7 @@ input,textarea,button{font-family:inherit;}
     <div class="api-card">
       <div style="font-size:12px;color:#5a5a4a;font-weight:600;margin-bottom:4px;">Anthropic API Key</div>
       <div style="font-size:11px;color:#9a9a7a;margin-bottom:12px;">
-        <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color:#c8a96e;">console.anthropic.com</a> で取得
+        <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#c8a96e;">console.anthropic.com</a> で取得
       </div>
       <div style="position:relative;">
         <input type="password" id="apiKeyInput" placeholder="sk-ant-..."
@@ -583,7 +583,15 @@ const SCORE_DEFS=[
   {key:"cooking_suitability",label:"炊飯適性",color:"#c8a96e",group:"総合"},
 ];
 
-function renderResult(r){
+// 文字列を HTML の特別な文字（& < > " '）だけ置きかえる。配列・入れ子の中も
+function escDeep(v){
+  if(typeof v==="string")return v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  if(Array.isArray(v))return v.map(escDeep);
+  if(v&&typeof v==="object"){const o={};for(const k of Object.keys(v))o[k]=escDeep(v[k]);return o;}
+  return v;
+}
+function renderResult(raw){
+  const r=escDeep(raw); // AIの返事の文字はHTMLとして入れない（写真に書かれた文字で返事が変わっても、画面でプログラムが動かないように）。保存・ほかの道具へ渡すのは元のまま（raw）
   correctionGrade=r.grade;
   const cfg=GRADE_CFG[r.grade]||GRADE_CFG.B;
   const scoreBar=(label,val,color)=>`<div class="score-row"><div class="score-header"><span class="score-label">${label}</span><span class="score-val">${val}点</span></div><div class="score-track"><div class="score-fill" style="width:${val}%;background:${color};"></div></div></div>`;
@@ -658,9 +666,9 @@ function renderResult(r){
 
   const box=document.getElementById("resultBox");
   box.innerHTML=html;box.style.display="block";
-  window._lastResult=r;window._lastImage=currentImage;
+  window._lastResult=raw;window._lastImage=currentImage;
   // 販促ツール（marketing.html）で使えるように最新の判定結果を保存
-  try{localStorage.setItem("ricepia_last_judge",JSON.stringify({grade:r.grade,variety:r.variety,avg:avg,comment:r.comment,points:r.points,usage:r.usage,date:new Date().toLocaleString("ja-JP")}));}catch(e){}
+  try{localStorage.setItem("ricepia_last_judge",JSON.stringify({grade:raw.grade,variety:raw.variety,avg:avg,comment:raw.comment,points:raw.points,usage:raw.usage,date:new Date().toLocaleString("ja-JP")}));}catch(e){}
 }
 
 function setCorrectionGrade(g){
@@ -696,7 +704,7 @@ function resetJudge(){
   resetResult();renderUploadZone();
 }
 function printReceipt(){
-  const r=window._lastResult,img=window._lastImage;
+  const r=window._lastResult&&escDeep(window._lastResult),img=window._lastImage; // 印刷の HTML に入れるので 置きかえてから
   if(!r)return;
   const now=new Date();
   const dateStr=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;

@@ -52,6 +52,7 @@ MATS = {
     # スポットの種類
     'hasu': '#f29bbf', 'hasuL': '#ffd0e0', 'hasuHa': '#4f9e3a', 'kamera': '#3a3a3a', 'lens': '#5a8ad0', 'bench': '#a06a3a', 'parasol': '#e8504a', 'parasolW': '#f4f1e8',
     'zou': '#a8a49a', 'asahi': '#ff9f1c', 'densha': '#c8102e', 'hata': '#2f7a34',
+    'furoshiki': '#3f9a5a', 'furoshikiD': '#2a6e3e', 'combine': '#e0602a', 'combineD': '#a8401c', 'crawler': '#2e2e30', 'reaper': '#e8c048',
     'umi': '#3d86c6', 'riku': '#6fbf4a', 'truck': '#f4f4f4', 'tire': '#2a2a2a', 'hari': '#d23a2e', 'hariB': '#2f5d9a', 'hairY': '#f2c230', 'shirt': '#3f7fbf', 'pants': '#2d3a55',
 }
 
@@ -400,6 +401,17 @@ def up_bag():
     return dict(target=(0, 0, 0.38), scale=1.15)
 
 
+def omiyage():
+    """おみやげ袋：唐草の緑の風呂敷で包んだ箱（上で結んだ耳が2つ）。歩くと開く袋（docs/location-game-essence.md）"""
+    box('hako', 'furoshiki', (0.62, 0.5, 0.4), (0, 0, 0.22), bevel=0.14)
+    for i, x in enumerate((-0.15, 0.15)):   # 結んだ耳（上へぴんと立つ）
+        sphere(f'mimi{i}', 'furoshiki', 0.12, (x, 0, 0.56), (0.7, 0.6, 1.5)).rotation_euler = (0, (-0.7 if x < 0 else 0.7), 0)
+    sphere('musubi', 'furoshikiD', 0.1, (0, -0.02, 0.45), (1.2, 1.0, 0.8))
+    for i, (x, z) in enumerate(((-0.17, 0.3), (0.15, 0.14), (0.05, 0.3), (-0.08, 0.12))):   # 唐草の白いうず
+        sphere(f'uzu{i}', 'white', 0.05, (x, -0.25, z), (1.3, 0.5, 1.0))
+    return dict(target=(0, 0, 0.32), scale=1.0)
+
+
 def up_nap():
     """るすばん上手：赤い屋根の家と、すやすや（Zの形の青い札）"""
     box('kabe', 'wall', (0.56, 0.48, 0.38), (0, 0, 0.19))
@@ -675,6 +687,21 @@ def btn_car():
         for y in (0.22, -0.22):
             cyl(f'tire{x}{y}', 'tire', 0.09, 0.06, (x, y, 0.09), (math.pi / 2, 0, 0), 16)
     return dict(target=(0, 0, 0.22), scale=1.0, el=20, az=-40, size=32)
+
+
+def btn_combine():
+    """稲刈り：コンバイン（だいだいの車体と運転席、前に稲を刈る刈り取り部、黒いクローラー）"""
+    for y in (0.2, -0.2):
+        box(f'crawler{y}', 'crawler', (0.66, 0.14, 0.16), (0, y, 0.09), bevel=0.05)
+    box('body', 'combine', (0.56, 0.46, 0.26), (-0.04, 0, 0.3), bevel=0.03)
+    box('tank', 'combineD', (0.26, 0.22, 0.2), (-0.16, -0.1, 0.52), bevel=0.03)
+    box('cab', 'combine', (0.22, 0.2, 0.22), (0.12, 0.12, 0.54), bevel=0.03)
+    box('cabG', 'glass', (0.02, 0.17, 0.15), (0.235, 0.12, 0.56))
+    box('reaper', 'reaper', (0.18, 0.56, 0.08), (0.42, 0, 0.12), (0, -0.35, 0))
+    for y in (-0.22, -0.07, 0.07, 0.22):
+        cyl(f'bunri{y}', 'reaper', 0.025, 0.12, (0.53, y, 0.08), (0, 1.2, 0), 6, r2=0.0)
+    cyl('auger', 'combineD', 0.03, 0.5, (-0.1, -0.2, 0.62), (0, math.pi / 2, 0.3), 8)
+    return dict(target=(0.02, 0, 0.3), scale=1.1, el=22, az=-40, size=32)
 
 
 def btn_walker():
@@ -960,7 +987,7 @@ def pixmap():
     return dict(target=(0, 0, 0.06), scale=1.15, el=40, az=-30, size=32)
 
 
-MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal}
+MODELS = {'ricebag': ricebag, 'coin': coin, 'up-spd': up_spd, 'up-bag': up_bag, 'up-nap': up_nap, 'chest': chest, 'medal': medal, 'omiyage': small(omiyage)}
 MODELS.update({'stat-coin': small(coin), 'stat-star': stat_star, 'stat-book': stat_book, 'stat-face': small(lambda: npc_bust('cMan', 'hairBlack')),
                'stat-flag': stat_flag, 'stat-pin': stat_pin, 'stat-feet': stat_feet, 'stat-fire': stat_fire, 'stat-medal': small(lambda: medal()),
                'stat-chest': small(lambda: chest()), 'quest': quest, 'home': small(lambda: up_nap())})
@@ -968,6 +995,7 @@ MODELS.update({'calendar': calendar, 'card': card, 'talk': talk, 'clock': clock,
 MODELS.update({f'cat-{k}': v for k, v in (('shrine', cat_shrine), ('temple', cat_temple), ('worship', cat_worship), ('castle', cat_castle), ('historic', cat_historic),
                ('museum', cat_museum), ('view', cat_view), ('art', cat_art), ('sight', cat_sight), ('park', cat_park), ('library', cat_library),
                ('station', cat_station), ('townhall', cat_townhall), ('beach', cat_beach))})
+MODELS.update({'btn-combine': btn_combine})
 MODELS.update({'btn-globe': btn_globe, 'btn-car': btn_car, 'btn-walker': btn_walker, 'btn-compass': btn_compass})
 MODELS.update({'tab-map': tab_map, 'tab-note': tab_note, 'tab-gift': tab_gift, 'tab-gear': tab_gear, 'bar-castle': bar_castle, 'bar-bowl': bar_bowl})
 MODELS.update({f'npc-{k}': v for k, v in (('elder', npc_elder), ('granny', npc_granny), ('man', npc_man), ('woman', npc_woman), ('kid', npc_kid),
@@ -1049,22 +1077,66 @@ def srgb(v):
     return 12.92 * v if v <= 0.0031308 else 1.055 * v ** (1 / 2.4) - 0.055
 
 
-def to_pixel(light, ids, names, n=SIZE):
+def tones5(h):   # 5段（影・影より・ふつう・明るめ・明るい）：細かく作りこむ絵（当店など）用
+    t = tones(h)
+    return [t[0], [(a + b) / 2 for a, b in zip(t[0], t[1])], t[1], [(a + b) / 2 for a, b in zip(t[1], t[2])], t[2]]
+
+
+def to_pixel(light, ids, names, n=SIZE, opts=None):
+    # opts（細かく作りこむ絵だけ）：vote 4×4 の中で いちばん多い材質にする（細い字や線が 消えたり 出たりしない）・
+    #   bands 5 なら 5段の明るさ・inner 材質の さかいの点を 少し暗く（窓・看板・ひさしの くぎりが 見えるように）
+    opts = opts or {}
     c = SS // 2   # 4×4 の真ん中の点
     L = light[c::SS, c::SS][:n, :n]
     I = ids[c::SS, c::SS][:n, :n]
     alpha = (I[..., 3] > 0.5)
     id_srgb = np.array([srgb((i + 1) / (len(names) + 1)) for i in range(len(names))])   # 材質の色分けが PNG に入ったときの値
     lum = L[..., :3].mean(axis=2) / np.maximum(L[..., 3], 1e-4)
+    kmap = np.full((n, n), -1, dtype=np.int32)
+    if opts.get('vote'):
+        B = ids[:n * SS, :n * SS]
+        kk = np.abs(id_srgb[None, None, :] - B[..., 0:1]).argmin(axis=2)
+        kk[B[..., 3] <= 0.5] = -1
+        Lb = light[:n * SS, :n * SS]
+        lumb = Lb[..., :3].mean(axis=2) / np.maximum(Lb[..., 3], 1e-4)
+        kk = kk.reshape(n, SS, n, SS).transpose(0, 2, 1, 3).reshape(n, n, SS * SS)
+        lumb = lumb.reshape(n, SS, n, SS).transpose(0, 2, 1, 3).reshape(n, n, SS * SS)
+        for y in range(n):
+            for x in range(n):
+                v = kk[y, x]
+                op = v[v >= 0]
+                if len(op) * 2 < len(v):
+                    alpha[y, x] = False
+                    continue
+                alpha[y, x] = True
+                k = int(np.bincount(op).argmax())
+                kmap[y, x] = k
+                lum[y, x] = float(lumb[y, x][v == k].mean())
     out = np.zeros((n, n, 4), dtype=np.uint8)
+    five = opts.get('bands') == 5
     for y in range(n):
         for x in range(n):
             if not alpha[y, x]:
                 continue
-            k = int(np.argmin(np.abs(id_srgb - I[y, x, 0])))
-            band = 0 if lum[y, x] < 0.28 else 1 if lum[y, x] < 0.70 else 2
-            out[y, x, :3] = tones(MATS[names[k]])[band]
+            k = kmap[y, x] if kmap[y, x] >= 0 else int(np.argmin(np.abs(id_srgb - I[y, x, 0])))
+            kmap[y, x] = k
+            if five:
+                l = lum[y, x]
+                band = 0 if l < 0.24 else 1 if l < 0.42 else 2 if l < 0.66 else 3 if l < 0.80 else 4
+                out[y, x, :3] = [int(v) for v in tones5(MATS[names[k]])[band]]
+            else:
+                band = 0 if lum[y, x] < 0.28 else 1 if lum[y, x] < 0.70 else 2
+                out[y, x, :3] = tones(MATS[names[k]])[band]
             out[y, x, 3] = 255
+    if opts.get('inner'):   # 材質の さかい（上か左が ちがう材質）の点を 少し暗く
+        f = opts['inner'] if isinstance(opts['inner'], float) else 0.86
+        for y in range(n):
+            for x in range(n):
+                if not alpha[y, x]:
+                    continue
+                k = kmap[y, x]
+                if (y > 0 and alpha[y - 1, x] and kmap[y - 1, x] != k) or (x > 0 and alpha[y, x - 1] and kmap[y, x - 1] != k):
+                    out[y, x, :3] = (out[y, x, :3] * f).astype(np.uint8)
     # ふちどり：絵のすぐ外側の点を黒く
     a = out[..., 3] > 0
     edge = np.zeros_like(a)
@@ -1100,7 +1172,7 @@ def make(name):
     ids = render(sc, os.path.join(TMP, f'{name}-id.png'), 1)
     set_materials('light')
     light = render(sc, os.path.join(TMP, f'{name}-light.png'), 64)
-    px = to_pixel(light, ids, names, n)
+    px = to_pixel(light, ids, names, n, opts)
     os.makedirs(OUT, exist_ok=True)
     save_png(px, os.path.join(OUT, f'{name}.png'))
     print('wrote', os.path.relpath(os.path.join(OUT, f'{name}.png'), ROOT))

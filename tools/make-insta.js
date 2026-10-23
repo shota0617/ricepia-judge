@@ -39,7 +39,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   await page.goto(URL); await sleep(2500);
   // 1) 西尾城跡のあたりを歩く
-  await page.click('#demoBtn'); await sleep(800);
+  await page.click('#meiroBtn'); await sleep(800);
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-nishio-castle'); nishioGo.moveTo(s.lat - 0.0006, s.lng + 0.0006); });
   await sleep(2500);
   for (const k of ['ArrowLeft', 'ArrowLeft', 'ArrowUp', 'ArrowUp', 'ArrowLeft', 'ArrowUp']) { await page.keyboard.press(k); await sleep(380); }

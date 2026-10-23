@@ -488,7 +488,7 @@
     <div class="modal-head"><b>🔑 Anthropic API Key</b><button class="x" onclick="RP.closeModal('keyModal')">×</button></div>
     <p class="hint"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> で取得したキーを入力してください。</p>
     <input type="password" id="keyInput" class="inp mono" placeholder="sk-ant-..." autocomplete="off"/>
-    <label class="chk"><input type="checkbox" id="keyRemember"/> この端末に記憶する（共用PCではオフ推奨）</label>
+    <div class="hint" style="font-size:12px;color:#8a8a70;">このタブを閉じると消えます（ブラウザには のこしません）</div>
     <button class="btn-primary" onclick="RP.saveKey()">設定する</button>
     <p class="hint center">🔒 キーはAnthropic APIへの通信以外には使いません。</p>
   </div>

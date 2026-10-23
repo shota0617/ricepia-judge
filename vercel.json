@@ -1,4 +1,24 @@
 {
+  "git": { "deploymentEnabled": { "main": true, "claude/**": false, "codex/**": false, "play-improve/**": false, "feedback/**": false, "x-cycle/**": false } },
+  "functions": { "api/feedback.js": { "maxDuration": 10 } },
+  "headers": [
+    { "source": "/(.*)", "headers": [
+      { "key": "X-Content-Type-Options", "value": "nosniff" },
+      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+      { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+      { "key": "Permissions-Policy", "value": "camera=(self), microphone=(self), geolocation=(self), accelerometer=(self), gyroscope=(self), magnetometer=(self), payment=(), usb=()" },
+      { "key": "Content-Security-Policy", "value": "object-src 'none'; base-uri 'self'; frame-ancestors 'self'" }
+    ] },
+    { "source": "/meeting.html", "headers": [{ "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' https://api.anthropic.com https://api.github.com https://0.peerjs.com wss://0.peerjs.com" }] },
+    { "source": "/marketing.html", "headers": [{ "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com" }] },
+    { "source": "/meta-ads.html", "headers": [{ "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.anthropic.com" }] },
+    { "source": "/tsunagu.html", "headers": [{ "key": "Content-Security-Policy", "value": "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob: mediastream:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; connect-src 'self' https://0.peerjs.com wss://0.peerjs.com" }] },
+    { "source": "/nishio-go/(art|maptiles|deco|bgm|shots|dots3d|chunks)/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/nishio-go/(landuse|landmarks|world)\\.json", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/nishio-go/([^/]+)\\.(js|css|svg|png)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=300" }] },
+    { "source": "/tools/tractor/(.*)\\.glb", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] },
+    { "source": "/tractor/shots/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" }] }
+  ],
   "redirects": [
     { "source": "/", "has": [{ "type": "host", "value": "go.ricepia.jp" }], "destination": "/nishio-go.html", "permanent": false },
     { "source": "/nishio-go.html", "has": [{ "type": "host", "value": "ricepia-judge.vercel.app" }], "destination": "https://go.ricepia.jp/nishio-go.html", "permanent": true }

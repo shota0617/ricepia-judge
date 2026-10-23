@@ -328,12 +328,8 @@ function renderResult(){
   };
 }
 
-async function analyze(){
-  const m = current; if(!m) return;
-  M.saveSettings({product:$("#anProduct").value.trim(), ourSide:$("#anOurSide").value.trim()});
-  const btn = $("#anBtn"); M.busy(btn, true, "AIが分析中…（1〜2分）");
-  $("#anOut").innerHTML = "";
-  try{
+/** Analyse one meeting (no UI). Used by the button and by the automatic pipeline. */
+M.analyzeMeeting = async function(m, onProgress){
     const bl = M.backlog().filter(b => b.status !== "rejected").slice(0, 150);
     const ppl = M.speakers(m).map(n => { const r = roleOf(m, m.lines.find(l => l.who === n)); return n + (r ? "（" + r + "）" : ""); }).join("、");
     const st = M.settings();
@@ -347,18 +343,28 @@ async function analyze(){
       "上の会議から、お客様のニーズを抽出して整理してください。"
     ].filter(Boolean).join("\n\n");
     let n = 0;
-    const r = await M.ai({system:SYSTEM, prompt, schema:SCHEMA, effort:"high", onText: t => { if(++n % 20 === 0) btn.innerHTML = '<span class="spinner"></span>AIが整理中… ' + t.length + "字"; }});
+    const r = await M.ai({system:SYSTEM, prompt, schema:SCHEMA, effort:"high", onText: t => { if(++n % 20 === 0 && onProgress) onProgress(t.length); }});
     const ids = new Set(bl.map(b => b.id));
     r.needs.forEach(x => { if(!ids.has(x.backlog_match)) x.backlog_match = ""; });
     r.at = Date.now();
     m.analysis = r; m.analysisStale = false;
     M.saveMeeting(m); M.badges();
-    renderSelect(m.id); renderResult();
+    if(current && current.id === m.id){ current = m; renderSelect(m.id); renderResult(); }
+    return r;
+};
+async function analyze(){
+  const m = current; if(!m) return;
+  M.saveSettings({product:$("#anProduct").value.trim(), ourSide:$("#anOurSide").value.trim()});
+  const btn = $("#anBtn"); M.busy(btn, true, "AIが分析中…（1〜2分）");
+  $("#anOut").innerHTML = "";
+  try{
+    const r = await M.analyzeMeeting(m, len => { btn.innerHTML = '<span class="spinner"></span>AIが整理中… ' + len + "字"; });
     M.toast("分析が完了しました（ニーズ " + r.needs.length + "件）", "ok");
   }catch(e){ M.errorBox($("#anOut"), e); }
   finally{ M.busy(btn, false); }
 }
 
+M.analyzeView = {current:() => current, refresh:() => { if(current){ current = M.meeting(current.id); renderSelect(current && current.id); renderMeta(); } }};
 M.mod.analyze = {
   init(){
     const s = M.settings();
@@ -400,7 +406,7 @@ function renderHistory(){
   el.innerHTML = `<div class="tbl-wrap"><table class="mtable"><tr><th>日時</th><th>会議 / お客様</th><th>長さ</th><th>発言</th><th>状態</th><th></th></tr>` +
     list.map(m => `<tr>
       <td style="white-space:nowrap;">${esc(M.dt(m.startedAt))}</td>
-      <td><b>${esc(m.title)}</b>${m.customer ? `<div class="muted small">${esc(m.customer)}</div>` : ""}${m.source === "import" ? ' <span class="tag">取り込み</span>' : ""}${m.sample ? ' <span class="tag">サンプル</span>' : ""}${m.audio ? ' <span class="tag">🎙 録音あり</span>' : ""}</td>
+      <td><b>${esc(m.title)}</b>${m.customer ? `<div class="muted small">${esc(m.customer)}</div>` : ""}${m.source === "import" ? ' <span class="tag">取り込み</span>' : ""}${m.sample ? ' <span class="tag">サンプル</span>' : ""}${m.audio ? ' <span class="tag">🎙 録音あり</span>' : ""}${m.source === "tsunagu" ? ' <span class="tag">つなぐ</span>' : ""}</td>
       <td style="white-space:nowrap;">${esc(M.dur(m))}</td><td>${m.lines.length}</td>
       <td>${m.analysis ? `<span class="badge b-green">分析済み・ニーズ${m.analysis.needs.length}</span>` : '<span class="badge">未分析</span>'}</td>
       <td style="white-space:nowrap;"><button class="btn btn-gold btn-sm" data-act="an" data-id="${esc(m.id)}">分析</button>

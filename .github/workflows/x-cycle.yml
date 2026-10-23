@@ -50,7 +50,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.cfg.outputs.on
         with:
-          node-version: 20
+          node-version: 22   # Claude Code は Node 22 以上
       # Claude が作業場所のファイルを書きかえても、確かめる手順・PR を作る手順は Claude より前の中身で動かす（作業場所の外にコピーしておく）
       - name: Keep trusted tools
         if: steps.cfg.outputs.on

@@ -6467,10 +6467,12 @@ function mzArea(cx, cy) {   // めいろの マス (cx, cy) を ふくむ 区域
   let a = mzAreas.get(key);
   if (a) return a;
   const t0x = rx * MZ_R * MZ_K - MZ_K, t0y = ry * MZ_R * MZ_K - MZ_K, t1x = (rx + 1) * MZ_R * MZ_K + MZ_K, t1y = (ry + 1) * MZ_R * MZ_K + MZ_K;
+  let ready = true;
   for (let gy = Math.floor(t0y / CHUNK); gy <= Math.floor((t1y - 1) / CHUNK); gy++) for (let gx = Math.floor(t0x / CHUNK); gx <= Math.floor((t1x - 1) / CHUNK); gx++) {
     const st = chunkState(gx, gy);
-    if (st !== 'ok' && st !== 'out') return null;
+    if (st !== 'ok' && st !== 'out') { ready = false; ensureChunk(gx, gy); }   // 区域に いる 区画を 読みに いく（見えている 所の 読みこみだけでは 足りない ことがある）
   }
+  if (!ready) return null;
   a = mzBuild(rx, ry); mzAreas.set(key, a);
   return a;
 }
@@ -6790,6 +6792,7 @@ function snapDemoStart() {
   if (key === snapKey || c === C.X) return;
   snapKey = key;
   if (!BLOCK.has(c)) return;
+  if (mazeOn() && mzType(Math.floor(t.x / MZ_K), Math.floor(t.y / MZ_K)) === 1) return;   // めいろの 通路の 中の 建物の マスは 通れる（壁を こえて 動かさない）
   const seen = new Set([key]);
   let frontier = [[x, y]];
   for (let d = 1; d <= 40 && frontier.length; d++) {

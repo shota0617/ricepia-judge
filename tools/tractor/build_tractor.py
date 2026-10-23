@@ -69,7 +69,7 @@ PAL = {
     'darkgray': dict(c='#35383b', r=0.5, m=0.3),
     'chrome': dict(c='#e8e8e8', r=0.08, m=1.0),
     'silver': dict(c='#b9bdc1', r=0.28, m=0.85),
-    'wheel_cream': dict(c='#e6d9b0', r=0.35),
+    'wheel_cream': dict(c='#ebe6d2', r=0.35),           # 白っぽいアイボリー（X の農家さんの写真 3 人が「白い・白っぽいホイール」）
     'tire': dict(c='#1b1b1b', r=0.85),
     'white': dict(c='#f2f2ef', r=0.3),
     'glass': dict(c='#8fb3a2', r=0.04, a=0.2),            # 少し緑がかった色ガラス

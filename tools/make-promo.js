@@ -80,9 +80,10 @@ async function endCard(page) {
   await sleep(2500);
   await caption(page, '🌀 西尾の地図ぜんぶが めいろに', '本物の道で できた めいろを、傾けて ころころ');
   const roll = await G(() => !!(window.nishioPixel && nishioPixel.roll && nishioPixel.roll.on));
-  for (const [k, ms] of [['ArrowLeft', 700], ['ArrowUp', 900], ['ArrowRight', 500], ['ArrowUp', 700], ['ArrowLeft', 800]]) { await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(250); }
+  // 転がす まえと 撮る まえに、まちの人の 呼びとめ（会話の 窓）を とじる（窓が 開いている 間は お米が 止まる・画面を ふさぐ）
+  for (const [k, ms] of [['ArrowLeft', 700], ['ArrowUp', 900], ['ArrowRight', 500], ['ArrowUp', 700], ['ArrowLeft', 800]]) { await closeAll(); await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(250); }
   if (!roll) console.log('  （転がす が オフ のまま でした）');
-  await sleep(600);
+  await sleep(400); await closeAll(); await sleep(300);
   await shot('02-maze');
   // 3) 人の話で、次の ゴール（行き先の 名所）が 決まる
   await G(() => { const n = nishioGo.npcs.find(x => x.id === 'castle-guide'); nishioGo.moveTo(n.lat, n.lng); const r = nishioGo.talkNpc(n.id, 0); document.getElementById('pxInfoBody').innerHTML = r.html; document.getElementById('pxInfo').hidden = false; });
@@ -93,8 +94,8 @@ async function endCard(page) {
   await G(() => { document.getElementById('pxInfo').hidden = true; });
   // 4) ゴールは 西尾の 名所（地図に 🏁。画面の 外なら 縁に 矢印と めいろの 道のり）
   await caption(page, '🏁 ゴールは 西尾の 名所', '西尾城跡・岩瀬文庫・佐久島…らいすぴあ も'); await sleep(1200);
-  for (const [k, ms] of [['ArrowDown', 600], ['ArrowRight', 700], ['ArrowDown', 500]]) { await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(200); }
-  await sleep(1500);
+  for (const [k, ms] of [['ArrowDown', 600], ['ArrowRight', 700], ['ArrowDown', 500]]) { await closeAll(); await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(200); }
+  await sleep(1200); await closeAll(); await sleep(300);
   await shot('04-goal');
   // 5) 名所に 転がりこんで チェックイン → 「🏁 ゴール！」と 紙ふぶき
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-ricepia'); nishioGo.moveTo(s.lat, s.lng); });

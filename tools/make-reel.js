@@ -61,13 +61,13 @@ async function endCard(page) {
   const frames = path.join(OUT, 'reel-frames');
   fs.rmSync(frames, { recursive: true, force: true });
   const stop = await recordPage(page, frames);
-  const roll = async seq => { for (const [k, ms] of seq) { await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(200); } };
   const closeAll = () => G(() => {   // ごほうび・名所の 窓・ムービー・「どうだった？」を とじる
     const rw = document.getElementById('reward'); if (rw && rw.classList.contains('show')) rw.click();   // ゲームと 同じ とじかた（つぎの 窓へ すすむ）
     const pi = document.getElementById('pxInfo'); if (pi && !pi.hidden) { const c = pi.querySelector('[data-close]'); if (c) c.click(); else pi.hidden = true; }
     document.querySelectorAll('.movie button, [data-mv="close"]').forEach(b => { if (b.getClientRects().length && /とじる|閉じる|✕|×/.test(b.textContent)) b.click(); });
     const rb = document.getElementById('reactBar'); if (rb) rb.hidden = true;
   });
+  const roll = async seq => { for (const [k, ms] of seq) { await closeAll(); await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(200); } await closeAll(); };   // まちの人の 呼びとめ（会話の 窓）は とじてから 転がす
   // 1) はじめの画面（お米が 台地の坂を ころころ転がり下りる）
   await caption(page, 'スマホを傾けて<br>お米を転がす', 'にしおさんぽGO', 'mid'); await sleep(2800); mark('intro');
   await caption(page, '');

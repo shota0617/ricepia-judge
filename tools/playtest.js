@@ -97,7 +97,17 @@ async function walkTo(page, id) {
   // はじめての人と同じく、せかいちずを開いた状態で「操作して遊ぶ」を押す
   // はじめての人は歩く地図から始まり、すぐ近くに「ようこそ たからばこ」が置かれる（docs/retention.md）
   await page.evaluate(() => nishioPixel.setWorld(true));
-  await page.click('#demoBtn'); await page.waitForTimeout(2500);
+  await page.click('#meiroBtn'); await page.waitForTimeout(2500);
+  // 地図の めいろ（メインの 遊び）：転がす ときは めいろ。お米の まわりの 区域が できていて、通路の マスに 通れない さかい（壁）がある
+  R.checks.mapMaze = await page.evaluate(async () => {
+    const M = nishioPixel.maze, r = nishioPixel.roll, K = M.K;
+    for (let i = 0; i < 40 && M.type(Math.floor(r.x / K), Math.floor(r.y / K)) < 0; i++) await new Promise(f => setTimeout(f, 250));
+    const cx = Math.floor(r.x / K), cy = Math.floor(r.y / K);
+    let floors = 0, walls = 0;
+    for (let y = cy - 6; y <= cy + 6; y++) for (let x = cx - 6; x <= cx + 6; x++) if (M.type(x, y) === 1) { floors++; for (const [dx, dy] of [[1, 0], [0, 1]]) if (M.type(x + dx, y + dy) === 1 && !M.open(x, y, dx, dy)) walls++; }
+    return { ok: M.on() && floors > 10 && walls > 3, on: M.on(), floors, walls };
+  });
+  await page.evaluate(() => nishioPixel.setRoll(false));   // 「🌀 傾けて めいろ」は 転がすを 入れるので、台本の 1マスずつ 歩くに もどす
   // 文字を少なく（ふだん）：上のバーと下のタブは文字を出さず、ドット絵だけ
   R.checks.simpleDefault = await page.evaluate(() => document.body.classList.contains('simple') && !!document.querySelector('.tabs img.pi') && getComputedStyle(document.querySelector('.tabs button span')).display === 'none' && getComputedStyle(document.querySelector('.brand .tx')).display === 'none');
   R.checks.firstOnField = await page.evaluate(() => nishioGo.demo && !nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
@@ -948,6 +958,7 @@ async function walkTo(page, id) {
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');
   need(c.koroStyles && c.koroStyles.ok, '転がり方 200：数・名前・ずかん が おかしい');
+  need(c.mapMaze && c.mapMaze.ok, `地図の めいろ：転がすときに 地図が めいろに ならない（${JSON.stringify(c.mapMaze)}）`);
   need(c.meiro && c.meiro.ok, `西尾めいろ：盤ができない・お米が動かない・ゴールできない・とじられない（${JSON.stringify(c.meiro)}）`);
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');

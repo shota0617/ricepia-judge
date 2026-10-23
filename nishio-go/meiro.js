@@ -36,7 +36,7 @@ function note() {   // きろく の 札に すすみぐあい（何面まで・
   el.textContent = `${st.stage + 1}面まで あそべる・★${stars}`;
 }
 
-let api = null, ui = null, game = null, raf = 0, wantDaily = false;
+let api = null, ui = null, game = null, raf = 0, wantDaily = false, wantOpen = false;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
 const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
@@ -686,13 +686,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (b) b.addEventListener('click', () => {
     const P = root.nishioPixel && root.nishioPixel.meiroApi;
     if (P) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
-    const d = $('demoBtn'); if (d) d.click();
-    setTimeout(() => open(undefined, wantDaily), 60);
+    if (root.nishioPixel && root.nishioPixel.setRoll) root.nishioPixel.setRoll(true);   // 傾けて 転がす（地図が めいろに なる）
+    const d = $('demoBtn'); if (d) d.click();   // 操作して遊ぶ で 始める：歩く地図ぜんぶが めいろ（メインの 遊び）
+    if (wantOpen) setTimeout(() => open(undefined, wantDaily), 60);   // シェアの リンクから 来た人は、その めいろ（☀️ きょうの めいろ など）を ひらく
   });
   // シェアの リンク（?meiro=daily：きょうの めいろ・?meiro=1：めいろ）から 来た人
   const want = new URLSearchParams(location.search).get('meiro');
   if (want === 'daily' || want === '1') {
-    wantDaily = want === 'daily';
+    wantDaily = want === 'daily'; wantOpen = true;
     const intro = $('intro'), t = b && b.querySelector('.mp-t');
     if (intro && !intro.hidden && b) { if (t && wantDaily) t.textContent = '☀️ きょうの めいろ に ちょうせん'; }   // はじめての人：いちばん上の ボタンで（iPhone の 傾きの 許可は タップの その場で）
     else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）

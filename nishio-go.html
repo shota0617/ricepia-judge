@@ -327,15 +327,16 @@
     <p class="player-count voice-intro" id="voiceIntro" hidden></p>
     <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="お米が 台地から 坂を ころころ転がり下りて、田んぼの あぜ道で にっこり"></canvas>
     <p class="tagline">お米を ころころ 転がして、西尾をめぐろう</p>
-    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 めいろでは、本物の西尾の道が 迷路に。黒い穴と川を よけて、ゴールの名所まで ころがそう。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
+    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころがそう。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
-    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small>西尾の本物の地図が 迷路に。スマホを傾けて、お米を ゴールの名所まで ころがそう</small></button>
-    <button type="button" class="btn big mode-pick" id="demoBtn"><span class="mp-t">📱 傾けて さんぽ</span><small>地図の上を 自由に ころころ。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米を 名所から名所へ ころがそう。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
     <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
     <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
     <ul class="intro-shots" aria-label="プレイ画面">
-      <li><img src="nishio-go/shots/meiro.webp" alt="西尾駅の まわりの 本当の道で できた めいろ。立った 緑の 壁の あいだを、お米が ゴールの 西尾駅へ 転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>めいろで ゴールへ</span></li>
+      <li><img src="nishio-go/shots/meiro.webp" alt="西尾の歩く地図が 壁のある めいろになり、お米が 名所へ 転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>地図が めいろに</span></li>
+      <li><img src="nishio-go/shots/meiro-board.webp" alt="西尾駅の まわりの 本当の道で できた めいろ。立った 緑の 壁の あいだを、お米が ゴールの 西尾駅へ 転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>めいろで ゴールへ</span></li>
       <li><img src="nishio-go/shots/roll.webp" alt="ドット絵の西尾の町を お米が転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>お米を転がす</span></li>
       <li><img src="nishio-go/shots/reward.webp" alt="たからばこからドット絵が出た画面" width="540" height="1080" loading="lazy" decoding="async"/><span>ドット絵をあつめる</span></li>
       <li><img src="nishio-go/shots/world.webp" alt="西尾とまわりのまちの、せかいちず" width="540" height="1080" loading="lazy" decoding="async"/><span>名所をめぐる</span></li>

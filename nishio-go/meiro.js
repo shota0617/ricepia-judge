@@ -1,6 +1,7 @@
 // にしおさんぽGO：西尾めいろ（スマホを傾けて、お米を 西尾の地図の迷路の ゴールまで ころがす。キーホルダーの 玉ころがし迷路のように）
-// ・盤は 本物の西尾の地図の一部（ドット絵の地図と同じ絵。pixel.js の paintRegion）。めいろの1マスは 地図の 3×3マス（約24m）。
-//   まん中のマスを 道が 通っている所（道が6つ以上の 広い道・広場、公園・境内も）が 通路、そのほか（家の かたまり・田畑など）は 壁。町の 通りが そのまま 迷路になる
+// ・盤は 本物の西尾の地図の一部（ドット絵の地図と同じ絵。pixel.js の paintRegion）。めいろの1マスは 地図の 2×2マス（約16m）。
+//   道の ある マスが 床で、となりへ 通れるのは 本当の 道が さかいを またいで つながる 所だけ。その中から 穴ほりで 1本道の 迷路を えらぶ（町の 通りが そのまま 迷路になる）。
+//   通路は 地図を 明るく、そのほか（家の かたまり・田畑・つながらない 床）は 盛りあがった 緑の 台、細い壁は 立った 緑の 壁（影と てかり つき）
 // ・川や池（水のマス）と、面が進むと ふえる マンホールの 穴は「落とし穴」：おちると スタートに もどる
 // ・ゴールは 西尾の名所（1面 西尾駅 → 2面 西尾城跡 → らいすぴあ …）。スタートは ゴールから 道を たどって いちばん遠い所
 // ・傾き（pixel.js の傾きを そのまま使う）・矢印キー・盤を なぞる で 転がす。ベストタイムは この端末（localStorage nsg_meiro）
@@ -11,14 +12,14 @@ const $ = id => document.getElementById(id);
 const KEY = 'nsg_meiro';
 // 面のゴール（名所の id）。この順に。あとは 西尾の注目スポットを 西尾城跡から近い順に
 const GOALS = ['f-nishio-station', 'f-nishio-castle', 'f-ricepia', 'f-iwase-bunko', 'f-kondo-beikoku', 'f-konrenji', 'f-jofukuji', 'f-kurokabe', 'f-inariyama-chaen'];
-const K = 3;   // めいろの1マス = 地図の K×K マス
+const K = 2;   // めいろの1マス = 地図の K×K マス（約16m。細かいほど 本物の 道に そった 細い通路が たくさん できる）
 const CD = 2.4;   // はじめの 3・2・1（秒）。「1」の あいだに いまの持ち方を「まっすぐ」に しなおす
 const SLOPE = 2;   // 坂の 引っぱりの つよさ（めいろの ころがり抵抗に かつのは 5%より 急な坂：台地の ふちなど）
 const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // マス/秒²・いちばん速い速さ・ころがり抵抗・速さに比べて へる分・はね返り・お米の半径（マス）
 // stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
 const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
 const st = load();
-if (st.ver !== 2) { st.best = {}; st.skip = []; st.ver = 2; }   // めいろの 作り方を かえた（2：1本道の 迷路）。前の 盤の ベスト・はずした名所は つかわない
+if (st.ver !== 3) { st.best = {}; st.skip = []; st.ver = 3; }   // めいろの 作り方を かえた（2：1本道の 迷路・3：1マスを 地図の 2×2 に 細かく）。前の 盤の ベスト・はずした名所は つかわない
 // 👻 ゴースト：ベストの ときの 走り（0.1秒ごとの 位置）。記録と 同じ キーで、べつの 場所に のこす（大きいので st には 入れない）
 const GKEY = 'nsg_meiro_ghost', GSTEP = 0.1;
 const ghosts = (() => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}') || {}; } catch (e) { return {}; } })();
@@ -48,7 +49,7 @@ function goalList(all = false) {   // all：はずした名所も 入れる（�
   const rest = castle ? spots.filter(s => s.featured && (all || !bad.has(s.id)) && !first.includes(s) && G.dist(castle, s) < 9000).sort((a, b) => G.dist(castle, a) - G.dist(castle, b)) : [];
   return [...first, ...rest];
 }
-const boardSize = n => ({ tw: 13 + Math.min(4, Math.floor(n / 3)) * 1, th: 19 + Math.min(6, Math.floor(n / 3)) * 1.5 | 0 });   // 面が進むと 盤が少し広く
+const boardSize = n => ({ tw: 17 + Math.min(3, Math.floor(n / 3)), th: 28 + Math.min(6, Math.floor(n / 3) * 2) });   // 面が進むと 盤が少し広く（スマホの 画面に 合わせて たて長）
 
 /* ---------- 盤を作る ---------- */
 function makeBoard(n, spot) {
@@ -63,7 +64,7 @@ function makeBoard(n, spot) {
     const b = layout(n, tx0, ty0, tw, th, gx, gy, PATH);
     if (b && (!best || b.len > best.len)) best = b;
   }
-  if (best && best.len < 14 + Math.min(n, 12)) return null;   // 道のりが みじかすぎる（前の面より ずっと かんたん）名所は はずす
+  if (best && best.len < 22 + (Math.min(n, 12) * 1.5 | 0)) return null;   // 道のりが みじかすぎる（前の面より ずっと かんたん）名所は はずす
   if (best) best.spot = spot;
   return best;
 }
@@ -80,8 +81,8 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
       if (v === 1) road++; else if (v === 2) water++;
       else { const c = A.codeAt((tx0 + x) * K + i, (ty0 + y) * K + j); if (c === C.P || c === C.J) park++; }
     }
-    cell[y * tw + x] = water >= 5 && road < 2 ? 2 : road >= 2 || park >= 7 ? 1 : 0;   // 公園・境内は 広場として 床に
-    if (park >= 7 && road < 2) for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) { const q = (y * K + j) * W + x * K + i; if (!kind[q]) kind[q] = 1; }
+    cell[y * tw + x] = water >= 3 && !road ? 2 : road >= 1 || park >= 3 ? 1 : 0;   // 道が 1つでも あれば 床（どこへ 通れるかは さかいの 道で きまる）。公園・境内は 広場として 床に
+    if (park >= 3 && !road) for (let j = 0; j < K; j++) for (let i = 0; i < K; i++) { const q = (y * K + j) * W + x * K + i; if (!kind[q]) kind[q] = 1; }
   }
   // さかいを またいで となりあう 地図のマスが（床どうしは 道と道・床と水は 道と水）あれば 通れる
   const link = (x, y, dx, dy) => {
@@ -128,17 +129,24 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     const braid = Math.max(0.06, 0.3 - n * 0.04);   // ぬけ道の わりあい（1面 3割 → 7面から 6%）
     for (const e of cand) if (!tree.has(e) && rn() < braid) (e[2] === 'r' ? er : ed)[e[3]] = 1;
   }
-  // ゴール：名所に いちばん近い 床
-  let goal = null, gd = 1e9;
-  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (at(x, y) === 1) { const d = Math.hypot(tx0 + x - gx, ty0 + y - gy); if (d < gd) { gd = d; goal = [x, y]; } }
-  if (!goal || gd > 4) return null;   // 名所の そばに 床が なければ、この置き方は やめる
-  const B = { n, tx0, ty0, tw, th, cell, er, ed, goal, holes: new Set() };
-  const dist = bfs(B, goal);
+  // ゴール：名所の そば（6マス以内）の 床で、近い順に 通路が 40マス以上 つながっている 所（道の 切れはしの 小島に しない）。なければ いちばん 広く つながる 所
+  const near = [];
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (at(x, y) === 1) { const d = Math.hypot(tx0 + x - gx, ty0 + y - gy); if (d <= 6) near.push([d, x, y]); }
+  if (!near.length) return null;   // 名所の そばに 床が なければ、この置き方は やめる
+  near.sort((a, c) => a[0] - c[0]);
+  const B = { n, tx0, ty0, tw, th, cell, er, ed, goal: null, holes: new Set() };
+  let dist = null, most = 0;
+  for (const [, x, y] of near) {
+    const d = bfs(B, [x, y]), k = d.reduce((a, v) => a + (v > 0), 0);
+    if (k > most) { most = k; B.goal = [x, y]; dist = d; }
+    if (k >= 40) break;
+  }
+  const goal = B.goal;
   // スタート：ゴールから 道のりが めやす（面が 進むと 長く）までで いちばん遠い 床（1本道の めいろは とても 長く なるので）
-  const aim = 28 + Math.min(n, 10) * 5;
+  const aim = 60 + Math.min(n, 10) * 9;
   let start = null, len = 0;
   for (let i = 0; i < dist.length; i++) if (dist[i] > len && dist[i] <= aim) { len = dist[i]; start = [i % tw, (i / tw) | 0]; }
-  if (!start || len < 10) return null;
+  if (!start || len < 20) return null;
   // マンホールの穴：面が進むと ふえる。ゴール・スタートの そばと、穴があると たどりつけなくなる所には 置かない
   const want = Math.min(8, Math.max(0, n - 1) * 2), cand = [];
   for (let i = 0; i < dist.length; i++) if (dist[i] > 2 && dist[i] < len - 2) cand.push(i);
@@ -328,7 +336,7 @@ function startStage(n, daily = false) {
     }
     g.board = b;
     const gh = ghosts[recKey(g)];   // 盤が かわっていたら（地図の 作りなおし など）つかわない
-    g.ghost = gh && gh.v === 2 && gh.w === b.tw && gh.s === b.start[1] * b.tw + b.start[0] && gh.e === b.goal[1] * b.tw + b.goal[0] && gh.p && gh.p.length >= 4 ? gh : null;
+    g.ghost = gh && gh.v === 3 && gh.w === b.tw && gh.s === b.start[1] * b.tw + b.start[0] && gh.e === b.goal[1] * b.tw + b.goal[0] && gh.p && gh.p.length >= 4 ? gh : null;
     ui.load.hidden = true;
     fit();
     restart();
@@ -374,27 +382,52 @@ function paintBoard(b, T) {
   const x = c.getContext('2d');
   api.paintRegion(x, b.tx0 * K, b.ty0 * K, b.tw * K, b.th * K, T / K);
   const at = (i, j) => (i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i]);
-  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(2, Math.round(T / 6));
-  const reach = bfs(b, b.goal);   // ゴールへ つながらない 床は 通路に 見えないよう 暗く（迷路の 通路が うかんで 見える）
+  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(2, Math.round(T * 0.18)), sh = Math.max(1, Math.round(T * 0.12));
+  // 通路：ゴールへ つながる 床（穴は 通れるものとして。穴の 先の 行き止まりも 通路に 見せる）。そのほか（壁の かたまり・つながらない 床）は ぜんぶ「台」
+  const reach = bfs(Object.assign({}, b, { holes: new Set() }), b.goal);
+  const solid = (i, j) => i < 0 || j < 0 || i >= b.tw || j >= b.th || (b.cell[j * b.tw + i] === 1 ? !reach[j * b.tw + i] : !b.cell[j * b.tw + i]);
+  // 1) 通路は 地図を 明るく（町が 見える）、台は 緑の プラスチックで おおう（地図は うっすら）
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    const X = i * T, Y = j * T, v = at(i, j);
-    if (v === 1 && reach[j * b.tw + i]) { x.fillStyle = 'rgba(255,250,235,.42)'; x.fillRect(X, Y, T, T); }   // 通路：明るく
-    else if (v === 1) { x.fillStyle = 'rgba(16,28,22,.55)'; x.fillRect(X, Y, T, T); }
-    else if (!v) { x.fillStyle = 'rgba(16,28,22,.78)'; x.fillRect(X, Y, T, T); }   // 壁の かたまり：暗く
+    const X = i * T, Y = j * T;
+    if (!solid(i, j)) { if (at(i, j) === 1) { x.fillStyle = 'rgba(255,250,235,.38)'; x.fillRect(X, Y, T, T); } continue; }
+    x.fillStyle = 'rgba(28,70,52,.86)'; x.fillRect(X, Y, T, T);
+    x.fillStyle = (i + j) % 2 ? 'rgba(255,255,255,.025)' : 'rgba(0,0,0,.03)'; x.fillRect(X, Y, T, T);   // ごく うすい 市松（台の 面の てざわり）
   }
-  // かべの線：通れない さかい（床と 壁の かたまり、道が つながっていない 床どうし）に 黒い太い線（キーホルダーの 迷路の 線のように）。
-  // 上と左の かべの下には 明るい ふちで、少し 立体に
+  // 2) 影：台と 細い壁は 右下へ 影を おとす（光は 左上から。キーホルダーの 迷路の 立った 壁のように）
+  x.fillStyle = 'rgba(0,0,0,.32)';
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    if (!at(i, j)) continue;
-    const X = i * T, Y = j * T, up = pass(b, i, j, 0, -1), lf = pass(b, i, j, -1, 0);
-    x.fillStyle = 'rgba(255,255,255,.4)';
-    if (!up) x.fillRect(X, Y + lw / 2, T, u);
-    if (!lf) x.fillRect(X + lw / 2, Y, u, T);
-    x.fillStyle = '#141414';
-    if (!up) x.fillRect(X - lw / 2, Y - lw / 2, T + lw, lw);
-    if (!pass(b, i, j, 0, 1)) x.fillRect(X - lw / 2, Y + T - lw / 2, T + lw, lw);
-    if (!lf) x.fillRect(X - lw / 2, Y - lw / 2, lw, T + lw);
-    if (!pass(b, i, j, 1, 0)) x.fillRect(X + T - lw / 2, Y - lw / 2, lw, T + lw);
+    if (solid(i, j)) continue;
+    const X = i * T, Y = j * T;
+    if (solid(i, j - 1)) x.fillRect(X, Y, T, sh);   // 上が 台：上の ふちに 影
+    if (solid(i - 1, j)) x.fillRect(X, Y, sh, T);
+    if (solid(i - 1, j - 1) && !solid(i, j - 1) && !solid(i - 1, j)) x.fillRect(X, Y, sh, sh);   // ななめ上の 台の 角
+    if (!solid(i, j - 1) && !pass(b, i, j, 0, -1)) x.fillRect(X, Y + lw / 2, T, sh);   // 細い壁の 影
+    if (!solid(i - 1, j) && !pass(b, i, j, -1, 0)) x.fillRect(X + lw / 2, Y, sh, T);
+  }
+  // 3) 台の ふち：通路に 面した 上・左の ふちは 光って 明るく、下・右の ふちは 暗い 線（盛りあがって 見える）
+  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
+    if (!solid(i, j)) continue;
+    const X = i * T, Y = j * T;
+    x.fillStyle = '#0d2219';
+    if (!solid(i, j + 1)) x.fillRect(X, Y + T - u, T, u);
+    if (!solid(i + 1, j)) x.fillRect(X + T - u, Y, u, T);
+    if (!solid(i, j - 1)) x.fillRect(X, Y, T, u);
+    if (!solid(i - 1, j)) x.fillRect(X, Y, u, T);
+    x.fillStyle = 'rgba(190,240,205,.55)';
+    if (!solid(i, j + 1)) x.fillRect(X, Y + T - 2 * u, T, u);
+    if (!solid(i + 1, j)) x.fillRect(X + T - 2 * u, Y, u, T);
+  }
+  // 4) 細い壁（床どうしで 道が つながっていない さかい）：台と 同じ 緑の 立った 壁。上・左の 面に てかり、まわりに 黒い ふち
+  const rail = (X, Y, w, h) => {
+    x.fillStyle = '#0d2219'; x.fillRect(X - u, Y - u, w + 2 * u, h + 2 * u);
+    x.fillStyle = '#2f7a58'; x.fillRect(X, Y, w, h);
+    x.fillStyle = 'rgba(200,255,220,.55)'; if (w > h) x.fillRect(X, Y, w, u); else x.fillRect(X, Y, u, h);
+  };
+  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
+    if (solid(i, j)) continue;
+    const X = i * T, Y = j * T;
+    if (!solid(i + 1, j) && !pass(b, i, j, 1, 0)) rail(X + T - lw / 2, Y - lw / 2, lw, T + lw);
+    if (!solid(i, j + 1) && !pass(b, i, j, 0, 1)) rail(X - lw / 2, Y + T - lw / 2, T + lw, lw);
   }
   // 水の ふち：床から 入れる 水との さかいに、黄色と黒の しま（ここから先は 落ちる）
   const sw = Math.max(2, Math.round(T / 10));
@@ -499,7 +532,7 @@ function win() {
   const sec = Math.round(g.t * 10) / 10, par = (b.len * 0.45 + 3) * (st.slow ? 1.6 : 1);   // 目やすの時間（道のりから。ゆっくりでは 長め）
   const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
   const prev = st.best[recKey(g)], newBest = !prev || sec < prev.t;
-  if (newBest) { g.ghost = { v: 2, s: b.start[1] * b.tw + b.start[0], e: b.goal[1] * b.tw + b.goal[0], w: b.tw, p: g.rec }; saveGhost(recKey(g), g.ghost); }   // つぎの「もういちど」から この走りと きそう
+  if (newBest) { g.ghost = { v: 3, s: b.start[1] * b.tw + b.start[0], e: b.goal[1] * b.tw + b.goal[0], w: b.tw, p: g.rec }; saveGhost(recKey(g), g.ghost); }   // つぎの「もういちど」から この走りと きそう
   st.best[recKey(g)] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
   if (!g.daily) st.stage = Math.max(st.stage, g.n + 1);   // きょうの めいろ では 面を すすめない
   save();
@@ -521,12 +554,12 @@ function win() {
   clearTimeout(g.cardT);
   g.cardT = setTimeout(() => { if (game === g && g.done) ui.clear.hidden = false; }, 1100);   // 紙ふぶきの あいだに やりなおしたら 出さない
 }
-function hint() {   // いまの マスから ゴールまでの 道すじの 先 8マスを、3秒 点で 見せる
+function hint() {   // いまの マスから ゴールまでの 道すじの 先 12マスを、3秒 点で 見せる
   const g = game;
   if (!g || !g.board || g.done || g.fall > 0) return;
   const b = g.board, d = bfs(b, b.goal), path = [];
   let x = Math.floor(g.x), y = Math.floor(g.y);
-  for (let k = 0; k < 8 && d[y * b.tw + x] > 1; k++) {
+  for (let k = 0; k < 12 && d[y * b.tw + x] > 1; k++) {
     let nx = -1, ny = -1, best = d[y * b.tw + x];
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const v = pass(b, x, y, dx, dy) ? d[(y + dy) * b.tw + x + dx] : 0; if (v && v < best) { best = v; nx = x + dx; ny = y + dy; } }
     if (nx < 0) break;

@@ -552,7 +552,7 @@ async function analyze(){
     if(data.stop_reason==="refusal")throw new Error("AIが判定を辞退しました。別の写真でお試しください");
     if(data.stop_reason==="max_tokens")throw new Error("AIの回答が途中で切れました。もう一度お試しください");
     const text=data.content?.filter(b=>b.type==="text").map(b=>b.text).join("")||"";
-    const parsed=escDeep(JSON.parse(text.replace(/```json|```/g,"").trim())); // AIの返事の文字はHTMLとして入れない（写真に書かれた文字で返事が変わっても、画面でプログラムが動かないように）
+    const parsed=JSON.parse(text.replace(/```json|```/g,"").trim());
     renderResult(parsed);
   }catch(e){
     const eb=document.getElementById("errorBox");
@@ -590,7 +590,8 @@ function escDeep(v){
   if(v&&typeof v==="object"){const o={};for(const k of Object.keys(v))o[k]=escDeep(v[k]);return o;}
   return v;
 }
-function renderResult(r){
+function renderResult(raw){
+  const r=escDeep(raw); // AIの返事の文字はHTMLとして入れない（写真に書かれた文字で返事が変わっても、画面でプログラムが動かないように）。保存・ほかの道具へ渡すのは元のまま（raw）
   correctionGrade=r.grade;
   const cfg=GRADE_CFG[r.grade]||GRADE_CFG.B;
   const scoreBar=(label,val,color)=>`<div class="score-row"><div class="score-header"><span class="score-label">${label}</span><span class="score-val">${val}点</span></div><div class="score-track"><div class="score-fill" style="width:${val}%;background:${color};"></div></div></div>`;
@@ -665,9 +666,9 @@ function renderResult(r){
 
   const box=document.getElementById("resultBox");
   box.innerHTML=html;box.style.display="block";
-  window._lastResult=r;window._lastImage=currentImage;
+  window._lastResult=raw;window._lastImage=currentImage;
   // 販促ツール（marketing.html）で使えるように最新の判定結果を保存
-  try{localStorage.setItem("ricepia_last_judge",JSON.stringify({grade:r.grade,variety:r.variety,avg:avg,comment:r.comment,points:r.points,usage:r.usage,date:new Date().toLocaleString("ja-JP")}));}catch(e){}
+  try{localStorage.setItem("ricepia_last_judge",JSON.stringify({grade:raw.grade,variety:raw.variety,avg:avg,comment:raw.comment,points:raw.points,usage:raw.usage,date:new Date().toLocaleString("ja-JP")}));}catch(e){}
 }
 
 function setCorrectionGrade(g){
@@ -703,7 +704,7 @@ function resetJudge(){
   resetResult();renderUploadZone();
 }
 function printReceipt(){
-  const r=window._lastResult,img=window._lastImage;
+  const r=window._lastResult&&escDeep(window._lastResult),img=window._lastImage; // 印刷の HTML に入れるので 置きかえてから
   if(!r)return;
   const now=new Date();
   const dateStr=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;

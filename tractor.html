@@ -1847,7 +1847,7 @@ const TURBID = (() => {
 // ---- 代かきの波：タイヤが水を押して、輪の波がひろがる。浅い水の波の速さは √(重力×水深)。水深 3cm で約 0.54m/s。
 // トラクター（時速 2.8km＝0.78m/s）のほうが速いので、波は追いつけず、うしろへ V の字にひらく（船のひき波と同じ）
 const RIPPLE = (() => {
-  if (!SHIRO) return { update() {} };
+  if (!SHIRO) return { update() {}, ring() {} };
   const cv = document.createElement('canvas'); cv.width = cv.height = 128;
   const g = cv.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
   gr.addColorStop(0, 'rgba(40,30,20,0)'); gr.addColorStop(0.72, 'rgba(40,30,20,0)'); gr.addColorStop(0.8, 'rgba(40,30,20,0.35)');   // 谷は暗く
@@ -1861,6 +1861,12 @@ const RIPPLE = (() => {
   }
   let next = 0;
   const acc = { rl: 0, rr: 0, fl: 0, fr: 0 };
+  function ring(x, z, a) {                         // 輪の波を 1 つ出す（カエルが水に飛びこんだ所にも使う）
+    const m = pool[next]; next = (next + 1) % N;
+    const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+    m.position.set(x, i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.019, z);   // かいた所は泥の面、まだの所は水たまりの面
+    m.userData.t = 0; m.userData.a = a; m.visible = true;
+  }
   function update(dt) {
     const sp = Math.abs(S.v);
     if (sp > 0.15) {
@@ -1870,10 +1876,7 @@ const RIPPLE = (() => {
         if (Math.abs(x) > HX - 0.2 || Math.abs(z) > HZ - 0.2) continue;
         if ((acc[k] += dt * sp * 2.6) < 1) continue;
         acc[k] = 0;
-        const m = pool[next]; next = (next + 1) % N;
-        const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
-        m.position.set(x, tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.019, z);   // かいた所は泥の面、まだの所は水たまりの面
-        m.userData.t = 0; m.userData.a = Math.min(0.9, 0.45 + sp * 0.4); m.visible = true;
+        ring(x, z, Math.min(0.9, 0.45 + sp * 0.4));
       }
     }
     for (const m of pool) {
@@ -1885,7 +1888,64 @@ const RIPPLE = (() => {
       m.material.opacity = m.userData.a * (1 - t / L) * Math.min(1, t * 8);   // ひろがるほど うすく
     }
   }
-  return { update, pool, C };
+  return { update, pool, C, ring };
+})();
+
+// ---- 代かきのアマガエル：水を入れた田んぼにはカエルがたくさんいて、トラクターが近づくと ぴょんぴょんはねて逃げ、水に飛びこむ ----
+const FROGS = (() => {
+  if (!SHIRO) return { update() {} };
+  const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
+  for (let k = 0; k < (MOBILE ? 5 : 8); k++) {
+    const f = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), mat);
+    body.scale.set(0.9, 0.65, 1.3); body.position.y = 0.015; f.add(body);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), mat);
+    head.position.set(0, 0.022, 0.022); f.add(head);
+    for (const sx of [-1, 1]) {                     // うしろ足
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.008, 0.03), mat);
+      leg.position.set(sx * 0.018, 0.006, -0.018); leg.rotation.y = sx * 0.5; f.add(leg);
+    }
+    f.visible = false; scene.add(f);
+    list.push({ f, hops: 0, t: 0, from: new THREE.Vector3(), to: new THREE.Vector3(), dur: 0.35, rest: 0 });
+  }
+  let acc = 0;
+  const y0 = TILL_Y + 0.01;
+  function next(u) {                                  // 次にはねる先：トラクターから遠ざかる向き＋少し横
+    const dx = u.f.position.x - S.x, dz = u.f.position.z - S.z, d = Math.hypot(dx, dz) || 1;
+    const a = Math.atan2(dx, dz) + (Math.random() - 0.5) * 1.2, L = 0.3 + Math.random() * 0.35;
+    u.from.copy(u.f.position);
+    u.to.set(u.f.position.x + Math.sin(a) * L, y0, u.f.position.z + Math.cos(a) * L);
+    u.f.rotation.y = a; u.t = 0; u.dur = 0.3 + Math.random() * 0.12;
+  }
+  function update(dt) {
+    const sp = Math.abs(S.v);
+    if (sp > 0.2 && (acc += dt * sp * 0.9) > 1) {    // 走っていると前のほうから ときどき出てくる
+      acc = 0;
+      const u = list.find(e => !e.f.visible);
+      if (u) {
+        const s = Math.sin(S.yaw), c = Math.cos(S.yaw), dir = S.v >= 0 ? 1 : -1;
+        const lx = (Math.random() - 0.5) * 3.5, lz = dir * (2.2 + Math.random() * 3);
+        const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
+        if (Math.abs(x) < HX - 0.3 && Math.abs(z) < HZ - 0.3) {
+          u.f.position.set(x, y0, z); u.f.visible = true; u.hops = 2 + Math.floor(Math.random() * 3); u.rest = Math.random() * 0.3; next(u);
+        }
+      }
+    }
+    for (const u of list) {
+      if (!u.f.visible) continue;
+      if (u.rest > 0) { u.rest -= dt; continue; }
+      u.t += dt;
+      const k = Math.min(1, u.t / u.dur);
+      u.f.position.lerpVectors(u.from, u.to, k);
+      u.f.position.y = y0 + Math.sin(k * Math.PI) * 0.14;   // 弧をえがいてはねる
+      if (k >= 1) {
+        RIPPLE.ring(u.to.x, u.to.z, 0.5);              // 水に落ちた所に輪の波
+        if (--u.hops <= 0) { u.f.visible = false; continue; }   // 何回かはねたら水にもぐる
+        u.rest = 0.15 + Math.random() * 0.5; next(u);
+      }
+    }
+  }
+  return { update, list };
 })();
 
 // ---- 秋のクモの糸（バルーニング）：晴れて風の弱い秋の日、子グモが糸を風に流して空をわたる。刈りあとの田んぼの上を、
@@ -2844,6 +2904,7 @@ function frame(now) {
   HEAPS.flush(dt);
   TURBID.update(dt);
   RIPPLE.update(dt);
+  FROGS.update(dt);
   GOSSAMER.update(dt);
   MIST.update(dt);
   FROST.update(dt * SPEEDUP);
@@ -2857,7 +2918,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

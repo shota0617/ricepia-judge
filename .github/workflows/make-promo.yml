@@ -11,6 +11,7 @@ on:
       - tools/make-promo.js
       - tools/make-reel.js
       - tools/record-page.js
+      - nishio-go/logo.svg   # タイトルロゴを変えたら、広告の画像も作り直す
       - .github/workflows/make-promo.yml
 permissions:
   contents: write

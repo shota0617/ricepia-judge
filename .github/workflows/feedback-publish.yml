@@ -1,0 +1,38 @@
+# にしおさんぽGO：おたよりから直した案を、人が確かめてから 公開のリポジトリの PR にする
+# feedback.yml は、Claude が直した差分を 非公開の置き場の「公開前の確認」Issue（ラベル publish-review）に置くだけ。
+# 運営者が その Issue の差分に おたよりの中身（文・名前・位置・連絡先）が入っていないことを確かめてから、Issue の番号を入れて これを動かす。
+# AI は動かさない。差分は 直してよい場所（nishio-go/ の遊びのデータと画面の文）の ふつうのファイルだけで、こわれていないときだけ PR にする（マージは人）
+# 必要な準備：Variables の FEEDBACK_REPO、Secrets の FEEDBACK_TOKEN（feedback.yml と同じ）。docs/feedback.md
+name: Nishio feedback publish
+on:
+  workflow_dispatch:
+    inputs:
+      review:
+        description: '「公開前の確認」Issue の番号（非公開の置き場）'
+        required: true
+permissions:
+  contents: write
+  pull-requests: write
+concurrency:
+  group: feedback-publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+      - name: Publish reviewed feedback fix
+        env:
+          FEEDBACK_REPO: ${{ vars.FEEDBACK_REPO }}
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          REVIEW: ${{ inputs.review }}
+        run: |
+          case "$REVIEW" in ''|*[!0-9]*) echo "::error::番号だけを入れてください"; exit 1;; esac
+          node tools/feedback-triage.js publish "$REVIEW"

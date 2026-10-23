@@ -102,6 +102,16 @@ async function recentCount(max, now) {
   const list = await gh(`/issues?labels=feedback&state=all&sort=created&direction=desc&per_page=${Math.min(100, max)}`);
   return list.filter(i => now - Date.parse(i.created_at) < 86400e3).length;
 }
+// 置いたあとに もう一度数える：24時間のうちで、この Issue より前（番号が小さい）か同じものが 上限より多ければ、置きすぎ。
+// 同時にたくさん来ると、先に数えたときは みな上限より下に見えるので（数えてから置くまでのあいだ）、あとから決まった順で 多いぶんを閉じる
+async function overLimit(n, max, now) {
+  const list = await gh('/issues?labels=feedback&state=all&sort=created&direction=desc&per_page=100');
+  const full = list.length === 100 && now - Date.parse(list[list.length - 1].created_at) < 86400e3;   // 24時間に100件より多い（上限は100まで）
+  return full || list.filter(i => i.number <= n && now - Date.parse(i.created_at) < 86400e3).length > max;
+}
+// この関数（Vercel のひとつのインスタンス）の中では、おたよりを1件ずつ順に置く（数えてから置くまでのあいだに ほかの送信が割りこまないように）
+let queue = Promise.resolve();
+const oneByOne = fn => { const run = queue.then(fn); queue = run.catch(() => {}); return run; };
 
 function parseReact(b) {
   if (!b || typeof b !== 'object' || !b.spot || typeof b.spot !== 'object') return null;
@@ -155,13 +165,21 @@ module.exports = async function handler(req, res) {
   if (!rateOk(ip, now)) return res.status(429).json({ error: 'rate' });
   const max = Math.max(1, Math.min(100, Number(process.env.FEEDBACK_DAILY_MAX) || 40));
   try {
-    if (await recentCount(max, now) >= max) return res.status(429).json({ error: 'daily' });
-    const is = issueOf(f), made = await gh('/issues', { method: 'POST', body: JSON.stringify(is) });
-    // ラベルがつかなかったら（はじめての空のリポジトリなど）、ラベルを作ってつけなおす。仕分けは feedback ラベルで探すので
-    if (!(made.labels || []).some(l => (l.name || l) === 'feedback')) {
-      await ensureLabels(is.labels);
-      await gh(`/issues/${made.number}/labels`, { method: 'POST', body: JSON.stringify({ labels: is.labels }) });
-    }
+    const over = await oneByOne(async () => {
+      if (await recentCount(max, now) >= max) return true;
+      const is = issueOf(f), made = await gh('/issues', { method: 'POST', body: JSON.stringify(is) });
+      // ラベルがつかなかったら（はじめての空のリポジトリなど）、ラベルを作ってつけなおす。仕分けは feedback ラベルで探すので
+      if (!(made.labels || []).some(l => (l.name || l) === 'feedback')) {
+        await ensureLabels(is.labels);
+        await gh(`/issues/${made.number}/labels`, { method: 'POST', body: JSON.stringify({ labels: is.labels }) });
+      }
+      if (await overLimit(made.number, max, now)) {   // ほかのインスタンスと同時に置いて、上限をこえた：閉じて仕分けに入れない
+        await gh(`/issues/${made.number}`, { method: 'PATCH', body: JSON.stringify({ state: 'closed', state_reason: 'not_planned' }) });
+        return true;
+      }
+      return false;
+    });
+    if (over) return res.status(429).json({ error: 'daily' });
   } catch (e) {
     console.error('feedback:', e.message);
     return res.status(502).json({ error: 'store' });

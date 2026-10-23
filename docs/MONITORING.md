@@ -57,7 +57,9 @@ Cloudflare トークンの権限:
 | `SUPABASE_PROJECT_REFS` | 全プロジェクト | 監視するプロジェクト ref（カンマ区切り） |
 | `MONITOR_URLS` | https://ricepia-judge.vercel.app/ | 死活監視する URL（カンマ区切り） |
 | `ALERT_REMIND_HOURS` | 6 | 継続中の異常の再通知間隔 |
-| `AUTO_STOP` | true | `false` にすると通知だけで止めない |
+| `AUTO_STOP` | なし（通知のみ） | `true` にしたときだけ自動で止める（ほかの仕事で使うキーや Worker まで止めないように、はじめは止めない） |
+| `AUTO_STOP_ANTHROPIC_KEY_IDS` | なし（組織のすべて） | 止めてよい API キー ID（`apikey_...`。カンマ区切り）。入れると、止めるのは ここに書いたキーだけ |
+| `AUTO_STOP_WORKERS` | なし（すべて） | 止めてよい Worker 名（カンマ区切り）。入れると、止めるのは ここに書いた Worker だけ |
 | `AUTO_STOP_EXCLUDE_WORKERS` | なし | 自動停止しない Worker 名（カンマ区切り） |
 | `AUTO_STOP_EXCLUDE_ANTHROPIC_KEY_IDS` | なし | 無効化しない API キー ID（`apikey_...`） |
 
@@ -69,6 +71,9 @@ Actions → 「異常・課金監視」→ Run workflow →「テストメール
 ---
 
 ## 自動停止の中身
+
+自動で止めるのは、Variables の `AUTO_STOP` を `true` にしたときだけです（未設定のあいだは、メールで知らせるだけ）。
+止めてよいものは `AUTO_STOP_ANTHROPIC_KEY_IDS`・`AUTO_STOP_WORKERS` で しぼっておくのがおすすめです（にしおさんぽGO のおたより・会議ツールなど、ほかの仕事のキーまで止めないように）。
 
 **Anthropic**: 利用額が上限を超えると、Admin API で組織内の有効な API キーを `inactive` にします。
 キーは削除されないので、Console で再び有効にできます。Admin キーは対象外なので監視は続きます。

@@ -1,13 +1,15 @@
 // にしおさんぽGO：おたより（非公開リポジトリの Issue）を仕分けて、結果を Issue に書きもどす（.github/workflows/feedback.yml から使う）
 //   node tools/feedback-triage.js prepare   … まだ見ていないおたよりを読み、決まった手順で片づくもの（もうゲームにある名所など）は
 //                                             その場で返事をして閉じる。のこりを .feedback/items.json に書く（Claude が読む）
-//   node tools/feedback-triage.js report    … Claude の結果（.feedback/results.json）と、できたPR（環境変数 PR_URL）を Issue に書く
-//   node tools/feedback-triage.js pr        … Claude が直したファイルを確かめて（直してよい場所だけ・JSON と JS が壊れていないか）、PR を作る（マージは人）
+//   node tools/feedback-triage.js report    … Claude の結果（.feedback/results.json）と、公開前の確認の Issue（環境変数 REVIEW_URL）を おたよりの Issue に書く
+//   node tools/feedback-triage.js pr        … Claude が直したファイルを確かめて（直してよい場所だけ・JSON と JS が壊れていないか）、差分を 非公開の置き場の
+//                                             「公開前の確認」Issue（ラベル publish-review）に置く。公開のリポジトリには まだ何も出さない
+//   node tools/feedback-triage.js publish <番号> … 人が確かめた「公開前の確認」Issue の差分だけを、公開のリポジトリの PR にする（.github/workflows/feedback-publish.yml。マージは人）
 //   node tools/feedback-triage.js voices    … プレイヤーへの返事（受付番号ごとの いまの様子）と、反映されたこと（人がマージした PR）を
 //                                             nishio-go/voices.json に書いて main にコミットする（ゲームの「こえ」タブが読む）。
 //                                             公開ページ nishio-go/minna.html（tools/make-minna.js）も いっしょに作りなおす
 // 環境変数：FEEDBACK_REPO（owner/name）、FEEDBACK_TOKEN（そのリポジトリの Issues を読み書きできるトークン）、FEEDBACK_MAX（1回に Claude にわたす数。ふだん5）、
-//           CLAUDE_ON（'true' なら Claude にわたす）。pr は GH_TOKEN（このリポジトリに PR を作れるトークン）・GITHUB_REPOSITORY・GITHUB_REF_NAME・GITHUB_RUN_ID・GITHUB_OUTPUT
+//           CLAUDE_ON（'true' なら Claude にわたす）。pr は GITHUB_RUN_ID・GITHUB_SHA・GITHUB_OUTPUT、publish は GH_TOKEN（このリポジトリに PR を作れるトークン）・GITHUB_REPOSITORY・GITHUB_REF_NAME
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -113,7 +115,7 @@ async function findOsm(f) {
 }
 
 // 仕分けで使うラベル（無ければ作る。もうあれば 422 で、それでよい）
-const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced', 'told', 'reactions', 'counted'];
+const LABELS = ['feedback', 'kind:spot', 'kind:fun', 'kind:fix', 'kind:idea', 'triaged', 'claude-try', 'needs-check', 'already', 'fixed', 'proposal', 'spam', 'reflected', 'announced', 'told', 'reactions', 'counted', 'publish-review'];
 async function ensureLabels() {
   for (const name of LABELS) {
     try { await gh('/labels', { method: 'POST', body: JSON.stringify({ name, color: name === 'feedback' ? 'f9d0c4' : name === 'needs-check' ? 'e99695' : 'ededed' }) }); }
@@ -190,7 +192,8 @@ const LABEL = { fixed: 'fixed', proposal: 'proposal', done: 'already', skip: 'sp
 async function report() {
   const read = f => { try { return JSON.parse(fs.readFileSync(path.join(DIR, f), 'utf8')); } catch (_) { return null; } };
   const items = read('items.json') || [], results = read('results.json');
-  const pr = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(process.env.PR_URL || '') ? process.env.PR_URL : '';
+  const m = /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/issues\/(\d+)$/.exec(process.env.REVIEW_URL || '');
+  const review = m ? process.env.REVIEW_URL : '', reviewN = m ? Number(m[1]) : 0;   // 公開前の確認の Issue（非公開の置き場）
   const blocked = fs.existsSync(path.join(DIR, 'blocked.txt'));   // 直した内容に おたよりの文・位置が入っていて、公開を止めた
   const rids = read('rids.json') || {};
   if (!REPO || !TOKEN || !items.length) return;
@@ -205,11 +208,11 @@ async function report() {
       console.log(`#${it.n} 止めた`);
       continue;
     }
-    if (action === 'fixed' && !pr) { action = 'proposal'; text += '\n\n（直した内容は確認で取りこめなかったので、提案として残します）'; }
-    const head = { fixed: `直しました。取りこみ（マージ）を待っています：${pr}`, proposal: '提案です。人が決めてください。', done: 'もう対応ずみ／いまのままで問題ありません。', skip: '反映しないおたよりとして閉じます。' }[action];
-    // 反映されたら（人が PR をマージしたら）voices がゲームで知らせる。そのときに出す文（公開してよいと確かめたもの）を、しるしとして残す
+    if (action === 'fixed' && !review) { action = 'proposal'; text += '\n\n（直した内容は確認で取りこめなかったので、提案として残します）'; }
+    const head = { fixed: `直しました。公開前の確認を待っています：${review}`, proposal: '提案です。人が決めてください。', done: 'もう対応ずみ／いまのままで問題ありません。', skip: '反映しないおたよりとして閉じます。' }[action];
+    // 反映されたら（人が確認して PR にし、マージしたら）voices がゲームで知らせる。そのときに出す文（公開してよいと確かめたもの）を、しるしとして残す
     const pub = action === 'fixed' ? publicText(r.public, it, knownNames()) : '';
-    const mark = action === 'fixed' ? `\n\n<!-- nsg-public:${Buffer.from(JSON.stringify({ pr, text: pub, kind: it.kind })).toString('base64')} -->` : '';
+    const mark = action === 'fixed' ? `\n\n<!-- nsg-public:${Buffer.from(JSON.stringify({ review: reviewN, text: pub, kind: it.kind })).toString('base64')} -->` : '';
     const st = { fixed: 'checking', proposal: 'proposal', done: 'done', skip: 'skip' }[action];
     await comment(it.n, `${head}\n\n${text}${mark}${statusMark(rids[it.n], st)}`);
     await addLabels(it.n, ['triaged', LABEL[action]]);
@@ -291,21 +294,73 @@ async function pr() {
   }
   const results = (() => { try { return JSON.parse(fs.readFileSync(path.join(DIR, 'results.json'), 'utf8')); } catch (_) { return []; } })();
   const fixed = (Array.isArray(results) ? results : []).filter(r => r && r.action === 'fixed');
-  const branch = `feedback/run-${process.env.GITHUB_RUN_ID || Date.now()}`;
-  git('checkout', '-b', branch);
-  git('add', '--', ...files.map(c => c.path));
-  git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', 'にしおさんぽGO: おたよりから直す（自動・要確認）');
-  git('push', '-q', `https://x-access-token:${process.env.GH_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`, `HEAD:refs/heads/${branch}`);
-  const body = ['プレイヤーからのおたより（非公開の置き場の Issue）を Claude が読んで直した案です。**内容を確かめてからマージしてください。**', '',
+  // 公開のリポジトリには まだ出さない（おたよりを読んだ Claude の変更には、決まった手順では見つけられない形で おたよりの中身が入りうる）。
+  // 差分は 非公開の置き場の「公開前の確認」Issue に置き、人が中身を確かめて publish を動かしたときだけ PR にする
+  if (files.some(c => c.code === '??')) git('add', '-N', '--', ...files.filter(c => c.code === '??').map(c => c.path));
+  const patch = git('diff', 'HEAD', '--no-color', '--binary');
+  git('reset', '-q');
+  const b64 = Buffer.from(patch).toString('base64');
+  if (b64.length > 50000) {
+    console.log('差分が大きすぎて「公開前の確認」に置けないので、ぜんぶ戻して人にまわす');
+    files.forEach(revert);
+    fs.writeFileSync(path.join(DIR, 'blocked.txt'), '差分が大きすぎる\n');
+    return;
+  }
+  const prBody = ['プレイヤーからのおたより（非公開の置き場の Issue）を Claude が読んで直した案です。運営者が公開前に中身を確かめました。**遊んで確かめてからマージしてください。**', '',
     ...(fixed.length ? fixed.map(r => `- ${publicText(r.public, items.find(it => it.n === r.n) || { text: items.map(it => it.text).join(' ') }, knownNames()) || '（要約なし）'}`) : ['- （要約なし）']), '',
     '変更してよいのは nishio-go/ の遊びのデータと画面の文だけで、それ以外の変更は自動で取りのぞいています（tools/feedback-triage.js）。',
     'おたよりの文そのもの・送った人の位置は、このPRには書きません。'].join('\n');
-  const bodyFile = path.join(DIR, 'pr-body.md');
-  fs.writeFileSync(bodyFile, body);
+  const fence = '~'.repeat(Math.max(4, ...(patch.match(/~{4,}/g) || []).map(x => x.length + 1)));
+  const shown = patch.length > 12000 ? patch.slice(0, 12000) + '\n…（長いので ここまで。のこりは 下の しるしに入っています）' : patch;
+  const body = [`おたより ${items.map(it => '#' + it.n).join('・')} を Claude が読んで直した案です。**まだ公開していません。**`, '',
+    '1. 下の差分に、おたよりの文・名前・位置・連絡先など 公開してはいけないものが（言いかえや ローマ字・数字の形でも）入っていないか確かめる',
+    '2. よければ、公開のリポジトリの Actions →「Nishio feedback publish」→ Run workflow で、この Issue の番号を入れて動かす（PR になる。マージは遊んで確かめてから）',
+    '3. だめなら、この Issue を閉じる（おたよりは「提案」にもどる）', '',
+    `ファイル：${files.map(c => '`' + c.path + '`').join('・')}`, '',
+    '<details><summary>PR の本文（公開される文）</summary>', '', fence, prBody, fence, '', '</details>', '',
+    fence + 'diff', shown, fence, '',
+    `<!-- nsg-patch:${b64} -->`, `<!-- nsg-prbody:${Buffer.from(prBody).toString('base64')} -->`,
+    `<!-- nsg-base:${process.env.GITHUB_SHA || git('rev-parse', 'HEAD').trim()} -->`].join('\n');
+  files.forEach(revert);   // 作業場所からも消しておく（このあとの voices が main にコミットするときに まざらないように）
+  await ensureLabels();
+  const issue = await gh('/issues', { method: 'POST', body: JSON.stringify({ title: `公開前の確認：おたよりから直す（${fixed.length}件・run ${process.env.GITHUB_RUN_ID || ''}）`, body: body + FOOT, labels: ['publish-review'] }) });
+  console.log(issue.html_url);
+  out('url', issue.html_url);
+}
+
+// 人が確かめた「公開前の確認」Issue の差分を、公開のリポジトリの PR にする（AI は動かさない。決まった手順だけ）
+async function publish() {
+  if (process.env.GITHUB_ACTIONS !== 'true') throw new Error('publish は GitHub Actions の中でだけ動かします');
+  const n = Number(process.argv[3]);
+  if (!Number.isInteger(n) || n <= 0) throw new Error('「公開前の確認」Issue の番号を入れてください');
+  const issue = await gh(`/issues/${n}`);
+  if (issue.pull_request || issue.state !== 'open' || !(issue.labels || []).some(l => (l.name || l) === 'publish-review')) throw new Error(`#${n} は 開いている「公開前の確認」Issue ではありません`);
+  const pick = k => { const m = [...String(issue.body || '').matchAll(new RegExp(`<!-- nsg-${k}:([A-Za-z0-9+/=]+) -->`, 'g'))].pop(); return m ? m[1] : ''; };
+  const patch = Buffer.from(pick('patch'), 'base64').toString('utf8'), prBody = Buffer.from(pick('prbody'), 'base64').toString('utf8');
+  if (!patch.trim()) throw new Error(`#${n} に差分がありません`);
+  // ふつうのファイルの 中身の変更・新しいファイルだけ（消す・名前を変える・実行できるようにする・リンクは しない）
+  if (/^(deleted file mode|old mode|new mode|rename from|copy from|similarity index)/m.test(patch) || /^new file mode (?!100644$)/m.test(patch) || /^index [0-9a-f]+\.\.[0-9a-f]+ (?!100644$)/m.test(patch)) throw new Error(`#${n} の差分に、ふつうのファイルの変更でないものがあります`);
+  const paths = [...patch.matchAll(/^diff --git a\/(\S+) b\/(\S+)$/gm)];
+  if (!paths.length || paths.length !== (patch.match(/^diff --git /gm) || []).length || paths.some(m => m[1] !== m[2] || !EDITABLE(m[2]))) throw new Error(`#${n} の差分に、直してよい場所の外のファイルがあります`);
+  const tmp = path.join(require('os').tmpdir(), `feedback-${n}.patch`);
+  fs.writeFileSync(tmp, patch);
+  try { git('apply', '--check', tmp); } catch (_) { throw new Error(`#${n} の差分が いまの main に当たりません（もう一度 おたよりの仕分けから）`); }
+  git('apply', tmp);
+  const files = changedFiles();
+  if (!files.length || files.some(c => !EDITABLE(c.path) || !intact(c.path))) { files.forEach(revert); throw new Error(`#${n} の差分を当てると、こわれる・直してよい場所の外が かわるので止めます`); }
+  const branch = `feedback/review-${n}`;
+  git('checkout', '-q', '-b', branch);
+  git('add', '--', ...files.map(c => c.path));
+  git('-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com', 'commit', '-q', '-m', 'にしおさんぽGO: おたよりから直す（自動・確認ずみ）');
+  git('push', '-q', `https://x-access-token:${process.env.GH_TOKEN}@github.com/${process.env.GITHUB_REPOSITORY}.git`, `HEAD:refs/heads/${branch}`);
+  const bodyFile = path.join(require('os').tmpdir(), `feedback-${n}-body.md`);
+  fs.writeFileSync(bodyFile, prBody || 'おたよりから直した案です（運営者が公開前に確かめました）。');
   const url = require('child_process').execFileSync('gh', ['pr', 'create', '--base', process.env.GITHUB_REF_NAME || 'main', '--head', branch,
-    '--title', `おたよりから直す（自動・要確認）${fixed.length ? `：${fixed.length}件` : ''}`, '--body-file', bodyFile], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n').pop();
+    '--title', 'おたよりから直す（自動・確認ずみ）', '--body-file', bodyFile], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n').pop();
+  if (!/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+$/.test(url)) throw new Error('PR の URL が読めない：' + url);
+  await gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: `PR にしました：${url}\n\n<!-- nsg-pr:${url} -->` + FOOT }) });
+  await close(n, 'completed');
   console.log(url);
-  out('url', url);
 }
 
 // ---------- ゲームの公開データ（nishio-go/voices.json）----------
@@ -399,6 +454,16 @@ async function announcements() {
     const m = (await comments(i.number)).map(c => /<!-- nsg-public:([A-Za-z0-9+/=]+) -->/.exec(c.body || '')).filter(Boolean).pop();
     if (!m) continue;
     let info; try { info = JSON.parse(Buffer.from(m[1], 'base64').toString('utf8')); } catch (_) { continue; }
+    if (!info.pr && Number.isInteger(info.review) && info.review > 0) {   // 公開前の確認の Issue から、人が作った PR をさがす
+      const rv = await gh(`/issues/${info.review}`).catch(() => null);
+      const pm = rv && (await comments(info.review)).map(c => /<!-- nsg-pr:(https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+) -->/.exec(c.body || '')).filter(Boolean).pop();
+      if (pm) info.pr = pm[1];
+      else if (rv && rv.state === 'closed') {   // 公開しないと決めた（PR にせずに閉じた）
+        if (RID.test(f.rid || '')) status[f.rid] = { s: 'proposal' };
+        done.push(i.number);
+        continue;
+      } else continue;   // まだ 確認を待っている
+    }
     const pm = /^https:\/\/github\.com\/([\w.-]+\/[\w.-]+)\/pull\/(\d+)$/.exec(info.pr || '');
     if (!pm) continue;
     const p = await fetch(`https://api.github.com/repos/${pm[1]}/pulls/${pm[2]}`, { headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'nishio-go-feedback', ...(process.env.GH_TOKEN ? { Authorization: 'Bearer ' + process.env.GH_TOKEN } : {}) } }).then(r => (r.ok ? r.json() : null));
@@ -461,8 +526,8 @@ async function voices() {
 }
 
 if (require.main === module) {
-  const run = { prepare, report, pr, voices }[process.argv[2]];
-  if (!run) { console.error('使いかた：node tools/feedback-triage.js prepare|report|pr|voices'); process.exit(2); }
+  const run = { prepare, report, pr, publish, voices }[process.argv[2]];
+  if (!run) { console.error('使いかた：node tools/feedback-triage.js prepare|report|pr|publish <番号>|voices'); process.exit(2); }
   run().catch(e => { console.error(e.message); process.exit(1); });
 }
 module.exports = { payloadOf, sameName, norm, findKnown, known, EDITABLE, leaks, safePublic, publicText, applyVoices, announcements, reactionsToCount, searchIssues, gh, dist, prepare, report, voices };

@@ -4,16 +4,19 @@ const http = require('http'), fs = require('fs'), path = require('path');
 
 const ROOT = path.join(__dirname, '..');
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.mp3': 'audio/mpeg', '.wasm': 'application/wasm' };
+// 自分の端末の中（127.0.0.1）だけで待ちうける。リポジトリの外・.git などの「.」で始まる場所は配らない
 function startServer(PORT) {
   return http.createServer((req, res) => {
-    const p = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
-    if (!p.startsWith(ROOT)) { res.writeHead(403); res.end(); return; }
+    let rel;
+    try { rel = decodeURIComponent(req.url.split('?')[0]); } catch (_) { res.writeHead(400); res.end(); return; }
+    const p = path.join(ROOT, rel);
+    if ((p !== ROOT && !p.startsWith(ROOT + path.sep)) || path.relative(ROOT, p).split(path.sep).some(x => x.startsWith('.'))) { res.writeHead(403); res.end(); return; }
     fs.readFile(p, (e, d) => {
       if (e) { res.writeHead(404); res.end(); return; }
       const type = TYPES[path.extname(p)] || 'application/octet-stream';
       res.writeHead(200, { 'Content-Type': /^(text|application\/json)/.test(type) || type.includes('javascript') || type.includes('svg') ? type + '; charset=utf-8' : type }); res.end(d);
     });
-  }).listen(PORT);
+  }).listen(PORT, '127.0.0.1');
 }
 
 // Overpass への問い合わせは、ブラウザからではなく Node から送る（CORS を気にせず、いくつものサーバーを順に試せる）

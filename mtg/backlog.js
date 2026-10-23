@@ -321,9 +321,9 @@ M.mod.backlog = {
       }
       if(b.dataset.act === "notice") openNotices(item);
       if(b.dataset.act === "dev"){
-        if(!confirm("「" + item.title + "」の開発を Claude Code に依頼します（Issue に claude-dev ラベルを付けます）。よろしいですか？")) return;
         M.busy(b, true, "依頼中…");
-        M.auto.requestDev(item.id).then(() => { render(); M.badges(); M.toast("開発を依頼しました。進み具合は Issue に書き込まれます", "ok"); })
+        // Issue の文を確かめたか、requestDev の中で きく（Issue に claude-dev ラベルを付ける）
+        M.auto.requestDev(item.id).then(ok => { if(ok === false){ M.busy(b, false); return; } render(); M.badges(); M.toast("開発を依頼しました。進み具合は Issue に書き込まれます", "ok"); })
           .catch(e => { M.busy(b, false); M.toast(e.message, "err"); });
       }
       if(b.dataset.act === "md") M.copy("# " + item.title + "\n\n" + itemMd(item), "Markdownをコピーしました");

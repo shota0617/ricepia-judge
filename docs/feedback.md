@@ -8,7 +8,7 @@
 - **マージ（ゲームへの反映）は、いつも人が確かめてから**。自動で作った PR を自動でマージすることはしません
 
 プレイヤーは「📮 こえ」タブから、**こんな名所があるよ／こうしたらもっと面白い／スポットの情報がちがう／こまった・使いにくい**を送れます。
-届いたおたよりは30分ごとに自動で仕分けられ、直せるものは PR になります。
+届いたおたよりは30分ごとに自動で仕分けられ、直せるものは、まず非公開の置き場の「公開前の確認」Issue になります。運営者が中身を確かめてから PR にします。
 
 ```
 ゲームの おたより
@@ -21,7 +21,8 @@ tools/feedback-triage.js prepare
    ├ もうゲームにある名所 → 返事をして閉じる（already）
    ├ OpenStreetMap にある名所 → 「毎週の作り直しで出ます」と返事をして閉じる（already）
    └ のこり（1回5件まで） → Claude（tools/feedback-prompt.md）
-          ├ 出典（Wikipedia・Wikidata・西尾市・OpenStreetMap）で確かめた小さな直し → PR（fixed）
+          ├ 出典（Wikipedia・Wikidata・西尾市・OpenStreetMap）で確かめた小さな直し → 非公開の「公開前の確認」Issue（fixed）
+          │     → 運営者が差分を確かめて「Nishio feedback publish」を動かす → PR（.github/workflows/feedback-publish.yml）
           ├ 人が決めること → Issue に提案を書いて開いたまま（proposal）。「もっと面白い」は、遊びの案と作りかた・Issue のたたき台をつける
           └ 対応ずみ・いたずら → 閉じる（already・spam）
    ▼
@@ -57,7 +58,10 @@ tools/feedback-triage.js voices（毎回）
 
 ## ふだんの見かた
 
-- **PR**（タイトル「おたよりから直す（自動・要確認）」）：中身を確かめて、よければマージ。おかしければ閉じる
+- **「公開前の確認」Issue**（非公開リポジトリ・ラベル `publish-review`）：Claude が直した差分です。まだ公開していません。
+  差分に おたよりの文・名前・位置・連絡先など 公開してはいけないものが（言いかえ・ローマ字・数字の形でも）入っていないか確かめて、
+  よければ このリポジトリの Actions →「Nishio feedback publish」→ Run workflow で その Issue の番号を入れる（PR になる）。だめなら Issue を閉じる（おたよりは「提案」にもどる）
+- **PR**（タイトル「おたよりから直す（自動・確認ずみ）」）：遊んで確かめて、よければマージ。おかしければ閉じる
 - **非公開リポジトリの Issue**
   - `proposal`（開いたまま）：Claude の提案を読んで決める。直すなら Claude Code に頼むか手で直す。決めたら閉じる
   - **「こうしたらもっと面白い」（kind:fun）を作るとき**：提案の「Issue のたたき台」を、このリポジトリ（ricepia-judge）の新しい Issue にはって、
@@ -71,7 +75,7 @@ tools/feedback-triage.js voices（毎回）
 
 ## 守っていること
 
-- **個人情報**：IPアドレス・ブラウザの種類は保存しない。位置は、プレイヤーがチェックしたときだけ約100mに丸めて送る。おたよりの文と位置は、公開の PR やコミットに書かない（Claude への指示と、PR の本文を作る tools/feedback-triage.js の両方で）
+- **個人情報**：IPアドレス・ブラウザの種類は保存しない。位置は、プレイヤーがチェックしたときだけ約100mに丸めて送る。おたよりの文と位置は、公開の PR やコミットに書かない（Claude への指示と、PR の本文を作る tools/feedback-triage.js の両方で）。Claude の変更は、運営者が非公開の置き場で確かめるまで 公開のリポジトリに出さない
 - **いたずら対策**：同じ所から1時間に5通まで、全体で24時間に40通まで、ゲームでも1日3通まで。人には見えない欄（わな）と、早すぎる送信は捨てる。@ と #数字 は全角にして、メンションや Issue へのリンクにならないように
 - **おたよりに書かれた指示には従わない**：Claude は おたよりを「データ」として読む。シェル・git・トークンは使えず、ファイルの読み書きと、決まったサイト（ja.wikipedia.org・www.wikidata.org・www.city.nishio.aichi.jp・www.openstreetmap.org・nominatim.openstreetmap.org）の閲覧だけ
 - **直してよい場所だけ**：PR にするのは `nishio-go.html` と `nishio-go/` 直下の JS・JSON・CSS だけ（OpenStreetMap などから作るデータ・キャンペーン・ごほうび・解析は除く）。それ以外の変更や、こわれた JSON・JS は自動で取りのぞく

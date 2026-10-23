@@ -1,7 +1,7 @@
 # X の発信から ゲームを直すサイクル：Grok が X でさがす → Claude が実装する → Codex がレビューする → Claude が直す（2回まで）→ PR
 # 1. Grok（xAI の x_search）が、農家さんや西尾の人の X の発信から、ゲームに取り入れられそうな話をさがす（tools/x-cycle-topics.json）
 #    API のクレジットが無いときは、無料の Grok に手で聞いた答えを「Grok の答え」にはりつけて動かす（毎週の分は、クレジットがあるときだけ動く）
-# 2. Claude Code が 1〜3 つ選んで実装する。Claude は シェル・git・ウェブを使えず、決まったファイルの読み書きと node --check だけ。発信は「データ」として扱う（tools/x-cycle-prompt.md）
+# 2. Claude Code が 1〜3 つ選んで実装する。Claude は シェル・git・ウェブを使えず、決まったファイルの読み書きと 文法の確かめ（x-cycle.js check）だけ。発信は「データ」として扱う（tools/x-cycle-prompt.md）
 # 3. Codex（openai/codex-action・読むだけ）がレビューし、must の指摘があれば Claude が直して、もう一度レビュー（2回まで）
 # 4. 変えてよい場所の変更だけを PR にする（tools/x-cycle.js guard）。マージは人が遊んで確かめてから
 # 必要な準備：Secrets の XAI_API_KEY（無料の Grok の答えをはりつけるなら不要）と、ANTHROPIC_API_KEY または CLAUDE_CODE_OAUTH_TOKEN（Claude の Pro・Max の契約で動かすとき。claude setup-token で作る）。無いあいだは なにもしない。OPENAI_API_KEY（無ければレビューなしで PR）。
@@ -50,11 +50,11 @@ jobs:
           if [ -z "$A" ]; then echo "ANTHROPIC_API_KEY か CLAUDE_CODE_OAUTH_TOKEN が無いので、なにもしません"
           elif [ -z "$X" ] && [ -z "$R" ]; then echo "Grok の答えのはりつけも XAI_API_KEY も無いので、なにもしません"
           else echo "on=1" >> "$GITHUB_OUTPUT"; fi
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.cfg.outputs.on
         with:
           persist-credentials: false   # Claude と Codex が動くあいだ、git の認証情報を置かない（PR を作るときだけ渡す）
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         if: steps.cfg.outputs.on
         with:
           node-version: 22   # Claude Code は Node 22 以上
@@ -97,7 +97,7 @@ jobs:
         id: review1
         if: steps.guard0.outputs.changed && env.CODEX_ON == 'true'
         continue-on-error: true
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt-file: .xcycle/review-prompt-1.md
@@ -123,7 +123,7 @@ jobs:
         id: review2
         if: steps.guard1.outputs.changed
         continue-on-error: true
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt-file: .xcycle/review-prompt-2.md
@@ -149,7 +149,7 @@ jobs:
         id: review3
         if: steps.guard2.outputs.changed
         continue-on-error: true
-        uses: openai/codex-action@v1
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           prompt-file: .xcycle/review-prompt-3.md
@@ -168,7 +168,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: node "$RUNNER_TEMP/trusted/x-cycle.js" pr
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always() && steps.cfg.outputs.on
         with:
           name: x-cycle

@@ -6663,10 +6663,10 @@ function mzTrailTick() {
   mzTrail.set(k, [a, b]);
   if (mzTrail.size > 3000) mzTrail.delete(mzTrail.keys().next().value);
 }
-function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中に 米つぶ、通れる となりの 足あとへ 点を 2つ（「・・」で つながって 見える）
+function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中に 米つぶ（丸。Godot の 記録係には ellipse が ないので arc だけ）、通れる となりの 足あとへ 点を 2つ（「・・」で つながって 見える）
   if (!mzTrail.size) return;
   const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
-  const rg = Math.max(1.5, T * 0.3), rd = Math.max(1, T * 0.16), dots = [], grains = [];
+  const rg = Math.max(1.5, T * 0.26), rd = Math.max(1, T * 0.16), dots = [], grains = [];
   for (const [cx, cy] of mzTrail.values()) {
     if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
     const X = ox + cx * S + S / 2, Y = oy + cy * S + S / 2;
@@ -6675,10 +6675,10 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中�
   }
   ctx.fillStyle = 'rgba(26,26,26,.45)';
   for (const [X, Y] of dots) { ctx.beginPath(); ctx.arc(X, Y, rd + 1, 0, Math.PI * 2); ctx.fill(); }
-  for (const [X, Y] of grains) { ctx.beginPath(); ctx.ellipse(X, Y, rg * 0.75 + 1, rg + 1, 0.5, 0, Math.PI * 2); ctx.fill(); }
+  for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, rg + 1, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = 'rgba(255,250,232,.85)';
   for (const [X, Y] of dots) { ctx.beginPath(); ctx.arc(X, Y, rd, 0, Math.PI * 2); ctx.fill(); }
-  for (const [X, Y] of grains) { ctx.beginPath(); ctx.ellipse(X, Y, rg * 0.75, rg, 0.5, 0, Math.PI * 2); ctx.fill(); }
+  for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, rg, 0, Math.PI * 2); ctx.fill(); }
 }
 // 壁の かたまりの 中に いる（始めた 所・ひとっとび の 行き先が 道の ない 区画 など）：いちばん近い 通路・参道の まん中へ うつす（0.5秒ごと）
 let mzSnapT = 0;

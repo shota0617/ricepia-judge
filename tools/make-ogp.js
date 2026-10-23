@@ -1,5 +1,5 @@
 // にしおさんぽGO の共有用画像（OGP・1200×630）を作る：node tools/make-ogp.js
-// ゲームをヘッドレス Chromium で開いて、せかいちずと歩く地図（西尾城跡）を撮り、ロゴと文字を重ねて nishio-go/ogp.png にする
+// ゲームをヘッドレス Chromium で開いて、せかいちずと 地図の めいろ（西尾城跡。「🌀 傾けて めいろ」で 始める）を撮り、ロゴと文字を重ねて nishio-go/ogp.png にする
 // 環境変数：CHROMIUM=Chromium の場所、LEAFLET_DIR=Leaflet の dist（ネットにつながらないとき）
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
@@ -19,13 +19,14 @@ const PORT = 8898, URL = `http://localhost:${PORT}/nishio-go.html`, OUT = path.j
   });
   await page.route(/^https:\/\/(cyberjapandata\.gsi\.go\.jp|[^/]*overpass[^/]*)\//, r => r.fulfill({ status: 504, body: '' }));
   await page.goto(URL); await page.waitForTimeout(2500);
+  if (await page.isVisible('#meiroBtn')) { await page.click('#meiroBtn'); await page.waitForTimeout(1500); }   // 地図の めいろ（転がす）で 始める
   // 知らせ（トースト）と下の案内は写さない
   await page.addStyleTag({ content: '.toast,.sheet,.tabs,.bar,.fab-col,.px-zoom,.px-pad,.px-attr{display:none!important}#pxView{top:0!important;bottom:0!important}' });
   // せかいちず（西尾市のまんなかを少し寄って）
   await page.evaluate(() => { const s = nishioGo.spots.find(x => x.id === 'f-nishio-castle'); nishioGo.moveTo(s.lat, s.lng); nishioPixel.setWorld(true); });
-  await page.$eval('#pxZoomIn', b => b.click()); await page.waitForTimeout(1500);
+  await page.$eval('#pxZoomIn', b => b.click()).catch(() => {}); await page.waitForTimeout(1500);   // ＋ボタンが ない ときは そのまま
   const world = await page.screenshot({ type: 'png' });
-  // 歩く地図（西尾城跡）
+  // 地図の めいろ（西尾城跡）
   await page.evaluate(() => nishioPixel.setWorld(false)); await page.waitForTimeout(2500);
   const field = await page.screenshot({ type: 'png' });
   await ctx.close();
@@ -53,8 +54,8 @@ const PORT = 8898, URL = `http://localhost:${PORT}/nishio-go.html`, OUT = path.j
     <div class="bg"></div><div class="shade"></div>
     <div class="left">
       <img class="logo" src="${uri(logo, 'image/svg+xml')}"/>
-      <h1>西尾のまちを歩いて、<br/><em>名所をめぐる</em>お散歩ゲーム</h1>
-      <ul><li>📜 今日のクエスト</li><li>🎁 たからばこ</li><li>📅 今月のおまつり</li><li>🎮 家でも遊べる</li></ul>
+      <h1>スマホを傾けて、<br/><em>お米を転がす</em>西尾の めいろ</h1>
+      <ul><li>🌀 本物の道の めいろ</li><li>🏁 ゴールは 西尾の名所</li><li>📜 人の話で 行き先</li><li>🆓 無料・登録なし</li></ul>
       <p class="by">西尾のお米屋さん <b>らいすぴあ・近藤米穀店</b> がお届け</p>
     </div>
     <div class="phone"><img src="${uri(field, 'image/png')}"/></div>

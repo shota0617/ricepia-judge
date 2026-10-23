@@ -3,22 +3,25 @@
 // そこで Chrome（CDP）の スクリーンショットを scale 倍で撮りつづけ（2倍で毎秒18枚ほど）、撮った時刻どおりに ffmpeg でつなぐ。
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 
-// 録りはじめる。戻り値の stop() を呼ぶと止まり、{ list（ffmpeg の concat 用ファイル）, duration（秒） } を返す
+// 録りはじめる。戻り値の stop() を呼ぶと止まり、{ list（ffmpeg の concat 用ファイル）, duration（秒） } を返す。
+// stop.pause()・stop.resume()：静止画を撮る あいだ 録るのを 休む（録りながら ほかの 撮り方を まぜると、画面が 2×2 に ならんで 写る ことがある）。休んだ あいだは 前の こまが のびる
 async function recordPage(page, dir, { scale = 2, quality = 88 } = {}) {
   fs.mkdirSync(dir, { recursive: true });
   const cdp = await page.context().newCDPSession(page), vp = page.viewportSize(), frames = [];
-  let on = true;
+  let on = true, paused = false, busy = null;
   const loop = (async () => {
     while (on) {
+      if (paused) { await new Promise(res => setTimeout(res, 30)); continue; }
       const t = Date.now();
-      const r = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality, optimizeForSpeed: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height, scale } }).catch(() => null);
+      busy = cdp.send('Page.captureScreenshot', { format: 'jpeg', quality, optimizeForSpeed: true, clip: { x: 0, y: 0, width: vp.width, height: vp.height, scale } }).catch(() => null);
+      const r = await busy; busy = null;
       if (!r) { await new Promise(res => setTimeout(res, 50)); continue; }
       const f = path.join(dir, `f${String(frames.length).padStart(5, '0')}.jpg`);
       fs.writeFileSync(f, Buffer.from(r.data, 'base64'));
       frames.push({ f, t });
     }
   })();
-  return async function stop() {
+  const stop = async function () {
     on = false; await loop;
     if (!frames.length) throw new Error('動画のこまが撮れませんでした');
     // 1こまずつ、次のこまを撮るまでの長さだけ出す（concat の決まりで、最後のこまは2回書く）
@@ -29,6 +32,9 @@ async function recordPage(page, dir, { scale = 2, quality = 88 } = {}) {
     fs.writeFileSync(list, lines.join('\n') + '\n');
     return { list, duration: (frames[frames.length - 1].t - frames[0].t) / 1000 + 0.1 };
   };
+  stop.pause = async () => { paused = true; if (busy) await busy; };
+  stop.resume = () => { paused = false; };
+  return stop;
 }
 // つないで mp4（H.264・30fps・1080×1920）にする。audio を渡すと、くり返して長さに合わせ、最初と最後を小さくしてのせる
 function toMp4({ list, duration }, out, { audio = null, width = 1080, height = 1920 } = {}) {

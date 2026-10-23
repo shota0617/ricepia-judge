@@ -31,12 +31,26 @@ Settings → Secrets and variables → Actions：
 
 | 名前 | 種類 | 中身 |
 | --- | --- | --- |
-| `XAI_API_KEY` | Secret | xAI の API キー（console.x.ai）。無いあいだは なにもしない |
+| `XAI_API_KEY` | Secret | xAI の API キー（console.x.ai）。クレジットを買ったときだけ使われる。無い・クレジットが無いときは、下の「無料で動かす」で |
 | `ANTHROPIC_API_KEY` | Secret | Claude 用の API キー（使った分だけ課金）。下の `CLAUDE_CODE_OAUTH_TOKEN` とどちらか1つ |
 | `CLAUDE_CODE_OAUTH_TOKEN` | Secret | Claude の Pro・Max の契約で動かすときのトークン（追加の課金なし・契約の利用枠を使う）。Claude Code を入れたパソコンで `claude setup-token` を動かすと出る。どちらも無いあいだは なにもしない |
 | `OPENAI_API_KEY` | Secret | Codex 用。無ければレビューなしで PR にする（PR に「レビューは動いていません」と出る） |
 | `XAI_MODEL` | Variable（なくてよい） | Grok のモデル。ふだん `grok-latest` |
 | `CODEX_MODEL` | Variable（なくてよい） | Codex のモデル。ふだん codex-action の既定 |
+
+## 無料で動かす（無料の Grok に聞いて、はりつける）
+
+xAI の API は、新しいチームでもクレジットを買わないと使えません（2026-10、無料のクレジットは付かなかった）。
+そのあいだは、Grok に聞く所だけを人が手でします。そこから先（実装・確かめ・レビュー・PR）は同じです。
+
+1. 頼み方を出す：`node tools/x-cycle.js ask tractor`（にしおさんぽGO なら `ask nishio-go`）。期間・すでに取り入れた話も入った文が出る
+2. X アプリの Grok か grok.com（無料）に、その文をそのまま送る。答えは改行のない1行の JSON で返ってくる
+3. Actions の「X cycle (Grok → Claude → Codex)」→ Run workflow で、ゲームを選び、「Grok の答え」に答えをはりつけて実行する
+
+- はりつけた答えがあれば、Grok の API は使いません（`XAI_API_KEY` が無くても動く）
+- 答えが JSON でなかったときも、文のまま Claude にわたします
+- API と違って「検索結果に出た投稿か」を確かめられないので、URL の無い話は「確かめられない話」として扱います（Claude には、2人以上が言っていること・写真や動画で確かめられることを選ぶよう頼んであります）
+- 毎週月曜の分は、API のクレジットがあるときだけ動きます。無いときは「なにもしません」と出て、失敗にはしません
 
 ## 1 周の流れ
 

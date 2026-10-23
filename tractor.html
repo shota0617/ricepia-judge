@@ -1142,6 +1142,7 @@ const PASSER = (() => {
     z -= v * dt;
     g.position.set(X, 0.5, z); g.rotation.y = Math.PI;
     wheels.forEach(w => { w.rotation.x -= v * dt / 0.27; });
+    if (v > 2 && Math.abs(z - S.z) < 120) emitRoadDust(dt, X, z, Math.PI, v, 0);   // 軽トラも砂ぼこりを立てる
     if (z < Z1) { g.visible = false; wait = 60 + Math.random() * 90; }
   }
   return { update, g, get v() { return v; } };
@@ -1451,6 +1452,17 @@ function emitTilling(dt) {
   }
 }
 let steamAcc = 0;
+// 砂利の農道を走ると、うしろのタイヤから砂ぼこりが立ち、風下（東）へ流れる（速いほど多い）。トラクターと通る軽トラ
+let dustAcc = 0;
+function emitRoadDust(dt, x, z, yaw, v, k) {
+  dustAcc += dt * Math.min(22, (Math.abs(v) - 1.2) * 6);
+  const s = Math.sin(yaw), c = Math.cos(yaw), back = Math.sign(v) || 1;
+  while (dustAcc >= 1) {
+    dustAcc -= 1;
+    const lx = (Math.random() - 0.5) * 2 * (k ? 1.1 : 0.7), lz = -back * ((k ? 2.0 : 1.4) + Math.random() * 1.5);   // タイヤがまき上げたのが、うしろへひろがって見える
+    FX.emit(x + lx * c + lz * s, 0.65, z - lx * s + lz * c, -s * v * 0.15 + (Math.random() - 0.5) * 0.4, 0.15 + Math.random() * 0.3, -c * v * 0.15 + (Math.random() - 0.5) * 0.4, 1);
+  }
+}
 
 // ---- タイヤの跡（ロータリーを上げて走ったとき。あとで耕すと消える） ----
 const TR = (() => {
@@ -2418,7 +2430,9 @@ function step(dt) {
     toast('旋回連動：ハンドルを切ったので、ロータリーが自動で上がり、直進アシストが切れました。回ったら下げる');
   }
   S.autoBrake = !S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;   // 道では左右のブレーキを連結するので片ブレーキはきかない
-  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * dt;
+  // 代かきの泥の中では前輪が横にすべって、ハンドルを切ったほど曲がらない（速いほどふくらむ）
+  const under = SHIRO && Math.abs(S.x) < HX && Math.abs(S.z) < HZ ? 0.86 - 0.08 * Math.min(1, Math.abs(S.v) / 1.5) : 1;
+  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * under * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
   else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
@@ -2479,6 +2493,7 @@ function step(dt) {
   const slip = !inField ? 0 : (SHIRO ? 0.09 : 0.03) + (working ? 0.025 : 0) + 0.01 * Math.min(1, Math.abs(S.v));
   P.WheelRL.rotation.x += S.v * (1 + slip) * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
   if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
+  if (!inField && S.x > 16.4 && Math.abs(S.v) > 1.4) emitRoadDust(dt, S.x, S.z, S.yaw, S.v, 1);   // 乾いた砂利の農道では砂ぼこり
   P.WheelFL.rotation.x += S.v * dt / R_FRONT; P.WheelFR.rotation.x = P.WheelFL.rotation.x;
   {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
     const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);

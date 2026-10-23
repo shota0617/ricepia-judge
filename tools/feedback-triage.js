@@ -272,6 +272,9 @@ function publicText(s, f, names) {
   if (leaks(s, [{ n: f.n || 0, text: [f.text, nameOk ? '' : f.name].join(' '), lat: f.lat, lng: f.lng }], 8)) return '';
   return s;
 }
+// 人が読んで確かめられない差分：バイナリ（GIT binary patch）・制御文字・見えない文字（ゼロ幅・向きを変える文字など）が入っているもの
+const UNSEEN = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f\u00ad\u200b-\u200f\u202a-\u202e\u2060-\u2069\ufeff]/;
+const unreadable = patch => /^GIT binary patch$|^Binary files /m.test(patch) || UNSEEN.test(patch);
 async function pr() {
   // 直してよい場所の外の変更は、まだ記録していないファイルも消して戻すので、GitHub Actions の使い捨ての作業場所でだけ動かす
   if (process.env.GITHUB_ACTIONS !== 'true') throw new Error('pr は GitHub Actions の中でだけ動かします（手元のファイルを消さないように）');
@@ -297,8 +300,14 @@ async function pr() {
   // 公開のリポジトリには まだ出さない（おたよりを読んだ Claude の変更には、決まった手順では見つけられない形で おたよりの中身が入りうる）。
   // 差分は 非公開の置き場の「公開前の確認」Issue に置き、人が中身を確かめて publish を動かしたときだけ PR にする
   if (files.some(c => c.code === '??')) git('add', '-N', '--', ...files.filter(c => c.code === '??').map(c => c.path));
-  const patch = git('diff', 'HEAD', '--no-color', '--binary');
+  const patch = git('diff', 'HEAD', '--no-color');
   git('reset', '-q');
+  if (unreadable(patch)) {   // 人が公開前に読めないものは、確認に進めない
+    console.log('差分に バイナリや見えない文字が入っていて人が確かめられないので、ぜんぶ戻して人にまわす');
+    files.forEach(revert);
+    fs.writeFileSync(path.join(DIR, 'blocked.txt'), '人が読めない差分\n');
+    return;
+  }
   const b64 = Buffer.from(patch).toString('base64');
   const prBody = ['プレイヤーからのおたより（非公開の置き場の Issue）を Claude が読んで直した案です。運営者が公開前に中身を確かめました。**遊んで確かめてからマージしてください。**', '',
     ...(fixed.length ? fixed.map(r => `- ${publicText(r.public, items.find(it => it.n === r.n) || { text: items.map(it => it.text).join(' ') }, knownNames()) || '（要約なし）'}`) : ['- （要約なし）']), '',
@@ -337,6 +346,7 @@ async function publish() {
   const pick = k => { const m = [...String(issue.body || '').matchAll(new RegExp(`<!-- nsg-${k}:([A-Za-z0-9+/=]+) -->`, 'g'))].pop(); return m ? m[1] : ''; };
   const patch = Buffer.from(pick('patch'), 'base64').toString('utf8'), prBody = Buffer.from(pick('prbody'), 'base64').toString('utf8');
   if (!patch.trim()) throw new Error(`#${n} に差分がありません`);
+  if (unreadable(patch)) throw new Error(`#${n} の差分に、バイナリや見えない文字など 人が読んで確かめられないものがあります`);
   // 運営者が読んだ差分（本文に見えているもの）と、当てる差分が 同じときだけ（見えていない中身を 公開しない）
   const shown = [...String(issue.body || '').matchAll(/^(~{4,})diff\n([\s\S]*?)\n\1$/gm)].map(m => m[2]);
   if (shown.length !== 1 || shown[0] !== patch.replace(/\n$/, '') && shown[0] !== patch) throw new Error(`#${n} の本文に見えている差分と、公開する差分が ちがいます`);

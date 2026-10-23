@@ -382,7 +382,8 @@ function paintBoard(b, T) {
   const x = c.getContext('2d');
   api.paintRegion(x, b.tx0 * K, b.ty0 * K, b.tw * K, b.th * K, T / K);
   const at = (i, j) => (i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i]);
-  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(2, Math.round(T * 0.18)), sh = Math.max(1, Math.round(T * 0.12));
+  // 細い壁の 見た目の はば（ふちも ふくめて）は 当たりの はば（WALL の 2倍）と そろえる。小さい 盤では 黒い ふちを はぶく（通路が お米より 細く 見えないように）
+  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(1, Math.round(T * WALL * 2)), e = lw >= 5 ? u : 0, sh = Math.max(1, Math.round(T * 0.12));
   // 通路：ゴールへ つながる 床（穴は 通れるものとして。穴の 先の 行き止まりも 通路に 見せる）。そのほか（壁の かたまり・つながらない 床）は ぜんぶ「台」
   const reach = bfs(Object.assign({}, b, { holes: new Set() }), b.goal);
   const solid = (i, j) => i < 0 || j < 0 || i >= b.tw || j >= b.th || (b.cell[j * b.tw + i] === 1 ? !reach[j * b.tw + i] : !b.cell[j * b.tw + i]);
@@ -401,8 +402,8 @@ function paintBoard(b, T) {
     if (solid(i, j - 1)) x.fillRect(X, Y, T, sh);   // 上が 台：上の ふちに 影
     if (solid(i - 1, j)) x.fillRect(X, Y, sh, T);
     if (solid(i - 1, j - 1) && !solid(i, j - 1) && !solid(i - 1, j)) x.fillRect(X, Y, sh, sh);   // ななめ上の 台の 角
-    if (!solid(i, j - 1) && !pass(b, i, j, 0, -1)) x.fillRect(X, Y + lw / 2, T, sh);   // 細い壁の 影
-    if (!solid(i - 1, j) && !pass(b, i, j, -1, 0)) x.fillRect(X + lw / 2, Y, sh, T);
+    if (!solid(i, j - 1) && !pass(b, i, j, 0, -1)) x.fillRect(X, Y + (lw >> 1), T, sh);   // 細い壁の 影
+    if (!solid(i - 1, j) && !pass(b, i, j, -1, 0)) x.fillRect(X + (lw >> 1), Y, sh, T);
   }
   // 3) 台の ふち：通路に 面した 上・左の ふちは 光って 明るく、下・右の ふちは 暗い 線（盛りあがって 見える）
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
@@ -419,15 +420,15 @@ function paintBoard(b, T) {
   }
   // 4) 細い壁（床どうしで 道が つながっていない さかい）：台と 同じ 緑の 立った 壁。上・左の 面に てかり、まわりに 黒い ふち
   const rail = (X, Y, w, h) => {
-    x.fillStyle = '#0d2219'; x.fillRect(X - u, Y - u, w + 2 * u, h + 2 * u);
-    x.fillStyle = '#2f7a58'; x.fillRect(X, Y, w, h);
-    x.fillStyle = 'rgba(200,255,220,.55)'; if (w > h) x.fillRect(X, Y, w, u); else x.fillRect(X, Y, u, h);
+    if (e) { x.fillStyle = '#0d2219'; x.fillRect(X, Y, w, h); }
+    x.fillStyle = '#2f7a58'; x.fillRect(X + e, Y + e, w - 2 * e, h - 2 * e);
+    if (lw - 2 * e >= 2 * u) { x.fillStyle = 'rgba(200,255,220,.55)'; if (w > h) x.fillRect(X + e, Y + e, w - 2 * e, u); else x.fillRect(X + e, Y + e, u, h - 2 * e); }
   };
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
     if (solid(i, j)) continue;
     const X = i * T, Y = j * T;
-    if (!solid(i + 1, j) && !pass(b, i, j, 1, 0)) rail(X + T - lw / 2, Y - lw / 2, lw, T + lw);
-    if (!solid(i, j + 1) && !pass(b, i, j, 0, 1)) rail(X - lw / 2, Y + T - lw / 2, T + lw, lw);
+    if (!solid(i + 1, j) && !pass(b, i, j, 1, 0)) rail(X + T - (lw >> 1), Y - (lw >> 1), lw, T + lw);
+    if (!solid(i, j + 1) && !pass(b, i, j, 0, 1)) rail(X - (lw >> 1), Y + T - (lw >> 1), T + lw, lw);
   }
   // 水の ふち：床から 入れる 水との さかいに、黄色と黒の しま（ここから先は 落ちる）
   const sw = Math.max(2, Math.round(T / 10));
@@ -454,7 +455,7 @@ function hole(x, cx, cy, T) {   // マンホールの穴：灰色の ふちと �
 }
 
 /* ---------- うごき ---------- */
-const WALL = 0.07;   // 細い壁の 半分の あつさ（マス）
+const WALL = 0.09;   // 細い壁の 半分の あつさ（マス）。盤の 細い壁も この はばで 描く
 function blocked(b, px, py) {   // お米（半径 R）が 壁に かかるか（壁の かたまり・盤の外・通れない さかいの 細い壁）
   const hitRect = (x0, y0, x1, y1) => { const nx = Math.max(x0, Math.min(px, x1)), ny = Math.max(y0, Math.min(py, y1)); return (px - nx) ** 2 + (py - ny) ** 2 < R * R; };
   const solid = (i, j) => i < 0 || j < 0 || i >= b.tw || j >= b.th || b.cell[j * b.tw + i] === 0;

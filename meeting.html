@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="mtg/style.css"/>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js" integrity="sha384-nlUQ8ZqCbvStErob+biJNzSgltf6urV3VGqhfIfzhmg9RXmpeRm76ELw0pYnKlTR" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -149,7 +149,7 @@
       <div class="grid2" style="margin-top:12px;">
         <div class="field"><label for="au_token">GitHub トークン（③④に必要）</label>
           <input id="au_token" type="password" placeholder="github_pat_…" autocomplete="off" style="font-family:monospace;"/>
-          <label class="chk" style="margin-top:4px;"><input type="checkbox" id="au_remember"/> この端末に記憶する（店内の信頼できる端末のみ）</label>
+          <div class="hint" style="margin-top:4px;font-size:12px;color:#8a8a70;">このタブを閉じると消えます（ブラウザには のこしません）</div>
           <div class="row" style="margin-top:6px;"><button class="btn btn-ghost btn-sm" id="au_tokenSave">保存</button><button class="btn btn-gold btn-sm" id="au_check">接続を確認</button></div>
           <div class="small" id="au_checkOut" style="margin-top:6px;line-height:1.7;"></div></div>
         <div class="tip">
@@ -297,7 +297,7 @@
     <h3>🔑 Anthropic APIキー</h3>
     <div class="field"><input type="password" id="keyInput" placeholder="sk-ant-..." autocomplete="off" style="font-family:monospace;"/>
       <div class="hint">AI分析にだけ使います（文字起こし・会議には不要）。<a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> で取得できます。Marketing Studio と共通です。</div></div>
-    <label class="chk" style="margin-top:10px;"><input type="checkbox" id="keyRemember"/> この端末に記憶する（店内の信頼できる端末のみ）</label>
+    <div class="hint" style="margin-top:10px;font-size:12px;color:#8a8a70;">このタブを閉じると消えます（ブラウザには のこしません）</div>
     <div class="acts"><button class="btn btn-ghost" onclick="M.forgetKey()">消去</button><button class="btn btn-ghost" onclick="M.modal('keyModal',false)">キャンセル</button><button class="btn btn-gold" onclick="M.saveKey()">保存</button></div>
   </div>
 </div>

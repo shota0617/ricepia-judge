@@ -208,7 +208,9 @@ RP.renderCost = function(){
 };
 
 /* ================= API key ================= */
-RP.getKey = () => { try{ return sessionStorage.getItem(PFX+"key") || localStorage.getItem(PFX+"key") || ""; }catch(e){ return ""; } };
+// キーは このタブの あいだだけ（sessionStorage）。ブラウザには のこさない（同じサイトの ほかのページに 穴があっても ぬすまれないように）。前に「記憶」したものは 消す
+try{ localStorage.removeItem(PFX+"key"); }catch(e){}
+RP.getKey = () => { try{ return sessionStorage.getItem(PFX+"key") || ""; }catch(e){ return ""; } };
 RP.renderKey = function(){
   const k = RP.getKey(), b = RP.$("#keyBadge");
   b.textContent = k ? "🔑 APIキー設定済み" : "🔑 APIキー未設定";
@@ -217,7 +219,6 @@ RP.renderKey = function(){
 };
 RP.keyModal = function(){
   RP.$("#keyInput").value = RP.getKey();
-  try{ RP.$("#keyRemember").checked = !!localStorage.getItem(PFX+"key"); }catch(e){}
   RP.$("#keyModal").hidden = false;
   setTimeout(() => RP.$("#keyInput").focus(), 50);
 };
@@ -226,7 +227,6 @@ RP.saveKey = function(){
   if(v.length < 10){ RP.toast("APIキーを入力してください", "err"); return; }
   try{
     sessionStorage.setItem(PFX+"key", v);
-    if(RP.$("#keyRemember").checked) localStorage.setItem(PFX+"key", v); else localStorage.removeItem(PFX+"key");
   }catch(e){}
   RP.closeModal("keyModal"); RP.renderKey(); RP.toast("APIキーを設定しました", "ok");
   if(RP._keyWaiter){ const w = RP._keyWaiter; RP._keyWaiter = null; w(); }

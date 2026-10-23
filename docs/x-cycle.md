@@ -38,6 +38,18 @@ Settings → Secrets and variables → Actions：
 | `XAI_MODEL` | Variable（なくてよい） | Grok のモデル。ふだん `grok-latest` |
 | `CODEX_MODEL` | Variable（なくてよい） | Codex のモデル。ふだん codex-action の既定 |
 
+## マーケティングのサイクル（今週の投稿案と企画）
+
+行き先を `marketing` にすると、ゲームではなく **マーケティング週報** を書きます（`docs/marketing-weekly/日付.md`）。
+
+1. **Grok**：お米とお米屋さんの X の話題（新米・米の値段・保存や炊き方の困りごと・ギフト・反応の多い投稿の形）と、西尾の季節の話題・お散歩ゲームの話題をさがす
+2. **Claude**：今週の話題・らいすぴあにとっての意味・投稿案（X 2 本・Instagram・LINE）・企画案・人が確かめることを書く（`tools/x-cycle-marketing-prompt.md`）。お店の事実（価格・営業時間・産地など）は `llms.txt`・`docs/marketing.md` などに書いてあることだけを使う
+3. **Codex**：作った事実・表示のルール（景品表示法の「日本一」「最高」、健康の効き目、産地・品種・年産）・投稿の写し・政治や災害の話題・文字数をレビューし、must があれば Claude が直す（`tools/x-cycle-marketing-review-prompt.md`）
+4. **PR**：書けるのは `docs/marketing-weekly/` だけ。**自動では投稿しない**。人が読んで、価格・日付・在庫を確かめてから、X・Instagram・LINE に手で貼る
+
+動かし方：Actions の「X cycle (Grok → Claude → Codex)」で、どれを直すか に `marketing`。xAI のクレジットが無いときは、`node tools/x-cycle.js ask marketing` の頼み方を無料の Grok に送って、答えを「Grok の答え」にはりつける。
+毎週の交代（トラクター → にしおさんぽGO → マーケティング）にも入っている。
+
 ## Grok を呼ぶ係（調べるだけ）
 
 `.github/workflows/grok-research.yml`（Actions の「Grok research (X)」）は、Grok に X の投稿を調べてもらうだけで、ゲームは変えません。

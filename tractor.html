@@ -2448,11 +2448,13 @@ function step(dt) {
   else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
+  const rp0 = S.rotPos;
   S.rotPos += Math.max(-dt * 1.2, Math.min(dt * 1.2, (S.rotDown ? 0 : 1) - S.rotPos));
+  S.lift = dt > 0 ? (S.rotPos - rp0) / dt : 0;     // 作業機を上げている（+）・下げている（−）ところ
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
-  if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; }
+  if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; if (audio && soundOn) thud(audio.ac, audio.out); }
   // 乾いた土の大きな土くれに爪が当たると、ごつっと がくっとくる（春の深い田起こしで多い。代かきの泥では無い）
   if (working && !SHIRO && Math.abs(S.v) > 0.3 && Math.random() < dt * (season === 'haru' ? 0.7 : 0.3) * Math.min(1, Math.abs(S.v) / 0.8)) {
     clodBump = 1; S.ppv = (S.ppv || 0) + 0.03 * (Math.random() < 0.5 ? 1 : -1); if (audio && soundOn) thud(audio.ac, audio.out);
@@ -2540,7 +2542,7 @@ const CAMS = ['運転席', 'うしろから', '上から'];
 let camMode = 0;
 const look = { yaw: 0, pitch: 0 };
 const chase = new THREE.Vector3(), tmpV = new THREE.Vector3();
-let headLag = 0, lastV = 0, glance = 0, lean = 0, lastYaw = 0, lookBack = 0, clodBump = 0;   // 曲がる先を見る・体のかたむき・うしろを見る
+let headLag = 0, lastV = 0, glance = 0, lean = 0, lastYaw = 0, lookBack = 0, clodBump = 0, seatY = 0, seatV = 0, lastRy = null, lastRvy = 0;   // seat：座席のサスペンション   // 曲がる先を見る・体のかたむき・うしろを見る
 const DBG = {};
 function updateCamera(dt) {
   if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
@@ -2557,8 +2559,13 @@ function updateCamera(dt) {
     // かたい農道では、タイヤのラグ（山）が 1 つずつ地面をたたいて ゴトゴト細かくふるえる（ラグの間かくは約 19cm）
     const hard = !(Math.abs(S.x) < HX && Math.abs(S.z) < HZ), lug = hard ? 0.0022 * Math.min(1, Math.abs(S.v) / 3) * Math.sin((S.dist || 0) / 0.19 * 6.283) : 0;
     clodBump = Math.max(0, clodBump - dt * 6);
+    // 座席のサスペンション：車体が上下にゆれると、体は少しおくれてふわっと沈み・もどる（ばねとダンパー）
+    const ry = rig.position.y, rvy = lastRy === null ? 0 : (ry - lastRy) / Math.max(dt, 1e-3); lastRy = ry;
+    const ay = Math.max(-30, Math.min(30, (rvy - lastRvy) / Math.max(dt, 1e-3))); lastRvy = rvy;
+    seatV += (-ay * 0.5 - seatY * 90) * dt - seatV * 9 * dt; seatY += seatV * dt;
+    seatY = Math.max(-0.03, Math.min(0.03, seatY));
     camera.position.set(EYE.x + shake * Math.sin(tt * fq * 6.283) + 0.035 * lean - 0.30 * lookBack,   // うしろを見るときは体をひねって右へ寄る
-      EYE.y + shake * Math.sin(tt * fq * 6.283 * 1.13 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7) + 0.05 * lookBack + lug + 0.012 * clodBump * Math.sin(clodBump * 9), EYE.z + 0.05 * lookBack);
+      EYE.y + shake * Math.sin(tt * fq * 6.283 * 1.13 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7) + 0.05 * lookBack + lug + 0.012 * clodBump * Math.sin(clodBump * 9) + seatY, EYE.z + 0.05 * lookBack);
     headLag += ((S.v - lastV) / Math.max(dt, 0.001) * 0.006 - headLag) * Math.min(1, dt * 4);
     if (S.bite > 0) { headLag += 0.02 * S.bite * Math.sin((1 - S.bite) * 18); S.bite = Math.max(0, S.bite - dt * 2.5); }
     lastV = S.v;
@@ -2742,7 +2749,12 @@ function toggleSound() {
     const lL = ac.createBiquadFilter(); lL.type = 'lowpass'; lL.frequency.value = 220;
     const lG = ac.createGain(); lG.gain.value = 0;
     lO.connect(lL); lL.connect(lG); lG.connect(out); lO.start();
-    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG };
+    // 油圧の音：作業機を上げ下げするあいだ「ウィーン」（上げるときは ポンプがうなって高め）
+    const hO = ac.createOscillator(); hO.type = 'sawtooth'; hO.frequency.value = 180;
+    const hB = ac.createBiquadFilter(); hB.type = 'bandpass'; hB.frequency.value = 520; hB.Q.value = 3;
+    const hG = ac.createGain(); hG.gain.value = 0;
+    hO.connect(hB); hB.connect(hG); hG.connect(out); hO.start();
+    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -2851,6 +2863,9 @@ function updateSound(dt = 0) {
   const hardG = !(Math.abs(S.x) < HX && Math.abs(S.z) < HZ);
   audio.lO.frequency.setTargetAtTime(Math.max(2, Math.abs(S.v) / 0.19), t, 0.2);
   audio.lG.gain.setTargetAtTime(Math.min(0.5, Math.abs(S.v) * 0.12) * (hardG ? 1 : 0.25), t, 0.3);
+  const lifting = Math.abs(S.lift || 0) > 0.05;
+  audio.hG.gain.setTargetAtTime(lifting ? (S.lift > 0 ? 0.35 : 0.18) : 0, t, 0.08);
+  audio.hO.frequency.setTargetAtTime(S.lift > 0 ? 210 : 165, t, 0.1);
   if (NB.root) {
     const [pan, d] = panTo(NB.root.position);
     audio.nbG.gain.setTargetAtTime(Math.min(0.03, 0.75 / Math.max(d, 8)) * inCab, t, 0.4);
@@ -2884,6 +2899,7 @@ function engineRpm(t) {
   let rpm = work ? 2500 - (40 + DEPTH * 5) * Math.min(1, Math.abs(S.v) / 0.8) * (0.8 + 0.08 * S.gear) + 30 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
   if (S.crank > 0.6) rpm = 160 + 70 * Math.sin(t * 34);
   rpm += 900 * (S.flare || 0);
+  if (S.lift > 0.1) rpm -= 70;                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
   return rpm;
 }
 

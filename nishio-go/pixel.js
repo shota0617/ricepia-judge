@@ -5968,7 +5968,8 @@ function frame(now) {
       ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
     }
   }
-  if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now);
+  if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
+  if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
   if (mazeOn() && gt) drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now);   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
@@ -6607,6 +6608,7 @@ function mzRoute(now) {
   if (gkey !== mzRt.gkey) {   // ゴールが かわった（着いて 次の 行き先に なった など）：前の ゴールも 2分 おぼえる（チェックインは 行き先が かわった あとに なる）
     if (mzRt.gid) mzRt.prev = { id: mzRt.gid, t0: mzRt.t0, len0: mzRt.len0, at: now };
     mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.t0 = now; mzRt.len0 = 0;
+    mzNext.name = g.name || ''; mzNext.want = true;   // 「🏁 つぎの ゴール」を 出す（道のりが 分かってから）
   }
   mzRt.gid = g.id || g.name;
   if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
@@ -6635,6 +6637,7 @@ function mzRoute(now) {
   mzRt.path = path.reverse();
   const L = mzRt.path.length;
   if (!mzRt.len0) mzRt.len0 = L;
+  if (L !== mzRt.shownLen && G.renderGuide) { mzRt.shownLen = L; G.renderGuide(); }   // 案内の 札の 道のり（🌀）を すぐ かえる
   if (L < mzRt.best) { mzRt.best = L; mzRt.bestT = now; }
 }
 function mzHintTick(now) {   // 25秒 行き先に 近づけていない（めいろの 道のりが へらない）ときだけ 道すじを 見せる
@@ -6676,17 +6679,18 @@ function mzSnap(now) {
 // ・画面の 外：縁に 大きな 矢印と、🏁 と めいろの 道のり（なければ まっすぐの きょり）の 札
 // ゴールに 着いた：お米の まわりに 紙ふぶき（ごはんつぶ・星・桜の 色。盤の めいろと 同じ）
 const mzFx = [], mzBanner = { t0: 0, text: '' };
+const mzNext = { t0: 0, name: '', want: false };   // 新しい ゴールの 知らせ（3秒）
 function mzGoalFx(text) {
   const now = performance.now(), cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];
   for (let i = 0; i < 60; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6; mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, c: cols[i % cols.length], life: 1 + Math.random() * 0.8 }); }
   mzBanner.t0 = now; mzBanner.text = text || '';   // 「🏁 ゴール！」の 大きな 文字（4秒。ごほうびの 窓を とじても 見える ように 長め）
 }
-function drawMzFx(w, cy, T, now) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる
+function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
   const ba = (now - mzBanner.t0) / 1000;
   if (mzBanner.t0 && ba < 4) {   // 大きな「🏁 ゴール！」と 時間（さいごの 0.5秒で うすく）
     ctx.globalAlpha = Math.min(1, (4 - ba) / 0.5);
-    const big = Math.round(T * 1.6), y = cy - T * 3.2 - Math.max(0, 0.3 - ba) * T * 6;
+    const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
     ctx.strokeText('🏁 ゴール！', w / 2, y); ctx.fillText('🏁 ゴール！', w / 2, y);
@@ -6703,8 +6707,35 @@ function drawMzFx(w, cy, T, now) {   // 画面の まん中（お米）から �
   }
   ctx.globalAlpha = 1;
 }
+// 新しい ゴールが きまった：画面の 上に「🏁 つぎの ゴール」と 名所の 名前・めいろの 道のりを 3秒（運営者の声「ゴールのわかりやすさを磨く」）
+// 「🏁 ゴール！」の あと・窓が 開いている 間は 待つ。道のりが 分かってから（2秒 待っても 分からなければ 名前だけ）
+function drawMzNext(w, cy, U, now) {
+  if (mapCovered() || mzBanner.t0) { if (mzNext.t0) mzNext.t0 = now; return; }
+  if (mzNext.want) {
+    if (!mzRt.path && now - mzRt.t0 < 2000) return;
+    mzNext.want = false; mzNext.t0 = now;
+    mzNext.dist = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : 0;
+  }
+  const a = (now - mzNext.t0) / 1000;
+  if (a > 3) { mzNext.t0 = 0; return; }
+  const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
+  ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  const lines = [['🏁 つぎの ゴール', Math.round(big * 0.8), '#ffe680'], [mzNext.name, big, '#ffffff'], [dist, Math.round(big * 0.7), '#bfefff']].filter(l => l[0]);
+  let yy = y;
+  ctx.fillStyle = 'rgba(10,20,30,.62)';
+  const bw = Math.min(w - U, Math.max(...lines.map(([t, sz]) => { ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; return ctx.measureText(t).width; })) + U * 1.2);
+  const bh = lines.reduce((s, l) => s + l[1] * 1.35, 0) + U * 0.5;
+  ctx.fillRect(Math.round(w / 2 - bw / 2), Math.round(y - lines[0][1] * 0.9), Math.round(bw), Math.round(bh));
+  for (const [t, sz, col] of lines) {
+    ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sz / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = col;
+    let tt = t; while (ctx.measureText(tt).width > w - U * 2 && tt.length > 2) tt = tt.slice(0, -2) + '…';   // 長い 名前は 「…」
+    ctx.strokeText(tt, w / 2, yy); ctx.fillText(tt, w / 2, yy); yy += sz * 1.35;
+  }
+  ctx.globalAlpha = 1;
+}
 function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
-  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.max(T, Math.round(24 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ）
+  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.min(Math.max(T, Math.round(24 * dpr)), Math.round(32 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ。大きく しても 画面の 32点まで）
   const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
   const dist = far < 1000 ? `${Math.round(far / 10) * 10}m` : `${(far / 1000).toFixed(1)}km`;
   const label = (t, x, y, size, col) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#1a1a1a'; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); };

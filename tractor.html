@@ -1046,6 +1046,7 @@ function setupField(root) {
   root.traverse(o => {
     if (o.isMesh) o.receiveShadow = true;
     if (o.isMesh && /water/.test(o.material.name)) o.material.envMapIntensity = 0.55;   // 水に映る空を少しおさえる
+    if (o.isMesh && o.material.name === 'window' && TOD === 'yu') { o.material.emissive.set(0xffb45a); o.material.emissiveIntensity = 0.7; }   // 夕方は家の窓に明かり
     const amp = o.isMesh && { grass_tuft: 0.05, higanbana: 0.06, rice_side: 0.05, tree_card: 0.22, cedar_card: 0.15 }[o.material.name];
     if (amp && !o.material.userData.wind) { o.material.userData.wind = 1; addWind(o.material, amp); }
     if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
@@ -1117,7 +1118,7 @@ const PASSER = (() => {
   B(gray, 1.36, 0.6, 0.05, 0, 1.08, 0.36);              // 鳥居（運転席のうしろの枠）
   B(black, 1.50, 0.18, 0.10, 0, 0.48, 1.74);            // 前のバンパー
   B(black, 1.40, 0.24, 3.30, 0, 0.36, 0.15);            // 下まわり
-  const lampM = new THREE.MeshLambertMaterial({ color: 0xfff6d8, emissive: 0x333022 });
+  const lampM = new THREE.MeshLambertMaterial({ color: 0xfff6d8, emissive: TOD === 'yu' ? 0xfff2c8 : 0x333022 });   // 夕方はライトをつけて走る
   for (const sx of [-1, 1]) B(lampM, 0.22, 0.12, 0.04, sx * 0.52, 0.78, 1.75);
   const wheels = [];
   for (const [x, z] of [[-0.62, 1.15], [0.62, 1.15], [-0.62, -0.85], [0.62, -0.85]]) {
@@ -1691,6 +1692,41 @@ const BIRDS = (() => {
       }
       if (!want && dTractor > 30) b.visible = false;
     });
+  }
+  return { update, list };
+})();
+
+// ---- 夕方のコウモリ（アブラコウモリ）：日がしずむころ、田んぼの上を ひらひら不規則に飛びまわって虫をとる（3〜11 月に活動）。
+// 水を張った代かきの田んぼの上がいちばん多い ----
+const BATS = (() => {
+  if (TOD !== 'yu') return { update() {} };
+  const n = { haru: 3, aki: 2, shirokaki: 5 }[season], list = [];
+  const mat = new THREE.MeshBasicMaterial({ color: 0x15100e, side: THREE.DoubleSide });
+  const wingGeo = new THREE.BufferGeometry();
+  wingGeo.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0.04, 0, 0, -0.04, 0.13, 0, -0.03, 0, 0, 0.04, 0.13, 0, -0.03, 0.11, 0, 0.03], 3));
+  for (let k = 0; k < n; k++) {
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.025, 6, 4), mat); body.scale.set(0.8, 0.8, 1.6); g.add(body);
+    const wl = new THREE.Mesh(wingGeo, mat), wr = new THREE.Mesh(wingGeo, mat); wr.scale.x = -1;
+    g.add(wl, wr); scene.add(g);
+    g.position.set((Math.random() - 0.5) * 30, 4 + Math.random() * 5, (Math.random() - 0.5) * 30);
+    list.push({ g, wl, wr, vel: new THREE.Vector3(), tgt: new THREE.Vector3(), t: 0, ph: Math.random() * 6 });
+  }
+  const tmp = new THREE.Vector3();
+  function update(dt) {
+    const time = performance.now() / 1000;
+    for (const u of list) {
+      if ((u.t -= dt) <= 0) {                        // 0.3〜0.8 秒ごとに向きをかえる（虫を追う）
+        u.t = 0.3 + Math.random() * 0.5;
+        u.tgt.set(S.x + (Math.random() - 0.5) * 40, 2.5 + Math.random() * 7, S.z + (Math.random() - 0.5) * 40);
+      }
+      tmp.subVectors(u.tgt, u.g.position).normalize().multiplyScalar(6.5);
+      u.vel.lerp(tmp, Math.min(1, dt * 4));
+      u.g.position.addScaledVector(u.vel, dt);
+      u.g.rotation.y = Math.atan2(u.vel.x, u.vel.z);
+      const f = Math.sin(time * 38 + u.ph) * 0.9;    // はやいはばたき
+      u.wl.rotation.z = f; u.wr.rotation.z = -f;
+    }
   }
   return { update, list };
 })();
@@ -2948,6 +2984,7 @@ function frame(now) {
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);
   WAGTAILS.update(dt, S.rotDown && S.rotPos < 0.08);
   SPARROWS.update(dt);
+  BATS.update(dt);
   emitExhaust(dt);
   DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
   MIRROR.update(dt, camMode === 0);
@@ -2989,7 +3026,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

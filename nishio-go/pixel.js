@@ -2271,6 +2271,21 @@ function splashSound(v) {   // ぽちゃん：上がる「ぽ」と、しぶき�
     n.connect(f); f.connect(ng); ng.connect(a.destination); n.start(t + 0.02);
   } catch (e) { /* noop */ }
 }
+function hedgeSound(v) {   // がさっ：めいろの 生け垣に 当たる（葉っぱの ざわっ と、やわらかい ぽすっ）
+  const a = sfxCtx();
+  if (!a) return;
+  try {
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(90, t + 0.08);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06 * (0.4 + v * 0.6), t + 0.008); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.12);
+    const buf = a.createBuffer(1, Math.floor(a.sampleRate * 0.22), a.sampleRate), d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) { const k = i / d.length; d[i] = (Math.random() * 2 - 1) * Math.pow(1 - k, 2) * (k < 0.4 || (k > 0.5 && k < 0.7) ? 1 : 0.35); }   // ざわ、ざっ
+    const n = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
+    n.buffer = buf; f.type = 'bandpass'; f.frequency.value = 3200; f.Q.value = 0.7; ng.gain.value = 0.06 * (0.4 + v * 0.6);
+    n.connect(f); f.connect(ng); ng.connect(a.destination); n.start(t);
+  } catch (e) { /* noop */ }
+}
 function clackSound(v) {   // ガタン ゴトン：線路の つぎめを 2回
   const a = sfxCtx();
   if (!a) return;
@@ -6814,31 +6829,46 @@ function rollStep(dt) {
   }
   const mz = mazeOn(), rb = mz ? (x, y) => mzBlocked(rp.x, rp.y, x, y) : rollBlocked;   // めいろの ときは めいろの 壁だけに 当たる
   const R = 0.3, RS = R * 0.6;   // つぶの大きさ（マス）。かべは つぶの まん中と 両はしの3か所で調べる（建物の かどに めりこまないように）
-  const hit = (vin, horiz, wet) => {   // かべに当たった：おそければ ぴたっと止まる（押しつけても がたがたしない）。速ければ はね返って ぺたっ。水なら ぽちゃん（やわらかく はね返る）
+  // めいろの 壁（緑の 生け垣。マスの さかいに 0.5マスの 厚み）は、絵の お米（はば 約1.3マス・足もとは まん中より 0.4マス下）に 合わせて 当てる（壁に 食いこんで 見えないように）。
+  // 左右は 0.72・下は 0.62・上は 0.42（上の 壁は お米の うしろに 立つので、頭が 少し かさなって 見えるのが しぜん）
+  const RX = mz ? 0.72 : R, RD = mz ? 0.62 : R, RU = mz ? 0.42 : R, RSX = mz ? 0.5 : RS, RSY = mz ? 0.4 : RS;
+  const hit = (vin, horiz, wet) => {   // かべに当たった：おそければ ぴたっと止まる（押しつけても がたがたしない）。速ければ はね返って ぺたっ。水なら ぽちゃん（やわらかく はね返る）。生け垣なら がさっ（やわらかく はね返る）
     if (vin < ROLL_STICK) return 0;
-    bumpFx(vin, horiz, wet);
-    return wet ? -0.25 : -(KP.bounce !== undefined ? KP.bounce : ROLL_BOUNCE);
+    bumpFx(vin, horiz, wet, mz);
+    return wet ? -0.25 : mz ? -(KP.bounce !== undefined ? KP.bounce * 0.7 : 0.3) : -(KP.bounce !== undefined ? KP.bounce : ROLL_BOUNCE);
   };
   const wetAt = (x, ys, xs) => (xs || [x]).some(px => (ys || []).some(py => codeAt(Math.floor(px), Math.floor(py)) === C.A));   // 当たったのは 水か
-  const nx = rp.x + rp.vx * dt, ex = nx + Math.sign(rp.vx) * R;
-  const xa = rb(ex, rp.y - RS), xb = rb(ex, rp.y + RS);
+  const nx = rp.x + rp.vx * dt, ex = nx + Math.sign(rp.vx) * RX;
+  const xa = rb(ex, rp.y - RSY), xb = rb(ex, rp.y + RSY);
   if (rp.vx && (rb(ex, rp.y) || (xa && xb))) {   // かべに ぴったり つけてから はね返す（すきまが残ると、押しつづけたときに すきまで また速くなって がたがたする）
-    rp.x = rp.vx > 0 ? Math.floor(ex) - R - 1e-3 : Math.floor(ex) + 1 + R + 1e-3;
-    const k = hit(Math.abs(rp.vx), true, wetAt(ex, [rp.y, rp.y - RS, rp.y + RS])); rp.vx *= k; if (k) rp.vy *= 0.85;
+    rp.x = rp.vx > 0 ? Math.floor(ex) - RX - 1e-3 : Math.floor(ex) + 1 + RX + 1e-3;
+    const k = hit(Math.abs(rp.vx), true, wetAt(ex, [rp.y, rp.y - RSY, rp.y + RSY])); rp.vx *= k; if (k) rp.vy *= 0.85;
   }
   else {
     rp.x = nx;
-    if (rp.vx && (xa || xb) && !rb(rp.x, rp.y + (xa ? 1 : -1) * (R + 0.05))) rp.y += (xa ? 1 : -1) * Math.abs(rp.vx) * dt * 0.7;   // かどに かすった：すべって よける
+    if (rp.vx && (xa || xb) && !rb(rp.x, rp.y + (xa ? RD : -RU) + (xa ? 0.05 : -0.05))) rp.y += (xa ? 1 : -1) * Math.abs(rp.vx) * dt * 0.7;   // かどに かすった：すべって よける
   }
-  const ny = rp.y + rp.vy * dt, ey = ny + Math.sign(rp.vy) * R;
-  const ya = rb(rp.x - RS, ey), yb = rb(rp.x + RS, ey);
+  const ny = rp.y + rp.vy * dt, ey = ny + (rp.vy > 0 ? RD : rp.vy < 0 ? -RU : 0);
+  const ya = rb(rp.x - RSX, ey), yb = rb(rp.x + RSX, ey);
   if (rp.vy && (rb(rp.x, ey) || (ya && yb))) {
-    rp.y = rp.vy > 0 ? Math.floor(ey) - R - 1e-3 : Math.floor(ey) + 1 + R + 1e-3;
-    const k = hit(Math.abs(rp.vy), false, wetAt(0, [ey], [rp.x, rp.x - RS, rp.x + RS])); rp.vy *= k; if (k) rp.vx *= 0.85;
+    rp.y = rp.vy > 0 ? Math.floor(ey) - RD - 1e-3 : Math.floor(ey) + 1 + RU + 1e-3;
+    const k = hit(Math.abs(rp.vy), false, wetAt(0, [ey], [rp.x, rp.x - RSX, rp.x + RSX])); rp.vy *= k; if (k) rp.vx *= 0.85;
   }
   else {
     rp.y = ny;
-    if (rp.vy && (ya || yb) && !rb(rp.x + (ya ? 1 : -1) * (R + 0.05), rp.y)) rp.x += (ya ? 1 : -1) * Math.abs(rp.vy) * dt * 0.7;
+    if (rp.vy && (ya || yb) && !rb(rp.x + (ya ? RX : -RX) + (ya ? 0.05 : -0.05), rp.y)) rp.x += (ya ? 1 : -1) * Math.abs(rp.vy) * dt * 0.7;
+  }
+  if (mz) {   // 生け垣に そって 転がる：こすれて 葉っぱが はらはら（速いほど よく落ちる）
+    const spd = Math.hypot(rp.vx, rp.vy);
+    hedgeScrapeT -= dt;
+    if (spd > 1.4 && hedgeScrapeT <= 0) {
+      const horiz = Math.abs(rp.vx) >= Math.abs(rp.vy);
+      const side = horiz ? (rb(rp.x, rp.y + RD + 0.04) ? 1 : rb(rp.x, rp.y - RU - 0.04) ? -1 : 0) : (rb(rp.x + RX + 0.04, rp.y) ? 1 : rb(rp.x - RX - 0.04, rp.y) ? -1 : 0);
+      if (side) {
+        hedgeScrapeT = 0.22 / Math.min(3, spd / 1.4);
+        roll.dust.push({ x: rp.x + (horiz ? 0 : side * RX * 0.9), y: rp.y + (horiz ? side * (side > 0 ? RD : RU) * 0.9 : 0), t: 0, s: 0.8 + Math.random() * 0.5, vx: -Math.sign(horiz ? rp.vx : 0) * 0.4 + (Math.random() - 0.5) * 0.8, c: Math.random() < 0.5 ? '168,222,104' : '236,244,150', bit: true });
+      }
+    }
   }
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
@@ -6884,11 +6914,22 @@ function rollStep(dt) {
     G.moveTo(ll.lat, ll.lng, 'step');
   }
 }
-function bumpFx(hard = 1, horiz = true, wet = false) {
+let hedgeScrapeT = 0;
+function bumpFx(hard = 1, horiz = true, wet = false, hedge = false) {
   const now = performance.now();
   if (now - rp.bump < 160) return;
   rp.bump = now;
   if (hard < 0.25) return;
+  if (hedge) {   // めいろの 生け垣に がさっ：やわらかく 受けとめて、葉っぱが 舞う。強く 当たった ときだけ いたい顔
+    roll.sq = Math.min(0.24, 0.07 + hard * 0.04); roll.sqv = 0; roll.sqx = horiz;
+    roll.shake = Math.min(0.4, 0.06 + hard * 0.06);
+    if (hard > 3.2) roll.ouchT = 0.5;
+    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;   // 当たった 生け垣の 面（はね返る まえの 向き）
+    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: i % 3 ? '168,222,104' : '236,244,150', bit: true });   // 若葉色（壁の 緑より 明るく）
+    hedgeSound(Math.min(1, hard / 4));
+    if (navigator.vibrate) navigator.vibrate(Math.round(5 + hard * 2));
+    return;
+  }
   if (wet) {   // 水に ぽちゃん：しぶきが はねて、あせの しずく。画面は ほとんど ゆれない
     roll.sq = Math.min(0.18, 0.06 + hard * 0.03); roll.sqv = 0; roll.sqx = horiz;
     roll.wetT = 1.4; roll.shake = 0.12; roll.dirt = 0;   // 水で あらわれて きれいに
@@ -7287,7 +7328,8 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), goal: id => {   // 
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0 } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     return g && g.t0 ? { sec: (now - g.t0) / 1000, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M } : null;
-  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
+  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

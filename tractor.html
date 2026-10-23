@@ -45,6 +45,8 @@
   #padC { right: 14px; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 86px); }
   #padC button { width: auto; height: 56px; padding: 0 18px; font-size: 16px; border-radius: 999px; }
   #padC button.down { background: var(--red); color: #fff; }
+  #padB { left: 14px; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 86px); }
+  #padB button { width: auto; height: 48px; padding: 0 14px; font-size: 14px; border-radius: 999px; }
   /* はじめの画面・読みこみ・おわり */
   .sheet { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 24, 20, .55); }
   .card { width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 20px; border-radius: 18px; background: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align: center; }
@@ -98,6 +100,7 @@
 </div>
 <div class="pad hidden" id="padL"><button data-k="left" aria-label="左へ切る">◀</button><button data-k="right" aria-label="右へ切る">▶</button></div>
 <div class="pad hidden" id="padC"><button id="bRot" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
+<div class="pad hidden" id="padB"><button data-k="lookBack" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
 
@@ -124,7 +127,7 @@
       <b>うごかし方</b><br>
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
-      ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／うしろの作業機を見る：<kbd>B</kbd> を押しているあいだ／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
+      ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／うしろの作業機を見る：<kbd>B</kbd> を押しているあいだ（スマホは「うしろを見る」）／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
       ・直進アシスト <kbd>G</kbd>（本物と同じく、始点 A で G → 5m 以上まっすぐ走って終点 B で G。A・B を結んだ基準線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>・ボタンの長押しで登録しなおし。アシストで耕しているときにハンドルを切ると、ロータリーが自動で上がる「旋回連動」つき。回ったら下げるとアシストがまた入る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）／主変速 <kbd>Q</kbd> <kbd>E</kbd>（1〜4 速。耕すのは 2〜3 速）<br>
       ・スマホは画面の下のボタンで操作します。
     </div>
@@ -2362,8 +2365,15 @@ function placeRig(dt) {
   S.dist = (S.dist || 0) + Math.abs(S.v) * dt;   // 走った道のり（凸凹のゆれに使う）
   const bump = Math.min(1, Math.abs(S.v) / 1.5) * (Math.abs(S.x) < HX && Math.abs(S.z) < HZ ? 1 : 0.3);
   const pitchB = bump * (0.008 * Math.sin(S.dist * 1.9) + 0.004 * Math.sin(S.dist * 4.7 + 1.1));
+  // 加減速でゆれる：止まるときは鼻先が沈み、走りだすと少し持ちあがる（タイヤがばねになって、少しゆりもどす）
+  if (dt > 0) {
+    const a = (S.v - (S.pv ?? S.v)) / dt; S.pv = S.v;
+    S.pp = S.pp || 0; S.ppv = S.ppv || 0;
+    S.ppv += ((-a * 0.004) - S.pp) * 60 * dt - S.ppv * 7 * dt;
+    S.pp += S.ppv * dt;
+  }
   const rollB = bump * (0.010 * Math.sin(S.dist * 1.3 + 0.5) + 0.004 * Math.sin(S.dist * 3.9));
-  rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB, S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
+  rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB + (S.pp || 0), S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
   // 作業機の自動水平：耕しているあいだは、トラクターが左右に傾いても ロータリー（ハロー）は田んぼの面と平行に保つ。
   // 油圧で動くので少しおくれる。上げているときはトラクターといっしょに傾く
   const lv = S.rotDown ? -rig.rotation.z : 0;
@@ -2442,6 +2452,8 @@ function step(dt) {
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
+  if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; }   // 爪が土にかみこむ瞬間、ぐっと前へ引かれて がくっとくる
+  S.wasWorking = working;
   // 軽油：エンジンが出している力（kW）× 燃料消費率 約 0.25kg/kWh ÷ 軽油の重さ 0.83kg/L。60 馬力＝44kW。
   // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
   if (S.started && !(S.crank > 0)) {
@@ -2541,6 +2553,7 @@ function updateCamera(dt) {
     camera.position.set(EYE.x + shake * Math.sin(tt * fq * 6.283) + 0.035 * lean - 0.30 * lookBack,   // うしろを見るときは体をひねって右へ寄る
       EYE.y + shake * Math.sin(tt * fq * 6.283 * 1.13 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7) + 0.05 * lookBack, EYE.z + 0.05 * lookBack);
     headLag += ((S.v - lastV) / Math.max(dt, 0.001) * 0.006 - headLag) * Math.min(1, dt * 4);
+    if (S.bite > 0) { headLag += 0.02 * S.bite * Math.sin((1 - S.bite) * 18); S.bite = Math.max(0, S.bite - dt * 2.5); }
     lastV = S.v;
     // 曲がる先へ目がいく（ハンドルを切ったほう。右へ切ると右を見る）。B を押しているあいだは右肩ごしに うしろの作業機を見る
     glance += (-S.steer / MAX_STEER * 0.3 * Math.min(1, Math.abs(S.v) / 0.5 + 0.3) - glance) * Math.min(1, dt * 2.5);
@@ -2958,7 +2971,7 @@ function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity 
 $('bStart').onclick = () => {
   if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
-  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
+  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padB', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
   if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800); }
   if (!soundOn && !audio) toggleSound();
 };

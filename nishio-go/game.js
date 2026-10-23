@@ -2007,7 +2007,8 @@ function renderGuide() {
   const alts = (S.guide && S.guide.alts) || [];
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
   const far = mr ? `🌀${fmtM(mr.m)}` : fmtM(dist(me, g));   // 🌀：めいろの 道のり（名前が 長くても 入るように みじかく）
-  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${esc(g.name)}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${esc(g.name)}<span>　${dir}へ ${far}</span>`;
+  const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(g.name)}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
+  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${dir}へ ${far}</span>`;
   el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
@@ -3801,7 +3802,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

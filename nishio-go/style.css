@@ -440,6 +440,7 @@ body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .
 .guide{margin:0 0 6px;padding:6px 10px;border-left:4px solid #3aa7d6;background:#eef8fc;border-radius:8px;font-size:13px;line-height:1.5}
 .guide b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide b span{font-weight:400;font-size:12px}
+.guide b{display:flex;align-items:center}.guide b .gn{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;margin-left:3px}.guide b>span{flex:none}   /* 名前が 長いと 名前を「…」に（道のりは かくさない） */
 .guide small{display:block;color:var(--sub);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .guide.open b,.guide.open small{white-space:normal}
 .guide .alts{display:none;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}

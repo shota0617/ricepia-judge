@@ -577,6 +577,15 @@ def hood():
         rim_ = [(0.055, 1.112), (0.285, 1.165), (0.29, 1.218), (0.05, 1.167)]
         prism('black_gloss', [(s * x, z) for x, z in rim_], 0.012, T((0, gy + 0.002, 0), (90, 0, 0)))
         prism('lamp_head', [(s * x, z) for x, z in poly], 0.012, T((0, gy - 0.003, 0), (90, 0, 0)))
+    # ボンネットの横の下半分は黒いパネル（実車は赤い上半分と黒い下半分の 2 色。境目は前で低く、運転席のほうへ上がる）
+    for sd in (1, -1):
+        rows = []
+        for i in range(N):
+            y, w, t, bb, rc = secs[i]
+            ztop = 1.03 + 0.13 * (1 - i / (N - 1)) ** 1.3
+            rows.append([(sd * (w + 0.004), y, bb + 0.005), (sd * (w + 0.004), y, ztop)])
+        loft('black', rows if sd > 0 else [r[::-1] for r in rows], smooth=50)
+        pipe('black_gloss', [(sd * (secs[i][1] + 0.006), secs[i][0], 1.03 + 0.13 * (1 - i / (N - 1)) ** 1.3) for i in range(N)], 0.006, 6)   # 境目の線
     # ボンネット横の通気口
     for s in (1, -1):
         for k in range(5):

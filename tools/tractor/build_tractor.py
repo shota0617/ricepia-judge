@@ -94,6 +94,8 @@ PAL = {
     'blue': dict(c='#1f5fc4', r=0.35),
     'led_green': dict(c='#2cff5a', r=0.3, e=3.0),
     'mirror': dict(c='#dfe3e6', r=0.02, m=1.0),
+    'pet': dict(c='#e4eef2', r=0.05, a=0.35),          # ペットボトル（すきとおったプラスチック）
+    'tea': dict(c='#b8a24a', r=0.1, a=0.75),           # 中のお茶
     'meter_screen': dict(c='#ffffff', r=0.25, tex='meter'),
     'monitor_screen': dict(c='#ffffff', r=0.15, tex='monitor'),
 }
@@ -575,6 +577,15 @@ def hood():
         rim_ = [(0.055, 1.112), (0.285, 1.165), (0.29, 1.218), (0.05, 1.167)]
         prism('black_gloss', [(s * x, z) for x, z in rim_], 0.012, T((0, gy + 0.002, 0), (90, 0, 0)))
         prism('lamp_head', [(s * x, z) for x, z in poly], 0.012, T((0, gy - 0.003, 0), (90, 0, 0)))
+    # ボンネットの横の下半分は黒いパネル（実車は赤い上半分と黒い下半分の 2 色。境目は前で低く、運転席のほうへ上がる）
+    for sd in (1, -1):
+        rows = []
+        for i in range(N):
+            y, w, t, bb, rc = secs[i]
+            ztop = 1.03 + 0.13 * (1 - i / (N - 1)) ** 1.3
+            rows.append([(sd * (w + 0.004), y, bb + 0.005), (sd * (w + 0.004), y, ztop)])
+        loft('black', rows if sd > 0 else [r[::-1] for r in rows], smooth=50)
+        pipe('black_gloss', [(sd * (secs[i][1] + 0.006), secs[i][0], 1.03 + 0.13 * (1 - i / (N - 1)) ** 1.3) for i in range(N)], 0.006, 6)   # 境目の線
     # ボンネット横の通気口
     for s in (1, -1):
         for k in range(5):
@@ -905,6 +916,21 @@ def interior():
     box('black', (0.04, 0.16, 0.006), (0.35, 0.24, FLOOR + 0.222))
     cyl('black', 0.042, 0.09, (0.35, 0.42, FLOOR + 0.20), n=24, caps=False)
     cyl('black', 0.036, 0.004, (0.35, 0.42, FLOOR + 0.17), n=24)
+    # カップホルダーのペットボトルのお茶（農家さんの運転席にはたいてい飲みものがある）
+    b0 = FLOOR + 0.175
+    cyl('tea', 0.029, 0.15, (0.35, 0.42, b0 + 0.075), n=20)
+    cyl('pet', 0.031, 0.17, (0.35, 0.42, b0 + 0.085), n=20)
+    cyl('blue', 0.0315, 0.06, (0.35, 0.42, b0 + 0.11), n=20, caps=False)           # 帯のラベル
+    cyl('pet', 0.031, 0.04, (0.35, 0.42, b0 + 0.19), n=20, r2=0.013)              # 肩
+    cyl('white', 0.015, 0.02, (0.35, 0.42, b0 + 0.22), n=16)                       # キャップ
+    # 右のうしろの柱の内側に、安全の注意ラベル（字は描かず、色の帯と灰色の行だけ）
+    lx = -CAB_X + 0.033
+    for k, (h, head) in enumerate(((0.12, 'orange'), (0.08, 'yellow'), (0.10, 'orange'), (0.07, 'yellow'))):
+        zc = 2.28 - sum((0.12, 0.08, 0.10, 0.07)[:k]) - 0.015 * k - h / 2
+        box('white', (0.003, 0.05, h), (lx, GLASS_R - 0.01, zc))
+        box(head, (0.004, 0.05, 0.016), (lx + 0.0005, GLASS_R - 0.01, zc + h / 2 - 0.008))
+        for r in range(int((h - 0.03) / 0.012)):
+            box('gray', (0.004, 0.038, 0.004), (lx + 0.0005, GLASS_R - 0.01, zc + h / 2 - 0.026 - r * 0.012))
     # 乗降グリップ（左 A ピラー）・サンバイザ・ルームミラー・天井のエアコン・室内灯
     for s in (1, -1):
         gx = s * (CAB_X - 0.05)
@@ -1375,6 +1401,9 @@ def preview():
         'top': dict(loc=(0.0, -0.3, 9.0), target=(0, -0.3, 0), lens=35),
         'left': dict(loc=(0.15, 0.40, 2.2), target=(0.4, 0.1, 1.6), lens=24),
         'photo': dict(loc=(-4.4, -5.6, 1.45), target=(0, -1.0, 1.25), lens=30),   # 右の前ななめ・人の目の高さ（実車の写真とくらべる）
+        'seat': dict(loc=(0.42, -0.52, 2.20), target=(-0.20, 0.40, 1.55), lens=16),   # キャビンの中、左前から座席と右のコンソール
+        'pillar': dict(loc=(0.15, 0.05, 2.05), target=(-0.62, 0.80, 2.0), lens=24),
+        'cup': dict(loc=(0.05, -0.05, 2.0), target=(0.35, 0.42, 1.58), lens=30),
     }
     only = [a.split('=', 1)[1] for a in sys.argv if a.startswith('--shot=')]
     for k, v in ({k: v for k, v in {**shots, **extra}.items() if k in only} if only else shots).items():

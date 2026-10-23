@@ -7066,7 +7066,7 @@ function padStep(dir) {
 // 画面の スティックは、地図が めいろに なったので はずした（傾き・矢印キー・地図を タップで 動かす）
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !meiroPause && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); if (rollOn && !driving) rk[k] = 1; else padStep(k); }   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
+  if (k && active && G.demo && !meiroPause && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); if (rollOn && !driving) { if (worldMode) setWorld(false); rk[k] = 1; } else padStep(k); }   // 転がす ときも、せかいちずなら 歩く地図に もどってから   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
 });
 
 /* ---------- タップした所へ歩く：道すじ ---------- */

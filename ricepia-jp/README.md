@@ -6,6 +6,7 @@ ricepia.jp（さくらのレンタルサーバ）の `www/index.html` に、に�
 | --- | --- |
 | `game-section.html` | にしおさんぽGO のお知らせ欄。「動画で見る らいすぴあ」の欄のすぐ上に入れる |
 | `tractor-section.html` | トラクターのゲーム（go.ricepia.jp/tractor.html）のお知らせ欄。にしおさんぽGO の欄のすぐ下に入れる。絵は go.ricepia.jp/tractor/shots/ |
+| （米づくり365） | 米づくり365 のお知らせ欄（`<!-- kome365:start` 〜 `<!-- kome365:end -->`）はこのリポジトリには置かず、サーバーのページにあるものを `tools/build-ricepia-jp.py` がそのまま取り出して、トラクターの欄のすぐ下（ゲームの3番め）に移す |
 | `current.html` | 公開中のトップページを保存したもの（`.github/workflows/ricepia-jp-snapshot.yml` が保存） |
 | `index.html` | `current.html` にお知らせ欄を入れた案（`python3 tools/build-ricepia-jp.py` で作る）。確認用で、手でアップロードするときはこれを使う |
 

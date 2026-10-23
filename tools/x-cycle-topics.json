@@ -1,5 +1,5 @@
 {
-  "_説明": "X の発信から ゲームを直すサイクル（.github/workflows/x-cycle.yml・tools/x-cycle.js）の、ゲームごとの設定。search：Grok に X でさがしてもらうこと／read：Claude と Codex が はじめに読むファイル／editable：Claude が変えてよいファイル（正規表現。ここに合わない変更は自動で戻す）／globs：同じ範囲を Claude Code の Edit・Write の許可の形で／deny：editable の中でも変えてはいけないもの",
+  "_説明": "X の発信から ゲームを直すサイクル（.github/workflows/x-cycle.yml・tools/x-cycle.js）の、ゲームごとの設定。search：Grok に X でさがしてもらうこと／read：Claude と Codex が はじめに読むファイル／editable：Claude が変えてよいファイル（正規表現。ここに合わない変更は自動で戻す）／globs：同じ範囲を Claude Code の Edit・Write の許可の形で／deny：editable の中でも変えてはいけないもの／research_only：調べるだけ（.github/workflows/grok-research.yml で使う。X サイクルの週ごとの交代には入れず、Claude にも変えさせない）",
   "tractor": {
     "name": "トラクターのゲーム（tractor.html）",
     "search": "日本の米農家・農業法人・農機の販売店が X に投稿した、田んぼでのトラクター作業のようす。耕うん（秋起こし・春の田起こし）・代かき・あぜ塗り・田植え・稲刈りのあとの田んぼ。とくに愛知県（西三河・西尾市・安城市・岡崎市）の田んぼ。作業の手順・コツ・機械の設定（回転数・PTO・耕深・速度）・土や水のようす・田んぼに来る鳥や生きもの・天気や時間帯による違い・作業中に困ること。写真や動画から分かる見た目（土の色、くれ、水の濁り、わだち、あぜ）も",
@@ -15,5 +15,14 @@
     "editable": ["^nishio-go\\.html$", "^nishio-go/[^/]+\\.(js|json)$"],
     "globs": ["./nishio-go.html", "./nishio-go/*.js", "./nishio-go/*.json"],
     "deny": ["^nishio-go/(world|osm-spots|landmarks|landuse|areas)\\.json$", "^nishio-go/analytics\\.js$"]
+  },
+  "tractor-model": {
+    "research_only": true,
+    "name": "トラクターの 3D 車体（60 馬力クラス・キャビン付き・ロータリー付きの日本の水田用トラクター。tools/tractor/build_tractor.py を Blender で作る）",
+    "search": "日本の米農家・農業法人・農機の販売店が X に投稿した、60 馬力前後のキャビン付きトラクターの写真や動画から分かる、車体そのものの本物らしさ。外から見た形と部品（ボンネット・グリル・ヘッドライトとワークランプ・回転灯・低速車マーク・ナンバープレートの位置・ミラー・ステップ・フェンダー・前のウエイト・マフラー）、タイヤ（前後の大きさの差・ラグの形とすり減り方・ホイールの色）、ロータリー（カバー・均平板・爪・PTO シャフトとカバー・3 点リンク・オートヒッチ・ゲージ輪・後付けの灯火器や反射器）、使いこまれた様子（塗装の色あせや傷・さび・ガラスの汚れ）、キャビンの中（運転席から見える景色・農家さんが自分で足しているもの）、音や動き（始動の煙・アイドリングのゆれ・ロータリーの上げ下げ）。メーカーの名前やロゴは使わないので、形・色・大きさ・付け方を中心に",
+    "read": ["tools/tractor/build_tractor.py", "tools/tractor/README.md"],
+    "editable": [],
+    "globs": [],
+    "deny": []
   }
 }

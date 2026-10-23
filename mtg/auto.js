@@ -13,12 +13,11 @@ A.settings = () => Object.assign({analyze:true, backlog:true, issue:false, dev:f
 A.save = patch => M.saveSettings({auto:Object.assign(A.settings(), patch)});
 
 /* ---------- GitHub (fine-grained token in this browser only) ---------- */
-A.getToken = () => { try{ return sessionStorage.getItem(TOKEN) || localStorage.getItem(TOKEN) || ""; }catch(e){ return ""; } };
-function setToken(v, remember){
-  try{
-    if(v){ sessionStorage.setItem(TOKEN, v); if(remember) localStorage.setItem(TOKEN, v); else localStorage.removeItem(TOKEN); }
-    else { sessionStorage.removeItem(TOKEN); localStorage.removeItem(TOKEN); }
-  }catch(e){}
+// トークンは このタブの あいだだけ（sessionStorage）。ブラウザには のこさない。前に「記憶」したものは 消す
+try{ localStorage.removeItem(TOKEN); }catch(e){}
+A.getToken = () => { try{ return sessionStorage.getItem(TOKEN) || ""; }catch(e){ return ""; } };
+function setToken(v){
+  try{ if(v) sessionStorage.setItem(TOKEN, v); else sessionStorage.removeItem(TOKEN); }catch(e){}
 }
 async function gh(path, method, body){
   const res = await fetch("https://api.github.com" + path, {
@@ -177,7 +176,6 @@ function paintSettings(){
   ["analyze","backlog","issue","dev"].forEach(k => { $("#au_" + k).checked = !!st[k]; });
   $("#au_level").value = st.level;
   $("#au_token").value = A.getToken();
-  try{ $("#au_remember").checked = !!localStorage.getItem(TOKEN); }catch(e){}
   const on = [st.analyze && "分析", st.backlog && "バックログ", st.issue && "Issue", st.dev && "開発依頼"].filter(Boolean);
   $("#au_summary").textContent = on.length ? "オン：" + on.join(" → ") : "オフ";
 }
@@ -185,10 +183,10 @@ M.mod.auto = {
   init(){
     ["analyze","backlog","issue","dev"].forEach(k => $("#au_" + k).addEventListener("change", e => { A.save({[k]:e.target.checked}); paintSettings(); }));
     $("#au_level").onchange = e => { A.save({level:e.target.value}); paintSettings(); };
-    $("#au_tokenSave").onclick = () => { setToken($("#au_token").value.trim(), $("#au_remember").checked); M.toast($("#au_token").value.trim() ? "トークンを保存しました" : "トークンを消去しました", "ok"); };
+    $("#au_tokenSave").onclick = () => { setToken($("#au_token").value.trim()); M.toast($("#au_token").value.trim() ? "トークンを保存しました" : "トークンを消去しました", "ok"); };
     $("#au_check").onclick = async () => {
       const out = $("#au_checkOut"), btn = $("#au_check");
-      setToken($("#au_token").value.trim(), $("#au_remember").checked);
+      setToken($("#au_token").value.trim());
       if(!repoOk()){ out.innerHTML = '<span style="color:var(--red)">上の「GitHubリポジトリ」に owner/repo を入れてください</span>'; return; }
       M.busy(btn, true, "確認中…");
       try{

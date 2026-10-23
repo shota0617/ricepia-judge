@@ -35,7 +35,7 @@ jobs:
             echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0
           fi
           echo "ok=true" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.secrets.outputs.ok == 'true'
         with:
           fetch-depth: 0   # すべてのブランチと履歴

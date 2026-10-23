@@ -26,10 +26,20 @@
 - **使用量の見張り（`monitor/check.mjs`）**：上限（1日$10・月$100）をこえると ぜんぶの API キーを自動で止める。上限の見なおしか、はじめは知らせるだけに
 - 昔の `index.html` に書いてあった管理者パスワード（いまは消してある。履歴には のこる）を、ほかのサービスで使っていたら 変える
 
-## まだ直していないこと（コードで直せるが、今回は見送った）
+## 2回目に直したこと（はじめは見送ったもの）
 
-- GitHub Actions の外の部品（`anthropics/claude-code-action@v1`・`actions/*@v4`）を、版の SHA で固定する（この環境から 部品の SHA を取れなかった）
-- 社内ツール（`meeting.html`・`marketing.html`）の API キー・GitHub トークンを「記憶する」とブラウザに のこる。同じサイトの ほかのページに 穴があると ぬすまれうる。社内ツールを べつのサイトに分けるのが いちばん
-- `play-improve.yml` の Claude が 書けるファイルを しぼる
-- `ricepia-jp.yml` の FTP の やりとりの ログ（`debug 3`）を 少なくする（パスワードは伏せて出る）
-- 外から読みこむ部品（CDN）に 改ざんチェック（SRI）を つける（Leaflet は つけてある）
+運営者のことば：「見送った指摘も直して」
+
+| 指摘 | 直し方 |
+|---|---|
+| GitHub Actions の外の部品を、版の名前（`@v4`・`@v1`）で使っていた（あとから中身を差しかえられうる） | ぜんぶのワークフローで、版の コミットの SHA に固定（`actions/checkout`・`setup-node`・`upload-artifact`・`cache` の v4、`anthropics/claude-code-action` の v1。行の終わりに `# v4` などと残した）。版を上げるときは SHA も書きかえる |
+| 社内ツール（`meeting.html`・`marketing.html`）の API キー・GitHub トークンを「記憶する」と ブラウザ（localStorage）に のこり、同じサイトの ほかのページに 穴があると ぬすまれうる | キーと トークンは このタブの あいだだけ（sessionStorage）に。「記憶する」を なくし、前に記憶した キー・トークンは 開いたときに 消す。タブを閉じたら もう一度 入れる |
+| AI の遊びテスト（`play-improve.yml`）の Claude が どのファイルでも 書けた（遊ぶ道具 `tools/ai-play.js` を 書きかえて 動かせた） | 書けるのは `nishio-go/`・`nishio-go.html`・`docs/play-improve.md`・`tools/playtest.js` だけに。PR にするのも その場所だけで、ほかが かわっていたら PR に しない |
+| ricepia.jp の FTP の やりとりを くわしく（`debug 3`）公開の ログに 出していた | `debug 1`（接続の結果と エラーだけ）に |
+| 外から読む部品（CDN）に 改ざんチェックが なかった（トラクターの three.js・店内ビデオ通話と ミーティングの PeerJS） | `integrity`（sha384）と `crossorigin` を つけた。値は npm の 同じ版の ファイルから 計算した（three.js は npm と 同じ中身を 配る jsDelivr に 読み先を そろえた）。版を上げるときは 値も 計算しなおす |
+
+## まだ のこること
+
+- 社内ツールを べつのサイト（べつの Vercel のプロジェクト・サブドメイン）に分ける（運営者の 設定が いる。キーは もう ブラウザに のこらないので、急ぎでは ない）
+- `play-improve.yml` で Claude が書ける `tools/playtest.js` は、そのあと 同じ手順の中で 動く（入力は リポジトリの中身だけで、動かせるのは 運営者だけ）
+- ricepia.jp（さくら）の ページの 外から読む部品（tailwind・chart.js など）：ricepia.jp への アップロードが いるので、運営者の OK が出たら

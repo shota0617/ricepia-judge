@@ -29,7 +29,7 @@ jobs:
       FTP_USER: ${{ secrets.SAKURA_FTP_USER }}
       FTP_PASS: ${{ secrets.SAKURA_FTP_PASSWORD }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Check secrets
         id: secrets
         run: |
@@ -59,8 +59,8 @@ jobs:
         run: |
           mkdir -p current
           . .github/ricepia-ftp.sh
-          # つながらないときに原因がログでわかるように、やりとりを出す（lftp はパスワードを XXXX と伏せて表示する）
-          if ! ftp "debug 3; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"; then
+          # つながらないときに原因がログでわかるように、やりとりの あらましを出す（debug 1：接続の結果と エラーだけ。サーバー名・ユーザー名の 細かい やりとりは 公開の ログに 出さない）
+          if ! ftp "debug 1; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"; then
             msg="FTP でつながりませんでした。あいさつ（220）の直後に切られるときは、さくらの「国外IPアドレスフィルタ」で GitHub（海外）からの FTP が止められている可能性があります"
             # アップロードしないときは確認だけなので、失敗にはしない（ふだんはフィルタを有効にしておくため）
             if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "::warning::$msg"; echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0; fi
@@ -70,7 +70,7 @@ jobs:
           echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
           cat current/index.html
           echo "----- end -----"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
           name: ricepia-jp-current

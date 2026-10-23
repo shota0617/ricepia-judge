@@ -2432,7 +2432,7 @@ function step(dt) {
   // 上げて田んぼの中を移動するときは その 3.2 倍、農道は 5 倍。うしろは 3km/h。大きく切っているときは ゆっくり
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
   const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
-  const vmax = GEARS[S.gear - 1] * (S.rotDown ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);
+  const vmax = GEARS[S.gear - 1] * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
   if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に排気がふっと出る
     const before = S.crank;
     S.crank = Math.max(0, S.crank - dt);
@@ -2469,11 +2469,14 @@ function step(dt) {
     setRotBtn(); setAssistBtn();
     toast('旋回連動：ハンドルを切ったので、ロータリーが自動で上がり、直進アシストが切れました。回ったら下げる');
   }
-  // 旋回アップ（U で入切。はじめは切）：耕しながらハンドルを大きく切ると、作業機が自動で上がる（大きい機種にある機能。下げるのは手で）
-  else if (S.turnUp && S.rotDown && S.rotPos < 0.08 && sIn && Math.abs(S.steer) > 0.45 && S.v > 0.05) {
-    S.rotDown = false; setRotBtn();
+  // 旋回アップ（U で入切。はじめは切）：耕しながらハンドルを大きく切ると、作業機が自動で上がる（下げるのは手で）。
+  // 判定はキーではなく 実際のハンドルの切れ角で。1 回の旋回で 1 回だけ（ハンドルをもどすと また働く）
+  else if (S.turnUp && S.rotDown && S.rotPos < 0.08 && Math.abs(S.steer) > 0.45 && S.v > 0.05 && !S.turnLatch) {
+    S.rotDown = false; S.turnLatch = true; S.turnUpHold = true; setRotBtn();
     toast('旋回アップ：ハンドルを大きく切ったので ' + IMPL + 'が上がりました。回ったら下げる');
   }
+  if (Math.abs(S.steer) < 0.2) { S.turnLatch = false; S.turnUpHold = false; }
+  if (S.rotDown && S.rotPos < 0.08) S.turnUpHold = false;
   S.autoBrake = !S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;   // 道では左右のブレーキを連結するので片ブレーキはきかない
   // 代かきの泥の中では前輪が横にすべって、ハンドルを切ったほど曲がらない（速いほどふくらむ）
   const under = SHIRO && Math.abs(S.x) < HX && Math.abs(S.z) < HZ ? 0.86 - 0.08 * Math.min(1, Math.abs(S.v) / 1.5) : 1;

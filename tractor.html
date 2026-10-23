@@ -127,7 +127,7 @@
       <b>うごかし方</b><br>
       ・前へ <kbd>↑</kbd><kbd>W</kbd>／うしろへ <kbd>↓</kbd><kbd>S</kbd>／ハンドル <kbd>←</kbd><kbd>→</kbd><kbd>A</kbd><kbd>D</kbd><br>
       ・ロータリーを下げる・上げる <kbd>スペース</kbd>（下げて前へ走ると耕せる）<br>
-      ・視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／うしろの作業機を見る：<kbd>B</kbd> を押しているあいだ（スマホは「うしろを見る」）／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
+      ・耕す深さ（耕深）<kbd>Z</kbd> 浅く・<kbd>X</kbd> 深く／視点 <kbd>C</kbd>／まわりを見る：画面をドラッグ／うしろの作業機を見る：<kbd>B</kbd> を押しているあいだ（スマホは「うしろを見る」）／音 <kbd>M</kbd>／はじめの場所へ <kbd>R</kbd><br>
       ・直進アシスト <kbd>G</kbd>（本物と同じく、始点 A で G → 5m 以上まっすぐ走って終点 B で G。A・B を結んだ基準線と平行に、ハンドルから手をはなすとまっすぐ走る。<kbd>Shift</kbd>+<kbd>G</kbd>・ボタンの長押しで登録しなおし。アシストで耕しているときにハンドルを切ると、ロータリーが自動で上がる「旋回連動」つき。回ったら下げるとアシストがまた入る）／早送り <kbd>F</kbd>／ライト <kbd>L</kbd>（夕方は点いている）／主変速 <kbd>Q</kbd> <kbd>E</kbd>（1〜4 速。耕すのは 2〜3 速）<br>
       ・スマホは画面の下のボタンで操作します。
     </div>
@@ -173,7 +173,8 @@ let season = FIELD[params.get('season')] ? params.get('season') : 'haru';
 const SHIRO = season === 'shirokaki';
 const IMPL = SHIRO ? 'ハロー' : 'ロータリー';   // 作業機の呼び名
 // 耕深（cm）：春の田起こしは 15cm くらい深く（根を張らせる）、秋起こしは 5cm くらい浅く藁と土をまぜる、代かきは浅く
-const DEPTH = { haru: 15, aki: 6, shirokaki: 8 }[season];
+let DEPTH = { haru: 15, aki: 6, shirokaki: 8 }[season];        // Z・X で変えられる（右の操作盤の耕深ダイヤル）
+const DEPTH0 = DEPTH, DEPTH_RANGE = { haru: [8, 20], aki: [4, 14], shirokaki: [4, 12] }[season];
 const ROTARY_Z = -1.38, TILL_W = SHIRO ? 3.4 : 2.2;   // 代かきは幅 3.4m のウイングハロー（tools/tractor/harrow_yt.glb）
 const TILL_Y = SHIRO ? 0.045 : 0.035;
 
@@ -346,11 +347,20 @@ const LAMPS = (() => {
   function set(v) {
     on = v;
     for (const m of mats) { m.emissive.set(on ? 0xfff4e6 : 0x000000); m.emissiveIntensity = on ? 2.2 : 1; }
-    for (const m of tails) { m.emissive.set(on ? 0xff0000 : 0x000000); m.emissiveIntensity = on ? 0.6 : 1; }   // ライトをつけるとテールも赤く点く
+    for (const m of tails) { m.emissive.set(on ? 0xff0000 : 0x000000); m.emissiveIntensity = on ? 0.6 : 1; }
+    lastB = -1;   // ライトをつけるとテールも赤く点く
     for (const l of spots) l.intensity = on ? l.userData.i : 0;
   }
   function toggle() { set(!on); toast(on ? 'ヘッドライトと作業灯をつけました（L）' : 'ライトを消しました（L）'); }
-  return { setup, toggle, get on() { return on; } };
+  // ブレーキランプ：止まろうとしている（アクセルをはなして まだ動いている）・内側ブレーキのときは、テールが明るく点く
+  let lastB = -1;
+  function update() {
+    const b = (!key.fwd && !key.back && Math.abs(S.v) > 0.05) || S.autoBrake ? 1 : 0;
+    if (b === lastB) return;
+    lastB = b;
+    for (const m of tails) { m.emissive.set(on || b ? 0xff0000 : 0x000000); m.emissiveIntensity = (on ? 0.6 : 0) + b * 1.6; }
+  }
+  return { setup, toggle, update, get on() { return on; } };
 })();
 
 function setupTractor(root) {
@@ -368,7 +378,7 @@ function setupTractor(root) {
   P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
   for (const [n, k] of [['WheelRL', 1], ['WheelRR', 1], ['WheelFL', 1], ['WheelFR', 1], ['Rotary', 0.75]]) {
     P[n].traverse(o => {
-      if (!o.isMesh) return;
+      if (!o.isMesh || /^(tail|winker_|reflector)/.test(o.material.name)) return;   // 灯火器は泥をかぶらせず、ライトの入切がきくようにそのまま
       o.material = o.material.clone();
       const w = o.material.name === 'tire' ? 0.55 : o.material.name === 'wheel_cream' ? 0.7 : 0.55;
       MUD.mats.push({ m: o.material, base: o.material.color.clone(), w: w * k });
@@ -2358,13 +2368,14 @@ function canBe(x, z, yaw) {
 }
 // 耕したあとのふかふかの土にタイヤが乗ると沈む（春は深く 15cm 耕すので 6cm ほど・秋は浅いので 3〜4cm。前輪は軽いので少し）。
 // 片側だけ乗ると傾く。代かきは田んぼ全体がやわらかい泥なので、地面の高さのほうで沈めてある
-const SINK = { haru: 0.06, aki: 0.035, shirokaki: 0 }[season], sinkW = { rl: 0, rr: 0, fl: 0, fr: 0 };
+const SINK0 = { haru: 0.06, aki: 0.035, shirokaki: 0 }[season], sinkW = { rl: 0, rr: 0, fl: 0, fr: 0 };
 function softAt(x, z) {
   const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
   return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? 1 : 0;
 }
 function placeRig(dt) {
   const p = wheelPoints(S.x, S.z, S.yaw);
+  const SINK = SINK0 * DEPTH / DEPTH0;             // 深く耕したところほど ふかふかで沈む
   if (SINK) for (const k in sinkW) {                 // タイヤはじわっと沈み、かたい所へ出るとすっと上がる
     const t = softAt(p[k][0], p[k][1]) * SINK * (k[0] === 'f' ? 0.6 : 1);
     sinkW[k] += (t - sinkW[k]) * Math.min(1, dt * (t > sinkW[k] ? 3 : 6));
@@ -2472,7 +2483,7 @@ function step(dt) {
   const working = S.rotDown && S.rotPos < 0.08;
   if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; if (audio && soundOn) thud(audio.ac, audio.out); }
   // 乾いた土の大きな土くれに爪が当たると、ごつっと がくっとくる（春の深い田起こしで多い。代かきの泥では無い）
-  if (working && !SHIRO && Math.abs(S.v) > 0.3 && Math.random() < dt * (season === 'haru' ? 0.7 : 0.3) * Math.min(1, Math.abs(S.v) / 0.8)) {
+  if (working && !SHIRO && Math.abs(S.v) > 0.3 && Math.random() < dt * (season === 'haru' ? 0.7 : 0.3) * (DEPTH / DEPTH0) * Math.min(1, Math.abs(S.v) / 0.8)) {
     clodBump = 1; S.ppv = (S.ppv || 0) + 0.03 * (Math.random() < 0.5 ? 1 : -1); if (audio && soundOn) thud(audio.ac, audio.out);
   }   // 爪が土にかみこむ瞬間、ぐっと前へ引かれて がくっとくる
   S.wasWorking = working;
@@ -2480,7 +2491,7 @@ function step(dt) {
   // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
   if (S.started && !(S.crank > 0)) {
     const sp = Math.min(1, Math.abs(S.v) / 0.78);
-    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.3 + 0.7 * sp) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
+    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.7 + 0.3 * DEPTH / DEPTH0) * (0.3 + 0.7 * sp) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
     S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
   }
   if (working && Math.abs(S.v) > 0.1) {
@@ -2931,6 +2942,8 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyF') toggleFast();
   else if (e.code === 'KeyL') LAMPS.toggle();
   else if (e.code === 'KeyB') key.lookBack = 1;
+  else if (e.code === 'KeyZ') setDepth(-1);
+  else if (e.code === 'KeyX') setDepth(1);
   else if (e.code === 'KeyQ') shiftGear(-1);
   else if (e.code === 'KeyE') shiftGear(1);
 });
@@ -2943,6 +2956,15 @@ document.querySelectorAll('.pad button[data-k]').forEach(b => {
 function setRotBtn() {
   $('bRot').textContent = S.rotDown ? IMPL + 'を上げる' : IMPL + 'を下げる';
   $('bRot').classList.toggle('down', S.rotDown);
+}
+// 耕深ダイヤル：1cm ずつ。季節にあわない深さだと、ひとこと教える（春の田起こしは 15cm ほど、秋起こしは 5〜7cm の浅起こし）
+function setDepth(d) {
+  const v = Math.max(DEPTH_RANGE[0], Math.min(DEPTH_RANGE[1], DEPTH + d));
+  if (v === DEPTH) return;
+  DEPTH = v;
+  const hint = season === 'aki' && DEPTH > 10 ? '。秋起こしは藁を土にまぜる浅起こし（5〜7cm）がよい'
+    : season === 'haru' && DEPTH < 12 ? '。春の田起こしは 15cm くらい深めに（根が深く張る）' : '';
+  toast('耕深 ' + DEPTH + 'cm（Z 浅く・X 深く）' + hint);
 }
 function toggleRotary() {
   DRIVER.st.reach = 0.8;
@@ -3078,6 +3100,7 @@ function frame(now) {
   WAGTAILS.update(dt, S.rotDown && S.rotPos < 0.08);
   SPARROWS.update(dt);
   BATS.update(dt);
+  LAMPS.update();
   emitExhaust(dt);
   DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
   MIRROR.update(dt, camMode === 0);
@@ -3119,7 +3142,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

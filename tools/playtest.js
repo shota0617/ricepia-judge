@@ -694,8 +694,10 @@ async function walkTo(page, id) {
     let floors = 0, walls = 0;
     for (let y = cy - 6; y <= cy + 6; y++) for (let x = cx - 6; x <= cx + 6; x++) if (M.type(x, y) === 1) { floors++; for (const [dx, dy] of [[1, 0], [0, 1]]) if (M.type(x + dx, y + dy) === 1 && !M.open(x, y, dx, dy)) walls++; }
     const on = M.on();
+    for (let i = 0; i < 12 && !M.trail().length; i++) await new Promise(f => setTimeout(f, 250));   // 足あと：いる 通路の マスに しるし
+    const trail = M.trail().length;
     nishioPixel.setRoll(false); nishioGo.moveTo(at.lat, at.lng);
-    return { ok: on && floors > 10 && walls > 3, on, floors, walls };
+    return { ok: on && floors > 10 && walls > 3 && trail > 0, on, floors, walls, trail };
   });
   R.checks.heightJump = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);

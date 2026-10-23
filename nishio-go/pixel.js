@@ -5694,7 +5694,7 @@ function frame(now) {
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }
-    if (mazeOn()) { mzRoute(now); mzHintTick(now); }
+    if (mazeOn()) { mzSpotUpdate(now); mzRoute(now); mzHintTick(now); }
   }
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
@@ -6486,7 +6486,7 @@ function mzCell(cx, cy) {   // マスの 種類 0 壁・1 通路・2 水 と、�
     const c = codeAt(cx * MZ_K + i, cy * MZ_K + j);
     if (MZ_PATH.has(c)) road++; else if (c === C.A) water++; else if (c === C.P || c === C.J) park++;
   }
-  return { t: water >= 5 && road < 2 ? 2 : road >= 2 || park >= 7 ? 1 : 0, plaza: park >= 7 && road < 2 };
+  return { t: water >= 5 && road < 1 ? 2 : road >= 1 || park >= 7 ? 1 : 0, plaza: park >= 7 && road < 1 };   // 道が 1つでも あれば 通路（ななめの 道で 通路が とぎれて はなれ島に ならないように）
 }
 function mzLinkRaw(ca, cb, ax, ay, dx, dy) {   // となりの 通路へ、さかいを 道が またいでいるか（ca・cb は mzCell）
   if (ca.t !== 1 || cb.t !== 1) return false;
@@ -6522,17 +6522,67 @@ function mzBuild(rx, ry) {   // 区域の マスの 種類と、穴ほりで え
     }
   }
   for (const e of cand) if (!tree.has(e) && rn() < MZ_BRAID) e[2][Math.min(e[0], e[1])] = 1;
+  // はなれ島を つなぐ：道の 絵が マスの さかいで そろわず、どこにも つながらない 通路の かたまりが できる（名所に とどかない）。
+  // となりあう 通路どうしの さかいを、ちがう かたまりを つなぐ ときだけ あける（1本ずつ。迷路の 形は ほぼ そのまま）
+  const par = new Int32Array(N * N).map((_, i) => i), find = i => { while (par[i] !== i) { par[i] = par[par[i]]; i = par[i]; } return i; };
+  for (let k = 0; k < N * N; k++) { if (er[k] && t[k] === 1 && t[k + 1] === 1) par[find(k)] = find(k + 1); if (ed[k] && t[k] === 1 && k + N < N * N && t[k + N] === 1) par[find(k)] = find(k + N); }
+  const extra = [];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const k = j * N + i;
+    if (t[k] !== 1) continue;
+    if (i + 1 < N && t[k + 1] === 1 && !er[k]) extra.push([k, k + 1, er]);
+    if (j + 1 < N && t[k + N] === 1 && !ed[k]) extra.push([k, k + N, ed]);
+  }
+  for (let k = extra.length - 1; k > 0; k--) { const m = (rn() * (k + 1)) | 0; [extra[k], extra[m]] = [extra[m], extra[k]]; }
+  for (const [u, v, arr] of extra) { const a = find(u), b = find(v); if (a !== b) { par[a] = b; arr[u] = 1; } }
   return { rx, ry, x0, y0, cells, t, er, ed };
+}
+// 名所への 参道：道の ない 区画の 中の 名所にも とどくように、名所の マスから いちばん近い 通路まで（5マスまで）を「参道」に して 入れる。
+// 参道は 通路と 参道から だけ 入れる（壁の かたまりの 中を 自由に 通りぬけない）。区域が 読めてから つくる（まだなら あとで）
+let mzSpotV = -1, mzSpotCells = new Set(), mzSpotTodo = [];
+function mzSpotCell(cx, cy) { return mzSpotCells.has(cx + ',' + cy); }
+let mzSpotT = 0;
+function mzSpotUpdate(now) {
+  if (now - mzSpotT < 500) return;   // 0.5秒ごと
+  mzSpotT = now;
+  if (G.spotsVersion !== mzSpotV) { mzSpotV = G.spotsVersion; mzSpotCells = new Set(); mzSpotTodo = (G.spots || []).map(sp => { const t = toTile(sp.lat, sp.lng); return [Math.floor(t.x / MZ_K), Math.floor(t.y / MZ_K)]; }); }
+  if (!mzSpotTodo.length || rp.x === null) return;
+  const rc = Math.floor(rp.x / MZ_K), rr = Math.floor(rp.y / MZ_K), later = [];
+  for (const [sx, sy] of mzSpotTodo) {
+    if (Math.abs(sx - rc) > 60 || Math.abs(sy - rr) > 60) { later.push([sx, sy]); continue; }   // 近くの 名所だけ（区域を 読みに いきすぎない）
+    const t0 = mzType(sx, sy);
+    if (t0 < 0) { later.push([sx, sy]); continue; }
+    if (t0 === 1) continue;
+    const from = new Map([[sx + ',' + sy, null]]), q = [[sx, sy, 0]];
+    let end = null, wait = false;
+    for (let h = 0; h < q.length && !end; h++) {
+      const [x, y, d] = q[h];
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+        if (from.has(k)) continue;
+        const ty = mzType(nx, ny);
+        if (ty < 0) { wait = true; continue; }
+        from.set(k, x + ',' + y);
+        if (ty === 1) { end = x + ',' + y; break; }
+        if (d < 5) q.push([nx, ny, d + 1]);
+      }
+    }
+    if (!end && wait) { later.push([sx, sy]); continue; }
+    for (let k = end; k; k = from.get(k)) mzSpotCells.add(k);   // 名所の マス から 通路の となり まで
+  }
+  mzSpotTodo = later;
 }
 function mzType(cx, cy) { const a = mzArea(cx, cy); return a ? a.t[(cy - a.y0) * MZ_R + cx - a.x0] : -1; }   // -1：まだ 読めていない
 function mzOpen(cx, cy, dx, dy) {   // (cx, cy) から となりの マスへ 転がって 行けるか
   const A = mzArea(cx, cy), B = mzArea(cx + dx, cy + dy);
   if (!A || !B) return true;
   const ia = (cy - A.y0) * MZ_R + cx - A.x0, ib = (cy + dy - B.y0) * MZ_R + cx + dx - B.x0;
-  if (A.t[ia] !== 1) return true;   // 壁の かたまりの 中から 出るときは 通す（とじこめない）
-  if (B.t[ib] !== 1) return false;
+  const sa = mzSpotCell(cx, cy), sb = mzSpotCell(cx + dx, cy + dy);
+  if (A.t[ia] !== 1 && !sa) return true;   // 壁の かたまりの 中（始めた 所が 建物の 中 など）から 出るときは 通す（とじこめない）
+  if (B.t[ib] !== 1) return sb;   // 参道には 通路・参道から 入れる。ほかの 壁の かたまりには 入れない
+  if (A.t[ia] !== 1) return true;   // 参道から 通路へ
   if (A === B) return (dx ? A.er : A.ed)[dx + dy > 0 ? ia : ib] === 1;
-  return dx + dy > 0 ? mzLinkRaw(A.cells[ia], B.cells[ib], cx, cy, dx, dy) : mzLinkRaw(B.cells[ib], A.cells[ia], cx + dx, cy + dy, -dx, -dy);   // 区域の さかい：道が つながれば 通れる（左・上の マスから しらべる）
+  return true;   // 区域の さかい：となりあう 通路どうしは いつも 通れる（区域の 中の はなれ島も さかいで つながる）
 }
 function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マス）へ 動くと 壁に 当たるか
   const a = Math.floor(fx / MZ_K), b = Math.floor(fy / MZ_K), c = Math.floor(x / MZ_K), d = Math.floor(y / MZ_K), dx = c - a, dy = d - b;
@@ -6548,6 +6598,8 @@ function mzRoute(now) {
   const g = G.guide;
   if (!g || rp.x === null) { mzRt.path = null; return; }
   const p = toTile(g.lat, g.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(p.x / MZ_K), gr = Math.floor(p.y / MZ_K);
+  const near = ((G.reachOf ? G.reachOf(g) : 40) || 40) * 0.8 / TILE_M;   // 着いたと みなす 近さ（チェックインの 半径より 少し 内がわ。マス）
+  const inReach = (x, y) => Math.hypot(Math.max(x * MZ_K - p.x, 0, p.x - (x + 1) * MZ_K), Math.max(y * MZ_K - p.y, 0, p.y - (y + 1) * MZ_K)) <= near;   // マスの いちばん 近い 所が その 近さに 入る
   const gkey = gc + ',' + gr, key = a + ',' + b + '>' + gkey;
   if (gkey !== mzRt.gkey) { mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; }
   if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
@@ -6559,7 +6611,7 @@ function mzRoute(now) {
   let end = -1, unk = false;
   for (let h = 0; h < q.length && h < 60000; h++) {
     const i = q[h], x = i % W + x0, y = (i / W | 0) + y0;
-    if (Math.abs(x - gc) <= 1 && Math.abs(y - gr) <= 1 && (mzType(x, y) === 1 || (x === gc && y === gr))) { end = i; break; }
+    if (inReach(x, y)) { end = i; break; }   // 行き先の チェックインの 近さに 入る マスまで
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = x + dx, ny = y + dy;
       if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
@@ -6596,13 +6648,12 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：右�
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
     const ty = mzType(cx, cy);
     if (ty < 0) continue;
-    const X = ox + cx * S, Y = oy + cy * S;
-    if (ty === 0) { ctx.fillStyle = 'rgba(16,28,22,.3)'; ctx.fillRect(X, Y, S, S); continue; }
-    if (ty !== 1) continue;
+    const X = ox + cx * S, Y = oy + cy * S, go = (x, y) => mzType(x, y) === 1 || mzSpotCell(x, y);   // 入れる マス（通路・名所への 参道）
+    if (!go(cx, cy)) { if (ty === 0) { ctx.fillStyle = 'rgba(16,28,22,.3)'; ctx.fillRect(X, Y, S, S); } continue; }
     if (!mzOpen(cx, cy, 1, 0)) segs.push([X + S - lw / 2, Y - lw / 2, lw, S + lw]);
     if (!mzOpen(cx, cy, 0, 1)) segs.push([X - lw / 2, Y + S - lw / 2, S + lw, lw]);
-    if (mzType(cx - 1, cy) !== 1 && mzType(cx - 1, cy) >= 0) segs.push([X - lw / 2, Y - lw / 2, lw, S + lw]);   // 左・上は となりが 壁の かたまり の ときだけ（通路どうしは 左・上の マスが 描く）
-    if (mzType(cx, cy - 1) !== 1 && mzType(cx, cy - 1) >= 0) segs.push([X - lw / 2, Y - lw / 2, S + lw, lw]);
+    if (!go(cx - 1, cy) && mzType(cx - 1, cy) >= 0) segs.push([X - lw / 2, Y - lw / 2, lw, S + lw]);   // 左・上は となりが 入れない マスの ときだけ（入れる マスどうしは 左・上の マスが 描く）
+    if (!go(cx, cy - 1) && mzType(cx, cy - 1) >= 0) segs.push([X - lw / 2, Y - lw / 2, S + lw, lw]);
   }
   ctx.fillStyle = 'rgba(0,0,0,.35)'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + o, Y + o, w, h);
   ctx.fillStyle = '#10283a'; for (const [X, Y, w, h] of segs) ctx.fillRect(X, Y, w, h);
@@ -7164,7 +7215,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; },
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

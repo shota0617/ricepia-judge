@@ -18,7 +18,7 @@ async function newPage(browser, opts = {}) {
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...opts });
   await ctx.addInitScript(() => {
     localStorage.setItem('nsg_auto', 'false');   // おまかせ歩きは止めて、台本どおりに歩く
-    if (!localStorage.getItem('nsg_roll')) localStorage.setItem('nsg_roll', '0');   // 台本は1マスずつ歩く（かたむけて転がすのは、下の roll のチェックで）
+    if (!localStorage.getItem('nsg_roll')) { localStorage.setItem('nsg_roll', '0'); localStorage.setItem('nsg_roll_v2', '1'); }   // 台本は1マスずつ歩く（かたむけて転がすのは、下の roll のチェックで）
     if (!localStorage.getItem('nsg_view')) { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '0'); }
     window.__played = [];   // 鳴らした音（効果音・BGM）を記録する
     window.__rewards = [];   // 出たごほうびの知らせ（あとから出たものに消されても、出たことは分かるように）
@@ -109,15 +109,13 @@ async function walkTo(page, id) {
   // せかいちずでもスティックが出て、動かすと歩く地図にもどる
   await page.evaluate(() => nishioPixel.setWorld(true)); await page.waitForTimeout(500);
   R.checks.padOnWorldMap = await page.evaluate(() => nishioGo.demo && nishioPixel.worldMode && !document.getElementById('pxPad').hidden);
-  // スティックを上へ倒して少し持ち、はなす（北へ何マスか歩く）
+  // 地図が めいろに なったので、画面の スティック・📱転がす・🚗車・地図の 切りかえ と、せっていの ドット絵の地図・Godot は はずした
+  R.checks.controlsGone = await page.evaluate(() => ['pxStick', 'pxRoll', 'pxCar', 'viewBtn', 'pxToggle', 'godotToggle'].every(id => !document.getElementById(id)) && !!document.getElementById('pxMeiro'));
+  // 矢印キーの上を 何回か（北へ 歩く。せかいちずなら 歩く地図に もどってから）
   const lat0 = await page.evaluate(() => nishioGo.me && nishioGo.me.lat);
-  const sb = await page.locator('#pxStick').boundingBox();
-  await page.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2); await page.mouse.down();
-  await page.mouse.move(sb.x + sb.width / 2, sb.y + 8, { steps: 4 }); await page.waitForTimeout(700);
-  R.checks.stickKnobMoved = await page.evaluate(() => /translate/.test(document.getElementById('pxKnob').style.transform));
-  await page.mouse.up(); await page.waitForTimeout(800);
-  R.checks.stickWalkedNorth = await page.evaluate(l => !!nishioGo.me && l != null && nishioGo.me.lat > l, lat0);
-  R.checks.stickReleased = await page.evaluate(() => !document.getElementById('pxKnob').style.transform && !document.getElementById('pxStick').classList.contains('on'));
+  for (let i = 0; i < 4; i++) { await page.keyboard.press('ArrowUp'); await page.waitForTimeout(150); }
+  await page.waitForTimeout(500);
+  R.checks.keyWalkedNorth = await page.evaluate(l => !!nishioGo.me && l != null && nishioGo.me.lat > l && !nishioPixel.worldMode, lat0);
   // 地面をタップすると、そこまで歩く（通れるマスで、まわりに人や名所がなく、ボタンに隠れていない所を選ぶ）
   const tapAt = await page.evaluate(() => {
     const P = nishioPixel, C = P.C, BL = new Set([C.A, C.B, C.M, C.X]), a = P.toTile(nishioGo.me.lat, nishioGo.me.lng), sx = Math.floor(a.x), sy = Math.floor(a.y);
@@ -682,6 +680,11 @@ async function walkTo(page, id) {
     return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, style: dbg.style, wall: dbg.wall, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
   })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
+  // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
+  await page.evaluate(() => { nishioPixel.setRoll(true); nishioPixel.setWorld(true); }); await page.waitForTimeout(300);
+  await page.keyboard.down('ArrowUp'); await page.waitForTimeout(200); await page.keyboard.up('ArrowUp'); await page.waitForTimeout(300);
+  R.checks.rollKeyLeavesWorld = await page.evaluate(() => !nishioPixel.worldMode);
+  await page.evaluate(() => nishioPixel.setRoll(false));
   // 地図の めいろ（メインの 遊び）：転がす ときは めいろ。お米の まわりの 区域が できていて、通路の マスに 通れない さかい（壁）がある
   R.checks.mapMaze = await page.evaluate(async () => {
     nishioPixel.setRoll(true);
@@ -938,7 +941,9 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.firstOnField && c.welcomeChestM !== null && c.welcomeChestM <= 150, 'はじめての人が歩く地図から始まらないか、近くに ようこそ たからばこ がない');
-  need(c.stickKnobMoved && c.stickWalkedNorth && c.stickReleased, 'スティックを上へ倒しても北へ歩かない・はなしても戻らない');
+  need(c.controlsGone, 'めいろに いらない ボタン・せってい（スティック・📱・🚗・地図の 切りかえ・ドット絵の地図・Godot）が のこっている');
+  need(c.rollKeyLeavesWorld, '転がす ときに せかいちずで 矢印キーを 押しても 歩く地図に もどらない');
+  need(c.keyWalkedNorth, '矢印キーの上で 北へ 歩かない（せかいちずから 歩く地図に もどらない）');
   need(c.tapWalk === true, '地面をタップしても、そこまで歩かない');
   need(c.tapWalkStopsOnPanel === true, 'タップした所へ歩くとちゅうで きろく を開いても、うしろで歩きつづける');
   need(c.tapWalkStopsOnTouch === true, 'タップした所へ歩くとちゅうで 地図の外（こよみの札）をさわっても、うしろで歩きつづける');

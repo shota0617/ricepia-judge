@@ -13,7 +13,7 @@
   const KEY = 'nsg_godot', P = window.nishioPixel, G = window.nishioGo;
   if (!P || !G) return;
   const $ = id => document.getElementById(id);
-  let want = (() => { try { return localStorage.getItem(KEY) === '1' || /[?&]godot=1\b/.test(location.search); } catch (e) { return false; } })();
+  let want = /[?&]godot=1\b/.test(location.search);   // 地図が めいろに なったので せっていから はずした（めいろの 壁を 描かない）。ためすときは ?godot=1
   let ready = false, starting = false, canvas = null, engine = null, sleeping = false, latest = '', sent = '';
 
   /* ---------- 描く命令の記録係（CanvasRenderingContext2D のうち、pixel.js の frame が使うものだけ） ---------- */

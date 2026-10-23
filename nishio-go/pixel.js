@@ -5968,7 +5968,8 @@ function frame(now) {
       ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
     }
   }
-  if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
+  if (mazeOn() && gt) drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now);   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
+  else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
     if (ex < 0 || ey < 0 || ex > w || ey > vh) {   // 見えている所（パネルの上）の外なら、その縁に矢印
@@ -6335,8 +6336,6 @@ function setActive(on) {
   if (!on && driving) setDriving(false);   // ふつうの地図では車に乗れない
   document.body.classList.toggle('px', on);
   try { localStorage.setItem('nsg_view', on ? 'px' : 'map'); } catch (e) { /* noop */ }
-  $('viewBtn').innerHTML = on ? ICO('map', '🗺️', 'ふつうの地図') : ICO('pixmap', '👾', 'ドット絵の地図');
-  $('viewBtn').title = on ? 'ふつうの地図にする' : 'ドット絵の地図にする';
   updatePad();
   cancelAnimationFrame(raf);
   if (on) { lastT = 0; raf = requestAnimationFrame(frame); }
@@ -6347,7 +6346,6 @@ function updatePad() {
   $('pxPad').hidden = !(active && G.demo);
   G.sound.scene(active && worldMode ? 'world' : 'field');   // せかいちずでは別の曲
 }
-$('viewBtn').addEventListener('click', () => setActive(!active));
 // せかいちずをいちばん大きくしてさらに拡大すると歩く地図へ、歩く地図をいちばん小さくしてさらに縮小するとせかいちずへ
 $('pxZoomIn').addEventListener('click', () => {
   if (!worldMode) return setScale(curScale() + 1);
@@ -6410,7 +6408,11 @@ function step(dir) {   // 1マス進めたら（人に話しかけたときも�
 // ・押すのをやめても すぐには止まらない（ころがり抵抗で ゆっくりになる）。建物・水には入れず、当たると少し はね返る。人にぶつかると話しかける
 // ・新しいマスに入るたびに、1歩と同じこと（呼びとめ・生きもの・チェックインの範囲など）が起きる。位置は 少し動くたびに game.js へ（moveTo の 'step'）
 // ・📱 ボタンで オン・オフ（端末に覚える）。タップで歩く・車は いままでどおり
-let rollOn = (() => { try { return localStorage.getItem('nsg_roll') !== '0'; } catch (e) { return true; } })();
+let rollOn = (() => { try {
+  // 地図が めいろに なって「📱 転がす」の 切りかえを はずした：前に 切っていた人も 1回だけ 転がすに もどす（もう 切りかえられないので）
+  if (!localStorage.getItem('nsg_roll_v2')) { localStorage.setItem('nsg_roll_v2', '1'); localStorage.setItem('nsg_roll', '1'); }
+  return localStorage.getItem('nsg_roll') !== '0';
+} catch (e) { return true; } })();
 const rp = { x: null, y: null, vx: 0, vy: 0, sent: null, tile: '', bump: 0 };
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
@@ -6449,7 +6451,7 @@ function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.x = tiltG.y = 0; }
 function tiltAsk() {   // iPhone：傾きを使う許可（画面をさわったときにしか聞けない）
   if (tiltG.asked || !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) return;
   tiltG.asked = true;
-  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、スティックで転がしてね'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
+  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、地図を タップした所へ 転がしてね（矢印キーでも）'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
 }
 ['click', 'touchend'].forEach(ev => document.addEventListener(ev, () => { if (rollOn) tiltAsk(); }, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tiltReset(); });
@@ -6663,6 +6665,42 @@ function mzSnap(now) {
     }
   }
 }
+// めいろの ゴール（行き先 G.guide）：運営者の声「迷路のゴールがわからない」
+// ・画面の 中：チェックインの 近さの 光る わ（ふくらんだり ちぢんだり）と、🏁 の 旗、「ゴール」の 文字
+// ・画面の 外：縁に 大きな 矢印と、🏁 と めいろの 道のり（なければ まっすぐの きょり）の 札
+function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
+  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.max(T, Math.round(24 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ）
+  const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
+  const dist = far < 1000 ? `${Math.round(far / 10) * 10}m` : `${(far / 1000).toFixed(1)}km`;
+  const label = (t, x, y, size, col) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#1a1a1a'; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); };
+  const flag = (x, y, s) => {   // 白黒の 市松の 旗（x, y：さおの 下）
+    const q = Math.max(1, Math.round(s / 8));
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(x) - q, Math.round(y - s * 1.1), q * 2 + 1, Math.round(s * 1.1));
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(Math.round(x), Math.round(y - s * 1.1), q, Math.round(s * 1.1));
+    const fw = s * 0.9, fh = s * 0.6, cw = fw / 4, ch = fh / 3, fx = x + q, fy = y - s * 1.1;
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(fx), Math.round(fy) - q, Math.round(fw) + q, Math.round(fh) + 2 * q);
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) { ctx.fillStyle = (i + j) % 2 ? '#1a1a1a' : '#ffffff'; ctx.fillRect(Math.round(fx + i * cw), Math.round(fy + j * ch), Math.ceil(cw), Math.ceil(ch)); }
+  };
+  if (ex >= 0 && ey >= 0 && ex <= w && ey <= vh) {
+    const r = Math.max(U * 0.8, G.reachOf(gt) / TILE_M * T) * (0.92 + pulse * 0.12);
+    ctx.lineWidth = Math.max(3, U * 0.16);
+    ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = Math.max(2, U * 0.1); ctx.strokeStyle = `rgba(255,213,79,${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+    flag(ex, ey - U * 0.3, U * 1.3);
+    label('ゴール', ex, ey - U * 2.1 - pulse * U * 0.12, Math.round(U * 0.62), '#ffe680');
+    return;
+  }
+  const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6;
+  const px = Math.min(Math.abs((w / 2 - m) / Math.cos(a)), Math.abs((vh / 2 - m) / Math.sin(a)));
+  const qx = w / 2 + Math.cos(a) * px, qy = cy + Math.sin(a) * px, k = 1 + pulse * 0.08;
+  ctx.save(); ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
+  ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.moveTo(U * 1.1, 0); ctx.lineTo(-U * 0.2, -U * 0.75); ctx.lineTo(-U * 0.2, U * 0.75); ctx.fill();
+  ctx.fillStyle = '#ffd54f'; ctx.beginPath(); ctx.moveTo(U * 0.85, 0); ctx.lineTo(-U * 0.05, -U * 0.5); ctx.lineTo(-U * 0.05, U * 0.5); ctx.fill();
+  ctx.restore();
+  const bx = qx - Math.cos(a) * U * 1.3, by = qy - Math.sin(a) * U * 1.3;   // 矢印の 内がわに 🏁 と 道のり
+  flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
+  label(dist, bx + U * 0.45, by, Math.round(U * 0.5), '#ffffff');
+}
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
   const lw = Math.max(2, Math.round(T / 2)), u = Math.max(1, Math.round(T / 8)), o = Math.max(1, Math.round(T / 4)), segs = [];
@@ -6689,8 +6727,7 @@ function rollStep(dt) {
   }
   if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) { rp.vx = rp.vy = 0; return; }
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
-  const soft = v => Math.sign(v) * Math.pow(Math.abs(v), 1.35);   // スティックも 少し倒したときは やさしく（傾きと同じ）
-  const ax = (tiltG.x + soft(stick.x) + rk.right - rk.left), ay = (tiltG.y + soft(stick.y) + rk.down - rk.up);
+  const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
   const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1);   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
   const up = rp.vx * sl.x + rp.vy * sl.y < 0 ? 0.6 : 1;   // 上り坂は、下りより ゆるく おそくなる（いきおいで 堤防や 坂を のぼれる）
@@ -6806,26 +6843,19 @@ function setRoll(on) {
   const b = $('pxRoll');
   if (b) { b.classList.toggle('on', rollOn); b.setAttribute('aria-pressed', String(rollOn)); }
 }
-if ($('pxRoll')) {
-  setRoll(rollOn);
-  $('pxRoll').addEventListener('click', () => {
-    const want = !rollOn;
-    if (want) { tiltG.asked = false; tiltAsk(); tiltReset(); tiltG.announce = performance.now(); }   // オンにしたら、いまの持ち方を まっすぐに（合わせたら 知らせる）
-    setRoll(want);
-    G.toast(want ? '🍚 スマホを傾けると、お米が ころころ転がるよ（スティック・矢印キーでも）' : '🚶 1マスずつ進むようにしました');
-  });
-}
 // 車：スティックのとなりのボタンで乗り降り。道の上（またはとなり）で乗れて、道だけを倍の速さで走る。
 // 乗っている間は、歩いた距離・チェックイン・たからばこ・話しかけはお休み（降りるとできる）
 const CAR_OK = new Set([C.R, C.H]);
 let driving = false;
 function setDriving(on, msg) {
   driving = !!on;
-  const b = $('pxCar');
-  b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
-  b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
-  b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
-  b.classList.toggle('on', driving);
+  const b = $('pxCar');   // 地図が めいろに なったので 車の ボタンは はずした（車では めいろの 壁が きかない）
+  if (b) {
+    b.innerHTML = driving ? ICO('walker', '🚶', '降りる') : ICO('car', '🚗', '車に乗る');
+    b.setAttribute('aria-label', driving ? '車を降りる' : '車に乗る');
+    b.title = driving ? '車を降りる' : '車に乗る（道の上で）';
+    b.classList.toggle('on', driving);
+  }
   G.setDriving(driving);
   if (msg) G.toast(msg);
   dirty = true;
@@ -6847,7 +6877,7 @@ function checkCar() {
   const t = targetTile(), c = codeAt(Math.floor(t.x), Math.floor(t.y));
   if (c !== C.X && !CAR_OK.has(c)) setDriving(false, '🚶 道の外へ移動したので、車を降りました');
 }
-$('pxCar').addEventListener('click', toggleCar);
+if ($('pxCar')) $('pxCar').addEventListener('click', toggleCar);
 // 稲刈りミニゲーム（harvest.js）：田んぼのマス（またはすぐとなり）にいるときだけ、右上の列に「稲刈り」ボタンを出す（あるいて移動でも見えるよう、スティックの列には置かない）
 const PADDY_CODES = new Set([C.U, C.F]);
 function onPaddy() {
@@ -7033,62 +7063,10 @@ function padStep(dir) {
   if (!ok && navigator.vibrate) navigator.vibrate(20);
   return ok;
 }
-// スティック：さわったまま動かすと、倒した向きへ歩きつづける。
-//   ・まん中の少しは遊び（動かない）。大きく倒すと速く歩く（車はもっと速い）
-//   ・ななめに倒すと、2つの向きを交互に1マスずつ（片方が通れなければ、もう片方へ）
-const stick = { id: null, x: 0, y: 0, dirs: [], turn: 0, timer: null, key: '' };
-const STICK_DEAD = 0.28, STICK_FAST = 0.75, STICK_DIAG = Math.tan(Math.PI / 8);
-function stickDirs(x, y) {   // x, y は -1〜1（半径で割った値）
-  const ax = Math.abs(x), ay = Math.abs(y);
-  if (Math.hypot(x, y) < STICK_DEAD) return [];
-  const h = x < 0 ? 'left' : 'right', v = y < 0 ? 'up' : 'down';
-  if (Math.min(ax, ay) > Math.max(ax, ay) * STICK_DIAG) return ay >= ax ? [v, h] : [h, v];
-  return [ax > ay ? h : v];
-}
-function stickTick() {
-  stick.timer = null;
-  if (!stick.dirs.length || (G.demo && rollOn && !driving)) return;   // 転がすときは、スティックの倒し具合が そのまま傾き（rollStep）
-  const n = stick.dirs.length, first = stick.dirs[stick.turn % n];
-  if (!padStep(first) && n > 1) padStep(stick.dirs[(stick.turn + 1) % n]);
-  stick.turn++;
-  const fast = Math.hypot(stick.x, stick.y) >= STICK_FAST;
-  stick.timer = setTimeout(stickTick, driving ? (fast ? 70 : 120) : (fast ? 130 : 230));
-}
-function stickMove(e) {
-  const r = $('pxStick').getBoundingClientRect(), R = r.width / 2 - 8;
-  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-  const d = Math.hypot(dx, dy);
-  if (d > R) { dx *= R / d; dy *= R / d; }
-  stick.x = dx / R; stick.y = dy / R;
-  $('pxKnob').style.transform = `translate(${dx}px,${dy}px)`;
-  const dirs = stickDirs(stick.x, stick.y), key = dirs.join(',');
-  for (const k of ['up', 'down', 'left', 'right']) $('pxStick').querySelector('.' + k[0]).classList.toggle('lit', dirs.includes(k));
-  if (key === stick.key) return;
-  stick.key = key; stick.dirs = dirs; stick.turn = 0;
-  clearTimeout(stick.timer); stick.timer = null;
-  if (dirs.length) stickTick();   // 向きが変わったらすぐ1歩
-}
-function stickEnd(e) {
-  if (e && stick.id !== e.pointerId) return;
-  stick.id = null; stick.dirs = []; stick.key = ''; stick.x = stick.y = 0;
-  clearTimeout(stick.timer); stick.timer = null;
-  $('pxStick').classList.remove('on');
-  $('pxKnob').style.transform = '';
-  $('pxStick').querySelectorAll('i').forEach(i => i.classList.remove('lit'));
-}
-$('pxStick').addEventListener('pointerdown', e => {
-  e.preventDefault();
-  stick.id = e.pointerId;
-  try { $('pxStick').setPointerCapture(e.pointerId); } catch (err) { /* noop */ }
-  $('pxStick').classList.add('on');
-  stickMove(e);
-});
-$('pxStick').addEventListener('pointermove', e => { if (stick.id === e.pointerId) stickMove(e); });
-['pointerup', 'pointercancel', 'lostpointercapture'].forEach(ev => $('pxStick').addEventListener(ev, stickEnd));
-window.addEventListener('blur', () => stickEnd());
+// 画面の スティックは、地図が めいろに なったので はずした（傾き・矢印キー・地図を タップで 動かす）
 document.addEventListener('keydown', e => {
   const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key];
-  if (k && active && G.demo && !meiroPause && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); if (rollOn && !driving) rk[k] = 1; else padStep(k); }   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
+  if (k && active && G.demo && !meiroPause && !e.target.closest('input,textarea') && !document.body.classList.contains('jump-open')) { e.preventDefault(); if (rollOn && !driving) { if (worldMode) setWorld(false); rk[k] = 1; } else padStep(k); }   // 転がす ときも、せかいちずなら 歩く地図に もどってから   // ミニゲーム（にしおジャンプ・稲刈り）のあいだは、うしろの主人公を歩かせない
 });
 
 /* ---------- タップした所へ歩く：道すじ ---------- */
@@ -7224,7 +7202,7 @@ G.onModeChange(updatePad);
 G.onModeChange(() => { if (driving) setDriving(false); });
 // はじめての人はドット絵（ダンジョン風）のせかいちずから
 let initial = 'px', worldOn = '1';
-try { initial = localStorage.getItem('nsg_view') || 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
+try { initial = 'px'; worldOn = localStorage.getItem('nsg_world_on') ?? '1'; } catch (e) { /* noop */ }
 if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 
 // テスト用

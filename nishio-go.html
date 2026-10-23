@@ -97,17 +97,13 @@
   <div class="dq px-msg" id="pxMsg" hidden></div>
   <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
   <div class="px-pad" id="pxPad" hidden>
-    <div class="px-stick" id="pxStick" role="application" aria-label="スティック：さわったまま動かすと、その向きへ歩く（矢印キーでも歩けます。地図の地面をタップすると、そこまで歩きます）"><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i><div class="px-knob" id="pxKnob"></div></div>
-    <button type="button" id="pxRoll" class="c" aria-pressed="true" aria-label="かたむけて転がす（お米が勢いをつけて転がる）" title="かたむけて転がす">📱</button>
     <button type="button" id="pxMeiro" class="c" aria-label="西尾めいろ（傾けて お米を ゴールへ）" title="西尾めいろ">🌀</button>
-    <button type="button" id="pxCar" class="c" aria-label="車に乗る" title="車に乗る（道の上で）"><i data-pi="car" data-art="btn-car"></i></button>
   </div>
   <div class="meet" id="meetBox" hidden><div class="dq"><canvas id="meetArt" width="16" height="16"></canvas><p id="meetText"></p></div></div>
   <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
 </section>
 
 <div class="fab-col">
-  <button class="fab" id="viewBtn" type="button" title="ドット絵の地図にする" aria-label="地図の表示を切り替え"><i data-pi="pixmap" data-art="pixmap"></i></button>
   <button class="fab" id="locateBtn" type="button" title="現在地へ" aria-label="現在地へ移動"><i data-pi="pin" data-art="stat-pin"></i></button>
 </div>
 
@@ -241,10 +237,6 @@
       <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
       <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
     </div>
-    <label class="row">
-      <span><b>👾 ドット絵の地図</b><small>オフにすると、ふつうの地図（地理院タイル）で遊べます。</small></span>
-      <input type="checkbox" id="pxToggle"/>
-    </label>
     <div class="row">
       <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
       <button type="button" id="koroOpen" class="btn" style="flex:none">ずかん</button>
@@ -260,10 +252,6 @@
     <label class="row">
       <span><b>📝 文字を多めに出す</b><small>オンにすると、地図の町名・駅名・お店の看板、ごほうびのくわしい説明、案内のすすめた人の話などの文字も出します。オフ（はじめ）は、文字を少なくしてドット絵で出します。</small></span>
       <input type="checkbox" id="textToggle"/>
-    </label>
-    <label class="row">
-      <span><b>🎮 Godotで地図を描く（試作）</b><small>ドット絵の地図を、ゲームエンジン Godot で描きます。雨や雪がつぶで降り、夕方や夜は色あいが変わります。はじめに約8MBを読みこみます（WebGL2 が使える端末だけ）。</small></span>
-      <input type="checkbox" id="godotToggle"/>
     </label>
     <label class="row">
       <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。曲は100曲以上あり、朝・昼・夕方・夜・雨で変わります。</small></span>

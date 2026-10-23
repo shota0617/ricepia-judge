@@ -83,6 +83,8 @@ PAL = {
     'reflector': dict(c='#e43a12', r=0.2),
     'smv_red': dict(c='#c0101a', r=0.2),
     'gray': dict(c='#70757a', r=0.45),
+    'rust': dict(c='#6e3b22', r=0.85, m=0.15),        # さびた鉄（下リンク・そり。X の写真では連結まわりがさびている）
+    'tine_steel': dict(c='#3d3d3c', r=0.6, m=0.6),    # 土で黒ずんだ爪の鋼（光るのは刃先だけ）
     'trim': dict(c='#4d5054', r=0.6),
     'trim_light': dict(c='#9a9ea2', r=0.6),
     'headliner': dict(c='#bdbdb6', r=0.8),
@@ -724,7 +726,7 @@ def fenders_lamps():
         cyl_x('darkgray', 0.13, s * 0.28, s * 0.42, 0, RZ, 24)
         cyl_x('darkgray', 0.19, s * 0.40, s * 0.47, 0, RZ, 28)
         pipe('paint_red', [(s * 0.20, 0.35, 0.98), (s * 0.24, 0.62, 0.92)], 0.03, 8)
-        pipe('darkgray', [(s * 0.24, 0.62, 0.90), (s * 0.29, 0.68, 0.47)], 0.016, 8)        # リフトロッド
+        pipe('rust', [(s * 0.24, 0.62, 0.90), (s * 0.29, 0.68, 0.47)], 0.016, 8)            # リフトロッド（さびている）
         cyl('silver', 0.024, 0.12, (s * 0.265, 0.65, 0.70), (5, -s * 6, 0), 10)           # 長さの調整
 
     box('darkgray', (0.30, 0.20, 0.22), (0, 0.50, 0.95), bev=(0.02,))
@@ -1077,7 +1079,8 @@ def rotary():
             arc = [(0.33 * math.sin(math.radians(a)), az + 0.33 * math.cos(math.radians(a))) for a in range(-80, 66, 10)]
             prism('paint_red', [(0.0 + p[0], p[1]) for p in arc] + [(0.25, 0.02), (-0.25, 0.02)], 0.012,
                   T((s * (TILL_W / 2 + 0.03), ay, 0), (90, 0, 90)))
-            box('darkgray', (0.03, 0.55, 0.04), (s * (TILL_W / 2 + 0.03), ay + 0.02, 0.03), bev=(0.01,))   # そり
+            box('rust', (0.03, 0.55, 0.04), (s * (TILL_W / 2 + 0.03), ay + 0.02, 0.03), bev=(0.01,))       # そり（土にこすれて、さびている）
+            box('rust', (0.016, 0.50, 0.03), (s * (TILL_W / 2 + 0.03), ay + 0.02, 0.06))                    # 側板の下の縁のさび
         box('paint_red', (TILL_W + 0.04, 0.10, 0.03), (0, ay - 0.22, az + 0.25), (-35, 0, 0))
         # まん中のギヤボックス・横のチェーンケース・マスト
         box('paint_red', (0.26, 0.30, 0.24), (0, ay - 0.06, 0.70), bev=(0.03,))
@@ -1089,13 +1092,15 @@ def rotary():
             pipe('paint_red', [(s * 0.42, oy - 0.26, 0.42), (s * 0.20, oy - 0.20, 0.82), (0, oy - 0.26, 0.96)], 0.025, 8)
             pipe('paint_red', [(s * 0.42, oy - 0.26, 0.42), (s * 0.45, oy - 0.10, 0.50)], 0.025, 8)
             cyl_x('silver', 0.016, s * 0.39, s * 0.47, oy - 0.26, 0.42, 8)
-        # 三点リンク（トラクターの後ろへ）と PTO の軸
+        # 三点リンク（トラクターの後ろへ）と PTO の軸。下リンクはさびている（X の農家さんの写真：連結まわりのさび）
         for s in (1, -1):
-            pipe('darkgray', [(s * 0.30, 0.48, 0.45), (s * 0.43, oy - 0.26, 0.42)], 0.022, 8)
+            pipe('rust', [(s * 0.30, 0.48, 0.45), (s * 0.43, oy - 0.26, 0.42)], 0.022, 8)
         pipe('darkgray', [(0, 0.56, 1.00), (0, oy - 0.26, 0.96)], 0.022, 8)
         cyl('silver', 0.03, 0.10, (0, 0.92, 0.66), (90, 0, 0), 12)
         cyl('darkgray', 0.022, 0.40, (0, 0.88, 0.65), (93, 0, 0), 12)
-        cyl('black', 0.045, 0.30, (0, 0.86, 0.65), (93, 0, 0), 14)               # 軸の覆い
+        cyl('yellow', 0.045, 0.30, (0, 0.86, 0.65), (93, 0, 0), 14)              # 軸の覆い（黄色い筒。X の写真）
+        for y in (0.70, 1.02):                                                    # 両はしのじょうご形の覆い
+            cyl('yellow', 0.056, 0.05, (0, y, 0.65 + (y - 0.86) * 0.052), (93, 0, 0), 14)
         implement_lamps((TILL_W / 2 - 0.12, -TILL_W / 2 + 0.12), ay + 0.12, az + 0.30)
     with part('Rotor'):
         cyl_x('darkgray', 0.032, -TILL_W / 2, TILL_W / 2, ay, az, 16)
@@ -1110,10 +1115,12 @@ def rotary():
                 rad = lambda r: Vector((x, ay + r * sa, az + r * ca))
                 tng = Vector((0, ca, -sa))
                 p0, p1 = rad(0.055), rad(0.19)
-                box('silver', (0.008, 0.045, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=along(p0, p1, tng))
+                box('tine_steel', (0.008, 0.045, (p1 - p0).length), (0, 0, (p1 - p0).length / 2), mtx=along(p0, p1, tng))
                 q0 = p1
                 q1 = rad(0.245) + Vector((side * 0.05, 0, 0)) - tng * 0.03
-                box('silver', (0.008, 0.045, (q1 - q0).length), (0, 0, (q1 - q0).length / 2), mtx=along(q0, q1, tng))
+                qm = q0.lerp(q1, 0.55)                                             # 曲がった先の半分から先（刃先）だけが土で みがかれて光る
+                box('tine_steel', (0.008, 0.045, (qm - q0).length), (0, 0, (qm - q0).length / 2), mtx=along(q0, qm, tng))
+                box('silver', (0.008, 0.045, (q1 - qm).length), (0, 0, (q1 - qm).length / 2), mtx=along(qm, q1, tng))
     flap_h = Vector((0, ay + 0.31 * math.sin(math.radians(60)), az + 0.31 * math.cos(math.radians(60))))
     with part('Flap'):
         end = Vector((0, flap_h.y + 0.23, 0.05))
@@ -1404,6 +1411,7 @@ def preview():
         'seat': dict(loc=(0.42, -0.52, 2.20), target=(-0.20, 0.40, 1.55), lens=16),   # キャビンの中、左前から座席と右のコンソール
         'pillar': dict(loc=(0.15, 0.05, 2.05), target=(-0.62, 0.80, 2.0), lens=24),
         'cup': dict(loc=(0.05, -0.05, 2.0), target=(0.35, 0.42, 1.58), lens=30),
+        'hitch': dict(loc=(1.9, 2.3, 1.55), target=(0.0, 0.95, 0.55), lens=40),   # うしろの連結まわり（下リンク・PTO の軸の覆い・爪）
     }
     only = [a.split('=', 1)[1] for a in sys.argv if a.startswith('--shot=')]
     for k, v in ({k: v for k, v in {**shots, **extra}.items() if k in only} if only else shots).items():

@@ -9,3 +9,4 @@ __pycache__/
 *.nes
 *.fds
 nethack-play-out/
+.xcycle/

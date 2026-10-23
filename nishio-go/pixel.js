@@ -5968,8 +5968,8 @@ function frame(now) {
       ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
     }
   }
-  if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now);
-  if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.max(T, Math.round(16 * dpr)), now);
+  if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
+  if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
   if (mazeOn() && gt) drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now);   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
@@ -6685,12 +6685,12 @@ function mzGoalFx(text) {
   for (let i = 0; i < 60; i++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6; mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, c: cols[i % cols.length], life: 1 + Math.random() * 0.8 }); }
   mzBanner.t0 = now; mzBanner.text = text || '';   // 「🏁 ゴール！」の 大きな 文字（4秒。ごほうびの 窓を とじても 見える ように 長め）
 }
-function drawMzFx(w, cy, T, now) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる
+function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
   const ba = (now - mzBanner.t0) / 1000;
   if (mzBanner.t0 && ba < 4) {   // 大きな「🏁 ゴール！」と 時間（さいごの 0.5秒で うすく）
     ctx.globalAlpha = Math.min(1, (4 - ba) / 0.5);
-    const big = Math.round(T * 1.6), y = cy - T * 3.2 - Math.max(0, 0.3 - ba) * T * 6;
+    const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
     ctx.strokeText('🏁 ゴール！', w / 2, y); ctx.fillText('🏁 ゴール！', w / 2, y);
@@ -6718,7 +6718,7 @@ function drawMzNext(w, cy, U, now) {
   }
   const a = (now - mzNext.t0) / 1000;
   if (a > 3) { mzNext.t0 = 0; return; }
-  const big = Math.round(U * 1.05), y = cy - U * 5.6, d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;
+  const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
   ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
   const lines = [['🏁 つぎの ゴール', Math.round(big * 0.8), '#ffe680'], [mzNext.name, big, '#ffffff'], [dist, Math.round(big * 0.7), '#bfefff']].filter(l => l[0]);
@@ -6735,7 +6735,7 @@ function drawMzNext(w, cy, U, now) {
   ctx.globalAlpha = 1;
 }
 function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
-  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.max(T, Math.round(24 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ）
+  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.min(Math.max(T, Math.round(24 * dpr)), Math.round(32 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ。大きく しても 画面の 32点まで）
   const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
   const dist = far < 1000 ? `${Math.round(far / 10) * 10}m` : `${(far / 1000).toFixed(1)}km`;
   const label = (t, x, y, size, col) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#1a1a1a'; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); };

@@ -105,9 +105,15 @@ async function recentCount(max, now) {
 // 置いたあとに もう一度数える：24時間のうちで、この Issue より前（番号が小さい）か同じものが 上限より多ければ、置きすぎ。
 // 同時にたくさん来ると、先に数えたときは みな上限より下に見えるので（数えてから置くまでのあいだ）、あとから決まった順で 多いぶんを閉じる
 async function overLimit(n, max, now) {
-  const list = await gh('/issues?labels=feedback&state=all&sort=created&direction=desc&per_page=100');
-  const full = list.length === 100 && now - Date.parse(list[list.length - 1].created_at) < 86400e3;   // 24時間に100件より多い（上限は100まで）
-  return full || list.filter(i => i.number <= n && now - Date.parse(i.created_at) < 86400e3).length > max;
+  let before = 0;
+  for (let page = 1; page <= 5; page++) {   // 新しいじゅんに読み、24時間より前のものが出るまで（ふつうは1ページ）
+    const list = await gh(`/issues?labels=feedback&state=all&sort=created&direction=desc&per_page=100&page=${page}`);
+    const recent = list.filter(i => now - Date.parse(i.created_at) < 86400e3);
+    before += recent.filter(i => i.number <= n).length;
+    if (before > max) return true;
+    if (list.length < 100 || recent.length < list.length) return false;
+  }
+  return true;   // 24時間に500件より多い
 }
 // この関数（Vercel のひとつのインスタンス）の中では、おたよりを1件ずつ順に置く（数えてから置くまでのあいだに ほかの送信が割りこまないように）
 let queue = Promise.resolve();

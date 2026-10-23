@@ -300,27 +300,26 @@ async function pr() {
   const patch = git('diff', 'HEAD', '--no-color', '--binary');
   git('reset', '-q');
   const b64 = Buffer.from(patch).toString('base64');
-  if (b64.length > 50000) {
-    console.log('差分が大きすぎて「公開前の確認」に置けないので、ぜんぶ戻して人にまわす');
-    files.forEach(revert);
-    fs.writeFileSync(path.join(DIR, 'blocked.txt'), '差分が大きすぎる\n');
-    return;
-  }
   const prBody = ['プレイヤーからのおたより（非公開の置き場の Issue）を Claude が読んで直した案です。運営者が公開前に中身を確かめました。**遊んで確かめてからマージしてください。**', '',
     ...(fixed.length ? fixed.map(r => `- ${publicText(r.public, items.find(it => it.n === r.n) || { text: items.map(it => it.text).join(' ') }, knownNames()) || '（要約なし）'}`) : ['- （要約なし）']), '',
     '変更してよいのは nishio-go/ の遊びのデータと画面の文だけで、それ以外の変更は自動で取りのぞいています（tools/feedback-triage.js）。',
     'おたよりの文そのもの・送った人の位置は、このPRには書きません。'].join('\n');
   const fence = '~'.repeat(Math.max(4, ...(patch.match(/~{4,}/g) || []).map(x => x.length + 1)));
-  const shown = patch.length > 12000 ? patch.slice(0, 12000) + '\n…（長いので ここまで。のこりは 下の しるしに入っています）' : patch;
   const body = [`おたより ${items.map(it => '#' + it.n).join('・')} を Claude が読んで直した案です。**まだ公開していません。**`, '',
     '1. 下の差分に、おたよりの文・名前・位置・連絡先など 公開してはいけないものが（言いかえや ローマ字・数字の形でも）入っていないか確かめる',
     '2. よければ、公開のリポジトリの Actions →「Nishio feedback publish」→ Run workflow で、この Issue の番号を入れて動かす（PR になる。マージは遊んで確かめてから）',
     '3. だめなら、この Issue を閉じる（おたよりは「提案」にもどる）', '',
     `ファイル：${files.map(c => '`' + c.path + '`').join('・')}`, '',
     '<details><summary>PR の本文（公開される文）</summary>', '', fence, prBody, fence, '', '</details>', '',
-    fence + 'diff', shown, fence, '',
+    fence + 'diff', patch, fence, '',   // 差分は 省かずに ぜんぶ見せる（publish は、ここに見えている差分と しるしの差分が 同じときだけ PR にする）
     `<!-- nsg-patch:${b64} -->`, `<!-- nsg-prbody:${Buffer.from(prBody).toString('base64')} -->`,
     `<!-- nsg-base:${process.env.GITHUB_SHA || git('rev-parse', 'HEAD').trim()} -->`].join('\n');
+  if (body.length + FOOT.length > 60000) {   // Issue に ぜんぶは のせられない大きさ：人が ぜんぶ読めないものは 公開前の確認に進めない
+    console.log('差分が大きすぎて「公開前の確認」に ぜんぶのせられないので、ぜんぶ戻して人にまわす');
+    files.forEach(revert);
+    fs.writeFileSync(path.join(DIR, 'blocked.txt'), '差分が大きすぎる\n');
+    return;
+  }
   files.forEach(revert);   // 作業場所からも消しておく（このあとの voices が main にコミットするときに まざらないように）
   await ensureLabels();
   const issue = await gh('/issues', { method: 'POST', body: JSON.stringify({ title: `公開前の確認：おたよりから直す（${fixed.length}件・run ${process.env.GITHUB_RUN_ID || ''}）`, body: body + FOOT, labels: ['publish-review'] }) });
@@ -338,6 +337,9 @@ async function publish() {
   const pick = k => { const m = [...String(issue.body || '').matchAll(new RegExp(`<!-- nsg-${k}:([A-Za-z0-9+/=]+) -->`, 'g'))].pop(); return m ? m[1] : ''; };
   const patch = Buffer.from(pick('patch'), 'base64').toString('utf8'), prBody = Buffer.from(pick('prbody'), 'base64').toString('utf8');
   if (!patch.trim()) throw new Error(`#${n} に差分がありません`);
+  // 運営者が読んだ差分（本文に見えているもの）と、当てる差分が 同じときだけ（見えていない中身を 公開しない）
+  const shown = [...String(issue.body || '').matchAll(/^(~{4,})diff\n([\s\S]*?)\n\1$/gm)].map(m => m[2]);
+  if (shown.length !== 1 || shown[0] !== patch.replace(/\n$/, '') && shown[0] !== patch) throw new Error(`#${n} の本文に見えている差分と、公開する差分が ちがいます`);
   // ふつうのファイルの 中身の変更・新しいファイルだけ（消す・名前を変える・実行できるようにする・リンクは しない）
   if (/^(deleted file mode|old mode|new mode|rename from|copy from|similarity index)/m.test(patch) || /^new file mode (?!100644$)/m.test(patch) || /^index [0-9a-f]+\.\.[0-9a-f]+ (?!100644$)/m.test(patch)) throw new Error(`#${n} の差分に、ふつうのファイルの変更でないものがあります`);
   const paths = [...patch.matchAll(/^diff --git a\/(\S+) b\/(\S+)$/gm)];

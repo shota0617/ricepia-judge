@@ -9,8 +9,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
-      - claude/confident-turing-etepui
+      - main   # 本番（ricepia.jp）を 書きかえうるので main だけ（作業用の ブランチへの push では 動かさない）
     paths:
       - ricepia-jp/**
       - .github/workflows/ricepia-jp.yml

@@ -6663,22 +6663,23 @@ function mzSnap(now) {
     }
   }
 }
-function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：右下に 影・紺の 壁・上と左の ふちに 光（玉ころがし迷路の プラスチックの 壁）。壁の かたまりは 少し 暗く
+function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
   const lw = Math.max(2, Math.round(T / 2)), u = Math.max(1, Math.round(T / 8)), o = Math.max(1, Math.round(T / 4)), segs = [];
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
     const ty = mzType(cx, cy);
     if (ty < 0) continue;
     const X = ox + cx * S, Y = oy + cy * S, go = (x, y) => mzType(x, y) === 1 || mzSpotCell(x, y);   // 入れる マス（通路・名所への 参道）
-    if (!go(cx, cy)) { if (ty === 0) { ctx.fillStyle = 'rgba(16,28,22,.3)'; ctx.fillRect(X, Y, S, S); } continue; }
+    if (!go(cx, cy)) { if (ty === 0) { ctx.fillStyle = 'rgba(28,70,52,.4)'; ctx.fillRect(X, Y, S, S); } continue; }   // 台（地図は 見える こさ）
     if (!mzOpen(cx, cy, 1, 0)) segs.push([X + S - lw / 2, Y - lw / 2, lw, S + lw]);
     if (!mzOpen(cx, cy, 0, 1)) segs.push([X - lw / 2, Y + S - lw / 2, S + lw, lw]);
     if (!go(cx - 1, cy) && mzType(cx - 1, cy) >= 0) segs.push([X - lw / 2, Y - lw / 2, lw, S + lw]);   // 左・上は となりが 入れない マスの ときだけ（入れる マスどうしは 左・上の マスが 描く）
     if (!go(cx, cy - 1) && mzType(cx, cy - 1) >= 0) segs.push([X - lw / 2, Y - lw / 2, S + lw, lw]);
   }
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + o, Y + o, w, h);
-  ctx.fillStyle = '#10283a'; for (const [X, Y, w, h] of segs) ctx.fillRect(X, Y, w, h);
-  ctx.fillStyle = '#5b93bd'; for (const [X, Y, w, h] of segs) { ctx.fillRect(X, Y, w, u); ctx.fillRect(X, Y, u, h); }
+  ctx.fillStyle = 'rgba(0,0,0,.32)'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + o, Y + o, w, h);   // 影
+  ctx.fillStyle = '#0d2219'; for (const [X, Y, w, h] of segs) ctx.fillRect(X, Y, w, h);   // 黒い ふち
+  ctx.fillStyle = '#2f7a58'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + u, Y + u, w - 2 * u, h - 2 * u);   // 緑の 壁
+  ctx.fillStyle = 'rgba(200,255,220,.55)'; for (const [X, Y, w, h] of segs) { if (w > h) ctx.fillRect(X + u, Y + u, w - 2 * u, u); else ctx.fillRect(X + u, Y + u, u, h - 2 * u); }   // 上・左の 面の てかり
 }
 function rollStep(dt) {
   const t = targetTile();

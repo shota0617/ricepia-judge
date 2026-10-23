@@ -5968,7 +5968,8 @@ function frame(now) {
       ctx.fillStyle = '#7ee0ff'; ctx.beginPath(); ctx.moveTo(ex - T * 0.26, by - T * 0.22); ctx.lineTo(ex + T * 0.26, by - T * 0.22); ctx.lineTo(ex, by + T * 0.08); ctx.fill();
     }
   }
-  if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
+  if (mazeOn() && gt) drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now);   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
+  else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
     if (ex < 0 || ey < 0 || ex > w || ey > vh) {   // 見えている所（パネルの上）の外なら、その縁に矢印
@@ -6663,6 +6664,42 @@ function mzSnap(now) {
       q.push([nx, ny]);
     }
   }
+}
+// めいろの ゴール（行き先 G.guide）：運営者の声「迷路のゴールがわからない」
+// ・画面の 中：チェックインの 近さの 光る わ（ふくらんだり ちぢんだり）と、🏁 の 旗、「ゴール」の 文字
+// ・画面の 外：縁に 大きな 矢印と、🏁 と めいろの 道のり（なければ まっすぐの きょり）の 札
+function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
+  const p = toTile(gt.lat, gt.lng), ex = ox + p.x * T, ey = oy + p.y * T, U = Math.max(T, Math.round(24 * dpr)), pulse = (Math.sin(now / 260) + 1) / 2;   // U：絵の 大きさの もと（地図を 小さく していても 見える 大きさ）
+  const far = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : Math.hypot(p.x - (rp.x === null ? p.x : rp.x), p.y - (rp.y === null ? p.y : rp.y)) * TILE_M;
+  const dist = far < 1000 ? `${Math.round(far / 10) * 10}m` : `${(far / 1000).toFixed(1)}km`;
+  const label = (t, x, y, size, col) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#1a1a1a'; ctx.strokeText(t, x, y); ctx.fillStyle = col; ctx.fillText(t, x, y); };
+  const flag = (x, y, s) => {   // 白黒の 市松の 旗（x, y：さおの 下）
+    const q = Math.max(1, Math.round(s / 8));
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(x) - q, Math.round(y - s * 1.1), q * 2 + 1, Math.round(s * 1.1));
+    ctx.fillStyle = '#5a3a1a'; ctx.fillRect(Math.round(x), Math.round(y - s * 1.1), q, Math.round(s * 1.1));
+    const fw = s * 0.9, fh = s * 0.6, cw = fw / 4, ch = fh / 3, fx = x + q, fy = y - s * 1.1;
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(fx), Math.round(fy) - q, Math.round(fw) + q, Math.round(fh) + 2 * q);
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) { ctx.fillStyle = (i + j) % 2 ? '#1a1a1a' : '#ffffff'; ctx.fillRect(Math.round(fx + i * cw), Math.round(fy + j * ch), Math.ceil(cw), Math.ceil(ch)); }
+  };
+  if (ex >= 0 && ey >= 0 && ex <= w && ey <= vh) {
+    const r = Math.max(U * 0.8, G.reachOf(gt) / TILE_M * T) * (0.92 + pulse * 0.12);
+    ctx.lineWidth = Math.max(3, U * 0.16);
+    ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = Math.max(2, U * 0.1); ctx.strokeStyle = `rgba(255,213,79,${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
+    flag(ex, ey - U * 0.3, U * 1.3);
+    label('ゴール', ex, ey - U * 2.1 - pulse * U * 0.12, Math.round(U * 0.62), '#ffe680');
+    return;
+  }
+  const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6;
+  const px = Math.min(Math.abs((w / 2 - m) / Math.cos(a)), Math.abs((vh / 2 - m) / Math.sin(a)));
+  const qx = w / 2 + Math.cos(a) * px, qy = cy + Math.sin(a) * px, k = 1 + pulse * 0.08;
+  ctx.save(); ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
+  ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.moveTo(U * 1.1, 0); ctx.lineTo(-U * 0.2, -U * 0.75); ctx.lineTo(-U * 0.2, U * 0.75); ctx.fill();
+  ctx.fillStyle = '#ffd54f'; ctx.beginPath(); ctx.moveTo(U * 0.85, 0); ctx.lineTo(-U * 0.05, -U * 0.5); ctx.lineTo(-U * 0.05, U * 0.5); ctx.fill();
+  ctx.restore();
+  const bx = qx - Math.cos(a) * U * 1.3, by = qy - Math.sin(a) * U * 1.3;   // 矢印の 内がわに 🏁 と 道のり
+  flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
+  label(dist, bx + U * 0.45, by, Math.round(U * 0.5), '#ffffff');
 }
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;

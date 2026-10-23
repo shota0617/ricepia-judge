@@ -7073,7 +7073,7 @@ document.addEventListener('keydown', e => {
 const AUTO_ROADS = new Set([C.R, C.H, C.D]);   // 通りやすい道（ふつうの道・大きな道・小道）
 // (sx,sy) から (gx,gy) のまわり goalR マスまでの道すじ（A*）。行けなければ、いちばん近づける所まで
 function planPath(sx, sy, gx, gy, goalR, avoid) {
-  const pad = 40, x0 = Math.min(sx, gx) - pad, y0 = Math.min(sy, gy) - pad, W = Math.abs(gx - sx) + pad * 2 + 1, H = Math.abs(gy - sy) + pad * 2 + 1;
+  const pad = mazeOn() ? 150 : 40, x0 = Math.min(sx, gx) - pad, y0 = Math.min(sy, gy) - pad, W = Math.abs(gx - sx) + pad * 2 + 1, H = Math.abs(gy - sy) + pad * 2 + 1;   // めいろは 大回りが いるので 広く さがす（50マスぶん）
   if (W * H > 700000) return [];
   const N = W * H, g = new Float32Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), done = new Uint8Array(N);
   const hx = [], hf = [];   // 二分ヒープ（f の小さい順）

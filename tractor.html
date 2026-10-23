@@ -2452,7 +2452,11 @@ function step(dt) {
   P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42;   // 深く耕すほど沈む
   P.Rotary.rotation.x = -S.rotPos * 0.12;
   const working = S.rotDown && S.rotPos < 0.08;
-  if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; }   // 爪が土にかみこむ瞬間、ぐっと前へ引かれて がくっとくる
+  if (working && !S.wasWorking) { S.ppv = (S.ppv || 0) - 0.05; S.bite = 1; }
+  // 乾いた土の大きな土くれに爪が当たると、ごつっと がくっとくる（春の深い田起こしで多い。代かきの泥では無い）
+  if (working && !SHIRO && Math.abs(S.v) > 0.3 && Math.random() < dt * (season === 'haru' ? 0.7 : 0.3) * Math.min(1, Math.abs(S.v) / 0.8)) {
+    clodBump = 1; S.ppv = (S.ppv || 0) + 0.03 * (Math.random() < 0.5 ? 1 : -1); if (audio && soundOn) thud(audio.ac, audio.out);
+  }   // 爪が土にかみこむ瞬間、ぐっと前へ引かれて がくっとくる
   S.wasWorking = working;
   // 軽油：エンジンが出している力（kW）× 燃料消費率 約 0.25kg/kWh ÷ 軽油の重さ 0.83kg/L。60 馬力＝44kW。
   // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
@@ -2536,7 +2540,7 @@ const CAMS = ['運転席', 'うしろから', '上から'];
 let camMode = 0;
 const look = { yaw: 0, pitch: 0 };
 const chase = new THREE.Vector3(), tmpV = new THREE.Vector3();
-let headLag = 0, lastV = 0, glance = 0, lean = 0, lastYaw = 0, lookBack = 0;   // 曲がる先を見る・体のかたむき・うしろを見る
+let headLag = 0, lastV = 0, glance = 0, lean = 0, lastYaw = 0, lookBack = 0, clodBump = 0;   // 曲がる先を見る・体のかたむき・うしろを見る
 const DBG = {};
 function updateCamera(dt) {
   if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
@@ -2550,8 +2554,11 @@ function updateCamera(dt) {
     const yr = (S.yaw - lastYaw) / Math.max(dt, 1e-3); lastYaw = S.yaw;
     lookBack += ((key.lookBack ? 1 : 0) - lookBack) * Math.min(1, dt * 5);
     lean += (Math.max(-1, Math.min(1, -S.v * yr * 0.6)) - lean) * Math.min(1, dt * 3);
+    // かたい農道では、タイヤのラグ（山）が 1 つずつ地面をたたいて ゴトゴト細かくふるえる（ラグの間かくは約 19cm）
+    const hard = !(Math.abs(S.x) < HX && Math.abs(S.z) < HZ), lug = hard ? 0.0022 * Math.min(1, Math.abs(S.v) / 3) * Math.sin((S.dist || 0) / 0.19 * 6.283) : 0;
+    clodBump = Math.max(0, clodBump - dt * 6);
     camera.position.set(EYE.x + shake * Math.sin(tt * fq * 6.283) + 0.035 * lean - 0.30 * lookBack,   // うしろを見るときは体をひねって右へ寄る
-      EYE.y + shake * Math.sin(tt * fq * 6.283 * 1.13 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7) + 0.05 * lookBack, EYE.z + 0.05 * lookBack);
+      EYE.y + shake * Math.sin(tt * fq * 6.283 * 1.13 + 1) + 0.012 * rough * Math.sin(tt * 2.3) * Math.sin(tt * 1.7) + 0.05 * lookBack + lug + 0.012 * clodBump * Math.sin(clodBump * 9), EYE.z + 0.05 * lookBack);
     headLag += ((S.v - lastV) / Math.max(dt, 0.001) * 0.006 - headLag) * Math.min(1, dt * 4);
     if (S.bite > 0) { headLag += 0.02 * S.bite * Math.sin((1 - S.bite) * 18); S.bite = Math.max(0, S.bite - dt * 2.5); }
     lastV = S.v;
@@ -2730,7 +2737,12 @@ function toggleSound() {
     kO.connect(kL); kL.connect(kG); noise.connect(kL);
     if (kP) { kG.connect(kP); kP.connect(ac.destination); } else kG.connect(ac.destination);
     kO.start();
-    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP };
+    // タイヤのラグの音：かたい道では ラグが地面をたたく低いうなり（速いほど高く大きく）
+    const lO = ac.createOscillator(); lO.type = 'sawtooth'; lO.frequency.value = 10;
+    const lL = ac.createBiquadFilter(); lL.type = 'lowpass'; lL.frequency.value = 220;
+    const lG = ac.createGain(); lG.gain.value = 0;
+    lO.connect(lL); lL.connect(lG); lG.connect(out); lO.start();
+    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -2809,6 +2821,13 @@ function caw(ac, dest, t0, n) {
     o.start(t); o.stop(t + 0.3);
   }
 }
+// 土くれに当たった ごつっという低い音（短く下がる）
+function thud(ac, dest) {
+  const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'triangle'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6, t + 0.01); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+  o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.2);
+}
 const _v = new THREE.Vector3();
 function panTo(pos) {                             // 見ている向きから見た左右（-1〜1）と距離
   _v.copy(pos).applyMatrix4(camera.matrixWorldInverse);
@@ -2829,6 +2848,9 @@ function updateSound(dt = 0) {
   const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
   audio.tg.gain.setTargetAtTime(till, t, 0.2);
   const inCab = camMode === 0 ? 0.35 : 1;         // キャビンの中では外の音は小さい
+  const hardG = !(Math.abs(S.x) < HX && Math.abs(S.z) < HZ);
+  audio.lO.frequency.setTargetAtTime(Math.max(2, Math.abs(S.v) / 0.19), t, 0.2);
+  audio.lG.gain.setTargetAtTime(Math.min(0.5, Math.abs(S.v) * 0.12) * (hardG ? 1 : 0.25), t, 0.3);
   if (NB.root) {
     const [pan, d] = panTo(NB.root.position);
     audio.nbG.gain.setTargetAtTime(Math.min(0.03, 0.75 / Math.max(d, 8)) * inCab, t, 0.4);
@@ -3065,7 +3087,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

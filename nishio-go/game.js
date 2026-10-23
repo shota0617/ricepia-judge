@@ -1201,6 +1201,15 @@ function checkin() {
   day.checkins++;
   if (!day.spots.includes(s.id)) day.spots.push(s.id);
   if (jumpNew) lines.push('🎮 名所でミニゲーム「にしおジャンプ」があそべる（スポットの窓・きろく から）');
+  {   // 地図の めいろの ゴール（行き先の 名所）に 着いた：かかった 時間と めいろの 道のり、紙ふぶき
+    const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(s.id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
+    if (gl && gl.sec > 3) {
+      const t = gl.sec < 60 ? `${Math.round(gl.sec)}秒` : `${Math.floor(gl.sec / 60)}分${String(Math.round(gl.sec % 60)).padStart(2, '0')}秒`;
+      lines.unshift(`🏁 めいろ ゴール！ ${t}${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
+      MZ.goalFx(`${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
+      track('maze_goal', { spot: s.name, sec: Math.round(gl.sec), m: Math.round(gl.m) });
+    }
+  }
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
   // 「はじめてのスポット」：まだ行っていない所がもう無い人は、どのスポットでも達成にする
   if (!v || spots.every(x => x.id === s.id || S.visits[x.id])) day.fresh++;

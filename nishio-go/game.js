@@ -3119,6 +3119,7 @@ function setMode(isDemo) {
   if (demo && !isDemo) idleMark();   // 操作して移動をやめるときは、ここから るすばん
   sessionEnd();   // 1回に遊んだ時間・ポイントは、モードごとに分けて送る（るすばん の おかえり より前に新しい回を始める）
   demo = isDemo;
+  calledBy = null;   // 呼びとめ・めいろの ゴールで「近くで 話せる」あつかいに した 人は、モードを かえたら もどす（歩く 地図で 遠くから 話せて しまわない ように）
   if (store.get('nsg_started', false)) sessionStart();
   store.set('nsg_mode', demo ? 'demo' : 'real');
   S = loadState();

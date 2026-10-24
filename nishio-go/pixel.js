@@ -7873,7 +7873,12 @@ function tapWalk(gx, gy) {
   tapS.path = path; tapS.goal = path[path.length - 1];
   tapWalkTick();
 }
-$('pxInfo').addEventListener('click', e => { if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) $('pxInfo').hidden = true; });
+$('pxInfo').addEventListener('click', e => {
+  if (e.target === $('pxInfo') || e.target.closest('[data-close]') || e.target.closest('[data-move]')) {
+    $('pxInfo').hidden = true;
+    if (mzArrive.call && !sight.n) { G.callNpc(null); mzArrive.call = ''; }   // めいろの ゴールで「近くで 話せる」あつかいに した 人は、窓を とじたら もどす（めいろの 更新が 止まっていても）
+  }
+});
 
 G.onModeChange(updatePad);
 G.onModeChange(() => { if (driving) setDriving(false); });

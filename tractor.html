@@ -2837,12 +2837,12 @@ function step(dt) {
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
   }
-  if (EASY.on && want !== 0 && S.started) {        // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）
+  if (EASY.on && S.started && (want !== 0 || Math.abs(S.v) > 0.05)) {   // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）。アクセルをはなして惰性で進むあいだも見る
     // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
     // 曲がる道すじを 5cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
     // 曲がり方は、じっさいの動き（turnRate）と同じ式で。止まるまでに遅くなると曲がり方が変わり、ハンドルを切りつづけていればもっと切れるので、
     // いまの速さ・止まる前の速さと、いまの切れ角・0.5 秒先の切れ角の組み合わせを全部見る（大きく切ると、うしろの作業機が外へふくらむ）
-    const sg = Math.sign(want), sIn0 = key.right - key.left;
+    const sg = Math.abs(S.v) > 0.2 || want === 0 ? Math.sign(S.v) : Math.sign(want), sIn0 = key.right - key.left;   // 動いている向き（止まりかけなら行きたい向き）
     const steers = sIn0 ? [S.steer, Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn0 * 0.55))] : [S.steer];
     const path = (d, v, st) => {
       let x = S.x, z = S.z, y = S.yaw;
@@ -2856,8 +2856,8 @@ function step(dt) {
     };
     const at = d => steers.every(st => path(d, Math.abs(S.v), st) && path(d, 0, st));
     if (!at(0.45 + Math.abs(S.v) * 0.7)) {
-      if (Math.abs(S.v) > 0.2 || !at(0.06)) { want = 0; S.v *= 0.6; }   // 速いときは強くブレーキ。6cm 先も畦なら止まる
-      else want = sg * Math.min(Math.abs(want), 0.15);                  // ゆっくりなら、少しずつ動ける
+      if (Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
+      else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける
       EASY.used = true;
       EASY.tell('stop', '畦の手前で止めました。' + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
     }

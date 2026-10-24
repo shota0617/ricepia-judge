@@ -242,7 +242,7 @@
       ・ジャンボタニシ（スクミリンゴガイ）は 西尾市をふくむ愛知県でも 苗を食べる被害が多い（<a href="https://www.pref.aichi.jp/uploaded/attachment/442532.pdf" target="_blank" rel="noopener">愛知県の実証試験</a>）。土の浅い所で冬をこすので、寒い 12〜2 月に、ゆっくり走って 爪を速く回し、浅く耕して 貝をつぶす・寒さにさらす（時速 1.4km 以下・PTO 2 速：千葉県）。耕したあとの泥に貝がつくので、トラクターの泥は田んぼで落とす<br>
       ・春の田起こしの前に、ケイ酸の資材（白っぽい粒）や堆肥をまいておき、耕して土にまぜる。土づくりは耕す前に必ず（<a href="https://www.pref.toyama.jp/documents/43308/tsuchidukuri.pdf" target="_blank" rel="noopener">富山県の土づくりの資料</a>）。ゲームの春の田んぼにも まいてある<br>
       ・西尾市の田んぼには、矢作川から取る明治用水の水が 地下のパイプで来て、田んぼの角の給水栓のバルブを開けて入れる（代かきの田んぼの東の畦）。閉めるときは パイプをいためないよう ゆっくり<br>
-      ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止めてから。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
+      ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止め、上げた作業機は油圧の降下を止めて木の台でささえてから（<a href="https://www.yanmar.com/jp/agri/afterservice_support/selfcheck/tractor/" target="_blank" rel="noopener">ヤンマーの点検の案内</a>）。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・寒い朝や夜は、ディーゼルを<b>予熱</b>（グロー）してからかける。キーを回すとメーターの予熱ランプがつき、消えてからセルが回る（暖かいと 2〜3 秒、寒いと 5〜6 秒ほど）。冷えているあいだはカラカラ音が大きい<br>
       ・季節の生きもの：春の田んぼにはケリが巣をつくり、近づくと「キッ キッ キリッ」と鳴いて頭の上を飛びまわる（巣のそばは手早く通る）。代かきの 5 月は だいだい色のアマサギ、秋は渡ってきたばかりのジョウビタキ。イナゴやチョウは近づくと よける<br>
@@ -2184,7 +2184,8 @@ const RUTS = (() => {
 })();
 // ---- 秋：伸びた 2 番穂（ひこばえ）や長い藁が ロータリーの爪軸に巻きつく（X の米農家さん 2026-10-22：「伸びた 2 番穂がロータリーに絡む」）。
 // 耕した道のりで少しずつ太り（爪軸はカバーの中なので見えない）、巻きつくほど 爪軸が重くなって エンジンの回転が落ち、音も重くなる。
-// 止まって作業機を上げたまま待つと、エンジンを止めて降り、手で取る（本物も PTO を切り エンジンを止めてから。回っている爪に手を出すと巻きこまれる）
+// 止まって作業機を上げたまま待つと、エンジンを止めて降り、手で取る（本物も PTO を切り エンジンを止めてから。回っている爪に手を出すと巻きこまれる）。
+// 上げた作業機の下に手を入れる前に、油圧の降下を止め（ストップバルブ・ロック）、木の台でささえる（ヤンマー「ロータリーの点検」）
 const WRAP = (() => {
   if (season !== 'aki') return { step() {}, v: 0 };
   let wait = 0, told = false;
@@ -2194,12 +2195,12 @@ const WRAP = (() => {
       if (working && Math.abs(S.x) < HX && Math.abs(S.z) < HZ) W.v = Math.min(1, W.v + Math.abs(S.v) * dt * 0.002);   // 田んぼで 300m ほど耕すと 6 割
       if (W.v > 0.6 && !told) {
         told = true; voice('wrap');
-        toast('ロータリーに 2 番穂が巻きついて、エンジンが重い。止まって ' + IMPL + 'を上げ、爪が止まるまで待つと、エンジンを止めて降り、手で取れる', 7);
+        toast('ロータリーに 2 番穂が巻きついて、エンジンが重い。止まって ' + IMPL + 'を上げ、爪が止まるまで待つと、エンジンを止め、油圧の降下を止めて木の台でささえてから降りて、手で取れる', 8);
       }
       if (W.v > 0.3 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && S.rotorW < 1) {   // 爪が止まってから
         if ((wait += dt) > 2.5) {
-          W.v = 0; wait = 0; told = false; S.elapsed += 45;
-          toast('エンジンを止めて降り、爪軸に巻きついた 2 番穂を手で取りました（45 秒）。PTO が回っているあいだは ぜったいに手を出さない', 6);
+          W.v = 0; wait = 0; told = false; S.elapsed += 60;
+          toast('エンジンを止め、油圧の降下を止めて ' + IMPL + 'を木の台でささえ、降りて爪軸の 2 番穂を手で取りました（1 分）。PTO が回っているあいだや、ささえていない作業機の下には ぜったいに手を出さない', 7);
         }
       } else wait = 0;
     }
@@ -2218,12 +2219,13 @@ const SNAILS = (() => {
   for (const m of [shells, bits]) { m.count = 0; m.frustumCulled = false; m.receiveShadow = true; scene.add(m); }
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
   let acc = 0, ks = 0, kb = 0;
+  const PX = Math.ceil(2 * HX), PZ = Math.ceil(2 * HZ), pop = Uint8Array.from({ length: PX * PZ }, () => Math.floor(Math.random() * 3));   // 1m ごとに 0〜2 匹（平均 1 匹/m²）。つぶした・掘り出した貝はへる（同じ所を耕しなおしても ふえない）
   const put = (mesh, k, x, z, y) => { mesh.setMatrixAt(k, m4.compose(p.set(x, y, z), q.setFromEuler(e.set(Math.random() * 0.6, Math.random() * 6.3, Math.random() * 0.6)), one)); };
   return {
     count: cnt,
     step(dt, working) {
       if (!working || Math.abs(S.v) < 0.1) return;
-      acc += Math.abs(S.v) * dt * TILL_W * 0.8;    // 多い田んぼでは 1m² に 1 匹ほど
+      acc += Math.abs(S.v) * dt * TILL_W * 1.6;    // 耕した所を細かく調べる（多い田んぼでは 1m² に 1 匹ほどいて、1 回目でほとんど出てくる）
       if (acc < 1) return;
       const crush = Math.min(0.95, Math.max(0.15, Math.min(0.9, 1.15 - Math.abs(S.v) * 3.6 / 3.5)) * (DEPTH <= 7 ? 1 : 0.6) * (PTO2 ? 1.25 : 1));   // 爪が速い 2 速は よくつぶれる   // 時速 1.4km で 7 割・3km で 3 割ほど。深いと埋めもどす
       const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
@@ -2231,6 +2233,9 @@ const SNAILS = (() => {
         acc -= 1;
         const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.8 - Math.random() * 0.6, x = S.x + lx * cs + lz * sn, z = S.z - lx * sn + lz * cs;
         if (Math.abs(x) > HX - 0.1 || Math.abs(z) > HZ - 0.1) continue;   // 田んぼの中で耕した所だけ（下げたまま農道を走っても 出ない・数えない）
+        const c = Math.floor(x + HX) * PZ + Math.floor(z + HZ);
+        if (!pop[c]) continue;                     // そこの貝は もういない
+        pop[c]--;
         if (Math.random() < crush) {
           cnt.crushed++;
           for (let k = 0; k < 3; k++) { put(bits, kb, x + (Math.random() - 0.5) * 0.08, z + (Math.random() - 0.5) * 0.08, TILL_Y + 0.008); kb = (kb + 1) % (N * 3); }
@@ -4545,6 +4550,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyB') key.lookBack = 1;
   else if (e.code === 'KeyH') toggleHelp();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
+  else if (e.code === 'KeyP' && (S.rotDown || (S.rotorW || 0) > 1)) toast('PTO の変速は、' + IMPL + 'を上げて 爪の回転が止まってから（本物も PTO を切り、止まってから変速レバーを動かす）（P）', 4);
   else if (e.code === 'KeyP') { PTO2 = !PTO2; toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
   else if (e.code === 'KeyT') { S.dbl = !S.dbl; toast('倍速ターン ' + (S.dbl ? '入：35° より大きく切ると前輪が約 2 倍の速さで回って小さく回れる' : '切：大きく回る') + '（T）'); }
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }

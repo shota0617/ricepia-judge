@@ -245,7 +245,7 @@
       ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止め、上げた作業機は油圧の降下を止めて木の台でささえてから（<a href="https://www.yanmar.com/jp/agri/afterservice_support/selfcheck/tractor/" target="_blank" rel="noopener">ヤンマーの点検の案内</a>）。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・寒い朝や夜は、ディーゼルを<b>予熱</b>（グロー）してからかける。キーを回すとメーターの予熱ランプがつき、消えてからセルが回る（暖かいと 2〜3 秒、寒いと 5〜6 秒ほど）。冷えているあいだはカラカラ音が大きい<br>
-      ・季節の生きもの：春の田んぼにはケリが巣をつくり、近づくと「キッ キッ キリッ」と鳴いて頭の上を飛びまわる（巣のそばは手早く通る）。代かきの 5 月は だいだい色のアマサギ、秋は渡ってきたばかりのジョウビタキ。イナゴやチョウは近づくと よける<br>
+      ・季節の生きもの：春の田んぼにはケリが巣をつくり、近づくと「キッ キッ キリッ」と鳴いて頭の上を飛びまわる。巣は地面にあるので、巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない（耕起や代かきで巣が失われることが多い：<a href="https://www.jstage.jst.go.jp/article/jjo/70/2/70_131/_pdf/-char/ja" target="_blank" rel="noopener">日本鳥学会誌の調査</a>）。代かきの 5 月は だいだい色のアマサギ、秋は渡ってきたばかりのジョウビタキ。イナゴやチョウは近づくと よける<br>
       ・代かきで畦ぎわに渦ができていたら、アメリカザリガニの巣穴から水がもれている。土をつめてふさぐ（放っておくと畦がくずれる：愛知県の防除の手引き）<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
@@ -2812,6 +2812,15 @@ const KERI = (() => {
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const M = { back: lam(0x857a64), grey: lam(0x8e9396), white: lam(0xf0f0ea), yellow: lam(0xe0c030), black: lam(0x1a1a1a) };
   const home = k => [NEST[0] + (k ? 0.8 : -0.5), NEST[1] + k * 0.6];
+  // 春は 田んぼの地面に巣（浅いくぼみに 卵が 4 つ）。耕すと巣は失われる（日本鳥学会誌：耕起・湛水による繁殖の失敗）
+  const nest = season === 'haru' ? (() => {
+    const g = new THREE.Group(), egg = new THREE.SphereGeometry(0.022, 8, 6).scale(1, 0.8, 1.35), lin = c => lam(new THREE.Color(c).convertSRGBToLinear()), em = lin(0x6f6a3e);   // 卵は オリーブ色
+    for (let i = 0; i < 4; i++) { const e = new THREE.Mesh(egg, em), a = i * Math.PI / 2 + 0.4; e.position.set(Math.cos(a) * 0.026, 0.017, Math.sin(a) * 0.026); e.rotation.y = -a; g.add(e); }
+    const scrape = new THREE.Mesh(new THREE.CircleGeometry(0.09, 12).rotateX(-Math.PI / 2), lin(0x3e3324)); scrape.position.y = 0.006;   // 浅いくぼみ（暗い土） g.add(scrape);
+    g.position.set(NEST[0], 0, NEST[1]); scene.add(g); return g;
+  })() : null;
+  const ni = Math.floor((NEST[0] + HX) / CELL), nj = Math.floor((NEST[1] + HZ) / CELL);
+  let nestTold = false;
   function make(k) {
     const b = new THREE.Group();
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), M.back); body.scale.set(0.9, 0.8, 1.6); body.position.y = 0.26; b.add(body);
@@ -2835,8 +2844,12 @@ const KERI = (() => {
   const birds = [make(0), make(1)];
   let alarmT = 0;
   return {
-    birds, NEST, get alarm() { return alarmT > 0; },
+    birds, NEST, nest, get alarm() { return alarmT > 0; },
     update(dt) {
+      if (nest && nest.visible) {
+        if (!nestTold && S.started && Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 9) { nestTold = true; toast('ケリの巣（地面に卵が 4 つ）があります。巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない', 5); }
+        if (tilledMask[ni * NZ + nj]) { nest.visible = false; toast('ケリの巣を耕してしまった…。本物は 巣のまわりを残して よける', 5); }
+      }
       alarmT = Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 14 ? 6 : alarmT - dt;   // 巣から 14m 以内に来たら騒ぐ（はなれて 6 秒で落ちつく）
       birds.forEach((b, k) => {
         const u = b.userData; u.t += dt;

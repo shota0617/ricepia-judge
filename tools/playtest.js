@@ -714,8 +714,15 @@ async function walkTo(page, id) {
     let entered = false;
     for (let i = 0; i < 16 && !entered; i++) { await page.waitForTimeout(100); entered = await page.evaluate(([x, y, K]) => { const r = nishioPixel.roll; return Math.floor(r.y / K) === y - 1 && Math.floor(r.x / K) === x; }, [c.x, c.y, c.K]); }
     await page.keyboard.up('ArrowUp');
+    // ななめ（上と右を いっしょに）でも、2つの 寄せが 打ち消しあって マスから 出られなく ならない
+    await page.evaluate(([x, y]) => nishioPixel.rollPut(x, y, 0, 0), [(c.x + 0.5) * c.K, c.y * c.K + 1.4]);
+    await page.waitForTimeout(150);
+    await page.keyboard.down('ArrowUp'); await page.keyboard.down('ArrowRight');
+    await page.waitForTimeout(1500);
+    await page.keyboard.up('ArrowUp'); await page.keyboard.up('ArrowRight');
+    const diag = await page.evaluate(([x, y, K]) => { const r = nishioPixel.roll; return Math.floor(r.x / K) !== x || Math.floor(r.y / K) !== y; }, [c.x, c.y, c.K]);
     await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ok: entered, cell: [c.x, c.y] };
+    return { ok: entered && diag, cell: [c.x, c.y], entered, diag };
   })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

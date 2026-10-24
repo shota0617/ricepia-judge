@@ -7055,11 +7055,12 @@ function rollStep(dt) {
     //   寄りきる ころに、いまの 勢いの 一部を 曲がる 向きへ（止まらずに くるっと 曲がれる）。通路の まん中：横は マスの まん中、たては 上下の 当たりの ちがいで 1.4マス目
     const ix = Math.max(-1, Math.min(1, ax)), iy = Math.max(-1, Math.min(1, ay)), cx = Math.floor(rp.x / MZ_K), cy = Math.floor(rp.y / MZ_K), k = Math.min(1, dt * 12);
     const mx = (cx + 0.5) * MZ_K, my = cy * MZ_K + 1.4;
-    if (Math.abs(iy) > 0.3 && Math.abs(iy) >= Math.abs(ix) * 0.6 && Math.abs(mx - rp.x) < 1.3 && mzOpen(cx, cy, 0, Math.sign(iy))) {
+    const sp2 = rp.vx * rp.vx + rp.vy * rp.vy, toY = sp2 > 0.25 ? Math.abs(rp.vx) >= Math.abs(rp.vy) : Math.abs(iy) >= Math.abs(ix);   // 曲がる 向きは 1つだけ（いまの 進む 向きと 直角。止まって いれば 強く 傾けた ほう）。ななめに 傾けても 2つの 寄せが 打ち消しあって 動けなく ならない
+    if (toY && Math.abs(iy) > 0.3 && Math.abs(iy) >= Math.abs(ix) * 0.6 && Math.abs(mx - rp.x) < 1.3 && mzOpen(cx, cy, 0, Math.sign(iy))) {
       rp.x += (mx - rp.x) * k;
       if (Math.abs(mx - rp.x) < 0.35 && Math.abs(rp.vx) > Math.abs(rp.vy)) { const t = Math.abs(rp.vx) * 0.4 * k; rp.vy += Math.sign(iy) * t; rp.vx -= Math.sign(rp.vx) * t; }
     }
-    if (Math.abs(ix) > 0.3 && Math.abs(ix) >= Math.abs(iy) * 0.6 && Math.abs(my - rp.y) < 1.3 && mzOpen(cx, cy, Math.sign(ix), 0)) {
+    else if (!toY && Math.abs(ix) > 0.3 && Math.abs(ix) >= Math.abs(iy) * 0.6 && Math.abs(my - rp.y) < 1.3 && mzOpen(cx, cy, Math.sign(ix), 0)) {
       rp.y += (my - rp.y) * k;
       if (Math.abs(my - rp.y) < 0.35 && Math.abs(rp.vy) > Math.abs(rp.vx)) { const t = Math.abs(rp.vy) * 0.4 * k; rp.vx += Math.sign(ix) * t; rp.vy -= Math.sign(rp.vy) * t; }
     }

@@ -62,6 +62,7 @@
   .seasons button span { display: block; font-size: 24px; }
   .seasons button.sel { border-color: var(--green); background: #e8efdf; }
   .times { margin-top: -6px; }
+  #times { grid-template-columns: repeat(4, 1fr); }   /* 朝・昼・夕方・夜 */
   .arts { grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: -6px; }
   @media (max-width: 420px) { .arts { grid-template-columns: repeat(3, 1fr); } }
   .arts button { padding: 6px 2px; font-size: 12px; }
@@ -176,6 +177,7 @@
       <button data-t="asa"><span>🌅</span>朝</button>
       <button data-t="hiru"><span>☀️</span>昼</button>
       <button data-t="yu"><span>🌇</span>夕方</button>
+      <button data-t="yoru"><span>🌙</span>夜</button>
     </div>
     <div class="seasons times" id="weathers">
       <button data-w="hare"><span>🌤️</span>晴れ</button>
@@ -235,6 +237,7 @@
       ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
       ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
       ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
+      ・夜までかかる作業は なるべくしない。暗いと畦や人が見えにくく、事故が多い（<a href="https://www.pref.shimane.lg.jp/industry/norin/kikan/seibu_norin/infomation2/accidents.html" target="_blank" rel="noopener">島根県の農作業事故の防止</a>）。するなら作業灯とライトを点検して、向きを作業する所に合わせる（ヤンマーの説明）。夜の作業灯には虫が集まる<br>
       ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止めてから。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
@@ -300,7 +303,8 @@ const TILL_Y = SHIRO ? 0.045 : 0.035;
 
 const $ = id => document.getElementById(id);
 // 時間：朝・昼・夕方（太陽の高さと向き・光の色・空・もや）
-const TOD = { asa: 1, hiru: 1, yu: 1 }[params.get('time')] ? params.get('time') : 'hiru';
+const TOD = { asa: 1, hiru: 1, yu: 1, yoru: 1 }[params.get('time')] ? params.get('time') : 'hiru';
+const DARK = TOD === 'yu' || TOD === 'yoru';     // ライトをつけて始める
 // 天気：晴れ・くもり・小雨（w=kumori・ame）。くもりと小雨は 空が灰色で、日ざしがやわらかく影がうすい（雲の影も流れない）。
 // 小雨は 雨のすじ・前ガラスの水滴と間欠ワイパー・キャビンの屋根をたたく音
 const WX = { kumori: 1, ame: 1 }[params.get('w')] ? params.get('w') : 'hare', RAIN = WX === 'ame';
@@ -332,14 +336,18 @@ const LIGHT = {
     cLit: [1.0, 0.9, 0.8], cDark: [0.62, 0.65, 0.74], disk: [1.0, 0.85, 0.65], exp: 1.0 },
   yu: { sky: [0x4d6ba8, 0xf0a46c], sun: [-0.8, 0.12, 0.42], sunC: 0xffa25a, sunI: 2.8, hemi: [0xb6a6c6, 0x4a3a2c, 0.26], fog: [120, 900],
     cLit: [1.0, 0.70, 0.48], cDark: [0.48, 0.42, 0.52], disk: [1.0, 0.65, 0.35], exp: 0.95 },
+  // 夜：月明かり（青白く弱い）と、作業灯・ヘッドライト。空は暗い紺、地平は少し明るい（町の明かり）。月の円盤は太陽と同じしくみで描く
+  yoru: { sky: [0x070b18, 0x1c2436], sun: [0.35, 0.55, -0.45], sunC: 0xa9bde0, sunI: 0.22, hemi: [0x24304a, 0x0a0907, 0.12], fog: [35, 420],
+    cLit: [0.16, 0.18, 0.24], cDark: [0.05, 0.06, 0.09], disk: [0.55, 0.6, 0.7], exp: 1.15 },
 }[TOD];
 if (WX !== 'hare') {                            // くもり・小雨：雲が日ざしをさえぎり、光は空全体から来る（影はうすく、色はさめる）
   const k = RAIN ? 0.8 : 1, grey = (a, b) => [a, b].map(c => new THREE.Color(c).multiplyScalar(k).getHex());
   Object.assign(LIGHT, {
-    sky: { asa: grey(0x8d97a2, 0xc6c9cb), hiru: grey(0x9aa3ac, 0xcdd1d4), yu: grey(0x6c6f78, 0xa8a097) }[TOD],
+    sky: { asa: grey(0x8d97a2, 0xc6c9cb), hiru: grey(0x9aa3ac, 0xcdd1d4), yu: grey(0x6c6f78, 0xa8a097), yoru: grey(0x111419, 0x23262c) }[TOD],
     sunI: LIGHT.sunI * (RAIN ? 0.16 : 0.28), hemi: [LIGHT.hemi[0], LIGHT.hemi[1], LIGHT.hemi[2] * (RAIN ? 1.9 : 2.1)],
     fog: RAIN ? [25, 380] : [70, 750], cLit: [0.84, 0.86, 0.88].map(c => c * k), cDark: [0.56, 0.59, 0.63].map(c => c * k), disk: [0.04, 0.04, 0.04],
   });
+  if (TOD === 'yoru') Object.assign(LIGHT, { cLit: LIGHT.cLit.map(c => c * 0.15), cDark: LIGHT.cDark.map(c => c * 0.15), disk: [0, 0, 0], fog: RAIN ? [20, 260] : [30, 380] });   // 雲の夜は 月も見えない
 }
 
 // ---- 描くしくみ ----
@@ -389,6 +397,17 @@ function skyMesh(r) {
 }
 const sky = skyMesh(2000);
 scene.add(sky);
+// 夜空の星（晴れた夜だけ）。空の球の少し内側に点を散らす（地平の近くは もやで見えないので 少し上から）
+if (TOD === 'yoru' && WX === 'hare') {
+  const N = 700, pos = new Float32Array(N * 3);
+  for (let k = 0; k < N; k++) {
+    const y = 0.08 + 0.92 * Math.sqrt(Math.random()), r = Math.sqrt(1 - y * y), th = Math.random() * Math.PI * 2;
+    pos.set([Math.cos(th) * r * 1800, y * 1800, Math.sin(th) * r * 1800], k * 3);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const stars = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xdfe6ff, size: 1.6, sizeAttenuation: false, fog: false, transparent: true, opacity: 0.85, depthWrite: false }));
+  stars.frustumCulled = false; scene.add(stars);
+}
 {
   // 環境マップ：空の色の帯（エクイレクタングラー）の絵から作る。水や金属・ガラスに空が映る
   const cv = document.createElement('canvas');
@@ -457,7 +476,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
 // テール：ライトといっしょに点く。作業機のうしろの灯火器も同じ
 const LAMPS = (() => {
   const mats = [], spots = [], tails = [];
-  let on = false;
+  let on = false, moths = null;
   function setup(root) {
     const box = new THREE.Box3(), inv = new THREE.Matrix4();
     rig.updateMatrixWorld(true);
@@ -485,7 +504,16 @@ const LAMPS = (() => {
       const w = found.lamp_work;
       add(new THREE.Vector3(0, w.max.y, w.min.z), new THREE.Vector3(0, 0, ROTARY_Z - 3.5), 0.95, 22);
     }
-    set(TOD === 'yu');
+    if (TOD === 'yoru' && !RAIN) {                // 夜の作業灯には 蛾や小さな虫が集まって ちらちら飛ぶ（前のライトの前と、うしろの作業灯のまわり）
+      const C = [new THREE.Vector3(0, h.y + 0.15, h.z + 0.6)];
+      if (found.lamp_work) C.push(new THREE.Vector3(0, found.lamp_work.max.y + 0.2, found.lamp_work.min.z - 0.6));
+      const N = 36, g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(N * 3), 3));
+      const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xfff6e0, size: 0.025, transparent: true, opacity: 0.9, depthWrite: false }));
+      pts.frustumCulled = false; rig.add(pts);
+      moths = { pts, C, ph: Float32Array.from({ length: N * 4 }, () => Math.random() * 10) };
+    }
+    set(DARK);
   }
   function set(v) {
     on = v;
@@ -498,6 +526,19 @@ const LAMPS = (() => {
   // ブレーキランプ：止まろうとしている（アクセルをはなして まだ動いている）・内側ブレーキのときは、テールが明るく点く
   let lastB = -1;
   function update() {
+    if (moths) {
+      moths.pts.visible = on;
+      if (on) {
+        const t = performance.now() / 1000, a = moths.pts.geometry.attributes.position, p = moths.ph;
+        for (let i = 0; i < a.count; i++) {
+          const c = moths.C[i % moths.C.length], k = i * 4;
+          a.setXYZ(i, c.x + 0.5 * Math.sin(t * (1.3 + p[k] * 0.2) + p[k + 1]) + 0.05 * Math.sin(t * 13 + p[k + 2]),
+            c.y + 0.25 * Math.sin(t * (2.1 + p[k + 2] * 0.3) + p[k + 3]) + 0.04 * Math.sin(t * 17 + p[k]),
+            c.z + 0.4 * Math.cos(t * (1.7 + p[k + 1] * 0.2) + p[k]));
+        }
+        a.needsUpdate = true;
+      }
+    }
     const b = (!key.fwd && !key.back && Math.abs(S.v) > 0.05) || S.autoBrake ? 1 : 0;
     if (b === lastB) return;
     lastB = b;
@@ -873,6 +914,7 @@ function dustyGlass(m) {
 
 // 季節の生き物：春と代かきはツバメがトラクターのまわりを低く飛びまわる。秋は赤とんぼが窓の高さでホバリング
 const LIFE = (() => {
+  if (TOD === 'yoru') return { update() {} };   // ツバメと赤とんぼも 昼だけ
   const list = [];
   const aki = season === 'aki';
   const dark = new THREE.MeshLambertMaterial({ color: 0x1a1d2a, side: THREE.DoubleSide });
@@ -1073,6 +1115,7 @@ const FROST = (() => {
 // ---- 畦を見回る人：田んぼの水や畦は毎日のように見回る（山形県・農林水産省の資料）。北の畦（となりの田んぼとのあいだ）を
 // スコップをかついで歩き、ときどき立ち止まって田んぼをのぞく。トラクターが近いと止まって待つ
 const FARMER = (() => {
+  if (TOD === 'yoru') return { update() {} };   // 夜は 畦を見回る人もいない
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const M = { cloth: lam(0x3b5f86), pants: lam(0x4a4c52), boot: lam(SHIRO ? 0x2b2b2b : 0xe8e8e2), skin: lam(0xc99a78), cap: lam(season === 'aki' ? 0xd9c48a : 0xe9e4d6), wood: lam(0x8a6a44), steel: lam(0x8c9298), towel: lam(0xf2f2ee) };
   const box = (w, h, d, m) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
@@ -1308,7 +1351,7 @@ function setupField(root) {
   root.traverse(o => {
     if (o.isMesh) o.receiveShadow = true;
     if (o.isMesh && /water/.test(o.material.name)) o.material.envMapIntensity = 0.55;   // 水に映る空を少しおさえる
-    if (o.isMesh && o.material.name === 'window' && TOD === 'yu') { o.material.emissive.set(0xffb45a); o.material.emissiveIntensity = 0.7; }   // 夕方は家の窓に明かり
+    if (o.isMesh && o.material.name === 'window' && DARK) { o.material.emissive.set(0xffb45a); o.material.emissiveIntensity = TOD === 'yoru' ? 1.2 : 0.7; }   // 夕方と夜は家の窓に明かり
     const amp = o.isMesh && { grass_tuft: 0.05, higanbana: 0.06, rice_side: 0.05, tree_card: 0.22, cedar_card: 0.15 }[o.material.name];
     if (amp && !o.material.userData.wind) { o.material.userData.wind = 1; addWind(o.material, amp); }
     if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
@@ -1384,7 +1427,7 @@ const PASSER = (() => {
   B(gray, 1.36, 0.6, 0.05, 0, 1.08, 0.36);              // 鳥居（運転席のうしろの枠）
   B(black, 1.50, 0.18, 0.10, 0, 0.48, 1.74);            // 前のバンパー
   B(black, 1.40, 0.24, 3.30, 0, 0.36, 0.15);            // 下まわり
-  const lampM = new THREE.MeshLambertMaterial({ color: 0xfff6d8, emissive: TOD === 'yu' ? 0xfff2c8 : 0x333022 });   // 夕方はライトをつけて走る
+  const lampM = new THREE.MeshLambertMaterial({ color: 0xfff6d8, emissive: DARK ? 0xfff2c8 : 0x333022 });   // 夕方と夜はライトをつけて走る
   for (const sx of [-1, 1]) B(lampM, 0.22, 0.12, 0.04, sx * 0.52, 0.78, 1.75);
   const wheels = [];
   for (const [x, z] of [[-0.62, 1.15], [0.62, 1.15], [-0.62, -0.85], [0.62, -0.85]]) {
@@ -2179,6 +2222,7 @@ function laySomeTracks(working) {
 
 // ---- シラサギ（耕しているとうしろについてきて、土から出た虫をついばむ） ----
 const BIRDS = (() => {
+  if (TOD === 'yoru') return { update() {}, list: [] };   // サギもカラスも 昼の鳥。夜は来ない
   // 耕していると十数羽が集まってくる（掘り起こされたミミズや虫をねらう）。ダイサギ・コサギ（小さく、くちばしが黒い）・アオサギ（灰色で大きい）
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const KIND = {
@@ -2309,7 +2353,7 @@ const BIRDS = (() => {
 // ---- 夕方のコウモリ（アブラコウモリ）：日がしずむころ、田んぼの上を ひらひら不規則に飛びまわって虫をとる（3〜11 月に活動）。
 // 水を張った代かきの田んぼの上がいちばん多い ----
 const BATS = (() => {
-  if (TOD !== 'yu') return { update() {} };
+  if (!DARK) return { update() {} };                // 夕方から夜にかけて飛ぶ
   const n = { haru: 3, aki: 2, shirokaki: 5 }[season], list = [];
   const mat = new THREE.MeshBasicMaterial({ color: 0x15100e, side: THREE.DoubleSide });
   const wingGeo = new THREE.BufferGeometry();
@@ -2344,7 +2388,7 @@ const BATS = (() => {
 // ---- 秋のスズメの群れ：稲刈りのあとの田んぼで落ち穂（こぼれた籾）をついばむ。トラクターが近づくと
 // いっせいに飛び立ち、波をえがいて少しはなれた耕していない所へまとまって降りる ----
 const SPARROWS = (() => {
-  if (season !== 'aki') return { update() {} };
+  if (season !== 'aki' || TOD === 'yoru') return { update() {} };
   const N = MOBILE ? 18 : 30;
   const geo = new THREE.SphereGeometry(0.035, 6, 4); geo.scale(0.9, 0.85, 1.5);
   const mesh = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color: 0x7a5a3a }), N);
@@ -2402,6 +2446,7 @@ const SPARROWS = (() => {
 
 // ---- セキレイ（ハクセキレイ）：耕した土の上を小走りしては止まり、長い尾を上下にふって虫をついばむ。近づくと波をえがいて飛ぶ
 const WAGTAILS = (() => {
+  if (TOD === 'yoru') return { update() {}, list: [] };
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const grey = lam(0x6f7276), white = lam(0xf2f2ee), black = lam(0x161616);
   function make() {
@@ -3597,6 +3642,12 @@ function startAmbient(ac) {
       osc(k % 3 ? 'square' : 'sawtooth', bp.frequency.value * 0.5, bp); bp.connect(v.g);
       v.kind = k % 3 ? 'ama' : 'koro'; voices.push(v);
     }
+  } else if (season === 'haru' && TOD === 'yoru') {   // 春の夜：ヒバリは鳴かない。水を入れはじめた となりの田んぼから 遠いカエル
+    for (let k = 0; k < 3; k++) {
+      const v = voice(R(-0.9, 0.9), R(0.15, 0.4)), bp = ac.createBiquadFilter();
+      bp.type = 'bandpass'; bp.frequency.value = R(1300, 2000); bp.Q.value = 6;
+      osc('square', bp.frequency.value * 0.5, bp); bp.connect(v.g); v.kind = 'ama'; voices.push(v);
+    }
   } else if (season === 'haru') {               // ヒバリ：1 羽、高い声を早口で
     const v = voice(R(-0.4, 0.4), 0.6); v.o = osc('sine', 3500, v.g); v.kind = 'hibari'; voices.push(v);
   } else {
@@ -3609,7 +3660,7 @@ function startAmbient(ac) {
     for (const v of voices) {
       v.t = Math.max(v.t || now, now);
       while (v.t < end) {
-        const g = v.g.gain, a = v.vol * (TOD === 'hiru' && v.kind === 'korogi' ? 0.4 : 1);
+        const g = v.g.gain, a = v.vol * (TOD === 'hiru' && v.kind === 'korogi' ? 0.4 : 1) * (TOD === 'yoru' ? 1.3 : 1);   // 夜は虫とカエルの声が大きい
         if (v.kind === 'ama') {                   // グワッグワッ…（1 秒くらい続けて休む）
           if (Math.random() < 0.35) { v.t += R(0.8, 3); continue; }
           const n = Math.floor(R(4, 10));
@@ -3954,6 +4005,7 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
+    if (TOD === 'yoru') setTimeout(() => toast('🌙 本物は、暗くなってからの作業は なるべくしない（畦や足もとが見えにくく、事故が多い）。するなら作業灯をつけて ゆっくり（L でライトの入切）', 6), 10000);
     if (RAIN && !SHIRO) setTimeout(() => toast('🌧️ 本物は、雨の日や雨のすぐあとには耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになる（乾くのを待つ）', 6), 4000);
   }
   if (!soundOn && !audio) toggleSound();

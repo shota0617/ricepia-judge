@@ -240,6 +240,7 @@
       ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
       ・夜までかかる作業は なるべくしない。暗いと畦や人が見えにくく、事故が多い（<a href="https://www.pref.shimane.lg.jp/industry/norin/kikan/seibu_norin/infomation2/accidents.html" target="_blank" rel="noopener">島根県の農作業事故の防止</a>）。するなら作業灯とライトを点検して、向きを作業する所に合わせる（ヤンマーの説明）。夜の作業灯には虫が集まる<br>
       ・ジャンボタニシ（スクミリンゴガイ）は 西尾市をふくむ愛知県でも 苗を食べる被害が多い（<a href="https://www.pref.aichi.jp/uploaded/attachment/442532.pdf" target="_blank" rel="noopener">愛知県の実証試験</a>）。土の浅い所で冬をこすので、寒い 12〜2 月に、ゆっくり走って 爪を速く回し、浅く耕して 貝をつぶす・寒さにさらす（時速 1.4km 以下・PTO 2 速：千葉県）。耕したあとの泥に貝がつくので、トラクターの泥は田んぼで落とす<br>
+      ・秋起こしの前には、稲わらを早く腐らせるために石灰窒素（黒っぽい灰色の粒、10a に 10〜20kg）をまき、深さ 5〜7cm で浅く耕してすき込む。稲刈りのあと なるべく早く、おそくとも 10 月下旬までに（<a href="https://www.pref.aomori.lg.jp/soshiki/kenmin/ni-nosui/files/seisanjohoH29.10.pdf" target="_blank" rel="noopener">青森県の稲作の情報</a>）<br>
       ・春の田起こしの前に、ケイ酸の資材（白っぽい粒）や堆肥をまいておき、耕して土にまぜる。土づくりは耕す前に必ず（<a href="https://www.pref.toyama.jp/documents/43308/tsuchidukuri.pdf" target="_blank" rel="noopener">富山県の土づくりの資料</a>）。ゲームの春の田んぼにも まいてある<br>
       ・西尾市の田んぼには、矢作川から取る明治用水の水が 地下のパイプで来て、田んぼの角の給水栓のバルブを開けて入れる（代かきの田んぼの東の畦）。閉めるときは パイプをいためないよう ゆっくり<br>
       ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止め、上げた作業機は油圧の降下を止めて木の台でささえてから（<a href="https://www.yanmar.com/jp/agri/afterservice_support/selfcheck/tractor/" target="_blank" rel="noopener">ヤンマーの点検の案内</a>）。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
@@ -2161,17 +2162,24 @@ const RUTS = (() => {
 })();
 // ---- 春：田起こしの前の土づくり。ケイ酸の資材（白っぽい粒）と堆肥（黒っぽいかたまり）を ブロードキャスターでまいてから耕す
 // （富山県：土づくりは耕起の前に必ず。ケイ酸質資材 120〜160kg/10a・牛ふん堆肥 1t/10a）。耕すと土にまざって見えなくなる。
-// ブロードキャスターは 幅 10m ほどずつ往復してまくので、重なった所は濃く、まん中は少しうすい帯になる
+// ブロードキャスターは 幅 10m ほどずつ往復してまくので、重なった所は濃く、まん中は少しうすい帯になる。
+// 秋：稲わらを早く腐らせるため、秋起こし（深さ 5〜7cm の浅起こし）の前に 石灰窒素（黒っぽい灰色の粒）を 10a に 10〜20kg まく。
+// 稲刈りのあと なるべく早く、おそくとも 10 月下旬までに（青森県・山形県の稲作の技術情報）。春の資材よりずっと少ないので まばら
 (() => {
-  if (season !== 'haru') return;
+  if (season !== 'haru' && season !== 'aki') return;
   const cv = document.createElement('canvas'); cv.width = cv.height = 256;
   const g = cv.getContext('2d');
-  for (let k = 0; k < 2200; k++) {                // ケイ酸の粒（直径 2〜4mm）
+  if (season === 'aki') for (let k = 0; k < 5200; k++) {  // 石灰窒素の粒（直径 1〜3mm、黒っぽい灰色。1m² に 数千つぶ なので、遠目には 灰色の ごま塩）
+    const v = 48 + Math.random() * 30;
+    g.fillStyle = `rgba(${v},${v},${v + 4},${0.7 + Math.random() * 0.3})`;
+    g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random(), 1 + Math.random());
+  }
+  else for (let k = 0; k < 2200; k++) {           // ケイ酸の粒（直径 2〜4mm）
     const v = 210 + Math.random() * 40;
     g.fillStyle = `rgba(${v},${v},${v - 8},${0.6 + Math.random() * 0.4})`;
     g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 1.5, 1 + Math.random() * 1.5);
   }
-  for (let k = 0; k < 26; k++) {                  // 堆肥のかたまり
+  if (season === 'haru') for (let k = 0; k < 26; k++) {   // 堆肥のかたまり
     g.fillStyle = `rgba(${45 + Math.random() * 20},${34 + Math.random() * 14},${24 + Math.random() * 10},0.85)`;
     g.beginPath(); g.ellipse(Math.random() * 256, Math.random() * 256, 3 + Math.random() * 6, 2 + Math.random() * 5, Math.random() * 3, 0, Math.PI * 2); g.fill();
   }

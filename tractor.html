@@ -2184,7 +2184,7 @@ const WRAP = (() => {
   const W = {
     v: 0,
     step(dt, working) {
-      if (working) W.v = Math.min(1, W.v + Math.abs(S.v) * dt * 0.002);   // 300m ほど耕すと 6 割
+      if (working && Math.abs(S.x) < HX && Math.abs(S.z) < HZ) W.v = Math.min(1, W.v + Math.abs(S.v) * dt * 0.002);   // 田んぼで 300m ほど耕すと 6 割
       if (W.v > 0.6 && !told) {
         told = true; voice('wrap');
         toast('ロータリーに 2 番穂が巻きついて、エンジンが重い。止まって ' + IMPL + 'を上げ、爪が止まるまで待つと、エンジンを止めて降り、手で取れる', 7);
@@ -2223,6 +2223,7 @@ const SNAILS = (() => {
       while (acc >= 1) {
         acc -= 1;
         const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.8 - Math.random() * 0.6, x = S.x + lx * cs + lz * sn, z = S.z - lx * sn + lz * cs;
+        if (Math.abs(x) > HX - 0.1 || Math.abs(z) > HZ - 0.1) continue;   // 田んぼの中で耕した所だけ（下げたまま農道を走っても 出ない・数えない）
         if (Math.random() < crush) {
           cnt.crushed++;
           for (let k = 0; k < 3; k++) { put(bits, kb, x + (Math.random() - 0.5) * 0.08, z + (Math.random() - 0.5) * 0.08, TILL_Y + 0.008); kb = (kb + 1) % (N * 3); }

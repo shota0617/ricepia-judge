@@ -71,6 +71,8 @@ function postJson(url, headers, body, ms) {
       res.setEncoding('utf8');
       res.on('data', d => { s += d; });
       res.on('end', () => resolve({ status: res.statusCode, text: s }));
+      res.on('error', reject);
+      res.on('close', () => { if (!res.complete) reject(new Error('xAI の答えが途中で切れた')); });   // 答えの途中で切れたら失敗にする（待ちつづけない）
     });
     req.setTimeout(ms, () => req.destroy(new Error(`xAI の答えが ${ms / 60e3} 分来ない`)));
     req.on('error', reject);

@@ -1823,14 +1823,19 @@ function alleyFind(x, y, ll) {
   showReward(ALLEY.pts, '🔍 路地の行き止まりを しらべたら 見つかった！', fresh ? ['📖 まちメモ +1'] : [], lvUp, fresh ? factPool().get(k) : '', null);
   return true;
 }
-// 金の米つぶ（pixel.js の 地図の めいろ）：行き止まりに おちている。ひろうと +2pt、きょう 10こごとに +20pt。ひろった つぶは その日の きろく（dayState().grains。日が かわると また 出る）
+// 金の米つぶ（pixel.js の 地図の めいろ）：行き止まりに おちている。ひろうと +2pt、きょう 10こごとに +20pt。
+// ひろった つぶは S.mzGrainGot（key は「日本の 日の 番号:マス」。つぶの 場所と 同じく 日本の 日づけで かわる。端末の 時間帯が 日本で なくても ずれない）
 const MZ_GRAIN = { pts: 2, every: 10, bonus: 20 };
+function mzGrainGot() {   // きょう（日本の 日づけ）ひろった つぶ
+  const p = Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + ':';
+  if (!Array.isArray(S.mzGrainGot) || S.mzGrainGot.some(k => !k.startsWith(p))) S.mzGrainGot = (S.mzGrainGot || []).filter(k => k.startsWith(p));
+  return S.mzGrainGot;
+}
 function mzGrain(key) {
-  const day = dayState();
-  if (!Array.isArray(day.grains)) day.grains = [];
-  if (day.grains.includes(key)) return null;
-  day.grains.push(key);
-  const n = day.grains.length, bonus = n % MZ_GRAIN.every === 0 ? MZ_GRAIN.bonus : 0, pts = MZ_GRAIN.pts + bonus;
+  const got = mzGrainGot();
+  if (got.includes(key)) return null;
+  got.push(key);
+  const n = got.length, bonus = n % MZ_GRAIN.every === 0 ? MZ_GRAIN.bonus : 0, pts = MZ_GRAIN.pts + bonus;
   const lvUp = gainPoints(pts);
   if (bonus) S.log.unshift({ type: 'grain', t: Date.now(), pts: MZ_GRAIN.every * MZ_GRAIN.pts + bonus, name: `金の米つぶを ${n}こ ひろった`, icon: '🌾' });   // きろくは 10こごとに まとめて（1こずつだと 最近のポイントが うまる）
   const msg = bonus ? `🌾 金の米つぶ きょう ${n}こ！ ボーナス +${bonus}pt` : n === 1 ? '🌾 金の米つぶ：めいろの 行き止まりに おちているよ（毎日 かわる）' : '';
@@ -3831,7 +3836,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzGrainHas: key => (dayState().grains || []).includes(key), get mzGrains() { return (dayState().grains || []).length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

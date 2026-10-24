@@ -6875,10 +6875,10 @@ const mzStars = (sec, len0) => { const p = mzPar(len0); return sec <= p.p3 ? 3 :
 function mzClock(now) {
   const dt = mzRt.clockT ? Math.min(now - mzRt.clockT, Math.max(0, now - mzRt.t0)) : 0;   // いまの ゴールが 始まってからの 分だけ
   mzRt.clockT = now;
-  if (mzRt.t0 && (dt > 1000 || mapCovered() || !howtoEl.hidden || sightBusy())) mzRt.t0 += dt;   // 止める（画面が かくれて 1こまが 長い ときも）
+  if (mzRt.t0 && (dt > 1000 || mapCovered(true) || !howtoEl.hidden || sightBusy())) mzRt.t0 += dt;   // 止める（画面が かくれて 1こまが 長い ときも）
 }
 function drawMzClock(w, dpr, now) {
-  if (!mzRt.t0 || !mzRt.len0 || mapCovered() || mzBanner.t0) return;
+  if (!mzRt.t0 || !mzRt.len0 || mapCovered(true) || mzBanner.t0) return;
   const sec = (now - mzRt.t0) / 1000, p = mzPar(mzRt.len0), st = mzStars(sec, mzRt.len0), left = st === 3 ? p.p3 - sec : st === 2 ? p.p2 - sec : 0;
   const mmss = v => `${Math.floor(v / 60)}:${String(Math.floor(v % 60)).padStart(2, '0')}`;
   const S = Math.round(13 * dpr), stars = '★'.repeat(st) + '☆'.repeat(3 - st), t = mzRt.warp ? `⏱ ${mmss(sec)}　とびこえたので ★なし` : `⏱ ${mmss(sec)}　${stars}${left > 0 ? ` あと ${mmss(left)}` : ''}`;
@@ -7245,7 +7245,7 @@ function rollStep(dt) {
     if (rp.x !== null && rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 6 && performance.now() - (mzRt.snapT || 0) > 800) mzRt.warp = true;   // めいろを とびこえた（名所の 窓の「ここへ」など）：この ゴールは ★なし
     Object.assign(rp, { x: t.x, y: t.y, vx: 0, vy: 0, sent: { x: t.x, y: t.y }, tile: `${Math.floor(t.x)},${Math.floor(t.y)}` });
   }
-  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered())) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
+  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
   const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
@@ -7265,6 +7265,20 @@ function rollStep(dt) {
     rp.vx *= ns / sp; rp.vy *= ns / sp;
   }
   const mz = mazeOn(), rb = mz ? (x, y) => mzBlocked(rp.x, rp.y, x, y) : rollBlocked;   // めいろの ときは めいろの 壁だけに 当たる
+  if (mz && !window.__noCornerAssist) {   // 曲がり角アシスト：曲がりたい 向きに 傾けて、その 向きの 通路が 開いていれば、通路の まん中へ すっと 寄せて 入れる（生け垣の かどに ひっかからない）。
+    //   寄りきる ころに、いまの 勢いの 一部を 曲がる 向きへ（止まらずに くるっと 曲がれる）。通路の まん中：横は マスの まん中、たては 上下の 当たりの ちがいで 1.4マス目
+    const ix = Math.max(-1, Math.min(1, ax)), iy = Math.max(-1, Math.min(1, ay)), cx = Math.floor(rp.x / MZ_K), cy = Math.floor(rp.y / MZ_K), k = Math.min(1, dt * 12);
+    const mx = (cx + 0.5) * MZ_K, my = cy * MZ_K + 1.4;
+    const sp2 = rp.vx * rp.vx + rp.vy * rp.vy, toY = sp2 > 0.25 ? Math.abs(rp.vx) >= Math.abs(rp.vy) : Math.abs(iy) >= Math.abs(ix);   // 曲がる 向きは 1つだけ（いまの 進む 向きと 直角。止まって いれば 強く 傾けた ほう）。ななめに 傾けても 2つの 寄せが 打ち消しあって 動けなく ならない
+    if (toY && Math.abs(iy) > 0.3 && Math.abs(iy) >= Math.abs(ix) * 0.6 && Math.abs(mx - rp.x) < 1.3 && mzOpen(cx, cy, 0, Math.sign(iy))) {
+      rp.x += (mx - rp.x) * k;
+      if (Math.abs(mx - rp.x) < 0.35 && Math.abs(rp.vx) > Math.abs(rp.vy)) { const t = Math.abs(rp.vx) * 0.4 * k; rp.vy += Math.sign(iy) * t; rp.vx -= Math.sign(rp.vx) * t; }
+    }
+    else if (!toY && Math.abs(ix) > 0.3 && Math.abs(ix) >= Math.abs(iy) * 0.6 && Math.abs(my - rp.y) < 1.3 && mzOpen(cx, cy, Math.sign(ix), 0)) {
+      rp.y += (my - rp.y) * k;
+      if (Math.abs(my - rp.y) < 0.35 && Math.abs(rp.vy) > Math.abs(rp.vx)) { const t = Math.abs(rp.vy) * 0.4 * k; rp.vx += Math.sign(ix) * t; rp.vy -= Math.sign(rp.vy) * t; }
+    }
+  }
   const R = 0.3, RS = R * 0.6;   // つぶの大きさ（マス）。かべは つぶの まん中と 両はしの3か所で調べる（建物の かどに めりこまないように）
   // めいろの 壁（緑の 生け垣。マスの さかいに 0.5マスの 厚み）は、絵の お米（はば 約1.3マス・足もとは まん中より 0.4マス下）に 合わせて 当てる（壁に 食いこんで 見えないように）。
   // 左右は 0.72・下は 0.62・上は 0.42（上の 壁は お米の うしろに 立つので、頭が 少し かさなって 見えるのが しぜん）
@@ -7722,9 +7736,10 @@ cv.addEventListener('click', e => {
 //   ・スティック・矢印キーをさわる、窓が開く、着けない所になる、のどれかでやめる。歩いている間は、おまかせ歩きは休む
 // 地図の上に何か開いている（ほうびの知らせ・ミニゲーム・説明の窓・きろく などのパネル・はじめの画面・ダイアログ（シェア・クーポン・ホーム画面に追加 など、role="dialog" のものぜんぶ））：
 // 見ていない間に うしろで歩いて、たからばこなどが進まないように
-function mapCovered() {
+//   soft：下に 出る 小さな「ホーム画面に追加」の 帯は のぞく（地図は 見えている。めいろの お米と 時計は 止めない）
+function mapCovered(soft) {
   return $('reward').classList.contains('show') || document.body.classList.contains('jump-open')
-    || !!document.querySelector('#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])');
+    || !!document.querySelector(`#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])${soft ? ':not(#a2hs)' : ''}`);
 }
 function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path = []; tapS.goal = null; }
 // 地図（キャンバス）より外をさわったら（こよみの札・ボタン・タブ など、何を開くときも）やめる。勝手に出てくるもの（ほうびの知らせ・ダイアログ）は mapCovered で

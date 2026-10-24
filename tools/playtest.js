@@ -1182,6 +1182,21 @@ async function walkTo(page, id) {
       G.setGuide(null);
       return { npc: n.name, goal: o.name, near: !!(r && r.near), keep, set, ok: !!(r && r.near) && keep && set };
     });
+    // 迷って いる 間（25秒 近づけない）：光る 点は 毎回 出すが、知らせは ゴールごとに 1回目だけ。3回目は おたすけを すすめる（1回の あそびで 1回）
+    R.checks.mzHintToast = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), got = [], t0 = G.toast, h0 = localStorage.getItem('nsg_mzhelp');
+      localStorage.setItem('nsg_mzhelp', 'off');
+      G.setGuide(G.decideGuide(null));
+      for (let i = 0; i < 20 && !(M.routePath() && M.routePath().length >= 3); i++) await wait(250);
+      if (!(M.routePath() && M.routePath().length >= 3)) { if (h0 === null) localStorage.removeItem('nsg_mzhelp'); else localStorage.setItem('nsg_mzhelp', h0); return { skip: true, ok: true }; }
+      G.toast = m => { if (/道しるべ|おたすけ/.test(m)) got.push(m); };
+      try {
+        for (let i = 0; i < 4; i++) { M.lost(); await wait(150); }
+      } finally { G.toast = t0; if (h0 === null) localStorage.removeItem('nsg_mzhelp'); else localStorage.setItem('nsg_mzhelp', h0); }
+      G.setGuide(null);
+      const first = got.filter(m => /光る 点/.test(m)).length, offer = got.filter(m => /おたすけ/.test(m)).length;
+      return { got, ok: first === 1 && offer === 1 && got.length === 2 && /光る 点/.test(got[0]) };
+    });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
@@ -1219,6 +1234,7 @@ async function walkTo(page, id) {
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
+  need(c.mzHintToast && c.mzHintToast.ok, '迷って いる 間、道しるべの 知らせが 25秒ごとに 出つづける');
   need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');

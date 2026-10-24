@@ -3586,7 +3586,7 @@ function finishArt() {
 // エンストのときと、田んぼアートが仕上がりそうなときも出す。パソコンはキー、スマホはボタンの場所で書く
 const COACH = (() => {
   const el = $('coach'), PAD = MOBILE || params.has('pad');
-  let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false;
+  let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false;
   const K = (pc, sp) => PAD ? sp : pc;
   const dYaw = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
   function leveeAhead() {                         // 前 4.5〜6.5m の所が畦（田んぼのはし）か
@@ -3594,8 +3594,12 @@ const COACH = (() => {
     return [4.5, 6.5].some(d => Math.abs(S.x + s * d) > HX - 0.2 || Math.abs(S.z + c * d) > HZ - 0.2);
   }
   function msg() {
-    if (S.stalled) return ['!', K('エンスト：<kbd>スペース</kbd>で' + IMPL + 'を上げてから、<kbd>↑</kbd> でエンジンをかけなおす', 'エンスト：' + IMPL + 'を上げてから、▲ でエンジンをかけなおす')];
-    if (off) return ART.on && ART.score().fill >= 0.9 ? ['✓', K('仕上がったら <kbd>Enter</kbd>（📸 完成）でドローン写真', '仕上がったら 右上の「📸 完成」')] : null;
+    if (S.stalled) return S.rotDown                // エンスト：上げるまでは「上げる」、上げたら「かけなおす」だけ
+      ? ['!', K('エンスト：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる', 'エンスト：まず ' + IMPL + 'を上げる')]
+      : ['!', K('エンスト：<kbd>↑</kbd> でエンジンをかけなおす', 'エンスト：▲ でエンジンをかけなおす')];
+    if (ART.on && ART.score().fill >= 0.9) return ['✓', K('仕上がったら <kbd>Enter</kbd>（📸 完成）でドローン写真', '仕上がったら 右上の「📸 完成」')];   // 旋回の練習が終わっていなくても出す
+    if (afterStall && !S.rotDown) return ['!', K('かかった：<kbd>スペース</kbd>で下げて、<kbd>Q</kbd> で 1〜2 速に落としてゆっくり', 'かかった：ボタンで下げて、「変速」で 1〜2 速に落としてゆっくり')];
+    if (off) return null;
     if (!S.rotDown) {
       if (!S.everDown) return ['1', K('<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '右の「' + IMPL + 'を下げる」ボタンで下げる')];
       if (liftYaw === null) return null;
@@ -3608,6 +3612,8 @@ const COACH = (() => {
   }
   function step() {                               // 毎ステップ：上げ下げと旋回を見のがさない
     if (S.rotDown && S.v > 0.3) S.everMoved = true;
+    if (S.stalled) { afterStall = true; liftYaw = null; }      // エンストで上げたのは旋回ではない
+    else if (S.rotDown) afterStall = false;
     if (S.rotDown) S.everDown = true;
     if (prevDown && !S.rotDown) liftYaw = S.yaw;                 // 上げた（手で・バック・旋回アップ）
     if (!prevDown && S.rotDown && liftYaw !== null) {          // 下げた：回ってからなら 1 回

@@ -7031,7 +7031,7 @@ function rollStep(dt) {
     if (rp.x !== null && rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 6 && performance.now() - (mzRt.snapT || 0) > 800) mzRt.warp = true;   // めいろを とびこえた（名所の 窓の「ここへ」など）：この ゴールは ★なし
     Object.assign(rp, { x: t.x, y: t.y, vx: 0, vy: 0, sent: { x: t.x, y: t.y }, tile: `${Math.floor(t.x)},${Math.floor(t.y)}` });
   }
-  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open')) { rp.vx = rp.vy = 0; return; }
+  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered())) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
   const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）

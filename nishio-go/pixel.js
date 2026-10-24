@@ -7280,7 +7280,11 @@ function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上
     ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
   }
   ctx.font = `bold ${Math.round(S * 0.55)}px "DotGothic16", sans-serif`; ctx.fillStyle = '#bfefff'; ctx.lineWidth = 3;
-  { const t = `⚪ いま 🏁 ゴール ${help ? '🟦 道 ' : ''}🟨 米つぶ${mzCrow.list.length ? ' ⚫ カラス' : ''}${mzScare.on ? ' 🟠 かかし' : ''}（タップで とじる）`; ctx.strokeText(t, w / 2, Y + H + S * 0.45); ctx.fillText(t, w / 2, Y + H + S * 0.45); }
+  {   // 見かた。せまい 画面（360 など）で はみ出さない よう、入りきらなければ 文字を 小さく
+    const t = `⚪ いま 🏁 ゴール ${help ? '🟦 道 ' : ''}🟨 米つぶ${mzCrow.list.length ? ' ⚫ カラス' : ''}${mzScare.on ? ' 🟠 かかし' : ''}（タップで とじる）`, tw = ctx.measureText(t).width;
+    if (tw > w * 0.96) ctx.font = `bold ${Math.max(8, Math.floor(S * 0.55 * w * 0.96 / tw))}px "DotGothic16", sans-serif`;
+    ctx.strokeText(t, w / 2, Y + H + S * 0.45); ctx.fillText(t, w / 2, Y + H + S * 0.45);
+  }
   ctx.globalAlpha = 1;
   mzMap.rect = [X - S * 0.5, Y - S * 1.6, X + W + S * 0.5, Y + H + S * 0.9];
 }

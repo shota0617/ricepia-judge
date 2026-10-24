@@ -2844,12 +2844,14 @@ function step(dt) {
     // いまの速さ・止まる前の速さと、いまの切れ角・0.5 秒先の切れ角の組み合わせを全部見る（大きく切ると、うしろの作業機が外へふくらむ）
     const sg = Math.abs(S.v) > 0.2 || want === 0 ? Math.sign(S.v) : Math.sign(want), sIn0 = key.right - key.left;   // 動いている向き（止まりかけなら行きたい向き）
     const steers = sIn0 ? [S.steer, Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn0 * 0.55))] : [S.steer];
-    const path = (d, v, st) => {
-      let x = S.x, z = S.z, y = S.yaw;
-      const k = turnRate(v, x, z, onRoad, st);
+    // ハンドルから手をはなしていれば、走るあいだに切れ角がもどっていく（0.35/秒）のもたどる
+    const path = (d, v, st0) => {
+      let x = S.x, z = S.z, y = S.yaw, st = st0;
+      const dtPer = 1 / Math.max(0.3, Math.abs(S.v));          // 1m 進むのにかかる時間
       for (let n = Math.ceil(d / 0.05), i = 0; i < n; i++) {   // 5cm ずつ（大きく切ると鼻先が一瞬だけ畦にかかって もどることがある）
         const ds = d / n;
-        y -= sg * ds * Math.tan(st) / WB * k; x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
+        if (!sIn0) st -= Math.sign(st) * Math.min(Math.abs(st), 0.35 * ds * dtPer);
+        y -= sg * ds * Math.tan(st) / WB * turnRate(v, x, z, onRoad, st); x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
         if (!canBe(x, z, y)) return false;
       }
       return true;
@@ -2915,6 +2917,7 @@ function step(dt) {
   const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
+  else if (EASY.on) { if (Math.abs(S.v) > 0.3) EASY.tell('stop', '畦の手前で止めました。ハンドルを切るか、反対へ'); S.v = 0; EASY.used = true; }   // 🔰 予測で止めきれなかったときも、ぶつけずにその場で止める（減点しない）
   else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す

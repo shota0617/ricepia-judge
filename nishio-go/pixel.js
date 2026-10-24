@@ -6670,7 +6670,7 @@ function mzRoute(now) {
     if (mzRt.gid) mzRt.prev = { id: mzRt.gid, t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, at: now, sec: mzRt.t0 ? (now - mzRt.t0) / 1000 : 0 };   // 着いた ときの 時間で 止める（チェックインまでに 窓を 読む 時間を 足さない）
     mzRt.warp = false;
     mzTrail.clear();   // 足あとは いまの ゴールへの ぶんだけ
-    mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.t0 = now; mzRt.len0 = 0;
+    mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.t0 = now; mzRt.clockT = now; mzRt.len0 = 0;
     mzNext.name = g.name || ''; mzNext.want = true;   // 「🏁 つぎの ゴール」を 出す（道のりが 分かってから）
   }
   mzRt.gid = g.id || g.name;
@@ -6721,7 +6721,7 @@ function drawMzHint(ox, oy, T, now) {
 const mzPar = len0 => { const m = Math.max(0, len0 - 1) * MZ_K * TILE_M, p3 = Math.max(20, m / 12 + 10); return { p3, p2: p3 * 1.8 }; };   // ★3：1秒に 12m（曲がり角・行き止まりを ふくめて ふつうに 転がす 速さ）＋10秒。2km で 約3分。★2 は その 1.8倍
 const mzStars = (sec, len0) => { const p = mzPar(len0); return sec <= p.p3 ? 3 : sec <= p.p2 ? 2 : 1; };
 function mzClock(now) {
-  const dt = mzRt.clockT ? now - mzRt.clockT : 0;
+  const dt = mzRt.clockT ? Math.min(now - mzRt.clockT, Math.max(0, now - mzRt.t0)) : 0;   // いまの ゴールが 始まってからの 分だけ
   mzRt.clockT = now;
   if (mzRt.t0 && (dt > 1000 || mapCovered() || !howtoEl.hidden || sightBusy())) mzRt.t0 += dt;   // 止める（画面が かくれて 1こまが 長い ときも）
 }

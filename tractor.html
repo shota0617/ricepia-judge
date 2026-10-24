@@ -394,12 +394,12 @@ function skyMesh(r) {
       '  vec3 cc = mix(cDark, cLit, clamp(0.55 + (n - d) * 4.0 + s * 0.3, 0.0, 1.0));' +
       '  c = mix(c, cc, cl * 0.92);' +
       // 秋の晴れた空：高いところに うろこ雲（巻積雲）。小さな白い雲のつぶが 魚のうろこのように並ぶ。低い雲より ゆっくり流れ、少しすけて見える
-      (season === 'aki' && WX === 'hare' && TOD !== 'yoru' ? '  vec2 u2 = vD.xz / (vD.y + 0.05) * 2.4 + vec2(time * 0.0025, time * 0.001);' +
+      (season === 'aki' && WX === 'hare' && TOD === 'hiru' ? '  if (vD.y > 0.1) { vec2 u2 = vD.xz / (vD.y + 0.05) * 2.4 + vec2(time * 0.0025, time * 0.001);' +
         '  vec2 q = u2 * 7.0 + vec2(fbm(u2 * 0.9) * 2.5, fbm(u2 * 0.9 + 5.0) * 1.5);' +
         '  float sc = smoothstep(0.25, 0.85, abs(sin(q.x + 0.7 * sin(q.y * 0.6))) * abs(sin(q.y * 1.35 + 0.5 * sin(q.x * 0.8))));' +
         '  float pat = smoothstep(0.52, 0.72, fbm(u2 * 0.3 + 3.0));' +
         '  float uc = sc * pat * smoothstep(0.1, 0.4, vD.y) * (0.6 + 0.4 * noise(q * 0.5));' +
-        '  c = mix(c, mix(cLit, vec3(1.0), 0.3), uc * 0.6 * (1.0 - cl));' : '') +
+        '  c = mix(c, mix(cLit, vec3(1.0), 0.3), uc * 0.6 * (1.0 - cl)); }' : '') +
       // 夜空の星：向きを小さなます目に分け、ところどころを光らせる。雲がある所と 地平の近く（もや）は見えない
       (TOD === 'yoru' && WX === 'hare' ? '  vec3 sq = floor(vD * 300.0); float sh = hash(sq.xy * 0.37 + vec2(sq.z * 0.71, sq.z * 0.13));' +
         '  c += vec3(0.85, 0.9, 1.0) * step(0.99, sh) * (0.5 + 0.5 * hash(sq.zx)) * (1.0 - cl) * smoothstep(0.02, 0.07, vD.y);' : '') +
@@ -3113,12 +3113,19 @@ const INAGO = (() => {
 // ---- 昼のチョウ：モンシロチョウ（白）とモンキチョウ（黄）。モンキチョウは 3 月下旬〜11 月に年 4〜5 回出て、田畑の畦や河川敷の草地でふつうに見られる
 // （兵庫県立人と自然の博物館『兵庫県の蝶』・神戸新聞 虫顔図鑑）。畦の花やセイタカアワダチソウにとまって 翅を閉じ、トラクターが近づくと飛びたつ。雨の日と夜は飛ばない
 const BUTTERFLIES = (() => {
-  if (TOD === 'yoru' || RAIN) return { update() {} };
+  if (DARK || RAIN) return { update() {} };
   const n = Math.max(1, Math.round({ haru: 6, shirokaki: 4, aki: 3 }[season] * (TOD === 'asa' ? 0.5 : 1)));   // 冷えた朝は少ない
-  const spots = [], m4 = new THREE.Matrix4();                // とまる所：畦の花・アワダチソウの穂
-  const add = (m, h) => { for (let i = 0; i < m.count; i += 5) { m.getMatrixAt(i, m4); const v = new THREE.Vector3(0, h, 0).applyMatrix4(m4); if (Math.abs(v.z) < HZ + 6) spots.push(v); } };   // 田んぼのそばの花だけ
-  if (LEVEE_FLOWERS) Object.values(LEVEE_FLOWERS).forEach(a => a && add(a[0], 0.01));
-  if (ROADSIDE) add(ROADSIDE.goldenrod[1], 1.0);
+  const spots = [], m4 = new THREE.Matrix4();                // とまる所：畦の花・アワダチソウの穂（風でゆれる花といっしょに ゆれる）
+  const add = (m, h, kind) => { for (let i = 0; i < m.count; i += 5) { m.getMatrixAt(i, m4); const v = new THREE.Vector3(0, h, 0).applyMatrix4(m4); if (Math.abs(v.z) < HZ + 6) { v.kind = kind; v.q = [m4.elements[12], m4.elements[14]]; spots.push(v); } } };   // 田んぼのそばの花だけ
+  if (LEVEE_FLOWERS) Object.values(LEVEE_FLOWERS).forEach(a => a && add(a[0], 0.01, 'nod'));
+  if (ROADSIDE) add(ROADSIDE.goldenrod[1], 1.0, 'sway');
+  const swayOf = (s, out) => {                               // 花の shader（nod・sway）と同じ ゆれ
+    const T = WIND_T.value, [qx, qz] = s.q;
+    if (s.kind === 'sway') return out.set(0.64 * 0.09 * (Math.sin(T * 1.5 + qx * 0.4 + qz * 0.25) + 0.4 * Math.sin(T * 3.3 + qz * 0.8)), 0, 0.64 * 0.04 * Math.sin(T * 1.1 + qx * 0.6));
+    return out.set(0.014 * (Math.sin(T * 1.7 + qx * 0.35 + qz * 0.2) + 0.4 * Math.sin(T * 3.1 + qz * 0.9 + qx * 0.3)), 0, 0.007 * Math.sin(T * 1.3 + qx * 0.5));
+  };
+  // 地面の高さ（おおまか）：田んぼ 0・農道と土手 0.55・畦 0.35・まわりの田んぼ（秋は耕した土のかたまりが高い）
+  const groundY = (x, z) => Math.abs(x) <= HX && Math.abs(z) <= HZ ? 0 : x > HX - 0.5 && x < 21.4 ? 0.55 : Math.abs(x) < HX + 1.2 && Math.abs(z) < HZ + 1.2 ? 0.35 : season === 'aki' ? 0.9 : 0.4;
   const wingGeo = new THREE.PlaneGeometry(0.026, 0.022).translate(0.013, 0, 0).rotateX(-Math.PI / 2);
   const list = [];
   for (let k = 0; k < n; k++) {
@@ -3126,45 +3133,57 @@ const BUTTERFLIES = (() => {
     const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(col).convertSRGBToLinear(), side: THREE.DoubleSide });
     const g = new THREE.Group(), wings = [-1, 1].map(sx => { const w = new THREE.Mesh(wingGeo, mat); w.scale.x = sx; g.add(w); return w; });
     const s0 = spots.length ? spots[Math.floor(Math.random() * spots.length)] : new THREE.Vector3(-HX - 0.6, 0.4, (Math.random() - 0.5) * 2 * HZ);
-    g.position.set(s0.x + (Math.random() - 0.5) * 4, 0.5 + Math.random() * 0.6, s0.z + (Math.random() - 0.5) * 4);
+    g.position.set(s0.x + (Math.random() - 0.5) * 4, 0, s0.z + (Math.random() - 0.5) * 4);
+    g.position.y = groundY(g.position.x, g.position.z) + 0.5 + Math.random() * 0.6;
     scene.add(g);
-    list.push({ g, wings, st: 'fly', t: Math.random() * 9, tgt: g.position.clone(), rest: 0, ph: Math.random() * 6 });
+    list.push({ g, wings, st: 'fly', t: Math.random() * 9, tgt: g.position.clone(), spot: null, rest: 0, ph: Math.random() * 6, flee: 0 });
   }
-  const tmp = new THREE.Vector3();
+  const tmp = new THREE.Vector3(), off = new THREE.Vector3();
   function pickTarget(b) {
     const p = b.g.position;
+    b.spot = null;
     if (spots.length && Math.random() < 0.3) {                 // 近くの花へ
       let best = null, bd = 1e9;
       for (let i = 0; i < 12; i++) { const s = spots[Math.floor(Math.random() * spots.length)], d = s.distanceToSquared(p); if (d < bd) { bd = d; best = s; } }
-      if (bd < 64) { b.tgt.copy(best); b.toFlower = true; return; }
+      if (bd < 64) { b.spot = best; b.tgt.copy(best); return; }
     }
-    b.toFlower = false;
-    b.tgt.set(p.x + (Math.random() - 0.5) * 6, 0.3 + Math.random() * 1.1, p.z + (Math.random() - 0.5) * 6);
+    b.tgt.set(p.x + (Math.random() - 0.5) * 6, 0, p.z + (Math.random() - 0.5) * 6);
     b.tgt.x = Math.max(-HX - 6, Math.min(HX + 7, b.tgt.x)); b.tgt.z = Math.max(-HZ - 6, Math.min(HZ + 6, b.tgt.z));   // 田んぼのまわりから 遠くへ行かない
+    b.tgt.y = groundY(b.tgt.x, b.tgt.z) + 0.3 + Math.random() * 1.1;
   }
   return {
     list,
     update(dt) {
+      const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), rx = fz, rz = -fx;
       for (const b of list) {
         b.t += dt;
-        const p = b.g.position, near = Math.hypot(p.x - S.x, p.z - S.z) < 3;
-        if (b.st === 'rest') {                                 // とまって 翅を閉じる（ときどき ゆっくり開く）
+        const p = b.g.position, ox = p.x - (S.x + fx), oz = p.z - (S.z + fz);   // 車体のまん中（後車軸の 1m 前）から
+        const lat = ox * rx + oz * rz, ahead = ox * fx + oz * fz;
+        const near = Math.hypot(ox, oz) < 4.5 || ahead > 0 && ahead < 4 + Math.abs(S.v) * 1.5 && Math.abs(lat) < 2.2;   // 近い・走ってくる前にいる
+        if (b.st === 'rest') {                                 // とまって 翅を閉じる（ときどき ゆっくり開く）。花といっしょに風でゆれる
           const open = Math.max(0, Math.sin(b.t * 1.3 + b.ph)) ** 4 * 0.9;
           b.wings.forEach((w, i) => { w.rotation.z = (i ? 1 : -1) * (1.45 - open); });
-          if ((b.rest -= dt) <= 0 || near) { b.st = 'fly'; pickTarget(b); }
-          continue;
+          if (b.spot) p.copy(b.spot).add(swayOf(b.spot, off));
+          if ((b.rest -= dt) > 0 && !near) continue;
+          b.st = 'fly'; pickTarget(b);
         }
-        if (near) { tmp.set(p.x - S.x, 0, p.z - S.z).normalize(); b.tgt.set(p.x + tmp.x * 4, 1.2 + Math.random() * 0.5, p.z + tmp.z * 4); b.toFlower = false; }   // にげる
+        if (near && b.flee <= 0) {                             // にげる：通り道から 横へ、少し上へ、トラクターより速く
+          const sg = lat >= 0 ? 1 : -1; b.flee = 1.2; b.spot = null;
+          b.tgt.set(p.x + rx * sg * 5 + fx * 1.5, groundY(p.x, p.z) + 1.4 + Math.random() * 0.5, p.z + rz * sg * 5 + fz * 1.5);
+        }
+        b.flee -= dt;
+        if (b.spot) b.tgt.copy(b.spot).add(swayOf(b.spot, off));
         tmp.subVectors(b.tgt, p); const d = tmp.length();
         if (d < 0.08) {
-          if (b.toFlower) { b.st = 'rest'; b.rest = 2 + Math.random() * 5; p.copy(b.tgt); continue; }
+          if (b.spot) { b.st = 'rest'; b.rest = 2 + Math.random() * 5; p.copy(b.tgt); continue; }
           pickTarget(b); continue;
         }
-        tmp.multiplyScalar(Math.min(1, dt * 1.1 / d));         // ひらひら：まっすぐ進まず 上下左右にゆれる
+        tmp.multiplyScalar(Math.min(1, dt * (b.flee > 0 ? 3.4 : 1.1) / d));   // ひらひら：まっすぐ進まず 上下左右にゆれる
         p.add(tmp); p.x += Math.sin(b.t * 7.3 + b.ph) * 0.35 * dt; p.y += Math.sin(b.t * 9.1 + b.ph * 2) * 0.5 * dt; p.z += Math.cos(b.t * 6.1 + b.ph) * 0.35 * dt;
+        if (!b.spot || d > 0.5) p.y = Math.max(p.y, groundY(p.x, p.z) + 0.1);   // 地面にもぐらない（花へ降りる最後だけは低く）
         b.g.rotation.y = Math.atan2(tmp.x, tmp.z);
         const f = Math.sin(b.t * 55 + b.ph);                    // 1 秒に 9 回ほど はばたく
-        b.wings.forEach((w, i) => { w.rotation.z = (i ? 1 : -1) * (0.3 + 0.95 * f); });
+        for (let i = 0; i < 2; i++) b.wings[i].rotation.z = (i ? 1 : -1) * (0.3 + 0.95 * f);
       }
     }
   };
@@ -4256,7 +4275,7 @@ function startAmbient(ac) {
       v.kind = k % 3 ? 'ama' : 'koro'; voices.push(v);
     }
     if (DARK) {                                   // ウシガエル：夜行性のオスが「ウオー ウオー」とウシのような太い声（5〜9 月に産卵。愛知県・京都市動物園）。遠くの水路から 1 匹
-      const v = voice(R(-0.9, 0.9), 0.9), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 2;
+      const v = voice(R(-0.9, 0.9), 0.22), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 2;
       v.o = osc('sawtooth', 110, lp); lp.connect(v.g); v.kind = 'ushi'; v.t = ac.currentTime + R(4, 12); voices.push(v);
     }
   } else if (season === 'haru' && TOD === 'yoru') {   // 春の夜：ヒバリは鳴かない。水を入れはじめた となりの田んぼから 遠いカエル

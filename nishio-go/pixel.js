@@ -6726,11 +6726,13 @@ function drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T) {   // 行き止まり（
   mzHelp.dead = 0;
   const c0 = Math.floor(tx0 / MZ_K), r0 = Math.floor(ty0 / MZ_K), c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
   const onPath = new Set((mzRt.path || []).map(([x, y]) => x + ',' + y)), ra = rp.x === null ? null : Math.floor(rp.x / MZ_K) + ',' + Math.floor(rp.y / MZ_K);
+  const g = G.guide, gp = g ? toTile(g.lat, g.lng) : null, gNear = g ? (((G.reachOf ? G.reachOf(g) : 40) || 40) / TILE_M) + MZ_K : 0;   // ゴールの まわり（道すじが 手前で 終わっても、ゴールの マスには 出さない）
   const r = T * 0.42, lw = Math.max(2, T / 6);
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
     if (mzType(cx, cy) !== 1 || mzSpotCell(cx, cy)) continue;
     const k = cx + ',' + cy;
     if (onPath.has(k) || k === ra) continue;
+    if (gp && Math.hypot((cx + 0.5) * MZ_K - gp.x, (cy + 0.5) * MZ_K - gp.y) <= gNear) continue;
     let open = 0;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (mzOpen(cx, cy, dx, dy)) open++;
     if (open !== 1) continue;
@@ -6748,7 +6750,7 @@ function drawMzHint(ox, oy, T, now) {
   mzHelp.dots = 0;
   if (!mzRt.path) return;
   if (now >= mzRt.showUntil && mzHelpOn()) {   // おたすけ：ゴールへの 道すじを 水色の 流れる 線で いつも（16マス先まで。金の 米つぶと まちがえない 色と 形）
-    if (!mzHelp.told && mzRt.path.length > 2) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）'); }
+    if (!mzHelp.told && mzRt.path.length > 2 && !mapCovered() && !sightBusy()) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）'); }   // あそびかた・窓・人の 話が 出ている 間は 待つ（読める ように なってから 知らせる）
     const S = MZ_K * T, pts = mzRt.path.slice(0, 17).map(([cx, cy]) => [ox + cx * S + S / 2, oy + cy * S + S / 2]);
     if (pts.length < 2) return;
     ctx.save();
@@ -7047,8 +7049,9 @@ function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上
   ctx.lineWidth = 3; ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
   ctx.strokeText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8); ctx.fillText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8);
   const pulse = (Math.sin(now / 200) + 1) / 2, help = mzHelpOn() && mzRt.path && mzRt.path.length > 1;
-  if (help) {   // おたすけ：ゴールまでの 道すじを 図にも 水色の 線で（めいろ全体の どこを 通るか 分かる）
+  if (help) {   // おたすけ：ゴールまでの 道すじを 図にも 水色の 線で（めいろ全体の どこを 通るか 分かる）。図の 外へ 回る ところは 図の ふちで 切る
     ctx.save();
+    ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip();
     ctx.beginPath(); mzRt.path.forEach(([cx, cy], i) => { const px = X + (cx + 0.5 - B.x0) * B.c, py = Y + (cy + 0.5 - B.y0) * B.c; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(3, B.c * 0.9); ctx.stroke();

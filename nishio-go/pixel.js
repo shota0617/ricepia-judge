@@ -7134,7 +7134,7 @@ function drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // びゅんパネ�
 // 「ぴっ」の 音が 1つずつ 高く なる（ドレミソラ）。列を ぜんぶ ひろうと 和音と きらきら、ころころコンボ +2。つぶは 2分半で また 出る（いつでも ぱくぱく ひろえる）。
 // ポイントは つけない（同じ 所で ふやせない。数と 音だけ）。きょう ひろった 数は この端末（nsg_tsubu）。場所は 区域で きまり 毎日 同じ。区域ごとに 6列、びゅんパネルの マスと 行き止まりには 置かない
 const MZ_LINE_N = 6, MZ_DOT_BACK = 150000;
-const mzDots = { n: (() => { try { const v = JSON.parse(localStorage.getItem('nsg_tsubu') || 'null'); return v && v.d === jstDay() ? v.n : 0; } catch (e) { return 0; } })(), lines: 0 };
+const mzDots = { d: jstDay(), n: (() => { try { const v = JSON.parse(localStorage.getItem('nsg_tsubu') || 'null'); return v && v.d === jstDay() ? v.n : 0; } catch (e) { return 0; } })(), lines: 0 };   // d：n を 数えている 日（ひらいた まま 日づけが かわったら 0 から）
 function mzLineSet(a) {   // 区域の ごはんつぶの 列：[{ dots: [[x, y]]（地図の マス）, taken: [時刻] }]
   if (a.lines) return a.lines;
   const N = MZ_R, op = (k, d) => (d === 0 ? a.er[k] : d === 1 ? a.ed[k] : d === 2 ? a.er[k - 1] : a.ed[k - N]) === 1;
@@ -7171,12 +7171,13 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
   const now = performance.now();
   mzLinesNear(L => {
     let got = false;
+    for (let i = 0; i < L.dots.length; i++) if (L.taken[i] && now - L.taken[i] > MZ_DOT_BACK) L.taken[i] = 0;   // また 出る（先に 列ぜんぶ。1つ ひろった だけで「ぜんぶ」に ならないように）
     for (let i = 0; i < L.dots.length; i++) {
-      if (L.taken[i] && now - L.taken[i] > MZ_DOT_BACK) L.taken[i] = 0;   // また 出る
       if (L.taken[i] || Math.abs(L.dots[i][0] - rp.x) > 0.75 || Math.abs(L.dots[i][1] - rp.y) > 0.75) continue;
       L.taken[i] = now; got = true;
       const left = L.taken.filter(t => !t).length;
       dotSound(L.dots.length - left - 1);
+      if (mzDots.d !== jstDay()) { mzDots.d = jstDay(); mzDots.n = 0; }
       mzDots.n++;
       if (!left) {   // 列を ぜんぶ ひろった
         mzDots.lines++;
@@ -7186,7 +7187,7 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
         for (let j = 0; j < 12; j++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[j % 3], life: 0.5 + Math.random() * 0.4 }); }
       }
     }
-    if (got) { dirty = true; try { localStorage.setItem('nsg_tsubu', JSON.stringify({ d: jstDay(), n: mzDots.n })); } catch (e) { /* noop */ } }
+    if (got) { dirty = true; try { localStorage.setItem('nsg_tsubu', JSON.stringify({ d: mzDots.d, n: mzDots.n })); } catch (e) { /* noop */ } }
   });
 }
 function drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // ごはんつぶ：白い 小さな つぶ（黒い ふち。ふわっと ゆれる）。点の 四角だけで 描く

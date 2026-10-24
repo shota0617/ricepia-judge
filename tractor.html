@@ -177,6 +177,11 @@
       <button data-t="hiru"><span>☀️</span>昼</button>
       <button data-t="yu"><span>🌇</span>夕方</button>
     </div>
+    <div class="seasons times" id="weathers">
+      <button data-w="hare"><span>🌤️</span>晴れ</button>
+      <button data-w="kumori"><span>☁️</span>くもり</button>
+      <button data-w="ame"><span>🌧️</span>小雨</button>
+    </div>
     <div class="seasons arts" id="arts">
       <button data-a="heart"><span>❤️</span>ハート</button>
       <button data-a="kome"><span>🌾</span>米</button>
@@ -228,6 +233,7 @@
       ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす（道に泥を落とさない。ゲームでは耕していない固い所を少し走ると落ちる）<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
+      ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
@@ -293,9 +299,12 @@ const TILL_Y = SHIRO ? 0.045 : 0.035;
 const $ = id => document.getElementById(id);
 // 時間：朝・昼・夕方（太陽の高さと向き・光の色・空・もや）
 const TOD = { asa: 1, hiru: 1, yu: 1 }[params.get('time')] ? params.get('time') : 'hiru';
+// 天気：晴れ・くもり・小雨（w=kumori・ame）。くもりと小雨は 空が灰色で、日ざしがやわらかく影がうすい（雲の影も流れない）。
+// 小雨は 雨のすじ・前ガラスの水滴と間欠ワイパー・キャビンの屋根をたたく音
+const WX = { kumori: 1, ame: 1 }[params.get('w')] ? params.get('w') : 'hare', RAIN = WX === 'ame';
 // 田んぼアートのお題（はじめはハート）。「なし」（art=none）は田んぼをぜんぶ耕す
 const ART_ID = params.get('art') === 'none' ? null : ['heart', 'kome', 'onigiri', 'star', 'smile'].includes(params.get('art')) ? params.get('art') : 'heart';
-const go = (s_, t_, a_ = ART_ID) => { location.search = '?season=' + s_ + '&time=' + t_ + '&art=' + (a_ || 'none'); };
+const go = (s_, t_, a_ = ART_ID, w_ = WX) => { location.search = '?season=' + s_ + '&time=' + t_ + '&art=' + (a_ || 'none') + (w_ !== 'hare' ? '&w=' + w_ : ''); };
 document.querySelectorAll('#seasons button').forEach(b => {
   if (b.dataset.s === season) b.classList.add('sel');
   b.onclick = () => { if (b.dataset.s !== season) go(b.dataset.s, TOD); };
@@ -303,6 +312,10 @@ document.querySelectorAll('#seasons button').forEach(b => {
 document.querySelectorAll('#times button').forEach(b => {
   if (b.dataset.t === TOD) b.classList.add('sel');
   b.onclick = () => { if (b.dataset.t !== TOD) go(season, b.dataset.t); };
+});
+document.querySelectorAll('#weathers button').forEach(b => {
+  if (b.dataset.w === WX) b.classList.add('sel');
+  b.onclick = () => { if (b.dataset.w !== WX) go(season, TOD, ART_ID, b.dataset.w); };
 });
 document.querySelectorAll('#arts button').forEach(b => {
   const a = b.dataset.a === 'none' ? null : b.dataset.a;
@@ -318,6 +331,14 @@ const LIGHT = {
   yu: { sky: [0x4d6ba8, 0xf0a46c], sun: [-0.8, 0.12, 0.42], sunC: 0xffa25a, sunI: 2.8, hemi: [0xb6a6c6, 0x4a3a2c, 0.26], fog: [120, 900],
     cLit: [1.0, 0.70, 0.48], cDark: [0.48, 0.42, 0.52], disk: [1.0, 0.65, 0.35], exp: 0.95 },
 }[TOD];
+if (WX !== 'hare') {                            // くもり・小雨：雲が日ざしをさえぎり、光は空全体から来る（影はうすく、色はさめる）
+  const k = RAIN ? 0.8 : 1, grey = (a, b) => [a, b].map(c => new THREE.Color(c).multiplyScalar(k).getHex());
+  Object.assign(LIGHT, {
+    sky: { asa: grey(0x8d97a2, 0xc6c9cb), hiru: grey(0x9aa3ac, 0xcdd1d4), yu: grey(0x6c6f78, 0xa8a097) }[TOD],
+    sunI: LIGHT.sunI * (RAIN ? 0.16 : 0.28), hemi: [LIGHT.hemi[0], LIGHT.hemi[1], LIGHT.hemi[2] * (RAIN ? 1.9 : 2.1)],
+    fog: RAIN ? [25, 380] : [70, 750], cLit: [0.84, 0.86, 0.88].map(c => c * k), cDark: [0.56, 0.59, 0.63].map(c => c * k), disk: [0.04, 0.04, 0.04],
+  });
+}
 
 // ---- 描くしくみ ----
 const canvas = $('view');
@@ -341,7 +362,7 @@ function skyMesh(r) {
   const m = new THREE.ShaderMaterial({
     side: THREE.BackSide, depthWrite: false, fog: false,
     uniforms: { top: { value: new THREE.Color(SKY[0]) }, hor: { value: new THREE.Color(SKY[1]) }, sun: { value: SUN_DIR }, time: SKY_TIME,
-      cover: { value: { haru: 0.48, aki: 0.38, shirokaki: 0.55 }[season] },
+      cover: { value: WX !== 'hare' ? 0.97 : { haru: 0.48, aki: 0.38, shirokaki: 0.55 }[season] },
       cLit: { value: new THREE.Vector3(...LIGHT.cLit) }, cDark: { value: new THREE.Vector3(...LIGHT.cDark) }, disk: { value: new THREE.Vector3(...LIGHT.disk) } },
     vertexShader: 'varying vec3 vD; void main(){ vD = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
     // 雲：空を平らな天井とみなし、そこに重ねた雑音（fbm）で白い雲を描く。ゆっくり流れる。太陽の側は明るく、下は少し暗い
@@ -786,12 +807,16 @@ const MIRROR = (() => {
 // （ガラスには UV が無いので、トラクターの中の位置から計算する。前＝+Z・左＝+X・上＝+Y）
 const SUN_VIEW = { value: new THREE.Vector3(0, 0, 1) };   // 太陽の向き（カメラから見た向き）。毎コマ更新
 const GLASS_MUD = { value: 0 };   // ガラスの泥はねの量（代かきで耕していると ふえる）
+// ワイパー：前ガラスの下を根元に 扇形をふく。小雨のときは間欠（WIPE_P 秒ごとに 1 往復）。ふいたあとは 少しずつ水滴がたまる
+const WIPE = { value: 9 }, RAIN_AMT = { value: RAIN ? 1 : 0 }, WIPE_P = 4.5;
 function dustyGlass(m) {
   m.onBeforeCompile = sh => {
     sh.uniforms.sunView = SUN_VIEW;
     sh.uniforms.glassMud = GLASS_MUD;
+    sh.uniforms.wipeU = WIPE;
+    sh.uniforms.rainAmt = RAIN_AMT;
     sh.vertexShader = 'varying vec3 vObjP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vObjP = position;');
-    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\nuniform float glassMud;\n' +
+    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\nuniform float glassMud;\nuniform float wipeU;\nuniform float rainAmt;\n' +
       'float gH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n' +
       'float gN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
       ' return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
@@ -801,11 +826,14 @@ function dustyGlass(m) {
   float speck = step(0.986, gH(floor(q * 260.0))) * (0.5 + 0.5 * gH(floor(q * 260.0) + 3.1));
   float low = smoothstep(1.95, 1.42, vObjP.y);                       // 下のほうほど土ぼこり
   float dust = 0.09 + 0.13 * haze + 0.38 * low * (0.6 + 0.4 * haze) + speck * 0.5;
-  if (vObjP.z > 0.45) {                                               // 前ガラス：ワイパーがふいた半円（根元は左下）
-    float d = length(vec2(vObjP.x - 0.46, vObjP.y - 1.62));
-    float wiped = smoothstep(0.50, 0.47, d) * step(1.60, vObjP.y);
+  // ワイパー：根元は前ガラスの下（まん中より少し左）。長さ 0.85m の腕が、横（右）から左上まで 160° ふく
+  vec2 rp = vec2(vObjP.x - 0.22, vObjP.y - 1.42);
+  float wd = length(rp), wth = atan(max(rp.y, 0.0), rp.x) / 3.14159;  // 0＝左（+X）・1＝右（止まっている所）
+  float inWipe = step(0.11, wth) * step(-0.02, rp.y);
+  if (vObjP.z > 0.45) {                                               // 前ガラス：ワイパーがふいた扇形だけ ほこりがうすい
+    float wiped = smoothstep(0.85, 0.82, wd) * inWipe;
     dust *= 1.0 - 0.8 * wiped;
-    dust += 0.18 * smoothstep(0.035, 0.0, abs(d - 0.49)) * step(1.6, vObjP.y);   // ふいたふちに たまった すじ
+    dust += 0.18 * smoothstep(0.035, 0.0, abs(wd - 0.84)) * inWipe;   // ふいたふちに たまった すじ
   }
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.60, 0.54, 0.44), clamp(dust * 1.6, 0.0, 1.0));
   diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));
@@ -815,8 +843,31 @@ function dustyGlass(m) {
   float blot = gN(q * 21.0) * 0.75 + gN(q * 63.0) * 0.25;
   float mud = smoothstep(1.0 - glassMud * lowM * rearW * 0.62, 1.04 - glassMud * lowM * rearW * 0.62, blot);
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.24, 0.17), mud);
-  diffuseColor.a = max(diffuseColor.a, mud * 0.9);`).replace('#include <output_fragment>', `#include <output_fragment>
+  diffuseColor.a = max(diffuseColor.a, mud * 0.9);
+  // 雨の水滴：小さな丸がガラスに散らばる（ふちは暗く、まん中は空を映して明るい）。前ガラスのふいた所は、ふいてからの時間でだんだんふえる
+  float bladeTh = wipeU < 0.55 ? 1.0 - 0.89 * wipeU / 0.55 : wipeU < 1.1 ? 0.11 + 0.89 * (wipeU - 0.55) / 0.55 : 1.0;
+  if (rainAmt > 0.0) {
+    float cov = rainAmt * (vObjP.z > 0.45 ? 0.5 : vObjP.z < -0.45 ? 0.15 : 0.35);
+    if (vObjP.z > 0.45 && wd < 0.85 && inWipe > 0.5) {
+      float u1 = 0.55 * (1.0 - wth) / 0.89, u2 = 0.55 + 0.55 * (wth - 0.11) / 0.89;
+      float since = wipeU >= u2 ? wipeU - u2 : wipeU >= u1 ? wipeU - u1 : wipeU + ${WIPE_P.toFixed(1)} - u2;
+      cov *= clamp(since * 0.22, 0.0, 1.0);
+    }
+    vec2 dg = q * 70.0, di = floor(dg), df = fract(dg) - 0.5;
+    float dr = 0.1 + 0.25 * gH(di + 3.9), dd = length(df - (vec2(gH(di + 1.7), gH(di + 7.3)) - 0.5) * 0.4);
+    float drop = smoothstep(dr, dr * 0.7, dd) * step(gH(di + 11.1), cov);
+    diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.80, 0.84, 0.88), vec3(0.30, 0.33, 0.36), smoothstep(dr * 0.2, dr, dd)), drop * 0.85);
+    diffuseColor.a = max(diffuseColor.a, drop * 0.5);
+  }
+  if (vObjP.z > 0.45) {                                               // ワイパーのゴムと腕（黒い線）
+    vec2 bd = vec2(cos(3.14159 * bladeTh), sin(3.14159 * bladeTh));
+    float bt = clamp(dot(rp, bd), 0.03, 0.85), bdist = length(rp - bd * bt);
+    float arm = smoothstep(0.009, 0.005, bdist);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05), arm);
+    diffuseColor.a = max(diffuseColor.a, arm);
+  }`).replace('#include <output_fragment>', `#include <output_fragment>
   float glare = pow(max(dot(normalize(-vViewPosition), sunView), 0.0), 3.0);   // 太陽のほうを見ると、ガラスのよごれが白く光る
+  glare *= ${WX === 'hare' ? '1.0' : '0.15'};                      // くもりの日は 日ざしがないので まぶしくない
   gl_FragColor.rgb += vec3(1.0, 0.95, 0.85) * glare * (0.15 + 2.2 * dust);
   gl_FragColor.a = max(gl_FragColor.a, glare * clamp(dust * 2.5, 0.0, 0.7));`);
   };
@@ -946,7 +997,7 @@ const MUDDROP = (() => {
 // ---- 朝霧（放射霧）：晴れて風の弱い朝、冷えた地面や水面の上に低くたまる霧。秋と、水を張った代かきの田んぼで濃い。
 // 高さのちがう うすい板を何枚か重ね、ゆっくり流す。日がのぼると少しずつ薄くなる（ゲームの時間で 3 分くらい）
 const MIST = (() => {
-  if (TOD !== 'asa') return { update() {} };
+  if (TOD !== 'asa' || WX !== 'hare') return { update() {} };   // 放射霧は 晴れて冷えこんだ朝だけ（雲があると夜に冷えない）
   const cv = document.createElement('canvas');
   cv.width = cv.height = 256;
   const g = cv.getContext('2d');
@@ -995,7 +1046,7 @@ const MIST = (() => {
 // 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける。
 // 春の田起こしのころ（4 月）も、放射冷却の朝は遅霜がおりる（山形県の凍霜害の注意）。春はうすく、早くとける
 const FROST = (() => {
-  const on = (season === 'aki' || season === 'haru') && TOD === 'asa', list = [], S0 = season === 'aki' ? 1 : 0.6, T = season === 'aki' ? 150 : 100;
+  const on = (season === 'aki' || season === 'haru') && TOD === 'asa' && WX === 'hare', list = [], S0 = season === 'aki' ? 1 : 0.6, T = season === 'aki' ? 150 : 100;   // 霜も 晴れた夜の冷えこみで降りる
   let t = 0;
   const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7, weed: 0.6, renge: 0.5 };
   const add = m => {
@@ -1133,8 +1184,35 @@ const CLOUDS = (() => {
   }
   return {
     apply(root) {
-      if (params.has('nocloud')) return;
+      if (params.has('nocloud') || WX !== 'hare') return;   // くもり・雨の日は 空ぜんたいが雲なので、流れる影はない
       root.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(patch); });
+    }
+  };
+})();
+
+// ---- 小雨の雨すじ：カメラのまわり（半径 18m・高さ 14m の箱）に降らせ、はしから出たら反対側からまた降らせる。
+// 小雨の粒（直径 0.5〜1mm）は 毎秒 2〜4m でゆっくり落ちる。そよ風で少しななめ。運転席の視点では キャビンの中には降らせない
+const RAINFX = (() => {
+  if (!RAIN) return { update() {} };
+  const N = MOBILE ? 900 : 2000, R = 18, H = 14, V = 3.6, WXs = 0.45, WZs = 0.2, LEN = 0.45;
+  const seed = Float32Array.from({ length: N * 3 }, Math.random), pos = new Float32Array(N * 6);
+  const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const lines = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xc4ccd4, transparent: true, opacity: 0.33, depthWrite: false }));
+  lines.frustumCulled = false; scene.add(lines);
+  const c = new THREE.Vector3(), wrap = (v, r) => ((v % (2 * r)) + 2 * r) % (2 * r) - r;
+  let t = 0;
+  return {
+    update(dt) {
+      t += dt; camera.getWorldPosition(c);
+      for (let i = 0; i < N; i++) {
+        const dx = wrap(seed[i * 3] * 2 * R + t * WXs - c.x, R), dz = wrap(seed[i * 3 + 2] * 2 * R + t * WZs - c.z, R);
+        let y = c.y + H * 0.6 - (seed[i * 3 + 1] * H + t * V) % H;
+        if (camMode === 0 && dx * dx + dz * dz < 0.8 && y > c.y - 1.6) y = -50;   // キャビンの中
+        const o = i * 6;
+        pos[o] = c.x + dx; pos[o + 1] = y; pos[o + 2] = c.z + dz;
+        pos[o + 3] = c.x + dx - WXs / V * LEN; pos[o + 4] = y + LEN; pos[o + 5] = c.z + dz - WZs / V * LEN;
+      }
+      geo.attributes.position.needsUpdate = true;
     }
   };
 })();
@@ -1775,7 +1853,7 @@ function emitTilling(dt) {
     const back = -(0.6 + Math.random() * 1.2), up = 0.6 + Math.random() * 1.6, side = (Math.random() - 0.5) * 0.6;
     const vx = side * c + back * s + Math.sin(S.yaw) * S.v * 0.8, vz = -side * s + back * c + Math.cos(S.yaw) * S.v * 0.8;
     FX.emit(x, TILL_Y + 0.15, z, vx, up, vz, SHIRO ? 2 : 0);
-    if (!SHIRO && Math.random() < (season === 'aki' ? 0.05 : 0.12)) FX.emit(x, 0.35, z, vx * 0.3, 0.3, vz * 0.3, 1);
+    if (!SHIRO && !RAIN && Math.random() < (season === 'aki' ? 0.05 : 0.12)) FX.emit(x, 0.35, z, vx * 0.3, 0.3, vz * 0.3, 1);   // 雨でぬれた土は ほこりが立たない
   }
   // 冷えた朝は、掘り起こした下の土のほうが地表や空気よりあたたかく、耕したあとから うすい湯気が立つ（日がのぼると消える）
   if (TOD === 'asa' && !SHIRO) {
@@ -1792,6 +1870,7 @@ let steamAcc = 0;
 // 砂利の農道を走ると、うしろのタイヤから砂ぼこりが立ち、風下（東）へ流れる（速いほど多い）。トラクターと通る軽トラ
 let dustAcc = 0;
 function emitRoadDust(dt, x, z, yaw, v, k) {
+  if (RAIN) return;                               // ぬれた砂利道は ほこりが立たない
   dustAcc += dt * Math.min(22, (Math.abs(v) - 1.2) * 6);
   const s = Math.sin(yaw), c = Math.cos(yaw), back = Math.sign(v) || 1;
   while (dustAcc >= 1) {
@@ -2417,7 +2496,7 @@ const FROGS = (() => {
 // ---- 秋のクモの糸（バルーニング）：晴れて風の弱い秋の日、子グモが糸を風に流して空をわたる。刈りあとの田んぼの上を、
 // 長い糸がゆっくり風下（東）へただよい、太陽のほうを見ると光って見える（ふだんはほとんど見えない）
 const GOSSAMER = (() => {
-  if (season !== 'aki') return { update() {} };
+  if (season !== 'aki' || WX !== 'hare') return { update() {} };   // 晴れて風の弱い日だけ
   const N = MOBILE ? 10 : 18, K = 10, list = [];
   const mat = new THREE.LineBasicMaterial({ color: 0xfffaf0, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending });
   const R = (a, b) => a + Math.random() * (b - a);
@@ -2851,13 +2930,14 @@ function step(dt) {
     const sg = Math.abs(S.v) > 0.2 || want === 0 ? Math.sign(S.v) : Math.sign(want), sIn0 = key.right - key.left;   // 動いている向き（止まりかけなら行きたい向き）
     const steers = sIn0 ? [S.steer, Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn0 * 0.55))] : [S.steer];
     // ハンドルから手をはなしていれば、走るあいだに切れ角がもどっていく（0.35/秒）のもたどる
+    // 田んぼの中か道かも 一歩ごとに見なおす（倍速ターンとオートブレーキは 田んぼの中だけ）
     const path = (d, v, st0) => {
       let x = S.x, z = S.z, y = S.yaw, st = st0;
       const dtPer = 1 / Math.max(0.3, Math.abs(S.v));          // 1m 進むのにかかる時間
       for (let n = Math.ceil(d / 0.05), i = 0; i < n; i++) {   // 5cm ずつ（大きく切ると鼻先が一瞬だけ畦にかかって もどることがある）
         const ds = d / n;
         if (!sIn0) st -= Math.sign(st) * Math.min(Math.abs(st), 0.35 * ds * dtPer);
-        y -= sg * ds * Math.tan(st) / WB * turnRate(v, x, z, onRoad, st); x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
+        y -= sg * ds * Math.tan(st) / WB * turnRate(v, x, z, Math.abs(x) > HX || Math.abs(z) > HZ, st); x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
         if (!canBe(x, z, y)) return false;
       }
       return true;
@@ -3262,6 +3342,17 @@ function toggleSound() {
     const buf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate), d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     const noise = ac.createBufferSource(); noise.buffer = buf; noise.loop = true;
+    // 小雨：まわりの「サー」と、キャビンの屋根や窓をたたく「パラパラ」。同じ雑音をゆっくり再生したものを音量のゆらぎにして、粒が当たるむらを出す
+    let rainG = null, rainF = null;
+    if (RAIN) {
+      const rn = ac.createBufferSource(); rn.buffer = buf; rn.loop = true; rn.playbackRate.value = 0.93;
+      const rm = ac.createBufferSource(); rm.buffer = buf; rm.loop = true; rm.playbackRate.value = 0.004;
+      const rmG = ac.createGain(); rmG.gain.value = 0.02;
+      rainF = ac.createBiquadFilter(); rainF.type = 'bandpass'; rainF.frequency.value = 2600; rainF.Q.value = 0.5;
+      rainG = ac.createGain(); rainG.gain.value = 0;
+      rn.connect(rainF); rainF.connect(rainG); rainG.connect(ac.destination); rm.connect(rmG); rmG.connect(rainG.gain);
+      rn.start(); rm.start();
+    }
     const nf = ac.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 900; nf.Q.value = 0.8;
     const ng = ac.createGain(); ng.gain.value = 0.18;
     noise.connect(nf); nf.connect(ng); ng.connect(am);
@@ -3311,7 +3402,7 @@ function toggleSound() {
     wLfo.connect(wLg); wLg.connect(wA.gain); wLfo.start();
     const wG = ac.createGain(); wG.gain.value = 0;
     noise.connect(wB); wB.connect(wA); wA.connect(wG); wG.connect(out);
-    audio = { ac, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
+    audio = { ac, rainG, rainF, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -3408,6 +3499,10 @@ function updateSound(dt = 0) {
   const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
   let rpm = engineRpm(t);
   const fire = rpm / 30;
+  if (audio.rainG) {                              // 小雨：キャビンの中は 屋根をたたく こもった音が大きい
+    audio.rainG.gain.setTargetAtTime(camMode === 0 ? 0.05 : 0.03, t, 0.5);
+    audio.rainF.frequency.setTargetAtTime(camMode === 0 ? 1300 : 3200, t, 0.5);
+  }
   if (audio.eng) {                                 // ディーゼルの音：回転数・負荷・カタカタの強さ・ターボ・キャビンの中か外か
     const E = audio.eng, work = S.rotDown && S.rotPos < 0.1;
     const ld = Math.min(1, (work ? 0.55 + 0.35 * Math.min(1, Math.abs(S.v) / 0.8) * DEPTH / 15 : key.fwd || key.back ? 0.3 : 0.08) + (work && S.wetLoad ? S.wetLoad / 900 : 0));
@@ -3687,6 +3782,7 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
+    if (RAIN && !SHIRO) setTimeout(() => toast('🌧️ 本物は、雨の日や雨のすぐあとには耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになる（乾くのを待つ）', 6), 4000);
   }
   if (!soundOn && !audio) toggleSound();
 };
@@ -3816,6 +3912,8 @@ function frame(now) {
   updateCamera(dt);
   updateSound(dt);
   SKY_TIME.value += dt;
+  RAINFX.update(dt);
+  WIPE.value = RAIN ? (performance.now() / 1000) % WIPE_P : 9;   // 間欠ワイパー
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);

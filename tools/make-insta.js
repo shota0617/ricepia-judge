@@ -16,7 +16,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const srv = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 3, timezoneId: 'Asia/Tokyo', locale: 'ja-JP' });
-  await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_noanalytics', '1'); });
+  await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_howto', '1'); localStorage.setItem('nsg_noanalytics', '1'); });
   // ネットにつながらないとき：地図の Leaflet とドットの文字（DotGothic16）を手もとのファイルから出す
   const offline = async c => {
     if (process.env.LEAFLET_DIR) await c.route('https://unpkg.com/**', r => {

@@ -783,6 +783,19 @@ async function walkTo(page, id) {
     await page.evaluate(h => { nishioPixel.rollPut(h[0], h[1], 0, 0); nishioPixel.setRoll(false); }, c.home);
     return { ok: d1.n - c.d0.n >= L.dots.length && d1.lines === c.d0.lines + 1, len: L.dots.length, got: d1.n - c.d0.n, lines: d1.lines - c.d0.lines };
   })();
+  // めいろ図に びゅんパネルと ごはんつぶも 出る（寄り道の 計画に）
+  R.checks.mapMarks = await (async () => {
+    await page.evaluate(() => { nishioPixel.setRoll(true); document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); }); await page.waitForTimeout(300);
+    const goal = await page.evaluate(() => !!nishioGo.guide);
+    if (!goal) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-goal' }; }
+    await page.evaluate(() => nishioPixel.maze.map(5000));
+    let m = null;
+    for (let i = 0; i < 20 && !m; i++) { await page.waitForTimeout(200); m = await page.evaluate(() => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); return nishioPixel.maze.mapShown ? nishioPixel.maze.mapMarks : null; }); }
+    const inBox = m ? await page.evaluate(([x0, y0, cols, rows]) => { const K = nishioPixel.maze.K, ins = ([x, y]) => x / K >= x0 && x / K < x0 + cols && y / K >= y0 && y / K < y0 + rows;   // 図の 中に ある つぶ・パネル
+      return { dots: nishioPixel.maze.linesNear().filter(L => L.left === L.dots.length).reduce((n, L) => n + L.dots.filter(ins).length, 0), pads: nishioPixel.maze.padsNear(40).filter(([x, y]) => ins([(x + 0.5) * K, (y + 0.5) * K])).length }; }, m.box) : null;
+    await page.evaluate(() => { nishioPixel.maze.map(0); nishioPixel.setRoll(false); });
+    return { ok: !!m && (!inBox.pads || m.pads > 0) && (!inBox.dots || m.dots > 0), inBox, marks: m && { pads: m.pads, dots: m.dots } };
+  })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
   await page.evaluate(() => { nishioPixel.setRoll(true); nishioPixel.setWorld(true); }); await page.waitForTimeout(300);
@@ -1242,8 +1255,10 @@ async function walkTo(page, id) {
           pi.hidden = true; await wait(200);
           const again = await push();
           const gone = () => { const r2 = P.roll; return Math.abs((r2.x - (sx + 0.5)) * -dx + (r2.y - (sy + 0.5)) * -dy) > 0.7; };
-          for (let i = 0; i < 10 && !gone() && pi.hidden; i++) await wait(100);   // 遅い 画面でも 待てるよう
-          const passed = gone();   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
+          const dbg = [];
+          for (let i = 0; i < 10 && !gone() && pi.hidden; i++) { await wait(100); const r3 = P.roll; dbg.push([+(r3.x - sx - 0.5).toFixed(2), +(r3.y - sy - 0.5).toFixed(2), +r3.vx.toFixed(1), +r3.vy.toFixed(1), pi.hidden, P.mapCovered(true), P.sightBusy()]); }   // 遅い 画面でも 待てるよう
+          const passed = gone();
+          window.__bumpDbg = passed ? null : { dx, dy, dbg, floats: P.floats() };   // すりぬけなかった ときの ようす（原因を 追う ため）   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
           pi.hidden = true;
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
@@ -1264,7 +1279,7 @@ async function walkTo(page, id) {
       }
       return { npc: 'none' };
     });
-    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && !bumpA.back && bumpA.fresh !== false) };
+    R.checks.npcBump = { ...bumpA, dbg: await w.page.evaluate(() => window.__bumpDbg || undefined), ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && !bumpA.back && bumpA.fresh !== false) };
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
       const G = nishioGo, pi = document.getElementById('pxInfo');
@@ -1415,6 +1430,7 @@ async function walkTo(page, id) {
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
+  need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.mazeWallFit && c.mazeWallFit.ok, 'めいろの 壁：お米が 壁に 食いこんで 見える（当たり判定が 絵より 小さい）、または はね返らない');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');

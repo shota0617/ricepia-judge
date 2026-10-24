@@ -1224,8 +1224,12 @@ async function walkTo(page, id) {
         const at = M.arrowAt, hud = M.hudRects();
         hits.push(at ? hud.filter(r => at[0] + at[2] > r[0] && at[0] - at[2] < r[2] && at[1] + at[2] > r[1] && at[1] - at[2] < r[3]).length : -1);
       }
+      const b0 = M.mapBuilds;
+      M.map(12000);   // 画面の 外の ゴールを 描いた あとも、矢印を タップすると めいろ図が 出て、0.5秒ごとに かきなおす（「つぎの ゴール」の 札の 間は 待つ）
+      for (let i = 0; i < 40 && M.mapBuilds - b0 < 2; i++) await wait(200);
+      const mapOk = M.mapBuilds - b0 >= 2; M.map(0);   // テストの ゴールは めいろの 道が ないので 図は 出ない。かきなおしが 動くかだけ 見る
       G.setGuide(null);
-      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) };
+      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, mapOk, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) && mapOk };
     });
     // 迷って いる 間（25秒 近づけない）：光る 点は 毎回 出すが、知らせは ゴールごとに 1回目だけ。3回目は おたすけを すすめる（1回の あそびで 1回）
     R.checks.mzHintToast = await w.page.evaluate(async () => {

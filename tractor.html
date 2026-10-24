@@ -1569,7 +1569,8 @@ const ART = (() => {
     g.textAlign = 'right'; g.font = 'bold 26px sans-serif'; g.fillText('トラクターで田んぼを耕そう｜らいすぴあ', W - 30, H - 42);
     return cv.toDataURL('image/jpeg', 0.88);
   }
-  return { on, id: ART_ID, name, T, setup, score, color, drawMini, photo, get guide() { return guide; } };
+  const sdAt = (x, z) => sd(z, x);               // 絵のふちからの距離（内側が負）
+  return { on, id: ART_ID, name, T, sdAt, setup, score, color, drawMini, photo, get guide() { return guide; } };
 })();
 
 // 切り株の並び（条間 30cm・株間 3/17m）。秋はコンバインのクローラの跡の上は無い
@@ -2765,15 +2766,15 @@ const EASY = (() => {
   if (params.has('easy')) on = params.get('easy') !== '0';
   const told = {};
   const tell = (id, t) => { if (!told[id]) { told[id] = 1; toast('🔰 ' + t, 3.2); } };
-  // 作業機のすぐ前の 3 点（左・まん中・右）の答え（1＝絵の中・0＝外・-1＝数えない）
+  // 作業機のすぐ前の 3 点（左・まん中・右）が、絵の外（白線から 40cm より外）か・絵の中か。
+  // 数えない帯（白線のまわり）ではなく、絵そのもので見る（米の線のような細い所でも下がるように）
   function ahead() {
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + 0.5, r = [0, 0];
     for (const lx of [-0.8, 0, 0.8]) {
       const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
-      const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
-      if (i < 0 || j < 0 || i >= NX || j >= NZ) continue;
-      const t = ART.T[i * NZ + j];
-      if (t === 0) r[0]++; else if (t === 1) r[1]++;
+      if (Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5) continue;
+      const d = ART.sdAt(x, z);
+      if (d > 0.4) r[0]++; else if (d < 0) r[1]++;
     }
     return r;
   }
@@ -2829,10 +2830,13 @@ function step(dt) {
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
   }
-  if (EASY.on && want !== 0 && S.started) {        // 🔰 畦の手前で止まる：止まれる長さの先に畦があれば進まない
-    const m = 0.45 + Math.abs(S.v) * 0.7, sg = Math.sign(want), y2 = S.yaw - sg * m * Math.tan(S.steer) / WB;   // ハンドルを切っていれば、曲がった先で見る
-    if (!canBe(S.x + Math.sin(y2) * m * sg, S.z + Math.cos(y2) * m * sg, y2)) {
-      want = 0; S.v *= 0.6; EASY.used = true;
+  if (EASY.on && want !== 0 && S.started) {        // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）
+    // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
+    const sg = Math.sign(want), at = d => { const y2 = S.yaw - sg * d * Math.tan(S.steer) / WB; return canBe(S.x + Math.sin(y2) * d * sg, S.z + Math.cos(y2) * d * sg, y2); };
+    if (!at(0.45 + Math.abs(S.v) * 0.7)) {
+      if (Math.abs(S.v) > 0.2 || !at(0.06)) { want = 0; S.v *= 0.6; }   // 速いときは強くブレーキ。6cm 先も畦なら止まる
+      else want = sg * Math.min(Math.abs(want), 0.15);                  // ゆっくりなら、少しずつ動ける
+      EASY.used = true;
       EASY.tell('stop', '畦の手前で止めました。' + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
     }
   }

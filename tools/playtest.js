@@ -989,8 +989,15 @@ async function walkTo(page, id) {
     await w.page.reload(); await w.page.waitForTimeout(2500);
     const again = await w.page.evaluate(() => !document.getElementById('howto').hidden);
     const reopen = await w.page.evaluate(() => { document.getElementById('howtoOpen').click(); const ok = !document.getElementById('howto').hidden; document.getElementById('howtoOk').click(); return ok && document.getElementById('howto').hidden; });
+    // 読んでいる 間に 来た ごほうびは うしろに 重ならず、とじてから 出る
+    await unblock(); await w.page.waitForTimeout(800); await unblock();
+    await w.page.evaluate(() => { document.getElementById('howtoOpen').click(); nishioGo.showReward(5, 'あそびかたの テスト', []); });
+    await w.page.waitForTimeout(700);
+    const heldBack = await w.page.evaluate(() => !document.getElementById('reward').classList.contains('show') && nishioGo.rewardSoon());
+    await w.page.click('#howtoOk'); await w.page.waitForTimeout(1500);
+    const afterOk = await w.page.evaluate(() => document.getElementById('reward').classList.contains('show') && /あそびかたの テスト/.test(document.getElementById('reward').textContent));
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
-    R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, ok: !!sub && shown && frozen && closed && rolls && !again && reopen };
+    R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -1003,7 +1010,7 @@ async function walkTo(page, id) {
   need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
-  need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない）');
+  need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');
   need(c.firstOnField && c.welcomeChestM !== null && c.welcomeChestM <= 150, 'はじめての人が歩く地図から始まらないか、近くに ようこそ たからばこ がない');
   need(c.controlsGone, 'めいろに いらない ボタン・せってい（スティック・📱・🚗・地図の 切りかえ・ドット絵の地図・Godot）が のこっている');
   need(c.rollKeyLeavesWorld, '転がす ときに せかいちずで 矢印キーを 押しても 歩く地図に もどらない');

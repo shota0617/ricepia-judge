@@ -5705,7 +5705,7 @@ function howtoShow() {
   try { localStorage.setItem('nsg_howto', '1'); } catch (e) { /* noop */ }
   setTimeout(() => { const b = $('howtoOk'); if (b && !howtoEl.hidden) b.focus(); }, 50);
 }
-function howtoTick() { if (!howtoSeen && mazeOn() && !mapCovered() && !sightBusy()) howtoShow(); }
+function howtoTick() { if (!howtoSeen && mazeOn() && !mapCovered() && !sightBusy() && !(G.rewardSoon && G.rewardSoon())) howtoShow(); }   // 出る 予定の ごほうび（開く 予約の おみやげ袋・読みこみ中の 絵・ムービー）が 済んでから
 $('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; });   // いまの 持ち方を「まっすぐ」に して はじめる
 $('howtoOpen').addEventListener('click', howtoShow);
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）

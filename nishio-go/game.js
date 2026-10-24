@@ -2503,7 +2503,7 @@ const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i
 // チェックインのあとの ひとこと：ごほうびの画面が消えたら、下に小さく出す（react.pending）
 const react = { pending: null, shown: 0, t: 0 };
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
-const medashiOpen = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ・古い地図・本のできごと。どれも .medashi）
+const medashiOpen = () => !!document.querySelector('.medashi:not([hidden]), #howto:not([hidden])');   // イベントの窓（田んぼ・古い地図・本のできごと。どれも .medashi）と「あそびかた」。開いている 間の ごほうびは 待って、とじてから 出す
 function showReward(total, name, lines, lvUp, fact, dot, waited) {
   if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
     const q = showReward.pending || (showReward.pending = []);

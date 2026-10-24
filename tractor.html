@@ -178,6 +178,13 @@
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
       ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
     </details>
+    <details class="how"><summary><b>農家の声</b>（ゲームの中で その場面になると出てくる言葉と、もとの話）</summary>
+      ・「まっすぐ進むのは思いのほか難しい」…<a href="https://www.pref.tochigi.lg.jp/g63/hp/kensyuka/20200825kusakari.html" target="_blank" rel="noopener">栃木県農業大学校の研修</a><br>
+      ・ぬかるみで爪とタイヤが泥に取られ、音が変わってエンストしそうに／黒土では深いわだち／耕すと土がはしに寄る…伊賀の兼業農家さんの記録（<a href="https://note.com/yuki0mori/n/nff90dd208391" target="_blank" rel="noopener">秋起こし</a>・<a href="https://note.com/yuki0mori/n/na89a773a8924" target="_blank" rel="noopener">春の田起こし</a>・<a href="https://note.com/yuki0mori/n/nd13d201e32b2" target="_blank" rel="noopener">土・自然・機械とのコミュニケーション</a>）<br>
+      ・「トラクターは車の運転とは別物」…<a href="https://note.com/mild_wasp1097/n/nefd2e2729a1d" target="_blank" rel="noopener">新規就農した人の記録</a><br>
+      ・振り返ったはずみにハンドルを取られる事故…<a href="https://www.naro.go.jp/org/iam/anzenweb/point/point_pdf/till_02.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
+      ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく
+    </details>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
 </div>
@@ -1144,6 +1151,7 @@ function setupField(root) {
     stubbleGeo.setIndex(Array.from(hm.geometry.index.array).slice(0, 3 * (MOBILE ? 40 : 60)));
     stubbleMat = hm.material;
     HEAPS.setup();
+    WET.setup();
     const hk = root.getObjectByName('HikobaeHill');   // 秋：刈り株から伸びた青い芽（ひこばえ）。切り株と同じ所に並べる
     if (hk) {
       hk.visible = false;
@@ -1204,6 +1212,28 @@ const PASSER = (() => {
     if (z < Z1) { g.visible = false; wait = 60 + Math.random() * 90; }
   }
   return { update, g, get v() { return v; } };
+})();
+
+// ---- 取水口のまわりのぬかるみ（春・秋）：水口から しみた水で、田んぼの東のはしの一角がいつも湿っている。
+// タイヤが深く沈み、爪が泥に取られて エンジンが重くなる（音も変わる）。高い速さ・深い耕深のまま入るとエンスト
+const WET = (() => {
+  const on = !SHIRO, cx = HX - 3.2, cz = -18, rx = 4.2, rz = 5.5;
+  function at(x, z) {
+    if (!on) return 0;
+    const d = Math.hypot((x - cx) / rx, (z - cz) / rz);
+    return Math.max(0, Math.min(1, (1 - d) * 1.6));
+  }
+  function setup() {
+    if (!on) return;
+    const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+    const g = cv.getContext('2d'), gr = g.createRadialGradient(64, 64, 4, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(28,20,12,0.8)'); gr.addColorStop(0.6, 'rgba(28,20,12,0.6)'); gr.addColorStop(1, 'rgba(30,22,14,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(rx * 2.4, rz * 2.4).rotateX(-Math.PI / 2),
+      new THREE.MeshStandardMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, roughness: 0.55, envMapIntensity: 0.12 }));   // ぬれて少しつや
+    m.position.set(cx, 0.08, cz); m.renderOrder = 2; scene.add(m);   // 耕していない土の凸凹より少し上
+  }
+  return { at, setup };
 })();
 
 // ---- 地面の高さと、走れる所 ----
@@ -1459,7 +1489,7 @@ let emitAcc = 0, exhAcc = 0;
 // 冷えた朝は、排気の水蒸気が白い湯気になって見える
 const EXH = { p: new THREE.Vector3(-0.80, 2.50, 0.645), w: new THREE.Vector3(), dark: 0.05, col: TOD === 'asa' ? [0.92, 0.92, 0.93] : [0.5, 0.5, 0.52] };   // 右 A ピラーの排気管の先
 function emitExhaust(dt) {
-  if (S.crank > 0.6) return;
+  if (S.crank > 0.6 || S.stalled) return;
   const load = (key.fwd || key.back ? 0.6 : 0) + (S.rotDown && S.rotPos < 0.1 ? 0.6 : 0) + Math.abs(S.v - lastExhV) / Math.max(dt, 1e-3) * 0.3;
   lastExhV = S.v;
   EXH.dark = Math.min(0.2, (0.025 + load * 0.03 + (S.flare || 0) * 0.08) * (TOD === 'asa' ? 3 : 1));
@@ -2369,6 +2399,7 @@ const HEAPS = (() => {
     if (!told && list.some(h => h.h > 0.07)) {
       told = true;
       toast('ロータリーを下げたまま大きく曲がると、土が寄って盛り上がります。角では上げてから回ろう');
+      setTimeout(() => voice('heap'), 3000);
     }
   }
   function flush(dt) {
@@ -2411,8 +2442,8 @@ function softAt(x, z) {
 function placeRig(dt) {
   const p = wheelPoints(S.x, S.z, S.yaw);
   const SINK = SINK0 * DEPTH / DEPTH0;             // 深く耕したところほど ふかふかで沈む
-  if (SINK) for (const k in sinkW) {                 // タイヤはじわっと沈み、かたい所へ出るとすっと上がる
-    const t = softAt(p[k][0], p[k][1]) * SINK * (k[0] === 'f' ? 0.6 : 1);
+  for (const k in sinkW) {                 // タイヤはじわっと沈み、かたい所へ出るとすっと上がる
+    const t = (softAt(p[k][0], p[k][1]) * SINK + WET.at(p[k][0], p[k][1]) * 0.07) * (k[0] === 'f' ? 0.6 : 1);   // ぬかるみでは さらに沈む
     sinkW[k] += (t - sinkW[k]) * Math.min(1, dt * (t > sinkW[k] ? 3 : 6));
   }
   const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8 - (sinkW[k] || 0);   // 盛り上がった土の上では傾く
@@ -2479,7 +2510,23 @@ function step(dt) {
   // バックアップ：耕しているときにバックすると、ロータリーが自動で上がる（前へ走りだすと下がる）
   if (key.back && S.rotDown && S.v < 0.3) { S.rotDown = false; S.autoUp = true; setRotBtn(); toast('バックしたので、ロータリーが自動で上がりました'); }
   if (key.fwd && S.autoUp && S.v >= 0) { S.rotDown = true; S.autoUp = false; setRotBtn(); }
-  let want = S.crank > 0 ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
+  // ぬかるみ：耕していると エンジンが重くなる。速さ（変速）と耕深が大きいほど重い。重すぎるとエンスト
+  const wet = WET.at(S.x, S.z), workingNow = S.rotDown && S.rotPos < 0.08;
+  if (wet > 0.2 && S.started) voice('wet');
+  S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) : 0;
+  S.lugT = S.wetLoad > 950 ? (S.lugT || 0) + dt : 0;
+  if (S.lugT > 1.2 && !S.stalled) {
+    S.stalled = true; S.v = 0; S.lugT = 0;
+    toast('エンスト！ ぬかるみで爪とタイヤが泥に取られました。' + IMPL + 'を上げてから、↑（▲）でエンジンをかけなおそう', 5);
+    if (audio && soundOn) thud(audio.ac, audio.out, 1.2);
+    setTimeout(() => voice('stall'), 5200);
+  }
+  if (S.stalled) {
+    S.v = 0;
+    if ((key.fwd || key.back) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.crank = 1.7; S.flare = 0; }   // かけなおし：セル → かかる
+    else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
+  }
+  let want = S.crank > 0 || S.stalled ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
   // 前後の切りかえ（シャトル）：止まってから逆へ入れると、一瞬まって「ごとん」とつながる
   if (want !== 0 && Math.abs(S.v) < 0.05 && S.lastDir && Math.sign(want) !== S.lastDir && !(S.shuttleT > 0)) {
     S.shuttleT = 0.35; S.lastDir = Math.sign(want); S.ppv = (S.ppv || 0) + 0.04 * S.lastDir; if (audio && soundOn) thud(audio.ac, audio.out, 0.5);
@@ -2491,6 +2538,9 @@ function step(dt) {
   const sIn = key.right - key.left;
   ASSIST.active = false;
   if (sIn) S.steer = Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn * 1.1 * dt));
+  // うしろを振り返っていると、体のひねりにつられて ハンドルが少しずつ右へとられる（振り返り事故のもと）
+  if (sIn && S.rotDown && S.rotPos < 0.08 && (S.workT || 0) > 6) voice('straight');   // 耕しながら向きを直しはじめたら
+  if (key.lookBack && Math.abs(S.v) > 0.2 && !ASSIST.active) { S.steer = Math.max(-MAX_STEER, S.steer - 0.05 * dt); S.lookT = (S.lookT || 0) + dt; if (S.lookT > 2.5) voice('look'); }
   else if (ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
   else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
   // オートブレーキ：ロータリーを上げて大きく切ると、内側の後輪に半ブレーキがかかって小さく回れる（枕地での旋回）
@@ -2547,7 +2597,7 @@ function step(dt) {
     if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
   }
   // 爪軸の回転：PTO が入ると回りはじめ、上げて PTO が切れても すぐには止まらず、はずみで しばらく回る
-  const wT = working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 19 * (SHIRO ? 784 / 561 : 1) * 0.9 : 0;
+  const wT = S.stalled ? 0 : working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 19 * (SHIRO ? 784 / 561 : 1) * 0.9 : 0;
   S.rotorW = (S.rotorW || 0) + (wT - (S.rotorW || 0)) * Math.min(1, dt * (wT > (S.rotorW || 0) ? 4 : 0.9));
   P.Rotor.rotation.x += S.rotorW * dt;
   if (P.WingL) {                                  // ハロー：上げると翼を上へ折りたたみ、下げると広げる
@@ -2939,7 +2989,7 @@ function updateSound(dt = 0) {
   audio.o2.frequency.setTargetAtTime(fire * 0.5, t, 0.25);
   audio.lfo.frequency.setTargetAtTime(fire, t, 0.25);
   audio.lp.frequency.setTargetAtTime(380 + load * 260, t, 0.3);
-  audio.out.gain.setTargetAtTime(camMode === 0 ? 0.07 : 0.11, t, 0.3);         // 運転席はキャビンで少し静か
+  audio.out.gain.setTargetAtTime(S.stalled ? 0 : camMode === 0 ? 0.07 : 0.11, t, S.stalled ? 0.15 : 0.3);   // エンストすると しんとなる         // 運転席はキャビンで少し静か
   audio.amb.gain.setTargetAtTime((camMode === 0 ? 0.01 : 0.04) * (SHIRO ? 1.2 : 1), t, 0.5);   // 生きものの声はキャビンの中だとほとんど聞こえない
   const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
   const ear = camMode === 0 ? 1 + 0.7 * lookBack : 1.4;   // うしろを見る・外から見ると、作業機の音が大きく聞こえる
@@ -2990,8 +3040,10 @@ function engineRpm(t) {
   // 深く・速く耕すほど重くて回転が落ちる
   let rpm = work ? 2500 - (40 + DEPTH * 5) * Math.min(1, Math.abs(S.v) / 0.8) * (0.8 + 0.08 * S.gear) + 30 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
   if (S.crank > 0.6) rpm = 160 + 70 * Math.sin(t * 34);
+  if (S.stalled) return 0;                       // エンスト：エンジンが止まっている
   rpm += 900 * (S.flare || 0);
-  if (S.lift > 0.1) rpm -= 70;                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
+  if (S.lift > 0.1) rpm -= 70;
+  if (work && S.wetLoad) rpm -= S.wetLoad;      // ぬかるみで爪とタイヤが泥に取られると、回転がぐっと落ちる                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
   return rpm;
 }
 
@@ -3119,14 +3171,29 @@ canvas.addEventListener('pointermove', e => {
 const endDrag = () => { drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0;
-function toast(t) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; toastT = 2.2; }
+function toast(t, sec = 2.2) { const el = $('toast'); el.textContent = t; el.style.opacity = 1; toastT = sec; }
+// 農家の声：その場面になったら 1 回だけ、本物の農家さん・研修生の言葉（要約）を出す
+const VOICES = {
+  straight: ['平らな所でも、まっすぐ進むのは思いのほか難しい', 'トラクター研修を受けた人の声（栃木県農業大学校）'],
+  wet: ['取水口のまわりはぬかるみ。タイヤや爪が泥に取られるとエンジンの音が変わって、エンストしそうになる', '伊賀の兼業農家さん（note「ゼロから始める伊賀の米づくり」）'],
+  stall: ['ぬかるみではロータリーを上げ、1〜2 速でゆっくり抜ける', '伊賀の兼業農家さん（note）'],
+  look: ['うしろを振り返ったはずみに ハンドルを取られて、田んぼや水路に落ちる事故がある。見るときはゆっくり', '農研機構の農作業事故の事例'],
+  heap: ['耕すと土がうしろへ送られて、田んぼのはしに寄っていく。中へもどすように意識して耕す', '伊賀の兼業農家さん（note）'],
+  car: ['トラクターは車の運転とは別物。変速・PTO・上げ下げと、確かめることが多い', '新規就農した人の声（note）'],
+};
+const heard = {};
+function voice(id) {
+  if (heard[id] || !VOICES[id]) return;
+  heard[id] = true;
+  toast('🧑‍🌾「' + VOICES[id][0] + '」— ' + VOICES[id][1], 6);
+}
 
 $('bStart').onclick = () => {
   if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padB', 'padD', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
-  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800); }
+  if (!S.started) { S.started = true; setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800); setTimeout(() => voice('car'), 9000); }
   if (!soundOn && !audio) toggleSound();
 };
 function finish() {
@@ -3221,7 +3288,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, finish, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

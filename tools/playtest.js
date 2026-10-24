@@ -713,8 +713,20 @@ async function walkTo(page, id) {
     const on = M.on();
     for (let i = 0; i < 12 && !M.trail().length; i++) await new Promise(f => setTimeout(f, 250));   // 足あと：いる 通路の マスに しるし
     const trail = M.trail().length;
+    M.map(4000);   // ゴールまでの めいろ図（行き先が あれば 出る。窓が 開いていれば 待つ）
+    let map = !nishioGo.guide ? 'no-goal' : false;
+    for (let i = 0; i < 12 && map === false; i++) { await new Promise(f => setTimeout(f, 250)); if (M.mapShown) map = true; }
+    M.map(0);
+    // 金の米つぶ：行き止まりに おちていて、ころがって 入ると ひろえる（その日は もう 出ない）
+    const near = M.grainsNear(20);
+    let grain = near.length ? false : 'none-near';
+    if (near.length) {
+      const [gx, gy] = near[0], n0 = nishioGo.mzGrains;
+      nishioPixel.rollPut(gx * K + 1.5, gy * K + 1.5);
+      for (let i = 0; i < 8 && grain === false; i++) { await new Promise(f => setTimeout(f, 150)); if (nishioGo.mzGrains === n0 + 1 && !M.grainsNear(20).some(([x, y]) => x === gx && y === gy)) grain = true; }
+    }
     nishioPixel.setRoll(false); nishioGo.moveTo(at.lat, at.lng);
-    return { ok: on && floors > 10 && walls > 3 && trail > 0, on, floors, walls, trail };
+    return { ok: on && floors > 10 && walls > 3 && trail > 0 && map !== false && grain !== false, on, floors, walls, trail, map, grain, grains: near.length };
   });
   // めいろの 壁（生け垣）に 押しつけても、お米が 壁に 食いこんで 見えない（左右は 壁の さかいから 0.6マスより 手前で 止まる）。当たると 葉っぱが 舞う
   R.checks.mazeWallFit = await (async () => {

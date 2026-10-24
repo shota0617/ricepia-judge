@@ -1823,6 +1823,27 @@ function alleyFind(x, y, ll) {
   showReward(ALLEY.pts, '🔍 路地の行き止まりを しらべたら 見つかった！', fresh ? ['📖 まちメモ +1'] : [], lvUp, fresh ? factPool().get(k) : '', null);
   return true;
 }
+// 金の米つぶ（pixel.js の 地図の めいろ）：行き止まりに おちている。ひろうと +2pt、きょう 10こごとに +20pt。
+// ひろった つぶは S.mzGrainGot（key は「日本の 日の 番号:マス」。つぶの 場所と 同じく 日本の 日づけで かわる。端末の 時間帯が 日本で なくても ずれない）
+const MZ_GRAIN = { pts: 2, every: 10, bonus: 20 };
+function mzGrainGot() {   // きょう（日本の 日づけ）ひろった つぶ
+  const p = Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + ':';
+  if (!Array.isArray(S.mzGrainGot) || S.mzGrainGot.some(k => !k.startsWith(p))) S.mzGrainGot = (S.mzGrainGot || []).filter(k => k.startsWith(p));
+  return S.mzGrainGot;
+}
+function mzGrain(key) {
+  const got = mzGrainGot();
+  if (got.includes(key)) return null;
+  got.push(key);
+  const n = got.length, bonus = n % MZ_GRAIN.every === 0 ? MZ_GRAIN.bonus : 0, pts = MZ_GRAIN.pts + bonus;
+  const lvUp = gainPoints(pts);
+  if (bonus) S.log.unshift({ type: 'grain', t: Date.now(), pts: MZ_GRAIN.every * MZ_GRAIN.pts + bonus, name: `金の米つぶを ${n}こ ひろった`, icon: '🌾' });   // きろくは 10こごとに まとめて（1こずつだと 最近のポイントが うまる）
+  const msg = bonus ? `🌾 金の米つぶ きょう ${n}こ！ ボーナス +${bonus}pt` : n === 1 ? '🌾 金の米つぶ：めいろの 行き止まりに おちているよ（毎日 かわる）' : '';
+  if (msg || lvUp) toast(`${msg}${lvUp ? `${msg ? ' ' : ''}⭐ レベル${lvUp}！` : ''}`);
+  save();
+  track('maze_grain', { n });
+  return { n, pts };
+}
 // イベント「ドット絵ムービー」（movie.js）：西尾の海と大地の話（shizen.js）は、文で ばらばらに出すのではなく、ゆかりの名所に着いたときに ムービーで見せる。
 // 最後まで見ると、その話が まちメモ に残る。途中で閉じたら、次に着いたとき（名所の窓の「📽️ ムービー」からも）また見られる
 const movieOf = s => (window.NISHIO_MOVIE && s ? NISHIO_MOVIE.movieAt(s.id, s.area) : null);
@@ -3768,7 +3789,20 @@ if (store.get('nsg_started', false)) {
   if (!store.get('nsg_begin_t', 0)) store.set('nsg_first_reward', true);
   $('intro').hidden = true; setMode(demo);   // setMode が1回に遊んだ時間を数えはじめる
 }
-else track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
+else {
+  track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
+  // 押すのに 抵抗が ある人へ：iPhone は 傾きの 確認が 出ることを 先に 伝える。8秒 押されなければ、いちばん上の ボタンが はねて お米の ふきだし（1回だけ。アクセス解析に intro_nudge）
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') $('iosTiltNote').hidden = false;
+  setTimeout(() => {
+    const b = $('meiroBtn');
+    if ($('intro').hidden || !b) return;
+    b.classList.add('nudge');
+    const tip = document.createElement('span');
+    tip.className = 'nudge-tip'; tip.setAttribute('aria-hidden', 'true'); tip.textContent = '🍚 おしても だいじょうぶ！';
+    b.append(tip);
+    track('intro_nudge', {});
+  }, 8000);
+}
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
 window.addEventListener('pagehide', idleMark);
@@ -3802,7 +3836,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

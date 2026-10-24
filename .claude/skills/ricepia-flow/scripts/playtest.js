@@ -47,7 +47,7 @@ function withOldFiles(ref, files, fn) {   // いまの 作業ファイルは 書
   const wt = fs.mkdtempSync(path.join(os.tmpdir(), 'ricepia-old-'));
   git('worktree', 'add', '-q', '--detach', wt, 'HEAD');
   try {
-    const dirty = [...git('diff', '-z', '--name-only', 'HEAD').split('\0'), ...git('ls-files', '-z', '--others', '--exclude-standard').split('\0')].map(f => f.trim()).filter(Boolean);   // -z：日本語の ファイル名も 引用・エスケープ しない 生の パスで
+    const dirty = [...git('diff', '-z', '--name-only', '--no-renames', 'HEAD').split('\0'), ...git('ls-files', '-z', '--others', '--exclude-standard').split('\0')].map(f => f.trim()).filter(Boolean);   // -z：日本語の ファイル名も 引用・エスケープ しない 生の パスで。--no-renames：名前を かえた ときも 元の 名前（消す）と 新しい 名前（足す）の 両方を 出す
     for (const f of dirty) {
       const src = path.join(ROOT, f), dst = path.join(wt, f);
       if (fs.existsSync(src)) { fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.copyFileSync(src, dst); } else fs.rmSync(dst, { force: true });

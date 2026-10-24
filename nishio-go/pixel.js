@@ -7524,17 +7524,8 @@ function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
     x.fillRect(i * c, j * c, c, c);
     if (t === 1 && mzGrainAt(cx, cy)) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g); }   // 金の米つぶ
   }
-  {   // 通路どうしの あいだの 細い壁
-    x.fillStyle = '#1d4434';
-    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-      const cx = x0 + i, cy = y0 + j;
-      if (!go(cx, cy)) continue;
-      if (go(cx + 1, cy) && !mzOpen(cx, cy, 1, 0)) x.fillRect((i + 1) * c - Math.ceil(wl / 2), j * c, wl, c);
-      if (go(cx, cy + 1) && !mzOpen(cx, cy, 0, 1)) x.fillRect(i * c, (j + 1) * c - Math.ceil(wl / 2), c, wl);
-    }
-  }
   let pads = 0, dots = 0;
-  {   // びゅんパネル（だいだいの 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）
+  {   // びゅんパネル（だいだいの 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）。細い壁より 先に 描く（小さい 図でも 壁を ぬりつぶさない）
     const now = performance.now(), q = Math.max(1, Math.round(c / 5));
     x.lineWidth = 1; x.strokeStyle = '#1a1a1a'; x.fillStyle = '#ff9a3c';
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
@@ -7552,6 +7543,15 @@ function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
         if (px < 0 || py < 0 || px >= cols * c || py >= rows * c) return;
         x.fillStyle = '#5a4a2a'; x.fillRect(Math.round(px - q / 2) - 1, Math.round(py - q / 2) - 1, q + 2, q + 2); x.fillStyle = '#ffffff'; x.fillRect(Math.round(px - q / 2), Math.round(py - q / 2), q, q); dots++;   // こい ふちで 通路の 色から うく
       });
+    }
+  }
+  {   // 通路どうしの あいだの 細い壁
+    x.fillStyle = '#1d4434';
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const cx = x0 + i, cy = y0 + j;
+      if (!go(cx, cy)) continue;
+      if (go(cx + 1, cy) && !mzOpen(cx, cy, 1, 0)) x.fillRect((i + 1) * c - Math.ceil(wl / 2), j * c, wl, c);
+      if (go(cx, cy + 1) && !mzOpen(cx, cy, 0, 1)) x.fillRect(i * c, (j + 1) * c - Math.ceil(wl / 2), c, wl);
     }
   }
   return { x0, y0, cols, rows, c, pads, dots, near: ((G.reachOf ? G.reachOf(gt) : 40) || 40) * 0.8 / TILE_M / MZ_K, gx: g.x / MZ_K, gy: g.y / MZ_K };

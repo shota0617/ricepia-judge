@@ -1153,6 +1153,7 @@ function chainStep(s, now) {
   return { n: c.n, bonus: c.n >= 2 ? Math.round(ptsOf(s) * (chainMult(c.n) - 1)) : 0 };
 }
 
+const MZ_STAR_PTS = [0, 2, 5, 10];   // 地図の めいろの ゴールの ★（1〜3）の ボーナス
 function checkin() {
   const s = selected;
   if (!s || !me) return;
@@ -1205,9 +1206,11 @@ function checkin() {
     const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(s.id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
     if (gl && gl.sec > 3) {
       const t = gl.sec < 60 ? `${Math.round(gl.sec)}秒` : `${Math.floor(gl.sec / 60)}分${String(Math.round(gl.sec % 60)).padStart(2, '0')}秒`;
+      const st = gl.stars || 0, stars = st ? '★'.repeat(st) + '☆'.repeat(3 - st) : '', sb = MZ_STAR_PTS[st] || 0;   // 目やすの 時間（めいろの 道のりで きまる）より はやいほど ★が ふえて ボーナス
+      if (sb) { total += sb; lines.unshift(`${stars} ${st === 3 ? 'はやい！' : st === 2 ? 'いいね！' : 'ゴール！'} +${sb}`); }
       lines.unshift(`🏁 めいろ ゴール！ ${t}${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
-      MZ.goalFx(`${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
-      track('maze_goal', { spot: s.name, sec: Math.round(gl.sec), m: Math.round(gl.m) });
+      MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
+      track('maze_goal', { spot: s.name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st });
     }
   }
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;

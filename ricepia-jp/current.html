@@ -4519,6 +4519,33 @@
 </head>
 
 <body>
+<!-- ===== まもなく新米告知（おにぎりがうまい米・安城ハツシモ）===== -->
+<section class="soon-shinmai" id="soon-shinmai" aria-label="新米入荷のお知らせ">
+  <div class="soon-shinmai__inner">
+    <span class="soon-shinmai__badge">新米入荷</span>
+    <p class="soon-shinmai__text">
+      <strong>おにぎりがうまい米</strong><span class="soon-shinmai__sep">・</span><strong>安城ハツシモ</strong>
+      <span class="soon-shinmai__tail">新米入荷しました！</span>
+    </p>
+    <a class="soon-shinmai__link" href="#shinmai-news">新米情報を見る</a>
+  </div>
+</section>
+<style>
+.soon-shinmai{background:var(--green-deep,#2d5a3d);color:#fff;border-bottom:3px solid var(--gold-bright,#c9a049);}
+.soon-shinmai__inner{max-width:1100px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;text-align:center;}
+.soon-shinmai__badge{background:var(--gold-bright,#c9a049);color:var(--green-deep,#2d5a3d);font-weight:700;font-size:.85rem;letter-spacing:.08em;padding:4px 10px;border-radius:999px;white-space:nowrap;animation:soonShinmaiPulse 2.4s ease-in-out infinite;}
+.soon-shinmai__text{margin:0;font-family:var(--font-serif,"Hiragino Mincho ProN","Yu Mincho",serif);font-size:1.05rem;line-height:1.6;}
+.soon-shinmai__text strong{color:var(--gold-bright,#e8c878);font-weight:700}
+.soon-shinmai__sep{opacity:.7;margin:0 .15em}
+.soon-shinmai__tail{margin-left:.4em}
+.soon-shinmai__link{color:#fff;font-size:.85rem;text-decoration:none;white-space:nowrap;border:1px solid rgba(255,255,255,.6);border-radius:4px;padding:4px 10px;}
+.soon-shinmai__link:hover{background:rgba(255,255,255,.12)}
+@keyframes soonShinmaiPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.soon-shinmai__badge{animation:none}}
+@media (max-width:600px){.soon-shinmai__inner{gap:8px;padding:10px 12px}.soon-shinmai__text{font-size:.95rem}.soon-shinmai__tail{display:block;margin-left:0}}
+</style>
+<!-- ===== /まもなく新米告知 ===== -->
+
 <style id="shinmai-refresh-preserved">
 #shinmai-news .news-update{font-size:16px;font-weight:700;margin:0 0 12px}
 #shinmai-news .news-stock{text-align:left;background:#fffdf4;border:2px solid #baa46f;padding:20px;max-width:760px;margin:20px auto}
@@ -4530,6 +4557,86 @@
 #shinmai-news .news-archive{font-size:16px;line-height:1.7;padding:16px;background:#fff;border:1px solid #bca77b;margin-top:24px}
 @media(max-width:600px){#shinmai-news .news-stock{padding:18px 14px}#shinmai-news .news-stock ul{grid-template-columns:1fr}#shinmai-news .news-actions a{width:100%}}
 </style>
+<!-- kome365:start 米づくり365(稲作ゲーム)のお知らせ。ゲームの3番め(トラクターの下)に置く(2026-10-24 店主指示で冒頭から移動)。2026-10-23 店主指示。日本語のトップだけ(ゲームが日本語のみ) -->
+<!-- 2026 新米 安城ハツシモ入荷（2026-10-24 追加） -->
+<style id="hatsushimo-style">
+#hatsushimo{background:#fff;padding:56px 20px;border-bottom:1px solid #e8e1cf}
+#hatsushimo .hs-inner{max-width:960px;margin:0 auto;display:grid;grid-template-columns:1fr minmax(240px,320px);gap:48px;align-items:center}
+#hatsushimo .hs-tag{display:inline-block;background:#d4a94a;color:#fff;font-weight:700;font-size:.85rem;letter-spacing:.1em;padding:4px 16px;border-radius:999px;margin:0 0 18px}
+#hatsushimo .hs-title{font-family:"Shippori Mincho","Noto Serif JP",serif;font-weight:800;font-size:clamp(2rem,5.4vw,3.1rem);line-height:1.3;letter-spacing:.04em;color:#1a1814;margin:0 0 18px}
+#hatsushimo .hs-title em{font-style:normal;color:#1f4d2b;background:linear-gradient(transparent 62%,#ead9a6 62%)}
+#hatsushimo .hs-lead{font-family:"Shippori Mincho","Noto Serif JP",serif;font-weight:700;font-size:clamp(1.15rem,2.8vw,1.4rem);line-height:1.7;color:#8a6423;margin:0 0 14px}
+#hatsushimo .hs-text{line-height:1.9;margin:0 0 24px;color:#3d3830}
+#hatsushimo .hs-btns{display:flex;flex-wrap:wrap;gap:12px}
+#hatsushimo .hs-btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 24px;border-radius:999px;font-weight:700;text-decoration:none;border:2px solid #1f4d2b;background:#1f4d2b;color:#fff}
+#hatsushimo .hs-btn--ghost{background:#fff;color:#1f4d2b}
+#hatsushimo .hs-media{justify-self:center;width:100%;max-width:320px}
+#hatsushimo .hs-video{display:block;width:100%;height:auto;aspect-ratio:9/16;object-fit:cover;border-radius:22px;background:#f4ecd8;box-shadow:0 14px 34px rgba(31,77,43,.18)}
+@media (max-width:800px){
+  #hatsushimo{padding:40px 20px 48px}
+  #hatsushimo .hs-inner{grid-template-columns:1fr;gap:28px;text-align:center}
+  #hatsushimo .hs-btns{justify-content:center}
+  #hatsushimo .hs-media{max-width:300px}
+}
+</style>
+<section id="hatsushimo" aria-labelledby="hatsushimo-title">
+  <div class="hs-inner">
+    <div>
+      <p class="hs-tag">新米入荷</p>
+      <h2 class="hs-title" id="hatsushimo-title">新米<br><em>安城ハツシモ</em>入荷！</h2>
+      <p class="hs-lead">ハツシモに最適な天候に恵まれ、<br>丸々と育ちました！</p>
+      <p class="hs-text">安城ハツシモの新米が入荷しました。<br>店頭・ドライブスルーでお求めいただけます。</p>
+      <div class="hs-btns">
+        <a class="hs-btn" href="#shinmai-news">新米情報を見る</a>
+        <a class="hs-btn hs-btn--ghost" href="#shop-info">店舗情報</a>
+      </div>
+    </div>
+    <div class="hs-media">
+      <video class="hs-video" src="videos/shinmai-anjo-hatsushimo.mp4" poster="videos/shinmai-anjo-hatsushimo.jpg" width="720" height="1280" autoplay muted loop playsinline controls preload="metadata" aria-label="新米の安城ハツシモ（玄米）の動画"></video>
+    </div>
+  </div>
+</section>
+<style id="kome365-style">
+  #kome365-game { background: #eef3e4; padding: clamp(2.5rem, 6vw, 4rem) 1.25rem; text-align: center; }
+  #kome365-game .km-inner { max-width: 720px; margin: 0 auto; }
+  #kome365-game .km-tag { display: inline-block; margin: 0 0 .9rem; padding: .15em .9em; border: 1px solid var(--gold, #b8893a); border-radius: 999px; background: #fff; color: var(--gold-text, #8a6423); font-size: .85rem; font-weight: 700; }
+  #kome365-game .sec-title { margin-bottom: .9rem; }
+  #kome365-game .km-nb { display: inline-block; }
+  #kome365-game .sec-lead { margin: 0 auto 1.6rem; }
+  #kome365-game .km-hero { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; margin: 0 0 1rem; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,.18); background: #c9d8e6; object-fit: cover; }
+  #kome365-game .km-shots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 1.4rem; padding: 0; list-style: none; }
+  #kome365-game .km-shots img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 10; border-radius: 10px; object-fit: cover; background: #c9d8e6; }
+  #kome365-game .km-shots span { display: block; margin-top: .4rem; color: var(--ink, #1a1814); font-size: .85rem; font-weight: 700; }
+  #kome365-game .km-points { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: 0 0 1.8rem; padding: 0; list-style: none; }
+  #kome365-game .km-points li { padding: .35em .9em; border-radius: 999px; background: #fff; color: var(--ink, #1a1814); font-size: .9rem; box-shadow: var(--shadow-soft); }
+  #kome365-game .km-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 14px 40px; border-radius: 999px; background: var(--green-deep, #1f4d2b); color: #fff; font-size: 1.05rem; font-weight: 700; letter-spacing: .04em; text-decoration: none; }
+  #kome365-game .km-btn:hover { background: #173e2d; }
+  #kome365-game .km-btn:focus-visible { outline: 3px solid var(--gold, #b8893a); outline-offset: 4px; }
+  #kome365-game .km-note { margin: 1rem 0 0; color: var(--text-muted, #736c5e); font-size: .85rem; line-height: 1.7; }
+  @media (max-width: 599px) { #kome365-game .km-btn { width: 100%; } #kome365-game .km-shots { gap: 6px; } #kome365-game .km-shots span { font-size: .75rem; } }
+</style>
+<section id="kome365-game" aria-labelledby="kome365-game-title">
+  <div class="km-inner">
+    <span class="km-tag">🌾 新しいゲーム</span>
+    <h2 id="kome365-game-title" class="sec-title"><span class="km-nb">西尾の田んぼで、</span><br><span class="em">お米づくりの1年</span>を。</h2>
+    <p class="sec-lead">種まき・田植えから稲刈りまで、いつ・どれだけをするかを決めるのは あなた。暑い夏、カメムシ、台風…。愛知県や農林水産省の公開資料をもとに、西尾の田んぼの1年を再現した「米づくり365」です。最後に、育てたお米が らいすぴあで どの銘柄として買えるかも わかります。</p>
+    <img class="km-hero" src="/kome365/shots/minori.webp" alt="ゲームの3Dの田んぼ。実って頭を垂れた黄金色の稲と、遠くの集落と山" width="960" height="600" loading="lazy">
+    <ul class="km-shots" aria-label="田んぼの1年">
+      <li><img src="/kome365/shots/nae.webp" alt="田んぼのそばの苗箱で育つ苗" width="960" height="600" loading="lazy"><span>🌱 苗を育てる</span></li>
+      <li><img src="/kome365/shots/taue.webp" alt="水を張った田んぼに、植えたばかりの苗が並ぶ" width="960" height="600" loading="lazy"><span>💧 田植えのあと</span></li>
+      <li><img src="/kome365/shots/ho.webp" alt="夏に青々と育った稲" width="960" height="600" loading="lazy"><span>☀️ 夏の田んぼ</span></li>
+    </ul>
+    <ul class="km-points">
+      <li>🌾 6つの品種から選べる</li>
+      <li>☀️ 暑い夏・涼しい夏</li>
+      <li>🚜 田植えも直播も</li>
+      <li>🏅 1等をめざす</li>
+    </ul>
+    <a class="km-btn" href="/kome365/">▶ 米づくりをはじめる</a>
+    <p class="km-note">パソコン・スマホのブラウザで遊べます(無料・インストール不要)。<br>3Dの田んぼを読みこむので、Wi-Fi のある所がおすすめです。</p>
+  </div>
+</section>
+<!-- kome365:end -->
 <!-- nishio-go:start にしおさんぽGO（試作版）のお知らせ。ricepia.jp トップの「動画で見る らいすぴあ」の上に入れる（tools/build-ricepia-jp.py） -->
 <style id="nishio-go-style">
   #nishio-go { background: var(--green-soft, #e8efdf); padding: clamp(2.5rem, 6vw, 4rem) 1.25rem; text-align: center; }
@@ -4556,19 +4663,20 @@
   <div class="ng-inner">
     <img class="ng-logo" src="https://go.ricepia.jp/nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80" loading="lazy">
     <span class="ng-tag">🧪 試作版</span>
-    <h2 id="nishio-go-title" class="sec-title">スマホを傾けて、<br><span class="em">お米を転がす</span>ゲーム。</h2>
-    <p class="sec-lead">主人公は、ひと粒のお米。スマホを傾けると、ドット絵の西尾のまちを ころころ転がります。坂は本当の西尾の高低差で、ひとりでに転がり下ります。名所に転がりこむとポイント。西尾城跡・岩瀬文庫・佐久島…そして らいすぴあ も名所のひとつです。</p>
+    <h2 id="nishio-go-title" class="sec-title">スマホを傾けると、<br><span class="em">お米が ころころ</span>西尾の めいろ。</h2>
+    <p class="sec-lead">主人公は、ひと粒のお米。西尾の地図ぜんぶが、本物の道で できた 迷路に なりました。スマホを傾けて、行き止まりを よけながら ころころ。ゴールは 西尾城跡・岩瀬文庫・佐久島…西尾の名所で、次の ゴールは まちの人の話で 決まります。らいすぴあ も名所のひとつです。坂は本当の西尾の高低差で、ひとりでに転がり下ります。</p>
     <ul class="ng-points">
+      <li>🌀 地図ぜんぶが めいろ</li>
+      <li>🏁 ゴールは 西尾の名所</li>
       <li>📱 傾けて ころころ</li>
+      <li>😆 表情が かわる お米</li>
       <li>⛰️ 本当の高低差の坂</li>
-      <li>🎁 たからばこと ドット絵</li>
-      <li>📜 毎日かわる「今日のクエスト」</li>
     </ul>
     <ul class="ng-shots" aria-label="プレイ画面">
-      <li><img src="https://go.ricepia.jp/nishio-go/shots/roll.webp" alt="ドット絵の西尾のまちを、お米が ころころ転がっている画面" width="540" height="1080" loading="lazy"><span>お米を転がす</span></li>
+      <li><img src="https://go.ricepia.jp/nishio-go/shots/meiro.webp" alt="西尾の地図が 緑の壁の めいろになり、お米が 名所の ゴールへ 転がる画面" width="540" height="1080" loading="lazy"><span>地図が めいろに</span></li>
+      <li><img src="https://go.ricepia.jp/nishio-go/shots/roll.webp" alt="ドット絵の西尾のまちを、お米が「&gt; &lt;」の顔で ころころ転がっている画面" width="540" height="1080" loading="lazy"><span>お米が ころころ</span></li>
       <li><img src="https://go.ricepia.jp/nishio-go/shots/reward.webp" alt="たからばこを開けて、名鉄の電車のドット絵をもらった画面" width="540" height="1080" loading="lazy"><span>ドット絵をあつめる</span></li>
       <li><img src="https://go.ricepia.jp/nishio-go/shots/world.webp" alt="西尾市と となりの市町の、名所が並んだ地図の画面" width="540" height="1080" loading="lazy"><span>名所をめぐる</span></li>
-      <li><img src="https://go.ricepia.jp/nishio-go/shots/badges.webp" alt="神社めぐり・お寺めぐりなどのバッジが並んだ画面" width="540" height="1080" loading="lazy"><span>バッジをそろえる</span></li>
     </ul>
     <a class="ng-btn" href="https://go.ricepia.jp/?utm_source=ricepia.jp&amp;utm_medium=referral&amp;utm_campaign=homepage" target="_blank" rel="noopener">▶ あそんでみる</a>
     <p class="ng-note">スマホのブラウザで遊べます（アプリのインストールは不要・無料）。<br>歩きスマホ・傾けながら歩くのは やめて、立ち止まって遊んでください。</p>
@@ -4779,9 +4887,9 @@
   <div class="shinmai-news-inner">
     <div class="shinmai-news-head">🌾 新米入荷速報</div>
     <!-- shinmai-news-status:start(入荷したらここを書き換える) -->
-    <p class="news-update"><time datetime="2026-10-06">2026年10月6日 更新</time></p>
+    <p class="news-update"><time datetime="2026-10-25">2026年10月25日 更新</time></p>
 <p class="shinmai-news-main">新米、いろいろ揃ってます！</p><p class="shinmai-news-body">新米として販売中の主な銘柄です。</p>
-<div class="news-stock"><h3>白米</h3><ul><li>のどか（愛知コシヒカリ）</li><li>あいちのかおり</li><li>ミルキークイーン</li><li>減農薬コシヒカリ</li><li>岩手ひとめぼれ</li><li>つやっ子</li><li>西尾にこまる</li></ul><h3>玄米30kgも新米に</h3><p>愛知コシヒカリ・あいちのかおり・ミルキークイーン・減農薬コシヒカリ。</p><p>ハイガ米・5分づき米・食用玄米も新米です。</p></div>
+<div class="news-stock"><h3>白米</h3><ul><li>のどか（愛知コシヒカリ）</li><li>あいちのかおり</li><li>ミルキークイーン</li><li>減農薬コシヒカリ</li><li>おにぎりがうまい米（にこまる＋ハツシモ）</li><li>岩手ひとめぼれ</li><li>つやっ子</li><li>西尾にこまる</li><li>安城ハツシモ</li></ul><h3>玄米30kgも新米に</h3><p>愛知コシヒカリ・あいちのかおり・ミルキークイーン・減農薬コシヒカリ。</p><p>ハイガ米・5分づき米・食用玄米も新米です。</p></div>
 
 <p class="shinmai-news-body">店頭・ドライブスルーでお受け取りいただけます。</p><div class="news-actions"><a href="/kakaku.pdf">最新の価格表を見る（PDF）</a></div><figure style="margin:1.4rem auto 0;max-width:360px;">
       <img src="images/shinmai-nyuka-2026.jpg" alt="2026年産の新米「のどか」(愛知県産コシヒカリ)とミルキークイーン10kgの袋を持つ五代目 近藤翔太" width="1050" height="1400" loading="lazy"

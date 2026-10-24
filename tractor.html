@@ -82,6 +82,8 @@
   .artImg { display: block; width: 100%; margin: 8px 0; border-radius: 10px; }
   .artBtns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0 10px; }
   .artBtns .go { min-height: 44px; padding: 0 20px; font-size: 15px; text-decoration: none; }
+  .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
+  .easy input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--green); }
   .go.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
   .times button { padding: 6px 4px; }
   .times button span { display: inline; font-size: 18px; margin-right: 4px; }
@@ -141,6 +143,7 @@
 <div id="bar" class="hidden">
   <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
+  <button id="bEasy" title="かんたんアシスト（K）：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる">🔰</button>
   <button id="bAssist" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
   <button id="bGear" title="主変速（Q で下げる・E で上げる）">変速 3</button>
   <button id="bFast" title="早送り（F）">⏩ ×1</button>
@@ -182,6 +185,7 @@
       <button data-a="smile"><span>😊</span>にっこり</button>
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
+    <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
     <p class="small" id="progText">読みこみ中…</p>
@@ -208,6 +212,7 @@
         <tr><td>早送り</td><td class="pc"><kbd>F</kbd></td><td>「⏩」</td></tr>
         <tr><td>音・ライト</td><td class="pc"><kbd>M</kbd>・<kbd>L</kbd></td><td>「🔊」</td></tr>
         <tr><td>旋回アップの入切</td><td class="pc"><kbd>U</kbd></td><td>—</td></tr>
+        <tr><td>🔰 かんたんアシストの入切</td><td class="pc"><kbd>K</kbd></td><td>「🔰」</td></tr>
         <tr><td>はじめの場所へ</td><td class="pc"><kbd>R</kbd></td><td>—</td></tr>
         <tr><td>この操作の表</td><td class="pc"><kbd>H</kbd></td><td>「？」</td></tr>
       </table>
@@ -1490,7 +1495,7 @@ const ART = (() => {
     }
     const prec = tp / Math.max(1, tp + fp), fill = tp / Math.max(1, goal), ready = (tp + fp) * CELL * CELL >= 10;
     const kirei = Math.round(100 * Math.max(0, Math.min(1, (prec - 0.6) / 0.35))), unten = SCORE.calc();
-    const skill = ready ? Math.round(kirei * unten / 100) : null;
+    const skill = ready ? Math.round(kirei * unten / 100 * (EASY.used ? 0.8 : 1)) : null;   // 🔰 かんたんアシストを使った回は 8 割
     return { skill, kirei, unten, prec, fill, ready, final: ready ? Math.round(skill * Math.min(1, fill / 0.95)) : 0,
       sim: Math.round(100 * tp / Math.max(1, tp + fp + fn)), over: fp * CELL * CELL, left: fn * CELL * CELL };
   }
@@ -1560,11 +1565,12 @@ const ART = (() => {
     renderer.setPixelRatio(pr); resize();
     g.fillStyle = 'rgba(20,18,14,.62)'; g.fillRect(0, H - 84, W, 84);
     g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.font = 'bold 40px sans-serif';
-    g.fillText('🎨 田んぼアート「' + name + '」 ' + pts + ' 点', 30, H - 42);
+    g.fillText('🎨 田んぼアート「' + name + '」 ' + pts, 30, H - 42);
     g.textAlign = 'right'; g.font = 'bold 26px sans-serif'; g.fillText('トラクターで田んぼを耕そう｜らいすぴあ', W - 30, H - 42);
     return cv.toDataURL('image/jpeg', 0.88);
   }
-  return { on, id: ART_ID, name, T, setup, score, color, drawMini, photo, get guide() { return guide; } };
+  const sdAt = (x, z) => sd(z, x);               // 絵のふちからの距離（内側が負）
+  return { on, id: ART_ID, name, T, sdAt, setup, score, color, drawMini, photo, get guide() { return guide; } };
 })();
 
 // 切り株の並び（条間 30cm・株間 3/17m）。秋はコンバインのクローラの跡の上は無い
@@ -2727,6 +2733,22 @@ const ASSIST = { mode: 'none', paused: false, on: false, active: false, A: null,
 // PTO：耕うんは 1 速、代かきは 2 速で爪を速く回す（同じ YT4 シリーズの仕様：エンジン 2600 回転で 1 速 561・2 速 784 回転）
 const PTO_RATIO = (SHIRO ? 784 : 561) / 2600;
 const PITCH = TILL_W - 0.1;
+// 曲がりやすさ：オートブレーキ（上げて大きく切ると内側の後輪に半ブレーキ）で小回り。
+// 代かきの泥の中では前輪が横にすべって、ハンドルを切ったほど曲がらない（速いほどふくらむ）。かんたんアシストの予測も同じ式を使う
+function turnRate(v, x, z, onRoad, steer = S.steer) {
+  const autoBrake = !S.rotDown && !onRoad && Math.abs(steer) > 0.45 && v < 3;
+  const under = SHIRO && Math.abs(x) < HX && Math.abs(z) < HZ ? 0.86 - 0.08 * Math.min(1, v / 1.5) : 1;
+  return (autoBrake ? 1.45 : 1) * under;
+}
+// 🔰 まっすぐを手伝う：耕しているとき、田んぼの長い向き・短い向きから 12° 以内なら、その向きにそろえる
+function easyStraight(dt) {
+  const a = Math.round(S.yaw / (Math.PI / 2)) * (Math.PI / 2), err = Math.atan2(Math.sin(S.yaw - a), Math.cos(S.yaw - a));
+  if (Math.abs(err) > 0.21) return false;
+  const target = Math.max(-0.25, Math.min(0.25, 1.2 * err * WB / S.v));   // 向きのずれを 1 秒くらいでもどす切れ角
+  S.steer += Math.max(-0.8 * dt, Math.min(0.8 * dt, target - S.steer));
+  if (Math.abs(err) > 0.02) EASY.used = true;
+  return true;
+}
 function assistSteer(dt) {
   if (!ASSIST.on) return false;
   const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), [dx, dz] = ASSIST.d, [nx, nz] = ASSIST.n;
@@ -2741,6 +2763,38 @@ function assistSteer(dt) {
   const target = Math.max(-0.3, Math.min(0.3, ASSIST.dir * (off * 0.9 + lat * 2.2)));
   S.steer += Math.max(-0.8 * dt, Math.min(0.8 * dt, target - S.steer));
   return true;
+}
+// ---- 🔰 かんたんアシスト：はじめての人がつまずく所を手伝う（入切できる。はじめは入。ブラウザに覚えておく）----
+// 畦の手前で止まる／耕すときは時速 3km まで・坂は低速／手をはなすと田んぼの向きにまっすぐそろえる／旋回アップを入れる／
+// 田んぼアートでは白線をこえそうなら上げ、絵の中にもどったら下げる（GPS の作業機の自動昇降のように）。使った回は点数に 🔰 を付ける
+const EASY = (() => {
+  let on = true;
+  try { const v = localStorage.getItem('tractorEasy'); if (v !== null) on = v === '1'; } catch (e) {}
+  if (params.has('easy')) on = params.get('easy') !== '0';
+  const told = {};
+  const tell = (id, t) => { if (!told[id]) { told[id] = 1; toast('🔰 ' + t, 3.2); } };
+  // 作業機のすぐ前の 3 点（左・まん中・右）が、絵の外（白線から 40cm より外）か・絵の中か。
+  // 数えない帯（白線のまわり）ではなく、絵そのもので見る（米の線のような細い所でも下がるように）
+  function ahead() {
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + 0.5, r = [0, 0];
+    for (const lx of [-0.8, 0, 0.8]) {
+      const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
+      if (Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5) continue;
+      const d = ART.sdAt(x, z);
+      if (d > 0.4) r[0]++; else if (d < 0) r[1]++;
+    }
+    return r;
+  }
+  return {
+    get on() { return on; }, set on(v) { on = v; }, used: false, autoUp: false, tell, ahead,
+  };
+})();
+function setEasy(v) {
+  EASY.on = v;
+  try { localStorage.setItem('tractorEasy', v ? '1' : '0'); } catch (e) {}
+  $('bEasy').classList.toggle('on', v); $('easyBox').checked = v;
+  if (v) S.turnUp = true;
+  if (S.started) toast('🔰 かんたんアシスト ' + (v ? '入：畦の手前で止まる・速さをおさえる・まっすぐを手伝う' + (ART.on ? '・白線で上げる' : '') : '切') + '（K）', 3);
 }
 function step(dt) {
   // 目標の速さ：主変速（1〜4 速）で決まる。耕すとき（副変速は低速）は 1.6・2.2・2.8・3.6km/h（本物のロータリー耕うんは 2〜3km/h）、
@@ -2779,6 +2833,37 @@ function step(dt) {
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
   let want = S.crank > 0 || S.stalled ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
+  if (EASY.on && want > 0) {                       // 🔰 耕すときは時速 3km まで、坂は時速 5km まで
+    const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
+    if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
+  }
+  if (EASY.on && S.started && (want !== 0 || Math.abs(S.v) > 0.05)) {   // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）。アクセルをはなして惰性で進むあいだも見る
+    // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
+    // 曲がる道すじを 5cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
+    // 曲がり方は、じっさいの動き（turnRate）と同じ式で。止まるまでに遅くなると曲がり方が変わり、ハンドルを切りつづけていればもっと切れるので、
+    // いまの速さ・止まる前の速さと、いまの切れ角・0.5 秒先の切れ角の組み合わせを全部見る（大きく切ると、うしろの作業機が外へふくらむ）
+    const sg = Math.abs(S.v) > 0.2 || want === 0 ? Math.sign(S.v) : Math.sign(want), sIn0 = key.right - key.left;   // 動いている向き（止まりかけなら行きたい向き）
+    const steers = sIn0 ? [S.steer, Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn0 * 0.55))] : [S.steer];
+    // ハンドルから手をはなしていれば、走るあいだに切れ角がもどっていく（0.35/秒）のもたどる
+    const path = (d, v, st0) => {
+      let x = S.x, z = S.z, y = S.yaw, st = st0;
+      const dtPer = 1 / Math.max(0.3, Math.abs(S.v));          // 1m 進むのにかかる時間
+      for (let n = Math.ceil(d / 0.05), i = 0; i < n; i++) {   // 5cm ずつ（大きく切ると鼻先が一瞬だけ畦にかかって もどることがある）
+        const ds = d / n;
+        if (!sIn0) st -= Math.sign(st) * Math.min(Math.abs(st), 0.35 * ds * dtPer);
+        y -= sg * ds * Math.tan(st) / WB * turnRate(v, x, z, onRoad, st); x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
+        if (!canBe(x, z, y)) return false;
+      }
+      return true;
+    };
+    const at = d => steers.every(st => path(d, Math.abs(S.v), st) && path(d, 0, st));
+    if (!at(0.45 + Math.abs(S.v) * 0.7)) {
+      if (Math.abs(S.v) > 0.2 || !at(0.06) || Math.sign(want) !== sg) { want = 0; S.v *= 0.6; }   // 速いとき・惰性のときは強くブレーキ。6cm 先も畦なら止まる
+      else want = sg * Math.min(Math.abs(want), 0.15);                                           // ゆっくりなら、少しずつ動ける
+      EASY.used = true;
+      EASY.tell('stop', '畦の手前で止めました。' + (S.rotDown && sg > 0 ? IMPL + 'を上げてから回ろう' : 'ハンドルを切るか、反対へ'));
+    }
+  }
   // 前後の切りかえ（シャトル）：止まってから逆へ入れると、一瞬まって「ごとん」とつながる
   if (want !== 0 && Math.abs(S.v) < 0.05 && S.lastDir && Math.sign(want) !== S.lastDir && !(S.shuttleT > 0)) {
     S.shuttleT = 0.35; S.lastDir = Math.sign(want); S.ppv = (S.ppv || 0) + 0.04 * S.lastDir; if (audio && soundOn) thud(audio.ac, audio.out, 0.5);
@@ -2804,6 +2889,7 @@ function step(dt) {
   }
   if (key.lookBack && Math.abs(S.v) > 0.2 && !ASSIST.active) { S.steer = Math.max(-MAX_STEER, S.steer - 0.05 * dt); S.lookT = (S.lookT || 0) + dt; if (S.lookT > 2.5) voice('look'); }
   else if (ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
+  else if (EASY.on && !sIn && S.rotDown && S.rotPos < 0.08 && Math.abs(S.v) > 0.1 && !onRoad && easyStraight(dt)) ASSIST.active = true;   // 🔰 まっすぐを手伝う（点数のまっすぐには数えない）
   else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
   // オートブレーキ：ロータリーを上げて大きく切ると、内側の後輪に半ブレーキがかかって小さく回れる（枕地での旋回）
   // 旋回連動（直進アシスト仕様）：直進アシストで耕したあと、旋回でハンドルを切ると作業機が自動で上がり、アシストも切れる。
@@ -2819,14 +2905,19 @@ function step(dt) {
     S.rotDown = false; S.turnLatch = true; S.turnUpHold = true; setRotBtn();
     toast('旋回アップ：ハンドルを大きく切ったので ' + IMPL + 'が上がりました。回ったら下げる');
   }
+  if (EASY.on && ART.on && S.v > 0.1) {            // 🔰 田んぼアート：白線をこえそうなら上げ、絵の中にもどったら下げる
+    const [out, inn] = EASY.ahead();
+    if (S.rotDown && S.rotPos < 0.08 && out >= 2) { S.rotDown = false; EASY.autoUp = true; EASY.used = true; setRotBtn(); EASY.tell('artUp', '白線をこえるので ' + IMPL + 'を上げました。絵の中にもどると下がります'); }
+    else if (!S.rotDown && EASY.autoUp && inn >= 2 && Math.abs(S.steer) < 0.2) { S.rotDown = true; EASY.autoUp = false; setRotBtn(); }
+  }
+  if (!S.rotDown && Math.abs(S.steer) > 0.45) EASY.autoUp = false;   // 回りはじめたら、自動で下げるのはやめる（下げるのは手で）
   if (Math.abs(S.steer) < 0.2) { S.turnLatch = false; S.turnUpHold = false; }
   if (S.rotDown && S.rotPos < 0.08) S.turnUpHold = false;
   S.autoBrake = !S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;   // 道では左右のブレーキを連結するので片ブレーキはきかない
-  // 代かきの泥の中では前輪が横にすべって、ハンドルを切ったほど曲がらない（速いほどふくらむ）
-  const under = SHIRO && Math.abs(S.x) < HX && Math.abs(S.z) < HZ ? 0.86 - 0.08 * Math.min(1, Math.abs(S.v) / 1.5) : 1;
-  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * under * dt;
+  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
+  else if (EASY.on) { if (Math.abs(S.v) > 0.3) EASY.tell('stop', '畦の手前で止めました。ハンドルを切るか、反対へ'); S.v = 0; EASY.used = true; }   // 🔰 予測で止めきれなかったときも、ぶつけずにその場で止める（減点しない）
   else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
   placeRig(dt);
   // ロータリー：下げると爪が回り、通ったところを耕す
@@ -3337,6 +3428,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyL') LAMPS.toggle();
   else if (e.code === 'KeyB') key.lookBack = 1;
   else if (e.code === 'KeyH') toggleHelp();
+  else if (e.code === 'KeyK') setEasy(!EASY.on);
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }
   else if (e.code === 'KeyZ') setDepth(-1);
   else if (e.code === 'KeyX') setDepth(1);
@@ -3446,6 +3538,9 @@ function toggleHelp() {
 }
 $('bHelp').onclick = toggleHelp;
 $('bHelpClose').onclick = toggleHelp;
+$('bEasy').onclick = () => setEasy(!EASY.on);
+$('easyBox').onchange = e => setEasy(e.target.checked);
+setEasy(EASY.on);
 $('bShallow').onclick = () => setDepth(-1);
 $('bDeep').onclick = () => setDepth(1);
 $('bAgain').onclick = () => location.reload();
@@ -3543,7 +3638,8 @@ function finish() {
   g.imageSmoothingEnabled = false; g.drawImage(tmp, 0, 0, W, H);
   const area = left * CELL * CELL;
   const trkM = Math.round(TR.remaining(c => tilledMask[c]));   // 耕した所の上に、いま残っているタイヤの跡（4 本の車輪の跡の長さの合計）
-  $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
+  const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
+  $('doneScore').innerHTML = `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
@@ -3556,7 +3652,7 @@ function finish() {
 const heardLine = () => `<br><span class="small">🧑‍🌾 聞いた農家の声 ${Object.keys(heard).length}/${Object.keys(VOICES).length}（はじめの画面の「農家の声」に、もとの話）</span>`;
 // 田んぼアートの仕上がり：ドローンの写真・点数（上手さ × でき）・保存とシェア
 function finishArt() {
-  const r = ART.score(), url = ART.photo(r.final);
+  const r = ART.score(), url = ART.photo(r.final + ' 点' + (EASY.used ? ' 🔰' : ''));
   $('artBox').classList.add('hidden');
   $('doneTitle').textContent = '🎨 田んぼアートができました！';
   $('doneText').textContent = `お題「${ART.name}」を ${fmtTime(S.elapsed)} で描きました。ドローンで真上から撮った写真です。`;
@@ -3567,11 +3663,11 @@ function finishArt() {
   if (r.fill < 0.95) tips.push('のこりの黄色い所も耕すと、でき が上がる');
   if (r.ready && r.kirei < 80) tips.push('白線の手前でロータリーを上げると、はみ出さない（はみ出した土はもどせない）');
   tips.push(...sm.tips);
-  $('doneScore').innerHTML = `<b>${f} 点</b><br><span class="small">${msg}</span>` +
-    `<br><span class="small">上手さ ${r.ready ? r.skill : 0} 点（きれいさ ${r.kirei}% × 運転 ${r.unten} 点）× でき ${Math.round(r.fill * 100)}%（95% で満点）</span>` +
+  $('doneScore').innerHTML = `<b>${f} 点</b>${EASY.used ? '（🔰 かんたんアシストを使ったので 8 割）' : ''}<br><span class="small">${msg}</span>` +
+    `<br><span class="small">上手さ ${r.ready ? r.skill : 0} 点（きれいさ ${r.kirei}% × 運転 ${r.unten} 点${EASY.used ? ' × 🔰 0.8' : ''}）× でき ${Math.round(r.fill * 100)}%（95% で満点）</span>` +
     `<br><span class="small">はみ出し ${r.over.toFixed(0)}m²・耕し残し ${r.left.toFixed(0)}m²（白線から ${SHIRO ? 60 : 40}cm 以内は数えない）・運転：${sm.text}</span>` +
     (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '') + heardLine();
-  const blob = fetch(url).then(x => x.blob()), text = `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点`;
+  const blob = fetch(url).then(x => x.blob()), text = `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}`;
   blob.then(b => {
     const f = new File([b], 'tanbo-art.jpg', { type: 'image/jpeg' });
     if (!navigator.canShare || !navigator.canShare({ files: [f] })) return;
@@ -3674,7 +3770,7 @@ function frame(now) {
     if (pct >= 3 && !S.hintGone) { S.hintGone = true; $('keyHint').style.opacity = 0; }
     $('time').textContent = fmtTime(S.elapsed);
     if (ART.on) { const r = ART.score(); $('sc').textContent = r.skill === null ? '—' : r.skill; $('sim').textContent = Math.round(r.fill * 100); }
-    else $('sc').textContent = SCORE.ready() ? SCORE.calc() : '—';   // 10m² 耕すまでは点数を出さない（まだ上手か下手かわからない）
+    else $('sc').textContent = SCORE.ready() ? Math.round(SCORE.calc() * (EASY.used ? 0.8 : 1)) + (EASY.used ? '🔰' : '') : '—';   // 10m² 耕すまでは点数を出さない（まだ上手か下手かわからない）
     hudT = 0.15;
   }
   if (toastT > 0 && (toastT -= dt) <= 0) { $('toast').style.opacity = 0; curVoice = null; if (voiceQ.length) nextVoice(); }
@@ -3697,7 +3793,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -220,6 +220,7 @@
         <tr><td>音・ライト</td><td class="pc"><kbd>M</kbd>・<kbd>L</kbd></td><td>「🔊」</td></tr>
         <tr><td>旋回アップの入切</td><td class="pc"><kbd>U</kbd></td><td>—</td></tr>
         <tr><td>倍速ターンの入切（はじめは入）</td><td class="pc"><kbd>T</kbd></td><td>—</td></tr>
+        <tr><td>PTO の変速（1 速・2 速。2 速は土が細かく砕ける）</td><td class="pc"><kbd>P</kbd></td><td>—</td></tr>
         <tr><td>🔰 かんたんアシストの入切</td><td class="pc"><kbd>K</kbd></td><td>「🔰」</td></tr>
         <tr><td>はじめの場所へ</td><td class="pc"><kbd>R</kbd></td><td>—</td></tr>
         <tr><td>この操作の表</td><td class="pc"><kbd>H</kbd></td><td>「？」</td></tr>
@@ -1568,7 +1569,7 @@ function tillCell(i, j) {
 // 田起こしは 10cm くらいまでがよい。粗い所は土くれの影で暗く、細かい所は少し明るく見える
 const ROUGH = new Float32Array(NX * NZ).fill(1);
 function tillPitch() {
-  const rotor = engineRpm(performance.now() / 1000) * PTO_RATIO * 0.42;
+  const rotor = engineRpm(performance.now() / 1000) * ptoRatio() * 0.42;
   return Math.abs(S.v) * 6000 / Math.max(60, rotor * 2);
 }
 const DRY = (() => {
@@ -2218,7 +2219,7 @@ const SNAILS = (() => {
       if (!working || Math.abs(S.v) < 0.1) return;
       acc += Math.abs(S.v) * dt * TILL_W * 0.8;    // 多い田んぼでは 1m² に 1 匹ほど
       if (acc < 1) return;
-      const crush = Math.max(0.15, Math.min(0.9, 1.15 - Math.abs(S.v) * 3.6 / 3.5)) * (DEPTH <= 7 ? 1 : 0.6);   // 時速 1.4km で 7 割・3km で 3 割ほど。深いと埋めもどす
+      const crush = Math.min(0.95, Math.max(0.15, Math.min(0.9, 1.15 - Math.abs(S.v) * 3.6 / 3.5)) * (DEPTH <= 7 ? 1 : 0.6) * (PTO2 ? 1.25 : 1));   // 爪が速い 2 速は よくつぶれる   // 時速 1.4km で 7 割・3km で 3 割ほど。深いと埋めもどす
       const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
       while (acc >= 1) {
         acc -= 1;
@@ -3112,7 +3113,9 @@ function placeRig(dt) {
 // そのあと G で入切、Shift+G で登録しなおし
 const ASSIST = { mode: 'none', paused: false, on: false, active: false, A: null, B: null, aDist: 0, d: [0, 1], n: [1, 0], dir: 1, k: 0, off: 0 };
 // PTO：耕うんは 1 速、代かきは 2 速で爪を速く回す（同じ YT4 シリーズの仕様：エンジン 2600 回転で 1 速 561・2 速 784 回転）
-const PTO_RATIO = (SHIRO ? 784 : 561) / 2600;
+// P で 1 速・2 速を切りかえる。2 速は爪が速く回って土が細かく砕け（ピッチが小さい）、エンジンは少し重い（ジャンボタニシ対策の冬の耕うんは 2 速：千葉県）
+let PTO2 = SHIRO;
+const ptoRatio = () => (PTO2 ? 784 : 561) / 2600;
 const PITCH = TILL_W - 0.1;
 // 曲がりやすさ：オートブレーキ（上げて大きく切ると内側の後輪に半ブレーキ）で小回り。
 // 倍速ターン：前輪を 35° より大きく切ると、前輪が後輪の約 2 倍の速さで回って鼻先を引っぱり、もっと小さく回れる。
@@ -3204,7 +3207,7 @@ function step(dt) {
   // ぬかるみ：耕していると エンジンが重くなる。速さ（変速）と耕深が大きいほど重い。重すぎるとエンスト
   const wet = WET.at(S.x, S.z), workingNow = S.rotDown && S.rotPos < 0.08;
   if (wet > 0.2 && S.started) voice('wet');
-  S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) + WRAP.v * 220 : 0;   // 秋は 爪軸に巻きついた 2 番穂でも重い
+  S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) + WRAP.v * 220 + (PTO2 && !SHIRO ? 80 : 0) : 0;   // 秋は 爪軸に巻きついた 2 番穂でも重い
   S.lugT = S.wetLoad > 950 ? (S.lugT || 0) + dt : 0;
   if (S.lugT > 1.2 && !S.stalled) {
     S.stalled = true; S.v = 0; S.lugT = 0;
@@ -3337,7 +3340,7 @@ function step(dt) {
     if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
   }
   // 爪軸の回転：PTO が入ると回りはじめ、上げて PTO が切れても すぐには止まらず、はずみで しばらく回る
-  const wT = S.stalled ? 0 : working ? 19 * (SHIRO ? 784 / 561 : 1) : S.rotDown ? 19 * (SHIRO ? 784 / 561 : 1) * 0.9 : 0;
+  const wT = S.stalled ? 0 : working ? 19 * (PTO2 ? 784 / 561 : 1) : S.rotDown ? 19 * (PTO2 ? 784 / 561 : 1) * 0.9 : 0;
   S.rotorW = (S.rotorW || 0) + (wT - (S.rotorW || 0)) * Math.min(1, dt * (wT > (S.rotorW || 0) ? 4 : 0.9));
   P.Rotor.rotation.x += S.rotorW * dt;
   if (P.WingL) {                                  // ハロー：上げると翼を上へ折りたたみ、下げると広げる
@@ -3553,7 +3556,7 @@ function drawMonitor(pct) {
   for (let k = 0; k < 4; k++) { g.fillRect(392, 52 + k * 58, 108, 46); }
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
   ['直進 ' + (ASSIST.on ? (ASSIST.active ? (ASSIST.off >= 0 ? '左' : '右') + Math.abs(ASSIST.off * 100).toFixed(0) + 'cm' : '入') : ASSIST.mode === 'a' ? 'A点' : ASSIST.B ? '切' : '未登録'),
-    (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (SHIRO ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * PTO_RATIO / 10) * 10 : (S.dblAct ? '倍速' + (S.autoBrake ? '+ブレーキ' : '') : S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+    (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (PTO2 ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * ptoRatio() / 10) * 10 : (S.dblAct ? '倍速' + (S.autoBrake ? '+ブレーキ' : '') : S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
   if (S.dpfT > 0) {                               // DPF 自動再生中のしるし
     g.fillStyle = '#3a2a08'; g.fillRect(14, 272, 200, 32);
     g.fillStyle = Math.floor(performance.now() / 600) % 2 ? '#ffb020' : '#d08a10'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
@@ -3916,6 +3919,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyB') key.lookBack = 1;
   else if (e.code === 'KeyH') toggleHelp();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
+  else if (e.code === 'KeyP') { PTO2 = !PTO2; toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
   else if (e.code === 'KeyT') { S.dbl = !S.dbl; toast('倍速ターン ' + (S.dbl ? '入：35° より大きく切ると前輪が約 2 倍の速さで回って小さく回れる' : '切：大きく回る') + '（T）'); }
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }
   else if (e.code === 'KeyZ') setDepth(-1);

@@ -17,6 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const cp = require('child_process');
+const https = require('https');
 
 const ROOT = process.env.XCYCLE_ROOT || path.join(__dirname, '..');
 const DIR = path.join(ROOT, '.xcycle');
@@ -62,15 +63,27 @@ const SCHEMA = {
   },
 };
 
-async function grok(body) {
-  const r = await fetch('https://api.x.ai/v1/responses', {
-    method: 'POST',
-    headers: { Authorization: 'Bearer ' + process.env.XAI_API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(15 * 60e3),
+// Node の fetch は答えの頭が 5 分来ないと切れる（x_search で動画まで見ると 5 分をこえる）ので、https で 15 分まで待つ
+function postJson(url, headers, body, ms) {
+  return new Promise((resolve, reject) => {
+    const req = https.request(url, { method: 'POST', headers: { ...headers, 'Content-Length': Buffer.byteLength(body) } }, res => {
+      let s = '';
+      res.setEncoding('utf8');
+      res.on('data', d => { s += d; });
+      res.on('end', () => resolve({ status: res.statusCode, text: s }));
+    });
+    req.setTimeout(ms, () => req.destroy(new Error(`xAI の答えが ${ms / 60e3} 分来ない`)));
+    req.on('error', reject);
+    req.end(body);
   });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error(`xAI ${r.status}: ${JSON.stringify(j.error || j).slice(0, 300)}`); e.status = r.status; throw e; }
+}
+
+async function grok(body) {
+  const r = await postJson('https://api.x.ai/v1/responses',
+    { Authorization: 'Bearer ' + process.env.XAI_API_KEY, 'Content-Type': 'application/json' }, JSON.stringify(body), 15 * 60e3);
+  let j = {};
+  try { j = JSON.parse(r.text); } catch {}
+  if (r.status < 200 || r.status >= 300) { const e = new Error(`xAI ${r.status}: ${JSON.stringify(j.error || j).slice(0, 300)}`); e.status = r.status; throw e; }
   let text = '';
   const cited = new Set();
   for (const o of j.output || []) {

@@ -5755,7 +5755,7 @@ function frame(now) {
   }
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
-    if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
+    if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
     if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzClock(now); mzCrowTick(now); mzArriveTick(now); }
   }
   waterWatch(tgt, dt);
@@ -6986,12 +6986,14 @@ const mzTrail = new Map();   // 'cx,cy' → [cx, cy]（通った 順。多すぎ
 // 「まよわず ゴール」の ための 通った マスの 数（足あとの 絵とは べつ。同じ マスを また 通っても 数え、上限も ない）。
 // さかいの 上で 行ったり 来たり（0.4秒 以内に 1つ前の マスへ もどる）した ぶんは 数えない。とりけすのは 直前に 数えた 1歩だけ
 // （とりけした あとに また またいだら 数える。何度 またいでも、それより 前の 歩数は へらない）
-// 1こまに ななめに 2つの さかいを こえた（0,0 → 1,1）ときは 2歩（道すじの 歩数は たて・よこを べつに 数える）。とんだ（4マスより 遠く）ときは 1歩
+// 転がる 1/120秒ごとに 数える（rollStep の あと）。それでも ななめに 2つの さかいを 同時に こえた（0,0 → 1,1）ときは、よこ → たての 2歩に わけて 数える
+// （道すじの 歩数は たて・よこを べつに 数える。2歩めは ふつうに とりけせる）。とんだ（4マスより 遠く）ときは 1歩
 const mzMv = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 };
 function mzMvReset(m) { m.n = 0; m.undo = false; m.prev = ''; }   // 次の ゴール：いまの マスから 数えはじめる（前の ゴールの 最後の 1歩は とりけせない）
 function mzMvStep(m, x, y, now) {
   const k = x + ',' + y;
   if (k === m.cell) return;
+  if (m.cell && Math.abs(x - m.x) === 1 && Math.abs(y - m.y) === 1) mzMvStep(m, x, m.y, now);   // ななめ：まず よこの 1歩
   if (m.cell) {
     const d = Math.abs(x - m.x) + Math.abs(y - m.y);
     if (d === 1 && m.undo && k === m.prev && now - m.t < 400) { m.n = Math.max(0, m.n - 1); m.undo = false; }

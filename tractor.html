@@ -241,6 +241,7 @@
       ・夜までかかる作業は なるべくしない。暗いと畦や人が見えにくく、事故が多い（<a href="https://www.pref.shimane.lg.jp/industry/norin/kikan/seibu_norin/infomation2/accidents.html" target="_blank" rel="noopener">島根県の農作業事故の防止</a>）。するなら作業灯とライトを点検して、向きを作業する所に合わせる（ヤンマーの説明）。夜の作業灯には虫が集まる<br>
       ・ジャンボタニシ（スクミリンゴガイ）は 西尾市をふくむ愛知県でも 苗を食べる被害が多い（<a href="https://www.pref.aichi.jp/uploaded/attachment/442532.pdf" target="_blank" rel="noopener">愛知県の実証試験</a>）。土の浅い所で冬をこすので、寒い 12〜2 月に、ゆっくり走って 爪を速く回し、浅く耕して 貝をつぶす・寒さにさらす（時速 1.4km 以下・PTO 2 速：千葉県）。耕したあとの泥に貝がつくので、トラクターの泥は田んぼで落とす<br>
       ・春の田起こしの前に、ケイ酸の資材（白っぽい粒）や堆肥をまいておき、耕して土にまぜる。土づくりは耕す前に必ず（<a href="https://www.pref.toyama.jp/documents/43308/tsuchidukuri.pdf" target="_blank" rel="noopener">富山県の土づくりの資料</a>）。ゲームの春の田んぼにも まいてある<br>
+      ・西尾市の田んぼには、矢作川から取る明治用水の水が 地下のパイプで来て、田んぼの角の給水栓のバルブを開けて入れる（代かきの田んぼの東の畦）。閉めるときは パイプをいためないよう ゆっくり<br>
       ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止めてから。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
@@ -2738,6 +2739,43 @@ const RIPPLE = (() => {
 })();
 
 // ---- 代かきのアマガエル：水を入れた田んぼにはカエルがたくさんいて、トラクターが近づくと ぴょんぴょんはねて逃げ、水に飛びこむ ----
+// ---- 代かき：田んぼの東の畦の給水栓（パイプライン）から水を入れている。西尾市の田んぼは 矢作川から取る明治用水の水を、
+// 地下のパイプで田んぼの角の給水栓まで送り、バルブを開けて入れる。吐き出し口から水が勢いよく落ちて 白い泡と輪の波が立ち、ザーッと音がする
+const HYDRANT = (() => {
+  if (!SHIRO) return { update() {}, pos: null };
+  const X = HX + 0.35, Z = -18, g = new THREE.Group();
+  const conc = new THREE.MeshLambertMaterial({ color: 0x8c887f }), blue = new THREE.MeshLambertMaterial({ color: 0x2f5f9e }), dark = new THREE.MeshLambertMaterial({ color: 0x3a3c40 });
+  const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.5), conc); box.position.set(X, 0.12, Z); g.add(box);   // コンクリートの箱
+  const riser = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 0.3, 10), dark); riser.position.set(X, 0.5, Z); g.add(riser);
+  const wheel = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.015, 6, 14), blue); wheel.rotation.x = Math.PI / 2; wheel.position.set(X, 0.67, Z); g.add(wheel);   // バルブのハンドル
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.35, 10), dark); spout.rotation.z = Math.PI / 2; spout.position.set(X - 0.3, 0.32, Z); g.add(spout);
+  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(g);
+  // 落ちる水：吐き出し口から放物線で田んぼへ（点を くり返し流す）
+  const N = 70, x0 = X - 0.48, y0 = 0.32, pos = new Float32Array(N * 3), ph = Float32Array.from({ length: N * 2 }, Math.random);
+  const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const pts = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0xe8eef2, size: 0.045, transparent: true, opacity: 0.75, depthWrite: false }));
+  pts.frustumCulled = false; scene.add(pts);
+  const foam = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xf2f4f2, transparent: true, opacity: 0.5, depthWrite: false }));
+  const xl = x0 - 1.1 * 0.36, zl = Z;            // 落ちる所（0.36 秒ほどで水面）
+  foam.position.set(xl, 0.03, zl); foam.renderOrder = 3; scene.add(foam);
+  let t = 0, rt = 0;
+  return {
+    pos: [xl, zl],
+    update(dt) {
+      t += dt;
+      for (let i = 0; i < N; i++) {
+        const tt = ((t * 1.8 + ph[i * 2]) % 1) * 0.36, sp = (ph[i * 2 + 1] - 0.5) * 0.12;
+        pos.set([x0 - 1.1 * tt, y0 + 0.25 * tt - 4.9 * tt * tt, Z + sp * (0.3 + tt * 2)], i * 3);
+      }
+      pg.attributes.position.needsUpdate = true;
+      foam.material.opacity = 0.4 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
+      foam.scale.setScalar(0.9 + 0.12 * Math.sin(t * 11));
+      if ((rt -= dt) <= 0) { rt = 0.3; RIPPLE.ring(xl - 0.2 - Math.random() * 0.4, zl + (Math.random() - 0.5) * 0.5, 0.5); }
+    }
+  };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -3705,6 +3743,15 @@ function toggleSound() {
     wLfo.connect(wLg); wLg.connect(wA.gain); wLfo.start();
     const wG = ac.createGain(); wG.gain.value = 0;
     noise.connect(wB); wB.connect(wA); wA.connect(wG); wG.connect(out);
+    // 給水栓から落ちる水の「ザーッ」（近いほど大きい。見ている向きで左右に分ける）
+    let hydG = null, hydP = null;
+    if (SHIRO) {
+      const hb = ac.createBiquadFilter(); hb.type = 'bandpass'; hb.frequency.value = 900; hb.Q.value = 0.6;
+      hydG = ac.createGain(); hydG.gain.value = 0;
+      hydP = ac.createStereoPanner ? ac.createStereoPanner() : null;
+      noise.connect(hb); hb.connect(hydG);
+      if (hydP) { hydG.connect(hydP); hydP.connect(ac.destination); } else hydG.connect(ac.destination);
+    }
     // ワイパーのモーター：動いているあいだ「ウーン」と低くうなり、ゴムがガラスをこする「シュッ」
     let wipG = null;
     if (RAIN) {
@@ -3715,7 +3762,7 @@ function toggleSound() {
       wipG = ac.createGain(); wipG.gain.value = 0;
       wo.connect(wl); wl.connect(wipG); noise.connect(wb); wb.connect(wn); wn.connect(wipG); wipG.connect(ac.destination); wo.start();
     }
-    audio = { ac, wipG, rainG, rainF, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
+    audio = { ac, hydG, hydP, wipG, rainG, rainF, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -3818,6 +3865,15 @@ function updateSound(dt = 0) {
   const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
   let rpm = engineRpm(t);
   const fire = rpm / 30;
+  if (audio.hydG) {                               // 給水栓の水の音：カメラからの近さと向き
+    const c = camera.getWorldPosition(tmpV), d = Math.hypot(c.x - HYDRANT.pos[0], c.z - HYDRANT.pos[1]);
+    audio.hydG.gain.setTargetAtTime(0.35 / (1 + d * 0.35) * (camMode === 0 ? 0.45 : 1), t, 0.3);
+    if (audio.hydP) {
+      const fw = new THREE.Vector3(); camera.getWorldDirection(fw);
+      const a = Math.atan2(HYDRANT.pos[0] - c.x, HYDRANT.pos[1] - c.z) - Math.atan2(fw.x, fw.z);
+      audio.hydP.pan.setTargetAtTime(Math.max(-1, Math.min(1, -Math.sin(a))), t, 0.3);
+    }
+  }
   if (audio.wipG) audio.wipG.gain.setTargetAtTime(WIPE.value < 1.1 ? (camMode === 0 ? 0.025 : 0.004) : 0, t, 0.04);   // ワイパーが動くあいだだけ
   if (audio.rainG) {                              // 小雨：キャビンの中は 屋根をたたく こもった音が大きい
     audio.rainG.gain.setTargetAtTime(camMode === 0 ? 0.05 : 0.03, t, 0.5);
@@ -4243,6 +4299,7 @@ function frame(now) {
   SKY_TIME.value += dt;
   RAINFX.update(dt);
   RAINRING.update(dt);
+  HYDRANT.update(dt);
   WIPE.value = RAIN ? (performance.now() / 1000) % WIPE_P : 9;   // 間欠ワイパー
   if (P.Wiper) P.Wiper.rotation.z = Math.PI / 2 + Math.PI * bladeTh(WIPE.value);
   if (FOG0) FOG_CLEAR.value = S.started ? Math.min(1.8, 0.15 + S.elapsed / 14) : 0;   // デフロスターで だんだん晴れる   // 車体のワイパーを、ガラスのふいた所と同じ動きで回す

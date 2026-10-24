@@ -2846,6 +2846,49 @@ const KERI = (() => {
   };
 })();
 
+// ---- 春の畦の花：タンポポ（黄）・ホトケノザ（赤むらさき）・オオイヌノフグリ（うすい青）。早春の田んぼの畦や道ばたに次々と咲く
+// （ミュージアムパーク茨城県自然博物館・千葉県『身近な生き物図鑑』・BE-PAL 春の雑草観察ガイド）。タンポポは夜は花を閉じる
+const LEVEE_FLOWERS = (() => {
+  if (season !== 'haru') return null;
+  const rnd = Math.random, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
+  const spot = () => {                             // 畦の上と斜面（畦は田んぼのふちから 0.25〜1.1m、高さ 0.3m）。坂と給水栓のそばはよける
+    for (;;) {
+      const side = Math.floor(rnd() * 4), t = rnd() * 2 - 1, d = 0.3 + rnd() * 0.72;
+      const [x, z] = side < 2 ? [t * (HX + 0.3), (side ? 1 : -1) * (HZ + d)] : [(side === 2 ? 1 : -1) * (HX + d), t * (HZ + 0.3)];
+      if (x > HX && z > 17.3 && z < 22.7) continue;
+      if (Math.hypot(x - (HX + 0.35), z + 18) < 0.6) continue;
+      return [x, 0.3 * Math.min(1, d / 0.33, (1.1 - d) / 0.33), z];
+    }
+  };
+  function bed(geo, color, patches, per, spread, size, tilt, h0, h1) {   // h0〜h1：花の高さ（畦の草より上に出る）
+    const mesh = new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial({ color }), patches * per), c = new THREE.Color();
+    let n = 0;
+    for (let p = 0; p < patches; p++) {
+      const [px, py, pz] = spot();
+      for (let k = 0; k < per; k++) {
+        const s = size * (0.75 + rnd() * 0.5);
+        V.set(px + (rnd() - 0.5) * spread, py + h0 + rnd() * (h1 - h0), pz + (rnd() - 0.5) * spread);
+        E.set((rnd() - 0.5) * tilt, rnd() * 6.3, (rnd() - 0.5) * tilt); Q.setFromEuler(E); SC.set(s, s, s);
+        mesh.setMatrixAt(n, M4.compose(V, Q, SC)); mesh.setColorAt(n++, c.setHex(color).convertSRGBToLinear().multiplyScalar(0.85 + rnd() * 0.3));
+      }
+    }
+    mesh.material.color.set(0xffffff); mesh.receiveShadow = true; scene.add(mesh); return mesh;
+  }
+  const disc = r => new THREE.CircleGeometry(r, 10).rotateX(-Math.PI / 2);
+  const henbit = (() => {                          // ホトケノザ：茎の先に 赤むらさきの小さな花が段になってつく
+    const g = new THREE.SphereGeometry(0.012, 6, 4); g.scale(1, 1.6, 1); g.translate(0, 0.02, 0);
+    const g2 = g.clone().translate(0.012, -0.012, 0.004), g3 = g.clone().translate(-0.01, -0.014, -0.006);
+    const parts = [g, g2, g3].map(x => x.toNonIndexed()), out = new THREE.BufferGeometry();
+    for (const a of ['position', 'normal']) out.setAttribute(a, new THREE.Float32BufferAttribute(parts.flatMap(x => [...x.attributes[a].array]), 3));
+    return out;
+  })();
+  return {
+    dandelion: TOD === 'yoru' ? null : bed(disc(0.03), 0xf2c418, 170, 3, 0.6, 1, 0.5, 0.1, 0.22),
+    henbit: bed(henbit, 0xb0608f, 140, 6, 0.35, 1.3, 0.3, 0.06, 0.16),
+    speedwell: bed(disc(0.011), 0x7a9be8, 140, 10, 0.3, 1, 0.4, 0.03, 0.09),
+  };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -4471,7 +4514,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -2733,6 +2733,13 @@ const ASSIST = { mode: 'none', paused: false, on: false, active: false, A: null,
 // PTO：耕うんは 1 速、代かきは 2 速で爪を速く回す（同じ YT4 シリーズの仕様：エンジン 2600 回転で 1 速 561・2 速 784 回転）
 const PTO_RATIO = (SHIRO ? 784 : 561) / 2600;
 const PITCH = TILL_W - 0.1;
+// 曲がりやすさ：オートブレーキ（上げて大きく切ると内側の後輪に半ブレーキ）で小回り。
+// 代かきの泥の中では前輪が横にすべって、ハンドルを切ったほど曲がらない（速いほどふくらむ）。かんたんアシストの予測も同じ式を使う
+function turnRate(v, x, z, onRoad, steer = S.steer) {
+  const autoBrake = !S.rotDown && !onRoad && Math.abs(steer) > 0.45 && v < 3;
+  const under = SHIRO && Math.abs(x) < HX && Math.abs(z) < HZ ? 0.86 - 0.08 * Math.min(1, v / 1.5) : 1;
+  return (autoBrake ? 1.45 : 1) * under;
+}
 // 🔰 まっすぐを手伝う：耕しているとき、田んぼの長い向き・短い向きから 12° 以内なら、その向きにそろえる
 function easyStraight(dt) {
   const a = Math.round(S.yaw / (Math.PI / 2)) * (Math.PI / 2), err = Math.atan2(Math.sin(S.yaw - a), Math.cos(S.yaw - a));
@@ -2832,18 +2839,22 @@ function step(dt) {
   }
   if (EASY.on && want !== 0 && S.started) {        // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）
     // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
-    // 曲がる道すじを 15cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
-    const sg = Math.sign(want), inF = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
-    const turnK = (!S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 ? 1.45 : 1) * (SHIRO && inF ? 0.86 : 1);
-    const at = d => {
+    // 曲がる道すじを 5cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
+    // 曲がり方は、じっさいの動き（turnRate）と同じ式で。止まるまでに遅くなると曲がり方が変わり、ハンドルを切りつづけていればもっと切れるので、
+    // いまの速さ・止まる前の速さと、いまの切れ角・0.5 秒先の切れ角の組み合わせを全部見る（大きく切ると、うしろの作業機が外へふくらむ）
+    const sg = Math.sign(want), sIn0 = key.right - key.left;
+    const steers = sIn0 ? [S.steer, Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn0 * 0.55))] : [S.steer];
+    const path = (d, v, st) => {
       let x = S.x, z = S.z, y = S.yaw;
-      for (let n = Math.ceil(d / 0.15), k = 0; k < n; k++) {
+      const k = turnRate(v, x, z, onRoad, st);
+      for (let n = Math.ceil(d / 0.05), i = 0; i < n; i++) {   // 5cm ずつ（大きく切ると鼻先が一瞬だけ畦にかかって もどることがある）
         const ds = d / n;
-        y -= sg * ds * Math.tan(S.steer) / WB * turnK; x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
+        y -= sg * ds * Math.tan(st) / WB * k; x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
         if (!canBe(x, z, y)) return false;
       }
       return true;
     };
+    const at = d => steers.every(st => path(d, Math.abs(S.v), st) && path(d, 0, st));
     if (!at(0.45 + Math.abs(S.v) * 0.7)) {
       if (Math.abs(S.v) > 0.2 || !at(0.06)) { want = 0; S.v *= 0.6; }   // 速いときは強くブレーキ。6cm 先も畦なら止まる
       else want = sg * Math.min(Math.abs(want), 0.15);                  // ゆっくりなら、少しずつ動ける
@@ -2901,9 +2912,7 @@ function step(dt) {
   if (Math.abs(S.steer) < 0.2) { S.turnLatch = false; S.turnUpHold = false; }
   if (S.rotDown && S.rotPos < 0.08) S.turnUpHold = false;
   S.autoBrake = !S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;   // 道では左右のブレーキを連結するので片ブレーキはきかない
-  // 代かきの泥の中では前輪が横にすべって、ハンドルを切ったほど曲がらない（速いほどふくらむ）
-  const under = SHIRO && Math.abs(S.x) < HX && Math.abs(S.z) < HZ ? 0.86 - 0.08 * Math.min(1, Math.abs(S.v) / 1.5) : 1;
-  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * (S.autoBrake ? 1.45 : 1) * under * dt;
+  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
   else { if (Math.abs(S.v) > 0.5) { toast('畦（あぜ）です。もどってください'); if (Math.abs(S.x) < HX + 1 && Math.abs(S.z) < HZ + 1) SCORE.levee(); } S.v = 0; }
@@ -3781,7 +3790,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

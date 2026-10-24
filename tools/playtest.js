@@ -1204,6 +1204,22 @@ async function walkTo(page, id) {
       G.setGuide(null);
       return { far: far.name, d: Math.round(G.dist(G.me, far)), refer, d1, kept, d2, ok: !refer && d1 <= 3000 && !kept && d2 <= 3000 };
     });
+    // ゴールが 画面の 上の 外：矢印と 旗は 時計の 札より 下に（札や 左上の 札に 重ならない）
+    R.checks.mzArrowTop = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+      G.setGuide({ kind: 'spot', id: 'test-north', name: 'テストの 北', lat: G.me.lat + 0.03, lng: G.me.lng });
+      await wait(500);
+      const ar = M.mapArrow, S = Math.round(13 * Math.min(window.devicePixelRatio || 1, 3));
+      const hits = [];   // 右上の ボタンの ほう（北東）・左上の 札の ほう（北西）でも、矢印が ボタン・札に 重ならない
+      for (const dl of [0.02, -0.02]) {
+        G.setGuide({ kind: 'spot', id: 'test-ne', name: 'テストの 北東', lat: G.me.lat + 0.03, lng: G.me.lng + dl });
+        await wait(700);
+        const at = M.arrowAt, hud = M.hudRects();
+        hits.push(at ? hud.filter(r => at[0] + at[2] > r[0] && at[0] - at[2] < r[2] && at[1] + at[2] > r[1] && at[1] - at[2] < r[3]).length : -1);
+      }
+      G.setGuide(null);
+      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) };
+    });
     // 迷って いる 間（25秒 近づけない）：光る 点は 毎回 出すが、知らせは ゴールごとに 1回目だけ。3回目は おたすけを すすめる（1回の あそびで 1回）
     R.checks.mzHintToast = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), got = [], t0 = G.toast, h0 = localStorage.getItem('nsg_mzhelp');
@@ -1257,6 +1273,7 @@ async function walkTo(page, id) {
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
+  need(c.mzArrowTop && c.mzArrowTop.ok, 'ゴールが 上の 外の とき、矢印が 時計の 札や 右上の ボタンに 重なる');
   need(c.mzHintToast && c.mzHintToast.ok, '迷って いる 間、道しるべの 知らせが 25秒ごとに 出つづける');
   need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');

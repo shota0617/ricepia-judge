@@ -3702,7 +3702,17 @@ function toggleSound() {
     wLfo.connect(wLg); wLg.connect(wA.gain); wLfo.start();
     const wG = ac.createGain(); wG.gain.value = 0;
     noise.connect(wB); wB.connect(wA); wA.connect(wG); wG.connect(out);
-    audio = { ac, rainG, rainF, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
+    // ワイパーのモーター：動いているあいだ「ウーン」と低くうなり、ゴムがガラスをこする「シュッ」
+    let wipG = null;
+    if (RAIN) {
+      const wo = ac.createOscillator(); wo.type = 'sawtooth'; wo.frequency.value = 95;
+      const wl = ac.createBiquadFilter(); wl.type = 'lowpass'; wl.frequency.value = 380;
+      const wb = ac.createBiquadFilter(); wb.type = 'bandpass'; wb.frequency.value = 1500; wb.Q.value = 0.8;
+      const wn = ac.createGain(); wn.gain.value = 0.5;
+      wipG = ac.createGain(); wipG.gain.value = 0;
+      wo.connect(wl); wl.connect(wipG); noise.connect(wb); wb.connect(wn); wn.connect(wipG); wipG.connect(ac.destination); wo.start();
+    }
+    audio = { ac, wipG, rainG, rainF, o1, o2, lfo, lp, out, tg, amb: startAmbient(ac), nbO, nbG, nbP, crowG, crowP, crowT: 4, kO, kG, kP, lO, lG, hO, hG, rO, rG, wG };
   }
   if (audio) audio.ac[soundOn ? 'resume' : 'suspend']();
 }
@@ -3805,6 +3815,7 @@ function updateSound(dt = 0) {
   const t = audio.ac.currentTime, load = (key.fwd || key.back ? 1 : 0) + (S.rotDown && S.rotPos < 0.1 ? 1 : 0);
   let rpm = engineRpm(t);
   const fire = rpm / 30;
+  if (audio.wipG) audio.wipG.gain.setTargetAtTime(WIPE.value < 1.1 ? (camMode === 0 ? 0.025 : 0.004) : 0, t, 0.04);   // ワイパーが動くあいだだけ
   if (audio.rainG) {                              // 小雨：キャビンの中は 屋根をたたく こもった音が大きい
     audio.rainG.gain.setTargetAtTime(camMode === 0 ? 0.05 : 0.03, t, 0.5);
     audio.rainF.frequency.setTargetAtTime(camMode === 0 ? 1300 : 3200, t, 0.5);
@@ -3815,7 +3826,9 @@ function updateSound(dt = 0) {
     const acc = Math.max(0, rpm - E.prev) / Math.max(dt, 0.016) / 2000; E.prev = rpm;   // ふかした瞬間はカタカタが強い
     E.rpm.setTargetAtTime(rpm, t, 0.06);
     E.load.setTargetAtTime(ld, t, 0.15);
-    E.knock.setTargetAtTime(Math.min(1.2, 0.25 + 0.55 * Math.max(0, 1 - rpm / 1500) + Math.min(0.5, acc)), t, 0.1);
+    // 冷えたディーゼルは 着火おくれが大きく カラカラ音が大きい。寒い朝や夜は、かけてから 1 分半ほどで静かになる
+    const cold = (TOD === 'asa' ? 0.6 : TOD === 'yoru' ? 0.3 : 0) * Math.max(0, 1 - S.elapsed / 90);
+    E.knock.setTargetAtTime(Math.min(1.4, 0.25 + 0.55 * Math.max(0, 1 - rpm / 1500) + Math.min(0.5, acc) + cold), t, 0.1);
     E.tO.frequency.setTargetAtTime(1800 + rpm * 1.2 + ld * 900, t, 0.4);
     E.tG.gain.setTargetAtTime(0.012 * ld * Math.min(1, rpm / 2500) ** 2, t, 0.4);
     E.cab.frequency.setTargetAtTime(camMode === 0 ? 900 : 7000, t, 0.2);

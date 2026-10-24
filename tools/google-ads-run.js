@@ -8,7 +8,7 @@
 //     node tools/google-ads-run.js --job game      にしおさんぽGO のサイトリンク・コールアウトを検証だけ（--apply で反映）
 //     node tools/google-ads-run.js --job game-campaign  にしおさんぽGO 専用キャンペーン（一時停止で作る）を検証だけ（--apply で反映）
 //     node tools/google-ads-run.js --job serving --out ads.md  配信中の広告をぜんぶ書き出す（読むだけ。3社のAIのレビュー用）
-//     node tools/google-ads-run.js --job pause     効果の悪いもの（新米２・業務用米_検索・サイトリンク2本）を止めるのを検証だけ（--apply で反映）
+//     node tools/google-ads-run.js --job pause     新米２ を一時停止するのを検証だけ（--apply で反映）
 //     node tools/google-ads-run.js --job effect --out effect.txt  広告の効果を見る数字を書き出す（読むだけ。週ごとの LINE 1件の費用・変更履歴など）
 //   読む環境変数（値はチャットやリポジトリに書かない）:
 //     GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN,

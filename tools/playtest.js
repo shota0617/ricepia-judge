@@ -1016,6 +1016,24 @@ async function walkTo(page, id) {
     const helpA = await w.page.evaluate(() => nishioPixel.maze.help());
     const helpB = await w.page.evaluate(async () => { const t = document.getElementById('mzHelpToggle'); const was = t.checked; t.checked = false; t.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 400)); const off = nishioPixel.maze.help(); t.checked = true; t.dispatchEvent(new Event('change')); await new Promise(r => setTimeout(r, 400)); const on = nishioPixel.maze.help(); localStorage.removeItem('nsg_mzhelp'); localStorage.setItem('nsg_mzgoals', '3'); await new Promise(r => setTimeout(r, 400)); const auto3 = nishioPixel.maze.help(); localStorage.setItem('nsg_mzgoals', '0'); return { was, off, on, auto3 }; });
     R.checks.mzHelp = { helpA, ...helpB, ok: helpA.on && helpA.dots > 0 && helpB.was && !helpB.off.on && helpB.off.dots === 0 && helpB.off.dead === 0 && helpB.on.on && !helpB.auto3.on };
+    // めいろの カラス：うろうろ 動き、お米の となりに 来ると はじいて 時計が すすむ。せっていで オフに すると いなくなる
+    const crowA = await w.page.evaluate(async () => {
+      const M = nishioPixel.maze, r = nishioPixel.roll, K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K);
+      for (let i = 0; i < 20 && !M.crows().list.length; i++) await new Promise(res => setTimeout(res, 300));   // 1羽 出るまで
+      const before = M.crows().list.map(c => [c.cx, c.cy, c.t]);
+      await new Promise(res => setTimeout(res, 1500));
+      const moved = M.crows().list.some((c, i) => before[i] && (c.cx !== before[i][0] || c.cy !== before[i][1] || Math.abs(c.t - before[i][2]) > 0.05));
+      const h0 = M.crows().hits, s0 = M.clock() ? M.clock().sec : 0;
+      M.crowPut(a, b);   // お米の マスに 1羽（すぐ 当たる）
+      await new Promise(res => setTimeout(res, 600));
+      const h1 = M.crows().hits, s1 = M.clock() ? M.clock().sec : 0;
+      const t = document.getElementById('mzCrowToggle'); t.checked = false; t.dispatchEvent(new Event('change'));
+      await new Promise(res => setTimeout(res, 300));
+      const offN = M.crows().list.length, offOn = M.crows().on;
+      t.checked = true; t.dispatchEvent(new Event('change'));
+      return { n: before.length, moved, hit: h1 - h0, jump: Math.round((s1 - s0) * 10) / 10, offN, offOn };
+    });
+    R.checks.mzCrow = { ...crowA, ok: crowA.n >= 1 && crowA.moved && crowA.hit === 1 && crowA.jump >= 5 && crowA.offN === 0 && !crowA.offOn };
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
@@ -1050,6 +1068,7 @@ async function walkTo(page, id) {
   need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
+  need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
   need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');

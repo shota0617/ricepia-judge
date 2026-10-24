@@ -510,7 +510,7 @@ function setupTractor(root) {
     if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
   });
   for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'SteerFL', 'SteerFR', 'SteeringWheel', 'Rotary', 'Rotor', 'Flap', 'WingL', 'WingR', 'RotorL', 'RotorR',
-    'LeverJoy', 'LeverShuttle', 'PedalBrakeL', 'PedalBrakeR', 'PedalClutch', 'MeterScreen', 'MonitorScreen', 'Glass']) P[n] = root.getObjectByName(n);
+    'LeverJoy', 'LeverShuttle', 'PedalBrakeL', 'PedalBrakeR', 'PedalClutch', 'MeterScreen', 'MonitorScreen', 'Glass', 'Wiper']) P[n] = root.getObjectByName(n);
   P.sw0 = P.SteeringWheel.quaternion.clone();
   // ハンドル：スポークとハブも黒に（いまのキャビン付きトラクターのハンドルは、黒い 3 本スポークに小さな黒いハブ）
   const swBlack = new THREE.MeshStandardMaterial({ color: 0x1a1b1d, roughness: 0.45, metalness: 0.1 });
@@ -807,8 +807,10 @@ const MIRROR = (() => {
 // （ガラスには UV が無いので、トラクターの中の位置から計算する。前＝+Z・左＝+X・上＝+Y）
 const SUN_VIEW = { value: new THREE.Vector3(0, 0, 1) };   // 太陽の向き（カメラから見た向き）。毎コマ更新
 const GLASS_MUD = { value: 0 };   // ガラスの泥はねの量（代かきで耕していると ふえる）
-// ワイパー：前ガラスの下を根元に 扇形をふく。小雨のときは間欠（WIPE_P 秒ごとに 1 往復）。ふいたあとは 少しずつ水滴がたまる
-const WIPE = { value: 9 }, RAIN_AMT = { value: RAIN ? 1 : 0 }, WIPE_P = 4.5;
+// ワイパー：前ガラスの左下を根元に 扇形をふく。小雨のときは間欠（WIPE_P 秒ごとに 1 往復）。ふいたあとは 少しずつ水滴がたまる
+const WIPE = { value: 9 }, RAIN_AMT = { value: RAIN ? 1 : 0 }, WIPE_P = 4.5, WTH0 = 0.38;
+// ワイパーの向き（0＝根元から左・1＝右へ寝ている）：0.55 秒で左へふいて、0.55 秒でもどる。そのあとは止まって待つ
+const bladeTh = u => u < 0.55 ? 1 - (1 - WTH0) * u / 0.55 : u < 1.1 ? WTH0 + (1 - WTH0) * (u - 0.55) / 0.55 : 1;
 function dustyGlass(m) {
   m.onBeforeCompile = sh => {
     sh.uniforms.sunView = SUN_VIEW;
@@ -826,14 +828,14 @@ function dustyGlass(m) {
   float speck = step(0.986, gH(floor(q * 260.0))) * (0.5 + 0.5 * gH(floor(q * 260.0) + 3.1));
   float low = smoothstep(1.95, 1.42, vObjP.y);                       // 下のほうほど土ぼこり
   float dust = 0.09 + 0.13 * haze + 0.38 * low * (0.6 + 0.4 * haze) + speck * 0.5;
-  // ワイパー：根元は前ガラスの下（まん中より少し左）。長さ 0.85m の腕が、横（右）から左上まで 160° ふく
-  vec2 rp = vec2(vObjP.x - 0.22, vObjP.y - 1.42);
+  // ワイパー（車体の Wiper）：根元は前ガラスの左下、長さ 0.5m。止まっているときは右へ寝ていて、左の柱の手前まで ふく
+  vec2 rp = vec2(vObjP.x - 0.46, vObjP.y - 1.62);
   float wd = length(rp), wth = atan(max(rp.y, 0.0), rp.x) / 3.14159;  // 0＝左（+X）・1＝右（止まっている所）
-  float inWipe = step(0.11, wth) * step(-0.02, rp.y);
+  float inWipe = step(${WTH0.toFixed(2)}, wth) * step(-0.02, rp.y);
   if (vObjP.z > 0.45) {                                               // 前ガラス：ワイパーがふいた扇形だけ ほこりがうすい
-    float wiped = smoothstep(0.85, 0.82, wd) * inWipe;
+    float wiped = smoothstep(0.50, 0.47, wd) * inWipe;
     dust *= 1.0 - 0.8 * wiped;
-    dust += 0.18 * smoothstep(0.035, 0.0, abs(wd - 0.84)) * inWipe;   // ふいたふちに たまった すじ
+    dust += 0.18 * smoothstep(0.035, 0.0, abs(wd - 0.49)) * inWipe;   // ふいたふちに たまった すじ
   }
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.60, 0.54, 0.44), clamp(dust * 1.6, 0.0, 1.0));
   diffuseColor.a = max(diffuseColor.a, clamp(dust, 0.0, 0.6));
@@ -845,11 +847,10 @@ function dustyGlass(m) {
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.24, 0.17), mud);
   diffuseColor.a = max(diffuseColor.a, mud * 0.9);
   // 雨の水滴：小さな丸がガラスに散らばる（ふちは暗く、まん中は空を映して明るい）。前ガラスのふいた所は、ふいてからの時間でだんだんふえる
-  float bladeTh = wipeU < 0.55 ? 1.0 - 0.89 * wipeU / 0.55 : wipeU < 1.1 ? 0.11 + 0.89 * (wipeU - 0.55) / 0.55 : 1.0;
   if (rainAmt > 0.0) {
     float cov = rainAmt * (vObjP.z > 0.45 ? 0.5 : vObjP.z < -0.45 ? 0.15 : 0.35);
-    if (vObjP.z > 0.45 && wd < 0.85 && inWipe > 0.5) {
-      float u1 = 0.55 * (1.0 - wth) / 0.89, u2 = 0.55 + 0.55 * (wth - 0.11) / 0.89;
+    if (vObjP.z > 0.45 && wd < 0.5 && inWipe > 0.5) {               // ワイパーが最後に通ってからの時間
+      float u1 = 0.55 * (1.0 - wth) / ${(1 - WTH0).toFixed(2)}, u2 = 0.55 + 0.55 * (wth - ${WTH0.toFixed(2)}) / ${(1 - WTH0).toFixed(2)};
       float since = wipeU >= u2 ? wipeU - u2 : wipeU >= u1 ? wipeU - u1 : wipeU + ${WIPE_P.toFixed(1)} - u2;
       cov *= clamp(since * 0.22, 0.0, 1.0);
     }
@@ -859,13 +860,7 @@ function dustyGlass(m) {
     diffuseColor.rgb = mix(diffuseColor.rgb, mix(vec3(0.80, 0.84, 0.88), vec3(0.30, 0.33, 0.36), smoothstep(dr * 0.2, dr, dd)), drop * 0.85);
     diffuseColor.a = max(diffuseColor.a, drop * 0.5);
   }
-  if (vObjP.z > 0.45) {                                               // ワイパーのゴムと腕（黒い線）
-    vec2 bd = vec2(cos(3.14159 * bladeTh), sin(3.14159 * bladeTh));
-    float bt = clamp(dot(rp, bd), 0.03, 0.85), bdist = length(rp - bd * bt);
-    float arm = smoothstep(0.009, 0.005, bdist);
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05), arm);
-    diffuseColor.a = max(diffuseColor.a, arm);
-  }`).replace('#include <output_fragment>', `#include <output_fragment>
+`).replace('#include <output_fragment>', `#include <output_fragment>
   float glare = pow(max(dot(normalize(-vViewPosition), sunView), 0.0), 3.0);   // 太陽のほうを見ると、ガラスのよごれが白く光る
   glare *= ${WX === 'hare' ? '1.0' : '0.15'};                      // くもりの日は 日ざしがないので まぶしくない
   gl_FragColor.rgb += vec3(1.0, 0.95, 0.85) * glare * (0.15 + 2.2 * dust);
@@ -3961,6 +3956,7 @@ function frame(now) {
   RAINFX.update(dt);
   RAINRING.update(dt);
   WIPE.value = RAIN ? (performance.now() / 1000) % WIPE_P : 9;   // 間欠ワイパー
+  if (P.Wiper) P.Wiper.rotation.z = Math.PI / 2 + Math.PI * bladeTh(WIPE.value);   // 車体のワイパーを、ガラスのふいた所と同じ動きで回す
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);

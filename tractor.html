@@ -393,6 +393,13 @@ function skyMesh(r) {
       '  float cl = smoothstep(1.0 - cover, 1.0 - cover + 0.28, n) * smoothstep(0.015, 0.22, vD.y);' +
       '  vec3 cc = mix(cDark, cLit, clamp(0.55 + (n - d) * 4.0 + s * 0.3, 0.0, 1.0));' +
       '  c = mix(c, cc, cl * 0.92);' +
+      // 秋の晴れた空：高いところに うろこ雲（巻積雲）。小さな白い雲のつぶが 魚のうろこのように並ぶ。低い雲より ゆっくり流れ、少しすけて見える
+      (season === 'aki' && WX === 'hare' && TOD !== 'yoru' ? '  vec2 u2 = vD.xz / (vD.y + 0.05) * 2.4 + vec2(time * 0.0025, time * 0.001);' +
+        '  vec2 q = u2 * 7.0 + vec2(fbm(u2 * 0.9) * 2.5, fbm(u2 * 0.9 + 5.0) * 1.5);' +
+        '  float sc = smoothstep(0.25, 0.85, abs(sin(q.x + 0.7 * sin(q.y * 0.6))) * abs(sin(q.y * 1.35 + 0.5 * sin(q.x * 0.8))));' +
+        '  float pat = smoothstep(0.52, 0.72, fbm(u2 * 0.3 + 3.0));' +
+        '  float uc = sc * pat * smoothstep(0.1, 0.4, vD.y) * (0.6 + 0.4 * noise(q * 0.5));' +
+        '  c = mix(c, mix(cLit, vec3(1.0), 0.3), uc * 0.6 * (1.0 - cl));' : '') +
       // 夜空の星：向きを小さなます目に分け、ところどころを光らせる。雲がある所と 地平の近く（もや）は見えない
       (TOD === 'yoru' && WX === 'hare' ? '  vec3 sq = floor(vD * 300.0); float sh = hash(sq.xy * 0.37 + vec2(sq.z * 0.71, sq.z * 0.13));' +
         '  c += vec3(0.85, 0.9, 1.0) * step(0.99, sh) * (0.5 + 0.5 * hash(sq.zx)) * (1.0 - cl) * smoothstep(0.02, 0.07, vD.y);' : '') +

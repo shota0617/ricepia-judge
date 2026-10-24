@@ -1130,11 +1130,12 @@ async function walkTo(page, id) {
     // 「まよわず ゴール」は 文字を 少なく でも 札に 出る（倍率・ボーナス）。「つぎは〜へ」の 行は 出さない
     R.checks.wayChip = await w.page.evaluate(async () => {
       document.body.classList.add('simple');
-      nishioGo.showReward(15, 'テストの 名所', ['🧭 まよわず ゴール！（通った 道 1.1倍） +5', '🧭 通った 道は ちかみちの 1.8倍（1.3倍 までなら ボーナス）', '🧭 つぎは どこかへ']);
+      nishioGo.showReward(15, 'テストの 名所', ['🏁 めいろ ゴール！ 1分17秒（めいろの 道のり 2.0km）', '★★☆ いいね！ +5', '🧭 まよわず ゴール！（通った 道 1.1倍） +5', '🧭 通った 道は ちかみちの 1.8倍（1.3倍 までなら ボーナス）', '🧭 つぎは どこかへ']);
       await new Promise(r => setTimeout(r, 300));
       const el = document.getElementById('reward'), t = el.innerText, titles = [...el.querySelectorAll('.chips span')].map(x => x.title);
       el.click();
-      return { good: /1\.1倍/.test(t) && /\+5/.test(t), bad: /1\.8倍/.test(t), next: titles.some(x => /つぎは/.test(x)), ok: /1\.1倍/.test(t) && /1\.8倍/.test(t) && !titles.some(x => /つぎは/.test(x)) };
+      const goal = /1分17秒/.test(t) && /★★☆/.test(t);   // かかった 時間と ★も 札に
+      return { good: /1\.1倍/.test(t) && /\+5/.test(t), bad: /1\.8倍/.test(t), goal, next: titles.some(x => /つぎは/.test(x)), ok: goal && /1\.1倍/.test(t) && /1\.8倍/.test(t) && !titles.some(x => /つぎは/.test(x)) };
     });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
     // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）

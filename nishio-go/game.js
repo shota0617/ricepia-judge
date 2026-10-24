@@ -2540,6 +2540,11 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
   for (const l of lines) {
+    if (/^🏁 めいろ ゴール/.test(l) || /^[★☆]+ /.test(l)) {   // めいろの ゴール：かかった 時間・★の 数（文字を 少なく でも 分かる ように）
+      const t = l.startsWith('🏁') ? (l.match(/ゴール！ (\S+?)(（|$)/) || [])[1] || '' : l.split(' ')[0], plus = (l.match(/[+＋]\d+/) || [''])[0];
+      out.push(`<span title="${esc(l)}">${PIA(l.startsWith('🏁') ? 'flag' : 'star', l)}${esc(t)}${plus ? ' ' + plus : ''}</span>`);
+      continue;
+    }
     if (/^🧭 (まよわず|通った 道)/.test(l)) {   // めいろの「まよわず ゴール」：通った 道の 倍率（と ボーナス）の 札（下の「つぎは〜へ」とは べつ）
       const x = (l.match(/([\d.]+)倍/) || [])[1], plus = (l.match(/[+＋]\d+/) || [''])[0];
       out.push(`<span title="${esc(l)}">${PIA('compass', l)}${x ? `${x}倍` : ''}${plus ? ' ' + plus : ''}</span>`);

@@ -3203,6 +3203,7 @@ const HEAPS = (() => {
 })();
 
 // ---- 運転 ----
+const COOL0 = TOD === 'asa' ? 0.08 : TOD === 'yoru' ? 0.2 : 0.55;   // かけたときの水温（寒い朝・夜は冷えている）
 const S = { dbl: true, gear: 3, x: 0, z: 0, yaw: 0, v: 0, steer: 0, rotDown: false, rotPos: 1, rpmT: 0, started: false, done: false, t0: 0, elapsed: 0 };
 const key = { fwd: 0, back: 0, left: 0, right: 0 };
 // 前輪の切れ角の最大：外側の前輪の通る円が半径 3.3m（ヤンマー YT460A の最小旋回半径）になるように。後輪の車軸のまん中では半径 1.84m
@@ -3341,14 +3342,16 @@ function step(dt) {
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
   const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
   const vmax = GEARS[S.gear - 1] * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
-  if (S.crank > 0) {                              // 始動：セルが回っているあいだは走らない。かかった瞬間に排気がふっと出る
+  if (S.glow > 0) {                               // 予熱中：ランプが消えたら セルが回る（ソレノイドの カチッ）
+    if ((S.glow -= dt) <= 0) relayClick();
+  } else if (S.crank > 0) {                       // 始動：セルが回っているあいだは走らない。かかった瞬間に排気がふっと出る
     const before = S.crank;
     S.crank = Math.max(0, S.crank - dt);
     if (before > 0.6 && S.crank <= 0.6) {
       S.flare = 1;
       rig.localToWorld(EXH.w.copy(EXH.p));
       EXH.dark = TOD === 'asa' ? 0.4 : 0.15;     // かけたときも DPF で黒煙は出ない（朝は白い湯気）
-      for (let k = 0; k < 26; k++) FX.emit(EXH.w.x, EXH.w.y, EXH.w.z, (Math.random() - 0.5) * 0.6, 1.4 + Math.random() * 1.4, (Math.random() - 0.5) * 0.6, 3);
+      for (let k = 0; k < 26 + 24 * (S.cold || 0); k++) FX.emit(EXH.w.x, EXH.w.y, EXH.w.z, (Math.random() - 0.5) * 0.6, 1.4 + Math.random() * 1.4, (Math.random() - 0.5) * 0.6, 3);
     }
   }
   S.flare = Math.max(0, (S.flare || 0) - dt * 0.9);
@@ -3368,7 +3371,7 @@ function step(dt) {
   }
   if (S.stalled) {
     S.v = 0;
-    if ((key.fwd || key.back) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.crank = 1.7; S.flare = 0; }   // かけなおし：セル → かかる
+    if ((key.fwd || key.back) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
   let want = S.crank > 0 || S.stalled ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
@@ -3545,7 +3548,7 @@ function step(dt) {
   // かかった時間・耕した割合
   if (S.started && !S.done) S.elapsed += dt;
   // エンジンの水温（0＝冷たい・0.55＝ふつう）：寒い朝や夜はかけたとき冷えていて、回しているうちに上がる（耕していると早い）
-  if (S.cool === undefined) S.cool = TOD === 'asa' ? 0.08 : TOD === 'yoru' ? 0.2 : 0.55;
+  if (S.cool === undefined) S.cool = COOL0;
   if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) - S.cool) * Math.min(1, dt / (S.cool < 0.5 ? 40 : 15));
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
   if (pct >= 95 && !S.done && !ART.on) finish();   // 田んぼアートは「完成」で終わる
@@ -3568,7 +3571,7 @@ function updateCamera(dt) {
   if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
     if (camera.parent !== rig) rig.add(camera);
     const tt = performance.now() / 1000, rough = (S.rotDown && S.rotPos < 0.1 ? 1.6 : 1) * Math.min(1, Math.abs(S.v) / 1.5);
-    const crankShake = S.crank > 0.6 ? 0.004 * (Math.sin(tt * 38) > 0 ? 1 : -0.6) : 0;   // セルの がくがく
+    const crankShake = S.crank > 0.6 && !(S.glow > 0) ? 0.004 * (Math.sin(tt * 38) > 0 ? 1 : -0.6) : 0;   // セルの がくがく
     // ディーゼルのふるえ：アイドリング（900 回転）は ぶるぶる大きくゆっくり、回転を上げると細かくなる
     const rpm = engineRpm(tt), idle = Math.max(0, Math.min(1, (1500 - rpm) / 600)), fq = 8.5 - 3 * idle;
     const shake = (S.crank > 0.6 ? 0 : 0.0009 + 0.0016 * idle) + 0.0035 * rough + crankShake + 0.006 * (S.flare || 0);   // エンジンのふるえと、土の凸凹のゆっくりしたゆれ
@@ -3647,7 +3650,11 @@ function drawMeter() {
   g.beginPath(); g.moveTo(r + Math.cos(a) * 62, r + Math.sin(a) * 62); g.lineTo(r + Math.cos(a) * 112, r + Math.sin(a) * 112); g.stroke();
   g.beginPath(); g.arc(r, r, 64, 0, 7); g.fillStyle = '#0d1214'; g.fill();
   g.fillStyle = '#bfe7ee'; g.font = 'bold 34px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(kmh.toFixed(1), r, r - 8);
+  if (S.glow > 0) {                               // 予熱ランプ（コイルのしるし）：消えたらセル
+    g.strokeStyle = '#ffa020'; g.lineWidth = 3; g.beginPath();
+    for (let k = 0; k <= 40; k++) { const u = k / 40, x = r - 24 + 48 * u, y = r - 10 + 9 * Math.sin(u * Math.PI * 6); k ? g.lineTo(x, y) : g.moveTo(x, y); }
+    g.stroke(); g.fillStyle = '#ffa020'; g.font = 'bold 15px sans-serif'; g.fillText('予熱', r, r - 34);
+  } else g.fillText(kmh.toFixed(1), r, r - 8);
   g.font = 'bold 15px sans-serif';
   g.fillText((S.v < -0.05 ? 'R' : 'F' + S.gear) + '  km/h', r, r + 20);
   g.fillStyle = S.rotDown ? '#ffb020' : '#2c3438'; g.fillText('PTO', r - 22, r + 42);
@@ -3725,7 +3732,11 @@ function drawMonitor(pct) {
       g.fillStyle = col; g.fillRect(x + 42, y - 6, 80 * v, 12);
     });
   }
-  if (S.dpfT > 0) {                               // DPF 自動再生中のしるし
+  if (S.glow > 0) {                               // 予熱中のしるし（冷えた朝・夜にかけたとき）
+    g.fillStyle = '#3a2a08'; g.fillRect(14, 228, 200, 30);
+    g.fillStyle = '#ffa020'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    g.fillText('予熱中（消えたら始動）', 24, 243);
+  } else if (S.dpfT > 0) {                        // DPF 自動再生中のしるし
     g.fillStyle = '#3a2a08'; g.fillRect(14, 228, 200, 30);   // 地図の左下（下の水温計・燃料計にかぶらない）
     g.fillStyle = Math.floor(performance.now() / 600) % 2 ? '#ffb020' : '#d08a10'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
     g.fillText('DPF 自動再生中', 24, 243);
@@ -4005,6 +4016,14 @@ function caw(ac, dest, t0, n) {
     o.start(t); o.stop(t + 0.3);
   }
 }
+// リレーの「カチッ」（予熱が入る・切れる、セルのソレノイド）
+function relayClick(vol = 1) {
+  if (!audio || !soundOn || audio.ac.state !== 'running') return;
+  const ac = audio.ac, t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'square'; o.frequency.setValueAtTime(1900, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.012);
+  g.gain.setValueAtTime(0.12 * vol * (camMode === 0 ? 1 : 0.4), t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+  o.connect(g); g.connect(audio.out); o.start(t); o.stop(t + 0.03);
+}
 // 土くれに当たった ごつっという低い音（短く下がる）
 function thud(ac, dest, vol = 1) {
   const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
@@ -4106,7 +4125,7 @@ function engineRpm(t) {
   // 深く・速く耕すほど重くて回転が落ちる
   let rpm = work ? 2500 - (40 + DEPTH * 5) * Math.min(1, Math.abs(S.v) / 0.8) * (0.8 + 0.08 * S.gear) + 30 * Math.sin(t * 3.1) : 900 + Math.abs(S.v) * 330 + load * 300;
   if (S.crank > 0.6) rpm = 160 + 70 * Math.sin(t * 34);
-  if (S.stalled) return 0;                       // エンスト：エンジンが止まっている
+  if (S.stalled || S.glow > 0) return 0;          // エンスト・予熱中：エンジンは止まっている                       // エンスト：エンジンが止まっている
   rpm += 900 * (S.flare || 0);
   if (S.lift > 0.1) rpm -= 70;
   if (work && S.wetLoad) rpm -= S.wetLoad;      // ぬかるみで爪とタイヤが泥に取られると、回転がぐっと落ちる                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
@@ -4309,9 +4328,17 @@ function nextVoice() {
   curVoice = id;
 }
 
+// 予熱（グロー）：冷えたディーゼルは、キーを回すと予熱ランプが点き、消えてからセルを回す。暖かいと 2〜3 秒、寒いと 5〜6 秒
+// （小型トラクターの持ち主たちの話：TractorByNet フォーラム）。ゲームは寒い朝で 3 秒ほど。冷えているとセルも長めに回り、かかると白い湯気が多い
+function startCrank() {
+  const cold = Math.max(0, Math.min(1, (0.45 - (S.cool ?? COOL0)) / 0.4));
+  S.cold = cold; S.glow = cold > 0 ? 0.8 + 2.4 * cold : 0; S.crank = 1.7 + 0.6 * cold; S.flare = 0;
+  if (S.glow) relayClick(0.7);
+  if (S.glow && !S.started) toast((TOD === 'yoru' ? '夜' : '朝') + 'の冷えたエンジンなので、まず予熱。予熱ランプが消えるとセルが回ってかかります', 3.5);
+}
 $('bStart').onclick = () => {
   if (S.done) { location.reload(); return; }    // 終わったあとは、同じ田んぼ・お題で始めから
-  if (!S.started) { S.crank = 1.7; S.flare = 0; }  // エンジンをかける：セル（1.1 秒）→ かかる → 回転が上がって落ちつく
+  if (!S.started) startCrank();  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padB', 'padD', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー

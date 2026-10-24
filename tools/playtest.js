@@ -809,6 +809,15 @@ async function walkTo(page, id) {
   await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   await page.click('#spinBtn').catch(() => {}); await page.waitForTimeout(800);
   R.checks.movieAfterReward = await page.evaluate(() => { const rw = document.getElementById('reward').classList.contains('show'), mv = !!(window.NISHIO_MOVIE && NISHIO_MOVIE.playing); return { rw, mv, ok: rw && !mv }; });   // ムービーは ごほうびの 窓を とじてから（ごほうびの 上に 出て かくさない）
+  // ごほうびの「📣 シェア」を おしたら、シェアの 画面を とじるまで ムービーは 待つ（ムービーが シェアの 上に 出て かくしていた）
+  R.checks.movieAfterShare = await (async () => {
+    const opened = await page.evaluate(() => { const b = document.querySelector('#reward [data-rw-share]'); if (!b) return false; b.click(); return !document.getElementById('share').hidden; });
+    if (!opened) return { opened, ok: true };
+    await page.waitForTimeout(1500);
+    const during = await page.evaluate(() => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.playing));
+    await page.evaluate(() => document.querySelector('#share [data-share="close"]').click());
+    return { opened, during, ok: !during };
+  })();
   await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   R.checks.movieOpen = await page.waitForFunction(() => window.NISHIO_MOVIE && NISHIO_MOVIE.playing === 'iwa', null, { timeout: 10000 }).then(() => true, () => false);
   if (R.checks.movieOpen) { await shot(page, '07c-movie'); for (let i = 0; i < 4; i++) { await page.click('#movie [data-mv="next"]'); await page.waitForTimeout(200); } }
@@ -1197,6 +1206,7 @@ async function walkTo(page, id) {
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode && c.reactOffTab, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.movieAfterShare && c.movieAfterShare.ok, 'ドット絵ムービーが シェアの 画面の 上に 出て かくす');
   need(c.movieAfterReward && c.movieAfterReward.ok, 'ドット絵ムービーが ごほうびの 窓の 上に すぐ 出て、ごほうびを かくす');
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');

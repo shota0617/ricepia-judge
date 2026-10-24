@@ -1898,7 +1898,7 @@ function movieWhenFree(id, key = stateKey()) {
   movieWhenFree.wait = true;
   function go() {
     if (stateKey() !== key) { movieWhenFree.wait = false; return; }
-    if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || medashiOpen()) return setTimeout(go, 600);   // イベントの窓（.medashi）が開いている間も待つ
+    if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || medashiOpen() || document.querySelector('[role="dialog"]:not([hidden])')) return setTimeout(go, 600);   // イベントの窓（.medashi）・シェア（ごほうびの「📣 シェア」から開く）などの ダイアログが 開いている 間も 待つ
     movieWhenFree.wait = false; playMovie(id);
   }
   setTimeout(go, 50);   // チェックインの とちゅうで よばれる：そのあと 出す ごほうびの 窓を 待つ（すぐ 調べると まだ ごほうびが なく、ムービーが ごほうびと「🏁 ゴール！」の 上に 出て かくしていた）

@@ -41,10 +41,13 @@ const g = spawnSync(process.execPath, [path.join(__dirname, 'guard.js'), '--pre-
 if (g.status !== 0) bad.push(`見張り（guard.js --pre-merge）：\n${g.stdout.trim().split('\n').map(l => '    ' + l).join('\n')}`);
 
 // Codex の レビューの ようす（PR の まとめの コメントに 埋めこまれた 状態を 読む）
-let codex = null;
-for (let page = 1; page <= 5 && !codex; page++) {
+let codex = null, codexAt = '';   // いちばん 新しく 書きかえられた まとめの コメントを 使う（全部の ページを 見る。古い まとめが 先の ページに ある ことも ある）
+for (let page = 1; page <= 30; page++) {
   const cs = api(`issues/${n}/comments?per_page=100&page=${page}`);
-  for (const c of cs) { const m = (c.body || '').match(/codex-review-state:v1 (\{.*?\}\}) /); if (m) codex = JSON.parse(m[1].replace(/&#123;/g, '{').replace(/&#125;/g, '}')).code_review; }
+  for (const c of cs) {
+    const m = (c.body || '').match(/codex-review-state:v1 (\{.*?\}\}) /);
+    if (m && (c.updated_at || '') >= codexAt) { codex = JSON.parse(m[1].replace(/&#123;/g, '{').replace(/&#125;/g, '}')).code_review; codexAt = c.updated_at || ''; }
+  }
   if (cs.length < 100) break;
 }
 if (!codex || !codex.commit_sha) warn.push('Codex の レビューが まだ ない');

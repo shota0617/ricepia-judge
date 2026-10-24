@@ -23,7 +23,7 @@ if (has(base, 'ricepia-jp/deploy.txt')) bad.push(`ricepia-jp/deploy.txt が ${ba
 if (has('HEAD', 'ricepia-jp/deploy.txt')) (PRE_MERGE ? bad : warn).push(PRE_MERGE ? 'ricepia-jp/deploy.txt が ブランチに 残っている：消してから マージする（main に 入ると、あとの push で 本番の ricepia.jp を 書きかえる）' : 'ricepia-jp/deploy.txt が ブランチに ある：運営者の OK を もらって ワークフローを 手で 動かしたら すぐ 消す（さくらの 国外IPアドレスフィルタを 戻すよう 運営者に 伝える）');
 
 // 足した 行
-const diff = git('diff', '--unified=0', '--no-color', `${base}...HEAD`);
+const diff = git('-c', 'core.quotePath=false', 'diff', '--unified=0', '--no-color', `${base}...HEAD`);
 let file = '';
 const SECRET = [
   [/sk-ant-[A-Za-z0-9_-]{10,}/, 'Anthropic の キー'],
@@ -42,7 +42,7 @@ for (const l of diff.split('\n')) {   // 最後の 差分：メールアドレ�
   if (/\.(html|js|json|css)$/.test(file) && !file.startsWith('.claude/')) for (const m of t.match(EMAIL) || []) if (!EMAIL_OK.test(m) && !/\.(png|jpe?g|webp|svg|gif)$/i.test(m)) warn.push(`${file}：メールアドレス「${m.replace(/^(.).*@/, '$1…@')}」（運営者の メールは ページに 書かない）`);
 }
 // 秘密は コミットごとに 見る（あとの コミットで 消しても、途中の コミットは push で 公開される）
-const patches = git('log', '--first-parent', '--no-merges', '-p', '--unified=0', '--no-color', '--format=@@@COMMIT %h', `${base}..HEAD`);
+const patches = git('-c', 'core.quotePath=false', 'log', '--first-parent', '--no-merges', '-p', '--unified=0', '--no-color', '--format=@@@COMMIT %h', `${base}..HEAD`);
 let sha = '';
 file = '';
 for (const l of patches.split('\n')) {

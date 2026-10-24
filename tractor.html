@@ -2774,6 +2774,78 @@ const HYDRANT = (() => {
   };
 })();
 
+// ---- 春と代かきの昼：ケリ（チドリのなかま）。東海地方の田んぼでよく見られ、春は田んぼに巣をつくる（Canon 野鳥写真図鑑）。
+// トラクターが巣に近づくと 2 羽が飛び立ち、「キッ キッ キリッ」と鋭く鳴きながら頭の上を飛びまわり、ときどき急降下する。はなれると巣のそばに降りる
+function keriCall(pos) {
+  if (!audio || !soundOn || audio.ac.state !== 'running') return;
+  const ac = audio.ac, [pan, d] = panTo(pos), t0 = ac.currentTime + 0.02;
+  const g = ac.createGain(), o = ac.createOscillator(), p = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  o.type = 'triangle'; o.connect(g); g.gain.value = 0;
+  if (p) { p.pan.value = pan; g.connect(p); p.connect(ac.destination); } else g.connect(ac.destination);
+  const v = 0.16 / (1 + d * 0.12) * (camMode === 0 ? 0.4 : 1);
+  const note = (t, f0, f1, len) => { o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + len); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006); g.gain.linearRampToValueAtTime(0, t + len); };
+  note(t0, 3000, 2500, 0.07); note(t0 + 0.16, 3000, 2500, 0.07);       // キッ キッ
+  for (let i = 0; i < 3; i++) note(t0 + 0.34 + i * 0.035, 3300, 2800, 0.03);   // キリッ
+  o.start(t0); o.stop(t0 + 0.5);
+}
+const KERI = (() => {
+  if (season === 'aki' || TOD === 'yoru') return { update() {} };
+  const NEST = [-10 + Math.random() * 4, 6 + Math.random() * 10];
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const M = { back: lam(0x857a64), grey: lam(0x8e9396), white: lam(0xf0f0ea), yellow: lam(0xe0c030), black: lam(0x1a1a1a) };
+  const home = k => [NEST[0] + (k ? 0.8 : -0.5), NEST[1] + k * 0.6];
+  function make(k) {
+    const b = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.075, 10, 8), M.back); body.scale.set(0.9, 0.8, 1.6); body.position.y = 0.26; b.add(body);
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.068, 10, 8), M.white); belly.scale.set(0.85, 0.7, 1.4); belly.position.set(0, 0.235, 0.01); b.add(belly);
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.042, 8, 6), M.grey); head.position.set(0, 0.34, 0.1); b.add(head);
+    const bill = new THREE.Mesh(new THREE.ConeGeometry(0.009, 0.05, 5), M.yellow); bill.rotation.x = Math.PI / 2; bill.position.set(0, 0.335, 0.155); b.add(bill);
+    for (const sx of [-1, 1]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.2, 4), M.yellow); l.position.set(sx * 0.025, 0.1, 0); b.add(l); }
+    const wings = [];
+    for (const sx of [-1, 1]) {                   // 飛ぶと 翼の白と先の黒がよく目立つ
+      const w = new THREE.Group(); w.position.set(sx * 0.04, 0.27, 0); w.visible = false;
+      const a = new THREE.Mesh(new THREE.PlaneGeometry(0.22, 0.13).translate(sx * 0.11, 0, 0).rotateX(-Math.PI / 2), M.white.clone());
+      const tip = new THREE.Mesh(new THREE.PlaneGeometry(0.12, 0.12).translate(sx * 0.28, 0, 0).rotateX(-Math.PI / 2), M.black.clone());
+      [a, tip].forEach(m => { m.material.side = THREE.DoubleSide; w.add(m); });
+      b.add(w); wings.push(w);
+    }
+    b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    b.userData = { wings, state: 'ground', t: Math.random() * 6, ph: Math.random() * 6, call: Math.random() };
+    const [hx, hz] = home(k); b.position.set(hx, 0, hz); b.rotation.y = Math.random() * 6.3;
+    scene.add(b); return b;
+  }
+  const birds = [make(0), make(1)];
+  let alarmT = 0;
+  return {
+    birds, NEST, get alarm() { return alarmT > 0; },
+    update(dt) {
+      alarmT = Math.hypot(S.x - NEST[0], S.z - NEST[1]) < 14 ? 6 : alarmT - dt;   // 巣から 14m 以内に来たら騒ぐ（はなれて 6 秒で落ちつく）
+      birds.forEach((b, k) => {
+        const u = b.userData; u.t += dt;
+        let tx, ty, tz, sp;
+        if (alarmT > 0) {
+          u.state = 'fly';
+          const a = u.t * (0.9 + k * 0.25) + u.ph, cx = (NEST[0] + S.x) / 2, cz = (NEST[1] + S.z) / 2;
+          const dive = Math.max(0, Math.sin(u.t * 0.7 + k * 2)) ** 6;   // ときどき トラクターめがけて急降下
+          tx = cx + (Math.cos(a) * 6) * (1 - dive) + (S.x - cx) * dive; tz = cz + (Math.sin(a) * 6) * (1 - dive) + (S.z - cz) * dive;
+          ty = 4.5 - 2.4 * dive + Math.sin(u.t * 1.3 + k) * 0.6; sp = 1.6;
+          if ((u.call -= dt) <= 0) { u.call = 0.6 + Math.random() * 0.8; keriCall(b.position); }
+        } else if (u.state === 'fly') {           // 巣のそばへもどる
+          [tx, tz] = home(k); ty = 0; sp = 1.2;
+          if (Math.hypot(b.position.x - tx, b.position.z - tz) < 0.3 && b.position.y < 0.2) { u.state = 'ground'; b.position.set(tx, 0, tz); }
+        }
+        const fly = u.state === 'fly';
+        b.userData.wings.forEach((w, i) => { w.visible = fly; w.rotation.z = (i ? -1 : 1) * Math.sin(u.t * 13) * 0.8; });
+        if (fly) {
+          const dx = tx - b.position.x, dz = tz - b.position.z, f = Math.min(1, dt * sp);
+          b.position.x += dx * f; b.position.z += dz * f; b.position.y += (ty - b.position.y) * f;
+          if (dx * dx + dz * dz > 1e-4) b.rotation.y = Math.atan2(dx, dz);
+        } else b.position.y = 0.01 * Math.max(0, Math.sin(u.t * 2 + u.ph));   // 立って ときどき首をふる（体が少し上下）
+      });
+    }
+  };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -4351,6 +4423,7 @@ function frame(now) {
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);
   WAGTAILS.update(dt, S.rotDown && S.rotPos < 0.08);
   SPARROWS.update(dt);
+  KERI.update(dt);
   BATS.update(dt);
   LAMPS.update();
   emitExhaust(dt);
@@ -4398,7 +4471,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

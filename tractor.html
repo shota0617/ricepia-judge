@@ -4049,8 +4049,8 @@ function relayClick(vol = 1) {
   if (!audio || !soundOn || audio.ac.state !== 'running') return;
   const ac = audio.ac, t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
   o.type = 'square'; o.frequency.setValueAtTime(1900, t); o.frequency.exponentialRampToValueAtTime(700, t + 0.012);
-  g.gain.setValueAtTime(0.12 * vol * (camMode === 0 ? 1 : 0.4), t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
-  o.connect(g); g.connect(audio.out); o.start(t); o.stop(t + 0.03);
+  g.gain.setValueAtTime(0.03 * vol * (camMode === 0 ? 1 : 0.4), t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.025);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.03);   // エンジンの音（out）は予熱中は消してあるので じかに
 }
 // 土くれに当たった ごつっという低い音（短く下がる）
 function thud(ac, dest, vol = 1) {
@@ -4102,7 +4102,7 @@ function updateSound(dt = 0) {
   audio.o2.frequency.setTargetAtTime(fire * 0.5, t, 0.25);
   audio.lfo.frequency.setTargetAtTime(fire, t, 0.25);
   audio.lp.frequency.setTargetAtTime(380 + load * 260, t, 0.3);
-  audio.out.gain.setTargetAtTime(S.stalled ? 0 : camMode === 0 ? 0.07 : 0.11, t, S.stalled ? 0.15 : 0.3);   // エンストすると しんとなる         // 運転席はキャビンで少し静か
+  audio.out.gain.setTargetAtTime(S.stalled || S.glow > 0 ? 0 : camMode === 0 ? 0.07 : 0.11, t, S.stalled || S.glow > 0 ? 0.15 : 0.3);   // エンストすると しんとなる         // 運転席はキャビンで少し静か
   audio.amb.gain.setTargetAtTime((camMode === 0 ? 0.01 : 0.04) * (SHIRO ? 1.2 : 1), t, 0.5);   // 生きものの声はキャビンの中だとほとんど聞こえない
   const till = S.rotDown && S.rotPos < 0.08 ? 0.12 + Math.min(0.25, Math.abs(S.v) * 0.15) : 0;
   const ear = camMode === 0 ? 1 + 0.7 * lookBack : 1.4;   // うしろを見る・外から見ると、作業機の音が大きく聞こえる

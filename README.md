@@ -6,6 +6,7 @@
 - `llms.txt` / `llms-full.txt` … AI検索・LLM向けのサイト要約と本文全文（LLMO）
 - `robots.txt` / `sitemap.xml` / `ogp.png` … クローラー・SNS共有用
 - `docs/seo-llmo-analysis.md` … SEO/LLMO 分析レポートと改善の進捗
+- `skills/kokoku-shindan/` … 広告診断スキル（Meta広告CSVの判定スクリプト＋SEO/LLMOチェックリスト）。`skills/kokoku-shindan.skill` を Claude にアップロードすると使える
 
 ## 更新時のチェックリスト
 

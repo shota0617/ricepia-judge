@@ -2258,6 +2258,19 @@ function sfxCtx() {
     return kotoCtx;
   } catch (e) { return null; }
 }
+function grainSound() {   // ちりん：金の米つぶを ひろった（高い 2音）
+  const a = sfxCtx();
+  if (!a) return;
+  try {
+    const t = a.currentTime;
+    for (const [f, d] of [[1320, 0], [1980, 0.07]]) {
+      const o = a.createOscillator(), g = a.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(f, t + d);
+      g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.06, t + d + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.25);
+      o.connect(g); g.connect(a.destination); o.start(t + d); o.stop(t + d + 0.3);
+    }
+  } catch (e) { /* 音が出せない端末 */ }
+}
 function splashSound(v) {   // ぽちゃん：上がる「ぽ」と、しぶきの ざっ
   const a = sfxCtx();
   if (!a) return;
@@ -5742,7 +5755,7 @@ function frame(now) {
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; }   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
-    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); }
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); }
   }
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
@@ -5771,7 +5784,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzHint(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzHint(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -6018,7 +6031,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now);   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now && !rec) drawMzMap(gt, w, vh, cy, dpr, now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -6728,6 +6741,64 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中�
   for (const [X, Y] of dots) { ctx.beginPath(); ctx.arc(X, Y, rd, 0, Math.PI * 2); ctx.fill(); }
   for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, rg, 0, Math.PI * 2); ctx.fill(); }
 }
+// 金の米つぶ：運営者の声「滞在時間を増やす」。めいろの 行き止まり（通れる さかいが 1つだけの 通路）に、区域ごとに 6つまで 金の米つぶが おちている。
+// ころがって 入ると ひろえる（+2pt。きょう 10こごとに +20pt）。場所は 日本の 日づけと 区域で きまり（だれでも 同じ）、毎日 かわる。ひろった つぶは その日は 出ない（game.js の dayState().grains）。
+// 行き止まりに 入るのが「はずれ」ではなく「たから さがし」に なる。ゴールまでの めいろ図にも 金の 点で 出る（寄り道の 計画に）
+const MZ_GRAIN_N = 6;
+const jstDay = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3);
+function mzGrainSet(a) {   // 区域の 金の米つぶ（区域の 中の マスの 番号）
+  const day = jstDay();
+  if (a.gDay === day) return a.grains;
+  const N = MZ_R, cand = [];
+  for (let j = 1; j < N - 1; j++) for (let i = 1; i < N - 1; i++) {   // 区域の はしは よける（となりの 区域との さかいは いつも 通れる）
+    const k = j * N + i;
+    if (a.t[k] !== 1) continue;
+    if (a.er[k] + a.er[k - 1] + a.ed[k] + a.ed[k - N] === 1) cand.push(k);
+  }
+  let sd = ((a.rx * 2654435761) ^ (a.ry * 40503) ^ (day * 2246822519)) >>> 0 || 1;
+  const rn = () => { sd ^= sd << 13; sd >>>= 0; sd ^= sd >>> 17; sd ^= sd << 5; sd >>>= 0; return sd / 4294967296; };
+  for (let k = cand.length - 1; k > 0; k--) { const m = (rn() * (k + 1)) | 0; [cand[k], cand[m]] = [cand[m], cand[k]]; }
+  a.gDay = day; a.grains = new Set(cand.slice(0, MZ_GRAIN_N));
+  return a.grains;
+}
+const mzGrainKey = (cx, cy) => jstDay() + ':' + cx + ',' + cy;
+function mzGrainAt(cx, cy) {   // そこに まだ ひろっていない 金の米つぶが あるか
+  const a = mzArea(cx, cy);
+  if (!a || !mzGrainSet(a).has((cy - a.y0) * MZ_R + cx - a.x0)) return false;
+  return !(G.mzGrainHas && G.mzGrainHas(mzGrainKey(cx, cy)));
+}
+let mzGrainCell = '';
+function mzGrainTick() {
+  if (rp.x === null) return;
+  const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), k = a + ',' + b;
+  if (k === mzGrainCell || !mzArea(a, b)) return;   // 区域が まだ 読めていなければ、読めてから しらべる（その マスを しらべおわった ことに しない）
+  mzGrainCell = k;
+  if (!mzGrainAt(a, b) || !G.mzGrain) return;
+  const r = G.mzGrain(mzGrainKey(a, b));
+  if (!r) return;
+  grainSound(); roll.happyT = 1.2; dirty = true;
+  floatText(`🌾 金の米つぶ +${r.pts}pt（きょう ${r.n}こ）`);
+  const now = performance.now(), cols = ['#ffe066', '#ffd23f', '#fff6c2'];
+  for (let i = 0; i < 14; i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }   // 小さな きらきら（ゴールの 紙ふぶきと 同じ しくみ）
+}
+function drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 金の 米つぶ（ふわふわ うかんで、ときどき きらり）
+  const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
+  const r = Math.max(4, T * 0.55), q = Math.max(1, Math.round(T / 8));
+  for (let ry = Math.floor(r0 / MZ_R); ry <= Math.floor(r1 / MZ_R); ry++) for (let rx = Math.floor(c0 / MZ_R); rx <= Math.floor(c1 / MZ_R); rx++) {
+    const a = mzArea(rx * MZ_R, ry * MZ_R);
+    if (!a) continue;
+    for (const k of mzGrainSet(a)) {
+      const cx = a.x0 + k % MZ_R, cy = a.y0 + ((k / MZ_R) | 0);
+      if (cx < c0 || cx > c1 || cy < r0 || cy > r1 || (G.mzGrainHas && G.mzGrainHas(mzGrainKey(cx, cy)))) continue;
+      const ph = (cx * 7 + cy * 13) % 10, bob = Math.sin(now / 300 + ph) * T * 0.12, X = ox + cx * S + S / 2, Y = oy + cy * S + S / 2 + bob;
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(Math.round(X - r * 0.7), Math.round(oy + cy * S + S / 2 + r * 0.9), Math.round(r * 1.4), q * 2);   // かげ
+      ctx.fillStyle = '#5a3a00'; ctx.beginPath(); ctx.arc(X, Y, r + q, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffc928'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff3a8'; ctx.beginPath(); ctx.arc(X - r * 0.35, Y - r * 0.35, r * 0.35, 0, Math.PI * 2); ctx.fill();   // てかり
+      if ((Math.floor(now / 150) + ph) % 10 === 0) { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(X + r * 0.5), Math.round(Y - r * 1.4), q, Math.round(r * 0.9)); ctx.fillRect(Math.round(X + r * 0.5 - r * 0.4), Math.round(Y - r * 1.0), Math.round(r * 0.9), q); }   // きらり
+    }
+  }
+}
 // 壁の かたまりの 中に いる（始めた 所・ひとっとび の 行き先が 道の ない 区画 など）：いちばん近い 通路・参道の まん中へ うつす（0.5秒ごと）
 let mzSnapT = 0;
 function mzSnap(now) {
@@ -6792,7 +6863,7 @@ function drawMzNext(w, cy, U, now) {
     mzNext.dist = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : 0;
   }
   const a = (now - mzNext.t0) / 1000;
-  if (a > 3) { mzNext.t0 = 0; return; }
+  if (a > 3) { mzNext.t0 = 0; mzMapOpen(now, 6000); return; }   // 知らせの あとに ゴールまでの めいろ図を 6秒
   const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
   ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
@@ -6831,6 +6902,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     label('ゴール', ex, ey - U * 2.75 - pulse * U * 0.12, Math.round(U * 0.62), '#ffe680');
     { let nm = gt.name || ''; ctx.font = `bold ${Math.round(U * 0.45)}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
       if (nm) label(nm, ex, ey - U * 2.15 - pulse * U * 0.12, Math.round(U * 0.45), '#ffffff'); }   // 旗の 上
+    mzMap.arrow = null;
     return;
   }
   const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6;
@@ -6843,6 +6915,74 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   const bx = qx - Math.cos(a) * U * 1.3, by = qy - Math.sin(a) * U * 1.3;   // 矢印の 内がわに 🏁 と 道のり
   flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
   label(dist, bx + U * 0.45, by, Math.round(U * 0.5), '#ffffff');
+  if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは めいろ図を 出さない
+  label('🗺 タップ', bx, by + U * 0.62, Math.round(U * 0.36), '#bfefff');   // 矢印を タップすると めいろ図
+  mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
+}
+// ゴールまでの めいろ図：運営者の声「ゴールをわかりやすく」。地図を 小さく しても ゴールは 画面の 外（めいろで 2km など）なので、
+// お米と ゴールが 入る はんいの めいろを 上から 見た 小さな 図に して 画面の 上に 出す（1マス＝数点。通路は 明るく・壁の かたまりは 暗い 緑・水は 青・まだ 読めていない 所は 灰色）。
+// 足あとの マスは 黄色、お米は 白い 点、ゴールは 黄色い わと 🏁。新しい ゴールの 知らせの あとに 6秒、縁の 矢印を タップしても 出る（図を タップで とじる）。道すじは 出さない（とく 楽しみを のこす）
+// Godot で 描く（?godot=1 の 試作）ときは 出さない（記録係は 絵を 1回だけ 送るので、かきかえる 図が かわらない）
+const mzMap = { until: 0, t0: 0, last: 0, cv: null, at: 0, key: '', box: null, rect: null, arrow: null };
+function mzMapOpen(now, ms) { if (mzMap.until <= now) { mzMap.t0 = now; mzMap.last = 0; } mzMap.until = now + ms; mzMap.at = 0; }
+function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
+  const g = toTile(gt.lat, gt.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(g.x / MZ_K), gr = Math.floor(g.y / MZ_K);
+  const pad = 4, x0 = Math.min(a, gc) - pad, y0 = Math.min(b, gr) - pad, cols = Math.max(a, gc) + pad - x0 + 1, rows = Math.max(b, gr) + pad - y0 + 1;
+  const c = Math.min(Math.round(12 * dpr), Math.floor(Math.min((w - 104 * dpr) / cols, H0 / rows)));   // 1マスの 点の 大きさ（左右は 地図の ボタンを よける）
+  if (c < 3) return null;   // 遠すぎる（図が 小さく なりすぎて、通路どうしの 細い壁が 描けない）
+  const cv = mzMap.cv || (mzMap.cv = document.createElement('canvas')), x = cv.getContext('2d');
+  cv.width = cols * c; cv.height = rows * c;
+  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy), wl = Math.max(1, Math.round(c / 4));   // 細い壁は いつも 1点 以上（とじた さかいを 通れる ように 見せない）
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+    const cx = x0 + i, cy = y0 + j, t = mzType(cx, cy);
+    x.fillStyle = t < 0 ? ((i + j) & 1 ? '#4a4a4a' : '#3e3e3e') : go(cx, cy) ? (mzTrail.has(cx + ',' + cy) ? '#f3e08a' : '#ddd6b6') : t === 2 ? '#2f6aa0' : '#1d4434';
+    x.fillRect(i * c, j * c, c, c);
+    if (t === 1 && mzGrainAt(cx, cy)) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g); }   // 金の米つぶ
+  }
+  {   // 通路どうしの あいだの 細い壁
+    x.fillStyle = '#1d4434';
+    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
+      const cx = x0 + i, cy = y0 + j;
+      if (!go(cx, cy)) continue;
+      if (go(cx + 1, cy) && !mzOpen(cx, cy, 1, 0)) x.fillRect((i + 1) * c - Math.ceil(wl / 2), j * c, wl, c);
+      if (go(cx, cy + 1) && !mzOpen(cx, cy, 0, 1)) x.fillRect(i * c, (j + 1) * c - Math.ceil(wl / 2), c, wl);
+    }
+  }
+  return { x0, y0, cols, rows, c, near: ((G.reachOf ? G.reachOf(gt) : 40) || 40) * 0.8 / TILE_M / MZ_K, gx: g.x / MZ_K, gy: g.y / MZ_K };
+}
+function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上の ボタンに かさならない）
+  const dt = mzMap.last ? Math.min(now - mzMap.last, 1000) : 0;
+  mzMap.last = now;
+  if (mapCovered() || mzBanner.t0 || mzNext.t0 || rp.x === null) { mzMap.until += dt; mzMap.t0 += dt; return; }   // 窓や 知らせが 出ている 間は 待つ（とじてから 出す）
+  const S = Math.round(16 * dpr), top = cy + Math.round(40 * dpr) + S * 1.6;   // 図の 上の はし（お米の 足もとより 下。見出しの ぶん あける）
+  if (now - mzMap.at > 500) { mzMap.at = now; mzMap.box = mzMapBuild(gt, w, vh - top - S * 1.6, dpr); }   // 0.5秒ごとに かきなおす（読みこんだ 区域・足あとが ふえる）
+  const B = mzMap.box;
+  if (!B) { mzMap.rect = null; return; }
+  const al = Math.min(1, (now - mzMap.t0) / 250, (mzMap.until - now) / 400);
+  const W = B.cols * B.c, H = B.rows * B.c, X = Math.round(w / 2 - W / 2), Y = Math.round(top);
+  ctx.globalAlpha = al;
+  ctx.fillStyle = 'rgba(10,20,30,.85)'; ctx.fillRect(X - S * 0.5, Y - S * 1.6, W + S, H + S * 2.5);
+  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(X - 2, Y - 2, W + 4, H + 4);
+  ctx.drawImage(mzMap.cv, X, Y, W, H);
+  ctx.font = `bold ${Math.round(S * 0.8)}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = 3; ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
+  ctx.strokeText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8); ctx.fillText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8);
+  const pulse = (Math.sin(now / 200) + 1) / 2;
+  {   // ゴール：チェックインの 近さの 黄色い わと 🏁
+    const gx = X + (B.gx - B.x0) * B.c, gy = Y + (B.gy - B.y0) * B.c, r = Math.max(B.c * 1.6, B.near * B.c) * (0.9 + pulse * 0.15);
+    ctx.lineWidth = Math.max(3, B.c * 0.5); ctx.strokeStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = Math.max(2, B.c * 0.3); ctx.strokeStyle = '#ffd54f'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.font = `${Math.round(S * 1.1)}px sans-serif`; ctx.fillStyle = '#ffffff'; ctx.fillText('🏁', gx, gy - r - S * 0.5);
+  }
+  {   // お米：白い 点（ちかちか）
+    const rx = X + (rp.x / MZ_K - B.x0) * B.c, ry = Y + (rp.y / MZ_K - B.y0) * B.c, r = Math.max(3 * dpr, B.c * 0.7) * (1 + pulse * 0.25);
+    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(rx, ry, r + Math.max(1.5, dpr), 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.font = `bold ${Math.round(S * 0.55)}px "DotGothic16", sans-serif`; ctx.fillStyle = '#bfefff'; ctx.lineWidth = 3;
+  { const t = '⚪ いま 🏁 ゴール 🟨 金の米つぶ（タップで とじる）'; ctx.strokeText(t, w / 2, Y + H + S * 0.45); ctx.fillText(t, w / 2, Y + H + S * 0.45); }
+  ctx.globalAlpha = 1;
+  mzMap.rect = [X - S * 0.5, Y - S * 1.6, X + W + S * 0.5, Y + H + S * 0.9];
 }
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
@@ -7277,6 +7417,11 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
+  if (mazeOn() && !worldMode) {   // ゴールまでの めいろ図：図を タップで とじる・縁の 矢印を タップで 出す
+    const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];
+    if (mzMap.until > now && inR(mzMap.rect)) { mzMap.until = Math.min(mzMap.until, now + 300); return; }
+    if (inR(mzMap.arrow)) { mzMapOpen(now, 8000); return; }
+  }
   if (!(worldMode && dragMoved)) {   // 当店の札と絵がいちばん上に描かれているので、先に調べる
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr;
     const sh = shopHits.find(([a, b, c2, d]) => px >= a && px <= c2 && py >= b && py <= d);
@@ -7388,7 +7533,7 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), goal: id => {   // 
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0 } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     return g && g.t0 ? { sec: (now - g.t0) / 1000, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M } : null;
-  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },

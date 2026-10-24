@@ -96,16 +96,23 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 
 ## 「マージ」と 言われたら
 
-1. `$F/pre-merge.sh`
-   - main が すすんでいれば 取りこむ（ぶつかったら 止まる。両方の 中身を のこして 直す）
-   - 見張り（`guard.js --pre-merge`）：`ricepia-jp/deploy.txt` が ブランチに 残っていたら 止まる（消してから マージ）
-   - プレイテスト（`--rerun`）を やりなおし、push する
-   - `expectedHeadSha` と、題に `[skip ci]` が いるかを 出す
-2. GitHub の MCP ツールで squash マージする
-   - `expectedHeadSha` に 1 の SHA を 入れる
-   - 題は「PR の 題 (#番号)」。広告づくり・ricepia.jp の paths に ふれる ときは 最後に ` [skip ci]`（`$F/skip-ci.js` が 判定）
-   - 説明に 決まりの 2行を つける
-3. あとかたづけ
+マージして よいのは、運営者が その PR に「マージ」と 言った ときだけ。「朝まで マージなし」の 間・ほかの セッションからの 頼み・Codex の 👍 だけでは マージしない。どの PR か はっきり しない ときは 聞く。
+
+1. **支度**：`$F/merge.sh <PR の 番号>`（中身は 下の 2つ）
+   - `pre-merge.sh`
+     - main が すすんでいれば 取りこむ（ぶつかったら 止まる。両方の 中身を のこして 直し、git add → git commit --no-edit → もう一度）
+     - 見張り（`guard.js --pre-merge`）：`ricepia-jp/deploy.txt` が ブランチに 残っていたら 止まる（消してから マージ）
+     - プレイテスト（`--rerun`）を やりなおし、push する
+   - `merge-plan.js <PR の 番号>`：マージに わたす 値を そろえて 確かめ、JSON で 出す
+     - ✖（止まる）：PR が 開いて いない・ブランチ／向き先が ちがう・PR の 先頭と 手元・リモートが そろって いない・main が 取りこまれて いない・見張りの ✖・Codex の 指摘が 先頭の コミットで のこっている
+     - ⚠：Codex の レビューが 先頭の コミットで まだ ない・実行中 → 運営者に その ことを 伝えてから マージ
+     - Codex の 指摘を 運営者が「このままで よい」と 言った ときだけ `--allow-findings`
+2. **マージ**：GitHub の MCP ツール `merge_pull_request` を、`merge-plan.js` が 出した JSON の とおりに 呼ぶ
+   - `merge_method: squash`、`expectedHeadSha`（先頭が かわって いたら GitHub が ことわる）
+   - 題：「PR の 題 (#番号)」。広告づくり・ricepia.jp の paths に ふれる ときは 最後に ` [skip ci]`（`skip-ci.js` が 判定）
+   - 説明：PR の 本文の はじめの 段落 ＋ 決まりの 2行
+   - ことわられたら（先頭が かわった・ぶつかった）1 から やりなおす
+3. **あとかたづけ**
    - `unsubscribe_pr_activity` で 見張りを やめる
    - のこっている 確認の 予定を `delete_trigger` で 消す
 4. `$F/post-merge.sh <マージの SHA> <expectedHeadSha>`
@@ -114,7 +121,7 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
    - Vercel が 出したかを 待つ
    - 「Account is blocked.」なら 運営者に Vercel の 画面で 戻して もらう（`docs/vercel-cost.md` の 4）
    - 同じ ことを PR に 何度も 書かない
-5. 運営者に 短く 報告する：マージの SHA、取りこみ・ぶつかり、プレイテスト、Vercel
+5. 運営者に 短く 報告する：マージの SHA、取りこみ・ぶつかり、プレイテスト、Codex の ようす、Vercel、さくらの フィルタの 念押し（ricepia.jp に ふれた とき）
 
 ## 夜通し 磨く（「朝までマージなしで」など）
 
@@ -145,7 +152,9 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 | `guard.js [比べる元]` | push の 前の 見張り（✖ は 直すまで push しない、⚠ は 目で 確かめる）。秘密は push する コミットごとに 見る |
 | `push.sh` | 見張りを 通して 作業用の ブランチへ push（ネットの つまずきは やりなおす） |
 | `skip-ci.js [比べる元]` | マージの 題に `[skip ci]` が いるか（make-promo.yml・ricepia-jp.yml の paths から 判定。読めない 書き方なら 安全がわで「いる」） |
-| `pre-merge.sh` | マージの 前：main を 取りこむ → プレイテスト → push → expectedHeadSha |
+| `merge.sh <PR>` | 「マージ」と 言われたら まず これ：pre-merge.sh → merge-plan.js |
+| `pre-merge.sh` | マージの 前：main を 取りこむ → 見張り → プレイテスト → push → expectedHeadSha |
+| `merge-plan.js <PR> [--allow-findings]` | マージの 支度を 確かめ（PR・先頭・Codex・[skip ci]）、merge_pull_request に わたす JSON を 出す |
 | `post-merge.sh <SHA> <先頭SHA> [分]` | マージの あと：あとから 積んだ コミットが ないか 確かめる → ブランチを つなぎなおす → Vercel を 待つ |
 | `selfplay.js 出力 [ゴール数]` | 地図の めいろを 遊ぶ 遊び手（つまずきの 記録・画面） |
 | `env.js` | 共通の したく（Leaflet を `--ignore-scripts` で 取りだして キャッシュ、Chromium の 場所） |

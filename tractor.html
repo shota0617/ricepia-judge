@@ -3031,6 +3031,56 @@ const ROADSIDE = (() => {
   };
 })();
 
+// ---- 秋の昼：イナゴ（コバネイナゴ。成虫は 7〜12 月、田んぼや休耕田にすむ：Honda 生きもの図鑑・京都府・滋賀県）。
+// トラクターが近づくと、前の切り株から ぴょんと跳んで よける。冷えた朝は動きがにぶくて少ない。雨の日と夜は出ない
+const INAGO = (() => {
+  if (season !== 'aki' || TOD === 'yoru' || RAIN) return { update() {} };
+  const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x7c9a38).convertSRGBToLinear() });   // 緑〜黄かっ色
+  const geo = new THREE.BoxGeometry(0.012, 0.012, 0.038);
+  const leg = new THREE.BoxGeometry(0.003, 0.012, 0.022).rotateX(-0.6);   // うしろあし（太い）
+  const N = 18, pool = [];
+  for (let k = 0; k < N; k++) {
+    const g = new THREE.Group(), b = new THREE.Mesh(geo, mat); b.position.y = 0.008; g.add(b);
+    for (const sx of [-1, 1]) { const l = new THREE.Mesh(leg, mat); l.position.set(sx * 0.008, 0.012, -0.004); g.add(l); }
+    g.visible = false; scene.add(g); pool.push({ g, vx: 0, vy: 0, vz: 0, rest: 0, hops: 0, on: false });
+  }
+  let acc = 0, next = 0;
+  const rate = TOD === 'asa' ? 0.25 : 0.9;           // 1m 走るあいだに跳びだす数
+  const ground0 = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y : 0.012; };
+  function hop(o) {                                  // トラクターから はなれる向きへ 0.7〜1.5m
+    const p = o.g.position, dx = p.x - S.x, dz = p.z - S.z, d = Math.hypot(dx, dz) || 1, a = Math.atan2(dx / d, dz / d) + (Math.random() - 0.5) * 1.6, sp = 1.4 + Math.random() * 1.1;
+    o.vx = Math.sin(a) * sp; o.vz = Math.cos(a) * sp; o.vy = 1.8 + Math.random() * 0.8; o.hops++; o.g.rotation.y = a;
+  }
+  return {
+    pool,
+    update(dt) {
+      const inField = Math.abs(S.x) < HX - 0.5 && Math.abs(S.z) < HZ - 0.5;
+      if (S.v > 0.2 && inField && (acc += dt * S.v * rate) >= 1) {
+        acc -= 1;
+        const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lx = (Math.random() - 0.5) * 4, lz = 3 + Math.random() * 3;   // ボンネットの先・横の 3〜6m
+        const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
+        const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+        if (i >= 0 && j >= 0 && i < NX && j < NZ && !tilledMask[i * NZ + j]) {   // 耕していない切り株の中から
+          const o = pool[next]; next = (next + 1) % N;
+          o.g.position.set(x, 0.012, z); o.g.visible = o.on = true; o.hops = 0; hop(o);
+        }
+      }
+      for (const o of pool) {
+        if (!o.on) continue;
+        const p = o.g.position;
+        if (o.rest > 0) {                            // 着地して ひと休み。まだ近ければ もう一度跳ぶ（3 回まで）。そのあと 株もとに かくれる
+          if ((o.rest -= dt) <= 0) { if (o.hops < 3 && Math.hypot(p.x - S.x, p.z - S.z) < 3.2) hop(o); else o.g.visible = o.on = false; }
+          continue;
+        }
+        p.x += o.vx * dt; p.z += o.vz * dt; o.vy -= 9.8 * dt; p.y += o.vy * dt;
+        o.g.rotation.x = -Math.atan2(o.vy, Math.hypot(o.vx, o.vz)) * 0.6;
+        const gy = ground0(p.x, p.z);
+        if (p.y <= gy && o.vy < 0) { p.y = gy; o.g.rotation.x = 0; o.rest = 0.3 + Math.random() * 0.8; }
+      }
+    }
+  };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -4639,6 +4689,7 @@ function frame(now) {
   BATS.update(dt);
   KABASHIRA.update(dt);
   TOBI.update(dt);
+  INAGO.update(dt);
   LAMPS.update();
   emitExhaust(dt);
   DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
@@ -4685,7 +4736,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

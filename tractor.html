@@ -2827,8 +2827,10 @@ const KERI = (() => {
           u.state = 'fly';
           const a = u.t * (0.9 + k * 0.25) + u.ph, cx = (NEST[0] + S.x) / 2, cz = (NEST[1] + S.z) / 2;
           const dive = Math.max(0, Math.sin(u.t * 0.7 + k * 2)) ** 6;   // ときどき トラクターめがけて急降下
-          tx = cx + (Math.cos(a) * 6) * (1 - dive) + (S.x - cx) * dive; tz = cz + (Math.sin(a) * 6) * (1 - dive) + (S.z - cz) * dive;
-          ty = 4.5 - 2.4 * dive + Math.sin(u.t * 1.3 + k) * 0.6; sp = 1.6;
+          const sy = Math.sin(S.yaw), cy = Math.cos(S.yaw), side = k ? 1.6 : -1.6;   // 急降下は ボンネットの先の 横あたりへ（キャビンを つきぬけない）
+          const dx = S.x + sy * 3.2 + cy * side, dz = S.z + cy * 3.2 - sy * side;
+          tx = cx + (Math.cos(a) * 6) * (1 - dive) + (dx - cx) * dive; tz = cz + (Math.sin(a) * 6) * (1 - dive) + (dz - cz) * dive;
+          ty = Math.max(3.1, 4.6 - 1.4 * dive + Math.sin(u.t * 1.3 + k) * 0.5); sp = 1.6;
           if ((u.call -= dt) <= 0) { u.call = 0.6 + Math.random() * 0.8; keriCall(b.position); }
         } else if (u.state === 'fly') {           // 巣のそばへもどる
           [tx, tz] = home(k); ty = 0; sp = 1.2;
@@ -2847,34 +2849,38 @@ const KERI = (() => {
 })();
 
 // ---- 春の畦の花：タンポポ（黄）・ホトケノザ（赤むらさき）・オオイヌノフグリ（うすい青）。早春の田んぼの畦や道ばたに次々と咲く
-// （ミュージアムパーク茨城県自然博物館・千葉県『身近な生き物図鑑』・BE-PAL 春の雑草観察ガイド）。タンポポは夜は花を閉じる。
+// （ミュージアムパーク茨城県自然博物館・千葉県『身近な生き物図鑑』・BE-PAL 春の雑草観察ガイド）。タンポポは夕方から夜は花を閉じる。
 // 代かきの 5 月はハルジオン・シロツメクサ（紀伊風土記の丘・さいたま市・Honda Woods）
 const LEVEE_FLOWERS = (() => {
   if (season !== 'haru' && season !== 'shirokaki') return null;
   const rnd = Math.random, M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
-  const spot = () => {                             // 畦の上と斜面（畦は田んぼのふちから 0.25〜1.1m、高さ 0.3m）。坂と給水栓のそばはよける
+  const lev = (side, t, d) => {                    // 畦の上と斜面（畦は田んぼのふちから 0.25〜1.1m、高さ 0.3m）：どの辺・辺にそった位置・ふちからの距離 → 位置と高さ
+    const [x, z] = side < 2 ? [t * (HX + 0.3), (side ? 1 : -1) * (HZ + d)] : [(side === 2 ? 1 : -1) * (HX + d), t * (HZ + 0.3)];
+    return [x, 0.3 * Math.min(1, d / 0.33, (1.1 - d) / 0.33), z];
+  };
+  const spot = () => {                             // 坂と給水栓のそばはよける
     for (;;) {
-      const side = Math.floor(rnd() * 4), t = rnd() * 2 - 1, d = 0.3 + rnd() * 0.72;
-      const [x, z] = side < 2 ? [t * (HX + 0.3), (side ? 1 : -1) * (HZ + d)] : [(side === 2 ? 1 : -1) * (HX + d), t * (HZ + 0.3)];
+      const side = Math.floor(rnd() * 4), t = rnd() * 2 - 1, d = 0.3 + rnd() * 0.72, [x, , z] = lev(side, t, d);
       if (x > HX && z > 17.3 && z < 22.7) continue;
       if (Math.hypot(x - (HX + 0.35), z + 18) < 0.6) continue;
-      return [x, 0.3 * Math.min(1, d / 0.33, (1.1 - d) / 0.33), z];
+      return [side, t, d];
     }
   };
   function bed(parts, patches, per, spread, size, tilt, h0, h1) {   // parts：[形, 色] を同じ所に重ねる。h0〜h1：花の高さ（畦の草より上に出る）
     const ms = parts.map(([geo]) => new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial(), patches * per)), c = new THREE.Color();
     let n = 0;
     for (let p = 0; p < patches; p++) {
-      const [px, py, pz] = spot();
+      const [sd, pt, pd] = spot(), L = sd < 2 ? HX + 0.3 : HZ + 0.3;
       for (let k = 0; k < per; k++) {
-        const s = size * (0.75 + rnd() * 0.5);
-        V.set(px + (rnd() - 0.5) * spread, py + h0 + rnd() * (h1 - h0), pz + (rnd() - 0.5) * spread);
+        const s = size * (0.75 + rnd() * 0.5);   // 花ごとに 畦の上の高さを求めなおす（斜面で浮いたり埋まったりしない）
+        const [fx, fy, fz] = lev(sd, Math.max(-1, Math.min(1, pt + (rnd() - 0.5) * spread / L)), Math.max(0.3, Math.min(1.02, pd + (rnd() - 0.5) * Math.min(spread, 0.25))));
+        V.set(fx, fy + h0 + rnd() * (h1 - h0), fz);
         E.set((rnd() - 0.5) * tilt, rnd() * 6.3, (rnd() - 0.5) * tilt); Q.setFromEuler(E); SC.set(s, s, s);
         M4.compose(V, Q, SC); const sh = 0.85 + rnd() * 0.3;
         ms.forEach((m, i) => { m.setMatrixAt(n, M4); m.setColorAt(n, c.setHex(parts[i][1]).convertSRGBToLinear().multiplyScalar(sh)); }); n++;
       }
     }
-    ms.forEach(m => { m.receiveShadow = true; scene.add(m); }); return ms;
+    ms.forEach(m => { m.receiveShadow = true; m.frustumCulled = false; scene.add(m); }); return ms;   // 形の範囲が原点のままなので、見えなくならないように
   }
   const disc = r => new THREE.CircleGeometry(r, 10).rotateX(-Math.PI / 2);
   const merge = geos => {
@@ -2887,14 +2893,14 @@ const LEVEE_FLOWERS = (() => {
     fleabane: bed([[disc(0.022), 0xf3e6ec], [disc(0.0065).translate(0, 0.002, 0), 0xe8c020]], 120, 7, 0.32, 1, 0.6, 0.15, 0.34),
     clover: bed([[ball(0.011), 0xf2f2ea]], 170, 8, 0.35, 1, 0.2, 0.04, 0.1),
     puff: bed([[ball(0.026), 0xeeeeea]], 70, 2, 0.6, 1, 0, 0.2, 0.32),
-    dandelion: TOD === 'yoru' ? null : bed([[disc(0.03), 0xf2c418]], 50, 2, 0.6, 1, 0.5, 0.1, 0.22),
+    dandelion: DARK ? null : bed([[disc(0.03), 0xf2c418]], 50, 2, 0.6, 1, 0.5, 0.1, 0.22),
   };
   const henbit = (() => {                          // ホトケノザ：茎の先に 赤むらさきの小さな花が段になってつく
     const g = new THREE.SphereGeometry(0.012, 6, 4); g.scale(1, 1.6, 1); g.translate(0, 0.02, 0);
     return merge([g, g.clone().translate(0.012, -0.012, 0.004), g.clone().translate(-0.01, -0.014, -0.006)]);
   })();
   return {
-    dandelion: TOD === 'yoru' ? null : bed([[disc(0.03), 0xf2c418]], 170, 3, 0.6, 1, 0.5, 0.1, 0.22),
+    dandelion: DARK ? null : bed([[disc(0.03), 0xf2c418]], 170, 3, 0.6, 1, 0.5, 0.1, 0.22),
     henbit: bed([[henbit, 0xb0608f]], 140, 6, 0.35, 1.3, 0.3, 0.06, 0.16),
     speedwell: bed([[disc(0.011), 0x7a9be8]], 140, 10, 0.3, 1, 0.4, 0.03, 0.09),
   };
@@ -2945,7 +2951,7 @@ function kiteCall(pos) {
   o.start(t0); lfo.start(t0); o.stop(t0 + 2.2); lfo.stop(t0 + 2.2);
 }
 const TOBI = (() => {
-  if (TOD === 'yoru' || RAIN) return { update() {} };
+  if (DARK || RAIN) return { update() {} };         // 夕方には ねぐらへ帰る
   const b = new THREE.Group(), brown = new THREE.MeshLambertMaterial({ color: 0x4d3b2b, side: THREE.DoubleSide }), pale = new THREE.MeshLambertMaterial({ color: 0xb8ab98, side: THREE.DoubleSide });
   const flat = (pts, mat) => { const sh = new THREE.Shape(); pts.forEach(([x, z], i) => i ? sh.lineTo(x, z) : sh.moveTo(x, z)); return new THREE.Mesh(new THREE.ShapeGeometry(sh).rotateX(Math.PI / 2), mat); };
   for (const sx of [-1, 1]) {                       // 翼（開くと 1.5m ほど）。先は指のように分かれて少し上へ
@@ -2993,22 +2999,22 @@ const ROADSIDE = (() => {
         ' transformed.z += wH * 0.035 * sin(windT * 1.1 + wq.x * 0.6);');
     };
   };
-  const spot = () => {
-    const z = (rnd() * 2 - 1) * 70;
-    if (rnd() < 0.6) { const x = 20.85 + rnd() * 0.5; return [x, 0.5 - (x - 20.7) / 0.7 * 0.45, z]; }   // 農道の東の土手（0.5m → 0.05m の斜面）
-    return [21.8 + rnd() * 0.25, 0.28, z];                                                                 // 東の田んぼの畦
+  const spot = () => [rnd() < 0.6, (rnd() * 2 - 1) * 70];
+  const at = bank => {                             // 株ごとの根もと：農道の東の土手（0.5m → 0.05m の斜面。道のきわは よける）か、東の田んぼの畦
+    if (bank) { const x = 20.95 + rnd() * 0.4; return [x, 0.5 - (x - 20.7) / 0.7 * 0.45]; }
+    return [21.8 + rnd() * 0.25, 0.28];
   };
   function clump(stemGeo, headGeo, stemCol, headCol, clumps, per, s0, s1, lean) {
     const n = clumps * per, ms = [[stemGeo, stemCol], [headGeo, headCol]].map(([g, c]) => {
-      const m = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() }), n); sway(m.material); m.castShadow = true; m.receiveShadow = true; scene.add(m); return m;
+      const m = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() }), n); sway(m.material); m.castShadow = true; m.receiveShadow = true; m.frustumCulled = false; scene.add(m); return m;
     });
     let k = 0;
     for (let c = 0; c < clumps; c++) {
-      const [x, y, z] = spot();
+      const [bank, z] = spot();
       for (let j = 0; j < per; j++) {
-        const s = s0 + rnd() * (s1 - s0);
-        V.set(x + (rnd() - 0.5) * 0.45, y - 0.03, z + (rnd() - 0.5) * 0.7);
-        E.set((rnd() - 0.5) * lean, rnd() * 6.3, (rnd() - 0.5) * lean); Q.setFromEuler(E); SC.set(s, s, s);
+        const s = s0 + rnd() * (s1 - s0), [x, y] = at(bank);
+        V.set(x, y - 0.03, z + (rnd() - 0.5) * 0.7);
+        E.set((rnd() - 0.5) * lean, rnd() * 6.3, -rnd() * lean * 0.6, 'ZXY'); Q.setFromEuler(E); SC.set(s, s, s);   // まわしてから 道と反対（東）へ かたむける
         M4.compose(V, Q, SC); ms.forEach(m => m.setMatrixAt(k, M4)); k++;
       }
     }
@@ -3044,18 +3050,22 @@ const INAGO = (() => {
     for (const sx of [-1, 1]) { const l = new THREE.Mesh(leg, mat); l.position.set(sx * 0.008, 0.012, -0.004); g.add(l); }
     g.visible = false; scene.add(g); pool.push({ g, vx: 0, vy: 0, vz: 0, rest: 0, hops: 0, on: false });
   }
-  let acc = 0, next = 0;
-  const rate = TOD === 'asa' ? 0.25 : 0.9;           // 1m 走るあいだに跳びだす数
+  let acc = 0, next = 0, lx = 0, lz = 0;   // S はまだ無いので 0 から（最初の 1 こまの とびは下で はぶく）
+  const rate = TOD === 'asa' ? 0.25 : 0.9;           // 1m 走るあいだに跳びだす数（止まっている・メニューを開いている あいだは出ない）
   const ground0 = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y : 0.012; };
-  function hop(o) {                                  // トラクターから はなれる向きへ 0.7〜1.5m
-    const p = o.g.position, dx = p.x - S.x, dz = p.z - S.z, d = Math.hypot(dx, dz) || 1, a = Math.atan2(dx / d, dz / d) + (Math.random() - 0.5) * 1.6, sp = 1.4 + Math.random() * 1.1;
+  const nose = () => [S.x + Math.sin(S.yaw) * 3.05, S.z + Math.cos(S.yaw) * 3.05];
+  function hop(o) {                                  // トラクターの通り道から 横へ よける向きへ 0.7〜1.5m
+    const p = o.g.position, rx = Math.cos(S.yaw), rz = -Math.sin(S.yaw), lat = (p.x - S.x) * rx + (p.z - S.z) * rz, sg = lat >= 0 ? 1 : -1;
+    const dx = Math.sin(S.yaw) * 0.6 + rx * sg, dz = Math.cos(S.yaw) * 0.6 + rz * sg;
+    const a = Math.atan2(dx, dz) + (Math.random() - 0.5) * 1.0, sp = 1.4 + Math.random() * 1.1;
     o.vx = Math.sin(a) * sp; o.vz = Math.cos(a) * sp; o.vy = 1.8 + Math.random() * 0.8; o.hops++; o.g.rotation.y = a;
   }
   return {
     pool,
     update(dt) {
       const inField = Math.abs(S.x) < HX - 0.5 && Math.abs(S.z) < HZ - 0.5;
-      if (S.v > 0.2 && inField && (acc += dt * S.v * rate) >= 1) {
+      const mv = Math.hypot(S.x - lx, S.z - lz); lx = S.x; lz = S.z;
+      if (S.v > 0.2 && inField && mv < 1 && (acc += mv * rate) >= 1) {
         acc -= 1;
         const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lx = (Math.random() - 0.5) * 4, lz = 3 + Math.random() * 3;   // ボンネットの先・横の 3〜6m
         const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
@@ -3069,7 +3079,7 @@ const INAGO = (() => {
         if (!o.on) continue;
         const p = o.g.position;
         if (o.rest > 0) {                            // 着地して ひと休み。まだ近ければ もう一度跳ぶ（3 回まで）。そのあと 株もとに かくれる
-          if ((o.rest -= dt) <= 0) { if (o.hops < 3 && Math.hypot(p.x - S.x, p.z - S.z) < 3.2) hop(o); else o.g.visible = o.on = false; }
+          if ((o.rest -= dt) <= 0) { const [nx, nz] = nose(); if (o.hops < 3 && Math.hypot(p.x - nx, p.z - nz) < 2.5) hop(o); else o.g.visible = o.on = false; }
           continue;
         }
         p.x += o.vx * dt; p.z += o.vz * dt; o.vy -= 9.8 * dt; p.y += o.vy * dt;
@@ -3534,7 +3544,8 @@ function step(dt) {
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
   const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
   const vmax = GEARS[S.gear - 1] * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
-  if (S.glow > 0) {                               // 予熱中：ランプが消えたら セルが回る（ソレノイドの カチッ）
+  if (S.glow > 0) {                               // 予熱中：ランプが点くと カチッ、消えたら セルが回る（ソレノイドの カチッ）
+    if (!S.glowClick) { S.glowClick = true; relayClick(0.7); }   // 始めるときは 音の用意があとなので、ここで鳴らす
     if ((S.glow -= dt) <= 0) relayClick();
   } else if (S.crank > 0) {                       // 始動：セルが回っているあいだは走らない。かかった瞬間に排気がふっと出る
     const before = S.crank;
@@ -3845,7 +3856,7 @@ function drawMeter() {
   if (S.glow > 0) {                               // 予熱ランプ（コイルのしるし）：消えたらセル
     g.strokeStyle = '#ffa020'; g.lineWidth = 3; g.beginPath();
     for (let k = 0; k <= 40; k++) { const u = k / 40, x = r - 24 + 48 * u, y = r - 10 + 9 * Math.sin(u * Math.PI * 6); k ? g.lineTo(x, y) : g.moveTo(x, y); }
-    g.stroke(); g.fillStyle = '#ffa020'; g.font = 'bold 15px sans-serif'; g.fillText('予熱', r, r - 34);
+    g.stroke(); g.fillStyle = '#ffa020'; g.font = 'bold 15px sans-serif'; g.fillText('予熱', r, r - 34); g.fillStyle = '#bfe7ee';
   } else g.fillText(kmh.toFixed(1), r, r - 8);
   g.font = 'bold 15px sans-serif';
   g.fillText((S.v < -0.05 ? 'R' : 'F' + S.gear) + '  km/h', r, r + 20);
@@ -4525,7 +4536,7 @@ function nextVoice() {
 function startCrank() {
   const cold = Math.max(0, Math.min(1, (0.45 - (S.cool ?? COOL0)) / 0.4));
   S.cold = cold; S.glow = cold > 0 ? 0.8 + 2.4 * cold : 0; S.crank = 1.7 + 0.6 * cold; S.flare = 0;
-  if (S.glow) relayClick(0.7);
+  S.glowClick = false;
   if (S.glow && !S.started) toast((TOD === 'yoru' ? '夜' : '朝') + 'の冷えたエンジンなので、まず予熱。予熱ランプが消えるとセルが回ってかかります', 3.5);
 }
 $('bStart').onclick = () => {

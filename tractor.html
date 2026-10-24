@@ -2866,8 +2866,19 @@ const LEVEE_FLOWERS = (() => {
       return [side, t, d];
     }
   };
+  const nod = mat => {                             // 花は茎の先で 風に ゆれる（株ごとに少しずつずれて。畦の草と同じ風）
+    mat.onBeforeCompile = sh => {
+      sh.uniforms.windT = WIND_T;
+      sh.vertexShader = 'uniform float windT;\n' + sh.vertexShader.replace('#include <project_vertex>',
+        'vec4 mvPosition = instanceMatrix * vec4(transformed, 1.0); vec2 wq = instanceMatrix[3].xz;' +
+        ' mvPosition.x += 0.014 * (sin(windT * 1.7 + wq.x * 0.35 + wq.y * 0.2) + 0.4 * sin(windT * 3.1 + wq.y * 0.9 + wq.x * 0.3));' +
+        ' mvPosition.z += 0.007 * sin(windT * 1.3 + wq.x * 0.5);' +
+        ' mvPosition = modelViewMatrix * mvPosition; gl_Position = projectionMatrix * mvPosition;');
+    };
+    return mat;
+  };
   function bed(parts, patches, per, spread, size, tilt, h0, h1) {   // parts：[形, 色] を同じ所に重ねる。h0〜h1：花の高さ（畦の草より上に出る）
-    const ms = parts.map(([geo]) => new THREE.InstancedMesh(geo, new THREE.MeshLambertMaterial(), patches * per)), c = new THREE.Color();
+    const ms = parts.map(([geo]) => new THREE.InstancedMesh(geo, nod(new THREE.MeshLambertMaterial()), patches * per)), c = new THREE.Color();
     let n = 0;
     for (let p = 0; p < patches; p++) {
       const [sd, pt, pd] = spot(), L = sd < 2 ? HX + 0.3 : HZ + 0.3;

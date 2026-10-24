@@ -800,9 +800,11 @@ async function walkTo(page, id) {
     const near = M.grainsNear(20);
     let grain = near.length ? false : 'none-near';
     if (near.length) {
-      const [gx, gy] = near[0], n0 = nishioGo.mzGrains;
+      const [gx, gy] = near[0], n0 = nishioGo.mzGrains, c0 = M.clock(), s0 = c0 ? c0.sec : 0, t0 = performance.now();
       nishioPixel.rollPut(gx * K + 1.5, gy * K + 1.5);
       for (let i = 0; i < 8 && grain === false; i++) { await new Promise(f => setTimeout(f, 150)); if (nishioGo.mzGrains === n0 + 1 && !M.grainsNear(20).some(([x, y]) => x === gx && y === gy)) grain = true; }
+      const c1 = M.clock();   // ひろうと 時計が 2秒 もどる（時計が 2秒 より 進んで いれば）
+      if (grain === true && c0 && c1) { const back = s0 + (performance.now() - t0) / 1000 - c1.sec; grain = { back: Math.round(back * 10) / 10 }; if (s0 > 2.5 && back < 1.5) grain = false; }
     }
     nishioPixel.setRoll(false); nishioGo.moveTo(at.lat, at.lng);
     return { ok: on && floors > 10 && walls > 3 && trail > 0 && map !== false && grain !== false && clock !== false, on, floors, walls, trail, map, grain, grains: near.length, clock };
@@ -844,7 +846,8 @@ async function walkTo(page, id) {
     const L = K.list(), uniq = new Set(L.map(x => x.name)).size;
     const sel = K.select('daily'), cur = K.current();
     K.open(); const cells = document.querySelectorAll('#koroDex .kd-cell').length; K.close();
-    return { n: L.length, uniq, daily: cur && cur.name, cells, ok: L.length === 200 && uniq === 200 && sel && !!cur && cells === 200 };
+    const need = K.need ? K.need() : 0, have = K.state.u.length;   // 次までの 道のりは 持っている 数で のびる（40・80・…・240マス）
+    return { n: L.length, uniq, daily: cur && cur.name, cells, need, have, ok: L.length === 200 && uniq === 200 && sel && !!cur && cells === 200 && need === 40 * Math.min(have + 1, 6) };
   });
   // 西尾めいろ：1面（西尾駅）の盤ができて、スタートから ゴールまで 道で つながっている。矢印キーで お米が動き、ゴールに着くと「ゴール！」。とじると 歩く地図が また動く
   R.checks.meiro = await (async () => {
@@ -881,6 +884,16 @@ async function walkTo(page, id) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   await page.click('#spinBtn').catch(() => {}); await page.waitForTimeout(800);
+  R.checks.movieAfterReward = await page.evaluate(() => { const rw = document.getElementById('reward').classList.contains('show'), mv = !!(window.NISHIO_MOVIE && NISHIO_MOVIE.playing); return { rw, mv, ok: rw && !mv }; });   // ムービーは ごほうびの 窓を とじてから（ごほうびの 上に 出て かくさない）
+  // ごほうびの「📣 シェア」を おしたら、シェアの 画面を とじるまで ムービーは 待つ（ムービーが シェアの 上に 出て かくしていた）
+  R.checks.movieAfterShare = await (async () => {
+    const opened = await page.evaluate(() => { const b = document.querySelector('#reward [data-rw-share]'); if (!b) return false; b.click(); return !document.getElementById('share').hidden; });
+    if (!opened) return { opened, ok: true };
+    await page.waitForTimeout(1500);
+    const during = await page.evaluate(() => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.playing));
+    await page.evaluate(() => document.querySelector('#share [data-share="close"]').click());
+    return { opened, during, ok: !during };
+  })();
   await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   R.checks.movieOpen = await page.waitForFunction(() => window.NISHIO_MOVIE && NISHIO_MOVIE.playing === 'iwa', null, { timeout: 10000 }).then(() => true, () => false);
   if (R.checks.movieOpen) { await shot(page, '07c-movie'); for (let i = 0; i < 4; i++) { await page.click('#movie [data-mv="next"]'); await page.waitForTimeout(200); } }
@@ -1070,10 +1083,13 @@ async function walkTo(page, id) {
     await w.page.click('#meiroBtn'); await w.page.waitForTimeout(2500);
     const pos = () => w.page.evaluate(() => { const r = nishioPixel.roll; return r.x === null ? null : [r.x, r.y]; });
     const shown = await w.page.evaluate(() => !document.getElementById('howto').hidden);
+    const toastOver = await w.page.evaluate(() => { nishioGo.toast('あそびかたの テストの 知らせ'); return document.getElementById('toast').classList.contains('show') && /テストの 知らせ/.test(document.getElementById('toast').textContent); });   // あそびかたの 札の 上に 知らせを 重ねない（とじてから）
     await shot(w.page, '12-howto');
     const p0 = await pos(); await w.page.keyboard.down('ArrowUp'); await w.page.waitForTimeout(900); await w.page.keyboard.up('ArrowUp'); const p1 = await pos();
     await w.page.click('#howtoOk'); await w.page.waitForTimeout(300);
     const closed = await w.page.evaluate(() => document.getElementById('howto').hidden && localStorage.getItem('nsg_howto') === '1');
+    await w.page.waitForTimeout(300);
+    const toastAfterOk = await w.page.evaluate(() => /テストの 知らせ/.test(document.getElementById('toast').textContent));   // とじたら 出る（ほかの 知らせの あとに なる ことも あるので 記録だけ）
     const unblock = () => w.page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); const pi = document.getElementById('pxInfo'); if (!pi.hidden) pi.hidden = true; });   // とじたあとに 出る ようこそ たからばこ・はじめの1枚
     const free = async () => { for (let i = 0; i < 3; i++) { await unblock(); await w.page.waitForTimeout(400); await unblock(); const pp = await pos(); await w.page.keyboard.down('ArrowUp'); await w.page.waitForTimeout(700); await w.page.keyboard.up('ArrowUp'); await w.page.waitForTimeout(300); const qq = await pos(); if (pp && qq && Math.hypot(qq[0] - pp[0], qq[1] - pp[1]) > 0.3) return true; await w.page.keyboard.down('ArrowLeft'); await w.page.waitForTimeout(700); await w.page.keyboard.up('ArrowLeft'); const rr = await pos(); if (qq && rr && Math.hypot(rr[0] - qq[0], rr[1] - qq[1]) > 0.3) return true; } return false; };
     const rolls = await free();
@@ -1116,8 +1132,198 @@ async function walkTo(page, id) {
       return { n: before.length, moved, hit: h1 - h0, jump: Math.round((s1 - s0) * 10) / 10, offN, offOn, many, helpN };
     });
     R.checks.mzCrow = { ...crowA, ok: crowA.n >= 1 && crowA.moved && crowA.hit === 1 && crowA.jump >= 5 && crowA.offN === 0 && !crowA.offOn && crowA.many >= 2 && crowA.helpN <= 1 };
+    // かかし：カラスが いると 近くに 立つ。とると カラスが こわがって にげ、さわると おいはらえる（時計は すすまない）。ゴールでは 通った 道の 倍率
+    const scareA = await w.page.evaluate(async () => {
+      const M = nishioPixel.maze, r = nishioPixel.roll, K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K), wait = ms => new Promise(res => setTimeout(res, ms));
+      for (let i = 0; i < 20 && !M.crows().list.length; i++) await wait(300);
+      let auto = false;
+      for (let i = 0; i < 30 && !auto; i++) { await wait(250); const s = M.scare(); if (s.on) auto = Math.abs(s.cx - a) + Math.abs(s.cy - b) >= 5 && M.type(s.cx, s.cy) === 1; }
+      const g0 = M.scare().got;
+      M.scarePut(a, b); await wait(400);
+      const s1 = M.scare(), scaredAll = M.crows().list.length > 0 && M.crows().list.every(c => c.scared);
+      const h0 = M.crows().hits, o0 = M.crows().shoo, c0 = M.clock();
+      M.crowPut(a, b); await wait(500);
+      const c1 = M.crows(), k1 = M.clock();
+      const way = nishioGo.guide ? M.goal(nishioGo.guide.id || nishioGo.guide.name) : null;
+      // かかしの 効きめが おわってから、かかしと カラスを 同じ マスに：とった その こまで こわがり、当たらずに おいはらう
+      for (let i = 0; i < 40 && M.scare().left > 0; i++) await wait(250);
+      const h2 = M.crows().hits, o2 = M.crows().shoo;
+      M.scarePut(a, b); M.crowPut(a, b); await wait(400);
+      const same = { shoo: M.crows().shoo - o2, hit: M.crows().hits - h2 };
+      // まよわず ゴールの 歩数：さかいを 0.4秒 以内に 何度 またいでも 前の 歩数は へらない。ゆっくり 行き来すれば 数える
+      const A = [0, 0], B = [1, 0];
+      const mv = { jitter: M.mvSim(100, [A, B, A, B, A, B, A, B, A, B], 100), slow: M.mvSim(0, [A, B, A, B, A], 1000), line: M.mvSim(0, [[0, 0], [1, 0], [2, 0], [3, 0]], 100), diag: M.mvSim(0, [[0, 0], [1, 1], [2, 1]], 100), reset: M.mvSim(0, [A, B, 'R', A], 100), diagBack: M.mvSim(0, [[0, 0], [1, 1], [1, 0], [2, 0]], 100) };   // diagBack：ななめの すぐ あとに 片方だけ ひきかえしても、その 1歩は とりけす（0,0→1,0→1,1→1,0→2,0 と 同じ 2歩）   // reset：ゴールが かわった すぐ あとに ひきかえしても 前の 1歩は とりけさない（1歩と 数える）   // diag：1こまに ななめに 2つ こえたら 2歩
+      return { auto, got: s1.got - g0, left: Math.round(s1.left), scaredAll, shoo: c1.shoo - o0, hit: c1.hits - h0, jump: c0 && k1 ? Math.round((k1.sec - c0.sec) * 10) / 10 : 0, float: nishioPixel.floats().some(t => /おいはらった/.test(t)), way: way ? way.way : 'no-goal', same, mv };
+    });
+    R.checks.mzScare = { ...scareA, ok: scareA.auto && scareA.got === 1 && scareA.left > 6500 && scareA.scaredAll && scareA.shoo === 1 && scareA.hit === 0 && scareA.jump < 2 && scareA.float && (scareA.way === 'no-goal' || scareA.way === 0 || scareA.way >= 1) && scareA.same.shoo === 1 && scareA.same.hit === 0 && scareA.mv.jitter >= 100 && scareA.mv.jitter <= 101 && scareA.mv.slow === 4 && scareA.mv.line === 3 && scareA.mv.diag === 3 && scareA.mv.reset === 1 && scareA.mv.diagBack === 2 };
+    // ゴールに 着いたら そのまま ゴール：名所は ひとりでに チェックイン（「🏁 ゴール！」）、人は 話しかける（人が ゴールでも「🏁 ゴール！」）
+    const arriveA = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+      const clear = () => { const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); const pi = document.getElementById('pxInfo'); if (!pi.hidden) pi.hidden = true; document.querySelectorAll('.md-card .md-close').forEach(b => { if (b.getClientRects().length) b.click(); }); };
+      const me0 = { lat: G.me.lat, lng: G.me.lng };
+      const s = G.spots.filter(x => x.featured && !x.shop && !G.cooldownLeft(x) && G.dist(me0, x) < 1500).sort((a, b) => G.dist(me0, a) - G.dist(me0, b))[0];
+      if (!s) return { spot: 'none' };
+      G.setGuide({ kind: 'spot', id: s.id, name: s.name, why: 'テスト', by: 'テスト' });
+      await wait(3800); clear();
+      const v0 = (G.state.visits[s.id] || { n: 0 }).n, b0 = M.banner;
+      G.moveTo(s.lat, s.lng);
+      let spot = false;
+      for (let i = 0; i < 20 && !spot; i++) { await wait(250); if ((G.state.visits[s.id] || { n: 0 }).n === v0 + 1) spot = true; }
+      await wait(600); clear(); await wait(800); clear();
+      const sb = M.banner !== b0 && /・めいろ|秒/.test(M.banner);
+      // 着いた とき 窓が 開いていて、そのまま 2分 ちかく 読んでから とじても、その ゴールで チェックインする（窓の 間は 2分を 止める）
+      let held = 'none';
+      const s2 = G.spots.filter(x => x.featured && !x.shop && x.id !== s.id && !G.cooldownLeft(x) && G.dist(G.me, x) < 1500).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (s2) {
+        G.setGuide({ kind: 'spot', id: s2.id, name: s2.name, why: 'テスト', by: 'テスト' });
+        await wait(3800); clear();
+        const pi = document.getElementById('pxInfo'), v2 = (G.state.visits[s2.id] || { n: 0 }).n;
+        document.getElementById('pxInfoBody').innerHTML = '<p>テストの 窓</p>'; pi.hidden = false;
+        G.moveTo(s2.lat, s2.lng); await wait(900);
+        const aged = M.prevAge(119000);
+        await wait(2000);
+        const during = (G.state.visits[s2.id] || { n: 0 }).n === v2;   // 窓の 間は まだ チェックインしない
+        pi.hidden = true;
+        let got = false;
+        for (let i = 0; i < 12 && !got; i++) { await wait(250); if ((G.state.visits[s2.id] || { n: 0 }).n === v2 + 1) got = true; }
+        held = { aged, during, got };
+        await wait(500); clear(); await wait(600); clear();
+      }
+      const n = G.npcs.filter(x => G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (!n) return { spot, sb, npc: 'none' };
+      for (let i = 0; i < 30 && (G.rewardSoon() || (window.NISHIO_MOVIE && NISHIO_MOVIE.playing)); i++) { await wait(300); clear(); }   // チェックインの あとの ムービー（ごほうびの あとに 流れる）が おわってから
+      G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
+      await wait(3800); clear();
+      for (let i = 0; i < 30 && !(M.clock() && M.clock().sec > 3.5); i++) { await wait(300); clear(); }   // 窓の 間は 時計が 止まるので、3秒 すすむまで（3秒 より 前の ゴールは 数えない）
+      const b1 = M.banner, gt = G.guide;
+      G.moveTo(gt.lat, gt.lng);
+      let talk = false;
+      for (let i = 0; i < 20 && !talk; i++) { await wait(250); const pi = document.getElementById('pxInfo'); if (!pi.hidden && pi.textContent.includes(n.name)) talk = true; }
+      await wait(400);
+      const nb = M.banner !== b1;
+      clear();
+      return { spot, sb, held, talk, nb };
+    });
+    // 「まよわず ゴール」は 文字を 少なく でも 札に 出る（倍率・ボーナス）。「つぎは〜へ」の 行は 出さない
+    R.checks.wayChip = await w.page.evaluate(async () => {
+      document.body.classList.add('simple');
+      nishioGo.showReward(15, 'テストの 名所', ['🏁 めいろ ゴール！ 1分17秒（めいろの 道のり 2.0km）', '★★☆ いいね！ +5', '🧭 まよわず ゴール！（通った 道 1.1倍） +5', '🧭 通った 道は ちかみちの 1.8倍（1.3倍 までなら ボーナス）', '🧭 つぎは どこかへ']);
+      await new Promise(r => setTimeout(r, 300));
+      const el = document.getElementById('reward'), t = el.innerText, titles = [...el.querySelectorAll('.chips span')].map(x => x.title);
+      el.click();
+      const goal = /1分17秒/.test(t) && /★★☆/.test(t);   // かかった 時間と ★も 札に
+      return { good: /1\.1倍/.test(t) && /\+5/.test(t), bad: /1\.8倍/.test(t), goal, next: titles.some(x => /つぎは/.test(x)), ok: goal && /1\.1倍/.test(t) && /1\.8倍/.test(t) && !titles.some(x => /つぎは/.test(x)) };
+    });
+    R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
+    // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
+    const bumpA = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
+      G.setGuide(null);
+      for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500)) {
+        const t = P.npcTile(n);
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const sx = t.x + dx, sy = t.y + dy;
+          if (P.blockedAt(sx + 0.5, sy + 0.5) || P.blockedAt(sx - dx + 0.5, sy - dy + 0.5)) continue;
+          pi.hidden = true;
+          const push = async () => { P.rollPut(sx + 0.5, sy + 0.5, -dx * 4, -dy * 4); for (let i = 0; i < 6; i++) { await wait(100); if (!pi.hidden) break; } return !pi.hidden && pi.textContent.includes(n.name); };
+          const first = await push();
+          if (!first) continue;
+          pi.hidden = true; await wait(200);
+          const again = await push();
+          const r2 = P.roll, passed = Math.abs((r2.x - (sx + 0.5)) * -dx + (r2.y - (sy + 0.5)) * -dy) > 0.7;   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
+          pi.hidden = true;
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
+          const back = await push();   // めいろでは、いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない
+          pi.hidden = true;
+          const g = G.decideGuide(null), M = P.maze;
+          let fresh = 'skip';
+          if (g) {   // ゴールが かわると、また こつんで 話せる
+            G.setGuide(g);
+            for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
+            P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
+            fresh = await push();
+            pi.hidden = true;
+            G.setGuide(null);
+          }
+          return { npc: n.name, first, again, passed, back, fresh };
+        }
+      }
+      return { npc: 'none' };
+    });
+    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && !bumpA.back && bumpA.fresh !== false) };
+    // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
+    R.checks.mzKeepGoal = await w.page.evaluate(async () => {
+      const G = nishioGo, pi = document.getElementById('pxInfo');
+      const ns = G.npcs.filter(x => G.dist(G.me, x) < 3000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b)), n = ns[0];
+      const would = n && G.decideGuide(n), o = would && ns.find(x => x.id !== n.id && x.id !== would.id);   // ゴールは、この人の 話で 決まる 行き先とは 別の 人に
+      if (!o) return { skip: true, ok: true };
+      G.setGuide({ kind: 'npc', id: o.id, name: o.name, lat: o.lat, lng: o.lng });
+      const id0 = G.guide && G.guide.id;
+      G.callNpc(n.id); const r = G.talkNpc(n.id); G.callNpc(null); pi.hidden = true;
+      const keep = !!(G.guide && G.guide.id === id0);
+      G.setGuide(null);
+      G.callNpc(n.id); G.talkNpc(n.id); G.callNpc(null); pi.hidden = true;   // ゴールが ない ときは、これまでどおり 人の 話で 決まる
+      const set = !!G.guide;
+      G.setGuide(null);
+      return { npc: n.name, goal: o.name, near: !!(r && r.near), keep, set, ok: !!(r && r.near) && keep && set };
+    });
+    // めいろでは、人の すすめも すすめる範囲（3km）まで。めいろの 前に 決まった 遠すぎる 行き先（4.5km より 先）は 決め直す
+    R.checks.mzFarGuide = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, far = G.npcs.filter(n => G.dist(G.me, n) > 5000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (!far) return { skip: true, ok: true };
+      const g1 = G.decideGuide({ id: 'test-from', name: 'テストの人', refer: [[far.id, 'テスト']] });
+      const refer = !!(g1 && g1.id === far.id), d1 = g1 ? Math.round(G.dist(G.me, g1)) : 0;
+      G.setGuide({ kind: 'npc', id: far.id, name: far.name, lat: far.lat, lng: far.lng, refer: true });
+      G.refreshNearby();   // 行き先を 調べなおす（checkGuide）
+      const g2 = G.guide, kept = !!(g2 && g2.id === far.id), d2 = g2 ? Math.round(G.dist(G.me, g2)) : 0;
+      // ふつうの 地図に 切りかえた 間は、これまでどおり（人の すすめは 10km まで・遠い 行き先も そのまま）
+      P.setActive(false);
+      const g3 = G.decideGuide({ id: 'test-from', name: 'テストの人', refer: [[far.id, 'テスト']] }), mapRefer = !!(g3 && g3.id === far.id);
+      G.setGuide({ kind: 'npc', id: far.id, name: far.name, lat: far.lat, lng: far.lng, refer: true });
+      G.refreshNearby();
+      const mapKept = !!(G.guide && G.guide.id === far.id);
+      P.setActive(true);
+      G.setGuide(null);
+      return { far: far.name, d: Math.round(G.dist(G.me, far)), refer, d1, kept, d2, mapRefer, mapKept, ok: !refer && d1 <= 3000 && !kept && d2 <= 3000 && mapRefer && mapKept };
+    });
+    // ゴールが 画面の 上の 外：矢印と 旗は 時計の 札より 下に（札や 左上の 札に 重ならない）
+    R.checks.mzArrowTop = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+      G.setGuide({ kind: 'spot', id: 'test-north', name: 'テストの 北', lat: G.me.lat + 0.03, lng: G.me.lng });
+      await wait(500);
+      const ar = M.mapArrow, S = Math.round(13 * Math.min(window.devicePixelRatio || 1, 3));
+      const hits = [];   // 右上の ボタンの ほう（北東）・左上の 札の ほう（北西）でも、矢印が ボタン・札に 重ならない
+      for (const dl of [0.02, -0.02]) {
+        G.setGuide({ kind: 'spot', id: 'test-ne', name: 'テストの 北東', lat: G.me.lat + 0.03, lng: G.me.lng + dl });
+        await wait(700);
+        const at = M.arrowAt, hud = M.hudRects();
+        hits.push(at ? hud.filter(r => at[0] + at[2] > r[0] && at[0] - at[2] < r[2] && at[1] + at[2] > r[1] && at[1] - at[2] < r[3]).length : -1);
+      }
+      const b0 = M.mapBuilds;
+      M.map(12000);   // 画面の 外の ゴールを 描いた あとも、矢印を タップすると めいろ図が 出て、0.5秒ごとに かきなおす（「つぎの ゴール」の 札の 間は 待つ）
+      for (let i = 0; i < 40 && M.mapBuilds - b0 < 2; i++) await wait(200);
+      const mapOk = M.mapBuilds - b0 >= 2; M.map(0);   // テストの ゴールは めいろの 道が ないので 図は 出ない。かきなおしが 動くかだけ 見る
+      G.setGuide(null);
+      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, mapOk, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) && mapOk };
+    });
+    // 迷って いる 間（25秒 近づけない）：光る 点は 毎回 出すが、知らせは ゴールごとに 1回目だけ。3回目は おたすけを すすめる（1回の あそびで 1回）
+    R.checks.mzHintToast = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), got = [], t0 = G.toast, h0 = localStorage.getItem('nsg_mzhelp');
+      localStorage.setItem('nsg_mzhelp', 'off');
+      G.setGuide(G.decideGuide(null));
+      for (let i = 0; i < 20 && !(M.routePath() && M.routePath().length >= 3); i++) await wait(250);
+      if (!(M.routePath() && M.routePath().length >= 3)) { if (h0 === null) localStorage.removeItem('nsg_mzhelp'); else localStorage.setItem('nsg_mzhelp', h0); return { skip: true, ok: true }; }
+      G.toast = m => { if (/光る 点|まよったら/.test(m)) got.push(m); };   // ほかの 知らせ（「めいろに なれてきたので…」など）は 数えない
+      try {
+        for (let i = 0; i < 4; i++) { M.lost(); await wait(150); }
+      } finally { G.toast = t0; if (h0 === null) localStorage.removeItem('nsg_mzhelp'); else localStorage.setItem('nsg_mzhelp', h0); }
+      G.setGuide(null);
+      const first = got.filter(m => /光る 点/.test(m)).length, offer = got.filter(m => /まよったら/.test(m)).length;
+      return { got, ok: first === 1 && offer === 1 && got.length === 2 && /光る 点/.test(got[0]) };
+    });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
-    R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
+    R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -1151,6 +1357,14 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
+  need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
+  need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
+  need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
+  need(c.mzArrowTop && c.mzArrowTop.ok, 'ゴールが 上の 外の とき、矢印が 時計の 札や 右上の ボタンに 重なる');
+  need(c.mzHintToast && c.mzHintToast.ok, '迷って いる 間、道しるべの 知らせが 25秒ごとに 出つづける');
+  need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
+  need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
+  need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
   need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');
@@ -1165,6 +1379,8 @@ async function walkTo(page, id) {
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode && c.reactOffTab, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.movieAfterShare && c.movieAfterShare.ok, 'ドット絵ムービーが シェアの 画面の 上に 出て かくす');
+  need(c.movieAfterReward && c.movieAfterReward.ok, 'ドット絵ムービーが ごほうびの 窓の 上に すぐ 出て、ごほうびを かくす');
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');

@@ -1,7 +1,8 @@
 // にしおさんぽGO：転がり方のバリエーション 200（転がり方ずかん）
 // ・20の「うごき」（はねる・すべる・おもい・よく回る… 転がり方の 物理と 動きを かえる）× 10の「かざり」（転がった あとに のこる つぶ：さくら・もみじ・ほし…）＝ 200
 // ・名前は「うごき・かざり」（例：ぴょんぴょん・さくら）。番号は No.001〜No.200
-// ・あつめ方：転がった道のり 40マス（約320m）ごとに、まだ持っていない 転がり方を 1つ もらえる（もらったら すぐ その転がり方に）。
+// ・あつめ方：転がった道のり 40マス（約320m）で、まだ持っていない 転がり方を 1つ もらえる（もらったら すぐ その転がり方に）。
+//   2つめからは 80・120・160・200マス、6つめからは 240マス（約2km）ごと（めいろで 転がしつづけると 10秒ごとに 知らせが 出て、転がり方も かわっていた）。
 //   毎日 1つ「きょうの転がり方」が 持っていなくても 使える（はじめは これ）。「ふつう」（いままでの転がり方）にも もどせる
 // ・せってい の「🍚 転がり方」から ずかんを開いて えらぶ。記録は この端末（localStorage nsg_koro）
 // ・pixel.js が current() で いまの うごき・かざりを読む。game.js より後、pixel.js より前に読む
@@ -54,7 +55,7 @@ for (let m = 0; m < MOTIONS.length; m++) for (let t = 0; t < TRAILS.length; t++)
   const id = m * TRAILS.length + t;
   LIST.push({ id, no: 'No.' + String(id + 1).padStart(3, '0'), name: `${MOTIONS[m].name}・${TRAILS[t].name}`, motion: MOTIONS[m], trail: TRAILS[t], desc: `${MOTIONS[m].desc}。うしろに ${TRAILS[t].name}` });
 }
-const KEY = 'nsg_koro', STEP = 40;   // 40マス（約320m）ごとに 1つ
+const KEY = 'nsg_koro', STEP = 40, STEP_MAX = 6;   // 1つめは 40マス（約320m）。持っている 数が ふえるほど 40マスずつ 長く、240マス（約2km）まで
 const load = () => { try { return Object.assign({ u: [], sel: 'daily', dist: 0, n: 0 }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { u: [], sel: 'daily', dist: 0, n: 0 }; } };
 const st = load();
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } };
@@ -72,17 +73,18 @@ function select(sel) {
   if (root.nsgTrack) root.nsgTrack('koro_select', { id: typeof sel === 'number' ? sel + 1 : sel });
   return true;
 }
-function addDist(d) {   // 転がった道のり（マス）。40マスごとに 新しい転がり方を もらう
+const need = () => STEP * Math.min(st.u.length + 1, STEP_MAX);   // 次の 転がり方まで の 道のり（マス）
+function addDist(d) {   // 転がった道のり（マス）。need() ごとに 新しい転がり方を もらう
   if (!(d > 0) || d > 3) return;
   st.dist += d;
-  if (st.dist < STEP) { if (Math.random() < 0.02) save(); return; }
-  st.dist -= STEP;
+  if (st.dist < need()) { if (Math.random() < 0.02) save(); return; }
+  st.dist -= need();
   const left = LIST.filter(x => !has(x.id));
   if (!left.length) { save(); return; }
   const got = left[hash('koro-get:' + st.n++) % left.length];
   st.u.push(got.id); st.sel = got.id; save(); paint();
   const G = root.nishioGo;
-  // 知らせは1行で短く（40マスごとに出るので、3行だと 地図の上が いつも ふさがる）。どう転がるかは ずかんで
+  // 知らせは1行で短く（3行だと 地図の上が ふさがる）。どう転がるかは ずかんで
   if (G && G.toast) G.toast(`🍚 転がり方「${got.name}」GET！`);
   if (root.nsgTrack) root.nsgTrack('koro_unlock', { id: got.id + 1, count: st.u.length });
 }
@@ -180,5 +182,5 @@ document.addEventListener('DOMContentLoaded', () => {
   paint();
 });
 
-root.NISHIO_KOROSTYLE = { MOTIONS, TRAILS, list: () => LIST, current, select, addDist, open, close, dailyId, get state() { return st; } };
+root.NISHIO_KOROSTYLE = { MOTIONS, TRAILS, list: () => LIST, current, select, addDist, need, open, close, dailyId, get state() { return st; } };
 })(window);

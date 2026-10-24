@@ -5998,9 +5998,10 @@ function frame(now) {
     if (age > 2.8) here.banner = '';
     else {
       ctx.globalAlpha = Math.min(1, age * 3, (2.8 - age) * 2);
-      const bs = Math.round(18 * dpr), t = `〜 ${here.banner} 〜`;
+      const mz = mazeOn() && rollOn, bs = Math.round((mz ? 14 : 18) * dpr), t = `〜 ${here.banner} 〜`;
       ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      const tw = ctx.measureText(t).width, by = Math.round(Math.max(cy - T * 3, 48 * dpr + bs));   // 左上の こよみ の札より下に
+      // 左上の こよみ の札より下に。めいろでは お米の すぐ上（これから 転がす 所）を ふさがない よう、上の 時計・かかしの 札の 下に 小さく
+      const tw = ctx.measureText(t).width, by = mz ? Math.round(13 * dpr * 5.4 + bs) : Math.round(Math.max(cy - T * 3, 48 * dpr + bs));
       ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(w / 2 - tw / 2 - 14 * dpr), by - bs, Math.round(tw + 28 * dpr), bs * 2);
       ctx.fillStyle = '#fff'; ctx.fillText(t, w / 2, by);
       ctx.globalAlpha = 1;

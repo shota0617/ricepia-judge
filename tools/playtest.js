@@ -1194,15 +1194,22 @@ async function walkTo(page, id) {
     });
     // めいろでは、人の すすめも すすめる範囲（3km）まで。めいろの 前に 決まった 遠すぎる 行き先（4.5km より 先）は 決め直す
     R.checks.mzFarGuide = await w.page.evaluate(async () => {
-      const G = nishioGo, far = G.npcs.filter(n => G.dist(G.me, n) > 5000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      const G = nishioGo, P = nishioPixel, far = G.npcs.filter(n => G.dist(G.me, n) > 5000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
       if (!far) return { skip: true, ok: true };
       const g1 = G.decideGuide({ id: 'test-from', name: 'テストの人', refer: [[far.id, 'テスト']] });
       const refer = !!(g1 && g1.id === far.id), d1 = g1 ? Math.round(G.dist(G.me, g1)) : 0;
       G.setGuide({ kind: 'npc', id: far.id, name: far.name, lat: far.lat, lng: far.lng, refer: true });
       G.refreshNearby();   // 行き先を 調べなおす（checkGuide）
       const g2 = G.guide, kept = !!(g2 && g2.id === far.id), d2 = g2 ? Math.round(G.dist(G.me, g2)) : 0;
+      // ふつうの 地図に 切りかえた 間は、これまでどおり（人の すすめは 10km まで・遠い 行き先も そのまま）
+      P.setActive(false);
+      const g3 = G.decideGuide({ id: 'test-from', name: 'テストの人', refer: [[far.id, 'テスト']] }), mapRefer = !!(g3 && g3.id === far.id);
+      G.setGuide({ kind: 'npc', id: far.id, name: far.name, lat: far.lat, lng: far.lng, refer: true });
+      G.refreshNearby();
+      const mapKept = !!(G.guide && G.guide.id === far.id);
+      P.setActive(true);
       G.setGuide(null);
-      return { far: far.name, d: Math.round(G.dist(G.me, far)), refer, d1, kept, d2, ok: !refer && d1 <= 3000 && !kept && d2 <= 3000 };
+      return { far: far.name, d: Math.round(G.dist(G.me, far)), refer, d1, kept, d2, mapRefer, mapKept, ok: !refer && d1 <= 3000 && !kept && d2 <= 3000 && mapRefer && mapKept };
     });
     // ゴールが 画面の 上の 外：矢印と 旗は 時計の 札より 下に（札や 左上の 札に 重ならない）
     R.checks.mzArrowTop = await w.page.evaluate(async () => {

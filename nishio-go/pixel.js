@@ -7927,7 +7927,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; },
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

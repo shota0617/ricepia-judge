@@ -1580,7 +1580,7 @@ const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら�
 // あるいて移動では GPS の精度が悪いときもだめ（電車・バスなどの乗り物で移動中は、着いたことにしてよい）
 const fixOk = () => !!me && !driving && (demo || me.acc <= CFG.maxAccuracy);   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by, alts }（alts：ほかの候補。札から選べる）
-const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.on && nishioPixel.maze.on());   // 地図の めいろで 遊んでいる
+const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing());   // 地図の めいろで 遊んでいる（ドット絵の 地図を 出している 間だけ。ふつうの 地図に 切りかえたら 偽）
 function decideGuide(from) {
   if (!me) return null;
   const now = new Date(), range = GUIDE_RANGE[demo ? 'play' : 'walk'];

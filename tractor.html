@@ -2760,16 +2760,18 @@ const HYDRANT = (() => {
   const foam = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xf2f4f2, transparent: true, opacity: 0.5, depthWrite: false }));
   const xl = x0 - 1.1 * 0.36, zl = Z;            // 落ちる所（0.36 秒ほどで水面）
   foam.position.set(xl, 0.03, zl); foam.renderOrder = 3; scene.add(foam);
+  const fc = Math.floor((xl + HX) / CELL) * NZ + Math.floor((zl + HZ) / CELL);   // 泡の下のます目（かいたら泥の面の上へ）
   let t = 0, rt = 0;
   return {
     pos: [xl, zl],
     update(dt) {
       t += dt;
       for (let i = 0; i < N; i++) {
-        const tt = ((t * 1.8 + ph[i * 2]) % 1) * 0.36, sp = (ph[i * 2 + 1] - 0.5) * 0.12;
-        pos.set([x0 - 1.1 * tt, y0 + 0.25 * tt - 4.9 * tt * tt, Z + sp * (0.3 + tt * 2)], i * 3);
+        const tt = ((t * 1.8 + ph[i * 2]) % 1) * 0.36, sp = (ph[i * 2 + 1] - 0.5) * 0.12, o = i * 3;
+        pos[o] = x0 - 1.1 * tt; pos[o + 1] = y0 + 0.25 * tt - 4.9 * tt * tt; pos[o + 2] = Z + sp * (0.3 + tt * 2);
       }
       pg.attributes.position.needsUpdate = true;
+      foam.position.y = tilledMask[fc] ? TILL_Y + 0.014 : 0.03;
       foam.material.opacity = 0.4 + 0.15 * Math.sin(t * 23) * Math.sin(t * 7.3);
       foam.scale.setScalar(0.9 + 0.12 * Math.sin(t * 11));
       if ((rt -= dt) <= 0) { rt = 0.3; RIPPLE.ring(xl - 0.2 - Math.random() * 0.4, zl + (Math.random() - 0.5) * 0.5, 0.5); }

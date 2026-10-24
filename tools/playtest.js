@@ -1154,17 +1154,18 @@ async function walkTo(page, id) {
           if (!first) continue;
           pi.hidden = true; await wait(200);
           const again = await push();
+          const r2 = P.roll, passed = Math.abs((r2.x - (sx + 0.5)) * -dx + (r2.y - (sy + 0.5)) * -dy) > 0.7;   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
           pi.hidden = true;
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
           const back = await push();
           pi.hidden = true;
-          return { npc: n.name, first, again, back };
+          return { npc: n.name, first, again, passed, back };
         }
       }
       return { npc: 'none' };
     });
-    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.back) };
+    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && bumpA.back) };
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);

@@ -238,6 +238,7 @@
       ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
       ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
       ・夜までかかる作業は なるべくしない。暗いと畦や人が見えにくく、事故が多い（<a href="https://www.pref.shimane.lg.jp/industry/norin/kikan/seibu_norin/infomation2/accidents.html" target="_blank" rel="noopener">島根県の農作業事故の防止</a>）。するなら作業灯とライトを点検して、向きを作業する所に合わせる（ヤンマーの説明）。夜の作業灯には虫が集まる<br>
+      ・ジャンボタニシ（スクミリンゴガイ）は 西尾市をふくむ愛知県でも 苗を食べる被害が多い（<a href="https://www.pref.aichi.jp/uploaded/attachment/442532.pdf" target="_blank" rel="noopener">愛知県の実証試験</a>）。土の浅い所で冬をこすので、寒い 12〜2 月に、ゆっくり走って 爪を速く回し、浅く耕して 貝をつぶす・寒さにさらす（時速 1.4km 以下・PTO 2 速：千葉県）。耕したあとの泥に貝がつくので、トラクターの泥は田んぼで落とす<br>
       ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止めてから。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
@@ -2155,6 +2156,44 @@ const WRAP = (() => {
   };
   return W;
 })();
+// ---- 秋：ジャンボタニシ（スクミリンゴガイ）。西尾市をふくむ愛知県でも稲の苗が食べられる被害が多い（愛知県の 2022 年の実証）。
+// 田んぼの土の浅い所にいて（約 8 割が深さ 6cm より浅い：農林水産省）、耕すと 貝がらが掘り起こされ、爪でつぶれた かけらも出る。
+// ゆっくり走って 爪を速く回し、浅く耕すほど よくつぶれる（愛知県：走るのは遅く・ロータリーの回転は速く。千葉県：時速 1.4km 以下・PTO 2 速）
+const SNAILS = (() => {
+  if (season !== 'aki') return { step() {}, count: { up: 0, crushed: 0 } };
+  const N = MOBILE ? 160 : 300, cnt = { up: 0, crushed: 0 };
+  const shellGeo = new THREE.SphereGeometry(0.022, 7, 5); shellGeo.scale(1, 0.75, 1.25);
+  const shells = new THREE.InstancedMesh(shellGeo, new THREE.MeshLambertMaterial({ color: 0x86703f }), N);   // 貝がらは 黄みのある茶色
+  const bits = new THREE.InstancedMesh(new THREE.BoxGeometry(0.018, 0.004, 0.012), new THREE.MeshLambertMaterial({ color: 0xd2c6a4 }), N * 3);   // つぶれたかけらは 内側が白っぽい
+  for (const m of [shells, bits]) { m.count = 0; m.frustumCulled = false; m.receiveShadow = true; scene.add(m); }
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
+  let acc = 0, ks = 0, kb = 0;
+  const put = (mesh, k, x, z, y) => { mesh.setMatrixAt(k, m4.compose(p.set(x, y, z), q.setFromEuler(e.set(Math.random() * 0.6, Math.random() * 6.3, Math.random() * 0.6)), one)); };
+  return {
+    count: cnt,
+    step(dt, working) {
+      if (!working || Math.abs(S.v) < 0.1) return;
+      acc += Math.abs(S.v) * dt * TILL_W * 0.8;    // 多い田んぼでは 1m² に 1 匹ほど
+      if (acc < 1) return;
+      const crush = Math.max(0.15, Math.min(0.9, 1.15 - Math.abs(S.v) * 3.6 / 3.5)) * (DEPTH <= 7 ? 1 : 0.6);   // 時速 1.4km で 7 割・3km で 3 割ほど。深いと埋めもどす
+      const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
+      while (acc >= 1) {
+        acc -= 1;
+        const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.8 - Math.random() * 0.6, x = S.x + lx * cs + lz * sn, z = S.z - lx * sn + lz * cs;
+        if (Math.random() < crush) {
+          cnt.crushed++;
+          for (let k = 0; k < 3; k++) { put(bits, kb, x + (Math.random() - 0.5) * 0.08, z + (Math.random() - 0.5) * 0.08, TILL_Y + 0.008); kb = (kb + 1) % (N * 3); }
+          bits.count = Math.min(N * 3, bits.count + 3); bits.instanceMatrix.needsUpdate = true;
+        } else {
+          cnt.up++;
+          put(shells, ks, x, z, TILL_Y + 0.012); ks = (ks + 1) % N;
+          shells.count = Math.min(N, shells.count + 1); shells.instanceMatrix.needsUpdate = true;
+        }
+        if (cnt.up + cnt.crushed === 12) voice('tanishi');
+      }
+    }
+  };
+})();
 const trackCells = new Set();
 function eraseTracks(c) { if (trackCells.has(c)) { TR.erase(c); trackCells.delete(c); } }
 // 均平板のすじ：耕しているとき、ロータリーのうしろに進む向きの細いすじを残す（耕幅より 10cm せまい帯）
@@ -3283,7 +3322,7 @@ function step(dt) {
       if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL)) || 0;
     }
   }
-  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); WRAP.step(dt, working); }
+  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); WRAP.step(dt, working); SNAILS.step(dt, working); }
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
   const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
@@ -3975,6 +4014,7 @@ const VOICES = {
   corner: ['まっすぐは自動にまかせられても、四隅は手で回すので苦戦する', '@ham_kaze_choco（X の米農家さん）'],
   dryWait: ['雨のあとは、乾くのを待ってから秋起こしに入る。長雨の稲刈りのわだちが、まだ残っている', '@F_TERU603（X の米農家さん）'],
   wrap: ['朝の秋起こし。伸びた 2 番穂が ロータリーに絡む', '@hirogogo88（X の米農家さん）'],
+  tanishi: ['ジャンボタニシの対策で 早めに耕した。レンゲの前の耕うんも 1 回ふやした', '@Tyoshi0410Taoka（X の米農家さん）'],
   wara: ['わらは 1 回では埋まりきらない。年によっては耕す回数を 1 回ふやす', '@Tyoshi0410Taoka（X の米農家さん）'],
   straightSelf: ['どれだけまっすぐ走れるか、自分との戦い', '@BLACKkome96（X の米農家さん）'],
 };
@@ -4037,7 +4077,8 @@ function finish() {
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
-    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span>` + heardLine() + '<br>';
+    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span>` +
+    (season === 'aki' && SNAILS.count.up + SNAILS.count.crushed > 0 ? `<br><span class="small">ジャンボタニシ：つぶした 約 ${SNAILS.count.crushed} 匹・掘り起こした 約 ${SNAILS.count.up} 匹（ゆっくり走り、浅く耕すほど よくつぶれる）</span>` : '') + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');
 }
@@ -4192,7 +4233,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -25,7 +25,7 @@ async function newPage(browser, opts = {}) {
     window.__played = [];   // 鳴らした音（効果音・BGM）を記録する
     window.__rewards = [];   // 出たごほうびの知らせ（あとから出たものに消されても、出たことは分かるように）
     setInterval(() => { if (window.NISHIO_MOVIE && NISHIO_MOVIE.playing && !window.__keepMovie) NISHIO_MOVIE.close(); }, 200);   // 名所で流れる ドット絵ムービーは閉じて先へ（ムービーは下の movie のチェックで見る）
-    document.addEventListener('DOMContentLoaded', () => { const r = document.getElementById('reward'); new MutationObserver(() => { if (r.innerText) window.__rewards.push((r.innerText + ' ' + [...r.querySelectorAll('[title]')].map(e => e.title).join(' ')).replace(/\s+/g, ' ').slice(0, 400)); }).observe(r, { childList: true }); });
+    document.addEventListener('DOMContentLoaded', () => { const r = document.getElementById('reward'); if (!r) return; new MutationObserver(() => { if (r.innerText) window.__rewards.push((r.innerText + ' ' + [...r.querySelectorAll('[title]')].map(e => e.title).join(' ')).replace(/\s+/g, ' ').slice(0, 400)); }).observe(r, { childList: true }); });
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () { window.__played.push(this.src.split('/').pop()); return play.call(this); };
   }, !!howto);
@@ -1014,6 +1014,26 @@ async function walkTo(page, id) {
     await w.ctx.close();
   }
 
+  // 西尾市の担当者むけの 提案資料（nishio-go/city.html）：数字が ゲームの データから 入り、ドット絵の 枚数が ゲームと 同じ。画面写真・QR が 読める。公式でないと 書いてある
+  {
+    const w = await newPage(browser);
+    await w.page.goto(URL); await w.page.waitForTimeout(1500);
+    const count = await w.page.evaluate(() => window.NISHIO_DOTS && NISHIO_DOTS.COUNT);
+    await w.page.goto(URL.replace(/nishio-go\.html.*$/, 'nishio-go/city.html')); await w.page.waitForTimeout(1500);
+    const info = await w.page.evaluate(() => ({
+      nums: Object.fromEntries([...document.querySelectorAll('[data-n]')].map(e => [e.dataset.n, e.textContent])),
+      imgs: [...document.querySelectorAll('img')].map(i => [i.getAttribute('src'), i.naturalWidth]),
+      notOfficial: /西尾市の公式のものではありません/.test(document.body.textContent),
+      demo: (document.querySelector('a.btn') || {}).href || '',
+      wide: document.documentElement.scrollWidth <= innerWidth + 1,
+    }));
+    await shot(w.page, '13-city');
+    const n = k => Number(String(info.nums[k] || '').replace(/,/g, ''));
+    R.checks.cityPage = { count, ...info, ok: n('spots') > 0 && n('npcs') > 0 && n('events') > 0 && n('dots') === count && info.imgs.every(([, nw]) => nw > 0) && info.notOfficial && /ed=city/.test(info.demo) && info.wide };
+    R.errors.push(...w.errors);
+    await w.ctx.close();
+  }
+
   await browser.close(); server.close();
   // 合格の条件：どれか1つでも外れたら、理由を failures に書いて終了コード1
   const c = R.checks, fail = [];
@@ -1022,6 +1042,7 @@ async function walkTo(page, id) {
   need(R.walk.length === 4 && R.walk.every(w => w.reached), 'たからばこか3か所のどこかに着けなかった');
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
+  need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
   need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');
   need(c.firstOnField && c.welcomeChestM !== null && c.welcomeChestM <= 150, 'はじめての人が歩く地図から始まらないか、近くに ようこそ たからばこ がない');
   need(c.controlsGone, 'めいろに いらない ボタン・せってい（スティック・📱・🚗・地図の 切りかえ・ドット絵の地図・Godot）が のこっている');

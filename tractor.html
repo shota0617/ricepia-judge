@@ -4,13 +4,13 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
 <title>トラクターで田んぼを耕そう（試作版） - らいすぴあ（近藤米穀店）</title>
-<meta name="description" content="60馬力のキャビン付きトラクターの運転席に座って、ロータリーで田んぼを耕すブラウザのゲーム。春の田んぼ・秋の稲刈りあと・水を張った代かきの3つの季節。らいすぴあ（近藤米穀店）の試作版です。"/>
+<meta name="description" content="60馬力のキャビン付きトラクターの運転席に座って、ロータリーで田んぼを耕し、田んぼに絵を描く（田んぼアート）ブラウザのゲーム。春の田んぼ・秋の稲刈りあと・水を張った代かきの3つの季節。らいすぴあ（近藤米穀店）の試作版です。"/>
 <meta name="theme-color" content="#2d2d1e"/>
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="ja_JP"/>
 <meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
 <meta property="og:title" content="トラクターで田んぼを耕そう（試作版）"/>
-<meta property="og:description" content="運転席に座って、ロータリーで田んぼを耕すブラウザのゲーム。3つの季節。"/>
+<meta property="og:description" content="運転席に座って、ロータリーで田んぼを耕し、田んぼアートを描くブラウザのゲーム。3つの季節。"/>
 <meta property="og:image" content="https://go.ricepia.jp/tractor/shots/cockpit.webp"/>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%9C%3C/text%3E%3C/svg%3E"/>
 <style>
@@ -62,9 +62,8 @@
   .seasons button span { display: block; font-size: 24px; }
   .seasons button.sel { border-color: var(--green); background: #e8efdf; }
   .times { margin-top: -6px; }
-  .modes { grid-template-columns: repeat(2, 1fr); }
-  .modes button span { display: inline; font-size: 20px; margin-right: 4px; }
-  .arts { grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: -6px; }
+  .arts { grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: -6px; }
+  @media (max-width: 420px) { .arts { grid-template-columns: repeat(3, 1fr); } }
   .arts button { padding: 6px 2px; font-size: 12px; }
   .arts button span { font-size: 20px; }
   /* 田んぼアートの地図（黄＝まだ耕していない絵の所、緑＝耕せた、赤＝はみ出し）。パソコンは左上、スマホは下のまん中 */
@@ -141,7 +140,7 @@
   <div class="card">
     <span class="tag">🧪 試作版</span>
     <h1>🚜 トラクターで田んぼを耕そう</h1>
-    <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで田んぼを耕します。30m×50m の田んぼを、ぜんぶ耕せたらクリア。</p>
+    <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで 30m×50m の田んぼを耕し、<b>田んぼに絵を描きます</b>（田んぼアート）。お題を「なし」にすると、田んぼをぜんぶ耕せたらクリア。</p>
     <div class="seasons" id="seasons">
       <button data-s="haru"><span>🌸</span>春<br>耕す前の田んぼ</button>
       <button data-s="aki"><span>🌾</span>秋<br>稲刈りのあと</button>
@@ -152,18 +151,15 @@
       <button data-t="hiru"><span>☀️</span>昼</button>
       <button data-t="yu"><span>🌇</span>夕方</button>
     </div>
-    <div class="seasons modes" id="modes">
-      <button data-m=""><span>🚜</span>ぜんぶ耕す</button>
-      <button data-m="art"><span>🎨</span>田んぼアート</button>
-    </div>
-    <div class="seasons arts hidden" id="arts">
+    <div class="seasons arts" id="arts">
       <button data-a="heart"><span>❤️</span>ハート</button>
       <button data-a="kome"><span>🌾</span>米</button>
       <button data-a="onigiri"><span>🍙</span>おにぎり</button>
       <button data-a="star"><span>⭐</span>星</button>
       <button data-a="smile"><span>😊</span>にっこり</button>
+      <button data-a="none"><span>🚜</span>なし</button>
     </div>
-    <p class="small hidden" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮ります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
+    <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮ります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
     <p class="small" id="progText">読みこみ中…</p>
     <button class="go" id="bStart" disabled>▶ 運転する</button>
@@ -261,9 +257,9 @@ const TILL_Y = SHIRO ? 0.045 : 0.035;
 const $ = id => document.getElementById(id);
 // 時間：朝・昼・夕方（太陽の高さと向き・光の色・空・もや）
 const TOD = { asa: 1, hiru: 1, yu: 1 }[params.get('time')] ? params.get('time') : 'hiru';
-// 遊び方：ぜんぶ耕す・田んぼアート（お題を選ぶ）
-const ART_ID = params.get('mode') === 'art' ? (['heart', 'kome', 'onigiri', 'star', 'smile'].includes(params.get('art')) ? params.get('art') : 'heart') : null;
-const go = (s_, t_, a_ = ART_ID) => { location.search = '?season=' + s_ + '&time=' + t_ + (a_ ? '&mode=art&art=' + a_ : ''); };
+// 田んぼアートのお題（はじめはハート）。「なし」（art=none）は田んぼをぜんぶ耕す
+const ART_ID = params.get('art') === 'none' ? null : ['heart', 'kome', 'onigiri', 'star', 'smile'].includes(params.get('art')) ? params.get('art') : 'heart';
+const go = (s_, t_, a_ = ART_ID) => { location.search = '?season=' + s_ + '&time=' + t_ + '&art=' + (a_ || 'none'); };
 document.querySelectorAll('#seasons button').forEach(b => {
   if (b.dataset.s === season) b.classList.add('sel');
   b.onclick = () => { if (b.dataset.s !== season) go(b.dataset.s, TOD); };
@@ -272,15 +268,12 @@ document.querySelectorAll('#times button').forEach(b => {
   if (b.dataset.t === TOD) b.classList.add('sel');
   b.onclick = () => { if (b.dataset.t !== TOD) go(season, b.dataset.t); };
 });
-document.querySelectorAll('#modes button').forEach(b => {
-  if (b.dataset.m === (ART_ID ? 'art' : '')) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.m !== (ART_ID ? 'art' : '')) go(season, TOD, b.dataset.m ? 'heart' : null); };
-});
 document.querySelectorAll('#arts button').forEach(b => {
-  if (b.dataset.a === ART_ID) b.classList.add('sel');
-  b.onclick = () => { if (b.dataset.a !== ART_ID || S.done) go(season, TOD, b.dataset.a); };
+  const a = b.dataset.a === 'none' ? null : b.dataset.a;
+  if (a === ART_ID) b.classList.add('sel');
+  b.onclick = () => { if (a !== ART_ID || S.done) go(season, TOD, a); };
 });
-if (ART_ID) { $('arts').classList.remove('hidden'); $('artHow').classList.remove('hidden'); }
+if (!ART_ID) $('artHow').textContent = 'お題なし：30m×50m の田んぼを ぜんぶ耕せたらクリア。お題を選ぶと、白線の下絵の内側を耕して 田んぼに絵を描きます';
 const LIGHT = {
   hiru: { sky: null, sun: [-0.45, season === 'aki' ? 0.45 : 0.7, -0.55], sunC: 0xfff3e2, sunI: 3.2, hemi: [0xdfe9f5, 0x6b5a40, 0.35], fog: [160, 1100],
     cLit: [1.0, 0.99, 0.96], cDark: [0.72, 0.75, 0.80], disk: [1.0, 0.95, 0.85], exp: 1.0 },

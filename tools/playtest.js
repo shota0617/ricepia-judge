@@ -1075,10 +1075,11 @@ async function walkTo(page, id) {
       M.scarePut(a, b); M.crowPut(a, b); await wait(400);
       const same = { shoo: M.crows().shoo - o2, hit: M.crows().hits - h2 };
       // まよわず ゴールの 歩数：さかいを 0.4秒 以内に 何度 またいでも 前の 歩数は へらない。ゆっくり 行き来すれば 数える
-      const mv = { jitter: M.mvSim(100, ['A', 'B', 'A', 'B', 'A', 'B', 'A', 'B', 'A', 'B'], 100), slow: M.mvSim(0, ['A', 'B', 'A', 'B', 'A'], 1000), line: M.mvSim(0, ['A', 'B', 'C', 'D'], 100) };
+      const A = [0, 0], B = [1, 0];
+      const mv = { jitter: M.mvSim(100, [A, B, A, B, A, B, A, B, A, B], 100), slow: M.mvSim(0, [A, B, A, B, A], 1000), line: M.mvSim(0, [[0, 0], [1, 0], [2, 0], [3, 0]], 100), diag: M.mvSim(0, [[0, 0], [1, 1], [2, 1]], 100) };   // diag：1こまに ななめに 2つ こえたら 2歩
       return { auto, got: s1.got - g0, left: Math.round(s1.left), scaredAll, shoo: c1.shoo - o0, hit: c1.hits - h0, jump: c0 && k1 ? Math.round((k1.sec - c0.sec) * 10) / 10 : 0, float: nishioPixel.floats().some(t => /おいはらった/.test(t)), way: way ? way.way : 'no-goal', same, mv };
     });
-    R.checks.mzScare = { ...scareA, ok: scareA.auto && scareA.got === 1 && scareA.left > 6500 && scareA.scaredAll && scareA.shoo === 1 && scareA.hit === 0 && scareA.jump < 2 && scareA.float && (scareA.way === 'no-goal' || scareA.way === 0 || scareA.way >= 1) && scareA.same.shoo === 1 && scareA.same.hit === 0 && scareA.mv.jitter >= 100 && scareA.mv.jitter <= 101 && scareA.mv.slow === 4 && scareA.mv.line === 3 };
+    R.checks.mzScare = { ...scareA, ok: scareA.auto && scareA.got === 1 && scareA.left > 6500 && scareA.scaredAll && scareA.shoo === 1 && scareA.hit === 0 && scareA.jump < 2 && scareA.float && (scareA.way === 'no-goal' || scareA.way === 0 || scareA.way >= 1) && scareA.same.shoo === 1 && scareA.same.hit === 0 && scareA.mv.jitter >= 100 && scareA.mv.jitter <= 101 && scareA.mv.slow === 4 && scareA.mv.line === 3 && scareA.mv.diag === 3 };
     // ゴールに 着いたら そのまま ゴール：名所は ひとりでに チェックイン（「🏁 ゴール！」）、人は 話しかける（人が ゴールでも「🏁 ゴール！」）
     const arriveA = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));

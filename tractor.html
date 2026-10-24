@@ -2741,6 +2741,7 @@ const RIPPLE = (() => {
 // ---- 代かきのアマガエル：水を入れた田んぼにはカエルがたくさんいて、トラクターが近づくと ぴょんぴょんはねて逃げ、水に飛びこむ ----
 // ---- 代かき：田んぼの東の畦の給水栓（パイプライン）から水を入れている。西尾市の田んぼは 矢作川から取る明治用水の水を、
 // 地下のパイプで田んぼの角の給水栓まで送り、バルブを開けて入れる。吐き出し口から水が勢いよく落ちて 白い泡と輪の波が立ち、ザーッと音がする
+const HYD_FW = new THREE.Vector3();               // 給水栓の音の左右を決めるときの カメラの向き（使い回す）
 const HYDRANT = (() => {
   if (!SHIRO) return { update() {}, pos: null };
   const X = HX + 0.35, Z = -18, g = new THREE.Group();
@@ -3869,7 +3870,7 @@ function updateSound(dt = 0) {
     const c = camera.getWorldPosition(tmpV), d = Math.hypot(c.x - HYDRANT.pos[0], c.z - HYDRANT.pos[1]);
     audio.hydG.gain.setTargetAtTime(0.35 / (1 + d * 0.35) * (camMode === 0 ? 0.45 : 1), t, 0.3);
     if (audio.hydP) {
-      const fw = new THREE.Vector3(); camera.getWorldDirection(fw);
+      const fw = camera.getWorldDirection(HYD_FW);
       const a = Math.atan2(HYDRANT.pos[0] - c.x, HYDRANT.pos[1] - c.z) - Math.atan2(fw.x, fw.z);
       audio.hydP.pan.setTargetAtTime(Math.max(-1, Math.min(1, -Math.sin(a))), t, 0.3);
     }

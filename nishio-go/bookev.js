@@ -69,6 +69,7 @@
   let root = null, cur = null, order = [], picked = false, closedAt = 0;
   const shown = () => !!root && !root.hidden;
   const GAP = 3 * 60000;   // 閉じてから次のできごとまで
+  const LATER = 10 * 60000, later = new Map();   // 「あとで」に した できごとは、10分 たつまで また 出さない（めいろの 途中で 同じ 問いが 3分ごとに 出ていた）
 
   function build() {
     root = document.createElement('div');
@@ -119,7 +120,7 @@
     res.hidden = false;
     root.querySelector('.md-close').textContent = 'とじる';
   }
-  function close() { if (root) root.hidden = true; closedAt = Date.now(); cur = null; }
+  function close() { if (root) root.hidden = true; closedAt = Date.now(); if (cur && !picked) later.set(cur.id, closedAt); cur = null; }
   function here(ev) {
     const G = window.nishioGo, P = window.nishioPixel, O = window.NISHIO_OLDMAP, me = G && G.me, w = ev.where;
     if (!me) return false;
@@ -136,7 +137,7 @@
     if (!G || !P || shown() || Date.now() - closedAt < GAP) return;
     if (document.querySelector('.medashi:not([hidden])') || document.body.classList.contains('jump-open') || (G.rewardSoon && G.rewardSoon())) return;
     if ((P.mapCovered && P.mapCovered()) || (P.sightBusy && P.sightBusy())) return;
-    const ev = EVENTS.find(e => !(G.bookEvHas && G.bookEvHas(e.id)) && here(e));
+    const ev = EVENTS.find(e => !(G.bookEvHas && G.bookEvHas(e.id)) && !(Date.now() - (later.get(e.id) || -Infinity) < LATER) && here(e));
     if (ev) open(ev);
   }
   setInterval(tick, 2000);

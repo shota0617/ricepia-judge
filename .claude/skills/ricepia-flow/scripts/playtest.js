@@ -81,9 +81,12 @@ if (opt.old) {
     const again = run(ROOT, Number(opt.port) || 8899, 'もう1回');
     report(again);
     if (again) {
-      const both = res.bad.filter(k => again.bad.includes(k));
-      console.log(both.length || !again.ok ? `2回 とも 落ちた：${both.join(', ') || '（項目の ok 以外の 条件）'}` : '2回目は 通りました（1回目は ときどき 落ちる 確認。--main で main でも 落ちるか 見てください）');
-      process.exit(again.ok ? 0 : 1);
+      // 本当の 失敗：2回 とも 落ちた 項目が ある、または 2回 とも 項目の ok 以外の 条件で 落ちた（1回目と 2回目で 別の 項目だけが 落ちたなら、どちらも ときどき 落ちる 確認）
+      const both = res.bad.filter(k => again.bad.includes(k)), other = r => !r.ok && !r.bad.length;
+      const real = both.length > 0 || (other(res) && other(again));
+      if (real) console.log(`2回 とも 落ちた：${both.join(', ') || '（項目の ok 以外の 条件）'}`);
+      else console.log(`2回 とも 落ちた 項目は ありません（1回目：${res.bad.join(', ') || 'なし'}／2回目：${again.bad.join(', ') || 'なし'}。ときどき 落ちる 確認。--main で main でも 落ちるか 見てください）`);
+      process.exit(real ? 1 : 0);
     }
   }
   process.exit(res && res.ok ? 0 : 1);

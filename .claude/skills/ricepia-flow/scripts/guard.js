@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-// push の 前の 見張り：node guard.js [比べる元＝origin/main]
+// push の 前の 見張り：node guard.js [比べる元＝origin/main] [--pre-merge]
 // まもる きまり（くわしくは SKILL.md）を、機械で 見られる ところだけ 調べる。✖ は 直すまで push しない。⚠ は 目で 確かめる
 //   ✖ main に いる・作業用の ブランチ（RICEPIA_BRANCH）で ない
-//   ✖ ricepia-jp/deploy.txt が main に ある（本番の ricepia.jp を 書きかえる 合図。作業用の ブランチに だけ 置き、動かしたら すぐ 消す）
+//   ✖ ricepia-jp/deploy.txt が main に ある（本番の ricepia.jp を 書きかえる 合図。作業用の ブランチに だけ 置き、動かしたら すぐ 消す）。--pre-merge では ブランチに 残っていても ✖
 //   ✖ push する コミットの どれかに 秘密の 値らしい もの（API キー・トークン・パスワード・秘密鍵。あとで 消しても 途中の コミットに のこる）
 //   ✖ コミットの 文に モデルの 名前（Co-Authored-By の 行は のぞく）
 //   ⚠ コミットに Co-Authored-By・Claude-Session の 行が ない／ページや コードに メールアドレス／deploy.txt が ブランチに 残っている
@@ -10,7 +10,8 @@
 const { git } = require('./env');
 
 const BRANCH = process.env.RICEPIA_BRANCH || 'claude/confident-turing-etepui';
-const base = process.argv[2] || 'origin/main';
+const PRE_MERGE = process.argv.includes('--pre-merge');   // マージの 前（pre-merge.sh）：deploy.txt が ブランチに 残っていても ✖
+const base = process.argv.slice(2).find(a => !a.startsWith('--')) || 'origin/main';
 const bad = [], warn = [];
 
 const cur = git('rev-parse', '--abbrev-ref', 'HEAD');
@@ -19,7 +20,7 @@ else if (cur !== BRANCH) bad.push(`ブランチが ${cur}（push して よい�
 
 const has = (ref, f) => git('ls-tree', '--name-only', ref, f) === f;
 if (has(base, 'ricepia-jp/deploy.txt')) bad.push(`ricepia-jp/deploy.txt が ${base} に ある（main には ぜったい 置かない）`);
-if (has('HEAD', 'ricepia-jp/deploy.txt')) warn.push('ricepia-jp/deploy.txt が ブランチに ある：運営者の OK を もらって ワークフローを 手で 動かしたら すぐ 消す（さくらの 国外IPアドレスフィルタを 戻すよう 運営者に 伝える）');
+if (has('HEAD', 'ricepia-jp/deploy.txt')) (PRE_MERGE ? bad : warn).push(PRE_MERGE ? 'ricepia-jp/deploy.txt が ブランチに 残っている：消してから マージする（main に 入ると、あとの push で 本番の ricepia.jp を 書きかえる）' : 'ricepia-jp/deploy.txt が ブランチに ある：運営者の OK を もらって ワークフローを 手で 動かしたら すぐ 消す（さくらの 国外IPアドレスフィルタを 戻すよう 運営者に 伝える）');
 
 // 足した 行
 const diff = git('diff', '--unified=0', '--no-color', `${base}...HEAD`);

@@ -54,7 +54,7 @@ description: にしおさんぽGO（ricepia-judge）で 作業する ときの �
    - 新しい 確認を 足したら、直す 前の コードで 落ちる ことを 確かめる：
      `node $F/playtest.js --old HEAD --files nishio-go/pixel.js --show 項目名`（別の 作業場所で 動かすので、いまの ファイルは さわらない）
    - 落ちた 項目が この 変更の せいか 分からない ときは、`--rerun`（もう1回）と `--main`（main だけで 動かす）で 見分ける
-     - main でも 落ちる、または 2回目に 通る なら、もとから ときどき 落ちる 確認
+     - main でも 落ちる、または 2回 とも 落ちた 項目が ない なら、もとから ときどき 落ちる 確認
      - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`
 3. **コミット**：`git add …` → `$F/commit.sh "題" "本文"`（決まりの 2行 Co-Authored-By・Claude-Session を つける）
 4. **push**：`$F/push.sh`（見張りを 通してから push。ネットの つまずきは 2・4・8・16秒で やりなおす）
@@ -98,6 +98,7 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 
 1. `$F/pre-merge.sh`
    - main が すすんでいれば 取りこむ（ぶつかったら 止まる。両方の 中身を のこして 直す）
+   - 見張り（`guard.js --pre-merge`）：`ricepia-jp/deploy.txt` が ブランチに 残っていたら 止まる（消してから マージ）
    - プレイテスト（`--rerun`）を やりなおし、push する
    - `expectedHeadSha` と、題に `[skip ci]` が いるかを 出す
 2. GitHub の MCP ツールで squash マージする

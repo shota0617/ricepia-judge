@@ -14,6 +14,7 @@ else
   echo "main に ある 新しい コミット："; git log --oneline HEAD..origin/main | sed 's/^/  /'
   git merge origin/main -m "main を取りこむ" || { echo "✖ ぶつかりました：上の ファイルを 直して git add → git commit --no-edit → もう一度"; exit 1; }
 fi
+node "$here/guard.js" --pre-merge   # deploy.txt の 消し忘れ・秘密 などが あれば ここで 止まる
 node "$here/playtest.js" --rerun
 "$here/push.sh"
 echo "expectedHeadSha: $(git rev-parse HEAD)（マージの あと post-merge.sh の 2つめにも わたす）"

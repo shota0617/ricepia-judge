@@ -26,7 +26,9 @@ function chromium() {
 
 // 子プロセスに わたす 環境変数（tools/playtest.js が 読む もの）
 function playEnv(extra = {}) {
-  const env = { ...process.env, LEAFLET_DIR: leafletDir(), ...extra };
+  // 別の 作業場所（worktree）から 動かしても、リポジトリ直下の node_modules（Playwright など。docs/codex-playtest.md）を 読めるように
+  const np = [path.join(ROOT, 'node_modules'), process.env.NODE_PATH].filter(Boolean).join(path.delimiter);
+  const env = { ...process.env, LEAFLET_DIR: leafletDir(), NODE_PATH: np, ...extra };
   const c = chromium();
   if (c) env.CHROMIUM = c;
   return env;

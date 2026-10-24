@@ -1217,6 +1217,44 @@ const RAINFX = (() => {
   };
 })();
 
+// ---- 小雨の水の輪：代かきの田んぼの水面に、雨つぶが落ちた小さな輪が広がっては消える（カメラのまわり 10m。直径 20〜40cm の輪が 0.7 秒で消える）
+const RAINRING = (() => {
+  if (!(RAIN && SHIRO)) return { update() {} };
+  const N = MOBILE ? 90 : 180, LIFE = 0.7, R = 10;
+  const geo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const born = new THREE.InstancedBufferAttribute(new Float32Array(N).fill(-9), 1);
+  geo.setAttribute('born', born);
+  const T = { value: 0 };
+  const mesh = new THREE.InstancedMesh(geo, new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, uniforms: { t: T },
+    vertexShader: 'attribute float born; uniform float t; varying vec2 vUv; varying float vK;' +
+      'void main(){ vUv = uv; vK = clamp((t - born) / ' + LIFE.toFixed(2) + ', 0.0, 1.0); gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'varying vec2 vUv; varying float vK;' +
+      'void main(){ float r = length(vUv * 2.0 - 1.0), a = smoothstep(0.16, 0.0, abs(r - vK)) * (1.0 - vK); gl_FragColor = vec4(0.9, 0.93, 0.96, a * 0.8); }'
+  }), N);
+  mesh.frustumCulled = false; mesh.renderOrder = 3; scene.add(mesh);
+  const m4 = new THREE.Matrix4(), c = new THREE.Vector3();
+  let t = 0, k = 0, acc = 0;
+  return {
+    update(dt) {
+      t += dt; T.value = t; acc += dt * N / LIFE; camera.getWorldPosition(c);
+      if (acc < 1) return;
+      while (acc >= 1) {
+        acc -= 1;
+        const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * R, x = c.x + Math.cos(a) * d, z = c.z + Math.sin(a) * d;
+        if (Math.abs(x) > HX - 0.1 || Math.abs(z) > HZ - 0.1) born.array[k] = -9;   // 田んぼの外には出さない
+        else {
+          const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL), sc = 0.2 + Math.random() * 0.2;
+          m4.makeScale(sc, 1, sc).setPosition(x, tilledMask[i * NZ + j] ? TILL_Y + 0.01 : 0.021, z);   // かいた所は泥の面、まだの所は水たまりの面
+          mesh.setMatrixAt(k, m4); born.array[k] = t;
+        }
+        k = (k + 1) % N;
+      }
+      mesh.instanceMatrix.needsUpdate = true; born.needsUpdate = true;
+    }
+  };
+})();
+
 // となりの田んぼ（北）で、行ったり来たりして耕しているトラクター
 const NB = (() => {
   // 耕すときは時速 2.8km、はしで回るときは作業機を上げて少し速く（本物のように、旋回のあいだは上げる）
@@ -1261,6 +1299,12 @@ function canvasTex(cv) {
   return t;
 }
 
+// 雨でぬれた土：色が濃くなり、表面に水の膜ができて少しつやが出る
+function wetSoil(m) {
+  if (m.userData.wet) return;
+  m.userData.wet = 1; m.color.multiplyScalar(0.72);
+  if (m.roughness !== undefined) m.roughness *= 0.65;
+}
 function setupField(root) {
   field = root;
   scene.add(root);
@@ -1271,12 +1315,14 @@ function setupField(root) {
     const amp = o.isMesh && { grass_tuft: 0.05, higanbana: 0.06, rice_side: 0.05, tree_card: 0.22, cedar_card: 0.15 }[o.material.name];
     if (amp && !o.material.userData.wind) { o.material.userData.wind = 1; addWind(o.material, amp); }
     if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
+    if (RAIN && o.isMesh && ['soil_untilled', 'track'].includes(o.material.name)) wetSoil(o.material);
   });
   // 耕した所：0.2m のます目ごとの四角を先に用意し、耕したら地面に出す（UV＝x/2, −z/2）
   const ft = root.getObjectByName('FieldTilled');
   ft.visible = false;
   const mat = (ft.isMesh ? ft : ft.children[0]).material.clone();
   mat.vertexColors = false;
+  if (RAIN) wetSoil(mat);
   const n = NX * NZ, pos = new Float32Array(n * 12), uv = new Float32Array(n * 8), nor = new Float32Array(n * 12), idx = new Uint32Array(n * 6);
   for (let i = 0; i < n; i++) {
     for (let k = 0; k < 4; k++) nor[i * 12 + k * 3 + 1] = 1;
@@ -1456,7 +1502,7 @@ const DRY = (() => {
   let clock = 0, acc = 0;
   const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v * ROUGH[c], c * 12, c * 12 + 12); };
   return {
-    wet(c) { if (SHIRO) return; set(c, WET); list.push([c, clock]); },
+    wet(c) { if (SHIRO) return; set(c, WET); if (!RAIN) list.push([c, clock]); },   // 雨の日は 耕した土が乾かない
     update(dt) {                                  // 2 秒ごとに、耕して 2 分半までの所を少しずつ明るくする
       clock += dt;
       if (SHIRO || (acc += dt) < 2 || !list.length) return;
@@ -3071,7 +3117,7 @@ function step(dt) {
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
   const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
-  const slip = !inField ? 0 : (SHIRO ? 0.09 : 0.03) + (working ? 0.025 : 0) + 0.01 * Math.min(1, Math.abs(S.v));
+  const slip = !inField ? 0 : (SHIRO ? 0.09 : 0.03) + (working ? 0.025 : 0) + 0.01 * Math.min(1, Math.abs(S.v)) + (RAIN && !SHIRO ? 0.03 : 0);   // 雨でぬれた土は すべりやすい
   P.WheelRL.rotation.x += S.v * (1 + slip) * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
   if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
   if (!inField && S.x > 16.4 && Math.abs(S.v) > 1.4) emitRoadDust(dt, S.x, S.z, S.yaw, S.v, 1);   // 乾いた砂利の農道では砂ぼこり
@@ -3913,6 +3959,7 @@ function frame(now) {
   updateSound(dt);
   SKY_TIME.value += dt;
   RAINFX.update(dt);
+  RAINRING.update(dt);
   WIPE.value = RAIN ? (performance.now() / 1000) % WIPE_P : 9;   // 間欠ワイパー
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));

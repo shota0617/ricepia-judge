@@ -335,7 +335,7 @@ document.querySelectorAll('#arts button').forEach(b => {
 });
 if (!ART_ID) $('artHow').textContent = 'お題なし：30m×50m の田んぼを ぜんぶ耕せたらクリア。お題を選ぶと、白線の下絵の内側を耕して 田んぼに絵を描きます';
 const LIGHT = {
-  hiru: { sky: null, sun: [-0.45, season === 'aki' ? 0.45 : 0.7, -0.55], sunC: 0xfff3e2, sunI: 3.2, hemi: [0xdfe9f5, 0x6b5a40, 0.35], fog: [160, 1100],
+  hiru: { sky: null, sun: [-0.45, season === 'aki' ? 0.45 : 0.7, -0.55], sunC: 0xfff3e2, sunI: 3.2, hemi: [0xdfe9f5, 0x6b5a40, 0.35], fog: { haru: [120, 950], shirokaki: [140, 1000], aki: [210, 1500] }[season],   // 春は霞（土ぼこり・黄砂・水蒸気）で遠くがかすみ、秋は乾いた空気で澄む（神戸市・気象庁）
     cLit: [1.0, 0.99, 0.96], cDark: [0.72, 0.75, 0.80], disk: [1.0, 0.95, 0.85], exp: 1.0 },
   asa: { sky: [0x7aa2d8, 0xf1dccb], sun: [0.78, 0.2, 0.3], sunC: 0xffd6a4, sunI: 2.6, hemi: [0xcad8ea, 0x5a4a36, 0.32], fog: [50, 650],   // 朝もや
     cLit: [1.0, 0.9, 0.8], cDark: [0.62, 0.65, 0.74], disk: [1.0, 0.85, 0.65], exp: 1.0 },

@@ -3814,8 +3814,19 @@ function startAmbient(ac) {
     }
   } else if (season === 'haru') {               // ヒバリ：1 羽、高い声を早口で
     const v = voice(R(-0.4, 0.4), 0.6); v.o = osc('sine', 3500, v.g); v.kind = 'hibari'; voices.push(v);
+    // キジ：春は繁殖期。ときどき遠くで「ケーン ケーン」と鳴いて、つづけて羽を打つ「ドドドッ」（ほろ打ち。なわばりの主張：BE-PAL・我孫子市鳥の博物館）
+    const k = voice(R(-0.9, 0.9), 0.8), kb = ac.createBiquadFilter(); kb.type = 'bandpass'; kb.frequency.value = 1500; kb.Q.value = 1.2;
+    k.o = osc('sawtooth', 1100, kb); kb.connect(k.g); k.kind = 'kiji'; k.t = ac.currentTime + R(6, 15);
+    const nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), nd = nb.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const ns = ac.createBufferSource(), wl = ac.createBiquadFilter(); ns.buffer = nb; ns.loop = true; wl.type = 'lowpass'; wl.frequency.value = 180;
+    k.wing = voice(0, 1); ns.connect(wl); wl.connect(k.wing.g); ns.start();   // 羽の音（鳴き声と同じ所から）
+    voices.push(k);
   } else {
     for (let k = 0; k < 4; k++) { const v = voice(R(-0.9, 0.9), R(0.3, 1)); v.o = osc('sine', R(4300, 4800), v.g); v.kind = 'korogi'; voices.push(v); }
+    if (TOD !== 'yoru') {                         // モズの高鳴き：秋に「キーキー キチキチ」と鳴いて、冬のなわばりを主張する（Canon 野鳥写真図鑑・我孫子市鳥の博物館）
+      const v = voice(R(-0.8, 0.8), 0.7); v.o = osc('triangle', 3800, v.g); v.kind = 'mozu'; v.t = ac.currentTime + R(5, 15); voices.push(v);
+    }
   }
   // 鳴き方を 0.4 秒先まで予約する
   const tick = force => {
@@ -3834,6 +3845,23 @@ function startAmbient(ac) {
           if (Math.random() < 0.5) { v.t += R(1, 4); continue; }
           for (let i = 0; i < 14; i++) { const t0 = v.t + i * 0.035; g.setValueAtTime(a * 0.8, t0); g.setValueAtTime(0, t0 + 0.02); }
           v.t += 0.5 + R(0.6, 2);
+        } else if (v.kind === 'kiji') {          // ケーン ケーン（2 声）→ ドドドッ（羽を打つ）→ 20〜50 秒休む
+          for (let i = 0; i < 2; i++) {
+            const t0 = v.t + i * 0.42;
+            v.o.frequency.setValueAtTime(1250, t0); v.o.frequency.linearRampToValueAtTime(1050, t0 + 0.22);
+            g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.02); g.setValueAtTime(a, t0 + 0.15); g.linearRampToValueAtTime(0, t0 + 0.24);
+          }
+          const w = v.wing.g, t1 = v.t + 0.95;
+          for (let i = 0; i < 9; i++) { const t0 = t1 + i * 0.075; w.setValueAtTime(0, t0); w.linearRampToValueAtTime(a * 1.2, t0 + 0.01); w.linearRampToValueAtTime(0, t0 + 0.05); }
+          v.t += R(20, 50);
+        } else if (v.kind === 'mozu') {          // キーキー（高くて下がる声）を 3〜4 回、つづけて キチキチ…（はやい）→ 20〜50 秒休む
+          let t0 = v.t;
+          for (let i = 0, n = Math.floor(R(3, 5)); i < n; i++, t0 += 0.22) {
+            v.o.frequency.setValueAtTime(3800, t0); v.o.frequency.exponentialRampToValueAtTime(2600, t0 + 0.13);
+            g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.01); g.linearRampToValueAtTime(0, t0 + 0.14);
+          }
+          for (let i = 0; i < 7; i++, t0 += 0.06) { v.o.frequency.setValueAtTime(4200, t0); g.setValueAtTime(a * 0.8, t0); g.setValueAtTime(0, t0 + 0.025); }
+          v.t = t0 + R(20, 50);
         } else if (v.kind === 'hibari') {        // ピーチュクチュク…（さえずり続け、ときどき休む）
           if (Math.random() < 0.04) { g.setValueAtTime(0, v.t); v.t += R(3, 8); continue; }
           const d = R(0.05, 0.11);

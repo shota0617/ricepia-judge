@@ -738,6 +738,29 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ok: max >= 2 && after.n === 0 && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after };
   })();
+  // びゅんパネル（クセになる ギミック）：めいろの パネルの 上で 矢印の 向きに 傾けると びゅんと 速く なる。矢印と 逆から 来ても おされない（通れる）
+  R.checks.mazePad = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(500);
+    const c = await page.evaluate(() => { const r = nishioPixel.roll; return { pads: nishioPixel.maze.padsNear(14), K: nishioPixel.maze.K, home: [r.x, r.y] }; });
+    if (!c.pads.length) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-pad' }; }
+    const [x, y, d] = c.pads[0], D = [[1, 0], [0, 1], [-1, 0], [0, -1]][d], key = ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp'][d], K = c.K;
+    const put = (X, Y, vx, vy) => page.evaluate(a => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); nishioPixel.rollPut(...a); }, [X, Y, vx, vy]);
+    await put(c.home[0], c.home[1], 0, 0); await page.waitForTimeout(150);
+    const h0 = await page.evaluate(() => nishioPixel.maze.padHits);
+    await put((x + 0.5) * K, y * K + 1.4, 0, 0); await page.waitForTimeout(100);   // パネルの 上で 止まって いて、矢印の 向きに 傾ける
+    await page.keyboard.down(key);
+    let vmax = 0, h1 = h0;
+    for (let i = 0; i < 30 && h1 === h0; i++) { await page.waitForTimeout(16); const r = await page.evaluate(() => { const r = nishioPixel.roll; return [Math.hypot(r.vx, r.vy), nishioPixel.maze.padHits]; }); vmax = Math.max(vmax, r[0]); h1 = r[1]; }
+    const r1 = await page.evaluate(() => { const r = nishioPixel.roll; return Math.hypot(r.vx, r.vy); }); vmax = Math.max(vmax, r1);
+    await page.keyboard.up(key);
+    await put(c.home[0], c.home[1], 0, 0); await page.waitForTimeout(150);
+    await put((x + 0.5) * K + D[0] * 1.2, y * K + 1.4 + D[1] * 1.2, -D[0] * 2, -D[1] * 2);   // 逆から
+    await page.waitForTimeout(400);
+    const h2 = await page.evaluate(() => nishioPixel.maze.padHits);
+    await put(c.home[0], c.home[1], 0, 0);
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ok: h1 === h0 + 1 && vmax > 6 && h2 === h1, pad: [x, y, d], boosted: h1 - h0, vmax: +vmax.toFixed(1), against: h2 - h1 };
+  })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
   await page.evaluate(() => { nishioPixel.setRoll(true); nishioPixel.setWorld(true); }); await page.waitForTimeout(300);
@@ -1149,6 +1172,7 @@ async function walkTo(page, id) {
   need(c.rollVert && c.rollVert.ok, `たての 転がり方：上・下へ 転がっても でんぐりがえし しない（${JSON.stringify(c.rollVert)}）`);
   need(c.cornerAssist && c.cornerAssist.ok, `曲がり角アシスト：めいろの 曲がり角で、横に ずれていると 曲がれない（${JSON.stringify(c.cornerAssist)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
+  need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.mazeWallFit && c.mazeWallFit.ok, 'めいろの 壁：お米が 壁に 食いこんで 見える（当たり判定が 絵より 小さい）、または はね返らない');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');

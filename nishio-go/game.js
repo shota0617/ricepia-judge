@@ -3784,7 +3784,20 @@ if (store.get('nsg_started', false)) {
   if (!store.get('nsg_begin_t', 0)) store.set('nsg_first_reward', true);
   $('intro').hidden = true; setMode(demo);   // setMode が1回に遊んだ時間を数えはじめる
 }
-else track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
+else {
+  track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
+  // 押すのに 抵抗が ある人へ：iPhone は 傾きの 確認が 出ることを 先に 伝える。8秒 押されなければ、いちばん上の ボタンが はねて お米の ふきだし（1回だけ。アクセス解析に intro_nudge）
+  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') $('iosTiltNote').hidden = false;
+  setTimeout(() => {
+    const b = $('meiroBtn');
+    if ($('intro').hidden || !b) return;
+    b.classList.add('nudge');
+    const tip = document.createElement('span');
+    tip.className = 'nudge-tip'; tip.setAttribute('aria-hidden', 'true'); tip.textContent = '🍚 おしても だいじょうぶ！';
+    b.append(tip);
+    track('intro_nudge', {});
+  }, 8000);
+}
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });
 window.addEventListener('pagehide', idleMark);

@@ -2315,7 +2315,9 @@ const BIRDS = (() => {
   const KIND = {
     dai: { body: lam(0xf6f6f2), neck: lam(0xf6f6f2), beak: lam(0xe8b400), leg: lam(0x1b1b1b), s: 1 },
     ko: { body: lam(0xf8f8f6), neck: lam(0xf8f8f6), beak: lam(0x1b1b1b), leg: lam(0x2a2a22), s: 0.72 },
-    ao: { body: lam(0x8a9199), neck: lam(0xcfd2d5), beak: lam(0xc99a2e), leg: lam(0x6e6040), s: 1.15 }
+    ao: { body: lam(0x8a9199), neck: lam(0xcfd2d5), beak: lam(0xc99a2e), leg: lam(0x6e6040), s: 1.15 },
+    // アマサギ（代かきの 5 月）：小さく、夏羽は頭から胸・背に だいだい色の飾り羽、くちばしも だいだい色。夏鳥で 渡ってくるのが遅い（新潟県・環境省）
+    ama: { body: lam(0xf6f4ee), neck: lam(0xcf7418), beak: lam(0xe87010), leg: lam(0x5a4a2a), s: 0.62, back: lam(0xd8842a) }
   };
   function make(kind) {
     const { body: white, neck: neckM, beak: yellow, leg: black } = KIND[kind];
@@ -2344,6 +2346,7 @@ const BIRDS = (() => {
       b.add(w); wings.push(w);
     }
     b.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    if (KIND[kind].back) { const bk = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 6), KIND[kind].back); bk.scale.set(0.8, 0.45, 1.3); bk.position.set(0, 0.48, 0.02); bk.castShadow = true; b.add(bk); }   // 背の飾り羽
     b.userData = { neck, head, legs, wings, state: 'away', t: Math.random() * 5, tx: 0, tz: 0, y: 0 };
     return b;
   }
@@ -2380,7 +2383,7 @@ const BIRDS = (() => {
     return b;
   }
   const list = [];
-  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : k % 3 === 1 ? 'ko' : 'dai'); b.userData.delay = 3 + k * 2.2; b.visible = false; scene.add(b); list.push(b); }
+  for (let k = 0; k < (MOBILE ? 7 : 12); k++) { const b = make(k % 4 === 3 ? 'ao' : SHIRO && k % 2 ? 'ama' : k % 3 === 1 ? 'ko' : 'dai'); b.userData.delay = 3 + k * 2.2; b.visible = false; scene.add(b); list.push(b); }
   const NCROW = { haru: 3, aki: 4, shirokaki: 1 }[season] - (MOBILE ? 1 : 0);
   for (let k = 0; k < NCROW; k++) { const b = makeCrow(); b.userData.delay = 1.5 + k * 3.5; b.visible = false; scene.add(b); list.push(b); }
   let workT = 0;

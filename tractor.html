@@ -4235,6 +4235,10 @@ function startAmbient(ac) {
       osc(k % 3 ? 'square' : 'sawtooth', bp.frequency.value * 0.5, bp); bp.connect(v.g);
       v.kind = k % 3 ? 'ama' : 'koro'; voices.push(v);
     }
+    if (DARK) {                                   // ウシガエル：夜行性のオスが「ウオー ウオー」とウシのような太い声（5〜9 月に産卵。愛知県・京都市動物園）。遠くの水路から 1 匹
+      const v = voice(R(-0.9, 0.9), 0.9), lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 520; lp.Q.value = 2;
+      v.o = osc('sawtooth', 110, lp); lp.connect(v.g); v.kind = 'ushi'; v.t = ac.currentTime + R(4, 12); voices.push(v);
+    }
   } else if (season === 'haru' && TOD === 'yoru') {   // 春の夜：ヒバリは鳴かない。水を入れはじめた となりの田んぼから 遠いカエル
     for (let k = 0; k < 3; k++) {
       const v = voice(R(-0.9, 0.9), R(0.15, 0.4)), bp = ac.createBiquadFilter();
@@ -4291,6 +4295,13 @@ function startAmbient(ac) {
           }
           for (let i = 0; i < 7; i++, t0 += 0.06) { v.o.frequency.setValueAtTime(4200, t0); g.setValueAtTime(a * 0.8, t0); g.setValueAtTime(0, t0 + 0.025); }
           v.t = t0 + R(20, 50);
+        } else if (v.kind === 'ushi') {          // ウオー ウオー（3〜5 声）→ 15〜40 秒休む
+          for (let i = 0, n = Math.floor(R(3, 6)); i < n; i++) {
+            const t0 = v.t + i * 0.8;
+            v.o.frequency.setValueAtTime(124, t0); v.o.frequency.linearRampToValueAtTime(96, t0 + 0.5);
+            g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.07); g.setValueAtTime(a, t0 + 0.36); g.linearRampToValueAtTime(0, t0 + 0.5);
+          }
+          v.t += R(15, 40);
         } else if (v.kind === 'hibari') {        // ピーチュクチュク…（さえずり続け、ときどき休む）
           if (Math.random() < 0.04) { g.setValueAtTime(0, v.t); v.t += R(3, 8); continue; }
           const d = R(0.05, 0.11);

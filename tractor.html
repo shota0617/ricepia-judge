@@ -3432,6 +3432,9 @@ function step(dt) {
   P.PedalBrakeR.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer > 0 ? 0.5 : 0);
   // かかった時間・耕した割合
   if (S.started && !S.done) S.elapsed += dt;
+  // エンジンの水温（0＝冷たい・0.55＝ふつう）：寒い朝や夜はかけたとき冷えていて、回しているうちに上がる（耕していると早い）
+  if (S.cool === undefined) S.cool = TOD === 'asa' ? 0.08 : TOD === 'yoru' ? 0.2 : 0.55;
+  if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) - S.cool) * Math.min(1, dt / (S.cool < 0.5 ? 40 : 15));
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
   if (pct >= 95 && !S.done && !ART.on) finish();   // 田んぼアートは「完成」で終わる
   if (hillsDirty || rig.position.distanceTo(hillsCenter) > 2.5) {
@@ -3540,6 +3543,10 @@ function drawMeter() {
   g.fillText(Math.round(engineRpm(performance.now() / 1000) / 10) * 10 + 'rpm', r + 22, r + 42);
   g.beginPath(); g.arc(46, 214, 9, 0, 7); g.fillStyle = '#20d050'; g.fill();
   g.beginPath(); g.arc(210, 214, 9, 0, 7); g.fillStyle = S.rotDown ? '#ffb020' : '#3a2a10'; g.fill();
+  const tw = Math.min(1, S.cool ?? 0.55);          // 水温計（C〜H。ふつうはまん中。寒い朝は C から上がる）
+  g.fillStyle = '#20282c'; g.fillRect(80, 206, 96, 9);
+  g.fillStyle = tw < 0.35 ? '#5aa0ff' : tw > 0.85 ? '#ff4a2a' : '#9fd2dc'; g.fillRect(80, 206, 96 * tw, 9);
+  g.fillStyle = '#9fd2dc'; g.font = 'bold 11px sans-serif'; g.textAlign = 'center'; g.fillText('C', 72, 211); g.fillText('H', 184, 211);
   const fuelL = Math.max(0, 0.82 - (S.fuel || 0) / 50);   // 燃料計（E〜F。始めは 8 分目くらい）
   g.fillStyle = '#20282c'; g.fillRect(80, 226, 96, 9);
   g.fillStyle = fuelL < 0.15 ? '#ff6a2a' : '#9fd2dc'; g.fillRect(80, 226, 96 * fuelL, 9);
@@ -3596,6 +3603,16 @@ function drawMonitor(pct) {
   g.fillStyle = '#d9e6f2'; g.font = 'bold 16px sans-serif'; g.textAlign = 'center';
   ['直進 ' + (ASSIST.on ? (ASSIST.active ? (ASSIST.off >= 0 ? '左' : '右') + Math.abs(ASSIST.off * 100).toFixed(0) + 'cm' : '入') : ASSIST.mode === 'a' ? 'A点' : ASSIST.B ? '切' : '未登録'),
     (Math.abs(S.v) * 3.6).toFixed(1) + 'km/h', S.rotDown ? 'PTO' + (PTO2 ? '2速 ' : '1速 ') + Math.round(engineRpm(performance.now() / 1000) * ptoRatio() / 10) * 10 : (S.dblAct ? '倍速' + (S.autoBrake ? '+ブレーキ' : '') : S.autoBrake ? 'オートブレーキ' : 'PTO 切'), fmtTime(S.elapsed)].forEach((t, k) => g.fillText(t, 446, 75 + k * 58));
+  {                                               // 水温計と燃料計（メーターの下の段はハンドルに隠れるので、モニターにも出す）
+    const tw = Math.min(1, S.cool ?? 0.55), fl = Math.max(0, 0.82 - (S.fuel || 0) / 50);
+    g.font = 'bold 13px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
+    [['水温', tw, tw < 0.35 ? '#5aa0ff' : tw > 0.85 ? '#ff4a2a' : '#9fd2dc', 'C', 'H'], ['燃料', fl, fl < 0.15 ? '#ff6a2a' : '#9fd2dc', 'E', 'F']].forEach(([lab, v, col, lo, hi], k) => {
+      const x = 16 + k * 150, y = 292;                 // 地図の下の左（運転席からいつも見える所）
+      g.fillStyle = '#d9e6f2'; g.fillText(lab, x, y);
+      g.fillStyle = '#20282c'; g.fillRect(x + 42, y - 6, 80, 12);
+      g.fillStyle = col; g.fillRect(x + 42, y - 6, 80 * v, 12);
+    });
+  }
   if (S.dpfT > 0) {                               // DPF 自動再生中のしるし
     g.fillStyle = '#3a2a08'; g.fillRect(14, 272, 200, 32);
     g.fillStyle = Math.floor(performance.now() / 600) % 2 ? '#ffb020' : '#d08a10'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
@@ -3886,8 +3903,8 @@ function updateSound(dt = 0) {
     const acc = Math.max(0, rpm - E.prev) / Math.max(dt, 0.016) / 2000; E.prev = rpm;   // ふかした瞬間はカタカタが強い
     E.rpm.setTargetAtTime(rpm, t, 0.06);
     E.load.setTargetAtTime(ld, t, 0.15);
-    // 冷えたディーゼルは 着火おくれが大きく カラカラ音が大きい。寒い朝や夜は、かけてから 1 分半ほどで静かになる
-    const cold = (TOD === 'asa' ? 0.6 : TOD === 'yoru' ? 0.3 : 0) * Math.max(0, 1 - S.elapsed / 90);
+    // 冷えたディーゼルは 着火おくれが大きく カラカラ音が大きい。寒い朝や夜は、水温が上がる 1 分半ほどで静かになる
+    const cold = Math.max(0, 0.45 - (S.cool ?? 0.55)) * 1.4;   // 水温が低いほど（メーターの水温計）
     E.knock.setTargetAtTime(Math.min(1.4, 0.25 + 0.55 * Math.max(0, 1 - rpm / 1500) + Math.min(0.5, acc) + cold), t, 0.1);
     E.tO.frequency.setTargetAtTime(1800 + rpm * 1.2 + ld * 900, t, 0.4);
     E.tG.gain.setTargetAtTime(0.012 * ld * Math.min(1, rpm / 2500) ** 2, t, 0.4);

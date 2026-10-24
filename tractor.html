@@ -98,6 +98,11 @@
   body.touch .keys .pc, body.touch .steps .pc, body:not(.touch) .steps .sp { display: none; }   /* スマホではパソコンのキーを、パソコンではスマホのボタンをかくす */
   #help .card { text-align: left; }
   #keyHint { position: fixed; left: 12px; bottom: 12px; padding: 6px 10px; border-radius: 10px; background: rgba(20,20,20,.62); color: #fff; font-size: 12.5px; line-height: 1.6; pointer-events: none; transition: opacity .8s; }
+  /* 案内（コーチ）：いま何をすればよいかを 1 行で。はじめの 2 回の旋回までと、エンストのとき */
+  #coach { position: fixed; left: 50%; bottom: 64px; transform: translateX(-50%); max-width: min(560px, calc(100vw - 32px)); padding: 8px 16px; border: 2px solid #ffd84a; border-radius: 999px; background: rgba(20,18,14,.8); color: #fff; font-size: 15px; font-weight: 700; line-height: 1.5; text-align: center; pointer-events: none; transition: opacity .3s; }
+  #coach b { display: inline-block; min-width: 1.6em; margin-right: 6px; border-radius: 999px; background: #ffd84a; color: #1a1814; }
+  #coach kbd { padding: 0 5px; border: 1px solid #aaa; border-bottom-width: 2px; border-radius: 4px; background: rgba(255,255,255,.18); font-size: 13px; }
+  body.touch #coach { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 136px); max-width: calc(100vw - 400px); font-size: 13px; border-radius: 14px; }
   #keyHint kbd { padding: 0 4px; border: 1px solid #888; border-radius: 4px; background: rgba(255,255,255,.15); font-size: 11.5px; }
   .prog { height: 8px; margin: 14px 0 6px; border-radius: 99px; background: #e2dccb; overflow: hidden; }
   .prog i { display: block; height: 100%; width: 0; background: var(--green); transition: width .2s; }
@@ -107,6 +112,13 @@
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
   #rotateHint { display: none; }
   @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
+  /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
+  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; } }
+  @media (max-width: 640px) and (orientation: portrait) {
+    body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
+    body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }
+    #toast { bottom: 430px; }
+  }
 </style>
 <!-- 外から読む部品は 版を決めて、改ざんチェック（integrity）つきで（three.js は npm の 0.128.0 と同じ中身を jsDelivr から） -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js" integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu" crossorigin="anonymous"></script>
@@ -143,6 +155,7 @@
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
+<div id="coach" class="hidden"></div>
 <div id="keyHint" class="hidden"><kbd>↑</kbd><kbd>↓</kbd> 前・うしろ　<kbd>←</kbd><kbd>→</kbd> ハンドル　<kbd>スペース</kbd> ロータリー上げ下げ　<kbd>H</kbd> 操作の表</div>
 <div class="sheet hidden" id="help"><div class="card"><div id="helpBody"></div><button class="go" id="bHelpClose">とじる（H）</button></div></div>
 
@@ -177,7 +190,7 @@
     <div class="how" id="keysBox">
       <b>はじめての人へ：耕すのは 3 ステップ</b>
       <ol class="steps">
-        <li><b>ロータリーを下げる</b>：<span class="pc"><kbd>スペース</kbd></span><span class="sp">まん中の大きいボタン</span></li>
+        <li><b>ロータリーを下げる</b>：<span class="pc"><kbd>スペース</kbd></span><span class="sp">右の「ロータリーを下げる」ボタン（▲ の上）</span></li>
         <li><b>前へ走る</b>：<span class="pc"><kbd>↑</kbd></span><span class="sp">右下の ▲</span>。うしろの土が黒く耕せていく</li>
         <li><b>はしまで来たら、上げて回る</b>：<span class="pc"><kbd>スペース</kbd> で上げ、<kbd>←</kbd><kbd>→</kbd> で回り</span><span class="sp">ボタンで上げ、◀ ▶ で回り</span>、となりにならんだら また下げる</li>
       </ol>
@@ -185,7 +198,7 @@
         <tr><th>操作</th><th class="pc">パソコン</th><th>スマホ</th></tr>
         <tr class="main"><td>前へ・うしろへ</td><td class="pc"><kbd>↑</kbd><kbd>↓</kbd>（<kbd>W</kbd><kbd>S</kbd>）</td><td>▲ ▼</td></tr>
         <tr class="main"><td>ハンドル</td><td class="pc"><kbd>←</kbd><kbd>→</kbd>（<kbd>A</kbd><kbd>D</kbd>）</td><td>◀ ▶</td></tr>
-        <tr class="main"><td>ロータリーを下げる・上げる</td><td class="pc"><kbd>スペース</kbd></td><td>まん中の大きいボタン</td></tr>
+        <tr class="main"><td>ロータリーを下げる・上げる</td><td class="pc"><kbd>スペース</kbd></td><td>右の「ロータリーを下げる」ボタン</td></tr>
         <tr><td>速さ（主変速 1〜4 速。耕すのは 2〜3 速）</td><td class="pc"><kbd>Q</kbd> 遅く・<kbd>E</kbd> 速く</td><td>「変速」</td></tr>
         <tr><td>耕す深さ</td><td class="pc"><kbd>Z</kbd> 浅く・<kbd>X</kbd> 深く</td><td>「浅く」「深く」</td></tr>
         <tr><td>うしろの作業機を見る</td><td class="pc"><kbd>B</kbd>（押しているあいだ）</td><td>「うしろを見る」</td></tr>
@@ -2779,6 +2792,7 @@ function step(dt) {
   if (sIn) S.steer = Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn * 1.1 * dt));
   // うしろを振り返っていると、体のひねりにつられて ハンドルが少しずつ右へとられる（振り返り事故のもと）
   if (sIn && S.rotDown && S.rotPos < 0.08 && (S.workT || 0) > 6) voice('straight');   // 耕しながら向きを直しはじめたら
+  COACH.step();
   if ((S.workT || 0) > 40 && SCORE.st.yawM > 30 && SCORE.parts.straight < 22) voice('veteran');   // 蛇行している
   if ((S.workT || 0) > 60 && SCORE.st.yawM > 40 && SCORE.parts.straight >= 27) voice('straightSelf');   // まっすぐ耕せている
   if (ASSIST.on && S.started && Math.abs(S.x) > HX - 4 && Math.abs(S.z) > HZ - 4) voice('corner');   // 直進アシストのまま四隅に来た
@@ -3073,6 +3087,13 @@ const fmtTime = s => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padSt
 
 // ---- 音（ディーゼルエンジンと、ロータリーの爪が土をかく音） ----
 let audio = null, soundOn = false;
+// 音は、運転しているあいだだけ鳴らす（おわり・メニュー・ほかのタブでは止める。🔇 のときも止める）
+function syncAudio(running) {
+  if (!audio) return;
+  const want = soundOn && running && !document.hidden, st = audio.ac.state;
+  if (want && st === 'suspended') audio.ac.resume();
+  else if (!want && st === 'running') audio.ac.suspend();
+}
 function toggleSound() {
   soundOn = !soundOn;
   $('bSnd').textContent = soundOn ? '🔊' : '🔇';
@@ -3300,8 +3321,14 @@ function engineRpm(t) {
 // ---- 操作 ----
 const KEYS = { ArrowUp: 'fwd', KeyW: 'fwd', ArrowDown: 'back', KeyS: 'back', ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right' };
 addEventListener('keydown', e => {
-  if (KEYS[e.code]) { key[KEYS[e.code]] = 1; e.preventDefault(); }
-  else if (e.code === 'Space') { toggleRotary(); e.preventDefault(); }
+  if (!$('help').classList.contains('hidden')) {   // 操作の表を開いているあいだは、閉じるキーだけ
+    if ((e.code === 'KeyH' || e.code === 'Escape') && !e.repeat) { toggleHelp(); e.preventDefault(); }
+    return;
+  }
+  if (!$('start').classList.contains('hidden') || !$('done').classList.contains('hidden')) return;   // はじめ・おわりの画面では運転しない
+  if (KEYS[e.code]) { key[KEYS[e.code]] = 1; e.preventDefault(); return; }
+  if (e.repeat) { if (e.code === 'Space') e.preventDefault(); return; }   // 押しっぱなしでくりかえさない（上げ下げ・視点・音・直進アシストなど）
+  if (e.code === 'Space') { toggleRotary(); e.preventDefault(); }
   else if (e.code === 'KeyC') nextCam();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyR') resetPos();
@@ -3319,6 +3346,14 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyE') shiftGear(1);
 });
 addEventListener('keyup', e => { if (KEYS[e.code]) key[KEYS[e.code]] = 0; if (e.code === 'KeyB') key.lookBack = 0; });
+// ほかの窓やタブへ移ると keyup が来ないことがあるので、押しているキー・ボタン・画面のドラッグをはなす
+function releaseAll() {
+  for (const k in key) key[k] = 0;
+  document.querySelectorAll('.pad button.active').forEach(b => b.classList.remove('active'));
+  drag = null;
+}
+addEventListener('blur', releaseAll);
+document.addEventListener('visibilitychange', () => { if (document.hidden) releaseAll(); syncAudio(false); });
 document.querySelectorAll('.pad button[data-k]').forEach(b => {
   const on = e => { e.preventDefault(); key[b.dataset.k] = 1; b.classList.add('active'); };
   const off = e => { e.preventDefault(); key[b.dataset.k] = 0; b.classList.remove('active'); };
@@ -3405,6 +3440,7 @@ $('bMenu').onclick = () => { $('start').classList.remove('hidden'); };
 // 操作の表（？・H）：はじめの画面と同じ表を出す
 function toggleHelp() {
   const h = $('help');
+  releaseAll();                                   // 開くとき：押しっぱなしのまま後ろで走りつづけない
   if (h.classList.contains('hidden')) { $('helpBody').innerHTML = $('keysBox').outerHTML.replace('id="keysBox"', ''); h.classList.remove('hidden'); }
   else h.classList.add('hidden');
 }
@@ -3478,7 +3514,7 @@ $('bStart').onclick = () => {
   if (!S.started) {
     S.started = true;
     if (ART.on) { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); }
-    else setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800);
+    // はじめの「下げて前へ」は、画面下の案内（COACH）が出す
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
@@ -3545,18 +3581,62 @@ function finishArt() {
   $('done').classList.remove('hidden');
 }
 
+// ---- 案内（コーチ）：いま何をすればよいかを、画面の下に 1 行で出す ----
+// ①下げる → ②前へ → ③畦が近いので上げる → ④回る → ⑤となりにならんだら下げる。上げて回って下げる旋回が 2 回できたら消える。
+// エンストのときと、田んぼアートが仕上がりそうなときも出す。パソコンはキー、スマホはボタンの場所で書く
+const COACH = (() => {
+  const el = $('coach'), PAD = MOBILE || params.has('pad');
+  let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false;
+  const K = (pc, sp) => PAD ? sp : pc;
+  const dYaw = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+  function leveeAhead() {                         // 前 4.5〜6.5m の所が畦（田んぼのはし）か
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
+    return [4.5, 6.5].some(d => Math.abs(S.x + s * d) > HX - 0.2 || Math.abs(S.z + c * d) > HZ - 0.2);
+  }
+  function msg() {
+    if (S.stalled) return ['!', K('エンスト：<kbd>スペース</kbd>で' + IMPL + 'を上げてから、<kbd>↑</kbd> でエンジンをかけなおす', 'エンスト：' + IMPL + 'を上げてから、▲ でエンジンをかけなおす')];
+    if (off) return ART.on && ART.score().fill >= 0.9 ? ['✓', K('仕上がったら <kbd>Enter</kbd>（📸 完成）でドローン写真', '仕上がったら 右上の「📸 完成」')] : null;
+    if (!S.rotDown) {
+      if (!S.everDown) return ['1', K('<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '右の「' + IMPL + 'を下げる」ボタンで下げる')];
+      if (liftYaw === null) return null;
+      if (Math.abs(dYaw(S.yaw, liftYaw)) > 2.6 && !leveeAhead()) return ['5', K('となりの耕した跡にならんだら、<kbd>スペース</kbd>で下げる', 'となりの耕した跡にならんだら、ボタンで下げる')];
+      return ['4', K('<kbd>←</kbd><kbd>→</kbd> で回る（せまいときは <kbd>↓</kbd> で少しバック）', '◀ ▶ で回る（せまいときは ▼ で少しバック）')];
+    }
+    if (!S.everMoved) return ['2', K('<kbd>↑</kbd> で前へ。うしろの土が耕せていく', '右下の ▲ で前へ。うしろの土が耕せていく')];
+    if (leveeAhead()) return ['3', K('畦が近い：<kbd>スペース</kbd>で上げてから回る', '畦が近い：ボタンで上げてから回る')];
+    return null;
+  }
+  function step() {                               // 毎ステップ：上げ下げと旋回を見のがさない
+    if (S.rotDown && S.v > 0.3) S.everMoved = true;
+    if (S.rotDown) S.everDown = true;
+    if (prevDown && !S.rotDown) liftYaw = S.yaw;                 // 上げた（手で・バック・旋回アップ）
+    if (!prevDown && S.rotDown && liftYaw !== null) {          // 下げた：回ってからなら 1 回
+      if (Math.abs(dYaw(S.yaw, liftYaw)) > 2.6 && ++turns >= 2 && !off) { off = true; toast('旋回のしかたは もうだいじょうぶ。案内を消します（H で操作の表）', 3.5); }
+      liftYaw = null;
+    }
+    prevDown = S.rotDown;
+  }
+  function update(running) {                      // 表示は計器と同じ間隔で
+    const m = running ? msg() : null, h = m ? '<b>' + m[0] + '</b>' + m[1] : '';
+    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; }
+  }
+  return { step, update, msg, get turns() { return turns; }, get off() { return off; } };
+})();
+
 // ---- まわす ----
-let last = performance.now(), hudT = 0, meterT = 0, monT = 0;
+let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(0.05, (now - last) / 1000);
   last = now;
   if (!P.Rotary) { renderer.render(scene, camera); return; }
-  const running = S.started && $('start').classList.contains('hidden') && !S.done;
+  const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; }
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
-  let pct = 0;
-  for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt);   // 早送り
+  // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
+  let pct = lastPct;
+  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt); lastPct = pct; }   // 早送り
+  syncAudio(running);
   updateCamera(dt);
   updateSound(dt);
   SKY_TIME.value += dt;
@@ -3584,6 +3664,7 @@ function frame(now) {
     $('rot').textContent = S.rotDown ? IMPL + ' 下（' + (SHIRO ? 'かく' : '耕す') + '）' : IMPL + ' 上';
     $('rot').classList.toggle('on', S.rotDown);
     $('pct').textContent = pct;
+    COACH.update(running);
     if (pct >= 3 && !S.hintGone) { S.hintGone = true; $('keyHint').style.opacity = 0; }
     $('time').textContent = fmtTime(S.elapsed);
     if (ART.on) { const r = ART.score(); $('sc').textContent = r.skill === null ? '—' : r.skill; $('sim').textContent = Math.round(r.fill * 100); }
@@ -3610,7 +3691,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

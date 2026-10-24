@@ -234,6 +234,7 @@
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
       ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
+      ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
@@ -1478,6 +1479,7 @@ function tillCell(i, j) {
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
   });
   eraseTracks(c);
+  RUTS.erase(c);
   ROUGH[c] = 1.04 - 0.16 * Math.max(0, Math.min(1, ((S.pitch || 9) - 6) / 7));
   DRY.wet(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
@@ -1718,6 +1720,7 @@ function buildHills() {
     if (dx * dx + dz * dz > r2) continue;
     const i = Math.floor((h[0] + HX) / CELL), j = Math.floor((h[1] + HZ) / CELL);
     if (tilledMask[i * NZ + j]) continue;
+    if (RUTS.at(h[0], h[1]) > 0.025) continue;  // 秋のわだちの中の株は、コンバインのクローラにつぶされている
     list.push(h);
   }
   if (!stubble || stubble.instanceMatrix.count < list.length) {
@@ -1981,6 +1984,102 @@ const TR = (() => {
     return L;
   }
   return { add, erase, flush, reset, remaining, cell };
+})();
+// ---- 秋：長雨の年の稲刈りのわだち（X の米農家さん：「9 月の長雨の稲刈りのわだちが、まだ残っている。田が乾いてからトラクターを入れる」）。
+// コンバインのクローラ（幅 45cm・左右の間 1.15m）が ぬかるみに沈んで 深さ 5〜10cm のみぞを残し、両わきに泥が盛り上がって、乾くとひび割れる。
+// 回り刈りの外周・まん中の往復・もみを積んで出口の坂へ向かった所（重いので いちばん深い）。トラクターは みぞに落ちると傾き、耕すと ならされて消える。
+// 雨の日は みぞの底に水がたまる
+const RUTS = (() => {
+  if (season !== 'aki') return { at: () => 0, erase() {}, flush() {} };
+  const W = 0.45, LIP = 0.12, GAUGE = 1.15, depth = new Float32Array(NX * NZ), quads = new Map(), lines = [];
+  const R = HX - 1.7, Q = HZ - 1.7, round = [];
+  for (let k = 0; k <= 64; k++) {                 // 回り刈りの外周（角は半径 2.5m で回る）
+    const a = k / 64 * Math.PI * 2, c = Math.cos(a), s_ = Math.sin(a);
+    const sx = Math.sign(c) * Math.min(1, Math.abs(c) * 3), sz = Math.sign(s_) * Math.min(1, Math.abs(s_) * 3);
+    round.push([sx * (R - 2.5) + c * 2.5, sz * (Q - 2.5) + s_ * 2.5]);
+  }
+  const straight = (x, z0, z1, ph) => { const pts = []; for (let z = z0; z <= z1 + 1e-6; z += 1) pts.push([x + 0.15 * Math.sin(z * 0.21 + ph), z]); return pts; };
+  const haul = [];                                // もみを積んで 出口の坂（北東）へ
+  for (let k = 0; k <= 20; k++) { const t = k / 20; haul.push([1.5 + 11 * t - 2.5 * Math.sin(t * Math.PI) * 0.6, 3 + 16.5 * t * t]); }
+  for (const [pts, d] of [[round, 0.05], [straight(-7.3, -20, 20, 0.4), 0.09], [straight(4.2, -18, 16, 2.1), 0.07], [haul, 0.1]]) {
+    for (const side of [-1, 1]) {                 // 左右のクローラ
+      const o = pts.map((p, k) => {
+        const a = pts[Math.max(0, k - 1)], b = pts[Math.min(pts.length - 1, k + 1)], dx = b[0] - a[0], dz = b[1] - a[1], L = Math.hypot(dx, dz) || 1;
+        return [p[0] - dz / L * side * GAUGE / 2, p[1] + dx / L * side * GAUGE / 2];
+      });
+      lines.push({ pts: o, d });
+    }
+  }
+  // みぞの深さ（ます目ごと）：まん中が深く、ふちは浅く、外側は泥が 2cm 盛り上がる
+  for (const { pts, d } of lines) for (let k = 0; k + 1 < pts.length; k++) {
+    const [ax, az] = pts[k], [bx, bz] = pts[k + 1], dx = bx - ax, dz = bz - az, L2 = dx * dx + dz * dz || 1, M = W / 2 + LIP;
+    const i0 = Math.max(0, Math.floor((Math.min(ax, bx) - M + HX) / CELL)), i1 = Math.min(NX - 1, Math.floor((Math.max(ax, bx) + M + HX) / CELL));
+    const j0 = Math.max(0, Math.floor((Math.min(az, bz) - M + HZ) / CELL)), j1 = Math.min(NZ - 1, Math.floor((Math.max(az, bz) + M + HZ) / CELL));
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+      const r = Math.hypot(x - ax - dx * t, z - az - dz * t), c = i * NZ + j;
+      const v = r < W / 2 ? d * (1 - (r / (W / 2)) ** 2) : r < M ? -0.02 * Math.sin((r - W / 2) / LIP * Math.PI) : 0;
+      if (Math.abs(v) > Math.abs(depth[c]) || (v > 0 && v > depth[c])) depth[c] = v;
+    }
+  }
+  // 見た目：みぞに沿った帯（クローラのすじ・ひび割れ・両わきの盛り上がり）
+  const cv = document.createElement('canvas'); cv.width = 64; cv.height = 256;
+  const g2 = cv.getContext('2d'), lip = 64 * LIP / (W + 2 * LIP);
+  g2.fillStyle = 'rgba(150,132,104,0.6)'; g2.fillRect(0, 0, lip, 256); g2.fillRect(64 - lip, 0, lip, 256);   // 盛り上がった乾いた泥
+  g2.fillStyle = RAIN ? 'rgba(118,126,130,0.92)' : 'rgba(98,84,66,0.85)'; g2.fillRect(lip, 0, 64 - 2 * lip, 256);   // みぞの底：乾いた灰茶色の泥（雨の日は水たまり）
+  g2.fillStyle = RAIN ? 'rgba(190,198,204,0.35)' : 'rgba(70,56,40,0.55)';
+  for (let y = 0; y < 256; y += 16) g2.fillRect(lip + 2, y, 64 - 2 * lip - 4, 5);   // クローラのすじ
+  g2.strokeStyle = 'rgba(38,26,16,0.85)'; g2.lineWidth = 1.4;
+  for (let k = 0; k < 60; k++) {                  // 乾いてできた ひび割れ
+    let x = Math.random() * 64, y = Math.random() * 256;
+    g2.beginPath(); g2.moveTo(x, y);
+    for (let n = 0; n < 4; n++) { x += (Math.random() - 0.5) * 14; y += (Math.random() - 0.5) * 22; g2.lineTo(x, y); }
+    g2.stroke();
+  }
+  const tex = new THREE.CanvasTexture(cv); tex.wrapT = THREE.RepeatWrapping; tex.encoding = THREE.sRGBEncoding;
+  const pos = [], uv = [], idx = [];
+  for (const { pts } of lines) {
+    let v = 0;
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const [ax, az] = pts[k], [bx, bz] = pts[k + 1], L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.ceil(L / 0.4));
+      for (let m = 0; m < n; m++) {
+        const x0 = ax + (bx - ax) * m / n, z0 = az + (bz - az) * m / n, x1 = ax + (bx - ax) * (m + 1) / n, z1 = az + (bz - az) * (m + 1) / n;
+        const nx = -(bz - az) / L * (W / 2 + LIP), nz = (bx - ax) / L * (W / 2 + LIP), v1 = v + L / n / 0.5;
+        const ci = Math.floor(((x0 + x1) / 2 + HX) / CELL) * NZ + Math.floor(((z0 + z1) / 2 + HZ) / CELL);
+        if (Math.abs((x0 + x1) / 2) < HX - 0.3 && Math.abs((z0 + z1) / 2) < HZ - 0.3) {
+          const q = pos.length / 12, y = 0.027;
+          pos.push(x0 + nx, y, z0 + nz, x0 - nx, y, z0 - nz, x1 - nx, y, z1 - nz, x1 + nx, y, z1 + nz);
+          uv.push(0, v, 1, v, 1, v1, 0, v1);
+          idx.push(q * 4, q * 4 + 2, q * 4 + 1, q * 4, q * 4 + 3, q * 4 + 2);   // 上から見て表になる向き（裏だと光が当たらず暗い）
+          if (!quads.has(ci)) quads.set(ci, []);
+          quads.get(ci).push(q);
+        }
+        v = v1;
+      }
+    }
+  }
+  const geo = new THREE.BufferGeometry(), pa = new THREE.BufferAttribute(new Float32Array(pos), 3);
+  geo.setAttribute('position', pa); geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uv), 2));
+  geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(pos.length).map((_, k) => k % 3 === 1 ? 1 : 0), 3));
+  geo.setIndex(idx);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  mesh.frustumCulled = false; mesh.renderOrder = 0.9; scene.add(mesh);
+  let dirty = false;
+  return {
+    at(x, z) {                                    // みぞの深さ（m。耕した所は 0）
+      const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+      if (i < 0 || j < 0 || i >= NX || j >= NZ) return 0;
+      const c = i * NZ + j;
+      return tilledMask[c] ? 0 : depth[c];
+    },
+    erase(c) {                                    // 耕した所のわだちの帯を消す
+      const list = quads.get(c);
+      if (!list) return;
+      for (const q of list) pa.array.fill(0, q * 12, q * 12 + 12);
+      quads.delete(c); dirty = true;
+    },
+    flush() { if (dirty) { pa.needsUpdate = true; dirty = false; } }
+  };
 })();
 const trackCells = new Set();
 function eraseTracks(c) { if (trackCells.has(c)) { TR.erase(c); trackCells.delete(c); } }
@@ -2826,7 +2925,7 @@ function placeRig(dt) {
     const t = (softAt(p[k][0], p[k][1]) * SINK + WET.at(p[k][0], p[k][1]) * 0.07) * (k[0] === 'f' ? 0.6 : 1);   // ぬかるみでは さらに沈む
     sinkW[k] += (t - sinkW[k]) * Math.min(1, dt * (t > sinkW[k] ? 3 : 6));
   }
-  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8 - (sinkW[k] || 0);   // 盛り上がった土の上では傾く
+  const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8 - (sinkW[k] || 0) - RUTS.at(p[k][0], p[k][1]);   // 盛り上がった土の上では傾く・わだちに落ちると傾く
   const hr = (h('rl') + h('rr')) / 2, hf = (h('fl') + h('fr')) / 2;
   rig.position.set(S.x, hr, S.z);
   S.dist = (S.dist || 0) + Math.abs(S.v) * dt;   // 走った道のり（凸凹のゆれに使う）
@@ -4002,6 +4101,7 @@ function frame(now) {
   FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
   TR.flush();
+  RUTS.flush();
   STREAK.flush();
   SUN_VIEW.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);
   renderer.render(scene, camera);

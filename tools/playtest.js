@@ -1081,6 +1081,24 @@ async function walkTo(page, id) {
       for (let i = 0; i < 20 && !spot; i++) { await wait(250); if ((G.state.visits[s.id] || { n: 0 }).n === v0 + 1) spot = true; }
       await wait(600); clear(); await wait(800); clear();
       const sb = M.banner !== b0 && /・めいろ|秒/.test(M.banner);
+      // 着いた とき 窓が 開いていて、そのまま 2分 ちかく 読んでから とじても、その ゴールで チェックインする（窓の 間は 2分を 止める）
+      let held = 'none';
+      const s2 = G.spots.filter(x => x.featured && !x.shop && x.id !== s.id && !G.cooldownLeft(x) && G.dist(G.me, x) < 1500).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (s2) {
+        G.setGuide({ kind: 'spot', id: s2.id, name: s2.name, why: 'テスト', by: 'テスト' });
+        await wait(3800); clear();
+        const pi = document.getElementById('pxInfo'), v2 = (G.state.visits[s2.id] || { n: 0 }).n;
+        document.getElementById('pxInfoBody').innerHTML = '<p>テストの 窓</p>'; pi.hidden = false;
+        G.moveTo(s2.lat, s2.lng); await wait(900);
+        const aged = M.prevAge(119000);
+        await wait(2000);
+        const during = (G.state.visits[s2.id] || { n: 0 }).n === v2;   // 窓の 間は まだ チェックインしない
+        pi.hidden = true;
+        let got = false;
+        for (let i = 0; i < 12 && !got; i++) { await wait(250); if ((G.state.visits[s2.id] || { n: 0 }).n === v2 + 1) got = true; }
+        held = { aged, during, got };
+        await wait(500); clear(); await wait(600); clear();
+      }
       const n = G.npcs.filter(x => G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
       if (!n) return { spot, sb, npc: 'none' };
       G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
@@ -1092,9 +1110,9 @@ async function walkTo(page, id) {
       await wait(400);
       const nb = M.banner !== b1;
       clear();
-      return { spot, sb, talk, nb };
+      return { spot, sb, held, talk, nb };
     });
-    R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && arriveA.talk === true && arriveA.nb };
+    R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
     // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
     const bumpA = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');

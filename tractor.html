@@ -3091,6 +3091,111 @@ const INAGO = (() => {
   };
 })();
 
+// ---- 昼のチョウ：モンシロチョウ（白）とモンキチョウ（黄）。モンキチョウは 3 月下旬〜11 月に年 4〜5 回出て、田畑の畦や河川敷の草地でふつうに見られる
+// （兵庫県立人と自然の博物館『兵庫県の蝶』・神戸新聞 虫顔図鑑）。畦の花やセイタカアワダチソウにとまって 翅を閉じ、トラクターが近づくと飛びたつ。雨の日と夜は飛ばない
+const BUTTERFLIES = (() => {
+  if (TOD === 'yoru' || RAIN) return { update() {} };
+  const n = Math.max(1, Math.round({ haru: 6, shirokaki: 4, aki: 3 }[season] * (TOD === 'asa' ? 0.5 : 1)));   // 冷えた朝は少ない
+  const spots = [], m4 = new THREE.Matrix4();                // とまる所：畦の花・アワダチソウの穂
+  const add = (m, h) => { for (let i = 0; i < m.count; i += 5) { m.getMatrixAt(i, m4); const v = new THREE.Vector3(0, h, 0).applyMatrix4(m4); if (Math.abs(v.z) < HZ + 6) spots.push(v); } };   // 田んぼのそばの花だけ
+  if (LEVEE_FLOWERS) Object.values(LEVEE_FLOWERS).forEach(a => a && add(a[0], 0.01));
+  if (ROADSIDE) add(ROADSIDE.goldenrod[1], 1.0);
+  const wingGeo = new THREE.PlaneGeometry(0.026, 0.022).translate(0.013, 0, 0).rotateX(-Math.PI / 2);
+  const list = [];
+  for (let k = 0; k < n; k++) {
+    const col = k % 3 === 2 || season === 'aki' && k % 2 ? 0xe9d64a : 0xf3f3ec;
+    const mat = new THREE.MeshLambertMaterial({ color: new THREE.Color(col).convertSRGBToLinear(), side: THREE.DoubleSide });
+    const g = new THREE.Group(), wings = [-1, 1].map(sx => { const w = new THREE.Mesh(wingGeo, mat); w.scale.x = sx; g.add(w); return w; });
+    const s0 = spots.length ? spots[Math.floor(Math.random() * spots.length)] : new THREE.Vector3(-HX - 0.6, 0.4, (Math.random() - 0.5) * 2 * HZ);
+    g.position.set(s0.x + (Math.random() - 0.5) * 4, 0.5 + Math.random() * 0.6, s0.z + (Math.random() - 0.5) * 4);
+    scene.add(g);
+    list.push({ g, wings, st: 'fly', t: Math.random() * 9, tgt: g.position.clone(), rest: 0, ph: Math.random() * 6 });
+  }
+  const tmp = new THREE.Vector3();
+  function pickTarget(b) {
+    const p = b.g.position;
+    if (spots.length && Math.random() < 0.3) {                 // 近くの花へ
+      let best = null, bd = 1e9;
+      for (let i = 0; i < 12; i++) { const s = spots[Math.floor(Math.random() * spots.length)], d = s.distanceToSquared(p); if (d < bd) { bd = d; best = s; } }
+      if (bd < 64) { b.tgt.copy(best); b.toFlower = true; return; }
+    }
+    b.toFlower = false;
+    b.tgt.set(p.x + (Math.random() - 0.5) * 6, 0.3 + Math.random() * 1.1, p.z + (Math.random() - 0.5) * 6);
+    b.tgt.x = Math.max(-HX - 6, Math.min(HX + 7, b.tgt.x)); b.tgt.z = Math.max(-HZ - 6, Math.min(HZ + 6, b.tgt.z));   // 田んぼのまわりから 遠くへ行かない
+  }
+  return {
+    list,
+    update(dt) {
+      for (const b of list) {
+        b.t += dt;
+        const p = b.g.position, near = Math.hypot(p.x - S.x, p.z - S.z) < 3;
+        if (b.st === 'rest') {                                 // とまって 翅を閉じる（ときどき ゆっくり開く）
+          const open = Math.max(0, Math.sin(b.t * 1.3 + b.ph)) ** 4 * 0.9;
+          b.wings.forEach((w, i) => { w.rotation.z = (i ? 1 : -1) * (1.45 - open); });
+          if ((b.rest -= dt) <= 0 || near) { b.st = 'fly'; pickTarget(b); }
+          continue;
+        }
+        if (near) { tmp.set(p.x - S.x, 0, p.z - S.z).normalize(); b.tgt.set(p.x + tmp.x * 4, 1.2 + Math.random() * 0.5, p.z + tmp.z * 4); b.toFlower = false; }   // にげる
+        tmp.subVectors(b.tgt, p); const d = tmp.length();
+        if (d < 0.08) {
+          if (b.toFlower) { b.st = 'rest'; b.rest = 2 + Math.random() * 5; p.copy(b.tgt); continue; }
+          pickTarget(b); continue;
+        }
+        tmp.multiplyScalar(Math.min(1, dt * 1.1 / d));         // ひらひら：まっすぐ進まず 上下左右にゆれる
+        p.add(tmp); p.x += Math.sin(b.t * 7.3 + b.ph) * 0.35 * dt; p.y += Math.sin(b.t * 9.1 + b.ph * 2) * 0.5 * dt; p.z += Math.cos(b.t * 6.1 + b.ph) * 0.35 * dt;
+        b.g.rotation.y = Math.atan2(tmp.x, tmp.z);
+        const f = Math.sin(b.t * 55 + b.ph);                    // 1 秒に 9 回ほど はばたく
+        b.wings.forEach((w, i) => { w.rotation.z = (i ? 1 : -1) * (0.3 + 0.95 * f); });
+      }
+    }
+  };
+})();
+
+// ---- 代かき：畦の穴から水がもれる。アメリカザリガニが畦に巣穴を掘ると、そこから水が抜けて、放っておくと畦がくずれる
+// （愛知県「アメリカザリガニ防除の手引き」・農林水産省・神奈川県）。畦ぎわの水面に小さな渦ができ、近づくとゴボゴボ聞こえる
+const LEAK = (() => {
+  if (!SHIRO) return { update() {} };
+  const X = -HX + 0.36, Z = -12 + Math.random() * 24;          // 西の畦ぎわ
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;
+  const g = cv.getContext('2d');
+  g.translate(64, 64); g.lineCap = 'round';
+  const pool = g.createRadialGradient(0, 0, 8, 0, 0, 63);       // 穴のまわりに 水がたまって 吸いこまれていく（浅水なので まわりは泥）
+  pool.addColorStop(0, 'rgba(62,70,74,0.85)'); pool.addColorStop(0.75, 'rgba(92,102,106,0.6)'); pool.addColorStop(1, 'rgba(92,102,106,0)');
+  g.fillStyle = pool; g.beginPath(); g.arc(0, 0, 63, 0, 7); g.fill();
+  for (let k = 0; k < 3; k++) {                                  // 中心へ吸いこまれる らせんの すじ
+    g.beginPath();
+    for (let i = 0; i <= 60; i++) { const u = i / 60, a = k * 2.1 + u * 5.5, r = 44 * (1 - u) + 4; i ? g.lineTo(Math.cos(a) * r, Math.sin(a) * r) : g.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+    g.strokeStyle = 'rgba(235,238,236,0.4)'; g.lineWidth = 2.5; g.stroke();
+  }
+  const gr = g.createRadialGradient(0, 0, 0, 0, 0, 20); gr.addColorStop(0, 'rgba(20,14,8,0.8)'); gr.addColorStop(1, 'rgba(20,14,8,0)');
+  g.fillStyle = gr; g.beginPath(); g.arc(0, 0, 20, 0, 7); g.fill();   // まん中は くぼんで暗い
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 0.7).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false, opacity: 0.85 * FX_K }));
+  m.renderOrder = 3; m.position.set(X, 0.03, Z); scene.add(m);
+  const i0 = Math.floor((X + HX) / CELL), j0 = Math.floor((Z + HZ) / CELL);
+  let told = false, gT = 0;
+  const tmp = new THREE.Vector3();
+  function gurgle() {                                            // ゴボッ：短く下がる 低めの泡の音
+    if (!audio || !soundOn || audio.ac.state !== 'running') return;
+    const ac = audio.ac, [pan, d] = panTo(tmp.set(X, 0.05, Z)), t0 = ac.currentTime + 0.01;
+    if (d > 9) return;
+    const o = ac.createOscillator(), gg = ac.createGain(), p = ac.createStereoPanner ? ac.createStereoPanner() : null;
+    const v = 0.05 / (1 + d * 0.5) * (camMode === 0 ? 0.4 : 1), f = 260 + Math.random() * 260;
+    o.type = 'sine'; o.frequency.setValueAtTime(f, t0); o.frequency.exponentialRampToValueAtTime(f * 2.2, t0 + 0.05);   // 泡がはじけると 音が上がる
+    gg.gain.setValueAtTime(0, t0); gg.gain.linearRampToValueAtTime(v, t0 + 0.008); gg.gain.exponentialRampToValueAtTime(0.0005, t0 + 0.07);
+    o.connect(gg); if (p) { p.pan.value = pan; gg.connect(p); p.connect(ac.destination); } else gg.connect(ac.destination);
+    o.start(t0); o.stop(t0 + 0.08);
+  }
+  return {
+    pos: [X, Z],
+    update(dt) {
+      m.rotation.y -= dt * 2.2;                                  // 渦が回る
+      m.position.y = tilledMask[i0 * NZ + j0] ? TILL_Y + 0.012 : 0.03;
+      if ((gT -= dt) <= 0) { gT = 0.15 + Math.random() * (Math.random() < 0.3 ? 0.1 : 0.9); gurgle(); }
+      if (!told && S.started && Math.hypot(S.x - X, S.z - Z) < 5) { told = true; toast('畦の穴から水がもれています（アメリカザリガニの巣穴）。本物は 土をつめて ふさぐ。放っておくと畦がくずれる', 4); }
+    }
+  };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -4701,6 +4806,8 @@ function frame(now) {
   KABASHIRA.update(dt);
   TOBI.update(dt);
   INAGO.update(dt);
+  BUTTERFLIES.update(dt);
+  LEAK.update(dt);
   LAMPS.update();
   emitExhaust(dt);
   DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
@@ -4747,7 +4854,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

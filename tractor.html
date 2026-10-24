@@ -4299,6 +4299,8 @@ function startAmbient(ac) {
     const ns = ac.createBufferSource(), wl = ac.createBiquadFilter(); ns.buffer = nb; ns.loop = true; wl.type = 'lowpass'; wl.frequency.value = 180;
     k.wing = voice(0, 1); ns.connect(wl); wl.connect(k.wing.g); ns.start();   // 羽の音（鳴き声と同じ所から）
     voices.push(k);
+    // ウグイス：本州中部では 3 月はじめから「ホーホケキョ」とさえずる（なわばりの宣言）。ときどき「キキキキ キッキョ」の谷渡り。集落の竹やぶから（コトバンク・tenki.jp）
+    const u = voice(R(-0.9, 0.9), 0.45); u.o = osc('sine', 1200, u.g); u.kind = 'uguisu'; u.t = ac.currentTime + R(3, 10); voices.push(u);
   } else {
     for (let k = 0; k < 4; k++) { const v = voice(R(-0.9, 0.9), R(0.3, 1)); v.o = osc('sine', R(4300, 4800), v.g); v.kind = 'korogi'; voices.push(v); }
     if (TOD !== 'yoru') {                         // モズの高鳴き：秋に「キーキー キチキチ」と鳴いて、冬のなわばりを主張する（Canon 野鳥写真図鑑・我孫子市鳥の博物館）
@@ -4341,6 +4343,21 @@ function startAmbient(ac) {
           }
           for (let i = 0; i < 7; i++, t0 += 0.06) { v.o.frequency.setValueAtTime(4200, t0); g.setValueAtTime(a * 0.8, t0); g.setValueAtTime(0, t0 + 0.025); }
           v.t = t0 + R(20, 50);
+        } else if (v.kind === 'uguisu') {        // ホーー ホケキョ（ときどき 谷渡り）→ 6〜15 秒休む
+          const f = v.o.frequency; let t0 = v.t;
+          if (Math.random() < 0.18) {               // キキキキキ キッキョ キッキョ
+            for (let i = 0; i < 9; i++, t0 += 0.09) { f.setValueAtTime(2900, t0); f.linearRampToValueAtTime(2500, t0 + 0.05); g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a * 0.8, t0 + 0.01); g.linearRampToValueAtTime(0, t0 + 0.06); }
+            for (let i = 0; i < 2; i++, t0 += 0.34) { f.setValueAtTime(2700, t0); f.setValueAtTime(3100, t0 + 0.08); f.linearRampToValueAtTime(2000, t0 + 0.24); g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.02); g.linearRampToValueAtTime(0, t0 + 0.26); }
+          } else {
+            f.setValueAtTime(1150, t0); f.linearRampToValueAtTime(1400, t0 + 0.95);   // ホーー
+            g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a * 0.8, t0 + 0.3); g.setValueAtTime(a * 0.8, t0 + 0.85); g.linearRampToValueAtTime(0, t0 + 1.0);
+            t0 += 1.15;
+            f.setValueAtTime(1700, t0); g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.015); g.linearRampToValueAtTime(0, t0 + 0.08);   // ホ
+            t0 += 0.1; f.setValueAtTime(2700, t0); f.linearRampToValueAtTime(2300, t0 + 0.09); g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.015); g.linearRampToValueAtTime(0, t0 + 0.1);   // ケ
+            t0 += 0.12; f.setValueAtTime(3100, t0); f.linearRampToValueAtTime(1900, t0 + 0.26); g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.02); g.linearRampToValueAtTime(0, t0 + 0.28);   // キョ
+            t0 += 0.3;
+          }
+          v.t = t0 + R(6, 15);
         } else if (v.kind === 'jobi') {          // ヒッ ヒッ（2〜4 声）→ カッカッ → 少し休む
           let t0 = v.t;
           for (let i = 0, n = Math.floor(R(2, 5)); i < n; i++, t0 += R(0.32, 0.45)) {

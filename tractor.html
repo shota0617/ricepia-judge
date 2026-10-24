@@ -855,6 +855,10 @@ const GLASS_MUD = { value: 0 };   // ガラスの泥はねの量（代かきで�
 // ワイパー：前ガラスの左下を根元に 扇形をふく。小雨のときは間欠（WIPE_P 秒ごとに 1 往復）。ふいたあとは 少しずつ水滴がたまる
 const WIPE = { value: 9 }, RAIN_AMT = { value: RAIN ? 1 : 0 }, WIPE_P = 4.5, WTH0 = 0.38;
 // ワイパーの向き（0＝根元から左・1＝右へ寝ている）：0.55 秒で左へふいて、0.55 秒でもどる。そのあとは止まって待つ
+// 窓の内側の曇り：雨の日（湿気）・寒い朝や夜（冷えたガラス）は、はじめ窓が白くくもっている。デフロスター（エアコンで除湿した風）を
+// 前ガラスの下のまん中から当てるので、前ガラスは下から 20 秒ほどで晴れていき、横とうしろの窓は長くくもる（JAF・クルマの記事の曇りのしくみ）
+const FOG0 = RAIN ? 0.75 : TOD === 'asa' && !SHIRO ? 0.6 : TOD === 'yoru' ? 0.45 : 0;
+const GLASS_FOG = { value: FOG0 }, FOG_CLEAR = { value: 0 };
 const bladeTh = u => u < 0.55 ? 1 - (1 - WTH0) * u / 0.55 : u < 1.1 ? WTH0 + (1 - WTH0) * (u - 0.55) / 0.55 : 1;
 function dustyGlass(m) {
   m.onBeforeCompile = sh => {
@@ -862,8 +866,10 @@ function dustyGlass(m) {
     sh.uniforms.glassMud = GLASS_MUD;
     sh.uniforms.wipeU = WIPE;
     sh.uniforms.rainAmt = RAIN_AMT;
+    sh.uniforms.glassFog = GLASS_FOG;
+    sh.uniforms.fogClear = FOG_CLEAR;
     sh.vertexShader = 'varying vec3 vObjP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vObjP = position;');
-    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\nuniform float glassMud;\nuniform float wipeU;\nuniform float rainAmt;\n' +
+    sh.fragmentShader = 'varying vec3 vObjP;\nuniform vec3 sunView;\nuniform float glassMud;\nuniform float wipeU;\nuniform float rainAmt;\nuniform float glassFog;\nuniform float fogClear;\n' +
       'float gH(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }\n' +
       'float gN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);' +
       ' return mix(mix(gH(i), gH(i + vec2(1.0, 0.0)), f.x), mix(gH(i + vec2(0.0, 1.0)), gH(i + vec2(1.0, 1.0)), f.x), f.y); }\n' +
@@ -892,6 +898,13 @@ function dustyGlass(m) {
   diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.30, 0.24, 0.17), mud);
   diffuseColor.a = max(diffuseColor.a, mud * 0.9);
   // 雨の水滴：小さな丸がガラスに散らばる（ふちは暗く、まん中は空を映して明るい）。前ガラスのふいた所は、ふいてからの時間でだんだんふえる
+  if (glassFog > 0.0) {                                              // 内側の曇り（前ガラスは下のまん中から晴れる・横とうしろは晴れにくい）
+    float fd = length(vec2(vObjP.x, (vObjP.y - 1.38) * 1.15));
+    float fa = vObjP.z > 0.45 ? glassFog * smoothstep(fogClear - 0.25, fogClear, fd) : glassFog * clamp(1.0 - fogClear * 0.35, 0.3, 1.0);
+    fa *= 0.75 + 0.25 * gN(q * 9.0);
+    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.88, 0.9), fa * 0.55);
+    diffuseColor.a = max(diffuseColor.a, fa * 0.5);
+  }
   if (rainAmt > 0.0) {
     float cov = rainAmt * (vObjP.z > 0.45 ? 0.5 : vObjP.z < -0.45 ? 0.15 : 0.35);
     if (vObjP.z > 0.45 && wd < 0.5 && inWipe > 0.5) {               // ワイパーが最後に通ってからの時間
@@ -4077,6 +4090,7 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
+    if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
     if (TOD === 'yoru') setTimeout(() => toast('🌙 本物は、暗くなってからの作業は なるべくしない（畦や足もとが見えにくく、事故が多い）。するなら作業灯をつけて ゆっくり（L でライトの入切）', 6), 10000);
     if (RAIN && !SHIRO) setTimeout(() => toast('🌧️ 本物は、雨の日や雨のすぐあとには耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになる（乾くのを待つ）', 6), 4000);
   }
@@ -4212,7 +4226,8 @@ function frame(now) {
   RAINFX.update(dt);
   RAINRING.update(dt);
   WIPE.value = RAIN ? (performance.now() / 1000) % WIPE_P : 9;   // 間欠ワイパー
-  if (P.Wiper) P.Wiper.rotation.z = Math.PI / 2 + Math.PI * bladeTh(WIPE.value);   // 車体のワイパーを、ガラスのふいた所と同じ動きで回す
+  if (P.Wiper) P.Wiper.rotation.z = Math.PI / 2 + Math.PI * bladeTh(WIPE.value);
+  if (FOG0) FOG_CLEAR.value = S.started ? Math.min(1.8, 0.15 + S.elapsed / 14) : 0;   // デフロスターで だんだん晴れる   // 車体のワイパーを、ガラスのふいた所と同じ動きで回す
   FX.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);

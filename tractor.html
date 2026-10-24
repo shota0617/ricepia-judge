@@ -224,7 +224,11 @@
       ・ぬかるみで爪とタイヤが泥に取られ、音が変わってエンストしそうに／黒土では深いわだち／耕すと土がはしに寄る…伊賀の兼業農家さんの記録（<a href="https://note.com/yuki0mori/n/nff90dd208391" target="_blank" rel="noopener">秋起こし</a>・<a href="https://note.com/yuki0mori/n/na89a773a8924" target="_blank" rel="noopener">春の田起こし</a>・<a href="https://note.com/yuki0mori/n/nd13d201e32b2" target="_blank" rel="noopener">土・自然・機械とのコミュニケーション</a>）<br>
       ・「トラクターは車の運転とは別物」…<a href="https://note.com/mild_wasp1097/n/nefd2e2729a1d" target="_blank" rel="noopener">新規就農した人の記録</a><br>
       ・振り返ったはずみにハンドルを取られる事故…<a href="https://www.naro.go.jp/org/iam/anzenweb/point/point_pdf/till_02.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
-      ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく
+      ・「まっすぐ等間隔に往復するのは、ベテランでないと至難の技。まっすぐのつもりでも蛇行している」…<a href="https://www.businessinsider.jp/post-211001" target="_blank" rel="noopener">直進アシストの開発の話（ビジネスインサイダー）</a><br>
+      ・「頭ではわかっていても、ねらった所で止めるのに苦労する」…<a href="https://www.pref.tottori.lg.jp/item/1118891.htm" target="_blank" rel="noopener">鳥取県の農業研修のトラクター実習</a><br>
+      ・田植えの前に測量して下絵をうつす・斜めから見る絵はゆがめて植える…<a href="https://www.city.kitaakita.akita.jp/archive/contents-623" target="_blank" rel="noopener">北秋田市の田んぼアート</a><br>
+      ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
+      ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわでも、その場面で言葉が出る。終わりの画面に、聞いた声の数
     </details>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
   </div>
@@ -1506,6 +1510,7 @@ const ART = (() => {
     bar(H + 10, r.fill, '#6fd05e', 'でき ' + Math.round(r.fill * 100) + '%');
     bar(H + 29, r.over / 100, '#ff5a3c', 'はみ出し ' + Math.round(r.over) + 'm²');   // 100m² で いっぱい
     const box = $('artBox');
+    if (r.over > lastOver + 0.05 && r.over > 3 && S.started) voice('stopLine');
     if (r.over > lastOver + 0.05) { flashT = now + 0.8; box.classList.add('bad'); box.classList.remove('good'); $('artChip').classList.add('bad'); }
     else if (now > flashT) { box.classList.remove('bad'); $('artChip').classList.remove('bad'); }
     lastOver = r.over;
@@ -2758,6 +2763,11 @@ function step(dt) {
   if (sIn) S.steer = Math.max(-MAX_STEER, Math.min(MAX_STEER, S.steer + sIn * 1.1 * dt));
   // うしろを振り返っていると、体のひねりにつられて ハンドルが少しずつ右へとられる（振り返り事故のもと）
   if (sIn && S.rotDown && S.rotPos < 0.08 && (S.workT || 0) > 6) voice('straight');   // 耕しながら向きを直しはじめたら
+  if ((S.workT || 0) > 40 && SCORE.st.yawM > 30 && SCORE.parts.straight < 22) voice('veteran');   // 蛇行している
+  if (SHIRO && S.rotDown && S.rotPos < 0.08 && S.v > 0.2) {
+    if (SCORE.st.swept > 80 && 1 - SCORE.st.newA / SCORE.st.swept > 0.35) voice('konashi');      // 同じ所を何度もかいている
+    if ((S.workT || 0) > 20 && (Math.abs(S.x) > HX - 2.2 || Math.abs(S.z) > HZ - 2.2)) voice('aze');   // 畦ぎわをかきはじめた
+  }
   if (key.lookBack && Math.abs(S.v) > 0.2 && !ASSIST.active) { S.steer = Math.max(-MAX_STEER, S.steer - 0.05 * dt); S.lookT = (S.lookT || 0) + dt; if (S.lookT > 2.5) voice('look'); }
   else if (ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
   else if (Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
@@ -3403,12 +3413,24 @@ const VOICES = {
   look: ['うしろを振り返ったはずみに ハンドルを取られて、田んぼや水路に落ちる事故がある。見るときはゆっくり', '農研機構の農作業事故の事例'],
   heap: ['耕すと土がうしろへ送られて、田んぼのはしに寄っていく。中へもどすように意識して耕す', '伊賀の兼業農家さん（note）'],
   car: ['トラクターは車の運転とは別物。変速・PTO・上げ下げと、確かめることが多い', '新規就農した人の声（note）'],
+  veteran: ['まっすぐ等間隔に往復するのは、ベテランでないと至難の技。本人はまっすぐのつもりでも、蛇行していることが多い', '直進アシストの開発の話（ビジネスインサイダー）。G で直進アシスト'],
+  stopLine: ['頭ではわかっていても、ねらった所でトラクターを止めるのに苦労する', '鳥取県の農業研修のトラクター実習。白線の少し手前で上げはじめる'],
+  art: ['田んぼアートは、田植えの前に測量して下絵をうつす。斜め上から見る絵は、わざとゆがめて植える', '秋田県北秋田市の田んぼアート'],
+  konashi: ['代かきは、こなし過ぎると 苗が育ちはじめに酸欠になりやすい', '滋賀県の稲作の資料。同じ所を何度もかかない'],
+  aze: ['水もれの大半は畦ぎわから。外周はていねいに代かきする', '鳥取県の浅水代かきの資料'],
 };
-const heard = {};
-function voice(id) {
+const heard = {}, voiceQ = [];
+function voice(id) {                              // 同じときに重なったら、前の言葉を読み終えてから出す
   if (heard[id] || !VOICES[id]) return;
   heard[id] = true;
+  voiceQ.push(id);
+  if (voiceQ.length === 1 && !(toastT > 2 && $('toast').textContent.startsWith('🧑‍🌾'))) nextVoice();
+}
+function nextVoice() {
+  const id = voiceQ[0];
+  if (!id) return;
   toast('🧑‍🌾「' + VOICES[id][0] + '」— ' + VOICES[id][1], 6);
+  voiceQ.shift();
 }
 
 $('bStart').onclick = () => {
@@ -3421,6 +3443,7 @@ $('bStart').onclick = () => {
     if (ART.on) { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); }
     else setTimeout(() => { if (!S.rotDown) toast('スペース（またはまん中のボタン）で' + IMPL + 'を下げて、前へ走ろう'); }, 1800);
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
+    if (ART.on) setTimeout(() => voice('art'), 30000);
   }
   if (!soundOn && !audio) toggleSound();
 };
@@ -3448,11 +3471,13 @@ function finish() {
   $('doneScore').innerHTML = `<b>${sm.total} 点</b><br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
-    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span><br>`;
+    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span>` + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
   $('done').classList.remove('hidden');
 }
 
+// 終わりの画面：きょう聞いた農家の声（季節やお題で出る声はちがう）
+const heardLine = () => `<br><span class="small">🧑‍🌾 聞いた農家の声 ${Object.keys(heard).length}/${Object.keys(VOICES).length}（はじめの画面の「農家の声」に、もとの話）</span>`;
 // 田んぼアートの仕上がり：ドローンの写真・点数（上手さ × でき）・保存とシェア
 function finishArt() {
   const r = ART.score(), url = ART.photo(r.final);
@@ -3469,7 +3494,7 @@ function finishArt() {
   $('doneScore').innerHTML = `<b>${f} 点</b><br><span class="small">${msg}</span>` +
     `<br><span class="small">上手さ ${r.ready ? r.skill : 0} 点（きれいさ ${r.kirei}% × 運転 ${r.unten} 点）× でき ${Math.round(r.fill * 100)}%（95% で満点）</span>` +
     `<br><span class="small">はみ出し ${r.over.toFixed(0)}m²・耕し残し ${r.left.toFixed(0)}m²（白線から ${SHIRO ? 60 : 40}cm 以内は数えない）・運転：${sm.text}</span>` +
-    (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '');
+    (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '') + heardLine();
   const blob = fetch(url).then(x => x.blob()), text = `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点`;
   blob.then(b => {
     const f = new File([b], 'tanbo-art.jpg', { type: 'image/jpeg' });
@@ -3525,7 +3550,7 @@ function frame(now) {
     else $('sc').textContent = SCORE.ready() ? SCORE.calc() : '—';   // 10m² 耕すまでは点数を出さない（まだ上手か下手かわからない）
     hudT = 0.15;
   }
-  if (toastT > 0 && (toastT -= dt) <= 0) $('toast').style.opacity = 0;
+  if (toastT > 0 && (toastT -= dt) <= 0) { $('toast').style.opacity = 0; if (voiceQ.length) nextVoice(); }
   SCORE.update(dt);
   flushTilled();                                // 耕した四角は描く直前にまとめて送る
   HEAPS.flush(dt);

@@ -1030,10 +1030,16 @@ async function walkTo(page, id) {
       const t = document.getElementById('mzCrowToggle'); t.checked = false; t.dispatchEvent(new Event('change'));
       await new Promise(res => setTimeout(res, 300));
       const offN = M.crows().list.length, offOn = M.crows().on;
-      t.checked = true; t.dispatchEvent(new Event('change'));
-      return { n: before.length, moved, hit: h1 - h0, jump: Math.round((s1 - s0) * 10) / 10, offN, offOn };
+      // おたすけ中は 1羽：3羽 いる ところで おたすけに すると 1羽に へる
+      localStorage.setItem('nsg_mzgoals', '3'); t.checked = true; t.dispatchEvent(new Event('change'));
+      for (let i = 0; i < 25 && M.crows().list.length < 2; i++) await new Promise(res => setTimeout(res, 400));
+      const many = M.crows().list.length;
+      localStorage.setItem('nsg_mzgoals', '0');
+      await new Promise(res => setTimeout(res, 300));
+      const helpN = M.crows().list.length;
+      return { n: before.length, moved, hit: h1 - h0, jump: Math.round((s1 - s0) * 10) / 10, offN, offOn, many, helpN };
     });
-    R.checks.mzCrow = { ...crowA, ok: crowA.n >= 1 && crowA.moved && crowA.hit === 1 && crowA.jump >= 5 && crowA.offN === 0 && !crowA.offOn };
+    R.checks.mzCrow = { ...crowA, ok: crowA.n >= 1 && crowA.moved && crowA.hit === 1 && crowA.jump >= 5 && crowA.offN === 0 && !crowA.offOn && crowA.many >= 2 && crowA.helpN <= 1 };
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);

@@ -2917,6 +2917,49 @@ const KABASHIRA = (() => {
   };
 })();
 
+// ---- 昼の空：トビ。羽ばたかずに上昇気流に乗って、田んぼの上を大きく輪をえがく。ときどき「ピーー ヒョロロロ」（タカのなかまで いちばんよく鳴く）。
+// 尾の先がまっすぐ切れた「バチ形」が目じるしで、翼の下の先のほうが白っぽい（新潟県・キヤノン野鳥写真図鑑・サントリー日本の鳥百科）。雨の日と夜は飛ばない
+function kiteCall(pos) {
+  if (!audio || !soundOn || audio.ac.state !== 'running') return;
+  const ac = audio.ac, [pan, d] = panTo(pos), t0 = ac.currentTime + 0.05;
+  const o = ac.createOscillator(), g = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(), p = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  const v = 0.07 / (1 + d * 0.025) * (camMode === 0 ? 0.35 : 1);
+  o.type = 'sine'; lfo.frequency.value = 11; lg.gain.value = 0; lfo.connect(lg); lg.connect(o.frequency); o.connect(g);
+  if (p) { p.pan.value = pan; g.connect(p); p.connect(ac.destination); } else g.connect(ac.destination);
+  o.frequency.setValueAtTime(2050, t0); o.frequency.linearRampToValueAtTime(2900, t0 + 0.18); o.frequency.linearRampToValueAtTime(2450, t0 + 0.95);   // ピーー
+  o.frequency.setValueAtTime(2750, t0 + 1.1); o.frequency.linearRampToValueAtTime(1900, t0 + 2.1);                                                  // ヒョロロロ
+  lg.gain.setValueAtTime(0, t0 + 1.05); lg.gain.linearRampToValueAtTime(380, t0 + 1.2);
+  g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + 0.06); g.gain.setValueAtTime(v, t0 + 0.85); g.gain.linearRampToValueAtTime(0, t0 + 1.0);
+  g.gain.linearRampToValueAtTime(v * 0.8, t0 + 1.15); g.gain.linearRampToValueAtTime(0, t0 + 2.15);
+  o.start(t0); lfo.start(t0); o.stop(t0 + 2.2); lfo.stop(t0 + 2.2);
+}
+const TOBI = (() => {
+  if (TOD === 'yoru' || RAIN) return { update() {} };
+  const b = new THREE.Group(), brown = new THREE.MeshLambertMaterial({ color: 0x4d3b2b, side: THREE.DoubleSide }), pale = new THREE.MeshLambertMaterial({ color: 0xb8ab98, side: THREE.DoubleSide });
+  const flat = (pts, mat) => { const sh = new THREE.Shape(); pts.forEach(([x, z], i) => i ? sh.lineTo(x, z) : sh.moveTo(x, z)); return new THREE.Mesh(new THREE.ShapeGeometry(sh).rotateX(Math.PI / 2), mat); };
+  for (const sx of [-1, 1]) {                       // 翼（開くと 1.5m ほど）。先は指のように分かれて少し上へ
+    const w = flat([[0, 0.16], [0.42, 0.14], [0.62, 0.08], [0.76, 0.0], [0.72, -0.1], [0.5, -0.16], [0, -0.2]].map(([x, z]) => [sx * x, z]), brown); b.add(w);
+    const spot = flat([[0.5, 0.05], [0.62, 0.04], [0.6, -0.06], [0.5, -0.07]].map(([x, z]) => [sx * x, z]), pale); spot.position.y = -0.004; b.add(spot);
+  }
+  b.add(flat([[-0.07, -0.18], [0.07, -0.18], [0.11, -0.5], [0.0, -0.47], [-0.11, -0.5]], brown));   // バチ形の尾（先が広がって ほぼまっすぐ）
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), brown); body.scale.set(0.9, 0.7, 3.2); b.add(body);
+  scene.add(b);
+  const C = { x: -10 + Math.random() * 20, z: -40 + Math.random() * 30 };
+  let t = Math.random() * 50, callT = 6 + Math.random() * 20;
+  return {
+    bird: b,
+    update(dt) {
+      t += dt;
+      const R = 26 + 6 * Math.sin(t * 0.05), w = 2 * Math.PI / 28, a = t * w;
+      const cx = C.x + Math.sin(t * 0.013) * 25, cz = C.z + Math.cos(t * 0.011) * 20;   // 輪の中心も ゆっくり流れる
+      b.position.set(cx + Math.cos(a) * R, 30 + 7 * Math.sin(t * 0.07), cz + Math.sin(a) * R);
+      b.rotation.set(0, 0, 0); b.rotateY(Math.atan2(-Math.sin(a), Math.cos(a)));   // 進む向き（輪の接線）
+      b.rotateZ(0.35); b.rotateX(0.05 * Math.sin(t * 0.8));                         // 輪の内へかたむけて すべる。ときどき 尾と翼で 舵をとる
+      if ((callT -= dt) <= 0) { callT = 18 + Math.random() * 35; kiteCall(b.position); }
+    }
+  };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -4524,6 +4567,7 @@ function frame(now) {
   KERI.update(dt);
   BATS.update(dt);
   KABASHIRA.update(dt);
+  TOBI.update(dt);
   LAMPS.update();
   emitExhaust(dt);
   DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
@@ -4570,7 +4614,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

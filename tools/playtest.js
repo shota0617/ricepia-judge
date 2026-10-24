@@ -738,6 +738,17 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ok: max >= 2 && after.n === 0 && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after };
   })();
+  // ころころコンボの ベスト：転がっている うちに ベストを こえると その場で「🏅 ベスト こえた！」、止まると ベストが のこる
+  R.checks.comboBest = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(300);
+    const old = await page.evaluate(() => nishioPixel.combo.best);
+    const mid = await page.evaluate(() => { nishioPixel.comboBest(5); nishioPixel.comboAdd(6); return { c: nishioPixel.combo, f: nishioPixel.floats() }; });
+    let end = null;
+    for (let i = 0; i < 20 && !(end && end.n === 0); i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.combo); }   // 止まって 0.7秒で おしまい
+    await page.evaluate(o => { nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
+    const told = mid.f.some(t => /ベスト こえた/.test(t));
+    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat, beat: mid.c.beat, told, end };
+  })();
   // びゅんパネル（クセになる ギミック）：めいろの パネルの 上で 矢印の 向きに 傾けると びゅんと 速く なる。矢印と 逆から 来ても おされない（通れる）
   R.checks.mazePad = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(500);
@@ -819,7 +830,7 @@ async function walkTo(page, id) {
     if (!c) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: false, why: 'no wall' }; }
     await page.evaluate(([x, y, K]) => nishioPixel.rollPut(x * K + 0.9, y * K + 1.5, 5, 0), [c.x, c.y, c.K]);
     let hitMood = '';
-    for (let i = 0; i < 12 && !hitMood; i++) { await page.waitForTimeout(40); const r = await page.evaluate(() => nishioPixel.roll); if (r.vx < 0) hitMood = r.mood; }   // はね返った
+    for (let i = 0; i < 40 && !hitMood; i++) { await page.waitForTimeout(40); const r = await page.evaluate(() => nishioPixel.roll); if (r.vx < 0) hitMood = r.mood; }   // はね返った（遅い 画面でも 待てるよう 1.6秒まで）
     await page.keyboard.down('ArrowRight'); await page.waitForTimeout(1500); await page.keyboard.up('ArrowRight'); await page.waitForTimeout(400);
     const r = await page.evaluate(() => nishioPixel.roll), gap = +((c.x + 1) * c.K - r.x).toFixed(3);
     await page.evaluate(() => nishioPixel.setRoll(false)); await page.evaluate(ll => { nishioGo.moveTo(ll.lat, ll.lng); Object.assign(nishioPixel.critterState, ll.cs); }, at);
@@ -1230,7 +1241,9 @@ async function walkTo(page, id) {
           if (!first) continue;
           pi.hidden = true; await wait(200);
           const again = await push();
-          const r2 = P.roll, passed = Math.abs((r2.x - (sx + 0.5)) * -dx + (r2.y - (sy + 0.5)) * -dy) > 0.7;   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
+          const gone = () => { const r2 = P.roll; return Math.abs((r2.x - (sx + 0.5)) * -dx + (r2.y - (sy + 0.5)) * -dy) > 0.7; };
+          for (let i = 0; i < 10 && !gone() && pi.hidden; i++) await wait(100);   // 遅い 画面でも 待てるよう
+          const passed = gone();   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
           pi.hidden = true;
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
@@ -1399,6 +1412,7 @@ async function walkTo(page, id) {
   need(c.rollVert && c.rollVert.ok, `たての 転がり方：上・下へ 転がっても でんぐりがえし しない（${JSON.stringify(c.rollVert)}）`);
   need(c.cornerAssist && c.cornerAssist.ok, `曲がり角アシスト：めいろの 曲がり角で、横に ずれていると 曲がれない（${JSON.stringify(c.cornerAssist)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
+  need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

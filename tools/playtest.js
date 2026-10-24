@@ -770,7 +770,8 @@ async function walkTo(page, id) {
     const L = K.list(), uniq = new Set(L.map(x => x.name)).size;
     const sel = K.select('daily'), cur = K.current();
     K.open(); const cells = document.querySelectorAll('#koroDex .kd-cell').length; K.close();
-    return { n: L.length, uniq, daily: cur && cur.name, cells, ok: L.length === 200 && uniq === 200 && sel && !!cur && cells === 200 };
+    const need = K.need ? K.need() : 0, have = K.state.u.length;   // 次までの 道のりは 持っている 数で のびる（40・80・…・240マス）
+    return { n: L.length, uniq, daily: cur && cur.name, cells, need, have, ok: L.length === 200 && uniq === 200 && sel && !!cur && cells === 200 && need === 40 * Math.min(have + 1, 6) };
   });
   // 西尾めいろ：1面（西尾駅）の盤ができて、スタートから ゴールまで 道で つながっている。矢印キーで お米が動き、ゴールに着くと「ゴール！」。とじると 歩く地図が また動く
   R.checks.meiro = await (async () => {

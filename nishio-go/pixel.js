@@ -6757,7 +6757,7 @@ let mzGrainCell = '';
 function mzGrainTick() {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), k = a + ',' + b;
-  if (k === mzGrainCell) return;
+  if (k === mzGrainCell || !mzArea(a, b)) return;   // 区域が まだ 読めていなければ、読めてから しらべる（その マスを しらべおわった ことに しない）
   mzGrainCell = k;
   if (!mzGrainAt(a, b) || !G.mzGrain) return;
   const r = G.mzGrain(mzGrainKey(a, b));

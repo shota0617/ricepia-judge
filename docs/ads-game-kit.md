@@ -93,7 +93,7 @@ API の認証情報があれば `node tools/google-ads-run.js --job game`（検�
 | 予算 | 1日 1,000円（`CONFIG.DAILY_BUDGET_YEN`。30日で約3万円） |
 | 入札 | コンバージョン数の最大化。入札に使う成果は、このキャンペーンだけ「にしおさんぽGO ゲーム開始」 |
 | 地域・言語 | 遊べる7市町（西尾市・岡崎市・安城市・碧南市・幸田町・蒲郡市・高浜市）・日本語 |
-| 画像 | `ad-1200x628.png`・`ad-1200x1200.png`・`ad-960x1200.png`、ロゴは `nishio-go/icon-512.png` |
+| 画像 | `ad-1200x628.png`・`ad-1200x1200.png`・`ad-960x1200.png`、ロゴは `nishio-go/icon-512.png`（タイトルロゴと同じ お米のアイコン。`tools/make-icon.py`） |
 | 文 | 見出し5本・説明3本（1章の文から。2026-10-24 に いまのゲームの 文に した）、ビジネス名「近藤米穀店 らいすぴあ」 |
 | リンク | `https://go.ricepia.jp/?utm_source=google&utm_medium=cpc&utm_campaign=game_demandgen&play=1` |
 

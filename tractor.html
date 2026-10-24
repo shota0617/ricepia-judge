@@ -235,6 +235,7 @@
       ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
       ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
       ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
+      ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止めてから。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
@@ -2081,6 +2082,30 @@ const RUTS = (() => {
     flush() { if (dirty) { pa.needsUpdate = true; dirty = false; } }
   };
 })();
+// ---- 秋：伸びた 2 番穂（ひこばえ）や長い藁が ロータリーの爪軸に巻きつく（X の米農家さん 2026-10-22：「伸びた 2 番穂がロータリーに絡む」）。
+// 耕した道のりで少しずつ太り（爪軸はカバーの中なので見えない）、巻きつくほど 爪軸が重くなって エンジンの回転が落ち、音も重くなる。
+// 止まって作業機を上げたまま待つと、エンジンを止めて降り、手で取る（本物も PTO を切り エンジンを止めてから。回っている爪に手を出すと巻きこまれる）
+const WRAP = (() => {
+  if (season !== 'aki') return { step() {}, v: 0 };
+  let wait = 0, told = false;
+  const W = {
+    v: 0,
+    step(dt, working) {
+      if (working) W.v = Math.min(1, W.v + Math.abs(S.v) * dt * 0.002);   // 300m ほど耕すと 6 割
+      if (W.v > 0.6 && !told) {
+        told = true; voice('wrap');
+        toast('ロータリーに 2 番穂が巻きついて、エンジンが重い。止まって ' + IMPL + 'を上げ、爪が止まるまで待つと、エンジンを止めて降り、手で取れる', 7);
+      }
+      if (W.v > 0.3 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && S.rotorW < 1) {   // 爪が止まってから
+        if ((wait += dt) > 2.5) {
+          W.v = 0; wait = 0; told = false; S.elapsed += 45;
+          toast('エンジンを止めて降り、爪軸に巻きついた 2 番穂を手で取りました（45 秒）。PTO が回っているあいだは ぜったいに手を出さない', 6);
+        }
+      } else wait = 0;
+    }
+  };
+  return W;
+})();
 const trackCells = new Set();
 function eraseTracks(c) { if (trackCells.has(c)) { TR.erase(c); trackCells.delete(c); } }
 // 均平板のすじ：耕しているとき、ロータリーのうしろに進む向きの細いすじを残す（耕幅より 10cm せまい帯）
@@ -3044,7 +3069,7 @@ function step(dt) {
   // ぬかるみ：耕していると エンジンが重くなる。速さ（変速）と耕深が大きいほど重い。重すぎるとエンスト
   const wet = WET.at(S.x, S.z), workingNow = S.rotDown && S.rotPos < 0.08;
   if (wet > 0.2 && S.started) voice('wet');
-  S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) : 0;
+  S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) + WRAP.v * 220 : 0;   // 秋は 爪軸に巻きついた 2 番穂でも重い
   S.lugT = S.wetLoad > 950 ? (S.lugT || 0) + dt : 0;
   if (S.lugT > 1.2 && !S.stalled) {
     S.stalled = true; S.v = 0; S.lugT = 0;
@@ -3207,7 +3232,7 @@ function step(dt) {
       if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL)) || 0;
     }
   }
-  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); }
+  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); WRAP.step(dt, working); }
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
   const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
@@ -3892,6 +3917,7 @@ const VOICES = {
   shallow: ['春の耕しが浅いと、代かきが均一にならない。7 年目で、師匠のやり方との差に気づいた', '@chappy199604（X の米農家さん）'],
   corner: ['まっすぐは自動にまかせられても、四隅は手で回すので苦戦する', '@ham_kaze_choco（X の米農家さん）'],
   dryWait: ['雨のあとは、乾くのを待ってから秋起こしに入る。長雨の稲刈りのわだちが、まだ残っている', '@F_TERU603（X の米農家さん）'],
+  wrap: ['朝の秋起こし。伸びた 2 番穂が ロータリーに絡む', '@hirogogo88（X の米農家さん）'],
   wara: ['わらは 1 回では埋まりきらない。年によっては耕す回数を 1 回ふやす', '@Tyoshi0410Taoka（X の米農家さん）'],
   straightSelf: ['どれだけまっすぐ走れるか、自分との戦い', '@BLACKkome96（X の米農家さん）'],
 };
@@ -4108,7 +4134,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
+window.game = { WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); } buildHills(); } };
 </script>
 </body>
 </html>

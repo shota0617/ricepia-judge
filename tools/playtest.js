@@ -749,6 +749,20 @@ async function walkTo(page, id) {
     const told = mid.f.some(t => /ベスト こえた/.test(t));
     return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat, beat: mid.c.beat, told, end };
   })();
+  // スピード線：とても 速いと（1秒に 5マスより）お米の うしろに 線が 出て、おそく なると うすれて 消える
+  R.checks.speedLines = await (async () => {
+    await page.evaluate(() => { nishioPixel.setRoll(true); document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); }); await page.waitForTimeout(300);
+    const pick = await page.evaluate(() => { const r = nishioPixel.roll; let best = null; for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) { let d = 1; while (d < 14 && !nishioPixel.rollBlockedFrom(r.x + dx * (d - 1), r.y + dy * (d - 1), r.x + dx * d, r.y + dy * d)) d++; if (!best || d > best[2]) best = [dx, dy, d]; } return { best, x: r.x, y: r.y }; });
+    const [dx, dy, d] = pick.best;
+    if (d < 5) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-room', d }; }
+    await page.evaluate(a => nishioPixel.rollPut(...a), [pick.x, pick.y, dx * 7.5, dy * 7.5]);
+    let fast = 0;
+    for (let i = 0; i < 10 && fast < 0.3; i++) { await page.waitForTimeout(30); fast = Math.max(fast, await page.evaluate(() => nishioPixel.speedK)); }
+    let slow = 1;
+    for (let i = 0; i < 20 && slow >= 0.05; i++) { await page.waitForTimeout(150); slow = await page.evaluate(() => nishioPixel.speedK); }
+    await page.evaluate(a => { nishioPixel.rollPut(a[0], a[1], 0, 0); nishioPixel.setRoll(false); }, [pick.x, pick.y]);
+    return { ok: fast >= 0.3 && slow < 0.05, room: d, fast: +fast.toFixed(2), slow: +slow.toFixed(2) };
+  })();
   // びゅんパネル（クセになる ギミック）：めいろの パネルの 上で 矢印の 向きに 傾けると びゅんと 速く なる。矢印と 逆から 来ても おされない（通れる）
   R.checks.mazePad = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(500);
@@ -1428,6 +1442,7 @@ async function walkTo(page, id) {
   need(c.cornerAssist && c.cornerAssist.ok, `曲がり角アシスト：めいろの 曲がり角で、横に ずれていると 曲がれない（${JSON.stringify(c.cornerAssist)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
+  need(c.speedLines && c.speedLines.ok, `スピード線：速くても 出ない／おそく なっても 消えない（${JSON.stringify(c.speedLines)}）`);
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);

@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
-<title>にしおさんぽGO｜西尾市を歩いてスポットを巡るポイントラリー - らいすぴあ</title>
-<meta name="description" content="西尾市の地図を歩いて、神社・お寺・公園・名所などのスポットに近づくとポイントが貯まるお散歩ゲーム。西尾城跡や岩瀬文庫などの注目スポットはボーナスポイント。"/>
+<title>にしおさんぽGO｜スマホを傾けてお米を転がす、西尾の地図の迷路ゲーム - らいすぴあ</title>
+<meta name="description" content="スマホを傾けて、お米を転がすゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾城跡・岩瀬文庫などの名所で、まちの人の話で次のゴールが決まります。西尾のお米屋さん らいすぴあ がつくった、無料・登録なしのゲーム。"/>
 <meta name="theme-color" content="#2f5d3a"/>
 <link rel="canonical" href="https://go.ricepia.jp/nishio-go.html"/>
 <link rel="manifest" href="nishio-go.webmanifest"/>
@@ -18,10 +18,11 @@
  ],
  "name": "にしおさんぽGO",
  "url": "https://go.ricepia.jp/nishio-go.html",
- "description": "西尾市の地図を歩いて、神社・お寺・公園・名所などのスポットに近づくとポイントが貯まるお散歩ゲーム。位置情報を使わず家から遊べる「操作して遊ぶ」もあります。",
+ "description": "スマホを傾けて、お米を転がすゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。位置情報を使って実際に西尾を歩く「あるいて遊ぶ」もあります。",
  "image": "https://go.ricepia.jp/nishio-go/ogp.png",
  "inLanguage": "ja",
  "genre": [
+  "迷路ゲーム",
   "お散歩ゲーム",
   "位置情報ゲーム",
   "ドット絵"
@@ -58,13 +59,13 @@
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="ja_JP"/>
 <meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
-<meta property="og:title" content="にしおさんぽGO - 西尾市を歩いてポイントを貯めよう"/>
-<meta property="og:description" content="西尾のまちを歩いて名所をめぐるお散歩ゲーム。今日のクエスト・たからばこ・今月のおまつりの会場めぐり。家から遊べる操作モードも。無料・スマホのブラウザで遊べます。"/>
+<meta property="og:title" content="にしおさんぽGO - 傾けてお米を転がす、西尾の地図の迷路"/>
+<meta property="og:description" content="スマホを傾けて、お米を転がす。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。西尾のお米屋さんがつくった、無料・登録なしのゲーム。スマホのブラウザですぐ遊べます。"/>
 <meta property="og:url" content="https://go.ricepia.jp/nishio-go.html"/>
 <meta property="og:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
-<meta property="og:image:alt" content="にしおさんぽGO：西尾のまちを歩いて、名所をめぐるお散歩ゲーム"/>
+<meta property="og:image:alt" content="にしおさんぽGO：スマホを傾けて、お米を転がす西尾の地図の迷路ゲーム"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -238,6 +239,10 @@
       <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
     </div>
     <div class="row">
+      <span><b>❓ あそびかた</b><small>傾けて お米を転がし、めいろを ぬけて 西尾の名所へ。はじめに出た 説明を もう一度 見られます。</small></span>
+      <button type="button" id="howtoOpen" class="btn" style="flex:none">見る</button>
+    </div>
+    <div class="row">
       <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
       <button type="button" id="koroOpen" class="btn" style="flex:none">ずかん</button>
     </div>
@@ -317,13 +322,13 @@
     <p class="tagline">お米を ころころ 転がして、西尾をめぐろう</p>
     <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころがそう。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
-    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米を 名所から名所へ ころがそう。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small class="mp-s">スマホを傾けて、お米を 名所へ。家で遊べる</small><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米を 名所から名所へ ころがそう。家からでも西尾めぐり</small></button>
     <!-- 押すのに 抵抗が ある人へ：お金・登録・アプリ・位置情報の 心配が ないことを ボタンの すぐ下に（運営者の声「プレイボタンを押すのに抵抗がある人対策」） -->
     <p class="no-risk" aria-label="無料・登録なし・アプリ不要・位置情報なし"><span>✓ 無料</span><span>✓ 登録なし</span><span>✓ アプリ不要</span><span>✓ 位置情報なし</span></p>
     <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
     <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
     <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
-    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
+    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small class="mp-s">本当に 西尾のまちを 歩く（位置情報）</small><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
     <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
     <ul class="intro-shots" aria-label="プレイ画面">
@@ -350,6 +355,21 @@
     </details>
     <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
     <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
+  </div>
+</div>
+
+<!-- あそびかた（はじめて めいろに 入ったときに 1回。せっていの「❓ あそびかた」で もう一度） -->
+<div class="howto" id="howto" hidden role="dialog" aria-modal="true" aria-labelledby="howtoT">
+  <div class="howto-box">
+    <h3 id="howtoT">🌀 あそびかた</h3>
+    <ol class="howto-list">
+      <li><span class="hi" aria-hidden="true">📱</span><span><b>スマホを傾けると、お米が 転がる</b><small id="howtoKey">傾けにくい ときは、地図を タップした所へ 向かう</small></span></li>
+      <li><span class="hi" aria-hidden="true">🏁</span><span><b>ゴールは 西尾の名所</b><small>画面の はしの 黄色い ▼ が ゴールの むき。下の 札に 名前と のこりの 道のり</small></span></li>
+      <li><span class="hi" aria-hidden="true">🌿</span><span><b>みどりの 生け垣は 通れない</b><small>本物の道で できた めいろ。行き止まりを よけて 道を さがそう</small></span></li>
+      <li><span class="hi" aria-hidden="true">⭐</span><span><b>着いたら ポイントと ドット絵</b><small>まちの人の 話で、つぎの ゴールが きまる</small></span></li>
+    </ol>
+    <p class="howto-btns"><span>🌏 せかいちず</span><span>🔍 地図の大きさ</span><span>🌀 ステージの めいろ</span></p>
+    <button type="button" class="btn big" id="howtoOk">わかった！ 転がしてみる</button>
   </div>
 </div>
 

@@ -239,6 +239,7 @@
       ・秋：長雨の年は、ぬかるみで稲を刈ったコンバインの深いわだちが残る。田んぼが乾いてからトラクターを入れ、わだちを耕してならす（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。ゲームの秋の田んぼにも、外周・往復・出口へ向かったわだちがある<br>
       ・夜までかかる作業は なるべくしない。暗いと畦や人が見えにくく、事故が多い（<a href="https://www.pref.shimane.lg.jp/industry/norin/kikan/seibu_norin/infomation2/accidents.html" target="_blank" rel="noopener">島根県の農作業事故の防止</a>）。するなら作業灯とライトを点検して、向きを作業する所に合わせる（ヤンマーの説明）。夜の作業灯には虫が集まる<br>
       ・ジャンボタニシ（スクミリンゴガイ）は 西尾市をふくむ愛知県でも 苗を食べる被害が多い（<a href="https://www.pref.aichi.jp/uploaded/attachment/442532.pdf" target="_blank" rel="noopener">愛知県の実証試験</a>）。土の浅い所で冬をこすので、寒い 12〜2 月に、ゆっくり走って 爪を速く回し、浅く耕して 貝をつぶす・寒さにさらす（時速 1.4km 以下・PTO 2 速：千葉県）。耕したあとの泥に貝がつくので、トラクターの泥は田んぼで落とす<br>
+      ・春の田起こしの前に、ケイ酸の資材（白っぽい粒）や堆肥をまいておき、耕して土にまぜる。土づくりは耕す前に必ず（<a href="https://www.pref.toyama.jp/documents/43308/tsuchidukuri.pdf" target="_blank" rel="noopener">富山県の土づくりの資料</a>）。ゲームの春の田んぼにも まいてある<br>
       ・秋：伸びた 2 番穂（ひこばえ）や長い藁が、ロータリーの爪軸に巻きついて重くなる（<a href="https://x.com/i/status/2113052931071336692" target="_blank" rel="noopener">X の米農家さんの投稿</a>）。取るときは PTO を切り、エンジンを止めてから。回っている爪に手を出すと巻きこまれる（ゲームでは 止まって上げたまま待つと取れる）<br>
       ・耕していると、掘り起こされたミミズや虫をねらってサギが十数羽、カラスやセキレイも集まってくる<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある<br>
@@ -1496,6 +1497,24 @@ function ground(x, z) {
 
 // ---- 耕したます目と、切り株 ----
 const tilledMask = new Uint8Array(NX * NZ);
+// 耕したます目のしるし（tilledMask）を そのまま絵にしたもの。耕した所だけ消える上がき（秋のわだち・春にまいた資材）が、絵の点ごとに見て描かない
+const TILL_TEX = new THREE.DataTexture(tilledMask, NZ, NX, THREE.LuminanceFormat, THREE.UnsignedByteType);
+TILL_TEX.magFilter = TILL_TEX.minFilter = THREE.NearestFilter; TILL_TEX.needsUpdate = true;
+let tillTexDirty = false;                         // 耕したら 1 コマに 1 回 送りなおす
+function maskTilled(mat, more = '', post = '') {  // more：ほかに描かない所の GLSL・post：色が決まったあとに濃さを変える GLSL（vTP＝世界の xz）
+  const prev = mat.onBeforeCompile;
+  mat.onBeforeCompile = (sh, r) => {
+    if (prev) prev.call(mat, sh, r);
+    sh.uniforms.tilledTex = { value: TILL_TEX };
+    sh.vertexShader = 'varying vec2 vTP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vTP = (modelMatrix * vec4(position, 1.0)).xz;');
+    sh.fragmentShader = 'varying vec2 vTP;\nuniform sampler2D tilledTex;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+  vec2 cIJ = floor(vec2(vTP.x + ${HX.toFixed(1)}, vTP.y + ${HZ.toFixed(1)}) / ${CELL.toFixed(2)});
+  if (texture2D(tilledTex, vec2((cIJ.y + 0.5) / ${NZ.toFixed(1)}, (cIJ.x + 0.5) / ${NX.toFixed(1)})).r > 0.0) discard;
+  ${more}`).replace('#include <map_fragment>', '#include <map_fragment>\n' + post);
+  };
+  mat.customProgramCacheKey = () => 'maskTilled|' + more + '|' + post;
+  return mat;
+}
 let tilledCount = 0, workCount = 0;
 for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
   const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL;
@@ -1524,7 +1543,7 @@ function tillCell(i, j) {
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
   });
   eraseTracks(c);
-  RUTS.erase(c);
+  tillTexDirty = true;
   ROUGH[c] = 1.04 - 0.16 * Math.max(0, Math.min(1, ((S.pitch || 9) - 6) / 7));
   DRY.wet(c);
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
@@ -2035,7 +2054,7 @@ const TR = (() => {
 // 回り刈りの外周・まん中の往復・もみを積んで出口の坂へ向かった所（重いので いちばん深い）。トラクターは みぞに落ちると傾き、耕すと ならされて消える。
 // 雨の日は みぞの底に水がたまる
 const RUTS = (() => {
-  if (season !== 'aki') return { at: () => 0, erase() {}, flush() {} };
+  if (season !== 'aki') return { at: () => 0 };
   const W = 0.45, LIP = 0.12, GAUGE = 1.15, depth = new Float32Array(NX * NZ), lines = [];
   const onRamp = (x, z) => x > 11.8 && z > 17.8 && z < 22.2;   // 出口の坂（ground() の坂）とそのきわには わだちを作らない
   const R = HX - 1.7, Q = HZ - 1.7, round = [];
@@ -2106,31 +2125,42 @@ const RUTS = (() => {
   geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3)); geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uv), 2));
   geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(pos.length).map((_, k) => k % 3 === 1 ? 1 : 0), 3));
   geo.setIndex(idx);
-  // 耕したます目では描かない：ます目の「耕した」しるし（tilledMask）をそのまま絵にして、絵の点ごとに見る（深さの at() と同じます目でそろう）
-  const mask = new THREE.DataTexture(tilledMask, NZ, NX, THREE.LuminanceFormat, THREE.UnsignedByteType);
-  mask.magFilter = mask.minFilter = THREE.NearestFilter; mask.needsUpdate = true;
-  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-  mat.onBeforeCompile = sh => {
-    sh.uniforms.tilledTex = { value: mask };
-    sh.vertexShader = 'varying vec2 vRutP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vRutP = position.xz;');
-    sh.fragmentShader = 'varying vec2 vRutP;\nuniform sampler2D tilledTex;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
-  vec2 cIJ = floor(vec2(vRutP.x + ${HX.toFixed(1)}, vRutP.y + ${HZ.toFixed(1)}) / ${CELL.toFixed(2)});
-  if (texture2D(tilledTex, vec2((cIJ.y + 0.5) / ${NZ.toFixed(1)}, (cIJ.x + 0.5) / ${NX.toFixed(1)})).r > 0.0) discard;
-  if (vRutP.x > 11.8 && vRutP.y > 17.8 && vRutP.y < 22.2) discard;`);
-  };
+  // 耕したます目では描かない（深さの at() と同じます目でそろう）。出口の坂にも描かない
+  const mat = maskTilled(new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    'if (vTP.x > 11.8 && vTP.y > 17.8 && vTP.y < 22.2) discard;');
   const mesh = new THREE.Mesh(geo, mat);
   mesh.frustumCulled = false; mesh.renderOrder = 0.9; scene.add(mesh);
-  let dirty = false;
   return {
     at(x, z) {                                    // みぞの深さ（m。耕した所は 0）
       const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
       if (i < 0 || j < 0 || i >= NX || j >= NZ) return 0;
       const c = i * NZ + j;
       return tilledMask[c] ? 0 : depth[c];
-    },
-    erase() { dirty = true; },                    // 耕した：しるしの絵を送りなおす（1 コマに 1 回）
-    flush() { if (dirty) { mask.needsUpdate = true; dirty = false; } }
+    }
   };
+})();
+// ---- 春：田起こしの前の土づくり。ケイ酸の資材（白っぽい粒）と堆肥（黒っぽいかたまり）を ブロードキャスターでまいてから耕す
+// （富山県：土づくりは耕起の前に必ず。ケイ酸質資材 120〜160kg/10a・牛ふん堆肥 1t/10a）。耕すと土にまざって見えなくなる。
+// ブロードキャスターは 幅 10m ほどずつ往復してまくので、重なった所は濃く、まん中は少しうすい帯になる
+(() => {
+  if (season !== 'haru') return;
+  const cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  const g = cv.getContext('2d');
+  for (let k = 0; k < 2200; k++) {                // ケイ酸の粒（直径 2〜4mm）
+    const v = 210 + Math.random() * 40;
+    g.fillStyle = `rgba(${v},${v},${v - 8},${0.6 + Math.random() * 0.4})`;
+    g.fillRect(Math.random() * 256, Math.random() * 256, 1 + Math.random() * 1.5, 1 + Math.random() * 1.5);
+  }
+  for (let k = 0; k < 26; k++) {                  // 堆肥のかたまり
+    g.fillStyle = `rgba(${45 + Math.random() * 20},${34 + Math.random() * 14},${24 + Math.random() * 10},0.85)`;
+    g.beginPath(); g.ellipse(Math.random() * 256, Math.random() * 256, 3 + Math.random() * 6, 2 + Math.random() * 5, Math.random() * 3, 0, Math.PI * 2); g.fill();
+  }
+  const tex = new THREE.CanvasTexture(cv);        // 1 枚で 2m 四方
+  tex.encoding = THREE.sRGBEncoding; tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(HX, HZ);
+  const mat = maskTilled(new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    '', 'diffuseColor.a *= 0.55 + 0.45 * abs(sin(vTP.x * 0.314));');   // 10m ごとの帯（往復の重なり）
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(2 * HX - 0.6, 2 * HZ - 0.6).rotateX(-Math.PI / 2), mat);
+  m.position.y = 0.026; m.renderOrder = 0.8; scene.add(m);
 })();
 // ---- 秋：伸びた 2 番穂（ひこばえ）や長い藁が ロータリーの爪軸に巻きつく（X の米農家さん 2026-10-22：「伸びた 2 番穂がロータリーに絡む」）。
 // 耕した道のりで少しずつ太り（爪軸はカバーの中なので見えない）、巻きつくほど 爪軸が重くなって エンジンの回転が落ち、音も重くなる。
@@ -4226,7 +4256,7 @@ function frame(now) {
   FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
   TR.flush();
-  RUTS.flush();
+  if (tillTexDirty) { TILL_TEX.needsUpdate = true; tillTexDirty = false; }
   STREAK.flush();
   SUN_VIEW.value.copy(SUN_DIR).transformDirection(camera.matrixWorldInverse);
   renderer.render(scene, camera);

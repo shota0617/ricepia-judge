@@ -1158,14 +1158,24 @@ async function walkTo(page, id) {
           pi.hidden = true;
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
           P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
-          const back = await push();
+          const back = await push();   // めいろでは、いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない
           pi.hidden = true;
-          return { npc: n.name, first, again, passed, back };
+          const g = G.decideGuide(null), M = P.maze;
+          let fresh = 'skip';
+          if (g) {   // ゴールが かわると、また こつんで 話せる
+            G.setGuide(g);
+            for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
+            P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
+            fresh = await push();
+            pi.hidden = true;
+            G.setGuide(null);
+          }
+          return { npc: n.name, first, again, passed, back, fresh };
         }
       }
       return { npc: 'none' };
     });
-    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && bumpA.back) };
+    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && !bumpA.back && bumpA.fresh !== false) };
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
       const G = nishioGo, pi = document.getElementById('pxInfo');
@@ -1189,12 +1199,12 @@ async function walkTo(page, id) {
       G.setGuide(G.decideGuide(null));
       for (let i = 0; i < 20 && !(M.routePath() && M.routePath().length >= 3); i++) await wait(250);
       if (!(M.routePath() && M.routePath().length >= 3)) { if (h0 === null) localStorage.removeItem('nsg_mzhelp'); else localStorage.setItem('nsg_mzhelp', h0); return { skip: true, ok: true }; }
-      G.toast = m => { if (/道しるべ|おたすけ/.test(m)) got.push(m); };
+      G.toast = m => { if (/光る 点|まよったら/.test(m)) got.push(m); };   // ほかの 知らせ（「めいろに なれてきたので…」など）は 数えない
       try {
         for (let i = 0; i < 4; i++) { M.lost(); await wait(150); }
       } finally { G.toast = t0; if (h0 === null) localStorage.removeItem('nsg_mzhelp'); else localStorage.setItem('nsg_mzhelp', h0); }
       G.setGuide(null);
-      const first = got.filter(m => /光る 点/.test(m)).length, offer = got.filter(m => /おたすけ/.test(m)).length;
+      const first = got.filter(m => /光る 点/.test(m)).length, offer = got.filter(m => /まよったら/.test(m)).length;
       return { got, ok: first === 1 && offer === 1 && got.length === 2 && /光る 点/.test(got[0]) };
     });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）

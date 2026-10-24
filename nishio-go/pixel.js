@@ -6729,7 +6729,7 @@ function drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T) {   // 行き止まり（
   const g = G.guide, gp = g ? toTile(g.lat, g.lng) : null, gNear = g ? (((G.reachOf ? G.reachOf(g) : 40) || 40) / TILE_M) + MZ_K : 0;   // ゴールの まわり（道すじが 手前で 終わっても、ゴールの マスには 出さない）
   const r = T * 0.42, lw = Math.max(2, T / 6);
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
-    if (mzType(cx, cy) !== 1 || mzSpotCell(cx, cy)) continue;
+    if (mzType(cx, cy) !== 1 || mzSpotCell(cx, cy) || mzGrainAt(cx, cy)) continue;   // 金の 米つぶが ある 行き止まりは ひろいに 行く 寄り道（✕ で かくさない）
     const k = cx + ',' + cy;
     if (onPath.has(k) || k === ra) continue;
     if (gp && Math.hypot((cx + 0.5) * MZ_K - gp.x, (cy + 0.5) * MZ_K - gp.y) <= gNear) continue;

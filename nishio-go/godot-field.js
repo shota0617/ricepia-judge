@@ -93,7 +93,7 @@
     },
     fillText(t, x, y) { this.text(String(t), x, y, false); },
     strokeText(t, x, y) { this.text(String(t), x, y, true); },
-    strokeRect() {}, clearRect() {}, stroke() {}, arc() {},
+    strokeRect() {}, clearRect() {}, stroke() {}, arc() {}, setLineDash() {}, rect() {}, clip() {},   // 線・円・破線・切りとりは まだ 送らない（めいろの おたすけの 線なども 描かれない だけで 止まらない）
   };
 
   /* ---------- Godot から呼ばれる窓口 ---------- */

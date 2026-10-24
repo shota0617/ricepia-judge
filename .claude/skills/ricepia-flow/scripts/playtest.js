@@ -81,10 +81,13 @@ if (opt.old) {
     const again = run(ROOT, Number(opt.port) || 8899, 'もう1回');
     report(again);
     if (again) {
-      // 本当の 失敗：2回 とも 落ちた 項目が ある、または 2回 とも 項目の ok 以外の 条件で 落ちた（1回目と 2回目で 別の 項目だけが 落ちたなら、どちらも ときどき 落ちる 確認）
-      const both = res.bad.filter(k => again.bad.includes(k)), other = r => !r.ok && !r.bad.length;
-      const real = both.length > 0 || (other(res) && other(again));
-      if (real) console.log(`2回 とも 落ちた：${both.join(', ') || '（項目の ok 以外の 条件）'}`);
+      // 本当の 失敗：2回 とも のこる 失敗が ある（落ちた 項目の 名前と、落ちた 理由の 文を それぞれの 回で 集めて 比べる。
+      // 文の 中の JSON・数は のぞく。ページの エラーや 真偽値の 確認も、項目の ok と は 別に 比べる）。1回目と 2回目で 別の ものだけが 落ちたなら、ときどき 落ちる 確認
+      const norm = t => String(t).replace(/[（(]\s*[{[].*[}\]]\s*[）)]/g, '').replace(/[{[].*[}\]]/g, '').replace(/-?\d+(\.\d+)?/g, '#').replace(/\s+/g, ' ').trim();
+      const keys = r => new Set([...r.bad.map(k => `項目 ${k}`), ...r.failures.map(norm)]);
+      const k2 = keys(again), both = [...keys(res)].filter(k => k2.has(k));
+      const real = both.length > 0 || (!res.ok && !again.ok && !keys(res).size && !k2.size);
+      if (real) console.log(`2回 とも 落ちた：\n${both.map(k => `  - ${k}`).join('\n') || '  （理由の 分からない 失敗）'}`);
       else console.log(`2回 とも 落ちた 項目は ありません（1回目：${res.bad.join(', ') || 'なし'}／2回目：${again.bad.join(', ') || 'なし'}。ときどき 落ちる 確認。--main で main でも 落ちるか 見てください）`);
       process.exit(real ? 1 : 0);
     }

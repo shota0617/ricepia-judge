@@ -1095,6 +1095,32 @@ async function walkTo(page, id) {
       return { spot, sb, talk, nb };
     });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && arriveA.talk === true && arriveA.nb };
+    // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
+    const bumpA = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
+      G.setGuide(null);
+      for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500)) {
+        const t = P.npcTile(n);
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const sx = t.x + dx, sy = t.y + dy;
+          if (P.blockedAt(sx + 0.5, sy + 0.5) || P.blockedAt(sx - dx + 0.5, sy - dy + 0.5)) continue;
+          pi.hidden = true;
+          const push = async () => { P.rollPut(sx + 0.5, sy + 0.5, -dx * 4, -dy * 4); for (let i = 0; i < 6; i++) { await wait(100); if (!pi.hidden) break; } return !pi.hidden && pi.textContent.includes(n.name); };
+          const first = await push();
+          if (!first) continue;
+          pi.hidden = true; await wait(200);
+          const again = await push();
+          pi.hidden = true;
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
+          const back = await push();
+          pi.hidden = true;
+          return { npc: n.name, first, again, back };
+        }
+      }
+      return { npc: 'none' };
+    });
+    R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.back) };
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
@@ -1130,6 +1156,7 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
+  need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');

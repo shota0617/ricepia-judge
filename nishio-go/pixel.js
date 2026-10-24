@@ -6477,6 +6477,7 @@ let rollOn = (() => { try {
   return localStorage.getItem('nsg_roll') !== '0';
 } catch (e) { return true; } })();
 const rp = { x: null, y: null, vx: 0, vy: 0, sent: null, tile: '', bump: 0 };
+const npcBump = { id: '', x: 0, y: 0 };   // さいごに こつんと ぶつかって 話しかけた 人（はなれるまで もう 話しかけない）
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
@@ -7415,9 +7416,10 @@ function rollStep(dt) {
       rp.vx = rp.vy = 0;
       if (hard > 0.6) { roll.sq = Math.min(0.2, 0.08 + hard * 0.03); roll.sqv = 0; roll.sqx = Math.abs(rp.x - (tx + 0.5)) > Math.abs(rp.y - (ty + 0.5)); kotoSound(Math.min(1, hard / 5)); }
       roll.happyT = 1.4;
-      if ($('pxInfo').hidden) openNpc(who);
+      if ($('pxInfo').hidden && npcBump.id !== who.id) { npcBump.id = who.id; npcBump.x = tx; npcBump.y = ty; openNpc(who); }   // 同じ 人には、いちど はなれる（3マス）まで もう 話しかけない（傾けた まま だと、とじる たびに また 話しかけて いた）
       return;
     }
+    if (npcBump.id && Math.abs(tx - npcBump.x) + Math.abs(ty - npcBump.y) >= 3) npcBump.id = '';
     const [px0, py0] = rp.tile.split(',').map(Number), wasRail = codeAt(px0, py0) === C.L;
     rp.tile = key;
     sightCheck(); critterStep(tx, ty);

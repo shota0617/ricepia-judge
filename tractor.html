@@ -2734,11 +2734,10 @@ const RIPPLE = (() => {
 })();
 
 // ---- 代かきのアマガエル：水を入れた田んぼにはカエルがたくさんいて、トラクターが近づくと ぴょんぴょんはねて逃げ、水に飛びこむ ----
-// ---- 代かき：田んぼの東の畦の給水栓（パイプライン）から水を入れている。西尾市の田んぼは 矢作川から取る明治用水の水を、
+// ---- 田んぼの東の畦の給水栓（パイプライン）。代かきのときは ここから水を入れている。西尾市の田んぼは 矢作川から取る明治用水の水を、
 // 地下のパイプで田んぼの角の給水栓まで送り、バルブを開けて入れる。吐き出し口から水が勢いよく落ちて 白い泡と輪の波が立ち、ザーッと音がする
 const HYD_FW = new THREE.Vector3();               // 給水栓の音の左右を決めるときの カメラの向き（使い回す）
 const HYDRANT = (() => {
-  if (!SHIRO) return { update() {}, pos: null };
   const X = HX + 0.35, Z = -18, g = new THREE.Group();
   const conc = new THREE.MeshLambertMaterial({ color: 0x8c887f }), blue = new THREE.MeshLambertMaterial({ color: 0x2f5f9e }), dark = new THREE.MeshLambertMaterial({ color: 0x3a3c40 });
   const box = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.55, 0.5), conc); box.position.set(X, 0.12, Z); g.add(box);   // コンクリートの箱
@@ -2747,6 +2746,7 @@ const HYDRANT = (() => {
   const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.35, 10), dark); spout.rotation.z = Math.PI / 2; spout.position.set(X - 0.3, 0.32, Z); g.add(spout);
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(g);
+  if (!SHIRO) return { update() {}, pos: null };   // 春・秋はバルブを閉めてある（取水口のまわりは しみた水でぬかるむ）
   // 落ちる水：吐き出し口から放物線で田んぼへ（点を くり返し流す）
   const N = 70, x0 = X - 0.48, y0 = 0.32, pos = new Float32Array(N * 3), ph = Float32Array.from({ length: N * 2 }, Math.random);
   const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));

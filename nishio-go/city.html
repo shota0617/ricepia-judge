@@ -81,14 +81,16 @@
     h3 { font-size: 10pt; margin: 4px 0 2px; }
     .lead { font-size: 10pt; }
     .try img.qr { width: 100px; height: 100px; }
-    .shots { max-width: 78%; margin: 0 auto; }
+    .shots { max-width: 62%; margin: 0 auto; }
+    .good p, ul.list li { font-size: 8.5pt; }
+    .good b { font-size: 10pt; }
     .shots img { border-width: 2px; border-radius: 6px; }
     .nums { grid-template-columns: repeat(5, 1fr); gap: 6px; }
     .num { padding: 6px 8px; }
     .num b { font-size: 16pt; }
     .num small, .note, table { font-size: 8.5pt; }
     th, td { padding: 3px 4px; }
-    footer { padding: 4px 0 0; font-size: 8pt; }
+    footer { display: none; }   /* 地図の 出典は「安心して…」の 表に ある。2枚に おさめる */
     .print, .btn.sub, .no-print { display: none !important; }
     .btn { background: none; color: var(--ink); padding: 0; border-radius: 0; }
     .btn::after { content: "（" attr(href) "）"; font-weight: 400; font-size: 9pt; }
@@ -179,12 +181,12 @@
   <section>
     <h2>安心して 使っていただくために</h2>
     <table>
-      <tr><th>位置情報</th><td>現在地の座標は、どこにも 送りません。記録は その スマホの 中（ブラウザ）だけに 残ります（<a href="privacy.html">プライバシーポリシー</a>）</td></tr>
+      <tr><th>位置情報</th><td>現在地の座標 そのものは 送りません。ただし「こえ」で「いまいる場所の近く」に チェックして おたよりを 送ったときだけ、約100mの 細かさに 丸めた 位置を おたよりと いっしょに 送ります。また、地図を 表示するため、表示している 場所の おおよその 範囲（数百m〜約1km四方）は 地図の 取得先（国土地理院・OpenStreetMap）に 伝わります（<a href="privacy.html">プライバシーポリシー</a>）</td></tr>
       <tr><th>安全</th><td>はじめの画面で「歩きスマホ・傾けながら歩くのは やめましょう」と お知らせしています。私有地・立入禁止の 場所には 入らないよう お願いしています</td></tr>
       <tr><th>内容の 確かさ</th><td>まちの人の話と 行事は、出典のある 事実（観光協会・市・県の ページなど）を もとに しています。名所の 位置と 説明は 公開されている 資料で 調べたものです。市の 資料で 確かめていただけると、より 正確に なります</td></tr>
       <tr><th>地図</th><td>OpenStreetMap、国土地理院の 地理院タイル・標高、国土交通省の 国土数値情報を 加工して 作っています（それぞれの 利用規約に そって 表示）</td></tr>
       <tr><th>西尾市版の 表示</th><td>画面の上に「🏛 西尾市版（提案用デモ）」の札を いつも出し、「西尾市の公式のものではありません」と 書いています。市章や マスコットは 使っていません</td></tr>
-      <tr><th>動く しくみ</th><td>スマホの ブラウザだけで 動きます（iPhone・Android・パソコン）。遊んだ 記録は サーバーに ためません（「こえ」で おたよりを 送ったときだけ、その 文を 受けとります）</td></tr>
+      <tr><th>記録と 解析</th><td>スマホの ブラウザだけで 動きます（iPhone・Android・パソコン）。ポイントや めぐった所などの 記録は、その スマホの 中（ブラウザ）だけに 保存します。いっぽう Google アナリティクスには、見た画面・押したボタン・チェックインした 名所の名前・遊んだ時間や ポイントなどの 操作の 記録を 送ります（LINEヤフー広告の 計測タグにも ページを 見たことが 伝わります。現在地の 座標は 送りません）。解析は ゲームの「せってい」の「📊 アクセス解析」で オフに できます。「こえ」で おたよりを 送ったときは、その 文を 受けとります</td></tr>
     </table>
   </section>
 

@@ -4303,6 +4303,8 @@ function startAmbient(ac) {
     for (let k = 0; k < 4; k++) { const v = voice(R(-0.9, 0.9), R(0.3, 1)); v.o = osc('sine', R(4300, 4800), v.g); v.kind = 'korogi'; voices.push(v); }
     if (TOD !== 'yoru') {                         // モズの高鳴き：秋に「キーキー キチキチ」と鳴いて、冬のなわばりを主張する（Canon 野鳥写真図鑑・我孫子市鳥の博物館）
       const v = voice(R(-0.8, 0.8), 0.7); v.o = osc('triangle', 3800, v.g); v.kind = 'mozu'; v.t = ac.currentTime + R(5, 15); voices.push(v);
+      // ジョウビタキ：10〜11 月に渡ってくる冬鳥。農耕地にもいて、澄んだ「ヒッ ヒッ」と、ときどき乾いた「カッカッ」（新潟県・Canon 野鳥写真図鑑・コトバンク）
+      const j = voice(R(-0.9, 0.9), 0.35); j.o = osc('sine', 5800, j.g); j.kind = 'jobi'; j.t = ac.currentTime + R(8, 20); voices.push(j);
     }
   }
   // 鳴き方を 0.4 秒先まで予約する
@@ -4339,6 +4341,14 @@ function startAmbient(ac) {
           }
           for (let i = 0; i < 7; i++, t0 += 0.06) { v.o.frequency.setValueAtTime(4200, t0); g.setValueAtTime(a * 0.8, t0); g.setValueAtTime(0, t0 + 0.025); }
           v.t = t0 + R(20, 50);
+        } else if (v.kind === 'jobi') {          // ヒッ ヒッ（2〜4 声）→ カッカッ → 少し休む
+          let t0 = v.t;
+          for (let i = 0, n = Math.floor(R(2, 5)); i < n; i++, t0 += R(0.32, 0.45)) {
+            v.o.frequency.setValueAtTime(5500, t0); v.o.frequency.linearRampToValueAtTime(6300, t0 + 0.06);
+            g.setValueAtTime(0, t0); g.linearRampToValueAtTime(a, t0 + 0.01); g.linearRampToValueAtTime(0, t0 + 0.07);
+          }
+          if (Math.random() < 0.6) for (let i = 0; i < 2; i++, t0 += 0.11) { v.o.frequency.setValueAtTime(2600, t0); g.setValueAtTime(a * 0.9, t0); g.setValueAtTime(0, t0 + 0.018); }
+          v.t = t0 + (Math.random() < 0.3 ? R(25, 60) : R(5, 14));
         } else if (v.kind === 'ushi') {          // ウオー ウオー（3〜5 声）→ 15〜40 秒休む
           for (let i = 0, n = Math.floor(R(3, 6)); i < n; i++) {
             const t0 = v.t + i * 0.8;

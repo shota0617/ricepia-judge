@@ -2164,7 +2164,47 @@ function groundAt(x, y) {
   if (c === C.G || c === C.P || c === C.W || c === C.K || c === C.V || c === C.E || c === C.U || c === C.Y) return GROUND.grass;
   return GROUND.dirt;
 }
+// ころころコンボ（運営者の声「クセになる転がり方を研究」）：かべに 当たらずに 転がりつづけると、コトンの たびに 数が ふえ、音が ドレミソラ…と 1音ずつ 高く なる（転がるだけで メロディに。
+// 当てるたびに 音が 上がっていく ゲームの 気持ちよさ）。3から お米の 右よこに「×12」、5ごとに きらきら、10ごとに「🎵 ころころ ×20！」。当たる・止まると おしまい。じぶんの ベストを こえたら「🏅」。
+// ポイントは つけない（同じ所を ぐるぐる しても もうからない。音と 数と ベストだけの 楽しみ）。ベストは この端末（nsg_combo_best）
+const combo = { n: 0, quietT: 0, shown: 0, best: (() => { try { return +localStorage.getItem('nsg_combo_best') || 0; } catch (e) { return 0; } })() };
+const PENTA = [0, 2, 4, 7, 9];
+function comboNote(n, v) {   // ドレミソラ（五音の 音階）を 下から。2オクターブ 上まで いったら そこで くり返す
+  const a = sfxCtx();
+  if (!a) return;
+  try {
+    const i = (n - 1) % 11, semi = PENTA[i % 5] + 12 * Math.floor(i / 5), t = a.currentTime, f = 523.25 * Math.pow(2, semi / 12);
+    const o = a.createOscillator(), o2 = a.createOscillator(), g = a.createGain();
+    o.type = 'triangle'; o.frequency.setValueAtTime(f, t); o2.type = 'sine'; o2.frequency.setValueAtTime(f * 2, t);   // 木の 音に 少し 鈴の ひびき
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.045 * (0.6 + v * 0.4), t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g); o2.connect(g); g.connect(a.destination); o.start(t); o2.start(t); o.stop(t + 0.2); o2.stop(t + 0.2);
+  } catch (e) { /* 音が出せない端末 */ }
+}
+function comboStep() {
+  combo.shown = performance.now();
+  if (combo.n % 5 === 0) {   // 5ごとに きらきら（10ごとに 文字も）
+    if (combo.n % 10 === 0) floatText(`🎵 ころころ ×${combo.n}！`);
+    const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'];
+    for (let i = 0; i < 10 + Math.min(20, combo.n / 2); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 4], life: 0.6 + Math.random() * 0.4 }); }
+  }
+}
+function comboEnd() {
+  const n = combo.n;
+  combo.n = 0; combo.quietT = 0;
+  if (n < 5) return;
+  if (n > combo.best) { combo.best = n; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ } floatText(`🏅 ころころ ベスト ×${n}`); }
+  if (G.track) G.track('roll_combo', { n, best: combo.best });
+}
+function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数が ふえるほど 大きく・色が かわる）
+  if (combo.n < 3) return;
+  const S = Math.round(Math.min(24, 11 + combo.n * 0.4) * u), pop = Math.max(0, 1 - (now - combo.shown) / 180), sz = Math.round(S * (1 + pop * 0.25));
+  ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+  ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
+  const t = `×${combo.n}`;
+  ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
+}
 function riceFeel(dt, speed) {
+  if (combo.n) { combo.quietT = speed < 0.6 ? combo.quietT + dt : 0; if (combo.quietT > 0.7) comboEnd(); }   // 止まったら おしまい
   const g = roll.gnd = roll.last ? groundAt(roll.last.x, roll.last.y) : GROUND.dirt, wx = WX_ROLL[wxKind()];
   {   // よごれ（速く転がるほど つく）
     const key = Object.keys(GROUND).find(k => GROUND[k] === g) || 'dirt', r = DIRT_RATE[key] || 0;
@@ -2176,7 +2216,9 @@ function riceFeel(dt, speed) {
   if (k !== roll.side) {
     const n = ka + ks + kp; roll.side = k;
     if (speed > 0.6 && roll.h <= 0) {
-      kotoSound(Math.min(1, speed / 5) * g.snd); roll.sq = Math.max(roll.sq, 0.06 * (KP.kotoSq || 1)); roll.sqx = false;
+      if (speed > 1.2 && rollOn && G.demo) { combo.n++; combo.quietT = 0; comboNote(combo.n, Math.min(1, speed / 5) * g.snd); comboStep(); }   // ころころコンボ：コトンが 1音ずつ 高く（音階に）
+      else kotoSound(Math.min(1, speed / 5) * g.snd);
+      roll.sq = Math.max(roll.sq, 0.06 * (KP.kotoSq || 1)); roll.sqx = false;
       const hopV = KP.hopV || HOP_V;
       if (speed > hopV && (KP.hopEvery === 1 || (n & 1))) { roll.hv = (2.2 + (speed - hopV) * 0.4) * (KP.hopPow || 1); roll.h = 0.001; roll.kind = 'hop'; }   // ぴょん：速いと、2回に1回 とびはねる（転がり方で かわる）
     }
@@ -5922,6 +5964,7 @@ function frame(now) {
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ
       drawSendArrow(hx, by, T, u);   // お米の まん中から
+      drawCombo(hx + 15 * u, by - 4 * u, u, now);   // ころころコンボの 数（お米の 右よこ。頭の上は 浮かぶ 文字の 場所）
       if (roll.wetT > 0) {   // ぽちゃん のあと：頭の左上に 水の しずく
         const q = Math.max(1, Math.round(u)), dx0 = Math.round(hx - 11 * u), dy0 = Math.round(by - 12 * u + (1.4 - roll.wetT) * 3 * u);
         ctx.globalAlpha = Math.min(1, roll.wetT * 2);
@@ -7371,6 +7414,7 @@ function bumpFx(hard = 1, horiz = true, wet = false, hedge = false) {
   if (now - rp.bump < 160) return;
   rp.bump = now;
   if (hard < 0.25) return;
+  comboEnd();   // 当たったら ころころコンボは おしまい
   if (hedge) {   // めいろの 生け垣に がさっ：やわらかく 受けとめて、葉っぱが 舞う。強く 当たった ときだけ いたい顔
     roll.sq = Math.min(0.24, 0.07 + hard * 0.04); roll.sqv = 0; roll.sqx = horiz;
     roll.shake = Math.min(0.4, 0.06 + hard * 0.06);
@@ -7787,7 +7831,7 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), goal: id => {   // 
     if (!g || !g.t0) return null;
     const sec = g.sec !== undefined ? g.sec : (now - g.t0) / 1000;
     return { sec, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M, stars: g.len0 && !g.warp ? mzStars(sec, g.len0) : 0, par: g.len0 ? mzPar(g.len0).p3 : 0 };
-  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone() }), crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase })) }), crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone() }), crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase })) }), crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best }; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },

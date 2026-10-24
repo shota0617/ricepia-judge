@@ -724,6 +724,20 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ok: entered && diag, cell: [c.x, c.y], entered, diag };
   })();
+  // ころころコンボ（クセになる 転がり方）：かべに 当たらずに 転がりつづけると コトンの たびに 数が ふえ、当たるか 止まると 0 に もどる
+  R.checks.rollCombo = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const pick = await page.evaluate(() => { const r = nishioPixel.roll; let best = null; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 30 && !nishioPixel.rollBlockedFrom(r.x + dx * (d - 1), r.y + dy * (d - 1), r.x + dx * d, r.y + dy * d)) d++; if (!best || d > best[1]) best = [k, d]; } return best; });
+    if (pick[1] < 5) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-room', d: pick[1] }; }
+    await page.keyboard.down(pick[0]);
+    let max = 0;
+    for (let i = 0; i < 30; i++) { await page.waitForTimeout(100); max = Math.max(max, await page.evaluate(() => nishioPixel.combo.n)); }
+    await page.keyboard.up(pick[0]);
+    await page.waitForTimeout(1800);   // かべに 当たるか、止まって 0.7秒で おしまい
+    const after = await page.evaluate(() => nishioPixel.combo);
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ok: max >= 2 && after.n === 0 && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after };
+  })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
   await page.evaluate(() => { nishioPixel.setRoll(true); nishioPixel.setWorld(true); }); await page.waitForTimeout(300);
@@ -1134,6 +1148,7 @@ async function walkTo(page, id) {
   need(c.trailMile && c.trailMile.ok, '歩いた道の節目：500m を歩いても 節目のお祝いが出ない');
   need(c.rollVert && c.rollVert.ok, `たての 転がり方：上・下へ 転がっても でんぐりがえし しない（${JSON.stringify(c.rollVert)}）`);
   need(c.cornerAssist && c.cornerAssist.ok, `曲がり角アシスト：めいろの 曲がり角で、横に ずれていると 曲がれない（${JSON.stringify(c.cornerAssist)}）`);
+  need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.mazeWallFit && c.mazeWallFit.ok, 'めいろの 壁：お米が 壁に 食いこんで 見える（当たり判定が 絵より 小さい）、または はね返らない');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');

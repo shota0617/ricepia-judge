@@ -558,7 +558,7 @@ function setupTractor(root) {
     if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; }
   });
   for (const n of ['WheelRL', 'WheelRR', 'WheelFL', 'WheelFR', 'SteerFL', 'SteerFR', 'SteeringWheel', 'Rotary', 'Rotor', 'Flap', 'WingL', 'WingR', 'RotorL', 'RotorR',
-    'LeverJoy', 'LeverShuttle', 'PedalBrakeL', 'PedalBrakeR', 'PedalClutch', 'MeterScreen', 'MonitorScreen', 'Glass', 'Wiper']) P[n] = root.getObjectByName(n);
+    'LeverJoy', 'LeverShuttle', 'LeverPtoSel', 'PedalBrakeL', 'PedalBrakeR', 'PedalClutch', 'MeterScreen', 'MonitorScreen', 'Glass', 'Wiper']) P[n] = root.getObjectByName(n);
   P.sw0 = P.SteeringWheel.quaternion.clone();
   // ハンドル：スポークとハブも黒に（いまのキャビン付きトラクターのハンドルは、黒い 3 本スポークに小さな黒いハブ）
   const swBlack = new THREE.MeshStandardMaterial({ color: 0x1a1b1d, roughness: 0.45, metalness: 0.1 });
@@ -3869,6 +3869,7 @@ function step(dt) {
   P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
+  if (P.LeverPtoSel) P.LeverPtoSel.rotation.x += ((PTO2 ? -0.28 : 0.28) - P.LeverPtoSel.rotation.x) * Math.min(1, dt * 8);   // PTO 変速レバー（1 速・2 速）
   const brake = !key.fwd && !key.back && Math.abs(S.v) > 0.05 ? 1 : 0;
   P.PedalBrakeL.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer < 0 ? 0.5 : 0);   // オートブレーキは内側だけ
   P.PedalBrakeR.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer > 0 ? 0.5 : 0);

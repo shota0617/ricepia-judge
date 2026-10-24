@@ -608,7 +608,7 @@ function talkNpc(id, page = 0) {
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
     // 地図の めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かえない（自分で 遊んで 分かった：通りすがりに こつんと
     // 話すと ゴールが 別の 人に かわり、時計も 0 から やりなおしに なっていた）。ゴールに 着いてから 話せば、その人の 話で 次が 決まる
-    const mzKeep = !arrived && guideTarget() && demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.on();
+    const mzKeep = !arrived && guideTarget() && mazeNow();
     const g = mzKeep ? null : decideGuide(n);
     if (g) {
       setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 イベント発生：${g.name}へ行ってみて`); brief.next = g.name;
@@ -1580,6 +1580,7 @@ const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら�
 // あるいて移動では GPS の精度が悪いときもだめ（電車・バスなどの乗り物で移動中は、着いたことにしてよい）
 const fixOk = () => !!me && !driving && (demo || me.acc <= CFG.maxAccuracy);   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by, alts }（alts：ほかの候補。札から選べる）
+const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.on && nishioPixel.maze.on());   // 地図の めいろで 遊んでいる
 function decideGuide(from) {
   if (!me) return null;
   const now = new Date(), range = GUIDE_RANGE[demo ? 'play' : 'walk'];
@@ -1591,10 +1592,11 @@ function decideGuide(from) {
   const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
   const cands = [];
   // ①' この人が知っている人（人から人へ）。まだ話していない人だけ。遠くても10kmまで（佐久島へは船で）
+  // 地図の めいろでは、ほかの 行き先と 同じ すすめる範囲まで（めいろの 道のりは まっすぐの 3〜4倍。5km 先の 人や 船の 先の 島は、めいろでは 着けない）
   if (from && Array.isArray(from.refer)) {
-    const all = placeNpcs();
+    const all = placeNpcs(), lim = mazeNow() ? range : 10000;
     const ref = from.refer.map(([id, words]) => ({ n: all.find(x => x.id === id), words }))
-      .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > guideRadius({ kind: 'npc' }) * 1.5 && dist(me, x.n) <= 10000);
+      .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > guideRadius({ kind: 'npc' }) * 1.5 && dist(me, x.n) <= lim);
     if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
   }
   // ②'' 雨がふっている（天気）→ 屋根のある所（博物館・資料館・美術館・水族館・図書館）。いちばん先に
@@ -1989,7 +1991,9 @@ function checkGuide() {
   }
   // 遠くへ移った（となりの市町へ行ったなど）ときは、いまいる所のようすで決め直す
   // （人のすすめは10kmまで出すので12km、それ以外は すすめる範囲の2倍まで）
-  const farLimit = g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
+  // 地図の めいろでは、すすめる範囲の 1.5倍より 遠い 行き先（めいろの 前に 人に すすめられた 遠くの 人など）は 決め直す
+  // （めいろの 道は ゴールから いちど はなれる ことも あるので、すすめる範囲 ちょうどでは 決め直さない。自分で 選んだ 行き先は そのまま）
+  const farLimit = mazeNow() && !g.mine ? GUIDE_RANGE.play * 1.5 : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
   if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;

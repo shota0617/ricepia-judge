@@ -2540,6 +2540,11 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
   const out = [];
   let book = false, shown = false;   // shown：大きく出している絵の札（はじめの1枚）はもう出したか
   for (const l of lines) {
+    if (/^🧭 (まよわず|通った 道)/.test(l)) {   // めいろの「まよわず ゴール」：通った 道の 倍率（と ボーナス）の 札（下の「つぎは〜へ」とは べつ）
+      const x = (l.match(/([\d.]+)倍/) || [])[1], plus = (l.match(/[+＋]\d+/) || [''])[0];
+      out.push(`<span title="${esc(l)}">${PIA('compass', l)}${x ? `${x}倍` : ''}${plus ? ' ' + plus : ''}</span>`);
+      continue;
+    }
     if (l.startsWith('🧭')) continue;   // 「つぎは〜へ」は下の案内に出ている
     const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
     if (ic === 'book') book = true;

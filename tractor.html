@@ -1992,7 +1992,8 @@ const TR = (() => {
 // 雨の日は みぞの底に水がたまる
 const RUTS = (() => {
   if (season !== 'aki') return { at: () => 0, erase() {}, flush() {} };
-  const W = 0.45, LIP = 0.12, GAUGE = 1.15, depth = new Float32Array(NX * NZ), quads = new Map(), lines = [];
+  const W = 0.45, LIP = 0.12, GAUGE = 1.15, depth = new Float32Array(NX * NZ), lines = [];
+  const onRamp = (x, z) => x > 11.8 && z > 17.8 && z < 22.2;   // 出口の坂（ground() の坂）とそのきわには わだちを作らない
   const R = HX - 1.7, Q = HZ - 1.7, round = [];
   for (let k = 0; k <= 64; k++) {                 // 回り刈りの外周（角は半径 2.5m で回る）
     const a = k / 64 * Math.PI * 2, c = Math.cos(a), s_ = Math.sin(a);
@@ -2018,6 +2019,7 @@ const RUTS = (() => {
     const j0 = Math.max(0, Math.floor((Math.min(az, bz) - M + HZ) / CELL)), j1 = Math.min(NZ - 1, Math.floor((Math.max(az, bz) + M + HZ) / CELL));
     for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
       const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / L2));
+      if (onRamp(x, z)) continue;
       const r = Math.hypot(x - ax - dx * t, z - az - dz * t), c = i * NZ + j;
       const v = r < W / 2 ? d * (1 - (r / (W / 2)) ** 2) : r < M ? -0.02 * Math.sin((r - W / 2) / LIP * Math.PI) : 0;
       if (Math.abs(v) > Math.abs(depth[c]) || (v > 0 && v > depth[c])) depth[c] = v;
@@ -2046,24 +2048,33 @@ const RUTS = (() => {
       for (let m = 0; m < n; m++) {
         const x0 = ax + (bx - ax) * m / n, z0 = az + (bz - az) * m / n, x1 = ax + (bx - ax) * (m + 1) / n, z1 = az + (bz - az) * (m + 1) / n;
         const nx = -(bz - az) / L * (W / 2 + LIP), nz = (bx - ax) / L * (W / 2 + LIP), v1 = v + L / n / 0.5;
-        const ci = Math.floor(((x0 + x1) / 2 + HX) / CELL) * NZ + Math.floor(((z0 + z1) / 2 + HZ) / CELL);
         if (Math.abs((x0 + x1) / 2) < HX - 0.3 && Math.abs((z0 + z1) / 2) < HZ - 0.3) {
           const q = pos.length / 12, y = 0.027;
           pos.push(x0 + nx, y, z0 + nz, x0 - nx, y, z0 - nz, x1 - nx, y, z1 - nz, x1 + nx, y, z1 + nz);
           uv.push(0, v, 1, v, 1, v1, 0, v1);
           idx.push(q * 4, q * 4 + 2, q * 4 + 1, q * 4, q * 4 + 3, q * 4 + 2);   // 上から見て表になる向き（裏だと光が当たらず暗い）
-          if (!quads.has(ci)) quads.set(ci, []);
-          quads.get(ci).push(q);
         }
         v = v1;
       }
     }
   }
-  const geo = new THREE.BufferGeometry(), pa = new THREE.BufferAttribute(new Float32Array(pos), 3);
-  geo.setAttribute('position', pa); geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uv), 2));
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3)); geo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array(uv), 2));
   geo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(pos.length).map((_, k) => k % 3 === 1 ? 1 : 0), 3));
   geo.setIndex(idx);
-  const mesh = new THREE.Mesh(geo, new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }));
+  // 耕したます目では描かない：ます目の「耕した」しるし（tilledMask）をそのまま絵にして、絵の点ごとに見る（深さの at() と同じます目でそろう）
+  const mask = new THREE.DataTexture(tilledMask, NZ, NX, THREE.LuminanceFormat, THREE.UnsignedByteType);
+  mask.magFilter = mask.minFilter = THREE.NearestFilter; mask.needsUpdate = true;
+  const mat = new THREE.MeshLambertMaterial({ map: tex, transparent: true, depthWrite: false, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.tilledTex = { value: mask };
+    sh.vertexShader = 'varying vec2 vRutP;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vRutP = position.xz;');
+    sh.fragmentShader = 'varying vec2 vRutP;\nuniform sampler2D tilledTex;\n' + sh.fragmentShader.replace('#include <clipping_planes_fragment>', `#include <clipping_planes_fragment>
+  vec2 cIJ = floor(vec2(vRutP.x + ${HX.toFixed(1)}, vRutP.y + ${HZ.toFixed(1)}) / ${CELL.toFixed(2)});
+  if (texture2D(tilledTex, vec2((cIJ.y + 0.5) / ${NZ.toFixed(1)}, (cIJ.x + 0.5) / ${NX.toFixed(1)})).r > 0.0) discard;
+  if (vRutP.x > 11.8 && vRutP.y > 17.8 && vRutP.y < 22.2) discard;`);
+  };
+  const mesh = new THREE.Mesh(geo, mat);
   mesh.frustumCulled = false; mesh.renderOrder = 0.9; scene.add(mesh);
   let dirty = false;
   return {
@@ -2073,13 +2084,8 @@ const RUTS = (() => {
       const c = i * NZ + j;
       return tilledMask[c] ? 0 : depth[c];
     },
-    erase(c) {                                    // 耕した所のわだちの帯を消す
-      const list = quads.get(c);
-      if (!list) return;
-      for (const q of list) pa.array.fill(0, q * 12, q * 12 + 12);
-      quads.delete(c); dirty = true;
-    },
-    flush() { if (dirty) { pa.needsUpdate = true; dirty = false; } }
+    erase() { dirty = true; },                    // 耕した：しるしの絵を送りなおす（1 コマに 1 回）
+    flush() { if (dirty) { mask.needsUpdate = true; dirty = false; } }
   };
 })();
 // ---- 秋：伸びた 2 番穂（ひこばえ）や長い藁が ロータリーの爪軸に巻きつく（X の米農家さん 2026-10-22：「伸びた 2 番穂がロータリーに絡む」）。

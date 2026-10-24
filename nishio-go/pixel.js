@@ -5714,12 +5714,13 @@ let howtoSeen = (() => { try { return localStorage.getItem('nsg_howto') === '1';
 function howtoShow() {
   const k = $('howtoKey'), pc = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (k) k.textContent = pc ? 'パソコンは 矢印キー。地図を クリックした所へも 向かう' : '傾けにくい ときは、地図を タップした所へ 向かう';
+  if (G.toastHold) G.toastHold();   // いま 出ている 知らせは 下げて、とじてから（札の 見出しに 重なっていた）
   howtoEl.hidden = false; howtoSeen = true;
   try { localStorage.setItem('nsg_howto', '1'); } catch (e) { /* noop */ }
   setTimeout(() => { const b = $('howtoOk'); if (b && !howtoEl.hidden) b.focus(); }, 50);
 }
 function howtoTick() { if (!howtoSeen && mazeOn() && !mapCovered() && !sightBusy() && !(G.rewardSoon && G.rewardSoon())) howtoShow(); }   // 出る 予定の ごほうび（開く 予約の おみやげ袋・読みこみ中の 絵・ムービー）が 済んでから
-$('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; });   // いまの 持ち方を「まっすぐ」に して はじめる
+$('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; if (G.toastFlush) G.toastFlush(); });   // いまの 持ち方を「まっすぐ」に して はじめる
 $('howtoOpen').addEventListener('click', howtoShow);
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
 function frame(now) {

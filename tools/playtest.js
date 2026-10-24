@@ -998,10 +998,13 @@ async function walkTo(page, id) {
     await w.page.click('#meiroBtn'); await w.page.waitForTimeout(2500);
     const pos = () => w.page.evaluate(() => { const r = nishioPixel.roll; return r.x === null ? null : [r.x, r.y]; });
     const shown = await w.page.evaluate(() => !document.getElementById('howto').hidden);
+    const toastOver = await w.page.evaluate(() => { nishioGo.toast('あそびかたの テストの 知らせ'); return document.getElementById('toast').classList.contains('show') && /テストの 知らせ/.test(document.getElementById('toast').textContent); });   // あそびかたの 札の 上に 知らせを 重ねない（とじてから）
     await shot(w.page, '12-howto');
     const p0 = await pos(); await w.page.keyboard.down('ArrowUp'); await w.page.waitForTimeout(900); await w.page.keyboard.up('ArrowUp'); const p1 = await pos();
     await w.page.click('#howtoOk'); await w.page.waitForTimeout(300);
     const closed = await w.page.evaluate(() => document.getElementById('howto').hidden && localStorage.getItem('nsg_howto') === '1');
+    await w.page.waitForTimeout(300);
+    const toastAfterOk = await w.page.evaluate(() => /テストの 知らせ/.test(document.getElementById('toast').textContent));   // とじたら 出る（ほかの 知らせの あとに なる ことも あるので 記録だけ）
     const unblock = () => w.page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); const pi = document.getElementById('pxInfo'); if (!pi.hidden) pi.hidden = true; });   // とじたあとに 出る ようこそ たからばこ・はじめの1枚
     const free = async () => { for (let i = 0; i < 3; i++) { await unblock(); await w.page.waitForTimeout(400); await unblock(); const pp = await pos(); await w.page.keyboard.down('ArrowUp'); await w.page.waitForTimeout(700); await w.page.keyboard.up('ArrowUp'); await w.page.waitForTimeout(300); const qq = await pos(); if (pp && qq && Math.hypot(qq[0] - pp[0], qq[1] - pp[1]) > 0.3) return true; await w.page.keyboard.down('ArrowLeft'); await w.page.waitForTimeout(700); await w.page.keyboard.up('ArrowLeft'); const rr = await pos(); if (qq && rr && Math.hypot(rr[0] - qq[0], rr[1] - qq[1]) > 0.3) return true; } return false; };
     const rolls = await free();
@@ -1143,7 +1146,7 @@ async function walkTo(page, id) {
     });
     R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.back) };
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
-    R.checks.howtoFirst = { sub, shown, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
+    R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
     await w.ctx.close();
   }

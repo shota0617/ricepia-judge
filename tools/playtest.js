@@ -808,6 +808,7 @@ async function walkTo(page, id) {
   await page.waitForTimeout(1500);
   await page.evaluate(() => { document.getElementById('pxInfo').hidden = true; const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   await page.click('#spinBtn').catch(() => {}); await page.waitForTimeout(800);
+  R.checks.movieAfterReward = await page.evaluate(() => { const rw = document.getElementById('reward').classList.contains('show'), mv = !!(window.NISHIO_MOVIE && NISHIO_MOVIE.playing); return { rw, mv, ok: rw && !mv }; });   // ムービーは ごほうびの 窓を とじてから（ごほうびの 上に 出て かくさない）
   await page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); });
   R.checks.movieOpen = await page.waitForFunction(() => window.NISHIO_MOVIE && NISHIO_MOVIE.playing === 'iwa', null, { timeout: 10000 }).then(() => true, () => false);
   if (R.checks.movieOpen) { await shot(page, '07c-movie'); for (let i = 0; i < 4; i++) { await page.click('#movie [data-mv="next"]'); await page.waitForTimeout(200); } }
@@ -1101,8 +1102,10 @@ async function walkTo(page, id) {
       }
       const n = G.npcs.filter(x => G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
       if (!n) return { spot, sb, npc: 'none' };
+      for (let i = 0; i < 30 && (G.rewardSoon() || (window.NISHIO_MOVIE && NISHIO_MOVIE.playing)); i++) { await wait(300); clear(); }   // チェックインの あとの ムービー（ごほうびの あとに 流れる）が おわってから
       G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
       await wait(3800); clear();
+      for (let i = 0; i < 30 && !(M.clock() && M.clock().sec > 3.5); i++) { await wait(300); clear(); }   // 窓の 間は 時計が 止まるので、3秒 すすむまで（3秒 より 前の ゴールは 数えない）
       const b1 = M.banner, gt = G.guide;
       G.moveTo(gt.lat, gt.lng);
       let talk = false;
@@ -1191,6 +1194,7 @@ async function walkTo(page, id) {
   need(c.operateMode && c.bgmStarted && c.checkinSound && c.cooldown && c.shopCard && c.worldBgm && c.walkMode && c.reactOffTab, '操作・音・当店の案内・あるいて移動のどれかが動かない');
   need(c.rewardTapClose === true, 'ほうびの知らせがチェックインのあとに出ないか、タップで消えない');
   need(c.chestsNearby > 0, 'たからばこが置かれていない');
+  need(c.movieAfterReward && c.movieAfterReward.ok, 'ドット絵ムービーが ごほうびの 窓の 上に すぐ 出て、ごほうびを かくす');
   need(c.movieOpen === true && c.movieDone === true, 'ドット絵ムービー：八ツ面山でチェックインしても流れないか、最後まで見ても まちメモ に残らない');
   need(c.roll && c.roll.ok, 'かたむけて転がす：お米が転がらない（または絵が回らない）');
   need(c.slope && c.slope.ok, '坂：平らな所で動く、または 下り坂で ひとりでに転がらない');

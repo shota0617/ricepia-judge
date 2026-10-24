@@ -1896,11 +1896,12 @@ function shopAfter(s, key = stateKey(), t0 = Date.now()) {   // 当店でチェ�
 function movieWhenFree(id, key = stateKey()) {
   if (movieWhenFree.wait) return;
   movieWhenFree.wait = true;
-  (function go() {
+  function go() {
     if (stateKey() !== key) { movieWhenFree.wait = false; return; }
     if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || medashiOpen()) return setTimeout(go, 600);   // イベントの窓（.medashi）が開いている間も待つ
     movieWhenFree.wait = false; playMovie(id);
-  })();
+  }
+  setTimeout(go, 50);   // チェックインの とちゅうで よばれる：そのあと 出す ごほうびの 窓を 待つ（すぐ 調べると まだ ごほうびが なく、ムービーが ごほうびと「🏁 ゴール！」の 上に 出て かくしていた）
 }
 function playMovie(id) {
   if (!window.NISHIO_MOVIE) return;

@@ -3,7 +3,7 @@
 // まもる きまり（くわしくは SKILL.md）を、機械で 見られる ところだけ 調べる。✖ は 直すまで push しない。⚠ は 目で 確かめる
 //   ✖ main に いる・作業用の ブランチ（RICEPIA_BRANCH）で ない
 //   ✖ ricepia-jp/deploy.txt が main に ある（本番の ricepia.jp を 書きかえる 合図。作業用の ブランチに だけ 置き、動かしたら すぐ 消す）
-//   ✖ 足した 行に 秘密の 値らしい もの（API キー・トークン・パスワード・秘密鍵）
+//   ✖ push する コミットの どれかに 秘密の 値らしい もの（API キー・トークン・パスワード・秘密鍵。あとで 消しても 途中の コミットに のこる）
 //   ✖ コミットの 文に モデルの 名前（Co-Authored-By の 行は のぞく）
 //   ⚠ コミットに Co-Authored-By・Claude-Session の 行が ない／ページや コードに メールアドレス／deploy.txt が ブランチに 残っている
 'use strict';
@@ -34,12 +34,21 @@ const SECRET = [
   [/\bMLY\|[0-9]+\|[A-Za-z0-9]{20,}/, 'Mapillary の トークン'],
 ];
 const EMAIL = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, EMAIL_OK = /^(noreply@anthropic\.com|.*@example\.(com|org)|.*@users\.noreply\.github\.com)$/i;
-for (const l of diff.split('\n')) {
+for (const l of diff.split('\n')) {   // 最後の 差分：メールアドレス
   if (l.startsWith('+++ ')) { file = l.slice(6); continue; }
   if (!l.startsWith('+') || l.startsWith('+++')) continue;
   const t = l.slice(1);
-  for (const [re, what] of SECRET) if (re.test(t)) bad.push(`${file}：${what}らしい 値（値は 出さない。消してから 履歴に 残っていないか 確かめる）`);
   if (/\.(html|js|json|css)$/.test(file) && !file.startsWith('.claude/')) for (const m of t.match(EMAIL) || []) if (!EMAIL_OK.test(m) && !/\.(png|jpe?g|webp|svg|gif)$/i.test(m)) warn.push(`${file}：メールアドレス「${m.replace(/^(.).*@/, '$1…@')}」（運営者の メールは ページに 書かない）`);
+}
+// 秘密は コミットごとに 見る（あとの コミットで 消しても、途中の コミットは push で 公開される）
+const patches = git('log', '--first-parent', '--no-merges', '-p', '--unified=0', '--no-color', '--format=@@@COMMIT %h', `${base}..HEAD`);
+let sha = '';
+file = '';
+for (const l of patches.split('\n')) {
+  if (l.startsWith('@@@COMMIT ')) { sha = l.slice(10); continue; }
+  if (l.startsWith('+++ ')) { file = l.slice(6); continue; }
+  if (!l.startsWith('+') || l.startsWith('+++')) continue;
+  for (const [re, what] of SECRET) if (re.test(l.slice(1))) bad.push(`${sha} の ${file}：${what}らしい 値（値は 出さない。まだ push して いない コミットなら、その コミットから 消して 作りなおす。push ずみなら 運営者に 伝えて キーを 取りかえて もらう）`);
 }
 
 // コミットの 文

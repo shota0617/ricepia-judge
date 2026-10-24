@@ -16,5 +16,5 @@ else
 fi
 node "$here/playtest.js" --rerun
 "$here/push.sh"
-echo "expectedHeadSha: $(git rev-parse HEAD)"
+echo "expectedHeadSha: $(git rev-parse HEAD)（マージの あと post-merge.sh の 2つめにも わたす）"
 node "$here/skip-ci.js" || true

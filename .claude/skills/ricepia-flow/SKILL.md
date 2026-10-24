@@ -52,7 +52,7 @@ description: にしおさんぽGO（ricepia-judge）で 作業する ときの �
 1. **作る**：コードを 変え、`docs/` の 説明も 足す（めいろは `docs/meiro.md`、ほかの ゲームを 参考に した ときは `docs/play-improve.md`）
 2. **プレイテスト**：`node $F/playtest.js`（通しで 約8分。落ちた 項目と 結果の ファイルを 出す）
    - 新しい 確認を 足したら、直す 前の コードで 落ちる ことを 確かめる：
-     `node $F/playtest.js --old HEAD --files nishio-go/pixel.js --show 項目名`
+     `node $F/playtest.js --old HEAD --files nishio-go/pixel.js --show 項目名`（別の 作業場所で 動かすので、いまの ファイルは さわらない）
    - 落ちた 項目が この 変更の せいか 分からない ときは、`--rerun`（もう1回）と `--main`（main だけで 動かす）で 見分ける
      - main でも 落ちる、または 2回目に 通る なら、もとから ときどき 落ちる 確認
      - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`
@@ -107,7 +107,8 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 3. あとかたづけ
    - `unsubscribe_pr_activity` で 見張りを やめる
    - のこっている 確認の 予定を `delete_trigger` で 消す
-4. `$F/post-merge.sh <マージの SHA>`
+4. `$F/post-merge.sh <マージの SHA> <expectedHeadSha>`
+   - マージした 先頭より あとに 積んだ コミットが あれば 止まる（消さない。新しい main の 上に cherry-pick で 積みなおす）
    - ブランチを 新しい main から 作りなおし、マージずみの 歴史を つないで push する
    - Vercel が 出したかを 待つ
    - 「Account is blocked.」なら 運営者に Vercel の 画面で 戻して もらう（`docs/vercel-cost.md` の 4）
@@ -140,11 +141,11 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 | --- | --- |
 | `playtest.js` | 通しの プレイテストを 動かし、落ちた 項目を まとめる。`--show`・`--old REF --files`・`--main`・`--rerun`・`--port` |
 | `commit.sh "題" ["本文"]` | 決まりの 2行を つけて コミット（題・本文に モデルの 名前が あれば 止める） |
-| `guard.js [比べる元]` | push の 前の 見張り（✖ は 直すまで push しない、⚠ は 目で 確かめる） |
+| `guard.js [比べる元]` | push の 前の 見張り（✖ は 直すまで push しない、⚠ は 目で 確かめる）。秘密は push する コミットごとに 見る |
 | `push.sh` | 見張りを 通して 作業用の ブランチへ push（ネットの つまずきは やりなおす） |
-| `skip-ci.js [比べる元]` | マージの 題に `[skip ci]` が いるか（make-promo.yml・ricepia-jp.yml の paths から 判定） |
+| `skip-ci.js [比べる元]` | マージの 題に `[skip ci]` が いるか（make-promo.yml・ricepia-jp.yml の paths から 判定。読めない 書き方なら 安全がわで「いる」） |
 | `pre-merge.sh` | マージの 前：main を 取りこむ → プレイテスト → push → expectedHeadSha |
-| `post-merge.sh <SHA> [分]` | マージの あと：ブランチを つなぎなおす → Vercel を 待つ |
+| `post-merge.sh <SHA> <先頭SHA> [分]` | マージの あと：あとから 積んだ コミットが ないか 確かめる → ブランチを つなぎなおす → Vercel を 待つ |
 | `selfplay.js 出力 [ゴール数]` | 地図の めいろを 遊ぶ 遊び手（つまずきの 記録・画面） |
 | `env.js` | 共通の したく（Leaflet を `--ignore-scripts` で 取りだして キャッシュ、Chromium の 場所） |
 

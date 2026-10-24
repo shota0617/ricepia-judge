@@ -3,7 +3,7 @@
 //   node playtest.js                         通しで 1回（落ちた 項目が あれば 終了コード 1）
 //   node playtest.js --show mzArrive,npcBump 見たい 項目の 中身も 出す
 //   node playtest.js --old HEAD --files nishio-go/pixel.js[,nishio-go/game.js] --show 項目
-//                                            直す 前の コードで 新しい 確認が 落ちるかを 見る（そのファイルだけ REF の 中身に して 動かし、かならず 元に もどす）
+//                                            直す 前の コードで 新しい 確認が 落ちるかを 見る（別の 作業場所で、そのファイルだけ REF の 中身に して 動かす。いまの 作業ファイルは さわらない）
 //   node playtest.js --main                  origin/main だけで 動かす（落ちた 項目が この PR の せいか、もとから ときどき 落ちるのかを 見分ける）
 //   node playtest.js --rerun                 落ちた ときに もう1回 動かし、2回 とも 落ちた 項目だけを 本当の 失敗と する
 //   --port N                                 ポート（いくつか 同時に 動かす ときは かえる。--old は 8941、--main は 8942 が 既定）
@@ -22,7 +22,7 @@ for (let i = 0; i < args.length; i++) {
 const show = typeof opt.show === 'string' ? opt.show.split(',') : [];
 
 function run(cwd, port, label) {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), `playtest-${label}-`));
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), `playtest-${label.replace(/[^\w.-]+/g, '_')}-`));   // ref の「/」などは フォルダ名に 入れない
   const r = spawnSync(process.execPath, [path.join(cwd, 'tools', 'playtest.js'), out], { cwd, env: playEnv({ PLAYTEST_PORT: String(port) }), encoding: 'utf8', maxBuffer: 1 << 28, timeout: 15 * 60 * 1000 });
   const f = path.join(out, 'playtest.json');
   if (!fs.existsSync(f)) {
@@ -43,22 +43,25 @@ function report(r) {
   console.log(`  結果：${r.out}/playtest.json`);
 }
 
-function withOldFiles(ref, files, fn) {   // files を ref の 中身に かえて fn を 動かし、かならず いまの 中身（コミット前の 変更も）に もどす
-  const keep = files.map(f => [f, fs.readFileSync(path.join(ROOT, f))]);
-  const restore = () => { for (const [f, b] of keep) fs.writeFileSync(path.join(ROOT, f), b); };
-  const onSig = () => { restore(); process.exit(130); };
-  process.on('SIGINT', onSig); process.on('SIGTERM', onSig);
+function withOldFiles(ref, files, fn) {   // いまの 作業ファイルは 書きかえない：別の 作業場所（git worktree）に いまの 中身（コミット前の 変更も）を 写し、files だけ ref の 中身に して fn(その場所) を 動かす
+  const wt = fs.mkdtempSync(path.join(os.tmpdir(), 'ricepia-old-'));
+  git('worktree', 'add', '-q', '--detach', wt, 'HEAD');
   try {
-    for (const f of files) fs.writeFileSync(path.join(ROOT, f), execFileSync('git', ['show', `${ref}:${f}`], { cwd: ROOT, maxBuffer: 1 << 28 }));
-    return fn();
-  } finally { restore(); process.off('SIGINT', onSig); process.off('SIGTERM', onSig); }
+    const dirty = [...git('diff', '--name-only', 'HEAD').split('\n'), ...git('ls-files', '--others', '--exclude-standard').split('\n')].filter(Boolean);
+    for (const f of dirty) {
+      const src = path.join(ROOT, f), dst = path.join(wt, f);
+      if (fs.existsSync(src)) { fs.mkdirSync(path.dirname(dst), { recursive: true }); fs.copyFileSync(src, dst); } else fs.rmSync(dst, { force: true });
+    }
+    for (const f of files) fs.writeFileSync(path.join(wt, f), execFileSync('git', ['show', `${ref}:${f}`], { cwd: ROOT, maxBuffer: 1 << 28 }));
+    return fn(wt);
+  } finally { try { git('worktree', 'remove', '--force', wt); } catch (e) { fs.rmSync(wt, { recursive: true, force: true }); } }
 }
 
 let res;
 if (opt.old) {
   if (typeof opt.files !== 'string') { console.error('--old には --files a,b を つけてください'); process.exit(2); }
   const files = opt.files.split(',');
-  res = withOldFiles(opt.old, files, () => run(ROOT, Number(opt.port) || 8941, `old:${opt.old}`));
+  res = withOldFiles(opt.old, files, wt => run(wt, Number(opt.port) || 8941, `old:${opt.old}`));
   report(res);
   console.log('（直す 前の コードで 新しい 確認が 落ちれば、その 確認は 直した ことを 見分けられて います）');
   process.exit(0);

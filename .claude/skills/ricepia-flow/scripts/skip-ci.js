@@ -8,20 +8,27 @@ const fs = require('fs'), path = require('path');
 const { ROOT, git } = require('./env');
 
 const WF = ['.github/workflows/make-promo.yml', '.github/workflows/ricepia-jp.yml'];
-function pathsOf(file) {   // on.push.paths の 並びを 読む（この 2つの ファイルの 書き方に 合わせた 小さな 読み方）
-  const lines = fs.readFileSync(path.join(ROOT, file), 'utf8').split('\n'), out = [];
-  let inPush = false, inPaths = false;
+function pathsOf(file) {   // on.push.paths を 読む。読めない 書き方・paths の ない push は null（安全がわ：[skip ci] が いる と みなす）。push が なければ []
+  const src = fs.readFileSync(path.join(ROOT, file), 'utf8'), lines = src.split('\n');
+  if (/^on:\s*(\[[^\]]*\bpush\b[^\]]*\]|push)\s*$/m.test(src)) return null;   // on: push・on: [push, …]（paths なし）
+  let inPush = false, inPaths = false, sawPush = false, out = [];
   for (const l of lines) {
-    if (/^\s{2}push:\s*$/.test(l)) { inPush = true; continue; }
-    if (inPush && /^\s{2}\S/.test(l)) inPush = false;
-    if (inPush && /^\s{4}paths:\s*$/.test(l)) { inPaths = true; continue; }
+    if (/^\s{2}push:\s*(\{\s*\})?\s*$/.test(l)) { inPush = sawPush = true; continue; }
+    if (/^\s{2}push:\s*\S/.test(l)) return null;   // push: {…} などの 1行の 書き方
+    if (inPush && /^\s{0,2}\S/.test(l)) { inPush = false; inPaths = false; }
+    if (!inPush) continue;
+    const inline = l.match(/^\s{4}paths:\s*\[(.*)\]\s*(#.*)?$/);
+    if (inline) { out.push(...inline[1].split(',').map(x => x.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean)); continue; }
+    if (/^\s{4}paths:\s*$/.test(l)) { inPaths = true; continue; }
+    if (/^\s{4}paths(-ignore)?:/.test(l)) return null;   // ほかの 書き方・paths-ignore は 読まない
     if (inPaths) {
       const m = l.match(/^\s{6}-\s*([^\s#]+)/);
       if (m) { out.push(m[1].replace(/^['"]|['"]$/g, '')); continue; }
       if (/^\s{0,4}\S/.test(l)) inPaths = false;
     }
   }
-  return out;
+  if (!sawPush) return [];
+  return out.length ? out : null;   // push は あるのに paths が 読めない → 安全がわ
 }
 const glob = g => new RegExp('^' + g.split('**').map(s => s.split('*').map(t => t.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')).join('.*') + '$');
 
@@ -30,7 +37,9 @@ const files = git('diff', '--name-only', `${base}...HEAD`).split('\n').filter(Bo
 const hits = [];
 for (const wf of WF) {
   if (!fs.existsSync(path.join(ROOT, wf))) continue;
-  const pats = pathsOf(wf).map(p => [p, glob(p)]);
+  const ps = pathsOf(wf);
+  if (ps === null) { if (files.length) hits.push(`${path.basename(wf)} の push の 条件が 読めない（安全がわ）`); continue; }
+  const pats = ps.map(p => [p, glob(p)]);
   for (const f of files) for (const [p, re] of pats) if (re.test(f)) hits.push(`${f}（${path.basename(wf)} の ${p}）`);
 }
 if (hits.length) {

@@ -6714,10 +6714,11 @@ function mzRoute(now) {
 // （そばに ほかの 注目スポットが あって、下の 札が そちらを さしていても）。人：話せる 近さに 入ったら 話しかける
 // 窓・ごほうび（読みこみ中・出す 予約も）・あそびかた・人の 話の 間は 待つ。待って いる 間は、前の ゴールを おぼえる 2分も 止める
 // （着いて すぐ 窓が 出て、2分 読んでから とじても、その ゴールで チェックインできる）
-const mzArrive = { done: '', t: 0, last: 0 };
+const mzArrive = { done: '', t: 0, last: 0, call: '' };
 function mzArriveTick(now) {
   const gap = mzArrive.last ? now - mzArrive.last : 0;
   mzArrive.last = now;
+  if (mzArrive.call && $('pxInfo').hidden && !sight.n) { G.callNpc(null); mzArrive.call = ''; }   // 話の 窓を とじたら、近くで 話せる あつかいを やめる
   if (!rollOn || !G.demo || !G.me || !G.checkinSpot) return;
   if (gap > 1000 || mapCovered() || !howtoEl.hidden || sightBusy() || (G.rewardSoon && G.rewardSoon())) { if (mzRt.prev) mzRt.prev.at += gap; return; }
   if (now - mzArrive.t < 300) return;
@@ -6729,9 +6730,12 @@ function mzArriveTick(now) {
     if (mzArrive.done !== key && G.checkinSpot(c[0])) { mzArrive.done = key; return; }
   }
   const g = G.guide;
-  if (g && g.kind === 'npc' && $('pxInfo').hidden && G.dist(G.me, g) <= G.guideRadius(g)) {
+  // 人：話せる 近さ（30m）に 入ったか、めいろの 道すじの おわり（ゴールの 近さに 入る マス）に 着いたら。道すじは マスの いちばん 近い 所で 着いたと みなすので、
+  // マスの まん中の お米は 30m より 少し 遠い ことが ある（遊び手が 32m で 止まった）。その ときは 呼びとめと 同じ ように 近くで 話せる あつかいに する
+  if (g && g.kind === 'npc' && $('pxInfo').hidden) {
+    const near = G.dist(G.me, g) <= G.guideRadius(g), end = !!(mzRt.path && mzRt.path.length <= 1 && mzRt.gid === g.id);
     const key = 'n:' + g.id + ':' + mzRt.t0, n = (G.npcs || []).find(x => x.id === g.id);
-    if (n && mzArrive.done !== key) { mzArrive.done = key; openNpc(n); }
+    if (n && (near || end) && mzArrive.done !== key) { mzArrive.done = key; if (!near) { G.callNpc(n.id); mzArrive.call = n.id; } openNpc(n); }
   }
 }
 function mzHintTick(now) {   // 25秒 行き先に 近づけていない（めいろの 道のりが へらない）ときだけ 道すじを 見せる（おたすけの ときは いつも 出ているので いらない）

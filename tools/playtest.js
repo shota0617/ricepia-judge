@@ -778,13 +778,20 @@ async function walkTo(page, id) {
     for (let i = 0; i < 30 && h1 === h0; i++) { await page.waitForTimeout(16); const r = await page.evaluate(() => { const r = nishioPixel.roll; return [Math.hypot(r.vx, r.vy), nishioPixel.maze.padHits]; }); vmax = Math.max(vmax, r[0]); h1 = r[1]; }
     const r1 = await page.evaluate(() => { const r = nishioPixel.roll; return Math.hypot(r.vx, r.vy); }); vmax = Math.max(vmax, r1);
     await page.keyboard.up(key);
+    let chain = 'one-pad';   // 3.5秒 いないに 別の パネルに のると「びゅん×2」
+    if (c.pads.length > 1) {
+      const [x2, y2, d2] = c.pads[1], E = [[1, 0], [0, 1], [-1, 0], [0, -1]][d2];
+      await put((x2 + 0.5) * K, y2 * K + 1.4, E[0] * 2, E[1] * 2);
+      for (let i = 0; i < 20; i++) { await page.waitForTimeout(16); chain = await page.evaluate(() => nishioPixel.maze.padChain.n); if (chain >= 2) break; }
+    }
     await put(c.home[0], c.home[1], 0, 0); await page.waitForTimeout(150);
+    const h1b = await page.evaluate(() => nishioPixel.maze.padHits);
     await put((x + 0.5) * K + D[0] * 1.2, y * K + 1.4 + D[1] * 1.2, -D[0] * 2, -D[1] * 2);   // 逆から
     await page.waitForTimeout(400);
     const h2 = await page.evaluate(() => nishioPixel.maze.padHits);
     await put(c.home[0], c.home[1], 0, 0);
     await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ok: h1 === h0 + 1 && vmax > 6 && h2 === h1, pad: [x, y, d], boosted: h1 - h0, vmax: +vmax.toFixed(1), against: h2 - h1 };
+    return { ok: h1 === h0 + 1 && vmax > 6 && h2 === h1b && (chain === 'one-pad' || chain === 2), pad: [x, y, d], boosted: h1 - h0, vmax: +vmax.toFixed(1), against: h2 - h1b, chain };
   })();
   // ごはんつぶの 列（癖になる ギミック）：通路に 並んだ つぶに ふれると ひろえて、列を ぜんぶ ひろうと「ぜんぶ ひろった！」
   R.checks.mazeDots = await (async () => {

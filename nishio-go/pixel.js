@@ -6897,16 +6897,19 @@ function drawMzCrows(ox, oy, T, now) {   // 地図の 飾りの カラス（Blen
   }
 }
 if ($('mzCrowToggle')) { $('mzCrowToggle').checked = mzCrowOn(); $('mzCrowToggle').addEventListener('change', e => { lsSet('nsg_mzcrow', e.target.checked ? 'on' : 'off'); if (!e.target.checked) mzCrow.list.length = 0; dirty = true; }); }   // せっていの「🐦 めいろの カラス」
+// お米から めいろの 10マス 以内だけ（画面 いっぱいに ✕ が 25こ ほど 出て、地図が 見えにくかった。迷うのは 近くの 分かれ道）
+const MZ_DEAD_R = 10;
 function drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T) {   // 行き止まり（入れる 向きが 1つだけの 通路）に ✕ の 札。ゴールへの 道すじの マスと、お米の いる マスには 出さない
   mzHelp.dead = 0;
   const c0 = Math.floor(tx0 / MZ_K), r0 = Math.floor(ty0 / MZ_K), c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
   const onPath = new Set((mzRt.path || []).map(([x, y]) => x + ',' + y)), ra = rp.x === null ? null : Math.floor(rp.x / MZ_K) + ',' + Math.floor(rp.y / MZ_K);
+  const ax = rp.x === null ? null : Math.floor(rp.x / MZ_K), ay = rp.x === null ? null : Math.floor(rp.y / MZ_K);
   const g = G.guide, gp = g ? toTile(g.lat, g.lng) : null, gNear = g ? (((G.reachOf ? G.reachOf(g) : 40) || 40) / TILE_M) + MZ_K : 0;   // ゴールの まわり（道すじが 手前で 終わっても、ゴールの マスには 出さない）
   const r = T * 0.42, lw = Math.max(2, T / 6);
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
     if (mzType(cx, cy) !== 1 || mzSpotCell(cx, cy) || mzGrainAt(cx, cy)) continue;   // 金の 米つぶが ある 行き止まりは ひろいに 行く 寄り道（✕ で かくさない）
     const k = cx + ',' + cy;
-    if (onPath.has(k) || k === ra) continue;
+    if (onPath.has(k) || k === ra || (ax !== null && Math.abs(cx - ax) + Math.abs(cy - ay) > MZ_DEAD_R)) continue;
     if (gp && Math.hypot((cx + 0.5) * MZ_K - gp.x, (cy + 0.5) * MZ_K - gp.y) <= gNear) continue;
     let open = 0;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (mzOpen(cx, cy, dx, dy)) open++;

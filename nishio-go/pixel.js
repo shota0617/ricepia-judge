@@ -7020,9 +7020,55 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤�
     if (!go(cx, cy - 1) && mzType(cx, cy - 1) >= 0) segs.push([X - lw / 2, Y - lw / 2, S + lw, lw]);
   }
   ctx.fillStyle = 'rgba(0,0,0,.32)'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + o, Y + o, w, h);   // 影
+  const hi = hedgeImg();
+  if (hi && T % 16 === 0) { drawHedges(hi, segs, ox, oy, T, S, lw); return; }   // Blender の 生け垣（読めない あいだと、半端な 大きさの ときは 下の 平らな 壁）
   ctx.fillStyle = '#0d2219'; for (const [X, Y, w, h] of segs) ctx.fillRect(X, Y, w, h);   // 黒い ふち
   ctx.fillStyle = '#2f7a58'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + u, Y + u, w - 2 * u, h - 2 * u);   // 緑の 壁
   ctx.fillStyle = 'rgba(200,255,220,.55)'; for (const [X, Y, w, h] of segs) { if (w > h) ctx.fillRect(X + u, Y + u, w - 2 * u, u); else ctx.fillRect(X + u, Y + u, u, h - 2 * u); }   // 上・左の 面の てかり
+}
+// めいろの 生け垣の 絵（Blender：tools/blender/hedge.py → nishio-go/art/hedge.png）
+// シート：横の 帯（128×8）・横の 花の 帯・たての 帯（8×128）・たての 花の 帯・かどの 株 4つ（12×12）。帯は 8マスで くり返して つながるので、
+// 地図の 位置で 帯を 切りとって 貼る（どんなに 長い 生け垣でも つなぎ目が 出ない）。春（桜の ころ）は ところどころ つつじの 花の 帯と 花の 株
+const HEDGE = { img: null, req: false };
+function hedgeImg() {
+  if (!HEDGE.req) {
+    HEDGE.req = true;
+    const im = new Image();
+    im.onload = () => { HEDGE.img = im; dirty = true; };
+    im.onerror = () => { setTimeout(() => { HEDGE.req = false; }, 15000); };   // 読めなければ、しばらくして もう一度
+    im.src = 'nishio-go/art/hedge.png';
+  }
+  return HEDGE.img;
+}
+function drawHedges(img, segs, ox, oy, T, S, lw) {
+  const k = T / 16, LP = 128, spring = mapSeason() === 0, corners = new Map();
+  const hash = (a, b, c) => { let h = (a * 73856093) ^ (b * 19349663) ^ (c * 83492791); h = (h ^ (h >>> 13)) * 1274126177; return (h ^ (h >>> 16)) >>> 0; };
+  for (const [X, Y, w, h] of segs) {
+    const horiz = w > h, gx = Math.round((X + lw / 2 - ox) / S), gy = Math.round((Y + lw / 2 - oy) / S);   // さかいの はじまりの かど（めいろの マスの 番号）
+    const flower = spring && hash(gx, gy, horiz ? 1 : 2) % 3 === 0;
+    if (horiz) {
+      const sy = flower ? 8 : 0;
+      for (let x = X; x < X + w - 0.5;) {   // 帯を 地図の 位置で 切りとって、はしまで 来たら 帯の はじめから
+        const u = ((Math.round((x - ox) / k) % LP) + LP) % LP, pw = Math.min((LP - u) * k, X + w - x);
+        ctx.drawImage(img, u, sy, pw / k, 8, x, Y, pw, h);
+        x += pw;
+      }
+    } else {
+      const sx = flower ? 8 : 0;
+      for (let y = Y; y < Y + h - 0.5;) {
+        const v = ((Math.round((y - oy) / k) % LP) + LP) % LP, ph = Math.min((LP - v) * k, Y + h - y);
+        ctx.drawImage(img, sx, 16 + v, 8, ph / k, X, y, w, ph);
+        y += ph;
+      }
+    }
+    corners.set(`${gx},${gy}`, [gx, gy]);
+    corners.set(horiz ? `${gx + 1},${gy}` : `${gx},${gy + 1}`, horiz ? [gx + 1, gy] : [gx, gy + 1]);
+  }
+  const P = 12 * k;
+  for (const [gx, gy] of corners.values()) {   // かどの 株（生け垣の つなぎ目を かくす）
+    const hv = hash(gx, gy, 7), i = spring && hv % 4 === 0 ? 3 : hv % 3;
+    ctx.drawImage(img, 20 + i * 14, 20, 12, 12, ox + gx * S - P / 2, oy + gy * S - P / 2, P, P);
+  }
 }
 function rollStep(dt) {
   const t = targetTile();

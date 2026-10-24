@@ -51,6 +51,20 @@ for (const l of patches.split('\n')) {
   if (!l.startsWith('+') || l.startsWith('+++')) continue;
   for (const [re, what] of SECRET) if (re.test(l.slice(1))) bad.push(`${sha} の ${file}：${what}らしい 値（値は 出さない。まだ push して いない コミットなら、その コミットから 消して 作りなおす。push ずみなら 運営者に 伝えて キーを 取りかえて もらう）`);
 }
+// マージコミット（main の 取りこみ）で 足された 行も 見る：--cc の 差分は、どの 親とも ちがう 行（ぶつかりの 直しで 入った 行）だけを 出す。
+// 行の 頭は 親の 数の けたで、どれかが「+」なら 足した 行
+for (const m of git('rev-list', '--first-parent', '--merges', `${base}..HEAD`).split('\n').filter(Boolean)) {
+  const cc = git('-c', 'core.quotePath=false', 'show', '--cc', '--unified=0', '--no-color', '--format=', m);
+  let f = '', np = 2;
+  for (const l of cc.split('\n')) {
+    const d = l.match(/^diff --cc (.+)$/); if (d) { f = d[1]; continue; }
+    const h = l.match(/^(@{3,}) /); if (h) { np = h[1].length - 1; continue; }
+    if (l.startsWith('+++ ') || l.startsWith('--- ')) continue;
+    const pre = l.slice(0, np);
+    if (pre.length < np || !/^[ +-]+$/.test(pre) || !pre.includes('+') || pre.includes('-')) continue;
+    for (const [re, what] of SECRET) if (re.test(l.slice(np))) bad.push(`${m.slice(0, 8)}（マージ）の ${f}：${what}らしい 値（値は 出さない。マージを やりなおす 前に 消す。push ずみなら 運営者に 伝えて キーを 取りかえて もらう）`);
+  }
+}
 
 // コミットの 文
 const MODEL = /\bclaude-(?:opus|sonnet|haiku|fable|instant)[-\w.]*|\b(?:Opus|Sonnet|Haiku|Fable)\s*\d+(?:\.\d+)?\b|\bclaude-\d[-\w.]*/i;

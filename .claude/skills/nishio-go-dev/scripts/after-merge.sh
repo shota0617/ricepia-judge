@@ -6,7 +6,9 @@ ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 cd "$ROOT"
 BR="${1:-$(git branch --show-current)}"
 [ -n "$BR" ] && [ "$BR" != main ] || { echo "作業ブランチが わからない（main には しない）" >&2; exit 1; }
-for i in 1 2 3 4; do git fetch -q origin main && break; sleep $((2 ** i)); done
+fetched=0
+for i in 1 2 3 4; do git fetch -q origin main && { fetched=1; break; }; sleep $((2 ** i)); done
+[ "$fetched" = 1 ] || { echo "main を 取ってこられない（古い main に そろえて しまわない よう、ここで やめる）" >&2; exit 1; }
 git checkout -q -B "$BR" origin/main || exit 1
 for i in 1 2 3 4 5; do git push -q --force-with-lease -u origin "$BR" && break; [ $i = 5 ] && { echo "push できない" >&2; exit 1; }; sleep $((2 ** i)); done
 sha="$(git rev-parse --short HEAD)"

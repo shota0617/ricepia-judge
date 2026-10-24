@@ -2377,6 +2377,7 @@ const BIRDS = (() => {
         const a = Math.random() * 6.28;
         b.position.set(S.x + Math.cos(a) * 40, 9, S.z + Math.sin(a) * 40);
         b.visible = true; u.state = 'fly';
+        if (u.crow && season === 'aki') voice('karasu');   // 秋：耕す音に カラスが集まってくる（農家さんの声）
       }
       if (!b.visible) return;
       // うしろの耕した所のどこかをめざす
@@ -4044,6 +4045,7 @@ const VOICES = {
   corner: ['まっすぐは自動にまかせられても、四隅は手で回すので苦戦する', '@ham_kaze_choco（X の米農家さん）'],
   dryWait: ['雨のあとは、乾くのを待ってから秋起こしに入る。長雨の稲刈りのわだちが、まだ残っている', '@F_TERU603（X の米農家さん）'],
   wrap: ['朝の秋起こし。伸びた 2 番穂が ロータリーに絡む', '@hirogogo88（X の米農家さん）'],
+  karasu: ['刈り取りのあとの初めての耕うん。音に カラスが餌を探しに集まってくる', '@ymmtyshk_（X の米農家さん）'],
   tanishi: ['ジャンボタニシの対策で 早めに耕した。レンゲの前の耕うんも 1 回ふやした', '@Tyoshi0410Taoka（X の米農家さん）'],
   wara: ['わらは 1 回では埋まりきらない。年によっては耕す回数を 1 回ふやす', '@Tyoshi0410Taoka（X の米農家さん）'],
   straightSelf: ['どれだけまっすぐ走れるか、自分との戦い', '@BLACKkome96（X の米農家さん）'],

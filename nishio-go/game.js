@@ -606,7 +606,10 @@ function talkNpc(id, page = 0) {
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
     }
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
-    const g = decideGuide(n);
+    // 地図の めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かえない（自分で 遊んで 分かった：通りすがりに こつんと
+    // 話すと ゴールが 別の 人に かわり、時計も 0 から やりなおしに なっていた）。ゴールに 着いてから 話せば、その人の 話で 次が 決まる
+    const mzKeep = !arrived && guideTarget() && demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.on();
+    const g = mzKeep ? null : decideGuide(n);
     if (g) {
       setGuide({ ...g, byId: n.id }); track('guide_set', { by: n.id, kind: g.kind }); say.push(`📜 イベント発生：${g.name}へ行ってみて`); brief.next = g.name;
       const hid = heardOf(g, n), hs = hid && spots.find(x => x.id === hid);

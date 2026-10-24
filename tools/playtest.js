@@ -1166,6 +1166,22 @@ async function walkTo(page, id) {
       return { npc: 'none' };
     });
     R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && bumpA.back) };
+    // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
+    R.checks.mzKeepGoal = await w.page.evaluate(async () => {
+      const G = nishioGo, pi = document.getElementById('pxInfo');
+      const ns = G.npcs.filter(x => G.dist(G.me, x) < 3000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b)), n = ns[0];
+      const would = n && G.decideGuide(n), o = would && ns.find(x => x.id !== n.id && x.id !== would.id);   // ゴールは、この人の 話で 決まる 行き先とは 別の 人に
+      if (!o) return { skip: true, ok: true };
+      G.setGuide({ kind: 'npc', id: o.id, name: o.name, lat: o.lat, lng: o.lng });
+      const id0 = G.guide && G.guide.id;
+      G.callNpc(n.id); const r = G.talkNpc(n.id); G.callNpc(null); pi.hidden = true;
+      const keep = !!(G.guide && G.guide.id === id0);
+      G.setGuide(null);
+      G.callNpc(n.id); G.talkNpc(n.id); G.callNpc(null); pi.hidden = true;   // ゴールが ない ときは、これまでどおり 人の 話で 決まる
+      const set = !!G.guide;
+      G.setGuide(null);
+      return { npc: n.name, goal: o.name, near: !!(r && r.near), keep, set, ok: !!(r && r.near) && keep && set };
+    });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
     R.errors.push(...w.errors);
@@ -1202,6 +1218,7 @@ async function walkTo(page, id) {
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
+  need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');

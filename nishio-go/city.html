@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>西尾市のご担当者さまへ｜にしおさんぽGO（提案資料）</title>
+<meta name="description" content="西尾の本物の地図ぜんぶが めいろになるスマホのゲーム「にしおさんぽGO」の、西尾市のご担当者さまむけの提案資料です（試作・提案用デモ。西尾市の公式のものではありません）。"/>
+<meta name="theme-color" content="#2f5d3a"/>
+<meta name="robots" content="noindex"/>
+<link rel="canonical" href="https://go.ricepia.jp/nishio-go/city.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="にしおさんぽGO｜西尾市のご担当者さまへ（提案資料）"/>
+<meta property="og:description" content="西尾の本物の地図が めいろになるスマホのゲーム。家からも、歩いても、西尾の名所をめぐれます。"/>
+<meta property="og:url" content="https://go.ricepia.jp/nishio-go/city.html"/>
+<meta property="og:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<link rel="icon" href="icon-192.png"/>
+<!-- 西尾市の担当者に見せる提案資料。印刷すると A4 の配りもの になる
+     ・西尾市の公式のものではない（市章・マスコット・市の名前での呼びかけは使わない。「提案用デモ」と はっきり書く）
+     ・数字は ゲームの データ（spots.json・npcs.js・events.js・stats.json）から 開いたときに 数える。ドット絵の 枚数だけは dots.js が ゲームの 中でしか 読めないので 書いておき、プレイテスト（cityPage）で ゲームと 同じか 確かめる
+     ・費用や 約束ごとは 書かない（ご相談）。tools/make-city-shots.js が 画面写真（shots/city-*.webp）を 作る -->
+<style>
+  :root { --green: #2f5d3a; --green2: #1f8fc8; --ink: #1f2a22; --sub: #5d6b60; --bg: #f6f4ec; --card: #fff; --line: #e3e0d3; --warn: #fff6dc; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif; line-height: 1.75; }
+  a { color: #1d5f8a; }
+  .demo-tag { background: var(--warn); border-bottom: 1px solid #ecd9a0; color: #6a5212; font-size: 13px; text-align: center; padding: 6px 12px; }
+  header { background: var(--green); color: #fff; padding: 22px 16px 26px; }
+  header .in, main { max-width: 900px; margin: 0 auto; }
+  header img.logo { width: min(340px, 80%); height: auto; image-rendering: pixelated; background: #fff; border-radius: 12px; padding: 8px 12px; }
+  header h1 { font-size: 24px; line-height: 1.45; margin: 14px 0 6px; }
+  header p { margin: 0; opacity: .92; }
+  main { padding: 8px 16px 48px; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 14px; margin: 16px 0; }
+  h2 { font-size: 19px; margin: 0 0 10px; color: var(--green); }
+  h3 { font-size: 16px; margin: 12px 0 4px; }
+  .lead { font-size: 17px; font-weight: 700; margin: 0 0 6px; }
+  .try { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: center; }
+  .try img.qr { width: 150px; height: 150px; border: 1px solid var(--line); border-radius: 8px; }
+  .btn { display: inline-block; background: var(--green2); color: #fff; text-decoration: none; font-weight: 700; border-radius: 999px; padding: 10px 20px; margin: 6px 6px 0 0; }
+  .btn.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
+  .shots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
+  .shots img { width: 100%; height: auto; border-radius: 10px; border: 3px solid #1f2a22; display: block; }
+  .shots span { display: block; font-size: 13px; text-align: center; color: var(--sub); margin-top: 4px; }
+  .nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .num { background: #f1f7ee; border-radius: 10px; padding: 10px 12px; }
+  .num b { display: block; font-size: 26px; color: var(--green); line-height: 1.2; }
+  .num small { color: var(--sub); font-size: 13px; }
+  .goods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .good { border-top: 4px solid var(--green2); background: #f7fbfd; border-radius: 8px; padding: 10px 12px; }
+  .good b { display: block; font-size: 16px; margin-bottom: 2px; }
+  .good p { margin: 0; font-size: 14px; }
+  ul.list { margin: 4px 0; padding-left: 1.3em; }
+  ul.list li { margin: 2px 0; }
+  .note { color: var(--sub); font-size: 13px; }
+  .warn { background: var(--warn); border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { border-bottom: 1px solid var(--line); text-align: left; padding: 6px 4px; vertical-align: top; }
+  th { width: 9em; color: var(--sub); font-weight: 600; }
+  .print { text-align: right; margin: 10px 0 0; }
+  .print button { font: inherit; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  footer { text-align: center; font-size: 12px; color: var(--sub); padding: 0 16px 32px; }
+  @media (max-width: 640px) {
+    header h1 { font-size: 20px; }
+    .try { grid-template-columns: 1fr; }
+    .try img.qr { width: 120px; height: 120px; }
+    .shots { grid-template-columns: repeat(2, 1fr); }
+    .goods { grid-template-columns: 1fr; }
+  }
+  /* 印刷：A4 の 配りもの（ボタンを 消して、区切りで ページが 割れない ように） */
+  @page { size: A4; margin: 12mm; }
+  @media print {
+    body { background: #fff; font-size: 9pt; line-height: 1.45; }
+    .demo-tag { font-size: 8pt; padding: 3px 8px; }
+    header { background: #fff; color: var(--ink); border-bottom: 3px solid var(--green); padding: 0 0 6px; }
+    header img.logo { padding: 0; width: 200px; }
+    header h1 { font-size: 15pt; margin: 6px 0 2px; }
+    main { padding: 0; }
+    section { break-inside: avoid; border-color: #ccc; margin: 6px 0; padding: 8px 10px 6px; border-radius: 8px; }
+    h2 { font-size: 12pt; margin: 0 0 4px; }
+    h3 { font-size: 10pt; margin: 4px 0 2px; }
+    .lead { font-size: 10pt; }
+    .try img.qr { width: 100px; height: 100px; }
+    .shots { max-width: 78%; margin: 0 auto; }
+    .shots img { border-width: 2px; border-radius: 6px; }
+    .nums { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .num { padding: 6px 8px; }
+    .num b { font-size: 16pt; }
+    .num small, .note, table { font-size: 8.5pt; }
+    th, td { padding: 3px 4px; }
+    footer { padding: 4px 0 0; font-size: 8pt; }
+    .print, .btn.sub, .no-print { display: none !important; }
+    .btn { background: none; color: var(--ink); padding: 0; border-radius: 0; }
+    .btn::after { content: "（" attr(href) "）"; font-weight: 400; font-size: 9pt; }
+    .shots { grid-template-columns: repeat(4, 1fr); }
+    .goods { grid-template-columns: repeat(3, 1fr); }
+    a { color: var(--ink); text-decoration: none; }
+  }
+</style>
+</head>
+<body>
+<div class="demo-tag">🏛 この資料と「西尾市版」は、西尾のお米屋さんが つくった <b>提案用の試作</b> です。西尾市の公式のものではありません。</div>
+<header>
+  <div class="in">
+    <img class="logo" src="logo.svg" alt="にしおさんぽGO" width="544" height="80"/>
+    <h1>西尾市のご担当者さまへ<br/>西尾の名所を「遊んで知ってもらう」スマホのゲームの ご提案</h1>
+    <p>西尾の本物の地図ぜんぶが めいろに。スマホを傾けて お米を転がし、名所から名所へ。家からも、まちを歩いても遊べます。</p>
+  </div>
+</header>
+<main>
+  <section>
+    <h2>まずは 30秒、さわってみてください</h2>
+    <div class="try">
+      <div>
+        <p class="lead">スマホで QR コードを読むと、「西尾市版（提案用デモ）」が ひらきます。</p>
+        <ul class="list">
+          <li>アプリの インストールも、会員登録も いりません（ブラウザで ひらくだけ。無料）</li>
+          <li>「🌀 傾けて めいろ」を押すと、名鉄 西尾駅と 西尾城跡の あいだ あたりから はじまり、はじめの ゴールは 西尾城跡（西尾市歴史公園）です</li>
+          <li>西尾市版では、お店の宣伝・特典を はずし、市役所に「観光担当の職員さん」を置いています</li>
+        </ul>
+        <a class="btn" href="https://go.ricepia.jp/nishio-go.html?ed=city&amp;utm_source=city_proposal&amp;utm_medium=page">西尾市版を ひらく</a>
+        <a class="btn sub" href="pr.html">西尾の四季ドット絵を見る</a>
+      </div>
+      <img class="qr" src="city-qr.svg" alt="西尾市版（提案用デモ）を ひらく QR コード" width="150" height="150"/>
+    </div>
+  </section>
+
+  <section>
+    <h2>どんな ゲームか</h2>
+    <ul class="shots" aria-label="西尾市版の画面">
+      <li><img src="shots/city-meiro.webp" alt="西尾城跡の まわりの 本当の道で できた めいろを、お米が 転がる画面" width="540" height="1080" loading="lazy"/><span>地図が めいろに</span></li>
+      <li><img src="shots/city-talk.webp" alt="市役所の観光担当の職員さんが、2011年の合併の話をする画面" width="540" height="1080" loading="lazy"/><span>まちの人の話</span></li>
+      <li><img src="shots/city-goal.webp" alt="西尾城跡に着いて「ゴール！」と出た画面" width="540" height="1080" loading="lazy"/><span>名所が ゴール</span></li>
+      <li><img src="shots/city-world.webp" alt="西尾市の ドット絵の 地図" width="540" height="1080" loading="lazy"/><span>西尾ぜんぶの 地図</span></li>
+    </ul>
+    <h3>遊びかた</h3>
+    <ul class="list">
+      <li><b>🌀 傾けて めいろ</b>：西尾の本物の道で できた めいろを、スマホを傾けて お米を転がし、名所（ゴール）へ。家からでも 西尾めぐり</li>
+      <li><b>🚶 あるいて遊ぶ</b>：位置情報を使い、実際に まちを歩いて 名所で チェックイン</li>
+      <li><b>📜 まちの人の話</b>：西尾にいそうな人（ガイドさん・茶畑のおじいさん・漁師さん…）が、出典のある 西尾の話をして、次の行き先を すすめます</li>
+      <li><b>🖼 西尾ドット絵帳</b>：てん茶の茶畑・一色のうなぎ・佐久島・西尾城の丑寅櫓…西尾ならではの ドット絵が あつまります</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>西尾市にとっての 3つの よいこと</h2>
+    <div class="goods">
+      <div class="good"><b>① 名所を 知ってもらう</b><p>遊ぶうちに、西尾・一色・吉良・幡豆・佐久島の 名所と 行事を、出典のある 短い説明で 知ってもらえます。</p></div>
+      <div class="good"><b>② 来てもらう きっかけ</b><p>家で めいろを ぬけた名所に、こんどは「あるいて遊ぶ」で 実際に 行ける。市外の人の 西尾めぐりの 入り口に。</p></div>
+      <div class="good"><b>③ 市民の声が 集まる</b><p>ゲームの「こえ」タブで、名所や まちへの 声を 受けつけ、毎月 種類・地区ごとに まとめます。</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>いま ゲームに 入っているもの</h2>
+    <div class="nums" id="nums">
+      <div class="num"><b data-n="spots">—</b><small>西尾市内の 名所（説明つき）</small></div>
+      <div class="num"><b data-n="npcs">—</b><small>西尾市内で 話せる まちの人</small></div>
+      <div class="num"><b data-n="events">—</b><small>西尾市内の 行事（月ごとに 案内）</small></div>
+      <div class="num"><b data-n="dots">74,000</b><small>西尾ドット絵帳の 絵（西尾ならではの 37の 題材）</small></div>
+      <div class="num"><b data-n="near">6</b><small>となりの 市町（岡崎・安城・碧南・高浜・幸田・蒲郡）</small></div>
+    </div>
+    <p class="note" id="numsNote">名所・まちの人・行事の 数は、この ページを ひらいたときに ゲームの データから 数えています（ドット絵の 枚数は プレイテストで ゲームと 同じか 確かめています）。</p>
+    <p class="note" id="players" hidden></p>
+  </section>
+
+  <section>
+    <h2>ご相談したいこと（案）</h2>
+    <p>どれも これから ご相談したい 案です。形や 進めかたは、ご担当者さまの お考えに あわせます。</p>
+    <ul class="list">
+      <li><b>西尾市版の 公開</b>：内容を 市で ご確認いただいたうえで、「提案用デモ」の札を はずした 西尾市版として 公開する</li>
+      <li><b>名所・行事の 説明の 確認と 追加</b>：市の 観光資料に もとづいて、名所の説明や 行事の日程を 確かめ、足りない 名所を 加える</li>
+      <li><b>観光キャンペーン・行事との 連動</b>：行事の 会場めぐりや、期間を決めた めいろ（例：まつりの会場を ゴールにする）</li>
+      <li><b>市民の声の ご提供</b>：毎月の「プレイヤーの声」のまとめ（数と 種類・地区。声の文は そのまま 写しません）を お届けする</li>
+      <li><b>ドット絵の 活用</b>：西尾の名所の ドット絵（<a href="pr.html">西尾の四季ドット絵</a>）を、市の 紹介に 使っていただく</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>安心して 使っていただくために</h2>
+    <table>
+      <tr><th>位置情報</th><td>現在地の座標は、どこにも 送りません。記録は その スマホの 中（ブラウザ）だけに 残ります（<a href="privacy.html">プライバシーポリシー</a>）</td></tr>
+      <tr><th>安全</th><td>はじめの画面で「歩きスマホ・傾けながら歩くのは やめましょう」と お知らせしています。私有地・立入禁止の 場所には 入らないよう お願いしています</td></tr>
+      <tr><th>内容の 確かさ</th><td>まちの人の話と 行事は、出典のある 事実（観光協会・市・県の ページなど）を もとに しています。名所の 位置と 説明は 公開されている 資料で 調べたものです。市の 資料で 確かめていただけると、より 正確に なります</td></tr>
+      <tr><th>地図</th><td>OpenStreetMap、国土地理院の 地理院タイル・標高、国土交通省の 国土数値情報を 加工して 作っています（それぞれの 利用規約に そって 表示）</td></tr>
+      <tr><th>西尾市版の 表示</th><td>画面の上に「🏛 西尾市版（提案用デモ）」の札を いつも出し、「西尾市の公式のものではありません」と 書いています。市章や マスコットは 使っていません</td></tr>
+      <tr><th>動く しくみ</th><td>スマホの ブラウザだけで 動きます（iPhone・Android・パソコン）。遊んだ 記録は サーバーに ためません（「こえ」で おたよりを 送ったときだけ、その 文を 受けとります）</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>つくった人・お問い合わせ</h2>
+    <p>西尾のお米屋さん <b>近藤米穀店・らいすぴあ</b>（西尾市米津町・明治25年創業）が、西尾の まちを 知ってもらいたくて つくっている 試作の ゲームです。</p>
+    <ul class="list">
+      <li>電話：<a href="tel:0563-54-4001">0563-54-4001</a>（近藤米穀店）</li>
+      <li>ホームページ：<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=city_proposal#contact">ricepia.jp</a></li>
+      <li>ふだんの版（お店の版）：<a href="../nishio-go.html?ed=shop">go.ricepia.jp</a></li>
+    </ul>
+    <p class="warn">この資料と 西尾市版は、ご提案のための 試作です。西尾市が つくったもの・みとめたもの では ありません。</p>
+    <p class="print no-print"><button type="button" id="printBtn">🖨 印刷する（A4）</button></p>
+  </section>
+</main>
+<footer>にしおさんぽGO ／ 試作・運営：近藤米穀店 らいすぴあ（西尾市）／ 地図：© OpenStreetMap contributors・地理院タイル・国土数値情報を加工</footer>
+<script src="npcs.js"></script>
+<script src="events.js"></script>
+<script>
+// いま ゲームに 入っているものを、ゲームの データから 数える（西尾市版と 同じ 数え方：当店の 2店舗と その店員さんは 入れず、市役所の 職員さんを 足す）
+(() => {
+  'use strict';
+  const CITY = new Set(['nishio', 'isshiki', 'kira', 'hazu', 'sakushima']);   // 西尾市の 地区（areas.json）
+  const SHOP = new Set(['ricepia', 'kondo-beikoku']);
+  const put = (k, v) => { const el = document.querySelector(`[data-n="${k}"]`); if (el && Number.isFinite(v)) el.textContent = v.toLocaleString('ja-JP'); };
+  try {
+    const npcs = (window.NISHIO_NPCS || []).filter(n => !n.area && !SHOP.has(n.spot));
+    put('npcs', npcs.length + 1);   // ＋市役所の 観光担当の 職員さん（edition.js）
+  } catch (e) { /* noop */ }
+  try { put('events', ((window.NISHIO_EVENTS && NISHIO_EVENTS.list) || []).filter(e => !e.area || CITY.has(e.area)).length); } catch (e) { /* noop */ }
+  fetch('spots.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(j => {
+    const list = ((j && j.spots) || []).filter(s => CITY.has(s.area) && !s.shop && !SHOP.has(s.id));
+    put('spots', list.length);
+  }).catch(() => {});
+  // 遊んだ人の数（ゲームの はじめの画面と 同じ：Google アナリティクスから 毎日 数える。100人を こえたら）
+  fetch('stats.json', { cache: 'no-cache' }).then(r => (r.ok ? r.json() : null)).then(j => {
+    if (!j || !(j.players >= 100)) return;
+    const p = document.getElementById('players');
+    p.textContent = `これまでに ${(Math.floor(j.players / 10) * 10).toLocaleString('ja-JP')}人以上が 遊んでいます（お店の版と 西尾市版の 合計・${String(j.updated).slice(0, 10)}時点）。`;
+    p.hidden = false;
+  }).catch(() => {});
+  const pb = document.getElementById('printBtn');
+  if (pb) pb.addEventListener('click', () => window.print());
+})();
+</script>
+</body>
+</html>

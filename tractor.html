@@ -2832,7 +2832,18 @@ function step(dt) {
   }
   if (EASY.on && want !== 0 && S.started) {        // 🔰 畦の手前で止まる：止まれる長さ＋ゆとりの先に畦があれば、ゆっくり（6cm 先も畦なら止まる）
     // ハンドルを切っていれば曲がった先で見る。せまい所でも少しずつ動いて抜けられる（動けなくならない）
-    const sg = Math.sign(want), at = d => { const y2 = S.yaw - sg * d * Math.tan(S.steer) / WB; return canBe(S.x + Math.sin(y2) * d * sg, S.z + Math.cos(y2) * d * sg, y2); };
+    // 曲がる道すじを 15cm ずつたどって、途中のどこかで畦にかかるかを見る（オートブレーキの小回りと、代かきの泥で曲がりにくいのもふくめる）
+    const sg = Math.sign(want), inF = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
+    const turnK = (!S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 ? 1.45 : 1) * (SHIRO && inF ? 0.86 : 1);
+    const at = d => {
+      let x = S.x, z = S.z, y = S.yaw;
+      for (let n = Math.ceil(d / 0.15), k = 0; k < n; k++) {
+        const ds = d / n;
+        y -= sg * ds * Math.tan(S.steer) / WB * turnK; x += Math.sin(y) * ds * sg; z += Math.cos(y) * ds * sg;
+        if (!canBe(x, z, y)) return false;
+      }
+      return true;
+    };
     if (!at(0.45 + Math.abs(S.v) * 0.7)) {
       if (Math.abs(S.v) > 0.2 || !at(0.06)) { want = 0; S.v *= 0.6; }   // 速いときは強くブレーキ。6cm 先も畦なら止まる
       else want = sg * Math.min(Math.abs(want), 0.15);                  // ゆっくりなら、少しずつ動ける

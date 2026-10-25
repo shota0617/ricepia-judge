@@ -4440,7 +4440,11 @@ function drawMonitor(pct) {
   const mg = monitor.map.getContext('2d'), img = mg.createImageData(NZ, NX);
   for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
     const o = ((NX - 1 - i) * NZ + j) * 4, t = tilledMask[i * NZ + j];
-    if (ART.on) { img.data.set(ART.color(i * NZ + j), o); img.data[o + 3] = 255; continue; }   // 田んぼアート：絵の所を黄色、はみ出しを赤
+    if (ART.on) {                                 // 田んぼアート：絵の所を黄色、はみ出しを赤（歩いて見つけた やわらかい所は 青をまぜる）
+      img.data.set(ART.color(i * NZ + j), o); img.data[o + 3] = 255;
+      if (WALK.mask && WALK.mask[i * NZ + j]) { img.data[o] = img.data[o] * 0.5 + 30; img.data[o + 1] = img.data[o + 1] * 0.5 + 45; img.data[o + 2] = img.data[o + 2] * 0.5 + 115; }
+      continue;
+    }
     img.data[o] = t ? 70 : 92; img.data[o + 1] = t ? 140 : 74; img.data[o + 2] = t ? 60 : 52; img.data[o + 3] = 255;
     if (WALK.mask && WALK.mask[i * NZ + j]) { img.data[o] = t ? 50 : 60; img.data[o + 1] = t ? 120 : 90; img.data[o + 2] = t ? 150 : 160; }   // 歩いて見つけた やわらかい所
   }

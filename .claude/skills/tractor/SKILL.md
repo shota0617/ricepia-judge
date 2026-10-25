@@ -73,6 +73,19 @@ description: トラクターのゲーム（tractor.html・tools/tractor/）を�
      - `tractor-blender` を最新の `main` から作りなおし、新しい PR にする。
      - 例：`git fetch origin main && git checkout -B tractor-blender origin/main`、`git push --force-with-lease`。
      - マージ済みのコミットだけのときに限る。マージされていないコミットが残っていれば、`main` の上に載せなおす。
+   - **ユーザーが「マージ公開」「マージ」と言ったとき**：
+     - 条件を待たずに、その場でマージと公開まで行う。Codex のレビューがまだ終わっていなくてもよい。報告で「Codex は終わる前にマージした」と書く。
+     - ただし Vercel のプレビューが失敗しているときは、マージしても公開されない。理由を短く伝えて、マージするか待つかをたずねる。
+     - ユーザーが Vercel を直したら、PR の最新のコミットで Vercel をもう一度動かす。空のコミットは使わない。
+       - `main` が進んでいれば、`main` を PR のブランチにマージして push する（本物の変更なのでデプロイが動く）。
+       - `main` が進んでいなければ、ユーザーに Vercel の画面で「Redeploy」してもらう。
+     - リポジトリの `steward` スキルは「マージは言われたときだけ」。トラクターの PR は、このスキルの自動マージを優先する（ユーザーの指示）。
+   - **手順の細かいところ**：
+     - Vercel の状態：`.claude/skills/nishio-go-dev/scripts/deploy-status.sh <sha> --wait`（GitHub のステータスを読む。成功で終了コード 0）。
+     - `merge_pull_request` の `expectedHeadSha` は 40 文字のフルの SHA（`git rev-parse HEAD`）。
+     - Codex が 1 時間以上「Running」のままなら、止まっている。`@codex review` をもう一度コメントする。
+     - マージしたら、その PR の見はり（`subscribe_pr_activity`）を止める（`unsubscribe_pr_activity`）。
+     - 次の作業は `tractor-blender` を `main` から作りなおし、新しい PR を作って見はる。
 8. **報告**：日本語で短く。
    - 入れたもの・PR のリンク・Codex の結果。
    - Vercel の状態と、マージ・公開したか（しなかったなら、その理由）。
@@ -121,7 +134,7 @@ description: トラクターのゲーム（tractor.html・tools/tractor/）を�
   - 畦と道ばたの草花。
   - 季節と時間帯に合った鳥と虫。
 - Codex のレビューは厳しめに。コードだけでなく、リアリティもレビューさせて直す。
-- マージと公開も、このスキルで自動で行う（条件がそろえば たずねない）。
+- マージと公開も、このスキルで自動で行う（条件がそろえば たずねない）。「マージ公開」と言われたら、その場でマージして公開まで確かめる。
 - SNS から農家の声をとりいれる（X・note・ブログ・Instagram・YouTube など。毎回のループで）。
 
 ## テスト（ヘッドレス Chromium）

@@ -4010,7 +4010,7 @@ function step(dt) {
   if ((S.workT || 0) > 50 && SCORE.st.swept > 60 && SCORE.parts.overlap < 15) voice('gatagata');
   if (season === 'aki' && (S.workT || 0) > 120) voice('gasu');   // 秋起こしを 2 分ほど続けたら（秋に早く起こすわけ）
   if (SHIRO && (S.workT || 0) > 45) voice('asamizu');   // 代かきを 45 秒ほど続けたら（水の深さの目安）
-  if (SHIRO && S.started && Math.abs(S.x) > HX - 2.5 && Math.abs(S.z) > HZ - 2.5) voice('azenuri');   // 代かき：塗った畦の 角に来たら   // 重ねがそろわず 耕し残しや重なりが多い
+  if (SHIRO && S.started && Math.abs(S.x) > HX - 2.5 && Math.abs(S.x) < HX && Math.abs(S.z) > HZ - 2.5 && Math.abs(S.z) < HZ) voice('azenuri');   // 代かき：田んぼの中で 塗った畦の 角に来たら（農道では出さない）   // 重ねがそろわず 耕し残しや重なりが多い
   if (ASSIST.on && S.started && Math.abs(S.x) > HX - 4 && Math.abs(S.z) > HZ - 4) voice('corner');   // 直進アシストのまま四隅に来た
   if (SHIRO && !S.rotDown && softAt(S.x, S.z) && Math.abs(S.v) > 0.3 && (S.trackM = (S.trackM || 0) + Math.abs(S.v) * dt) > 12) voice('track');   // かいた泥の上を上げて走り、跡をつけた
   if (SHIRO && !S.rotDown && Math.abs(S.steer) > 0.4 && S.started && (Math.abs(S.x) > HX - 2.5 || Math.abs(S.z) > HZ - 2.5)) voice('outer');   // 畦ぎわで回る

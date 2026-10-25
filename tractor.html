@@ -284,6 +284,7 @@
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
+      ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
       ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
       ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
       ・植え代かきは、風の強い日（水面が見づらい）や雨のすぐあと（土がやわらかくなりすぎる）はさけ、風のない晴れた朝に。水が多すぎると平らにならず、苗が流されることもある／きれいにしすぎない。土をやわらかくしすぎると田植え機が沈んで苗が深く入りすぎる…<a href="https://note.com/kome_noka_shinya/n/n5261c27150cd" target="_blank" rel="noopener">いち田さん（note の米農家）「植え代かきのさじ加減」</a><br>
@@ -3735,10 +3736,16 @@ const SCORE = (() => {
     st.leveeT = 2; st.levee++; pop('−2　畦にぶつかった'); voice('backTurn');
   }
   // 安全：トラクターの死亡事故の多くは転倒・転落。坂（田んぼの出入り）は低速で、坂に対してまっすぐ上り下りする
-  let onRamp = false, rampBad = 0;
+  let onRamp = false, rampBad = 0, linkTold = false;
   function ramp(dt) {
     const on = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;
     if (on && !onRamp) rampBad = 0;
+    // 田んぼから道へ出るとき：左右のブレーキペダルを連結する（連結を外すのは 田んぼの中だけ。道では 片ブレーキのオートブレーキも きかない）
+    if (on && !onRamp && !linkTold && S.v > 0.1 && Math.sin(S.yaw) > 0.3) {
+      linkTold = true;
+      toast('🔗 道へ出るので、左右のブレーキペダルを連結（道で 片方だけ急に止まると、車体が大きく振られる）', 5);
+      if (!SHIRO) voice('renketsu');                // 代かきは rampBrake（坂で前輪が浮いた事故）が 同じ連結の話をする
+    }
     if (on && SHIRO && S.v > 0.3 && S.x > 13 && Math.sin(S.yaw) > 0.5) voice('rampBrake');   // 代かきのあと 田んぼから道へ 坂を上る
     else if (on && !SHIRO && lastPct >= 90 && S.v > 0.3 && S.x > 13 && Math.sin(S.yaw) > 0.5) voice('iriguchi');   // 耕し終わって 入口（坂）から出る
     if (on && Math.abs(S.v) > 0.3) {
@@ -5142,6 +5149,7 @@ const VOICES = {
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
   // いち田さん（note の米農家）の「荒起こし準備と手順の基本チェック」（2026 年 10 月。WebSearch で見つけて要約）
+  renketsu: ['左右のブレーキの連結を外すのは 田んぼの中だけ。道で 連結を外したまま急ブレーキをかけると、片ブレーキになって 車体が大きく振られる', '農業モンスター（note）'],
   sanshu: ['いちばん多いのは 外周 3 周のやり方。ふちから ロータリー 3 回分あけて まん中を耕し、最後に外周を 3 周する。仕上がりがきれい', '井上寅雄農園（note）'],
   numa: ['雨のあと、空いた時間に 休んでいた田んぼを耕したら 沼にはまった。土をのけても 砂や板を入れても出られず、ユンボで引き上げてもらった（2 万円）。耕す前に 地面を一通り歩く', '自然でトトノウ会（note）'],
   hajimete: ['初めてのトラクターで、教わりながら 1 枚耕すのに 1 時間半かかった。耕した土は ふわっと やわらかくなった', 'のんのんさん（note）'],

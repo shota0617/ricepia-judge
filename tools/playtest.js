@@ -1404,8 +1404,22 @@ async function walkTo(page, id) {
         pi.hidden = true; el.classList.remove('show'); await wait(350);
         pi.hidden = false; await wait(100); nishioGo.toast(msg + '　'); await wait(450);   // 窓が 先、知らせが あと
         const second = look();
+        pi.hidden = true; el.classList.remove('show'); await wait(350);
+        // 話の ページを めくって 窓が のびる（pxInfoBody だけ 書きかわる。hidden は そのまま）
+        body.innerHTML = '<div style="height:40px">みじかい ページ</div>'; pi.hidden = false; await wait(100);
+        nishioGo.toast(msg); await wait(450);
+        const shortPage = look();
+        body.innerHTML = '<div style="height:200px">ながい ページ</div>'; await wait(450);
+        const page = look();
+        // 下に よけて いる 知らせを、窓を 開いた まま 別の 知らせで 書きかえる（low を 外した 直後の、まだ 下に いる 位置で はからない）
+        pi.hidden = true; el.classList.remove('show'); await wait(350);
+        pi.hidden = false; await wait(100); nishioGo.toast(msg + '（まえ）'); await wait(450);
+        const before = look(), wasLow = el.classList.contains('low');
+        nishioGo.toast(msg + '（つぎ）'); await wait(450);
+        const update = { ...look(), before, wasLow };
         pi.hidden = true; el.classList.remove('show'); body.innerHTML = keep;
-        return { first, second, ok: first.shown && !first.hit && second.shown && !second.hit };
+        const fine = x => x.shown && !x.hit;
+        return { first, second, shortPage, page, update, ok: fine(first) && fine(second) && fine(page) && fine(before) && fine(update) };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return r;

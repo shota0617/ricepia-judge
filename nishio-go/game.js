@@ -2529,15 +2529,20 @@ function toastHold() {
   t.classList.remove('show'); clearTimeout(toastTimer);
 }
 // 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
-// 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓が 開いた ときにも 見る
+// 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓の 大きさが かわった ときにも 見る
 function toastDodge() {
   const el = $('toast'), dq = document.querySelector('#pxInfo:not([hidden]) .dq');
-  el.classList.remove('low');
-  if (!dq || !el.classList.contains('show')) return;
-  const t = el.getBoundingClientRect(), d = dq.getBoundingClientRect(), ty = new DOMMatrix(getComputedStyle(el).transform).m42;   // 出はじめは 上に 20px ずれて いるので、止まった 位置で くらべる
-  if (t.top - ty < d.bottom && t.bottom - ty > d.top) el.classList.add('low');
+  if (!dq || !el.classList.contains('show')) { el.classList.remove('low'); return; }
+  // 動いている とちゅう（出はじめの transform・low を 外した あとの bottom の transition）では なく、ふつうの 位置に 止まった 形で くらべる：transition の ない 見えない 写しで はかる
+  const c = el.cloneNode(true);
+  ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.remove('low'); c.style.cssText = 'transition:none;visibility:hidden';
+  el.parentNode.appendChild(c);
+  const t = c.getBoundingClientRect(), d = dq.getBoundingClientRect();
+  c.remove();
+  el.classList.toggle('low', t.top < d.bottom && t.bottom > d.top);
 }
-if ($('pxInfo')) new MutationObserver(toastDodge).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });
+// 窓が 開く・とじる・話の ページを めくって 高さが かわる（pxInfoBody だけ 書きかわる）たびに 見なおす
+if (window.ResizeObserver && document.querySelector('#pxInfo .dq')) new ResizeObserver(toastDodge).observe(document.querySelector('#pxInfo .dq'));
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
 // 待っている知らせが いくつあっても、来た順に1つずつ（同時に出して、あとのものが上書きしないように）
 function toastAfter(msg) {

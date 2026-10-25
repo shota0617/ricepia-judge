@@ -138,12 +138,14 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 
 手順（動かすのは GitHub の MCP の `actions_run_trigger`、待つのは `$F/run-wait.sh`、ログは `get_job_logs`）
 
-1. `before=$($F/run-wait.sh line-richmenu.yml)` で いまの 実行の id を 控える
-2. `actions_run_trigger`（`run_workflow`、`line-richmenu.yml`、ref `main`、inputs `{"apply": "false"}`）→ `$F/run-wait.sh line-richmenu.yml $before`
-3. ログで「いまの 既定」「新しい メニュー」の タップ範囲・アクション、「LINE の 確認（validate）：ok」を 見る。止まったら 理由を 運営者に 伝える（何も 変わって いない）
-4. 運営者が「差し替えて」と 言って いれば、inputs `{"apply": "true"}` で もう一度。ログの「作りました」の 新しい id と「もどす ときは」の 前の id を 運営者に 伝える
+どの 実行も「動かす 直前に id を 控える → 動かす → その id より あとの 実行を 待つ」の 順で。控えた id を 使いまわさない（前の 実行が 終わって いると、それを 取りちがえる）
+
+1. 確かめるだけ：`before=$($F/run-wait.sh line-richmenu.yml)` → `actions_run_trigger`（`run_workflow`、`line-richmenu.yml`、ref `main`、inputs `{"apply": "false"}`）→ `$F/run-wait.sh line-richmenu.yml $before`（「待つ 実行：id」が 出る）
+2. その id の ログを `get_job_logs` で 見る：入力が `APPLY: false` か、「いまの 既定」「新しい メニュー」の タップ範囲・アクション、「LINE の 確認（validate）：ok」。止まったら 理由を 運営者に 伝える（何も 変わって いない）
+3. 運営者が「差し替えて」と 言って いれば、もう一度 `before=$($F/run-wait.sh line-richmenu.yml)` で 控えなおしてから inputs `{"apply": "true"}` で 動かし、`$F/run-wait.sh line-richmenu.yml $before`
+4. その id の ログで `APPLY: true`、「作りました」の 新しい id、「もどす ときは」の 前の id を 見て、運営者に 伝える。失敗したら ログの「とちゅうで 止まりました」の とおりに もどす
 5. 運営者に スマホの LINE で 見た目と 5つの マスの リンクを 確かめて もらう（この 環境からは 見られない）
-6. もどす：inputs `{"apply": "true", "rollback": "<前の id>"}`。差しかえが とちゅうで 止まった ときは ログに 出る id を `rollback_from` にも
+6. もどす：同じく id を 控えてから inputs `{"apply": "true", "rollback": "<前の id>"}`。差しかえが とちゅうで 止まった ときは ログに 出る id を `rollback_from` にも
 
 スクリプトを 直した ときは、PR の ブランチを ref に して 確かめるだけで 動かせる（ワークフローの ファイルが main に ある ので）。本番を 変える 前に Codex の レビューを 通す。
 
@@ -188,7 +190,7 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 | `pre-merge.sh` | マージの 前：main を 取りこむ → 見張り → プレイテスト → push → expectedHeadSha |
 | `merge-plan.js <PR> [--allow-findings]` | マージの 支度を 確かめ（PR・先頭・Codex・[skip ci]）、merge_pull_request に わたす JSON を 出す |
 | `post-merge.sh <SHA> <先頭SHA> [分]` | マージの あと：あとから 積んだ コミットが ないか 確かめる → ブランチを つなぎなおす → Vercel を 待つ |
-| `run-wait.sh <ワークフロー> [前の id]` | Actions の 実行が 終わるまで 待つ（引数1つなら いまの 実行の id を 出す）。LINE リッチメニューの 差しかえで 使う |
+| `run-wait.sh <ワークフロー> [控えた id]`・`--id <id>` | Actions の 実行が 終わるまで 待つ（引数1つなら いまの 実行の id を 出す。控えた id より あとの 最初の 実行に 相手を 決めて その id だけを 追う）。LINE リッチメニューの 差しかえで 使う |
 | `selfplay.js 出力 [ゴール数]` | 地図の めいろを 遊ぶ 遊び手（つまずきの 記録・画面） |
 | `env.js` | 共通の したく（Leaflet を `--ignore-scripts` で 取りだして キャッシュ、Chromium の 場所） |
 

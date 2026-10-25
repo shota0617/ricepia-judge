@@ -81,14 +81,22 @@ const show = a => {
   const old = await call('GET', `${API}/richmenu/${cur}`);
   console.log(`いまの 既定：${old.name}（${cur}）　${old.size.width}×${old.size.height}　メニューバー「${old.chatBarText}」　マス ${old.areas.length}`);
   for (const a of old.areas) console.log(`  ${show(a)}`);
-  if (old.size.width !== w || old.size.height !== h) throw new Error(`絵の 大きさ ${w}×${h} が メニューの ${old.size.width}×${old.size.height} と ちがう`);
+  // 前の メニューが ちがう 大きさ（1280×863 など）で 作られて いても、縦横の 比が 同じ なら、タップ範囲を 絵の 大きさに 広げて 新しい メニューを 作る
+  const sx = w / old.size.width, sy = h / old.size.height;
+  if (Math.abs(sx / sy - 1) > 0.01) throw new Error(`絵の 大きさ ${w}×${h} と メニューの ${old.size.width}×${old.size.height} の 縦横の 比が ちがう`);
+  const scale = (v, k, max) => Math.min(max, Math.round(v * k));
+  const scaled = old.areas.map(a => {   // 左上と 右下の かどを それぞれ 広げる（となりの マスと すきまも 重なりも できない）
+    const { x, y, width, height } = a.bounds, x0 = scale(x, sx, w), y0 = scale(y, sy, h), x1 = scale(x + width, sx, w), y1 = scale(y + height, sy, h);
+    return { ...a, bounds: { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } };
+  });
+  if (sx !== 1 || sy !== 1) { console.log(`タップ範囲を ${w}×${h} に 広げます（×${sx.toFixed(4)}・×${sy.toFixed(4)}）`); for (const a of scaled) console.log(`  ${show(a)}`); }
 
   // 前の タップ範囲が 絵の マスと 合って いるか：どの タップ範囲も、ちょうど 1つの マスを ぜんぶ ふくみ、ほかの マスには かからない。どの マスも ちょうど 1つの タップ範囲に
   const box = a => [a.bounds.x, a.bounds.y, a.bounds.x + a.bounds.width, a.bounds.y + a.bounds.height];
   const covers = ([ax0, ay0, ax1, ay1], [, x0, y0, x1, y1]) => ax0 <= x0 && ay0 <= y0 && ax1 >= x1 && ay1 >= y1;
   const touches = ([ax0, ay0, ax1, ay1], [, x0, y0, x1, y1]) => ax0 < x1 && ax1 > x0 && ay0 < y1 && ay1 > y0;
   const bad = [], tileOf = new Map();
-  for (const a of old.areas) {
+  for (const a of scaled) {
     const b = box(a), own = TILES.filter(t => covers(b, t)), hit = TILES.filter(t => touches(b, t));
     if (own.length !== 1 || hit.length !== 1) bad.push(`${show(a)}：${own.length !== 1 ? `ふくむ マスが ${own.length} こ` : ''}${hit.length !== 1 ? ` かかる マス ${hit.map(t => t[0]).join('・') || 'なし'}` : ''}`);
     else tileOf.set(a, own[0]);
@@ -96,8 +104,8 @@ const show = a => {
   for (const t of TILES) { const n = [...tileOf.values()].filter(x => x === t).length; if (n !== 1) bad.push(`${t[0]}：タップ範囲が ${n} こ`); }
   if (bad.length) throw new Error(`いまの タップ範囲が 新しい 絵の マスと 合いません（何も 変えて いません）：\n  ${bad.join('\n  ')}`);
 
-  const areas = old.areas.map(a => KEEP || tileOf.get(a) !== GAME_TILE ? a : { bounds: a.bounds, action: { type: 'uri', label: 'お米ころころ', uri: GAME_URL } });
-  const menu = { size: old.size, selected: old.selected, name: `${old.name.replace(/（\d{4}-\d{2}-\d{2}）$/, '')}（${new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)}）`.slice(0, 300), chatBarText: old.chatBarText, areas };
+  const areas = scaled.map(a => KEEP || tileOf.get(a) !== GAME_TILE ? a : { bounds: a.bounds, action: { type: 'uri', label: 'お米ころころ', uri: GAME_URL } });
+  const menu = { size: { width: w, height: h }, selected: old.selected, name: `${old.name.replace(/（\d{4}-\d{2}-\d{2}）$/, '')}（${new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)}）`.slice(0, 300), chatBarText: old.chatBarText, areas };
   console.log(`新しい メニュー：${menu.name}`);
   for (const a of areas) console.log(`  ${show(a)}`);
   await call('POST', `${API}/richmenu/validate`, menu);

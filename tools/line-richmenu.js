@@ -18,14 +18,16 @@ const rb = args.indexOf('--rollback'), ROLLBACK = rb >= 0 ? args[rb + 1] : '';
 const IMAGE = path.resolve(args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--rollback') || 'mkt/nishio-go/richmenu-2500x1686.png');
 const TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
 
-// 絵の マス（tools/make-promo.js の richMenu() と docs/ads-game-kit.md 5章）。前の メニューの タップ範囲が これと ずれて いたら 止まる
+// 絵に 描いた マス（tools/make-promo.js の richMenu() の tileBox の 位置。x0, y0, x1, y1）。
+// 前の メニューの タップ範囲は、それぞれ 1つの マスを ぜんぶ ふくみ、ほかの マスに かからない こと（すきまの 白い ところで 区切る）。そうで なければ 止まる
 const TILES = [
-  ['お米ころころ（左上）', 0, 0, 825, 830],
-  ['店舗・営業時間（左下）', 0, 830, 825, 1686],
-  ['新米 販売中（中央）', 825, 0, 1674, 1686],
-  ['価格表PDF（右上）', 1674, 0, 2500, 830],
-  ['常連さまポイント（右下）', 1674, 830, 2500, 1686],
+  ['お米ころころ（左上）', 35, 21, 806, 815],
+  ['店舗・営業時間（左下）', 35, 846, 806, 1650],
+  ['新米 販売中（中央）', 844, 21, 1654, 1650],
+  ['価格表PDF（右上）', 1694, 21, 2463, 815],
+  ['常連さまポイント（右下）', 1694, 846, 2463, 1650],
 ];
+const GAME_TILE = TILES[0];
 
 async function call(method, url, body, type = 'application/json') {
   const r = await fetch(url, { method, headers: { Authorization: `Bearer ${TOKEN}`, ...(body ? { 'Content-Type': type } : {}) }, body: body && type === 'application/json' ? JSON.stringify(body) : body });
@@ -39,6 +41,13 @@ function pngSize(buf) {   // PNG の 頭（IHDR）から 幅と 高さ
   return [buf.readUInt32BE(16), buf.readUInt32BE(20)];
 }
 
+async function defaultMenu() {   // いまの 既定の メニュー（ない ときは ''）
+  try { return (await call('GET', `${API}/user/all/richmenu`)).richMenuId || ''; } catch (e) { if (/→ 404/.test(e.message)) return ''; throw e; }
+}
+async function aliasesOf(id) {   // その メニューを さす 別名。一覧を 読めない ときは 止まる
+  return ((await call('GET', `${API}/richmenu/alias/list`)).aliases || []).filter(x => x.richMenuId === id);
+}
+
 const show = a => {
   const b = a.bounds, act = a.action || {};
   const what = act.type === 'uri' ? act.uri : act.type === 'message' ? `メッセージ「${act.text}」` : act.type === 'postback' ? `postback ${act.data}` : act.type === 'richmenuswitch' ? `切りかえ → ${act.richMenuAliasId}` : act.type;
@@ -48,12 +57,16 @@ const show = a => {
 (async () => {
   if (!TOKEN) { console.log('LINE_CHANNEL_ACCESS_TOKEN が ありません（GitHub の Settings → Secrets and variables → Actions に 入れる。チャットには 書かない）'); process.exit(1); }
 
-  if (ROLLBACK) {   // 前の メニューに もどす
+  if (ROLLBACK) {   // 前の メニューに もどす：既定と、いまの 既定を さして いる 別名（差しかえで 付けかえた もの）を もどす
     const m = await call('GET', `${API}/richmenu/${ROLLBACK}`);
     console.log(`もどす 先：${m.name}（${ROLLBACK}）`);
+    const now = await defaultMenu();
+    const back = now && now !== ROLLBACK ? await aliasesOf(now) : [];
+    if (back.length) console.log(`いまの 既定（${now}）を さす 別名：${back.map(x => x.richMenuAliasId).join(', ')}（もどす 先に 付けかえる）`);
     if (!APPLY) { console.log('確かめるだけ（--apply で もどす）'); return; }
     await call('POST', `${API}/user/all/richmenu/${ROLLBACK}`);
     console.log('既定の メニューを もどしました');
+    for (const x of back) { await call('POST', `${API}/richmenu/alias/${x.richMenuAliasId}`, { richMenuId: ROLLBACK }); console.log(`別名 ${x.richMenuAliasId} を もどしました`); }
     return;
   }
 
@@ -61,37 +74,34 @@ const show = a => {
   console.log(`新しい 絵：${path.relative(process.cwd(), IMAGE)}（${w}×${h}・${Math.round(img.length / 1024)}KB）`);
   if (img.length > 1024 * 1024) throw new Error('絵が 1MB を こえて いる（LINE の 上限）');
 
-  let cur;
-  try { cur = (await call('GET', `${API}/user/all/richmenu`)).richMenuId; } catch (e) { if (!/→ 404/.test(e.message)) throw e; }
+  const cur = await defaultMenu();
   if (!cur) throw new Error('既定の リッチメニューが ありません（LINE Official Account Manager で 作った メニューは API から 見えない。今まで API で 差しかえていた なら、その メニューを 既定に して から）');
   const old = await call('GET', `${API}/richmenu/${cur}`);
   console.log(`いまの 既定：${old.name}（${cur}）　${old.size.width}×${old.size.height}　メニューバー「${old.chatBarText}」　マス ${old.areas.length}`);
   for (const a of old.areas) console.log(`  ${show(a)}`);
   if (old.size.width !== w || old.size.height !== h) throw new Error(`絵の 大きさ ${w}×${h} が メニューの ${old.size.width}×${old.size.height} と ちがう`);
 
-  // 前の タップ範囲が 絵の マスと 合って いるか（どの マスにも、まん中が その マスに 入る 範囲が 1つ）
-  const center = a => [a.bounds.x + a.bounds.width / 2, a.bounds.y + a.bounds.height / 2];
-  const bad = [];
-  for (const [name, x0, y0, x1, y1] of TILES) {
-    const hit = old.areas.filter(a => { const [cx, cy] = center(a); return cx >= x0 && cx < x1 && cy >= y0 && cy < y1; });
-    if (hit.length !== 1) bad.push(`${name}：タップ範囲が ${hit.length} こ`);
+  // 前の タップ範囲が 絵の マスと 合って いるか：どの タップ範囲も、ちょうど 1つの マスを ぜんぶ ふくみ、ほかの マスには かからない。どの マスも ちょうど 1つの タップ範囲に
+  const box = a => [a.bounds.x, a.bounds.y, a.bounds.x + a.bounds.width, a.bounds.y + a.bounds.height];
+  const covers = ([ax0, ay0, ax1, ay1], [, x0, y0, x1, y1]) => ax0 <= x0 && ay0 <= y0 && ax1 >= x1 && ay1 >= y1;
+  const touches = ([ax0, ay0, ax1, ay1], [, x0, y0, x1, y1]) => ax0 < x1 && ax1 > x0 && ay0 < y1 && ay1 > y0;
+  const bad = [], tileOf = new Map();
+  for (const a of old.areas) {
+    const b = box(a), own = TILES.filter(t => covers(b, t)), hit = TILES.filter(t => touches(b, t));
+    if (own.length !== 1 || hit.length !== 1) bad.push(`${show(a)}：${own.length !== 1 ? `ふくむ マスが ${own.length} こ` : ''}${hit.length !== 1 ? ` かかる マス ${hit.map(t => t[0]).join('・') || 'なし'}` : ''}`);
+    else tileOf.set(a, own[0]);
   }
-  if (old.areas.length !== TILES.length) bad.push(`タップ範囲の 数が ${old.areas.length}（絵の マスは ${TILES.length}）`);
-  if (bad.length) throw new Error(`いまの タップ範囲が 新しい 絵の マスと 合いません：\n  ${bad.join('\n  ')}`);
+  for (const t of TILES) { const n = [...tileOf.values()].filter(x => x === t).length; if (n !== 1) bad.push(`${t[0]}：タップ範囲が ${n} こ`); }
+  if (bad.length) throw new Error(`いまの タップ範囲が 新しい 絵の マスと 合いません（何も 変えて いません）：\n  ${bad.join('\n  ')}`);
 
-  const areas = old.areas.map(a => {
-    const [cx, cy] = center(a);
-    if (KEEP || !(cx < 825 && cy < 830)) return a;
-    return { bounds: a.bounds, action: { type: 'uri', label: 'お米ころころ', uri: GAME_URL } };
-  });
+  const areas = old.areas.map(a => KEEP || tileOf.get(a) !== GAME_TILE ? a : { bounds: a.bounds, action: { type: 'uri', label: 'お米ころころ', uri: GAME_URL } });
   const menu = { size: old.size, selected: old.selected, name: `${old.name.replace(/（\d{4}-\d{2}-\d{2}）$/, '')}（${new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10)}）`.slice(0, 300), chatBarText: old.chatBarText, areas };
   console.log(`新しい メニュー：${menu.name}`);
   for (const a of areas) console.log(`  ${show(a)}`);
   await call('POST', `${API}/richmenu/validate`, menu);
   console.log('LINE の 確認（validate）：ok');
 
-  let aliases = [];
-  try { aliases = ((await call('GET', `${API}/richmenu/alias/list`)).aliases || []).filter(x => x.richMenuId === cur); } catch (e) { console.log(`別名の 一覧を 読めませんでした（${e.message}）`); }
+  const aliases = await aliasesOf(cur);   // 読めなければ ここで 止まる（別名だけ 前の メニューに のこるのを ふせぐ）
   if (aliases.length) console.log(`前の メニューを さす 別名：${aliases.map(x => x.richMenuAliasId).join(', ')}（新しい メニューに 付けかえる）`);
 
   if (!APPLY) { console.log('確かめるだけでした（何も 変えて いません）。差しかえるなら apply を つけて もう一度'); return; }

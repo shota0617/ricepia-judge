@@ -1163,12 +1163,12 @@ const FARMER = (() => {
   // ---- ダメ出し：この田んぼの持ち主（近所の米農家さん）が 畦から運転を見ていて、まずい所があると 大きな声で言う（西尾の三河弁）。
   // 言うことは 点数のつけ方（SCORE）と同じ所：旋回で上げない・畦にぶつける・速さ・蛇行・重ね・田んぼアートのはみ出し・代かきのこねすぎ・エンスト
   const el = $('farmerSay'), said = {}, head3 = new THREE.Vector3();
-  let quiet = 8, cur = null, last = { turnsDown: 0, levee: 0, over: 0, stalled: false }, fastT = 0, slowT = 0;
+  let quiet = 8, cur = null, last = { turnsDown: 0, levee: 0, over: 0, stalled: false }, fastT = 0, slowT = 0, gapM = 0;
   const LINES = {
     turnDown: ['こらー！ 回るときは ロータリーを上げてからだら！', 'また下げたまま回っとる！ 四すみに土が寄るじゃん', '上げてから回りん！'],
     levee: ['畦にぶつけるな！ 崩れたら 直すのは わしだで', 'また畦！ 水がもれるようになるに'],
     fast: ['速すぎるじゃん！ 耕うんは 歩くくらい（時速 2〜3km）で'],
-    slow: ['おそいおそい、日が暮れるに。もうちょっと 速くてええ'],
+    slow: ['おそいおそい、日が暮れるに。ぬかるみでなけりゃ もうちょっと 速くてええ'],
     crooked: ['曲がっとるじゃん！ 足もとじゃなくて 遠くの目印を見て 走りん'],
     gap: ['すき間が あいとるに！ となりの跡に 10cm くらい 重ねりん'],
     overlap: ['重ねすぎだら。軽油と時間が もったいない'],
@@ -1177,34 +1177,47 @@ const FARMER = (() => {
     stall: ['あーあ、エンストさせた。上げてから かけなおしりん'],
     good: ['お、だいぶ まっすぐに なってきたな'],
   };
-  function say(k) {
+  function say(k) {                               // 言ったら true。もう言ったことなら false（ほかのダメ出しを先へ見る）
     const n = said[k] || 0, L = LINES[k];
-    if (n >= L.length && k !== 'turnDown' && k !== 'levee') return;   // 同じことは 何度も言わない（旋回と畦だけは くり返す）
+    if (n >= L.length && k !== 'turnDown' && k !== 'levee') return false;   // 同じことは 何度も言わない（旋回と畦だけは くり返す）
     said[k] = n + 1;
     el.innerHTML = L[Math.min(n, L.length - 1)] + '<small>— 畦で見ている 田んぼの持ち主</small>';
     el.style.opacity = 1; cur = k; st.sayT = 4.5; quiet = 14; st.pause = Math.max(st.pause, 4.5);
+    return true;
+  }
+  // 耕し残しのすじ：作業機のすぐ横（はしから 15cm）が まだ耕していないのに、その先（50cm〜1m）は耕してある＝となりの跡との間に すき間
+  const tilledAt = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ ? tilledMask[i * NZ + j] : -1; };
+  function gapBeside() {
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z, w = TILL_W / 2;
+    for (const sd of [-1, 1]) {
+      const at = d => tilledAt(S.x + sd * (w + d) * c + lz * s, S.z - sd * (w + d) * s + lz * c);
+      if (at(0.15) === 0 && (at(0.5) === 1 || at(0.8) === 1)) return true;
+    }
+    return false;
   }
   function critic(dt) {
     if (!S.started || S.done) return;
     quiet -= dt;
     const sc = SCORE.st, working = S.rotDown && S.rotPos < 0.08 && S.v > 0.1, kmh = S.v * 3.6;
     // すぐ言うこと（旋回で上げない・畦・エンスト・はみ出し）は 間をあけずに言う
-    if (sc.turnsDown > last.turnsDown) { last.turnsDown = sc.turnsDown; return say('turnDown'); }
-    if (sc.levee > last.levee) { last.levee = sc.levee; return say('levee'); }
-    if (S.stalled && !last.stalled) { last.stalled = true; return say('stall'); }
+    if (sc.turnsDown > last.turnsDown) { last.turnsDown = sc.turnsDown; if (say('turnDown')) return; }
+    if (sc.levee > last.levee) { last.levee = sc.levee; if (say('levee')) return; }
+    if (S.stalled && !last.stalled) { last.stalled = true; if (say('stall')) return; }
     if (!S.stalled) last.stalled = false;
-    if (ART.on) { const o = ART.score().over; if (o > last.over + 1.5) { last.over = o; return say('spill'); } }
+    if (ART.on) { const o = ART.score().over; if (o > last.over + 1.5) { last.over = o; if (say('spill')) return; } }
+    // 速さ：変速は 1.6・2.2・2.8・3.6km/h。点数は 時速 1.9〜3.3km が満点なので、4 速（3.6）と 1 速（1.6）を言う。ぬかるみの 1 速は言わない
+    fastT = working && kmh > 3.4 ? fastT + dt : 0; slowT = working && kmh < 1.75 && WET.at(S.x, S.z) < 0.05 ? slowT + dt : 0;
+    gapM = working && !ART.on && gapBeside() ? gapM + S.v * dt : Math.max(0, gapM - S.v * dt * 0.5);
     if (quiet > 0) return;
-    fastT = working && kmh > 3.8 ? fastT + dt : 0; slowT = working && kmh < 1.4 ? slowT + dt : 0;
-    if (fastT > 3) return say('fast');
-    if (slowT > 8) return say('slow');
+    if (fastT > 4 && say('fast')) return;
+    if (slowT > 10 && say('slow')) return;
+    if (gapM > 6 && say('gap')) return;            // すき間のすじが 6m 続いた
     if (sc.yawM > 15 && sc.swept > 40) {
       SCORE.calc(); const p = SCORE.parts;
-      if (p.rms > 2.2) return say('crooked');   // 点数の「まっすぐ」が 30 点中 22 点を切るくらい
-      if (SHIRO && p.dup > 0.55) return say('konashi');
-      if (!SHIRO && !ART.on && p.dup < 0.02 && sc.swept > 80) return say('gap');
-      if (!SHIRO && p.dup > 0.4) return say('overlap');
-      if (said.crooked && p.rms < 1.2 && sc.yawM > 60) return say('good');
+      if (p.rms > 2.2 && say('crooked')) return;   // 点数の「まっすぐ」が 30 点中 22 点を切るくらい
+      if (SHIRO && p.dup > 0.55 && say('konashi')) return;
+      if (!SHIRO && p.dup > 0.4 && say('overlap')) return;
+      if (said.crooked && p.rms < 1.2 && sc.yawM > 60 && say('good')) return;
     }
   }
   function bubble(dt) {
@@ -1214,7 +1227,10 @@ const FARMER = (() => {
     const W = innerWidth, H = innerHeight, x = (head3.x + 1) / 2 * W, y = (1 - head3.y) / 2 * H, w = el.offsetWidth, h = el.offsetHeight;
     const onScr = head3.z < 1 && x > w / 2 + 8 && x < W - w / 2 - 8 && y > h + 60 && y < H - 40;
     el.classList.toggle('dock', !onScr);
-    el.style.transform = onScr ? `translate(${Math.round(x - w / 2)}px, ${Math.round(y - h - 12)}px)` : `translate(12px, ${MOBILE ? 96 : 110}px)`;
+    let dx = 12, dy = MOBILE ? 96 : 110;           // 寄せる所：左上。田んぼアートの地図（左上）が出ているときは その右に
+    const ab = $('artBox');
+    if (!onScr && ab && !ab.classList.contains('hidden')) { const r = ab.getBoundingClientRect(); if (r.width && r.top < dy + h && r.bottom > dy && r.left < dx + w) dx = Math.round(r.right + 10); }
+    el.style.transform = onScr ? `translate(${Math.round(x - w / 2)}px, ${Math.round(y - h - 12)}px)` : `translate(${dx}px, ${dy}px)`;
   }
   function update(dt) {
     st.t += dt;

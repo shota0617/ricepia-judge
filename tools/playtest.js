@@ -1309,16 +1309,22 @@ async function walkTo(page, id) {
     });
     // 地図の 上に 出る 知らせ（長い 文）が、右上の 丸い ボタン（せかいちず・しらべる など）に 重ならない（自分で 遊んで 分かった：「歩いた道が 8.0km に！」が 2つめの ボタンに かかっていた）
     R.checks.toastHud = await w.page.evaluate(async () => {
-      nishioGo.toast('👣 これまでに歩いた道が 8.0km に！ +150pt（つぎの節目は 16km）テストの 長い 知らせ');
-      await new Promise(res => setTimeout(res, 450));
-      const t = document.getElementById('toast').getBoundingClientRect(), hit = [];
+      const wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), msg = '👣 これまでに歩いた道が 8.0km に！ +150pt（つぎの節目は 16km）テストの 長い 知らせ';
+      for (let i = 0; i < 6; i++) {   // 窓（ごほうび・人の話・あそびかた）が 開いて いると、知らせは 待ちの 列に 入るか 下に 出るので、先に とじる
+        const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click();
+        document.getElementById('pxInfo').hidden = true; const h = document.getElementById('howto'); if (h && !h.hidden) h.hidden = true;
+        await wait(150);
+      }
+      nishioGo.toast(msg);
+      await wait(450);
+      const t = el.getBoundingClientRect(), hit = [], shown = el.classList.contains('show') && el.textContent === msg, top = t.bottom < innerHeight / 2;   // この 知らせが 画面の 上に 出て いる ときだけ 比べる
       for (const b of document.querySelectorAll('.px-zoom button')) {
         if (!b.getClientRects().length || getComputedStyle(b).visibility === 'hidden') continue;
         const r = b.getBoundingClientRect();
         if (r.width && t.left < r.right && t.right > r.left && t.top < r.bottom && t.bottom > r.top) hit.push(b.id || b.title || b.textContent.trim().slice(0, 6));
       }
       document.getElementById('toast').classList.remove('show');
-      return { toast: [Math.round(t.left), Math.round(t.top), Math.round(t.right), Math.round(t.bottom)], hit, ok: t.width > 0 && !hit.length };
+      return { toast: [Math.round(t.left), Math.round(t.top), Math.round(t.right), Math.round(t.bottom)], shown, top, hit, ok: shown && top && t.width > 0 && !hit.length };
     });
     // めいろの「🏁 ゴール！」が 出ている 間は、頭の 上に 浮かぶ 文字（「→ 〇〇へ ころころ」など）を 待たせ、消えてから 浮かべる（重なって どちらも 読めなかった）
     R.checks.mzBannerFloat = await w.page.evaluate(async () => {

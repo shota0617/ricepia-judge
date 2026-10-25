@@ -5007,16 +5007,34 @@ const COACH = (() => {
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
     return [4.5, 6.5].some(d => Math.abs(S.x + s * d) > HX - 0.2 || Math.abs(S.z + c * d) > HZ - 0.2);
   }
+  // 田んぼアート：作業機の左・まん中・右が、作業機の d m 先で 絵の外（白線から 40cm より外）か・絵の中か
+  function artAt(d) {
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + d, r = [0, 0];
+    for (const lx of [-0.8, 0, 0.8]) {
+      const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
+      const e = Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5 ? 1 : ART.sdAt(x, z);
+      if (e > 0.4) r[0]++; else if (e < 0) r[1]++;
+    }
+    return r;
+  }
   function msg() {
     if (S.stalled) return S.rotDown                // エンスト：上げるまでは「上げる」、上げたら「かけなおす」だけ
       ? ['!', K('エンスト：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる', 'エンスト：まず ' + IMPL + 'を上げる')]
       : ['!', K('エンスト：<kbd>↑</kbd> でエンジンをかけなおす', 'エンスト：▲ でエンジンをかけなおす')];
     if (ART.on && ART.score().fill >= 0.9) return ['✓', K('仕上がったら <kbd>Enter</kbd>（📸 完成）でドローン写真', '仕上がったら 右上の「📸 完成」')];   // 旋回の練習が終わっていなくても出す
     if (afterStall && !S.rotDown) return ['!', K('かかった：<kbd>スペース</kbd>で下げて、<kbd>Q</kbd> で 1〜2 速に落としてゆっくり', 'かかった：ボタンで下げて、「変速」で 1〜2 速に落としてゆっくり')];
+    // 田んぼアート：白線の外では下げない（耕した土はもどせない）。白線の内側に入ってから下げ、白線の手前で上げる
+    const art = ART.on, inNow = art && !S.rotDown && artAt(0.3)[1] === 3;
+    if (art && !S.everDown) return inNow ? ['1', K('白線の内側に入った：<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '白線の内側に入った：ボタンで ' + IMPL + 'を下げる')]
+      : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (off) return null;
+    if (art && !EASY.on && S.rotDown && S.v > 0.2 && artAt(0.4)[0] === 0 && artAt(0.4 + Math.max(1.2, S.v * 1.5))[0] >= 2)   // 🔰 アシストのときは 自動で上がる
+      return ['3', K('白線が近い：<kbd>スペース</kbd>で上げる（外は耕さない）', '白線が近い：ボタンで上げる（外は耕さない）')];
+    if (inNow && S.everMoved && liftYaw !== null && Math.abs(dYaw(S.yaw, liftYaw)) > 2.6) return ['5', K('白線の内側に入った：<kbd>スペース</kbd>で下げる', '白線の内側に入った：ボタンで下げる')];
     if (!S.rotDown) {
       if (!S.everDown) return ['1', K('<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '右の「' + IMPL + 'を下げる」ボタンで下げる')];
       if (liftYaw === null) return null;
+      if (art && Math.abs(dYaw(S.yaw, liftYaw)) > 2.6) return ['5', K('白線の内側まで進んでから、<kbd>スペース</kbd>で下げる', '白線の内側まで進んでから、ボタンで下げる')];
       if (Math.abs(dYaw(S.yaw, liftYaw)) > 2.6 && !leveeAhead()) return ['5', K('となりの耕した跡にならんだら、<kbd>スペース</kbd>で下げる', 'となりの耕した跡にならんだら、ボタンで下げる')];
       return ['4', K('<kbd>←</kbd><kbd>→</kbd> で回る（せまいときは <kbd>↓</kbd> で少しバック）', '◀ ▶ で回る（せまいときは ▼ で少しバック）')];
     }

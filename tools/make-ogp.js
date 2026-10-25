@@ -12,6 +12,7 @@ const PORT = 8898, URL = `http://localhost:${PORT}/nishio-go.html`, OUT = path.j
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2 });
   await ctx.addInitScript(() => { localStorage.setItem('nsg_started', 'true'); localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_world_on', '1'); localStorage.setItem('nsg_mode', '"demo"'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_howto', '1'); });
+  await ctx.clock.setFixedTime(new Date('2026-10-25T12:00:00+09:00'));   // ゲームは本当の時刻で空の明るさが変わる。夜に作っても昼の画面になるよう、正午に固定
   const page = await ctx.newPage();
   if (process.env.LEAFLET_DIR) await page.route('https://unpkg.com/**', r => {
     const f = r.request().url().endsWith('.css') ? 'leaflet.css' : 'leaflet.js';
@@ -54,7 +55,7 @@ const PORT = 8898, URL = `http://localhost:${PORT}/nishio-go.html`, OUT = path.j
     <div class="bg"></div><div class="shade"></div>
     <div class="left">
       <img class="logo" src="${uri(logo, 'image/svg+xml')}"/>
-      <h1>スマホを傾けて、<br/><em>お米を転がす</em>西尾の めいろ</h1>
+      <h1>スマホを傾けると、<br/><em>お米がころころ</em>西尾のめいろ</h1>
       <ul><li>🌀 本物の道の めいろ</li><li>🏁 ゴールは 西尾の名所</li><li>📜 人の話で 行き先</li><li>🆓 無料・登録なし</li></ul>
       <p class="by">西尾のお米屋さん <b>らいすぴあ・近藤米穀店</b> がお届け</p>
     </div>

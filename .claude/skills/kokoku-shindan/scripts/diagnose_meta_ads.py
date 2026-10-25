@@ -200,6 +200,11 @@ def main():
     name_cols = [col[k] for k in ("campaign", "adset", "ad") if k in col]
     rows = [r for r in rows if not name_cols or any((r[i] if i < len(r) else "").strip() for i in name_cols)]
     date_idx = col.get("day")
+    # 「日」列が無くても、各行の開始日＝終了日で日付が複数あれば日別データとみなす（meta-ads.html の loadText と同じ）
+    if date_idx is None and "start" in col and "end" in col:
+        g = lambda r, k: norm_date(r[col[k]]) if col[k] < len(r) else None
+        if rows and all(g(r, "start") and g(r, "start") == g(r, "end") for r in rows) and len({g(r, "start") for r in rows}) > 1:
+            date_idx = col["start"]
     level = args.level or ("ad" if "ad" in col else "adset" if "adset" in col else "campaign" if "campaign" in col else None)
     cands = conv_candidates(headers, rows)
     conv_idx = None
@@ -212,9 +217,12 @@ def main():
     elif cands:
         # meta-ads.html の setupSettings と同じ優先順位：合計が正の「購入」→ 合計が正の「結果」→ 合計が最大の列
         sums = {i: sum((num(r[i]) or 0) for r in rows if i < len(r)) for i in cands}
-        conv_idx = (next((i for i in cands if re.fullmatch(r"(購入|purchases?|ウェブサイトでの購入|website purchases)", headers[i], re.I) and sums[i] > 0), None)
-                    or next((i for i in cands if re.fullmatch(r"(結果|results)", headers[i], re.I) and sums[i] > 0), None)
-                    or max(cands, key=lambda i: sums[i]))
+        # 列番号0も有効なので or で繋がず None を明示的に確かめる
+        conv_idx = next((i for i in cands if re.fullmatch(r"(購入|purchases?|ウェブサイトでの購入|website purchases)", headers[i], re.I) and sums[i] > 0), None)
+        if conv_idx is None:
+            conv_idx = next((i for i in cands if re.fullmatch(r"(結果|results)", headers[i], re.I) and sums[i] > 0), None)
+        if conv_idx is None:
+            conv_idx = max(cands, key=lambda i: sums[i])
 
     dates = sorted({norm_date(r[date_idx]) for r in rows if date_idx is not None and date_idx < len(r)} - {None}) if date_idx is not None else []
     if not dates and "start" in col:

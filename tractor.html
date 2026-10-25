@@ -283,6 +283,7 @@
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
+      ・植え代かきは、風の強い日や雨のすぐあとはさけ、風のない晴れた朝に／きれいにしすぎない。土をやわらかくしすぎると田植え機が沈んで苗が深く入りすぎる…<a href="https://note.com/kome_noka_shinya/n/n5261c27150cd" target="_blank" rel="noopener">いち田さん（note の米農家）「植え代かきのさじ加減」</a><br>
       ・同じ所を何度も耕すと、土が細かくなりすぎて、あとの代かきや田植えで泥のようになる。荒起こしは荒く、1 回で均一に…<a href="https://note.com/kome_noka_shinya/n/nc99565cddbe0" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こしで気をつけたい 6 つの落とし穴」</a>（ゲームでは 3 回通った所が 土くれのない平らな土になる。3 回はゲームの決めごと）<br>
       ・燃料は半分あったので足りると思ったが、とちゅうで給油して作業が止まった。荒起こしは時間がかかるので満タンで／耕しはじめは入口の反対がわから、最後に外周を回って入口から出る…<a href="https://note.com/kome_noka_shinya/n/n4d9c95f5e653" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こし準備と手順の基本チェック」</a><br>
       ・土が乾いていないと、田んぼに入るたびにタイヤに土がつく。作業のあと、ついていれば そのつど移植ゴテで削り落とす…<a href="https://komeya4th.exblog.jp/29289731/" target="_blank" rel="noopener">米農家さんのブログ（komeya4th「トラクターのタイヤに付いた土は田んぼで落としていますか？」）</a><br>
@@ -1279,6 +1280,7 @@ const FARMER = (() => {
     if (sc.swept > 40) {
       SCORE.calc(); const p = SCORE.parts;
       if (sc.yawM > 15 && p.rms > 2.2 && say('crooked')) return;   // まっすぐ：自分でハンドルを切った道のり（yawM）で見る。点数の「まっすぐ」が 30 点中 22 点を切るくらい
+      if (SHIRO && p.dup > 0.7) voice('shizumu');   // ずっと こねすぎ：田植え機が沈む話
       if (SHIRO && p.dup > 0.55 && say('konashi')) return;      // 重ね・こねすぎ：耕した広さ（swept）で見る（直進アシストのときも）
       if (!SHIRO && p.dup > 0.4 && say('overlap')) return;
       if (said.crooked && p.rms < 1.2 && sc.yawM > 60 && say('good')) return;
@@ -5114,6 +5116,9 @@ const VOICES = {
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
   // いち田さん（note の米農家）の「荒起こし準備と手順の基本チェック」（2026 年 10 月。WebSearch で見つけて要約）
+  // いち田さん（note の米農家）「ぬかるむ田んぼに、“ちょうどいい”はどこにある？──植え代かきのさじ加減」
+  kaze: ['植え代かきは、風の強い日や 雨のすぐあとは さけて、風のない 晴れた朝にする（水が多いと 平らにならず、苗が流されることもある）', 'いち田さん（note の米農家）'],
+  shizumu: ['きれいにしすぎない。土をやわらかくしすぎると、田植え機が沈んで 苗が深く入りすぎる', 'いち田さん（note の米農家）'],
   arashiku: ['完璧にしようと 同じ所を何度も耕すと、土が細かくなりすぎて、あとの代かきや田植えで 泥のようになる。荒起こしは荒く、1 回で均一に耕せば十分', 'いち田さん（note の米農家）'],
   kakunin: ['燃料は半分あったので 足りると思ったが、とちゅうで給油することになって 作業が止まった。荒起こしは時間がかかるので、燃料は満タンにしてから', 'いち田さん（note の米農家）'],
   iriguchi: ['耕しはじめは 入口の反対がわから。中から外へ耕し、最後に外周を回って 入口から出る', 'いち田さん（note の米農家）'],
@@ -5158,6 +5163,8 @@ $('bStart').onclick = () => {
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
     if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
     if (TOD === 'yoru') setTimeout(() => toast('🌙 本物は、暗くなってからの作業は なるべくしない（畦や足もとが見えにくく、事故が多い）。するなら作業灯をつけて ゆっくり（L でライトの入切）', 6), 10000);
+    if (SHIRO && RAIN) setTimeout(() => { toast('🌧️ 本物は、雨のすぐあとや風の強い日の植え代かきは さける（水がかたよって 平らにならず、苗が流されることもある）', 6); voice('kaze'); }, 4000);
+    else if (SHIRO && TOD === 'asa' && WX === 'hare') setTimeout(() => { toast('☀️ 風のない晴れた朝：代かきに向いている', 4); voice('kaze'); }, 4000);
     if (RAIN && !SHIRO) setTimeout(() => toast('🌧️ 本物は、雨の日や雨のすぐあとには耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになる（乾くのを待つ）', 6), 4000);
   }
   if (!soundOn && !audio) toggleSound();

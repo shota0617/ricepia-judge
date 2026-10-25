@@ -63,9 +63,9 @@
   .seasons button.sel { border-color: var(--green); background: #e8efdf; }
   .times { margin-top: -6px; }
   #times { grid-template-columns: repeat(4, 1fr); }   /* 朝・昼・夕方・夜 */
-  .arts { grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: -6px; }
-  @media (max-width: 420px) { .arts { grid-template-columns: repeat(3, 1fr); } }
+  .arts { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: -6px; }   /* お題は やさしい順（★ が むずかしさ） */
   .arts button { padding: 6px 2px; font-size: 12px; }
+  .arts button i { display: block; font-style: normal; font-size: 9px; color: #c08a1e; letter-spacing: -1px; }
   .arts button span { font-size: 20px; }
   /* 田んぼアートの地図（黄＝まだ耕していない絵の所、緑＝耕せた、赤＝はみ出し）。パソコンは左上、スマホは下のまん中 */
   #artBox { position: fixed; left: 8px; top: calc(max(8px, env(safe-area-inset-top)) + 40px); width: 220px; pointer-events: none; }
@@ -185,11 +185,13 @@
       <button data-w="ame"><span>🌧️</span>小雨</button>
     </div>
     <div class="seasons arts" id="arts">
-      <button data-a="heart"><span>❤️</span>ハート</button>
-      <button data-a="kome"><span>🌾</span>米</button>
-      <button data-a="onigiri"><span>🍙</span>おにぎり</button>
-      <button data-a="star"><span>⭐</span>星</button>
-      <button data-a="smile"><span>😊</span>にっこり</button>
+      <button data-a="shikaku"><span>⬛</span>四角<i>★</i></button>
+      <button data-a="juji"><span>➕</span>十<i>★★</i></button>
+      <button data-a="kome"><span>🌾</span>米<i>★★★</i></button>
+      <button data-a="onigiri"><span>🍙</span>おにぎり<i>★★★</i></button>
+      <button data-a="star"><span>⭐</span>星<i>★★★★</i></button>
+      <button data-a="heart"><span>❤️</span>ハート<i>★★★★</i></button>
+      <button data-a="smile"><span>😊</span>にっこり<i>★★★★★</i></button>
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
@@ -284,6 +286,7 @@
     <img id="artImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼアート">
     <div class="artBtns hidden" id="artBtns"><a class="go sub" id="bSave" download="tanbo-art.jpg">💾 保存</a><button class="go sub hidden" id="bShare">📤 シェア</button><button class="go sub" id="bOther">別のお題</button></div>
     <p id="doneScore"></p>
+    <button class="go hidden" id="bNext"></button>
     <button class="go" id="bAgain">もう一度</button>
     <p class="small"><a href="https://ricepia.jp/" target="_blank" rel="noopener">らいすぴあ（近藤米穀店）のお米を見る</a></p>
   </div>
@@ -319,8 +322,10 @@ const DARK = TOD === 'yu' || TOD === 'yoru';     // ライトをつけて始め�
 // 小雨は 雨のすじ・前ガラスの水滴と間欠ワイパー・キャビンの屋根をたたく音
 const WX = { kumori: 1, ame: 1 }[params.get('w')] ? params.get('w') : 'hare', RAIN = WX === 'ame';
 const FX_K = TOD === 'yoru' ? 0.18 : TOD === 'yu' ? 0.7 : 1;   // 光を受けない雨すじ・水しぶきなどの明るさ（夜は暗い）
-// 田んぼアートのお題（はじめはハート）。「なし」（art=none）は田んぼをぜんぶ耕す
-const ART_ID = params.get('art') === 'none' ? null : ['heart', 'kome', 'onigiri', 'star', 'smile'].includes(params.get('art')) ? params.get('art') : 'heart';
+// 田んぼアートのお題。やさしい順：四角（まっすぐ往復するだけ）→ 十（縦と横）→ 米・おにぎり（ななめ）→ 星・ハート（とがった角・曲線）→ にっこり（円）。
+// はじめは いちばんやさしい四角。「なし」（art=none）は田んぼをぜんぶ耕す
+const ARTS = ['shikaku', 'juji', 'kome', 'onigiri', 'star', 'heart', 'smile'];
+const ART_ID = params.get('art') === 'none' ? null : ARTS.includes(params.get('art')) ? params.get('art') : 'shikaku';
 const go = (s_, t_, a_ = ART_ID, w_ = WX) => { location.search = '?season=' + s_ + '&time=' + t_ + '&art=' + (a_ || 'none') + (w_ !== 'hare' ? '&w=' + w_ : ''); };
 document.querySelectorAll('#seasons button').forEach(b => {
   if (b.dataset.s === season) b.classList.add('sel');
@@ -1672,6 +1677,8 @@ const ART = (() => {
   const STAR = [...Array(10)].map((_, k) => { const t = Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 5.3 : 12.8; return [r * Math.cos(t), r * Math.sin(t) - 1.2]; });
   const MOUTH = [...Array(9)].map((_, k) => { const t = -Math.PI * (0.18 + 0.64 * k / 8); return [6.6 * Math.cos(t), 1.4 + 6.6 * Math.sin(t)]; });
   const SHAPES = {
+    shikaku: ['四角', (a, b) => poly([[-14, -6.6], [14, -6.6], [14, 6.6], [-14, 6.6]], a, b)],   // 長さ 28m・幅 13.2m（耕幅 2.2m で 6 往復）。まっすぐ往復して、白線で上げて回るだけ
+    juji: ['十', strokes([[-13, 0, 13, 0], [0, -10, 0, 10]], R)],   // 長い方へ 1 本、短い方へ 1 本。それぞれ 1 回ずつ まっすぐ通る
     heart: ['ハート', (a, b) => {                  // ハートの形（iq の距離の式）を 21 倍
       const s = 21, x = Math.abs(a) / s, y = (b + 11.5) / s;
       if (x + y > 1) return (Math.hypot(x - 0.25, y - 0.75) - Math.SQRT2 / 4) * s;
@@ -4996,6 +5003,13 @@ function finishArt() {
     `<br><span class="small">上手さ ${r.ready ? r.skill : 0} 点（きれいさ ${r.kirei}% × 運転 ${r.unten} 点${EASY.used ? ' × 🔰 0.8' : ''}）× でき ${Math.round(r.fill * 100)}%（95% で満点）</span>` +
     `<br><span class="small">はみ出し ${r.over.toFixed(0)}m²・耕し残し ${r.left.toFixed(0)}m²（白線から ${SHIRO ? 60 : 40}cm 以内は数えない）・運転：${sm.text}</span>` +
     (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '') + heardLine();
+  const nx = ARTS[ARTS.indexOf(ART.id) + 1];      // 上手に描けたら、ひとつむずかしいお題へ
+  if (f >= 70 && nx) {
+    const b = document.querySelector(`#arts button[data-a="${nx}"]`);
+    $('bNext').textContent = `次のお題「${b.childNodes[1].textContent}」${b.querySelector('i').textContent} に挑戦 ▶`;
+    $('bNext').onclick = () => go(season, TOD, nx);
+    $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
+  }
   const blob = fetch(url).then(x => x.blob()), text = `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}`;
   blob.then(b => {
     const f = new File([b], 'tanbo-art.jpg', { type: 'image/jpeg' });

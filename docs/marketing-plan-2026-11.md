@@ -293,7 +293,7 @@ Marketing プラグインのコネクタは、このクラウド環境のネッ�
 
 つなぎ方（運営者がする）：
 
-1. Claude のクラウド環境の設定（セッションの上の環境の名前 → 編集 → ネットワークアクセス）で、上の接続先を「許可するドメイン」に足す（「パッケージマネージャーを許可」はチェックしたまま）。手順：https://code.claude.com/docs/en/cloud-environments#network-access
+1. Claude のクラウド環境の設定（セッションの上の環境の名前 → 編集 → Network access）を、いまの「Trusted」から「**Custom**」に変え、上の接続先を1行に1つずつ入れる。いま使えている所（パッケージ・GitHub など）が止まらないよう、ふだんの許可リストも含める（チェックの欄があればオンのまま）。共有の環境で編集できないときは、組織の Owner が管理設定の「Cloud environments」から変える。手順：https://code.claude.com/docs/en/cloud-environments#network-access
 2. claude.ai の「カスタマイズ → コネクタ」で、使うサービスにログインして許可する
 3. 新しいセッションをはじめる（コネクタはセッションのはじめにつながる）
 

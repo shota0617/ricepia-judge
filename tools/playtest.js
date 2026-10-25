@@ -1307,6 +1307,18 @@ async function walkTo(page, id) {
       G.setGuide(null);
       return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, mapOk, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) && mapOk };
     });
+    // めいろの「🏁 ゴール！」が 出ている 間は、頭の 上に 浮かぶ 文字（「→ 〇〇へ ころころ」など）を 待たせ、消えてから 浮かべる（重なって どちらも 読めなかった）
+    R.checks.mzBannerFloat = await w.page.evaluate(async () => {
+      const P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), t = 'テストの 浮かぶ 文字';
+      M.goalFx('★★★ 0分10秒（めいろの 道のり 100m）');
+      await wait(300); P.floatText(t);
+      let during = false;
+      for (let i = 0; i < 10; i++) { await wait(150); if (P.floatsDrawn.includes(t)) during = true; }   // ゴールの 文字が 出ている 間
+      for (let i = 0; i < 40 && M.banner; i++) await wait(150);   // ゴールの 文字が 消えるまで（4秒）
+      let after = false;
+      for (let i = 0; i < 8 && !after; i++) { await wait(100); if (P.floatsDrawn.includes(t)) after = true; }
+      return { during, after, gone: !M.banner, ok: !during && after };
+    });
     // ゴールが 画面の 左右の はしに ある とき：ゴールの 名前が 画面から はみ出して 切れない（自分で 遊んで 分かった：らいすぴあの 店員さんの 名前の 頭が 切れていた）
     R.checks.mzGoalEdge = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), nm = 'らいすぴあの店員さん（らいすぴあ・秀幸）', out = {};
@@ -1378,6 +1390,7 @@ async function walkTo(page, id) {
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
+  need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.mzGoalEdge && c.mzGoalEdge.ok, 'ゴールが 画面の はしに ある とき、ゴールの 名前が 画面から はみ出して 切れる');
   need(c.mzArrowTop && c.mzArrowTop.ok, 'ゴールが 上の 外の とき、矢印が 時計の 札や 右上の ボタンに 重なる');
   need(c.mzHintToast && c.mzHintToast.ok, '迷って いる 間、道しるべの 知らせが 25秒ごとに 出つづける');

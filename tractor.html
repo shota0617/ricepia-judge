@@ -787,7 +787,7 @@ const DRIVER = (() => {
     AX[1].set(0, 1, 0).applyEuler(joy.rotation).lerp(rimTangent(1.05 - st.off, tmp2), st.rightOnWheel).normalize();
     if (st.reach > 0) {
       const k = Math.sin(Math.min(1, st.reach / 0.8) * Math.PI);
-      T[1].lerp(tmp3.set(-0.31, 1.86, -0.25), k);   // 昇降スイッチ（操作盤の前の台の うしろの ふち）
+      T[1].lerp(tmp3.set(-0.312, 1.86, -0.255), k);   // 昇降スイッチ（操作盤の前の台の うしろの ふち）
       AX[1].lerp(tmp3.set(1, 0, 0), k).normalize();
     }
     const sh = performance.now() / 1000;          // 息とエンジンのふるえで、肩が少し動く

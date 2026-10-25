@@ -3744,7 +3744,7 @@ const SCORE = (() => {
     // オートブレーキも きかない。田んぼの出入りや坂の前に連結を確かめる：農研機構の安全のポイント）。前進でもバックでも、
     // 坂（x 12 から）へ向かって進んでいて、先に坂へ着くはし（前進なら鼻先、バックならロータリー）が 坂の 1.5m 手前に来たら
     const sn = Math.sin(S.yaw), lead = S.v >= 0 ? S.x + 3.05 * sn : S.x - 1.62 * sn;
-    if (!linkTold && !S.rotDown && S.v * sn > 0.1 && S.x < 12 && S.z > 18 && S.z < 22 && lead > 10.5 && lead < 12) {
+    if (!linkTold && !S.rotDown && lastPct >= 85 && Math.abs(S.steer) < 0.2 && Math.abs(sn) > 0.9 && S.v * sn > 0.1 && S.x < 12 && S.z > 18 && S.z < 22 && lead > 10.5 && lead < 12) {   // 耕し終わるころ、まっすぐ坂へ向かっているとき（枕地の旋回中は出さない）
       linkTold = true;
       toast('🔗 坂の手前：道へ出るので、左右のブレーキペダルを連結（坂や道で 片方だけ急に止まると、車体が大きく振られる）', 5);
       if (!SHIRO) voice('renketsu');                // 代かきは rampBrake（坂で前輪が浮いた事故）が 同じ連結の話をする

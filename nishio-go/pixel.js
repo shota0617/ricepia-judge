@@ -6819,6 +6819,51 @@ function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マ�
   if (Math.abs(dx) === 1 && Math.abs(dy) === 1) return !((mzOpen(a, b, dx, 0) && mzOpen(a + dx, b, 0, dy)) || (mzOpen(a, b, 0, dy) && mzOpen(a, b + dy, dx, 0)));
   return false;
 }
+// ゆるい めいろ（2026-10-26 店主「直角ではなく ゆるい構造に。西尾の町に合った迷路」）
+// ・どこが 通れるかは これまでと 同じ（マスと、穴ほりで えらんだ さかい）。かわるのは 通路の 形：通れる さかいで つながる マスの まん中を
+//   なめらかな 線で むすんだ「道すじ」に して、お米の まん中は 道すじから MZ_TUBE マス以内だけ 動ける（筒の 中を 転がる）
+// ・2つに つながる マスは 2次の B スプライン（さかいの まん中から まん中へ、マスの まん中に 引かれる 線）：直角の 曲がり角は まるい カーブに、
+//   階段の ような ななめの 道（すじかいの 道・川ぞいの 道）は ななめの 一本道に なる。3つ以上の 分かれ道は まっすぐの 枝と、となりあう 枝の あいだの カーブ
+// ・道すじは 通路の マスの 中に おさまる（壁の マスへ はみ出さない）ので、マスで 数える しくみ（道しるべ・カラス・米つぶ・歩数）は そのまま
+const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
+const mzCurveC = { key: '', m: new Map() };
+function mzCurves(cx, cy) {   // マスが 受けもつ 道すじ（地図の マスの 座標の 点の 列の 配列）。区域が 読めて いなければ null
+  const key = mzAreas.size + ':' + mzSpotCells.size + ':' + mzSpotV;   // 区域が 読めた・参道が ふえた ときは つくりなおす（となりの マスへ 通れるかが かわる）
+  if (mzCurveC.key !== key || mzCurveC.m.size > 20000) { mzCurveC.key = key; mzCurveC.m.clear(); }
+  const k = cx + ',' + cy;
+  let out = mzCurveC.m.get(k);
+  if (out) return out;
+  const ty = mzType(cx, cy);
+  if (ty < 0) return null;
+  out = [];
+  if (ty === 1 || mzSpotCell(cx, cy)) {
+    const px = (cx + 0.5) * MZ_K, py = (cy + 0.5) * MZ_K, h = MZ_K / 2;
+    const arms = MZ_DIRS.filter(([dx, dy]) => mzOpen(cx, cy, dx, dy)).map(([dx, dy]) => [px + dx * h, py + dy * h, dx, dy]);   // 通れる さかいの まん中
+    const bez = (a, b) => { const q = []; for (let i = 0; i <= 6; i++) { const t = i / 6, s = 1 - t; q.push([s * s * a[0] + 2 * s * t * px + t * t * b[0], s * s * a[1] + 2 * s * t * py + t * t * b[1]]); } return q; };
+    if (!arms.length) out.push([[px - 0.01, py], [px + 0.01, py]]);   // どこにも 通れない 通路：まるい 広場
+    else if (arms.length === 2) out.push(bez(arms[0], arms[1]));
+    else {
+      for (const a of arms) out.push([[px, py], [a[0], a[1]]]);   // 行き止まり・分かれ道：まん中から さかいへ
+      if (arms.length > 2) for (let i = 0; i < arms.length; i++) for (let j = i + 1; j < arms.length; j++) if (!(arms[i][2] * arms[j][2] + arms[i][3] * arms[j][3])) out.push(bez(arms[i], arms[j]));   // 分かれ道の 角も まるく
+    }
+  }
+  mzCurveC.m.set(k, out);
+  return out;
+}
+function mzNear(x, y) {   // (x, y) に いちばん近い 道すじの 点（まわり 3×3 マスから）。読めて いない マスが あれば null（壁なし）
+  const a = Math.floor(x / MZ_K), b = Math.floor(y / MZ_K);
+  let bd = Infinity, bx = 0, by = 0;
+  for (let cy = b - 1; cy <= b + 1; cy++) for (let cx = a - 1; cx <= a + 1; cx++) {
+    const cs = mzCurves(cx, cy);
+    if (!cs) return null;
+    for (const q of cs) for (let i = 1; i < q.length; i++) {
+      const x0 = q[i - 1][0], y0 = q[i - 1][1], dx = q[i][0] - x0, dy = q[i][1] - y0, l = dx * dx + dy * dy;
+      const t = l ? Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / l)) : 0, qx = x0 + dx * t, qy = y0 + dy * t, d = (x - qx) * (x - qx) + (y - qy) * (y - qy);
+      if (d < bd) { bd = d; bx = qx; by = qy; }
+    }
+  }
+  return bd < Infinity ? { d: Math.sqrt(bd), x: bx, y: by } : null;
+}
 // 道しるべ：お米の マスから 行き先（G.guide）の そばの 通路まで、めいろの 道すじ（マスの 幅さがし）。お米の マスか 行き先が かわったときだけ さがす。
 // 案内の 札の 道のり（めいろで 何m）に 使い、25秒 近づけなければ 道すじの 先 8マスを 6秒 光る 点で 見せる（ふだんは 見せない：迷路を とく 楽しみを のこす）
 const mzRt = { key: '', path: null, best: Infinity, bestT: 0, showUntil: 0, gkey: '', retry: 0, t0: 0, len0: 0, run: { dots: 0, pads: 0, combo: 0 } };   // run：この ゴールまでの 道で ひろった ごはんつぶ・のった びゅんパネル・いちばん 長い コンボ（ゴールの ふり返りに）   // t0・len0：いまの ゴールに なった 時刻と、そのときの めいろの 道のり（ゴールの 知らせに）
@@ -7110,7 +7155,9 @@ function drawMzHint(ox, oy, T, now) {
     if (pts.length < 2) return;
     ctx.save();
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.beginPath(); pts.forEach(([X, Y], i) => (i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y)));
+    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);   // ゆるい めいろの 道すじと 同じ 曲線（さかいの まん中を とおり、マスの まん中へ 引かれる）
+    for (let i = 1; i < pts.length - 1; i++) { if (rec) ctx.lineTo(pts[i][0], pts[i][1]); else ctx.quadraticCurveTo(pts[i][0], pts[i][1], (pts[i][0] + pts[i + 1][0]) / 2, (pts[i][1] + pts[i + 1][1]) / 2); }
+    ctx.lineTo(pts[pts.length - 1][0], pts[pts.length - 1][1]);
     ctx.strokeStyle = 'rgba(10,30,45,.55)'; ctx.lineWidth = Math.max(4, T * 0.5); ctx.stroke();   // ふち
     ctx.setLineDash([T * 0.7, T * 0.45]); ctx.lineDashOffset = -(now / 25) % (T * 1.15);   // 先へ 流れる
     ctx.strokeStyle = '#7fe0ff'; ctx.lineWidth = Math.max(2, T * 0.3); ctx.stroke();
@@ -7680,7 +7727,68 @@ function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上
   ctx.globalAlpha = 1;
   mzMap.rect = [X - S * 0.5, Y - S * 1.6, X + W + S * 0.5, Y + H + S * 0.9];
 }
-function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {   // めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
+// ゆるい めいろの 生け垣：道すじを 太い 線で なぞって、外がわの 帯（MZ_HEDGE）を 生け垣に、内がわ（MZ_HALF）を くりぬいて 通路に する。
+// 重ねた 絵（くりぬき）を 使うので 下絵に 描いて から 貼る。下絵は 地図の 1/8 マスを 1点に した 小さな 絵（ドット絵の 地図に そろい、スマホでも 軽い）。影は 右下へ ずらした 帯
+const mzLayer = { a: null, b: null, pat: null, patKey: '' };
+function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面の 何点か・(sx, sy)：下絵の 左上が 画面の どこか
+  let c = mzLayer[k];
+  if (!c) c = mzLayer[k] = document.createElement('canvas');
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const x = c.getContext('2d');
+  x.setTransform(1, 0, 0, 1, 0, 0); x.globalCompositeOperation = 'source-over'; x.clearRect(0, 0, w, h);
+  x.setTransform(1 / q, 0, 0, 1 / q, -sx / q, -sy / q); x.transform(m.a, m.b, m.c, m.d, m.e, m.f);   // 画面の 座標で 描ける ように
+  x.lineCap = x.lineJoin = 'round';
+  return x;
+}
+function mzHedgePat(x, ox, oy, T) {   // 生け垣の 葉っぱの 模様（16×16 点・地図に くっついて 動く）。春は ところどころ つつじの 花
+  const spring = mapSeason() === 0, key = spring ? 's' : 'n';
+  if (mzLayer.patKey !== key) {
+    const c = document.createElement('canvas'); c.width = c.height = 16;
+    const g = c.getContext('2d');
+    g.fillStyle = '#2f7a58'; g.fillRect(0, 0, 16, 16);
+    let h = 2463534242;
+    const rn = () => { h ^= h << 13; h >>>= 0; h ^= h >>> 17; h ^= h << 5; h >>>= 0; return h / 4294967296; };
+    for (let i = 0; i < 70; i++) { const r = rn(); g.fillStyle = r < 0.4 ? '#256548' : r < 0.8 ? '#3d9168' : '#5aac7c'; g.fillRect((rn() * 16) | 0, (rn() * 16) | 0, 1 + (rn() < 0.3), 1); }   // こい葉・うすい葉・てかり
+    if (spring) for (let i = 0; i < 3; i++) { const fx = (rn() * 14) | 0, fy = (rn() * 14) | 0; g.fillStyle = '#f07aa0'; g.fillRect(fx, fy, 2, 2); g.fillStyle = '#ffd0e0'; g.fillRect(fx, fy, 1, 1); }
+    mzLayer.pat = { c, p: null }; mzLayer.patKey = key;
+  }
+  const P = mzLayer.pat;
+  P.p = x.createPattern(P.c, 'repeat');
+  if (P.p && P.p.setTransform && window.DOMMatrix) P.p.setTransform(new DOMMatrix().translate(ox, oy).scale(T / 8));   // 模様の 1点 ＝ 地図の 1/8 マス
+  return P.p;
+}
+function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
+  if (rec) { drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T); return; }   // Godot で 描く 試作：記録係は くりぬきの 絵を 送れないので、これまでの 生け垣
+  const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
+  const net = new Path2D();
+  let n = 0;
+  ctx.fillStyle = 'rgba(28,70,52,.4)';
+  for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
+    const ty = mzType(cx, cy);
+    if (ty < 0) continue;
+    if (ty === 0 && !mzSpotCell(cx, cy)) ctx.fillRect(ox + cx * S, oy + cy * S, S, S);   // 壁の かたまりの 台（地図は 見える こさ）
+    const cs = mzCurves(cx, cy);
+    if (cs) for (const q of cs) { net.moveTo(ox + q[0][0] * T, oy + q[0][1] * T); for (let i = 1; i < q.length; i++) net.lineTo(ox + q[i][0] * T, oy + q[i][1] * T); n++; }
+  }
+  if (!n) return;
+  const m = ctx.getTransform(), q = T / 8, sx = (((ox % q) + q) % q) - q, sy = (((oy % q) + q) % q) - q;   // 下絵の 点を 地図の 1/8 マスに そろえる
+  const W = Math.ceil((ctx.canvas.width - sx) / q) + 1, H = Math.ceil((ctx.canvas.height - sy) / q) + 1;
+  const wo = 2 * (MZ_HALF + MZ_HEDGE) * T, wi = 2 * MZ_HALF * T, u = Math.max(1, Math.round(T / 8)), o = Math.max(1, Math.round(T / 4));
+  const L = mzLayerCtx('a', W, H, q, sx, sy, m);
+  L.imageSmoothingEnabled = false;
+  L.strokeStyle = '#0d2219'; L.lineWidth = wo; L.stroke(net);   // 生け垣の 外の 黒い ふち
+  L.strokeStyle = mzHedgePat(L, ox, oy, T) || '#2f7a58'; L.lineWidth = wo - 2 * u; L.stroke(net);   // 葉っぱ
+  L.strokeStyle = '#0d2219'; L.lineWidth = wi + 2 * u; L.stroke(net);   // 通路がわの 黒い ふち
+  L.globalCompositeOperation = 'destination-out'; L.lineWidth = wi; L.stroke(net);   // 通路を くりぬく
+  const B = mzLayerCtx('b', W, H, q, sx, sy, m);
+  B.translate(o, o); B.strokeStyle = '#000'; B.lineWidth = wo; B.stroke(net);
+  B.globalCompositeOperation = 'destination-out'; B.lineWidth = wi; B.stroke(net);   // 影：右下へ ずらした 生け垣の 帯
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = 0.32; ctx.drawImage(mzLayer.b, sx, sy, W * q, H * q); ctx.globalAlpha = 1;
+  ctx.drawImage(mzLayer.a, sx, sy, W * q, H * q);
+  ctx.restore();
+}
+function drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T) {   // これまでの 直角の めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
   const lw = Math.max(2, Math.round(T / 2)), u = Math.max(1, Math.round(T / 8)), o = Math.max(1, Math.round(T / 4)), segs = [];
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
@@ -7773,7 +7881,9 @@ function rollStep(dt) {
     rp.vx *= ns / sp; rp.vy *= ns / sp;
   }
   const mz = mazeOn(), rb = mz ? (x, y) => mzBlocked(rp.x, rp.y, x, y) : rollBlocked;   // めいろの ときは めいろの 壁だけに 当たる
-  if (mz && !window.__noCornerAssist) {   // 曲がり角アシスト：曲がりたい 向きに 傾けて、その 向きの 通路が 開いていれば、通路の まん中へ すっと 寄せて 入れる（生け垣の かどに ひっかからない）。
+  const tube = mz ? mzNear(rp.x, rp.y) : null, inTube = !!tube && tube.d <= MZ_TUBE + 0.35;   // ゆるい めいろ：道すじの 筒の 中に いる（壁の かたまりの 中から 出る とき・読めて いない 所では これまでの 当たり）
+  let rub = null;   // 筒の ふちに こすれて いる 向き（外向き）
+  if (mz && !inTube && !window.__noCornerAssist) {   // 曲がり角アシスト（筒の 中では いらない：カーブに そって すべる）：曲がりたい 向きに 傾けて、その 向きの 通路が 開いていれば、通路の まん中へ すっと 寄せて 入れる（生け垣の かどに ひっかからない）。
     //   寄りきる ころに、いまの 勢いの 一部を 曲がる 向きへ（止まらずに くるっと 曲がれる）。通路の まん中：横は マスの まん中、たては 上下の 当たりの ちがいで 1.4マス目
     const ix = Math.max(-1, Math.min(1, ax)), iy = Math.max(-1, Math.min(1, ay)), cx = Math.floor(rp.x / MZ_K), cy = Math.floor(rp.y / MZ_K), k = Math.min(1, dt * 12);
     const mx = (cx + 0.5) * MZ_K, my = cy * MZ_K + 1.4;
@@ -7797,6 +7907,37 @@ function rollStep(dt) {
     return wet ? -0.25 : mz ? -(KP.bounce !== undefined ? KP.bounce * 0.7 : 0.3) : -(KP.bounce !== undefined ? KP.bounce : ROLL_BOUNCE);
   };
   const wetAt = (x, ys, xs) => (xs || [x]).some(px => (ys || []).some(py => codeAt(Math.floor(px), Math.floor(py)) === C.A));   // 当たったのは 水か
+  if (inTube) {   // 筒の 中を 転がる：道すじから MZ_TUBE より 外へ 出る ぶんは 筒の ふちへ もどし、外向きの 速さだけ はね返す（なめらかな カーブに そって すべる）
+    const ix = Math.max(-1, Math.min(1, ax)), iy = Math.max(-1, Math.min(1, ay)), im = Math.hypot(ix, iy);
+    if (tube.d > MZ_TUBE - 0.05 && im > 0.3 && !window.__noCornerAssist) {   // 曲がり角アシスト（ゆるい めいろ版）：曲がりたい 向きに 傾けても 筒の ふちに 押しつける だけの ときは、
+      //   その 向きの 通路が この マスか となりの マスに あれば、道すじに そって そちらへ 転がす（まるい 角を まわって 入れる）
+      const ux = (rp.x - tube.x) / tube.d, uy = (rp.y - tube.y) / tube.d;
+      if ((ix * ux + iy * uy) / im > 0.6) {
+        const dx = Math.abs(ix) >= Math.abs(iy) ? Math.sign(ix) : 0, dy = dx ? 0 : Math.sign(iy), cx = Math.floor(rp.x / MZ_K), cy = Math.floor(rp.y / MZ_K);
+        let aim = mzOpen(cx, cy, dx, dy) ? [(cx + 0.5 + dx * 0.5) * MZ_K, (cy + 0.5 + dy * 0.5) * MZ_K] : null;
+        if (!aim) for (const [ex, ey] of MZ_DIRS) {
+          if (ex * dx + ey * dy || !mzOpen(cx, cy, ex, ey) || !mzOpen(cx + ex, cy + ey, dx, dy)) continue;
+          if (Math.hypot(rp.x - (cx + 0.5 + ex * 0.5) * MZ_K, rp.y - (cy + 0.5 + ey * 0.5) * MZ_K) < 1.6) { aim = [(cx + ex + 0.5 + dx * 0.5) * MZ_K, (cy + ey + 0.5 + dy * 0.5) * MZ_K]; break; }   // となりの マスの 曲がり角（さかいの そばに いる とき）
+        }
+        if (aim) {
+          let tx = -uy, ty = ux;
+          if (tx * (aim[0] - tube.x) + ty * (aim[1] - tube.y) < 0) { tx = -tx; ty = -ty; }
+          const k = acc * Math.min(1, im) * 0.9 * dt; rp.vx += tx * k; rp.vy += ty * k;
+        }
+      }
+    }
+    let nx = rp.x + rp.vx * dt, ny = rp.y + rp.vy * dt;
+    const q = mzNear(nx, ny);
+    if (q && q.d > MZ_TUBE) {
+      const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, vn = rp.vx * ux + rp.vy * uy;
+      nx = q.x + ux * MZ_TUBE; ny = q.y + uy * MZ_TUBE; rub = [ux, uy];
+      if (vn > 0) {   // そっと 当たれば ぴたっと（そって すべる）、強く 当たれば がさっと はね返る（そう 向きの 速さも 少し へる）
+        const k = hit(vn, Math.abs(ux) >= Math.abs(uy), false), f = k ? 0.85 : 1, vtx = rp.vx - vn * ux, vty = rp.vy - vn * uy;
+        rp.vx = vtx * f + k * vn * ux; rp.vy = vty * f + k * vn * uy;
+      }
+    }
+    rp.x = nx; rp.y = ny;
+  } else {
   const nx = rp.x + rp.vx * dt, ex = nx + Math.sign(rp.vx) * RX;
   const xa = rb(ex, rp.y - RSY), xb = rb(ex, rp.y + RSY);
   if (rp.vx && (rb(ex, rp.y) || (xa && xb))) {   // かべに ぴったり つけてから はね返す（すきまが残ると、押しつづけたときに すきまで また速くなって がたがたする）
@@ -7817,10 +7958,16 @@ function rollStep(dt) {
     rp.y = ny;
     if (rp.vy && (ya || yb) && !rb(rp.x + (ya ? RX : -RX) + (ya ? 0.05 : -0.05), rp.y)) rp.x += (ya ? 1 : -1) * Math.abs(rp.vy) * dt * 0.7;
   }
+  }
   if (mz) {   // 生け垣に そって 転がる：こすれて 葉っぱが はらはら（速いほど よく落ちる）
     const spd = Math.hypot(rp.vx, rp.vy);
     hedgeScrapeT -= dt;
-    if (spd > 1.4 && hedgeScrapeT <= 0) {
+    if (spd > 1.4 && hedgeScrapeT <= 0 && inTube) {
+      if (rub) {
+        hedgeScrapeT = 0.22 / Math.min(3, spd / 1.4);
+        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: Math.random() < 0.5 ? '168,222,104' : '236,244,150', bit: true });
+      }
+    } else if (spd > 1.4 && hedgeScrapeT <= 0) {
       const horiz = Math.abs(rp.vx) >= Math.abs(rp.vy);
       const side = horiz ? (rb(rp.x, rp.y + RD + 0.04) ? 1 : rb(rp.x, rp.y - RU - 0.04) ? -1 : 0) : (rb(rp.x + RX + 0.04, rp.y) ? 1 : rb(rp.x - RX - 0.04, rp.y) ? -1 : 0);
       if (side) {
@@ -8309,7 +8456,7 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => acti
     if (!g || !g.t0) return null;
     const sec = g.sec !== undefined ? g.sec : (now - g.t0) / 1000;
     return { sec, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M, stars: g.len0 && !g.warp ? mzStars(sec, g.len0) : 0, par: g.len0 ? mzPar(g.len0).p3 : 0, way: g.len0 && !g.warp && g.len0 >= MZ_WAY_MIN ? Math.max(1, g.moves / (g.len0 - 1)) : 0, run: g.run || null };   // way：通った マスが ちかみちの 何倍か（1 に 近いほど まよわず 来た）
-  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, near: (x, y) => mzNear(x, y) }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy,
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },

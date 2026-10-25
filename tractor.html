@@ -1103,23 +1103,25 @@ const MIST = (() => {
 })();
 
 
-// ---- 初霜：秋の晴れた朝は、刈りあとの切り株・ひこばえ・畦の草・耕していない土の表面が霜で白い（山形では 10 月下旬に初霜。
-// 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける。
-// 春の田起こしのころ（4 月）も、放射冷却の朝は遅霜がおりる（山形県の凍霜害の注意）。春はうすく、早くとける
+// ---- 朝つゆ：晴れた朝は 夜の放射冷却で、刈りあとの切り株・ひこばえ・畦の草に つゆがついて 白っぽく光り、耕していない土は しめって黒っぽい。
+// 日がのぼると 2〜3 分でかわく。霜ではない：西尾市に近い名古屋では 霜の初日は平年 11 月 30 日、終日は 3 月 21 日（名古屋地方気象台）なので、
+// 4 月の田起こしにも 10 月下旬の秋起こしにも 霜はまず降りない（名前は前のまま FROST）
 const FROST = (() => {
-  const on = (season === 'aki' || season === 'haru') && TOD === 'asa' && WX === 'hare', list = [], S0 = season === 'aki' ? 1 : 0.6, T = season === 'aki' ? 150 : 100;   // 霜も 晴れた夜の冷えこみで降りる
+  const on = (season === 'aki' || season === 'haru') && TOD === 'asa' && WX === 'hare', list = [], S0 = 1, T = season === 'aki' ? 160 : 120;   // 霜も 晴れた夜の冷えこみで降りる
   let t = 0;
+  const DEW_C = new THREE.Color(1.15, 1.2, 1.28), DEW_E = new THREE.Color(0.05, 0.055, 0.065);
   const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7, weed: 0.6, renge: 0.5 };
   const add = m => {
     if (!m || !(m.name in K) || list.some(e => e.m === m)) return;
-    list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name] });
+    list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name], soil: m.name === 'soil_untilled' || m.name === 'track' });
   };
   function apply() {
     const f = Math.max(0, 1 - t / T) * S0;
     for (const e of list) {
       const a = e.k * f;
-      e.m.color.copy(e.c).lerp(new THREE.Color(1.35, 1.4, 1.5), a);   // 白くきらっと（少し青み）
-      if (e.e) e.m.emissive.copy(e.e).lerp(new THREE.Color(0.10, 0.11, 0.13), a);
+      if (e.soil) { e.m.color.copy(e.c).multiplyScalar(1 - 0.3 * a); continue; }   // 土は しめって 黒っぽい
+      e.m.color.copy(e.c).lerp(DEW_C, a * 0.35);   // 草や切り株は つゆで 白っぽく光る（少し青み）
+      if (e.e) e.m.emissive.copy(e.e).lerp(DEW_E, a * 0.5);
     }
   }
   return {

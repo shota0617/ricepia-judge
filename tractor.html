@@ -5008,10 +5008,11 @@ const COACH = (() => {
     return [4.5, 6.5].some(d => Math.abs(S.x + s * d) > HX - 0.2 || Math.abs(S.z + c * d) > HZ - 0.2);
   }
   // 田んぼアート：作業機の d m 先で、耕す幅（TILL_W）の 5 点（両はし・その中ほど・まん中）を見る。
-  // out＝点数ではみ出しになる所（白線から 40cm、代かきのハローは 60cm より外）の数、mid＝まん中が絵の中か
+  // out＝点数ではみ出しになる所（白線から 40cm、代かきのハローは 60cm より外）の数、mid＝まん中が絵の中か。
+  // 耕す所（step の耕す所：作業機の 0.22m うしろ〜0.18m 前）と 0.2m のます目の分だけ、はしは 5cm・前後は 10cm 広めに見る
   const ART_TOL = SHIRO ? 0.6 : 0.4;
   function artAt(d) {
-    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + d, h = TILL_W / 2, r = { out: 0, mid: false };
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + d, h = TILL_W / 2 + 0.05, r = { out: 0, mid: false };
     for (const lx of [-h, -h / 2, 0, h / 2, h]) {
       const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
       const e = Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5 ? 9 : ART.sdAt(x, z);
@@ -5027,7 +5028,8 @@ const COACH = (() => {
     if (ART.on && ART.score().fill >= 0.9) return ['✓', K('仕上がったら <kbd>Enter</kbd>（📸 完成）でドローン写真', '仕上がったら 右上の「📸 完成」')];   // 旋回の練習が終わっていなくても出す
     if (afterStall && !S.rotDown) return ['!', K('かかった：<kbd>スペース</kbd>で下げて、<kbd>Q</kbd> で 1〜2 速に落としてゆっくり', 'かかった：ボタンで下げて、「変速」で 1〜2 速に落としてゆっくり')];
     // 田んぼアート：白線の外では下げない（耕した土はもどせない）。白線の内側に入ってから下げ、白線の手前で上げる
-    const art = ART.on, here = art && artAt(0.3), inNow = art && !S.rotDown && here.out === 0 && here.mid;   // 耕す幅ぜんぶが はみ出しにならない所
+    const art = ART.on, here = art && artAt(0.28);   // 耕す所の いちばん前
+    const inNow = art && !S.rotDown && here.out === 0 && artAt(-0.32).out === 0 && artAt(0).mid;   // 耕す所ぜんぶ（前後・左右）が はみ出しにならない所
     if (art && !S.everDown) return inNow ? ['1', K('白線の内側に入った：<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '白線の内側に入った：ボタンで ' + IMPL + 'を下げる')]
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (off) return null;

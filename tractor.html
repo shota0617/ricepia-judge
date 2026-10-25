@@ -283,6 +283,7 @@
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
+      ・同じ所を何度も耕すと、土が細かくなりすぎて泥のようになる。荒起こしは荒く、1 回で均一に…<a href="https://note.com/kome_noka_shinya/n/nc99565cddbe0" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こしで気をつけたい 6 つの落とし穴」</a>（ゲームでは 3 回目に耕した所が 黒っぽく平らになる）<br>
       ・燃料は半分あったので足りると思ったが、とちゅうで給油して作業が止まった。荒起こしは時間がかかるので満タンで／耕しはじめは入口の反対がわから、最後に外周を回って入口から出る…<a href="https://note.com/kome_noka_shinya/n/n4d9c95f5e653" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こし準備と手順の基本チェック」</a><br>
       ・土が乾いていないと、田んぼに入るたびにタイヤに土がつく。作業のあと、ついていれば そのつど移植ゴテで削り落とす…<a href="https://komeya4th.exblog.jp/29289731/" target="_blank" rel="noopener">米農家さんのブログ（komeya4th「トラクターのタイヤに付いた土は田んぼで落としていますか？」）</a><br>
       ・米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって動けなくなった…<a href="https://www.bepal.net/?p=577528" target="_blank" rel="noopener">熊本で米をつくって 13 年の書き手の記録（BE-PAL）</a><br>
@@ -1726,15 +1727,32 @@ for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
 const jitter = (x, z) => 0.012 * Math.sin(x * 12.9898 + z * 78.233) * Math.sin(x * 3.7 - z * 5.1) + 0.008 * Math.sin(x * 23.1 + 1.3) * Math.sin(z * 19.7 - 0.4) + 0.012;
 const warp = (x, z) => [x + 0.06 * Math.sin(z * 9.3 + x * 2.1) + 0.035 * Math.sin(z * 23.7), z + 0.06 * Math.sin(x * 8.1 - z * 1.7) + 0.035 * Math.sin(x * 21.3)];
 let dirtyLo = Infinity, dirtyHi = -1;
+// 耕しすぎ：同じ所を 3 回以上耕すと、土が細かくなりすぎて 泥のように なめらかで黒っぽくなる（荒起こしは荒く、1 回で均一に：
+// いち田さん（note の米農家）「荒起こしで気をつけたい 6 つの落とし穴」）。代かきは こねる作業なので 別（こねすぎは konashi）
+const TILLN = new Uint8Array(NX * NZ), TLAST = new Float32Array(NX * NZ);   // 耕した回数（通った回数）と、さいごに耕した時刻
+let overTilled = 0;
+function overTill(c) {
+  const i = (c / NZ) | 0, j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, pos = tilled.geometry.attributes.position.array;
+  [[x0, z0], [x0 + CELL, z0], [x0 + CELL, z0 + CELL], [x0, z0 + CELL]].forEach(([a, b], k) => {
+    const [x, z] = warp(a, b);
+    pos[c * 12 + k * 3 + 1] = TILL_Y + 0.25 * jitter(x, z);   // 土くれがなくなって 平らに
+  });
+  ROUGH[c] = 0.86;                                // 練れた土は 黒っぽい
+  DRY.wet(c);
+  dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
+  if (++overTilled > 200) voice('arashiku');      // 8m² ほど 耕しすぎたら
+}
 function tillCell(i, j) {
   if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
   const c = i * NZ + j;
   if (tilledMask[c]) {                            // もう一度耕すと、上についたタイヤの跡が消える
     eraseTracks(c);
     if (season === 'aki' && (S.retill = (S.retill || 0) + 1) > 1500) voice('wara');   // 秋：同じ所をもう一度耕している
+    if (!SHIRO && S.elapsed - TLAST[c] > 3 && TILLN[c] < 255 && ++TILLN[c] === 3) overTill(c);   // 作業機が通りすぎてから また来たら 1 回と数える
+    TLAST[c] = S.elapsed;
     return 0;
   }
-  tilledMask[c] = 1;
+  tilledMask[c] = 1; TILLN[c] = 1; TLAST[c] = S.elapsed;
   const x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
   const pos = tilled.geometry.attributes.position.array, uv = tilled.geometry.attributes.uv.array;
@@ -5092,6 +5110,7 @@ const VOICES = {
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
   // いち田さん（note の米農家）の「荒起こし準備と手順の基本チェック」（2026 年 10 月。WebSearch で見つけて要約）
+  arashiku: ['完璧にしようと 同じ所を何度も耕すと、土が細かくなりすぎて 泥のようになる。荒起こしは荒く、1 回で均一に耕せば十分', 'いち田さん（note の米農家）'],
   kakunin: ['燃料は半分あったので 足りると思ったが、とちゅうで給油することになって 作業が止まった。荒起こしは時間がかかるので、燃料は満タンにしてから', 'いち田さん（note の米農家）'],
   iriguchi: ['耕しはじめは 入口の反対がわから。中から外へ耕し、最後に外周を回って 入口から出る', 'いち田さん（note の米農家）'],
   doro: ['土が乾いていないと、田んぼに入るたびに タイヤに土がつく。作業のあと ついていれば、そのつど移植ゴテで削り落とす（手より楽）', '米農家さんのブログ（komeya4th）'],
@@ -5368,7 +5387,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, engineLoad, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, engineLoad, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

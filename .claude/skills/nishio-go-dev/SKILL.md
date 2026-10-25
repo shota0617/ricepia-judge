@@ -6,6 +6,7 @@ description: にしおさんぽGO（nishio-go/・nishio-go.html）を 改善す�
 # にしおさんぽGO の 開発の 進め方
 
 運営者（ユーザー）の 指示を まとめた もの。コードで できる ところは `scripts/` に ある。
+広告・宣伝の 材料（Google広告・広告の 画像・ロゴ・ricepia.jp の アップロード）は 広告診断スキル（`.claude/skills/kokoku-shindan/` の C、`references/nishio-go-ads.md`）。
 
 ## いつも 守る こと
 

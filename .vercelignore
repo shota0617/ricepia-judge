@@ -11,3 +11,6 @@
 # トラクターのゲーム（tractor.html）は tools/tractor/ の 3D モデルを 読む
 !/tools/tractor
 /tools/tractor/*.py
+/.claude
+/scripts
+/tests

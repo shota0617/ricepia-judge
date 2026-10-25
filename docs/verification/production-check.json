@@ -1,0 +1,31 @@
+[
+  {
+    "path": "/robots.txt",
+    "status": 200,
+    "url": "https://ricepia-judge.vercel.app/robots.txt",
+    "content_type": "text/plain; charset=utf-8",
+    "bytes": 408
+  },
+  {
+    "path": "/sitemap.xml",
+    "status": 200,
+    "url": "https://ricepia-judge.vercel.app/sitemap.xml",
+    "content_type": "application/xml",
+    "bytes": 323
+  },
+  {
+    "path": "/llms.txt",
+    "status": 200,
+    "url": "https://ricepia-judge.vercel.app/llms.txt",
+    "content_type": "text/plain; charset=utf-8",
+    "bytes": 6071
+  },
+  {
+    "path": "/llms-full.txt",
+    "status": 404
+  },
+  {
+    "path": "/guide/",
+    "status": 404
+  }
+]

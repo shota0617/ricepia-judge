@@ -6869,7 +6869,7 @@ function mzHintTick(now) {   // 25秒 行き先に 近づけていない（め�
     mzRt.showUntil = now + 6000; mzRt.bestT = now; mzRt.hints = (mzRt.hints || 0) + 1;
     // 知らせは ゴールごとに 1回目だけ（自分で 遊んで 分かった：迷って いる 間、25秒ごとに 同じ 知らせが 上を ふさいでいた。光る 点は 毎回 出す）。
     // 同じ ゴールで 3回目には、おたすけを すすめる（1回の あそびで 1回）
-    if (mzRt.hints === 1) G.toast('💡 道しるべ：光る 点の ほうへ ころがそう');
+    if (mzRt.hints === 1) G.toast('💡 道しるべ：光る 点の ほうへ 進もう');
     else if (mzRt.hints === 3 && !mzHelp.offered) { mzHelp.offered = true; G.toast('🧭 まよったら、せっていの「めいろの おたすけ」で 道しるべを いつも 出せるよ'); }
   }
 }

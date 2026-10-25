@@ -3819,7 +3819,7 @@ function begin(isDemo) {
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 転がそう（矢印キー・地図を タップでも）')
+    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 進もう（矢印キー・地図を タップでも）')
     : '🎮 地図をタップするとその場所へ移動します');
   setTimeout(sealPickCheck, 3000);   // えらぶ前に閉じた しるしの2枚
 }

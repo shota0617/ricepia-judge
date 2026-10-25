@@ -112,7 +112,7 @@ function drawCard() {
     const m = curMeiro;
     line(`🌀 ${m.name} まで ${m.sec.toFixed(1)}秒`, 62, 240, true);
     line(`西尾めいろ ${m.daily ? '☀️ きょうの めいろ' : `${m.n}面`} ${'★'.repeat(m.stars)}${'☆'.repeat(3 - m.stars)}${m.grains ? ` ・ 🌾 ${m.got}/${m.grains}` : ''}`, 36, 306);
-    line('スマホを 傾けて、お米を 名所へ ころがそう', 30, 358);
+    line('スマホを 傾けると、お米が 名所へ ころころ', 30, 358);
     if (mz) {
       const sh = 372, sw = Math.round(sh * mz.width / mz.height), dx = W - sw - 60, dy = 112;
       x.fillStyle = '#145a80'; x.fillRect(dx - 16, dy - 16, sw + 32, sh + 32);

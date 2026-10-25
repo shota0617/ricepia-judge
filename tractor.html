@@ -3403,6 +3403,7 @@ const SCORE = (() => {
   function ramp(dt) {
     const on = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;
     if (on && !onRamp) rampBad = 0;
+    if (on && SHIRO && S.v > 0.3 && S.x > 13 && Math.sin(S.yaw) > 0.5) voice('rampBrake');   // 代かきのあと 田んぼから道へ 坂を上る
     if (on && Math.abs(S.v) > 0.3) {
       if (Math.abs(S.v) > 1.6 && !(rampBad & 1)) { rampBad |= 1; st.safety++; pop('−2　坂は低速で（時速 6km 以下）'); toast('坂は 1 速の低速で（Q で変速を下げる）。トラクターの事故は転倒・転落が多い'); }
       if (Math.abs(Math.sin(S.yaw)) < 0.9 && !(rampBad & 2)) { rampBad |= 2; st.safety++; pop('−2　坂にはまっすぐ出入りする'); toast('坂は、ななめに通ると横に倒れやすい。坂に対してまっすぐ上り下りする'); }
@@ -3804,6 +3805,7 @@ function step(dt) {
   COACH.step();
   if ((S.workT || 0) > 40 && SCORE.st.yawM > 30 && SCORE.parts.straight < 22) voice('veteran');   // 蛇行している
   if ((S.workT || 0) > 60 && SCORE.st.yawM > 40 && SCORE.parts.straight >= 27) voice('straightSelf');   // まっすぐ耕せている
+  if ((S.workT || 0) > 50 && SCORE.st.swept > 60 && SCORE.parts.overlap < 15) voice('gatagata');   // 重ねがそろわず 耕し残しや重なりが多い
   if (ASSIST.on && S.started && Math.abs(S.x) > HX - 4 && Math.abs(S.z) > HZ - 4) voice('corner');   // 直進アシストのまま四隅に来た
   if (SHIRO && !S.rotDown && softAt(S.x, S.z) && Math.abs(S.v) > 0.3 && (S.trackM = (S.trackM || 0) + Math.abs(S.v) * dt) > 12) voice('track');   // かいた泥の上を上げて走り、跡をつけた
   if (SHIRO && !S.rotDown && Math.abs(S.steer) > 0.4 && S.started && (Math.abs(S.x) > HX - 2.5 || Math.abs(S.z) > HZ - 2.5)) voice('outer');   // 畦ぎわで回る
@@ -4574,7 +4576,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyH') toggleHelp();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
   else if (e.code === 'KeyP' && (S.rotDown || (S.rotorW || 0) > 1)) toast('PTO の変速は、' + IMPL + 'を上げて 爪の回転が止まってから（本物も PTO を切り、止まってから変速レバーを動かす）（P）', 4);
-  else if (e.code === 'KeyP') { PTO2 = !PTO2; toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
+  else if (e.code === 'KeyP') { PTO2 = !PTO2; setTimeout(() => voice('newMachine'), 4500); toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
   else if (e.code === 'KeyT') { S.dbl = !S.dbl; toast('倍速ターン ' + (S.dbl ? '入：35° より大きく切ると前輪が約 2 倍の速さで回って小さく回れる' : '切：大きく回る') + '（T）'); }
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }
   else if (e.code === 'KeyZ') setDepth(-1);
@@ -4735,6 +4737,10 @@ const VOICES = {
   tanishi: ['ジャンボタニシの対策で 早めに耕した。レンゲの前の耕うんも 1 回ふやした', '@Tyoshi0410Taoka（X の米農家さん）'],
   wara: ['わらは 1 回では埋まりきらない。年によっては耕す回数を 1 回ふやす', '@Tyoshi0410Taoka（X の米農家さん）'],
   straightSelf: ['どれだけまっすぐ走れるか、自分との戦い', '@BLACKkome96（X の米農家さん）'],
+  // SNS・ウェブの農家さん本人の発信と、事故の事例（2026 年 10 月。Grok は クレジット切れのため WebSearch で集め、要約した）
+  gatagata: ['新人のころ、はじめて耕した跡はガタガタだった。同級生にコツを教わって、なんとか終わらせた', '農家の息子さんが描いた 新人時代のマンガ（マイナビ農業）'],
+  newMachine: ['研修のときとは 土も機械もちがって、機械の操作を一から覚えなおした', '北海道の新規就農者の声（農林水産省 北海道農政事務所）'],
+  rampBrake: ['代かきのあと、田んぼから道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転した事故がある。坂は低速でまっすぐ、左右のブレーキは連結して', '農研機構の農作業事故の事例'],
 };
 const heard = {}, voiceQ = [];
 function voice(id) {                              // 知らせが出ているあいだは待ち、消えてから順に出す

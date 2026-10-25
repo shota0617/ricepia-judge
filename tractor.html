@@ -244,7 +244,7 @@
       ・耕す深さ（耕深）は、春は 15cm くらい深く、秋起こしは 5cm くらい浅く（藁と土を軽くまぜる）。エンジンは 2500 回転、PTO は 1 速（540 回転）にして、歩くくらいの速さ（時速 2〜3km）でゆっくり耕す。代かきは幅 3.4m のウイングハロー（道では翼を折りたたむ）を PTO 2 速で回し、水は土が 8 割見えるくらいの浅水で。ロータリーを上げると PTO（爪の回転）が止まり、バックすると自動で上がる<br>
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
-      ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす。道に落ちた泥のかたまりは、車や自転車・歩く人のじゃまになる。田んぼの中の平らな所で止まり、エンジンを切って駐車ブレーキをかけてから、竹ヘラなどで落とす（<a href="https://www.city.kumamoto.jp/kiji00342791/index.html" target="_blank" rel="noopener">熊本市</a>・<a href="https://www.city.iwaki.lg.jp/www/contents/1621398326632/files/pamphlet.pdf" target="_blank" rel="noopener">いわき市</a>のお願い）。ゲームでは止まって上げてから <kbd>V</kbd>（スマホは「泥落とし」）。耕していない固い所を少し走っても落ちる<br>
+      ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす。道に落ちた泥のかたまりは、車や自転車・歩く人のじゃまになる。田んぼの中の平らな所で止まり、エンジンを切って駐車ブレーキをかけ、爪が止まってから、竹ヘラなどで落とす。上げた作業機は エンジンを止めても油圧で下がることがあるので、油圧ロック（降下止め）をかけて台でささえ、下に手や体を入れない（<a href="https://www.naro.go.jp/org/iam/anzenweb/kiken/kiken.html" target="_blank" rel="noopener">農研機構の農作業安全</a>）（<a href="https://www.city.kumamoto.jp/kiji00342791/index.html" target="_blank" rel="noopener">熊本市</a>・<a href="https://www.city.iwaki.lg.jp/www/contents/1621398326632/files/pamphlet.pdf" target="_blank" rel="noopener">いわき市</a>のお願い）。ゲームでは止まって上げてから <kbd>V</kbd>（スマホは「泥落とし」）。耕していない固い所を少し走っても落ちる<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
       ・雨の日や雨のすぐあとは耕さない。ぬれた土を耕すと こねられて、かわくと固いかたまりになり なかなか砕けない（<a href="https://newswire.caes.uga.edu/story/5615/wet-soil.html" target="_blank" rel="noopener">ジョージア大学の普及の記事</a>）。秋起こしも乾くのを待つ（X の米農家さん）。ゲームでは「小雨」も選べる（雨の音・ワイパー）<br>
@@ -1050,7 +1050,11 @@ const MUDDROP = (() => {
 const SCRAPE = (() => {
   const T = 6;
   let acc = 0;
-  const inField = () => Math.abs(S.x) < HX - 0.3 && Math.abs(S.z) < HZ - 0.3 && !(S.x > 12 && S.z > 18 && S.z < 22);   // 坂の上ではしない（転ぶおそれのない所で）
+  const flat = (x, z) => Math.abs(x) < HX - 0.3 && Math.abs(z) < HZ - 0.3 && !(x > 12 && z > 18 && z < 22);
+  const inField = () => {                         // 車輪・鼻先・作業機のはしが ぜんぶ 田んぼの平らな所（坂にかかっていない＝転ぶおそれのない所）
+    const w = wheelPoints(S.x, S.z, S.yaw);
+    return ['rl', 'rr', 'fl', 'fr', 'nose', 'rotL', 'rotR'].every(k => flat(w[k][0], w[k][1]));
+  };
   const can = () => S.started && !S.done && !(S.scrape > 0) && !S.stalled && !(S.crank > 0) && inField() && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && MUD.level >= 0.12;
   function start() {
     if (!S.started || S.done || S.scrape > 0) return;
@@ -1059,13 +1063,14 @@ const SCRAPE = (() => {
       : Math.abs(S.v) >= 0.05 ? '止まってから' : S.rotDown || S.rotPos <= 0.9 ? IMPL + 'を上げてから'
       : MUD.level < 0.12 ? 'タイヤの泥は ほとんどついていません' : '';
     if (why) { toast(why + '（' + (MOBILE ? '「泥落とし」' : 'V') + '）', 2.5); return; }
-    S.stalled = true; S.parked = true; S.scrape = T; S.v = 0; acc = 0;
+    S.stalled = true; S.parked = true; S.scrape = T; S.v = 0; S.autoUp = false; acc = 0;   // バックで自動で上がったのも、前へ押して下がらないように
     for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
-    toast('エンジンを切って 駐車ブレーキ。爪が止まってから、ヘラでタイヤと' + IMPL + 'の泥を落とします…', T - 0.5);
+    toast('エンジンを切って 駐車ブレーキ。爪が止まるのを待ち、上げた' + IMPL + 'は油圧ロック（降下止め）をかけてから、ヘラでタイヤとカバーの外の泥を落とします。上げた' + IMPL + 'の下には もぐらない', T + 1);
   }
   function step(dt) {
     if (!(S.scrape > 0)) return;
     S.v = 0;
+    if ((S.rotorW || 0) >= 1) return;               // 爪が惰性で回っているあいだは さわらない（止まってから始める）
     const lv = MUD.level;
     MUD.level = Math.max(0.04, MUD.level - dt * MUD.level * 0.6);   // 少しずつ落ちる（すき間の泥は少し残る）
     acc += (lv - MUD.level) * 60;                   // 落とした量に合わせて、かたまりを足もとに置く
@@ -5199,7 +5204,7 @@ const COACH = (() => {
     return r;
   }
   function msg() {
-    if (S.parked) return S.scrape > 0 ? ['…', 'エンジンを切って、タイヤと' + IMPL + 'の泥を落としています']
+    if (S.parked) return S.scrape > 0 ? ['…', (S.rotorW || 0) >= 1 ? '爪が止まるのを待っています（回っている爪に近づかない）' : 'エンジンを切って、タイヤと' + IMPL + 'の泥を落としています']
       : ['!', K('泥を落とした：<kbd>↑</kbd> でエンジンをかける', '泥を落とした：▲ でエンジンをかける')];
     if (S.stalled) return S.rotDown                // エンスト：上げるまでは「上げる」、上げたら「かけなおす」だけ
       ? ['!', K('エンスト：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる', 'エンスト：まず ' + IMPL + 'を上げる')]
@@ -5211,7 +5216,7 @@ const COACH = (() => {
     const inNow = art && !S.rotDown && here.out === 0 && artAt(-0.32).out === 0 && artAt(0).mid;   // 耕す所ぜんぶ（前後・左右）が はみ出しにならない所
     if (art && !S.everDown) return inNow ? ['1', K('白線の内側に入った：<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '白線の内側に入った：ボタンで ' + IMPL + 'を下げる')]
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
-    if (!S.rotDown && lastPct >= 90 && MUD.level >= 0.3 && S.x > 10 && S.x < HX && S.z > 17 && S.z < 23 && Math.sin(S.yaw) > 0.5)   // 耕し終わって 坂（道への出口）へ向かうとき
+    if (!S.rotDown && lastPct >= 90 && MUD.level >= 0.3 && S.x > 4 && S.x < HX && S.z > 17 && S.z < 23 && Math.sin(S.yaw) > 0.5)   // 耕し終わって 坂（道への出口）へ向かうとき
       return ['!', K('道へ出る前に：止まって <kbd>V</kbd> で タイヤの泥を落とす', '道へ出る前に：止まって「泥落とし」で タイヤの泥を落とす')];
     if (off) return null;
     if (art && !EASY.on && S.rotDown && S.v > 0.2 && (here.out > 0 || artAt(0.4 + Math.max(1.2, S.v * 1.5)).out > 0))   // はしが 1 か所でも はみ出しそう・はみ出したら。🔰 アシストのときは 自動で上がる

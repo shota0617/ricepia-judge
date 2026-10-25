@@ -34,6 +34,6 @@ function playEnv(extra = {}) {
   return env;
 }
 
-const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8' }).trim();
+const git = (...a) => execFileSync('git', a, { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 30 }).trim();   // 大きな 差分（地図の データなど）でも 止まらない ように
 
 module.exports = { ROOT, CACHE, leafletDir, chromium, playEnv, git };

@@ -42,7 +42,11 @@ for (const l of diff.split('\n')) {   // 最後の 差分：メールアドレ�
   if (/\.(html|js|json|css)$/.test(file) && !file.startsWith('.claude/')) for (const m of t.match(EMAIL) || []) if (!EMAIL_OK.test(m) && !/\.(png|jpe?g|webp|svg|gif)$/i.test(m)) warn.push(`${file}：メールアドレス「${m.replace(/^(.).*@/, '$1…@')}」（運営者の メールは ページに 書かない）`);
 }
 // 秘密は コミットごとに 見る（あとの コミットで 消しても、途中の コミットは push で 公開される）
-const patches = git('-c', 'core.quotePath=false', 'log', '--first-parent', '--no-merges', '-p', '--unified=0', '--no-color', '--format=@@@COMMIT %h', `${base}..HEAD`);
+// 見る コミット：これから 公開される もの＝main（base）にも リモートの 作業用 ブランチにも ない、すべての 親の がわの コミット
+// （まだ push して いない 別の ブランチを 取りこんだ ときの 2つめの 親の がわも。つないだ マージずみの 歴史は リモートに あるので 見ない）
+const refOk = r => { try { git('rev-parse', '--verify', '-q', r); return true; } catch (e) { return false; } };
+const NOT = ['--not', base, ...(refOk(`origin/${BRANCH}`) ? [`origin/${BRANCH}`] : [])];
+const patches = git('-c', 'core.quotePath=false', 'log', '--no-merges', '-p', '--unified=0', '--no-color', '--format=@@@COMMIT %h', 'HEAD', ...NOT);
 let sha = '';
 file = '';
 for (const l of patches.split('\n')) {
@@ -53,7 +57,7 @@ for (const l of patches.split('\n')) {
 }
 // マージコミット（main の 取りこみ）で 足された 行も 見る：--cc の 差分は、どの 親とも ちがう 行（ぶつかりの 直しで 入った 行）だけを 出す。
 // 行の 頭は 親の 数の けたで、どれかが「+」なら 足した 行
-for (const m of git('rev-list', '--first-parent', '--merges', `${base}..HEAD`).split('\n').filter(Boolean)) {
+for (const m of git('rev-list', '--merges', 'HEAD', ...NOT).split('\n').filter(Boolean)) {
   const cc = git('-c', 'core.quotePath=false', 'show', '--cc', '--unified=0', '--no-color', '--format=', m);
   let f = '', np = 2;
   for (const l of cc.split('\n')) {

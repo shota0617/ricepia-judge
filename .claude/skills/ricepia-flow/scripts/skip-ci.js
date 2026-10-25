@@ -33,7 +33,7 @@ function pathsOf(file) {   // on.push.paths を 読む。読めない 書き方�
 const glob = g => new RegExp('^' + g.split('**').map(s => s.split('*').map(t => t.replace(/[.+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')).join('.*') + '$');
 
 const base = process.argv[2] || 'origin/main';
-const files = git('diff', '-z', '--name-only', `${base}...HEAD`).split('\0').map(f => f.trim()).filter(Boolean);   // -z：日本語などの ファイル名を 引用・エスケープ しない 生の パスで
+const files = git('diff', '-z', '--name-only', '--no-renames', `${base}...HEAD`).split('\0').map(f => f.trim()).filter(Boolean);   // -z：日本語などの ファイル名を 引用・エスケープ しない 生の パスで。--no-renames：名前を かえた ときの 元の 名前（paths に ある かも しれない）も
 const hits = [];
 for (const wf of WF) {
   if (!fs.existsSync(path.join(ROOT, wf))) continue;

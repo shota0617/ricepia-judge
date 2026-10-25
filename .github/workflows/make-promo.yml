@@ -12,6 +12,7 @@ on:
       - tools/make-reel.js
       - tools/record-page.js
       - nishio-go/logo.svg   # タイトルロゴを変えたら、広告の画像も作り直す
+      - nishio-go/logo-stack.svg   # 2段の タイトルロゴ（LINE リッチメニューの マス）
       - .github/workflows/make-promo.yml
 permissions:
   contents: write

@@ -5007,13 +5007,16 @@ const COACH = (() => {
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
     return [4.5, 6.5].some(d => Math.abs(S.x + s * d) > HX - 0.2 || Math.abs(S.z + c * d) > HZ - 0.2);
   }
-  // 田んぼアート：作業機の左・まん中・右が、作業機の d m 先で 絵の外（白線から 40cm より外）か・絵の中か
+  // 田んぼアート：作業機の d m 先で、耕す幅（TILL_W）の 5 点（両はし・その中ほど・まん中）を見る。
+  // out＝点数ではみ出しになる所（白線から 40cm、代かきのハローは 60cm より外）の数、mid＝まん中が絵の中か
+  const ART_TOL = SHIRO ? 0.6 : 0.4;
   function artAt(d) {
-    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + d, r = [0, 0];
-    for (const lx of [-0.8, 0, 0.8]) {
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), lz = ROTARY_Z + d, h = TILL_W / 2, r = { out: 0, mid: false };
+    for (const lx of [-h, -h / 2, 0, h / 2, h]) {
       const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
-      const e = Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5 ? 1 : ART.sdAt(x, z);
-      if (e > 0.4) r[0]++; else if (e < 0) r[1]++;
+      const e = Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5 ? 9 : ART.sdAt(x, z);
+      if (e > ART_TOL) r.out++;
+      if (lx === 0) r.mid = e < 0;
     }
     return r;
   }
@@ -5024,11 +5027,11 @@ const COACH = (() => {
     if (ART.on && ART.score().fill >= 0.9) return ['✓', K('仕上がったら <kbd>Enter</kbd>（📸 完成）でドローン写真', '仕上がったら 右上の「📸 完成」')];   // 旋回の練習が終わっていなくても出す
     if (afterStall && !S.rotDown) return ['!', K('かかった：<kbd>スペース</kbd>で下げて、<kbd>Q</kbd> で 1〜2 速に落としてゆっくり', 'かかった：ボタンで下げて、「変速」で 1〜2 速に落としてゆっくり')];
     // 田んぼアート：白線の外では下げない（耕した土はもどせない）。白線の内側に入ってから下げ、白線の手前で上げる
-    const art = ART.on, inNow = art && !S.rotDown && artAt(0.3)[1] === 3;
+    const art = ART.on, here = art && artAt(0.3), inNow = art && !S.rotDown && here.out === 0 && here.mid;   // 耕す幅ぜんぶが はみ出しにならない所
     if (art && !S.everDown) return inNow ? ['1', K('白線の内側に入った：<kbd>スペース</kbd>で ' + IMPL + 'を下げる', '白線の内側に入った：ボタンで ' + IMPL + 'を下げる')]
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (off) return null;
-    if (art && !EASY.on && S.rotDown && S.v > 0.2 && artAt(0.4)[0] === 0 && artAt(0.4 + Math.max(1.2, S.v * 1.5))[0] >= 2)   // 🔰 アシストのときは 自動で上がる
+    if (art && !EASY.on && S.rotDown && S.v > 0.2 && (here.out > 0 || artAt(0.4 + Math.max(1.2, S.v * 1.5)).out > 0))   // はしが 1 か所でも はみ出しそう・はみ出したら。🔰 アシストのときは 自動で上がる
       return ['3', K('白線が近い：<kbd>スペース</kbd>で上げる（外は耕さない）', '白線が近い：ボタンで上げる（外は耕さない）')];
     if (inNow && S.everMoved && liftYaw !== null && Math.abs(dYaw(S.yaw, liftYaw)) > 2.6) return ['5', K('白線の内側に入った：<kbd>スペース</kbd>で下げる', '白線の内側に入った：ボタンで下げる')];
     if (!S.rotDown) {

@@ -1,6 +1,6 @@
 ---
 name: ricepia-flow
-description: にしおさんぽGO（ricepia-judge）で 作業する ときの 運営者の きまりと 手順。変更を 作る → プレイテスト → コミット → push → PR → Codex の 厳しめレビュー → 指摘を 直す → 「マージ」と 言われたら マージ → あとかたづけ、を スクリプトで 行う。守る きまり（秘密・本番・マージ・出典・ほかの ゲーム）も ここに ある。このリポジトリで コードを 変える・PR を 出す・マージする・夜通し 磨く・自分で 遊んで 直す ときに 使う。
+description: にしおさんぽGO（ricepia-judge）で 作業する ときの 運営者の きまりと 手順。変更を 作る → プレイテスト → コミット → push → PR → Codex の 厳しめレビュー → 指摘を 直す → 「マージ」と 言われたら マージ → あとかたづけ、を スクリプトで 行う。守る きまり（秘密・本番・マージ・出典・ほかの ゲーム）も ここに ある。このリポジトリで コードを 変える・PR を 出す・マージする・夜通し 磨く・自分で 遊んで 直す・LINE の リッチメニューを 差しかえる ときに 使う。
 ---
 
 # ricepia-flow：にしおさんぽGO の 作業の きまりと 手順
@@ -24,6 +24,7 @@ description: にしおさんぽGO（ricepia-judge）で 作業する ときの �
   - この ファイルは 作業用の ブランチに だけ 置き、ワークフローを 手で 動かしたら すぐ 消す。main には ぜったい 置かない
   - さくらの 国外IPアドレスフィルタは 運営者が 一時的に 切る。終わったら 戻すよう 伝える
 - 動いている 広告・LINE・Instagram は かえない（素材や スクリプトは 作って よいが、本物の アカウントに 向けて 動かさない）
+  - ただし LINE の リッチメニューは、運営者が「差し替えて」「アップして」と 言った ときだけ、下の「LINE リッチメニューを 差しかえる」の 手順で 差しかえて よい
 
 **マージと git**
 - マージは 運営者が「マージ」と 言った ときだけ
@@ -55,7 +56,8 @@ description: にしおさんぽGO（ricepia-judge）で 作業する ときの �
      `node $F/playtest.js --old HEAD --files nishio-go/pixel.js --show 項目名`（別の 作業場所で 動かすので、いまの ファイルは さわらない）
    - 落ちた 項目が この 変更の せいか 分からない ときは、`--rerun`（もう1回）と `--main`（main だけで 動かす）で 見分ける
      - main でも 落ちる、または 2回 とも 落ちた 項目が ない なら、もとから ときどき 落ちる 確認
-     - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`
+     - いま 知っている ものは `waterWatch`・`critterSure`・`cornerAssist`・`npcBump`（相手に「本好きの高校生」が 選ばれると 落ちる）
+     - PR が ゲームの コード（`nishio-go/`・`nishio-go.html`・`tools/playtest.js`）に ふれない ときは、その ことと main での 結果を 運営者に 伝えて マージして よい
 3. **コミット**：`git add …` → `$F/commit.sh "題" "本文"`（決まりの 2行 Co-Authored-By・Claude-Session を つける）
 4. **push**：`$F/push.sh`（見張りを 通してから push。ネットの つまずきは 2・4・8・16秒で やりなおす）
 5. **PR**：GitHub の MCP ツールで 作る（gh は ない）
@@ -123,6 +125,38 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
    - 同じ ことを PR に 何度も 書かない
 5. 運営者に 短く 報告する：マージの SHA、取りこみ・ぶつかり、プレイテスト、Codex の ようす、Vercel、さくらの フィルタの 念押し（ricepia.jp に ふれた とき）
 
+## LINE リッチメニューを 差しかえる（「差し替えて」「アップして」）
+
+らいすぴあぶろぐ の リッチメニューは Messaging API で 作られて いる（LINE Official Account Manager では ない）。Actions「LINE rich menu」（`tools/line-richmenu.js`・`.github/workflows/line-richmenu.yml`、くわしくは `docs/ads-game-kit.md` 5-1）で 差しかえる。
+
+- トークン：GitHub の Secrets の `LINE_CHANNEL_ACCESS_TOKEN`（運営者が 入れた。値は チャットで たのまない・受けとらない）
+- 絵：`mkt/nishio-go/richmenu-2500x1686.png`（`tools/make-promo.js` の `richMenu()`。ゲームの マスは 2段の ロゴ `nishio-go/logo-stack.svg`）
+- しくみ：いまの 既定の メニューの タップ範囲・アクション・メニューバーの 文字を 写した 新しい メニューを 作り、絵を 載せて 既定に する（作った メニューの 絵は あとから 変えられない）。前の メニューは 消さない
+  - 前の メニューが ちがう 大きさ（1280×863 など）でも、縦横の 比が 同じ なら タップ範囲を 絵の 大きさに 広げる
+  - タップ範囲が 絵の マスと 合わない・比が ちがう・別名を 読めない ときは、何も 変えずに 止まる
+  - 左上（ゲーム）の アクションは `https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game` に する（`keep_game_link` で 前のまま）
+
+手順（動かすのは GitHub の MCP の `actions_run_trigger`、待つのは `$F/run-wait.sh`、ログは `get_job_logs`）
+
+どの 実行も「動かす 直前に id を 控える → 動かす → その id より あとの 実行を 待つ」の 順で。控えた id を 使いまわさない（前の 実行が 終わって いると、それを 取りちがえる）
+
+1. 確かめるだけ：`before=$($F/run-wait.sh line-richmenu.yml)` → `actions_run_trigger`（`run_workflow`、`line-richmenu.yml`、ref `main`、inputs `{"apply": "false"}`）→ `$F/run-wait.sh line-richmenu.yml $before`（「待つ 実行：id」が 出る）
+2. その id の ログを `get_job_logs` で 見る：入力が `APPLY: false` か、「いまの 既定」「新しい メニュー」の タップ範囲・アクション、「LINE の 確認（validate）：ok」。止まったら 理由を 運営者に 伝える（何も 変わって いない）
+3. 運営者が「差し替えて」と 言って いれば、もう一度 `before=$($F/run-wait.sh line-richmenu.yml)` で 控えなおしてから inputs `{"apply": "true"}` で 動かし、`$F/run-wait.sh line-richmenu.yml $before`
+4. その id の ログで `APPLY: true`、「作りました」の 新しい id、「もどす ときは」の 前の id を 見て、運営者に 伝える。失敗したら ログの「とちゅうで 止まりました」の とおりに もどす
+5. 運営者に スマホの LINE で 見た目と 5つの マスの リンクを 確かめて もらう（この 環境からは 見られない）
+6. もどす：同じく id を 控えてから inputs `{"apply": "true", "rollback": "<前の id>"}`。差しかえが とちゅうで 止まった ときは ログに 出る id を `rollback_from` にも
+
+スクリプトを 直した ときは、PR の ブランチを ref に して 確かめるだけで 動かせる（ワークフローの ファイルが main に ある ので）。本番を 変える 前に Codex の レビューを 通す。
+
+記録（売り出しの「通常版に もどす」で 使う id。差しかえたら ここを 書きかえる）
+
+| いつ | 通常版（既定） | その 前 |
+| --- | --- | --- |
+| 2026-10-25 | `richmenu-0277eccdc1bcb72cca949b059dd075d2`（2500×1686・2段ロゴ・左上 go.ricepia.jp） | `richmenu-75e46dc46960f4de1207e86a1ff548c0`（ja-nishio-homepage-20261017・1280×863・左上 ricepia.jp/） |
+
+- 売り出し（スキル `uridashi-junbi`）で セール版に 切りかえる ときも、この 通常版の id に もどす。古い id に もどすと 前の 絵（「お散歩ゲーム」）に なる
+
 ## 夜通し 磨く（「朝までマージなしで」など）
 
 - マージは しない。PR に コミットを 積み、指摘を 直し、45〜50分ごとに 確認の 予定を 入れる
@@ -156,6 +190,7 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 | `pre-merge.sh` | マージの 前：main を 取りこむ → 見張り → プレイテスト → push → expectedHeadSha |
 | `merge-plan.js <PR> [--allow-findings]` | マージの 支度を 確かめ（PR・先頭・Codex・[skip ci]）、merge_pull_request に わたす JSON を 出す |
 | `post-merge.sh <SHA> <先頭SHA> [分]` | マージの あと：あとから 積んだ コミットが ないか 確かめる → ブランチを つなぎなおす → Vercel を 待つ |
+| `run-wait.sh <ワークフロー> [控えた id]`・`--id <id>` | Actions の 実行が 終わるまで 待つ（引数1つなら いまの 実行の id を 出す。控えた id より あとの 最初の 実行に 相手を 決めて その id だけを 追う）。LINE リッチメニューの 差しかえで 使う |
 | `selfplay.js 出力 [ゴール数]` | 地図の めいろを 遊ぶ 遊び手（つまずきの 記録・画面） |
 | `env.js` | 共通の したく（Leaflet を `--ignore-scripts` で 取りだして キャッシュ、Chromium の 場所） |
 

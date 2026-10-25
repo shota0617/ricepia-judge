@@ -269,6 +269,7 @@
       ・ターンでついたタイヤ跡は最後に外周を回って消す…<a href="https://greenland-yoro.jp/shirokaki/" target="_blank" rel="noopener">代かきを図解した作業者</a>／外周を先に 1 周あらくかき、外周に踏みこまないようターン…<a href="https://detail.chiebukuro.yahoo.co.jp/qa/question_detail/q10107576580" target="_blank" rel="noopener">農家さんの回答（Yahoo!知恵袋）</a>／畦の近くは少しバックしてから曲がる…<a href="https://noukiya.co.jp/blogs/column/tractor-tanbo-kotsu" target="_blank" rel="noopener">農機屋のコラム</a>／まっすぐ耕すのがいちばん身につけにくい…<a href="https://www.jstage.jst.go.jp/article/jsfwr/42/2/42_2_91/_article/-char/ja" target="_blank" rel="noopener">日本農作業学会誌</a><br>
       ・X の米農家さんの投稿（2026 年 8〜10 月）：春の耕しが浅いと代かきが均一にならない（<a href="https://x.com/i/status/2093225433953349943" target="_blank" rel="noopener">@chappy199604</a>）／まっすぐは自動でも四隅は手で苦戦（<a href="https://x.com/i/status/2111710765841563940" target="_blank" rel="noopener">@ham_kaze_choco</a>）／乾くのを待って秋起こし、稲刈りのわだちが残る（<a href="https://x.com/i/status/2112133129792266353" target="_blank" rel="noopener">@F_TERU603</a>）／わらは 1 回では埋まらず、耕す回数をふやす年も（<a href="https://x.com/i/status/2113741376261386271" target="_blank" rel="noopener">@Tyoshi0410Taoka</a>）／どれだけまっすぐ走れるか自分との戦い（<a href="https://x.com/i/status/2107789535816163517" target="_blank" rel="noopener">@BLACKkome96</a>）<br>
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
+      ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわ・タイヤ跡・畦にぶつけたときにも、その場面で言葉が出る。耕しなおすとタイヤ跡が消え、代かきでは かいた泥の上にタイヤ跡が残る。終わりの画面に、聞いた声の数
     </details>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
@@ -1103,23 +1104,25 @@ const MIST = (() => {
 })();
 
 
-// ---- 初霜：秋の晴れた朝は、刈りあとの切り株・ひこばえ・畦の草・耕していない土の表面が霜で白い（山形では 10 月下旬に初霜。
-// 2024 年は 10 月 21 日：山形地方気象台）。耕すと下の土が出るので、耕したすじだけ黒い。日がのぼると 2 分半ほどでとける。
-// 春の田起こしのころ（4 月）も、放射冷却の朝は遅霜がおりる（山形県の凍霜害の注意）。春はうすく、早くとける
+// ---- 朝つゆ：晴れた朝は 夜の放射冷却で、刈りあとの切り株・ひこばえ・畦の草に つゆがついて 白っぽく光り、耕していない土は しめって黒っぽい。
+// 日がのぼると 2〜3 分でかわく。霜ではない：西尾市に近い名古屋では 霜の初日は平年 11 月 30 日、終日は 3 月 21 日（名古屋地方気象台）なので、
+// 4 月の田起こしにも 10 月下旬の秋起こしにも 霜はまず降りない（名前は前のまま FROST）
 const FROST = (() => {
-  const on = (season === 'aki' || season === 'haru') && TOD === 'asa' && WX === 'hare', list = [], S0 = season === 'aki' ? 1 : 0.6, T = season === 'aki' ? 150 : 100;   // 霜も 晴れた夜の冷えこみで降りる
+  const on = (season === 'aki' || season === 'haru') && TOD === 'asa' && WX === 'hare', list = [], S0 = 1, T = season === 'aki' ? 160 : 120;   // 霜も 晴れた夜の冷えこみで降りる
   let t = 0;
+  const DEW_C = new THREE.Color(1.15, 1.2, 1.28), DEW_E = new THREE.Color(0.05, 0.055, 0.065);
   const K = { soil_untilled: 0.55, track: 0.45, stubble: 0.8, hikobae: 0.7, grass: 0.6, grass_tuft: 0.7, weed: 0.6, renge: 0.5 };
   const add = m => {
     if (!m || !(m.name in K) || list.some(e => e.m === m)) return;
-    list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name] });
+    list.push({ m, c: m.color.clone(), e: m.emissive ? m.emissive.clone() : null, k: K[m.name], soil: m.name === 'soil_untilled' || m.name === 'track' });
   };
   function apply() {
     const f = Math.max(0, 1 - t / T) * S0;
     for (const e of list) {
       const a = e.k * f;
-      e.m.color.copy(e.c).lerp(new THREE.Color(1.35, 1.4, 1.5), a);   // 白くきらっと（少し青み）
-      if (e.e) e.m.emissive.copy(e.e).lerp(new THREE.Color(0.10, 0.11, 0.13), a);
+      if (e.soil) { e.m.color.copy(e.c).multiplyScalar(1 - 0.3 * a); continue; }   // 土は しめって 黒っぽい
+      e.m.color.copy(e.c).lerp(DEW_C, a * 0.35);   // 草や切り株は つゆで 白っぽく光る（少し青み）
+      if (e.e) e.m.emissive.copy(e.e).lerp(DEW_E, a * 0.5);
     }
   }
   return {
@@ -1368,6 +1371,36 @@ function wetSoil(m) {
   m.userData.wet = 1; m.color.multiplyScalar(0.72);
   if (m.roughness !== undefined) m.roughness *= 0.65;
 }
+// 秋起こし（10 月下旬）の畦の彼岸花：花は 9 月中旬〜10 月上旬で終わり、花のあとに葉が出る（環境省 皇居外苑の解説）。
+// しおれた花茎が茶色く残り、根もとから 濃い緑の細い葉が 束になって出ている
+function higanbanaAfter(o) {
+  const m = o.material, prev = m.onBeforeCompile, key = m.customProgramCacheKey();   // 風の細工はそのまま残す
+  m.color.setRGB(1, 1, 1); m.roughness = 1; m.envMapIntensity = 0.4;   // 枯れた茎は つやが無い（空が白く映らない）
+  m.onBeforeCompile = (sh, r) => {                    // しおれた花：赤い花も緑の茎も、明るさだけ残して 枯れた茶色にする（切り抜きのアルファはそのまま）
+    prev.call(m, sh, r);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>',
+      '#include <map_fragment>\n float kL = dot(diffuseColor.rgb, vec3(0.45, 0.45, 0.1)); diffuseColor.rgb = vec3(0.15, 0.09, 0.05) * (0.6 + 1.5 * kL);');
+  };
+  m.customProgramCacheKey = () => key + '|kare';
+  m.needsUpdate = true;
+  o.updateWorldMatrix(true, false);
+  // 株のまん中：板（4 頂点の四角）ごとに まん中と 根もとの高さを出し、十字に組んだ 2 枚（まん中が 2cm 以内）を 1 株にまとめる
+  const P = o.geometry.attributes.position, v = new THREE.Vector3(), cl = [];
+  for (let q = 0; q + 4 <= P.count; q += 4) {
+    let x = 0, z = 0, y = 1e9;
+    for (let k = 0; k < 4; k++) { v.fromBufferAttribute(P, q + k).applyMatrix4(o.matrixWorld); x += v.x / 4; z += v.z / 4; y = Math.min(y, v.y); }
+    const c = cl.find(c => Math.hypot(c.x / c.n - x, c.z / c.n - z) < 0.02);
+    if (c) { c.x += x; c.z += z; c.n++; c.y = Math.min(c.y, y); } else cl.push({ x, z, n: 1, y });
+  }
+  const parts = [];
+  for (let i = 0; i < 9; i++) parts.push(new THREE.PlaneGeometry(0.014, 0.3).translate(0, 0.15, 0).rotateX(-0.75 - Math.random() * 0.35).rotateY(i * 0.7 + Math.random() * 0.3).toNonIndexed());   // 細い葉が 弓なりに 外へ広がる
+  const g = new THREE.BufferGeometry();
+  for (const a of ['position', 'normal', 'uv']) g.setAttribute(a, new THREE.Float32BufferAttribute(parts.flatMap(x => [...x.attributes[a].array]), a === 'uv' ? 2 : 3));
+  const leaves = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: new THREE.Color(0x3a5f30).convertSRGBToLinear(), side: THREE.DoubleSide }), cl.length), m4 = new THREE.Matrix4();
+  let n = 0;
+  for (const c of cl) { const s = 0.8 + Math.random() * 0.5; leaves.setMatrixAt(n++, m4.makeRotationY(Math.random() * 6.3).scale(v.set(s, s, s)).setPosition(c.x / c.n, c.y, c.z / c.n)); }
+  leaves.frustumCulled = false; leaves.receiveShadow = true; scene.add(leaves);
+}
 function setupField(root) {
   field = root;
   scene.add(root);
@@ -1379,6 +1412,7 @@ function setupField(root) {
     if (amp && !o.material.userData.wind) { o.material.userData.wind = 1; addWind(o.material, amp); }
     if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
     if (RAIN && o.isMesh && ['soil_untilled', 'track'].includes(o.material.name)) wetSoil(o.material);
+    if (o.isMesh && o.material.name === 'higanbana' && season === 'aki') higanbanaAfter(o);
   });
   // 耕した所：0.2m のます目ごとの四角を先に用意し、耕したら地面に出す（UV＝x/2, −z/2）
   const ft = root.getObjectByName('FieldTilled');
@@ -3401,6 +3435,7 @@ const SCORE = (() => {
   function ramp(dt) {
     const on = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;
     if (on && !onRamp) rampBad = 0;
+    if (on && SHIRO && S.v > 0.3 && S.x > 13 && Math.sin(S.yaw) > 0.5) voice('rampBrake');   // 代かきのあと 田んぼから道へ 坂を上る
     if (on && Math.abs(S.v) > 0.3) {
       if (Math.abs(S.v) > 1.6 && !(rampBad & 1)) { rampBad |= 1; st.safety++; pop('−2　坂は低速で（時速 6km 以下）'); toast('坂は 1 速の低速で（Q で変速を下げる）。トラクターの事故は転倒・転落が多い'); }
       if (Math.abs(Math.sin(S.yaw)) < 0.9 && !(rampBad & 2)) { rampBad |= 2; st.safety++; pop('−2　坂にはまっすぐ出入りする'); toast('坂は、ななめに通ると横に倒れやすい。坂に対してまっすぐ上り下りする'); }
@@ -3802,6 +3837,7 @@ function step(dt) {
   COACH.step();
   if ((S.workT || 0) > 40 && SCORE.st.yawM > 30 && SCORE.parts.straight < 22) voice('veteran');   // 蛇行している
   if ((S.workT || 0) > 60 && SCORE.st.yawM > 40 && SCORE.parts.straight >= 27) voice('straightSelf');   // まっすぐ耕せている
+  if ((S.workT || 0) > 50 && SCORE.st.swept > 60 && SCORE.parts.overlap < 15) voice('gatagata');   // 重ねがそろわず 耕し残しや重なりが多い
   if (ASSIST.on && S.started && Math.abs(S.x) > HX - 4 && Math.abs(S.z) > HZ - 4) voice('corner');   // 直進アシストのまま四隅に来た
   if (SHIRO && !S.rotDown && softAt(S.x, S.z) && Math.abs(S.v) > 0.3 && (S.trackM = (S.trackM || 0) + Math.abs(S.v) * dt) > 12) voice('track');   // かいた泥の上を上げて走り、跡をつけた
   if (SHIRO && !S.rotDown && Math.abs(S.steer) > 0.4 && S.started && (Math.abs(S.x) > HX - 2.5 || Math.abs(S.z) > HZ - 2.5)) voice('outer');   // 畦ぎわで回る
@@ -4572,7 +4608,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyH') toggleHelp();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
   else if (e.code === 'KeyP' && (S.rotDown || (S.rotorW || 0) > 1)) toast('PTO の変速は、' + IMPL + 'を上げて 爪の回転が止まってから（本物も PTO を切り、止まってから変速レバーを動かす）（P）', 4);
-  else if (e.code === 'KeyP') { PTO2 = !PTO2; toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
+  else if (e.code === 'KeyP') { PTO2 = !PTO2; setTimeout(() => voice('newMachine'), 4500); toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
   else if (e.code === 'KeyT') { S.dbl = !S.dbl; toast('倍速ターン ' + (S.dbl ? '入：35° より大きく切ると前輪が約 2 倍の速さで回って小さく回れる' : '切：大きく回る') + '（T）'); }
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }
   else if (e.code === 'KeyZ') setDepth(-1);
@@ -4733,6 +4769,10 @@ const VOICES = {
   tanishi: ['ジャンボタニシの対策で 早めに耕した。レンゲの前の耕うんも 1 回ふやした', '@Tyoshi0410Taoka（X の米農家さん）'],
   wara: ['わらは 1 回では埋まりきらない。年によっては耕す回数を 1 回ふやす', '@Tyoshi0410Taoka（X の米農家さん）'],
   straightSelf: ['どれだけまっすぐ走れるか、自分との戦い', '@BLACKkome96（X の米農家さん）'],
+  // SNS・ウェブの農家さん本人の発信と、事故の事例（2026 年 10 月。Grok は クレジット切れのため WebSearch で集め、要約した）。もとの話のリンクは はじめの画面の「農家の声」に
+  gatagata: ['新人のころ、はじめて耕した跡はガタガタだった。同級生にコツを教わって、なんとか終わらせた', '農家の息子さんが描いた 新人時代のマンガ（マイナビ農業）'],
+  newMachine: ['研修のときとは 土も機械もちがって、機械の操作を一から覚えなおした', '北海道の新規就農者の声（農林水産省 北海道農政事務所）'],
+  rampBrake: ['代かきのあと、田んぼから道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転した事故がある。坂は低速でまっすぐ、左右のブレーキは連結して', '農研機構の農作業事故の事例'],
 };
 const heard = {}, voiceQ = [];
 function voice(id) {                              // 知らせが出ているあいだは待ち、消えてから順に出す

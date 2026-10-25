@@ -1315,9 +1315,15 @@ async function walkTo(page, id) {
       let during = false;
       for (let i = 0; i < 10; i++) { await wait(150); if (P.floatsDrawn.some(x => x === t || x === t2)) during = true; }   // ゴールの 文字が 出ている 間
       for (let i = 0; i < 40 && M.banner; i++) await wait(150);   // ゴールの 文字が 消えるまで（4秒）
-      let after = false, after2 = false, both = false;   // 消えた あとは 1つずつ（同じ こまに 2つ 描かない）
-      for (let i = 0; i < 70; i++) { await wait(50); const d = P.floatsDrawn; if (d.includes(t)) after = true; if (d.includes(t2)) after2 = true; if (d.includes(t) && d.includes(t2)) both = true; }
-      return { during, after, after2, both, gone: !M.banner, ok: !during && after && after2 && !both };
+      const t3 = 'テストの 浮かぶ 文字 3';   // 順に 出している 間に 新しく 来た 文字（金の 米つぶ など）も、列の 最後に
+      let after = false, after2 = false, after3 = false, both = false, sent3 = false;   // 消えた あとは 1つずつ（同じ こまに 2つ 描かない）
+      for (let i = 0; i < 110; i++) {
+        await wait(50); const d = P.floatsDrawn;
+        if (d.includes(t)) after = true; if (d.includes(t2)) after2 = true; if (d.includes(t3)) after3 = true;
+        if ([t, t2, t3].filter(x => d.includes(x)).length > 1) both = true;
+        if (after2 && !sent3) { P.floatText(t3); sent3 = true; }   // 2つめが 出はじめた ところで
+      }
+      return { during, after, after2, after3, both, gone: !M.banner, ok: !during && after && after2 && after3 && !both };
     });
     // ゴールが 画面の 左右の はしに ある とき：ゴールの 名前が 画面から はみ出して 切れない（自分で 遊んで 分かった：らいすぴあの 店員さんの 名前の 頭が 切れていた）
     R.checks.mzGoalEdge = await w.page.evaluate(async () => {

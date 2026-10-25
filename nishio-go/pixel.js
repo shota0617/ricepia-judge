@@ -5553,6 +5553,7 @@ let gbPause = 0;   // 0 でないあいだは4色にしない（当店の建物�
 }
 let active = false, raf = 0, dirty = true, scale = 2, mzScale = 1;   // mzScale：めいろの ときの 大きさ（はじめは いちばん小さく：先の 道まで 見える）
 const floaters = [], floatDrawn = [];   // 浮かぶ文字 { t, at }。floatDrawn：いまの こまに 描いた 文字（プレイテストで 見る）
+let floatQEnd = 0;   // 待っていた 浮かぶ 文字を 順に 出し おわる 時刻（その 前に 来た 文字は この あとに）
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
 let cover = 0, fieldCy = 0;
 const tapS = { path: [], timer: null, goal: null };   // タップした所へ歩く道すじ（下の tapWalk）
@@ -5606,7 +5607,11 @@ function occludeRice(hx, by, footY, u, again) {
   ctx.globalAlpha = 0.5; again(); ctx.globalAlpha = 1;
   return true;
 }
-function floatText(t) { floaters.push({ t, at: performance.now() }); if (floaters.length > 4) floaters.shift(); }
+function floatText(t) {   // 「ゴール！」の あと 待っていた 文字を 順に 出している 間（floatQEnd まで）に 来た 文字は、列の 最後に（重ねない）
+  const now = performance.now(), at = Math.max(now, floatQEnd);
+  if (floatQEnd > now) floatQEnd += 1300;
+  floaters.push({ t, at }); if (floaters.length > 4) floaters.shift();
+}
 /* ---------- 町を走る乗り物（Blender の絵：tools/blender/maptiles.py → nishio-go/maptiles/vehicles.png） ----------
    線路には赤い電車（4両）、道には乗用車、ひろい水の上には漁船。見えている所のまわり（画面の外）に出して、マスに沿って走らせる。
    ただの景色なので、主人公や名所とはぶつからない。進む向きは trafficTurn（これまでの向きに近い向き・まっすぐ・その先も続く道を好む）。
@@ -6094,7 +6099,7 @@ function frame(now) {
   // めいろの「🏁 ゴール！」が 出ている 間は 待って、消えてから 浮かべる（ゴールの 時間・★の 行と 重なって どちらも 読めなかった。自分で 遊んで 分かった）
   //   待っている 文字が いくつか あれば、消えた あとに 来た 順に 1つずつ（1.3秒ずつ）。同じ 所に いっしょに 出すと 重なって 読めない
   floatDrawn.length = 0;
-  if (mzBanner.t0) floaters.forEach((fl, k) => { fl.at = now + k * 1300; });   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
+  if (mzBanner.t0) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (mzBanner.t0) continue;

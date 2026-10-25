@@ -283,6 +283,7 @@
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
+      ・燃料は半分あったので足りると思ったが、とちゅうで給油して作業が止まった。荒起こしは時間がかかるので満タンで／耕しはじめは入口の反対がわから、最後に外周を回って入口から出る…<a href="https://note.com/kome_noka_shinya/n/n4d9c95f5e653" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こし準備と手順の基本チェック」</a><br>
       ・土が乾いていないと、田んぼに入るたびにタイヤに土がつく。作業のあと、ついていれば そのつど移植ゴテで削り落とす…<a href="https://komeya4th.exblog.jp/29289731/" target="_blank" rel="noopener">米農家さんのブログ（komeya4th「トラクターのタイヤに付いた土は田んぼで落としていますか？」）</a><br>
       ・米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって動けなくなった…<a href="https://www.bepal.net/?p=577528" target="_blank" rel="noopener">熊本で米をつくって 13 年の書き手の記録（BE-PAL）</a><br>
       畦では この田んぼの持ち主（近所の米農家さん）が運転を見ていて、旋回で上げない・畦にぶつける・速すぎ・蛇行・すき間・はみ出しなどがあると、ふきだしで ダメ出しする（昼だけ）。<br>
@@ -3713,6 +3714,7 @@ const SCORE = (() => {
     const on = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;
     if (on && !onRamp) rampBad = 0;
     if (on && SHIRO && S.v > 0.3 && S.x > 13 && Math.sin(S.yaw) > 0.5) voice('rampBrake');   // 代かきのあと 田んぼから道へ 坂を上る
+    else if (on && !SHIRO && lastPct >= 90 && S.v > 0.3 && S.x > 13 && Math.sin(S.yaw) > 0.5) voice('iriguchi');   // 耕し終わって 入口（坂）から出る
     if (on && Math.abs(S.v) > 0.3) {
       if (Math.abs(S.v) > 1.6 && !(rampBad & 1)) { rampBad |= 1; st.safety++; pop('−2　坂は低速で（時速 6km 以下）'); toast('坂は 1 速の低速で（Q で変速を下げる）。トラクターの事故は転倒・転落が多い'); }
       if (Math.abs(Math.sin(S.yaw)) < 0.9 && !(rampBad & 2)) { rampBad |= 2; st.safety++; pop('−2　坂にはまっすぐ出入りする'); toast('坂は、ななめに通ると横に倒れやすい。坂に対してまっすぐ上り下りする'); }
@@ -4031,6 +4033,8 @@ function step(dt) {
   const onRoad = Math.abs(S.x) > HX || Math.abs(S.z) > HZ;
   const onSlope = S.x > 12 && S.x < 16.9 && S.z > 18 && S.z < 22;   // 田んぼへの坂は道の速さにしない
   S.hiRange = onRoad && !onSlope && !S.rotDown;     // 道では 副変速を「高」（路上）に入れて走る
+  // 副変速は 3 段（低・中・高。ヤンマー YT3R の公式「操作性」②）：耕すときは低、上げて田んぼの中を移動するときは中、道は高
+  S.range = S.rotDown || S.turnUpHold ? 'L' : S.hiRange ? 'H' : 'M';
   const vmax = GEARS[S.gear - 1] * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
   if (S.glow > 0) {                               // 予熱中：ランプが点くと カチッ、消えたら セルが回る（ソレノイドの カチッ）
     if (!S.glowClick) { S.glowClick = true; relayClick(0.7); }   // 始めるときは 音の用意があとなので、ここで鳴らす
@@ -4185,6 +4189,7 @@ function step(dt) {
     const sp = Math.min(1, Math.abs(S.v) / 0.78);
     const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.7 + 0.3 * DEPTH / DEPTH0) * (0.3 + 0.7 * sp) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
     S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
+    if (S.fuel > 0.5 && !SHIRO) voice('kakunin');   // 燃料計が少し下がってきたころ（荒起こし：春・秋）
   }
   if (working && Math.abs(S.v) > 0.1) {
     S.workT = (S.workT || 0) + dt;                // 耕している時間（ほ場作業効率に使う）
@@ -4244,7 +4249,7 @@ function step(dt) {
   P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
-  if (P.LeverRange) P.LeverRange.rotation.x += ((S.hiRange ? -0.3 : 0.3) - P.LeverRange.rotation.x) * Math.min(1, dt * 6);   // 副変速レバー（田んぼは低・道は高）
+  if (P.LeverRange) P.LeverRange.rotation.x += (({ L: 0.3, M: 0, H: -0.3 })[S.range || 'L'] - P.LeverRange.rotation.x) * Math.min(1, dt * 6);   // 副変速レバー（低・中・高の 3 段）
   if (P.LeverPtoSel) P.LeverPtoSel.rotation.x += ((PTO2 ? -0.28 : 0.28) - P.LeverPtoSel.rotation.x) * Math.min(1, dt * 8);   // PTO 変速レバー（1 速・2 速）
   const brake = !key.fwd && !key.back && Math.abs(S.v) > 0.05 ? 1 : 0;
   P.PedalBrakeL.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer < 0 ? 0.5 : 0);   // オートブレーキは内側だけ
@@ -4370,6 +4375,7 @@ function drawMeter() {
   g.font = 'bold 13px sans-serif'; g.fillStyle = '#9fd2dc'; g.fillText('km/h', r + 50, r - 2);
   g.font = 'bold 20px sans-serif'; g.fillStyle = S.v < -0.05 ? '#ffb020' : '#d6f6fb';
   g.fillText(S.v < -0.05 ? 'R' : 'F' + S.gear, r - 56, r - 2);
+  g.font = 'bold 13px sans-serif'; g.fillStyle = '#ffd27a'; g.fillText('副' + { L: '低', M: '中', H: '高' }[S.range || 'L'], r - 56, r - 24);   // 副変速
   const L = engineLoad();                         // エンジン負荷率：10 こまのバー（8 割からだいだい、9 割から赤）
   g.font = 'bold 13px sans-serif'; g.fillStyle = '#9fd2dc'; g.textAlign = 'left'; g.fillText('負荷', r - 70, r + 24);
   for (let k = 0; k < 10; k++) {
@@ -5085,6 +5091,9 @@ const VOICES = {
   tsume: ['固い所や タイヤの跡を耕す はしの爪ほど 早く減る。減りやすい爪を 入れかえて 長く使う', '愛媛の専業米農家さん（アメブロ）'],
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
+  // いち田さん（note の米農家）の「荒起こし準備と手順の基本チェック」（2026 年 10 月。WebSearch で見つけて要約）
+  kakunin: ['燃料は半分あったので 足りると思ったが、とちゅうで給油することになって 作業が止まった。荒起こしは時間がかかるので、燃料は満タンにしてから', 'いち田さん（note の米農家）'],
+  iriguchi: ['耕しはじめは 入口の反対がわから。中から外へ耕し、最後に外周を回って 入口から出る', 'いち田さん（note の米農家）'],
   doro: ['土が乾いていないと、田んぼに入るたびに タイヤに土がつく。作業のあと ついていれば、そのつど移植ゴテで削り落とす（手より楽）', '米農家さんのブログ（komeya4th）'],
   gasu: ['稲刈りの 2 日あとに 秋起こしを始めた。秋に起こすと、春に起こすより ガス湧きが少ないと感じる', '岩手県盛岡市の自然栽培の米農家さん（YouTube）'],
   rampBrake: ['代かきのあと、田んぼから道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転した事故がある。坂は低速でまっすぐ、左右のブレーキは連結して', '農研機構の農作業事故の事例'],

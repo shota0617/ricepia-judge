@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
+<title>にしおさんぽGO｜スマホを傾けてお米を転がす、西尾の地図の迷路ゲーム - らいすぴあ</title>
+<meta name="description" content="スマホを傾けて、お米を転がすゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾城跡・岩瀬文庫などの名所で、まちの人の話で次のゴールが決まります。西尾のお米屋さん らいすぴあ がつくった、無料・登録なしのゲーム。"/>
+<meta name="theme-color" content="#2f5d3a"/>
+<link rel="canonical" href="https://go.ricepia.jp/nishio-go.html"/>
+<link rel="manifest" href="nishio-go.webmanifest"/>
+<!-- 検索エンジン・AI検索むけの説明（schema.org）。西尾市版（?ed=city）も同じページ -->
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": [
+  "VideoGame",
+  "WebApplication"
+ ],
+ "name": "にしおさんぽGO",
+ "url": "https://go.ricepia.jp/nishio-go.html",
+ "description": "スマホを傾けて、お米を転がすゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。位置情報を使って実際に西尾を歩く「あるいて遊ぶ」もあります。",
+ "image": "https://go.ricepia.jp/nishio-go/ogp.png",
+ "inLanguage": "ja",
+ "genre": [
+  "迷路ゲーム",
+  "お散歩ゲーム",
+  "位置情報ゲーム",
+  "ドット絵"
+ ],
+ "gamePlatform": "Webブラウザ（スマートフォン・PC）",
+ "applicationCategory": "GameApplication",
+ "operatingSystem": "Web",
+ "isAccessibleForFree": true,
+ "offers": {
+  "@type": "Offer",
+  "price": "0",
+  "priceCurrency": "JPY"
+ },
+ "contentLocation": {
+  "@type": "Place",
+  "name": "愛知県西尾市"
+ },
+ "publisher": {
+  "@type": "Organization",
+  "name": "近藤米穀店 らいすぴあ",
+  "address": {
+   "@type": "PostalAddress",
+   "addressLocality": "西尾市",
+   "addressRegion": "愛知県",
+   "addressCountry": "JP"
+  }
+ }
+}
+</script>
+<link rel="apple-touch-icon" href="nishio-go/icon-192.png"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-title" content="さんぽGO"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9A%B6%3C/text%3E%3C/svg%3E"/>
+<meta property="og:type" content="website"/>
+<meta property="og:locale" content="ja_JP"/>
+<meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
+<meta property="og:title" content="にしおさんぽGO - 傾けてお米を転がす、西尾の地図の迷路"/>
+<meta property="og:description" content="スマホを傾けて、お米を転がす。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。西尾のお米屋さんがつくった、無料・登録なしのゲーム。スマホのブラウザですぐ遊べます。"/>
+<meta property="og:url" content="https://go.ricepia.jp/nishio-go.html"/>
+<meta property="og:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="にしおさんぽGO：スマホを傾けて、お米を転がす西尾の地図の迷路ゲーム"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap"/>
+<link rel="stylesheet" href="nishio-go/style.css"/>
+</head>
+<body>
+<script>/* 文字を少なく（ふだん）。せってい の「文字を多めに出す」をオンにすると外す */try{if(localStorage.getItem('nsg_text_more')!=='1')document.body.classList.add('simple')}catch(e){document.body.classList.add('simple')}</script>
+
+<header class="bar">
+  <div class="brand"><i data-pi="castle" data-art="bar-castle"></i><span class="tx">にしおさんぽGO</span></div>
+  <button class="lv" id="lvBtn" type="button" aria-label="レベルと称号">
+    <span class="lv-num"><i data-pi="star" data-art="stat-star"></i><span class="tx">Lv</span><b id="lvNum">1</b></span>
+    <span class="lv-bar"><i id="lvFill"></i></span>
+  </button>
+  <div class="pts" aria-live="polite"><i data-pi="coin" data-art="stat-coin"></i><b id="ptsNum">0</b><small class="tx">pt</small></div>
+  <a class="home-btn" href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=home_button" aria-label="当店（らいすぴあ）のホームページへ戻る" title="当店（らいすぴあ）のホームページへ戻る"><i data-pi="bowl" data-art="bar-bowl"></i><small class="tx">当店HP</small></a>
+</header>
+
+<main id="map" aria-label="西尾市の地図"></main>
+
+<!-- こよみ（日付・季節・田んぼのようす）。タップでくわしく -->
+<button type="button" class="koyomi" id="koyomi" hidden aria-label="きょうのこよみ"></button>
+
+<!-- ドット絵の地図 -->
+<section id="pxView" aria-label="ドット絵の地図">
+  <canvas id="pxCanvas"></canvas>
+  <div class="px-zoom"><button type="button" id="pxWorld" aria-label="せかいちず（西尾市と となりの市町）" title="せかいちず（西尾市と となりの市町）"><i data-pi="globe" data-art="btn-globe"></i></button><button type="button" id="pxZoomIn" aria-label="拡大">＋</button><button type="button" id="pxZoomOut" aria-label="縮小">－</button><button type="button" id="pxZoom" class="zc" aria-label="大きさを変える" title="大きさを変える">🔍</button><button type="button" id="pxHarvest" class="h" hidden aria-label="コンバインで稲刈り（田んぼの上で）" title="コンバインで稲刈り（田んぼの上で）"><i data-pi="star" data-art="btn-combine"></i></button><button type="button" id="pxDankyu" class="h" hidden aria-label="段丘をのぼる（急な坂のそばで）" title="段丘をのぼる（急な坂のそばで）">⛰️</button><button type="button" id="pxHiryo" class="h" hidden aria-label="肥料山の草刈り（丘や山のそばで）" title="肥料山の草刈り（丘や山のそばで）">🌿</button></div>
+  <div class="dq px-msg" id="pxMsg" hidden></div>
+  <div class="px-attr">© OpenStreetMap contributors／地理院タイル／国土数値情報を加工</div>
+  <div class="px-pad" id="pxPad" hidden>
+    <button type="button" id="pxMeiro" class="c" aria-label="西尾めいろ（傾けて お米を ゴールへ）" title="西尾めいろ">🌀</button>
+  </div>
+  <div class="meet" id="meetBox" hidden><div class="dq"><canvas id="meetArt" width="16" height="16"></canvas><p id="meetText"></p></div></div>
+  <div class="px-info" id="pxInfo" hidden><div class="dq"><div id="pxInfoBody"></div><button type="button" class="dq-close" data-close>▶ とじる</button></div></div>
+</section>
+
+<div class="fab-col">
+  <button class="fab" id="locateBtn" type="button" title="現在地へ" aria-label="現在地へ移動"><i data-pi="pin" data-art="stat-pin"></i></button>
+</div>
+
+<section class="sheet" id="sheet">
+  <div class="guide" id="guide" hidden></div>
+  <div class="status" id="status">位置情報を待っています…</div>
+  <button class="spin" id="spinBtn" type="button" hidden>
+    <span class="spin-ico" id="spinIco">⭐</span>
+    <span class="spin-txt"><b id="spinName">スポット</b><small id="spinSub">タップしてポイントゲット</small></span>
+  </button>
+</section>
+
+<nav class="tabs" aria-label="メニュー">
+  <button type="button" class="on" data-tab="map" aria-label="マップ"><i data-pi="map" data-art="tab-map"></i><span>マップ</span></button>
+  <button type="button" data-tab="log" aria-label="きろく"><i data-pi="note" data-art="tab-note"></i><span>きろく</span></button>
+  <button type="button" data-tab="voice" aria-label="こえ"><i data-pi="talk" data-art="talk"></i><span>こえ</span><b class="tab-dot" id="voiceDot" hidden></b></button>
+  <button type="button" data-tab="rewards" id="rewardsTab" hidden aria-label="とくてん"><i data-pi="gift" data-art="tab-gift"></i><span>とくてん</span></button>
+  <button type="button" data-tab="settings" aria-label="せってい"><i data-pi="gear" data-art="tab-gear"></i><span>せってい</span></button>
+</nav>
+
+<!-- 記録 -->
+<section class="panel" id="panel-log" hidden>
+  <h2>きろく <button type="button" class="btn mini share-btn" id="shareLogBtn">📣 シェア</button></h2>
+  <div class="card jump-card"><p><b><i data-pi="star" data-art="ricebag"></i> ミニゲーム「にしおジャンプ」</b><small id="jumpNote">名所（注目スポット）でチェックインすると、その日あそべます</small></p><button type="button" class="btn" id="jumpBtn">あそぶ</button></div>
+  <div class="card jump-card meiro-card"><p><b>🌀 西尾めいろ</b><small id="meiroNote">西尾の地図が 迷路に。傾けて お米を 名所まで</small></p><button type="button" class="btn" id="meiroCardBtn">あそぶ</button></div>
+  <div class="card tomorrow" id="tomorrowBox" hidden></div>
+  <div class="card bags" id="bagBox"></div>
+  <div class="campaigns" id="campaignBox" hidden></div>
+  <div id="upBox" hidden>
+    <h3><i data-pi="home" data-art="home"></i> るすばん強化 <small>操作して移動</small></h3>
+    <p class="note" id="upNote"></p>
+    <ul class="list" id="upList"></ul>
+  </div>
+  <h3><i data-pi="scroll" data-art="quest"></i> 今日のおさんぽクエスト</h3>
+  <ul class="list" id="questList"></ul>
+  <div class="stats" id="stats"></div>
+  <h3><i data-pi="calendar" data-art="calendar"></i> 今月・来月の西尾のおまつり・行事</h3>
+  <ul class="list" id="eventList"></ul>
+  <p class="note src">出典：<a href="https://nishiokanko.com/eventpage" target="_blank" rel="noopener">西尾観光（西尾市観光協会）</a>・<a href="https://www.city.nishio.aichi.jp/sportskanko/kanko/index.html" target="_blank" rel="noopener">西尾市公式ウェブサイト</a>。日にちは変わることがあるので、お出かけ前に確かめてください。</p>
+  <h3><i data-pi="flag" data-art="stat-flag"></i> 地区ごとのめぐり具合</h3>
+  <ul class="list" id="areaList"></ul>
+  <h3><i data-pi="book" data-art="stat-book"></i> まちメモ（西尾と まわりのまち） <small id="factCount"></small></h3>
+  <ul class="list" id="factList"></ul>
+  <h3><i data-pi="card" data-art="card"></i> 西尾ドット絵帳 <small id="dotCount"></small></h3>
+  <p class="note">西尾市の中で、たからばこを開けたり、スポットにチェックインしたりすると、西尾ならではのドット絵が1枚もらえます。絵は全部で74000枚。どの絵になるかは、その場所の地区（西尾・一色・吉良・幡豆・佐久島）と、田んぼ・畑・まちなか・海辺などの場所、季節と時間帯、その日の天気（晴れ・くもり・雨・霧・雪や虹）で変わります。雨の日に歩くと、雨の絵が集まります。目標は、37の題材と、それぞれの天気5つ（☀️☁️☔🌫️と、🌈＝冬は雪・夜は満月・ほかは虹）をそろえることです。</p>
+  <ul class="dot-motifs" id="dotMotifs"></ul>
+  <p class="note" id="dotNote"></p>
+  <div class="dot-grid" id="dotGrid"></div>
+  <h3><i data-pi="talk" data-art="talk"></i> 聞いた名所 <small id="heardCount"></small></h3>
+  <ul class="list" id="heardList"></ul>
+  <h3><i data-pi="feet" data-art="stat-feet"></i> 生きもの手帳 <small id="critterCount"></small></h3>
+  <ul class="list" id="critterList"></ul>
+  <h3><i data-pi="pin" data-art="stat-pin"></i> めぐったスポット</h3>
+  <ul class="list" id="visitedList"></ul>
+  <h3><i data-pi="coin" data-art="stat-coin"></i> 最近のポイント</h3>
+  <ul class="list" id="logList"></ul>
+  <h3 id="badgeHead"><i data-pi="medal" data-art="stat-medal"></i> バッジ <small id="badgeCount"></small></h3>
+  <p class="badge-soon" id="badgeSoon" hidden></p>
+  <div class="badges" id="badgeGrid"></div>
+  <h3><i data-pi="star" data-art="stat-star"></i> レベルと称号</h3>
+  <ul class="list" id="titleList"></ul>
+</section>
+
+
+
+<!-- 特典 -->
+<section class="panel" id="panel-rewards" hidden>
+  <h2>とくてん</h2>
+  <div class="card wallet"><img class="wallet-art" src="nishio-go/art/coin.png" alt="" width="48" height="48"/><small>使えるポイント</small><b id="walletPts">0</b><small>pt</small></div>
+  <p class="note" id="rewardNote"></p>
+  <ul class="list" id="rewardList"></ul>
+  <h3><i data-pi="gift" data-art="tab-gift"></i> 交換したクーポン</h3>
+  <ul class="list" id="couponList"></ul>
+</section>
+
+<!-- 設定 -->
+<!-- こえ（プレイヤーの声でそだつ。おたよりを送る・あなたのおたよりの様子・みんなの声で かわったこと） -->
+<section class="panel" id="panel-voice" hidden>
+  <h2>📮 こえ <small>みんなでつくる にしおさんぽGO</small></h2>
+  <div class="card voice-hero">
+    <p><b>このゲームは、あそぶ人の声でそだちます。</b>「こんな名所があるよ」「こうしたらもっと面白い」「ここがちがう」を送ってください。たしかめて、ゲームに反映します。反映されたら、ここでお知らせします。</p>
+    <p class="voice-stats" id="voiceStats" hidden></p>
+  </div>
+  <div class="card voice-me" id="voiceMe">
+    <p class="voice-rank" id="voiceRank"></p>
+    <p class="voice-stamps" id="voiceStamps"></p>
+  </div>
+  <div class="card voice-theme" id="voiceTheme">
+    <p><b>🗓 今週のお題</b><span id="themeDone" class="st reflected" hidden>答えた！</span></p>
+    <p class="voice-q" id="themeQ"></p>
+    <button type="button" class="btn" id="themeBtn">お題に答える</button>
+  </div>
+  <div class="card" id="voiceMineCard" hidden>
+    <h3>あなたのおたより</h3>
+    <ul class="voice-list" id="voiceMine"></ul>
+  </div>
+  <div class="card" id="fbCard">
+    <h3>📮 おたよりを送る</h3>
+    <p class="note">名前・電話番号・住所など、あなたの個人情報は書かないでください。おたよりごとに、この端末で作った でたらめな「受付番号」をつけて送ります（だれが送ったかは分かりません）。たしかめた結果は、この番号で「あなたのおたより」にお知らせします。</p>
+    <form id="fbForm" class="fb-form" novalidate>
+      <label><span>なにについて？</span>
+        <select id="fbKind">
+          <option value="spot">📍 こんな名所があるよ</option>
+          <option value="fun">🎉 こうしたらもっと面白い</option>
+          <option value="fix">✏️ 名所・スポットの情報がちがう</option>
+          <option value="idea">😣 こまった・使いにくい</option>
+        </select></label>
+      <label id="fbSpotRow" hidden><span>どのスポット？（近いじゅん）</span><select id="fbSpot"></select></label>
+      <label id="fbNameRow"><span>名所の名前</span><input id="fbName" type="text" maxlength="40" autocomplete="off" placeholder="れい：○○神社の大くすのき"/></label>
+      <label><span id="fbTextLabel">どんな所？（見どころ・場所の目じるしなど）</span><textarea id="fbText" maxlength="400" rows="4" required></textarea></label>
+      <label><span>くわしく分かるページ（あれば・https）</span><input id="fbUrl" type="url" maxlength="200" inputmode="url" autocomplete="off" placeholder="https://"/></label>
+      <label class="fb-here"><input id="fbHere" type="checkbox"/><span>いまいる場所の近く（だいたいの位置・約100mの細かさをいっしょに送る。操作して移動では、キャラのいる場所）</span></label>
+      <label class="hp" aria-hidden="true">この欄は空のままにしてください<input id="fbHp" type="text" tabindex="-1" autocomplete="off"/></label>
+      <button type="submit" class="btn" id="fbSend">おたよりを送る</button>
+      <p class="note" id="fbMsg" aria-live="polite"></p>
+    </form>
+  </div>
+  <div class="card">
+    <h3>みんなの声で かわったこと</h3>
+    <ul class="voice-list" id="voiceLog"></ul>
+    <p class="note" id="voiceLogEmpty">まだありません。あなたの声が、さいしょの1つになるかもしれません。</p>
+    <p class="note"><a href="nishio-go/pr.html" target="_blank" rel="noopener">🖼 公開ページ「西尾の四季ドット絵」</a>（西尾の名所を、春夏秋冬・朝昼夕夜・4つの向きで描いた特大ドット絵。保存して西尾の紹介に使えます）</p>
+    <p class="note"><a href="nishio-go/minna.html" target="_blank" rel="noopener">🌏 公開ページ「みんなで見つけた西尾」</a>（ゲームを遊んでいない人にも、みんなの声でふえた西尾の名所を見てもらえます）</p>
+  </div>
+</section>
+
+<section class="panel" id="panel-settings" hidden>
+  <h2>せってい</h2>
+  <div class="card">
+    <div class="mode-sw" role="group" aria-label="移動のしかた">
+      <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
+      <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
+    </div>
+    <div class="row">
+      <span><b>❓ あそびかた</b><small>傾けて お米を転がし、めいろを ぬけて 西尾の名所へ。はじめに出た 説明を もう一度 見られます。</small></span>
+      <button type="button" id="howtoOpen" class="btn" style="flex:none">見る</button>
+    </div>
+    <label class="row">
+      <span><b>🐦 めいろの カラス</b><small>オンにすると、めいろの 中を カラスが うろうろして、近づくと お米を 追いかけて きます。当たると はじかれて 時計が 5秒 すすみます。かかしを とると しばらく にげて いき、さわると おいはらえます。おたすけの あいだは 1羽で ゆっくり。</small></span>
+      <input type="checkbox" id="mzCrowToggle" checked/>
+    </label>
+    <label class="row">
+      <span><b>🧭 めいろの おたすけ</b><small>オンにすると、めいろで ゴールへの 道を 水色の 線で いつも 出し、行き止まりに ✕ を 出します。はじめは めいろの ゴールに 3回 着くまで 自動で オンです。</small></span>
+      <input type="checkbox" id="mzHelpToggle"/>
+    </label>
+    <div class="row">
+      <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
+      <button type="button" id="koroOpen" class="btn" style="flex:none">ずかん</button>
+    </div>
+    <label class="row">
+      <span><b>🌙 夜は地図を暗く</b><small>オン（はじめ）は、夜（19時〜5時）のドット絵の地図が暗くなり、主人公のまわりと お店・建物の明かりだけが見えます（夕方・明け方は半分）。</small></span>
+      <input type="checkbox" id="nightToggle"/>
+    </label>
+    <label class="row">
+      <span><b>🟩 ゲームボーイの4色</b><small>オンにすると、ドット絵の地図を ポケモン赤・緑のころの ゲームボーイと同じ4つの色で描きます。オフ（はじめ）は 色のついたドット絵です。</small></span>
+      <input type="checkbox" id="gbToggle"/>
+    </label>
+    <label class="row">
+      <span><b>📝 文字を多めに出す</b><small>オンにすると、地図の町名・駅名・お店の看板、ごほうびのくわしい説明、案内のすすめた人の話などの文字も出します。オフ（はじめ）は、文字を少なくしてドット絵で出します。</small></span>
+      <input type="checkbox" id="textToggle"/>
+    </label>
+    <label class="row">
+      <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。曲は100曲以上あり、朝・昼・夕方・夜・雨で変わります。</small></span>
+      <input type="checkbox" id="bgmToggle"/>
+    </label>
+    <div class="row"><span><small id="bgmNow"></small></span><button type="button" class="btn mini" id="bgmNext" hidden>⏭ 次の曲</button></div>
+    <label class="row">
+      <span><b>📊 アクセス解析</b><small>どの画面を見たか・どのボタンを押したかを、Google・LINEヤフー・Meta の解析に送ります（現在地の座標は送りません）。オフにすると送りません。くわしくは<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>。</small></span>
+      <input type="checkbox" id="anaToggle"/>
+    </label>
+  </div>
+  <div class="card" id="codeCard">
+    <p><b>🔑 ひきつぎの あいことば</b><small>機種を変えるときや、別の端末で続きを遊ぶときに使います。「あいことばを出す」でコピーして、新しい端末の ここに はりつけると、ポイント・めぐった所・ドット絵などが そのまま移ります（あるいて移動・操作して移動 は別の記録です）。</small></p>
+    <div class="row"><button type="button" class="btn mini" id="codeMake">あいことばを出す</button><button type="button" class="btn mini" id="codeCopy" hidden>コピー</button></div>
+    <textarea id="codeBox" rows="3" spellcheck="false" placeholder="ここに あいことば を はりつけて、下のボタン"></textarea>
+    <button type="button" class="btn mini" id="codeLoad">この あいことばで続ける</button>
+  </div>
+  <div class="card">
+    <div class="row"><span><b>いまのGPS</b><small id="gpsInfo">—</small></span>
+      <button type="button" class="btn" id="copyGps">座標をコピー</button></div>
+  </div>
+  <div class="card">
+    <div class="row"><span><b>スポット</b><small id="spotInfo">—</small></span>
+      <button type="button" class="btn" id="reloadSpots">再読み込み</button></div>
+  </div>
+  <div class="card" id="edBox" hidden>
+    <h3>🏛 西尾市版（提案用デモ）について</h3>
+    <p class="note">西尾市が、歩いてまちを知ってもらうためにつくったゲーム、と仮定した版です。西尾市に見てもらうための試作で、西尾市の公式のものではありません。お店の要素（当店・特典・キャンペーン）を外し、市役所に観光担当の職員さんがいます。</p>
+    <p class="note"><a href="nishio-go/city.html" target="_blank" rel="noopener">📄 西尾市のご担当者さまむけの 提案資料</a>（遊びかた・西尾市にとってのよいこと・ご相談したいこと。印刷すると A4 2枚）</p>
+    <button type="button" class="btn" id="edShop">お店の版にもどす</button>
+  </div>
+  <div class="card">
+    <h3>ポイントのルール</h3>
+    <ul class="rules" id="rules"></ul>
+  </div>
+  <div class="card">
+    <h3>安全に遊ぶために</h3>
+    <ul class="rules">
+      <li>歩きながら画面を見ないでください。立ち止まって操作しましょう。</li>
+      <li>私有地・立入禁止の場所、境内の立入禁止区域には入らないでください。</li>
+      <li>神社やお寺では参拝の方の迷惑にならないようにしましょう。</li>
+      <li>車・自転車の運転中は操作しないでください（同乗者や電車・バスでの移動中は、そのまま遊べます）。</li>
+      <li>夜間や悪天候、海沿い・川沿いでは無理をしないでください。</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>プライバシー（<a href="nishio-go/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a>）</h3>
+    <p class="note">現在地の座標そのものは、どこにも送信しません（「こえ」タブのおたよりで「いまいる場所の近く」にチェックしたときだけ、約100mの細かさに丸めた位置をおたよりといっしょに送ります）。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
+  </div>
+  <div class="card danger">
+    <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
+      <button type="button" class="btn red" id="resetBtn">削除</button></div>
+  </div>
+  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。作者の一覧は docs/landmark-photos.md）を参考に描いたもの<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
+</section>
+
+<!-- はじめに（遊びかたのボタンは、スクロールしなくても見える所に。くわしい説明はたたんでおく） -->
+<div class="intro" id="intro">
+  <div class="intro-box">
+    <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/><span class="logo-lane" aria-hidden="true"><span class="logo-rice"><span class="logo-heart"></span></span></span></h1>
+    <p class="player-count" id="playerCount" hidden></p>
+    <p class="player-count voice-intro" id="voiceIntro" hidden></p>
+    <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="お米が 台地から 坂を ころころ転がり下りて、田んぼの あぜ道で にっこり"></canvas>
+    <p class="tagline">お米を ころころ 転がして、西尾をめぐろう</p>
+    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころがそう。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
+    <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
+    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small class="mp-s">スマホを傾けて、お米を 名所へ。家で遊べる</small><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米を 名所から名所へ ころがそう。家からでも西尾めぐり</small></button>
+    <!-- 押すのに 抵抗が ある人へ：お金・登録・アプリ・位置情報の 心配が ないことを ボタンの すぐ下に（運営者の声「プレイボタンを押すのに抵抗がある人対策」） -->
+    <p class="no-risk" aria-label="無料・登録なし・アプリ不要・位置情報なし"><span>✓ 無料</span><span>✓ 登録なし</span><span>✓ アプリ不要</span><span>✓ 位置情報なし</span></p>
+    <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
+    <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
+    <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
+    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small class="mp-s">本当に 西尾のまちを 歩く（位置情報）</small><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
+    <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
+    <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
+    <ul class="intro-shots" aria-label="プレイ画面">
+      <li><img src="nishio-go/shots/meiro.webp" alt="西尾の歩く地図が 緑の生け垣の めいろになり、お米が 通った あとに 足あとの 点が のこり、行き止まりに 金の米つぶ。画面の はしに ゴールの 🏁 と のこりの 道のり" width="540" height="1080" loading="lazy" decoding="async"/><span>地図が めいろに</span></li>
+      <li><img src="nishio-go/shots/meiro-board.webp" alt="西尾駅の まわりの 本当の道で できた めいろ。立った 緑の 壁の あいだを、お米が ゴールの 西尾駅へ 転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>めいろで ゴールへ</span></li>
+      <li><img src="nishio-go/shots/roll.webp" alt="🗺 ゴールまでの めいろ図。お米の いる所から ゴールの 名所までの めいろを 上から 見た 小さな 図に、金の米つぶと 足あとも 出る" width="540" height="1080" loading="lazy" decoding="async"/><span>めいろ図で 道を考える</span></li>
+      <li><img src="nishio-go/shots/reward.webp" alt="はじめての たからばこから 名鉄の電車の ドット絵が 出た画面" width="540" height="1080" loading="lazy" decoding="async"/><span>ドット絵をあつめる</span></li>
+      <li><img src="nishio-go/shots/world.webp" alt="西尾とまわりのまちの、せかいちず" width="540" height="1080" loading="lazy" decoding="async"/><span>名所をめぐる</span></li>
+      <li><img src="nishio-go/shots/badges.webp" alt="バッジの画面" width="540" height="1080" loading="lazy" decoding="async"/><span>バッジをそろえる</span></li>
+    </ul>
+    <details class="intro-more">
+      <summary>くわしい遊びかた</summary>
+      <ol class="core">
+        <li><b>聞く</b>：まちの人に話しかけると「📜 イベント」。たのまれた所へ行ってみよう</li>
+        <li><b>知る</b>：着いた所・たからばこ・歩いた道すがらで「📖 まちメモ」が集まる</li>
+        <li><b>ころころ</b>：操作して遊ぶときは、スマホを傾けると お米が ころころ転がる。閉じている間も るすばん でさんぽ</li>
+      </ol>
+      <ul>
+        <li>⭐ 西尾の名所に着いたらチェックインでポイント（はじめての場所はボーナス）</li>
+        <li>📜 毎日かわる「今日のクエスト」と、今月のおまつりの会場めぐり</li>
+        <li>📅 毎日つづけると、連続日数のボーナス</li>
+        <li>🔗 30分以内に つぎの名所へ行くと「めぐりの れんさ」でポイントが ふえる。👣 毎日の「100歩たんけん」、🔍 道が終わる所の「？」も しらべてみよう</li>
+      </ul>
+    </details>
+    <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
+    <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
+  </div>
+</div>
+
+<!-- あそびかた（はじめて めいろに 入ったときに 1回。せっていの「❓ あそびかた」で もう一度） -->
+<div class="howto" id="howto" hidden role="dialog" aria-modal="true" aria-labelledby="howtoT">
+  <div class="howto-box">
+    <h3 id="howtoT">🌀 あそびかた</h3>
+    <ol class="howto-list">
+      <li><span class="hi" aria-hidden="true">📱</span><span><b>スマホを傾けると、お米が 転がる</b><small id="howtoKey">傾けにくい ときは、地図を タップした所へ 向かう</small></span></li>
+      <li><span class="hi" aria-hidden="true">🏁</span><span><b>ゴールは 西尾の名所</b><small>画面の はしの 黄色い ▼ が ゴールの むき。下の 札に 名前と のこりの 道のり</small></span></li>
+      <li><span class="hi" aria-hidden="true">🌿</span><span><b>みどりの 生け垣は 通れない</b><small>本物の道で できた めいろ。はじめは 水色の 線が ゴールへの 道を 教えてくれる。✕ は 行き止まり</small></span></li>
+      <li><span class="hi" aria-hidden="true">🐦</span><span><b>カラスに 気をつけて</b><small>近づくと 追いかけて くる。当たると はじかれて、時計が 5秒 すすむ。かかしを とると 立場が 逆に！</small></span></li>
+      <li><span class="hi" aria-hidden="true">⭐</span><span><b>着いたら ポイントと ドット絵</b><small>まちの人の 話で、つぎの ゴールが きまる</small></span></li>
+    </ol>
+    <p class="howto-btns"><span>🌏 せかいちず</span><span>🔍 地図の大きさ</span><span>🌀 ステージの めいろ</span></p>
+    <button type="button" class="btn big" id="howtoOk">わかった！ 転がしてみる</button>
+  </div>
+</div>
+
+<!-- ホーム画面に追加のおすすめ（ごほうびを2回もらったあとに、7日に1回まで） -->
+<div class="a2hs" id="a2hs" hidden role="dialog" aria-label="ホーム画面に追加">
+  <p id="a2hsText">📲 ホーム画面に追加すると、あしたもワンタップで遊べます</p>
+  <div class="a2hs-btns"><button type="button" class="btn mini" id="a2hsAdd">追加する</button><button type="button" class="btn mini ghost" id="a2hsNo">あとで</button></div>
+</div>
+
+<!-- シェア（SNS・LINE・画像） -->
+<div class="share" id="share" hidden role="dialog" aria-modal="true" aria-label="シェア">
+  <div class="share-box">
+    <h3>📣 にしおさんぽGOをシェア</h3>
+    <canvas id="shareCard" width="1200" height="630" aria-label="シェア用の画像"></canvas>
+    <p class="share-text" id="shareText"></p>
+    <div class="share-btns">
+      <button type="button" class="btn" data-share="native" id="shareNative" hidden>📱 シェアする</button>
+      <a class="btn" data-share="x" id="shareX" target="_blank" rel="noopener">𝕏 ポスト</a>
+      <a class="btn" data-share="line" id="shareLine" target="_blank" rel="noopener">LINE</a>
+      <a class="btn" data-share="facebook" id="shareFb" target="_blank" rel="noopener">Facebook</a>
+      <button type="button" class="btn" data-share="copy">🔗 コピー</button>
+      <button type="button" class="btn" data-share="image">🖼️ 画像を保存</button>
+    </div>
+    <button type="button" class="btn big" data-share="close">とじる</button>
+  </div>
+</div>
+
+<!-- クーポン（店頭で見せる画面） -->
+<div class="coupon" id="coupon" hidden role="dialog" aria-modal="true" aria-labelledby="cpName">
+  <div class="coupon-box">
+    <div class="cp-shop" id="cpShop"></div>
+    <div class="cp-name" id="cpName"></div>
+    <div class="cp-code" id="cpCode"></div>
+    <div class="cp-clock" id="cpClock"></div>
+    <div class="cp-band" aria-hidden="true"><i></i></div>
+    <div class="cp-state" id="cpState"></div>
+    <div class="cp-staff" id="cpStaff">
+      <small>店員さんへ：内容を確認したら押してください（押すと使用済みになります）</small>
+      <button type="button" class="btn big" id="cpUse">使用済みにする</button>
+    </div>
+    <button type="button" class="btn ghost" id="cpClose">とじる</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="reward" id="reward" aria-live="assertive"></div>
+<!-- チェックインのあとの ひとこと（ワンタップ。みんなの声として名所の窓に出る） -->
+<div class="react-bar" id="reactBar" role="group" aria-label="この名所の ひとこと" hidden></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="nishio-go/icons.js"></script>
+<script src="nishio-go/analytics.js"></script>
+<script src="nishio-go/events.js"></script>
+<script src="nishio-go/npcs.js"></script>
+<script src="nishio-go/meibutsu.js"></script>
+<script src="nishio-go/shizen.js"></script>
+<script src="nishio-go/kome.js"></script>
+<script src="nishio-go/sangyo.js"></script>
+<script src="nishio-go/machi.js"></script>
+<script src="nishio-go/edition.js"></script>
+<script src="nishio-go/region.js"></script>
+<script src="nishio-go/season.js"></script>
+<script src="nishio-go/weather.js"></script>
+<script src="nishio-go/osm-query.js"></script>
+<script src="nishio-go/game.js"></script>
+<script src="nishio-go/runner.js"></script>
+<script src="nishio-go/harvest.js"></script>
+<script src="nishio-go/movie.js"></script>
+<script src="nishio-go/dankyu.js"></script>
+<script src="nishio-go/hiryoyama.js"></script>
+<script src="nishio-go/medashi.js"></script>
+<script src="nishio-go/mushi.js"></script>
+<script src="nishio-go/oldmap.js"></script>
+<script src="nishio-go/bookev.js"></script>
+<script src="nishio-go/kirara.js"></script>
+<script src="nishio-go/yatsumushi.js"></script>
+<script src="nishio-go/landmark-gen.js"></script>
+<script src="nishio-go/korostyle.js"></script>
+<script src="nishio-go/pixel.js"></script>
+<script src="nishio-go/meiro.js"></script>
+<script src="nishio-go/dots.js"></script>
+<script src="nishio-go/godot-field.js"></script>
+<script src="nishio-go/share.js"></script>
+</body>
+</html>

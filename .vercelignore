@@ -1,0 +1,16 @@
+# 公開サイト（go.ricepia.jp・ricepia-judge.vercel.app）に 置かなくてよい ファイル。リポジトリには のこす
+# （GitHub の自動処理・社内の文書・スクリプト・ricepia.jp の HTML の写しなど。サイトが 読むものは 外さない）
+# 頭の / は「いちばん上の フォルダ だけ」（nishio-go/godot/ のような 同じ名前の フォルダは 外さない）
+/.github
+/docs
+/monitor
+/ricepia-jp
+/godot
+*.md
+/tools/*
+# トラクターのゲーム（tractor.html）は tools/tractor/ の 3D モデルを 読む
+!/tools/tractor
+/tools/tractor/*.py
+/.claude
+/scripts
+/tests

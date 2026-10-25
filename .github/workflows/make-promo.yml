@@ -1,0 +1,54 @@
+# にしおさんぽGO：広告用の動画（縦長 9:16・mp4）と画像、インスタのリール用のデモプレイ動画を、ほんとうのゲーム画面から作る（tools/make-promo.js・make-reel.js）
+# 動画と画像は Actions の「Artifacts」から取り出す。画像は mkt/nishio-go/ にもコミットする
+name: Make Nishio promo
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/make-promo.js
+      - tools/make-reel.js
+      - tools/record-page.js
+      - nishio-go/logo.svg   # タイトルロゴを変えたら、広告の画像も作り直す
+      - .github/workflows/make-promo.yml
+permissions:
+  contents: write
+concurrency:
+  group: make-promo-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  promo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+      - name: Install Playwright and ffmpeg
+        run: |
+          npm install --no-save --no-package-lock playwright@1.48.2
+          npx playwright install --with-deps chromium
+          command -v ffmpeg || (sudo apt-get update -q && sudo apt-get install -y -q ffmpeg)
+      - name: Record promo and demo reel
+        run: |
+          node tools/make-promo.js promo-out
+          node tools/make-reel.js promo-out   # インスタのリール用のデモプレイ動画（nishio-go-reel.mp4）
+          ls -la promo-out
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: nishio-go-promo
+          path: promo-out/
+          retention-days: 30
+      - name: Commit stills
+        run: |
+          mkdir -p mkt/nishio-go && rm -f mkt/nishio-go/*.png && cp promo-out/*.png mkt/nishio-go/   # 使わなくなった場面の画像を残さない
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mkt/nishio-go
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -q -m "にしおさんぽGO: 広告用の画像を作り直し（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          exit 1

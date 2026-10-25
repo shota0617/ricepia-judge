@@ -1,0 +1,59 @@
+# にしおさんぽGO：国土数値情報「土地利用細分メッシュ」（国土交通省）から、遊べる範囲の土地利用の表 nishio-go/landuse.json を作ってコミットする
+name: Bake Nishio landuse
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/bake-landuse.js
+      - .github/workflows/bake-landuse.yml
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: bake-landuse-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+      - name: Download landuse mesh (1次メッシュ 5236・5237、令和3年度)
+        run: |
+          mkdir -p landuse-src
+          for m in 5236 5237; do
+            curl -sSfL --retry 3 -m 300 "https://nlftp.mlit.go.jp/ksj/gml/data/L03-b/L03-b-21/L03-b-21_${m}-jgd2011_GML.zip" -o "landuse-src/$m.zip"
+            unzip -o -q "landuse-src/$m.zip" '*.dbf' -d "landuse-src/$m"
+          done
+      - name: Bake landuse.json
+        id: bake
+        run: node tools/bake-landuse.js landuse-src
+      # 土地利用の表が変わったら、せかいちずの版を上げ、前の範囲の中身が変わったときは歩く地図の版も上げて（古い区画をぜんぶ作り直す対象にする）
+      # いっしょにコミットし、両方の作成を起動する（GITHUB_TOKEN のコミットでは push の起動がかからないため）。
+      # 範囲を広げただけ（前の範囲は同じ）なら、歩く地図は新しく範囲に入った区画だけ作る
+      - name: Commit landuse.json
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nishio-go/landuse.json
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          if [ "${{ steps.bake.outputs.old_changed }}" != "0" ]; then echo $(( $(cat tools/chunks-version.txt) + 1 )) > tools/chunks-version.txt; fi
+          echo $(( $(cat tools/world-version.txt) + 1 )) > tools/world-version.txt
+          git add tools/chunks-version.txt tools/world-version.txt
+          git commit -q -m "にしおさんぽGO: 土地利用の表を国土数値情報から作り直し、歩く地図とせかいちずを作り直す（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && echo "changed=1" >> "$GITHUB_OUTPUT" && exit 0; sleep 10; done
+          exit 1
+      - name: Rebake maps for the new landuse
+        if: steps.commit.outputs.changed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run bake-chunks.yml --ref "${GITHUB_REF_NAME}"
+          gh workflow run bake-world.yml --ref "${GITHUB_REF_NAME}"

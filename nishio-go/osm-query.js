@@ -1,0 +1,105 @@
+// にしおさんぽGO：OpenStreetMap からスポットを取るときの問い合わせと、取れた場所の分類
+// ゲーム（game.js）と、前もってスポットを作るスクリプト（tools/bake-spots.js）の両方で使う
+(function (root) {
+'use strict';
+
+// 正規表現の記号は「任意の1文字」に（取得側は広め、照合は game.js で厳密に）
+const reEsc = t => t.replace(/[.*+?^${}()|[\]\\"']/g, '.');
+
+// 近藤米穀店（本店）から半径15km（game.js の CFG.home。市町の外でも遊べる範囲）
+const HOME = { lat: 34.891717, lng: 137.059249, r: 15000 };
+// 遊べる範囲で探す：遊べる市町（西尾市と となりの市町。region.js と同じ）の中と、本店から15km（＋300m）の円を囲む長方形の中
+// （around より長方形のほうがサーバーの負担がずっと軽い。円の外の角に出たものは、game.js が遊べる範囲で絞る）
+const AREA = 'area["name"~"^(西尾市|岡崎市|安城市|碧南市|幸田町|蒲郡市|高浜市)$"]["admin_level"="7"]->.a;';
+const KM_LNG = 111.32 * Math.cos(HOME.lat * Math.PI / 180), R_KM = (HOME.r + 300) / 1000, f6 = v => v.toFixed(4);
+const BOX = `${f6(HOME.lat - R_KM / 111.32)},${f6(HOME.lng - R_KM / KM_LNG)},${f6(HOME.lat + R_KM / 111.32)},${f6(HOME.lng + R_KM / KM_LNG)}`;
+const IN = ['(area.a)', `(${BOX})`];
+const stmts = (filters, ins = IN) => filters.flatMap(f => ins.map(w => `\n  nwr${f}${w};`)).join('');
+const SPOT_FILTERS = [
+  '["amenity"="place_of_worship"]["name"]',
+  '["historic"]["name"]',
+  '["tourism"~"^(attraction|museum|gallery|viewpoint|artwork|zoo|aquarium|theme_park)$"]["name"]',
+  '["leisure"~"^(park|garden|nature_reserve)$"]["name"]',
+  '["amenity"~"^(library|townhall)$"]["name"]',
+  '["railway"="station"]["name"]',
+  '["natural"~"^(beach|peak|cape)$"]["name"]',
+  '["waterway"="waterfall"]["name"]',
+  '["man_made"="lighthouse"]["name"]',
+];
+// 注目スポットの名前（spots.json の match）でも探す。名前だけで見つかったものは注目スポットにのみ使う
+// （注目スポットはどれも遊べる市町の中なので、名前で探すのは市町の中だけ）
+const nameStmt = names => names.length ? `\n  nwr["name"~"${names.map(m => m.startsWith('=') ? `^${reEsc(m.slice(1))}$` : reEsc(m)).join('|')}"](area.a);` : '';
+const wrap = (body, area) => `[out:json][timeout:180];\n${area ? AREA + '\n' : ''}(${body}\n);\nout center tags;`;
+// ゲームが使う問い合わせ（osm-spots.json の q と同じ文字列なら、前もって作ったスポットを使う）
+const buildQuery = names => wrap(stmts(SPOT_FILTERS) + nameStmt(names), true);
+// 前もって作るとき（tools/bake-spots.js）は、市町の中と長方形の中を別々に問い合わせて合わせる（1回が重すぎて時間切れになるため）
+const buildQueryParts = names => [wrap(stmts(SPOT_FILTERS, [IN[0]]) + nameStmt(names), true), wrap(stmts(SPOT_FILTERS, [IN[1]]), false)];
+
+function catOf(t) {
+  if (t.amenity === 'place_of_worship') return t.religion === 'shinto' ? 'shrine' : t.religion === 'buddhist' ? 'temple' : 'worship';
+  if (t.historic === 'castle') return 'castle';
+  if (t.historic) return 'historic';
+  if (t.tourism === 'museum' || t.tourism === 'gallery') return 'museum';
+  if (t.tourism === 'viewpoint' || t.natural === 'peak' || t.natural === 'cape') return 'view';
+  if (t.tourism === 'artwork') return 'art';
+  if (t.tourism || t.waterway === 'waterfall' || t.man_made === 'lighthouse') return 'sight';
+  if (t.leisure === 'park' || t.leisure === 'garden' || t.leisure === 'nature_reserve') return 'park';
+  if (t.amenity === 'library') return 'library';
+  if (t.amenity === 'townhall') return 'townhall';
+  if (t.railway === 'station') return 'station';
+  if (t.natural === 'beach') return 'beach';
+  return 'other';   // 名前検索でだけ見つかったもの（ふつうのスポットにはしない）
+}
+
+// Overpass の答え（JSON）から、[id, 表示名, 分類, 緯度, 経度, OSMの名前] の一覧を作る
+function toItems(json) {
+  const items = [];
+  for (const el of json.elements || []) {
+    const t = el.tags || {};
+    const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
+    if (!t.name || lat == null || lng == null) continue;
+    const cat = catOf(t);
+    let name = t.name;
+    if (cat === 'station' && !name.endsWith('駅')) name += '駅';
+    items.push([el.type[0] + el.id, name, cat, +lat.toFixed(6), +lng.toFixed(6), t.name]);
+  }
+  return items;
+}
+
+// 街並みの目印（コンビニ・スーパー・ガソリンスタンドなど）。西尾の人が見て「あそこだ」と分かるように、名前つきで地図に出す
+const LANDMARK_FILTERS = [
+  '["shop"]["name"]',   // 名前のあるお店はぜんぶ（町の八百屋・酒屋・お茶屋・自転車屋なども「あそこの店だ」と分かるように）
+  '["craft"]["name"]',   // 和菓子・鰻・瓦・お茶など、つくっているところ
+  '["amenity"~"^(fuel|bank|restaurant|fast_food|cafe|pharmacy|post_office|ice_cream|bar|pub|karaoke_box|car_wash)$"]["name"]',
+];
+const LANDMARK_QUERY = wrap(stmts(LANDMARK_FILTERS), true);
+const LANDMARK_PARTS = [wrap(stmts(LANDMARK_FILTERS, [IN[0]]), true), wrap(stmts(LANDMARK_FILTERS, [IN[1]]), false)];
+function landmarkKind(t) {
+  const s = t.shop || '', a = t.amenity || '';
+  if (s === 'convenience') return 'konbini';
+  if (/^(supermarket|mall|department_store)$/.test(s)) return 'super';
+  if (/^(doityourself|hardware|furniture)$/.test(s)) return 'home';
+  if (/^(chemist|drugstore)$/.test(s) || a === 'pharmacy') return 'drug';
+  if (a === 'fuel') return 'fuel';
+  if (a === 'bank') return 'bank';
+  if (a === 'post_office') return 'post';
+  if (/^(restaurant|fast_food|bar|pub|karaoke_box)$/.test(a)) return 'food';
+  if (/^(cafe|ice_cream)$/.test(a) || /^(bakery|confectionery|tea|pastry)$/.test(s) || /^(confectionery|tea)$/.test(t.craft || '')) return 'cafe';
+  return 'store';
+}
+// [緯度, 経度, 種類, 名前] の一覧
+function toLandmarks(json) {
+  const out = [];
+  for (const el of json.elements || []) {
+    const t = el.tags || {};
+    const lat = el.lat ?? el.center?.lat, lng = el.lon ?? el.center?.lon;
+    if (!t.name || lat == null || lng == null) continue;
+    out.push([+lat.toFixed(6), +lng.toFixed(6), landmarkKind(t), String(t.name).slice(0, 30)]);
+  }
+  return out;
+}
+
+const api = { HOME, buildQuery, buildQueryParts, LANDMARK_PARTS, catOf, toItems, LANDMARK_QUERY, landmarkKind, toLandmarks };
+if (typeof module !== 'undefined' && module.exports) module.exports = api;
+else root.NSG_OSM = api;
+})(typeof window !== 'undefined' ? window : globalThis);

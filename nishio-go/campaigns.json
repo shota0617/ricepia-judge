@@ -1,0 +1,18 @@
+{
+  "_説明": "キャンペーン（お店の企画や広告と連動）。active が true のものだけ本番で表示（false は「操作して遊ぶ」でだけサンプルとして表示）。from〜to（YYYY-MM-DD）の期間中、きろくの上に表示し、bonus.shopCheckin があれば当店でのチェックインに1日1回そのポイントを足します。url はくわしいページ（https のみ。UTM は自動で付きます）。広告のリンクに ?c=キャンペーンのid を付けると、そのキャンペーンから来た人として数えます（docs/marketing.md）。ほんとうの特典や期間は、お店で決めてから active にしてください。",
+  "campaigns": [
+    {
+      "id": "shinmai-sample",
+      "active": false,
+      "from": "2026-10-01",
+      "to": "2026-11-30",
+      "icon": "🌾",
+      "title": "新米キャンペーン",
+      "text": "新米の季節。当店にチェックインすると、1日1回ボーナスポイント。",
+      "bonus": {
+        "shopCheckin": 50
+      },
+      "url": "https://ricepia.jp/"
+    }
+  ]
+}

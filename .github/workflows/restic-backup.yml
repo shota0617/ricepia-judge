@@ -1,0 +1,47 @@
+# このリポジトリ（すべてのブランチと履歴）を、毎日 restic でクラウドにバックアップする（tools/restic-backup.sh）
+# 必要なシークレット：RESTIC_REPOSITORY（保存先）・RESTIC_PASSWORD（暗号のパスワード）
+#   保存先がクラウドなら、その鍵も：S3 / Cloudflare R2 は RESTIC_AWS_ACCESS_KEY_ID・RESTIC_AWS_SECRET_ACCESS_KEY、
+#   Backblaze B2 は B2_ACCOUNT_ID・B2_ACCOUNT_KEY
+# 外付けSSDへは、自分のパソコンで同じスクリプトを動かす（README の「バックアップ」）
+name: restic backup
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 18 * * *'   # 毎日 3:17（日本時間）
+permissions:
+  contents: read
+concurrency:
+  group: restic-backup
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RESTIC_REPOSITORY: ${{ secrets.RESTIC_REPOSITORY }}
+      RESTIC_PASSWORD: ${{ secrets.RESTIC_PASSWORD }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.RESTIC_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.RESTIC_AWS_SECRET_ACCESS_KEY }}
+      B2_ACCOUNT_ID: ${{ secrets.B2_ACCOUNT_ID }}
+      B2_ACCOUNT_KEY: ${{ secrets.B2_ACCOUNT_KEY }}
+      RESTIC_HOST: github-actions
+    steps:
+      - name: Check secrets
+        id: secrets
+        run: |
+          if [ -z "$RESTIC_REPOSITORY" ] || [ -z "$RESTIC_PASSWORD" ]; then
+            # まだ設定されていないときは何もしない（失敗にはしない）
+            echo "::warning::シークレットが未設定のためバックアップしません（RESTIC_REPOSITORY / RESTIC_PASSWORD）"
+            echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.secrets.outputs.ok == 'true'
+        with:
+          fetch-depth: 0   # すべてのブランチと履歴
+      - name: Install restic
+        if: steps.secrets.outputs.ok == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq restic && restic version
+      - name: Backup
+        if: steps.secrets.outputs.ok == 'true'
+        run: bash tools/restic-backup.sh

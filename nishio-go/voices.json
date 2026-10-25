@@ -1,0 +1,25 @@
+{
+ "_説明": "にしおさんぽGO のプレイヤーの声（おたより）の公開データ。tools/feedback-triage.js voices が作る。replies は受付番号（端末で作った でたらめな番号）ごとの いまの様子、log は反映されたこと。おたよりの文・送った人の位置は入れない",
+ "replies": {},
+ "log": [],
+ "counts": {},
+ "updated": "2026-10-23",
+ "reactions": {
+  "n4581974121": {
+   "love": 1
+  },
+  "f-nishio-station": {
+   "love": 1
+  },
+  "w557365459": {
+   "photo": 1
+  },
+  "w1073242980": {
+   "calm": 1
+  }
+ },
+ "reactedIssues": [
+  2,
+  3
+ ]
+}

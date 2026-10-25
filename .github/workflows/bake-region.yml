@@ -1,0 +1,55 @@
+# にしおさんぽGO：遊べる市町（西尾市と となりの市町）の境界を 国土数値情報の行政区域（取れないときは OpenStreetMap）から作り直して、nishio-go/region.js をコミットする
+name: Bake Nishio region
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - claude/confident-turing-etepui
+    paths:
+      - tools/bake-region.js
+      - .github/workflows/bake-region.yml
+permissions:
+  contents: write
+  actions: write
+concurrency:
+  group: bake-region-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+      # 国土数値情報「行政区域データ」（N03）の愛知県。新しい年から順に試す
+      - name: Download administrative boundaries (KSJ N03, Aichi)
+        id: ksj
+        run: |
+          mkdir -p n03
+          for y in 2025 2024 2023; do
+            if curl -sSfL --retry 3 -m 300 "https://nlftp.mlit.go.jp/ksj/gml/data/N03/N03-${y}/N03-${y}0101_23_GML.zip" -o n03/n03.zip; then
+              unzip -o -q n03/n03.zip '*.geojson' -d n03 && f=$(find n03 -name '*.geojson' | head -1) && [ -n "$f" ] && echo "file=$f" >> "$GITHUB_OUTPUT" && echo "N03-${y}: $f" && exit 0
+            fi
+          done
+          echo "国土数値情報が取れないので、OpenStreetMap から作ります"
+      - name: Bake region
+        run: node tools/bake-region.js ${{ steps.ksj.outputs.file }}
+      - name: Commit region.js
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add nishio-go/region.js
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -m "にしおさんぽGO: 遊べる市町の境界を作り直し（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && echo "changed=1" >> "$GITHUB_OUTPUT" && exit 0; sleep 10; done
+          exit 1
+      # 境界が変わったら、歩く地図の区画を作り直す（範囲に入った区画を作り、外れた区画を消す）。GITHUB_TOKEN のコミットでは push の起動がかからないため
+      - name: Bake walking map for the new boundary
+        if: steps.commit.outputs.changed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run bake-chunks.yml --ref "${GITHUB_REF_NAME}"

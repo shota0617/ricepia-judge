@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>らいすぴあ Marketing Studio</title>
+<meta name="robots" content="noindex,nofollow"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Serif+JP:wght@500;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="mkt/style.css"/>
+</head>
+<body>
+
+<div class="shell">
+  <aside id="sidebar">
+    <div class="brand">
+      <div class="brand-logo">🌾</div>
+      <div class="brand-txt">
+        <div class="brand-name">らいすぴあ</div>
+        <div class="brand-sub">販促の管理画面</div>
+      </div>
+      <button id="keyBadgeM" class="badge badge-btn only-m" onclick="RP.keyModal()">🔑</button>
+    </div>
+    <nav id="nav" aria-label="メニュー">
+      <button data-go="home"><i>⌂</i><span>ホーム</span></button>
+      <button data-go="improve"><i>✧</i><span>今週の改善</span><em class="nb" id="nbImprove"></em></button>
+      <button data-go="calendar"><i>▦</i><span>販促カレンダー</span><em class="nb" id="nbCalendar"></em></button>
+      <button data-go="sales"><i>▥</i><span>売上と配信</span></button>
+      <button data-go="customers"><i>☺</i><span>顧客分析</span></button>
+      <div class="nav-sep"></div>
+      <button data-go="studio"><i>✎</i><span>コンテンツ生成</span></button>
+      <button data-go="doctor"><i>✓</i><span>コピー診断</span></button>
+      <button data-go="reviews"><i>☏</i><span>口コミ対応</span></button>
+      <button data-go="campaign"><i>◎</i><span>キャンペーン設計</span></button>
+      <button data-go="research"><i>⌕</i><span>市場リサーチ</span></button>
+      <div class="nav-sep"></div>
+      <button data-go="library"><i>❏</i><span>ライブラリ</span></button>
+      <button data-go="brand"><i>◈</i><span>ブランド設定</span><em class="nb warn" id="nbBrand"></em></button>
+      <button data-go="settings"><i>⚙</i><span>設定・データ</span></button>
+    </nav>
+    <div class="side-foot">
+      <button id="keyBadge" class="badge badge-btn" onclick="RP.keyModal()">🔑 APIキー未設定</button>
+      <span id="costBadge" class="badge" title="今月のAI利用料（概算）">¥0</span>
+      <a class="side-link" href="index.html">🍚 品質判定AI</a>
+      <a class="side-link" href="meta-ads.html">📊 Meta広告診断</a>
+      <a class="side-link" href="meeting.html">🎥 ミーティング・要望分析</a>
+    </div>
+  </aside>
+
+  <main id="main">
+
+    <!-- ============ ホーム ============ -->
+    <section id="v-home" class="view">
+      <div class="page-head">
+        <h1>ホーム</h1><span class="muted small" id="homeTime"></span>
+        <span class="spacer"></span>
+        <button class="btn-ghost-sm" onclick="RP.mod.home.show()">更新</button>
+      </div>
+      <div id="homeWelcome"></div>
+      <div class="act-row">
+        <div id="homeAction" class="act-box"></div>
+        <button id="homeDiagJump" class="diag-jump" onclick="document.getElementById('homeDiag').scrollIntoView({behavior:'smooth'})"></button>
+      </div>
+      <div id="homeTiles" class="tiles tiles-big"></div>
+      <div id="homeStrip" class="strip"></div>
+      <div class="card" id="homeDiag"></div>
+      <div class="card">
+        <div class="card-head"><h2>チャネルの調子 <small>7日</small></h2><span class="spacer"></span><button class="btn-ghost-sm" onclick="RP.mod.home.editStats()">数値を更新</button><button class="link" data-go="studio">つくる →</button></div>
+        <div id="homeChannels" class="tbl-wrap"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>日別発信数 <small>直近30日</small></h2><span class="spacer"></span><button class="link" data-go="calendar">カレンダー →</button></div>
+        <div id="homeDaily" class="chart"></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>今後2週間の予定</h2><span class="spacer"></span><button class="link" data-go="calendar">すべて →</button></div>
+          <div id="dashUpcoming"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>季節の販促ヒント</h2></div>
+          <div id="dashSeason"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 今週の改善 ============ -->
+    <section id="v-improve" class="view" hidden>
+      <div class="view-head">
+        <h1>今週の改善</h1>
+        <p>入力済みのデータから自動で見つけた改善点と、AIによる打ち手の提案。</p>
+      </div>
+      <div class="card" id="improveList"></div>
+      <div class="card">
+        <div class="card-head"><h2>AI経営アドバイザー</h2></div>
+        <p class="hint">KPIの推移・季節・ブランド情報から、今月の打ち手を優先順位付きで提案します。</p>
+        <button class="btn-primary" id="dashAiBtn" onclick="RP.mod.sales.advise()">📈 今月の打ち手を提案してもらう</button>
+        <div id="dashAiOut" class="ai-out" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ 売上と配信 ============ -->
+    <section id="v-sales" class="view" hidden>
+      <div class="view-head">
+        <h1>売上と配信</h1>
+        <p>月次の売上・客数・フォロワーの推移。数値を入力するとホームと診断に反映されます。</p>
+      </div>
+      <div id="dashTiles" class="tiles"></div>
+      <div class="card">
+        <div class="card-head">
+          <h2>月次推移</h2>
+          <select id="dashMetric" class="sel-sm"></select>
+        </div>
+        <div id="dashChart" class="chart"></div>
+        <details class="tbl-toggle"><summary>表で見る</summary><div id="dashChartTable"></div></details>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <h2>月次KPI入力</h2>
+          <button class="btn-sm" onclick="RP.mod.sales.addRow()">＋ 月を追加</button>
+        </div>
+        <p class="hint">数値を入力すると自動保存されます。空欄はそのままでOK。</p>
+        <div class="tbl-wrap"><table class="tbl" id="kpiTable"></table></div>
+        <div class="row-btns">
+          <button class="btn-ghost-sm" onclick="RP.mod.sales.sample()">サンプルデータを入れる</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONTENT STUDIO ============ -->
+    <section id="v-studio" class="view" hidden>
+      <div class="view-head">
+        <h1>コンテンツ生成</h1>
+        <p>SNS・LINE・EC・POP・チラシまで。ブランドの声で一発生成。</p>
+      </div>
+      <div id="judgeBridge" class="bridge" hidden></div>
+      <div class="grid2 grid-form">
+        <div class="card">
+          <label class="lbl">チャネル</label>
+          <div id="chanPicker" class="chips"></div>
+          <label class="lbl">商品</label>
+          <select id="stProduct" class="inp"></select>
+          <label class="lbl">目的</label>
+          <div id="stGoal" class="chips"></div>
+          <label class="lbl">季節・イベント</label>
+          <input id="stOccasion" class="inp" list="occasionList" placeholder="例：新米入荷、お歳暮、敬老の日"/>
+          <datalist id="occasionList"></datalist>
+          <label class="lbl">トーン</label>
+          <div id="stTone" class="chips"></div>
+          <label class="lbl">伝えたいこと・補足（任意）</label>
+          <textarea id="stNotes" class="inp" rows="3" placeholder="例：今週末だけ5kg以上で精米無料サービス。駐車場あり。"></textarea>
+          <div class="row2">
+            <div>
+              <label class="lbl">案の数</label>
+              <select id="stVariants" class="inp"><option>1</option><option selected>2</option><option>3</option></select>
+            </div>
+            <div>
+              <label class="lbl">写真（任意）</label>
+              <button class="btn-ghost-sm w100" onclick="document.getElementById('stImage').click()" id="stImageBtn">🖼 写真を添付</button>
+              <input type="file" id="stImage" accept="image/*" hidden/>
+            </div>
+          </div>
+          <div id="stImagePrev" class="img-prev" hidden></div>
+          <button class="btn-primary" id="stGo" onclick="RP.mod.studio.generate()">✨ 生成する</button>
+        </div>
+        <div class="card out-card">
+          <div class="card-head">
+            <h2>生成結果</h2>
+            <span id="stMeta" class="muted small"></span>
+          </div>
+          <div id="stOut" class="ai-out placeholder">左のフォームを埋めて「生成する」を押してください。<br/>チャネルごとの文字数・書式ルールに合わせて作成します。</div>
+          <div id="stActions" class="row-btns" hidden>
+            <button class="btn-sm" onclick="RP.mod.studio.copy()">📋 コピー</button>
+            <button class="btn-sm" onclick="RP.mod.studio.save()">📚 ライブラリに保存</button>
+            <button class="btn-sm" onclick="RP.mod.studio.toDoctor()">🩺 診断する</button>
+            <button class="btn-sm" onclick="RP.mod.studio.toCalendar()">🗓️ 予定に入れる</button>
+            <button class="btn-ghost-sm" onclick="RP.mod.studio.generate()">↻ 再生成</button>
+          </div>
+          <div id="stRefine" class="refine" hidden>
+            <input id="stRefineInp" class="inp" placeholder="修正指示：例）もっと短く／絵文字を減らして／ギフト向けに"/>
+            <button class="btn-sm" onclick="RP.mod.studio.refine()">修正</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COPY DOCTOR ============ -->
+    <section id="v-doctor" class="view" hidden>
+      <div class="view-head">
+        <h1>コピー診断</h1>
+        <p>訴求力の採点と、景品表示法・食品表示の観点でのリスクチェック。</p>
+      </div>
+      <div class="grid2 grid-form">
+        <div class="card">
+          <label class="lbl">診断するコピー・投稿文</label>
+          <textarea id="drText" class="inp" rows="9" placeholder="キャッチコピー、SNS投稿、チラシ文面などを貼り付け"></textarea>
+          <label class="lbl">使う場所</label>
+          <select id="drChannel" class="inp"></select>
+          <button class="btn-primary" id="drGo" onclick="RP.mod.doctor.run()">🩺 診断する</button>
+          <p class="hint">※ 法的助言ではありません。表示内容の最終判断は専門家・所管窓口にご確認ください。</p>
+        </div>
+        <div class="card out-card"><div id="drOut" class="placeholder">診断結果がここに表示されます。</div></div>
+      </div>
+    </section>
+
+    <!-- ============ REVIEWS ============ -->
+    <section id="v-reviews" class="view" hidden>
+      <div class="view-head">
+        <h1>口コミ対応</h1>
+        <p>Googleマップ等の口コミに、店主らしい返信を。まとめて分析もできます。</p>
+      </div>
+      <div class="seg" id="rvTabs">
+        <button class="on" data-rv="reply">1件に返信</button>
+        <button data-rv="bulk">まとめて分析</button>
+      </div>
+      <div id="rvReply" class="grid2 grid-form">
+        <div class="card">
+          <label class="lbl">口コミ本文</label>
+          <textarea id="rvText" class="inp" rows="6" placeholder="お客様の口コミを貼り付け"></textarea>
+          <div class="row2">
+            <div>
+              <label class="lbl">評価</label>
+              <select id="rvStars" class="inp"><option value="5">★5</option><option value="4">★4</option><option value="3">★3</option><option value="2">★2</option><option value="1">★1</option></select>
+            </div>
+            <div>
+              <label class="lbl">投稿者名（任意）</label>
+              <input id="rvName" class="inp" placeholder="例：山田様"/>
+            </div>
+          </div>
+          <label class="lbl">店側の事情・補足（任意）</label>
+          <textarea id="rvNote" class="inp" rows="2" placeholder="例：当日は精米機の故障で待たせてしまった。現在は修理済み。"></textarea>
+          <button class="btn-primary" id="rvGo" onclick="RP.mod.reviews.reply()">💬 返信案を作る</button>
+        </div>
+        <div class="card out-card">
+          <div id="rvOut" class="ai-out placeholder">返信案がここに表示されます。</div>
+          <div class="row-btns" id="rvActions" hidden>
+            <button class="btn-sm" onclick="RP.copy(RP.mod.reviews.last)">📋 コピー</button>
+            <button class="btn-ghost-sm" onclick="RP.mod.reviews.reply()">↻ 別案</button>
+          </div>
+        </div>
+      </div>
+      <div id="rvBulk" class="grid2 grid-form" hidden>
+        <div class="card">
+          <label class="lbl">口コミ（空行区切りで複数）</label>
+          <textarea id="rvBulkText" class="inp" rows="14" placeholder="★5 新米が本当においしい…&#10;&#10;★3 駐車場がわかりにくい…"></textarea>
+          <button class="btn-primary" id="rvBulkGo" onclick="RP.mod.reviews.analyze()">📊 傾向を分析する</button>
+        </div>
+        <div class="card out-card"><div id="rvBulkOut" class="placeholder">分析結果がここに表示されます。</div></div>
+      </div>
+    </section>
+
+    <!-- ============ CAMPAIGN ============ -->
+    <section id="v-campaign" class="view" hidden>
+      <div class="view-head">
+        <h1>キャンペーン設計</h1>
+        <p>目的と予算から、コンセプト・KPI・予算配分・スケジュールまで一括設計。</p>
+      </div>
+      <div class="grid2 grid-form">
+        <div class="card">
+          <label class="lbl">キャンペーンの目的</label>
+          <select id="cpGoal" class="inp">
+            <option>新米シーズンの売上最大化</option>
+            <option>お歳暮・ギフト需要の獲得</option>
+            <option>新規客の獲得（来店）</option>
+            <option>EC・通販の売上拡大</option>
+            <option>定期便・リピート客の育成</option>
+            <option>LINE友だち登録の増加</option>
+            <option>業務用（飲食店）取引の開拓</option>
+            <option>オリジナル米ブランドの認知向上</option>
+          </select>
+          <label class="lbl">主役の商品</label>
+          <select id="cpProduct" class="inp"></select>
+          <div class="row2">
+            <div><label class="lbl">開始日</label><input type="date" id="cpStart" class="inp"/></div>
+            <div><label class="lbl">期間（日）</label><input type="number" id="cpDays" class="inp" value="30" min="3" max="180"/></div>
+          </div>
+          <div class="row2">
+            <div><label class="lbl">予算（円）</label><input type="number" id="cpBudget" class="inp" value="50000" step="1000" min="0"/></div>
+            <div><label class="lbl">売上目標（円・任意）</label><input type="number" id="cpTarget" class="inp" step="10000" min="0" placeholder="例：1500000"/></div>
+          </div>
+          <label class="lbl">使えるチャネル</label>
+          <div id="cpChannels" class="chips"></div>
+          <label class="lbl">条件・アイデア（任意）</label>
+          <textarea id="cpNotes" class="inp" rows="3" placeholder="例：店頭での試食が可能。スタッフは2名。"></textarea>
+          <button class="btn-primary" id="cpGo" onclick="RP.mod.campaign.plan()">🎯 キャンペーンを設計する</button>
+        </div>
+        <div class="card out-card">
+          <div id="cpOut" class="placeholder">設計結果がここに表示されます。</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>保存したキャンペーン</h2></div>
+        <div id="cpList"></div>
+      </div>
+    </section>
+
+    <!-- ============ CALENDAR ============ -->
+    <section id="v-calendar" class="view" hidden>
+      <div class="view-head">
+        <h1>販促カレンダー</h1>
+        <p>投稿・配信・イベントの予定管理。AIで1ヶ月分の計画も作れます。</p>
+      </div>
+      <div class="card">
+        <div class="cal-bar">
+          <button class="btn-ghost-sm" onclick="RP.mod.calendar.shift(-1)">‹</button>
+          <div id="calTitle" class="cal-title"></div>
+          <button class="btn-ghost-sm" onclick="RP.mod.calendar.shift(1)">›</button>
+          <button class="btn-ghost-sm" onclick="RP.mod.calendar.today()">今月</button>
+          <span class="spacer"></span>
+          <button class="btn-sm" onclick="RP.mod.calendar.edit()">＋ 予定</button>
+          <button class="btn-sm btn-gold" id="calAiBtn" onclick="RP.mod.calendar.autoPlan()">🤖 1ヶ月分をAIで計画</button>
+        </div>
+        <div id="calSeason" class="season-strip"></div>
+        <div id="calGrid" class="cal-grid"></div>
+        <div id="calLegend" class="legend"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>この月の予定一覧</h2></div>
+        <div id="calList"></div>
+      </div>
+    </section>
+
+    <!-- ============ CUSTOMERS ============ -->
+    <section id="v-customers" class="view" hidden>
+      <div class="view-head">
+        <h1>顧客分析（RFM）</h1>
+        <p>購入履歴から顧客をセグメント分けし、セグメント別の施策とメッセージを作成。</p>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>顧客データ</h2><span id="cuCount" class="muted small"></span></div>
+        <p class="hint">CSV列：<code>顧客名, 最終購入日, 購入回数, 累計購入額</code>（見出し行あり／順不同OK）。<br/>🔒 顧客データはこのブラウザ内だけで集計し、AIにはセグメント別の集計値のみ送信します。</p>
+        <div class="row-btns">
+          <button class="btn-sm" onclick="document.getElementById('cuFile').click()">📥 CSVを読み込む</button>
+          <input type="file" id="cuFile" accept=".csv,text/csv" hidden/>
+          <button class="btn-ghost-sm" onclick="RP.mod.customers.sample()">サンプル顧客を生成</button>
+          <button class="btn-ghost-sm" onclick="RP.mod.customers.exportCsv()">セグメント付きCSVを書き出す</button>
+          <button class="btn-ghost-sm danger" onclick="RP.mod.customers.clear()">全削除</button>
+        </div>
+      </div>
+      <div id="cuTiles" class="tiles"></div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>セグメント別 顧客数</h2></div>
+          <div id="cuChart" class="chart"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>セグメント詳細</h2></div>
+          <div id="cuSegTable" class="tbl-wrap"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>🤖 セグメント別 施策とLINEメッセージ</h2></div>
+        <button class="btn-primary" id="cuAiBtn" onclick="RP.mod.customers.strategy()">👥 セグメント別の施策を作る</button>
+        <div id="cuAiOut" class="ai-out" hidden></div>
+      </div>
+    </section>
+
+    <!-- ============ RESEARCH ============ -->
+    <section id="v-research" class="view" hidden>
+      <div class="view-head">
+        <h1>市場リサーチ</h1>
+        <p>Web検索で最新の米価・トレンド・競合動向を調べ、出典付きでまとめます。</p>
+      </div>
+      <div class="card">
+        <label class="lbl">調べたいこと</label>
+        <textarea id="rsQuery" class="inp" rows="3" placeholder="例：今年の新米の店頭価格の相場と、消費者の購買行動の変化"></textarea>
+        <div id="rsPresets" class="chips"></div>
+        <button class="btn-primary" id="rsGo" onclick="RP.mod.research.run()">🔎 リサーチする</button>
+        <p class="hint">Web検索を使うため、通常の生成より時間と費用がかかります（検索1回あたり約1.5円＋トークン料）。</p>
+      </div>
+      <div id="rsOutCard" class="card" hidden>
+        <div id="rsOut" class="ai-out"></div>
+        <div id="rsSources" class="sources"></div>
+        <div class="row-btns">
+          <button class="btn-sm" onclick="RP.mod.research.save()">📚 ライブラリに保存</button>
+          <button class="btn-sm" onclick="RP.copy(RP.mod.research.lastText)">📋 コピー</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>リサーチ履歴</h2></div>
+        <div id="rsHistory"></div>
+      </div>
+    </section>
+
+    <!-- ============ LIBRARY ============ -->
+    <section id="v-library" class="view" hidden>
+      <div class="view-head">
+        <h1>ライブラリ</h1>
+        <p>生成したコンテンツ・リサーチ結果の保管庫。</p>
+      </div>
+      <div class="card">
+        <div class="row2">
+          <input id="libSearch" class="inp" placeholder="🔍 キーワードで検索"/>
+          <select id="libFilter" class="inp"><option value="">すべての種類</option></select>
+        </div>
+        <div class="row-btns">
+          <button class="btn-ghost-sm" onclick="RP.mod.library.exportCsv()">CSVで書き出す</button>
+        </div>
+      </div>
+      <div id="libList"></div>
+    </section>
+
+    <!-- ============ BRAND ============ -->
+    <section id="v-brand" class="view" hidden>
+      <div class="view-head">
+        <h1>ブランド設定</h1>
+        <p>ここの内容がすべてのAI生成の「前提知識」になります。正確に書くほど精度が上がります。</p>
+      </div>
+      <div class="card">
+        <div class="row2">
+          <div><label class="lbl">店名</label><input id="bdName" class="inp"/></div>
+          <div><label class="lbl">ブランド名</label><input id="bdBrand" class="inp"/></div>
+        </div>
+        <label class="lbl">店の歴史・ストーリー</label>
+        <textarea id="bdStory" class="inp" rows="3"></textarea>
+        <div class="row2">
+          <div><label class="lbl">所在地・商圏</label><input id="bdArea" class="inp"/></div>
+          <div><label class="lbl">営業時間・定休日</label><input id="bdHours" class="inp"/></div>
+        </div>
+        <label class="lbl">強み（USP）</label>
+        <textarea id="bdUsp" class="inp" rows="3"></textarea>
+        <label class="lbl">主なお客様</label>
+        <textarea id="bdTarget" class="inp" rows="2"></textarea>
+        <label class="lbl">文章のトーン・口調</label>
+        <textarea id="bdVoice" class="inp" rows="2"></textarea>
+        <label class="lbl">販売チャネル・連絡先・URL</label>
+        <textarea id="bdChannels" class="inp" rows="2"></textarea>
+        <label class="lbl">使わない言葉・注意事項</label>
+        <textarea id="bdNg" class="inp" rows="2"></textarea>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>商品マスタ</h2><button class="btn-sm" onclick="RP.mod.brand.addProduct()">＋ 商品</button></div>
+        <div class="tbl-wrap"><table class="tbl" id="bdProducts"></table></div>
+      </div>
+      <div class="row-btns sticky-save">
+        <button class="btn-primary" onclick="RP.mod.brand.save()">💾 ブランド設定を保存</button>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="v-settings" class="view" hidden>
+      <div class="view-head">
+        <h1>設定・データ</h1>
+        <p>AIモデル、費用管理、データのバックアップ。</p>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-head"><h2>AI設定</h2></div>
+          <label class="lbl">モデル</label>
+          <select id="sgModel" class="inp"></select>
+          <label class="lbl">思考の深さ（effort）</label>
+          <select id="sgEffort" class="inp">
+            <option value="low">low — 速い・安い</option>
+            <option value="medium">medium — バランス（推奨）</option>
+            <option value="high">high — じっくり</option>
+          </select>
+          <label class="chk"><input type="checkbox" id="sgFallback"/> 安全判定で断られた時に別モデルで自動再試行（fallbacks）</label>
+          <div class="row2">
+            <div><label class="lbl">為替（円/ドル）</label><input type="number" id="sgRate" class="inp" min="50" max="400"/></div>
+            <div><label class="lbl">月の予算上限（円）</label><input type="number" id="sgBudget" class="inp" min="0" step="500"/></div>
+          </div>
+          <button class="btn-dark" onclick="RP.mod.settings.save()">設定を保存</button>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>AI利用料（概算）</h2></div>
+          <div id="sgUsage"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h2>データ管理</h2></div>
+        <p class="hint">データはこのブラウザ内（localStorage）に保存されています。端末を変える時や定期的にバックアップしてください。</p>
+        <div class="row-btns">
+          <button class="btn-sm" onclick="RP.backup()">⬇️ バックアップを書き出す</button>
+          <button class="btn-sm" onclick="document.getElementById('sgRestore').click()">⬆️ バックアップから復元</button>
+          <input type="file" id="sgRestore" accept="application/json,.json" hidden/>
+          <button class="btn-ghost-sm" onclick="RP.forgetKey()">APIキーを消去</button>
+          <button class="btn-ghost-sm danger" onclick="RP.resetAll()">全データを初期化</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- API key modal -->
+<div id="keyModal" class="modal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><b>🔑 Anthropic API Key</b><button class="x" onclick="RP.closeModal('keyModal')">×</button></div>
+    <p class="hint"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> で取得したキーを入力してください。</p>
+    <input type="password" id="keyInput" class="inp mono" placeholder="sk-ant-..." autocomplete="off"/>
+    <div class="hint" style="font-size:12px;color:#8a8a70;">このタブを閉じると消えます（ブラウザには のこしません）</div>
+    <button class="btn-primary" onclick="RP.saveKey()">設定する</button>
+    <p class="hint center">🔒 キーはAnthropic APIへの通信以外には使いません。</p>
+  </div>
+</div>
+
+<!-- Generic modal -->
+<div id="genModal" class="modal" hidden>
+  <div class="modal-card wide">
+    <div class="modal-head"><b id="genModalTitle"></b><button class="x" onclick="RP.closeModal('genModal')">×</button></div>
+    <div id="genModalBody"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="mkt/core.js"></script>
+<script src="mkt/charts.js"></script>
+<script src="mkt/data.js"></script>
+<script src="mkt/studio.js"></script>
+<script src="mkt/plan.js"></script>
+<script src="mkt/insight.js"></script>
+<script src="mkt/home.js"></script>
+<script>RP.boot();</script>
+</body>
+</html>

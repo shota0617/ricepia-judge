@@ -1,0 +1,95 @@
+# ricepia.jp（さくらのレンタルサーバ）のトップページを更新する
+# - いつも：いまの www/index.html をダウンロードして、ログと成果物に出す（サイトは変えない）
+# - ricepia-jp/deploy.txt に「deploy」と書いたときだけ：サーバーの index.html を index.html.bak-日時 に残してから、
+#   いまの index.html に ricepia-jp/game-section.html を入れたもの（tools/build-ricepia-jp.py）をアップロードする
+#   （ricepia-jp/index.html は、公開中のページ ricepia-jp/current.html から作った確認用の案）
+# 必要なシークレット：SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD
+name: ricepia.jp top page
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main   # 本番（ricepia.jp）を 書きかえうるので main だけ（作業用の ブランチへの push では 動かさない）
+    paths:
+      - ricepia-jp/**
+      - .github/workflows/ricepia-jp.yml
+      - .github/ricepia-ftp.sh
+      - tools/build-ricepia-jp.py
+permissions:
+  contents: read
+concurrency:
+  group: ricepia-jp
+  cancel-in-progress: false
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FTP_SERVER: ${{ secrets.SAKURA_FTP_SERVER }}
+      FTP_USER: ${{ secrets.SAKURA_FTP_USER }}
+      FTP_PASS: ${{ secrets.SAKURA_FTP_PASSWORD }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Check secrets
+        id: secrets
+        run: |
+          for v in FTP_SERVER FTP_USER FTP_PASS; do
+            if [ -z "${!v}" ]; then
+              # まだ設定されていないときは何もしない（失敗にはしない）
+              echo "::warning::シークレットが未設定のため ricepia.jp にはつなぎません（SAKURA_FTP_SERVER / SAKURA_FTP_USER / SAKURA_FTP_PASSWORD）"
+              echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+          done
+          echo "ok=true" >> "$GITHUB_OUTPUT"
+      - name: Fetch public page (https://ricepia.jp/)
+        # FTP につながらなくても、公開中のページ（ブラウザで見えるもの）は取れるので、案づくりに使えるよう出しておく
+        run: |
+          mkdir -p current
+          curl -fsSL --retry 2 -A 'Mozilla/5.0 (ricepia-jp workflow)' -D current/public.headers -o current/public.html https://ricepia.jp/
+          cat current/public.headers
+          echo "----- https://ricepia.jp/ ($(wc -c < current/public.html) bytes) -----"
+          cat current/public.html
+          echo "----- end -----"
+      - name: Install lftp
+        if: steps.secrets.outputs.ok == 'true'
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+      - name: Download current index.html
+        id: download
+        if: steps.secrets.outputs.ok == 'true'
+        run: |
+          mkdir -p current
+          . .github/ricepia-ftp.sh
+          # つながらないときに原因がログでわかるように、やりとりの あらましを出す（debug 1：接続の結果と エラーだけ。サーバー名・ユーザー名の 細かい やりとりは 公開の ログに 出さない）
+          if ! ftp "debug 1; set net:timeout 20; set net:max-retries 2; get www/index.html -o current/index.html"; then
+            msg="FTP でつながりませんでした。あいさつ（220）の直後に切られるときは、さくらの「国外IPアドレスフィルタ」で GitHub（海外）からの FTP が止められている可能性があります"
+            # アップロードしないときは確認だけなので、失敗にはしない（ふだんはフィルタを有効にしておくため）
+            if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "::warning::$msg"; echo "ok=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+            echo "::error::$msg"
+            exit 1
+          fi
+          echo "----- www/index.html ($(wc -c < current/index.html) bytes) -----"
+          cat current/index.html
+          echo "----- end -----"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: ricepia-jp-current
+          path: current/
+          if-no-files-found: ignore
+      - name: Deploy (only when ricepia-jp/deploy.txt says deploy)
+        if: steps.secrets.outputs.ok == 'true' && steps.download.outputs.ok != 'false'
+        run: |
+          if ! grep -qx 'deploy' ricepia-jp/deploy.txt 2>/dev/null; then echo "アップロードはしません（確認だけ）"; exit 0; fi
+          # いまサーバーにある index.html（さっきダウンロードしたもの）にお知らせ欄を入れて上げる
+          # （案を作ったあとにトップページが更新されていても、その更新を消さないように）
+          python3 tools/build-ricepia-jp.py current/index.html current/new-index.html
+          stamp=$(TZ=Asia/Tokyo date +%Y%m%d-%H%M%S)
+          . .github/ricepia-ftp.sh
+          # 先に別名でアップロードしてから入れ替える（途中で失敗しても、トップページが消えたままにならないように）
+          ftp "put current/new-index.html -o www/index.html.new"
+          if ! ftp "mv www/index.html www/index.html.bak-$stamp; mv www/index.html.new www/index.html"; then
+            echo "::error::入れ替えに失敗したので元に戻します"
+            ftp "mv www/index.html.bak-$stamp www/index.html" || true
+            exit 1
+          fi
+          echo "アップロードしました（元のファイルは www/index.html.bak-$stamp）"

@@ -267,6 +267,8 @@ input,textarea,button{font-family:inherit;}
 .htitle{color:#f5f2eb;font-size:14px;font-weight:700;letter-spacing:0.06em;}
 .hsub{color:#c8a96e;font-size:9px;letter-spacing:0.15em;}
 .tab-btn{padding:4px 10px;border:none;border-radius:6px;font-size:11px;cursor:pointer;font-weight:400;}
+.tab-btn{white-space:nowrap;}
+@media (max-width:420px){.tab-btn{padding:4px 6px;}.htitle{font-size:13px;}}
 .tab-btn.active{background:#c8a96e;color:#2d2d1e;font-weight:700;}
 .tab-btn:not(.active){background:transparent;color:#6a6a54;}
 #main{max-width:480px;margin:0 auto;padding:20px 16px 0;}
@@ -449,7 +451,9 @@ input,textarea,button{font-family:inherit;}
       <div style="margin-left:auto;display:flex;gap:6px;">
         <button class="tab-btn active" id="tabJudge" onclick="switchTab('judge')">判定</button>
         <button class="tab-btn" id="tabAdmin" onclick="switchTab('admin')">管理</button>
+        <a class="tab-btn" href="marketing.html" style="text-decoration:none;">販促</a>
         <a class="tab-btn" href="meta-ads.html" style="text-decoration:none;">📊広告</a>
+        <a class="tab-btn" href="meeting.html" style="text-decoration:none;">🎥会議</a>
       </div>
     </div>
   </div>
@@ -743,7 +747,15 @@ const SCORE_DEFS=[
   {key:"cooking_suitability",label:"炊飯適性",color:"#c8a96e",group:"総合"},
 ];
 
-function renderResult(r){
+// 文字列を HTML の特別な文字（& < > " '）だけ置きかえる。配列・入れ子の中も
+function escDeep(v){
+  if(typeof v==="string")return v.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  if(Array.isArray(v))return v.map(escDeep);
+  if(v&&typeof v==="object"){const o={};for(const k of Object.keys(v))o[k]=escDeep(v[k]);return o;}
+  return v;
+}
+function renderResult(raw){
+  const r=escDeep(raw); // AIの返事の文字はHTMLとして入れない（写真に書かれた文字で返事が変わっても、画面でプログラムが動かないように）。保存・ほかの道具へ渡すのは元のまま（raw）
   correctionGrade=r.grade;
   const cfg=GRADE_CFG[r.grade]||GRADE_CFG.B;
   const scoreBar=(label,val,color)=>`<div class="score-row"><div class="score-header"><span class="score-label">${label}</span><span class="score-val">${val}点</span></div><div class="score-track"><div class="score-fill" style="width:${val}%;background:${color};"></div></div></div>`;
@@ -811,13 +823,16 @@ function renderResult(r){
       <div id="correctionDone" style="display:none;margin-top:8px;text-align:center;font-size:12px;color:#5b8a6b;font-weight:600;">✓ 学習データに保存しました</div>
     </div>
 
+    <a class="btn-primary" href="marketing.html#studio" style="margin-bottom:10px;text-decoration:none;">📣 この結果で販促コンテンツを作る</a>
     <button class="btn-dark" onclick="printReceipt()" style="margin-bottom:10px;">🖨️ レシートプリンターで印刷</button>
     <button class="btn-ghost" onclick="resetJudge()">別の写真を判定する</button>
     <div class="tip-box">💡 印刷ダイアログでmC-Print3を選択してください。</div>`;
 
   const box=document.getElementById("resultBox");
   box.innerHTML=html;box.style.display="block";
-  window._lastResult=r;window._lastImage=currentImage;
+  window._lastResult=raw;window._lastImage=currentImage;
+  // 販促ツール（marketing.html）で使えるように最新の判定結果を保存
+  try{localStorage.setItem("ricepia_last_judge",JSON.stringify({grade:raw.grade,variety:raw.variety,avg:avg,comment:raw.comment,points:raw.points,usage:raw.usage,date:new Date().toLocaleString("ja-JP")}));}catch(e){}
 }
 
 function setCorrectionGrade(g){
@@ -853,7 +868,7 @@ function resetJudge(){
   resetResult();renderUploadZone();
 }
 function printReceipt(){
-  const r=window._lastResult,img=window._lastImage;
+  const r=window._lastResult&&escDeep(window._lastResult),img=window._lastImage; // 印刷の HTML に入れるので 置きかえてから
   if(!r)return;
   const now=new Date();
   const dateStr=`${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;

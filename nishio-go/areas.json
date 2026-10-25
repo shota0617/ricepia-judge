@@ -1,0 +1,296 @@
+{
+  "_説明": "西尾市の5つの地区（2011年に一色町・吉良町・幡豆町を編入。佐久島は旧一色町だがゲームでは別の地区）の分析データ。せかいちずの地区の札と地区ガイド、地区制覇バッジに使う。lat/lng は札を出す位置（地区の中心あたりの概算）。人口・面積は出典の値か、市の公表値から計算した値（2026年10月に調査）。 near: true は となりの市町（岡崎・安城・碧南・高浜・幸田・蒲郡。2026年10月に調査）。",
+  "city": {
+    "name": "西尾市",
+    "population": 169284,
+    "populationAsOf": "2025年4月1日・住民基本台帳",
+    "areaKm2": 161.22,
+    "sources": [
+      "https://www.seikatsu-guide.com/keyword/1100/23/23213/",
+      "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/008/044/toshimasu3-1.pdf"
+    ]
+  },
+  "areas": [
+    {
+      "id": "nishio",
+      "name": "西尾",
+      "kana": "にしお",
+      "icon": "🍵",
+      "catch": "城下町と抹茶のまち",
+      "lat": 34.872,
+      "lng": 137.058,
+      "population": 113523,
+      "populationAsOf": "2020年国勢調査から計算",
+      "areaKm2": 76.2,
+      "summary": "矢作川下流の平野にある旧城下町。西尾城跡のまわりに寺や神社が多く、「三河の小京都」とも呼ばれる。抹茶の原料になるてん茶の一大産地で、市内の茶園の96%以上がてん茶を育てている。",
+      "specialties": [
+        "西尾の抹茶",
+        "てん茶の茶畑（稲荷山に約100ha）",
+        "抹茶スイーツ"
+      ],
+      "trivia": "西尾の茶づくりは明治5年（1872年）、紅樹院の住職・足立順道が京都の宇治から茶の種を取り寄せて茶園を開いたのが始まり。紅樹院は「茶祖の寺」と呼ばれている。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/008/044/toshimasu3-1.pdf",
+        "https://nishiokanko.com/wp-content/uploads/2022/07/model001.pdf",
+        "https://aichinow.pref.aichi.jp/events/detail/1218/",
+        "https://www.criser.jp/document/crec/167chiiki2.pdf"
+      ]
+    },
+    {
+      "id": "isshiki",
+      "name": "一色",
+      "kana": "いっしき",
+      "icon": "🐟",
+      "catch": "うなぎと大提灯の港町",
+      "lat": 34.803,
+      "lng": 137.02,
+      "population": 22475,
+      "populationAsOf": "2020年国勢調査から計算（佐久島を除く）",
+      "areaKm2": 20.9,
+      "summary": "三河湾に面した干拓地と漁港の町。干拓地には矢作川の水を使ったうなぎの養殖池が広がり、長く生産量日本一とされてきた。三河一色大提灯まつりや、えびせんべい、一色さかな広場で知られる。",
+      "specialties": [
+        "一色産うなぎ（地域団体商標）",
+        "三河一色えびせんべい",
+        "一色さかな広場の海の幸"
+      ],
+      "trivia": "三河一色大提灯まつりの大提灯は、長いもので約10m。6組12張が奉納され、愛知県の有形民俗文化財になっている。海の魔物をしずめるかがり火が始まりと伝わる。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/003/616/issiki0330.pdf",
+        "https://www.jpo.go.jp/system/trademark/gaiyo/chidan/shoukai/ichiran/5093218.html",
+        "https://aichinow.pref.aichi.jp/spots/detail/145/"
+      ]
+    },
+    {
+      "id": "kira",
+      "name": "吉良",
+      "kana": "きら",
+      "icon": "♨️",
+      "catch": "塩と温泉、名君・上野介の里",
+      "lat": 34.815,
+      "lng": 137.078,
+      "population": 21705,
+      "populationAsOf": "2020年国勢調査",
+      "areaKm2": 36.2,
+      "summary": "三河湾に面し、江戸時代には饗庭（あいば）塩の産地として栄えた。吉良上野介義央の領地で、忠臣蔵では悪役でも、地元では堤防づくりや新田開発をした名君として語り継がれている。海沿いには吉良温泉と宮崎海岸がある。",
+      "specialties": [
+        "饗庭塩（塩づくり体験）",
+        "吉良温泉",
+        "宮崎海岸の潮干狩り・海水浴"
+      ],
+      "trivia": "上野介が築いた堤防のおかげで水害がなくなり、田んぼが金色の稲穂でいっぱいになったことから「黄金堤」と呼ばれている。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/003/616/kira0330.pdf",
+        "https://aichinow.pref.aichi.jp/spots/detail/2127/",
+        "https://www.maff.go.jp/j/nousin/sekkei/museum/m_kakuti/27_kogane/index.html"
+      ]
+    },
+    {
+      "id": "hazu",
+      "name": "幡豆",
+      "kana": "はず",
+      "icon": "⛰️",
+      "catch": "三ヶ根山と海の国定公園",
+      "lat": 34.8,
+      "lng": 137.15,
+      "population": 11147,
+      "populationAsOf": "2020年国勢調査",
+      "areaKm2": 26.2,
+      "summary": "三ヶ根山の丘が三河湾にせまる、三河湾国定公園の地区。尾根を三ヶ根山スカイラインが通り、ふもとには愛知こどもの国がある。東幡豆の沖には前島・沖島が浮かび、潮が引くとトンボロ干潟が現れる。",
+      "specialties": [
+        "三ヶ根山のあじさい（約7万本）",
+        "トンボロ干潟と前島",
+        "鳥羽の火祭り（国の重要無形民俗文化財）"
+      ],
+      "trivia": "前島と沖島は昭和32年（1957年）に「うさぎ島」「猿が島」として開かれ、観光船でにぎわった。1985年のゴールデンウィークには約17,000人が訪れたという。",
+      "sources": [
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/003/616/hazu0330.pdf",
+        "https://www.aichinow.pref.aichi.jp/spots/detail/123/",
+        "https://tabi-mag.jp/toba-himatsuri/"
+      ]
+    },
+    {
+      "id": "sakushima",
+      "name": "佐久島",
+      "kana": "さくしま",
+      "icon": "🏝️",
+      "catch": "黒壁とアートの島",
+      "lat": 34.727,
+      "lng": 137.042,
+      "population": 196,
+      "populationAsOf": "2020年国勢調査",
+      "areaKm2": 1.73,
+      "summary": "三河湾のほぼ真ん中にある、三河湾でいちばん大きな島（海岸線約11km）。一色港から市営渡船で約20分。島の8割以上が里山で、2001年に始まったアートプランで、アート作品が点在する「アートの島」になった。",
+      "specialties": [
+        "島じゅうのアート作品",
+        "黒壁集落",
+        "アサリ・タコなどの魚介"
+      ],
+      "trivia": "西地区の家が黒いのは、潮風から守るためにコールタールを塗っているから。その町並みは「三河湾の黒真珠」と呼ばれている。",
+      "sources": [
+        "https://rito.pref.aichi.jp/wp-content/themes/aichi/assets/pdf/guide.pdf",
+        "https://www.city.nishio.aichi.jp/_res/projects/default_project/_page_/001/010/063/ar527sakushima.pdf",
+        "https://aichinow.pref.aichi.jp/features/detail/357/"
+      ]
+    },
+    {
+      "id": "okazaki",
+      "name": "岡崎",
+      "kana": "おかざき",
+      "icon": "🏯",
+      "catch": "家康公生誕の城下町と八丁味噌",
+      "lat": 34.954333,
+      "lng": 137.174361,
+      "population": 380930,
+      "populationAsOf": "2026年3月1日・住民基本台帳",
+      "areaKm2": 387.2,
+      "summary": "徳川家康が生まれた岡崎城がある城下町です。岡崎城から西へ八丁はなれた村でつくられた「八丁味噌」で知られています。1916年に市になり、2006年にとなりの額田町と合併しました。",
+      "specialties": [
+        "八丁味噌",
+        "岡崎石工品（石灯籠）",
+        "額田のお米「たべりん」（ミネアサヒ）",
+        "藤川のむらさき麦"
+      ],
+      "trivia": "岡崎城と大樹寺は約3kmの一直線（ビスタライン）でむすばれていて、大樹寺の門のあいだから岡崎城が見えるように建物がならんでいるんだよ。",
+      "sources": [
+        "http://webhp.city.okazaki.lg.jp/tokei-portal/tokei000.htm",
+        "https://www.seikatsu-guide.com/info/23/23202/1/",
+        "https://www.stat.go.jp/info/t-news/pdf/1706_p5-8.pdf",
+        "https://en.wikipedia.org/wiki/Okazaki,_Aichi",
+        "https://aichinow.pref.aichi.jp/spots/detail/38/",
+        "https://aichinow.pref.aichi.jp/features/detail/267/"
+      ],
+      "near": true
+    },
+    {
+      "id": "anjo",
+      "name": "安城",
+      "kana": "あんじょう",
+      "icon": "🌾",
+      "catch": "日本デンマークと七夕のまち",
+      "lat": 34.958,
+      "lng": 137.083,
+      "population": 187252,
+      "populationAsOf": "2026年4月1日・安城市の資料",
+      "areaKm2": 86.05,
+      "summary": "明治用水の水で農業が大きく発展し、大正の終わりから昭和のはじめには「日本デンマーク」と呼ばれた農業のまち。いまも米・小麦・大豆・いちじく・梨づくりがさかん。夏の安城七夕まつりは1954年から続いている。",
+      "specialties": [
+        "安城の梨",
+        "いちじく",
+        "米・小麦・大豆"
+      ],
+      "trivia": "童話「ごんぎつね」で知られる新美南吉は、1938年から安城高等女学校の先生をしていた。1939年4月からは安城で下宿して、歩いて学校に通っていた。",
+      "sources": [
+        "https://www.city.anjo.aichi.jp/zigyo/nogyo/anjonogyo/documents/1anjosinoaramasi.pdf",
+        "https://www.city.anjo.aichi.jp/shisei/sisei-yoran/documents/70digest1216.pdf",
+        "https://www.city.anjo.aichi.jp/shisei/pressrelease/documents/26081801.pdf",
+        "https://www.pref.aichi.jp/uploaded/attachment/553941.pdf",
+        "https://www.city.anjo.aichi.jp/shisei/koho/20120101/documents/p10p11.pdf"
+      ],
+      "near": true
+    },
+    {
+      "id": "hekinan",
+      "name": "碧南",
+      "kana": "へきなん",
+      "icon": "🥕",
+      "catch": "哲学とにんじんと本みりんのまち",
+      "lat": 34.8848,
+      "lng": 136.9937,
+      "population": 72032,
+      "populationAsOf": "2025年10月31日・住民基本台帳（碧南市）",
+      "areaKm2": 36.68,
+      "summary": "碧南市は、北は油ヶ淵、東は矢作川、西と南は衣浦港にかこまれた、たいらな市です。1948年に大浜町・新川町・棚尾町・旭村が合併して市になりました。冬のにんじん「へきなん美人」や、江戸時代から続く本みりんで知られています。",
+      "specialties": [
+        "にんじん（へきなん美人）",
+        "本みりん（九重味淋）",
+        "たまねぎ",
+        "赤シソ"
+      ],
+      "trivia": "1月23日は「碧南人参の日」。「いい（1）にん（2）じん（3）」の語呂合わせと、1月下旬が碧南のにんじんがいちばんおいしい時期だからです。",
+      "sources": [
+        "https://www.city.hekinan.lg.jp/city_info/gaiyo/1017.html",
+        "https://www.city.hekinan.lg.jp/material/files/group/28/01_gaiyo_R3.pdf",
+        "https://www.city.hekinan.lg.jp/material/files/group/1/1951_17.pdf",
+        "https://www.city.hekinan.lg.jp/soshiki/shiminseikatsu/simin/jyuminkihondaichou/hekinannojinnkou/reiwa7/22685.html",
+        "https://www.seikatsu-guide.com/info/23/23209/1/",
+        "https://www.city.hekinan.lg.jp/soshiki/keizai_kankyo/nogyo_suisan/1/17517.html",
+        "http://www.city.hekinan.lg.jp/soshiki/keizai_kankyo/nogyo_suisan/regional_promotion/16655.html"
+      ],
+      "near": true
+    },
+    {
+      "id": "takahama",
+      "name": "高浜",
+      "kana": "たかはま",
+      "icon": "👹",
+      "catch": "三州瓦と鬼瓦の職人のまち",
+      "lat": 34.9276,
+      "lng": 136.9873,
+      "population": 49041,
+      "populationAsOf": "2025年1月1日・住民基本台帳",
+      "areaKm2": 13.11,
+      "summary": "粘土瓦の国内最大の産地「三州瓦」の中心的な産地で、鬼瓦をつくる職人「鬼師」のまち。高浜港駅から鬼瓦を見ながら歩ける散策路「鬼みち」があり、吉浜では細工人形の伝統が受けつがれている。",
+      "specialties": [
+        "三州瓦",
+        "鬼瓦",
+        "吉浜細工人形"
+      ],
+      "trivia": "高浜港駅前のニコニコ鬼広場には、縦4.5m・横4.2mの、日本一大きいとされる古代鬼面の鬼瓦がある。",
+      "sources": [
+        "https://www.seikatsu-guide.com/info/23/23227/1/",
+        "https://www.seikatsu-guide.com/keyword/1100/23/23227/",
+        "https://www.pref.aichi.jp/sangyoshinko/jibasangyo/industry/_sansyugawara.html",
+        "https://tabi-mag.jp/ai0387/"
+      ],
+      "near": true
+    },
+    {
+      "id": "kota",
+      "name": "幸田",
+      "kana": "こうた",
+      "icon": "🌸",
+      "catch": "筆柿とあじさい寺の町",
+      "lat": 34.862,
+      "lng": 137.1655,
+      "population": 41695,
+      "populationAsOf": "2026年9月1日・推計人口（Wikipedia掲載）",
+      "areaKm2": 56.72,
+      "summary": "幸田町は愛知県の額田郡にある町で、まん中を流れる広田川のまわりに平野が広がり、そのまわりを丘がかこんでいます。筆柿の生産は全国の約95%をしめていて、「三河のあじさい寺」とよばれる本光寺もあります。",
+      "specialties": [
+        "筆柿",
+        "なす",
+        "いちご"
+      ],
+      "trivia": "幸田駅ができたころ、村の名前は「広田村」でした。でも福島県にもう広田駅があったので、駅の名前を「幸田」にして、村の名前も幸田村にかえました。",
+      "sources": [
+        "https://ja.wikipedia.org/wiki/%E5%B9%B8%E7%94%B0%E7%94%BA",
+        "https://www.cbr.mlit.go.jp/toyohashi/kaigi/yahagigawa/ryuiki-kondan/img/20221125yamasiryou17.pdf",
+        "https://www.town.kota.lg.jp/soshiki/13/764.html",
+        "https://www.ja-aichimikawa.or.jp/wp/archives/7157",
+        "https://ja.wikipedia.org/wiki/%E5%B9%B8%E7%94%B0%E9%A7%85"
+      ],
+      "near": true
+    },
+    {
+      "id": "gamagori",
+      "name": "蒲郡",
+      "kana": "がまごおり",
+      "icon": "🏝️",
+      "catch": "三河湾にうかぶ竹島の町",
+      "lat": 34.8256,
+      "lng": 137.2197,
+      "population": 76089,
+      "populationAsOf": "2026年9月1日・推計人口（Wikipedia掲載）",
+      "areaKm2": 56.96,
+      "summary": "蒲郡市は三河湾に面した市です。沖にうかぶ竹島は、島ぜんたいが八百富神社の神域で、島の植物は国の天然記念物になっています。",
+      "specialties": [],
+      "trivia": "市の木は「クス」、市の花は「ツツジ」。どちらも1972年11月3日、蒲郡市民憲章ができたときにきまりました。",
+      "sources": [
+        "https://ja.wikipedia.org/wiki/%E8%92%B2%E9%83%A1%E5%B8%82",
+        "https://ja.wikipedia.org/wiki/%E5%85%AB%E7%99%BE%E5%AF%8C%E7%A5%9E%E7%A4%BE",
+        "https://ja.wikipedia.org/wiki/%E7%AB%B9%E5%B3%B6_(%E6%84%9B%E7%9F%A5%E7%9C%8C)"
+      ],
+      "near": true
+    }
+  ]
+}

@@ -3357,14 +3357,20 @@ const AKIAKANE = (() => {
           if (c.length) q.spot = c[Math.floor(Math.random() * c.length)];
           else {                                               // 行ける ぬかるみが無い：トラクターから はなれた所へ逃げて、上を飛んでいる
             q.away = Math.max(q.away, 1);
-            if (near(p, 3)) { const dx = p.x - S.x, dz = p.z - S.z, L = Math.hypot(dx, dz) || 1; q.spot = [Math.max(-HX, Math.min(HX, p.x + dx / L * 7)), Math.max(-HZ, Math.min(HZ, p.z + dz / L * 7)), 0.08]; }
+            if (near(p, 3)) {                                  // 7m 先の 5 つの向き（まっすぐ逃げる向き ±60°・±120°）から、トラクターからいちばん遠い所。畦の外（6m まで）へも飛んでいく
+              const a0 = Math.atan2(p.z - S.z, p.x - S.x); let best = -1;
+              for (const da of [0, 1.05, -1.05, 2.1, -2.1]) {
+                const x = Math.max(-HX - 6, Math.min(HX + 6, p.x + Math.cos(a0 + da) * 7)), z = Math.max(-HZ - 6, Math.min(HZ + 6, p.z + Math.sin(a0 + da) * 7)), dd = Math.hypot(x - S.x, z - S.z);
+                if (dd > best) { best = dd; q.spot = [x, z, 0.08]; }
+              }
+            }
           }
         }
         if (q.away > 0) q.away -= dt;
         tmp.set(q.spot[0] + Math.cos(q.dir) * 0.15 - p.x, 0, q.spot[1] + Math.sin(q.dir) * 0.15 - p.z);
         const d = tmp.length(), far = d > 0.5 || q.away > 0;
         q.dir += dt * (0.5 + 0.3 * Math.sin(q.t * 0.7 + q.ph));  // 産卵の場所の上を ゆっくり輪をえがいて動く
-        if (d > 0.01) { tmp.multiplyScalar(Math.min(1, dt * (far ? 2.2 : 0.35) / d)); p.x += tmp.x; p.z += tmp.z; q.g.rotation.y = Math.atan2(tmp.x, tmp.z); }
+        if (d > 0.01) { tmp.multiplyScalar(Math.min(1, dt * (q.away > 0 ? 3.5 : far ? 2.2 : 0.35) / d)); p.x += tmp.x; p.z += tmp.z; q.g.rotation.y = Math.atan2(tmp.x, tmp.z); }   // 逃げるときは 秒速 3.5m
         // 産卵：雄は 泥から 3〜4cm の高さを ほとんど変えずに飛び、つかんだ雌を 振り子のように ふりおろして、腹の先で泥を打つ（1 秒に 1〜2 回）
         const sw = Math.pow(Math.abs(Math.sin(q.t * Math.PI * 1.4 + q.ph)), 3);   // 1＝打ちつけた所
         const ty = far ? 0.6 + 0.2 * Math.sin(q.t) : mudY(q.spot) + 0.034 + 0.004 * Math.sin(q.t * 3 + q.ph);

@@ -19,6 +19,9 @@ on:
       rollback:
         description: 'もどす ときだけ：前の メニューの richMenuId'
         default: ''
+      rollback_from:
+        description: 'もどす ときだけ・ふつうは 空：差しかえが とちゅうで 止まった ときに ログに 出る richMenuId'
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -39,9 +42,11 @@ jobs:
           APPLY: ${{ inputs.apply }}
           KEEP: ${{ inputs.keep_game_link }}
           ROLLBACK: ${{ inputs.rollback }}
+          FROM: ${{ inputs.rollback_from }}
         run: |
           set -- "$IMAGE"
           [ "$APPLY" = "true" ] && set -- "$@" --apply
           [ "$KEEP" = "true" ] && set -- "$@" --keep-game-link
           [ -n "$ROLLBACK" ] && set -- "$@" --rollback "$ROLLBACK"
+          [ -n "$ROLLBACK" ] && [ -n "$FROM" ] && set -- "$@" --from "$FROM"
           node tools/line-richmenu.js "$@"

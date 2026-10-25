@@ -1,5 +1,5 @@
 // LINE 公式アカウント（らいすぴあぶろぐ）の リッチメニューの 絵を、Messaging API で 差しかえる：
-//   node tools/line-richmenu.js [画像＝mkt/nishio-go/richmenu-2500x1686.png] [--apply] [--keep-game-link] [--rollback <richMenuId>]
+//   node tools/line-richmenu.js [画像＝mkt/nishio-go/richmenu-2500x1686.png] [--apply] [--keep-game-link] [--rollback <richMenuId> [--from <richMenuId>]]
 // ・いま 既定に なっている メニューを 読み、大きさ・名前・メニューバーの 文字・タップ範囲と アクションを そのまま 写した 新しい メニューを 作って、
 //   新しい 絵を 載せ、既定に する（Messaging API では 作った メニューの 絵を あとから 変えられないので、作りなおす）。
 //   左上の マス（ゲーム）の アクションは go.ricepia.jp の リンク（docs/ads-game-kit.md 2章の utm つき）に する。--keep-game-link なら 前のまま。
@@ -14,8 +14,9 @@ const API = process.env.LINE_API_BASE || 'https://api.line.me/v2/bot', DATA = pr
 const GAME_URL = 'https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game';
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply'), KEEP = args.includes('--keep-game-link');
-const rb = args.indexOf('--rollback'), ROLLBACK = rb >= 0 ? args[rb + 1] : '';
-const IMAGE = path.resolve(args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--rollback') || 'mkt/nishio-go/richmenu-2500x1686.png');
+const opt = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] || '' : ''; };
+const ROLLBACK = opt('--rollback'), FROM = opt('--from');   // FROM：別名を はがす 元（ふつうは いまの 既定。差しかえが 途中で 止まった ときは その ログの とおりに）
+const IMAGE = path.resolve(args.find((a, i) => !a.startsWith('--') && !['--rollback', '--from'].includes(args[i - 1])) || 'mkt/nishio-go/richmenu-2500x1686.png');
 const TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN || '';
 
 // 絵に 描いた マス（tools/make-promo.js の richMenu() の tileBox の 位置。x0, y0, x1, y1）。
@@ -57,16 +58,17 @@ const show = a => {
 (async () => {
   if (!TOKEN) { console.log('LINE_CHANNEL_ACCESS_TOKEN が ありません（GitHub の Settings → Secrets and variables → Actions に 入れる。チャットには 書かない）'); process.exit(1); }
 
-  if (ROLLBACK) {   // 前の メニューに もどす：既定と、いまの 既定を さして いる 別名（差しかえで 付けかえた もの）を もどす
+  if (ROLLBACK) {   // 前の メニューに もどす：差しかえで 付けかえた 別名（FROM か いまの 既定を さす もの）と、既定を もどす
+    // 別名を 先に、既定を あとに もどす。とちゅうで 失敗しても 既定は まだ FROM の ままなので、同じ ように 動かせば のこりを やりなおせる
     const m = await call('GET', `${API}/richmenu/${ROLLBACK}`);
     console.log(`もどす 先：${m.name}（${ROLLBACK}）`);
-    const now = await defaultMenu();
-    const back = now && now !== ROLLBACK ? await aliasesOf(now) : [];
-    if (back.length) console.log(`いまの 既定（${now}）を さす 別名：${back.map(x => x.richMenuAliasId).join(', ')}（もどす 先に 付けかえる）`);
+    const now = await defaultMenu(), from = FROM || now;
+    const back = from && from !== ROLLBACK ? await aliasesOf(from) : [];
+    if (back.length) console.log(`${from} を さす 別名：${back.map(x => x.richMenuAliasId).join(', ')}（もどす 先に 付けかえる）`);
+    if (now !== ROLLBACK) console.log(`既定：${now || 'なし'} → ${ROLLBACK}`); else console.log('既定は もう もどす 先です');
     if (!APPLY) { console.log('確かめるだけ（--apply で もどす）'); return; }
-    await call('POST', `${API}/user/all/richmenu/${ROLLBACK}`);
-    console.log('既定の メニューを もどしました');
     for (const x of back) { await call('POST', `${API}/richmenu/alias/${x.richMenuAliasId}`, { richMenuId: ROLLBACK }); console.log(`別名 ${x.richMenuAliasId} を もどしました`); }
+    if (now !== ROLLBACK) { await call('POST', `${API}/user/all/richmenu/${ROLLBACK}`); console.log('既定の メニューを もどしました'); }
     return;
   }
 
@@ -108,10 +110,14 @@ const show = a => {
 
   const id = (await call('POST', `${API}/richmenu`, menu)).richMenuId;
   console.log(`作りました：${id}`);
-  await call('POST', `${DATA}/richmenu/${id}/content`, img, 'image/png');
-  console.log('絵を 載せました');
-  await call('POST', `${API}/user/all/richmenu/${id}`);
-  console.log('既定の メニューに しました');
-  for (const x of aliases) { await call('POST', `${API}/richmenu/alias/${x.richMenuAliasId}`, { richMenuId: id }); console.log(`別名 ${x.richMenuAliasId} を 付けかえました`); }
+  try {
+    await call('POST', `${DATA}/richmenu/${id}/content`, img, 'image/png');
+    console.log('絵を 載せました');
+    await call('POST', `${API}/user/all/richmenu/${id}`);
+    console.log('既定の メニューに しました');
+    for (const x of aliases) { await call('POST', `${API}/richmenu/alias/${x.richMenuAliasId}`, { richMenuId: id }); console.log(`別名 ${x.richMenuAliasId} を 付けかえました`); }
+  } catch (e) {   // とちゅうで 止まった：どこまで 変わったかに かかわらず、この 2つで 前の 状態に もどせる
+    throw new Error(`${e.message}\n  とちゅうで 止まりました。もどす ときは rollback に ${cur}、rollback_from に ${id} を 入れて 動かす`);
+  }
   console.log(`もどす ときは：rollback に ${cur} を 入れて 動かす（前の メニューは 消して いません）`);
 })().catch(e => { console.error(`できませんでした：${e.message}`); process.exit(1); });

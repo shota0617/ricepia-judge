@@ -140,7 +140,7 @@ Actions「LINE rich menu」（`tools/line-richmenu.js`）が、いま既定の�
 1. GitHub の Settings → Secrets and variables → Actions に `LINE_CHANNEL_ACCESS_TOKEN`（LINE Developers → らいすぴあぶろぐ の Messaging API チャネル → チャネルアクセストークン）を入れる。**値はチャットに書かない**
 2. Actions →「LINE rich menu」→ Run workflow（`apply` を つけない）→ ログで「いまの既定」と「新しいメニュー」のタップ範囲・アクションを確かめる（何も変わらない）
 3. よければ `apply` を つけて もう一度。スマホの LINE で表示とリンクを確かめる
-4. もどすときは、ログの「もどすときは」の richMenuId を `rollback` に入れ、`apply` を つけて動かす
+4. もどすときは、ログの「もどすときは」の richMenuId を `rollback` に入れ、`apply` を つけて動かす（別名も もどします。とちゅうで止まったら、同じように もう一度。差しかえが とちゅうで止まったときは、ログに出る richMenuId を `rollback_from` にも入れる）
 
 いまのタップ範囲が絵のマス（下の表）と合わないとき・絵の大きさがメニューとちがうときは、何もせずに止まります。ひとりずつ別のメニューをつないでいる友だちには、既定のメニューは出ません（LINE のしくみ）。
 

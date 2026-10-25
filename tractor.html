@@ -1261,9 +1261,12 @@ const FARMER = (() => {
     if (art) {
       const issue = art.over >= 1 ? '白線から はみ出しとるな。白線の手前で 上げりん'
         : art.fill < 0.95 ? 'まだ 黄色い所が 残っとるに。最後まで 耕しりん'
-        : '絵はええけど 運転が あらいな。ゆっくり まっすぐ やりん';
+        : art.unten < 99.5 ? '絵はええけど 運転が あらいな。ゆっくり まっすぐ やりん'
+        : art.kirei < 99.5 ? '白線の きわを もうちょい きれいに そろえりん'
+        : '絵も 運転も ええじゃん。つぎは アシストなしで やってみりん';   // どこも へっていない：点が低いのは 🔰 アシストの 8 割だけ
+      const assistOnly = !(art.over >= 1 || art.fill < 0.95 || art.unten < 99.5 || art.kirei < 99.5);
       t = total >= 85 ? 'ええ絵だら！ 上から見ると よう分かる'
-        : total >= 70 ? 'ちゃんと ' + ART.name + ' に見えるじゃん。' + issue
+        : total >= 70 && !assistOnly ? 'ちゃんと ' + ART.name + ' に見えるな。' + issue
         : issue;
     } else {
       const P = SCORE.parts, st = SCORE.st;

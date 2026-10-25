@@ -4,7 +4,9 @@
 # かなは お米の白 → 稲穂の金色、1文字ごとに 上下にずらして ころころ転がる感じに。
 # GO の O は 主人公のお米（art/rice-logo.png の 口をあけた にっこり顔。ゲームと同じ絵）で、頭から 芽（ふた葉）が出ている。
 # 大きさは前のロゴと同じ 272×40（2倍の 544×80 で表示。ricepia.jp・OGP・宣伝の画像も同じ大きさで読む）。出力：nishio-go/logo.svg
+# --stack：「にしおさんぽ」と「GO」を 2段に 積んだ ロゴ（LINE リッチメニューの マスなど、四角に 近い 所で 大きく 見せる）。出力：nishio-go/logo-stack.svg
 import os
+import sys
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = os.path.dirname(__file__)
@@ -12,8 +14,9 @@ FONTS = os.path.join(HERE, 'fonts', 'm-plus-rounded-1c')
 KANA_FONT = ImageFont.truetype(os.path.join(FONTS, 'm-plus-rounded-1c-119-900-normal.woff'), 34)   # ひらがな の入った分
 LATIN_FONT = ImageFont.truetype(os.path.join(FONTS, 'm-plus-rounded-1c-latin-900-normal.woff'), 42)
 RICE = os.path.join(HERE, '..', 'nishio-go', 'art', 'rice-logo.png')
-OUT = os.path.join(HERE, '..', 'nishio-go', 'logo.svg')
-W, H = 272, 40
+STACK = '--stack' in sys.argv
+OUT = os.path.join(HERE, '..', 'nishio-go', 'logo-stack.svg' if STACK else 'logo.svg')
+W, H = (200, 84) if STACK else (272, 40)
 
 
 def glyph(ch, font):
@@ -64,6 +67,9 @@ kana = set().union(*kana_cells)
 # 2) GO の G（大きめ・抹茶の緑）
 G = glyph('G', LATIN_FONT)
 gx0, gy0, gx1, gy1 = bbox(G)
+if STACK:   # 2段め：G と お米（O）を、かなの 行の まん中に そろえる（O は 32マスより 少し せまい）
+    x = (x - (gx1 - gx0 + 1 + 5 + 30)) // 2 + 5
+    BASE += 42
 G = shift(G, x + 2, BASE - gy1)
 x = bbox(G)[2] + 3
 

@@ -1374,21 +1374,31 @@ function wetSoil(m) {
 // 秋起こし（10 月下旬）の畦の彼岸花：花は 9 月中旬〜10 月上旬で終わり、花のあとに葉が出る（環境省 皇居外苑の解説）。
 // しおれた花茎が茶色く残り、根もとから 濃い緑の細い葉が 束になって出ている
 function higanbanaAfter(o) {
-  o.material.color.setRGB(0.4, 0.29, 0.22);           // しおれた花（赤い花の絵を 茶色っぽくくすませる）
+  const m = o.material, prev = m.onBeforeCompile, key = m.customProgramCacheKey();   // 風の細工はそのまま残す
+  m.color.setRGB(1, 1, 1); m.roughness = 1; m.envMapIntensity = 0.4;   // 枯れた茎は つやが無い（空が白く映らない）
+  m.onBeforeCompile = (sh, r) => {                    // しおれた花：赤い花も緑の茎も、明るさだけ残して 枯れた茶色にする（切り抜きのアルファはそのまま）
+    prev.call(m, sh, r);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <map_fragment>',
+      '#include <map_fragment>\n float kL = dot(diffuseColor.rgb, vec3(0.45, 0.45, 0.1)); diffuseColor.rgb = vec3(0.15, 0.09, 0.05) * (0.6 + 1.5 * kL);');
+  };
+  m.customProgramCacheKey = () => key + '|kare';
+  m.needsUpdate = true;
   o.updateWorldMatrix(true, false);
-  const P = o.geometry.attributes.position, v = new THREE.Vector3(), cl = new Map();
-  for (let i = 0; i < P.count; i++) {                 // 株ごと（0.4m のます目）に、根もとの高さと まん中を求める
-    v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld);
-    const k = Math.round(v.x / 0.4) + ',' + Math.round(v.z / 0.4), c = cl.get(k);
-    if (c) { c.x += v.x; c.z += v.z; c.n++; c.y = Math.min(c.y, v.y); } else cl.set(k, { x: v.x, z: v.z, n: 1, y: v.y });
+  // 株のまん中：板（4 頂点の四角）ごとに まん中と 根もとの高さを出し、十字に組んだ 2 枚（まん中が 2cm 以内）を 1 株にまとめる
+  const P = o.geometry.attributes.position, v = new THREE.Vector3(), cl = [];
+  for (let q = 0; q + 4 <= P.count; q += 4) {
+    let x = 0, z = 0, y = 1e9;
+    for (let k = 0; k < 4; k++) { v.fromBufferAttribute(P, q + k).applyMatrix4(o.matrixWorld); x += v.x / 4; z += v.z / 4; y = Math.min(y, v.y); }
+    const c = cl.find(c => Math.hypot(c.x / c.n - x, c.z / c.n - z) < 0.02);
+    if (c) { c.x += x; c.z += z; c.n++; c.y = Math.min(c.y, y); } else cl.push({ x, z, n: 1, y });
   }
   const parts = [];
   for (let i = 0; i < 9; i++) parts.push(new THREE.PlaneGeometry(0.014, 0.3).translate(0, 0.15, 0).rotateX(-0.75 - Math.random() * 0.35).rotateY(i * 0.7 + Math.random() * 0.3).toNonIndexed());   // 細い葉が 弓なりに 外へ広がる
   const g = new THREE.BufferGeometry();
   for (const a of ['position', 'normal', 'uv']) g.setAttribute(a, new THREE.Float32BufferAttribute(parts.flatMap(x => [...x.attributes[a].array]), a === 'uv' ? 2 : 3));
-  const leaves = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: new THREE.Color(0x3a5f30).convertSRGBToLinear(), side: THREE.DoubleSide }), cl.size), m4 = new THREE.Matrix4();
+  const leaves = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: new THREE.Color(0x3a5f30).convertSRGBToLinear(), side: THREE.DoubleSide }), cl.length), m4 = new THREE.Matrix4();
   let n = 0;
-  for (const c of cl.values()) { const s = 0.8 + Math.random() * 0.5; leaves.setMatrixAt(n++, m4.makeRotationY(Math.random() * 6.3).scale(v.set(s, s, s)).setPosition(c.x / c.n, c.y, c.z / c.n)); }
+  for (const c of cl) { const s = 0.8 + Math.random() * 0.5; leaves.setMatrixAt(n++, m4.makeRotationY(Math.random() * 6.3).scale(v.set(s, s, s)).setPosition(c.x / c.n, c.y, c.z / c.n)); }
   leaves.frustumCulled = false; leaves.receiveShadow = true; scene.add(leaves);
 }
 function setupField(root) {

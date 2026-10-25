@@ -115,6 +115,8 @@
   #farmerSay { position: fixed; left: 0; top: 0; z-index: 6; max-width: 260px; padding: 7px 12px; border: 2px solid #3b2f22; border-radius: 14px; background: #fffdf6; color: #2b2116; font-size: 14px; font-weight: 700; line-height: 1.4; pointer-events: none; opacity: 0; transition: opacity .2s; }
   #farmerSay::after { content: ''; position: absolute; left: 50%; bottom: -10px; margin-left: -8px; border: 8px solid transparent; border-top-color: #3b2f22; border-bottom: 0; }
   #farmerSay.dock::after { display: none; }
+  .farmerVerdict { margin: 0 0 8px; padding: 8px 12px; border: 2px solid #3b2f22; border-radius: 14px; background: #fffdf6; color: #2b2116; font-weight: 700; font-size: 14px; text-align: left; }
+  .farmerVerdict small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
   #farmerSay small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
   #toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
@@ -1122,7 +1124,7 @@ const FROST = (() => {
 // ---- 畦を見回る人：田んぼの水や畦は毎日のように見回る（山形県・農林水産省の資料）。北の畦（となりの田んぼとのあいだ）を
 // スコップをかついで歩き、ときどき立ち止まって田んぼをのぞく。トラクターが近いと止まって待つ
 const FARMER = (() => {
-  if (TOD === 'yoru') return { update() {} };   // 夜は 畦を見回る人もいない
+  if (TOD === 'yoru') return { update() {}, verdict: () => '' };   // 夜は 畦を見回る人もいない
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const M = { cloth: lam(0x3b5f86), pants: lam(0x4a4c52), boot: lam(SHIRO ? 0x2b2b2b : 0xe8e8e2), skin: lam(0xc99a78), cap: lam(season === 'aki' ? 0xd9c48a : 0xe9e4d6), wood: lam(0x8a6a44), steel: lam(0x8c9298), towel: lam(0xf2f2ee) };
   const box = (w, h, d, m) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
@@ -1253,7 +1255,18 @@ const FARMER = (() => {
     root.rotation.y += ((look - root.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 3);
     head.rotation.y = !moving && near ? Math.atan2(S.x - st.x, S.z - Z) - root.rotation.y : 0;   // トラクターを目で追う
   }
-  return { update, root, st, say, said };
+  // 終わりの画面：田んぼの持ち主の ひとこと（点数と いちばん点が低い所から）
+  function verdict(total, area, art) {
+    const P = SCORE.parts, weak = [['まっすぐ走るのを', P.straight / 30], ['となりの跡への 重ねかたを', P.overlap / 25], ['速さを', P.spd / 20], ['回るとき 上げるのを', P.turn / 25]].sort((a, b) => a[1] - b[1])[0];
+    const t = art ? (total >= 85 ? 'ええ絵だら！ 上から見ると よう分かる' : total >= 70 ? 'ちゃんと ' + ART.name + ' に見えるじゃん。もうちょい 白線に そろえりん' : '白線から はみ出しとるな。もういっぺん やってみりん')
+      : area > 0.2 * 4 * HX * HZ ? 'まだ だいぶ 残っとるじゃん！ 最後まで 耕しりん'   // 田んぼの 2 割より多く 耕し残し
+      : total >= 90 ? (area >= 1 ? '上手いもんだ。けど 四すみの耕し残しは 外周を回って 仕上げりん' : '上出来だら！ これなら 来年も 頼むわ')
+      : total >= 75 ? 'まあまあだな。' + weak[0] + ' 直しゃあ 一人前だ'
+      : total >= 50 ? 'まだまだだな。' + weak[0] + ' 練習しりん'
+      : 'こりゃあ 耕し直しだな…。あわてんで ゆっくり やりん';
+    return `<div class="farmerVerdict">🧑‍🌾「${t}」<small>— 畦で見とった 田んぼの持ち主</small></div>`;
+  }
+  return { update, root, st, say, said, verdict };
 })();
 
 // 風：畦の草・彼岸花・実った稲・遠くの木を、上のほうだけゆらす（絵の v が高いほど大きく）
@@ -5032,7 +5045,7 @@ function finish() {
   const area = left * CELL * CELL;
   const trkM = Math.round(TR.remaining(c => tilledMask[c]));   // 耕した所の上に、いま残っているタイヤの跡（4 本の車輪の跡の長さの合計）
   const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
-  $('doneScore').innerHTML = `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
+  $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
@@ -5057,7 +5070,7 @@ function finishArt() {
   if (r.fill < 0.95) tips.push('のこりの黄色い所も耕すと、でき が上がる');
   if (r.ready && r.kirei < 80) tips.push('白線の手前でロータリーを上げると、はみ出さない（はみ出した土はもどせない）');
   tips.push(...sm.tips);
-  $('doneScore').innerHTML = `<b>${f} 点</b>${EASY.used ? '（🔰 かんたんアシストを使ったので 8 割）' : ''}<br><span class="small">${msg}</span>` +
+  $('doneScore').innerHTML = FARMER.verdict(f, 0, true) + `<b>${f} 点</b>${EASY.used ? '（🔰 かんたんアシストを使ったので 8 割）' : ''}<br><span class="small">${msg}</span>` +
     `<br><span class="small">上手さ ${r.ready ? r.skill : 0} 点（きれいさ ${r.kirei}% × 運転 ${r.unten} 点${EASY.used ? ' × 🔰 0.8' : ''}）× でき ${Math.round(r.fill * 100)}%（95% で満点）</span>` +
     `<br><span class="small">はみ出し ${r.over.toFixed(0)}m²・耕し残し ${r.left.toFixed(0)}m²（白線から ${SHIRO ? 60 : 40}cm 以内は数えない）・運転：${sm.text}</span>` +
     (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '') + heardLine();

@@ -133,6 +133,17 @@ LINE 公式アカウントのリッチメニューは、LINE Official Account Ma
 3. アクション：左上のマス（ドライブスルーだった所）を「リンク」にして、URL を `https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game`、ラベルを「お米ころころ」にする。ほかの4マスのアクションは変えない
 4. 保存して、スマホの LINE で表示とリンクを確かめる
 
+### 5-1. Messaging API で差しかえる（今までの やり方）
+
+Actions「LINE rich menu」（`tools/line-richmenu.js`）が、いま既定のメニューのタップ範囲・アクション・メニューバーの文字をそのまま写した新しいメニューを作り、絵を載せて既定にします（Messaging API では、作ったメニューの絵をあとから変えられないので作りなおします）。左上のマスのアクションは上のリンクにします（`keep_game_link` で前のまま）。切りかえ用の別名（alias）が前のメニューをさしていれば、新しいメニューに付けかえます。前のメニューは消しません。
+
+1. GitHub の Settings → Secrets and variables → Actions に `LINE_CHANNEL_ACCESS_TOKEN`（LINE Developers → らいすぴあぶろぐ の Messaging API チャネル → チャネルアクセストークン）を入れる。**値はチャットに書かない**
+2. Actions →「LINE rich menu」→ Run workflow（`apply` を つけない）→ ログで「いまの既定」と「新しいメニュー」のタップ範囲・アクションを確かめる（何も変わらない）
+3. よければ `apply` を つけて もう一度。スマホの LINE で表示とリンクを確かめる
+4. もどすときは、ログの「もどすときは」の richMenuId を `rollback` に入れ、`apply` を つけて動かす（別名も もどします。とちゅうで止まったら、同じように もう一度。差しかえが とちゅうで止まったときは、ログに出る richMenuId を `rollback_from` にも入れる）
+
+いまのタップ範囲が絵のマス（下の表）と合わないとき・絵の大きさがメニューとちがうときは、何もせずに止まります。ひとりずつ別のメニューをつないでいる友だちには、既定のメニューは出ません（LINE のしくみ）。
+
 テンプレートを自分で決める（自由に区切る）場合のタップ範囲（2500×1686 の座標）：
 
 | マス | x | y | アクション |

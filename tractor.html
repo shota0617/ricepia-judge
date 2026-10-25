@@ -1232,9 +1232,10 @@ const FARMER = (() => {
     if (!onScr && ab && !ab.classList.contains('hidden')) { const r = ab.getBoundingClientRect(); if (r.width && r.top < dy + h && r.bottom > dy && r.left < dx + w) dx = Math.round(r.right + 10); }
     el.style.transform = onScr ? `translate(${Math.round(x - w / 2)}px, ${Math.round(y - h - 12)}px)` : `translate(${dx}px, ${dy}px)`;
   }
-  function update(dt) {
+  function update(dt, running) {
     st.t += dt;
-    critic(dt); bubble(dt);
+    if (running) critic(dt);                       // メニュー・操作の表・おわりで止まっているあいだは 見ない（トラクターも止まっている）
+    bubble(dt);
     const near = Math.hypot(S.x - st.x, S.z - Z) < 6;
     let moving = false;
     if (st.pause > 0) st.pause -= dt;
@@ -5219,7 +5220,7 @@ function frame(now) {
   GOSSAMER.update(dt);
   MIST.update(dt);
   FROST.update(dt * SPEEDUP);
-  FARMER.update(dt);
+  FARMER.update(dt, running);
   FLOAT.update(dt * SPEEDUP);
   DRY.update(dt * SPEEDUP);
   TR.flush();

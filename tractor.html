@@ -4969,8 +4969,8 @@ function engineRpm(t) {
   if (S.stalled || S.glow > 0) return 0;          // エンスト・予熱中：エンジンは止まっている                       // エンスト：エンジンが止まっている
   rpm += 900 * (S.flare || 0);
   if (S.lift > 0.1) rpm -= 70;
-  if (work && S.wetLoad) rpm -= S.wetLoad;      // ぬかるみで爪とタイヤが泥に取られると、回転がぐっと落ちる                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
-  return rpm;
+  if (work && S.wetLoad) rpm -= S.wetLoad * (PTOREV ? REV_RPM / 2500 : 1);   // ぬかるみで爪とタイヤが泥に取られると、回転がぐっと落ちる（逆転は もとの回転が低いぶん 落ち幅も小さい）                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
+  return Math.max(work && !(S.crank > 0.6) ? 380 : 0, rpm);   // 重すぎても エンストするまでは 380 回転あたりで粘る（マイナスにはならない）
 }
 
 // ---- 操作 ----

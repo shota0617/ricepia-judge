@@ -238,10 +238,19 @@ async function walkTo(page, id) {
     return bad.length ? bad.join(',') : true;
   });
   // 田んぼのイベント「芽出しの見きわめ」：種もみが3つ出て、OK をえらぶと +20pt と米づくりの まちメモ。1日1回
+  // 芽出しは こよみの 田おこし・田植えの ころ（4〜6月）だけ。台本の 日付（10月）では 出ないので、ここだけ 田おこしの ころに する
+  R.checks.medashiSeason = await page.evaluate(() => {
+    const S = window.NISHIO_SEASON, G = nishioGo, p0 = S.paddy, res = {};
+    for (const m of [12, 1, 4, 5, 6, 10]) { S.paddy = () => p0(new Date(2026, m - 1, 15)); res[m] = G.medashiDue(); }
+    S.paddy = p0;
+    return { ...res, ok: !res[12] && !res[1] && !res[10] && res[4] && res[5] && res[6] };
+  });
   R.checks.medashi = await page.evaluate(async () => {
-    const M = window.NISHIO_MEDASHI, G = nishioGo, bad = [];
+    const M = window.NISHIO_MEDASHI, G = nishioGo, bad = [], S = window.NISHIO_SEASON, p0 = S.paddy;
     if (!M) return 'none';
     if (G.state.medashiDay === G.ymd()) return 'もう今日は遊んだことになっている';
+    S.paddy = () => p0(new Date(2026, 3, 20));   // 田おこしの ころ（芽出しの イベントが 出る）
+    try {
     const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();   // ごほうびの画面の上には出ないので、閉じてから
     const p0 = G.state.points;
     // 田んぼを歩いて始まる。きろく のパネルを開いている間は始まらず、閉じたあとの1歩で始まる
@@ -280,6 +289,7 @@ async function walkTo(page, id) {
     if (!rw.classList.contains('show') || !/テスト2/.test(rw.textContent)) bad.push('1つめを閉じたあとに 2つめの ごほうびが出ない');
     rw.click();
     return bad.length ? bad.join(',') : true;
+    } finally { S.paddy = p0; }
   });
   // 水べのイベント「虫の名前あて」：水べを歩くと始まり、3問。名前の絵を3びきから えらぶ。3問当たると +20pt と虫の まちメモ。1日1回
   R.checks.mushi = await page.evaluate(async () => {
@@ -1476,6 +1486,7 @@ async function walkTo(page, id) {
   need(c.hiryo === true, `ミニゲーム 肥料山の草刈り：${c.hiryo}`);
   need(c.bookev === true, `イベント 本のできごと：${c.bookev}`);
   need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
+  need(c.medashiSeason && c.medashiSeason.ok, `芽出しの見きわめが 季節の ちがう 月（冬・秋）に 出る／春に 出ない：${JSON.stringify(c.medashiSeason)}`);
   need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.mushi === true, `水べのイベント 虫の名前あて：${c.mushi}`);
   need(c.kirara === true, `イベント 雲母石を探せ：${c.kirara}`);

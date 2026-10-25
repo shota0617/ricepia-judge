@@ -967,7 +967,9 @@ function dankyuReward(stars, level) {
 
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：1日1回。えらんだ種もみで ポイント（OK 20・ギリギリOK 10・伸び過ぎ 0）と、
 // そのわけの 米づくりの まちメモ（kome.js。OK・ギリギリOK は「いちばんよい芽出し」、伸び過ぎは「伸びすぎるわけ」）
-const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0;
+// 芽出し（催芽）は 苗づくりの はじめ。こよみ（season.js）の 田おこし・田植えの ころ（4〜6月）だけ 出す（冬に 種もみの 芽出しは しない。自分で 遊んで 分かった：12月に 出ていた）
+const medashiSeason = () => { const p = window.NISHIO_SEASON && NISHIO_SEASON.paddy(new Date()); return !p || p.id === 'taokoshi' || p.id === 'taue'; };
+const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0 && medashiSeason();
 function medashiReward(choice, pts) {
   if (!medashiDue()) return { pts: 0, fresh: false };
   S.medashiDay = ymd();

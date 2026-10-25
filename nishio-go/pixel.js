@@ -6092,9 +6092,9 @@ function frame(now) {
 
   // 主人公の頭の上に浮かぶ文字（ポイントなど）
   // めいろの「🏁 ゴール！」が 出ている 間は 待って、消えてから 浮かべる（ゴールの 時間・★の 行と 重なって どちらも 読めなかった。自分で 遊んで 分かった）
-  //   待っている 文字が いくつか あれば、消えた あとに 来た 順に 1つずつ（1.2秒ずつ）。同じ 所に いっしょに 出すと 重なって 読めない
+  //   待っている 文字が いくつか あれば、消えた あとに 来た 順に 1つずつ（1.3秒ずつ）。同じ 所に いっしょに 出すと 重なって 読めない
   floatDrawn.length = 0;
-  if (mzBanner.t0) floaters.forEach((fl, k) => { fl.at = now + k * 1200; });
+  if (mzBanner.t0) floaters.forEach((fl, k) => { fl.at = now + k * 1300; });   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (mzBanner.t0) continue;

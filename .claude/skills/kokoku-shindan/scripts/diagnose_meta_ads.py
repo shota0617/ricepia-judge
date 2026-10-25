@@ -180,10 +180,25 @@ def main():
     ap.add_argument("--conv-col", default=None, help="成果列の名前（部分一致）"); ap.add_argument("--json", default=None)
     args = ap.parse_args()
     raw = open(args.csv, "rb").read()
-    text = raw.decode("utf-8-sig", errors="replace") if not raw.startswith(b"\xff\xfe") else raw.decode("utf-16")
+    text = None
+    # Excelで保存し直したCSVは Shift_JIS（cp932）のことがある。文字化けした見出しで集計してゼロを出さないよう、厳密に判定する
+    for enc in (("utf-16",) if raw.startswith((b"\xff\xfe", b"\xfe\xff")) else ("utf-8-sig", "cp932")):
+        try:
+            text = raw.decode(enc); break
+        except UnicodeDecodeError:
+            continue
+    if text is None:
+        sys.exit("CSVの文字コードを判定できません（UTF-8 / Shift_JIS / UTF-16 に対応）")
     rows = [r for r in csv.reader(io.StringIO(text)) if any(c.strip() for c in r)]
+    if len(rows) < 2:
+        sys.exit("データ行がありません")
     headers, rows = [h.strip() for h in rows[0]], rows[1:]
     col = find_cols(headers)
+    if "spend" not in col or "imp" not in col:
+        sys.exit("「消化金額」と「インプレッション」の列が見つかりません。広告マネージャからエクスポートしたCSVか確認してください（見つかった列: " + " / ".join(headers[:12]) + "）")
+    # 合計行（名前列が空で金額だけ入っている行）を除外。meta-ads.html の loadText と同じ
+    name_cols = [col[k] for k in ("campaign", "adset", "ad") if k in col]
+    rows = [r for r in rows if not name_cols or any((r[i] if i < len(r) else "").strip() for i in name_cols)]
     date_idx = col.get("day")
     level = args.level or ("ad" if "ad" in col else "adset" if "adset" in col else "campaign" if "campaign" in col else None)
     cands = conv_candidates(headers, rows)
@@ -195,7 +210,11 @@ def main():
             sys.exit(f"成果列 '{args.conv_col}' が見つかりません。列名: {', '.join(headers)}")
         conv_idx = hits[0]
     elif cands:
-        conv_idx = next((i for i in cands if re.search(r"購入|purchase", headers[i], re.I) and not re.search(r"値|value", headers[i], re.I)), cands[0])
+        # meta-ads.html の setupSettings と同じ優先順位：合計が正の「購入」→ 合計が正の「結果」→ 合計が最大の列
+        sums = {i: sum((num(r[i]) or 0) for r in rows if i < len(r)) for i in cands}
+        conv_idx = (next((i for i in cands if re.fullmatch(r"(購入|purchases?|ウェブサイトでの購入|website purchases)", headers[i], re.I) and sums[i] > 0), None)
+                    or next((i for i in cands if re.fullmatch(r"(結果|results)", headers[i], re.I) and sums[i] > 0), None)
+                    or max(cands, key=lambda i: sums[i]))
 
     dates = sorted({norm_date(r[date_idx]) for r in rows if date_idx is not None and date_idx < len(r)} - {None}) if date_idx is not None else []
     if not dates and "start" in col:

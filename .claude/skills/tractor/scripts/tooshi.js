@@ -33,7 +33,7 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
     K.fwd=0; g.sim(1);
     const pct=g.SCORE ? document.getElementById('pct')?.textContent : '';
     g.finish && g.finish();
-    return {...log, tr:undefined, rows:undefined, turnsDown:g.SCORE.st.turnsDown, parts:g.SCORE.parts, levee:g.SCORE.st.levee-log.levee0, x:+S.x.toFixed(1), z:+S.z.toFixed(1), done:S.done, sc:document.getElementById('sc')?.textContent, pct, heard:Object.keys(g.heard||{}).join(',')};
+    return {...log, tr:undefined, rows:undefined, turnsDown:g.SCORE.st.turnsDown, parts:g.SCORE.parts, levee:g.SCORE.st.levee-log.levee0, x:+S.x.toFixed(1), z:+S.z.toFixed(1), done:S.done, sc:document.getElementById('sc')?.textContent, pct, heard:Object.keys(g.heard||{}).join(','), dame:JSON.stringify(g.FARMER.said||{})};
   });
   await p.waitForTimeout(2500);
   await p.screenshot({path:out+'_done.png'});

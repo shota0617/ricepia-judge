@@ -1255,15 +1255,29 @@ const FARMER = (() => {
     root.rotation.y += ((look - root.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 3);
     head.rotation.y = !moving && near ? Math.atan2(S.x - st.x, S.z - Z) - root.rotation.y : 0;   // トラクターを目で追う
   }
-  // 終わりの画面：田んぼの持ち主の ひとこと（点数と いちばん点が低い所から）
+  // 終わりの画面：田んぼの持ち主の ひとこと。点数を下げた ほんとうのわけ（へった所・数）から言う。art は田んぼアートの ART.score() の結果
   function verdict(total, area, art) {
-    const P = SCORE.parts, weak = [['まっすぐ走るのを', P.straight / 30], ['となりの跡への 重ねかたを', P.overlap / 25], ['速さを', P.spd / 20], ['回るとき 上げるのを', P.turn / 25]].sort((a, b) => a[1] - b[1])[0];
-    const t = art ? (total >= 85 ? 'ええ絵だら！ 上から見ると よう分かる' : total >= 70 ? 'ちゃんと ' + ART.name + ' に見えるじゃん。もうちょい 白線に そろえりん' : '白線から はみ出しとるな。もういっぺん やってみりん')
-      : area > 0.2 * 4 * HX * HZ ? 'まだ だいぶ 残っとるじゃん！ 最後まで 耕しりん'   // 田んぼの 2 割より多く 耕し残し
-      : total >= 90 ? (area >= 1 ? '上手いもんだ。けど 四すみの耕し残しは 外周を回って 仕上げりん' : '上出来だら！ これなら 来年も 頼むわ')
-      : total >= 75 ? 'まあまあだな。' + weak[0] + ' 直しゃあ 一人前だ'
-      : total >= 50 ? 'まだまだだな。' + weak[0] + ' 練習しりん'
-      : 'こりゃあ 耕し直しだな…。あわてんで ゆっくり やりん';
+    let t;
+    if (art) {
+      const issue = art.over >= 1 ? '白線から はみ出しとるな。白線の手前で 上げりん'
+        : art.fill < 0.95 ? 'まだ 黄色い所が 残っとるに。最後まで 耕しりん'
+        : '絵はええけど 運転が あらいな。ゆっくり まっすぐ やりん';
+      t = total >= 85 ? 'ええ絵だら！ 上から見ると よう分かる'
+        : total >= 70 ? 'ちゃんと ' + ART.name + ' に見えるじゃん。' + issue
+        : issue;
+    } else {
+      const P = SCORE.parts, st = SCORE.st;
+      // 「旋回と安全」は 旋回で上げない・畦にぶつけた・坂 の どれで へったかで 言い分ける
+      const turnWhy = st.turnsDown * 3 >= Math.max(st.levee, st.safety) * 2 ? '回るとき 上げるのを' : st.levee >= st.safety ? '畦に ぶつけんように 回るのを' : '坂を ゆっくり まっすぐ 通るのを';
+      const weak = [['まっすぐ走るのを', P.straight / 30], ['となりの跡への 重ねかたを', P.overlap / 25], ['速さを', P.spd / 20], [turnWhy, P.turn / 25]].sort((a, b) => a[1] - b[1])[0];
+      const lost = weak[1] < 0.995;                   // どこかで 点がへったか（へっていなければ、点が低いのは 🔰 アシストの 8 割だけ）
+      t = area > 0.2 * 4 * HX * HZ ? 'まだ だいぶ 残っとるじゃん！ 最後まで 耕しりん'   // 田んぼの 2 割より多く 耕し残し
+        : total >= 90 ? (area >= 1 ? '上手いもんだ。けど 四すみの耕し残しは 外周を回って 仕上げりん' : '上出来だら！ これなら 来年も 頼むわ')
+        : !lost ? '運転は ええじゃん。つぎは アシストなしで やってみりん'
+        : total >= 75 ? 'まあまあだな。' + weak[0] + ' 直しゃあ 一人前だ'
+        : total >= 50 ? 'まだまだだな。' + weak[0] + ' 練習しりん'
+        : 'こりゃあ 耕し直しだな…。あわてんで ゆっくり やりん';
+    }
     return `<div class="farmerVerdict">🧑‍🌾「${t}」<small>— 畦で見とった 田んぼの持ち主</small></div>`;
   }
   return { update, root, st, say, said, verdict };
@@ -5070,7 +5084,7 @@ function finishArt() {
   if (r.fill < 0.95) tips.push('のこりの黄色い所も耕すと、でき が上がる');
   if (r.ready && r.kirei < 80) tips.push('白線の手前でロータリーを上げると、はみ出さない（はみ出した土はもどせない）');
   tips.push(...sm.tips);
-  $('doneScore').innerHTML = FARMER.verdict(f, 0, true) + `<b>${f} 点</b>${EASY.used ? '（🔰 かんたんアシストを使ったので 8 割）' : ''}<br><span class="small">${msg}</span>` +
+  $('doneScore').innerHTML = FARMER.verdict(f, 0, r) + `<b>${f} 点</b>${EASY.used ? '（🔰 かんたんアシストを使ったので 8 割）' : ''}<br><span class="small">${msg}</span>` +
     `<br><span class="small">上手さ ${r.ready ? r.skill : 0} 点（きれいさ ${r.kirei}% × 運転 ${r.unten} 点${EASY.used ? ' × 🔰 0.8' : ''}）× でき ${Math.round(r.fill * 100)}%（95% で満点）</span>` +
     `<br><span class="small">はみ出し ${r.over.toFixed(0)}m²・耕し残し ${r.left.toFixed(0)}m²（白線から ${SHIRO ? 60 : 40}cm 以内は数えない）・運転：${sm.text}</span>` +
     (tips.length ? '<br><span class="small">' + tips.map(t => '・' + t).join('<br>') + '</span>' : '') + heardLine();

@@ -1,0 +1,47 @@
+# LINE 公式アカウントの リッチメニューの 絵を、Messaging API で 差しかえる（tools/line-richmenu.js）。手で 動かす ときだけ。
+# はじめは apply を つけずに 動かして、ログで いまの メニューと 新しい メニュー（タップ範囲・アクション）を 確かめてから、apply を つけて もう一度。
+# Secrets の LINE_CHANNEL_ACCESS_TOKEN が いる（チャットには 書かない）。ログは 公開なので、トークンは 出さない
+name: LINE rich menu
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'のせる 絵（2500×1686・1MB まで）'
+        default: 'mkt/nishio-go/richmenu-2500x1686.png'
+      apply:
+        description: '本当に 差しかえる（つけない ときは 確かめるだけ）'
+        type: boolean
+        default: false
+      keep_game_link:
+        description: '左上の マスの アクションを 前のまま に する'
+        type: boolean
+        default: false
+      rollback:
+        description: 'もどす ときだけ：前の メニューの richMenuId'
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: line-richmenu
+jobs:
+  richmenu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+      - name: Replace rich menu
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          IMAGE: ${{ inputs.image }}
+          APPLY: ${{ inputs.apply }}
+          KEEP: ${{ inputs.keep_game_link }}
+          ROLLBACK: ${{ inputs.rollback }}
+        run: |
+          set -- "$IMAGE"
+          [ "$APPLY" = "true" ] && set -- "$@" --apply
+          [ "$KEEP" = "true" ] && set -- "$@" --keep-game-link
+          [ -n "$ROLLBACK" ] && set -- "$@" --rollback "$ROLLBACK"
+          node tools/line-richmenu.js "$@"

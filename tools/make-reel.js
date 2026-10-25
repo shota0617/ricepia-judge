@@ -103,7 +103,7 @@ async function endCard(page) {
   // 6) お店も 本物そっくり（主人公は 店の 左上。店は 画面の 右下の 空いた所）
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-ricepia'); nishioGo.moveTo(s.lat + 0.00022, s.lng - 0.0003); });
   await sleep(1400);
-  await caption(page, '🍚 お店も 本物そっくり', 'らいすぴあ・秀幸／近藤米穀店'); await sleep(2600); mark('shop');
+  await caption(page, '🍚 お店も 本物そっくり', 'らいすぴあ（近藤米穀店）'); await sleep(2600); mark('shop');
   // 7) せかいちず
   for (let i = 0; i < 3; i++) { await closeAll(); await sleep(300); }
   await caption(page, '');

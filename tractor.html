@@ -4251,6 +4251,7 @@ function step(dt) {
   P.PedalBrakeR.rotation.x = -0.22 * Math.max(brake, S.autoBrake && S.steer > 0 ? 0.5 : 0);
   // かかった時間・耕した割合
   if (S.started && !S.done) S.elapsed += dt;
+  if (S.started && !S.done && !S.stalled && !(S.glow > 0) && !(S.crank > 0.6)) S.engineT = (S.engineT || 0) + dt;   // アワーメーター：エンジンが回っているあいだだけ（泥落とし・エンスト・巻きつきの片づけで止めた時間は入れない）
   // エンジンの水温（0＝冷たい・0.55＝ふつう）：寒い朝や夜はかけたとき冷えていて、回しているうちに上がる（耕していると早い）
   if (S.cool === undefined) S.cool = COOL0;
   if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) - S.cool) * Math.min(1, dt / (S.cool < 0.5 ? 40 : 15));
@@ -4377,7 +4378,7 @@ function drawMeter() {
   }
   g.textAlign = 'right'; g.fillStyle = L >= 90 ? '#ff6a4a' : '#d6f6fb'; g.fillText(Math.round(L) + '%', r + 80, r + 24);
   g.textAlign = 'center'; g.font = 'bold 13px sans-serif'; g.fillStyle = '#9fd2dc';
-  g.fillText('アワー ' + (HOUR0 + (S.elapsed || 0) / 3600).toFixed(1) + 'h', r, r + 46);
+  g.fillText('アワー ' + (HOUR0 + (S.engineT || 0) / 3600).toFixed(1) + 'h', r, r + 46);
   // 絵文字のランプ：左に PTO（入で だいだい）、右に 倍速ターン（入で緑）
   g.fillStyle = S.rotDown && (S.rotorW || 0) > 1 ? '#ffb020' : '#2c3438'; g.font = 'bold 12px sans-serif'; g.fillText('PTO', r - 34, r + 70);
   g.fillStyle = S.dbl ? (S.dblAct ? '#40f070' : '#2f7a46') : '#2c3438'; g.fillText('倍速', r + 34, r + 70);

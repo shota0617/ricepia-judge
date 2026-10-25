@@ -1262,6 +1262,40 @@ async function walkTo(page, id) {
       return { npc: 'none' };
     });
     R.checks.npcBump = { ...bumpA, ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && !bumpA.back && bumpA.fresh !== false) };
+    // めいろの ゴールの 人に 着いて 話した あと、そのまま となりから こつんと 当たっても、同じ 話を もう 一度 開かない。次の ゴールへ 向かう 間は、はなれて また 通っても 開かない（こつんで あいさつした 人と 同じ）。
+    // 自分で 遊んで 分かった：着いて 話すと ゴールが 次の 人に かわり、とじて 2秒で 同じ 人の 窓が また 開いた
+    R.checks.npcArriveBump = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
+      const talking = n => !pi.hidden && pi.textContent.includes(n.name);
+      G.setGuide(null); pi.hidden = true;
+      for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))) {
+        const t = P.npcTile(n);
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const sx = t.x + dx, sy = t.y + dy;
+          if ([-1, 0, 1, 2, 3, 4, 5].some(k => P.blockedAt(sx + dx * k + 0.5, sy + dy * k + 0.5))) continue;   // 人の マスから 5マス 先まで まっすぐ 通れる
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, dx * 2, dy * 2); await wait(600);   // はなれる ほうへ 転がす（前の 確かめの こつんを 忘れさせる。rollPut は マスを かえた あつかいに ならない）
+          G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
+          for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
+          P.rollPut(sx + 0.5, sy + 0.5, 0, 0);   // ゴールの 人の となりに 着く（こつんでは なく、着いて 話す）
+          let arrived = false;
+          for (let i = 0; i < 16 && !arrived; i++) { await wait(250); arrived = talking(n); }
+          if (!arrived) { pi.hidden = true; G.setGuide(null); continue; }
+          pi.hidden = true; await wait(400);
+          const moved = !!G.guide && G.guide.id !== n.id;   // 話で 次の ゴールに かわった（次の ゴールへ 向かう 間の ふるまいを 見る）
+          P.rollPut(sx + 0.5, sy + 0.5, -dx * 4, -dy * 4);   // そのまま となりから 当たる
+          let again = false;
+          for (let i = 0; i < 6 && !again; i++) { await wait(100); again = talking(n); }
+          pi.hidden = true;
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれて もどる
+          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3);
+          let back = false;
+          for (let i = 0; i < 12 && !back; i++) { await wait(100); back = talking(n); }
+          pi.hidden = true; G.setGuide(null);
+          return { npc: n.name, arrived, moved, again, back, ok: arrived && moved && !again && !back };
+        }
+      }
+      return { npc: 'none', ok: true };
+    });
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
       const G = nishioGo, pi = document.getElementById('pxInfo');
@@ -1423,6 +1457,7 @@ async function walkTo(page, id) {
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
+  need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');

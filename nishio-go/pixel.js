@@ -6573,7 +6573,7 @@ let rollOn = (() => { try {
   return localStorage.getItem('nsg_roll') !== '0';
 } catch (e) { return true; } })();
 const rp = { x: null, y: null, vx: 0, vy: 0, sent: null, tile: '', bump: 0 };
-const npcBump = { id: '', x: 0, y: 0, met: new Set(), gkey: '' };   // さいごに こつんと ぶつかって 話しかけた 人（はなれるまで もう 話しかけない）。met：めいろで いまの ゴールへ 向かう 間に あいさつした 人
+const npcBump = { id: '', x: 0, y: 0, met: new Set(), gkey: '', carry: null };   // さいごに こつんと ぶつかって 話しかけた 人（はなれるまで もう 話しかけない）。met：めいろで いまの ゴールへ 向かう 間に あいさつした 人
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
@@ -6829,7 +6829,11 @@ function mzArriveTick(now) {
   if (g && g.kind === 'npc' && $('pxInfo').hidden) {
     const near = G.dist(G.me, g) <= G.guideRadius(g), end = !!(mzRt.path && mzRt.path.length <= 1 && mzRt.gid === g.id);
     const key = 'n:' + g.id + ':' + mzRt.t0, n = (G.npcs || []).find(x => x.id === g.id);
-    if (n && (near || end) && mzArrive.done !== key) { mzArrive.done = key; if (!near) { G.callNpc(n.id); mzArrive.call = n.id; } openNpc(n); }
+    if (n && (near || end) && mzArrive.done !== key) {
+      mzArrive.done = key; if (!near) { G.callNpc(n.id); mzArrive.call = n.id; } openNpc(n);
+      // こつんで 話した ときと 同じく、はなれるまで もう 話しかけない。話で ゴールが 次へ かわっても、次の ゴールへ 向かう 間は あいさつ ずみ（自分で 遊んで 分かった：とじて 2秒で 同じ 人の 窓が また 開いた）
+      Object.assign(npcBump, { id: n.id, x: Math.floor(rp.x), y: Math.floor(rp.y), carry: { id: n.id, gkey: mzRt.gkey } });
+    }
   }
 }
 function mzHintTick(now) {   // 25秒 行き先に 近づけていない（めいろの 道のりが へらない）ときだけ 道すじを 見せる（おたすけの ときは いつも 出ているので いらない）
@@ -7726,7 +7730,10 @@ function rollStep(dt) {
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
   if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
-    if (npcBump.gkey !== mzRt.gkey) { npcBump.gkey = mzRt.gkey; npcBump.met.clear(); }
+    if (npcBump.gkey !== mzRt.gkey) {
+      npcBump.gkey = mzRt.gkey; npcBump.met.clear();
+      const c = npcBump.carry; if (c && c.gkey !== mzRt.gkey) { npcBump.met.add(c.id); npcBump.carry = null; }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ
+    }
     // めいろでは、いちど こつんと あいさつした 人は すりぬける（通路の まん中に 立つ 人に 止められて 先へ 進めなかった）。
     // いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない（自分で 遊んで 分かった：行き止まりから ひきかえすと、同じ 人の 窓が また 開いた）
     const who0 = npcAt(tx, ty), who = who0 && !(mazeOn() && (npcBump.id === who0.id || npcBump.met.has(who0.id))) ? who0 : null;

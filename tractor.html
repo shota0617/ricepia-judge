@@ -3292,16 +3292,17 @@ const AKIAKANE = (() => {
   };
   const wetOk = s => WET.at(s[0], s[1]) > 0.45 && untilled(s[0], s[1]);
   const solo = [], pairs = [];
-  const nSolo = TOD === 'asa' ? 7 : 10, nPair = mud.length ? (TOD === 'asa' ? 1 : 3) : 0;
+  // 連結して産卵するのは 朝から昼（10 時〜正午ごろがさかん）。夕方は ひとりで飛んだり とまったりしている（大阪教育大学のアキアカネの解説・日本のトンボの 10 月の観察記録）
+  const nSolo = TOD === 'asa' ? 7 : 10, nPair = mud.length ? { asa: 1, hiru: 3 }[TOD] || 0 : 0;
   for (let k = 0; k < nSolo; k++) {
     const g = body(k % 3 !== 2); g.position.set((Math.random() * 2 - 1) * HX, 0.5 + Math.random(), (Math.random() * 2 - 1) * HZ); scene.add(g);
     solo.push({ g, st: TOD === 'asa' && Math.random() < 0.7 ? 'perch0' : 'dart', t: Math.random() * 9, tgt: g.position.clone(), hover: 0, rest: 0, ph: Math.random() * 6 });
   }
   for (let k = 0; k < nPair; k++) {
-    const g = new THREE.Group(), m = body(true), f = body(false);
-    f.position.set(0, -0.004, -0.04); f.rotation.x = -0.25; g.add(m, f);   // 雄が前で雌の頭をつかみ、雌がうしろにつながる
+    const g = new THREE.Group(), m = body(true), f = body(false), piv = new THREE.Group();
+    piv.position.z = -0.029; f.position.z = -0.0105; piv.add(f); g.add(m, piv);   // 雄が前で 腹の先で雌の頭をつかみ、雌はそこを支点に ぶら下がる
     const s = mud[k % mud.length]; g.position.set(s[0], 0.3, s[1]); scene.add(g);
-    pairs.push({ g, m, f, spot: s, t: Math.random() * 9, ph: Math.random() * 6, move: 0, away: 0, dir: Math.random() * 6.3 });
+    pairs.push({ g, m, f, piv, spot: s, t: Math.random() * 9, ph: Math.random() * 6, move: 0, away: 0, dir: Math.random() * 6.3 });
   }
   function newTarget(b) {
     const p = b.g.position;
@@ -3353,18 +3354,23 @@ const AKIAKANE = (() => {
         if (!wetOk(q.spot) || near(p, 3)) {                   // 耕されたら、または トラクターが来たら ぬかるみの別の所へ
           if (near(p, 3)) q.away = 3 + Math.random() * 3;
           const c = mud.filter(s => wetOk(s) && Math.hypot(s[0] - S.x, s[1] - S.z) > 6);
-          if (c.length) q.spot = c[Math.floor(Math.random() * c.length)]; else q.away = 1;   // ぬかるみが全部耕されたら 上を飛んでいる
+          if (c.length) q.spot = c[Math.floor(Math.random() * c.length)];
+          else {                                               // 行ける ぬかるみが無い：トラクターから はなれた所へ逃げて、上を飛んでいる
+            q.away = Math.max(q.away, 1);
+            if (near(p, 3)) { const dx = p.x - S.x, dz = p.z - S.z, L = Math.hypot(dx, dz) || 1; q.spot = [Math.max(-HX, Math.min(HX, p.x + dx / L * 7)), Math.max(-HZ, Math.min(HZ, p.z + dz / L * 7)), 0.08]; }
+          }
         }
         if (q.away > 0) q.away -= dt;
         tmp.set(q.spot[0] + Math.cos(q.dir) * 0.15 - p.x, 0, q.spot[1] + Math.sin(q.dir) * 0.15 - p.z);
         const d = tmp.length(), far = d > 0.5 || q.away > 0;
         q.dir += dt * (0.5 + 0.3 * Math.sin(q.t * 0.7 + q.ph));  // 産卵の場所の上を ゆっくり輪をえがいて動く
         if (d > 0.01) { tmp.multiplyScalar(Math.min(1, dt * (far ? 2.2 : 0.35) / d)); p.x += tmp.x; p.z += tmp.z; q.g.rotation.y = Math.atan2(tmp.x, tmp.z); }
-        const floor = mudY(q.spot) + 0.026;                    // 雌の腹の先が 泥にとどく高さ（雌はうしろで少し下がっている）
-        const bob = Math.abs(Math.sin(q.t * Math.PI * 1.4 + q.ph));   // 1 秒に 1〜2 回、ふりおろして泥を打つ
-        const ty = far ? 0.6 + 0.2 * Math.sin(q.t) : floor + 0.32 * bob;
-        if (!far && Math.abs(ty - p.y) < 0.1) p.y = ty; else p.y += (ty - p.y) * Math.min(1, dt * 3);   // 産卵中は はずみに そのまま合わせる
-        q.f.rotation.x = far ? -0.15 : -0.25 - 0.5 * (1 - bob);   // 打ちつけるとき、雌の体が下を向く
+        // 産卵：雄は 泥から 3〜4cm の高さを ほとんど変えずに飛び、つかんだ雌を 振り子のように ふりおろして、腹の先で泥を打つ（1 秒に 1〜2 回）
+        const sw = Math.pow(Math.abs(Math.sin(q.t * Math.PI * 1.4 + q.ph)), 3);   // 1＝打ちつけた所
+        const ty = far ? 0.6 + 0.2 * Math.sin(q.t) : mudY(q.spot) + 0.034 + 0.004 * Math.sin(q.t * 3 + q.ph);
+        p.y += (ty - p.y) * Math.min(1, dt * (far ? 3 : 6));
+        q.piv.rotation.x = far ? -0.12 : -0.2 - 0.95 * sw;      // 雌の腹の先は 支点から 4cm。いちばん下で 泥にとどく
+        q.m.rotation.x = far ? 0 : -0.15 * sw;                   // ふりおろすとき 雄も少し頭を上げる
       }
     }
   };

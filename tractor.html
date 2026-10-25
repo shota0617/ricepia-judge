@@ -4079,7 +4079,7 @@ function step(dt) {
   S.hiRange = onRoad && !onSlope && !S.rotDown;     // 道では 副変速を「高」（路上）に入れて走る
   // 副変速は 3 段（低・中・高。ヤンマー YT3R の公式「操作性」②）：耕すときは低、上げて田んぼの中を移動するときは中、道は高
   S.range = S.rotDown || S.turnUpHold ? 'L' : S.hiRange ? 'H' : 'M';
-  const vmax = GEARS[S.gear - 1] * (PTOREV && S.rotDown ? REV_RPM / 2500 : 1) * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
+  const vmax = GEARS[S.gear - 1] * (PTOREV && (S.rotDown || S.turnUpHold) ? REV_RPM / 2500 : 1) * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
   if (S.glow > 0) {                               // 予熱中：ランプが点くと カチッ、消えたら セルが回る（ソレノイドの カチッ）
     if (!S.glowClick) { S.glowClick = true; relayClick(0.7); }   // 始めるときは 音の用意があとなので、ここで鳴らす
     if ((S.glow -= dt) <= 0) relayClick();

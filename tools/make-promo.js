@@ -173,7 +173,7 @@ async function endCard(page) {
       ${[[80, 18, -40], [88, 16, -10], [86, 27, -50], [95, 24, -20], [93, 36, -55], [102, 34, -25], [99, 46, -60], [107, 46, -30], [104, 58, -65], [111, 58, -35]].map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="3.6" ry="6.2" transform="rotate(${r} ${x} ${y})" fill="#d8962c"/>`).join('')}</svg>`;
     // 位置（2500×1686）：左 35〜806・中 844〜1654・右 1694〜2463、上 21〜815・下 846〜1650（中のマスは上下つなぎ）
     return `<div style="position:absolute;inset:0;background:#fff"></div>
-      ${tileBox(35, 21, 806, 815, '#7ddaf9', `<img src="${logoUrl}" style="width:700px;margin-bottom:40px">${big('お米ころころ', 118)}${sub('傾けて 西尾めいろ・無料', 66)}`)}
+      ${tileBox(35, 21, 806, 815, '#7ddaf9', `<img src="${logoUrl}" style="width:700px;margin-bottom:40px">${big('お米ころころ', 118)}${sub('傾けて 西尾めいろ・無料', 56)}`)}
       ${tileBox(35, 846, 806, 1650, '#fda170', `${pin}${big('店舗・営業時間', 104)}${sub('地図・定休日', 92)}`)}
       ${tileBox(844, 21, 1654, 1650, '#fed82c', `${rice}${big('新米 販売中', 150)}${sub('入荷速報', 110)}${sub('産地レポート', 110)}`)}
       ${tileBox(1694, 21, 2463, 815, '#c7b9f8', `${clipboard}${big('価格表PDF', 118)}${sub('全銘柄・税込', 86)}`)}

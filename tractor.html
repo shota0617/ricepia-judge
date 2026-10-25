@@ -3288,7 +3288,11 @@ const AKIAKANE = (() => {
   });
   const stubTop = () => { if (!stubbleGeo) return 0.18; if (!stubbleGeo.boundingBox) stubbleGeo.computeBoundingBox(); return stubbleGeo.boundingBox.max.y * 0.97; };   // 刈り株の先の高さ
   const untilled = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && !tilledMask[i * NZ + j]; };
-  const near = (p, r) => Math.hypot(p.x - S.x, p.z - S.z) < r;
+  // トラクターまでの近さは、車体のまん中の線（ロータリーのうしろ 1.6m から 前のはし 3.05m まで）のいちばん近い所から測る
+  const TP = [0, 0];
+  const trac = (x, z) => { const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), t = Math.max(-1.62, Math.min(3.05, (x - S.x) * fx + (z - S.z) * fz)); TP[0] = S.x + fx * t; TP[1] = S.z + fz * t; return TP; };
+  const gap = (x, z) => { const [tx, tz] = trac(x, z); return Math.hypot(x - tx, z - tz); };
+  const near = (p, r) => gap(p.x, p.z) < r;
   const tmp = new THREE.Vector3();
   // 産卵する所：取水口のまわりの ぬかるみ。泥の面の高さは 田んぼの形に光線を当てて求める（ぬれた色の板より下には行かない）
   const mud = [], ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0);
@@ -3316,7 +3320,7 @@ const AKIAKANE = (() => {
     if (HILLS.length && Math.random() < 0.35) {                // 刈り株の先へ（耕していない所の株）
       for (let i = 0; i < 12; i++) {
         const h = HILLS[Math.floor(Math.random() * HILLS.length)];
-        if (Math.hypot(h[0] - p.x, h[1] - p.z) < 8 && untilled(h[0], h[1]) && Math.hypot(h[0] - S.x, h[1] - S.z) > 4 && RUTS.at(h[0], h[1]) < 0.02) { b.tgt.set(h[0], stubTop() * h[3], h[1]); b.toPerch = true; return; }
+        if (Math.hypot(h[0] - p.x, h[1] - p.z) < 8 && untilled(h[0], h[1]) && gap(h[0], h[1]) > 4 && RUTS.at(h[0], h[1]) < 0.02) { b.tgt.set(h[0], stubTop() * h[3], h[1]); b.toPerch = true; return; }
       }
     }
     b.toPerch = false;
@@ -3338,7 +3342,7 @@ const AKIAKANE = (() => {
           continue;
         }
         flap(b.g, b.t, true);
-        if (near(p, 2.5) && p.y < 1.2) { tmp.set(p.x - S.x, 0, p.z - S.z).normalize(); b.tgt.set(p.x + tmp.x * 4, 1.3 + Math.random() * 0.6, p.z + tmp.z * 4); b.toPerch = false; b.hover = 0; }
+        if (near(p, 2.5) && p.y < 1.2) { const [tx, tz] = trac(p.x, p.z); tmp.set(p.x - tx, 0, p.z - tz).normalize(); b.tgt.set(p.x + tmp.x * 4, 1.3 + Math.random() * 0.6, p.z + tmp.z * 4); b.toPerch = false; b.hover = 0; }
         if (b.hover > 0) {                                     // ホバリング：その場で止まり、少しふるえる
           b.hover -= dt; p.x += Math.sin(b.t * 13 + b.ph) * 0.02 * dt; p.y += Math.sin(b.t * 9 + b.ph) * 0.03 * dt;
           b.g.rotation.y += Math.sin(b.t * 2 + b.ph) * 0.4 * dt;
@@ -3360,14 +3364,14 @@ const AKIAKANE = (() => {
         flap(q.m, q.t, true); flap(q.f, q.t + 0.4, true);
         if (!wetOk(q.spot) || near(p, 3)) {                   // 耕されたら、または トラクターが来たら ぬかるみの別の所へ
           if (near(p, 3)) q.away = 3 + Math.random() * 3;
-          const c = mud.filter(s => wetOk(s) && Math.hypot(s[0] - S.x, s[1] - S.z) > 6);
+          const c = mud.filter(s => wetOk(s) && gap(s[0], s[1]) > 6);
           if (c.length) q.spot = c[Math.floor(Math.random() * c.length)];
           else {                                               // 行ける ぬかるみが無い：トラクターから はなれた所へ逃げて、上を飛んでいる
             q.away = Math.max(q.away, 1);
             if (near(p, 3)) {                                  // 7m 先の 5 つの向き（まっすぐ逃げる向き ±60°・±120°）から、トラクターからいちばん遠い所。畦の外（6m まで）へも飛んでいく
-              const a0 = Math.atan2(p.z - S.z, p.x - S.x); let best = -1;
+              const [tx, tz] = trac(p.x, p.z), a0 = Math.atan2(p.z - tz, p.x - tx); let best = -1;
               for (const da of [0, 1.05, -1.05, 2.1, -2.1]) {
-                const x = Math.max(-HX - 6, Math.min(HX + 6, p.x + Math.cos(a0 + da) * 7)), z = Math.max(-HZ - 6, Math.min(HZ + 6, p.z + Math.sin(a0 + da) * 7)), dd = Math.hypot(x - S.x, z - S.z);
+                const x = Math.max(-HX - 6, Math.min(HX + 6, p.x + Math.cos(a0 + da) * 7)), z = Math.max(-HZ - 6, Math.min(HZ + 6, p.z + Math.sin(a0 + da) * 7)), dd = gap(x, z);
                 if (dd > best) { best = dd; q.spot = [x, z, 0.08]; }
               }
             }

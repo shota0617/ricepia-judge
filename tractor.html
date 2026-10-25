@@ -1371,6 +1371,26 @@ function wetSoil(m) {
   m.userData.wet = 1; m.color.multiplyScalar(0.72);
   if (m.roughness !== undefined) m.roughness *= 0.65;
 }
+// 秋起こし（10 月下旬）の畦の彼岸花：花は 9 月中旬〜10 月上旬で終わり、花のあとに葉が出る（環境省 皇居外苑の解説）。
+// しおれた花茎が茶色く残り、根もとから 濃い緑の細い葉が 束になって出ている
+function higanbanaAfter(o) {
+  o.material.color.setRGB(0.4, 0.29, 0.22);           // しおれた花（赤い花の絵を 茶色っぽくくすませる）
+  o.updateWorldMatrix(true, false);
+  const P = o.geometry.attributes.position, v = new THREE.Vector3(), cl = new Map();
+  for (let i = 0; i < P.count; i++) {                 // 株ごと（0.4m のます目）に、根もとの高さと まん中を求める
+    v.fromBufferAttribute(P, i).applyMatrix4(o.matrixWorld);
+    const k = Math.round(v.x / 0.4) + ',' + Math.round(v.z / 0.4), c = cl.get(k);
+    if (c) { c.x += v.x; c.z += v.z; c.n++; c.y = Math.min(c.y, v.y); } else cl.set(k, { x: v.x, z: v.z, n: 1, y: v.y });
+  }
+  const parts = [];
+  for (let i = 0; i < 9; i++) parts.push(new THREE.PlaneGeometry(0.014, 0.3).translate(0, 0.15, 0).rotateX(-0.75 - Math.random() * 0.35).rotateY(i * 0.7 + Math.random() * 0.3).toNonIndexed());   // 細い葉が 弓なりに 外へ広がる
+  const g = new THREE.BufferGeometry();
+  for (const a of ['position', 'normal', 'uv']) g.setAttribute(a, new THREE.Float32BufferAttribute(parts.flatMap(x => [...x.attributes[a].array]), a === 'uv' ? 2 : 3));
+  const leaves = new THREE.InstancedMesh(g, new THREE.MeshLambertMaterial({ color: new THREE.Color(0x3a5f30).convertSRGBToLinear(), side: THREE.DoubleSide }), cl.size), m4 = new THREE.Matrix4();
+  let n = 0;
+  for (const c of cl.values()) { const s = 0.8 + Math.random() * 0.5; leaves.setMatrixAt(n++, m4.makeRotationY(Math.random() * 6.3).scale(v.set(s, s, s)).setPosition(c.x / c.n, c.y, c.z / c.n)); }
+  leaves.frustumCulled = false; leaves.receiveShadow = true; scene.add(leaves);
+}
 function setupField(root) {
   field = root;
   scene.add(root);
@@ -1382,6 +1402,7 @@ function setupField(root) {
     if (amp && !o.material.userData.wind) { o.material.userData.wind = 1; addWind(o.material, amp); }
     if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
     if (RAIN && o.isMesh && ['soil_untilled', 'track'].includes(o.material.name)) wetSoil(o.material);
+    if (o.isMesh && o.material.name === 'higanbana' && season === 'aki') higanbanaAfter(o);
   });
   // 耕した所：0.2m のます目ごとの四角を先に用意し、耕したら地面に出す（UV＝x/2, −z/2）
   const ft = root.getObjectByName('FieldTilled');

@@ -2481,7 +2481,7 @@ function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
   const lv = levelOf(S.total), perH = Math.floor(IDLE.ptPerHour(lv) * (1 + 0.5 * upLv('bag')));
-  $('upNote').textContent = `🍚 自分で転がす：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
+  $('upNote').textContent = `🍚 自分で遊ぶ：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     if (simple()) return `<li class="up-pic" title="${esc(u.desc)}"><span class="ico">${UP_PI[u.id] ? `<img class="art" src="nishio-go/art/up-${u.id}.png" alt="${esc(u.name)}" width="48" height="48"/>` : PI('up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`
@@ -3165,7 +3165,7 @@ function switchMode(isDemo) {
   if (isDemo === demo) return;
   setMode(isDemo);
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
-  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けて 迷路を 転がします' : '地図をタップした所へ移動します'}。記録は別です）`
+  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けると お米が 迷路を ころころ進みます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
 document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode === 'demo')));

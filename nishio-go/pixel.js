@@ -6635,14 +6635,14 @@ window.addEventListener('deviceorientation', e => {
   tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * k; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * k;
   if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {   // あるいて移動で傾けたとき：1回だけ教える
     tiltG.walkTold = true;
-    G.toast('🍚 あるいて移動では、歩いた所へ お米が転がるよ。傾けて転がすのは「操作して遊ぶ」で');
+    G.toast('🍚 あるいて移動では、歩いた所へ お米が転がるよ。傾けて遊ぶのは「操作して遊ぶ」で');
   }
 });
 function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.x = tiltG.y = 0; }
 function tiltAsk() {   // iPhone：傾きを使う許可（画面をさわったときにしか聞けない）
   if (tiltG.asked || !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) return;
   tiltG.asked = true;
-  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、地図を タップした所へ 転がしてね（矢印キーでも）'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
+  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、地図を タップした所へ お米が進むよ（矢印キーでも）'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
 }
 ['click', 'touchend'].forEach(ev => document.addEventListener(ev, () => { if (rollOn) tiltAsk(); }, { capture: true, passive: true }));
 document.addEventListener('visibilitychange', () => { if (!document.hidden) tiltReset(); });

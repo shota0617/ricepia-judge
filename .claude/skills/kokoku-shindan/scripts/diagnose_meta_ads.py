@@ -189,8 +189,12 @@ def main():
     cands = conv_candidates(headers, rows)
     conv_idx = None
     if args.conv_col:
-        conv_idx = next((i for i in cands if args.conv_col in headers[i]), None)
-    if conv_idx is None and cands:
+        # 明示指定は全列から探す（検出ヒントに当たらない成果列も使えるように）。見つからなければ別の列で代用せずに終了
+        hits = [i for i, h in enumerate(headers) if h == args.conv_col] or [i for i, h in enumerate(headers) if args.conv_col in h]
+        if not hits:
+            sys.exit(f"成果列 '{args.conv_col}' が見つかりません。列名: {', '.join(headers)}")
+        conv_idx = hits[0]
+    elif cands:
         conv_idx = next((i for i in cands if re.search(r"購入|purchase", headers[i], re.I) and not re.search(r"値|value", headers[i], re.I)), cands[0])
 
     dates = sorted({norm_date(r[date_idx]) for r in rows if date_idx is not None and date_idx < len(r)} - {None}) if date_idx is not None else []
@@ -236,9 +240,9 @@ def main():
     L.append(f"- 判定の指標: " + (f"ROAS（基準：{ctx['roasBenchLabel']} {roas(roas_bench)}）" if use_roas else f"CPA（基準：{'目標CPA' if args.target_cpa>0 else '全体平均CPA'} {yen(bench_cpa)}）"))
     if breakeven: L.append(f"- 損益分岐ROAS: {roas(breakeven)}（粗利率 {args.margin:.0f}%）")
     t = total
-    L.append(f"\n## アカウント全体\n消化 {yen(t['spend'])} / 表示 {t['imp']:,.0f} / リーチ {t['reach']:,.0f} / 頻度 {t['freq']:.2f}{'(参考値)' if t['freqApprox'] else ''} / クリック {t['clicks']:,.0f} / CTR {pct(t['ctr'])} / CPC {yen(t['cpc'])} / CPM {yen(t['cpm'])}"
-             .replace("リーチ None", "リーチ —").replace("頻度 None", "頻度 —") if t["freq"] is not None else
-             f"\n## アカウント全体\n消化 {yen(t['spend'])} / 表示 {t['imp']:,.0f} / クリック {t['clicks']:,.0f} / CTR {pct(t['ctr'])} / CPC {yen(t['cpc'])} / CPM {yen(t['cpm'])}")
+    reach_s = f"{t['reach']:,.0f}" if t["reach"] else "—"
+    freq_s = (f"{t['freq']:.2f}" + ("(参考値)" if t["freqApprox"] else "")) if t["freq"] is not None else "—"
+    L.append(f"\n## アカウント全体\n消化 {yen(t['spend'])} / 表示 {t['imp']:,.0f} / リーチ {reach_s} / 頻度 {freq_s} / クリック {t['clicks']:,.0f} / CTR {pct(t['ctr'])} / CPC {yen(t['cpc'])} / CPM {yen(t['cpm'])}")
     if conv_idx is not None: L.append(f"成果 {t['conv']:,.0f} / 成果率 {pct(t['cvr'])} / CPA {yen(t['cpa'])}" + (f" / 売上 {yen(t['value'])} / ROAS {roas(t['roas'])}" if has_value else ""))
     if t["trend"]:
         tr = t["trend"]; f = lambda v: "—" if v is None else f"{v*100:+.0f}%"

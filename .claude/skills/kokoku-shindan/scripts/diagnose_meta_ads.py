@@ -63,16 +63,12 @@ def find_cols(headers):
     return col
 
 
-def conv_candidates(headers, rows, col):
-    """成果列の候補。loadText と同じく、指標列を除き、名前が成果らしい列を全行で確かめる（成果が疎でも落とさない）"""
+def conv_candidates(headers, col):
+    """成果列の候補。loadText と同じく、指標列を除いて名前で判定する。
+    値が全行空欄や「—」でも候補に残す（成果0件の広告は「成果が無い」として CPA 判定したい）"""
     metric_cols = {col[k] for k in ("spend", "imp", "reach", "freq", "linkClicks", "clicksAll") if k in col}
-    out = []
-    for i, h in enumerate(headers):
-        if i in metric_cols or CONV_EXCLUDE.search(h) or not CONV_HINT.search(h.strip()):
-            continue
-        if any(num(r[i]) is not None for r in rows if i < len(r)):
-            out.append(i)
-    return out
+    return [i for i, h in enumerate(headers)
+            if i not in metric_cols and not CONV_EXCLUDE.search(h) and CONV_HINT.search(h.strip())]
 
 
 def empty():
@@ -209,7 +205,7 @@ def main():
         if rows and all(g(r, "start") and g(r, "start") == g(r, "end") for r in rows) and len({g(r, "start") for r in rows}) > 1:
             date_idx = col["start"]
     level = args.level or ("ad" if "ad" in col else "adset" if "adset" in col else "campaign" if "campaign" in col else None)
-    cands = conv_candidates(headers, rows, col)
+    cands = conv_candidates(headers, col)
     conv_idx = None
     if args.conv_col:
         # 明示指定は全列から探す（検出ヒントに当たらない成果列も使えるように）。見つからなければ別の列で代用せずに終了

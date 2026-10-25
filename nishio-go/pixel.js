@@ -6769,6 +6769,7 @@ function mzRoute(now) {
     mzMvReset(mzMv);   // 着いた ときの 時間で 止める（チェックインまでに 窓を 読む 時間を 足さない）
     mzRt.warp = false;
     mzTrail.clear();   // 足あとは いまの ゴールへの ぶんだけ
+    const bc = npcBump.carry; if (bc) npcBump.carry = bc.from === mzRt.gkey ? { id: bc.id, to: gkey } : null;   // ゴールの 人に 着いて 話した：あいさつ ずみは その すぐ 次の ゴールへ だけ もちこす（動く 前に 行き先を また かえたら すてる）
     mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.hints = 0; mzRt.t0 = now; mzRt.clockT = now; mzRt.len0 = 0;
     mzNext.name = g.name || ''; mzNext.want = true;   // 「🏁 つぎの ゴール」を 出す（道のりが 分かってから）
   }
@@ -6832,7 +6833,7 @@ function mzArriveTick(now) {
     if (n && (near || end) && mzArrive.done !== key) {
       mzArrive.done = key; if (!near) { G.callNpc(n.id); mzArrive.call = n.id; } openNpc(n);
       // こつんで 話した ときと 同じく、はなれるまで もう 話しかけない。話で ゴールが 次へ かわっても、次の ゴールへ 向かう 間は あいさつ ずみ（自分で 遊んで 分かった：とじて 2秒で 同じ 人の 窓が また 開いた）
-      Object.assign(npcBump, { id: n.id, x: Math.floor(rp.x), y: Math.floor(rp.y), carry: { id: n.id, gkey: mzRt.gkey } });
+      Object.assign(npcBump, { id: n.id, x: Math.floor(rp.x), y: Math.floor(rp.y), carry: { id: n.id, from: mzRt.gkey } });
     }
   }
 }
@@ -7732,7 +7733,7 @@ function rollStep(dt) {
   if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
     if (npcBump.gkey !== mzRt.gkey) {
       npcBump.gkey = mzRt.gkey; npcBump.met.clear();
-      const c = npcBump.carry; if (c && c.gkey !== mzRt.gkey) { npcBump.met.add(c.id); npcBump.carry = null; }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ
+      const c = npcBump.carry; if (c && c.to) { if (c.to === mzRt.gkey) npcBump.met.add(c.id); npcBump.carry = null; }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ（mzRoute で 決めた 次の ゴールだけ）
     }
     // めいろでは、いちど こつんと あいさつした 人は すりぬける（通路の まん中に 立つ 人に 止められて 先へ 進めなかった）。
     // いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない（自分で 遊んで 分かった：行き止まりから ひきかえすと、同じ 人の 窓が また 開いた）

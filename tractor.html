@@ -1212,10 +1212,10 @@ const FARMER = (() => {
     if (fastT > 4 && say('fast')) return;
     if (slowT > 10 && say('slow')) return;
     if (gapM > 6 && say('gap')) return;            // すき間のすじが 6m 続いた
-    if (sc.yawM > 15 && sc.swept > 40) {
+    if (sc.swept > 40) {
       SCORE.calc(); const p = SCORE.parts;
-      if (p.rms > 2.2 && say('crooked')) return;   // 点数の「まっすぐ」が 30 点中 22 点を切るくらい
-      if (SHIRO && p.dup > 0.55 && say('konashi')) return;
+      if (sc.yawM > 15 && p.rms > 2.2 && say('crooked')) return;   // まっすぐ：自分でハンドルを切った道のり（yawM）で見る。点数の「まっすぐ」が 30 点中 22 点を切るくらい
+      if (SHIRO && p.dup > 0.55 && say('konashi')) return;      // 重ね・こねすぎ：耕した広さ（swept）で見る（直進アシストのときも）
       if (!SHIRO && p.dup > 0.4 && say('overlap')) return;
       if (said.crooked && p.rms < 1.2 && sc.yawM > 60 && say('good')) return;
     }

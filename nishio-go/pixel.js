@@ -7658,16 +7658,18 @@ function rollStep(dt) {
   const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1);   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
   const up = rp.vx * sl.x + rp.vy * sl.y < 0 ? 0.6 : 1;   // 上り坂は、下りより ゆるく おそくなる（いきおいで 堤防や 坂を のぼれる）
   const acc = ROLL_ACC * (KP.accel || 1);
+  // ころがり抵抗は 押す力の 4わり まで：どの 地面・転がり方・天気でも 約10度 傾ければ 動きだす（「ぴたっ」で 砂浜は いくら 傾けても 動かず、草は 14度 いった。めいろで「詰まって 動かない」の もと）
+  const cr = Math.min(crr * (KP.crr || 1), acc * 0.4);
   const fx = Math.max(-1, Math.min(1, ax)) * acc + sl.x * up, fy = Math.max(-1, Math.min(1, ay)) * acc + sl.y * up, fp = Math.hypot(fx, fy);   // 押す力（傾き・坂）
   let sp = Math.hypot(rp.vx, rp.vy);
   if (sp < 0.05) {   // 止まっている：押す力が ころがり抵抗より弱ければ 動かない（ゆるい坂では 止まっていられる）
-    const c0 = crr * (KP.crr || 1);
+    const c0 = cr;
     if (fp <= c0) { rp.vx = rp.vy = 0; return; }
     rp.vx += fx / fp * (fp - c0) * dt; rp.vy += fy / fp * (fp - c0) * dt;
   } else {
     rp.vx += fx * dt; rp.vy += fy * dt;
     sp = Math.hypot(rp.vx, rp.vy);
-    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (crr * (KP.crr || 1) + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
+    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (cr + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
     rp.vx *= ns / sp; rp.vy *= ns / sp;
   }
   const mz = mazeOn(), rb = mz ? (x, y) => mzBlocked(rp.x, rp.y, x, y) : rollBlocked;   // めいろの ときは めいろの 壁だけに 当たる

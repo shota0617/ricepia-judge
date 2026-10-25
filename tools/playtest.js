@@ -1312,6 +1312,37 @@ async function walkTo(page, id) {
       }
       return { npc: 'none', ok: true };
     });
+    // どの 地面・転がり方でも、少し（約12度）傾ければ 動きだす。「ぴたっ」（ころがり抵抗 2.4倍）で 草の 上では 14度、砂浜では いくら 傾けても 動かなかった（めいろで「詰まって 動かない」）
+    R.checks.rollStartTilt = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, KS = window.NISHIO_KOROSTYLE, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+      G.setGuide(null); document.getElementById('pxInfo').hidden = true;
+      const r0 = P.roll, K = M.K, a = Math.floor(r0.x / K), b = Math.floor(r0.y / K);
+      let spot = null;
+      for (let d = 0; d < 8 && !spot; d++) for (let cy = b - d; cy <= b + d && !spot; cy++) for (let cx = a - d; cx <= a + d && !spot; cx++) {
+        if (Math.max(Math.abs(cx - a), Math.abs(cy - b)) !== d || M.type(cx, cy) !== 1) continue;
+        for (let ty = 0; ty < K && !spot; ty++) for (let tx = 0; tx < K && !spot; tx++) {
+          const x = cx * K + tx + 0.5, y = cy * K + ty + 0.5;
+          P.rollPut(x, y, 0, 0); await wait(60);
+          if (P.roll.ground === 'grass' && P.roll.slope && P.roll.slope.g < 0.02) spot = { x, y };
+        }
+      }
+      if (!spot) return { skip: 'no grass', ok: true };
+      const id = KS.list().findIndex(c => c.motion.name === 'ぴたっ'), st = KS.state, sel0 = st.sel, had = st.u.includes(id);
+      if (!had) st.u.push(id);
+      KS.select(id);
+      const tg = P.meiroApi.tilt(), res = {};
+      for (const [k, dx, dy] of [['r', 1, 0], ['l', -1, 0], ['d', 0, 1], ['u', 0, -1]]) {
+        P.rollPut(spot.x, spot.y, 0, 0); await wait(100);
+        tg.x = dx * 0.5; tg.y = dy * 0.5;   // 傾き 約12度（0.5 ＝ いちばん強い 傾きの 半分の 押す力）
+        await wait(1200);
+        const r = P.roll; res[k] = +Math.hypot(r.x - spot.x, r.y - spot.y).toFixed(2);
+        tg.x = tg.y = 0;
+      }
+      if (!had) st.u.splice(st.u.indexOf(id), 1);
+      KS.select(sel0);
+      const best = Math.max(...Object.values(res));
+      return { spot, style: 'ぴたっ', moved: res, ok: best > 0.5 };
+    });
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
       const G = nishioGo, pi = document.getElementById('pxInfo');
@@ -1511,6 +1542,7 @@ async function walkTo(page, id) {
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
+  need(c.rollStartTilt && c.rollStartTilt.ok, '転がり方「ぴたっ」で 草の 上だと、少し 傾けても お米が 動きださない（めいろで 詰まる）');
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');

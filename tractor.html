@@ -111,6 +111,11 @@
   .prog i { display: block; height: 100%; width: 0; background: var(--green); transition: width .2s; }
   .small { color: #736c5e; font-size: 12px !important; }
   a { color: var(--green); }
+  /* 畦の農家さんのダメ出し（ふきだし）。顔の上に出し、画面の外のときは 左上に寄せる */
+  #farmerSay { position: fixed; left: 0; top: 0; z-index: 6; max-width: 260px; padding: 7px 12px; border: 2px solid #3b2f22; border-radius: 14px; background: #fffdf6; color: #2b2116; font-size: 14px; font-weight: 700; line-height: 1.4; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  #farmerSay::after { content: ''; position: absolute; left: 50%; bottom: -10px; margin-left: -8px; border: 8px solid transparent; border-top-color: #3b2f22; border-bottom: 0; }
+  #farmerSay.dock::after { display: none; }
+  #farmerSay small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
   #toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
   #rotateHint { display: none; }
@@ -158,6 +163,7 @@
 <div class="pad hidden" id="padB"><button data-k="lookBack" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
+<div id="farmerSay"></div>
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
 <div id="coach" class="hidden"></div>
 <div id="keyHint" class="hidden"><kbd>↑</kbd><kbd>↓</kbd> 前・うしろ　<kbd>←</kbd><kbd>→</kbd> ハンドル　<kbd>スペース</kbd> ロータリー上げ下げ　<kbd>H</kbd> 操作の表</div>
@@ -273,6 +279,7 @@
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a><br>
+      畦では この田んぼの持ち主（近所の米農家さん）が運転を見ていて、旋回で上げない・畦にぶつける・速すぎ・蛇行・すき間・はみ出しなどがあると、ふきだしで ダメ出しする（昼だけ）。<br>
       ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわ・タイヤ跡・畦にぶつけたときにも、その場面で言葉が出る。耕しなおすとタイヤ跡が消え、代かきでは かいた泥の上にタイヤ跡が残る。終わりの画面に、聞いた声の数
     </details>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/" target="_blank" rel="noopener">ricepia.jp</a></p>
@@ -1151,10 +1158,67 @@ const FARMER = (() => {
   root.traverse(o => { if (o.isMesh) o.castShadow = true; });
   scene.add(root);
   const Z = -(HZ + 0.55), Y = 0.3, X0 = -HX + 1, X1 = HX - 1;   // 北の畦の上（高さ 30cm）
-  const st = { x: X0 + 4, dir: 1, t: 0, pause: 0, phase: 0 };
+  const st = { x: X0 + 4, dir: 1, t: 0, pause: 0, phase: 0, sayT: 0 };
   root.position.set(st.x, Y, Z);
+  // ---- ダメ出し：この田んぼの持ち主（近所の米農家さん）が 畦から運転を見ていて、まずい所があると 大きな声で言う（西尾の三河弁）。
+  // 言うことは 点数のつけ方（SCORE）と同じ所：旋回で上げない・畦にぶつける・速さ・蛇行・重ね・田んぼアートのはみ出し・代かきのこねすぎ・エンスト
+  const el = $('farmerSay'), said = {}, head3 = new THREE.Vector3();
+  let quiet = 8, cur = null, last = { turnsDown: 0, levee: 0, over: 0, stalled: false }, fastT = 0, slowT = 0;
+  const LINES = {
+    turnDown: ['こらー！ 回るときは ロータリーを上げてからだら！', 'また下げたまま回っとる！ 四すみに土が寄るじゃん', '上げてから回りん！'],
+    levee: ['畦にぶつけるな！ 崩れたら 直すのは わしだで', 'また畦！ 水がもれるようになるに'],
+    fast: ['速すぎるじゃん！ 耕うんは 歩くくらい（時速 2〜3km）で'],
+    slow: ['おそいおそい、日が暮れるに。もうちょっと 速くてええ'],
+    crooked: ['曲がっとるじゃん！ 足もとじゃなくて 遠くの目印を見て 走りん'],
+    gap: ['すき間が あいとるに！ となりの跡に 10cm くらい 重ねりん'],
+    overlap: ['重ねすぎだら。軽油と時間が もったいない'],
+    spill: ['白線の外まで 耕しとるじゃん！ 耕した土は もどせんに'],
+    konashi: ['こねすぎだら！ 苗が 息できんくなる'],
+    stall: ['あーあ、エンストさせた。上げてから かけなおしりん'],
+    good: ['お、だいぶ まっすぐに なってきたな'],
+  };
+  function say(k) {
+    const n = said[k] || 0, L = LINES[k];
+    if (n >= L.length && k !== 'turnDown' && k !== 'levee') return;   // 同じことは 何度も言わない（旋回と畦だけは くり返す）
+    said[k] = n + 1;
+    el.innerHTML = L[Math.min(n, L.length - 1)] + '<small>— 畦で見ている 田んぼの持ち主</small>';
+    el.style.opacity = 1; cur = k; st.sayT = 4.5; quiet = 14; st.pause = Math.max(st.pause, 4.5);
+  }
+  function critic(dt) {
+    if (!S.started || S.done) return;
+    quiet -= dt;
+    const sc = SCORE.st, working = S.rotDown && S.rotPos < 0.08 && S.v > 0.1, kmh = S.v * 3.6;
+    // すぐ言うこと（旋回で上げない・畦・エンスト・はみ出し）は 間をあけずに言う
+    if (sc.turnsDown > last.turnsDown) { last.turnsDown = sc.turnsDown; return say('turnDown'); }
+    if (sc.levee > last.levee) { last.levee = sc.levee; return say('levee'); }
+    if (S.stalled && !last.stalled) { last.stalled = true; return say('stall'); }
+    if (!S.stalled) last.stalled = false;
+    if (ART.on) { const o = ART.score().over; if (o > last.over + 1.5) { last.over = o; return say('spill'); } }
+    if (quiet > 0) return;
+    fastT = working && kmh > 3.8 ? fastT + dt : 0; slowT = working && kmh < 1.4 ? slowT + dt : 0;
+    if (fastT > 3) return say('fast');
+    if (slowT > 8) return say('slow');
+    if (sc.yawM > 15 && sc.swept > 40) {
+      SCORE.calc(); const p = SCORE.parts;
+      if (p.rms > 2.2) return say('crooked');   // 点数の「まっすぐ」が 30 点中 22 点を切るくらい
+      if (SHIRO && p.dup > 0.55) return say('konashi');
+      if (!SHIRO && !ART.on && p.dup < 0.02 && sc.swept > 80) return say('gap');
+      if (!SHIRO && p.dup > 0.4) return say('overlap');
+      if (said.crooked && p.rms < 1.2 && sc.yawM > 60) return say('good');
+    }
+  }
+  function bubble(dt) {
+    if (st.sayT <= 0) return;
+    if ((st.sayT -= dt) <= 0) { el.style.opacity = 0; cur = null; return; }
+    head3.set(st.x, Y + 2.05, Z).project(camera);   // 頭の上に出す。うしろや画面の外なら 左上に寄せる
+    const W = innerWidth, H = innerHeight, x = (head3.x + 1) / 2 * W, y = (1 - head3.y) / 2 * H, w = el.offsetWidth, h = el.offsetHeight;
+    const onScr = head3.z < 1 && x > w / 2 + 8 && x < W - w / 2 - 8 && y > h + 60 && y < H - 40;
+    el.classList.toggle('dock', !onScr);
+    el.style.transform = onScr ? `translate(${Math.round(x - w / 2)}px, ${Math.round(y - h - 12)}px)` : `translate(12px, ${MOBILE ? 96 : 110}px)`;
+  }
   function update(dt) {
     st.t += dt;
+    critic(dt); bubble(dt);
     const near = Math.hypot(S.x - st.x, S.z - Z) < 6;
     let moving = false;
     if (st.pause > 0) st.pause -= dt;
@@ -1166,13 +1230,13 @@ const FARMER = (() => {
     st.phase += moving ? dt * 6.2 : 0;
     const sw = moving ? Math.sin(st.phase) : 0;
     legs.forEach((l, i) => { const a = (i ? -1 : 1) * sw * 0.45; l.hip.rotation.x = a; l.knee.rotation.x = Math.max(0, -a) * 0.9 + (moving ? 0.1 : 0); });
-    arms[1].sh.rotation.x = -sw * 0.4;
+    arms[1].sh.rotation.x = st.sayT > 0 ? -2.5 + 0.25 * Math.sin(st.t * 9) : -sw * 0.4;   // 言うときは 腕を上げて ふる
     root.position.set(st.x, Y + (moving ? Math.abs(Math.cos(st.phase)) * 0.025 : 0), Z);
-    const look = !moving ? 0 : (st.dir > 0 ? Math.PI / 2 : -Math.PI / 2);   // 止まると南（耕す田んぼ）を向く
+    const look = st.sayT > 0 ? Math.atan2(S.x - st.x, S.z - Z) : !moving ? 0 : (st.dir > 0 ? Math.PI / 2 : -Math.PI / 2);   // 止まると南（耕す田んぼ）を向く。言うときは トラクターを向く
     root.rotation.y += ((look - root.rotation.y + Math.PI * 3) % (Math.PI * 2) - Math.PI) * Math.min(1, dt * 3);
     head.rotation.y = !moving && near ? Math.atan2(S.x - st.x, S.z - Z) - root.rotation.y : 0;   // トラクターを目で追う
   }
-  return { update, root, st };
+  return { update, root, st, say, said };
 })();
 
 // 風：畦の草・彼岸花・実った稲・遠くの木を、上のほうだけゆらす（絵の v が高いほど大きく）

@@ -1386,6 +1386,30 @@ async function walkTo(page, id) {
       document.getElementById('toast').classList.remove('show');
       return { toast: [Math.round(t.left), Math.round(t.top), Math.round(t.right), Math.round(t.bottom)], shown, top, hit, ok: shown && top && t.width > 0 && !hit.length };
     });
+    // 小さい 画面（320×568）で 人の 話の 窓が 開いて いる 間の 知らせが、窓（「▶ とじる」）に 重ならない。
+    // 知らせが 先に 出て あとから 窓が 開く ときも（ゴールの 人に 着いた とき。自分で 遊んで 分かった：窓の 下の はしに 知らせが 重なって「▶ とじる」が 見えなかった）
+    R.checks.toastTalk = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), pi = document.getElementById('pxInfo'), body = document.getElementById('pxInfoBody');
+        const msg = '💬🎉🏁 +30pt Lv7　📜 → 近所のおばあさん（紅樹院（茶祖の寺）） 🔍';
+        const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        const keep = body.innerHTML;
+        body.innerHTML = '<div style="height:200px">テスト：顔の 絵と 3行の 話（窓の 高さを 本物に 近く）</div>';
+        const look = () => { const t = el.getBoundingClientRect(), d = pi.querySelector('.dq').getBoundingClientRect(); return { shown: el.classList.contains('show'), hit: t.top < d.bottom && t.bottom > d.top, t: [Math.round(t.top), Math.round(t.bottom)], d: [Math.round(d.top), Math.round(d.bottom)] }; };
+        pi.hidden = true; el.classList.remove('show'); await wait(350);
+        nishioGo.toast(msg); await wait(100); pi.hidden = false; await wait(450);   // 知らせが 先、窓が あと
+        const first = look();
+        pi.hidden = true; el.classList.remove('show'); await wait(350);
+        pi.hidden = false; await wait(100); nishioGo.toast(msg + '　'); await wait(450);   // 窓が 先、知らせが あと
+        const second = look();
+        pi.hidden = true; el.classList.remove('show'); body.innerHTML = keep;
+        return { first, second, ok: first.shown && !first.hit && second.shown && !second.hit };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return r;
+    })();
     // めいろの「🏁 ゴール！」が 出ている 間は、頭の 上に 浮かぶ 文字（「→ 〇〇へ ころころ」など）を 待たせ、消えてから 浮かべる（重なって どちらも 読めなかった）
     R.checks.mzBannerFloat = await w.page.evaluate(async () => {
       const P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), t = 'テストの 浮かぶ 文字', t2 = 'テストの 浮かぶ 文字 2';
@@ -1477,6 +1501,7 @@ async function walkTo(page, id) {
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');
+  need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.mzGoalEdge && c.mzGoalEdge.ok, 'ゴールが 画面の はしに ある とき、ゴールの 名前が 画面から はみ出して 切れる');
   need(c.mzArrowTop && c.mzArrowTop.ok, 'ゴールが 上の 外の とき、矢印が 時計の 札や 右上の ボタンに 重なる');

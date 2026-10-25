@@ -202,6 +202,7 @@
       <button data-a="smile"><span>😊</span>にっこり<i>★★★★★</i></button>
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
+    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
@@ -283,6 +284,7 @@
       ・代かきのこなし過ぎは苗の酸欠のもと…<a href="https://www.pref.shiga.lg.jp/file/attachment/1009961.pdf" target="_blank" rel="noopener">滋賀県の資料</a>／水もれの大半は畦ぎわから、外周はていねいに…<a href="https://www.pref.tottori.lg.jp/secure/515264/asamizu.pdf" target="_blank" rel="noopener">鳥取県の浅水代かきの資料</a><br>
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
+      ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
       ・植え代かきは、風の強い日（水面が見づらい）や雨のすぐあと（土がやわらかくなりすぎる）はさけ、風のない晴れた朝に。水が多すぎると平らにならず、苗が流されることもある／きれいにしすぎない。土をやわらかくしすぎると田植え機が沈んで苗が深く入りすぎる…<a href="https://note.com/kome_noka_shinya/n/n5261c27150cd" target="_blank" rel="noopener">いち田さん（note の米農家）「植え代かきのさじ加減」</a><br>
       ・同じ所を何度も耕すと、土が細かくなりすぎて、あとの代かきや田植えで泥のようになる。荒起こしは荒く、1 回で均一に…<a href="https://note.com/kome_noka_shinya/n/nc99565cddbe0" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こしで気をつけたい 6 つの落とし穴」</a>（ゲームでは 3 回通った所が 土くれのない平らな土になる。3 回はゲームの決めごと）<br>
       ・燃料は半分あったので足りると思ったが、とちゅうで給油して作業が止まった。荒起こしは時間がかかるので満タンで／耕しはじめは入口の反対がわから、最後に外周を回って入口から出る…<a href="https://note.com/kome_noka_shinya/n/n4d9c95f5e653" target="_blank" rel="noopener">いち田さん（note の米農家）「荒起こし準備と手順の基本チェック」</a><br>
@@ -4086,7 +4088,7 @@ function step(dt) {
     toast('エンスト！ ぬかるみで爪とタイヤが泥に取られました。' + IMPL + 'を上げてから、↑（▲）でエンジンをかけなおそう', 5);
     if (audio && soundOn) thud(audio.ac, audio.out, 1.2);
     S.stallN = (S.stallN || 0) + 1;
-    setTimeout(() => voice(S.stallN > 1 ? 'fukami' : 'stall'), 5200);   // 2 回目のエンストでは、深みにはまった話
+    setTimeout(() => voice(S.stallN > 2 ? 'numa' : S.stallN > 1 ? 'fukami' : 'stall'), 5200);   // 2 回目・3 回目のエンストでは、深みや沼にはまった話
   }
   SCRAPE.step(dt);
   if (S.stalled) {
@@ -4285,6 +4287,7 @@ function step(dt) {
   if (S.cool === undefined) S.cool = COOL0;
   if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) - S.cool) * Math.min(1, dt / (S.cool < 0.5 ? 40 : 15));
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
+  if (pct >= 50 && !SHIRO && S.started) voice('hajimete');   // 半分 耕せたころ
   if (pct >= 95 && !S.done && !ART.on) finish();   // 田んぼアートは「完成」で終わる
   if (hillsDirty || rig.position.distanceTo(hillsCenter) > 2.5) {
     hillsTimer -= dt;
@@ -4439,6 +4442,7 @@ function drawMonitor(pct) {
     const o = ((NX - 1 - i) * NZ + j) * 4, t = tilledMask[i * NZ + j];
     if (ART.on) { img.data.set(ART.color(i * NZ + j), o); img.data[o + 3] = 255; continue; }   // 田んぼアート：絵の所を黄色、はみ出しを赤
     img.data[o] = t ? 70 : 92; img.data[o + 1] = t ? 140 : 74; img.data[o + 2] = t ? 60 : 52; img.data[o + 3] = 255;
+    if (WALK.mask && WALK.mask[i * NZ + j]) { img.data[o] = t ? 50 : 60; img.data[o + 1] = t ? 120 : 90; img.data[o + 2] = t ? 150 : 160; }   // 歩いて見つけた やわらかい所
   }
   mg.putImageData(img, 0, 0);
   if (ART.on) ART.drawMini(monitor.map);
@@ -5058,6 +5062,17 @@ $('bHelp').onclick = toggleHelp;
 $('bHelpClose').onclick = toggleHelp;
 $('bEasy').onclick = () => setEasy(!EASY.on);
 $('easyBox').onchange = e => setEasy(e.target.checked);
+if (SHIRO) $('walkLabel').classList.add('hidden');   // 代かきは 水を張っているので 歩いて確かめるのは 田起こしのとき
+// 耕す前に田んぼを一回り歩いて、やわらかい所を確かめる（はまってから気づいた農家さんの教訓：自然でトトノウ会の note）。
+// 歩いた所の印：ぬかるみ（WET）が 0.3 より大きいます目。モニターの地図に青く出す
+const WALK = { mask: null };
+function walkField() {
+  WALK.mask = new Uint8Array(NX * NZ);
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) WALK.mask[i * NZ + j] = WET.at(-HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL) > 0.3 ? 1 : 0;
+  S.elapsed += 120;
+  toast('👣 田んぼを一回り歩いて、足が沈む やわらかい所を確かめた（モニターの地図の青。2 分）', 5);
+  setTimeout(() => voice('numa'), 6000);
+}
 setEasy(EASY.on);
 $('bShallow').onclick = () => setDepth(-1);
 $('bDoro').onclick = () => SCRAPE.start();
@@ -5116,6 +5131,8 @@ const VOICES = {
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
   // いち田さん（note の米農家）の「荒起こし準備と手順の基本チェック」（2026 年 10 月。WebSearch で見つけて要約）
+  numa: ['雨のあと、空いた時間に 休んでいた田んぼを耕したら 沼にはまった。土をのけても 砂や板を入れても出られず、ユンボで引き上げてもらった（2 万円）。耕す前に 地面を一通り歩く', '自然でトトノウ会（note）'],
+  hajimete: ['初めてのトラクターで、教わりながら 1 枚耕すのに 1 時間半かかった。耕した土は ふわっと やわらかくなった', 'のんのんさん（note）'],
   // いち田さん（note の米農家）「ぬかるむ田んぼに、“ちょうどいい”はどこにある？──植え代かきのさじ加減」
   kaze: ['植え代かきは、風の強い日（水面が見づらい）や 雨のすぐあと（土がやわらかくなりすぎる）は さけて、風のない 晴れた朝にする', 'いち田さん（note の米農家）'],
   shizumu: ['きれいにしすぎない。土をやわらかくしすぎると、田植え機が沈んで 苗が深く入りすぎる', 'いち田さん（note の米農家）'],
@@ -5161,6 +5178,8 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
+    if (!SHIRO && $('walkBox').checked) walkField();
+    else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
     if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
     if (TOD === 'yoru') setTimeout(() => toast('🌙 本物は、暗くなってからの作業は なるべくしない（畦や足もとが見えにくく、事故が多い）。するなら作業灯をつけて ゆっくり（L でライトの入切）', 6), 10000);
     if (SHIRO && RAIN) setTimeout(() => { toast('🌧️ 本物は、雨のすぐあとの植え代かきは さける（土がやわらかくなりすぎる）。風の強い日も 水面が見づらいので さける', 6); voice('kaze'); }, 4000);
@@ -5398,7 +5417,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, engineLoad, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, engineLoad, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

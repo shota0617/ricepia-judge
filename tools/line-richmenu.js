@@ -2,7 +2,8 @@
 //   node tools/line-richmenu.js [画像＝mkt/nishio-go/richmenu-2500x1686.png] [--apply] [--keep-game-link] [--rollback <richMenuId> [--from <richMenuId>]]
 // ・いま 既定に なっている メニューを 読み、大きさ・名前・メニューバーの 文字・タップ範囲と アクションを そのまま 写した 新しい メニューを 作って、
 //   新しい 絵を 載せ、既定に する（Messaging API では 作った メニューの 絵を あとから 変えられないので、作りなおす）。
-//   左上の マス（ゲーム）の アクションは go.ricepia.jp の リンク（docs/ads-game-kit.md 2章の utm つき）に する。--keep-game-link なら 前のまま。
+//   左上の マス（ゲーム）の アクションは ricepia.jp の ゲームの 欄（にしおさんぽGO の お知らせ。#nishio-go）の リンク（docs/ads-game-kit.md 2章の utm つき）に する。
+//   ゲームの 説明と 写真を 見てから 遊べる（運営者の 指示 2026-10-26）。--keep-game-link なら 前のまま。
 //   切りかえ用の 別名（alias）が 前の メニューを さして いれば、新しい メニューに 付けかえる。前の メニューは 消さない（--rollback で もどせる）
 // ・--apply が ない ときは 読んで 確かめるだけ（何も 変えない）。ログには トークンを 出さない（公開リポジトリの Actions の ログは だれでも 見られる）
 // ・ひとりずつ 別の メニューを つないで いる 友だちには、既定の メニューは 出ない（LINE の しくみ）
@@ -11,7 +12,7 @@
 const fs = require('fs'), path = require('path');
 
 const API = process.env.LINE_API_BASE || 'https://api.line.me/v2/bot', DATA = process.env.LINE_DATA_BASE || 'https://api-data.line.me/v2/bot';   // 宛先を かえるのは にせの サーバーで 確かめる ときだけ
-const GAME_URL = 'https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game';
+const GAME_URL = 'https://ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game#nishio-go';   // ricepia.jp の にしおさんぽGO の 欄（その 中の「遊ぶ」から go.ricepia.jp へ）
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply'), KEEP = args.includes('--keep-game-link');
 const opt = k => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] || '' : ''; };

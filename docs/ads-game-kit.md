@@ -61,7 +61,7 @@ Actions の「Make Nishio promo」（`tools/make-promo.js`）が、ほんとう�
 | Google（サイトリンク） | `https://go.ricepia.jp/?utm_source=google&utm_medium=cpc&utm_campaign=game_sitelink&play=1` |
 | Meta | `https://go.ricepia.jp/?utm_source=meta&utm_medium=paid&utm_campaign=game&utm_content={{ad.name}}&play=1` |
 | LINEヤフー広告 | `https://go.ricepia.jp/?utm_source=line_ads&utm_medium=paid&utm_campaign=game&play=1` |
-| LINE リッチメニュー | `https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game` |
+| LINE リッチメニュー | `https://ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game#nishio-go`（ricepia.jp の にしおさんぽGO の 欄へ。2026-10-26 から） |
 
 ## 3. Google広告
 
@@ -147,7 +147,7 @@ LINE 公式アカウントのリッチメニューは、LINE Official Account Ma
 
 1. LINE Official Account Manager → ホーム → トークルーム管理 → リッチメニュー → いま表示中のメニュー →「編集」
 2. 画像：「背景画像をアップロード」で `richmenu-2500x1686.png` をアップロードする（テンプレートはいまのまま）
-3. アクション：左上のマス（ドライブスルーだった所）を「リンク」にして、URL を `https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game`、ラベルを「お米ころころ」にする。ほかの4マスのアクションは変えない
+3. アクション：左上のマス（ドライブスルーだった所）を「リンク」にして、URL を `https://ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game#nishio-go`、ラベルを「お米ころころ」にする。ほかの4マスのアクションは変えない
 4. 保存して、スマホの LINE で表示とリンクを確かめる
 
 ### 5-1. Messaging API で差しかえる（今までの やり方）

@@ -295,6 +295,7 @@
       ・プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返した…<a href="https://note.com/shoei_world/n/n4755bc166ea3" target="_blank" rel="noopener">shoei さん（note）「トラクターを使って『天地返し』の術！？」</a>（ゲームでは 秋の稲刈りのわだちに 前輪が落ちると ハンドルを取られる）<br>
       ・天気の悪い日に耕していて田んぼにはまり、応援のトラクターとロープで一発で脱出。いつも同じ田んぼの同じ所。悪天候の日は作業しない・大きな機体で入らない・旋回を激しくしない…<a href="https://note.com/okamotonozomu/n/n534d7840e1c6" target="_blank" rel="noopener">岡元望さん（note）「トラクターがはまった話」</a>／となりのトラクタを引き出すとき、畦の外から斜めに引いて動かず、大きいトラクタでまっすぐ引いて救出（ロープが一度ちぎれた）…<a href="https://note.com/marukawadaizu/n/ncc82441beb7e" target="_blank" rel="noopener">マルカワみそ農園（note）「立ち往生したトラクタを救出」</a>（ゲームでは 取水口のまわりのぬかるみで 下げたまま大きく旋回したり エンストをくり返したりすると はまる）<br>
       ・土のバランスは 固相・液相・気相が 4:3:3。水分が多いときに耕して 土塊がふえた。握ってホロッとくずれるくらいで耕すと 砕土がうまくいくことがある…<a href="https://note.com/marukawadaizu/n/ncd1c2b06dc04" target="_blank" rel="noopener">マルカワみそ農園（note）「耕起の砕土率を高めるためには土の水分」</a>（ゲームでは <kbd>N</kbd> で土を握る。雨の日や ぬかるみを耕すと 土塊がふえる）<br>
+      ・作業のあと：高圧洗浄機で大きな泥 → ブラシとシャンプーで車体とタイヤ → 乾かしてから車内をエアダスター、ロータリーの土も落とす。洗っていて 爪の摩耗に気づいて発注…<a href="https://note.com/marukawadaizu/n/n10d3042d96dc" target="_blank" rel="noopener">マルカワみそ農園（note）「トラクタの洗車」</a>（ゲームでは おわりの画面の「🚿 洗車して しまう」）<br>
       ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
       ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
       ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
@@ -318,6 +319,7 @@
     <div class="artBtns hidden" id="artBtns"><a class="go sub" id="bSave" download="tanbo-art.jpg">💾 保存</a><button class="go sub hidden" id="bShare">📤 シェア</button><button class="go sub" id="bOther">別のお題</button></div>
     <p id="doneScore"></p>
     <button class="go hidden" id="bNext"></button>
+    <button class="go sub" id="bWash">🚿 洗車して しまう</button>
     <button class="go" id="bAgain">もう一度</button>
     <p class="small"><a href="https://ricepia.jp/" target="_blank" rel="noopener">らいすぴあ（近藤米穀店）のお米を見る</a></p>
   </div>
@@ -2271,6 +2273,47 @@ const HAMARU = (() => {
   }
   function reset() { acc = 0; idle = 0; rescueT = 0; S.stuck = false; S.stuckSink = 0; }   // はじめの場所へもどしたとき
   return { bump, step, reset, get rescuing() { return rescueT > 0; } };
+})();
+// 洗車：作業のあと、泥まみれのままにしない。高圧洗浄機で大きな泥 → ブラシとシャンプーで車体とタイヤ → 乾かしてから車内をエアダスター → ロータリーの土も落とす。
+// 清潔にしておくと長持ちし、異常にも気づきやすい（マルカワみそ農園（note）「トラクタの洗車」：洗っていて 爪の摩耗に気づいて発注）。ゲームでは おわりの画面から その場で
+const WASH = (() => {
+  let t = -1, step = -1, cam0 = 0;
+  const T = 11, steps = [
+    [0, '🚿 高圧洗浄機で 大きな泥を落とす（タイヤ・ロータリーのカバーの裏）'],
+    [3.5, '🧽 ブラシとシャンプーで 車体とタイヤを みがく'],
+    [7, '💨 乾かしてから 車内をエアダスターで。ロータリーの土も落とす'],
+  ];
+  const w = new THREE.Vector3();
+  function start() {
+    if (t >= 0) return;
+    t = 0; step = -1;
+    $('done').classList.add('hidden');
+    cam0 = camMode; while (CAMS[camMode] !== 'うしろから') nextCam();   // 外から トラクターを見る
+    $('bWash').disabled = true;
+  }
+  function update(dt) {
+    if (t < 0 || t >= T) return;
+    t += dt;
+    while (step + 1 < steps.length && t >= steps[step + 1][0]) { step++; toast(steps[step][1], 3.4); }
+    if (t < 7) {                                    // 水しぶき：タイヤとロータリーのまわり
+      for (let k = 0; k < 6; k++) {
+        const lx = (Math.random() < 0.5 ? 1 : -1) * (0.7 + Math.random() * 0.5), lz = Math.random() < 0.6 ? Math.random() * 2.2 - 0.2 : ROTARY_Z + (Math.random() - 0.5) * 0.6;
+        rig.localToWorld(w.set(lx, 0.3 + Math.random() * 0.9, lz));
+        FX.emit(w.x, w.y, w.z, (Math.random() - 0.5) * 1.2, 0.5 + Math.random() * 1.2, (Math.random() - 0.5) * 1.2, 2);
+        if (k < 2) FX.emit(w.x, w.y, w.z, (Math.random() - 0.5) * 0.6, 0.4 + Math.random() * 0.4, (Math.random() - 0.5) * 0.6, 3, 0.5, [0.9, 0.93, 0.97]);   // 白い水けむり
+      }
+    }
+    MUD.level = Math.max(0, MUD.level - dt * 0.2); GLASS_MUD.value = Math.max(0, GLASS_MUD.value - dt * 0.2);
+    for (const e of MUD.mats) e.m.color.copy(e.base).lerp(MUD.col, e.w * MUD.level);
+    if (t >= T) {
+      MUD.level = 0; GLASS_MUD.value = 0;
+      toast(STONES.hits >= 3 ? '洗っていて 気づいた：石に当たった爪が すり減っている。新しい爪を発注した（泥まみれのままだと 気づかない）'
+        : '洗車おわり。泥を落とすと、爪のすり減りや油もれにも 気づきやすい', 6);
+      setTimeout(() => voice('sensha'), 6500);
+      setTimeout(() => { $('bWash').textContent = '🚿 洗車した'; $('done').classList.remove('hidden'); while (camMode !== cam0) nextCam(); }, 7000);
+    }
+  }
+  return { start, update, get t() { return t; } };
 })();
 // 春の田んぼの石：土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に拾う（拳大〜直径 30cm 余り）。
 // 拾わずに耕すと、爪が石に当たって カン！と鳴り、がくっとくる（運転席では 音で気づく）。
@@ -5408,6 +5451,7 @@ $('bShallow').onclick = () => setDepth(-1);
 $('bDoro').onclick = () => SCRAPE.start();
 $('bDeep').onclick = () => setDepth(1);
 $('bAgain').onclick = () => location.reload();
+$('bWash').onclick = () => WASH.start();
 $('bArt').onclick = () => { if (S.started && !S.done) finish(); };
 $('bOther').onclick = () => { $('done').classList.add('hidden'); $('start').classList.remove('hidden'); };
 // ドラッグでまわりを見る（はなすと前にもどる）
@@ -5460,6 +5504,7 @@ const VOICES = {
   tsume: ['固い所や タイヤの跡を耕す はしの爪ほど 早く減る。減りやすい爪を 入れかえて 長く使う', '愛媛の専業米農家さん（アメブロ）'],
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
+  sensha: ['作業のあとは 高圧洗浄機で大きな泥を落とし、ブラシとシャンプーで車体とタイヤを磨いた。乾かしてから 車内をエアダスターで、ロータリーの土も落とした。爪が摩耗していたので 発注した。道具を清潔に保つと 長持ちし、異常にも気づきやすい', 'マルカワみそ農園（note）'],
   horo: ['土のバランスがいいのは 固相・液相・気相が 4:3:3。水分が多いときに耕したら 土塊がふえてしまった。手で握って ホロッとくずれるくらいの水分で耕すと、砕土がうまくいくことがある（まだまだ勉強中）', 'マルカワみそ農園（note）'],
   hamaru: ['天気の悪い日に耕していたら、トラクターが田んぼにはまって 自力で動けなくなった。応援のトラクターを呼んで ロープで引いたら 一発で抜けた。いつも同じ田んぼの同じ所で はまる。悪天候の日は作業しない、大きな機体で入らない、旋回を激しくしない', '石川の岡元農場 岡元望さん（note）'],
   wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
@@ -5713,6 +5758,7 @@ function frame(now) {
   if (P.Wiper) P.Wiper.rotation.z = Math.PI / 2 + Math.PI * bladeTh(WIPE.value);   // 車体のワイパーを、ガラスのふいた所と同じ動きで回す
   if (FOG0) FOG_CLEAR.value = S.started ? Math.min(1.8, 0.15 + S.elapsed / 14) : 0;   // デフロスターで だんだん晴れる
   FX.update(dt);
+  WASH.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);
   WAGTAILS.update(dt, S.rotDown && S.rotPos < 0.08);
@@ -5771,7 +5817,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, BELT, COVER, WAVY, STONES, HAMARU, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, COVER, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

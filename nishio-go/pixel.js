@@ -6850,12 +6850,13 @@ function mzCurves(cx, cy) {   // マスが 受けもつ 道すじ（地図の �
   mzCurveC.m.set(k, out);
   return out;
 }
-function mzNear(x, y) {   // (x, y) に いちばん近い 道すじの 点（まわり 3×3 マスから）。読めて いない マスが あれば null（壁なし）
+function mzNear(x, y) {   // (x, y) に いちばん近い 道すじの 点（まわり 3×3 マスから）。お米の いる マスが 読めて いなければ null（壁なし）
   const a = Math.floor(x / MZ_K), b = Math.floor(y / MZ_K);
+  if (!mzCurves(a, b)) return null;
   let bd = Infinity, bx = 0, by = 0;
   for (let cy = b - 1; cy <= b + 1; cy++) for (let cx = a - 1; cx <= a + 1; cx++) {
     const cs = mzCurves(cx, cy);
-    if (!cs) return null;
+    if (!cs) continue;   // となりの 区域が まだ 読めて いない マスは とばす（1つでも 読めて いないと 壁が なくなって、とじた さかいを 通りぬけた）
     for (const q of cs) for (let i = 1; i < q.length; i++) {
       const x0 = q[i - 1][0], y0 = q[i - 1][1], dx = q[i][0] - x0, dy = q[i][1] - y0, l = dx * dx + dy * dy;
       const t = l ? Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / l)) : 0, qx = x0 + dx * t, qy = y0 + dy * t, d = (x - qx) * (x - qx) + (y - qy) * (y - qy);
@@ -7967,7 +7968,7 @@ function rollStep(dt) {
         let aim = mzOpen(cx, cy, dx, dy) ? [(cx + 0.5 + dx * 0.5) * MZ_K, (cy + 0.5 + dy * 0.5) * MZ_K] : null;
         if (!aim) for (const [ex, ey] of MZ_DIRS) {
           if (ex * dx + ey * dy || !mzOpen(cx, cy, ex, ey) || !mzOpen(cx + ex, cy + ey, dx, dy)) continue;
-          if (Math.hypot(rp.x - (cx + 0.5 + ex * 0.5) * MZ_K, rp.y - (cy + 0.5 + ey * 0.5) * MZ_K) < 1.6) { aim = [(cx + ex + 0.5 + dx * 0.5) * MZ_K, (cy + ey + 0.5 + dy * 0.5) * MZ_K]; break; }   // となりの マスの 曲がり角（さかいの そばに いる とき）
+          if (Math.hypot(rp.x - (cx + 0.5 + ex * 0.5) * MZ_K, rp.y - (cy + 0.5 + ey * 0.5) * MZ_K) < 1) { aim = [(cx + ex + 0.5 + dx * 0.5) * MZ_K, (cy + ey + 0.5 + dy * 0.5) * MZ_K]; break; }   // となりの マスの 曲がり角（さかいの そばに いる とき）
         }
         if (aim) {
           let tx = -uy, ty = ux;

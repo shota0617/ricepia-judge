@@ -736,7 +736,7 @@ async function walkTo(page, id) {
     return { ok: entered && diag, cell: [c.x, c.y], entered, diag };
   })();
   // ゆるい めいろ（2026-10-26 店主「直角ではなく ゆるい構造に」）：通路は 道すじの 筒。次の マスの 向きだけ 押して 転がすと、
-  // 筒から はみ出さずに（道すじから 0.5マス以内）、ゴールまでの めいろの 道のりが へる（まるい 角で 止まらない）
+  // 筒から はみ出さずに（道すじから 0.45マス＋やわらかい 生け垣が のびる 0.4マス以内）、ゴールまでの めいろの 道のりが へる（まるい 角で 止まらない）
   R.checks.yuruMeiro = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(500);
     const r = await page.evaluate(async () => {
@@ -760,7 +760,7 @@ async function walkTo(page, id) {
       return { len0: r0.length, best, maxD: +maxD.toFixed(2), covered: P.mapCovered(true) };
     });
     await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ...r, ok: !!r.skipped || (r.maxD <= 0.5 && (r.best <= r.len0 - 3 || r.covered)) };   // 窓が 出て 止まった ときは 進めなくても よい
+    return { ...r, ok: !!r.skipped || (r.maxD <= 0.9 && (r.best <= r.len0 - 3 || r.covered)) };   // やわらかい 生け垣：筒の ふち（0.45）から 0.4マスまで のびる   // 窓が 出て 止まった ときは 進めなくても よい
   })();
   // ころころコンボ（クセになる 転がり方）：かべに 当たらずに 転がりつづけると コトンの たびに 数が ふえ、当たるか 止まると 0 に もどる
   R.checks.rollCombo = await (async () => {

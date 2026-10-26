@@ -1893,6 +1893,19 @@ async function walkTo(page, id) {
     });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
+    // さんぽ仲間（ライバル）は、すぐ そば（300m 未満）の 次の 行き先へは 先回りしない（その 次の 遠い 行き先へ）。
+    // 自分で 遊んで 分かった：6マス 先の 人へ「先に 行っとるでね」が 着いた あとに 出て、4秒後に「おそかったじゃん！」
+    R.checks.rivalNear = await w.page.evaluate(() => {
+      const G = nishioGo, S = G.state, me = G.me, r0 = S.rival, n0 = S.rivalN;
+      if (!me || !G.rivalSay) return { ok: false, why: 'no-api' };
+      S.rival = null; S.rivalN = 2;   // 次に 着くと 先回りする 番
+      G.rivalSay({ id: 'test-a', name: 'テストA' }, { kind: 'spot', id: 'test-near', name: 'テスト近く', lat: me.lat + 0.0005, lng: me.lng });   // 約55m
+      const a = { at: S.rival && S.rival.at, n: S.rivalN };
+      G.rivalSay({ id: 'test-b', name: 'テストB' }, { kind: 'spot', id: 'test-far', name: 'テスト遠く', lat: me.lat + 0.01, lng: me.lng });   // 約1.1km
+      const b = { at: S.rival && S.rival.at, n: S.rivalN };
+      S.rival = r0; S.rivalN = n0;
+      return { a, b, ok: !a.at && b.at === 'test-far' };
+    });
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -1932,6 +1945,7 @@ async function walkTo(page, id) {
   need(c.mzSameCellGoal && c.mzSameCellGoal.ok, '同じ めいろの マスの ゴールが つづくと、ゴールが かわった ことに 気づかない（「🏁 つぎの ゴール」が 出ない）');
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
+  need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');

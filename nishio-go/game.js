@@ -2044,10 +2044,15 @@ function rivalWhere() {
   const p = s || (n && { lat: n.lat, lng: n.lng, name: n.spotName });
   return p ? { at, lat: p.lat - 14 / 111320, lng: p.lng - 14 / (111320 * Math.cos(p.lat * Math.PI / 180)), name: p.name } : null;   // 少し南西にずらして、名所の絵や人と重ならないように
 }
+const RIVAL_NEAR = 300;   // 次の行き先が これより 近いと 先回りしない（m）
 function rivalSay(g, next) {
   const met = S.rival && S.rival.at === g.id;
+  // 次の行き先が すぐ そばなら、先回りは その次へ（自分で 遊んで 分かった：6マス 先の 人へ「先に 行っとるでね」が、知らせの 列で おくれて 着いた あとに 出て、4秒後に「おそかったじゃん！」）
+  const np = next && (next.kind === 'npc' ? (n => n && npcSpot(n))(placeNpcs().find(x => x.id === next.id)) : spots.find(x => x.id === next.id) || next);
+  const near = !!(np && np.lat && me && dist(me, np) < RIVAL_NEAR);
   S.rivalN = (S.rivalN || 0) + 1;
-  const go = !!next && S.rivalN % 3 === 0;
+  if (near && S.rivalN % 3 === 0) S.rivalN--;
+  const go = !!next && !near && S.rivalN % 3 === 0;
   const to = next && (next.kind === 'npc' ? (placeNpcs().find(x => x.id === next.id) || {}).spotName || next.name : next.name);   // 人のときは、その人がいる所
   S.rival = go ? { at: next.id } : null;
   save();
@@ -3955,7 +3960,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

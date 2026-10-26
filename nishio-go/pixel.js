@@ -2184,12 +2184,12 @@ function comboStep() {
   combo.shown = performance.now();
   if (combo.n > mzRt.run.combo) mzRt.run.combo = combo.n;   // この ゴールまでの いちばん 長い コンボ
   if (!combo.beat && combo.best >= 5 && combo.n > combo.best) {   // 転がっている うちに ベストを こえた：その場で 知らせる（「あと 少しで ベスト」を 追いかける 楽しみ）
-    combo.beat = true; chordSound(); floatText(`🏅 ベスト こえた！ ×${combo.n}`);
+    combo.beat = true; chordSound(); floatText(`🏅 ベスト こえたじゃん！ ×${combo.n}`);   // 知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
     const now = performance.now(), cols = ['#ff9fd0', '#ffe066', '#ffffff'];
     for (let i = 0; i < 24; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3.5, c: cols[i % 3], life: 0.7 + Math.random() * 0.5 }); }
   }
   if (combo.n % 5 === 0) {   // 5ごとに きらきら（10ごとに 文字も）
-    if (combo.n % 10 === 0) floatText(`🎵 ころころ ×${combo.n}！`);
+    if (combo.n % 10 === 0) floatText(`🎵 ころころ ×${combo.n}！ じょうずだら`);
     const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'];
     for (let i = 0; i < 10 + Math.min(20, combo.n / 2); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 4], life: 0.6 + Math.random() * 0.4 }); }
   }
@@ -2198,8 +2198,8 @@ function comboEnd() {
   const n = combo.n, beat = combo.beat;
   combo.n = 0; combo.quietT = 0; combo.beat = false;
   if (n < 5) return;
-  if (n > combo.best) { combo.best = n; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ } floatText(beat ? `🏅 あたらしい ベスト ×${n}` : `🏅 ころころ ベスト ×${n}`); }
-  else if (combo.best - n <= 3) floatText(`おしい！ ベストまで あと${combo.best - n + 1}`);   // あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）
+  if (n > combo.best) { combo.best = n; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ } floatText(beat ? `🏅 あたらしい ベスト ×${n}！ やったじゃん` : `🏅 ころころ ベスト ×${n}！ やったじゃん`); }
+  else if (combo.best - n <= 3) floatText(`おしい！ ベストまで あと${combo.best - n + 1}だったじゃん`);   // あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }
 // スピード線（運営者の声「スキルを繰り返す」3回目）：びゅんパネルで 加速しても 見た目が あまり かわらず、速さを 目で 感じにくかった。
@@ -7312,9 +7312,9 @@ function mzPadTick(ax, ay) {   // パネルの マスに いる 間 しらべる
   mzPad.chain = now - mzPad.lastT < MZ_PAD_CHAIN_MS ? mzPad.chain + 1 : 1; mzPad.lastT = now;
   if (mzPad.chain > mzPad.best) { mzPad.best = mzPad.chain; try { localStorage.setItem('nsg_pad_best', String(mzPad.best)); } catch (e) { /* noop */ } }   // びゅんの れんさの ベスト（この端末。きろくに 出す）   // びゅんの れんさ：前の パネルから 3.5秒 いないなら つながる
   mzPad.cell = key; mzPad.hits++; mzRt.run.pads++; mzPad.fx = key; mzPad.fxT = now;
-  if (mzPad.chain >= 2) floatText(`💨 びゅん×${mzPad.chain}！`);
+  if (mzPad.chain >= 2) floatText(`💨 びゅん×${mzPad.chain}！${mzPad.chain >= 3 ? ' はやいじゃん' : ''}`);
   padSound(mzPad.chain); roll.happyT = Math.max(roll.happyT || 0, 0.8); dirty = true;
-  try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('💨 びゅんパネル！ 矢印の 向きに 加速'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
+  try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('💨 びゅんパネル！ 矢印の 向きに のってみりん'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
   combo.n++; combo.quietT = 0; comboStep();   // ころころコンボも つづく
   for (let i = 0; i < 6; i++) roll.dust.push({ x: rp.x - dx * (0.4 + i * 0.25) + (Math.random() - 0.5) * 0.5 * Math.abs(dy), y: rp.y - dy * (0.4 + i * 0.25) + (Math.random() - 0.5) * 0.5 * Math.abs(dx), t: 0, s: 0.7 + Math.random() * 0.4, c: '190,240,255' });   // うしろに 風の すじ
 }
@@ -7394,7 +7394,7 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
       if (!left) {   // 列を ぜんぶ ひろった
         mzDots.lines++;
         chordSound(); combo.n += 2; combo.quietT = 0; comboStep(); roll.happyT = Math.max(roll.happyT || 0, 1);
-        floatText(`🍚 ぜんぶ ひろった！（きょう ${mzDots.n}つぶ）`);
+        floatText(`🍚 ぜんぶ ひろったじゃん！（きょう ${mzDots.n}つぶ）`);
         const cols = ['#ffffff', '#fff6c2', '#ffe066'];
         for (let j = 0; j < 12; j++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[j % 3], life: 0.5 + Math.random() * 0.4 }); }
       }

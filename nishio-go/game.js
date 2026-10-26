@@ -1180,7 +1180,7 @@ function mazeGoal(id, name, lines) {
   lines.unshift(`🏁 めいろ ゴール！ ${t}${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
   {   // この 道の ふり返り（ポイントは つけない）：ひろった ごはんつぶ・のった びゅんパネル・いちばん 長い コンボ
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
-    if (parts.length) lines.push(`この 道で：${parts.join('・')}`);
+    if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });

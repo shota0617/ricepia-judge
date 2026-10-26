@@ -134,7 +134,7 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 - しくみ：いまの 既定の メニューの タップ範囲・アクション・メニューバーの 文字を 写した 新しい メニューを 作り、絵を 載せて 既定に する（作った メニューの 絵は あとから 変えられない）。前の メニューは 消さない
   - 前の メニューが ちがう 大きさ（1280×863 など）でも、縦横の 比が 同じ なら タップ範囲を 絵の 大きさに 広げる
   - タップ範囲が 絵の マスと 合わない・比が ちがう・別名を 読めない ときは、何も 変えずに 止まる
-  - 左上（ゲーム）の アクションは `https://go.ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game` に する（`keep_game_link` で 前のまま）
+  - 左上（ゲーム）の アクションは `https://ricepia.jp/?utm_source=line&utm_medium=richmenu&utm_campaign=game#nishio-go`（ricepia.jp の ゲームの 欄の にしおさんぽGO。2026-10-26 から）に する（`keep_game_link` で 前のまま）
 
 手順（動かすのは GitHub の MCP の `actions_run_trigger`、待つのは `$F/run-wait.sh`、ログは `get_job_logs`）
 

@@ -292,6 +292,7 @@
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
       ・土の中の石は 耕うんの爪をいため、苗の根張りも悪くする。水を張る前に拾った（拳大〜30cm 余り、50kg ほど）…<a href="https://note.com/yuki0mori/n/n3691961a57a9" target="_blank" rel="noopener">大森雄貴さん（note）「春が来る前に石拾い」</a>／運転席では、爪が土を引っかく音のちがいで 土の固さや深さがわかり、石を掘り起こすと音で気づく…<a href="https://note.com/yuki0mori/n/n5101cc99caee" target="_blank" rel="noopener">同「代かきトラクターの運転席から見える景色」</a>（ゲームでは 春の「🪨 はじめに石を拾う」）<br>
       ・プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返した…<a href="https://note.com/shoei_world/n/n4755bc166ea3" target="_blank" rel="noopener">shoei さん（note）「トラクターを使って『天地返し』の術！？」</a>（ゲームでは 秋の稲刈りのわだちに 前輪が落ちると ハンドルを取られる）<br>
+      ・天気の悪い日に耕していて田んぼにはまり、応援のトラクターとロープで一発で脱出。いつも同じ田んぼの同じ所。悪天候の日は作業しない・大きな機体で入らない・旋回を激しくしない…<a href="https://note.com/okamotonozomu/n/n534d7840e1c6" target="_blank" rel="noopener">岡元望さん（note）「トラクターがはまった話」</a>／となりのトラクタを引き出すとき、畦の外から斜めに引いて動かず、大きいトラクタでまっすぐ引いて救出（ロープが一度ちぎれた）…<a href="https://note.com/marukawadaizu/n/ncc82441beb7e" target="_blank" rel="noopener">マルカワみそ農園（note）「立ち往生したトラクタを救出」</a>（ゲームでは 取水口のまわりのぬかるみで 下げたまま大きく旋回したり エンストをくり返したりすると はまる）<br>
       ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
       ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
       ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
@@ -2192,6 +2193,54 @@ const WEEDS = (() => {
     }
   }
   return { parts, pts, build };
+})();
+// はまる：取水口のまわりの ぬかるみで、作業機を下げたまま大きく旋回したり エンストをくり返したりすると、後輪が泥に沈んで 自力で出られなくなる。
+// 空回りさせると もっと沈む。アクセルをはなして待つと、応援のトラクターを呼んで ロープで引き出してもらう（+20 分）。
+// （石川の岡元農場 岡元望さんの note「トラクターがはまった話」：天気の悪い日に耕していてはまり、応援のトラクターとロープで一発で脱出。
+//   いつも同じ田んぼの同じ所。悪天候の日は作業しない・大きな機体で入らない・旋回を激しくしない。
+//   マルカワみそ農園の note「立ち往生したトラクタを救出」：斜めに引いて動かず、大きいトラクタでまっすぐ引いて救出。ロープが一度ちぎれた）
+const HAMARU = (() => {
+  let acc = 0, idle = 0, rescueT = 0, told = false;
+  const wetHere = () => WET.at(S.x, S.z) > 0.45;
+  function bump(a) { if (!SHIRO && wetHere()) acc += a; }   // ぬかるみでのエンスト
+  function step(dt) {
+    if (SHIRO || !S.started || S.done) return;
+    if (rescueT > 0) {                              // 応援のトラクターが引いている
+      S.v = 0;
+      if ((rescueT -= dt) <= 0) {
+        const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
+        let to = null;                              // まっすぐ引ける向き：うしろ → 前 → 横（畦にはみ出さない所）
+        for (const [fx, fz] of [[-sn, -cs], [sn, cs], [cs, -sn], [-cs, sn]]) {
+          for (const d of [4, 3, 2]) { const x = S.x + fx * d, z = S.z + fz * d; if (canBe(x, z, S.yaw)) { to = [x, z]; break; } }
+          if (to) break;
+        }
+        if (!to) { rescueT = 1; return; }           // 引ける所がなければ 向きを変えて もう一度
+        rescueT = 0; S.stuck = false; S.stuckSink = 0; acc = 0;
+        S.x = to[0]; S.z = to[1];
+        S.elapsed += 1200;
+        toast('抜けた！（+20 分）本物は 悪天候の日は作業しない・旋回を激しくしない。同じ田んぼの同じ所で はまりやすい', 6);
+        setTimeout(() => voice('hamaru'), 6500);
+      }
+      return;
+    }
+    if (!S.stuck) {
+      const hard = wetHere() && Math.abs(S.steer) > 0.45 && Math.abs(S.v) > 0.05 && S.rotDown && S.rotPos < 0.1;   // ぬかるみで 耕しながら大きく旋回（爪が泥をかいて 後輪が掘れる）
+      acc = Math.max(0, acc + (hard ? dt : -dt * 0.05));
+      if (acc > 1.6) {
+        S.stuck = true; S.v = 0; idle = 0; S.stuckSink = 0.05;
+        if (!told) { told = true; toast('はまった！ 後輪が泥に沈んで 進めない。むりに空回りさせると もっと沈む。' + IMPL + 'を上げて アクセルをはなして待つと、応援のトラクターを呼ぶ', 7); }
+      }
+      return;
+    }
+    S.v = 0;
+    if (key.fwd || key.back) { idle = 0; S.stuckSink = Math.min(0.14, S.stuckSink + dt * 0.02); }   // 空回り：さらに沈む
+    else if ((idle += dt) > 2.5 && !S.rotDown) {   // エンジンが止まっていても 呼べる（作業機は上げてから）
+      rescueT = 7;
+      toast('応援のトラクターを呼んだ。ロープをつないで、斜めではなく まっすぐ引いてもらう…', 6);
+    }
+  }
+  function reset() { acc = 0; idle = 0; rescueT = 0; S.stuck = false; S.stuckSink = 0; }   // はじめの場所へもどしたとき
+  return { bump, step, reset, get rescuing() { return rescueT > 0; } };
 })();
 // 春の田んぼの石：土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に拾う（拳大〜直径 30cm 余り）。
 // 拾わずに耕すと、爪が石に当たって カン！と鳴り、がくっとくる（運転席では 音で気づく）。
@@ -4098,6 +4147,7 @@ const key = { fwd: 0, back: 0, left: 0, right: 0 };
 const MAX_STEER = Math.atan(WB / (Math.sqrt(3.3 * 3.3 - WB * WB) - TRACK));
 function resetPos() {
   Object.assign(S, { x: 11, z: 20.3, yaw: -Math.PI / 2, v: 0, steer: 0 });
+  HAMARU.reset();                                 // はまっていたら 抜ける（呼んだ応援も とりやめ）
   placeRig(0);
   buildHills();
 }
@@ -4123,7 +4173,7 @@ function placeRig(dt) {
   const p = wheelPoints(S.x, S.z, S.yaw);
   const SINK = SINK0 * DEPTH / DEPTH0;             // 深く耕したところほど ふかふかで沈む
   for (const k in sinkW) {                 // タイヤはじわっと沈み、かたい所へ出るとすっと上がる
-    const t = (softAt(p[k][0], p[k][1]) * SINK + WET.at(p[k][0], p[k][1]) * 0.07) * (k[0] === 'f' ? 0.6 : 1) + RUTS.at(p[k][0], p[k][1]);   // ぬかるみでは さらに沈む。秋のわだちに落ちる（なめらかに）
+    const t = (softAt(p[k][0], p[k][1]) * SINK + WET.at(p[k][0], p[k][1]) * 0.07) * (k[0] === 'f' ? 0.6 : 1) + RUTS.at(p[k][0], p[k][1]) + (k[0] === 'r' ? S.stuckSink || 0 : 0);   // はまると 後輪が沈む   // ぬかるみでは さらに沈む。秋のわだちに落ちる（なめらかに）
     sinkW[k] += (t - sinkW[k]) * Math.min(1, dt * (t > sinkW[k] ? 3 : 6));
   }
   const h = k => (ground(p[k][0], p[k][1]) ?? 0) + HEAPS.at(p[k][0], p[k][1]) * 0.8 - (sinkW[k] || 0);   // 盛り上がった土の上では傾く（わだちは sinkW に入る）
@@ -4269,18 +4319,19 @@ function step(dt) {
     if (revHard) setTimeout(() => voice('gyakuten'), 5200);
     else {
       S.stallN = (S.stallN || 0) + 1;
+      HAMARU.bump(0.7);                             // ぬかるみで エンストをくり返すと はまる
       setTimeout(() => voice(S.stallN > 2 ? 'numa' : S.stallN > 1 ? 'fukami' : 'stall'), 5200);   // 2 回目・3 回目のエンストでは、深みや沼にはまった話
     }
   }
   SCRAPE.step(dt);
-  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); }
+  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); }
   if (S.stalled) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れのあいだは エンジンを切ったまま
     else if ((key.fwd || key.back) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
-  let want = S.crank > 0 || S.stalled ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;
+  let want = S.crank > 0 || S.stalled || S.stuck ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;   // はまったら 進まない
   if (EASY.on && want > 0) {                       // 🔰 耕すときは時速 3km まで、坂は時速 5km まで
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
@@ -4481,7 +4532,7 @@ function step(dt) {
   // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
   const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
   const slip = !inField ? 0 : (SHIRO ? 0.09 : 0.03) + (working ? 0.025 : 0) + 0.01 * Math.min(1, Math.abs(S.v)) + (RAIN && !SHIRO ? 0.03 : 0);   // 雨でぬれた土は すべりやすい
-  P.WheelRL.rotation.x += S.v * (1 + slip) * dt / R_REAR; P.WheelRR.rotation.x = P.WheelRL.rotation.x;
+  P.WheelRL.rotation.x += S.v * (1 + slip) * dt / R_REAR + (S.stuck && !S.stalled && (key.fwd || key.back) ? (key.fwd ? 5 : -4) * dt : 0); P.WheelRR.rotation.x = P.WheelRL.rotation.x;   // はまって空回り
   if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
   if (!inField && S.x > 16.4 && Math.abs(S.v) > 1.4) emitRoadDust(dt, S.x, S.z, S.yaw, S.v, 1);   // 乾いた砂利の農道では砂ぼこり
   P.WheelFL.rotation.x += S.v * dt / R_FRONT * (S.dblAct ? 2 : 1); P.WheelFR.rotation.x = P.WheelFL.rotation.x;   // 倍速ターンのあいだは 前輪が約 2 倍の速さで回る
@@ -5378,6 +5429,7 @@ const VOICES = {
   tsume: ['固い所や タイヤの跡を耕す はしの爪ほど 早く減る。減りやすい爪を 入れかえて 長く使う', '愛媛の専業米農家さん（アメブロ）'],
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
+  hamaru: ['天気の悪い日に耕していたら、トラクターが田んぼにはまって 自力で動けなくなった。応援のトラクターを呼んで ロープで引いたら 一発で抜けた。いつも同じ田んぼの同じ所で はまる。悪天候の日は作業しない、大きな機体で入らない、旋回を激しくしない', '石川の岡元農場 岡元望さん（note）'],
   wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
   ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   oto: ['運転席にいると、爪が土を引っかく音のちがいで 土の固さや深さがわかる。石を掘り起こすと 音で気づく', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
@@ -5544,6 +5596,9 @@ const COACH = (() => {
   function msg() {
     if (S.parked && (BELT.fixing || BELT.broken)) return S.rotDown ? ['!', K('エンジンが止まった：<kbd>スペース</kbd>で' + IMPL + 'を上げる', 'エンジンが止まった：' + IMPL + 'を上げる')]
       : ['…', 'エンジンを切って、切れたファンベルトを交換しています'];
+    if (HAMARU.rescuing) return ['…', '応援のトラクターが ロープで引っぱっています'];
+    if (S.stuck && S.rotDown) return ['!', K('はまった：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる（上げてから 応援を呼ぶ）', 'はまった：まず ' + IMPL + 'を上げる（上げてから 応援を呼ぶ）')];
+    if (S.stuck) return ['!', K('はまった：<kbd>↑</kbd><kbd>↓</kbd> をはなして待つと 応援を呼ぶ（空回りは もっと沈む）', 'はまった：▲▼ をはなして待つと 応援を呼ぶ（空回りは もっと沈む）')];
     if (S.parked && COVER.fixing) return ['…', 'エンジンを切って、リヤカバーのワイヤーとアームの根元に オイルスプレーを吹いています'];
     if (S.parked && COVER.fixed && !(S.scrape > 0)) return ['!', K('リヤカバーを直した：<kbd>↑</kbd> でエンジンをかける', 'リヤカバーを直した：▲ でエンジンをかける')];
     if (S.parked && BELT.fixed && !(S.scrape > 0)) return ['!', K('ベルトを交換した：<kbd>↑</kbd> でエンジンをかける', 'ベルトを交換した：▲ でエンジンをかける')];
@@ -5684,7 +5739,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, BELT, COVER, WAVY, STONES, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, COVER, WAVY, STONES, HAMARU, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

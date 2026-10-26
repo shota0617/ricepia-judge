@@ -237,6 +237,13 @@ function near(b, x, y) {   // (x, y) に いちばん近い 道すじの 点（�
   return bd < Infinity ? { d: Math.sqrt(bd), x: bx, y: by } : null;
 }
 
+function onPath(b, i, j) {   // マス (i, j) の まん中に いちばん近い 道すじの 点（角の マスでは カーブの 上。穴・ヒントの 点を ここに）
+  const k = j * b.tw + i, c = b.onp || (b.onp = new Map());
+  let p = c.get(k);
+  if (!p) { const q = near(b, i + 0.5, j + 0.5); p = q ? [q.x, q.y] : [i + 0.5, j + 0.5]; c.set(k, p); }
+  return p;
+}
+
 /* ---------- 画面 ---------- */
 const CSS = `.share.over-meiro{z-index:3600}
 #meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;user-select:none;-webkit-user-select:none;overflow-y:auto;overscroll-behavior:contain}   /* 横向きなど 低い画面では 下のボタンまで スクロールできる */
@@ -449,7 +456,7 @@ function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線�
       if (dx) stripes(X + dx * T / 2 - sw / 2, Y - half, sw, 2 * half); else stripes(X - half, Y + dy * T / 2 - sw / 2, 2 * half, sw);
     }
   }
-  for (const i of b.holes) hole(x, (i % b.tw + 0.5) * T, (((i / b.tw) | 0) + 0.5) * T, T);
+  for (const i of b.holes) { const p = onPath(b, i % b.tw, (i / b.tw) | 0); hole(x, p[0] * T, p[1] * T, T); }   // 道すじの 上に
   // スタート
   const sx = (b.start[0] + 0.5) * T, sy = (b.start[1] + 0.5) * T;
   x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = 2 * u; x.setLineDash([3 * u, 2 * u]);
@@ -498,7 +505,7 @@ function step(dt) {
     const ci = Math.floor(g.x), cj = Math.floor(g.y);
     for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
       if (!b.holes.has(j * b.tw + i)) continue;
-      const dx = i + 0.5 - g.x, dy = j + 0.5 - g.y, d = Math.hypot(dx, dy);
+      const p = onPath(b, i, j), dx = p[0] - g.x, dy = p[1] - g.y, d = Math.hypot(dx, dy);
       if (d < 0.62 && d > 0.01) { const k = (0.62 - d) * 22 * dt / d; g.vx += dx * k; g.vy += dy * k; }
     }
   }
@@ -546,7 +553,7 @@ function step(dt) {
   if (!g.go && Math.hypot(g.vx, g.vy) > 0.3) g.go = true;   // タイムは お米が 動きだしてから（盤を 見て 考える あいだは 数えない）
   if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); }   // ゴーストの ための 走りの きろく（1/20マス）
   const ci = Math.floor(g.x), cj = Math.floor(g.y), idx = cj * b.tw + ci;
-  const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && Math.hypot(g.x - ci - 0.5, g.y - cj - 0.5) < 0.3;
+  const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && (p => Math.hypot(g.x - p[0], g.y - p[1]) < 0.3)(onPath(b, ci, cj));
   if (water || inHole) {   // おちた
     g.fall = 0.8; g.falls++; g.fallAt = [g.x, g.y]; g.fallWater = water; g.vx = g.vy = 0;
     if (water) api.splash(0.8); else api.koto(0.8, true);
@@ -653,7 +660,8 @@ function draw(now) {
   if (spr) { const s = T * 1.5; x.drawImage(spr, Math.round(gx - s / 2), Math.round(gy - s * 0.95), s, s); }
   flag(x, gx + T * 0.18, gy - T * 0.1, T);
   if (g.hint && now < g.hint.until) {   // ヒントの 道すじ（白い 点が 順に ぴかぴか）
-    g.hint.path.forEach(([i, j], k) => {
+    g.hint.path.forEach(([i0, j0], k) => {
+      const [i, j] = onPath(b, i0, j0).map(v => v - 0.5);   // 道すじの 上に
       const on = Math.floor(now / 120) % 8 === k % 8, r = T * (on ? 0.16 : 0.11);
       x.fillStyle = '#1a1a1a'; x.beginPath(); x.arc((i + 0.5) * T, (j + 0.5) * T, r + Math.max(1, T / 24), 0, Math.PI * 2); x.fill();
       x.fillStyle = on ? '#fff59d' : '#ffffff'; x.beginPath(); x.arc((i + 0.5) * T, (j + 0.5) * T, r, 0, Math.PI * 2); x.fill();

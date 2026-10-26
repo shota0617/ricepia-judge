@@ -20,7 +20,19 @@
 - 言語: 日本語
 - 料金: ツールは無料。判定には利用者自身の Anthropic API キーが必要（API利用料は Anthropic の料金体系に従う）
 - 動作環境: スマートフォン・PCのWebブラウザ（インストール不要）
-- 最終更新: 2026-10-14
+- 最終更新: 2026-10-15
+
+## 運営店舗
+
+- 運営：近藤米穀店 らいすぴあ
+- 本店：〒445-0802 愛知県西尾市米津町蓮台３−１
+- 電話：0563-54-4001（2店舗共通）
+- 創業：1892年（明治25年）
+- 五代目店主：[近藤翔太](https://ricepia.jp/shomai/)
+- [公式サイト](https://ricepia.jp/) / [会社案内](https://ricepia.jp/about.html)
+- [本店のGoogleマップ](https://maps.app.goo.gl/jwSHhSN4M6YjR8Av7)
+- [Facebook](https://www.facebook.com/ricepia/) / [Instagram](https://www.instagram.com/ricepiablog/) / [YouTube](https://www.youtube.com/@ricepia) / [LINE](https://line.me/R/ti/p/@wxh6702b)
+- 店舗情報の確認日：2026-10-15。公式サイト・会社案内・日本郵便の公開情報で確認
 
 ## できること
 
@@ -72,9 +84,9 @@
 
 - プレミアム：姫さま（つや姫・減農薬）、幻の米（JAながのコシヒカリ）
 - 産地品種：富山コシヒカリ、山形 雪若丸、佐賀 夢しずく、岩手 ひとめぼれ、ミルキークイーン、減農薬コシヒカリ
-- 愛知産：安城 ハツシモ、のどか愛知コシヒカリ、あいちのかおり、つやっ子、西尾 にこまる
-- らいすぴあ オリジナル：おにぎりがうまい米、花子、コスパ米
-- 特殊米：ハイガ米、5分づき米、玄米、もっちり玄米、もっちり玄米デラックス（黒米入り）、愛知コシヒカリ
+- 愛知産：安城 ハツシモ、のどか愛知コシヒカリ、あいちのかおり、つやっ子（あいちコシヒカリ＋あいちのこころ）、西尾 にこまる、愛知コシヒカリ
+- らいすぴあ オリジナル：おにぎりがうまい米、花子（あいちのこころ＋中米）、コスパ米（あいちのこころ＋中米）
+- 特殊米：ハイガ米・5分づき米・玄米（いずれも岩手ひとめぼれ）、もっちり玄米、もっちり玄米デラックス（黒米入り）
 
 ## 注意点
 
@@ -94,7 +106,9 @@
 ## ページ
 
 - [精米品質AI判定](https://ricepia-judge.vercel.app/): 本ツール。12項目の説明・グレード基準・使い方・FAQを掲載
+- [お米の品質ガイド](https://ricepia-judge.vercel.app/guide/): 米店による解説記事の一覧
+- [精米の品質を見分ける12のポイント](https://ricepia-judge.vercel.app/guide/rice-quality-12-points.html): 白度・光沢・粒揃い・割れ・着色粒・乳白粒・異物・精米仕上がり・鮮度感・品種純度・炊飯適性の見方と原因、自宅での確認方法
+- [お米の「1等米」と精米の品質はどう違う？](https://ricepia-judge.vercel.app/guide/grading-vs-inspection.html): 農産物検査法の等級（1等〜3等・規格外、主に玄米が対象）と食味ランキング（特A）、らいすぴあのS〜Dグレードの違い
+- [llms-full.txt](https://ricepia-judge.vercel.app/llms-full.txt): 上記ページの本文をまとめた全文版
 
-## Optional
-
-- [Meta広告分析](https://ricepia-judge.vercel.app/meta-ads.html): らいすぴあの Meta（Facebook / Instagram）広告の成果を、広告マネージャのCSVから診断するツール（精米品質判定とは別機能）
+- [お米の撮影のコツ｜AI判定で見落としを減らす準備と確認](https://ricepia-judge.vercel.app/guide/rice-photo-tips.html): 照明・ピント・背景・粒の広げ方と写真による推定の限界

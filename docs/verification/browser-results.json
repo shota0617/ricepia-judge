@@ -1,0 +1,189 @@
+[
+  {
+    "route": "/",
+    "width": 375,
+    "status": 200,
+    "scrollWidth": 375,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "らいすぴあ 精米品質AI判定",
+    "errors": []
+  },
+  {
+    "route": "/guide/",
+    "width": 375,
+    "status": 200,
+    "scrollWidth": 375,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "お米の品質ガイド",
+    "errors": []
+  },
+  {
+    "route": "/guide/grading-vs-inspection.html",
+    "width": 375,
+    "status": 200,
+    "scrollWidth": 375,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
+    "errors": []
+  },
+  {
+    "route": "/guide/rice-quality-12-points.html",
+    "width": 375,
+    "status": 200,
+    "scrollWidth": 375,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "精米の品質を見分ける12のポイント",
+    "errors": []
+  },
+  {
+    "route": "/guide/rice-photo-tips.html",
+    "width": 375,
+    "status": 200,
+    "scrollWidth": 375,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
+    "errors": []
+  },
+  {
+    "route": "/meta-ads.html",
+    "width": 375,
+    "status": 200,
+    "scrollWidth": 375,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "route": "/",
+    "width": 1280,
+    "status": 200,
+    "scrollWidth": 1280,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "らいすぴあ 精米品質AI判定",
+    "errors": []
+  },
+  {
+    "route": "/guide/",
+    "width": 1280,
+    "status": 200,
+    "scrollWidth": 1280,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "お米の品質ガイド",
+    "errors": []
+  },
+  {
+    "route": "/guide/grading-vs-inspection.html",
+    "width": 1280,
+    "status": 200,
+    "scrollWidth": 1280,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "お米の「1等米」と精米の品質はどう違う？農産物検査の等級と米店の基準",
+    "errors": []
+  },
+  {
+    "route": "/guide/rice-quality-12-points.html",
+    "width": 1280,
+    "status": 200,
+    "scrollWidth": 1280,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "精米の品質を見分ける12のポイント",
+    "errors": []
+  },
+  {
+    "route": "/guide/rice-photo-tips.html",
+    "width": 1280,
+    "status": 200,
+    "scrollWidth": 1280,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "h1": "お米の撮影のコツ｜AI判定で見落としを減らす準備と確認",
+    "errors": []
+  },
+  {
+    "route": "/meta-ads.html",
+    "width": 1280,
+    "status": 200,
+    "scrollWidth": 1280,
+    "font": true,
+    "fontCSS": [
+      {
+        "media": "all",
+        "sheet": true
+      }
+    ],
+    "errors": []
+  },
+  {
+    "fontDelay": {
+      "cls": 0.005037162139917695,
+      "loaded": true
+    }
+  },
+  {
+    "noJS": "お米の品質ガイド"
+  }
+]

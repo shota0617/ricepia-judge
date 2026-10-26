@@ -11,7 +11,8 @@
 | `nishio-go.html` | **にしおさんぽGO**（西尾市のお散歩ポイントラリー）。地図上のスポット（神社・お寺・公園・史跡・駅など）に歩いて近づくとチェックインでき、ポイント・レベル・バッジが貯まる |
 | `tsunagu.html` | **つなぐ**。店舗どうしをビデオ通話でつなぐだけのページ。開くだけで最大5台がひとつの部屋に入る（設定・ID・パスワード不要） |
 | `meeting.html` | **らいすぴあ ミーティング**（Zoomのようなビデオ会議）。発言を自動で文字起こしし、AIがお客様のニーズを抽出して開発バックログ・GitHub Issue・開発依頼書につなげる |
-| `meta-ads.html` | Meta（Facebook / Instagram）広告の成果診断。広告マネージャのCSVを読み込み、CPA・ROAS・CTR・フリークエンシー・前後半の推移から「増額／維持／要改善／停止／データ不足」を判定し、AIが改善策と次の広告案を提案 |
+| `guide/` | **お米の品質ガイド**（解説記事。`guide/index.html` が一覧。SEO/LLMO 用） |
+| `meta-ads.html` | Meta（Facebook / Instagram）広告の成果診断（社内用。`noindex` で検索対象外）。広告マネージャのCSVを読み込み、CPA・ROAS・CTR・フリークエンシー・前後半の推移から「増額／維持／要改善／停止／データ不足」を判定し、AIが改善策と次の広告案を提案 |
 
 ## Marketing Studio の機能
 
@@ -176,6 +177,32 @@
 - 共有用の画像（OGP）：`nishio-go/ogp.png`（1200×630）。`node tools/make-ogp.js` でゲーム画面を撮って作り直せます。
 - 自社ドメイン：**https://go.ricepia.jp/** で公開。`vercel.json` で、`go.ricepia.jp/` を `go.ricepia.jp/nishio-go.html` へ、古いアドレス `ricepia-judge.vercel.app/nishio-go.html` も `go.ricepia.jp/nishio-go.html` へ転送します（クエリ文字列＝utm などはそのまま）。トップに別のアプリの `index.html` があり、Vercel では同じ場所にファイルがあると rewrite が効かないため、転送にしています。DNS はさくらのレンタルサーバのコントロールパネル →「ドメイン/SSL」→ ricepia.jp の「設定」→「DNSレコード設定」に `go` の CNAME（Vercel が示す値）を登録してあります（2026-10-16）。
 - 注意：ポイントは端末内で計算しているため、改ざんは防げません。特典は「動く時計が出ていること（スクリーンショットでないこと）」と残り時間を店頭で確認する運用が前提です。高額な特典にする場合はサーバー側での検証（ログイン・チェックイン記録の照合）を追加してください。
+
+## 精米品質AI判定の SEO / LLMO
+
+- `llms.txt` / `llms-full.txt` … AI検索・LLM向けのサイト要約と本文全文。`robots.txt` / `sitemap.xml` / `ogp.png` … クローラー・SNS共有用
+- `docs/seo-llmo-analysis.md` … 分析レポートと改善の進捗。`docs/REVIEW-codex.md` … レビュー記録。`docs/store-information-sources.md` … 店舗情報の根拠
+- `.claude/skills/kokoku-shindan/` … 広告診断スキル（Meta広告CSVの判定スクリプト `scripts/diagnose_meta_ads.py` ＋ SEO/LLMO チェックリスト）
+
+### 更新時のチェックリスト
+
+ビルド工程が無いため、日付は手書きです。内容を更新したら以下をまとめて直す。
+
+1. `index.html`：JSON-LD の `"dateModified"`、footer の `<time datetime>` と表示日付
+2. `sitemap.xml`：更新したページの `<lastmod>`
+3. `llms.txt`：「最終更新」行。FAQ・品種・グレード基準を変えたら本文側（`index.html` の `#about`、JSON-LD の FAQPage）と文言を一致させる
+4. `llms-full.txt`：`python3 scripts/generate_llms_full.py` で再生成する
+5. `guide/*.html`：JSON-LD の `dateModified`、`<time>`、`article:modified_time`（`datePublished` は初出日なので変えない）
+6. 判定12項目・グレード基準・品種の選択肢を変えたら、`index.html` の本文・JSON-LD・`llms.txt`・`guide/` の記述を全て揃える
+7. 公開前に店側で記事内容をレビューする
+
+### ローカル検証（Python 3 標準ライブラリのみ）
+
+```sh
+python3 scripts/generate_llms_full.py --check
+python3 -m unittest discover -s tests -v
+git diff --check
+```
 
 ## バックアップ（restic）
 

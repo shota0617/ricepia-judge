@@ -269,7 +269,7 @@
       ・作業機の傾きは 平らな所で合わせる（代かきは ロータリーから ハローに付けかえるので、点検で見る）。傾いたままだと 片側だけ深くかいて、反対側は土が水面から出る（<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）</a>。自動水平は 合わせた水平を保つしくみ：<a href="https://www.yanmar.com/jp/agri/products/tractor/yt6/automatic-control.html" target="_blank" rel="noopener">ヤンマー</a>）<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある。代かきの前に<b>畦塗り</b>：畦の内側に泥を塗って、モグラやザリガニの穴からの水もれをふさぐ（ゲームの代かきの畦も塗ってある。早すぎると ひびが入る：<a href="https://www.pref.hiroshima.lg.jp/uploaded/attachment/236669.pdf" target="_blank" rel="noopener">広島県</a>・<a href="https://www.pref.shiga.lg.jp/documents/6940/1009949_1.pdf" target="_blank" rel="noopener">滋賀県</a>の資料）<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る（代かきは ハローを下げたまま 速く回る・倍速ターンのまま回る）、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
-      ・出入口の坂は 作業機を上げて、ハンドルを大きく切らずに まっすぐ通る。坂を削ったり えぐったりすると 形が崩れて、出るときに タイヤがすべって はまることもある（<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）</a>）<br>
+      ・出入口の坂は、作業機を 地面に当たらない高さにして（上げすぎると 重心が高くなって かえって不安定。取扱説明書で）、坂に入る前に低速に落とし、ハンドルを大きく切らずに まっすぐ通る（ゲームの「上げる」は かんたんにしてある）。坂を削ったり えぐったりすると 形が崩れて、出るときに タイヤがすべって はまることもある（<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）</a>）<br>
       ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
     </details>
     <details class="how"><summary><b>本物の田んぼアート</b></summary>
@@ -2291,7 +2291,7 @@ const WEEDS = (() => {
 const RAMPDMG = (() => {
   const inBox = (x, z) => x > 12 && x < 16.9 && z > 18 && z < 22;
   const MAX = 14, spots = [];
-  let dmg = 0, told = false, slipTold = false, mat = null, lastX = 1e9, lastZ = 1e9;
+  let dmg = 0, told = false, slipTold = false, preTold = false, mat = null, lastX = 1e9, lastZ = 1e9;
   function patch(x, z, yaw, len) {                // えぐれた所：坂の面にそって こげ茶の すじ
     if (Math.hypot(x - lastX, z - lastZ) < 0.6 || spots.length >= MAX) return;
     lastX = x; lastZ = z;
@@ -2316,16 +2316,25 @@ const RAMPDMG = (() => {
     if (!add) return;
     dmg = Math.min(1, dmg + add * dt);
     if (mat) mat.opacity = Math.min(0.85, 0.25 + dmg);
-    if (dmg > 0.25 && !told) { told = true; toast('出入口の坂を ' + (S.rotDown ? IMPL + 'で削っている' : 'タイヤで えぐっている') + '。坂の形が崩れると、出るときに タイヤがすべる（坂では ' + IMPL + 'を上げて、まっすぐ）', 6); }
+    if (dmg > 0.25 && !told) { told = true; toast('出入口の坂を ' + (S.rotDown ? IMPL + 'で削っている' : 'タイヤで えぐっている') + '。坂の形が崩れると、出るときに タイヤがすべる（坂では ' + IMPL + 'を 地面に当たらない高さにして、まっすぐ）', 6); }
   }
-  function cap() {                                // 崩れた坂を 上がるとき：タイヤがすべって ゆっくりしか上がれない
-    if (dmg < 0.4 || !inBox(S.x, S.z) || Math.sin(S.yaw) < 0.3) return Infinity;
-    if (!slipTold && S.v > 0.1) {
+  function cap(dir) {                             // 崩れた坂を 上がるとき（前進でも バックでも）：タイヤがすべって ゆっくりしか上がれない
+    if (dmg < 0.4 || !dir) return Infinity;
+    const up = Math.sin(S.yaw) * dir > 0.3;        // 坂は +x へ上がる
+    if (up && !preTold && S.x > 9 && S.x < 12 && S.z > 18 && S.z < 22) {   // 坂に入る前に言う（坂の上では 変速しない）
+      preTold = true;
+      toast('この先の坂は 崩れている。坂に入る前に 1 速に落としておく（坂の上では 変速しない）', 6);
+    }
+    if (!up || !inBox(S.x, S.z)) return Infinity;
+    if (!slipTold && Math.abs(S.v) > 0.1) {
       slipTold = true;
-      toast('崩れた坂で タイヤがすべる。1 速で まっすぐ、ゆっくり上がる（本物は はまって 引き上げてもらうことも）', 6);
+      toast('崩れた坂で タイヤがすべる。そのまま まっすぐ、ゆっくり上がる（本物は はまって 引き上げてもらうことも）', 6);
       setTimeout(() => voice('surope'), 6200);
     }
-    if (S.v > 0.2 && Math.random() < 0.3) { const p = wheelPoints(S.x, S.z, S.yaw); for (const k of ['rl', 'rr']) FX.emit(p[k][0], (ground(p[k][0], p[k][1]) ?? 0) + 0.1, p[k][1], -Math.sin(S.yaw) * 0.8, 0.6, -Math.cos(S.yaw) * 0.8, 0); }   // うしろへ 泥がとぶ
+    if (Math.abs(S.v) > 0.2 && Math.random() < 0.3) {   // 進む向きと反対へ 泥がとぶ
+      const p = wheelPoints(S.x, S.z, S.yaw), b = -Math.sign(S.v) * 0.8;
+      for (const k of ['rl', 'rr']) FX.emit(p[k][0], (ground(p[k][0], p[k][1]) ?? 0) + 0.1, p[k][1], Math.sin(S.yaw) * b, 0.6, Math.cos(S.yaw) * b, 0);
+    }
     return 0.36;
   }
   return { step, cap, spots, get dmg() { return dmg; }, get told() { return told; } };
@@ -4530,7 +4539,7 @@ function step(dt) {
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
   let want = S.crank > 0 || S.stalled || S.stuck ? 0 : key.fwd ? vmax : key.back ? -0.85 : 0;   // はまったら 進まない
-  if (want > 0) want = Math.min(want, RAMPDMG.cap());   // 崩れた坂では すべって ゆっくり
+  if (want) want = Math.sign(want) * Math.min(Math.abs(want), RAMPDMG.cap(Math.sign(want)));   // 崩れた坂では すべって ゆっくり（バックでも）
   if (EASY.on && want > 0) {                       // 🔰 耕すときは時速 3km まで、坂は時速 5km まで
     const cap = S.rotDown ? 3.0 / 3.6 : onSlope ? 1.4 : Infinity;
     if (want > cap) { want = cap; EASY.used = true; EASY.tell('speed', S.rotDown ? '耕すときは時速 3km までにおさえています（速いと土が粗くなる）' : '坂はゆっくり。速さをおさえています'); }
@@ -5730,7 +5739,7 @@ function finish() {
   $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
     (STONES.hits ? `<br><span class="small">爪が石に当たった：${STONES.hits} 回。耕す前に石を拾っておくと、爪がいたまない</span>` : '') +
-    (RAMPDMG.told ? '<br><span class="small">出入口の坂を 崩した。坂では 作業機を上げて、ハンドルを大きく切らずに まっすぐ通る</span>' : '') +
+    (RAMPDMG.told ? '<br><span class="small">出入口の坂を 崩した。坂では 作業機を 地面に当たらない高さにして、ハンドルを大きく切らずに まっすぐ通る</span>' : '') +
     (tiltA >= 1 ? `<br><span class="small">傾いたハローで かいたままの所：約 ${Math.round(tiltA)}m²（片側が浅く 土が出る。ハローを付けかえたら 平らな所で傾きを合わせる）</span>` : '') +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +

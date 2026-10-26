@@ -7639,12 +7639,20 @@ function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
   if (c < 3) return null;   // 遠すぎる（図が 小さく なりすぎて、通路どうしの 細い壁が 描けない）
   const cv = mzMap.cv || (mzMap.cv = document.createElement('canvas')), x = cv.getContext('2d');
   cv.width = cols * c; cv.height = rows * c;
-  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy), wl = Math.max(1, Math.round(c / 4));   // 細い壁は いつも 1点 以上（とじた さかいを 通れる ように 見せない）
+  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy);
+  const net = new Path2D(), walked = new Path2D(), grains = [];   // ゆるい めいろ：通路は 道すじの 曲線で（歩く地図と 同じ 形）
   for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
     const cx = x0 + i, cy = y0 + j, t = mzType(cx, cy);
-    x.fillStyle = t < 0 ? ((i + j) & 1 ? '#4a4a4a' : '#3e3e3e') : go(cx, cy) ? (mzTrail.has(cx + ',' + cy) ? '#f3e08a' : '#ddd6b6') : t === 2 ? '#2f6aa0' : '#1d4434';
+    x.fillStyle = t < 0 ? ((i + j) & 1 ? '#4a4a4a' : '#3e3e3e') : t === 2 ? '#2f6aa0' : '#1d4434';
     x.fillRect(i * c, j * c, c, c);
-    if (t === 1 && mzGrainAt(cx, cy)) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g); }   // 金の米つぶ
+    const cs = go(cx, cy) ? mzCurves(cx, cy) : null;
+    if (cs) for (const q of cs) for (const p of mzTrail.has(cx + ',' + cy) ? [net, walked] : [net]) { p.moveTo((q[0][0] / MZ_K - x0) * c, (q[0][1] / MZ_K - y0) * c); for (let k = 1; k < q.length; k++) p.lineTo((q[k][0] / MZ_K - x0) * c, (q[k][1] / MZ_K - y0) * c); }
+    if (t === 1 && mzGrainAt(cx, cy)) grains.push([i, j]);
+  }
+  x.lineCap = x.lineJoin = 'round'; x.lineWidth = c * 2 * MZ_HALF / MZ_K;
+  x.strokeStyle = '#ddd6b6'; x.stroke(net);
+  x.strokeStyle = '#f3e08a'; x.stroke(walked);   // 通った 所は 黄色く
+  for (const [i, j] of grains) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g);   // 金の米つぶ
   }
   let pads = 0, dots = 0;
   {   // びゅんパネル（だいだいの 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）。細い壁より 先に 描く（小さい 図でも 壁を ぬりつぶさない）
@@ -7665,15 +7673,6 @@ function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
         if (px < 0 || py < 0 || px >= cols * c || py >= rows * c) return;
         x.fillStyle = '#5a4a2a'; x.fillRect(Math.round(px - q / 2) - 1, Math.round(py - q / 2) - 1, q + 2, q + 2); x.fillStyle = '#ffffff'; x.fillRect(Math.round(px - q / 2), Math.round(py - q / 2), q, q); dots++;   // こい ふちで 通路の 色から うく
       });
-    }
-  }
-  {   // 通路どうしの あいだの 細い壁
-    x.fillStyle = '#1d4434';
-    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-      const cx = x0 + i, cy = y0 + j;
-      if (!go(cx, cy)) continue;
-      if (go(cx + 1, cy) && !mzOpen(cx, cy, 1, 0)) x.fillRect((i + 1) * c - Math.ceil(wl / 2), j * c, wl, c);
-      if (go(cx, cy + 1) && !mzOpen(cx, cy, 0, 1)) x.fillRect(i * c, (j + 1) * c - Math.ceil(wl / 2), c, wl);
     }
   }
   return { x0, y0, cols, rows, c, pads, dots, near: ((G.reachOf ? G.reachOf(gt) : 40) || 40) * 0.8 / TILE_M / MZ_K, gx: g.x / MZ_K, gy: g.y / MZ_K };
@@ -7699,7 +7698,10 @@ function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上
   if (help) {   // おたすけ：ゴールまでの 道すじを 図にも 水色の 線で（めいろ全体の どこを 通るか 分かる）。図の 外へ 回る ところは 図の ふちで 切る
     ctx.save();
     ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip();
-    ctx.beginPath(); mzRt.path.forEach(([cx, cy], i) => { const px = X + (cx + 0.5 - B.x0) * B.c, py = Y + (cy + 0.5 - B.y0) * B.c; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); });
+    const P = mzRt.path.map(([cx, cy]) => [X + (cx + 0.5 - B.x0) * B.c, Y + (cy + 0.5 - B.y0) * B.c]);   // 道すじと 同じ 曲線（さかいの まん中を とおる）
+    ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]);
+    for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
+    ctx.lineTo(P[P.length - 1][0], P[P.length - 1][1]);
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(3, B.c * 0.9); ctx.stroke();
     ctx.strokeStyle = '#7fe0ff'; ctx.lineWidth = Math.max(1.5, B.c * 0.5); ctx.stroke();

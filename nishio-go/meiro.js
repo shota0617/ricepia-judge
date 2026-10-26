@@ -1,7 +1,7 @@
 // にしおさんぽGO：西尾めいろ（スマホを傾けて、お米を 西尾の地図の迷路の ゴールまで ころがす。キーホルダーの 玉ころがし迷路のように）
 // ・盤は 本物の西尾の地図の一部（ドット絵の地図と同じ絵。pixel.js の paintRegion）。めいろの1マスは 地図の 2×2マス（約16m）。
 //   道の ある マスが 床で、となりへ 通れるのは 本当の 道が さかいを またいで つながる 所だけ。その中から 穴ほりで 1本道の 迷路を えらぶ（町の 通りが そのまま 迷路になる）。
-//   通路は 地図を 明るく、そのほか（家の かたまり・田畑・つながらない 床）は 盛りあがった 緑の 台、細い壁は 立った 緑の 壁（影と てかり つき）
+//   通路は マスの まん中を なめらかな 曲線で むすんだ「道すじ」（直角に 曲がらない ゆるい めいろ。2026-10-26）。通路は 地図を 明るく、そのほかは 盛りあがった 緑の 台（影と てかり つき）
 // ・川や池（水のマス）と、面が進むと ふえる マンホールの 穴は「落とし穴」：おちると スタートに もどる
 // ・ゴールは 西尾の名所（1面 西尾駅 → 2面 西尾城跡 → らいすぴあ …）。スタートは ゴールから 道を たどって いちばん遠い所
 // ・傾き（pixel.js の傾きを そのまま使う）・矢印キー・盤を なぞる で 転がす。ベストタイムは この端末（localStorage nsg_meiro）
@@ -196,6 +196,55 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
   return d;
 }
 
+/* ---------- ゆるい めいろの 道すじ ---------- */
+// 2026-10-26 店主「直角ではなく ゆるい構造に。西尾の町に合った迷路」：歩く地図の めいろ（pixel.js）と 同じ 作り。
+// どこが 通れるかは そのまま。通れる さかいで つながる マスの まん中を なめらかな 曲線（さかいの まん中を とおり、マスの まん中へ 引かれる）で むすび、
+// お米の まん中は 道すじから TUBE マス以内を 転がる。直角の 曲がり角は まるく、階段の ような ななめの 道は ななめの 一本道に なる
+const TUBE = 0.12, HALF = TUBE + R;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（マス）
+const SOFT_K = 2400, SOFT_C = 34, SOFT_MAX = 0.12;   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
+const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+function tubes(b) {   // マスごとに 受けもつ 道すじ（マスの 座標の 点の 列の 配列）。ゴールへ つながる 床と、そこから 入れる 水（落とし穴）
+  if (b.tube) return b.tube;
+  const { tw, th, cell } = b, reach = bfs(Object.assign({}, b, { holes: new Set() }), b.goal), out = new Array(tw * th);
+  const ok = i => (cell[i] === 1 ? reach[i] > 0 : cell[i] === 2);
+  for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) {
+    const i = y * tw + x;
+    if (!ok(i)) continue;
+    const arms = DIRS.filter(([dx, dy]) => { const j = (y + dy) * tw + x + dx; return pass(b, x, y, dx, dy) && ok(j) && (cell[i] === 1 || cell[j] === 1); }).map(([dx, dy]) => [x + 0.5 + dx * 0.5, y + 0.5 + dy * 0.5, dx, dy]);
+    if (cell[i] === 2 && !arms.length) continue;   // 床から 入れない 水
+    const px = x + 0.5, py = y + 0.5, own = [];
+    const bez = (a, c) => { const q = []; for (let k = 0; k <= 6; k++) { const t = k / 6, u = 1 - t; q.push([u * u * a[0] + 2 * u * t * px + t * t * c[0], u * u * a[1] + 2 * u * t * py + t * t * c[1]]); } return q; };
+    if (!arms.length) own.push([[px - 0.01, py], [px + 0.01, py]]);
+    else if (arms.length === 2) own.push(bez(arms[0], arms[1]));
+    else {
+      for (const a of arms) own.push([[px, py], [a[0], a[1]]]);   // 行き止まり・分かれ道：まん中から さかいへ
+      if (arms.length > 2) for (let m = 0; m < arms.length; m++) for (let k = m + 1; k < arms.length; k++) if (!(arms[m][2] * arms[k][2] + arms[m][3] * arms[k][3])) own.push(bez(arms[m], arms[k]));   // 分かれ道の 角も まるく
+    }
+    out[i] = own;
+  }
+  return (b.tube = out);
+}
+function near(b, x, y) {   // (x, y) に いちばん近い 道すじの 点（まわり 3×3 マス）
+  const T = tubes(b), a = Math.floor(x), c = Math.floor(y);
+  let bd = Infinity, bx = 0, by = 0;
+  for (let j = c - 1; j <= c + 1; j++) for (let i = a - 1; i <= a + 1; i++) {
+    if (i < 0 || j < 0 || i >= b.tw || j >= b.th || !T[j * b.tw + i]) continue;
+    for (const q of T[j * b.tw + i]) for (let k = 1; k < q.length; k++) {
+      const x0 = q[k - 1][0], y0 = q[k - 1][1], dx = q[k][0] - x0, dy = q[k][1] - y0, l = dx * dx + dy * dy;
+      const t = l ? Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / l)) : 0, qx = x0 + dx * t, qy = y0 + dy * t, d = (x - qx) * (x - qx) + (y - qy) * (y - qy);
+      if (d < bd) { bd = d; bx = qx; by = qy; }
+    }
+  }
+  return bd < Infinity ? { d: Math.sqrt(bd), x: bx, y: by } : null;
+}
+
+function onPath(b, i, j) {   // マス (i, j) の まん中に いちばん近い 道すじの 点（角の マスでは カーブの 上。穴・ヒントの 点を ここに）
+  const k = j * b.tw + i, c = b.onp || (b.onp = new Map());
+  let p = c.get(k);
+  if (!p) { const q = near(b, i + 0.5, j + 0.5); p = q ? [q.x, q.y] : [i + 0.5, j + 0.5]; c.set(k, p); }
+  return p;
+}
+
 /* ---------- 画面 ---------- */
 const CSS = `.share.over-meiro{z-index:3600}
 #meiro{position:fixed;inset:0;z-index:3500;background:radial-gradient(circle at 50% 30%,#2f6f8f,#123247);display:flex;flex-direction:column;align-items:center;color:#fff;font-family:"DotGothic16","Hiragino Sans",sans-serif;user-select:none;-webkit-user-select:none;overflow-y:auto;overscroll-behavior:contain}   /* 横向きなど 低い画面では 下のボタンまで スクロールできる */
@@ -361,7 +410,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -377,71 +426,39 @@ function fit() {
   ui.cv.style.width = b.tw * T / dpr + 'px'; ui.cv.style.height = b.th * T / dpr + 'px';
   game.bg = paintBoard(b, T); game.dem = api.demGen;   // 標高が あとから とどいたら 等高線を 描きなおす（tick）
 }
-function paintBoard(b, T) {
+function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線で くりぬいた 緑の 台（盛りあがって 見える ように 右下へ 影）。通路は 地図を 明るく
   const c = document.createElement('canvas'); c.width = b.tw * T; c.height = b.th * T;
-  const x = c.getContext('2d');
+  const x = c.getContext('2d'), W = c.width, H = c.height;
   api.paintRegion(x, b.tx0 * K, b.ty0 * K, b.tw * K, b.th * K, T / K);
-  const at = (i, j) => (i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i]);
-  // 細い壁の 見た目の はば（ふちも ふくめて）は 当たりの はば（WALL の 2倍）と そろえる。小さい 盤では 黒い ふちを はぶく（通路が お米より 細く 見えないように）
-  const u = Math.max(1, Math.round(T / 16)), lw = Math.max(1, Math.round(T * WALL * 2)), e = lw >= 5 ? u : 0, sh = Math.max(1, Math.round(T * 0.12));
-  // 通路：ゴールへ つながる 床（穴は 通れるものとして。穴の 先の 行き止まりも 通路に 見せる）。そのほか（壁の かたまり・つながらない 床）は ぜんぶ「台」
-  const reach = bfs(Object.assign({}, b, { holes: new Set() }), b.goal);
-  const solid = (i, j) => i < 0 || j < 0 || i >= b.tw || j >= b.th || (b.cell[j * b.tw + i] === 1 ? !reach[j * b.tw + i] : !b.cell[j * b.tw + i]);
-  // 1) 通路は 地図を 明るく（町が 見える）、台は 緑の プラスチックで おおう（地図は うっすら）
-  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    const X = i * T, Y = j * T;
-    if (!solid(i, j)) { if (at(i, j) === 1) { x.fillStyle = 'rgba(255,250,235,.38)'; x.fillRect(X, Y, T, T); } continue; }
-    x.fillStyle = 'rgba(28,70,52,.86)'; x.fillRect(X, Y, T, T);
-    x.fillStyle = (i + j) % 2 ? 'rgba(255,255,255,.025)' : 'rgba(0,0,0,.03)'; x.fillRect(X, Y, T, T);   // ごく うすい 市松（台の 面の てざわり）
-  }
-  // 2) 影：台と 細い壁は 右下へ 影を おとす（光は 左上から。キーホルダーの 迷路の 立った 壁のように）
-  x.fillStyle = 'rgba(0,0,0,.32)';
-  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    if (solid(i, j)) continue;
-    const X = i * T, Y = j * T;
-    if (solid(i, j - 1)) x.fillRect(X, Y, T, sh);   // 上が 台：上の ふちに 影
-    if (solid(i - 1, j)) x.fillRect(X, Y, sh, T);
-    if (solid(i - 1, j - 1) && !solid(i, j - 1) && !solid(i - 1, j)) x.fillRect(X, Y, sh, sh);   // ななめ上の 台の 角
-    if (!solid(i, j - 1) && !pass(b, i, j, 0, -1)) x.fillRect(X, Y + (lw >> 1), T, sh);   // 細い壁の 影
-    if (!solid(i - 1, j) && !pass(b, i, j, -1, 0)) x.fillRect(X + (lw >> 1), Y, sh, T);
-  }
-  // 3) 台の ふち：通路に 面した 上・左の ふちは 光って 明るく、下・右の ふちは 暗い 線（盛りあがって 見える）
-  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    if (!solid(i, j)) continue;
-    const X = i * T, Y = j * T;
-    x.fillStyle = '#0d2219';
-    if (!solid(i, j + 1)) x.fillRect(X, Y + T - u, T, u);
-    if (!solid(i + 1, j)) x.fillRect(X + T - u, Y, u, T);
-    if (!solid(i, j - 1)) x.fillRect(X, Y, T, u);
-    if (!solid(i - 1, j)) x.fillRect(X, Y, u, T);
-    x.fillStyle = 'rgba(190,240,205,.55)';
-    if (!solid(i, j + 1)) x.fillRect(X, Y + T - 2 * u, T, u);
-    if (!solid(i + 1, j)) x.fillRect(X + T - 2 * u, Y, u, T);
-  }
-  // 4) 細い壁（床どうしで 道が つながっていない さかい）：台と 同じ 緑の 立った 壁。上・左の 面に てかり、まわりに 黒い ふち
-  const rail = (X, Y, w, h) => {
-    if (e) { x.fillStyle = '#0d2219'; x.fillRect(X, Y, w, h); }
-    x.fillStyle = '#2f7a58'; x.fillRect(X + e, Y + e, w - 2 * e, h - 2 * e);
-    if (lw - 2 * e >= 2 * u) { x.fillStyle = 'rgba(200,255,220,.55)'; if (w > h) x.fillRect(X + e, Y + e, w - 2 * e, u); else x.fillRect(X + e, Y + e, u, h - 2 * e); }
-  };
-  for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    if (solid(i, j)) continue;
-    const X = i * T, Y = j * T;
-    if (!solid(i + 1, j) && !pass(b, i, j, 1, 0)) rail(X + T - (lw >> 1), Y - (lw >> 1), lw, T + lw);
-    if (!solid(i, j + 1) && !pass(b, i, j, 0, 1)) rail(X - (lw >> 1), Y + T - (lw >> 1), T + lw, lw);
-  }
-  // 水の ふち：床から 入れる 水との さかいに、黄色と黒の しま（ここから先は 落ちる）
-  const sw = Math.max(2, Math.round(T / 10));
+  const net = new Path2D();
+  for (const own of tubes(b)) if (own) for (const q of own) { net.moveTo(q[0][0] * T, q[0][1] * T); for (let k = 1; k < q.length; k++) net.lineTo(q[k][0] * T, q[k][1] * T); }
+  const u = Math.max(1, Math.round(T / 16)), sh = Math.max(1, Math.round(T * 0.12)), wi = 2 * HALF * T;
+  const layer = () => { const l = document.createElement('canvas'); l.width = W; l.height = H; const y = l.getContext('2d'); y.lineCap = y.lineJoin = 'round'; return [l, y]; };
+  x.lineCap = x.lineJoin = 'round';
+  x.strokeStyle = 'rgba(255,250,235,.38)'; x.lineWidth = wi; x.stroke(net);   // 通路は 地図を 明るく（町が 見える）
+  const m = document.createElement('canvas'); m.width = W; m.height = H; m.getContext('2d').drawImage(c, 0, 0); c.map = m;   // 台を のせる 前の 地図（やわらかい ふちが へこんだ 所に 見せる）
+  const [L, l] = layer();   // 台：緑の プラスチック（地図は うっすら）。通路との さかいに 黒い ふち と、台の 上の てかり
+  l.fillStyle = 'rgba(28,70,52,.86)'; l.fillRect(0, 0, W, H);
+  l.strokeStyle = 'rgba(190,240,205,.35)'; l.lineWidth = wi + 6 * u; l.stroke(net);
+  l.strokeStyle = '#0d2219'; l.lineWidth = wi + 2 * u; l.stroke(net);
+  l.globalCompositeOperation = 'destination-out'; l.lineWidth = wi; l.stroke(net);
+  const [S, z] = layer();   // 影：台を 右下へ ずらした ぶん
+  z.fillStyle = '#000'; z.fillRect(0, 0, W, H);
+  z.globalCompositeOperation = 'destination-out'; z.translate(sh, sh); z.lineWidth = wi; z.stroke(net);
+  x.globalAlpha = 0.32; x.drawImage(S, 0, 0); x.globalAlpha = 1;
+  x.drawImage(L, 0, 0);
+  // 水の ふち：床から 入れる 水との さかいに、黄色と黒の しま（ここから先は 落ちる）。しまは 通路の はばだけ
+  const at = (i, j) => (i < 0 || j < 0 || i >= b.tw || j >= b.th ? 0 : b.cell[j * b.tw + i]), T2 = tubes(b);
+  const sw = Math.max(2, Math.round(T / 10)), half = HALF * T;
   const stripes = (X, Y, w, h) => { for (let k = 0; k * sw < Math.max(w, h); k++) { x.fillStyle = k % 2 ? '#1a1a1a' : '#f2c200'; if (w > h) x.fillRect(X + k * sw, Y, Math.min(sw, w - k * sw), h); else x.fillRect(X, Y + k * sw, w, Math.min(sw, h - k * sw)); } };
   for (let j = 0; j < b.th; j++) for (let i = 0; i < b.tw; i++) {
-    if (at(i, j) !== 1) continue;
-    const X = i * T, Y = j * T;
-    if (at(i, j - 1) === 2 && pass(b, i, j, 0, -1)) stripes(X, Y - sw / 2, T, sw);
-    if (at(i, j + 1) === 2 && pass(b, i, j, 0, 1)) stripes(X, Y + T - sw / 2, T, sw);
-    if (at(i - 1, j) === 2 && pass(b, i, j, -1, 0)) stripes(X - sw / 2, Y, sw, T);
-    if (at(i + 1, j) === 2 && pass(b, i, j, 1, 0)) stripes(X + T - sw / 2, Y, sw, T);
+    if (at(i, j) !== 1 || !T2[j * b.tw + i]) continue;
+    const X = (i + 0.5) * T, Y = (j + 0.5) * T;
+    for (const [dx, dy] of DIRS) if (at(i + dx, j + dy) === 2 && pass(b, i, j, dx, dy)) {
+      if (dx) stripes(X + dx * T / 2 - sw / 2, Y - half, sw, 2 * half); else stripes(X - half, Y + dy * T / 2 - sw / 2, 2 * half, sw);
+    }
   }
-  for (const i of b.holes) hole(x, (i % b.tw + 0.5) * T, (((i / b.tw) | 0) + 0.5) * T, T);
+  for (const i of b.holes) { const p = onPath(b, i % b.tw, (i / b.tw) | 0); hole(x, p[0] * T, p[1] * T, T); }   // 道すじの 上に
   // スタート
   const sx = (b.start[0] + 0.5) * T, sy = (b.start[1] + 0.5) * T;
   x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = 2 * u; x.setLineDash([3 * u, 2 * u]);
@@ -490,14 +507,38 @@ function step(dt) {
     const ci = Math.floor(g.x), cj = Math.floor(g.y);
     for (let j = cj - 1; j <= cj + 1; j++) for (let i = ci - 1; i <= ci + 1; i++) {
       if (!b.holes.has(j * b.tw + i)) continue;
-      const dx = i + 0.5 - g.x, dy = j + 0.5 - g.y, d = Math.hypot(dx, dy);
+      const p = onPath(b, i, j), dx = p[0] - g.x, dy = p[1] - g.y, d = Math.hypot(dx, dy);
       if (d < 0.62 && d > 0.01) { const k = (0.62 - d) * 22 * dt / d; g.vx += dx * k; g.vy += dy * k; }
     }
   }
   const sp = Math.hypot(g.vx, g.vy);
   const max = MAX * (st.slow ? 0.6 : 1);
   if (sp > 0) { const k = Math.max(0, sp - (CRR + LIN * sp) * dt) / sp * (sp > max ? max / sp : 1); g.vx *= k; g.vy *= k; }
-  for (const axis of ['x', 'y']) {   // たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す（角を すべるように）
+  const tb = near(b, g.x, g.y);
+  if (tb && tb.d <= TUBE + 0.25) {   // ゆるい めいろ：道すじの 筒の 中を 転がる（はみ出す ぶんは 筒の ふちへ もどし、外向きの 速さだけ はね返す）
+    const ix = ax, iy = ay, im = Math.hypot(ix, iy);
+    if (tb.d > TUBE - 0.03 && im > 0.3) {   // 曲がりたい 向きに 傾けても ふちに 押しつける だけの ときは、その 向きの 通路が この マスか となりの マスに あれば 道すじに そって そちらへ
+      const ux = (g.x - tb.x) / tb.d, uy = (g.y - tb.y) / tb.d;
+      if ((ix * ux + iy * uy) / im > 0.6) {
+        const dx = Math.abs(ix) >= Math.abs(iy) ? Math.sign(ix) : 0, dy = dx ? 0 : Math.sign(iy), cx = Math.floor(g.x), cy = Math.floor(g.y);
+        let aim = pass(b, cx, cy, dx, dy) ? [cx + 0.5 + dx * 0.5, cy + 0.5 + dy * 0.5] : null;
+        if (!aim) for (const [ex, ey] of DIRS) if (!(ex * dx + ey * dy) && pass(b, cx, cy, ex, ey) && pass(b, cx + ex, cy + ey, dx, dy) && Math.hypot(g.x - cx - 0.5 - ex * 0.5, g.y - cy - 0.5 - ey * 0.5) < 0.55) { aim = [cx + ex + 0.5 + dx * 0.5, cy + ey + 0.5 + dy * 0.5]; break; }
+        if (aim) { let tx = -uy, ty = ux; if (tx * (aim[0] - tb.x) + ty * (aim[1] - tb.y) < 0) { tx = -tx; ty = -ty; } const k = acc * Math.min(1, im) * 0.9 * dt; g.vx += tx * k; g.vy += ty * k; }
+      }
+    }
+    let nx = g.x + g.vx * dt, ny = g.y + g.vy * dt;
+    const q = near(b, nx, ny), sf = g.soft;
+    if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
+      const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
+      if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
+      Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
+      let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり
+      if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
+      g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
+    } else sf.on = false;
+    { const tg = sf.on ? sf.pen : 0; sf.dv += (1600 * (tg - sf.dent) - 32 * sf.dv) * dt; sf.dent += sf.dv * dt; }   // ふちの へこみの 絵：お米に ついていき、はなれると ぷるんと もどる
+    g.x = nx; g.y = ny;
+  } else for (const axis of ['x', 'y']) {   // （筒の 外：たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す）
     const v = axis === 'x' ? g.vx : g.vy;
     if (!v) continue;
     const nx = axis === 'x' ? g.x + v * dt : g.x, ny = axis === 'y' ? g.y + v * dt : g.y;
@@ -514,7 +555,7 @@ function step(dt) {
   if (!g.go && Math.hypot(g.vx, g.vy) > 0.3) g.go = true;   // タイムは お米が 動きだしてから（盤を 見て 考える あいだは 数えない）
   if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); }   // ゴーストの ための 走りの きろく（1/20マス）
   const ci = Math.floor(g.x), cj = Math.floor(g.y), idx = cj * b.tw + ci;
-  const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && Math.hypot(g.x - ci - 0.5, g.y - cj - 0.5) < 0.3;
+  const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && (p => Math.hypot(g.x - p[0], g.y - p[1]) < 0.3)(onPath(b, ci, cj));
   if (water || inHole) {   // おちた
     g.fall = 0.8; g.falls++; g.fallAt = [g.x, g.y]; g.fallWater = water; g.vx = g.vy = 0;
     if (water) api.splash(0.8); else api.koto(0.8, true);
@@ -613,6 +654,12 @@ function draw(now) {
   const g = game, b = g.board, T = g.T, x = ui.cv.getContext('2d');
   x.imageSmoothingEnabled = false;
   x.drawImage(g.bg, 0, 0);
+  const sf = g.soft;
+  if (sf && sf.dent > 0.004 && g.bg.map) {   // やわらかい ふちの へこみ：当たった 所の 台が お米の 形に 押されて 横へ のびる（下の 地図が 見える）
+    const a = Math.atan2(sf.uy, sf.ux), cx = (sf.x + sf.ux * (TUBE + sf.dent)) * T, cy = (sf.y + sf.uy * (TUBE + sf.dent)) * T, rn = R * T, rt = rn * (1 + Math.min(1, sf.dent * 12)), u = Math.max(1, Math.round(T / 16));
+    x.save(); x.beginPath(); x.ellipse(cx, cy, rn, rt, a, 0, Math.PI * 2); x.clip(); x.drawImage(g.bg.map, 0, 0); x.restore();
+    x.strokeStyle = '#0d2219'; x.lineWidth = u; x.beginPath(); x.ellipse(cx, cy, rn, rt, a, -Math.PI / 2, Math.PI / 2); x.stroke();   // 外がわの ふち
+  }
   // ゴール：名所の絵と、ぴこぴこ光る わ と 旗
   const gx = (b.goal[0] + 0.5) * T, gy = (b.goal[1] + 0.5) * T, pulse = (Math.sin(now / 220) + 1) / 2;
   x.strokeStyle = `rgba(255,230,80,${0.5 + pulse * 0.5})`; x.lineWidth = Math.max(2, T / 10);
@@ -621,7 +668,8 @@ function draw(now) {
   if (spr) { const s = T * 1.5; x.drawImage(spr, Math.round(gx - s / 2), Math.round(gy - s * 0.95), s, s); }
   flag(x, gx + T * 0.18, gy - T * 0.1, T);
   if (g.hint && now < g.hint.until) {   // ヒントの 道すじ（白い 点が 順に ぴかぴか）
-    g.hint.path.forEach(([i, j], k) => {
+    g.hint.path.forEach(([i0, j0], k) => {
+      const [i, j] = onPath(b, i0, j0).map(v => v - 0.5);   // 道すじの 上に
       const on = Math.floor(now / 120) % 8 === k % 8, r = T * (on ? 0.16 : 0.11);
       x.fillStyle = '#1a1a1a'; x.beginPath(); x.arc((i + 0.5) * T, (j + 0.5) * T, r + Math.max(1, T / 24), 0, Math.PI * 2); x.fill();
       x.fillStyle = on ? '#fff59d' : '#ffffff'; x.beginPath(); x.arc((i + 0.5) * T, (j + 0.5) * T, r, 0, Math.PI * 2); x.fill();

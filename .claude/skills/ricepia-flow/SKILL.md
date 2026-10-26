@@ -153,6 +153,7 @@ https://claude.ai/code/session_01LKyh5zrgZ1g3dd89iSPEFE
 
 | いつ | 通常版（既定） | その 前 |
 | --- | --- | --- |
+| 2026-10-26 | `richmenu-3074b3e0272cd6faef5c7ad2635716d0`（2500×1686・2段ロゴ・左上 ricepia.jp/#nishio-go） | `richmenu-0277eccdc1bcb72cca949b059dd075d2`（左上 go.ricepia.jp） |
 | 2026-10-25 | `richmenu-0277eccdc1bcb72cca949b059dd075d2`（2500×1686・2段ロゴ・左上 go.ricepia.jp） | `richmenu-75e46dc46960f4de1207e86a1ff548c0`（ja-nishio-homepage-20261017・1280×863・左上 ricepia.jp/） |
 
 - 売り出し（スキル `uridashi-junbi`）で セール版に 切りかえる ときも、この 通常版の id に もどす。古い id に もどすと 前の 絵（「お散歩ゲーム」）に なる

@@ -2652,8 +2652,9 @@ const WARAYAMA = (() => {
   return { setup, step, list };
 })();
 // ---- 秋：畦にイノシシよけの電気柵が残っている（夏、穂が出る前に張り、稲刈りのあとも しばらくそのまま）。
-// 線は 地面から 20cm と 40cm（茨城県：地面と 1 段目、1 段目と 2 段目は 20cm 以下）。人が見やすい所に 注意の表示板をつける（島根県）。
-// 出入口は ゲートのハンドルを外すと そこから先に電気が流れず、出入りできる。線のまわりの草は刈っておく：草が線にふれると漏電して
+// 線は 地面から 20cm と 40cm（茨城県：地面と 1 段目、1 段目と 2 段目は 20cm 以下 https://www.pref.ibaraki.jp/nourinsuisan/hokunourin/kikaku/kikaku/h30denkisakunokokoroe.html）。
+// 人が見やすい所に 注意の表示板をつける（群馬県 https://www.pref.gunma.jp/06/p16200006.html・島根県 https://www.pref.shimane.lg.jp/industry/norin/choujyu_taisaku/denkisaku_chuiten.html）。
+// 出入口は ゲートのハンドルを外すと そこから先に電気が流れず、出入りできる（税関の分類事例 https://www.customs.go.jp/tetsuzuki_search/bunrui/J8/25/J82500013.htm）。線のまわりの草は刈っておく：草が線にふれると漏電して
 // 電気が弱くなる（窪野米日記 vol.8：電気柵で いちばん大事なのは まわりの草刈り。風でゆれても草にふれないよう 線の高さと張りを調整する）
 const FENCE = (() => {
   if (season !== 'aki') return { step() {}, on: false };

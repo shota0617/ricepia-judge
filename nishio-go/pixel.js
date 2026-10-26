@@ -2345,7 +2345,7 @@ function grainSound() {   // ちりん：金の米つぶを ひろった（高�
     }
   } catch (e) { /* 音が出せない端末 */ }
 }
-function padSound(chain = 1) {   // びゅん：下から 上へ すべる 音と、風の しゅっ。続けて のるほど 高く（れんさ 1つごとに 3半音。6れんさで 止める）
+function padSound(chain = 1) {   // びゅん：下から 上へ すべる 音と、風の しゅっ、茶せんの しゃかしゃか。続けて のるほど 高く（れんさ 1つごとに 3半音。6れんさで 止める）
   const a = sfxCtx();
   if (!a) return;
   try {
@@ -2358,6 +2358,13 @@ function padSound(chain = 1) {   // びゅん：下から 上へ すべる 音�
     const n = a.createBufferSource(), f = a.createBiquadFilter(), ng = a.createGain();
     n.buffer = buf; f.type = 'bandpass'; f.frequency.setValueAtTime(900, t); f.frequency.exponentialRampToValueAtTime(3200, t + 0.2); f.Q.value = 1.2; ng.gain.value = 0.05;
     n.connect(f); f.connect(ng); ng.connect(a.destination); n.start(t);
+    for (let k = 0; k < 3; k++) {   // 抹茶びゅん（西尾らしく）：茶せんで 点てる「しゃかしゃか」。高い ざらざらを 3回、45ms おきに
+      const tk = t + 0.12 + k * 0.045, wb = a.createBuffer(1, Math.floor(a.sampleRate * 0.03), a.sampleRate), wd = wb.getChannelData(0);
+      for (let i = 0; i < wd.length; i++) wd[i] = (Math.random() * 2 - 1) * (1 - i / wd.length);
+      const w = a.createBufferSource(), wf = a.createBiquadFilter(), wg = a.createGain();
+      w.buffer = wb; wf.type = 'bandpass'; wf.frequency.value = 4800 + k * 400; wf.Q.value = 2; wg.gain.value = 0.035;
+      w.connect(wf); wf.connect(wg); wg.connect(a.destination); w.start(tk);
+    }
   } catch (e) { /* 音が出せない端末 */ }
 }
 function dotSound(i) {   // ぴっ：ごはんつぶを ひろう（列の 中で 1つずつ 高く。ドレミソラ）

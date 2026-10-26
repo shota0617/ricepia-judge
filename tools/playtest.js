@@ -762,6 +762,34 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: !!r.skipped || (r.maxD <= 0.9 && (r.best <= r.len0 - 3 || r.covered)) };   // やわらかい 生け垣：筒の ふち（0.45）から 0.4マスまで のびる   // 窓が 出て 止まった ときは 進めなくても よい
   })();
+  // やわらかい 生け垣（2026-10-26 店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：左だけ 開いた 行き止まりへ 右向きに 当てると、
+  // 生け垣が のびて（めりこみ 0〜0.41マス）はね返り（2割以上）、へこみの 奥で 固まらない（めりこんだ まま 止まらない）
+  R.checks.yuruSoft = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    for (let i = 0; i < 15; i++) {   // 窓が 出ている 間は 転がらないので 閉じてから
+      const busy = await page.evaluate(() => { if (!nishioPixel.mapCovered(true)) return false; const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('.medashi:not([hidden]) .md-close').forEach(b => b.click()); return true; });
+      if (!busy) break; await page.waitForTimeout(200);
+    }
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, M = P.maze, sleep = ms => new Promise(f => setTimeout(f, ms));
+      if (!M.on() || !M.soft) return { skipped: 'no-maze' };
+      const K = M.K, cx = Math.floor(P.roll.x / K), cy = Math.floor(P.roll.y / K);
+      let c = null;
+      for (let d = 0; d < 15 && !c; d++) for (let y = cy - d; y <= cy + d && !c; y++) for (let x = cx - d; x <= cx + d && !c; x++) if (M.type(x, y) === 1 && M.open(x, y, -1, 0) && !M.open(x, y, 1, 0) && !M.open(x, y, 0, 1) && !M.open(x, y, 0, -1)) c = { x, y };
+      if (!c) return { skipped: 'no-deadend' };
+      const out = [];
+      for (const v of [5, 8]) {
+        P.rollPut(c.x * K + 0.6, c.y * K + 1.5, v, 0);
+        let pen = 0, back = 0;
+        for (let i = 0; i < 50; i++) { await sleep(20); const s = M.soft(); if (s.on) pen = Math.max(pen, s.pen); back = Math.min(back, P.roll.vx); }
+        await sleep(1200);
+        out.push({ v, pen: +pen.toFixed(3), e: +(-back / v).toFixed(2), stuck: !!(M.soft().on && Math.hypot(P.roll.vx, P.roll.vy) < 0.05), same: Math.floor(P.roll.x / K) <= c.x });   // 右の さかいを 通りぬけていない（はね返って 左へ 出るのは よい）
+      }
+      return { cell: [c.x, c.y], out };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: !!r.skipped || r.out.every(o => o.pen > 0 && o.pen <= 0.41 && o.e >= 0.2 && !o.stuck && o.same) };
+  })();
   // ころころコンボ（クセになる 転がり方）：かべに 当たらずに 転がりつづけると コトンの たびに 数が ふえ、当たるか 止まると 0 に もどる
   R.checks.rollCombo = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -1024,8 +1052,9 @@ async function walkTo(page, id) {
     await page.evaluate(([x, y, K]) => nishioPixel.rollPut(x * K + 0.9, y * K + 1.5, 5, 0), [c.x, c.y, c.K]);
     let hitMood = '';
     for (let i = 0; i < 40 && !hitMood; i++) { await page.waitForTimeout(40); const r = await page.evaluate(() => nishioPixel.roll); if (r.vx < 0) hitMood = r.mood; }   // はね返った（遅い 画面でも 待てるよう 1.6秒まで）
-    await page.keyboard.down('ArrowRight'); await page.waitForTimeout(1500); await page.keyboard.up('ArrowRight'); await page.waitForTimeout(400);
-    const r = await page.evaluate(() => nishioPixel.roll), gap = +((c.x + 1) * c.K - r.x).toFixed(3);
+    await page.keyboard.down('ArrowRight'); await page.waitForTimeout(1500);
+    const r = await page.evaluate(() => nishioPixel.roll), gap = +((c.x + 1) * c.K - r.x).toFixed(3);   // 押しつけて いる 間に 見る（やわらかい 生け垣は はなすと ぽよんと 押しかえす）
+    await page.keyboard.up('ArrowRight'); await page.waitForTimeout(400);
     // ゆるい めいろ（2026-10-26）：壁は マスの さかいでは なく、道すじの 筒の ふち（道すじから 0.45マス）。押しつけたら 筒の ふちで 止まり、とじた さかいの 先の マスへ 行かない
     const tube = await page.evaluate(([x, y]) => { const q = nishioPixel.maze.near && nishioPixel.maze.near(x, y); return q ? +q.d.toFixed(3) : null; }, [r.x, r.y]);
     const same = Math.floor(r.x / c.K) === c.x && Math.floor(r.y / c.K) === c.y;
@@ -2136,6 +2165,7 @@ async function walkTo(page, id) {
   need(c.rollVert && c.rollVert.ok, `たての 転がり方：上・下へ 転がっても でんぐりがえし しない（${JSON.stringify(c.rollVert)}）`);
   need(c.cornerAssist && c.cornerAssist.ok, `曲がり角アシスト：めいろの 曲がり角で、横に ずれていると 曲がれない（${JSON.stringify(c.cornerAssist)}）`);
   need(c.yuruMeiro && c.yuruMeiro.ok, `ゆるい めいろ：次の 向きだけ 押すと 筒から はみ出す・角で 止まって 進めない（${JSON.stringify(c.yuruMeiro)}）`);
+  need(c.yuruSoft && c.yuruSoft.ok, `やわらかい 生け垣：当たっても のびない・はね返らない・へこみの 奥で 固まる・通りぬける（${JSON.stringify(c.yuruSoft)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
   need(c.speedLines && c.speedLines.ok, `スピード線：速くても 出ない／おそく なっても 消えない（${JSON.stringify(c.speedLines)}）`);

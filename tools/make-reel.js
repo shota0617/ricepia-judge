@@ -34,7 +34,7 @@ async function endCard(page) {
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;inset:0;z-index:6000;background:linear-gradient(#9fd6ff,#e8f6ff 58%,#86b54c 58%);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:120px;gap:16px;font-family:"DotGothic16",sans-serif;text-align:center';
     el.innerHTML = `<img src="nishio-go/logo.svg" style="width:290px;height:auto" alt="">
-      <div style="font-size:23px;font-weight:bold;background:#fff;border:3px solid #000;border-radius:10px;padding:10px 14px">スマホを傾けて<br>お米を転がす 西尾の めいろ</div>
+      <div style="font-size:23px;font-weight:bold;background:#fff;border:3px solid #000;border-radius:10px;padding:10px 14px">スマホを傾けると<br>お米が ころころ 西尾の めいろ</div>
       <div style="font-size:17px;background:rgba(0,0,0,.8);color:#fff;border-radius:8px;padding:7px 12px">無料・登録なし／スマホでそのまま</div>
       <div style="font-size:30px;font-weight:bold;color:#1f5a25;background:#fff;border-radius:8px;padding:6px 14px">go.ricepia.jp</div>`;
     document.body.appendChild(el);
@@ -69,7 +69,7 @@ async function endCard(page) {
   });
   const roll = async seq => { for (const [k, ms] of seq) { await closeAll(); await page.keyboard.down(k); await sleep(ms); await page.keyboard.up(k); await sleep(200); } await closeAll(); };   // まちの人の 呼びとめ（会話の 窓）は とじてから 転がす
   // 1) はじめの画面（お米が 台地の坂を ころころ転がり下りる）
-  await caption(page, 'スマホを傾けて<br>お米を転がす', 'にしおさんぽGO', 'mid'); await sleep(2800); mark('intro');
+  await caption(page, 'スマホを傾けると<br>お米が ころころ', 'にしおさんぽGO', 'mid'); await sleep(2800); mark('intro');
   await caption(page, '');
   await page.click('#meiroBtn'); await sleep(600);
   // 2) 西尾の地図ぜんぶが めいろ（西尾市歴史公園＝西尾城跡のあたり）
@@ -103,7 +103,7 @@ async function endCard(page) {
   // 6) お店も 本物そっくり（主人公は 店の 左上。店は 画面の 右下の 空いた所）
   await G(() => { const s = nishioGo.spots.find(x => x.id === 'f-ricepia'); nishioGo.moveTo(s.lat + 0.00022, s.lng - 0.0003); });
   await sleep(1400);
-  await caption(page, '🍚 お店も 本物そっくり', 'らいすぴあ・秀幸／近藤米穀店'); await sleep(2600); mark('shop');
+  await caption(page, '🍚 お店も 本物そっくり', 'らいすぴあ（近藤米穀店）'); await sleep(2600); mark('shop');
   // 7) せかいちず
   for (let i = 0; i < 3; i++) { await closeAll(); await sleep(300); }
   await caption(page, '');

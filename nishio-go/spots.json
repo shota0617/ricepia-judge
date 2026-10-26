@@ -6,7 +6,7 @@
       "shop": true,
       "url": "https://ricepia.jp/?utm_source=nishio-go&utm_medium=game&utm_campaign=spot",
       "area": "nishio",
-      "name": "近藤米穀店（本店）",
+      "name": "近藤米穀店 本店（米津町）",
       "icon": "🍚",
       "lat": 34.891717,
       "lng": 137.059249,
@@ -22,14 +22,14 @@
       "shop": true,
       "url": "https://ricepia.jp/?utm_source=nishio-go&utm_medium=game&utm_campaign=spot",
       "area": "nishio",
-      "name": "らいすぴあ・秀幸",
+      "name": "らいすぴあ秀幸（永吉）",
       "icon": "🌾",
       "lat": 34.859668,
       "lng": 137.04994,
       "approx": false,
       "reach": 70,
       "points": 50,
-      "desc": "近藤米穀店のお店。ドライブスルーでお米が買えます。永吉4丁目62。",
+      "desc": "近藤米穀店のもうひとつのお店。年中無休で、ドライブスルーでもお米が買えます。永吉4丁目62。",
       "hours": { "open": "10:00", "close": "19:00", "closed": [] },
       "tel": "0563-54-4001"
     },
@@ -1854,7 +1854,7 @@
       "points": 20,
       "cat": "townhall",
       "desc": "安城市の市役所（桜町）。安城市は1952年（昭和27年）5月5日に、愛知県で13番目の市になった。",
-      "src": "https://www.city.anjo.aichi.jp/shisei/gyoseishiryo/documents/r6seiso1shisei.pdf"
+      "src": "https://www.city.anjo.aichi.jp/shisei/shokai/index.html"
     },
     {
       "id": "hekinan-aquarium",
@@ -2019,7 +2019,7 @@
       "points": 50,
       "cat": "museum",
       "desc": "「無我愛」をとなえた哲学者・伊藤証信にちなむ施設。1992年に開き、瞑想室のある瞑想回廊や茶室がある。",
-      "src": "http://www.city.hekinan.lg.jp/soshiki/kyouiku/bunkazai/1_3/1/4904.html"
+      "src": "https://www.city.hekinan.lg.jp/soshiki/kyouiku/shogaigakushu/1_4/general_information/23986.html"
     },
     {
       "id": "hekinan-oninji",

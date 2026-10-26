@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover"/>
-<title>にしおさんぽGO｜スマホを傾けてお米を転がす、西尾の地図の迷路ゲーム - らいすぴあ</title>
-<meta name="description" content="スマホを傾けて、お米を転がすゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾城跡・岩瀬文庫などの名所で、まちの人の話で次のゴールが決まります。西尾のお米屋さん らいすぴあ がつくった、無料・登録なしのゲーム。"/>
+<title>にしおさんぽGO｜スマホを傾けるとお米がころころ進む、西尾の地図の迷路ゲーム - らいすぴあ</title>
+<meta name="description" content="スマホを傾けると、お米がころころ進むゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾城跡・岩瀬文庫などの名所で、まちの人の話で次のゴールが決まります。西尾のお米屋さん らいすぴあ がつくった、無料・登録なしのゲーム。"/>
 <meta name="theme-color" content="#2f5d3a"/>
 <link rel="canonical" href="https://go.ricepia.jp/nishio-go.html"/>
 <link rel="manifest" href="nishio-go.webmanifest"/>
@@ -18,7 +18,7 @@
  ],
  "name": "にしおさんぽGO",
  "url": "https://go.ricepia.jp/nishio-go.html",
- "description": "スマホを傾けて、お米を転がすゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。位置情報を使って実際に西尾を歩く「あるいて遊ぶ」もあります。",
+ "description": "スマホを傾けると、お米がころころ進むゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。位置情報を使って実際に西尾を歩く「あるいて遊ぶ」もあります。",
  "image": "https://go.ricepia.jp/nishio-go/ogp.png",
  "inLanguage": "ja",
  "genre": [
@@ -59,13 +59,13 @@
 <meta property="og:type" content="website"/>
 <meta property="og:locale" content="ja_JP"/>
 <meta property="og:site_name" content="らいすぴあ（近藤米穀店）"/>
-<meta property="og:title" content="にしおさんぽGO - 傾けてお米を転がす、西尾の地図の迷路"/>
-<meta property="og:description" content="スマホを傾けて、お米を転がす。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。西尾のお米屋さんがつくった、無料・登録なしのゲーム。スマホのブラウザですぐ遊べます。"/>
+<meta property="og:title" content="にしおさんぽGO - 傾けるとお米がころころ、西尾の地図の迷路"/>
+<meta property="og:description" content="スマホを傾けると、お米がころころ。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。西尾のお米屋さんがつくった、無料・登録なしのゲーム。スマホのブラウザですぐ遊べます。"/>
 <meta property="og:url" content="https://go.ricepia.jp/nishio-go.html"/>
 <meta property="og:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
-<meta property="og:image:alt" content="にしおさんぽGO：スマホを傾けて、お米を転がす西尾の地図の迷路ゲーム"/>
+<meta property="og:image:alt" content="にしおさんぽGO：スマホを傾けるとお米がころころ進む、西尾の地図の迷路ゲーム"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://go.ricepia.jp/nishio-go/ogp.png"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -239,7 +239,7 @@
       <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
     </div>
     <div class="row">
-      <span><b>❓ あそびかた</b><small>傾けて お米を転がし、めいろを ぬけて 西尾の名所へ。はじめに出た 説明を もう一度 見られます。</small></span>
+      <span><b>❓ あそびかた</b><small>傾けると お米が ころころ。めいろを ぬけて 西尾の名所へ。はじめに出た 説明を もう一度 見られます。</small></span>
       <button type="button" id="howtoOpen" class="btn" style="flex:none">見る</button>
     </div>
     <label class="row">
@@ -318,7 +318,7 @@
     <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
       <button type="button" class="btn red" id="resetBtn">削除</button></div>
   </div>
-  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。作者の一覧は docs/landmark-photos.md）を参考に描いたもの<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
+  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。<a href="nishio-go/photo-credits.html" target="_blank" rel="noopener">作者とライセンスの一覧</a>）を参考に描いたもの<br/>まちの人（ガイドさん・お坊さん・店員さんなど）は、ゲームの中の 架空の人物です。お話は 出典のある公開資料をもとにしたもので、その場所の方の言葉や、施設の公式の案内ではありません<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
 </section>
 
 <!-- はじめに（遊びかたのボタンは、スクロールしなくても見える所に。くわしい説明はたたんでおく） -->
@@ -328,10 +328,10 @@
     <p class="player-count" id="playerCount" hidden></p>
     <p class="player-count voice-intro" id="voiceIntro" hidden></p>
     <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="お米が 台地から 坂を ころころ転がり下りて、田んぼの あぜ道で にっこり"></canvas>
-    <p class="tagline">お米を ころころ 転がして、西尾をめぐろう</p>
-    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころがそう。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
+    <p class="tagline">お米が ころころ、西尾をめぐろう</p>
+    <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころころ。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
-    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small class="mp-s">スマホを傾けて、お米を 名所へ。家で遊べる</small><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米を 名所から名所へ ころがそう。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small class="mp-s">スマホを傾けて、お米を 名所へ。家で遊べる</small><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米が 名所から名所へ ころころ。家からでも西尾めぐり</small></button>
     <!-- 押すのに 抵抗が ある人へ：お金・登録・アプリ・位置情報の 心配が ないことを ボタンの すぐ下に（運営者の声「プレイボタンを押すのに抵抗がある人対策」） -->
     <p class="no-risk" aria-label="無料・登録なし・アプリ不要・位置情報なし"><span>✓ 無料</span><span>✓ 登録なし</span><span>✓ アプリ不要</span><span>✓ 位置情報なし</span></p>
     <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
@@ -363,7 +363,7 @@
       </ul>
     </details>
     <p class="beta-note">🧪 試作版です。地図・スポット・ポイントのルールは予告なく変わることがあります。</p>
-    <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ・秀幸／近藤米穀店</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
+    <p class="by">つくったのは、西尾のお米屋さん <b>らいすぴあ（近藤米穀店）</b>（<a href="https://ricepia.jp/?utm_source=nishio-go&amp;utm_medium=game&amp;utm_campaign=intro" target="_blank" rel="noopener">ricepia.jp</a>）。当店も名所のひとつです🍚</p>
   </div>
 </div>
 
@@ -379,7 +379,7 @@
       <li><span class="hi" aria-hidden="true">⭐</span><span><b>着いたら ポイントと ドット絵</b><small>まちの人の 話で、つぎの ゴールが きまる</small></span></li>
     </ol>
     <p class="howto-btns"><span>🌏 せかいちず</span><span>🔍 地図の大きさ</span><span>🌀 ステージの めいろ</span></p>
-    <button type="button" class="btn big" id="howtoOk">わかった！ 転がしてみる</button>
+    <button type="button" class="btn big" id="howtoOk">わかった！ 傾けてみる</button>
   </div>
 </div>
 
@@ -412,6 +412,7 @@
   <div class="coupon-box">
     <div class="cp-shop" id="cpShop"></div>
     <div class="cp-name" id="cpName"></div>
+    <div class="cp-cond" id="cpCond" hidden></div>
     <div class="cp-code" id="cpCode"></div>
     <div class="cp-clock" id="cpClock"></div>
     <div class="cp-band" aria-hidden="true"><i></i></div>

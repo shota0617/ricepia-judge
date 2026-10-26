@@ -2483,7 +2483,7 @@ function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
   const lv = levelOf(S.total), perH = Math.floor(IDLE.ptPerHour(lv) * (1 + 0.5 * upLv('bag')));
-  $('upNote').textContent = `🍚 自分で転がす：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
+  $('upNote').textContent = `🍚 自分で遊ぶ：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     if (simple()) return `<li class="up-pic" title="${esc(u.desc)}"><span class="ico">${UP_PI[u.id] ? `<img class="art" src="nishio-go/art/up-${u.id}.png" alt="${esc(u.name)}" width="48" height="48"/>` : PI('up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`
@@ -2981,6 +2981,7 @@ async function loadRewards() {
         rewards: j.rewards.filter(r => r && r.id && r.name && Number(r.cost) > 0)
           .map(r => ({ id: String(r.id), name: String(r.name), cost: Math.round(Number(r.cost)), desc: r.desc ? String(r.desc) : '',
             perDay: Number(r.perDay) > 0 ? Math.floor(Number(r.perDay)) : 0, active: r.active === true,
+            validMin: Number(r.validMin) > 0 ? Math.round(Number(r.validMin)) : 0,   // この特典だけの 有効時間（分。なければ ぜんぶ 共通の validMin）
             art: /^[a-z0-9-]+$/.test(r.art || '') ? r.art : '' })),   // 品物のドット絵（nishio-go/art/<art>.png）
       };
     }
@@ -2994,6 +2995,8 @@ function updateRewardsTab() {
   $('rewardsTab').hidden = !has;
   if (!has && !$('panel-rewards').hidden) openTab('map');
 }
+const rewardMin = r => r.validMin || rewardCfg.validMin;   // 特典の クーポンの 有効時間（分）
+const rewardMinText = () => { const m = [...new Set(visibleRewards().map(rewardMin))]; return m.length > 1 ? `${Math.min(...m)}〜${Math.max(...m)}` : String(m[0] || rewardCfg.validMin); };
 const couponState = c => c.used ? 'used' : Date.now() > c.t + c.validMin * 60000 ? 'expired' : 'valid';
 const usedToday = rid => S.coupons.filter(c => c.rid === rid && ymd(new Date(c.t)) === ymd()).length;
 
@@ -3002,17 +3005,17 @@ function renderRewards() {
   const pic = simple();   // 文字を少なく（ふだん）：品物のドット絵（Blender で作った絵）と、ポイント・回数の札。くわしい条件はタップで
   $('rewardNote').textContent = demo
     ? (pic ? '操作して移動：サンプル（お店では使えません）' : '操作して移動：サンプルの特典で交換の流れを試せます（このクーポンはお店では使えません。お店のとくてんは「あるいて移動」で）。')
-    : pic ? `有効${rewardCfg.validMin}分。お店で見せる直前に交換` : `交換すると、その場でクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に交換してください。`;
+    : pic ? `有効${rewardMinText()}分。お店で見せる直前に交換` : `交換すると、その場でクーポン画面が出ます（有効${rewardMinText()}分）。お店で店員さんに見せる直前に交換してください。`;
   $('rewardList').innerHTML = visibleRewards().map(r => {
     const limit = r.perDay && usedToday(r.id) >= r.perDay;
     const short = S.points < r.cost;
     const why = limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
     if (pic) return `<li class="reward-pic"><span class="ico">${r.art ? `<img class="art" src="nishio-go/art/${r.art}.png" alt="" width="48" height="48"/>` : PIA('gift', '')}</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
-      <span class="chips"><span>${PIA('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PIA('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}</span>
+      <span class="chips"><span>${PIA('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PIA('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}<span>${PIA('clock', 'クーポンの有効時間')}${rewardMin(r)}分</span></span>
       ${r.desc ? `<details><summary>${PIA('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${limit ? `${PIA('clock', '')} あした` : short ? `${PIA('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
     return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
-      <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}${r.desc ? '・' + esc(r.desc) : ''}</small></span>
+      <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}・有効${rewardMin(r)}分${r.desc ? '・' + esc(r.desc) : ''}</small></span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''}>${why ? esc(why) : '交換'}</button></li>`;
   }).join('') || '<li class="empty">いま交換できる特典はありません</li>';
   const list = S.coupons.slice().sort((a, b) => b.t - a.t).slice(0, 20);
@@ -3029,11 +3032,11 @@ function redeem(rid) {
   if (!r) return;
   if (S.points < r.cost) { toast('ポイントが足りません'); return; }
   if (r.perDay && usedToday(r.id) >= r.perDay) { toast('この特典は今日はもう交換しました'); return; }
-  if (!confirm(`「${r.name}」と ${r.cost}pt を交換しますか？\n\n交換するとクーポン画面が出ます（有効${rewardCfg.validMin}分）。お店で店員さんに見せる直前に押してください。交換したポイントは戻せません。`)) return;
+  if (!confirm(`「${r.name}」と ${r.cost}pt を交換しますか？\n\n交換するとクーポン画面が出ます（有効${rewardMin(r)}分${r.desc ? `。${r.desc}` : ''}）。お店で店員さんに見せる直前に押してください。交換したポイントは戻せません。`)) return;
   const rnd = new Uint32Array(2);
   (window.crypto || {}).getRandomValues ? crypto.getRandomValues(rnd) : (rnd[0] = Math.random() * 4e9, rnd[1] = Math.random() * 4e9);
   const c = { id: rnd[0].toString(36) + rnd[1].toString(36), rid: r.id, name: r.name, cost: r.cost, t: Date.now(),
-    validMin: rewardCfg.validMin, code: String(rnd[0] % 10000).padStart(4, '0'), used: 0, demo, sample: !r.active };
+    validMin: rewardMin(r), cond: r.desc, code: String(rnd[0] % 10000).padStart(4, '0'), used: 0, demo, sample: !r.active };   // cond：使える 条件（店頭の 画面に 出す）
   S.points -= r.cost;
   S.coupons.push(c);
   S.coupons = S.coupons.slice(-50);
@@ -3060,6 +3063,8 @@ function tickCoupon() {
   const d = new Date();
   $('cpShop').textContent = c.demo ? '操作モード（お店では使えません）' : rewardCfg.shop;
   $('cpName').textContent = c.name;
+  $('cpCond').textContent = c.cond || '';   // 使える 条件（「お米1袋につき1回まで」など。店員さんが その場で 確かめられる ように）
+  $('cpCond').hidden = !c.cond;
   $('cpCode').textContent = `No. ${c.code}`;
   $('cpClock').textContent = `${d.getMonth() + 1}/${d.getDate()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   const left = c.t + c.validMin * 60000 - Date.now();
@@ -3182,7 +3187,7 @@ function switchMode(isDemo) {
   if (isDemo === demo) return;
   setMode(isDemo);
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
-  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けて 迷路を 転がします' : '地図をタップした所へ移動します'}。記録は別です）`
+  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けると お米が 迷路を ころころ進みます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
 document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode === 'demo')));
@@ -3831,7 +3836,7 @@ function begin(isDemo) {
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 転がそう（矢印キー・地図を タップでも）')
+    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 進もう（矢印キー・地図を タップでも）')
     : '🎮 地図をタップするとその場所へ移動します');
   setTimeout(sealPickCheck, 3000);   // えらぶ前に閉じた しるしの2枚
 }

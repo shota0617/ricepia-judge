@@ -11,6 +11,7 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
   await p.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({path:TN+r.request().url().split('/three@0.128.0')[1],contentType:'text/javascript'}));
   await p.goto(`http://localhost:${PORT}/tractor.html?season=${season}&time=hiru&noshadow&art=none${qs}`);
   await p.waitForFunction(()=>!document.getElementById('bStart').disabled,null,{timeout:180000});
+  if (!process.env.NOCHECK && await p.$('#checkBox')) await p.check('#checkBox');   // 始業点検をしてから（しないと 春は ファンベルトが切れる。ベルトは別のテストで見る）
   await p.click('#bStart'); await p.waitForTimeout(1500);
   const res=await p.evaluate(()=>{
     const g=game,S=g.S,K=g.key, HX=15, HZ=25; g.sim(3);
@@ -33,7 +34,7 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
     K.fwd=0; g.sim(1);
     const pct=g.SCORE ? document.getElementById('pct')?.textContent : '';
     g.finish && g.finish();
-    return {...log, tr:undefined, rows:undefined, turnsDown:g.SCORE.st.turnsDown, parts:g.SCORE.parts, levee:g.SCORE.st.levee-log.levee0, x:+S.x.toFixed(1), z:+S.z.toFixed(1), done:S.done, sc:document.getElementById('sc')?.textContent, pct, heard:Object.keys(g.heard||{}).join(',')};
+    return {...log, tr:undefined, rows:undefined, turnsDown:g.SCORE.st.turnsDown, parts:g.SCORE.parts, levee:g.SCORE.st.levee-log.levee0, x:+S.x.toFixed(1), z:+S.z.toFixed(1), done:S.done, sc:document.getElementById('sc')?.textContent, pct, heard:Object.keys(g.heard||{}).join(","), over:g.overTilled, dame:JSON.stringify(g.FARMER.said||{})};
   });
   await p.waitForTimeout(2500);
   await p.screenshot({path:out+'_done.png'});

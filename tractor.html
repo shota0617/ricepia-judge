@@ -3243,7 +3243,7 @@ const WRAP = (() => {
 // 「トラクターの始発終着」https://brassica.exblog.jp/32557480/）。ゲームでは 見た目だけ（高さ 3.5cm）。耕しなおすと ならされる
 const SHIHATSU = (() => {
   if (SHIRO) return { step() {} };               // 代かきのハローは 水と泥なので 出さない
-  let was = false, spin = 0, pend = null, still = false, odo0 = 0, toldUp = false, toldDown = false;
+  let was = false, spin = 0, pend = null, odo0 = 0, toldUp = false, toldDown = false;
   const rotC = () => [S.x + ROTARY_Z * Math.sin(S.yaw), S.z + ROTARY_Z * Math.cos(S.yaw), S.yaw];
   function mark(x, z, yaw, h) {                   // 作業機の幅 × 前後 60cm の ます目（耕した所）を 上げ下げする
     const sn = Math.sin(yaw), cs = Math.cos(yaw);
@@ -3263,11 +3263,10 @@ const SHIHATSU = (() => {
   }
   function step(dt, working) {
     const moving = Math.abs(S.v) > 0.1, odo = S.odo || 0;
-    if (working && !was) { odo0 = odo; spin = 0; still = !moving; pend = moving ? rotC() : null; }   // 下ろした
-    if (working && still) {
-      if (!moving) spin += dt;                    // 止まったまま 空回し
-      else { still = false; pend = spin >= 2.5 ? null : rotC(); odo0 = odo; }   // 3 秒ほど空回ししてから走り出すと 盛り上がらない
-    }
+    // PTO 逆転は 土を前へ寄せて ならす作業なので、正転の始発・終着の 盛り上がりや くぼみは つけない
+    if (working && !was) { odo0 = odo; spin = 0; pend = PTOREV ? null : rotC(); }   // 下ろした所が 始発
+    if (working && !moving) spin += dt;           // 止まったまま 空回し（走りながら下ろして すぐ止まったときも数える）
+    if (pend && (spin >= 2.5 || PTOREV)) pend = null;   // 3 秒ほど空回しすると 盛り上がらない
     if (working && pend && odo - odo0 > 0.8) {    // 走り出して 少し進んでから、はじめの所を盛り上げる
       const [x, z, yaw] = pend; pend = null;
       if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, 0.035) && !toldDown) {
@@ -3276,7 +3275,7 @@ const SHIHATSU = (() => {
         setTimeout(() => voice('shihatsu'), 7500);
       }
     }
-    if (!working && was && odo - odo0 > 1) {      // 上げた（耕していた）：止めた所が くぼむ
+    if (!working && was && odo - odo0 > 1 && !PTOREV) {   // 上げた（正転で耕していた）：止めた所が くぼむ
       const [x, z, yaw] = rotC();
       if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, -0.035) && !toldUp) {
         toldUp = true;

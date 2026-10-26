@@ -2691,13 +2691,16 @@ const FENCE = (() => {
   const c2 = cv.getContext('2d');
   c2.fillStyle = '#f2c81c'; c2.fillRect(0, 0, 128, 96); c2.fillStyle = '#111'; c2.textAlign = 'center';
   c2.font = 'bold 34px sans-serif'; c2.fillText('危険', 64, 40); c2.font = 'bold 24px sans-serif'; c2.fillText('電気さく', 64, 78);
-  const signM = new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(cv), side: THREE.DoubleSide });
+  const signM = new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(cv) });   // 表と裏に 1 枚ずつ（両面 1 枚だと 裏から鏡文字になる）
   const signGeo = new THREE.PlaneGeometry(0.2, 0.15);
   pts.forEach(([x, z], i) => {
     if (i % 6 !== 3) return;
-    const sg = new THREE.Mesh(signGeo, signM);
-    sg.position.set(x, hAt(x, z) + 0.6, z); sg.rotation.y = (Math.abs(x - E) < 0.01 || Math.abs(x + W) < 0.01) && Math.abs(z) < N - 0.01 ? Math.PI / 2 : 0;   // 東西の辺の板は 柵の線と同じ向きに
-    scene.add(sg);
+    const ry = (Math.abs(x - E) < 0.01 || Math.abs(x + W) < 0.01) && Math.abs(z) < N - 0.01 ? Math.PI / 2 : 0;   // 東西の辺の板は 柵の線と同じ向きに
+    for (const r of [ry, ry + Math.PI]) {
+      const sg = new THREE.Mesh(signGeo, signM);
+      sg.position.set(x + 0.016 * Math.sin(r), hAt(x, z) + 0.6, z + 0.016 * Math.cos(r)); sg.rotation.y = r;   // 支柱の前に 貼る
+      scene.add(sg);
+    }
   });
   // ゲート：出入口をあけてある。黄色いハンドル 2 本を 北の支柱に かけたまま、線がたれている
   const hM = new THREE.MeshLambertMaterial({ color: 0xf0c020 });

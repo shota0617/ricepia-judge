@@ -604,6 +604,8 @@ function talkNpc(id, page = 0) {
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
       const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
       if (mz) mzNpcShare = { ...mz, id: n.id };   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）
+      const spl = ml.find(l => l.startsWith('🏃'));
+      if (spl && simple()) toastAfter(spl);   // はやさ：文字を少なく では 下の 知らせが 絵だけに なるので、あとに 文で 出す
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
     }
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
@@ -1197,8 +1199,8 @@ function friendVs(sec, st) {
 // めいろの はやさの ベスト（クセになる「じぶんの 記録を こえる 目あて」2026-10-26）：ゴールの タイムは 出発した 所で 道のりが かわるので
 // くらべられない。めいろの 道のり ÷ かかった 時間（1秒に 何m）で くらべ、この 端末に ベストを のこす（nsg_mz_speed）。ポイントは つけない
 const MZ_SPEED_MIN_M = 80;   // みじかい めいろは 数えない（すぐ 着いて ベストが ゆがむ）
-function mzSpeed(m, sec) {
-  if (!(m >= MZ_SPEED_MIN_M) || !(sec > 3)) return '';
+function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（名所の「ここへ」など）ゴールは 数えない
+  if (warp || !(m >= MZ_SPEED_MIN_M) || !(sec > 3)) return '';
   const v = Math.round(m / sec * 10) / 10, best = store.get('nsg_mz_speed', 0);
   if (v > best) { store.set('nsg_mz_speed', v); track('maze_speed_best', { v, prev: best }); return best ? `🏃 はやさ ベスト こえたじゃん！ 1秒に ${v}m（前 ${best}m）` : `🏃 はやさ 1秒に ${v}m（はじめての ベスト）`; }
   return `🏃 はやさ 1秒に ${v}m（ベスト ${best}m まで あと ${Math.round((best - v) * 10) / 10}m）`;
@@ -1222,7 +1224,7 @@ function mazeGoal(id, name, lines) {
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
-  const sp = mzSpeed(gl.m, gl.sec);
+  const sp = mzSpeed(gl.m, gl.sec, gl.warp);
   if (sp) lines.push(sp);
   friendVs(gl.sec, st);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now() };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）

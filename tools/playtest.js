@@ -953,13 +953,14 @@ async function walkTo(page, id) {
   R.checks.mazeSpeed = await page.evaluate(async () => {
     const G = nishioGo, k = 'nsg_mz_speed', old = localStorage.getItem(k);
     localStorage.removeItem(k);
-    const a = G.mzSpeed(400, 40), b = G.mzSpeed(400, 50), c = G.mzSpeed(600, 40), d = G.mzSpeed(50, 10), best = localStorage.getItem(k);
+    const a = G.mzSpeed(400, 40), b = G.mzSpeed(400, 50), c = G.mzSpeed(600, 40), d = G.mzSpeed(50, 10), w = G.mzSpeed(2000, 10, true), best = localStorage.getItem(k);   // w：とびこえた ゴールは 数えない
     G.showReward(5, '🏁 テスト', ['🏁 めいろ ゴール！ 40秒', c, 'この 道で がんばったじゃん：🍚 つぶ 9・💨 びゅん 2・🎵 コンボ ×6'], false, '', null);
     await new Promise(f => setTimeout(f, 400));
     const html = document.getElementById('reward').innerHTML, chip = html.includes('15m/秒') && (!document.querySelector('#reward .chips') || html.includes('🍚9 💨2 🎵×6'));   // 文字を少なく では ふり返りも 数の 札
     document.getElementById('reward').click();
     if (old === null) localStorage.removeItem(k); else localStorage.setItem(k, old);
-    return { a, b, c, d, best, chip, ok: /1秒に 10m（はじめての ベスト）/.test(a) && /1秒に 8m（ベスト 10m まで あと 2m）/.test(b) && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
+    const g = G.guide, gl = g && nishioPixel.maze.goal(g.id || g.name), warp = gl ? typeof gl.warp : 'no-goal';   // とびこえた ゴールを はやさから のぞく ための しるし
+    return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && /1秒に 8m（ベスト 10m まで あと 2m）/.test(b) && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
   });
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

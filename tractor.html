@@ -2513,8 +2513,8 @@ const HAMARU = (() => {
         S.x = to[0]; S.z = to[1];
         S.elapsed += 1200;
         toast('抜けた！（+20 分）本物は 悪天候の日は作業しない・旋回を激しくしない。同じ田んぼの同じ所で はまりやすい', 6);
-        rescues++;
-        setTimeout(() => voice(rescues === 1 ? 'hamaru' : 'unikku'), 6500);   // 2 回目は「今年も はまった」話（光男の米のブログ）
+        const vid = ++rescues === 1 ? 'hamaru' : 'unikku';   // 2 回目は「今年も はまった」話（光男の米のブログ）。早送りで 待つあいだに次が来ても 取りちがえない
+        setTimeout(() => voice(vid), 6500);
       }
       return;
     }

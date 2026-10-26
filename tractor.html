@@ -4485,13 +4485,14 @@ function step(dt) {
   if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
   if (!inField && S.x > 16.4 && Math.abs(S.v) > 1.4) emitRoadDust(dt, S.x, S.z, S.yaw, S.v, 1);   // 乾いた砂利の農道では砂ぼこり
   P.WheelFL.rotation.x += S.v * dt / R_FRONT * (S.dblAct ? 2 : 1); P.WheelFR.rotation.x = P.WheelFL.rotation.x;   // 倍速ターンのあいだは 前輪が約 2 倍の速さで回る
+  const effSteer = S.steer + (S.rutPull || 0);    // わだちに取られた分も 前輪とハンドルに出す（走る向きの計算と同じ切れ角）
   {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
-    const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);
+    const R = WB / Math.tan(Math.max(1e-4, Math.abs(effSteer))), sg = Math.sign(effSteer);
     const inner = Math.min(0.96, Math.atan(WB / Math.max(0.2, R - TRACK))), outer = Math.atan(WB / (R + TRACK));   // 内側は 55° まで（見た目）
     P.SteerFL.rotation.y = -sg * (sg > 0 ? outer : inner);   // 右へ切る（steer＞0）と右（FR）が内側
     P.SteerFR.rotation.y = -sg * (sg > 0 ? inner : outer);
   }
-  P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
+  P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -effSteer / MAX_STEER * 4.2));
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
   if (P.LeverRange) P.LeverRange.rotation.x += (({ L: 0.3, M: 0, H: -0.3 })[S.range || 'L'] - P.LeverRange.rotation.x) * Math.min(1, dt * 6);   // 副変速レバー（低・中・高の 3 段）
@@ -5639,7 +5640,7 @@ function frame(now) {
   LEAK.update(dt);
   LAMPS.update();
   emitExhaust(dt);
-  DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
+  DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も
   MIRROR.update(dt, camMode === 0);
   updateMud(dt, S.rotDown && S.rotPos < 0.08);
   NB.update(dt);

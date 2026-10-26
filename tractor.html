@@ -203,6 +203,7 @@
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
     <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
+    <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気を見る（2 分。傷んだ部品は 先に交換）</span></label>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
@@ -286,6 +287,7 @@
       ・新人のころ、はじめて耕した跡はガタガタ。同級生にコツを教わって終わらせた…<a href="https://agri.mynavi.jp/2020_02_15_105161" target="_blank" rel="noopener">農家の息子さんが描いた新人時代のマンガ（マイナビ農業）</a>／研修のときとは土も機械もちがい、操作を一から覚えなおした…<a href="https://www.maff.go.jp/hokkaido/sapporo/shinnki/attach/pdf/shinnki-17.pdf" target="_blank" rel="noopener">北海道の新規就農者の紹介（農林水産省 北海道農政事務所）</a>／代かきのあと、道へ出る坂で前輪が浮き、あわててブレーキを踏んで横転…<a href="https://www.naro.go.jp/org/iam/anzenweb/poster/poster_A4/poster_04.pdf" target="_blank" rel="noopener">農研機構の農作業事故の事例</a><br>
       ・稲刈りの 2 日あとに秋起こし。秋に起こすと、春に起こすより ガス湧きが少ないと感じる…<a href="https://www.youtube.com/watch?v=iVYUNi42g2Q" target="_blank" rel="noopener">岩手県盛岡市の自然栽培の米農家さんの動画（YouTube）</a>／水を張りすぎると土の表面が見えず平らにしにくい。荒代かきは水 1cm くらいの浅水で…<a href="https://note.com/kome_noka_shinya/n/na7acbb02a6dc" target="_blank" rel="noopener">米農家 いち田さんの note「荒代かきと植え代かき」</a>／前の畦塗り機では畦のはし 5m ほどが塗れず、手で塗っていた…<a href="https://note.com/23owarai/n/n8beeebef58d3" target="_blank" rel="noopener">林さんちのゆかいな米作り（note）「隅々まで塗れる脅威の畦塗り機購入」</a>／固い所やタイヤの跡を耕す はしの爪ほど早く減る。減りやすい爪を入れかえて長く使う…<a href="https://ameblo.jp/yuuyasyoueikoharu/entry-12123637685.html" target="_blank" rel="noopener">愛媛の専業米農家さんのブログ「ちょっぴりお得な、ロータリーの爪交換」</a><br>
       ・ロータリーの逆転：ロータリーを下ろしたあとに盛り上がった土を前へ戻して平らにしやすい。正転より負荷が大きいので、硬い所や耕作放棄地では故障のもと。エンジンは低回転で（取扱説明書では 1500rpm 以下が目安）…<a href="https://note.com/ryutaro0306/n/n1dec2d4d6705" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターの逆転機能」</a>／四隅などにたまった土を寄せるのに使う。硬い所では使わず、やわらかい所で…<a href="https://note.com/ryutaro0306/n/n9cd5ebffa07d" target="_blank" rel="noopener">同「逆回転機能」</a>（ゲームでは <kbd>O</kbd>）<br>
+      ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
       ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
       ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
       ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
@@ -1104,6 +1106,52 @@ const SCRAPE = (() => {
     }
   }
   return { start, step, can };
+})();
+// 始業点検とファンベルト：春、冬のあいだ置いていた機械は、冷却ファンを回すベルトが傷んでいることがある。
+// 点検しないで耕していると、とちゅうでベルトが切れて ファンが止まり、水温が上がって ボンネットの前から湯気（煙）が出る。
+// 止まって作業機を上げると エンジンを切って 交換する（ゲームでは予備のベルトに替えて続ける。+10 分。H をこえて止まったら 冷めるのを待って +25 分）。
+// はじめに点検すれば（2 分）、ひびを見つけて先に交換できる（+3 分）。（伊賀の米農家 大森雄貴さんの note「田植え機のメンテナンスとトラクターの故障！？」）
+const BELT = (() => {
+  let worn = false, broken = false, fixT = 0, told = false, hot = false, acc = 0, fixed = false;
+  const STEAM = new THREE.Vector3(0, 1.45, 2.3), w = new THREE.Vector3();   // ボンネットの前のほう
+  function start(checked) {
+    worn = season === 'haru' && !checked;
+    if (!checked) return;
+    S.elapsed += season === 'haru' ? 300 : 120;
+    toast(season === 'haru' ? '🔧 始業点検：冷却水・エンジンオイル・燃料・タイヤの空気。冷却ファンのベルトに ひびがあったので、予備に交換した（5 分）' : '🔧 始業点検：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気。問題なし（2 分）', 5);
+  }
+  function step(dt, working) {
+    if (fixT > 0) {
+      S.v = 0;
+      if ((fixT -= dt) <= 0) {
+        fixT = 0; broken = false; worn = false; fixed = true; S.cool = Math.min(S.cool, 0.62);
+        toast('ファンベルトを交換しました。' + (MOBILE ? '▲' : '↑') + ' でエンジンをかけて 続けよう（本物は、型に合うベルトが特殊で 部品が届くまで 3〜4 日かかることも）', 5);
+        setTimeout(() => voice('belt'), 5200);
+      }
+      return;
+    }
+    if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
+    if (worn && !broken && working && (S.workT || 0) > 150) { broken = true; if (audio && soundOn) thud(audio.ac, audio.out, 0.4); }   // ぱちん：ベルトが切れた（本人はまだ気づかない）
+    if (!broken) return;
+    if (S.cool > 0.8 && !S.stalled) {               // ボンネットの前から湯気
+      acc += dt * 22 * Math.min(1, (S.cool - 0.8) * 5);
+      rig.localToWorld(w.copy(STEAM));
+      while (acc >= 1) { acc -= 1; FX.emit(w.x + (Math.random() - 0.5) * 0.5, w.y, w.z + (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.3, 0.9 + Math.random() * 0.5, (Math.random() - 0.5) * 0.3, 3, 0.6, [0.95, 0.95, 0.96]); }
+      if (!told) { told = true; toast('⚠️ 水温計が H に近い！ ボンネットの前から湯気が出ている。止まって ' + IMPL + 'を上げ、エンジンを切って見る（止まって上げると 切ります）', 7); }
+    }
+    if (S.cool >= 1.08 && !S.stalled) {             // オーバーヒート：エンジンが止まる
+      S.stalled = true; S.parked = true; S.v = 0; hot = true;
+      for (const k of ['fwd', 'back']) key[k] = 0;
+      toast('オーバーヒートで エンジンが止まりました（本物は エンジンをいためる）。' + IMPL + 'を上げて、冷めるのを待ってから見る', 6);
+    }
+    if (Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && S.cool > 0.7 && !(S.crank > 0)) {
+      S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
+      for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
+      fixT = hot ? 12 : 8; S.elapsed += hot ? 1500 : 600;
+      toast('エンジンを切って ボンネットを開けた。冷却ファンを回すベルトが切れていた。予備のベルトに交換します（' + (hot ? '冷めるのを待って 25 分' : '10 分') + '）', 6);
+    }
+  }
+  return { start, step, get broken() { return broken; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; }, get worn() { return worn; } };
 })();
 
 
@@ -2111,7 +2159,7 @@ const FX = (() => {
   scene.add(pts);
   let next = 0;
   const SOIL = SHIRO ? [0.36, 0.29, 0.21] : season === 'aki' ? [0.24, 0.18, 0.13] : [0.30, 0.23, 0.16];
-  function emit(x, y, z, vx, vy, vz, k, a) {
+  function emit(x, y, z, vx, vy, vz, k, a, c) {
     const i = next; next = (next + 1) % N;
     pos.set([x, y, z], i * 3); vel.set([vx, vy, vz], i * 3);
     kind[i] = k;
@@ -2124,7 +2172,7 @@ const FX = (() => {
     }
     else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
     else if (k === 2) { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
-    else { col.set(EXH.col.map(v => v * t), i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }
+    else { col.set((c || EXH.col).map(v => v * t), i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }   // c：湯気など 白い煙
     life[i] = max[i];
     exhaustA[i] = k === 3 ? (a ?? EXH.dark) : 0;
   }
@@ -4114,9 +4162,10 @@ function step(dt) {
     }
   }
   SCRAPE.step(dt);
+  if (S.started && !S.done) BELT.step(dt, S.rotDown && S.rotPos < 0.08);
   if (S.stalled) {
     S.v = 0;
-    if (S.scrape > 0) {}                           // 泥落としのあいだは エンジンを切ったまま
+    if (S.scrape > 0 || BELT.fixing) {}            // 泥落とし・ベルトの交換のあいだは エンジンを切ったまま
     else if ((key.fwd || key.back) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
@@ -4322,7 +4371,7 @@ function step(dt) {
   if (S.started && !S.done && !S.stalled && !(S.glow > 0) && !(S.crank > 0.6)) S.engineT = (S.engineT || 0) + dt;   // アワーメーター：エンジンが回っているあいだだけ（泥落とし・エンスト・巻きつきの片づけで止めた時間は入れない）
   // エンジンの水温（0＝冷たい・0.55＝ふつう）：寒い朝や夜はかけたとき冷えていて、回しているうちに上がる（耕していると早い）
   if (S.cool === undefined) S.cool = COOL0;
-  if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) - S.cool) * Math.min(1, dt / (S.cool < 0.5 ? 40 : 15));
+  if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) + (BELT.broken ? 0.65 : 0) - S.cool) * Math.min(1, dt / (BELT.broken ? 14 : S.cool < 0.5 ? 40 : 15));   // ファンベルトが切れると ファンが止まって どんどん上がる
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
   if (pct >= 50 && !SHIRO && S.started) voice('hajimete');   // 半分 耕せたころ
   if (pct >= 40 && !SHIRO && !ART.on && S.rotDown && S.rotPos < 0.08 && S.v > 0.05 && !S.stalled && Math.abs(S.x) < HX && Math.abs(S.z) < HZ
@@ -5184,6 +5233,7 @@ const VOICES = {
   tsume: ['固い所や タイヤの跡を耕す はしの爪ほど 早く減る。減りやすい爪を 入れかえて 長く使う', '愛媛の専業米農家さん（アメブロ）'],
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
+  belt: ['春起こしの最中、トラクターの前から煙が上がって 水温計が上がり、エンジンのあたりから異音もした。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日。機械の故障ひとつで、作業の予定を組みなおすことになる', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   gyakuten: ['盛り上がった土は、逆転で前へ戻すと 平らにしやすい。逆転は正転より負荷が大きいので、硬い所では使わず、やわらかい所で エンジンの回転を下げて使う', '井上寅雄農園（note）'],
   renketsu: ['左右のブレーキの連結を外すのは 田んぼの中だけ。道で 連結を外したまま急ブレーキをかけると、片ブレーキになって 車体が大きく振られる', '農業モンスター（note）'],
   sanshu: ['いちばん多いのは 外周 3 周のやり方。ふちから ロータリー 3 回分あけて まん中を耕し、最後に外周を 3 周する。仕上がりがきれい', '井上寅雄農園（note）'],
@@ -5235,6 +5285,7 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
+    BELT.start($('checkBox').checked);
     if (!SHIRO && $('walkBox').checked) walkField();
     else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
     if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
@@ -5341,6 +5392,9 @@ const COACH = (() => {
     return r;
   }
   function msg() {
+    if (S.parked && (BELT.fixing || BELT.broken)) return S.rotDown ? ['!', K('エンジンが止まった：<kbd>スペース</kbd>で' + IMPL + 'を上げる', 'エンジンが止まった：' + IMPL + 'を上げる')]
+      : ['…', 'エンジンを切って、切れたファンベルトを交換しています'];
+    if (S.parked && BELT.fixed && !(S.scrape > 0)) return ['!', K('ベルトを交換した：<kbd>↑</kbd> でエンジンをかける', 'ベルトを交換した：▲ でエンジンをかける')];
     if (S.parked) return S.scrape > 0 ? ['…', (S.rotorW || 0) >= 1 ? '爪が止まるのを待っています（回っている爪に近づかない）' : 'エンジンを切って、タイヤと' + IMPL + 'の泥を落としています']
       : ['!', K('泥を落とした：<kbd>↑</kbd> でエンジンをかける', '泥を落とした：▲ でエンジンをかける')];
     if (S.stalled) return S.rotDown                // エンスト：上げるまでは「上げる」、上げたら「かけなおす」だけ
@@ -5476,7 +5530,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

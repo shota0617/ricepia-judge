@@ -118,15 +118,20 @@ Actions の「Google Ads」（`.github/workflows/google-ads.yml`）が、3-1・3
 1. GitHub のリポジトリ → Settings → **Environments** →「New environment」で `google-ads` を作る
    - 「Deployment branches and tags」を「Selected branches and tags」にして、`main` だけを足す
    - こうすると、main 以外のブランチから動かしても GitHub が止め、認証情報は渡りません（ブランチでコードを書きかえて本番を変える・認証情報を送り出す、を防ぐ）。**リポジトリの Secrets（Repository secrets）には入れないでください**
-2. その Environment の「Environment secrets」→「Add environment secret」で、次の5つ（MCC 経由のときは6つ）を入れる。**値はチャットに書かないでください**
-   - `GOOGLE_ADS_DEVELOPER_TOKEN`：Google広告（MCC）→ ツールと設定 → API センター の開発者トークン
-   - `GOOGLE_ADS_CLIENT_ID`・`GOOGLE_ADS_CLIENT_SECRET`：Google Cloud の OAuth クライアント
-   - `GOOGLE_ADS_REFRESH_TOKEN`：そのクライアントで、広告アカウントに入れる Google アカウントの許可をとったリフレッシュトークン
+2. Google Cloud で、API を使えるようにする（**2026-09-09 から 開発者トークンと MCC は いりません**。使える範囲は Google Cloud のプロジェクトで決まります）
+   - Google Cloud コンソールでプロジェクトを作り（例：`ricepia-ads`）、「Google Ads API」を有効にする（はじめは テスト用の範囲だけ）
+   - 同じ画面の「Google Ads API」の概要ページで「**Explorer アクセス**」を申し込む。本物の広告アカウントに 1日 2,880 回まで使えます（お店には十分。キーワードプランナー・アカウント作成・請求などは使えません）
+   - 同じプロジェクトで OAuth の同意画面（外部・本番に公開。テストのままだとリフレッシュトークンが7日で切れます）と OAuth クライアントを作る。種類は「**ウェブ アプリケーション**」にして、「承認済みのリダイレクト URI」に `https://developers.google.com/oauthplayground` を足す（デスクトップ アプリだと、次の Playground で `redirect_uri_mismatch` になります）。**ちがうプロジェクトのクライアントを使うと、テスト用の範囲にもどってしまいます**
+   - OAuth 2.0 Playground（歯車 →「Use your own OAuth credentials」にそのクライアントを入れる）で、スコープ `https://www.googleapis.com/auth/adwords` を、広告アカウントに入れる Google アカウントで許可し、リフレッシュトークンを取る
+3. その Environment の「Environment secrets」→「Add environment secret」で、次の4つ（MCC 経由のときは5つ）を入れる。**値はチャットに書かないでください**
+   - `GOOGLE_ADS_CLIENT_ID`・`GOOGLE_ADS_CLIENT_SECRET`：2 で作った OAuth クライアント
+   - `GOOGLE_ADS_REFRESH_TOKEN`：2 で取ったリフレッシュトークン
    - `GOOGLE_ADS_CUSTOMER_ID`：広告アカウントのお客様ID（ログには出さないようにしてあります）
    - `GOOGLE_ADS_LOGIN_CUSTOMER_ID`：MCC（クライアント センター）から入るときだけ、その MCC の ID
-   - 毎日の費用を数えている しくみ（Supabase の `channel_metrics` の `google_ads`）が すでに Google Ads API を使っているなら、同じ値を使えます
-3. Actions →「Google Ads」→「Run workflow」（ブランチは `main`）で、job `game-campaign`、apply `false`（検証だけ。アカウントは変わりません）→ ログの「できなかった:」を見る
-4. よければ apply `true` にして もう一度。ログの「★ ゲームに入れるラベル」を `CFG.adsGameStart` に入れる（3-2 の 2 から）
+   - `GOOGLE_ADS_DEVELOPER_TOKEN`：いりません（入れても送るだけで、Google は使いません）
+   - 毎日の費用を数えている しくみ（Supabase の `channel_metrics` の `google_ads`）が すでに Google Ads API を使っているなら、その OAuth クライアント・リフレッシュトークンを使えます
+4. Actions →「Google Ads」→「Run workflow」（ブランチは `main`）で、job `game-campaign`、apply `false`（検証だけ。アカウントは変わりません）→ ログの「できなかった:」を見る
+5. よければ apply `true` にして もう一度。ログの「★ ゲームに入れるラベル」を `CFG.adsGameStart` に入れる（3-2 の 2 から）
 
 ## 4. Meta広告・LINEヤフー広告
 

@@ -8,8 +8,9 @@
 //     node tools/google-ads-run.js --job game      にしおさんぽGO のサイトリンク・コールアウトを検証だけ（--apply で反映）
 //     node tools/google-ads-run.js --job game-campaign  にしおさんぽGO 専用キャンペーン（一時停止で作る）を検証だけ（--apply で反映）
 //   読む環境変数（値はチャットやリポジトリに書かない）:
-//     GOOGLE_ADS_DEVELOPER_TOKEN, GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN,
+//     GOOGLE_ADS_CLIENT_ID, GOOGLE_ADS_CLIENT_SECRET, GOOGLE_ADS_REFRESH_TOKEN,
 //     GOOGLE_ADS_CUSTOMER_ID（広告アカウントのお客様ID）, GOOGLE_ADS_LOGIN_CUSTOMER_ID（MCC経由のときだけ）,
+//     GOOGLE_ADS_DEVELOPER_TOKEN（あれば送る。2026-09-09 から 使える範囲は OAuth クライアントの Google Cloud プロジェクトで決まり、トークンは いらない）,
 //     GOOGLE_ADS_API_VERSION（省略時 v25）。試験用に GOOGLE_ADS_API_ENDPOINT / GOOGLE_ADS_TOKEN_URL で送り先を変えられる
 // スクリプトは同期的に API を呼ぶ前提なので、HTTP は curl を同期実行して送る（プロキシと証明書の設定もそのまま使える）。
 const { execFileSync } = require('child_process');
@@ -18,7 +19,7 @@ const fs = require('fs'), os = require('os'), path = require('path');
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply'), STEP2 = args.includes('--step2');
 const env = k => (process.env[k] || '').trim();
-const need = ['GOOGLE_ADS_DEVELOPER_TOKEN', 'GOOGLE_ADS_CLIENT_ID', 'GOOGLE_ADS_CLIENT_SECRET', 'GOOGLE_ADS_REFRESH_TOKEN', 'GOOGLE_ADS_CUSTOMER_ID'];
+const need = ['GOOGLE_ADS_CLIENT_ID', 'GOOGLE_ADS_CLIENT_SECRET', 'GOOGLE_ADS_REFRESH_TOKEN', 'GOOGLE_ADS_CUSTOMER_ID'];
 const missing = need.filter(k => !env(k));
 if (missing.length) { console.error('環境変数が足りません: ' + missing.join(', ')); process.exit(2); }
 const VERSION = env('GOOGLE_ADS_API_VERSION') || 'v25';
@@ -46,7 +47,8 @@ function token() {
   if (r.status !== 200 || !r.json.access_token) throw new Error('アクセストークンを取得できません（' + r.status + ' ' + (r.json.error || '') + ' ' + (r.json.error_description || '') + '）');
   return r.json.access_token;
 }
-fs.writeFileSync(headerFile, ['Authorization: Bearer ' + token(), 'developer-token: ' + env('GOOGLE_ADS_DEVELOPER_TOKEN')]
+fs.writeFileSync(headerFile, ['Authorization: Bearer ' + token()]
+  .concat(env('GOOGLE_ADS_DEVELOPER_TOKEN') ? ['developer-token: ' + env('GOOGLE_ADS_DEVELOPER_TOKEN')] : [])
   .concat(LOGIN_CID ? ['login-customer-id: ' + LOGIN_CID] : []).join('\n') + '\n', { mode: 0o600 });
 
 function errorMessages(json) {

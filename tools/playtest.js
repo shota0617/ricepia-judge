@@ -1977,6 +1977,22 @@ async function walkTo(page, id) {
   }
 
   await browser.close(); server.close();
+  // ゴールの 戸の 道さがし（mzGateTry を 小さな 格子で）：戸 4つの 近い 道と、戸 3つで 8歩の 道が ある とき、上限（戸 3つ・歩数 まっすぐの 2倍＋4）以内の 道で 戸を あける
+  // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸 4つの 道が えらばれて 上限で はねられ、戸が ひらかなかった。Codex の 指摘）
+  R.checks.mzGateSearch = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), i = src.indexOf('function mzGateKey'), j = src.indexOf('function mzBlocked', i);
+    if (i < 0 || j < 0) return { ok: false, why: 'no-func' };
+    const key = (x, y, dx, dy) => dx + dy < 0 ? key(x + dx, y + dy, -dx, -dy) : `${x},${y}${dx ? 'r' : 'd'}`;
+    const run = withShort => {
+      const M = new Map(), E = (pts, kind) => { for (let k = 1; k < pts.length; k++) { const [x, y] = pts[k - 1], [u, v] = pts[k]; M.set(key(x, y, u - x, v - y), kind); } };
+      E([[2, 0], [2, -1], [2, -2]], 'open'); E([[2, -2], [1, -2]], 'road'); E([[1, -2], [0, -2], [-1, -2]], 'open'); E([[-1, -2], [-1, -1]], 'road'); E([[-1, -1], [0, -1]], 'open'); E([[0, -1], [0, 0]], 'road');   // 8歩・戸 3つ
+      if (withShort) E([[2, 0], [2, 1], [1, 1], [0, 1], [0, 0]], 'road');   // 4歩・戸 4つ
+      const env = { MZ_DIRS: [[1, 0], [-1, 0], [0, 1], [0, -1]], mzGate: Object.assign(new Map(), { v: 0 }), MZ_GATE_NEAR: 3, MZ_GATE_MAX: 3, mzOpen: (x, y, dx, dy) => M.get(key(x, y, dx, dy)) === 'open', mzType: () => 1, mzCell: () => ({}), mzLinkRaw: (ca, cb, lx, ly, dx, dy) => M.get(key(lx, ly, dx, dy)) === 'road', chordSound() {}, floatText() {}, performance: { now: () => 0 } };
+      const f = new Function(...Object.keys(env), src.slice(i, j) + '; return mzGateTry;')(...Object.values(env));
+      return { opened: f(2, 0, 0, 0, (x, y) => x === 0 && y === 0, 18), gates: env.mzGate.size };
+    };
+    try { const both = run(true), only3 = run(false); return { both, only3, ok: both.opened && both.gates === 3 && only3.opened }; } catch (e) { return { ok: false, err: String(e) }; }
+  })();
   // 合格の条件：どれか1つでも外れたら、理由を failures に書いて終了コード1
   const c = R.checks, fail = [];
   const need = (ok, why) => { if (!ok) fail.push(why); };
@@ -1992,6 +2008,7 @@ async function walkTo(page, id) {
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
   need(c.mzGoalGate && c.mzGoalGate.ok, `ゴールの すぐ そばなのに 道のりが とても 長い 所で、生け垣の 戸が ひらかない（${JSON.stringify(c.mzGoalGate)}）`);
+  need(c.mzGateSearch && c.mzGateSearch.ok, `ゴールの 戸の 道さがしが、上限 以内の 道を 見のがす（${JSON.stringify(c.mzGateSearch)}）`);
   need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');

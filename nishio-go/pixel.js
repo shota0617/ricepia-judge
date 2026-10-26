@@ -6842,36 +6842,38 @@ function mzGateTry(a, b, gc, gr, inReach, L) {   // 戸を あけたら true
     const lx = dx + dy < 0 ? x + dx : x, ly = dx + dy < 0 ? y + dy : y;
     return mzLinkRaw(mzCell(lx, ly), mzCell(lx + Math.abs(dx), ly + Math.abs(dy)), lx, ly, Math.abs(dx), Math.abs(dy));
   };
-  const dist = new Float64Array(N).fill(Infinity), from = new Int32Array(N).fill(-1), gate = new Uint8Array(N), done = new Uint8Array(N);
-  const s0 = (b - y0) * W + a - x0;
-  dist[s0] = 0;
-  let end = -1;
-  for (let it = 0; it < N; it++) {   // 1歩 1・戸 1つ 3（戸の 少ない 近い 道）
-    let u = -1;
-    for (let i = 0; i < N; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
-    if (u < 0) break;
-    done[u] = 1;
-    const x = u % W + x0, y = (u / W | 0) + y0;
-    if (inReach(x, y)) { end = u; break; }
-    for (const [dx, dy] of MZ_DIRS) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < x0 || nx >= x0 + W || ny < y0 || ny >= y0 + W) continue;
-      const v = (ny - y0) * W + nx - x0;
-      if (done[v]) continue;
-      const open = mzOpen(x, y, dx, dy), c = open ? 1 : road(x, y, dx, dy) ? 4 : 0;
-      if (c && dist[u] + c < dist[v]) { dist[v] = dist[u] + c; from[v] = u; gate[v] = open ? 0 : 1; }
+  // 戸の 数の 上限を 1 から ふやしながら、上限 以内で いちばん 歩数の 少ない 道（状態＝マス×あけた 戸の 数）。歩数が まっすぐの 2倍＋4 以内なら きめる
+  // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸が 多すぎる 道が えらばれ、上限 以内の 別の 道を 見のがした。Codex の 指摘）
+  const s0 = (b - y0) * W + a - x0, G1 = MZ_GATE_MAX + 1;
+  let opens = null;
+  for (let lim = 1; lim <= MZ_GATE_MAX && !opens; lim++) {
+    const from = new Int32Array(N * G1).fill(-2), q = [s0 * G1];
+    from[s0 * G1] = -1;
+    let end = -1;
+    for (let h = 0; h < q.length && end < 0; h++) {   // 歩数の じゅん
+      const st = q[h], u = st / G1 | 0, g = st % G1, x = u % W + x0, y = (u / W | 0) + y0;
+      if (inReach(x, y)) { end = st; break; }
+      for (const [dx, dy] of MZ_DIRS) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < x0 || nx >= x0 + W || ny < y0 || ny >= y0 + W) continue;
+        const ng = mzOpen(x, y, dx, dy) ? g : g < lim && road(x, y, dx, dy) ? g + 1 : -1, v = ((ny - y0) * W + nx - x0) * G1 + ng;
+        if (ng < 0 || from[v] !== -2) continue;
+        from[v] = st; q.push(v);
+      }
     }
+    if (end < 0) continue;
+    const ks = [];
+    let steps = 0;
+    for (let v = end; from[v] >= 0; v = from[v]) {
+      steps++;
+      const u = from[v];
+      if (v % G1 === u % G1) continue;   // 戸を あけずに 通った
+      const ui = u / G1 | 0, vi = v / G1 | 0, x = ui % W + x0, y = (ui / W | 0) + y0;
+      ks.push(mzGateKey(x, y, vi % W + x0 - x, (vi / W | 0) + y0 - y));
+    }
+    if (ks.length && steps <= man * 2 + 4) opens = ks;
   }
-  if (end < 0) return false;
-  const opens = [];
-  let steps = 0;
-  for (let v = end; from[v] >= 0; v = from[v]) {
-    steps++;
-    if (!gate[v]) continue;
-    const u = from[v], x = u % W + x0, y = (u / W | 0) + y0, nx = v % W + x0, ny = (v / W | 0) + y0;
-    opens.push(mzGateKey(x, y, nx - x, ny - y));
-  }
-  if (!opens.length || opens.length > MZ_GATE_MAX || steps > man * 2 + 4) return false;
+  if (!opens) return false;
   for (const k of opens) mzGate.set(k, performance.now());
   while (mzGate.size > 24) mzGate.delete(mzGate.keys().next().value);   // ふるい 戸から（遠くに なって いる）
   mzGate.v++;

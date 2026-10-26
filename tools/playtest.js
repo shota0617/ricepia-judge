@@ -780,6 +780,7 @@ async function walkTo(page, id) {
   })();
   // ころころコンボの ベスト：転がっている うちに ベストを こえると その場で「🏅 ベスト こえた！」、止まると ベストが のこる
   R.checks.comboBest = await (async () => {
+    const w0 = await page.evaluate(() => { const d = nishioGo.state.day || (nishioGo.state.day = {}), w = d.watch; d.watch = 2; return w === undefined ? null : w; });   // 止まって 待つ 間に、水べの「じっと見る」が 起きない ように（あとの waterWatch・critterSure が ずれる）
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(300);
     const old = await page.evaluate(() => nishioPixel.combo.best);
     const mid = await page.evaluate(() => { nishioPixel.comboBest(5); nishioPixel.comboAdd(6); return { c: nishioPixel.combo, f: nishioPixel.floats() }; });
@@ -789,9 +790,19 @@ async function walkTo(page, id) {
     await page.evaluate(() => { nishioPixel.comboBest(10); nishioPixel.comboAdd(8); });
     let near = false;
     for (let i = 0; i < 20 && !near; i++) { await page.waitForTimeout(150); near = await page.evaluate(() => nishioPixel.floats().some(t => /おしい！ ベストまで あと3/.test(t))); }
+    // 同じ ベストに 同じ 近さ（8）では もう 出さない・前より 近づくと（9）また 出す（めいろで 迷う 間、2分で 7回「あと4」が 出た）
+    const oshii = () => page.evaluate(() => nishioPixel.floats().filter(t => /おしい！/.test(t)));
+    for (let i = 0; i < 40 && (await oshii()).length; i++) await page.waitForTimeout(150);   // 前の 文字が 消えるまで
+    await page.evaluate(() => nishioPixel.comboAdd(8));
+    let again = false;
+    for (let i = 0; i < 20 && !again; i++) { await page.waitForTimeout(150); again = (await oshii()).length > 0; }
+    await page.evaluate(() => nishioPixel.comboAdd(9));
+    let closer = false;
+    for (let i = 0; i < 20 && !closer; i++) { await page.waitForTimeout(150); closer = (await oshii()).some(t => /あと2/.test(t)); }
     await page.evaluate(o => { nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
+    await page.evaluate(w => { const d = nishioGo.state.day || {}; if (w === null) delete d.watch; else d.watch = w; }, w0);
     const told = mid.f.some(t => /ベスト こえた/.test(t));
-    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near, beat: mid.c.beat, told, end, near };
+    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near && !again && closer, beat: mid.c.beat, told, end, near, again, closer };
   })();
   // スピード線：とても 速いと（1秒に 5マスより）お米の うしろに 線が 出て、おそく なると うすれて 消える
   R.checks.speedLines = await (async () => {

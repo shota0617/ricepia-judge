@@ -1303,6 +1303,8 @@ async function walkTo(page, id) {
         for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
           const sx = t.x + dx, sy = t.y + dy;
           if ([-1, 0, 1, 2, 3, 4, 5].some(k => P.blockedAt(sx + dx * k + 0.5, sy + dy * k + 0.5))) continue;   // 人の マスから 5マス 先まで まっすぐ 通れる
+          const K = M.K, cell = k => [Math.floor((sx + dx * k) / K), Math.floor((sy + dy * k) / K)];
+          if ([-1, 0, 1, 2, 3, 4].some(k => { const [a1, b1] = cell(k), [a2, b2] = cell(k + 1); return (a1 !== a2 || b1 !== b2) && !M.open(a2, b2, a1 - a2, b1 - b2); })) continue;   // めいろの 生け垣も またがない（4マス 先から 人まで 転がって とどく）
           const a = await once(n, sx, sy, dx, dy, false);
           if (!a) continue;
           const b = await once(n, sx, sy, dx, dy, true);
@@ -1342,6 +1344,26 @@ async function walkTo(page, id) {
       KS.select(sel0);
       const best = Math.max(...Object.values(res));
       return { spot, style: 'ぴたっ', moved: res, ok: best > 0.5 };
+    });
+    // 遠い ゴール（まっすぐ 1km より 先）：縁の 矢印を タップすると、せかいちずが お米と ゴールの 両方 入る ように 開き、🏁 と 名前の 札が 出る
+    // （運営者の声「ゴールがどこなのかわからない」：遠くて 地図の どこか 分からない。めいろ図は こまかすぎて 町の どこか 分からなかった）
+    R.checks.mzFarWorld = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas') || document.querySelector('canvas');
+      document.getElementById('pxInfo').hidden = true;
+      const far = G.spots.filter(x => x.lat && G.dist(G.me, x) > 2000 && G.dist(G.me, x) < 4000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (!far) return { skip: 'no far spot', ok: true };
+      G.setGuide({ kind: 'spot', id: far.id, name: far.name, why: 'テスト', by: 'テスト' });
+      let a = null;
+      for (let i = 0; i < 30 && !a; i++) { await wait(200); a = M.mapArrow; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }
+      if (!a) { G.setGuide(null); return { far: far.name, arrow: null, ok: false }; }
+      const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
+      cv.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.left + (a[0] + a[2]) / 2 / dpr, clientY: r.top + (a[1] + a[3]) / 2 / dpr }));
+      await wait(800);
+      const world = document.body.classList.contains('pxw'), g = M.worldGoal, inView = !!g && g[0] > 0 && g[1] > 0 && g[0] < cv.width && g[1] < cv.height;
+      if (world) document.getElementById('pxWorld').click();
+      await wait(300);
+      G.setGuide(null);
+      return { far: far.name, m: Math.round(G.dist(G.me, far)), world, goal: g, inView, back: !document.body.classList.contains('pxw'), ok: world && inView };
     });
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
@@ -1543,6 +1565,7 @@ async function walkTo(page, id) {
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.rollStartTilt && c.rollStartTilt.ok, '転がり方「ぴたっ」で 草の 上だと、少し 傾けても お米が 動きださない（めいろで 詰まる）');
+  need(c.mzFarWorld && c.mzFarWorld.ok, '遠い ゴールの 矢印を タップしても、せかいちずで ゴールの 場所（🏁）が 見られない');
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');

@@ -13,19 +13,25 @@ if (!G) return;
 const $ = id => document.getElementById(id);
 const SITE = 'https://go.ricepia.jp/';
 const track = (n, p) => { try { G.track(n, p); } catch (e) { /* noop */ } };
+const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 
 /* ---------- 広告・QR・シェアから来た人 ---------- */
 const q = new URLSearchParams(location.search);
 const land = {};
-for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play', 'meiro']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
+for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'c', 'spot', 'from', 'play', 'meiro', 'vs', 'vst']) if (q.get(k)) land[k] = q.get(k).slice(0, 60);
 // 友だちのシェアから来た、まだ遊んだことのない人：はじめて遊ぶときに game.js が +20pt（nsg_friend：1＝これから、2＝もらった）
 if (land.utm_source === 'share' && !G.started) { try { if (!localStorage.getItem('nsg_friend')) localStorage.setItem('nsg_friend', '1'); } catch (e) { /* noop */ } }
+// 友だちの めいろの ゴールの シェア（?vs=秒&vst=★）から 来た 人：友だちの タイムを 見せて さそい、はじめての ゴールで ならべて 見せる（game.js の mazeGoal・nsg_vs）。
+// 数だけ（名前・場所は のせない）
+const vsSec = Math.round(Number(land.vs)), vsSt = Math.max(0, Math.min(3, Math.round(Number(land.vst)) || 0));
+if (land.utm_source === 'share' && vsSec >= 4 && vsSec <= 3600) { try { localStorage.setItem('nsg_vs', JSON.stringify({ sec: vsSec, st: vsSt })); } catch (e) { /* noop */ } }
 if (Object.keys(land).length) {
   track('landing', land);
   if (land.c) track('campaign_landing', { campaign: land.c });
   if (land.play === '1') {   // 広告から「操作して遊ぶ」ですぐ始める（はじめての人は始め、もう始めている人は切り替える）
     if (document.getElementById('intro') && !document.getElementById('intro').hidden) G.begin(true); else G.playMode();
   }
+  if (land.utm_source === 'share' && vsSec >= 4 && vsSec <= 3600 && G.toastAfter) G.toastAfter(`👋 友だちは めいろの ゴールまで ${fmtSec(vsSec)}${vsSt ? ` ${'★'.repeat(vsSt)}` : ''}。きみも ころころ やってみりん`);
   if (land.spot) {   // スポットの読み込みを待って見せる（最大20秒）
     let n = 0;
     const t = setInterval(() => { if (G.focusSpot(land.spot) || ++n > 40) clearInterval(t); }, 500);
@@ -41,7 +47,7 @@ if (Object.keys(land).length) {
 
 /* ---------- シェア ---------- */
 // 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
-const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}${kind === 'mzgoal' ? 'play=1&' : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}${kind === 'mzgoal' ? `play=1&${curMz ? `vs=${Math.round(curMz.sec)}&vst=${curMz.stars || 0}&` : ''}` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
 let cur = 'log', curDot = null, curSpot = null, curVoice = '', curMeiro = null, curMz = null;   // curMz：地図の めいろの ゴール（game.js の mzShare。見た 人は ?play=1 で すぐ 遊べる）
 // 西尾の名物（「抹茶とうなぎのまち」）。名前は meibutsu.js（西尾市観光協会などの出典）から。X の字数に入るよう短く
 const meibutsuShort = () => { const m = (window.NISHIO_MEIBUTSU || []).filter(x => !x.area).slice(0, 2).map(x => x.name.replace(/^(西尾の|一色産)/, '')); return m.length ? `${m.join('と')}のまち・` : ''; };
@@ -50,7 +56,6 @@ const cityOf = s => { try { const c = (G.cityNear || G.cityAt)(s.lat, s.lng); re
 const areaOf = s => (s && s.area && Array.isArray(G.areas) ? G.areas.find(a => a.id === s.area) : null) || null;
 const clip = (t, n) => { const a = [...String(t || '')]; return a.length > n ? a.slice(0, n - 1).join('') + '…' : a.join(''); };
 const D = () => window.NISHIO_DOTS;
-const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 const mzRunLine = r => (r ? [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `🍵 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean).join('・') : '');
 function shareText() {
   const s = G.stats(), tags = `#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;

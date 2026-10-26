@@ -1184,12 +1184,20 @@ function snapMaze() {   // ドット絵の 地図の まん中（お米の ま�
     return out;
   } catch (e) { return null; }
 }
+// 友だちの シェア（share.js の ?vs=秒&vst=★）から 来た 人の はじめての ゴール：友だちの タイムと ならべる（1回だけ。行き先が ちがうので 勝ち負けは 言わない）
+function friendVs(sec, st) {
+  const vs = store.get('nsg_vs', null);
+  if (!vs || !vs.sec) return '';
+  store.del('nsg_vs'); track('friend_vs', { sec: Math.round(sec), vs: vs.sec });
+  return `👋 友だちは ${fmtSec(vs.sec)}${vs.st ? ` ${'★'.repeat(vs.st)}` : ''}、きみは ${fmtSec(sec)}${st ? ` ${'★'.repeat(st)}` : ''}。シェアで おかえし しよまい`;
+}
+const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 function mazeGoal(id, name, lines) {
   mzShare = null;
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
   if (!gl || gl.sec <= 3) return 0;
   let total = 0;
-  const t = gl.sec < 60 ? `${Math.round(gl.sec)}秒` : `${Math.floor(gl.sec / 60)}分${String(Math.round(gl.sec % 60)).padStart(2, '0')}秒`;
+  const t = fmtSec(gl.sec);
   const st = gl.stars || 0, stars = st ? '★'.repeat(st) + '☆'.repeat(3 - st) : '', sb = MZ_STAR_PTS[st] || 0;   // 目やすの 時間（めいろの 道のりで きまる）より はやいほど ★が ふえて ボーナス
   if (sb) { total += sb; lines.unshift(`${stars} ${st === 3 ? 'はやい！' : st === 2 ? 'いいね！' : 'ゴール！'} +${sb}`); }
   if (gl.way) {   // 通った マスが ちかみちの 何倍か（ほかの 迷路ゲームの「何手で とけた」）。1.3倍 までなら まよわず ゴールで ボーナス
@@ -1202,6 +1210,8 @@ function mazeGoal(id, name, lines) {
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
+  const fv = friendVs(gl.sec, st);
+  if (fv) lines.push(fv);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now() };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
@@ -3930,7 +3940,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
-  snapMaze, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  snapMaze, friendVs, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,

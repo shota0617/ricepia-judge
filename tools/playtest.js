@@ -939,7 +939,7 @@ async function walkTo(page, id) {
       document.getElementById('share').hidden = true; document.getElementById('pxInfo').hidden = true; G.mzNpcShareTest = null;
       G.callNpc(null);
     }
-    return { ok: kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, text: text.slice(0, 160) };
+    return { ok: kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, text: text.slice(0, 160) };
   });
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
@@ -1245,6 +1245,27 @@ async function walkTo(page, id) {
     }
     const after = await w.page.evaluate(() => ({ fact: !!document.querySelector('#status .wait-fact'), ready: window.__toasts.some(t => /いまの場所が わかった/.test(t)), toasts: window.__toasts.slice(-4), me: !!nishioGo.me, reward: document.getElementById('reward').classList.contains('show') }));
     R.checks.waitFact = { f1, f2, ...after, ok: !!f1 && !!f2 && f1 !== f2 && !after.fact && after.ready };
+    R.errors.push(...w.errors);
+    await w.ctx.close();
+  }
+
+  // バイラルループの 見た人：めいろの ゴールの シェアの リンク（?play=1&vs=秒&vst=★）から 来た はじめての 人は、すぐ 遊べて、友だちの タイムで さそわれ、
+  // はじめての ゴールで 友だちの タイムと ならぶ（1回だけ）
+  {
+    const w = await newPage(browser);
+    await w.ctx.addInitScript(() => {
+      window.__toasts = [];
+      document.addEventListener('DOMContentLoaded', () => { const el = document.getElementById('toast'); new MutationObserver(() => window.__toasts.push(el.textContent)).observe(el, { childList: true, characterData: true, subtree: true }); });
+    });
+    await w.page.goto(`${URL}?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal`); await w.page.waitForTimeout(2500);
+    const r = await w.page.evaluate(async () => {
+      const said = () => window.__toasts.some(t => /友だちは めいろの ゴールまで 1分23秒 ★★/.test(t)) || (nishioGo.toastAfter.q || []).some(t => /友だちは めいろの ゴールまで 1分23秒/.test(t));
+      for (let i = 0; i < 16 && !said(); i++) { await new Promise(f => setTimeout(f, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); }
+      const stored = JSON.parse(localStorage.getItem('nsg_vs') || 'null');
+      const line = nishioGo.friendVs(58, 3), again = nishioGo.friendVs(40, 3);
+      return { started: document.getElementById('intro').hidden && nishioGo.demo, said: said(), stored, line, again, left: localStorage.getItem('nsg_vs') };
+    });
+    R.checks.friendVs = { ...r, ok: r.started && r.said && !!r.stored && r.stored.sec === 83 && r.stored.st === 2 && /友だちは 1分23秒 ★★、きみは 58秒 ★★★/.test(r.line) && !r.again && !r.left };
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -1826,6 +1847,7 @@ async function walkTo(page, id) {
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
   need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」が クーポンに 出ない（${JSON.stringify(c.coupon100)}）`);
+  need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);
   need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）が 出ない（${JSON.stringify(c.koroRec)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

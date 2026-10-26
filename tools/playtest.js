@@ -803,11 +803,13 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(500);
     const c = await page.evaluate(() => { const r = nishioPixel.roll; return { home: [r.x, r.y], d0: nishioPixel.maze.dots, ls: nishioPixel.maze.linesNear().filter(L => L.left === L.dots.length).map(L => ({ dots: L.dots, dist: Math.hypot(L.dots[0][0] - r.x, L.dots[0][1] - r.y) })).sort((a, b) => a.dist - b.dist) }; });
     if (!c.ls.length) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-line' }; }
-    const L = c.ls[0];
+    const L = c.ls[0], runOf = () => page.evaluate(() => { const g = nishioGo.guide, gl = g && nishioPixel.maze.goal(g.id || g.name); return gl && gl.run ? gl.run.dots : null; });   // ゴールの ふり返り（この 道で ひろった つぶ）
+    const r0 = await runOf();
     for (const d of L.dots) { await page.evaluate(d => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); nishioPixel.rollPut(d[0], d[1], 0, 0); }, d); await page.waitForTimeout(60); }
-    const d1 = await page.evaluate(() => nishioPixel.maze.dots);
+    const d1 = await page.evaluate(() => nishioPixel.maze.dots), r1 = await runOf();
     await page.evaluate(h => { nishioPixel.rollPut(h[0], h[1], 0, 0); nishioPixel.setRoll(false); }, c.home);
-    return { ok: d1.n - c.d0.n >= L.dots.length && d1.lines === c.d0.lines + 1, len: L.dots.length, got: d1.n - c.d0.n, lines: d1.lines - c.d0.lines };
+    const run = r0 === null || r1 === null ? 'no-goal' : r1 - r0;
+    return { ok: d1.n - c.d0.n >= L.dots.length && d1.lines === c.d0.lines + 1 && (run === 'no-goal' || run >= L.dots.length), len: L.dots.length, got: d1.n - c.d0.n, lines: d1.lines - c.d0.lines, run };
   })();
   // めいろ図に びゅんパネルと ごはんつぶも 出る（寄り道の 計画に）
   R.checks.mapMarks = await (async () => {

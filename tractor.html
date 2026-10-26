@@ -294,6 +294,7 @@
       ・ロータリーの逆転：ロータリーを下ろしたあとに盛り上がった土を前へ戻して平らにしやすい。正転より負荷が大きいので、硬い所や耕作放棄地では故障のもと。エンジンは低回転で（取扱説明書では 1500rpm 以下が目安）…<a href="https://note.com/ryutaro0306/n/n1dec2d4d6705" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターの逆転機能」</a>／四隅などにたまった土を寄せるのに使う。硬い所では使わず、やわらかい所で…<a href="https://note.com/ryutaro0306/n/n9cd5ebffa07d" target="_blank" rel="noopener">同「逆回転機能」</a>（ゲームでは <kbd>O</kbd>）<br>
       ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
+      ・小さい田が点在していると ターンの回数がふえ、田の四隅も バックしてから耕すので 手間がふえる…<a href="https://note.com/toshi_chaki/n/n28258f30b67d" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第2部 馬からトラクターへ」</a>／はじめての田起こし：耕して止まり、バックして向きを変え、また耕す。残った隅を もう一周耕した…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a>（ゲームでは 角が残っていると、バックで寄せて耕す案内が出る）<br>
       ・勘で整地をくり返して 深くなりすぎた所で傾いて はまった。別の田んぼでは 田から出るスロープで動けなくなり、軽トラで引き上げてもらった。出入口のスロープの形は崩さない…<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）「田植え終わりました」</a>（ゲームでは 坂を作業機で削ったり 坂の上で大きく切ったりすると 坂が崩れて、出るときに すべる）<br>
       ・代かきのハローは 旋回でも下げたまま。旋回上昇と倍速ターンを切り、回る前に速さを直進より 3 ポイント落とす（速いと 土が寄り、タイヤ跡が出て、ハローのうしろの板に土がのる）。畦が近づいたら 深さ・傾きも切り、外周 3 周目からは 深さ・傾きと倍速ターンを入れる…<a href="https://note.com/wkpxk085/n/n01bee10678c3" target="_blank" rel="noopener">眞木優さん（note）「トラクター作業機の交換→代搔きハロー」</a>（その農家さんの機械とやり方。ゲームでは 代かきで 下げたまま 時速 2km までで回ると 減点しない）<br>
       ・作業機の傾きの調整は 平らな所で（ヤンマー AF18 の例）：ロアリンクを水平にし、作業機の中心を PTO 軸に合わせ、左右のチェックチェーンを締めてから、傾きスイッチで水平にして機械に覚えさせる。ボタンや チェーンのゆとりは 機種ごとに取扱説明書で…<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）「傾き調整についてご紹介」</a>／自動水平（ヤンマーは UFO・クボタはモンロー）は、本体が傾いても作業機を水平に保つ。畝くずしや 田んぼの外周の耕うんに役立つ…<a href="https://note.com/ryutaro0306/n/n7e4973d0892c" target="_blank" rel="noopener">同「トラクターの自動水平機能」</a>（ゲームでは 代かきで点検をしないと ハローが傾いている）<br>
@@ -1960,6 +1961,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
     return 0;
   }
   tilledMask[c] = 1; TILLN[c] = 1; TODO[c] = S.odo || 0;
+  CORNER.tilled(-HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL);
   const x0 = -HX + i * CELL, z0 = -HZ + j * CELL;
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
   const wv = COVER.stuck ? COVER.wave() : null;  // リヤカバーが固まっていると 波うつ
@@ -2338,6 +2340,55 @@ const RAMPDMG = (() => {
     return 0.36;
   }
   return { step, cap, spots, get dmg() { return dmg; }, get told() { return told; } };
+})();
+// ---- 四隅の仕上げ：角は 外周を回っても 丸く残りやすい。角の手前で上げ、バックで角へ寄せてから 下げて前へ出ると 角まで耕せる。
+// （茶木寿夫さん（note）「農業用トラクターは楽し。第2部」：小さい田が点在していると ターンの回数がふえ、田の四隅も バックしてから耕すので 手間がふえる。
+//   のんのんさん（note）「初トラクター運転と田おこし」：耕して止まり、バックして向きを変え、また耕す。残った隅を もう一周耕した）
+const CORNER = (() => {
+  const A = 2.5, M = 0.5;                         // 角の 2m 四方（ロータリーの幅 2.2m で 1 回で耕せる。畦ぎわ 0.5m は 耕し残しに数えないので 見ない）
+  let backAgo = 99, heardOK = false;
+  const inCorner = (x, z) => Math.abs(x) > HX - A && Math.abs(x) < HX - M && Math.abs(z) > HZ - A && Math.abs(z) < HZ - M;
+  function left() {                               // いちばん近い角に 耕し残しがあれば その角（7m 以内）
+    const sx = Math.sign(S.x) || 1, sz = Math.sign(S.z) || 1;
+    if (Math.hypot(S.x - sx * HX, S.z - sz * HZ) > 7) return null;
+    let n = 0;
+    for (let x = sx * (HX - A) + 0.1 * sx; Math.abs(x) < HX - M; x += 0.2 * sx) for (let z = sz * (HZ - A) + 0.1 * sz; Math.abs(z) < HZ - M; z += 0.2 * sz) {
+      if (!tilledMask[Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL)] && ++n > 10) return [sx, sz];   // 0.4m² より多い
+    }
+    return null;
+  }
+  function stage([sx, sz]) {                       // turn：うしろが角を向いていない／back：バックで寄せる／stop：畦の手前（作業機のうしろが 畦から 0.5m 以内）
+    const bx = -Math.sin(S.yaw), bz = -Math.cos(S.yaw), dx = sx * (HX - 1.5) - S.x, dz = sz * (HZ - 1.5) - S.z, d = Math.hypot(dx, dz) || 1;   // 角の残り（2m 四方）のまん中へ
+    if (d > 2.5 && (bx * dx + bz * dz) / d < 0.8) return 'turn';   // 近くまで来たら 向きは見ない（下の 届くか・畦にかかるか で見る）
+    const p = wheelPoints(S.x, S.z, S.yaw);
+    const toX = bx * sx > 0.2, toZ = bz * sz > 0.2;  // バックしていく向きに近づく畦だけを見る（ななめなら 両方。まっすぐなら 横の畦は 見ない）
+    const half = SHIRO ? TILL_W / 2 + 0.06 : 1.16;  // 下げたときの はしの位置（ハローは 翼を広げる。ROT_HALF と同じ値）
+    const gap = Math.min(...[-1, 1].map(k => { const [x, z] = p.w(k * half, ROTARY_Z - 0.45); return Math.min(toX ? HX - Math.abs(x) : 9, toZ ? HZ - Math.abs(z) : 9); }));
+    if (gap >= 0.5) return 'back';
+    // 下げて まっすぐ前へ出たときを 0.1m ずつたどる：畦にかかる所（canBe と同じ点。作業機は 下げたときの幅）で止め、
+    // それまでに 耕す所（step と同じ見本の点）が 角の耕し残しにかかれば 'stop'
+    const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
+    const fits = (x, z) => { const q = wheelPoints(x, z, S.yaw); return ['rl', 'rr', 'fl', 'fr', 'nose'].every(k => ground(q[k][0], q[k][1]) !== null) && [-1, 1].every(k => { const [rx, rz] = q.w(k * half, -1.62); return ground(rx, rz) !== null && Math.abs(rx) <= HX && Math.abs(rz) <= HZ; }); };
+    if (!fits(S.x, S.z)) return 'wide';             // 下げると はしが畦にかかる
+    for (let d = 0; d <= 3 + 1e-6; d += 0.1) {
+      const x0 = S.x + sn * d, z0 = S.z + cs * d;
+      if (d > 0 && !fits(x0, z0)) break;
+      const q = wheelPoints(x0, z0, S.yaw);
+      for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
+        const [x, z] = q.w(lx, lz);
+        if (inCorner(x, z) && !tilledMask[Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL)]) return 'stop';
+      }
+    }
+    return 'miss';                                  // ここで下げても 角の残りに届かない
+  }
+  return {
+    left, stage,
+    step(dt) { backAgo = S.v < -0.1 ? 0 : backAgo + dt; },
+    get backAgo() { return backAgo; },
+    tilled(x, z) {                                // バックで寄せてから 角を耕した
+      if (!heardOK && backAgo < 8 && inCorner(x, z)) { heardOK = true; setTimeout(() => voice('yosumi'), 1500); }
+    },
+  };
 })();
 const HAMARU = (() => {
   let acc = 0, idle = 0, rescueT = 0, told = false;
@@ -4531,7 +4582,7 @@ function step(dt) {
     }
   }
   SCRAPE.step(dt);
-  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); RAMPDMG.step(dt); }
+  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); RAMPDMG.step(dt); CORNER.step(dt); }
   if (S.stalled) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing || KATA.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れ・傾きの調整のあいだは エンジンを切ったまま
@@ -5645,6 +5696,7 @@ const VOICES = {
   wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
   ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   oto: ['運転席にいると、爪が土を引っかく音のちがいで 土の固さや深さがわかる。石を掘り起こすと 音で気づく', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
+  yosumi: ['小さい田が点在していると、畦ですぐにターンしなければならず、ターンの回数がふえる。田の四隅も バックしてから耕すので、その手間もふえる（田は 1 枚が大きくて 道路付けがよいと楽）', '茶木寿夫さん（note）'],
   surope: ['代かき用の整地ロータリーがなく、勘で整地をくり返したら 深くなりすぎた所で傾いて はまった。別の田んぼでは 田から出るスロープで動けなくなり、軽トラで引き上げてもらった。入水前の整地は ていねいに、代かきは浅めに。出入口のスロープの形は 崩さない', '超早場米の農家 小薗郁也さん（note）'],
   harrowturn: ['うちの代かきは、ハローを旋回でも下げたまま。旋回上昇と倍速ターンは切って、回る前に 速さを直進より 3 ポイント落とす（速いと 土が寄り、タイヤの跡が出て、ハローのうしろの板に土がのって 水平を保てない）。畦が近づいたら 深さ・傾きも切る。外周 3 周目からは 深さ・傾きと倍速ターンを入れる', '特別栽培米の農家 眞木優さん（note）'],
   katamuki: ['ヤンマー AF18 のロータリーの例：傾きを合わせるのは 平らな所で。エンジンをかけてロアリンクを水平にし、作業機の中心を PTO 軸の中心に合わせる。左右のチェックチェーンを手で締めて、傾きスイッチで作業機を水平にしてから、その状態を機械に覚えさせる（ボタンの組み合わせや チェーンのゆとりは 機種ごとに 取扱説明書で）', '井上寅雄農園（note）'],
@@ -5737,7 +5789,7 @@ function finish() {
   let tiltA = 0; for (let c = 0; c < NX * NZ; c++) if (tilledMask[c] && Math.abs(TILTY[c]) > 0.01) tiltA += CELL * CELL;   // 土が出たり 深すぎたりする所（はしの 1cm 以上）
   const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
   $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
-    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
+    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる（角は バックで寄せてから 下げて前へ）' : ''}</span>` +
     (STONES.hits ? `<br><span class="small">爪が石に当たった：${STONES.hits} 回。耕す前に石を拾っておくと、爪がいたまない</span>` : '') +
     (RAMPDMG.told ? '<br><span class="small">出入口の坂を 崩した。坂では 作業機を 地面に当たらない高さにして、ハンドルを大きく切らずに まっすぐ通る</span>' : '') +
     (tiltA >= 1 ? `<br><span class="small">傾いたハローで かいたままの所：約 ${Math.round(tiltA)}m²（片側が浅く 土が出る。ハローを付けかえたら 平らな所で傾きを合わせる）</span>` : '') +
@@ -5845,6 +5897,15 @@ const COACH = (() => {
       return ['!', K('PTO 逆転のまま 硬い所に入っている：<kbd>スペース</kbd>で上げて <kbd>O</kbd> で正転に', 'PTO 逆転のまま 硬い所に入っている：上げて 正転にもどす（O キー）')];
     if (S.rotDown && S.v > 0.1 && (S.wetLoad || 0) > 600)   // ぬかるみで爪とタイヤが取られて 回転が落ちてきた（950 を 1.2 秒こえるとエンスト。step と同じ重さで見る）
       return ['!', K('ぬかるみで回転が落ちている（負荷が赤）：<kbd>Q</kbd> で変速を下げるか、<kbd>Z</kbd> で浅く', 'ぬかるみで回転が落ちている（負荷が赤）：「変速」で下げるか、「浅く」')];
+    const cn = !art && lastPct >= 80 && !S.rotDown && (S.v < 0.6) && CORNER.left();   // 仕上げ：角が残っている（バックのあいだは 速さにかかわらず出す。止まる所を言うため）
+    if (cn) {
+      const st = CORNER.stage(cn);
+      if (st === 'turn') return ['!', '角が残っている：作業機（うしろ）が 角を向くように 回ってから止まる'];
+      if (st === 'wide') return ['!', '下げると ' + IMPL + 'のはしが 横の畦にかかる：少し前へ出て、横の畦から はなれてから まっすぐバックしなおす'];
+      if (st === 'miss') return ['!', '作業機が 角の残りに届いていない：少し前へ出て、うしろが 残っている所へ まっすぐ向くように 回りなおす'];
+      if (st === 'stop') return ['!', K('畦の手前まで来た：止まって <kbd>スペース</kbd>で下げ、<kbd>↑</kbd> で前へ', '畦の手前まで来た：止まって ボタンで下げ、▲ で前へ')];
+      return ['!', K('角が残っている：上げたまま うしろを見て <kbd>↓</kbd> で ゆっくりバック。作業機が畦に当たる前に止まる', '角が残っている：上げたまま うしろを見て ▼ で ゆっくりバック。作業機が畦に当たる前に止まる')];
+    }
     if (off) return null;
     if (art && !EASY.on && S.rotDown && S.v > 0.2 && (here.out > 0 || artAt(0.4 + Math.max(1.2, S.v * 1.5)).out > 0))   // はしが 1 か所でも はみ出しそう・はみ出したら。🔰 アシストのときは 自動で上がる
       return ['3', K('白線が近い：<kbd>スペース</kbd>で上げる（外は耕さない）', '白線が近い：ボタンで上げる（外は耕さない）')];
@@ -5964,7 +6025,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, BELT, COVER, KATA, RAMPDMG, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

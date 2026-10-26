@@ -2477,7 +2477,8 @@ const SAGE = (() => {
       if (wasDown && !S.rotDown) { upYaw = S.yaw; dist = 0; }   // 上げた：旋回のはじまり
       if (S.rotDown) upYaw = null;
       wasDown = S.rotDown;
-      if (upYaw === null || told || S.autoUp || S.v < 0.2) return;   // 旋回アップは 前へ出ると自動で下りる
+      if (upYaw === null || told || S.autoUp) return;   // 旋回アップは 前へ出ると自動で下りる
+      if (S.v < 0.2) { dist = 0; return; }           // 止まった・バックした：つづけて前へ進んだ分だけ数える
       const turned = Math.abs(Math.atan2(Math.sin(S.yaw - upYaw), Math.cos(S.yaw - upYaw))) > 2.6;   // U ターンを終えた（150° 以上 回った）
       const a = Math.round(S.yaw / (Math.PI / 2)) * (Math.PI / 2), aligned = Math.abs(Math.atan2(Math.sin(S.yaw - a), Math.cos(S.yaw - a))) < 0.2;
       if (!turned) { dist = 0; return; }

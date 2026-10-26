@@ -104,7 +104,8 @@ function drawCard() {
   else { x.fillStyle = '#1f5a25'; x.font = 'bold 64px "DotGothic16", sans-serif'; x.fillText('にしおさんぽGO', 40, 100); }
   const dc = cur === 'dot' && curDot != null && D() ? D().canvas(curDot) : null;   // 見つけたドット絵（右に金の額縁で大きく）
   const mz = cur === 'meiro' && curMeiro && curMeiro.img && curMeiro.img.width ? curMeiro.img : null;   // めいろの 盤（右に 水色の わくで）
-  const maxW = dc || mz || (cur === 'mzgoal' && curMz && curMz.img) ? 700 : W - 80;   // 文字は絵にかからないはばに（入らなければ字を小さく）
+  const shot = cur === 'mzgoal' && curMz ? curMz.img : cur === 'koro' && curKoro ? curKoro.img : null;   // 遊んでいた 画面（右に 抹茶色の わくで）
+  const maxW = dc || mz || (shot && shot.width) ? 700 : W - 80;   // 文字は絵にかからないはばに（入らなければ字を小さく）
   const line = (t, size, y, bold) => {
     let f = size;
     do { x.font = `${bold ? 'bold ' : ''}${f}px "DotGothic16", sans-serif`; f -= 2; } while (f > 20 && x.measureText(t).width > maxW);
@@ -142,12 +143,6 @@ function drawCard() {
     line(`🏁 ${m.name} まで ${fmtSec(m.sec)}`, 60, 240, true);
     line(`${'★'.repeat(m.stars)}${'☆'.repeat(3 - m.stars)}${run ? `  ${run}` : ''}`, 40, 306);
     line('西尾の まちが めいろ。スマホを 傾けると、お米が ころころ', 28, 360);
-    if (m.img && m.img.width) {
-      const sz = 372, dx = W - sz - 60, dy = 112;
-      x.fillStyle = '#3f5f17'; x.fillRect(dx - 16, dy - 16, sz + 32, sz + 32);
-      x.fillStyle = '#9ccc4f'; x.fillRect(dx - 10, dy - 10, sz + 20, sz + 20);
-      x.imageSmoothingEnabled = false; x.drawImage(m.img, dx, dy, sz, sz); x.imageSmoothingEnabled = true;
-    }
   } else if (cur === 'koro' && curKoro) {
     const k = curKoro;
     line(`🎵 ころころ コンボ ×${k.combo}`, 64, 240, true);
@@ -162,6 +157,12 @@ function drawCard() {
     line(rec, 36, 310);
     if (KO) line(KO.line(new Date()), 30, 362);
   }
+  if (shot && shot.width) {
+    const sz = 372, dx = W - sz - 60, dy = 112;
+    x.fillStyle = '#3f5f17'; x.fillRect(dx - 16, dy - 16, sz + 32, sz + 32);
+    x.fillStyle = '#9ccc4f'; x.fillRect(dx - 10, dy - 10, sz + 20, sz + 20);
+    x.imageSmoothingEnabled = false; x.drawImage(shot, dx, dy, sz, sz); x.imageSmoothingEnabled = true;
+  }
   x.fillStyle = 'rgba(0,0,0,.78)'; x.fillRect(0, H - 70, W, 70);
   x.fillStyle = '#fff'; x.font = '30px "DotGothic16", sans-serif';
   x.fillText((window.NSG_EDITION && window.NSG_EDITION.share) || '西尾のお米屋さん 近藤米穀店・らいすぴあ が つくったお散歩ゲーム', 30, H - 26);
@@ -175,7 +176,7 @@ function openShare(kind, opt) {
   curMeiro = opt && opt.meiro ? opt.meiro : null;
   curMz = opt && opt.mzgoal ? opt.mzgoal : null;
   const P = window.nishioPixel;
-  curKoro = kind === 'koro' && P && P.combo && P.combo.best >= 3 ? { combo: P.combo.best, dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, chain: P.maze && P.maze.padChain ? P.maze.padChain.best : 0 } : null;
+  curKoro = kind === 'koro' && P && P.combo && P.combo.best >= 3 ? { combo: P.combo.best, dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, chain: P.maze && P.maze.padChain ? P.maze.padChain.best : 0, img: G.snapMaze ? G.snapMaze() : null } : null;   // 画像には さいごに 描いた ドット絵の 地図
   const text = shareText(), url = shareUrl(kind);
   drawCard();
   $('shareText').textContent = `${text}\n${url}`;

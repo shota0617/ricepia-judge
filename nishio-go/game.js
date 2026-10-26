@@ -1177,7 +1177,7 @@ const takeMzShare = () => { const m = mzShare; mzShare = null; return m; };
 function snapMaze() {   // ドット絵の 地図の まん中（お米の まわり）を 正方形に 切りだす。どこにも 送らない（シェアの 画像に だけ 使う）
   try {
     const cv = $('pxCanvas');
-    if (!cv || !cv.width || !cv.height) return null;
+    if (!cv || !cv.width || !cv.height || !document.body.classList.contains('px')) return null;   // ドット絵の 地図で ない とき（ふつうの 地図）は 絵なし
     const sz = Math.min(cv.width, Math.round(cv.height * 0.75)), out = document.createElement('canvas');
     out.width = out.height = 360;
     out.getContext('2d').drawImage(cv, Math.round((cv.width - sz) / 2), Math.round((cv.height - sz) / 2), sz, sz, 0, 0, 360, 360);

@@ -8059,21 +8059,26 @@ function rollStep(dt) {
   if (mz) mzPadTick(ax, ay);   // びゅんパネル
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
-  if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
+  const syncMet = () => {   // めいろの あいさつ ずみ：ゴールが かわったら わすれる・ゴールに 着いて 話した 人は 次の ゴールへ もちこす
     if (npcBump.gkey !== mzRt.gkey) { npcBump.gkey = mzRt.gkey; npcBump.met.clear(); }
     { const c = npcBump.carry; if (c && c.to) { if (c.to === mzRt.gkey) npcBump.met.add(c.id); npcBump.carry = null; } }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ（mzRoute で 決めた 次の ゴールだけ）。ゴールが かわった ことを この マスの 見はりが 見のがしても（前の ゴールと 同じ 次の ゴール）のせる
+  };
+  const hitNpc = who => {   // 人に こつん：前のマスの まん中へ とばずに、その場で ぽよんと止まって にっこり あいさつ
+    if (x0 !== null) { rp.x = x0; rp.y = y0; }
+    const hard = Math.hypot(rp.vx, rp.vy);
+    rp.vx = rp.vy = 0;
+    if (hard > 0.6) { roll.sq = Math.min(0.2, 0.08 + hard * 0.03); roll.sqv = 0; roll.sqx = Math.abs(rp.x - (tx + 0.5)) > Math.abs(rp.y - (ty + 0.5)); kotoSound(Math.min(1, hard / 5)); }
+    roll.happyT = 1.4;
+    if ($('pxInfo').hidden && npcBump.id !== who.id) { npcBump.id = who.id; npcBump.x = tx; npcBump.y = ty; if (mazeOn()) npcBump.met.add(who.id); openNpc(who); }   // 同じ 人には、いちど はなれる（3マス）まで もう 話しかけない（傾けた まま だと、とじる たびに また 話しかけて いた）
+  };
+  const mzHit = mazeOn() ? mzNpcNear(rp.x, rp.y) : null;   // めいろでは 人の そばに 来たかを 毎回（同じ マスの 中で 近づいて はなれる 動きでも 当たる。Codex の 指摘）
+  if (key === rp.tile && mzHit && npcBump.id !== mzHit.id) { syncMet(); if (!npcBump.met.has(mzHit.id)) { hitNpc(mzHit); return; } }
+  if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
+    syncMet();
     // めいろでは、いちど こつんと あいさつした 人は すりぬける（通路の まん中に 立つ 人に 止められて 先へ 進めなかった）。
     // いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない（自分で 遊んで 分かった：行き止まりから ひきかえすと、同じ 人の 窓が また 開いた）
-    const who0 = mazeOn() ? mzNpcNear(rp.x, rp.y) : npcAt(tx, ty), who = who0 && !(mazeOn() && (npcBump.id === who0.id || npcBump.met.has(who0.id))) ? who0 : null;
-    if (who) {   // 人に こつん：前のマスの まん中へ とばずに、その場で ぽよんと止まって にっこり あいさつ
-      if (x0 !== null) { rp.x = x0; rp.y = y0; }
-      const hard = Math.hypot(rp.vx, rp.vy);
-      rp.vx = rp.vy = 0;
-      if (hard > 0.6) { roll.sq = Math.min(0.2, 0.08 + hard * 0.03); roll.sqv = 0; roll.sqx = Math.abs(rp.x - (tx + 0.5)) > Math.abs(rp.y - (ty + 0.5)); kotoSound(Math.min(1, hard / 5)); }
-      roll.happyT = 1.4;
-      if ($('pxInfo').hidden && npcBump.id !== who.id) { npcBump.id = who.id; npcBump.x = tx; npcBump.y = ty; if (mazeOn()) npcBump.met.add(who.id); openNpc(who); }   // 同じ 人には、いちど はなれる（3マス）まで もう 話しかけない（傾けた まま だと、とじる たびに また 話しかけて いた）
-      return;
-    }
+    const who0 = mazeOn() ? mzHit : npcAt(tx, ty), who = who0 && !(mazeOn() && (npcBump.id === who0.id || npcBump.met.has(who0.id))) ? who0 : null;
+    if (who) { hitNpc(who); return; }
     if (npcBump.id && Math.abs(tx - npcBump.x) + Math.abs(ty - npcBump.y) >= 3) npcBump.id = '';
     const [px0, py0] = rp.tile.split(',').map(Number), wasRail = codeAt(px0, py0) === C.L;
     rp.tile = key;

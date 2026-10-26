@@ -1547,6 +1547,32 @@ async function walkTo(page, id) {
       }
       return { npc: 'none', ok: true };
     });
+    // めいろで 人の そば（1.2マス）に 入れば、マスが かわらなくても こつんと 話しかける（Codex の 指摘：同じ マスの 中で 近づいて はなれると、まだ あいさつ して いない 人にも 当たれなかった）
+    R.checks.npcBumpInTile = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
+      if (!M.near) return { npc: 'none', why: 'まっすぐの めいろ', ok: true };
+      const used = new Set([G.guide && G.guide.id].filter(Boolean)), out = [], r0 = P.roll;
+      for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500)) {
+        if (out.length >= 3) break;
+        const t = P.npcTile(n), q = M.near(t.x + 0.5, t.y + 0.5);
+        if (!q || q.d > 1.05 || Math.floor(q.x) === t.x && Math.floor(q.y) === t.y) continue;   // 道すじから 1.2マスに とどかない・人の マスの 中
+        if (G.npcs.some(m => m.id !== n.id && (u => Math.hypot(q.x - u.x - 0.5, q.y - u.y - 0.5) < 1.6)(P.npcTile(m)))) continue;   // ほかの 人も そば
+        const sp = G.spots.find(x => x.lat && !used.has(x.id) && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000);   // ゴールを 新しく（あいさつ ずみを わすれる）
+        if (!sp) break;
+        used.add(sp.id); G.setGuide({ kind: 'spot', id: sp.id, name: sp.name, why: 'テスト', by: 'テスト' });
+        for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
+        pi.hidden = true; await wait(150);
+        const v = { x: (t.x + 0.5 - q.x) / q.d * 0.3, y: (t.y + 0.5 - q.y) / q.d * 0.3 };
+        P.rollPut(q.x, q.y, v.x, v.y);   // 人から 1.05マス 以内の 道すじに 置いて、ゆっくり 転がす（0.3マス/秒。マスは かわらない。止まった お米は 動きを 見ない）
+        let hit = false;
+        for (let i = 0; i < 8 && !hit; i++) { await wait(100); hit = !pi.hidden && pi.textContent.includes(n.name); }
+        const r = P.roll;
+        out.push({ npc: n.name, d: +q.d.toFixed(2), hit, sameTile: Math.floor(r.x) === Math.floor(q.x) && Math.floor(r.y) === Math.floor(q.y) });
+        pi.hidden = true;
+      }
+      G.setGuide(null); P.rollPut(r0.x, r0.y, 0, 0);   // もとの 所へ（人の そばに のこすと、あとの 項目で こつんと 止まる）
+      return { npc: out.length ? out.map(o => o.npc).join('・') : 'none', tries: out, ok: !out.length || out.some(o => o.hit) };
+    });
     // どの 地面・転がり方でも、少し（約12度）傾ければ 動きだす。「ぴたっ」（ころがり抵抗 2.4倍）で 草の 上では 14度、砂浜では いくら 傾けても 動かなかった（めいろで「詰まって 動かない」）
     R.checks.rollStartTilt = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, KS = window.NISHIO_KOROSTYLE, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms));
@@ -1858,6 +1884,7 @@ async function walkTo(page, id) {
   need(c.mzFarWorld && c.mzFarWorld.ok, '遠い ゴールの 矢印を タップしても、せかいちずで ゴールの 場所（🏁）が 見られない');
   need(c.mzSameCellGoal && c.mzSameCellGoal.ok, '同じ めいろの マスの ゴールが つづくと、ゴールが かわった ことに 気づかない（「🏁 つぎの ゴール」が 出ない）');
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
+  need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');

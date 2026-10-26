@@ -660,9 +660,9 @@ async function walkTo(page, id) {
     const look = () => page.evaluate(() => { const r = nishioPixel.roll, out = []; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 9 && !nishioPixel.rollBlockedFrom(r.x + dx * (d - 1), r.y + dy * (d - 1), r.x + dx * d, r.y + dy * d)) d++; out.push([k, d, dx, dy]); } return out.sort((p, q) => q[1] - p[1]); });
     const [open] = await look();
     await page.keyboard.down(open[0]); await page.waitForTimeout(900); await page.keyboard.up(open[0]);
-    const t0 = Date.now(); let stopped = false;
-    while (Date.now() - t0 < 4000) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); if (r.vx === 0 && r.vy === 0) { stopped = true; break; } }
-    const stopS = +((Date.now() - t0) / 1000).toFixed(1);
+    // 止まるまでの 時間は ページの 中の 時計で はかる（テストと ページの やりとりの 待ちを 入れない。遅い 画面で 長く 出て 落ちていた）
+    const stopMs = await page.evaluate(async () => { const t0 = performance.now(); while (performance.now() - t0 < 4000) { await new Promise(f => setTimeout(f, 50)); const r = nishioPixel.roll; if (r.vx === 0 && r.vy === 0) return performance.now() - t0; } return null; });
+    const stopped = stopMs !== null, stopS = +((stopped ? stopMs : 4000) / 1000).toFixed(1);
     let still = 'no-wall';
     const dbg = { style: await page.evaluate(() => { const k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(); return k ? k.name : ''; }) };   // 落ちたときに 分かるように
     const wall = (await look()).pop();   // 止まった所から いちばん近い かべ

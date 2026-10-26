@@ -1,7 +1,9 @@
 # らいすぴあ Google広告：tools/google-ads-*.js（Google広告スクリプト）を、Google Ads API から動かす（tools/google-ads-run.js）。
-# 手で動かすだけ。apply を true にしないかぎり「検証だけ」（validateOnly）で、アカウントは変わらない。反映は main からだけ。
+# 手で動かすだけ。apply を true にしないかぎり「検証だけ」（validateOnly）で、アカウントは変わらない。main からだけ動く（Environment で しばる）。
 #   job: game-campaign（にしおさんぽGO 専用キャンペーンを一時停止で作る）／ game（サイトリンク・コールアウト）
-# Secrets：GOOGLE_ADS_DEVELOPER_TOKEN・GOOGLE_ADS_CLIENT_ID・GOOGLE_ADS_CLIENT_SECRET・GOOGLE_ADS_REFRESH_TOKEN・GOOGLE_ADS_CUSTOMER_ID
+# Secrets：GitHub の Environment「google-ads」（動かせるブランチを main だけにする）の Environment secrets に入れる。
+#          リポジトリの Secrets に入れると、main 以外のブランチで書きかえた コードにも 本番の 認証情報が わたってしまう（Codex の 指摘）
+#          GOOGLE_ADS_DEVELOPER_TOKEN・GOOGLE_ADS_CLIENT_ID・GOOGLE_ADS_CLIENT_SECRET・GOOGLE_ADS_REFRESH_TOKEN・GOOGLE_ADS_CUSTOMER_ID
 #          （MCC 経由のときだけ GOOGLE_ADS_LOGIN_CUSTOMER_ID）。くわしくは docs/ads-game-kit.md の 3-3
 name: Google Ads
 on:
@@ -14,7 +16,7 @@ on:
         type: choice
         options: [game-campaign, game]
       apply:
-        description: 'true でアカウントに反映（main からだけ）。false は検証だけ'
+        description: 'true でアカウントに反映。false は検証だけ（どちらも main からだけ）'
         required: true
         default: 'false'
         type: choice
@@ -28,6 +30,9 @@ jobs:
   run:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Secrets は この Environment に だけ 置く。Environment の「Deployment branches」を main だけに すると、
+    # ほかの ブランチから 動かしても GitHub が ジョブを 止め、Secrets は わたらない（ワークフローを 書きかえても 同じ）
+    environment: google-ads
     env:
       GOOGLE_ADS_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}
       GOOGLE_ADS_CLIENT_ID: ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
@@ -45,7 +50,7 @@ jobs:
       - name: Run Google Ads script
         run: |
           for v in GOOGLE_ADS_DEVELOPER_TOKEN GOOGLE_ADS_CLIENT_ID GOOGLE_ADS_CLIENT_SECRET GOOGLE_ADS_REFRESH_TOKEN GOOGLE_ADS_CUSTOMER_ID; do
-            [ -n "${!v}" ] || { echo "::error::Secrets の $v がありません（docs/ads-game-kit.md の 3-3）"; exit 1; }
+            [ -n "${!v}" ] || { echo "::error::Environment「google-ads」の Secrets に $v がありません（docs/ads-game-kit.md の 3-3）"; exit 1; }
           done
           # 公開の ログに お客様ID を 出さない（スクリプトは ハイフンなしで 書くので、両方 かくす）
           echo "::add-mask::$GOOGLE_ADS_CUSTOMER_ID"

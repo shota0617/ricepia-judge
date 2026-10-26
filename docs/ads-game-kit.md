@@ -115,15 +115,18 @@ API の認証情報があれば `node tools/google-ads-run.js --job game`（検�
 
 Actions の「Google Ads」（`.github/workflows/google-ads.yml`）が、3-1・3-2 のスクリプトを Google Ads API から動かします。Secrets が入っていれば、Claude が動かして結果を見られます。
 
-1. GitHub のリポジトリ → Settings → Secrets and variables → Actions →「New repository secret」で、次の5つ（MCC 経由のときは6つ）を入れる。**値はチャットに書かないでください**
+1. GitHub のリポジトリ → Settings → **Environments** →「New environment」で `google-ads` を作る
+   - 「Deployment branches and tags」を「Selected branches and tags」にして、`main` だけを足す
+   - こうすると、main 以外のブランチから動かしても GitHub が止め、認証情報は渡りません（ブランチでコードを書きかえて本番を変える・認証情報を送り出す、を防ぐ）。**リポジトリの Secrets（Repository secrets）には入れないでください**
+2. その Environment の「Environment secrets」→「Add environment secret」で、次の5つ（MCC 経由のときは6つ）を入れる。**値はチャットに書かないでください**
    - `GOOGLE_ADS_DEVELOPER_TOKEN`：Google広告（MCC）→ ツールと設定 → API センター の開発者トークン
    - `GOOGLE_ADS_CLIENT_ID`・`GOOGLE_ADS_CLIENT_SECRET`：Google Cloud の OAuth クライアント
    - `GOOGLE_ADS_REFRESH_TOKEN`：そのクライアントで、広告アカウントに入れる Google アカウントの許可をとったリフレッシュトークン
    - `GOOGLE_ADS_CUSTOMER_ID`：広告アカウントのお客様ID（ログには出さないようにしてあります）
    - `GOOGLE_ADS_LOGIN_CUSTOMER_ID`：MCC（クライアント センター）から入るときだけ、その MCC の ID
    - 毎日の費用を数えている しくみ（Supabase の `channel_metrics` の `google_ads`）が すでに Google Ads API を使っているなら、同じ値を使えます
-2. Actions →「Google Ads」→「Run workflow」で、job `game-campaign`、apply `false`（検証だけ。アカウントは変わりません）→ ログの「できなかった:」を見る
-3. よければ、main で apply `true` にして もう一度。ログの「★ ゲームに入れるラベル」を `CFG.adsGameStart` に入れる（3-2 の 2 から）
+3. Actions →「Google Ads」→「Run workflow」（ブランチは `main`）で、job `game-campaign`、apply `false`（検証だけ。アカウントは変わりません）→ ログの「できなかった:」を見る
+4. よければ apply `true` にして もう一度。ログの「★ ゲームに入れるラベル」を `CFG.adsGameStart` に入れる（3-2 の 2 から）
 
 ## 4. Meta広告・LINEヤフー広告
 

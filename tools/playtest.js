@@ -1639,19 +1639,21 @@ async function walkTo(page, id) {
     R.checks.mzSameCellGoal = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, M = P.maze, K = M.K, wait = ms => new Promise(res => setTimeout(res, ms));
       const cell = o => { const t = P.toTile(o.lat, o.lng); return Math.floor(t.x / K) + ',' + Math.floor(t.y / K); };
-      const cands = [...G.npcs.map(n => ({ kind: 'npc', id: n.id, name: n.name, lat: n.lat, lng: n.lng })), ...G.spots.map(s => ({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng }))].filter(o => o.lat && G.dist(G.me, o) > 150 && G.dist(G.me, o) < 4000);
+      const cands = G.spots.map(s => ({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng })).filter(o => o.lat && G.dist(G.me, o) > 150 && G.dist(G.me, o) < 4000);   // 名所だけ（人の ゴールは 立つ 所が ずれて、マスが 同じか 分からない）
       let pair = null;
       for (let i = 0; i < cands.length && !pair; i++) for (let j = i + 1; j < cands.length && !pair; j++) if (cell(cands[i]) === cell(cands[j])) pair = [cands[i], cands[j]];
       if (!pair) return { skip: 'no pair', ok: true };
       const g0 = G.guide, set = o => G.setGuide({ kind: o.kind, id: o.id, name: o.name, why: 'テスト', by: 'テスト' });
       set(pair[0]);
       for (let i = 0; i < 30 && !(M.help().banner === false && M.routePath()); i++) await wait(200);   // 1つめの「つぎの ゴール」が おわるまで
-      const before = M.help().banner;
+      const before = M.help().banner, ca = cell(G.guide);
       set(pair[1]);
       let banner = false;
       for (let i = 0; i < 15 && !banner; i++) { await wait(100); banner = M.help().banner; }
+      const cb = cell(G.guide);
       G.setGuide(g0 || null);
-      return { a: pair[0].name, b: pair[1].name, cell: cell(pair[0]), before, banner, ok: before === false && banner };
+      if (ca !== cb) return { skip: 'not same cell', ca, cb, ok: true };
+      return { a: pair[0].name, b: pair[1].name, cell: ca, before, banner, ok: before === false && banner };
     });
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {

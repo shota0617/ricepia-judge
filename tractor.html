@@ -2393,14 +2393,16 @@ const CORNER = (() => {
 })();
 // ---- バックの前に うしろを目で見る：ミラーだけに頼ると うしろの人に気づけない。目で見て、要るときは クラクションで知らせる
 // （井上寅雄農園（note）「トラクターにかかわる危険な行動5選」の 3．バック時の目視確認）。
-// 運転席から見ているときに、うしろを見ないまま（3 秒より前）バックを始めたら 1 回だけ知らせる。見てからバックしたら 農家の声
+// 運転席から見ているときに、うしろを見ないまま（うしろを 0.6 秒以上見たのが 3 秒より前）バックを始めたら 1 回だけ知らせる。見てからバックしたら 農家の声
 const BACKCHK = (() => {
-  let lookAgo = 99, prevBack = false, told = false;
+  let lookAgo = 99, hold = 0, prev = false, told = false;
   return {
     step(dt) {
-      lookAgo = key.lookBack ? 0 : lookAgo + dt;
-      const start = key.back && !prevBack && S.v > -0.05 && !S.stalled && !S.parked && !(S.crank > 0);   // いま バックを始めた
-      prevBack = !!key.back;
+      hold = key.lookBack ? hold + dt : 0;          // 0.6 秒 押しつづけると 目がうしろを向き終わる（カメラは なめらかに回る）
+      lookAgo = hold >= 0.6 ? 0 : lookAgo + dt;
+      const can = key.back && !S.stalled && !S.parked && !(S.crank > 0);   // バックで動ける（エンジンがかかるのを 待っていたときも ここで始まる）
+      const start = can && !prev && S.v > -0.05;
+      prev = can;
       if (!start || camMode !== 0) return;
       if (lookAgo <= 3) voice('mokushi');
       else if (!told) { told = true; toast('バックの前に うしろを目で見る（' + (MOBILE || params.has('pad') ? '「うしろを見る」' : 'B') + ' を押しているあいだ うしろが見える）。ミラーだけでは うしろの人に気づけない', 6); }

@@ -1444,7 +1444,7 @@ async function walkTo(page, id) {
             const i1 = pts.findIndex(z => Math.hypot(z.x - c.x, z.y - c.y) >= 2.2), L = pts.length - 1;   // こつんの 近さ（1.2マス）の 外から 押す
             if (i1 < 1 || Math.hypot(p.x - c.x, p.y - c.y) < 5.5) continue;   // 遠くの 点は 人から 5.5マス（話した 所から 3マス 以上 はなれて、さいごに 話した 人を わすれる）
             if (out.some(o => Math.hypot(o.far.x - p.x, o.far.y - p.y) < 1)) continue;   // 同じ 道
-            if (G.npcs.some(m => m.id !== n.id && pts.some(z => { const u = P.npcTile(m); return Math.floor(z.x) === u.x && Math.floor(z.y) === u.y; }))) continue;   // ほかの 人が 道に いない
+            if (G.npcs.some(m => m.id !== n.id && pts.some(z => { const u = P.npcTile(m); return Math.hypot(z.x - u.x - 0.5, z.y - u.y - 0.5) < 1.5; }))) continue;   // ほかの 人の そばを 通らない（めいろでは 1.2マス 以内で こつん。駅前の学生への 道の わきに ほかの 人が いて、そこで 止まり、テストが ゆらいだ）
             out.push({ near: pts[i1], dNear: unit(pts[i1], pts[i1 - 1]), far: pts[L], dFar: unit(pts[L], pts[L - 1]) });
           }
           return out;
@@ -1540,7 +1540,7 @@ async function walkTo(page, id) {
             const i1 = pts.findIndex(z => Math.hypot(z.x - c.x, z.y - c.y) >= 2.2), L = pts.length - 1;   // こつんの 近さ（1.2マス）の 外から 押す
             if (i1 < 1 || Math.hypot(p.x - c.x, p.y - c.y) < 5.5) continue;   // 遠くの 点は 人から 5.5マス（話した 所から 3マス 以上 はなれて、さいごに 話した 人を わすれる）
             if (out.some(o => Math.hypot(o.far.x - p.x, o.far.y - p.y) < 1)) continue;   // 同じ 道
-            if (G.npcs.some(m => m.id !== n.id && pts.some(z => { const u = P.npcTile(m); return Math.floor(z.x) === u.x && Math.floor(z.y) === u.y; }))) continue;   // ほかの 人が 道に いない
+            if (G.npcs.some(m => m.id !== n.id && pts.some(z => { const u = P.npcTile(m); return Math.hypot(z.x - u.x - 0.5, z.y - u.y - 0.5) < 1.5; }))) continue;   // ほかの 人の そばを 通らない（めいろでは 1.2マス 以内で こつん。駅前の学生への 道の わきに ほかの 人が いて、そこで 止まり、テストが ゆらいだ）
             out.push({ near: pts[i1], dNear: unit(pts[i1], pts[i1 - 1]), far: pts[L], dFar: unit(pts[L], pts[L - 1]) });
           }
           return out;
@@ -1619,6 +1619,52 @@ async function walkTo(page, id) {
       }
       G.setGuide(null); P.rollPut(r0.x, r0.y, 0, 0);   // もとの 所へ（人の そばに のこすと、あとの 項目で こつんと 止まる）
       return { npc: out.length ? out.map(o => o.npc).join('・') : 'none', tries: out, ok: !out.length || out.some(o => o.hit) };
+    });
+    // ゴールの すぐ そば（まっすぐ 3マス以内）なのに 道のりが とても 長い 所では、生け垣の 戸が ひらいて 近道に なる
+    // （自分で 遊んで 分かった：らいすぴあの 店員さんが 生け垣の 向こう 70m に 見えて いるのに、道のりは 900m。2回とも そこで 1分 以上 止まった）
+    R.checks.mzGoalGate = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
+      if (!M.gates) return { ok: false, why: 'no-api' };
+      const K = M.K, r0 = P.roll, g0 = G.guide;
+      const bfs = (sx, sy, gx, gy) => {   // めいろの マスで 何歩か（いま 通れる さかいだけ）
+        const seen = new Map([[sx + ',' + sy, 0]]), q = [[sx, sy]];
+        for (let h = 0; h < q.length && h < 30000; h++) {
+          const [x, y] = q[h], d = seen.get(x + ',' + y);
+          if (x === gx && y === gy) return d;
+          for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+            if (seen.has(k) || Math.abs(nx - gx) > 40 || Math.abs(ny - gy) > 40 || M.type(nx, ny) !== 1 || !M.open(x, y, dx, dy)) continue;
+            seen.set(k, d + 1); q.push([nx, ny]);
+          }
+        }
+        return Infinity;
+      };
+      const goals = [...G.npcs.filter(n => G.dist(G.me, n) < 1500).map(n => ({ kind: 'npc', id: n.id, name: n.name })), ...G.spots.filter(s => s.lat && G.dist(G.me, s) < 1500).slice(0, 30).map(s => ({ kind: 'spot', id: s.id, name: s.name }))];
+      let pick = null;
+      for (const g of goals) {
+        G.setGuide({ ...g, why: 'テスト', by: 'テスト' });
+        const t = G.guide && P.toTile(G.guide.lat, G.guide.lng);
+        if (!t) continue;
+        const gc = Math.floor(t.x / K), gr = Math.floor(t.y / K);
+        if (M.type(gc, gr) !== 1) continue;
+        for (let dy = -2; dy <= 2 && !pick; dy++) for (let dx = -2; dx <= 2 && !pick; dx++) {
+          const man = Math.abs(dx) + Math.abs(dy);
+          if (man < 2 || M.type(gc + dx, gr + dy) !== 1) continue;
+          const d = bfs(gc + dx, gr + dy, gc, gr);
+          if (d < Infinity && d >= man * 4 + 14) pick = { g, gc, gr, cx: gc + dx, cy: gr + dy, man, d };
+        }
+        if (pick) break;
+      }
+      if (!pick) { G.setGuide(g0 || null); return { ok: true, skipped: 'no-far-goal' }; }
+      G.setGuide({ ...pick.g, why: 'テスト', by: 'テスト' });
+      const n0 = M.gates().length, q = M.near((pick.cx + 0.5) * K, (pick.cy + 0.5) * K) || { x: (pick.cx + 0.5) * K, y: (pick.cy + 0.5) * K };
+      pi.hidden = true;
+      P.rollPut(q.x, q.y, 0, 0);
+      let opened = 0, cells = null;
+      for (let i = 0; i < 30; i++) { await wait(150); opened = M.gates().length - n0; const r = M.route(); cells = r ? r.cells : null; if (opened && cells !== null && cells <= pick.man * 2 + 6) break; }
+      const after = bfs(pick.cx, pick.cy, pick.gc, pick.gr);
+      G.setGuide(g0 || null); P.rollPut(r0.x, r0.y, 0, 0); pi.hidden = true;
+      return { goal: pick.g.name, man: pick.man, before: pick.d, after, opened, cells, ok: opened > 0 && opened <= 3 && after <= pick.man * 2 + 4 && cells !== null && cells <= pick.man * 2 + 6 };
     });
     // どの 地面・転がり方でも、少し（約12度）傾ければ 動きだす。「ぴたっ」（ころがり抵抗 2.4倍）で 草の 上では 14度、砂浜では いくら 傾けても 動かなかった（めいろで「詰まって 動かない」）
     R.checks.rollStartTilt = await w.page.evaluate(async () => {
@@ -1945,6 +1991,7 @@ async function walkTo(page, id) {
   need(c.mzSameCellGoal && c.mzSameCellGoal.ok, '同じ めいろの マスの ゴールが つづくと、ゴールが かわった ことに 気づかない（「🏁 つぎの ゴール」が 出ない）');
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
+  need(c.mzGoalGate && c.mzGoalGate.ok, `ゴールの すぐ そばなのに 道のりが とても 長い 所で、生け垣の 戸が ひらかない（${JSON.stringify(c.mzGoalGate)}）`);
   need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');

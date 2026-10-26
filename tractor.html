@@ -5881,7 +5881,7 @@ const COACH = (() => {
       return ['!', K('PTO 逆転のまま 硬い所に入っている：<kbd>スペース</kbd>で上げて <kbd>O</kbd> で正転に', 'PTO 逆転のまま 硬い所に入っている：上げて 正転にもどす（O キー）')];
     if (S.rotDown && S.v > 0.1 && (S.wetLoad || 0) > 600)   // ぬかるみで爪とタイヤが取られて 回転が落ちてきた（950 を 1.2 秒こえるとエンスト。step と同じ重さで見る）
       return ['!', K('ぬかるみで回転が落ちている（負荷が赤）：<kbd>Q</kbd> で変速を下げるか、<kbd>Z</kbd> で浅く', 'ぬかるみで回転が落ちている（負荷が赤）：「変速」で下げるか、「浅く」')];
-    const cn = !art && lastPct >= 80 && !S.rotDown && Math.abs(S.v) < 0.6 && CORNER.left();   // 仕上げ：角が残っている
+    const cn = !art && lastPct >= 80 && !S.rotDown && (S.v < 0.6) && CORNER.left();   // 仕上げ：角が残っている（バックのあいだは 速さにかかわらず出す。止まる所を言うため）
     if (cn) {
       const st = CORNER.stage(cn);
       if (st === 'turn') return ['!', '角が残っている：作業機（うしろ）が 角を向くように 回ってから止まる'];

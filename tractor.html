@@ -1020,6 +1020,7 @@ const LIFE = (() => {
 // 泥：耕すほど車輪とロータリーに泥がつく（代かきは早い）
 const MUD = { level: 0, mats: [], t: 0, col: new THREE.Color(SHIRO ? 0x5a4a38 : 0x4a3a2a) };
 function updateMud(dt, working) {
+  if (S.done) return;                             // おわったあとは 泥がつかない（洗車は WASH が色を戻す）
   if (working && Math.abs(S.v) > 0.1) MUD.level = Math.min(1, MUD.level + dt * (SHIRO ? 0.03 : 0.015));
   if (SHIRO && Math.abs(S.v) > 0.3 && Math.abs(S.x) < HX && Math.abs(S.z) < HZ) GLASS_MUD.value = Math.min(1, GLASS_MUD.value + dt * 0.004 * Math.min(1, Math.abs(S.v)));
   else if (!SHIRO && !S.rotDown && Math.abs(S.v) > 0.5 && Math.abs(S.x) < HX && Math.abs(S.z) < HZ &&
@@ -2278,10 +2279,11 @@ const HAMARU = (() => {
 // 清潔にしておくと長持ちし、異常にも気づきやすい（マルカワみそ農園（note）「トラクタの洗車」：洗っていて 爪の摩耗に気づいて発注）。ゲームでは おわりの画面から その場で
 const WASH = (() => {
   let t = -1, step = -1, cam0 = 0;
-  const T = 11, steps = [
-    [0, '🚿 高圧洗浄機で 大きな泥を落とす（タイヤ・ロータリーのカバーの裏）'],
-    [3.5, '🧽 ブラシとシャンプーで 車体とタイヤを みがく'],
-    [7, '💨 乾かしてから 車内をエアダスターで。ロータリーの土も落とす'],
+  const T0 = 2.5, T = 13.5, steps = [            // はじめに 止めて上げて、爪が止まるのを待つ
+    [0, '🅿️ 止まって ' + IMPL + 'を上げる。爪が止まったら エンジンを切って 駐車ブレーキ。上げた' + IMPL + 'に降下止め（油圧ロック）をかけてから 洗う'],
+    [T0, '🚿 高圧洗浄機で 大きな泥を落とす（タイヤ・' + IMPL + 'のカバーの裏）'],
+    [T0 + 3.5, '🧽 ブラシとシャンプーで 車体とタイヤを みがく'],
+    [T0 + 7, '💨 乾かしてから 車内をエアダスターで。' + IMPL + 'の土も落とす'],
   ];
   const w = new THREE.Vector3();
   function start() {
@@ -2289,13 +2291,22 @@ const WASH = (() => {
     t = 0; step = -1;
     $('done').classList.add('hidden');
     cam0 = camMode; while (CAMS[camMode] !== 'うしろから') nextCam();   // 外から トラクターを見る
+    S.v = 0; S.rotDown = false; S.stalled = true; S.parked = true;   // 止めて上げる（エンジンは 爪が止まってから切る）
+    for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
     $('bWash').disabled = true;
   }
   function update(dt) {
     if (t < 0 || t >= T) return;
     t += dt;
-    while (step + 1 < steps.length && t >= steps[step + 1][0]) { step++; toast(steps[step][1], 3.4); }
-    if (t < 7) {                                    // 水しぶき：タイヤとロータリーのまわり
+    while (step + 1 < steps.length && t >= steps[step + 1][0]) { step++; toast(steps[step][1], step ? 3.4 : 2.4); }
+    if (S.rotPos < 1) {                             // おわったあとは step() が回らないので、ここで上げる
+      S.rotPos = Math.min(1, S.rotPos + dt * 1.2);
+      P.Rotary.position.y = P.rotY0 - (0.02 + DEPTH * 0.0035) + S.rotPos * 0.42; P.Rotary.rotation.x = -S.rotPos * 0.12;
+    }
+    S.rotorW = Math.max(0, (S.rotorW || 0) * (1 - Math.min(1, dt * 1.5)));   // 爪は惰性で回って 止まる
+    P.Rotor.rotation.x += S.rotorW * dt;
+    if (t < T0) return;
+    if (t < T0 + 7) {                               // 水しぶき：タイヤとロータリーのまわり
       for (let k = 0; k < 6; k++) {
         const lx = (Math.random() < 0.5 ? 1 : -1) * (0.7 + Math.random() * 0.5), lz = Math.random() < 0.6 ? Math.random() * 2.2 - 0.2 : ROTARY_Z + (Math.random() - 0.5) * 0.6;
         rig.localToWorld(w.set(lx, 0.3 + Math.random() * 0.9, lz));
@@ -2307,10 +2318,12 @@ const WASH = (() => {
     for (const e of MUD.mats) e.m.color.copy(e.base).lerp(MUD.col, e.w * MUD.level);
     if (t >= T) {
       MUD.level = 0; GLASS_MUD.value = 0;
-      toast(STONES.hits >= 3 ? '洗っていて 気づいた：石に当たった爪が すり減っている。新しい爪を発注した（泥まみれのままだと 気づかない）'
-        : '洗車おわり。泥を落とすと、爪のすり減りや油もれにも 気づきやすい', 6);
-      setTimeout(() => voice('sensha'), 6500);
-      setTimeout(() => { $('bWash').textContent = '🚿 洗車した'; $('done').classList.remove('hidden'); while (camMode !== cam0) nextCam(); }, 7000);
+      const v = VOICES.sensha, note = document.createElement('p');   // 結果の画面の中に書く（知らせは画面の下にかくれるので）
+      note.className = 'small';
+      note.textContent = '🚿 ' + (STONES.hits >= 3 ? '洗っていて 気づいた：石に当たった爪が すり減っている。新しい爪を発注した。' : '洗車おわり。泥を落とすと、爪のすり減りや油もれにも 気づきやすい。') + '　「' + v[0] + '」— ' + v[1];
+      $('bWash').before(note);
+      heard.sensha = true;
+      $('bWash').textContent = '🚿 洗車した'; $('done').classList.remove('hidden'); while (camMode !== cam0) nextCam();
     }
   }
   return { start, update, get t() { return t; } };

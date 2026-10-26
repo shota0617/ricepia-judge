@@ -1836,6 +1836,14 @@ function npcTile(n) {
   return t;
 }
 const npcAt = (tx, ty) => (G.npcs || []).find(n => { const t = npcTile(n); return t.x === tx && t.y === ty; });
+// ゆるい めいろ：人は 道すじの わき（1マス ほど はなれた 所）に 立つので、お米の まん中（道すじから MZ_TUBE マス以内）は 人の マスに 入れない。
+// めいろでは 人の まん中から MZ_NPC_HIT マス以内に 来たら こつん（通しの プレイ確認で 分かった：ゆるい めいろに してから、どの 人にも 当たれなかった）
+const MZ_NPC_HIT = 1.2;
+function mzNpcNear(x, y) {
+  let best = null, bd = MZ_NPC_HIT;
+  for (const n of G.npcs || []) { const t = npcTile(n), d = Math.hypot(x - t.x - 0.5, y - t.y - 0.5); if (d < bd) { bd = d; best = n; } }
+  return best;
+}
 // 話しかけた人の頭の上に、ぽんと気持ちの吹き出し（はじめて会った人は「！」、2回目からは「♪」か「♥」。1.6秒）
 const npcEmotes = new Map();
 const EMOTE_PIX = { '!': ['..#..', '..#..', '..#..', '.....', '..#..'], '♪': ['...##', '..#.#', '..#..', '.##..', '.##..'], '♥': ['.#.#.', '#####', '#####', '.###.', '..#..'] };
@@ -6882,7 +6890,7 @@ function mzRoute(now) {
   const p = toTile(g.lat, g.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(p.x / MZ_K), gr = Math.floor(p.y / MZ_K);
   const near = ((g.kind === 'npc' && G.guideRadius ? G.guideRadius(g) : G.reachOf ? G.reachOf(g) : 40) || 40) * 0.8 / TILE_M;   // 着いたと みなす 近さ（チェックインの 半径・人は 話しかけられる 近さより 少し 内がわ。マス）
   const inReach = (x, y) => Math.hypot(Math.max(x * MZ_K - p.x, 0, p.x - (x + 1) * MZ_K), Math.max(y * MZ_K - p.y, 0, p.y - (y + 1) * MZ_K)) <= near;   // マスの いちばん 近い 所が その 近さに 入る
-  const gkey = gc + ',' + gr, key = a + ',' + b + '>' + gkey;
+  const gkey = gc + ',' + gr + ':' + (g.id || g.name || ''), key = a + ',' + b + '>' + gkey;   // ゴールの マスと 名前（同じ マスに 2つの ゴールが つづくと、かわった ことに 気づかず、「🏁 つぎの ゴール」も 時計の やりなおしも なかった：西尾城跡の ガイドさん → 旧近衛邸の お姉さん）
   if (gkey !== mzRt.gkey) {   // ゴールが かわった（着いて 次の 行き先に なった など）：前の ゴールも 2分 おぼえる（チェックインは 行き先が かわった あとに なる）
     if (rp.x !== null) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), now);   // 着いた こまの 移動まで 前の ゴールに 数えてから（足あとの 数えは この あと）
     if (mzRt.gid) mzRt.prev = { id: mzRt.gid, t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, at: now, sec: mzRt.t0 ? (now - mzRt.t0) / 1000 : 0, moves: mzMv.n, run: { ...mzRt.run } };   // moves：通った マスの 数（同じ マスを また 通っても 数える。まよわず 来られたか）
@@ -8052,13 +8060,11 @@ function rollStep(dt) {
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
   if (key !== rp.tile) {   // 新しいマス：人がいたら話しかけて止まる。いなければ 1歩と同じこと
-    if (npcBump.gkey !== mzRt.gkey) {
-      npcBump.gkey = mzRt.gkey; npcBump.met.clear();
-      const c = npcBump.carry; if (c && c.to) { if (c.to === mzRt.gkey) npcBump.met.add(c.id); npcBump.carry = null; }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ（mzRoute で 決めた 次の ゴールだけ）
-    }
+    if (npcBump.gkey !== mzRt.gkey) { npcBump.gkey = mzRt.gkey; npcBump.met.clear(); }
+    { const c = npcBump.carry; if (c && c.to) { if (c.to === mzRt.gkey) npcBump.met.add(c.id); npcBump.carry = null; } }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ（mzRoute で 決めた 次の ゴールだけ）。ゴールが かわった ことを この マスの 見はりが 見のがしても（前の ゴールと 同じ 次の ゴール）のせる
     // めいろでは、いちど こつんと あいさつした 人は すりぬける（通路の まん中に 立つ 人に 止められて 先へ 進めなかった）。
     // いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない（自分で 遊んで 分かった：行き止まりから ひきかえすと、同じ 人の 窓が また 開いた）
-    const who0 = npcAt(tx, ty), who = who0 && !(mazeOn() && (npcBump.id === who0.id || npcBump.met.has(who0.id))) ? who0 : null;
+    const who0 = mazeOn() ? mzNpcNear(rp.x, rp.y) : npcAt(tx, ty), who = who0 && !(mazeOn() && (npcBump.id === who0.id || npcBump.met.has(who0.id))) ? who0 : null;
     if (who) {   // 人に こつん：前のマスの まん中へ とばずに、その場で ぽよんと止まって にっこり あいさつ
       if (x0 !== null) { rp.x = x0; rp.y = y0; }
       const hard = Math.hypot(rp.vx, rp.vy);

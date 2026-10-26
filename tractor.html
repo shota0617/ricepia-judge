@@ -312,6 +312,7 @@
       ・アメンボは 水面を自由に動けるので、水面に落ちて動けなくなった虫を食べる。そのなかに ウンカの幼虫もいて、田んぼの害虫を減らしてくれる…<a href="https://rice.tanaka-fukui.jp/archives/276" target="_blank" rel="noopener">福井の米づくりのサイト「お米に悪さをする者たちと、それらを成敗してくれる者たち」</a>（ゲームでは 代かきの田んぼの水面に アメンボがいて、こぐたびに小さな輪の波が立ち、トラクターが近づくと逃げる）<br>
       ・半枯れのレンゲを 1㎡ に 2kg ほど（10a に 2 トン）すきこんだ。レンゲは 腐りやすい やわらかい緑肥なので、10 日後に もう一度耕すと 細切れになって 土に入りやすい…<a href="https://brassica.exblog.jp/11191106/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「レンゲすき込み」</a>（ゲームでは 春に「🌸 レンゲの田んぼ」を選ぶと、レンゲの田んぼを耕して すきこむ）<br>
       ・満開のレンゲをすきこんでいたら、2 枚目の田んぼで レンゲにまじった イネ科の草が 爪に巻きついた。そのままだと 軸受けが焼き付くので、2 往復ごとに エンジンを止めて うしろへ回り、からんだ草を取った…<a href="https://ameblo.jp/hunter4436/entry-12024244160.html" target="_blank" rel="noopener">アメブロ「緑肥レンゲを梳き込みました。」</a>（ゲームでは レンゲの田んぼを 2 往復ほど耕すと 草が巻きつき、止まって 作業機を上げると 降りて取る）<br>
+      ・ロータリーを下ろして耕しはじめた所は 高くなり、上げて止めた所は 低くなる（爪が 土をうしろへ けちらしながら耕すから）。はじめは フラップを少し押さえ気味にして 3 秒ほど空回しする。止めた所の穴は、爪の回転を止めて PTO を中立にし、ゆっくり前へ出ると フラップが土を押しこんで うまる…<a href="https://brassica.exblog.jp/32557480/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「トラクターの始発終着」</a>（ゲームでは 耕しはじめの所が 3.5cm 盛り上がり、止めた所が くぼむ。止まって 3 秒空回ししてから走り出すと 盛り上がらない。耕しなおすと ならされる）<br>
       ・春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮き、レーキで埋めようとしても沈まず 田植えに失敗した。その後は 7〜10cm 起こし、代かきを 2 回にした…<a href="https://komeya4th.exblog.jp/28361023/" target="_blank" rel="noopener">米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」</a>（ゲームでは 代かきで 浮き藁が畦ぎわに たくさん寄ると出る）<br>
       ・速く進めば早く終わると思っていたが、自分の田んぼと機械では、速いと 爪が土を十分にまぜられず 浅い耕しになった。ゆっくり進むほど 土が細かくなり、草やワラが むらなく まざる…<a href="https://happy-ricefarm.com/%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E8%80%95%E3%81%97%E3%81%A8%E5%AD%A6%E3%82%93%E3%81%A0%E3%82%B3%E3%83%84/" target="_blank" rel="noopener">happy-ricefarm（ブログ）「初めてのトラクター耕し」</a>（ゲームでは 主変速を 4 速に上げると出る。ゲームの耕す深さは 耕深の設定で決まり、速さで変わるのは 土の細かさ＝耕うんピッチ）<br>
       ・旋回のときは 油圧でロータリーを上げ、回り終わったら すぐ下ろして 爪を ちょうどよい深さに入れる。ここが腕の見せどころで、雑にあつかうと ロータリーをこわす…<a href="https://note.com/toshi_chaki/n/nf21b7ee32ad2" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第1部」</a>（ゲームでは 回り終わっても 上げたまま まだ耕していない所を進むと、下ろす案内が出る）<br>
@@ -1965,13 +1966,14 @@ function clodH(x, z) {                            // その場所で 土塊が �
 }
 const WAVY = new Uint8Array(NX * NZ), WAVD = new Float32Array(NX * NZ);   // 波うったます目と、その波の向き（耕したときの向き）
 const TILTY = new Float32Array(NX * NZ);        // 傾いたハローで かいた所の 高さのずれ（KATA）
+const DIP = new Float32Array(NX * NZ);          // ロータリーを下ろして耕しはじめた所の 盛り上がり（+）と、上げて止めた所の くぼみ（−）（SHIHATSU）
 function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ・UV・法線（wv：波うち。clod：水分が多くて 大きな土塊が残る 0〜1）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   const g = tilled.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nor = g.attributes.normal.array;
   [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].forEach(([x0_, z0_], k) => {
     const [x, z] = warp(x0_, z0_);
     const hx = Math.sin(x * 41.3 + z * 17.1), hz = Math.sin(x * 13.7 - z * 29.3);   // 土塊の面の向き（場所で決まる）
-    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c], z], c * 12 + k * 3);
+    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c] + DIP[c], z], c * 12 + k * 3);
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
     const n = wv ? wv.n(x, z) : [0, 1, 0];
     if (clod > 0) { n[0] += hx * 0.45 * clod; n[2] += hz * 0.45 * clod; const l = Math.hypot(n[0], n[1], n[2]); n[0] /= l; n[1] /= l; n[2] /= l; }   // 大きな土塊の面で 陰がまだらに
@@ -1990,6 +1992,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
     const ty = KATA.y(lx);                        // かきなおすと いまのハローの高さになる（調整したあとは 平らに）
     if (Math.abs(ty - TILTY[c]) > 0.003) { TILTY[c] = ty; setCell(c, null, CLOD[c]); }   // 傾きは 代かきだけ（波うちは 秋だけ）
     if (WAVY[c] && !COVER.stuck) { WAVY[c] = 0; setCell(c, null, CLOD[c]); }   // 直したあとに耕しなおすと 波がならされる
+    if (DIP[c]) { DIP[c] = 0; setCell(c, null, CLOD[c]); }   // 始発の盛り上がり・終着のくぼみも 耕しなおすと ならされる
     if (season === 'aki' && (S.retill = (S.retill || 0) + 1) > 1500) voice('wara');   // 秋：同じ所をもう一度耕している
     if (!SHIRO && (S.odo || 0) - TODO[c] > 1.5 && TILLN[c] < 255 && ++TILLN[c] === 3) overTill(c);   // 作業機がその所をはなれて（1.5m 以上走って）から また来たら 1 回と数える。止まっているあいだは数えない
     TODO[c] = S.odo || 0;
@@ -3233,6 +3236,58 @@ const WRAP = (() => {
     }
   };
   return W;
+})();
+// ---- 始発と終着：ロータリーを下ろして耕しはじめた所は 盛り上がり、上げて耕すのを止めた所は くぼむ（爪が 土をうしろへ
+// けちらしながら耕すから）。はじめは フラップを少し押さえ気味にして 3 秒ほど空回しすると ならせる。止めた所の穴は、爪の回転を止め、
+// PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで うまる（田圃に遊ぶ・・・（エキサイトブログ）
+// 「トラクターの始発終着」https://brassica.exblog.jp/32557480/）。ゲームでは 見た目だけ（高さ 3.5cm）。耕しなおすと ならされる
+const SHIHATSU = (() => {
+  if (SHIRO) return { step() {} };               // 代かきのハローは 水と泥なので 出さない
+  let was = false, spin = 0, pend = null, still = false, odo0 = 0, toldUp = false, toldDown = false;
+  const rotC = () => [S.x + ROTARY_Z * Math.sin(S.yaw), S.z + ROTARY_Z * Math.cos(S.yaw), S.yaw];
+  function mark(x, z, yaw, h) {                   // 作業機の幅 × 前後 60cm の ます目（耕した所）を 上げ下げする
+    const sn = Math.sin(yaw), cs = Math.cos(yaw);
+    const i0 = Math.max(0, Math.floor((x - 1.6 + HX) / CELL)), i1 = Math.min(NX - 1, Math.floor((x + 1.6 + HX) / CELL));
+    const j0 = Math.max(0, Math.floor((z - 1.6 + HZ) / CELL)), j1 = Math.min(NZ - 1, Math.floor((z + 1.6 + HZ) / CELL));
+    let n = 0;
+    for (let i = i0; i <= i1; i++) for (let j = j0; j <= j1; j++) {
+      const c = i * NZ + j;
+      if (!tilledMask[c]) continue;
+      const dx = -HX + (i + 0.5) * CELL - x, dz = -HZ + (j + 0.5) * CELL - z;
+      const lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
+      if (Math.abs(lx) > TILL_W / 2 - 0.05 || Math.abs(lz) > 0.3) continue;
+      DIP[c] = h * Math.cos(lz / 0.3 * Math.PI / 2) * (1 - 0.3 * Math.pow(Math.abs(lx) / (TILL_W / 2), 4));
+      setCell(c, null, CLOD[c]); n++;
+    }
+    return n;
+  }
+  function step(dt, working) {
+    const moving = Math.abs(S.v) > 0.1, odo = S.odo || 0;
+    if (working && !was) { odo0 = odo; spin = 0; still = !moving; pend = moving ? rotC() : null; }   // 下ろした
+    if (working && still) {
+      if (!moving) spin += dt;                    // 止まったまま 空回し
+      else { still = false; pend = spin >= 2.5 ? null : rotC(); odo0 = odo; }   // 3 秒ほど空回ししてから走り出すと 盛り上がらない
+    }
+    if (working && pend && odo - odo0 > 0.8) {    // 走り出して 少し進んでから、はじめの所を盛り上げる
+      const [x, z, yaw] = pend; pend = null;
+      if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, 0.035) && !toldDown) {
+        toldDown = true;
+        toast('ロータリーを下ろして 耕しはじめた所は 土が盛り上がる（爪が 土をうしろへ けちらすから）。止まったまま 3 秒ほど 空回ししてから 走り出すと ならせる（本物は フラップを少し押さえ気味に）', 7);
+        setTimeout(() => voice('shihatsu'), 7500);
+      }
+    }
+    if (!working && was && odo - odo0 > 1) {      // 上げた（耕していた）：止めた所が くぼむ
+      const [x, z, yaw] = rotC();
+      if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, -0.035) && !toldUp) {
+        toldUp = true;
+        toast('ロータリーを上げて 耕すのを止めた所は くぼむ。本物は 爪の回転を止め、PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで 穴がうまる（ゲームでは 耕しなおすと ならされる）', 7);
+        setTimeout(() => voice('shihatsu'), 7500);
+      }
+    }
+    if (!working) pend = null;
+    was = working;
+  }
+  return { step };
 })();
 // ---- 秋：ジャンボタニシ（スクミリンゴガイ）。西尾市をふくむ愛知県でも稲の苗が食べられる被害が多い（愛知県の 2022 年の実証）。
 // 田んぼの土の浅い所にいて（約 8 割が深さ 6cm より浅い：農林水産省）、耕すと 貝がらが掘り起こされ、爪でつぶれた かけらも出る。
@@ -5302,7 +5357,7 @@ function step(dt) {
   }
   S.revHard = (S.revHard || 0) + (hard - (S.revHard || 0)) * Math.min(1, dt * 3);
   if (S.revHard > 0.5 && !S.revTold) { S.revTold = true; toast('PTO 逆転のまま まだ耕していない硬い所に入っています。とても重く、機械をいためる。逆転は 盛り上がった所の土寄せだけ。O で正転にもどして耕そう', 6); }
-  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); WRAP.step(dt, working); SNAILS.step(dt, working); }
+  if (S.started && !S.done) { SCORE.step(dt, working, newCells); SCORE.ramp(dt); WRAP.step(dt, working); SNAILS.step(dt, working); SHIHATSU.step(dt, working); }
   // 部品：車輪・かじ取り・ハンドル・レバー・ペダル
   // 後輪のすべり：田んぼの中では、耕すと土の重さで 4〜6%（湿った田んぼで時速 1.5〜2.5km の測定）、代かきの泥ではもっとすべる
   const inField = Math.abs(S.x) < HX && Math.abs(S.z) < HZ;
@@ -6221,6 +6276,7 @@ const VOICES = {
   hayasa: ['速く進めば 早く終わると思っていたが、自分の田んぼと機械では、速いと 爪が土を十分にまぜられず 浅い耕しになった。ゆっくり進むほど 土が細かくなり、草やワラが むらなく まざる', 'happy-ricefarm（福岡・朝倉で米づくりを始める人のブログ）「初めてのトラクター耕し」'],
   ukiwara: ['春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮いた。レーキで埋めようとしても 沈まず、田植えは失敗。その後は 7〜10cm 起こすようにし、代かきを 2 回にした', '米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」'],
   unikku: ['今年も 山の田んぼで トラクターが はまった。粘土の田で 長靴は役に立たず、はだしで畦を歩いた。クレーンつきのトラック（ユニック車）で 引っぱり、何度か やりなおして 引き上げた', '光男の米（ブログ）「泥んこのトラクター脱出作戦！」'],
+  shihatsu: ['ロータリーを下ろして耕しはじめた所は 高くなり、上げて止めた所は 低くなる。爪が 土をうしろへ けちらしながら耕すから。はじめは フラップを少し押さえ気味にして 3 秒ほど空回しする。止めた所の穴は、爪の回転を止めて PTO を中立にし、ゆっくり前へ出ると フラップが土を押しこんで うまる', '田圃に遊ぶ・・・（エキサイトブログ）'],
   rengemaki: ['満開のレンゲをすきこんでいたら、2 枚目の田んぼで レンゲにまじった イネ科の草が 爪に巻きついた。そのままだと 軸受けが焼き付くので、2 往復ごとに エンジンを止めて うしろへ回り、からんだ草を取った', 'アメブロ「緑肥レンゲを梳き込みました。」'],
   renge: ['半枯れのレンゲを 1㎡ に 2kg ほど（10a に 2 トン）すきこんだ。レンゲは 腐りやすい やわらかい緑肥なので、10 日後に もう一度耕すと 細切れになって 土に入りやすい', '田圃に遊ぶ・・・（エキサイトブログ）'],
   amenbo: ['アメンボは 水面を自由に動けるので、水面に落ちて動けなくなった虫を食べる。そのなかに ウンカの幼虫もいるので、田んぼの害虫を減らしてくれる', '福井の米づくりのサイト（rice.tanaka-fukui.jp）'],
@@ -6594,7 +6650,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { DIFF, SAGE, WARAYAMA, FENCE, RENGE, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); AMENBO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); AMENBO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -1747,6 +1747,13 @@ async function walkTo(page, id) {
       }
       return { during, after, after2, after3, both, gone: !M.banner, ok: !during && after && after2 && after3 && !both };
     });
+    // ゴールの 紙ふぶきは 西尾らしく：お米つぶ・抹茶の 葉・金の つぶ
+    R.checks.goalConfetti = await w.page.evaluate(() => {
+      const M = nishioPixel.maze, n0 = M.fxKinds().length;
+      M.goalFx('');
+      const k = M.fxKinds().slice(n0), c = x => k.filter(y => y === x).length;
+      return { n: k.length, rice: c('rice'), leaf: c('leaf'), gold: c('gold'), ok: k.length === 60 && c('rice') >= 25 && c('leaf') >= 15 && c('gold') >= 5 };
+    });
     // ゴールが 画面の 左右の はしに ある とき：ゴールの 名前が 画面から はみ出して 切れない（自分で 遊んで 分かった：らいすぴあの 店員さんの 名前の 頭が 切れていた）
     R.checks.mzGoalEdge = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), nm = 'らいすぴあの店員さん（らいすぴあ・秀幸）', out = {};
@@ -1874,6 +1881,7 @@ async function walkTo(page, id) {
   need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」が クーポンに 出ない（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
+  need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);
   need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）・シェアが 出ない（${JSON.stringify(c.koroRec)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

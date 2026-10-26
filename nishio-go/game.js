@@ -592,7 +592,7 @@ function talkNpc(id, page = 0) {
   // 話しかけると、この人の話で次の行き先が決まる（同じ人と話し続けている間は変えない）
   // GPS の精度が悪いあいだは、話はできても行き先は変えない（精度が上がってから話しかければ、着いたことになる）
   if (page === 0 && S.parcel && S.parcel.to === n.id) { brief.icons += '📦'; say.push(deliverParcel(n)); }   // あずかった おとどけものを届けた
-  if (page === 0) npcJust.delete(n.id);
+  if (page === 0) { npcJust.delete(n.id); mzNpcShare = null; }   // めいろの ゴールの シェアは、着いた ときの 話（つぎへ の ページも）に だけ
   const seal = page === 0 ? sealGive(n) : '';   // 地区のしるし（その地区を5か所めぐってから、この人と話した）
   if (seal) { brief.icons += '🔖'; say.push(seal); const w = seal.match(/「(.*)」/); if (w) npcJust.set(n.id, `🔖 ${w[1]}`); }
   if (page === 0 && clearGive(n)) { brief.icons += '🏯'; say.push('🏯 西尾さんぽ 殿堂入り！'); }   // 5つのしるしを そろえて、この人と話した（クリア）
@@ -602,7 +602,8 @@ function talkNpc(id, page = 0) {
       const pts = guideReward(S.guide);
       brief.icons += '🎉';
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
-      const ml = [], mb = mazeGoal(n.id, n.name, ml);   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
+      const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
+      if (mz) mzNpcShare = { ...mz, id: n.id };   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
     }
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
@@ -625,13 +626,14 @@ function talkNpc(id, page = 0) {
     toast([brief.icons && `${brief.icons}${got ? ` +${got}pt` : ''}${lv ? ` Lv${lv}` : ''}`, brief.next && `📜 → ${brief.next}${brief.marks ? ` ${brief.marks}` : ''}`].filter(Boolean).join('　'));
   } else if (say.length) toast(say.join('　'));
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
+  const mzBtn = mzNpcShare && mzNpcShare.id === n.id ? '<button type="button" class="btn mini npc-share" data-mz-share>📣 ゴールを シェア</button>' : '';
   if (pic) {
     const dots = `<span class="pg">${pages.map((_, k) => `<i class="${k <= i ? 'on' : ''}"></i>`).join('')}</span>`;
     return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
-    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}" aria-label="つぎへ（${i + 1}/${pages.length}）">${dots} ▼</button>` : `<p class="npc-end">${dots}<span class="vh">（${pages.length}/${pages.length}）おわり</span></p>`}</div>` };
+    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}" aria-label="つぎへ（${i + 1}/${pages.length}）">${dots} ▼</button>` : `<p class="npc-end">${dots}<span class="vh">（${pages.length}/${pages.length}）おわり</span></p>`}${mzBtn}</div>` };
   }
   return { near: true, html: `${head}<p class="npc-say">「${esc(pages[i])}」</p>
-    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}</div>` };
+    ${i < pages.length - 1 ? `<button type="button" class="btn mini npc-next" data-npc="${esc(n.id)}" data-page="${i + 1}">▼ つぎへ（${i + 1}/${pages.length}）</button>` : `<p class="npc-end">（${pages.length}/${pages.length}）</p>`}${mzBtn}</div>` };
 }
 // ふつうの地図：人を絵文字で出す（寄ったときだけ）
 const npcMarkers = new Map();
@@ -662,6 +664,8 @@ document.addEventListener('click', e => {
     e.stopPropagation();
     return;
   }
+  const ms = e.target.closest('[data-mz-share]');   // 人の ゴールの シェア（話の 窓の 上に シェアの 窓）
+  if (ms) { e.stopPropagation(); if (mzNpcShare && window.nishioGo.openShare) { track('share_prompt', { kind: 'mzgoal' }); window.nishioGo.openShare('mzgoal', { mzgoal: mzNpcShare }); } return; }
   const mv = e.target.closest('[data-move-npc]');
   const n = mv && demo && placeNpcs().find(x => x.id === mv.dataset.moveNpc);
   if (n) { const p = npcSpot(n); map.closePopup(); follow = false; onFix(p.lat - 12 / 111320, p.lng, 5, Date.now()); }
@@ -1166,8 +1170,10 @@ const MZ_SHOO_PTS = 3;   // かかしで こわがった カラスを おいは�
 // 地図の めいろの ゴール（行き先の 名所・人）に 着いた：かかった 時間と めいろの 道のり・★・まよわず ゴール、紙ふぶき。
 // lines の 先頭に 行を 足し、ボーナスの ポイントを かえす（名所は checkin、人は 話しかけた とき）
 // バイラルループ（運営者の声「バイラルループを作る」：使う → 画面を投稿する → 見た人が知る → 登録する）：めいろの ゴールで、遊んでいた 画面を 1枚 とっておき、
-// ごほうびの 窓に「📣 シェア」を 出す（share.js の 'mzgoal'。リンクは すぐ 遊べる ?play=1 と、友だちの +20pt）
-let mzShare = null;
+// ごほうびの 窓（名所）・話の 窓（人）に「📣 シェア」を 出す（share.js の 'mzgoal'。リンクは すぐ 遊べる ?play=1 と、友だちの +20pt）。
+// mzShare は いま 着いた ゴールの ぶん だけ：呼んだ 所が takeMzShare() で 受けとり、その ごほうび・話に だけ わたす（あとの 別の ごほうびに 持ちこさない）
+let mzShare = null, mzNpcShare = null;
+const takeMzShare = () => { const m = mzShare; mzShare = null; return m; };
 function snapMaze() {   // ドット絵の 地図の まん中（お米の まわり）を 正方形に 切りだす。どこにも 送らない（シェアの 画像に だけ 使う）
   try {
     const cv = $('pxCanvas');
@@ -1179,6 +1185,7 @@ function snapMaze() {   // ドット絵の 地図の まん中（お米の ま�
   } catch (e) { return null; }
 }
 function mazeGoal(id, name, lines) {
+  mzShare = null;
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
   if (!gl || gl.sec <= 3) return 0;
   let total = 0;
@@ -1258,6 +1265,7 @@ function checkin() {
   if (!day.spots.includes(s.id)) day.spots.push(s.id);
   if (jumpNew) lines.push('🎮 名所でミニゲーム「にしおジャンプ」があそべる（スポットの窓・きろく から）');
   total += mazeGoal(s.id, s.name, lines);   // 地図の めいろの ゴール（行き先の 名所）に 着いた：かかった 時間と めいろの 道のり、紙ふぶき
+  const mz = takeMzShare();   // この ごほうびに だけ シェアの ボタン
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
   // 「はじめてのスポット」：まだ行っていない所がもう無い人は、どのスポットでも達成にする
   if (!v || spots.every(x => x.id === s.id || S.visits[x.id])) day.fresh++;
@@ -1289,7 +1297,7 @@ function checkin() {
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
   const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
-  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot);
+  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot, false, mz);
   reactAsk(s);
   if (s.shop) shopAfter(s);   // ごほうびのあと、当店の窓（営業時間・LINE の常連さまポイント）を出す
   map.closePopup();
@@ -2612,10 +2620,10 @@ const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i
 const react = { pending: null, shown: 0, t: 0 };
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
 const medashiOpen = () => !!document.querySelector('.medashi:not([hidden]), #howto:not([hidden])');   // イベントの窓（田んぼ・古い地図・本のできごと。どれも .medashi）と「あそびかた」。開いている 間の ごほうびは 待って、とじてから 出す
-function showReward(total, name, lines, lvUp, fact, dot, waited) {
+function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz：めいろの ゴールの シェア（takeMzShare）
   if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
     const q = showReward.pending || (showReward.pending = []);
-    q.push([total, name, lines, lvUp, fact, dot, waited]);
+    q.push([total, name, lines, lvUp, fact, dot, waited, mz]);
     if (q.length === 1) setTimeout(function drain() {
       if (medashiOpen() || $('reward').classList.contains('show') || showReward.waiting) { setTimeout(drain, 600); return; }
       const args = q.shift();
@@ -2627,13 +2635,13 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
   const el = $('reward'), D = window.NISHIO_DOTS;
   if (waited !== true) {
     const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
-    if (dot && D && D.ready && !D.ready([dot.id])) { showReward.waiting = gen; D.load([dot.id]).then(() => { if (showReward.waiting === gen) showReward.waiting = 0; if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
+    if (dot && D && D.ready && !D.ready([dot.id])) { showReward.waiting = gen; D.load([dot.id]).then(() => { if (showReward.waiting === gen) showReward.waiting = 0; if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true, mz); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
   }
   showReward.waiting = 0;
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   // うれしい場面（はじめて見つけた絵・レベルアップ）には「シェア」のボタン（share.js。押すとシェアの窓）
-  const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : mzShare && !mzShare.shown && Date.now() - mzShare.t < 15000 ? 'mzgoal' : '';   // めいろの ゴール：遊んだ 画面を シェア（ゴールの ごほうびの 1回だけ）
-  if (shareKind === 'mzgoal') mzShare.shown = true;
+  const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : mz ? 'mzgoal' : '';   // めいろの ゴール：遊んだ 画面を シェア
+  showReward.mz = shareKind === 'mzgoal' ? mz : null;
   const shareBtn = shareKind ? `<button type="button" class="btn mini rw-share" data-rw-share="${shareKind}"${shareKind === 'dot' ? ` data-dot="${dot.id}"` : ''}>📣 シェア</button>` : '';
   const stay = shareKind ? 7000 : 0;   // シェアのボタンがあるときは長めに出す（.rw.long の7秒のアニメーションに合わせる）
   if (simple()) {
@@ -2676,7 +2684,7 @@ function hideReward() {
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');
   hideReward();
-  if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null, mzgoal: b.dataset.rwShare === 'mzgoal' ? mzShare : null }); }
+  if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null, mzgoal: b.dataset.rwShare === 'mzgoal' ? showReward.mz : null }); }
 });
 
 /* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。ぜんぶ Blender で作った絵） ----------
@@ -3922,7 +3930,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
-  set mzShareTest(v) { mzShare = v; }, snapMaze,   // テスト用：めいろの ゴールの シェア（mzShare）を 置く・遊んでいる 画面を とる
+  snapMaze, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,

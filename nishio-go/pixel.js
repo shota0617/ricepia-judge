@@ -7774,7 +7774,8 @@ function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面�
 // ・茶畑の そば → 丸く 刈りこんだ 茶の木（西尾の 抹茶）・川や 池の そば → 石垣・西尾城跡から 800m 以内の 町なか → 黒塀（城下町）・そのほか → いつもの 生け垣
 // ・地区ごと（店主「地区ごとの生垣も」。地区は その場所に いちばん 近い 注目スポットの 地区＝dots.js の areaOf。地区の 紹介 areas.json に そろえる）：
 //   一色 → 漁網の 垣（漁港・うなぎの 養殖池。水の そばも 網）・吉良 → 土手（堤防づくりの 名君）・幡豆 → 松の 垣（三ヶ根山と 国定公園の 海べ）・佐久島 → 黒塀（島の 黒壁の 集落）
-const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro', 'ami', 'dote', 'matsu'], MZ_CASTLE_R = 800 / TILE_M;
+// ・田んぼの そば → 稲の 垣（店主「さらに西尾らしく」。西尾は 田んぼの 町。こよみの 田んぼと そろえて 青田・水田は 緑の 稲、実りは 黄金の 穂、刈田・田おこしは はざ掛けの 稲わら）
+const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro', 'ami', 'dote', 'matsu', 'ine'], MZ_CASTLE_R = 800 / TILE_M;
 const MZ_AREA_STYLE = { isshiki: 'ami', kira: 'dote', hazu: 'matsu', sakushima: 'kuro' };
 function mzArea0(cx, cy) {   // マスの 地区（西尾市の 中だけ。わからなければ ''）。null：まだ わからない（名所や 地区の しくみが 読めて いない）
   const D = window.NISHIO_DOTS;
@@ -7788,20 +7789,20 @@ function mzStyle(cx, cy) {
   const k = cx + ',' + cy;
   let v = mzStyleC.get(k);
   if (v) return v;
-  let tea = 0, water = 0, town = 0, unread = 0;
+  let tea = 0, water = 0, town = 0, paddy = 0, unread = 0;
   for (let j = -1; j <= MZ_K; j++) for (let i = -1; i <= MZ_K; i++) {
     const c = codeAt(cx * MZ_K + i, cy * MZ_K + j);
-    if (c === C.X) unread++; else if (c === C.E) tea++; else if (c === C.A) water++; else if (c === C.T || c === C.Q || c === C.B) town++;
+    if (c === C.X) unread++; else if (c === C.E) tea++; else if (c === C.A) water++; else if (c === C.T || c === C.Q || c === C.B) town++; else if (c === C.F || c === C.U) paddy++;
   }
   if (!mzCastle) { const sp = (G.spots || []).find(p => p.id === 'f-nishio-castle'); if (sp) mzCastle = toTile(sp.lat, sp.lng); }
   const castle = mzCastle && Math.hypot((cx + 0.5) * MZ_K - mzCastle.x, (cy + 0.5) * MZ_K - mzCastle.y) < MZ_CASTLE_R;
   const area = mzArea0(cx, cy), as = area && MZ_AREA_STYLE[area];
-  v = tea >= 3 ? 'cha' : water >= 4 ? (as === 'ami' ? 'ami' : 'ishi') : as || (castle && town >= 6 ? 'kuro' : 'ike');
+  v = tea >= 3 ? 'cha' : water >= 4 ? (as === 'ami' ? 'ami' : 'ishi') : as || (castle && town >= 6 ? 'kuro' : paddy >= 10 ? 'ine' : 'ike');   // 田んぼ：まわり 25マス（5×5）の うち 10マス 以上
   if (!unread && mzCastle && area !== null) mzStyleC.set(k, v);   // 地図・名所・地区が わかってから おぼえる（まだなら あとで きめなおす）
   return v;
 }
 function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱの 模様（16×16 点・地図に くっついて 動く）。春は ところどころ つつじの 花
-  const spring = mapSeason() === 0, key = style + (spring ? 's' : 'n');
+  const spring = mapSeason() === 0, key = style + (spring ? 's' : 'n') + (style === 'ine' ? PADDY_TILE : '');   // 稲の 垣は 田んぼの ようすごとに
   if (!mzLayer.pats) mzLayer.pats = {};
   if (!mzLayer.pats[key]) {
     const c = document.createElement('canvas'); c.width = c.height = 16;
@@ -7825,6 +7826,19 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
     } else if (style === 'matsu') {   // 松の 垣（幡豆）：こい 緑の 枝葉と 茶色の 幹
       px('#1f4a36', 0, 0, 16, 16);
       for (let i = 0; i < 36; i++) { const r = rn(); px(r < 0.5 ? '#2f6448' : r < 0.85 ? '#4a8a5e' : '#7a5236', (rn() * 16) | 0, (rn() * 16) | 0, 2, 1); }
+    } else if (style === 'ine') {   // 稲の 垣：こよみの 田んぼに あわせる
+      if (PADDY_TILE === 'gold') {   // 実り：黄金の 穂が 頭を たれる
+        px('#a8892e', 0, 0, 16, 16);
+        for (let i = 0; i < 44; i++) { const r = rn(); px(r < 0.3 ? '#8a6f22' : r < 0.8 ? '#d8b84e' : '#f0d878', (rn() * 16) | 0, (rn() * 16) | 0, 1, 1 + (rn() < 0.6)); }   // 穂の かげ・穂・てかり
+      } else if (PADDY_TILE === 'stubble' || PADDY_TILE === 'soil') {   // 刈田・田おこし：はざ掛け（木の 横木に 稲わらの 束）
+        px('#8a6a44', 0, 0, 16, 16);
+        for (let a = 0; a < 16; a += 8) px('#5a3e26', 0, a + 1, 16, 1);   // 横木
+        for (let a = 0; a < 16; a += 2) for (const b of [2, 10]) { px('#d8c27a', a, b, 1, 4); px('#b89a52', a + 1, b, 1, 4); }   // 稲わらの 束
+      } else {   // 青田・水田：すじに ならんだ 緑の 稲
+        px('#4f8a2e', 0, 0, 16, 16);
+        for (let a = 0; a < 16; a += 3) for (let b = 0; b < 16; b++) if (rn() < 0.8) px(rn() < 0.6 ? '#7cbf45' : '#9ad25e', a, b, 1, 1);   // 株の すじ
+        for (let i = 0; i < 10; i++) px('#3a6e22', (rn() * 16) | 0, (rn() * 16) | 0);
+      }
     } else if (style === 'kuro') {   // 黒塀：焼き杉の 板の 黒と、ところどころ しっくいの 白い 笠
       px('#2a2724', 0, 0, 16, 16);
       for (let a = 0; a < 16; a += 4) { px('#3a3530', a, 0, 1, 16); px('#1c1a18', a + 3, 0, 1, 16); }

@@ -258,7 +258,7 @@
       ・まず田んぼのまん中を<b>往復</b>して耕し、まわりは耕幅の 2.5〜3 倍（外周 3 周分）残しておく。最後に<b>外周を 3 周</b>して仕上げる。角では少しバックして向きを変える<br>
       ・となりの耕した跡に 10cm ほど重ねて、耕し残しを作らない。タイヤの跡は次の周で耕して消す<br>
       ・田んぼから道へ出る前に、タイヤとロータリーの泥を落とす。道に落ちた泥のかたまりは、車や自転車・歩く人のじゃまになる。田んぼの中の平らな所で止まり、エンジンを切って駐車ブレーキをかけ、爪が止まってから、竹ヘラなどで落とす。上げた作業機は エンジンを止めても油圧で下がることがあるので、油圧ロック（降下止め）をかけて台でささえ、下に手や体を入れない（<a href="https://www.naro.go.jp/org/iam/anzenweb/kiken/kiken.html" target="_blank" rel="noopener">農研機構の農作業安全</a>）（<a href="https://www.city.kumamoto.jp/kiji00342791/index.html" target="_blank" rel="noopener">熊本市</a>・<a href="https://www.city.iwaki.lg.jp/www/contents/1621398326632/files/pamphlet.pdf" target="_blank" rel="noopener">いわき市</a>のお願い）。ゲームでは止まって上げてから <kbd>V</kbd>（スマホは「泥落とし」）。耕していない固い所を少し走っても落ちる<br>
-      ・ぬかるみで 片方の後輪だけが空回りしたら、ハンドルをまっすぐにして デフロック（左右の後輪を同じ回転にするペダル）を踏み、ゆっくり出る。旋回と道路では はなす（左右が同じに回って 曲がれない）。深く沈んでからでは効かないので、むりに空回りさせない（<a href="https://www.naro.go.jp/org/iam/anzenweb/point/point_pdf/tra_01.pdf" target="_blank" rel="noopener">農研機構「農作業安全ポイント（乗用トラクター）」</a>）<br>
+      ・ぬかるみで 片方の後輪だけが空回りしたら、デフロック（左右の後輪を同じ回転にするペダル）を使う。旋回と道路では はなす（左右が同じに回って 曲がれない）（<a href="https://www.naro.go.jp/org/iam/anzenweb/point/point_pdf/tra_01.pdf" target="_blank" rel="noopener">農研機構「農作業安全ポイント（乗用トラクター）」</a>）。空回りしている最中に踏むと デフが傷むので、アクセルをもどして 空回りを止め、エンジンの回転を下げてから踏む（<a href="https://media.kubota.io/uploads/BX1880-BX2380-BX2680-Tractor-Operator-Manual.pdf#page=55" target="_blank" rel="noopener">クボタ BX の取扱説明書</a>。使い方は 機種の取扱説明書で）。深く沈んでからでは効かないので、むりに空回りさせない<br>
       ・ロータリーを下げたまま大きく曲がると、土が外側へ寄って四隅が盛り上がる。角では上げてから回り、まっすぐ耕しなおすとならせる<br>
       ・代かきのハローを 旋回でも下げたままにする農家さんもいる。旋回上昇と倍速ターンを切り、回る前に 直進より速さを落とす。畦が近づいたら 深さ・傾きの自動も切る（<a href="https://note.com/wkpxk085/n/n01bee10678c3" target="_blank" rel="noopener">眞木優さん（note）</a>）。ただし 旋回のときは上げるよう書いてある取扱説明書もあるので、本物は 自分のトラクターとハローの取扱説明書（旋回上昇の設定も）にしたがう。ゲームでは 下げたまま 時速 2km までで回ると減点しない（倍速ターンは いつも減点：かんたんにしてある）<br>
       ・枕地（田んぼのはし）で回るときは、ロータリーを上げてハンドルをいっぱいに切る。内側の後輪に半ブレーキ（オートブレーキ）がかかり、前輪を 35° より大きく切ると前輪が後輪の約 2 倍の速さで回る（倍速ターン）ので、小さく回れて枕地がせまくてすむ。モニターに「倍速」と出る（<kbd>T</kbd> で入切）<br>
@@ -2432,15 +2432,22 @@ const BACKCHK = (() => {
 })();
 // デフロック：左右の後輪を 同じ回転でまわす。ぬかるみで 片方の後輪だけが空回りしたとき、踏んでいるあいだだけ効くペダル（J・「デフロック」）。
 // 旋回や道路では はなす（左右が同じに回るので 曲がりにくい）。深く沈んでからでは 両方が空回りして 効かない
+// 空回りしている最中には踏まない：アクセルをもどして 空回りを止め、回転を下げてから踏む（クボタ BX の取扱説明書）
 // （農研機構 農作業安全情報センター「農作業安全ポイント（乗用トラクター）」・のらくら農園のブログ「トラクター沈没。」）
 const DIFF = (() => {
-  let turnT = 0, told = false;
+  let turnT = 0, told = false, prev = false, engaged = false;
   const label = () => MOBILE || params.has('pad') ? '「デフロック」' : 'J';
   return {
     label,
     show() { $('bDiff').classList.remove('hidden'); },   // スマホ：空回りを知らせてから 出す
     step(dt) {
-      S.diffLock = !!key.diff && !S.stalled && !(S.crank > 0);
+      // 片方の後輪が空回りしている最中に踏むと デフが傷む：アクセルをもどして 空回りを止めてから踏む（クボタ BX の取扱説明書）
+      if (key.diff && !prev) {
+        engaged = !((key.fwd || key.back) && HAMARU.slipping);
+        if (!engaged) toast('空回りしている最中に デフロックを踏まない（デフが傷む）。' + (MOBILE || params.has('pad') ? '▲▼' : 'アクセル（↑↓）') + 'をはなして 空回りを止めてから 踏みなおす', 5);
+      }
+      prev = !!key.diff; if (!key.diff) engaged = false;
+      S.diffLock = engaged && !S.stalled && !(S.crank > 0);
       turnT = S.diffLock && Math.abs(S.steer) > 0.45 && Math.abs(S.v) > 0.1 ? turnT + dt : 0;
       if (turnT > 0.8 && !told) { told = true; toast('デフロックを押したまま 曲がろうとしている。左右の後輪が同じに回るので 曲がらず、まっすぐ押される。旋回と道路では はなす', 6); }
     },
@@ -2476,11 +2483,11 @@ const HAMARU = (() => {
       acc = Math.max(0, acc + (hard ? dt : grip ? -dt * 1.2 : -dt * 0.05));
       if (acc > 0.8 && !slipTold) {                // 片方の後輪が 空回りしはじめた（まだ はまってはいない）
         slipTold = true; DIFF.show();
-        toast('片方の後輪が 空回りしはじめた。ハンドルを まっすぐにもどし、デフロック（' + DIFF.label() + '）を押しながら出ると、左右の後輪が いっしょに回って 抜けやすい', 6);
+        toast('片方の後輪が 空回りしはじめた。アクセルをはなして 空回りを止め、ハンドルを まっすぐにしてから デフロック（' + DIFF.label() + '）を押し、ゆっくり出ると 左右の後輪が いっしょに回って 抜けやすい', 7);
       }
       if (acc > 1.6) {
         S.stuck = true; S.v = 0; idle = 0; S.stuckSink = 0.05; esc = 0; DIFF.show();
-        if (!told) { told = true; toast('はまった！ 後輪が泥に沈んで 進めない。沈みきる前なら、デフロックで まっすぐ出られることもある。むりに空回りさせると もっと沈んで デフロックも効かない。' + IMPL + 'を上げて アクセルをはなして待つと、応援のトラクターを呼ぶ', 7); }
+        if (!told) { told = true; toast('はまった！ 後輪が泥に沈んで 進めない。沈みきる前なら、アクセルをはなし まっすぐにして デフロックを押してから ゆっくり出られることもある。むりに空回りさせると もっと沈んで デフロックも効かない。' + IMPL + 'を上げて 手をぜんぶはなして待つと、応援のトラクターを呼ぶ', 7); }
       }
       return;
     }
@@ -2490,11 +2497,12 @@ const HAMARU = (() => {
       if ((esc += dt) > 1.5) { S.stuck = false; S.stuckSink = 0; acc = 0; esc = 0; toast('デフロックで 抜けた！ 抜けたら すぐ はなす（押したままだと 曲がれない）', 5); }
       return;
     }
-    if (key.fwd || key.back) {                      // 空回り：さらに沈む
-      idle = 0; S.stuckSink = Math.min(0.14, S.stuckSink + dt * 0.02);
+    if (key.fwd || key.back) {                      // 空回り：さらに沈む（エンジンが止まっている・かけなおしているあいだは 車輪が回らないので 沈まない）
+      idle = 0;
+      if (!S.stalled && !(S.crank > 0)) S.stuckSink = Math.min(0.14, S.stuckSink + dt * 0.02);
       if (S.diffLock && S.stuckSink > 0.07 && !deepTold) {   // 沈みすぎると デフロックでも 両方が空回り
         deepTold = true;
-        toast('もう深く沈んで、デフロックでも 両方の後輪が 空回りするだけ。' + IMPL + 'を上げて アクセルをはなして待つと、応援のトラクターを呼ぶ', 6);
+        toast('もう深く沈んで、デフロックでも 両方の後輪が 空回りするだけ。' + IMPL + 'を上げて、アクセル・デフロック・ハンドルから 手をはなして待つと、応援のトラクターを呼ぶ', 6);
         setTimeout(() => voice('deflock'), 6500);
       }
     }
@@ -2505,7 +2513,7 @@ const HAMARU = (() => {
     }
   }
   function reset() { acc = 0; idle = 0; rescueT = 0; esc = 0; S.stuck = false; S.stuckSink = 0; }   // はじめの場所へもどしたとき
-  return { bump, step, reset, get rescuing() { return rescueT > 0; } };
+  return { bump, step, reset, get rescuing() { return rescueT > 0; }, get slipping() { return S.stuck || acc > 0.8; } };
 })();
 // 洗車：作業のあと、泥まみれのままにしない。高圧洗浄機で大きな泥 → ブラシとシャンプーで車体とタイヤ → 乾かしてから車内をエアダスター → ロータリーの土も落とす。
 // 清潔にしておくと長持ちし、異常にも気づきやすい（マルカワみそ農園（note）「トラクタの洗車」：洗っていて 爪の摩耗に気づいて発注）。ゲームでは おわりの画面から その場で
@@ -5972,9 +5980,9 @@ const COACH = (() => {
     if (S.parked && (BELT.fixing || BELT.broken)) return S.rotDown ? ['!', K('エンジンが止まった：<kbd>スペース</kbd>で' + IMPL + 'を上げる', 'エンジンが止まった：' + IMPL + 'を上げる')]
       : ['…', 'エンジンを切って、切れたファンベルトを交換しています'];
     if (HAMARU.rescuing) return ['…', '応援のトラクターが ロープで引っぱっています'];
-    if (S.stuck && S.stuckSink <= 0.07 && !HAMARU.rescuing) return ['!', K('はまった：沈みきる前なら ハンドルをまっすぐにして <kbd>J</kbd>（デフロック）を押しながら <kbd>↑</kbd> か <kbd>↓</kbd>。だめなら' + IMPL + 'を上げて 応援を呼ぶ', 'はまった：沈みきる前なら まっすぐにして「デフロック」を押しながら ▲ か ▼。だめなら' + IMPL + 'を上げて 応援を呼ぶ')];
+    if (S.stuck && S.stuckSink <= 0.07 && !HAMARU.rescuing) return ['!', K('はまった：沈みきる前なら <kbd>↑</kbd><kbd>↓</kbd> をはなし、まっすぐにして <kbd>J</kbd>（デフロック）を押してから ゆっくり <kbd>↑</kbd> か <kbd>↓</kbd>。だめなら' + IMPL + 'を上げて 手をはなして待つ', 'はまった：沈みきる前なら ▲▼ をはなし、まっすぐにして「デフロック」を押してから ゆっくり ▲ か ▼。だめなら' + IMPL + 'を上げて 手をはなして待つ')];
     if (S.stuck && S.rotDown) return ['!', K('はまった：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる（上げてから 応援を呼ぶ）', 'はまった：まず ' + IMPL + 'を上げる（上げてから 応援を呼ぶ）')];
-    if (S.stuck) return ['!', K('はまった：<kbd>↑</kbd><kbd>↓</kbd> をはなして待つと 応援を呼ぶ（空回りは もっと沈む）', 'はまった：▲▼ をはなして待つと 応援を呼ぶ（空回りは もっと沈む）')];
+    if (S.stuck) return ['!', K('はまった：<kbd>↑</kbd><kbd>↓</kbd>・ハンドル・<kbd>J</kbd> から手をはなして待つと 応援を呼ぶ（空回りは もっと沈む）', 'はまった：▲▼・ハンドル・「デフロック」から手をはなして待つと 応援を呼ぶ（空回りは もっと沈む）')];
     if (S.parked && COVER.fixing) return ['…', 'エンジンを切って、リヤカバーのワイヤーとアームの根元に オイルスプレーを吹いています'];
     if (S.parked && KATA.fixing) return ['…', '降下止めをかけて ハローの中心と チェックチェーンを合わせ、傾きスイッチで 水平を覚えさせています'];
     if (S.parked && KATA.fixed && !(S.scrape > 0)) return ['!', K('ハローを水平にした：<kbd>↑</kbd> でエンジンをかける', 'ハローを水平にした：▲ でエンジンをかける')];

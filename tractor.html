@@ -4381,51 +4381,72 @@ const AMENBO = (() => {
   if (!SHIRO || TOD === 'yoru' || RAIN) return { update() {}, setWater() { return 0; } };   // 雨の日は 水面が雨の輪でいっぱい。夜は見えない
   const N = MOBILE ? 12 : 24, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
   const mat = new THREE.MeshLambertMaterial({ color: 0x2b241c });
+  const leg = L => new THREE.BoxGeometry(0.0012, 0.001, L).translate(0, 0, L / 2);   // つけねから外へのびる脚
   const body = new THREE.InstancedMesh(new THREE.BoxGeometry(0.004, 0.003, 0.016), mat, N);   // からだ（1.5cm ほど、細長い）
-  const legA = new THREE.InstancedMesh(new THREE.BoxGeometry(0.05, 0.001, 0.0012), mat, N * 2);   // 中脚・後脚：長く、水面に ひろげる
-  for (const im of [body, legA]) { im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.count = 0; scene.add(im); }   // 水たまりがわかってから出す
+  const legM = new THREE.InstancedMesh(leg(0.024), mat, N * 2);   // 中脚：オールのように こぐ
+  const legH = new THREE.InstancedMesh(leg(0.02), mat, N * 2);    // 後脚：うしろへのばして かじをとる
+  const IMS = [body, legM, legH];
+  for (const im of IMS) { im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; im.count = 0; scene.add(im); }   // 水たまりがわかってから出す
   // 水があるのは：かいた所（泥水）と、まだかいていない所の 水たまり（土の面が 代かき前の水面 0.006 より低い所）。
-  // 田んぼの土の形（glb）を 0.5m ごとに平均して、水たまりの ます目を出す
-  const BIN = 0.5, BW = Math.ceil(2 * HX / BIN), BH = Math.ceil(2 * HZ / BIN), pond = new Uint8Array(BW * BH);
+  // 田んぼの土の形（glb の三角形）を 10cm ごとの高さの表にして、その場所の土が 水面より低いかで決める
+  const G = 0.1, GW = Math.ceil(2 * HX / G), GH = Math.ceil(2 * HZ / G), hgt = new Float32Array(GW * GH).fill(1);
+  const soilAt = (x, z) => {
+    const a = Math.floor((x + HX) / G), b = Math.floor((z + HZ) / G);
+    return a >= 0 && b >= 0 && a < GW && b < GH ? hgt[a * GH + b] : 1;
+  };
   const water = (x, z) => {
     const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
     if (i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j]) return true;
-    const bi = Math.floor((x + HX) / BIN), bj = Math.floor((z + HZ) / BIN);
-    return bi >= 0 && bj >= 0 && bi < BW && bj < BH && pond[bi * BH + bj] === 1;
+    return soilAt(x, z) < 0.0045;                   // 水が 1.5mm 以上ある
   };
   const list = [];
   function setWater(root) {                         // 田んぼの土（soil_untilled）を読んだあとに よぶ
-    const sum = new Float32Array(BW * BH), cnt = new Uint16Array(BW * BH), v = new THREE.Vector3();
+    const A = new THREE.Vector3(), B = new THREE.Vector3(), C = new THREE.Vector3();
     root.traverse(o => {
       if (!o.isMesh || o.material.name !== 'soil_untilled') return;
       o.updateWorldMatrix(true, false);
-      const P = o.geometry.attributes.position;
-      for (let n = 0; n < P.count; n++) {
-        v.fromBufferAttribute(P, n).applyMatrix4(o.matrixWorld);
-        const bi = Math.floor((v.x + HX) / BIN), bj = Math.floor((v.z + HZ) / BIN);
-        if (bi < 0 || bj < 0 || bi >= BW || bj >= BH) continue;
-        sum[bi * BH + bj] += v.y; cnt[bi * BH + bj]++;
+      const P = o.geometry.attributes.position, I = o.geometry.index, nt = I ? I.count / 3 : P.count / 3;
+      for (let t = 0; t < nt; t++) {                 // 三角形ごとに、中に入る ます目のまん中の高さを 内分で求める
+        A.fromBufferAttribute(P, I ? I.getX(t * 3) : t * 3).applyMatrix4(o.matrixWorld);
+        B.fromBufferAttribute(P, I ? I.getX(t * 3 + 1) : t * 3 + 1).applyMatrix4(o.matrixWorld);
+        C.fromBufferAttribute(P, I ? I.getX(t * 3 + 2) : t * 3 + 2).applyMatrix4(o.matrixWorld);
+        const det = (B.z - C.z) * (A.x - C.x) + (C.x - B.x) * (A.z - C.z);
+        if (Math.abs(det) < 1e-9) continue;
+        const a0 = Math.max(0, Math.floor((Math.min(A.x, B.x, C.x) + HX) / G)), a1 = Math.min(GW - 1, Math.floor((Math.max(A.x, B.x, C.x) + HX) / G));
+        const b0 = Math.max(0, Math.floor((Math.min(A.z, B.z, C.z) + HZ) / G)), b1 = Math.min(GH - 1, Math.floor((Math.max(A.z, B.z, C.z) + HZ) / G));
+        for (let a = a0; a <= a1; a++) for (let b = b0; b <= b1; b++) {
+          const x = -HX + (a + 0.5) * G, z = -HZ + (b + 0.5) * G;
+          const l1 = ((B.z - C.z) * (x - C.x) + (C.x - B.x) * (z - C.z)) / det, l2 = ((C.z - A.z) * (x - C.x) + (A.x - C.x) * (z - C.z)) / det, l3 = 1 - l1 - l2;
+          if (l1 < -1e-6 || l2 < -1e-6 || l3 < -1e-6) continue;
+          hgt[a * GH + b] = l1 * A.y + l2 * B.y + l3 * C.y;
+        }
       }
     });
-    const ponds = [];
-    for (let c = 0; c < BW * BH; c++) if (cnt[c] && sum[c] / cnt[c] < 0.0) { pond[c] = 1; ponds.push(c); }
-    for (let k = 0; k < N && ponds.length; k++) {   // 水たまりに 2〜3 匹ずつ
-      const c = ponds[Math.floor(Math.random() * ponds.length)];
-      const x = -HX + (Math.floor(c / BH) + 0.5) * BIN, z = -HZ + (c % BH + 0.5) * BIN;
-      for (let m = 0; m < 3 && list.length < N; m++, k++) list.push({ x: x + (Math.random() - 0.5) * 0.3, z: z + (Math.random() - 0.5) * 0.3, vx: 0, vz: 0, yaw: Math.random() * 6.28, w: Math.random() * 1.5, flee: false });
+    const ponds = [];                               // 置く所：まわり 3cm も 水が 2mm 以上ある ます目
+    for (let c = 0; c < GW * GH; c++) {
+      const x = -HX + (Math.floor(c / GH) + 0.5) * G, z = -HZ + (c % GH + 0.5) * G;
+      if (Math.abs(x) < HX - 0.5 && Math.abs(z) < HZ - 0.5 && hgt[c] < 0.004 && [[0.03, 0], [-0.03, 0], [0, 0.03], [0, -0.03]].every(([dx, dz]) => soilAt(x + dx, z + dz) < 0.004)) ponds.push([x, z]);
     }
-    body.count = list.length; legA.count = list.length * 2;
+    while (list.length < N && ponds.length) {       // 水たまりに 1〜3 匹ずつ
+      const [x, z] = ponds[Math.floor(Math.random() * ponds.length)];
+      for (let m = 0, n = 1 + Math.floor(Math.random() * 3); m < n && list.length < N; m++) {
+        const px = x + (Math.random() - 0.5) * 0.06, pz = z + (Math.random() - 0.5) * 0.06;
+        if (water(px, pz)) list.push({ x: px, z: pz, vx: 0, vz: 0, yaw: Math.random() * 6.28, w: Math.random() * 1.5, st: 9, flee: false });
+      }
+    }
+    body.count = list.length; legM.count = legH.count = list.length * 2;
     return ponds.length;
   }
   let told = false;
+  const put = (im, n, x, y, z, a) => { e.set(0, a, 0); q.setFromEuler(e); m4.compose(v3.set(x, y, z), q, one); im.setMatrixAt(n, m4); };
   function update(dt) {
     const sx = S.x - Math.sin(S.yaw) * 0.5, sz = S.z - Math.cos(S.yaw) * 0.5;
     list.forEach((u, k) => {
       const d = Math.hypot(u.x - sx, u.z - sz), near = d < 3.5;
+      u.st += dt;
       if ((u.w -= dt) <= 0 || near && !u.flee) {     // こぐ：ふだんは 0.4〜1.6 秒ごと。トラクターが近いと すぐ 強く逃げる
         const a = near ? Math.atan2(u.x - sx, u.z - sz) + (Math.random() - 0.5) * 0.8 : u.yaw + (Math.random() - 0.5) * 2;
-        const sp = near ? 0.9 : 0.25 + Math.random() * 0.2;
-        u.vx = Math.sin(a) * sp; u.vz = Math.cos(a) * sp; u.yaw = a; u.flee = near;
+        u.yaw = a; u.flee = near; u.st = 0; u.sp = near ? 0.9 : 0.25 + Math.random() * 0.2;
         u.w = near ? 0.25 : 0.4 + Math.random() * 1.2;
         RIPPLE.ring(u.x, u.z, near ? 0.4 : 0.25, 0.015, 0.7, 0.12);   // こいだ所に 小さな輪
         if (near && !told && Math.abs(S.v) > 0.1) {
@@ -4435,23 +4456,26 @@ const AMENBO = (() => {
         }
       }
       if (!near) u.flee = false;
-      const f = Math.exp(-2.5 * dt);                 // こいだあとは すーっと すべって止まる
-      u.vx *= f; u.vz *= f;
+      if (u.st < 0.12) { u.vx = Math.sin(u.yaw) * u.sp * u.st / 0.12; u.vz = Math.cos(u.yaw) * u.sp * u.st / 0.12; }   // 中脚で水をかくあいだに 速くなる
+      else { const f = Math.exp(-2.5 * dt); u.vx *= f; u.vz *= f; }   // かいたあとは すーっと すべって止まる
       const nx = u.x + u.vx * dt, nz = u.z + u.vz * dt;
       if (Math.abs(nx) < HX - 0.3 && Math.abs(nz) < HZ - 0.3 && water(nx, nz)) { u.x = nx; u.z = nz; }
-      else { u.vx *= -0.5; u.vz *= -0.5; }          // 水のはし（土くれ・畦）では はね返る
+      else { u.vx *= -0.5; u.vz *= -0.5; u.yaw += Math.PI; u.st = Math.max(u.st, 0.12); }   // 水のはし（土くれ・畦）では はね返る
       const i = Math.floor((u.x + HX) / CELL), j = Math.floor((u.z + HZ) / CELL);
       const y = (i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.006) + 0.002;   // 水面の上
-      e.set(0, u.yaw, 0); q.setFromEuler(e);
-      m4.compose(v3.set(u.x, y + 0.001, u.z), q, one); body.setMatrixAt(k, m4);
-      for (let l = 0; l < 2; l++) {                  // 脚は X の字に ひろげる
-        e.set(0, u.yaw + (l ? 0.55 : -0.55), 0); q.setFromEuler(e);
-        m4.compose(v3.set(u.x, y, u.z), q, one); legA.setMatrixAt(k * 2 + l, m4);
+      put(body, k, u.x, y + 0.001, u.z, u.yaw);
+      // 中脚：ふだんは 前よりに ひろげ、こぐときは うしろへ払って（0.12 秒）、ゆっくり前へ もどす（0.23 秒）。後脚は うしろへ のばしたまま
+      const p = u.st, bm = p < 0.12 ? 1.15 + 0.85 * p / 0.12 : p < 0.35 ? 2.0 - 0.85 * (p - 0.12) / 0.23 : 1.15;
+      const fx = Math.sin(u.yaw), fz = Math.cos(u.yaw);
+      for (let l = 0; l < 2; l++) {
+        const sg = l ? 1 : -1;
+        put(legM, k * 2 + l, u.x + fx * 0.002, y, u.z + fz * 0.002, u.yaw + sg * bm);
+        put(legH, k * 2 + l, u.x - fx * 0.003, y, u.z - fz * 0.003, u.yaw + sg * 2.6);
       }
     });
-    body.instanceMatrix.needsUpdate = legA.instanceMatrix.needsUpdate = true;
+    for (const im of IMS) im.instanceMatrix.needsUpdate = true;
   }
-  return { update, list, setWater, water };
+  return { update, list, setWater, water, soilAt };
 })();
 
 const FROGS = (() => {

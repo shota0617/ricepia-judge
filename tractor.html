@@ -1933,12 +1933,8 @@ let dirtyLo = Infinity, dirtyHi = -1;
 const TILLN = new Uint8Array(NX * NZ), TODO = new Float32Array(NX * NZ);   // 耕した回数（通った回数）と、さいごに耕したときの走った道のり
 let overTilled = 0;
 function overTill(c) {
-  const i = (c / NZ) | 0, j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, pos = tilled.geometry.attributes.position.array;
-  [[x0, z0], [x0 + CELL, z0], [x0 + CELL, z0 + CELL], [x0, z0 + CELL]].forEach(([a, b], k) => {
-    const [x, z] = warp(a, b);
-    pos[c * 12 + k * 3 + 1] = TILL_Y + 0.25 * jitter(x, z);   // 土くれがなくなって 平らに
-  });
-  if (WAVY[c] || CLOD[c]) { WAVY[c] = 0; CLOD[c] = 0; const nor = tilled.geometry.attributes.normal.array; for (let k = 0; k < 4; k++) nor.set([0, 1, 0], c * 12 + k * 3); }   // 平らになったので 波も土塊もない
+  const x0 = -HX + ((c / NZ) | 0) * CELL, z0 = -HZ + (c % NZ) * CELL;
+  WAVY[c] = 0; setCell(c, null, 0);              // 土くれがなくなって 平らに（波も土塊も消える。二山盛りの山は 残る）
   const wet = RAIN || WET.at(x0 + CELL / 2, z0 + CELL / 2) > 0.2;
   ROUGH[c] = wet ? 0.86 : 1.1;                    // 細かい土は 土くれの影がなく少し明るい。ぬれた所だけ 練れて黒っぽい
   DRY.wet(c);
@@ -1972,22 +1968,36 @@ const TILTY = new Float32Array(NX * NZ);        // 傾いたハローで かい�
 const DIP = new Float32Array(NX * NZ);          // ロータリーを下ろして耕しはじめた所の 盛り上がり（+）と、上げて止めた所の くぼみ（−）（SHIHATSU）
 // 爪を 二山盛りに並べると、1 回通るごとに 作業機の幅に 土の山が 2 本できる（爪を 2 か所で 内向きに寄せる並べ方。ふつうは平耕）。
 // 稲わらは よく埋まるが、田面の 高い低いが わかりにくい（田圃に遊ぶ「耕運跡」・への字稲作 in 長野「トラクター爪の配列」）
-const YAMA = { on: false, n: 0, k: new Uint8Array(NX * NZ), d: new Float32Array(NX * NZ), o: new Float32Array(NX * NZ),   // k：山がある。d・o：耕したときの 向きと 横の位置
-  lx(c, x, z) { return x * Math.cos(this.d[c]) - z * Math.sin(this.d[c]) - this.o[c]; },   // その点が 耕したときの作業機の まん中から 左へ何 m か（角ごとに出すので となりの ます目と 段にならない）
+const YAMA = { on: false, n: 0,
+  h: new Float32Array((NX + 1) * (NZ + 1)), gx: new Float32Array((NX + 1) * (NZ + 1)), gz: new Float32Array((NX + 1) * (NZ + 1)),   // 格子の角ごとの 山の高さと 傾き（となりの ます目と 同じ角を使うので 段にならない）
   y(lx) { return -0.018 * Math.cos(4 * Math.PI * lx / TILL_W); },   // 山は まん中と両はしの あいだ（±幅の 1/4）。高さ ±1.8cm
   sl(lx) { return 0.018 * 4 * Math.PI / TILL_W * Math.sin(4 * Math.PI * lx / TILL_W); },   // 横向きの傾き
-  set(c) { this.k[c] = 1; this.d[c] = S.yaw; this.o[c] = S.x * Math.cos(S.yaw) - S.z * Math.sin(S.yaw); } };
+  till(i, j) {                                    // いまの作業機の 向きと 横の位置で、ます目の四隅の山を決める（向きが変わっても 高さが同じでも 決めなおす）。変わったら true
+    const cs = Math.cos(S.yaw), sn = Math.sin(S.yaw), o = S.x * cs - S.z * sn; let ch = false;
+    for (const [a, b] of [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]]) {
+      const v = a * (NZ + 1) + b, [x, z] = warp(-HX + a * CELL, -HZ + b * CELL), lx = x * cs - z * sn - o, h = this.y(lx), s = this.sl(lx);
+      if (Math.abs(h - this.h[v]) > 0.002 || Math.abs(s * cs - this.gx[v]) + Math.abs(s * sn + this.gz[v]) > 0.02) { this.h[v] = h; this.gx[v] = s * cs; this.gz[v] = -s * sn; ch = true; }
+    }
+    return ch;
+  },
+  refresh(i, j, c) {                              // 角を分けあう となりの 耕した ます目も 描きなおす（波うっている所は そのまま）
+    for (let a = i - 1; a <= i + 1; a++) for (let b = j - 1; b <= j + 1; b++) {
+      const c2 = a * NZ + b;
+      if (a >= 0 && b >= 0 && a < NX && b < NZ && c2 !== c && tilledMask[c2] && !WAVY[c2]) setCell(c2, null, CLOD[c2]);
+    }
+  } };
 function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ・UV・法線（wv：波うち。clod：水分が多くて 大きな土塊が残る 0〜1）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   const g = tilled.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nor = g.attributes.normal.array;
+  const fine = !SHIRO && TILLN[c] >= 3;           // 耕しすぎた所は 土くれが細かくて平ら（overTill）
   [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].forEach(([x0_, z0_], k) => {
     const [x, z] = warp(x0_, z0_);
     const hx = Math.sin(x * 41.3 + z * 17.1), hz = Math.sin(x * 13.7 - z * 29.3);   // 土塊の面の向き（場所で決まる）
-    const yl = YAMA.k[c] ? YAMA.lx(c, x, z) : 0;
-    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c] + DIP[c] + (YAMA.k[c] ? YAMA.y(yl) : 0), z], c * 12 + k * 3);
+    const v = (i + (k === 1 || k === 2 ? 1 : 0)) * (NZ + 1) + j + (k >= 2 ? 1 : 0);   // 格子の角（二山盛りの山）
+    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : fine ? 0.25 * jitter(x, z) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c] + DIP[c] + (YAMA.on ? YAMA.h[v] : 0), z], c * 12 + k * 3);
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
     const n = wv ? wv.n(x, z) : [0, 1, 0];
-    if (YAMA.k[c]) { const k = YAMA.sl(yl), l = Math.hypot(n[0], n[1], n[2]); n[0] = n[0] / l - k * Math.cos(YAMA.d[c]); n[1] /= l; n[2] = n[2] / l + k * Math.sin(YAMA.d[c]); const m = Math.hypot(n[0], n[1], n[2]); n[0] /= m; n[1] /= m; n[2] /= m; }   // 山の斜面に 陰がつく
+    if (YAMA.on && (YAMA.gx[v] || YAMA.gz[v])) { const l = Math.hypot(n[0], n[1], n[2]); n[0] = n[0] / l - YAMA.gx[v]; n[1] /= l; n[2] = n[2] / l - YAMA.gz[v]; const m = Math.hypot(n[0], n[1], n[2]); n[0] /= m; n[1] /= m; n[2] /= m; }   // 山の斜面に 陰がつく
     if (clod > 0) { n[0] += hx * 0.45 * clod; n[2] += hz * 0.45 * clod; const l = Math.hypot(n[0], n[1], n[2]); n[0] /= l; n[1] /= l; n[2] /= l; }   // 大きな土塊の面で 陰がまだらに
     nor.set(n, c * 12 + k * 3);
   });
@@ -2005,7 +2015,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
     if (Math.abs(ty - TILTY[c]) > 0.003) { TILTY[c] = ty; setCell(c, null, CLOD[c]); }   // 傾きは 代かきだけ（波うちは 秋だけ）
     if (WAVY[c] && !COVER.stuck) { WAVY[c] = 0; setCell(c, null, CLOD[c]); }   // 直したあとに耕しなおすと 波がならされる
     if (DIP[c]) { DIP[c] = 0; setCell(c, null, CLOD[c]); }   // 始発の盛り上がり・終着のくぼみも 耕しなおすと ならされる
-    if (YAMA.on && (!YAMA.k[c] || Math.abs(YAMA.y(YAMA.lx(c, -HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL)) - YAMA.y(lx)) > 0.003)) { YAMA.set(c); setCell(c, null, CLOD[c]); }   // 耕しなおすと そのときの山の並びになる
+    if (YAMA.on && !WAVY[c] && YAMA.till(i, j)) { setCell(c, null, CLOD[c]); YAMA.refresh(i, j, c); }   // 耕しなおすと そのときの山の並び・向きになる
     if (season === 'aki' && (S.retill = (S.retill || 0) + 1) > 1500) voice('wara');   // 秋：同じ所をもう一度耕している
     if (!SHIRO && (S.odo || 0) - TODO[c] > 1.5 && TILLN[c] < 255 && ++TILLN[c] === 3) overTill(c);   // 作業機がその所をはなれて（1.5m 以上走って）から また来たら 1 回と数える。止まっているあいだは数えない
     TODO[c] = S.odo || 0;
@@ -2017,7 +2027,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
   const wv = COVER.stuck ? COVER.wave() : null;  // リヤカバーが固まっていると 波うつ
   TILTY[c] = KATA.y(lx);                          // ハローが傾いていると 片側が浅い
-  if (YAMA.on) YAMA.set(c);
+  if (YAMA.on && YAMA.till(i, j)) YAMA.refresh(i, j, c);
   if (YAMA.on && ++YAMA.n === 600) {              // 24m² ほど耕したら
     toast('⛰️ 二山盛り：1 回通るごとに 土の山が 2 本できた。稲わらは よく埋まるが、平耕より 田面の高い低いが わかりにくい', 6);
     setTimeout(() => voice('futayama'), 6500); setTimeout(() => voice('hirakou'), 6500);

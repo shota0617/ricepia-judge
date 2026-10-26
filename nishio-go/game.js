@@ -1165,6 +1165,19 @@ const MZ_WAY = { good: 1.3, pts: 5 };   // 通った マスが ちかみちの 1
 const MZ_SHOO_PTS = 3;   // かかしで こわがった カラスを おいはらった
 // 地図の めいろの ゴール（行き先の 名所・人）に 着いた：かかった 時間と めいろの 道のり・★・まよわず ゴール、紙ふぶき。
 // lines の 先頭に 行を 足し、ボーナスの ポイントを かえす（名所は checkin、人は 話しかけた とき）
+// バイラルループ（運営者の声「バイラルループを作る」：使う → 画面を投稿する → 見た人が知る → 登録する）：めいろの ゴールで、遊んでいた 画面を 1枚 とっておき、
+// ごほうびの 窓に「📣 シェア」を 出す（share.js の 'mzgoal'。リンクは すぐ 遊べる ?play=1 と、友だちの +20pt）
+let mzShare = null;
+function snapMaze() {   // ドット絵の 地図の まん中（お米の まわり）を 正方形に 切りだす。どこにも 送らない（シェアの 画像に だけ 使う）
+  try {
+    const cv = $('pxCanvas');
+    if (!cv || !cv.width || !cv.height) return null;
+    const sz = Math.min(cv.width, Math.round(cv.height * 0.75)), out = document.createElement('canvas');
+    out.width = out.height = 360;
+    out.getContext('2d').drawImage(cv, Math.round((cv.width - sz) / 2), Math.round((cv.height - sz) / 2), sz, sz, 0, 0, 360, 360);
+    return out;
+  } catch (e) { return null; }
+}
 function mazeGoal(id, name, lines) {
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
   if (!gl || gl.sec <= 3) return 0;
@@ -1182,6 +1195,7 @@ function mazeGoal(id, name, lines) {
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
+  mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now() };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
   return total;
@@ -2618,7 +2632,8 @@ function showReward(total, name, lines, lvUp, fact, dot, waited) {
   showReward.waiting = 0;
   sound.jingle(lvUp ? 'levelup' : 'checkin');
   // うれしい場面（はじめて見つけた絵・レベルアップ）には「シェア」のボタン（share.js。押すとシェアの窓）
-  const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : '';
+  const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : mzShare && !mzShare.shown && Date.now() - mzShare.t < 15000 ? 'mzgoal' : '';   // めいろの ゴール：遊んだ 画面を シェア（ゴールの ごほうびの 1回だけ）
+  if (shareKind === 'mzgoal') mzShare.shown = true;
   const shareBtn = shareKind ? `<button type="button" class="btn mini rw-share" data-rw-share="${shareKind}"${shareKind === 'dot' ? ` data-dot="${dot.id}"` : ''}>📣 シェア</button>` : '';
   const stay = shareKind ? 7000 : 0;   // シェアのボタンがあるときは長めに出す（.rw.long の7秒のアニメーションに合わせる）
   if (simple()) {
@@ -2661,7 +2676,7 @@ function hideReward() {
 $('reward').addEventListener('click', e => {
   const b = e.target.closest('[data-rw-share]');
   hideReward();
-  if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null }); }
+  if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null, mzgoal: b.dataset.rwShare === 'mzgoal' ? mzShare : null }); }
 });
 
 /* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。ぜんぶ Blender で作った絵） ----------
@@ -3907,6 +3922,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
+  set mzShareTest(v) { mzShare = v; }, snapMaze,   // テスト用：めいろの ゴールの シェア（mzShare）を 置く・遊んでいる 画面を とる
   sound,
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,

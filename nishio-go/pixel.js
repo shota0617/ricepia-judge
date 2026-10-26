@@ -7314,11 +7314,11 @@ function mzPadTick(ax, ay) {   // パネルの マスに いる 間 しらべる
   mzPad.cell = key; mzPad.hits++; mzRt.run.pads++; mzPad.fx = key; mzPad.fxT = now;
   if (mzPad.chain >= 2) floatText(`💨 びゅん×${mzPad.chain}！${mzPad.chain >= 3 ? ' はやいじゃん' : ''}`);
   padSound(mzPad.chain); roll.happyT = Math.max(roll.happyT || 0, 0.8); dirty = true;
-  try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('💨 びゅんパネル！ 矢印の 向きに のってみりん'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
+  try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('🍵 抹茶びゅん！ 矢印の 向きに のってみりん'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
   combo.n++; combo.quietT = 0; comboStep();   // ころころコンボも つづく
   for (let i = 0; i < 6; i++) roll.dust.push({ x: rp.x - dx * (0.4 + i * 0.25) + (Math.random() - 0.5) * 0.5 * Math.abs(dy), y: rp.y - dy * (0.4 + i * 0.25) + (Math.random() - 0.5) * 0.5 * Math.abs(dx), t: 0, s: 0.7 + Math.random() * 0.4, c: '190,240,255' });   // うしろに 風の すじ
 }
-function drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // びゅんパネル：だいだい色の 板に 黄色い「＞」が 矢印の 向きへ 流れる（点の 四角だけで 描く）
+function drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // びゅんパネル（抹茶びゅん）：西尾の 抹茶色の 板に 白い「＞」が 矢印の 向きへ 流れる（点の 四角だけで 描く）
   const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
   const b = Math.max(1, Math.round(S / 13)), P = Math.round(S * 0.36);   // 点の 大きさ・板の 半分
   for (let ry = Math.floor(r0 / MZ_R); ry <= Math.floor(r1 / MZ_R); ry++) for (let rx = Math.floor(c0 / MZ_R); rx <= Math.floor(c1 / MZ_R); rx++) {
@@ -7330,13 +7330,13 @@ function drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // びゅんパネ�
       const X = Math.round(ox + cx * S + S / 2), Y = Math.round(oy + cy * S + S / 2), [dx, dy] = MZ_PAD_D[d];
       const lit = mzPad.fx === cx + ',' + cy ? Math.max(0, 1 - (now - mzPad.fxT) / 400) : 0;
       ctx.fillStyle = '#1a1a1a'; ctx.fillRect(X - P - b, Y - P - b, 2 * P + 2 * b, 2 * P + 2 * b);
-      ctx.fillStyle = lit ? '#ffb27a' : '#e0662b'; ctx.fillRect(X - P, Y - P, 2 * P, 2 * P);
+      ctx.fillStyle = lit ? '#cfe89a' : '#7da83a'; ctx.fillRect(X - P, Y - P, 2 * P, 2 * P);   // 抹茶色（運営者の声「西尾らしく」。生け垣の こい 緑より 明るい 黄みどり）
       ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(X - P, Y - P, 2 * P, b);   // 上の へりに てかり
       const put = (u, v) => ctx.fillRect(X + (dx ? u * dx : -v * dy) - b / 2 | 0, Y + (dy ? u * dy : v * dx) - b / 2 | 0, b, b);   // 板の 中の (u 矢印の 向き, v 横) に 点
       const ph = Math.floor(now / 160 + cx + cy) % 3;   // 「＞＞」が うしろから 前へ 順に 光る（電光の 矢印）
       for (let j = 0; j < 2; j++) {
         const u0 = (j * 3 + 0.5) * b;
-        ctx.fillStyle = lit || ph === j ? '#fffbe6' : '#f7b23b';
+        ctx.fillStyle = lit || ph === j ? '#fffbe6' : '#4c6e1d';
         for (let v = -2; v <= 2; v++) for (let w = 0; w < 2; w++) put(u0 - Math.abs(v) * b - w * b, v * b);
       }
     }
@@ -7592,9 +7592,9 @@ function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
     if (t === 1 && mzGrainAt(cx, cy)) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g); }   // 金の米つぶ
   }
   let pads = 0, dots = 0;
-  {   // びゅんパネル（だいだいの 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）。細い壁より 先に 描く（小さい 図でも 壁を ぬりつぶさない）
+  {   // びゅんパネル（抹茶色の 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）。細い壁より 先に 描く（小さい 図でも 壁を ぬりつぶさない）
     const now = performance.now(), q = Math.max(1, Math.round(c / 5));
-    x.lineWidth = 1; x.strokeStyle = '#1a1a1a'; x.fillStyle = '#ff9a3c';
+    x.lineWidth = 1; x.strokeStyle = '#1a1a1a'; x.fillStyle = '#9ccc4f';
     for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
       const d = mzType(x0 + i, y0 + j) === 1 ? mzPadAt(x0 + i, y0 + j) : -1;
       if (d < 0) continue;

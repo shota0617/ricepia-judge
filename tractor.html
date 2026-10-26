@@ -4387,7 +4387,7 @@ const FLOAT = (() => {
   const mesh = new THREE.InstancedMesh(geo, mat, N);
   mesh.count = 0; mesh.frustumCulled = false; mesh.renderOrder = 3;
   scene.add(mesh);
-  const st = []; let next = 0, acc = 0, piled = 0;
+  const st = []; let next = 0, acc = 0, piled = 0, told = false;   // piled：いま畦ぎわにたまっている藁の数
   const m = new THREE.Matrix4(), q = new THREE.Quaternion(), p = new THREE.Vector3(), sc = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
   function spawn(dt) {                            // ハローのうしろから浮いてくる
     acc += dt * 7 * Math.min(1, Math.abs(S.v) / 0.6);
@@ -4395,6 +4395,7 @@ const FLOAT = (() => {
     while (acc >= 1) {
       acc -= 1;
       const lx = (Math.random() - 0.5) * TILL_W, lz = ROTARY_Z - 0.7 - Math.random() * 0.8;
+      if (st[next] && st[next].stuck) piled--;      // 古い藁を新しい藁に入れかえる（たまっていた分は数からぬく）
       st[next] = { x: S.x + lx * cs + lz * sn, z: S.z - lx * sn + lz * cs, a: Math.random() * 6.28, L: 0.07 + Math.random() * 0.1, vx: 0.03 + Math.random() * 0.04, vz: (Math.random() - 0.5) * 0.02, stuck: false };
       next = (next + 1) % N; mesh.count = Math.min(N, mesh.count + 1);
     }
@@ -4408,7 +4409,7 @@ const FLOAT = (() => {
         if (f.x > HX - 0.18 - Math.random() * 0.25 || Math.abs(f.z) > HZ - 0.2) {   // 畦ぎわにたまる
           f.stuck = true;
           // 畦ぎわに浮き藁がたくさん寄ったら：浅く起こして 深水で代かきした年は 田植えの日に藁が大量に浮いた（米屋四代目のブログ）
-          if (++piled === 150) voice('ukiwara');
+          if (++piled >= 50 && !told) { told = true; voice('ukiwara'); }
         }
       }
       m.compose(p.set(f.x, TILL_Y + 0.006, f.z), q.setFromAxisAngle(up, f.a), sc.set(0.006, 1, f.L));

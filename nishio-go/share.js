@@ -25,6 +25,9 @@ if (land.utm_source === 'share' && !G.started) { try { if (!localStorage.getItem
 // 数だけ（名前・場所は のせない）
 const vsSec = Math.round(Number(land.vs)), vsSt = Math.max(0, Math.min(3, Math.round(Number(land.vst)) || 0));
 if (land.utm_source === 'share' && vsSec >= 4 && vsSec <= 3600) { try { localStorage.setItem('nsg_vs', JSON.stringify({ sec: vsSec, st: vsSt })); } catch (e) { /* noop */ } }
+if (land.vs || land.vst) {   // 受けとったら アドレスから のぞく（読みこみなおしで また 1回目の あつかいに ならないように）
+  try { const u = new URL(location.href); u.searchParams.delete('vs'); u.searchParams.delete('vst'); history.replaceState(history.state, '', u.pathname + u.search + u.hash); } catch (e) { /* noop */ }
+}
 if (Object.keys(land).length) {
   track('landing', land);
   if (land.c) track('campaign_landing', { campaign: land.c });

@@ -1184,12 +1184,15 @@ function snapMaze() {   // ドット絵の 地図の まん中（お米の ま�
     return out;
   } catch (e) { return null; }
 }
-// 友だちの シェア（share.js の ?vs=秒&vst=★）から 来た 人の はじめての ゴール：友だちの タイムと ならべる（1回だけ。行き先が ちがうので 勝ち負けは 言わない）
+// 友だちの シェア（share.js の ?vs=秒&vst=★）から 来た 人の はじめての ゴール：友だちの タイムと ならべる（1回だけ。行き先が ちがうので 勝ち負けは 言わない）。
+// 知らせで 出す（文字を 少なく の ごほうびの 札や、人の ゴールの 話の 窓では 文が 見えないので。ごほうびの 窓を とじた あとに 出る）
 function friendVs(sec, st) {
   const vs = store.get('nsg_vs', null);
   if (!vs || !vs.sec) return '';
   store.del('nsg_vs'); track('friend_vs', { sec: Math.round(sec), vs: vs.sec });
-  return `👋 友だちは ${fmtSec(vs.sec)}${vs.st ? ` ${'★'.repeat(vs.st)}` : ''}、きみは ${fmtSec(sec)}${st ? ` ${'★'.repeat(st)}` : ''}。シェアで おかえし しよまい`;
+  const msg = `👋 友だちは ${fmtSec(vs.sec)}${vs.st ? ` ${'★'.repeat(vs.st)}` : ''}、きみは ${fmtSec(sec)}${st ? ` ${'★'.repeat(st)}` : ''}。シェアで おかえし しよまい`;
+  toastAfter(msg);
+  return msg;
 }
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 function mazeGoal(id, name, lines) {
@@ -1210,8 +1213,7 @@ function mazeGoal(id, name, lines) {
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
-  const fv = friendVs(gl.sec, st);
-  if (fv) lines.push(fv);
+  friendVs(gl.sec, st);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now() };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });

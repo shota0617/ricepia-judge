@@ -1269,11 +1269,15 @@ async function walkTo(page, id) {
     const r = await w.page.evaluate(async () => {
       const said = () => window.__toasts.some(t => /友だちは めいろの ゴールまで 1分23秒 ★★/.test(t)) || (nishioGo.toastAfter.q || []).some(t => /友だちは めいろの ゴールまで 1分23秒/.test(t));
       for (let i = 0; i < 16 && !said(); i++) { await new Promise(f => setTimeout(f, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); }
-      const stored = JSON.parse(localStorage.getItem('nsg_vs') || 'null');
+      const stored = JSON.parse(localStorage.getItem('nsg_vs') || 'null'), url = location.search;
       const line = nishioGo.friendVs(58, 3), again = nishioGo.friendVs(40, 3);
-      return { started: document.getElementById('intro').hidden && nishioGo.demo, said: said(), stored, line, again, left: localStorage.getItem('nsg_vs') };
+      const told = () => window.__toasts.some(t => t.includes(line)) || (nishioGo.toastAfter.q || []).includes(line);   // ごほうびの 札では 見えないので 知らせで 出す
+      for (let i = 0; i < 16 && line && !told(); i++) { await new Promise(f => setTimeout(f, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }
+      return { started: document.getElementById('intro').hidden && nishioGo.demo, said: said(), stored, url, line, told: told(), again, left: localStorage.getItem('nsg_vs') };
     });
-    R.checks.friendVs = { ...r, ok: r.started && r.said && !!r.stored && r.stored.sec === 83 && r.stored.st === 2 && /友だちは 1分23秒 ★★、きみは 58秒 ★★★/.test(r.line) && !r.again && !r.left };
+    await w.page.reload(); await w.page.waitForTimeout(2000);   // 読みこみなおしても もう 出ない（アドレスから vs を のぞいた）
+    r.reload = await w.page.evaluate(() => ({ vs: localStorage.getItem('nsg_vs'), url: location.search }));
+    R.checks.friendVs = { ...r, ok: r.started && r.said && !!r.stored && r.stored.sec === 83 && r.stored.st === 2 && !/vs=/.test(r.url) && /友だちは 1分23秒 ★★、きみは 58秒 ★★★/.test(r.line) && r.told && !r.again && !r.left && !r.reload.vs && !/vs=/.test(r.reload.url) };
     R.errors.push(...w.errors);
     await w.ctx.close();
   }

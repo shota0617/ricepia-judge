@@ -305,6 +305,7 @@
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
       ・バックするときは ミラーだけに頼らず 目で見て確かめ、要るときは クラクションで知らせる。作業機の付けはずしは エンジンを止めて、作業中に降りるときも エンジンを止める…<a href="https://note.com/ryutaro0306/n/n277e4493a3a4" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターにかかわる危険な行動5選」</a>（ゲームでは <kbd>B</kbd>／「うしろを見る」で うしろを見てから バックする）<br>
       ・小さい田が点在していると ターンの回数がふえ、田の四隅も バックしてから耕すので 手間がふえる…<a href="https://note.com/toshi_chaki/n/n28258f30b67d" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第2部 馬からトラクターへ」</a>／はじめての田起こし：耕して止まり、バックして向きを変え、また耕す。残った隅を もう一周耕した…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a>（ゲームでは 角が残っていると、バックで寄せて耕す案内が出る）<br>
+      ・旋回のときは 油圧でロータリーを上げ、回り終わったら すぐ下ろして 爪を ちょうどよい深さに入れる。ここが腕の見せどころで、雑にあつかうと ロータリーをこわす…<a href="https://note.com/toshi_chaki/n/nf21b7ee32ad2" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第1部」</a>（ゲームでは 回り終わっても 上げたまま まだ耕していない所を進むと、下ろす案内が出る）<br>
       ・勘で整地をくり返して 深くなりすぎた所で傾いて はまった。別の田んぼでは 田から出るスロープで動けなくなり、軽トラで引き上げてもらった。出入口のスロープの形は崩さない…<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）「田植え終わりました」</a>（ゲームでは 坂を作業機で削ったり 坂の上で大きく切ったりすると 坂が崩れて、出るときに すべる）<br>
       ・代かきのハローは 旋回でも下げたまま。旋回上昇と倍速ターンを切り、回る前に速さを直進より 3 ポイント落とす（速いと 土が寄り、タイヤ跡が出て、ハローのうしろの板に土がのる）。畦が近づいたら 深さ・傾きも切り、外周 3 周目からは 深さ・傾きと倍速ターンを入れる…<a href="https://note.com/wkpxk085/n/n01bee10678c3" target="_blank" rel="noopener">眞木優さん（note）「トラクター作業機の交換→代搔きハロー」</a>（その農家さんの機械とやり方。ゲームでは 代かきで 下げたまま 時速 2km までで回ると 減点しない）<br>
       ・作業機の傾きの調整は 平らな所で（ヤンマー AF18 の例）：ロアリンクを水平にし、作業機の中心を PTO 軸に合わせ、左右のチェックチェーンを締めてから、傾きスイッチで水平にして機械に覚えさせる。ボタンや チェーンのゆとりは 機種ごとに取扱説明書で…<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）「傾き調整についてご紹介」</a>／自動水平（ヤンマーは UFO・クボタはモンロー）は、本体が傾いても作業機を水平に保つ。畝くずしや 田んぼの外周の耕うんに役立つ…<a href="https://note.com/ryutaro0306/n/n7e4973d0892c" target="_blank" rel="noopener">同「トラクターの自動水平機能」</a>（ゲームでは 代かきで点検をしないと ハローが傾いている）<br>
@@ -2450,6 +2451,39 @@ const DIFF = (() => {
       S.diffLock = engaged && !S.stalled && !(S.crank > 0);
       turnT = S.diffLock && Math.abs(S.steer) > 0.45 && Math.abs(S.v) > 0.1 ? turnT + dt : 0;
       if (turnT > 0.8 && !told) { told = true; toast('デフロックを押したまま 曲がろうとしている。左右の後輪が同じに回るので 曲がらず、まっすぐ押される。旋回と道路では はなす', 6); }
+    },
+  };
+})();
+// 下げどき：旋回は 油圧でロータリーを上げ、回り終わったら すぐ下ろして 爪を ちょうどよい深さに入れる。ここが腕の見せどころ
+// （茶木寿夫さん（note）「農業用トラクターは楽し。第1部」）。上げたまま まっすぐ進むと、そこが耕し残しになる（あとで耕しなおす手間）
+const SAGE = (() => {
+  let upYaw = null, dist = 0, told = false, wasDown = false;
+  function untilledBehind() {                     // 作業機の下が まだ耕していない土か（田んぼの内側だけ見る）
+    const p = wheelPoints(S.x, S.z, S.yaw);
+    let n = 0, u = 0;
+    for (let lx = -TILL_W / 2 + 0.1; lx <= TILL_W / 2 - 0.1 + 1e-6; lx += 0.3) {
+      const [wx, wz] = p.w(lx, ROTARY_Z);
+      if (Math.abs(wx) > HX - 0.3 || Math.abs(wz) > HZ - 0.3) continue;
+      n++;
+      if (!tilledMask[Math.floor((wx + HX) / CELL) * NZ + Math.floor((wz + HZ) / CELL)]) u++;
+    }
+    return n >= 3 && u / n > 0.8;
+  }
+  return {
+    step(dt) {
+      if (wasDown && !S.rotDown) { upYaw = S.yaw; dist = 0; }   // 上げた：旋回のはじまり
+      if (S.rotDown) upYaw = null;
+      wasDown = S.rotDown;
+      if (upYaw === null || told || S.autoUp || S.v < 0.2) return;   // 旋回アップは 前へ出ると自動で下りる
+      const turned = Math.abs(Math.atan2(Math.sin(S.yaw - upYaw), Math.cos(S.yaw - upYaw))) > 2.6;   // U ターンを終えた（150° 以上 回った）
+      const a = Math.round(S.yaw / (Math.PI / 2)) * (Math.PI / 2), aligned = Math.abs(Math.atan2(Math.sin(S.yaw - a), Math.cos(S.yaw - a))) < 0.2;
+      if (!turned) { dist = 0; return; }
+      if (aligned && untilledBehind()) dist += S.v * dt;
+      if (dist > 2.5) {
+        told = true;
+        toast('旋回が終わったら すぐ下ろす（' + (MOBILE || params.has('pad') ? '「' + IMPL + 'を下げる」' : 'スペース') + '）。上げたまま進むと、そこが耕し残しになって あとで耕しなおす', 6);
+        setTimeout(() => voice('udemi'), 6500);
+      }
     },
   };
 })();
@@ -4664,7 +4698,7 @@ function step(dt) {
     }
   }
   SCRAPE.step(dt);
-  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); DIFF.step(dt); HAMARU.step(dt); RAMPDMG.step(dt); CORNER.step(dt); BACKCHK.step(dt); }
+  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); DIFF.step(dt); SAGE.step(dt); HAMARU.step(dt); RAMPDMG.step(dt); CORNER.step(dt); BACKCHK.step(dt); }
   if (S.stalled) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing || KATA.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れ・傾きの調整のあいだは エンジンを切ったまま
@@ -5775,6 +5809,7 @@ const VOICES = {
   sensha: ['作業のあとは 高圧洗浄機で大きな泥を落とし、ブラシとシャンプーで車体とタイヤを磨いた。乾かしてから 車内をエアダスターで、ロータリーの土も落とした。爪が摩耗していたので 発注した。道具を清潔に保つと 長持ちし、異常にも気づきやすい', 'マルカワみそ農園（note）'],
   horo: ['土のバランスがいいのは 固相・液相・気相が 4:3:3。水分が多いときに耕したら 土塊がふえてしまった。手で握って ホロッとくずれるくらいの水分で耕すと、砕土がうまくいくことがある（まだまだ勉強中）', 'マルカワみそ農園（note）'],
   deflock: ['雨の合間に、水がしみた畑に入って はまった。通りかかった農家さんに「デフロックを使え」と言われて 踏んだけど、もう沈みすぎて 効かなかった。近所の 米の作業を受けている農家さんの 大きなトラクターに ワイヤーで引いてもらって 抜けた', 'のらくら農園（ブログ「トラクター沈没。」）'],
+  udemi: ['旋回のときは 油圧でロータリーを上げ、回り終わったら すぐ下ろして、爪を ちょうどよい深さに入れる。ここが 腕の見せどころ。雑にあつかうと ロータリーをこわす', '茶木寿夫さん（note）「農業用トラクターは楽し。第1部」'],
   hamaru: ['天気の悪い日に耕していたら、トラクターが田んぼにはまって 自力で動けなくなった。応援のトラクターを呼んで ロープで引いたら 一発で抜けた。いつも同じ田んぼの同じ所で はまる。悪天候の日は作業しない、大きな機体で入らない、旋回を激しくしない', '石川の岡元農場 岡元望さん（note）'],
   wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
   ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
@@ -6142,7 +6177,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { DIFF, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { DIFF, SAGE, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -2401,9 +2401,9 @@ const BACKCHK = (() => {
     step(dt) {
       hold = key.lookBack ? hold + dt : 0;          // 0.6 秒 押しつづけると 目がうしろを向き終わる（カメラは なめらかに回る）
       lookAgo = hold >= 0.6 ? 0 : lookAgo + dt;
-      // 知らせは 少しおいて出し（同じコマの ほかの知らせに 上書きされない）、1.2 秒後にも出ていたら「伝えた」とする。消されていたら 出しなおす（3 回まで）
-      if (pend >= 0 && (pend -= dt) < 0) { toast(MSG(), 6); check = 1.2; }
-      if (check >= 0 && (check -= dt) < 0) { if ($('toast').textContent === MSG()) told = true; else if (++tries < 3) pend = 0.3; }
+      // 知らせは 少しおいて出し（同じコマの ほかの知らせに 上書きされない）、画面に 1.2 秒 出ていたら「伝えた」とする（早送りでも 本当の時間で数える）。その前に消されたら 出しなおす（3 回まで）
+      if (pend >= 0 && (pend -= dt) < 0) { toast(MSG(), 6); check = 1; }
+      if (check > 0) { if ($('toast').textContent !== MSG()) { check = -1; if (++tries < 3) pend = 0.3; } else if (toastT <= 6 - 1.2) { check = -1; told = true; } }
       const can = key.back && !S.stalled && !S.parked && !(S.crank > 0);   // バックで動ける（エンジンがかかるのを 待っていたときも ここで始まる）
       const start = can && !prev && S.v > -0.05;
       prev = can;

@@ -1448,6 +1448,32 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return r;
     })();
+    // おたすけの「🧭 水色の 線が…」の 知らせは、「🏁 つぎの ゴール」の 大きな 文字が 出ている 間は 出さない（その あとに 出す）。
+    // 自分で 遊んで 分かった（320×568）：はじめの ゴールの 名前と 道のりが、この 知らせの 下に かくれて 読めなかった
+    R.checks.mzHelpAfterBanner = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast');
+      const g0 = G.guide, goals0 = localStorage.getItem('nsg_mzgoals'), help0 = localStorage.getItem('nsg_mzhelp');   // おわったら もどす（あとの 確かめに ひびかない ように）
+      localStorage.setItem('nsg_mzgoals', '0'); localStorage.removeItem('nsg_mzhelp');
+      document.getElementById('pxInfo').hidden = true;
+      const s = G.spots.filter(x => x.lat && G.dist(G.me, x) > 300 && G.dist(G.me, x) < 900).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (!s) return { skip: 'no spot', ok: true };
+      el.classList.remove('show');
+      M.helpReset();
+      G.setGuide({ kind: 'spot', id: s.id, name: s.name, why: 'テスト', by: 'テスト' });
+      let during = false, shown = false, sawBanner = false;
+      for (let i = 0; i < 80 && !shown; i++) {
+        await wait(100);
+        const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        const h = M.help(), on = el.classList.contains('show') && /水色の 線が/.test(el.textContent);
+        if (h.banner) sawBanner = true;
+        if (on && h.banner) during = true;
+        if (on) shown = true;
+      }
+      G.setGuide(g0 || null);
+      if (goals0 === null) localStorage.removeItem('nsg_mzgoals'); else localStorage.setItem('nsg_mzgoals', goals0);
+      if (help0 !== null) localStorage.setItem('nsg_mzhelp', help0);
+      return { spot: s.name, sawBanner, during, shown, ok: sawBanner && shown && !during };
+    });
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
       const G = nishioGo, pi = document.getElementById('pxInfo');
@@ -1661,6 +1687,7 @@ async function walkTo(page, id) {
   need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
+  need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
   need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');

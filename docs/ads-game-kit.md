@@ -121,7 +121,7 @@ Actions の「Google Ads」（`.github/workflows/google-ads.yml`）が、3-1・3
 2. Google Cloud で、API を使えるようにする（**2026-09-09 から 開発者トークンと MCC は いりません**。使える範囲は Google Cloud のプロジェクトで決まります）
    - Google Cloud コンソールでプロジェクトを作り（例：`ricepia-ads`）、「Google Ads API」を有効にする（はじめは テスト用の範囲だけ）
    - 同じ画面の「Google Ads API」の概要ページで「**Explorer アクセス**」を申し込む。本物の広告アカウントに 1日 2,880 回まで使えます（お店には十分。キーワードプランナー・アカウント作成・請求などは使えません）
-   - 同じプロジェクトで OAuth の同意画面（外部・本番に公開）と OAuth クライアント（デスクトップ アプリ）を作る。**ちがうプロジェクトのクライアントを使うと、テスト用の範囲にもどってしまいます**
+   - 同じプロジェクトで OAuth の同意画面（外部・本番に公開。テストのままだとリフレッシュトークンが7日で切れます）と OAuth クライアントを作る。種類は「**ウェブ アプリケーション**」にして、「承認済みのリダイレクト URI」に `https://developers.google.com/oauthplayground` を足す（デスクトップ アプリだと、次の Playground で `redirect_uri_mismatch` になります）。**ちがうプロジェクトのクライアントを使うと、テスト用の範囲にもどってしまいます**
    - OAuth 2.0 Playground（歯車 →「Use your own OAuth credentials」にそのクライアントを入れる）で、スコープ `https://www.googleapis.com/auth/adwords` を、広告アカウントに入れる Google アカウントで許可し、リフレッシュトークンを取る
 3. その Environment の「Environment secrets」→「Add environment secret」で、次の4つ（MCC 経由のときは5つ）を入れる。**値はチャットに書かないでください**
    - `GOOGLE_ADS_CLIENT_ID`・`GOOGLE_ADS_CLIENT_SECRET`：2 で作った OAuth クライアント

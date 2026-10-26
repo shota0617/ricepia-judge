@@ -2361,8 +2361,8 @@ const CORNER = (() => {
     const bx = -Math.sin(S.yaw), bz = -Math.cos(S.yaw), dx = sx * HX - S.x, dz = sz * HZ - S.z, d = Math.hypot(dx, dz) || 1;
     if ((bx * dx + bz * dz) / d < 0.6) return 'turn';
     const p = wheelPoints(S.x, S.z, S.yaw);
-    const alongZ = Math.abs(bz) > Math.abs(bx);      // うしろの畦（バックしていく向きの畦）だけを見る。横の畦は 見ない
-    const gap = Math.min(...[-1, 1].map(k => { const [x, z] = p.w(k * ROT_HALF(), ROTARY_Z - 0.45); return alongZ ? HZ - Math.abs(z) : HX - Math.abs(x); }));
+    const toX = bx * sx > 0.2, toZ = bz * sz > 0.2;  // バックしていく向きに近づく畦だけを見る（ななめなら 両方。まっすぐなら 横の畦は 見ない）
+    const gap = Math.min(...[-1, 1].map(k => { const [x, z] = p.w(k * ROT_HALF(), ROTARY_Z - 0.45); return Math.min(toX ? HX - Math.abs(x) : 9, toZ ? HZ - Math.abs(z) : 9); }));
     return gap < 0.5 ? 'stop' : 'back';
   }
   return {

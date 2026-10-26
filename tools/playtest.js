@@ -694,7 +694,7 @@ async function walkTo(page, id) {
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
-    const info = await page.evaluate(() => { const r = nishioPixel.roll, k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(); let best = null; for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { let d = 1; while (d < 9 && !nishioPixel.rollBlockedFrom(r.x, r.y + dy * (d - 1), r.x, r.y + dy * d)) d++; if (!best || d > best[1]) best = [key, d]; } return { best, style: k ? k.name : '', p0: r.pitch, s0: r.spin }; });
+    const info = await page.evaluate(() => { const r = nishioPixel.roll, k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(); let best = null; for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const M = nishioPixel.maze, tube = M.on() && M.near ? (y => { const q = M.near(r.x, y); return !q || q.d <= 0.5; }) : () => true; let d = 1; while (d < 9 && !nishioPixel.rollBlockedFrom(r.x, r.y + dy * (d - 1), r.x, r.y + dy * d) && tube(r.y + dy * d)) d++; if (!best || d > best[1]) best = [key, d]; } return { best, style: k ? k.name : '', p0: r.pitch, s0: r.spin }; });   // ゆるい めいろでは 道すじの 筒の 中に いられる はばだけ
     if (/^くるくる/.test(info.style) || info.best[1] < 2) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: info.best[1] < 2 ? 'no-room' : info.style, room: info.best[1] }; }
     for (let i = 0; i < 15; i++) {   // めいろでは 窓（ごほうび・イベント）が 出ている 間は 転がらないので、閉じてから
       const busy = await page.evaluate(() => { if (!nishioPixel.mapCovered(true)) return false; const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('.medashi:not([hidden]) .md-close').forEach(b => b.click()); return true; });
@@ -771,7 +771,9 @@ async function walkTo(page, id) {
     let max = 0;
     for (let i = 0; i < 30; i++) { await page.waitForTimeout(100); max = Math.max(max, await page.evaluate(() => nishioPixel.combo.n)); }
     await page.keyboard.up(pick[0]);
-    await page.waitForTimeout(1800);   // かべに 当たるか、止まって 0.7秒で おしまい
+    // かべに 当たるか、止まって 0.7秒で おしまい。ゆるい めいろでは 曲がり角も カーブに そって すべるので（当たらないので コンボは つづく）、止まるまで 待つ（5秒まで）
+    for (let i = 0; i < 25; i++) { await page.waitForTimeout(200); const r = await page.evaluate(() => nishioPixel.roll); if (Math.hypot(r.vx, r.vy) < 0.05) break; }
+    await page.waitForTimeout(1000);
     const after = await page.evaluate(() => nishioPixel.combo);
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ok: max >= 2 && after.n === 0 && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after };

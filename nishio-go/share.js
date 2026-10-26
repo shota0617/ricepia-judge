@@ -81,7 +81,7 @@ function shareText() {
   }
   if (cur === 'koro' && curKoro) {   // ころころの きろく（きろくの タブから）：コンボの ベストを 自慢して、見た 人が すぐ 遊べる（?play=1）
     const k = curKoro;
-    return `にしおさんぽGOで、お米を ころころ🎵 コンボ ベスト ×${k.combo}${k.dots ? `・きょう ひろった つぶ ${k.dots}` : ''}\n西尾の まちが めいろ。スマホを 傾けると お米が ころころ。${invite}\n${tags}`;
+    return `にしおさんぽGOで、お米を ころころ🎵 コンボ ベスト ×${k.combo}${k.speed ? `・はやさ 1秒に ${k.speed}m` : ''}${k.dots ? `・きょう ひろった つぶ ${k.dots}` : ''}\n西尾の まちが めいろ。スマホを 傾けると お米が ころころ。${invite}\n${tags}`;
   }
   if (cur === 'voice' && curVoice) {   // おたよりが反映された
     return `わたしの声で、にしおさんぽGOが かわりました📮「${clip(curVoice, 34)}」\nみんなの声で、名所がふえていきます\n${tags}`;
@@ -146,7 +146,7 @@ function drawCard() {
   } else if (cur === 'koro' && curKoro) {
     const k = curKoro;
     line(`🎵 ころころ コンボ ×${k.combo}`, 64, 240, true);
-    line([k.dots ? `🍚 きょう ひろった つぶ ${k.dots}` : '', k.chain >= 2 ? `🍵 びゅん れんさ ×${k.chain}` : ''].filter(Boolean).join(' ・ ') || '西尾の まちが めいろ', 36, 306);
+    line([k.speed ? `🏃 1秒に ${k.speed}m` : '', k.dots ? `🍚 つぶ ${k.dots}` : '', k.chain >= 2 ? `🍵 びゅん れんさ ×${k.chain}` : ''].filter(Boolean).join(' ・ ') || '西尾の まちが めいろ', 36, 306);
     line('スマホを 傾けると、お米が ころころ', 30, 360);
   } else if (cur === 'voice' && curVoice) {
     line('📮 わたしの声が反映されました', 56, 230, true);
@@ -176,7 +176,7 @@ function openShare(kind, opt) {
   curMeiro = opt && opt.meiro ? opt.meiro : null;
   curMz = opt && opt.mzgoal ? opt.mzgoal : null;
   const P = window.nishioPixel;
-  curKoro = kind === 'koro' && P && P.combo && P.combo.best >= 3 ? { combo: P.combo.best, dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, chain: P.maze && P.maze.padChain ? P.maze.padChain.best : 0, img: G.snapMaze ? G.snapMaze() : null } : null;   // 画像には さいごに 描いた ドット絵の 地図
+  curKoro = kind === 'koro' && P && P.combo && P.combo.best >= 3 ? { combo: P.combo.best, dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, chain: P.maze && P.maze.padChain ? P.maze.padChain.best : 0, speed: (() => { try { return Number(localStorage.getItem('nsg_mz_speed')) || 0; } catch (e) { return 0; } })(), img: G.snapMaze ? G.snapMaze() : null } : null;   // 画像には さいごに 描いた ドット絵の 地図
   const text = shareText(), url = shareUrl(kind);
   drawCard();
   $('shareText').textContent = `${text}\n${url}`;

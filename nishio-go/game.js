@@ -2904,7 +2904,8 @@ function renderKoroRec() {
   const box = $('koroRec'), P = window.nishioPixel;
   if (!box) return;
   const c = P && P.combo ? P.combo.best : 0, d = P && P.maze && P.maze.dots ? P.maze.dots.n : 0, b = P && P.maze && P.maze.padChain ? P.maze.padChain.best : 0;
-  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
+  const v = store.get('nsg_mz_speed', 0);   // めいろの はやさの ベスト（mzSpeed）
+  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', v ? `🏃 はやさ ベスト 1秒に ${v}m` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
   box.hidden = !parts.length;
   box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>${c >= 3 ? '<button type="button" class="btn mini" data-share-open="koro">📣 シェア</button>' : ''}` : '';   // コンボの ベストを あとからでも シェア（バイラルループの 入口。share.js の 'koro'）
 }

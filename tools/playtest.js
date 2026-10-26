@@ -905,6 +905,7 @@ async function walkTo(page, id) {
   })();
   // きろくに「ころころの きろく」（コンボの ベスト・きょう ひろった ごはんつぶ）
   R.checks.koroRec = await page.evaluate(async () => {
+    const old = localStorage.getItem('nsg_mz_speed'); localStorage.setItem('nsg_mz_speed', '21.6');   // はやさの ベストも のる
     const want = { c: nishioPixel.combo.best, d: nishioPixel.maze.dots.n };
     nishioGo.openTab('log'); await new Promise(f => setTimeout(f, 300));
     const box = document.getElementById('koroRec'), text = box && !box.hidden ? box.textContent : '';
@@ -913,11 +914,12 @@ async function walkTo(page, id) {
       const b = box.querySelector('[data-share-open="koro"]');
       if (b) { b.click(); await new Promise(f => setTimeout(f, 300)); }
       const st = document.getElementById('shareText').textContent;
-      share = !!b && !document.getElementById('share').hidden && st.includes(`コンボ ベスト ×${want.c}`) && st.includes('?play=1&utm_source=share&utm_medium=social&utm_campaign=koro');
+      share = !!b && !document.getElementById('share').hidden && st.includes(`コンボ ベスト ×${want.c}`) && st.includes('はやさ 1秒に 21.6m') && st.includes('?play=1&utm_source=share&utm_medium=social&utm_campaign=koro');
       document.getElementById('share').hidden = true;
     }
     nishioGo.openTab('map');
-    return { ok: (!want.c || text.includes(`×${want.c}`)) && (!want.d || text.includes(`つぶ ${want.d}`)) && (!(want.c || want.d) || !!text) && share !== false, want, share, text: text.slice(0, 80) };
+    if (old === null) localStorage.removeItem('nsg_mz_speed'); else localStorage.setItem('nsg_mz_speed', old);
+    return { ok: (!want.c || text.includes(`×${want.c}`)) && (!want.d || text.includes(`つぶ ${want.d}`)) && text.includes('はやさ ベスト 1秒に 21.6m') && share !== false, want, share, text: text.slice(0, 100) };
   });
   // バイラルループ：めいろの ゴールの ごほうびに「📣 シェア」→ 遊んだ 画面の カードと、見た 人が すぐ 遊べる リンク（?play=1・友だちの +20pt）
   R.checks.mzGoalShare = await page.evaluate(async () => {

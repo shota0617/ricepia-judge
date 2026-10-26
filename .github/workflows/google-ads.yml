@@ -3,8 +3,8 @@
 #   job: game-campaign（にしおさんぽGO 専用キャンペーンを一時停止で作る）／ game（サイトリンク・コールアウト）
 # Secrets：GitHub の Environment「google-ads」（動かせるブランチを main だけにする）の Environment secrets に入れる。
 #          リポジトリの Secrets に入れると、main 以外のブランチで書きかえた コードにも 本番の 認証情報が わたってしまう（Codex の 指摘）
-#          GOOGLE_ADS_DEVELOPER_TOKEN・GOOGLE_ADS_CLIENT_ID・GOOGLE_ADS_CLIENT_SECRET・GOOGLE_ADS_REFRESH_TOKEN・GOOGLE_ADS_CUSTOMER_ID
-#          （MCC 経由のときだけ GOOGLE_ADS_LOGIN_CUSTOMER_ID）。くわしくは docs/ads-game-kit.md の 3-3
+#          GOOGLE_ADS_CLIENT_ID・GOOGLE_ADS_CLIENT_SECRET・GOOGLE_ADS_REFRESH_TOKEN・GOOGLE_ADS_CUSTOMER_ID
+#          （MCC 経由のときだけ GOOGLE_ADS_LOGIN_CUSTOMER_ID。開発者トークンは 2026-09-09 から いらない）。くわしくは docs/ads-game-kit.md の 3-3
 name: Google Ads
 on:
   workflow_dispatch:
@@ -49,7 +49,7 @@ jobs:
           node-version: 20
       - name: Run Google Ads script
         run: |
-          for v in GOOGLE_ADS_DEVELOPER_TOKEN GOOGLE_ADS_CLIENT_ID GOOGLE_ADS_CLIENT_SECRET GOOGLE_ADS_REFRESH_TOKEN GOOGLE_ADS_CUSTOMER_ID; do
+          for v in GOOGLE_ADS_CLIENT_ID GOOGLE_ADS_CLIENT_SECRET GOOGLE_ADS_REFRESH_TOKEN GOOGLE_ADS_CUSTOMER_ID; do
             [ -n "${!v}" ] || { echo "::error::Environment「google-ads」の Secrets に $v がありません（docs/ads-game-kit.md の 3-3）"; exit 1; }
           done
           # 公開の ログに お客様ID を 出さない（スクリプトは ハイフンなしで 書くので、両方 かくす）

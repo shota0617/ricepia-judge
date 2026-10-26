@@ -2696,7 +2696,7 @@ const FENCE = (() => {
   pts.forEach(([x, z], i) => {
     if (i % 6 !== 3) return;
     const sg = new THREE.Mesh(signGeo, signM);
-    sg.position.set(x, hAt(x, z) + 0.6, z); sg.rotation.y = Math.abs(Math.abs(x) - E) < 0.01 ? Math.PI / 2 : 0;
+    sg.position.set(x, hAt(x, z) + 0.6, z); sg.rotation.y = (Math.abs(x - E) < 0.01 || Math.abs(x + W) < 0.01) && Math.abs(z) < N - 0.01 ? Math.PI / 2 : 0;   // 東西の辺の板は 柵の線と同じ向きに
     scene.add(sg);
   });
   // ゲート：出入口をあけてある。黄色いハンドル 2 本を 北の支柱に かけたまま、線がたれている

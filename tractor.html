@@ -2357,8 +2357,16 @@ const CORNER = (() => {
     }
     return null;
   }
+  function stage([sx, sz]) {                       // turn：うしろが角を向いていない／back：バックで寄せる／stop：畦の手前（作業機のうしろが 畦から 0.5m 以内）
+    const bx = -Math.sin(S.yaw), bz = -Math.cos(S.yaw), dx = sx * HX - S.x, dz = sz * HZ - S.z, d = Math.hypot(dx, dz) || 1;
+    if ((bx * dx + bz * dz) / d < 0.6) return 'turn';
+    const p = wheelPoints(S.x, S.z, S.yaw);
+    const alongZ = Math.abs(bz) > Math.abs(bx);      // うしろの畦（バックしていく向きの畦）だけを見る。横の畦は 見ない
+    const gap = Math.min(...[-1, 1].map(k => { const [x, z] = p.w(k * ROT_HALF(), ROTARY_Z - 0.45); return alongZ ? HZ - Math.abs(z) : HX - Math.abs(x); }));
+    return gap < 0.5 ? 'stop' : 'back';
+  }
   return {
-    left,
+    left, stage,
     step(dt) { backAgo = S.v < -0.1 ? 0 : backAgo + dt; },
     get backAgo() { return backAgo; },
     tilled(x, z) {                                // バックで寄せてから 角を耕した
@@ -5873,8 +5881,13 @@ const COACH = (() => {
       return ['!', K('PTO 逆転のまま 硬い所に入っている：<kbd>スペース</kbd>で上げて <kbd>O</kbd> で正転に', 'PTO 逆転のまま 硬い所に入っている：上げて 正転にもどす（O キー）')];
     if (S.rotDown && S.v > 0.1 && (S.wetLoad || 0) > 600)   // ぬかるみで爪とタイヤが取られて 回転が落ちてきた（950 を 1.2 秒こえるとエンスト。step と同じ重さで見る）
       return ['!', K('ぬかるみで回転が落ちている（負荷が赤）：<kbd>Q</kbd> で変速を下げるか、<kbd>Z</kbd> で浅く', 'ぬかるみで回転が落ちている（負荷が赤）：「変速」で下げるか、「浅く」')];
-    if (!art && lastPct >= 80 && !S.rotDown && Math.abs(S.v) < 0.6 && CORNER.left())   // 仕上げ：角が残っている
-      return ['!', K('角が残っている：角の手前で上げ、<kbd>↓</kbd> で角へバックしてから、<kbd>スペース</kbd>で下げて <kbd>↑</kbd> で前へ', '角が残っている：角の手前で上げ、▼ で角へバックしてから、ボタンで下げて ▲ で前へ')];
+    const cn = !art && lastPct >= 80 && !S.rotDown && Math.abs(S.v) < 0.6 && CORNER.left();   // 仕上げ：角が残っている
+    if (cn) {
+      const st = CORNER.stage(cn);
+      if (st === 'turn') return ['!', '角が残っている：作業機（うしろ）が 角を向くように 回ってから止まる'];
+      if (st === 'stop') return ['!', K('畦の手前まで来た：止まって <kbd>スペース</kbd>で下げ、<kbd>↑</kbd> で前へ', '畦の手前まで来た：止まって ボタンで下げ、▲ で前へ')];
+      return ['!', K('角が残っている：上げたまま うしろを見て <kbd>↓</kbd> で ゆっくりバック。作業機が畦に当たる前に止まる', '角が残っている：上げたまま うしろを見て ▼ で ゆっくりバック。作業機が畦に当たる前に止まる')];
+    }
     if (off) return null;
     if (art && !EASY.on && S.rotDown && S.v > 0.2 && (here.out > 0 || artAt(0.4 + Math.max(1.2, S.v * 1.5)).out > 0))   // はしが 1 か所でも はみ出しそう・はみ出したら。🔰 アシストのときは 自動で上がる
       return ['3', K('白線が近い：<kbd>スペース</kbd>で上げる（外は耕さない）', '白線が近い：ボタンで上げる（外は耕さない）')];

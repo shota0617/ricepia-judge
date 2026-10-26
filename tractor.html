@@ -291,6 +291,7 @@
       ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
       ・土の中の石は 耕うんの爪をいため、苗の根張りも悪くする。水を張る前に拾った（拳大〜30cm 余り、50kg ほど）…<a href="https://note.com/yuki0mori/n/n3691961a57a9" target="_blank" rel="noopener">大森雄貴さん（note）「春が来る前に石拾い」</a>／運転席では、爪が土を引っかく音のちがいで 土の固さや深さがわかり、石を掘り起こすと音で気づく…<a href="https://note.com/yuki0mori/n/n5101cc99caee" target="_blank" rel="noopener">同「代かきトラクターの運転席から見える景色」</a>（ゲームでは 春の「🪨 はじめに石を拾う」）<br>
+      ・プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返した…<a href="https://note.com/shoei_world/n/n4755bc166ea3" target="_blank" rel="noopener">shoei さん（note）「トラクターを使って『天地返し』の術！？」</a>（ゲームでは 秋の稲刈りのわだちに 前輪が落ちると ハンドルを取られる）<br>
       ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
       ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
       ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
@@ -4371,7 +4372,30 @@ function step(dt) {
   if (S.rotDown && S.rotPos < 0.08) S.turnUpHold = false;
   S.autoBrake = !S.rotDown && !onRoad && Math.abs(S.steer) > 0.45 && Math.abs(S.v) < 3;   // 道では左右のブレーキを連結するので片ブレーキはきかない
   S.dblAct = dblOn(S.steer, onRoad);
-  const yaw = S.yaw - S.v * Math.tan(S.steer) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;
+  // わだちに前輪を取られる（秋）：前輪がみぞに落ちると、みぞの深いほうへ ハンドルを取られて まっすぐ走れない
+  // （shoei さんの note：往路のタイヤの溝に 復路で前輪が落ち、バランスが崩れて直進できず 切り返した）。耕すと みぞは ならされる
+  let rutPull = 0;
+  if (season === 'aki' && Math.abs(S.v) > 0.05) {
+    const w = wheelPoints(S.x, S.z, S.yaw), rx = -Math.cos(S.yaw), rz = Math.sin(S.yaw), d = 0.2;   // ハンドルを + に切ると 前輪が寄る向き
+    const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw);
+    for (const k of ['fl', 'fr']) {
+      const [x, z] = w[k];
+      if (RUTS.at(x, z) < 0.02) continue;
+      const gx = (RUTS.at(x + d, z) - RUTS.at(x - d, z)) / (2 * d), gz = (RUTS.at(x, z + d) - RUTS.at(x, z - d)) / (2 * d), g = Math.hypot(gx, gz);
+      rutPull += 0.5 * (gx * rx + gz * rz) * Math.sign(S.v);   // みぞの深いほう（まん中）へ寄せる
+      if (g > 0.05) {                               // みぞのかべ：前輪を みぞの向きにそわせる（大きな角度で横切るときは 乗りこえるだけ）
+        let tx = -gz / g, tz = gx / g;
+        if (tx * fx + tz * fz < 0) { tx = -tx; tz = -tz; }
+        const th = Math.atan2(fx * tz - fz * tx, fx * tx + fz * tz);   // 車体の yaw − みぞの向き（+ は 車体のほうが yaw が大きい）
+        if (Math.abs(th) < 0.6) rutPull += 0.8 * th * Math.sign(S.v);   // + に切ると 前進では yaw が減る（バックでは増える）ので、角の差が縮まる
+      }
+    }
+    rutPull = Math.max(-0.22, Math.min(0.22, rutPull));   // バックでは 切る向きが逆
+    S.rutT = Math.abs(rutPull) > 0.08 ? (S.rutT || 0) + dt : 0;
+    if (S.rutT > 0.5 && !S.rutTold && S.started) { S.rutTold = true; toast('わだち（稲刈りのみぞ）に前輪が落ちて、ハンドルを取られた。まっすぐ走れないときは、止まって 切り返す（みぞは 耕すと ならされる）', 6); setTimeout(() => voice('wadachi'), 6500); }
+  }
+  S.rutPull = rutPull;
+  const yaw = S.yaw - S.v * Math.tan(S.steer + rutPull) / WB * turnRate(Math.abs(S.v), S.x, S.z, onRoad) * dt;
   const x = S.x + Math.sin(yaw) * S.v * dt, z = S.z + Math.cos(yaw) * S.v * dt;
   if (canBe(x, z, yaw)) { S.x = x; S.z = z; S.yaw = yaw; }
   else if (EASY.on) { if (Math.abs(S.v) > 0.3) EASY.tell('stop', '畦の手前で止めました。ハンドルを切るか、反対へ'); S.v = 0; EASY.used = true; }   // 🔰 予測で止めきれなかったときも、ぶつけずにその場で止める（減点しない）
@@ -4461,13 +4485,14 @@ function step(dt) {
   if (inField && Math.abs(S.v) > 0.2) emitTireMud(dt, slip);
   if (!inField && S.x > 16.4 && Math.abs(S.v) > 1.4) emitRoadDust(dt, S.x, S.z, S.yaw, S.v, 1);   // 乾いた砂利の農道では砂ぼこり
   P.WheelFL.rotation.x += S.v * dt / R_FRONT * (S.dblAct ? 2 : 1); P.WheelFR.rotation.x = P.WheelFL.rotation.x;   // 倍速ターンのあいだは 前輪が約 2 倍の速さで回る
+  const effSteer = S.steer + (S.rutPull || 0);    // わだちに取られた分も 前輪とハンドルに出す（走る向きの計算と同じ切れ角）
   {                                               // 内側の前輪を大きく切る（アッカーマン）。左＝+X
-    const R = WB / Math.tan(Math.max(1e-4, Math.abs(S.steer))), sg = Math.sign(S.steer);
+    const R = WB / Math.tan(Math.max(1e-4, Math.abs(effSteer))), sg = Math.sign(effSteer);
     const inner = Math.min(0.96, Math.atan(WB / Math.max(0.2, R - TRACK))), outer = Math.atan(WB / (R + TRACK));   // 内側は 55° まで（見た目）
     P.SteerFL.rotation.y = -sg * (sg > 0 ? outer : inner);   // 右へ切る（steer＞0）と右（FR）が内側
     P.SteerFR.rotation.y = -sg * (sg > 0 ? inner : outer);
   }
-  P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -S.steer / MAX_STEER * 4.2));
+  P.SteeringWheel.quaternion.copy(P.sw0).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), -effSteer / MAX_STEER * 4.2));
   P.LeverShuttle.rotation.x = S.v < -0.05 || key.back ? -0.3 : 0.3;
   P.LeverJoy.rotation.x = (key.fwd ? 0.25 : 0) - (key.back ? 0.25 : 0);
   if (P.LeverRange) P.LeverRange.rotation.x += (({ L: 0.3, M: 0, H: -0.3 })[S.range || 'L'] - P.LeverRange.rotation.x) * Math.min(1, dt * 6);   // 副変速レバー（低・中・高の 3 段）
@@ -5353,6 +5378,7 @@ const VOICES = {
   tsume: ['固い所や タイヤの跡を耕す はしの爪ほど 早く減る。減りやすい爪を 入れかえて 長く使う', '愛媛の専業米農家さん（アメブロ）'],
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
+  wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
   ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   oto: ['運転席にいると、爪が土を引っかく音のちがいで 土の固さや深さがわかる。石を掘り起こすと 音で気づく', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   nami: ['耕したあとが波うつときは、まずリヤカバーが なめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーを吹くとよくなる。上下レバーを途中までしか下げないとセンサーがうまく働かないので、一番下まで下げて、深さは深さ調整レバーで合わせる', '井上寅雄農園（note）'],
@@ -5614,7 +5640,7 @@ function frame(now) {
   LEAK.update(dt);
   LAMPS.update();
   emitExhaust(dt);
-  DRIVER.update(dt, -S.steer / MAX_STEER * 4.2, camMode === 0);
+  DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も
   MIRROR.update(dt, camMode === 0);
   updateMud(dt, S.rotDown && S.rotPos < 0.08);
   NB.update(dt);

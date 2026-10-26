@@ -6864,6 +6864,14 @@ function mzNear(x, y) {   // (x, y) に いちばん近い 道すじの 点（�
   }
   return bd < Infinity ? { d: Math.sqrt(bd), x: bx, y: by } : null;
 }
+const mzOnC = { key: '', m: new Map() };
+function mzOn(x, y) {   // (x, y)（地図の マス）を いちばん近い 道すじの 上へ（印・足あとを 道すじに のせる）。読めて いなければ そのまま
+  if (mzOnC.key !== mzCurveC.key || mzOnC.m.size > 20000) { mzOnC.key = mzCurveC.key; mzOnC.m.clear(); }
+  const k = Math.round(x * 6) + ',' + Math.round(y * 6);
+  let p = mzOnC.m.get(k);
+  if (!p) { const q = mzNear(x, y); if (!q) return [x, y]; p = [q.x, q.y]; mzOnC.m.set(k, p); }
+  return p;
+}
 // 道しるべ：お米の マスから 行き先（G.guide）の そばの 通路まで、めいろの 道すじ（マスの 幅さがし）。お米の マスか 行き先が かわったときだけ さがす。
 // 案内の 札の 道のり（めいろで 何m）に 使い、25秒 近づけなければ 道すじの 先 8マスを 6秒 光る 点で 見せる（ふだんは 見せない：迷路を とく 楽しみを のこす）
 const mzRt = { key: '', path: null, best: Infinity, bestT: 0, showUntil: 0, gkey: '', retry: 0, t0: 0, len0: 0, run: { dots: 0, pads: 0, combo: 0 } };   // run：この ゴールまでの 道で ひろった ごはんつぶ・のった びゅんパネル・いちばん 長い コンボ（ゴールの ふり返りに）   // t0・len0：いまの ゴールに なった 時刻と、そのときの めいろの 道のり（ゴールの 知らせに）
@@ -7238,9 +7246,9 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中�
   const rg = Math.max(1.5, T * 0.26), rd = Math.max(1, T * 0.16), dots = [], grains = [];
   for (const [cx, cy] of mzTrail.values()) {
     if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
-    const X = ox + cx * S + S / 2, Y = oy + cy * S + S / 2;
-    grains.push([X, Y]);
-    for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) for (const f of [1 / 3, 2 / 3]) dots.push([X + dx * S * f, Y + dy * S * f]);
+    const at = (x, y) => { const p = mzOn(x, y); return [ox + p[0] * T, oy + p[1] * T]; };   // ゆるい めいろ：角の マスでは 道すじの カーブの 上に
+    grains.push(at((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K));
+    for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) for (const f of [1 / 3, 2 / 3]) dots.push(at((cx + 0.5 + dx * f) * MZ_K, (cy + 0.5 + dy * f) * MZ_K));
   }
   ctx.fillStyle = 'rgba(26,26,26,.45)';
   for (const [X, Y] of dots) { ctx.beginPath(); ctx.arc(X, Y, rd + 1, 0, Math.PI * 2); ctx.fill(); }

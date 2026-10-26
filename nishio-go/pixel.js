@@ -6361,8 +6361,8 @@ function drawWorld(now, w, h, dpr) {
     ctx.lineWidth = 3 * dpr; ctx.strokeStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(gx, gy, rr, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = 2 * dpr; ctx.strokeStyle = '#ffd54f'; ctx.beginPath(); ctx.arc(gx, gy, rr, 0, Math.PI * 2); ctx.stroke();
     ctx.font = `${Math.round(18 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = '#fff'; ctx.fillText('🏁', gx, gy - rr);
-    goalTag(gx, gy - rr - 20 * dpr, dpr, `ゴール：${gl.name || ''}`);
-    mzMap.worldGoal = [Math.round(gx), Math.round(gy)];   // テスト用
+    const tag = goalTag(gx, gy - rr - 20 * dpr, dpr, `ゴール：${gl.name || ''}`);
+    mzMap.worldGoal = [Math.round(gx), Math.round(gy), tag];   // テスト用
   } else mzMap.worldGoal = null;
   // 主人公
   if (me) {
@@ -6398,14 +6398,18 @@ function shopTag(cx, bottom, dpr, s) {
   ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
 }
-function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所の札：こい紺に金色の字（当店の札とは ちがう色）
-  const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));
+function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所・めいろの ゴールの 札：こい紺に金色の字（当店の札とは ちがう色）。札の わく [左, 上, 右, 下] を返す
+  const fs = Math.round(10 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr)), W = ctx.canvas.width, edge = 4 * dpr;
   ctx.font = `${fs}px "DotGothic16", monospace`;
-  const tw = Math.ceil(ctx.measureText(text).width), bw = tw + pad * 2, bh = fs + pad * 2;
-  const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr);
+  // 画面の はしで 切れない ように：長い 名前は「…」で つめ、札を 内がわへ ずらす（遠い ゴールの 人の 名前と 場所が 長いと、はしで 切れた）
+  let t = text;
+  while (t.length > 2 && ctx.measureText(t).width + pad * 2 + b * 2 > W - edge * 2) t = t.slice(0, -2) + '…';
+  const tw = Math.ceil(ctx.measureText(t).width), bw = tw + pad * 2, bh = fs + pad * 2;
+  const x = Math.round(Math.max(edge + b, Math.min(W - edge - b - bw, cx - bw / 2))), y = Math.round(bottom - bh - 2 * dpr);
   ctx.fillStyle = '#ffd54f'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2);
   ctx.fillStyle = '#1b2a4a'; ctx.fillRect(x, y, bw, bh);
-  ctx.fillStyle = '#ffd54f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
+  ctx.fillStyle = '#ffd54f'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(t, x + bw / 2, y + bh / 2 + dpr * 0.5);
+  return [x - b, y - b, x + bw + b, y + bh + b];
 }
 function worldSpotShown(s) {
   return !!s.featured;   // 注目スポット（名所）はどの縮尺でも全部出す
@@ -6494,11 +6498,13 @@ $('pxWorld').addEventListener('click', () => setWorld(!worldMode));
 function worldCamFitGoal() {
   const me = G.me, g = mazeBack() && G.guide;
   if (!me || !g || g.lat == null || !G.inPlay(me.lat, me.lng)) return;
-  const a = llToW(me.lat, me.lng), b = llToW(g.lat, g.lng), W = cv.clientWidth || 360, H = cv.clientHeight || 600;
-  wcam = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; wcamOnMe = false;
+  updateCover();
+  // 見えている 所（下の 案内の 札より 上）に 入れる：小さい 画面で 南の ゴールが 札に かくれた（Codex の 指摘）
+  const a = llToW(me.lat, me.lng), b = llToW(g.lat, g.lng), W = cv.clientWidth || 360, H = cv.clientHeight || 600, Hv = Math.max(120, H - cover);
   let i = WSIZES.length - 1;
-  while (i > 0 && (Math.abs(a.x - b.x) * WSIZES[i] > W * 0.7 || Math.abs(a.y - b.y) * WSIZES[i] > H * 0.55)) i--;
+  while (i > 0 && (Math.abs(a.x - b.x) * WSIZES[i] > W * 0.7 || Math.abs(a.y - b.y) * WSIZES[i] > Hv * 0.55)) i--;
   wscale = i;
+  wcam = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 + (H - Hv) / 2 / WSIZES[i] }; wcamOnMe = false;   // 2つの まん中を、見えている 所の まん中に
 }
 // 📍ボタン：せかいちずでは主人公のいる所へ戻す（歩く地図はいつも主人公が真ん中）
 function centerOnMe() { if (worldMode) wcam = worldCamStart(); }

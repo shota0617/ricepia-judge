@@ -1347,24 +1347,34 @@ async function walkTo(page, id) {
     });
     // 遠い ゴール（まっすぐ 1km より 先）：縁の 矢印を タップすると、せかいちずが お米と ゴールの 両方 入る ように 開き、🏁 と 名前の 札が 出る
     // （運営者の声「ゴールがどこなのかわからない」：遠くて 地図の どこか 分からない。めいろ図は こまかすぎて 町の どこか 分からなかった）
-    R.checks.mzFarWorld = await w.page.evaluate(async () => {
-      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas') || document.querySelector('canvas');
-      document.getElementById('pxInfo').hidden = true;
-      const far = G.spots.filter(x => x.lat && G.dist(G.me, x) > 2000 && G.dist(G.me, x) < 4000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
-      if (!far) return { skip: 'no far spot', ok: true };
-      G.setGuide({ kind: 'spot', id: far.id, name: far.name, why: 'テスト', by: 'テスト' });
-      let a = null;
-      for (let i = 0; i < 30 && !a; i++) { await wait(200); a = M.mapArrow; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }
-      if (!a) { G.setGuide(null); return { far: far.name, arrow: null, ok: false }; }
-      const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
-      cv.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: r.left + (a[0] + a[2]) / 2 / dpr, clientY: r.top + (a[1] + a[3]) / 2 / dpr }));
-      await wait(800);
-      const world = document.body.classList.contains('pxw'), g = M.worldGoal, inView = !!g && g[0] > 0 && g[1] > 0 && g[0] < cv.width && g[1] < cv.height;
-      if (world) document.getElementById('pxWorld').click();
-      await wait(300);
-      G.setGuide(null);
-      return { far: far.name, m: Math.round(G.dist(G.me, far)), world, goal: g, inView, back: !document.body.classList.contains('pxw'), ok: world && inView };
-    });
+    // 小さい 画面（320×568）で、南の ゴール（下の 案内の 札に かくれやすい）と 長い 名前（札が はしで 切れやすい）でも、🏁 は 見えている 所に、札は 画面の 中に（Codex の 指摘）
+    R.checks.mzFarWorld = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas');
+        document.getElementById('pxInfo').hidden = true;
+        const far = G.spots.filter(x => x.lat && x.lat < G.me.lat && G.dist(G.me, x) > 2000 && G.dist(G.me, x) < 4000).sort((a, b) => a.lat - b.lat)[0];   // いちばん 南
+        if (!far) return { skip: 'no far spot', ok: true };
+        const name = far.name + '（' + 'とても長い名前のテスト'.repeat(4) + '）';
+        G.setGuide({ kind: 'spot', id: far.id, name, why: 'テスト', by: 'テスト' });
+        let a = null;
+        for (let i = 0; i < 30 && !a; i++) { await wait(200); a = M.mapArrow; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }
+        if (!a) { G.setGuide(null); return { far: far.name, arrow: null, ok: false }; }
+        const rc = cv.getBoundingClientRect(), dpr = cv.width / rc.width;
+        cv.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: rc.left + (a[0] + a[2]) / 2 / dpr, clientY: rc.top + (a[1] + a[3]) / 2 / dpr }));
+        await wait(800);
+        const sh = document.getElementById('sheet').getBoundingClientRect(), visBottom = (Math.min(rc.bottom, sh.top) - rc.top) * dpr;
+        const world = document.body.classList.contains('pxw'), g = M.worldGoal, tag = g && g[2];
+        const inView = !!g && g[0] > 0 && g[1] > 0 && g[0] < cv.width && g[1] < visBottom, tagIn = !!tag && tag[0] >= 0 && tag[2] <= cv.width && tag[1] >= 0;
+        if (world) document.getElementById('pxWorld').click();
+        await wait(300);
+        G.setGuide(null);
+        return { far: far.name, m: Math.round(G.dist(G.me, far)), world, goal: g && g.slice(0, 2), visBottom: Math.round(visBottom), tag, w: cv.width, inView, tagIn, ok: world && inView && tagIn };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return r;
+    })();
     // めいろで ゴールへ 向かう とちゅうに、ゴールでない 人と 話しても、ゴールは かわらない（人の 話の 行き先は、ゴールが ない ときだけ）
     R.checks.mzKeepGoal = await w.page.evaluate(async () => {
       const G = nishioGo, pi = document.getElementById('pxInfo');

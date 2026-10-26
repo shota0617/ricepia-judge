@@ -260,6 +260,9 @@ label.row{min-height:44px;cursor:pointer}
 .btn.mode-pick.meiro{position:relative}
 .nudge-tip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);white-space:nowrap;pointer-events:none;font-size:12.5px;font-weight:700;color:#7a4b00;background:#fff4c2;border:2px solid #1f2a22;border-radius:10px;padding:2px 10px;line-height:1.6}   /* ボタンの 上に かさねる（下の ボタンが ずれない） */
 .nudge-tip::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-6px;border:6px solid transparent;border-top-color:#1f2a22;border-bottom:0}
+/* 吹き出しはボタンの上のふちに のせる（ボタンの上に出すと、すぐ上の「お米が ころころ…」の文に かぶって読めなくなる） */
+.nudge-tip{bottom:auto;top:-13px}
+.nudge-tip::after{display:none}
 @media (prefers-reduced-motion:reduce){.btn.mode-pick.meiro.nudge{animation:none}}
 .intro .warn{font-size:12px;background:#fff4e0;border-radius:10px;padding:8px;color:#7a4b00}
 
@@ -440,6 +443,7 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 /* はじめの画面やスポットの説明ウィンドウが出ている間は、知らせ（トースト）を下に出して文字に重ねない */
 body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
 body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}
+body:has(#pxInfo:not([hidden])) .toast.low{bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}   /* 窓に 重なる ときは 下の札の 上に（toastDodge。小さい 画面で「▶ とじる」が かくれた） */
 /* きろく・こえ・とくてん・せってい のタブでは、上の見出し（バッジの達成率・もうすぐ など）に重ねないよう 下に */
 body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .toast,body:has(#panel-rewards:not([hidden])) .toast,body:has(#panel-settings:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}
 /* 西尾の人たち（話しかけられる町の人） */
@@ -502,7 +506,7 @@ body.px .guide small{color:#ddd}
 @keyframes twinkle{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.2)}}
 @media (prefers-reduced-motion:reduce){.intro-hero .sp{animation:none;opacity:.8}}   /* 動きを減らす設定の人には、きらきらを止める */
 .tagline{display:none}
-.simple .tagline{display:block;font-weight:800;color:var(--green);font-size:16px;margin:4px 0 2px}
+.simple .tagline{display:block;font-weight:800;color:var(--green);font-size:16px;margin:4px 0 14px}   /* 下は「おしても だいじょうぶ！」の吹き出しの場所 */
 .simple .intro .pitch,.simple .intro .mode-q{display:none}
 .simple .btn.mode-pick{border-radius:999px;box-shadow:0 0 0 3px #e9c46a,0 4px 0 #1f3f27}
 .simple .btn.mode-pick.alt{box-shadow:0 0 0 3px #e9c46a,0 4px 0 #22305a}

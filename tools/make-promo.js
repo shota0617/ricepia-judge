@@ -34,7 +34,7 @@ async function endCard(page) {
     const el = document.createElement('div');
     el.style.cssText = 'position:fixed;inset:0;z-index:6000;background:linear-gradient(#9fd6ff,#e8f6ff 60%,#cfae4a 60%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;font-family:"DotGothic16",sans-serif;text-align:center;padding:20px';
     el.innerHTML = `<img src="nishio-go/logo.svg" style="width:300px;height:auto" alt="">
-      <div style="font-size:24px;font-weight:bold;background:#fff;border:3px solid #000;border-radius:10px;padding:12px 16px">スマホを傾けて<br>お米を転がす 西尾の めいろ</div>
+      <div style="font-size:24px;font-weight:bold;background:#fff;border:3px solid #000;border-radius:10px;padding:12px 16px">スマホを傾けると<br>お米が ころころ 西尾の めいろ</div>
       <div style="font-size:18px;background:rgba(0,0,0,.8);color:#fff;border-radius:8px;padding:8px 14px">無料・登録なしで、すぐ遊べる</div>
       <div style="font-size:30px;font-weight:bold;color:#1f5a25;background:#fff;border-radius:8px;padding:6px 14px">go.ricepia.jp</div>
       <div style="font-size:15px;background:rgba(0,0,0,.75);color:#fff;border-radius:6px;padding:6px 10px">西尾のお米屋さん 近藤米穀店・らいすぴあ</div>`;
@@ -71,7 +71,7 @@ async function endCard(page) {
   fs.rmSync(frames, { recursive: true, force: true });
   const stop = recorder = await recordPage(page, frames);
   // 1) はじめの画面（お米が 台地の坂を ころころ転がり下りる アニメーション）
-  await caption(page, 'スマホを傾けて<br>お米を転がす', '西尾のお米屋さんがつくったゲーム', 'bottom'); await sleep(3500);
+  await caption(page, 'スマホを傾けると<br>お米が ころころ', '西尾のお米屋さんがつくったゲーム', 'bottom'); await sleep(3500);
   await shot('01-intro');
   // 2) 「🌀 傾けて めいろ」：西尾の地図ぜんぶが、本物の道で できた めいろ（西尾城跡のあたり）。矢印キーは 傾けたのと 同じ
   await caption(page, '');
@@ -135,7 +135,7 @@ async function endCard(page) {
     if (w / h > 1.4) {   // 横長：左に文、右にゲーム画面
       const ph = Math.round(h * 0.9), fs = Math.round(h / 11);
       return `<img src="${logoUrl}" style="position:absolute;left:${w * 0.04}px;top:${h * 0.06}px;width:${w * 0.45}px">
-        <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.27}px;font-size:${fs}px;font-weight:bold;line-height:1.35;text-shadow:0 0 8px #fff">傾けて お米を転がす<br>西尾の めいろ</div>
+        <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.27}px;font-size:${fs}px;font-weight:bold;line-height:1.35;text-shadow:0 0 8px #fff">傾けると お米が ころころ<br>西尾の めいろ</div>
         <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.56}px">${pill('本物の道で できた めいろを、名所へ', Math.round(fs / 2))}</div>
         <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.69}px">${pill('無料・登録なし ／ go.ricepia.jp', Math.round(fs / 2))}</div>
         <div style="position:absolute;right:${w * 0.05}px;top:${h * 0.05}px">${phone('02-maze.png', ph)}</div>${foot(Math.round(fs / 2.3), Math.round(h * 0.09))}`;
@@ -144,7 +144,7 @@ async function endCard(page) {
     const fs = Math.round(w / 14), logoTop = h * 0.035, headTop = logoTop + w * 0.13, pill1 = headTop + w * 0.21, pill2 = pill1 + w * 0.075;
     const phoneTop = pill2 + w * 0.085, ph = Math.round(h * 0.9 - phoneTop);
     return `<div style="position:absolute;left:0;right:0;top:${logoTop}px;text-align:center"><img src="${logoUrl}" style="width:${w * 0.7}px"></div>
-      <div style="position:absolute;left:0;right:0;top:${headTop}px;text-align:center;font-size:${fs}px;font-weight:bold;line-height:1.3;text-shadow:0 0 8px #fff">傾けて お米を転がす<br>西尾の めいろ</div>
+      <div style="position:absolute;left:0;right:0;top:${headTop}px;text-align:center;font-size:${fs}px;font-weight:bold;line-height:1.3;text-shadow:0 0 8px #fff">傾けると お米が ころころ<br>西尾の めいろ</div>
       <div style="position:absolute;left:0;right:0;top:${pill1}px;text-align:center">${pill('本物の道で できた めいろを、名所へ', Math.round(fs / 2.3))}</div>
       <div style="position:absolute;left:0;right:0;top:${pill2}px;text-align:center">${pill('無料・登録なし ／ go.ricepia.jp', Math.round(fs / 2.3))}</div>
       <div style="position:absolute;left:0;right:0;top:${phoneTop}px;display:flex;justify-content:center;gap:${w * 0.03}px">${phone('02-maze.png', ph)}${h / w > 1.1 ? '' : phone('04-goal.png', ph)}</div>${foot(Math.round(fs / 2.4), Math.round(h * 0.075))}`;

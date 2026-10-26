@@ -967,7 +967,9 @@ function dankyuReward(stars, level) {
 
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：1日1回。えらんだ種もみで ポイント（OK 20・ギリギリOK 10・伸び過ぎ 0）と、
 // そのわけの 米づくりの まちメモ（kome.js。OK・ギリギリOK は「いちばんよい芽出し」、伸び過ぎは「伸びすぎるわけ」）
-const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0;
+// 芽出し（催芽）は 苗づくりの はじめ。こよみ（season.js）の 田おこし・田植えの ころ（4〜6月）だけ 出す（冬に 種もみの 芽出しは しない。自分で 遊んで 分かった：12月に 出ていた）
+const medashiSeason = () => { const p = window.NISHIO_SEASON && NISHIO_SEASON.paddy(new Date()); return !p || p.id === 'taokoshi' || p.id === 'taue'; };
+const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0 && medashiSeason();
 function medashiReward(choice, pts) {
   if (!medashiDue()) return { pts: 0, fresh: false };
   S.medashiDay = ymd();
@@ -2485,7 +2487,7 @@ function renderUps() {
   $('upBox').hidden = !demo;
   if (!demo) return;
   const lv = levelOf(S.total), perH = Math.floor(IDLE.ptPerHour(lv) * (1 + 0.5 * upLv('bag')));
-  $('upNote').textContent = `🍚 自分で転がす：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
+  $('upNote').textContent = `🍚 自分で遊ぶ：いちばんたくさん集まり、たからばこ（ドット絵）を自由に探せます。🏠 るすばん：閉じている間も 1時間に約${perH}pt（最大${idleCapH()}時間）と、まちメモ・ドット絵を持ち帰ります。`;
   $('upList').innerHTML = IDLE.ups.map(u => {
     const lv = upLv(u.id), max = lv >= u.cost.length, cost = u.cost[lv];
     if (simple()) return `<li class="up-pic" title="${esc(u.desc)}"><span class="ico">${UP_PI[u.id] ? `<img class="art" src="nishio-go/art/up-${u.id}.png" alt="${esc(u.name)}" width="48" height="48"/>` : PI('up', u.name)}</span><span class="main"><b>${esc(u.name)}</b><span class="lvdots">${u.cost.map((c, i) => `<i class="${i < lv ? 'on' : ''}"></i>`).join('')}</span></span>`
@@ -2516,7 +2518,7 @@ function toast(msg) {
   const el = $('toast');
   if ($('reward').classList.contains('show') || howtoOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札の 上にも 重ねない（とじてから）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
-  el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
+  el.textContent = msg; el.classList.add('show'); toast.at = Date.now(); toastDodge();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
@@ -2530,6 +2532,21 @@ function toastHold() {
   if (Date.now() - (toast.at || 0) < 1500 && !toastQ.includes(t.textContent)) toastQ.push(t.textContent);
   t.classList.remove('show'); clearTimeout(toastTimer);
 }
+// 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
+// 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓の 大きさが かわった ときにも 見る
+function toastDodge() {
+  const el = $('toast'), dq = document.querySelector('#pxInfo:not([hidden]) .dq');
+  if (!dq || !el.classList.contains('show')) { el.classList.remove('low'); return; }
+  // 動いている とちゅう（出はじめの transform・low を 外した あとの bottom の transition）では なく、ふつうの 位置に 止まった 形で くらべる：transition の ない 見えない 写しで はかる
+  const c = el.cloneNode(true);
+  ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.remove('low'); c.style.cssText = 'transition:none;visibility:hidden';
+  el.parentNode.appendChild(c);
+  const t = c.getBoundingClientRect(), d = dq.getBoundingClientRect();
+  c.remove();
+  el.classList.toggle('low', t.top < d.bottom && t.bottom > d.top);
+}
+// 窓が 開く・とじる・話の ページを めくって 高さが かわる（pxInfoBody だけ 書きかわる）たびに 見なおす
+if (window.ResizeObserver && document.querySelector('#pxInfo .dq')) new ResizeObserver(toastDodge).observe(document.querySelector('#pxInfo .dq'));
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
 // 待っている知らせが いくつあっても、来た順に1つずつ（同時に出して、あとのものが上書きしないように）
 function toastAfter(msg) {
@@ -3190,7 +3207,7 @@ function switchMode(isDemo) {
   if (isDemo === demo) return;
   setMode(isDemo);
   track('mode_switch', { mode: demo ? 'play' : 'walk' });
-  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けて 迷路を 転がします' : '地図をタップした所へ移動します'}。記録は別です）`
+  toast(demo ? `🎮 操作して移動にしました（${document.body.classList.contains('px') ? 'スマホを傾けると お米が 迷路を ころころ進みます' : '地図をタップした所へ移動します'}。記録は別です）`
     : '🚶 あるいて移動にしました（位置情報を使います）');
 }
 document.querySelectorAll('.mode-sw [data-mode]').forEach(b => b.addEventListener('click', () => switchMode(b.dataset.mode === 'demo')));
@@ -3839,7 +3856,7 @@ function begin(isDemo) {
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
   if (isDemo) toast(document.body.classList.contains('px')
-    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 転がそう（矢印キー・地図を タップでも）')
+    ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 進もう（矢印キー・地図を タップでも）')
     : '🎮 地図をタップするとその場所へ移動します');
   setTimeout(sealPickCheck, 3000);   // えらぶ前に閉じた しるしの2枚
 }

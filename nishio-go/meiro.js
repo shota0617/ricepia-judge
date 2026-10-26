@@ -235,7 +235,7 @@ function build() {
   el.innerHTML = `<div class="mz-top"><div class="mz-st"></div><div class="mz-time">0.0</div><button type="button" class="mz-x mz-slow" data-mz="slow" aria-pressed="false" aria-label="ゆっくり転がる" title="ゆっくり">🐢</button><button type="button" class="mz-x" data-mz="close" aria-label="めいろを とじる">✕</button></div>
     <div class="mz-bezel"><div class="mz-glass"><canvas aria-label="迷路の盤"></canvas><div class="mz-load">めいろを つくっています…</div></div></div>
     <div class="mz-clear" hidden><div class="mz-card"></div></div>
-    <p class="mz-hint">📱 スマホを 傾けて、お米を 🏁 まで ころがそう（パソコンは 矢印キー・盤を なぞっても）。<br/>黒い穴と 水に おちると スタートに もどるよ</p>
+    <p class="mz-hint">📱 スマホを 傾けて、お米と 🏁 まで 進もう（パソコンは 矢印キー・盤を なぞっても）。<br/>黒い穴と 水に おちると スタートに もどるよ</p>
     <div class="mz-btns"><button type="button" class="sub" data-mz="retry">↺ やりなおし</button><button type="button" class="sub" data-mz="hint">💡 ヒント</button><button type="button" class="sub" data-mz="list">いちらん</button></div>`;
   document.body.appendChild(el);
   ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'), bezel: el.querySelector('.mz-bezel'),

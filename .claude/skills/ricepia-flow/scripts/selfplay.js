@@ -4,7 +4,7 @@
 //   MODE=route（道すじを 追う。既定）／explore（答えを 知らない：分かれ道で ゴールの 方角へ、行き止まりで ひきかえす）
 //   HINT=1（explore で、25秒 近づけないと 光る 点＝道すじの 先 8マスを 見て たどる。人と 同じ）
 //   MZGOALS=5（めいろの ゴールに 着いた 回数。3 以上だと おたすけが 消えた あと）／DATE=2026-10-25T10:00:00+09:00（時刻を 固定）
-//   SECS=480（遊ぶ 秒数）／PORT=8987
+//   SECS=480（遊ぶ 秒数）／PORT=8987／VIEW=320x568（画面の 大きさ。既定は 390x780。小さい スマホで 重なりを 見る）
 //   ログの STUCK は 15秒 道のりが へらなかった 所（画面を stuck-N.png に 残す）。遊び手の 動きの せいか、ゲームの せいかは 画面と probe で 見分ける
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
@@ -17,7 +17,7 @@ const OUT = path.resolve(process.argv[2] || 'selfplay-out'), GOALS = Number(proc
   fs.mkdirSync(OUT, { recursive: true });
   startServer(Number(process.env.PORT || 8987));
   const browser = await chromium.launch(ENV.CHROMIUM ? { executablePath: ENV.CHROMIUM } : {});
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 780 }, deviceScaleFactor: 2, locale: 'ja-JP', timezoneId: 'Asia/Tokyo' });
+  const ctx = await browser.newContext({ viewport: (([w, h]) => ({ width: w, height: h }))((process.env.VIEW || '390x780').split('x').map(Number)), deviceScaleFactor: 2, locale: 'ja-JP', timezoneId: 'Asia/Tokyo' });
   await ctx.addInitScript(g => { localStorage.setItem('nsg_noanalytics', '1'); if (g) localStorage.setItem('nsg_mzgoals', g); }, process.env.MZGOALS || '');
   const page = await ctx.newPage(); if (process.env.DATE) await page.clock.setFixedTime(new Date(process.env.DATE));
   const errs = []; page.on('pageerror', e => errs.push(e.message));

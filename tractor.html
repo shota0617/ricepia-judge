@@ -2359,11 +2359,16 @@ const CORNER = (() => {
   }
   function stage([sx, sz]) {                       // turn：うしろが角を向いていない／back：バックで寄せる／stop：畦の手前（作業機のうしろが 畦から 0.5m 以内）
     const bx = -Math.sin(S.yaw), bz = -Math.cos(S.yaw), dx = sx * HX - S.x, dz = sz * HZ - S.z, d = Math.hypot(dx, dz) || 1;
-    if ((bx * dx + bz * dz) / d < 0.6) return 'turn';
+    if ((bx * dx + bz * dz) / d < 0.8) return 'turn';
     const p = wheelPoints(S.x, S.z, S.yaw);
     const toX = bx * sx > 0.2, toZ = bz * sz > 0.2;  // バックしていく向きに近づく畦だけを見る（ななめなら 両方。まっすぐなら 横の畦は 見ない）
     const gap = Math.min(...[-1, 1].map(k => { const [x, z] = p.w(k * ROT_HALF(), ROTARY_Z - 0.45); return Math.min(toX ? HX - Math.abs(x) : 9, toZ ? HZ - Math.abs(z) : 9); }));
-    return gap < 0.5 ? 'stop' : 'back';
+    if (gap >= 0.5) return 'back';
+    for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {   // 下げたら耕す所（step と同じ）に 角の耕し残しがあるか
+      const [x, z] = p.w(lx, lz);
+      if (inCorner(x, z) && !tilledMask[Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL)]) return 'stop';
+    }
+    return 'miss';                                  // ここで下げても 角の残りに届かない
   }
   return {
     left, stage,
@@ -5885,6 +5890,7 @@ const COACH = (() => {
     if (cn) {
       const st = CORNER.stage(cn);
       if (st === 'turn') return ['!', '角が残っている：作業機（うしろ）が 角を向くように 回ってから止まる'];
+      if (st === 'miss') return ['!', '作業機が 角の残りに届いていない：少し前へ出て、うしろが 残っている所へ まっすぐ向くように 回りなおす'];
       if (st === 'stop') return ['!', K('畦の手前まで来た：止まって <kbd>スペース</kbd>で下げ、<kbd>↑</kbd> で前へ', '畦の手前まで来た：止まって ボタンで下げ、▲ で前へ')];
       return ['!', K('角が残っている：上げたまま うしろを見て <kbd>↓</kbd> で ゆっくりバック。作業機が畦に当たる前に止まる', '角が残っている：上げたまま うしろを見て ▼ で ゆっくりバック。作業機が畦に当たる前に止まる')];
     }

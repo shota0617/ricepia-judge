@@ -7,6 +7,7 @@
 - **できない**：Google広告・Meta・LINE・インスタの 管理画面に 入る こと（認証情報も つなぐ 手段も ない）。「広告に 追加して」と 言われても、アカウントは 変えられない。
   - かわりに、貼って 動かす スクリプト（Google広告）か、アップロードする 画像を 用意して `SendUserFile` で 送る。どこに どの 画像かを 表に して 伝える（下の「画像と 使う 所」）。
   - 環境変数 `GOOGLE_ADS_*` が あれば、`node tools/google-ads-run.js` で API から 動かせる（まず 検証だけ → `--apply`）。値は チャットに 書いて もらわない（環境の 設定に 入れて もらう）。
+  - GitHub の Secrets に `GOOGLE_ADS_*` が あれば、Actions「Google Ads」（`google-ads.yml`）を `actions_run_trigger` で 動かせる（inputs `{"job": "game-campaign", "apply": "false"}` → ログを 見る → 運営者が よいと 言ったら main で `"apply": "true"`）。入れ方は docs/ads-game-kit.md の 3-3。
 - **LINE リッチメニュー**：Messaging API で 差しかえる Actions「LINE rich menu」（`tools/line-richmenu.js`、Secrets の `LINE_CHANNEL_ACCESS_TOKEN`）。運営者が「アップ」と 言ったら、まず `apply` なしで 動かして ログを 見せ、よければ `apply`。手順は `docs/ads-game-kit.md` 5-1。
 - **できる**：スクリプト・画像・文を 作って PR、Actions の ワークフローを 動かす（GitHub の MCP の `actions_run_trigger`）、ricepia.jp の アップロード（下の 手順。さくらの フィルタは ユーザーに 切って もらう）。
 - go.ricepia.jp・ricepia.jp は この 環境の プロキシで 止められて 見られない。公開後の 見た目は ユーザーに 見て もらう。

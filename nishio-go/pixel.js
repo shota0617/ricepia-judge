@@ -8144,6 +8144,9 @@ function rollStep(dt) {
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;
   const syncMet = () => {   // めいろの あいさつ ずみ：ゴールが かわったら わすれる・ゴールに 着いて 話した 人は 次の ゴールへ もちこす
+    // ゴールが かわった すぐ あと（mzRoute は こまの おわりに 回る：前の マスで 次の ゴールが 決まった など）でも、あいさつ ずみを いまの ゴールで おぼえる
+    // （前の ゴールで おぼえると、こまの おわりに ゴールが そろった あと 消えて、はなれて もどると 同じ 話が また 開いた）
+    if (mz) mzRoute(performance.now());
     if (npcBump.gkey !== mzRt.gkey) { npcBump.gkey = mzRt.gkey; npcBump.met.clear(); }
     { const c = npcBump.carry; if (c && c.to) { if (c.to === mzRt.gkey) npcBump.met.add(c.id); npcBump.carry = null; } }   // ゴールに 着いて 話した 人は、次の ゴールへ 向かう 間も あいさつ ずみ（mzRoute で 決めた 次の ゴールだけ）。ゴールが かわった ことを この マスの 見はりが 見のがしても（前の ゴールと 同じ 次の ゴール）のせる
   };
@@ -8153,7 +8156,14 @@ function rollStep(dt) {
     rp.vx = rp.vy = 0;
     if (hard > 0.6) { roll.sq = Math.min(0.2, 0.08 + hard * 0.03); roll.sqv = 0; roll.sqx = Math.abs(rp.x - (tx + 0.5)) > Math.abs(rp.y - (ty + 0.5)); kotoSound(Math.min(1, hard / 5)); }
     roll.happyT = 1.4;
-    if ($('pxInfo').hidden && npcBump.id !== who.id) { npcBump.id = who.id; npcBump.x = tx; npcBump.y = ty; if (mazeOn()) npcBump.met.add(who.id); openNpc(who); }   // 同じ 人には、いちど はなれる（3マス）まで もう 話しかけない（傾けた まま だと、とじる たびに また 話しかけて いた）
+    if ($('pxInfo').hidden && npcBump.id !== who.id) {   // 同じ 人には、いちど はなれる（3マス）まで もう 話しかけない（傾けた まま だと、とじる たびに また 話しかけて いた）
+      const g0 = G.state.guide;
+      npcBump.id = who.id; npcBump.x = tx; npcBump.y = ty; if (mazeOn()) npcBump.met.add(who.id); openNpc(who);
+      // 話で 次の ゴールが 決まった（ゴールの 人に こつんと 着いた・ゴールが ない ときに 話した）：着いて 話した ときと 同じく、次の ゴールへ 向かう 間も あいさつ ずみ
+      // （ゴールが かわると あいさつ ずみが 消えて、はなれて もどると 同じ 話が また 開いていた）
+      const g1 = G.state.guide;
+      if (mazeOn() && g1 && g1 !== g0 && g1.byId === who.id) npcBump.carry = { id: who.id, from: mzRt.gkey };
+    }
   };
   const mzHit = mazeOn() ? mzNpcNear(rp.x, rp.y) : null;   // めいろでは 人の そばに 来たかを 毎回（同じ マスの 中で 近づいて はなれる 動きでも 当たる。Codex の 指摘）
   if (key === rp.tile && mzHit && npcBump.id !== mzHit.id) { syncMet(); if (!npcBump.met.has(mzHit.id)) { hitNpc(mzHit); return; } }

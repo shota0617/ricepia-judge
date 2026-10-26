@@ -1407,6 +1407,29 @@ async function walkTo(page, id) {
       return { good: /1\.1倍/.test(t) && /\+5/.test(t), bad: /1\.8倍/.test(t), goal, next: titles.some(x => /つぎは/.test(x)), ok: goal && /1\.1倍/.test(t) && /1\.8倍/.test(t) && !titles.some(x => /つぎは/.test(x)) };
     });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
+    // 人から はなれる（テストの 道具）：めいろの 道すじの 上で 人の マスから 5〜8マスの 所に 置き、道すじに そって となりの マスへ 転がす（4マス 以上 はなれた マスに 入る）。
+    // 人から まっすぐ 4マス 先は、ゆるい めいろでは 生け垣の 中の ことが あり、置いても 道すじへ もどされて「はなれた」ことに ならなかった
+    await w.page.evaluate(() => {
+      window.__npcLeave = async t => {
+        const P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+        const on = (x, y) => { const q = M.near(x + 0.5, y + 0.5); return !!q && q.d < 0.2 && !P.blockedAt(x + 0.5, y + 0.5) && Math.abs(x - t.x) + Math.abs(y - t.y) >= 4; };
+        const cands = [];
+        for (let y = t.y - 8; y <= t.y + 8; y++) for (let x = t.x - 8; x <= t.x + 8; x++) { const d = Math.abs(x - t.x) + Math.abs(y - t.y); if (d >= 5 && d <= 8 && on(x, y)) cands.push([x, y, d]); }
+        cands.sort((a, b) => a[2] - b[2]);
+        let tries = 0;
+        for (const [x, y] of cands) for (const [ex, ey] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          if (tries >= 6 || !on(x + ex, y + ey) || P.rollBlockedFrom(x + 0.5, y + 0.5, x + ex + 0.5, y + ey + 0.5)) continue;
+          tries++;
+          P.rollPut(x + 0.5, y + 0.5, ex * 2, ey * 2);
+          for (let i = 0; i < 10; i++) {
+            await wait(100);
+            const r = P.roll; if (Math.floor(r.x) === x + ex && Math.floor(r.y) === y + ey) return true;
+            const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.querySelectorAll('.md-card .md-close').forEach(b => { if (b.getClientRects().length) b.click(); });   // 置いた 所の そばの 名所の ごほうび・本の できごとで 止まった ときは 閉じる
+          }
+        }
+        return false;
+      };
+    });
     // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
     const bumpA = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
@@ -1484,7 +1507,9 @@ async function walkTo(page, id) {
           await leave();
           const back = await push();   // めいろでは、いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない
           pi.hidden = true;
-          const g = G.decideGuide(null), M = P.maze;
+          // 人の 話で 決まった ゴールとは べつの 所（話で 決まった ゴールへ 向かう 間は あいさつ ずみの まま）
+          const gg = G.guide, far = x => !gg || G.dist(gg, x) > 100;
+          const g = [G.decideGuide(null), ...G.spots.filter(s => s.featured && !s.shop && G.dist(G.me, s) < 1500).map(s => ({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: 'テスト', by: 'テスト' }))].find(x => x && Number.isFinite(x.lat) && far(x)), M = P.maze;
           let fresh = 'skip';
           if (g) {   // ゴールが かわると、また こつんで 話せる
             G.setGuide(g);

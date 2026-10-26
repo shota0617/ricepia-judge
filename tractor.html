@@ -5806,7 +5806,9 @@ $('bStart').onclick = () => {
 // ---- バイラルループ：遊ぶ → 結果を投稿する → 見た人が知る → （友だち追加・挑戦）→ 遊ぶ。
 // 投稿のリンクは 同じ季節・お題で開き、はじめの画面に「友だちは ○ 点。きみは何点？」と出す。終わりの画面で 友だちの点と くらべる
 const LOOP = (() => {
-  const p = parseInt(params.get('p'), 10), friend = params.get('from') === 'share' && p >= 0 && p <= 100 ? p : null;
+  // リンクの 季節・お題・時間・天気が このゲームで そのまま使えるときだけ 挑戦にする（知らない値で ほかの田んぼに 変わっていたら、同じ条件と言えない）
+  const same = params.get('season') === season && params.get('art') === (ART.on ? ART.id : 'none') && (!params.has('time') || params.get('time') === TOD) && (!params.has('w') || params.get('w') === WX);
+  const p = /^\d{1,3}$/.test(params.get('p')) ? +params.get('p') : -1, friend = params.get('from') === 'share' && same && p >= 0 && p <= 100 ? p : null;
   const SNAME = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' };
   if (friend !== null) {
     const el = $('challenge');

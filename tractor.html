@@ -4386,8 +4386,8 @@ function step(dt) {
       if (g > 0.05) {                               // みぞのかべ：前輪を みぞの向きにそわせる（大きな角度で横切るときは 乗りこえるだけ）
         let tx = -gz / g, tz = gx / g;
         if (tx * fx + tz * fz < 0) { tx = -tx; tz = -tz; }
-        const th = Math.atan2(fx * tz - fz * tx, fx * tx + fz * tz);   // 進む向きから みぞの向きまでの角（+ は yaw が増える向き）
-        if (Math.abs(th) < 0.6) rutPull -= 0.8 * th * Math.sign(S.v);
+        const th = Math.atan2(fx * tz - fz * tx, fx * tx + fz * tz);   // 車体の yaw − みぞの向き（+ は 車体のほうが yaw が大きい）
+        if (Math.abs(th) < 0.6) rutPull += 0.8 * th * Math.sign(S.v);   // + に切ると 前進では yaw が減る（バックでは増える）ので、角の差が縮まる
       }
     }
     rutPull = Math.max(-0.22, Math.min(0.22, rutPull));   // バックでは 切る向きが逆

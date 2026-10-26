@@ -695,11 +695,12 @@ async function walkTo(page, id) {
     let pmax = 0, smax = 0;
     for (let i = 0; i < 9; i++) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); pmax = Math.max(pmax, Math.abs(r.pitch - info.p0)); smax = Math.max(smax, Math.abs(r.spin - info.s0)); }
     await page.keyboard.up(info.best[0]);
-    await page.waitForTimeout(1500);
-    const end = await page.evaluate(() => nishioPixel.roll);
+    const upright = p => Math.abs(p / (Math.PI * 2) - Math.round(p / (Math.PI * 2))) < 0.02;   // 止まると 起きあがって こっちを向く
+    let end = null, upS = 0;
+    for (let i = 0; i < 20; i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.roll); upS = (i + 1) * 0.15; if (upright(end.pitch) && Math.hypot(end.vx, end.vy) < 0.05) break; }   // 遅い 画面でも 待てるよう 3秒まで
     await page.evaluate(() => nishioPixel.setRoll(false));
-    const up = Math.abs(end.pitch / (Math.PI * 2) - Math.round(end.pitch / (Math.PI * 2))) < 0.02;   // 止まると 起きあがって こっちを向く
-    return { key: info.best[0], room: info.best[1], style: info.style, pitch: +pmax.toFixed(2), spin: +smax.toFixed(2), up, cov, ok: pmax > 1 && smax < 0.3 && up };
+    const up = upright(end.pitch);
+    return { key: info.best[0], room: info.best[1], style: info.style, pitch: +pmax.toFixed(2), spin: +smax.toFixed(2), up, upS: +upS.toFixed(2), endPitch: +end.pitch.toFixed(2), cov, ok: pmax > 1 && smax < 0.3 && up };
   })();
   // 曲がり角アシスト（めいろ）：右へ 開いた 曲がり角で、通路の まん中から 横に ずれて いても、上へ 傾けると 上の 通路に 入れる（アシストで 曲がれなく なっていないか）
   R.checks.cornerAssist = await (async () => {

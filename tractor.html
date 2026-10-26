@@ -1427,7 +1427,7 @@ const FARMER = (() => {
     if (!S.stalled) last.stalled = false;
     if (ART.on) { const o = ART.score().over; if (o > last.over + 1.5) { last.over = o; if (say('spill')) return; } }
     // 速さ：変速は 1.6・2.2・2.8・3.6km/h。点数は 時速 1.9〜3.3km が満点なので、4 速（3.6）と 1 速（1.6）を言う。ぬかるみの 1 速は言わない
-    fastT = working && kmh > 3.4 ? fastT + dt : 0; slowT = working && kmh < 1.75 && WET.at(S.x, S.z) < 0.05 ? slowT + dt : 0;
+    fastT = working && kmh > 3.4 ? fastT + dt : 0; slowT = working && kmh < 1.75 && WET.at(S.x, S.z) < 0.05 && !(SHIRO && (sc.turning || Math.abs(S.steer) > 0.32)) ? slowT + dt : 0;   // 代かきで 下げたまま ゆっくり回るのは よい
     gapM = working && !ART.on && gapBeside() ? gapM + S.v * dt : Math.max(0, gapM - Math.abs(S.v) * dt * 0.5);   // バックでも へっていく（ふえない）
     if (quiet > 0) return;
     if (fastT > 4 && say('fast')) return;

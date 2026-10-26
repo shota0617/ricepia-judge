@@ -201,6 +201,7 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 // どこが 通れるかは そのまま。通れる さかいで つながる マスの まん中を なめらかな 曲線（さかいの まん中を とおり、マスの まん中へ 引かれる）で むすび、
 // お米の まん中は 道すじから TUBE マス以内を 転がる。直角の 曲がり角は まるく、階段の ような ななめの 道は ななめの 一本道に なる
 const TUBE = 0.12, HALF = TUBE + R;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（マス）
+const SOFT_K = 2400, SOFT_C = 34, SOFT_MAX = 0.12;   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 function tubes(b) {   // マスごとに 受けもつ 道すじ（マスの 座標の 点の 列の 配列）。ゴールへ つながる 床と、そこから 入れる 水（落とし穴）
   if (b.tube) return b.tube;
@@ -409,7 +410,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -435,6 +436,7 @@ function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線�
   const layer = () => { const l = document.createElement('canvas'); l.width = W; l.height = H; const y = l.getContext('2d'); y.lineCap = y.lineJoin = 'round'; return [l, y]; };
   x.lineCap = x.lineJoin = 'round';
   x.strokeStyle = 'rgba(255,250,235,.38)'; x.lineWidth = wi; x.stroke(net);   // 通路は 地図を 明るく（町が 見える）
+  const m = document.createElement('canvas'); m.width = W; m.height = H; m.getContext('2d').drawImage(c, 0, 0); c.map = m;   // 台を のせる 前の 地図（やわらかい ふちが へこんだ 所に 見せる）
   const [L, l] = layer();   // 台：緑の プラスチック（地図は うっすら）。通路との さかいに 黒い ふち と、台の 上の てかり
   l.fillStyle = 'rgba(28,70,52,.86)'; l.fillRect(0, 0, W, H);
   l.strokeStyle = 'rgba(190,240,205,.35)'; l.lineWidth = wi + 6 * u; l.stroke(net);
@@ -525,16 +527,16 @@ function step(dt) {
       }
     }
     let nx = g.x + g.vx * dt, ny = g.y + g.vy * dt;
-    const q = near(b, nx, ny);
-    if (q && q.d > TUBE) {
-      const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy;
-      nx = q.x + ux * TUBE; ny = q.y + uy * TUBE;
-      if (hit > 0) {
-        if (hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }
-        const k = hit > 0.6 ? -BOUNCE : 0;
-        g.vx += (k - 1) * hit * ux; g.vy += (k - 1) * hit * uy;
-      }
-    }
+    const q = near(b, nx, ny), sf = g.soft;
+    if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
+      const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
+      if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
+      Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
+      let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり
+      if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
+      g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
+    } else sf.on = false;
+    { const tg = sf.on ? sf.pen : 0; sf.dv += (1600 * (tg - sf.dent) - 32 * sf.dv) * dt; sf.dent += sf.dv * dt; }   // ふちの へこみの 絵：お米に ついていき、はなれると ぷるんと もどる
     g.x = nx; g.y = ny;
   } else for (const axis of ['x', 'y']) {   // （筒の 外：たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す）
     const v = axis === 'x' ? g.vx : g.vy;
@@ -652,6 +654,12 @@ function draw(now) {
   const g = game, b = g.board, T = g.T, x = ui.cv.getContext('2d');
   x.imageSmoothingEnabled = false;
   x.drawImage(g.bg, 0, 0);
+  const sf = g.soft;
+  if (sf && sf.dent > 0.004 && g.bg.map) {   // やわらかい ふちの へこみ：当たった 所の 台が お米の 形に 押されて 横へ のびる（下の 地図が 見える）
+    const a = Math.atan2(sf.uy, sf.ux), cx = (sf.x + sf.ux * (TUBE + sf.dent)) * T, cy = (sf.y + sf.uy * (TUBE + sf.dent)) * T, rn = R * T, rt = rn * (1 + Math.min(1, sf.dent * 12)), u = Math.max(1, Math.round(T / 16));
+    x.save(); x.beginPath(); x.ellipse(cx, cy, rn, rt, a, 0, Math.PI * 2); x.clip(); x.drawImage(g.bg.map, 0, 0); x.restore();
+    x.strokeStyle = '#0d2219'; x.lineWidth = u; x.beginPath(); x.ellipse(cx, cy, rn, rt, a, -Math.PI / 2, Math.PI / 2); x.stroke();   // 外がわの ふち
+  }
   // ゴール：名所の絵と、ぴこぴこ光る わ と 旗
   const gx = (b.goal[0] + 0.5) * T, gy = (b.goal[1] + 0.5) * T, pulse = (Math.sin(now / 220) + 1) / 2;
   x.strokeStyle = `rgba(255,230,80,${0.5 + pulse * 0.5})`; x.lineWidth = Math.max(2, T / 10);

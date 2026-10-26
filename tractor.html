@@ -203,7 +203,7 @@
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
     <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
-    <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・リヤカバーの動きを見る（2 分。傷んだ部品は 先に交換）</span></label>
+    <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
     <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
@@ -265,6 +265,7 @@
       ・寒い朝や夜は、ディーゼルを<b>予熱</b>（グロー）してからかける。キーを回すとメーターの予熱ランプがつき、消えてからセルが回る（暖かいと 2〜3 秒、寒いと 5〜6 秒ほど）。冷えているあいだはカラカラ音が大きい<br>
       ・季節の生きもの：春の田んぼにはケリが巣をつくり、近づくと「キッ キッ キリッ」と鳴いて頭の上を飛びまわる。巣は地面にあるので、巣とそのまわりは耕さずに残し、タイヤとロータリーを近づけない（耕起や代かきで巣が失われることが多い：<a href="https://www.jstage.jst.go.jp/article/jjo/70/2/70_131/_pdf/-char/ja" target="_blank" rel="noopener">日本鳥学会誌の調査</a>）。代かきの 5 月は だいだい色のアマサギ、秋は渡ってきたばかりのジョウビタキと、山から田んぼへもどった赤とんぼ（アキアカネ。雄と雌がつながって ぬかるみの泥に卵を産む：<a href="https://www.cgr.mlit.go.jp/miyoshi/haizuka/wetland/pdf/haiduka085.pdf" target="_blank" rel="noopener">国土交通省 灰塚ダムの資料</a>）。イナゴやチョウは近づくと よける<br>
       ・代かきで畦ぎわに渦ができていたら、アメリカザリガニの巣穴から水がもれている。土をつめてふさぐ（放っておくと畦がくずれる：愛知県の防除の手引き）<br>
+      ・作業機の傾きは 平らな所で合わせる（代かきは ロータリーから ハローに付けかえるので、点検で見る）。傾いたままだと 片側だけ深くかいて、反対側は土が水面から出る（<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）</a>。自動水平は 合わせた水平を保つしくみ：<a href="https://www.yanmar.com/jp/agri/products/tractor/yt6/automatic-control.html" target="_blank" rel="noopener">ヤンマー</a>）<br>
       ・代かきは<b>浅水</b>で（土が 7〜8 割見えるくらい）。落水口の止水板は高くして、濁った水を川へ流さない。春・秋は水を落としておくので板ははずしてある。代かきの前に<b>畦塗り</b>：畦の内側に泥を塗って、モグラやザリガニの穴からの水もれをふさぐ（ゲームの代かきの畦も塗ってある。早すぎると ひびが入る：<a href="https://www.pref.hiroshima.lg.jp/uploaded/attachment/236669.pdf" target="_blank" rel="noopener">広島県</a>・<a href="https://www.pref.shiga.lg.jp/documents/6940/1009949_1.pdf" target="_blank" rel="noopener">滋賀県</a>の資料）<br>
       ・<b>点数</b>（右上）：速さ 20・まっすぐ 30・重ね 25・旋回と安全 25 の 100 点。ロータリーを下げたまま回る、畦にぶつける、重ねすぎる、坂を速く・ななめに通ると減る<br>
       ・安全：シートベルトをしめる。田んぼの出入りの坂は低速で、坂に対してまっすぐ。道では左右のブレーキを連結する（片ブレーキで急に曲がらない）
@@ -291,6 +292,7 @@
       ・ロータリーの逆転：ロータリーを下ろしたあとに盛り上がった土を前へ戻して平らにしやすい。正転より負荷が大きいので、硬い所や耕作放棄地では故障のもと。エンジンは低回転で（取扱説明書では 1500rpm 以下が目安）…<a href="https://note.com/ryutaro0306/n/n1dec2d4d6705" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターの逆転機能」</a>／四隅などにたまった土を寄せるのに使う。硬い所では使わず、やわらかい所で…<a href="https://note.com/ryutaro0306/n/n9cd5ebffa07d" target="_blank" rel="noopener">同「逆回転機能」</a>（ゲームでは <kbd>O</kbd>）<br>
       ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
+      ・作業機の傾きの調整は 平らな所で（ヤンマー AF18 の例）：ロアリンクを水平にし、作業機の中心を PTO 軸に合わせ、左右のチェックチェーンを締めてから、傾きスイッチで水平にして機械に覚えさせる。ボタンや チェーンのゆとりは 機種ごとに取扱説明書で…<a href="https://note.com/ryutaro0306/n/n014532cd9045" target="_blank" rel="noopener">井上寅雄農園（note）「傾き調整についてご紹介」</a>／自動水平（ヤンマーは UFO・クボタはモンロー）は、本体が傾いても作業機を水平に保つ。畝くずしや 田んぼの外周の耕うんに役立つ…<a href="https://note.com/ryutaro0306/n/n7e4973d0892c" target="_blank" rel="noopener">同「トラクターの自動水平機能」</a>（ゲームでは 代かきで点検をしないと ハローが傾いている）<br>
       ・土の中の石は 耕うんの爪をいため、苗の根張りも悪くする。水を張る前に拾った（拳大〜30cm 余り、50kg ほど）…<a href="https://note.com/yuki0mori/n/n3691961a57a9" target="_blank" rel="noopener">大森雄貴さん（note）「春が来る前に石拾い」</a>／運転席では、爪が土を引っかく音のちがいで 土の固さや深さがわかり、石を掘り起こすと音で気づく…<a href="https://note.com/yuki0mori/n/n5101cc99caee" target="_blank" rel="noopener">同「代かきトラクターの運転席から見える景色」</a>（ゲームでは 春の「🪨 はじめに石を拾う」）<br>
       ・プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返した…<a href="https://note.com/shoei_world/n/n4755bc166ea3" target="_blank" rel="noopener">shoei さん（note）「トラクターを使って『天地返し』の術！？」</a>（ゲームでは 秋の稲刈りのわだちに 前輪が落ちると ハンドルを取られる）<br>
       ・天気の悪い日に耕していて田んぼにはまり、応援のトラクターとロープで一発で脱出。いつも同じ田んぼの同じ所。悪天候の日は作業しない・大きな機体で入らない・旋回を激しくしない…<a href="https://note.com/okamotonozomu/n/n534d7840e1c6" target="_blank" rel="noopener">岡元望さん（note）「トラクターがはまった話」</a>／となりのトラクタを引き出すとき、畦の外から斜めに引いて動かず、大きいトラクタでまっすぐ引いて救出（ロープが一度ちぎれた）…<a href="https://note.com/marukawadaizu/n/ncc82441beb7e" target="_blank" rel="noopener">マルカワみそ農園（note）「立ち往生したトラクタを救出」</a>（ゲームでは 取水口のまわりのぬかるみで 下げたまま大きく旋回したり エンストをくり返したりすると はまる）<br>
@@ -1127,8 +1129,8 @@ const BELT = (() => {
   function start(checked) {
     worn = season === 'haru' && !checked;
     if (!checked) return;
-    S.elapsed += season === 'haru' ? 300 : 120;
-    toast(season === 'haru' ? '🔧 始業点検：冷却水・エンジンオイル・燃料・タイヤの空気。冷却ファンのベルトに ひびがあったので、予備に交換した（5 分）' : season === 'aki' ? '🔧 始業点検：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気。リヤカバーの動きがかたいので、ワイヤーとアームの根元にオイルスプレーを吹いた（2 分）' : '🔧 始業点検：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気。問題なし（2 分）', 5);
+    S.elapsed += season === 'aki' ? 120 : 300;
+    toast(season === 'haru' ? '🔧 始業点検：冷却水・エンジンオイル・燃料・タイヤの空気。冷却ファンのベルトに ひびがあったので、予備に交換した（5 分）' : season === 'aki' ? '🔧 始業点検：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気。リヤカバーの動きがかたいので、ワイヤーとアームの根元にオイルスプレーを吹いた（2 分）' : '🔧 始業点検：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気。ロータリーから ハローに付けかえたので、平らな所で 傾きを合わせた（5 分）', 5);
   }
   function step(dt, working) {
     if (fixT > 0) {
@@ -1206,6 +1208,49 @@ const COVER = (() => {
     return A * (1 + Math.sin((x * Math.sin(WAVD[c]) + z * Math.cos(WAVD[c])) * K)) / 2;
   }
   return { start, step, wave, h, get stuck() { return stuck; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+})();
+// 作業機の傾き：自動水平（ヤンマーは UFO・クボタはモンロー）は、トラクターが左右に傾いても 作業機を水平に保つ。
+// 水平の基準がずれていると、作業機は片側に傾いたまま。代かきでは 片側だけ深くかいて、反対側は土が水面から出る（ハローの幅ごとに すじになる）。
+// 平らな所で ロアリンクを水平にし、作業機の中心を PTO 軸に合わせ、左右のチェックチェーンを締めてから、傾きスイッチで水平にして 機械に覚えさせる
+// （井上寅雄農園（note）「傾き調整についてご紹介」はヤンマー AF18 の例。「トラクターの自動水平機能をご紹介」。ボタンの組み合わせ・チェーンのゆとりは 機種でちがう：取扱説明書）。
+// 上げた作業機に手を出す前は 降下止め（油圧ロック）をかけて 下りないのを確かめ、下に入らない（クボタの取扱説明書「油圧ロックレバー」）。
+// ゲームでは、代かきの はじめの点検をしないと ハローが 1.2° 傾いている（はしで ±3.5cm）。平らな所で止まって上げると 調整する（+5 分）。調整したあとに かきなおすと 平らになる
+const KATA = (() => {
+  const ANG = 1.2 * Math.PI / 180, T = 8;
+  let tilted = false, odo = 0, told = false, fixT = 0, fixed = false;
+  function start(checked) { tilted = SHIRO && !checked; }
+  const flat = () => Math.abs(rig.rotation.z) < 0.012 && Math.abs(rig.rotation.x) < 0.02;   // 坂や わだちの上では 調整しない
+  function step(dt, working) {
+    if (fixT > 0) {
+      S.v = 0;
+      if ((fixT -= dt) <= 0) {
+        fixT = 0; tilted = false; fixed = true;
+        toast('ハローが 水平になりました。' + (MOBILE ? '▲' : '↑') + ' でエンジンをかけて 続けよう（土が出た すじは、かきなおすと 平らになる）', 5);
+        setTimeout(() => voice('katamuki'), 5200);
+      }
+      return;
+    }
+    if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
+    if (!tilted) return;
+    if (working && S.v > 0.05) odo += S.v * dt;
+    if (odo > 15 && !told) { told = true; toast('かいたあとの 片側だけ 土が水面から出て、すじになっている。' + IMPL + 'が傾いているのかも。平らな所で止まって ' + IMPL + 'を上げると 見ます', 7); }
+    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && !S.stalled && !(S.crank > 0) && flat()) {   // 爪が惰性で回っているあいだは 近づかない
+      S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
+      for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
+      fixT = T; S.elapsed += 300;
+      toast('爪が止まったので 駐車ブレーキ。ハローが 左右に傾いていた。ロアリンクを水平にしたら エンジンを切り、降下止め（油圧ロック）をかけて 下りないのを確かめる。ハローの下には入らずに、中心を PTO 軸に合わせ、チェックチェーンを取扱説明書のゆとりに合わせる。まわりに人がいないのを見て キーを入れ、傾きスイッチで水平にして その位置を 機械に覚えさせます（5 分。手順は機種でちがう）', 8);
+    }
+  }
+  return {
+    start, step, flat,
+    off: () => tilted ? ANG * (fixT > 0 ? fixT / T : 1) : 0,   // ハローの傾き（調整しているあいだに 少しずつ水平へ）
+    y: lx => tilted ? Math.tan(ANG) * lx : 0,       // かいた所の高さのずれ（ハローの左はしが浅くて 高い）
+    h(x, z) {                                       // その場所の ずれ（タイヤ跡を 泥の面に合わせる）
+      const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+      return i < 0 || j < 0 || i >= NX || j >= NZ ? 0 : TILTY[i * NZ + j];
+    },
+    get tilted() { return tilted; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; },
+  };
 })();
 
 
@@ -1688,10 +1733,8 @@ function setupField(root) {
   g.setAttribute('uv', new THREE.BufferAttribute(uv, 2).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('normal', new THREE.BufferAttribute(nor, 3).setUsage(THREE.DynamicDrawUsage));   // 波うった所は 法線を傾ける（COVER）
   // 土の湿り：耕した直後は下の湿った土が出て黒っぽく、表面が乾くと明るくなる（ゲームでは 2 分半で乾く。代かきの泥水は乾かない）
-  if (!SHIRO) {
-    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 12).fill(1), 3).setUsage(THREE.DynamicDrawUsage));
-    mat.vertexColors = true;
-  }
+  g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 12).fill(1), 3).setUsage(THREE.DynamicDrawUsage));   // 代かきは 傾いたハローの すじ（KATA）に使う
+  mat.vertexColors = true;
   g.setIndex(new THREE.BufferAttribute(idx, 1));
   tilled = new THREE.Mesh(g, mat);
   tilled.frustumCulled = false;
@@ -1880,13 +1923,14 @@ function clodH(x, z) {                            // その場所で 土塊が �
   return jitter(x, z) * 1.5 * k + k * 0.02 * (1 + hx * hz);
 }
 const WAVY = new Uint8Array(NX * NZ), WAVD = new Float32Array(NX * NZ);   // 波うったます目と、その波の向き（耕したときの向き）
+const TILTY = new Float32Array(NX * NZ);        // 傾いたハローで かいた所の 高さのずれ（KATA）
 function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ・UV・法線（wv：波うち。clod：水分が多くて 大きな土塊が残る 0〜1）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   const g = tilled.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nor = g.attributes.normal.array;
   [[x0, z0], [x1, z0], [x1, z1], [x0, z1]].forEach(([x0_, z0_], k) => {
     const [x, z] = warp(x0_, z0_);
     const hx = Math.sin(x * 41.3 + z * 17.1), hz = Math.sin(x * 13.7 - z * 29.3);   // 土塊の面の向き（場所で決まる）
-    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0), z], c * 12 + k * 3);
+    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c], z], c * 12 + k * 3);
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
     const n = wv ? wv.n(x, z) : [0, 1, 0];
     if (clod > 0) { n[0] += hx * 0.45 * clod; n[2] += hz * 0.45 * clod; const l = Math.hypot(n[0], n[1], n[2]); n[0] /= l; n[1] /= l; n[2] /= l; }   // 大きな土塊の面で 陰がまだらに
@@ -1894,13 +1938,16 @@ function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ
   });
   if (wv) WAVD[c] = wv.yaw;
   CLOD[c] = clod;
+  if (SHIRO) g.attributes.color.array.fill(1 + 10 * TILTY[c], c * 12, c * 12 + 12);   // 高い所は 土が出て明るく、低い所は 水がたまって暗い
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
 }
-function tillCell(i, j) {
+function tillCell(i, j, lx = 0) {               // lx：作業機のまん中から 左へ何 m の所か
   if (i < 0 || j < 0 || i >= NX || j >= NZ) return;
   const c = i * NZ + j;
   if (tilledMask[c]) {                            // もう一度耕すと、上についたタイヤの跡が消える
     eraseTracks(c);
+    const ty = KATA.y(lx);                        // かきなおすと いまのハローの高さになる（調整したあとは 平らに）
+    if (Math.abs(ty - TILTY[c]) > 0.003) { TILTY[c] = ty; setCell(c, null, CLOD[c]); }   // 傾きは 代かきだけ（波うちは 秋だけ）
     if (WAVY[c] && !COVER.stuck) { WAVY[c] = 0; setCell(c, null, CLOD[c]); }   // 直したあとに耕しなおすと 波がならされる
     if (season === 'aki' && (S.retill = (S.retill || 0) + 1) > 1500) voice('wara');   // 秋：同じ所をもう一度耕している
     if (!SHIRO && (S.odo || 0) - TODO[c] > 1.5 && TILLN[c] < 255 && ++TILLN[c] === 3) overTill(c);   // 作業機がその所をはなれて（1.5m 以上走って）から また来たら 1 回と数える。止まっているあいだは数えない
@@ -1911,6 +1958,7 @@ function tillCell(i, j) {
   const x0 = -HX + i * CELL, z0 = -HZ + j * CELL;
   if (Math.abs(x0 + CELL / 2) < HX - 0.5 && Math.abs(z0 + CELL / 2) < HZ - 0.5) tilledCount++;
   const wv = COVER.stuck ? COVER.wave() : null;  // リヤカバーが固まっていると 波うつ
+  TILTY[c] = KATA.y(lx);                          // ハローが傾いていると 片側が浅い
   if (wv) WAVY[c] = 1;
   const mo = moistAt(x0 + CELL / 2, z0 + CELL / 2), clod = SHIRO ? 0 : Math.max(0, mo - 0.2) / 0.8;   // 水分が多いと 大きな土塊が残る
   setCell(c, wv, clod);
@@ -2552,7 +2600,7 @@ const TR = (() => {
     const nx = -dz / d * w / 2, nz = dx / d * w / 2;
     const ci = Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL);
     const y = tilledMask[ci] ? TILL_Y + 0.025 : 0.028;     // 田んぼの面の凸凹（±2cm）より上
-    const yy = (a, b) => y + (tilledMask[ci] ? COVER.h(a, b) + clodH(a, b) : 0);   // 波うった所・土塊の上は その高さに
+    const yy = (a, b) => y + (tilledMask[ci] ? COVER.h(a, b) + clodH(a, b) + KATA.h(a, b) : 0);   // 波うった所・土塊の上は その高さに
     const i = next; next = (next + 1) % N;
     pos.set([L.x + nx, yy(L.x + nx, L.z + nz), L.z + nz, L.x - nx, yy(L.x - nx, L.z - nz), L.z - nz, x - nx, yy(x - nx, z - nz), z - nz, x + nx, yy(x + nx, z + nz), z + nz], i * 12);
     const v1 = L.v + d / 0.5;
@@ -4279,7 +4327,7 @@ function placeRig(dt) {
   rig.rotation.set(-Math.atan2(hf - hr, WB) + pitchB + (S.pp || 0), S.yaw, Math.atan2(h('rr') - h('rl'), 2 * TRACK) * 0.5 + rollB, 'YXZ');
   // 作業機の自動水平：耕しているあいだは、トラクターが左右に傾いても ロータリー（ハロー）は田んぼの面と平行に保つ。
   // 油圧で動くので少しおくれる。上げているときはトラクターといっしょに傾く
-  const lv = S.rotDown ? -rig.rotation.z : 0;
+  const lv = (S.rotDown ? -rig.rotation.z : 0) + KATA.off();   // 水平の基準がずれていると 傾いたまま
   S.rotLevel = (S.rotLevel || 0) + (lv - (S.rotLevel || 0)) * Math.min(1, dt * 2.5);
   if (P.Rotary) P.Rotary.rotation.z = S.rotLevel;
 }
@@ -4410,10 +4458,10 @@ function step(dt) {
     }
   }
   SCRAPE.step(dt);
-  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); }
+  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); }
   if (S.stalled) {
     S.v = 0;
-    if (S.scrape > 0 || BELT.fixing || COVER.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れのあいだは エンジンを切ったまま
+    if (S.scrape > 0 || BELT.fixing || COVER.fixing || KATA.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れ・傾きの調整のあいだは エンジンを切ったまま
     else if ((key.fwd || key.back) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
@@ -4597,7 +4645,7 @@ function step(dt) {
     const p = wheelPoints(S.x, S.z, S.yaw);
     for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
       const [wx, wz] = p.w(lx, lz);
-      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL)) || 0;
+      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL), lx) || 0;
     }
   }
   // 逆転のまま まだ耕していない硬い所へ入った：とても重い（盛り上がった所の土寄せだけに使う）
@@ -5523,6 +5571,7 @@ const VOICES = {
   wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
   ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   oto: ['運転席にいると、爪が土を引っかく音のちがいで 土の固さや深さがわかる。石を掘り起こすと 音で気づく', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
+  katamuki: ['ヤンマー AF18 のロータリーの例：傾きを合わせるのは 平らな所で。エンジンをかけてロアリンクを水平にし、作業機の中心を PTO 軸の中心に合わせる。左右のチェックチェーンを手で締めて、傾きスイッチで作業機を水平にしてから、その状態を機械に覚えさせる（ボタンの組み合わせや チェーンのゆとりは 機種ごとに 取扱説明書で）', '井上寅雄農園（note）'],
   nami: ['耕したあとが波うつときは、まずリヤカバーが なめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーを吹くとよくなる。上下レバーを途中までしか下げないとセンサーがうまく働かないので、一番下まで下げて、深さは深さ調整レバーで合わせる', '井上寅雄農園（note）'],
   belt: ['春起こしの最中、トラクターの前から煙が上がって 水温計が上がり、エンジンのあたりから異音もした。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日。機械の故障ひとつで、作業の予定を組みなおすことになる', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   gyakuten: ['盛り上がった土は、逆転で前へ戻すと 平らにしやすい。逆転は正転より負荷が大きいので、硬い所では使わず、やわらかい所で エンジンの回転を下げて使う', '井上寅雄農園（note）'],
@@ -5576,7 +5625,7 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
-    BELT.start($('checkBox').checked); COVER.start($('checkBox').checked); STONES.start($('stoneBox').checked);
+    BELT.start($('checkBox').checked); COVER.start($('checkBox').checked); KATA.start($('checkBox').checked); STONES.start($('stoneBox').checked);
     if (!SHIRO && $('walkBox').checked) walkField();
     else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
     if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
@@ -5609,10 +5658,12 @@ function finish() {
   g.imageSmoothingEnabled = false; g.drawImage(tmp, 0, 0, W, H);
   const area = left * CELL * CELL;
   const trkM = Math.round(TR.remaining(c => tilledMask[c]));   // 耕した所の上に、いま残っているタイヤの跡（4 本の車輪の跡の長さの合計）
+  let tiltA = 0; for (let c = 0; c < NX * NZ; c++) if (tilledMask[c] && Math.abs(TILTY[c]) > 0.01) tiltA += CELL * CELL;   // 土が出たり 深すぎたりする所（はしの 1cm 以上）
   const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
   $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
     (STONES.hits ? `<br><span class="small">爪が石に当たった：${STONES.hits} 回。耕す前に石を拾っておくと、爪がいたまない</span>` : '') +
+    (tiltA >= 1 ? `<br><span class="small">傾いたハローで かいたままの所：約 ${Math.round(tiltA)}m²（片側が浅く 土が出る。ハローを付けかえたら 平らな所で傾きを合わせる）</span>` : '') +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
     `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span>` +
@@ -5690,6 +5741,8 @@ const COACH = (() => {
     if (S.stuck && S.rotDown) return ['!', K('はまった：まず <kbd>スペース</kbd>で' + IMPL + 'を上げる（上げてから 応援を呼ぶ）', 'はまった：まず ' + IMPL + 'を上げる（上げてから 応援を呼ぶ）')];
     if (S.stuck) return ['!', K('はまった：<kbd>↑</kbd><kbd>↓</kbd> をはなして待つと 応援を呼ぶ（空回りは もっと沈む）', 'はまった：▲▼ をはなして待つと 応援を呼ぶ（空回りは もっと沈む）')];
     if (S.parked && COVER.fixing) return ['…', 'エンジンを切って、リヤカバーのワイヤーとアームの根元に オイルスプレーを吹いています'];
+    if (S.parked && KATA.fixing) return ['…', '降下止めをかけて ハローの中心と チェックチェーンを合わせ、傾きスイッチで 水平を覚えさせています'];
+    if (S.parked && KATA.fixed && !(S.scrape > 0)) return ['!', K('ハローを水平にした：<kbd>↑</kbd> でエンジンをかける', 'ハローを水平にした：▲ でエンジンをかける')];
     if (S.parked && COVER.fixed && !(S.scrape > 0)) return ['!', K('リヤカバーを直した：<kbd>↑</kbd> でエンジンをかける', 'リヤカバーを直した：▲ でエンジンをかける')];
     if (S.parked && BELT.fixed && !(S.scrape > 0)) return ['!', K('ベルトを交換した：<kbd>↑</kbd> でエンジンをかける', 'ベルトを交換した：▲ でエンジンをかける')];
     if (S.parked) return S.scrape > 0 ? ['…', (S.rotorW || 0) >= 1 ? '爪が止まるのを待っています（回っている爪に近づかない）' : 'エンジンを切って、タイヤと' + IMPL + 'の泥を落としています']
@@ -5706,6 +5759,9 @@ const COACH = (() => {
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (!S.rotDown && lastPct >= 90 && MUD.level >= 0.3 && S.x > 4 && S.x < HX && S.z > 17 && S.z < 23 && Math.sin(S.yaw) > 0.5)   // 耕し終わって 坂（道への出口）へ向かうとき
       return ['!', K('道へ出る前に：止まって <kbd>V</kbd> で タイヤの泥を落とす', '道へ出る前に：止まって「泥落とし」で タイヤの泥を落とす')];
+    if (KATA.tilted && KATA.told && !S.rotDown && Math.abs(S.v) < 0.05 && (S.rotorW || 0) >= 1) return ['…', '爪が止まるのを待っています（回っている爪に近づかない）'];
+    if (KATA.tilted && KATA.told && !S.rotDown && Math.abs(S.v) < 0.05 && !KATA.flat()) return ['!', K('ここは傾いている：平らな所まで動いて 止まると ハローの傾きを見る', 'ここは傾いている：平らな所まで動いて 止まると ハローの傾きを見る')];
+    if (KATA.tilted && KATA.told && S.rotDown) return ['!', K('片側だけ 土が出て すじになる：止まって <kbd>スペース</kbd>で上げると ハローの傾きを見る', '片側だけ 土が出て すじになる：止まって 上げると ハローの傾きを見る')];
     if (COVER.stuck && COVER.told && !S.rotDown && Math.abs(S.v) < 0.05 && (S.rotorW || 0) >= 1) return ['…', '爪が止まるのを待っています（回っている爪に近づかない）'];
     if (COVER.stuck && COVER.told && S.rotDown) return ['!', K('耕したあとが 波うっている：止まって <kbd>スペース</kbd>で上げると リヤカバーを見る', '耕したあとが 波うっている：止まって 上げると リヤカバーを見る')];
     if (S.rotDown && S.v > 0.1 && PTOREV && (S.revHard || 0) > 0.3)   // 逆転のまま まだ耕していない所へ
@@ -5830,7 +5886,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, BELT, COVER, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, COVER, KATA, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

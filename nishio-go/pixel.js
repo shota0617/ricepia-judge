@@ -7448,7 +7448,7 @@ function mzLinesNear(fn) {   // お米の 区域と となりの 区域の 列�
 // 一色町は 一色産うなぎ、吉良・幡豆の 海べは 三河湾の あさり、ほかの 西尾市は 西尾の 抹茶。西尾市の 外では 出さない
 function mzMeibutsuTip() {
   const t = here.town || '', c = here.city || '';
-  if (c && !/西尾/.test(c)) return '';
+  if (!/西尾/.test(c)) return '';   // 西尾市と わかった ときだけ（市町が わからない 所や 西尾市の 外では 出さない）
   if (/^一色町/.test(t)) return '🐟 一色は うなぎの まちだら';
   if (/^(吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)/.test(t)) return '🐚 三河湾の あさりも 名物だら';
   return '🍵 西尾は 抹茶の まちだら';

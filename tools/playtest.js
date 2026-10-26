@@ -846,10 +846,14 @@ async function walkTo(page, id) {
     const r0 = await runOf();
     for (const d of L.dots) { await page.evaluate(d => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); nishioPixel.rollPut(d[0], d[1], 0, 0); }, d); await page.waitForTimeout(60); }
     const d1 = await page.evaluate(() => nishioPixel.maze.dots), r1 = await runOf();
-    const tip = await page.evaluate(() => ({ tip: nishioPixel.maze.meibutsuTip(), floats: nishioPixel.floats() }));   // 3回に 1回（1回目も）名物の ひと言
+    const tip = await page.evaluate(() => {   // 3回に 1回（1回目も）名物の ひと言。市町が わからない・西尾市の 外では 出さない
+      const H = nishioPixel.here, c0 = H.city, out = { tip: nishioPixel.maze.meibutsuTip(), floats: nishioPixel.floats() };
+      H.city = ''; out.none = nishioPixel.maze.meibutsuTip(); H.city = '蒲郡市'; out.out = nishioPixel.maze.meibutsuTip(); H.city = c0;
+      return out;
+    });
     await page.evaluate(h => { nishioPixel.rollPut(h[0], h[1], 0, 0); nishioPixel.setRoll(false); }, c.home);
     const run = r0 === null || r1 === null ? 'no-goal' : r1 - r0;
-    const tipOk = d1.lines % 3 !== 1 || !tip.tip || tip.floats.some(t => t.includes(tip.tip));
+    const tipOk = (d1.lines % 3 !== 1 || !tip.tip || tip.floats.some(t => t.includes(tip.tip))) && !tip.none && !tip.out;
     return { ok: d1.n - c.d0.n >= L.dots.length && d1.lines === c.d0.lines + 1 && (run === 'no-goal' || run >= L.dots.length) && tipOk, len: L.dots.length, got: d1.n - c.d0.n, lines: d1.lines - c.d0.lines, run, tip: tip.tip, tipOk };
   })();
   // めいろ図に びゅんパネルと ごはんつぶも 出る（寄り道の 計画に）

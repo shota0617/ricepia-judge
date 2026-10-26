@@ -7827,7 +7827,7 @@ function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上
 }
 // ゆるい めいろの 生け垣：道すじを 太い 線で なぞって、外がわの 帯（MZ_HEDGE）を 生け垣に、内がわ（MZ_HALF）を くりぬいて 通路に する。
 // 重ねた 絵（くりぬき）を 使うので 下絵に 描いて から 貼る。下絵は 地図の 1/8 マスを 1点に した 小さな 絵（ドット絵の 地図に そろい、スマホでも 軽い）。影は 右下へ ずらした 帯
-const mzLayer = { a: null, b: null, pats: null };
+const mzLayer = { a: null, b: null, pats: null, key: '', geo: null };
 function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面の 何点か・(sx, sy)：下絵の 左上が 画面の どこか
   let c = mzLayer[k];
   if (!c) c = mzLayer[k] = document.createElement('canvas');
@@ -7938,13 +7938,16 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   if (rec) { drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T); return; }   // Godot で 描く 試作：記録係は くりぬきの 絵を 送れないので、これまでの 生け垣
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
-  const net = new Path2D(), nets = {};
+  const m = ctx.getTransform(), live = mzSoft.dent > 0.01 && mazeOn();
+  // 下絵の 使い回し：画面の 位置・大きさ・読めた 区域・参道・生け垣の 種類・季節が 同じで、生け垣が へこんで いなければ、前の 下絵を そのまま 貼る（止まって いる 間の 重さを へらす）
+  const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason()].join();
+  if (!live && key === mzLayer.key) { mzBlit(); return; }
+  const blocks = [], net = new Path2D(), nets = {};
   let n = 0;
-  ctx.fillStyle = 'rgba(28,70,52,.4)';
   for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {
     const ty = mzType(cx, cy);
     if (ty < 0) continue;
-    if (ty === 0 && !mzSpotCell(cx, cy)) ctx.fillRect(ox + cx * S, oy + cy * S, S, S);   // 壁の かたまりの 台（地図は 見える こさ）
+    if (ty === 0 && !mzSpotCell(cx, cy)) blocks.push([ox + cx * S, oy + cy * S]);   // 壁の かたまりの 台（地図は 見える こさ。下絵に 描く）
     const cs = mzCurves(cx, cy);
     if (cs && cs.length) {
       const st = mzStyle(cx, cy), sn = nets[st] || (nets[st] = new Path2D());
@@ -7952,12 +7955,14 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
       n += cs.length;
     }
   }
-  if (!n) return;
-  const m = ctx.getTransform(), q = T / 8, sx = (((ox % q) + q) % q) - q, sy = (((oy % q) + q) % q) - q;   // 下絵の 点を 地図の 1/8 マスに そろえる
+  mzLayer.key = live ? '' : key; mzLayer.geo = null;
+  if (!n && !blocks.length) return;
+  const q = T / 8, sx = (((ox % q) + q) % q) - q, sy = (((oy % q) + q) % q) - q;   // 下絵の 点を 地図の 1/8 マスに そろえる
   const W = Math.ceil((ctx.canvas.width - sx) / q) + 1, H = Math.ceil((ctx.canvas.height - sy) / q) + 1;
   const wo = 2 * (MZ_HALF + MZ_HEDGE) * T, wi = 2 * MZ_HALF * T, u = Math.max(1, Math.round(T / 8)), o = Math.max(1, Math.round(T / 4));
   const L = mzLayerCtx('a', W, H, q, sx, sy, m);
   L.imageSmoothingEnabled = false;
+  L.fillStyle = 'rgba(28,70,52,.4)'; for (const [X, Y] of blocks) L.fillRect(X, Y, S, S);   // 壁の かたまりの 台
   L.strokeStyle = '#0d2219'; L.lineWidth = wo; L.stroke(net);   // 生け垣の 外の 黒い ふち
   L.lineWidth = wo - 2 * u;
   for (const st of MZ_STYLES) if (nets[st]) { L.strokeStyle = mzHedgePat(L, ox, oy, T, st) || '#2f7a58'; L.stroke(nets[st]); }   // 葉っぱ・茶の木・石垣・黒塀（マスの まわりで 種類を かえる）
@@ -7974,9 +7979,15 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   B.translate(o, o); B.strokeStyle = '#000'; B.lineWidth = wo; B.stroke(net);
   B.globalCompositeOperation = 'destination-out'; B.lineWidth = wi; B.stroke(net);   // 影：右下へ ずらした 生け垣の 帯
   if (dent) { B.beginPath(); B.ellipse(dent[0], dent[1], dent[2], dent[2] * dent[4], dent[3], 0, Math.PI * 2); B.fill(); }
+  mzLayer.geo = [sx, sy, W * q, H * q];
+  mzBlit();
+}
+function mzBlit() {   // 生け垣の 下絵を 画面へ（影を うすく、その上に 生け垣と 台）
+  const g = mzLayer.geo;
+  if (!g) return;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha = 0.32; ctx.drawImage(mzLayer.b, sx, sy, W * q, H * q); ctx.globalAlpha = 1;
-  ctx.drawImage(mzLayer.a, sx, sy, W * q, H * q);
+  ctx.globalAlpha = 0.32; ctx.drawImage(mzLayer.b, g[0], g[1], g[2], g[3]); ctx.globalAlpha = 1;
+  ctx.drawImage(mzLayer.a, g[0], g[1], g[2], g[3]);
   ctx.restore();
 }
 function drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T) {   // これまでの 直角の めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう

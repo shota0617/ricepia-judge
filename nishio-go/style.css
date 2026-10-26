@@ -339,6 +339,7 @@ body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 
 .coupon[data-state=used] .coupon-box,.coupon[data-state=expired] .coupon-box{border-color:#bbb;filter:grayscale(.6)}
 .cp-shop{font-size:13px;color:var(--sub)}
 .cp-name{font-size:22px;font-weight:900;margin:6px 0;color:var(--green);line-height:1.4}
+.cp-cond{font-size:14px;font-weight:700;margin:-2px 0 6px;color:#5a4a2a;line-height:1.5}
 .cp-code{font-size:16px;font-weight:700;letter-spacing:2px}
 .cp-clock{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;margin:10px 0 6px}
 .cp-band{height:10px;border-radius:5px;background:#eee;overflow:hidden;position:relative}

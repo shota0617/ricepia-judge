@@ -818,6 +818,29 @@ async function walkTo(page, id) {
     await page.evaluate(() => { nishioPixel.maze.map(0); nishioPixel.setRoll(false); });
     return { ok: !!m && (!inBox.pads || m.pads > 0) && (!inBox.dots || m.dots > 0), inBox, marks: m && { pads: m.pads, dots: m.dots } };
   })();
+  // 特典の 100円引き：クーポンの 有効時間は 短め（10分）、条件「お米1袋につき1回まで」が 特典の 札と 店頭の クーポン画面に 出る（操作して移動の サンプルで ためす）
+  R.checks.coupon100 = await (async () => {
+    const onDialog = d => d.accept();
+    page.on('dialog', onDialog);
+    const r = await page.evaluate(async () => {
+      const G = nishioGo, S = G.state, wait = ms => new Promise(f => setTimeout(f, ms));
+      if (!G.demo) return { skipped: 'walk' };
+      const p0 = S.points, n0 = S.coupons.length, l0 = S.log.length;
+      S.points += 600; G.openTab('rewards'); await wait(300);
+      const li = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
+      if (!li) { S.points = p0; G.openTab('map'); return { found: false }; }
+      const chip = /10分/.test(li.textContent);
+      li.querySelector('[data-redeem]').click(); await wait(300);
+      const cp = document.getElementById('coupon'), cond = document.getElementById('cpCond');
+      const out = { found: true, chip, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };
+      document.getElementById('cpClose').click();
+      S.points = p0; S.coupons.length = n0; S.log.splice(0, S.log.length - l0); G.openTab('map');   // ほかの チェックの ポイントが かわらない よう もどす
+      return out;
+    });
+    page.off('dialog', onDialog);
+    if (r.skipped) return { ok: true, ...r };
+    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && r.validMin === 10 && /あと(9|10)分/.test(r.state) };
+  })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
   await page.evaluate(() => { nishioPixel.setRoll(true); nishioPixel.setWorld(true); }); await page.waitForTimeout(300);
@@ -1512,6 +1535,7 @@ async function walkTo(page, id) {
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
+  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」が クーポンに 出ない（${JSON.stringify(c.coupon100)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.mazeWallFit && c.mazeWallFit.ok, 'めいろの 壁：お米が 壁に 食いこんで 見える（当たり判定が 絵より 小さい）、または はね返らない');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');

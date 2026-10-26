@@ -905,11 +905,21 @@ async function walkTo(page, id) {
   })();
   // きろくに「ころころの きろく」（コンボの ベスト・きょう ひろった ごはんつぶ）
   R.checks.koroRec = await page.evaluate(async () => {
+    const old = localStorage.getItem('nsg_mz_speed'); localStorage.setItem('nsg_mz_speed', '21.6');   // はやさの ベストも のる
     const want = { c: nishioPixel.combo.best, d: nishioPixel.maze.dots.n };
     nishioGo.openTab('log'); await new Promise(f => setTimeout(f, 300));
     const box = document.getElementById('koroRec'), text = box && !box.hidden ? box.textContent : '';
+    let share = 'skip';   // コンボの ベストが 3 いじょう なら「📣 シェア」→ シェアの 文と すぐ 遊べる リンク
+    if (want.c >= 3) {
+      const b = box.querySelector('[data-share-open="koro"]');
+      if (b) { b.click(); await new Promise(f => setTimeout(f, 300)); }
+      const st = document.getElementById('shareText').textContent;
+      share = !!b && !document.getElementById('share').hidden && st.includes(`コンボ ベスト ×${want.c}`) && st.includes('はやさ 1秒に 21.6m') && st.includes('?play=1&utm_source=share&utm_medium=social&utm_campaign=koro');
+      document.getElementById('share').hidden = true;
+    }
     nishioGo.openTab('map');
-    return { ok: (!want.c || text.includes(`×${want.c}`)) && (!want.d || text.includes(`つぶ ${want.d}`)) && (!(want.c || want.d) || !!text), want, text: text.slice(0, 80) };
+    if (old === null) localStorage.removeItem('nsg_mz_speed'); else localStorage.setItem('nsg_mz_speed', old);
+    return { ok: (!want.c || text.includes(`×${want.c}`)) && (!want.d || text.includes(`つぶ ${want.d}`)) && text.includes('はやさ ベスト 1秒に 21.6m') && share !== false, want, share, text: text.slice(0, 100) };
   });
   // バイラルループ：めいろの ゴールの ごほうびに「📣 シェア」→ 遊んだ 画面の カードと、見た 人が すぐ 遊べる リンク（?play=1・友だちの +20pt）
   R.checks.mzGoalShare = await page.evaluate(async () => {
@@ -939,7 +949,20 @@ async function walkTo(page, id) {
       document.getElementById('share').hidden = true; document.getElementById('pxInfo').hidden = true; G.mzNpcShareTest = null;
       G.callNpc(null);
     }
-    return { ok: kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, text: text.slice(0, 160) };
+    return { ok: kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, text: text.slice(0, 160) };
+  });
+  // めいろの はやさの ベスト：道のり ÷ 時間で くらべ、こえたら「ベスト こえたじゃん！」、とどかなければ「ベスト まで あと」。みじかい めいろは 数えない。札は「10m/秒」
+  R.checks.mazeSpeed = await page.evaluate(async () => {
+    const G = nishioGo, k = 'nsg_mz_speed', old = localStorage.getItem(k);
+    localStorage.removeItem(k);
+    const a = G.mzSpeed(400, 40), b = G.mzSpeed(400, 50), c = G.mzSpeed(600, 40), d = G.mzSpeed(50, 10), w = G.mzSpeed(2000, 10, true), best = localStorage.getItem(k);   // w：とびこえた ゴールは 数えない
+    G.showReward(5, '🏁 テスト', ['🏁 めいろ ゴール！ 40秒', c, 'この 道で がんばったじゃん：🍚 つぶ 9・💨 びゅん 2・🎵 コンボ ×6'], false, '', null);
+    await new Promise(f => setTimeout(f, 400));
+    const html = document.getElementById('reward').innerHTML, chip = html.includes('15m/秒') && (!document.querySelector('#reward .chips') || html.includes('🍚9 💨2 🎵×6'));   // 文字を少なく では ふり返りも 数の 札
+    document.getElementById('reward').click();
+    if (old === null) localStorage.removeItem(k); else localStorage.setItem(k, old);
+    const g = G.guide, gl = g && nishioPixel.maze.goal(g.id || g.name), warp = gl ? typeof gl.warp : 'no-goal';   // とびこえた ゴールを はやさから のぞく ための しるし
+    return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && /1秒に 8m（ベスト 10m まで あと 2m）/.test(b) && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
   });
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
@@ -1245,6 +1268,31 @@ async function walkTo(page, id) {
     }
     const after = await w.page.evaluate(() => ({ fact: !!document.querySelector('#status .wait-fact'), ready: window.__toasts.some(t => /いまの場所が わかった/.test(t)), toasts: window.__toasts.slice(-4), me: !!nishioGo.me, reward: document.getElementById('reward').classList.contains('show') }));
     R.checks.waitFact = { f1, f2, ...after, ok: !!f1 && !!f2 && f1 !== f2 && !after.fact && after.ready };
+    R.errors.push(...w.errors);
+    await w.ctx.close();
+  }
+
+  // バイラルループの 見た人：めいろの ゴールの シェアの リンク（?play=1&vs=秒&vst=★）から 来た はじめての 人は、すぐ 遊べて、友だちの タイムで さそわれ、
+  // はじめての ゴールで 友だちの タイムと ならぶ（1回だけ）
+  {
+    const w = await newPage(browser);
+    await w.ctx.addInitScript(() => {
+      window.__toasts = [];
+      document.addEventListener('DOMContentLoaded', () => { const el = document.getElementById('toast'); new MutationObserver(() => window.__toasts.push(el.textContent)).observe(el, { childList: true, characterData: true, subtree: true }); });
+    });
+    await w.page.goto(`${URL}?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal`); await w.page.waitForTimeout(2500);
+    const r = await w.page.evaluate(async () => {
+      const said = () => window.__toasts.some(t => /友だちは めいろの ゴールまで 1分23秒 ★★/.test(t)) || (nishioGo.toastAfter.q || []).some(t => /友だちは めいろの ゴールまで 1分23秒/.test(t));
+      for (let i = 0; i < 16 && !said(); i++) { await new Promise(f => setTimeout(f, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); }
+      const stored = JSON.parse(localStorage.getItem('nsg_vs') || 'null'), url = location.search;
+      const line = nishioGo.friendVs(58, 3), again = nishioGo.friendVs(40, 3);
+      const told = () => window.__toasts.some(t => t.includes(line)) || (nishioGo.toastAfter.q || []).includes(line);   // ごほうびの 札では 見えないので 知らせで 出す
+      for (let i = 0; i < 16 && line && !told(); i++) { await new Promise(f => setTimeout(f, 500)); const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }
+      return { started: document.getElementById('intro').hidden && nishioGo.demo, said: said(), stored, url, line, told: told(), again, left: localStorage.getItem('nsg_vs') };
+    });
+    await w.page.reload(); await w.page.waitForTimeout(2000);   // 読みこみなおしても もう 出ない（アドレスから vs を のぞいた）
+    r.reload = await w.page.evaluate(() => ({ vs: localStorage.getItem('nsg_vs'), url: location.search }));
+    R.checks.friendVs = { ...r, ok: r.started && r.said && !!r.stored && r.stored.sec === 83 && r.stored.st === 2 && !/vs=/.test(r.url) && /友だちは 1分23秒 ★★、きみは 58秒 ★★★/.test(r.line) && r.told && !r.again && !r.left && !r.reload.vs && !/vs=/.test(r.reload.url) };
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -1734,6 +1782,13 @@ async function walkTo(page, id) {
       }
       return { during, after, after2, after3, both, gone: !M.banner, ok: !during && after && after2 && after3 && !both };
     });
+    // ゴールの 紙ふぶきは 西尾らしく：お米つぶ・抹茶の 葉・金の つぶ
+    R.checks.goalConfetti = await w.page.evaluate(() => {
+      const M = nishioPixel.maze, n0 = M.fxKinds().length;
+      M.goalFx('');
+      const k = M.fxKinds().slice(n0), c = x => k.filter(y => y === x).length;
+      return { n: k.length, rice: c('rice'), leaf: c('leaf'), gold: c('gold'), ok: k.length === 60 && c('rice') >= 25 && c('leaf') >= 15 && c('gold') >= 5 };
+    });
     // ゴールが 画面の 左右の はしに ある とき：ゴールの 名前が 画面から はみ出して 切れない（自分で 遊んで 分かった：らいすぴあの 店員さんの 名前の 頭が 切れていた）
     R.checks.mzGoalEdge = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), nm = 'らいすぴあの店員さん（らいすぴあ・秀幸）', out = {};
@@ -1859,8 +1914,11 @@ async function walkTo(page, id) {
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
   need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」が クーポンに 出ない（${JSON.stringify(c.coupon100)}）`);
+  need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
+  need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
+  need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);
-  need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）が 出ない（${JSON.stringify(c.koroRec)}）`);
+  need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）・シェアが 出ない（${JSON.stringify(c.koroRec)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.mazeWallFit && c.mazeWallFit.ok, 'めいろの 壁：お米が 壁に 食いこんで 見える（当たり判定が 絵より 小さい）、または はね返らない');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');

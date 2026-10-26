@@ -604,6 +604,8 @@ function talkNpc(id, page = 0) {
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
       const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
       if (mz) mzNpcShare = { ...mz, id: n.id };   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）
+      const spl = ml.find(l => l.startsWith('🏃'));
+      if (spl && simple()) toastAfter(spl);   // はやさ：文字を少なく では 下の 知らせが 絵だけに なるので、あとに 文で 出す
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
     }
     // 人の話で行き先が決まったら、イベント（みちしるべが案内し、おまかせ歩きならそこへ向かう）
@@ -1177,19 +1179,39 @@ const takeMzShare = () => { const m = mzShare; mzShare = null; return m; };
 function snapMaze() {   // ドット絵の 地図の まん中（お米の まわり）を 正方形に 切りだす。どこにも 送らない（シェアの 画像に だけ 使う）
   try {
     const cv = $('pxCanvas');
-    if (!cv || !cv.width || !cv.height) return null;
+    if (!cv || !cv.width || !cv.height || !document.body.classList.contains('px')) return null;   // ドット絵の 地図で ない とき（ふつうの 地図）は 絵なし
     const sz = Math.min(cv.width, Math.round(cv.height * 0.75)), out = document.createElement('canvas');
     out.width = out.height = 360;
     out.getContext('2d').drawImage(cv, Math.round((cv.width - sz) / 2), Math.round((cv.height - sz) / 2), sz, sz, 0, 0, 360, 360);
     return out;
   } catch (e) { return null; }
 }
+// 友だちの シェア（share.js の ?vs=秒&vst=★）から 来た 人の はじめての ゴール：友だちの タイムと ならべる（1回だけ。行き先が ちがうので 勝ち負けは 言わない）。
+// 知らせで 出す（文字を 少なく の ごほうびの 札や、人の ゴールの 話の 窓では 文が 見えないので。ごほうびの 窓を とじた あとに 出る）
+function friendVs(sec, st) {
+  const vs = store.get('nsg_vs', null);
+  if (!vs || !vs.sec) return '';
+  store.del('nsg_vs'); track('friend_vs', { sec: Math.round(sec), vs: vs.sec });
+  const msg = `👋 友だちは ${fmtSec(vs.sec)}${vs.st ? ` ${'★'.repeat(vs.st)}` : ''}、きみは ${fmtSec(sec)}${st ? ` ${'★'.repeat(st)}` : ''}。シェアで おかえし しよまい`;
+  toastAfter(msg);
+  return msg;
+}
+// めいろの はやさの ベスト（クセになる「じぶんの 記録を こえる 目あて」2026-10-26）：ゴールの タイムは 出発した 所で 道のりが かわるので
+// くらべられない。めいろの 道のり ÷ かかった 時間（1秒に 何m）で くらべ、この 端末に ベストを のこす（nsg_mz_speed）。ポイントは つけない
+const MZ_SPEED_MIN_M = 80;   // みじかい めいろは 数えない（すぐ 着いて ベストが ゆがむ）
+function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（名所の「ここへ」など）ゴールは 数えない
+  if (warp || !(m >= MZ_SPEED_MIN_M) || !(sec > 3)) return '';
+  const v = Math.round(m / sec * 10) / 10, best = store.get('nsg_mz_speed', 0);
+  if (v > best) { store.set('nsg_mz_speed', v); track('maze_speed_best', { v, prev: best }); return best ? `🏃 はやさ ベスト こえたじゃん！ 1秒に ${v}m（前 ${best}m）` : `🏃 はやさ 1秒に ${v}m（はじめての ベスト）`; }
+  return `🏃 はやさ 1秒に ${v}m（ベスト ${best}m まで あと ${Math.round((best - v) * 10) / 10}m）`;
+}
+const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 function mazeGoal(id, name, lines) {
   mzShare = null;
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
   if (!gl || gl.sec <= 3) return 0;
   let total = 0;
-  const t = gl.sec < 60 ? `${Math.round(gl.sec)}秒` : `${Math.floor(gl.sec / 60)}分${String(Math.round(gl.sec % 60)).padStart(2, '0')}秒`;
+  const t = fmtSec(gl.sec);
   const st = gl.stars || 0, stars = st ? '★'.repeat(st) + '☆'.repeat(3 - st) : '', sb = MZ_STAR_PTS[st] || 0;   // 目やすの 時間（めいろの 道のりで きまる）より はやいほど ★が ふえて ボーナス
   if (sb) { total += sb; lines.unshift(`${stars} ${st === 3 ? 'はやい！' : st === 2 ? 'いいね！' : 'ゴール！'} +${sb}`); }
   if (gl.way) {   // 通った マスが ちかみちの 何倍か（ほかの 迷路ゲームの「何手で とけた」）。1.3倍 までなら まよわず ゴールで ボーナス
@@ -1202,6 +1224,9 @@ function mazeGoal(id, name, lines) {
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
+  const sp = mzSpeed(gl.m, gl.sec, gl.warp);
+  if (sp) lines.push(sp);
+  friendVs(gl.sec, st);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now() };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
@@ -2595,6 +2620,17 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
       out.push(`<span title="${esc(l)}">${PIA(l.startsWith('🏁') ? 'flag' : 'star', l)}${esc(t)}${plus ? ' ' + plus : ''}</span>`);
       continue;
     }
+    if (l.startsWith('この 道で')) {   // この 道の ふり返り（つぶ・びゅん・コンボ）：数だけの 札（旗だけに ならない ように）
+      const n = re => (l.match(re) || [])[1];
+      const t = [n(/つぶ (\d+)/) ? `🍚${n(/つぶ (\d+)/)}` : '', n(/びゅん (\d+)/) ? `💨${n(/びゅん (\d+)/)}` : '', n(/コンボ ×(\d+)/) ? `🎵×${n(/コンボ ×(\d+)/)}` : ''].filter(Boolean).join(' ');
+      if (t) out.push(`<span title="${esc(l)}">${esc(t)}</span>`);
+      continue;
+    }
+    if (l.startsWith('🏃 はやさ')) {   // めいろの はやさ（1秒に 何m）と、ベストを こえたら メダル
+      const v = (l.match(/1秒に ([\d.]+)m/) || [])[1];
+      out.push(`<span title="${esc(l)}">${PIA('feet', l)}${v ? `${v}m/秒` : ''}${/ベスト こえた|はじめての ベスト/.test(l) ? PIA('medal', 'ベスト') : ''}</span>`);
+      continue;
+    }
     if (/^🧭 (まよわず|通った 道)/.test(l)) {   // めいろの「まよわず ゴール」：通った 道の 倍率（と ボーナス）の 札（下の「つぎは〜へ」とは べつ）
       const x = (l.match(/([\d.]+)倍/) || [])[1], plus = (l.match(/[+＋]\d+/) || [''])[0];
       out.push(`<span title="${esc(l)}">${PIA('compass', l)}${x ? `${x}倍` : ''}${plus ? ' ' + plus : ''}</span>`);
@@ -2868,9 +2904,10 @@ function renderKoroRec() {
   const box = $('koroRec'), P = window.nishioPixel;
   if (!box) return;
   const c = P && P.combo ? P.combo.best : 0, d = P && P.maze && P.maze.dots ? P.maze.dots.n : 0, b = P && P.maze && P.maze.padChain ? P.maze.padChain.best : 0;
-  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
+  const v = store.get('nsg_mz_speed', 0);   // めいろの はやさの ベスト（mzSpeed）
+  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', v ? `🏃 はやさ ベスト 1秒に ${v}m` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
   box.hidden = !parts.length;
-  box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>` : '';
+  box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>${c >= 3 ? '<button type="button" class="btn mini" data-share-open="koro">📣 シェア</button>' : ''}` : '';   // コンボの ベストを あとからでも シェア（バイラルループの 入口。share.js の 'koro'）
 }
 function renderLog() {
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
@@ -3930,7 +3967,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
-  snapMaze, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  snapMaze, friendVs, mzSpeed, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,

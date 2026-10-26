@@ -7179,7 +7179,7 @@ function drawMzHint(ox, oy, T, now) {
   if (now >= mzRt.showUntil) return;
   const S = MZ_K * T, pts = mzRt.path.slice(1, 9);
   pts.forEach(([cx, cy], k) => {
-    const on = Math.floor(now / 120) % 8 === k, r = T * (on ? 0.55 : 0.38), X = ox + cx * S + S / 2, Y = oy + cy * S + S / 2;
+    const on = Math.floor(now / 120) % 8 === k, r = T * (on ? 0.55 : 0.38), p = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), X = ox + p[0] * T, Y = oy + p[1] * T;   // 道すじの 上に
     ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(X, Y, r + Math.max(1, T / 6), 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = on ? '#fff59d' : '#ffffff'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
   });
@@ -7308,8 +7308,8 @@ function drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 金の 米つ�
     for (const k of mzGrainSet(a)) {
       const cx = a.x0 + k % MZ_R, cy = a.y0 + ((k / MZ_R) | 0);
       if (cx < c0 || cx > c1 || cy < r0 || cy > r1 || (G.mzGrainHas && G.mzGrainHas(mzGrainKey(cx, cy)))) continue;
-      const ph = (cx * 7 + cy * 13) % 10, bob = Math.sin(now / 300 + ph) * T * 0.12, X = ox + cx * S + S / 2, Y = oy + cy * S + S / 2 + bob;
-      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(Math.round(X - r * 0.7), Math.round(oy + cy * S + S / 2 + r * 0.9), Math.round(r * 1.4), q * 2);   // かげ
+      const ph = (cx * 7 + cy * 13) % 10, bob = Math.sin(now / 300 + ph) * T * 0.12, on = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), X = ox + on[0] * T, Y0 = oy + on[1] * T, Y = Y0 + bob;   // ゆるい めいろの 道すじの 上に
+      ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(Math.round(X - r * 0.7), Math.round(Y0 + r * 0.9), Math.round(r * 1.4), q * 2);   // かげ
       ctx.fillStyle = '#5a3a00'; ctx.beginPath(); ctx.arc(X, Y, r + q, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#ffc928'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#fff3a8'; ctx.beginPath(); ctx.arc(X - r * 0.35, Y - r * 0.35, r * 0.35, 0, Math.PI * 2); ctx.fill();   // てかり
@@ -7382,7 +7382,7 @@ function drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // びゅんパネ�
     for (const [k, d] of mzPadSet(a)) {
       const cx = a.x0 + k % MZ_R, cy = a.y0 + ((k / MZ_R) | 0);
       if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
-      const X = Math.round(ox + cx * S + S / 2), Y = Math.round(oy + cy * S + S / 2), [dx, dy] = MZ_PAD_D[d];
+      const on = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y = Math.round(oy + on[1] * T), [dx, dy] = MZ_PAD_D[d];   // 道すじの 上に
       const lit = mzPad.fx === cx + ',' + cy ? Math.max(0, 1 - (now - mzPad.fxT) / 400) : 0;
       ctx.fillStyle = '#1a1a1a'; ctx.fillRect(X - P - b, Y - P - b, 2 * P + 2 * b, 2 * P + 2 * b);
       ctx.fillStyle = lit ? '#ffb27a' : '#e0662b'; ctx.fillRect(X - P, Y - P, 2 * P, 2 * P);

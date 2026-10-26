@@ -2116,7 +2116,7 @@ const ART = (() => {
     const val = (ia, ib) => sd(-HZ + ia * st, -HX + ib * st);
     const P_ = (ia, ib, ja, jb) => { const d1 = val(ia, ib), d2 = val(ja, jb), t = d1 / (d1 - d2); return [-HZ + (ia + (ja - ia) * t) * st, -HX + (ib + (jb - ib) * t) * st]; };
     const line = (p, q) => {
-      const da = q[0] - p[0], db = q[1] - p[1], l = Math.hypot(da, db) || 1, w = 0.09, na_ = -db / l * w, nb_ = da / l * w, y = 0.09;
+      const da = q[0] - p[0], db = q[1] - p[1], l = Math.hypot(da, db) || 1, w = 0.09, na_ = -db / l * w, nb_ = da / l * w, y = RENGE_ON ? 0.2 : 0.09;   // レンゲの田んぼは レンゲ（高さ 18cm まで）より上に見せる
       const A = [p[1] + nb_, y, p[0] + na_], B = [p[1] - nb_, y, p[0] - na_], C = [q[1] - nb_, y, q[0] - na_], D = [q[1] + nb_, y, q[0] + na_];
       v.push(...A, ...B, ...C, ...A, ...C, ...D);
     };

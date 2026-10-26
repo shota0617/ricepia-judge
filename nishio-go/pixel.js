@@ -6825,7 +6825,7 @@ function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マ�
 // ・2つに つながる マスは 2次の B スプライン（さかいの まん中から まん中へ、マスの まん中に 引かれる 線）：直角の 曲がり角は まるい カーブに、
 //   階段の ような ななめの 道（すじかいの 道・川ぞいの 道）は ななめの 一本道に なる。3つ以上の 分かれ道は まっすぐの 枝と、となりあう 枝の あいだの カーブ
 // ・道すじは 通路の マスの 中に おさまる（壁の マスへ はみ出さない）ので、マスで 数える しくみ（道しるべ・カラス・米つぶ・歩数）は そのまま
-const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
+const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5, MZ_RUB = 0.15;   // MZ_RUB：生け垣に こすれる ときの すべりにくさ   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
 const mzCurveC = { key: '', m: new Map() };
 function mzCurves(cx, cy) {   // マスが 受けもつ 道すじ（地図の マスの 座標の 点の 列の 配列）。区域が 読めて いなければ null
   const key = mzAreas.size + ':' + mzSpotCells.size + ':' + mzSpotV;   // 区域が 読めた・参道が ふえた ときは つくりなおす（となりの マスへ 通れるかが かわる）
@@ -7753,7 +7753,16 @@ function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面�
 }
 // 西尾らしい 生け垣（2026-10-26 店主「西尾らしさの生垣」）：マスの まわり（地図の 5×5 マス）を 見て 生け垣の 種類を かえる
 // ・茶畑の そば → 丸く 刈りこんだ 茶の木（西尾の 抹茶）・川や 池の そば → 石垣・西尾城跡から 800m 以内の 町なか → 黒塀（城下町）・そのほか → いつもの 生け垣
-const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro'], MZ_CASTLE_R = 800 / TILE_M;
+// ・地区ごと（店主「地区ごとの生垣も」。地区は その場所に いちばん 近い 注目スポットの 地区＝dots.js の areaOf。地区の 紹介 areas.json に そろえる）：
+//   一色 → 漁網の 垣（漁港・うなぎの 養殖池。水の そばも 網）・吉良 → 土手（堤防づくりの 名君）・幡豆 → 松の 垣（三ヶ根山と 国定公園の 海べ）・佐久島 → 黒塀（島の 黒壁の 集落）
+const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro', 'ami', 'dote', 'matsu'], MZ_CASTLE_R = 800 / TILE_M;
+const MZ_AREA_STYLE = { isshiki: 'ami', kira: 'dote', hazu: 'matsu', sakushima: 'kuro' };
+function mzArea0(cx, cy) {   // マスの 地区（西尾市の 中だけ。わからなければ ''）。null：まだ わからない（名所や 地区の しくみが 読めて いない）
+  const D = window.NISHIO_DOTS;
+  if (!D || !D.areaOf || !G.spots || !G.spots.length || !G.cityAt) return null;
+  const ll = toLatLng((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), c = G.cityAt(ll.lat, ll.lng);
+  return c && c.name === '西尾市' ? D.areaOf(ll.lat, ll.lng) : '';
+}
 const mzStyleC = new Map();
 let mzCastle = null;
 function mzStyle(cx, cy) {
@@ -7767,8 +7776,9 @@ function mzStyle(cx, cy) {
   }
   if (!mzCastle) { const sp = (G.spots || []).find(p => p.id === 'f-nishio-castle'); if (sp) mzCastle = toTile(sp.lat, sp.lng); }
   const castle = mzCastle && Math.hypot((cx + 0.5) * MZ_K - mzCastle.x, (cy + 0.5) * MZ_K - mzCastle.y) < MZ_CASTLE_R;
-  v = tea >= 3 ? 'cha' : water >= 4 ? 'ishi' : castle && town >= 6 ? 'kuro' : 'ike';
-  if (!unread && (mzCastle || !G.spots || !G.spots.length)) mzStyleC.set(k, v);   // 地図が 読めてから おぼえる（名所が まだなら 城下町は あとで）
+  const area = mzArea0(cx, cy), as = area && MZ_AREA_STYLE[area];
+  v = tea >= 3 ? 'cha' : water >= 4 ? (as === 'ami' ? 'ami' : 'ishi') : as || (castle && town >= 6 ? 'kuro' : 'ike');
+  if (!unread && mzCastle && area !== null) mzStyleC.set(k, v);   // 地図・名所・地区が わかってから おぼえる（まだなら あとで きめなおす）
   return v;
 }
 function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱの 模様（16×16 点・地図に くっついて 動く）。春は ところどころ つつじの 花
@@ -7786,6 +7796,16 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
     } else if (style === 'ishi') {   // 石垣：大きさの ちがう 石を 組んだ 灰色の 壁
       px('#7a7c74', 0, 0, 16, 16);   // 目地（黒塀と まちがえない ように 明るめの 灰色）
       for (const [a, b, w, hh] of [[0, 0, 6, 4], [7, 0, 9, 4], [0, 5, 4, 5], [5, 5, 6, 5], [12, 5, 4, 5], [0, 11, 8, 5], [9, 11, 7, 5]]) { px('#acaea3', a, b, w - 1, hh - 1); px('#d2d4c8', a, b, w - 1, 1); px('#909288', a + w - 2, b + 1, 1, hh - 2); }
+    } else if (style === 'ami') {   // 漁網の 垣（一色）：杭に かけた 青緑の 網と、だいだいの 浮き
+      px('#2d5f6e', 0, 0, 16, 16);
+      for (let i = 0; i < 16; i++) { px('#8ec3cc', i, (i * 2) % 16); px('#8ec3cc', i, (31 - i * 2) % 16); px('#5f97a3', i, (i * 2 + 8) % 16); }   // 網目
+      for (const [a, b] of [[3, 2], [11, 10]]) { px('#ff8a3c', a, b, 2, 2); px('#ffd0a0', a, b); }   // 浮き
+    } else if (style === 'dote') {   // 土手（吉良）：土の 堤に 芝
+      px('#8a6a44', 0, 0, 16, 16);
+      for (let i = 0; i < 40; i++) { const r = rn(); px(r < 0.5 ? '#6aa84f' : r < 0.75 ? '#4f8a3a' : '#a5845a', (rn() * 16) | 0, (rn() * 16) | 0, 1 + (rn() < 0.5), 1); }
+    } else if (style === 'matsu') {   // 松の 垣（幡豆）：こい 緑の 枝葉と 茶色の 幹
+      px('#1f4a36', 0, 0, 16, 16);
+      for (let i = 0; i < 36; i++) { const r = rn(); px(r < 0.5 ? '#2f6448' : r < 0.85 ? '#4a8a5e' : '#7a5236', (rn() * 16) | 0, (rn() * 16) | 0, 2, 1); }
     } else if (style === 'kuro') {   // 黒塀：焼き杉の 板の 黒と、ところどころ しっくいの 白い 笠
       px('#2a2724', 0, 0, 16, 16);
       for (let a = 0; a < 16; a += 4) { px('#3a3530', a, 0, 1, 16); px('#1c1a18', a + 3, 0, 1, 16); }
@@ -7983,7 +8003,8 @@ function rollStep(dt) {
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, vn = rp.vx * ux + rp.vy * uy;
       nx = q.x + ux * MZ_TUBE; ny = q.y + uy * MZ_TUBE; rub = [ux, uy];
       if (vn > 0) {   // そっと 当たれば ぴたっと（そって すべる）、強く 当たれば がさっと はね返る（そう 向きの 速さも 少し へる）
-        const k = hit(vn, Math.abs(ux) >= Math.abs(uy), false), f = k ? 0.85 : 1, vtx = rp.vx - vn * ux, vty = rp.vy - vn * uy;
+        const k = hit(vn, Math.abs(ux) >= Math.abs(uy), false), vt = Math.hypot(rp.vx - vn * ux, rp.vy - vn * uy);
+        const f = k ? 0.85 : vt > 0 ? Math.max(0, 1 - MZ_RUB * vn / vt) : 1, vtx = rp.vx - vn * ux, vty = rp.vy - vn * uy;   // 生け垣に こすれる ぶん おそく（カーブを いつまでも すべりつづけない）
         rp.vx = vtx * f + k * vn * ux; rp.vy = vty * f + k * vn * uy;
       }
     }

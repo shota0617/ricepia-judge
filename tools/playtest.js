@@ -908,8 +908,16 @@ async function walkTo(page, id) {
     const want = { c: nishioPixel.combo.best, d: nishioPixel.maze.dots.n };
     nishioGo.openTab('log'); await new Promise(f => setTimeout(f, 300));
     const box = document.getElementById('koroRec'), text = box && !box.hidden ? box.textContent : '';
+    let share = 'skip';   // コンボの ベストが 3 いじょう なら「📣 シェア」→ シェアの 文と すぐ 遊べる リンク
+    if (want.c >= 3) {
+      const b = box.querySelector('[data-share-open="koro"]');
+      if (b) { b.click(); await new Promise(f => setTimeout(f, 300)); }
+      const st = document.getElementById('shareText').textContent;
+      share = !!b && !document.getElementById('share').hidden && st.includes(`コンボ ベスト ×${want.c}`) && st.includes('?play=1&utm_source=share&utm_medium=social&utm_campaign=koro');
+      document.getElementById('share').hidden = true;
+    }
     nishioGo.openTab('map');
-    return { ok: (!want.c || text.includes(`×${want.c}`)) && (!want.d || text.includes(`つぶ ${want.d}`)) && (!(want.c || want.d) || !!text), want, text: text.slice(0, 80) };
+    return { ok: (!want.c || text.includes(`×${want.c}`)) && (!want.d || text.includes(`つぶ ${want.d}`)) && (!(want.c || want.d) || !!text) && share !== false, want, share, text: text.slice(0, 80) };
   });
   // バイラルループ：めいろの ゴールの ごほうびに「📣 シェア」→ 遊んだ 画面の カードと、見た 人が すぐ 遊べる リンク（?play=1・友だちの +20pt）
   R.checks.mzGoalShare = await page.evaluate(async () => {
@@ -1849,7 +1857,7 @@ async function walkTo(page, id) {
   need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」が クーポンに 出ない（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);
-  need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）が 出ない（${JSON.stringify(c.koroRec)}）`);
+  need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）・シェアが 出ない（${JSON.stringify(c.koroRec)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');
   need(c.mazeWallFit && c.mazeWallFit.ok, 'めいろの 壁：お米が 壁に 食いこんで 見える（当たり判定が 絵より 小さい）、または はね返らない');
   need(c.heightJump && c.heightJump.ok, '高低差で とぶ：急な下り坂の へりを 速く こえても とばない');

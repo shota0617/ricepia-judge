@@ -55,7 +55,7 @@
 | `checkin`・`shop_checkin` | 名所・当店にチェックインした（当店は Meta では「Lead」） |
 | `idle_return`・`idle_fact`・`idle_upgrade`・`guide_pick` | るすばんから戻った・おまかせ歩きで まちメモ・おまかせ強化・行き先を自分で変えた |
 | `guide_set`・`guide_arrive`・`npc_talk` | みちしるべ・人との会話 |
-| `share_open`・`share` | シェアの画面を開いた・シェアした（kind：log（きろく）／dot（見つけたドット絵）／lvup（レベルアップ）／mzgoal（めいろの ゴール）、via：x／line／facebook／copy／image／native） |
+| `share_open`・`share` | シェアの画面を開いた・シェアした（kind：log（きろく）／dot（見つけたドット絵）／lvup（レベルアップ）／mzgoal（めいろの ゴール）／koro（ころころの きろく）、via：x／line／facebook／copy／image／native） |
 | `share_prompt` | ごほうびの画面の「📣 シェア」を押した（kind：dot／lvup／mzgoal） |
 | `friend_bonus` | 友だちのシェアから来た人が、はじめて遊んで +20pt をもらった（シェアから増えた人の数） |
 | `campaign_landing`・`campaign_bonus`・`campaign_link` | キャンペーンのリンクから来た・当店チェックインのボーナス・くわしいページへ |
@@ -89,6 +89,7 @@
 | 登録する | リンクは `?play=1&utm_source=share&utm_campaign=mzgoal`。はじめての 人は はじめの 画面を とばして すぐ めいろで 遊べ、+20pt（友だちの 紹介ボーナス） |
 | 使う（もう一周） | リンクには 友だちの タイム（`vs=秒&vst=★`。数だけで 名前・場所は のせない）。来た 人には「👋 友だちは めいろの ゴールまで 1分23秒 ★★。きみも ころころ やってみりん」、その人の はじめての ゴールで「👋 友だちは 1分23秒 ★★、きみは 58秒 ★★★。シェアで おかえし しよまい」（1回だけ。行き先が ちがうので 勝ち負けは 言わない）。その人も ゴールで シェア |
 
+- **あとからでも シェア**：きろくの タブの「🍙 ころころの きろく」に「📣 シェア」（コンボの ベストが ×3 いじょう）。文は「お米を ころころ🎵 コンボ ベスト ×12・きょう ひろった つぶ 30」、リンクは `?play=1&utm_campaign=koro`（`share.js` の 'koro'）。ゴールの シェアは その場かぎりなので、あとから 自慢できる 入口。
 - 数える：`share_prompt`（kind：mzgoal）→ `share`（via）→ `landing`（utm_campaign：mzgoal・play：1・vs）→ `friend_bonus` → `friend_vs`（来た 人が はじめて ゴール）。シェアした 人の 数と、そこから 来て 遊んだ 人の 数で ループの 強さ（1人が 何人 つれて くるか）が わかる。
 - 画面の 絵は その場で 描き、どこにも 送らない（シェアの 画像に だけ 使う）。地図の 絵は ぜんぶ 同じ サイトの 絵なので、画像の 保存・端末の シェアも できる。
 - 確かめ：`tools/playtest.js` の mzGoalShare（ボタン → 文・リンク・画像、別の ごほうびや レベルアップと かさなった あとに 持ちこさない、人の ゴールの 話の 窓）、friendVs（?vs= で 来た 人への さそいと、はじめての ゴールで 1回だけ ならべる）。

@@ -47,8 +47,8 @@ if (Object.keys(land).length) {
 
 /* ---------- シェア ---------- */
 // 西尾市版（提案用デモ）でシェアしたときは、受け取った人も西尾市版で開くように ed=city を付ける
-const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}${kind === 'mzgoal' ? `play=1&${curMz ? `vs=${Math.round(curMz.sec)}&vst=${curMz.stars || 0}&` : ''}` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
-let cur = 'log', curDot = null, curSpot = null, curVoice = '', curMeiro = null, curMz = null;   // curMz：地図の めいろの ゴール（game.js の mzShare。見た 人は ?play=1 で すぐ 遊べる）
+const shareUrl = kind => `${SITE}?${window.NSG_EDITION && !window.NSG_EDITION.shops ? `ed=${window.NSG_EDITION.id}&` : ''}${kind === 'spot' && curSpot ? `spot=${encodeURIComponent(curSpot.id)}&` : ''}${kind === 'meiro' && curMeiro ? `meiro=${curMeiro.daily ? 'daily' : '1'}&` : ''}${kind === 'koro' ? 'play=1&' : ''}${kind === 'mzgoal' ? `play=1&${curMz ? `vs=${Math.round(curMz.sec)}&vst=${curMz.stars || 0}&` : ''}` : ''}utm_source=share&utm_medium=social&utm_campaign=${encodeURIComponent(kind)}`;
+let cur = 'log', curDot = null, curSpot = null, curVoice = '', curMeiro = null, curMz = null, curKoro = null;   // curKoro：ころころの きろく（コンボの ベスト・きょうの つぶ・びゅん れんさ）   // curMz：地図の めいろの ゴール（game.js の mzShare。見た 人は ?play=1 で すぐ 遊べる）
 // 西尾の名物（「抹茶とうなぎのまち」）。名前は meibutsu.js（西尾市観光協会などの出典）から。X の字数に入るよう短く
 const meibutsuShort = () => { const m = (window.NISHIO_MEIBUTSU || []).filter(x => !x.area).slice(0, 2).map(x => x.name.replace(/^(西尾の|一色産)/, '')); return m.length ? `${m.join('と')}のまち・` : ''; };
 // 名所のある市町（西尾市の外の名所を「西尾の」と言わないように）と、その地区（注目スポットの area）
@@ -75,6 +75,10 @@ function shareText() {
   if (cur === 'mzgoal' && curMz) {   // 地図の めいろの ゴール：遊んだ 画面と、タイム・★・この 道の がんばり。見た 人が すぐ 遊べる（?play=1）
     const m = curMz, run = mzRunLine(m.run);
     return `にしおさんぽGOで、西尾の まちが めいろに🌀「${m.name}」まで ${fmtSec(m.sec)} ${'★'.repeat(m.stars)}${run ? `\n${run}` : ''}\nスマホを 傾けると お米が ころころ。${invite}\n${tags}`;
+  }
+  if (cur === 'koro' && curKoro) {   // ころころの きろく（きろくの タブから）：コンボの ベストを 自慢して、見た 人が すぐ 遊べる（?play=1）
+    const k = curKoro;
+    return `にしおさんぽGOで、お米を ころころ🎵 コンボ ベスト ×${k.combo}${k.dots ? `・きょう ひろった つぶ ${k.dots}` : ''}\n西尾の まちが めいろ。スマホを 傾けると お米が ころころ。${invite}\n${tags}`;
   }
   if (cur === 'voice' && curVoice) {   // おたよりが反映された
     return `わたしの声で、にしおさんぽGOが かわりました📮「${clip(curVoice, 34)}」\nみんなの声で、名所がふえていきます\n${tags}`;
@@ -141,6 +145,11 @@ function drawCard() {
       x.fillStyle = '#9ccc4f'; x.fillRect(dx - 10, dy - 10, sz + 20, sz + 20);
       x.imageSmoothingEnabled = false; x.drawImage(m.img, dx, dy, sz, sz); x.imageSmoothingEnabled = true;
     }
+  } else if (cur === 'koro' && curKoro) {
+    const k = curKoro;
+    line(`🎵 ころころ コンボ ×${k.combo}`, 64, 240, true);
+    line([k.dots ? `🍚 きょう ひろった つぶ ${k.dots}` : '', k.chain >= 2 ? `🍵 びゅん れんさ ×${k.chain}` : ''].filter(Boolean).join(' ・ ') || '西尾の まちが めいろ', 36, 306);
+    line('スマホを 傾けると、お米が ころころ', 30, 360);
   } else if (cur === 'voice' && curVoice) {
     line('📮 わたしの声が反映されました', 56, 230, true);
     line(clip(curVoice, 40), 34, 300);
@@ -162,6 +171,8 @@ function openShare(kind, opt) {
   curVoice = opt && opt.voice ? String(opt.voice) : '';
   curMeiro = opt && opt.meiro ? opt.meiro : null;
   curMz = opt && opt.mzgoal ? opt.mzgoal : null;
+  const P = window.nishioPixel;
+  curKoro = kind === 'koro' && P && P.combo && P.combo.best >= 3 ? { combo: P.combo.best, dots: P.maze && P.maze.dots ? P.maze.dots.n : 0, chain: P.maze && P.maze.padChain ? P.maze.padChain.best : 0 } : null;
   const text = shareText(), url = shareUrl(kind);
   drawCard();
   $('shareText').textContent = `${text}\n${url}`;

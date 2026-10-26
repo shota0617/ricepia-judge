@@ -18,6 +18,7 @@
 | フォルダ | 内容 |
 |---|---|
 | `agents/ads-watch/` | **広告監視エージェント**。Google広告・Meta広告を30分おきに読み取り専用で見張り、予算の使い過ぎ・配信停止・成果0・CPA急上昇を LINE／メールで通知。朝7:30と夜20:00に Claude Code が報告を書いて送る。設定は [agents/ads-watch/README.md](agents/ads-watch/README.md) |
+| `agents/nightly-backup/` | **毎晩の自動バックアップ**。毎晩2時に Time Machine を実行し、失敗したときだけ LINE／メールで通知。設定は [agents/nightly-backup/README.md](agents/nightly-backup/README.md) |
 
 ## Marketing Studio の機能
 

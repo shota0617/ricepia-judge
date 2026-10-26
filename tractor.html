@@ -294,6 +294,7 @@
       ・ロータリーの逆転：ロータリーを下ろしたあとに盛り上がった土を前へ戻して平らにしやすい。正転より負荷が大きいので、硬い所や耕作放棄地では故障のもと。エンジンは低回転で（取扱説明書では 1500rpm 以下が目安）…<a href="https://note.com/ryutaro0306/n/n1dec2d4d6705" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターの逆転機能」</a>／四隅などにたまった土を寄せるのに使う。硬い所では使わず、やわらかい所で…<a href="https://note.com/ryutaro0306/n/n9cd5ebffa07d" target="_blank" rel="noopener">同「逆回転機能」</a>（ゲームでは <kbd>O</kbd>）<br>
       ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
+      ・バックするときは ミラーだけに頼らず 目で見て確かめ、要るときは クラクションで知らせる。作業機の付けはずしは エンジンを止めて、作業中に降りるときも エンジンを止める…<a href="https://note.com/ryutaro0306/n/n277e4493a3a4" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターにかかわる危険な行動5選」</a>（ゲームでは <kbd>B</kbd>／「うしろを見る」で うしろを見てから バックする）<br>
       ・小さい田が点在していると ターンの回数がふえ、田の四隅も バックしてから耕すので 手間がふえる…<a href="https://note.com/toshi_chaki/n/n28258f30b67d" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第2部 馬からトラクターへ」</a>／はじめての田起こし：耕して止まり、バックして向きを変え、また耕す。残った隅を もう一周耕した…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a>（ゲームでは 角が残っていると、バックで寄せて耕す案内が出る）<br>
       ・勘で整地をくり返して 深くなりすぎた所で傾いて はまった。別の田んぼでは 田から出るスロープで動けなくなり、軽トラで引き上げてもらった。出入口のスロープの形は崩さない…<a href="https://note.com/kozonoikuya/n/n6b8c5a5089aa" target="_blank" rel="noopener">小薗郁也さん（note）「田植え終わりました」</a>（ゲームでは 坂を作業機で削ったり 坂の上で大きく切ったりすると 坂が崩れて、出るときに すべる）<br>
       ・代かきのハローは 旋回でも下げたまま。旋回上昇と倍速ターンを切り、回る前に速さを直進より 3 ポイント落とす（速いと 土が寄り、タイヤ跡が出て、ハローのうしろの板に土がのる）。畦が近づいたら 深さ・傾きも切り、外周 3 周目からは 深さ・傾きと倍速ターンを入れる…<a href="https://note.com/wkpxk085/n/n01bee10678c3" target="_blank" rel="noopener">眞木優さん（note）「トラクター作業機の交換→代搔きハロー」</a>（その農家さんの機械とやり方。ゲームでは 代かきで 下げたまま 時速 2km までで回ると 減点しない）<br>
@@ -2387,6 +2388,28 @@ const CORNER = (() => {
     get backAgo() { return backAgo; },
     tilled(x, z) {                                // バックで寄せてから 角を耕した
       if (!heardOK && backAgo < 8 && inCorner(x, z)) { heardOK = true; setTimeout(() => voice('yosumi'), 1500); }
+    },
+  };
+})();
+// ---- バックの前に うしろを目で見る：ミラーだけに頼ると うしろの人に気づけない。目で見て、要るときは クラクションで知らせる
+// （井上寅雄農園（note）「トラクターにかかわる危険な行動5選」の 3．バック時の目視確認）。
+// 運転席から見ているときに、うしろを見ないまま（うしろを 0.6 秒以上見たのが 3 秒より前）バックを始めたら 1 回だけ知らせる。見てからバックしたら 農家の声
+const BACKCHK = (() => {
+  let lookAgo = 99, hold = 0, prev = false, told = false, pend = -1, check = -1, tries = 0;
+  const MSG = () => 'バックの前に うしろを目で見る（' + (MOBILE || params.has('pad') ? '「うしろを見る」' : 'B') + ' を押しているあいだ うしろが見える）。ミラーだけでは うしろの人に気づけない';
+  return {
+    step(dt) {
+      hold = key.lookBack ? hold + dt : 0;          // 0.6 秒 押しつづけると 目がうしろを向き終わる（カメラは なめらかに回る）
+      lookAgo = hold >= 0.6 ? 0 : lookAgo + dt;
+      // 知らせは 少しおいて出し（同じコマの ほかの知らせに 上書きされない）、画面に 1.2 秒 出ていたら「伝えた」とする（早送りでも 本当の時間で数える）。その前に消されたら 出しなおす（3 回まで）
+      if (pend >= 0 && (pend -= dt) < 0) { toast(MSG(), 6); check = 1; }
+      if (check > 0) { if ($('toast').textContent !== MSG()) { check = -1; if (++tries < 3) pend = 0.3; } else if (toastT <= 6 - 1.2) { check = -1; told = true; } }
+      const can = key.back && !S.stalled && !S.parked && !(S.crank > 0);   // バックで動ける（エンジンがかかるのを 待っていたときも ここで始まる）
+      const start = can && !prev && S.v > -0.05;
+      prev = can;
+      if (!start || camMode !== 0) return;
+      if (lookAgo <= 3) voice('mokushi');
+      else if (!told && pend < 0 && check < 0) pend = 0.3;
     },
   };
 })();
@@ -4582,7 +4605,7 @@ function step(dt) {
     }
   }
   SCRAPE.step(dt);
-  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); RAMPDMG.step(dt); CORNER.step(dt); }
+  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); KATA.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); HAMARU.step(dt); RAMPDMG.step(dt); CORNER.step(dt); BACKCHK.step(dt); }
   if (S.stalled) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing || KATA.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れ・傾きの調整のあいだは エンジンを切ったまま
@@ -5696,6 +5719,7 @@ const VOICES = {
   wadachi: ['プラウで天地返しをしていたら、往路でできたタイヤの溝に 復路で前輪が落ちた。バランスが崩れて まっすぐ走れず、切り返すことになった', 'shoei さん（米農家×簿記の note）'],
   ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   oto: ['運転席にいると、爪が土を引っかく音のちがいで 土の固さや深さがわかる。石を掘り起こすと 音で気づく', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
+  mokushi: ['バックするときは ミラーだけに頼ると うしろの人に気づけない。目で見て確かめ、要るときは クラクションで知らせる', '井上寅雄農園（note）'],
   yosumi: ['小さい田が点在していると、畦ですぐにターンしなければならず、ターンの回数がふえる。田の四隅も バックしてから耕すので、その手間もふえる（田は 1 枚が大きくて 道路付けがよいと楽）', '茶木寿夫さん（note）'],
   surope: ['代かき用の整地ロータリーがなく、勘で整地をくり返したら 深くなりすぎた所で傾いて はまった。別の田んぼでは 田から出るスロープで動けなくなり、軽トラで引き上げてもらった。入水前の整地は ていねいに、代かきは浅めに。出入口のスロープの形は 崩さない', '超早場米の農家 小薗郁也さん（note）'],
   harrowturn: ['うちの代かきは、ハローを旋回でも下げたまま。旋回上昇と倍速ターンは切って、回る前に 速さを直進より 3 ポイント落とす（速いと 土が寄り、タイヤの跡が出て、ハローのうしろの板に土がのって 水平を保てない）。畦が近づいたら 深さ・傾きも切る。外周 3 周目からは 深さ・傾きと倍速ターンを入れる', '特別栽培米の農家 眞木優さん（note）'],

@@ -262,7 +262,8 @@ const CSS = `.share.over-meiro{z-index:3600}
 #meiro canvas{display:block;image-rendering:pixelated;touch-action:none}   /* 盤を なぞる あいだは 画面を動かさない */
 #meiro .mz-glass::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:18px;background:linear-gradient(155deg,rgba(255,255,255,.32),rgba(255,255,255,0) 32%,rgba(255,255,255,0) 70%,rgba(255,255,255,.12));box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
 #meiro .mz-hint{font-size:13px;opacity:.9;margin:10px 14px 4px;text-align:center;line-height:1.5}
-#meiro .mz-btns{display:flex;gap:10px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
+#meiro .mz-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:100%;box-sizing:border-box;padding:0 8px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
+@media (max-width:360px){#meiro .mz-btns{gap:6px}#meiro .mz-btns button{padding:9px 12px;font-size:14px}}   /* せまい スマホ（320 幅）でも 3つの ボタンが 画面に おさまる */
 #meiro .mz-btns button,#meiro .mz-clear button{border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:15px;background:#ffe680;color:#2a2410;box-shadow:0 3px 0 #b59a2a}
 #meiro .mz-btns button.sub{background:rgba(255,255,255,.2);color:#fff;box-shadow:none}
 #meiro .mz-clear{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;background:rgba(10,30,40,.55);padding:12px;box-sizing:border-box}   /* 盤の わくの外（低い画面でも 切れない） */

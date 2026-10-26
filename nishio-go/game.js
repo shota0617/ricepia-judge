@@ -2988,8 +2988,12 @@ const couponState = c => c.used ? 'used' : Date.now() > c.t + c.validMin * 60000
 const openCoupon = () => S.coupons.find(c => couponState(c) === 'valid' && !!c.demo === !!demo);   // まだ 使っていない 有効な クーポン（ほかの クーポンとは いっしょに 使えないので、ある 間は 次を 交換しない）
 const usedToday = rid => S.coupons.filter(c => c.rid === rid && ymd(new Date(c.t)) === ymd()).length;
 
+let rewardExpT = 0;
 function renderRewards() {
   $('walletPts').textContent = S.points.toLocaleString();
+  clearTimeout(rewardExpT);
+  const oc = openCoupon();   // 使っていない クーポンの 期限が きれたら 描きなおす（併用できない ための「使ってから」を とく）
+  if (oc) rewardExpT = setTimeout(() => { if (!$('panel-rewards').hidden) renderRewards(); }, Math.max(0, oc.t + oc.validMin * 60000 - Date.now()) + 500);
   const pic = simple();   // 文字を少なく（ふだん）：品物のドット絵（Blender で作った絵）と、ポイント・回数の札。くわしい条件はタップで
   $('rewardNote').textContent = demo
     ? (pic ? '操作して移動：サンプル（お店では使えません）' : '操作して移動：サンプルの特典で交換の流れを試せます（このクーポンはお店では使えません。お店のとくてんは「あるいて移動」で）。')

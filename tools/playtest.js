@@ -844,12 +844,19 @@ async function walkTo(page, id) {
       S.points += 600; G.openTab('rewards'); await wait(300);
       const li2 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
       out.blocked = !!li2 && li2.querySelector('[data-redeem]').disabled && /使ってから|使っていないクーポン/.test(li2.textContent + li2.querySelector('[data-redeem]').getAttribute('aria-label'));
-      S.points = p0; S.coupons.length = n0; S.log.splice(0, S.log.length - l0); G.openTab('map');   // ほかの チェックの ポイントが かわらない よう もどす
+      const cpn = S.coupons[S.coupons.length - 1]; cpn.validMin = 0.02; G.openTab('rewards');   // 1.2秒で 期限切れに して、とくてんを 開いた まま 待つ
+      window.__cp100 = { p0, n0, l0 };
       return out;
     });
+    if (r.found && !r.skipped) {   // 期限が きれたら（とくてんを 開いた まま）描きなおされて「使ってから」が とける。テストの 時計は とまって いるので 2分 すすめる
+      await page.clock.setFixedTime(new Date(new Date(PLAY_DATE).getTime() + 120000)); await page.waitForTimeout(2500);
+      r.unblocked = await page.evaluate(() => { const li3 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent)); return !!li3 && !/使ってから|使っていないクーポン/.test(li3.textContent + li3.querySelector('[data-redeem]').getAttribute('aria-label')); });
+      await page.clock.setFixedTime(new Date(PLAY_DATE));
+      await page.evaluate(() => { const G = nishioGo, S = G.state, o = window.__cp100; S.points = o.p0; S.coupons.length = o.n0; S.log.splice(0, S.log.length - o.l0); G.openTab('map'); });   // ほかの チェックの ポイントが かわらない よう もどす
+    }
     page.off('dialog', onDialog);
     if (r.skipped) return { ok: true, ...r };
-    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && /クーポン・割引との併用はできません/.test(r.cond) && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked };
+    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && /クーポン・割引との併用はできません/.test(r.cond) && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
   })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

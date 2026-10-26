@@ -2458,17 +2458,20 @@ const DIFF = (() => {
 // （茶木寿夫さん（note）「農業用トラクターは楽し。第1部」）。上げたまま まっすぐ進むと、そこが耕し残しになる（あとで耕しなおす手間）
 const SAGE = (() => {
   let upYaw = null, dist = 0, told = false, wasDown = false;
-  function untilledBehind() {                     // 作業機の下が まだ耕していない土か（田んぼの内側だけ見る）
-    const p = wheelPoints(S.x, S.z, S.yaw);
+  function untilledBehind() {                     // ここで下ろせば 耕せる、まだ耕していない土か
+    const p = wheelPoints(S.x, S.z, S.yaw), half = SHIRO ? TILL_W / 2 + 0.06 : 1.16;   // 下ろしたときの幅（代かきのハローは翼をひろげる）
+    if ([half, -half].some(lx => { const [x, z] = p.w(lx, -1.62); return ground(x, z) === null; })) return false;   // 下ろすと 畦にかかる
     let n = 0, u = 0;
     for (let lx = -TILL_W / 2 + 0.1; lx <= TILL_W / 2 - 0.1 + 1e-6; lx += 0.3) {
       const [wx, wz] = p.w(lx, ROTARY_Z);
-      if (Math.abs(wx) > HX - 0.3 || Math.abs(wz) > HZ - 0.3) continue;
+      if (Math.abs(wx) > HX - 0.3 || Math.abs(wz) > HZ - 0.3) return false;   // 田んぼのふち
+      if (ART.on && ART.sdAt(wx, wz) > (SHIRO ? 0.6 : 0.4)) return false;   // 田んぼアート：白線の外は 上げたまま通るのが正しい
       n++;
       if (!tilledMask[Math.floor((wx + HX) / CELL) * NZ + Math.floor((wz + HZ) / CELL)]) u++;
     }
     return n >= 3 && u / n > 0.8;
   }
+  const toExit = () => S.x > 6 && S.z > 17.5 && S.z < 22.5 && Math.sin(S.yaw) > 0.7;   // 出口の坂（x 12〜17・z 18〜22）へ向かっている：上げて走るのが正しい
   return {
     step(dt) {
       if (wasDown && !S.rotDown) { upYaw = S.yaw; dist = 0; }   // 上げた：旋回のはじまり
@@ -2478,7 +2481,7 @@ const SAGE = (() => {
       const turned = Math.abs(Math.atan2(Math.sin(S.yaw - upYaw), Math.cos(S.yaw - upYaw))) > 2.6;   // U ターンを終えた（150° 以上 回った）
       const a = Math.round(S.yaw / (Math.PI / 2)) * (Math.PI / 2), aligned = Math.abs(Math.atan2(Math.sin(S.yaw - a), Math.cos(S.yaw - a))) < 0.2;
       if (!turned) { dist = 0; return; }
-      if (aligned && untilledBehind()) dist += S.v * dt;
+      if (aligned && !toExit() && untilledBehind()) dist += S.v * dt; else dist = 0;
       if (dist > 2.5) {
         told = true;
         toast('旋回が終わったら すぐ下ろす（' + (MOBILE || params.has('pad') ? '「' + IMPL + 'を下げる」' : 'スペース') + '）。上げたまま進むと、そこが耕し残しになって あとで耕しなおす', 6);

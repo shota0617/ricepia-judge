@@ -2202,7 +2202,7 @@ const STONES = (() => {
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
   if (season === 'haru') for (let k = 0; k < 46; k++) {
     const r = 0.04 + Math.pow(rnd(), 2.2) * 0.13;   // 半径 4〜17cm（小さいものが多い）
-    list.push({ x: (rnd() * 2 - 1) * (HX - 1.2), z: (rnd() * 2 - 1) * (HZ - 1.2), r, ry: rnd() * 6.28, rx: rnd() * 0.6, sy: 0.6 + rnd() * 0.3, y: r * 0.35, hit: false });
+    list.push({ x: (rnd() * 2 - 1) * (HX - 1.2), z: (rnd() * 2 - 1) * (HZ - 1.2), r, ry: rnd() * 6.28, rx: rnd() * 0.6, sy: 0.6 + rnd() * 0.3, y: r * 0.35, inZone: false });
   }
   function place(k) {
     const s = list[k];
@@ -2223,15 +2223,17 @@ const STONES = (() => {
     setTimeout(() => voice('ishi'), 6500);
   }
   function step(dt, working) {
-    if (!mesh || !working) return;
+    if (!mesh) return;
+    const spin = working && !S.stalled && (S.rotorW || 0) > 5;   // 爪が回っているときだけ（エンストで止まった爪は 石をはじかない）
     const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
     list.forEach((s, k) => {
-      if (s.hit) return;
       const dx = s.x - S.x, dz = s.z - S.z;
-      if (dx * dx + dz * dz > 16) return;
+      if (dx * dx + dz * dz > 16) { s.inZone = false; return; }
       const lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
-      if (Math.abs(lx) > TILL_W / 2 || Math.abs(lz - ROTARY_Z) > 0.3) return;
-      s.hit = true; hits++;                         // 爪が石に当たった：はじかれて 耕した土の上に出る
+      const inZone = spin && Math.abs(lx) <= TILL_W / 2 && Math.abs(lz - ROTARY_Z) <= 0.3;
+      if (!inZone) { s.inZone = false; return; }
+      if (s.inZone) return;                         // 同じ当たりで 何度も鳴らさない（爪がはなれたら また当たる）
+      s.inZone = true; hits++;                      // 爪が石に当たった：はじかれて 耕した土の上に出る（拾わないかぎり 田んぼに残る）
       s.x -= sn * 0.5; s.z -= cs * 0.5; s.y = TILL_Y + s.r * 0.2; place(k); mesh.instanceMatrix.needsUpdate = true;
       S.v *= 0.82;                                  // がくっ
       if (audio && soundOn) { clank(audio.ac, audio.out, Math.min(1, s.r * 8)); thud(audio.ac, audio.out, 0.35); }

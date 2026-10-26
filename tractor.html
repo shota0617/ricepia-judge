@@ -2366,7 +2366,7 @@ const CORNER = (() => {
     const gap = Math.min(...[-1, 1].map(k => { const [x, z] = p.w(k * half, ROTARY_Z - 0.45); return Math.min(toX ? HX - Math.abs(x) : 9, toZ ? HZ - Math.abs(z) : 9); }));
     if (gap >= 0.5) return 'back';
     if ([-1, 1].some(k => { const [x, z] = p.w(k * half, -1.62); return Math.abs(x) > HX || Math.abs(z) > HZ; })) return 'wide';   // 下げると はしが畦にかかる（canBe と同じ所を見る）
-    for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {   // 下げたら耕す所（step と同じ）に 角の耕し残しがあるか
+    for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (let lz = ROTARY_Z - 0.22; lz <= ROTARY_Z + 3; lz += 0.2) {   // 下げて 前へ 3m 進むあいだに耕す所（step と同じ幅）に 角の耕し残しがあるか
       const [x, z] = p.w(lx, lz);
       if (inCorner(x, z) && !tilledMask[Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL)]) return 'stop';
     }

@@ -3150,7 +3150,7 @@ function laySomeTracks(working) {
 
 // ---- シラサギ（耕しているとうしろについてきて、土から出た虫をついばむ） ----
 const BIRDS = (() => {
-  if (TOD === 'yoru') return { update() {}, list: [] };   // サギもカラスも 昼の鳥。夜は来ない
+  if (TOD === 'yoru') return { update() {}, list: [], scare() {}, flee: 0 };   // サギもカラスも 昼の鳥。夜は来ない
   // 耕していると十数羽が集まってくる（掘り起こされたミミズや虫をねらう）。ダイサギ・コサギ（小さく、くちばしが黒い）・アオサギ（灰色で大きい）
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const KIND = {

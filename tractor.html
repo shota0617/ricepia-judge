@@ -1145,7 +1145,7 @@ const BELT = (() => {
       for (const k of ['fwd', 'back']) key[k] = 0;
       toast('オーバーヒートで エンジンが止まりました（本物は エンジンをいためる）。' + IMPL + 'を上げて、冷めるのを待ってから見る', 6);
     }
-    if (Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && S.cool > 0.7 && !(S.crank > 0)) {
+    if (Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && S.cool > 0.7 && !(S.crank > 0)) {   // 爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = hot ? 12 : 8; S.elapsed += hot ? 1500 : 600;
@@ -1165,6 +1165,7 @@ const COVER = (() => {
   function wave() {                               // 進む向きに山と谷がくり返す（すじは 進む向きに直角）
     const dx = Math.sin(S.yaw), dz = Math.cos(S.yaw), ph = (x, z) => (x * dx + z * dz) * K;
     return {
+      yaw: S.yaw,
       y: (x, z) => A * (1 + Math.sin(ph(x, z))) / 2,
       n: (x, z) => { const sl = -A / 2 * K * Math.cos(ph(x, z)), l = Math.hypot(sl, 1); return [sl * dx / l, 1 / l, sl * dz / l]; },
     };
@@ -1183,14 +1184,19 @@ const COVER = (() => {
     if (!stuck) return;
     if (working && S.v > 0.05) odo += S.v * dt;
     if (odo > 15 && !told) { told = true; toast('耕したあとが 波うっている（山と谷が くり返す）。リヤカバーが なめらかに上下していないのかも。止まって ' + IMPL + 'を上げると 見ます', 7); }
-    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && !S.stalled && !(S.crank > 0)) {
+    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && !S.stalled && !(S.crank > 0)) {   // 爪が惰性で回っているあいだは 近づかない
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 6; S.elapsed += 180;
-      toast('エンジンを切って リヤカバーを見た。ワイヤーがさびて、アームの根元が固まっていた。ワイヤーとアームの根元にオイルスプレーを吹きます（3 分）', 6);
+      toast('爪が止まったので エンジンを切って 駐車ブレーキ。上げた' + IMPL + 'に降下止め（油圧ロック）をかけて リヤカバーを見た。ワイヤーがさびて、アームの根元が固まっていた。ワイヤーとアームの根元にオイルスプレーを吹きます（3 分）', 7);
     }
   }
-  return { start, step, wave, get stuck() { return stuck; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
+  function h(x, z) {                              // その場所の 波の高さ（タイヤ跡を 地面に合わせる）
+    const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL), c = i * NZ + j;
+    if (i < 0 || j < 0 || i >= NX || j >= NZ || !WAVY[c]) return 0;
+    return A * (1 + Math.sin((x * Math.sin(WAVD[c]) + z * Math.cos(WAVD[c])) * K)) / 2;
+  }
+  return { start, step, wave, h, get stuck() { return stuck; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; } };
 })();
 
 
@@ -1841,7 +1847,7 @@ function overTill(c) {
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
   if (++overTilled > 200) voice('arashiku');      // 8m² ほど 耕しすぎたら
 }
-const WAVY = new Uint8Array(NX * NZ);
+const WAVY = new Uint8Array(NX * NZ), WAVD = new Float32Array(NX * NZ);   // 波うったます目と、その波の向き（耕したときの向き）
 function setCell(c, wv) {                         // ます目の四隅の高さ・UV・法線（wv：波うち）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
   const g = tilled.geometry, pos = g.attributes.position.array, uv = g.attributes.uv.array, nor = g.attributes.normal.array;
@@ -1851,6 +1857,7 @@ function setCell(c, wv) {                         // ます目の四隅の高さ
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
     nor.set(wv ? wv.n(x, z) : [0, 1, 0], c * 12 + k * 3);
   });
+  if (wv) WAVD[c] = wv.yaw;
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
 }
 function tillCell(i, j) {
@@ -2356,8 +2363,9 @@ const TR = (() => {
     const nx = -dz / d * w / 2, nz = dx / d * w / 2;
     const ci = Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL);
     const y = tilledMask[ci] ? TILL_Y + 0.025 : 0.028;     // 田んぼの面の凸凹（±2cm）より上
+    const yy = (a, b) => y + (tilledMask[ci] ? COVER.h(a, b) : 0);   // 波うった所は その高さに
     const i = next; next = (next + 1) % N;
-    pos.set([L.x + nx, y, L.z + nz, L.x - nx, y, L.z - nz, x - nx, y, z - nz, x + nx, y, z + nz], i * 12);
+    pos.set([L.x + nx, yy(L.x + nx, L.z + nz), L.z + nz, L.x - nx, yy(L.x - nx, L.z - nz), L.z - nz, x - nx, yy(x - nx, z - nz), z - nz, x + nx, yy(x + nx, z + nz), z + nz], i * 12);
     const v1 = L.v + d / 0.5;
     uv.set([0, L.v, 1, L.v, 1, v1, 0, v1], i * 8);
     cell[i] = ci;
@@ -2377,7 +2385,7 @@ const TR = (() => {
     }
     return L;
   }
-  return { add, erase, flush, reset, remaining, cell };
+  return { add, erase, flush, reset, remaining, cell, pos };
 })();
 // ---- 秋：長雨の年の稲刈りのわだち（X の米農家さん：「9 月の長雨の稲刈りのわだちが、まだ残っている。田が乾いてからトラクターを入れる」）。
 // コンバインのクローラ（幅 45cm・左右の間 1.15m）が ぬかるみに沈んで 深さ 5〜10cm のみぞを残し、両わきに泥が盛り上がって、乾くとひび割れる。
@@ -5461,6 +5469,7 @@ const COACH = (() => {
       : ['1', K('まず 白線の内側（地図の黄色）へ。<kbd>↑</kbd><kbd>←</kbd><kbd>→</kbd> で走る（白線の外では下げない）', 'まず 白線の内側（地図の黄色）へ。▲ ◀ ▶ で走る（白線の外では下げない）')];
     if (!S.rotDown && lastPct >= 90 && MUD.level >= 0.3 && S.x > 4 && S.x < HX && S.z > 17 && S.z < 23 && Math.sin(S.yaw) > 0.5)   // 耕し終わって 坂（道への出口）へ向かうとき
       return ['!', K('道へ出る前に：止まって <kbd>V</kbd> で タイヤの泥を落とす', '道へ出る前に：止まって「泥落とし」で タイヤの泥を落とす')];
+    if (COVER.stuck && COVER.told && !S.rotDown && Math.abs(S.v) < 0.05 && (S.rotorW || 0) >= 1) return ['…', '爪が止まるのを待っています（回っている爪に近づかない）'];
     if (COVER.stuck && COVER.told && S.rotDown) return ['!', K('耕したあとが 波うっている：止まって <kbd>スペース</kbd>で上げると リヤカバーを見る', '耕したあとが 波うっている：止まって 上げると リヤカバーを見る')];
     if (S.rotDown && S.v > 0.1 && PTOREV && (S.revHard || 0) > 0.3)   // 逆転のまま まだ耕していない所へ
       return ['!', K('PTO 逆転のまま 硬い所に入っている：<kbd>スペース</kbd>で上げて <kbd>O</kbd> で正転に', 'PTO 逆転のまま 硬い所に入っている：上げて 正転にもどす（O キー）')];

@@ -83,6 +83,12 @@
   .artImg { display: block; width: 100%; margin: 8px 0; border-radius: 10px; }
   .artBtns { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0 10px; }
   .artBtns .go { min-height: 44px; padding: 0 20px; font-size: 15px; text-decoration: none; }
+  .loop { margin: 10px 0; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.06); }
+  .loopHead { margin: 2px 0 6px; font-weight: bold; }
+  .vs { margin: 4px 0 8px; font-weight: bold; font-size: 17px; }
+  .go.line { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; margin: 8px auto 2px; max-width: 360px; min-height: 48px; background: #06c755; color: #fff; text-decoration: none; }
+  .go.line small { font-size: 12px; font-weight: normal; opacity: .9; }
+  .challenge { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff3c4; color: #4a3600; font-weight: bold; line-height: 1.5; }
   .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
   .easy input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--green); }
   .go.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
@@ -173,6 +179,7 @@
 
 <div class="sheet" id="start">
   <div class="card">
+    <p class="challenge hidden" id="challenge"></p>
     <span class="tag">🧪 試作版</span>
     <h1>🚜 トラクターで<span style="display:inline-block">田んぼを耕そう</span></h1>
     <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで 30m×50m の田んぼを耕し、<b>田んぼに絵を描きます</b>（田んぼアート）。お題を「なし」にすると、田んぼをぜんぶ耕せたらクリア。</p>
@@ -324,8 +331,16 @@
     <h1 id="doneTitle">🎉 耕し終わりました！</h1>
     <p id="doneText"></p>
     <img id="artImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼアート">
-    <div class="artBtns hidden" id="artBtns"><a class="go sub" id="bSave" download="tanbo-art.jpg">💾 保存</a><button class="go sub hidden" id="bShare">📤 シェア</button><button class="go sub" id="bOther">別のお題</button></div>
+    <div class="artBtns hidden" id="artBtns"><button class="go sub" id="bOther">別のお題</button></div>
     <p id="doneScore"></p>
+    <div class="loop" id="loopBox">
+      <p class="vs hidden" id="vsLine"></p>
+      <p class="loopHead">📣 結果を投稿して、友だちに挑戦してもらおう</p>
+      <img id="cardImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼと点数">
+      <div class="artBtns"><button class="go sub hidden" id="bShare">📱 シェア</button><a class="go sub" id="bX" target="_blank" rel="noopener">𝕏 ポスト</a><a class="go sub" id="bLine" target="_blank" rel="noopener">LINE で送る</a><a class="go sub" id="bSave" download="tractor.jpg">💾 画像を保存</a></div>
+      <p class="small">投稿のリンクから来た人は、同じ季節・お題で あなたの点数に挑戦できます</p>
+      <a class="go line" id="bLineAdd" href="https://line.me/R/ti/p/@wxh6702b" target="_blank" rel="noopener">📩 らいすぴあの LINE を友だち追加<small>価格表・売り出し情報</small></a>
+    </div>
     <button class="go hidden" id="bNext"></button>
     <button class="go sub" id="bWash">🚿 洗車して しまう</button>
     <button class="go" id="bAgain">もう一度</button>
@@ -2168,22 +2183,22 @@ const ART = (() => {
     }
   }
   // ドローンで真上から撮る（白線は消して、絵だけ）。地図と同じ向き（右が東・上が北）
-  function photo(pts) {
+  function photo(pts, caption) {                  // caption：田んぼアートでないときの 左下の文字
     const W = 1600, H = 900, pr = renderer.getPixelRatio();
     const cam = new THREE.PerspectiveCamera(50, W / H, 1, 600), tn = Math.tan(25 * Math.PI / 180);
     cam.position.set(0, Math.max((HZ + 2.5) / (tn * W / H), (HX + 1.5) / tn), 0); cam.up.set(1, 0, 0); cam.lookAt(0, 0, 0);
-    guide.visible = false;
+    if (guide) guide.visible = false;
     flushTilled();
     renderer.setPixelRatio(1); renderer.setSize(W, H, false);
     renderer.render(scene, cam);
     const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     const g = cv.getContext('2d');
     g.drawImage(renderer.domElement, 0, 0);
-    guide.visible = true;
+    if (guide) guide.visible = true;
     renderer.setPixelRatio(pr); resize();
     g.fillStyle = 'rgba(20,18,14,.62)'; g.fillRect(0, H - 84, W, 84);
     g.fillStyle = '#fff'; g.textBaseline = 'middle'; g.textAlign = 'left'; g.font = 'bold 40px sans-serif';
-    g.fillText('🎨 田んぼアート「' + name + '」 ' + pts, 30, H - 42);
+    g.fillText(caption || '🎨 田んぼアート「' + name + '」 ' + pts, 30, H - 42);
     g.textAlign = 'right'; g.font = 'bold 26px sans-serif'; g.fillText('トラクターで田んぼを耕そう｜らいすぴあ', W - 30, H - 42);
     return cv.toDataURL('image/jpeg', 0.88);
   }
@@ -5788,6 +5803,39 @@ $('bStart').onclick = () => {
   }
   if (!soundOn && !audio) toggleSound();
 };
+// ---- バイラルループ：遊ぶ → 結果を投稿する → 見た人が知る → （友だち追加・挑戦）→ 遊ぶ。
+// 投稿のリンクは 同じ季節・お題で開き、はじめの画面に「友だちは ○ 点。きみは何点？」と出す。終わりの画面で 友だちの点と くらべる
+const LOOP = (() => {
+  // リンクの 季節・お題・時間・天気が このゲームで そのまま使えるときだけ 挑戦にする（知らない値で ほかの田んぼに 変わっていたら、同じ条件と言えない）
+  const same = params.get('season') === season && params.get('art') === (ART.on ? ART.id : 'none') && (!params.has('time') || params.get('time') === TOD) && (!params.has('w') || params.get('w') === WX);
+  const p = /^\d{1,3}$/.test(params.get('p')) ? +params.get('p') : -1, friend = params.get('from') === 'share' && same && p >= 0 && p <= 100 ? p : null;
+  const SNAME = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' };
+  if (friend !== null) {
+    const el = $('challenge');
+    el.textContent = `🏁 友だちが「${SNAME[season]}${ART.on ? '・田んぼアート「' + ART.name + '」' : ''}」で ${friend} 点！ きみは何点とれる？（季節・時間・天気${ART.on ? '・お題' : ''}は 友だちと同じにしてあります）`;
+    el.classList.remove('hidden');
+  }
+  function result(score, cardUrl, text, artUrl) {
+    const img = cardUrl || artUrl;                  // 田んぼアートは 上の写真をそのまま使う
+    const url = location.origin + location.pathname + `?season=${season}&time=${TOD}&art=${ART.on ? ART.id : 'none'}${WX !== 'hare' ? '&w=' + WX : ''}&p=${score}&from=share`;   // 季節・時間・天気・お題を 友だちと そろえる
+    if (cardUrl) { $('cardImg').src = cardUrl; $('cardImg').classList.remove('hidden'); }
+    $('bSave').href = img;
+    $('bX').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    $('bLine').href = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+    if (friend !== null) {
+      const d = score - friend, el = $('vsLine');
+      el.textContent = d > 0 ? `🏆 友だちの ${friend} 点を ${d} 点こえた！ 投稿して、また挑戦してもらおう` : d === 0 ? `🤝 友だちと 同じ ${friend} 点！` : `友だちは ${friend} 点。あと ${-d} 点！ もう一度 挑戦しよう`;
+      el.classList.remove('hidden');
+    }
+    fetch(img).then(x => x.blob()).then(b => {      // スマホは 画像つきで そのままシェアできる
+      const f = new File([b], 'tractor.jpg', { type: 'image/jpeg' });
+      if (!navigator.canShare || !navigator.canShare({ files: [f] })) return;
+      $('bShare').classList.remove('hidden');
+      $('bShare').onclick = () => navigator.share({ files: [f], text, url }).catch(() => {});
+    }).catch(() => {});
+  }
+  return { result, get friend() { return friend; } };
+})();
 function finish() {
   S.done = true;
   if (ART.on) return finishArt();
@@ -5822,6 +5870,8 @@ function finish() {
     `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span>` +
     (season === 'aki' && SNAILS.count.up + SNAILS.count.crushed > 0 ? `<br><span class="small">ジャンボタニシ：つぶした 約 ${SNAILS.count.crushed} 匹・掘り起こした 約 ${SNAILS.count.up} 匹（ゆっくり走り、浅く耕すほど よくつぶれる）</span>` : '') + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
+  const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];
+  LOOP.result(total, ART.photo(null, `🚜 ${label} ${total} 点（${fmtTime(S.elapsed)}）`), `トラクターで${label}をしたよ。${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`);
   $('done').classList.remove('hidden');
 }
 
@@ -5834,7 +5884,7 @@ function finishArt() {
   $('doneTitle').textContent = '🎨 田んぼアートができました！';
   $('doneText').textContent = `お題「${ART.name}」を ${fmtTime(S.elapsed)} で描きました。ドローンで真上から撮った写真です。`;
   $('artImg').src = url; $('artImg').classList.remove('hidden');
-  $('bSave').href = url; $('artBtns').classList.remove('hidden');
+  $('artBtns').classList.remove('hidden');
   const f = r.final, msg = f >= 85 ? 'まるで本物の田んぼアート！' : f >= 70 ? '上から見ると ちゃんと' + ART.name + 'に見える' : f >= 45 ? 'もう少し。白線にそって ていねいに' : '白線の内側を、耕幅ずつならべて耕そう';
   const sm = SCORE.summary(), tips = [];
   if (r.fill < 0.95) tips.push('のこりの黄色い所も耕すと、でき が上がる');
@@ -5851,13 +5901,7 @@ function finishArt() {
     $('bNext').onclick = () => go(season, TOD, nx);
     $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
   }
-  const blob = fetch(url).then(x => x.blob()), text = `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}`;
-  blob.then(b => {
-    const f = new File([b], 'tanbo-art.jpg', { type: 'image/jpeg' });
-    if (!navigator.canShare || !navigator.canShare({ files: [f] })) return;
-    $('bShare').classList.remove('hidden');
-    $('bShare').onclick = () => navigator.share({ files: [f], text, url: location.href }).catch(() => {});
-  }).catch(() => {});
+  LOOP.result(f, null, `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`, url);
   $('done').classList.remove('hidden');
 }
 

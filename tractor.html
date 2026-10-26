@@ -5810,12 +5810,12 @@ const LOOP = (() => {
   const SNAME = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' };
   if (friend !== null) {
     const el = $('challenge');
-    el.textContent = `🏁 友だちが「${SNAME[season]}${ART.on ? '・田んぼアート「' + ART.name + '」' : ''}」で ${friend} 点！ きみは何点とれる？（季節${ART.on ? 'とお題' : ''}は 友だちと同じにしてあります）`;
+    el.textContent = `🏁 友だちが「${SNAME[season]}${ART.on ? '・田んぼアート「' + ART.name + '」' : ''}」で ${friend} 点！ きみは何点とれる？（季節・時間・天気${ART.on ? '・お題' : ''}は 友だちと同じにしてあります）`;
     el.classList.remove('hidden');
   }
   function result(score, cardUrl, text, artUrl) {
     const img = cardUrl || artUrl;                  // 田んぼアートは 上の写真をそのまま使う
-    const url = location.origin + location.pathname + `?season=${season}&art=${ART.on ? ART.id : 'none'}&p=${score}&from=share`;
+    const url = location.origin + location.pathname + `?season=${season}&time=${TOD}&art=${ART.on ? ART.id : 'none'}${WX !== 'hare' ? '&w=' + WX : ''}&p=${score}&from=share`;   // 季節・時間・天気・お題を 友だちと そろえる
     if (cardUrl) { $('cardImg').src = cardUrl; $('cardImg').classList.remove('hidden'); }
     $('bSave').href = img;
     $('bX').href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;

@@ -2198,6 +2198,7 @@ function comboEnd() {
   combo.n = 0; combo.quietT = 0; combo.beat = false;
   if (n < 5) return;
   if (n > combo.best) { combo.best = n; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ } floatText(beat ? `🏅 あたらしい ベスト ×${n}` : `🏅 ころころ ベスト ×${n}`); }
+  else if (combo.best - n <= 3) floatText(`おしい！ ベストまで あと${combo.best - n + 1}`);   // あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }
 // スピード線（運営者の声「スキルを繰り返す」3回目）：びゅんパネルで 加速しても 見た目が あまり かわらず、速さを 目で 感じにくかった。

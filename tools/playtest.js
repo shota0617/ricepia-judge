@@ -746,9 +746,13 @@ async function walkTo(page, id) {
     const mid = await page.evaluate(() => { nishioPixel.comboBest(5); nishioPixel.comboAdd(6); return { c: nishioPixel.combo, f: nishioPixel.floats() }; });
     let end = null;
     for (let i = 0; i < 20 && !(end && end.n === 0); i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.combo); }   // 止まって 0.7秒で おしまい
+    // あと 少しで ベスト（ベスト 10 に 8）：おわった ときに「おしい！ ベストまで あと3」
+    await page.evaluate(() => { nishioPixel.comboBest(10); nishioPixel.comboAdd(8); });
+    let near = false;
+    for (let i = 0; i < 20 && !near; i++) { await page.waitForTimeout(150); near = await page.evaluate(() => nishioPixel.floats().some(t => /おしい！ ベストまで あと3/.test(t))); }
     await page.evaluate(o => { nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
     const told = mid.f.some(t => /ベスト こえた/.test(t));
-    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat, beat: mid.c.beat, told, end };
+    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near, beat: mid.c.beat, told, end, near };
   })();
   // スピード線：とても 速いと（1秒に 5マスより）お米の うしろに 線が 出て、おそく なると うすれて 消える
   R.checks.speedLines = await (async () => {

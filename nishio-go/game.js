@@ -967,7 +967,9 @@ function dankyuReward(stars, level) {
 
 // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：1日1回。えらんだ種もみで ポイント（OK 20・ギリギリOK 10・伸び過ぎ 0）と、
 // そのわけの 米づくりの まちメモ（kome.js。OK・ギリギリOK は「いちばんよい芽出し」、伸び過ぎは「伸びすぎるわけ」）
-const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0;
+// 芽出し（催芽）は 苗づくりの はじめ。こよみ（season.js）の 田おこし・田植えの ころ（4〜6月）だけ 出す（冬に 種もみの 芽出しは しない。自分で 遊んで 分かった：12月に 出ていた）
+const medashiSeason = () => { const p = window.NISHIO_SEASON && NISHIO_SEASON.paddy(new Date()); return !p || p.id === 'taokoshi' || p.id === 'taue'; };
+const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0 && medashiSeason();
 function medashiReward(choice, pts) {
   if (!medashiDue()) return { pts: 0, fresh: false };
   S.medashiDay = ymd();
@@ -2512,7 +2514,7 @@ function toast(msg) {
   const el = $('toast');
   if ($('reward').classList.contains('show') || howtoOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札の 上にも 重ねない（とじてから）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
-  el.textContent = msg; el.classList.add('show'); toast.at = Date.now();
+  el.textContent = msg; el.classList.add('show'); toast.at = Date.now(); toastDodge();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
@@ -2526,6 +2528,21 @@ function toastHold() {
   if (Date.now() - (toast.at || 0) < 1500 && !toastQ.includes(t.textContent)) toastQ.push(t.textContent);
   t.classList.remove('show'); clearTimeout(toastTimer);
 }
+// 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
+// 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓の 大きさが かわった ときにも 見る
+function toastDodge() {
+  const el = $('toast'), dq = document.querySelector('#pxInfo:not([hidden]) .dq');
+  if (!dq || !el.classList.contains('show')) { el.classList.remove('low'); return; }
+  // 動いている とちゅう（出はじめの transform・low を 外した あとの bottom の transition）では なく、ふつうの 位置に 止まった 形で くらべる：transition の ない 見えない 写しで はかる
+  const c = el.cloneNode(true);
+  ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.remove('low'); c.style.cssText = 'transition:none;visibility:hidden';
+  el.parentNode.appendChild(c);
+  const t = c.getBoundingClientRect(), d = dq.getBoundingClientRect();
+  c.remove();
+  el.classList.toggle('low', t.top < d.bottom && t.bottom > d.top);
+}
+// 窓が 開く・とじる・話の ページを めくって 高さが かわる（pxInfoBody だけ 書きかわる）たびに 見なおす
+if (window.ResizeObserver && document.querySelector('#pxInfo .dq')) new ResizeObserver(toastDodge).observe(document.querySelector('#pxInfo .dq'));
 // いま出ている知らせ（同じ動きの中で少しあとに出る知らせも）が消えてから出す
 // 待っている知らせが いくつあっても、来た順に1つずつ（同時に出して、あとのものが上書きしないように）
 function toastAfter(msg) {

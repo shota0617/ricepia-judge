@@ -668,6 +668,8 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .jump-card p{margin:0;display:flex;flex-direction:column;gap:2px}
 .jump-card small{color:var(--sub)}
 .jump-card img.pi.art{width:32px;height:32px;vertical-align:-10px}
+.koro-rec p{margin:0;display:flex;flex-direction:column;gap:2px}
+.koro-rec small{color:var(--sub);line-height:1.6}
 body.jump-open{overflow:hidden}
 .jump{position:fixed;inset:0;z-index:3000;background:#16201a;color:#fff;display:flex;flex-direction:column;padding:env(safe-area-inset-top) 8px calc(8px + env(safe-area-inset-bottom))}
 .jump[hidden]{display:none}

@@ -840,12 +840,16 @@ async function walkTo(page, id) {
       const cp = document.getElementById('coupon'), cond = document.getElementById('cpCond');
       const out = { found: true, chip, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };
       document.getElementById('cpClose').click();
+      // ほかの クーポンとは いっしょに 使えない：使っていない クーポンが ある 間は、次の 交換が できない
+      S.points += 600; G.openTab('rewards'); await wait(300);
+      const li2 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
+      out.blocked = !!li2 && li2.querySelector('[data-redeem]').disabled && /使ってから|使っていないクーポン/.test(li2.textContent + li2.querySelector('[data-redeem]').getAttribute('aria-label'));
       S.points = p0; S.coupons.length = n0; S.log.splice(0, S.log.length - l0); G.openTab('map');   // ほかの チェックの ポイントが かわらない よう もどす
       return out;
     });
     page.off('dialog', onDialog);
     if (r.skipped) return { ok: true, ...r };
-    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && r.validMin === 10 && /あと(9|10)分/.test(r.state) };
+    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && /クーポン・割引との併用はできません/.test(r.cond) && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked };
   })();
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

@@ -2985,6 +2985,7 @@ function updateRewardsTab() {
 const rewardMin = r => r.validMin || rewardCfg.validMin;   // 特典の クーポンの 有効時間（分）
 const rewardMinText = () => { const m = [...new Set(visibleRewards().map(rewardMin))]; return m.length > 1 ? `${Math.min(...m)}〜${Math.max(...m)}` : String(m[0] || rewardCfg.validMin); };
 const couponState = c => c.used ? 'used' : Date.now() > c.t + c.validMin * 60000 ? 'expired' : 'valid';
+const openCoupon = () => S.coupons.find(c => couponState(c) === 'valid' && !!c.demo === !!demo);   // まだ 使っていない 有効な クーポン（ほかの クーポンとは いっしょに 使えないので、ある 間は 次を 交換しない）
 const usedToday = rid => S.coupons.filter(c => c.rid === rid && ymd(new Date(c.t)) === ymd()).length;
 
 function renderRewards() {
@@ -2995,12 +2996,12 @@ function renderRewards() {
     : pic ? `有効${rewardMinText()}分。お店で見せる直前に交換` : `交換すると、その場でクーポン画面が出ます（有効${rewardMinText()}分）。お店で店員さんに見せる直前に交換してください。`;
   $('rewardList').innerHTML = visibleRewards().map(r => {
     const limit = r.perDay && usedToday(r.id) >= r.perDay;
-    const short = S.points < r.cost;
-    const why = limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
+    const short = S.points < r.cost, busy = !!openCoupon();
+    const why = busy ? '使っていないクーポンがあります' : limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
     if (pic) return `<li class="reward-pic"><span class="ico">${r.art ? `<img class="art" src="nishio-go/art/${r.art}.png" alt="" width="48" height="48"/>` : PIA('gift', '')}</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <span class="chips"><span>${PIA('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PIA('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}<span>${PIA('clock', 'クーポンの有効時間')}${rewardMin(r)}分</span></span>
       ${r.desc ? `<details><summary>${PIA('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
-      <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${limit ? `${PIA('clock', '')} あした` : short ? `${PIA('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
+      <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${busy ? `${ART32('ticket', '')} 使ってから` : limit ? `${PIA('clock', '')} あした` : short ? `${PIA('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
     return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}・有効${rewardMin(r)}分${r.desc ? '・' + esc(r.desc) : ''}</small></span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''}>${why ? esc(why) : '交換'}</button></li>`;
@@ -3018,6 +3019,7 @@ function redeem(rid) {
   const r = visibleRewards().find(x => x.id === rid);
   if (!r) return;
   if (S.points < r.cost) { toast('ポイントが足りません'); return; }
+  if (openCoupon()) { toast('使っていないクーポンがあります。ほかのクーポンとはいっしょに使えません'); return; }
   if (r.perDay && usedToday(r.id) >= r.perDay) { toast('この特典は今日はもう交換しました'); return; }
   if (!confirm(`「${r.name}」と ${r.cost}pt を交換しますか？\n\n交換するとクーポン画面が出ます（有効${rewardMin(r)}分${r.desc ? `。${r.desc}` : ''}）。お店で店員さんに見せる直前に押してください。交換したポイントは戻せません。`)) return;
   const rnd = new Uint32Array(2);

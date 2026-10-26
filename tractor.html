@@ -1847,7 +1847,7 @@ function overTill(c) {
     const [x, z] = warp(a, b);
     pos[c * 12 + k * 3 + 1] = TILL_Y + 0.25 * jitter(x, z);   // 土くれがなくなって 平らに
   });
-  if (WAVY[c]) { WAVY[c] = 0; const nor = tilled.geometry.attributes.normal.array; for (let k = 0; k < 4; k++) nor.set([0, 1, 0], c * 12 + k * 3); }
+  if (WAVY[c] || CLOD[c]) { WAVY[c] = 0; CLOD[c] = 0; const nor = tilled.geometry.attributes.normal.array; for (let k = 0; k < 4; k++) nor.set([0, 1, 0], c * 12 + k * 3); }   // 平らになったので 波も土塊もない
   const wet = RAIN || WET.at(x0 + CELL / 2, z0 + CELL / 2) > 0.2;
   ROUGH[c] = wet ? 0.86 : 1.1;                    // 細かい土は 土くれの影がなく少し明るい。ぬれた所だけ 練れて黒っぽい
   DRY.wet(c);
@@ -1867,6 +1867,15 @@ function squeeze() {                              // N：ロータリーの前�
     : '✊ 握ると ホロッとくずれた：耕しごろ（N）', 4);
   if (!S.horoTold) { S.horoTold = true; setTimeout(() => voice('horo'), 4500); }
 }
+const CLOD = new Float32Array(NX * NZ);           // ます目ごとの 土塊の大きさ（水分。0〜1）
+function clodH(x, z) {                            // その場所で 土塊が 地面を持ち上げた高さ（タイヤ跡を 土の上に置く）
+  const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+  if (i < 0 || j < 0 || i >= NX || j >= NZ) return 0;
+  const k = CLOD[i * NZ + j];
+  if (!k) return 0;
+  const hx = Math.sin(x * 41.3 + z * 17.1), hz = Math.sin(x * 13.7 - z * 29.3);
+  return jitter(x, z) * 1.5 * k + k * 0.02 * (1 + hx * hz);
+}
 const WAVY = new Uint8Array(NX * NZ), WAVD = new Float32Array(NX * NZ);   // 波うったます目と、その波の向き（耕したときの向き）
 function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ・UV・法線（wv：波うち。clod：水分が多くて 大きな土塊が残る 0〜1）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
@@ -1881,6 +1890,7 @@ function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ
     nor.set(n, c * 12 + k * 3);
   });
   if (wv) WAVD[c] = wv.yaw;
+  CLOD[c] = clod;
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
 }
 function tillCell(i, j) {
@@ -1888,7 +1898,7 @@ function tillCell(i, j) {
   const c = i * NZ + j;
   if (tilledMask[c]) {                            // もう一度耕すと、上についたタイヤの跡が消える
     eraseTracks(c);
-    if (WAVY[c] && !COVER.stuck) { WAVY[c] = 0; setCell(c, null); }   // 直したあとに耕しなおすと 波がならされる
+    if (WAVY[c] && !COVER.stuck) { WAVY[c] = 0; setCell(c, null, CLOD[c]); }   // 直したあとに耕しなおすと 波がならされる
     if (season === 'aki' && (S.retill = (S.retill || 0) + 1) > 1500) voice('wara');   // 秋：同じ所をもう一度耕している
     if (!SHIRO && (S.odo || 0) - TODO[c] > 1.5 && TILLN[c] < 255 && ++TILLN[c] === 3) overTill(c);   // 作業機がその所をはなれて（1.5m 以上走って）から また来たら 1 回と数える。止まっているあいだは数えない
     TODO[c] = S.odo || 0;
@@ -2486,7 +2496,7 @@ const TR = (() => {
     const nx = -dz / d * w / 2, nz = dx / d * w / 2;
     const ci = Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL);
     const y = tilledMask[ci] ? TILL_Y + 0.025 : 0.028;     // 田んぼの面の凸凹（±2cm）より上
-    const yy = (a, b) => y + (tilledMask[ci] ? COVER.h(a, b) : 0);   // 波うった所は その高さに
+    const yy = (a, b) => y + (tilledMask[ci] ? COVER.h(a, b) + clodH(a, b) : 0);   // 波うった所・土塊の上は その高さに
     const i = next; next = (next + 1) % N;
     pos.set([L.x + nx, yy(L.x + nx, L.z + nz), L.z + nz, L.x - nx, yy(L.x - nx, L.z - nz), L.z - nz, x - nx, yy(x - nx, z - nz), z - nz, x + nx, yy(x + nx, z + nz), z + nz], i * 12);
     const v1 = L.v + d / 0.5;
@@ -5761,7 +5771,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, BELT, COVER, WAVY, STONES, HAMARU, squeeze, moistAt, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, COVER, WAVY, STONES, HAMARU, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -1746,6 +1746,7 @@ function setupField(root) {
     if (amp && !o.material.userData.wind) { o.material.userData.wind = 1; addWind(o.material, amp); }
     if (o.isMesh && o.material && o.material.name === 'grass_tuft') o.castShadow = false;
     if (RAIN && o.isMesh && ['soil_untilled', 'track'].includes(o.material.name)) wetSoil(o.material);
+    if (o.isMesh && ['grass_tuft', 'higanbana'].includes(o.material.name)) FENCE.mow(o);   // 秋：電気柵の線のまわりは 草を刈ってある
     if (o.isMesh && o.material.name === 'higanbana' && season === 'aki') higanbanaAfter(o);
   });
   // 耕した所：0.2m のます目ごとの四角を先に用意し、耕したら地面に出す（UV＝x/2, −z/2）
@@ -2657,11 +2658,11 @@ const WARAYAMA = (() => {
 // 出入口は ゲートのハンドルを外すと そこから先に電気が流れず、出入りできる（税関の分類事例 https://www.customs.go.jp/tetsuzuki_search/bunrui/J8/25/J82500013.htm）。線のまわりの草は刈っておく：草が線にふれると漏電して
 // 電気が弱くなる（窪野米日記 vol.8：電気柵で いちばん大事なのは まわりの草刈り。風でゆれても草にふれないよう 線の高さと張りを調整する）
 const FENCE = (() => {
-  if (season !== 'aki') return { step() {}, on: false };
+  if (season !== 'aki') return { step() {}, on: false, mow() { return 0; } };
   const D = 0.9, H0 = 0.3 * (1.1 - D) / 0.33;      // 畦の外がわの斜面（田んぼのふちから 0.9m）に立てる
-  const E = HX + 0.5, N = HZ + D, G0 = 17.3, G1 = 22.7;   // 東は 畦の外に 道ぞいの水路があるので 畦の上に。出入口の坂（z 18〜22）をあけて ゲートにする
-  const hAt = (x, z) => Math.abs(x - E) < 0.01 && Math.abs(z) < HZ + 0.3 ? 0.3 : H0;   // 立てる所の 畦の高さ
-  const path = [[E, G1], [E, N], [-E, N], [-E, -N], [E, -N], [E, G0]];
+  const E = HX + 0.5, W = HX + D, N = HZ + D, G0 = 17.3, G1 = 22.7;   // 東は 畦の外に 道ぞいの水路があるので 畦の上に。出入口の坂（z 18〜22）をあけて ゲートにする
+  const hAt = (x, z) => Math.abs(x - E) < 0.01 && Math.abs(z) < HZ + 0.3 ? 0.3 : H0;   // 立てる所の 畦の高さ（東は畦の上、ほかは外がわの斜面）
+  const path = [[E, G1], [E, N], [-W, N], [-W, -N], [E, -N], [E, G0]];
   const pts = [];                                  // 支柱：角と、そのあいだ 4m ほどごと
   for (let i = 0; i < path.length - 1; i++) {
     const [x0, z0] = path[i], [x1, z1] = path[i + 1], L = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.round(L / 4));
@@ -2719,7 +2720,32 @@ const FENCE = (() => {
     toast('畦に イノシシよけの電気柵（線は 20cm と 40cm。黄色い板は「危険 電気さく」）。出入口は 電源を切って ゲートのハンドルを外してある。線のまわりの草は刈っておく（草が線にふれると 漏電する）', 7);
     setTimeout(() => voice('denkisaku'), 7500);
   }
-  return { step, on: true, pts };
+  // 線のまわりの草を刈ってある：線から 30cm 以内の 畦の草（と 枯れた彼岸花）を 5cm ほどに短くする
+  const near = (x, z, r = 0.3) => {
+    for (let i = 0; i < path.length - 1; i++) {
+      const [x0, z0] = path[i], [x1, z1] = path[i + 1], dx = x1 - x0, dz = z1 - z0;
+      const t = Math.max(0, Math.min(1, ((x - x0) * dx + (z - z0) * dz) / (dx * dx + dz * dz)));
+      if (Math.hypot(x - x0 - dx * t, z - z0 - dz * t) < r) return true;
+    }
+    return false;
+  };
+  function mow(o) {                                 // 板（4 頂点の四角）ごとに、どこかが線の近くなら 根もとから 5cm に切る
+    o.updateWorldMatrix(true, false);
+    const P = o.geometry.attributes.position, v = new THREE.Vector3();
+    let n = 0;
+    for (let q = 0; q + 4 <= P.count; q += 4) {
+      let y0 = 1e9, hit = false;
+      for (let k = 0; k < 4; k++) { v.fromBufferAttribute(P, q + k).applyMatrix4(o.matrixWorld); hit = hit || near(v.x, v.z); y0 = Math.min(y0, P.getY(q + k)); }
+      if (!hit) continue;
+      for (let k = 0; k < 4; k++) if (P.getY(q + k) > y0 + 0.05) P.setY(q + k, y0 + 0.05);
+      n++;
+    }
+    if (n) { P.needsUpdate = true; o.geometry.computeBoundingSphere(); }
+    mowed += n;
+    return n;
+  }
+  let mowed = 0;
+  return { step, on: true, pts, mow, near, get mowed() { return mowed; } };
 })();
 const STONES = (() => {
   const list = [];

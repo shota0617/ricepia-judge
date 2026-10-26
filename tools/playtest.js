@@ -1353,6 +1353,29 @@ async function walkTo(page, id) {
       return { good: /1\.1倍/.test(t) && /\+5/.test(t), bad: /1\.8倍/.test(t), goal, next: titles.some(x => /つぎは/.test(x)), ok: goal && /1\.1倍/.test(t) && /1\.8倍/.test(t) && !titles.some(x => /つぎは/.test(x)) };
     });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
+    // 人から はなれる（テストの 道具）：めいろの 道すじの 上で 人の マスから 5〜8マスの 所に 置き、道すじに そって となりの マスへ 転がす（4マス 以上 はなれた マスに 入る）。
+    // 人から まっすぐ 4マス 先は、ゆるい めいろでは 生け垣の 中の ことが あり、置いても 道すじへ もどされて「はなれた」ことに ならなかった
+    await w.page.evaluate(() => {
+      window.__npcLeave = async t => {
+        const P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+        const on = (x, y) => { const q = M.near(x + 0.5, y + 0.5); return !!q && q.d < 0.2 && !P.blockedAt(x + 0.5, y + 0.5) && Math.abs(x - t.x) + Math.abs(y - t.y) >= 4; };
+        const cands = [];
+        for (let y = t.y - 8; y <= t.y + 8; y++) for (let x = t.x - 8; x <= t.x + 8; x++) { const d = Math.abs(x - t.x) + Math.abs(y - t.y); if (d >= 5 && d <= 8 && on(x, y)) cands.push([x, y, d]); }
+        cands.sort((a, b) => a[2] - b[2]);
+        let tries = 0;
+        for (const [x, y] of cands) for (const [ex, ey] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          if (tries >= 6 || !on(x + ex, y + ey) || P.rollBlockedFrom(x + 0.5, y + 0.5, x + ex + 0.5, y + ey + 0.5)) continue;
+          tries++;
+          P.rollPut(x + 0.5, y + 0.5, ex * 2, ey * 2);
+          for (let i = 0; i < 10; i++) {
+            await wait(100);
+            const r = P.roll; if (Math.floor(r.x) === x + ex && Math.floor(r.y) === y + ey) return true;
+            const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.querySelectorAll('.md-card .md-close').forEach(b => { if (b.getClientRects().length) b.click(); });   // 置いた 所の そばの 名所の ごほうび・本の できごとで 止まった ときは 閉じる
+          }
+        }
+        return false;
+      };
+    });
     // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
     const bumpA = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
@@ -1365,45 +1388,55 @@ async function walkTo(page, id) {
           const wall = k0 => { for (let k = k0; k > -1; k--) if (P.rollBlockedFrom(sx + dx * k + 0.5, sy + dy * k + 0.5, sx + dx * (k - 1) + 0.5, sy + dy * (k - 1) + 0.5)) return true; return false; };   // 4マス はなれた 所から 人の マスまで 1マスずつ
           if (wall(4)) continue;   // めいろの 生け垣を はさむ 向きは ためさない（人に とどかずに はね返り、すりぬけを ためせなかった：相手が「本好きの高校生」の とき ときどき 落ちた）
           pi.hidden = true;
-          const push = async () => { P.rollPut(sx + 0.5, sy + 0.5, -dx * 4, -dy * 4); for (let i = 0; i < 6; i++) { await wait(100); if (!pi.hidden) break; } return !pi.hidden && pi.textContent.includes(n.name); };
+          // 人の となりの マスの、人がわの はしから 押す（ゆるい めいろでは 人は 道すじの 1マス 横＝生け垣ぎわに 立つ ことが 多く、マスの まん中から 押すと
+          // やわらかい 生け垣に もどされて 人の マスに とどかない ことが あった：相手が「らいすぴあの店員さん」の とき 手前で はね返った）
+          const push = async () => { P.rollPut(sx + 0.5 - dx * 0.45, sy + 0.5 - dy * 0.45, -dx * 4, -dy * 4); for (let i = 0; i < 6; i++) { await wait(100); if (!pi.hidden) break; } return !pi.hidden && pi.textContent.includes(n.name); };
           const first = await push();
           if (!first) continue;
           pi.hidden = true; await wait(200);
           const again = await push();
-          const gone = () => { const r2 = P.roll; return Math.abs((r2.x - (sx + 0.5)) * -dx + (r2.y - (sy + 0.5)) * -dy) > 0.7; };
-          const dbg = [];
-          for (let i = 0; i < 10 && !gone() && pi.hidden; i++) { await wait(100); const r3 = P.roll; dbg.push([+(r3.x - sx - 0.5).toFixed(2), +(r3.y - sy - 0.5).toFixed(2), +r3.vx.toFixed(1), +r3.vy.toFixed(1), pi.hidden, P.mapCovered(true), P.sightBusy()]); }   // 遅い 画面でも 待てるよう
-          const passed = gone();
+          // あいさつ ずみの 人は すりぬける：お米が 人の マスに 入る（止められる ときは、人の マスに 入る 前の 所に もどされる）
+          let passed = false; const dbg = [];
+          P.rollPut(sx + 0.5 - dx * 0.45, sy + 0.5 - dy * 0.45, -dx * 4, -dy * 4);
+          for (const t0 = performance.now(); performance.now() - t0 < 1000 && !passed && pi.hidden;) {
+            await new Promise(res => requestAnimationFrame(res));   // まいコマ 見る（人の マスに いるのは 生け垣に もどされるまでの 少しの 間）
+            const r3 = P.roll; passed = Math.floor(r3.x) === t.x && Math.floor(r3.y) === t.y;
+            if (dbg.length < 40) dbg.push([+(r3.x - sx - 0.5).toFixed(2), +(r3.y - sy - 0.5).toFixed(2), +r3.vx.toFixed(1), +r3.vy.toFixed(1), pi.hidden, P.mapCovered(true), P.sightBusy()]);
+          }
           window.__bumpDbg = passed ? null : { dx, dy, dbg, floats: P.floats() };   // すりぬけなかった ときの ようす（原因を 追う ため）   // めいろでは あいさつ ずみの 人を すりぬける（止められない）
           pi.hidden = true;
-          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれる
-          P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
+          const left = await window.__npcLeave(t);   // 4マス 以上 はなれる
           const back = await push();   // めいろでは、いまの ゴールへ 向かう 間は、はなれて また 通っても 話しかけない
           pi.hidden = true;
-          const g = G.decideGuide(null), M = P.maze;
+          // 人の 話で 決まった ゴールとは べつの 所（話で 決まった ゴールへ 向かう 間は あいさつ ずみの まま）
+          const gg = G.guide, far = x => !gg || G.dist(gg, x) > 100;
+          const g = [G.decideGuide(null), ...G.spots.filter(s => s.featured && !s.shop && G.dist(G.me, s) < 1500).map(s => ({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: 'テスト', by: 'テスト' }))].find(x => x && Number.isFinite(x.lat) && far(x)), M = P.maze;
           let fresh = 'skip';
           if (g) {   // ゴールが かわると、また こつんで 話せる
             G.setGuide(g);
             for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
-            P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 3, -dy * 3); await wait(200);
+            await window.__npcLeave(t);
             fresh = await push();
             pi.hidden = true;
             G.setGuide(null);
           }
-          return { npc: n.name, first, again, passed, back, fresh };
+          return { npc: n.name, first, again, passed, left, back, fresh };
         }
       }
       return { npc: 'none' };
     });
-    R.checks.npcBump = { ...bumpA, dbg: await w.page.evaluate(() => window.__bumpDbg || undefined), ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && !bumpA.back && bumpA.fresh !== false) };
+    R.checks.npcBump = { ...bumpA, dbg: await w.page.evaluate(() => window.__bumpDbg || undefined), ok: bumpA.npc === 'none' || (bumpA.first && !bumpA.again && bumpA.passed && bumpA.left && !bumpA.back && bumpA.fresh !== false) };
     // めいろの ゴールの 人に 着いて 話した あと、そのまま となりから こつんと 当たっても、同じ 話を もう 一度 開かない。次の ゴールへ 向かう 間は、はなれて また 通っても 開かない（こつんで あいさつした 人と 同じ）。
     // 自分で 遊んで 分かった：着いて 話すと ゴールが 次の 人に かわり、とじて 2秒で 同じ 人の 窓が また 開いた
     R.checks.npcArriveBump = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
       const talking = n => !pi.hidden && pi.textContent.includes(n.name);
+      // 人の となりの マスの 人がわの はしから 人の ほうへ（ゆるい めいろでは 人は 道すじの 1マス 横に 立つ ことが 多く、4マス 先から 転がすと
+      // 道すじの カーブや やわらかい 生け垣に そらされて、人に とどく ことも とどかない ことも あった）
+      const bump = (sx, sy, dx, dy) => P.rollPut(sx + 0.5 - dx * 0.45, sy + 0.5 - dy * 0.45, -dx * 4, -dy * 4);
       // reroute：話で 次の ゴールが 決まった あと、動く 前に 行き先を また かえる（その ときは あいさつ ずみを 次の 次の ゴールへ もちこさない＝はなれて もどれば また 話せる）
       const once = async (n, sx, sy, dx, dy, reroute) => {
-        P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, dx * 2, dy * 2); await wait(600);   // はなれる ほうへ 転がす（前の 確かめの こつんを 忘れさせる。rollPut は マスを かえた あつかいに ならない）
+        await window.__npcLeave(P.npcTile(n)); await wait(300);   // はなれる（前の 確かめの こつんを 忘れさせる。rollPut は マスを かえた あつかいに ならない）
         G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
         for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
         P.rollPut(sx + 0.5, sy + 0.5, 0, 0);   // ゴールの 人の となりに 着く（こつんでは なく、着いて 話す）
@@ -1420,16 +1453,16 @@ async function walkTo(page, id) {
         }
         let again = false;
         if (!reroute) {   // reroute の ときは 当たらない（すりぬけた お米が 3マス 先で はね返って また 当たると、そこで あいさつ ずみに なって しまう）
-          P.rollPut(sx + 0.5, sy + 0.5, -dx * 4, -dy * 4);   // そのまま となりから 当たる
+          bump(sx, sy, dx, dy);   // そのまま となりから 当たる
           for (let i = 0; i < 6 && !again; i++) { await wait(100); again = talking(n); }
           pi.hidden = true;
         }
-        P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, 0, 0); await wait(300);   // 4マス はなれて もどる
-        P.rollPut(sx + 0.5 + dx * 4, sy + 0.5 + dy * 4, -dx * 8, -dy * 8);   // 人の マスまで とどく 速さで（3 では 2マス、6 でも 人の 手前で 止まった）
+        const left = await window.__npcLeave(P.npcTile(n));   // 4マス 以上 はなれて もどる
+        bump(sx, sy, dx, dy);
         let back = false;
-        for (let i = 0; i < 20 && !back; i++) { await wait(100); back = talking(n); }
+        for (let i = 0; i < 10 && !back; i++) { await wait(100); back = talking(n); }
         pi.hidden = true; G.setGuide(null);
-        return { arrived, moved, other, again, back };
+        return { arrived, moved, other, again, left, back };
       };
       G.setGuide(null); pi.hidden = true;
       for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))) {
@@ -1442,8 +1475,8 @@ async function walkTo(page, id) {
           const a = await once(n, sx, sy, dx, dy, false);
           if (!a) continue;
           const b = await once(n, sx, sy, dx, dy, true);
-          const okB = !b || b.skip || (b.arrived && !/^no:/.test(b.other) && b.back);
-          return { npc: n.name, ...a, reroute: b, ok: a.moved && !a.again && !a.back && okB };
+          const okB = !b || b.skip || (b.arrived && !/^no:/.test(b.other) && b.left && b.back);
+          return { npc: n.name, ...a, reroute: b, ok: a.moved && !a.again && a.left && !a.back && okB };
         }
       }
       return { npc: 'none', ok: true };

@@ -2395,17 +2395,21 @@ const CORNER = (() => {
 // （井上寅雄農園（note）「トラクターにかかわる危険な行動5選」の 3．バック時の目視確認）。
 // 運転席から見ているときに、うしろを見ないまま（うしろを 0.6 秒以上見たのが 3 秒より前）バックを始めたら 1 回だけ知らせる。見てからバックしたら 農家の声
 const BACKCHK = (() => {
-  let lookAgo = 99, hold = 0, prev = false, told = false;
+  let lookAgo = 99, hold = 0, prev = false, told = false, pend = -1, check = -1, tries = 0;
+  const MSG = () => 'バックの前に うしろを目で見る（' + (MOBILE || params.has('pad') ? '「うしろを見る」' : 'B') + ' を押しているあいだ うしろが見える）。ミラーだけでは うしろの人に気づけない';
   return {
     step(dt) {
       hold = key.lookBack ? hold + dt : 0;          // 0.6 秒 押しつづけると 目がうしろを向き終わる（カメラは なめらかに回る）
       lookAgo = hold >= 0.6 ? 0 : lookAgo + dt;
+      // 知らせは 少しおいて出し（同じコマの ほかの知らせに 上書きされない）、1.2 秒後にも出ていたら「伝えた」とする。消されていたら 出しなおす（3 回まで）
+      if (pend >= 0 && (pend -= dt) < 0) { toast(MSG(), 6); check = 1.2; }
+      if (check >= 0 && (check -= dt) < 0) { if ($('toast').textContent === MSG()) told = true; else if (++tries < 3) pend = 0.3; }
       const can = key.back && !S.stalled && !S.parked && !(S.crank > 0);   // バックで動ける（エンジンがかかるのを 待っていたときも ここで始まる）
       const start = can && !prev && S.v > -0.05;
       prev = can;
       if (!start || camMode !== 0) return;
       if (lookAgo <= 3) voice('mokushi');
-      else if (!told) { told = true; toast('バックの前に うしろを目で見る（' + (MOBILE || params.has('pad') ? '「うしろを見る」' : 'B') + ' を押しているあいだ うしろが見える）。ミラーだけでは うしろの人に気づけない', 6); }
+      else if (!told && pend < 0 && check < 0) pend = 0.3;
     },
   };
 })();

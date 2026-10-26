@@ -204,6 +204,7 @@
     </div>
     <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
     <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・リヤカバーの動きを見る（2 分。傷んだ部品は 先に交換）</span></label>
+    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
@@ -289,6 +290,7 @@
       ・ロータリーの逆転：ロータリーを下ろしたあとに盛り上がった土を前へ戻して平らにしやすい。正転より負荷が大きいので、硬い所や耕作放棄地では故障のもと。エンジンは低回転で（取扱説明書では 1500rpm 以下が目安）…<a href="https://note.com/ryutaro0306/n/n1dec2d4d6705" target="_blank" rel="noopener">井上寅雄農園（note）「トラクターの逆転機能」</a>／四隅などにたまった土を寄せるのに使う。硬い所では使わず、やわらかい所で…<a href="https://note.com/ryutaro0306/n/n9cd5ebffa07d" target="_blank" rel="noopener">同「逆回転機能」</a>（ゲームでは <kbd>O</kbd>）<br>
       ・春起こしの最中、トラクターの前から煙が上がり、水温計が上がって異音も。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日…<a href="https://note.com/yuki0mori/n/n54506678cb0e" target="_blank" rel="noopener">大森雄貴さん（note）「ゼロから始める伊賀の米づくり16：田植え機のメンテナンスとトラクターの故障！？」</a>（ゲームでは はじめの画面の「🔧 はじめに点検する」。しないと 春は とちゅうで切れる）<br>
       ・耕したあとが波うつときは、リヤカバーがなめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーで よくなる。上下レバーは一番下まで下げ、深さは深さ調整レバーで合わせる（途中まででは センサーがうまく働かない）…<a href="https://note.com/ryutaro0306/n/nc00b16345f07" target="_blank" rel="noopener">井上寅雄農園（note）「耕うん後が波うつ場合の対処法」</a>（ゲームでは 秋に点検をしないと 波うつ）<br>
+      ・土の中の石は 耕うんの爪をいため、苗の根張りも悪くする。水を張る前に拾った（拳大〜30cm 余り、50kg ほど）…<a href="https://note.com/yuki0mori/n/n3691961a57a9" target="_blank" rel="noopener">大森雄貴さん（note）「春が来る前に石拾い」</a>／運転席では、爪が土を引っかく音のちがいで 土の固さや深さがわかり、石を掘り起こすと音で気づく…<a href="https://note.com/yuki0mori/n/n5101cc99caee" target="_blank" rel="noopener">同「代かきトラクターの運転席から見える景色」</a>（ゲームでは 春の「🪨 はじめに石を拾う」）<br>
       ・左右のブレーキの連結を外すのは田んぼの中だけ。道で外したまま急ブレーキをかけると、片ブレーキで車体が大きく振られる…<a href="https://note.com/agile_pothos7003/n/nb8c2bef1af09" target="_blank" rel="noopener">農業モンスター（note）「トラクター操作の 5 つの鉄則」</a><br>
       ・いちばん多いのは外周 3 周のやり方：ふちからロータリー 3 回分あけてまん中を耕し、最後に外周を 3 周。四隅を先に耕すやり方は タイヤの跡が残らないが、下げたまま向きを変えるので機械に負担がかかる…<a href="https://note.com/ryutaro0306/n/n3a50d73f5b84" target="_blank" rel="noopener">井上寅雄農園（note）「図解でわかる耕耘方法」</a>（ゲームのモニターの点線が 外周 3 周分の目安）<br>
       ・雨のあと 休んでいた田んぼを耕したら沼にはまり、ユンボで引き上げてもらった。耕す前に地面を一通り歩く…<a href="https://note.com/shizentotonoi/n/nd1f4abd338d7" target="_blank" rel="noopener">自然でトトノウ会（note）「トラクターが沼にはまる→救出しました」</a>（ゲームでは はじめの画面の「👣 はじめに田んぼを歩く」）／初めてのトラクターで、1 枚耕すのに 1 時間半…<a href="https://note.com/non_non19/n/n146bd6107e07" target="_blank" rel="noopener">のんのんさん（note）「初トラクター運転と田おこし」</a><br>
@@ -1699,6 +1701,7 @@ function setupField(root) {
     stubbleGeo.setIndex(Array.from(hm.geometry.index.array).slice(0, 3 * (MOBILE ? 40 : 60)));
     stubbleMat = hm.material;
     HEAPS.setup();
+    STONES.setup();
     WET.setup();
     const hk = root.getObjectByName('HikobaeHill');   // 秋：刈り株から伸びた青い芽（ひこばえ）。切り株と同じ所に並べる
     if (hk) {
@@ -2188,6 +2191,54 @@ const WEEDS = (() => {
     }
   }
   return { parts, pts, build };
+})();
+// 春の田んぼの石：土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に拾う（拳大〜直径 30cm 余り）。
+// 拾わずに耕すと、爪が石に当たって カン！と鳴り、がくっとくる（運転席では 音で気づく）。
+// （伊賀の米農家 大森雄貴さんの note「春が来る前に石拾い」「代かきトラクターの運転席から見える景色」）
+const STONES = (() => {
+  const list = [];
+  let seed = 23, mesh = null, hits = 0, told = false;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), p = new THREE.Vector3(), sc = new THREE.Vector3();
+  if (season === 'haru') for (let k = 0; k < 46; k++) {
+    const r = 0.04 + Math.pow(rnd(), 2.2) * 0.13;   // 半径 4〜17cm（小さいものが多い）
+    list.push({ x: (rnd() * 2 - 1) * (HX - 1.2), z: (rnd() * 2 - 1) * (HZ - 1.2), r, ry: rnd() * 6.28, rx: rnd() * 0.6, sy: 0.6 + rnd() * 0.3, y: r * 0.35, hit: false });
+  }
+  function place(k) {
+    const s = list[k];
+    mesh.setMatrixAt(k, m4.compose(p.set(s.x, s.y, s.z), q.setFromEuler(e.set(s.rx, s.ry, 0)), sc.set(s.r, s.r * s.sy, s.r * 1.15)));
+  }
+  function setup() {
+    if (!list.length) return;
+    mesh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: 0x6b675f, roughness: 0.9, flatShading: true }), list.length);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    list.forEach((_, k) => place(k));
+    scene.add(mesh);
+  }
+  function start(picked) {
+    if (!list.length || !picked) return;
+    list.length = 0; if (mesh) mesh.count = 0;
+    S.elapsed += 240;
+    toast('🪨 耕す前に 田んぼを歩いて 石を拾った。拳大から 30cm をこえる石まで。ペットボトルや空き缶、肥料袋の切れはしも出てきた（4 分）', 6);
+    setTimeout(() => voice('ishi'), 6500);
+  }
+  function step(dt, working) {
+    if (!mesh || !working) return;
+    const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw);
+    list.forEach((s, k) => {
+      if (s.hit) return;
+      const dx = s.x - S.x, dz = s.z - S.z;
+      if (dx * dx + dz * dz > 16) return;
+      const lx = dx * cs - dz * sn, lz = dx * sn + dz * cs;
+      if (Math.abs(lx) > TILL_W / 2 || Math.abs(lz - ROTARY_Z) > 0.3) return;
+      s.hit = true; hits++;                         // 爪が石に当たった：はじかれて 耕した土の上に出る
+      s.x -= sn * 0.5; s.z -= cs * 0.5; s.y = TILL_Y + s.r * 0.2; place(k); mesh.instanceMatrix.needsUpdate = true;
+      S.v *= 0.82;                                  // がくっ
+      if (audio && soundOn) { clank(audio.ac, audio.out, Math.min(1, s.r * 8)); thud(audio.ac, audio.out, 0.35); }
+      if (!told) { told = true; toast('カン！ 爪が石に当たった。土の中の石は 爪をいためる（田植えの苗の根張りも悪くする）。本物は 水を張る前に 石を拾っておく', 6); setTimeout(() => voice('oto'), 6500); }
+    });
+  }
+  return { setup, start, step, list, get hits() { return hits; } };
 })();
 
 // ---- 土くれ・土ぼこり・水しぶき（点の粒）。耕しているとロータリーのうしろから飛ぶ ----
@@ -4219,7 +4270,7 @@ function step(dt) {
     }
   }
   SCRAPE.step(dt);
-  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); }
+  if (S.started && !S.done) { BELT.step(dt, S.rotDown && S.rotPos < 0.08); COVER.step(dt, S.rotDown && S.rotPos < 0.08); STONES.step(dt, S.rotDown && S.rotPos < 0.08); }
   if (S.stalled) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れのあいだは エンジンを切ったまま
@@ -4978,6 +5029,15 @@ function thud(ac, dest, vol = 1) {
   g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6 * vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
   o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.2);
 }
+function clank(ac, dest, vol = 1) {                // 爪が石に当たる：カン（金属の高い音）
+  const t = ac.currentTime;
+  for (const [f, a] of [[1850, 1], [2930, 0.6], [4170, 0.35]]) {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3 * a * vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.27);
+  }
+}
 const _v = new THREE.Vector3();
 function panTo(pos) {                             // 見ている向きから見た左右（-1〜1）と距離
   _v.copy(pos).applyMatrix4(camera.matrixWorldInverse);
@@ -5222,7 +5282,8 @@ $('bHelp').onclick = toggleHelp;
 $('bHelpClose').onclick = toggleHelp;
 $('bEasy').onclick = () => setEasy(!EASY.on);
 $('easyBox').onchange = e => setEasy(e.target.checked);
-if (SHIRO) $('walkLabel').classList.add('hidden');   // 代かきは 水を張っているので 歩いて確かめるのは 田起こしのとき
+if (SHIRO) $('walkLabel').classList.add('hidden');
+if (season !== 'haru') $('stoneLabel').classList.add('hidden');   // 石を拾うのは 冬のあいだ（春の田起こしの前）   // 代かきは 水を張っているので 歩いて確かめるのは 田起こしのとき
 // 耕す前に田んぼを一回り歩いて、やわらかい所を確かめる（はまってから気づいた農家さんの教訓：自然でトトノウ会の note）。
 // 歩いた所の印：ぬかるみ（WET）が 0.3 より大きいます目。モニターの地図に青く出す
 const WALK = { mask: null };
@@ -5290,6 +5351,8 @@ const VOICES = {
   tsume: ['固い所や タイヤの跡を耕す はしの爪ほど 早く減る。減りやすい爪を 入れかえて 長く使う', '愛媛の専業米農家さん（アメブロ）'],
   azenuri: ['前の畦塗り機では 畦のはし 5m ほどが塗れず、手で塗っていた。はしまで塗れる機械に買いかえた', '林さんちのゆかいな米作り（note の米農家さん）'],
   fukami: ['米づくりを始めたころ、ゆずってもらった 2 駆のトラクターが、大雨のあと 田んぼの深みにはまって 動けなくなった', '熊本で米をつくって 13 年の書き手（BE-PAL）'],
+  ishi: ['土の中の石は 耕うんの爪をいため、田植えの苗の根張りも悪くする。水を張る前に 石を拾った。拳大から 直径 30cm をこえる石まで 50kg ほど。ペットボトルや空き缶、肥料袋の切れはし、さびた熊手の金具も出てきた', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
+  oto: ['運転席にいると、爪が土を引っかく音のちがいで 土の固さや深さがわかる。石を掘り起こすと 音で気づく', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   nami: ['耕したあとが波うつときは、まずリヤカバーが なめらかに上下しているかを見る。ワイヤーのサビやアームの固着は、根元にオイルスプレーを吹くとよくなる。上下レバーを途中までしか下げないとセンサーがうまく働かないので、一番下まで下げて、深さは深さ調整レバーで合わせる', '井上寅雄農園（note）'],
   belt: ['春起こしの最中、トラクターの前から煙が上がって 水温計が上がり、エンジンのあたりから異音もした。冷却ファンを回すベルトが切れていた。型に合うベルトは特殊で、部品が届くまで 3〜4 日。機械の故障ひとつで、作業の予定を組みなおすことになる', '伊賀で米づくりを始めた 大森雄貴さん（note）'],
   gyakuten: ['盛り上がった土は、逆転で前へ戻すと 平らにしやすい。逆転は正転より負荷が大きいので、硬い所では使わず、やわらかい所で エンジンの回転を下げて使う', '井上寅雄農園（note）'],
@@ -5343,7 +5406,7 @@ $('bStart').onclick = () => {
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
-    BELT.start($('checkBox').checked); COVER.start($('checkBox').checked);
+    BELT.start($('checkBox').checked); COVER.start($('checkBox').checked); STONES.start($('stoneBox').checked);
     if (!SHIRO && $('walkBox').checked) walkField();
     else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
     if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
@@ -5379,6 +5442,7 @@ function finish() {
   const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
   $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる' : ''}</span>` +
+    (STONES.hits ? `<br><span class="small">爪が石に当たった：${STONES.hits} 回。耕す前に石を拾っておくと、爪がいたまない</span>` : '') +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
     `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり）</span>` +
@@ -5592,7 +5656,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { SCRAPE, BELT, COVER, WAVY, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { SCRAPE, BELT, COVER, WAVY, STONES, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

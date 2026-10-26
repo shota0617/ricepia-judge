@@ -8642,6 +8642,7 @@ if (initial === 'px') { setActive(true); if (worldOn === '1') setWorld(true); }
 const meiroApi = {
   C, CHUNK, codeAt, paintRegion, ensureChunk, chunkState,
   toTile, toLatLng, spriteOf: sp => spriteOf(sp)[0],
+  hedgeStyleAt: (tx, ty) => mzStyle(Math.floor(tx / MZ_K), Math.floor(ty / MZ_K)), hedgePat: (x, ox, oy, tile, style) => mzHedgePat(x, ox, oy, tile, style),   // 盤の 台の ふちも 地図と 同じ 生け垣の 種類で（tile：地図の 1マスの 点の 大きさ）
   forgetChunk(cx, cy) { const k = cx + '_' + cy, c = chunks.get(k); if (c && c.state === 'fail') chunks.delete(k); },   // 読めなかった区画を わすれる（やりなおしで すぐ 読みなおす。ふだんは 60秒 待つ）
   slopeAt: (x, y) => slopeAt(x, y), get demGen() { return demGen; },   // 坂（マス/秒² の加速）と、標高が とどくたびに ふえる数（盤を 描きなおす）
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）

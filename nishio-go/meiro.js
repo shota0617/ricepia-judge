@@ -440,6 +440,16 @@ function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線�
   const [L, l] = layer();   // 台：緑の プラスチック（地図は うっすら）。通路との さかいに 黒い ふち と、台の 上の てかり
   l.fillStyle = 'rgba(28,70,52,.86)'; l.fillRect(0, 0, W, H);
   l.strokeStyle = 'rgba(190,240,205,.35)'; l.lineWidth = wi + 6 * u; l.stroke(net);
+  if (api.hedgeStyleAt && api.hedgePat) {   // 台の ふちは 地図の めいろと 同じ 生け垣の 種類（茶の木・石垣・黒塀・一色の 網・吉良の 土手・幡豆の 松。店主OK済み）
+    const T2 = tubes(b), nets = {};
+    for (let k = 0; k < T2.length; k++) {
+      if (!T2[k]) continue;
+      const i = k % b.tw, j = (k / b.tw) | 0, st = api.hedgeStyleAt((b.tx0 + i) * K + K / 2, (b.ty0 + j) * K + K / 2), p = nets[st] || (nets[st] = new Path2D());
+      for (const q of T2[k]) { p.moveTo(q[0][0] * T, q[0][1] * T); for (let n = 1; n < q.length; n++) p.lineTo(q[n][0] * T, q[n][1] * T); }
+    }
+    l.lineWidth = wi + 2 * Math.max(2 * u, Math.round(T * 0.12));
+    for (const st in nets) { const pat = api.hedgePat(l, 0, 0, T / K, st); if (pat) { l.strokeStyle = pat; l.stroke(nets[st]); } }
+  }
   l.strokeStyle = '#0d2219'; l.lineWidth = wi + 2 * u; l.stroke(net);
   l.globalCompositeOperation = 'destination-out'; l.lineWidth = wi; l.stroke(net);
   const [S, z] = layer();   // 影：台を 右下へ ずらした ぶん

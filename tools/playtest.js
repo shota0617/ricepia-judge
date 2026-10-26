@@ -693,7 +693,7 @@ async function walkTo(page, id) {
     const cov = await page.evaluate(() => nishioPixel.mapCovered() ? [...document.querySelectorAll('#pxInfo:not([hidden]), .panel:not([hidden]), [role="dialog"]:not([hidden])')].map(e => e.id || e.className).join(',') || 'reward' : '');   // 落ちたときに 分かるように
     await page.keyboard.down(info.best[0]);
     let pmax = 0, smax = 0;
-    for (let i = 0; i < 9; i++) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); pmax = Math.max(pmax, Math.abs(r.pitch - info.p0)); smax = Math.max(smax, Math.abs(r.spin - info.s0)); }
+    for (let i = 0; i < 25 && !(i >= 9 && pmax > 1.2); i++) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); pmax = Math.max(pmax, Math.abs(r.pitch - info.p0)); smax = Math.max(smax, Math.abs(r.spin - info.s0)); }   // 遅い 画面でも 待てるよう、回りきるまで（2.5秒まで）押す
     await page.keyboard.up(info.best[0]);
     const upright = p => Math.abs(p / (Math.PI * 2) - Math.round(p / (Math.PI * 2))) < 0.02;   // 止まると 起きあがって こっちを向く
     let end = null, upS = 0;
@@ -1293,6 +1293,8 @@ async function walkTo(page, id) {
         for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
           const sx = t.x + dx, sy = t.y + dy;
           if (P.blockedAt(sx + 0.5, sy + 0.5) || P.blockedAt(sx - dx + 0.5, sy - dy + 0.5)) continue;
+          const wall = k0 => { for (let k = k0; k > -1; k--) if (P.rollBlockedFrom(sx + dx * k + 0.5, sy + dy * k + 0.5, sx + dx * (k - 1) + 0.5, sy + dy * (k - 1) + 0.5)) return true; return false; };   // 4マス はなれた 所から 人の マスまで 1マスずつ
+          if (wall(4)) continue;   // めいろの 生け垣を はさむ 向きは ためさない（人に とどかずに はね返り、すりぬけを ためせなかった：相手が「本好きの高校生」の とき ときどき 落ちた）
           pi.hidden = true;
           const push = async () => { P.rollPut(sx + 0.5, sy + 0.5, -dx * 4, -dy * 4); for (let i = 0; i < 6; i++) { await wait(100); if (!pi.hidden) break; } return !pi.hidden && pi.textContent.includes(n.name); };
           const first = await push();

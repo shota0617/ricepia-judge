@@ -4846,13 +4846,23 @@ const USHI = (() => {
     const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
     return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? i * NZ + j : -1;
   };
-  const yAt = (x, z) => {                            // その所に 描いている 土の面の高さ（耕した所は ます目の四隅の高さを 内そうする。jitter・土塊・山も入る）
-    const c = tilledAt(x, z);
-    if (c < 0) return 0.003;                         // 耕していない所は 地面
-    const P = tilled.geometry.attributes.position.array, o = c * 12;
-    const u = Math.min(1, Math.max(0, (x + HX) / CELL - Math.floor((x + HX) / CELL))), v = Math.min(1, Math.max(0, (z + HZ) / CELL - Math.floor((z + HZ) / CELL)));
-    const y00 = P[o + 1], y10 = P[o + 4], y11 = P[o + 7], y01 = P[o + 10];   // 角の順：(x0,z0)・(x1,z0)・(x1,z1)・(x0,z1)
-    return y00 * (1 - u) * (1 - v) + y10 * u * (1 - v) + y11 * u * v + y01 * (1 - u) * v + 0.003;
+  const TRI = [[0, 2, 1], [0, 3, 2]];               // 耕した土の ます目の 2 つの三角形（tilled の index と同じ並び）
+  const yAt = (x, z) => {                            // その所に 描いている 土の面の高さ。頂点は warp で ずれているので、
+    const P = tilled.geometry.attributes.position.array;   // その点をふくむ三角形を まわりの ます目から探し、重心座標で 高さを出す
+    const i0 = Math.floor((x + HX) / CELL), j0 = Math.floor((z + HZ) / CELL);
+    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+      const i = i0 + di, j = j0 + dj;
+      if (i < 0 || j < 0 || i >= NX || j >= NZ || !tilledMask[i * NZ + j]) continue;
+      const o = (i * NZ + j) * 12;
+      for (const [a, b, c] of TRI) {
+        const ax = P[o + a * 3], az = P[o + a * 3 + 2], bx = P[o + b * 3], bz = P[o + b * 3 + 2], cx = P[o + c * 3], cz = P[o + c * 3 + 2];
+        const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+        if (!d) continue;
+        const wa = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, wb = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, wc = 1 - wa - wb;
+        if (wa >= -1e-4 && wb >= -1e-4 && wc >= -1e-4) return wa * P[o + a * 3 + 1] + wb * P[o + b * 3 + 1] + wc * P[o + c * 3 + 1] + 0.003;
+      }
+    }
+    return 0.003;                                    // 耕した土の三角形の上でなければ 地面
   };
   for (let k = 0; k < 2; k++) {
     const f = new THREE.Group();
@@ -4906,7 +4916,7 @@ const USHI = (() => {
       } else if ((u.rest -= dt) <= 0) next(u);
     }
   }
-  return { update, list, get n() { return n; } };
+  return { update, list, yAt, get n() { return n; } };
 })();
 
 // ---- 秋のクモの糸（バルーニング）：晴れて風の弱い秋の日、子グモが糸を風に流して空をわたる。刈りあとの田んぼの上を、

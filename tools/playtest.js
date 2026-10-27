@@ -2130,9 +2130,12 @@ async function walkTo(page, id) {
       el.classList.remove('show');
       // 窓 自身の 操作の 結果（コピー）は 待たせず 窓の 中に 出す（Codex の 指摘：知らせだけで 伝えて いたので、とじるまで 分からなかった）
       sh.hidden = false; await wait(100);
+      const cb = navigator.clipboard, keepW = cb && cb.writeText;
+      if (cb) cb.writeText = () => Promise.resolve();   // 見えない ブラウザでは コピーの 許可を 待って もどらない ことが ある（結果の 出し方だけ 見る）
       const cp = sh.querySelector('[data-share="copy"]'); if (cp) cp.click();
       let inMsg = '';
       for (let i = 0; i < 20 && !inMsg; i++) { await wait(100); const m = document.getElementById('shareMsg'); inMsg = m && !m.hidden ? m.textContent : ''; }
+      if (cb) cb.writeText = keepW;
       sh.hidden = keep; el.classList.remove('show');
       return { over, after, inMsg, ok: !over && after && /コピー/.test(inMsg) };
     });
@@ -2192,14 +2195,16 @@ async function walkTo(page, id) {
       await w.page.setViewportSize({ width: 360, height: 640 }); await w.page.waitForTimeout(400);
       const r = await w.page.evaluate(async () => {
         const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d');
-        document.getElementById('pxInfo').hidden = true;
+        const clear = () => { const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.getElementById('pxInfo').hidden = true; document.getElementById('share').hidden = true; };
+        clear(); await wait(300); clear();
+        const covered = nishioPixel.maze.arrive().covered, maze = nishioPixel.maze.on();   // 地図が 窓で かくれて いると 札は 出ない（しらべる ため）
         const mPer = (a, b) => [(b.lng - a.lng) * 111320 * Math.cos(a.lat * Math.PI / 180), (b.lat - a.lat) * 110540];
         const cands = G.spots.filter(x => x.lat && !x.shop && G.dist(G.me, x) > 1000 && G.dist(G.me, x) < 3500).map(x => { const [e, n] = mPer(G.me, x); return { x, e, n }; }).filter(o => o.e < 0 && o.n > 0).sort((a, b) => Math.abs(a.n / -a.e - 0.46) - Math.abs(b.n / -b.e - 0.46)).slice(0, 8);   // 西北西：縁の 矢印が 札の 高さに 出る
         const keep = { fr: ctx.fillRect, ft: ctx.fillText }, dpr = Math.min(devicePixelRatio || 1, 3), U = 28 * dpr;
         let box = null, texts = [];
         ctx.fillRect = function (x, y, w0, h0) { if (/^rgba\(10, 20, 30, 0\.62\)$/.test(String(this.fillStyle))) box = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
         ctx.fillText = function (t, x, y) { if (/^\d+(\.\d)?(km|m)$/.test(t)) texts.push([x, y]); return keep.ft.apply(this, arguments); };
-        let res = { name: 'none', frames: 0, hits: 0, hid: 0 };
+        let res = { name: 'none', frames: 0, hits: 0, hid: 0, covered, maze };
         for (const g of cands) {   // 縁の 道のりの 札が 札に かかる ゴールを さがす（お米の 位置で かわる）
           G.setGuide({ kind: 'spot', id: g.x.id, name: g.x.name, why: 'テスト', by: 'テスト' });
           let frames = 0, hits = 0, hid = 0;
@@ -2214,6 +2219,7 @@ async function walkTo(page, id) {
             await wait(50);
           }
           if (hits || hid) { res = { name: g.x.name, frames, hits, hid }; break; }
+          clear();
           await wait(1500);
         }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft;

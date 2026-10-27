@@ -7883,7 +7883,7 @@ function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上
 }
 // ゆるい めいろの 生け垣：道すじを 太い 線で なぞって、外がわの 帯（MZ_HEDGE）を 生け垣に、内がわ（MZ_HALF）を くりぬいて 通路に する。
 // 重ねた 絵（くりぬき）を 使うので 下絵に 描いて から 貼る。下絵は 地図の 1/8 マスを 1点に した 小さな 絵（ドット絵の 地図に そろい、スマホでも 軽い）。影は 右下へ ずらした 帯
-const mzLayer = { a: null, b: null, pats: null, key: '', geo: null };
+const mzLayer = { a: null, b: null, c: null, pats: null, key: '', geo: null };
 function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面の 何点か・(sx, sy)：下絵の 左上が 画面の どこか
   let c = mzLayer[k];
   if (!c) c = mzLayer[k] = document.createElement('canvas');
@@ -8037,15 +8037,17 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   B.translate(o, o); B.strokeStyle = '#000'; B.lineWidth = wo; B.stroke(net);
   B.globalCompositeOperation = 'destination-out'; B.lineWidth = wi; B.stroke(net);   // 影：右下へ ずらした 生け垣の 帯
   if (dent) { B.beginPath(); B.ellipse(dent[0], dent[1], dent[2], dent[2] * dent[4], dent[3], 0, Math.PI * 2); B.fill(); }
+  const C = mzLayer.c || (mzLayer.c = document.createElement('canvas'));
+  if (C.width !== W || C.height !== H) { C.width = W; C.height = H; }
+  const X = C.getContext('2d'); X.clearRect(0, 0, W, H); X.globalAlpha = 0.32; X.drawImage(mzLayer.b, 0, 0); X.globalAlpha = 1; X.drawImage(mzLayer.a, 0, 0);   // 影（うすく）と 生け垣を 小さい 下絵の まま 1枚に（画面の 大きさで 貼るのは 1回だけ。2回 貼ると 1コマの 約16%）
   mzLayer.geo = [sx, sy, W * q, H * q];
   mzBlit();
 }
-function mzBlit() {   // 生け垣の 下絵を 画面へ（影を うすく、その上に 生け垣と 台）
+function mzBlit() {   // 生け垣の 下絵を 画面へ（影と 生け垣と 台を 1枚に した もの）
   const g = mzLayer.geo;
   if (!g) return;
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.imageSmoothingEnabled = false;
-  ctx.globalAlpha = 0.32; ctx.drawImage(mzLayer.b, g[0], g[1], g[2], g[3]); ctx.globalAlpha = 1;
-  ctx.drawImage(mzLayer.a, g[0], g[1], g[2], g[3]);
+  ctx.drawImage(mzLayer.c, g[0], g[1], g[2], g[3]);
   ctx.restore();
 }
 function drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T) {   // これまでの 直角の めいろの 壁：盤の めいろ（meiro.js）と 同じ 緑の 立った 壁（右下に 影・黒い ふち・上と左の 面に てかり）。壁の かたまりは 緑の 台で うっすら おおう

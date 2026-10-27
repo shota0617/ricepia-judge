@@ -207,7 +207,7 @@ label.row{min-height:44px;cursor:pointer}
 .play-more{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
 .play-more .btn.mini{margin-top:0}
 .play-more .play-share{background:#e07a2c}
-.play-more input{flex:1;min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px}
+.play-more input{flex:1 1 12em;min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px}   /* 12em：「ひとこと（なくてOK）」が 入る 幅。せまい 画面では「📣 友だちに」が 次の 行へ（320px で 欄が 縮んで「ひとこと（な」と 切れ、なくても よいと 分からなかった） */
 .react-x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:20px;color:var(--sub);width:28px;height:28px}
 .react-line{font-size:13px}
 .react-line span{display:inline-block;background:#fff6d6;border-radius:8px;padding:0 6px;margin-right:2px}

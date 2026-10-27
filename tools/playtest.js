@@ -2130,6 +2130,27 @@ async function walkTo(page, id) {
       sh.hidden = keep; el.classList.remove('show');
       return { over, after, ok: !over && after };
     });
+    // 「めいろ、どうだった？」の ひとことの 欄：320px でも 「ひとこと（なくてOK）」が 切れずに 入り、ボタンも 札の 中（自分で 遊んで 分かった：欄が 縮んで「ひとこと（な」と 切れていた）
+    R.checks.playMore320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), bar = document.getElementById('reactBar');
+        localStorage.removeItem('nsg_play_ask'); document.getElementById('pxInfo').hidden = true;
+        G.playAsk({ sec: 61, stars: 3, name: 'テスト' }); G.playShow(); await wait(200);
+        if (bar.hidden) return { shown: false };
+        bar.querySelector('.play-more').hidden = false; const sb = bar.querySelector('[data-play-share]'); if (sb) sb.hidden = false; await wait(200);   // ★5 を えらんだ ときの 形（★は えらばない：とじる ときに 声を 送らない）
+        const inp = document.getElementById('playText'), cs = getComputedStyle(inp), c = document.createElement('canvas').getContext('2d');
+        c.font = `${cs.fontSize} ${cs.fontFamily}`;
+        const need = Math.ceil(c.measureText(inp.placeholder).width), room = inp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        const b = bar.getBoundingClientRect(), out = [...bar.querySelectorAll('.play-more > *')].filter(e => e.getClientRects().length).some(e => { const q = e.getBoundingClientRect(); return q.right > b.right - 1 || q.left < b.left + 1; });
+        const share = !!bar.querySelector('[data-play-share]:not([hidden])');
+        bar.querySelector('[data-play-x]').click(); localStorage.removeItem('nsg_play_ask');
+        return { shown: true, need, room: Math.floor(room), out, share };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.shown && r.room >= r.need && !r.out };
+    })();
     // めいろの「🏁 つぎの ゴール」の 札（3秒）に 知らせを 重ねない：札の 間は 待たせて、消えたら 出す（自分で 遊んで 分かった：ごほうびを とじると 待たせた 知らせと 札が 同時に 出て、札の 見出しが かくれて いた）
     R.checks.nextGoalToast = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), msg = '🎁 テストの 知らせ（つぎの ゴール）';
@@ -2553,6 +2574,7 @@ async function walkTo(page, id) {
   need(c.codeCardHead && c.codeCardHead.ok, `ひきつぎの あいことばの 見出しと 説明が 同じ 行に つづく（${JSON.stringify(c.codeCardHead)}）`);
   need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
   need(c.shareToast && c.shareToast.ok, `シェアの 窓の 上に 知らせが 重なる（${JSON.stringify(c.shareToast)}）`);
+  need(c.playMore320 && c.playMore320.ok, `320px の「めいろ、どうだった？」の ひとことの 欄が 切れる（${JSON.stringify(c.playMore320)}）`);
   need(c.nextGoalToast && c.nextGoalToast.ok, `めいろの「つぎの ゴール」の 札に 知らせが 重なる（${JSON.stringify(c.nextGoalToast)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);

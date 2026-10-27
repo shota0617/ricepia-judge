@@ -3,7 +3,7 @@
 // ・「🌀 傾けて めいろ」で はじめて 遊ぶ 人と 同じ 順に すすむ（あそびかた → はじめの1枚 → めいろ）。画面の スティックや 📱/🚗 の 切りかえは もう ないので 写らない
 // ・撮るもの：reward（はじめの1枚の ごほうび）・meiro（地図の めいろ：生け垣・お米・足あと・金の米つぶ）・roll（🗺 ゴールまでの めいろ図）・world（せかいちず）・badges（バッジ）
 //   meiro-board.webp（🌀 ステージの めいろ）は ここでは 撮らない
-// 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、SHOTS_PORT、SHOTS（撮る 名前を カンマで。例 meiro,roll）
+// 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、SHOTS_PORT、SHOTS（撮る 名前を カンマで。例 meiro,roll）、SHOTS_TIME（画面の 時刻。既定は きょうの 正午）
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { startServer, ROOT } = require('./bake-common');
@@ -19,6 +19,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: { width: 360, height: 720 }, deviceScaleFactor: 1.5, timezoneId: 'Asia/Tokyo', locale: 'ja-JP' });
   await ctx.addInitScript(() => { localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_noanalytics', '1'); });
+  // ゲームは 本当の 時刻で 空の 明るさが かわる。夜に 撮っても 昼の 画面に なるよう、きょうの 正午（日本時間）に 固定（make-ogp.js と 同じ。SHOTS_TIME で かえられる）
+  const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  await ctx.clock.setFixedTime(new Date(process.env.SHOTS_TIME || `${day}T12:00:00+09:00`));
   const page = await ctx.newPage();
   page.on('pageerror', e => console.log('pageerror:', e.message));
   if (process.env.LEAFLET_DIR) await page.route('https://unpkg.com/**', r => {

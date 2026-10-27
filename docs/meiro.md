@@ -78,6 +78,11 @@
   - `meiro.webp`・`roll.webp`・`reward.webp`・`world.webp` に、はずした 画面の スティック・📱/🚗 の 切りかえが 写って いたので、ほんとうの ゲーム画面から 撮りなおした（`node tools/make-shots.js`。「🌀 傾けて めいろ」→ あそびかた → はじめの1枚 → 矢印キーで 金の米つぶの 行き止まりの 手前まで 転がす）。はずした ボタンが 写ると 止まる（プレイテスト `controlsGone` と 同じ id）
   - `meiro.webp`：生け垣・お米・足あと・金の米つぶ・縁の 🏁 と 道のり。`roll.webp`：🗺 ゴールまでの めいろ図（見出しを「めいろ図で 道を考える」に）。`badges.webp` も いまの 下の メニュー（名前つき）で。`meiro-board.webp`（🌀 ステージの めいろ）は そのまま
   - ricepia.jp の お知らせ欄（`ricepia-jp/game-section.html` → `python3 tools/build-ricepia-jp.py`）の 説明も 写真に あわせた
+- はじめの画面の 写真・共有用の 画像を いまの 見た目に 撮りなおし（2026-10-27、運営者の声「トップ画像を最新に」）
+  - `node tools/make-shots.js`：まるい 生け垣・行き止まりの ✕・青い 道しるべ・⏱ と ★ が 写る。`make-shots.js` は 時刻を その日の 正午（日本時間）に 固定する ように した（夜に 撮ると 空が 暗く なって いた。`SHOTS_TIME` で かえられる）
+  - ホーム画面に 追加の 写真（`shots/install-*.jpg`）は 新しい webp から JPEG に しなおし、共有用の 画像（`ogp.png`）も `node tools/make-ogp.js` で 撮りなおした
+  - 写真の 説明（alt）を 新しい 絵に あわせた（`nishio-go.html`・`ricepia-jp/game-section.html` → `python3 tools/build-ricepia-jp.py`）。ricepia.jp の お知らせ欄の 絵は go.ricepia.jp の 写真を 読むので 公開で 新しく なる（説明の 文は アップロード するまで 前の まま）
+  - `meiro-board.webp`（🌀 ステージの めいろ）は 撮る 道具が ないので そのまま
 - 運営者の声「迷路を磨く」（2026-10-24 つづき）
   - ⏱ ゴールまでの タイムと ★（`mzClock`・`drawMzClock`・`mzPar`）：新しい ゴールが きまると 時計が 動き、画面の 上に「⏱ 0:42　★★★ あと 1:18」。★3 の 目やすは めいろの 道のりから（1秒に 12m＋10秒。2km で 約3分）、★2 は その 1.8倍、それより おそいと ★1。★が へる 5秒前は ちかちか
   - 着いたら ごほうびに「★★★ はやい！ +10」（★2 +5・★1 +2。`game.js` の `MZ_STAR_PTS`）と、地図の「🏁 ゴール！」にも ★。アクセス解析 `maze_goal` に stars

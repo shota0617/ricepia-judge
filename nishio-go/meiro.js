@@ -427,7 +427,9 @@ function restart() {
 function fit() {
   const b = game.board, dpr = Math.min(root.devicePixelRatio || 1, 3);
   const side = root.matchMedia && root.matchMedia('(orientation:landscape) and (max-height:540px)').matches;   // 横向きの 低い画面：ヒントと ボタンは 右（CSS と 同じ 条件）
-  const maxW = side ? innerWidth - 240 - 16 - 16 - 20 - 8 : Math.min(innerWidth, 520) - 28 - 28, maxH = side ? innerHeight - 64 - 20 - 10 : innerHeight - 190;   // わく と 上下（横向きは 右）の文字のぶん
+  const oh = q => { const e = ui.el.querySelector(q); if (!e) return 0; const s = getComputedStyle(e); return e.getBoundingClientRect().height + parseFloat(s.marginTop) + parseFloat(s.marginBottom); };
+  const used = oh('.mz-top') + oh('.mz-hint') + oh('.mz-btns') + 28 + 4 + 4;   // たて：上・ヒント・ボタンの 本当の 高さ（字が 大きく なって ヒントが 3行に なり、iPhone SE では 下の ボタンが 画面の 外に 出ていた）
+  const maxW = side ? innerWidth - 240 - 16 - 16 - 20 - 8 : Math.min(innerWidth, 520) - 28 - 28, maxH = side ? innerHeight - 64 - 20 - 10 : innerHeight - Math.max(190, used);   // わく と 上下（横向きは 右）の文字のぶん
   const css = Math.max(6, Math.floor(Math.min(maxW / b.tw, Math.max(120, maxH) / b.th)));   // 1マスの大きさ（画面の点）。横向きの 低い画面でも 盤ぜんたいが 入るように 小さくできる
   const T = Math.max(K, Math.round(css * dpr / K) * K);   // 地図の1マス（T/K 点）が きっちり 入るように
   game.T = T; game.dpr = dpr;

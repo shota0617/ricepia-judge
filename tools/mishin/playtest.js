@@ -1,22 +1,22 @@
 // ミシン糸 一本どり：ボットで通しプレイして、面白さの目安を数える
-// node tools/mishin/playtest.js [--runs 20] [--shot]
+// node tools/mishin/playtest.js [--runs 12]
+// 本物の手順：表なら裏返す → 裏の ほどき始めの端（赤が白い輪にささっている）をタップ → 縫った向きと逆へ ゆっくり引く
 const { chromium } = require('playwright');
 const path = require('path');
 const args = process.argv.slice(2);
-const RUNS = +(args[args.indexOf('--runs')+1] || 20) || 20;
-const SHOT = args.includes('--shot');
+const RUNS = +(args[args.indexOf('--runs')+1] || 12) || 12;
 const FILE = 'file://' + path.resolve(__dirname, '../../mishin.html');
 
-// ボットの性格：read＝くさり目を読みあてる確率、target＝ねらう張り、noise＝ぶれ、look＝かたい目を何目前から読むか、react＝気づくまでの秒
-// bell＝指の速さが 1回の なで の 中で 山なりに なる（人の 指に 近い）
+// face＝表裏を 見分ける確率、read＝ほどき始めを 読みあてる確率、target＝ねらう張り、noise＝ぶれ、react＝ひっかかりに 気づくまで、
+// bell＝なでる速さが 山なり（人の指）、stroke＝1回の なでる長さ
 const BOTS = {
-  expert:  { read:1.00, target:0.80, noise:0.06, look:1, react:0.15 },
-  human:   { read:0.92, target:0.65, noise:0.15, look:0, react:0.25, bell:true, stroke:200 },
-  regular: { read:0.90, target:0.80, noise:0.18, look:0, react:0.25 },
-  novice:  { read:0.70, target:0.90, noise:0.30, look:0, react:0.40, bell:true },
-  greedy:  { read:1.00, target:1.35, noise:0.10, look:0, react:0.40 },
-  careful: { read:1.00, target:0.22, noise:0.05, look:1, react:0.05 },
-  guesser: { read:0.50, target:0.80, noise:0.06, look:1, react:0.15 },
+  expert:  { face:1.00, read:1.00, target:0.80, noise:0.06, react:0.15, stroke:260 },
+  human:   { face:0.95, read:0.90, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200 },
+  regular: { face:0.95, read:0.90, target:0.80, noise:0.18, react:0.25, stroke:240 },
+  novice:  { face:0.80, read:0.70, target:0.90, noise:0.30, react:0.40, bell:true, stroke:180 },
+  greedy:  { face:1.00, read:1.00, target:1.35, noise:0.10, react:0.40, stroke:260 },
+  careful: { face:1.00, read:1.00, target:0.22, noise:0.05, react:0.05, stroke:260 },
+  guesser: { face:0.50, read:0.50, target:0.80, noise:0.06, react:0.15, stroke:260 },
 };
 
 async function main(){
@@ -37,65 +37,57 @@ async function main(){
         KB.start();
         const {W,H} = KB.size();
         const dt = 1/60; let t = 0;
-        let x = W/2, y = H*0.6, dirx = 1, strokeLeft = 0, lift = 0, held = false, noise = 1, noiseT = 0;
-        let decidedFor = null, knotSeenAt = -1, bagStart = 0; const bagTimes = [];
-        let lastBags = 0;
+        const tick = () => { KB.step(dt); t += dt; };
+        let x = 0, y = H*0.6, x0 = 0, strokeLeft = 0, lift = 0, held = false, noise = 1, noiseT = 0;
+        let seen = null, knotSeenAt = -1, tangleWait = 0;
         while (S.mode === 'play' && t < 600){
-          const b = S.bag;
-          if (S.bags !== lastBags){ bagTimes.push(t - bagStart); bagStart = t; lastBags = S.bags; }
-          if (b.done || b.slide > 0.05 || S.stunT > 0){ if (held){ KB.up(); held=false; } KB.step(dt); t+=dt; continue; }
-          if (!b.engaged){
-            if (decidedFor !== b){ decidedFor = b; b._pick = rand() < bot.read ? b.side : (b.side==='L'?'R':'L'); b._think = 0.35 + rand()*0.3; }
-            if (b._think > 0){ b._think -= dt; KB.step(dt); t+=dt; continue; }
-            if (b.wrong && b._pick !== b.side) b._pick = b.side; // 逆を引いて結び目 → 反対へ
-            if (!held){ x = b._pick==='L' ? W*0.25 : W*0.75; y = H*0.6; KB.down(x,y); held = true; strokeLeft = (bot.stroke||280); }
+          const b = S.bag, L = KB.layout();
+          if (b.done || b.slide > 0.05 || b.flipT > 0){ if (held){ KB.up(); held=false; } tick(); continue; }
+          if (b.phase === 'look'){
+            if (seen !== b){ seen = b; b._think = 0.4 + rand()*0.3; b._faceOk = rand() < bot.face; b._readOk = rand() < bot.read; }
+            if (b._think > 0){ b._think -= dt; tick(); continue; }
+            const isFront = b.face === 'front';
+            const thinksFront = b._faceOk ? isFront : !isFront;
+            if (thinksFront && !b._flippedOnce){ b._flippedOnce = true; KB.down(W/2, L.seamY + L.bagH*0.6); KB.up(); b._think = 0.25; tick(); continue; }
+            if (isFront){ // 表のまま 端を さわって しまった → 気づいて 裏返す
+              KB.down(L.x0 + 4, L.seamY); KB.up(); b._faceOk = true; b._flippedOnce = false; b._think = 0.3; tick(); continue;
+            }
+            let end = b._readOk ? b.start : (b.start==='L'?'R':'L');
+            if (b.wrong && b.wrongEnd) end = b.wrongEnd==='L' ? 'R' : 'L';
+            x = end==='L' ? L.x0 + 4 : L.x1 - 4; y = L.seamY;
+            KB.down(x, y); held = S.held;
+            if (!held){ b._think = 0.3; tick(); continue; }
+            x0 = x; strokeLeft = bot.stroke; tick(); continue;
           }
-          // ねらう速さ
+          // もつれ：気づいて タップ 3回
+          if (b.tangle){
+            if (held){ KB.up(); held=false; }
+            tangleWait -= dt; if (tangleWait <= 0){ KB.down(W/2, H*0.6); KB.up(); tangleWait = 0.15; }
+            tick(); continue;
+          }
+          const dir = KB.pullDir(b);
           noiseT -= dt; if (noiseT <= 0){ noise = 1 + (rand()*2-1)*bot.noise; noiseT = 0.15; }
-          let tgt = bot.target * noise;
-          // かたい目
-          let d = 99; for (const k of b.knots) if (k >= b.pulled) d = Math.min(d, k - b.pulled);
-          const onKnot = d === 0;
+          const onKnot = b.knots.has(b.pulled);
           if (onKnot){ if (knotSeenAt < 0) knotSeenAt = t; } else knotSeenAt = -1;
-          const slowNow = (d <= bot.look && d > 0 && b.sub > 0.6*KB.R.pxPerStitch) || (onKnot && t - knotSeenAt >= bot.react);
-          const safe = b.safe * (slowNow ? KB.R.knotSlow : 1);
-          const v = tgt * safe; // px/s
-          if (lift > 0){ lift -= dt; if (lift <= 0){ KB.down(x,y); held = true; strokeLeft = (bot.stroke||280); } KB.step(dt); t+=dt; continue; }
-          if (!held){ KB.down(x,y); held = true; strokeLeft = (bot.stroke||280); }
-          const ph = 1 - Math.max(0,strokeLeft)/(bot.stroke||280);
-          const mv = (bot.bell ? v*1.5*Math.max(0.15, Math.sin(Math.PI*ph)) : v)*dt; x += dirx*mv; strokeLeft -= mv;
+          const slowNow = onKnot && t - knotSeenAt >= bot.react;
+          const v = bot.target * noise * b.safe * (slowNow ? KB.R.knotSlow : 1);
+          if (lift > 0){ lift -= dt; if (lift <= 0){ KB.down(x,y); held = true; strokeLeft = bot.stroke; } tick(); continue; }
+          if (!held){ KB.down(x,y); held = true; strokeLeft = bot.stroke; }
+          const ph = 1 - Math.max(0,strokeLeft)/bot.stroke;
+          const mv = (bot.bell ? v*1.5*Math.max(0.15, Math.sin(Math.PI*ph)) : v)*dt;
+          x += dir*mv; strokeLeft -= mv;
           KB.move(x, y);
-          if (strokeLeft <= 0){ KB.up(); held = false; lift = 0.12; dirx = -dirx; }
-          KB.step(dt); t += dt;
+          if (strokeLeft <= 0){ KB.up(); held = false; lift = 0.12; x -= dir*bot.stroke; KB.move(x,y); }
+          tick();
         }
-        const avg = bagTimes.length ? bagTimes.reduce((a,c)=>a+c,0)/bagTimes.length : 0;
-        return { score:S.score, bags:S.bags, clean:S.clean, snaps:S.snaps, wrongs:S.wrongs, len:+t.toFixed(1), perBag:+avg.toFixed(2), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2) };
+        return { score:S.score, bags:S.bags, clean:S.clean, tangles:S.tangles, wrongs:S.wrongs+S.fronts, len:+t.toFixed(1), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2) };
       }, [bot, 1000 + r]));
     }
     const mean = k => +(runs.reduce((a,c)=>a+c[k],0)/runs.length).toFixed(2);
-    out[name] = { score:mean('score'), bags:mean('bags'), clean:mean('clean'), snaps:mean('snaps'), wrongs:mean('wrongs'), len:mean('len'), perBag:mean('perBag'), zone:mean('zone'), maxBags: Math.max(...runs.map(r=>r.bags)) };
+    out[name] = { score:Math.round(mean('score')), bags:mean('bags'), clean:mean('clean'), tangles:mean('tangles'), wrongs:mean('wrongs'), len:mean('len'), zone:mean('zone'), maxBags: Math.max(...runs.map(r=>r.bags)) };
   }
   console.table(out);
   if (errors.length) console.log('ERRORS', errors);
-  if (SHOT){
-    const dir = process.env.SHOT_DIR || '.';
-    const p2 = await browser.newPage({ viewport:{ width:390, height:844 } });
-    await p2.goto(FILE); await p2.waitForTimeout(800);
-    await p2.screenshot({ path: path.join(dir,'shot-title.png') });
-    await p2.evaluate(() => { KB.manual = true; KB.fixedSeed = 1005; KB.start(); for (let i=0;i<30;i++) KB.step(1/60); });
-    // 何袋かすすめて、引いている途中で止める
-    await p2.evaluate(() => { const S=KB.S; S.bags=6; S.bag = null; });
-    await p2.evaluate(() => { KB.S.bag = null; }).catch(()=>{});
-    await p2.evaluate(() => { KB.start(); KB.S.bags = 0; for (let i=0;i<40;i++) KB.step(1/60); const {W,H}=KB.size(); const b=KB.S.bag; const x = b.side==='L'?W*0.25:W*0.75; KB.down(x,H*0.6); let xx=x; for (let i=0;i<30;i++){ xx+= (b.side==='L'?-1:1)*10; KB.move(xx, H*0.62); KB.step(1/60);} });
-    await p2.waitForTimeout(100);
-    await p2.screenshot({ path: path.join(dir,'shot-pull.png') });
-    await p2.evaluate(() => { for (let i=0;i<200;i++){ KB.move(200+Math.random()*3000, 600); KB.step(1/60);} });
-    await p2.waitForTimeout(100);
-    await p2.screenshot({ path: path.join(dir,'shot-snap.png') });
-    await p2.evaluate(() => { KB.S.time = 0.01; KB.step(1/60); });
-    await p2.waitForTimeout(100);
-    await p2.screenshot({ path: path.join(dir,'shot-result.png') });
-  }
   await browser.close();
 }
 main().catch(e => { console.error(e); process.exit(1); });

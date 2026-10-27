@@ -7951,9 +7951,9 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   if (rec) { drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T); return; }   // Godot で 描く 試作：記録係は くりぬきの 絵を 送れないので、これまでの 生け垣
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
-  const m = ctx.getTransform(), live = (Math.abs(mzSoft.dent) > 0.01 || Math.abs(mzSoft.dv) > 0.05) && mazeOn();   // ぷるぷる ゆれて いる 間は 毎こま 描く
+  const m = ctx.getTransform(), live = mzSoft.dv !== 0 && mazeOn(), dk = mazeOn() && mzSoft.dent > 0.01 ? [mzSoft.dent.toFixed(2), mzSoft.x.toFixed(2), mzSoft.y.toFixed(2)].join('/') : '';   // ぷるぷる ゆれて いる 間は 毎こま 描く。おさまった へこみ（押しつけた まま）は 下絵に 入れて 使い回す
   // 下絵の 使い回し：画面の 位置・大きさ・読めた 区域・参道・生け垣の 種類・季節が 同じで、生け垣が へこんで いなければ、前の 下絵を そのまま 貼る（止まって いる 間の 重さを へらす）
-  const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason()].join();
+  const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason(), dk].join();
   if (!live && key === mzLayer.key) { mzBlit(); return; }
   const blocks = [], net = new Path2D(), nets = {};
   let n = 0;
@@ -8069,7 +8069,18 @@ function drawHedges(img, segs, ox, oy, T, S, lw) {
     ctx.drawImage(img, 20 + i * 14, 20, 12, 12, ox + gx * S - P / 2, oy + gy * S - P / 2, P, P);
   }
 }
+function mzDentStep(dt) {   // 生け垣の へこみの 絵：お米より 大きく ついていき、はなれると ぷるぷると もどる。お米が 止まって 動きの 処理が 早く おわる こまでも 回す（止まった まま へこみが のこり、毎こま 描きなおして いた。Codex の 指摘）
+  if (!mazeOn()) { mzSoft.dent = mzSoft.dv = 0; return; }
+  const tg = mzSoft.on ? Math.min(MZ_SOFT_MAX, mzSoft.pen * 2) : 0;
+  for (let left = Math.min(dt, 0.1); left > 1e-6; left -= 1 / 60) {   // 長い こまは 1/60秒 ずつ（ばねが とびださない ように）
+    const h = Math.min(left, 1 / 60);
+    mzSoft.dv += (MZ_DENT_K * (tg - mzSoft.dent) - MZ_DENT_C * mzSoft.dv) * h;
+    mzSoft.dent = Math.max(-0.15, Math.min(MZ_SOFT_MAX, mzSoft.dent + mzSoft.dv * h));
+  }
+  if (Math.abs(mzSoft.dv) < 0.02 && Math.abs(mzSoft.dent - tg) < 0.004) { mzSoft.dent = tg; mzSoft.dv = 0; }   // おさまった（止まった あとも 毎こま 描きなおさない）
+}
 function rollStep(dt) {
+  mzDentStep(dt);
   const t = targetTile();
   const x0 = rp.x, y0 = rp.y;   // この1こま前の位置（人に ぶつかったら ここで止まる）
   if (rp.x === null || (rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 0.6)) {   // はじめ・ほかの動き（おまかせ歩き・タップ・ひとっとび）のあとは、そこから
@@ -8199,7 +8210,6 @@ function rollStep(dt) {
       }
     }
   }
-  if (mz) { const tg = mzSoft.on ? Math.min(MZ_SOFT_MAX, mzSoft.pen * 2) : 0; mzSoft.dv += (MZ_DENT_K * (tg - mzSoft.dent) - MZ_DENT_C * mzSoft.dv) * dt; mzSoft.dent = Math.max(-0.15, Math.min(MZ_SOFT_MAX, mzSoft.dent + mzSoft.dv * dt)); }   // 生け垣の へこみ：お米より 大きく ついていき、はなれると ぷるぷると もどる
   if (mz) mzPadTick(ax, ay);   // びゅんパネル
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;

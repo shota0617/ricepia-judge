@@ -264,6 +264,13 @@ const CSS = `.share.over-meiro{z-index:3600}
 #meiro .mz-hint{font-size:13px;opacity:.9;margin:10px 14px 4px;text-align:center;line-height:1.5}
 #meiro .mz-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:100%;box-sizing:border-box;padding:0 8px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
 @media (max-width:360px){#meiro .mz-btns{gap:6px}#meiro .mz-btns button{padding:9px 12px;font-size:14px}}   /* せまい スマホ（320 幅）でも 3つの ボタンが 画面に おさまる */
+@media (orientation:landscape) and (max-height:540px){   /* 横向きの 低い画面：盤を 左、ヒントと ボタンを 右に ならべて、スクロールせずに 盤が 大きく 見える */
+#meiro{display:grid;grid-template-columns:auto minmax(150px,240px);grid-template-rows:auto 1fr auto;grid-template-areas:"top top" "bezel hint" "bezel btns";justify-content:center;align-content:start;column-gap:16px;padding:0 max(8px,env(safe-area-inset-right,0px)) 0 max(8px,env(safe-area-inset-left,0px))}
+#meiro .mz-top{grid-area:top;width:min(100%,760px);justify-self:center;padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
+#meiro .mz-bezel{grid-area:bezel;margin:0 0 calc(env(safe-area-inset-bottom,0px) + 8px);padding:10px;border-radius:24px}
+#meiro .mz-hint{grid-area:hint;align-self:end;text-align:left;margin:0 0 8px;font-size:12px}
+#meiro .mz-btns{grid-area:btns;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:8px;padding:0;margin:0 0 calc(env(safe-area-inset-bottom,0px) + 8px)}
+}
 #meiro .mz-btns button,#meiro .mz-clear button{border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:15px;background:#ffe680;color:#2a2410;box-shadow:0 3px 0 #b59a2a}
 #meiro .mz-btns button.sub{background:rgba(255,255,255,.2);color:#fff;box-shadow:none}
 #meiro .mz-clear{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;background:rgba(10,30,40,.55);padding:12px;box-sizing:border-box}   /* 盤の わくの外（低い画面でも 切れない） */
@@ -411,7 +418,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, peak: 0, dent: 0, dv: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -419,7 +426,8 @@ function restart() {
 /* ---------- 盤の絵 ---------- */
 function fit() {
   const b = game.board, dpr = Math.min(root.devicePixelRatio || 1, 3);
-  const maxW = Math.min(innerWidth, 520) - 28 - 28, maxH = innerHeight - 190;   // わく と 上下の文字のぶん
+  const side = root.matchMedia && root.matchMedia('(orientation:landscape) and (max-height:540px)').matches;   // 横向きの 低い画面：ヒントと ボタンは 右（CSS と 同じ 条件）
+  const maxW = side ? innerWidth - 240 - 16 - 16 - 20 - 8 : Math.min(innerWidth, 520) - 28 - 28, maxH = side ? innerHeight - 64 - 20 - 10 : innerHeight - 190;   // わく と 上下（横向きは 右）の文字のぶん
   const css = Math.max(6, Math.floor(Math.min(maxW / b.tw, Math.max(120, maxH) / b.th)));   // 1マスの大きさ（画面の点）。横向きの 低い画面でも 盤ぜんたいが 入るように 小さくできる
   const T = Math.max(K, Math.round(css * dpr / K) * K);   // 地図の1マス（T/K 点）が きっちり 入るように
   game.T = T; game.dpr = dpr;
@@ -542,11 +550,14 @@ function step(dt) {
     if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
       if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
-      Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
+      Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen, peak: sf.on ? Math.max(sf.peak, pen) : pen });
       let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり
       if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
       g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
-    } else sf.on = false;
+    } else {
+      if (sf.on && api.boing) { const out = -(g.vx * sf.ux + g.vy * sf.uy); if (sf.peak > 0.03 && out > 0.8) api.boing(Math.min(1, out / 5)); }   // はなれた 瞬間：深く めりこんで はね返った ときだけ ぽよん
+      sf.on = false;
+    }
     { const tg = sf.on ? sf.pen : 0; sf.dv += (1600 * (tg - sf.dent) - 32 * sf.dv) * dt; sf.dent += sf.dv * dt; }   // ふちの へこみの 絵：お米に ついていき、はなれると ぷるんと もどる
     g.x = nx; g.y = ny;
   } else for (const axis of ['x', 'y']) {   // （筒の 外：たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す）

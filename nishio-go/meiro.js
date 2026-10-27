@@ -418,7 +418,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -556,7 +556,7 @@ function step(dt) {
       if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
       g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
     } else {
-      if (sf.on && sf.vin > 1.5 && api.boing) api.boing(Math.min(1, sf.vin / 8));   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
+      if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8)); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
     { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - (calm ? 18 : 5) * sf.dv) * dt; sf.dent = Math.max(calm ? 0 : -0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // 動きを へらす 設定の 人には ぷるぷる させない（1回で もどす）   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる

@@ -2292,13 +2292,13 @@ function riceFeel(dt, speed) {
   roll.dust = roll.dust.filter(p => p.t < 0.45);
 }
 let kotoCtx = null;
-function boingSound(v) {   // やわらかい 生け垣で はね返った：ぽよん（低い 音から 上がって、少し ふるえる）
+function boingSound(v, hi) {   // やわらかい 生け垣で はね返った：ぽよん（低い 音から 上がって、少し ふるえる）。hi：ばねの わざ（高く のびる びよーん）
   try {
     if (localStorage.getItem('nsg_bgm') === 'false' || document.hidden) return;
     kotoCtx = kotoCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (kotoCtx.state === 'suspended') kotoCtx.resume();
     const t = kotoCtx.currentTime, o = kotoCtx.createOscillator(), w = kotoCtx.createOscillator(), wg = kotoCtx.createGain(), g = kotoCtx.createGain();
-    o.type = 'sine'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(420, t + 0.16);
+    o.type = 'sine'; o.frequency.setValueAtTime(hi ? 240 : 170, t); o.frequency.exponentialRampToValueAtTime(hi ? 760 : 420, t + 0.16);
     w.frequency.setValueAtTime(18, t); wg.gain.setValueAtTime(25, t); w.connect(wg); wg.connect(o.frequency);   // ぷるぷる
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09 * (0.4 + v * 0.6), t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
     o.connect(g); g.connect(kotoCtx.destination); o.start(t); w.start(t); o.stop(t + 0.26); w.stop(t + 0.26);
@@ -5943,7 +5943,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -7279,6 +7279,26 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
   if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
 }
+function drawMzSpring(ox, oy, T, now) {   // ばね：通路に 置いて ある ばね（緑の わが ふくらむ・のびちぢみ）と、わざの 間の お米の まわりの 光の わ
+  const S = MZ_K * T, q = Math.max(1, Math.round(T / 8));
+  if (mzSpring.on) {
+    const X = ox + (mzSpring.cx + 0.5) * S, Y = oy + (mzSpring.cy + 0.5) * S, pl = 0.55 + Math.sin(now / 220) * 0.08, r = T * 1.8 * pl, h = T * (1.1 + Math.sin(now / 140) * 0.25), bw = T * 0.9;   // h：ばねの 高さ（びよんびよん）
+    ctx.fillStyle = 'rgba(140,240,120,.45)'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.lineWidth = Math.max(2, T / 6); ctx.strokeStyle = '#8cf078'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.stroke();
+    const y0 = Math.round(Y + T * 0.7), y1 = Math.round(y0 - h);
+    ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(X - bw / 2) - q, y0 - q, Math.round(bw) + 2 * q, 3 * q); ctx.fillRect(Math.round(X - bw / 2) - q, y1 - 2 * q, Math.round(bw) + 2 * q, 3 * q);   // 台と 上の 板（黒い ふち）
+    ctx.lineWidth = Math.max(2, q * 2); ctx.lineJoin = 'miter'; ctx.strokeStyle = '#1a1a1a'; ctx.beginPath();
+    for (let i = 0; i <= 6; i++) { const x = X + (i % 2 ? bw / 2 : -bw / 2) * 0.8, y = y0 - (h * i) / 6; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke(); ctx.lineWidth = Math.max(1, q); ctx.strokeStyle = '#d8e0e6'; ctx.stroke();   // ぎざぎざの ばね（銀）
+    ctx.fillStyle = '#5fc24a'; ctx.fillRect(Math.round(X - bw / 2), y0, Math.round(bw), q); ctx.fillRect(Math.round(X - bw / 2), y1 - q, Math.round(bw), q);
+  }
+  const left = mzSpring.until - now;
+  if (left > 0 && rp.x !== null) {   // わざの 間：お米の まわりに 緑の わ（のこり 2秒は ちかちか）
+    if (left < 2000 && Math.floor(now / 160) % 2) return;
+    const X = ox + rp.x * T, Y = oy + rp.y * T, r = T * (1.15 + Math.sin(now / 120) * 0.12);
+    ctx.lineWidth = Math.max(2, q * 2); ctx.strokeStyle = 'rgba(140,240,120,.85)'; ctx.beginPath(); ctx.arc(Math.round(X), Math.round(Y), r, 0, Math.PI * 2); ctx.stroke();
+  }
+}
 function drawMzCrows(ox, oy, T, now) {   // 地図の 飾りの カラス（Blender の 絵）が はばたいて 動く。読めない あいだは 黒い 丸
   const S = MZ_K * T, sz = Math.round(T * 1.8);
   if (mzScare.on) {   // かかし（地図の 飾りと 同じ Blender の 絵）：金色の わが ふくらんだり ちぢんだり（とれる もの だと 分かる ように）
@@ -7394,10 +7414,17 @@ function drawMzClock(w, dpr, now) {
   if (left > 0 && left < 5 && Math.floor(now / 250) % 2) ctx.fillStyle = '#ff9f80';   // ★が へる 5秒前は ちかちか
   ctx.fillText(t, x, y);
   const sl = mzScare.until - now;
+  let y2 = y;
   if (sl > 0) {   // かかしの のこり（カラスが にげて いる 間）
-    const t2 = `かかし：カラスが にげる あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2, y2 = y + S * 1.9;
+    const t2 = `かかし：カラスが にげる あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,40,90,.78)'; ctx.fillRect(Math.round(x - tw2 / 2), Math.round(y2 - S * 0.85), Math.round(tw2), Math.round(S * 1.7));
     ctx.fillStyle = sl < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#9fd0ff'; ctx.fillText(t2, x, y2);
+  }
+  const sp = mzSpring.until - now;
+  if (sp > 0) {   // ばねの わざの のこり
+    const t3 = `ばね：生け垣で はずむ あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
+    ctx.fillStyle = 'rgba(20,70,30,.8)'; ctx.fillRect(Math.round(x - tw3 / 2), Math.round(y2 - S * 0.85), Math.round(tw3), Math.round(S * 1.7));
+    ctx.fillStyle = sp < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#b8f5a8'; ctx.fillText(t3, x, y2);
   }
 }
 // 足あと：いまの ゴールへ 向かう あいだに 通った 通路の マスに、うすい お米の しるし（同じ 行き止まりに 何度も 入らない ように。迷路の 紙に えんぴつで しるしを つける かわり）
@@ -7815,7 +7842,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     return;
   }
   // 上の 縁は、時計の 札（かかしの のこりの 札まで）より 下に（上に ゴールが あると、矢印と 旗が 時計の 札や 左上の 札に 重なっていた）
-  const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6, S = Math.round(MZ_CLOCK_PX * dpr), mt = Math.max(m, S * (mzScare.until > now ? 4.25 : 2.35) + U * 1.3);   // 矢印の 先（U×1.1 と ふくらみ）まで 札の 下
+  const a = Math.atan2(ey - cy, ex - w / 2), m = U * 1.6, S = Math.round(MZ_CLOCK_PX * dpr), mt = Math.max(m, S * (2.35 + 1.9 * ((mzScare.until > now) + (mzSpring.until > now))) + U * 1.3);   // 矢印の 先（U×1.1 と ふくらみ）まで 札の 下
   const px = Math.min(Math.abs((w / 2 - m) / Math.cos(a)), Math.abs(Math.max(U, Math.sin(a) < 0 ? cy - mt : vh - m - cy) / Math.sin(a)));
   let qx = w / 2 + Math.cos(a) * px, qy = cy + Math.sin(a) * px;
   const k = 1 + pulse * 0.08, R = U * 1.25;
@@ -8301,7 +8328,7 @@ function rollStep(dt) {
         const vo = -(rp.vx * mzSoft.ux + rp.vy * mzSoft.uy), want = Math.min(ROLL_MAX, mzSoft.vin * MZ_SPRING_E);
         if (vo < want) { rp.vx -= (want - vo) * mzSoft.ux; rp.vy -= (want - vo) * mzSoft.uy; mzSpring.boosts++; }
       }
-      if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8)); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
+      if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now()); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
       mzSoft.on = false; mzSoft.vin = 0;
     }
     rp.x = nx; rp.y = ny;

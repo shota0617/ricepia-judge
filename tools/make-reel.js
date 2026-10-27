@@ -46,7 +46,9 @@ async function endCard(page) {
   const srv = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 3, timezoneId: 'Asia/Tokyo', locale: 'ja-JP' });
-  await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_howto', '1'); localStorage.setItem('nsg_noanalytics', '1'); });
+  await ctx.addInitScript(() => { localStorage.setItem('nsg_view', 'px'); localStorage.setItem('nsg_auto', 'false'); localStorage.setItem('nsg_world_on', '0'); localStorage.setItem('nsg_bgm', 'false'); localStorage.setItem('nsg_howto', '1'); localStorage.setItem('nsg_noanalytics', '1');
+    setInterval(() => { if (window.NISHIO_MOVIE && NISHIO_MOVIE.playing) NISHIO_MOVIE.close(); }, 150);   // 名所の ドット絵ムービーは すぐ とじる（撮る まぎわに 流れはじめて めいろの 画面を ふさいだ 2026-10-27）
+  });
   const page = await ctx.newPage();
   page.on('pageerror', e => console.log('pageerror:', e.message));
   if (process.env.LEAFLET_DIR) await page.route('https://unpkg.com/**', r => {

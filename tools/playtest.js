@@ -782,15 +782,22 @@ async function walkTo(page, id) {
       const out = [];
       for (const v of [5, 8]) {
         P.rollPut(c.x * K + 0.6, c.y * K + 1.5, v, 0);
-        let pen = 0, back = 0;
-        for (let i = 0; i < 50; i++) { await sleep(20); const s = M.soft(); if (s.on) pen = Math.max(pen, s.pen); back = Math.min(back, P.roll.vx); }
+        let pen = 0, back = 0, dent = 0, show = 0, prev = null;
+        const b0 = M.soft().boings || 0, tEnd = performance.now() + 1000;
+        while (performance.now() < tEnd) {   // 描く こまごとに 見る。show：へこみの 絵が 0.12マスより 深い 時間（目に 見える 間）。こまの 間は、その はじめの こまの ようすで 数える（遅い 画面で、見る 前の 待ち時間を いまの ようすに 数えない。Codex の 指摘）
+          await new Promise(f => requestAnimationFrame(f));
+          const s = M.soft(), t2 = performance.now();
+          if (s.on) pen = Math.max(pen, s.pen); back = Math.min(back, P.roll.vx); dent = Math.max(dent, s.dent);
+          if (prev && prev.vis) show += t2 - prev.t;
+          prev = { t: t2, vis: s.dent > 0.12 };
+        }
         await sleep(1200);
-        out.push({ v, pen: +pen.toFixed(3), e: +(-back / v).toFixed(2), stuck: !!(M.soft().on && Math.hypot(P.roll.vx, P.roll.vy) < 0.05), same: Math.floor(P.roll.x / K) <= c.x });   // 右の さかいを 通りぬけていない（はね返って 左へ 出るのは よい）
+        out.push({ v, pen: +pen.toFixed(3), e: +(-back / v).toFixed(2), dent: +dent.toFixed(2), show: Math.round(show), boing: (M.soft().boings || 0) - b0, settled: M.soft().dv === 0, stuck: !!(M.soft().on && Math.hypot(P.roll.vx, P.roll.vy) < 0.05), same: Math.floor(P.roll.x / K) <= c.x });   // 右の さかいを 通りぬけていない（はね返って 左へ 出るのは よい）
       }
       return { cell: [c.x, c.y], out };
     });
     await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ...r, ok: !!r.skipped || r.out.every(o => o.pen > 0 && o.pen <= 0.41 && o.e >= 0.2 && !o.stuck && o.same) };
+    return { ...r, ok: !!r.skipped || (r.out.every(o => o.pen > 0 && o.pen <= 0.41 && o.e >= 0.2 && !o.stuck && o.same && o.boing >= 1 && o.settled) && r.out[r.out.length - 1].show >= 200) };   // のびた へこみが 0.2秒 以上 見え（これまでは 0.1秒 たらずで もどり、お米の 絵に かくれて 見えなかった）、はなれると ぽよん
   })();
   // ころころコンボ（クセになる 転がり方）：かべに 当たらずに 転がりつづけると コトンの たびに 数が ふえ、当たるか 止まると 0 に もどる
   R.checks.rollCombo = await (async () => {
@@ -1510,6 +1517,18 @@ async function walkTo(page, id) {
       };
     });
     // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
+    // 人から はなれて、さいごに 話した 人を わすれさせる（テストの 道具）：4マス 先の 点に 置き、マスが かわるまで 人の ほうへ ゆっくり 転がして 止める
+    // （置いて 0.2秒 転がす だけでは マスの さかいを こえない ことが あり、ゲームは マスが かわった ときに わすれるので、わすれなかった：駅前の学生で 落ちた）
+    await w.page.evaluate(() => {
+      window.__mzForget = async L => {
+        const P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms));
+        P.rollPut(L.far.x, L.far.y, 0, 0); await wait(150);
+        const k0 = Math.floor(L.far.x) + ',' + Math.floor(L.far.y);
+        P.rollPut(L.far.x, L.far.y, L.dFar.x * 3, L.dFar.y * 3);
+        for (let i = 0; i < 12; i++) { await wait(50); const r = P.roll; if (Math.floor(r.x) + ',' + Math.floor(r.y) !== k0) break; }
+        await wait(50); const r = P.roll; P.rollPut(r.x, r.y, 0, 0); await wait(100);
+      };
+    });
     const bumpA = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
       // 転がる とちゅうで ごほうび・イベントの 窓が 出たら（名所の そばに 立つ 人：近づく とちゅうで 名所に 着いて ごほうびが 出て、お米が 止まった）、とじて もう一度
@@ -1568,9 +1587,9 @@ async function walkTo(page, id) {
       let tried = 0;
       for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500)) {
         for (const L of lanes(n)) {
-          pi.hidden = true; tried++;
+          pi.hidden = true; tried++; await wait(200);   // 前の 話を とじた あとの「次の 行き先へ 押す」が 当てる 瞬間に かさならない ように（ガイドさんに とどかず、ときどき 落ちた）
           const push = async () => { await rollTo(L.near, L.dNear, 4, 800, () => !pi.hidden); return !pi.hidden && pi.textContent.includes(n.name); };
-          const leave = async () => { await unblockW(); P.rollPut(L.far.x, L.far.y, 0, 0); await wait(300); P.rollPut(L.far.x, L.far.y, L.dFar.x * 3, L.dFar.y * 3); await wait(200); };   // 4マス はなれて もどりかける（さいごに 話した 人を わすれる）
+          const leave = async () => { await unblockW(); await window.__mzForget(L); };   // 4マス はなれて もどりかける（さいごに 話した 人を わすれる）
           const first = await push();
           if (!first) continue;
           pi.hidden = true; await wait(200);
@@ -1661,7 +1680,7 @@ async function walkTo(page, id) {
       };
       // reroute：話で 次の ゴールが 決まった あと、動く 前に 行き先を また かえる（その ときは あいさつ ずみを 次の 次の ゴールへ もちこさない＝はなれて もどれば また 話せる）
       const once = async (n, L, reroute) => {
-        await unblockW(); P.rollPut(L.far.x, L.far.y, -L.dFar.x * 2, -L.dFar.y * 2); await wait(600);   // はなれる ほうへ 転がす（前の 確かめの こつんを 忘れさせる。rollPut は マスを かえた あつかいに ならない）
+        await unblockW(); await window.__mzForget(L);   // はなれて 前の 確かめの こつんを 忘れさせる（rollPut は マスを かえた あつかいに ならない）
         G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
         for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
         const arrived = await rollTo(L.near, L.dNear, 0, 4000, () => talking(n));   // ゴールの 人の そばに 着く（こつんでは なく、着いて 話す）
@@ -1679,10 +1698,10 @@ async function walkTo(page, id) {
           again = await rollTo(L.near, L.dNear, 4, 600, () => talking(n));   // そのまま そばから 当たる
           pi.hidden = true;
         }
-        await unblockW(); P.rollPut(L.far.x, L.far.y, 0, 0); await wait(300);   // 4マス はなれて もどる（道すじに そって 人まで とどく 速さで）
+        await unblockW(); await window.__mzForget(L);   // 4マス はなれて（マスを かえて）さいごに 話した 人を わすれる
         let minD = 99;
         const tn = P.npcTile(n);
-        const back = await rollTo(L.far, L.dFar, 8, 2000, () => { const r = P.roll; minD = Math.min(minD, Math.hypot(r.x - tn.x - 0.5, r.y - tn.y - 0.5)); return talking(n); });
+        const back = await rollTo(L.near, L.dNear, 4, 1500, () => { const r = P.roll; minD = Math.min(minD, Math.hypot(r.x - tn.x - 0.5, r.y - tn.y - 0.5)); return talking(n); });   // そばの 点から もどる（4マス 先から 転がすと、曲がる 道では とちゅうで いきおいが なくなり、人の 2マス 手前で 止まった：駅前の学生）
         pi.hidden = true; G.setGuide(null);
         return { arrived, moved, other, again, back, minD: +minD.toFixed(2) };
       };
@@ -2090,6 +2109,24 @@ async function walkTo(page, id) {
   await browser.close(); server.close();
   // ゴールの 戸の 道さがし（mzGateTry を 小さな 格子で）：戸 4つの 近い 道と、戸 3つで 8歩の 道が ある とき、上限（戸 3つ・歩数 まっすぐの 2倍＋4）以内の 道で 戸を あける
   // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸 4つの 道が えらばれて 上限で はねられ、戸が ひらかなかった。Codex の 指摘）
+  // やわらかい 生け垣の へこみの ばね（mzDentStep を 取りだして）：軽く 押しつけて おさまった あと はなれると、へこみは 0 に もどる・押しつけて いる 間は 小さな ゆらぎで 動かない
+  // （0.02マスの 遊びを はなれた ときにも かけると、小さな へこみが のこって 生け垣が もどらなかった。Codex の 指摘）
+  R.checks.mzDentBack = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), i = src.indexOf('function mzDentStep'), j = src.indexOf('\nfunction ', i + 10);
+    if (i < 0 || j < 0) return { ok: false, why: 'no-func' };
+    const soft = { on: true, pen: 0.1, dent: 0, dv: 0 };
+    const env = { mzSoft: soft, mazeOn: () => true, MZ_SOFT_MAX: 0.4, MZ_DENT_K: Number((src.match(/MZ_DENT_K = ([\d.]+)/) || [])[1]), MZ_DENT_C: Number((src.match(/MZ_DENT_C = ([\d.]+)/) || [])[1]) };
+    try {
+      const step = new Function(...Object.keys(env), src.slice(i, j) + '; return mzDentStep;')(...Object.values(env));
+      for (let k = 0; k < 180; k++) step(1 / 60);   // 強く 押しつけて（へこみ 0.2マス）
+      soft.pen = 0.008; for (let k = 0; k < 600; k++) step(1 / 60);   // 軽く 押しつけた まま 10秒（へこみ 0.016マスで おさまる）
+      const held = { dent: +soft.dent.toFixed(3), dv: soft.dv };
+      let moved = 0; for (let k = 0; k < 120; k++) { soft.pen = 0.008 + (k % 2) * 0.001; const d0 = soft.dent; step(1 / 60); if (soft.dent !== d0) moved++; }   // 押しつけた ままの 小さな ゆらぎ
+      soft.on = false; for (let k = 0; k < 600; k++) step(1 / 60);   // はなれて 10秒
+      const off = { dent: +soft.dent.toFixed(3), dv: soft.dv };
+      return { held, moved, off, ok: held.dv === 0 && moved === 0 && off.dent <= 0.01 && off.dv === 0 };
+    } catch (e) { return { ok: false, err: String(e) }; }
+  })();
   R.checks.mzGateSearch = (() => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), i = src.indexOf('function mzGateKey'), j = src.indexOf('function mzBlocked', i);
     if (i < 0 || j < 0) return { ok: false, why: 'no-func' };
@@ -2119,6 +2156,7 @@ async function walkTo(page, id) {
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
   need(c.mzGoalGate && c.mzGoalGate.ok, `ゴールの すぐ そばなのに 道のりが とても 長い 所で、生け垣の 戸が ひらかない（${JSON.stringify(c.mzGoalGate)}）`);
+  need(c.mzDentBack && c.mzDentBack.ok, `やわらかい 生け垣：はなれても 小さな へこみが のこる・押しつけた ままの ゆらぎで へこみが 動きつづける（${JSON.stringify(c.mzDentBack)}）`);
   need(c.mzGateSearch && c.mzGateSearch.ok, `ゴールの 戸の 道さがしが、上限 以内の 道を 見のがす（${JSON.stringify(c.mzGateSearch)}）`);
   need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
@@ -2168,7 +2206,7 @@ async function walkTo(page, id) {
   need(c.rollVert && c.rollVert.ok, `たての 転がり方：上・下へ 転がっても でんぐりがえし しない（${JSON.stringify(c.rollVert)}）`);
   need(c.cornerAssist && c.cornerAssist.ok, `曲がり角アシスト：めいろの 曲がり角で、横に ずれていると 曲がれない（${JSON.stringify(c.cornerAssist)}）`);
   need(c.yuruMeiro && c.yuruMeiro.ok, `ゆるい めいろ：次の 向きだけ 押すと 筒から はみ出す・角で 止まって 進めない（${JSON.stringify(c.yuruMeiro)}）`);
-  need(c.yuruSoft && c.yuruSoft.ok, `やわらかい 生け垣：当たっても のびない・はね返らない・へこみの 奥で 固まる・通りぬける（${JSON.stringify(c.yuruSoft)}）`);
+  need(c.yuruSoft && c.yuruSoft.ok, `やわらかい 生け垣：当たっても のびない・のびた ことが 見えない・へこみの ゆれが おさまらない・ぽよんと 鳴らない・はね返らない・へこみの 奥で 固まる・通りぬける（${JSON.stringify(c.yuruSoft)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
   need(c.speedLines && c.speedLines.ok, `スピード線：速くても 出ない／おそく なっても 消えない（${JSON.stringify(c.speedLines)}）`);

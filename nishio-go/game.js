@@ -2644,6 +2644,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
       continue;
     }
     if (l.startsWith('🧭')) continue;   // 「つぎは〜へ」は下の案内に出ている
+    if (l.startsWith('🍚 来店スタンプ')) { const n = (l.match(/(\d+)こめ/) || [])[1]; if (n) out.push(`<span title="${esc(l)}">${PIA('bowl', l)}${n}こめ</span>`); continue; }   // 当店の 来店スタンプ：何こめか（数の ない 茶わんの 札だけ だった）
     const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
     if (ic === 'book') book = true;
     const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
@@ -2651,6 +2652,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
     if (hero && ic === 'card' && !shown) { shown = true; continue; }
     if (hero && ic !== 'card' && v === `+${total}`) continue;
+    if (!v && (ic === 'flag' || ic === 'bowl')) continue;   // 数も しるしも ない 旗・茶わんの 札は 出さない（何の 札か 分からず、ならぶ だけ だった：当店の「ありがとう」「LINE でも たまります」）
     out.push(`<span title="${esc(l)}">${PIA(ic, l)}${v}</span>`);
   }
   return `<div class="chips">${out.join('')}</div>`;
@@ -2700,6 +2702,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
         ${rewardChips(lines, fact, total, true)}
         ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`
       : `<div class="rw${shareKind ? ' long' : ''}"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
+        ${lines.some(l => l.startsWith('🍚 当店に来てくれて')) ? '<div class="thanks">来てくれて ありがとう！</div>' : ''}
         ${rewardChips(lines, fact)}
         ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);

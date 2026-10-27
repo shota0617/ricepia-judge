@@ -1147,7 +1147,7 @@ function shopOpen(s, t = Date.now()) {   // 当店の いま営業中か（spots
 function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店スタンプ・LINE の常連さまポイント
   const h = s.hours, o = shopOpen(s), n = (S.shopDays || []).length;
   return `<div class="shop-info">
-    ${h ? `<p>🕘 ${esc(h.open)}〜${esc(h.close)}（${(h.closed || []).length ? (h.closed || []).map(w => WEEK[w]).join('・') + '曜休み' : '年中無休'}）　<b class="${o.open ? 'open' : 'shut'}">${esc(o.text)}</b></p>` : ''}
+    ${h ? `<p>🕘 ${esc(h.open)}〜${esc(h.close)}（${(h.closed || []).length ? (h.closed || []).map(w => WEEK[w]).join('・') + '曜休み' : '年中無休'}）　<b class="${o.open ? 'open' : 'shut'}">${esc(o.text)}</b><br><small>年末年始などは 営業日・時間が かわることが あります（くわしくは お電話で）</small></p>` : ''}
     ${s.tel ? `<p>📞 <a href="tel:${esc(s.tel.replace(/-/g, ''))}">${esc(s.tel)}</a>${n ? `　🍚 来店スタンプ ${n}こ` : ''}</p>` : ''}
     <p class="shop-line">📱 <b>常連さまポイント</b>：お店で1日1回の来店で+1pt、10ptで100円引き（LINE の友だち登録から）<br>
       <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;
@@ -2264,7 +2264,8 @@ function refreshNearby() {
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
   // めぐりの れんさ：つながっている間は、文字を少なく（ふだん）でも のこり時間を出す（次の名所に間に合うか分かるように）
-  const cl = chainLeft(), h1 = dayState().h100, chain = [cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} ${S.chain.n >= 2 ? `れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : `のこり${Math.ceil(cl / 60000)}分で 次の名所 → れんさ`}` : '',   // 1か所目は まだ つながっていないので「次の名所で れんさ」
+  // 文字を少なく（ふだん）では、れんさは つながって いる（2か所 いじょう）ときだけ。1か所目の「のこり22分で 次の名所 → れんさ」は 小さい 字が ふえるので 出さない（運営者の声「大きい文字シンプルに」2026-10-27）
+  const cl0 = chainLeft(), cl = cl0 && (S.chain.n >= 2 || !simple()) ? cl0 : 0, h1 = dayState().h100, chain = [cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} ${S.chain.n >= 2 ? `れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : `のこり${Math.ceil(cl / 60000)}分で 次の名所 → れんさ`}` : '',   // 1か所目は まだ つながっていないので「次の名所で れんさ」
     h1 && !h1.done ? `${simple() ? PIA('feet', '100歩たんけん') : '👣'} たんけん <b>${h1.steps}</b>/100` : ''].filter(Boolean).join('　');   // 100歩たんけんの とちゅうも（何歩目か）
   if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {

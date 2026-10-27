@@ -2908,8 +2908,9 @@ const FENCE = (() => {
 // ゲームでは 畦の上に 赤いテープを巻いた竹を立てる（4 つの畦に 2 本ずつ。出入口の坂にかかる所は立てない。田んぼアートは白線があるので出さない）
 const MARKS = (() => {
   if (ART_ID) return { step() {}, L: 0 };
-  const W3 = 3 * TILL_W, LZ = HZ - W3, LX = HX - W3, D = 0.5, Y = SHIRO ? -0.07 + 0.3 : 0.3;   // 畦の上（田んぼのふちから 0.5m・高さ 30cm）
-  const spots = [[-(HX + D), LZ], [-(HX + D), -LZ], [HX + D, LZ], [HX + D, -LZ], [LX, HZ + D], [-LX, HZ + D], [LX, -(HZ + D)], [-LX, -(HZ + D)]]
+  const W3 = 3 * TILL_W, LZ = HZ - W3, LX = HX - W3, D = 0.5, DE = 0.72, Y = SHIRO ? -0.07 + 0.3 : 0.3;   // 畦の上（田んぼのふちから 0.5m・高さ 30cm。上の平らな所は 0.33〜0.77m）
+  // 東は 畦の上（0.5m）に 秋の電気柵が通り、田んぼがわ（0.35m）に 給水栓の箱があるので、平らな所の 外がわ（0.72m）に寄せて 柵から 22cm はなす
+  const spots = [[-(HX + D), LZ], [-(HX + D), -LZ], [HX + DE, LZ], [HX + DE, -LZ], [LX, HZ + D], [-LX, HZ + D], [LX, -(HZ + D)], [-LX, -(HZ + D)]]
     .filter(([x, z]) => !(x > 12 && z > 17.6 && z < 22.4));   // 出入口の坂
   const pole = new THREE.CylinderGeometry(0.01, 0.013, 1.1, 6); pole.translate(0, 0.55, 0);
   const tape = new THREE.PlaneGeometry(0.05, 0.22); tape.translate(0, -0.11, 0);
@@ -2919,23 +2920,28 @@ const MARKS = (() => {
     const p = new THREE.Mesh(pole, poleM); p.position.set(x, Y, z); p.castShadow = true; scene.add(p);
     const t = new THREE.Mesh(tape, tapeM); t.position.set(x, Y + 1.04, z); t.rotation.y = Math.random() * 6.28; scene.add(t); tapes.push(t);   // 竹の先の ビニールテープ
   }
-  let was = false, told = false, tt = 0, pend = false;
+  const MSG = '👍 畦の上の 赤い目印の所で 上げた。まわりに 外周 3 周分（耕幅の 3 倍）が残るので、最後に 回って仕上げる';
+  let was = false, told = false, tt = 0, pend = false, chk = false, tries = 0;
   function step(dt) {
     tt += dt;
     for (let k = 0; k < tapes.length; k++) { const t = tapes[k]; t.rotation.z = 0.35 + 0.25 * Math.sin(tt * 3.1 + k * 1.7); t.rotation.y += dt * 0.6 * Math.sin(tt * 0.7 + k); }   // 風に ゆれる
-    const down = S.rotDown;
-    if (was && !down && !told && Math.abs(S.v) > 0.1) {   // 走りながら上げた所が 目印の線の近く（まん中の往復の 折り返し）
-      const rx = S.x + ROTARY_Z * Math.sin(S.yaw), rz = S.z + ROTARY_Z * Math.cos(S.yaw);
-      if ((Math.abs(Math.abs(rz) - LZ) < 1 && Math.abs(rx) < LX + 0.5) || (Math.abs(Math.abs(rx) - LX) < 1 && Math.abs(rz) < LZ + 0.5)) {
+    const work = S.rotDown && S.rotPos < 0.08;     // 耕している（作業機が下がりきっている）
+    if (was && !S.rotDown && !told && S.v > 0.1) {  // 耕しながら前へ走っていて 上げた所が 目印の線の近く（まん中の往復の 折り返し）
+      const sn = Math.sin(S.yaw), cs = Math.cos(S.yaw), rx = S.x + ROTARY_Z * sn, rz = S.z + ROTARY_Z * cs;
+      if ((Math.abs(Math.abs(rz) - LZ) < 1 && Math.abs(rx) < LX + 0.5 && Math.abs(cs) > 0.8 && Math.sign(rz) * cs > 0) ||   // 南北に往復して 北か南の目印へ向かっていた
+          (Math.abs(Math.abs(rx) - LX) < 1 && Math.abs(rz) < LZ + 0.5 && Math.abs(sn) > 0.8 && Math.sign(rx) * sn > 0)) {   // 東西に往復して 東か西の目印へ向かっていた
         told = pend = true;
       }
     }
     if (pend && toastT <= 0) {                      // ほかの知らせ（終着のくぼみなど）が 消えてから
-      pend = false;
-      toast('👍 畦の上の 赤い目印の所で 上げた。まわりに 外周 3 周分（耕幅の 3 倍）が残るので、最後に 回って仕上げる', 5);
-      setTimeout(() => voice('mejirushi'), 5200);
+      pend = false; chk = true;
+      toast(MSG, 5);
     }
-    was = down;
+    if (chk) {                                      // 出したあと 1.2 秒 そのまま見えていたら 出せたことにする（上書きされたら 3 回まで 出しなおす）
+      if ($('toast').textContent !== MSG) { chk = false; if (++tries < 3) pend = true; }
+      else if (toastT <= 5 - 1.2) { chk = false; voice('mejirushi'); }
+    }
+    was = work;
   }
   return { step, L: LZ, spots };
 })();

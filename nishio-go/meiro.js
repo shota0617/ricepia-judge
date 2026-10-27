@@ -561,9 +561,10 @@ function step(dt) {
       if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
       g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
     } else {
-      if (sf.on && g.spring.left > 0 && sf.vin > 0.5) {   // ばねの わざ：はなれる ときに 外へ 押しだす（当たった 速さの SPRING_E 倍まで）
+      if (sf.on && g.spring.left > 0 && sf.vin > 1.5) {   // ばねの わざ：はなれる ときに 外へ 押しだす（当たった 速さの SPRING_E 倍まで）。ぽよんと 鳴る ほどの 当たりだけ（カーブに こすれる たびに 押すと ピンボールの ように あばれて 穴に おちた）
         const vo = -(g.vx * sf.ux + g.vy * sf.uy), want = Math.min(MAX, sf.vin * SPRING_E);
         if (vo < want) { g.vx -= (want - vo) * sf.ux; g.vy -= (want - vo) * sf.uy; g.spring.boosts++; }
+        const v = Math.hypot(g.vx, g.vy); if (v > MAX) { g.vx *= MAX / v; g.vy *= MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
       if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8), g.spring.left > 0); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
@@ -731,8 +732,8 @@ function draw(now) {
     x.fillStyle = '#fff6c0'; x.beginPath(); x.ellipse(cx - rw * 0.35, cy - rh * 0.35, rw * 0.3, rh * 0.3, 0.35, 0, Math.PI * 2); x.fill();
   }
   if (b.spring >= 0 && g.spring && !g.spring.got) {   // ばね（地図の めいろと 同じ：緑の わと のびちぢみ する 銀の ぎざぎざ）
-    const cx = (b.spring % b.tw + 0.5) * T, cy = (((b.spring / b.tw) | 0) + 0.5) * T, q = Math.max(1, Math.round(T / 24)), h = T * (0.36 + Math.sin(now / 140) * 0.08), bw = T * 0.3, y0 = cy + T * 0.22;
-    x.fillStyle = 'rgba(140,240,120,.45)'; x.beginPath(); x.arc(cx, cy, T * (0.36 + Math.sin(now / 220) * 0.03), 0, Math.PI * 2); x.fill();
+    const cx = (b.spring % b.tw + 0.5) * T, cy = (((b.spring / b.tw) | 0) + 0.5) * T, q = Math.max(1, Math.round(T / 20)), h = T * (0.5 + Math.sin(now / 140) * 0.1), bw = T * 0.44, y0 = cy + T * 0.3;   // 盤の マスは 小さいので マスいっぱいに
+    x.fillStyle = 'rgba(140,240,120,.45)'; x.beginPath(); x.arc(cx, cy, T * (0.5 + Math.sin(now / 220) * 0.04), 0, Math.PI * 2); x.fill(); x.lineWidth = Math.max(2, q * 2); x.strokeStyle = '#8cf078'; x.stroke();
     x.fillStyle = '#1a1a1a'; x.fillRect(Math.round(cx - bw / 2) - q, Math.round(y0) - q, Math.round(bw) + 2 * q, 3 * q); x.fillRect(Math.round(cx - bw / 2) - q, Math.round(y0 - h) - 2 * q, Math.round(bw) + 2 * q, 3 * q);
     x.lineWidth = Math.max(2, q * 2); x.lineJoin = 'miter'; x.strokeStyle = '#1a1a1a'; x.beginPath();
     for (let i = 0; i <= 6; i++) { const px = cx + (i % 2 ? bw / 2 : -bw / 2) * 0.8, py = y0 - (h * i) / 6; i ? x.lineTo(px, py) : x.moveTo(px, py); }

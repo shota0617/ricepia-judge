@@ -8324,9 +8324,10 @@ function rollStep(dt) {
       if (over > MZ_SOFT_MAX) { nx = q.x + ux * (MZ_TUBE + MZ_SOFT_MAX); ny = q.y + uy * (MZ_TUBE + MZ_SOFT_MAX); if (vn2 > 0) vn2 = 0; }   // それより 先へは のびない（通りぬけない）
       rp.vx = vtx * f + vn2 * ux; rp.vy = vty * f + vn2 * uy;
     } else {
-      if (mzSoft.on && mzSpring.until > performance.now() && mzSoft.vin > 0.5) {   // ばねの わざ：はなれる ときに 外へ 押しだす（当たった 速さの MZ_SPRING_E 倍まで）
+      if (mzSoft.on && mzSpring.until > performance.now() && mzSoft.vin > 1.5) {   // ばねの わざ：はなれる ときに 外へ 押しだす（当たった 速さの MZ_SPRING_E 倍まで）。ぽよんと 鳴る ほどの 当たりだけ（カーブに こすれる たびに 押すと あばれる）
         const vo = -(rp.vx * mzSoft.ux + rp.vy * mzSoft.uy), want = Math.min(ROLL_MAX, mzSoft.vin * MZ_SPRING_E);
         if (vo < want) { rp.vx -= (want - vo) * mzSoft.ux; rp.vy -= (want - vo) * mzSoft.uy; mzSpring.boosts++; }
+        const v = Math.hypot(rp.vx, rp.vy); if (v > ROLL_MAX) { rp.vx *= ROLL_MAX / v; rp.vy *= ROLL_MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
       if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now()); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
       mzSoft.on = false; mzSoft.vin = 0;

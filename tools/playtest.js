@@ -2186,6 +2186,33 @@ async function walkTo(page, id) {
       }
       return { maze, seen, over, after, off, paused, ok: maze && !over && after && paused !== false };
     });
+    // 「🏁 つぎの ゴール」の 札（3秒）に 縁の 矢印の「🏁 2.0km」が かぶらない（重なる 間は 道のりの 札を 描かない。自分で 遊んで 分かった：360×640 で 札の 名前の 行に かぶった）
+    R.checks.nextGoalLabel = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 360, height: 640 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d');
+        document.getElementById('pxInfo').hidden = true;
+        const mPer = (a, b) => [(b.lng - a.lng) * 111320 * Math.cos(a.lat * Math.PI / 180), (b.lat - a.lat) * 110540];
+        const g = G.spots.filter(x => x.lat && !x.shop && G.dist(G.me, x) > 1000 && G.dist(G.me, x) < 3000).map(x => { const [e, n] = mPer(G.me, x); return { x, e, n }; }).filter(o => o.e < 0 && o.n > 0).sort((a, b) => Math.abs(a.n / -a.e - 0.46) - Math.abs(b.n / -b.e - 0.46))[0];   // 西北西：縁の 矢印が 札の 高さに 出る
+        if (!g) return { spot: 'none' };
+        G.setGuide({ kind: 'spot', id: g.x.id, name: g.x.name, why: 'テスト', by: 'テスト' });
+        const keep = { fr: ctx.fillRect, ft: ctx.fillText };
+        let box = null, texts = [], frames = 0, hits = 0;
+        ctx.fillRect = function (x, y, w0, h0) { if (/^rgba\(10, 20, 30, 0\.62\)$/.test(String(this.fillStyle))) box = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
+        ctx.fillText = function (t, x, y) { if (/^\d+(\.\d)?(km|m)$/.test(t)) texts.push([x, y]); return keep.ft.apply(this, arguments); };
+        for (let i = 0; i < 40; i++) {   // 札の 3秒の 間（と 道のりを 待つ 間）、こまごとに 見る
+          box = null; texts = [];
+          await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+          if (box) { frames++; if (texts.some(([x, y]) => x > box[0] && x < box[2] && y > box[1] && y < box[3])) hits++; }
+          await wait(80);
+        }
+        ctx.fillRect = keep.fr; ctx.fillText = keep.ft;
+        return { name: g.x.name, frames, hits };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.frames > 0 && r.hits === 0 };
+    })();
     // めいろの 縁の 矢印と 道のりの 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）
     R.checks.mzEdgeToast = await (async () => {
       const vp = w.page.viewportSize();
@@ -2604,6 +2631,7 @@ async function walkTo(page, id) {
   need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
   need(c.shareToast && c.shareToast.ok, `シェアの 窓の 上に 知らせが 重なる（${JSON.stringify(c.shareToast)}）`);
   need(c.playMore320 && c.playMore320.ok, `320px の「めいろ、どうだった？」の ひとことの 欄が 切れる（${JSON.stringify(c.playMore320)}）`);
+  need(c.nextGoalLabel && c.nextGoalLabel.ok, `「つぎの ゴール」の 札に 縁の 矢印の 道のりが かぶる（${JSON.stringify(c.nextGoalLabel)}）`);
   need(c.mzEdgeToast && c.mzEdgeToast.ok, `めいろの 縁の 矢印の 札に 知らせが 重なる（${JSON.stringify(c.mzEdgeToast)}）`);
   need(c.nextGoalToast && c.nextGoalToast.ok, `めいろの「つぎの ゴール」の 札に 知らせが 重なる（${JSON.stringify(c.nextGoalToast)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);

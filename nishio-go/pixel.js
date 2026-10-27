@@ -7735,6 +7735,7 @@ function drawMzNext(w, cy, U, now) {
   const bw = Math.min(w - U, Math.max(...lines.map(([t, sz]) => { ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; return ctx.measureText(t).width; })) + U * 1.2);
   const bh = lines.reduce((s, l) => s + l[1] * 1.35, 0) + U * 0.5;
   ctx.fillRect(Math.round(w / 2 - bw / 2), Math.round(y - lines[0][1] * 0.9), Math.round(bw), Math.round(bh));
+  mzNext.box = [w / 2 - bw / 2, y - lines[0][1] * 0.9, w / 2 + bw / 2, y - lines[0][1] * 0.9 + bh]; mzNext.at = now;   // 縁の 矢印の 道のりの 札が これに 重なる ときは 描かない（drawMzGoal）
   for (const [t, sz, col] of lines) {
     ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sz / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = col;
     let tt = t; while (ctx.measureText(tt).width > w - U * 2 && tt.length > 2) tt = tt.slice(0, -2) + '…';   // 長い 名前は 「…」
@@ -7803,11 +7804,17 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   ctx.fillStyle = '#ffd54f'; dart(0.9, 0.36, 0.55, 0.02);
   ctx.restore();
   const bx = qx - Math.cos(a) * U * 1.5, by = qy - Math.sin(a) * U * 1.5;   // 矢印の 内がわに 🏁 と 道のり
-  flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
-  label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
+  // 「🏁 つぎの ゴール」の 札（同じ こまで 先に 描く）に 重なる 間は 🏁 と 道のりを 描かない（札にも「めいろで 2.0km」が ある。
+  // 自分で 遊んで 分かった：360×640 で 縁の「2.0km」と 旗が 札の 名前の 行に かぶって 読めなかった）。矢印は 残す（向きは 分かる）
+  const nb = mzNext.at === now && mzNext.box, labHide = !!nb && bx - U * 1.2 < nb[2] && bx + U * 2.2 > nb[0] && by - U * 1.0 < nb[3] && by + U * 1.0 > nb[1];
+  mzNext.labHide = labHide;
+  if (!labHide) {
+    flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
+    label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
+  }
   if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは めいろ図を 出さない
   mzMap.far = !!G.me && G.dist(G.me, gt) > MZ_FAR_MAP;
-  if (!mzMap.tapped) label(mzMap.far ? '🌏 タップ' : '🗺 タップ', bx, by + U * 0.7, Math.round(U * 0.36), '#bfefff');   // 矢印を タップすると めいろ図（遠い ゴールは せかいちず）。1回 タップしたら もう 出さない（小さい 字を へらす）
+  if (!mzMap.tapped && !labHide) label(mzMap.far ? '🌏 タップ' : '🗺 タップ', bx, by + U * 0.7, Math.round(U * 0.36), '#bfefff');   // 矢印を タップすると めいろ図（遠い ゴールは せかいちず）。1回 タップしたら もう 出さない（小さい 字を へらす）
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
 // ゴールまでの めいろ図：運営者の声「ゴールをわかりやすく」。地図を 小さく しても ゴールは 画面の 外（めいろで 2km など）なので、

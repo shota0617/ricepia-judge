@@ -6895,7 +6895,7 @@ function frame(now) {
   HEAPS.flush(dt);
   TURBID.update(dt);
   RIPPLE.update(dt);
-  FROGS.update(dt); USHI.update(dt); AMENBO.update(dt);
+  FROGS.update(dt); USHI.update(running ? dt : 0); AMENBO.update(dt);   // ウシガエルは 止めているあいだ（操作の表など）は 進めない
   GOSSAMER.update(dt);
   MIST.update(dt);
   FROST.update(dt * SPEEDUP);

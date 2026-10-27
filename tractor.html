@@ -320,6 +320,7 @@
       ・耕す前に 5.5m のメジャーを用意して、耕運幅の 3 倍の所に 目印を付け、その内側から耕す。耕運は かならず少し重ねるので、その分も見て 目印の所を決める…<a href="https://brassica.exblog.jp/33215863/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「耕運実際編」</a>（ゲームでは 畦の上に 赤いテープを巻いた竹を立てた。耕幅の 3 倍の所。お題のときは 白線があるので 出さない）<br>
       ・トラクターで田んぼへ行くときは、17mm のスパナと 予備の爪ボルトを かならず持っていく…<a href="https://brassica.exblog.jp/32544623/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「いよいよ田んぼへ」</a>（ゲームでは 秋に はじめの点検をしないと、耕しているうちに 爪が 1 本 取れて 細い耕し残しの すじができる。止まって 上げると 予備の爪を付ける。3 分）<br>
       ・トラクターで耕していたら、ウシガエルを 起こしてしまったようです…<a href="https://ameblo.jp/iko228-yamaha/entry-12891527997.html" target="_blank" rel="noopener">ikoのブログ「田んぼ トラクター」</a>（ゲームでは 春に耕していると、ロータリーのうしろの 耕した土から 冬眠していた ウシガエルが 出てきて、のそのそと 畦のほうへ はねていく。2 ひきまで）<br>
+      ・トラクターで耕していると いつものカラスが来て、近ごろは モズも来る。切り株のあいだを 小さな鳥が走り、止まると うずくまって 見えにくい。トラクターを降りて近づくと 走って 草むらへ 飛んでいった。野生のウズラは はじめて見た…<a href="https://ameblo.jp/iko228-yamaha/entry-12730524373.html" target="_blank" rel="noopener">ikoのブログ「珍しい野生の鳥がいたー 田んぼ耕し！」</a>（ゲームでは 春と秋の昼、半分の日に 1 羽が 耕している先の 切り株のあいだに ひそんでいる。トラクターが近づくと 株の列のあいだを 走って逃げ、止まると うずくまる。すぐそばまで来ると 低く飛んで 畦の草むらへ。ウズラは 環境省のレッドリストで 絶滅危惧Ⅱ類：<a href="https://www.env.go.jp/nature/choju/docs/docs5/docs5-uzura.pdf" target="_blank" rel="noopener">環境省の資料</a>）<br>
       ・春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮き、レーキで埋めようとしても沈まず 田植えに失敗した。その後は 7〜10cm 起こし、代かきを 2 回にした…<a href="https://komeya4th.exblog.jp/28361023/" target="_blank" rel="noopener">米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」</a>（ゲームでは 代かきで 浮き藁が畦ぎわに たくさん寄ると出る）<br>
       ・速く進めば早く終わると思っていたが、自分の田んぼと機械では、速いと 爪が土を十分にまぜられず 浅い耕しになった。ゆっくり進むほど 土が細かくなり、草やワラが むらなく まざる…<a href="https://happy-ricefarm.com/%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E8%80%95%E3%81%97%E3%81%A8%E5%AD%A6%E3%82%93%E3%81%A0%E3%82%B3%E3%83%84/" target="_blank" rel="noopener">happy-ricefarm（ブログ）「初めてのトラクター耕し」</a>（ゲームでは 主変速を 4 速に上げると出る。ゲームの耕す深さは 耕深の設定で決まり、速さで変わるのは 土の細かさ＝耕うんピッチ）<br>
       ・旋回のときは 油圧でロータリーを上げ、回り終わったら すぐ下ろして 爪を ちょうどよい深さに入れる。ここが腕の見せどころで、雑にあつかうと ロータリーをこわす…<a href="https://note.com/toshi_chaki/n/nf21b7ee32ad2" target="_blank" rel="noopener">茶木寿夫さん（note）「農業用トラクターは楽し。第1部」</a>（ゲームでは 回り終わっても 上げたまま まだ耕していない所を進むと、下ろす案内が出る）<br>
@@ -4835,6 +4836,30 @@ const FROGS = (() => {
   return { update, list };
 })();
 
+// 生きものを 土の上に置くための 高さ（耕した所は 描いている土の面、耕していない所は 地面）
+const soilCell = (x, z) => {
+  const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
+  return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? i * NZ + j : -1;
+};
+const SOIL_TRI = [[0, 2, 1], [0, 3, 2]];               // 耕した土の ます目の 2 つの三角形（tilled の index と同じ並び）
+const soilY = (x, z) => {                            // その所に 描いている 土の面の高さ。頂点は warp で ずれているので、
+  const P = tilled.geometry.attributes.position.array;   // その点をふくむ三角形を まわりの ます目から探し、重心座標で 高さを出す
+  const i0 = Math.floor((x + HX) / CELL), j0 = Math.floor((z + HZ) / CELL);
+  for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+    const i = i0 + di, j = j0 + dj;
+    if (i < 0 || j < 0 || i >= NX || j >= NZ || !tilledMask[i * NZ + j]) continue;
+    const o = (i * NZ + j) * 12;
+    for (const [a, b, c] of SOIL_TRI) {
+      const ax = P[o + a * 3], az = P[o + a * 3 + 2], bx = P[o + b * 3], bz = P[o + b * 3 + 2], cx = P[o + c * 3], cz = P[o + c * 3 + 2];
+      const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
+      if (!d) continue;
+      const wa = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, wb = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, wc = 1 - wa - wb;
+      if (wa >= -1e-4 && wb >= -1e-4 && wc >= -1e-4) return wa * P[o + a * 3 + 1] + wb * P[o + b * 3 + 1] + wc * P[o + c * 3 + 1] + 0.003;
+    }
+  }
+  return 0.003;                                    // 耕した土の三角形の上でなければ 地面
+};
+
 // ---- 春のウシガエル：冬のあいだ 田んぼの土の中で 冬眠している。春に耕すと 起こしてしまい、ロータリーのうしろの 耕した土から
 // 大きなカエルが出てくる（ikoのブログ「田んぼ トラクター」：トラクターしてたら、ウシガエルを起こしたようです）。
 // 寒くて 動きが にぶいので しばらく じっとして、のそのそと 畦のほうへ はねていく（トラクターが近づくと 少し急ぐ）。1 回に 2 ひきまで
@@ -4842,28 +4867,6 @@ const USHI = (() => {
   if (season !== 'haru') return { update() {}, list: [] };
   const back = new THREE.MeshLambertMaterial({ color: 0x1f2609 }), headM = new THREE.MeshLambertMaterial({ color: 0x2b3a0b }), eyeM = new THREE.MeshLambertMaterial({ color: 0x140f08 });   // 背は暗いオリーブ、頭は少し緑
   const list = [];
-  const tilledAt = (x, z) => {
-    const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
-    return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? i * NZ + j : -1;
-  };
-  const TRI = [[0, 2, 1], [0, 3, 2]];               // 耕した土の ます目の 2 つの三角形（tilled の index と同じ並び）
-  const yAt = (x, z) => {                            // その所に 描いている 土の面の高さ。頂点は warp で ずれているので、
-    const P = tilled.geometry.attributes.position.array;   // その点をふくむ三角形を まわりの ます目から探し、重心座標で 高さを出す
-    const i0 = Math.floor((x + HX) / CELL), j0 = Math.floor((z + HZ) / CELL);
-    for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
-      const i = i0 + di, j = j0 + dj;
-      if (i < 0 || j < 0 || i >= NX || j >= NZ || !tilledMask[i * NZ + j]) continue;
-      const o = (i * NZ + j) * 12;
-      for (const [a, b, c] of TRI) {
-        const ax = P[o + a * 3], az = P[o + a * 3 + 2], bx = P[o + b * 3], bz = P[o + b * 3 + 2], cx = P[o + c * 3], cz = P[o + c * 3 + 2];
-        const d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz);
-        if (!d) continue;
-        const wa = ((bz - cz) * (x - cx) + (cx - bx) * (z - cz)) / d, wb = ((cz - az) * (x - cx) + (ax - cx) * (z - cz)) / d, wc = 1 - wa - wb;
-        if (wa >= -1e-4 && wb >= -1e-4 && wc >= -1e-4) return wa * P[o + a * 3 + 1] + wb * P[o + b * 3 + 1] + wc * P[o + c * 3 + 1] + 0.003;
-      }
-    }
-    return 0.003;                                    // 耕した土の三角形の上でなければ 地面
-  };
   for (let k = 0; k < 2; k++) {
     const f = new THREE.Group();
     const body = new THREE.Mesh(new THREE.SphereGeometry(0.055, 10, 8), back); body.scale.set(1, 0.6, 1.35); body.position.y = 0.033; f.add(body);
@@ -4884,7 +4887,7 @@ const USHI = (() => {
     let a = near ? Math.atan2(dx, dz) : ex < ez ? (p.x > 0 ? Math.PI / 2 : -Math.PI / 2) : (p.z > 0 ? 0 : Math.PI);
     a += (Math.random() - 0.5) * 0.9;
     const L = 0.15 + Math.random() * 0.15;
-    u.from.copy(p); u.to.set(p.x + Math.sin(a) * L, 0, p.z + Math.cos(a) * L); u.to.y = yAt(u.to.x, u.to.z);
+    u.from.copy(p); u.to.set(p.x + Math.sin(a) * L, 0, p.z + Math.cos(a) * L); u.to.y = soilY(u.to.x, u.to.z);
     u.f.rotation.y = a; u.t = 0; u.dur = 0.35 + Math.random() * 0.15; u.hop = true;
   }
   function update(dt) {
@@ -4892,9 +4895,9 @@ const USHI = (() => {
     if (S.started && !S.done && S.rotDown && S.rotPos < 0.08 && S.v > 0.1 && n < list.length && (acc += d) > need) {   // 耕していると ときどき 起こす
       const lx = (Math.random() - 0.5) * 1.6, lz = ROTARY_Z - 0.7, s = Math.sin(S.yaw), c = Math.cos(S.yaw);
       const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
-      if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1 && tilledAt(x, z) >= 0) {   // 耕した土からだけ 出てくる（まだ耕していない所なら こんどは 出さない）
+      if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1 && soilCell(x, z) >= 0) {   // 耕した土からだけ 出てくる（まだ耕していない所なら こんどは 出さない）
         const u = list[n++];
-        u.f.position.set(x, yAt(x, z), z); u.f.rotation.y = Math.random() * 6.28; u.f.visible = true; u.life = 0; u.rest = 2 + Math.random() * 2; u.hop = false;   // 出てきてすぐは じっとしている
+        u.f.position.set(x, soilY(x, z), z); u.f.rotation.y = Math.random() * 6.28; u.f.visible = true; u.life = 0; u.rest = 2 + Math.random() * 2; u.hop = false;   // 出てきてすぐは じっとしている
         acc = 0; need = 70 + Math.random() * 70;
         if (n === 1) pend = true;
       }
@@ -4917,7 +4920,120 @@ const USHI = (() => {
       } else if ((u.rest -= dt) <= 0) next(u);
     }
   }
-  return { update, list, yAt, get n() { return n; } };
+  return { update, list, yAt: soilY, get n() { return n; } };
+})();
+
+// ---- 野生のウズラ：刈り株の あいだに ひそんでいて、トラクターが近づくと 株の列のあいだを 走って逃げ、止まると うずくまって
+// 土の色に まぎれる。すぐそばまで来ると 低く飛んで 畦の草むらへ入る（ikoのブログ「珍しい野生の鳥がいたー 田んぼ耕し！」：
+// 耕していると 切り株のあいだを 小さな鳥が走っていた。トラクターを降りて近づくと 走って 草むらへ飛んだ。野生のウズラは はじめて見た）。
+// 環境省のレッドリストで 絶滅危惧Ⅱ類。めったに見ないので、春と秋の昼の 半分の日だけ 1 羽。代かきの水の田んぼ・雨・夜は 出ない
+const UZURA = (() => {
+  if (SHIRO || TOD === 'yoru' || RAIN || Math.random() >= 0.5) return { update() {}, u: null };
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const cv = document.createElement('canvas'); cv.width = cv.height = 128;   // 羽の もよう：茶色に 黒い横じまと 白っぽい すじ（枯れ草と 土に まぎれる）
+  const cx = cv.getContext('2d'); cx.fillStyle = '#5c4834'; cx.fillRect(0, 0, 128, 128);
+  for (let k = 0; k < 420; k++) { cx.fillStyle = k % 3 ? '#2b2118' : '#7a654a'; cx.fillRect(Math.random() * 128, Math.random() * 128, 2 + Math.random() * 4, 1 + Math.random()); }
+  for (let k = 0; k < 40; k++) { cx.fillStyle = '#c9b58c'; cx.fillRect(Math.random() * 128, Math.random() * 128, 1, 4 + Math.random() * 6); }
+  const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding;
+  const brown = new THREE.MeshLambertMaterial({ map: tex }), dark = lam(0x2a1c11), pale = lam(0xc9b58c), leg = lam(0xc49a74);
+  const b = new THREE.Group(), pose = new THREE.Group(); b.add(pose);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.05, 12, 9), brown);
+  body.scale.set(0.95, 0.8, 1.3); body.position.y = 0.05; pose.add(body);
+  const head = new THREE.Group(); head.position.set(0, 0.08, 0.055); pose.add(head);
+  head.add(new THREE.Mesh(new THREE.SphereGeometry(0.026, 10, 8), brown));
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0265, 10, 6, 0, Math.PI * 2, 0, 0.9), dark);   // 頭の上は 黒っぽい
+  cap.rotation.x = -0.35; head.add(cap);
+  for (const sx of [-1, 1]) {                     // 目の上の 白っぽい すじ（眉斑）
+    const br = new THREE.Mesh(new THREE.SphereGeometry(0.009, 6, 4), pale);
+    br.scale.set(0.35, 0.4, 1.6); br.position.set(sx * 0.02, 0.008, -0.002); head.add(br);
+  }
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.006, 0.014, 4), dark);
+  beak.rotation.x = Math.PI / 2; beak.position.set(0, -0.004, 0.03); head.add(beak);
+  const legs = [];
+  for (const sx of [-1, 1]) {
+    const l = new THREE.Mesh(new THREE.CylinderGeometry(0.0022, 0.0022, 0.035, 4), leg);
+    l.position.set(sx * 0.014, 0.017, 0.005); pose.add(l); legs.push(l);
+  }
+  const wings = [];
+  for (const s of [-1, 1]) {                      // 飛ぶときだけ出す 丸くて 短い つばさ
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.07), brown.clone());
+    w.geometry.translate(s * 0.055, 0, 0); w.geometry.rotateX(-Math.PI / 2); w.material.side = THREE.DoubleSide;   // 水平に寝かせた形にしておき、rotation.z（体の前後の軸）で 上下に はばたく
+    w.position.set(0, 0.07, 0); w.visible = false; pose.add(w); wings.push(w);
+  }
+  b.visible = false; b.castShadow = true; scene.add(b);
+  const u = { state: 'none', t: 0, dir: 0, dur: 0, runs: 0, tx: 0, tz: 0, ty: 0, fromY: 0, seen: false };
+  const MSG = '🐦 切り株の あいだを 小さな鳥が 走っていく。野生の ウズラだ。止まると うずくまって 土の色に まぎれる（めずらしい鳥：環境省の 絶滅危惧Ⅱ類）';
+  let acc = 0, need = 40 + Math.random() * 80, lastOdo = 0, pend = false, chk = false, tries = 0;
+  const rowX = x => -HX + 0.3 * Math.round((x + HX) / 0.3);   // 切り株の列（-HX+0.15 から 条間 30cm）の あいだ
+  function near() {                               // トラクター（前のおもりから ロータリーのうしろまで、ロータリーの幅）の 外がわまでの きょり
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), dx = b.position.x - S.x, dz = b.position.z - S.z;
+    const f = dx * s + dz * c, l = dx * c - dz * s, hw = Math.max(ROT_HALF(), TRACK) + 0.1;
+    return Math.hypot(Math.max(0, Math.abs(l) - hw), Math.max(0, f - 3.05, -1.8 - f));
+  }
+  function fly() {                                // 畦の 草むらへ 低く飛ぶ。トラクターの上を 越えないよう、トラクターから はなれる向きの 畦のうち いちばん近い所へ
+    const p = b.position, s = Math.sin(S.yaw), c = Math.cos(S.yaw), dx = p.x - S.x, dz = p.z - S.z, hw = Math.max(ROT_HALF(), TRACK) + 0.1;
+    const f = Math.min(3.05, Math.max(-1.8, dx * s + dz * c)), l = Math.min(hw, Math.max(-hw, dx * c - dz * s));   // トラクターの いちばん近い所
+    let ax = p.x - (S.x + l * c + f * s), az = p.z - (S.z - l * s + f * c);
+    const al = Math.hypot(ax, az) || 1; ax /= al; az /= al;
+    let best = null, bd = 1e9, bc = -2;
+    for (const [tx, tz] of [[HX + 0.8, p.z], [-HX - 0.8, p.z], [p.x, HZ + 0.8], [p.x, -HZ - 0.8]]) {
+      const d = Math.hypot(tx - p.x, tz - p.z), cs = ((tx - p.x) * ax + (tz - p.z) * az) / d;
+      if (cs > 0.3 ? (bc <= 0.3 || d < bd) : (bc <= 0.3 && cs > bc)) { best = [tx, tz]; bd = d; bc = cs; }
+    }
+    u.tx = best[0]; u.tz = best[1];
+    u.state = 'fly'; u.t = 0; u.fromY = p.y; u.ty = 0.7 + Math.random() * 0.4;
+    b.rotation.y = Math.atan2(u.tx - p.x, u.tz - p.z);
+    wings.forEach(w => { w.visible = true; });
+  }
+  function crouch(on) {                           // うずくまると 低く 丸くなって 首を引っこめる
+    pose.scale.set(on ? 1.08 : 1, on ? 0.72 : 1, on ? 0.95 : 1);
+    head.position.set(0, on ? 0.072 : 0.08, on ? 0.045 : 0.055);
+    legs.forEach(l => { l.visible = !on; });
+  }
+  function update(dt) {
+    const od = S.odo || 0, d = Math.max(0, od - lastOdo); lastOdo = od;
+    if (!dt) return;                                // 止めているあいだ（操作の表など）は 出さない・動かない・知らせない
+    if (u.state === 'none' && S.started && !S.done && S.rotDown && S.rotPos < 0.08 && S.v > 0.1 && (acc += d) > need) {
+      const lx = (Math.random() - 0.5) * 2.4, lz = 6 + Math.random() * 3, s = Math.sin(S.yaw), c = Math.cos(S.yaw);   // 耕している先の 切り株の中
+      const x = rowX(S.x + lx * c + lz * s), z = S.z - lx * s + lz * c;
+      if (Math.abs(x) < HX - 1.5 && Math.abs(z) < HZ - 2 && soilCell(x, z) < 0) {
+        b.position.set(x, soilY(x, z), z); b.rotation.y = Math.random() < 0.5 ? 0 : Math.PI;
+        b.visible = true; u.state = 'crouch'; u.t = 0; crouch(true);
+      }
+    }
+    if (pend && toastT <= 0) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから
+    if (chk) {                                      // 1.2 秒 見えていたら 出せたことにする（上書きされたら 3 回まで 出しなおす）
+      if ($('toast').textContent !== MSG) { chk = false; if (++tries < 3) pend = true; }
+      else if (toastT <= 6 - 1.2) { chk = false; voice('uzura'); }
+    }
+    if (!b.visible) return;
+    u.t += dt;
+    const p = b.position, dn = near();
+    if (u.state === 'fly') {
+      const dx = u.tx - p.x, dz = u.tz - p.z, L = Math.hypot(dx, dz), m = Math.min(L, 7 * dt);
+      p.x += dx / Math.max(L, 1e-3) * m; p.z += dz / Math.max(L, 1e-3) * m;
+      p.y += (Math.min(u.ty, u.fromY + u.t * 2.5) - p.y) * Math.min(1, dt * 6);
+      wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * Math.sin(u.t * 70) * 0.9; });   // 小さな つばさで はげしく はばたく
+      if (L < 0.05) { b.visible = false; u.state = 'gone'; }   // 畦の草むらに 入った
+      return;
+    }
+    if (dn < 1.2 + 0.5 * Math.abs(S.v) || u.runs >= 5) { fly(); return; }   // すぐそばまで来たら（速いと 早めに・何度も 追われたら）飛ぶ
+    if (u.state === 'crouch') {
+      if (dn < 4 && Math.abs(S.v) > 0.1 && u.t > 1) {   // 動いている（バックでも）トラクターが 近づくと 走りだす。止まっていれば うずくまったまま
+        u.dir = p.z >= S.z ? 0 : Math.PI;           // 列のあいだを トラクターから はなれる向きへ
+        u.state = 'run'; u.t = 0; u.runs++; u.dur = 1.2 + Math.random() * 1.0; crouch(false);
+        b.rotation.y = u.dir;
+        if (!u.seen && dn < 8) { u.seen = true; pend = true; }
+      }
+    } else if (u.state === 'run') {
+      p.z += Math.cos(u.dir) * 1.6 * dt;
+      p.y = soilY(p.x, p.z) + 0.006 * Math.abs(Math.sin(u.t * 30));
+      legs.forEach((l, i) => { l.rotation.x = Math.sin(u.t * 30 + i * Math.PI) * 0.6; });
+      if (Math.abs(p.z) > HZ - 0.6 || soilCell(p.x, p.z) >= 0) { fly(); return; }   // 畦の手前・耕した所に出たら 飛ぶ
+      if (u.t > u.dur) { u.state = 'crouch'; u.t = 0; crouch(true); p.y = soilY(p.x, p.z); }   // 止まって うずくまる
+    }
+  }
+  return { update, u, get b() { return b; } };
 })();
 
 // ---- 秋のクモの糸（バルーニング）：晴れて風の弱い秋の日、子グモが糸を風に流して空をわたる。刈りあとの田んぼの上を、
@@ -6526,6 +6642,7 @@ const VOICES = {
   ukiwara: ['春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮いた。レーキで埋めようとしても 沈まず、田植えは失敗。その後は 7〜10cm 起こすようにし、代かきを 2 回にした', '米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」'],
   unikku: ['今年も 山の田んぼで トラクターが はまった。粘土の田で 長靴は役に立たず、はだしで畦を歩いた。クレーンつきのトラック（ユニック車）で 引っぱり、何度か やりなおして 引き上げた', '光男の米（ブログ）「泥んこのトラクター脱出作戦！」'],
   ushigaeru: ['トラクターで耕していたら、ウシガエルを 起こしてしまったようです', 'ikoのブログ（アメーバブログ）「田んぼ トラクター」'],
+  uzura: ['田んぼを耕していると、切り株のあいだを 小さな鳥が走っていた。止まると うずくまって 見えにくい。トラクターを降りて近づくと、走って 草むらへ 飛んでいった。野生のウズラは はじめて見た', 'ikoのブログ（アメーバブログ）「珍しい野生の鳥がいたー 田んぼ耕し！」'],
   tsumebolt: ['トラクターで田んぼへ行くときは、17mm のスパナと 予備の爪ボルトを かならず持っていく', '田圃に遊ぶ・・・（エキサイトブログ）「いよいよ田んぼへ」'],
   mejirushi: ['耕す前に 5.5m のメジャーを用意して、耕運幅の 3 倍の所に 目印を付け、その内側から耕す。耕運は かならず少し重ねるので、その分も見て 目印の所を決める', '田圃に遊ぶ・・・（エキサイトブログ）「耕運実際編」'],
   grease: ['3 点リンクを始め、ロータリーを上下させる 全ての 動く所・すべる所に グリースを塗っておく。ロータリーを上げ下げしたときに ギーギー鳴るようでは ユーザー失格', '田圃に遊ぶ・・・（エキサイトブログ）「農機具雑談」'],
@@ -6840,7 +6957,7 @@ function frame(now) {
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
-  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt); lastPct = pct; }   // 早送り
+  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) UZURA.update(dt); } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
   syncAudio(running);
   updateCamera(dt);
   updateSound(dt);
@@ -6911,7 +7028,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); AMENBO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

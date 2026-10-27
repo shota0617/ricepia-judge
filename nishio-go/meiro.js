@@ -559,7 +559,7 @@ function step(dt) {
       if (sf.on && sf.vin > 1.5 && api.boing) api.boing(Math.min(1, sf.vin / 8));   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
-    { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - 5 * sf.dv) * dt; sf.dent = Math.max(-0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる
+    { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - (calm ? 18 : 5) * sf.dv) * dt; sf.dent = Math.max(calm ? 0 : -0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // 動きを へらす 設定の 人には ぷるぷる させない（1回で もどす）   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる
       if (Math.abs(sf.dv) < 0.01 && Math.abs(sf.dent - tg) < 0.002) { sf.dent = tg; sf.dv = 0; } }   // おさまった
     g.x = nx; g.y = ny;
   } else for (const axis of ['x', 'y']) {   // （筒の 外：たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す）

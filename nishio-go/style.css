@@ -404,8 +404,8 @@ body.px .spin{padding:4px 10px;gap:8px}
 body.px .spin-ico{width:28px;height:28px;font-size:18px}
 body.px .spin-ico img.gthumb,body.px .spin-ico img.pi.art{width:26px;height:26px}
 body.px .spin-txt{flex-direction:row;align-items:baseline;gap:8px;flex:1 1 auto}
-body.px .spin-txt b{min-width:0;flex:0 1 auto}
-body.px .spin-txt small{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* 名前も 下の 文（「あと 20m」など）も 長い ときは「…」に */
+body.px .spin-txt b{flex:0 0 auto;max-width:100%}
+body.px .spin-txt small{flex:1 1 0;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* 名前を 先に 見せ、のこりに 下の 文（「タップして +20pt（初訪問ボーナスあり）」など）。長い 名前は「…」に（短い 名前まで 縮んで 読めなく なっていた。Codex の 指摘） */
 body.px .leaflet-control-container{display:none}
 
 body.pxw #pxCanvas{touch-action:none;cursor:grab}

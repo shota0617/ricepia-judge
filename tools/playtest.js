@@ -1908,13 +1908,15 @@ async function walkTo(page, id) {
         const h0 = sh.offsetHeight;
         sp.hidden = false; nm.textContent = '名鉄 西尾駅'; sub.textContent = '+20'; await wait(100);
         const h1 = sh.offsetHeight, spinH = sp.offsetHeight;
+        nm.textContent = '尚古荘'; sub.textContent = 'タップして +20pt（初訪問ボーナスあり）'; await wait(100);
+        const shortName = nm.scrollWidth <= nm.clientWidth + 1;   // 短い 名前は 長い 下の 文に おされて 縮まない（「…」に ならない。Codex の 指摘）
         nm.textContent = '西尾市歴史公園（西尾城跡）とても長い名前のテスト'; sub.textContent = 'あと 20m・今日は もう チェックインずみ'; await wait(100);
         const rb = sp.getBoundingClientRect(), over = [nm, sub].some(e => { const q = e.getBoundingClientRect(); return q.right > rb.right + 1 || q.left < rb.left - 1; }), spinH2 = sp.offsetHeight;
         sp.hidden = keep.hidden; nm.innerHTML = keep.nm; sub.innerHTML = keep.sub;
-        return { px: document.body.classList.contains('px'), h0, h1, spinH, spinH2, over };
+        return { px: document.body.classList.contains('px'), h0, h1, spinH, spinH2, over, shortName };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.px && r.spinH <= 44 && r.spinH2 <= 44 && r.h1 - r.h0 <= 52 && !r.over };
+      return { ...r, ok: r.px && r.spinH <= 44 && r.spinH2 <= 44 && r.h1 - r.h0 <= 52 && !r.over && r.shortName };
     })();
     // おたすけの「🧭 水色の 線が…」の 知らせは、「🏁 つぎの ゴール」の 大きな 文字が 出ている 間は 出さない（その あとに 出す）。
     // 自分で 遊んで 分かった（320×568）：はじめの ゴールの 名前と 道のりが、この 知らせの 下に かくれて 読めなかった
@@ -2254,7 +2256,7 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
-  need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す）（${JSON.stringify(c.spinCompact)}）`);
+  need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);
   need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.rollStartTilt && c.rollStartTilt.ok, '転がり方「ぴたっ」で 草の 上だと、少し 傾けても お米が 動きださない（めいろで 詰まる）');

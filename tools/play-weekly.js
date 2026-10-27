@@ -26,7 +26,7 @@ const THEMES = [
   ['fun', '😊 たのしい', /楽し|たのし|面白|おもしろ|好き|すき|最高|よかった|良かった/],
 ];
 // アクセス解析で ならべる イベント（nishio-go の track の 名前）
-const GA_EVENTS = [['play_day', 'その日 遊んだ 端末'], ['game_start', 'はじめて 遊んだ 端末'], ['maze_goal', 'めいろの ゴール'], ['play_ask', '「めいろ、どうだった？」を 出した'], ['play_rating', '★を 送った'], ['share_prompt', 'シェアの ボタンを おした'], ['share', 'シェアした'], ['friend_bonus', 'シェアから 来て 遊んだ']];
+const GA_EVENTS = [['play_day', 'その日 遊んだ 端末'], ['game_start', 'はじめて 遊んだ 端末'], ['maze_goal', 'めいろの ゴール'], ['play_ask', '「めいろ、どうだった？」を 出した'], ['play_rating', '★を 送った'], ['share_prompt', 'ごほうびなどの シェアの ボタンを おした'], ['share_open', 'シェアの 窓を ひらいた（どこからでも）'], ['share', 'シェアした（どこからでも）'], ['friend_bonus', 'シェアから 来て 遊んだ']];
 const ymdShift = (d, n) => new Date(Date.parse(d + 'T00:00:00Z') + n * 86400e3).toISOString().slice(0, 10);
 function weekEnd() {
   const w = process.env.WEEK_END;
@@ -80,7 +80,8 @@ function summarize(list, prev, ga = null) {
     const c = ga.cur, p = ga.prev, pct = (a, b) => Math.round(a / b * 100);
     if (c.play_ask >= 20 && c.play_rating / c.play_ask < 0.2) todo.push(`「めいろ、どうだった？」に 答える 人が 少ない（${pct(c.play_rating, c.play_ask)}%：${c.play_rating}/${c.play_ask}）。出す 時・文・★の 大きさを 見なおす`);
     if (p.play_day >= 20 && c.play_day >= 1 && p.maze_goal >= 20 && c.maze_goal / c.play_day < (p.maze_goal / p.play_day) * 0.7) todo.push(`遊んだ 人あたりの めいろの ゴールが へった（${(p.maze_goal / p.play_day).toFixed(1)} → ${(c.maze_goal / c.play_day).toFixed(1)}）。この 週の 変更で めいろが 遊びにくく なって いないか`);
-    if (c.share_prompt >= 20 && c.share / c.share_prompt < 0.15) todo.push(`シェアの ボタンを おしても シェアまで いく 人が 少ない（${pct(c.share, c.share_prompt)}%）。シェアの 窓の 文・画像を 見なおす`);
+    // share は どの 入口（きろく・名所・おたより も）からでも 数える ので、分母も どこからでも 数える share_open に そろえる（share_prompt は 一部の 入口だけ。Codex の 指摘）
+    if (c.share_open >= 20 && c.share / c.share_open < 0.15) todo.push(`シェアの 窓を ひらいても シェアまで いく 人が 少ない（${pct(c.share, c.share_open)}%：${c.share}/${c.share_open}）。シェアの 窓の 文・画像を 見なおす`);
   }
   s.todo = todo;
   return s;

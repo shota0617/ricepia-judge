@@ -930,7 +930,7 @@ async function walkTo(page, id) {
       const li = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
       if (!li) { S.points = p0; G.openTab('map'); return { found: false }; }
       const chip = /10分/.test(li.textContent), lc = li.querySelector('.cond');
-      const listCond = !!lc && lc.offsetHeight > 0 && !lc.closest('details') && /LINE のクーポンとは併用できません/.test(lc.textContent);
+      const listCond = !!lc && lc.offsetHeight > 0 && lc.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && !lc.closest('details') && /LINE のクーポンとは併用できません/.test(lc.textContent);   // visibility:hidden・opacity:0 でも 高さは のこるので、見えて いるかも 見る（Codex の 指摘）
       li.querySelector('[data-redeem]').click(); await wait(300);
       const cp = document.getElementById('coupon'), cond = document.getElementById('cpCond');
       const out = { found: true, chip, listCond, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };

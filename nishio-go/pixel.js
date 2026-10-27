@@ -7696,10 +7696,13 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     flag(ex, ey - U * 0.3, U * 1.3);
     // 文字は 画面の はしで 切れない ように、まん中を 内がわへ ずらす（ゴールが 画面の はしに あると、名前の 頭が 切れて 読めなかった）
     const inside = (t, size) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; const hw = ctx.measureText(t).width / 2 + Math.max(3, size / 4); return Math.max(hw, Math.min(w - hw, ex)); };
-    const gs = Math.round(U * 0.62);
-    label('ゴール', inside('ゴール', gs), ey - U * 2.75 - pulse * U * 0.12, gs, '#ffe680');
-    { let nm = gt.name || ''; const ns = Math.round(U * 0.45); ctx.font = `bold ${ns}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
-      if (nm) { const nx = inside(nm, ns), hw = ctx.measureText(nm).width / 2; label(nm, nx, ey - U * 2.15 - pulse * U * 0.12, ns, '#ffffff'); mzMap.goalLab = { x0: nx - hw, x1: nx + hw, w, ex, nm }; } }   // 旗の 上（goalLab：プレイテストで 見る）
+    const gs = Math.round(U * 0.62), bob = pulse * U * 0.12;
+    // 旗の 上に 入らない（ゴールが 画面の 上の ほう。時計の 札の 下まで）ときは 旗の 下に（大きく した 名前が 画面の 上で 切れていた）
+    const below = ey - U * 2.9 - gs * 0.6 < Math.round(MZ_CLOCK_PX * dpr * 2.35), yG = below ? ey + U * 1.55 : ey - U * 2.9 - bob, yN = below ? ey + U * 0.95 : ey - U * 2.15 - bob;
+    label('ゴール', inside('ゴール', gs), yG, gs, '#ffe680');
+    { let nm = gt.name || ''; const ns = Math.round(U * 0.56);   // 名前も 大きく（0.45 → 0.56。運営者の声「大きい文字シンプルに」2026-10-27）
+      ctx.font = `bold ${ns}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
+      if (nm) { const nx = inside(nm, ns), hw = ctx.measureText(nm).width / 2; label(nm, nx, yN, ns, '#ffffff'); mzMap.goalLab = { x0: nx - hw, x1: nx + hw, w, ex, nm, y: Math.round(yN), ns }; } }   // 旗の 上（goalLab：プレイテストで 見る）
     mzMap.arrow = null;
     return;
   }

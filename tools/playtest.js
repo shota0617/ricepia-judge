@@ -548,8 +548,11 @@ async function walkTo(page, id) {
   //   浮かぶ 文字（「+3pt」「ぜんぶ ひろったじゃん！」など）は 16点の 太い 字
   R.checks.bigText = await page.evaluate(async () => {
     const st = document.getElementById('status'), simple = document.body.classList.contains('simple') || !!document.querySelector('#status .pia'), P = nishioPixel;
-    const floatPx = Math.max(P.FLOAT_PX, P.floatPx);   // 描いた 大きさは スクショで 確かめた（ここで 文字を 浮かべて 待つと、あとの チェックの 人の 位置・知らせの 時間が ずれる）
-    return { clockS: P.maze.clockS, floatPx, teaser: /次の名所 → れんさ/.test(st.textContent), simple, ok: P.maze.clockS >= 18 && floatPx >= 16 && !(simple && /次の名所 → れんさ/.test(st.textContent)) };
+    const floatPx = Math.max(P.FLOAT_PX, P.floatPx);
+    // つづけて たくさん 来ても、待ちは のびつづけない（4つ まで、のこりの 出番を つめなおす）
+    P.floatsClear(); for (let i = 0; i < 12; i++) P.floatText(`テストの 浮かぶ 文字 ${i}`);
+    const ats = P.floatAts(), texts = P.floats(); P.floatsClear();   // 描いた 大きさは スクショで 確かめた（ここで 文字を 浮かべて 待つと、あとの チェックの 人の 位置・知らせの 時間が ずれる）
+    return { clockS: P.maze.clockS, floatPx, ats, last: texts[texts.length - 1], teaser: /次の名所 → れんさ/.test(st.textContent), simple, ok: P.maze.clockS >= 18 && floatPx >= 16 && ats.length === 4 && Math.max(...ats) <= 4 * 1250 && texts[3] === 'テストの 浮かぶ 文字 11' && !(simple && /次の名所 → れんさ/.test(st.textContent)) };
   });
   R.checks.h100 = await page.evaluate(() => { const h = (nishioGo.state.day || {}).h100 || {}; return { steps: h.steps, fresh: h.fresh, done: !!h.done, best: nishioGo.state.h100best, ok: !!h.done && h.steps === 100 && h.fresh > 0 && nishioGo.state.h100best === h.fresh }; });   // きょうの100歩たんけん：3か所めぐる間に100歩おわる
   R.checks.trailMile = await page.evaluate(() => { const st = nishioGo.state, logged = st.log.some(l => l.type === 'trailmile'); return { mile: st.trailMile, trail: st.trail, logged, ok: st.trailMile >= 1 && logged }; });

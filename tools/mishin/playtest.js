@@ -55,7 +55,7 @@ async function main(){
             }
             let end = b._readOk ? b.start : (b.start==='L'?'R':'L');
             if (b.wrong && b.wrongEnd) end = b.wrongEnd==='L' ? 'R' : 'L';
-            x = end==='L' ? L.x0 + 4 : L.x1 - 4; y = L.seamY;
+            x = end==='L' ? L.x0 + 4 : L.x1 - 4; y = L.seamY + 40;
             KB.down(x, y); held = S.held;
             if (!held){ b._think = 0.3; tick(); continue; }
             x0 = x; strokeLeft = bot.stroke; tick(); continue;
@@ -78,7 +78,8 @@ async function main(){
           const mv = (bot.bell ? v*1.5*Math.max(0.15, Math.sin(Math.PI*ph)) : v)*dt;
           x += dir*mv; strokeLeft -= mv;
           KB.move(x, y);
-          if (strokeLeft <= 0){ KB.up(); held = false; lift = 0.12; x -= dir*bot.stroke; KB.move(x,y); }
+          // 画面の 端まで 来たか、1回 ぶん 引いたら、指を はなして つまみなおす（人は 0.3 秒 ほど かかる）
+          if (strokeLeft <= 0 || x < 24 || x > W-24){ KB.up(); held = false; lift = 0.3; x = dir>0 ? Math.max(24, x - bot.stroke) : Math.min(W-24, x + bot.stroke); KB.move(x,y); }
           tick();
         }
         return { score:S.score, bags:S.bags, clean:S.clean, tangles:S.tangles, wrongs:S.wrongs+S.fronts, len:+t.toFixed(1), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2) };

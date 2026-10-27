@@ -15,8 +15,8 @@
     { "src": "/nishio-go/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [
-    { "src": "/nishio-go/shots/meiro.webp", "sizes": "540x1080", "type": "image/webp", "form_factor": "narrow", "label": "西尾の地図が 緑の生け垣の めいろに" },
-    { "src": "/nishio-go/shots/roll.webp", "sizes": "540x1080", "type": "image/webp", "form_factor": "narrow", "label": "ゴールの 名所までの めいろ図" },
-    { "src": "/nishio-go/shots/reward.webp", "sizes": "540x1080", "type": "image/webp", "form_factor": "narrow", "label": "名所で もらえる ドット絵" }
+    { "src": "/nishio-go/shots/install-meiro.jpg", "sizes": "540x1080", "type": "image/jpeg", "form_factor": "narrow", "label": "西尾の地図が 緑の生け垣の めいろに" },
+    { "src": "/nishio-go/shots/install-roll.jpg", "sizes": "540x1080", "type": "image/jpeg", "form_factor": "narrow", "label": "ゴールの 名所までの めいろ図" },
+    { "src": "/nishio-go/shots/install-reward.jpg", "sizes": "540x1080", "type": "image/jpeg", "form_factor": "narrow", "label": "名所で もらえる ドット絵" }
   ]
 }

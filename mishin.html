@@ -117,17 +117,17 @@ function rnd(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed 
 const R = {
   startTime: 30,
   pxPerStitch: 34,      // 1目ほどくのに引く長さ（CSS px）
-  smooth: 0.2,          // 指の速さをならす時間（秒）。指の速さのムラで すぐ赤に ならないように
-  zoneLo: 0.4,          // メーターの緑の下限
+  smooth: 0.14,         // 指の速さをならす時間（秒）。指の速さのムラで すぐ赤に ならないように
+  zoneLo: 0.3,          // メーターの緑の下限
   overRate: 2.5, overDecay: 1.2,
   snapAfter: 0.3,       // 赤の「ため」がこれをこえるとプツン
-  knotSlow: 0.4,        // かたい目では安全な速さがこの割合に
-  knotLen: 2.5,         // かたい目は何目ぶんの長さ
-  knotGrace: 0.3,       // かたい目で「カチッ」と止まる間。この間は赤でも切れない（気づいて ゆるめる 時間）
-  wrongPx: 110,         // 逆側をこれだけ引くと結び目
-  stun: 0.5,            // プツン後に糸をつかみなおすまで
+  knotSlow: 0.25,       // かたい目では安全な速さがこの割合に
+  knotLen: 1.8,         // かたい目は何目ぶんの長さ
+  knotGrace: 0.45,      // かたい目で「カチッ」と止まる間。この間は赤でも切れない（気づいて ゆるめる 時間）
+  wrongPx: 30,          // 逆側をこれだけ引くと結び目
+  stun: 0.7,            // プツン後に糸をつかみなおすまで
   openDur: 0.55,
-  timeBag: 1.5, timeClean: 1, timeZone: 1.5, timeWrong: -2,
+  timeBag: 1.5, timeCut: -1.5, timeClean: 1, timeZone: 1.5, timeWrong: -2,
   snapLimit: 3,
 };
 const BRANDS = ['コシヒカリ','あいちのかおり','ミルキークイーン','ミネアサヒ','ひとめぼれ'];
@@ -140,23 +140,23 @@ const S = {
 };
 
 function makeBag(k){
-  const N = 14 + Math.min(10, k);
+  const N = k===0 ? 8 : 14 + Math.min(6, k);
   const side = rnd()<0.5 ? 'L' : 'R';
   const knots = new Set();
-  const nk = k<2 ? 0 : Math.min(4, 1 + Math.floor((k-2)/3));
+  const nk = k<2 ? 0 : Math.min(3, 1 + Math.floor((k-2)/3));
   let guard=0;
   while(knots.size<nk && guard++<80){ const i = 3 + Math.floor(rnd()*(N-5)); if(!knots.has(i-1) && !knots.has(i+1)) knots.add(i); }
-  const safe = Math.max(470, 700 - k*14);
   const golden = k>0 && k%5===4;
+  const safe = Math.max(470, 700 - k*14) * (golden ? 0.85 : 1); // 新米は糸が しまっていて むずかしい
   const kg = k<3 ? 5 : k<7 ? 10 : 30;
   return { N, side, knots, safe, golden, kg, brand: BRANDS[k%BRANDS.length], pulled:0, sub:0, engaged:false, wrongSide:null, wrongPx:0,
-    snaps:0, wrong:false, open:0, done:false, failed:false, hint:k<2, slide:1, k, knotHit:-1, knotT:0, zoneT:0, pullT:0 };
+    snaps:0, wrong:false, open:0, done:false, failed:false, hint:k<2, slide:1, k, knotHit:-1, knotT:0, zoneSt:0, readT:0 };
 }
 
 function startGame(){
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
   Object.assign(S,{mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,snaps:0,wrongs:0,streak:0,bestStreak:0,combo:0,
-    speed:0,tension:0,over:0,held:false,pend:0,stunT:0,fx:[],grains:[],shake:0,msg:null,totalTime:0,zoneTime:0,pullTime:0});
+    bagNo:0,liftT:0,speed:0,tension:0,over:0,held:false,pend:0,stunT:0,fx:[],grains:[],shake:0,msg:null,totalTime:0,zoneTime:0,pullTime:0});
   S.bag = makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.hud.hidden = false;
   audio.ensure();
@@ -192,7 +192,10 @@ function down(x,y){
   if(!b.engaged){
     const pick = x < W/2 ? 'L' : 'R';
     if(pick!==b.side){ b.wrongSide = pick; b.wrongPx = 0; }
-    else { b.engaged = true; b.wrongSide = null; b.hint=false; }
+    else {
+      b.engaged = true; b.wrongSide = null; b.hint=false;
+      if(!b.wrong && b.readT < 0.6){ b.quick = true; S.score += 50; S.fx.push({kind:'text', text:'早読み +50', x:stitchPos(b,0).x, y:layout().seamY-26, t:0, life:0.8}); }
+    }
   }
   S.held = true;
 }
@@ -220,20 +223,22 @@ function step(dt){
 
   const b = S.bag;
   b.slide = Math.max(0, b.slide - dt*4);
+  if(b.slide<=0.05 && !b.engaged) b.readT += dt;
   if(S.stunT>0){ S.stunT-=dt; S.pend=0; }
 
   if(b.done){
     b.open += dt; S.pend=0; S.speed*=0.8; S.tension=S.speed/b.safe; S.over=0;
-    if(b.open>R.openDur){ S.bags++; S.bag = makeBag(S.bags); }
+    if(b.open>R.openDur){ if(!b.failed) S.bags++; S.bagNo++; S.bag = makeBag(S.bagNo); } // ハサミで切った袋は 数えない
     return;
   }
 
   const moved = S.pend; S.pend = 0;
+  if(S.held) S.liftT = 0; else S.liftT = (S.liftT||0) + dt;
   if(!b.engaged){
     // 逆側を引いている：糸がしまっていく
     if(b.wrongSide && S.held){
       b.wrongPx += moved;
-      S.tension = Math.min(1.6, b.wrongPx / R.wrongPx * 1.4);
+      S.tension = Math.min(1.6, 0.35 + b.wrongPx / R.wrongPx * 0.9);
       if(b.wrongPx > R.wrongPx){
         b.wrong = true; S.wrongs++; S.combo=0; S.streak=0; S.held=false; b.wrongSide=null;
         addTime(R.timeWrong); say('ぎゅっ… 逆だ！', 'ng'); audio.knot(); S.shake=0.6;
@@ -244,7 +249,7 @@ function step(dt){
   }
 
   const inst = moved/dt;
-  S.speed += (inst - S.speed) * Math.min(1, dt/R.smooth);
+  if(S.held || S.liftT > 0.25) S.speed += (inst - S.speed) * Math.min(1, dt/R.smooth);
   const onKnot = b.knots.has(b.pulled);
   let grace = false;
   if(onKnot){
@@ -253,7 +258,7 @@ function step(dt){
   }
   const safe = b.safe * (onKnot ? R.knotSlow : 1);
   S.tension = S.speed / safe;
-  if(S.held){ S.pullTime += dt; b.pullT += dt; }
+  if(S.held) S.pullTime += dt;
 
   // 赤の「ため」
   if(S.tension>1 && !grace) S.over += dt*(S.tension-1)*R.overRate; else S.over = Math.max(0, S.over - dt*R.overDecay);
@@ -261,9 +266,8 @@ function step(dt){
 
   // 緑ゾーンでスルスル（コンボ）
   // 持ちかえ（指をはなして つかみなおす）の 短い間は へらさない
-  if(S.held) S.liftT = 0; else S.liftT = (S.liftT||0) + dt;
-  if(S.held && S.tension>=R.zoneLo && S.tension<=1){ S.combo = Math.min(1, S.combo + dt*0.5); S.zoneTime += dt; b.zoneT += dt; }
-  else if((S.held && S.tension<R.zoneLo) || S.liftT>0.5) S.combo = Math.max(0, S.combo - dt*0.2);
+  if(S.held && S.tension>=R.zoneLo && S.tension<=1){ S.combo = Math.min(1, S.combo + dt*0.5); S.zoneTime += dt; }
+  else if(S.tension>1 || S.liftT>0.5) S.combo = Math.max(0, S.combo - dt*0.25);
 
   // かたい目で止まっている間は、糸はすすまない
   let adv = grace ? 0 : moved;
@@ -274,6 +278,7 @@ function step(dt){
     if(b.sub >= need-1e-6){
       const wasKnot = b.knots.has(b.pulled);
       b.sub = 0; b.pulled++;
+      if(S.tension>=R.zoneLo && S.tension<=1) b.zoneSt++;
       const mult = multOf();
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
@@ -290,19 +295,21 @@ function multOf(){ return 1 + Math.floor(S.combo*4 + 1e-9); }
 
 function snap(){
   const b=S.bag; b.snaps++; S.snaps++; S.combo=0; S.streak=0; S.over=0; S.speed=0; S.held=false; S.stunT=R.stun;
+  b.pulled = Math.max(0, b.pulled-1); b.sub = 0; b.knotHit = -1; // 切れた所から 1目ぶん もどって つかみなおす
   S.shake=1; audio.snap();
   const p = stitchPos(b, b.pulled);
   S.fx.push({kind:'snap', x:p.x, y:p.y, t:0, life:0.6});
-  if(b.snaps>=R.snapLimit){ b.failed=true; b.done=true; b.open=0; say('ハサミで切った…','ng'); return; }
+  if(b.snaps>=R.snapLimit){ b.failed=true; b.done=true; b.open=0; addTime(R.timeCut); say('ハサミで切った…','ng'); return; }
   say('プツン！ ゆっくり','ng');
 }
 
 function finishBag(){
   const b=S.bag; b.done=true; b.open=0;
   const cleanBag = b.snaps===0 && !b.wrong;
-  const smooth = b.zoneT / Math.max(0.01, b.pullT) >= 0.5;
+  const smooth = b.zoneSt / b.N >= 0.5;
   const mult = multOf(), g = b.golden?2:1;
-  let dtime = R.timeBag + (cleanBag?R.timeClean:0) + (smooth?R.timeZone:0);
+  let dtime = Math.max(0.5, R.timeBag - 0.06*b.k) + (cleanBag?R.timeClean:0) + (smooth?R.timeZone:0);
+  dtime = Math.round(dtime*10)/10;
   if(cleanBag){
     S.clean++; S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
     S.score += 100*mult*g + 50*(S.streak-1);
@@ -437,7 +444,14 @@ function drawSeam(L, b){
       const tx = (b.side==='R'?tailR.x:tailL.x) + dir*12;
       ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(tx, sy+26, 24+pulse*4, 0, 7); ctx.stroke();
       ctx.fillStyle='#f0c44c'; ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText('ここ！', Math.min(W-24, Math.max(24, tx)), sy+68);
+      ctx.fillText('ここをつかんで', Math.min(W-50, Math.max(50, tx)), sy+68);
+      // 指の見本：端から 画面の 下の まん中へ
+      const ph = (S.t*0.8)%1, ex = W/2, ey = Math.min(H-60, sy+L.bagH*0.75);
+      const fx = tx + (ex-tx)*ph, fy = (sy+26) + (ey-sy-26)*ph;
+      ctx.setLineDash([5,6]); ctx.strokeStyle='rgba(240,196,76,.7)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(tx, sy+26); ctx.lineTo(ex, ey); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle=`rgba(240,196,76,${1-ph*0.5})`; ctx.beginPath(); ctx.arc(fx, fy, 11, 0, 7); ctx.fill();
+      ctx.fillStyle='#f0c44c'; ctx.fillText('下へ引く', ex, ey+22);
       // 「とがった方」を指す矢じるし
       const ax = W/2; ctx.strokeStyle='#f0c44c'; ctx.lineWidth=2.5;
       ctx.beginPath(); ctx.moveTo(ax-30*dir, sy-26); ctx.lineTo(ax+30*dir, sy-26); ctx.lineTo(ax+22*dir, sy-32); ctx.moveTo(ax+30*dir, sy-26); ctx.lineTo(ax+22*dir, sy-20); ctx.stroke();
@@ -482,6 +496,9 @@ function drawFx(){
       ctx.beginPath(); ctx.arc(f.x, f.y, 4 + f.t*40, 0, 7); ctx.stroke();
     } else if(f.kind==='fluff'){
       ctx.fillStyle=`rgba(246,242,231,${a})`; ctx.beginPath(); ctx.arc(f.x+f.vx*f.t, f.y+f.vy*f.t+60*f.t*f.t, 1.6, 0, 7); ctx.fill();
+    } else if(f.kind==='text'){
+      ctx.fillStyle=`rgba(240,196,76,${a})`; ctx.font='700 14px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(f.text, Math.min(W-40, Math.max(40, f.x)), f.y - f.t*24);
     } else if(f.kind==='catch'){
       ctx.strokeStyle = `rgba(240,196,76,${a})`; ctx.lineWidth=3;
       ctx.beginPath(); ctx.arc(f.x, f.y, 10 + f.t*20, 0, 7); ctx.stroke();
@@ -498,7 +515,7 @@ function drawMeter(L){
   const b=S.bag;
   const mw = Math.min(L.bagW-20, 360), mx = W/2 - mw/2, my = L.seamY - 78;
   ctx.textBaseline='alphabetic';
-  if(b && !b.engaged && !b.done){
+  if(b && !b.engaged && !b.done && !(b.wrongSide && S.held)){
     ctx.fillStyle='#f3efe4'; ctx.textAlign='center'; ctx.font='700 15px "Zen Maru Gothic",sans-serif';
     ctx.fillText('どっちの糸を引く？', W/2, my-14);
     ctx.fillStyle='#a9b0c7'; ctx.font='700 12px "Zen Maru Gothic",sans-serif';
@@ -566,7 +583,7 @@ function syncUI(dt){
   ui.time.classList.toggle('low', S.time<8);
   ui.bags.textContent = S.bags;
   const mult = multOf();
-  ui.combo.textContent = mult>=5 ? 'スルスル ×5 さいこう！' : mult>1 ? 'スルスル ×'+mult : '';
+  ui.combo.textContent = mult>1 ? 'スルスル ×'+mult : '';
   ui.combo.style.color = mult>=5 ? 'var(--gold)' : 'var(--ok)';
   ui.tdT += dt; ui.td.style.opacity = Math.max(0, 1 - ui.tdT/0.9); ui.td.style.transform = `translate(-50%, ${-ui.tdT*20}px)`;
 }

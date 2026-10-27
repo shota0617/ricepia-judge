@@ -15,7 +15,7 @@ const BOTS = {
   regular: { read:0.90, target:0.80, noise:0.18, look:0, react:0.25 },
   novice:  { read:0.70, target:0.90, noise:0.30, look:0, react:0.40, bell:true },
   greedy:  { read:1.00, target:1.35, noise:0.10, look:0, react:0.40 },
-  careful: { read:1.00, target:0.30, noise:0.05, look:1, react:0.05 },
+  careful: { read:1.00, target:0.22, noise:0.05, look:1, react:0.05 },
   guesser: { read:0.50, target:0.80, noise:0.06, look:1, react:0.15 },
 };
 

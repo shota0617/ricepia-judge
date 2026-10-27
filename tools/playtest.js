@@ -2050,6 +2050,15 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.inside && r.sw <= r.cw };
     })();
+    // せっていの「🔑 ひきつぎの あいことば」は、ほかの せっていと 同じく 見出しの 下に 説明（見出しの すぐ うしろに 説明が つづいて いた）
+    R.checks.codeCardHead = await w.page.evaluate(async () => {
+      const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms));
+      G.openTab('settings'); await wait(300);
+      const b = document.querySelector('#codeCard > p b'), sm = document.querySelector('#codeCard > p small');
+      const res = b && sm ? { bBottom: Math.round(b.getBoundingClientRect().bottom), smTop: Math.round(sm.getBoundingClientRect().top), smLeft: Math.round(sm.getBoundingClientRect().left), bLeft: Math.round(b.getBoundingClientRect().left) } : { missing: true };
+      G.openTab('map'); await wait(300);
+      return { ...res, ok: !res.missing && res.smTop >= res.bBottom - 1 && Math.abs(res.smLeft - res.bLeft) <= 1 };
+    });
     // きろくの バッジは 320px の 画面でも 3列が 同じ 幅で、画面から はみ出さない
     // （自分で 遊んで 分かった：1fr の 列が 長い 名前で ひろがり、88・92・111px に なって 右の 列の 枠が 画面の 外に 切れていた）
     R.checks.badgeGrid320 = await (async () => {
@@ -2464,6 +2473,7 @@ async function walkTo(page, id) {
   need((R.walk.find(w => w.id === 'chest') || {}).ribbon?.has && !R.walk.find(w => w.id === 'chest').ribbon.hit, `ごほうびの「NEW」の 札が 名前の 字に 重なる（${JSON.stringify((R.walk.find(w => w.id === 'chest') || {}).ribbon)}）`);
   need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);
+  need(c.codeCardHead && c.codeCardHead.ok, `ひきつぎの あいことばの 見出しと 説明が 同じ 行に つづく（${JSON.stringify(c.codeCardHead)}）`);
   need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);

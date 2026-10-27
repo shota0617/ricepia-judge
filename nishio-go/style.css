@@ -167,6 +167,8 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 label.row{min-height:44px;cursor:pointer}
 .row>span{display:flex;flex-direction:column;min-width:0}
 .row small{color:var(--sub);font-size:12px;margin-top:2px;line-height:1.5}
+#codeCard>p{display:flex;flex-direction:column;margin:0 0 8px}   /* ひきつぎの あいことば：ほかの せっていと 同じく 見出しの 下に 説明（見出しの すぐ うしろに 説明の 字が つづいて 切れめが 分からなかった。自分で 遊んで 分かった） */
+#codeCard>p small{color:var(--sub);font-size:12px;margin-top:2px;line-height:1.5}
 /* こえ（プレイヤーの声） */
 .tabs button{position:relative}
 .tab-dot{position:absolute;top:6px;left:calc(50% + 8px);width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid #fff}

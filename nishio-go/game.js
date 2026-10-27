@@ -3458,6 +3458,7 @@ function reactAsk(s) {
 // 届いた 声は /api/feedback（kind: play）→ 運営者の 非公開リポジトリの「[あそび] 日づけ」に たまり、ゲームを 直す 手がかりに する。
 // 1日1回、名所の ひとこと（reactBar）と 同じ 場所に 出す。運営者の声「どのようにレビューを受けるのか。ゲーム改善につながるか」2026-10-27
 const playQ = { pending: null, r: 0, shown: 0, sent: false, t: 0 };
+const PLAY_MIN_MS = 900;   // api/feedback.js の PLAY_MIN_MS（800）より すこし 長く
 function playAsk(mz) {
   if (store.get('nsg_play_ask', '') === ymd()) return;
   playQ.pending = { sec: Math.round(mz.sec), st: mz.stars || 0 };
@@ -3482,6 +3483,8 @@ async function playSend(text) {
   playQ.sent = true;
   const r = playQ.r, ctx = playQ.ctx || {};
   track('play_rating', { r, text: text ? 1 : 0 });
+  const wait = PLAY_MIN_MS - (Date.now() - playQ.shown);   // 受けとる 口は 出てから 0.8秒 より 早い 送信を いたずらと して 捨てるので、すばやく 2回 タップしても その 時間まで 待って 送る
+  if (wait > 0) await new Promise(f => setTimeout(f, wait));
   let res = null;
   try { res = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'play', r, text: text || '', sec: ctx.sec, st: ctx.st, t: Date.now() - playQ.shown, hp: '' }) }); } catch (e) { res = null; }
   if (res && res.ok) {

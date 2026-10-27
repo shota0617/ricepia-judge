@@ -7678,7 +7678,8 @@ function drawMzNext(w, cy, U, now) {
   }
   const a = (now - mzNext.t0) / 1000;
   if (a > 3) { mzNext.t0 = 0; mzMapOpen(now, 6000); return; }   // 知らせの あとに ゴールまでの めいろ図を 6秒
-  const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
+  const S = Math.round(MZ_CLOCK_PX * U / 16), under = mzRt.t0 && mzRt.len0 ? Math.round(S * 1.5 + S * 0.85 + U * 0.3) : 0;   // 時間と ★の 札（drawMzClock）の 下から（横向きの 低い 画面では お米が 上の ほうに いて、札と 重なって 字が 読めなかった）
+  const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6, under + Math.round(big * 0.8) * 0.9), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
   ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
   const lines = [['🏁 つぎの ゴール', Math.round(big * 0.8), '#ffe680'], [mzNext.name, big, '#ffffff'], [dist, Math.round(big * 0.7), '#bfefff']].filter(l => l[0]);

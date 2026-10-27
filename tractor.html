@@ -1166,6 +1166,11 @@ const SCRAPE = (() => {
 // 点検しないで耕していると、とちゅうでベルトが切れて ファンが止まり、水温が上がって ボンネットの前から湯気（煙）が出る。
 // 止まって作業機を上げると エンジンを切って 交換する（ゲームでは予備のベルトに替えて続ける。+10 分。H をこえて止まったら 冷めるのを待って +25 分）。
 // はじめに点検すれば（2 分）、ひびを見つけて先に交換できる（+3 分）。（伊賀の米農家 大森雄貴さんの note「田植え機のメンテナンスとトラクターの故障！？」）
+// エンジンが止まっていて（ほかの手入れが終わって 止まったまま・エンストしたまま）、ほかの手入れも していない。
+// このときは エンジンを かけなおさずに そのまま 次の手入れ（リヤカバー・グリース・爪）を始めてよい
+function offFree() {
+  return S.stalled && !BELT.fixing && !BELT.broken && !COVER.fixing && !GREASE.fixing && !CLAW.fixing && !KATA.fixing && !(S.scrape > 0) && !S.stuck;
+}
 const BELT = (() => {
   let worn = false, broken = false, fixT = 0, told = false, hot = false, acc = 0, fixed = false;
   const STEAM = new THREE.Vector3(0, 1.45, 2.3), w = new THREE.Vector3();   // ボンネットの前のほう
@@ -1238,7 +1243,7 @@ const COVER = (() => {
     if (!stuck) return;
     if (working && S.v > 0.05) odo += S.v * dt;
     if (odo > 15 && !told) { told = true; toast('耕したあとが 波うっている（山と谷が くり返す）。リヤカバーが なめらかに上下していないのかも。止まって ' + IMPL + 'を上げると 見ます', 7); }
-    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && !S.stalled && !(S.crank > 0)) {   // 爪が惰性で回っているあいだは 近づかない
+    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が惰性で回っているあいだは 近づかない
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 6; S.elapsed += 180;
@@ -1276,7 +1281,7 @@ const GREASE = (() => {
     if (m && (t -= dt) <= 0) { t = 0.42; if (audio && soundOn) squeak(audio.ac, audio.out, 0.6 + 0.4 * Math.random()); }   // 動いているあいだ ギーッ、ギーッ
     if (!m) t = 0;
     if (moves >= 3 && !m && !told) { told = true; toast('ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます', 7); }
-    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && !S.stalled && !(S.crank > 0)) {   // 爪が止まってから
+    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 5; S.elapsed += 120;
@@ -1316,9 +1321,8 @@ const CLAW = (() => {
       else if (toastT <= 7 - 1.2) { chk = false; told = true; }
     }
     // 気づいたかどうかに かかわらず、すじが 12m のびたら 止まって上げると 見る（画面下の案内でも 知らせつづける）。
-    // ほかの手入れ（リヤカバーなど）が終わって 止まったままなら、エンジンを かけなおさずに そのまま 続けて見る
-    const parkedFree = S.parked && !BELT.fixing && !BELT.broken && !COVER.fixing && !GREASE.fixing && !KATA.fixing && !(S.scrape > 0) && !S.stuck;
-    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || parkedFree) && !(S.crank > 0)) {   // 爪が止まってから
+    // エンジンが止まっているとき（ほかの手入れが終わって 止まったまま・エンストしたまま）も、エンジンを かけなおさずに そのまま見る
+    if (run > 12 && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 6; S.elapsed += 180;

@@ -38,13 +38,22 @@ def site(u, label=''):                                # 人・サイト。note�
     return host + ('/' + first if host in ('note.com', 'ameblo.jp') else '')
 
 
+BLOGS = ('ameblo.jp', 'note.com', 'exblog.jp', 'hatenablog.com', 'hatenablog.jp', 'hatenadiary.jp', 'livedoor.blog', 'blog.goo.ne.jp', 'fc2.com', 'seesaa.net')
+TRACK = ('frm', 'fbclid', 'gclid', 'hl', 'ref', 'ref_src', 'from', 's', 't', 'igshid', 'si')
+
+
 def norm(u):                                          # 同じ投稿・記事かを比べる形。X は 投稿の番号で比べる
     p = urlparse(u)
-    if p.netloc.replace('www.', '') in X_HOSTS:
+    host = p.netloc.lower().replace('www.', '')
+    if host in X_HOSTS:
         m = re.search(r'/status(?:es)?/(\d+)', p.path)
         if m:
             return 'x:' + m.group(1)
-    return u.split('#')[0].rstrip('/').replace('http://', 'https://').replace('://www.', '://')
+    if host.endswith(BLOGS):                          # ブログは 記事の場所（パス）だけで決まる。?frm= などの 飾りは すてる
+        q = ''
+    else:                                             # ほかは 中身を決める ?v= などを のこし、追跡用の ものだけ すてる
+        q = '&'.join(sorted(kv for kv in p.query.split('&') if kv and not (kv.split('=')[0].startswith('utm_') or kv.split('=')[0] in TRACK)))
+    return host + p.path.rstrip('/') + ('?' + q if q else '')
 
 
 def main():

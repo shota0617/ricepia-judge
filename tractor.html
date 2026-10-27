@@ -6957,7 +6957,7 @@ function frame(now) {
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
-  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) pct = step(dt); lastPct = pct; }   // 早送り
+  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) UZURA.update(dt); } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
   syncAudio(running);
   updateCamera(dt);
   updateSound(dt);
@@ -7013,7 +7013,7 @@ function frame(now) {
   HEAPS.flush(dt);
   TURBID.update(dt);
   RIPPLE.update(dt);
-  FROGS.update(dt); USHI.update(running ? dt : 0); UZURA.update(running ? dt : 0); AMENBO.update(dt);   // ウシガエルは 止めているあいだ（操作の表など）は 進めない
+  FROGS.update(dt); USHI.update(running ? dt : 0); AMENBO.update(dt);   // ウシガエルは 止めているあいだ（操作の表など）は 進めない
   GOSSAMER.update(dt);
   MIST.update(dt);
   FROST.update(dt * SPEEDUP);

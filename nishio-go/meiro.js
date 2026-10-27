@@ -421,7 +421,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0 };
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -563,10 +563,14 @@ function step(dt) {
     } else {
       if (sf.on && g.spring.left > 0 && sf.vin > 1.5) {   // ばねの わざ：はなれる ときに 外へ 押しだす（当たった 速さの SPRING_E 倍まで）。ぽよんと 鳴る ほどの 当たりだけ（カーブに こすれる たびに 押すと ピンボールの ように あばれて 穴に おちた）
         const vo = -(g.vx * sf.ux + g.vy * sf.uy), want = Math.min(MAX, sf.vin * SPRING_E);
-        if (vo < want) { g.vx -= (want - vo) * sf.ux; g.vy -= (want - vo) * sf.uy; g.spring.boosts++; }
+        if (vo < want) {
+          g.vx -= (want - vo) * sf.ux; g.vy -= (want - vo) * sf.uy; g.spring.boosts++;
+          const now = performance.now(), sp = g.spring; sp.chain = now - (sp.at || 0) < 1500 ? sp.chain + 1 : 1; sp.at = now;   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 音が 1段ずつ 高く、2れんぱつ から 緑の きらきら
+          if (sp.chain >= 2) for (let k = 0; k < 6 + Math.min(12, sp.chain * 3); k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, c: k % 3 === 0 ? '#ffffff' : k % 2 ? '#8cf078' : '#e4ffd8', t: 0, life: 0.5 }); }
+        }
         const v = Math.hypot(g.vx, g.vy); if (v > MAX) { g.vx *= MAX / v; g.vy *= MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
-      if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8), g.spring.left > 0); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
+      if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8), g.spring.left > 0 ? g.spring.chain || 1 : 0); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
     { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - (calm ? 18 : 5) * sf.dv) * dt; sf.dent = Math.max(calm ? 0 : -0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // 動きを へらす 設定の 人には ぷるぷる させない（1回で もどす）   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる

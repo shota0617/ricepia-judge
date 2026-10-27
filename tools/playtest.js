@@ -1517,6 +1517,18 @@ async function walkTo(page, id) {
       };
     });
     // 人に こつん：傾けた まま 押しつづけても、とじる たびに また 話しかけない（3マス はなれたら また 話せる）
+    // 人から はなれて、さいごに 話した 人を わすれさせる（テストの 道具）：4マス 先の 点に 置き、マスが かわるまで 人の ほうへ ゆっくり 転がして 止める
+    // （置いて 0.2秒 転がす だけでは マスの さかいを こえない ことが あり、ゲームは マスが かわった ときに わすれるので、わすれなかった：駅前の学生で 落ちた）
+    await w.page.evaluate(() => {
+      window.__mzForget = async L => {
+        const P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms));
+        P.rollPut(L.far.x, L.far.y, 0, 0); await wait(150);
+        const k0 = Math.floor(L.far.x) + ',' + Math.floor(L.far.y);
+        P.rollPut(L.far.x, L.far.y, L.dFar.x * 3, L.dFar.y * 3);
+        for (let i = 0; i < 12; i++) { await wait(50); const r = P.roll; if (Math.floor(r.x) + ',' + Math.floor(r.y) !== k0) break; }
+        await wait(50); const r = P.roll; P.rollPut(r.x, r.y, 0, 0); await wait(100);
+      };
+    });
     const bumpA = await w.page.evaluate(async () => {
       const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
       // 転がる とちゅうで ごほうび・イベントの 窓が 出たら（名所の そばに 立つ 人：近づく とちゅうで 名所に 着いて ごほうびが 出て、お米が 止まった）、とじて もう一度
@@ -1575,9 +1587,9 @@ async function walkTo(page, id) {
       let tried = 0;
       for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500)) {
         for (const L of lanes(n)) {
-          pi.hidden = true; tried++;
+          pi.hidden = true; tried++; await wait(200);   // 前の 話を とじた あとの「次の 行き先へ 押す」が 当てる 瞬間に かさならない ように（ガイドさんに とどかず、ときどき 落ちた）
           const push = async () => { await rollTo(L.near, L.dNear, 4, 800, () => !pi.hidden); return !pi.hidden && pi.textContent.includes(n.name); };
-          const leave = async () => { await unblockW(); P.rollPut(L.far.x, L.far.y, 0, 0); await wait(300); P.rollPut(L.far.x, L.far.y, L.dFar.x * 3, L.dFar.y * 3); await wait(200); };   // 4マス はなれて もどりかける（さいごに 話した 人を わすれる）
+          const leave = async () => { await unblockW(); await window.__mzForget(L); };   // 4マス はなれて もどりかける（さいごに 話した 人を わすれる）
           const first = await push();
           if (!first) continue;
           pi.hidden = true; await wait(200);
@@ -1668,7 +1680,7 @@ async function walkTo(page, id) {
       };
       // reroute：話で 次の ゴールが 決まった あと、動く 前に 行き先を また かえる（その ときは あいさつ ずみを 次の 次の ゴールへ もちこさない＝はなれて もどれば また 話せる）
       const once = async (n, L, reroute) => {
-        await unblockW(); P.rollPut(L.far.x, L.far.y, -L.dFar.x * 2, -L.dFar.y * 2); await wait(600);   // はなれる ほうへ 転がす（前の 確かめの こつんを 忘れさせる。rollPut は マスを かえた あつかいに ならない）
+        await unblockW(); await window.__mzForget(L);   // はなれて 前の 確かめの こつんを 忘れさせる（rollPut は マスを かえた あつかいに ならない）
         G.setGuide({ kind: 'npc', id: n.id, name: n.name, why: 'テスト', by: 'テスト' });
         for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
         const arrived = await rollTo(L.near, L.dNear, 0, 4000, () => talking(n));   // ゴールの 人の そばに 着く（こつんでは なく、着いて 話す）
@@ -1686,10 +1698,10 @@ async function walkTo(page, id) {
           again = await rollTo(L.near, L.dNear, 4, 600, () => talking(n));   // そのまま そばから 当たる
           pi.hidden = true;
         }
-        await unblockW(); P.rollPut(L.far.x, L.far.y, 0, 0); await wait(300);   // 4マス はなれて もどる（道すじに そって 人まで とどく 速さで）
+        await unblockW(); await window.__mzForget(L);   // 4マス はなれて（マスを かえて）さいごに 話した 人を わすれる
         let minD = 99;
         const tn = P.npcTile(n);
-        const back = await rollTo(L.far, L.dFar, 8, 2000, () => { const r = P.roll; minD = Math.min(minD, Math.hypot(r.x - tn.x - 0.5, r.y - tn.y - 0.5)); return talking(n); });
+        const back = await rollTo(L.near, L.dNear, 4, 1500, () => { const r = P.roll; minD = Math.min(minD, Math.hypot(r.x - tn.x - 0.5, r.y - tn.y - 0.5)); return talking(n); });   // そばの 点から もどる（4マス 先から 転がすと、曲がる 道では とちゅうで いきおいが なくなり、人の 2マス 手前で 止まった：駅前の学生）
         pi.hidden = true; G.setGuide(null);
         return { arrived, moved, other, again, back, minD: +minD.toFixed(2) };
       };

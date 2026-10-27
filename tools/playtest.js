@@ -1031,8 +1031,10 @@ async function walkTo(page, id) {
       G.playAsk({ sec: 83.4, stars: 2 }); G.playShow();
       const shown = !bar.hidden && /めいろ、どうだった？/.test(bar.textContent);
       const big = parseFloat(getComputedStyle(bar.querySelector('[data-play]')).fontSize);   // ★は 大きく（タップ しやすく）
+      bar.querySelector('[data-play="2"]').click();
+      const share2 = !bar.querySelector('[data-play-share]').hidden;   // ★3 より 下では「友だちに」を 出さない
       bar.querySelector('[data-play="4"]').click();
-      const on = bar.querySelectorAll('[data-play].on').length, more = !bar.querySelector('.play-more').hidden;
+      const on = bar.querySelectorAll('[data-play].on').length, more = !bar.querySelector('.play-more').hidden, share4 = !bar.querySelector('[data-play-share]').hidden;
       document.getElementById('playText').value = 'テストの ひとこと';
       bar.querySelector('[data-play-send]').click();
       for (let i = 0; i < 20 && !bar.hidden; i++) await wait(100);
@@ -1048,13 +1050,21 @@ async function walkTo(page, id) {
       const tabClosed = bar.hidden && !bar.classList.contains('play');
       await wait(1200);
       document.querySelector('.tabs button[data-tab="map"]').click();
+      // ★5 の「📣 友だちに」：★を 送って、めいろの ゴールの シェア（タイムに いどめる リンク）を ひらく
+      localStorage.removeItem('nsg_play_ask');
+      G.playAsk({ name: '西尾城', sec: 61, stars: 3 }); G.playShow();
+      bar.querySelector('[data-play="5"]').click();
+      bar.querySelector('[data-play-share]').click();
+      await wait(1200);
+      const sh = document.getElementById('share'), shareOpen = !sh.hidden && /vs=61/.test(document.getElementById('shareText').textContent) && bar.hidden;
+      sh.hidden = true;
       S.points = p0; S.total = t0; G.save && G.save();
-      return { shown, big, on, more, closed, again, tabClosed, day: localStorage.getItem('nsg_play_ask') };
+      return { shown, big, on, more, share2, share4, closed, again, tabClosed, shareOpen, day: localStorage.getItem('nsg_play_ask') };
     });
     await page.unroute('**/api/feedback');
-    const js = x => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } }, body = js(fb[0]), tab = js(fb[1]);
+    const js = x => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } }, body = js(fb[0]), tab = js(fb[1]), viaShare = js(fb[2]);
     const c = R.checks.playRating;
-    R.checks.playRating = { ...c, sent: fb.length, body, tab, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && fb.length === 2 };
+    R.checks.playRating = { ...c, sent: fb.length, body, tab, viaShare, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && !c.share2 && c.share4 && c.shareOpen && !!viaShare && viaShare.r === 5 && viaShare.sec === 61 && fb.length === 3 };
   }
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

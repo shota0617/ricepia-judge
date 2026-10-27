@@ -3461,7 +3461,7 @@ const playQ = { pending: null, r: 0, shown: 0, sent: false, t: 0 };
 const PLAY_MIN_MS = 900;   // api/feedback.js の PLAY_MIN_MS（800）より すこし 長く
 function playAsk(mz) {
   if (store.get('nsg_play_ask', '') === ymd()) return;
-  playQ.pending = { sec: Math.round(mz.sec), st: mz.stars || 0 };
+  playQ.pending = { sec: Math.round(mz.sec), st: mz.stars || 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）
   react.pending = null;   // 名所の ひとこと は こんどに（2つ つづけて たずねない）
 }
 function playShow() {
@@ -3472,7 +3472,7 @@ function playShow() {
   $('reactBar').classList.add('play');
   $('reactBar').innerHTML = `<p>🎮 めいろ、どうだった？ <small>ゲームを よくするのに 使います（+5pt）</small></p>
     <div class="play-stars" role="group" aria-label="★の 数">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-play="${n}" aria-label="★${n}">★</button>`).join('')}</div>
-    <div class="play-more" hidden><input type="text" id="playText" maxlength="140" placeholder="ひとこと（なくても OK）" aria-label="ひとこと"/><button type="button" class="btn mini" data-play-send>送る</button></div>
+    <div class="play-more" hidden><input type="text" id="playText" maxlength="140" placeholder="ひとこと（なくてOK）" aria-label="ひとこと"/><button type="button" class="btn mini" data-play-send>送る</button><button type="button" class="btn mini play-share" data-play-share hidden>📣 友だちに</button></div>
     <button type="button" class="react-x" data-play-x aria-label="とじる">×</button>`;
   $('reactBar').hidden = false;
   track('play_ask', {});
@@ -3520,7 +3520,15 @@ $('reactBar').addEventListener('click', async e => {
     playQ.r = +ps.dataset.play;
     $('reactBar').querySelectorAll('[data-play]').forEach(b => b.classList.toggle('on', +b.dataset.play <= playQ.r));
     const more = $('reactBar').querySelector('.play-more'); if (more) more.hidden = false;
+    // ★4〜5：たのしかった いま、友だちにも さそう（めいろの ゴールの シェア。見た 人は タイムに いどめる）。★3 より 下では 出さない
+    const sh = $('reactBar').querySelector('[data-play-share]'); if (sh) sh.hidden = !(playQ.r >= 4 && playQ.ctx && playQ.ctx.mz && window.nishioGo.openShare);
     clearTimeout(react.t); react.t = setTimeout(() => playClose(), 30000);
+    return;
+  }
+  if (e.target.closest('[data-play-share]')) {   // ★と ひとことを 送って、シェアの 窓を ひらく
+    const v = ($('playText') || {}).value || '', mz = playQ.ctx && playQ.ctx.mz;
+    playSend(v.trim().slice(0, 140)); playClose();
+    if (mz && window.nishioGo.openShare) { track('share_prompt', { kind: 'mzgoal', from: 'play' }); window.nishioGo.openShare('mzgoal', { mzgoal: mz }); }
     return;
   }
   if (e.target.closest('[data-play-send]')) { const v = ($('playText') || {}).value || ''; await playSend(v.trim().slice(0, 140)); return playClose(); }

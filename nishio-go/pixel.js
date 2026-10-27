@@ -8076,7 +8076,7 @@ function drawHedges(img, segs, ox, oy, T, S, lw) {
 function mzDentStep(dt) {   // 生け垣の へこみの 絵：お米より 大きく ついていき、はなれると ぷるぷると もどる。お米が 止まって 動きの 処理が 早く おわる こまでも 回す（止まった まま へこみが のこり、毎こま 描きなおして いた。Codex の 指摘）
   if (!mazeOn()) { mzSoft.dent = mzSoft.dv = 0; return; }
   const tg = mzSoft.on ? Math.min(MZ_SOFT_MAX, mzSoft.pen * 2) : 0;
-  if (mzSoft.dv === 0 && Math.abs(tg - mzSoft.dent) < 0.02) return;   // おさまった あとは、押しつけた ままの 小さな ゆらぎ（めりこみが 0.001マスずつ かわる）を 追わない（止まって いるのに 毎こま 描きなおして いた）
+  if (mzSoft.dv === 0 && Math.abs(tg - mzSoft.dent) < 0.02) { if (!mzSoft.on) mzSoft.dent = 0; return; }   // おさまった あとは、押しつけた ままの 小さな ゆらぎ（めりこみが 0.001マスずつ かわる）を 追わない（止まって いるのに 毎こま 描きなおして いた）。はなれたら 小さな へこみも 0 へ（のこって 生け垣が もどらなかった。Codex の 指摘）
   for (let left = Math.min(dt, 0.1); left > 1e-6; left -= 1 / 60) {   // 長い こまは 1/60秒 ずつ（ばねが とびださない ように）
     const h = Math.min(left, 1 / 60);
     mzSoft.dv += (MZ_DENT_K * (tg - mzSoft.dent) - MZ_DENT_C * mzSoft.dv) * h;

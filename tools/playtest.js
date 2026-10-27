@@ -2109,6 +2109,24 @@ async function walkTo(page, id) {
   await browser.close(); server.close();
   // ゴールの 戸の 道さがし（mzGateTry を 小さな 格子で）：戸 4つの 近い 道と、戸 3つで 8歩の 道が ある とき、上限（戸 3つ・歩数 まっすぐの 2倍＋4）以内の 道で 戸を あける
   // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸 4つの 道が えらばれて 上限で はねられ、戸が ひらかなかった。Codex の 指摘）
+  // やわらかい 生け垣の へこみの ばね（mzDentStep を 取りだして）：軽く 押しつけて おさまった あと はなれると、へこみは 0 に もどる・押しつけて いる 間は 小さな ゆらぎで 動かない
+  // （0.02マスの 遊びを はなれた ときにも かけると、小さな へこみが のこって 生け垣が もどらなかった。Codex の 指摘）
+  R.checks.mzDentBack = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), i = src.indexOf('function mzDentStep'), j = src.indexOf('\nfunction ', i + 10);
+    if (i < 0 || j < 0) return { ok: false, why: 'no-func' };
+    const soft = { on: true, pen: 0.1, dent: 0, dv: 0 };
+    const env = { mzSoft: soft, mazeOn: () => true, MZ_SOFT_MAX: 0.4, MZ_DENT_K: Number((src.match(/MZ_DENT_K = ([\d.]+)/) || [])[1]), MZ_DENT_C: Number((src.match(/MZ_DENT_C = ([\d.]+)/) || [])[1]) };
+    try {
+      const step = new Function(...Object.keys(env), src.slice(i, j) + '; return mzDentStep;')(...Object.values(env));
+      for (let k = 0; k < 180; k++) step(1 / 60);   // 強く 押しつけて（へこみ 0.2マス）
+      soft.pen = 0.008; for (let k = 0; k < 600; k++) step(1 / 60);   // 軽く 押しつけた まま 10秒（へこみ 0.016マスで おさまる）
+      const held = { dent: +soft.dent.toFixed(3), dv: soft.dv };
+      let moved = 0; for (let k = 0; k < 120; k++) { soft.pen = 0.008 + (k % 2) * 0.001; const d0 = soft.dent; step(1 / 60); if (soft.dent !== d0) moved++; }   // 押しつけた ままの 小さな ゆらぎ
+      soft.on = false; for (let k = 0; k < 600; k++) step(1 / 60);   // はなれて 10秒
+      const off = { dent: +soft.dent.toFixed(3), dv: soft.dv };
+      return { held, moved, off, ok: held.dv === 0 && moved === 0 && off.dent <= 0.01 && off.dv === 0 };
+    } catch (e) { return { ok: false, err: String(e) }; }
+  })();
   R.checks.mzGateSearch = (() => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), i = src.indexOf('function mzGateKey'), j = src.indexOf('function mzBlocked', i);
     if (i < 0 || j < 0) return { ok: false, why: 'no-func' };
@@ -2138,6 +2156,7 @@ async function walkTo(page, id) {
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
   need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
   need(c.mzGoalGate && c.mzGoalGate.ok, `ゴールの すぐ そばなのに 道のりが とても 長い 所で、生け垣の 戸が ひらかない（${JSON.stringify(c.mzGoalGate)}）`);
+  need(c.mzDentBack && c.mzDentBack.ok, `やわらかい 生け垣：はなれても 小さな へこみが のこる・押しつけた ままの ゆらぎで へこみが 動きつづける（${JSON.stringify(c.mzDentBack)}）`);
   need(c.mzGateSearch && c.mzGateSearch.ok, `ゴールの 戸の 道さがしが、上限 以内の 道を 見のがす（${JSON.stringify(c.mzGateSearch)}）`);
   need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');

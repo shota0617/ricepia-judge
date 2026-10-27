@@ -887,3 +887,18 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 /* はじめの画面：遊びかたの ボタンに ひとことの 説明（文字を多めのときは 長い 説明の ほう） */
 .btn.mode-pick small.mp-s{display:none}
 .simple .btn.mode-pick small.mp-s{display:block;font-size:12px;opacity:.92;margin-top:2px}
+/* 横向きの 低い 画面（スマホを 横に した とき）：ゲームは たて向き 前提だが、横で 開いても 窓が 画面に 入る ように（自分で 遊んで 分かった：568×320 で ごほうびの 窓が 上下に はみ出して 名前と「シェア」が 切れ、はじめの1枚の 3枚は 下の パネルに かくれて えらべなかった） */
+@media (orientation:landscape) and (max-height:480px){
+  .reward .rw.hero{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:14px;align-items:center;max-width:calc(100% - 24px);padding:12px 16px 10px}   /* 絵を 左、文を 右に */
+  .reward .rw.hero>*{grid-column:2}
+  .reward .rw.hero::after{grid-column:1/-1;margin-top:4px}
+  .reward .rw.hero .place{grid-column:1/-1;margin-bottom:6px}
+  .reward .rw.hero .frame{grid-column:1;grid-row:2/span 8;align-self:center}
+  .reward .rw.hero .dot-card{width:128px;height:128px}
+  .reward .rw:not(.hero){max-height:calc(100% - 16px);overflow-y:auto}
+  body:has(#pxInfo:not([hidden])) .sheet{display:none}   /* 話の 窓（はじめの1枚 など）の 間は 下の パネルを かくす：地図の 所が 低く、窓が パネルの うしろに かくれて いた */
+  .px-info{padding:10px 16px}
+  .px-info .dq{max-height:100%}
+  .pick-first .pick3 button img{max-width:64px}
+  body:has(#pxInfo:not([hidden])) .toast{bottom:calc(var(--safe-b) + 6px)}   /* 話の 窓の 間の 知らせは いちばん 下（タブの 上）へ：パネルを かくした ので、窓の 札（はじめの1枚の 名前）に 重なって いた */
+}

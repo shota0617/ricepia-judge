@@ -4970,9 +4970,17 @@ const UZURA = (() => {
     const f = dx * s + dz * c, l = dx * c - dz * s, hw = Math.max(ROT_HALF(), TRACK) + 0.1;
     return Math.hypot(Math.max(0, Math.abs(l) - hw), Math.max(0, f - 3.05, -1.8 - f));
   }
-  function fly() {                                // いちばん近い畦の 草むらへ 低く飛ぶ
-    const p = b.position, ex = HX - Math.abs(p.x), ez = HZ - Math.abs(p.z);
-    if (ex < ez) { u.tx = Math.sign(p.x || 1) * (HX + 0.8); u.tz = p.z; } else { u.tx = p.x; u.tz = Math.sign(p.z || 1) * (HZ + 0.8); }
+  function fly() {                                // 畦の 草むらへ 低く飛ぶ。トラクターの上を 越えないよう、トラクターから はなれる向きの 畦のうち いちばん近い所へ
+    const p = b.position, s = Math.sin(S.yaw), c = Math.cos(S.yaw), dx = p.x - S.x, dz = p.z - S.z, hw = Math.max(ROT_HALF(), TRACK) + 0.1;
+    const f = Math.min(3.05, Math.max(-1.8, dx * s + dz * c)), l = Math.min(hw, Math.max(-hw, dx * c - dz * s));   // トラクターの いちばん近い所
+    let ax = p.x - (S.x + l * c + f * s), az = p.z - (S.z - l * s + f * c);
+    const al = Math.hypot(ax, az) || 1; ax /= al; az /= al;
+    let best = null, bd = 1e9, bc = -2;
+    for (const [tx, tz] of [[HX + 0.8, p.z], [-HX - 0.8, p.z], [p.x, HZ + 0.8], [p.x, -HZ - 0.8]]) {
+      const d = Math.hypot(tx - p.x, tz - p.z), cs = ((tx - p.x) * ax + (tz - p.z) * az) / d;
+      if (cs > 0.3 ? (bc <= 0.3 || d < bd) : (bc <= 0.3 && cs > bc)) { best = [tx, tz]; bd = d; bc = cs; }
+    }
+    u.tx = best[0]; u.tz = best[1];
     u.state = 'fly'; u.t = 0; u.fromY = p.y; u.ty = 0.7 + Math.random() * 0.4;
     b.rotation.y = Math.atan2(u.tx - p.x, u.tz - p.z);
     wings.forEach(w => { w.visible = true; });

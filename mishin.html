@@ -33,7 +33,7 @@
 html,body{height:100%;margin:0}
 body{background:var(--ai);color:var(--ink);font-family:var(--body);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
 #app{position:fixed;inset:0}
-canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hud{position:absolute;left:0;right:0;top:0;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:8px;
   padding-top:calc(10px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
 .hcell{display:flex;flex-direction:column;gap:2px}
@@ -83,10 +83,11 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
       <h1><small>米袋の口を あける</small>ミシン糸<br/>一本どり</h1>
       <ul class="rules">
         <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>裏返す</strong>。裏には糸の輪がならぶ。</span></li>
-        <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこをタップして輪からはずす。</span></li>
-        <li><b>3</b><span>赤い糸を、縫った向きと逆へ<strong>ゆっくり</strong>引く。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（タップでほぐす）。</span></li>
+        <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこを<strong>二本指でつまんで</strong>輪からはずす。</span></li>
+        <li><b>3</b><span>つまんだまま、縫った向きと逆へ<strong>ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（タップでほぐす）。</span></li>
       </ul>
       <button class="go" id="startBtn" type="button">はじめる</button>
+      <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。</p>
       <p class="note">ほどき方は、紙袋メーカーと製粉会社の説明にもとづく（下糸は上糸の輪の中を通っている。裏から見て左端の、輪にささった下糸をはずし、ゆっくり引く。縫い始めの側からだと からまる）。袋によっては右から、また1本糸の袋は どちらからでも ほどける。<br/>
       出典：<a href="https://yamaguchi-kf-pack.com/%E7%B4%99%E8%A2%8B/%E3%83%9F%E3%82%B7%E3%83%B3%E7%B8%AB%E3%81%84%E7%B4%99%E8%A2%8B%E3%81%AE%E9%96%8B%E3%81%91%E6%96%B9%E3%82%92%E5%8B%95%E7%94%BB%E3%81%A7%E7%B4%B9%E4%BB%8B%EF%BC%81%E3%80%80%E7%B4%99%E8%A2%8B%E3%83%A1/" target="_blank" rel="noopener">山口紙袋（ミシン縫い紙袋の開け方）</a>・<a href="https://www.flour.co.jp/news/article/063/" target="_blank" rel="noopener">木下製粉（ミシン袋の開け方）</a></p>
     </div>
@@ -210,6 +211,26 @@ function whereTap(x,y){
   if(x>bx && x<bx+L.bagW && y>L.seamY-40 && y<L.seamY+L.bagH) return 'bag';
   return null;
 }
+// 1本指の タップ：袋を 裏返す・もつれを ほぐす
+function tap(x,y){
+  if(S.mode!=='play') return;
+  audio.ensure();
+  const b=S.bag; if(!b || b.done || b.slide>0.05 || b.flipT>0) return;
+  if(b.phase==='look'){
+    const w = whereTap(x,y);
+    if(w==='bag'){ b.flipT = 0.0001; audio.flip(); }
+    else if(w==='L' || w==='R'){ say('糸は 二本指で つまむ','ok'); S.pinchHint = 1.6; }
+    return;
+  }
+  if(b.tangle) untangleTap();
+  else if(!S.held){ S.pinchHint = 1.6; }
+}
+function untangleTap(){
+  const b=S.bag;
+  b.tangle.taps++; audio.click(); S.fx.push({kind:'catch', x:b.tangle.x, y:b.tangle.y, t:0, life:0.3});
+  if(b.tangle.taps>=R.untangleTaps){ b.tangle=null; say('ほぐれた','ok'); }
+}
+// 二本指で つまむ（x,y は 2本の 指の まん中）
 function down(x,y){
   if(S.mode!=='play') return;
   audio.ensure();
@@ -217,7 +238,6 @@ function down(x,y){
   S.px=x; S.py=y; S.pend=0;
   if(b.phase==='look'){
     const w = whereTap(x,y);
-    if(w==='bag'){ b.flipT = 0.0001; audio.flip(); return; }
     if(w==='L' || w==='R'){
       if(b.face==='front'){
         S.fronts++; S.combo=0; S.streak=0; b.wrong=true; addTime(R.timeFront); say('表は 白い糸だけ。裏返そう','ng'); audio.knot();
@@ -235,11 +255,7 @@ function down(x,y){
     }
     return;
   }
-  if(b.tangle){
-    b.tangle.taps++; audio.click(); S.fx.push({kind:'catch', x:b.tangle.x, y:b.tangle.y, t:0, life:0.3});
-    if(b.tangle.taps>=R.untangleTaps){ b.tangle=null; say('ほぐれた','ok'); }
-    return;
-  }
+  if(b.tangle){ untangleTap(); return; }
   S.held = true;
 }
 function move(x,y){
@@ -259,6 +275,7 @@ function step(dt){
   for(const g of S.grains){ g.vy+=900*dt; g.x+=g.vx*dt; g.y+=g.vy*dt; g.t+=dt; } S.grains = S.grains.filter(g=>g.t<1.6);
   S.shake = Math.max(0, S.shake - dt*3);
   if(S.msg){ S.msg.t+=dt; if(S.msg.t>S.msg.life) S.msg=null; }
+  if(S.pinchHint>0) S.pinchHint -= dt;
   if(S.mode!=='play') return;
 
   const before = Math.ceil(S.time);
@@ -398,7 +415,29 @@ function draw(){
   drawFx();
   ctx.restore();
   if(S.mode==='play') drawMeter(L);
+  drawFingers(L);
   drawMsg(L);
+}
+// 二本指の 見本（つまむ しぐさ）
+function pinchIcon(x, y, ph, col){
+  const gap = 16 - 10*ph;
+  ctx.fillStyle = col; ctx.strokeStyle='rgba(19,26,46,.8)'; ctx.lineWidth=2;
+  for(const d of [-1,1]){ ctx.beginPath(); ctx.arc(x + d*gap, y - 8 + d*4, 9, 0, 7); ctx.fill(); ctx.stroke(); }
+}
+function drawFingers(L){
+  // さわっている 指の 位置（タッチ）
+  for(const f of fingers.values()){
+    ctx.fillStyle = S.held ? 'rgba(255,217,102,.35)' : 'rgba(246,242,231,.22)';
+    ctx.beginPath(); ctx.arc(f.x, f.y, 20, 0, 7); ctx.fill();
+  }
+  const b = S.bag;
+  if(S.mode==='play' && b && !b.done && S.pinchHint>0 && !S.held){
+    const ph = 0.5+0.5*Math.sin(S.t*8);
+    const x = W/2, y = L.seamY + Math.min(L.bagH - 40, 200);
+    pinchIcon(x, y, ph, 'rgba(255,217,102,.9)');
+    ctx.fillStyle='#f0c44c'; ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('二本指で つまむ', x, y+24);
+  }
 }
 const demoBag = { N:16, face:'back', start:'L', from:null, single:false, knots:new Set([7]), pulled:0, sub:0, golden:false, kg:30, brand:'コシヒカリ', phase:'look', done:false, open:0, hint:false, slide:0, flipT:0, tangle:null };
 
@@ -537,14 +576,14 @@ function drawSeamBack(L, b){
     ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(sx, sy+4, 22+pulse*4, 0, 7); ctx.stroke();
     ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillText('赤が 白い輪に ささっている', Math.min(W-90, Math.max(90, sx + sd*60)), sy+38);
-    ctx.fillText('ここを タップ', Math.min(W-90, Math.max(90, sx + sd*60)), sy+56);
+    ctx.fillText('ここを 二本指で つまむ', Math.min(W-90, Math.max(90, sx + sd*60)), sy+56);
   }
   if(b.k===0 && b.phase==='pull' && !b.done && b.pulled<3){
     // 指の 見本：縫った 向きと 逆へ（ほどける 向き）
     const ph=(S.t*0.9)%1, x0 = sx + sd*20, x1 = sx + sd*Math.min(220, (L.x1-L.x0)*0.7), yy = sy+70;
     ctx.setLineDash([5,6]); ctx.strokeStyle='rgba(240,196,76,.7)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle=`rgba(240,196,76,${1-ph*0.5})`; ctx.beginPath(); ctx.arc(x0+(x1-x0)*ph, yy, 10, 0, 7); ctx.fill();
-    ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.fillText('ゆっくり 横へ なでて 引く', (x0+x1)/2, yy+22);
+    ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.fillText('つまんだまま ゆっくり 横へ 引く', (x0+x1)/2, yy+22);
   }
 }
 function drawHoles(L, b){
@@ -607,7 +646,7 @@ function drawMeter(L){
     ctx.fillStyle='#f3efe4'; ctx.textAlign='center'; ctx.font='700 15px "Zen Maru Gothic",sans-serif';
     ctx.fillText(b.face==='front' ? '糸の口は どっち側？' : 'どっちの端から ほどく？', W/2, my-14);
     ctx.fillStyle='#a9b0c7'; ctx.font='700 12px "Zen Maru Gothic",sans-serif';
-    ctx.fillText('端をタップ＝そこから ほどく　袋をタップ＝裏返す', W/2, my+6, W-24);
+    ctx.fillText('端を二本指でつまむ＝ほどく　袋をタップ＝裏返す', W/2, my+6, W-24);
     return;
   }
   const maxT = 1.5;
@@ -678,14 +717,61 @@ function syncUI(dt){
 }
 
 function pos(e){ const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; }
-cv.addEventListener('pointerdown', e=>{ try{ cv.setPointerCapture(e.pointerId); }catch(_){} down(...pos(e)); });
-cv.addEventListener('pointermove', e=>{ const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; for(const ev of (evs.length?evs:[e])) move(...pos(ev)); });
-cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+// ---------- 指 ----------
+// タッチ：2本の 指が 近い（PINCH_ON 以内）と「つまむ」。指の まん中が 糸を もつ 手。
+//   はなれる（PINCH_OFF より 開く）か、どちらかの 指を あげると はなす。1本指で すぐ あげると タップ。
+// マウス：おしている 間を つまんでいる と みなす（パソコン用）。袋の 上の クリックは タップ。
+const PINCH_ON = 120, PINCH_OFF = 170;
+const fingers = new Map(); let pinch = null; let tapCand = null;
+function pinchMid(){ const [a,b2] = [...fingers.values()]; return [(a.x+b2.x)/2, (a.y+b2.y)/2, Math.hypot(a.x-b2.x, a.y-b2.y)]; }
+cv.addEventListener('pointerdown', e=>{
+  try{ cv.setPointerCapture(e.pointerId); }catch(_){}
+  const [x,y] = pos(e);
+  if(e.pointerType==='mouse'){
+    const b=S.bag;
+    if(S.mode==='play' && b && b.phase==='look' && whereTap(x,y)==='bag'){ tap(x,y); return; }
+    if(S.mode==='play' && b && b.tangle){ tap(x,y); return; }
+    pinch = 'mouse'; down(x,y); return;
+  }
+  fingers.set(e.pointerId, {x, y, sx:x, sy:y});
+  if(fingers.size===1){ tapCand = {id:e.pointerId, x, y, t:performance.now()}; }
+  else if(fingers.size===2 && !pinch){
+    tapCand = null;
+    const [mx,my,d] = pinchMid();
+    if(d < PINCH_ON){ pinch = 'touch'; down(mx,my); }
+  }
+});
+cv.addEventListener('pointermove', e=>{
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for(const ev of (evs.length?evs:[e])){
+    const [x,y] = pos(ev);
+    if(e.pointerType==='mouse'){ if(pinch==='mouse') move(x,y); continue; }
+    const f = fingers.get(e.pointerId); if(!f) continue;
+    f.x=x; f.y=y;
+    if(tapCand && tapCand.id===e.pointerId && Math.hypot(x-tapCand.x, y-tapCand.y) > 14) tapCand = null;
+    // 1本指で なぞっても 糸は つまめない → 見本を 出す
+    if(fingers.size===1 && !pinch && S.mode==='play' && Math.hypot(x-f.sx, y-f.sy) > 30) S.pinchHint = 1.2;
+    if(fingers.size===2){
+      const [mx,my,d] = pinchMid();
+      if(pinch==='touch'){ if(d > PINCH_OFF){ pinch=null; up(); } else move(mx,my); }
+      else if(d < PINCH_ON){ pinch='touch'; down(mx,my); }
+    }
+  }
+});
+function fingerUp(e){
+  if(e.pointerType==='mouse'){ if(pinch==='mouse'){ pinch=null; up(); } return; }
+  const f = fingers.get(e.pointerId); fingers.delete(e.pointerId);
+  if(pinch==='touch'){ pinch=null; up(); }
+  if(tapCand && tapCand.id===e.pointerId && e.type==='pointerup' && performance.now()-tapCand.t < 350 && f) tap(f.x, f.y);
+  tapCand = null;
+}
+cv.addEventListener('pointerup', fingerUp); cv.addEventListener('pointercancel', fingerUp);
+document.addEventListener('gesturestart', e=>e.preventDefault()); // iOS の 2本指 ズームを とめる
 
 // ---------- テスト用の口（tools/mishin/playtest.js） ----------
 const KB = window.KB = {
   manual:false, fixedSeed:0, calm: matchMedia('(prefers-reduced-motion: reduce)').matches,
-  S, R, start: startGame, step, down, move, up, layout, stitchPos, makeBag, pullDir, size:()=>({W,H}),
+  S, R, start: startGame, step, down, move, up, tap, fingers, layout, stitchPos, makeBag, pullDir, size:()=>({W,H}),
 };
 
 let last = performance.now();

@@ -1,6 +1,7 @@
 // ミシン糸 一本どり：ボットで通しプレイして、面白さの目安を数える
 // node tools/mishin/playtest.js [--runs 12]
-// 本物の手順：表なら裏返す → 裏の ほどき始めの端（赤が白い輪にささっている）をタップ → 縫った向きと逆へ ゆっくり引く
+// 本物の手順：表なら裏返す（タップ）→ 裏の ほどき始めの端（赤が白い輪にささっている）を 二本指で つまむ → 縫った向きと逆へ ゆっくり引く
+// KB.down/move/up は「つまむ手」（2本の指の まん中）、KB.tap は 1本指の タップ
 const { chromium } = require('playwright');
 const path = require('path');
 const args = process.argv.slice(2);
@@ -48,7 +49,7 @@ async function main(){
             if (b._think > 0){ b._think -= dt; tick(); continue; }
             const isFront = b.face === 'front';
             const thinksFront = b._faceOk ? isFront : !isFront;
-            if (thinksFront && !b._flippedOnce){ b._flippedOnce = true; KB.down(W/2, L.seamY + L.bagH*0.6); KB.up(); b._think = 0.25; tick(); continue; }
+            if (thinksFront && !b._flippedOnce){ b._flippedOnce = true; KB.tap(W/2, L.seamY + L.bagH*0.6); b._think = 0.25; tick(); continue; }
             if (isFront){ // 表のまま 端を さわって しまった → 気づいて 裏返す
               KB.down(L.x0 + 4, L.seamY); KB.up(); b._faceOk = true; b._flippedOnce = false; b._think = 0.3; tick(); continue;
             }
@@ -62,7 +63,7 @@ async function main(){
           // もつれ：気づいて タップ 3回
           if (b.tangle){
             if (held){ KB.up(); held=false; }
-            tangleWait -= dt; if (tangleWait <= 0){ KB.down(W/2, H*0.6); KB.up(); tangleWait = 0.15; }
+            tangleWait -= dt; if (tangleWait <= 0){ KB.tap(W/2, H*0.6); tangleWait = 0.15; }
             tick(); continue;
           }
           const dir = KB.pullDir(b);

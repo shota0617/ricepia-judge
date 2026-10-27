@@ -2026,25 +2026,29 @@ async function walkTo(page, id) {
         const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
         const keep = body.innerHTML;
         body.innerHTML = '<div style="height:200px">テスト：顔の 絵と 3行の 話（窓の 高さを 本物に 近く）</div>';
+        const settle = async () => {   // 知らせが すべり おわって 止まるまで 待つ（0.3秒の 動きの とちゅうを はかると、重い ときに 窓の 上へ はみ出して 見えた：上の はし 319 → 止まると 332）
+          let prev = null, same = 0;
+          for (let k = 0; k < 40 && same < 3; k++) { await wait(50); const y = Math.round(el.getBoundingClientRect().top); same = y === prev ? same + 1 : 0; prev = y; }
+        };
         const look = () => { const t = el.getBoundingClientRect(), d = pi.querySelector('.dq').getBoundingClientRect(); return { shown: el.classList.contains('show'), hit: t.top < d.bottom && t.bottom > d.top, t: [Math.round(t.top), Math.round(t.bottom)], d: [Math.round(d.top), Math.round(d.bottom)] }; };
         pi.hidden = true; el.classList.remove('show'); await wait(350);
-        nishioGo.toast(msg); await wait(100); pi.hidden = false; await wait(450);   // 知らせが 先、窓が あと
+        nishioGo.toast(msg); await wait(100); pi.hidden = false; await wait(150); await settle();   // 知らせが 先、窓が あと
         const first = look();
         pi.hidden = true; el.classList.remove('show'); await wait(350);
-        pi.hidden = false; await wait(100); nishioGo.toast(msg + '　'); await wait(450);   // 窓が 先、知らせが あと
+        pi.hidden = false; await wait(100); nishioGo.toast(msg + '　'); await wait(150); await settle();   // 窓が 先、知らせが あと
         const second = look();
         pi.hidden = true; el.classList.remove('show'); await wait(350);
         // 話の ページを めくって 窓が のびる（pxInfoBody だけ 書きかわる。hidden は そのまま）
         body.innerHTML = '<div style="height:40px">みじかい ページ</div>'; pi.hidden = false; await wait(100);
-        nishioGo.toast(msg); await wait(450);
+        nishioGo.toast(msg); await wait(150); await settle();
         const shortPage = look();
-        body.innerHTML = '<div style="height:200px">ながい ページ</div>'; await wait(450);
+        body.innerHTML = '<div style="height:200px">ながい ページ</div>'; await wait(150); await settle();
         const page = look();
         // 下に よけて いる 知らせを、窓を 開いた まま 別の 知らせで 書きかえる（low を 外した 直後の、まだ 下に いる 位置で はからない）
         pi.hidden = true; el.classList.remove('show'); await wait(350);
-        pi.hidden = false; await wait(100); nishioGo.toast(msg + '（まえ）'); await wait(450);
+        pi.hidden = false; await wait(100); nishioGo.toast(msg + '（まえ）'); await wait(150); await settle();
         const before = look(), wasLow = el.classList.contains('low');
-        nishioGo.toast(msg + '（つぎ）'); await wait(450);
+        nishioGo.toast(msg + '（つぎ）'); await wait(150); await settle();
         const update = { ...look(), before, wasLow };
         pi.hidden = true; el.classList.remove('show'); body.innerHTML = keep;
         const fine = x => x.shown && !x.hit;

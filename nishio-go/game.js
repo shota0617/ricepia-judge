@@ -603,7 +603,7 @@ function talkNpc(id, page = 0) {
       brief.icons += '🎉';
       say.push(`🎉 ${S.guide.byId ? 'イベント達成：' : ''}${n.name}に会えた${pts ? ` +${pts}pt` : ''}`);
       const ml = [], mb = mazeGoal(n.id, n.name, ml), mz = takeMzShare();   // 地図の めいろの ゴールが この人だった：名所と 同じ ように 時間・★と 紙ふぶき
-      if (mz) mzNpcShare = { ...mz, id: n.id };   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）
+      if (mz) { mzNpcShare = { ...mz, id: n.id }; playAsk(mz); }   // 話の 窓に「📣 シェア」（人の ゴールにも ごほうびの 窓は 出ないので）。「めいろ、どうだった？」は 話の 窓を とじた あと
       const spl = ml.find(l => l.startsWith('🏃'));
       if (spl && simple()) toastAfter(spl);   // はやさ：文字を少なく では 下の 知らせが 絵だけに なるので、あとに 文で 出す
       if (ml.length) { if (mb) gainPoints(mb); brief.icons += '🏁'; say.unshift(...ml); }
@@ -3464,6 +3464,9 @@ function playAsk(mz) {
   playQ.pending = { sec: Math.round(mz.sec), st: mz.stars || 0, mz };   // mz：★4〜5 の ときの「友だちに」で シェアする ゴール（takeMzShare）
   react.pending = null;   // 名所の ひとこと は こんどに（2つ つづけて たずねない）
 }
+// 人が ゴールの めいろ：話の 窓（pxInfo）を とじた あとに 出す（名所の ゴールは ごほうびの 窓を とじた あと＝hideReward）。
+// これまで 人の ゴールでは たずねて いなかった（名所の ゴールの 声だけに かたよる）
+new MutationObserver(() => { if (playQ.pending && $('pxInfo').hidden && !$('reward').classList.contains('show')) playShow(); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });
 function playShow() {
   const ctx = playQ.pending; playQ.pending = null;
   if (!ctx) return;

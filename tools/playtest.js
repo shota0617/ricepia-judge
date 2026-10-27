@@ -1058,13 +1058,22 @@ async function walkTo(page, id) {
       await wait(1200);
       const sh = document.getElementById('share'), shareOpen = !sh.hidden && /vs=61/.test(document.getElementById('shareText').textContent) && bar.hidden;
       sh.hidden = true;
+      // 人が ゴールの めいろ：話の 窓（pxInfo）が 出て いる 間は 出さず、とじたら 出る
+      localStorage.removeItem('nsg_play_ask');
+      const px = document.getElementById('pxInfo'); px.hidden = false;
+      G.playAsk({ name: '駅前の学生', sec: 45, stars: 1 });
+      await wait(100);
+      const npcWait = bar.hidden;
+      px.hidden = true; await wait(100);
+      const npcShown = !bar.hidden && /めいろ、どうだった？/.test(bar.textContent);
+      bar.querySelector('[data-play-x]').click();
       S.points = p0; S.total = t0; G.save && G.save();
-      return { shown, big, on, more, share2, share4, closed, again, tabClosed, shareOpen, day: localStorage.getItem('nsg_play_ask') };
+      return { shown, big, on, more, share2, share4, closed, again, tabClosed, shareOpen, npcWait, npcShown, day: localStorage.getItem('nsg_play_ask') };
     });
     await page.unroute('**/api/feedback');
     const js = x => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } }, body = js(fb[0]), tab = js(fb[1]), viaShare = js(fb[2]);
     const c = R.checks.playRating;
-    R.checks.playRating = { ...c, sent: fb.length, body, tab, viaShare, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && !c.share2 && c.share4 && c.shareOpen && !!viaShare && viaShare.r === 5 && viaShare.sec === 61 && fb.length === 3 };
+    R.checks.playRating = { ...c, sent: fb.length, body, tab, viaShare, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && !c.share2 && c.share4 && c.shareOpen && !!viaShare && viaShare.r === 5 && viaShare.sec === 61 && c.npcWait && c.npcShown && fb.length === 3 };
   }
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

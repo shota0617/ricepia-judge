@@ -2001,6 +2001,29 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return r;
     })();
+    // 知らせ（トースト）と ごほうびの 名前は、ことばの 間の すきまで 折りかえす（320px）。長すぎる 文は 画面から はみ出さない
+    // （自分で 遊んで 分かった：「🎁 すぐ近くに たからば／こ！」「はじめての たから／ばこ」と ことばの とちゅうで 切れていた）
+    R.checks.wrapWords320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const wait = ms => new Promise(res => setTimeout(res, ms));
+        const lineOf = (el, i) => { const rg = document.createRange(); rg.setStart(el.firstChild, i); rg.setEnd(el.firstChild, i + 1); const rc = rg.getClientRects()[0]; return rc ? Math.round(rc.top) : null; };
+        const sameLine = (el, word) => { const t = el.textContent, i = t.indexOf(word); return lineOf(el, i) === lineOf(el, i + word.length - 1); };
+        const t = document.getElementById('toast'), keep = { text: t.textContent, show: t.classList.contains('show') };
+        t.textContent = '🎁 すぐ近くに たからばこ！'; t.classList.add('show'); await wait(50);
+        const toast = sameLine(t, 'たからばこ') && lineOf(t, 0) !== lineOf(t, t.textContent.length - 1);   // 2行に なって いて、たからばこ は 切れない
+        t.textContent = 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺあいうえおかきくけこさしすせそ'; await wait(50);
+        const longIn = t.getBoundingClientRect().right <= innerWidth && t.scrollWidth <= t.clientWidth + 1;
+        t.textContent = keep.text; t.classList.toggle('show', keep.show);
+        const box = document.createElement('div'); box.className = 'reward show'; box.style.cssText = 'visibility:hidden;pointer-events:none';
+        box.innerHTML = '<div class="rw hero long"><div class="place">ようこそ！ はじめての たからばこ</div></div>'; document.body.appendChild(box); await wait(50);
+        const place = sameLine(box.querySelector('.place'), 'たからばこ'); box.remove();
+        return { toast, longIn, place };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.toast && r.longIn && r.place };
+    })();
     // はじめの1枚（3枚から えらぶ）の 窓：320px の 画面でも 3枚とも 窓の 中に 入る
     // （自分で 遊んで 分かった：絵が 84px 固定で 3枚が 窓より 広く なり、まん中 寄せの まま 左右が 切れて、左の 絵は スクロールでも 見られなかった）
     R.checks.pickFit320 = await (async () => {
@@ -2403,6 +2426,7 @@ async function walkTo(page, id) {
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need((R.walk.find(w => w.id === 'chest') || {}).ribbon?.has && !R.walk.find(w => w.id === 'chest').ribbon.hit, `ごほうびの「NEW」の 札が 名前の 字に 重なる（${JSON.stringify((R.walk.find(w => w.id === 'chest') || {}).ribbon)}）`);
+  need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);
   need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);

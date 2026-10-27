@@ -1647,6 +1647,16 @@ async function walkTo(page, id) {
       const goal = /1分17秒/.test(t) && /★★☆/.test(t);   // かかった 時間と ★も 札に
       return { good: /1\.1倍/.test(t) && /\+5/.test(t), bad: /1\.8倍/.test(t), goal, next: titles.some(x => /つぎは/.test(x)), ok: goal && /1\.1倍/.test(t) && /1\.8倍/.test(t) && !titles.some(x => /つぎは/.test(x)) };
     });
+    // 当店の ごほうび（文字を少なく）：「来てくれて ありがとう！」を 文で、来店スタンプは 何こめか。数も しるしも ない 札（茶わん・旗だけ）は ならべない
+    R.checks.shopThanks = await w.page.evaluate(async () => {
+      document.body.classList.add('simple');
+      nishioGo.showReward(225, 'らいすぴあ秀幸（永吉）', ['🔗 れんさ ×1.5 +25', '✨ はじめての 名所 +100', '🍚 来店スタンプ 3こめ', '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります']);
+      await new Promise(r => setTimeout(r, 300));
+      const el = document.getElementById('reward'), t = el.innerText, chips = [...el.querySelectorAll('.chips span')].map(x => x.textContent.trim());
+      el.click();
+      const thanks = /来てくれて ありがとう！/.test(t), stamp = chips.includes('3こめ'), blank = chips.filter(x => !x).length;
+      return { thanks, stamp, blank, chips, ok: thanks && stamp && blank === 0 && chips.length === 3 };
+    });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
     // 人から はなれる（テストの 道具）：めいろの 道すじの 上で 人の マスから 5〜8マスの 所に 置き、道すじに そって となりの マスへ 転がす（4マス 以上 はなれた マスに 入る）。
     // 人から まっすぐ 4マス 先は、ゆるい めいろでは 生け垣の 中の ことが あり、置いても 道すじへ もどされて「はなれた」ことに ならなかった
@@ -2725,6 +2735,7 @@ async function walkTo(page, id) {
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
+  need(c.shopThanks && c.shopThanks.ok, `当店の ごほうびに「来てくれて ありがとう！」・来店スタンプの 数が 出ない、または 数の ない 札が ならぶ（${JSON.stringify(c.shopThanks)}）`);
   need(c.mzGoalEdge && c.mzGoalEdge.ok, 'ゴールが 画面の はしに ある とき、ゴールの 名前が 画面から はみ出して 切れる');
   need(c.mzArrowTop && c.mzArrowTop.ok, 'ゴールが 上の 外の とき、矢印が 時計の 札や 右上の ボタンに 重なる');
   need(c.mzHintToast && c.mzHintToast.ok, '迷って いる 間、道しるべの 知らせが 25秒ごとに 出つづける');

@@ -287,6 +287,7 @@ body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 
 .reward .rw{background:#fff;border-radius:20px;padding:18px 24px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35);animation:pop 2.6s ease forwards;min-width:220px;max-width:calc(100% - 40px)}
 .reward .rw .big{font-size:40px;font-weight:900;color:var(--gold);line-height:1.1}
 .reward .rw .nm{font-weight:700;margin-top:4px}
+.reward .rw .thanks{font-size:18px;font-weight:700;color:var(--green);margin-top:2px}
 .reward .rw.ending{animation:none;max-height:86vh;overflow:auto;max-width:min(360px,calc(100% - 32px))}   /* クリア（殿堂入り）の記録：自分で とじるまで出す */
 .reward .rw.ending .say{font-size:14px;line-height:1.7;margin:10px 0 0;text-align:left}
 .reward .rw.ending ul{text-align:left}

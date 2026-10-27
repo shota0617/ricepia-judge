@@ -6478,16 +6478,26 @@ function shopTag(cx, bottom, dpr, s) {
   ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
 }
-// せかいちずの「ゴール：…」の 札に 知らせが 重なる ときは、知らせを 下へ（wlow。自分で 遊んで 分かった：320×568 で 遠い ゴールの 札が 左上の はしに 出て、
-// 「🧭 水色の 線が…」の 知らせに かくれて ゴールの 名前が 読めなかった）。下げたら 知らせが 消えるまで 下の まま（上下に ゆれない ように）
+// せかいちずの「ゴール：…」の 札に 知らせが 重なる ときは、知らせを 上⇔下の 空いて いる ほうへ（wlow で 下。自分で 遊んで 分かった：320×568 で 遠い ゴールの 札が
+// 左上の はしに 出て、「🧭 水色の 線が…」の 知らせに かくれて ゴールの 名前が 読めなかった）。いまの 位置で 重ならない 間は 動かさない（上下に ゆれない）。
+// 地図を 引っぱって 札が 下げた 知らせの 下に 来たら、上が 空いて いれば 上へ もどす（Codex の 指摘）。位置は 動きの とちゅうで なく、止まった 形で はかる
+const wtd = { key: '' };
 function worldToastDodge(tag) {
   const el = document.getElementById('toast');
   if (!el) return;
-  const show = el.classList.contains('show');
-  if (el.classList.contains('wlow')) { if (!show || !tag || !worldMode) el.classList.remove('wlow'); return; }
-  if (!show || !tag) return;
-  const r = cv.getBoundingClientRect(), k = r.width / cv.width, t = el.getBoundingClientRect();
-  if (t.left < r.left + tag[2] * k && t.right > r.left + tag[0] * k && t.top < r.top + tag[3] * k && t.bottom > r.top + tag[1] * k) el.classList.add('wlow');
+  if (!el.classList.contains('show') || !tag || !worldMode) { if (el.classList.contains('wlow')) el.classList.remove('wlow'); wtd.key = ''; return; }
+  const r = cv.getBoundingClientRect(), k = r.width / cv.width, T = [r.left + tag[0] * k, r.top + tag[1] * k, r.left + tag[2] * k, r.top + tag[3] * k];
+  const low = el.classList.contains('wlow'), key = T.map(Math.round).join() + '|' + low + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
+  if (key === wtd.key) return;   // 札・知らせ・画面が かわらなければ はかりなおさない
+  wtd.key = key;
+  const hitAt = lw => {   // wlow を lw に した ときの 止まった 位置で 札と 重なるか（transition の ない 見えない 写しで はかる）
+    const c = el.cloneNode(true);
+    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.toggle('wlow', lw); c.style.cssText = 'transition:none;visibility:hidden';
+    el.parentNode.appendChild(c);
+    const q = c.getBoundingClientRect(); c.remove();
+    return q.left < T[2] && q.right > T[0] && q.top < T[3] && q.bottom > T[1];
+  };
+  if (hitAt(low) && !hitAt(!low)) el.classList.toggle('wlow', !low);   // いまの 位置で 重なり、反対側が 空いて いれば そちらへ
 }
 function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所・めいろの ゴールの 札：こい紺に金色の字（当店の札とは ちがう色）。札の わく [左, 上, 右, 下] を返す
   const fs = Math.round(13 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr)), W = ctx.canvas.width, edge = 4 * dpr;   // 字は 13点（10点では 小さかった 2026-10-27）

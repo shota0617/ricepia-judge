@@ -2120,13 +2120,28 @@ async function walkTo(page, id) {
         const over = q => !!T && q.left < T[2] && q.right > T[0] && q.top < T[3] && q.bottom > T[1];
         const c = el.cloneNode(true); ['id', 'role', 'aria-live'].forEach(x => c.removeAttribute(x)); c.classList.remove('wlow', 'low'); c.style.cssText = 'transition:none;visibility:hidden'; el.parentNode.appendChild(c);
         const would = over(c.getBoundingClientRect()); c.remove();   // ふつうの 位置（上）なら 重なる 形か
-        const res = { far: far.name, world: document.body.classList.contains('pxw'), tagIn: !!T && T[1] >= 0 && T[3] <= innerHeight, would, wlow: el.classList.contains('wlow'), hit: over(el.getBoundingClientRect()) };
-        if (res.world) document.getElementById('pxWorld').click();
+        const tr = el.getBoundingClientRect();
+        return { far: far.name, world: document.body.classList.contains('pxw'), tagIn: !!T && T[1] >= 0 && T[3] <= innerHeight, would, wlow: el.classList.contains('wlow'), hit: over(tr),
+          drag: T && { x: (T[0] + T[2]) / 2, y: (T[1] + T[3]) / 2, dy: Math.round((tr.top + tr.bottom) / 2 - (T[1] + T[3]) / 2) } };
+      });
+      // 下げた あとに 地図を 引っぱって、札を 下げた 知らせの 所へ 動かす：知らせは 上へ もどって、札は かくれない（Codex の 指摘）
+      if (r.world && r.drag && r.wlow) {
+        const { x, y, dy } = r.drag, y0 = Math.max(150, Math.min(400, y));
+        await w.page.mouse.move(x, y0); await w.page.mouse.down();
+        for (let i = 1; i <= 8; i++) { await w.page.mouse.move(x, y0 + dy * i / 8); await w.page.waitForTimeout(30); }
+        await w.page.mouse.up(); await w.page.waitForTimeout(700);
+      }
+      const r2 = await w.page.evaluate(async () => {
+        const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), el = document.getElementById('toast');
+        const g = M.worldGoal, tag = g && g[2], rc = cv.getBoundingClientRect(), k = rc.width / cv.width;
+        const T = tag && [rc.left + tag[0] * k, rc.top + tag[1] * k, rc.left + tag[2] * k, rc.top + tag[3] * k], q = el.getBoundingClientRect();
+        const res = { tagIn2: !!T && T[1] >= 0 && T[3] <= innerHeight, wlow2: el.classList.contains('wlow'), hit2: !!T && el.classList.contains('show') && q.left < T[2] && q.right > T[0] && q.top < T[3] && q.bottom > T[1], shown2: el.classList.contains('show') };
+        if (document.body.classList.contains('pxw')) document.getElementById('pxWorld').click();
         el.classList.remove('show'); await wait(300); G.setGuide(null);
         return res;
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: !!r.skip || (r.world && r.tagIn && r.would && r.wlow && !r.hit) };
+      return { ...r, ...r2, ok: !!r.skip || (r.world && r.tagIn && r.would && r.wlow && !r.hit && r2.shown2 && !r2.hit2) };
     })();
     // おたすけの「🧭 水色の 線が…」の 知らせは、「🏁 つぎの ゴール」の 大きな 文字が 出ている 間は 出さない（その あとに 出す）。
     // 自分で 遊んで 分かった（320×568）：はじめの ゴールの 名前と 道のりが、この 知らせの 下に かくれて 読めなかった

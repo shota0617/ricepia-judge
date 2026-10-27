@@ -4877,7 +4877,7 @@ const USHI = (() => {
     list.push({ f, t: 0, life: 0, rest: 0, from: new THREE.Vector3(), to: new THREE.Vector3(), dur: 0.4, hop: false });
   }
   const MSG = '🐸 耕した土から 冬眠していた ウシガエルが 出てきた。寒くて 動きが にぶい（耕すと 土の中の生き物を 起こしてしまう）';
-  let acc = 0, need = 70 + Math.random() * 70, n = 0, pend = false, chk = false, tries = 0;
+  let acc = 0, need = 70 + Math.random() * 70, n = 0, pend = false, chk = false, tries = 0, lastOdo = 0;
   function next(u) {                                  // 次にはねる先：トラクターが近いときは 遠ざかる向き、そうでなければ 近い畦のほう
     const p = u.f.position, dx = p.x - S.x, dz = p.z - S.z, near = Math.hypot(dx, dz) < 5;
     const ex = HX - Math.abs(p.x), ez = HZ - Math.abs(p.z);
@@ -4888,7 +4888,8 @@ const USHI = (() => {
     u.f.rotation.y = a; u.t = 0; u.dur = 0.35 + Math.random() * 0.15; u.hop = true;
   }
   function update(dt) {
-    if (S.started && !S.done && S.rotDown && S.rotPos < 0.08 && S.v > 0.1 && n < list.length && (acc += S.v * dt) > need) {   // 耕していると ときどき 起こす
+    const od = S.odo || 0, d = Math.max(0, od - lastOdo); lastOdo = od;   // 実際に走った道のり（step の中で ふえる。早送りの倍率も 止めているあいだも そのまま）
+    if (S.started && !S.done && S.rotDown && S.rotPos < 0.08 && S.v > 0.1 && n < list.length && (acc += d) > need) {   // 耕していると ときどき 起こす
       const lx = (Math.random() - 0.5) * 1.6, lz = ROTARY_Z - 0.7, s = Math.sin(S.yaw), c = Math.cos(S.yaw);
       const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
       if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1 && tilledAt(x, z) >= 0) {   // 耕した土からだけ 出てくる（まだ耕していない所なら こんどは 出さない）

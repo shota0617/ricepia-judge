@@ -5885,6 +5885,7 @@ function frame(now) {
   raf = requestAnimationFrame(frame);
   if (meiroPause) { lastT = 0; return; }
   howtoTick();
+  mzNextHoldTick();
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
   if (!w || !h) return;
@@ -7655,6 +7656,17 @@ function mzSnap(now) {
 // ゴールに 着いた：お米の まわりに 紙ふぶき（ごはんつぶ・星・桜の 色。盤の めいろと 同じ）
 const mzFx = [], mzBanner = { t0: 0, text: '' };
 const mzNext = { t0: 0, name: '', want: false };   // 新しい ゴールの 知らせ（3秒）
+// 「🏁 つぎの ゴール」の 札（と 道のりを 待つ 2秒まで）が 出て いる 間は、知らせ（game.js の toast）を 待たせ、札が 消えたら 出す。
+// ごほうびの 窓を とじると、待たせて いた 知らせと この 札が 同時に 出て、札の 見出し「🏁 つぎの ゴール」が 知らせに かくれて いた（自分で 遊んで 分かった。ゴールの たびに）
+function mzNextOn() { return !!((mzNext.want || mzNext.t0) && mazeOn() && G.guide && !mapCovered() && !mzBanner.t0); }
+G.toastBlock = mzNextOn;
+function mzNextHoldTick() {
+  const on = mzNextOn();
+  if (on === !!mzNext.hold) return;
+  mzNext.hold = on;
+  if (on) { if (G.toastHold) G.toastHold(); }   // いま 出ている 知らせは 下げる（出た ばかりなら 札の あとに 出し直す）
+  else if (G.toastFlush) G.toastFlush();
+}
 function mzGoalFx(text) {
   // 紙ふぶきは 西尾らしく（運営者の声「西尾らしく」）：お米つぶ（白い たて長が くるくる）・抹茶の 葉（緑）・金の つぶ（お米屋さんの ゲーム、抹茶の まち）
   const now = performance.now(), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
@@ -8753,7 +8765,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: v => boingSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; },
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn() }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

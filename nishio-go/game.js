@@ -2570,7 +2570,8 @@ const toastQ = [];
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
 function toast(msg) {
   const el = $('toast');
-  if ($('reward').classList.contains('show') || howtoOpen() || modalOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面・シェアの 窓の 上にも 重ねない（とじてから）
+  if (toastBlocked()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面・シェアの 窓・めいろの「🏁 つぎの ゴール」の 上にも 重ねない（とじてから）
+  if (toastQ.length) toastFlush();   // 待たせた ものが のこって いれば あとに 出す（札の 途中で 地図を はなれた など）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
   el.textContent = msg; el.classList.remove('wlow'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow：せかいちずの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
@@ -2583,7 +2584,10 @@ function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
 // シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
 function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden); }
 if (window.MutationObserver && $('share')) new MutationObserver(() => { if ($('share').hidden) toastFlush(); else toastHold(); }).observe($('share'), { attributes: true, attributeFilter: ['hidden'] });
-function toastFlush() { if (!$('reward').classList.contains('show') && !howtoOpen() && !modalOpen()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓を とじたとき
+// めいろの「🏁 つぎの ゴール」の 札（pixel.js の mzNextOn）
+function pxBusy() { try { return !!(window.nishioGo && nishioGo.toastBlock && nishioGo.toastBlock()); } catch (e) { return false; } }
+function toastBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy(); }
+function toastFlush() { if (!toastBlocked()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓・つぎの ゴールの 札を とじたとき
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
   const t = $('toast');

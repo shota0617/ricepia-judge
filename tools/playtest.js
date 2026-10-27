@@ -2130,6 +2130,24 @@ async function walkTo(page, id) {
       sh.hidden = keep; el.classList.remove('show');
       return { over, after, ok: !over && after };
     });
+    // めいろの「🏁 つぎの ゴール」の 札（3秒）に 知らせを 重ねない：札の 間は 待たせて、消えたら 出す（自分で 遊んで 分かった：ごほうびを とじると 待たせた 知らせと 札が 同時に 出て、札の 見出しが かくれて いた）
+    R.checks.nextGoalToast = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), msg = '🎁 テストの 知らせ（つぎの ゴール）';
+      document.getElementById('pxInfo').hidden = true; el.classList.remove('show');
+      const maze = M.on(), g0 = G.guide, g = G.spots.filter(x => x.lat && !x.shop && (!g0 || x.id !== g0.id) && G.dist(G.me, x) > 300 && G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (!g) return { spot: 'none' };
+      G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
+      let seen = false;
+      for (let i = 0; i < 10; i++) { await wait(60); const n = M.next ? M.next() : null; if (n && n.on) { seen = true; break; } }   // 新しい ゴールに なった（直す 前の コードには M.next が ないので 0.6秒 待つ）
+      G.toast(msg);
+      let over = false;
+      for (let i = 0; i < 12; i++) { if (el.classList.contains('show') && el.textContent === msg) over = true; await wait(200); }   // 札の 出はじめ 2.4秒（道のりを 待つ 間と 札の 3秒の うち）
+      let after = false;
+      for (let i = 0; i < 50 && !after; i++) { await wait(200); after = el.classList.contains('show') && el.textContent === msg; }   // 札が 消えたら（ほかの 知らせが あれば その あと。10秒まで）
+      const off = M.next ? !M.next().on : null;
+      el.classList.remove('show');
+      return { maze, seen, over, after, off, ok: maze && !over && after };
+    });
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {
       const vp = w.page.viewportSize();
@@ -2524,6 +2542,7 @@ async function walkTo(page, id) {
   need(c.codeCardHead && c.codeCardHead.ok, `ひきつぎの あいことばの 見出しと 説明が 同じ 行に つづく（${JSON.stringify(c.codeCardHead)}）`);
   need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
   need(c.shareToast && c.shareToast.ok, `シェアの 窓の 上に 知らせが 重なる（${JSON.stringify(c.shareToast)}）`);
+  need(c.nextGoalToast && c.nextGoalToast.ok, `めいろの「つぎの ゴール」の 札に 知らせが 重なる（${JSON.stringify(c.nextGoalToast)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);
   need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');

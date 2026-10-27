@@ -98,6 +98,8 @@ description: トラクターのゲーム（tractor.html・tools/tractor/）を�
 
 ゲームの「農家の声」（`VOICES`）は、本物の農家さん・研修生の言葉を要約したもの。その場面になったら 1 回だけ出す（`voice('key')`）。1 回分のループのたびに、SNS から新しい声をさがして足す。
 
+**くわしい拾い方・控え方・ゲームの動きへの作りかえ方は、`tractor-sns` スキル（`.claude/skills/tractor-sns/SKILL.md`）にまとめた。** 「農家の声を拾う」「このスキルをループ」と言われたら、そちらを回す。
+
 1. **集める**：
    - **X**：`grok-research.yml`（`topic: tractor`。focus に「米農家さんの本人の言葉を短く、投稿の URL つき」）を回し、ジョブのログ（`research.json`）を読む。
      - xAI のクレジットが切れていると 403 で失敗する。そのときは下へ。

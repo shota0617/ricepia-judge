@@ -1324,6 +1324,7 @@ function checkin() {
   const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
   showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot, false, mz);
   reactAsk(s);
+  if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   if (s.shop) shopAfter(s);   // ごほうびのあと、当店の窓（営業時間・LINE の常連さまポイント）を出す
   map.closePopup();
   renderMarkers();
@@ -2719,7 +2720,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
 function hideReward() {
-  clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow();
+  clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow(); else if (playQ.pending) playShow();
   toastQ.splice(0).forEach(toastAfter);   // たまった知らせは、1つずつ順に（つなげて1つにすると長すぎて読めなかった）
   setTimeout(tryChest, 300);   // ごほうびの間に着いていた たからばこ を開ける
 }
@@ -3453,6 +3454,48 @@ function reactAsk(s) {
   if (day.d === ymd() && day.n >= 3) return;
   react.pending = s;
 }
+// めいろの ゴールの あとの「めいろ、どうだった？」：★1〜5 を えらぶと ひとこと（なくても よい）の 欄。送るか とじると ★が 届く（ひとことは 送った ときだけ）。
+// 届いた 声は /api/feedback（kind: play）→ 運営者の 非公開リポジトリの「[あそび] 日づけ」に たまり、ゲームを 直す 手がかりに する。
+// 1日1回、名所の ひとこと（reactBar）と 同じ 場所に 出す。運営者の声「どのようにレビューを受けるのか。ゲーム改善につながるか」2026-10-27
+const playQ = { pending: null, r: 0, shown: 0, sent: false, t: 0 };
+function playAsk(mz) {
+  if (store.get('nsg_play_ask', '') === ymd()) return;
+  playQ.pending = { sec: Math.round(mz.sec), st: mz.stars || 0 };
+  react.pending = null;   // 名所の ひとこと は こんどに（2つ つづけて たずねない）
+}
+function playShow() {
+  const ctx = playQ.pending; playQ.pending = null;
+  if (!ctx) return;
+  store.set('nsg_play_ask', ymd());
+  Object.assign(playQ, { ctx, r: 0, shown: Date.now(), sent: false });
+  $('reactBar').classList.add('play');
+  $('reactBar').innerHTML = `<p>🎮 めいろ、どうだった？ <small>ゲームを よくするのに 使います（+5pt）</small></p>
+    <div class="play-stars" role="group" aria-label="★の 数">${[1, 2, 3, 4, 5].map(n => `<button type="button" data-play="${n}" aria-label="★${n}">★</button>`).join('')}</div>
+    <div class="play-more" hidden><input type="text" id="playText" maxlength="140" placeholder="ひとこと（なくても OK）" aria-label="ひとこと"/><button type="button" class="btn mini" data-play-send>送る</button></div>
+    <button type="button" class="react-x" data-play-x aria-label="とじる">×</button>`;
+  $('reactBar').hidden = false;
+  track('play_ask', {});
+  clearTimeout(react.t); react.t = setTimeout(() => playClose(), 20000);   // えらばなければ 20秒で とじる（えらんだら ★だけ 送る）
+}
+async function playSend(text) {
+  if (playQ.sent || !playQ.r) return;
+  playQ.sent = true;
+  const r = playQ.r, ctx = playQ.ctx || {};
+  track('play_rating', { r, text: text ? 1 : 0 });
+  let res = null;
+  try { res = await fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: 'play', r, text: text || '', sec: ctx.sec, st: ctx.st, t: Date.now() - playQ.shown, hp: '' }) }); } catch (e) { res = null; }
+  if (res && res.ok) {
+    fbStatsAdd(x => { x.react++; });
+    const lv = gainPoints(5); save();
+    toast(`🎮 ありがとう！ +5pt（ゲームを よくするのに 使います）${lv ? ` レベル${lv}！` : ''}`);
+  } else toast(res && (res.status === 503 || res.status === 404) ? '声は まだ受けつけていません。ごめんなさい。' : '声を送れませんでした。また こんど おねがいします。');
+}
+function playClose() {
+  clearTimeout(react.t);
+  if (playQ.r && !playQ.sent) playSend('');   // ★を えらんで とじた：★だけ 届ける
+  $('reactBar').classList.remove('play');
+  reactHide();
+}
 function reactHide() { clearTimeout(react.t); $('reactBar').hidden = true; $('reactBar').innerHTML = ''; }
 function reactShow() {
   const s = react.pending; react.pending = null;
@@ -3467,6 +3510,16 @@ function reactShow() {
   clearTimeout(react.t); react.t = setTimeout(reactHide, 15000);
 }
 $('reactBar').addEventListener('click', async e => {
+  if (e.target.closest('[data-play-x]')) return playClose();
+  const ps = e.target.closest('[data-play]');
+  if (ps) {   // ★を えらぶ（えらびなおしても よい）→ ひとことの 欄
+    playQ.r = +ps.dataset.play;
+    $('reactBar').querySelectorAll('[data-play]').forEach(b => b.classList.toggle('on', +b.dataset.play <= playQ.r));
+    const more = $('reactBar').querySelector('.play-more'); if (more) more.hidden = false;
+    clearTimeout(react.t); react.t = setTimeout(() => playClose(), 30000);
+    return;
+  }
+  if (e.target.closest('[data-play-send]')) { const v = ($('playText') || {}).value || ''; await playSend(v.trim().slice(0, 140)); return playClose(); }
   if (e.target.closest('[data-react-x]')) return reactHide();
   const b = e.target.closest('[data-react]');
   if (!b) return;
@@ -3973,7 +4026,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
-  snapMaze, friendVs, mzSpeed, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  snapMaze, friendVs, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,

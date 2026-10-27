@@ -1014,6 +1014,32 @@ async function walkTo(page, id) {
     const g = G.guide, gl = g && nishioPixel.maze.goal(g.id || g.name), warp = gl ? typeof gl.warp : 'no-goal';   // とびこえた ゴールを はやさから のぞく ための しるし
     return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && /1秒に 8m（ベスト 10m まで あと 2m）/.test(b) && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
   });
+  // めいろの ゴールの あとの「めいろ、どうだった？」：★を えらび ひとことを 書いて 送ると、/api/feedback に kind: play・★・ひとこと・秒・めいろの★ が 届く。1日1回
+  {
+    const fb = [];
+    await page.route('**/api/feedback', r => { fb.push(r.request().postData()); r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
+    R.checks.playRating = await page.evaluate(async () => {
+      const G = nishioGo, S = G.state, p0 = S.points, t0 = S.total, wait = ms => new Promise(f => setTimeout(f, ms)), bar = document.getElementById('reactBar');
+      localStorage.removeItem('nsg_play_ask');
+      G.playAsk({ sec: 83.4, stars: 2 }); G.playShow();
+      const shown = !bar.hidden && /めいろ、どうだった？/.test(bar.textContent);
+      const big = parseFloat(getComputedStyle(bar.querySelector('[data-play]')).fontSize);   // ★は 大きく（タップ しやすく）
+      bar.querySelector('[data-play="4"]').click();
+      const on = bar.querySelectorAll('[data-play].on').length, more = !bar.querySelector('.play-more').hidden;
+      document.getElementById('playText').value = 'テストの ひとこと';
+      bar.querySelector('[data-play-send]').click();
+      for (let i = 0; i < 20 && !bar.hidden; i++) await wait(100);
+      const closed = bar.hidden;
+      G.playAsk({ sec: 50, stars: 3 });
+      const again = !!G.playPending;   // 同じ 日は もう たずねない
+      S.points = p0; S.total = t0; G.save && G.save();
+      return { shown, big, on, more, closed, again, day: localStorage.getItem('nsg_play_ask') };
+    });
+    await page.unroute('**/api/feedback');
+    const body = (() => { try { return JSON.parse(fb[fb.length - 1] || 'null'); } catch (e) { return null; } })();
+    const c = R.checks.playRating;
+    R.checks.playRating = { ...c, sent: fb.length, body, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && fb.length === 1 };
+  }
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
   await page.evaluate(() => { nishioPixel.setRoll(true); nishioPixel.setWorld(true); }); await page.waitForTimeout(300);
@@ -2194,6 +2220,7 @@ async function walkTo(page, id) {
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
   need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);
+  need(c.playRating && c.playRating.ok, `めいろの ゴールの あとの「めいろ、どうだった？」（★と ひとこと）が 出ない・届かない・同じ 日に また たずねる（${JSON.stringify(c.playRating)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);
   need(c.koroRec && c.koroRec.ok, `きろくに ころころの きろく（コンボの ベスト・きょうの つぶ）・シェアが 出ない（${JSON.stringify(c.koroRec)}）`);
   need(c.rollFeel && c.rollFeel.ok, '転がり方：はなしても なかなか止まらない、または かべに押しつけると がたがたする');

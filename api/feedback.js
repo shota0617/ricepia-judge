@@ -10,6 +10,9 @@ const MAX_BODY = 4096, PER_IP = 5, IP_WINDOW = 3600e3, MIN_FILL_MS = 3000;
 // チェックインのあとの「ひとこと」（ワンタップ）：1日1つの Issue（ラベル reactions）にコメントで足す。送るのはスポットの id・名前と、えらんだ ひとことだけ
 const REACTS = { love: '😍 よかった', photo: '📷 映える', calm: '🍵 ほっこり', hard: '🤔 わかりにくい', access: '🚧 行きにくい' };
 const REACT_PER_IP = 30, REACT_MIN_MS = 300;
+// めいろの ゴールの あとの「めいろ、どうだった？」（★1〜5 と、あれば ひとこと 140字まで）：1日1つの Issue（ラベル play-ratings）にコメントで足す。
+// 送るのは ★と ひとこと、その ゴールの かかった 秒・★（めいろの ★）だけ（位置・名所は 送らない）。運営者の声「どのようにレビューを受けるのか。ゲーム改善につながるか」2026-10-27
+const PLAY_PER_IP = 10, PLAY_MIN_MS = 800;
 const hits = new Map();   // IP → 送った時刻の一覧（関数が起きているあいだだけ）
 
 // 制御文字を消し、@（メンション）・#数字（Issue へのリンク）・< > を全角にして、長さを切る
@@ -121,6 +124,34 @@ function parseReact(b) {
   if (typeof b.spot.id !== 'string' || !/^[\w-]{1,60}$/.test(b.spot.id) || typeof b.r !== 'string' || !Object.hasOwn(REACTS, b.r)) return null;
   return { spot: b.spot.id, name: clean(b.spot.name, 60), r: b.r };
 }
+function parsePlay(b) {
+  if (!b || typeof b !== 'object') return null;
+  const r = Number(b.r);
+  if (!Number.isInteger(r) || r < 1 || r > 5) return null;
+  const out = { r, text: clean(b.text, 140, true) };
+  const sec = Number(b.sec), st = Number(b.st);
+  if (Number.isFinite(sec) && sec > 0 && sec < 36000) out.sec = Math.round(sec);
+  if (Number.isInteger(st) && st >= 0 && st <= 3) out.st = st;
+  return out;
+}
+const playIssue = { d: '', n: 0 };
+async function storePlay(x, now) {
+  const d = new Date(now + 9 * 3600e3).toISOString().slice(0, 10), title = `[あそび] ${d}`;
+  const cap = Math.max(10, Math.min(2000, Number(process.env.FEEDBACK_PLAY_DAILY_MAX) || 300));
+  let n = playIssue.d === d ? playIssue.n : 0;
+  const list = await gh('/issues?labels=play-ratings&state=open&sort=created&direction=desc&per_page=10');
+  const today = list.find(i => i.title === title);
+  if (today) { n = today.number; if (today.comments >= cap) return 'daily'; }
+  if (!n) {
+    await ensureLabels(['play-ratings']);
+    n = (await gh('/issues', { method: 'POST', body: JSON.stringify({ title, labels: ['play-ratings'], body: 'めいろの ゴールの あとの「めいろ、どうだった？」（1日ぶん）。★1〜5 と ひとこと。ゲームを 直す 手がかりに 読む（docs/feedback.md）。' }) })).number;
+  }
+  playIssue.d = d; playIssue.n = n;
+  const stars = '★'.repeat(x.r) + '☆'.repeat(5 - x.r), ctx = [x.sec != null ? `${x.sec}秒` : '', x.st != null ? `めいろ★${x.st}` : ''].filter(Boolean).join('・');
+  await gh(`/issues/${n}/comments`, { method: 'POST', body: JSON.stringify({ body: `${stars}（${x.r}）${ctx ? `　${ctx}` : ''}${x.text ? `\n${quote(x.text)}` : ''}\n<!-- nsg-play:${Buffer.from(JSON.stringify(x)).toString('base64')} -->` }) });
+  return '';
+}
+
 // きょう（日本時間）の ひとこと の Issue。この関数が起きているあいだは番号をおぼえておく
 const reactIssue = { d: '', n: 0 };
 async function storeReact(x, now) {
@@ -150,8 +181,17 @@ module.exports = async function handler(req, res) {
   let b = req.body;
   if (typeof b === 'string') { if (b.length > MAX_BODY) return res.status(413).json({ error: 'size' }); try { b = JSON.parse(b); } catch (_) { b = null; } }
   // わな（人には見えない欄）に何か入っている・早すぎる送信は、受けとったふりをして捨てる
-  const isReact = !!b && typeof b === 'object' && b.kind === 'react';
-  if (b && typeof b === 'object' && ((typeof b.hp === 'string' && b.hp) || !(Number(b.t) >= (isReact ? REACT_MIN_MS : MIN_FILL_MS)))) return res.status(200).json({ ok: true });
+  const isReact = !!b && typeof b === 'object' && b.kind === 'react', isPlay = !!b && typeof b === 'object' && b.kind === 'play';
+  if (b && typeof b === 'object' && ((typeof b.hp === 'string' && b.hp) || !(Number(b.t) >= (isReact ? REACT_MIN_MS : isPlay ? PLAY_MIN_MS : MIN_FILL_MS)))) return res.status(200).json({ ok: true });
+  if (isPlay) {
+    const x = parsePlay(b);
+    if (!x) return res.status(400).json({ error: 'bad' });
+    const ip = String(req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    if (!rateOk(ip, Date.now(), 'p', PLAY_PER_IP)) return res.status(429).json({ error: 'rate' });
+    try { if (await storePlay(x, Date.now())) return res.status(429).json({ error: 'daily' }); }
+    catch (e) { console.error('play:', e.message); return res.status(502).json({ error: 'store' }); }
+    return res.status(200).json({ ok: true });
+  }
   if (isReact) {
     const x = parseReact(b);
     if (!x) return res.status(400).json({ error: 'bad' });
@@ -192,5 +232,6 @@ module.exports = async function handler(req, res) {
 };
 module.exports.parse = parse;
 module.exports.parseReact = parseReact;
+module.exports.parsePlay = parsePlay;
 module.exports.REACTS = REACTS;
 module.exports.issueOf = issueOf;

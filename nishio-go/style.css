@@ -198,6 +198,12 @@ label.row{min-height:44px;cursor:pointer}
 .react-chips button{display:flex;align-items:center;gap:4px;border:1px solid var(--line);background:#f6f4ec;border-radius:999px;padding:6px 10px;font-size:13px;color:var(--ink)}
 .react-chips button span{font-size:18px}
 .react-chips button:disabled{opacity:.5}
+.react-bar.play p{font-size:17px;font-weight:700}
+.play-stars{display:flex;justify-content:center;gap:6px}
+.play-stars button{border:0;background:none;font-size:38px;line-height:1;color:#cfd6cc;padding:2px 4px}
+.play-stars button.on{color:#f2b51d;text-shadow:0 2px 0 #9a6a00}
+.play-more{display:flex;gap:6px;margin-top:8px}
+.play-more input{flex:1;min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px}
 .react-x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:20px;color:var(--sub);width:28px;height:28px}
 .react-line{font-size:13px}
 .react-line span{display:inline-block;background:#fff6d6;border-radius:8px;padding:0 6px;margin-right:2px}

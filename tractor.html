@@ -213,7 +213,7 @@
     <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・3 点リンクのグリース・爪のボルト・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
     <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b>🌸 レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
     <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b>⛰️ 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
-    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b>⛽ エンジンを 2000 回転に下げて耕す</b>：軽油が 3 割ほど へる。走る速さも 爪の回転も 2 割おそくなるので、時間は少し かかる（ふつうは 2500 回転）</span></label>
+    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b>⛽ エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
     <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
@@ -249,6 +249,7 @@
         <tr><td>土を握って 水分を確かめる（ホロッとくずれれば耕しごろ。だんごなら 水分が多い）</td><td class="pc"><kbd>N</kbd></td><td>—（キーボードだけ）</td></tr>
         <tr><td>PTO の逆転（R 速。盛り上がった土を前へ寄せて平らに。重いので エンジンを下げて、盛り上がった所だけ。春・秋）</td><td class="pc"><kbd>O</kbd></td><td>—（キーボードだけ）</td></tr>
         <tr><td>🔰 かんたんアシストの入切</td><td class="pc"><kbd>K</kbd></td><td>「🔰」</td></tr>
+        <tr><td>⛽ 耕すときのエンジン回転 2500 ⇄ 2000（軽油がへるが 力の余裕が少ない。春・秋）</td><td class="pc"><kbd>I</kbd></td><td>はじめの画面の「⛽」</td></tr>
         <tr><td>はじめの場所へ</td><td class="pc"><kbd>R</kbd></td><td>—</td></tr>
         <tr><td>この操作の表</td><td class="pc"><kbd>H</kbd></td><td>「？」</td></tr>
       </table>
@@ -321,7 +322,7 @@
       ・耕す前に 5.5m のメジャーを用意して、耕運幅の 3 倍の所に 目印を付け、その内側から耕す。耕運は かならず少し重ねるので、その分も見て 目印の所を決める…<a href="https://brassica.exblog.jp/33215863/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「耕運実際編」</a>（ゲームでは 畦の上に 赤いテープを巻いた竹を立てた。耕幅の 3 倍の所。お題のときは 白線があるので 出さない）<br>
       ・トラクターで田んぼへ行くときは、17mm のスパナと 予備の爪ボルトを かならず持っていく…<a href="https://brassica.exblog.jp/32544623/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「いよいよ田んぼへ」</a>（ゲームでは 秋に はじめの点検をしないと、耕しているうちに 爪が 1 本 取れて 細い耕し残しの すじができる。止まって 上げると 予備の爪を付ける。3 分）<br>
       ・トラクターで耕していたら、ウシガエルを 起こしてしまったようです…<a href="https://ameblo.jp/iko228-yamaha/entry-12891527997.html" target="_blank" rel="noopener">ikoのブログ「田んぼ トラクター」</a>（ゲームでは 春に耕していると、ロータリーのうしろの 耕した土から 冬眠していた ウシガエルが 出てきて、のそのそと 畦のほうへ はねていく。2 ひきまで）<br>
-      ・燃費をよくするため、トラクターのエンジンを 最大の 2500 回転から 2000 回転に下げて 秋の田起こしをしている。燃料の消費は 30% 前後へった（PTO 1・耕深 3）。回転を下げると PTO の回転も下がるので、PTO 2 速で 試したこともある。メーカーや 排気量で ちがう…<a href="https://ameblo.jp/shirouri360/entry-12244846823.html" target="_blank" rel="noopener">shirouri360（アメブロ）「トラクターのエンジン回転数を下げて、田起こしを始めました。」</a>（ゲームでは はじめの画面の「⛽ エンジンを 2000 回転に下げて耕す」で、耕すときの回転・走る速さ・爪の回転が 2 割下がり、軽油は 1 時間あたり 3 割ほど へる。春と秋だけ。回転を下げて PTO を 1 段上げる やり方は <a href="https://gn.nbkbooks.com/?p=11792" target="_blank" rel="noopener">現代農業</a> にも）<br>
+      ・燃費をよくするため、トラクターのエンジンを 最大の 2500 回転から 2000 回転に下げて 秋の田起こしをしている。燃料の消費は 30% 前後へった（PTO 1・耕深 3）。回転を下げると PTO の回転も下がるので、PTO 2 速で 試したこともある。メーカーや 排気量で ちがう…<a href="https://ameblo.jp/shirouri360/entry-12244846823.html" target="_blank" rel="noopener">shirouri360（アメブロ）「トラクターのエンジン回転数を下げて、田起こしを始めました。」</a>／前の 23 馬力では やわらかい所で エンジンが止まりそうになり 回転を上げていた。27 馬力では 2000 回転でも粘る（作業は 時速 2km 前後）…<a href="https://ameblo.jp/shirouri360/entry-12836656045.html" target="_blank" rel="noopener">同「昨年やり残した田起こししました」</a>（ゲームでは はじめの画面の「⛽ エンジンを 2000 回転に下げて耕す」で、耕すときの回転・走る速さ・爪の回転が 2 割下がり、軽油は 1 時間あたり 3 割ほど（耕した広さあたり 1 割ほど）へる。ぬかるみでは エンストしやすいので、重くなったら I で 2500 回転にもどす。春と秋だけ。回転を下げて PTO を 1 段上げる やり方は <a href="https://gn.nbkbooks.com/?p=11792" target="_blank" rel="noopener">現代農業</a> にも）<br>
       ・トラクターで耕していると いつものカラスが来て、近ごろは モズも来る。切り株のあいだを 小さな鳥が走り、止まると うずくまって 見えにくい。トラクターを降りて近づくと 走って 草むらへ 飛んでいった。野生のウズラは はじめて見た…<a href="https://ameblo.jp/iko228-yamaha/entry-12730524373.html" target="_blank" rel="noopener">ikoのブログ「珍しい野生の鳥がいたー 田んぼ耕し！」</a>（ゲームでは 春と秋の昼、半分の日に 1 羽が 耕している先の 切り株のあいだに ひそんでいる。トラクターが近づくと 株の列のあいだを 走って逃げ、止まると うずくまる。すぐそばまで来ると 低く飛んで 畦の草むらへ。ウズラは 環境省のレッドリストで 絶滅危惧Ⅱ類：<a href="https://www.env.go.jp/nature/choju/docs/docs5/docs5-uzura.pdf" target="_blank" rel="noopener">環境省の資料</a>）<br>
       ・春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮き、レーキで埋めようとしても沈まず 田植えに失敗した。その後は 7〜10cm 起こし、代かきを 2 回にした…<a href="https://komeya4th.exblog.jp/28361023/" target="_blank" rel="noopener">米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」</a>（ゲームでは 代かきで 浮き藁が畦ぎわに たくさん寄ると出る）<br>
       ・速く進めば早く終わると思っていたが、自分の田んぼと機械では、速いと 爪が土を十分にまぜられず 浅い耕しになった。ゆっくり進むほど 土が細かくなり、草やワラが むらなく まざる…<a href="https://happy-ricefarm.com/%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E8%80%95%E3%81%97%E3%81%A8%E5%AD%A6%E3%82%93%E3%81%A0%E3%82%B3%E3%83%84/" target="_blank" rel="noopener">happy-ricefarm（ブログ）「初めてのトラクター耕し」</a>（ゲームでは 主変速を 4 速に上げると出る。ゲームの耕す深さは 耕深の設定で決まり、速さで変わるのは 土の細かさ＝耕うんピッチ）<br>
@@ -5399,6 +5400,11 @@ let PTO2 = SHIRO;
 let ECO = false;
 const ECO_RPM = 2000, ECO_K = ECO_RPM / 2500;
 const WORK_RPM = () => ECO ? ECO_RPM : 2500;
+const ecoOn = () => ECO && !PTOREV;               // 逆転は もともと 1450 回転なので 関係しない
+// 回転を下げると 力の余裕が少ない：ぬかるみで 回転が落ちる幅は ふつうと同じなので 早く粘りきれなくなり、エンストしやすい（950 → 800）。
+// 同じ人の あとの記事（shirouri360「昨年やり残した田起こししました」）：23 馬力のころは やわらかい所で 負荷がかかると エンジンが止まりそうになり、回転を上げていた。
+// 27 馬力にしてからは 2000 回転でも 粘る。合う回転は 機種・馬力・土で ちがう
+const STALL_LOAD = () => ecoOn() ? 800 : 950;
 // PTO 逆転：爪を逆に回して、盛り上がった土（四隅の山）を前へ寄せて平らにする。正転より負荷が大きいので、やわらかい所だけ・ゆっくり。
 // 硬い所（まだ耕していない所）では使わない。エンジンは 1500 回転以下で（取扱説明書の目安）
 // （井上寅雄農園（note）「トラクターの逆転機能」「逆回転機能」）。逆転は PTO 変速レバーの R 速：正転の 1・2 速とは別の段で、
@@ -5504,7 +5510,8 @@ function step(dt) {
   const wet = WET.at(S.x, S.z), workingNow = S.rotDown && S.rotPos < 0.08;
   if (wet > 0.2 && S.started) voice('wet');
   S.wetLoad = workingNow && Math.abs(S.v) > 0.1 ? wet * (260 + 230 * S.gear) * (DEPTH / DEPTH0) + WRAP.v * 220 + (PTO2 && !SHIRO ? 80 : 0) + (PTOREV ? 160 + (S.revHard || 0) * (600 + 120 * S.gear) : 0) : 0;   // 秋は 爪軸に巻きついた 2 番穂でも重い。逆転は 正転より重く、まだ耕していない硬い所ではとても重い
-  S.lugT = S.wetLoad > 950 ? (S.lugT || 0) + dt : 0;
+  S.lugT = S.wetLoad > STALL_LOAD() ? (S.lugT || 0) + dt : 0;
+  if (ecoOn() && S.wetLoad > 600) voice('teikaiten2');   // 2000 回転で 重い所に入った：回転を上げる話
   if (S.lugT > 1.2 && !S.stalled) {
     S.stalled = true; S.v = 0; S.lugT = 0;
     const revHard = PTOREV && S.revHard > 0.5;      // 逆転のまま 硬い所に入って止まった（ぬかるみではない）
@@ -5663,11 +5670,12 @@ function step(dt) {
   // 軽油：エンジンが出している力（kW）× 燃料消費率 約 0.25kg/kWh ÷ 軽油の重さ 0.83kg/L。60 馬力＝44kW。
   // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
   if (S.started && !(S.crank > 0)) {
-    const sp = Math.min(1, Math.abs(S.v) / 0.78);
-    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.7 + 0.3 * DEPTH / DEPTH0) * (0.3 + 0.7 * sp) * (ECO ? 0.82 : 1) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
+    const eco = working && ecoOn();                // 回転を下げると 走る速さも 爪の回転も 2 割おそい：耕す量（＝要る力）が 2 割へり、燃料消費率も 1 割ほど よくなる
+    const sp = Math.min(1, Math.abs(S.v) / (0.78 * (eco ? ECO_K : 1)));   // 速さは 同じギアの ふつうの回転に くらべる
+    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.7 + 0.3 * DEPTH / DEPTH0) * (0.3 + 0.7 * sp) * (eco ? ECO_K * 0.88 : 1) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
     S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
     if (S.fuel > 0.5 && !SHIRO) voice('kakunin');   // 燃料計が少し下がってきたころ（荒起こし：春・秋）
-    if (ECO && working && Math.abs(S.v) > 0.1) voice('teikaiten');   // 回転を下げて 耕しはじめたら
+    if (eco && Math.abs(S.v) > 0.1) voice('teikaiten');   // 回転を下げて 耕しはじめたら
   }
   if (working && Math.abs(S.v) > 0.1) {
     S.workT = (S.workT || 0) + dt;                // 耕している時間（ほ場作業効率に使う）
@@ -5679,7 +5687,7 @@ function step(dt) {
     if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
   }
   // 爪軸の回転：PTO が入ると回りはじめ、上げて PTO が切れても すぐには止まらず、はずみで しばらく回る
-  const wPto = 19 * ptoRatio() / (561 / 2600) * (PTOREV ? REV_RPM / 2500 : ECO ? ECO_K : 1);   // 逆転・低燃費は エンジンを下げるので 爪もゆっくり
+  const wPto = 19 * ptoRatio() / (561 / 2600) * (PTOREV ? REV_RPM / 2500 : ecoOn() ? ECO_K : 1);   // 逆転・低燃費は エンジンを下げるので 爪もゆっくり
   const wT = S.stalled ? 0 : working ? wPto : S.rotDown ? wPto * 0.9 : 0;
   S.rotorW = (S.rotorW || 0) + (wT - (S.rotorW || 0)) * Math.min(1, dt * (wT > (S.rotorW || 0) ? 4 : 0.9));
   P.Rotor.rotation.x += S.rotorW * dt * (PTOREV ? -1 : 1);   // 逆転は 爪が逆に回る
@@ -5846,7 +5854,7 @@ const HOUR0 = 412.6;                               // この中古のトラク�
 function engineLoad() {                           // エンジン負荷率（0〜100%）
   if (S.stalled || S.glow > 0 || S.crank > 0.6 || !S.started) return 0;
   const work = S.rotDown && S.rotPos < 0.1, mv = Math.min(1, Math.abs(S.v) / 0.8);
-  if (work) return Math.min(100, 18 + (22 + DEPTH * 1.6 + S.gear * 6 + (PTO2 && !SHIRO ? 8 : 0)) * mv + (S.wetLoad || 0) / 950 * 45);   // 逆転の重さは wetLoad に入っている
+  if (work) return Math.min(100, 18 + (22 + DEPTH * 1.6 + S.gear * 6 + (PTO2 && !SHIRO ? 8 : 0)) * mv + (S.wetLoad || 0) / STALL_LOAD() * 45);   // 逆転の重さは wetLoad に入っている。回転を下げていると 力の余裕が少ない
   return Math.min(100, 12 + Math.abs(S.v) * 6 + (key.fwd || key.back ? 8 : 0) + (S.lift > 0.1 ? 10 : 0));
 }
 function drawMeter() {
@@ -6418,7 +6426,7 @@ function engineRpm(t) {
   if (S.stalled || S.glow > 0) return 0;          // エンスト・予熱中：エンジンは止まっている                       // エンスト：エンジンが止まっている
   rpm += 900 * (S.flare || 0);
   if (S.lift > 0.1) rpm -= 70;
-  if (work && S.wetLoad) rpm -= S.wetLoad * (PTOREV ? REV_RPM : WORK_RPM()) / 2500;   // ぬかるみで爪とタイヤが泥に取られると、回転がぐっと落ちる（逆転は もとの回転が低いぶん 落ち幅も小さい）                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
+  if (work && S.wetLoad) rpm -= S.wetLoad * (PTOREV ? REV_RPM / 2500 : 1);   // ぬかるみで爪とタイヤが泥に取られると、回転がぐっと落ちる（逆転は もとの回転が低いぶん 落ち幅も小さい）                   // 油圧で作業機を持ちあげるあいだは ポンプの重さで少し下がる
   return Math.max(work && !(S.crank > 0.6) ? 380 : 0, rpm);   // 重すぎても エンストするまでは 380 回転あたりで粘る（マイナスにはならない）
 }
 
@@ -6444,6 +6452,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyB') key.lookBack = 1;
   else if (e.code === 'KeyH') toggleHelp();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
+  else if (e.code === 'KeyI' && !SHIRO) { ECO = !ECO; $('ecoBox').checked = ECO; toast(ECO ? '⛽ エンジンを 2000 回転に下げた：軽油が へる。走る速さと 爪の回転は 2 割おそい。重い所では 力の余裕が少ない（I）' : 'エンジンを 2500 回転にもどした：力に 余裕がある（I）', 4); }
   else if (e.code === 'KeyP' && (S.rotDown || (S.rotorW || 0) > 1)) toast('PTO の変速は、' + IMPL + 'を上げて 爪の回転が止まってから（本物も PTO を切り、止まってから変速レバーを動かす）（P）', 4);
   else if (e.code === 'KeyP' && PTOREV) { PTOREV = false; PTO2 = false; toast('PTO 1 速（正転）：ふつうの田起こし（P）'); }
   else if (e.code === 'KeyP') { PTO2 = !PTO2; setTimeout(() => voice('newMachine'), 4500); toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
@@ -6653,6 +6662,7 @@ const VOICES = {
   ukiwara: ['春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮いた。レーキで埋めようとしても 沈まず、田植えは失敗。その後は 7〜10cm 起こすようにし、代かきを 2 回にした', '米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」'],
   unikku: ['今年も 山の田んぼで トラクターが はまった。粘土の田で 長靴は役に立たず、はだしで畦を歩いた。クレーンつきのトラック（ユニック車）で 引っぱり、何度か やりなおして 引き上げた', '光男の米（ブログ）「泥んこのトラクター脱出作戦！」'],
   ushigaeru: ['トラクターで耕していたら、ウシガエルを 起こしてしまったようです', 'ikoのブログ（アメーバブログ）「田んぼ トラクター」'],
+  teikaiten2: ['前の 23 馬力のトラクターでは、2000 回転で やわらかい所に来ると 負荷がかかって エンジンが止まりそうになり、回転を上げていた。27 馬力にしてからは 止まりそうで止まらない', 'shirouri360（アメーバブログ）「昨年やり残した田起こししました」'],
   teikaiten: ['トラクターのエンジンを 最大の 2500 回転から 2000 回転に下げて、秋の田起こしをしている。燃料は 3 割ぐらい へった。回転を下げると PTO（爪）の回転も下がる', 'shirouri360（アメーバブログ）「トラクターのエンジン回転数を下げて、田起こしを始めました。」'],
   uzura: ['田んぼを耕していると、切り株のあいだを 小さな鳥が走っていた。止まると うずくまって 見えにくい。トラクターを降りて近づくと、走って 草むらへ 飛んでいった。野生のウズラは はじめて見た', 'ikoのブログ（アメーバブログ）「珍しい野生の鳥がいたー 田んぼ耕し！」'],
   tsumebolt: ['トラクターで田んぼへ行くときは、17mm のスパナと 予備の爪ボルトを かならず持っていく', '田圃に遊ぶ・・・（エキサイトブログ）「いよいよ田んぼへ」'],

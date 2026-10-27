@@ -399,6 +399,13 @@ body.px .spin-ico{background:none}
 body.px .spin-txt b{font-weight:400}
 body.px .spin-txt b::before{content:"▶ "}
 body.px .spin:disabled{filter:none;opacity:.6}
+/* ドット絵の 画面（めいろ）では 名所の 札を 1行に（自分で 遊んで 分かった：転がって 名所の そばを 通る たびに 札が 出て 下の 欄が 76px→152px に のび、320×568 の スマホでは めいろの 見える 所が 372px→296px に へって いた） */
+body.px .spin{padding:4px 10px;gap:8px}
+body.px .spin-ico{width:28px;height:28px;font-size:18px}
+body.px .spin-ico img.gthumb,body.px .spin-ico img.pi.art{width:26px;height:26px}
+body.px .spin-txt{flex-direction:row;align-items:baseline;gap:8px;flex:1 1 auto}
+body.px .spin-txt b{min-width:0;flex:0 1 auto}
+body.px .spin-txt small{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}   /* 名前も 下の 文（「あと 20m」など）も 長い ときは「…」に */
 body.px .leaflet-control-container{display:none}
 
 body.pxw #pxCanvas{touch-action:none;cursor:grab}

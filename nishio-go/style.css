@@ -506,6 +506,7 @@ body.px .guide small{color:#ddd}
 .share-btns a.btn{text-decoration:none}
 .share-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
 .share-btns .btn{flex:1 1 30%;min-width:96px}
+.share-msg{margin:-4px 0 10px;padding:6px 10px;border-radius:8px;background:#eef6ef;color:var(--ink);font-size:13px;font-weight:700}   /* コピーの 結果（窓の 中に。知らせは 窓を とじるまで 待つ ので） */
 .player-count{font-weight:bold;color:#1f5a25;background:#eaf6e2;border-radius:6px;padding:4px 8px;display:inline-block}
 
 /* 西尾市版（提案用デモ。edition.js）：西尾市の公式とまちがえられないよう、いつも上に札を出す */

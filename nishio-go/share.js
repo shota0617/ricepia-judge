@@ -184,8 +184,15 @@ function openShare(kind, opt) {
   $('shareLine').href = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
   $('shareFb').href = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
   $('shareNative').hidden = !navigator.share;
+  shareMsg('');
   $('share').hidden = false;
   track('share_open', { kind });
+}
+// シェアの 窓の 中の 結果（コピー できた／できなかった）。窓の 間の 知らせ（toast）は とじるまで 待たせるので、窓 自身の 操作の 結果は ここに 出す（Codex の 指摘）
+function shareMsg(t) {
+  const el = $('shareMsg'); if (!el) return;
+  clearTimeout(shareMsg.t); el.textContent = t; el.hidden = !t;
+  if (t) shareMsg.t = setTimeout(() => { el.hidden = true; }, 5000);
 }
 function cardBlob() { return new Promise(r => $('shareCard').toBlob(b => r(b), 'image/png')); }
 $('share').addEventListener('click', async e => {
@@ -202,7 +209,7 @@ $('share').addEventListener('click', async e => {
       else await navigator.share({ text, url });
     } catch (err) { /* とじた */ }
   } else if (via === 'copy') {
-    try { await navigator.clipboard.writeText(`${text}\n${url}`); G.toast('🔗 シェアの文とリンクをコピーしました'); } catch (err) { G.toast('コピーできませんでした。文を長押ししてコピーしてください'); }
+    try { await navigator.clipboard.writeText(`${text}\n${url}`); shareMsg('🔗 シェアの文とリンクをコピーしました'); } catch (err) { shareMsg('コピーできませんでした。上の 文を 長押しして コピーしてください'); }
   } else if (via === 'image') {
     const blob = await cardBlob();
     if (!blob) return;

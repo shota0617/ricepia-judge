@@ -2127,8 +2127,14 @@ async function walkTo(page, id) {
       sh.hidden = true;
       for (let i = 0; i < 40 && !(el.classList.contains('show') && el.textContent === msg); i++) await wait(200);   // ほかの 知らせが 出て いれば その あと（8秒まで）
       const after = el.classList.contains('show') && el.textContent === msg;
+      el.classList.remove('show');
+      // 窓 自身の 操作の 結果（コピー）は 待たせず 窓の 中に 出す（Codex の 指摘：知らせだけで 伝えて いたので、とじるまで 分からなかった）
+      sh.hidden = false; await wait(100);
+      const cp = sh.querySelector('[data-share="copy"]'); if (cp) cp.click();
+      let inMsg = '';
+      for (let i = 0; i < 20 && !inMsg; i++) { await wait(100); const m = document.getElementById('shareMsg'); inMsg = m && !m.hidden ? m.textContent : ''; }
       sh.hidden = keep; el.classList.remove('show');
-      return { over, after, ok: !over && after };
+      return { over, after, inMsg, ok: !over && after && /コピー/.test(inMsg) };
     });
     // 「めいろ、どうだった？」の ひとことの 欄：320px でも 「ひとこと（なくてOK）」が 切れずに 入り、ボタンも 札の 中（自分で 遊んで 分かった：欄が 縮んで「ひとこと（な」と 切れていた）
     R.checks.playMore320 = await (async () => {

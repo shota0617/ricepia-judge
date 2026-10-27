@@ -4957,14 +4957,14 @@ const UZURA = (() => {
   const wings = [];
   for (const s of [-1, 1]) {                      // 飛ぶときだけ出す 丸くて 短い つばさ
     const w = new THREE.Mesh(new THREE.PlaneGeometry(0.11, 0.07), brown.clone());
-    w.geometry.translate(s * 0.055, 0, 0); w.material.side = THREE.DoubleSide;
-    w.position.set(0, 0.07, 0); w.rotation.x = -Math.PI / 2; w.visible = false; pose.add(w); wings.push(w);
+    w.geometry.translate(s * 0.055, 0, 0); w.geometry.rotateX(-Math.PI / 2); w.material.side = THREE.DoubleSide;   // 水平に寝かせた形にしておき、rotation.z（体の前後の軸）で 上下に はばたく
+    w.position.set(0, 0.07, 0); w.visible = false; pose.add(w); wings.push(w);
   }
   b.visible = false; b.castShadow = true; scene.add(b);
   const u = { state: 'none', t: 0, dir: 0, dur: 0, runs: 0, tx: 0, tz: 0, ty: 0, fromY: 0, seen: false };
   const MSG = '🐦 切り株の あいだを 小さな鳥が 走っていく。野生の ウズラだ。止まると うずくまって 土の色に まぎれる（めずらしい鳥：環境省の 絶滅危惧Ⅱ類）';
   let acc = 0, need = 40 + Math.random() * 80, lastOdo = 0, pend = false, chk = false, tries = 0;
-  const rowX = x => -HX + 0.3 * Math.round((x + HX) / 0.3);   // 切り株の列（条間 30cm）の あいだ
+  const rowX = x => -HX + 0.3 * Math.round((x + HX) / 0.3);   // 切り株の列（-HX+0.15 から 条間 30cm）の あいだ
   function near() {                               // トラクターか ロータリーの いちばん近い所までの きょり
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw), rx = S.x + ROTARY_Z * s, rz = S.z + ROTARY_Z * c;
     return Math.min(Math.hypot(b.position.x - S.x, b.position.z - S.z), Math.hypot(b.position.x - rx, b.position.z - rz));
@@ -4983,9 +4983,10 @@ const UZURA = (() => {
   }
   function update(dt) {
     const od = S.odo || 0, d = Math.max(0, od - lastOdo); lastOdo = od;
+    if (!dt) return;                                // 止めているあいだ（操作の表など）は 出さない・動かない・知らせない
     if (u.state === 'none' && S.started && !S.done && S.rotDown && S.rotPos < 0.08 && S.v > 0.1 && (acc += d) > need) {
       const lx = (Math.random() - 0.5) * 2.4, lz = 6 + Math.random() * 3, s = Math.sin(S.yaw), c = Math.cos(S.yaw);   // 耕している先の 切り株の中
-      const x = rowX(S.x + lx * c + lz * s) + 0.15, z = S.z - lx * s + lz * c;
+      const x = rowX(S.x + lx * c + lz * s), z = S.z - lx * s + lz * c;
       if (Math.abs(x) < HX - 1.5 && Math.abs(z) < HZ - 2 && soilCell(x, z) < 0) {
         b.position.set(x, soilY(x, z), z); b.rotation.y = Math.random() < 0.5 ? 0 : Math.PI;
         b.visible = true; u.state = 'crouch'; u.t = 0; crouch(true);

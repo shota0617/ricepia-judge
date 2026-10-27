@@ -550,7 +550,7 @@ function step(dt) {
     if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
       if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
-      if (!sf.on) sf.vin = Math.max(0, hit);   // 当たった 速さ（ぽよんの 強さ）
+      if (!sf.on) { sf.vin = Math.max(0, hit); sf.dv = Math.max(sf.dv, sf.vin / 6); }   // 当たった 速さ（ぽよんの 強さ）。へこみの 絵を ぐっと 押しこむ（盤の 1マスは 地図の 3マスぶん なので 地図の 1/3）
       Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
       let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり
       if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
@@ -559,7 +559,8 @@ function step(dt) {
       if (sf.on && sf.vin > 1.5 && api.boing) api.boing(Math.min(1, sf.vin / 8));   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
-    { const tg = sf.on ? sf.pen : 0; sf.dv += (1600 * (tg - sf.dent) - 32 * sf.dv) * dt; sf.dent += sf.dv * dt; }   // ふちの へこみの 絵：お米に ついていき、はなれると ぷるんと もどる
+    { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - 5 * sf.dv) * dt; sf.dent = Math.max(-0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる
+      if (Math.abs(sf.dv) < 0.01 && Math.abs(sf.dent - tg) < 0.002) { sf.dent = tg; sf.dv = 0; } }   // おさまった
     g.x = nx; g.y = ny;
   } else for (const axis of ['x', 'y']) {   // （筒の 外：たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す）
     const v = axis === 'x' ? g.vx : g.vy;
@@ -679,7 +680,10 @@ function draw(now) {
   x.drawImage(g.bg, 0, 0);
   const sf = g.soft;
   if (sf && sf.dent > 0.004 && g.bg.map) {   // やわらかい ふちの へこみ：当たった 所の 台が お米の 形に 押されて 横へ のびる（下の 地図が 見える）
-    const a = Math.atan2(sf.uy, sf.ux), cx = (sf.x + sf.ux * (TUBE + sf.dent)) * T, cy = (sf.y + sf.uy * (TUBE + sf.dent)) * T, rn = R * T, rt = rn * (1 + Math.min(1, sf.dent * 12)), u = Math.max(1, Math.round(T / 16));
+    const a = Math.atan2(sf.uy, sf.ux), cx = (sf.x + sf.ux * (TUBE + sf.dent)) * T, cy = (sf.y + sf.uy * (TUBE + sf.dent)) * T, rn = R * T, rt = rn * (1 + Math.min(2.6, sf.dent * 30)), u = Math.max(1, Math.round(T / 16));   // 横へ 広く のびる（地図の めいろと 同じ。お米の 両わきで しなるのが 見える）
+    const glow = Math.min(1, sf.dent / 0.083), gr = rn + 0.12 * T;   // のびて うすく なった 所を 明るく（ぴんと はった 膜）。台の がわだけ
+    x.save(); x.translate(cx, cy); x.rotate(a); x.beginPath(); x.rect((R - sf.dent) * T, -gr * 4, gr * 2, gr * 8); x.clip();
+    x.fillStyle = `rgba(200,245,170,${(0.6 * glow).toFixed(2)})`; x.beginPath(); x.ellipse(0, 0, gr, gr * (rt / rn), 0, 0, Math.PI * 2); x.fill(); x.restore();
     x.save(); x.beginPath(); x.ellipse(cx, cy, rn, rt, a, 0, Math.PI * 2); x.clip(); x.drawImage(g.bg.map, 0, 0); x.restore();
     x.strokeStyle = '#0d2219'; x.lineWidth = u; x.beginPath(); x.ellipse(cx, cy, rn, rt, a, -Math.PI / 2, Math.PI / 2); x.stroke();   // 外がわの ふち
   }

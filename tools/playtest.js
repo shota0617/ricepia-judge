@@ -2114,7 +2114,7 @@ async function walkTo(page, id) {
         const rc0 = cv.getBoundingClientRect(), dpr = cv.width / rc0.width;
         cv.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: rc0.left + (a[0] + a[2]) / 2 / dpr, clientY: rc0.top + (a[1] + a[3]) / 2 / dpr }));
         await wait(800);
-        G.toast('🧭 テストの 知らせ：' + 'ながい ながい 知らせの 文 '.repeat(6)); await wait(600);
+        G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）'); await wait(600);   // 本当に 出る 長さの 知らせ（320px で 4行）
         const g = M.worldGoal, tag = g && g[2], rc = cv.getBoundingClientRect(), k = rc.width / cv.width;
         const T = tag && [rc.left + tag[0] * k, rc.top + tag[1] * k, rc.left + tag[2] * k, rc.top + tag[3] * k];
         const over = q => !!T && q.left < T[2] && q.right > T[0] && q.top < T[3] && q.bottom > T[1];

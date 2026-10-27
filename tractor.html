@@ -4842,9 +4842,17 @@ const USHI = (() => {
   if (season !== 'haru') return { update() {}, list: [] };
   const back = new THREE.MeshLambertMaterial({ color: 0x1f2609 }), headM = new THREE.MeshLambertMaterial({ color: 0x2b3a0b }), eyeM = new THREE.MeshLambertMaterial({ color: 0x140f08 });   // 背は暗いオリーブ、頭は少し緑
   const list = [];
-  const yAt = (x, z) => {                            // 耕した所は 土が高い・耕していない所は 地面
+  const tilledAt = (x, z) => {
     const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL);
-    return (i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y : 0) + 0.003;
+    return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? i * NZ + j : -1;
+  };
+  const yAt = (x, z) => {                            // その所に 描いている 土の面の高さ（耕した所は ます目の四隅の高さを 内そうする。jitter・土塊・山も入る）
+    const c = tilledAt(x, z);
+    if (c < 0) return 0.003;                         // 耕していない所は 地面
+    const P = tilled.geometry.attributes.position.array, o = c * 12;
+    const u = Math.min(1, Math.max(0, (x + HX) / CELL - Math.floor((x + HX) / CELL))), v = Math.min(1, Math.max(0, (z + HZ) / CELL - Math.floor((z + HZ) / CELL)));
+    const y00 = P[o + 1], y10 = P[o + 4], y11 = P[o + 7], y01 = P[o + 10];   // 角の順：(x0,z0)・(x1,z0)・(x1,z1)・(x0,z1)
+    return y00 * (1 - u) * (1 - v) + y10 * u * (1 - v) + y11 * u * v + y01 * (1 - u) * v + 0.003;
   };
   for (let k = 0; k < 2; k++) {
     const f = new THREE.Group();
@@ -4873,7 +4881,7 @@ const USHI = (() => {
     if (S.started && !S.done && S.rotDown && S.rotPos < 0.08 && S.v > 0.1 && n < list.length && (acc += S.v * dt) > need) {   // 耕していると ときどき 起こす
       const lx = (Math.random() - 0.5) * 1.6, lz = ROTARY_Z - 0.7, s = Math.sin(S.yaw), c = Math.cos(S.yaw);
       const x = S.x + lx * c + lz * s, z = S.z - lx * s + lz * c;
-      if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1) {
+      if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1 && tilledAt(x, z) >= 0) {   // 耕した土からだけ 出てくる（まだ耕していない所なら こんどは 出さない）
         const u = list[n++];
         u.f.position.set(x, yAt(x, z), z); u.f.rotation.y = Math.random() * 6.28; u.f.visible = true; u.life = 0; u.rest = 2 + Math.random() * 2; u.hop = false;   // 出てきてすぐは じっとしている
         acc = 0; need = 70 + Math.random() * 70;

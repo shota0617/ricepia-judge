@@ -1,7 +1,8 @@
 # にしおさんぽGO：毎週 月曜に、めいろの「めいろ、どうだった？」（★と ひとこと）の 1週間ぶんを まとめる（tools/play-weekly.js）
 # 非公開リポジトリに Issue「[週の声] 〜」（ひとことの 文つき）、このリポジトリに docs/play-weekly.md（数と 直す 候補だけ）をコミット。
 # 開発の ループ（.claude/skills/nishio-go-dev）が docs/play-weekly.md を 読んで、つぎに 直す ものを えらぶ。
-# Variables の FEEDBACK_REPO と Secrets の FEEDBACK_TOKEN が 無い あいだは、なにも しない（docs/feedback.md）
+# Secrets の GA4_PROPERTY_ID・GA4_SERVICE_ACCOUNT_JSON が あれば、アクセス解析の 数も ならべる。
+# Variables の FEEDBACK_REPO と Secrets の FEEDBACK_TOKEN も GA4 の 鍵も 無い あいだは、なにも しない（docs/feedback.md）
 name: Nishio play weekly
 on:
   workflow_dispatch:
@@ -27,8 +28,10 @@ jobs:
         id: cfg
         env:
           T: ${{ secrets.FEEDBACK_TOKEN }}
+          GP: ${{ secrets.GA4_PROPERTY_ID }}
+          GK: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
         run: |
-          if [ -n "$T" ] && [ -n "$FEEDBACK_REPO" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "FEEDBACK_REPO / FEEDBACK_TOKEN が無いので、なにもしません"; fi
+          if { [ -n "$T" ] && [ -n "$FEEDBACK_REPO" ]; } || { [ -n "$GP" ] && [ -n "$GK" ]; }; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "FEEDBACK_REPO / FEEDBACK_TOKEN も GA4 の 鍵も 無いので、なにもしません"; fi
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         if: steps.cfg.outputs.on
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -39,6 +42,8 @@ jobs:
         if: steps.cfg.outputs.on
         env:
           FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+          GA4_PROPERTY_ID: ${{ secrets.GA4_PROPERTY_ID }}
+          GA4_SERVICE_ACCOUNT_JSON: ${{ secrets.GA4_SERVICE_ACCOUNT_JSON }}
         run: node tools/play-weekly.js
       - name: Commit docs/play-weekly.md
         if: steps.cfg.outputs.on

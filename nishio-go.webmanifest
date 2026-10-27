@@ -1,7 +1,8 @@
 {
+  "id": "/nishio-go.html?src=a2hs",
   "name": "にしおさんぽGO",
   "short_name": "さんぽGO",
-  "description": "西尾のまちを歩いて名所をめぐるお散歩ゲーム",
+  "description": "西尾の地図ぜんぶが めいろに。スマホを傾けて お米を ころころ転がし、名所をめぐるお散歩ゲーム",
   "lang": "ja",
   "start_url": "/nishio-go.html?src=a2hs",
   "scope": "/nishio-go",
@@ -12,5 +13,10 @@
   "icons": [
     { "src": "/nishio-go/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/nishio-go/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "/nishio-go/shots/install-meiro.jpg", "sizes": "540x1080", "type": "image/jpeg", "form_factor": "narrow", "label": "西尾の地図が 緑の生け垣の めいろに" },
+    { "src": "/nishio-go/shots/install-roll.jpg", "sizes": "540x1080", "type": "image/jpeg", "form_factor": "narrow", "label": "ゴールの 名所までの めいろ図" },
+    { "src": "/nishio-go/shots/install-reward.jpg", "sizes": "540x1080", "type": "image/jpeg", "form_factor": "narrow", "label": "名所で もらえる ドット絵" }
   ]
 }

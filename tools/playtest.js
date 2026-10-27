@@ -2189,6 +2189,41 @@ async function walkTo(page, id) {
     };
     try { const both = run(true), only3 = run(false); return { both, only3, ok: both.opened && both.gates === 3 && only3.opened }; } catch (e) { return { ok: false, err: String(e) }; }
   })();
+  // 入口（店頭POP・配るカード・ホーム画面に追加）：manifest の 画面写真が あって 形式（Chrome の 追加の 画面は PNG・JPEG だけ）と 大きさが 本当の 絵と 同じ・POP の 写真が ある・カードの QR が POP と 同じ（来た人を 同じ from で 数える）
+  // （絵の 大きさは 形式ごとに 頭から 読む。webp は VP8X だけで なく VP8・VP8L も。Codex の 指摘）
+  R.checks.entryPrint = (() => {
+    const root = path.join(__dirname, '..'), rd = f => { try { return fs.readFileSync(path.join(root, f)); } catch (e) { return null; } };
+    const img = b => {
+      if (!b || b.length < 30) return null;
+      if (b.readUInt32BE(0) === 0x89504e47) return { type: 'image/png', size: `${b.readUInt32BE(16)}x${b.readUInt32BE(20)}` };
+      if (b.toString('latin1', 0, 4) === 'RIFF' && b.toString('latin1', 8, 12) === 'WEBP') {
+        const t = b.toString('latin1', 12, 16), v = b.readUInt32LE(21);
+        const size = t === 'VP8X' ? `${1 + b.readUIntLE(24, 3)}x${1 + b.readUIntLE(27, 3)}` : t === 'VP8 ' ? `${b.readUInt16LE(26) & 0x3fff}x${b.readUInt16LE(28) & 0x3fff}` : t === 'VP8L' ? `${(v & 0x3fff) + 1}x${((v >>> 14) & 0x3fff) + 1}` : null;
+        return { type: 'image/webp', size };
+      }
+      if (b[0] === 0xff && b[1] === 0xd8) {
+        for (let i = 2; i + 9 < b.length;) {
+          if (b[i] !== 0xff) return null;
+          const m = b[i + 1];
+          if (m === 0xff) { i++; continue; }
+          if (m >= 0xd0 && m <= 0xd9 || m === 0x01) { i += 2; continue; }
+          if (m >= 0xc0 && m <= 0xcf && m !== 0xc4 && m !== 0xc8 && m !== 0xcc) return { type: 'image/jpeg', size: `${b.readUInt16BE(i + 7)}x${b.readUInt16BE(i + 5)}` };
+          i += 2 + b.readUInt16BE(i + 2);
+        }
+      }
+      return null;
+    };
+    try {
+      const man = JSON.parse(rd('nishio-go.webmanifest')), shots = man.screenshots || [];
+      const bad = shots.filter(s => { const g = img(rd(s.src.slice(1))); return !g || !/^image\/(png|jpeg)$/.test(s.type) || g.type !== s.type || g.size !== s.sizes; }).map(s => s.src);
+      const pop = String(rd('nishio-go/pop.html') || ''), card = String(rd('nishio-go/card.html') || '');
+      const popImgs = [...pop.matchAll(/<img[^>]*src="([^"]+)"/g)].map(m => m[1]), missing = popImgs.filter(f => !rd('nishio-go/' + f));
+      const qr = h => ((h.match(/class="qrline"[^>]*\sd="([^"]+)"/) || [])[1] || '');
+      const cards = (card.match(/class="card"/g) || []).length, uses = (card.match(/<use href="#qr"\/>/g) || []).length;
+      const same = qr(pop).length > 100 && qr(pop) === qr(card);
+      return { shots: shots.length, bad, missing, cards, uses, same, ok: !!man.id && shots.length >= 1 && !bad.length && !missing.length && cards === 10 && uses === 10 && same };
+    } catch (e) { return { ok: false, err: String(e) }; }
+  })();
   // 合格の条件：どれか1つでも外れたら、理由を failures に書いて終了コード1
   const c = R.checks, fail = [];
   const need = (ok, why) => { if (!ok) fail.push(why); };
@@ -2197,6 +2232,7 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
+  need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.rollStartTilt && c.rollStartTilt.ok, '転がり方「ぴたっ」で 草の 上だと、少し 傾けても お米が 動きださない（めいろで 詰まる）');
   need(c.mzFarWorld && c.mzFarWorld.ok, '遠い ゴールの 矢印を タップしても、せかいちずで ゴールの 場所（🏁）が 見られない');

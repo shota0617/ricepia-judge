@@ -3493,13 +3493,14 @@ async function playSend(text) {
     toast(`🎮 ありがとう！ +5pt（ゲームを よくするのに 使います）${lv ? ` レベル${lv}！` : ''}`);
   } else toast(res && (res.status === 503 || res.status === 404) ? '声は まだ受けつけていません。ごめんなさい。' : '声を送れませんでした。また こんど おねがいします。');
 }
-function playClose() {
+const playClose = () => reactHide();
+// 下の 札を とじる（×・時間ぎれ・タブの 切りかえ など どこから でも）。「めいろ、どうだった？」で ★を えらんで いれば ★だけ 届ける
+// （タブを 切りかえて とじると ★が 届かず、その日は もう たずねない ので 声が なくなって いた。Codex の 指摘）
+function reactHide() {
   clearTimeout(react.t);
-  if (playQ.r && !playQ.sent) playSend('');   // ★を えらんで とじた：★だけ 届ける
-  $('reactBar').classList.remove('play');
-  reactHide();
+  if ($('reactBar').classList.contains('play')) { if (playQ.r && !playQ.sent) playSend(''); $('reactBar').classList.remove('play'); }
+  $('reactBar').hidden = true; $('reactBar').innerHTML = '';
 }
-function reactHide() { clearTimeout(react.t); $('reactBar').hidden = true; $('reactBar').innerHTML = ''; }
 function reactShow() {
   const s = react.pending; react.pending = null;
   if (!s) return;

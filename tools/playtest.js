@@ -1032,13 +1032,22 @@ async function walkTo(page, id) {
       const closed = bar.hidden;
       G.playAsk({ sec: 50, stars: 3 });
       const again = !!G.playPending;   // 同じ 日は もう たずねない
+      // ★を えらんで タブを 切りかえても ★だけ 届く（Codex の 指摘）
+      localStorage.removeItem('nsg_play_ask');
+      G.playAsk({ sec: 40, stars: 1 }); G.playShow();
+      await wait(200);
+      bar.querySelector('[data-play="5"]').click();
+      document.querySelector('.tabs button[data-tab="voice"]').click();
+      const tabClosed = bar.hidden && !bar.classList.contains('play');
+      await wait(1200);
+      document.querySelector('.tabs button[data-tab="map"]').click();
       S.points = p0; S.total = t0; G.save && G.save();
-      return { shown, big, on, more, closed, again, day: localStorage.getItem('nsg_play_ask') };
+      return { shown, big, on, more, closed, again, tabClosed, day: localStorage.getItem('nsg_play_ask') };
     });
     await page.unroute('**/api/feedback');
-    const body = (() => { try { return JSON.parse(fb[fb.length - 1] || 'null'); } catch (e) { return null; } })();
+    const js = x => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } }, body = js(fb[0]), tab = js(fb[1]);
     const c = R.checks.playRating;
-    R.checks.playRating = { ...c, sent: fb.length, body, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && fb.length === 1 };
+    R.checks.playRating = { ...c, sent: fb.length, body, tab, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && fb.length === 2 };
   }
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる

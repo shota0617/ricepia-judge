@@ -2059,12 +2059,15 @@ async function walkTo(page, id) {
         const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms));
         G.openTab('log'); await wait(400);
         const cards = [...document.querySelectorAll('#panel-log .jump-card')].map(c => { const q = c.getBoundingClientRect(), b = c.querySelector('button').getBoundingClientRect(); return { w: Math.round(q.width), right: Math.round(q.right), btnRight: Math.round(b.right) }; });
+        const tn = [...document.querySelector('#panel-log .jump-card p b').childNodes].find(n => n.nodeType === 3 && /にしおジャンプ/.test(n.textContent)), word = 'にしおジャンプ';
+        const top = i => { const rg = document.createRange(); rg.setStart(tn, i); rg.setEnd(tn, i + 1); const rc = rg.getClientRects()[0]; return rc ? Math.round(rc.top) : null; };
+        const wi = tn ? tn.textContent.indexOf(word) : -1, titleOne = wi >= 0 && top(wi) === top(wi + word.length - 1);   // 題の「にしおジャンプ」が 1行に
         G.openTab('map'); await wait(300);
-        return { cards };
+        return { cards, titleOne };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       const ws = r.cards.map(c => c.w);
-      return { ...r, ok: r.cards.length >= 2 && Math.max(...ws) - Math.min(...ws) <= 1 && r.cards.every(c => c.btnRight <= c.right) };
+      return { ...r, ok: r.cards.length >= 2 && Math.max(...ws) - Math.min(...ws) <= 1 && r.cards.every(c => c.btnRight <= c.right) && r.titleOne };
     })();
     // せっていの「🔑 ひきつぎの あいことば」は、ほかの せっていと 同じく 見出しの 下に 説明（見出しの すぐ うしろに 説明が つづいて いた）
     R.checks.codeCardHead = await w.page.evaluate(async () => {

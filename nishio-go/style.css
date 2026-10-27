@@ -688,6 +688,7 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 /* ミニゲーム「にしおジャンプ」（runner.js） */
 .jump-card{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .jump-card p{margin:0;display:flex;flex-direction:column;gap:2px}
+.jump-card p b{word-break:keep-all;overflow-wrap:anywhere}   /* 題は ことばの 切れめで 折りかえす（「「に／しおジャンプ」」と 切れていた） */
 .jump-card small{color:var(--sub)}
 .jump-card img.pi.art{width:32px;height:32px;vertical-align:-10px}
 .koro-rec p{margin:0;display:flex;flex-direction:column;gap:2px}

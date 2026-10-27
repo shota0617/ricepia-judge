@@ -2232,13 +2232,14 @@ function drawSpeedLines(x, y, u, now) {
 }
 function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数が ふえるほど 大きく・色が かわる）
   if (combo.n < 3) return;
-  const S = Math.round(Math.min(24, 11 + combo.n * 0.4) * u), pop = Math.max(0, 1 - (now - combo.shown) / 180), sz = Math.round(S * (1 + pop * 0.25));
+  // 字は はじめから 大きめ（11 → 16。運営者の声「大きい文字シンプルに」2026-10-27）
+  const S = Math.round(Math.min(28, 16 + combo.n * 0.4) * u), pop = Math.max(0, 1 - (now - combo.shown) / 180), sz = Math.round(S * (1 + pop * 0.25));
   ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
   ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
   const t = `×${combo.n}`;
   ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
   if (combo.best >= 5) {   // その下に 小さく ベスト（こえたら「ベスト こうしん中」）
-    const s2 = Math.round(9 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? 'ベスト こうしん中' : `ベスト ${combo.best}`;
+    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? 'ベスト こうしん中' : `ベスト ${combo.best}`;
     ctx.font = `bold ${s2}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(2, s2 / 4); ctx.fillStyle = combo.n > combo.best ? '#ff9fd0' : '#d9e6d0';
     ctx.strokeText(t2, x, y2); ctx.fillText(t2, x, y2);
   }
@@ -5602,6 +5603,8 @@ let active = false, raf = 0, dirty = true, scale = 2, mzScale = 1;   // mzScale�
 const FLOAT_PX = 16;   // 浮かぶ 文字の 大きさ（画面の 点）
 let floatPx = 0;   // いちばん 最近 描いた 浮かぶ 文字の 大きさ（テスト用。はばに 入らず 小さく した ときも わかる）
 const floaters = [], floatDrawn = [];   // 浮かぶ文字 { t, at }。floatDrawn：いまの こまに 描いた 文字（プレイテストで 見る）
+const FLOAT_GAP = 1250;   // つづけて 来た 浮かぶ 文字の あいだ（ミリ秒。1つ 1.2秒で 消えるので、前の 文字が 消えてから 次を）
+let floatLast = -1e9;   // さいごに 浮かべた（浮かべる）文字の 時刻
 let floatQEnd = 0;   // 待っていた 浮かぶ 文字を 順に 出し おわる 時刻（その 前に 来た 文字は この あとに）
 // 下の案内パネルが地図に重なっている高さ（CSS px）。主人公は、パネルの上に見えている所のまん中に置く
 let cover = 0, fieldCy = 0;
@@ -5657,8 +5660,10 @@ function occludeRice(hx, by, footY, u, again) {
   return true;
 }
 function floatText(t) {   // 「ゴール！」の あと 待っていた 文字を 順に 出している 間（floatQEnd まで）に 来た 文字は、列の 最後に（重ねない）
-  const now = performance.now(), at = Math.max(now, floatQEnd);
+  // つづけて 来た 文字は 前の 文字が 消えてから 出す（字を 大きく したら、同じ 所に 2つ 重なって 読めなかった 2026-10-27）
+  const now = performance.now(), at = Math.max(now, floatQEnd, floatLast + FLOAT_GAP);
   if (floatQEnd > now) floatQEnd += 1300;
+  floatLast = at;
   floaters.push({ t, at }); if (floaters.length > 4) floaters.shift();
 }
 /* ---------- 町を走る乗り物（Blender の絵：tools/blender/maptiles.py → nishio-go/maptiles/vehicles.png） ----------
@@ -6149,7 +6154,7 @@ function frame(now) {
   // めいろの「🏁 ゴール！」が 出ている 間は 待って、消えてから 浮かべる（ゴールの 時間・★の 行と 重なって どちらも 読めなかった。自分で 遊んで 分かった）
   //   待っている 文字が いくつか あれば、消えた あとに 来た 順に 1つずつ（1.3秒ずつ）。同じ 所に いっしょに 出すと 重なって 読めない
   floatDrawn.length = 0;
-  if (mzBanner.t0) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
+  if (mzBanner.t0) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; if (floaters.length) floatLast = now + (floaters.length - 1) * 1300; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (mzBanner.t0) continue;
@@ -6166,7 +6171,7 @@ function frame(now) {
     ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineJoin = 'round';
     ctx.lineWidth = Math.max(3, Math.round(fz / 4)); ctx.strokeStyle = 'rgba(0,0,0,.85)'; ctx.fillStyle = '#ffe27a';
     floatPx = Math.max(floatPx, fz / dpr);
-    const fy = Math.round(cy - T * 0.85 - age * T * 0.8);
+    const fy = Math.round(cy - T * 1.15 - age * T * 0.7);   // お米の 頭より 上から（右よこの コンボの 数と 重ならない）
     ctx.strokeText(fl.t, w / 2, fy); ctx.fillText(fl.t, w / 2, fy);
     ctx.globalAlpha = 1;
   }

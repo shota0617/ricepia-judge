@@ -40,7 +40,9 @@
 例：
 - Meta 広告（家で遊んでもらう）：`https://go.ricepia.jp/?utm_source=meta&utm_medium=paid&utm_campaign=game&play=1`
 - 本店のレジ横のQR：`https://go.ricepia.jp/?from=pop-honten&spot=kondo-beikoku&utm_source=qr&utm_medium=offline&utm_campaign=honten`
-  - 印刷して置けるA4のPOP：`https://go.ricepia.jp/nishio-go/pop.html`（このQRと、ゲームの画面・「スマホのカメラで読みこむだけ／無料・登録なし／家からでも遊べます」。右下の「印刷する」で印刷。検索にはのせない）。QRを作り直すときは `python3 tools/make-pop.py`（segno が要る）
+  - 印刷して置けるA4のPOP：`https://go.ricepia.jp/nishio-go/pop.html`（このQRと、「西尾の地図ぜんぶが めいろに／スマホを傾けると お米が ころころ」・めいろの画面3枚・「スマホのカメラで読みこむだけ／無料・登録なし／家からでも遊べます」・「ホーム画面に追加」のひとこと。右下の「印刷する」で印刷。検索にはのせない）。QRを作り直すときは `python3 tools/make-pop.py`（segno が要る）
+  - レジで手わたすカード：`https://go.ricepia.jp/nishio-go/card.html`（名刺の大きさ 91×55mm が A4 に 10 枚。印刷して 点線で 切る。QR は POP と同じなので、カードから来た人も `from=pop-honten` に入る。カードだけ 別に 数えたくなったら、`from=card-honten` の QR を segno で 作って card.html の `<symbol id="qr">` に入れかえる）
+  - ホーム画面に追加したときの見え方（`nishio-go.webmanifest`）：Android の Chrome の 追加の画面に、めいろの 画面写真 3枚（`nishio-go/shots/meiro.webp`・`roll.webp`・`reward.webp`）が 出る。`id` は いままでの start_url と 同じにして、もう 追加した人の アプリが 別ものに ならないように した。画面写真を 撮りなおしたら 大きさ（sizes）も 合わせる（プレイテストの entryPrint が 見る）
 
 ## 2. 数えられること（計測）
 

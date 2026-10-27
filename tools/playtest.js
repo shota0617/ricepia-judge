@@ -2189,6 +2189,21 @@ async function walkTo(page, id) {
     };
     try { const both = run(true), only3 = run(false); return { both, only3, ok: both.opened && both.gates === 3 && only3.opened }; } catch (e) { return { ok: false, err: String(e) }; }
   })();
+  // 入口（店頭POP・配るカード・ホーム画面に追加）：manifest の 画面写真が あって 大きさが 本当の 絵と 同じ・POP の 写真が ある・カードの QR が POP と 同じ（来た人を 同じ from で 数える）
+  R.checks.entryPrint = (() => {
+    const root = path.join(__dirname, '..'), rd = f => { try { return fs.readFileSync(path.join(root, f)); } catch (e) { return null; } };
+    const webp = b => b && b.toString('latin1', 12, 16) === 'VP8X' ? `${1 + b.readUIntLE(24, 3)}x${1 + b.readUIntLE(27, 3)}` : null;
+    try {
+      const man = JSON.parse(rd('nishio-go.webmanifest')), shots = man.screenshots || [];
+      const bad = shots.filter(s => webp(rd(s.src.slice(1))) !== s.sizes).map(s => s.src);
+      const pop = String(rd('nishio-go/pop.html') || ''), card = String(rd('nishio-go/card.html') || '');
+      const popImgs = [...pop.matchAll(/<img[^>]*src="([^"]+)"/g)].map(m => m[1]), missing = popImgs.filter(f => !rd('nishio-go/' + f));
+      const qr = h => ((h.match(/class="qrline"[^>]*\sd="([^"]+)"/) || [])[1] || '');
+      const cards = (card.match(/class="card"/g) || []).length, uses = (card.match(/<use href="#qr"\/>/g) || []).length;
+      const same = qr(pop).length > 100 && qr(pop) === qr(card);
+      return { shots: shots.length, bad, missing, cards, uses, same, ok: !!man.id && shots.length >= 1 && !bad.length && !missing.length && cards === 10 && uses === 10 && same };
+    } catch (e) { return { ok: false, err: String(e) }; }
+  })();
   // 合格の条件：どれか1つでも外れたら、理由を failures に書いて終了コード1
   const c = R.checks, fail = [];
   const need = (ok, why) => { if (!ok) fail.push(why); };
@@ -2197,6 +2212,7 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
+  need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
   need(c.rollStartTilt && c.rollStartTilt.ok, '転がり方「ぴたっ」で 草の 上だと、少し 傾けても お米が 動きださない（めいろで 詰まる）');
   need(c.mzFarWorld && c.mzFarWorld.ok, '遠い ゴールの 矢印を タップしても、せかいちずで ゴールの 場所（🏁）が 見られない');

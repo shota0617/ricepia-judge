@@ -2291,6 +2291,18 @@ function riceFeel(dt, speed) {
   roll.dust = roll.dust.filter(p => p.t < 0.45);
 }
 let kotoCtx = null;
+function boingSound(v) {   // やわらかい 生け垣で はね返った：ぽよん（低い 音から 上がって、少し ふるえる）
+  try {
+    if (localStorage.getItem('nsg_bgm') === 'false' || document.hidden) return;
+    kotoCtx = kotoCtx || new (window.AudioContext || window.webkitAudioContext)();
+    if (kotoCtx.state === 'suspended') kotoCtx.resume();
+    const t = kotoCtx.currentTime, o = kotoCtx.createOscillator(), w = kotoCtx.createOscillator(), wg = kotoCtx.createGain(), g = kotoCtx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(170, t); o.frequency.exponentialRampToValueAtTime(420, t + 0.16);
+    w.frequency.setValueAtTime(18, t); wg.gain.setValueAtTime(25, t); w.connect(wg); wg.connect(o.frequency);   // ぷるぷる
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09 * (0.4 + v * 0.6), t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(g); g.connect(kotoCtx.destination); o.start(t); w.start(t); o.stop(t + 0.26); w.stop(t + 0.26);
+  } catch (e) { /* 音が出せない端末 */ }
+}
 function kotoSound(v, low) {   // 木の小さな「コトン」（音の設定がオフなら鳴らさない）
   try {
     if (localStorage.getItem('nsg_bgm') === 'false' || document.hidden) return;
@@ -6894,8 +6906,9 @@ function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マ�
 //   階段の ような ななめの 道（すじかいの 道・川ぞいの 道）は ななめの 一本道に なる。3つ以上の 分かれ道は まっすぐの 枝と、となりあう 枝の あいだの カーブ
 // ・道すじは 通路の マスの 中に おさまる（壁の マスへ はみ出さない）ので、マスで 数える しくみ（道しるべ・カラス・米つぶ・歩数）は そのまま
 const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5, MZ_RUB = 0.15;
-const MZ_SOFT_K = 300, MZ_SOFT_C = 12, MZ_SOFT_MAX = 0.4;   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
-const mzSoft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0 };   // dent：生け垣の へこみの 絵（ばねで ついていき、はなれると ぷるんと もどる）   // MZ_RUB：生け垣に こすれる ときの すべりにくさ   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
+const MZ_SOFT_K = 300, MZ_SOFT_C = 12, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 5;   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
+// MZ_DENT_K・C：へこみの 絵の ばね（運営者「当たると 伸びて 跳ね返る」を もっと 分かりやすく：これまでは 0.1秒で もどり 目に 見えなかった。0.4秒ほど のびて、2〜3回 ぷるぷる ゆれて もどる）
+const mzSoft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0, vin: 0, boings: 0 };   // dent：生け垣の へこみの 絵（ばねで ついていき、はなれると ぷるんと もどる）   // MZ_RUB：生け垣に こすれる ときの すべりにくさ   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
 const mzCurveC = { key: '', m: new Map() };
 function mzCurves(cx, cy) {   // マスが 受けもつ 道すじ（地図の マスの 座標の 点の 列の 配列）。区域が 読めて いなければ null
   const key = mzAreas.size + ':' + mzSpotCells.size + ':' + mzSpotV + ':' + mzGate.v;   // 区域が 読めた・参道が ふえた・ゴールの 戸が ひらいた ときは つくりなおす（となりの マスへ 通れるかが かわる）
@@ -7938,7 +7951,7 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   if (rec) { drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T); return; }   // Godot で 描く 試作：記録係は くりぬきの 絵を 送れないので、これまでの 生け垣
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
-  const m = ctx.getTransform(), live = mzSoft.dent > 0.01 && mazeOn();
+  const m = ctx.getTransform(), live = (Math.abs(mzSoft.dent) > 0.01 || Math.abs(mzSoft.dv) > 0.05) && mazeOn();   // ぷるぷる ゆれて いる 間は 毎こま 描く
   // 下絵の 使い回し：画面の 位置・大きさ・読めた 区域・参道・生け垣の 種類・季節が 同じで、生け垣が へこんで いなければ、前の 下絵を そのまま 貼る（止まって いる 間の 重さを へらす）
   const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason()].join();
   if (!live && key === mzLayer.key) { mzBlit(); return; }
@@ -7970,8 +7983,10 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   L.globalCompositeOperation = 'destination-out'; L.lineWidth = wi; L.stroke(net);   // 通路を くりぬく
   const dent = mzSoft.dent > 0.01 && mazeOn() ? [ox + (mzSoft.x + mzSoft.ux * (MZ_TUBE + mzSoft.dent)) * T, oy + (mzSoft.y + mzSoft.uy * (MZ_TUBE + mzSoft.dent)) * T, (MZ_HALF - MZ_TUBE) * T] : null;   // やわらかい 生け垣の へこみ（お米の 形に 押されて のびる）
   if (dent) {
-    const a = Math.atan2(mzSoft.uy, mzSoft.ux), stretch = 1 + Math.min(1, mzSoft.dent * 4);   // 当たった 所を 中心に 横へ 広く のびる（膜のように）
-    L.globalCompositeOperation = 'source-atop'; L.fillStyle = '#0d2219'; L.beginPath(); L.ellipse(dent[0], dent[1], dent[2] + u, (dent[2] + u) * stretch, a, 0, Math.PI * 2); L.fill();
+    const a = Math.atan2(mzSoft.uy, mzSoft.ux), stretch = 1 + Math.min(2.6, mzSoft.dent * 10);   // 当たった 所を 中心に 横へ 広く のびる（膜のように。お米の 両わきで しなるのが 見える ように：お米の 真下だけだと 絵に かくれて 見えなかった）
+    const glow = Math.min(1, mzSoft.dent / 0.25), gr = dent[2] + 0.35 * T;   // のびて うすく なった 所を 明るく（ぴんと はった 膜）
+    L.globalCompositeOperation = 'source-atop'; L.fillStyle = `rgba(200,245,170,${(0.6 * glow).toFixed(2)})`; L.beginPath(); L.ellipse(dent[0], dent[1], gr, gr * stretch, a, 0, Math.PI * 2); L.fill();
+    L.fillStyle = '#0d2219'; L.beginPath(); L.ellipse(dent[0], dent[1], dent[2] + u, (dent[2] + u) * stretch, a, 0, Math.PI * 2); L.fill();
     L.globalCompositeOperation = 'destination-out'; L.beginPath(); L.ellipse(dent[0], dent[1], dent[2], dent[2] * stretch, a, 0, Math.PI * 2); L.fill();
     dent.push(a, stretch);
   }
@@ -8133,14 +8148,17 @@ function rollStep(dt) {
     if (q && q.d > MZ_TUBE) {   // やわらかい 生け垣（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, vn = rp.vx * ux + rp.vy * uy, over = q.d - MZ_TUBE, pen = Math.min(over, MZ_SOFT_MAX);
       rub = [ux, uy];
-      if (!mzSoft.on && vn > 0) hit(vn, Math.abs(ux) >= Math.abs(uy), false);   // 当たった 瞬間だけ：がさっ（音・葉っぱ・ゆれ・いたい顔・コンボ おしまい）
+      if (!mzSoft.on && vn > 0) { hit(vn, Math.abs(ux) >= Math.abs(uy), false); mzSoft.vin = vn; mzSoft.dv = Math.max(mzSoft.dv, vn * 0.5); }   // 当たった 瞬間だけ：がさっ（音・葉っぱ・ゆれ・いたい顔・コンボ おしまい）。へこみの 絵を ぐっと 押しこむ
       mzSoft.on = true; mzSoft.x = q.x; mzSoft.y = q.y; mzSoft.ux = ux; mzSoft.uy = uy; mzSoft.pen = pen;
       const push = MZ_SOFT_K * pen * dt + (vn > 0 ? MZ_SOFT_C * vn * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり（はね返りの 強さ）
       const vtx = rp.vx - vn * ux, vty = rp.vy - vn * uy, vt = Math.hypot(vtx, vty), f = vt > 0 ? Math.max(0, 1 - MZ_RUB * MZ_SOFT_K * pen * dt / vt) : 1;   // 生け垣に こすれる ぶん おそく（カーブを いつまでも すべりつづけない）
       let vn2 = vn - push;
       if (over > MZ_SOFT_MAX) { nx = q.x + ux * (MZ_TUBE + MZ_SOFT_MAX); ny = q.y + uy * (MZ_TUBE + MZ_SOFT_MAX); if (vn2 > 0) vn2 = 0; }   // それより 先へは のびない（通りぬけない）
       rp.vx = vtx * f + vn2 * ux; rp.vy = vty * f + vn2 * uy;
-    } else mzSoft.on = false;
+    } else {
+      if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8)); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
+      mzSoft.on = false; mzSoft.vin = 0;
+    }
     rp.x = nx; rp.y = ny;
   } else {
   const nx = rp.x + rp.vx * dt, ex = nx + Math.sign(rp.vx) * RX;
@@ -8181,7 +8199,7 @@ function rollStep(dt) {
       }
     }
   }
-  if (mz) { const tg = mzSoft.on ? mzSoft.pen : 0; mzSoft.dv += (420 * (tg - mzSoft.dent) - 16 * mzSoft.dv) * dt; mzSoft.dent += mzSoft.dv * dt; }   // 生け垣の へこみ：お米に ついていき、はなれると ぷるんと もどる
+  if (mz) { const tg = mzSoft.on ? Math.min(MZ_SOFT_MAX, mzSoft.pen * 2) : 0; mzSoft.dv += (MZ_DENT_K * (tg - mzSoft.dent) - MZ_DENT_C * mzSoft.dv) * dt; mzSoft.dent = Math.max(-0.15, Math.min(MZ_SOFT_MAX, mzSoft.dent + mzSoft.dv * dt)); }   // 生け垣の へこみ：お米より 大きく ついていき、はなれると ぷるぷると もどる
   if (mz) mzPadTick(ax, ay);   // びゅんパネル
   if (Math.abs(rp.vx) > 0.05 || Math.abs(rp.vy) > 0.05) facing = Math.abs(rp.vx) > Math.abs(rp.vy) ? (rp.vx > 0 ? 'right' : 'left') : (rp.vy > 0 ? 'down' : 'up');
   const tx = Math.floor(rp.x), ty = Math.floor(rp.y), key = `${tx},${ty}`;

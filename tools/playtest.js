@@ -1743,6 +1743,50 @@ async function walkTo(page, id) {
       G.setGuide(null); P.rollPut(r0.x, r0.y, 0, 0);   // もとの 所へ（人の そばに のこすと、あとの 項目で こつんと 止まる）
       return { npc: out.length ? out.map(o => o.npc).join('・') : 'none', tries: out, ok: !out.length || out.some(o => o.hit) };
     });
+    // 呼びとめられて 話した 人も、こつんと 話した 人と 同じく あいさつ ずみ（そのまま 当たっても・はなれて もどっても 同じ 話を 開かない）
+    // （自分で 遊んで 分かった：呼びとめた ゴールの 人の 話を とじると、お米が 次の ゴールへ 押されて その人に 当たり、1.5秒で 同じ 話が また 開いた）
+    R.checks.npcSightBump = await w.page.evaluate(async () => {
+      const G = nishioGo, P = nishioPixel, M = P.maze, wait = ms => new Promise(res => setTimeout(res, ms)), pi = document.getElementById('pxInfo');
+      if (!P.sightCheck || !M.near) return { npc: 'none', why: 'no-api', ok: false };
+      const talking = n => !pi.hidden && pi.textContent.includes(n.name);
+      const blockedW = () => document.getElementById('reward').classList.contains('show') || !!document.querySelector('.medashi:not([hidden])');
+      const unblockW = () => { const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.querySelectorAll('.medashi:not([hidden]) .md-close').forEach(b => b.click()); };
+      const r0 = P.roll, g0 = G.guide, tries = [];
+      const near = (n, t) => { const q = M.near(t.x + 0.5, t.y + 0.5); if (!q || q.d > 1.05 || q.d < 0.05) return false; P.rollPut(q.x, q.y, (t.x + 0.5 - q.x) / q.d * 0.3, (t.y + 0.5 - q.y) / q.d * 0.3); return true; };   // 人の そばの 道すじから ゆっくり 人の ほうへ（npcBumpInTile と 同じ 当て方）
+      const sp = G.spots.find(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000);   // 遠い 名所を ゴールに（人の 近くで 着いた あつかいに ならない）
+      if (!sp) return { npc: 'none', why: 'no-goal', ok: true };
+      G.setGuide({ kind: 'spot', id: sp.id, name: sp.name, why: 'テスト', by: 'テスト' });
+      for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
+      pi.hidden = true;
+      for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500)) {
+        const t = P.npcTile(n), q = M.near(t.x + 0.5, t.y + 0.5);
+        if (!q || q.d > 1.05 || q.d < 0.05) continue;   // あとで そばの 道すじから 当てられる 人
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          if ([1, 2, 3].some(k => P.blockedAt(t.x + dx * k + 0.5, t.y + dy * k + 0.5))) continue;
+          await window.__npcLeave(t);   // 前の こつんを わすれる
+          G.state.met = (G.state.met || []).filter(id => id !== n.id); P.sightForget(n.id);   // まだ 話して いない 人に もどす（呼びとめは はじめての 人だけ）
+          for (let i = 0; i < 20 && (blockedW() || P.sightBusy()); i++) { unblockW(); pi.hidden = true; await wait(150); }   // 本の できごと・ごほうび・前の 呼びとめ（お米を 動かした とき ほかの まだ 話して いない 人が 呼びとめる ことも ある）が おわってから
+          P.rollPut(t.x + dx * 3 + 0.5, t.y + dy * 3 + 0.5, 0, 0); await wait(100);   // 人の まっすぐ 3マス 先
+          if (!P.sightCheck()) { tries.push(n.name + ':' + dx + ',' + dy + ':no-sight' + (blockedW() ? ':win' : '') + (P.sightBusy() ? ':busy' : '')); continue; }
+          let called = false;
+          for (let i = 0; i < 30 && !called; i++) { await wait(100); called = talking(n); }
+          if (!called) { tries.push(n.name + ':' + dx + ',' + dy + ':no-talk'); continue; }
+          pi.hidden = true; await wait(400);
+          near(n, t);   // そのまま 人に 当たる
+          let again = false;
+          for (let i = 0; i < 8 && !again; i++) { await wait(100); again = talking(n); }
+          pi.hidden = true;
+          const left = await window.__npcLeave(t);   // はなれて もどる
+          near(n, t);
+          let back = false;
+          for (let i = 0; i < 8 && !back; i++) { await wait(100); back = talking(n); }
+          pi.hidden = true; G.setGuide(g0 || null); P.rollPut(r0.x, r0.y, 0, 0);
+          return { npc: n.name, called, again, left, back, ok: !again && left && !back };
+        }
+      }
+      G.setGuide(g0 || null); P.rollPut(r0.x, r0.y, 0, 0);
+      return { npc: 'none', tries, ok: true };
+    });
     // ゴールの すぐ そば（まっすぐ 3マス以内）なのに 道のりが とても 長い 所では、生け垣の 戸が ひらいて 近道に なる
     // （自分で 遊んで 分かった：らいすぴあの 店員さんが 生け垣の 向こう 70m に 見えて いるのに、道のりは 900m。2回とも そこで 1分 以上 止まった）
     R.checks.mzGoalGate = await w.page.evaluate(async () => {
@@ -2154,6 +2198,7 @@ async function walkTo(page, id) {
   need(c.mzFarWorld && c.mzFarWorld.ok, '遠い ゴールの 矢印を タップしても、せかいちずで ゴールの 場所（🏁）が 見られない');
   need(c.mzSameCellGoal && c.mzSameCellGoal.ok, '同じ めいろの マスの ゴールが つづくと、ゴールが かわった ことに 気づかない（「🏁 つぎの ゴール」が 出ない）');
   need(c.npcArriveBump && c.npcArriveBump.ok, 'めいろの ゴールの 人に 着いて 話した あと、となりから 当たると 同じ 話が また 開く');
+  need(c.npcSightBump && c.npcSightBump.ok, 'めいろで 呼びとめられて 話した 人に、そのまま 当たるか はなれて もどると 同じ 話が また 開く');
   need(c.npcBumpInTile && c.npcBumpInTile.ok, 'めいろで 人の そばに 入っても、マスが かわらないと こつんと 話しかけない（同じ マスの 中で 近づいて はなれる と 当たれない）');
   need(c.mzGoalGate && c.mzGoalGate.ok, `ゴールの すぐ そばなのに 道のりが とても 長い 所で、生け垣の 戸が ひらかない（${JSON.stringify(c.mzGoalGate)}）`);
   need(c.mzDentBack && c.mzDentBack.ok, `やわらかい 生け垣：はなれても 小さな へこみが のこる・押しつけた ままの ゆらぎで へこみが 動きつづける（${JSON.stringify(c.mzDentBack)}）`);

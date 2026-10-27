@@ -1754,7 +1754,7 @@ async function walkTo(page, id) {
       const r0 = P.roll, g0 = G.guide, tries = [];
       const near = (n, t) => { const q = M.near(t.x + 0.5, t.y + 0.5); if (!q || q.d > 1.05 || q.d < 0.05) return false; P.rollPut(q.x, q.y, (t.x + 0.5 - q.x) / q.d * 0.3, (t.y + 0.5 - q.y) / q.d * 0.3); return true; };   // 人の そばの 道すじから ゆっくり 人の ほうへ（npcBumpInTile と 同じ 当て方）
       const sp = G.spots.find(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000);   // 遠い 名所を ゴールに（人の 近くで 着いた あつかいに ならない）
-      if (!sp) return { npc: 'none', why: 'no-goal', ok: true };
+      if (!sp) return { npc: 'none', why: 'no-goal', ok: false };   // ためせなかった ときは 落とす（呼びとめが 動かなく なっても 緑に ならない ように。Codex の 指摘）
       G.setGuide({ kind: 'spot', id: sp.id, name: sp.name, why: 'テスト', by: 'テスト' });
       for (let i = 0; i < 20 && !M.routePath(); i++) await wait(150);
       pi.hidden = true;
@@ -1785,7 +1785,7 @@ async function walkTo(page, id) {
         }
       }
       G.setGuide(g0 || null); P.rollPut(r0.x, r0.y, 0, 0);
-      return { npc: 'none', tries, ok: true };
+      return { npc: 'none', tries, ok: false };   // 1人も 呼びとめから 当たるまで ためせなかった
     });
     // ゴールの すぐ そば（まっすぐ 3マス以内）なのに 道のりが とても 長い 所では、生け垣の 戸が ひらいて 近道に なる
     // （自分で 遊んで 分かった：らいすぴあの 店員さんが 生け垣の 向こう 70m に 見えて いるのに、道のりは 900m。2回とも そこで 1分 以上 止まった）

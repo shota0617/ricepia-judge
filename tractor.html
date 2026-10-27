@@ -6188,7 +6188,7 @@ function setDepth(d) {
   if (d > 0 && season === 'aki' && DEPTH > 10) setTimeout(() => voice('kanroku'), 2500);
 }
 function toggleRotary() {
-  if (S.scrape > 0) return;                       // 泥落としのあいだは さわらない
+  if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || KATA.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
   DRIVER.st.reach = 0.8;
   S.rotDown = !S.rotDown;
   S.autoUp = false;

@@ -1147,7 +1147,7 @@ function shopOpen(s, t = Date.now()) {   // 当店の いま営業中か（spots
 function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店スタンプ・LINE の常連さまポイント
   const h = s.hours, o = shopOpen(s), n = (S.shopDays || []).length;
   return `<div class="shop-info">
-    ${h ? `<p>🕘 ${esc(h.open)}〜${esc(h.close)}（${(h.closed || []).length ? (h.closed || []).map(w => WEEK[w]).join('・') + '曜休み' : '年中無休'}）　<b class="${o.open ? 'open' : 'shut'}">${esc(o.text)}</b></p>` : ''}
+    ${h ? `<p>🕘 ${esc(h.open)}〜${esc(h.close)}（${(h.closed || []).length ? (h.closed || []).map(w => WEEK[w]).join('・') + '曜休み' : '年中無休'}）　<b class="${o.open ? 'open' : 'shut'}">${esc(o.text)}</b><br><small>年末年始などは 営業日・時間が かわることが あります（くわしくは お電話で）</small></p>` : ''}
     ${s.tel ? `<p>📞 <a href="tel:${esc(s.tel.replace(/-/g, ''))}">${esc(s.tel)}</a>${n ? `　🍚 来店スタンプ ${n}こ` : ''}</p>` : ''}
     <p class="shop-line">📱 <b>常連さまポイント</b>：お店で1日1回の来店で+1pt、10ptで100円引き（LINE の友だち登録から）<br>
       <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;

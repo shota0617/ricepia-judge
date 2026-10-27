@@ -1,0 +1,52 @@
+# にしおさんぽGO：毎週 月曜に、めいろの「めいろ、どうだった？」（★と ひとこと）の 1週間ぶんを まとめる（tools/play-weekly.js）
+# 非公開リポジトリに Issue「[週の声] 〜」（ひとことの 文つき）、このリポジトリに docs/play-weekly.md（数と 直す 候補だけ）をコミット。
+# 開発の ループ（.claude/skills/nishio-go-dev）が docs/play-weekly.md を 読んで、つぎに 直す ものを えらぶ。
+# Variables の FEEDBACK_REPO と Secrets の FEEDBACK_TOKEN が 無い あいだは、なにも しない（docs/feedback.md）
+name: Nishio play weekly
+on:
+  workflow_dispatch:
+    inputs:
+      week_end:
+        description: 'まとめる 週の 最後の 日（YYYY-MM-DD。空なら きのう）'
+        required: false
+  schedule:
+    - cron: '41 23 * * 0'   # 毎週 月曜 8:41（日本時間）
+permissions:
+  contents: write
+concurrency:
+  group: play-weekly
+jobs:
+  weekly:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      FEEDBACK_REPO: ${{ vars.FEEDBACK_REPO }}
+      WEEK_END: ${{ github.event.inputs.week_end }}
+    steps:
+      - name: Check settings
+        id: cfg
+        env:
+          T: ${{ secrets.FEEDBACK_TOKEN }}
+        run: |
+          if [ -n "$T" ] && [ -n "$FEEDBACK_REPO" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "FEEDBACK_REPO / FEEDBACK_TOKEN が無いので、なにもしません"; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.cfg.outputs.on
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.cfg.outputs.on
+        with:
+          node-version: 20
+      - name: Summarize the week
+        if: steps.cfg.outputs.on
+        env:
+          FEEDBACK_TOKEN: ${{ secrets.FEEDBACK_TOKEN }}
+        run: node tools/play-weekly.js
+      - name: Commit docs/play-weekly.md
+        if: steps.cfg.outputs.on
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/play-weekly.md
+          if git diff --cached --quiet; then echo "変更なし"; exit 0; fi
+          git commit -q -m "にしおさんぽGO: めいろの ★と ひとことの 週の まとめ（自動）"
+          for i in 1 2 3; do git pull -q --rebase origin "${GITHUB_REF_NAME}" && git push -q origin "HEAD:${GITHUB_REF_NAME}" && exit 0; sleep 10; done
+          exit 1

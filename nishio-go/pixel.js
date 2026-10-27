@@ -6503,6 +6503,7 @@ function worldToastDodge(tag, avoid = []) {
   };
   const over = (q, t) => q.left < t[2] && q.right > t[0] && q.top < t[3] && q.bottom > t[1];
   const here = posAt(low), there = posAt(!low);
+  if (low && A.some(a => over(here, a))) { el.classList.remove('wlow'); return; }   // 下げた あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
   if (over(here, T) && !over(there, T) && !A.some(a => over(there, a))) el.classList.toggle('wlow', !low);   // いまの 位置で 重なり、反対側が 空いて いれば そちらへ
 }
 function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない

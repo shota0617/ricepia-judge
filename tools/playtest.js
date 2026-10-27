@@ -2194,24 +2194,34 @@ async function walkTo(page, id) {
         const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d');
         document.getElementById('pxInfo').hidden = true;
         const mPer = (a, b) => [(b.lng - a.lng) * 111320 * Math.cos(a.lat * Math.PI / 180), (b.lat - a.lat) * 110540];
-        const g = G.spots.filter(x => x.lat && !x.shop && G.dist(G.me, x) > 1000 && G.dist(G.me, x) < 3000).map(x => { const [e, n] = mPer(G.me, x); return { x, e, n }; }).filter(o => o.e < 0 && o.n > 0).sort((a, b) => Math.abs(a.n / -a.e - 0.46) - Math.abs(b.n / -b.e - 0.46))[0];   // 西北西：縁の 矢印が 札の 高さに 出る
-        if (!g) return { spot: 'none' };
-        G.setGuide({ kind: 'spot', id: g.x.id, name: g.x.name, why: 'テスト', by: 'テスト' });
-        const keep = { fr: ctx.fillRect, ft: ctx.fillText };
-        let box = null, texts = [], frames = 0, hits = 0;
+        const cands = G.spots.filter(x => x.lat && !x.shop && G.dist(G.me, x) > 1000 && G.dist(G.me, x) < 3500).map(x => { const [e, n] = mPer(G.me, x); return { x, e, n }; }).filter(o => o.e < 0 && o.n > 0).sort((a, b) => Math.abs(a.n / -a.e - 0.46) - Math.abs(b.n / -b.e - 0.46)).slice(0, 8);   // 西北西：縁の 矢印が 札の 高さに 出る
+        const keep = { fr: ctx.fillRect, ft: ctx.fillText }, dpr = Math.min(devicePixelRatio || 1, 3), U = 28 * dpr;
+        let box = null, texts = [];
         ctx.fillRect = function (x, y, w0, h0) { if (/^rgba\(10, 20, 30, 0\.62\)$/.test(String(this.fillStyle))) box = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
         ctx.fillText = function (t, x, y) { if (/^\d+(\.\d)?(km|m)$/.test(t)) texts.push([x, y]); return keep.ft.apply(this, arguments); };
-        for (let i = 0; i < 40; i++) {   // 札の 3秒の 間（と 道のりを 待つ 間）、こまごとに 見る
-          box = null; texts = [];
-          await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
-          if (box) { frames++; if (texts.some(([x, y]) => x > box[0] && x < box[2] && y > box[1] && y < box[3])) hits++; }
-          await wait(80);
+        let res = { name: 'none', frames: 0, hits: 0, near: 0 };
+        for (const g of cands) {   // 縁の 道のりの 札（矢印の 内がわ）が 札に かかる ゴールを さがす（お米の 位置で かわる）
+          G.setGuide({ kind: 'spot', id: g.x.id, name: g.x.name, why: 'テスト', by: 'テスト' });
+          let frames = 0, hits = 0, near = 0;
+          for (let i = 0; i < 40; i++) {   // 札の 3秒の 間（と 道のりを 待つ 間）、こまごとに 見る
+            box = null; texts = [];
+            await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+            const pin = nishioPixel.maze.arrowAt;
+            if (box) {
+              frames++;
+              if (texts.some(([x, y]) => x > box[0] && x < box[2] && y > box[1] && y < box[3])) hits++;
+              if (pin) { const bx = pin[0] - Math.cos(pin[3]) * U * 1.5, by = pin[1] - Math.sin(pin[3]) * U * 1.5; if (bx + U * 1.5 > box[0] && bx - U * 0.5 < box[2] && by + U * 0.5 > box[1] && by - U * 0.5 < box[3]) near++; }   // 道のりの 札の 場所が 札に かかる
+            }
+            await wait(80);
+          }
+          if (near > 0) { res = { name: g.x.name, frames, hits, near }; break; }
+          await wait(1500);
         }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft;
-        return { name: g.x.name, frames, hits };
+        return res;
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.frames > 0 && r.hits === 0 };
+      return { ...r, ok: r.near > 0 && r.hits === 0 };
     })();
     // めいろの 縁の 矢印と 道のりの 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）
     R.checks.mzEdgeToast = await (async () => {
@@ -2230,11 +2240,15 @@ async function walkTo(page, id) {
         const A = a && [c.left + a[0] * k, c.top + a[1] * k, c.left + a[2] * k, c.top + a[3] * k];
         const shown = el.classList.contains('show') && el.textContent === msg, hit = !!A && q.left < A[2] && q.right > A[0] && q.top < A[3] && q.bottom > A[1];
         const low = el.classList.contains('wlow');
+        // 下げた あとに めいろ図を 開いたら（縁の 矢印を タップ）、図に 重ねず 上へ もどす（Codex の 指摘）
+        M.map(8000); await wait(400);
+        const mapUp = M.mapShown ? !el.classList.contains('wlow') : null;
+        M.map(0);
         el.classList.remove('show', 'wlow');
-        return { arrow: !!A, shown, hit, low, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
+        return { arrow: !!A, shown, hit, low, mapUp, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.arrow && r.shown && !r.hit };
+      return { ...r, ok: r.arrow && r.shown && !r.hit && r.mapUp !== false };
     })();
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {

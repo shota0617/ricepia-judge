@@ -262,7 +262,8 @@ const CSS = `.share.over-meiro{z-index:3600}
 #meiro canvas{display:block;image-rendering:pixelated;touch-action:none}   /* 盤を なぞる あいだは 画面を動かさない */
 #meiro .mz-glass::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:18px;background:linear-gradient(155deg,rgba(255,255,255,.32),rgba(255,255,255,0) 32%,rgba(255,255,255,0) 70%,rgba(255,255,255,.12));box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
 #meiro .mz-hint{font-size:13px;opacity:.9;margin:10px 14px 4px;text-align:center;line-height:1.5}
-#meiro .mz-btns{display:flex;gap:10px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
+#meiro .mz-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:100%;box-sizing:border-box;padding:0 8px;margin:6px 0 calc(env(safe-area-inset-bottom,0px) + 10px)}
+@media (max-width:360px){#meiro .mz-btns{gap:6px}#meiro .mz-btns button{padding:9px 12px;font-size:14px}}   /* せまい スマホ（320 幅）でも 3つの ボタンが 画面に おさまる */
 #meiro .mz-btns button,#meiro .mz-clear button{border:0;border-radius:999px;padding:10px 18px;font:inherit;font-size:15px;background:#ffe680;color:#2a2410;box-shadow:0 3px 0 #b59a2a}
 #meiro .mz-btns button.sub{background:rgba(255,255,255,.2);color:#fff;box-shadow:none}
 #meiro .mz-clear{position:fixed;inset:0;z-index:1;display:flex;align-items:center;justify-content:center;background:rgba(10,30,40,.55);padding:12px;box-sizing:border-box}   /* 盤の わくの外（低い画面でも 切れない） */
@@ -440,6 +441,16 @@ function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線�
   const [L, l] = layer();   // 台：緑の プラスチック（地図は うっすら）。通路との さかいに 黒い ふち と、台の 上の てかり
   l.fillStyle = 'rgba(28,70,52,.86)'; l.fillRect(0, 0, W, H);
   l.strokeStyle = 'rgba(190,240,205,.35)'; l.lineWidth = wi + 6 * u; l.stroke(net);
+  if (api.hedgeStyleAt && api.hedgePat) {   // 台の ふちは 地図の めいろと 同じ 生け垣の 種類（茶の木・石垣・黒塀・一色の 網・吉良の 土手・幡豆の 松。店主OK済み）
+    const T2 = tubes(b), nets = {};
+    for (let k = 0; k < T2.length; k++) {
+      if (!T2[k]) continue;
+      const i = k % b.tw, j = (k / b.tw) | 0, st = api.hedgeStyleAt((b.tx0 + i) * K + K / 2, (b.ty0 + j) * K + K / 2), p = nets[st] || (nets[st] = new Path2D());
+      for (const q of T2[k]) { p.moveTo(q[0][0] * T, q[0][1] * T); for (let n = 1; n < q.length; n++) p.lineTo(q[n][0] * T, q[n][1] * T); }
+    }
+    l.lineWidth = wi + 2 * Math.max(2 * u, Math.round(T * 0.12));
+    for (const st in nets) { const pat = api.hedgePat(l, 0, 0, T / K, st); if (pat) { l.strokeStyle = pat; l.stroke(nets[st]); } }
+  }
   l.strokeStyle = '#0d2219'; l.lineWidth = wi + 2 * u; l.stroke(net);
   l.globalCompositeOperation = 'destination-out'; l.lineWidth = wi; l.stroke(net);
   const [S, z] = layer();   // 影：台を 右下へ ずらした ぶん

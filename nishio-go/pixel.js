@@ -7955,7 +7955,7 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
 function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   if (rec) { drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T); return; }   // Godot で 描く 試作：記録係は くりぬきの 絵を 送れないので、これまでの 生け垣
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
-  const m = ctx.getTransform(), live = mzSoft.dv !== 0 && mazeOn(), dk = mazeOn() && mzSoft.dent > 0.01 ? [mzSoft.dent.toFixed(2), mzSoft.x.toFixed(2), mzSoft.y.toFixed(2)].join('/') : '';   // ぷるぷる ゆれて いる 間は 毎こま 描く。おさまった へこみ（押しつけた まま）は 下絵に 入れて 使い回す
+  const m = ctx.getTransform(), live = mzSoft.dv !== 0 && mazeOn(), dk = mazeOn() && mzSoft.dent > 0.01 ? [mzSoft.dent.toFixed(2), mzSoft.x.toFixed(1), mzSoft.y.toFixed(1)].join('/') : '';   // ぷるぷる ゆれて いる 間は 毎こま 描く。おさまった へこみ（押しつけた まま）は 下絵に 入れて 使い回す
   // 下絵の 使い回し：画面の 位置・大きさ・読めた 区域・参道・生け垣の 種類・季節が 同じで、生け垣が へこんで いなければ、前の 下絵を そのまま 貼る（止まって いる 間の 重さを へらす）
   const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason(), dk].join();
   if (!live && key === mzLayer.key) { mzBlit(); return; }
@@ -8076,6 +8076,7 @@ function drawHedges(img, segs, ox, oy, T, S, lw) {
 function mzDentStep(dt) {   // 生け垣の へこみの 絵：お米より 大きく ついていき、はなれると ぷるぷると もどる。お米が 止まって 動きの 処理が 早く おわる こまでも 回す（止まった まま へこみが のこり、毎こま 描きなおして いた。Codex の 指摘）
   if (!mazeOn()) { mzSoft.dent = mzSoft.dv = 0; return; }
   const tg = mzSoft.on ? Math.min(MZ_SOFT_MAX, mzSoft.pen * 2) : 0;
+  if (mzSoft.dv === 0 && Math.abs(tg - mzSoft.dent) < 0.02) return;   // おさまった あとは、押しつけた ままの 小さな ゆらぎ（めりこみが 0.001マスずつ かわる）を 追わない（止まって いるのに 毎こま 描きなおして いた）
   for (let left = Math.min(dt, 0.1); left > 1e-6; left -= 1 / 60) {   // 長い こまは 1/60秒 ずつ（ばねが とびださない ように）
     const h = Math.min(left, 1 / 60);
     mzSoft.dv += (MZ_DENT_K * (tg - mzSoft.dent) - MZ_DENT_C * mzSoft.dv) * h;

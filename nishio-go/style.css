@@ -130,7 +130,7 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 /* パネル */
 .panel{position:fixed;top:var(--bar-h);left:0;right:0;bottom:calc(var(--tabs-h) + var(--safe-b));overflow-y:auto;background:var(--bg);z-index:1050;padding:16px 16px 32px}
 .panel>*{max-width:640px;margin-left:auto;margin-right:auto}
-.panel h2{font-size:20px;margin:0 auto 12px}
+.panel h2{font-size:20px;margin:0 auto 12px;display:flow-root}   /* flow-root：右に うかせた「📣 シェア」（.share-btn）を 見出しの 中に おさめる（見出しより 下に はみ出して、すぐ 下の「にしおジャンプ」の 札が よけて 細く なり、「あそぶ」が 札の 外に 出ていた。自分で 遊んで 分かった） */
 .panel h3{font-size:15px;margin:20px auto 8px;color:var(--green)}
 .card h3{margin-top:0}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}

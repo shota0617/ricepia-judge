@@ -5885,6 +5885,7 @@ function frame(now) {
   raf = requestAnimationFrame(frame);
   if (meiroPause) { lastT = 0; return; }
   howtoTick();
+  mzNextHoldTick();
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
   if (!w || !h) return;
@@ -6206,7 +6207,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now && !rec) drawMzMap(gt, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now && !rec) drawMzMap(gt, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -6443,6 +6444,7 @@ function drawWorld(now, w, h, dpr) {
     const tag = goalTag(gx, gy - rr - 20 * dpr, dpr, `ゴール：${gl.name || ''}`);
     mzMap.worldGoal = [Math.round(gx), Math.round(gy), tag];   // テスト用
   } else mzMap.worldGoal = null;
+  worldToastDodge(mzMap.worldGoal && mzMap.worldGoal[2]);
   // 主人公
   if (me) {
     const p = llToW(me.lat, me.lng), hs = Math.max(T * 2, 18 * dpr);
@@ -6476,6 +6478,40 @@ function shopTag(cx, bottom, dpr, s) {
   ctx.fillStyle = bg; ctx.fillRect(x, y, bw, bh);
   ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
+}
+// せかいちずの「ゴール：…」の 札に 知らせが 重なる ときは、知らせを 上⇔下の 空いて いる ほうへ（wlow で 下。自分で 遊んで 分かった：320×568 で 遠い ゴールの 札が
+// 左上の はしに 出て、「🧭 水色の 線が…」の 知らせに かくれて ゴールの 名前が 読めなかった）。いまの 位置で 重ならない 間は 動かさない（上下に ゆれない）。
+// 地図を 引っぱって 札が 下げた 知らせの 下に 来たら、上が 空いて いれば 上へ もどす（Codex の 指摘）。位置は 動きの とちゅうで なく、止まった 形で はかる
+// めいろでも 同じ：縁の 矢印と 道のりの 札（mzMap.arrow）に 重なる ときは 下へ（自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）。
+// 下へ 動かすのは、下の めいろ図・「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
+const wtd = { key: '' };
+function worldToastDodge(tag, avoid = []) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  if (!el.classList.contains('show') || !tag) { if (el.classList.contains('wlow')) el.classList.remove('wlow'); wtd.key = ''; return; }
+  const r = cv.getBoundingClientRect(), k = r.width / cv.width, T = [r.left + tag[0] * k, r.top + tag[1] * k, r.left + tag[2] * k, r.top + tag[3] * k];
+  const A = avoid.map(a => a.page ? a.page : [r.left + a[0] * k, r.top + a[1] * k, r.left + a[2] * k, r.top + a[3] * k]);   // page：画面の 座標（DOM の 札）
+  const low = el.classList.contains('wlow'), key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + low + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
+  if (key === wtd.key) return;   // 札・知らせ・画面が かわらなければ はかりなおさない
+  wtd.key = key;
+  const posAt = lw => {   // wlow を lw に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）
+    const c = el.cloneNode(true);
+    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.toggle('wlow', lw); c.style.cssText = 'transition:none;visibility:hidden';
+    el.parentNode.appendChild(c);
+    const q = c.getBoundingClientRect(); c.remove();
+    return q;
+  };
+  const over = (q, t) => q.left < t[2] && q.right > t[0] && q.top < t[3] && q.bottom > t[1];
+  const here = posAt(low), there = posAt(!low);
+  if (low && A.some(a => over(here, a))) { el.classList.remove('wlow'); return; }   // 下げた あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
+  if (over(here, T) && !over(there, T) && !A.some(a => over(there, a))) el.classList.toggle('wlow', !low);   // いまの 位置で 重なり、反対側が 空いて いれば そちらへ
+}
+function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない
+  const avoid = [];
+  if (mzMap.until > now && mzMap.rect) avoid.push(mzMap.rect);
+  const rb = document.getElementById('reactBar');
+  if (rb && !rb.hidden) { const b = rb.getBoundingClientRect(); avoid.push({ page: [b.left, b.top, b.right, b.bottom] }); }
+  worldToastDodge(mazeOn() && G.guide && !rec ? mzMap.arrow : null, avoid);
 }
 function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所・めいろの ゴールの 札：こい紺に金色の字（当店の札とは ちがう色）。札の わく [左, 上, 右, 下] を返す
   const fs = Math.round(13 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr)), W = ctx.canvas.width, edge = 4 * dpr;   // 字は 13点（10点では 小さかった 2026-10-27）
@@ -6609,7 +6645,7 @@ function setActive(on) {
   updatePad();
   cancelAnimationFrame(raf);
   if (on) { lastT = 0; raf = requestAnimationFrame(frame); }
-  else { G.invalidateMap(); if (window.NSG_GODOT) NSG_GODOT.idle(); }   // ふつうの地図のあいだは Godot を休ませる
+  else { if (mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } G.invalidateMap(); if (window.NSG_GODOT) NSG_GODOT.idle(); }   // ふつうの地図のあいだは Godot を休ませる
 }
 function updatePad() {
   // 操作して移動なら、せかいちずでもスティックを出す（動かすと歩く地図にもどって歩く。はじめての人はせかいちずから始まるため）
@@ -7633,6 +7669,18 @@ function mzSnap(now) {
 // ゴールに 着いた：お米の まわりに 紙ふぶき（ごはんつぶ・星・桜の 色。盤の めいろと 同じ）
 const mzFx = [], mzBanner = { t0: 0, text: '' };
 const mzNext = { t0: 0, name: '', want: false };   // 新しい ゴールの 知らせ（3秒）
+// 「🏁 つぎの ゴール」の 札（と 道のりを 待つ 2秒まで）が 出て いる 間は、知らせ（game.js の toast）を 待たせ、札が 消えたら 出す。
+// ごほうびの 窓を とじると、待たせて いた 知らせと この 札が 同時に 出て、札の 見出し「🏁 つぎの ゴール」が 知らせに かくれて いた（自分で 遊んで 分かった。ゴールの たびに）
+// 描いて いる 間（active・meiroPause で ない）だけ。絵が 止まると t0 が 進まず、ずっと 待たせて しまう（ふつうの 地図・ステージの めいろに うつった とき）
+function mzNextOn() { return !!(active && !meiroPause && (mzNext.want || (mzNext.t0 && performance.now() - mzNext.t0 < 3300)) && mazeOn() && G.guide && !mapCovered() && !mzBanner.t0); }
+G.toastBlock = mzNextOn;
+function mzNextHoldTick() {
+  const on = mzNextOn();
+  if (on === !!mzNext.hold) return;
+  mzNext.hold = on;
+  if (on) { if (G.toastHold) G.toastHold(); }   // いま 出ている 知らせは 下げる（出た ばかりなら 札の あとに 出し直す）
+  else if (G.toastFlush) G.toastFlush();
+}
 function mzGoalFx(text) {
   // 紙ふぶきは 西尾らしく（運営者の声「西尾らしく」）：お米つぶ（白い たて長が くるくる）・抹茶の 葉（緑）・金の つぶ（お米屋さんの ゲーム、抹茶の まち）
   const now = performance.now(), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
@@ -7688,6 +7736,7 @@ function drawMzNext(w, cy, U, now) {
   const bw = Math.min(w - U, Math.max(...lines.map(([t, sz]) => { ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; return ctx.measureText(t).width; })) + U * 1.2);
   const bh = lines.reduce((s, l) => s + l[1] * 1.35, 0) + U * 0.5;
   ctx.fillRect(Math.round(w / 2 - bw / 2), Math.round(y - lines[0][1] * 0.9), Math.round(bw), Math.round(bh));
+  mzNext.box = [w / 2 - bw / 2, y - lines[0][1] * 0.9, w / 2 + bw / 2, y - lines[0][1] * 0.9 + bh]; mzNext.at = now;   // 縁の 矢印の 道のりの 札が これに 重なる ときは 描かない（drawMzGoal）
   for (const [t, sz, col] of lines) {
     ctx.font = `bold ${sz}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sz / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = col;
     let tt = t; while (ctx.measureText(tt).width > w - U * 2 && tt.length > 2) tt = tt.slice(0, -2) + '…';   // 長い 名前は 「…」
@@ -7756,11 +7805,17 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   ctx.fillStyle = '#ffd54f'; dart(0.9, 0.36, 0.55, 0.02);
   ctx.restore();
   const bx = qx - Math.cos(a) * U * 1.5, by = qy - Math.sin(a) * U * 1.5;   // 矢印の 内がわに 🏁 と 道のり
-  flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
-  label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
+  // 「🏁 つぎの ゴール」の 札（同じ こまで 先に 描く）に 重なる 間は 🏁 と 道のりを 描かない（札にも「めいろで 2.0km」が ある。
+  // 自分で 遊んで 分かった：360×640 で 縁の「2.0km」と 旗が 札の 名前の 行に かぶって 読めなかった）。矢印は 残す（向きは 分かる）
+  const nb = mzNext.at === now && mzNext.box, labHide = !!nb && bx - U * 1.2 < nb[2] && bx + U * 2.2 > nb[0] && by - U * 1.0 < nb[3] && by + U * 1.0 > nb[1];
+  mzNext.labHide = labHide;
+  if (!labHide) {
+    flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
+    label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
+  }
   if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは めいろ図を 出さない
   mzMap.far = !!G.me && G.dist(G.me, gt) > MZ_FAR_MAP;
-  if (!mzMap.tapped) label(mzMap.far ? '🌏 タップ' : '🗺 タップ', bx, by + U * 0.7, Math.round(U * 0.36), '#bfefff');   // 矢印を タップすると めいろ図（遠い ゴールは せかいちず）。1回 タップしたら もう 出さない（小さい 字を へらす）
+  if (!mzMap.tapped && !labHide) label(mzMap.far ? '🌏 タップ' : '🗺 タップ', bx, by + U * 0.7, Math.round(U * 0.36), '#bfefff');   // 矢印を タップすると めいろ図（遠い ゴールは せかいちず）。1回 タップしたら もう 出さない（小さい 字を へらす）
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
 // ゴールまでの めいろ図：運営者の声「ゴールをわかりやすく」。地図を 小さく しても ゴールは 画面の 外（めいろで 2km など）なので、
@@ -8729,9 +8784,9 @@ const meiroApi = {
   forgetChunk(cx, cy) { const k = cx + '_' + cy, c = chunks.get(k); if (c && c.state === 'fail') chunks.delete(k); },   // 読めなかった区画を わすれる（やりなおしで すぐ 読みなおす。ふだんは 60秒 待つ）
   slopeAt: (x, y) => slopeAt(x, y), get demGen() { return demGen; },   // 坂（マス/秒² の加速）と、標高が とどくたびに ふえる数（盤を 描きなおす）
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: v => boingSound(v), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
-  pause(on) { meiroPause = !!on; dirty = true; },
+  pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

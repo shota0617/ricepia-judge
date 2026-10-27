@@ -78,7 +78,14 @@ async function walkTo(page, id) {
     if (picks.length) { first.id = Number(await picks[1].getAttribute('data-pick-dot')); await picks[1].click(); await page.waitForTimeout(600); }
     // まめちしき：新しいまちメモが1つ増え、文字を多めに出すときは 💡 の文、文字を少なく（ふだん）のときは本の札（文は きろく の まちメモ に入る）
     const popup = await page.evaluate(() => { const r = document.getElementById('reward'); return { text: r.innerText, book: !!r.querySelector('img[alt^="📖"]'), facts: nishioGo.state.facts.length }; });
-    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, first, reached: /たからばこ/.test(popup.text) && popup.facts > facts0 && (/💡/.test(popup.text) || popup.book) };
+    // はじめての 絵の「NEW」の 札が、名前（「ようこそ！…」）の 字に 重ならない（自分で 遊んで 分かった：札が 1文字目の「よ」に 重なって 読めなかった）
+    const ribbon = await page.evaluate(() => {
+      const rb = document.querySelector('#reward .ribbon'), pl = document.querySelector('#reward .rw.hero .place');
+      if (!rb || !pl) return { has: false };
+      const a = rb.getBoundingClientRect(), rg = document.createRange(); rg.selectNodeContents(pl);
+      return { has: true, hit: [...rg.getClientRects()].some(t => t.left < a.right && t.right > a.left && t.top < a.bottom && t.bottom > a.top) };
+    });
+    return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, first, ribbon, reached: /たからばこ/.test(popup.text) && popup.facts > facts0 && (/💡/.test(popup.text) || popup.book) };
   }
   const spin = await page.evaluate(() => !document.getElementById('spinBtn').hidden && document.getElementById('spinName').textContent);
   return { id, name: plan.name, straightM: plan.straight, steps: plan.keys.length, reached: spin === plan.name };
@@ -943,7 +950,13 @@ async function walkTo(page, id) {
       li.querySelector('[data-redeem]').click(); await wait(300);
       const cp = document.getElementById('coupon'), cond = document.getElementById('cpCond');
       const out = { found: true, chip, listCond, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };
+      // クーポン画面の 上に 知らせを 重ねない（店員さん向けの 説明が 読めなく なる）：開いて いる 間は 待たせて、とじたら 出す（自分で 遊んで 分かった）
+      const tEl = document.getElementById('toast'), msg = '🎁 テストの 知らせ（クーポン）';
+      G.toast(msg); await wait(200);
+      out.toastOver = tEl.classList.contains('show') && tEl.textContent === msg;
       document.getElementById('cpClose').click();
+      for (let i = 0; i < 40 && !(tEl.classList.contains('show') && tEl.textContent === msg); i++) await wait(200);   // ほかの 知らせが 出ていれば その あと（8秒まで 待つ）
+      out.toastAfter = tEl.classList.contains('show') && tEl.textContent === msg;
       // ほかの クーポンとは いっしょに 使えない：使っていない クーポンが ある 間は、次の 交換が できない
       S.points += 600; G.openTab('rewards'); await wait(300);
       const li2 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
@@ -960,7 +973,7 @@ async function walkTo(page, id) {
     }
     page.off('dialog', onDialog);
     if (r.skipped) return { ok: true, ...r };
-    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && /LINE のクーポンとは併用できません/.test(r.cond) && /ほかのクーポン・割引とも併用できません/.test(r.cond) && r.listCond && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
+    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && !r.toastOver && r.toastAfter && /LINE のクーポンとは併用できません/.test(r.cond) && /ほかのクーポン・割引とも併用できません/.test(r.cond) && r.listCond && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
   })();
   // きろくに「ころころの きろく」（コンボの ベスト・きょう ひろった ごはんつぶ）
   R.checks.koroRec = await page.evaluate(async () => {
@@ -1998,6 +2011,94 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return r;
     })();
+    // 知らせ（トースト）と ごほうびの 名前は、ことばの 間の すきまで 折りかえす（320px）。長すぎる 文は 画面から はみ出さない
+    // （自分で 遊んで 分かった：「🎁 すぐ近くに たからば／こ！」「はじめての たから／ばこ」と ことばの とちゅうで 切れていた）
+    R.checks.wrapWords320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const wait = ms => new Promise(res => setTimeout(res, ms));
+        const lineOf = (el, i) => { const rg = document.createRange(); rg.setStart(el.firstChild, i); rg.setEnd(el.firstChild, i + 1); const rc = rg.getClientRects()[0]; return rc ? Math.round(rc.top) : null; };
+        const sameLine = (el, word) => { const t = el.textContent, i = t.indexOf(word); return lineOf(el, i) === lineOf(el, i + word.length - 1); };
+        const t = document.getElementById('toast'), keep = { text: t.textContent, show: t.classList.contains('show') };
+        t.textContent = '🎁 すぐ近くに たからばこ！'; t.classList.add('show'); await wait(50);
+        const toast = sameLine(t, 'たからばこ') && lineOf(t, 0) !== lineOf(t, t.textContent.length - 1);   // 2行に なって いて、たからばこ は 切れない
+        t.textContent = 'ＡＢＣＤＥＦＧＨＩＪＫＬＭＮＯＰＱＲＳＴＵＶＷＸＹＺあいうえおかきくけこさしすせそ'; await wait(50);
+        const longIn = t.getBoundingClientRect().right <= innerWidth && t.scrollWidth <= t.clientWidth + 1;
+        t.textContent = keep.text; t.classList.toggle('show', keep.show);
+        const box = document.createElement('div'); box.className = 'reward show'; box.style.cssText = 'visibility:hidden;pointer-events:none';
+        box.innerHTML = '<div class="rw hero long"><div class="place">ようこそ！ はじめての たからばこ</div></div>'; document.body.appendChild(box); await wait(50);
+        const place = sameLine(box.querySelector('.place'), 'たからばこ'); box.remove();
+        return { toast, longIn, place };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.toast && r.longIn && r.place };
+    })();
+    // はじめの1枚（3枚から えらぶ）の 窓：320px の 画面でも 3枚とも 窓の 中に 入る
+    // （自分で 遊んで 分かった：絵が 84px 固定で 3枚が 窓より 広く なり、まん中 寄せの まま 左右が 切れて、左の 絵は スクロールでも 見られなかった）
+    R.checks.pickFit320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const wait = ms => new Promise(res => setTimeout(res, ms)), info = document.getElementById('pxInfo'), body = document.getElementById('pxInfoBody');
+        const keep = { hidden: info.hidden, html: body.innerHTML }, D = window.NISHIO_DOTS;
+        const card = id => `<button type="button"><img src="${D.dataUrl(id)}" alt="" width="96" height="96"/><span>炭火のかば焼き</span></button>`;
+        body.innerHTML = `<div class="pick-first"><h4>はじめの1枚を えらぼう</h4><p>えらんだ絵が、西尾ドット絵帳の1枚目になります</p><div class="pick3">${[1, 2, 3].map(card).join('')}</div></div>`;
+        info.hidden = false; await wait(200);
+        const row = body.querySelector('.pick3'), rr = row.getBoundingClientRect(), W = innerWidth;
+        const btns = [...row.children].map(c => { const q = c.getBoundingClientRect(); return [Math.round(q.left), Math.round(q.right)]; });
+        const res = { row: [Math.round(rr.left), Math.round(rr.right)], sw: row.scrollWidth, cw: row.clientWidth, btns, inside: btns.every(([l, rt]) => l >= rr.left - 0.5 && rt <= rr.right + 0.5 && l >= 0 && rt <= W) };
+        body.innerHTML = keep.html; info.hidden = keep.hidden;
+        return res;
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.inside && r.sw <= r.cw };
+    })();
+    // きろくの いちばん 上の「ミニゲーム にしおジャンプ」の 札は、ほかの 札と 同じ 幅で「あそぶ」が 札の 中（320px）
+    // （自分で 遊んで 分かった：見出しの「📣 シェア」の うかせた ボタンを よけて 札が 細く なり、「あそぶ」が 札の 外に 出ていた）
+    R.checks.jumpCard320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms));
+        G.openTab('log'); await wait(400);
+        const cards = [...document.querySelectorAll('#panel-log .jump-card')].map(c => { const q = c.getBoundingClientRect(), b = c.querySelector('button').getBoundingClientRect(); return { w: Math.round(q.width), right: Math.round(q.right), btnRight: Math.round(b.right) }; });
+        const tn = [...document.querySelector('#panel-log .jump-card p b').childNodes].find(n => n.nodeType === 3 && /にしおジャンプ/.test(n.textContent)), word = 'にしおジャンプ';
+        const top = i => { const rg = document.createRange(); rg.setStart(tn, i); rg.setEnd(tn, i + 1); const rc = rg.getClientRects()[0]; return rc ? Math.round(rc.top) : null; };
+        const wi = tn ? tn.textContent.indexOf(word) : -1, titleOne = wi >= 0 && top(wi) === top(wi + word.length - 1);   // 題の「にしおジャンプ」が 1行に
+        G.openTab('map'); await wait(300);
+        return { cards, titleOne };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      const ws = r.cards.map(c => c.w);
+      return { ...r, ok: r.cards.length >= 2 && Math.max(...ws) - Math.min(...ws) <= 1 && r.cards.every(c => c.btnRight <= c.right) && r.titleOne };
+    })();
+    // せっていの「🔑 ひきつぎの あいことば」は、ほかの せっていと 同じく 見出しの 下に 説明（見出しの すぐ うしろに 説明が つづいて いた）
+    R.checks.codeCardHead = await w.page.evaluate(async () => {
+      const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms));
+      G.openTab('settings'); await wait(300);
+      const b = document.querySelector('#codeCard > p b'), sm = document.querySelector('#codeCard > p small');
+      const res = b && sm ? { bBottom: Math.round(b.getBoundingClientRect().bottom), smTop: Math.round(sm.getBoundingClientRect().top), smLeft: Math.round(sm.getBoundingClientRect().left), bLeft: Math.round(b.getBoundingClientRect().left) } : { missing: true };
+      G.openTab('map'); await wait(300);
+      return { ...res, ok: !res.missing && res.smTop >= res.bBottom - 1 && Math.abs(res.smLeft - res.bLeft) <= 1 };
+    });
+    // きろくの バッジは 320px の 画面でも 3列が 同じ 幅で、画面から はみ出さない
+    // （自分で 遊んで 分かった：1fr の 列が 長い 名前で ひろがり、88・92・111px に なって 右の 列の 枠が 画面の 外に 切れていた）
+    R.checks.badgeGrid320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms));
+        G.openTab('log'); await wait(400);
+        const g = document.getElementById('badgeGrid'), cols = getComputedStyle(g).gridTemplateColumns.split(' ').map(parseFloat);
+        const W = innerWidth, out = [...g.children].filter(c => { const q = c.getBoundingClientRect(); return q.right > W + 0.5 || q.left < -0.5; }).length;
+        const res = { n: g.children.length, cols: cols.map(Math.round), spread: Math.round(Math.max(...cols) - Math.min(...cols)), sw: g.scrollWidth, cw: g.clientWidth, out };
+        G.openTab('map'); await wait(300);
+        return res;
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.n > 0 && r.spread <= 1 && r.sw <= r.cw && r.out === 0 };
+    })();
     // めいろで 名所の そばを 通ると 出る 名所の 札（#spinBtn）は 1行：小さい 画面（320×568）でも 下の 欄が 札の ぶん 大きく のびない。名前と 文が 長くても はみ出さない
     // （自分で 遊んで 分かった：札が 2行の 高さ（68px）で、出る たびに 下の 欄が 76px→152px、めいろの 見える 所が 372px→296px に へって いた）
     R.checks.spinCompact = await (async () => {
@@ -2019,6 +2120,198 @@ async function walkTo(page, id) {
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.px && r.spinH <= 44 && r.spinH2 <= 44 && r.h1 - r.h0 <= 52 && !r.over && r.shortName };
+    })();
+    // シェアの 窓の 上に 知らせを 重ねない：開いて いる 間は 待たせて、とじたら 出す（自分で 遊んで 分かった：知らせが シェアする 絵の 上に 重なって いた）
+    R.checks.shareToast = await w.page.evaluate(async () => {
+      const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), sh = document.getElementById('share'), el = document.getElementById('toast'), msg = '🎁 テストの 知らせ（シェア）';
+      const keep = sh.hidden;
+      sh.hidden = false; await wait(100);
+      G.toast(msg); await wait(300);
+      const over = el.classList.contains('show') && el.textContent === msg;
+      sh.hidden = true;
+      for (let i = 0; i < 40 && !(el.classList.contains('show') && el.textContent === msg); i++) await wait(200);   // ほかの 知らせが 出て いれば その あと（8秒まで）
+      const after = el.classList.contains('show') && el.textContent === msg;
+      el.classList.remove('show');
+      // 窓 自身の 操作の 結果（コピー）は 待たせず 窓の 中に 出す（Codex の 指摘：知らせだけで 伝えて いたので、とじるまで 分からなかった）
+      sh.hidden = false; await wait(100);
+      const cb = navigator.clipboard, keepW = cb && cb.writeText;
+      if (cb) cb.writeText = () => Promise.resolve();   // 見えない ブラウザでは コピーの 許可を 待って もどらない ことが ある（結果の 出し方だけ 見る）
+      const cp = sh.querySelector('[data-share="copy"]'); if (cp) cp.click();
+      let inMsg = '';
+      for (let i = 0; i < 20 && !inMsg; i++) { await wait(100); const m = document.getElementById('shareMsg'); inMsg = m && !m.hidden ? m.textContent : ''; }
+      if (cb) cb.writeText = keepW;
+      sh.hidden = keep; el.classList.remove('show');
+      return { over, after, inMsg, ok: !over && after && /コピー/.test(inMsg) };
+    });
+    // 「めいろ、どうだった？」の ひとことの 欄：320px でも 「ひとこと（なくてOK）」が 切れずに 入り、ボタンも 札の 中（自分で 遊んで 分かった：欄が 縮んで「ひとこと（な」と 切れていた）
+    R.checks.playMore320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), bar = document.getElementById('reactBar');
+        localStorage.removeItem('nsg_play_ask'); document.getElementById('pxInfo').hidden = true;
+        G.playAsk({ sec: 61, stars: 3, name: 'テスト' }); G.playShow(); await wait(200);
+        if (bar.hidden) return { shown: false };
+        bar.querySelector('.play-more').hidden = false; const sb = bar.querySelector('[data-play-share]'); if (sb) sb.hidden = false; await wait(200);   // ★5 を えらんだ ときの 形（★は えらばない：とじる ときに 声を 送らない）
+        const inp = document.getElementById('playText'), cs = getComputedStyle(inp), c = document.createElement('canvas').getContext('2d');
+        c.font = `${cs.fontSize} ${cs.fontFamily}`;
+        const need = Math.ceil(c.measureText(inp.placeholder).width), room = inp.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        const b = bar.getBoundingClientRect(), out = [...bar.querySelectorAll('.play-more > *')].filter(e => e.getClientRects().length).some(e => { const q = e.getBoundingClientRect(); return q.right > b.right - 1 || q.left < b.left + 1; });
+        const share = !!bar.querySelector('[data-play-share]:not([hidden])');
+        bar.querySelector('[data-play-x]').click(); localStorage.removeItem('nsg_play_ask');
+        return { shown: true, need, room: Math.floor(room), out, share };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.shown && r.room >= r.need && !r.out };
+    })();
+    // めいろの「🏁 つぎの ゴール」の 札（3秒）に 知らせを 重ねない：札の 間は 待たせて、消えたら 出す（自分で 遊んで 分かった：ごほうびを とじると 待たせた 知らせと 札が 同時に 出て、札の 見出しが かくれて いた）
+    R.checks.nextGoalToast = await w.page.evaluate(async () => {
+      const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), msg = '🎁 テストの 知らせ（つぎの ゴール）';
+      document.getElementById('pxInfo').hidden = true; el.classList.remove('show');
+      const maze = M.on(), g0 = G.guide, g = G.spots.filter(x => x.lat && !x.shop && (!g0 || x.id !== g0.id) && G.dist(G.me, x) > 300 && G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      if (!g) return { spot: 'none' };
+      G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
+      let seen = false;
+      for (let i = 0; i < 10; i++) { await wait(60); const n = M.next ? M.next() : null; if (n && n.on) { seen = true; break; } }   // 新しい ゴールに なった（直す 前の コードには M.next が ないので 0.6秒 待つ）
+      G.toast(msg);
+      let over = false;
+      for (let i = 0; i < 12; i++) { if (el.classList.contains('show') && el.textContent === msg) over = true; await wait(200); }   // 札の 出はじめ 2.4秒（道のりを 待つ 間と 札の 3秒の うち）
+      let after = false;
+      for (let i = 0; i < 50 && !after; i++) { await wait(200); after = el.classList.contains('show') && el.textContent === msg; }   // 札が 消えたら（ほかの 知らせが あれば その あと。10秒まで）
+      const off = M.next ? !M.next().on : null;
+      el.classList.remove('show');
+      // 札の 途中で 地図の 絵が 止まっても（ステージの めいろ など）、知らせを 待たせた ままに しない（絵が 止まると 札の 時間が 進まない）
+      const g2 = G.spots.filter(x => x.lat && !x.shop && x.id !== g.id && (!g0 || x.id !== g0.id) && G.dist(G.me, x) > 300 && G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      let paused = null;
+      if (g2) {
+        G.setGuide({ kind: 'spot', id: g2.id, name: g2.name, why: 'テスト', by: 'テスト' });
+        for (let i = 0; i < 10; i++) { await wait(60); if (M.next && M.next().on) break; }
+        nishioPixel.meiroApi.pause(true); await wait(100);
+        const m2 = '🎁 テストの 知らせ（止めた あと）'; G.toast(m2); await wait(300);
+        paused = el.classList.contains('show') && el.textContent === m2;
+        nishioPixel.meiroApi.pause(false); el.classList.remove('show');
+      }
+      return { maze, seen, over, after, off, paused, ok: maze && !over && after && paused !== false };
+    });
+    // 「🏁 つぎの ゴール」の 札（3秒）に 縁の 矢印の「🏁 2.0km」が かぶらない（重なる 間は 道のりの 札を 描かない。自分で 遊んで 分かった：360×640 で 札の 名前の 行に かぶった）
+    R.checks.nextGoalLabel = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 360, height: 640 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d');
+        const clear = () => { const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); document.getElementById('pxInfo').hidden = true; document.getElementById('share').hidden = true; };
+        clear(); await wait(300); clear();
+        const covered = nishioPixel.maze.arrive().covered, maze = nishioPixel.maze.on();   // 地図が 窓で かくれて いると 札は 出ない（しらべる ため）
+        const mPer = (a, b) => [(b.lng - a.lng) * 111320 * Math.cos(a.lat * Math.PI / 180), (b.lat - a.lat) * 110540];
+        const cands = G.spots.filter(x => x.lat && !x.shop && G.dist(G.me, x) > 1000 && G.dist(G.me, x) < 3500).map(x => { const [e, n] = mPer(G.me, x); return { x, e, n }; }).filter(o => o.e < 0 && o.n > 0).sort((a, b) => Math.abs(a.n / -a.e - 0.46) - Math.abs(b.n / -b.e - 0.46)).slice(0, 8);   // 西北西：縁の 矢印が 札の 高さに 出る
+        const keep = { fr: ctx.fillRect, ft: ctx.fillText }, dpr = Math.min(devicePixelRatio || 1, 3), U = 28 * dpr;
+        let box = null, texts = [];
+        ctx.fillRect = function (x, y, w0, h0) { if (/^rgba\(10, 20, 30, 0\.62\)$/.test(String(this.fillStyle))) box = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
+        ctx.fillText = function (t, x, y) { if (/^\d+(\.\d)?(km|m)$/.test(t)) { const px = +(/(\d+)px/.exec(this.font) || [0, 0])[1]; texts.push([x, y, px]); } return keep.ft.apply(this, arguments); };
+        let res = { name: 'none', frames: 0, hits: 0, hid: 0, covered, maze };
+        for (const g of cands) {   // 縁の 道のりの 札が 札に かかる ゴールを さがす（お米の 位置で かわる）
+          G.setGuide({ kind: 'spot', id: g.x.id, name: g.x.name, why: 'テスト', by: 'テスト' });
+          let frames = 0, hits = 0, hid = 0;
+          for (let i = 0; i < 60; i++) {   // 札の 3秒の 間（と 道のりを 待つ 間）、1こまずつ 見る
+            box = null; texts = [];
+            await new Promise(res => requestAnimationFrame(res));
+            if (box) {
+              frames++;
+              // 縁の 🏁・道のり・タップの 札（道のりの 字の 位置と 大きさから：字は 矢印の 内がわ bx＋0.5U、大きさ 0.62U）が 札に かかる のに 描いた（直す 前）
+              if (texts.some(([x, y, px]) => { const U = px / 0.62, bx = x - U * 0.5; return px > 0 && bx - U * 1.2 < box[2] && bx + U * 2.2 > box[0] && y - U * 1.0 < box[3] && y + U * 1.0 > box[1]; })) hits++;
+              const n = nishioPixel.maze.next && nishioPixel.maze.next(); if (n && n.labHide) hid++;   // 札に かかるので 描かなかった（直した あと）
+            }
+            await wait(50);
+          }
+          if (hits || hid) { res = { name: g.x.name, frames, hits, hid }; break; }
+          clear();
+          await wait(1500);
+        }
+        ctx.fillRect = keep.fr; ctx.fillText = keep.ft;
+        return res;
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.hid > 0 && r.hits === 0 };
+    })();
+    // めいろの 縁の 矢印と 道のりの 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）
+    R.checks.mzEdgeToast = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), cv = document.getElementById('pxCanvas');
+        const g = G.spots.filter(x => x.lat && !x.shop && x.lat > G.me.lat + 0.008 && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 3500).sort((a, b) => Math.abs(a.lng - G.me.lng) - Math.abs(b.lng - G.me.lng))[0];   // 北の ゴール：矢印が 上の 縁に 出る
+        if (!g) return { spot: 'none' };
+        G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
+        await wait(6500);   // 「🏁 つぎの ゴール」の 札が 消えるまで
+        document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show');
+        const msg = '🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）';
+        G.toast(msg); await wait(900);
+        const a = M.mapArrow, c = cv.getBoundingClientRect(), k = c.width / cv.width, q = el.getBoundingClientRect();
+        const A = a && [c.left + a[0] * k, c.top + a[1] * k, c.left + a[2] * k, c.top + a[3] * k];
+        const shown = el.classList.contains('show') && el.textContent === msg, hit = !!A && q.left < A[2] && q.right > A[0] && q.top < A[3] && q.bottom > A[1];
+        const low = el.classList.contains('wlow');
+        el.classList.remove('show', 'wlow');
+        // 下げた あとに めいろ図を 開いたら（縁の 矢印を タップ）、図に 重ねず 上へ もどす（Codex の 指摘）。図が 出るのは 近い ゴール（1km まで）
+        let mapUp = 'none';
+        const g2 = G.spots.filter(x => x.lat && !x.shop && x.lat > G.me.lat + 0.003 && G.dist(G.me, x) > 400 && G.dist(G.me, x) < 1000).sort((a, b) => Math.abs(a.lng - G.me.lng) - Math.abs(b.lng - G.me.lng))[0];
+        if (g2) {
+          G.setGuide({ kind: 'spot', id: g2.id, name: g2.name, why: 'テスト', by: 'テスト' });
+          await wait(6500); document.getElementById('pxInfo').hidden = true; M.map(0);
+          G.toast(msg); await wait(500);
+          el.classList.add('wlow'); await wait(200);   // 下げた ところ
+          M.map(8000); await wait(500);
+          mapUp = M.mapShown ? !el.classList.contains('wlow') : 'nomap';
+          M.map(0); el.classList.remove('show', 'wlow');
+        }
+        return { arrow: !!A, shown, hit, low, mapUp, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.arrow && r.shown && !r.hit && r.mapUp === true };
+    })();
+    // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
+    R.checks.worldToast = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), el = document.getElementById('toast');
+        document.getElementById('pxInfo').hidden = true;
+        const far = G.spots.filter(x => x.lat && x.lat > G.me.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 3500).sort((a, b) => b.lat - a.lat)[0];   // 北の ゴール：札が 上の ほうに 出る
+        if (!far) return { skip: 'no far spot' };
+        G.setGuide({ kind: 'spot', id: far.id, name: far.name, why: 'テスト', by: 'テスト' });
+        let a = null;
+        for (let i = 0; i < 30 && !a; i++) { await wait(200); a = M.mapArrow; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); }
+        if (!a) { G.setGuide(null); return { far: far.name, arrow: null }; }
+        const rc0 = cv.getBoundingClientRect(), dpr = cv.width / rc0.width;
+        cv.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: rc0.left + (a[0] + a[2]) / 2 / dpr, clientY: rc0.top + (a[1] + a[3]) / 2 / dpr }));
+        await wait(800);
+        G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）'); await wait(600);   // 本当に 出る 長さの 知らせ（320px で 4行）
+        const g = M.worldGoal, tag = g && g[2], rc = cv.getBoundingClientRect(), k = rc.width / cv.width;
+        const T = tag && [rc.left + tag[0] * k, rc.top + tag[1] * k, rc.left + tag[2] * k, rc.top + tag[3] * k];
+        const over = q => !!T && q.left < T[2] && q.right > T[0] && q.top < T[3] && q.bottom > T[1];
+        const c = el.cloneNode(true); ['id', 'role', 'aria-live'].forEach(x => c.removeAttribute(x)); c.classList.remove('wlow', 'low'); c.style.cssText = 'transition:none;visibility:hidden'; el.parentNode.appendChild(c);
+        const would = over(c.getBoundingClientRect()); c.remove();   // ふつうの 位置（上）なら 重なる 形か
+        const tr = el.getBoundingClientRect();
+        return { far: far.name, world: document.body.classList.contains('pxw'), tagIn: !!T && T[1] >= 0 && T[3] <= innerHeight, would, wlow: el.classList.contains('wlow'), hit: over(tr),
+          drag: T && { x: (T[0] + T[2]) / 2, y: (T[1] + T[3]) / 2, dy: Math.round((tr.top + tr.bottom) / 2 - (T[1] + T[3]) / 2) } };
+      });
+      // 下げた あとに 地図を 引っぱって、札を 下げた 知らせの 所へ 動かす：知らせは 上へ もどって、札は かくれない（Codex の 指摘）
+      if (r.world && r.drag && r.wlow) {
+        const { x, y, dy } = r.drag, y0 = Math.max(150, Math.min(400, y));
+        await w.page.mouse.move(x, y0); await w.page.mouse.down();
+        for (let i = 1; i <= 8; i++) { await w.page.mouse.move(x, y0 + dy * i / 8); await w.page.waitForTimeout(30); }
+        await w.page.mouse.up(); await w.page.waitForTimeout(700);
+      }
+      const r2 = await w.page.evaluate(async () => {
+        const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), el = document.getElementById('toast');
+        const g = M.worldGoal, tag = g && g[2], rc = cv.getBoundingClientRect(), k = rc.width / cv.width;
+        const T = tag && [rc.left + tag[0] * k, rc.top + tag[1] * k, rc.left + tag[2] * k, rc.top + tag[3] * k], q = el.getBoundingClientRect();
+        const res = { tagIn2: !!T && T[1] >= 0 && T[3] <= innerHeight, wlow2: el.classList.contains('wlow'), hit2: !!T && el.classList.contains('show') && q.left < T[2] && q.right > T[0] && q.top < T[3] && q.bottom > T[1], shown2: el.classList.contains('show') };
+        if (document.body.classList.contains('pxw')) document.getElementById('pxWorld').click();
+        el.classList.remove('show'); await wait(300); G.setGuide(null);
+        return res;
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ...r2, ok: !!r.skip || (r.world && r.tagIn && r.would && r.wlow && !r.hit && r2.shown2 && !r2.hit2) };
     })();
     // おたすけの「🧭 水色の 線が…」の 知らせは、「🏁 つぎの ゴール」の 大きな 文字が 出ている 間は 出さない（その あとに 出す）。
     // 自分で 遊んで 分かった（320×568）：はじめの ゴールの 名前と 道のりが、この 知らせの 下に かくれて 読めなかった
@@ -2362,6 +2655,18 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
+  need((R.walk.find(w => w.id === 'chest') || {}).ribbon?.has && !R.walk.find(w => w.id === 'chest').ribbon.hit, `ごほうびの「NEW」の 札が 名前の 字に 重なる（${JSON.stringify((R.walk.find(w => w.id === 'chest') || {}).ribbon)}）`);
+  need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
+  need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);
+  need(c.jumpCard320 && c.jumpCard320.ok, `きろくの にしおジャンプの 札が 細く なる・「あそぶ」が 札の 外に 出る（${JSON.stringify(c.jumpCard320)}）`);
+  need(c.codeCardHead && c.codeCardHead.ok, `ひきつぎの あいことばの 見出しと 説明が 同じ 行に つづく（${JSON.stringify(c.codeCardHead)}）`);
+  need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
+  need(c.shareToast && c.shareToast.ok, `シェアの 窓の 上に 知らせが 重なる（${JSON.stringify(c.shareToast)}）`);
+  need(c.playMore320 && c.playMore320.ok, `320px の「めいろ、どうだった？」の ひとことの 欄が 切れる（${JSON.stringify(c.playMore320)}）`);
+  need(c.nextGoalLabel && c.nextGoalLabel.ok, `「つぎの ゴール」の 札に 縁の 矢印の 道のりが かぶる（${JSON.stringify(c.nextGoalLabel)}）`);
+  need(c.mzEdgeToast && c.mzEdgeToast.ok, `めいろの 縁の 矢印の 札に 知らせが 重なる（${JSON.stringify(c.mzEdgeToast)}）`);
+  need(c.nextGoalToast && c.nextGoalToast.ok, `めいろの「つぎの ゴール」の 札に 知らせが 重なる（${JSON.stringify(c.nextGoalToast)}）`);
+  need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);
   need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');
@@ -2429,7 +2734,7 @@ async function walkTo(page, id) {
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
-  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない（${JSON.stringify(c.coupon100)}）`);
+  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない・クーポン画面に 知らせが 重なる（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
   need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);

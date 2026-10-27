@@ -2203,7 +2203,7 @@ async function walkTo(page, id) {
         const keep = { fr: ctx.fillRect, ft: ctx.fillText }, dpr = Math.min(devicePixelRatio || 1, 3), U = 28 * dpr;
         let box = null, texts = [];
         ctx.fillRect = function (x, y, w0, h0) { if (/^rgba\(10, 20, 30, 0\.62\)$/.test(String(this.fillStyle))) box = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
-        ctx.fillText = function (t, x, y) { if (/^\d+(\.\d)?(km|m)$/.test(t)) texts.push([x, y]); return keep.ft.apply(this, arguments); };
+        ctx.fillText = function (t, x, y) { if (/^\d+(\.\d)?(km|m)$/.test(t)) { const px = +(/(\d+)px/.exec(this.font) || [0, 0])[1]; texts.push([x, y, px]); } return keep.ft.apply(this, arguments); };
         let res = { name: 'none', frames: 0, hits: 0, hid: 0, covered, maze };
         for (const g of cands) {   // 縁の 道のりの 札が 札に かかる ゴールを さがす（お米の 位置で かわる）
           G.setGuide({ kind: 'spot', id: g.x.id, name: g.x.name, why: 'テスト', by: 'テスト' });
@@ -2213,7 +2213,8 @@ async function walkTo(page, id) {
             await new Promise(res => requestAnimationFrame(res));
             if (box) {
               frames++;
-              if (texts.some(([x, y]) => x > box[0] && x < box[2] && y > box[1] && y < box[3])) hits++;   // 札の 中に 道のりを 描いた（直す 前）
+              // 縁の 🏁・道のり・タップの 札（道のりの 字の 位置と 大きさから：字は 矢印の 内がわ bx＋0.5U、大きさ 0.62U）が 札に かかる のに 描いた（直す 前）
+              if (texts.some(([x, y, px]) => { const U = px / 0.62, bx = x - U * 0.5; return px > 0 && bx - U * 1.2 < box[2] && bx + U * 2.2 > box[0] && y - U * 1.0 < box[3] && y + U * 1.0 > box[1]; })) hits++;
               const n = nishioPixel.maze.next && nishioPixel.maze.next(); if (n && n.labHide) hid++;   // 札に かかるので 描かなかった（直した あと）
             }
             await wait(50);

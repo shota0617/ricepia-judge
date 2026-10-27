@@ -59,6 +59,8 @@ const cityOf = s => { try { const c = (G.cityNear || G.cityAt)(s.lat, s.lng); re
 const areaOf = s => (s && s.area && Array.isArray(G.areas) ? G.areas.find(a => a.id === s.area) : null) || null;
 const clip = (t, n) => { const a = [...String(t || '')]; return a.length > n ? a.slice(0, n - 1).join('') + '…' : a.join(''); };
 const D = () => window.NISHIO_DOTS;
+// めいろの ゴールの まち：西尾市なら 名物（meibutsu.js の 出典の ある 名前）つきで「抹茶とうなぎのまち・西尾の まち」、ほかの 市町なら その 名前（西尾市の 外を「西尾の」と 言わない）
+const mzTown = m => (m.city && m.city !== '西尾市' ? `${m.city}の まち` : `${m.city ? meibutsuShort() : ''}西尾の まち`);
 const mzRunLine = r => (r ? [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `🍵 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean).join('・') : '');
 function shareText() {
   const s = G.stats(), tags = `#にしおさんぽGO #西尾市${window.NSG_EDITION && !window.NSG_EDITION.shops ? '' : ' #らいすぴあ'}`;
@@ -77,7 +79,7 @@ function shareText() {
   }
   if (cur === 'mzgoal' && curMz) {   // 地図の めいろの ゴール：遊んだ 画面と、タイム・★・この 道の がんばり。見た 人が すぐ 遊べる（?play=1）
     const m = curMz, run = mzRunLine(m.run);
-    return `にしおさんぽGOで、西尾の まちが めいろに🌀「${m.name}」まで ${fmtSec(m.sec)} ${'★'.repeat(m.stars)}${run ? `\n${run}` : ''}\nスマホを 傾けると お米が ころころ。${invite}\n${tags}`;
+    return `にしおさんぽGOで、${mzTown(m)}が めいろに🌀「${m.name}」まで ${fmtSec(m.sec)} ${'★'.repeat(m.stars)}${run ? `\n${run}` : ''}\nスマホを 傾けると お米が ころころ。${invite}\n${tags}`;
   }
   if (cur === 'koro' && curKoro) {   // ころころの きろく（きろくの タブから）：コンボの ベストを 自慢して、見た 人が すぐ 遊べる（?play=1）
     const k = curKoro;
@@ -142,7 +144,7 @@ function drawCard() {
     const m = curMz, run = mzRunLine(m.run);
     line(`🏁 ${m.name} まで ${fmtSec(m.sec)}`, 60, 240, true);
     line(`${'★'.repeat(m.stars)}${'☆'.repeat(3 - m.stars)}${run ? `  ${run}` : ''}`, 40, 306);
-    line('西尾の まちが めいろ。スマホを 傾けると、お米が ころころ', 28, 360);
+    line(`${m.city && m.city !== '西尾市' ? m.city : '西尾'}の まちが めいろ。スマホを 傾けると、お米が ころころ`, 28, 360);
   } else if (cur === 'koro' && curKoro) {
     const k = curKoro;
     line(`🎵 ころころ コンボ ×${k.combo}`, 64, 240, true);

@@ -539,7 +539,7 @@ body.px .guide small{color:#ddd}
 .reward .rw.hero .banner img.pi{width:20px;height:20px;vertical-align:-4px;margin-right:2px}
 .reward .rw.hero .sub{margin-top:6px;font-size:13px;color:var(--sub)}
 .reward .rw.hero .sub b{color:var(--gold);font-size:18px;margin-left:2px}
-.reward .ribbon{position:absolute;top:10px;left:-8px;background:#ffd54f;color:#5d3a1a;font-weight:900;font-size:13px;padding:3px 14px 3px 10px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);box-shadow:0 2px 0 rgba(0,0,0,.2);z-index:2}
+.reward .ribbon{position:absolute;top:-11px;left:-8px;background:#ffd54f;color:#5d3a1a;font-weight:900;font-size:13px;padding:3px 14px 3px 10px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);box-shadow:0 2px 0 rgba(0,0,0,.2);z-index:2}
 .stars{display:flex;justify-content:center;gap:3px;margin-top:8px}
 .stars i{width:18px;height:18px;background:#f2a516;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 0 #8a5a10)}
 /* 案内：行き先の名所の絵 */

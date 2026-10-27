@@ -1390,6 +1390,35 @@ async function walkTo(page, id) {
     await w.ctx.close();
   }
 
+  // 盤の めいろ：横向きの 低い 画面（667×375）では 盤を 左・ヒントと ボタンを 右に ならべ、スクロール しないで 全部 見える。やわらかい ふちに 強く 当たると ぽよん（地図と 同じ きまり）・へこみが のびて ぷるぷる もどる、そっと 当たると 鳴らない
+  {
+    const w = await newPage(browser, { viewport: { width: 667, height: 375 } });
+    await w.page.goto(URL); await w.page.waitForTimeout(2500);
+    await w.page.evaluate(() => NISHIO_MEIRO.open(0));
+    const built = await w.page.waitForFunction(() => NISHIO_MEIRO.game && NISHIO_MEIRO.game.board, null, { timeout: 30000 }).then(() => true, () => false);
+    let r = { built };
+    if (built) {
+      await w.page.waitForFunction(() => NISHIO_MEIRO.game.cd <= 0, null, { timeout: 6000 }).catch(() => {});
+      await shot(w.page, '07e-meiro-land');
+      r = { built, ...await w.page.evaluate(async () => {
+        const el = document.getElementById('meiro'), bz = el.querySelector('.mz-bezel').getBoundingClientRect(), bt = [...el.querySelectorAll('.mz-btns button')].map(b => b.getBoundingClientRect());
+        const lay = { grid: getComputedStyle(el).display === 'grid', scroll: el.scrollHeight > el.clientHeight + 1, btnsIn: bt.length === 3 && bt.every(q => q.left >= 0 && q.right <= innerWidth && q.bottom <= innerHeight), side: bt.every(q => q.left >= bz.right), boardH: Math.round(bz.height) };
+        const g = NISHIO_MEIRO.game, b = g.board, tw = b.tw, sleep = ms => new Promise(f => setTimeout(f, ms));
+        const pass = (x, y, dx, dy) => dx === 1 ? x + 1 < tw && b.er[y * tw + x] === 1 : dx === -1 ? x > 0 && b.er[y * tw + x - 1] === 1 : dy === 1 ? y + 1 < b.th && b.ed[y * tw + x] === 1 : y > 0 && b.ed[(y - 1) * tw + x] === 1;
+        let c = null;   // 左だけ 開いた 行き止まり
+        for (let y = 0; y < b.th && !c; y++) for (let x = 0; x < tw && !c; x++) if (b.cell[y * tw + x] === 1 && !b.holes.has(y * tw + x) && pass(x, y, -1, 0) && !pass(x, y, 1, 0) && !pass(x, y, 0, 1) && !pass(x, y, 0, -1)) c = { x, y };
+        if (!c) return { lay, skipped: '行き止まりが ない' };
+        const hitAt = async v => { const n0 = g.soft.boings; g.soft.on = false; g.soft.vin = 0; g.x = c.x + (v < 2 ? 0.45 : 0.2); g.y = c.y + 0.5; g.vx = v; g.vy = 0; let dmax = 0, dmin = 0, was = false; for (let i = 0; i < 50; i++) { await sleep(20); dmax = Math.max(dmax, g.soft.dent); dmin = Math.min(dmin, g.soft.dent); if (v < 2 && was && !g.soft.on) { g.vx = g.vy = 0; } was = was || g.soft.on; } return { v, boing: g.soft.boings - n0, dmax: +dmax.toFixed(3), dmin: +dmin.toFixed(3) }; };
+        return { lay, soft: g.soft ? 'ok' : 'none', slow: await hitAt(1), fast: await hitAt(8) };
+      }) };
+      await w.page.evaluate(() => NISHIO_MEIRO.close());
+    }
+    const L = r.lay || {};
+    R.checks.meiroLand = { ...r, ok: built && L.grid && !L.scroll && L.btnsIn && L.side && L.boardH >= 250 && (!!r.skipped || (r.slow.boing === 0 && r.fast.boing >= 1 && r.fast.dmax > 0.05 && r.fast.dmin < 0)) };
+    R.errors.push(...w.errors);
+    await w.ctx.close();
+  }
+
   // バイラルループの 見た人：めいろの ゴールの シェアの リンク（?play=1&vs=秒&vst=★）から 来た はじめての 人は、すぐ 遊べて、友だちの タイムで さそわれ、
   // はじめての ゴールで 友だちの タイムと ならぶ（1回だけ）
   {
@@ -2260,7 +2289,7 @@ async function walkTo(page, id) {
     const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), i = src.indexOf('function mzDentStep'), j = src.indexOf('\nfunction ', i + 10);
     if (i < 0 || j < 0) return { ok: false, why: 'no-func' };
     const soft = { on: true, pen: 0.1, dent: 0, dv: 0 };
-    const env = { mzSoft: soft, mazeOn: () => true, MZ_SOFT_MAX: 0.4, MZ_DENT_K: Number((src.match(/MZ_DENT_K = ([\d.]+)/) || [])[1]), MZ_DENT_C: Number((src.match(/MZ_DENT_C = ([\d.]+)/) || [])[1]) };
+    const env = { mzSoft: soft, mazeOn: () => true, calmMotion: false, MZ_SOFT_MAX: 0.4, MZ_DENT_K: Number((src.match(/MZ_DENT_K = ([\d.]+)/) || [])[1]), MZ_DENT_C: Number((src.match(/MZ_DENT_C = ([\d.]+)/) || [])[1]) };
     try {
       const step = new Function(...Object.keys(env), src.slice(i, j) + '; return mzDentStep;')(...Object.values(env));
       for (let k = 0; k < 180; k++) step(1 / 60);   // 強く 押しつけて（へこみ 0.2マス）
@@ -2409,6 +2438,7 @@ async function walkTo(page, id) {
   need(c.koroStyles && c.koroStyles.ok, '転がり方 200：数・名前・ずかん が おかしい');
   need(c.meiroMain, 'はじめの画面の いちばん上が「🌀 傾けて めいろ」で ない');
   need(c.mapMaze && c.mapMaze.ok, `地図の めいろ：転がすときに 地図が めいろに ならない（${JSON.stringify(c.mapMaze)}）`);
+  need(c.meiroLand && c.meiroLand.ok, `盤の めいろ（横向き）：ボタンが 画面の 外・スクロール する・盤が 小さい・強く 当たっても ぽよんと 鳴らない／そっと 当たって 鳴る・へこみが ぷるぷる しない（${JSON.stringify(c.meiroLand)}）`);
   need(c.meiro && c.meiro.ok, `西尾めいろ：盤ができない・お米が動かない・ゴールできない・とじられない（${JSON.stringify(c.meiro)}）`);
   need(c.critter === true, '生きもの手帳：田んぼで生きものに出会っても、手帳に載らない（または絵がない）');
   need(c.heard === true, '聞いた名所：人に行き先をすすめられても、きろく の 聞いた名所 に載らない');

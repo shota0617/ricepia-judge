@@ -418,7 +418,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, peak: 0, dent: 0, dv: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -427,7 +427,9 @@ function restart() {
 function fit() {
   const b = game.board, dpr = Math.min(root.devicePixelRatio || 1, 3);
   const side = root.matchMedia && root.matchMedia('(orientation:landscape) and (max-height:540px)').matches;   // 横向きの 低い画面：ヒントと ボタンは 右（CSS と 同じ 条件）
-  const maxW = side ? innerWidth - 240 - 16 - 16 - 20 - 8 : Math.min(innerWidth, 520) - 28 - 28, maxH = side ? innerHeight - 64 - 20 - 10 : innerHeight - 190;   // わく と 上下（横向きは 右）の文字のぶん
+  const oh = q => { const e = ui.el.querySelector(q); if (!e) return 0; const s = getComputedStyle(e); return e.getBoundingClientRect().height + parseFloat(s.marginTop) + parseFloat(s.marginBottom); };
+  const used = oh('.mz-top') + oh('.mz-hint') + oh('.mz-btns') + 28 + 4 + 4;   // たて：上・ヒント・ボタンの 本当の 高さ（字が 大きく なって ヒントが 3行に なり、iPhone SE では 下の ボタンが 画面の 外に 出ていた）
+  const maxW = side ? innerWidth - 240 - 16 - 16 - 20 - 8 : Math.min(innerWidth, 520) - 28 - 28, maxH = side ? innerHeight - 64 - 20 - 10 : innerHeight - Math.max(190, used);   // わく と 上下（横向きは 右）の文字のぶん
   const css = Math.max(6, Math.floor(Math.min(maxW / b.tw, Math.max(120, maxH) / b.th)));   // 1マスの大きさ（画面の点）。横向きの 低い画面でも 盤ぜんたいが 入るように 小さくできる
   const T = Math.max(K, Math.round(css * dpr / K) * K);   // 地図の1マス（T/K 点）が きっちり 入るように
   game.T = T; game.dpr = dpr;
@@ -550,15 +552,17 @@ function step(dt) {
     if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
       if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
-      Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen, peak: sf.on ? Math.max(sf.peak, pen) : pen });
+      if (!sf.on) { sf.vin = Math.max(0, hit); sf.dv = Math.max(sf.dv, sf.vin / 6); }   // 当たった 速さ（ぽよんの 強さ）。へこみの 絵を ぐっと 押しこむ（盤の 1マスは 地図の 3マスぶん なので 地図の 1/3）
+      Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
       let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり
       if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
       g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
     } else {
-      if (sf.on && api.boing) { const out = -(g.vx * sf.ux + g.vy * sf.uy); if (sf.peak > 0.03 && out > 0.8) api.boing(Math.min(1, out / 5)); }   // はなれた 瞬間：深く めりこんで はね返った ときだけ ぽよん
+      if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8)); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
-    { const tg = sf.on ? sf.pen : 0; sf.dv += (1600 * (tg - sf.dent) - 32 * sf.dv) * dt; sf.dent += sf.dv * dt; }   // ふちの へこみの 絵：お米に ついていき、はなれると ぷるんと もどる
+    { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - (calm ? 18 : 5) * sf.dv) * dt; sf.dent = Math.max(calm ? 0 : -0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // 動きを へらす 設定の 人には ぷるぷる させない（1回で もどす）   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる
+      if (Math.abs(sf.dv) < 0.01 && Math.abs(sf.dent - tg) < 0.002) { sf.dent = tg; sf.dv = 0; } }   // おさまった
     g.x = nx; g.y = ny;
   } else for (const axis of ['x', 'y']) {   // （筒の 外：たて・よこ 別々に動かして、壁に当たったら そこで止めて はね返す）
     const v = axis === 'x' ? g.vx : g.vy;
@@ -678,7 +682,10 @@ function draw(now) {
   x.drawImage(g.bg, 0, 0);
   const sf = g.soft;
   if (sf && sf.dent > 0.004 && g.bg.map) {   // やわらかい ふちの へこみ：当たった 所の 台が お米の 形に 押されて 横へ のびる（下の 地図が 見える）
-    const a = Math.atan2(sf.uy, sf.ux), cx = (sf.x + sf.ux * (TUBE + sf.dent)) * T, cy = (sf.y + sf.uy * (TUBE + sf.dent)) * T, rn = R * T, rt = rn * (1 + Math.min(1, sf.dent * 12)), u = Math.max(1, Math.round(T / 16));
+    const a = Math.atan2(sf.uy, sf.ux), cx = (sf.x + sf.ux * (TUBE + sf.dent)) * T, cy = (sf.y + sf.uy * (TUBE + sf.dent)) * T, rn = R * T, rt = rn * (1 + Math.min(2.6, sf.dent * 30)), u = Math.max(1, Math.round(T / 16));   // 横へ 広く のびる（地図の めいろと 同じ。お米の 両わきで しなるのが 見える）
+    const glow = Math.min(1, sf.dent / 0.083), gr = rn + 0.12 * T;   // のびて うすく なった 所を 明るく（ぴんと はった 膜）。台の がわだけ
+    x.save(); x.translate(cx, cy); x.rotate(a); x.beginPath(); x.rect((R - sf.dent) * T, -gr * 4, gr * 2, gr * 8); x.clip();
+    x.fillStyle = `rgba(200,245,170,${(0.6 * glow).toFixed(2)})`; x.beginPath(); x.ellipse(0, 0, gr, gr * (rt / rn), 0, 0, Math.PI * 2); x.fill(); x.restore();
     x.save(); x.beginPath(); x.ellipse(cx, cy, rn, rt, a, 0, Math.PI * 2); x.clip(); x.drawImage(g.bg.map, 0, 0); x.restore();
     x.strokeStyle = '#0d2219'; x.lineWidth = u; x.beginPath(); x.ellipse(cx, cy, rn, rt, a, -Math.PI / 2, Math.PI / 2); x.stroke();   // 外がわの ふち
   }

@@ -1008,7 +1008,11 @@ async function walkTo(page, id) {
       document.getElementById('share').hidden = true; document.getElementById('pxInfo').hidden = true; G.mzNpcShareTest = null;
       G.callNpc(null);
     }
-    return { ok: kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, text: text.slice(0, 160) };
+    // ゴールの まち：西尾市なら 名物つき（抹茶とうなぎのまち・西尾の まち）、ほかの 市町は その 名前（西尾市の 外を「西尾の」と 言わない）
+    const town = city => { G.openShare('mzgoal', { mzgoal: { ...mz, city } }); const t = document.getElementById('shareText').textContent; document.getElementById('share').hidden = true; return t.split('\n')[0]; };
+    const tNishio = town('西尾市'), tHeki = town('碧南市');
+    const townOk = /のまち・西尾の まちが めいろに/.test(tNishio) && /抹茶/.test(tNishio) && /^にしおさんぽGOで、碧南市の まちが めいろに/.test(tHeki) && !/西尾の まち/.test(tHeki);
+    return { ok: townOk && kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, tNishio, tHeki, text: text.slice(0, 160) };
   });
   // めいろの はやさの ベスト：道のり ÷ 時間で くらべ、こえたら「ベスト こえたじゃん！」、とどかなければ「ベスト まで あと」。みじかい めいろは 数えない。札は「10m/秒」
   R.checks.mazeSpeed = await page.evaluate(async () => {

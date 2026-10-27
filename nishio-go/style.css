@@ -859,8 +859,9 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .howto-btns{margin:12px 0 10px;font-size:12px;color:var(--sub);background:#f3f6f1;border-radius:8px;padding:6px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 12px}
 .howto-btns span{white-space:nowrap}
 .howto-box .btn.big{width:100%;background:#1f8fc8;box-shadow:0 3px 0 #145a80}
-/* 下の メニューは 絵だけだと 分かりにくいので、小さく 名前も */
-.simple .tabs button span{display:block;font-size:10px;line-height:1}
+/* 下の メニューは 絵だけだと 分かりにくいので、名前も（10点の 細い 字は 小さかった。運営者の声「大きい文字シンプルに」2026-10-27：12点の 太い 字・こい 色に） */
+.simple .tabs button span{display:block;font-size:12px;font-weight:700;line-height:1;color:#4f5d52}
+.simple .tabs button.on span{color:var(--green)}
 .simple .tabs button img.pi,.simple .tabs button img.pi.art{width:26px;height:26px}
 .simple .tabs button.on span{border-bottom:0}
 /* はじめの画面：遊びかたの ボタンに ひとことの 説明（文字を多めのときは 長い 説明の ほう） */

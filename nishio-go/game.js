@@ -2570,7 +2570,7 @@ const toastQ = [];
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
 function toast(msg) {
   const el = $('toast');
-  if ($('reward').classList.contains('show') || howtoOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札の 上にも 重ねない（とじてから）
+  if ($('reward').classList.contains('show') || howtoOpen() || couponOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面の 上にも 重ねない（とじてから）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
   el.textContent = msg; el.classList.add('show'); toast.at = Date.now(); toastDodge();
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
@@ -2578,7 +2578,9 @@ function toast(msg) {
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
 function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
 function howtoOpen() { const h = $('howto'); return !!h && !h.hidden; }
-function toastFlush() { if (!$('reward').classList.contains('show') && !howtoOpen()) toastQ.splice(0).forEach(toastAfter); }   // あそびかたを とじたとき（pixel.js）
+// 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
+function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
+function toastFlush() { if (!$('reward').classList.contains('show') && !howtoOpen() && !couponOpen()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面を とじたとき
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
   const t = $('toast');
@@ -3140,6 +3142,7 @@ let couponTimer = null, couponId = null;
 function showCoupon(id) {
   couponId = id;
   $('coupon').hidden = false;
+  toastHold();   // いま 出ている 知らせは 下げる（出た ばかりなら とじてから 出し直す）
   tickCoupon();
   clearInterval(couponTimer);
   couponTimer = setInterval(tickCoupon, 1000);
@@ -3165,6 +3168,7 @@ function closeCoupon() {
   clearInterval(couponTimer); couponTimer = null; couponId = null;
   $('coupon').hidden = true;
   if (!$('panel-rewards').hidden) renderRewards();
+  toastFlush();   // 待たせて いた 知らせを 出す
 }
 $('cpUse').addEventListener('click', () => {
   const c = S.coupons.find(x => x.id === couponId);

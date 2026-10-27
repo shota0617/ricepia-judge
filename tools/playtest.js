@@ -1994,6 +1994,23 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return r;
     })();
+    // きろくの バッジは 320px の 画面でも 3列が 同じ 幅で、画面から はみ出さない
+    // （自分で 遊んで 分かった：1fr の 列が 長い 名前で ひろがり、88・92・111px に なって 右の 列の 枠が 画面の 外に 切れていた）
+    R.checks.badgeGrid320 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms));
+        G.openTab('log'); await wait(400);
+        const g = document.getElementById('badgeGrid'), cols = getComputedStyle(g).gridTemplateColumns.split(' ').map(parseFloat);
+        const W = innerWidth, out = [...g.children].filter(c => { const q = c.getBoundingClientRect(); return q.right > W + 0.5 || q.left < -0.5; }).length;
+        const res = { n: g.children.length, cols: cols.map(Math.round), spread: Math.round(Math.max(...cols) - Math.min(...cols)), sw: g.scrollWidth, cw: g.clientWidth, out };
+        G.openTab('map'); await wait(300);
+        return res;
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.n > 0 && r.spread <= 1 && r.sw <= r.cw && r.out === 0 };
+    })();
     // めいろで 名所の そばを 通ると 出る 名所の 札（#spinBtn）は 1行：小さい 画面（320×568）でも 下の 欄が 札の ぶん 大きく のびない。名前と 文が 長くても はみ出さない
     // （自分で 遊んで 分かった：札が 2行の 高さ（68px）で、出る たびに 下の 欄が 76px→152px、めいろの 見える 所が 372px→296px に へって いた）
     R.checks.spinCompact = await (async () => {
@@ -2358,6 +2375,7 @@ async function walkTo(page, id) {
   need(c.padOnWorldMap, 'せかいちずで操作して遊ぶを選んだとき、スティックが出ない');
   need(c.simpleDefault && c.textMore && c.textLessAgain, '文字を少なくする表示がはじめから有効でないか、せってい で切り替わらない');
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
+  need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);
   need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');
   need(c.npcBump && c.npcBump.ok, '人に こつんと 押しつづけると、とじる たびに また 話しかけて しまう');

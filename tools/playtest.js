@@ -2146,7 +2146,18 @@ async function walkTo(page, id) {
       for (let i = 0; i < 50 && !after; i++) { await wait(200); after = el.classList.contains('show') && el.textContent === msg; }   // 札が 消えたら（ほかの 知らせが あれば その あと。10秒まで）
       const off = M.next ? !M.next().on : null;
       el.classList.remove('show');
-      return { maze, seen, over, after, off, ok: maze && !over && after };
+      // 札の 途中で 地図の 絵が 止まっても（ステージの めいろ など）、知らせを 待たせた ままに しない（絵が 止まると 札の 時間が 進まない）
+      const g2 = G.spots.filter(x => x.lat && !x.shop && x.id !== g.id && (!g0 || x.id !== g0.id) && G.dist(G.me, x) > 300 && G.dist(G.me, x) < 2000).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))[0];
+      let paused = null;
+      if (g2) {
+        G.setGuide({ kind: 'spot', id: g2.id, name: g2.name, why: 'テスト', by: 'テスト' });
+        for (let i = 0; i < 10; i++) { await wait(60); if (M.next && M.next().on) break; }
+        nishioPixel.meiroApi.pause(true); await wait(100);
+        const m2 = '🎁 テストの 知らせ（止めた あと）'; G.toast(m2); await wait(300);
+        paused = el.classList.contains('show') && el.textContent === m2;
+        nishioPixel.meiroApi.pause(false); el.classList.remove('show');
+      }
+      return { maze, seen, over, after, off, paused, ok: maze && !over && after && paused !== false };
     });
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {

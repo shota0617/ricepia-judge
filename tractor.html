@@ -4965,9 +4965,10 @@ const UZURA = (() => {
   const MSG = '🐦 切り株の あいだを 小さな鳥が 走っていく。野生の ウズラだ。止まると うずくまって 土の色に まぎれる（めずらしい鳥：環境省の 絶滅危惧Ⅱ類）';
   let acc = 0, need = 40 + Math.random() * 80, lastOdo = 0, pend = false, chk = false, tries = 0;
   const rowX = x => -HX + 0.3 * Math.round((x + HX) / 0.3);   // 切り株の列（-HX+0.15 から 条間 30cm）の あいだ
-  function near() {                               // トラクターか ロータリーの いちばん近い所までの きょり
-    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), rx = S.x + ROTARY_Z * s, rz = S.z + ROTARY_Z * c;
-    return Math.min(Math.hypot(b.position.x - S.x, b.position.z - S.z), Math.hypot(b.position.x - rx, b.position.z - rz));
+  function near() {                               // トラクター（前のおもりから ロータリーのうしろまで、ロータリーの幅）の 外がわまでの きょり
+    const s = Math.sin(S.yaw), c = Math.cos(S.yaw), dx = b.position.x - S.x, dz = b.position.z - S.z;
+    const f = dx * s + dz * c, l = dx * c - dz * s, hw = Math.max(ROT_HALF(), TRACK) + 0.1;
+    return Math.hypot(Math.max(0, Math.abs(l) - hw), Math.max(0, f - 3.05, -1.8 - f));
   }
   function fly() {                                // いちばん近い畦の 草むらへ 低く飛ぶ
     const p = b.position, ex = HX - Math.abs(p.x), ez = HZ - Math.abs(p.z);
@@ -5008,9 +5009,9 @@ const UZURA = (() => {
       if (L < 0.05) { b.visible = false; u.state = 'gone'; }   // 畦の草むらに 入った
       return;
     }
-    if (dn < 2.4 || u.runs >= 5) { fly(); return; }  // すぐそばまで来たら（何度も 追われたら）飛ぶ
+    if (dn < 1.2 + 0.5 * Math.abs(S.v) || u.runs >= 5) { fly(); return; }   // すぐそばまで来たら（速いと 早めに・何度も 追われたら）飛ぶ
     if (u.state === 'crouch') {
-      if (dn < 5.5 && S.v > 0.1 && u.t > 1) {       // 動いている トラクターが 近づくと 走りだす。止まっていれば うずくまったまま
+      if (dn < 4 && Math.abs(S.v) > 0.1 && u.t > 1) {   // 動いている（バックでも）トラクターが 近づくと 走りだす。止まっていれば うずくまったまま
         u.dir = p.z >= S.z ? 0 : Math.PI;           // 列のあいだを トラクターから はなれる向きへ
         u.state = 'run'; u.t = 0; u.runs++; u.dur = 1.2 + Math.random() * 1.0; crouch(false);
         b.rotation.y = u.dir;

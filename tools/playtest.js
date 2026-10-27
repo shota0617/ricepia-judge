@@ -2117,6 +2117,19 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.px && r.spinH <= 44 && r.spinH2 <= 44 && r.h1 - r.h0 <= 52 && !r.over && r.shortName };
     })();
+    // シェアの 窓の 上に 知らせを 重ねない：開いて いる 間は 待たせて、とじたら 出す（自分で 遊んで 分かった：知らせが シェアする 絵の 上に 重なって いた）
+    R.checks.shareToast = await w.page.evaluate(async () => {
+      const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), sh = document.getElementById('share'), el = document.getElementById('toast'), msg = '🎁 テストの 知らせ（シェア）';
+      const keep = sh.hidden;
+      sh.hidden = false; await wait(100);
+      G.toast(msg); await wait(300);
+      const over = el.classList.contains('show') && el.textContent === msg;
+      sh.hidden = true;
+      for (let i = 0; i < 40 && !(el.classList.contains('show') && el.textContent === msg); i++) await wait(200);   // ほかの 知らせが 出て いれば その あと（8秒まで）
+      const after = el.classList.contains('show') && el.textContent === msg;
+      sh.hidden = keep; el.classList.remove('show');
+      return { over, after, ok: !over && after };
+    });
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {
       const vp = w.page.viewportSize();
@@ -2510,6 +2523,7 @@ async function walkTo(page, id) {
   need(c.jumpCard320 && c.jumpCard320.ok, `きろくの にしおジャンプの 札が 細く なる・「あそぶ」が 札の 外に 出る（${JSON.stringify(c.jumpCard320)}）`);
   need(c.codeCardHead && c.codeCardHead.ok, `ひきつぎの あいことばの 見出しと 説明が 同じ 行に つづく（${JSON.stringify(c.codeCardHead)}）`);
   need(c.badgeGrid320 && c.badgeGrid320.ok, `きろくの バッジが 320px の 画面で 列の 幅が そろわない・画面から はみ出す（${JSON.stringify(c.badgeGrid320)}）`);
+  need(c.shareToast && c.shareToast.ok, `シェアの 窓の 上に 知らせが 重なる（${JSON.stringify(c.shareToast)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);
   need(c.entryPrint && c.entryPrint.ok, '店頭POP・配るカード・ホーム画面に追加の 画面写真（manifest）の どれかが そろっていない（写真が ない・大きさが ちがう・カードの QR が POP と ちがう）');

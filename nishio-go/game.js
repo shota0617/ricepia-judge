@@ -2570,7 +2570,7 @@ const toastQ = [];
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
 function toast(msg) {
   const el = $('toast');
-  if ($('reward').classList.contains('show') || howtoOpen() || couponOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面の 上にも 重ねない（とじてから）
+  if ($('reward').classList.contains('show') || howtoOpen() || modalOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面・シェアの 窓の 上にも 重ねない（とじてから）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
   el.textContent = msg; el.classList.remove('wlow'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow：せかいちずの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
@@ -2580,7 +2580,10 @@ function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   
 function howtoOpen() { const h = $('howto'); return !!h && !h.hidden; }
 // 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
 function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
-function toastFlush() { if (!$('reward').classList.contains('show') && !howtoOpen() && !couponOpen()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面を とじたとき
+// シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
+function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden); }
+if (window.MutationObserver && $('share')) new MutationObserver(() => { if ($('share').hidden) toastFlush(); else toastHold(); }).observe($('share'), { attributes: true, attributeFilter: ['hidden'] });
+function toastFlush() { if (!$('reward').classList.contains('show') && !howtoOpen() && !modalOpen()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓を とじたとき
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
   const t = $('toast');

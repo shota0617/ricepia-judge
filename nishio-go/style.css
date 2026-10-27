@@ -599,9 +599,8 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 .list li.reward-pic .ico img.art{width:56px;height:56px;image-rendering:pixelated}
 .list li.reward-pic .ico{width:60px;flex:none}
 .list li.reward-pic .chips{justify-content:flex-start;margin:4px 0 2px;font-size:14px}
-.list li.reward-pic details{font-size:12px;color:var(--sub)}
-.list li.reward-pic details summary{cursor:pointer;padding:8px 0}
-.list li.reward-pic details summary img.pi{width:14px;height:14px;vertical-align:-2px}
+.list li.reward-pic .cond{font-size:12px;line-height:1.5;color:var(--sub);margin:2px 0 0}
+.list li.reward-pic .cond img.pi{width:14px;height:14px;vertical-align:-2px}
 .btn img.pi{width:16px;height:16px;vertical-align:-3px}
 /* せってい（文字を少なく：ふだん）：説明はたたむ。アクセス解析の説明（送り先とプライバシーポリシー）は出したまま */
 .simple #panel-settings label.row:not(:has(#anaToggle)) small{display:none}

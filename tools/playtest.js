@@ -917,7 +917,8 @@ async function walkTo(page, id) {
     await page.evaluate(() => { nishioPixel.maze.map(0); nishioPixel.setRoll(false); });
     return { ok: !!m && (!inBox.pads || m.pads > 0) && (!inBox.dots || m.dots > 0), inBox, marks: m && { pads: m.pads, dots: m.dots } };
   })();
-  // 特典の 100円引き：クーポンの 有効時間は 短め（10分）、条件「お米1袋につき1回まで」が 特典の 札と 店頭の クーポン画面に 出る（操作して移動の サンプルで ためす）
+  // 特典の 100円引き：クーポンの 有効時間は 短め（10分）、条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が 特典の 札と 店頭の クーポン画面に 出る（操作して移動の サンプルで ためす）
+  // （札の 条件は「条件」を タップ しないと 見えなかった。タップ なしで いつも 見える ことも 見る）
   R.checks.coupon100 = await (async () => {
     const onDialog = d => d.accept();
     page.on('dialog', onDialog);
@@ -928,10 +929,11 @@ async function walkTo(page, id) {
       S.points += 600; G.openTab('rewards'); await wait(300);
       const li = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
       if (!li) { S.points = p0; G.openTab('map'); return { found: false }; }
-      const chip = /10分/.test(li.textContent);
+      const chip = /10分/.test(li.textContent), lc = li.querySelector('.cond');
+      const listCond = !!lc && lc.offsetHeight > 0 && !lc.closest('details') && /LINE のクーポンとは併用できません/.test(lc.textContent);
       li.querySelector('[data-redeem]').click(); await wait(300);
       const cp = document.getElementById('coupon'), cond = document.getElementById('cpCond');
-      const out = { found: true, chip, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };
+      const out = { found: true, chip, listCond, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };
       document.getElementById('cpClose').click();
       // ほかの クーポンとは いっしょに 使えない：使っていない クーポンが ある 間は、次の 交換が できない
       S.points += 600; G.openTab('rewards'); await wait(300);
@@ -949,7 +951,7 @@ async function walkTo(page, id) {
     }
     page.off('dialog', onDialog);
     if (r.skipped) return { ok: true, ...r };
-    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && /クーポン・割引との併用はできません/.test(r.cond) && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
+    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && /LINE のクーポンとは併用できません/.test(r.cond) && /ほかのクーポン・割引とも併用できません/.test(r.cond) && r.listCond && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
   })();
   // きろくに「ころころの きろく」（コンボの ベスト・きょう ひろった ごはんつぶ）
   R.checks.koroRec = await page.evaluate(async () => {
@@ -2298,7 +2300,7 @@ async function walkTo(page, id) {
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
-  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」が クーポンに 出ない（${JSON.stringify(c.coupon100)}）`);
+  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
   need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);

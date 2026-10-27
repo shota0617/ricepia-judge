@@ -7237,6 +7237,14 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
 // 生け垣から はなれる ときに 当たった 速さより 速く（MZ_SPRING_E 倍。いちばん速い 速さ ROLL_MAX まで）はね返る。ふだんの 生け垣は かわらない（4割ほど）
 const MZ_SPRING_MS = 12000, MZ_SPRING_E = 1.3;   // わざの 長さ・はね返りの 強さ（数字は 仮。店主に 聞く）
 const mzSpring = { cx: 0, cy: 0, on: false, t0: 0, until: 0, next: 0, told: false, got: 0, boosts: 0, last: 0, chain: 0, at: 0, best: 0 };   // chain：つづけて はね返った 数（1.5秒 以内）。at：さいごに はね返った 時刻
+function mzSpringShot() {   // ばねショット（快感）：ばねで はね返って 1.2秒 以内に 金の米つぶ・ごはんつぶ・ゴールを とった（わざを うまく つかえた ほめ。1回 はね返るごとに 1つ）
+  const now = performance.now();
+  if (!mzSpring.at || now - mzSpring.at > 1200) return;
+  mzSpring.at = 0; mzSpring.shots = (mzSpring.shots || 0) + 1;
+  floatText('🎯 ばねショット！ うまいじゃん'); chordSound();
+  const cols = ['#8cf078', '#ffd84a', '#ffffff'];
+  for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.5 }); }
+}
 function mzSpringChain(now) {   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 数が ふえ、ぽよんの 音が 1段ずつ 高く、2れんぱつ から 文字と 緑の きらきら
   mzSpring.chain = now - mzSpring.at < 1500 ? mzSpring.chain + 1 : 1; mzSpring.at = now; mzSpring.best = Math.max(mzSpring.best, mzSpring.chain);
   if (mzSpring.chain < 2) return;
@@ -7515,7 +7523,7 @@ function mzGrainTick() {
   if (!mzGrainAt(a, b) || !G.mzGrain) return;
   const r = G.mzGrain(mzGrainKey(a, b));
   if (!r) return;
-  grainSound(); roll.happyT = 1.2; dirty = true;
+  grainSound(); roll.happyT = 1.2; dirty = true; mzSpringShot();
   const now0 = performance.now(), back = mzRt.t0 ? Math.min(MZ_GRAIN_SEC * 1000, now0 - mzRt.t0) : 0;   // 寄り道の ごほうび：時計を 2秒 もどす（ほかの 迷路ゲームの「時間が ふえる 宝」）
   if (back > 0) mzRt.t0 += back;
   floatText(`🌾 金の米つぶ +${r.pts}pt${back >= 1000 ? `・⏱−${Math.round(back / 1000)}秒` : ''}（きょう ${r.n}こ）`);
@@ -7675,7 +7683,7 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
       if (L.taken[i] || Math.abs(L.dots[i][0] - rp.x) > 0.75 || Math.abs(L.dots[i][1] - rp.y) > 0.75) continue;
       L.taken[i] = now; got = true;
       const left = L.taken.filter(t => !t).length;
-      dotSound(L.dots.length - left - 1);
+      dotSound(L.dots.length - left - 1); mzSpringShot();
       if (mzDots.d !== jstDay()) { mzDots.d = jstDay(); mzDots.n = 0; }
       mzDots.n++; mzRt.run.dots++;
       if (!left) {   // 列を ぜんぶ ひろった
@@ -7745,6 +7753,7 @@ function mzNextHoldTick() {
   else if (G.toastFlush) G.toastFlush();
 }
 function mzGoalFx(text) {
+  mzSpringShot();   // ばねで はね返って ゴールに 飛びこんだ
   // 紙ふぶきは 西尾らしく（運営者の声「西尾らしく」）：お米つぶ（白い たて長が くるくる）・抹茶の 葉（緑）・金の つぶ（お米屋さんの ゲーム、抹茶の まち）
   const now = performance.now(), kinds = ['rice', 'rice', 'leaf', 'rice', 'gold', 'leaf'], cols = { rice: '#fffdf3', leaf: ['#6f9f2c', '#9ccc4f'], gold: '#ffd84a' };
   for (let i = 0; i < 60; i++) {

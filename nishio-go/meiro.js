@@ -417,6 +417,13 @@ function waitChunks(spot, done) {
     else setTimeout(poll, 250);
   })();
 }
+function springShot(g) {   // ばねショット（快感。地図の めいろと 同じ）：ばねで はね返って 1.2秒 以内に 金の米つぶ・ゴール → 金と 緑の きらきらと ちりりん
+  const sp = g.spring, now = performance.now();
+  if (!sp || !sp.at || now - sp.at > 1200) return;
+  sp.at = 0; sp.shots = (sp.shots || 0) + 1;
+  [0, 70, 140].forEach((d, k) => setTimeout(() => api.koto(0.8 + k * 0.1, false), d));
+  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, v = 3.5; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, c: k % 2 ? '#ffd84a' : '#8cf078', t: 0, life: 0.7 }); }
+}
 function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
@@ -601,7 +608,7 @@ function step(dt) {
     return;
   }
   for (const i of b.grains) if (!g.got.has(i) && Math.hypot(g.x - i % b.tw - 0.5, g.y - ((i / b.tw) | 0) - 0.5) < 0.45) {   // 金の米つぶを とった
-    g.got.add(i); api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90);
+    g.got.add(i); api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90); springShot(g);
     for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, c: k % 2 ? '#ffe066' : '#fff4b0', t: 0, life: 0.6 }); }
   }
   if (g.spring.left > 0) g.spring.left = Math.max(0, g.spring.left - dt);
@@ -609,7 +616,7 @@ function step(dt) {
     g.spring.got = true; g.spring.left = SPRING_S; api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90);
     for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, c: k % 2 ? '#8cf078' : '#e4ffd8', t: 0, life: 0.6 }); }
   }
-  if (Math.hypot(g.x - b.goal[0] - 0.5, g.y - b.goal[1] - 0.5) < 0.42) win();
+  if (Math.hypot(g.x - b.goal[0] - 0.5, g.y - b.goal[1] - 0.5) < 0.42) { springShot(g); win(); }
 }
 function win() {
   const g = game, b = g.board;

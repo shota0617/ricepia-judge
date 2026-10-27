@@ -1578,7 +1578,9 @@ async function walkTo(page, id) {
         for (const L of lanes(n)) {
           pi.hidden = true; tried++;
           const push = async () => { await rollTo(L.near, L.dNear, 4, 800, () => !pi.hidden); return !pi.hidden && pi.textContent.includes(n.name); };
-          const leave = async () => { await unblockW(); P.rollPut(L.far.x, L.far.y, 0, 0); await wait(300); P.rollPut(L.far.x, L.far.y, L.dFar.x * 3, L.dFar.y * 3); await wait(200); };   // 4マス はなれて もどりかける（さいごに 話した 人を わすれる）
+          // 4マス はなれて もどりかける（さいごに 話した 人を わすれる）。rollPut は マスを かえた あつかいに ならないので、はなれる ほうへ 転がして マスを うつる
+          // （もどる ほうへ 0.2秒 だけ だと、マスの さかいを こえない 道〈駅前の学生〉では わすれず、ゴールを かえても こつんで 話せなかった）
+          const leave = async () => { await unblockW(); P.rollPut(L.far.x, L.far.y, -L.dFar.x * 2, -L.dFar.y * 2); await wait(600); P.rollPut(L.far.x, L.far.y, L.dFar.x * 3, L.dFar.y * 3); await wait(200); };
           const first = await push();
           if (!first) continue;
           pi.hidden = true; await wait(200);
@@ -1687,24 +1689,28 @@ async function walkTo(page, id) {
           again = await rollTo(L.near, L.dNear, 4, 600, () => talking(n));   // そのまま そばから 当たる
           pi.hidden = true;
         }
-        await unblockW(); P.rollPut(L.far.x, L.far.y, 0, 0); await wait(300);   // 4マス はなれて もどる（道すじに そって 人まで とどく 速さで）
+        // 4マス はなれて（はなれる ほうへ 転がして マスを うつる：rollPut だけ では さいごに 話した 人を わすれない）、そばの 点から 人へ 押す
+        // （遠くから まっすぐ 転がすと、曲がった 道〈駅前の学生〉では 生け垣で 止まって 人まで とどかなかった。そばから でも 1秒に 4マスでは 曲がりきる 前に 止まった ので 6マス）
+        await unblockW(); P.rollPut(L.far.x, L.far.y, -L.dFar.x * 2, -L.dFar.y * 2); await wait(600);
         let minD = 99;
         const tn = P.npcTile(n);
-        const back = await rollTo(L.far, L.dFar, 8, 2000, () => { const r = P.roll; minD = Math.min(minD, Math.hypot(r.x - tn.x - 0.5, r.y - tn.y - 0.5)); return talking(n); });
+        const back = await rollTo(L.near, L.dNear, 6, 2000, () => { const r = P.roll; minD = Math.min(minD, Math.hypot(r.x - tn.x - 0.5, r.y - tn.y - 0.5)); return talking(n); });
         pi.hidden = true; G.setGuide(null);
         return { arrived, moved, other, again, back, minD: +minD.toFixed(2) };
       };
       G.setGuide(null); pi.hidden = true;
+      const skipped = [];
       for (const n of G.npcs.filter(x => G.dist(G.me, x) < 1500).sort((a, b) => G.dist(G.me, a) - G.dist(G.me, b))) {
         for (const L of lanes(n)) {
           const a = await once(n, L, false);
           if (!a) continue;
+          if (a.minD > 1.25) { skipped.push(`${n.name}:${a.minD}`); continue; }   // もどって 押しても 人の そば（こつんの 近さ 1.2マス）まで 届かない 道（人が 道すじから すこし それて 立つ 曲がり角〈駅前の学生〉）では 確かめられない
           const b = await once(n, L, true);
           const okB = !b || b.skip || (b.arrived && !/^no:/.test(b.other) && b.back);
-          return { npc: n.name, curve: !!(M.near && M.near(L.near.x, L.near.y)), ...a, reroute: b, ok: a.moved && !a.again && !a.back && okB };
+          return { npc: n.name, curve: !!(M.near && M.near(L.near.x, L.near.y)), ...a, reroute: b, skipped, ok: a.moved && !a.again && !a.back && okB };
         }
       }
-      return { npc: 'none', ok: true };
+      return { npc: 'none', skipped, ok: true };
     });
     // めいろで 人の そば（1.2マス）に 入れば、マスが かわらなくても こつんと 話しかける（Codex の 指摘：同じ マスの 中で 近づいて はなれると、まだ あいさつ して いない 人にも 当たれなかった）
     R.checks.npcBumpInTile = await w.page.evaluate(async () => {

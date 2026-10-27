@@ -1027,7 +1027,7 @@ async function walkTo(page, id) {
     await page.route('**/api/feedback', r => { fb.push(r.request().postData()); r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' }); });
     R.checks.playRating = await page.evaluate(async () => {
       const G = nishioGo, S = G.state, p0 = S.points, t0 = S.total, wait = ms => new Promise(f => setTimeout(f, ms)), bar = document.getElementById('reactBar');
-      localStorage.removeItem('nsg_play_ask');
+      localStorage.removeItem('nsg_play_ask'); document.getElementById('pxInfo').hidden = true;
       G.playAsk({ sec: 83.4, stars: 2 }); G.playShow();
       const shown = !bar.hidden && /めいろ、どうだった？/.test(bar.textContent);
       const big = parseFloat(getComputedStyle(bar.querySelector('[data-play]')).fontSize);   // ★は 大きく（タップ しやすく）
@@ -1064,16 +1064,20 @@ async function walkTo(page, id) {
       G.playAsk({ name: '駅前の学生', sec: 45, stars: 1 });
       await wait(100);
       const npcWait = bar.hidden;
+      // 話の 窓を 開いた まま タブを 切りかえて もどっても、とっておく（Codex の 指摘：ここで 使い切って その日は たずねられなかった）
+      document.querySelector('.tabs button[data-tab="log"]').click(); await wait(100);
+      document.querySelector('.tabs button[data-tab="map"]').click(); await wait(100);
+      const npcKeep = !!G.playPending && bar.hidden && localStorage.getItem('nsg_play_ask') === null;
       px.hidden = true; await wait(100);
       const npcShown = !bar.hidden && /めいろ、どうだった？/.test(bar.textContent);
       bar.querySelector('[data-play-x]').click();
       S.points = p0; S.total = t0; G.save && G.save();
-      return { shown, big, on, more, share2, share4, closed, again, tabClosed, shareOpen, npcWait, npcShown, day: localStorage.getItem('nsg_play_ask') };
+      return { shown, big, on, more, share2, share4, closed, again, tabClosed, shareOpen, npcWait, npcKeep, npcShown, day: localStorage.getItem('nsg_play_ask') };
     });
     await page.unroute('**/api/feedback');
     const js = x => { try { return JSON.parse(x || 'null'); } catch (e) { return null; } }, body = js(fb[0]), tab = js(fb[1]), viaShare = js(fb[2]);
     const c = R.checks.playRating;
-    R.checks.playRating = { ...c, sent: fb.length, body, tab, viaShare, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && !c.share2 && c.share4 && c.shareOpen && !!viaShare && viaShare.r === 5 && viaShare.sec === 61 && c.npcWait && c.npcShown && fb.length === 3 };
+    R.checks.playRating = { ...c, sent: fb.length, body, tab, viaShare, ok: c.shown && c.big >= 30 && c.on === 4 && c.more && c.closed && !c.again && !!body && body.kind === 'play' && body.r === 4 && body.text === 'テストの ひとこと' && body.sec === 83 && body.st === 2 && c.tabClosed && !!tab && tab.r === 5 && tab.text === '' && tab.sec === 40 && !c.share2 && c.share4 && c.shareOpen && !!viaShare && viaShare.r === 5 && viaShare.sec === 61 && c.npcWait && c.npcKeep && c.npcShown && fb.length === 3 };
   }
   // 高低差で とぶ：作った地形（平ら → 2マス先から 20% の下り坂）を 速く こえると とぶ
   // 転がす（めいろ）ときも、せかいちずで 矢印キーを 押すと 歩く地図に もどる
@@ -2105,10 +2109,14 @@ async function walkTo(page, id) {
       for (const side of [-1, 1]) {
         let best = null;
         for (let k = 2; k <= 24; k++) {   // ゴールを すこしずつ 横へ：画面に 描かれて いる うちで いちばん はしに 近い 所
-          G.setGuide({ kind: 'spot', id: 'test-edge', name: nm, lat: G.me.lat, lng: G.me.lng + side * k * 0.00015 });
-          await wait(220);
-          const L = M.goalLab;
-          if (!L) break;
+          // そばに 置くと「着いた」と みなされ、次の ゴール（人など）に かわる ことが ある（左の 1回目で ときどき 落ちた：ゴールが「氏子のおばあさん」に かわって いた）。かわったら 置きなおす
+          let L = null;
+          for (let tr = 0; tr < 3; tr++) {
+            G.setGuide({ kind: 'spot', id: 'test-edge', name: nm, lat: G.me.lat, lng: G.me.lng + side * k * 0.00015 });
+            await wait(220);
+            if (G.guide && G.guide.id === 'test-edge') { L = M.goalLab; break; }
+          }
+          if (!L) { if (!best) out['why' + side] = { k, on: M.on(), guide: G.guide && G.guide.name }; break; }
           if (!best || (side < 0 ? L.ex < best.ex : L.ex > best.ex)) best = L;
         }
         out[side < 0 ? 'left' : 'right'] = best && { ex: Math.round(best.ex), x0: Math.round(best.x0), x1: Math.round(best.x1), w: best.w };

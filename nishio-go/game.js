@@ -2719,8 +2719,9 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
   afterReward();
 }
 // ごほうびの画面は、どこかをタップすると消える（タップは下の地図やボタンには届かない）
-function hideReward() {
-  clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (react.pending) reactShow(); else if (playQ.pending) playShow();
+// quiet：地図より 上の タブを 開く とき。下の「どうだった？」は 出さずに とっておく（出して すぐ とじると、その日は もう たずねない ので 声が なくなる）。地図に もどったら 出す
+function hideReward(quiet) {
+  clearTimeout(showReward.t); const el = $('reward'); el.innerHTML = ''; el.classList.remove('show'); if (!quiet) { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }
   toastQ.splice(0).forEach(toastAfter);   // たまった知らせは、1つずつ順に（つなげて1つにすると長すぎて読めなかった）
   setTimeout(tryChest, 300);   // ごほうびの間に着いていた たからばこ を開ける
 }
@@ -3195,7 +3196,7 @@ $('copyGps').addEventListener('click', async () => {
 
 /* タブ */
 function openTab(tab) {
-  hideReward();   // ほかのタブを開いたら、ポイントの知らせは消す
+  hideReward(tab !== 'map');   // ほかのタブを開いたら、ポイントの知らせは消す
   if (tab !== 'map') reactHide();   // 「どうだった？」も（きろく・バッジの下の方を ふさいでいた）
   document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   ['log', 'voice', 'rewards', 'settings'].forEach(t => { $('panel-' + t).hidden = t !== tab; });
@@ -3468,8 +3469,9 @@ function playAsk(mz) {
 // これまで 人の ゴールでは たずねて いなかった（名所の ゴールの 声だけに かたよる）
 new MutationObserver(() => { if (playQ.pending && $('pxInfo').hidden && !$('reward').classList.contains('show')) playShow(); }).observe($('pxInfo'), { attributes: true, attributeFilter: ['hidden'] });
 function playShow() {
+  // 話の 窓が 出て いる 間は とっておく（人の ゴールで 話の 窓を 開いた まま タブを 切りかえると、ここで 使い切って その日は たずねられなかった。Codex の 指摘）
+  if (!playQ.pending || !$('pxInfo').hidden || $('reward').classList.contains('show')) return;
   const ctx = playQ.pending; playQ.pending = null;
-  if (!ctx) return;
   store.set('nsg_play_ask', ymd());
   Object.assign(playQ, { ctx, r: 0, shown: Date.now(), sent: false });
   $('reactBar').classList.add('play');

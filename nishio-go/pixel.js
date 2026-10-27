@@ -6443,6 +6443,7 @@ function drawWorld(now, w, h, dpr) {
     const tag = goalTag(gx, gy - rr - 20 * dpr, dpr, `ゴール：${gl.name || ''}`);
     mzMap.worldGoal = [Math.round(gx), Math.round(gy), tag];   // テスト用
   } else mzMap.worldGoal = null;
+  worldToastDodge(mzMap.worldGoal && mzMap.worldGoal[2]);
   // 主人公
   if (me) {
     const p = llToW(me.lat, me.lng), hs = Math.max(T * 2, 18 * dpr);
@@ -6476,6 +6477,17 @@ function shopTag(cx, bottom, dpr, s) {
   ctx.fillStyle = bg; ctx.fillRect(x, y, bw, bh);
   ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5);
   return [x - b, y - b, x + bw + b, y + bh + b];
+}
+// せかいちずの「ゴール：…」の 札に 知らせが 重なる ときは、知らせを 下へ（wlow。自分で 遊んで 分かった：320×568 で 遠い ゴールの 札が 左上の はしに 出て、
+// 「🧭 水色の 線が…」の 知らせに かくれて ゴールの 名前が 読めなかった）。下げたら 知らせが 消えるまで 下の まま（上下に ゆれない ように）
+function worldToastDodge(tag) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  const show = el.classList.contains('show');
+  if (el.classList.contains('wlow')) { if (!show || !tag || !worldMode) el.classList.remove('wlow'); return; }
+  if (!show || !tag) return;
+  const r = cv.getBoundingClientRect(), k = r.width / cv.width, t = el.getBoundingClientRect();
+  if (t.left < r.left + tag[2] * k && t.right > r.left + tag[0] * k && t.top < r.top + tag[3] * k && t.bottom > r.top + tag[1] * k) el.classList.add('wlow');
 }
 function goalTag(cx, bottom, dpr, text) {   // 殿堂入りの場所・めいろの ゴールの 札：こい紺に金色の字（当店の札とは ちがう色）。札の わく [左, 上, 右, 下] を返す
   const fs = Math.round(13 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr)), W = ctx.canvas.width, edge = 4 * dpr;   // 字は 13点（10点では 小さかった 2026-10-27）

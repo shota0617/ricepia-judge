@@ -3087,7 +3087,7 @@ function renderRewards() {
   clearTimeout(rewardExpT);
   const oc = openCoupon();   // 使っていない クーポンの 期限が きれたら 描きなおす（併用できない ための「使ってから」を とく）
   if (oc) rewardExpT = setTimeout(() => { if (!$('panel-rewards').hidden) renderRewards(); }, Math.max(0, oc.t + oc.validMin * 60000 - Date.now()) + 500);
-  const pic = simple();   // 文字を少なく（ふだん）：品物のドット絵（Blender で作った絵）と、ポイント・回数の札。くわしい条件はタップで
+  const pic = simple();   // 文字を少なく（ふだん）：品物のドット絵（Blender で作った絵）と、ポイント・回数の札。使える条件（LINE のクーポンと併用できない など）は タップなしで いつも見せる
   $('rewardNote').textContent = demo
     ? (pic ? '操作して移動：サンプル（お店では使えません）' : '操作して移動：サンプルの特典で交換の流れを試せます（このクーポンはお店では使えません。お店のとくてんは「あるいて移動」で）。')
     : pic ? `有効${rewardMinText()}分。お店で見せる直前に交換` : `交換すると、その場でクーポン画面が出ます（有効${rewardMinText()}分）。お店で店員さんに見せる直前に交換してください。`;
@@ -3097,7 +3097,7 @@ function renderRewards() {
     const why = busy ? '使っていないクーポンがあります' : limit ? '今日はもう交換しました' : short ? `あと${(r.cost - S.points).toLocaleString()}pt` : '';
     if (pic) return `<li class="reward-pic"><span class="ico">${r.art ? `<img class="art" src="nishio-go/art/${r.art}.png" alt="" width="48" height="48"/>` : PIA('gift', '')}</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <span class="chips"><span>${PIA('coin', 'ポイント')}${r.cost.toLocaleString()}</span>${r.perDay ? `<span>${PIA('calendar', '1日に交換できる回数')}×${r.perDay}</span>` : ''}<span>${PIA('clock', 'クーポンの有効時間')}${rewardMin(r)}分</span></span>
-      ${r.desc ? `<details><summary>${PIA('scroll', '')} 条件</summary>${esc(r.desc)}</details>` : ''}</span>
+      ${r.desc ? `<p class="cond">${PIA('scroll', '')} ${esc(r.desc)}</p>` : ''}</span>
       <button type="button" class="btn" data-redeem="${esc(r.id)}" ${why ? 'disabled' : ''} aria-label="${esc(why || '交換')}">${busy ? `${ART32('ticket', '')} 使ってから` : limit ? `${PIA('clock', '')} あした` : short ? `${PIA('coin', '')}あと${(r.cost - S.points).toLocaleString()}` : '交換'}</button></li>`;
     return `<li><span class="ico">🎁</span><span class="main"><b>${esc(r.name)}${r.active ? '' : ' <em class="sample">サンプル</em>'}</b>
       <small>${r.cost.toLocaleString()}pt${r.perDay ? `・1日${r.perDay}回まで` : ''}・有効${rewardMin(r)}分${r.desc ? '・' + esc(r.desc) : ''}</small></span>

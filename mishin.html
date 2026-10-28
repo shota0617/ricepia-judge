@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#1d2742"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Yuji+Syuku&family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet"/>
 <style>
 /* 米屋の前掛けの藍を地に、クラフト紙の米袋と白い木綿糸。画面いっぱいのキャンバスに、上へ HUD・下へ糸の張りメーター */
 :root{
@@ -171,7 +171,7 @@ function makeBag(k){
   while(knots.size<nk && guard++<80){ const i = 3 + Math.floor(rnd()*(N-5)); if(!knots.has(i-1) && !knots.has(i+1)) knots.add(i); }
   const golden = k>0 && k%5===4;
   const safe = Math.max(470, 700 - k*14) * (golden ? 0.85 : 1); // 新米は 糸が しまっていて むずかしい
-  const kg = k<3 ? 5 : k<7 ? 10 : 30;
+  const kg = 30; // ミシンで 口を 縫う クラフト紙の 米袋は 30kg の 業務用が 多い
   return { N, face, start, from:null, single, knots, safe, golden, kg, brand: BRANDS[k%BRANDS.length],
     printed: k>=1 && rnd()<0.6, // 表に「糸抜きはここから」の印刷（実際の口は裏、という例がある）
     phase:'look', pulled:0, sub:0, tangle:null, tangles:0, wrong:false, wrongEnd:null, flipT:0, flipped:false,
@@ -445,7 +445,7 @@ function layout(){
   const bagW = Math.min(W*0.86, 420);
   const seamY = Math.round(Math.max(210, Math.min(H*0.36, H-300)));
   const x0 = W/2 - bagW/2 + 30, x1 = W/2 + bagW/2 - 30;
-  return { bagW, seamY, x0, x1, bagH: Math.max(150, Math.min(H - seamY - 110, bagW*0.82)) };
+  return { bagW, seamY, x0, x1, bagH: H - seamY }; // 袋は 画面の 下へ つづく
 }
 // i 番目に ほどける 目の 位置（ほどき始めの 端から 数える）
 function stitchPos(b, i){
@@ -478,16 +478,17 @@ function draw(){
   const L = layout();
   const sh = S.shake>0 && !KB.calm ? S.shake*6 : 0;
   ctx.save(); ctx.translate((Math.random()-0.5)*sh, (Math.random()-0.5)*sh);
-  ctx.drawImage(layer(bgStore, `${W}|${H}|${DPR}|${S.bags}`, ()=>{
+  ctx.drawImage(layer(bgStore, `${W}|${H}|${DPR}`, ()=>{
     const bg = ctx.createRadialGradient(W/2, L.seamY, 40, W/2, L.seamY, Math.max(W,H));
     bg.addColorStop(0,'#26325a'); bg.addColorStop(1,'#131a2e');
     ctx.fillStyle = bg; ctx.fillRect(-20,-20,W+40,H+40);
-    drawPile(L);
   }), 0, 0, W, H);
   const b = S.bag || demoBag;
   ctx.save(); ctx.translate(b.slide*W, 0);
-  if(b.flipT>0){ const sy = Math.max(0.04, Math.abs(1-2*b.flipT)); const cy = L.seamY + L.bagH/2; ctx.translate(0, cy); ctx.scale(1, sy); ctx.translate(0, -cy); }
+  // 裏返す：袋を 横に くるっと 回す（たての 軸の まわり）。まん中で 紙の 裏の 暗い 色が 見える
+  if(b.flipT>0){ const k = Math.abs(1-2*b.flipT), sx = Math.max(0.03, k); ctx.translate(W/2, 0); ctx.scale(sx, 1); ctx.translate(-W/2, 0); }
   drawBag(L, b);
+  if(b.flipT>0){ const k = Math.abs(1-2*b.flipT); ctx.fillStyle=`rgba(30,18,4,${0.45*(1-k)})`; ctx.fillRect(W/2 - L.bagW/2 - 8, L.seamY - 32, L.bagW + 16, H); }
   ctx.restore();
   drawFx();
   ctx.restore();
@@ -527,54 +528,151 @@ function drawBag(L, b){
   if(!b.done || b.open<0.1){ if(b.face==='front') drawSeamFront(L, b); else drawSeamBack(L, b); }
   else drawHoles(L, b);
 }
-function paintBag(L, b, openA){
-  const x = W/2 - L.bagW/2, y = L.seamY - 30, w = L.bagW, h = L.bagH + 30;
-  ctx.fillStyle='rgba(0,0,0,.3)'; roundRect(x+6, y+12, w, h, 12); ctx.fill();
-  const g = ctx.createLinearGradient(x,0,x+w,0);
-  const base = b.golden ? ['#d6b25e','#ecd08a','#cda552'] : ['#b78d55','#d2ab72','#b28750'];
-  g.addColorStop(0,base[0]); g.addColorStop(0.5,base[1]); g.addColorStop(1,base[2]);
-  ctx.fillStyle=g;
+// ---------- 米袋（クラフト紙の 重ね袋）----------
+// 袋は 画面の 下へ つづく（口の まわりを 近くで 見ている）。紙の 繊維・お米で ふくらんだ 胴・横の 折り目（マチ）・
+// 口を しぼった しわ・インクの 刷り。うごかない ので 袋ごとに 1回 かいて はりつける（layer）
+let paperPat = null;
+function paperPattern(){
+  if(paperPat) return paperPat;
+  const c = document.createElement('canvas'); c.width = c.height = 160; const g = c.getContext('2d');
+  let r = 99; const rr = () => (r = (r*16807) % 2147483647) / 2147483647;
+  // 細かい 粒（こすれ・繊維の 影）
+  for(let i=0;i<2600;i++){ const v = rr(); g.fillStyle = v<0.5 ? `rgba(70,45,15,${0.05+rr()*0.07})` : `rgba(255,240,210,${0.05+rr()*0.08})`; g.fillRect(rr()*160, rr()*160, 1+rr()*1.4, 1); }
+  // 短い 繊維
+  g.lineWidth = 0.7;
+  for(let i=0;i<70;i++){ const x=rr()*160, y=rr()*160, a=rr()*Math.PI, l=4+rr()*10;
+    g.strokeStyle = rr()<0.5 ? 'rgba(90,60,20,.12)' : 'rgba(255,235,200,.14)';
+    g.beginPath(); g.moveTo(x,y); g.quadraticCurveTo(x+Math.cos(a)*l*0.5+rr()*3, y+Math.sin(a)*l*0.5+rr()*3, x+Math.cos(a)*l, y+Math.sin(a)*l); g.stroke(); }
+  paperPat = ctx.createPattern(c, 'repeat');
+  return paperPat;
+}
+function bagPath(x, top, w, bottom, openA){
+  // 口は しぼられて すこし 細く、下は お米で ふくらむ
   ctx.beginPath();
-  ctx.moveTo(x, y + openA*10);
-  ctx.quadraticCurveTo(x+w/2, y - openA*30, x+w, y + openA*10);
-  ctx.lineTo(x+w, y+h-12); ctx.quadraticCurveTo(x+w, y+h, x+w-12, y+h);
-  ctx.lineTo(x+12, y+h); ctx.quadraticCurveTo(x, y+h, x, y+h-12); ctx.closePath(); ctx.fill();
-  if(!openA){ ctx.fillStyle='rgba(90,60,20,.16)'; ctx.fillRect(x, L.seamY-14, w, 28); }
-  ctx.strokeStyle='rgba(70,45,10,.3)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x, L.seamY+16); ctx.lineTo(x+w, L.seamY+16); ctx.stroke();
-  if(openA>0){ ctx.fillStyle='#f4efe0'; ctx.beginPath(); ctx.ellipse(W/2, y+6, w*0.42*openA, 14*openA, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(W/2, y+9, w*0.36*openA, 8*openA, 0, 0, Math.PI*2); ctx.fill(); }
-  if(b.face==='front') drawFrontPrint(L, b, x, y, w, h); else drawBackPrint(L, b, x, y, w, h);
+  ctx.moveTo(x+5, top + openA*10);
+  ctx.quadraticCurveTo(x+w/2, top - openA*30, x+w-5, top + openA*10);
+  ctx.bezierCurveTo(x+w-3, top+60, x+w+6, top+150, x+w+6, top+240);
+  ctx.lineTo(x+w+6, bottom); ctx.lineTo(x-6, bottom); ctx.lineTo(x-6, top+240);
+  ctx.bezierCurveTo(x-6, top+150, x+3, top+60, x+5, top + openA*10);
+  ctx.closePath();
+}
+function paintBag(L, b, openA){
+  const x = W/2 - L.bagW/2, top = L.seamY - 30, w = L.bagW, bottom = H + 40;
+  // 床への 影
+  ctx.fillStyle='rgba(0,0,0,.28)'; bagPath(x+7, top+12, w, bottom, 0); ctx.fill();
+  ctx.save();
+  bagPath(x, top, w, bottom, openA); ctx.clip();
+  // 紙の 地：まるい 胴なので 両はしが 暗い
+  const g = ctx.createLinearGradient(x-6,0,x+w+6,0);
+  g.addColorStop(0,'#8f6a3c'); g.addColorStop(0.1,'#b98f58'); g.addColorStop(0.42,'#d4ad74'); g.addColorStop(0.6,'#cfa66b'); g.addColorStop(0.9,'#b48850'); g.addColorStop(1,'#8a6538');
+  ctx.fillStyle = g; ctx.fillRect(x-10, top-40, w+20, bottom-top+40);
+  // 上から 下へ：口は 光が あたり、下は すこし 暗い
+  const gv = ctx.createLinearGradient(0, top, 0, Math.min(bottom, top+520));
+  gv.addColorStop(0,'rgba(255,240,200,.10)'); gv.addColorStop(1,'rgba(40,25,5,.12)');
+  ctx.fillStyle = gv; ctx.fillRect(x-10, top-40, w+20, bottom-top+40);
+  // 紙の 繊維
+  ctx.fillStyle = paperPattern(); ctx.fillRect(x-10, top-40, w+20, bottom-top+40);
+  // 横の 折り目（マチ）：細い 影と 光
+  for(const [fx, d] of [[x+w*0.07, 1], [x+w*0.93, -1]]){
+    ctx.strokeStyle='rgba(60,38,10,.28)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(fx, top+34); ctx.bezierCurveTo(fx-d*2, top+120, fx+d*3, top+260, fx+d*4, bottom); ctx.stroke();
+    ctx.strokeStyle='rgba(255,236,200,.22)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(fx+d*2, top+34); ctx.bezierCurveTo(fx, top+120, fx+d*5, top+260, fx+d*6, bottom); ctx.stroke();
+  }
+  // 口を しぼった しわ（縫い目の 下から ななめに 広がる）
+  ctx.lineWidth = 1;
+  const rw = (k)=>{ let s = (b.id||1)*9301 + k*49297; s = (s*233280+1)%233280; return s/233280; };
+  for(let i=0;i<9;i++){
+    const sx = x + w*(0.14 + 0.72*rw(i)), len = 24 + 50*rw(i+20), lean = (sx - (x+w/2)) / w * 30;
+    ctx.strokeStyle='rgba(60,38,10,.07)'; ctx.beginPath(); ctx.moveTo(sx, L.seamY+18); ctx.quadraticCurveTo(sx+lean*0.4, L.seamY+18+len*0.5, sx+lean, L.seamY+18+len); ctx.stroke();
+    ctx.strokeStyle='rgba(255,236,200,.08)'; ctx.beginPath(); ctx.moveTo(sx+1.5, L.seamY+18); ctx.quadraticCurveTo(sx+1.5+lean*0.4, L.seamY+18+len*0.5, sx+1.5+lean, L.seamY+18+len); ctx.stroke();
+  }
+  // 口の 上：重ねた 紙の 切り口（3枚）と、縫い目の 帯
+  if(!openA){
+    ctx.fillStyle='rgba(60,38,10,.10)'; ctx.fillRect(x-10, L.seamY-14, w+20, 28);
+    ctx.strokeStyle='rgba(60,38,10,.35)'; ctx.lineWidth=1;
+    for(let k=0;k<3;k++){ ctx.beginPath(); ctx.moveTo(x, top+1.5+k*1.6); ctx.lineTo(x+w, top+1.5+k*1.6); ctx.stroke(); }
+  }
+  ctx.strokeStyle='rgba(60,38,10,.25)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x-10, L.seamY+16); ctx.lineTo(x+w+10, L.seamY+16); ctx.stroke();
+  if(b.face==='front') drawFrontPrint(L, b, x, top, w); else drawBackPrint(L, b, x, top, w);
+  ctx.restore();
+  // 口が あいたら 中の お米
+  if(openA>0){ ctx.fillStyle='#f4efe0'; ctx.beginPath(); ctx.ellipse(W/2, top+6, w*0.42*openA, 14*openA, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(W/2, top+9, w*0.36*openA, 8*openA, 0, 0, Math.PI*2); ctx.fill(); }
 }
 
-function drawFrontPrint(L, b, x, y, w, h){
-  const lw = Math.min(118, w*0.32), ly = L.seamY + 40;
-  if(ly + lw*1.2 < y+h-10){
-    ctx.fillStyle = b.golden ? '#2f7d3a' : '#b8352a';
-    roundRect(W/2 - lw/2, ly, lw, lw*1.15, 6); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.font = `${Math.round(lw*0.3)}px "Dela Gothic One",sans-serif`;
-    ctx.fillText(b.golden?'新米':'精米', W/2, ly + lw*0.34);
-    ctx.font = `700 ${Math.round(lw*0.13)}px "Zen Maru Gothic",sans-serif`;
-    ctx.fillText(b.brand, W/2, ly + lw*0.68, lw*0.88);
-    ctx.font = `700 ${Math.round(lw*0.15)}px "Zen Maru Gothic",sans-serif`;
-    ctx.fillText(b.kg+'kg', W/2, ly + lw*0.92);
+// インクの 刷り：紙に しみこむ ように（multiply）、すこし かすれる
+function inked(col, fn){ ctx.save(); ctx.globalCompositeOperation='multiply'; ctx.globalAlpha=0.88; ctx.fillStyle=col; ctx.strokeStyle=col; fn(); ctx.restore(); }
+// 稲穂の 絵（のぎの ある もみが 茎に そって たれる）
+function inaho(x, y, s, col){
+  inked(col, ()=>{
+    ctx.lineWidth = 1.6*s; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(x, y+120*s); ctx.quadraticCurveTo(x+4*s, y+40*s, x+28*s, y); ctx.stroke(); // 茎
+    for(let i=0;i<11;i++){
+      const t = i/11, px = x + 28*s*t*t + 4*s*t, py = y + 70*s*(1-t) - 4*s;
+      for(const d of [-1,1]){
+        ctx.save(); ctx.translate(px + d*5*s, py + 6*s*t); ctx.rotate(d*0.5 + 0.25);
+        ctx.beginPath(); ctx.ellipse(0, 0, 3.2*s, 6*s, 0, 0, Math.PI*2); ctx.fill();
+        ctx.lineWidth = 0.6*s; ctx.beginPath(); ctx.moveTo(0, -6*s); ctx.lineTo(d*2*s, -12*s); ctx.stroke(); // のぎ
+        ctx.restore();
+      }
+    }
+    // 葉
+    ctx.lineWidth = 2*s; ctx.beginPath(); ctx.moveTo(x+2*s, y+118*s); ctx.quadraticCurveTo(x-24*s, y+70*s, x-30*s, y+30*s); ctx.stroke();
+  });
+}
+function drawFrontPrint(L, b, x, top, w){
+  const ink = b.golden ? '#2f5d2a' : '#2d4f2a', red = '#b8322a';
+  const y0 = L.seamY + 34, cx = W/2;
+  // 稲穂（左）
+  inaho(x + w*0.16, y0 + 12, Math.min(1.1, w/360), '#7a8a2a');
+  // 内容量の 段（下の ほう）と、たて書きの 銘柄（筆の 字。内容量の 上に おさまる 大きさ）
+  const by = Math.min(H - 70, y0 + 250);
+  const fs = Math.min(46, w*0.12, (by - y0 - 24) / [...b.brand].length);
+  inked(ink, ()=>{
+    ctx.font = `${fs}px "Yuji Syuku","Dela Gothic One",serif`; ctx.textAlign='center'; ctx.textBaseline='top';
+    const chars = [...b.brand]; const step = fs*1.02;
+    chars.forEach((c,i)=>{ const rot = 'ー'===c; ctx.save(); ctx.translate(cx, y0 + i*step + (rot?fs/2:0)); if(rot) ctx.rotate(Math.PI/2); ctx.fillText(c, 0, rot?-fs/2:0); ctx.restore(); });
+  });
+  // 右上の 赤い 角印「精米」
+  const sw = Math.min(54, w*0.15), sx = x + w*0.80 - sw/2, sy = y0;
+  inked(red, ()=>{
+    ctx.lineWidth = 2.5; ctx.strokeRect(sx, sy, sw, sw); ctx.strokeRect(sx+4, sy+4, sw-8, sw-8);
+    ctx.font = `${Math.round(sw*0.34)}px "Dela Gothic One",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('精', sx+sw/2, sy+sw*0.32); ctx.fillText('米', sx+sw/2, sy+sw*0.70);
+  });
+  // 内容量（右下）
+  inked(ink, ()=>{
+    ctx.font = `700 ${Math.round(w*0.035+4)}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('内容量', x + w*0.80, by);
+    ctx.font = `${Math.round(w*0.07+6)}px "Dela Gothic One",sans-serif`; ctx.fillText(b.kg+'kg', x + w*0.80, by + w*0.08);
+    ctx.font = `700 ${Math.round(w*0.035+3)}px "Zen Maru Gothic",sans-serif`; ctx.fillText('らいすぴあ', x + w*0.20, by + w*0.08);
+  });
+  // 新米は 赤い まるい シール（あとから 貼る）
+  if(b.golden){
+    const r = Math.min(30, w*0.085), gx = x + w*0.78, gy = y0 + sw + r + 18;
+    ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(gx+1.5, gy+2, r, 0, 7); ctx.fill();
+    ctx.fillStyle='#d23a2a'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, 7); ctx.fill();
+    ctx.strokeStyle='#f0c44c'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(gx, gy, r-3, 0, 7); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font=`${Math.round(r*0.62)}px "Dela Gothic One",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('新米', gx, gy+1);
   }
   if(b.printed){
-    ctx.fillStyle = C.ink; ctx.font='700 11px "Zen Maru Gothic",sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-    ctx.fillText('糸抜きはここから →', L.x0 - 6, L.seamY + 28);
+    inked('#3a2a14', ()=>{ ctx.font='700 11px "Zen Maru Gothic",sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText('糸抜きはここから →', L.x0 - 6, L.seamY + 28); });
   }
 }
-function drawBackPrint(L, b, x, y, w, h){
-  // 裏の 一括表示（名称・原料玄米・内容量）
-  const bw = Math.min(170, w*0.5), bh = 74, bx = W/2 - bw/2, by = L.seamY + 84;
-  if(by + bh > y+h-8) return;
-  ctx.fillStyle='rgba(255,255,255,.75)'; ctx.fillRect(bx, by, bw, bh);
-  ctx.strokeStyle=C.ink; ctx.lineWidth=1; ctx.strokeRect(bx, by, bw, bh);
-  ctx.fillStyle='#3a2a14'; ctx.font='700 10px "Zen Maru Gothic",sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
-  const rows = [['名称','精米'],['原料玄米', b.brand],['内容量', b.kg+'kg'],['販売者','らいすぴあ']];
-  rows.forEach((r,i)=>{ const ry = by + 10 + i*18; ctx.fillText(r[0], bx+6, ry); ctx.fillText(r[1], bx+58, ry, bw-64);
-    if(i) { ctx.beginPath(); ctx.moveTo(bx, ry-9); ctx.lineTo(bx+bw, ry-9); ctx.stroke(); } });
-  ctx.beginPath(); ctx.moveTo(bx+52, by); ctx.lineTo(bx+52, by+bh); ctx.stroke();
+function drawBackPrint(L, b, x, top, w){
+  // 裏の 一括表示（紙に じかに 刷る）と、あとから 押す 精米年月日（その日の 日付）
+  const bw = Math.min(190, w*0.56), rows = [['名称','精米'],['原料玄米', b.brand],['内容量', b.kg+'kg'],['精米年月日', ''],['販売者','らいすぴあ']];
+  const rh = 18, bh = rh*rows.length, bx = W/2 - bw/2, by = L.seamY + 84;
+  if(by + bh > H - 8) return;
+  inked('#3a2a14', ()=>{
+    ctx.lineWidth=1; ctx.strokeRect(bx, by, bw, bh);
+    ctx.font='700 10px "Zen Maru Gothic",sans-serif'; ctx.textAlign='left'; ctx.textBaseline='middle';
+    rows.forEach((r,i)=>{ const ry = by + rh/2 + i*rh; ctx.fillText(r[0], bx+6, ry); if(r[1]) ctx.fillText(r[1], bx+66, ry, bw-72);
+      if(i){ ctx.beginPath(); ctx.moveTo(bx, ry-rh/2); ctx.lineTo(bx+bw, ry-rh/2); ctx.stroke(); } });
+    ctx.beginPath(); ctx.moveTo(bx+60, by); ctx.lineTo(bx+60, by+bh); ctx.stroke();
+  });
+  // 精米年月日：インクジェットの 点の 字（むらさき）
+  const d = new Date(); const ds = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+  inked('#4a3a7a', ()=>{ ctx.font='700 10px ui-monospace,Menlo,monospace'; ctx.textAlign='left'; ctx.textBaseline='middle'; ctx.fillText(ds, bx+66, by + rh/2 + 3*rh); });
 }
 
 // 表：上糸（白）が まっすぐ 並ぶ だけ
@@ -719,21 +817,7 @@ function hintText(a, bTxt, L){
   const pulse = 0.5+0.5*Math.sin(S.t*6);
   ctx.fillStyle='#f0c44c'; ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
   otext(a, W/2, L.seamY-34, '#f0c44c');
-  ctx.globalAlpha = 0.6+0.4*pulse; otext(bTxt, W/2, L.seamY+L.bagH*0.86, '#f0c44c'); ctx.globalAlpha=1;
-}
-
-// あけた袋を たたんで 足もとに 積む
-function drawPile(L){
-  const n = Math.min(S.bags, 40); if(!n) return;
-  const top = L.seamY + L.bagH + 22; if(top > H-20) return;
-  const bw = 34, bh = 9, per = Math.max(1, Math.floor((W-40)/(bw+6)));
-  for(let i=0;i<n;i++){
-    const col = i%per, row = Math.floor(i/per);
-    const x = 20 + col*(bw+6) + (row%2)*8, y = H - 22 - row*(bh+2);
-    if(y < top) break;
-    ctx.fillStyle = i%5===4 ? '#d9b866' : '#b88f58'; roundRect(x, y, bw, bh, 2); ctx.fill();
-    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(x, y+bh-3, bw, 3);
-  }
+  ctx.globalAlpha = 0.6+0.4*pulse; otext(bTxt, W/2, L.seamY+Math.min(L.bagH-40, 230), '#f0c44c'); ctx.globalAlpha=1;
 }
 
 function drawFx(){
@@ -925,6 +1009,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 resize(); requestAnimationFrame(frame);
+try{ document.fonts.ready.then(()=>{ bagStore.key = null; }); }catch(e){}
 })();
 </script>
 </body>

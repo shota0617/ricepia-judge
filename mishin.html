@@ -90,12 +90,13 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
       <ul class="rules">
         <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>裏返す</strong>。裏には糸の輪がならぶ。</span></li>
         <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこを<strong>二本指でつまんで</strong>輪からはずす。</span></li>
-        <li><b>3</b><span>つまんだまま、縫った向きと逆へ<strong>ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（タップでほぐす）。</span></li>
+        <li><b>3</b><span>つまんだまま、縫った向きと逆へ<strong>ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（表側の白糸を少し引くか、タップでほぐす）。</span></li>
       </ul>
       <div class="goals" id="goals"></div>
       <button class="go" id="startBtn" type="button">はじめる</button>
       <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。</p>
       <p class="note">ほどき方は、紙袋メーカーと製粉会社の説明にもとづく（下糸は上糸の輪の中を通っている。裏から見て左端の、輪にささった下糸をはずし、ゆっくり引く。縫い始めの側からだと からまる）。袋によっては右から、また1本糸の袋は どちらからでも ほどける。<br/>
+      もつれたら表側の白糸を引いてから赤を引く、はJAの案内として紹介されている方法。<br/>
       出典：<a href="https://yamaguchi-kf-pack.com/%E7%B4%99%E8%A2%8B/%E3%83%9F%E3%82%B7%E3%83%B3%E7%B8%AB%E3%81%84%E7%B4%99%E8%A2%8B%E3%81%AE%E9%96%8B%E3%81%91%E6%96%B9%E3%82%92%E5%8B%95%E7%94%BB%E3%81%A7%E7%B4%B9%E4%BB%8B%EF%BC%81%E3%80%80%E7%B4%99%E8%A2%8B%E3%83%A1/" target="_blank" rel="noopener">山口紙袋（ミシン縫い紙袋の開け方）</a>・<a href="https://www.flour.co.jp/news/article/063/" target="_blank" rel="noopener">木下製粉（ミシン袋の開け方）</a></p>
     </div>
   </div>
@@ -141,7 +142,8 @@ const R = {
   knotSlow: 0.25,       // ひっかかる目では 安全な速さが この割合に
   knotLen: 1.8,         // ひっかかる目は 何目ぶんの長さ
   knotGrace: 0.45,      // ひっかかって 止まる間。この間は 赤でも もつれない
-  untangleTaps: 3,      // もつれを ほぐす タップの数
+  untangleTaps: 3,      // もつれを ほぐす タップの数（細いもので より戻す）
+  tugPx: 50,            // 表側の 白糸を これだけ 引くと もつれが ゆるむ（JA の 案内）
   flipDur: 0.35,
   openDur: 0.6,
   timeBag: 1.5, timeCut: -1.5, timeClean: 1, timeZone: 1.5, timeWrong: -2, timeFront: -1,
@@ -262,6 +264,9 @@ function tap(x,y){
   if(b.tangle) untangleTap();
   else if(!S.held){ S.pinchHint = 1.6; }
 }
+// もつれた とき：表側の 白糸を 少し 引くと ゆるむ（JA の 案内）。その 白糸の 端の 位置
+function whiteTail(b){ const L=layout(), step=(L.x1-L.x0)/b.N; const sd = pullDir(b);
+  const x = (b.from==='R' ? L.x1 + step*0.1 : L.x0 - step*0.1) + sd*22; return { x, y: L.seamY + 36 }; } // 画面の 端から すこし 内がわ（つまみやすく）
 function untangleTap(){
   const b=S.bag;
   b.tangle.taps++; audio.click(); S.fx.push({kind:'catch', x:b.tangle.x, y:b.tangle.y, t:0, life:0.3});
@@ -292,7 +297,11 @@ function down(x,y){
     }
     return;
   }
-  if(b.tangle){ untangleTap(); return; }
+  if(b.tangle){
+    const t = whiteTail(b);
+    if(Math.hypot(x-t.x, y-t.y) < 70){ b.tangle.tugging = true; S.held = true; return; } // 白糸を つまんだ
+    untangleTap(); return;
+  }
   S.held = true;
 }
 function move(x,y){
@@ -300,6 +309,7 @@ function move(x,y){
   const b=S.bag;
   const dx = x-S.px, dy = y-S.py;
   S.px=x; S.py=y;
+  if(b.tangle){ if(b.tangle.tugging) b.tangle.tug += Math.hypot(dx,dy); return; }
   // 糸は ほどく向き（縫った向きと逆）へ 引いた ぶんだけ ぬける。もどす 向きは 数えない
   const eff = Math.max(0, dx*pullDir(b)) + 0.8*Math.max(0, dy), raw = Math.hypot(dx,dy);
   S.pend += eff;
@@ -307,7 +317,8 @@ function move(x,y){
 }
 function up(){
   S.held=false;
-  const b=S.bag; if(b && b.phase==='pull' && b.knots.has(b.pulled)) S.speed=0; // きつい目の上で はなしたら 張りは ぬける
+  const b=S.bag;
+  if(b && b.tangle) b.tangle.tugging = false; if(b && b.phase==='pull' && b.knots.has(b.pulled)) S.speed=0; // きつい目の上で はなしたら 張りは ぬける
 }
 
 // ---------- 1コマ ----------
@@ -343,7 +354,11 @@ function step(dt){
 
   const moved = S.pend; S.pend = 0;
   if(S.held) S.liftT = 0; else S.liftT += dt;
-  if(b.tangle){ S.speed=0; S.tension=0; S.over=0; return; }
+  if(b.tangle){
+    S.speed=0; S.tension=0; S.over=0;
+    if(b.tangle.tug >= R.tugPx){ b.tangle=null; S.held=false; say('白糸を引いたら ゆるんだ','ok'); audio.click(); }
+    return;
+  }
 
   const inst = moved/dt;
   if(S.held || S.liftT > 0.25) S.speed += (inst - S.speed) * Math.min(1, dt/R.smooth);
@@ -393,8 +408,8 @@ function tangle(){
   S.shake=1; audio.snap();
   const p = stitchPos(b, b.pulled);
   if(b.tangles>=R.tangleLimit){ b.failed=true; b.done=true; b.open=0; addTime(R.timeCut); say('ハサミで切った…','ng'); return; }
-  b.tangle = { taps:0, x:p.x, y:p.y };
-  say('もつれた！ タップでほぐす','ng');
+  b.tangle = { taps:0, x:p.x, y:p.y, tug:0, tugging:false };
+  say('もつれた！ 白糸を引いて ほぐす','ng');
 }
 
 function finishBag(){
@@ -611,6 +626,21 @@ function drawSeamBack(L, b){
     ctx.lineWidth = wantKnot ? 3 : 2.2; ctx.strokeStyle = wantKnot ? redEdge : red; ctx.stroke();
   }
   whiteHalves(true);
+  // ほどけた ところから 袋の 口（上の 縁）が ひらいて すきまが 見える
+  if(b.pulled>0 && !b.done){
+    const xa = from==='R' ? L.x1 + 26 : L.x0 - 26, xb = posOf(b.pulled-1), top = sy - 30;
+    const gl = Math.abs(xb - xa);
+    ctx.fillStyle='rgba(30,18,4,.55)'; ctx.beginPath(); ctx.moveTo(xa, top);
+    for(let j=0;j<=12;j++){ const t=j/12; ctx.lineTo(xa + (xb-xa)*t, top + 1 + Math.sin(t*Math.PI)*Math.min(5, 1+gl/60)*(1-t*0.6)); }
+    ctx.lineTo(xb, top); ctx.closePath(); ctx.fill();
+  }
+  // 糸を 張ると、ほどけ目の まわりの 紙が よる
+  if(b.phase==='pull' && !b.done && S.held && S.tension>0.5){
+    const zx = posOf(Math.min(b.pulled, n-1)), k = Math.min(1, (S.tension-0.5)*1.4);
+    ctx.strokeStyle=`rgba(70,45,10,${0.35*k})`; ctx.lineWidth=1; ctx.beginPath();
+    for(let j=-2;j<=2;j++){ const x = zx + j*5; ctx.moveTo(x, sy+6); ctx.lineTo(x + sd*4, sy+6 + 10*k); }
+    ctx.stroke();
+  }
   // 2つの 端
   const sx = from==='R' ? L.x1 + step*0.1 : L.x0 - step*0.1; // ほどき始め（裏から見て たいてい左）
   const ex = from==='R' ? L.x0 - step*0.1 : L.x1 + step*0.1; // 縫い始め
@@ -650,8 +680,14 @@ function drawSeamBack(L, b){
       ctx.strokeStyle=C.red; ctx.lineWidth=2;
       for(let k=0;k<5;k++){ const a=S.t*3+k*1.3; ctx.beginPath(); ctx.ellipse(b.tangle.x + Math.cos(a)*2, sy+1+Math.sin(a)*2, 9-k, 6-k*0.6, a, 0, 7); ctx.stroke(); }
       const left = R.untangleTaps - b.tangle.taps;
+      // 表側の 白糸の 端（縫い目の 下から のぞく）。つまんで 引くと のびる
+      const wt = whiteTail(b), pull = Math.min(1, b.tangle.tug / R.tugPx), pulse = 0.5+0.5*Math.sin(S.t*7);
+      ctx.strokeStyle=C.shade; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(wt.x - sd*10, sy+3); ctx.quadraticCurveTo(wt.x - sd*4, sy+18, wt.x + sd*pull*10, wt.y + pull*24); ctx.stroke();
+      ctx.strokeStyle=C.white; ctx.lineWidth=2.4; ctx.stroke();
+      ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(wt.x, wt.y, 22, 0, 7); ctx.stroke();
       ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      otext('タップで ほぐす あと'+left, Math.min(W-70, Math.max(70, b.tangle.x)), sy+36, '#ffd0cc');
+      otext('白糸を つまんで 引く', Math.min(W-80, Math.max(80, wt.x + sd*90)), wt.y + 4, '#ffd0cc');
+      otext('（タップでも ほぐせる あと'+left+'）', Math.min(W-100, Math.max(100, wt.x + sd*100)), wt.y + 22, '#d9c9a0');
     }
   }
   if(b.hint && S.bag===b && b.phase==='look'){
@@ -750,7 +786,7 @@ function drawMeter(L){
   ctx.beginPath(); ctx.arc(tx, my+6, 9, 0, 7); ctx.fill();
   ctx.strokeStyle='#131a2e'; ctx.lineWidth=2; ctx.stroke();
   if(S.over>0){ ctx.fillStyle='#ef5350'; ctx.fillRect(mx, my+16, mw*Math.min(1,S.over/R.tangleAfter), 3); }
-  if(b && b.phase==='pull' && !b.done){
+  if(b && b.phase==='pull' && !b.done && !b.tangle){
     let d=99; for(const k of b.knots){ if(k>=b.pulled) d=Math.min(d,k-b.pulled); }
     ctx.textAlign='right'; ctx.font='700 11px "Zen Maru Gothic",sans-serif';
     if(S.held && S.dirEff<0.4){ ctx.fillStyle='#f0c44c'; ctx.fillText(pullDir(b)>0 ? '→ 横か 下へ 引く' : '← 横か 下へ 引く', mx+mw, my-8); }

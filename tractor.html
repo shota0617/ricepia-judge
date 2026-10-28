@@ -4980,7 +4980,8 @@ const LEAK = (() => {
 // トラクターが近づくと 強くこいで逃げる。水面に落ちて動けない虫（ウンカの幼虫も）を食べる 田んぼの守り手（福井の米づくりのサイト
 // https://rice.tanaka-fukui.jp/archives/276）。落ちた虫の波を感じとって寄っていく（クボタ https://www.kubota.co.jp/kubotatanbo/livingthing/water-strider.html）
 const AMENBO = (() => {
-  if (!SHIRO || TOD === 'yoru' || RAIN) return { update() {}, setWater() { return 0; } };   // 雨の日は 水面が雨の輪でいっぱい。夜は見えない
+  if (!SHIRO) return { update() {}, setWater() { return 0; } };
+  const SHOW = TOD !== 'yoru' && !RAIN;              // 雨の日は 水面が雨の輪でいっぱい。夜は見えない（水の ある所の 表は カルガモが 使うので 作る）
   const N = MOBILE ? 12 : 24, m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), v3 = new THREE.Vector3(), one = new THREE.Vector3(1, 1, 1);
   const mat = new THREE.MeshLambertMaterial({ color: 0x2b241c });
   const leg = L => new THREE.BoxGeometry(0.0012, 0.001, L).translate(0, 0, L / 2);   // つけねから外へのびる脚
@@ -5029,7 +5030,7 @@ const AMENBO = (() => {
       const x = -HX + (Math.floor(c / GH) + 0.5) * G, z = -HZ + (c % GH + 0.5) * G;
       if (Math.abs(x) < HX - 0.5 && Math.abs(z) < HZ - 0.5 && hgt[c] < 0.004 && [[0.03, 0], [-0.03, 0], [0, 0.03], [0, -0.03]].every(([dx, dz]) => soilAt(x + dx, z + dz) < 0.004)) ponds.push([x, z]);
     }
-    while (list.length < N && ponds.length) {       // 水たまりに 1〜3 匹ずつ
+    while (SHOW && list.length < N && ponds.length) {   // 水たまりに 1〜3 匹ずつ
       const [x, z] = ponds[Math.floor(Math.random() * ponds.length)];
       for (let m = 0, n = 1 + Math.floor(Math.random() * 3); m < n && list.length < N; m++) {
         const px = x + (Math.random() - 0.5) * 0.06, pz = z + (Math.random() - 0.5) * 0.06;
@@ -5042,6 +5043,7 @@ const AMENBO = (() => {
   let told = false;
   const put = (im, n, x, y, z, a) => { e.set(0, a, 0); q.setFromEuler(e); m4.compose(v3.set(x, y, z), q, one); im.setMatrixAt(n, m4); };
   function update(dt) {
+    if (!SHOW) return;
     const sx = S.x - Math.sin(S.yaw) * 0.5, sz = S.z - Math.cos(S.yaw) * 0.5;
     list.forEach((u, k) => {
       const d = Math.hypot(u.x - sx, u.z - sz), near = d < 3.5;
@@ -5227,7 +5229,7 @@ const KAMO = (() => {
       if (!S.started || S.done || (S.workT || 0) < arriveT) return;
       const p = spot(16);                            // 遠くから 飛んできて 降りる
       const ang = Math.random() * 6.28;
-      list.forEach((u, k) => { u.g.visible = true; takeOff(u, p[0] + k * 0.7, p[1] + k * 0.4, [p[0] + Math.sin(ang) * 60, p[1] + Math.cos(ang) * 60, 14]); });
+      list.forEach((u, k) => { u.g.visible = true; takeOff(u, p[0] + k * 0.7, p[1] + k * 0.4, [p[0] + Math.sin(ang) * 60 + k * 1.4, p[1] + Math.cos(ang) * 60 - k * 0.9, 14 + k * 0.6]); });   // 2 羽は はじめから 少し はなれて 飛ぶ
     }
     for (const u of list) {
       const g = u.g;
@@ -5263,8 +5265,9 @@ const KAMO = (() => {
           u.t = 1.5 + Math.random() * 3;
           if (Math.random() < 0.55) { u.peck = 1.2 + Math.random() * 1.5; u.sp = 0; }
           else {
-            const cx = u === b ? a.x + 0.6 : u.x, cz = u === b ? a.z + 0.3 : u.z;
-            u.tx = cx + (Math.random() - 0.5) * 2; u.tz = cz + (Math.random() - 0.5) * 2; u.sp = 0.15 + Math.random() * 0.08;
+            if (u === b) { const r = 0.5 + Math.random() * 0.5, ang = Math.random() * 6.28; u.tx = a.x + Math.sin(ang) * r; u.tz = a.z + Math.cos(ang) * r; }   // 相方の 0.5〜1m そば
+            else { u.tx = u.x + (Math.random() - 0.5) * 2; u.tz = u.z + (Math.random() - 0.5) * 2; }
+            u.sp = 0.15 + Math.random() * 0.08;
           }
         }
         if (!inField(u.tx, u.tz, 1)) { u.tx = Math.max(-HX + 1, Math.min(HX - 1, u.tx)); u.tz = Math.max(-HZ + 1, Math.min(HZ - 1, u.tz)); }
@@ -5284,6 +5287,15 @@ const KAMO = (() => {
       }
       g.position.set(u.x, u.y, u.z); g.rotation.y = u.yaw;
       if (u.st === 'fly') g.rotation.z = 0;
+    }
+    if (a.st === 'walk' && b.st === 'walk') {        // 2 羽が 重ならない：からだ（はば 20cm・長さ 35cm）の ぶん はなす
+      let dx = b.x - a.x, dz = b.z - a.z, dd = Math.hypot(dx, dz);
+      if (dd < 0.38) {
+        if (dd < 1e-3) { dx = 1; dz = 0; dd = 1; }
+        const push = 0.38 - dd; b.x += dx / dd * push; b.z += dz / dd * push; b.tx += dx / dd * push; b.tz += dz / dd * push;
+        b.x = Math.max(-HX + 1, Math.min(HX - 1, b.x)); b.z = Math.max(-HZ + 1, Math.min(HZ - 1, b.z));
+        b.g.position.x = b.x; b.g.position.z = b.z;
+      }
     }
     if (pend && toastT <= 0) { pend = false; chk = true; toast(MSG, 6); }   // ほかの知らせが 消えてから
     if (chk) {

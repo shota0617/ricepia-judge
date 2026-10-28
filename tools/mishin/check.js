@@ -229,6 +229,11 @@ const CHECKS = {
     const w = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(3); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
       KB.down(L.x1-2, L.seamY); KB.up(); return { mark:S.mark, markT:S.markT }; });
     ok(w.mark==='？' && w.markT>0, '縫い始めを つまむと スズメが「？」', w);
+    const z = await p.evaluate(() => { KB.calm = true; KB.start(); const slide = KB.S.bag.slide; KB.calm = false; KB.S.time = 0.01; KB.step(1/60); return { slide }; });
+    await p.waitForTimeout(150);
+    const sr = await p.evaluate(() => document.getElementById('sr').textContent);
+    ok(z.slide===0, '動きを へらす 設定では 袋が すべって こない', z);
+    ok(/てんすう/.test(sr), 'おわりの 点が 読み上げの 欄に 入る', sr);
     const q = await page(b, 390, 844, '#coin');
     const bar = await q.evaluate(() => { KB.manual = true; for (let i=0;i<5;i++) KB.step(1/60); return [...document.querySelectorAll('.steps .bar i')].map(i=>getComputedStyle(i, '::after').content); });
     ok(bar[0]==='none' || bar[0]==='', 'れんしゅう 1袋目の 間は 帯に こめつぶが すわらない', bar);

@@ -2776,6 +2776,46 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.seen > 0 && r.hits === 0 && r.riceHits === 0 && (r.arrowHits > 0 || r.dodged > 0) && r.arrowHits === 0 };
     })();
+    // 町名の 札：置き場所が ない ときは 待ち、4秒 たっても なければ 出さない（重なる 所には 描かない）。町が かわったら 待ちを 引きつがない（Codex の 指摘 2つ）
+    R.checks.townNoRoom = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d'), el = document.getElementById('toast');
+        const shut = () => { document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
+        const keep = { fr: ctx.fillRect, ft: ctx.fillText }; let box = null, lastRect = null;
+        ctx.fillRect = function (x, y, w0, h0) { lastRect = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
+        ctx.fillText = function (t) { if (/^〜 .+ 〜$/.test(t)) box = lastRect; return keep.ft.apply(this, arguments); };
+        const ov = (b, r) => !!(b && r && b[0] < r[2] && b[2] > r[0] && b[1] < r[3] && b[3] > r[1]);
+        // 1. 北の ゴールで 長い 町名：左右にも 矢印の 下にも 置けない（矢印が 上の まん中、矢印の 下は お米）
+        const g = G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.008 && Math.abs(x.lng - G.me.lng) < 0.004 && G.dist(G.me, x) < 3500)[0];
+        let frames = 0, bad = 0, drawn = 0, gone = null;
+        if (g) {
+          G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();
+          P.townBanner('住吉町四丁目の とても ながい 町名');
+          for (let i = 0; i < 50; i++) {   // 5秒あまり（待つ 4秒を こえて）
+            box = null; G.toast('🧭 テストの 知らせ：ちょうど 2行に なる 長さ');
+            await new Promise(res => requestAnimationFrame(res));
+            const A = P.maze.mapArrow, Rb = P.riceBox;
+            if (A) { frames++; if (box) { drawn++; if (ov(box, A) || ov(box, Rb)) bad++; } }
+            await wait(100);
+          }
+          gone = !P.townBox;
+        }
+        // 2. 待ちの とちゅうで 本当に 町が かわる：新しい 町名は 前の 待ちを 引きつがない
+        P.townWait = 3500;
+        let reset = null;
+        const sp = G.spots.filter(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000)[0];
+        if (sp) {
+          const t = P.meiroApi.toTile(sp.lat, sp.lng); P.rollPut(t.x + 0.5, t.y + 0.5);
+          for (let i = 0; i < 30 && reset === null; i++) { await wait(100); shut(); if (P.townBox || P.townWait !== 3500) reset = P.townWait < 1000; }
+        }
+        ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
+        return { g: g && g.name, frames, drawn, bad, gone, reset };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.frames > 0 && r.bad === 0 && r.gone === true && r.reset === true };
+    })();
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -2881,6 +2921,7 @@ async function walkTo(page, id) {
   need((R.walk.find(w => w.id === 'chest') || {}).ribbon?.has && !R.walk.find(w => w.id === 'chest').ribbon.hit, `ごほうびの「NEW」の 札が 名前の 字に 重なる（${JSON.stringify((R.walk.find(w => w.id === 'chest') || {}).ribbon)}）`);
   need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
   need(c.eventToast && c.eventToast.ok, `イベントの 窓の 上に 知らせが 重なる（${JSON.stringify(c.eventToast)}）`);
+  need(c.townNoRoom && c.townNoRoom.ok, `町名の 札：置き場所が ない ときに 重ねて 描く・町が かわっても 待ちを 引きつぐ（${JSON.stringify(c.townNoRoom)}）`);
   need(c.townToast && c.townToast.ok, `町名の 札（〜 ○○町 〜）が 上の 知らせに かくれる（${JSON.stringify(c.townToast)}）`);
   need(c.landscape568 && c.landscape568.ok, `横に した 低い 画面（568×320）で はじめの1枚が えらべない・ごほうびの 窓が はみ出す（${JSON.stringify(c.landscape568)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);

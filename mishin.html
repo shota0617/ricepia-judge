@@ -239,6 +239,7 @@ function startGame(practice){
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true;
   ui.hud.hidden = practice; ui.steps.hidden = !practice;
+  ui.steps._no = ui.steps._now = null;
   audio.ensure();
 }
 
@@ -332,7 +333,7 @@ function tap(x,y){
   if(b.phase==='look'){
     const w = whereTap(x,y);
     if(w==='bag'){ b.flipT = 0.0001; audio.flip(); }
-    else if(w==='L' || w==='R'){ say('糸は 二本指で つまむ','ok'); S.pinchHint = 1.6; }
+    else if(w==='L' || w==='R'){ say(S.practice ? '指を おいたまま 少し 動かす' : '糸は 二本指で つまむ','ok'); S.pinchHint = 1.6; }
     return;
   }
   if(b.tangle) untangleTap();
@@ -497,6 +498,7 @@ function multOf(){ return 1 + Math.floor(S.combo*4 + 1e-9); }
 
 function tangle(){
   const b=S.bag; b.tangles++; S.tangles++; S.combo=0; S.streak=0; S.over=0; S.speed=0; S.held=false;
+  pinch = null; oneCand = null; // 指の 層も はなした ことに（つぎに つまむと 白糸を 引ける）
   if(S.practice && b.forceTangle>=0){ audio.click(); } else { S.shake=1; audio.snap(); }
   const p = stitchPos(b, b.pulled);
   if(b.tangles>=R.tangleLimit && !S.practice){ b.failed=true; b.done=true; b.open=0; addTime(R.timeCut); say('ハサミで切った…','ng'); return; }
@@ -537,7 +539,7 @@ function layout(){
   const bagW = Math.min(W*(S.practice ? 0.76 : 0.86), 420);
   const seamY = Math.round(Math.max(210, Math.min(H*0.36, H-300)));
   const x0 = W/2 - bagW/2 + 14, x1 = W/2 + bagW/2 - 14; // 縫い目は 口の 縁 ちかくまで
-  const k = bagW / BAG.mouthW; // Blender の 絵 1px（＝1mm）が 画面で 何 px か
+  const k = bagW / BAG.mouthW; // Blender の 絵の 1px が 画面で 何 px か（絵は 1mm＝1.5px なので、画面の 1mm＝k×1.5px）
   return { bagW, seamY, x0, x1, bagH: H - seamY, k, mouthTop: seamY - (BAG.seamY - BAG.topY)*k }; // 袋は 画面の 下へ つづく
 }
 // i 番目に ほどける 目の 位置（ほどき始めの 端から 数える）
@@ -642,8 +644,8 @@ let bagSerial = 0;
 function drawBag(L, b){
   const openA = b.done ? Math.min(1, b.open/0.25) : 0;
   if(!b.id) b.id = ++bagSerial;
-  if(openA>0) paintBag(L, b, openA);
-  else ctx.drawImage(layer(bagStore, `${b.id}|${b.face}|${W}|${H}|${DPR}`, ()=>paintBag(L, b, 0)), 0, 0, W, H);
+  ctx.drawImage(layer(bagStore, `${b.id}|${b.face}|${W}|${H}|${DPR}`, ()=>paintBag(L, b, 0)), 0, 0, W, H);
+  if(openA>0) riceMouth(L, openA);
   if(!b.done || b.open<0.1){ if(b.face==='front') drawSeamFront(L, b); else drawSeamBack(L, b); }
   else drawHoles(L, b);
 }
@@ -659,16 +661,23 @@ for(const side of ['front','back']){ if(!BAGIMG[side]) continue; const im = new 
 function paintBagImage(L, b, openA){
   const im = bagImgs[b.face]; if(!im || !im.ok) return false;
   const k = L.k, dx = W/2 - (BAG.mouthX + BAG.mouthW/2)*k, dy = L.seamY - BAG.seamY*k, dw = BAG.w*k, dh = BAG.h*k;
-  // 床への 影
-  ctx.save(); ctx.filter = 'brightness(0) blur(6px)'; ctx.globalAlpha = 0.35; ctx.drawImage(im, dx+6, dy+10, dw, dh); ctx.restore();
+  // 床への 影（袋の 形を 黒く ぬった 絵を、少し ずらして 重ねて ぼかしの かわりに する。
+  //  ctx.filter は 古い iPhone の Safari で きかず、袋の 色の まま 二重に 見えていた）
+  if(!im.shadow){ const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d');
+    g.drawImage(im, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height); im.shadow = c; }
+  ctx.save(); ctx.globalAlpha = 0.12; for(const [ox,oy] of [[4,7],[6,10],[8,13]]) ctx.drawImage(im.shadow, dx+ox, dy+oy, dw, dh); ctx.restore();
   ctx.drawImage(im, dx, dy, dw, dh);
   // 絵より 画面が 長い ときは、いちばん 下の 行を のばす
   if(dy + dh < H){ ctx.drawImage(im, 0, BAG.h-4, BAG.w, 4, dx, dy+dh-1, dw, H-(dy+dh)+2); }
   const x = W/2 - L.bagW/2, w = L.bagW;
   if(b.face==='front') drawFrontPrint(L, b, x, L.mouthTop, w); else drawBackPrint(L, b, x, L.mouthTop, w);
-  if(openA>0){ ctx.fillStyle='#f4efe0'; ctx.beginPath(); ctx.ellipse(W/2, L.mouthTop+4, w*0.42*openA, 12*openA, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(W/2, L.mouthTop+7, w*0.36*openA, 7*openA, 0, 0, Math.PI*2); ctx.fill(); }
   return true;
+}
+// 口が あいて 中の お米が 見える
+function riceMouth(L, openA){
+  const w = L.bagW;
+  ctx.fillStyle='#f4efe0'; ctx.beginPath(); ctx.ellipse(W/2, L.mouthTop+4, w*0.42*openA, 12*openA, 0, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(W/2, L.mouthTop+7, w*0.36*openA, 7*openA, 0, 0, Math.PI*2); ctx.fill();
 }
 let paperPat = null;
 function paperPattern(){
@@ -1154,8 +1163,13 @@ function stepText(){
 }
 function syncUI(dt){
   if(S.practice && S.mode==='play'){
-    const html = `<div class="bar">れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}${Array.from({length:PRACTICE_N},(_,i)=>`<i class="${i<=S.bagNo?'on':''}"></i>`).join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now">${stepText()}</div>`;
-    if(ui.steps._h !== html){ ui.steps.innerHTML = html; ui.steps._h = html;
+    if(!ui.steps._built){
+      ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now" id="stepNow"></div>`;
+      ui.steps._built = true;
+    }
+    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, now = stepText();
+    if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
+    if(ui.steps._now !== now){ ui.steps._now = now; $('stepNow').innerHTML = now;
       const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; }
   }
   const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;
@@ -1182,6 +1196,7 @@ const fingers = new Map(); let pinch = null; let tapCand = null; let oneCand = n
 function oneOk(x, y){
   const b = S.bag; if(!S.practice || S.mode!=='play' || !b || b.done || b.flipT>0 || b.slide>0.05) return false;
   if(b.phase==='look'){ const w = whereTap(x, y); return b.face==='back' && (w==='L' || w==='R'); }
+  if(b.tangle){ const t = whiteTail(b); return Math.hypot(x-t.x, y-t.y) < 70; } // 白糸を つまむ（ほかの 所は タップで ほぐす）
   return true;
 }
 function oneStart(){ if(!oneCand || pinch) return; const f = fingers.get(oneCand.id); if(!f) return;
@@ -1193,12 +1208,12 @@ cv.addEventListener('pointerdown', e=>{
   if(e.pointerType==='mouse'){
     const b=S.bag;
     if(S.mode==='play' && b && b.phase==='look' && whereTap(x,y)==='bag'){ tap(x,y); return; }
-    if(S.mode==='play' && b && b.tangle){ tap(x,y); return; }
+    if(S.mode==='play' && b && b.tangle){ const t = whiteTail(b); if(Math.hypot(x-t.x, y-t.y) < 70){ pinch = 'mouse'; down(x,y); } else tap(x,y); return; }
     pinch = 'mouse'; down(x,y); return;
   }
   fingers.set(e.pointerId, {x, y, sx:x, sy:y});
   if(fingers.size===1){ tapCand = {id:e.pointerId, x, y, t:performance.now()};
-    if(S.practice && !(S.bag && S.bag.tangle) && oneOk(x, y)){ const id = e.pointerId; oneCand = {id, x, y}; setTimeout(()=>{ if(oneCand && oneCand.id===id && fingers.size===1) oneStart(); }, 250); }
+    if(S.practice && oneOk(x, y)){ const id = e.pointerId; oneCand = {id, x, y}; setTimeout(()=>{ if(oneCand && oneCand.id===id && fingers.size===1) oneStart(); }, 250); }
   }
   else if(fingers.size===2 && !pinch){
     tapCand = null; oneCand = null;

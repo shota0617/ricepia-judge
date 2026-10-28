@@ -162,7 +162,7 @@ def scene_setup():
     sc.render.resolution_x, sc.render.resolution_y = 900, 1500
     sc.render.resolution_percentage = 50 if FAST else 100
     sc.view_settings.view_transform = 'Standard'
-    # カメラ：正面から 平行投影。1px＝1mm、絵の 上の はし＝ z +0.05
+    # カメラ：正面から 平行投影。高さ 1m ＝ 1500px（1mm＝1.5px）、絵の 上の はし＝ z +0.05
     cam = bpy.data.cameras.new('Cam'); cam.type = 'ORTHO'; cam.ortho_scale = 1.0
     co = bpy.data.objects.new('Cam', cam); sc.collection.objects.link(co)
     co.location = (0, -2, -0.45); co.rotation_euler = (math.radians(90), 0, 0)
@@ -187,7 +187,8 @@ def main():
         global _mat; _mat = None
         build(side)
         sc = bpy.context.scene
-        sc.render.filepath = os.path.join(HERE, f'bag_{side}.png')
+        # --fast は 別の 名前に（pack_bag.py は 900×1500 の 本番の 絵だけ うめこむ）
+        sc.render.filepath = os.path.join(HERE, f'bag_{side}{"_fast" if FAST else ""}.png')
         bpy.ops.render.render(write_still=True)
         print('wrote', sc.render.filepath)
 

@@ -7,6 +7,7 @@ HTML = os.path.join(HERE, '..', '..', 'mishin.html')
 out = {}
 for side in ('front', 'back'):
     im = Image.open(os.path.join(HERE, f'bag_{side}.png')).convert('RGBA')
+    assert im.size == (900, 1500), f'bag_{side}.png が {im.size}。mishin.html の BAG は 900×1500（--fast の 絵では ない？）'
     buf = io.BytesIO(); im.save(buf, 'WEBP', quality=90, method=6, use_sharp_yuv=True)
     out[side] = 'data:image/webp;base64,' + base64.b64encode(buf.getvalue()).decode()
     print(side, len(buf.getvalue())//1024, 'KB')

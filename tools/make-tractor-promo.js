@@ -4,7 +4,7 @@
 //   こちらで 1/FPS 秒ずつ進めて 1こまずつ 描いて撮る。録るのに時間はかかるが、動画は なめらかで、ゲームの動きは 本物と同じ速さ
 // ・場面ごとに ページを開きなおし（春の朝・春の運転席・秋の夕方・代かき）、前もって 何列か 耕しておいてから 録る
 // ・ゲームのボタン・案内は かくし、字幕だけをのせる。字幕は はじめの画面に 書いてあることだけ
-// 環境変数：FPS（30）、PREVIEW=1（4こま/秒・画面 1/2 で 構図だけ 見る）、THREE_NM（ネットにつながらないとき three を node_modules から）、PROMO_PORT
+// 環境変数：FPS（30）、ONLY=1,2（その場面だけ録る。あとで JOIN=1 で つなぐ）、PREVIEW=1（4こま/秒・画面 1/2 で 構図だけ 見る）、THREE_NM（ネットにつながらないとき three を node_modules から）、PROMO_PORT
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path'), { execFileSync } = require('child_process');
 const { startServer } = require('./bake-common');
@@ -113,10 +113,11 @@ async function scene(browser, sc, idx, dir) {
 (async () => {
   fs.mkdirSync(OUT, { recursive: true });
   const srv = startServer(PORT);
-  const browser = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+  const browser = process.env.JOIN ? null : await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
   const parts = [];
   try {
     for (let i = 0; i < SCENES.length; i++) {
+      if (process.env.JOIN) { parts.push(path.join(OUT, `part${i + 1}.mp4`)); continue; }   // JOIN=1：録った part を つなぐだけ（ONLY で 分けて 録ったとき）
       const only = process.env.ONLY; if (only && !only.split(',').includes(String(i + 1))) continue;
       const dir = path.join(OUT, `frames${i + 1}`);
       console.log(`場面${i + 1}：${SCENES[i].q}（${SCENES[i].cam}）`);
@@ -126,7 +127,8 @@ async function scene(browser, sc, idx, dir) {
         '-vf', `scale=1920:1080:flags=lanczos,fps=30,format=yuv420p`, '-c:v', 'libx264', '-preset', 'slow', '-crf', '18', part]);
       parts.push(part);
     }
-  } finally { await browser.close(); srv.close(); }
+  } finally { if (browser) await browser.close(); srv.close(); }
+  if (process.env.ONLY) { console.log('録った:', parts.join(' ')); return; }
   // 場面を 0.4 秒の クロスフェードで つなぐ
   const lens = parts.map(f => Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', f]).toString()));
   const X = 0.4, out = path.join(OUT, PREVIEW ? 'tractor-16x9-preview.mp4' : 'tractor-16x9.mp4');

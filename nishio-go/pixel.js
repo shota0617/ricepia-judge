@@ -6087,7 +6087,7 @@ function frame(now) {
   }
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
-    if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
+    if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
     if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
   }
   waterWatch(tgt, dt);
@@ -6988,6 +6988,8 @@ function npcGreet(n, tx, ty) {
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
+let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
+const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
 // へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
@@ -8586,6 +8588,7 @@ function rollStep(dt) {
     if (q && q.d > MZ_TUBE) {   // やわらかい 生け垣（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, vn = rp.vx * ux + rp.vy * uy, over = q.d - MZ_TUBE, pen = Math.min(over, MZ_SOFT_MAX);
       rub = [ux, uy];
+      if (!mzSoft.on && vn > MZ_HIT_STOP && !calmMotion) mzHitStop = performance.now() + MZ_HIT_STOP_MS;   // 動きを へらす 設定の 人には しない
       if (!mzSoft.on && vn > 0) { hit(vn, Math.abs(ux) >= Math.abs(uy), false); mzSoft.vin = vn; mzSoft.dv = Math.max(mzSoft.dv, vn * 0.5); }   // 当たった 瞬間だけ：がさっ（音・葉っぱ・ゆれ・いたい顔・コンボ おしまい）。へこみの 絵を ぐっと 押しこむ
       mzSoft.on = true; mzSoft.x = q.x; mzSoft.y = q.y; mzSoft.ux = ux; mzSoft.uy = uy; mzSoft.pen = pen;
       const push = MZ_SOFT_K * pen * dt + (vn > 0 ? MZ_SOFT_C * vn * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり（はね返りの 強さ）

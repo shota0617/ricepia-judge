@@ -38,6 +38,7 @@ function note() {   // きろく の 札に すすみぐあい（何面まで・
 
 let api = null, ui = null, game = null, raf = 0, wantDaily = false, wantOpen = false;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
+const HIT_STOP = 5, HIT_STOP_S = 0.045;   // これより 速く 当たったら（マス/秒）お米を 0.045秒 止める
 const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
 
@@ -428,7 +429,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -527,6 +528,7 @@ function step(dt) {
     if (g.fall <= 0) { g.x = b.start[0] + 0.5; g.y = b.start[1] + 0.5; g.vx = g.vy = 0; g.ouch = 1; }
     return;
   }
+  if (g.stop > 0) { g.stop -= dt; if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); } return; }   // ヒットストップ：強く 当たった 瞬間 お米を ほんの少し 止める（時計と ゴーストの きろくは すすめる）
   const [ax, ay] = input();
   const acc = ACC * (st.slow ? 0.55 : 1);   // 🐢 ゆっくり：押す強さと いちばん速い速さを 落とす（傾きに なれていない人・小さな子）
   g.vx += ax * acc * dt; g.vy += ay * acc * dt;
@@ -563,6 +565,7 @@ function step(dt) {
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
       if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
       if (!sf.on && hit > 2.5 && !calm && navigator.vibrate && localStorage.getItem('nsg_bgm') !== 'false') try { navigator.vibrate(Math.min(12, Math.round(3 + hit * 1.2))); } catch (e) { /* noop */ }   // 強く 当たった：ぶるっ（快感。地図の めいろには もう ある。動きを へらす 設定・音を 切った 人には しない）
+      if (!sf.on && hit > HIT_STOP && !calm) g.stop = HIT_STOP_S;   // ヒットストップ（地図の めいろと そろえる）
       if (!sf.on) { sf.vin = Math.max(0, hit); sf.dv = Math.max(sf.dv, sf.vin / 6); }   // 当たった 速さ（ぽよんの 強さ）。へこみの 絵を ぐっと 押しこむ（盤の 1マスは 地図の 3マスぶん なので 地図の 1/3）
       Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
       let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり

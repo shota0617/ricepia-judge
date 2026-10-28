@@ -800,11 +800,14 @@ async function walkTo(page, id) {
     if (!rec) return { ok: false, why: 'no-rec' };
     const onErr = e => errs.push(String(e.message || e.error || e).slice(0, 120));
     window.addEventListener('error', onErr);
+    document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    let shade = 0; const fill0 = rec.fill;
+    rec.fill = function () { if (String(this.fillStyle).replace(/\s/g, '') === 'rgba(0,0,0,.28)') shade++; return fill0.apply(this, arguments); };   // お米の 影まで 描けたか（お米が 描かれない こまでは この 確認に ならない）
     N.on = () => true;   // Godot が 動いて いる ことに して、歩く地図を 記録係で 描かせる（Godot は 読みこまない）
     let len = 0;
     try { for (let i = 0; i < 6; i++) { await new Promise(r => requestAnimationFrame(r)); len = Math.max(len, rec.out.length); } }
-    finally { N.on = on; for (let i = 0; i < 2; i++) await new Promise(r => requestAnimationFrame(r)); window.removeEventListener('error', onErr); }
-    return { errs: [...new Set(errs)], len, ok: !errs.length && len > 50 };
+    finally { N.on = on; rec.fill = fill0; for (let i = 0; i < 2; i++) await new Promise(r => requestAnimationFrame(r)); window.removeEventListener('error', onErr); }
+    return { errs: [...new Set(errs)], len, shade, ok: !errs.length && len > 50 && shade > 0 };
   });
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {

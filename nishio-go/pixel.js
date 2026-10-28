@@ -6245,14 +6245,15 @@ function frame(now) {
       const k = sps.sort((a, b) => Math.abs(a - fl.t.length / 2) - Math.abs(b - fl.t.length / 2))[0];   // まん中に ちかい すきまで 2行に
       const tries = [[fl.t]].concat(k ? [[fl.t.slice(0, k), fl.t.slice(k + 1)]] : []);
       const sideX = l => { const bw = wid(l); return (A[0] + A[2]) / 2 < w / 2 ? Math.min(w - m - bw / 2, A[2] + m + 1 + bw / 2) : Math.max(m + bw / 2, A[0] - m - 1 - bw / 2); };   // 矢印と 反対の がわへ（画面の はしまで。+1 は 小数の 誤差で ぎりぎり かかる 判定に ならない ように）
-      const place = d => d === 'side0' || d === 'side1' ? tries[+d[4]] && { ls: tries[+d[4]], fx: sideX(tries[+d[4]]), fy: fy0 }
-        : d === 'down' ? { ls: [fl.t], fx: w / 2, fy: Math.max(fy0, A[3] + m + fz) } : d === 'up' ? { ls: [fl.t], fx: w / 2, fy: Math.min(fy0, A[1] - m) } : null;   // 上へ 浮いて いく ので、矢印の 下（上）で 止めて おけば つながって 見える
+      const top = mzClockFoot(dpr, now) + m, huds = mzHudRects(now);   // 上の 時計の 札（かかし・ばねの のこりの 札も）と ボタンにも かけない（Codex の 指摘）
+      const foot = roll.box ? roll.box[1] - m : Math.round(cy - T * 1.15);   // お米の 頭より 下へは 下げない
+      const under = l => top + lh * (l.length - 1) + fz;   // 浮いて いっても 時計の 札の 下で 止める（Codex の 指摘）
+      const place = d => d === 'side0' || d === 'side1' ? tries[+d[4]] && { ls: tries[+d[4]], fx: sideX(tries[+d[4]]), fy: Math.max(fy0, under(tries[+d[4]])) }
+        : d === 'down' ? { ls: [fl.t], fx: w / 2, fy: Math.max(fy0, A[3] + m + fz) } : d === 'up' ? { ls: [fl.t], fx: w / 2, fy: Math.max(under([fl.t]), Math.min(fy0, A[1] - m)) } : null;   // 上へ 浮いて いく ので、矢印の 下（上）で 止めて おけば つながって 見える
+      const safe = (d, c) => { if (!c) return false; const b = box(c.ls, c.fx, c.fy); return !hit(b) && b[0] >= 0 && b[2] <= w && b[1] >= top && (d === 'up' ? c.fy <= A[1] - m : d !== 'down' || c.fy <= foot) && !huds.some(r => b[0] < r[2] && b[2] > r[0] && b[1] < r[3] && b[3] > r[1]); };
       let q = fl.dodge && place(fl.dodge);
-      if (q && hit(box(q.ls, q.fx, q.fy))) q = null;   // 画面の はばが かわった など、いまの 置き方では かかる ときは 選びなおす（Codex の 指摘）
+      if (q && !safe(fl.dodge, q)) q = null;   // 持っている よけ方も こまごとに 確かめ、画面の はばが かわった などで かかる ときは 選びなおす（Codex の 指摘）
       if (!q) {
-        const foot = roll.box ? roll.box[1] - m : Math.round(cy - T * 1.15);   // お米の 頭より 下へは 下げない
-        const top = (mzRt.t0 && mzRt.len0 ? Math.round(MZ_CLOCK_PX * dpr * 2.35) : 0) + m, huds = mzHudRects(now);   // 上の 時計の 札（drawMzClock）と ボタンにも かけない（Codex の 指摘）
-        const safe = (d, c) => { if (!c) return false; const b = box(c.ls, c.fx, c.fy); return !hit(b) && b[0] >= 0 && b[2] <= w && b[1] >= top && (d !== 'down' || c.fy <= foot) && !huds.some(r => b[0] < r[2] && b[2] > r[0] && b[1] < r[3] && b[3] > r[1]); };
         fl.dodge = ['side0', 'side1', 'down', 'up'].find(d => safe(d, place(d))) || '';
         q = fl.dodge && place(fl.dodge);
       }
@@ -7494,6 +7495,11 @@ function mzClock(now) {
   const dt = mzRt.clockT ? Math.min(now - mzRt.clockT, Math.max(0, now - mzRt.t0)) : 0;   // いまの ゴールが 始まってからの 分だけ
   mzRt.clockT = now;
   if (mzRt.t0 && (dt > 1000 || mapCovered(true) || !howtoEl.hidden || sightBusy())) mzRt.t0 += dt;   // 止める（画面が かくれて 1こまが 長い ときも）
+}
+function mzClockFoot(dpr, now) {   // 上の 時計の 札（と かかし・ばねの のこりの 札）の 下はし（キャンバスの 画素。出ていなければ 0。drawMzClock と 同じ 計算）
+  if (!mzRt.t0 || !mzRt.len0 || mapCovered(true) || mzBanner.t0) return 0;
+  const S = Math.round(MZ_CLOCK_PX * dpr);
+  return Math.round(S * 1.5 + S * 1.9 * ((mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0)) + S * 0.85);
 }
 function drawMzClock(w, dpr, now) {
   if (!mzRt.t0 || !mzRt.len0 || mapCovered(true) || mzBanner.t0) return;

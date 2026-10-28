@@ -67,13 +67,19 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 .tip b{color:var(--kraft)}
 button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2px solid var(--kraft);font-size:17px;padding:10px 16px}
 .steps{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none;display:flex;flex-direction:column;gap:6px}
-.steps .bar{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--ink-dim);letter-spacing:.08em}
+.steps .bar{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--ink);letter-spacing:.06em}
+.steps .skip{pointer-events:auto;margin-left:6px;min-height:40px;padding:6px 12px;border-radius:20px;border:2px solid var(--kraft);background:rgba(19,26,46,.85);color:var(--kraft);font:700 13px var(--body);white-space:nowrap}
 .steps .bar i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
 .steps .bar i.on{background:var(--kraft)}
 .steps .now{font-size:17px;line-height:1.45;font-weight:700;background:rgba(19,26,46,.82);border-radius:12px;padding:10px 12px}
 .steps .now b{color:var(--gold)}
+.panel h1.one{font-size:clamp(30px,9vw,40px)}
+.ends{margin:0;display:flex;flex-direction:column;gap:4px}
+.ends canvas{width:100%;height:auto;border-radius:10px;display:block}
+.ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:13px;line-height:1.4;color:var(--ink-dim);text-align:left}
+.ends figcaption b{color:var(--gold)}
 .real{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;text-align:left}
-.real li{display:grid;grid-template-columns:28px 1fr;gap:8px;font-size:15px;line-height:1.55;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px}
+.real li{display:grid;grid-template-columns:24px 1fr;gap:6px;font-size:15px;line-height:1.45;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px}
 .real b{font-family:var(--display);font-weight:400;color:var(--kraft);font-size:18px;text-align:center}
 .goals{display:flex;flex-direction:column;gap:6px;text-align:left}
 .goals h2{margin:0;font-size:12px;letter-spacing:.14em;color:var(--kraft);font-weight:700}
@@ -115,14 +121,16 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
 
   <div class="overlay" id="coinDone" hidden>
     <div class="panel">
-      <h1><small>れんしゅう できた</small>本物の袋で<br/>やってみよう</h1>
+      <h1 class="one"><small>れんしゅう できた</small>本物の袋で</h1>
+      <figure class="ends"><canvas id="endsPic" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：赤と白が よった しっぽ＝縫い始め"></canvas>
+        <figcaption><span><b>ここから</b>：赤が 白い輪に ささる</span><span>縫い始め：赤と白が よる（×）</span></figcaption></figure>
       <ol class="real">
-        <li><b>1</b><span>袋の口を見る。<strong>白い糸がまっすぐ</strong>なら表。袋を<strong>裏返す</strong>（糸の輪が ならぶ方が裏）。</span></li>
-        <li><b>2</b><span>端を見くらべる。<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方から（たいてい左）。赤と白が よった しっぽの方は 縫い始めで、からまる。</span></li>
-        <li><b>3</b><span>赤い糸の端を 白い輪から はずし、<strong>縫い目に そって 横へ ゆっくり</strong>引く。赤が ぬけきると、<strong>白糸は 自然に ぬける</strong>。</span></li>
-        <li><b>4</b><span>引っかかったら、<strong>表側の白糸</strong>を少し引いてから、また赤を引く。</span></li>
+        <li><b>1</b><span><strong>白い糸が まっすぐ</strong>なら表。袋を 立てたまま まわして、<strong>反対の面</strong>を 見る。</span></li>
+        <li><b>2</b><span><strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪に ささっている</strong>端から（たいてい左）。</span></li>
+        <li><b>3</b><span>赤の端を 輪から はずし、<strong>縫い目に そって 横へ ゆっくり</strong>引く。<strong>白糸は 自然に ぬける</strong>。</span></li>
+        <li><b>4</b><span>引っかかったら、<strong>表側の白糸</strong>を 少し 引いてから また 赤を 引く。</span></li>
       </ol>
-      <p class="tip">袋によっては右から ほどける。1本糸の袋は どちらからでも。<b>紙ひもで しばった袋</b>は、口を 何回か 折って ひもで 結んで あるので、結び目を ほどいて 折り返しを もどす。どうしても取れない ときは、ハサミで口を切っても大丈夫（ほどけば 口が 短く ならず、袋を また 使える）。<b>ほどいた糸や 紙くずは、投入口に 入れず ごみ箱へ。</b></p>
+      <p class="tip">取れない ときは <b>ハサミで 切っても 大丈夫</b>。<b>紙ひもの 袋</b>は 結び目を ほどいて 折り返しを もどす。ほどいた糸や 紙くずは <b>投入口に 入れず ごみ箱へ</b>。袋によっては 右から、1本糸の袋は どちらからでも。</p>
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
       <button class="go sub" id="toGame" type="button">ゲームで遊ぶ</button>
     </div>
@@ -215,6 +223,10 @@ function makePracticeBag(k){
   return b;
 }
 function pullDir(b){ return b.from==='R' ? -1 : 1; }
+// れんしゅうは やさしく：ゆっくりなら いつでも 緑・きつい目で 止まる 間を 長く・輪から はずす しぐさを はっきり
+const zoneLo = () => S.practice ? 0 : R.zoneLo;
+const knotGrace = () => S.practice ? 1.2 : R.knotGrace;
+const freePx = () => S.practice ? 50 : R.freePx;
 function pps(b){ const L=layout(); return Math.max(14, (L.x1-L.x0)*R.pullWidths/b.N); } // 1目ほどくのに引く長さ
 
 function startPractice(){ startGame(true); }
@@ -231,7 +243,25 @@ function startGame(practice){
 }
 
 function endPractice(){
-  S.mode='over'; S.held=false; ui.steps.hidden = true; ui.coinDone.hidden = false;
+  S.mode='over'; S.held=false; ui.steps.hidden = true; ui.coinDone.hidden = false; drawEndsPic();
+}
+// まとめの 絵：袋の 口の 両はしを 大きく（左＝ほどき始め、右＝縫い始め）
+function drawEndsPic(){
+  const c = document.getElementById('endsPic'); if(!c) return; const g = c.getContext('2d'); const w = c.width, h = c.height, sy = 66;
+  g.fillStyle='#c39a62'; g.fillRect(0,0,w,h);
+  g.fillStyle='rgba(60,38,10,.12)'; g.fillRect(0, sy-22, w, 44);
+  // くさり（寝た 白い 輪と 赤の ジグザグ）
+  const p = 34;
+  for(let x = 70; x < w-70; x += p){ g.strokeStyle='rgba(50,30,5,.35)'; g.lineWidth=5; g.beginPath(); g.ellipse(x+p/2, sy, p*0.62, 6, 0, 0, 7); g.stroke(); g.strokeStyle='#f8f4ea'; g.lineWidth=3; g.stroke(); }
+  g.strokeStyle='#d8342c'; g.lineWidth=4; g.lineJoin='round'; g.beginPath(); let k=0; for(let x = 70; x <= w-70; x += p){ const y = sy + (k++%2?4:-4); x===70?g.moveTo(x,y):g.lineTo(x,y); } g.stroke();
+  // 左：赤の 端が 白い 輪に ささる
+  g.strokeStyle='#f8f4ea'; g.lineWidth=4; g.beginPath(); g.ellipse(52, sy, 11, 20, 0, 0, 7); g.stroke();
+  g.strokeStyle='#d8342c'; g.lineWidth=5; g.beginPath(); g.moveTo(72, sy); g.lineTo(46, sy+3); g.quadraticCurveTo(22, sy+8, 26, sy+34); g.stroke();
+  g.strokeStyle='#f0c44c'; g.lineWidth=4; g.beginPath(); g.arc(46, sy+4, 36, 0, 7); g.stroke();
+  // 右：赤と 白が よった しっぽ
+  for(let s2=0;s2<2;s2++){ g.strokeStyle = s2 ? '#d8342c' : '#f8f4ea'; g.lineWidth=4; g.beginPath();
+    for(let j=0;j<=20;j++){ const t=j/20; const x = w-66 + t*18 + Math.sin(t*10 + s2*Math.PI)*4, y = sy + t*60; j?g.lineTo(x,y):g.moveTo(x,y); } g.stroke(); }
+  g.strokeStyle='#ef5350'; g.lineWidth=5; g.beginPath(); g.moveTo(w-82, sy-28); g.lineTo(w-34, sy+20); g.moveTo(w-34, sy-28); g.lineTo(w-82, sy+20); g.stroke();
 }
 function endGame(){
   S.mode='over'; S.held=false;
@@ -408,7 +438,7 @@ function step(dt){
   if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
   if(b.phase==='free'){
     S.pend=0; S.tension *= Math.pow(0.02, dt);
-    if(b.freePx >= R.freePx){ b.phase='pull'; audio.click(); say('輪から はずれた','ok'); const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); }
+    if(b.freePx >= freePx()){ b.phase='pull'; audio.click(); say('輪から はずれた','ok'); const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); }
     return;
   }
 
@@ -425,8 +455,8 @@ function step(dt){
   const onKnot = b.knots.has(b.pulled);
   let grace = false;
   if(onKnot){
-    if(b.knotHit!==b.pulled){ b.knotHit=b.pulled; b.knotT=0; audio.click(); const p=stitchPos(b,b.pulled); S.fx.push({kind:'catch',x:p.x,y:p.y,t:0,life:0.4}); }
-    b.knotT += dt; grace = b.knotT < R.knotGrace;
+    if(b.knotHit!==b.pulled){ b.knotHit=b.pulled; b.knotT=0; audio.click(); vib(40); const p=stitchPos(b,b.pulled); S.fx.push({kind:'catch',x:p.x,y:p.y,t:0,life:0.4}); }
+    b.knotT += dt; grace = b.knotT < knotGrace();
   }
   const safe = b.safe * (onKnot ? R.knotSlow : 1);
   S.tension = S.speed / safe;
@@ -436,7 +466,7 @@ function step(dt){
   if(S.held && S.tension>1 && !grace) S.over += dt*(S.tension-1)*R.overRate; else S.over = Math.max(0, S.over - dt*(S.held ? R.overDecay : R.overDecayLift));
   if(S.over > R.tangleAfter){ tangle(); return; }
 
-  if(S.held && S.tension>=R.zoneLo && S.tension<=1){ S.combo = Math.min(1, S.combo + dt*0.5); S.zoneTime += dt; }
+  if(S.held && S.tension>=zoneLo() && S.tension<=1){ S.combo = Math.min(1, S.combo + dt*0.5); S.zoneTime += dt; }
   else if(S.tension>1 || S.liftT>0.5) S.combo = Math.max(0, S.combo - dt*0.25);
 
   // ひっかかって 止まっている間は、糸は すすまない
@@ -448,7 +478,7 @@ function step(dt){
     if(b.sub >= need-1e-6){
       const wasKnot = b.knots.has(b.pulled);
       b.sub = 0; b.pulled++;
-      if(S.tension>=R.zoneLo && S.tension<=1) b.zoneSt++;
+      if(S.tension>=zoneLo() && S.tension<=1) b.zoneSt++;
       const mult = multOf(); S.maxMult = Math.max(S.maxMult, mult);
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
@@ -467,11 +497,11 @@ function multOf(){ return 1 + Math.floor(S.combo*4 + 1e-9); }
 
 function tangle(){
   const b=S.bag; b.tangles++; S.tangles++; S.combo=0; S.streak=0; S.over=0; S.speed=0; S.held=false;
-  S.shake=1; audio.snap();
+  if(S.practice && b.forceTangle>=0){ audio.click(); } else { S.shake=1; audio.snap(); }
   const p = stitchPos(b, b.pulled);
   if(b.tangles>=R.tangleLimit && !S.practice){ b.failed=true; b.done=true; b.open=0; addTime(R.timeCut); say('ハサミで切った…','ng'); return; }
   b.tangle = { taps:0, x:p.x, y:p.y, tug:0, tugging:false };
-  say('もつれた！ 白糸を引いて ほぐす','ng');
+  say(S.practice ? '引っかかった！' : 'もつれた！ 白糸を引いて ほぐす','ng');
 }
 
 function finishBag(){
@@ -504,7 +534,7 @@ function say(text, kind){ S.msg = {text, kind, t:0, life:1.2}; }
 // ---------- 配置 ----------
 let W=360,H=640,DPR=1;
 function layout(){
-  const bagW = Math.min(W*0.86, 420);
+  const bagW = Math.min(W*(S.practice ? 0.76 : 0.86), 420);
   const seamY = Math.round(Math.max(210, Math.min(H*0.36, H-300)));
   const x0 = W/2 - bagW/2 + 14, x1 = W/2 + bagW/2 - 14; // 縫い目は 口の 縁 ちかくまで
   const k = bagW / BAG.mouthW; // Blender の 絵 1px（＝1mm）が 画面で 何 px か
@@ -556,8 +586,34 @@ function draw(){
   drawFx();
   ctx.restore();
   if(S.mode==='play') drawMeter(L);
+  if(S.practice && S.mode==='play') drawPracticeAids(L, b);
   drawFingers(L);
   drawMsg(L);
+}
+// れんしゅうの 手助け：①ほどき始めの 端を 大きく 見せる 窓 ②引いている 指の すぐ 上に 張りの 目安
+function drawPracticeAids(L, b){
+  if(!b || b.done) return;
+  if(b.face==='back' && (b.phase==='look' || b.phase==='free') && b.flipT<=0 && b.slide<=0.05){
+    const from = b.from || b.start, ex = from==='R' ? L.x1 : L.x0, ey = L.seamY + 2;
+    const r = Math.min(66, W*0.17), cx = W/2, cy = L.seamY + 40 + r;
+    const src = 30; // まわり 30px を 2倍 ほどに
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
+    ctx.fillStyle='#b98f58'; ctx.fillRect(cx-r, cy-r, 2*r, 2*r);
+    ctx.drawImage(cv, (ex-src)*DPR, (ey-src)*DPR, 2*src*DPR, 2*src*DPR, cx-r, cy-r, 2*r, 2*r);
+    ctx.restore();
+    ctx.strokeStyle='#f0c44c'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke();
+    ctx.font='700 14px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    otext(b.phase==='free' ? '赤い 糸が 輪から ぬける' : 'ほどき始めを 大きく 見ると', cx, cy + r + 16, '#f0c44c');
+  }
+  if(b.phase==='pull' && S.held && !b.tangle){
+    const x = Math.min(W-50, Math.max(50, S.px)), y = Math.max(L.seamY + 20, S.py - 62);
+    const t = Math.min(1.5, S.tension), red = S.tension>1;
+    ctx.lineWidth=7; ctx.lineCap='round';
+    ctx.strokeStyle='rgba(19,26,46,.75)'; ctx.beginPath(); ctx.arc(x, y+24, 30, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
+    ctx.strokeStyle = red ? '#ef5350' : '#5ccf7a'; ctx.beginPath(); ctx.arc(x, y+24, 30, Math.PI*1.15, Math.PI*(1.15 + 0.7*t/1.5)); ctx.stroke();
+    ctx.font='700 16px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    otext(red ? 'はやい！ ゆるめて' : b.knots.has(b.pulled) ? 'きつい目 ゆっくり' : 'その調子', x, y - 14, red ? '#ff8a80' : '#bff2c9');
+  }
 }
 // 二本指の 見本（つまむ しぐさ）
 function pinchIcon(x, y, ph, col){
@@ -576,8 +632,8 @@ function drawFingers(L){
     const ph = 0.5+0.5*Math.sin(S.t*8);
     const x = W/2, y = L.seamY + Math.min(L.bagH - 40, 200);
     pinchIcon(x, y, ph, 'rgba(255,217,102,.9)');
-    ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    otext('二本指で つまむ', x, y+24, '#f0c44c');
+    ctx.font=`700 ${S.practice?17:13}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    otext(S.practice ? '指で つまむ' : '二本指で つまむ', x, y+26, '#f0c44c');
   }
 }
 const demoBag = { N:16, face:'back', start:'L', from:null, single:false, knots:new Set([7]), pulled:0, sub:0, golden:false, kg:30, brand:'コシヒカリ', phase:'look', done:false, open:0, hint:false, slide:0, flipT:0, tangle:null };
@@ -809,7 +865,7 @@ function drawSeamFront(L, b){
   ctx.strokeStyle=C.white; ctx.lineWidth=V.tw; ctx.stroke();
   ctx.strokeStyle='#ece6d6'; ctx.lineWidth=2;
   [[L.x0-4,-1],[L.x1+4,1]].forEach(([tx,d])=>{ ctx.beginPath(); ctx.moveTo(tx, sy); ctx.bezierCurveTo(tx+d*10, sy+10, tx+d*2, sy+24, tx+d*12, sy+36); ctx.stroke(); });
-  if(b.hint && S.bag===b){ hintText('白い糸が まっすぐ だけ ＝ 表', 'ふくろを タップして 裏返す', L); }
+  if(b.hint && S.bag===b && !S.practice){ hintText('白い糸が まっすぐ だけ ＝ 表', 'ふくろを タップして 裏返す', L); }
 }
 
 // 裏：上糸（白）の 輪の 中を 下糸（赤）が 通る、くさりの 目
@@ -881,7 +937,7 @@ function drawSeamBack(L, b){
     if(b.single){ twist(sx, -sd, C.white); }
     else {
       // ほどき始め：下糸（赤）の 端が いちばん はしの 上糸の 輪に ささっている。はずす ときは 端が 輪から 外へ ぬけていく
-      const fp = b.phase==='free' ? Math.min(1, b.freePx / R.freePx) : 0, o = -sd*fp*16;
+      const fp = b.phase==='free' ? Math.min(1, b.freePx / freePx()) : 0, o = -sd*fp*16;
       ctx.strokeStyle=C.shade; ctx.lineWidth=4; ctx.beginPath(); ctx.ellipse(sx - sd*2, sy+1, 6, 11, 0, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle=C.white; ctx.lineWidth=2.4; ctx.beginPath(); ctx.ellipse(sx - sd*2, sy+1, 6, 11, 0, 0, Math.PI*2); ctx.stroke();
       const tip = () => { ctx.beginPath(); ctx.moveTo(sx + sd*8, sy+1); ctx.lineTo(sx - sd*6 + o, sy+2); ctx.quadraticCurveTo(sx - sd*20 + o, sy+4, sx - sd*18 + o, sy+18); };
@@ -917,23 +973,27 @@ function drawSeamBack(L, b){
       ctx.strokeStyle=C.white; ctx.lineWidth=2.4; ctx.stroke();
       ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(wt.x, wt.y, 22, 0, 7); ctx.stroke();
       ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      otext('白糸を つまんで 引く', Math.min(W-80, Math.max(80, wt.x + sd*90)), wt.y + 4, '#ffd0cc');
-      otext('（タップでも ほぐせる あと'+left+'）', Math.min(W-100, Math.max(100, wt.x + sd*100)), wt.y + 22, '#d9c9a0');
+      if(!S.practice){
+        otext('白糸を つまんで 引く', Math.min(W-80, Math.max(80, wt.x + sd*90)), wt.y + 4, '#ffd0cc');
+        otext('（タップでも ほぐせる あと'+left+'）', Math.min(W-100, Math.max(100, wt.x + sd*100)), wt.y + 22, '#d9c9a0');
+      }
     }
   }
   if(b.hint && S.bag===b && b.phase==='look'){
     const pulse = 0.5+0.5*Math.sin(S.t*6);
     ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(sx, sy+4, 22+pulse*4, 0, 7); ctx.stroke();
-    ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    otext('赤が 白い輪に ささっている', Math.min(W-90, Math.max(90, sx + sd*60)), sy+40, '#f0c44c');
-    otext('ここを 二本指で つまむ', Math.min(W-90, Math.max(90, sx + sd*60)), sy+58, '#f0c44c');
+    if(!S.practice){
+      ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      otext('赤が 白い輪に ささっている', Math.min(W-90, Math.max(90, sx + sd*60)), sy+40, '#f0c44c');
+      otext('ここを 二本指で つまむ', Math.min(W-90, Math.max(90, sx + sd*60)), sy+58, '#f0c44c');
+    }
   }
   if(b.k===0 && b.phase==='pull' && !b.done && b.pulled<3){
     // 指の 見本：縫った 向きと 逆へ（ほどける 向き）
     const ph=(S.t*0.9)%1, x0 = sx + sd*20, x1 = sx + sd*Math.min(220, (L.x1-L.x0)*0.7), yy = sy+46;
     ctx.setLineDash([5,6]); ctx.strokeStyle='rgba(240,196,76,.7)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x0, yy); ctx.lineTo(x1, yy); ctx.stroke(); ctx.setLineDash([]);
     ctx.fillStyle=`rgba(240,196,76,${1-ph*0.5})`; ctx.beginPath(); ctx.arc(x0+(x1-x0)*ph, yy, 10, 0, 7); ctx.fill();
-    ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; otext('つまんだまま ゆっくり 横へ 引く', (x0+x1)/2, yy+20, '#f0c44c');
+    ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.font=`700 ${S.practice?16:12}px "Zen Maru Gothic",sans-serif`; otext('つまんだまま ゆっくり 横へ 引く', (x0+x1)/2, yy+22, '#f0c44c');
   }
 }
 function drawHoles(L, b){
@@ -1000,15 +1060,16 @@ function drawMeter(L){
     return;
   }
   const maxT = 1.5;
-  const z0 = mx + mw*R.zoneLo/maxT, z1 = mx + mw/maxT;
-  ctx.fillStyle='#a9b0c7'; ctx.font='700 11px "Zen Maru Gothic",sans-serif'; ctx.textAlign='left'; ctx.fillText('糸の張り', mx, my-8);
+  const z0 = mx + mw*zoneLo()/maxT, z1 = mx + mw/maxT;
+  const mf = S.practice ? 14 : 11;
+  ctx.fillStyle = S.practice ? '#f3efe4' : '#a9b0c7'; ctx.font=`700 ${mf}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='left'; ctx.fillText('糸の張り', mx, my-8);
   ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(mx, my, mw, 12, 6); ctx.fill();
   ctx.fillStyle='rgba(92,207,122,.55)'; ctx.fillRect(z0, my, z1-z0, 12);
   ctx.fillStyle='rgba(239,83,80,.45)'; ctx.fillRect(z1, my, mx+mw-z1, 12);
-  ctx.fillStyle='rgba(19,26,46,.9)'; ctx.font='700 10px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center';
-  ctx.fillText('スルスル', (z0+z1)/2, my+10);
+  ctx.fillStyle='rgba(19,26,46,.95)'; ctx.font=`700 ${S.practice?12:10}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='center';
+  ctx.fillText(S.practice ? 'ゆっくり＝緑' : 'スルスル', (z0+z1)/2, my+10);
   const t = Math.min(maxT, S.tension); const tx = mx + mw*t/maxT;
-  ctx.fillStyle = S.tension>1 ? '#ef5350' : S.tension>=R.zoneLo ? '#5ccf7a' : '#f6f2e7';
+  ctx.fillStyle = S.tension>1 ? '#ef5350' : S.tension>=zoneLo() ? '#5ccf7a' : '#f6f2e7';
   ctx.beginPath(); ctx.arc(tx, my+6, 9, 0, 7); ctx.fill();
   ctx.strokeStyle='#131a2e'; ctx.lineWidth=2; ctx.stroke();
   if(S.over>0){ ctx.fillStyle='#ef5350'; ctx.fillRect(mx, my+16, mw*Math.min(1,S.over/R.tangleAfter), 3); }
@@ -1024,7 +1085,8 @@ function drawMeter(L){
 function drawMsg(L){
   if(!S.msg) return;
   const m=S.msg; const a = Math.min(1, (m.life-m.t)/0.25); const s = 1 + Math.max(0, 0.2 - m.t)*1.5;
-  ctx.save(); ctx.globalAlpha = a; ctx.translate(W/2, L.seamY - 128); ctx.scale(s,s);
+  const my = Math.max(L.seamY - 128, S.practice ? (S.bannerBottom||0) + 24 : 0);
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(W/2, my); ctx.scale(s,s);
   ctx.font = `${W<360?22:26}px "Dela Gothic One",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.lineWidth=6; ctx.lineJoin='round'; ctx.strokeStyle='#131a2e'; ctx.strokeText(m.text,0,0,(W-24)/s);
   ctx.fillStyle = m.kind==='ok' ? '#f0c44c' : '#ef5350'; ctx.fillText(m.text,0,0,(W-24)/s);
@@ -1073,24 +1135,27 @@ renderGoals(ui.goals);
 $('startBtn').addEventListener('click', ()=>startGame(false));
 $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);
+ui.steps.addEventListener('click', e=>{ if(e.target && e.target.id==='skipBtn' && S.mode==='play') endPractice(); });
 $('practiceAgain').addEventListener('click', startPractice);
 $('toGame').addEventListener('click', ()=>startGame(false));
 // れんしゅうの いまの 手順（上の 帯）
 function stepText(){
   const b = S.bag; if(!b) return '';
-  if(b.phase==='look' && b.face==='front') return '<b>表</b>です（白い糸が まっすぐ）。袋を <b>タップして 裏返す</b>';
-  if(b.phase==='look') return b.wrongEnd ? '反対の端の、<b>赤い糸が 白い輪に ささっている</b>方を 二本指で つまむ'
-    : '裏です。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）を <b>二本指で つまむ</b>';
-  if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずす</b>（つまんだまま 少し 引く）';
+  if(b.phase==='look' && b.face==='front') return '<b>表</b>です（白い糸が まっすぐ）。袋を まわして <b>反対の面</b>を 見る（<b>袋を タップ</b>）';
+  if(b.phase==='look') return b.wrongEnd ? '反対の端の、<b>赤い糸が 白い輪に ささっている</b>方を <b>指で つまむ</b>'
+    : '裏です。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）を <b>指で つまむ</b>';
+  if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずす</b>（つまんだまま 少し 引く。下の 窓で 見える）';
   if(b.tangle) return '引っかかった！ <b>表側の白糸</b>を つまんで 少し引く（タップでも ほぐせる）';
   if(b.done) return (b.k===PRACTICE_N-1 ? 'ぜんぶ できた！ ' : 'あいた！ ') + '赤が ぬけると <b>白糸は 自然に ぬける</b>';
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>で 止まった。指を ゆるめて、<b>ゆっくり</b> こえる';
-  return 'つまんだまま、<b>縫い目に そって 横へ ゆっくり</b> 引く（メーターは <b>緑</b>）。はなして つまみなおしても よい';
+  if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと 引っかかる</b> 袋。直し方を ためそう。<b>縫い目に そって 横へ ゆっくり</b> 引く';
+  return 'つまんだまま、<b>縫い目に そって 横へ ゆっくり</b> 引く。はなして つまみなおしても よい';
 }
 function syncUI(dt){
   if(S.practice && S.mode==='play'){
-    const html = `<div class="bar">れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}${Array.from({length:PRACTICE_N},(_,i)=>`<i class="${i<=S.bagNo?'on':''}"></i>`).join('')}</div><div class="now">${stepText()}</div>`;
-    if(ui.steps._h !== html){ ui.steps.innerHTML = html; ui.steps._h = html; }
+    const html = `<div class="bar">れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}${Array.from({length:PRACTICE_N},(_,i)=>`<i class="${i<=S.bagNo?'on':''}"></i>`).join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now">${stepText()}</div>`;
+    if(ui.steps._h !== html){ ui.steps.innerHTML = html; ui.steps._h = html;
+      const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; }
   }
   const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;
   audio.zipSet(pulling ? Math.min(1.2, S.tension) : 0, S.tension);
@@ -1110,7 +1175,16 @@ function pos(e){ const r = cv.getBoundingClientRect(); return [e.clientX - r.lef
 //   はなれる（PINCH_OFF より 開く）か、どちらかの 指を あげると はなす。1本指で すぐ あげると タップ。
 // マウス：おしている 間を つまんでいる と みなす（パソコン用）。袋の 上の クリックは タップ。
 const PINCH_ON = 120, PINCH_OFF = 170;
-const fingers = new Map(); let pinch = null; let tapCand = null;
+const fingers = new Map(); let pinch = null; let tapCand = null; let oneCand = null;
+// れんしゅうでは 1本指でも つまめる（片手で スマホを 持ち、もう片手が 袋で ふさがって いても できるように）
+// 端の 上に 0.25 秒 おくか、そこから 動かすと つまむ。引く とき（はずす・引く）は どこからでも
+function oneOk(x, y){
+  const b = S.bag; if(!S.practice || S.mode!=='play' || !b || b.done || b.flipT>0 || b.slide>0.05) return false;
+  if(b.phase==='look'){ const w = whereTap(x, y); return b.face==='back' && (w==='L' || w==='R'); }
+  return true;
+}
+function oneStart(){ if(!oneCand || pinch) return; const f = fingers.get(oneCand.id); if(!f) return;
+  pinch = 'one'; tapCand = null; down(oneCand.x, oneCand.y); if(f.x!==oneCand.x || f.y!==oneCand.y) move(f.x, f.y); oneCand = null; }
 function pinchMid(){ const [a,b2] = [...fingers.values()]; return [(a.x+b2.x)/2, (a.y+b2.y)/2, Math.hypot(a.x-b2.x, a.y-b2.y)]; }
 cv.addEventListener('pointerdown', e=>{
   try{ cv.setPointerCapture(e.pointerId); }catch(_){}
@@ -1122,9 +1196,11 @@ cv.addEventListener('pointerdown', e=>{
     pinch = 'mouse'; down(x,y); return;
   }
   fingers.set(e.pointerId, {x, y, sx:x, sy:y});
-  if(fingers.size===1){ tapCand = {id:e.pointerId, x, y, t:performance.now()}; }
+  if(fingers.size===1){ tapCand = {id:e.pointerId, x, y, t:performance.now()};
+    if(S.practice && !(S.bag && S.bag.tangle) && oneOk(x, y)){ const id = e.pointerId; oneCand = {id, x, y}; setTimeout(()=>{ if(oneCand && oneCand.id===id && fingers.size===1) oneStart(); }, 250); }
+  }
   else if(fingers.size===2 && !pinch){
-    tapCand = null;
+    tapCand = null; oneCand = null;
     const [mx,my,d] = pinchMid();
     if(d < PINCH_ON){ pinch = 'touch'; down(mx,my); }
   }
@@ -1136,9 +1212,11 @@ cv.addEventListener('pointermove', e=>{
     if(e.pointerType==='mouse'){ if(pinch==='mouse') move(x,y); continue; }
     const f = fingers.get(e.pointerId); if(!f) continue;
     f.x=x; f.y=y;
+    if(pinch==='one'){ move(x,y); continue; }
+    if(oneCand && oneCand.id===e.pointerId && Math.hypot(x-oneCand.x, y-oneCand.y) > 14){ oneStart(); continue; }
     if(tapCand && tapCand.id===e.pointerId && Math.hypot(x-tapCand.x, y-tapCand.y) > 14) tapCand = null;
     // 1本指で なぞっても 糸は つまめない → 見本を 出す
-    if(fingers.size===1 && !pinch && S.mode==='play' && Math.hypot(x-f.sx, y-f.sy) > 30) S.pinchHint = 1.2;
+    if(fingers.size===1 && !pinch && !S.practice && S.mode==='play' && Math.hypot(x-f.sx, y-f.sy) > 30) S.pinchHint = 1.2;
     if(fingers.size===2){
       const [mx,my,d] = pinchMid();
       if(pinch==='touch'){ if(d > PINCH_OFF){ pinch=null; up(); } else move(mx,my); }
@@ -1149,7 +1227,8 @@ cv.addEventListener('pointermove', e=>{
 function fingerUp(e){
   if(e.pointerType==='mouse'){ if(pinch==='mouse'){ pinch=null; up(); } return; }
   const f = fingers.get(e.pointerId); fingers.delete(e.pointerId);
-  if(pinch==='touch'){ pinch=null; up(); }
+  if(oneCand && oneCand.id===e.pointerId) oneCand = null;
+  if(pinch==='touch' || (pinch==='one' && !fingers.size)){ pinch=null; up(); }
   if(tapCand && tapCand.id===e.pointerId && e.type==='pointerup' && performance.now()-tapCand.t < 350 && f) tap(f.x, f.y);
   tapCand = null;
 }

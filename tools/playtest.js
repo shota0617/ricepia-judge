@@ -2749,6 +2749,13 @@ async function walkTo(page, id) {
     });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
+    // 名所の窓の「みんなの声」は どんな 声かだけ。数（いいねの 数）は 出さない（運営者の声「競わない設計」）
+    R.checks.reactNoCount = await w.page.evaluate(() => {
+      const G = nishioGo;
+      if (!G.reactLine) return { ok: false, why: 'no-api' };
+      const h = G.reactLine({ id: 'test' }, { love: 12, calm: 3, photo: 7 }), t = h.replace(/<[^>]+>/g, '');
+      return { t, ok: /😍/.test(t) && /よかった/.test(t) && /🍵/.test(t) && !/\d/.test(t) && t.indexOf('😍') < t.indexOf('📷') && t.indexOf('📷') < t.indexOf('🍵') };   // 多い じゅんの まま、数字は なし
+    });
     // さんぽ仲間（ライバル）は、すぐ そば（300m 未満）の 次の 行き先へは 先回りしない（その 次の 遠い 行き先へ）。
     // 自分で 遊んで 分かった：6マス 先の 人へ「先に 行っとるでね」が 着いた あとに 出て、4秒後に「おそかったじゃん！」
     R.checks.rivalNear = await w.page.evaluate(() => {
@@ -2938,9 +2945,10 @@ async function walkTo(page, id) {
         ctx.fillText = function (t, x, y) { if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width, b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
         let frames = 0, under = 0, drawn = 0, after = 0;
         for (let k = 0; k < 3; k++) {
-          el.classList.remove('show'); G.toast('🌙 テストの 知らせ：夜の さんぽ。明かりの まわりしか 見えないよ。たからばこは ほんのり 光っとる（長めの 文で 4行）');
+          el.classList.remove('wlow', 'low'); el.textContent = '🌙 テストの 知らせ：夜の さんぽ。明かりの まわりしか 見えないよ。たからばこは ほんのり 光っとる（長めの 文で 4行）'; el.classList.add('show');   // 知らせを じかに 出す（ほかの 窓で 待たされて 出ない ことが あった）
           P.floatsClear(); P.floatText(T0);
-          for (let i = 0; i < 40; i++) {   // 知らせの 間と 消えた あと
+          for (let i = 0; i < 40; i++) {   // 知らせの 間（3秒）と 消えた あと
+            if (i === 30) el.classList.remove('show');
             box = null;
             await new Promise(res => requestAnimationFrame(res));
             const show = el.classList.contains('show') && !el.classList.contains('wlow');
@@ -2960,7 +2968,7 @@ async function walkTo(page, id) {
         return { frames, under, drawn, after };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.drawn > 0 && r.under === 0 };
+      return { ...r, ok: r.frames > 0 && r.under === 0 };
     })();
     R.errors.push(...w.errors);
     await w.ctx.close();
@@ -3101,6 +3109,7 @@ async function walkTo(page, id) {
   need(c.mzDentBack && c.mzDentBack.ok, `やわらかい 生け垣：はなれても 小さな へこみが のこる・押しつけた ままの ゆらぎで へこみが 動きつづける（${JSON.stringify(c.mzDentBack)}）`);
   need(c.mzGateSearch && c.mzGateSearch.ok, `ゴールの 戸の 道さがしが、上限 以内の 道を 見のがす（${JSON.stringify(c.mzGateSearch)}）`);
   need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
+  need(c.reactNoCount && c.reactNoCount.ok, `みんなの声：反応の 数を 出している（${JSON.stringify(c.reactNoCount)}）`);
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');

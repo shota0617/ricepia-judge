@@ -175,9 +175,15 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     ends.forEach((i, k) => { const d = grains.length ? Math.min(...grains.map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))) : toG[i]; if (d > bd) { bd = d; bi = k; } });
     grains.push(ends.splice(bi, 1)[0]);
   }
+  const komono = [];   // 西尾の 小物（10/28 店主「西尾らしい 素朴な かわいさ」）：米つぶの ない 行き止まり 2つまでに お地蔵さん・茶つぼ（見た目だけ）
+  while (komono.length < 2 && ends.length) {
+    let bi = 0, bd = -1;
+    ends.forEach((i, k) => { const d = Math.min(1e9, ...grains.concat(komono).map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))); if (d > bd) { bd = d; bi = k; } });
+    komono.push(ends.splice(bi, 1)[0]);
+  }
   let spring = -1, sd = 1e9;   // ばね：ゴールへの 近道の 上、スタートから 3割ほど 進んだ 所に 1つ（みんな 通る。とると 12秒 はずむ）
   for (const i of onPath) { const d = Math.abs(fromS[i] - 1 - Math.round(L * 0.3)); if (d < sd && !B.holes.has(i) && i !== start[1] * tw + start[0] && !grains.includes(i)) { sd = d; spring = i; } }
-  return Object.assign(B, { start, len, grains, spring });
+  return Object.assign(B, { start, len, grains, spring, komono });
 }
 const pass = (b, x, y, dx, dy) => {   // (x, y) から となりへ 通れるか
   if (dx === 1) return x + 1 < b.tw && b.er[y * b.tw + x] === 1;
@@ -492,11 +498,25 @@ function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線�
     }
   }
   for (const i of b.holes) { const p = onPath(b, i % b.tw, (i / b.tw) | 0); hole(x, p[0] * T, p[1] * T, T); }   // 道すじの 上に
+  (b.komono || []).forEach((i, n) => {   // 行き止まりの おく（あいて いない 向き）に 寄せて 小さく
+    const ci = i % b.tw, cj = (i / b.tw) | 0, op = DIRS.find(([dx, dy]) => pass(b, ci, cj, dx, dy) && at(ci + dx, cj + dy) === 1) || [0, 1];
+    komonoDraw(x, KOMONO[(ci + cj + n) % 2], (ci + 0.5 - op[0] * 0.12) * T, (cj + 0.5 - op[1] * 0.12) * T, T * 0.5);
+  });
   // スタート
   const sx = (b.start[0] + 0.5) * T, sy = (b.start[1] + 0.5) * T;
   x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = 2 * u; x.setLineDash([3 * u, 2 * u]);
   x.beginPath(); x.arc(sx, sy, T * 0.42, 0, Math.PI * 2); x.stroke(); x.setLineDash([]);
   return c;
+}
+// 西尾の 小物の ドット絵（12×12。k ふち・g 石・w 白・r 赤い よだれかけ・b 茶つぼ・B つや）
+const KOMONO = [
+  ['....kkkk....', '...kggggk...', '..kggggggk..', '..kgkggkgk..', '..kggggggk..', '...kggggk...', '..krrrrrrk..', '.kgrrrrrrgk.', '.kggrrrrggk.', '.kggggggggk.', '.kggggggggk.', '..kkkkkkkk..'],   // お地蔵さん
+  ['....kkkk....', '...kwwwwk...', '...kkkkkk...', '..kbbbbbbk..', '.kbbBbbbbbk.', '.kbBbbbbbbk.', 'kbbbbbbbbbbk', 'kbbbbbbbbbbk', '.kbbbbbbbbk.', '.kbbbbbbbbk.', '..kbbbbbbk..', '...kkkkkk...'],   // 茶つぼ
+];
+const KOMONO_C = { k: '#2a2420', g: '#aaa69b', w: '#f2ead8', r: '#c8423a', b: '#7a4a2a', B: '#b07c52' };
+function komonoDraw(x, rows, cx, cy, size) {
+  const p = size / 12, x0 = Math.round(cx - size / 2), y0 = Math.round(cy - size / 2);
+  rows.forEach((row, j) => { for (let i = 0; i < 12; i++) { const c = KOMONO_C[row[i]]; if (c) { x.fillStyle = c; x.fillRect(x0 + Math.floor(i * p), y0 + Math.floor(j * p), Math.ceil(p), Math.ceil(p)); } } });
 }
 function hole(x, cx, cy, T) {   // マンホールの穴：灰色の ふちと まっ暗な 中
   x.fillStyle = '#5a5a5a'; x.beginPath(); x.arc(cx, cy, T * 0.4, 0, Math.PI * 2); x.fill();

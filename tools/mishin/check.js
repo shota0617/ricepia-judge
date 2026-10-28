@@ -242,11 +242,17 @@ const CHECKS = {
     await p.waitForTimeout(60); const s1 = await p.evaluate(() => { const c = document.getElementById('cv'); return c.toDataURL().length; });
     await p.evaluate(() => { KB.S.t += 0.37; }); await p.waitForTimeout(60); const s2 = await p.evaluate(() => { const c = document.getElementById('cv'); const r = c.toDataURL().length; KB.calm = false; return r; });
     ok(s1===s2, '動きを へらす 設定では 1袋目の 見本の 点が 動かない', { s1, s2 });
-    const z = await p.evaluate(() => { KB.calm = true; KB.start(); const slide = KB.S.bag.slide; KB.calm = false; KB.S.time = 0.01; KB.step(1/60); return { slide }; });
+    const z = await p.evaluate(() => { KB.calm = true; KB.start(); const slide = KB.S.bag.slide; KB.calm = false; KB.S.time = 0.01; for (let i=0;i<60;i++) KB.step(1/60); return { slide }; });
     await p.waitForTimeout(150);
     const sr = await p.evaluate(() => document.getElementById('sr').textContent);
     ok(z.slide===1, '動きを へらす 設定でも 袋を 待つ 時間は 同じ（点が かわらない。絵だけ すべらせない）', z);
     ok(/てんすう/.test(sr), 'おわりの 点が 読み上げの 欄に 入る', sr);
+    const lb = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(1); Object.assign(bb, { face:'back', start:'L', slide:0, single:false, knots:new Set() }); S.bag = bb;
+      KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); }
+      let x = L.x0+40; KB.down(x, L.seamY+70); for (let i=0;i<40 && bb.pulled<3;i++){ x += 3; KB.move(x, L.seamY+70); KB.step(1/60); }
+      S.time = 0.01; KB.step(1/60); const mid = S.mode; for (let i=0;i<400 && !bb.done;i++){ x += S.tension>0.8 ? 0.5 : 3; KB.move(x, L.seamY+70); KB.step(1/60); }
+      for (let i=0;i<120;i++) KB.step(1/60); return { mid, last:S.lastBag, done:bb.done, bags:S.bags, mode:S.mode }; });
+    ok(lb.mid==='play' && lb.last && lb.done && lb.bags===1 && lb.mode==='over', '時間ぎれでも 引いている 袋は ラスト1袋 として あけられる', lb);
   },
   // お客さん目線（31周目）：れんしゅうで 表の 端を さわると 裏返す・途中で やめると はんこを 出さない・つぎの 袋に 前の 声を もちこさない
   async coin(b){

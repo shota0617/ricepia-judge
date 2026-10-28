@@ -28,7 +28,7 @@ fs.mkdirSync(OUT, { recursive: true });
       if (x > KB.size().W-10){ KB.up(); KB.step(1/60); x = L.x0+40; KB.down(x, L.seamY+70); } }
     KB.up(); for (let i=0;i<14;i++) KB.step(1/60); });
   await snap('05b-open', '一本どり（袋が あいた 瞬間）');
-  await p.evaluate(() => { const S = KB.S; S.score = 8420; S.bags = 7; S.bestStreak = 3; S.quick = 2; S.fevers = 1; S.time = 0.01; KB.step(1/60); });
+  await p.evaluate(() => { const S = KB.S; S.score = 8420; S.bags = 7; S.bestStreak = 3; S.quick = 2; S.fevers = 1; S.time = 0.01; for (let i=0;i<60;i++) KB.step(1/60); });
   await p.waitForTimeout(700); // はんこを 押す 動きの あと
   await snap('06-result', '結果');
   await p.goto(FILE + '#coin'); await p.reload(); await p.waitForFunction(() => window.KB && KB.S.mode==='play'); await p.waitForTimeout(400); // ハッシュだけ かわる ときは 読みなおさないので reload

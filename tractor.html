@@ -1542,7 +1542,7 @@ const AIRCL = (() => {
     if (clog <= 0) return;
     if (working && Math.abs(S.v) > 0.05 && !full()) clog = Math.min(1, clog + dt / 200);   // 耕すと 土ぼこりを 吸う
     if (full() && working && Math.abs(S.v) > 0.1 && !told && toastT <= 0) { told = true; toast('エンジンの 回転が 上がりにくい。ぬかるみで すぐ 重くなる。エアクリーナーが 土ぼこりで 詰まっているのかも。止まって ' + IMPL + 'を上げると 見ます', 7); }
-    if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
+    if (full() && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 詰まっていれば（知らせを 読めなくても）爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
       fixT = 5; S.elapsed += 300;
@@ -1555,7 +1555,7 @@ const AIRCL = (() => {
     loadK: () => full() ? 0.7 : 1,                  // エンストの 限界（ぬかるみの 重さ）
     sootK: () => full() ? 2 : 1,                    // DPF の すすの たまり方
     fuelK: () => full() ? 1.15 : 1,                 // 軽油
-    get clog() { return clog; }, set clog(v) { clog = v; }, get told() { return told; }, get fixing() { return fixT > 0; }, get fixed() { return fixed; },
+    get clog() { return clog; }, set clog(v) { clog = v; }, get told() { return told; }, get need() { return full(); }, get fixing() { return fixT > 0; }, get fixed() { return fixed; },
   };
 })();
 
@@ -6990,7 +6990,7 @@ const OCHI = (() => {
   return { bump, stop, takeFixed, get armed() { return armed; }, set armed(v) { armed = v; decided = true; } };
 })();
 function toggleRotary() {
-  if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
+  if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing || PANKU.fixing || AIRCL.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
   DRIVER.st.reach = 0.8;
   if (!S.rotDown && OCHI.stop()) return;          // 落下速度の つまみが しまっていて 降りない
   S.rotDown = !S.rotDown;
@@ -7408,6 +7408,12 @@ const COACH = (() => {
     if (S.parked && GREASE.fixed && !(S.scrape > 0)) return ['!', K('グリースを入れた：<kbd>↑</kbd> でエンジンをかける', 'グリースを入れた：▲ でエンジンをかける')];
     if (S.parked && KATA.fixing) return ['…', '降下止めをかけて ハローの中心と チェックチェーンを合わせ、傾きスイッチで 水平を覚えさせています'];
     if (S.parked && KATA.fixed && !(S.scrape > 0)) return ['!', K('ハローを水平にした：<kbd>↑</kbd> でエンジンをかける', 'ハローを水平にした：▲ でエンジンをかける')];
+    if (S.parked && PANKU.fixing) return ['…', 'エンジンを切って、ジャッキで 右前輪を上げ、予備の チューブに 替えています'];
+    if (S.parked && PANKU.fixed && !(S.scrape > 0)) return ['!', K('チューブを替えた：<kbd>↑</kbd> でエンジンをかける', 'チューブを替えた：▲ でエンジンをかける')];
+    if (PANKU.flat && !S.stuck && !S.stalled) return ['!', PANKU.nearExit() ? K('右前輪が パンク：止まって <kbd>スペース</kbd>で' + IMPL + 'を上げると チューブを替える', '右前輪が パンク：止まって ' + IMPL + 'を上げると チューブを替える') : '右前輪が パンク：田んぼの中では 直せない。ゆっくり 出入口の坂の下まで もどる'];
+    if (S.parked && AIRCL.fixing) return ['…', 'エンジンを切って、エアクリーナーの エレメントを 内がわから エアで 吹いています'];
+    if (S.parked && AIRCL.fixed && !(S.scrape > 0)) return ['!', K('エアクリーナーを掃除した：<kbd>↑</kbd> でエンジンをかける', 'エアクリーナーを掃除した：▲ でエンジンをかける')];
+    if (AIRCL.need && !S.stuck && !S.stalled) return ['!', K('エアクリーナーが 詰まって 回転が上がらない：止まって <kbd>スペース</kbd>で' + IMPL + 'を上げると 掃除する', 'エアクリーナーが 詰まって 回転が上がらない：止まって ' + IMPL + 'を上げると 掃除する')];
     if (S.parked && COVER.fixed && !(S.scrape > 0)) return ['!', K('リヤカバーを直した：<kbd>↑</kbd> でエンジンをかける', 'リヤカバーを直した：▲ でエンジンをかける')];
     if (S.parked && BELT.fixed && !(S.scrape > 0)) return ['!', K('ベルトを交換した：<kbd>↑</kbd> でエンジンをかける', 'ベルトを交換した：▲ でエンジンをかける')];
     if (S.parked) return S.scrape > 0 ? ['…', (S.rotorW || 0) >= 1 ? '爪が止まるのを待っています（回っている爪に近づかない）' : 'エンジンを切って、タイヤと' + IMPL + 'の泥を落としています']

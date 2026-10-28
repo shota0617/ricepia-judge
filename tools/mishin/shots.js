@@ -18,7 +18,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await p.evaluate(() => { const S = KB.S; const bb = KB.makeBag(4); Object.assign(bb, { face:'front', slide:0, golden:true }); S.bag = bb; for (let i=0;i<3;i++) KB.step(1/60); });
   await snap('03-front', '表（新米シール）');
   await p.evaluate(() => { const S = KB.S, L = KB.layout(); const bb = KB.makeBag(9); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
-    KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); } let x = L.x0+40; for (let i=0;i<40;i++){ x += 3; KB.move(x, L.seamY+70); KB.step(1/60); } });
+    KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); } let x = S.px, y = S.py; /* とばずに 少しずつ（とぶと もつれる） */ for (let i=0;i<240 && bb.pulled<6;i++){ x += S.tension>0.8 ? 0.5 : 3; y += (L.seamY+70-y)*0.1; KB.move(x, y); KB.step(1/60); } });
   await snap('04-pull', '引く（きつい目の 玉・ちりちりの 糸）');
   await p.evaluate(() => { const S = KB.S, L = KB.layout(), bb = S.bag; let x = S.px; for (let i=0;i<80 && !bb.tangle;i++){ x += 45; KB.move(x, L.seamY+70); KB.step(1/60); } KB.up(); for (let i=0;i<4;i++) KB.step(1/60); });
   await snap('05-tangle', 'もつれ（白糸を 引く）');

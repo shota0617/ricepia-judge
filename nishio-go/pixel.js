@@ -6988,6 +6988,9 @@ function npcGreet(n, tx, ty) {
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
+const TILT_DEGS = [15, 20, 26];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く
+tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); return TILT_DEGS.includes(v) ? v : 20; } catch (e) { return 20; } })();
+if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); } catch (er) { /* noop */ } }); }
 let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
@@ -7011,7 +7014,7 @@ window.addEventListener('deviceorientation', e => {
     }
     return;
   }
-  const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
+  const c = v => Math.max(-1, Math.min(1, v / tiltG.deg));   // tiltG.deg 度で いちばん強く（ふつう 20度）
   const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
   const te = e.timeStamp || performance.now(), k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - (tiltG.t || te - 16)) / 1000)) / 0.035);   // センサーの細かいゆれを ならす（届く回数が ちがう スマホでも 同じ なめらかさ：時間で まぜる）
   tiltG.t = te;

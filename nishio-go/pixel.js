@@ -6213,6 +6213,7 @@ function frame(now) {
   floatDrawn.length = 0;
   const floatHold = !!(mzBanner.t0 || mzNextOn());
   if (floatHold) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; if (floaters.length) floatLast = now + (floaters.length - 1) * 1300; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
+  let floatWait = -1;   // よける 所が なくて 待っている 文字の 番号
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (floatHold) continue;
@@ -6239,20 +6240,38 @@ function frame(now) {
     let ls = [fl.t], fx = w / 2, fy = fy0;
     floatShift = [0, 0];
     if (A && (fl.dodge || hit(box(ls, fx, fy)))) {   // いちど よけた 文字は 消えるまで 同じ よけ方で（浮いて 矢印を こえた とたんに 戻すと とんで 見える）
-      const k = [...fl.t].map((c, n) => (c === ' ' ? n : -1)).filter(n => n > 0).sort((a, b) => Math.abs(a - fl.t.length / 2) - Math.abs(b - fl.t.length / 2))[0];   // まん中に ちかい すきまで 2行に
+      const sps = [];
+      for (let n = fl.t.indexOf(' '); n > 0; n = fl.t.indexOf(' ', n + 1)) sps.push(n);   // slice と 同じ 数え方で（絵文字つきの 文字でも 1文字 けずらない。Codex の 指摘）
+      const k = sps.sort((a, b) => Math.abs(a - fl.t.length / 2) - Math.abs(b - fl.t.length / 2))[0];   // まん中に ちかい すきまで 2行に
       const tries = [[fl.t]].concat(k ? [[fl.t.slice(0, k), fl.t.slice(k + 1)]] : []);
       const sideX = l => { const bw = wid(l); return (A[0] + A[2]) / 2 < w / 2 ? Math.min(w - m - bw / 2, A[2] + m + 1 + bw / 2) : Math.max(m + bw / 2, A[0] - m - 1 - bw / 2); };   // 矢印と 反対の がわへ（画面の はしまで。+1 は 小数の 誤差で ぎりぎり かかる 判定に ならない ように）
-      if (!fl.dodge) {
-        const n = tries.findIndex(l => !hit(box(l, sideX(l), fy)));
+      const place = d => d === 'side0' || d === 'side1' ? tries[+d[4]] && { ls: tries[+d[4]], fx: sideX(tries[+d[4]]), fy: fy0 }
+        : d === 'down' ? { ls: [fl.t], fx: w / 2, fy: Math.max(fy0, A[3] + m + fz) } : d === 'up' ? { ls: [fl.t], fx: w / 2, fy: Math.min(fy0, A[1] - m) } : null;   // 上へ 浮いて いく ので、矢印の 下（上）で 止めて おけば つながって 見える
+      let q = fl.dodge && place(fl.dodge);
+      if (q && hit(box(q.ls, q.fx, q.fy))) q = null;   // 画面の はばが かわった など、いまの 置き方では かかる ときは 選びなおす（Codex の 指摘）
+      if (!q) {
         const foot = roll.box ? roll.box[1] - m : Math.round(cy - T * 1.15);   // お米の 頭より 下へは 下げない
-        fl.dodge = n >= 0 ? 'side' + n : A[3] + m + fz <= foot ? 'down' : 'up';
+        const top = (mzRt.t0 && mzRt.len0 ? Math.round(MZ_CLOCK_PX * dpr * 2.35) : 0) + m, huds = mzHudRects(now);   // 上の 時計の 札（drawMzClock）と ボタンにも かけない（Codex の 指摘）
+        const safe = (d, c) => { if (!c) return false; const b = box(c.ls, c.fx, c.fy); return !hit(b) && b[0] >= 0 && b[2] <= w && b[1] >= top && (d !== 'down' || c.fy <= foot) && !huds.some(r => b[0] < r[2] && b[2] > r[0] && b[1] < r[3] && b[3] > r[1]); };
+        fl.dodge = ['side0', 'side1', 'down', 'up'].find(d => safe(d, place(d))) || '';
+        q = fl.dodge && place(fl.dodge);
       }
-      if (fl.dodge === 'side0' || fl.dodge === 'side1') { ls = tries[+fl.dodge[4]] || ls; fx = sideX(ls); }
-      else fy = fl.dodge === 'down' ? Math.max(fy, A[3] + m + fz) : Math.min(fy, A[1] - m);   // 上へ 浮いて いく ので、矢印の 下（上）で 止めて おけば つながって 見える
+      if (!q) {   // よける 所が ない：重ねて 描かずに 待つ（4秒 たっても なければ 出さない）
+        floatDrawn.pop(); ctx.globalAlpha = 1;
+        if (!fl.w0) fl.w0 = now;
+        if (now - fl.w0 > 4000) { floaters.splice(i, 1); if (floatWait > i) floatWait--; }
+        else floatWait = i;
+        continue;
+      }
+      ({ ls, fx, fy } = q);
       floatShift = [fx - w / 2, fy - fy0];
     }
     ls.forEach((s, n) => { const y = fy - lh * (ls.length - 1 - n); ctx.strokeText(s, fx, y); ctx.fillText(s, fx, y); });
     ctx.globalAlpha = 1;
+  }
+  if (floatWait >= 0) {   // 待っている 文字は 出はじめの まま、あとの 文字は その うしろへ（いっしょに 出ると 重なる）
+    floaters.forEach((f, k) => { if (k >= floatWait) f.at = Math.max(f.at, now + (k - floatWait) * FLOAT_GAP); });
+    floatLast = Math.max(floatLast, floaters[floaters.length - 1].at);
   }
 
   // 画面の外にある行き先（みちしるべ。なければ一番近いスポット）への矢印。行き先が画面の中なら、その上で ▼ がはねる

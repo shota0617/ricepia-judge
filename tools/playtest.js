@@ -2829,13 +2829,16 @@ async function walkTo(page, id) {
         const shut = () => { document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
         const T0 = 'おしい！ ベストまで あと1だったじゃん', keep = ctx.fillText;
         let box = null;
-        ctx.fillText = function (t, x, y) { if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width; const b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
+        const T1 = '🏅 あたらしい ベスト ×12！ やったじゃん ほんと すごい';   // 絵文字つきの 文字を 2行に 分けても 1文字も けずらない（Codex の 指摘）
+        let pieces = null;
+        ctx.fillText = function (t, x, y) { if (pieces && t.length >= 2 && T1.includes(t) && !pieces.includes(t)) pieces.push(t); if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width; const b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
         const ov = (b, a) => !!(b && a && b[0] < a[2] && b[2] > a[0] && b[1] < a[3] && b[3] > a[1]);
         const me = G.me, ew = G.spots.filter(x => x.lat && G.dist(me, x) > 1200 && G.dist(me, x) < 6000 && Math.abs(x.lat - me.lat) < Math.abs(x.lng - me.lng) * 0.6).sort((a, b) => Math.abs(a.lat - me.lat) / Math.abs(a.lng - me.lng) - Math.abs(b.lat - me.lat) / Math.abs(b.lng - me.lng)).slice(0, 10);   // 東西の ゴール（まっすぐ 東西に ちかい 順）
-        let goal = 'none', frames = 0, hits = 0, dodged = 0, tried = 0;
+        let goal = 'none', frames = 0, hits = 0, dodged = 0, tried = 0, emoji = null, split = 0;
         for (const g of ew) {
           tried++;
           G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
+          for (let n = 0; n < 50 && P.maze.next().on; n++) { await wait(100); shut(); }   // 窓が 開いて いて 札が おくれて 出た ときも（札の 間は 浮かべない）
           let fr = 0, hi = 0, dg = 0;
           for (let k = 0; k < 2; k++) {
             P.floatsClear(); P.floatText(T0);
@@ -2847,7 +2850,13 @@ async function walkTo(page, id) {
               await wait(60);
             }
           }
-          if (hi || dg) { goal = g.name; frames = fr; hits = hi; dodged = dg; break; }
+          if (hi || dg) {
+            goal = g.name; frames = fr; hits = hi; dodged = dg;
+            pieces = []; P.floatsClear(); P.floatText(T1);
+            for (let i = 0; i < 14; i++) { await new Promise(res => requestAnimationFrame(res)); await wait(60); }
+            emoji = pieces.length === 1 ? pieces[0] === T1 : pieces.length === 2 ? pieces.join(' ') === T1 : false; split = pieces.length; pieces = null;
+            break;
+          }
         }
         // 2だんめ：「🏁 つぎの ゴール」の 札（3秒）の 間は 浮かべず、札が 消えてから 浮かべる（ゴールの あと 待っていた 文字が 札の「めいろで 2.0km」に 重なった）
         const g2 = G.spots.filter(x => x.lat && !x.shop && G.dist(me, x) > 300 && G.dist(me, x) < 2000 && (!G.guide || x.id !== G.guide.id)).sort((a, b) => G.dist(me, a) - G.dist(me, b))[0];
@@ -2864,10 +2873,10 @@ async function walkTo(page, id) {
           }
         }
         ctx.fillText = keep; P.floatsClear(); G.setGuide(null);
-        return { tried, goal, frames, hits, dodged, g2: g2 && g2.name, bannerFrames, during, after };
+        return { tried, goal, frames, hits, dodged, emoji, split, g2: g2 && g2.name, bannerFrames, during, after };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.bannerFrames > 0 && r.during === 0 && r.after };
+      return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.emoji === true && r.bannerFrames > 0 && r.during === 0 && r.after };
     })();
     R.errors.push(...w.errors);
     await w.ctx.close();

@@ -2950,6 +2950,12 @@ async function walkTo(page, id) {
   }
 
   await browser.close(); server.close();
+  // かかしを とった ときの はじめての 知らせは、浮かぶ 文字（「かかし！ カラスが 8秒 にげる」）と 時計の 下の のこりの 札と 同じ「にげる」を くりかえさない（自分で 遊んで 分かった）
+  R.checks.scareToast = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), m = src.match(/mzScare\.told = true; G\.toast\('([^']*)'\)/);
+    const t = m ? m[1] : '';
+    return { t, ok: !!t && /おいはらえる/.test(t) && !/にげる/.test(t) };
+  })();
   // ゴールの 戸の 道さがし（mzGateTry を 小さな 格子で）：戸 4つの 近い 道と、戸 3つで 8歩の 道が ある とき、上限（戸 3つ・歩数 まっすぐの 2倍＋4）以内の 道で 戸を あける
   // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸 4つの 道が えらばれて 上限で はねられ、戸が ひらかなかった。Codex の 指摘）
   // やわらかい 生け垣の へこみの ばね（mzDentStep を 取りだして）：軽く 押しつけて おさまった あと はなれると、へこみは 0 に もどる・押しつけて いる 間は 小さな ゆらぎで 動かない
@@ -3069,6 +3075,7 @@ async function walkTo(page, id) {
   need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
+  need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
   need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');

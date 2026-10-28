@@ -7302,7 +7302,8 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
     if (mzScare.cx === rc && mzScare.cy === rr) {   // とった
       mzScare.on = false; mzScare.until = now + MZ_SCARE_MS; mzScare.next = now + 45000; mzScare.got++;
       floatText(`かかし！ カラスが ${MZ_SCARE_MS / 1000}秒 にげる`);
-      if (!mzScare.told) { mzScare.told = true; G.toast('かかしを とると しばらく カラスが こわがって にげるよ。青い カラスに さわると おいはらえる（+3pt）'); }
+      // はじめての ときの 知らせは、浮かぶ 文字（カラスが ○秒 にげる）と 時計の 下の のこりの 札に ない ことだけ（同じ「にげる」を 3か所で 言っていた。自分で 遊んで 分かった）
+      if (!mzScare.told) { mzScare.told = true; G.toast('🐦 青く なった カラスに さわると おいはらえる（+3pt）'); }
       grainSound(); dirty = true;
     }
     return;

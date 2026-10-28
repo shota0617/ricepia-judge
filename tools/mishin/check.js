@@ -1,6 +1,6 @@
 // ミシン糸 一本どり：通しの 確かめ（本物の ポインタイベントで 遊んで、こわれて いないか 見る）
 //   node tools/mishin/check.js            # ぜんぶ
-//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor coin fonts sound perf）
+//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor coin season fonts sound perf）
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -245,6 +245,15 @@ const CHECKS = {
     await p.click('#skipBtn');
     const h = await p.evaluate(() => ({ hanko: getComputedStyle(document.querySelector('#coinDone .hanko')).display, small: document.getElementById('coinSmall').textContent }));
     ok(h.hanko==='none' && h.small==='取り方の まとめ', '途中で やめたら「よく できました」は 出さない', h);
+  },
+  // 新米の きせつ（34周目）：8/15〜12/31 だけ 新米シール。産年は 収穫の 年（農林水産省・愛知県）
+  async season(b){
+    const p = await page(b, 390, 844, '');
+    const r = await p.evaluate(() => { const out = {};
+      for (const d of ['2026-10-28', '2027-03-10', '2026-08-20']) { KB.today = d; out[d] = { year: KB.riceYear(new Date(d)), golden: KB.makeBag(4).golden }; }
+      KB.today = null; return out; });
+    ok(r['2026-10-28'].golden && r['2026-10-28'].year===2026, '秋は その年が 産年で 新米シール', r['2026-10-28']);
+    ok(!r['2027-03-10'].golden && r['2027-03-10'].year===2026, '春は 前の 年が 産年で 新米シールなし', r['2027-03-10']);
   },
   // フォントは 使う 字だけ（tools/mishin/fonts.py）。字を 書き足したら 回す
   async fonts(){

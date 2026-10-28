@@ -27,6 +27,7 @@ async function main(){
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(FILE);
   await page.waitForFunction(() => window.KB);
+  await page.evaluate(() => { window.KB.today = '2026-10-28'; }); // 新米の きせつ（新米の 袋が 出る 日）で はかる。日に よって 数が かわらない ように
   const out = {}, goalTable = {};
   for (const [name, bot] of Object.entries(BOTS)){
     const runs = [];

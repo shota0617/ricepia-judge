@@ -2161,7 +2161,8 @@ const WET = (() => {
 // おわりの画面に まいた所を 何割 まぜたか
 const KEIKAL = (() => {
   if (season !== 'aki') return { till() {}, flush() {}, get frac() { return 0; }, on: false };
-  const X0 = -HX + 0.5, X1 = -1, Z0 = -HZ + 0.5, Z1 = HZ - 0.5, W = 512, H = 1024;
+  const X0 = -HX + 0.4, X1 = -1, Z0 = -HZ + 0.4, Z1 = HZ - 0.4, W = 512, H = 1024;   // ます目（0.2m）の さかいに そろえる
+  const over = (x, z) => x + CELL / 2 > X0 && x - CELL / 2 < X1 && z + CELL / 2 > Z0 && z - CELL / 2 < Z1;   // ます目が まいた 範囲に かかる
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const g = cv.getContext('2d'), img = g.createImageData(W, H);
   let seed = 97; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // ほかの 乱数を ずらさない
@@ -2179,9 +2180,9 @@ const KEIKAL = (() => {
   m.position.set((X0 + X1) / 2, 0.08, (Z0 + Z1) / 2); m.renderOrder = 2; scene.add(m);   // 耕していない土の凸凹より少し上（ぬかるみと 同じ）
   // 板の 向き：PlaneGeometry を x 軸で 寝かせると 絵の 上（v=1）が -z。canvas の 上（py=0）が v=1 なので py は z の 小さい ほうから
   let total = 0, mixed = 0, dirty = false, t = 0;
-  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) { const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL; if (x > X0 && x < X1 && z > Z0 && z < Z1) total++; }
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) if (over(-HX + (i + 0.5) * CELL, -HZ + (j + 0.5) * CELL)) total++;
   function till(x, z) {                              // はじめて 耕した ます目（x, z は まん中）
-    if (!(x > X0 && x < X1 && z > Z0 && z < Z1)) return;
+    if (!over(x, z)) return;
     mixed++;
     const px0 = Math.floor((x - CELL / 2 - X0) / (X1 - X0) * W), px1 = Math.ceil((x + CELL / 2 - X0) / (X1 - X0) * W);
     const py0 = Math.floor((z - CELL / 2 - Z0) / (Z1 - Z0) * H), py1 = Math.ceil((z + CELL / 2 - Z0) / (Z1 - Z0) * H);

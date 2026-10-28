@@ -2752,7 +2752,7 @@ async function walkTo(page, id) {
         // 2だんめ：右上（北東）の ゴールで、下げた 札が 縁の 矢印と 道のりの 札に かからない（Codex の 指摘）。札は テスト用の 入口で 出す
         const msg2 = '🧭 テストの 知らせ：ちょうど 2行に なる 長さ';
         let ne = 'none', arrowSeen = 0, arrowHits = 0, dodged = 0;
-        const ngs = G.spots.filter(x => x.lat && x.lat > G.me.lat && x.lng > G.me.lng && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 3500).slice(0, 8).concat(G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.008 && Math.abs(x.lng - G.me.lng) < 0.004 && G.dist(G.me, x) < 3500).slice(0, 4));   // 北東と 北（北の ゴールは 札を 下げると お米に かかりやすい）
+        const ngs = G.spots.filter(x => x.lat && x.lat > G.me.lat && x.lng > G.me.lng && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 5000).slice(0, 14).concat(G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.008 && Math.abs(x.lng - G.me.lng) < (x.lat - G.me.lat) * 0.35 && G.dist(G.me, x) < 6000).slice(0, 6));   // 北東と 北（北の ゴールは 札を 下げると お米に かかりやすい）
         for (const g of ngs) {
           G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
           let as = 0, ah = 0, dg = 0;
@@ -2805,12 +2805,13 @@ async function walkTo(page, id) {
         // 2. 待ちの とちゅうで 本当に 町が かわる：新しい 町名は 前の 待ちを 引きつがない
         G.setGuide(null); await wait(300);   // 縁の 矢印を 出さない（札が 待たずに 出る ように）
         for (let i = 0; i < 40 && P.townBox; i++) await wait(100);   // 前の 町名の 札が 消えるまで
-        P.townWait = 3500;
         let reset = null;
-        const sp = G.spots.filter(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000)[0];
-        if (sp) {
+        for (const sp of G.spots.filter(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 5000).slice(0, 8)) {   // 町が かわる 所へ（札が 出るまで いくつか ためす）
+          P.townWait = 3500;
           const t = P.meiroApi.toTile(sp.lat, sp.lng); P.rollPut(t.x + 0.5, t.y + 0.5);
-          for (let i = 0; i < 40 && reset === null; i++) { await wait(100); shut(); if (P.townBox) reset = P.townWait < 1000; }   // 新しい 町名の 札が 出た ときの 待ち
+          for (let i = 0; i < 30 && reset === null; i++) { await wait(100); shut(); if (P.townBox) reset = P.townWait < 1000; }   // 新しい 町名の 札が 出た ときの 待ち
+          if (reset !== null) break;
+          G.setGuide(null);
         }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
         return { g: g && g.name, frames, drawn, bad, gone, reset };

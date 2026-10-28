@@ -6175,9 +6175,12 @@ function frame(now) {
       const mz = mazeOn() && rollOn, bs = Math.round((mz ? 14 : 18) * dpr), t = `〜 ${here.banner} 〜`;
       ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       // 左上の こよみ の札より下に。めいろでは お米の すぐ上（これから 転がす 所）を ふさがない よう、上の 時計・かかしの 札の 下に 小さく
-      const tw = ctx.measureText(t).width, by = Math.max(mz ? Math.round(13 * dpr * 5.4 + bs) : Math.round(Math.max(cy - T * 3, 48 * dpr + bs)), Math.round(toastFoot() + bs + 6 * dpr));   // 上の 知らせが 出て いれば その 下に（2行の 知らせに 町名が かくれていた。自分で 遊んで 分かった）
-      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(w / 2 - tw / 2 - 14 * dpr), by - bs, Math.round(tw + 28 * dpr), bs * 2);
-      here.box = [w / 2 - tw / 2 - 14 * dpr, by - bs, w / 2 + tw / 2 + 14 * dpr, by + bs];   // テスト用
+      const tw = ctx.measureText(t).width, bx0 = w / 2 - tw / 2 - 14 * dpr, bx1 = w / 2 + tw / 2 + 14 * dpr;
+      let by = Math.max(mz ? Math.round(13 * dpr * 5.4 + bs) : Math.round(Math.max(cy - T * 3, 48 * dpr + bs)), Math.round(toastFoot() + bs + 6 * dpr));   // 上の 知らせが 出て いれば その 下に（2行の 知らせに 町名が かくれていた。自分で 遊んで 分かった）
+      const A = mz && mzMap.arrow;   // めいろの 縁の 矢印と 道のりの 札（前の こまの 場所。あとから 描くので 札に かぶる）に かかる ときは、その 下へ（Codex の 指摘）
+      if (A && bx0 < A[2] && bx1 > A[0] && by - bs < A[3] && by + bs > A[1]) by = Math.round(A[3] + bs + 4 * dpr);
+      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(bx0), by - bs, Math.round(tw + 28 * dpr), bs * 2);
+      here.box = [bx0, by - bs, bx1, by + bs];   // テスト用
       ctx.fillStyle = '#fff'; ctx.fillText(t, w / 2, by);
       ctx.globalAlpha = 1;
     }

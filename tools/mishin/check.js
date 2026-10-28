@@ -1,6 +1,6 @@
 // ミシン糸 一本どり：通しの 確かめ（本物の ポインタイベントで 遊んで、こわれて いないか 見る）
 //   node tools/mishin/check.js            # ぜんぶ
-//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge fonts sound perf）
+//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor fonts sound perf）
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -209,6 +209,22 @@ const CHECKS = {
       return { next: S.bag!==bb, held:S.held, phase:S.bag.phase };
     });
     ok(r4.next && !r4.held && r4.phase==='look', 'キーを おしたまま つぎの 袋に なっても つまんだ ままに ならない', r4);
+  },
+  // かざり（素朴な かわいさ）：横向きで 吹き出しが「−1秒」を かくさない・はじめから やりなおすと もどる・動きを へらす 設定・れんしゅうの 帯
+  async decor(b){
+    const p = await page(b, 844, 390, '');
+    await p.evaluate(() => { KB.manual = true; KB.start(); for (let i=0;i<5;i++) KB.step(1/60); });
+    await p.waitForTimeout(50);
+    await p.evaluate(() => { const S = KB.S; S.msg = { text:'もつれた… 白糸を 少し 引こう', kind:'ng', t:0.5, life:2 }; S.msgY = undefined; });
+    await p.waitForTimeout(100); // 1コマ かかせる
+    const m = await p.evaluate(() => { const td = document.getElementById('timeDelta'), cv = document.getElementById('cv'); // 動く 前の「−1秒」の 下はし
+      return { msgY: KB.S.msgY, tdBottom: td.offsetTop + Math.max(td.offsetHeight, 22) - cv.offsetTop }; });
+    ok(m.msgY - 20 > m.tdBottom, '横向きでも 吹き出しが「−1秒」の 下', m);
+    const c = await p.evaluate(() => { const S = KB.S; S.hopT = [0.3, 0.4]; S.peckT = 0.4; KB.start(); return { reset: S.hopT[0]===0 && S.peckT===0 }; });
+    ok(c.reset, 'はじめから やりなおすと スズメの はね・首かしげは もどる', c);
+    const q = await page(b, 390, 844, '#coin');
+    const bar = await q.evaluate(() => { KB.manual = true; for (let i=0;i<5;i++) KB.step(1/60); return [...document.querySelectorAll('.steps .bar i')].map(i=>getComputedStyle(i, '::after').content); });
+    ok(bar[0]==='none' || bar[0]==='', 'れんしゅう 1袋目の 間は 帯に こめつぶが すわらない', bar);
   },
   // フォントは 使う 字だけ（tools/mishin/fonts.py）。字を 書き足したら 回す
   async fonts(){

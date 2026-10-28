@@ -268,7 +268,7 @@ const HARVEST = { 'コシヒカリ':[7,21], 'ひとめぼれ':[7,21], 'ミネア
 // ---------- 状態 ----------
 const S = {
   mode:'title', t:0, time:R.startTime, score:0, bags:0, clean:0, tangles:0, wrongs:0, fronts:0, streak:0, bestStreak:0,
-  hopT:[0,0], peckT:0, peckAll:false, mark:'', markT:0, combo:0, dirEff:1, bag:null, speed:0, tension:0, over:0, held:false, pend:0, liftT:0, bagNo:0,
+  hopT:[0,0,0,0], peckT:0, peckAll:false, mark:'', markT:0, combo:0, dirEff:1, bag:null, speed:0, tension:0, over:0, held:false, pend:0, liftT:0, bagNo:0,
   px:0, py:0, fx:[], grains:[], shake:0, msg:null, zoneTime:0, pullTime:0,
 };
 
@@ -329,7 +329,7 @@ function startGame(practice){
   practice = practice === true;
   S.day = today(); dprCap = 2; frame.slowT = 0; resize(); // 日を きめる。画面の きめは ゲームごとに 2 から（おそい ときだけ また 下げる）
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
-  Object.assign(S,{hopT:[0,0],peckT:0,peckAll:false,mark:'',markT:0,mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
+  Object.assign(S,{hopT:[0,0,0,0],peckT:0,peckAll:false,mark:'',markT:0,mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
     bagNo:0,liftT:0,dirEff:1,quick:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
   S.practice = practice;
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
@@ -536,7 +536,7 @@ function step(dt){
   S.t += dt;
   for(const f of S.fx) f.t+=dt; S.fx = S.fx.filter(f=>f.t<f.life);
   for(const g of S.grains){ g.vy+=(g.kome?520:900)*dt; g.x+=g.vx*dt; g.y+=g.vy*dt; g.t+=dt; } S.grains = S.grains.filter(g=>g.t<1.6);
-  S.shake = Math.max(0, S.shake - dt*3); S.hopT[0] = Math.max(0, S.hopT[0]-dt); S.hopT[1] = Math.max(0, S.hopT[1]-dt); S.peckT = Math.max(0, S.peckT - dt); S.markT = Math.max(0, S.markT - dt);
+  S.shake = Math.max(0, S.shake - dt*3); for(let i=0;i<S.hopT.length;i++) S.hopT[i] = Math.max(0, S.hopT[i]-dt); S.peckT = Math.max(0, S.peckT - dt); S.markT = Math.max(0, S.markT - dt);
   if(S.msg){ S.msg.t+=dt; if(S.msg.t>S.msg.life) S.msg=null; }
   if(S.pinchHint>0) S.pinchHint -= dt;
   if(S.mode!=='play') return;
@@ -616,7 +616,7 @@ function step(dt){
       if(S.tension>=zoneLo() && S.tension<=1) b.zoneSt++;
       const mult = multOf(); S.maxMult = Math.max(S.maxMult, mult);
       // ×5 に とどいたら フィーバー：数秒 ×5 の まま、1目 ほどく ごとに 時間が 0.02 秒 のびる
-      if(mult>=5 && !S.feverT && !S.practice){ S.feverT = R.feverDur; S.fevers++; say('フィーバー！','ok'); audio.clean(3); }
+      if(mult>=5 && !S.feverT && !S.practice){ S.feverT = R.feverDur; S.fevers++; say('フィーバー！','ok'); audio.fever(); }
       if(S.feverT>0) S.time += 0.02;
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
@@ -664,7 +664,7 @@ function finishBag(){
     S.clean++; S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
     S.score += 100*mult*g + 50*(S.streak-1);
     say(b.golden ? '新米 一本どり！' : S.streak>=2 ? '一本どり '+S.streak+'連続！' : '一本どり！','ok');
-    audio.clean(S.streak); S.hopT = [0.4, 0.55]; // 電線の スズメが よろこんで はねる（2羽目は 少し おくれて）
+    audio.clean(S.streak); S.hopT = [0.4, 0.55, 0.68, 0.8]; /* 1羽ずつ 少し おくれて はねる（音の「ちゅん」と そろえる） */ // 電線の スズメが よろこんで はねる（2羽目は 少し おくれて）
   } else { say('あいた！','ok'); audio.open(); S.peckT = 0.5; S.peckAll = false; } // 一本どりで ない ときは 首を かしげる
   addTime(dtime);
   // 下糸が ぬけると 上糸（白）も はずれて 落ちる
@@ -1292,7 +1292,7 @@ function drawBirds(L){
   const birds = [[bx(L.x0 - 30), 1, 0], [bx(L.x1 + 30), -1, 1]]; if(S.streak >= 3) birds.push([L.x0 + span*0.3, 1, 2]); if(S.streak >= 5) birds.push([L.x0 + span*0.86, -1, 3]);
   const bs = Math.round(Math.min(40, Math.max(28, W*0.025)));
   for(const [x0b, flip, k] of birds){
-    const ht = S.hopT[k&1], x = x0b, hop = !KB.calm && ht > 0 && ht <= 0.4 ? Math.sin(Math.PI * (1 - ht/0.4)) * 12 : 0;
+    const ht = S.hopT[k] || 0, x = x0b, hop = !KB.calm && ht > 0 && ht <= 0.4 ? Math.sin(Math.PI * (1 - ht/0.4)) * 12 : 0;
     const tilt = !KB.calm && (S.peckT > 0 && (k || S.peckAll)); // 一本どりで ない ときは 2羽目、まちがえた ときは 2羽とも 首を かしげる
     const by = wireAt(x, wy) - bs*0.4 - hop;
     ctx.save(); ctx.translate(x, by); ctx.scale(flip, 1); doodle(tilt ? 'suzumePeck' : 'suzume', 0, 0, bs); ctx.restore();
@@ -1310,7 +1310,7 @@ function drawBirds(L){
     }
   }
 }
-function birdsReact(mark){ S.mark = mark; S.markT = 1.1; S.peckT = mark==='！' ? 0 : 0.9; S.peckAll = true; if(mark==='！') S.hopT = [0.3, 0.38]; } // ！は びっくりして とびあがる
+function birdsReact(mark){ if(mark==='！') audio.chirp(2); S.mark = mark; S.markT = 1.1; /* びっくりの「ちゅちゅん」 */ S.peckT = mark==='！' ? 0 : 0.9; S.peckAll = true; if(mark==='！') S.hopT = [0.3, 0.38]; } // ！は びっくりして とびあがる
 
 // ---------- 素朴な かざり（手がきの こめつぶ・スズメ）----------
 // 米屋の 手書き POP の ような 線。袋と 糸（リアル）には かぶせず、まわりと おわりの 画面に だけ 使う。
@@ -1535,7 +1535,12 @@ const audio = {
   open(){ this.noise(0.5, 2500, 0.15, 0.7); }, // お米が ざっと 出る
   // 一本どり：拍子木の「カッ・カン」と スズメの「ちゅん」。連続で 少し 高く
   clean(streak){ this.noise(0.6, 2500, 0.18, 0.7); const k = Math.pow(1.05, Math.min(8, streak-1));
-    this.wood(1250*k, 0.26, 0.1); setTimeout(()=>this.wood(1650*k, 0.3, 0.14), 120); setTimeout(()=>this.chirp(streak>=3 ? 2 : 1), 300); },
+    this.wood(1250*k, 0.26, 0.1); setTimeout(()=>this.wood(1650*k, 0.3, 0.14), 120);
+    // スズメが はねる しゅんかんに「ちゅん」（1羽目 0.2 秒・2羽目 0.35 秒。3連続から 3羽目も）
+    setTimeout(()=>this.chirp(1), 200); setTimeout(()=>this.chirp(1), 350); if(streak>=3) setTimeout(()=>this.chirp(1), 480); if(streak>=5) setTimeout(()=>this.chirp(1), 600);
+    vib([12, 40, 12]); },
+  // フィーバーの はじまり：拍子木の「カン・カン・カカカン」
+  fever(){ [0, 180, 360, 450, 540].forEach((t, i) => setTimeout(()=>this.wood(i<2 ? 1500 : 1700, 0.2, 0.09), t)); vib([20, 30, 20, 30, 40]); },
 };
 function vib(p){ if(!soundOn) return; try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 

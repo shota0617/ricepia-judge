@@ -6363,7 +6363,10 @@ function step(dt) {
   if (!(working && Math.abs(S.v) > 0.1)) S.fineT = 0;   // 止まった・上げた：細かすぎる時間は つづけて 数える
   if (working && Math.abs(S.v) > 0.1) {
     S.workT = (S.workT || 0) + dt;                // 耕している時間（ほ場作業効率に使う）
-    S.depthSum = (S.depthSum || 0) + DEPTH * dt;   // 深さの 平均（おわりの画面で 代かきの 深さの 話に 使う）
+    if (SHIRO) {                                  // 代かきの 深さの 平均（おわりの画面）：ハローが 田んぼの 中で かいている 時間だけ
+      const hx = S.x + Math.sin(S.yaw) * ROTARY_Z, hz = S.z + Math.cos(S.yaw) * ROTARY_Z;
+      if (Math.abs(hx) < HX && Math.abs(hz) < HZ) { S.depthSum = (S.depthSum || 0) + DEPTH * dt; S.depthT = (S.depthT || 0) + dt; }
+    }
     S.pitch = tillPitch();
     S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
     S.fineT = season === 'aki' && S.pitch < 5 ? (S.fineT || 0) + dt : 0;   // 秋起こしを 細かくしすぎている
@@ -7188,15 +7191,16 @@ function setDepth(d) {
   DEPTH = v;
   const hint = season === 'aki' && DEPTH > 10 ? '。秋起こしは藁を土にまぜる浅起こし（5〜7cm）がよい'
     : season === 'haru' && DEPTH < 12 ? '。春の田起こしは 15cm くらい深めに（根が深く張る）'
-    : SHIRO && DEPTH >= 11 ? '。深く かくと 下の 土から 草の種が 上がってくる'
-    : SHIRO && DEPTH <= 5 ? '。浅すぎると 草の種は 上がらないが、苗の 育ちが 悪く なることも' : '';
+    : SHIRO && DEPTH >= 11 ? '。深く かくと 下の 土の 草の種が 上がってくる ことも（11cm は ゲームの 目安）'
+    : SHIRO && DEPTH <= 5 ? '。草の種を 上げない ねらいで なるべく 浅く かいた年に、苗の 育ちが 進まず 収穫が へった 農家も いる（5cm は ゲームの 目安）' : '';
   toast('耕深 ' + DEPTH + 'cm（Z 浅く・X 深く）' + hint);
   if (season === 'haru' && DEPTH <= 10) setTimeout(() => voice('shallow'), 2500);
   // 秋起こしを深くすると、春までに乾きにくい（勘六縁（ブログ）「今年のお米作りを振り返る①」：春までに乾くように 秋は浅く・溝を切った）
   if (d > 0 && season === 'aki' && DEPTH > 10) setTimeout(() => voice('kanroku'), 2500);
   // 代かきの 深さ：深く かくと 下の 土から 草の種が 上がる。草を おさえようと なるべく 浅く かいた年は、田植えの あと 苗の 育ちが 進まず、
   // 草に 負けた 田も ふえて、収穫が 去年より 35% 弱 へった（勘六縁（ブログ）「今年の失敗①～代かきについて」）。ゲームでは 4〜12cm の うち
-  // 5cm 以下に すると その声。11cm 以上は 草の種の 話。おわりの画面に 耕した あいだの 平均の 深さと その話（5.5cm 以下・10.5cm 以上）
+  // 5cm 以下に すると その声。11cm 以上は 草の種の 話。おわりの画面に ハローが 田んぼの 中で かいた あいだの 平均の 深さと その話（5.5cm 以下・10.5cm 以上）。
+  // 境の 数は 記事に なく、ゲームの 目安と 書く
   if (d < 0 && SHIRO && DEPTH <= 5) setTimeout(() => voice('asashiro'), 2500);
 }
 // ---- 落下速度の つまみが しまっていて ロータリーが 降りない（米屋四代目のブログ（岡山）「トラクターのロータリーが降りない時の対処方法」：
@@ -7557,7 +7561,7 @@ function finish() {
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
     `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり${ECO ? '。エンジンは ' + ECO_RPM + ' 回転' : ''}）</span>` +
-    (SHIRO && (S.workT || 0) > 20 && (S.depthSum / S.workT <= 5.5 || S.depthSum / S.workT >= 10.5) ? `<br><span class="small">代かきの 深さ：平均 ${(S.depthSum / S.workT).toFixed(1)}cm。${S.depthSum / S.workT <= 5.5 ? '浅く かくと 下の 草の種は 上がりにくいが、田植えの あと 苗の 育ちが 進まず 草に 負けることも（なるべく 浅く かいた年に 収穫が 35% 弱 へった 農家の 話）' : '深く かくと 下の 土から 草の種が 上がってくる'}</span>` : '') +
+    (SHIRO && (S.depthT || 0) > 20 && (S.depthSum / S.depthT <= 5.5 || S.depthSum / S.depthT >= 10.5) ? `<br><span class="small">代かきの 深さ：平均 ${(S.depthSum / S.depthT).toFixed(1)}cm（ゲームの 目安で ${S.depthSum / S.depthT <= 5.5 ? '浅め）。草の種を 上げない ねらいで なるべく 浅く かいた年に、田植えの あと 苗の 育ちが 進まず、草に 負けた 田も ふえて 収穫が 35% 弱 へった 農家の 話が ある' : '深め）。深く かくと 下の 土の 草の種が 上がってくる ことも'}</span>` : '') +
     (season === 'aki' && SNAILS.count.up + SNAILS.count.crushed > 0 ? `<br><span class="small">ジャンボタニシ：つぶした 約 ${SNAILS.count.crushed} 匹・掘り起こした 約 ${SNAILS.count.up} 匹（ゆっくり走り、浅く耕すほど よくつぶれる）</span>` : '') + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
   const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];

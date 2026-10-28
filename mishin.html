@@ -204,7 +204,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
       <ul class="rules">
         <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>反対の面</strong>を見る。裏には糸の輪がならぶ。</span></li>
         <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこを<strong>二本指でつまんで</strong>輪からはずす。</span></li>
-        <li><b>3</b><span>つまんだまま、<strong>縫い目に そって 横へ ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--red)">もつれる</strong>。</span></li>
+        <li><b>3</b><span>つまんだまま、<strong>縫い目に そって 反対の端の 方へ ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--red)">もつれる</strong>。</span></li>
       </ul>
       <div class="goals" id="goals"></div>
       <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。れんしゅうは キーボードでも できます（スペース＝裏返す、←・→＝その 端を つまんで おしている 間 引く）。</p>
@@ -1627,8 +1627,8 @@ function stepText(){
   if(b.tangle) return k('引っかかった！ <b>表側の白糸</b>を つまんで 少し引く（タップでも ほぐせる）', '（<b>スペース</b>で ほぐせる）');
   if(b.done) return (b.k===PRACTICE_N-1 ? 'ぜんぶ できた！ ' : 'あいた！ ') + '赤が ぬけると <b>白糸は 自然に ぬける</b>';
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>で 止まった。指を はなさずに、<b>ゆっくり</b> 横へ';
-  if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと 引っかかる</b> 袋。直し方を ためそう。<b>縫い目に そって 横へ ゆっくり</b> 引く';
-  return 'つまんだまま、<b>縫い目に そって 横へ ゆっくり</b> 引く。はなして つまみなおしても よい';
+  if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと 引っかかる</b> 袋。直し方を ためそう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引く';
+  return 'つまんだまま、<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引く。はなして つまみなおしても よい';
 }
 function syncUI(dt){
   const menu = S.mode!=='play'; if(menu !== syncUI.menu){ syncUI.menu = menu; document.body.classList.toggle('menu', menu); }

@@ -5200,8 +5200,9 @@ const KAMO = (() => {
       w.add(new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.16).rotateX(-Math.PI / 2).translate(s * 0.21, 0, 0), new THREE.MeshLambertMaterial({ color: 0x46362a, side: THREE.DoubleSide })));
     }
     g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+    g.rotation.order = 'YXZ';                        // 向き（y）の あとに 前へ かがむ（x）
     g.visible = false; scene.add(g);
-    list.push({ g, neck, head, legs, wings, st: 'away', x: 0, z: 0, y: 0, yaw: 0, tx: 0, tz: 0, sp: 0, t: Math.random() * 3, peck: 0, fx: 0, fz: 0, fy: 0, ft: 0, fT: 1, sx: 0, sz: 0, sy: 0 });
+    list.push({ g, tip, neck, head, legs, wings, pitch: 0, st: 'away', x: 0, z: 0, y: 0, yaw: 0, tx: 0, tz: 0, sp: 0, t: Math.random() * 3, peck: 0, fx: 0, fz: 0, fy: 0, ft: 0, fT: 1, sx: 0, sz: 0, sy: 0 });
   }
   const waterY = (x, z) => soilCell(x, z) >= 0 ? TILL_Y + 0.008 : 0.006;
   const baseY = (x, z) => soilCell(x, z) >= 0 ? TILL_Y + 0.008 : Math.max(0.006, Math.min(0.2, AMENBO.soilAt(x, z)));   // 浅い 水の中は 泥に 立つ（水が ない 高い所は 土の上）
@@ -5282,11 +5283,13 @@ const KAMO = (() => {
         const ph = (u.ph = (u.ph || 0) + mv * 18);
         u.legs[0].rotation.x = Math.sin(ph) * 0.5; u.legs[1].rotation.x = -Math.sin(ph) * 0.5;
         g.rotation.z = Math.sin(ph) * 0.08 * Math.min(1, u.sp / 0.2);   // よちよち
-        u.neck.rotation.x = u.peck > 0 ? 1.0 + 0.15 * Math.sin(u.peck * 14) : 0;   // 首を のばして くちばしを 泥に 入れる
+        u.pitch += ((u.peck > 0 ? 0.5 : 0) - u.pitch) * Math.min(1, dt * 6);   // ついばむときは からだを 前へ かがめ（尾が 上がる）、
+        u.neck.rotation.x = u.pitch / 0.5 * (1.2 + 0.06 * Math.sin(u.peck * 14));   // 首を のばして くちばしの 先を 泥に 入れる
+        g.rotation.x = u.pitch;
         if (u.peck > 0 && Math.random() < dt * 1.5 && AMENBO.water(u.x, u.z)) RIPPLE.ring(u.x + Math.sin(u.yaw) * 0.2, u.z + Math.cos(u.yaw) * 0.2, 0.15, 0.008, 0.5, 0.1);
       }
       g.position.set(u.x, u.y, u.z); g.rotation.y = u.yaw;
-      if (u.st === 'fly') g.rotation.z = 0;
+      if (u.st === 'fly') { g.rotation.z = 0; g.rotation.x = 0; u.pitch = 0; u.neck.rotation.x = 0; }
     }
     if (a.st === 'walk' && b.st === 'walk') {        // 2 羽が 重ならない：からだ（はば 20cm・長さ 35cm）の ぶん はなす
       let dx = b.x - a.x, dz = b.z - a.z, dd = Math.hypot(dx, dz);

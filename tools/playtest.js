@@ -2986,7 +2986,7 @@ async function walkTo(page, id) {
         return { frames, under, drawn, after };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.frames > 0 && r.under === 0 };
+      return { ...r, ok: r.under === 0 && (r.frames > 0 || r.after > 0) };   // 知らせの 下へ よけて 出る（frames）か、縁の 矢印に かかって 下へ よけられない ときは 知らせが 消えてから 出る（after）。どちらも かくれない
     })();
     R.errors.push(...w.errors);
     await w.ctx.close();

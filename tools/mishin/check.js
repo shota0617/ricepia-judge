@@ -325,7 +325,7 @@ const CHECKS = {
       return { gap, said, up: document.getElementById('best').innerHTML }; });
     ok(/あと 1,001点/.test(bs.gap), 'じこベストに とどかない ときは「じこベストまで あと 何点」', bs.gap);
     ok(bs.said==='じこベスト こえた！', '遊んで いる 間に じこベストを こえたら 言う', bs.said);
-    ok(/<b>じこベスト更新/.test(bs.up) && /はじめて「頼れるパートさん」/.test(bs.up), 'じこベスト更新と はじめての ランクは 金の 字で', bs.up);
+    ok(/<b>じこベスト更新/.test(bs.up) && /はじめて「頼れるパートさん」/.test(bs.up), 'じこベスト更新は 金の 字・はじめての ランクも 出る', bs.up);
     // 60周目（見えにくさ 4回目）：おわりの 読み上げに 金の 行・タイムアタックの キャンバスの 名前・キーの 人には キーの ことばと 見える フォーカス
     await p.waitForTimeout(200);
     const a11 = await p.evaluate(() => ({ sr: document.getElementById('sr').textContent, lbl: document.getElementById('cv').getAttribute('aria-label') }));

@@ -198,9 +198,9 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
       <div class="perch"><button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px);width:100%">糸の取り方を れんしゅう（1分）</button><span data-d="suzume" class="d-suzume-btn"></span></div>
       <button class="go sub" id="startBtn" type="button">ゲームで遊ぶ（タイムアタック）</button>
       <ul class="rules">
-        <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>反対の面</strong>を見る（本物は 袋を まわす）。裏には糸の輪がならぶ。</span></li>
+        <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>反対の面</strong>を見る。裏には糸の輪がならぶ。</span></li>
         <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこを<strong>二本指でつまんで</strong>輪からはずす。</span></li>
-        <li><b>3</b><span>つまんだまま、<strong>縫い目に そって 横へ ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--red)">もつれる</strong>（表側の白糸を少し引くか、タップでほぐす）。</span></li>
+        <li><b>3</b><span>つまんだまま、<strong>縫い目に そって 横へ ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--red)">もつれる</strong>。</span></li>
       </ul>
       <div class="goals" id="goals"></div>
       <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。れんしゅうは キーボードでも できます（スペース＝裏返す、←・→＝その 端を つまんで おしている 間 引く）。</p>
@@ -215,7 +215,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
       <h1 class="one"><small id="coinSmall">れんしゅう できた</small>本物の袋でも<br/>おなじ<span class="hanko" aria-hidden="true"><span><i>よく</i><i>できました</i></span></span></h1>
       <div class="done3" aria-hidden="true"><span data-d="kome"></span><span data-d="kome"></span><span data-d="komeBlink"></span><small>3袋 できた</small></div>
       <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：反対の端＝縫い始め（ここから 引くと からまる）"></canvas>
-        <figcaption><span><b>ここから</b>：赤が 白い輪に ささる</span><span>反対の端（縫い始め）：からまる（×）</span></figcaption></figure>
+        <figcaption><span>反対の端（縫い始め）：からまる（×）</span></figcaption></figure>
       <ol class="real">
         <li><b>1</b><span><strong>白い糸が まっすぐ</strong>なら表。袋を 立てたまま まわして、<strong>反対の面</strong>を 見る。<span class="fb" aria-hidden="true"><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><path d="M4 7h62" stroke="#f8f4ea" stroke-width="2.4" stroke-dasharray="7 2.5"/></svg>表</i><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><g fill="none" stroke="#f8f4ea" stroke-width="2"><ellipse cx="10" cy="7" rx="6" ry="3.4"/><ellipse cx="22" cy="7" rx="6" ry="3.4"/><ellipse cx="34" cy="7" rx="6" ry="3.4"/><ellipse cx="46" cy="7" rx="6" ry="3.4"/><ellipse cx="58" cy="7" rx="6" ry="3.4"/></g><path d="M4 8l12-2 12 2 12-2 12 2 12-2" stroke="#d8342c" stroke-width="2" fill="none"/></svg>裏</i></span></span></li>
         <li><b>2</b><span><strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪に ささっている</strong>端から（たいてい左）。</span></li>
@@ -423,11 +423,11 @@ function endGame(){
   const nr = nextRank(S.score);
   ui.best.innerHTML = [
     S.score>best && best>0 ? '<b>じこベスト更新！</b>（前は '+best.toLocaleString()+'）' : best>0 ? `じこベストまで あと ${(best-S.score+1).toLocaleString()}点（じこベスト ${best.toLocaleString()}）` : '',
-    best>0 && rankIdx(S.score) > rankIdx(best) ? `<b>はじめて「${rankOf(S.score)}」！</b>` : '',
+    best>0 && rankIdx(S.score) > rankIdx(best) ? `<span class="up">はじめて「${rankOf(S.score)}」</span>` : '', /* 金は 1行 だけ（62周目） */
     nr ? `つぎの ランク「${nr[1]}」まで あと ${(nr[0]-S.score).toLocaleString()}点` : '',
-    S.bags>bestBags ? (bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : `あけた袋の じこベスト ${S.bags}袋`) : `あけた袋の じこベスト ${bestBags}袋`,
+    S.bags>bestBags && bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : '', /* 更新の ときだけ */
   ].filter(Boolean).join('<br/>');
-  const gold = [...ui.best.querySelectorAll('b')].map(x=>x.textContent).join('、'); /* 金の 行と 目標の 達成も 読む */
+  const gold = [...ui.best.querySelectorAll('b, .up')].map(x=>x.textContent).join('、'); /* 金の 行と 目標の 達成も 読む */
   srSay(`おわり。てんすう ${S.score.toLocaleString()}、あけた袋 ${S.bags}、きょうの 腕まえ ${rankOf(S.score)}` + (gold ? '。' + gold : '') + (fresh.size ? '。目標 達成' : ''));
 }
 function tipOf(zone){
@@ -690,7 +690,7 @@ function tangle(){
   if(b.tangles>=R.tangleLimit && !S.practice){ b.failed=true; b.done=true; b.open=0; addTime(R.timeCut); birdsReact('…'); say('ハサミで 切りました','ng'); return; }
   audio.hush(); b.tangle = { taps:0, x:p.x, y:p.y, tug:0, tugging:false }; // もつれは 吹き出しが 知らせる（スズメの「！」は 47周目に けした）
   addTime(R.tangleTime);
-  say(S.practice ? '引っかかった！' : 'もつれた… ○の 白糸を 少し 引こう','ng', 2.5);
+  say(S.practice ? '引っかかった！' : 'もつれた…','ng', 2.5, false, S.practice ? '' : 'もつれた… ○の 白糸を 少し 引こう'); /* 吹き出しは 短く（やり方は 袋の 上の 字が 言う）。読み上げは ぜんぶ */
 }
 
 function finishBag(){
@@ -717,7 +717,7 @@ function finishBag(){
 }
 
 function addTime(d){ if(S.practice || S.lastBag) return; /* ラスト1袋は 時計を もどさない */ S.time = Math.max(0, S.time + d); ui.td.textContent = (d>0?'+':'')+d+'秒'; ui.td.style.color = d>0?'var(--ok)':'#ff7b6e'; /* 紺の 空との 比 5.5 */ ui.tdT = 0; }
-function say(text, kind, life, read){ S.msg = {text, kind, t:0, life: life || (S.practice ? 2.5 : 1.2)}; if(!S.practice || read) srSay(text); } // れんしゅうは 上の 帯（aria-live）が 読む ので 2重に しない
+function say(text, kind, life, read, srText){ S.msg = {text, kind, t:0, life: life || (S.practice ? 2.5 : 1.2)}; if(!S.practice || read) srSay(srText || text); } // れんしゅうは 上の 帯（aria-live）が 読む ので 2重に しない
 function srSay(text){ const sr = document.getElementById('sr'); if(!sr) return; // 一度 空に して、同じ 文が つづいても 読む。すぐ つづいた 声は つなげて 読む
   srSay.q = srSay.q ? srSay.q + '。' + text : text; if(srSay.t) return; sr.textContent = ''; srSay.t = setTimeout(()=>{ sr.textContent = srSay.q; srSay.q = ''; srSay.t = 0; }, 60); }
 

@@ -283,7 +283,7 @@ body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では�
 body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 列（.px-zoom：はば 40px＋右 10px）に かからない よう、左右とも 58px ずつ あける（知らせが 2つめの ボタンに 重なっていた。自分で 遊んで 分かった） */
 .reward{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2500}
 .reward.show{pointer-events:auto;cursor:pointer}   /* 出ている間はタップで消せる */
-.reward .rw::after{content:'タップで とじる';display:block;margin-top:8px;font-size:11px;color:var(--sub)}
+.reward .rw::after{content:'タップで とじる';display:block;margin-top:8px;font-size:13px;font-weight:700;color:#4f5d52}   /* 毎回 出る 案内なので 読める 大きさ・こさに（11点の うすい 字 だった。運営者の声「大きい文字シンプルに」） */
 .reward .rw{background:#fff;border-radius:20px;padding:18px 24px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35);animation:pop 2.6s ease forwards;min-width:220px;max-width:calc(100% - 40px)}
 .reward .rw .big{font-size:40px;font-weight:900;color:var(--gold);line-height:1.1}
 .reward .rw .nm{font-weight:700;margin-top:4px}

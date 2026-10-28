@@ -890,10 +890,7 @@ async function walkTo(page, id) {
   // ふだんは 当たった 速さより おそく はね返る（4割ほど）。わざの 時間が すぎたら もとに もどる
   R.checks.yuruSpring = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
-    for (let i = 0; i < 15; i++) {
-      const busy = await page.evaluate(() => { if (!nishioPixel.mapCovered(true)) return false; const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('.medashi:not([hidden]) .md-close').forEach(b => b.click()); return true; });
-      if (!busy) break; await page.waitForTimeout(200);
-    }
+    await uncover(page);   // 窓が 出ている 間は 転がらないので 閉じてから
     const r = await page.evaluate(async () => {
       const P = nishioPixel, M = P.maze, sleep = ms => new Promise(f => setTimeout(f, ms));
       if (!M.on() || !M.spring) return { skipped: 'no-maze' };
@@ -901,12 +898,20 @@ async function walkTo(page, id) {
       let c = null;
       for (let d = 0; d < 15 && !c; d++) for (let y = cy - d; y <= cy + d && !c; y++) for (let x = cx - d; x <= cx + d && !c; x++) if (M.type(x, y) === 1 && M.open(x, y, -1, 0) && !M.open(x, y, 1, 0) && !M.open(x, y, 0, 1) && !M.open(x, y, 0, -1)) c = { x, y };
       if (!c) return { skipped: 'no-deadend' };
-      const hitAt = async v => {   // 当てて、当たった 速さ（vin）と もどる 速さ（back）
-        P.rollPut(c.x * K + 0.6, c.y * K + 1.5, v, 0);
-        let vin = 0, back = 0; const t0 = performance.now();
-        while (performance.now() - t0 < 900) { await new Promise(f => requestAnimationFrame(f)); vin = Math.max(vin, M.soft().vin || 0); back = Math.min(back, P.roll.vx); }
-        P.rollPut(c.x * K + 0.6, c.y * K + 1.5, 0, 0); await sleep(300);
-        return { vin: +vin.toFixed(2), back: +(-back).toFixed(2) };
+      const stopped = () => P.mapCovered(true) || P.sightBusy() || !!document.querySelector('.medashi:not([hidden])');   // お米が 止められて いる（窓・人の 話・できごと）
+      const clear = async () => { for (let i = 0; i < 20 && stopped(); i++) { const w = document.getElementById('reward'); if (w.classList.contains('show')) w.click(); document.querySelectorAll('#pxInfo:not([hidden]) [data-close], .medashi:not([hidden]) .md-close').forEach(b => b.click()); await sleep(150); } };
+      const hitAt = async v => {   // 当てて、当たった 速さ（vin）と もどる 速さ（back）。当てて いる 間に 窓が 出て 止められたら、閉じて 当てなおす（3回まで。止められると vin 0 で 落ちた）
+        let res = null;
+        for (let tries = 0; tries < 3; tries++) {
+          await clear();
+          P.rollPut(c.x * K + 0.6, c.y * K + 1.5, v, 0);
+          let vin = 0, back = 0, why = ''; const t0 = performance.now();
+          while (performance.now() - t0 < 900) { await new Promise(f => requestAnimationFrame(f)); vin = Math.max(vin, M.soft().vin || 0); back = Math.min(back, P.roll.vx); if (!why && stopped()) why = document.getElementById('reward').classList.contains('show') ? 'reward:' + document.getElementById('reward').innerText.replace(/\s+/g, ' ').slice(0, 30) : !document.getElementById('pxInfo').hidden ? 'pxInfo' : P.sightBusy() ? 'sight' : 'other'; }
+          P.rollPut(c.x * K + 0.6, c.y * K + 1.5, 0, 0); await sleep(300);
+          res = { vin: +vin.toFixed(2), back: +(-back).toFixed(2), ...(why ? { why, tries } : {}) };
+          if (!why) break;
+        }
+        return res;
       };
       M.springOn(0); const off = await hitAt(6);
       const g0 = M.spring().got; M.springPut(c.x, c.y); await sleep(300);   // ばねを お米の いる マスに 置く → とる
@@ -2866,6 +2871,8 @@ async function walkTo(page, id) {
         let frames = 0, bad = 0, drawn = 0, gone = null;
         if (g) {
           G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();
+          // 知らせは 上に 止めて おく（知らせは 縁の 矢印に 重なると 横や いちばん 下へ よけて、上が 空く ことが ある。ここでは 置き場所が ない 形を 作る）
+          for (const [k, v] of [['top', 'calc(var(--bar-h) + 52px)'], ['bottom', 'auto'], ['left', '50%']]) el.style.setProperty(k, v, 'important');
           P.townBanner('住吉町四丁目の とても ながい 町名');
           for (let i = 0; i < 50; i++) {   // 5秒あまり（待つ 4秒を こえて）
             box = null; G.toast('🧭 テストの 知らせ：ちょうど 2行に なる 長さ');
@@ -2875,6 +2882,7 @@ async function walkTo(page, id) {
             await wait(100);
           }
           gone = !P.townBox;
+          ['top', 'bottom', 'left'].forEach(k => el.style.removeProperty(k));
         }
         // 2. 待ちの とちゅうで 本当に 町が かわる：新しい 町名は 前の 待ちを 引きつがない
         G.setGuide(null); await wait(300);   // 縁の 矢印を 出さない（札が 待たずに 出る ように）

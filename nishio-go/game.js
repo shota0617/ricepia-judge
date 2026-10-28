@@ -2582,8 +2582,14 @@ function howtoOpen() { const h = $('howto'); return !!h && !h.hidden; }
 // 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
 function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
 // シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
-function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden); }
+// イベントの 窓（古い地図・虫の名前あて・本のできごと・雲母石 など。どれも .medashi）も 同じ：知らせが 窓の 絵や 問いの 上に 重なって いた（自分で 遊んで 分かった：古い地図の 写真に 重なった）
+function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden) || !!document.querySelector('.medashi:not([hidden])'); }
 if (window.MutationObserver && $('share')) new MutationObserver(() => { if ($('share').hidden) toastFlush(); else toastHold(); }).observe($('share'), { attributes: true, attributeFilter: ['hidden'] });
+if (window.MutationObserver) new MutationObserver(ms => {   // イベントの 窓は あとから 作られる ので、body の 下の hidden の 変化を 見る
+  const ev = ms.find(m => m.target.classList && m.target.classList.contains('medashi'));
+  if (!ev) return;
+  if (ev.target.hidden) toastFlush(); else toastHold();
+}).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
 // めいろの「🏁 つぎの ゴール」の 札（pixel.js の mzNextOn）
 function pxBusy() { try { return !!(window.nishioGo && nishioGo.toastBlock && nishioGo.toastBlock()); } catch (e) { return false; } }
 function toastBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy(); }

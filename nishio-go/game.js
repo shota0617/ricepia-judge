@@ -823,7 +823,7 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   const day = dayState();
   let h = day.h100;
   if (h && h.done) return;
-  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな${S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
+  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter('👣 100歩たんけん：はじめての道を さがそう'); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
   const rest = H100.steps * TRAIL_M - (h.m || 0), part = meters > rest ? Math.max(0, rest) / meters : 1;   // 100歩（800m）を またぐ1回は、800m までの分だけ
   h.m = (h.m || 0) + meters;
   const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
@@ -859,7 +859,7 @@ function trailMiles(after) {   // 歩いた道が after マスになる前に呼
     gainPoints(pts);
     const q = toastAfter.q || [];   // まだ出ていない前の節目の知らせは、新しい節目に まとめる（おくれて「1.0km に！」と出ないように。ポイントと記録は そのまま）
     for (let i = q.length - 1; i >= 0; i--) if (q[i].startsWith('👣 これまでに歩いた道が')) q.splice(i, 1);   // 待っている処理が 同じ列を見ているので、その場で取りのぞく
-    toastAfter(`👣 これまでに歩いた道が ${fmtM(m)} に！ +${pts}pt（つぎの節目は ${fmtM(trailMile(k + 1))}）`);
+    toastAfter(`👣 歩いた道 ${fmtM(m)}！ +${pts}pt`);
     track('trail_mile', { m });
   }
 }
@@ -3516,7 +3516,7 @@ async function playSend(text) {
   if (res && res.ok) {
     fbStatsAdd(x => { x.react++; });
     const lv = gainPoints(5); save();
-    toast(`🎮 ありがとう！ +5pt（ゲームを よくするのに 使います）${lv ? ` レベル${lv}！` : ''}`);
+    toast(`🎮 ありがとう！ +5pt${lv ? ` レベル${lv}！` : ''}`);
   } else toast(res && (res.status === 503 || res.status === 404) ? '声は まだ受けつけていません。ごめんなさい。' : '声を送れませんでした。また こんど おねがいします。');
 }
 const playClose = () => reactHide();
@@ -3573,7 +3573,7 @@ $('reactBar').addEventListener('click', async e => {
     store.set('nsg_react', seen);
     fbStatsAdd(x => { x.react++; });
     const lv = gainPoints(5); save();
-    toast(`💬 ひとこと ありがとう！ +5pt（${esc(s.name)}の みんなの声に入ります）${lv ? ` レベル${lv}！` : ''}`);
+    toast(`💬 ありがとう！ +5pt${lv ? ` レベル${lv}！` : ''}`);
     track('feedback_react', { r: b.dataset.react });
     checkBadges();
   } else toast(r && (r.status === 503 || r.status === 404) ? 'ひとこと は まだ受けつけていません。ごめんなさい。' : 'ひとこと を送れませんでした。また こんど おねがいします。');
@@ -3741,7 +3741,7 @@ $('codeCopy').addEventListener('click', async () => {
 });
 $('codeLoad').addEventListener('click', async () => {
   const o = await readCode($('codeBox').value);
-  if (!o) { toast('🔑 あいことばが ちがうようです（さいごまで コピーできているか たしかめてね）'); return; }
+  if (!o) { toast('🔑 あいことばが ちがうみたい（さいごまで コピーできたかな）'); return; }
   if (!confirm(`この端末の いまの記録（${S.points}pt）は、あいことばの記録（${o.s.points}pt・めぐった所 ${Object.keys(o.s.visits || {}).length}か所）に おきかわります。よろしいですか？`)) return;
   store.set(stateKey(), o.s);
   if (o.started && !store.get('nsg_started', null)) store.set('nsg_started', o.started);

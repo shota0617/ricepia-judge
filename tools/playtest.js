@@ -749,6 +749,13 @@ async function walkTo(page, id) {
     const flatGrew = (await page.evaluate(() => nishioPixel.roll.flat)) - rr.f0;   // 丸いお米が描けるのに、古い絵（平らな お米）を重ねて描いていないか
     return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, style: dbg.style, wall: dbg.wall, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
   })();
+  // お米に 赤ちゃんの ような かわいさ（運営者の声 2026-10-28）：ふだんの 顔に 目の きらっ・止まって しばらくすると あくび（6秒 すぎ）・もっと たつと すやすや
+  R.checks.babyRice = await page.evaluate(() => {
+    const P = nishioPixel;
+    if (!P.riceFace || !P.moodAt) return { ok: false, why: 'no-api' };
+    const f = P.riceFace(), m = { a: P.moodAt(3), y: P.moodAt(6.3), b: P.moodAt(8), s: P.moodAt(13) };
+    return { ...f, m, ok: f.keys.includes('yawn') && f.shine >= 2 && m.y === 'yawn' && m.s === 'sleepy' && m.a !== 'yawn' && m.b !== 'yawn' };
+  });
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {
     // べつの ページで 確かめる（お米を 平らな 所へ 動かしたり、転がる 間に 宝箱・ゴール・人の 話が 起きたりしても、あとの 確認に のこらない。Codex の 指摘）
@@ -3001,6 +3008,18 @@ async function walkTo(page, id) {
     const src = ['game.js', 'pixel.js'].map(strip).join('\n'), bad = ['おそかったじゃん', 'もう見たじゃん', 'まけた！', '勝つと', 'vs${', 'ランキング', '位に'].filter(w => src.includes(w));
     return { bad, ok: bad.length === 0 };
   })();
+  // 文字は 少なく（運営者の声「文字は できるだけ 減らして」2026-10-28）：遊びの 知らせ・浮かぶ 文字は 40文字まで。安全・エラーの 知らせだけ 長くて よい
+  R.checks.shortText = (() => {
+    const long = [], ok = ['乗り物で移動中', 'スポット情報', '保存領域', '生きもの手帳が ぜんぶ', 'あるいて移動では'];
+    for (const f of ['game.js', 'pixel.js', 'korostyle.js']) {
+      const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', f), 'utf8');
+      for (const m of src.matchAll(/(?:toast|toastAfter|floatText)\((`[^`]*`|'[^']*')/g)) {
+        const t = m[1].slice(1, -1).replace(/\$\{[^}]*\}/g, '○');
+        if (t.length > 40 && !ok.some(k => t.includes(k))) long.push(`${f}: ${t.slice(0, 40)}…（${t.length}）`);
+      }
+    }
+    return { long, ok: long.length === 0 };
+  })();
   // かかしを とった ときの はじめての 知らせは、浮かぶ 文字（「かかし！ カラスが 8秒 にげる」）と 時計の 下の のこりの 札と 同じ「にげる」を くりかえさない（自分で 遊んで 分かった）
   R.checks.scareToast = (() => {
     const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), m = src.match(/mzScare\.told = true; G\.toast\('([^']*)'\)/);
@@ -3129,6 +3148,8 @@ async function walkTo(page, id) {
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
   need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
+  need(c.shortText && c.shortText.ok, `文字は 少なく：遊びの 知らせ・浮かぶ 文字が 40文字を こえる（${JSON.stringify(c.shortText)}）`);
+  need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
   need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);
   need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');

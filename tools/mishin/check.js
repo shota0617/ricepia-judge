@@ -4,7 +4,7 @@
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
-const FILE = 'file://' + path.resolve(__dirname, '../../mishin.html');
+const FILE = 'file://' + (process.env.MISHIN_FILE || path.resolve(__dirname, '../../mishin.html')); // MISHIN_FILE で 前の 版を ためせる
 const OUT = process.env.MISHIN_OUT || path.join(os.tmpdir(), 'mishin-check');
 fs.mkdirSync(OUT, { recursive: true });
 const only = process.argv.slice(2);
@@ -114,6 +114,22 @@ const CHECKS = {
     });
     ok(c.tangled && !c.after, '二本指で つまんだまま 引っかかっても、ひらいて とじれば 白糸を つまめる', c);
   },
+  // フィーバー：×5 で はじまり、まちがえ（もつれ）たら おわる。袋が あく 間も 残り時間は へる
+  async fever(b){
+    const p = await page(b, 390, 844, '');
+    const r = await p.evaluate(() => {
+      KB.manual = true; KB.fixedSeed = 3; KB.start(); const S = KB.S, L = KB.layout();
+      const bb = KB.makeBag(6); Object.assign(bb, { face:'back', start:'L', slide:0, single:true, knots:new Set() }); S.bag = bb;
+      S.combo = 1; KB.down(L.x0+2, L.seamY); let x = L.x0;
+      for (let i=0;i<200 && !S.feverT;i++){ x += 4; KB.move(x, L.seamY+60); KB.step(1/60); }
+      const started = S.feverT > 0;
+      for (let i=0;i<80 && !bb.tangle;i++){ x += 45; KB.move(x, L.seamY+60); KB.step(1/60); }
+      steps(2);
+      return { started, tangled: !!bb.tangle, feverAfter: S.feverT, combo: S.combo };
+    });
+    ok(r.started, 'スルスル ×5 で フィーバーが はじまる', r);
+    ok(r.tangled && r.feverAfter===0 && r.combo<1, 'もつれたら フィーバーは おわり、倍率も さがる', r);
+  },
   // 音・ふるえの 切りかえ（この 端末に おぼえる）
   async sound(b){
     const p = await page(b, 390, 844, '');
@@ -123,9 +139,9 @@ const CHECKS = {
   },
   // 重さ：CPU 4倍 おそく して、引いている 間の 1コマの 時間（ヘッドレスは GPU なし。目安）
   async perf(b){
-    const p = await b.newPage({ viewport:{ width:390, height:844 }, deviceScaleFactor:3 });
+    const p = await page(b, 390, 844, '', 3);
     const cdp = await p.context().newCDPSession(p); await cdp.send('Emulation.setCPUThrottlingRate', { rate:4 });
-    await p.goto(FILE); await p.waitForTimeout(300);
+    await p.waitForTimeout(300);
     const r = await p.evaluate(async () => {
       KB.fixedSeed = 7; KB.start(); const S = KB.S; S.bag = KB.makeBag(9); S.bag.face = 'back'; S.bag.slide = 0; S.combo = 1;
       const L = KB.layout(); KB.down(L.x0+4, L.seamY+40); const ts = []; let last = performance.now(), x = L.x0;
@@ -140,8 +156,9 @@ const CHECKS = {
 let fails = 0;
 function ok(cond, name, info){ console.log((cond ? '  ✔ ' : '  ✖ ') + name + (cond || info===undefined ? '' : '  ' + JSON.stringify(info))); if (!cond) fails++; }
 let errs = [];
-async function page(b, w, h, hash){
-  const p = await b.newPage({ viewport:{ width:w, height:h }, deviceScaleFactor:2 });
+const pages = [];
+async function page(b, w, h, hash, dsf){
+  const p = await b.newPage({ viewport:{ width:w, height:h }, deviceScaleFactor:dsf||2 }); pages.push(p);
   p.on('pageerror', e => errs.push(e.message));
   await p.goto(FILE + hash); await p.waitForFunction(() => window.KB); await p.evaluate(HELPERS);
   return p;
@@ -151,6 +168,7 @@ async function page(b, w, h, hash){
   for (const [name, fn] of Object.entries(CHECKS)){
     if (only.length && !only.includes(name)) continue;
     console.log(name); try { await fn(b); } catch (e) { ok(false, name + ' が 止まった', e.message); }
+    while (pages.length) await pages.pop().close(); // 1つ 確かめる ごとに 閉じる
   }
   ok(errs.length===0, 'ページの エラー なし', errs);
   await b.close();

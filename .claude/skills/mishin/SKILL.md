@@ -52,7 +52,7 @@ description: 米袋の ミシン糸 ゲーム「ミシン糸 一本どり」（m
    - `node tools/mishin/check.js`（ぜんぶ ✔ に なる まで）
    - `node tools/mishin/playtest.js --runs 10 --goals`（順位：expert ＞ regular ≧ human ＞ novice、greedy・careful・guesser は human より 点が 低い こと。expert の 1回は 2分 くらいまで）
    - `node tools/mishin/shots.js` と `node tools/mishin/shots.js 360 640` の `sheet.png` を 目で 見る（字の 重なり・はみ出し・かくれ）
-   - 新しい しぐさを 足したら、その 確かめを `check.js` に 足す
+   - 新しい しぐさや 直しを 足したら、その 確かめを `check.js` に 足し、直す 前の 版で 落ちる ことも 見る（`git show HEAD:mishin.html > <スクラッチ>/old.html` → `MISHIN_FILE=<スクラッチ>/old.html node tools/mishin/check.js <名前>`）
 6. **記録**：`docs/mishin.md` に「### N 周目（テーマ）」。何が どう だったか → どう 直したか、出典、ボットの 表（数が かわった とき）、作らなかった もの。
 7. **コミット・push**：`git add` → コミット（題は「ミシン糸 一本どり：…」）→ `git push -u origin <ブランチ>`。
 8. **公開**：`python3 tools/mishin/to_artifact.py mishin.html <スクラッチ>/mishin.html` → Artifact の publish（同じ ファイルの 道で 同じ URL を 更新。`label` に「N周目：テーマ」）。

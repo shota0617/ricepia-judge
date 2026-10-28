@@ -249,7 +249,7 @@ function startGame(practice){
   practice = practice === true;
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
   Object.assign(S,{mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
-    bagNo:0,liftT:0,dirEff:1,quick:0,feverBags:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
+    bagNo:0,liftT:0,dirEff:1,quick:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
   S.practice = practice;
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true;
@@ -296,7 +296,7 @@ function endGame(){
   ui.best.innerHTML = [
     S.score>best && best>0 ? 'じこベスト更新！（前は '+best.toLocaleString()+'）' : best>0 ? 'じこベスト '+best.toLocaleString() : '',
     nr ? `つぎの ランク「${nr[1]}」まで あと ${(nr[0]-S.score).toLocaleString()}点` : '',
-    S.bags>bestBags && bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : bestBags>0 ? `あけた袋の じこベスト ${Math.max(bestBags,S.bags)}袋` : '',
+    S.bags>bestBags ? (bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : `あけた袋の じこベスト ${S.bags}袋`) : `あけた袋の じこベスト ${bestBags}袋`,
   ].filter(Boolean).join('<br/>');
 }
 function tipOf(zone){
@@ -384,12 +384,12 @@ function down(x,y){
     const w = whereTap(x,y);
     if(w==='L' || w==='R'){
       if(b.face==='front'){
-        S.fronts++; S.combo=0; S.streak=0; b.wrong=true; addTime(R.timeFront); say('表は 白い糸だけ。裏返そう','ng'); audio.knot();
+        S.fronts++; S.combo=0; S.feverT=0; S.streak=0; b.wrong=true; addTime(R.timeFront); say('表は 白い糸だけ。裏返そう','ng'); audio.knot();
         return;
       }
       if(!b.single && w!==b.start){
         // 縫い始めの側：からまる
-        S.wrongs++; S.combo=0; S.streak=0; b.wrong=true; b.wrongEnd=w; addTime(R.timeWrong);
+        S.wrongs++; S.combo=0; S.feverT=0; S.streak=0; b.wrong=true; b.wrongEnd=w; addTime(R.timeWrong);
         say(S.practice ? 'そっちは 縫い始め。反対の端から' : '縫い始めだ… からまった','ng'); audio.knot(); S.shake=0.6; return;
       }
       b.from = w; b.hint=false; audio.click();
@@ -445,6 +445,8 @@ function step(dt){
     if(S.time<=0){ S.time=0; endGame(); return; }
   }
 
+  // フィーバーの 残り時間は、袋が あく 間や 裏返す 間も へる（ゲームの 時計と そろえる）
+  if(S.feverT>0){ S.feverT -= dt; S.combo = 1; if(S.feverT<=0){ S.feverT = 0; S.combo = 0.5; say('フィーバー おわり','ok'); } }
   const b = S.bag;
   b.slide = Math.max(0, b.slide - dt*4);
   if(b.flipT>0){
@@ -463,7 +465,6 @@ function step(dt){
     }
     return;
   }
-  if(S.feverT>0){ S.feverT -= dt; S.combo = 1; if(S.feverT<=0){ S.feverT = 0; S.combo = 0.5; say('フィーバー おわり','ok'); } }
   if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; if(b.readT>0.9 && !S.feverT) S.combo = Math.max(0, S.combo - dt*0.4); S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
   if(b.phase==='free'){
     S.pend=0; S.tension *= Math.pow(0.02, dt);
@@ -509,8 +510,8 @@ function step(dt){
       b.sub = 0; b.pulled++;
       if(S.tension>=zoneLo() && S.tension<=1) b.zoneSt++;
       const mult = multOf(); S.maxMult = Math.max(S.maxMult, mult);
-      // ×5 に とどいたら フィーバー：数秒 ×5 の まま、1目 ほどく ごとに 時間が 0.05 秒 のびる
-      if(mult>=5 && !S.feverT && !S.practice){ S.feverT = R.feverDur; S.fevers = (S.fevers||0) + 1; say('フィーバー！','ok'); audio.clean(3); }
+      // ×5 に とどいたら フィーバー：数秒 ×5 の まま、1目 ほどく ごとに 時間が 0.02 秒 のびる
+      if(mult>=5 && !S.feverT && !S.practice){ S.feverT = R.feverDur; S.fevers++; say('フィーバー！','ok'); audio.clean(3); }
       if(S.feverT>0) S.time += 0.02;
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
@@ -527,13 +528,13 @@ function step(dt){
 }
 // 早わざ：袋を すばやく 読み（0.9 秒 以内に つまむ）、つまんで すぐ（0.6 秒 以内に）輪から はずせたら
 function quickBonus(b){
-  if(b.wrong || b.readT >= 0.9 || S.t - (b.engageT||0) > 0.6) return;
+  if(S.practice || b.wrong || b.readT >= 0.9 || S.t - (b.engageT||0) > 0.6) return;
   S.score += 50; S.quick++; const p = stitchPos(b,0); S.fx.push({kind:'text', text:'早わざ +50', x:p.x, y:layout().seamY-30, t:0, life:0.8});
 }
 function multOf(){ return 1 + Math.floor(S.combo*4 + 1e-9); }
 
 function tangle(){
-  const b=S.bag; b.tangles++; S.tangles++; S.combo=0; S.streak=0; S.over=0; S.speed=0; S.held=false;
+  const b=S.bag; b.tangles++; S.tangles++; S.combo=0; S.feverT=0; S.streak=0; // まちがえたら フィーバーも おわり S.over=0; S.speed=0; S.held=false;
   pinch = null; oneCand = null; // 指の 層も はなした ことに（つぎに つまむと 白糸を 引ける）
   if(S.practice && b.forceTangle>=0){ audio.click(); } else { S.shake=1; audio.snap(); }
   const p = stitchPos(b, b.pulled);
@@ -551,7 +552,6 @@ function finishBag(){
   let dtime = Math.max(0.5, R.timeBag - 0.06*Math.max(0, b.k-4)) + (cleanBag?R.timeClean:0) + (smooth?R.timeZone:0);
   dtime = Math.round(dtime*10)/10;
   if(b.single) S.singleOpen++;
-  if(mult>=5) S.feverBags++;
   if(cleanBag){
     if(b.golden) S.goldenClean++;
     if(b.from==='R' && !b.single) S.rightClean++;
@@ -1247,7 +1247,7 @@ $('startBtn').addEventListener('click', ()=>startGame(false));
 $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);
 function showSound(){ const b = $('soundBtn'); b.textContent = soundOn ? '音・ふるえ あり' : '音・ふるえ なし'; b.setAttribute('aria-pressed', String(soundOn)); }
-$('soundBtn').addEventListener('click', ()=>{ soundOn = !soundOn; try{ localStorage.setItem('mishin-sound', soundOn ? 'on' : 'off'); }catch(e){} audio.ensure(); audio.setOn(soundOn); showSound(); });
+$('soundBtn').addEventListener('click', ()=>{ soundOn = !soundOn; try{ localStorage.setItem('mishin-sound', soundOn ? 'on' : 'off'); }catch(e){} if(soundOn) audio.ensure(); audio.setOn(soundOn); showSound(); });
 showSound();
 ui.steps.addEventListener('click', e=>{ if(e.target && e.target.id==='skipBtn' && S.mode==='play') endPractice(); });
 $('practiceAgain').addEventListener('click', startPractice);
@@ -1266,7 +1266,7 @@ function stepText(){
   return 'つまんだまま、<b>縫い目に そって 横へ ゆっくり</b> 引く。はなして つまみなおしても よい';
 }
 function syncUI(dt){
-  document.body.classList.toggle('menu', S.mode!=='play');
+  const menu = S.mode!=='play'; if(menu !== syncUI.menu){ syncUI.menu = menu; document.body.classList.toggle('menu', menu); }
   if(S.practice && S.mode==='play'){
     if(!ui.steps._built){
       ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now" id="stepNow"></div>`;

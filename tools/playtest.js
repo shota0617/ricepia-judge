@@ -2925,6 +2925,43 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.emoji === true && r.bannerFrames > 0 && r.during === 0 && r.after };
     })();
+    // 浮かぶ 文字は 上の 知らせ（DOM。キャンバスの 上に 重なる）に かくれない：知らせの 下へ ずれるか、消えるまで 待つ（自分で 遊んで 分かった：320×568 で 4行の「🌙 夜のさんぽ…」が「おしい！ ベストまで…」の 1行目を かくした）
+    R.checks.floatToast = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d'), el = document.getElementById('toast');
+        document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        G.setGuide(null); await wait(300);
+        const T0 = 'おしい！ ベストまで あと1だったじゃん', keep = ctx.fillText;
+        let box = null;
+        ctx.fillText = function (t, x, y) { if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width, b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
+        let frames = 0, under = 0, drawn = 0, after = 0;
+        for (let k = 0; k < 3; k++) {
+          el.classList.remove('show'); G.toast('🌙 テストの 知らせ：夜の さんぽ。明かりの まわりしか 見えないよ。たからばこは ほんのり 光っとる（長めの 文で 4行）');
+          P.floatsClear(); P.floatText(T0);
+          for (let i = 0; i < 40; i++) {   // 知らせの 間と 消えた あと
+            box = null;
+            await new Promise(res => requestAnimationFrame(res));
+            const show = el.classList.contains('show') && !el.classList.contains('wlow');
+            if (box) {
+              drawn++;
+              if (show) {
+                frames++;
+                const c = cv.getBoundingClientRect(), q = el.getBoundingClientRect(), s = c.width / cv.width;
+                const B = [c.left + box[0] * s, c.top + box[1] * s, c.left + box[2] * s, c.top + box[3] * s];
+                if (q.left < B[2] && q.right > B[0] && q.top < B[3] && q.bottom > B[1]) under++;   // 知らせの うしろに かくれた
+              } else after++;
+            }
+            await wait(100);
+          }
+        }
+        ctx.fillText = keep; P.floatsClear(); el.classList.remove('show');
+        return { frames, under, drawn, after };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.drawn > 0 && r.under === 0 };
+    })();
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -3038,6 +3075,7 @@ async function walkTo(page, id) {
   need(c.eventToast && c.eventToast.ok, `イベントの 窓の 上に 知らせが 重なる（${JSON.stringify(c.eventToast)}）`);
   need(c.townNoRoom && c.townNoRoom.ok, `町名の 札：置き場所が ない ときに 重ねて 描く・町が かわっても 待ちを 引きつぐ（${JSON.stringify(c.townNoRoom)}）`);
   need(c.floatArrow && c.floatArrow.ok, `浮かぶ 文字：めいろの 縁の 矢印と 道のりの 札・「つぎの ゴール」の 札に 重ねない（${JSON.stringify(c.floatArrow)}）`);
+  need(c.floatToast && c.floatToast.ok, `浮かぶ 文字：上の 知らせの うしろに かくれる（${JSON.stringify(c.floatToast)}）`);
   need(c.townToast && c.townToast.ok, `町名の 札（〜 ○○町 〜）が 上の 知らせに かくれる（${JSON.stringify(c.townToast)}）`);
   need(c.landscape568 && c.landscape568.ok, `横に した 低い 画面（568×320）で はじめの1枚が えらべない・ごほうびの 窓が はみ出す（${JSON.stringify(c.landscape568)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);

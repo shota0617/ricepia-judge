@@ -6218,6 +6218,12 @@ function frame(now) {
   const floatHold = !!(mzBanner.t0 || mzNextOn());
   if (floatHold) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; if (floaters.length) floatLast = now + (floaters.length - 1) * 1300; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
   let floatWait = -1;   // よける 所が なくて 待っている 文字の 番号
+  // 上に 出て いる 知らせ（DOM）の わく（キャンバスの 画素）。浮かぶ 文字は 知らせの うしろに かくれるので よける（自分で 遊んで 分かった：320×568 で 4行の「🌙 夜のさんぽ…」が「おしい！ ベストまで…」の 1行目を かくした）
+  let floatToast = null;
+  if (floaters.length) {
+    const te = document.getElementById('toast');
+    if (te && te.classList.contains('show')) { const r = te.getBoundingClientRect(), c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1; if (r.width && r.height) floatToast = [(r.left - c.left) * k, (r.top - c.top) * k, (r.right - c.left) * k, (r.bottom - c.top) * k]; }
+  }
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (floatHold) continue;
@@ -6270,6 +6276,20 @@ function frame(now) {
       }
       ({ ls, fx, fy } = q);
       floatShift = [fx - w / 2, fy - fy0];
+    }
+    if (floatToast) {   // 知らせに かかる ときは 知らせの すぐ 下へ（お米の 頭より 下に なる・縁の 矢印に かかる ときは 知らせが 消えるまで 待つ）
+      const b = box(ls, fx, fy), Q = floatToast;
+      if (b[0] < Q[2] + m && b[2] > Q[0] - m && b[1] < Q[3] + m && b[3] > Q[1] - m) {
+        const ny = Math.round(Q[3] + m + lh * (ls.length - 1) + fz), foot = roll.box ? roll.box[1] - m : Math.round(cy - T * 1.15);
+        if (ny <= foot && !(A && hit(box(ls, fx, ny)))) { fy = Math.max(fy, ny); floatShift = [fx - w / 2, fy - fy0]; }
+        else {
+          floatDrawn.pop(); ctx.globalAlpha = 1;
+          if (!fl.w0) fl.w0 = now;
+          if (now - fl.w0 > 6000) { floaters.splice(i, 1); if (floatWait > i) floatWait--; }   // 知らせは 4秒ほどで 消える。6秒 待っても だめなら 出さない
+          else floatWait = i;
+          continue;
+        }
+      }
     }
     ls.forEach((s, n) => { const y = fy - lh * (ls.length - 1 - n); ctx.strokeText(s, fx, y); ctx.fillText(s, fx, y); });
     ctx.globalAlpha = 1;

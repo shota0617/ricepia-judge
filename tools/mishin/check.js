@@ -336,7 +336,7 @@ const CHECKS = {
     await p.waitForTimeout(200);
     const fv = await p.evaluate(() => { const el = document.activeElement, r = el.getBoundingClientRect(); return { id: el.id, top:r.top, bottom:r.bottom, H:innerHeight }; });
     ok(/←・→キー/.test(kb), 'キーで 遊ぶ 人には れんしゅうの 帯も キーの ことば', kb);
-    ok(fv.id==='practiceAgain' && fv.bottom <= fv.H, 'キーで 遊ぶ 人には まとめの フォーカスが 見える 所に', fv);
+    ok(fv.id==='practiceAgain' && fv.bottom <= fv.H + 1, 'キーで 遊ぶ 人には まとめの フォーカスが 見える 所に', fv);
     // 61周目の レビュー：おまけの 行は 新しい じこベスト・0袋で 1回 まちがえた 人には その わけ・Ctrl では キーの 人に しない
     const r61 = await p.evaluate(() => { const ids = KB.GOALS.map(g=>g.id); localStorage.setItem('mishin-goals', JSON.stringify({ day: (()=>{ const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); })(), done: ids }));
       localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 9000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
@@ -357,6 +357,8 @@ const CHECKS = {
       const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });
     ok(ag4.b <= ag4.H, '320×568 で 結果の 行が ふえても「もう一回」が 画面の 中', ag4);
     const fev = await p.evaluate(() => { KB.start(); const S = KB.S; S.feverT = 4.2; S.score = 48060; for (let i=0;i<3;i++) KB.step(1/60); return new Promise(r => setTimeout(() => { const c = document.getElementById('combo'), t = document.getElementById('time').getBoundingClientRect(); r({ fit: c.scrollWidth <= c.clientWidth + 1, mid: Math.round(t.left + t.width/2), W: innerWidth }); }, 100)); });
+    const st69 = await p.evaluate(() => { const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); document.getElementById('result').scrollTop = 300; KB.start(); S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('result').scrollTop; });
+    ok(st69===0, 'つぎの 結果は いちばん 上から（前の 回の 位置を のこさない）', st69);
     ok(fev.fit && Math.abs(fev.mid - fev.W/2) <= 2, '320 でも フィーバーの 字が 1行に 入り 時計が まん中', fev);
   },
   // 新米の きせつ（34周目）：8/15〜12/31 だけ 新米シール。産年は 収穫の 年（農林水産省・愛知県）

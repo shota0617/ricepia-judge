@@ -1750,9 +1750,10 @@ async function walkTo(page, id) {
       nishioGo.showReward(225, 'らいすぴあ秀幸（永吉）', ['🔗 れんさ ×1.5 +25', '✨ はじめての 名所 +100', '🍚 来店スタンプ 3こめ', '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります']);
       await new Promise(r => setTimeout(r, 300));
       const el = document.getElementById('reward'), t = el.innerText, chips = [...el.querySelectorAll('.chips span')].map(x => x.textContent.trim());
+      const closePx = parseFloat(getComputedStyle(el.querySelector('.rw'), '::after').fontSize);   // 「タップで とじる」も 読める 大きさ（13点 から）
       el.click();
       const thanks = /来てくれて ありがとう！/.test(t), stamp = chips.includes('3こめ'), blank = chips.filter(x => !x).length;
-      return { thanks, stamp, blank, chips, ok: thanks && stamp && blank === 0 && chips.length === 3 };
+      return { thanks, stamp, blank, chips, closePx, ok: thanks && stamp && blank === 0 && chips.length === 3 && closePx >= 13 };
     });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
     // 人から はなれる（テストの 道具）：めいろの 道すじの 上で 人の マスから 5〜8マスの 所に 置き、道すじに そって となりの マスへ 転がす（4マス 以上 はなれた マスに 入る）。

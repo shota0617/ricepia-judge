@@ -60,10 +60,10 @@ async function main(){
             if (!held){ b._think = 0.3; tick(); continue; }
             x0 = x; strokeLeft = bot.stroke; tick(); continue;
           }
-          // 赤の 端を 白い 輪から はずす（少し 引く）・赤が ぬけたら 白糸を 引きぬく
-          if (b.phase === 'free' || b.phase === 'white'){
+          // 赤の 端を 白い 輪から はずす（少し 引く）
+          if (b.phase === 'free'){
             if (!S.held){ KB.down(x, y); held = S.held; }
-            const sp = b.phase === 'free' ? 120 : 400; x += KB.pullDir(b)*sp*dt; y += sp*0.3*dt; KB.move(x, y);
+            const sp = 120; x += KB.pullDir(b)*sp*dt; y += sp*0.3*dt; KB.move(x, y);
             tick(); if (b.phase === 'pull'){ x0 = x; strokeLeft = bot.stroke; } continue;
           }
           // もつれ：気づいて タップ 3回

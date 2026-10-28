@@ -785,6 +785,18 @@ async function walkTo(page, id) {
     const b = P.riceBox, c = b && [(b[0] + b[2]) / 2, b[3]], near = c ? hits.filter(h => Math.abs(h[0] - c[0]) < 2 && h[2] > 3) : [];
     return { n: hits.length, near: near.length, first: near[0] && near[0].map(v => +v.toFixed(2)), ok: near.length > 0 };
   });
+  // Godot の 記録係（?godot=1 の ためし）：歩く地図を 描く ときに 使う canvas の 命令が、記録係にも ぜんぶ ある（ない 命令で 止まると その こまの 絵が 送られない。Codex の 指摘：影の ellipse）
+  R.checks.godotRec = await page.evaluate(async () => {
+    const N = window.NSG_GODOT, rec = N && N.rec, errs = [], on = N && N.on;
+    if (!rec) return { ok: false, why: 'no-rec' };
+    const onErr = e => errs.push(String(e.message || e.error || e).slice(0, 120));
+    window.addEventListener('error', onErr);
+    N.on = () => true;   // Godot が 動いて いる ことに して、歩く地図を 記録係で 描かせる（Godot は 読みこまない）
+    let len = 0;
+    try { for (let i = 0; i < 6; i++) { await new Promise(r => requestAnimationFrame(r)); len = Math.max(len, rec.out.length); } }
+    finally { N.on = on; for (let i = 0; i < 2; i++) await new Promise(r => requestAnimationFrame(r)); window.removeEventListener('error', onErr); }
+    return { errs: [...new Set(errs)], len, ok: !errs.length && len > 50 };
+  });
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {
     // べつの ページで 確かめる（お米を 平らな 所へ 動かしたり、転がる 間に 宝箱・ゴール・人の 話が 起きたりしても、あとの 確認に のこらない。Codex の 指摘）
@@ -3185,6 +3197,7 @@ async function walkTo(page, id) {
   need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
   need(c.shortText && c.shortText.ok, `文字は 少なく：遊びの 知らせ・浮かぶ 文字が 40文字を こえる（${JSON.stringify(c.shortText)}）`);
   need(c.riceBreath && c.riceBreath.ok, `止まって いる お米が すう すう 息を しない（${JSON.stringify(c.riceBreath)}）`);
+  need(c.godotRec && c.godotRec.ok, `Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（${JSON.stringify(c.godotRec)}）`);
   need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);

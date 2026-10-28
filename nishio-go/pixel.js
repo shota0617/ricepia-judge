@@ -6133,7 +6133,8 @@ function frame(now) {
     }
     const sq = roll.sq;
     let sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる
-    if (roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2 && !calmMotion) { const b = riceBreath(now); sy *= 1 + b; sx *= 1 - b * 0.5; }   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
+    let br = 0;   // 息の ふくらみ（札が よける お米の はんいには 入れない。はんいが こまごとに ゆれると、ぎりぎりに よけた 札が お米に かかった）
+    if (roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2 && !calmMotion) { br = riceBreath(now); sy *= 1 + br; sx *= 1 - br * 0.5; }   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる
     else if (t0 && t1 && roll.v > 2) {   // 速いと、進む向きに 少し のびる
@@ -6143,7 +6144,8 @@ function frame(now) {
     const by = sy !== 1 ? ground - low * sy - hop : mid;
     roll.by = by;   // テスト用（お米の まん中の 高さ。息で かわる）
     const mood = roll.drawn = riceMood(now);
-    roll.box = [hx - 13 * u, by - 15 * u, hx + 13 * u, by + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
+    const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
+    roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
     if (riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {

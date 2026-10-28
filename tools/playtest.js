@@ -773,7 +773,7 @@ async function walkTo(page, id) {
     const ok0 = await page.evaluate(() => !!(nishioPixel.breathAt && nishioPixel.riceLast));
     if (!ok0) return { ok: false, why: 'no-api' };
     const ys = [];
-    for (let i = 0; i < 14; i++) { const r = await page.evaluate(() => { const R = nishioPixel.roll, L = nishioPixel.riceLast(); return R.kind === 'stop' && R.v < 0.2 && R.h <= 0 && L ? L.Y : null; }); if (r !== null) ys.push(r); await page.waitForTimeout(100); }
+    for (let i = 0; i < 14; i++) { const r = await page.evaluate(() => { const R = nishioPixel.roll; return R.kind === 'stop' && R.v < 0.2 && R.h <= 0 && typeof R.by === 'number' ? R.by : null; });   // 歩く地図の お米の 高さ（riceLast は ほかの 絵の お米でも かわる ので つかわない） if (r !== null) ys.push(r); await page.waitForTimeout(100); }
     const rg = ys.length ? Math.max(...ys) - Math.min(...ys) : 0, b = await page.evaluate(() => [nishioPixel.breathAt(0), nishioPixel.breathAt(650)]);
     return { n: ys.length, rg: +rg.toFixed(2), b, ok: ys.length >= 8 && rg > 0.15 && rg < 4 && Math.abs(b[0]) < 1e-9 && b[1] > 0.01 && b[1] < 0.04 };
   })();

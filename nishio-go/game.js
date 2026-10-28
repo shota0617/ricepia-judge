@@ -858,7 +858,7 @@ function trailMiles(after) {   // 歩いた道が after マスになる前に呼
     S.log.unshift({ type: 'trailmile', t: Date.now(), pts, icon: '👣', name: `歩いた道 ${fmtM(m)} の節目` });
     gainPoints(pts);
     const q = toastAfter.q || [];   // まだ出ていない前の節目の知らせは、新しい節目に まとめる（おくれて「1.0km に！」と出ないように。ポイントと記録は そのまま）
-    for (let i = q.length - 1; i >= 0; i--) if (q[i].startsWith('👣 これまでに歩いた道が')) q.splice(i, 1);   // 待っている処理が 同じ列を見ているので、その場で取りのぞく
+    for (let i = q.length - 1; i >= 0; i--) if (q[i].startsWith('👣 歩いた道 ')) q.splice(i, 1);   // 待っている処理が 同じ列を見ているので、その場で取りのぞく
     toastAfter(`👣 歩いた道 ${fmtM(m)}！ +${pts}pt`);
     track('trail_mile', { m });
   }

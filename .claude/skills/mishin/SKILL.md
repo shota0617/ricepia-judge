@@ -30,7 +30,7 @@ description: 米袋の ミシン糸 ゲーム「ミシン糸 一本どり」（m
 | ファイル | 中身 |
 |---|---|
 | `mishin.html` | ゲーム 1ファイル。`window.KB` が テスト用の 口（`KB.manual=true` で `KB.step(dt)` が 1コマ。`KB.down/move/up` は つまむ 手、`KB.tap` は 1本指の タップ） |
-| `tools/mishin/check.js` | 通しの 確かめ（本物の ポインタイベント）：れんしゅう 3袋・1本指・二本指・もつれ（マウス／1本指／つまみなおし）・音の 切りかえ・重さ |
+| `tools/mishin/check.js` | 通しの 確かめ（本物の ポインタイベント）：れんしゅう 3袋・1本指・二本指・もつれ（マウス／1本指／つまみなおし）・フィーバー・キーボード（れんしゅう だけ）と 読み上げ・音の 切りかえ・重さ |
 | `tools/mishin/playtest.js` | 性格ちがいの ボット 7種で タイムアタックを 通す。`--goals` で きょうの 目標が できる 割合 |
 | `tools/mishin/shots.js` | おもな 画面の スクショと ならべた 1枚（`sheet.png`）。`node tools/mishin/shots.js 360 640` で 小さい スマホ |
 | `tools/mishin/build_bag.py`・`pack_bag.py` | Blender（bpy）で 袋の 表・裏を かき、webp に して `mishin.html` の `BAGIMG` に うめこむ |

@@ -1,6 +1,6 @@
 // ミシン糸 一本どり：通しの 確かめ（本物の ポインタイベントで 遊んで、こわれて いないか 見る）
 //   node tools/mishin/check.js            # ぜんぶ
-//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle sound perf）
+//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys sound perf）
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -131,6 +131,42 @@ const CHECKS = {
     ok(r.tangled && r.feverAfter===0 && r.combo<1, 'もつれたら フィーバーは おわり、倍率も さがる', r);
   },
   // 音・ふるえの 切りかえ（この 端末に おぼえる）
+  // キーボード（れんしゅう だけ）：スペースで 裏返す、←→で つまんで 引く。赤く なったら はなす。読み上げの 欄も 見る
+  async keys(b){
+    const p = await page(b, 1280, 800, '#coin');
+    const r = await p.evaluate(() => {
+      KB.manual = true; steps(30); const S = KB.S, log = [];
+      const key = (t, k) => document.dispatchEvent(new KeyboardEvent(t, { key:k, bubbles:true }));
+      for (let k=0;k<3;k++){
+        const bb = S.bag; steps(30);
+        if (bb.face==='front'){ key('keydown',' '); key('keyup',' '); steps(40); }
+        const arrow = bb.start==='R' ? 'ArrowRight' : 'ArrowLeft'; let held = false, rest = 0;
+        for (let i=0;i<6000 && !bb.done;i++){
+          if (bb.tangle){ if (held){ key('keyup',arrow); held=false; } key('keydown',' '); key('keyup',' '); steps(8); continue; }
+          if (!S.held && held){ key('keyup',arrow); held=false; }
+          const lim = bb.knots.has(bb.pulled) ? 0.8 : 0.9;
+          if (held && S.tension > lim){ key('keyup',arrow); held=false; rest = 4; }
+          if (!held && rest-- <= 0){ key('keydown',arrow); held=true; }
+          KB.step(1/60);
+        }
+        if (held) key('keyup',arrow); steps(60); log.push(bb.tangles);
+      }
+      const sr = document.getElementById('sr').textContent;
+      return { mode:S.mode, bagNo:S.bagNo, tangles:log, sr, focus:document.activeElement && document.activeElement.id };
+    });
+    ok(r.mode==='over' && r.bagNo===3, 'キーボードだけで れんしゅう 3袋', r);
+    ok(r.sr.length > 0, '読み上げの 欄に 声が 入る', r.sr);
+    await p.waitForTimeout(100);
+    const f = await p.evaluate(() => document.activeElement && document.activeElement.id);
+    ok(f==='practiceAgain', 'まとめで「もう一回」に フォーカス', f);
+    const q = await page(b, 1280, 800, '');
+    const t = await q.evaluate(() => {
+      KB.manual = true; KB.start(); steps(30); const S = KB.S;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: S.bag.start==='R' ? 'ArrowRight' : 'ArrowLeft', bubbles:true })); steps(5);
+      return { held:S.held, phase:S.bag.phase };
+    });
+    ok(!t.held && t.phase==='look', 'タイムアタックは キーボードでは つまめない（二本指）', t);
+  },
   async sound(b){
     const p = await page(b, 390, 844, '');
     const a = await p.textContent('#soundBtn'); await p.click('#soundBtn'); const c = await p.textContent('#soundBtn');

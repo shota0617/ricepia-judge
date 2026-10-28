@@ -32,6 +32,7 @@
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--ai);color:var(--ink);font-family:var(--body);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+body.menu{touch-action:pan-y pinch-zoom} /* タイトル・結果・まとめは 二本指で 拡大できる */
 #app{position:fixed;inset:0}
 canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
 #hud{position:absolute;left:0;right:0;top:0;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:8px;
@@ -52,36 +53,37 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;text-align:left}
 .rules li{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;font-size:15px;line-height:1.5}
 .rules b{font-family:var(--display);font-weight:400;color:var(--kraft);font-size:18px;text-align:center}
-.note{font-size:12px;line-height:1.6;color:var(--ink-dim);text-align:left;margin:0}
-.note a{color:var(--kraft)}
+.note{font-size:14px;line-height:1.6;color:var(--ink-dim);text-align:left;margin:0}
+.note a{color:var(--kraft);display:inline-block;padding-block:10px}
 button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;border-radius:14px;background:var(--kraft);color:var(--ai-deep);cursor:pointer;box-shadow:0 4px 0 #8c6c3b}
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 .res{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .res div{background:rgba(255,255,255,.06);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:4px}
-.res span{font-size:12px;color:var(--ink-dim)}
+.res span{font-size:14px;color:var(--ink-dim)}
 .res strong{font-family:var(--display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums}
 #rank{font-family:var(--display);font-size:20px;color:var(--gold)}
 #best{font-size:13px;color:var(--ink-dim)}
 .tip{margin:0;font-size:14px;line-height:1.6;text-align:left;background:rgba(201,164,108,.14);border-radius:10px;padding:10px 12px}
 .tip b{color:var(--kraft)}
-button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;min-height:40px;padding:6px 12px;border-radius:20px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body)}
+button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;min-height:48px;padding:8px 14px;border-radius:24px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body)}
 body.menu button.sound{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}
 body.menu .overlay{padding-top:calc(64px + env(safe-area-inset-top,0px))}
 button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
 button.sound:focus-visible{outline:3px solid var(--ito);outline-offset:2px}
 button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2px solid var(--kraft);font-size:17px;padding:10px 16px}
 .steps{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none;display:flex;flex-direction:column;gap:6px}
-.steps .bar{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--ink);letter-spacing:.06em}
-.steps .skip{pointer-events:auto;margin-left:6px;min-height:40px;padding:6px 12px;border-radius:20px;border:2px solid var(--kraft);background:rgba(19,26,46,.85);color:var(--kraft);font:700 13px var(--body);white-space:nowrap}
+.steps .bar{display:flex;gap:6px;align-items:center;font-size:16px;color:var(--ink);letter-spacing:.06em}
+.steps .skip{pointer-events:auto;position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));min-height:48px;padding:8px 14px;border-radius:24px;border:2px solid var(--kraft);background:rgba(19,26,46,.85);color:var(--kraft);font:700 13px var(--body);white-space:nowrap}
 .steps .bar i{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.12)}
 .steps .bar i.on{background:var(--kraft)}
 .steps .now{font-size:17px;line-height:1.45;font-weight:700;background:rgba(19,26,46,.82);border-radius:12px;padding:10px 12px}
 .steps .now b{color:var(--gold)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .panel h1.one{font-size:clamp(30px,9vw,40px)}
 .ends{margin:0;display:flex;flex-direction:column;gap:4px}
 .ends canvas{width:100%;height:auto;border-radius:10px;display:block}
-.ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:13px;line-height:1.4;color:var(--ink-dim);text-align:left}
+.ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:16px;line-height:1.4;color:var(--ink);text-align:left}
 .ends figcaption b{color:var(--gold)}
 .real{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;text-align:left}
 .real li{display:grid;grid-template-columns:24px 1fr;gap:6px;font-size:15px;line-height:1.45;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px}
@@ -92,14 +94,15 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
 .goal i{font-style:normal;width:20px;height:20px;border-radius:50%;border:2px solid var(--ink-dim);display:grid;place-items:center;font-size:12px;color:var(--ai-deep)}
 .goal.done i{background:var(--ok);border-color:var(--ok)}
 .goal.new{outline:2px solid var(--gold)}
-.goal .prog{display:inline-block;margin-left:8px;font-size:12px;color:var(--ink-dim)}
+.goal .prog{display:inline-block;margin-left:8px;font-size:14px;color:var(--ink-dim)}
 .bonus{margin:0;font-size:13px;color:var(--gold)}
 @media (prefers-reduced-motion:reduce){button.go:active{transform:none}}
 </style>
 </head>
 <body>
 <div id="app">
-  <canvas id="cv"></canvas>
+  <canvas id="cv" role="img" aria-label="米袋の 口の 縫い目"></canvas>
+  <div id="sr" class="sr" aria-live="polite"></div>
   <div id="hud" hidden>
     <div class="hcell"><span class="hlab">てんすう</span><span class="hval" id="score">0</span><span id="combo"></span></div>
     <div id="time">30</div>
@@ -120,7 +123,7 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
       <button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px)">糸の取り方を れんしゅう（1分）</button>
       <button class="go sub" id="startBtn" type="button">ゲームで遊ぶ（タイムアタック）</button>
       <div class="goals" id="goals"></div>
-      <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。</p>
+      <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。れんしゅうは キーボードでも できます（スペース＝裏返す、←・→＝その 端を つまんで おしている 間 引く）。</p>
       <p class="note">ほどき方は、紙袋メーカーと製粉会社の説明にもとづく（下糸は上糸の輪の中を通っている。裏から見て左端の、輪にささった下糸をはずし、ゆっくり引く。縫い始めの側からだと からまる）。袋によっては右から、また1本糸の袋は どちらからでも ほどける。<br/>
       もつれたら表側の白糸を引いてから赤を引く、はJAの案内として紹介されている方法。<br/>
       出典：<a href="https://yamaguchi-kf-pack.com/%E7%B4%99%E8%A2%8B/%E3%83%9F%E3%82%B7%E3%83%B3%E7%B8%AB%E3%81%84%E7%B4%99%E8%A2%8B%E3%81%AE%E9%96%8B%E3%81%91%E6%96%B9%E3%82%92%E5%8B%95%E7%94%BB%E3%81%A7%E7%B4%B9%E4%BB%8B%EF%BC%81%E3%80%80%E7%B4%99%E8%A2%8B%E3%83%A1/" target="_blank" rel="noopener">山口紙袋（ミシン縫い紙袋の開け方）</a>・<a href="https://www.flour.co.jp/news/article/063/" target="_blank" rel="noopener">木下製粉（ミシン袋の開け方）</a></p>
@@ -130,7 +133,7 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
   <div class="overlay" id="coinDone" hidden>
     <div class="panel">
       <h1 class="one"><small>れんしゅう できた</small>本物の袋で</h1>
-      <figure class="ends"><canvas id="endsPic" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：赤と白が よった しっぽ＝縫い始め"></canvas>
+      <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：赤と白が よった しっぽ＝縫い始め"></canvas>
         <figcaption><span><b>ここから</b>：赤が 白い輪に ささる</span><span>縫い始め：赤と白が よる（×）</span></figcaption></figure>
       <ol class="real">
         <li><b>1</b><span><strong>白い糸が まっすぐ</strong>なら表。袋を 立てたまま まわして、<strong>反対の面</strong>を 見る。</span></li>
@@ -259,7 +262,7 @@ function startGame(practice){
 }
 
 function endPractice(){
-  S.mode='over'; S.held=false; ui.steps.hidden = true; ui.coinDone.hidden = false; drawEndsPic();
+  S.mode='over'; S.held=false; ui.steps.hidden = true; ui.coinDone.hidden = false; drawEndsPic(); setTimeout(()=>$('practiceAgain').focus({preventScroll:true}), 0); // 見出しが かくれない ように 画面は 動かさない
 }
 // まとめの 絵：袋の 口の 両はしを 大きく（左＝ほどき始め、右＝縫い始め）
 function drawEndsPic(){
@@ -281,7 +284,7 @@ function drawEndsPic(){
 }
 function endGame(){
   S.mode='over'; S.held=false;
-  ui.hud.hidden = true; ui.result.hidden = false;
+  ui.hud.hidden = true; ui.result.hidden = false; setTimeout(()=>$('againBtn').focus({preventScroll:true}), 0);
   ui.rScore.textContent = S.score.toLocaleString();
   ui.rBags.textContent = S.bags; ui.rClean.textContent = S.clean; ui.rSnap.textContent = S.tangles;
   ui.rank.textContent = 'ランク：' + rankOf(S.score);
@@ -450,7 +453,7 @@ function step(dt){
   const b = S.bag;
   b.slide = Math.max(0, b.slide - dt*4);
   if(b.flipT>0){
-    const was = b.flipT; b.flipT += dt/R.flipDur;
+    const was = b.flipT; b.flipT += KB.calm ? 1 : dt/R.flipDur; // 動きを へらす 設定では すぐ 裏返る
     if(was<0.5 && b.flipT>=0.5){ b.face = b.face==='front'?'back':'front'; b.flipped = true; }
     if(b.flipT>=1) b.flipT=0;
     S.pend=0; return;
@@ -465,6 +468,7 @@ function step(dt){
     }
     return;
   }
+  keyPull(dt);
   if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; if(b.readT>0.9 && !S.feverT) S.combo = Math.max(0, S.combo - dt*0.4); S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
   if(b.phase==='free'){
     S.pend=0; S.tension *= Math.pow(0.02, dt);
@@ -534,7 +538,8 @@ function quickBonus(b){
 function multOf(){ return 1 + Math.floor(S.combo*4 + 1e-9); }
 
 function tangle(){
-  const b=S.bag; b.tangles++; S.tangles++; S.combo=0; S.feverT=0; S.streak=0; // まちがえたら フィーバーも おわり S.over=0; S.speed=0; S.held=false;
+  const b=S.bag; b.tangles++; S.tangles++; S.combo=0; S.feverT=0; S.streak=0; // まちがえたら フィーバーも おわり
+  S.over=0; S.speed=0; S.held=false; keyHold=0;
   pinch = null; oneCand = null; // 指の 層も はなした ことに（つぎに つまむと 白糸を 引ける）
   if(S.practice && b.forceTangle>=0){ audio.click(); } else { S.shake=1; audio.snap(); }
   const p = stitchPos(b, b.pulled);
@@ -564,11 +569,11 @@ function finishBag(){
   // 下糸が ぬけると 上糸（白）も はずれて 落ちる
   const L=layout();
   S.fx.push({kind:'white', x0:L.x0, x1:L.x1, y:L.seamY, t:0, life:0.9});
-  for(let i=0;i<(cleanBag?60:30);i++) S.grains.push({x:W/2+(rnd()-0.5)*L.bagW*0.6, y:L.seamY-10, vx:(rnd()-0.5)*280, vy:-200-rnd()*420, t:0, rot:rnd()*6});
+  if(!KB.calm) for(let i=0;i<(cleanBag?60:30);i++) S.grains.push({x:W/2+(rnd()-0.5)*L.bagW*0.6, y:L.seamY-10, vx:(rnd()-0.5)*280, vy:-200-rnd()*420, t:0, rot:rnd()*6});
 }
 
 function addTime(d){ if(S.practice) return; S.time = Math.max(0, S.time + d); ui.td.textContent = (d>0?'+':'')+d+'秒'; ui.td.style.color = d>0?'var(--ok)':'var(--ng)'; ui.tdT = 0; }
-function say(text, kind){ S.msg = {text, kind, t:0, life:1.2}; }
+function say(text, kind){ S.msg = {text, kind, t:0, life: S.practice ? 2.5 : 1.2}; const sr = document.getElementById('sr'); if(sr) sr.textContent = text; }
 
 // ---------- 配置 ----------
 let W=360,H=640,DPR=1;
@@ -647,7 +652,7 @@ function drawPracticeAids(L, b){
   if(b.face==='back' && (b.phase==='look' || b.phase==='free') && b.flipT<=0 && b.slide<=0.05){
     const from = b.from || b.start, ex = from==='R' ? L.x1 : L.x0, ey = L.seamY + 2;
     const r = Math.min(66, W*0.17), cx = W/2, cy = L.seamY + 40 + r;
-    const src = 30; // まわり 30px を 2倍 ほどに
+    const src = 20; // まわり 20px を 3倍 ほどに
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
     ctx.fillStyle='#b98f58'; ctx.fillRect(cx-r, cy-r, 2*r, 2*r);
     ctx.drawImage(cv, (ex-src)*DPR, (ey-src)*DPR, 2*src*DPR, 2*src*DPR, cx-r, cy-r, 2*r, 2*r);
@@ -1038,9 +1043,12 @@ function drawSeamBack(L, b){
       const fp = b.phase==='free' ? Math.min(1, b.freePx / freePx()) : 0, o = -sd*fp*16;
       ctx.strokeStyle=C.shade; ctx.lineWidth=4; ctx.beginPath(); ctx.ellipse(sx - sd*2, sy+1, 6, 11, 0, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle=C.white; ctx.lineWidth=2.4; ctx.beginPath(); ctx.ellipse(sx - sd*2, sy+1, 6, 11, 0, 0, Math.PI*2); ctx.stroke();
-      const tip = () => { ctx.beginPath(); ctx.moveTo(sx + sd*8, sy+1); ctx.lineTo(sx - sd*6 + o, sy+2); ctx.quadraticCurveTo(sx - sd*20 + o, sy+4, sx - sd*18 + o, sy+18); };
-      tip(); ctx.strokeStyle=C.shade; ctx.lineWidth=5; ctx.stroke();
-      tip(); ctx.strokeStyle=red; ctx.lineWidth=3; ctx.stroke();
+      // 色が 見分けにくい 人や 日なたでも わかる よう、太く・濃い 縁どりと 白い ふちで 形を 見せる。先は 袋の 内がわへ
+      const tip = () => { ctx.beginPath(); ctx.moveTo(sx + sd*8, sy+1); ctx.lineTo(sx - sd*6 + o, sy+2); ctx.quadraticCurveTo(sx - sd*14 + o, sy+6, sx + sd*4 + o, sy+20); };
+      ctx.lineCap='round';
+      tip(); ctx.strokeStyle='#2a1606'; ctx.lineWidth=7.5; ctx.stroke();
+      tip(); ctx.strokeStyle='#fff6e8'; ctx.lineWidth=6; ctx.stroke();
+      tip(); ctx.strokeStyle=red; ctx.lineWidth=4.5; ctx.stroke();
       if(b.phase==='free' && S.held){ ctx.strokeStyle=red; ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(sx - sd*18 + o, sy+18); ctx.quadraticCurveTo((sx+S.px)/2, Math.max(sy+18, S.py)+20, S.px, S.py); ctx.stroke(); }
     }
   }
@@ -1074,7 +1082,7 @@ function drawSeamBack(L, b){
       for(let k=0;k<5;k++){ const a=S.t*3+k*1.3; ctx.beginPath(); ctx.ellipse(b.tangle.x + Math.cos(a)*2, sy+1+Math.sin(a)*2, 9-k, 6-k*0.6, a, 0, 7); ctx.stroke(); }
       const left = untangleTaps() - b.tangle.taps;
       // 表側の 白糸の 端（縫い目の 下から のぞく）。つまんで 引くと のびる
-      const wt = whiteTail(b), pull = Math.min(1, b.tangle.tug / R.tugPx), pulse = 0.5+0.5*Math.sin(S.t*7);
+      const wt = whiteTail(b), pull = Math.min(1, b.tangle.tug / R.tugPx), pulse = KB.calm ? 1 : 0.5+0.5*Math.sin(S.t*7);
       ctx.strokeStyle=C.shade; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(wt.x - sd*10, sy+3); ctx.quadraticCurveTo(wt.x - sd*4, sy+18, wt.x + sd*pull*10, wt.y + pull*24); ctx.stroke();
       ctx.strokeStyle=C.white; ctx.lineWidth=2.4; ctx.stroke();
       ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=2.5; ctx.beginPath(); ctx.arc(wt.x, wt.y, 22, 0, 7); ctx.stroke();
@@ -1086,7 +1094,7 @@ function drawSeamBack(L, b){
     }
   }
   if(b.hint && S.bag===b && b.phase==='look'){
-    const pulse = 0.5+0.5*Math.sin(S.t*6);
+    const pulse = KB.calm ? 1 : 0.5+0.5*Math.sin(S.t*6);
     ctx.strokeStyle=`rgba(240,196,76,${0.4+0.6*pulse})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(sx, sy+4, 22+pulse*4, 0, 7); ctx.stroke();
     if(!S.practice){
       ctx.fillStyle='#f0c44c'; ctx.font='700 12px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1113,7 +1121,7 @@ function otext(t, x, y, col, maxW){
   ctx.fillStyle=col; ctx.fillText(t, x, y, maxW);
 }
 function hintText(a, bTxt, L){
-  const pulse = 0.5+0.5*Math.sin(S.t*6);
+  const pulse = KB.calm ? 1 : 0.5+0.5*Math.sin(S.t*6);
   ctx.fillStyle='#f0c44c'; ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
   otext(a, W/2, L.seamY-34, '#f0c44c');
   ctx.globalAlpha = 0.6+0.4*pulse; otext(bTxt, W/2, L.seamY+Math.min(L.bagH-40, 230), '#f0c44c'); ctx.globalAlpha=1;
@@ -1172,26 +1180,38 @@ function drawMeter(L){
   ctx.fillStyle = S.practice ? '#f3efe4' : '#a9b0c7'; ctx.font=`700 ${mf}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='left'; ctx.fillText('糸の張り', mx, my-8);
   ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(mx, my, mw, 12, 6); ctx.fill();
   ctx.fillStyle='rgba(92,207,122,.55)'; ctx.fillRect(z0, my, z1-z0, 12);
-  ctx.fillStyle='rgba(239,83,80,.45)'; ctx.fillRect(z1, my, mx+mw-z1, 12);
-  ctx.fillStyle='rgba(19,26,46,.95)'; ctx.font=`700 ${S.practice?12:10}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='center';
-  ctx.fillText(S.practice ? 'ゆっくり＝緑' : 'スルスル', (z0+z1)/2, my+10);
-  const t = Math.min(maxT, S.tension); const tx = mx + mw*t/maxT;
-  ctx.fillStyle = S.tension>1 ? '#ef5350' : S.tension>=zoneLo() ? '#5ccf7a' : '#f6f2e7';
-  ctx.beginPath(); ctx.arc(tx, my+6, 9, 0, 7); ctx.fill();
-  ctx.strokeStyle='#131a2e'; ctx.lineWidth=2; ctx.stroke();
-  if(S.over>0){ ctx.fillStyle='#ef5350'; ctx.fillRect(mx, my+16, mw*Math.min(1,S.over/R.tangleAfter), 3); }
+  // 赤の 帯は 濃く して ななめ線の 模様（色が 見分けにくくても わかる）
+  ctx.fillStyle='rgba(239,83,80,.85)'; ctx.fillRect(z1, my, mx+mw-z1, 12);
+  ctx.save(); ctx.beginPath(); ctx.rect(z1, my, mx+mw-z1, 12); ctx.clip(); ctx.strokeStyle='rgba(19,26,46,.55)'; ctx.lineWidth=2; ctx.beginPath();
+  for(let x=z1-12; x<mx+mw; x+=7){ ctx.moveTo(x, my+12); ctx.lineTo(x+12, my); } ctx.stroke(); ctx.restore();
+  // 右の 知らせ（向き・きつい目）が ある ときは「スルスル」を 出さない（せまい 画面で 重なる）
+  let hint = null;
   if(b && b.phase==='pull' && !b.done && !b.tangle){
     let d=99; for(const k of b.knots){ if(k>=b.pulled) d=Math.min(d,k-b.pulled); }
-    ctx.textAlign='right'; ctx.font='700 11px "Zen Maru Gothic",sans-serif';
-    if(S.held && S.dirEff<0.4){ ctx.fillStyle='#f0c44c'; ctx.fillText(pullDir(b)>0 ? '→ 縫い目に そって 横へ' : '← 縫い目に そって 横へ', mx+mw, my-8); }
-    else if(d===0){ ctx.fillStyle='#f0c44c'; ctx.fillText('ひっかかった！ ゆっくり', mx+mw, my-8); }
-    else if(d<=3){ ctx.fillStyle='#d9c9a0'; ctx.fillText('きつい目が くる', mx+mw, my-8); }
+    if(S.held && S.dirEff<0.4) hint = [pullDir(b)>0 ? '→ 縫い目に そって 横へ' : '← 縫い目に そって 横へ', '#f0c44c'];
+    else if(d===0) hint = ['ひっかかった！ ゆっくり', '#f0c44c'];
+    else if(d<=3) hint = ['きつい目が くる', '#d9c9a0'];
   }
+  ctx.font='700 13px "Zen Maru Gothic",sans-serif';
+  if(hint){ ctx.textAlign='right'; ctx.fillStyle=hint[1]; ctx.fillText(hint[0], mx+mw, my-8); }
+  else { ctx.fillStyle='#f3efe4'; ctx.textAlign='center'; ctx.fillText('スルスル', (z0+z1)/2, my-8); }
+  const t = Math.min(maxT, S.tension); const tx = mx + mw*t/maxT;
+  if(S.tension>1){
+    // 強すぎ：玉は ×印、字でも 知らせる
+    ctx.strokeStyle='#131a2e'; ctx.lineWidth=6; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(tx-7, my-1); ctx.lineTo(tx+7, my+13); ctx.moveTo(tx+7, my-1); ctx.lineTo(tx-7, my+13); ctx.stroke();
+    ctx.strokeStyle='#ef5350'; ctx.lineWidth=3.5; ctx.stroke();
+    ctx.font='700 14px "Zen Maru Gothic",sans-serif'; otext('つよすぎ！ ゆるめて', W/2, my+30, '#ff8a80');
+  } else {
+    ctx.fillStyle = S.tension>=zoneLo() ? '#5ccf7a' : '#f6f2e7';
+    ctx.beginPath(); ctx.arc(tx, my+6, 9, 0, 7); ctx.fill();
+    ctx.strokeStyle='#131a2e'; ctx.lineWidth=2; ctx.stroke();
+  }
+  if(S.over>0){ ctx.fillStyle='#ef5350'; ctx.fillRect(mx, my+16, mw*Math.min(1,S.over/R.tangleAfter), 3); }
 }
 
 function drawMsg(L){
   if(!S.msg) return;
-  const m=S.msg; const a = Math.min(1, (m.life-m.t)/0.25); const s = 1 + Math.max(0, 0.2 - m.t)*1.5;
+  const m=S.msg; const a = Math.min(1, (m.life-m.t)/0.25); const s = KB.calm ? 1 : 1 + Math.max(0, 0.2 - m.t)*1.5;
   const my = Math.max(L.seamY - 128, S.practice ? (S.bannerBottom||0) + 24 : 0);
   ctx.save(); ctx.globalAlpha = a; ctx.translate(W/2, my); ctx.scale(s,s);
   ctx.font = `${W<360?22:26}px "Dela Gothic One",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1269,12 +1289,12 @@ function syncUI(dt){
   const menu = S.mode!=='play'; if(menu !== syncUI.menu){ syncUI.menu = menu; document.body.classList.toggle('menu', menu); }
   if(S.practice && S.mode==='play'){
     if(!ui.steps._built){
-      ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now" id="stepNow"></div>`;
+      ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now" id="stepNow" aria-live="polite"></div>`;
       ui.steps._built = true;
     }
     const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, now = stepText();
     if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
-    if(ui.steps._now !== now){ ui.steps._now = now; $('stepNow').innerHTML = now;
+    if(ui.steps._now !== now){ ui.steps._now = now; $('stepNow').innerHTML = now; cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
       const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; }
   }
   const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;
@@ -1354,7 +1374,31 @@ function fingerUp(e){
   tapCand = null;
 }
 cv.addEventListener('pointerup', fingerUp); cv.addEventListener('pointercancel', fingerUp);
-document.addEventListener('gesturestart', e=>e.preventDefault()); // iOS の 2本指 ズームを とめる
+// キーボード（れんしゅう だけ。パソコンや 指が 使いにくい 人に）：
+// スペース＝裏返す・もつれを ほぐす、←／→＝その 端を つまむ。おしている 間 引く（だんだん 速く なるので、赤く なったら はなす）
+// タイムアタックは 二本指（運営者の 決まり）なので キーボードでは 遊べない
+let keyHold = 0;
+document.addEventListener('keydown', e=>{
+  if(S.mode!=='play' || !S.practice || e.ctrlKey || e.metaKey || e.altKey) return;
+  const b=S.bag; if(!b) return;
+  if(e.key===' '){ e.preventDefault(); if(e.repeat) return;
+    if(b.phase==='look'){ const L=layout(); tap(W/2, L.seamY + L.bagH*0.4); } else if(b.tangle) untangleTap(); return; }
+  if(e.key!=='ArrowLeft' && e.key!=='ArrowRight') return;
+  e.preventDefault(); if(e.repeat || keyHold) return;
+  if(b.tangle){ untangleTap(); return; }
+  const L=layout();
+  if(b.phase==='look'){ down(e.key==='ArrowLeft' ? L.x0 : L.x1, L.seamY); if(!S.held) return; }
+  else { audio.ensure(); if(b.done || b.flipT>0) return; S.held = true; }
+  const sd = pullDir(b), ex = b.from==='R' ? L.x1 : L.x0; S.px = ex + sd*40; S.py = L.seamY + 30; // 手は 端の すこし 先
+  keyHold = 1e-6;
+});
+document.addEventListener('keyup', e=>{ if((e.key==='ArrowLeft' || e.key==='ArrowRight') && keyHold){ keyHold = 0; up(); } });
+function keyPull(dt){ // キーを おしている 間：はじめは ゆっくり、0.9 秒ほどで 速すぎに なる
+  const b=S.bag; if(!keyHold || !S.held || !b || b.done){ keyHold = keyHold && S.held ? keyHold : 0; return; }
+  keyHold += dt; const v = b.safe * Math.min(1.25, 0.15 + 0.9*keyHold);
+  if(b.phase==='free') b.freePx += v*dt; else if(b.phase==='pull' && !b.tangle){ S.pend += v*dt; S.dirEff = 1; }
+}
+document.addEventListener('gesturestart', e=>{ if(S.mode==='play') e.preventDefault(); }); // 遊んでいる 間だけ iOS の 2本指 ズームを とめる
 
 // ---------- テスト用の口（tools/mishin/playtest.js） ----------
 const KB = window.KB = {

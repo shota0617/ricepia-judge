@@ -2724,7 +2724,7 @@ async function walkTo(page, id) {
         const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d'), el = document.getElementById('toast');
         document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
         const keep = { fr: ctx.fillRect, ft: ctx.fillText };
-        let box = null, seen = 0, hits = 0, lastRect = null;
+        let box = null, seen = 0, hits = 0, riceHits = 0, lastRect = null;
         ctx.fillRect = function (x, y, w0, h0) { lastRect = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
         ctx.fillText = function (t) { if (/^〜 .+ 〜$/.test(t)) box = lastRect; return keep.ft.apply(this, arguments); };
         const msg = '🧭 テストの 知らせ：町の 名前の 札の 上に 2行で 出る 長さの 文に して おく';
@@ -2746,12 +2746,13 @@ async function walkTo(page, id) {
             const B = [c.left + box[0] * k, c.top + box[1] * k, c.left + box[2] * k, c.top + box[3] * k];
             if (q.left < B[2] && q.right > B[0] && q.top < B[3] && q.bottom > B[1]) hits++;
           }
+          const Rb = P.riceBox; if (box && Rb && box[0] < Rb[2] && box[2] > Rb[0] && box[1] < Rb[3] && box[3] > Rb[1]) riceHits++;   // 札が お米に かからない（Codex の 指摘）
           await wait(80);
         }
         // 2だんめ：右上（北東）の ゴールで、下げた 札が 縁の 矢印と 道のりの 札に かからない（Codex の 指摘）。札は テスト用の 入口で 出す
         const msg2 = '🧭 テストの 知らせ：ちょうど 2行に なる 長さ';
         let ne = 'none', arrowSeen = 0, arrowHits = 0, dodged = 0;
-        const ngs = G.spots.filter(x => x.lat && x.lat > G.me.lat && x.lng > G.me.lng && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 3500).slice(0, 8);
+        const ngs = G.spots.filter(x => x.lat && x.lat > G.me.lat && x.lng > G.me.lng && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 3500).slice(0, 8).concat(G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.008 && Math.abs(x.lng - G.me.lng) < 0.004 && G.dist(G.me, x) < 3500).slice(0, 4));   // 北東と 北（北の ゴールは 札を 下げると お米に かかりやすい）
         for (const g of ngs) {
           G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
           let as = 0, ah = 0, dg = 0;
@@ -2764,15 +2765,16 @@ async function walkTo(page, id) {
               if (box[0] < A[2] && box[2] > A[0] && box[1] < A[3] && box[3] > A[1]) ah++;   // 札が 縁の 札に かかった（直す 前）
               if (P.townDodged) dg++;   // かかる ので 下へ よけた（直した あと）
             }
+            { const Rb = P.riceBox; if (box && Rb && box[0] < Rb[2] && box[2] > Rb[0] && box[1] < Rb[3] && box[3] > Rb[1]) riceHits++; }   // よけた 先が お米に かからない（Codex の 指摘）
             await wait(60);
           }
           if (ah || dg) { ne = g.name; arrowSeen = as; arrowHits = ah; dodged = dg; break; }
         }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
-        return { moved, seen, hits, ne, arrowSeen, arrowHits, dodged };
+        return { moved, seen, hits, riceHits, ne, arrowSeen, arrowHits, dodged };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.seen > 0 && r.hits === 0 && (r.arrowHits > 0 || r.dodged > 0) && r.arrowHits === 0 };
+      return { ...r, ok: r.seen > 0 && r.hits === 0 && r.riceHits === 0 && (r.arrowHits > 0 || r.dodged > 0) && r.arrowHits === 0 };
     })();
     R.errors.push(...w.errors);
     await w.ctx.close();

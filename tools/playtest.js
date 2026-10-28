@@ -2948,7 +2948,7 @@ async function walkTo(page, id) {
           el.classList.remove('wlow', 'low'); el.textContent = '🌙 テストの 知らせ：夜の さんぽ。明かりの まわりしか 見えないよ。たからばこは ほんのり 光っとる（長めの 文で 4行）'; el.classList.add('show');   // 知らせを じかに 出す（ほかの 窓で 待たされて 出ない ことが あった）
           P.floatsClear(); P.floatText(T0);
           for (let i = 0; i < 40; i++) {   // 知らせの 間（3秒）と 消えた あと
-            if (i === 30) el.classList.remove('show');
+            if (i < 30) { el.classList.add('show'); el.classList.remove('wlow'); } else if (i === 30) el.classList.remove('show');   // 前の 知らせの タイマーが 消しても 3秒は 出して おく
             box = null;
             await new Promise(res => requestAnimationFrame(res));
             const show = el.classList.contains('show') && !el.classList.contains('wlow');

@@ -5479,14 +5479,14 @@ const ZARI = (() => {
     g.visible = false; scene.add(g);
     list.push({ g, tail, arms, ants, st: 'hide', t: 2 + k * 3 + R() * 4, x: 0, z: 0, yaw: 0, vx: 0, vz: 0, ph: R() * 6 });
   }
-  const yAt = (x, z) => soilCell(x, z) >= 0 ? TILL_Y + 0.006 : 0.009;   // 水ぎわの 泥の 上（水面より 少し 上）
+  const yAt = (x, z) => soilCell(x, z) >= 0 ? TILL_Y + 0.006 : Math.max(0.009, Math.min(0.2, AMENBO.soilAt(x, z)) + 0.002);   // 水ぎわの 泥の 上（水面より 少し 上・土くれの 上）
   const near = u => Math.hypot(u.x - S.x, u.z - S.z) < 6;
   function update(dt) {
     for (const u of list) {
       u.ph += dt;
       if (u.st === 'hide') {                        // 巣穴の そばに また 出てくる
         if ((u.t -= dt) > 0 || Math.hypot(LX - S.x, LZ - S.z) < 9) continue;
-        u.x = LX + 0.15 + R() * 0.35; u.z = LZ + (R() - 0.5) * 2.4; u.yaw = R() * 6.28; u.st = 'walk'; u.t = 2 + R() * 3; u.g.visible = true;
+        u.x = -HX + 0.15 + R() * 0.5; u.z = LZ + (R() - 0.5) * 2.4; u.yaw = R() * 6.28; u.st = 'walk'; u.t = 2 + R() * 3; u.g.visible = true;
       } else if (u.st === 'walk') {
         if (near(u)) {                               // 尾を たたんで うしろへ すっと もどる
           u.st = 'back'; u.t = 0.35; const a = u.yaw + Math.PI; u.vx = Math.sin(a) * 1.1; u.vz = Math.cos(a) * 1.1;
@@ -5503,7 +5503,7 @@ const ZARI = (() => {
         if ((u.t -= dt) <= 0) { u.st = 'hide'; u.g.visible = false; u.t = 20 + R() * 20; }   // 水に もぐって 見えなくなる
       }
       if (!u.g.visible) continue;
-      const fold = u.st === 'back' ? 1.1 : 0;
+      const fold = u.st === 'back' ? -1.1 : 0;   // 尾（-z へ のびる）を 下へ たたむ
       u.tail.rotation.x = fold;
       u.arms.forEach((a, i) => { a.rotation.x = -0.15 + 0.08 * Math.sin(u.ph * 1.7 + i); });   // はさみを ゆっくり ゆらす
       u.ants.forEach((a, i) => { a.rotation.z = (i ? -1 : 1) * (0.3 + 0.15 * Math.sin(u.ph * 3.1 + i * 2)); });

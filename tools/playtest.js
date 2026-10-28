@@ -765,7 +765,8 @@ async function walkTo(page, id) {
     const draw = X => { x.clearRect(0, 0, 200, 200); P.drawRice(x, X, 100, 0.4, 0, 'smile', 0, '', 3); return x.getImageData(0, 0, 200, 200).data; };
     const a = draw(100), L = P.riceLast(), b = draw(100.4);
     let diff = 0; for (let i = 3; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) > 8) diff++;
-    return { P: L.P, S: L.S, soft: L.soft, solid: L.solid, tones: L.tones, diff, ok: L.P === 3 && L.S >= 48 * 3 && L.soft >= 60 && L.tones >= 24 && diff >= 20 };
+    const ring = [0.5625, 0.2, 0.04].map(u => { x.clearRect(0, 0, 200, 200); P.drawRice(x, 100, 100, 0.4, 0, 'smile', 0, '', u); return P.riceLast().ring; });   // 小さく 描いても（せかいちず・めいろの 落ちる えんしゅつ）形の 外は とうめい（うすい 四角が 出ない。Codex の 指摘）
+    return { P: L.P, S: L.S, soft: L.soft, solid: L.solid, tones: L.tones, diff, ring, ok: L.P === 3 && L.S >= 48 * 3 && L.soft >= 60 && L.tones >= 24 && diff >= 20 && ring.every(v => v === 0) };
   });
   // すう すう 息：止まって いる お米は ゆっくり 息を する（足もとは 地面の まま。点より 細かく 描くので 0.5 ピクセルでも 見える）
   R.checks.riceBreath = await (async () => {

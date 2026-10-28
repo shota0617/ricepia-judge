@@ -352,6 +352,12 @@ const CHECKS = {
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 画面（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
+    await p.setViewportSize({ width:320, height:568 }); // 65周目：じこベスト・はじめての ランク・袋の じこベストの 行が ふえても
+    const ag4 = await p.evaluate(() => { localStorage.setItem('mishin-best2','5000'); localStorage.setItem('mishin-bestbags','3'); KB.start(); const S = KB.S; S.score = 8000; S.bags = 9; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
+      const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });
+    ok(ag4.b <= ag4.H, '320×568 で 結果の 行が ふえても「もう一回」が 画面の 中', ag4);
+    const fev = await p.evaluate(() => { KB.start(); const S = KB.S; S.feverT = 4.2; S.score = 48060; for (let i=0;i<3;i++) KB.step(1/60); return new Promise(r => setTimeout(() => { const c = document.getElementById('combo'), t = document.getElementById('time').getBoundingClientRect(); r({ fit: c.scrollWidth <= c.clientWidth + 1, mid: Math.round(t.left + t.width/2), W: innerWidth }); }, 100)); });
+    ok(fev.fit && Math.abs(fev.mid - fev.W/2) <= 2, '320 でも フィーバーの 字が 1行に 入り 時計が まん中', fev);
   },
   // 新米の きせつ（34周目）：8/15〜12/31 だけ 新米シール。産年は 収穫の 年（農林水産省・愛知県）
   async season(b){

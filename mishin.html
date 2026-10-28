@@ -47,7 +47,7 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 #time{font-family:var(--display);font-size:40px;line-height:1;text-align:center;font-variant-numeric:tabular-nums}
 #time.low{color:#ff7b6e;outline:3px dashed #ff7b6e;outline-offset:2px;border-radius:10px} /* 色だけで なく 点線の わくでも のこり わずかを 知らせる */
 #timeDelta{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-family:var(--display);font-size:18px;opacity:0;pointer-events:none}
-#combo{font-family:var(--display);font-size:15px;color:var(--ok);min-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} /* 長い ときも 時計を 横へ おさない */
+#combo{font-family:var(--display);font-size:clamp(12px,3.9vw,15px);color:var(--ok);min-height:18px;white-space:nowrap} /* せまい 画面でも 1行に おさまる 大きさ（時計を 横へ おさない） */
 .overlay{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;background:linear-gradient(180deg,#131a2e 45%,#2c2321);
   padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .panel{margin:auto;width:min(420px,100%);display:flex;flex-direction:column;gap:14px;text-align:center}
@@ -157,9 +157,9 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 @media (max-width:340px){body:not(.menu) button.sound{bottom:calc(68px + env(safe-area-inset-bottom,0px))}} /* れんしゅうの「やめて 手順を 見る」に かさねない */
 @media (max-width:300px){.res{grid-template-columns:1fr}.grow{flex-wrap:wrap}}
 @media (max-width:380px){.hanko{width:72px;height:72px;font-size:12px;right:-4px;top:-2px}}
-@media (max-width:440px){.hanko{top:auto;bottom:-12px;right:2px}} /* スマホでは 見出しの 2行目（短い）の 横へ。字に かけない（64周目） */
+@media (max-width:440px){.hanko{top:auto;bottom:-12px;right:2px;width:72px;height:72px;font-size:12px}} /* スマホでは 見出しの 2行目（短い）の 横へ。字に かけない（64周目） */
 @media (max-width:340px){.hanko{width:60px;height:60px;font-size:10px;right:-8px}}
-@media (max-height:600px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel>h1{font-size:30px} #result .res>div{padding:6px 10px}} /* 低い 縦の 画面で「もう一回」を 中に */
+@media (max-height:600px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel>h1{font-size:30px} #result .res>div{padding:6px 10px} #result .panel>#best{order:1} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:2}} /* 低い 縦の 画面で「もう一回」を 中に */
 .ends{margin:0;display:flex;flex-direction:column;gap:4px}
 .ends canvas{width:100%;height:auto;border-radius:10px;display:block}
 .ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:16px;line-height:1.4;color:var(--ink);text-align:left}
@@ -591,7 +591,7 @@ function step(dt){
       if(S.lastBag && !lb.done){ if(lb.pulled !== S.lastPulled){ S.lastPulled = lb.pulled; S.lastIdle = 0; } else S.lastIdle += dt; } /* つまんだ まま 止まって いても おわる */
       if(!S.ending && (!S.lastBag || lb.tangle || (!lb.done && ((!S.held && S.liftT>0.8) || S.lastIdle>2.5)))) finish(); }
   }
-  if(!S.practice && !S.ending && S.bestAt>0 && !S.passedBest && S.score>S.bestAt && (!S.msg || S.msg.t>0.6)){ S.passedBest = true; say('じこベスト こえた！','ok'); } /* 「一本どり！」「フィーバー！」を すぐ 上書き しない */ /* 遊んで いる 間に 1回 だけ（59周目） */
+  if(!S.practice && !S.ending && S.bestAt>0 && !S.passedBest && S.score>S.bestAt && (!S.msg || S.msg.t>0.4)){ S.passedBest = true; say('じこベスト こえた！','ok'); } /* 「一本どり！」「フィーバー！」を すぐ 上書き しない */ /* 遊んで いる 間に 1回 だけ（59周目） */
   if(S.ending > 0){ S.ending -= dt; if(S.ending <= 0) endGame(); return; } // 「そこまで！」の あと 結果へ
 
   // フィーバーの 残り時間は、袋が あく 間や 裏返す 間も へる（ゲームの 時計と そろえる）
@@ -1648,7 +1648,7 @@ function syncUI(dt){
   ui.time.classList.toggle('low', S.time<8);
   ui.bags.textContent = S.bags;
   const mult = multOf();
-  ui.combo.textContent = S.feverT>0 ? 'フィーバー あと'+Math.ceil(S.feverT)+'秒' : mult>1 ? 'スルスル ×'+mult : '';
+  ui.combo.textContent = S.feverT>0 ? 'フィーバー '+Math.ceil(S.feverT)+'秒' : mult>1 ? 'スルスル ×'+mult : '';
   ui.combo.style.color = mult>=5 ? 'var(--gold)' : 'var(--ok)';
   ui.tdT += dt; ui.td.style.opacity = Math.max(0, 1 - ui.tdT/0.9); ui.td.style.transform = `translate(-50%, ${KB.calm ? 0 : -ui.tdT*20}px)`;
 }

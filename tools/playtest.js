@@ -799,6 +799,14 @@ async function walkTo(page, id) {
     const wt = P.wakeT, calm = P.bfly.calm; await new Promise(r => setTimeout(r, 200)); const ph = P.bfly.phase;
     return { w, woke: wt >= t0, ph, calm, ok: calm || (w[0] === 0 && w[1] > 0.08 && w[2] === 0 && wt >= t0 && ph === 'out') };
   });
+  // ころころ ×10 は 文字を 出さず 大きな きらきら（数は お米の よこの「×N」に 見えて いる。同じ ことを 2か所に 書かない）
+  R.checks.comboTen = await page.evaluate(async () => {
+    const P = nishioPixel, n0 = P.combo.n, b0 = P.combo.best, t0 = performance.now();
+    P.comboBest(1000); P.floatsClear(); P.comboAdd(10 - (n0 % 10));   // ベストを こえない ように（こえると beat が のこり、あとの comboBest が 落ちる）
+    const fl = P.floats().slice(), pop = P.combo.pop;
+    P.comboAdd(-P.combo.n); P.comboBest(b0); P.floatsClear();   // もとに もどす（コンボを おわらせない ので ベストは かわらない）
+    return { fl, popped: pop >= t0, ok: !fl.some(t => /ころころ ×\d+！/.test(t)) && pop >= t0 };
+  });
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
   R.checks.smoothShadow = await page.evaluate(async () => {
     const P = nishioPixel, E = CanvasRenderingContext2D.prototype, keep = E.ellipse, cv = document.getElementById('pxCanvas'), hits = [];
@@ -3225,6 +3233,7 @@ async function walkTo(page, id) {
   need(c.godotRec && c.godotRec.ok, `Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（${JSON.stringify(c.godotRec)}）`);
   need(c.riceBfly && c.riceBfly.ok, `ねむって いる お米の 頭に ちょうちょが とまらない（${JSON.stringify(c.riceBfly)}）`);
   need(c.riceWake && c.riceWake.ok, `ねむって いた お米が おきても のびを しない（または ちょうちょが 飛んで いかない）（${JSON.stringify(c.riceWake)}）`);
+  need(c.comboTen && c.comboTen.ok, `ころころ ×10 で 文字が 出る（お米の よこの ×N と 同じ ことを 2か所に 書いている）か、大きな きらきらが 出ない（${JSON.stringify(c.comboTen)}）`);
   need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);

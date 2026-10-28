@@ -1,6 +1,6 @@
 // ミシン糸 一本どり：通しの 確かめ（本物の ポインタイベントで 遊んで、こわれて いないか 見る）
 //   node tools/mishin/check.js            # ぜんぶ
-//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor fonts sound perf）
+//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor coin fonts sound perf）
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -228,6 +228,19 @@ const CHECKS = {
     const q = await page(b, 390, 844, '#coin');
     const bar = await q.evaluate(() => { KB.manual = true; for (let i=0;i<5;i++) KB.step(1/60); return [...document.querySelectorAll('.steps .bar i')].map(i=>getComputedStyle(i, '::after').content); });
     ok(bar[0]==='none' || bar[0]==='', 'れんしゅう 1袋目の 間は 帯に こめつぶが すわらない', bar);
+  },
+  // お客さん目線（31周目）：れんしゅうで 表の 端を さわると 裏返す・途中で やめると はんこを 出さない・つぎの 袋に 前の 声を もちこさない
+  async coin(b){
+    const p = await page(b, 360, 640, '#coin');
+    const r = await p.evaluate(() => { KB.manual = true; const S = KB.S; for (let i=0;i<30;i++) KB.step(1/60);
+      const bb = S.bag; bb.face = 'front'; const L = KB.layout(); ev('pointerdown',1,L.x0+4,L.seamY); ev('pointerup',1,L.x0+4,L.seamY); for (let i=0;i<40;i++) KB.step(1/60);
+      return { face: bb.face }; });
+    ok(r.face==='back', 'れんしゅうで 表の 端を さわると 裏返す', r);
+    const m = await p.evaluate(() => { const S = KB.S; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あいた！', kind:'ok', t:0, life:2.5 }; for (let i=0;i<50;i++) KB.step(1/60); return { bagNo:S.bagNo, msg: S.msg && S.msg.text }; });
+    ok(m.bagNo===1 && !m.msg, 'つぎの 袋に 前の 声を もちこさない', m);
+    await p.click('#skipBtn');
+    const h = await p.evaluate(() => ({ hanko: getComputedStyle(document.querySelector('#coinDone .hanko')).display, small: document.getElementById('coinSmall').textContent }));
+    ok(h.hanko==='none' && h.small==='取り方の まとめ', '途中で やめたら「よく できました」は 出さない', h);
   },
   // フォントは 使う 字だけ（tools/mishin/fonts.py）。字を 書き足したら 回す
   async fonts(){

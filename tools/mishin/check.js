@@ -38,7 +38,7 @@ const CHECKS = {
           if (!S.held){ x = l.x0+20; KB.down(x, l.seamY+50); }
           x += bb.knots.has(bb.pulled) ? 1.5 : 5; KB.move(x, l.seamY+50); if (x > l.x1-20) KB.up(); KB.step(1/60);
         }
-        KB.up(); steps(60); log.push(bb.tangles);
+        KB.up(); steps(150); /* れんしゅうは あいて 2.2 秒 */ log.push(bb.tangles);
       }
       return { mode:S.mode, bagNo:S.bagNo, tangles:log, summary:!document.getElementById('coinDone').hidden };
     });
@@ -64,7 +64,7 @@ const CHECKS = {
           x += sd*(bb.knots.has(bb.pulled) ? 1.5 : 5); ev('pointermove',1,x,y); KB.step(1/60);
           if (x>330 || x<30){ ev('pointerup',1,x,y); down=false; KB.step(1/60); }
         }
-        ev('pointerup',1,x,y); steps(50); log.push(engaged);
+        ev('pointerup',1,x,y); steps(150); log.push(engaged);
       }
       return { mode:S.mode, engaged:log };
     });
@@ -166,7 +166,7 @@ const CHECKS = {
           if (!held && rest-- <= 0){ key('keydown',arrow); held=true; }
           KB.step(1/60);
         }
-        if (held) key('keyup',arrow); steps(60); log.push(bb.tangles);
+        if (held) key('keyup',arrow); steps(150); log.push(bb.tangles);
       }
       const sr = document.getElementById('sr').textContent;
       return { mode:S.mode, bagNo:S.bagNo, tangles:log, sr, focus:document.activeElement && document.activeElement.id };
@@ -290,11 +290,26 @@ const CHECKS = {
     const zw = await p.evaluate(() => { const S = KB.S; for (let i=0;i<40;i++) KB.step(1/60); const bb = S.bag, L = KB.layout(), W = KB.size().W, r = Math.min(66, W*0.17);
       ev('pointerdown',4,W/2,L.seamY+40+r); ev('pointerup',4,W/2,L.seamY+40+r); for (let i=0;i<40;i++) KB.step(1/60); return { face: bb.face }; });
     ok(zw.face==='back', 'れんしゅうで 拡大窓を さわっても 袋が 裏返らない', zw);
-    const m = await p.evaluate(() => { const S = KB.S; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あいた！', kind:'ok', t:0, life:2.5 }; for (let i=0;i<50;i++) KB.step(1/60); return { bagNo:S.bagNo, msg: S.msg && S.msg.text }; });
+    const m = await p.evaluate(() => { const S = KB.S; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あいた！', kind:'ok', t:0, life:2.5 }; for (let i=0;i<150;i++) KB.step(1/60); return { bagNo:S.bagNo, msg: S.msg && S.msg.text }; });
     ok(m.bagNo===1 && !m.msg, 'つぎの 袋に 前の 声を もちこさない', m);
+    // 55周目（お客さん目線）：前の 袋から おいた ままの 指で つぎの 袋を まわさない
+    const st = await p.evaluate(() => { const S = KB.S, L = KB.layout(), W = KB.size().W; ev('pointerdown',7,W/2,L.seamY+300); S.bag.done = true; S.bag.open = 0; for (let i=0;i<150;i++) KB.step(1/60);
+      const bb = S.bag; bb.face = 'front'; bb.slide = 0; bb.flipT = 0; ev('pointermove',7,W/2+80,L.seamY+300); KB.step(1/60); const r = { bagNo:S.bagNo, flip:bb.flipT }; ev('pointerup',7,W/2+80,L.seamY+300); return r; });
+    ok(st.bagNo===2 && st.flip===0, 'まえの 袋から おいた ままの 指で つぎの 袋を まわさない', st);
     await p.click('#skipBtn');
     const h = await p.evaluate(() => ({ hanko: getComputedStyle(document.querySelector('#coinDone .hanko')).display, small: document.getElementById('coinSmall').textContent }));
     ok(h.hanko==='none' && h.small==='取り方の まとめ', '途中で やめたら「よく できました」は 出さない', h);
+  },
+  // 55周目（お客さん目線）：タイムアタックで 1本指で なぞると 字でも 言う・0袋の ときの ヒント
+  async customer(b){
+    const p = await page(b, 390, 844, '');
+    const r = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; for (let i=0;i<5;i++) KB.step(1/60);
+      ev('pointerdown',3,L.x0+4,L.seamY+200); ev('pointermove',3,L.x0+60,L.seamY+200); const msg = S.msg && S.msg.text; ev('pointerup',3,L.x0+60,L.seamY+200);
+      S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return { msg, mode:S.mode }; });
+    await p.waitForTimeout(200);
+    const tip = await p.evaluate(() => document.getElementById('tip').textContent);
+    ok(r.msg==='糸は 二本指で つまむ', 'タイムアタックで 1本指で なぞると「二本指で」と 字でも 言う', r);
+    ok(r.mode==='over' && /二本指/.test(tip), '1袋も あけられなかった ときは つまみ方の ヒント', tip);
   },
   // 新米の きせつ（34周目）：8/15〜12/31 だけ 新米シール。産年は 収穫の 年（農林水産省・愛知県）
   async season(b){

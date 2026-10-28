@@ -126,7 +126,15 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .hanko i{font-style:normal;display:block}
 .season{margin:0 auto -6px;display:inline-flex;align-items:center;gap:6px;align-self:center;background:#f1dfba;color:#3e2a1a;font:700 14px var(--body);padding:4px 12px 4px 6px;border:2px dashed rgba(122,90,48,.6);border-radius:12px 9px 13px 10px;transform:rotate(-2deg)}
 .season .d-ine{position:relative;width:22px}
-.skipped .hanko{display:none}
+.skipped .hanko,.skipped .done3{display:none}
+.done3{display:flex;align-items:flex-end;justify-content:center;gap:4px;margin-top:-8px}
+.done3 span{position:relative;width:20px;line-height:0}
+.done3 span:nth-child(2){width:22px;transform:translateY(-3px)}
+.done3 small{margin-left:8px;font:700 14px var(--body);color:var(--kraft)}
+/* タイトル・結果の スズメが ときどき ぴょん（7秒に 1回。動きを へらす 設定では しない） */
+.d-suzume-btn{animation:hop 7s ease-out infinite}
+@keyframes hop{0%,90%,100%{transform:translateY(0)}93%{transform:translateY(-9px)}96%{transform:translateY(0)}98%{transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.d-suzume-btn{animation:none}}
 .fb{display:flex;gap:14px;margin-top:6px}
 .fb i{font-style:normal;display:flex;align-items:center;gap:6px;font-size:14px;color:var(--ink-dim)}
 @media (max-width:380px){.hanko{width:72px;height:72px;font-size:12px;right:-4px;top:-2px}}
@@ -184,6 +192,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
   <div class="overlay" id="coinDone" hidden>
     <div class="panel">
       <h1 class="one"><small id="coinSmall">れんしゅう できた</small>本物の袋で<span class="hanko" aria-hidden="true"><span><i>よく</i><i>できました</i></span></span></h1>
+      <div class="done3" aria-hidden="true"><span data-d="kome"></span><span data-d="kome"></span><span data-d="komeBlink"></span><small>3袋 できた</small></div>
       <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：赤と白が よった しっぽ＝縫い始め"></canvas>
         <figcaption><span><b>ここから</b>：赤が 白い輪に ささる</span><span>縫い始め：赤と白が よる（×）</span></figcaption></figure>
       <ol class="real">
@@ -211,7 +220,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
       <div class="goals" id="rGoals"></div>
       <p id="tip" class="tip"></p>
       <div id="best"></div>
-      <button class="go" id="againBtn" type="button">もう一回</button>
+      <div class="perch"><button class="go" id="againBtn" type="button" style="width:100%">もう一回</button><span data-d="suzume" class="d-suzume-btn"></span></div>
     </div>
   </div>
 </div>

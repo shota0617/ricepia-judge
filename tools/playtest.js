@@ -757,7 +757,7 @@ async function walkTo(page, id) {
       const P = nishioPixel, r = P.roll, M = P.maze, k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(), style = k ? k.name : '';
       const room = (x0, y0, dy) => { const tube = M.on() && M.near ? (y => { const q = M.near(x0, y); return !q || q.d <= 0.5; }) : () => true; let d = 1; while (d < 9 && !P.rollBlockedFrom(x0, y0 + dy * (d - 1), x0, y0 + dy * d) && tube(y0 + dy * d)) d++; return d; };
       const flat = (x0, y0, dy, d) => { for (let j = 0; j <= d; j++) { const sl = P.slopeAt(x0, y0 + dy * j); if (sl.x || sl.y) return false; } return true; };
-      let best = null, moved = false;
+      let best = null, moved = false; const home = [r.x, r.y];
       for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const d = room(r.x, r.y, dy); if (d >= 5 && flat(r.x, r.y, dy, d) && (!best || d > best[1])) best = [key, d]; }
       if (!best && M.on()) {   // ちかくの めいろの 道の マスを さがす
         const K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K);
@@ -769,7 +769,7 @@ async function walkTo(page, id) {
       }
       if (!best) for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const d = room(r.x, r.y, dy); if (!best || d > best[1]) best = [key, d]; }   // 見つからなければ いまの 場所で
       if (moved) await new Promise(res => setTimeout(res, 400));
-      return { best, style, moved, p0: P.roll.pitch, s0: P.roll.spin };
+      return { best, style, moved, home, p0: P.roll.pitch, s0: P.roll.spin };
     });
     if (/^くるくる/.test(info.style) || info.best[1] < 2) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: info.best[1] < 2 ? 'no-room' : info.style, room: info.best[1] }; }
     await uncover(page);   // めいろでは 窓（ごほうび・イベント・人の 話）が 出ている 間は 転がらないので、閉じてから
@@ -781,6 +781,7 @@ async function walkTo(page, id) {
     const upright = p => Math.abs(p / (Math.PI * 2) - Math.round(p / (Math.PI * 2))) < 0.02;   // 止まると 起きあがって こっちを向く
     let end = null, upS = 0; const trace = [];
     for (let i = 0; i < 30; i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.roll); trace.push([+(end.pitch / (Math.PI * 2)).toFixed(2), +Math.hypot(end.vx, end.vy).toFixed(2)]); upS = (i + 1) * 0.15; if (upright(end.pitch) && Math.hypot(end.vx, end.vy) < 0.05) break; }   // 遅い 画面でも 待てるよう 4.5秒まで
+    if (info.moved) { await page.evaluate(h => nishioPixel.rollPut(h[0], h[1]), info.home); await page.waitForTimeout(300); }   // 元の 場所に もどす（あとの 確認は 元の 場所から 始まる）
     await page.evaluate(() => nishioPixel.setRoll(false));
     const up = upright(end.pitch);
     return { key: info.best[0], room: info.best[1], moved: info.moved, style: info.style, pitch: +pmax.toFixed(2), spin: +smax.toFixed(2), up, upS: +upS.toFixed(2), endPitch: +end.pitch.toFixed(2), endV: +Math.hypot(end.vx, end.vy).toFixed(3), kind: end.kind, slope: end.slope, at: [+end.x.toFixed(2), +end.y.toFixed(2)], trace: up ? undefined : trace, cov, ok: pmax > 1 && smax < 0.3 && up };

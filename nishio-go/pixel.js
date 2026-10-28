@@ -8285,6 +8285,8 @@ function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面�
 // ・地区ごと（店主「地区ごとの生垣も」。地区は その場所に いちばん 近い 注目スポットの 地区＝dots.js の areaOf。地区の 紹介 areas.json に そろえる）：
 //   一色 → 漁網の 垣（漁港・うなぎの 養殖池。水の そばも 網）・吉良 → 土手（堤防づくりの 名君）・幡豆 → 松の 垣（三ヶ根山と 国定公園の 海べ）・佐久島 → 黒塀（島の 黒壁の 集落）
 // ・田んぼの そば → 稲の 垣（店主「さらに西尾らしく」。西尾は 田んぼの 町。こよみの 田んぼと そろえて 青田・水田は 緑の 稲、実りは 黄金の 穂、刈田・田おこしは はざ掛けの 稲わら）
+// 生け垣に 当たって 舞う くず（[こい, うすい]）：いつもの=若葉・茶の木=茶の 葉・石垣=小石・黒塀=木くず・網=糸くず・土手=土くれ・松=松葉・田んぼ=わら
+const MZ_BITS = { ike: ['168,222,104', '236,244,150'], cha: ['86,140,52', '150,196,90'], ishi: ['150,146,136', '204,200,188'], kuro: ['96,70,46', '156,116,78'], ami: ['228,220,196', '120,156,176'], dote: ['140,106,70', '190,154,108'], matsu: ['62,112,62', '124,164,84'], ine: ['214,190,110', '238,222,160'] };
 const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro', 'ami', 'dote', 'matsu', 'ine'], MZ_CASTLE_R = 800 / TILE_M;
 const MZ_AREA_STYLE = { isshiki: 'ami', kira: 'dote', hazu: 'matsu', sakushima: 'kuro' };
 // 地区は いちばん 近い 町名（住所）で きめる：合併の あとも 住所に のこる「一色町○○」「吉良町○○」、幡豆は 東幡豆町・西幡豆町・寺部町・鳥羽町。
@@ -8637,7 +8639,7 @@ function rollStep(dt) {
     if (spd > 1.4 && hedgeScrapeT <= 0 && inTube) {
       if (rub) {
         hedgeScrapeT = 0.22 / Math.min(3, spd / 1.4);
-        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: Math.random() < 0.5 ? '168,222,104' : '236,244,150', bit: true });
+        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: (MZ_BITS[mzStyle(Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K))] || MZ_BITS.ike)[Math.random() < 0.5 ? 0 : 1], bit: true });   // こすれた くずも 生け垣の 種類で
       }
     } else if (spd > 1.4 && hedgeScrapeT <= 0) {
       const horiz = Math.abs(rp.vx) >= Math.abs(rp.vy);
@@ -8710,8 +8712,9 @@ function bumpFx(hard = 1, horiz = true, wet = false, hedge = false) {
     roll.sq = Math.min(0.24, 0.07 + hard * 0.04); roll.sqv = 0; roll.sqx = horiz;
     roll.shake = Math.min(0.4, 0.06 + hard * 0.06);
     if (hard > 3.2) roll.ouchT = 0.5;
-    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;   // 当たった 生け垣の 面（はね返る まえの 向き）
-    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: i % 3 ? '168,222,104' : '236,244,150', bit: true });   // 若葉色（壁の 緑より 明るく）
+    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;
+    const bits = MZ_BITS[mzStyle(Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K))] || MZ_BITS.ike;   // 生け垣の 種類で くずを かえる（素朴な かわいさ）   // 当たった 生け垣の 面（はね返る まえの 向き）
+    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: bits[i % 3 ? 0 : 1], bit: true });   // 若葉色（壁の 緑より 明るく）
     hedgeSound(Math.min(1, hard / 4));
     if (navigator.vibrate) navigator.vibrate(Math.round(5 + hard * 2));
     return;

@@ -6250,16 +6250,21 @@ function step(dt) {
   if (season === 'aki' && (S.workT || 0) > 120) voice('gasu');
   // 秋：稲刈りの あとの 田んぼは、残った 稲株の 列（条間 30cm・田んぼの 長い向き）を 目印に すると まっすぐ 走れる
   // （大潟村あきたこまち生産者協会（note）「晩秋の田んぼと私の間には深い溝（物理）ができていた」：稲刈りの あと すぐ 明渠を 掘る 担当者は、
-  // 稲株を 目印に して まっすぐ 走るよう 直している）。列から 2〜7° ずれたまま 8m 耕すと 1 回 知らせる（直進アシスト・🔰 の まっすぐの ときは 出さない）
+  // 稲株を 目印に して まっすぐ 走るよう 直している）。3m 先に 稲株が 残っている 所で、列から 2〜7° ずれたまま 8m 耕すと 1 回 知らせる（直進アシスト・🔰 の ときは 出さない）
   if (season === 'aki' && S.rotDown && S.rotPos < 0.08 && S.v > 0.3 && !ASSIST.on && !EASY.on && !onRoad) {
     const off = Math.abs(Math.sin(S.yaw));        // 列（z の 向き）からの ずれ
-    S.rowSkewM = off > 0.035 && off < 0.12 ? (S.rowSkewM || 0) + S.v * dt : 0;
-    if (S.rowSkewM > 8 && !S.rowTold && toastT <= 0) {
-      S.rowTold = true;
-      toast('稲株の 列を ななめに 横切っている（約 ' + Math.round(Math.asin(off) * 180 / Math.PI) + '°）。稲刈りの あとの 田んぼは、残った 稲株の 列を 目印に すると まっすぐ 走れる。列に そうよう ハンドルを 少し もどす', 7);
-      setTimeout(() => voice('kabume'), 7500);
+    const ax = S.x + Math.sin(S.yaw) * 3, az = S.z + Math.cos(S.yaw) * 3, ai = Math.floor((ax + HX) / CELL), aj = Math.floor((az + HZ) / CELL);
+    const stubble = ai >= 0 && aj >= 0 && ai < NX && aj < NZ && !tilledMask[ai * NZ + aj];   // 3m 先に まだ 稲株が 残っている（耕した 所は 目印が ない）
+    S.rowSkewM = stubble && off > 0.035 && off < 0.12 ? (S.rowSkewM || 0) + S.v * dt : 0;
+    if (S.rowSkewM > 8 && !S.rowTold && !S.rowChk && (S.rowTries || 0) < 3 && toastT <= 0) {
+      S.rowMsg = '稲株の 列を ななめに 横切っている（約 ' + Math.round(Math.asin(off) * 180 / Math.PI) + '°）。稲刈りの あとの 田んぼは、残った 稲株の 列を 目印に すると まっすぐ 走れる。列に そうよう ハンドルを 少し もどす';
+      S.rowChk = true; toast(S.rowMsg, 7);
     }
   } else S.rowSkewM = 0;
+  if (S.rowChk) {                                 // 1.2 秒 見えていたら 読めたことに する（ほかの 知らせに 消されたら 3 回まで 出しなおす）
+    if ($('toast').textContent !== S.rowMsg) { S.rowChk = false; S.rowTries = (S.rowTries || 0) + 1; S.rowSkewM = 0; }
+    else if (toastT <= 7 - 1.2) { S.rowChk = false; S.rowTold = true; setTimeout(() => voice('kabume'), 6500); }
+  }
   if (season === 'aki' && S.rotDown && S.rotPos < 0.08 && S.v > 0.1) {   // 秋：コンバインのわだち（ふみ固められた所）を耕しはじめたら
     const s = Math.sin(S.yaw), c = Math.cos(S.yaw);
     if ([-0.9, 0.9].some(lx => RUTS.at(S.x + lx * c + (ROTARY_Z + 0.3) * s, S.z - lx * s + (ROTARY_Z + 0.3) * c) > 0.04)) voice('tsume');

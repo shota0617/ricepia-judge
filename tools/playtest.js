@@ -823,14 +823,16 @@ async function walkTo(page, id) {
   R.checks.suzume = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
     const r = await page.evaluate(async () => {
-      const P = nishioPixel, S = P.suzume, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points;
+      const P = nishioPixel, S = P.suzume, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points, l0 = nishioGo.state.log.length, w0 = (window.__rewards || []).length, f0 = new Set(P.floats());
       S.put(Math.floor(r0.x) + 3, Math.floor(r0.y));
       const n = S.list.length, still = S.list.every(b => !b.fly);
       const b = S.list[0]; P.rollPut(b.x - 1.4, b.y, 3, 0);   // すずめの 1.4マス 手前から 3マス/秒で
       let all = false; for (let i = 0; i < 15 && !all; i++) { await wait(60); all = S.list.length > 0 && S.list.every(x => x.fly); }
       let gone = false; for (let i = 0; i < 30 && !gone; i++) { await wait(100); gone = S.list.length === 0; }
       S.clear(); P.rollPut(r0.x, r0.y, 0, 0);
-      return { n, still, all, gone, pts: nishioGo.state.points - p0 };
+      // すずめ 以外で きろくに のこる ポイント（100歩たんけん：rollPut も 1歩に 数えるので、ちょうど 100歩目が ここに 来ると「はじめての道 1マス」で +1 に なって ときどき 落ちた）は 引く
+      const logs = nishioGo.state.log.slice(0, nishioGo.state.log.length - l0), other = logs.reduce((a, l) => a + (l.pts || 0), 0), pts = nishioGo.state.points - p0 - other;
+      return { n, still, all, gone, pts, ...(other ? { other: logs.map(l => l.type + ':' + l.pts) } : {}), ...(pts ? { why: { rw: (window.__rewards || []).slice(w0).map(t => t.slice(0, 40)), fl: P.floats().filter(t => !f0.has(t)) } } : {}) };   // 落ちた ときに 分かるように
     });
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.n >= 2 && r.n <= 3 && r.still && r.all && r.gone && r.pts === 0 };

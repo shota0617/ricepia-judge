@@ -27,7 +27,7 @@ async function main(){
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(FILE);
   await page.waitForFunction(() => window.KB);
-  const out = {};
+  const out = {}, goalTable = {};
   for (const [name, bot] of Object.entries(BOTS)){
     const runs = [];
     for (let r=0; r<RUNS; r++){
@@ -82,13 +82,17 @@ async function main(){
           if (strokeLeft <= 0 || x < 24 || x > W-24){ KB.up(); held = false; lift = 0.3; x = dir>0 ? Math.max(24, x - bot.stroke) : Math.min(W-24, x + bot.stroke); KB.move(x,y); }
           tick();
         }
-        return { score:S.score, bags:S.bags, clean:S.clean, tangles:S.tangles, wrongs:S.wrongs+S.fronts, len:+t.toFixed(1), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2) };
+        const goals = {}; for (const g of KB.GOALS) goals[g.id] = g.ok() ? 1 : 0;
+        return { goals, score:S.score, bags:S.bags, clean:S.clean, tangles:S.tangles, wrongs:S.wrongs+S.fronts, len:+t.toFixed(1), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2) };
       }, [bot, 1000 + r]));
     }
     const mean = k => +(runs.reduce((a,c)=>a+c[k],0)/runs.length).toFixed(2);
+    const gl = {}; for (const r of runs) for (const k in r.goals) gl[k] = (gl[k]||0) + r.goals[k]/runs.length;
+    goalTable[name] = Object.fromEntries(Object.entries(gl).map(([k,v])=>[k, Math.round(v*100)+'%']));
     out[name] = { score:Math.round(mean('score')), bags:mean('bags'), clean:mean('clean'), tangles:mean('tangles'), wrongs:mean('wrongs'), len:mean('len'), zone:mean('zone'), maxBags: Math.max(...runs.map(r=>r.bags)) };
   }
   console.table(out);
+  if (args.includes('--goals')) { console.log('きょうの目標が できた 割合'); console.table(goalTable); }
   if (errors.length) console.log('ERRORS', errors);
   await browser.close();
 }

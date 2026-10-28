@@ -65,6 +65,12 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 #best{font-size:13px;color:var(--ink-dim)}
 .tip{margin:0;font-size:14px;line-height:1.6;text-align:left;background:rgba(201,164,108,.14);border-radius:10px;padding:10px 12px}
 .tip b{color:var(--kraft)}
+.goals{display:flex;flex-direction:column;gap:6px;text-align:left}
+.goals h2{margin:0;font-size:12px;letter-spacing:.14em;color:var(--kraft);font-weight:700}
+.goal{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:center;font-size:14px;line-height:1.4;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,.05)}
+.goal i{font-style:normal;width:20px;height:20px;border-radius:50%;border:2px solid var(--ink-dim);display:grid;place-items:center;font-size:12px;color:var(--ai-deep)}
+.goal.done i{background:var(--ok);border-color:var(--ok)}
+.goal.new{outline:2px solid var(--gold)}
 @media (prefers-reduced-motion:reduce){button.go:active{transform:none}}
 </style>
 </head>
@@ -86,6 +92,7 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
         <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこを<strong>二本指でつまんで</strong>輪からはずす。</span></li>
         <li><b>3</b><span>つまんだまま、縫った向きと逆へ<strong>ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（タップでほぐす）。</span></li>
       </ul>
+      <div class="goals" id="goals"></div>
       <button class="go" id="startBtn" type="button">はじめる</button>
       <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。</p>
       <p class="note">ほどき方は、紙袋メーカーと製粉会社の説明にもとづく（下糸は上糸の輪の中を通っている。裏から見て左端の、輪にささった下糸をはずし、ゆっくり引く。縫い始めの側からだと からまる）。袋によっては右から、また1本糸の袋は どちらからでも ほどける。<br/>
@@ -103,6 +110,7 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
         <div><span>一本どり</span><strong id="rClean">0</strong></div>
         <div><span>もつれ</span><strong id="rSnap">0</strong></div>
       </div>
+      <div class="goals" id="rGoals"></div>
       <p id="tip" class="tip"></p>
       <div id="best"></div>
       <button class="go" id="againBtn" type="button">もう一回</button>
@@ -173,7 +181,7 @@ function pps(b){ const L=layout(); return Math.max(14, (L.x1-L.x0)*R.pullWidths/
 function startGame(){
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
   Object.assign(S,{mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
-    bagNo:0,liftT:0,dirEff:1,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
+    bagNo:0,liftT:0,dirEff:1,quick:0,feverBags:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
   S.bag = makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.hud.hidden = false;
   audio.ensure();
@@ -187,6 +195,9 @@ function endGame(){
   ui.rank.textContent = 'ランク：' + rankOf(S.score);
   const zone = Math.round(100*S.zoneTime/Math.max(0.01,S.pullTime));
   ui.tip.innerHTML = '<b>スルスル率 '+zone+'%</b>　' + tipOf(zone);
+  const done = goalsDone(), fresh = new Set();
+  for(const g of todayGoals()) if(!done.has(g.id) && g.ok()){ done.add(g.id); fresh.add(g.id); }
+  saveGoals(done); renderGoals(ui.rGoals, fresh); renderGoals(ui.goals);
   let best=0; try{ best = +localStorage.getItem('mishin-best2')||0; if(S.score>best) localStorage.setItem('mishin-best2', S.score); }catch(e){}
   ui.best.textContent = S.score>best && best>0 ? 'じこベスト更新！（前は '+best.toLocaleString()+'）' : best>0 ? 'じこベスト '+best.toLocaleString() : '';
 }
@@ -197,6 +208,31 @@ function tipOf(zone){
   if(zone<45) return 'もう少し速く引いても大丈夫。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびる。';
   if(S.bestStreak<5) return 'いい手つき。<b>一本どり</b>を続けると、連続ボーナスがつく。';
   return '名人の手つき。新米の袋（金色）は点が2倍。';
+}
+// きょうの 目標：日付で 3つ えらぶ（同じ日は 同じ 目標）。できた ものは この 端末に のこる
+const GOALS = [
+  { id:'streak5', text:'一本どり 5連続', ok:()=>S.bestStreak>=5 },
+  { id:'golden',  text:'新米の袋（金色）を 一本どり', ok:()=>S.goldenClean>=1 },
+  { id:'right',   text:'右から ほどく袋を 一本どり', ok:()=>S.rightClean>=1 },
+  { id:'notangle',text:'もつれ 0 で 8袋 あける', ok:()=>S.bags>=8 && S.tangles===0 },
+  { id:'quick5',  text:'早わざ 5回', ok:()=>S.quick>=5 },
+  { id:'fever3',  text:'スルスル ×5 のまま 3袋 あける', ok:()=>S.feverBags>=3 },
+  { id:'bags12',  text:'12袋 あける', ok:()=>S.bags>=12 },
+  { id:'bags8',   text:'8袋 あける', ok:()=>S.bags>=8 },
+  { id:'nomiss',  text:'表と端を 1回も まちがえずに 6袋', ok:()=>S.bags>=6 && S.wrongs+S.fronts===0 },
+];
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function todayGoals(){
+  const k = todayKey(); let h=0; for(const c of k) h = (h*31 + c.charCodeAt(0))|0;
+  const pool = GOALS.slice(), out=[];
+  while(out.length<3){ h = (h*1103515245 + 12345)|0; out.push(pool.splice(Math.abs(h)%pool.length,1)[0]); }
+  return out;
+}
+function goalsDone(){ try{ const o = JSON.parse(localStorage.getItem('mishin-goals')||'{}'); return o.day===todayKey() ? new Set(o.done) : new Set(); }catch(e){ return new Set(); } }
+function saveGoals(done){ try{ localStorage.setItem('mishin-goals', JSON.stringify({day:todayKey(), done:[...done]})); }catch(e){} }
+function renderGoals(el, fresh){
+  const done = goalsDone();
+  el.innerHTML = '<h2>きょうの目標</h2>' + todayGoals().map(g=>`<div class="goal${done.has(g.id)?' done':''}${fresh&&fresh.has(g.id)?' new':''}"><i>${done.has(g.id)?'✓':''}</i><span>${g.text}${fresh&&fresh.has(g.id)?'　<b style="color:var(--gold)">達成！</b>':''}</span></div>`).join('');
 }
 function rankOf(sc){ return sc>=30000?'米屋の五代目':sc>=15000?'精米所のベテラン':sc>=6000?'頼れるパートさん':sc>=2500?'見習い':'はじめての袋'; }
 
@@ -251,7 +287,7 @@ function down(x,y){
       }
       b.from = w; b.phase='pull'; b.hint=false; audio.click();
       const p = stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4});
-      if(!b.wrong && b.readT < 0.9){ S.score += 50; S.fx.push({kind:'text', text:'早わざ +50', x:p.x, y:layout().seamY-30, t:0, life:0.8}); }
+      if(!b.wrong && b.readT < 0.9){ S.score += 50; S.quick++; S.fx.push({kind:'text', text:'早わざ +50', x:p.x, y:layout().seamY-30, t:0, life:0.8}); }
       S.held = true; S.liftT = 0;
     }
     return;
@@ -338,7 +374,7 @@ function step(dt){
       const wasKnot = b.knots.has(b.pulled);
       b.sub = 0; b.pulled++;
       if(S.tension>=R.zoneLo && S.tension<=1) b.zoneSt++;
-      const mult = multOf();
+      const mult = multOf(); S.maxMult = Math.max(S.maxMult, mult);
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
       S.fx.push({kind:'pop', x:p.x, y:p.y, t:0, life:0.35, knot:wasKnot});
@@ -368,7 +404,11 @@ function finishBag(){
   const mult = multOf(), g = b.golden?2:1;
   let dtime = Math.max(0.5, R.timeBag - 0.06*Math.max(0, b.k-4)) + (cleanBag?R.timeClean:0) + (smooth?R.timeZone:0);
   dtime = Math.round(dtime*10)/10;
+  if(b.single) S.singleOpen++;
+  if(mult>=5) S.feverBags++;
   if(cleanBag){
+    if(b.golden) S.goldenClean++;
+    if(b.from==='R' && !b.single) S.rightClean++;
     S.clean++; S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
     S.score += 100*mult*g + 50*(S.streak-1);
     say(b.golden ? '新米 一本どり！' : S.streak>=2 ? '一本どり '+S.streak+'連続！' : '一本どり！','ok');
@@ -400,21 +440,36 @@ function stitchPos(b, i){
 }
 
 // ---------- 描画 ----------
-const cv = document.getElementById('cv'); const ctx = cv.getContext('2d');
+const cv = document.getElementById('cv'); let ctx = cv.getContext('2d');
 function resize(){ DPR = Math.min(2, window.devicePixelRatio||1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W*DPR; cv.height = H*DPR; }
 window.addEventListener('resize', resize);
 const C = { red:'#d8342c', redDark:'#8f1f19', white:'#f8f4ea', shade:'rgba(50,30,5,.35)', ink:'rgba(60,35,10,.7)' };
 
+// うごかない 絵（地・積んだ袋・袋の 紙と 印刷）は 別の キャンバスに 1回 かいて、毎コマ はりつける
+// （毎コマ 全部 かくと、CPU 4倍 おそい スマホ相当で 1コマ 60ms を こえていた）
+const bgStore = {}, bagStore = {};
+function layer(store, key, paint){
+  if(store.key!==key){
+    if(!store.cv) store.cv = document.createElement('canvas');
+    store.cv.width = W*DPR; store.cv.height = H*DPR;
+    const saved = ctx; ctx = store.cv.getContext('2d'); ctx.setTransform(DPR,0,0,DPR,0,0); ctx.clearRect(0,0,W,H);
+    try{ paint(); } finally { ctx = saved; }
+    store.key = key;
+  }
+  return store.cv;
+}
 function draw(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   const L = layout();
-  const bg = ctx.createRadialGradient(W/2, L.seamY, 40, W/2, L.seamY, Math.max(W,H));
-  bg.addColorStop(0,'#26325a'); bg.addColorStop(1,'#131a2e');
-  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
-  const b = S.bag || demoBag;
   const sh = S.shake>0 && !KB.calm ? S.shake*6 : 0;
   ctx.save(); ctx.translate((Math.random()-0.5)*sh, (Math.random()-0.5)*sh);
-  drawPile(L);
+  ctx.drawImage(layer(bgStore, `${W}|${H}|${DPR}|${S.bags}`, ()=>{
+    const bg = ctx.createRadialGradient(W/2, L.seamY, 40, W/2, L.seamY, Math.max(W,H));
+    bg.addColorStop(0,'#26325a'); bg.addColorStop(1,'#131a2e');
+    ctx.fillStyle = bg; ctx.fillRect(-20,-20,W+40,H+40);
+    drawPile(L);
+  }), 0, 0, W, H);
+  const b = S.bag || demoBag;
   ctx.save(); ctx.translate(b.slide*W, 0);
   if(b.flipT>0){ const sy = Math.max(0.04, Math.abs(1-2*b.flipT)); const cy = L.seamY + L.bagH/2; ctx.translate(0, cy); ctx.scale(1, sy); ctx.translate(0, -cy); }
   drawBag(L, b);
@@ -448,9 +503,17 @@ function drawFingers(L){
 }
 const demoBag = { N:16, face:'back', start:'L', from:null, single:false, knots:new Set([7]), pulled:0, sub:0, golden:false, kg:30, brand:'コシヒカリ', phase:'look', done:false, open:0, hint:false, slide:0, flipT:0, tangle:null };
 
+let bagSerial = 0;
 function drawBag(L, b){
-  const x = W/2 - L.bagW/2, y = L.seamY - 30, w = L.bagW, h = L.bagH + 30;
   const openA = b.done ? Math.min(1, b.open/0.25) : 0;
+  if(!b.id) b.id = ++bagSerial;
+  if(openA>0) paintBag(L, b, openA);
+  else ctx.drawImage(layer(bagStore, `${b.id}|${b.face}|${W}|${H}|${DPR}`, ()=>paintBag(L, b, 0)), 0, 0, W, H);
+  if(!b.done || b.open<0.1){ if(b.face==='front') drawSeamFront(L, b); else drawSeamBack(L, b); }
+  else drawHoles(L, b);
+}
+function paintBag(L, b, openA){
+  const x = W/2 - L.bagW/2, y = L.seamY - 30, w = L.bagW, h = L.bagH + 30;
   ctx.fillStyle='rgba(0,0,0,.3)'; roundRect(x+6, y+12, w, h, 12); ctx.fill();
   const g = ctx.createLinearGradient(x,0,x+w,0);
   const base = b.golden ? ['#d6b25e','#ecd08a','#cda552'] : ['#b78d55','#d2ab72','#b28750'];
@@ -466,8 +529,6 @@ function drawBag(L, b){
   if(openA>0){ ctx.fillStyle='#f4efe0'; ctx.beginPath(); ctx.ellipse(W/2, y+6, w*0.42*openA, 14*openA, 0, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle='rgba(0,0,0,.08)'; ctx.beginPath(); ctx.ellipse(W/2, y+9, w*0.36*openA, 8*openA, 0, 0, Math.PI*2); ctx.fill(); }
   if(b.face==='front') drawFrontPrint(L, b, x, y, w, h); else drawBackPrint(L, b, x, y, w, h);
-  if(!b.done || b.open<0.1){ if(b.face==='front') drawSeamFront(L, b); else drawSeamBack(L, b); }
-  else drawHoles(L, b);
 }
 
 function drawFrontPrint(L, b, x, y, w, h){
@@ -504,12 +565,10 @@ function drawBackPrint(L, b, x, y, w, h){
 // 表：上糸（白）が まっすぐ 並ぶ だけ
 function drawSeamFront(L, b){
   const n=b.N, step=(L.x1-L.x0)/n, sy=L.seamY;
-  ctx.lineCap='round';
-  for(let i=0;i<n;i++){
-    const x = L.x0 + (i+0.5)*step;
-    ctx.strokeStyle=C.shade; ctx.lineWidth=3.6; ctx.beginPath(); ctx.moveTo(x-step*0.42, sy); ctx.lineTo(x+step*0.42, sy); ctx.stroke();
-    ctx.strokeStyle=C.white; ctx.lineWidth=2.2; ctx.beginPath(); ctx.moveTo(x-step*0.42, sy); ctx.lineTo(x+step*0.42, sy); ctx.stroke();
-  }
+  ctx.lineCap='round'; ctx.beginPath();
+  for(let i=0;i<n;i++){ const x = L.x0 + (i+0.5)*step; ctx.moveTo(x-step*0.42, sy); ctx.lineTo(x+step*0.42, sy); }
+  ctx.strokeStyle=C.shade; ctx.lineWidth=3.6; ctx.stroke();
+  ctx.strokeStyle=C.white; ctx.lineWidth=2.2; ctx.stroke();
   ctx.strokeStyle='#ece6d6'; ctx.lineWidth=2;
   [[L.x0-4,-1],[L.x1+4,1]].forEach(([tx,d])=>{ ctx.beginPath(); ctx.moveTo(tx, sy); ctx.bezierCurveTo(tx+d*10, sy+10, tx+d*2, sy+24, tx+d*12, sy+36); ctx.stroke(); });
   if(b.hint && S.bag===b){ hintText('白い糸が まっすぐ だけ ＝ 表', 'ふくろを タップして 裏返す', L); }
@@ -523,25 +582,35 @@ function drawSeamBack(L, b){
   const posOf = i => { const f=(i+0.5)/n; return from==='R' ? L.x1 - f*(L.x1-L.x0) : L.x0 + f*(L.x1-L.x0); };
   const sd = from==='R' ? -1 : 1; // ほどける 向き
   // ほどけた 所：下糸は ぬけ、上糸の 輪だけ ゆるく 残る
-  for(let i=0;i<b.pulled;i++){ const x=posOf(i); ctx.strokeStyle='rgba(248,244,234,.55)'; ctx.lineWidth=1.6; ctx.beginPath(); ctx.ellipse(x, sy+7, step*0.18, 7, 0, 0, Math.PI*2); ctx.stroke(); }
-  const whiteHalf = (x, front) => { const a0 = front ? -Math.PI/2 : Math.PI/2, a1 = front ? Math.PI/2 : Math.PI*1.5;
-    ctx.strokeStyle=C.shade; ctx.lineWidth=3.2; ctx.beginPath(); ctx.ellipse(x, sy+1, step*0.17, 7.5, 0, a0, a1); ctx.stroke();
-    ctx.strokeStyle=C.white; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(x, sy+1, step*0.17, 7.5, 0, a0, a1); ctx.stroke(); };
-  for(let i=b.pulled;i<n;i++) whiteHalf(posOf(i), false);
-  // のこっている 下糸の くさり（となりの 上糸の 輪へ のびる 輪）
-  for(let i=b.pulled;i<n;i++){
-    const x = posOf(i), knot = b.knots.has(i);
-    const head = i===b.pulled && b.phase==='pull' && !b.done;
-    const jit = head && knot ? Math.min(1,S.tension)*1.5*Math.sin(S.t*70) : 0;
-    const prog = head ? b.sub/(pps(b)*(knot?R.knotLen:1)) : 0;
-    const cx = x + sd*step*0.45 + sd*prog*step*0.4 + jit, rx = step*0.5, ry = knot?2.6:4;
-    ctx.lineWidth = knot ? 4.5 : 3.6; ctx.strokeStyle = C.shade;
-    ctx.beginPath(); ctx.ellipse(cx, sy+1 + (i%2?1:-1), rx, ry, 0, 0, Math.PI*2); ctx.stroke();
-    ctx.lineWidth = knot ? 3 : 2.2; ctx.strokeStyle = knot ? redEdge : red;
-    ctx.beginPath(); ctx.ellipse(cx, sy+1 + (i%2?1:-1), rx, ry, 0, 0, Math.PI*2); ctx.stroke();
+  const TAU = Math.PI*2;
+  ctx.beginPath();
+  for(let i=0;i<b.pulled;i++){ const x=posOf(i); ctx.moveTo(x+step*0.18, sy+7); ctx.ellipse(x, sy+7, step*0.18, 7, 0, 0, TAU); }
+  ctx.strokeStyle='rgba(248,244,234,.55)'; ctx.lineWidth=1.6; ctx.stroke();
+  // 上糸の 輪の 半分ずつ（うしろ → 下糸 → まえ の 順で、からみあって 見える）
+  const whiteHalves = front => {
+    const a0 = front ? -Math.PI/2 : Math.PI/2, a1 = front ? Math.PI/2 : Math.PI*1.5, rx = step*0.17;
+    ctx.beginPath();
+    for(let i=b.pulled;i<n;i++){ const x=posOf(i); ctx.moveTo(x + rx*Math.cos(a0), sy+1 + 7.5*Math.sin(a0)); ctx.ellipse(x, sy+1, rx, 7.5, 0, a0, a1); }
+    ctx.strokeStyle=C.shade; ctx.lineWidth=3.2; ctx.stroke();
+    ctx.strokeStyle=C.white; ctx.lineWidth=2; ctx.stroke();
+  };
+  whiteHalves(false);
+  // のこっている 下糸の くさり（となりの 上糸の 輪へ のびる 輪）。ふつうの 目と きつい目を 分けて まとめる
+  for(const wantKnot of [false, true]){
+    ctx.beginPath(); let any=false;
+    for(let i=b.pulled;i<n;i++){
+      const knot = b.knots.has(i); if(knot!==wantKnot) continue; any=true;
+      const head = i===b.pulled && b.phase==='pull' && !b.done;
+      const jit = head && knot ? Math.min(1,S.tension)*1.5*Math.sin(S.t*70) : 0;
+      const prog = head ? b.sub/(pps(b)*(knot?R.knotLen:1)) : 0;
+      const cx = posOf(i) + sd*step*0.45 + sd*prog*step*0.4 + jit, rx = step*0.5, ry = knot?2.6:4, cy = sy+1 + (i%2?1:-1);
+      ctx.moveTo(cx+rx, cy); ctx.ellipse(cx, cy, rx, ry, 0, 0, TAU);
+    }
+    if(!any) continue;
+    ctx.lineWidth = wantKnot ? 4.5 : 3.6; ctx.strokeStyle = C.shade; ctx.stroke();
+    ctx.lineWidth = wantKnot ? 3 : 2.2; ctx.strokeStyle = wantKnot ? redEdge : red; ctx.stroke();
   }
-  // 上糸の 輪（針穴から 出て、下糸を つかまえる）の 前半分
-  for(let i=b.pulled;i<n;i++) whiteHalf(posOf(i), true);
+  whiteHalves(true);
   // 2つの 端
   const sx = from==='R' ? L.x1 + step*0.1 : L.x0 - step*0.1; // ほどき始め（裏から見て たいてい左）
   const ex = from==='R' ? L.x0 - step*0.1 : L.x1 + step*0.1; // 縫い始め
@@ -705,9 +774,24 @@ function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w
 // ---------- 音（WebAudio で作る） ----------
 const audio = {
   ac:null,
-  ensure(){ if(this.ac){ if(this.ac.state==='suspended') this.ac.resume(); return; } try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} },
+  ensure(){ if(this.ac){ if(this.ac.state==='suspended') this.ac.resume(); return; } try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.zipOn(); }catch(e){} },
   tone(f, d, type='sine', v=0.15, f2){ const ac=this.ac; if(!ac) return; const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.setValueAtTime(f, ac.currentTime); if(f2) o.frequency.exponentialRampToValueAtTime(f2, ac.currentTime+d); g.gain.setValueAtTime(v, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+d); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+d+0.02); },
   noise(d, freq, v=0.2, q=2){ const ac=this.ac; if(!ac) return; const n=Math.max(1,Math.floor(ac.sampleRate*d)); const buf=ac.createBuffer(1,n,ac.sampleRate); const a=buf.getChannelData(0); for(let i=0;i<n;i++) a[i]=(Math.random()*2-1)*(1-i/n); const s=ac.createBufferSource(); s.buffer=buf; const f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q; const g=ac.createGain(); g.gain.value=v; s.connect(f).connect(g).connect(ac.destination); s.start(); },
+  zip:null,
+  // 下糸が 目から ぬけていく「シュルル」：くり返す ノイズを 帯で しぼり、引く 速さで 音量と 高さを かえる
+  zipOn(){ const ac=this.ac; if(!ac || this.zip) return;
+    const n = ac.sampleRate; const buf = ac.createBuffer(1, n, ac.sampleRate); const a = buf.getChannelData(0);
+    for(let i=0;i<n;i++) a[i] = (Math.random()*2-1) * (0.6 + 0.4*Math.sin(i/n*Math.PI*2*37));
+    const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
+    const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1200; f.Q.value=1.5;
+    const g = ac.createGain(); g.gain.value = 0;
+    src.connect(f).connect(g).connect(ac.destination); src.start();
+    this.zip = { f, g };
+  },
+  zipSet(level, tension){ if(!this.zip) return; const t = this.ac.currentTime;
+    this.zip.g.gain.setTargetAtTime(level*0.22, t, 0.03);
+    this.zip.f.frequency.setTargetAtTime(700 + 1500*Math.min(1.3, tension), t, 0.05);
+    this.zip.f.Q.setTargetAtTime(tension>1 ? 0.6 : 1.6, t, 0.05); },
   pop(mult, knot){ this.noise(0.025, knot?900:1500+mult*350, knot?0.6:0.3, 4); },
   click(){ this.tone(1200, 0.05, 'square', 0.08); },
   flip(){ this.noise(0.18, 700, 0.35, 0.8); },
@@ -722,10 +806,13 @@ function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 // ---------- UI ----------
 const $ = id=>document.getElementById(id);
 const ui = { hud:$('hud'), title:$('title'), result:$('result'), score:$('score'), time:$('time'), bags:$('bags'), combo:$('combo'), td:$('timeDelta'), tdT:9,
-  rScore:$('rScore'), rBags:$('rBags'), rClean:$('rClean'), rSnap:$('rSnap'), rank:$('rank'), best:$('best'), tip:$('tip') };
+  rScore:$('rScore'), rBags:$('rBags'), rClean:$('rClean'), rSnap:$('rSnap'), rank:$('rank'), best:$('best'), tip:$('tip'), goals:$('goals'), rGoals:$('rGoals') };
+renderGoals(ui.goals);
 $('startBtn').addEventListener('click', startGame);
 $('againBtn').addEventListener('click', startGame);
 function syncUI(dt){
+  const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;
+  audio.zipSet(pulling ? Math.min(1.2, S.tension) : 0, S.tension);
   ui.score.textContent = S.score.toLocaleString();
   ui.time.textContent = Math.ceil(S.time);
   ui.time.classList.toggle('low', S.time<8);
@@ -791,7 +878,7 @@ document.addEventListener('gesturestart', e=>e.preventDefault()); // iOS の 2�
 // ---------- テスト用の口（tools/mishin/playtest.js） ----------
 const KB = window.KB = {
   manual:false, fixedSeed:0, calm: matchMedia('(prefers-reduced-motion: reduce)').matches,
-  S, R, start: startGame, step, down, move, up, tap, fingers, layout, stitchPos, makeBag, pullDir, size:()=>({W,H}),
+  S, R, GOALS, start: startGame, step, down, move, up, tap, fingers, layout, stitchPos, makeBag, pullDir, size:()=>({W,H}),
 };
 
 let last = performance.now();

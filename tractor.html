@@ -3431,7 +3431,7 @@ function emitRoadDust(dt, x, z, yaw, v, k) {
 
 // ---- タイヤの跡（ロータリーを上げて走ったとき。あとで耕すと消える） ----
 const TR = (() => {
-  const N = 2400;                                // 四角の数（古いものから上書き）
+  const N = SHIRO ? 6000 : 2400;                 // 四角の数（あいた所を先に使い、なければ 古いものから上書き）。代かきは かく前の 跡も 目印に 残すので 多め
   const pos = new Float32Array(N * 12), uv = new Float32Array(N * 8), idx = new Uint32Array(N * 6), cell = new Int32Array(N).fill(-1);
   for (let i = 0; i < N; i++) idx.set([i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3], i * 6);
   const g = new THREE.BufferGeometry();
@@ -3456,8 +3456,8 @@ const TR = (() => {
   mesh.frustumCulled = false;
   mesh.renderOrder = 1;
   scene.add(mesh);
-  let next = 0, dirty = false;
-  const last = {};                               // 車輪ごとの前の点と、跡の長さ（絵の v）
+  let next = N - 1, dirty = false;
+  const last = {}, free = [], inFree = new Uint8Array(N);   // 車輪ごとの前の点と、跡の長さ（絵の v）。free：消して あいた 四角
   function add(key, x, z, w) {
     const L = last[key];
     if (!L) { last[key] = { x, z, v: 0 }; return; }
@@ -3466,10 +3466,16 @@ const TR = (() => {
     if (d > 1.5 || ground(x, z) === null || Math.abs(x) > HX || Math.abs(z) > HZ) { last[key] = { x, z, v: 0 }; return; }
     const nx = -dz / d * w / 2, nz = dx / d * w / 2;
     const ci = Math.floor((x + HX) / CELL) * NZ + Math.floor((z + HZ) / CELL);
-    const y = tilledMask[ci] ? TILL_Y + 0.025 : SHIRO ? Math.max(0.028, Math.min(0.2, AMENBO.soilAt(x, z)) + 0.008) : 0.028;     // 田んぼの面の凸凹（±2cm）より上（代かきの まだの 所は 水面から 出た 土の 上にも）
-    const yy = (a, b) => y + (tilledMask[ci] ? COVER.h(a, b) + clodH(a, b) + KATA.h(a, b) : 0);   // 波うった所・土塊の上は その高さに
-    const i = next; next = (next + 1) % N;
-    pos.set([L.x + nx, yy(L.x + nx, L.z + nz), L.z + nz, L.x - nx, yy(L.x - nx, L.z - nz), L.z - nz, x - nx, yy(x - nx, z - nz), z - nz, x + nx, yy(x + nx, z + nz), z + nz], i * 12);
+    const y = tilledMask[ci] ? TILL_Y + 0.025 : 0.028;     // 田んぼの面の凸凹（±2cm）より上
+    const soilY0 = (a, b) => Math.max(0.028, Math.min(0.2, AMENBO.soilAt(a, b)) + 0.008);   // 代かきの まだ かいていない 所：水面から 出た 土の 上にも
+    const mx = (L.x + x) / 2, mz = (L.z + z) / 2;
+    const yy = (a, b, ma, mb) => tilledMask[ci] ? y + COVER.h(a, b) + clodH(a, b) + KATA.h(a, b)   // 波うった所・土塊の上は その高さに
+      : SHIRO ? Math.max(soilY0(a, b), soilY0(ma, mb)) : y;   // 角ごとに その所と 辺の まん中の 高い ほう（土に 埋まらない）
+    let i = -1;
+    while (free.length && i < 0) { const f = free.pop(); if (inFree[f]) { inFree[f] = 0; i = f; } }   // 古い順の 上書きで もう 使った あき は とばす
+    if (i < 0) { next = (next + 1) % N; i = next; inFree[i] = 0; }
+    pos.set([L.x + nx, yy(L.x + nx, L.z + nz, mx + nx, mz + nz), L.z + nz, L.x - nx, yy(L.x - nx, L.z - nz, mx - nx, mz - nz), L.z - nz,
+      x - nx, yy(x - nx, z - nz, mx - nx, mz - nz), z - nz, x + nx, yy(x + nx, z + nz, mx + nx, mz + nz), z + nz], i * 12);
     const v1 = L.v + d / 0.5;
     uv.set([0, L.v, 1, L.v, 1, v1, 0, v1], i * 8);
     cell[i] = ci;
@@ -3477,7 +3483,7 @@ const TR = (() => {
     dirty = true;
   }
   function erase(ci) {                           // 耕した所の跡を消す（四角をつぶす）
-    for (let i = 0; i < N; i++) if (cell[i] === ci) { pos.fill(0, i * 12, i * 12 + 12); cell[i] = -1; dirty = true; }
+    for (let i = 0; i < N; i++) if (cell[i] === ci) { pos.fill(0, i * 12, i * 12 + 12); cell[i] = -1; if (!inFree[i]) { inFree[i] = 1; free.push(i); } dirty = true; }
   }
   function flush() { if (dirty) { g.attributes.position.needsUpdate = true; g.attributes.uv.needsUpdate = true; dirty = false; } }
   function reset() { for (const k in last) delete last[k]; }

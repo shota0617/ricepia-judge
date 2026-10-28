@@ -815,8 +815,8 @@ async function walkTo(page, id) {
     const P = nishioPixel, c = document.createElement('canvas'); c.width = c.height = 400; const x = c.getContext('2d');
     for (let i = 0; i < 3; i++) P.drawRice(x, 200.3, 200.6, i * 0.2, 0, 'smile', 0, '', 4);   // あたため
     const t0 = performance.now(); for (let i = 0; i < 20; i++) P.drawRice(x, 200.3, 200.6, i * 0.15, 0, 'smile', 0, '', 4);
-    const ms = (performance.now() - t0) / 20;
-    return { ms: +ms.toFixed(2), ok: ms < 6 };
+    const ms = (performance.now() - t0) / 20, L = P.riceLast();   // ふつうの お米は あらく しない（のこりかげ だけ）
+    return { ms: +ms.toFixed(2), P: L && L.P, lowQ: L && L.lowQ, ok: ms < 6 && !!L && L.P === 4 && L.lowQ === false };
   });
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
   R.checks.smoothShadow = await page.evaluate(async () => {

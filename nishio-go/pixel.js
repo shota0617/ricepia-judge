@@ -2162,7 +2162,7 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
   const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
   const my = cp < 0 ? -1 : 1, ky = sy * riceTall(pitch) * my;   // たての ころころ：前に 寝ると 短く（はしから 見える）。うしろを 向くと 上下 さかさ
-  const P = gb ? 1 : Math.min(u, riceLowQ ? 2 : RICE_PMAX), k0 = P / u;   // P：絵の1点を 何ピクセルで 描くか（大きすぎる ときは 少し あらく 描いて のばす）
+  const P = gb ? 1 : Math.min(u, riceLowQ ? 2 : RICE_PMAX), k0 = P / u;   // riceLowQ：うすい のこりかげの とき だけ
   const X0 = gb ? Math.round(X - H * u) : Math.floor(X - H * u - 1), Y0 = gb ? Math.round(Y - H * u) : Math.floor(Y - H * u - 1);
   const ox0 = (X - X0) * k0, oy0 = (Y - Y0) * k0, S = Math.ceil(RB * P) + 3;   // つぶの まん中（絵の 中の ピクセル）。はしの ずれは 絵の 中で
   if (rb.cv.width !== S) { rb.cv.width = rb.cv.height = S; rb.img = null; }
@@ -2213,7 +2213,7 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
     }
   }
   o.putImageData(img, 0, 0);
-  rb.last = { P, S, X0, Y0, X, Y, th };   // テスト用
+  rb.last = { P, S, X0, Y0, X, Y, th, lowQ: riceLowQ };   // テスト用
   gbPause++;
   const sm = dst.imageSmoothingEnabled;
   try {
@@ -6195,8 +6195,8 @@ function frame(now) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
         ctx.globalAlpha = al; riceLowQ = true;
-        drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch);
-        ctx.globalAlpha = 1; riceLowQ = false;
+        try { drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch); }
+        finally { ctx.globalAlpha = 1; riceLowQ = false; }   // とちゅうで 止まっても、本体の お米まで あらく 描かない
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線

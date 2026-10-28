@@ -960,6 +960,26 @@ async function walkTo(page, id) {
     const told = mid.f.some(t => /ベスト こえた/.test(t));
     return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near && !again && closer, beat: mid.c.beat, told, end, near, again, closer };
   })();
+  // ころころコンボで ベストを こえた 数の まま おわった ときは、「ベスト こえたじゃん！ ×6」と「あたらしい ベスト ×6」を つづけて 出さない（自分で 遊んで 分かった：同じ ×9 が 0.1秒 ちがいで 2回）。
+  // こえた あとも のびて おわった ときは、おわりに のびた 数を 出す
+  R.checks.comboBestOnce = await (async () => {
+    const w0 = await page.evaluate(() => { const d = nishioGo.state.day || (nishioGo.state.day = {}), w = d.watch; d.watch = 2; return w === undefined ? null : w; });
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(300);
+    const old = await page.evaluate(() => nishioPixel.combo.best);
+    const run = async adds => {   // コンボを 足して おわるまで、出た 浮かぶ 文字を ぜんぶ 集める
+      await page.evaluate(a => { const P = nishioPixel; P.floatsClear(); P.comboBest(5); window.__fl = new Set(); for (const k of a) P.comboAdd(k); }, adds);
+      let end = null;
+      for (let i = 0; i < 30 && !(end && end.n === 0); i++) { await page.waitForTimeout(100); end = await page.evaluate(() => { nishioPixel.floats().forEach(t => window.__fl.add(t)); return nishioPixel.combo; }); }
+      await page.waitForTimeout(200);
+      return page.evaluate(() => { nishioPixel.floats().forEach(t => window.__fl.add(t)); return [...window.__fl].filter(t => /ベスト/.test(t) && !/おしい/.test(t)); });
+    };
+    const same = await run([6]);   // ×6 で こえて ×6 で おわる
+    for (let i = 0; i < 40 && (await page.evaluate(() => nishioPixel.floats().length)); i++) await page.waitForTimeout(150);
+    const grew = await run([6, 2]);   // ×6 で こえて ×8 まで のびて おわる
+    await page.evaluate(o => { nishioPixel.floatsClear(); nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
+    await page.evaluate(w => { const d = nishioGo.state.day || {}; if (w === null) delete d.watch; else d.watch = w; }, w0);
+    return { same, grew, ok: same.length === 1 && /こえた/.test(same[0]) && grew.length === 2 && grew.some(t => /あたらしい ベスト ×8/.test(t)) };
+  })();
   // スピード線：とても 速いと（1秒に 5マスより）お米の うしろに 線が 出て、おそく なると うすれて 消える
   R.checks.speedLines = await (async () => {
     await page.evaluate(() => { nishioPixel.setRoll(true); document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); }); await page.waitForTimeout(300);
@@ -3089,6 +3109,7 @@ async function walkTo(page, id) {
   need(c.yuruSoft && c.yuruSoft.ok, `やわらかい 生け垣：当たっても のびない・のびた ことが 見えない・へこみの ゆれが おさまらない・ぽよんと 鳴らない・はね返らない・へこみの 奥で 固まる・通りぬける（${JSON.stringify(c.yuruSoft)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
+  need(c.comboBestOnce && c.comboBestOnce.ok, `ころころコンボ：ベストを こえた 数の まま おわると 同じ 数の ベストを 2回 出す（${JSON.stringify(c.comboBestOnce)}）`);
   need(c.speedLines && c.speedLines.ok, `スピード線：速くても 出ない／おそく なっても 消えない（${JSON.stringify(c.speedLines)}）`);
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);

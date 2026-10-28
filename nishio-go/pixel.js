@@ -2182,7 +2182,7 @@ function groundAt(x, y) {
 // ころころコンボ（運営者の声「クセになる転がり方を研究」）：かべに 当たらずに 転がりつづけると、コトンの たびに 数が ふえ、音が ドレミソラ…と 1音ずつ 高く なる（転がるだけで メロディに。
 // 当てるたびに 音が 上がっていく ゲームの 気持ちよさ）。3から お米の 右よこに「×12」（下に 小さく じぶんの ベスト）、5ごとに きらきら、10ごとに「🎵 ころころ ×20！」。当たる・止まると おしまい。じぶんの ベストを こえた その場で「🏅」。
 // ポイントは つけない（同じ所を ぐるぐる しても もうからない。音と 数と ベストだけの 楽しみ）。ベストは この端末（nsg_combo_best）
-const combo = { n: 0, quietT: 0, shown: 0, beat: false, near: 0, best: (() => { try { return +localStorage.getItem('nsg_combo_best') || 0; } catch (e) { return 0; } })() };
+const combo = { n: 0, quietT: 0, shown: 0, beat: false, beatN: 0, near: 0, best: (() => { try { return +localStorage.getItem('nsg_combo_best') || 0; } catch (e) { return 0; } })() };
 const PENTA = [0, 2, 4, 7, 9];
 function comboNote(n, v) {   // ドレミソラ（五音の 音階）を 下から。2オクターブ 上まで いったら そこで くり返す
   const a = sfxCtx();
@@ -2199,7 +2199,7 @@ function comboStep() {
   combo.shown = performance.now();
   if (combo.n > mzRt.run.combo) mzRt.run.combo = combo.n;   // この ゴールまでの いちばん 長い コンボ
   if (!combo.beat && combo.best >= 5 && combo.n > combo.best) {   // 転がっている うちに ベストを こえた：その場で 知らせる（「あと 少しで ベスト」を 追いかける 楽しみ）
-    combo.beat = true; chordSound(); floatText(`🏅 ベスト こえたじゃん！ ×${combo.n}`);   // 知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
+    combo.beat = true; combo.beatN = combo.n; chordSound(); floatText(`🏅 ベスト こえたじゃん！ ×${combo.n}`);   // 知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
     const now = performance.now(), cols = ['#ff9fd0', '#ffe066', '#ffffff'];
     for (let i = 0; i < 24; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3.5, c: cols[i % 3], life: 0.7 + Math.random() * 0.5 }); }
   }
@@ -2213,7 +2213,11 @@ function comboEnd() {
   const n = combo.n, beat = combo.beat;
   combo.n = 0; combo.quietT = 0; combo.beat = false;
   if (n < 5) return;
-  if (n > combo.best) { combo.best = n; combo.near = 0; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ } floatText(beat ? `🏅 あたらしい ベスト ×${n}！ やったじゃん` : `🏅 ころころ ベスト ×${n}！ やったじゃん`); }
+  if (n > combo.best) {
+    combo.best = n; combo.near = 0; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ }
+    // 転がる うちに「ベスト こえたじゃん！ ×9」と 出した 数の まま おわった ときは、おわりの「あたらしい ベスト ×9」は 出さない（同じ 数を 2回 つづけて 出していた。自分で 遊んで 分かった）
+    if (!beat || n > combo.beatN) floatText(beat ? `🏅 あたらしい ベスト ×${n}！ やったじゃん` : `🏅 ころころ ベスト ×${n}！ やったじゃん`);
+  }
   else if (combo.best - n <= 3 && n > combo.near) { combo.near = n; floatText(`おしい！ ベストまで あと${combo.best - n + 1}だったじゃん`); }   // あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）。同じ ベストには、前より 近づいた ときだけ（自分で 遊んで 分かった：めいろで 迷う 間、2分で 7回「あと4」が 出た）
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }

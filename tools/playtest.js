@@ -1681,7 +1681,7 @@ async function walkTo(page, id) {
         const during = (G.state.visits[s2.id] || { n: 0 }).n === v2;   // 窓の 間は まだ チェックインしない
         pi.hidden = true;
         let got = false;
-        for (let i = 0; i < 12 && !got; i++) { await wait(250); if ((G.state.visits[s2.id] || { n: 0 }).n === v2 + 1) got = true; }
+        for (let i = 0; i < 12 && !got; i++) { await wait(250); clear(); if ((G.state.visits[s2.id] || { n: 0 }).n === v2 + 1) got = true; }   // clear：とちゅうで 出た ごほうびの 窓の 間は チェックインを 待つ 決まりなので、とじる（ときどき 落ちて いた）
         held = { aged, during, got };
         await wait(500); clear(); await wait(600); clear();
       }

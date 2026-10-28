@@ -251,6 +251,9 @@ const CHECKS = {
       const bb = S.bag; bb.face = 'front'; const L = KB.layout(); ev('pointerdown',1,L.x0+4,L.seamY); ev('pointerup',1,L.x0+4,L.seamY); for (let i=0;i<40;i++) KB.step(1/60);
       return { face: bb.face }; });
     ok(r.face==='back', 'れんしゅうで 表の 端を さわると 裏返す', r);
+    const zw = await p.evaluate(() => { const S = KB.S; for (let i=0;i<40;i++) KB.step(1/60); const bb = S.bag, L = KB.layout(), W = KB.size().W, r = Math.min(66, W*0.17);
+      ev('pointerdown',4,W/2,L.seamY+40+r); ev('pointerup',4,W/2,L.seamY+40+r); for (let i=0;i<40;i++) KB.step(1/60); return { face: bb.face }; });
+    ok(zw.face==='back', 'れんしゅうで 拡大窓を さわっても 袋が 裏返らない', zw);
     const m = await p.evaluate(() => { const S = KB.S; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あいた！', kind:'ok', t:0, life:2.5 }; for (let i=0;i<50;i++) KB.step(1/60); return { bagNo:S.bagNo, msg: S.msg && S.msg.text }; });
     ok(m.bagNo===1 && !m.msg, 'つぎの 袋に 前の 声を もちこさない', m);
     await p.click('#skipBtn');

@@ -66,6 +66,8 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 .tip{margin:0;font-size:14px;line-height:1.6;text-align:left;background:rgba(201,164,108,.14);border-radius:10px;padding:10px 12px}
 .tip b{color:var(--kraft)}
 button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;min-height:40px;padding:6px 12px;border-radius:20px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body)}
+body.menu button.sound{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}
+body.menu .overlay{padding-top:calc(64px + env(safe-area-inset-top,0px))}
 button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
 button.sound:focus-visible{outline:3px solid var(--ito);outline-offset:2px}
 button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2px solid var(--kraft);font-size:17px;padding:10px 16px}
@@ -90,6 +92,8 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
 .goal i{font-style:normal;width:20px;height:20px;border-radius:50%;border:2px solid var(--ink-dim);display:grid;place-items:center;font-size:12px;color:var(--ai-deep)}
 .goal.done i{background:var(--ok);border-color:var(--ok)}
 .goal.new{outline:2px solid var(--gold)}
+.goal .prog{display:inline-block;margin-left:8px;font-size:12px;color:var(--ink-dim)}
+.bonus{margin:0;font-size:13px;color:var(--gold)}
 @media (prefers-reduced-motion:reduce){button.go:active{transform:none}}
 </style>
 </head>
@@ -109,13 +113,13 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
     <div class="panel">
       <h1><small>米袋の口を あける</small>ミシン糸<br/>一本どり</h1>
       <ul class="rules">
-        <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>裏返す</strong>。裏には糸の輪がならぶ。</span></li>
+        <li><b>1</b><span><strong>白い糸がまっすぐ</strong>しか見えなければ、そこは表。袋をタップして<strong>反対の面</strong>を見る（本物は 袋を まわす）。裏には糸の輪がならぶ。</span></li>
         <li><b>2</b><span>裏の端で、<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方が ほどき始め。そこを<strong>二本指でつまんで</strong>輪からはずす。</span></li>
-        <li><b>3</b><span>つまんだまま、縫った向きと逆へ<strong>ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（表側の白糸を少し引くか、タップでほぐす）。</span></li>
+        <li><b>3</b><span>つまんだまま、<strong>縫い目に そって 横へ ゆっくり</strong>引く。指をはなして つまみなおしても よい。メーターの<strong style="color:var(--ok)">緑</strong>でスルスル。強すぎると<strong style="color:var(--ng)">もつれる</strong>（表側の白糸を少し引くか、タップでほぐす）。</span></li>
       </ul>
-      <button class="go" id="practiceBtn" type="button">糸の取り方を れんしゅう（1分）</button>
-      <div class="goals" id="goals"></div>
+      <button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px)">糸の取り方を れんしゅう（1分）</button>
       <button class="go sub" id="startBtn" type="button">ゲームで遊ぶ（タイムアタック）</button>
+      <div class="goals" id="goals"></div>
       <p class="note">パソコンでは マウスを おしたまま 引くと、つまんでいる ことに なります。</p>
       <p class="note">ほどき方は、紙袋メーカーと製粉会社の説明にもとづく（下糸は上糸の輪の中を通っている。裏から見て左端の、輪にささった下糸をはずし、ゆっくり引く。縫い始めの側からだと からまる）。袋によっては右から、また1本糸の袋は どちらからでも ほどける。<br/>
       もつれたら表側の白糸を引いてから赤を引く、はJAの案内として紹介されている方法。<br/>
@@ -176,13 +180,15 @@ const R = {
   pullWidths: 1.8,      // 1袋で 引く長さ ＝ 縫い目の幅の この倍（つまみなおし 2回ほど）
   smooth: 0.08,         // 指の速さをならす時間（秒）。長いと 短く速く引く「ちょい引き」が 赤に ならない
   zoneLo: 0.3,          // メーターの緑の下限
-  overRate: 4, overDecay: 1.2, overDecayLift: 0.4,
+  overRate: 5, overDecay: 1.2, overDecayLift: 0.25,
   tangleAfter: 0.3,     // 赤の「ため」がこれをこえると もつれる
-  knotSlow: 0.25,       // ひっかかる目では 安全な速さが この割合に
-  knotLen: 1.8,         // ひっかかる目は 何目ぶんの長さ
-  knotGrace: 0.45,      // ひっかかって 止まる間。この間は 赤でも もつれない
-  untangleTaps: 3,      // もつれを ほぐす タップの数（細いもので より戻す）
-  tugPx: 50,            // 表側の 白糸を これだけ 引くと もつれが ゆるむ（JA の 案内）
+  knotSlow: 0.4,        // ひっかかる目では 安全な速さが この割合に
+  knotLen: 1.0,         // ひっかかる目は 何目ぶんの長さ
+  knotGrace: 0.25,      // ひっかかって 止まる間。この間は 赤でも もつれない
+  untangleTaps: 5,      // もつれを ほぐす タップの数（細いもので より戻す）。白糸を 引く ほうが 早い
+  tangleTime: -1,       // もつれ 1回で へる 時間
+  feverDur: 5,          // ×5 に とどくと この秒数だけ フィーバー
+  tugPx: 30,            // 表側の 白糸を これだけ 引くと もつれが ゆるむ（JA の 案内）
   freePx: 26,           // 赤い 糸の 端を 白い 輪から はずす のに 引く 長さ（山口紙袋「ループから 外して」）
   flipDur: 0.35,
   openDur: 0.6,
@@ -228,8 +234,13 @@ function makePracticeBag(k){
 }
 function pullDir(b){ return b.from==='R' ? -1 : 1; }
 // れんしゅうは やさしく：ゆっくりなら いつでも 緑・きつい目で 止まる 間を 長く・輪から はずす しぐさを はっきり
-const zoneLo = () => S.practice ? 0 : R.zoneLo;
+// タイムアタックの むずかしさは、きつい目の 数では なく 緑の 幅：袋ごとに 下の 線が 0.3 → 0.55 へ 上がる
+const zoneLo = () => S.practice ? 0 : Math.min(0.55, R.zoneLo + 0.025*(S.bag ? S.bag.k : 0));
 const knotGrace = () => S.practice ? 1.2 : R.knotGrace;
+const untangleTaps = () => S.practice ? 3 : R.untangleTaps;
+// れんしゅうの きつい目は 前の まま（はっきり 止まって ゆっくり こえる 練習）
+const knotLen = () => S.practice ? 1.8 : R.knotLen;
+const knotSlow = () => S.practice ? 0.25 : R.knotSlow;
 const freePx = () => S.practice ? 50 : R.freePx;
 function pps(b){ const L=layout(); return Math.max(14, (L.x1-L.x0)*R.pullWidths/b.N); } // 1目ほどくのに引く長さ
 
@@ -238,7 +249,7 @@ function startGame(practice){
   practice = practice === true;
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
   Object.assign(S,{mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
-    bagNo:0,liftT:0,dirEff:1,quick:0,feverBags:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
+    bagNo:0,liftT:0,dirEff:1,quick:0,feverBags:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
   S.practice = practice;
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true;
@@ -280,7 +291,13 @@ function endGame(){
   for(const g of todayGoals()) if(!done.has(g.id) && g.ok()){ done.add(g.id); fresh.add(g.id); }
   saveGoals(done); renderGoals(ui.rGoals, fresh); renderGoals(ui.goals);
   let best=0; try{ best = +localStorage.getItem('mishin-best2')||0; if(S.score>best) localStorage.setItem('mishin-best2', S.score); }catch(e){}
-  ui.best.textContent = S.score>best && best>0 ? 'じこベスト更新！（前は '+best.toLocaleString()+'）' : best>0 ? 'じこベスト '+best.toLocaleString() : '';
+  let bestBags=0; try{ bestBags = +localStorage.getItem('mishin-bestbags')||0; if(S.bags>bestBags) localStorage.setItem('mishin-bestbags', S.bags); }catch(e){}
+  const nr = nextRank(S.score);
+  ui.best.innerHTML = [
+    S.score>best && best>0 ? 'じこベスト更新！（前は '+best.toLocaleString()+'）' : best>0 ? 'じこベスト '+best.toLocaleString() : '',
+    nr ? `つぎの ランク「${nr[1]}」まで あと ${(nr[0]-S.score).toLocaleString()}点` : '',
+    S.bags>bestBags && bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : bestBags>0 ? `あけた袋の じこベスト ${Math.max(bestBags,S.bags)}袋` : '',
+  ].filter(Boolean).join('<br/>');
 }
 function tipOf(zone){
   if(S.fronts>=2) return '白い糸が<b>まっすぐ</b>だけなら表。袋をタップして裏返そう。';
@@ -288,19 +305,19 @@ function tipOf(zone){
   if(S.tangles>=2) return 'もつれが多め。<b>ゆっくり</b>引くのが本物のコツ。ひっかかって止まったら、指をゆるめよう。';
   if(zone<45) return 'もう少し速く引いても大丈夫。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびる。';
   if(S.bestStreak<5) return 'いい手つき。<b>一本どり</b>を続けると、連続ボーナスがつく。';
-  return '名人の手つき。新米の袋（金色）は点が2倍。';
+  return '名人の手つき。新米シールの袋は 糸が かたいけど 点が2倍。';
 }
 // きょうの 目標：日付で 3つ えらぶ（同じ日は 同じ 目標）。できた ものは この 端末に のこる
 const GOALS = [
-  { id:'streak5', text:'一本どり 5連続', ok:()=>S.bestStreak>=5 },
-  { id:'golden',  text:'新米の袋（金色）を 一本どり', ok:()=>S.goldenClean>=1 },
+  { id:'streak5', text:'一本どり 5連続', ok:()=>S.bestStreak>=5, prog:()=>`${Math.min(S.bestStreak,5)}/5` },
+  { id:'golden',  text:'新米シールの袋を 一本どり', ok:()=>S.goldenClean>=1 },
   { id:'right',   text:'右から ほどく袋を 一本どり', ok:()=>S.rightClean>=1 },
-  { id:'notangle',text:'もつれ 0 で 8袋 あける', ok:()=>S.bags>=8 && S.tangles===0 },
-  { id:'quick5',  text:'早わざ 5回', ok:()=>S.quick>=5 },
-  { id:'fever3',  text:'スルスル ×5 のまま 3袋 あける', ok:()=>S.feverBags>=3 },
-  { id:'bags12',  text:'12袋 あける', ok:()=>S.bags>=12 },
-  { id:'bags8',   text:'8袋 あける', ok:()=>S.bags>=8 },
-  { id:'nomiss',  text:'表と端を 1回も まちがえずに 6袋', ok:()=>S.bags>=6 && S.wrongs+S.fronts===0 },
+  { id:'notangle',text:'もつれ 0 で 8袋 あける', ok:()=>S.bags>=8 && S.tangles===0, prog:()=> S.tangles ? 'もつれ '+S.tangles : `${Math.min(S.bags,8)}/8` },
+  { id:'quick5',  text:'早わざ 5回', ok:()=>S.quick>=5, prog:()=>`${Math.min(S.quick,5)}/5` },
+  { id:'fever2',  text:'フィーバー 2回', ok:()=>S.fevers>=2, prog:()=>`${Math.min(S.fevers,2)}/2` },
+  { id:'bags12',  text:'12袋 あける', ok:()=>S.bags>=12, prog:()=>`${Math.min(S.bags,12)}/12` },
+  { id:'bags8',   text:'8袋 あける', ok:()=>S.bags>=8, prog:()=>`${Math.min(S.bags,8)}/8` },
+  { id:'nomiss',  text:'表と端を 1回も まちがえずに 6袋', ok:()=>S.bags>=6 && S.wrongs+S.fronts===0, prog:()=> S.wrongs+S.fronts ? 'まちがい '+(S.wrongs+S.fronts) : `${Math.min(S.bags,6)}/6` },
 ];
 function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
 function todayGoals(){
@@ -312,10 +329,16 @@ function todayGoals(){
 function goalsDone(){ try{ const o = JSON.parse(localStorage.getItem('mishin-goals')||'{}'); return o.day===todayKey() ? new Set(o.done) : new Set(); }catch(e){ return new Set(); } }
 function saveGoals(done){ try{ localStorage.setItem('mishin-goals', JSON.stringify({day:todayKey(), done:[...done]})); }catch(e){} }
 function renderGoals(el, fresh){
-  const done = goalsDone();
-  el.innerHTML = '<h2>きょうの目標</h2>' + todayGoals().map(g=>`<div class="goal${done.has(g.id)?' done':''}${fresh&&fresh.has(g.id)?' new':''}"><i>${done.has(g.id)?'✓':''}</i><span>${g.text}${fresh&&fresh.has(g.id)?'　<b style="color:var(--gold)">達成！</b>':''}</span></div>`).join('');
+  const done = goalsDone(), gs = todayGoals();
+  // 結果の 画面では、まだの 目標に 今回の 途中の 数を そえる
+  el.innerHTML = '<h2>きょうの目標</h2>' + gs.map(g=>{
+    const isNew = fresh && fresh.has(g.id), prog = fresh && !done.has(g.id) && g.prog ? `<small class="prog">今回 ${g.prog()}</small>` : '';
+    return `<div class="goal${done.has(g.id)?' done':''}${isNew?' new':''}"><i>${done.has(g.id)?'✓':''}</i><span>${g.text}${isNew?'　<b style="color:var(--gold)">達成！</b>':''}${prog}</span></div>`; }).join('')
+    + (gs.every(g=>done.has(g.id)) ? '<p class="bonus">きょうの目標は ぜんぶ できた！ おまけ：じこベストを こえよう</p>' : '');
 }
-function rankOf(sc){ return sc>=30000?'米屋の五代目':sc>=15000?'精米所のベテラン':sc>=6000?'頼れるパートさん':sc>=2500?'見習い':'はじめての袋'; }
+const RANKS = [[22000,'米屋の五代目'],[12000,'精米所のベテラン'],[6000,'頼れるパートさん'],[2500,'見習い'],[0,'はじめての袋']];
+function rankOf(sc){ return RANKS.find(r=>sc>=r[0])[1]; }
+function nextRank(sc){ const i = RANKS.findIndex(r=>sc>=r[0]); return i>0 ? RANKS[i-1] : null; }
 
 // ---------- 入力 ----------
 // 袋の口の 左右の 端の まわりを タップ → その端から ほどく。ほかの 袋の上 → 裏返す
@@ -349,7 +372,7 @@ function whiteTail(b){ const L=layout(), step=(L.x1-L.x0)/b.N; const sd = pullDi
 function untangleTap(){
   const b=S.bag;
   b.tangle.taps++; audio.click(); S.fx.push({kind:'catch', x:b.tangle.x, y:b.tangle.y, t:0, life:0.3});
-  if(b.tangle.taps>=R.untangleTaps){ b.tangle=null; say('ほぐれた','ok'); }
+  if(b.tangle.taps>=untangleTaps()){ b.tangle=null; say('ほぐれた','ok'); }
 }
 // 二本指で つまむ（x,y は 2本の 指の まん中）
 function down(x,y){
@@ -373,8 +396,8 @@ function down(x,y){
       // まず 赤い 糸の 端を 白い 輪から はずす（1本糸の 袋は 輪に ささって いないので すぐ 引ける）
       b.phase = b.single ? 'pull' : 'free'; b.freePx = 0;
       const p = stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4});
-      if(!b.wrong && b.readT < 0.9){ S.score += 50; S.quick++; S.fx.push({kind:'text', text:'早わざ +50', x:p.x, y:layout().seamY-30, t:0, life:0.8}); }
-      S.held = true; S.liftT = 0;
+      b.engageT = S.t; S.held = true; S.liftT = 0;
+      if(b.single) quickBonus(b);
     }
     return;
   }
@@ -440,10 +463,11 @@ function step(dt){
     }
     return;
   }
-  if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
+  if(S.feverT>0){ S.feverT -= dt; S.combo = 1; if(S.feverT<=0){ S.feverT = 0; S.combo = 0.5; say('フィーバー おわり','ok'); } }
+  if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; if(b.readT>0.9 && !S.feverT) S.combo = Math.max(0, S.combo - dt*0.4); S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
   if(b.phase==='free'){
     S.pend=0; S.tension *= Math.pow(0.02, dt);
-    if(b.freePx >= freePx()){ b.phase='pull'; audio.click(); say('輪から はずれた','ok'); const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); }
+    if(b.freePx >= freePx()){ b.phase='pull'; audio.click(); if(S.practice) say('輪から はずれた','ok'); const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); quickBonus(b); }
     return;
   }
 
@@ -463,7 +487,7 @@ function step(dt){
     if(b.knotHit!==b.pulled){ b.knotHit=b.pulled; b.knotT=0; audio.click(); vib(40); const p=stitchPos(b,b.pulled); S.fx.push({kind:'catch',x:p.x,y:p.y,t:0,life:0.4}); }
     b.knotT += dt; grace = b.knotT < knotGrace();
   }
-  const safe = b.safe * (onKnot ? R.knotSlow : 1);
+  const safe = b.safe * (onKnot ? knotSlow() : 1);
   S.tension = S.speed / safe;
   if(S.held) S.pullTime += dt;
 
@@ -477,7 +501,7 @@ function step(dt){
   // ひっかかって 止まっている間は、糸は すすまない
   let adv = grace ? 0 : moved;
   while(adv>0 && !b.done){
-    const need = pps(b) * (b.knots.has(b.pulled) ? R.knotLen : 1);
+    const need = pps(b) * (b.knots.has(b.pulled) ? knotLen() : 1);
     const take = Math.min(adv, need - b.sub);
     b.sub += take; adv -= take;
     if(b.sub >= need-1e-6){
@@ -485,6 +509,9 @@ function step(dt){
       b.sub = 0; b.pulled++;
       if(S.tension>=zoneLo() && S.tension<=1) b.zoneSt++;
       const mult = multOf(); S.maxMult = Math.max(S.maxMult, mult);
+      // ×5 に とどいたら フィーバー：数秒 ×5 の まま、1目 ほどく ごとに 時間が 0.05 秒 のびる
+      if(mult>=5 && !S.feverT && !S.practice){ S.feverT = R.feverDur; S.fevers = (S.fevers||0) + 1; say('フィーバー！','ok'); audio.clean(3); }
+      if(S.feverT>0) S.time += 0.02;
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
       S.fx.push({kind:'pop', x:p.x, y:p.y, t:0, life:0.35, knot:wasKnot});
@@ -498,6 +525,11 @@ function step(dt){
     }
   }
 }
+// 早わざ：袋を すばやく 読み（0.9 秒 以内に つまむ）、つまんで すぐ（0.6 秒 以内に）輪から はずせたら
+function quickBonus(b){
+  if(b.wrong || b.readT >= 0.9 || S.t - (b.engageT||0) > 0.6) return;
+  S.score += 50; S.quick++; const p = stitchPos(b,0); S.fx.push({kind:'text', text:'早わざ +50', x:p.x, y:layout().seamY-30, t:0, life:0.8});
+}
 function multOf(){ return 1 + Math.floor(S.combo*4 + 1e-9); }
 
 function tangle(){
@@ -507,6 +539,7 @@ function tangle(){
   const p = stitchPos(b, b.pulled);
   if(b.tangles>=R.tangleLimit && !S.practice){ b.failed=true; b.done=true; b.open=0; addTime(R.timeCut); say('ハサミで切った…','ng'); return; }
   b.tangle = { taps:0, x:p.x, y:p.y, tug:0, tugging:false };
+  addTime(R.tangleTime);
   say(S.practice ? '引っかかった！' : 'もつれた！ 白糸を引いて ほぐす','ng');
 }
 
@@ -826,6 +859,12 @@ function drawFrontPrint(L, b, x, top, w){
   }
 }
 function drawBackPrint(L, b, x, top, w){
+  // 新米は 裏にも 赤い まるい シール（裏で 出ても わかる ように）
+  if(b.golden){ const r = Math.min(26, w*0.075), gx = x + w*0.8, gy = L.seamY + 60;
+    ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(gx+1.5, gy+2, r, 0, 7); ctx.fill();
+    ctx.fillStyle='#d23a2a'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, 7); ctx.fill();
+    ctx.strokeStyle='#f0c44c'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(gx, gy, r-3, 0, 7); ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font=`${Math.round(r*0.62)}px "Dela Gothic One",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('新米', gx, gy+1); }
   const genmai = b.kind==='genmai';
   const d = new Date();
   // 令和の 年（2019年＝令和元年）。新米の 秋は その年が 産年
@@ -925,7 +964,7 @@ function drawSeamBack(L, b){
   const TAU = Math.PI*2, V = seamVis(L, b), nv = V.nv, p = V.p, tw = V.tw;
   const vx = j => from==='R' ? L.x1 - (j+0.5)*p : L.x0 + (j+0.5)*p;
   const onPull = b.phase==='pull' && !b.done;
-  const needNow = pps(b)*(b.knots.has(b.pulled)?R.knotLen:1);
+  const needNow = pps(b)*(b.knots.has(b.pulled)?knotLen():1);
   const frac = Math.min(1, (b.pulled + (onPull ? b.sub/needNow : 0)) / n);
   const vp = Math.floor(frac*nv);
   const knotOf = j => b.knots.has(Math.floor(j*n/nv));
@@ -945,6 +984,15 @@ function drawSeamBack(L, b){
     for(let j=vp;j<nv;j++){ if((j%2===1)!==odd) continue; const k = knotOf(j); const cx = vx(j) - sd*p*0.5 + (k?jit:0), r2 = k ? ry*0.6 : ry;
       ctx.moveTo(cx+p*0.62, sy); ctx.ellipse(cx, sy, p*0.62, r2, 0, 0, TAU); } }, tw, C.white, '#ffffff', true);
   loops(false);
+  // きつい目：糸が 玉に なって 紙を しめつけて いる（前もって 見える ように）
+  { const seen = new Set();
+    for(let j=vp;j<nv;j++){ const gi = Math.floor(j*n/nv); if(!b.knots.has(gi) || seen.has(gi)) continue; seen.add(gi);
+      const j0 = Math.ceil(gi*nv/n), j1 = Math.ceil((gi+1)*nv/n)-1, xm = (vx(Math.max(j0,vp)) + vx(j1))/2 + jit, r = Math.max(2.5, 2*V.mm);
+      ctx.strokeStyle='rgba(60,38,10,.35)'; ctx.lineWidth=1; ctx.beginPath();
+      for(const d of [-1,1]){ ctx.moveTo(xm + d*r*1.2, sy - r*1.6); ctx.quadraticCurveTo(xm + d*r*0.5, sy, xm + d*r*1.2, sy + r*1.6); } ctx.stroke();
+      ctx.fillStyle = 'rgba(35,18,0,.45)'; ctx.beginPath(); ctx.arc(xm+0.7, sy+1.1, r, 0, 7); ctx.fill();
+      ctx.fillStyle = redEdge; ctx.beginPath(); ctx.arc(xm, sy, r, 0, 7); ctx.fill();
+      ctx.fillStyle = 'rgba(255,170,160,.6)'; ctx.beginPath(); ctx.arc(xm - r*0.3, sy - r*0.35, r*0.35, 0, 7); ctx.fill(); } }
   for(const wantKnot of [false, true]){
     let any=false; for(let j=vp;j<nv;j++) if(knotOf(j)===wantKnot){ any=true; break; }
     if(!any) continue;
@@ -1024,7 +1072,7 @@ function drawSeamBack(L, b){
       // もつれ：赤い 糸の かたまり
       ctx.strokeStyle=C.red; ctx.lineWidth=2;
       for(let k=0;k<5;k++){ const a=S.t*3+k*1.3; ctx.beginPath(); ctx.ellipse(b.tangle.x + Math.cos(a)*2, sy+1+Math.sin(a)*2, 9-k, 6-k*0.6, a, 0, 7); ctx.stroke(); }
-      const left = R.untangleTaps - b.tangle.taps;
+      const left = untangleTaps() - b.tangle.taps;
       // 表側の 白糸の 端（縫い目の 下から のぞく）。つまんで 引くと のびる
       const wt = whiteTail(b), pull = Math.min(1, b.tangle.tug / R.tugPx), pulse = 0.5+0.5*Math.sin(S.t*7);
       ctx.strokeStyle=C.shade; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(wt.x - sd*10, sy+3); ctx.quadraticCurveTo(wt.x - sd*4, sy+18, wt.x + sd*pull*10, wt.y + pull*24); ctx.stroke();
@@ -1112,7 +1160,7 @@ function drawMeter(L){
   if(b && b.phase==='look' && !b.done){
     if(S.practice) return; // れんしゅうは 上の 帯で 案内する
     ctx.fillStyle='#f3efe4'; ctx.textAlign='center'; ctx.font='700 15px "Zen Maru Gothic",sans-serif';
-    ctx.fillText(b.face==='front' ? '糸の口は どっち側？' : 'どっちの端から ほどく？', W/2, my-14);
+    ctx.fillText(b.golden ? '新米：糸が かたい。ゆっくり' : b.face==='front' ? '糸の口は どっち側？' : 'どっちの端から ほどく？', W/2, my-14);
     ctx.fillStyle='#a9b0c7'; ctx.font='700 12px "Zen Maru Gothic",sans-serif';
     ctx.fillText('端を二本指でつまむ＝ほどく　袋をタップ＝裏返す', W/2, my+6, W-24);
     return;
@@ -1218,6 +1266,7 @@ function stepText(){
   return 'つまんだまま、<b>縫い目に そって 横へ ゆっくり</b> 引く。はなして つまみなおしても よい';
 }
 function syncUI(dt){
+  document.body.classList.toggle('menu', S.mode!=='play');
   if(S.practice && S.mode==='play'){
     if(!ui.steps._built){
       ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">手順だけ見る</button></div><div class="now" id="stepNow"></div>`;
@@ -1235,7 +1284,7 @@ function syncUI(dt){
   ui.time.classList.toggle('low', S.time<8);
   ui.bags.textContent = S.bags;
   const mult = multOf();
-  ui.combo.textContent = mult>1 ? 'スルスル ×'+mult : '';
+  ui.combo.textContent = S.feverT>0 ? 'フィーバー ×5 あと'+Math.ceil(S.feverT)+'秒' : mult>1 ? 'スルスル ×'+mult : '';
   ui.combo.style.color = mult>=5 ? 'var(--gold)' : 'var(--ok)';
   ui.tdT += dt; ui.td.style.opacity = Math.max(0, 1 - ui.tdT/0.9); ui.td.style.transform = `translate(-50%, ${-ui.tdT*20}px)`;
 }

@@ -3024,6 +3024,12 @@ async function walkTo(page, id) {
 
   await browser.close(); server.close();
   // 競わない 設計：さんぽ仲間は あおらない・勝ち負けで くらべない（運営者の声「競わない設計」2026-10-28）。コメントを のぞいた 文で 見る
+  // 歩いた道の 節目の 知らせ：待ちの 列に のこる 前の 節目を 取りのぞく 判定（startsWith）が、いまの 文面の 頭と 合う（文面を 短く した とき 取りのぞけなく なった。Codex の 指摘）
+  R.checks.mileCollapse = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'game.js'), 'utf8');
+    const pre = (/q\[i\]\.startsWith\('(👣[^']*)'\)\) q\.splice/.exec(src) || [])[1], msg = (/toastAfter\(`(👣 [^`$]*)\$\{fmtM\(m\)\}/.exec(src) || [])[1];
+    return { pre, msg, ok: !!pre && !!msg && msg.startsWith(pre) };
+  })();
   R.checks.noRivalry = (() => {
     const strip = f => fs.readFileSync(path.join(__dirname, '..', 'nishio-go', f), 'utf8').replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');
     const src = ['game.js', 'pixel.js'].map(strip).join('\n'), bad = ['おそかったじゃん', 'もう見たじゃん', 'まけた！', '勝つと', 'vs${', 'ランキング', '位に'].filter(w => src.includes(w));
@@ -3173,6 +3179,7 @@ async function walkTo(page, id) {
   need(c.riceBreath && c.riceBreath.ok, `止まって いる お米が すう すう 息を しない（${JSON.stringify(c.riceBreath)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
+  need(c.mileCollapse && c.mileCollapse.ok, `歩いた道の 節目：前の 節目の 知らせを 待ちの 列から 取りのぞけない（文面の 頭が ちがう）（${JSON.stringify(c.mileCollapse)}）`);
   need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);
   need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');

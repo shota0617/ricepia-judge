@@ -16,6 +16,12 @@ const HELPERS = () => {
 };
 
 const CHECKS = {
+  // 書き方の 確かめ：script の 構文（1行の 関数に // の コメントを 足して 後ろを 消す まちがいを すぐ 見つける）
+  async syntax(){
+    const src = fs.readFileSync(FILE.replace('file://',''), 'utf-8'), scripts = [...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
+    const bad = []; scripts.forEach((sc, i) => { try { new Function(sc); } catch (e) { bad.push(i + ': ' + e.message); } });
+    ok(bad.length===0, 'script の 構文', bad);
+  },
   // れんしゅう（#coin）：3袋を KB の 手で 通して、まとめが 出る
   async practice(b){
     const p = await page(b, 390, 844, '#coin');
@@ -232,7 +238,7 @@ const CHECKS = {
     const z = await p.evaluate(() => { KB.calm = true; KB.start(); const slide = KB.S.bag.slide; KB.calm = false; KB.S.time = 0.01; KB.step(1/60); return { slide }; });
     await p.waitForTimeout(150);
     const sr = await p.evaluate(() => document.getElementById('sr').textContent);
-    ok(z.slide===0, '動きを へらす 設定では 袋が すべって こない', z);
+    ok(z.slide===1, '動きを へらす 設定でも 袋を 待つ 時間は 同じ（点が かわらない。絵だけ すべらせない）', z);
     ok(/てんすう/.test(sr), 'おわりの 点が 読み上げの 欄に 入る', sr);
     const q = await page(b, 390, 844, '#coin');
     const bar = await q.evaluate(() => { KB.manual = true; for (let i=0;i<5;i++) KB.step(1/60); return [...document.querySelectorAll('.steps .bar i')].map(i=>getComputedStyle(i, '::after').content); });

@@ -767,6 +767,15 @@ async function walkTo(page, id) {
     let diff = 0; for (let i = 3; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) > 8) diff++;
     return { P: L.P, S: L.S, soft: L.soft, solid: L.solid, tones: L.tones, diff, ok: L.P === 3 && L.S >= 48 * 3 && L.soft >= 60 && L.tones >= 24 && diff >= 20 };
   });
+  // すう すう 息：止まって いる お米は ゆっくり 息を する（足もとは 地面の まま。点より 細かく 描くので 0.5 ピクセルでも 見える）
+  R.checks.riceBreath = await (async () => {
+    const ok0 = await page.evaluate(() => !!(nishioPixel.breathAt && nishioPixel.riceLast));
+    if (!ok0) return { ok: false, why: 'no-api' };
+    const ys = [];
+    for (let i = 0; i < 14; i++) { const r = await page.evaluate(() => { const R = nishioPixel.roll, L = nishioPixel.riceLast(); return R.kind === 'stop' && R.v < 0.2 && R.h <= 0 && L ? L.Y : null; }); if (r !== null) ys.push(r); await page.waitForTimeout(100); }
+    const rg = ys.length ? Math.max(...ys) - Math.min(...ys) : 0, b = await page.evaluate(() => [nishioPixel.breathAt(0), nishioPixel.breathAt(650)]);
+    return { n: ys.length, rg: +rg.toFixed(2), b, ok: ys.length >= 8 && rg > 0.15 && rg < 4 && Math.abs(b[0]) < 1e-9 && b[1] > 0.01 && b[1] < 0.04 };
+  })();
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {
     // べつの ページで 確かめる（お米を 平らな 所へ 動かしたり、転がる 間に 宝箱・ゴール・人の 話が 起きたりしても、あとの 確認に のこらない。Codex の 指摘）
@@ -3160,6 +3169,7 @@ async function walkTo(page, id) {
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
   need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
   need(c.shortText && c.shortText.ok, `文字は 少なく：遊びの 知らせ・浮かぶ 文字が 40文字を こえる（${JSON.stringify(c.shortText)}）`);
+  need(c.riceBreath && c.riceBreath.ok, `止まって いる お米が すう すう 息を しない（${JSON.stringify(c.riceBreath)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
   need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);

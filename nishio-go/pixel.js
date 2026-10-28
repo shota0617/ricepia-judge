@@ -1996,8 +1996,8 @@ const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv
   };
   img.src = 'nishio-go/art/rice.png';
 })();
-// 丸く見せる：お米を 点の大きさ（1点＝絵の1点）のまま回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
-// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は5段（さかいは 点をまぜて なめらかに）、ふちどりは回したあとに描きなおす
+// 丸く見せる：お米を 画面の 細かさで 回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
+// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は 段なしの 連続、ふちどりは回したあとに描きなおす（くわしくは drawRiceBall・docs/korokoro.md「なめらかに ころころ」）
 const riceBall = { fill: null, face: null, cv: null, x: null, gx: 0, gy: 0, a: 1, b: 1, nx: 0, ny: 0, nr: 0 };
 const RB = 48;   // 回した絵を描く場所の大きさ（点）
 const RICE_TONE = [[172, 180, 204], [204, 210, 228], [230, 232, 238], [246, 245, 238], [253, 253, 250], [255, 255, 255]];   // 深い影・影・なか・つぶの色・明るい・てかり
@@ -2019,6 +2019,24 @@ function riceBallInit(src) {
   }
   fx.putImageData(fd, 0, 0); gx.putImageData(gd, 0, 0);
   const cv = document.createElement('canvas'); cv.width = cv.height = RB;
+  {   // ぼかした 形：絵の 点の 段（がたがた）ではなく、絵に 合わせた だ円から 胚芽の くぼみ（円）を けずった 形を 4倍の 細かさで 描き、
+    // 絵の1点ぶん ぼかす。こさ 0.5 の 線が つぶの ふち・0.16 が ふちどりの 外がわ（絵との ちがいは 点の 段だけ。2026-10-28 に 当てはめて 確かめた）
+    const pd = 3, F = 4, M = (N + 2 * pd) * F, gx = (L + R + 1) / 2, gy = (T + B + 1) / 2, A = (R - L + 1) / 2, Bv = (B - T + 1) / 2 - 0.1;
+    const nx = R + 1.5, ny = T + (B - T) * 0.2 + 0.5, nr = (R - L) * 0.26 * 0.96;
+    const sg0 = F, rad = Math.ceil(sg0 * 3), K = [];
+    for (let q = -rad; q <= rad; q++) K.push(Math.exp(-q * q / (2 * sg0 * sg0)));
+    const ks = K.reduce((x, y) => x + y, 0), a0 = new Float32Array(M * M), a1 = new Float32Array(M * M);
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) {
+      const X = (x + 0.5) / F - pd, Y = (y + 0.5) / F - pd;
+      a0[y * M + x] = ((X - gx) / A) ** 2 + ((Y - gy) / Bv) ** 2 < 1 && (X - nx) ** 2 + (Y - ny) ** 2 > nr * nr ? 1 : 0;
+    }
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) { let t = 0; for (let q = -rad; q <= rad; q++) { const xx = x + q; if (xx >= 0 && xx < M) t += K[q + rad] * a0[y * M + xx]; } a1[y * M + x] = t / ks; }
+    const soft = document.createElement('canvas'); soft.width = soft.height = M;
+    const sg = soft.getContext('2d'), si = sg.createImageData(M, M);
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) { let t = 0; for (let q = -rad; q <= rad; q++) { const yy = y + q; if (yy >= 0 && yy < M) t += K[q + rad] * a1[yy * M + x]; } si.data.set([255, 255, 255, Math.round(t / ks * 255)], (y * M + x) * 4); }
+    sg.putImageData(si, 0, 0);
+    riceBall.soft = soft; riceBall.pad = pd;
+  }
   riceBall.faces = riceFaces(face, sd, N);
   {   // よごれの しみの場所（つぶの中・顔と ふちを よけて、きまった ばらばらの10か所）
     const pts = [], fd2 = face.getContext('2d').getImageData(0, 0, N, N).data;
@@ -2091,7 +2109,7 @@ function riceMood(now) {
   if (roll.dizzyT > 0) return 'dizzy';
   if (roll.v > 3.4) return 'excited';
   if (roll.happyT > 0) return 'happy';
-  if (roll.kind === 'stop' && roll.idle > 6 && roll.idle < 12 && roll.idle % 5 < 0.9) return 'yawn';   // 止まって しばらくすると ふわぁと あくび（赤ちゃんの ような かわいさ。運営者の声 2026-10-28）
+  if (roll.kind === 'stop' && roll.idle > 6 && roll.idle < 12 && (roll.idle - 6) % 5 < 0.9) return 'yawn';   // 止まって しばらくすると ふわぁと あくび（赤ちゃんの ような かわいさ。運営者の声 2026-10-28）
   if (roll.kind === 'stop' && roll.idle > 12) return 'sleepy';
   if (roll.kind === 'stop' && now % 3700 < 140) return 'blink';
   return 'smile';
@@ -2099,61 +2117,84 @@ function riceMood(now) {
 const riceTall = pitch => Math.sqrt(Math.cos(pitch) ** 2 + (0.88 * (riceBall.a || 10) / (riceBall.b || 13.5) * Math.sin(pitch)) ** 2);   // たての ころころで 見える 高さ（立っているときを 1。寝ると つぶの 厚みだけ）
 // お米を描く：(X, Y) まん中（画面の点）・u：絵の1点の大きさ・th：回り・sx, sy：つぶれ・spin：くるくるの回り・dst：描く先（はじめの画面のアニメーションにも使う）・gb：ゲームボーイの4色で
 function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldMode, mood = 'smile', look = 0, dirt = 0, dirtCol = '', pitch = 0) {
+  // なめらかに ころころ（運営者の声 2026-10-28「この キャラクターくらい 滑らかに」）：画面の 細かさで 描き、影は 段でなく 連続に、ふちは なめらかに、
+  // 位置は 整数に 丸めない（点より 細かい ずれも 絵の 中で 描く）。ゲームボーイの4色の ときだけは これまでどおり 絵の 点の 細かさで
   const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
   const my = cp < 0 ? -1 : 1, ky = sy * riceTall(pitch) * my;   // たての ころころ：前に 寝ると 短く（はしから 見える）。うしろを 向くと 上下 さかさ
-  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, RB, RB); o.imageSmoothingEnabled = true;   // なめらかに回してから、半分より濃い所を つぶにする（ふちが がたがたしない）
-  o.setTransform(kx * Math.cos(th), ky * Math.sin(th), -kx * Math.sin(th), ky * Math.cos(th), H, H);
-  o.drawImage(rb.fill, -rb.gx, -rb.gy);
+  const P = gb ? 1 : Math.min(u, RICE_PMAX), k0 = P / u;   // P：絵の1点を 何ピクセルで 描くか（大きすぎる ときは 少し あらく 描いて のばす）
+  const X0 = gb ? Math.round(X - H * u) : Math.floor(X - H * u - 1), Y0 = gb ? Math.round(Y - H * u) : Math.floor(Y - H * u - 1);
+  const ox0 = (X - X0) * k0, oy0 = (Y - Y0) * k0, S = Math.ceil(RB * P) + 3;   // つぶの まん中（絵の 中の ピクセル）。はしの ずれは 絵の 中で
+  if (rb.cv.width !== S) { rb.cv.width = rb.cv.height = S; rb.img = null; }
+  if (!rb.img) rb.img = o.createImageData(S, S);
+  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, S, S); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high';
+  o.setTransform(P * kx * Math.cos(th), P * ky * Math.sin(th), -P * kx * Math.sin(th), P * ky * Math.cos(th), ox0, oy0);
+  const pd = rb.pad, fn = rb.fill.width;
+  o.drawImage(rb.soft, -rb.gx - pd, -rb.gy - pd, fn + 2 * pd, fn + 2 * pd);   // ぼかした 形（こさ 0.5 が つぶの ふち・0.16 が ふちどりの 外がわ）
   o.setTransform(1, 0, 0, 1, 0, 0);
-  const img = o.getImageData(0, 0, RB, RB), d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
+  const fd = o.getImageData(0, 0, S, S).data, img = rb.img, d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
   const [lx0, ly0, lz0] = RICE_LIGHT, [hx, hy, hz] = RICE_HALF;
-  const solid = new Uint8Array(RB * RB), nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
-  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {
-    const k = j * RB + i;
-    if (d[k * 4 + 3] < 128) { d[k * 4 + 3] = 0; continue; }
-    solid[k] = 1;
-    const ux = (i + 0.5 - H) / kx, uy = (j + 0.5 - H) / ky, px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
-    const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
-    let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
-    const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy);
-    if (qd < rb.nr + 1.6) { nx = -qx / (qd || 1) * 0.8; ny = -qy / (qd || 1) * 0.8; nz = 0.6; }   // くぼみの内がわは 中へ向く（光の当たらない がわが 影になる）
-    let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
-    const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
-    const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
-    const v = 0.28 + 0.76 * dif + ((i + j) & 1 ? 0.035 : -0.035) * ((i ^ j) & 2 ? 1 : 0.4);   // 点をまぜて さかいを なめらかに
-    const t = spec > 0.55 ? 5 : v < 0.42 ? 0 : v < 0.58 ? 1 : v < 0.74 ? 2 : v < 0.9 ? 3 : 4;
-    let col = RICE_TONE[t];
-    if (nDirt) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
-      const qx = Math.floor(rb.gx + px), qy = Math.floor(rb.gy + py);
-      for (let m = 0; m < nDirt; m++) if (rb.spots[m][0] === qx && rb.spots[m][1] === qy) { const f = 0.55 + 0.3 * dif; col = [dc[0] * f, dc[1] * f, dc[2] * f]; break; }
+  const kk = Math.min(Math.abs(kx), Math.abs(ky)) || 1, w1 = 0.4 / (P * kk), w2 = 0.24 / (P * kk);   // 1ピクセルで こさが どれだけ かわるか（ふちを 1ピクセルで ぼかす）
+  const nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+    const k = (j * S + i) * 4, f = fd[k + 3] / 255;
+    const ao = Math.min(1, Math.max(0, (f - 0.16) / w2 + 0.5));
+    if (ao <= 0) { d[k + 3] = 0; continue; }
+    const ab = Math.min(1, Math.max(0, (f - 0.5) / w1 + 0.5));
+    let r = 26, g = 26, bl = 26;
+    if (ab > 0) {
+      const ux = (i + 0.5 - ox0) / (P * kx), uy = (j + 0.5 - oy0) / (P * ky), px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
+      const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
+      let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
+      const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy), nb = Math.min(1, Math.max(0, rb.nr + 1.6 - qd));   // くぼみの内がわは 中へ向く（さかいは なめらかに まぜる）
+      if (nb > 0) { const n0 = Math.hypot(nx, ny, nz) || 1; nx = nx / n0 * (1 - nb) - qx / (qd || 1) * 0.8 * nb; ny = ny / n0 * (1 - nb) - qy / (qd || 1) * 0.8 * nb; nz = nz / n0 * (1 - nb) + 0.6 * nb; }
+      let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
+      const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
+      const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
+      const v = 0.28 + 0.76 * dif, tf = Math.min(4, Math.max(0, (v - 0.34) / 0.16)), t0 = Math.min(3, Math.floor(tf)), tt = tf - t0;   // 影は 段でなく 連続に
+      const T0 = RICE_TONE[t0], T1 = RICE_TONE[t0 + 1], sh = Math.min(1, Math.max(0, (spec - 0.35) / 0.35));
+      let cr = T0[0] + (T1[0] - T0[0]) * tt, cg = T0[1] + (T1[1] - T0[1]) * tt, cb = T0[2] + (T1[2] - T0[2]) * tt;
+      cr += (255 - cr) * sh; cg += (255 - cg) * sh; cb += (255 - cb) * sh;   // てかり
+      for (let m = 0; m < nDirt; m++) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
+        const dm = Math.hypot(rb.gx + px - rb.spots[m][0] - 0.5, rb.gy + py - rb.spots[m][1] - 0.5), al = Math.min(1, Math.max(0, (0.72 - dm) / (w1 * 2.5) + 0.5));
+        if (al > 0) { const fm = 0.55 + 0.3 * dif; cr += (dc[0] * fm - cr) * al; cg += (dc[1] * fm - cg) * al; cb += (dc[2] * fm - cb) * al; }
+      }
+      const al = ab + ao * (1 - ab);   // つぶの 色を ふちどりの 上に かさねる
+      r = (cr * ab + 26 * ao * (1 - ab)) / al; g = (cg * ab + 26 * ao * (1 - ab)) / al; bl = (cb * ab + 26 * ao * (1 - ab)) / al;
     }
-    d[k * 4] = col[0]; d[k * 4 + 1] = col[1]; d[k * 4 + 2] = col[2];
+    d[k] = r; d[k + 1] = g; d[k + 2] = bl; d[k + 3] = 255 * ao;
   }
-  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {   // ふちどり（回したあとに、つぶのすぐ外がわの点を黒く）
-    const k = j * RB + i;
-    if (solid[k] || !((i > 0 && solid[k - 1]) || (i < RB - 1 && solid[k + 1]) || (j > 0 && solid[k - RB]) || (j < RB - 1 && solid[k + RB]))) continue;
-    d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 26; d[k * 4 + 3] = 255;
+  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる。ふちは ぼかさない）
+    for (let k = 0; k < d.length; k += 4) {
+      if (d[k + 3] < 128) { d[k + 3] = 0; continue; }
+      const L = gbLum(d[k], d[k + 1], d[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
+      d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
+    }
   }
   o.putImageData(img, 0, 0);
-  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる）
-    const g = o.getImageData(0, 0, RB, RB), q = g.data;
-    for (let k = 0; k < q.length; k += 4) {
-      if (!q[k + 3]) continue;
-      const L = gbLum(q[k], q[k + 1], q[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
-      q[k] = col[0]; q[k + 1] = col[1]; q[k + 2] = col[2]; q[k + 3] = 255;
-    }
-    o.putImageData(g, 0, 0);
-  }
+  rb.last = { P, S, X0, Y0 };   // テスト用
   gbPause++;
-  try { dst.drawImage(rb.cv, Math.round(X - H * u), Math.round(Y - H * u), RB * u, RB * u); } finally { gbPause--; }
+  const sm = dst.imageSmoothingEnabled;
+  try {
+    if (k0 === 1) dst.drawImage(rb.cv, X0, Y0);   // 1点＝1ピクセルで そのまま（にじまない）
+    else { dst.imageSmoothingEnabled = !gb; dst.drawImage(rb.cv, X0, Y0, S / k0, S / k0); }
+  } finally { gbPause--; dst.imageSmoothingEnabled = sm; }
   if (cs > 0.12 && cp > 0.12 && mood) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
-    dst.save(); dst.translate(Math.round(X), Math.round(Y)); dst.scale(sx, sy); dst.rotate(th);
+    dst.save(); dst.translate(gb ? Math.round(X) : X, gb ? Math.round(Y) : Y); dst.scale(sx, sy); dst.rotate(th);
     dst.translate((sn * rb.a * 0.7 + look) * u, sp * rb.b * 0.6 * u); dst.scale(Math.max(0.25, cs), Math.max(0.25, cp));   // look：きょろきょろ（顔を 少し よこへ）。たての ころころでは 顔が 上下へ すべる
     const fc = (rb.faces && rb.faces[mood]) || rb.face;
-    dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    if (gb) dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    else { dst.imageSmoothingEnabled = true; dst.drawImage(riceFaceHi(fc, Math.ceil(u)), -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u); }   // 点を 大きくしてから なめらかに 回す（目の 形は そのまま、ふちだけ なめらか）
     dst.restore();
   }
+}
+const RICE_PMAX = 6;   // お米を 描く 細かさの 上限（絵の1点 = 6ピクセルまで）
+const faceHi = new WeakMap();
+function riceFaceHi(fc, q) {   // 顔の 絵を 点の まま q 倍に（なめらかに 回しても 目が ぼやけない）
+  let m = faceHi.get(fc);
+  if (!m) faceHi.set(fc, m = {});
+  if (!m[q]) { const c = document.createElement('canvas'); c.width = fc.width * q; c.height = fc.height * q; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(fc, 0, 0, c.width, c.height); m[q] = c; }
+  return m[q];
 }
 const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
 // なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
@@ -8990,7 +9031,7 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => acti
     if (!g || !g.t0) return null;
     const sec = g.sec !== undefined ? g.sec : (now - g.t0) / 1000;
     return { sec, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M, stars: g.len0 && !g.warp ? mzStars(sec, g.len0) : 0, par: g.len0 ? mzPar(g.len0).p3 : 0, way: g.len0 && !g.warp && g.len0 >= MZ_WAY_MIN ? Math.max(1, g.moves / (g.len0 - 1)) : 0, run: g.run || null, warp: !!g.warp };   // warp：とちゅうで とびこえた（★・はやさの ベストに 入れない）   // way：通った マスが ちかみちの 何倍か（1 に 近いほど まよわず 来た）
-  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy) }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, riceFace: () => { const f = riceBall.faces || {}, sm = f.smile; let shine = 0; if (sm) { const d = sm.getContext('2d').getImageData(0, 0, sm.width, sm.height).data; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] === 255 && d[i + 1] === 255 && d[i + 2] === 255) shine++; } return { keys: Object.keys(f), shine }; }, moodAt: idle => { const k = roll.kind, id = roll.idle, hv = [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT]; Object.assign(roll, { kind: 'stop', idle, happyT: 0, ouchT: 0, dizzyT: 0, v: 0, h: 0, wetT: 0 }); const m = riceMood(1000); roll.kind = k; roll.idle = id; [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT] = hv; return m; }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy) }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, riceFace: () => { const f = riceBall.faces || {}, sm = f.smile; let shine = 0; if (sm) { const d = sm.getContext('2d').getImageData(0, 0, sm.width, sm.height).data; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] === 255 && d[i + 1] === 255 && d[i + 2] === 255) shine++; } return { keys: Object.keys(f), shine }; }, riceLast: () => { const L = riceBall.last; if (!L) return null; const d = riceBall.x.getImageData(0, 0, L.S, L.S).data; let soft = 0, solid = 0, tones = new Set(); for (let i = 0; i < d.length; i += 4) { if (d[i + 3] > 0 && d[i + 3] < 255) soft++; else if (d[i + 3] === 255) { solid++; tones.add(d[i] >> 1); } } return { ...L, soft, solid, tones: tones.size }; }, moodAt: idle => { const k = roll.kind, id = roll.idle, hv = [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT]; Object.assign(roll, { kind: 'stop', idle, happyT: 0, ouchT: 0, dizzyT: 0, v: 0, h: 0, wetT: 0 }); const m = riceMood(1000); roll.kind = k; roll.idle = id; [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT] = hv; return m; }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   slopeAt: (x, y) => slopeAt(x, y),   // テスト用：その マスの かたむき
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）

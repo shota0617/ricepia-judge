@@ -7529,11 +7529,19 @@ canvas.addEventListener('pointermove', e => {
 const endDrag = () => { drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 let toastT = 0, curVoice = null;
-// のんびり：画面の 知らせは はじめの 一文だけ（「。」「（」の 前まで）。はじめの画面の「📖 くわしい説明」を 入れると ぜんぶ 出す。
+// のんびり：画面の 知らせは はじめの 一文だけ（かっこ書きは キーの 案内だけ 残す）＋ あとの 文に 操作の 案内（押す・ゆるめる・解除・「O で」など）が あれば その 1 文。はじめの画面の「📖 くわしい説明」を 入れると ぜんぶ 出す。
 // もとの 文は dataset.raw に 残す（知らせが 消されたかを くらべる 所は raw を 見る）
 let DETAIL = false;
 try { DETAIL = localStorage.getItem('tractorDetail') === '1'; } catch (e) {}
-const shortText = t => { if (DETAIL) return t; const s = t.split(/。|（/)[0].replace(/[、\s]+$/, ''); return s || t; };
+const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
+const cutParen = x => x.replace(/（[^）]*）/g, m => KEYH.test(m) ? m : '').replace(/[、\s]+$/, '').trim();
+const shortText = t => {
+  if (DETAIL) return t;
+  const ss = t.split('。').map(x => x.trim()).filter(Boolean);
+  if (!ss.length) return t;
+  const head = cutParen(ss[0]) || ss[0], act = ss.slice(1).find(x => KEYH.test(x));
+  return act ? head + '。' + (cutParen(act) || act) : head;
+};
 function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; }
 $('detailBox').checked = DETAIL;
 $('detailBox').onchange = e => { DETAIL = e.target.checked; try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };

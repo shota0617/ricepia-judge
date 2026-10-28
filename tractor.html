@@ -1386,8 +1386,8 @@ const HERI = (() => {
 // 止まって 上げると 軽トラの 携行缶から 入れる（5 分）。ガス欠で エンジンが止まると 油圧も止まるので、作業機は 下ろしたまま 止まって 入れ、エア抜きも する（15 分）
 const GASU = (() => {
   const WARN = 7.5;                                // 燃料の警告（L）：燃料計が 赤くなる 15%
-  let cap = 41, out = false, warned = false, fixT = 0, fixed = false, bleed = false;   // cap：S.fuel が 0 のときの 残り（L）。満タン 50L・はじめは 8 分目
-  function start(checked) { cap = SHIRO && !checked ? 0.9 : 41; out = false; warned = false; fixT = 0; fixed = false; }
+  let cap = 41, out = false, warned = false, fixT = 0, fixed = false, bleed = false, warnOdo = 0;   // cap：S.fuel が 0 のときの 残り（L）。満タン 50L・はじめは 8 分目
+  function start(checked) { cap = SHIRO && !checked ? 0.9 : 41; out = false; warned = false; fixT = 0; fixed = false; warnOdo = 0; }
   const left = () => cap - (S.fuel || 0);
   function step(dt) {
     if (fixT > 0) {
@@ -1404,9 +1404,9 @@ const GASU = (() => {
       out = true; S.stalled = true; S.v = 0; S.parked = true;
       toast('エンジンが止まった。ガス欠！ 燃料計が E。ディーゼルは 軽油が切れると 燃料の管に 空気が入るので、入れても すぐには かからない（セルを 回しつづけない）。エンジンも 油圧も 止まったので、' + IMPL + 'は 下ろしたまま、止まっていると 軽油を入れて エア抜きを する', 8);
     } else if (!out && !warned && left() < WARN && S.started && !(S.crank > 0)) {
-      warned = true; toast('⛽ 燃料の 警告が ついている（残り ' + Math.max(0, left()).toFixed(1) + 'L。燃料計が 赤）。ガス欠になる前に、止まって ' + IMPL + 'を上げると 軽トラの 携行缶から 入れる', 6);
+      warned = true; warnOdo = S.odo || 0; toast('⛽ 燃料の 警告が ついている（残り ' + Math.max(0, left()).toFixed(1) + 'L。燃料計が 赤）。ガス欠になる前に、止まって ' + IMPL + 'を上げると 軽トラの 携行缶から 入れる', 6);
     }
-    if (Math.abs(S.v) < 0.05 && (S.rotorW || 0) < 1 && !(S.crank > 0) && (out || (warned && !S.rotDown && S.rotPos > 0.9 && (!S.stalled || offFree())))) {   // ガス欠のあとは エンジンも油圧も 止まっているので 下ろしたまま
+    if (Math.abs(S.v) < 0.05 && (S.rotorW || 0) < 1 && !(S.crank > 0) && (out || (warned && (S.odo || 0) - warnOdo > 1 && !S.rotDown && S.rotPos > 0.9 && (!S.stalled || offFree())))) {   // 警告のあとに 走ってから 止まって 上げたら（始めの 止まった所では 入れない）   // ガス欠のあとは エンジンも油圧も 止まっているので 下ろしたまま
       bleed = out;
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;

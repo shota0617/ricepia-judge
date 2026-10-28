@@ -5542,7 +5542,7 @@ const USHI = (() => {
   let bs = 7; const B = () => (bs = (bs * 16807) % 2147483647) / 2147483647;   // まばたきの 間（春も ほかの 乱数を ずらさない）
   const lam = c => new THREE.MeshLambertMaterial({ color: c });
   const back = lam(AMA ? 0x3a382f : 0x1f2609), headM = lam(AMA ? 0x413e34 : 0x2b3a0b), eyeM = lam(0x140f08), throatM = lam(AMA ? 0x8f8a78 : 0xb9b47a);   // 春：背は暗いオリーブ、頭は少し緑。秋：灰褐色
-  const SC = AMA ? 0.32 : 1, HOP = AMA ? 0.6 : 1;     // アマガエルは ウシガエルの 3 分の 1 くらい
+  const SC = AMA ? 0.19 : 1, HOP = AMA ? 0.6 : 1;     // アマガエルは 頭胴長 3.5cm（モデルの 頭から 胴の はしまで 18.6cm の 0.19 倍。国立環境研究所：雄 22〜39mm・雌 26〜45mm）
   const list = [];
   for (let k = 0; k < 2; k++) {
     const f = new THREE.Group();
@@ -5559,7 +5559,7 @@ const USHI = (() => {
     f.scale.setScalar(SC); f.visible = false; f.castShadow = true; scene.add(f);
     list.push({ f, eyes, throat, blink: 2 + B() * 3, t: 0, life: 0, rest: 0, from: new THREE.Vector3(), to: new THREE.Vector3(), dur: 0.4, hop: false });
   }
-  const MSG = AMA ? '🐸 耕した土から 灰色の アマガエルが 出てきた。寒くなって 体の色が かわり、土の 浅い所で 冬眠しかけていた。のそのそ 畦のほうへ（耕すと 土の中の生き物を 起こしてしまう）'
+  const MSG = AMA ? '🐸 冬眠しかけの 灰色の アマガエルを 起こしちゃった'
     : '🐸 耕した土から 冬眠していた ウシガエルが 出てきた。寒くて 動きが にぶい（耕すと 土の中の生き物を 起こしてしまう）';
   let acc = 0, need = 70 + R() * 70, n = 0, pend = false, chk = false, tries = 0, lastOdo = 0;
   function next(u) {                                  // 次にはねる先：トラクターが近いときは 遠ざかる向き、そうでなければ 近い畦のほう

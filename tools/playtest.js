@@ -835,6 +835,25 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.n >= 2 && r.n <= 3 && r.still && r.all && r.gone && r.pts === 0 };
   })();
+  // 道ばたで ひるねする ねこ（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：ねて いて、お米が 近くを 転がると おきて、しばらく したら また ねる。文字は 出さない
+  R.checks.neko = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, N = P.neko, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points, t0 = document.getElementById('toast').textContent;
+      P.suzume.clear(); N.put(Math.floor(r0.x) + 3, Math.floor(r0.y));
+      await wait(200);
+      const asleep = !!N.cat && !N.cat.awake;
+      P.rollPut(N.cat.x - 1.6, N.cat.y, 2.5, 0);   // ねこの 1.6マス 手前から
+      let woke = false; for (let i = 0; i < 15 && !woke; i++) { await wait(60); woke = !!N.cat && N.cat.awake; }
+      P.rollPut(r0.x, r0.y, 0, 0);
+      let back = false; for (let i = 0; i < 40 && !back; i++) { await wait(100); back = !!N.cat && !N.cat.awake; }
+      const toast = document.getElementById('toast').textContent !== t0 && /ねこ|にゃ/.test(document.getElementById('toast').textContent);
+      N.clear();
+      return { asleep, woke, back, toast, pts: nishioGo.state.points - p0 };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.asleep && r.woke && r.back && !r.toast && r.pts === 0 };
+  })();
   // ゆるい めいろ（2026-10-26 店主「直角ではなく ゆるい構造に」）：通路は 道すじの 筒。次の マスの 向きだけ 押して 転がすと、
   // 筒から はみ出さずに（道すじから 0.45マス＋やわらかい 生け垣が のびる 0.4マス以内）、ゴールまでの めいろの 道のりが へる（まるい 角で 止まらない）
   R.checks.yuruMeiro = await (async () => {
@@ -3079,6 +3098,7 @@ async function walkTo(page, id) {
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
+  need(c.neko && c.neko.ok, `ねこ：ねて いない・お米が 近づいても おきない・また ねない・文字を 出す・ポイントが かわる（${JSON.stringify(c.neko)}）`);
   need(c.suzume && c.suzume.ok, `すずめ：2〜3羽 おりない・お米が 近づいても みんなで とびたたない・とびさらない・ポイントが かわる（${JSON.stringify(c.suzume)}）`);
   need(c.shopThanks && c.shopThanks.ok, `当店の ごほうびに「来てくれて ありがとう！」・来店スタンプの 数が 出ない、または 数の ない 札が ならぶ（${JSON.stringify(c.shopThanks)}）`);
   need(c.mzGoalEdge && c.mzGoalEdge.ok, 'ゴールが 画面の はしに ある とき、ゴールの 名前が 画面から はみ出して 切れる');

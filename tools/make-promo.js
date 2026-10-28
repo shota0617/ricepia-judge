@@ -135,7 +135,8 @@ async function endCard(page) {
   const foot = (fs, h) => `<div style="position:absolute;left:0;right:0;bottom:0;height:${h}px;background:rgba(0,0,0,.8);color:#fff;font-size:${fs}px;line-height:${h}px;text-align:center">西尾のお米屋さん 近藤米穀店・らいすぴあ</div>`;
   function layout(w, h) {
     if (w / h > 1.4) {   // 横長：左に文、右にゲーム画面
-      const ph = Math.round(h * 0.9), fs = Math.round(h / 11);
+      // 見出し（「傾けると お米が ころころ」12文字ほど）は ゲーム画面の 左に 入る 大きさまで（600×400 では 高さだけで 決めると、うしろが ゲーム画面の 下に かくれて いた）
+      const ph = Math.round(h * 0.9), phoneW = ph * 1080 / 1920 + 2 * Math.max(4, ph / 95), room = w * 0.95 - phoneW - w * 0.04 - w * 0.03, fs = Math.round(Math.min(h / 11, room / 12.5));
       return `<img src="${logoUrl}" style="position:absolute;left:${w * 0.04}px;top:${h * 0.06}px;width:${w * 0.45}px">
         <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.27}px;font-size:${fs}px;font-weight:bold;line-height:1.35;text-shadow:0 0 8px #fff">傾けると お米が ころころ<br>西尾の めいろ</div>
         <div style="position:absolute;left:${w * 0.04}px;top:${h * 0.56}px">${pill('本物の道で できた めいろを、名所へ', Math.round(fs / 2))}</div>

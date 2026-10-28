@@ -317,6 +317,15 @@ const CHECKS = {
     ok(pin.held && pin.msg!=='糸は 二本指で つまむ', '二本指で つまんで 1本 はなしても「二本指で」と 言わない', pin);
     const tip2 = await p.evaluate(() => { KB.start(); const S = KB.S; S.wrongs = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(!/まずは/.test(tip2), 'つまめた 人には 0袋でも べつの ヒント', tip2);
+    // 59周目（もう一回）：じこベストまで あと 何点・こえた ときは 遊んで いる 間にも・はじめての ランク
+    await p.setViewportSize({ width:390, height:844 });
+    const bs = await p.evaluate(() => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
+      const gap = document.getElementById('best').innerHTML;
+      KB.start(); S.score = 5100; KB.step(1/60); const said = S.msg && S.msg.text; S.score = 8000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
+      return { gap, said, up: document.getElementById('best').innerHTML }; });
+    ok(/あと 1,001点/.test(bs.gap), 'じこベストに とどかない ときは「じこベストまで あと 何点」', bs.gap);
+    ok(bs.said==='じこベスト こえた！', '遊んで いる 間に じこベストを こえたら 言う', bs.said);
+    ok(/<b>じこベスト更新/.test(bs.up) && /はじめて「頼れるパートさん」/.test(bs.up), 'じこベスト更新と はじめての ランクは 金の 字で', bs.up);
     for (const [w, h] of [[568,320],[667,375],[740,360]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 横向き（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }

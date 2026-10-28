@@ -2228,14 +2228,14 @@ function tillPitch() {
   return Math.abs(S.v) * 6000 / Math.max(60, rotor * 2);
 }
 const DRY = (() => {
-  const WET = season === 'aki' ? 0.68 : 0.6, T = 150, list = [];
+  const WET = season === 'aki' ? 0.68 : 0.6, T = 150, list = [], last = new Map();   // last：ます目ごとの いちばん新しい 記録
   let clock = 0, acc = 0;
   const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v * ROUGH[c], c * 12, c * 12 + 12); };
   return {
     list,                                         // 乾いていく所（[ます目, 耕した時刻, 乾く時間の倍率]）
     // 秋起こしは 荒く起こして 乾きやすくする（岩手・盛岡の農家の YouTube「田んぼの秋起こしは粗めに」）。秋に ゆっくり・PTO 2 速で
     // 細かくしすぎた所（耕うんピッチ 5cm より細かい）は、土の塊の すきまが少なく 乾くのに 2 倍かかる
-    wet(c) { if (SHIRO) return; set(c, WET); if (!RAIN) list.push([c, clock, season === 'aki' && (S.pitch || 9) < 5 ? 2 : 1]); },   // 雨の日は 耕した土が乾かない
+    wet(c) { if (SHIRO) return; set(c, WET); if (!RAIN) { const e = [c, clock, season === 'aki' && (S.pitch || 9) < 5 ? 2 : 1]; last.set(c, e); list.push(e); } },   // 耕しなおしたら 前の記録は 使わない   // 雨の日は 耕した土が乾かない
     update(dt) {                                  // 2 秒ごとに、耕して 2 分半までの所を少しずつ明るくする
       clock += dt;
       if (SHIRO || (acc += dt) < 2 || !list.length) return;
@@ -2243,11 +2243,13 @@ const DRY = (() => {
       const a = tilled.geometry.attributes.color;
       let lo = Infinity, hi = -1, k = 0;
       for (const e of list) {
+        if (last.get(e[0]) !== e) continue;       // 同じ ます目を 耕しなおした 古い記録は すてる
         const f = Math.min(1, (clock - e[1]) / (T * e[2])), v = WET + (1 - WET) * Math.pow(f, 0.7);
         set(e[0], v); lo = Math.min(lo, e[0]); hi = Math.max(hi, e[0]);
-        if (f < 1) list[k++] = e;
+        if (f < 1) list[k++] = e; else last.delete(e[0]);
       }
       list.length = k;
+      if (hi < 0) return;                          // 古い記録だけだった
       a.updateRange.offset = lo * 12; a.updateRange.count = (hi - lo + 1) * 12; a.needsUpdate = true;
     }
   };
@@ -6016,6 +6018,7 @@ function step(dt) {
     if (eco && Math.abs(S.v) > 0.1) voice('teikaiten');   // 回転を下げて 耕しはじめたら
     if (eco && PTO2 && Math.abs(S.v) > 0.1) voice('pto2nenpi');   // 回転を下げて PTO 2 速：爪の回転が ふつうに近くなる
   }
+  if (!(working && Math.abs(S.v) > 0.1)) S.fineT = 0;   // 止まった・上げた：細かすぎる時間は つづけて 数える
   if (working && Math.abs(S.v) > 0.1) {
     S.workT = (S.workT || 0) + dt;                // 耕している時間（ほ場作業効率に使う）
     S.pitch = tillPitch();

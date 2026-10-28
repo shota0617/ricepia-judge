@@ -2954,6 +2954,7 @@ async function walkTo(page, id) {
             if (A) { frames++; if (box) { drawn++; if (ov(box, A) || ov(box, Rb)) bad++; } }
             await wait(100);
           }
+          for (let i = 0; i < 50 && P.townBox; i++) { G.toast('🧭 テストの 知らせ：ちょうど 2行に なる 長さ'); await wait(100); }   // 置ける 所が あって とちゅうから 出た ときは、出た ぶん あとで 消える（5秒で まだ 出ていて ときどき 落ちた）
           gone = !P.townBox;
         }
         // 2. 待ちの とちゅうで 本当に 町が かわる：新しい 町名は 前の 待ちを 引きつがない

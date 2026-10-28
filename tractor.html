@@ -3856,7 +3856,9 @@ const MUKU = (() => {
     const x = S.x + side * c() + (ROTARY_Z - back) * s(), z = S.z - side * s() + (ROTARY_Z - back) * c();
     return [Math.max(-HX + 1, Math.min(HX - 1, x)), Math.max(-HZ + 1, Math.min(HZ - 1, z))];
   }
-  const aim = u => { u.tx = cx + (Math.random() - 0.5) * 3.2; u.tz = cz + (Math.random() - 0.5) * 3.2; };
+  const aim = u => {                              // 群れの まん中の まわり（田んぼの中だけ）
+    u.tx = Math.max(-HX + 0.4, Math.min(HX - 0.4, cx + (Math.random() - 0.5) * 3.2)); u.tz = Math.max(-HZ + 0.4, Math.min(HZ - 0.4, cz + (Math.random() - 0.5) * 3.2));
+  };
   function scatter(cr) {                          // カラスが来た：いっせいに飛び立ち、はなれた所へ まとまって降りる
     const a = Math.atan2(cx - cr.position.x, cz - cr.position.z);
     [cx, cz] = [Math.max(-HX + 1, Math.min(HX - 1, cx + Math.sin(a) * 9)), Math.max(-HZ + 1, Math.min(HZ - 1, cz + Math.cos(a) * 9))];
@@ -3899,9 +3901,9 @@ const MUKU = (() => {
         if (u.st === 'fly') {
           const sp = 7;
           u.x += dx / Math.max(d, 0.01) * Math.min(d, sp * dt); u.z += dz / Math.max(d, 0.01) * Math.min(d, sp * dt);
-          u.y += (Math.min(3.5, d * 0.5) + TILL_Y - u.y) * Math.min(1, dt * 3);
-          u.yaw = Math.atan2(dx, dz);
-          if (d < 0.2) { u.st = 'walk'; u.y = TILL_Y; u.t = 0; }
+          u.y += (Math.min(3.5, d * 0.5) + TILL_Y - u.y) * Math.min(1, dt * (d < 1 ? 5 : 3));   // 近づくと 降りていく
+          if (d > 0.05) u.yaw = Math.atan2(dx, dz);
+          if (d < 0.2 && u.y < TILL_Y + 0.03) { u.st = 'walk'; u.y = TILL_Y; u.t = 0; }   // 地面まで 降りてから 歩く
         } else if (d > 0.08) {                    // ちょこちょこ 歩く（ムクドリは 両足を交互に出して歩く）
           const ws = 0.35;
           u.x += dx / d * Math.min(d, ws * dt); u.z += dz / d * Math.min(d, ws * dt);
@@ -7332,7 +7334,7 @@ function frame(now) {
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
-  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); } } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
+  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); MUKU.update(dt, S.rotDown && S.rotPos < 0.08); } } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
   syncAudio(running);
   updateCamera(dt);
   updateSound(dt);
@@ -7347,7 +7349,6 @@ function frame(now) {
   WASH.update(dt);
   FX.mat.uniforms.scale.value = renderer.domElement.height / (2 * Math.tan(camera.fov * Math.PI / 360));
   BIRDS.update(dt, S.rotDown && S.rotPos < 0.08);
-  MUKU.update(dt, S.rotDown && S.rotPos < 0.08);
   WAGTAILS.update(dt, S.rotDown && S.rotPos < 0.08);
   SPARROWS.update(dt);
   KERI.update(dt);

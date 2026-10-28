@@ -448,7 +448,7 @@ function tipOf(zone){
 // きょうの 目標：日付で 3つ えらぶ（同じ日は 同じ 目標）。できた ものは この 端末に のこる
 const GOALS = [
   { id:'streak5', text:'一本どり 5連続', ok:()=>S.bestStreak>=5, prog:()=>`${Math.min(S.bestStreak,5)}/5` },
-  { id:'golden',  text:'新米シールの袋を 一本どり', ok:()=>S.goldenClean>=1 },
+  { id:'golden',  text:'新米シールの袋を 2袋 一本どり', ok:()=>S.goldenClean>=2, prog:()=>`${Math.min(S.goldenClean,2)}/2` }, // 1袋では はじめての 人でも 8割（71周目）
   { id:'right',   text:'右から ほどく袋を 一本どり', ok:()=>S.rightClean>=1 },
   { id:'notangle',text:'もつれ 0 で 8袋 あける', ok:()=>S.bags>=8 && S.tangles===0, prog:()=> S.tangles ? 'もつれ '+S.tangles : `${Math.min(S.bags,8)}/8` },
   { id:'quick8',  text:'早わざ 8回', ok:()=>S.quick>=8, prog:()=>`${Math.min(S.quick,8)}/8` },

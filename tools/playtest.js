@@ -751,21 +751,48 @@ async function walkTo(page, id) {
   })();
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {
-    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
-    const info = await page.evaluate(() => { const r = nishioPixel.roll, k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(); let best = null; for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const M = nishioPixel.maze, tube = M.on() && M.near ? (y => { const q = M.near(r.x, y); return !q || q.d <= 0.5; }) : () => true; let d = 1; while (d < 9 && !nishioPixel.rollBlockedFrom(r.x, r.y + dy * (d - 1), r.x, r.y + dy * d) && tube(r.y + dy * d)) d++; if (!best || d > best[1]) best = [key, d]; } return { best, style: k ? k.name : '', p0: r.pitch, s0: r.spin }; });   // ゆるい めいろでは 道すじの 筒の 中に いられる はばだけ
-    if (/^くるくる/.test(info.style) || info.best[1] < 2) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: info.best[1] < 2 ? 'no-room' : info.style, room: info.best[1] }; }
-    await uncover(page);   // めいろでは 窓（ごほうび・イベント・人の 話）が 出ている 間は 転がらないので、閉じてから
-    const cov = await page.evaluate(() => nishioPixel.mapCovered() ? [...document.querySelectorAll('#pxInfo:not([hidden]), .panel:not([hidden]), [role="dialog"]:not([hidden])')].map(e => e.id || e.className).join(',') || 'reward' : '');   // 落ちたときに 分かるように
-    await page.keyboard.down(info.best[0]);
-    let pmax = 0, smax = 0;
-    for (let i = 0; i < 25 && !(i >= 9 && pmax > 1.2); i++) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); pmax = Math.max(pmax, Math.abs(r.pitch - info.p0)); smax = Math.max(smax, Math.abs(r.spin - info.s0)); }   // 遅い 画面でも 待てるよう、回りきるまで（2.5秒まで）押す
-    await page.keyboard.up(info.best[0]);
-    const upright = p => Math.abs(p / (Math.PI * 2) - Math.round(p / (Math.PI * 2))) < 0.02;   // 止まると 起きあがって こっちを向く
-    let end = null, upS = 0;
-    for (let i = 0; i < 20; i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.roll); upS = (i + 1) * 0.15; if (upright(end.pitch) && Math.hypot(end.vx, end.vy) < 0.05) break; }   // 遅い 画面でも 待てるよう 3秒まで
-    await page.evaluate(() => nishioPixel.setRoll(false));
-    const up = upright(end.pitch);
-    return { key: info.best[0], room: info.best[1], style: info.style, pitch: +pmax.toFixed(2), spin: +smax.toFixed(2), up, upS: +upS.toFixed(2), endPitch: +end.pitch.toFixed(2), cov, ok: pmax > 1 && smax < 0.3 && up };
+    // べつの ページで 確かめる（お米を 平らな 所へ 動かしたり、転がる 間に 宝箱・ゴール・人の 話が 起きたりしても、あとの 確認に のこらない。Codex の 指摘）
+    const v = await newPage(browser), page = v.page;
+    try {
+      await page.goto(URL); await page.waitForTimeout(1500);
+      await page.click('#meiroBtn'); await page.waitForTimeout(1500);   // 「🌀 傾けて めいろ」
+      await page.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /わかった/.test(x.textContent) && x.offsetParent); if (b) b.click(); }); await page.waitForTimeout(600);
+      await page.evaluate(() => document.querySelector('[data-pick-dot]')?.click()); await page.waitForTimeout(900);   // はじめの 1枚
+      await uncover(page);
+      await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+      // 平らで まっすぐ たてに 5マス 以上 ころがれる 所から 始める（いまの 場所の ままだと、坂で 止まらずに 転がりつづけたり、場所が せまくて とばしたりして、ときどき 落ちていた）
+      const info = await page.evaluate(async () => {
+        const P = nishioPixel, r = P.roll, M = P.maze, k = window.NISHIO_KOROSTYLE && NISHIO_KOROSTYLE.current(), style = k ? k.name : '';
+        const room = (x0, y0, dy) => { const tube = M.on() && M.near ? (y => { const q = M.near(x0, y); return !q || q.d <= 0.5; }) : () => true; let d = 1; while (d < 9 && !P.rollBlockedFrom(x0, y0 + dy * (d - 1), x0, y0 + dy * d) && tube(y0 + dy * d)) d++; return d; };
+        const flat = (x0, y0, dy, d) => { for (let j = 0; j <= d; j++) { const sl = P.slopeAt(x0, y0 + dy * j); if (sl.x || sl.y) return false; } return true; };
+        let best = null, moved = false;
+        for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const d = room(r.x, r.y, dy); if (d >= 5 && flat(r.x, r.y, dy, d) && (!best || d > best[1])) best = [key, d]; }
+        if (!best && M.on()) {   // ちかくの めいろの 道の マスを さがす
+          const K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K);
+          outer: for (let rr = 1; rr <= 14; rr++) for (let y = b - rr; y <= b + rr; y++) for (let x = a - rr; x <= a + rr; x++) {
+            if (Math.max(Math.abs(x - a), Math.abs(y - b)) !== rr || M.type(x, y) !== 1 || M.spot(x, y)) continue;
+            const sx = (x + 0.5) * K, sy = (y + 0.5) * K;
+            for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const d = room(sx, sy, dy); if (d >= 5 && flat(sx, sy, dy, d)) { best = [key, d]; P.rollPut(sx, sy); moved = true; break outer; } }
+          }
+        }
+        if (!best) for (const [key, dy] of [['ArrowDown', 1], ['ArrowUp', -1]]) { const d = room(r.x, r.y, dy); if (!best || d > best[1]) best = [key, d]; }   // 見つからなければ いまの 場所で
+        if (moved) await new Promise(res => setTimeout(res, 400));
+        return { best, style, moved, p0: P.roll.pitch, s0: P.roll.spin };
+      });
+      if (/^くるくる/.test(info.style) || info.best[1] < 2) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: info.best[1] < 2 ? 'no-room' : info.style, room: info.best[1] }; }
+      await uncover(page);   // めいろでは 窓（ごほうび・イベント・人の 話）が 出ている 間は 転がらないので、閉じてから
+      const cov = await page.evaluate(() => nishioPixel.mapCovered() ? [...document.querySelectorAll('#pxInfo:not([hidden]), .panel:not([hidden]), [role="dialog"]:not([hidden])')].map(e => e.id || e.className).join(',') || 'reward' : '');   // 落ちたときに 分かるように
+      await page.keyboard.down(info.best[0]);
+      let pmax = 0, smax = 0;
+      for (let i = 0; i < 25 && !(i >= 9 && pmax > 1.2); i++) { await page.waitForTimeout(100); const r = await page.evaluate(() => nishioPixel.roll); pmax = Math.max(pmax, Math.abs(r.pitch - info.p0)); smax = Math.max(smax, Math.abs(r.spin - info.s0)); }   // 遅い 画面でも 待てるよう、回りきるまで（2.5秒まで）押す
+      await page.keyboard.up(info.best[0]);
+      const upright = p => Math.abs(p / (Math.PI * 2) - Math.round(p / (Math.PI * 2))) < 0.02;   // 止まると 起きあがって こっちを向く
+      let end = null, upS = 0; const trace = [];
+      for (let i = 0; i < 30; i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.roll); trace.push([+(end.pitch / (Math.PI * 2)).toFixed(2), +Math.hypot(end.vx, end.vy).toFixed(2)]); upS = (i + 1) * 0.15; if (upright(end.pitch) && Math.hypot(end.vx, end.vy) < 0.05) break; }   // 遅い 画面でも 待てるよう 4.5秒まで
+      await page.evaluate(() => nishioPixel.setRoll(false));
+      const up = upright(end.pitch);
+      return { key: info.best[0], room: info.best[1], moved: info.moved, style: info.style, pitch: +pmax.toFixed(2), spin: +smax.toFixed(2), up, upS: +upS.toFixed(2), endPitch: +end.pitch.toFixed(2), endV: +Math.hypot(end.vx, end.vy).toFixed(3), kind: end.kind, slope: end.slope, at: [+end.x.toFixed(2), +end.y.toFixed(2)], trace: up ? undefined : trace, cov, ok: pmax > 1 && smax < 0.3 && up };
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   // 曲がり角アシスト（めいろ）：右へ 開いた 曲がり角で、通路の まん中から 横に ずれて いても、上へ 傾けると 上の 通路に 入れる（アシストで 曲がれなく なっていないか）
   R.checks.cornerAssist = await (async () => {

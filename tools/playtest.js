@@ -2289,6 +2289,21 @@ async function walkTo(page, id) {
       sh.hidden = keep; el.classList.remove('show');
       return { over, after, inMsg, ok: !over && after && /コピー/.test(inMsg) };
     });
+    // イベントの 窓（.medashi：古い地図・虫の名前あて・本のできごと など）の 上に 知らせを 重ねない：開いて いる 間は 待たせ、とじたら 出す
+    // （自分で 遊んで 分かった：古い地図の 窓の 写真の 上に 知らせが 重なった）
+    R.checks.eventToast = await w.page.evaluate(async () => {
+      const G = nishioGo, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), msg = '🎁 テストの 知らせ（イベント）';
+      const ev = document.createElement('div'); ev.className = 'medashi'; ev.setAttribute('role', 'dialog'); ev.hidden = true; ev.innerHTML = '<div class="md-card">テストの イベント</div>';
+      document.body.appendChild(ev); el.classList.remove('show');
+      ev.hidden = false; await wait(100);
+      G.toast(msg); await wait(300);
+      const over = el.classList.contains('show') && el.textContent === msg;
+      ev.hidden = true;
+      let after = false;
+      for (let i = 0; i < 40 && !after; i++) { await wait(200); after = el.classList.contains('show') && el.textContent === msg; }   // ほかの 知らせが 出て いれば その あと（8秒まで）
+      ev.remove(); el.classList.remove('show');
+      return { over, after, ok: !over && after };
+    });
     // 「めいろ、どうだった？」の ひとことの 欄：320px でも 「ひとこと（なくてOK）」が 切れずに 入り、ボタンも 札の 中（自分で 遊んで 分かった：欄が 縮んで「ひとこと（な」と 切れていた）
     R.checks.playMore320 = await (async () => {
       const vp = w.page.viewportSize();
@@ -2843,6 +2858,7 @@ async function walkTo(page, id) {
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need((R.walk.find(w => w.id === 'chest') || {}).ribbon?.has && !R.walk.find(w => w.id === 'chest').ribbon.hit, `ごほうびの「NEW」の 札が 名前の 字に 重なる（${JSON.stringify((R.walk.find(w => w.id === 'chest') || {}).ribbon)}）`);
   need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
+  need(c.eventToast && c.eventToast.ok, `イベントの 窓の 上に 知らせが 重なる（${JSON.stringify(c.eventToast)}）`);
   need(c.townToast && c.townToast.ok, `町名の 札（〜 ○○町 〜）が 上の 知らせに かくれる（${JSON.stringify(c.townToast)}）`);
   need(c.landscape568 && c.landscape568.ok, `横に した 低い 画面（568×320）で はじめの1枚が えらべない・ごほうびの 窓が はみ出す（${JSON.stringify(c.landscape568)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);

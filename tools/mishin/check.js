@@ -237,6 +237,11 @@ const CHECKS = {
     ok(w.mark==='？' && w.markT>0, '縫い始めを つまむと スズメが「？」', w);
     const h = await p.evaluate(() => { KB.start(); KB.audio.fever(); const n0 = KB.audio.timers.length; KB.start(); return { n0, n1: KB.audio.timers.length }; });
     ok(h.n0>0 && h.n1===0, 'おくれて 鳴る 音は はじめから やりなおすと 止まる', h);
+    const cm = await p.evaluate(() => { KB.calm = true; KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(0); Object.assign(bb, { face:'back', start:'L', slide:0, phase:'pull', from:'L', pulled:1 }); S.bag = bb;
+      const c = document.getElementById('cv'), shot = () => c.getContext('2d').getImageData(0, 0, c.width, c.height).data; KB.step(1/60); return true; });
+    await p.waitForTimeout(60); const s1 = await p.evaluate(() => { const c = document.getElementById('cv'); return c.toDataURL().length; });
+    await p.evaluate(() => { KB.S.t += 0.37; }); await p.waitForTimeout(60); const s2 = await p.evaluate(() => { const c = document.getElementById('cv'); const r = c.toDataURL().length; KB.calm = false; return r; });
+    ok(s1===s2, '動きを へらす 設定では 1袋目の 見本の 点が 動かない', { s1, s2 });
     const z = await p.evaluate(() => { KB.calm = true; KB.start(); const slide = KB.S.bag.slide; KB.calm = false; KB.S.time = 0.01; KB.step(1/60); return { slide }; });
     await p.waitForTimeout(150);
     const sr = await p.evaluate(() => document.getElementById('sr').textContent);

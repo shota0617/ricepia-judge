@@ -2730,18 +2730,14 @@ async function walkTo(page, id) {
         const msg = '🧭 テストの 知らせ：町の 名前の 札の 上に 2行で 出る 長さの 文に して おく';
         const near = G.spots.filter(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000);
         const shut = () => { document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw2 = document.getElementById('reward'); if (rw2.classList.contains('show')) rw2.click(); };   // 動いた 先で 出た イベント・話・ごほうびの 窓は とじる（地図が かくれると 札が 描かれない）
-        let moved = 0, ne = '';
+        let moved = 0;
         for (const sp of near.slice(0, 6)) {   // 町が かわる 所へ お米を 動かす（札が 出るまで いくつか ためす）
-          // 動く 先から 北東（右上）の ゴールに して おく：縁の 矢印と 道のりの 札が 右上に 出て、下げた 町名の 札と かさなりやすい（Codex の 指摘）
-          const g = G.spots.filter(x => x.lat && x.id !== sp.id && x.lat > sp.lat && x.lng > sp.lng && G.dist(sp, x) > 1500 && G.dist(sp, x) < 3500).sort((p1, p2) => Math.abs((p1.lat - sp.lat) - (p1.lng - sp.lng) * 0.4) - Math.abs((p2.lat - sp.lat) - (p2.lng - sp.lng) * 0.4))[0];
-          if (g) { G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); ne = g.name; await wait(6500); shut(); }   // 「🏁 つぎの ゴール」の 札が 消えるまで
           const t = P.meiroApi.toTile(sp.lat, sp.lng); P.rollPut(t.x + 0.5, t.y + 0.5); moved++;
           await wait(200); shut();
           for (let i = 0; i < 20 && !box; i++) { shut(); G.toast(msg); box = null; await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res))); await wait(60); }
           if (box) break;
         }
-        let arrowSeen = 0, arrowHits = 0;
-        for (let i = 0; i < 15; i++) {   // 札の 間、こまごとに 知らせ・縁の 矢印の 札と 札の 重なりを 見る
+        for (let i = 0; i < 15; i++) {   // 札の 間、こまごとに 知らせと 札の 重なりを 見る
           box = null; G.toast(msg);
           await new Promise(res => requestAnimationFrame(res));
           if (box && el.classList.contains('show') && !el.classList.contains('wlow')) {   // 知らせが 上に 出て いる こま（縁の 矢印を よけて 下に いる こまは 数えない）
@@ -2749,16 +2745,34 @@ async function walkTo(page, id) {
             const c = cv.getBoundingClientRect(), k = c.width / cv.width, q = el.getBoundingClientRect();
             const B = [c.left + box[0] * k, c.top + box[1] * k, c.left + box[2] * k, c.top + box[3] * k];
             if (q.left < B[2] && q.right > B[0] && q.top < B[3] && q.bottom > B[1]) hits++;
-            const A = P.maze.mapArrow;
-            if (A) { arrowSeen++; if (box[0] < A[2] && box[2] > A[0] && box[1] < A[3] && box[3] > A[1]) arrowHits++; }
           }
           await wait(80);
         }
+        // 2だんめ：右上（北東）の ゴールで、下げた 札が 縁の 矢印と 道のりの 札に かからない（Codex の 指摘）。札は テスト用の 入口で 出す
+        const msg2 = '🧭 テストの 知らせ：ちょうど 2行に なる 長さ';
+        let ne = 'none', arrowSeen = 0, arrowHits = 0, dodged = 0;
+        const ngs = G.spots.filter(x => x.lat && x.lat > G.me.lat && x.lng > G.me.lng && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 3500).slice(0, 8);
+        for (const g of ngs) {
+          G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
+          let as = 0, ah = 0, dg = 0;
+          for (let i = 0; i < 12; i++) {
+            el.classList.remove('show', 'wlow'); G.toast(msg2); P.townBanner('テスト町'); box = null;
+            await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+            const A = P.maze.mapArrow;
+            if (box && A && el.classList.contains('show') && !el.classList.contains('wlow')) {
+              as++;
+              if (box[0] < A[2] && box[2] > A[0] && box[1] < A[3] && box[3] > A[1]) ah++;   // 札が 縁の 札に かかった（直す 前）
+              if (P.townDodged) dg++;   // かかる ので 下へ よけた（直した あと）
+            }
+            await wait(60);
+          }
+          if (ah || dg) { ne = g.name; arrowSeen = as; arrowHits = ah; dodged = dg; break; }
+        }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
-        return { moved, ne, seen, hits, arrowSeen, arrowHits, lines: Math.round(el.getBoundingClientRect().height) };
+        return { moved, seen, hits, ne, arrowSeen, arrowHits, dodged };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.seen > 0 && r.hits === 0 && r.arrowHits === 0 };
+      return { ...r, ok: r.seen > 0 && r.hits === 0 && (r.arrowHits > 0 || r.dodged > 0) && r.arrowHits === 0 };
     })();
     R.errors.push(...w.errors);
     await w.ctx.close();

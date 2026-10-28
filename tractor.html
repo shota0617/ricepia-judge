@@ -158,6 +158,7 @@
   <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
   <button id="bEasy" title="かんたんアシスト（K）：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる">🔰</button>
+  <button id="bEco" title="耕すときのエンジン回転（I）：2500 → 2000 → 1800。下げると軽油がへるが 力の余裕が少ない。DPF の再生は 2000 回転以上">⛽2500</button>
   <button id="bAssist" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
   <button id="bGear" title="主変速（Q で下げる・E で上げる）">変速 3</button>
   <button id="bFast" title="早送り（F）">⏩ ×1</button>
@@ -249,7 +250,7 @@
         <tr><td>土を握って 水分を確かめる（ホロッとくずれれば耕しごろ。だんごなら 水分が多い）</td><td class="pc"><kbd>N</kbd></td><td>—（キーボードだけ）</td></tr>
         <tr><td>PTO の逆転（R 速。盛り上がった土を前へ寄せて平らに。重いので エンジンを下げて、盛り上がった所だけ。春・秋）</td><td class="pc"><kbd>O</kbd></td><td>—（キーボードだけ）</td></tr>
         <tr><td>🔰 かんたんアシストの入切</td><td class="pc"><kbd>K</kbd></td><td>「🔰」</td></tr>
-        <tr><td>⛽ 耕すときのエンジン回転 2500 ⇄ 2000（軽油がへるが 力の余裕が少ない。春・秋）</td><td class="pc"><kbd>I</kbd></td><td>はじめの画面の「⛽」</td></tr>
+        <tr><td>⛽ 耕すときのエンジン回転 2500 → 2000 → 1800（軽油がへるが 力の余裕が少ない。DPF の自動再生は 2000 回転以上で進む。春・秋）</td><td class="pc"><kbd>I</kbd></td><td>「⛽」</td></tr>
         <tr><td>はじめの場所へ</td><td class="pc"><kbd>R</kbd></td><td>—</td></tr>
         <tr><td>この操作の表</td><td class="pc"><kbd>H</kbd></td><td>「？」</td></tr>
       </table>
@@ -323,7 +324,7 @@
       ・トラクターで田んぼへ行くときは、17mm のスパナと 予備の爪ボルトを かならず持っていく…<a href="https://brassica.exblog.jp/32544623/" target="_blank" rel="noopener">田圃に遊ぶ・・・（エキサイトブログ）「いよいよ田んぼへ」</a>（ゲームでは 秋に はじめの点検をしないと、耕しているうちに 爪が 1 本 取れて 細い耕し残しの すじができる。止まって 上げると 予備の爪を付ける。3 分）<br>
       ・トラクターで耕していたら、ウシガエルを 起こしてしまったようです…<a href="https://ameblo.jp/iko228-yamaha/entry-12891527997.html" target="_blank" rel="noopener">ikoのブログ「田んぼ トラクター」</a>（ゲームでは 春に耕していると、ロータリーのうしろの 耕した土から 冬眠していた ウシガエルが 出てきて、のそのそと 畦のほうへ はねていく。2 ひきまで）<br>
       ・燃費をよくするため、トラクターのエンジンを 最大の 2500 回転から 2000 回転に下げて 秋の田起こしをしている。燃料の消費は 30% 前後へった（PTO 1・耕深 3）。回転を下げると PTO の回転も下がるので、PTO 2 速で 試したこともある。メーカーや 排気量で ちがう…<a href="https://ameblo.jp/shirouri360/entry-12244846823.html" target="_blank" rel="noopener">shirouri360（アメブロ）「トラクターのエンジン回転数を下げて、田起こしを始めました。」</a>／前の 23 馬力では やわらかい所で エンジンが止まりそうになり 回転を上げていた。27 馬力では 2000 回転でも粘る（作業は 時速 2km 前後）…<a href="https://ameblo.jp/shirouri360/entry-12836656045.html" target="_blank" rel="noopener">同「昨年やり残した田起こししました」</a>（ゲームでは はじめの画面の「⛽ エンジンを 2000 回転に下げて耕す」で、耕すときの回転・走る速さ・爪の回転が 2 割下がり、軽油は 1 時間あたり 3 割ほど（耕した広さあたり 1 割ほど）へる。ぬかるみでは エンストしやすいので、重くなったら I で 2500 回転にもどす。春と秋だけ。回転を下げて PTO を 1 段上げる やり方は <a href="https://gn.nbkbooks.com/?p=11792" target="_blank" rel="noopener">現代農業</a> にも）<br>
-      ・ふだんは 2500 回転・PTO 1 速（540〜580 回転）・時速 2.4km。エンジンを 1800〜2000 回転に下げて PTO を 2 速（580〜650 回転）にすると、8 時間耕して 燃料が 4 分の 1 ほど残った（2500 回転では ほぼ空）。ただ DPF つきは 低い回転のままだと、自動再生のとき 回転を上げないといけない…<a href="https://greenland-yoro.jp/nenpi/" target="_blank" rel="noopener">田んぼの作業を図解する作業者のブログ（greenland-yoro.jp）「【トラクター】PTO2速で燃費良く耕うんする方法」</a>（ゲームでは 2000 回転で P の PTO 2 速にすると 爪の回転が ふつうより 1 割ほど速くなり 土が細かくなる。2000 回転のまま DPF の自動再生が始まると 再生が止まり、メーターに「回転を上げて」と出る。2500 回転にもどすと進む）<br>
+      ・ふだんは 2500 回転・PTO 1 速（540〜580 回転）・時速 2.4km。エンジンを 1800〜2000 回転に下げて PTO を 2 速（580〜650 回転）にすると、8 時間耕して 燃料が 4 分の 1 ほど残った（2500 回転では ほぼ空）。ただ DPF つきは 低い回転のままだと、自動再生のとき 回転を上げないといけない…<a href="https://greenland-yoro.jp/nenpi/" target="_blank" rel="noopener">田んぼの作業を図解する作業者のブログ（greenland-yoro.jp）「【トラクター】PTO2速で燃費良く耕うんする方法」</a>（ゲームでは 2000 回転で P の PTO 2 速にすると 爪の回転が ふつうより 1 割ほど速くなり 土が細かくなる。I か「⛽」で 2500 → 2000 → 1800 回転。DPF の自動再生は 2000 回転より下（1800 回転・PTO 逆転の 1450 回転）では止まり、メーターに「回転を上げて」と出る。同じ人の <a href="https://greenland-yoro.jp/dpf/" target="_blank" rel="noopener">DPF の記事</a> の機種は 再生のとき 2000 回転まで上げる。どの回転かは 機種で ちがう）<br>
       ・トラクターで耕していると いつものカラスが来て、近ごろは モズも来る。切り株のあいだを 小さな鳥が走り、止まると うずくまって 見えにくい。トラクターを降りて近づくと 走って 草むらへ 飛んでいった。野生のウズラは はじめて見た…<a href="https://ameblo.jp/iko228-yamaha/entry-12730524373.html" target="_blank" rel="noopener">ikoのブログ「珍しい野生の鳥がいたー 田んぼ耕し！」</a>（ゲームでは 春と秋の昼、半分の日に 1 羽が 耕している先の 切り株のあいだに ひそんでいる。トラクターが近づくと 株の列のあいだを 走って逃げ、止まると うずくまる。すぐそばまで来ると 低く飛んで 畦の草むらへ。ウズラは 環境省のレッドリストで 絶滅危惧Ⅱ類：<a href="https://www.env.go.jp/nature/choju/docs/docs5/docs5-uzura.pdf" target="_blank" rel="noopener">環境省の資料</a>）<br>
       ・春に浅く起こしすぎ、深水で代かきした年は、田植えの日に 稲わらが水面に大量に浮き、レーキで埋めようとしても沈まず 田植えに失敗した。その後は 7〜10cm 起こし、代かきを 2 回にした…<a href="https://komeya4th.exblog.jp/28361023/" target="_blank" rel="noopener">米屋四代目のブログ（岡山）「浅すぎる田起こしと深水代掻きの結末」</a>（ゲームでは 代かきで 浮き藁が畦ぎわに たくさん寄ると出る）<br>
       ・速く進めば早く終わると思っていたが、自分の田んぼと機械では、速いと 爪が土を十分にまぜられず 浅い耕しになった。ゆっくり進むほど 土が細かくなり、草やワラが むらなく まざる…<a href="https://happy-ricefarm.com/%E5%88%9D%E3%82%81%E3%81%A6%E3%81%AE%E3%83%88%E3%83%A9%E3%82%AF%E3%82%BF%E3%83%BC%E8%80%95%E3%81%97%E3%81%A8%E5%AD%A6%E3%82%93%E3%81%A0%E3%82%B3%E3%83%84/" target="_blank" rel="noopener">happy-ricefarm（ブログ）「初めてのトラクター耕し」</a>（ゲームでは 主変速を 4 速に上げると出る。ゲームの耕す深さは 耕深の設定で決まり、速さで変わるのは 土の細かさ＝耕うんピッチ）<br>
@@ -5398,14 +5399,25 @@ let PTO2 = SHIRO;
 // 軽油は 1 時間あたり 3 割ほど へる（農家さんのブログ shirouri360「トラクターのエンジン回転数を下げて、田起こしを始めました。」：
 // 最大 2500 回転を 2000 回転に下げて 秋の田起こし、燃料消費は 30% 前後へった。PTO 1・耕深 3。回転を下げると PTO も下がるので、
 // PTO 2 速で 試したこともある。現代農業の「低燃費・高速耕うん」も 回転を下げ PTO を 1 段上げる）。代かきは 水の中でハローを回すので 使わない
-let ECO = false;
-const ECO_RPM = 2000, ECO_K = ECO_RPM / 2500;
+let ECO = false, ECO_RPM = 2000;                // 下げる回転：2000（はじめの画面の ⛽）・1800（I か ⛽ ボタンで 2500 → 2000 → 1800 → 2500）
+const ecoK = () => ECO_RPM / 2500;
 const WORK_RPM = () => ECO ? ECO_RPM : 2500;
+// DPF の自動再生には 排気の温度が要るので、ある回転より下では 再生が進まない。どの回転かは 機種で ちがう
+// （greenland-yoro.jp の作業者のブログ「DPF」：クボタ MR70 は 再生のとき 2000 回転まで上げる。「PTO2速で燃費良く耕うんする方法」：1800 回転で使いつづけると
+// 自動再生のため 回転を上げる必要がある。クボタの取扱説明書：要求ランプが消えるまで 回転を上げる）。ゲームは MR70 の例で 2000 回転
+const REGEN_RPM = 2000;
+const setRpm = () => PTOREV ? REV_RPM : WORK_RPM();   // アクセルレバーで合わせている回転（逆転は 1450）
+function cycleEco() {                              // 2500 → 2000 → 1800 → 2500（I・⛽ ボタン）
+  if (SHIRO) return;
+  if (!ECO) { ECO = true; ECO_RPM = 2000; } else if (ECO_RPM > 1800) ECO_RPM = 1800; else ECO = false;
+  $('ecoBox').checked = ECO; $('bEco').textContent = ECO ? '⛽' + ECO_RPM : '⛽2500'; $('bEco').classList.toggle('on', ECO);
+  toast(ECO ? '⛽ 耕すときのエンジンを ' + ECO_RPM + ' 回転に下げた：軽油が へる。走る速さと 爪の回転は ' + Math.round((1 - ecoK()) * 100) + '% おそい。重い所では 力の余裕が少ない' + (ECO_RPM < REGEN_RPM ? '。DPF の自動再生は 進まない' : '') + '（I・⛽）' : 'エンジンを 2500 回転にもどした：力に 余裕がある（I・⛽）', 4);
+}
 const ecoOn = () => ECO && !PTOREV;               // 逆転は もともと 1450 回転なので 関係しない
 // 回転を下げると 力の余裕が少ない：ぬかるみで 回転が落ちる幅は ふつうと同じなので 早く粘りきれなくなり、エンストしやすい（950 → 800）。
 // 同じ人の あとの記事（shirouri360「昨年やり残した田起こししました」）：23 馬力のころは やわらかい所で 負荷がかかると エンジンが止まりそうになり、回転を上げていた。
 // 27 馬力にしてからは 2000 回転でも 粘る。合う回転は 機種・馬力・土で ちがう
-const STALL_LOAD = () => ecoOn() ? 800 : 950;
+const STALL_LOAD = () => ecoOn() ? 950 - (2500 - ECO_RPM) * 0.3 : 950;   // 2000 回転で 800・1800 回転で 740
 // PTO 逆転：爪を逆に回して、盛り上がった土（四隅の山）を前へ寄せて平らにする。正転より負荷が大きいので、やわらかい所だけ・ゆっくり。
 // 硬い所（まだ耕していない所）では使わない。エンジンは 1500 回転以下で（取扱説明書の目安）
 // （井上寅雄農園（note）「トラクターの逆転機能」「逆回転機能」）。逆転は PTO 変速レバーの R 速：正転の 1・2 速とは別の段で、
@@ -5489,7 +5501,7 @@ function step(dt) {
   S.hiRange = onRoad && !onSlope && !S.rotDown;     // 道では 副変速を「高」（路上）に入れて走る
   // 副変速は 3 段（低・中・高。ヤンマー YT3R の公式「操作性」②）：耕すときは低、上げて田んぼの中を移動するときは中、道は高
   S.range = S.rotDown || S.turnUpHold ? 'L' : S.hiRange ? 'H' : 'M';
-  const vmax = GEARS[S.gear - 1] * (S.rotDown || S.turnUpHold ? (PTOREV ? REV_RPM / 2500 : ECO ? ECO_K : 1) : 1) * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
+  const vmax = GEARS[S.gear - 1] * (S.rotDown || S.turnUpHold ? (PTOREV ? REV_RPM / 2500 : ECO ? ecoK() : 1) : 1) * (S.rotDown || S.turnUpHold ? 1 : onRoad && !onSlope ? 5 : 3.2) * (Math.abs(S.steer) > 0.4 && !S.rotDown ? 0.6 : 1);   // 旋回アップで上がったあいだは 速さを変えない（作業機の上昇と速さの切りかえは別）
   if (S.glow > 0) {                               // 予熱中：ランプが点くと カチッ、消えたら セルが回る（ソレノイドの カチッ）
     if (!S.glowClick) { S.glowClick = true; relayClick(0.7); }   // 始めるときは 音の用意があとなので、ここで鳴らす
     if ((S.glow -= dt) <= 0) relayClick();
@@ -5672,8 +5684,8 @@ function step(dt) {
   // 深く耕す春がいちばん重く、浅い秋・水の中の代かきは軽い。走るだけ・止まっているときは少し
   if (S.started && !(S.crank > 0)) {
     const eco = working && ecoOn();                // 回転を下げると 走る速さも 爪の回転も 2 割おそい：耕す量（＝要る力）が 2 割へり、燃料消費率も 1 割ほど よくなる
-    const sp = Math.min(1, Math.abs(S.v) / (0.78 * (eco ? ECO_K : 1)));   // 速さは 同じギアの ふつうの回転に くらべる
-    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.7 + 0.3 * DEPTH / DEPTH0) * (0.3 + 0.7 * sp) * (eco ? ECO_K * 0.88 : 1) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
+    const sp = Math.min(1, Math.abs(S.v) / (0.78 * (eco ? ecoK() : 1)));   // 速さは 同じギアの ふつうの回転に くらべる
+    const kw = 44 * (working ? (SHIRO ? 0.5 : season === 'haru' ? 0.62 : 0.48) * (0.7 + 0.3 * DEPTH / DEPTH0) * (0.3 + 0.7 * sp) * (eco ? ecoK() * 0.88 : 1) : 0.07 + 0.15 * Math.min(1, Math.abs(S.v) / 1.4));
     S.fuel = (S.fuel || 0) + kw * 0.25 / 0.83 * dt / 3600;
     if (S.fuel > 0.5 && !SHIRO) voice('kakunin');   // 燃料計が少し下がってきたころ（荒起こし：春・秋）
     if (eco && Math.abs(S.v) > 0.1) voice('teikaiten');   // 回転を下げて 耕しはじめたら
@@ -5684,16 +5696,15 @@ function step(dt) {
     S.pitch = tillPitch();
     S.fastT = S.pitch > 12 ? (S.fastT || 0) + dt : 0;
     // DPF の自動再生：耕しているとフィルターにすすがたまり、ある程度たまると作業しながら自動で燃やす（本物は 30 分ほど。ゲームは 1 分半）
-    // 回転を 2000 に下げたままだと 排気の温度が上がらず、自動再生が進まない（再生のときは 回転を上げる。greenland-yoro.jp の作業者のブログ
-    // 「PTO2速で燃費良く耕うんする方法」：DPF つきは 低い回転で使いつづけると 自動再生のため 回転を上げる必要がある）
-    if (S.dpfT > 0 && ecoOn()) {
-      if (!S.dpfLowTold) { S.dpfLowTold = true; toast('DPF の自動再生中。2000 回転のままでは 排気の温度が上がらず、再生が進みません。' + (MOBILE ? '' : 'I で ') + '2500 回転にもどすと 再生が進む', 6); voice('pto2nenpi'); }
+    // 回転が 低いままだと 排気の温度が上がらず、自動再生が進まない（REGEN_RPM。1800 回転・PTO 逆転の 1450 回転）
+    if (S.dpfT > 0 && setRpm() < REGEN_RPM) {
+      if (!S.dpfLowTold) { S.dpfLowTold = true; toast('DPF の自動再生中。' + setRpm() + ' 回転のままでは 排気の温度が上がらず、再生が進みません。' + (PTOREV ? 'O で 正転にもどすか、' : '') + '回転を ' + REGEN_RPM + ' 以上に上げる（' + (PTOREV ? '' : 'I・') + '⛽）', 6); voice('pto2nenpi'); }
     } else if (S.dpfT > 0) { if ((S.dpfT -= dt) <= 0) S.dpfLoad = 0; }
     else if ((S.dpfLoad = (S.dpfLoad || 0) + dt) > 200) { S.dpfT = 90; if (!S.dpfTold) { S.dpfTold = true; toast('DPF（排気のすすをこしとるフィルター）を自動で再生しています。そのまま作業できます'); } }
     if (S.fastT > 3 && !S.fastTold && !SHIRO) { S.fastTold = true; toast('速すぎて土が粗くなっています（耕うんピッチ ' + Math.round(S.pitch) + 'cm）。1〜2 速でゆっくり走ると細かく砕けます'); }
   }
   // 爪軸の回転：PTO が入ると回りはじめ、上げて PTO が切れても すぐには止まらず、はずみで しばらく回る
-  const wPto = 19 * ptoRatio() / (561 / 2600) * (PTOREV ? REV_RPM / 2500 : ecoOn() ? ECO_K : 1);   // 逆転・低燃費は エンジンを下げるので 爪もゆっくり
+  const wPto = 19 * ptoRatio() / (561 / 2600) * (PTOREV ? REV_RPM / 2500 : ecoOn() ? ecoK() : 1);   // 逆転・低燃費は エンジンを下げるので 爪もゆっくり
   const wT = S.stalled ? 0 : working ? wPto : S.rotDown ? wPto * 0.9 : 0;
   S.rotorW = (S.rotorW || 0) + (wT - (S.rotorW || 0)) * Math.min(1, dt * (wT > (S.rotorW || 0) ? 4 : 0.9));
   P.Rotor.rotation.x += S.rotorW * dt * (PTOREV ? -1 : 1);   // 逆転は 爪が逆に回る
@@ -5988,7 +5999,7 @@ function drawMonitor(pct) {
   } else if (S.dpfT > 0) {                        // DPF 自動再生中のしるし
     g.fillStyle = '#3a2a08'; g.fillRect(14, 228, 200, 30);   // 地図の左下（下の水温計・燃料計にかぶらない）
     g.fillStyle = Math.floor(performance.now() / 600) % 2 ? '#ffb020' : '#d08a10'; g.font = 'bold 16px sans-serif'; g.textAlign = 'left'; g.textBaseline = 'middle';
-    g.fillText(ecoOn() ? 'DPF 再生：回転を上げて' : 'DPF 自動再生中', 24, 243);   // 2000 回転のままでは 再生が進まない
+    g.fillText(setRpm() < REGEN_RPM ? 'DPF 再生：回転を上げて' : 'DPF 自動再生中', 24, 243);   // 低い回転のままでは 再生が進まない
   }
   monitor.tex && (monitor.tex.needsUpdate = true);
 }
@@ -6458,7 +6469,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyB') key.lookBack = 1;
   else if (e.code === 'KeyH') toggleHelp();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
-  else if (e.code === 'KeyI' && !SHIRO) { ECO = !ECO; $('ecoBox').checked = ECO; toast(ECO ? '⛽ エンジンを 2000 回転に下げた：軽油が へる。走る速さと 爪の回転は 2 割おそい。重い所では 力の余裕が少ない（I）' : 'エンジンを 2500 回転にもどした：力に 余裕がある（I）', 4); }
+  else if (e.code === 'KeyI') cycleEco();
   else if (e.code === 'KeyP' && (S.rotDown || (S.rotorW || 0) > 1)) toast('PTO の変速は、' + IMPL + 'を上げて 爪の回転が止まってから（本物も PTO を切り、止まってから変速レバーを動かす）（P）', 4);
   else if (e.code === 'KeyP' && PTOREV) { PTOREV = false; PTO2 = false; toast('PTO 1 速（正転）：ふつうの田起こし（P）'); }
   else if (e.code === 'KeyP') { PTO2 = !PTO2; setTimeout(() => voice('newMachine'), 4500); toast(PTO2 ? 'PTO 2 速：爪が速く回り、土が細かく砕ける（エンジンは少し重い。ジャンボタニシ対策の冬の耕うんにも）（P）' : 'PTO 1 速：ふつうの田起こし（P）'); }
@@ -6584,11 +6595,12 @@ function toggleHelp() {
 $('bHelp').onclick = toggleHelp;
 $('bHelpClose').onclick = toggleHelp;
 $('bEasy').onclick = () => setEasy(!EASY.on);
+$('bEco').onclick = cycleEco;
 $('easyBox').onchange = e => setEasy(e.target.checked);
 if (SHIRO) $('walkLabel').classList.add('hidden');
 if (season !== 'haru') $('stoneLabel').classList.add('hidden');
 if (season !== 'haru') $('rengeLabel').classList.add('hidden');
-if (SHIRO) { $('yamaLabel').classList.add('hidden'); $('ecoLabel').classList.add('hidden'); }   // 代かきの ハローには 耕うん爪がない
+if (SHIRO) { $('yamaLabel').classList.add('hidden'); $('ecoLabel').classList.add('hidden'); $('bEco').classList.add('hidden'); }   // 代かきの ハローには 耕うん爪がない
 $('rengeBox').checked = RENGE_ON;
 $('rengeBox').onchange = () => go(season, TOD, ART_ID, WX, $('rengeBox').checked);   // 田んぼの見た目が変わるので 読みなおす   // 石を拾うのは 冬のあいだ（春の田起こしの前）   // 代かきは 水を張っているので 歩いて確かめるのは 田起こしのとき
 // 耕す前に田んぼを一回り歩いて、やわらかい所を確かめる（はまってから気づいた農家さんの教訓：自然でトトノウ会の note）。
@@ -6748,7 +6760,8 @@ $('bStart').onclick = () => {
     if (season === 'aki') setTimeout(() => voice('dryWait'), 20000);
     BELT.start($('checkBox').checked); COVER.start($('checkBox').checked); GREASE.start($('checkBox').checked); CLAW.start($('checkBox').checked); KATA.start($('checkBox').checked); STONES.start($('stoneBox').checked);
     YAMA.on = !SHIRO && $('yamaBox').checked;
-    ECO = !SHIRO && $('ecoBox').checked;
+    ECO = !SHIRO && $('ecoBox').checked; ECO_RPM = 2000;
+    $('bEco').textContent = ECO ? '⛽2000' : '⛽2500'; $('bEco').classList.toggle('on', ECO);
     if (!SHIRO && $('walkBox').checked) walkField();
     else if (!SHIRO && RAIN) setTimeout(() => voice('numa'), 11000);   // 雨のあとに耕して はまった話
     if (FOG0) setTimeout(() => toast('窓の内側がくもっています。デフロスター（エアコンの除湿した風）で 前ガラスの下から だんだん晴れます', 5), 1500);
@@ -6823,7 +6836,7 @@ function finish() {
     (tiltA >= 1 ? `<br><span class="small">傾いたハローで かいたままの所：約 ${Math.round(tiltA)}m²（片側が浅く 土が出る。ハローを付けかえたら 平らな所で傾きを合わせる）</span>` : '') +
     `<br><span class="small">耕した所に残ったタイヤ跡：${trkM < 1 ? 'なし' : '約 ' + trkM + 'm。' + (SHIRO ? 'ターンの跡は、最後に外周を回って消す' : '跡は次の周で耕して消す')}</span>` +
     `<br><span class="small">作業能率：10a あたり ${tilledCount ? Math.round(S.elapsed / 60 / (tilledCount * CELL * CELL / 1000)) : '-'} 分（そのうち耕している時間 ${S.elapsed ? Math.round((S.workT || 0) / S.elapsed * 100) : 0}%。のこりは旋回や移動。人に頼むと 10a で 5,500 円くらい：茨城県常陸大宮市の標準料金の例）</span>` +
-    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり${ECO ? '。エンジンは 2000 回転' : ''}）</span>` +
+    `<br><span class="small">使った軽油：約 ${(S.fuel || 0).toFixed(1)}L（10a あたり ${((S.fuel || 0) / (4 * HX * HZ / 1000)).toFixed(1)}L。エンジンの力からの見積もり${ECO ? '。エンジンは ' + ECO_RPM + ' 回転' : ''}）</span>` +
     (season === 'aki' && SNAILS.count.up + SNAILS.count.crushed > 0 ? `<br><span class="small">ジャンボタニシ：つぶした 約 ${SNAILS.count.crushed} 匹・掘り起こした 約 ${SNAILS.count.up} 匹（ゆっくり走り、浅く耕すほど よくつぶれる）</span>` : '') + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
   const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];
@@ -7058,7 +7071,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { get ECO() { return ECO; }, set ECO(v) { ECO = v; }, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

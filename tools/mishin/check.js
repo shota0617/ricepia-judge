@@ -326,6 +326,17 @@ const CHECKS = {
     ok(/あと 1,001点/.test(bs.gap), 'じこベストに とどかない ときは「じこベストまで あと 何点」', bs.gap);
     ok(bs.said==='じこベスト こえた！', '遊んで いる 間に じこベストを こえたら 言う', bs.said);
     ok(/<b>じこベスト更新/.test(bs.up) && /はじめて「頼れるパートさん」/.test(bs.up), 'じこベスト更新と はじめての ランクは 金の 字で', bs.up);
+    // 60周目（見えにくさ 4回目）：おわりの 読み上げに 金の 行・タイムアタックの キャンバスの 名前・キーの 人には キーの ことばと 見える フォーカス
+    await p.waitForTimeout(200);
+    const a11 = await p.evaluate(() => ({ sr: document.getElementById('sr').textContent, lbl: document.getElementById('cv').getAttribute('aria-label') }));
+    ok(/じこベスト更新/.test(a11.sr), 'おわりの 読み上げに「じこベスト更新」も 入る', a11.sr);
+    ok(/タイムアタック/.test(a11.lbl), 'タイムアタックの キャンバスの 名前は れんしゅうの 文を のこさない', a11.lbl);
+    const kb = await p.evaluate(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key:'x', bubbles:true })); KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.bag.face = 'back'; for (let i=0;i<5;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 200)); /* 帯は 毎コマの syncUI が 作る */
+      const sn = document.getElementById('stepNow'), t = sn ? sn.textContent : 'なし'; S.bagNo = 2; S.bag.done = true; S.bag.open = 0; for (let i=0;i<160;i++) KB.step(1/60); return t; });
+    await p.waitForTimeout(200);
+    const fv = await p.evaluate(() => { const el = document.activeElement, r = el.getBoundingClientRect(); return { id: el.id, top:r.top, bottom:r.bottom, H:innerHeight }; });
+    ok(/←・→キー/.test(kb), 'キーで 遊ぶ 人には れんしゅうの 帯も キーの ことば', kb);
+    ok(fv.id==='practiceAgain' && fv.bottom <= fv.H, 'キーで 遊ぶ 人には まとめの フォーカスが 見える 所に', fv);
     for (const [w, h] of [[568,320],[667,375],[740,360]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 横向き（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }

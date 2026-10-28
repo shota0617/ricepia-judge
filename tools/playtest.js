@@ -2819,6 +2819,65 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.frames > 0 && r.bad === 0 && r.gone === true && r.reset === true };
     })();
+    // 浮かぶ 文字（「おしい！ ベストまで あと1…」など）は、めいろの 縁の 矢印と 道のりの 札に 重ねない（自分で 遊んで 分かった：西の ゴールの「2.4km」に 重なった）
+    // 描く 命令から 文字の 位置と はばを はかる（2行に 分けても 合わせて はかる。直す 前の コードでも はかれる）。東西の ゴールを いくつか ためし、重なるか よけた こまが 出るまで
+    R.checks.floatArrow = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d');
+        const shut = () => { document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
+        const T0 = 'おしい！ ベストまで あと1だったじゃん', keep = ctx.fillText;
+        let box = null;
+        const T1 = '🏅 あたらしい ベスト ×12！ やったじゃん ほんと すごい';   // 絵文字つきの 文字を 2行に 分けても 1文字も けずらない（Codex の 指摘）
+        let pieces = null;
+        ctx.fillText = function (t, x, y) { if (pieces && t.length >= 2 && T1.includes(t) && !pieces.includes(t)) pieces.push(t); if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width; const b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
+        const ov = (b, a) => !!(b && a && b[0] < a[2] && b[2] > a[0] && b[1] < a[3] && b[3] > a[1]);
+        const me = G.me, ew = G.spots.filter(x => x.lat && G.dist(me, x) > 1200 && G.dist(me, x) < 6000 && Math.abs(x.lat - me.lat) < Math.abs(x.lng - me.lng) * 0.6).sort((a, b) => Math.abs(a.lat - me.lat) / Math.abs(a.lng - me.lng) - Math.abs(b.lat - me.lat) / Math.abs(b.lng - me.lng)).slice(0, 10);   // 東西の ゴール（まっすぐ 東西に ちかい 順）
+        let goal = 'none', frames = 0, hits = 0, dodged = 0, tried = 0, emoji = null, split = 0;
+        for (const g of ew) {
+          tried++;
+          G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
+          for (let n = 0; n < 50 && P.maze.next().on; n++) { await wait(100); shut(); }   // 窓が 開いて いて 札が おくれて 出た ときも（札の 間は 浮かべない）
+          let fr = 0, hi = 0, dg = 0;
+          for (let k = 0; k < 2; k++) {
+            P.floatsClear(); P.floatText(T0);
+            for (let i = 0; i < 14; i++) {   // 文字が 浮いて いる 1.2秒の 間、こまごとに
+              box = null;
+              await new Promise(res => requestAnimationFrame(res));
+              const A = P.maze.mapArrow;
+              if (box && A) { fr++; if (ov(box, A)) hi++; const sh = P.floatShift; if (sh && (sh[0] || sh[1])) dg++; }
+              await wait(60);
+            }
+          }
+          if (hi || dg) {
+            goal = g.name; frames = fr; hits = hi; dodged = dg;
+            pieces = []; P.floatsClear(); P.floatText(T1);
+            for (let i = 0; i < 14; i++) { await new Promise(res => requestAnimationFrame(res)); await wait(60); }
+            emoji = pieces.length === 1 ? pieces[0] === T1 : pieces.length === 2 ? pieces.join(' ') === T1 : false; split = pieces.length; pieces = null;
+            break;
+          }
+        }
+        // 2だんめ：「🏁 つぎの ゴール」の 札（3秒）の 間は 浮かべず、札が 消えてから 浮かべる（ゴールの あと 待っていた 文字が 札の「めいろで 2.0km」に 重なった）
+        const g2 = G.spots.filter(x => x.lat && !x.shop && G.dist(me, x) > 300 && G.dist(me, x) < 2000 && (!G.guide || x.id !== G.guide.id)).sort((a, b) => G.dist(me, a) - G.dist(me, b))[0];
+        let during = 0, bannerFrames = 0, after = false;
+        if (g2) {
+          P.floatsClear(); G.setGuide({ kind: 'spot', id: g2.id, name: g2.name, why: 'テスト', by: 'テスト' });
+          for (let i = 0; i < 40 && !P.maze.next().on; i++) await wait(50);
+          P.floatText(T0);
+          for (let i = 0; i < 160 && !after; i++) {   // 札の 間（3秒 あまり）と その あと
+            await new Promise(res => requestAnimationFrame(res)); shut();
+            const on = P.maze.next().on, d = P.floatsDrawn.includes(T0);
+            if (on) { bannerFrames++; if (d) during++; } else if (d) after = true;
+            await wait(30);
+          }
+        }
+        ctx.fillText = keep; P.floatsClear(); G.setGuide(null);
+        return { tried, goal, frames, hits, dodged, emoji, split, g2: g2 && g2.name, bannerFrames, during, after };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.emoji === true && r.bannerFrames > 0 && r.during === 0 && r.after };
+    })();
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -2925,6 +2984,7 @@ async function walkTo(page, id) {
   need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
   need(c.eventToast && c.eventToast.ok, `イベントの 窓の 上に 知らせが 重なる（${JSON.stringify(c.eventToast)}）`);
   need(c.townNoRoom && c.townNoRoom.ok, `町名の 札：置き場所が ない ときに 重ねて 描く・町が かわっても 待ちを 引きつぐ（${JSON.stringify(c.townNoRoom)}）`);
+  need(c.floatArrow && c.floatArrow.ok, `浮かぶ 文字：めいろの 縁の 矢印と 道のりの 札・「つぎの ゴール」の 札に 重ねない（${JSON.stringify(c.floatArrow)}）`);
   need(c.townToast && c.townToast.ok, `町名の 札（〜 ○○町 〜）が 上の 知らせに かくれる（${JSON.stringify(c.townToast)}）`);
   need(c.landscape568 && c.landscape568.ok, `横に した 低い 画面（568×320）で はじめの1枚が えらべない・ごほうびの 窓が はみ出す（${JSON.stringify(c.landscape568)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);

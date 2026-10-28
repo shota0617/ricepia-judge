@@ -130,6 +130,12 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 @keyframes sway2{from{transform:rotate(-1.5deg)}to{transform:rotate(1.5deg)}}
 @media (prefers-reduced-motion:reduce){.noren b{animation:none}}
 @media (max-height:500px){.noren{display:none}} /* 横向きの 低い 画面では ボタンを 先に */
+@media (max-height:500px) and (min-width:640px){ /* 横向きの 結果は 2列（左に 腕まえ、右に 点と「もう一回」。ボタンを 画面の 中に） */
+  #result .panel{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:28px;row-gap:10px;align-items:start}
+  #result .panel>h1{grid-column:1;grid-row:1;align-self:end}
+  #result .panel>.rankBox{grid-column:1;grid-row:2/span 6}
+  #result .panel>:not(h1):not(.rankBox){grid-column:2}
+}
 .season{margin:0 auto -6px;display:inline-flex;align-items:center;gap:6px;align-self:center;background:#f1dfba;color:#3e2a1a;font:700 14px var(--body);padding:4px 12px 4px 6px;border:2px dashed rgba(122,90,48,.6);border-radius:12px 9px 13px 10px;transform:rotate(-2deg)}
 .season .d-ine{position:relative;width:22px}
 .skipped .hanko,.skipped .done3{display:none}
@@ -297,7 +303,7 @@ function makeBag(k){
   const nk = k<2 ? 0 : Math.min(4, 1 + Math.floor((k-2)/3)); // 後の 袋ほど きつい目が ふえる（さいだい 4。52周目）
   let guard=0;
   while(knots.size<nk && guard++<80){ const i = 3 + Math.floor(rnd()*(N-5));
-    if(k>=12 && knots.size===nk-1 && !knots.has(i-1) && !knots.has(i) && !knots.has(i+1) && !knots.has(i+2) && i+1<N-1){ knots.add(i); knots.add(i+1); } // 12袋目から：きつい目が 2つ ならぶ 所
+    if(k>=12 && knots.size===nk-2 && !knots.has(i-1) && !knots.has(i) && !knots.has(i+1) && !knots.has(i+2) && i+1<N-1){ knots.add(i); knots.add(i+1); } // 13袋目から：きつい目が 2つ ならぶ 所（2つで さいごの 2つ。合わせて 4まで）
     else if(!knots.has(i-1) && !knots.has(i+1)) knots.add(i); }
   const inSeason = BRANDS.filter(br => shinmaiSeason(day(), br)); // いま 新米が ある 銘柄
   const golden = k>0 && k%5===4 && inSeason.length > 0; // 新米の きせつ だけ
@@ -339,7 +345,7 @@ function startGame(practice){
   practice = practice === true; audio.hush();
   S.day = today(); dprCap = 2; frame.slowT = 0; resize(); // 日を きめる。画面の きめは ゲームごとに 2 から（おそい ときだけ また 下げる）
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
-  Object.assign(S,{lastBag:false,ending:0,hopT:[0,0,0,0],peckT:0,peckAll:false,mark:'',markT:0,mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
+  Object.assign(S,{lastBag:false,lastPulled:0,lastIdle:0,ending:0,hopT:[0,0,0,0],peckT:0,peckAll:false,mark:'',markT:0,mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
     bagNo:0,liftT:0,dirEff:1,quick:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
   S.practice = practice;
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
@@ -558,11 +564,12 @@ function step(dt){
   if(!S.practice){
     const before = Math.ceil(S.time);
     S.time -= dt;
-    if(S.time < 10 && Math.ceil(S.time) !== before) audio.tick(); // のこり 10秒から カチカチ
+    if(S.time > 0 && S.time < 10 && Math.ceil(S.time) !== before) audio.tick(); // のこり 10秒から カチカチ
     if(S.time<=0){ S.time=0; const lb = S.bag;
-      // 時間ぎれでも 半分 引いた 袋は「ラスト1袋」：もつれるか、0.8秒 はなすか、あけたら おわり
-      if(!S.lastBag && lb.phase==='pull' && !lb.done && !lb.tangle && lb.pulled>0){ S.lastBag = true; say('ラスト1袋！','ok'); }
-      if(!S.ending && (!S.lastBag || lb.tangle || (!lb.done && !S.held && S.liftT>0.8))) finish(); }
+      // 時間ぎれでも 引きはじめた 袋は「ラスト1袋」：もつれるか、0.8秒 はなすか、2.5秒 すすまないか、あけたら おわり
+      if(!S.lastBag && lb.phase==='pull' && !lb.done && !lb.tangle && lb.pulled>0 && (S.held || S.liftT<=0.8)){ S.lastBag = true; S.lastPulled = lb.pulled; S.lastIdle = 0; say('ラスト1袋！','ok'); }
+      if(S.lastBag && !lb.done){ if(lb.pulled !== S.lastPulled){ S.lastPulled = lb.pulled; S.lastIdle = 0; } else S.lastIdle += dt; } /* つまんだ まま 止まって いても おわる */
+      if(!S.ending && (!S.lastBag || lb.tangle || (!lb.done && ((!S.held && S.liftT>0.8) || S.lastIdle>2.5)))) finish(); }
   }
   if(S.ending > 0){ S.ending -= dt; if(S.ending <= 0) endGame(); return; } // 「そこまで！」の あと 結果へ
 
@@ -636,7 +643,7 @@ function step(dt){
       const mult = multOf(); S.maxMult = Math.max(S.maxMult, mult);
       // ×5 に とどいたら フィーバー：数秒 ×5 の まま、1目 ほどく ごとに 時間が 0.02 秒 のびる
       if(mult>=5 && !S.feverT && !S.practice){ S.feverT = R.feverDur; S.fevers++; say('フィーバー！','ok'); audio.fever(); }
-      if(S.feverT>0) S.time += 0.02;
+      if(S.feverT>0 && !S.lastBag) S.time += 0.02; /* 時間ぎれの あとは 時計を もどさない */
       S.score += 10*mult*(b.golden?2:1);
       const p = stitchPos(b, b.pulled-1);
       S.fx.push({kind:'pop', x:p.x, y:p.y, t:0, life:0.35, knot:wasKnot});
@@ -692,7 +699,7 @@ function finishBag(){
   if(!KB.calm) for(let i=0;i<(cleanBag?30:15);i++){ const r = Math.random; S.grains.push({genmai: b.kind==='genmai',x:W/2+(r()-0.5)*L.bagW*0.6, y:L.seamY-10, vx:(r()-0.5)*280, vy:-200-r()*420, t:0, rot:r()*6}); } // かざりは 袋の 乱数を 使わない（動きを へらす 設定でも 同じ 袋が 出る）
 }
 
-function addTime(d){ if(S.practice) return; S.time = Math.max(0, S.time + d); ui.td.textContent = (d>0?'+':'')+d+'秒'; ui.td.style.color = d>0?'var(--ok)':'#ff7b6e'; /* 紺の 空との 比 5.5 */ ui.tdT = 0; }
+function addTime(d){ if(S.practice || S.lastBag) return; /* ラスト1袋は 時計を もどさない */ S.time = Math.max(0, S.time + d); ui.td.textContent = (d>0?'+':'')+d+'秒'; ui.td.style.color = d>0?'var(--ok)':'#ff7b6e'; /* 紺の 空との 比 5.5 */ ui.tdT = 0; }
 function say(text, kind, life, read){ S.msg = {text, kind, t:0, life: life || (S.practice ? 2.5 : 1.2)}; if(!S.practice || read) srSay(text); } // れんしゅうは 上の 帯（aria-live）が 読む ので 2重に しない
 function srSay(text){ const sr = document.getElementById('sr'); if(!sr) return; // 一度 空に して、同じ 文が つづいても 読む。すぐ つづいた 声は つなげて 読む
   srSay.q = srSay.q ? srSay.q + '。' + text : text; if(srSay.t) return; sr.textContent = ''; srSay.t = setTimeout(()=>{ sr.textContent = srSay.q; srSay.q = ''; srSay.t = 0; }, 60); }
@@ -1437,7 +1444,7 @@ function drawMeter(L){
 function drawMeterBody(L, b, mw, mx, my){
   const maxT = 1.5;
   const z0 = mx + mw*zoneLo()/maxT, z1 = mx + mw/maxT;
-  const mf = S.practice ? 14 : 13, quiet = S.msg && S.msgY !== undefined && S.msgY + 34 > my - 16; // 吹き出しが かかる ときは 字を 出さない（横向き）
+  const mf = S.practice ? 14 : 13, quiet = S.msg && !(S.practice && S.msg.kind==='ng') && S.msgY !== undefined && S.msgY + 34 > my - 16; // 吹き出しが かかる ときは 字を 出さない（横向き）
   ctx.fillStyle = S.practice ? '#f3efe4' : '#a9b0c7'; ctx.font=`700 ${mf}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='left'; if(!quiet) ctx.fillText('糸の張り', mx, my-8);
   ctx.fillStyle='rgba(0,0,0,.35)'; roundRect(mx, my, mw, 12, 6); ctx.fill();
   ctx.fillStyle = S.feverT>0 ? 'rgba(240,196,76,.9)' : 'rgba(124,179,66,.75)'; ctx.fillRect(z0, my, z1-z0, 12); // 稲の 緑（フィーバー中は 金）

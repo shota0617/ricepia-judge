@@ -253,6 +253,32 @@ const CHECKS = {
       S.time = 0.01; KB.step(1/60); const mid = S.mode; for (let i=0;i<400 && !bb.done;i++){ x += S.tension>0.8 ? 0.5 : 3; KB.move(x, L.seamY+70); KB.step(1/60); }
       for (let i=0;i<120;i++) KB.step(1/60); return { mid, last:S.lastBag, done:bb.done, bags:S.bags, mode:S.mode }; });
     ok(lb.mid==='play' && lb.last && lb.done && lb.bags===1 && lb.mode==='over', '時間ぎれでも 引いている 袋は ラスト1袋 として あけられる', lb);
+    // 53周目の レビュー：ラスト1袋で つまんだ まま 止まると おわらない・時計が もどる・「ラスト1袋」と「そこまで」が 同時・きつい目が 5つ
+    const hang = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(1); Object.assign(bb, { face:'back', start:'L', slide:0, single:false, knots:new Set() }); S.bag = bb;
+      KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); }
+      let x = L.x0+40; KB.down(x, L.seamY+70); for (let i=0;i<40 && bb.pulled<3;i++){ x += 3; KB.move(x, L.seamY+70); KB.step(1/60); }
+      S.time = 0.01; KB.step(1/60); const last = S.lastBag; for (let i=0;i<60*5;i++) KB.step(1/60); /* つまんだ まま 動かさない */
+      const t0 = S.time; return { last, mode:S.mode, t0 }; });
+    ok(hang.last && hang.mode==='over', 'ラスト1袋で つまんだ まま 止まって いても おわる', hang);
+    const back = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(1); Object.assign(bb, { face:'back', start:'L', slide:0, single:false, knots:new Set() }); S.bag = bb; S.feverT = 3;
+      KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); }
+      let x = L.x0+40; KB.down(x, L.seamY+70); for (let i=0;i<40 && bb.pulled<3;i++){ x += 3; KB.move(x, L.seamY+70); KB.step(1/60); }
+      S.time = 0.01; KB.step(1/60); let maxT = 0; for (let i=0;i<600 && !bb.done;i++){ x += S.tension>0.8 ? 0.5 : 3; KB.move(x, L.seamY+70); KB.step(1/60); maxT = Math.max(maxT, S.time); }
+      for (let i=0;i<120;i++){ KB.step(1/60); maxT = Math.max(maxT, S.time); } return { maxT, done:bb.done, mode:S.mode }; });
+    ok(back.done && back.maxT===0 && back.mode==='over', 'ラスト1袋の あいだと あけた あと 時計が もどらない', back);
+    await p.waitForTimeout(400);
+    const ag = await p.evaluate(() => { const r = document.getElementById('againBtn').getBoundingClientRect(); return { top:r.top, bottom:r.bottom, H:innerHeight }; });
+    ok(ag.top >= 0 && ag.bottom <= ag.H, '横向きでも 結果の「もう一回」が 画面の 中に ある', ag);
+    await p.evaluate(() => { document.getElementById('sr').textContent = ''; });
+    const both = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(1); Object.assign(bb, { face:'back', start:'L', slide:0, single:false, knots:new Set() }); S.bag = bb;
+      KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); }
+      let x = L.x0+40; KB.down(x, L.seamY+70); for (let i=0;i<40 && bb.pulled<3;i++){ x += 3; KB.move(x, L.seamY+70); KB.step(1/60); }
+      KB.up(); for (let i=0;i<60;i++) KB.step(1/60); S.time = 0.01; KB.step(1/60); return { last:S.lastBag, ending:S.ending>0 }; });
+    await p.waitForTimeout(150);
+    const sr2 = await p.evaluate(() => document.getElementById('sr').textContent);
+    ok(!both.last && both.ending && !/ラスト/.test(sr2), 'はなして いる ときに 時間ぎれなら「ラスト1袋」と 言わずに おわる', { both, sr2 });
+    const kn = await p.evaluate(() => { let mx = 0; for (let k=0;k<40;k++) for (let s=0;s<8;s++) mx = Math.max(mx, KB.makeBag(k).knots.size); return mx; });
+    ok(kn===4, 'きつい目は さいだい 4つ', kn);
   },
   // お客さん目線（31周目）：れんしゅうで 表の 端を さわると 裏返す・途中で やめると はんこを 出さない・つぎの 袋に 前の 声を もちこさない
   async coin(b){

@@ -22,6 +22,12 @@ fs.mkdirSync(OUT, { recursive: true });
   await snap('04-pull', '引く（きつい目の 玉・ちりちりの 糸）');
   await p.evaluate(() => { const S = KB.S, L = KB.layout(), bb = S.bag; let x = S.px; for (let i=0;i<80 && !bb.tangle;i++){ x += 45; KB.move(x, L.seamY+70); KB.step(1/60); } KB.up(); for (let i=0;i<4;i++) KB.step(1/60); });
   await snap('05-tangle', 'もつれ（白糸を 引く）');
+  await p.evaluate(() => { const S = KB.S, L = KB.layout(); const bb = KB.makeBag(1); Object.assign(bb, { face:'back', start:'L', slide:0, single:false, knots:new Set() }); S.bag = bb; S.time = 30;
+    KB.down(L.x0+2, L.seamY); for (let i=0;i<12;i++){ KB.move(L.x0+2-i*3, L.seamY+i*3); KB.step(1/60); }
+    let x = L.x0+40; for (let n=0; n<2000 && !bb.done; n++){ x += S.tension>0.8 ? 0.5 : 4; KB.move(x, L.seamY+70); KB.step(1/60);
+      if (x > KB.size().W-10){ KB.up(); KB.step(1/60); x = L.x0+40; KB.down(x, L.seamY+70); } }
+    KB.up(); for (let i=0;i<14;i++) KB.step(1/60); });
+  await snap('05b-open', '一本どり（袋が あいた 瞬間）');
   await p.evaluate(() => { const S = KB.S; S.score = 8420; S.bags = 7; S.bestStreak = 3; S.quick = 2; S.fevers = 1; S.time = 0.01; KB.step(1/60); });
   await snap('06-result', '結果');
   await p.goto(FILE + '#coin'); await p.reload(); await p.waitForFunction(() => window.KB && KB.S.mode==='play'); await p.waitForTimeout(400); // ハッシュだけ かわる ときは 読みなおさないので reload

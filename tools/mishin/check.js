@@ -201,6 +201,10 @@ const CHECKS = {
     const r3 = await p.evaluate(() => { KB.startPractice(); steps(30); const S = KB.S, f = S.bag.face, btn = document.querySelector('.steps .skip');
       btn.focus(); btn.dispatchEvent(new KeyboardEvent('keydown', { key:' ', bubbles:true })); for (let i=0;i<40;i++) KB.step(1/60); return { f, after:S.bag.face }; });
     ok(r3.f===r3.after, 'ボタンの スペースで 袋が 裏返らない', r3);
+    const r5 = await p.evaluate(() => { KB.startPractice(); steps(30); const S = KB.S, bb = S.bag; if (bb.face==='front'){ KB.tap(640, KB.layout().seamY+200); steps(40); }
+      const btn = document.getElementById('soundBtn'); btn.focus(); const k = bb.start==='R' ? 'ArrowRight' : 'ArrowLeft';
+      btn.dispatchEvent(new KeyboardEvent('keydown', { key:k, bubbles:true })); const held = S.held; btn.dispatchEvent(new KeyboardEvent('keyup', { key:k, bubbles:true })); return { held }; });
+    ok(r5.held, 'ボタンに フォーカスが あっても 矢印で つまめる', r5);
     const r4 = await p.evaluate(() => {
       KB.startPractice(); const S = KB.S; for (let i=0;i<30;i++) KB.step(1/60); const bb = S.bag;
       if (bb.face==='front'){ KB.tap(640, KB.layout().seamY+200); for (let i=0;i<40;i++) KB.step(1/60); }

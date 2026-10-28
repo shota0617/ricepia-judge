@@ -310,6 +310,16 @@ const CHECKS = {
     const tip = await p.evaluate(() => document.getElementById('tip').textContent);
     ok(r.msg==='糸は 二本指で つまむ', 'タイムアタックで 1本指で なぞると「二本指で」と 字でも 言う', r);
     ok(r.mode==='over' && /二本指/.test(tip), '1袋も あけられなかった ときは つまみ方の ヒント', tip);
+    // 57周目の レビュー：二本指で つまんで 1本 はなした あとに「二本指で」と 言わない・つまんだ 人には 0袋でも べつの ヒント・低い 横向きでも「もう一回」が 見える
+    const pin = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; S.bag.face = 'back'; for (let i=0;i<5;i++) KB.step(1/60); S.msg = null;
+      const x = L.x0+2, y = L.seamY; ev('pointerdown',11,x-10,y); ev('pointerdown',12,x+10,y); for (let i=1;i<=10;i++){ ev('pointermove',11,x-10+i*8,y+i*4); ev('pointermove',12,x+10+i*8,y+i*4); KB.step(1/60); }
+      const held = S.held; ev('pointerup',12,x+90,y+40); ev('pointermove',11,x+80,y+60); KB.step(1/60); const msg = S.msg && S.msg.text; ev('pointerup',11,x+80,y+60); return { held, msg }; });
+    ok(pin.held && pin.msg!=='糸は 二本指で つまむ', '二本指で つまんで 1本 はなしても「二本指で」と 言わない', pin);
+    const tip2 = await p.evaluate(() => { KB.start(); const S = KB.S; S.wrongs = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
+    ok(!/まずは/.test(tip2), 'つまめた 人には 0袋でも べつの ヒント', tip2);
+    for (const [w, h] of [[568,320],[667,375],[740,360]]){ await p.setViewportSize({ width:w, height:h });
+      const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
+      ok(ag.b <= ag.H, `低い 横向き（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
   },
   // 新米の きせつ（34周目）：8/15〜12/31 だけ 新米シール。産年は 収穫の 年（農林水産省・愛知県）
   async season(b){

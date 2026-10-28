@@ -130,11 +130,13 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 @keyframes sway2{from{transform:rotate(-1.5deg)}to{transform:rotate(1.5deg)}}
 @media (prefers-reduced-motion:reduce){.noren b{animation:none}}
 @media (max-height:500px){.noren{display:none}} /* 横向きの 低い 画面では ボタンを 先に */
-@media (max-height:500px) and (min-width:640px){ /* 横向きの 結果は 2列（左に 腕まえ、右に 点と「もう一回」。ボタンを 画面の 中に） */
+@media (max-height:500px) and (min-width:560px){ /* 横向きの 結果は 2列（左に 腕まえ、右に 点と「もう一回」。ボタンを 画面の 中に） */
   #result .panel{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:28px;row-gap:10px;align-items:start}
   #result .panel>h1{grid-column:1;grid-row:1;align-self:end}
   #result .panel>.rankBox{grid-column:1;grid-row:2/span 6}
   #result .panel>:not(h1):not(.rankBox){grid-column:2}
+  #result .res{grid-template-columns:repeat(3,1fr);gap:6px} #result .res>div{padding:5px 2px;gap:0} #result .res span{white-space:nowrap;font-size:12px} #result .res strong{font-size:20px} /* 低い 画面では 点を 1行、のこり 3つを 1行に（ボタンを 画面の 中に） */
+  #result .res>div:first-child{grid-column:1/-1;flex-direction:row;justify-content:center;align-items:baseline;gap:12px}
 }
 .season{margin:0 auto -6px;display:inline-flex;align-items:center;gap:6px;align-self:center;background:#f1dfba;color:#3e2a1a;font:700 14px var(--body);padding:4px 12px 4px 6px;border:2px dashed rgba(122,90,48,.6);border-radius:12px 9px 13px 10px;transform:rotate(-2deg)}
 .season .d-ine{position:relative;width:22px}
@@ -420,7 +422,7 @@ function endGame(){
   ].filter(Boolean).join('<br/>');
 }
 function tipOf(zone){
-  if(S.bags===0) return 'まずは <b>二本指</b>で、赤い糸が 白い輪に ささっている 端を つまむ ところから。';
+  if(S.bags===0 && !S.fronts && !S.wrongs && !S.tangles) return 'まずは <b>二本指</b>で、赤い糸が 白い輪に ささっている 端を つまむ ところから。';
   if(S.fronts>=2) return '白い糸が<b>まっすぐ</b>だけなら表。袋をタップして まわそう（反対の面へ）。';
   if(S.wrongs>=2) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始め。反対の端（縫い始め）から 引くと からまる。';
   if(S.tangles>=2) return 'もつれが多め。<b>ゆっくり</b>引くのが本物のコツ。ひっかかって止まったら、はなさずに ゆっくり。';
@@ -1647,6 +1649,7 @@ function oneOk(x, y){
 }
 function oneStart(){ if(!oneCand || pinch) return; const f = fingers.get(oneCand.id); if(!f) return;
   pinch = 'one'; tapCand = null; down(oneCand.x, oneCand.y); if(f.x!==oneCand.x || f.y!==oneCand.y) move(f.x, f.y); oneCand = null; }
+function pinchTold(){ for(const f of fingers.values()) f.told = true; } /* 二本指で つまんだ 指は、1本 はなした あとも「二本指で」と 言わない */
 function pinchMid(){ const [a,b2] = [...fingers.values()]; return [(a.x+b2.x)/2, (a.y+b2.y)/2, Math.hypot(a.x-b2.x, a.y-b2.y)]; }
 cv.addEventListener('pointerdown', e=>{
   try{ cv.setPointerCapture(e.pointerId); }catch(_){}
@@ -1666,7 +1669,7 @@ cv.addEventListener('pointerdown', e=>{
   else if(fingers.size===2 && !pinch){
     tapCand = null; oneCand = null;
     const [mx,my,d] = pinchMid();
-    if(d < PINCH_ON){ pinch = 'touch'; down(mx,my); }
+    if(d < PINCH_ON){ pinch = 'touch'; down(mx,my); pinchTold(); }
   }
 });
 cv.addEventListener('pointermove', e=>{
@@ -1680,7 +1683,7 @@ cv.addEventListener('pointermove', e=>{
     if(oneCand && oneCand.id===e.pointerId && Math.hypot(x-oneCand.x, y-oneCand.y) > 14){ oneStart(); continue; }
     if(tapCand && tapCand.id===e.pointerId && Math.hypot(x-tapCand.x, y-tapCand.y) > 14) tapCand = null;
     // 1本指で なぞっても 糸は つまめない → 見本を 出す
-    if(fingers.size===1 && !pinch && !S.practice && S.mode==='play' && Math.hypot(x-f.sx, y-f.sy) > 30){ S.pinchHint = 1.2; if(!f.told){ f.told = true; say('糸は 二本指で つまむ','ok'); } } /* 字でも（1回の なぞりに 1回） */
+    if(fingers.size===1 && !pinch && !S.practice && S.mode==='play' && !S.ending && Math.hypot(x-f.sx, y-f.sy) > 30){ S.pinchHint = 1.2; if(!f.told){ f.told = true; say('糸は 二本指で つまむ','ok'); } } /* 字でも（1回の なぞりに 1回） */
     // れんしゅう：1本指で なぞっても 何も おきない とき → 表なら まわす、裏なら 黄色い 輪へ（1回の なぞりに 1回）
     if(fingers.size===1 && !pinch && S.practice && S.mode==='play' && !f.told && Math.hypot(x-f.sx, y-f.sy) > 30){ const b = S.bag;
       if(b && b.phase==='look' && !b.done && b.slide<=0.05 && b.flipT<=0){ f.told = true; if(b.face==='front'){ b.flipT = 0.0001; audio.flip(); } else { say('黄色い 輪の 所に 指を おいてね','ok', 0, true); S.pinchHint = 1.6; } } }
@@ -1688,7 +1691,7 @@ cv.addEventListener('pointermove', e=>{
       const [mx,my,d] = pinchMid();
       if(pinch==='touch'){ if(d > PINCH_OFF){ pinch=null; up(); } else move(mx,my); }
       else if(needOpen){ if(d > PINCH_ON + 20) needOpen = false; } // つまむ 幅より はっきり ひらいたら つまみなおせる
-      else if(d < PINCH_ON){ pinch='touch'; down(mx,my); }
+      else if(d < PINCH_ON){ pinch='touch'; down(mx,my); pinchTold(); }
     }
   }
 });

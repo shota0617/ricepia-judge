@@ -355,6 +355,13 @@ const CHECKS = {
     });
     console.log('  重さ（CPU 4倍 おそい・ヘッドレス）', r);
     ok(r.median < 60, '1コマ 60ms より 軽い', r);
+    // 58周目：れんしゅうの 拡大窓（見る 間）は 毎コマ 画面を 自分に うつさない
+    const z = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; await new Promise(r => setTimeout(r, 600));
+      const orig = CanvasRenderingContext2D.prototype.drawImage; let self = 0; const cv = document.getElementById('cv');
+      CanvasRenderingContext2D.prototype.drawImage = function(src, ...a){ if (src===cv) self++; return orig.call(this, src, ...a); };
+      await new Promise(res => { let n=0; (function f(){ if (++n<30) requestAnimationFrame(f); else res(); })(); });
+      CanvasRenderingContext2D.prototype.drawImage = orig; return { self, phase:S.bag.phase }; });
+    ok(z.phase==='look' && z.self <= 1, 'れんしゅうの 拡大窓は 見る 間 1回 だけ うつす', z);
   },
 };
 

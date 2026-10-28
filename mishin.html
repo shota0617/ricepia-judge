@@ -796,6 +796,7 @@ function draw(){
   drawMsg(L);
 }
 // れんしゅうの 手助け：①ほどき始めの 端を 大きく 見せる 窓 ②引いている 指の すぐ 上に 張りの 目安
+const zoomBmp = { c: document.createElement('canvas'), k:'' }; zoomBmp.x = zoomBmp.c.getContext('2d');
 function drawPracticeAids(L, b){
   if(!b || b.done) return;
   // 表の とき：袋の 横に 手がきの「くるっ」（袋を まわす）
@@ -813,7 +814,11 @@ function drawPracticeAids(L, b){
     const src = 20; // まわり 20px を 3倍 ほどに
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.clip();
     ctx.fillStyle='#b98f58'; ctx.fillRect(cx-r, cy-r, 2*r, 2*r);
-    ctx.drawImage(cv, (ex-src)*DPR, (ey-src)*DPR, 2*src*DPR, 2*src*DPR, cx-r, cy-r, 2*r, 2*r);
+    // 見る 間は 中身が かわらない ので、袋が 止まった 所で 1回 うつして とっておく（毎コマ 画面を 自分に かくと おそい スマホで 重い）
+    const zk = `${b.id}|${b.phase}|${b.face}|${W}|${H}|${DPR}|${bagReady()}|${document.fonts ? document.fonts.status : ''}`, live = b.phase==='free' || b.slide>0 || S.shake>0;
+    if(live || zoomBmp.k !== zk){ const zs = Math.round(2*src*DPR); if(zoomBmp.c.width !== zs){ zoomBmp.c.width = zoomBmp.c.height = zs; }
+      zoomBmp.x.clearRect(0, 0, zs, zs); zoomBmp.x.drawImage(cv, (ex-src)*DPR, (ey-src)*DPR, zs, zs, 0, 0, zs, zs); zoomBmp.k = live ? '' : zk; }
+    ctx.drawImage(zoomBmp.c, cx-r, cy-r, 2*r, 2*r);
     ctx.restore();
     ctx.strokeStyle='#3e2a1a'; ctx.lineWidth=6; ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.stroke(); // 外の 明るさでも 見える ように こげ茶の 下じき
     ctx.strokeStyle='#f0c44c'; ctx.lineWidth=3; ctx.stroke();

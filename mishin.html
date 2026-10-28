@@ -65,6 +65,9 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 #best{font-size:13px;color:var(--ink-dim)}
 .tip{margin:0;font-size:14px;line-height:1.6;text-align:left;background:rgba(201,164,108,.14);border-radius:10px;padding:10px 12px}
 .tip b{color:var(--kraft)}
+button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;min-height:40px;padding:6px 12px;border-radius:20px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body)}
+button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
+button.sound:focus-visible{outline:3px solid var(--ito);outline-offset:2px}
 button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2px solid var(--kraft);font-size:17px;padding:10px 16px}
 .steps{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none;display:flex;flex-direction:column;gap:6px}
 .steps .bar{display:flex;gap:6px;align-items:center;font-size:14px;color:var(--ink);letter-spacing:.06em}
@@ -99,6 +102,7 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
     <div class="hcell r"><span class="hlab">あけた袋</span><span class="hval" id="bags">0</span></div>
   </div>
   <div id="steps" class="steps" hidden></div>
+  <button type="button" id="soundBtn" class="sound" aria-pressed="true">音 あり</button>
   <div id="timeDelta"></div>
 
   <div class="overlay" id="title">
@@ -1151,11 +1155,15 @@ function drawMsg(L){
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
 // ---------- 音（WebAudio で作る） ----------
+// 音と ふるえ：コイン精米機の 前や 人の いる 所では 切れる ように（この 端末に おぼえる）
+let soundOn = true; try{ soundOn = localStorage.getItem('mishin-sound') !== 'off'; }catch(e){}
 const audio = {
   ac:null,
-  ensure(){ if(this.ac){ if(this.ac.state==='suspended') this.ac.resume(); return; } try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.zipOn(); }catch(e){} },
-  tone(f, d, type='sine', v=0.15, f2){ const ac=this.ac; if(!ac) return; const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.setValueAtTime(f, ac.currentTime); if(f2) o.frequency.exponentialRampToValueAtTime(f2, ac.currentTime+d); g.gain.setValueAtTime(v, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+d); o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime+d+0.02); },
-  noise(d, freq, v=0.2, q=2){ const ac=this.ac; if(!ac) return; const n=Math.max(1,Math.floor(ac.sampleRate*d)); const buf=ac.createBuffer(1,n,ac.sampleRate); const a=buf.getChannelData(0); for(let i=0;i<n;i++) a[i]=(Math.random()*2-1)*(1-i/n); const s=ac.createBufferSource(); s.buffer=buf; const f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q; const g=ac.createGain(); g.gain.value=v; s.connect(f).connect(g).connect(ac.destination); s.start(); },
+  ensure(){ if(this.ac){ if(this.ac.state==='suspended') this.ac.resume(); return; }
+    try{ this.ac = new (window.AudioContext||window.webkitAudioContext)(); this.master = this.ac.createGain(); this.master.gain.value = soundOn ? 1 : 0; this.master.connect(this.ac.destination); this.zipOn(); }catch(e){} },
+  setOn(on){ if(this.master) this.master.gain.setTargetAtTime(on ? 1 : 0, this.ac.currentTime, 0.02); },
+  tone(f, d, type='sine', v=0.15, f2){ const ac=this.ac; if(!ac) return; const o=ac.createOscillator(), g=ac.createGain(); o.type=type; o.frequency.setValueAtTime(f, ac.currentTime); if(f2) o.frequency.exponentialRampToValueAtTime(f2, ac.currentTime+d); g.gain.setValueAtTime(v, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+d); o.connect(g).connect(this.master); o.start(); o.stop(ac.currentTime+d+0.02); },
+  noise(d, freq, v=0.2, q=2){ const ac=this.ac; if(!ac) return; const n=Math.max(1,Math.floor(ac.sampleRate*d)); const buf=ac.createBuffer(1,n,ac.sampleRate); const a=buf.getChannelData(0); for(let i=0;i<n;i++) a[i]=(Math.random()*2-1)*(1-i/n); const s=ac.createBufferSource(); s.buffer=buf; const f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=freq; f.Q.value=q; const g=ac.createGain(); g.gain.value=v; s.connect(f).connect(g).connect(this.master); s.start(); },
   zip:null,
   // 下糸が 目から ぬけていく「シュルル」：くり返す ノイズを 帯で しぼり、引く 速さで 音量と 高さを かえる
   zipOn(){ const ac=this.ac; if(!ac || this.zip) return;
@@ -1164,7 +1172,7 @@ const audio = {
     const src = ac.createBufferSource(); src.buffer = buf; src.loop = true;
     const f = ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=1200; f.Q.value=1.5;
     const g = ac.createGain(); g.gain.value = 0;
-    src.connect(f).connect(g).connect(ac.destination); src.start();
+    src.connect(f).connect(g).connect(this.master); src.start();
     this.zip = { f, g };
   },
   zipSet(level, tension){ if(!this.zip) return; const t = this.ac.currentTime;
@@ -1180,7 +1188,7 @@ const audio = {
   open(){ this.noise(0.5, 2500, 0.15, 0.7); },
   clean(streak){ this.noise(0.6, 2500, 0.18, 0.7); const base = 660*Math.pow(1.06, Math.min(8,streak-1)); [1,1.26,1.5,2].forEach((r,i)=>setTimeout(()=>this.tone(base*r,0.16,'triangle',0.11), i*60)); },
 };
-function vib(p){ try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
+function vib(p){ if(!soundOn) return; try{ navigator.vibrate && navigator.vibrate(p); }catch(e){} }
 
 // ---------- UI ----------
 const $ = id=>document.getElementById(id);
@@ -1190,6 +1198,9 @@ renderGoals(ui.goals);
 $('startBtn').addEventListener('click', ()=>startGame(false));
 $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);
+function showSound(){ const b = $('soundBtn'); b.textContent = soundOn ? '音・ふるえ あり' : '音・ふるえ なし'; b.setAttribute('aria-pressed', String(soundOn)); }
+$('soundBtn').addEventListener('click', ()=>{ soundOn = !soundOn; try{ localStorage.setItem('mishin-sound', soundOn ? 'on' : 'off'); }catch(e){} audio.ensure(); audio.setOn(soundOn); showSound(); });
+showSound();
 ui.steps.addEventListener('click', e=>{ if(e.target && e.target.id==='skipBtn' && S.mode==='play') endPractice(); });
 $('practiceAgain').addEventListener('click', startPractice);
 $('toGame').addEventListener('click', ()=>startGame(false));

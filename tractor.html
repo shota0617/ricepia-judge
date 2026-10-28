@@ -5870,7 +5870,7 @@ function step(dt) {
   S.flare = Math.max(0, (S.flare || 0) - dt * 0.9);
   // バックアップ：耕しているときにバックすると、ロータリーが自動で上がる（前へ走りだすと下がる）
   if (key.back && S.rotDown && S.v < 0.3) { S.rotDown = false; S.autoUp = true; setRotBtn(); toast('バックしたので、ロータリーが自動で上がりました'); }
-  if (key.fwd && S.autoUp && S.v >= 0) { S.rotDown = true; S.autoUp = false; setRotBtn(); }
+  if (key.fwd && S.autoUp && S.v >= 0 && !OCHI.armed) { S.rotDown = true; S.autoUp = false; setRotBtn(); }   // 降下止めの つまみが しまっていると 自動では 下がらない
   // ぬかるみ：耕していると エンジンが重くなる。速さ（変速）と耕深が大きいほど重い。重すぎるとエンスト
   const wet = WET.at(S.x, S.z), workingNow = S.rotDown && S.rotPos < 0.08;
   if (wet > 0.2 && S.started) voice('wet');
@@ -5985,7 +5985,7 @@ function step(dt) {
   if (EASY.on && ART.on && S.v > 0.1) {            // 🔰 田んぼアート：白線をこえそうなら上げ、絵の中にもどったら下げる
     const [out, inn] = EASY.ahead();
     if (S.rotDown && S.rotPos < 0.08 && out >= 2) { S.rotDown = false; EASY.autoUp = true; EASY.used = true; setRotBtn(); EASY.tell('artUp', '白線をこえるので ' + IMPL + 'を上げました。絵の中にもどると下がります'); }
-    else if (!S.rotDown && EASY.autoUp && inn >= 2 && Math.abs(S.steer) < 0.2) { S.rotDown = true; EASY.autoUp = false; setRotBtn(); }
+    else if (!S.rotDown && EASY.autoUp && inn >= 2 && Math.abs(S.steer) < 0.2 && !OCHI.armed) { S.rotDown = true; EASY.autoUp = false; setRotBtn(); }
   }
   if (!S.rotDown && Math.abs(S.steer) > 0.45) EASY.autoUp = false;   // 回りはじめたら、自動で下げるのはやめる（下げるのは手で）
   if (Math.abs(S.steer) < 0.2) { S.turnLatch = false; S.turnUpHold = false; }
@@ -6883,7 +6883,7 @@ function setDepth(d) {
 // 次に 下げようとすると 降りず、知らせと 声。もう一度 押すと つまみを ゆるめて（10 秒）下がる
 const OCHI = (() => {
   let decided = false, armed = false, told = false, fixedNow = false;
-  function bump() { if (!decided) { decided = true; armed = Math.random() < 0.5; } }   // 降下止めを かけて 降りた
+  function bump() { if (!decided) { decided = true; armed = Math.random() < 0.5; if (armed) S.autoUp = false; } }   // 降下止めを かけて 降りた（しまったら バックの 自動の もどりも 下がらない）
   function stop() {                                // 下げようとした：降りないなら true
     fixedNow = false;
     if (!armed) return false;
@@ -6896,7 +6896,8 @@ const OCHI = (() => {
     armed = false; fixedNow = true; S.elapsed += 10;   // つまみを ゆるめる
     return false;
   }
-  return { bump, stop, get armed() { return armed; }, set armed(v) { armed = v; decided = true; }, get fixedNow() { return fixedNow; } };
+  const takeFixed = () => { const f = fixedNow; fixedNow = false; return f; };   // いま ゆるめたか（知らせで 1 回だけ 使う）
+  return { bump, stop, takeFixed, get armed() { return armed; }, set armed(v) { armed = v; decided = true; } };
 })();
 function toggleRotary() {
   if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || KATA.fixing) return;   // 泥落とし・直しているあいだは さわらない（降下止めをかけてある）
@@ -6911,7 +6912,7 @@ function toggleRotary() {
     return;
   }
   ASSIST.paused = false;
-  toast((OCHI.fixedNow ? '落下速度の つまみを ゆるめた。' : '') + (S.rotDown ? IMPL + 'を下げました（PTO 入）。前へ走ると' + (SHIRO ? '代かきできます' : '耕せます') : IMPL + 'を上げました（PTO 切）' + (SHIRO ? '。翼を折りたたみます' : '')));
+  toast((OCHI.takeFixed() ? '落下速度の つまみを ゆるめた。' : '') + (S.rotDown ? IMPL + 'を下げました（PTO 入）。前へ走ると' + (SHIRO ? '代かきできます' : '耕せます') : IMPL + 'を上げました（PTO 切）' + (SHIRO ? '。翼を折りたたみます' : '')));
 }
 function toggleAssist() {
   const A = ASSIST;

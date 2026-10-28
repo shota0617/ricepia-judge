@@ -6125,9 +6125,11 @@ function frame(now) {
     {   // 影：つぶの いまの はば（寝ころぶと広い）に合わせた、まるい点の だ円。とぶと小さく
       const wv = Math.sqrt((A * Math.cos(th)) ** 2 + (B * Math.sin(th)) ** 2), shw = wv * 1.8 / (1 + roll.h * 3), q = Math.max(1, Math.round(u)), sy0 = Math.round(hcy + T * 0.3);
       ctx.fillStyle = 'rgba(0,0,0,.28)';
-      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
-      ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
-      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+      if (gbOn && !worldMode) {   // ゲームボーイの4色は 点の だ円の まま
+        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
+        ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
+        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+      } else { ctx.beginPath(); ctx.ellipse(hx, hcy + T * 0.3 + u, shw / 2, 2 * u, 0, 0, Math.PI * 2); ctx.fill(); }   // お米と いっしょに なめらかに（点より 細かく 動く。整数に 丸めると 影だけ カクッと 動いた）
     }
     const sq = roll.sq;
     let sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる

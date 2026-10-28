@@ -782,9 +782,13 @@ async function walkTo(page, id) {
     const P0 = await page.evaluate(() => { const P = nishioPixel; if (!P.bflyIn) return null; const a = P.bflyIn(0), b = P.bflyIn(4); return { a: [Math.round(a.dx), Math.round(a.dy)], rest: b.rest, b: [b.dx, b.dy] }; });
     if (!P0) return { ok: false, why: 'no-api' };
     let st = null;
+    await page.evaluate(() => { const R = nishioPixel.roll; nishioPixel.rollPut(R.x, R.y, 0, 0); nishioPixel.setIdle(13); });   // 止めて、ねむった ところから（ねむるまで 12秒 待たない）
     for (let i = 0; i < 40; i++) { st = await page.evaluate(() => ({ ...nishioPixel.bfly, mood: nishioPixel.roll.mood })); if (st.phase === 'rest' || st.calm) break; await page.waitForTimeout(250); }
     const d0 = st.drawn; await page.waitForTimeout(300); const d1 = await page.evaluate(() => nishioPixel.bfly.drawn);
-    return { ...P0, st, more: d1 - d0, ok: st.calm || (st.phase === 'rest' && d1 > d0 && P0.a[0] > 30 && P0.rest && P0.b[0] === 0 && P0.b[1] === 0) };
+    // ゲームボーイの4色では 点の まま 整数の 位置に（なめらかに まぜると 4色 いがいの 色が 出る。Codex の 指摘）
+    const gb = await page.evaluate(async () => { const P = nishioPixel; P.setGb(true); for (let i = 0; i < 3; i++) await new Promise(r => requestAnimationFrame(r)); const b = P.bfly; P.setGb(false); return { smooth: b.smooth, at: b.at }; });
+    const gbOk = st.calm || (gb.smooth === false && !!gb.at && gb.at.every(v => Number.isInteger(v)));
+    return { ...P0, st, more: d1 - d0, gb, ok: gbOk && (st.calm || (st.phase === 'rest' && d1 > d0 && P0.a[0] > 30 && P0.rest && P0.b[0] === 0 && P0.b[1] === 0)) };
   })();
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
   R.checks.smoothShadow = await page.evaluate(async () => {

@@ -2174,6 +2174,32 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.inside && r.sw <= r.cw };
     })();
+    // スマホを 横に した 低い 画面（568×320）でも、はじめの1枚の 3枚が 見えて えらべ、ごほうびの 窓が 画面に 入る
+    // （自分で 遊んで 分かった：3枚が 下の パネルの うしろに かくれ、ごほうびの 窓は 上下に はみ出して 名前と「シェア」が 切れていた）
+    R.checks.landscape568 = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 568, height: 320 }); await w.page.waitForTimeout(500);
+      const r = await w.page.evaluate(async () => {
+        const wait = ms => new Promise(res => setTimeout(res, ms)), info = document.getElementById('pxInfo'), body = document.getElementById('pxInfoBody'), D = window.NISHIO_DOTS, H = innerHeight;
+        const keep = { hidden: info.hidden, html: body.innerHTML };
+        const card = id => `<button type="button"><img src="${D.dataUrl(id)}" alt="" width="96" height="96"/><span>炭火のかば焼き</span></button>`;
+        body.innerHTML = `<div class="pick-first"><h4>はじめの1枚を えらぼう</h4><p>えらんだ絵が、西尾ドット絵帳の1枚目になります</p><div class="pick3">${[1, 2, 3].map(card).join('')}</div></div>`;
+        info.hidden = false; await wait(250);
+        const dq = info.querySelector('.dq'), dr = dq.getBoundingClientRect(), sh = document.getElementById('sheet'), shown = sh && sh.getClientRects().length ? sh.getBoundingClientRect().top : H;
+        const cards = [...body.querySelectorAll('.pick3 button')].map(b => { const q = b.getBoundingClientRect(); return [Math.round(q.top), Math.round(q.bottom)]; });
+        const pickOk = cards.every(([t, b]) => t >= dr.top && b <= dr.bottom + 0.5 && b <= shown + 0.5 && b <= H);
+        body.innerHTML = keep.html; info.hidden = keep.hidden; await wait(150);
+        const rw = document.getElementById('reward'), rkeep = { cls: rw.className, html: rw.innerHTML };
+        rw.innerHTML = `<div class="rw hero long" style="animation:none"><span class="ribbon">NEW</span><div class="place">ようこそ！ はじめての たからばこ</div><div class="frame"><img class="dot-card" src="${D.dataUrl(1)}" alt="" width="192" height="192"/></div><div class="stars"><i></i><i></i><i></i><i></i></div><div class="banner">名鉄の電車</div><div class="sub"><b>+30</b></div><div class="chips"><span>+1</span><span>1km</span></div><button type="button" class="btn mini rw-share">📣 シェア</button></div>`;
+        rw.classList.add('show'); await wait(150);
+        const q = rw.querySelector('.rw').getBoundingClientRect(), rib = rw.querySelector('.ribbon').getBoundingClientRect();
+        const reward = [Math.round(q.top), Math.round(q.bottom)], rewardOk = q.top >= 0 && q.bottom <= H && rib.top >= 0;
+        rw.className = rkeep.cls; rw.innerHTML = rkeep.html;
+        return { H, cards, dq: [Math.round(dr.top), Math.round(dr.bottom)], sheetTop: Math.round(shown), pickOk, reward, rewardOk };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.pickOk && r.rewardOk };
+    })();
     // きろくの いちばん 上の「ミニゲーム にしおジャンプ」の 札は、ほかの 札と 同じ 幅で「あそぶ」が 札の 中（320px）
     // （自分で 遊んで 分かった：見出しの「📣 シェア」の うかせた ボタンを よけて 札が 細く なり、「あそぶ」が 札の 外に 出ていた）
     R.checks.jumpCard320 = await (async () => {
@@ -2778,6 +2804,7 @@ async function walkTo(page, id) {
   need(c.mzCrow && c.mzCrow.ok, 'めいろの カラス（出て 動く・当たると 時計が 5秒 すすむ・せっていで オフ）が はたらかない');
   need((R.walk.find(w => w.id === 'chest') || {}).ribbon?.has && !R.walk.find(w => w.id === 'chest').ribbon.hit, `ごほうびの「NEW」の 札が 名前の 字に 重なる（${JSON.stringify((R.walk.find(w => w.id === 'chest') || {}).ribbon)}）`);
   need(c.wrapWords320 && c.wrapWords320.ok, `知らせ・ごほうびの 名前が ことばの とちゅうで 切れる、または 長い 文が はみ出す（${JSON.stringify(c.wrapWords320)}）`);
+  need(c.landscape568 && c.landscape568.ok, `横に した 低い 画面（568×320）で はじめの1枚が えらべない・ごほうびの 窓が はみ出す（${JSON.stringify(c.landscape568)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);
   need(c.jumpCard320 && c.jumpCard320.ok, `きろくの にしおジャンプの 札が 細く なる・「あそぶ」が 札の 外に 出る（${JSON.stringify(c.jumpCard320)}）`);
   need(c.codeCardHead && c.codeCardHead.ok, `ひきつぎの あいことばの 見出しと 説明が 同じ 行に つづく（${JSON.stringify(c.codeCardHead)}）`);

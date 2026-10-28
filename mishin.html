@@ -87,7 +87,7 @@ button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 .tip::before{content:'';position:absolute;left:10px;top:12px;width:32px;height:32px;background:var(--onigiri) center/contain no-repeat}
 button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:5;min-height:48px;padding:8px 14px;border-radius:24px;border:2px solid rgba(201,164,108,.7);background:rgba(19,26,46,.8);color:var(--ink);font:700 13px var(--body)}
 body.menu button.sound{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}
-body.menu .overlay{top:calc(60px + env(safe-area-inset-top,0px));padding-top:4px} /* 音ボタンの 下から（下へ 送っても 字が かくれない） */
+body.menu .overlay{top:calc(60px + env(safe-area-inset-top,0px));padding-top:4px;background:linear-gradient(180deg,rgba(19,26,46,0),#131a2e 22px,#131a2e 45%,#2c2321)} /* 上の 端は ぼかす（板壁と ぷつっと 切れない） */ /* 音ボタンの 下から（下へ 送っても 字が かくれない） */
 button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
 button.sound:focus-visible{outline:3px solid var(--ito);outline-offset:2px}
 button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px solid var(--kraft);font:700 18px var(--body);padding:10px 16px}
@@ -1055,7 +1055,8 @@ function drawFrontPrint(L, b, x, top, w){
   });
   // 新米は 赤い まるい シール（あとから 貼る）
   if(b.golden){
-    const r = Math.min(30, w*0.085), gx = x + w*0.78, gy = y0 + sw + r + 18;
+    const r = Math.min(30, w*0.085), low = y0 + sw + 2*r + 18 > by - 14; /* 横向きの 低い 画面では 内容量に かかる ので 精米の 角印の 左へ */
+    const gx = low ? sx - r - 10 : x + w*0.78, gy = low ? y0 + sw/2 : y0 + sw + r + 18;
     ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.arc(gx+1.5, gy+2, r, 0, 7); ctx.fill();
     ctx.fillStyle='#d23a2a'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, 7); ctx.fill();
     ctx.strokeStyle='#f0c44c'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(gx, gy, r-3, 0, 7); ctx.stroke();

@@ -255,9 +255,10 @@ const CHECKS = {
   async season(b){
     const p = await page(b, 390, 844, '');
     const r = await p.evaluate(() => { const out = {};
-      for (const d of ['2026-10-28', '2027-03-10', '2026-08-20']) { KB.today = d; out[d] = { year: KB.riceYear(new Date(d)), golden: KB.makeBag(4).golden }; }
+      for (const d of ['2026-10-28', '2027-03-10', '2026-08-25']) { KB.today = d; const bag = KB.makeBag(4); out[d] = { year: KB.riceYear(new Date(d)), golden: bag.golden, brand: bag.brand, kaori: KB.riceYear(new Date(d), 'あいちのかおり') }; }
       KB.today = null; return out; });
     ok(r['2026-10-28'].golden && r['2026-10-28'].year===2026, '秋は その年が 産年で 新米シール', r['2026-10-28']);
+    ok(r['2026-08-25'].golden && r['2026-08-25'].brand!=='あいちのかおり' && r['2026-08-25'].kaori===2025, '8月下旬は あいちのかおりの 新米は まだ ない（10月中旬から）', r['2026-08-25']);
     ok(!r['2027-03-10'].golden && r['2027-03-10'].year===2026, '春は 前の 年が 産年で 新米シールなし', r['2027-03-10']);
   },
   // フォントは 使う 字だけ（tools/mishin/fonts.py）。字を 書き足したら 回す

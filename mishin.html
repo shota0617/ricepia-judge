@@ -221,10 +221,10 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
       <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：反対の端＝縫い始め（ここから 引くと からまる）"></canvas>
         <figcaption><span>反対の端（縫い始め）：からまる（×）</span></figcaption></figure>
       <ol class="real">
-        <li><b>1</b><span><strong>白い糸が まっすぐ</strong>なら表。袋を 立てたまま まわして、<strong>反対の面</strong>を 見る。<span class="fb" aria-hidden="true"><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><path d="M4 7h62" stroke="#f8f4ea" stroke-width="2.4" stroke-dasharray="7 2.5"/></svg>表</i><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><g fill="none" stroke="#f8f4ea" stroke-width="2"><ellipse cx="10" cy="7" rx="6" ry="3.4"/><ellipse cx="22" cy="7" rx="6" ry="3.4"/><ellipse cx="34" cy="7" rx="6" ry="3.4"/><ellipse cx="46" cy="7" rx="6" ry="3.4"/><ellipse cx="58" cy="7" rx="6" ry="3.4"/></g><path d="M4 8l12-2 12 2 12-2 12 2 12-2" stroke="#d8342c" stroke-width="2" fill="none"/></svg>裏</i></span></span></li>
-        <li><b>2</b><span><strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪に ささっている</strong>端から（たいてい左）。</span></li>
-        <li><b>3</b><span>赤の端を 輪から はずし、<strong>縫い目に そって 横へ ゆっくり</strong>引く。<strong>白糸は 自然に ぬける</strong>。ほどいた 糸は <strong>投入口に 入れず ごみ箱へ</strong>。</span></li>
-        <li><b>4</b><span>引っかかったら、<strong>表側の白糸</strong>を 少し 引いてから また 赤を 引く（JAの案内として 紹介されている 方法）。</span></li>
+        <li><b>1</b><span><strong>白い糸が まっすぐ</strong>なら表。袋を 立てたまま まわして、<strong>反対の面</strong>を 見る。表に「糸抜きはここから」と あっても、口は 裏（製粉会社の 説明）。<span class="fb" aria-hidden="true"><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><path d="M4 7h62" stroke="#f8f4ea" stroke-width="2.4" stroke-dasharray="7 2.5"/></svg>表</i><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><g fill="none" stroke="#f8f4ea" stroke-width="2"><ellipse cx="10" cy="7" rx="6" ry="3.4"/><ellipse cx="22" cy="7" rx="6" ry="3.4"/><ellipse cx="34" cy="7" rx="6" ry="3.4"/><ellipse cx="46" cy="7" rx="6" ry="3.4"/><ellipse cx="58" cy="7" rx="6" ry="3.4"/></g><path d="M4 8l12-2 12 2 12-2 12 2 12-2" stroke="#d8342c" stroke-width="2" fill="none"/></svg>裏</i></span></span></li>
+        <li><b>2</b><span><strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪に ささっている</strong>端から（裏から 見て たいてい左。袋に よっては 右）。</span></li>
+        <li><b>3</b><span>赤の端を 指で つまみ、白い輪を くぐらせて はずす。<strong>縫い目に そって 反対の端の 方へ ゆっくり</strong>引く（左からなら 右へ）。<strong>白糸は 自然に ぬける</strong>。ほどいた 糸は <strong>投入口に 入れず ごみ箱へ</strong>。</span></li>
+        <li><b>4</b><span>引っかかったら、袋の 表側（白い糸が まっすぐの 面）の <strong>白糸</strong>を 少し 引いてから また 赤を 引く（JAの案内として 紹介されている 方法）。</span></li>
       </ol>
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
       <button class="go sub" id="toGame" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
@@ -404,7 +404,7 @@ function drawEndsPic(){
 }
 // 時間ぎれ：「そこまで！」と 拍子木、0.8秒 たって から 結果へ（すぐ 切れない）
 let kbUser = false; addEventListener('keydown', e=>{ if(!e.ctrlKey && !e.metaKey && !e.altKey && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' ','Enter','Tab'].includes(e.key)) kbUser = true; }, true); /* 拡大（Ctrl＋）や Esc では かえない */ addEventListener('pointerdown', ()=>{ kbUser = false; }, true);
-function focusEnd(el){ el.focus({preventScroll:true}); if(kbUser) el.scrollIntoView({block:'nearest'}); } // キーの 人は フォーカスが 見える 所まで
+function focusEnd(el){ el.focus({preventScroll:true}); if(kbUser) requestAnimationFrame(()=>el.scrollIntoView({block:'center'})); } // キーの 人は フォーカスが 見える 所まで
 function finish(){ if(S.ending) return; S.ending = 0.8; S.held = false; say('そこまで！','ok', 1.2); audio.hush(); audio.wood(1500, 0.26, 0.1); audio.later(()=>audio.wood(1500, 0.26, 0.1), 160); S.hopT = [0.4, 0.4, 0.56, 0.56]; /* 拍子木に スズメが ぴょんと おどろく（音なし） */ }
 function endGame(){
   audio.hush();

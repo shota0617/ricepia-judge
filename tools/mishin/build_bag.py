@@ -146,8 +146,23 @@ def kraft():
     # でこぼこ：繊維の すじ＋細かい 粒
     add = N.new('ShaderNodeMath'); add.operation = 'ADD'
     Ln.new(fib.outputs['Fac'], add.inputs[0]); Ln.new(fine.outputs['Fac'], add.inputs[1])
+    # 縫い目の みぞ：糸が 重ねた 紙を しめつけて、縫い目に そって 紙が へこみ、目と 目の 間が 少し ふくらむ（1目 8.5mm）
+    def M(op, a, b=None, v=None):
+        n = N.new('ShaderNodeMath'); n.operation = op
+        if isinstance(a, (int, float)): n.inputs[0].default_value = a
+        else: Ln.new(a, n.inputs[0])
+        if b is not None:
+            if isinstance(b, (int, float)): n.inputs[1].default_value = b
+            else: Ln.new(b, n.inputs[1])
+        return n.outputs['Value']
+    sep = N.new('ShaderNodeSeparateXYZ'); Ln.new(tc.outputs['Object'], sep.inputs['Vector'])
+    dz = M('DIVIDE', M('SUBTRACT', sep.outputs['Z'], SEAM), 0.0025)
+    groove = M('EXPONENT', M('MULTIPLY', M('POWER', dz, 2.0), -1.0))
+    pucker = M('ADD', M('MULTIPLY', M('COSINE', M('MULTIPLY', sep.outputs['X'], 2*math.pi/0.0085)), 0.6), 1.0)
+    seamH = M('MULTIPLY', M('MULTIPLY', groove, pucker), -2.5)
+    total = M('ADD', add.outputs['Value'], seamH)
     bump = N.new('ShaderNodeBump'); bump.inputs['Strength'].default_value = 0.35; bump.inputs['Distance'].default_value = 0.0004
-    Ln.new(add.outputs['Value'], bump.inputs['Height'])
+    Ln.new(total, bump.inputs['Height'])
     Ln.new(bump.outputs['Normal'], bsdf.inputs['Normal'])
     _mat = m
     return m

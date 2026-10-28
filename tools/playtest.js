@@ -2873,7 +2873,8 @@ async function walkTo(page, id) {
           if (box) break;
         }
         for (let i = 0; i < 15; i++) {   // 札の 間、こまごとに 知らせと 札の 重なりを 見る
-          box = null; G.toast(msg);
+          box = null; G.toast(msg); el.classList.add('show'); el.classList.remove('wlow');   // 知らせを 上に 出した まま 見る（縁の 矢印を よけて 下に いると 比べられず、ときどき seen 0 で 落ちた）
+          if (!P.townBox && i % 5 === 0) P.townBanner('テスト町');   // 札が 消えて いたら 出しなおす
           await new Promise(res => requestAnimationFrame(res));
           if (box && el.classList.contains('show') && !el.classList.contains('wlow')) {   // 知らせが 上に 出て いる こま（縁の 矢印を よけて 下に いる こまは 数えない）
             seen++;

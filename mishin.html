@@ -1059,6 +1059,7 @@ function drawMeter(L){
     ctx.fillText('端を二本指でつまむ＝ほどく　袋をタップ＝裏返す', W/2, my+6, W-24);
     return;
   }
+  if(S.practice) return; // れんしゅうは 指の 上の 目安だけ（上の メーターは 帯と 重なる）
   const maxT = 1.5;
   const z0 = mx + mw*zoneLo()/maxT, z1 = mx + mw/maxT;
   const mf = S.practice ? 14 : 11;

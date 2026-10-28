@@ -101,6 +101,12 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .blink svg+svg{position:absolute;inset:0;opacity:0;animation:blink 4.3s infinite}
 @keyframes blink{0%,93%,100%{opacity:0}94%,97%{opacity:1}}
 @media (prefers-reduced-motion:reduce){.blink svg+svg{animation:none}}
+/* よみこみ中（#coin で 袋の 絵を 待つ 間）：こめつぶが ゆらゆら */
+#loading{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;display:flex;align-items:center;gap:10px;
+  background:#f1dfba;color:#3e2a1a;border:2px dashed rgba(122,90,48,.6);border-radius:16px 12px 15px 13px;padding:8px 16px 8px 12px;font:700 16px var(--body);white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+#loading .d-load{position:relative;width:26px;animation:sway 1.2s ease-in-out infinite alternate;transform-origin:50% 90%}
+@keyframes sway{from{transform:rotate(-10deg)}to{transform:rotate(10deg)}}
+@media (prefers-reduced-motion:reduce){#loading .d-load{animation:none}}
 .panel h1{position:relative}
 .panel .perch{position:relative}
 .d-suzume-btn{width:46px;right:18px;top:-36px}
@@ -142,6 +148,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
   <button type="button" id="soundBtn" class="sound" aria-pressed="true">音 あり</button>
   <div id="timeDelta"></div>
 
+  <div id="loading" role="status" hidden><span data-d="komeBlink" class="d-load"></span><span>袋を よういして います…</span></div>
   <div class="overlay" id="title">
     <div class="panel">
       <h1><small>米袋の口を あける</small>ミシン糸<br/>一本どり<span data-d="komeBlink" class="d-kome-h1"></span><span data-d="komeSleep" class="d-kome-h1 l"></span></h1>
@@ -285,7 +292,7 @@ function startGame(practice){
     bagNo:0,liftT:0,dirEff:1,quick:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
   S.practice = practice;
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
-  ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true;
+  ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true; $('loading').hidden = true;
   setTimeout(measureHud, 0); // HUD が 出てから はかる
   ui.hud.hidden = practice; ui.steps.hidden = !practice;
   ui.steps._no = ui.steps._now = null;
@@ -1598,7 +1605,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 resize(); requestAnimationFrame(frame);
-if(location.hash === '#coin') whenBag(()=>{ if(S.mode!=='play') startPractice(); }); // コイン精米機の QR から（袋の 絵が とどいて から）
+if(location.hash === '#coin'){ if(!bagReady()) $('loading').hidden = false; whenBag(()=>{ $('loading').hidden = true; if(S.mode!=='play') startPractice(); }); } // コイン精米機の QR から（袋の 絵が とどいて から）
 try{ document.fonts.ready.then(()=>{ bagStore.key = null; }); }catch(e){}
 })();
 </script>

@@ -2788,7 +2788,7 @@ async function walkTo(page, id) {
         ctx.fillText = function (t) { if (/^〜 .+ 〜$/.test(t)) box = lastRect; return keep.ft.apply(this, arguments); };
         const ov = (b, r) => !!(b && r && b[0] < r[2] && b[2] > r[0] && b[1] < r[3] && b[3] > r[1]);
         // 1. 北の ゴールで 長い 町名：左右にも 矢印の 下にも 置けない（矢印が 上の まん中、矢印の 下は お米）
-        const g = G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.008 && Math.abs(x.lng - G.me.lng) < 0.004 && G.dist(G.me, x) < 3500)[0];
+        const g = G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.006 && Math.abs(x.lng - G.me.lng) < (x.lat - G.me.lat) * 0.35 && G.dist(G.me, x) < 6000).sort((a, b) => Math.abs(a.lng - G.me.lng) - Math.abs(b.lng - G.me.lng))[0];   // 北の ゴール（まっすぐ 北に ちかい もの）
         let frames = 0, bad = 0, drawn = 0, gone = null;
         if (g) {
           G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();
@@ -2803,12 +2803,14 @@ async function walkTo(page, id) {
           gone = !P.townBox;
         }
         // 2. 待ちの とちゅうで 本当に 町が かわる：新しい 町名は 前の 待ちを 引きつがない
+        G.setGuide(null); await wait(300);   // 縁の 矢印を 出さない（札が 待たずに 出る ように）
+        for (let i = 0; i < 40 && P.townBox; i++) await wait(100);   // 前の 町名の 札が 消えるまで
         P.townWait = 3500;
         let reset = null;
         const sp = G.spots.filter(x => x.lat && G.dist(G.me, x) > 1500 && G.dist(G.me, x) < 4000)[0];
         if (sp) {
           const t = P.meiroApi.toTile(sp.lat, sp.lng); P.rollPut(t.x + 0.5, t.y + 0.5);
-          for (let i = 0; i < 30 && reset === null; i++) { await wait(100); shut(); if (P.townBox || P.townWait !== 3500) reset = P.townWait < 1000; }
+          for (let i = 0; i < 40 && reset === null; i++) { await wait(100); shut(); if (P.townBox) reset = P.townWait < 1000; }   // 新しい 町名の 札が 出た ときの 待ち
         }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
         return { g: g && g.name, frames, drawn, bad, gone, reset };

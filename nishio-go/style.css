@@ -462,6 +462,8 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
 body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}
 body.px .toast.wlow{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}   /* せかいちずで「ゴール：…」の 札・めいろで 縁の 矢印の 札に 重なる ときは 下へ（worldToastDodge） */
+body.px .toast.wside{left:var(--toast-x,50%)}   /* 上も 下も 縁の 矢印の 札に 重なる ときは 札の 横へ（worldToastDodge） */
+body.px .toast.wfloor{top:auto;bottom:calc(var(--safe-b) + 6px)}   /* 横にも 入らなければ いちばん 下（下の タブの 上に 重ねる。知らせは タップを 通す。下の 欄の ゴールの 名前を かくさない） */
 body:has(#pxInfo:not([hidden])) .toast.low{bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}   /* 窓に 重なる ときは 下の札の 上に（toastDodge。小さい 画面で「▶ とじる」が かくれた） */
 /* きろく・こえ・とくてん・せってい のタブでは、上の見出し（バッジの達成率・もうすぐ など）に重ねないよう 下に */
 body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .toast,body:has(#panel-rewards:not([hidden])) .toast,body:has(#panel-settings:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}

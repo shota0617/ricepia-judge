@@ -2573,7 +2573,7 @@ function toast(msg) {
   if (toastBlocked()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面・シェアの 窓・めいろの「🏁 つぎの ゴール」の 上にも 重ねない（とじてから）
   if (toastQ.length) toastFlush();   // 待たせた ものが のこって いれば あとに 出す（札の 途中で 地図を はなれた など）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
-  el.textContent = msg; el.classList.remove('wlow'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow：せかいちずの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
+  el.textContent = msg; el.classList.remove('wlow', 'wside', 'wfloor'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow・wside・wfloor：せかいちず・めいろの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）

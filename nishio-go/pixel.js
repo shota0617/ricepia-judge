@@ -6568,27 +6568,39 @@ function shopTag(cx, bottom, dpr, s) {
 // 地図を 引っぱって 札が 下げた 知らせの 下に 来たら、上が 空いて いれば 上へ もどす（Codex の 指摘）。位置は 動きの とちゅうで なく、止まった 形で はかる
 // めいろでも 同じ：縁の 矢印と 道のりの 札（mzMap.arrow）に 重なる ときは 下へ（自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）。
 // 下へ 動かすのは、下の めいろ図・「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
-const wtd = { key: '' };
+// 横向きの 低い 画面では 上も 下も 札に 重なる（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印と「840m」が「📅 あしたも来ると +20pt」に かくれた）。
+// そのときは 札の 横へ ずらし（wside。入る ときだけ）、それも だめなら いちばん 下（下の タブの 上に 重ねる。wfloor。知らせは タップを 通すので タブは 押せる。下の 欄の ゴールの 名前は かくさない）
+const wtd = { key: '' }, WT_MODES = ['wlow', 'wside', 'wfloor'];
 function worldToastDodge(tag, avoid = []) {
   const el = document.getElementById('toast');
   if (!el) return;
-  if (!el.classList.contains('show') || !tag) { if (el.classList.contains('wlow')) el.classList.remove('wlow'); wtd.key = ''; return; }
+  if (!el.classList.contains('show') || !tag) { if (WT_MODES.some(m => el.classList.contains(m))) el.classList.remove(...WT_MODES); wtd.key = ''; return; }
   const r = cv.getBoundingClientRect(), k = r.width / cv.width, T = [r.left + tag[0] * k, r.top + tag[1] * k, r.left + tag[2] * k, r.top + tag[3] * k];
   const A = avoid.map(a => a.page ? a.page : [r.left + a[0] * k, r.top + a[1] * k, r.left + a[2] * k, r.top + a[3] * k]);   // page：画面の 座標（DOM の 札）
-  const low = el.classList.contains('wlow'), key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + low + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
+  const cur = WT_MODES.find(m => el.classList.contains(m)) || '', key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + cur + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
   if (key === wtd.key) return;   // 札・知らせ・画面が かわらなければ はかりなおさない
   wtd.key = key;
-  const posAt = lw => {   // wlow を lw に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）
+  const posAt = (m, x) => {   // 知らせを m（'' は 上）に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）。x：wside の 知らせの まん中
     const c = el.cloneNode(true);
-    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.toggle('wlow', lw); c.style.cssText = 'transition:none;visibility:hidden';
+    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.remove(...WT_MODES); if (m) c.classList.add(m);
+    c.style.cssText = 'transition:none;visibility:hidden' + (m === 'wside' ? `;--toast-x:${x}px` : '');
     el.parentNode.appendChild(c);
     const q = c.getBoundingClientRect(); c.remove();
     return q;
   };
   const over = (q, t) => q.left < t[2] && q.right > t[0] && q.top < t[3] && q.bottom > t[1];
-  const here = posAt(low), there = posAt(!low);
-  if (low && A.some(a => over(here, a))) { el.classList.remove('wlow'); return; }   // 下げた あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
-  if (over(here, T) && !over(there, T) && !A.some(a => over(there, a))) el.classList.toggle('wlow', !low);   // いまの 位置で 重なり、反対側が 空いて いれば そちらへ
+  const clear = q => !over(q, T) && !A.some(a => over(q, a));
+  const set = (m, x) => { el.classList.remove(...WT_MODES); if (m) el.classList.add(m); if (m === 'wside') el.style.setProperty('--toast-x', x + 'px'); };
+  const top = posAt(''), here = posAt(cur, parseFloat(el.style.getPropertyValue('--toast-x')) || 0);
+  if (cur && A.some(a => over(here, a))) { set(''); return; }   // 動かした あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
+  if (!over(here, T)) { if (cur && cur !== 'wlow' && clear(top)) set(''); return; }   // いまの 位置で 重ならない 間は 動かさない（ゆれない）。横・いちばん下は 上が 空いたら もどす
+  const low = posAt('wlow');
+  if (cur !== 'wlow' && clear(low)) { set('wlow'); return; }
+  if (cur === 'wlow' && clear(top)) { set(''); return; }
+  const w = top.width, M = 62;   // 右上の 丸い ボタンの 列に かからない（.toast の max-width と 同じ あけ方）
+  const R = T[2] + 8 + w / 2, L = T[0] - 8 - w / 2;   // 札の 右・左（広い ほうを 先に）
+  for (const x of (T[0] + T[2]) / 2 < innerWidth / 2 ? [R, L] : [L, R]) if (x - w / 2 >= M && x + w / 2 <= innerWidth - M && clear(posAt('wside', x))) { set('wside', x); return; }
+  if (clear(posAt('wfloor'))) set('wfloor');
 }
 function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない
   const avoid = [];

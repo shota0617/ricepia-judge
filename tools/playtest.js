@@ -2476,6 +2476,33 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.arrow && r.shown && !r.hit && r.mapUp === true };
     })();
+    // 横向きの 低い 画面でも、縁の 矢印と 道のりの 札に 知らせが 重ならない（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印と「840m」が「📅 あしたも来ると +20pt」に かくれた。
+    // 上も 下も 札に 重なるので、札の 横（wside）か いちばん 下（wfloor）へ）。直す 前は 上の まま 重なる
+    R.checks.mzEdgeToastWide = await (async () => {
+      const vp = w.page.viewportSize(), out = {};
+      for (const [W, H] of [[740, 360], [568, 320]]) {
+        await w.page.setViewportSize({ width: W, height: H }); await w.page.waitForTimeout(400);
+        out[W + 'x' + H] = await w.page.evaluate(async () => {
+          const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), cv = document.getElementById('pxCanvas');
+          const g = G.spots.filter(x => x.lat && !x.shop && x.lat > G.me.lat + 0.008 && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 3500).sort((a, b) => Math.abs(a.lng - G.me.lng) - Math.abs(b.lng - G.me.lng))[0];   // 北の ゴール：矢印が 上の 縁の まん中あたりに 出る
+          if (!g) return { spot: 'none' };
+          G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
+          await wait(6500);   // 「🏁 つぎの ゴール」の 札が 消えるまで
+          document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show', 'wlow', 'wside', 'wfloor');
+          const msg = '📅 あしたも来ると +20pt';
+          G.toast(msg); await wait(900);
+          const a = M.mapArrow, c = cv.getBoundingClientRect(), k = c.width / cv.width, q = el.getBoundingClientRect();
+          const A = a && [c.left + a[0] * k, c.top + a[1] * k, c.left + a[2] * k, c.top + a[3] * k];
+          const shown = el.classList.contains('show') && el.textContent === msg, hit = !!A && q.left < A[2] && q.right > A[0] && q.top < A[3] && q.bottom > A[1];
+          const mode = ['wlow', 'wside', 'wfloor'].find(m => el.classList.contains(m)) || 'top', inside = q.left >= 0 && q.right <= innerWidth && q.top >= 0 && q.bottom <= innerHeight;
+          el.classList.remove('show', 'wlow', 'wside', 'wfloor');
+          return { arrow: !!A, shown, hit, mode, inside, A: A && A.map(Math.round), q: [q.left, q.top, q.right, q.bottom].map(Math.round) };
+        });
+      }
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      const rs = Object.values(out);
+      return { ...out, ok: rs.every(r => r.spot === 'none' || (r.arrow && r.shown && !r.hit && r.inside)) && rs.some(r => r.arrow) };
+    })();
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {
       const vp = w.page.viewportSize();
@@ -3042,6 +3069,7 @@ async function walkTo(page, id) {
   need(c.playMore320 && c.playMore320.ok, `320px の「めいろ、どうだった？」の ひとことの 欄が 切れる（${JSON.stringify(c.playMore320)}）`);
   need(c.nextGoalLabel && c.nextGoalLabel.ok, `「つぎの ゴール」の 札に 縁の 矢印の 道のりが かぶる（${JSON.stringify(c.nextGoalLabel)}）`);
   need(c.mzEdgeToast && c.mzEdgeToast.ok, `めいろの 縁の 矢印の 札に 知らせが 重なる（${JSON.stringify(c.mzEdgeToast)}）`);
+  need(c.mzEdgeToastWide && c.mzEdgeToastWide.ok, `横向きの 低い 画面で、知らせが めいろの 縁の 矢印と 道のりの 札に 重なる（${JSON.stringify(c.mzEdgeToastWide)}）`);
   need(c.nextGoalToast && c.nextGoalToast.ok, `めいろの「つぎの ゴール」の 札に 知らせが 重なる（${JSON.stringify(c.nextGoalToast)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);
   need(c.spinCompact && c.spinCompact.ok, `めいろの 名所の 札が 1行で ない（小さい 画面で 下の 欄が 大きく のびて めいろが かくれる・長い 名前が はみ出す・短い 名前が 縮んで 読めない）（${JSON.stringify(c.spinCompact)}）`);

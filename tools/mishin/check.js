@@ -222,6 +222,9 @@ const CHECKS = {
     ok(m.msgY - 20 > m.tdBottom, '横向きでも 吹き出しが「−1秒」の 下', m);
     const c = await p.evaluate(() => { const S = KB.S; S.hopT = [0.3, 0.4]; S.peckT = 0.4; KB.start(); return { reset: S.hopT[0]===0 && S.peckT===0 }; });
     ok(c.reset, 'はじめから やりなおすと スズメの はね・首かしげは もどる', c);
+    const w = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(3); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
+      KB.down(L.x1-2, L.seamY); KB.up(); return { mark:S.mark, markT:S.markT }; });
+    ok(w.mark==='？' && w.markT>0, '縫い始めを つまむと スズメが「？」', w);
     const q = await page(b, 390, 844, '#coin');
     const bar = await q.evaluate(() => { KB.manual = true; for (let i=0;i<5;i++) KB.step(1/60); return [...document.querySelectorAll('.steps .bar i')].map(i=>getComputedStyle(i, '::after').content); });
     ok(bar[0]==='none' || bar[0]==='', 'れんしゅう 1袋目の 間は 帯に こめつぶが すわらない', bar);

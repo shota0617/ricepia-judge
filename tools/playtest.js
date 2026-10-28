@@ -1029,7 +1029,7 @@ async function walkTo(page, id) {
       const li = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent));
       if (!li) { S.points = p0; G.openTab('map'); return { found: false }; }
       const chip = /10分/.test(li.textContent), lc = li.querySelector('.cond');
-      const listCond = !!lc && lc.offsetHeight > 0 && lc.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && !lc.closest('details') && /LINE のクーポンとは併用できません/.test(lc.textContent);   // visibility:hidden・opacity:0 でも 高さは のこるので、見えて いるかも 見る（Codex の 指摘）
+      const listCond = !!lc && lc.offsetHeight > 0 && lc.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && !lc.closest('details') && /LINE のクーポンとは併用できません/.test(lc.textContent) && /売り出し期間中は使えません/.test(lc.textContent);   // visibility:hidden・opacity:0 でも 高さは のこるので、見えて いるかも 見る（Codex の 指摘）
       li.querySelector('[data-redeem]').click(); await wait(300);
       const cp = document.getElementById('coupon'), cond = document.getElementById('cpCond');
       const out = { found: true, chip, listCond, shown: !cp.hidden, cond: cond.hidden ? '' : cond.textContent, state: document.getElementById('cpState').textContent, validMin: (S.coupons[S.coupons.length - 1] || {}).validMin };
@@ -1056,7 +1056,7 @@ async function walkTo(page, id) {
     }
     page.off('dialog', onDialog);
     if (r.skipped) return { ok: true, ...r };
-    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && !r.toastOver && r.toastAfter && /LINE のクーポンとは併用できません/.test(r.cond) && /ほかのクーポン・割引とも併用できません/.test(r.cond) && r.listCond && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
+    return { ...r, ok: r.found && r.chip && r.shown && /1袋につき1回/.test(r.cond) && !r.toastOver && r.toastAfter && /LINE のクーポンとは併用できません/.test(r.cond) && /ほかのクーポン・割引とも併用できません/.test(r.cond) && /売り出し期間中は使えません/.test(r.cond) && r.listCond && r.validMin === 10 && /あと(9|10)分/.test(r.state) && r.blocked && r.unblocked };
   })();
   // きろくに「ころころの きろく」（コンボの ベスト・きょう ひろった ごはんつぶ）
   R.checks.koroRec = await page.evaluate(async () => {
@@ -2946,7 +2946,7 @@ async function walkTo(page, id) {
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
   need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
-  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない・クーポン画面に 知らせが 重なる（${JSON.stringify(c.coupon100)}）`);
+  need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「売り出し期間中は使えません」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない・クーポン画面に 知らせが 重なる（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
   need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);

@@ -130,7 +130,7 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 /* パネル */
 .panel{position:fixed;top:var(--bar-h);left:0;right:0;bottom:calc(var(--tabs-h) + var(--safe-b));overflow-y:auto;background:var(--bg);z-index:1050;padding:16px 16px 32px}
 .panel>*{max-width:640px;margin-left:auto;margin-right:auto}
-.panel h2{font-size:20px;margin:0 auto 12px}
+.panel h2{font-size:20px;margin:0 auto 12px;display:flow-root}   /* flow-root：右に うかせた「📣 シェア」（.share-btn）を 見出しの 中に おさめる（見出しより 下に はみ出して、すぐ 下の「にしおジャンプ」の 札が よけて 細く なり、「あそぶ」が 札の 外に 出ていた。自分で 遊んで 分かった） */
 .panel h3{font-size:15px;margin:20px auto 8px;color:var(--green)}
 .card h3{margin-top:0}
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
@@ -148,10 +148,10 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 .list li .num{font-weight:700;color:var(--green);white-space:nowrap}
 .list li.empty{color:var(--sub);justify-content:center}
 .list li.now{background:#f0f6e8}
-.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.badges{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}   /* minmax(0,…)：3列を 同じ 幅に（1fr だと 長い 名前の 列が ひろがって、320px の 画面で 右の 列が 画面から はみ出していた。自分で 遊んで 分かった） */
 .badge{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
 .badge .bi{font-size:30px;line-height:1.2}
-.badge b{display:block;font-size:12px;margin-top:4px}
+.badge b{display:block;font-size:12px;margin-top:4px;overflow-wrap:anywhere}
 .badge small{display:block;font-size:11px;color:var(--sub);margin-top:2px;line-height:1.3}
 .badge .bp{height:4px;border-radius:2px;background:#eee;margin-top:6px;overflow:hidden}
 .badge .bp i{display:block;height:100%;background:var(--matcha)}
@@ -167,6 +167,8 @@ img.pi{width:16px;height:16px;image-rendering:pixelated;vertical-align:-3px;flex
 label.row{min-height:44px;cursor:pointer}
 .row>span{display:flex;flex-direction:column;min-width:0}
 .row small{color:var(--sub);font-size:12px;margin-top:2px;line-height:1.5}
+#codeCard>p{display:flex;flex-direction:column;margin:0 0 8px}   /* ひきつぎの あいことば：ほかの せっていと 同じく 見出しの 下に 説明（見出しの すぐ うしろに 説明の 字が つづいて 切れめが 分からなかった。自分で 遊んで 分かった） */
+#codeCard>p small{color:var(--sub);font-size:12px;margin-top:2px;line-height:1.5}
 /* こえ（プレイヤーの声） */
 .tabs button{position:relative}
 .tab-dot{position:absolute;top:6px;left:calc(50% + 8px);width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid #fff}
@@ -205,7 +207,7 @@ label.row{min-height:44px;cursor:pointer}
 .play-more{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
 .play-more .btn.mini{margin-top:0}
 .play-more .play-share{background:#e07a2c}
-.play-more input{flex:1;min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px}
+.play-more input{flex:1 1 12em;min-width:0;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px}   /* 12em：「ひとこと（なくてOK）」が 入る 幅。せまい 画面では「📣 友だちに」が 次の 行へ（320px で 欄が 縮んで「ひとこと（な」と 切れ、なくても よいと 分からなかった） */
 .react-x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:20px;color:var(--sub);width:28px;height:28px}
 .react-line{font-size:13px}
 .react-line span{display:inline-block;background:#fff6d6;border-radius:8px;padding:0 6px;margin-right:2px}
@@ -275,7 +277,7 @@ label.row{min-height:44px;cursor:pointer}
 .intro .warn{font-size:12px;background:#fff4e0;border-radius:10px;padding:8px;color:#7a4b00}
 
 /* 通知 */
-.toast{position:fixed;left:50%;top:calc(var(--bar-h) + 12px);transform:translate(-50%,-20px);opacity:0;pointer-events:none;background:rgba(30,40,32,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:3000;transition:all .3s;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center;line-height:1.5}   /* width:max-content がないと、left:50% のぶん画面の半分の幅で折り返してしまう */
+.toast{position:fixed;left:50%;top:calc(var(--bar-h) + 12px);transform:translate(-50%,-20px);opacity:0;pointer-events:none;background:rgba(30,40,32,.92);color:#fff;padding:10px 16px;border-radius:12px;font-size:13px;z-index:3000;transition:all .3s;width:max-content;max-width:calc(100% - 32px);box-sizing:border-box;text-align:center;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}   /* width:max-content がないと、left:50% のぶん画面の半分の幅で折り返してしまう。keep-all：文は ことばの 間に すきまを 入れて 書いて いるので、すきまで 折りかえす（「たからば／こ！」と ことばの とちゅうで 切れていた。長すぎる ときは anywhere で 切る） */
 .toast.show{opacity:1;transform:translate(-50%,0)}
 body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では、左上の「めぐった名所」と重ならないよう少し下に */
 body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 列（.px-zoom：はば 40px＋右 10px）に かからない よう、左右とも 58px ずつ あける（知らせが 2つめの ボタンに 重なっていた。自分で 遊んで 分かった） */
@@ -285,6 +287,7 @@ body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 
 .reward .rw{background:#fff;border-radius:20px;padding:18px 24px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35);animation:pop 2.6s ease forwards;min-width:220px;max-width:calc(100% - 40px)}
 .reward .rw .big{font-size:40px;font-weight:900;color:var(--gold);line-height:1.1}
 .reward .rw .nm{font-weight:700;margin-top:4px}
+.reward .rw .thanks{font-size:18px;font-weight:700;color:var(--green);margin-top:2px}
 .reward .rw.ending{animation:none;max-height:86vh;overflow:auto;max-width:min(360px,calc(100% - 32px))}   /* クリア（殿堂入り）の記録：自分で とじるまで出す */
 .reward .rw.ending .say{font-size:14px;line-height:1.7;margin:10px 0 0;text-align:left}
 .reward .rw.ending ul{text-align:left}
@@ -323,7 +326,7 @@ body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 
 @keyframes pop{0%{transform:scale(.4);opacity:0}12%{transform:scale(1.08);opacity:1}20%{transform:scale(1)}85%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
 
 @media (min-width:700px){
-  .badges{grid-template-columns:repeat(4,1fr)}
+  .badges{grid-template-columns:repeat(4,minmax(0,1fr))}
   .stats{grid-template-columns:repeat(4,1fr)}
 }
 @media (prefers-reduced-motion:reduce){
@@ -458,6 +461,7 @@ body.pxw #pxCanvas{touch-action:none;cursor:grab}
 /* はじめの画面やスポットの説明ウィンドウが出ている間は、知らせ（トースト）を下に出して文字に重ねない */
 body:has(#intro:not([hidden])) .toast{top:auto;bottom:calc(var(--safe-b) + 24px)}
 body:has(#pxInfo:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}
+body.px .toast.wlow{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + var(--sheet-h,0px) + 24px)}   /* せかいちずで「ゴール：…」の 札・めいろで 縁の 矢印の 札に 重なる ときは 下へ（worldToastDodge） */
 body:has(#pxInfo:not([hidden])) .toast.low{bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}   /* 窓に 重なる ときは 下の札の 上に（toastDodge。小さい 画面で「▶ とじる」が かくれた） */
 /* きろく・こえ・とくてん・せってい のタブでは、上の見出し（バッジの達成率・もうすぐ など）に重ねないよう 下に */
 body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .toast,body:has(#panel-rewards:not([hidden])) .toast,body:has(#panel-settings:not([hidden])) .toast{top:auto;bottom:calc(var(--tabs-h) + var(--safe-b) + 24px)}
@@ -503,6 +507,7 @@ body.px .guide small{color:#ddd}
 .share-btns a.btn{text-decoration:none}
 .share-btns{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:10px}
 .share-btns .btn{flex:1 1 30%;min-width:96px}
+.share-msg{margin:-4px 0 10px;padding:6px 10px;border-radius:8px;background:#eef6ef;color:var(--ink);font-size:13px;font-weight:700}   /* コピーの 結果（窓の 中に。知らせは 窓を とじるまで 待つ ので） */
 .player-count{font-weight:bold;color:#1f5a25;background:#eaf6e2;border-radius:6px;padding:4px 8px;display:inline-block}
 
 /* 西尾市版（提案用デモ。edition.js）：西尾市の公式とまちがえられないよう、いつも上に札を出す */
@@ -535,11 +540,11 @@ body.px .guide small{color:#ddd}
 .reward .rw.hero .dot-card{width:192px;height:192px;margin:0;border-radius:8px;box-shadow:none}
 .reward .rw.hero .banner{display:inline-block;margin-top:6px;padding:4px 16px;border-radius:999px;background:#2f6f6a;color:#fff;font-weight:800;font-size:15px;box-shadow:0 0 0 2px #e9c46a}
 .list .ico.heard img{filter:brightness(0) opacity(.35)}   /* 聞いた名所（まだ行っていない）は影の絵 */
-.reward .rw.hero .place{margin:0 0 8px;font-size:17px;font-weight:900;color:var(--ink);line-height:1.3}   /* どこで何があったか（いちばん上） */
+.reward .rw.hero .place{margin:0 0 8px;font-size:17px;font-weight:900;color:var(--ink);line-height:1.3;word-break:keep-all;overflow-wrap:anywhere}   /* どこで何があったか（いちばん上） */
 .reward .rw.hero .banner img.pi{width:20px;height:20px;vertical-align:-4px;margin-right:2px}
 .reward .rw.hero .sub{margin-top:6px;font-size:13px;color:var(--sub)}
 .reward .rw.hero .sub b{color:var(--gold);font-size:18px;margin-left:2px}
-.reward .ribbon{position:absolute;top:10px;left:-8px;background:#ffd54f;color:#5d3a1a;font-weight:900;font-size:13px;padding:3px 14px 3px 10px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);box-shadow:0 2px 0 rgba(0,0,0,.2);z-index:2}
+.reward .ribbon{position:absolute;top:-11px;left:-8px;background:#ffd54f;color:#5d3a1a;font-weight:900;font-size:13px;padding:3px 14px 3px 10px;clip-path:polygon(0 0,100% 0,88% 50%,100% 100%,0 100%);box-shadow:0 2px 0 rgba(0,0,0,.2);z-index:2}
 .stars{display:flex;justify-content:center;gap:3px;margin-top:8px}
 .stars i{width:18px;height:18px;background:#f2a516;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);filter:drop-shadow(0 1px 0 #8a5a10)}
 /* 案内：行き先の名所の絵 */
@@ -685,6 +690,7 @@ body:has(#pxInfo:not([hidden])) .koyomi{visibility:hidden}   /* 窓を開いて�
 /* ミニゲーム「にしおジャンプ」（runner.js） */
 .jump-card{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .jump-card p{margin:0;display:flex;flex-direction:column;gap:2px}
+.jump-card p b{word-break:keep-all;overflow-wrap:anywhere}   /* 題は ことばの 切れめで 折りかえす（「「に／しおジャンプ」」と 切れていた） */
 .jump-card small{color:var(--sub)}
 .jump-card img.pi.art{width:32px;height:32px;vertical-align:-10px}
 .koro-rec p{margin:0;display:flex;flex-direction:column;gap:2px}
@@ -755,8 +761,8 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .pick-first h4{margin:0 0 4px;font-size:16px}
 .pick-first p{margin:0 0 8px;font-size:12px;opacity:.85}
 .pick-first .pick3{display:flex;gap:8px;justify-content:center}
-.pick-first .pick3 button{flex:1;max-width:110px;background:#fffdf4;border:2px solid #e9c46a;border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#3a2a10;font-size:11px;line-height:1.3;cursor:pointer}
-.pick-first .pick3 button img{width:84px;height:84px;image-rendering:pixelated;border-radius:6px}
+.pick-first .pick3 button{flex:1 1 0;min-width:0;max-width:110px;background:#fffdf4;border:2px solid #e9c46a;border-radius:10px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;color:#3a2a10;font-size:11px;line-height:1.3;cursor:pointer}
+.pick-first .pick3 button img{width:100%;max-width:84px;height:auto;aspect-ratio:1;image-rendering:pixelated;border-radius:6px}   /* 3枚が 枠に 入る ように 絵を 縮める（84px 固定だと 320px の 画面で 3枚が 枠より 広く なり、まん中 寄せの まま 左右が 切れて、左の 絵は スクロールでも 見られなかった。自分で 遊んで 分かった） */
 .pick-first .pick3 .stars{transform:scale(.7);margin:-4px 0}
 .card.bags .todaywalk{margin:0 0 10px;padding:8px 10px;border-radius:10px;background:#fff8e6;border:1px solid #f0d9a0}
 .card.bags .todaywalk p{margin:0}

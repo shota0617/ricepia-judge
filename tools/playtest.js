@@ -2542,9 +2542,31 @@ async function walkTo(page, id) {
           return { arrow: !!A, shown, hit, mode, inside, A: A && A.map(Math.round), q: [q.left, q.top, q.right, q.bottom].map(Math.round) };
         });
       }
+      // 横（wside）に 置いた まま スマホを たてに しても、知らせが 画面の 外に 出ない（--toast-x は 画素。Codex の 指摘）
+      await w.page.setViewportSize({ width: 740, height: 360 }); await w.page.waitForTimeout(400);
+      const before = await w.page.evaluate(async () => {   // 矢印が 少し 左に ある ゴール（北北西）を さがす：知らせが 矢印の 右、たて向きの 画面より 右に 置かれる 形
+        const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms)), el = document.getElementById('toast'), at = { lat: G.me.lat, lng: G.me.lng };
+        let mode = 'none';
+        for (const dl of [-0.002, -0.003, -0.0045, -0.006]) {
+          G.setGuide({ kind: 'spot', id: 'test-rot' + dl, name: 'テストの 北の ゴール', lat: at.lat + 0.012, lng: at.lng + dl }); await wait(6500);
+          document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show', 'wlow', 'wside', 'wfloor');
+          G.toast('📅 あしたも来ると +20pt'); await wait(900);
+          mode = ['wlow', 'wside', 'wfloor'].find(m => el.classList.contains(m)) || 'top';
+          if (mode === 'wside' && el.getBoundingClientRect().left > 360) return { mode, dl, left: Math.round(el.getBoundingClientRect().left) };
+        }
+        return { mode, dl: null };
+      });
+      await w.page.setViewportSize({ width: 360, height: 640 }); await w.page.waitForTimeout(700);
+      const rot = await w.page.evaluate(() => {
+        const el = document.getElementById('toast'), q = el.getBoundingClientRect(), mode = ['wlow', 'wside', 'wfloor'].find(m => el.classList.contains(m)) || 'top';
+        const res = { before: null, mode, shown: el.classList.contains('show'), inside: q.left >= 0 && q.right <= innerWidth, q: [q.left, q.right].map(Math.round) };
+        el.classList.remove('show', 'wlow', 'wside', 'wfloor'); nishioGo.setGuide(null);
+        return res;
+      });
+      out.rotate = { ...rot, before };
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      const rs = Object.values(out);
-      return { ...out, ok: rs.every(r => r.spot === 'none' || (r.arrow && r.shown && !r.hit && r.inside)) && rs.some(r => r.arrow) };
+      const rs = Object.values(out).filter(r => r !== out.rotate);
+      return { ...out, ok: rs.every(r => r.spot === 'none' || (r.arrow && r.shown && !r.hit && r.inside)) && rs.some(r => r.arrow) && (out.rotate.before.mode !== 'wside' || !out.rotate.before.dl || (out.rotate.shown && out.rotate.inside)) };
     })();
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {

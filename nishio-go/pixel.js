@@ -6712,16 +6712,17 @@ function worldToastDodge(tag, avoid = []) {
   const over = (q, t) => q.left < t[2] && q.right > t[0] && q.top < t[3] && q.bottom > t[1];
   const clear = q => !over(q, T) && !A.some(a => over(q, a));
   const set = (m, x) => { el.classList.remove(...WT_MODES); if (m) el.classList.add(m); if (m === 'wside') el.style.setProperty('--toast-x', x + 'px'); };
-  const top = posAt(''), here = posAt(cur, parseFloat(el.style.getPropertyValue('--toast-x')) || 0);
+  const top = posAt(''), here = posAt(cur, parseFloat(el.style.getPropertyValue('--toast-x')) || 0), M = 62;   // M：右上の 丸い ボタンの 列に かからない（.toast の max-width と 同じ あけ方）
   if (cur && A.some(a => over(here, a))) { set(''); return; }   // 動かした あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
-  if (!over(here, T)) { if (cur && cur !== 'wlow' && clear(top)) set(''); return; }   // いまの 位置で 重ならない 間は 動かさない（ゆれない）。横・いちばん下は 上が 空いたら もどす
+  const out = cur === 'wside' && (here.left < M - 1 || here.right > innerWidth - M + 1);   // 横に 置いた あとに 画面が せまく なった（スマホを たてに した。--toast-x は 画素なので はみ出す。Codex の 指摘）：置きなおす
+  if (!over(here, T) && !out) { if (cur && cur !== 'wlow' && clear(top)) set(''); return; }   // いまの 位置で 重ならない 間は 動かさない（ゆれない）。横・いちばん下は 上が 空いたら もどす
   const low = posAt('wlow');
   if (cur !== 'wlow' && clear(low)) { set('wlow'); return; }
   if (cur === 'wlow' && clear(top)) { set(''); return; }
-  const w = top.width, M = 62;   // 右上の 丸い ボタンの 列に かからない（.toast の max-width と 同じ あけ方）
-  const R = T[2] + 8 + w / 2, L = T[0] - 8 - w / 2;   // 札の 右・左（広い ほうを 先に）
+  const w = top.width, R = T[2] + 8 + w / 2, L = T[0] - 8 - w / 2;   // 札の 右・左（広い ほうを 先に）
   for (const x of (T[0] + T[2]) / 2 < innerWidth / 2 ? [R, L] : [L, R]) if (x - w / 2 >= M && x + w / 2 <= innerWidth - M && clear(posAt('wside', x))) { set('wside', x); return; }
   if (clear(posAt('wfloor'))) set('wfloor');
+  else if (out) set('');   // どこも 空いて いなければ 上（画面の 外には 置かない）
 }
 function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない
   const avoid = [];

@@ -331,12 +331,24 @@ const CHECKS = {
     const a11 = await p.evaluate(() => ({ sr: document.getElementById('sr').textContent, lbl: document.getElementById('cv').getAttribute('aria-label') }));
     ok(/じこベスト更新/.test(a11.sr), 'おわりの 読み上げに「じこベスト更新」も 入る', a11.sr);
     ok(/タイムアタック/.test(a11.lbl), 'タイムアタックの キャンバスの 名前は れんしゅうの 文を のこさない', a11.lbl);
-    const kb = await p.evaluate(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key:'x', bubbles:true })); KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.bag.face = 'back'; for (let i=0;i<5;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 200)); /* 帯は 毎コマの syncUI が 作る */
+    const kb = await p.evaluate(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key:'Tab', bubbles:true })); KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.bag.face = 'back'; for (let i=0;i<5;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 200)); /* 帯は 毎コマの syncUI が 作る */
       const sn = document.getElementById('stepNow'), t = sn ? sn.textContent : 'なし'; S.bagNo = 2; S.bag.done = true; S.bag.open = 0; for (let i=0;i<160;i++) KB.step(1/60); return t; });
     await p.waitForTimeout(200);
     const fv = await p.evaluate(() => { const el = document.activeElement, r = el.getBoundingClientRect(); return { id: el.id, top:r.top, bottom:r.bottom, H:innerHeight }; });
     ok(/←・→キー/.test(kb), 'キーで 遊ぶ 人には れんしゅうの 帯も キーの ことば', kb);
     ok(fv.id==='practiceAgain' && fv.bottom <= fv.H, 'キーで 遊ぶ 人には まとめの フォーカスが 見える 所に', fv);
+    // 61周目の レビュー：おまけの 行は 新しい じこベスト・0袋で 1回 まちがえた 人には その わけ・Ctrl では キーの 人に しない
+    const r61 = await p.evaluate(() => { const ids = KB.GOALS.map(g=>g.id); localStorage.setItem('mishin-goals', JSON.stringify({ day: (()=>{ const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); })(), done: ids }));
+      localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 9000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
+      const bonus = (document.querySelector('#rGoals .bonus')||{}).textContent || '';
+      KB.start(); S.wrongs = 1; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const tip = document.getElementById('tip').textContent;
+      document.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true })); document.dispatchEvent(new KeyboardEvent('keydown', { key:'=', ctrlKey:true, bubbles:true }));
+      KB.startPractice(); S.bag.slide = 0; S.bag.face = 'back'; return { bonus, tip }; });
+    await p.waitForTimeout(200);
+    const sn61 = await p.evaluate(() => document.getElementById('stepNow').textContent);
+    ok(!r61.bonus || /9,000/.test(r61.bonus), 'おまけの 行は 新しい じこベストの 点', r61.bonus);
+    ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
+    ok(/指で つまむ/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
     for (const [w, h] of [[568,320],[667,375],[740,360]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 横向き（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }

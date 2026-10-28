@@ -349,9 +349,9 @@ const CHECKS = {
     ok(!r61.bonus || /9,000/.test(r61.bonus), 'おまけの 行は 新しい じこベストの 点', r61.bonus);
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指で つまむ/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
-    for (const [w, h] of [[568,320],[667,375],[740,360]]){ await p.setViewportSize({ width:w, height:h });
+    for (const [w, h] of [[568,320],[667,375],[740,360],[320,568]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
-      ok(ag.b <= ag.H, `低い 横向き（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
+      ok(ag.b <= ag.H, `低い 画面（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
   },
   // 新米の きせつ（34周目）：8/15〜12/31 だけ 新米シール。産年は 収穫の 年（農林水産省・愛知県）
   async season(b){

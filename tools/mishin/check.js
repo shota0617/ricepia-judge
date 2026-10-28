@@ -1,6 +1,6 @@
 // ミシン糸 一本どり：通しの 確かめ（本物の ポインタイベントで 遊んで、こわれて いないか 見る）
 //   node tools/mishin/check.js            # ぜんぶ
-//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys sound perf）
+//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge fonts sound perf）
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -113,6 +113,17 @@ const CHECKS = {
       return { tangled, after: !!bb.tangle };
     });
     ok(c.tangled && !c.after, '二本指で つまんだまま 引っかかっても、ひらいて とじれば 白糸を つまめる', c);
+    const d = await p.evaluate(() => {
+      ev('pointerup',1,0,0); ev('pointerup',2,0,0); // 前の 確かめの 指を はなす
+      KB.manual = true; KB.fixedSeed = 3; KB.start(); const S = KB.S, L = KB.layout();
+      const bb = KB.makeBag(6); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
+      let x = L.x0, y = L.seamY; ev('pointerdown',1,x-8,y); ev('pointerdown',2,x+8,y);
+      for (let i=0;i<20;i++){ ev('pointermove',1,x-8-i*2,y+i*3); ev('pointermove',2,x+8-i*2,y+i*3); KB.step(1/60); } x -= 40; y += 60;
+      for (let i=0;i<80 && !bb.tangle;i++){ x += 45; ev('pointermove',1,x-8,y); ev('pointermove',2,x+8,y); KB.step(1/60); }
+      for (let i=0;i<3;i++){ x += 2; ev('pointermove',1,x-8,y); ev('pointermove',2,x+8,y); KB.step(1/60); } // とじた まま 少し 動かす
+      return { tangled: !!bb.tangle, taps: bb.tangle ? bb.tangle.taps : -1 };
+    });
+    ok(d.tangled && d.taps===0, 'もつれた あと、とじた ままの 指で ただで ほぐせない', d);
   },
   // フィーバー：×5 で はじまり、まちがえ（もつれ）たら おわる。袋が あく 間も 残り時間は へる
   async fever(b){
@@ -155,8 +166,9 @@ const CHECKS = {
       return { mode:S.mode, bagNo:S.bagNo, tangles:log, sr, focus:document.activeElement && document.activeElement.id };
     });
     ok(r.mode==='over' && r.bagNo===3, 'キーボードだけで れんしゅう 3袋', r);
-    ok(r.sr.length > 0, '読み上げの 欄に 声が 入る', r.sr);
     await p.waitForTimeout(100);
+    r.sr = await p.evaluate(() => document.getElementById('sr').textContent); // 同じ 文でも 読むよう、一度 空に してから 入る
+    ok(r.sr.length > 0, '読み上げの 欄に 声が 入る', r.sr);
     const f = await p.evaluate(() => document.activeElement && document.activeElement.id);
     ok(f==='practiceAgain', 'まとめで「もう一回」に フォーカス', f);
     const q = await page(b, 1280, 800, '');
@@ -166,6 +178,42 @@ const CHECKS = {
       return { held:S.held, phase:S.bag.phase };
     });
     ok(!t.held && t.phase==='look', 'タイムアタックは キーボードでは つまめない（二本指）', t);
+  },
+  // キーボードの 取りのこし：窓を はなれる・マウスと まぜる・ボタンの スペース・袋の かわりめ
+  async keyedge(b){
+    const p = await page(b, 1280, 800, '#coin');
+    const key = (t, k, el) => p.evaluate(([t, k, el]) => (el ? document.getElementById(el) : document).dispatchEvent(new KeyboardEvent(t, { key:k, bubbles:true })), [t, k, el]);
+    const r1 = await p.evaluate(() => {
+      KB.manual = true; steps(30); const S = KB.S, bb = S.bag; if (bb.face==='front'){ KB.tap(640, KB.layout().seamY+200); steps(40); }
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: bb.start==='R' ? 'ArrowRight' : 'ArrowLeft', bubbles:true })); steps(5);
+      const held = S.held; window.dispatchEvent(new Event('blur')); steps(60);
+      return { held, after:S.held, tangles:bb.tangles };
+    });
+    ok(r1.held && !r1.after && r1.tangles===0, '窓を はなれたら キーを はなした ことに', r1);
+    const r2 = await p.evaluate(() => {
+      KB.startPractice(); const S = KB.S; steps(30); const bb = S.bag; if (bb.face==='front'){ KB.tap(640, KB.layout().seamY+200); steps(40); }
+      const L = KB.layout(), ex = bb.start==='R' ? L.x1 : L.x0; ev('pointerdown',9,ex,L.seamY,'mouse'); ev('pointermove',9,ex,L.seamY+30,'mouse'); KB.step(1/60);
+      const px = S.px, phase = bb.phase;
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: bb.start==='R' ? 'ArrowRight' : 'ArrowLeft', bubbles:true })); const px2 = S.px;
+      document.dispatchEvent(new KeyboardEvent('keyup', { key: bb.start==='R' ? 'ArrowRight' : 'ArrowLeft', bubbles:true })); ev('pointerup',9,ex,L.seamY+30,'mouse'); return { phase, px, px2 };
+    });
+    ok(r2.px===r2.px2, 'マウスで つまんでいる 間は キーで 手が とばない', r2);
+    const r3 = await p.evaluate(() => { KB.startPractice(); steps(30); const S = KB.S, f = S.bag.face, btn = document.querySelector('.steps .skip');
+      btn.focus(); btn.dispatchEvent(new KeyboardEvent('keydown', { key:' ', bubbles:true })); for (let i=0;i<40;i++) KB.step(1/60); return { f, after:S.bag.face }; });
+    ok(r3.f===r3.after, 'ボタンの スペースで 袋が 裏返らない', r3);
+    const r4 = await p.evaluate(() => {
+      KB.startPractice(); const S = KB.S; for (let i=0;i<30;i++) KB.step(1/60); const bb = S.bag;
+      if (bb.face==='front'){ KB.tap(640, KB.layout().seamY+200); for (let i=0;i<40;i++) KB.step(1/60); }
+      const k = bb.start==='R' ? 'ArrowRight' : 'ArrowLeft'; document.dispatchEvent(new KeyboardEvent('keydown', { key:k, bubbles:true }));
+      for (let i=0;i<4000 && S.bag===bb;i++){ if (S.tension>0.8){ document.dispatchEvent(new KeyboardEvent('keyup', { key:k, bubbles:true })); KB.step(1/60); document.dispatchEvent(new KeyboardEvent('keydown', { key:k, bubbles:true })); } KB.step(1/60); }
+      return { next: S.bag!==bb, held:S.held, phase:S.bag.phase };
+    });
+    ok(r4.next && !r4.held && r4.phase==='look', 'キーを おしたまま つぎの 袋に なっても つまんだ ままに ならない', r4);
+  },
+  // フォントは 使う 字だけ（tools/mishin/fonts.py）。字を 書き足したら 回す
+  async fonts(){
+    const r = require('child_process').spawnSync('python3', [path.resolve(__dirname, 'fonts.py'), '--check'], { cwd: path.resolve(__dirname, '../..'), encoding:'utf-8' });
+    ok(r.status===0, 'フォントの 字に もれが ない', (r.stdout||'') + (r.stderr||''));
   },
   async sound(b){
     const p = await page(b, 390, 844, '');
@@ -196,7 +244,9 @@ const pages = [];
 async function page(b, w, h, hash, dsf){
   const p = await b.newPage({ viewport:{ width:w, height:h }, deviceScaleFactor:dsf||2 }); pages.push(p);
   p.on('pageerror', e => errs.push(e.message));
-  await p.goto(FILE + hash); await p.waitForFunction(() => window.KB); await p.evaluate(HELPERS);
+  await p.goto(FILE + hash); await p.waitForFunction(() => window.KB);
+  if (hash==='#coin') await p.waitForFunction(() => KB.S.mode==='play'); // #coin は 袋の 絵が とどいて から れんしゅうが はじまる
+  await p.evaluate(HELPERS);
   return p;
 }
 (async () => {

@@ -24,7 +24,7 @@ fs.mkdirSync(OUT, { recursive: true });
   await snap('05-tangle', 'もつれ（白糸を 引く）');
   await p.evaluate(() => { const S = KB.S; S.score = 8420; S.bags = 7; S.bestStreak = 3; S.quick = 2; S.fevers = 1; S.time = 0.01; KB.step(1/60); });
   await snap('06-result', '結果');
-  await p.goto(FILE + '#coin'); await p.reload(); await p.waitForTimeout(400); // ハッシュだけ かわる ときは 読みなおさないので reload
+  await p.goto(FILE + '#coin'); await p.reload(); await p.waitForFunction(() => window.KB && KB.S.mode==='play'); await p.waitForTimeout(400); // ハッシュだけ かわる ときは 読みなおさないので reload
   await p.evaluate(() => { KB.manual = true; for (let i=0;i<30;i++) KB.step(1/60); });
   await snap('07-practice', 'れんしゅう（拡大窓）');
   await p.waitForSelector('#skipBtn'); await p.click('#skipBtn');

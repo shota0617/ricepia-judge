@@ -306,7 +306,7 @@ let spotsLoading = null;
 function loadSpots(force) {
   if (!spotsLoading) {
     spotsLoading = doLoadSpots(force)
-      .catch(() => toast('スポットの読み込みに失敗しました。もう一度お試しください。'))
+      .catch(() => toast('名所を うまく 読みこめませんでした。少し まってから、もう一度 ためしてね。'))
       .finally(() => { spotsLoading = null; refreshNearby(); });
     refreshNearby();
   }
@@ -753,8 +753,8 @@ function startGps() {
       if (!gpsError) track('geo_error', { code: err.code });
       gpsSlow = err.code === 3;   // 時間切れは、そのまま待てば届くことがある（待つ間の まちメモは続ける）
       gpsError = err.code === 1
-        ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「🎮 操作して移動」なら位置情報なしで遊べます）。'
-        : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報を取得できませんでした。電波の良い屋外でお試しください。';
+        ? '位置情報が つかえない ようです。ブラウザの設定で「位置情報」を許可してから、ページを 読みこみなおしてね（「🎮 操作して移動」なら 位置情報なしで 遊べます）。'
+        : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報が とれませんでした。電波のよい 外で、もう一度 ためしてね。';
       refreshNearby();
     },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });

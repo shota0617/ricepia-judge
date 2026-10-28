@@ -385,7 +385,7 @@ function drawEndsPic(){
   g.strokeStyle='#ef5350'; g.lineWidth=5; g.beginPath(); g.moveTo(w-82, sy-28); g.lineTo(w-34, sy+20); g.moveTo(w-34, sy-28); g.lineTo(w-82, sy+20); g.stroke();
 }
 // 時間ぎれ：「そこまで！」と 拍子木、0.8秒 たって から 結果へ（すぐ 切れない）
-function finish(){ if(S.ending) return; S.ending = 0.8; S.held = false; say('そこまで！','ok', 1.2); audio.hush(); audio.wood(1500, 0.26, 0.1); audio.later(()=>audio.wood(1500, 0.26, 0.1), 160); }
+function finish(){ if(S.ending) return; S.ending = 0.8; S.held = false; say('そこまで！','ok', 1.2); audio.hush(); audio.wood(1500, 0.26, 0.1); audio.later(()=>audio.wood(1500, 0.26, 0.1), 160); S.hopT = [0.4, 0.4, 0.56, 0.56]; /* 拍子木に スズメが ぴょんと おどろく（音なし） */ }
 function endGame(){
   audio.hush();
   S.mode='over'; S.held=false;

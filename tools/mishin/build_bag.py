@@ -5,15 +5,15 @@
 #   bpyenv/bin/python tools/mishin/build_bag.py --fast     # 荒い 絵で 試す
 #   python3 tools/mishin/pack_bag.py                       # webp に して mishin.html に うめこむ
 #
-# 寸法（メートル）：袋の 幅 0.45、口の 上の 縁＝ z 0、縫い目＝ z -0.025（縁から 2.5cm）。
-# 絵は 正面から の 平行投影で、1mm＝1.5px（スマホの 細かい 画面用）。絵の 大きさ 900×1500、袋の 左右の 縁（口）＝ x 112.5〜787.5px、
+# 寸法（メートル）：袋の 幅 0.49、口の 上の 縁＝ z 0、縫い目＝ z -0.025（縁から 2.5cm）。
+# 絵は 正面から の 平行投影で、1mm＝1.5px（スマホの 細かい 画面用）。絵の 大きさ 900×1500、袋の 左右の 縁（口）＝ x 82.5〜817.5px、
 # 口の 上の 縁＝ y 75px、縫い目＝ y 112.5px（ゲームは この 行を 縫い目に そろえる。mishin.html の BAG）。
 # 印刷（銘柄・一括表示）と 糸は ゲームが 上に かく。ここでは 紙の 形と 光だけ。
 import bpy, bmesh, math, os, random, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FAST = '--fast' in sys.argv
-W = 0.45            # 袋の 幅（口を 平らに した とき）
+W = 0.49            # 袋の 幅（口を 平らに した とき）。30kg の クラフト米袋の 標準は 高さ 800・幅 490・底マチ 100mm（komebukuro.com）
 SEAM = -0.025       # 縫い目の 高さ
 BOT = -0.97         # 絵の 下の はし より 下まで 作る
 D = 0.12            # お米で ふくらむ 深さ（正面へ）

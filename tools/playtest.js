@@ -810,6 +810,14 @@ async function walkTo(page, id) {
     P.comboAdd(-P.combo.n); P.comboBest(b0); P.floatsClear();   // もとに もどす（コンボを おわらせない ので ベストは かわらない）
     return { fl, popped: pop >= t0, ok: !fl.some(t => /ころころ ×\d+！/.test(t)) && pop >= t0 };
   });
+  // お米を 描く 重さ：3倍の 画面の 大きさ（u=4）でも 1こまの 時間に 十分 おさまる（なめらかに した ぶん 重く なって、かくつかない ように。Math.hypot・Math.pow を やめ、うすい のこりかげは あらく 描く）
+  R.checks.ricePerf = await page.evaluate(() => {
+    const P = nishioPixel, c = document.createElement('canvas'); c.width = c.height = 400; const x = c.getContext('2d');
+    for (let i = 0; i < 3; i++) P.drawRice(x, 200.3, 200.6, i * 0.2, 0, 'smile', 0, '', 4);   // あたため
+    const t0 = performance.now(); for (let i = 0; i < 20; i++) P.drawRice(x, 200.3, 200.6, i * 0.15, 0, 'smile', 0, '', 4);
+    const ms = (performance.now() - t0) / 20;
+    return { ms: +ms.toFixed(2), ok: ms < 6 };
+  });
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
   R.checks.smoothShadow = await page.evaluate(async () => {
     const P = nishioPixel, E = CanvasRenderingContext2D.prototype, keep = E.ellipse, cv = document.getElementById('pxCanvas'), hits = [];
@@ -3238,6 +3246,7 @@ async function walkTo(page, id) {
   need(c.riceBfly && c.riceBfly.ok, `ねむって いる お米の 頭に ちょうちょが とまらない（${JSON.stringify(c.riceBfly)}）`);
   need(c.riceWake && c.riceWake.ok, `ねむって いた お米が おきても のびを しない（または ちょうちょが 飛んで いかない）（${JSON.stringify(c.riceWake)}）`);
   need(c.comboTen && c.comboTen.ok, `ころころ ×10 で 文字が 出る（お米の よこの ×N と 同じ ことを 2か所に 書いている）か、大きな きらきらが 出ない（${JSON.stringify(c.comboTen)}）`);
+  need(c.ricePerf && c.ricePerf.ok, `お米を 描くのが 重すぎる（1回 6ミリ秒 より 長い）（${JSON.stringify(c.ricePerf)}）`);
   need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);

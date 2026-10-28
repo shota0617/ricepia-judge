@@ -2162,7 +2162,7 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
   const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
   const my = cp < 0 ? -1 : 1, ky = sy * riceTall(pitch) * my;   // たての ころころ：前に 寝ると 短く（はしから 見える）。うしろを 向くと 上下 さかさ
-  const P = gb ? 1 : Math.min(u, RICE_PMAX), k0 = P / u;   // P：絵の1点を 何ピクセルで 描くか（大きすぎる ときは 少し あらく 描いて のばす）
+  const P = gb ? 1 : Math.min(u, riceLowQ ? 2 : RICE_PMAX), k0 = P / u;   // P：絵の1点を 何ピクセルで 描くか（大きすぎる ときは 少し あらく 描いて のばす）
   const X0 = gb ? Math.round(X - H * u) : Math.floor(X - H * u - 1), Y0 = gb ? Math.round(Y - H * u) : Math.floor(Y - H * u - 1);
   const ox0 = (X - X0) * k0, oy0 = (Y - Y0) * k0, S = Math.ceil(RB * P) + 3;   // つぶの まん中（絵の 中の ピクセル）。はしの ずれは 絵の 中で
   if (rb.cv.width !== S) { rb.cv.width = rb.cv.height = S; rb.img = null; }
@@ -2187,17 +2187,17 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
       const ux = (i + 0.5 - ox0) / (P * kx), uy = (j + 0.5 - oy0) / (P * ky), px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
       const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
       let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
-      const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy), nb = Math.min(1, Math.max(0, rb.nr + 1.6 - qd));   // くぼみの内がわは 中へ向く（さかいは なめらかに まぜる）
-      if (nb > 0) { const n0 = Math.hypot(nx, ny, nz) || 1; nx = nx / n0 * (1 - nb) - qx / (qd || 1) * 0.8 * nb; ny = ny / n0 * (1 - nb) - qy / (qd || 1) * 0.8 * nb; nz = nz / n0 * (1 - nb) + 0.6 * nb; }
+      const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.sqrt(qx * qx + qy * qy), nb = Math.min(1, Math.max(0, rb.nr + 1.6 - qd));   // くぼみの内がわは 中へ向く（さかいは なめらかに まぜる）
+      if (nb > 0) { const n0 = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1; nx = nx / n0 * (1 - nb) - qx / (qd || 1) * 0.8 * nb; ny = ny / n0 * (1 - nb) - qy / (qd || 1) * 0.8 * nb; nz = nz / n0 * (1 - nb) + 0.6 * nb; }
       let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
-      const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
-      const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
+      const nn = Math.sqrt(wx * wx + wy * wy + nz * nz); wx /= nn; wy /= nn; const wz = nz / nn;
+      const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), s1 = Math.max(0, wx * hx + wy * hy + wz * hz), s4 = (s1 * s1) * (s1 * s1), s8 = s4 * s4, spec = s8 * s8 * s8 * s4;   // 28乗（かけ算で。Math.pow・Math.hypot は おそい）
       const v = 0.28 + 0.76 * dif, tf = Math.min(4, Math.max(0, (v - 0.34) / 0.16)), t0 = Math.min(3, Math.floor(tf)), tt = tf - t0;   // 影は 段でなく 連続に
       const T0 = RICE_TONE[t0], T1 = RICE_TONE[t0 + 1], sh = Math.min(1, Math.max(0, (spec - 0.35) / 0.35));
       let cr = T0[0] + (T1[0] - T0[0]) * tt, cg = T0[1] + (T1[1] - T0[1]) * tt, cb = T0[2] + (T1[2] - T0[2]) * tt;
       cr += (255 - cr) * sh; cg += (255 - cg) * sh; cb += (255 - cb) * sh;   // てかり
       for (let m = 0; m < nDirt; m++) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
-        const dm = Math.hypot(rb.gx + px - rb.spots[m][0] - 0.5, rb.gy + py - rb.spots[m][1] - 0.5), al = Math.min(1, Math.max(0, (0.72 - dm) / (w1 * 2.5) + 0.5));
+        const ddx = rb.gx + px - rb.spots[m][0] - 0.5, ddy = rb.gy + py - rb.spots[m][1] - 0.5, dm = Math.sqrt(ddx * ddx + ddy * ddy), al = Math.min(1, Math.max(0, (0.72 - dm) / (w1 * 2.5) + 0.5));
         if (al > 0) { const fm = 0.55 + 0.3 * dif; cr += (dc[0] * fm - cr) * al; cg += (dc[1] * fm - cg) * al; cb += (dc[2] * fm - cb) * al; }
       }
       const al = ab + ao * (1 - ab);   // つぶの 色を ふちどりの 上に かさねる
@@ -2229,7 +2229,8 @@ function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldM
     dst.restore();
   }
 }
-const RICE_PMAX = 6;   // お米を 描く 細かさの 上限（絵の1点 = 6ピクセルまで）
+const RICE_PMAX = 6;
+let riceLowQ = false;   // うすい のこりかげは あらく 描いて のばす（重さを へらす。とても うすいので 見た目は かわらない）   // お米を 描く 細かさの 上限（絵の1点 = 6ピクセルまで）
 const faceHi = new WeakMap();
 function riceFaceHi(fc, q) {   // 顔の 絵を 点の まま q 倍に（なめらかに 回しても 目が ぼやけない）
   let m = faceHi.get(fc);
@@ -6193,9 +6194,9 @@ function frame(now) {
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
-        ctx.globalAlpha = al;
+        ctx.globalAlpha = al; riceLowQ = true;
         drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch);
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1; riceLowQ = false;
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線

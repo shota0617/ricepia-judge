@@ -119,7 +119,7 @@ button.go.sub{background:transparent;color:var(--kraft);box-shadow:none;border:2
       <ol class="real">
         <li><b>1</b><span>袋の口を見る。<strong>白い糸がまっすぐ</strong>なら表。袋を<strong>裏返す</strong>（糸の輪が ならぶ方が裏）。</span></li>
         <li><b>2</b><span>端を見くらべる。<strong style="color:var(--red)">赤い糸</strong>が<strong>白い輪にささっている</strong>方から（たいてい左）。赤と白が よった しっぽの方は 縫い始めで、からまる。</span></li>
-        <li><b>3</b><span>赤い糸を 白い輪から はずし、縫った向きと逆へ <strong>ゆっくり</strong>引く。赤が ぬけると 白も はずれる。</span></li>
+        <li><b>3</b><span>赤い糸の端を 白い輪から はずし、<strong>縫い目に そって 横へ ゆっくり</strong>引く。赤が ぬけたら、<strong>白糸も 引きぬく</strong>。</span></li>
         <li><b>4</b><span>引っかかったら、<strong>表側の白糸</strong>を少し引いてから、また赤を引く。</span></li>
       </ol>
       <p class="tip">袋によっては右から ほどける。1本糸の袋は どちらからでも。<b>紙ひもで しばった袋</b>は、口を 何回か 折って ひもで 結んで あるので、結び目を ほどいて 折り返しを もどす。どうしても取れない ときは、ハサミで口を切っても大丈夫（ほどけば 口が 短く ならず、袋を また 使える）。<b>ほどいた糸や 紙くずは、投入口に 入れず ごみ箱へ。</b></p>
@@ -170,7 +170,9 @@ const R = {
   knotLen: 1.8,         // ひっかかる目は 何目ぶんの長さ
   knotGrace: 0.45,      // ひっかかって 止まる間。この間は 赤でも もつれない
   untangleTaps: 3,      // もつれを ほぐす タップの数（細いもので より戻す）
-  tugPx: 50,            // 表側の 白糸を これだけ 引くと もつれが ゆるむ（JA の 案内）
+  tugPx: 50,
+  freePx: 26,           // 赤い 糸の 端を 白い 輪から はずす のに 引く 長さ（山口紙袋「ループから 外して」）
+  whitePx: 70,          // 赤が ぬけた あと、白糸を 引きぬく 長さ（JA の 案内「白糸も 一緒に 引くと きれいに 抜ける」）            // 表側の 白糸を これだけ 引くと もつれが ゆるむ（JA の 案内）
   flipDur: 0.35,
   openDur: 0.6,
   timeBag: 1.5, timeCut: -1.5, timeClean: 1, timeZone: 1.5, timeWrong: -2, timeFront: -1,
@@ -333,13 +335,16 @@ function down(x,y){
         S.wrongs++; S.combo=0; S.streak=0; b.wrong=true; b.wrongEnd=w; addTime(R.timeWrong);
         say(S.practice ? 'そっちは 縫い始め。反対の端から' : '縫い始めだ… からまった','ng'); audio.knot(); S.shake=0.6; return;
       }
-      b.from = w; b.phase='pull'; b.hint=false; audio.click();
+      b.from = w; b.hint=false; audio.click();
+      // まず 赤い 糸の 端を 白い 輪から はずす（1本糸の 袋は 輪に ささって いないので すぐ 引ける）
+      b.phase = b.single ? 'pull' : 'free'; b.freePx = 0;
       const p = stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4});
       if(!b.wrong && b.readT < 0.9){ S.score += 50; S.quick++; S.fx.push({kind:'text', text:'早わざ +50', x:p.x, y:layout().seamY-30, t:0, life:0.8}); }
       S.held = true; S.liftT = 0;
     }
     return;
   }
+  if(b.phase==='free' || b.phase==='white'){ S.held = true; return; }
   if(b.tangle){
     const t = whiteTail(b);
     if(Math.hypot(x-t.x, y-t.y) < 70){ b.tangle.tugging = true; S.held = true; return; } // 白糸を つまんだ
@@ -353,6 +358,8 @@ function move(x,y){
   const dx = x-S.px, dy = y-S.py;
   S.px=x; S.py=y;
   if(b.tangle){ if(b.tangle.tugging) b.tangle.tug += Math.hypot(dx,dy); return; }
+  if(b.phase==='free'){ b.freePx += Math.hypot(dx,dy); return; }
+  if(b.phase==='white'){ b.whitePx = (b.whitePx||0) + Math.hypot(dx,dy); return; }
   // 糸は ほどく向き（縫った向きと逆）へ 引いた ぶんだけ ぬける。もどす 向きは 数えない
   // 本物は「糸は 常に 左→右へ（縫い目に そって）引っぱる」（木下製粉）。下へ 引いても 少ししか ぬけない
   const eff = Math.max(0, dx*pullDir(b)) + 0.35*Math.max(0, dy), raw = Math.hypot(dx,dy);
@@ -401,6 +408,16 @@ function step(dt){
     return;
   }
   if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
+  if(b.phase==='free'){
+    S.pend=0; S.tension *= Math.pow(0.02, dt);
+    if(b.freePx >= R.freePx){ b.phase='pull'; audio.click(); say('輪から はずれた','ok'); const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); }
+    return;
+  }
+  if(b.phase==='white'){
+    S.pend=0; S.tension *= Math.pow(0.02, dt);
+    if((b.whitePx||0) >= R.whitePx) finishBag();
+    return;
+  }
 
   const moved = S.pend; S.pend = 0;
   if(S.held) S.liftT = 0; else S.liftT += dt;
@@ -446,7 +463,7 @@ function step(dt){
       if(rnd()<0.5) S.fx.push({kind:'fluff', x:p.x, y:p.y, vx:(rnd()-0.5)*60, vy:-30-rnd()*50, t:0, life:0.6});
       audio.pop(mult, wasKnot);
       if(b.pulled%2===0) vib(4);
-      if(b.pulled>=b.N) finishBag();
+      if(b.pulled>=b.N){ if(b.single) finishBag(); else { b.phase='white'; b.whitePx=0; S.held=false; say('赤が ぬけた！ 白糸も 引く','ok'); audio.open(); } break; }
       else if(b.knots.has(b.pulled)) break;
       else if(b.pulled===b.forceTangle && !b.tangles){ tangle(); break; } // れんしゅう：ひっかかりと 直し方を 見せる
     }
@@ -820,7 +837,8 @@ function drawSeamBack(L, b){
   const ry = Math.max(1.6, 1.3*V.mm);
   // ほどけた 所：下糸は ぬけ、上糸の 輪だけ ゆるく たれて 残る
   ctx.beginPath();
-  for(let j=0;j<vp;j++){ const cx = vx(j) - sd*p*0.3; ctx.moveTo(cx+p*0.45, sy+3); ctx.ellipse(cx, sy+3, p*0.45, ry*1.6, 0, 0, TAU); }
+  const wv0 = b.phase==='white' ? Math.floor(Math.min(1, (b.whitePx||0)/R.whitePx) * nv) : 0;
+  for(let j=wv0;j<vp;j++){ const cx = vx(j) - sd*p*0.3; ctx.moveTo(cx+p*0.45, sy+3); ctx.ellipse(cx, sy+3, p*0.45, ry*1.6, 0, 0, TAU); }
   ctx.strokeStyle='rgba(248,244,234,.5)'; ctx.lineWidth=Math.max(1, tw*0.8); ctx.stroke();
   // 上糸（白）の 輪は 紙の 上に 寝て、縫い目の 向きに 1目ぶん のびる。下糸（赤）は 輪を 出入りして ジグザグ
   const loops = odd => { ctx.beginPath();
@@ -866,15 +884,23 @@ function drawSeamBack(L, b){
   const wrongEnd = b.wrongEnd;
   twist(ex, -sd, b.single ? C.white : red);
   if(wrongEnd){ const wx = wrongEnd==='L' ? L.x0 : L.x1; ctx.fillStyle='rgba(239,83,80,.9)'; ctx.beginPath(); ctx.arc(wx, sy+2, 7, 0, 7); ctx.fill(); }
-  if(b.phase==='look'){
+  if(b.phase==='look' || b.phase==='free'){
     if(b.single){ twist(sx, -sd, C.white); }
     else {
-      // ほどき始め：下糸（赤）の 端が いちばん はしの 上糸の 輪に ささっている
+      // ほどき始め：下糸（赤）の 端が いちばん はしの 上糸の 輪に ささっている。はずす ときは 端が 輪から 外へ ぬけていく
+      const fp = b.phase==='free' ? Math.min(1, b.freePx / R.freePx) : 0, o = -sd*fp*16;
       ctx.strokeStyle=C.shade; ctx.lineWidth=4; ctx.beginPath(); ctx.ellipse(sx - sd*2, sy+1, 6, 11, 0, 0, Math.PI*2); ctx.stroke();
       ctx.strokeStyle=C.white; ctx.lineWidth=2.4; ctx.beginPath(); ctx.ellipse(sx - sd*2, sy+1, 6, 11, 0, 0, Math.PI*2); ctx.stroke();
-      ctx.strokeStyle=C.shade; ctx.lineWidth=5; ctx.beginPath(); ctx.moveTo(sx + sd*8, sy+1); ctx.lineTo(sx - sd*6, sy+2); ctx.quadraticCurveTo(sx - sd*20, sy+4, sx - sd*18, sy+18); ctx.stroke();
-      ctx.strokeStyle=red; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(sx + sd*8, sy+1); ctx.lineTo(sx - sd*6, sy+2); ctx.quadraticCurveTo(sx - sd*20, sy+4, sx - sd*18, sy+18); ctx.stroke();
+      const tip = () => { ctx.beginPath(); ctx.moveTo(sx + sd*8, sy+1); ctx.lineTo(sx - sd*6 + o, sy+2); ctx.quadraticCurveTo(sx - sd*20 + o, sy+4, sx - sd*18 + o, sy+18); };
+      tip(); ctx.strokeStyle=C.shade; ctx.lineWidth=5; ctx.stroke();
+      tip(); ctx.strokeStyle=red; ctx.lineWidth=3; ctx.stroke();
+      if(b.phase==='free' && S.held){ ctx.strokeStyle=red; ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(sx - sd*18 + o, sy+18); ctx.quadraticCurveTo((sx+S.px)/2, Math.max(sy+18, S.py)+20, S.px, S.py); ctx.stroke(); }
     }
+  }
+  // 赤が ぬけた あと：白糸（上糸）を 引きぬく。引いた ぶん、ほどき始めの 側から 輪が 消えて、白い 糸が 指へ のびる
+  if(b.phase==='white' && !b.done && S.held){
+    const wv = Math.floor(Math.min(1, (b.whitePx||0)/R.whitePx) * nv), x0 = vx(Math.min(wv, nv-1));
+    ctx.strokeStyle=C.white; ctx.lineWidth=Math.max(1.4, tw*1.4); ctx.beginPath(); ctx.moveTo(x0, sy+2); ctx.quadraticCurveTo((x0+S.px)/2, Math.max(sy, S.py)+16, S.px, S.py); ctx.stroke();
   }
   // 引いている 下糸
   if(b.phase==='pull' && !b.done){
@@ -968,6 +994,14 @@ function drawMeter(L){
   const b=S.bag;
   const mw = Math.min(L.bagW-20, 360), mx = W/2 - mw/2, my = L.seamY - 78;
   ctx.textBaseline='alphabetic';
+  if(b && (b.phase==='free' || b.phase==='white') && !b.done){
+    if(S.practice) return;
+    ctx.fillStyle='#f3efe4'; ctx.textAlign='center'; ctx.font='700 15px "Zen Maru Gothic",sans-serif';
+    ctx.fillText(b.phase==='free' ? '赤い糸の 端を 輪から はずす' : '赤が ぬけた。白糸も 引きぬく', W/2, my-14);
+    ctx.fillStyle='#a9b0c7'; ctx.font='700 12px "Zen Maru Gothic",sans-serif';
+    ctx.fillText(b.phase==='free' ? 'つまんだまま 少し 引く' : '二本指で つまんで 引く', W/2, my+6);
+    return;
+  }
   if(b && b.phase==='look' && !b.done){
     if(S.practice) return; // れんしゅうは 上の 帯で 案内する
     ctx.fillStyle='#f3efe4'; ctx.textAlign='center'; ctx.font='700 15px "Zen Maru Gothic",sans-serif';
@@ -1058,6 +1092,8 @@ function stepText(){
   if(b.phase==='look' && b.face==='front') return '<b>表</b>です（白い糸が まっすぐ）。袋を <b>タップして 裏返す</b>';
   if(b.phase==='look') return b.wrongEnd ? '反対の端の、<b>赤い糸が 白い輪に ささっている</b>方を 二本指で つまむ'
     : '裏です。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）を <b>二本指で つまむ</b>';
+  if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずす</b>（つまんだまま 少し 引く）';
+  if(b.phase==='white' && !b.done) return '赤が ぬけた！ <b>白糸も</b> つまんで 引きぬく（いっしょに 引くと きれいに ぬける）';
   if(b.tangle) return '引っかかった！ <b>表側の白糸</b>を つまんで 少し引く（タップでも ほぐせる）';
   if(b.done) return b.k===PRACTICE_N-1 ? 'ぜんぶ できた！' : 'あいた！ つぎの袋へ';
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>で 止まった。指を ゆるめて、<b>ゆっくり</b> こえる';

@@ -7231,7 +7231,8 @@ function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マ�
 //   階段の ような ななめの 道（すじかいの 道・川ぞいの 道）は ななめの 一本道に なる。3つ以上の 分かれ道は まっすぐの 枝と、となりあう 枝の あいだの カーブ
 // ・道すじは 通路の マスの 中に おさまる（壁の マスへ はみ出さない）ので、マスで 数える しくみ（道しるべ・カラス・米つぶ・歩数）は そのまま
 const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5, MZ_RUB = 0.15;
-const MZ_SOFT_K = 300, MZ_SOFT_C = 12, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 5;   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
+const MZ_SOFT_K = 300, MZ_SOFT_C = 6, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 3.5;   // 10/28 店主「ふわふわした ぽよんぽよんする 迷路」：ねばりを へらして よく はね返る・へこみも ぷるぷる 長めに（ばねの 強さ K は かえない：やわらかく すると ふかく しずみ、となりの 通路へ ぬける）
+// （もとは K 300・C 12・DENT_C 5＝はね返り 3〜4割）   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
 // MZ_DENT_K・C：へこみの 絵の ばね（運営者「当たると 伸びて 跳ね返る」を もっと 分かりやすく：これまでは 0.1秒で もどり 目に 見えなかった。0.4秒ほど のびて、2〜3回 ぷるぷる ゆれて もどる）
 const mzSoft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0, vin: 0, boings: 0 };   // dent：生け垣の へこみの 絵（ばねで ついていき、はなれると ぷるんと もどる）   // MZ_RUB：生け垣に こすれる ときの すべりにくさ   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
 const mzCurveC = { key: '', m: new Map() };
@@ -8607,6 +8608,7 @@ function rollStep(dt) {
         if (vo < want) { rp.vx -= (want - vo) * mzSoft.ux; rp.vy -= (want - vo) * mzSoft.uy; mzSpring.boosts++; mzSpringChain(performance.now()); }
         const v = Math.hypot(rp.vx, rp.vy); if (v > ROLL_MAX) { rp.vx *= ROLL_MAX / v; rp.vy *= ROLL_MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
+      if (mzSoft.on && mzSoft.vin > 2.5 && roll.h <= 0 && !calmMotion) { roll.hv = Math.min(2.6, 0.8 + mzSoft.vin * 0.25); roll.h = 0.001; }   // ぽよんぽよん：はね返る ときに お米が ちょこんと とびはねる（見た目だけ。動きを へらす 人には しない）
       if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now() ? mzSpring.chain || 1 : 0); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
       mzSoft.on = false; mzSoft.vin = 0;
     }
@@ -8709,7 +8711,7 @@ function bumpFx(hard = 1, horiz = true, wet = false, hedge = false) {
   if (hard < 0.25) return;
   comboEnd();   // 当たったら ころころコンボは おしまい
   if (hedge) {   // めいろの 生け垣に がさっ：やわらかく 受けとめて、葉っぱが 舞う。強く 当たった ときだけ いたい顔
-    roll.sq = Math.min(0.24, 0.07 + hard * 0.04); roll.sqv = 0; roll.sqx = horiz;
+    roll.sq = Math.min(0.32, 0.1 + hard * 0.05); roll.sqv = 0; roll.sqx = horiz;   // ふわふわ：生け垣に もふっと うもれて 大きく つぶれる
     roll.shake = Math.min(0.4, 0.06 + hard * 0.06);
     if (hard > 3.2) roll.ouchT = 0.5;
     const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;

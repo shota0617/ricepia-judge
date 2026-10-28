@@ -205,7 +205,8 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 // お米の まん中は 道すじから TUBE マス以内を 転がる。直角の 曲がり角は まるく、階段の ような ななめの 道は ななめの 一本道に なる
 const TUBE = 0.12, HALF = TUBE + R;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（マス）
 const SPRING_S = 12, SPRING_E = 1.3;   // ばねの わざ（地図の めいろと 同じ。店主「迷路の壁が伸びて跳ね返って加速するスキル」）：とってから 何秒・当たった 速さの 何倍で はね返るか（数字は 仮）
-const SOFT_K = 2400, SOFT_C = 34, SOFT_MAX = 0.12;   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
+const SOFT_K = 2400, SOFT_C = 14, SOFT_MAX = 0.12;   // 10/28 店主「ふわふわ ぽよんぽよん」：ねばりを へらして よく はね返る（もとは C 34＝4割。K は かえない＝ふかく しずむと ぬける）
+//   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 function tubes(b) {   // マスごとに 受けもつ 道すじ（マスの 座標の 点の 列の 配列）。ゴールへ つながる 床と、そこから 入れる 水（落とし穴）
   if (b.tube) return b.tube;
@@ -563,7 +564,7 @@ function step(dt) {
     const q = near(b, nx, ny), sf = g.soft;
     if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
-      if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
+      if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.32, hit * 0.06); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
       if (!sf.on && hit > 2.5 && !calm && navigator.vibrate && localStorage.getItem('nsg_bgm') !== 'false') try { navigator.vibrate(Math.min(12, Math.round(3 + hit * 1.2))); } catch (e) { /* noop */ }   // 強く 当たった：ぶるっ（快感。地図の めいろには もう ある。動きを へらす 設定・音を 切った 人には しない）
       if (!sf.on && hit > HIT_STOP && !calm) g.stop = HIT_STOP_S;   // ヒットストップ（地図の めいろと そろえる）
       if (!sf.on) { sf.vin = Math.max(0, hit); sf.dv = Math.max(sf.dv, sf.vin / 6); }   // 当たった 速さ（ぽよんの 強さ）。へこみの 絵を ぐっと 押しこむ（盤の 1マスは 地図の 3マスぶん なので 地図の 1/3）

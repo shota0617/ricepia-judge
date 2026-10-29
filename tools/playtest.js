@@ -1878,6 +1878,34 @@ async function walkTo(page, id) {
     st.critters = Object.assign(book0 || {}, st.critters); day.critters = n0 || 0;
     return { left, told, first, next, capped, underPanel, afterPanel, ok: underPanel === 0 && afterPanel === 1 && !!left && left.left === left.all && left.all > 0 && told.endsWith(' ' + left.all) && first === 25 && next === 100 && all.left < left.all && capped === null };
   });
+  // 水べの さざなみ（夜の 改善 3）：お米が 水の となりを 転がると 水面に 輪が ひろがって 0.9秒で 消える。文字は 出さない。
+  // スタートの 近くに 水が ない ので、一色港の そばへ 動かして 見て、もとの 所へ もどす（動かすと めぐりの バッジ などが 出て ほかの テストに ひびくので、地図の テストの いちばん あとに）
+  R.checks.hamon = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, H = P.hamon, r0 = { x: P.roll.x, y: P.roll.y }, wait = ms => new Promise(res => setTimeout(res, ms)), t0 = document.getElementById('toast').textContent;
+      const shut = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
+      H.clear(); H.put(r0.x + 1, r0.y); await wait(200);
+      const shown = H.list.length === 1; await wait(H.MS);
+      const fade = H.list.length === 0;
+      const t = P.toTile(34.794466, 137.015547); P.rollPut(t.x, t.y, 0, 0);
+      let shore = null;
+      for (let k = 0; k < 20 && !shore; k++) {   // 地図が 読めるまで 待って、水の となりの 陸を さがす
+        await wait(250); shut();
+        for (let dy = -12; dy <= 12 && !shore; dy++) for (let dx = -12; dx <= 12 && !shore; dx++) {
+          const x = Math.floor(t.x) + dx, y = Math.floor(t.y) + dy;
+          if (P.codeAt(x, y) !== P.C.A && !P.blockedAt(x + 0.5, y + 0.5) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => P.codeAt(x + a, y + b) === P.C.A)) shore = { x, y };
+        }
+      }
+      let spawn = false;
+      if (shore) for (let i = 0; i < 12 && !spawn; i++) { shut(); P.rollPut(shore.x + 0.5, shore.y + 0.5, i % 2 ? 2.5 : -2.5, 0); await wait(80); spawn = H.list.length > 0; }
+      P.rollPut(r0.x, r0.y, 0, 0); H.clear();
+      const toast = document.getElementById('toast').textContent !== t0 && /さざなみ|水/.test(document.getElementById('toast').textContent);
+      return { shown, fade, shore: !!shore, spawn, toast };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.shown && r.fade && (!r.shore || r.spawn) && !r.toast };
+  })();
   R.errors.push(...errors);
   await ctx.close();
 
@@ -3594,6 +3622,7 @@ async function walkTo(page, id) {
   need(c.kaeru && c.kaeru.ok, `あぜの カエル：10月に 出ない・すわって いない・お米が 近づいても とびこまない・消えない・文字を 出す（${JSON.stringify(c.kaeru)}）`);
   need(c.chaHana && c.chaHana.ok, `茶畑の 茶の花：10月に 咲かない・ぽつぽつで ない（${JSON.stringify(c.chaHana)}）`);
   need(c.nightLamps && c.nightLamps.ok, `夜の あかり：夜に 街灯が ない・あたたかい 明かりが ない・昼にも 描く・文字を 出す（${JSON.stringify(c.nightLamps)}）`);
+  need(c.hamon && c.hamon.ok, `水べの さざなみ：輪が 出ない・消えない・水の となりを 転がっても 出ない・文字を 出す（${JSON.stringify(c.hamon)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);

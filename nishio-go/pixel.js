@@ -2040,7 +2040,7 @@ function yuamiStep(hx, by, u, now) {
 const horidashi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function horidashiStep(hx, by, u, now) {
   const h = horidashi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur) { h.cur = null; h.said = false; h.chk = 0; return; }
+  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur || shimatabi.cur) { h.cur = null; h.said = false; h.chk = 0; return; }
   const H = window.NISHIO_HORIDASHI;
   if (!h.cur || now - h.t0 >= H.CYCLE) {
     if (!h.cur && (roll.idle < H.STILL || now < h.chk)) return;
@@ -2070,6 +2070,41 @@ function horidashiStep(hx, by, u, now) {
     px(7, 12, 16, 3, '#e8cf94');   // 砂から 半分 出て いる ように 手前を 砂で かくす
   }
   h.drawn++; dirty = true;
+}
+// お米つぶの しまたび（shimatabi.js）：西尾市の 佐久島で 止まって じっと すると、お米の うしろが 島の ひとこまに なる。アート作品の 台座・黒壁の 集落・一色港からの 高速船が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 佐久島の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く（ほりだし・ゆあみより 先に 出る）
+const shimatabi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function shimatabiStep(hx, by, u, now) {
+  const m = shimatabi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_SHIMATABI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_SHIMATABI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_shimatabi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (m.cur.id === 'art') {   // 作品の 台座：石の 台に 名札。まわりに 赤い ポールと ロープ
+    px(-14, 11, 28, 4, '#b8b2a4'); px(-14, 11, 28, 1, '#d8d3c6'); px(-14, 14, 28, 1, '#8c8678'); px(-4, 12.5, 8, 1.5, '#4a4a4a');
+    px(-18, 8, 2, 7, '#c0392b'); px(16, 8, 2, 7, '#c0392b'); px(-16, 9, 4, 1, '#e6d3a3'); px(12, 9, 4, 1, '#e6d3a3');
+  } else if (m.cur.id === 'kurokabe') {   // 黒壁：黒い 板壁に 銀ねずの 瓦の ひさし
+    px(-22, -8, 44, 23, '#2b2f36'); for (let i = 0; i < 11; i++) px(-22 + i * 4, -6, 0.6, 21, '#1d2026');
+    px(-24, -11, 48, 3, '#7a7f86'); px(-24, -8, 48, 1, '#5b5f66'); px(12, -2, 7, 6, '#161a1f'); px(13, -1, 5, 4, '#e0c070');
+  } else {   // 高速船：海の 帯を 白い 船が ゆっくり 横ぎる
+    px(-24, 12, 48, 3, '#4a8fc2'); px(-24, 12, 48, 1, '#7db5dc');
+    for (let i = 0; i < 4; i++) px(-20 + i * 12 + Math.sin(t * 2 + i) * 2, 13.5, 4, 0.8, '#e8f3fb');
+    const sx = calmMotion ? -6 : -22 + ((age / 7000) % 1) * 34;
+    px(sx, 8, 14, 3, '#f4f4f4'); px(sx, 11, 14, 1.5, '#2f6fb0'); px(sx + 4, 5, 6, 3, '#f4f4f4'); px(sx + 5, 6, 4, 1, '#222');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
 }
 // お米つぶの ちゃせき（chasetsu.js）：西尾地区で 止まって じっと すると、お米の よこに 石臼が 出て てん茶を ひき（くるくる）、茶わんに 抹茶を 点てて（茶せんが しゃかしゃか）、お米が ひと言。
 // 動くか ねむりだすと 消える。ひと席 おわったら 動くまで くりかえさない。西尾市の 西尾地区の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
@@ -7033,6 +7068,7 @@ function frame(now) {
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
+    shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）

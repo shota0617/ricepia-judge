@@ -1532,7 +1532,9 @@ async function walkTo(page, id) {
     const tube = await page.evaluate(([x, y]) => { const q = nishioPixel.maze.near && nishioPixel.maze.near(x, y); return q ? +q.d.toFixed(3) : null; }, [r.x, r.y]);
     const same = Math.floor(r.x / c.K) === c.x && Math.floor(r.y / c.K) === c.y;
     await page.evaluate(() => nishioPixel.setRoll(false)); await page.evaluate(ll => { nishioGo.moveTo(ll.lat, ll.lng); Object.assign(nishioPixel.critterState, ll.cs); }, at);
-    const fit = tube !== null ? tube >= 0.4 && tube <= 0.5 && same : gap >= 0.6 && gap < 1;
+    // 上は 0.6：やわらかい 生け垣（10/28 店主「ぽよんぽよん」）は 押すと へこみ、生け垣の 絵も いっしょに へこむ。加速の 強い 転がり方（ロケット）で 押しつづけると
+    // 0.51〜0.53 まで 入り、0.5 で 見ると ときどき 落ちた（2026-10-29：3回に 1回ほど）。0.6 より 先は 見た目にも 食いこむ（前の きまりと 同じ）
+    const fit = tube !== null ? tube >= 0.4 && tube <= 0.6 && same : gap >= 0.6 && gap < 1;
     const ok = fit && !!hitMood;
     return { ok, gap, tube, same, bounced: !!hitMood, hitMood, tries, ...(ok ? {} : { cell: [c.x, c.y], env, tr }) };
   })();

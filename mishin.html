@@ -714,7 +714,7 @@ function step(dt){
   if(S.held && S.tension>1 && !grace) S.over += dt*(S.tension-1)*R.overRate; else S.over = Math.max(0, S.over - dt*(S.held ? R.overDecay : R.overDecayLift));
   if(S.over > tangleAfter()){ tangle(); return; }
 
-  if(S.held && S.tension>=zoneLo() && S.tension<=1){ S.combo = Math.min(1, S.combo + dt*0.5); S.zoneTime += dt; }
+  if(S.held && S.tension>=zoneLo() && S.tension<=1){ S.combo = Math.min(1, S.combo + dt*0.5/(1 + 0.35*Math.max(0, S.fevers - 2))); S.zoneTime += dt; } /* 3回目の フィーバーから 倍率の 上がりを ゆっくり（うまい 人で フィーバーが ふだんに ならない。114周目） */
   else if(S.tension>1 || S.liftT>0.5) S.combo = Math.max(0, S.combo - dt*0.25);
 
   // ひっかかって 止まっている間は、糸は すすまない

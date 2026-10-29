@@ -45,7 +45,7 @@ const CHECKS = {
     });
     await p.screenshot({ path: path.join(OUT, 'practice-summary.png') });
     ok(r.mode==='over' && r.bagNo===3 && r.summary, 'れんしゅう 3袋 → まとめ', r);
-    ok(r.tangles[2] >= 1, 'れんしゅう 3袋目は わざと 引っかかる', r.tangles);
+    ok(r.tangles[2] >= 1, 'れんしゅう 3袋目は わざと もつれる', r.tangles);
   },
   // れんしゅうを 1本指（本物の touch）だけで 通す。360×640
   async one(b){
@@ -101,7 +101,7 @@ const CHECKS = {
       for (let t=0;t<2 && !bb.done;t++){ KB.up(); await st(5); let x = l.x0+20; KB.down(x, l.seamY+50);
         for (let i=0;i<400 && !bb.tangle;i++){ x += 40; if (x>l.x1){ KB.up(); x=l.x0+20; KB.down(x,l.seamY+50); } KB.move(x, l.seamY+50); KB.step(1/60); await raf(); }
         await st(10); KB.up(); for (let k=0;k<3;k++){ KB.tap((l.x0+l.x1)/2, l.seamY+150); await st(3); } await st(60); }
-      mo.disconnect(); KB.manual = false; return { tangles: bb.tangles, reads: said.join('|').split('引っかかりました').length - 1 }; });
+      mo.disconnect(); KB.manual = false; return { tangles: bb.tangles, reads: said.join('|').split('もつれました').length - 1 }; });
     ok(t2.tangles >= 2 && t2.reads >= 2, '同じ 袋で 2回目に もつれても 帯の 声を 読む', t2);
     const make = practice => p.evaluate(practice => {
       KB.manual = true; KB.fixedSeed = 3; practice ? KB.startPractice() : KB.start(); const S = KB.S, L = KB.layout();
@@ -443,6 +443,9 @@ const CHECKS = {
       ev('pointerdown', 41, L.x0, L.seamY); ev('pointerdown', 42, L.x0 + 160, L.seamY); await new Promise(r => setTimeout(r, 100)); ev('pointermove', 42, L.x0 + 20, L.seamY); await new Promise(r => setTimeout(r, 700)); out.pinched = /はなれて/.test((S.msg && S.msg.text) || ''); ev('pointerup', 41, L.x0, L.seamY); ev('pointerup', 42, L.x0 + 20, L.seamY);
       KB.startPractice(); S = KB.S; L = KB.layout(); S.bag.slide = 0; S.msg = null; ev('pointerdown', 43, L.x0, L.seamY); ev('pointerdown', 44, L.x0, L.seamY + 200); await new Promise(r => setTimeout(r, 700)); out.practice = /はなれて/.test((S.msg && S.msg.text) || ''); ev('pointerup', 43, L.x0, L.seamY); ev('pointerup', 44, L.x0, L.seamY + 200); return out; });
     ok(!fa.pinched && !fa.practice, '「指が はなれています」は つまめたら 出さない・れんしゅうでは 出さない', fa);
+    // 122周目：「もう一回」の 中に 出した 行は 結果の 吹き出しで 見た目に くりかえさない（読み上げには のこす）
+    const dup = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100)); const b = document.getElementById('best'), c = b.cloneNode(true); c.querySelectorAll('.sr').forEach(e => e.remove()); return { vis: c.textContent, all: b.textContent }; });
+    ok(!/じこベストまで/.test(dup.vis) && /じこベストまで/.test(dup.all), '「もう一回」の 中に 出した 行は 結果の 吹き出しで くりかえさない（読み上げには のこす）', dup);
     // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
     const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(/あと 1つで きょうの 目標/.test(near), '目標が あと 1つの ときは ヒントで「あと 1つで きょうの 目標」', near);
@@ -481,7 +484,7 @@ const CHECKS = {
     const skd = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); const c = document.getElementById('coinDone'), sb = document.getElementById('skipBtn'); if (sb) sb.click(); const t = c.querySelector('.talks'), l = c.querySelector('.line-talk'); const r = !!(t.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING); c.hidden = true; return r; });
     ok(skd, '「やめて 手順を 見る」の まとめは DOM でも 手順 → LINE', skd);
     const sk2 = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); const sb = document.getElementById('skipBtn'); if (sb) sb.click(); const c = document.getElementById('coinDone'), t = c.querySelector('.talks'), st = t.nextElementSibling, l = st && st.nextElementSibling, says = [...t.querySelectorAll('.say')].map(e => e.textContent); c.hidden = true;
-      return { stuck: st && st.id, line: !!l && l.classList.contains('line-talk'), s4: /引っかかっ/.test(says[3] || ''), s5: /ごみ箱/.test(says[4] || '') }; });
+      return { stuck: st && st.id, line: !!l && l.classList.contains('line-talk'), s4: /もつれ/.test(says[3] || ''), s5: /ごみ箱/.test(says[4] || '') }; });
     ok(sk2.stuck === 'stuck' && sk2.line && sk2.s4 && sk2.s5, 'やめて 見に 来た まとめは 手順 →「それでも 取れない ときは」→ LINE、手順4 は もつれ・5 は ごみ箱（111・113周目）', sk2);
     // 97周目：横向きで やめて 見に 来ても 袋の 両はしは 左の 列の 上・せまい 画面でも 手順の 番号を けさない
     for (const [w, h] of [[667,375],[195,422]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);

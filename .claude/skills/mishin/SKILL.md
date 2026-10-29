@@ -100,7 +100,7 @@ description: 米袋の ミシン糸 ゲーム「ミシン糸 一本どり」（m
    - 画面の 字を 書き足したら `python3 tools/mishin/fonts.py`。袋の 絵（`BAGIMG`）は いちばん 下の 別の script（電波が 弱くても ボタンが 早く きく ように）。
    - 袋の 形や 紙を かえる ときは `build_bag.py`（`--fast` で 荒く 試す → 本番は 4分 ほど。バックグラウンドで 回して その間に ほかを）→ `pack_bag.py`。
 5. **確かめる**
-   - `node tools/mishin/check.js`（ぜんぶ ✔ に なる まで）
+   - `node tools/mishin/check.js`（ぜんぶ ✔ に なる まで）。**コミットは check.js の 終わりの 値で 止める**：`node tools/mishin/check.js > <スクラッチ>/check.log 2>&1 && git commit …`。`| grep` に つなぐと 落ちても 先へ 進む（106 周目に フォントの 確かめが 落ちた まま コミットした）。画面の 字を 足したら 先に `fonts.py`。
    - `node tools/mishin/playtest.js --runs 10 --goals`（順位：expert ＞ regular ≧ human ＞ novice、greedy・careful・guesser は human より 点が 低い こと。ずるい 打ち方 flick・alwaysL・noKnot・noKnotH・probe も human より 低い こと、ていねいに 読む slowRead が alwaysL より 低く ない こと（さいごに ✔／✖ が 出る。91 周目）。画面の 幅は `--w 768 --h 1024` などで かえられる（72 周目。幅で 順位が かわらないか）。expert の 1回は 2分 くらいまで）
    - `node tools/mishin/shots.js` と `node tools/mishin/shots.js 360 640`・`844 390` の `sheet.png` を 目で 見る（字の 重なり・はみ出し・かくれ）。結果の「もう一回」は 低い 横向き（568×320・667×375・740×360）でも 画面の 中に。字 200% は 幅 195px（`deviceScaleFactor` 4）で かわりに 見る。
    - `check.js` で 絵が かかれる のを 待つ ときは 決まった 時間（`setTimeout(250)`）で なく、値が 出る まで 少しずつ 待つ（重い ときに 落ちる。91・92 周目）。

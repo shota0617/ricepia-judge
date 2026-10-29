@@ -287,8 +287,8 @@ const CHECKS = {
       const bb = S.bag; bb.face = 'front'; const L = KB.layout(); ev('pointerdown',1,L.x0+4,L.seamY); ev('pointerup',1,L.x0+4,L.seamY); for (let i=0;i<40;i++) KB.step(1/60);
       return { face: bb.face }; });
     ok(r.face==='back', 'れんしゅうで 表の 端を さわると 裏返す', r);
-    const zw = await p.evaluate(() => { const S = KB.S; for (let i=0;i<40;i++) KB.step(1/60); const bb = S.bag, L = KB.layout(), W = KB.size().W, r = Math.min(66, W*0.17);
-      ev('pointerdown',4,W/2,L.seamY+40+r); ev('pointerup',4,W/2,L.seamY+40+r); for (let i=0;i<40;i++) KB.step(1/60); return { face: bb.face }; });
+    const zw = await p.evaluate(() => { const S = KB.S; for (let i=0;i<40;i++) KB.step(1/60); const bb = S.bag, z = S.zoom;
+      ev('pointerdown',4,z.cx,z.cy); ev('pointerup',4,z.cx,z.cy); for (let i=0;i<40;i++) KB.step(1/60); return { face: bb.face }; });
     ok(zw.face==='back', 'れんしゅうで 拡大窓を さわっても 袋が 裏返らない', zw);
     const m = await p.evaluate(() => { const S = KB.S; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あいた！', kind:'ok', t:0, life:2.5 }; for (let i=0;i<150;i++) KB.step(1/60); return { bagNo:S.bagNo, msg: S.msg && S.msg.text }; });
     ok(m.bagNo===1 && !m.msg, 'つぎの 袋に 前の 声を もちこさない', m);
@@ -368,11 +368,18 @@ const CHECKS = {
     ok(lp.flip > 0, 'れんしゅうの 表は 長押しでも まわる', lp);
     // 78周目：低い 画面の 題でも ボタンが 見える・2行の 吹き出しが 縫い目や メーターに かからない
     for (const [w, h] of [[667,375],[844,390],[320,568]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
-      const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
+      const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); t.hidden = true; document.body.classList.remove('menu'); return { b:r.bottom, H:innerHeight }; }); /* あとの 確かめに のこさない */
       ok(tb.b <= tb.H, `低い 画面（${w}×${h}）の 題で「れんしゅう」の ボタンが 見える`, tb); }
     await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);
     const bb = await p.evaluate(() => { document.getElementById('title').hidden = true; KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(0); Object.assign(b, { face:'back', slide:0 }); S.bag = b; S.msg = { text:'裏ですね。端の 赤い 糸を つまんで ください', kind:'ok', t:0.5, life:2 }; return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ top:S.msgTop, y:S.msgY, seam:L.seamY })))); });
     ok(bb.y + (bb.y - bb.top) + 9 <= bb.seam - 16, '320 幅で 2行の 吹き出しも 縫い目に かからない', bb);
+    // 82周目：れんしゅうの 拡大窓は 右手の 親指（下の 角 → 左の 端）で かくれない 所・帯と 音ボタンに かからない
+    for (const [w, h] of [[390,844],[360,640],[320,568],[844,390]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      const zz = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; await new Promise(r => setTimeout(r, 250)); const L = KB.layout(), z = S.zoom, W = KB.size().W, H = KB.size().H;
+        const snd = document.getElementById('soundBtn').getBoundingClientRect(), cv = document.getElementById('cv').getBoundingClientRect();
+        const t = Math.max(0, Math.min(1, ((z.cx - W) * (L.x0 - W) + (z.cy - H) * (L.seamY - H)) / ((L.x0 - W)**2 + (L.seamY - H)**2))), px = W + t*(L.x0 - W), py = H + t*(L.seamY - H); /* 親指の 線（右下の 角 → 左の 端） */
+        return { thumb: Math.hypot(z.cx - px, z.cy - py) - z.r, banner: z.cy - z.r - (S.bannerBottom||0), sound: (snd.top - cv.top) - (z.cy + z.r) > 0 || (snd.left - cv.left) > z.cx + z.r }; });
+      ok(zz.thumb > 20 && zz.banner >= 0 && zz.sound, `れんしゅうの 拡大窓が 親指・帯・音ボタンに かからない（${w}×${h}）`, zz); }
     await p.setViewportSize({ width:320, height:568 }); // 65周目：じこベスト・はじめての ランク・袋の じこベストの 行が ふえても
     const ag4 = await p.evaluate(() => { localStorage.setItem('mishin-best2','5000'); localStorage.setItem('mishin-bestbags','3'); KB.start(); const S = KB.S; S.score = 8000; S.bags = 9; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });

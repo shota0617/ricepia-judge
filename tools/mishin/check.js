@@ -559,6 +559,11 @@ const CHECKS = {
     const r = await p.evaluate(() => { const out = {};
       for (const d of ['2026-10-28', '2027-03-10', '2026-08-25']) { KB.today = d; const bag = KB.makeBag(4), bag9 = KB.makeBag(9); out[d] = { year: KB.riceYear(new Date(d)), golden: bag.golden, brand: bag.brand, brand9: bag9.golden ? bag9.brand : '', kaori: KB.riceYear(new Date(d), 'あいちのかおり') }; }
       KB.today = null; return out; });
+    // 135周目：きょうの 目標は 1年 どの 日も 3つ ちがう・1つは はじめての 人にも とれる（8袋 あける か 右から ほどく袋）・新米の 目標は 新米の きせつ だけ
+    const yg = await p.evaluate(() => { const bad = []; let easyFirst = 0, n = 0; for (let t = Date.UTC(2026,0,1); t < Date.UTC(2027,0,1); t += 864e5){ const d = new Date(t).toISOString().slice(0,10); KB.today = d; const ids = KB.todayGoals(); n++;
+        if (new Set(ids).size !== 3 || !ids.some(i => i==='bags8' || i==='right')) bad.push(d + ':' + ids.join(',')); }
+      KB.today = null; return { n, bad: bad.slice(0,5), nbad: bad.length }; });
+    ok(yg.n === 365 && yg.nbad === 0, 'きょうの 目標は どの 日も 3つ ちがい、1つは はじめての 人にも とれる', yg);
     ok(r['2026-10-28'].golden && r['2026-10-28'].year===2026, '秋は その年が 産年で 新米シール', r['2026-10-28']);
     ok(r['2026-08-25'].golden && r['2026-08-25'].brand!=='あいちのかおり' && r['2026-08-25'].brand9!=='あいちのかおり' && r['2026-08-25'].kaori===2025, '8月下旬は あいちのかおりの 新米は まだ ない（10月中旬から）', r['2026-08-25']);
     ok(!r['2027-03-10'].golden && r['2027-03-10'].year===2026, '春は 前の 年が 産年で 新米シールなし', r['2027-03-10']);

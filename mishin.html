@@ -259,7 +259,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
         <div class="talk"><span class="who num">4</span><p class="say">引っかかったら <strong>強く 引かずに</strong>、細い もので ゆるめて 少し もどしてから やりなおします<small class="src">（製粉会社の 説明）</small>。</p></div>
         <div class="talk"><span class="who num">5</span><p class="say">ほどいた 糸や 紙くずは <strong>投入口に 入れず ごみ箱へ</strong> お願いします。</p></div>
       </div>
-      <div class="talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">それでも 取れない ときは、袋の 表側（白い 糸が まっすぐの 面）の <b>白糸</b>を 少し 引いてから 赤を 引く 方法<small class="src">（JAの 案内として 紹介）</small>や、<b>白糸だけ ハサミで 切って</b> 赤を 引く 方法<small class="src">（農家の 説明）</small>も あります。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。</p></div> <!-- もつれの ほかの 直し方は ボタンの 上に 1つに（111周目） -->
+      <div class="talk cont" id="stuck"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">それでも 取れない ときは、袋の 表側（白い 糸が まっすぐの 面）の <b>白糸</b>を 少し 引いてから 赤を 引く 方法<small class="src">（JAの 案内として 紹介）</small>や、<b>白糸だけ ハサミで 切って</b> 赤を 引く 方法<small class="src">（農家の 説明）</small>も あります。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。</p></div> <!-- もつれの ほかの 直し方は ボタンの 上に 1つに（111周目） -->
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
       <button class="go sub" id="toGame" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
       <div class="talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">玄米30kgは らいすぴあの 店頭・ドライブスルーで どうぞ。食べる 分だけ、24時間 いつでも 精米 できます。<a href="https://ricepia.jp/#coin-seimai" target="_blank" rel="noopener">コイン精米所の 案内<small>（新しい タブで ひらきます）</small></a></p></div> <!-- ricepia.jp の コイン精米所の 案内の ことば（106周目） -->
@@ -423,7 +423,7 @@ function startGame(practice){
 }
 
 function endPractice(skipped){
-  { const pn = ui.coinDone.querySelector('.panel'), lt = pn.querySelector('.line-talk'), ref = skipped === true ? pn.querySelector('.talks').nextSibling : pn.querySelector('.coinHead').nextSibling; if(lt.nextSibling !== ref && lt !== ref) pn.insertBefore(lt, ref); } /* やめて 見に 来た 人には 手順 → LINE。見た目と 読み上げの 順を そろえる（93・96周目） */
+  { const pn = ui.coinDone.querySelector('.panel'), lt = pn.querySelector('.line-talk'), ref = skipped === true ? $('stuck').nextSibling : /* 手順 →「それでも」→ LINE（113周目） */ pn.querySelector('.coinHead').nextSibling; if(lt.nextSibling !== ref && lt !== ref) pn.insertBefore(lt, ref); } /* やめて 見に 来た 人には 手順 → LINE。見た目と 読み上げの 順を そろえる（93・96周目） */
   const hw = ui.coinDone.querySelector('.talk>.who'); if(hw) hw.innerHTML = DOODLE.kome(skipped === true ? 'smile' : 'joy'); /* 89周目 */
   track('mishin_coin_done', { skipped: skipped === true ? 1 : 0 });
   srSay(skipped === true ? '取り方の まとめ です' : 'れんしゅう できました。本物の 袋での 取り方の まとめ です');

@@ -363,8 +363,8 @@ const CHECKS = {
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指を おいて/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[341,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
-      const ag = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 400)); /* 結果が 落ちついて から（107周目） */ const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, t: document.getElementById('againBtn').textContent }; });
-      ok(ag.b <= ag.H && /あと/.test(ag.t), `低い 画面（${w}×${h}）でも「もう一回（…まで あと）」が 画面の 中`, ag); }
+      const ag = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '123456'); KB.start(); const S = KB.S; S.score = 100; S.bags = 1; S.time = 0.01; /* 長い 数で 見る（113周目） */ for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 400)); /* 結果が 落ちついて から（107周目） */ const r = document.getElementById('againBtn').getBoundingClientRect(); const vis = [...document.querySelectorAll('#againBtn small>span')].filter(e => getComputedStyle(e).display !== 'none').map(e => e.className).join(','); return { b:r.bottom, H:innerHeight, t: document.getElementById('againBtn').textContent, vis }; });
+      ok(ag.b <= ag.H && /あと/.test(ag.t) && (w > 359 ? ag.vis === 'lg' : ag.vis === 'sh'), `低い 画面（${w}×${h}）でも「もう一回（…まで あと）」が 画面の 中・せまい 画面は みじかい 文`, ag); }
     // 72周目：画面の 幅で むずかしさが かわらない（引く 長さに あわせて 速さの 上限も。広い 画面は 1.12 倍 まで）
     const sf = {}; for (const [w, h] of [[360,640],[390,844],[768,1024]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       sf[w] = await p.evaluate(() => { const L = KB.layout(), b = KB.makeBag(0); return +(b.safe / ((L.x1-L.x0))).toFixed(3); }); }
@@ -465,6 +465,9 @@ const CHECKS = {
     ok(dom.line && dom.best === 'bestTalk' && dom.first === 'A', '結果の DOM の 順＝見た目の 順（もう一回 → LINE（ボタン → 文）→ じこベストの 声）', dom);
     const skd = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); const c = document.getElementById('coinDone'), sb = document.getElementById('skipBtn'); if (sb) sb.click(); const t = c.querySelector('.talks'), l = c.querySelector('.line-talk'); const r = !!(t.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING); c.hidden = true; return r; });
     ok(skd, '「やめて 手順を 見る」の まとめは DOM でも 手順 → LINE', skd);
+    const sk2 = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); const sb = document.getElementById('skipBtn'); if (sb) sb.click(); const c = document.getElementById('coinDone'), t = c.querySelector('.talks'), st = t.nextElementSibling, l = st && st.nextElementSibling, says = [...t.querySelectorAll('.say')].map(e => e.textContent); c.hidden = true;
+      return { stuck: st && st.id, line: !!l && l.classList.contains('line-talk'), s4: /引っかかっ/.test(says[3] || ''), s5: /ごみ箱/.test(says[4] || '') }; });
+    ok(sk2.stuck === 'stuck' && sk2.line && sk2.s4 && sk2.s5, 'やめて 見に 来た まとめは 手順 →「それでも 取れない ときは」→ LINE、手順4 は もつれ・5 は ごみ箱（111・113周目）', sk2);
     // 97周目：横向きで やめて 見に 来ても 袋の 両はしは 左の 列の 上・せまい 画面でも 手順の 番号を けさない
     for (const [w, h] of [[667,375],[195,422]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const ls = await p.evaluate(async () => { KB.startPractice(); KB.step(1/60); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); document.getElementById('skipBtn').click(); await new Promise(r => setTimeout(r, 100));

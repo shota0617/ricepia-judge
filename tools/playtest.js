@@ -15,12 +15,13 @@ const STATION = [34.8640, 137.0560];   // あるいて移動で使う位置（�
 const PLAY_DATE = process.env.PLAYTEST_DATE || '2026-10-16T10:00:00+09:00';
 
 async function newPage(browser, opts = {}) {
-  const { howto, kome, ...ctxOpts } = opts;
+  const { howto, kome, auto, ...ctxOpts } = opts;
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...ctxOpts });
-  await ctx.addInitScript(([howto, kome]) => {
+  await ctx.addInitScript(([howto, kome, auto]) => {
     if (!howto) localStorage.setItem('nsg_howto', '1');
     if (!kome && !localStorage.getItem('nsg_kome_talk')) localStorage.setItem('nsg_kome_talk', '0');   // お米つぶの おはなしは 下の komeTalk で（ほかの 台本の じゃまに しない）   // 「あそびかた」は 読んだことに（はじめての人の 案内は 下の howtoFirst で）
     localStorage.setItem('nsg_auto', 'false');   // おまかせ歩きは止めて、台本どおりに歩く
+    if (!auto) { localStorage.setItem('nsg_noauto', '1'); localStorage.setItem('nsg_keep_walk', '1'); }   // 台本は はじめの 画面から（いきなり ころころ は autoStart で 確かめる）・あるいて移動の しくみも 確かめる
     if (!localStorage.getItem('nsg_roll')) { localStorage.setItem('nsg_roll', '0'); localStorage.setItem('nsg_roll_v2', '1'); }   // 台本は1マスずつ歩く（かたむけて転がすのは、下の roll のチェックで）
     // 転がり方は 日づけで きまる「きょうの転がり方」の まま（台本の 道のりで 新しい 転がり方を もらって 押す強さ・はね返りが かわると、転がる チェックの 数が 回ごとに ずれた。もらう ことは koroDist の チェックで）
     if (!localStorage.getItem('nsg_koro')) localStorage.setItem('nsg_koro', JSON.stringify({ u: [], sel: 'daily', dist: -1e9, n: 0 }));
@@ -31,7 +32,7 @@ async function newPage(browser, opts = {}) {
     document.addEventListener('DOMContentLoaded', () => { const r = document.getElementById('reward'); if (!r) return; new MutationObserver(() => { if (r.innerText) window.__rewards.push((r.innerText + ' ' + [...r.querySelectorAll('[title]')].map(e => e.title).join(' ')).replace(/\s+/g, ' ').slice(0, 400)); }).observe(r, { childList: true }); });
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () { window.__played.push(this.src.split('/').pop()); return play.call(this); };
-  }, [!!howto, !!kome]);
+  }, [!!howto, !!kome, !!auto]);
   const page = await ctx.newPage();
   await page.clock.setFixedTime(new Date(PLAY_DATE));   // Date だけ固定（タイマーやアニメーションはふつうに動く）
   const errors = [];
@@ -789,6 +790,18 @@ async function walkTo(page, id) {
       return { shown, picOk, held, after };
     });
     return { n: list.length, bad, howto, kt, ok: list.length >= 12 && !bad.length && /art\/intro\//.test(howto.scene || '') && /url\(/.test(howto.bg || '') && kt.shown && kt.picOk && kt.held && kt.after };
+  })();
+  // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめての 人が 開くと、はじめの 画面の ボタンを 待たずに 地図の めいろで 転がる
+  // （あそびかたの 札が 出る）。「あるいて遊ぶ」の ボタンと、せっていの 移動の しかたの 切りかえは ない。前に あるいて移動だった 人も ころころに
+  R.checks.autoStart = await (async () => {
+    const v = await newPage(browser, { howto: true, auto: true }), p2 = v.page;
+    try {
+      await p2.goto(URL); await p2.waitForTimeout(3000);
+      const a = await p2.evaluate(() => ({ intro: !document.getElementById('intro').hidden, demo: nishioGo.demo, roll: !!(nishioPixel.roll && nishioPixel.roll.on), howto: !document.getElementById('howto').hidden, walkBtn: !!document.getElementById('startBtn'), modeSw: !document.querySelector('.mode-sw').hidden }));
+      await p2.evaluate(() => { localStorage.setItem('nsg_mode', 'real'); localStorage.setItem('nsg_started', 'true'); }); await p2.reload(); await p2.waitForTimeout(2500);   // 前に あるいて移動で 遊んでいた 人
+      const walker = await p2.evaluate(() => ({ demo: nishioGo.demo, mode: localStorage.getItem('nsg_mode') }));
+      return { ...a, walker, ok: !a.intro && a.demo && a.roll && a.howto && !a.walkBtn && !a.modeSw && walker.demo && walker.mode === '"demo"' };
+    } finally { R.errors.push(...v.errors); await v.ctx.close(); }
   })();
   // 主人公の 名前は「あいちのかおりちゃん」（運営者の声 2026-10-29）：おはなしの 名前の 札・はじめの あいさつ
   R.checks.kaoriName = (() => {
@@ -1678,13 +1691,13 @@ async function walkTo(page, id) {
   R.checks.textLessAgain = await page.evaluate(() => document.body.classList.contains('simple'));
 
   // 2) 同じ画面のまま、あるいて移動に切り替える（位置情報で現在地が出るか、記録が操作モードと別か、戻すと操作モードの記録が残っているか）
-  await page.click('[data-tab=settings]'); await page.click('.mode-sw [data-mode=real]'); await page.click('[data-tab=map]'); await page.waitForTimeout(3500);   // 移動のしかたは せってい で切り替える
+  await page.click('[data-tab=settings]'); await page.evaluate(() => document.querySelector('.mode-sw [data-mode=real]').click()); await page.click('[data-tab=map]'); await page.waitForTimeout(3500);   // 移動のしかたは せってい で切り替える
   R.checks.walkMode = await page.evaluate(([la, lo]) => !nishioGo.demo && !!nishioGo.me && Math.abs(nishioGo.me.lat - la) < 1e-4 && Math.abs(nishioGo.me.lng - lo) < 1e-4 && document.getElementById('pxPad').hidden, STATION);
   R.checks.walkModePoints = await page.evaluate(() => nishioGo.state.points);
   R.checks.walkWelcome = await page.evaluate(() => !!nishioGo.state.welcomed && nishioGo.state.log.some(l => l.type === 'welcome'));
   R.checks.walkChests = await page.evaluate(() => nishioGo.liveChests().map(c => c.at || ''));   // あるいて移動ではスポットの上にだけ
   await shot(page, '08-walk-mode');
-  await page.click('[data-tab=settings]'); await page.click('.mode-sw [data-mode=demo]'); await page.click('[data-tab=map]'); await page.waitForTimeout(1000);
+  await page.click('[data-tab=settings]'); await page.evaluate(() => document.querySelector('.mode-sw [data-mode=demo]').click()); await page.click('[data-tab=map]'); await page.waitForTimeout(1000);
   R.checks.operatePointsKept = await page.evaluate(() => nishioGo.state.points);
   // ガイドさんの記録：西尾城跡のガイドさんの話に「📒 記録しといたよ。つぎの レベル○まで あと○pt。しるしは ○/5 …」（2ページ目から読むので、行き先などは変わらない）
   R.checks.guideRecord = await page.evaluate(async () => {
@@ -3557,6 +3570,7 @@ async function walkTo(page, id) {
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.riceAichi && c.riceAichi.ok, `お米が あいちのかおりの つぶに なって いない（影が 青い・縦すじが ない。${JSON.stringify(c.riceAichi)}）`);
   need(c.kaoriName && c.kaoriName.ok, `主人公の 名前が「あいちのかおりちゃん」に なって いない（${JSON.stringify(c.kaoriName)}）`);
+  need(c.autoStart && c.autoStart.ok, `開いても いきなり ころころ はじまらない／「あるいて遊ぶ」が のこって いる（${JSON.stringify(c.autoStart)}）`);
   need(c.introScenes && c.introScenes.ok, `西尾の 景色の ドット絵が はじめの 画面・あそびかた・おはなしに 出ない、または おはなしの 上に 知らせが かぶる（${JSON.stringify(c.introScenes)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
   need(c.mileCollapse && c.mileCollapse.ok, `歩いた道の 節目：前の 節目の 知らせを 待ちの 列から 取りのぞけない（文面の 頭が ちがう）（${JSON.stringify(c.mileCollapse)}）`);

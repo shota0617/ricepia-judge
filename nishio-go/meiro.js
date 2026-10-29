@@ -838,6 +838,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (intro && !intro.hidden && b) { if (t && wantDaily) t.textContent = '☀️ きょうの めいろ に ちょうせん'; }   // はじめての人：いちばん上の ボタンで（iPhone の 傾きの 許可は タップの その場で）
     else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
   }
+  // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめの 画面で ボタンを 待たず、開いたら すぐ 地図の めいろで 転がる
+  // （はじめての 人は「あそびかた」の 札から）。iPhone の 傾きの 許可は、さいしょに 画面を さわった ときに 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
+  let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
+  const intro0 = $('intro');
+  if (b && intro0 && !intro0.hidden && !noAuto) b.click();
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）

@@ -18,7 +18,7 @@
  ],
  "name": "にしおさんぽGO",
  "url": "https://go.ricepia.jp/nishio-go.html",
- "description": "スマホを傾けると、お米がころころ進むゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。位置情報を使って実際に西尾を歩く「あるいて遊ぶ」もあります。",
+ "description": "スマホを傾けると、お米がころころ進むゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。",
  "image": "https://go.ricepia.jp/nishio-go/ogp.png",
  "inLanguage": "ja",
  "genre": [
@@ -235,7 +235,7 @@
 <section class="panel" id="panel-settings" hidden>
   <h2>せってい</h2>
   <div class="card">
-    <div class="mode-sw" role="group" aria-label="移動のしかた">
+    <div class="mode-sw" role="group" aria-label="移動のしかた" hidden>
       <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
       <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
     </div>
@@ -324,10 +324,10 @@
     <p class="note">現在地の座標そのものは、どこにも送信しません（「こえ」タブのおたよりで「いまいる場所の近く」にチェックしたときだけ、約100mの細かさに丸めた位置をおたよりといっしょに送ります）。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
   </div>
   <div class="card danger">
-    <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
+    <div class="row"><span><b>記録を消す</b><small>ポイントと記録をすべて削除します。</small></span>
       <button type="button" class="btn red" id="resetBtn">削除</button></div>
   </div>
-  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。<a href="nishio-go/photo-credits.html" target="_blank" rel="noopener">作者とライセンスの一覧</a>）を参考に描いたもの<br/>西尾の 景色の ドット絵（はじめの 画面・あそびかた・おはなし）：使用の 許可を 得た 観光写真を 加工して 作成<br/>まちの人（ガイドさん・お坊さん・店員さんなど）は、ゲームの中の 架空の人物です。お話は 出典のある公開資料をもとにしたもので、その場所の方の言葉や、施設の公式の案内ではありません<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
+  <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。<a href="nishio-go/photo-credits.html" target="_blank" rel="noopener">作者とライセンスの一覧</a>）を参考に描いたもの<br/>まちの人（ガイドさん・お坊さん・店員さんなど）は、ゲームの中の 架空の人物です。お話は 出典のある公開資料をもとにしたもので、その場所の方の言葉や、施設の公式の案内ではありません<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
 </section>
 
 <!-- はじめに（遊びかたのボタンは、スクロールしなくても見える所に。くわしい説明はたたんでおく） -->
@@ -346,7 +346,6 @@
     <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
     <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
     <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
-    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small class="mp-s">本当に 西尾のまちを 歩く（位置情報）</small><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
     <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
     <ul class="intro-shots" aria-label="プレイ画面">

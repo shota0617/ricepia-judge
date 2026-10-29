@@ -149,6 +149,9 @@ function freshState() {
     guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
+// 歩いて遊ぶは なくした（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：前に あるいて移動で 遊んでいた 人も 操作して（ころころ）に。
+// あるいて移動の 記録（nsg_state）は けさずに のこす。nsg_keep_walk：プレイテストの 台本だけ（あるいて移動の しくみを 確かめる）
+if (!demo && store.get('nsg_started', false) && !store.get('nsg_keep_walk', false)) { demo = true; store.set('nsg_mode', 'demo'); }
 // 記録は版ごとに分ける（西尾市版は nsg_state_city など。お店の版で行った当店の記録や、当店への行き先を持ちこまない）
 const stateKey = () => (demo ? 'nsg_state_demo' : 'nsg_state') + (ED.shops ? '' : '_' + ED.id);
 function loadState() {
@@ -3970,13 +3973,13 @@ window.addEventListener('pagehide', sessionEnd);
 // （歩く地図と同じ お米の絵・同じ でこぼこの転がり方。pixel.js の riceSpin・riceFeel）。はじめの画面を閉じたら止める
 // はじめの画面のアニメーション：お米が 台地の上を ころころ進み、坂（本当の高低差のように）を ひとりでに速くなって転がり下りる。
 // 下で ぺたっ、田んぼの あぜ道で ゆっくり止まって、起き上がりこぼしのように ゆらゆら立って にっこり。また右へ転がっていく
-// 西尾の まちの 景色（運営者が 使用OKを 確かめた 写真を、ゲームの ドット絵に ディフォルメ：80×36・14色。運営者の声「ゲームの顔に」「ディフォルメして出す。ゲームの初めに随所に登場するように」2026-10-29）。
-// はじめの画面の 絵の 後ろ・あそびかた・あいちのかおりちゃんの はじめの あいさつ に 出す
-const INTRO_SCENES = [['002', '島へ のびる 道'], ['016', '抹茶と おかし'], ['020', '茶畑の 茶つみ'], ['024', 'うなぎの かば焼き'], ['037', '青い 海と 小島'], ['042', '白い 砂浜'], ['043', '西尾城の やぐら'],
-  ['053', '紅葉と 西尾城'], ['060', '大きな ちょうちんの まつり'], ['062', '夜の ちょうちん'], ['072', '川を わたる 赤い 電車'], ['073', '川の 橋と 河川じき'], ['078', '田んぼと 山なみ'], ['080', '田植えの あとの 田んぼ'],
-  ['082', 'あじさい'], ['084', 'お寺の 本堂'], ['097', 'ひまわり畑']].map(([f, t]) => ({ src: `nishio-go/art/intro/${f}.png`, t }));
+// 西尾の まちの 景色（図形だけで 描いた ディフォルメの ドット絵 80×36。tools/make-intro-scenes.py。写真は 使わない。
+// 運営者の声「ゲームの顔に」「ディフォルメして出す。ゲームの初めに随所に登場するように」「写真をそのまま使わない」2026-10-29）。あそびかた・あいちのかおりちゃんの はじめの あいさつ に 出す
+const INTRO_SCENES = [['castle', '西尾城'], ['island', '海と 小さな 島'], ['matcha', '抹茶と おかし'], ['teafield', '茶畑'], ['lantern', '大きな ちょうちんの まつり'], ['sunflower', 'ひまわり畑'],
+  ['paddy', '田んぼと 山なみ'], ['train', '川を わたる 赤い 電車'], ['beach', '白い 砂浜'], ['unagi', 'うなぎの かば焼き'], ['hydrangea', 'あじさい'], ['autumn', '紅葉と 西尾城']].map(([f, t]) => ({ src: `nishio-go/art/intro/${f}.png`, t }));
 const sceneAt = i => INTRO_SCENES[((i % INTRO_SCENES.length) + INTRO_SCENES.length) % INTRO_SCENES.length];
 const sceneRand = () => sceneAt(Math.floor(Math.random() * INTRO_SCENES.length));
+const sceneSet = n => { const a = INTRO_SCENES.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a.slice(0, n); };   // ちがう 景色を n まい
 function introHero() {
   const cv = $('introHero');
   if (!cv || !cv.getContext) return;
@@ -4086,7 +4089,8 @@ function begin(isDemo) {
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
     const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
-    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。', mood: 'happy', pic: sceneRand() }, how, { t: 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。', pic: sceneRand() },
+    const pics = sceneSet(3);   // あいさつの ページごとに ちがう 西尾の 景色
+    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。', mood: 'happy', pic: pics[0] }, { t: how, pic: pics[1] }, { t: 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。', pic: pics[2] },
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
     { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }
@@ -4100,7 +4104,6 @@ document.addEventListener('click', e => {
   const a = e.target.closest && e.target.closest('[data-sponsor],[data-camp]');
   if (a) track(a.dataset.sponsor ? 'sponsor_link' : 'campaign_link', { id: a.dataset.sponsor || a.dataset.camp });
 });
-$('startBtn').addEventListener('click', () => begin(false));
 $('demoBtn').addEventListener('click', () => begin(true));
 
 /* 起動 */

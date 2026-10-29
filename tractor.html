@@ -8258,8 +8258,21 @@ function startCrank() {
   S.glowClick = false;
   if (S.glow && !S.started) toast((TOD === 'yoru' ? '夜' : '朝') + 'の冷えたエンジンなので、まず予熱。予熱ランプが消えるとセルが回ってかかります', 3.5);
 }
+// はじめの 選ぶ 画面は 出さずに 始まるので、始めた あとで ≡ メニューから「始める ときだけ 使う 選びかた」（点検・歩く・石拾い・爪の 並べ方・回転）を
+// かえて ▶ を 押したら、その 選びかたで 始めから やりなおす（このタブの あいだだけ sessionStorage に 一度 置いて 読みこみなおす）
+const START_OPTS = ['checkBox', 'walkBox', 'stoneBox', 'yamaBox', 'ecoBox'];
+let optsDirty = false;
+try {
+  const o = JSON.parse(sessionStorage.getItem('tractorStartOpts') || 'null');
+  if (o) { sessionStorage.removeItem('tractorStartOpts'); for (const id of START_OPTS) $(id).checked = !!o[id]; }
+} catch (e) {}
+for (const id of START_OPTS) $(id).addEventListener('change', () => { if (S.started) optsDirty = true; });
 $('bStart').onclick = () => {
-  if (S.done) { location.reload(); return; }    // 終わったあとは、同じ田んぼ・お題で始めから
+  if (S.done) { location.reload(); return; }
+  if (S.started && optsDirty) {
+    try { sessionStorage.setItem('tractorStartOpts', JSON.stringify(Object.fromEntries(START_OPTS.map(id => [id, $(id).checked])))); } catch (e) {}
+    location.reload(); return;
+  }    // 終わったあとは、同じ田んぼ・お題で始めから
   if (!S.started) startCrank();  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padL', 'padC', 'padB', 'padD', 'padR'] : ['hud', 'bar', 'badge']) $(id).classList.remove('hidden');

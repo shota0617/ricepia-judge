@@ -46,6 +46,7 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 #time{font-family:var(--display);font-size:40px;line-height:1;text-align:center;font-variant-numeric:tabular-nums}
 #time.low{color:#ff7b6e;outline:3px dashed #ff7b6e;outline-offset:2px;border-radius:10px} /* 色だけで なく 点線の わくでも のこり わずかを 知らせる */
 #timeDelta{position:absolute;left:50%;top:calc(64px + env(safe-area-inset-top,0px));transform:translateX(-50%);font-family:var(--display);font-size:18px;opacity:0;pointer-events:none}
+@media (max-width:259px){#timeDelta{top:calc(92px + env(safe-area-inset-top,0px))}} /* とても せまいと HUD の 字が 2行に なり「フィーバー」と かさなる（147周目。後ろに 置く：同じ 強さの 規則は 後ろが 勝つ） */
 #combo{font-family:var(--display);font-size:clamp(12px,3.9vw,15px);color:var(--ok);min-height:18px;white-space:nowrap} /* せまい 画面でも 1行に おさまる 大きさ（時計を 横へ おさない） */
 .overlay{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;background:linear-gradient(180deg,#131a2e 45%,#2c2321);
   padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -55,7 +56,7 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .note{font-size:14px;line-height:1.6;color:var(--ink-dim);text-align:left;margin:0}
 .note a{color:var(--kraft);display:inline-block;padding-block:10px}
 .steps .skip:focus-visible,.note a:focus-visible{outline:3px solid #f6f2e7;outline-offset:2px;box-shadow:0 0 0 6px #131a2e}
-html.nofont :is(h1, button.go, .hval, #time, #timeDelta, #combo, .res strong, .talk>.who.num){font-weight:800} /* 見出しの 字が とどく まで（電波が 弱い・とどかない）は かわりの 字を 太く。細い 字だと 見出しらしく ない（146周目） */
+html.nofont :is(h1, button.go, .hval, #time, #timeDelta, #combo, .res strong, .talk>.who.num){font-weight:800;font-synthesis:none} /* Dela が 先に とどいても にせの 太字に しない（147周目） */ /* 見出しの 字が とどく まで（電波が 弱い・とどかない）は かわりの 字を 太く。細い 字だと 見出しらしく ない（146周目） */
 button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;border-radius:14px;background:var(--kraft);color:var(--ai-deep);cursor:pointer;box-shadow:0 4px 0 #8c6c3b}
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
@@ -1686,7 +1687,7 @@ const ui = { hud:$('hud'), title:$('title'), result:$('result'), score:$('score'
   rScore:$('rScore'), rBags:$('rBags'), rClean:$('rClean'), rSnap:$('rSnap'), rank:$('rank'), best:$('best'), tip:$('tip'), goals:$('goals'), rGoals:$('rGoals'), steps:$('steps'), coinDone:$('coinDone') };
 renderGoals(ui.goals);
 { const fx = () => { for(const f of document.fonts) if(/Dela Gothic One/.test(f.family) && f.status==='loaded'){ document.documentElement.classList.remove('nofont'); return; } }; /* 見出しの 字が とどいたら 太字を やめる（Dela は 1つの 太さ だけ） */
-  try{ document.fonts.addEventListener('loadingdone', fx); document.fonts.ready.then(fx); fx(); }catch(e){ document.documentElement.classList.remove('nofont'); } }
+  try{ document.fonts.addEventListener('loadingdone', fx); document.fonts.ready.then(fx); for(const f of document.fonts) if(/Dela Gothic One/.test(f.family)) f.loaded.then(fx, ()=>{}); fx(); }catch(e){ document.documentElement.classList.remove('nofont'); } }
 $('startBtn').addEventListener('click', ()=>startGame(false));
 $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);

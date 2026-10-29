@@ -424,10 +424,10 @@ const CHECKS = {
     const z145 = await p.evaluate(async () => { const t = document.getElementById('title'); t.hidden = false; document.body.classList.add('menu'); const btn = document.getElementById('practiceBtn'), tx = btn.firstChild, i = tx.textContent.indexOf('れんしゅう');
       const rr = k => { const r = document.createRange(); r.setStart(tx, k); r.setEnd(tx, k+1); return Math.round(r.getBoundingClientRect().top); }, sameLine = rr(i) === rr(i+4);
       t.hidden = true; document.body.classList.remove('menu'); const m0 = KB.manual; KB.manual = true; KB.start(); const S = KB.S; S.combo = 0.5; KB.step(1/60); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-      const c = document.getElementById('combo').getBoundingClientRect(), d = document.getElementById('timeDelta').getBoundingClientRect(), d0 = d.left, cx = c.right; KB.manual = m0;
-      return { sameLine, combo: document.getElementById('combo').textContent, comboRight: Math.round(cx), deltaLeft: Math.round(d0) }; });
+      const ce = document.getElementById('combo'), rg = document.createRange(); rg.selectNodeContents(ce); const c = rg.getBoundingClientRect(), td = document.getElementById('timeDelta'); td.textContent = '+3秒'; const d = td.getBoundingClientRect(), d0 = d.left, cx = c.right, dTop = d.top, cBot = c.bottom, comboTxt = ce.textContent; S.feverT = 3; KB.step(1/60); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); rg.selectNodeContents(ce); const cf = rg.getBoundingClientRect(), df = td.getBoundingClientRect(), feverApart = cf.right <= df.left || cf.bottom <= df.top || cf.top >= df.bottom; S.feverT = 0; KB.manual = m0; /* フィーバーの 字は 2行に なる（147周目） */ /* 字の 幅で はかる（箱は 列いっぱい。147周目） */
+      return { sameLine, combo: comboTxt, comboRight: Math.round(cx), deltaLeft: Math.round(d0), apart: cx <= d0 || cBot <= dTop, feverApart }; });
     await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(150);
-    ok(z145.sameLine && z145.comboRight <= z145.deltaLeft, '字 200%：れんしゅうの ボタンを ことばの 途中で 切らない・倍率と 時間の 字が かさならない', z145);
+    ok(z145.sameLine && /^×\d$/.test(z145.combo) && z145.apart && z145.feverApart, '字 200%：れんしゅうの ボタンを ことばの 途中で 切らない・倍率と 時間の 字が かさならない', z145);
     // 129周目：LINE は ricepia.jp の「価格表・売り出し情報」と 同じ リンク（ことばと あう）
     const lnk2 = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => a.getAttribute('href')));
     ok(lnk2.length === 2 && lnk2.every(h => /\/lin\.ee\/AULbClm\?from=mishin-(coin|result)$/.test(h)), 'LINE の リンクは 価格表・売り出し情報の もの（from つき）', lnk2);
@@ -601,9 +601,14 @@ const CHECKS = {
   async nofont(b){
     const ctx = await b.newContext({ viewport:{ width:360, height:560 } }); await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
     const p = await ctx.newPage(); await p.goto(FILE); await p.waitForTimeout(1200);
-    const nf = await p.evaluate(() => ({ cls: document.documentElement.classList.contains('nofont'), h1: getComputedStyle(document.querySelector('#title h1')).fontWeight, btn: getComputedStyle(document.getElementById('practiceBtn')).fontWeight, start: Math.round(document.getElementById('startBtn').getBoundingClientRect().bottom), H: innerHeight }));
+    const nf = await p.evaluate(() => ({ cls: document.documentElement.classList.contains('nofont'), h1: getComputedStyle(document.querySelector('#title h1')).fontWeight, btn: getComputedStyle(document.getElementById('practiceBtn')).fontWeight, start: Math.round(document.getElementById('startBtn').getBoundingClientRect().bottom), H: innerHeight, synth: getComputedStyle(document.querySelector('#title h1')).fontSynthesis }));
     await ctx.close();
     ok(nf.cls && +nf.h1 >= 700 && +nf.btn >= 700 && nf.start <= nf.H, '字が とどかない ときは 見出しと ボタンを 太い かわりの 字で・ボタンは 1画面目', nf);
+    // 147周目：字が とどいたら 太字を やめる（この 環境で Google Fonts に つながる とき だけ 見る）・とどく 前も にせの 太字に しない
+    const p2 = await page(b, 360, 560, ''); const on = await p2.evaluate(async () => { for (let i = 0; i < 60; i++){ if ([...document.fonts].some(f => /Dela Gothic One/.test(f.family) && f.status === 'loaded')) break; await new Promise(r => setTimeout(r, 100)); }
+      const loaded = [...document.fonts].some(f => /Dela Gothic One/.test(f.family) && f.status === 'loaded'); await new Promise(r => setTimeout(r, 100)); return { loaded, cls: document.documentElement.classList.contains('nofont'), synth: getComputedStyle(document.querySelector('#title h1')).fontSynthesis }; });
+    if (on.loaded) ok(!on.cls, '字が とどいたら 太字を やめる', on); else console.log('  （Google Fonts に つながらない ので「とどいたら やめる」は 見ない）');
+    ok(/none/.test(nf.synth || 'none'), '太字の 間も にせの 太字に しない', nf);
   },
   async sound(b){
     const p = await page(b, 390, 844, '');

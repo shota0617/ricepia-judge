@@ -5766,7 +5766,7 @@ const DOJO = (() => {
       if (i === SEG - 1) { const fin = new THREE.Mesh(new THREE.SphereGeometry(0.004, 6, 4), bodyM); fin.scale.set(0.25, 1.1, 1.6); fin.position.z = -0.008; m.add(fin); }   // 尾びれ
       if (i === 0) {                              // 頭：目と ひげ
         for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.0011, 5, 4), eyeM); e.position.set(sx * 0.0035, 0.003, 0.004); m.add(e); }
-        for (let b = 0; b < 4; b++) { const w = new THREE.Mesh(new THREE.BoxGeometry(0.0004, 0.0004, 0.004), bodyM); w.position.set((b < 2 ? -1 : 1) * (0.0015 + (b % 2) * 0.0015), -0.002, 0.0075); w.rotation.y = (b < 2 ? -1 : 1) * 0.5; m.add(w); }
+        for (let b = 0; b < 10; b++) { const sx = b < 5 ? -1 : 1, k = b % 5, w = new THREE.Mesh(new THREE.BoxGeometry(0.0004, 0.0004, 0.0025 + k * 0.0004), bodyM); w.position.set(sx * (0.0008 + k * 0.0007), -0.0022 + k * 0.0002, 0.0072 - k * 0.0008); w.rotation.y = sx * (0.35 + k * 0.18); m.add(w); }   // 口ひげ 5 対 10 本
       }
     }
     const belly = new THREE.Mesh(new THREE.SphereGeometry(0.005, 6, 4), bellyM); belly.scale.set(0.9, 0.5, 4); belly.position.y = -0.002; segs[1].add(belly);
@@ -5804,7 +5804,8 @@ const DOJO = (() => {
         if (u.sink >= 1) { u.st = 'off'; u.g.visible = false; continue; }
       }
       const amp = u.st === 'swim' ? 0.35 : 0.5, sp = u.st === 'swim' ? 9 : 14;
-      u.g.position.set(u.x, u.y + 0.004 - u.sink * 0.03, u.z); u.g.rotation.set(u.sink * 0.5, u.yaw, 0, 'YXZ');
+      // もぐる：頭を 下げ（0.35rad）、体ごと 7.6cm まで 沈める。おわりには しっぽの 先（LEN·sin0.35 ≈ 3.6cm 上がる）も 土の 下
+      u.g.position.set(u.x, u.y + 0.004 - u.sink * 0.076, u.z); u.g.rotation.set(0.35 * Math.min(1, u.sink * 3), u.yaw, 0, 'YXZ');
       let a = 0, px = 0, pz = 0;                   // 頭から しっぽへ、波が つたわる（体を S の 字に くねらせる）
       u.segs.forEach((m, i) => { a = Math.sin(u.ph * sp - i * 1.1) * amp * (0.4 + i / SEG); m.position.set(px, 0, pz); m.rotation.y = a; px -= Math.sin(a) * LEN / SEG; pz -= Math.cos(a) * LEN / SEG; });
     }

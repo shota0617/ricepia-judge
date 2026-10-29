@@ -172,10 +172,13 @@
   body.calm .seasons button { font-size: 0; }
   body.calm .card h1 { font-size: 0; }
   body.calm .card h1::before { content: '🚜'; font-size: 34px; }
-  body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
+  body.calm #start .tag, body.calm #start .card > p:not(.err):not(.calmNote), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
   /* はじめは 選ぶ 画面を 出さず、読みこむ あいだは 進みぐあいの 棒（と 読みこめなかった ときの 知らせ）だけ。季節・お題は ≡ メニューで かえる */
   #start.loading .card > :not(.prog):not(#progText) { display: none !important; }
   #start.loading #progText:not(.err) { display: none !important; }
+  /* 文字を へらしても、試作版・架空の 車体・子どもの 安全・だれが つくったか は 一行で のこす（信頼の 観点 D・G） */
+  .calmNote { display: none; }
+  body.calm #start .card > p.calmNote { display: block; margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: #6b5a40; }
   body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
   body.calm #start label.easy input { margin-top: 0; }
   body.calm #start label.easy > span { font-size: 0; line-height: 0; }
@@ -439,6 +442,7 @@
       畦では この田んぼの持ち主（近所の米農家さん）が運転を見ていて、旋回で上げない・畦にぶつける・速すぎ・蛇行・すき間・はみ出しなどがあると、ふきだしで ダメ出しする（昼だけ）。<br>
       ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわ・タイヤ跡・畦にぶつけたときにも、その場面で言葉が出る。耕しなおすとタイヤ跡が消え、代かきでは かいた泥の上にタイヤ跡が残る。終わりの画面に、聞いた声の数
     </details>
+    <p class="calmNote">🧪 試作版の ゲームです。トラクターは 架空の 車体で、メーカーの 公式では ありません。<br><b style="color:#7a4a12">🚸 本物の トラクターは とても あぶないので、子どもは 近づかないでね。</b><br>つくったのは 西尾の お米屋さん らいすぴあ（近藤米穀店）。</p>
     <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>トラクターは、60 馬力クラスのキャビン付きトラクターを参考にした架空の車体です。農機メーカーの公式のゲームではありません。<br><b style="color:#7a4a12">🚸 本物のトラクターは とても危ないので、子どもは乗ったり、動いているトラクターや作業機に近づいたりしないでください。</b><br>遊んだ記録や操作は、当店にも ほかの会社にも送りません（この端末に 覚えるのは「かんたんアシスト」と「くわしい説明」の入切、耕し終えた回数だけ。LINE の ボタンを 押したときだけ、このゲームから来たことが 当店に わかります）。<br>つくったのは 西尾のお米屋さん らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=credit" target="_blank" rel="noopener">ricepia.jp</a><br>農作業の説明に まちがいを見つけたら、<a href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=tractor-report" target="_blank" rel="noopener">当店の LINE</a> で教えてください。</p>
   </div>
 </div>

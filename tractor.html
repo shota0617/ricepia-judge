@@ -5904,7 +5904,10 @@ const MEDAKA = (() => {
   const lin = c => new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() });
   const backM = lin(0x8a8566), bellyM = lin(0xd9d6c4), eyeM = lin(0x101010), list = [];
   const surf = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.006; };
-  const HOME = [HX - 1.6, -18];                    // 水口の そば（給水栓・道ぞいの 水路の ある 東の 畦の 内がわ）
+  const HOME = [HX - 1.6, -18];                    // 水口の そば（給水栓・道ぞいの 水路の ある 東の 畦の 内がわ）。じっさいは 近くの 水たまりに 合わせる
+  const wet = (x, z) => Math.abs(x) < HX - 0.2 && Math.abs(z) < HZ - 0.2 && AMENBO.water(x, z);   // 水が ある（土くれの 上は だめ）
+  const pool = (x, z) => wet(x, z) && wet(x + 0.25, z) && wet(x - 0.25, z) && wet(x, z + 0.25) && wet(x, z - 0.25);
+  const path = (x0, z0, x1, z1) => { for (let k = 1; k <= 8; k++) { const f = k / 8; if (!wet(x0 + (x1 - x0) * f, z0 + (z1 - z0) * f)) return false; } return true; };   // とちゅうも ずっと 水
   const C = { x: HOME[0], z: HOME[1], tx: HOME[0], tz: HOME[1], st: 'calm', t: 0 };   // むれの まん中
   for (let k = 0; k < 7; k++) {
     const g = new THREE.Group(); g.scale.setScalar(1.3);
@@ -5918,30 +5921,38 @@ const MEDAKA = (() => {
   }
   let told = false, placed = false;
   function update(dt) {
-    if (!placed) { placed = true; for (const u of list) { u.x = C.x + u.ox; u.z = C.z + u.oz; u.g.visible = true; } }
+    if (!placed) {                                 // 水口の 近くで いちばん 近い 水たまりに（田んぼの 水が わかるまで 待つ）
+      if (!field) return;
+      let hit = null;
+      for (let r = 0; r <= 5 && !hit; r += 0.3) for (let a = 0; a < 16 && !hit; a++) { const x = HOME[0] - Math.abs(Math.cos(a / 16 * 6.28)) * r, z = HOME[1] + Math.sin(a / 16 * 6.28) * r; if (pool(x, z)) hit = [x, z]; }
+      if (!hit) return;
+      placed = true; HOME[0] = hit[0]; HOME[1] = hit[1]; C.x = C.tx = hit[0]; C.z = C.tz = hit[1];
+      for (const u of list) { if (!wet(C.x + u.ox, C.z + u.oz)) { u.ox = 0; u.oz = 0; } u.x = C.x + u.ox; u.z = C.z + u.oz; u.g.visible = true; }
+    }
     const near = Math.hypot(C.x - S.x, C.z - S.z);
     if (C.st === 'calm') {                         // 水口の あたりを ゆっくり 回る
       if ((C.t -= dt) <= 0) {
         C.t = 2 + R() * 3;
-        for (let k = 0; k < 10; k++) { const x = HOME[0] - R() * 2.5, z = HOME[1] + (R() - 0.5) * 4; if (AMENBO.water(x, z)) { C.tx = x; C.tz = z; break; } }
+        for (let k = 0; k < 10; k++) { const x = HOME[0] + (R() - 0.5) * 2.5, z = HOME[1] + (R() - 0.5) * 4; if (pool(x, z) && path(C.x, C.z, x, z)) { C.tx = x; C.tz = z; break; } }
       }
       if (near < 4) {                              // トラクターが 近い：さっと はなれる
         C.st = 'flee'; C.t = 4;
         const ax = C.x - S.x, az = C.z - S.z, al = Math.hypot(ax, az) || 1;
-        for (let k = 0; k < 12; k++) { const d = 3 + R() * 2, a = Math.atan2(ax, az) + (R() - 0.5) * 1.6, x = C.x + Math.sin(a) * d, z = C.z + Math.cos(a) * d;
-          if (Math.abs(x) < HX - 0.3 && Math.abs(z) < HZ - 0.3 && AMENBO.water(x, z)) { C.tx = x; C.tz = z; break; } }
+        let best = -1;                             // 水で つながった 所の うち、トラクターから いちばん 遠い 所（小さな 水たまりなら その はしへ）
+        for (let k = 0; k < 24; k++) { const d = 0.5 + R() * 4.5, a = Math.atan2(ax, az) + (R() - 0.5) * 2.4, x = C.x + Math.sin(a) * d, z = C.z + Math.cos(a) * d;
+          if (wet(x, z) && path(C.x, C.z, x, z)) { const far = Math.hypot(x - S.x, z - S.z); if (far > best) { best = far; C.tx = x; C.tz = z; } } }
       }
-    } else if ((C.t -= dt) <= 0 && near > 6) { C.st = 'calm'; C.t = 0; C.tx = HOME[0]; C.tz = HOME[1]; }   // おちついたら 水口へ もどる
+    } else if ((C.t -= dt) <= 0 && near > 6) { C.st = 'calm'; C.t = 0; if (path(C.x, C.z, HOME[0], HOME[1])) { C.tx = HOME[0]; C.tz = HOME[1]; } }   // おちついたら 水口へ もどる（水で つながって いれば）
     const sp = C.st === 'flee' ? 0.9 : 0.12, dx = C.tx - C.x, dz = C.tz - C.z, d = Math.hypot(dx, dz);
-    if (d > 0.01) { const st = Math.min(d, sp * dt); C.x += dx / d * st; C.z += dz / d * st; }
+    if (d > 0.01) { const st = Math.min(d, sp * dt), nx = C.x + dx / d * st, nz = C.z + dz / d * st; if (wet(nx, nz)) { C.x = nx; C.z = nz; } else { C.tx = C.x; C.tz = C.z; } }   // 土に ぶつかったら そこで 止まる
     if (!told && S.started && near < 9) {
       if (DETAIL || SAY.note('メダカの むれだ。水路から 入ってきたんだね')) { told = true; BADGE.peek(C.x, C.z, 3); voice('medaka'); }
     }
     for (const u of list) {                        // ひとりひとりは むれの まん中の まわりで 少しずつ 場所を かえる
       u.ph += dt;
-      if ((u.t -= dt) <= 0) { u.t = 1 + R() * 2; u.ox = (R() - 0.5) * 0.5; u.oz = (R() - 0.5) * 0.5; }
+      if ((u.t -= dt) <= 0) { u.t = 1 + R() * 2; const ox = (R() - 0.5) * 0.5, oz = (R() - 0.5) * 0.5; if (wet(C.x + ox, C.z + oz)) { u.ox = ox; u.oz = oz; } else { u.ox = 0; u.oz = 0; } }
       const wx = C.x + u.ox - u.x, wz = C.z + u.oz - u.z, wd = Math.hypot(wx, wz), v = Math.min(wd * 2, C.st === 'flee' ? 1.1 : 0.25);
-      if (wd > 0.005) { u.x += wx / wd * v * dt; u.z += wz / wd * v * dt; const want = Math.atan2(wx, wz); u.yaw += Math.atan2(Math.sin(want - u.yaw), Math.cos(want - u.yaw)) * Math.min(1, dt * 6); }
+      if (wd > 0.005) { const nx = u.x + wx / wd * v * dt, nz = u.z + wz / wd * v * dt; if (wet(nx, nz) || !wet(u.x, u.z)) { u.x = nx; u.z = nz; } const want = Math.atan2(wx, wz); u.yaw += Math.atan2(Math.sin(want - u.yaw), Math.cos(want - u.yaw)) * Math.min(1, dt * 6); }
       u.g.position.set(u.x, surf(u.x, u.z) - 0.0012, u.z);   // 水面の すぐ 下（背中が 見える）
       u.g.rotation.y = u.yaw + Math.sin(u.ph * (C.st === 'flee' ? 30 : 12)) * 0.12;
       u.tail.rotation.y = Math.sin(u.ph * (C.st === 'flee' ? 30 : 12)) * 0.5;

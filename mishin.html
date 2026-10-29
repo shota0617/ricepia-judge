@@ -184,7 +184,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 .fb i{font-style:normal;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--ink-dim)}
 .fb svg{width:min(110px,30vw);height:22px}
 @media (max-width:259px){.steps .talk>.who{display:none} .steps .talk>.say::before,.steps .talk>.say::after{display:none}} /* 字 200% など せまい 画面の れんしゅう：帯の 顔を 消して 行を へらす（84周目） */
-@media (max-width:340px){body:not(.menu) button.sound{bottom:calc(68px + env(safe-area-inset-bottom,0px))}} /* れんしゅうの「やめて 手順を 見る」に かさねない */
+@media (max-width:280px){body:not(.menu) button.sound{bottom:calc(68px + env(safe-area-inset-bottom,0px))}} /* れんしゅうの「やめて 手順を 見る」に かさねない（遊ぶ 間は「音 あり」と みじかい ので 280 幅 より せまい 時 だけ。141周目） */
 @media (max-width:300px){.res{grid-template-columns:1fr}.grow{flex-wrap:wrap}}
 @media (max-height:660px) and (max-width:500px) and (min-width:301px){ /* 本物の スマホの 高さ（ブラウザの バーを のぞくと 360×560・375×553 など）でも「もう一回」と LINE を 1画面目に（134周目） */
   #result .res{grid-template-columns:repeat(3,1fr);gap:6px} #result .res>div{gap:0} #result .res span{white-space:nowrap;font-size:12px} #result .res strong{font-size:20px} /* 余白は 下の 低い 縦の 画面の 規則（6px 10px）が きく */
@@ -533,6 +533,7 @@ const GOALS = [
 function todayKey(){ const d=day(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
 function todayGoals(){
   const k = todayKey(); let h=0; for(const c of k) h = (h*31 + c.charCodeAt(0))|0;
+  h = Math.imul(h ^ h>>>16, 0x45d9f3b); h ^= h>>>16; /* となりの 日の 種を よく まぜる（やさしい 目標が 3日 ずつ 同じに なって いた。141周目） */
   const pool = GOALS.filter(g => g.id!=='golden' || BRANDS.some(br => shinmaiSeason(day(), br))), out=[]; // 新米の ない きせつは 新米の 目標を 出さない
   const easy = pool.filter(g => g.id==='bags8' || g.id==='right'); /* 1つは はじめての 人にも とれる 目標（135周目：とれる 見こみが 2割 未満の 日が 4割 あった） */
   const nx = () => (h = (Math.imul(h, 1103515245) + 12345)|0) >>> 16; /* かけ算は Math.imul で（ふつうの * は 2^53 を こえて 下の けたが 0 に なり、いつも 同じ 目標を えらんで いた。136周目） */

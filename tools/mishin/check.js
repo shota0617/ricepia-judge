@@ -562,9 +562,10 @@ const CHECKS = {
     // 135周目：きょうの 目標は 1年 どの 日も 3つ ちがう・1つは はじめての 人にも とれる（8袋 あける か 右から ほどく袋）・新米の 目標は 新米の きせつ だけ
     const yg = await p.evaluate(() => { const bad = [], cnt = {}, first = {}; let n = 0; for (let t = Date.UTC(2026,0,1); t < Date.UTC(2027,0,1); t += 864e5){ const d = new Date(t).toISOString().slice(0,10); KB.today = d; const ids = KB.todayGoals(); n++;
         if (new Set(ids).size !== 3 || !ids.some(i => i==='bags8' || i==='right')) bad.push(d + ':' + ids.join(',')); first[ids[0]] = (first[ids[0]]||0) + 1; for (const i of ids) cnt[i] = (cnt[i]||0) + 1; }
-      KB.today = null; return { n, bad: bad.slice(0,5), nbad: bad.length, first, cnt }; });
+      let same = 0, days = 0, prev = null; for (let t = Date.UTC(2026,0,1); t < Date.UTC(2031,0,1); t += 864e5){ KB.today = new Date(t).toISOString().slice(0,10); const e = KB.todayGoals()[0]; if (prev) { days++; if (e === prev) same++; } prev = e; } /* 141周目：となりの 日で やさしい 目標が 同じに なる 割合（でたらめなら 0.5） */
+      KB.today = null; return { n, bad: bad.slice(0,5), nbad: bad.length, first, cnt, sameNext: +(same/days).toFixed(3) }; });
     const others = Object.entries(yg.cnt).filter(([k]) => !['bags8','right','golden'].includes(k)).map(([, v]) => v); /* 136周目：日ごとに ちらばる（かけ算の けた落ちで いつも 同じ 目標に なって いた） */
-    ok(yg.n === 365 && yg.nbad === 0 && yg.first.bags8 > 100 && yg.first.right > 100 && others.length === 6 && Math.min(...others) > 40 && Math.max(...others) < 160, 'きょうの 目標は どの 日も 3つ ちがい、1つは はじめての 人にも とれる・日ごとに ちらばる', yg);
+    ok(yg.n === 365 && yg.nbad === 0 && yg.sameNext < 0.57 && yg.first.bags8 > 100 && yg.first.right > 100 && others.length === 6 && Math.min(...others) > 40 && Math.max(...others) < 160, 'きょうの 目標は どの 日も 3つ ちがい、1つは はじめての 人にも とれる・日ごとに ちらばる', yg);
     ok(r['2026-10-28'].golden && r['2026-10-28'].year===2026, '秋は その年が 産年で 新米シール', r['2026-10-28']);
     ok(r['2026-08-25'].golden && r['2026-08-25'].brand!=='あいちのかおり' && r['2026-08-25'].brand9!=='あいちのかおり' && r['2026-08-25'].kaori===2025, '8月下旬は あいちのかおりの 新米は まだ ない（10月中旬から）', r['2026-08-25']);
     ok(!r['2027-03-10'].golden && r['2027-03-10'].year===2026, '春は 前の 年が 産年で 新米シールなし', r['2027-03-10']);

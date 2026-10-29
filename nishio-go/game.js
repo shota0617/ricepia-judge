@@ -4105,7 +4105,7 @@ function begin(isDemo) {
   if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ。めいろでは「あそびかた」の 画面を 先に 見てから）
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
-    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
+    const how = !isDemo ? 'きみが あるくと、いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、すすむよ。' : '地図を タップすると、そこへ 行くよ。';
     const pics = sceneSet(3);   // あいさつの ページごとに ちがう 西尾の 景色
     KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。いっしょに 町を めぐろう！', mood: 'happy', pic: pics[0] }, { t: how, pic: pics[1] },
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない

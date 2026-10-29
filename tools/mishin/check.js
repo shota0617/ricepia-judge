@@ -469,6 +469,11 @@ const CHECKS = {
     });
     console.log('  重さ（CPU 4倍 おそい・ヘッドレス）', r);
     ok(r.median < 60, '1コマ 60ms より 軽い', r);
+    // 94周目：HUD の 字は かわった ときだけ 書く（毎コマ 書くと そのたびに 画面の 組みなおし）
+    const mu = await p.evaluate(async () => { KB.up(); KB.manual = true; KB.start(); const S = KB.S; S.bag.slide = 0; await new Promise(r => setTimeout(r, 300)); let n = 0;
+      const mo = new MutationObserver(ms => { n += ms.length; }); for (const id of ['score','time','bags','combo','timeDelta']) mo.observe(document.getElementById(id), { childList:true, characterData:true, subtree:true, attributes:true });
+      for (let i=0;i<20;i++) await new Promise(r => requestAnimationFrame(r)); mo.disconnect(); KB.manual = false; return n; });
+    ok(mu === 0, 'うごかない 間は HUD の 字を 書きなおさない', mu);
     // 58周目：れんしゅうの 拡大窓（見る 間）は 毎コマ 画面を 自分に うつさない
     const z = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; await new Promise(r => setTimeout(r, 600));
       const orig = CanvasRenderingContext2D.prototype.drawImage; let self = 0; const cv = document.getElementById('cv');

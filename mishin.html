@@ -185,6 +185,12 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 @media (max-width:259px){.steps .talk>.who{display:none} .steps .talk>.say::before,.steps .talk>.say::after{display:none}} /* 字 200% など せまい 画面の れんしゅう：帯の 顔を 消して 行を へらす（84周目） */
 @media (max-width:340px){body:not(.menu) button.sound{bottom:calc(68px + env(safe-area-inset-bottom,0px))}} /* れんしゅうの「やめて 手順を 見る」に かさねない */
 @media (max-width:300px){.res{grid-template-columns:1fr}.grow{flex-wrap:wrap}}
+@media (max-height:660px) and (max-width:500px) and (min-width:301px){ /* 本物の スマホの 高さ（ブラウザの バーを のぞくと 360×560・375×553 など）でも「もう一回」と LINE を 1画面目に（134周目） */
+  #result .res{grid-template-columns:repeat(3,1fr);gap:6px} #result .res>div{padding:4px 2px;gap:0} #result .res span{white-space:nowrap;font-size:12px} #result .res strong{font-size:20px}
+  #result .res>div:first-child{grid-column:1/-1;flex-direction:row;justify-content:center;align-items:baseline;gap:12px}
+  #result .rankLbl{display:none} #result .rankBox{gap:4px} #result .grow span{width:26px} #result .grow span.now{width:34px}
+}
+
 @media (max-width:380px){.hanko{width:72px;height:72px;font-size:12px;right:-4px;top:-2px}}
 @media (max-width:440px){.hanko{top:auto;bottom:-24px;right:2px;width:72px;height:72px;font-size:12px}} /* スマホでは 見出しの 2行目（短い）の 横へ。字に かけない（64周目） */
 @media (max-width:340px){.hanko{width:60px;height:60px;font-size:10px;right:-8px}}

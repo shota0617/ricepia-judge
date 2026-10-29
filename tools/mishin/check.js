@@ -372,13 +372,13 @@ const CHECKS = {
     // リストづくり：まとめと 結果に お店の LINE の 友だち追加（どこから 来たかの from つき）。手元では 解析は 動かない
     const ln = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => ({ from: new URL(a.href).searchParams.get('from'), host: new URL(a.href).hostname, rel: a.rel, inCoin: !!a.closest('#coinDone'), inRes: !!a.closest('#result') })).concat([{ analyticsOn: window.nsgAnalytics ? window.nsgAnalytics.on : 'none' }]));
     ok(ln.some(l => l.inCoin && l.from==='mishin-coin') && ln.some(l => l.inRes && l.from==='mishin-result') && ln.filter(l => l.host).every(l => l.host==='ricepia.jp' && /noopener/.test(l.rel)) && ln[ln.length-1].analyticsOn===false, 'まとめと 結果に LINE の 友だち追加（from つき）・手元では 解析は 動かない', ln);
-    // 88周目（リストづくり 2）：まとめの LINE は 1画面目（手順の 前）、結果は「もう一回」の すぐ 下
-    for (const [w, h] of [[390,844],[360,640],[667,375],[844,390]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+    // 88周目（リストづくり 2）：まとめの LINE は 1画面目（手順の 前）、結果は「もう一回」の すぐ 下。134周目：ブラウザの バーを のぞいた 本物の 高さ（360×560・375×553）も
+    for (const [w, h] of [[390,844],[360,640],[667,375],[844,390],[360,560],[375,553]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const lc = await p.evaluate(() => { document.getElementById('result').hidden = true; const c = document.getElementById('coinDone'); c.hidden = false; c.scrollTop = 0; const r = c.querySelector('a.lineAdd').getBoundingClientRect(), g = document.getElementById('againBtn');
         const nx = g.nextElementSibling; c.hidden = true; return { b: r.bottom, H: innerHeight, next: nx && nx.classList.contains('line-talk') }; });
       ok(lc.b <= lc.H && lc.next, `まとめの LINE の ボタンが 1画面目（${w}×${h}）・結果は「もう一回」の すぐ 下`, lc); }
     // 90周目：結果の LINE も 1画面目（たて は ボタンを 文の 前、横向きは「もう一回」の すぐ 下）
-    for (const [w, h] of [[390,844],[360,640],[667,375],[844,390]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+    for (const [w, h] of [[390,844],[360,640],[667,375],[844,390],[360,560],[375,553]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const rl = await p.evaluate(() => { KB.start(); const S = KB.S; S.score = 3200; S.bags = 4; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.querySelector('#result a.lineAdd').getBoundingClientRect(); return { b: r.bottom, H: innerHeight }; });
       ok(rl.b <= rl.H, `結果の LINE の ボタンが 1画面目（${w}×${h}）`, rl); }
     await p.evaluate(() => { document.getElementById('result').hidden = true; });

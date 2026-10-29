@@ -387,7 +387,7 @@ const CHECKS = {
     ok(bb.y + (bb.y - bb.top) + 9 <= bb.seam - 16, '320 幅で 2行の 吹き出しも 縫い目に かからない', bb);
     // 82周目：れんしゅうの 拡大窓は 右手の 親指（下の 角 → 左の 端）で かくれない 所・帯と 音ボタンに かからない
     for (const [w, h] of [[390,844],[360,640],[320,568],[844,390],[568,320]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
-      const zz = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; await new Promise(r => setTimeout(r, 250)); const L = KB.layout(), z = S.zoom, W = KB.size().W, H = KB.size().H;
+      const zz = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.zoom = undefined; for (let i=0; i<40 && !S.zoom; i++) await new Promise(r => setTimeout(r, 50)); /* 拡大窓が かかれる まで 待つ（重い ときに 250ms で 足りない ことが あった。91周目） */ const L = KB.layout(), z = S.zoom, W = KB.size().W, H = KB.size().H;
         const snd = document.getElementById('soundBtn').getBoundingClientRect(), cv = document.getElementById('cv').getBoundingClientRect();
         const t = Math.max(0, Math.min(1, ((z.cx - W) * (L.x0 - W) + (z.cy - H) * (L.seamY - H)) / ((L.x0 - W)**2 + (L.seamY - H)**2))), px = W + t*(L.x0 - W), py = H + t*(L.seamY - H); /* 親指の 線（右下の 角 → 左の 端） */
         return { thumb: Math.hypot(z.cx - px, z.cy - py) - z.r, banner: z.cy - z.r - (S.bannerBottom||0), sound: (snd.top - cv.top) - (z.cy + z.r) > 0 || (snd.left - cv.left) > z.cx + z.r, inside: z.cx - z.r >= 0 && z.cx + z.r <= W && z.cy + z.r <= H }; });
@@ -397,6 +397,9 @@ const CHECKS = {
     const pm = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.msgY = undefined; S.msg = { text:'その 調子です', kind:'ok', t:0.1, life:2 }; KB.step(1/60);
       return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ band: document.getElementById('stepNow').textContent, y: S.msgY })))); });
     ok(/その 調子です/.test(pm.band) && pm.y === undefined, 'れんしゅうの 声は 上の 帯に 出て、袋の 上に 吹き出しは 出ない', pm);
+    // 91周目：タイムアタック 4袋目からは 表の 端を 1本指で さわっても 表を さわった ことに（声で たしかめる ずるさを ふさぐ）。教える 3袋は 声だけ
+    const pf = await p.evaluate(() => { const out = []; for (const k of [1, 3]){ KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(k); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts, t0 = S.time; KB.tap(L.x0 + 4, L.seamY); out.push({ k, fronts: S.fronts - f0, dt: +(S.time - t0).toFixed(2) }); } return out; });
+    ok(pf[0].fronts===0 && pf[1].fronts===1 && pf[1].dt < 0, '表の 端の 1本指タップ：教える 袋は 声だけ、4袋目からは 表を さわった ことに', pf);
     // 84周目（見えにくさ 5）：あいた 袋は「白糸は 自然に ぬけます」も 言う・まとめと 結果では キャンバスを 読まない・字 200%（幅 195）
     const dn = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'一本どり！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
     ok(/一本どり/.test(dn) && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);

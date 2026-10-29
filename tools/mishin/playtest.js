@@ -24,8 +24,11 @@ const BOTS = {
   alwaysL: { face:0.95, read:0.90, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, alwaysL:true }, // 端を 読まず いつも 左（human と 同じ 手）
   noKnot:  { face:1.00, read:1.00, target:0.80, noise:0.06, react:99, stroke:260, tug:true }, // きつい目でも ゆるめない
   noKnotH: { face:0.95, read:0.90, target:0.65, noise:0.15, react:99, bell:true, stroke:200, tug:true }, // human と 同じ 手で きつい目を 気に しない（73周目）
+  probe:   { face:0.95, read:0.90, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, probe:true }, // 表裏を 見ずに 端を 1本指で ちょんと さわって 声で たしかめる（91周目）
+  // ていねいに 読む 人（91周目）：表裏・端を まちがえないが 1袋で 1秒ほど 長く 見る。alwaysL（読まない）より 低く ならない こと
+  slowRead:{ face:1.00, read:1.00, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, think:1.4 },
 };
-const CHEATS = ['flick', 'alwaysL', 'noKnot', 'noKnotH'];
+const CHEATS = ['flick', 'alwaysL', 'noKnot', 'noKnotH', 'probe'];
 
 async function main(){
   const browser = await chromium.launch();
@@ -53,10 +56,11 @@ async function main(){
           const b = S.bag, L = KB.layout();
           if (b.done || b.slide > 0.05 || b.flipT > 0){ if (held){ KB.up(); held=false; } tick(); continue; }
           if (b.phase === 'look'){
-            if (seen !== b){ seen = b; b._think = 0.4 + rand()*0.3; b._faceOk = rand() < bot.face; b._readOk = rand() < bot.read; }
+            if (seen !== b){ seen = b; b._think = (bot.think || 0.4) + rand()*0.3; b._faceOk = rand() < bot.face; b._readOk = rand() < bot.read; }
             if (b._think > 0){ b._think -= dt; tick(); continue; }
             const isFront = b.face === 'front';
-            const thinksFront = b._faceOk ? isFront : !isFront;
+            if (bot.probe && !b._probed){ b._probed = true; KB.tap(L.x0 + 4, L.seamY); b._probeFront = !!(S.msg && /表/.test(S.msg.text)); b._think = 0.15; tick(); continue; }
+            const thinksFront = bot.probe ? b._probeFront : b._faceOk ? isFront : !isFront;
             if (thinksFront && !b._flippedOnce){ b._flippedOnce = true; KB.tap(W/2, L.seamY + L.bagH*0.6); b._think = 0.25; tick(); continue; }
             if (isFront){ // 表のまま 端を さわって しまった → 気づいて 裏返す
               KB.down(L.x0 + 4, L.seamY); KB.up(); b._faceOk = true; b._flippedOnce = false; b._think = 0.3; tick(); continue;
@@ -118,6 +122,7 @@ async function main(){
   }
   console.table(out);
   const bad = CHEATS.filter(c => out[c] && out.human && out[c].score >= out.human.score);
+  if (out.slowRead && out.alwaysL && out.slowRead.score < out.alwaysL.score) bad.push('slowRead（ていねいに 読む 人）が alwaysL（読まない）より 低い');
   console.log(bad.length ? '✖ ずるい 打ち方が human 以上：' + bad.join('・') : '✔ ずるい 打ち方（' + CHEATS.join('・') + '）は どれも human より 低い');
   if (args.includes('--goals')) { console.log('きょうの目標が できた 割合'); console.table(goalTable); }
   if (errors.length) console.log('ERRORS', errors);

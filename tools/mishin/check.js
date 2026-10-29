@@ -359,7 +359,7 @@ const CHECKS = {
       KB.startPractice(); S.bag.slide = 0; S.bag.face = 'back'; return { bonus, bonus2, tie, tip }; });
     await p.waitForTimeout(200);
     const sn61 = await p.evaluate(() => document.getElementById('stepNow').textContent);
-    ok(!/おまけ/.test(r61.bonus) && /おまけ/.test(r61.bonus2) && /9,000/.test(r61.bonus2) && /おなじ 点/.test(r61.tie) && !/あと 0点/.test(r61.tie), 'おまけの 行：更新した 回は 言わない・しない 回は じこベストの 点・同じ 点は「おなじ 点」（103・104周目）', r61);
+    ok(!/おまけ/.test(r61.bonus) && !/おまけ/.test(r61.bonus2) && /あした/.test(r61.bonus2) && /おなじ 点/.test(r61.tie) && !/あと 0点/.test(r61.tie), 'ぜんぶ できた 行：じこベストを くり返さず「あしたは 新しい 目標」・同じ 点は「おなじ 点」（103・104・143周目）', r61);
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指を おいて/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[341,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
@@ -406,6 +406,16 @@ const CHECKS = {
       KB.startPractice(); const b = S.bag; Object.assign(b, { slide:0, face:'back', phase:'pull', pulled:2 }); b.knots = new Set(); S.held = true; S.tension = 1.2; S.over = 0.08; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
       const warn = document.getElementById('stepNow').textContent; S.held = false; S.over = 0; S.tension = 0; KB.start(); KB.manual = m0; return { lefts, warn }; });
     ok(al.lefts.length >= 2 && al.lefts.every(x => x === al.lefts[0]) && /速すぎ/.test(al.warn), '結果の 顔の ない 吹き出しは 左が そろう・速すぎの 声は 早めに', al);
+    // 143周目：結果の ヒントは 目標 あと 1つを 先に・数は「速く」の ヒントの ときだけ・達成は「もう一回」の 中に・LINE の 説明は 1回目 だけ
+    const r143 = await p.evaluate(async () => { const m0 = KB.manual; KB.manual = true; const S = KB.S, raf = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      try{ localStorage.removeItem('mishin-goals'); localStorage.setItem('mishin-best2', '999999'); }catch(e){} KB.ends && KB.ends(0); /* この ページで 1回目の 結果 から */ const ids = KB.todayGoals();
+      const end = (f) => { KB.start(); f(KB.S); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); };
+      end(S => { S.bags = 3; S.clean = 3; S.pullTime = 10; S.zoneTime = 1; S.quick = 7; S.bestStreak = 2; S.streak = 0; });
+      await raf(); const tip1 = document.getElementById('tip').textContent, line1 = getComputedStyle(document.querySelector('#resLine .say>span')).display;
+      end(S => { S.bags = 8; S.clean = 8; S.pullTime = 10; S.zoneTime = 8; S.tangles = 3; S.bestStreak = 5; S.rightClean = 1; S.quick = 8; });
+      await raf(); const tip2 = document.getElementById('tip').textContent, btn2 = document.getElementById('againBtn').textContent, line2 = getComputedStyle(document.querySelector('#resLine .say>span')).display;
+      KB.manual = m0; KB.start(); return { ids, tip1, tip2, btn2, line1, line2 }; });
+    ok((!r143.ids.includes('quick8') || /あと 1つ/.test(r143.tip1)) && !/緑で 引けた/.test(r143.tip2) && /達成/.test(r143.btn2) && r143.line1 !== 'none' && r143.line2 === 'none', '結果：目標 あと 1つを 先に・数は 速さの ヒントの ときだけ・達成は もう一回の 中・LINE の 説明は 1回目 だけ', r143);
     // 129周目：LINE は ricepia.jp の「価格表・売り出し情報」と 同じ リンク（ことばと あう）
     const lnk2 = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => a.getAttribute('href')));
     ok(lnk2.length === 2 && lnk2.every(h => /\/lin\.ee\/AULbClm\?from=mishin-(coin|result)$/.test(h)), 'LINE の リンクは 価格表・売り出し情報の もの（from つき）', lnk2);

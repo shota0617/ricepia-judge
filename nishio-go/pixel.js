@@ -6356,7 +6356,7 @@ function frame(now) {
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
-    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
   }
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
@@ -8301,6 +8301,26 @@ function mzMeibutsuTip() {
   if (/^一色町/.test(t)) return '🐟 一色は うなぎの まちだら';
   if (/^(吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)/.test(t)) return '🐚 三河湾の あさりも 名物だら';
   return '🍵 西尾は 抹茶の まちだら';
+}
+// お米の みちくさ（michikusa.js）：転がって いる 最中に、いる 所（田んぼ・川や池・海べ・町）と 月に 合う ひとりごとを 吹き出しで 言う。
+// 名所に 着いた ときの 西尾ばなし（game.js の komeBanashi）とは ちがい、道ばたで お米が 自分で 気づく 形。45〜75秒に 1回まで・ほかの ひと言の 直後は 言わない。
+// 言った ことは この 端末に おぼえて（nsg_michikusa）、同じ 所の ひとりごとを ひとめぐり するまで くりかえさない
+const MICHI_KEY = 'nsg_michikusa';
+const michi = { next: 0, seen: null };
+function mzMichikusa(now) {
+  const M = window.NISHIO_MICHIKUSA;
+  if (!M || !LU || now < michi.next || now < riceBub.until + 3000 || !howtoEl.hidden || mapCovered() || sightBusy() || worldMode || driving || rp.x === null || Math.hypot(rp.vx, rp.vy) < 0.2) return;
+  if (!michi.seen) { try { michi.seen = JSON.parse(localStorage.getItem(MICHI_KEY)) || []; } catch (e) { michi.seen = []; } }
+  if (!michi.next) { michi.next = now + 15000; return; }   // はじめは 15秒 転がってから
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  const r = M.pick({ city: here.city, town: here.town, land: luAt(ll.lat, ll.lng), near, month: new Date().getMonth() + 1 }, michi.seen);
+  if (!r) { michi.next = now + 5000; return; }
+  michi.seen = r.seen; try { localStorage.setItem(MICHI_KEY, JSON.stringify(r.seen)); } catch (e) { /* noop */ }
+  michi.next = now + 45000 + Math.random() * 30000;
+  riceSay(r.item.say, 2400);
+  if (G.track) G.track('kome_michikusa', { id: r.item.id });
 }
 function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
   const now = performance.now();

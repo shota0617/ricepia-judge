@@ -5564,7 +5564,11 @@ const GENGO = (() => {
       if (u.st === 'under') {                     // 水の 中を およいで 次に 上がる 所へ
         u.x += Math.sin(u.yaw) * 0.12 * dt; u.z += Math.cos(u.yaw) * 0.12 * dt;
         if (Math.abs(u.x) > HX - 1 || Math.abs(u.z) > HZ - 1) u.yaw += Math.PI;
-        if ((u.t -= dt) <= 0 && !near && !AMENBO.water(u.x, u.z)) { u.t = 0.5; u.yaw += 0.8; }   // 水の ない 所（土くれ）では 上がらない
+        if ((u.t -= dt) <= 0 && !near && !AMENBO.water(u.x, u.z)) {   // 水の ない 所（土くれ）では 上がらず、2m 以内の 水の ある 所を さがして そこへ およぐ
+          let to = null;
+          for (let n = 0; n < 16 && !to; n++) { const a = R() * 6.28, d = 0.3 + R() * 1.7, x = u.x + Math.sin(a) * d, z = u.z + Math.cos(a) * d; if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1 && AMENBO.water(x, z)) to = [a, d]; }
+          if (to) { u.yaw = to[0]; u.t = to[1] / 0.12; } else { u.yaw = R() * 6.28; u.t = 2 + R() * 2; }   // 見つからなければ べつの 向きへ しばらく まっすぐ
+        }
         else if (u.t <= 0 && !near) { u.st = 'up'; u.t = 3 + R() * 3; u.g.visible = true; RIPPLE.ring(u.x, u.z, 0.35, 0.03, 0.5); }
       } else if (u.st === 'up') {                  // おしりを 水面に 出して 息つぎ
         if (!told && S.started && Math.hypot(u.x - S.x, u.z - S.z) < 8 && (DETAIL || SAY.note('あ、ゲンゴロウが いきつぎしてる'))) { told = true; voice('gengoro'); }   // 知らせの とちゅうは 次の 息つぎで

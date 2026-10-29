@@ -2071,6 +2071,39 @@ function horidashiStep(hx, by, u, now) {
   }
   h.drawn++; dirty = true;
 }
+// お米つぶの ちゃせき（chasetsu.js）：西尾地区で 止まって じっと すると、お米の よこに 石臼が 出て てん茶を ひき（くるくる）、茶わんに 抹茶を 点てて（茶せんが しゃかしゃか）、お米が ひと言。
+// 動くか ねむりだすと 消える。ひと席 おわったら 動くまで くりかえさない。西尾市の 西尾地区の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
+const chasetsu = { cur: null, t0: 0, chk: 0, said: false, done: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function chasetsuStep(hx, by, u, now) {
+  const c = chasetsu, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
+  const C = window.NISHIO_CHASETSU;
+  if (!c.cur) {
+    if (c.done || roll.idle < C.STILL || now < c.chk) return;
+    c.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const f = kasaFind(), d = f ? C.pick(f, new Date().getMonth() + 1) : null;
+    if (!d) return;
+    c.cur = d; c.t0 = now; c.said = false;
+    if (G.track) G.track('kome_chasetsu', { id: d.id });
+  }
+  const age = now - c.t0, t = calmMotion ? 0 : now / 1000, ate = age >= C.MILL + C.WHISK;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 400);
+  if (age < C.MILL) {   // 石臼：下の 臼に 上の 臼。取っ手が くるくる まわり、緑の 粉が ふちから おちる
+    px(11, 9, 14, 4, '#8a8a86'); px(12, 5, 12, 4, '#b3b3ad'); px(12, 5, 12, 1, '#d6d6d0'); px(10, 13, 16, 1, '#6b6b66');
+    const a = t * 5, hxp = 18 + Math.cos(a) * 4;
+    px(hxp, 4, 2, 2, '#7a4422'); px(hxp + (hxp > 18 ? -3 : 1), 3, 1, 1, '#7a4422');
+    for (let i = 0; i < 3; i++) { const ph = (t * 1.5 + i / 3) % 1; ctx.globalAlpha = Math.min(1, age / 400) * (1 - ph); px(10 + i * 0.5 - ph * 2, 10 + ph * 3, 1.5, 1.5, '#6fa85a'); }
+  } else {   // 茶わんに 点てる：茶せんが 左右に しゃかしゃか。できたら 抹茶の あわだつ 緑
+    drawNakama(Math.round(hx + 18 * u), Math.round(by + 8 * u), Math.max(1, Math.round(u * 0.9)), 'chawan', 0, true);
+    if (!ate) { const w = Math.sin(now / 55) * 2.5; px(17 + w, -2, 1, 6, '#e6d3a3'); px(16 + w, 3, 3, 1, '#e6d3a3'); px(17 + w, -3, 1, 1, '#7a4422'); }
+  }
+  ctx.globalAlpha = 1;
+  if (age >= C.MILL) roll.happyT = Math.max(roll.happyT, 0.3);   // 点てている あいだは にこにこ顔
+  if (ate && !c.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(c.cur.say, 2800, 'happy'); c.said = true; }
+  if (ate && c.said && now - c.t0 > C.MILL + C.WHISK + 3500) { c.cur = null; c.done = true; return; }   // ひと席 おわり：動くまで くりかえさない
+  c.drawn++; dirty = true;
+}
 // お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
 // 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
 const GOCHISO_MS = 6500;
@@ -7002,6 +7035,7 @@ function frame(now) {
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
+    chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）
     nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ

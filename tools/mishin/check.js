@@ -410,6 +410,14 @@ const CHECKS = {
     ok(/一本どり/.test(dn) && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);
     const dn2 = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あきました！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
     ok(/白糸は 自然に ぬけます/.test(dn2), '一本どりで ない ときも「白糸は 自然に ぬけます」が 帯に 出る', dn2);
+    // 93周目（お客さん目線 4）：下へ 引くと「横へ」、とちゅうで はなすと「また 指を」、やめて 見に 来た 人には 手順を LINE より 先に
+    const bandAt = (setup) => p.evaluate(setup).then(() => p.evaluate(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent))))));
+    const side = await bandAt(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.bag.face = 'back'; S.bag.phase = 'pull'; S.bag.pulled = 2; S.msg = null; S.held = true; S.dirEff = 0.2; KB.step(1/60); S.held = true; S.dirEff = 0.2; });
+    const rel = await bandAt(() => { const S = KB.S; S.held = false; S.dirEff = 1; S.liftT = 1; S.msg = null; });
+    ok(/下では なく/.test(side) && /また 指を おいて/.test(rel), 'れんしゅう：下へ 引くと「横へ」、とちゅうで はなすと「また 指を おいて」', { side, rel });
+    const sk = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); document.getElementById('skipBtn') && document.getElementById('skipBtn').click(); const c = document.getElementById('coinDone'); if (c.hidden) return { hidden:true };
+      const t = c.querySelector('.talks').getBoundingClientRect().top, l = c.querySelector('.line-talk').getBoundingClientRect().top; c.hidden = true; return { talks:t, line:l }; });
+    ok(sk.talks < sk.line, '「やめて 手順を 見る」で 来た ときは 手順が LINE より 先', sk);
     const ah = await p.evaluate(() => { KB.start(); const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ res: !document.getElementById('result').hidden, cv: document.getElementById('cv').getAttribute('aria-hidden') })))); });
     ok(ah.res && ah.cv === 'true', '結果の 間は キャンバス（前の 袋の 文）を 読み上げない', ah);
     await p.setViewportSize({ width:195, height:422 }); await p.waitForTimeout(100);

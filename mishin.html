@@ -107,6 +107,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
 #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{order:-1;margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
+#coinDone.skipped .panel>.line-talk{order:1} #coinDone.skipped .panel>.go,#coinDone.skipped .panel>.talk.cont{order:2} /* やめて 手順を 見に 来た 人には 手順を 先に（93周目） */
 .talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none} /* 続きの ことば：1つの 画面に こめつぶを ふやしすぎない（89周目） */
 .talk>.say .fb i{color:#7a5a30}
 .talk>.say h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.4vw,36px);word-break:keep-all;line-height:1.15;margin:0;color:#3e2a1a;text-align:left}
@@ -660,7 +661,7 @@ function step(dt){
   if(b.phase==='look'){ if(b.slide<=0.05) b.readT += dt; if(b.readT>1.6 && !S.feverT) S.combo = Math.max(0, S.combo - dt*0.4); S.tension *= Math.pow(0.02, dt); S.pend=0; return; }
   if(b.phase==='free'){
     S.pend=0; S.tension *= Math.pow(0.02, dt);
-    if(b.freePx >= freePx()){ b.phase='pull'; audio.click(); if(S.practice) say('輪から はずれました','ok'); const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); quickBonus(b); }
+    if(b.freePx >= freePx()){ b.phase='pull'; audio.click(); if(S.practice) say('輪から はずれました。つぎは 縫い目に そって 反対の端の 方へ ゆっくり どうぞ','ok'); /* はずした 直後も 向きを 言う（93周目） */ const p=stitchPos(b,0); S.fx.push({kind:'catch', x:p.x, y:p.y, t:0, life:0.4}); quickBonus(b); }
     return;
   }
 
@@ -1667,10 +1668,13 @@ function stepText(){
   if(b.phase==='look') return k(b.wrongEnd ? 'そちらは 縫い始めです。反対の端の、<b>赤い糸が 白い輪に ささっている</b>方に <b>指を おいて</b>、少し ずらして ください'
     : '裏ですね。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）に <b>指を おいて</b>、少し ずらして ください', 'を <b>←・→キー</b>で つまんで ください（おしたまま 引く）');
   if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずしましょう</b>（つまんだまま 少し 引きます。丸い 窓で 見えます）';
-  if(b.tangle) return k('引っかかりました。<b>黄色い 輪の 白い 糸</b>を 下へ 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
+  if(b.tangle) return k('引っかかりました。<b>強く 引かずに</b>、<b>黄色い 輪の 白い 糸</b>を 下へ 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
   if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと 引っかかる</b> 袋。直し方を ためして みましょう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引いて ください';
+  if(S.held && S.dirEff < 0.4) b.sideWarn = true; else if(!S.held || S.dirEff > 0.75) b.sideWarn = false; /* 行ったり 来たり しない ように 幅を もたせる（93周目） */
+  if(b.sideWarn) return '下では なく、<b>縫い目に そって 横へ</b> 引いて ください';
+  if(!S.held && S.liftT > 0.8 && b.pulled > 0) return kbUser ? 'はなしても 大丈夫です。<b>←・→キー</b>で また つまんで ください' : 'はなしても 大丈夫です。<b>赤い 糸の 端</b>に また 指を おいて、横へ ゆっくり どうぞ'; /* とちゅうで はなした とき（93周目） */
   return 'つまんだまま、<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引きましょう。はなして つまみなおしても 大丈夫です';
 }
 function syncUI(dt){

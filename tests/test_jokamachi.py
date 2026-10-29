@@ -40,7 +40,7 @@ class JokamachiTests(unittest.TestCase):
         self.assertIn('NISHIO_JOKAMACHI', px)
         self.assertIn('S.pick({ city: here.city, near: S.nearKeys(G.spots', px)
         self.assertIn('jokamachiStep(hx, by, u, now);', px)
-        self.assertIn('|| jokamachi.cur) { c.cur = null', px)   # ちゃせきは 譲る
+        self.assertIn('|| jokamachi.cur || chatsumi.cur) { c.cur = null', px)   # ちゃせきは 譲る
         for scene in IDS:
             self.assertIn("id === '%s'" % scene if scene != 'koto' else '三河の小京都：', px)
         self.assertIn('jokamachi.js', (ROOT / 'nishio-go.html').read_text())

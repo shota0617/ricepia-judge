@@ -410,6 +410,10 @@ const CHECKS = {
     // 91周目：タイムアタック 4袋目からは 表の 端を 1本指で さわっても 表を さわった ことに（声で たしかめる ずるさを ふさぐ）。教える 3袋は 声だけ
     const pf = await p.evaluate(() => { const out = []; for (const k of [1, 3]){ KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(k); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts, t0 = S.time; KB.tap(L.x0 + 4, L.seamY); out.push({ k, fronts: S.fronts - f0, dt: +(S.time - t0).toFixed(2) }); } return out; });
     ok(pf[0].fronts===0 && pf[1].fronts===1 && pf[1].dt < 0, '表の 端の 1本指タップ：教える 袋は 声だけ、4袋目からは 表を さわった ことに', pf);
+    // 99周目（はじめての 30秒）：教える 3袋は 表の 端を つまんでも 声だけ・タイムアタックの はじめに 二本指の 見本・れんしゅうは 1本指の ことば
+    const f99 = await p.evaluate(() => { const out = {}; KB.start(); let S = KB.S, L = KB.layout(); out.hint = S.pinchHint; const b = KB.makeBag(1); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts, t0 = S.time; KB.down(L.x0 + 4, L.seamY); KB.up(); out.fronts = S.fronts - f0; out.dt = +(S.time - t0).toFixed(2);
+      KB.startPractice(); S = KB.S; L = KB.layout(); Object.assign(S.bag, { slide:0, face:'back' }); KB.tap(KB.size().W/2, L.seamY + 200); out.tapMsg = S.msg && S.msg.text; return out; });
+    ok(f99.hint > 0 && f99.fronts === 0 && f99.dt === 0 && /指を 1本/.test(f99.tapMsg || ''), 'はじめての 30秒：二本指の 見本・教える 袋は 声だけ・れんしゅうは 1本指の ことば', f99);
     // 92周目：端の 近くでも 縫い目から はなれた 1本指タップは ふつうに 袋を まわす（罰に しない）
     await p.setViewportSize({ width:844, height:390 }); await p.waitForTimeout(100);
     const pr2 = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(4); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts; KB.tap(L.x0 + 50, L.seamY + 45); return { fronts: S.fronts - f0, flip: b.flipT > 0 }; });

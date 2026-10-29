@@ -5868,6 +5868,10 @@ const HACHI = (() => {
           } else { u.st = 'leave'; u.tx = u.x + (R() - 0.5) * 20; u.tz = u.z + (R() - 0.5) * 20; u.ty = 8; }
         } else if ((u.t -= dt) <= 0) { if (pick(u, false)) u.st = 'hop'; else u.t = 1; }   // となりの 花へ
       } else {                                     // とぶ（hop：となりの 花へ ゆっくり・fly：遠くへ・leave：空へ）
+        if (u.st !== 'leave' && ((u.st === 'hop' && near) || !grows(u.tx, u.tz) || Math.hypot(u.tx - S.x, u.tz - S.z) < 3.5)) {   // とぶ とちゅうも：（となりへ 移る とちゅうに）トラクターが 近い・行く先の レンゲが 耕された・行く先に トラクター → 遠くの レンゲへ 行く先を かえる
+          if (pick(u, true)) u.st = 'fly';
+          else { u.st = 'leave'; u.tx = u.x + (R() - 0.5) * 20; u.tz = u.z + (R() - 0.5) * 20; u.ty = 8; }
+        }
         const sp = u.st === 'hop' ? 0.5 : 2.2, dx = u.tx - u.x, dz = u.tz - u.z, d = Math.hypot(dx, dz);
         const cruise = u.st === 'hop' ? u.ty + 0.08 : u.st === 'leave' ? u.ty : u.ty + 0.6;
         const step = Math.min(d, sp * dt);

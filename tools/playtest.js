@@ -790,7 +790,7 @@ async function walkTo(page, id) {
       let flick = 0; for (let i = 0; i < 12; i++) { await wait(100); if (box.hidden) flick++; }   // 出した あと 1.2秒、消えたり しない（おはなしが 自分を「ほかの 窓」と 見て 0.4秒ごとに 出たり 消えたり していた。Codex の 指摘）
       G.toast('🧪 テストの 知らせ'); await wait(250);
       const held = !(t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ');
-      KT.close(); let after = false; for (let i = 0; i < 20 && !after; i++) { await wait(200); after = t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ'; }
+      KT.close(); let after = false; for (let i = 0; i < 50 && !after; i++) { await wait(200); after = t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ'; }   // 待って いた 知らせは 順に 出る（先に「🧭 水色の 線…」など）ので 10秒まで
       t.classList.remove('show'); KT.setOn(was);
       return { shown, picOk, held, after, flick };
     });

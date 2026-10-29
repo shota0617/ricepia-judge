@@ -102,7 +102,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::before{content:'';position:absolute;left:-10px;bottom:9px;border:7px solid transparent;border-right:10px solid #7a5a30;border-left:0}
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
-#resLine.short .say>span{display:none} #result .talk.cont>.who{display:none} /* 顔の ない 続きの 吹き出しは 幅いっぱい（横に 空きを のこさない。130周目。下の 吹き出しも そろえる。133周目） */ #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
+#resLine.short .say>span{display:none} #resLine.short a.lineAdd{margin-bottom:0} #result .talk.cont>.who{display:none} /* 顔の ない 続きの 吹き出しは 幅いっぱい（横に 空きを のこさない。130周目。下の 吹き出しも そろえる。133周目） */ #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
 #againBtn small{display:block;font:700 13px var(--body);margin-top:1px;letter-spacing:0;opacity:.85;white-space:nowrap}
 @media (max-height:500px){#againBtn small{display:inline;margin:0 0 0 8px}} @media (max-width:340px){#againBtn small{font-size:12px}} @media (max-width:340px),(max-height:500px){#result h1 small{white-space:nowrap;font-size:11px}} /* 「らいすぴあでの きょうの しごと」を 1行に（見出しが 2行に なって「もう一回」を 下げない。107周目） */
 @media (max-width:259px){#againBtn small,#result h1 small{white-space:normal;letter-spacing:0}} /* 字 200%：折る（上の 規則より 後ろに。110周目） */
@@ -480,7 +480,7 @@ function endGame(){
   { const tip = tipOf(zone); ui.tip.innerHTML = (S.pullTime > 0 && /もう少し速く/.test(tip) ? '<b>緑で 引けた 時間 '+zone+'%</b>　' : '') + tip; } /* 引いて いない 人に 0% を 見せない（103周目）。数は「速く」の ヒントの ときだけ・ことばは「緑で 引けた 時間」（もつれの ヒントと 並べると 逆に 聞こえた。143周目） */
   const done = goalsDone(), fresh = new Set();
   for(const g of todayGoals()) if(!done.has(g.id) && g.ok()){ done.add(g.id); fresh.add(g.id); }
-  let best=0; try{ best = +localStorage.getItem('mishin-best2')||0; if(S.score>best) localStorage.setItem('mishin-best2', S.score); }catch(e){} S.newBest = S.score > best && best > 0; /* 目標の おまけの 行が 新しい じこベストを 出せる ように 先に */
+  let best=0; try{ best = +localStorage.getItem('mishin-best2')||0; if(S.score>best) localStorage.setItem('mishin-best2', S.score); }catch(e){} S.newBest = S.score > best && best > 0; /* 「もう一回」の 中の 行が 新しい じこベストを 出せる ように 先に */
   saveGoals(done); renderGoals(ui.rGoals, fresh); renderGoals(ui.goals);
   let bestBags=0; try{ bestBags = +localStorage.getItem('mishin-bestbags')||0; if(S.bags>bestBags) localStorage.setItem('mishin-bestbags', S.bags); }catch(e){}
   const nr = nextRank(S.score), subKind = fresh.size ? 'goal' : S.newBest ? 'new' : best>0 && S.bags>0 && best>S.score ? 'best' : nr && S.bags>0 ? 'rank' : '', vis = (k, t) => t && subKind === k ? `<span class="sr">${t}</span>` : t; /* 「もう一回」の 中に 出した 行は 見た目で くりかえさない（122周目） */
@@ -498,8 +498,8 @@ function endGame(){
 }
 endGame.n = 0; // この ページで 結果を 出した 回数
 function tipOf(zone){
-  { const done = goalsDone(), near = todayGoals().find(g => { if(done.has(g.id) || g.ok() || !g.prog) return false; const m = /^(\d+)\/(\d+)$/.exec(g.prog()); return m && +m[2] - +m[1] === 1; }); /* まだの 目標が あと 1つ なら それを（105周目）。いちばん 先に（速さの ヒントに かくれて いた。143周目） */
-    if(near && S.bags>0) return `今回 あと 1つで きょうの 目標「<b>${near.text}</b>」でした。`; /* 数は 1回ごと（107周目） */ }
+  const near = S.bags>0 && (() => { const done = goalsDone(); return todayGoals().find(g => { if(done.has(g.id) || g.ok() || !g.prog) return false; const m = /^(\d+)\/(\d+)$/.exec(g.prog()); return m && +m[2] - +m[1] === 1; }); })(), nearTip = near && `今回 あと 1つで きょうの 目標「<b>${near.text}</b>」でした。`; /* まだの 目標が あと 1つ なら それを（105周目）。いちばん 先に（速さの ヒントに かくれて いた。143周目） */ /* 数は 1回ごと（107周目） */ 
+  if(nearTip && S.wrongs<3 && S.fronts<2 && S.tangles<2) return nearTip; /* まちがいが 少ない ときは いちばん 先に（143周目）。多い ときは 直し方を 先に（144周目） */
   if(zone<45 && S.wrongs<3 && S.fronts<2 && S.tangles<2 && S.bags>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。'; /* 読みの まちがいが 2回 くらいなら、速さの ほうを 先に */
   const z0 = S.bags===0, n = z0 ? 1 : 2; /* 1袋も あけて いない ときは 1回 でも その わけを */
   if(z0 && kbUser && !S.fronts && !S.wrongs && !S.tangles) return 'キーボードでは <b>れんしゅう</b>で どうぞ（←・→キーで つまめます）。'; /* 108周目 */
@@ -507,6 +507,7 @@ function tipOf(zone){
   if(S.fronts>=n) return '白い糸が<b>まっすぐ</b>だけなら表です。袋をタップして まわしましょう（反対の面へ）。';
   if(S.wrongs>=n) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始めです。反対の端（縫い始め）から 引くと からまります。';
   if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。もつれたら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
+  if(nearTip) return nearTip;
   if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
   if(S.bestStreak<5) return 'いい手つきです。<b>一本どり</b>を続けると、連続ボーナスが つきます。';
   return (S.score >= 30000 ? '名人の手つきです。' : S.fevers < 3 ? '一本どりが 続いて います。つぎは <b>フィーバー</b>を ねらって みてください。' : 'いい手つきです。つぎは <b>新米シール</b>の 袋や じこベストを ねらって みてください。') + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : ''); /* 「名人」は 五代目の 点から（103周目） */
@@ -542,7 +543,7 @@ function renderGoals(el, fresh){
   el.innerHTML = '<h2>きょうの目標</h2>' + gs.map(g=>{
     const isNew = fresh && fresh.has(g.id), prog = fresh && !done.has(g.id) && g.prog ? `<small class="prog">今回 ${g.prog()}</small>` : '';
     return `<div class="goal${done.has(g.id)?' done':''}${isNew?' new':''}"><i>${done.has(g.id)?'済':''}</i><span>${g.text}${isNew?'　<b style="color:var(--gold)">達成！</b>':''}${prog}${!fresh && g.hint && !done.has(g.id) ? `<small class="hint">${g.hint}</small>` : ''}</span></div>`; }).join('')
-    + (gs.every(g=>done.has(g.id)) ? '<p class="bonus">きょうの目標は ぜんぶ できました。あしたは 新しい 目標が 出ます。</p>' : ''); /* じこベストの ねらいは「もう一回」の 中に ある ので、おまけは 言わない（143周目） */
+    + (gs.every(g=>done.has(g.id)) ? '<p class="bonus">きょうの目標は ぜんぶ できました。あしたも 目標が 出ます。</p>' : ''); /* じこベストの ねらいは「もう一回」の 中に ある ので、おまけは 言わない（143周目） */
 }
 const RANKS = [[30000,'米屋の五代目'],[15000,'精米所のベテラン'],[7000,'頼れるパートさん'],[2500,'見習い'],[0,'はじめての袋']]; // 52周目：上の 線を 上げた（expert が いつも 天井に つかない）
 function rankOf(sc){ return RANKS.find(r=>sc>=r[0])[1]; }

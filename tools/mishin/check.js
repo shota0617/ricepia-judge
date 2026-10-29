@@ -352,6 +352,10 @@ const CHECKS = {
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 画面（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
+    // 72周目：画面の 幅で むずかしさが かわらない（引く 長さに あわせて 速さの 上限も。広い 画面は 1.12 倍 まで）
+    const sf = {}; for (const [w, h] of [[360,640],[390,844],[768,1024]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      sf[w] = await p.evaluate(() => { const L = KB.layout(), b = KB.makeBag(0); return +(b.safe / ((L.x1-L.x0))).toFixed(3); }); }
+    ok(Math.abs(sf[360]-sf[390]) < 0.02 && sf[768] < sf[390], '画面の 幅で 引く 速さの 上限が かわらない（広い 画面は 1.12 倍で 頭うち）', sf);
     await p.setViewportSize({ width:320, height:568 }); // 65周目：じこベスト・はじめての ランク・袋の じこベストの 行が ふえても
     const ag4 = await p.evaluate(() => { localStorage.setItem('mishin-best2','5000'); localStorage.setItem('mishin-bestbags','3'); KB.start(); const S = KB.S; S.score = 8000; S.bags = 9; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });

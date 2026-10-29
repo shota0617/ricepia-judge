@@ -319,7 +319,8 @@ function makeBag(k){
   const inSeason = BRANDS.filter(br => shinmaiSeason(day(), br)); // いま 新米が ある 銘柄
   const golden = k>0 && k%5===4 && inSeason.length > 0; // 新米の きせつ だけ
   const brand = golden ? inSeason[Math.floor(k/5) % inSeason.length] : BRANDS[k%BRANDS.length];
-  const safe = Math.max(470, 700 - k*14) * (golden ? 0.85 : 1); // 新米シールの 袋は ゲームの 上で 少し むずかしく（点 2倍）。本物の 糸の かたさの 出典は ない
+  const Lw = layout(), wf = Math.min(1.12, (Lw.x1 - Lw.x0) / 307); /* 引く 長さは 画面の 幅に 比例 → 速さの 上限も 幅に あわせる（390 幅で 1。広い 画面は 1.12 まで：72周目） */
+  const safe = Math.max(470, 700 - k*14) * (golden ? 0.85 : 1) * wf; // 新米シールの 袋は ゲームの 上で 少し むずかしく（点 2倍）。本物の 糸の かたさの 出典は ない
   const kg = 30; // ミシンで 口を 縫う クラフト紙の 米袋は 30kg の 業務用が 多い
   return { N, face, start, from:null, single, knots, safe, golden, kg, brand,
     printed: k>=1 && rnd()<0.6, // 表に「糸抜きはここから」の印刷（実際の口は裏、という例がある）
@@ -700,7 +701,7 @@ function tangle(){
 function finishBag(){
   const b=S.bag; b.done=true; b.open=0; S.bags++; // あいた しゅんかんに かぞえる（表示が おくれない）
   const cleanBag = b.tangles===0 && !b.wrong;
-  const smooth = b.zoneSt / b.N >= 0.5;
+  const smooth = b.zoneSt / b.N >= 0.65; /* 半分 では ほぼ いつも もらえた（72周目） */
   const mult = multOf(), g = b.golden?2:1;
   let dtime = Math.max(0.5, R.timeBag - 0.06*Math.max(0, b.k-4)) + (cleanBag?R.timeClean:0) + (smooth?R.timeZone:0);
   dtime = Math.round(dtime*10)/10;

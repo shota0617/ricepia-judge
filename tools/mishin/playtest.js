@@ -6,6 +6,7 @@ const { chromium } = require('playwright');
 const path = require('path');
 const args = process.argv.slice(2);
 const RUNS = +(args[args.indexOf('--runs')+1] || 12) || 12;
+const VW = args.includes('--w') ? +args[args.indexOf('--w')+1] : 390, VH = args.includes('--h') ? +args[args.indexOf('--h')+1] : 844; // 画面の 大きさ（72周目：幅で むずかしさが かわらないか）
 const FILE = 'file://' + path.resolve(__dirname, '../../mishin.html');
 
 // face＝表裏を 見分ける確率、read＝ほどき始めを 読みあてる確率、target＝ねらう張り、noise＝ぶれ、react＝ひっかかりに 気づくまで、
@@ -27,7 +28,7 @@ const CHEATS = ['flick', 'alwaysL', 'noKnot'];
 
 async function main(){
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport:{ width:390, height:844 }, deviceScaleFactor:1 });
+  const page = await browser.newPage({ viewport:{ width:VW, height:VH }, deviceScaleFactor:1 });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(FILE);

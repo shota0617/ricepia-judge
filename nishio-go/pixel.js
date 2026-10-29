@@ -6076,6 +6076,7 @@ function occludeRice(hx, by, footY, u, again) {
 // お米の 吹き出し（10/29 店主「文字を 廃止して 素朴な 可愛い キャラクターとの 対話を 軸に」。めいろの 中だけ・試作）：
 // めいろの 知らせを、お米が 頭の 上の 吹き出しで みじかく しゃべる（6字 くらいまで）。新しい ひと言は 前の ひと言と 入れかわる
 const riceBub = { t: '', at: 0, until: 0, log: [] };   // log：しゃべった ことば（試験用。新しい 8つ）
+// 言いかたの きまり（10/29 クラウドの「お米つぶの おはなし」・かかしと そろえる）：みじかく、絵文字は 数を あらわす ときだけ（♪＝れんぱつ・💨＝れんぞく）。かざりの 絵文字は つけない
 function riceSay(t, ms = 1400, mood = '') {
   const now = performance.now();
   Object.assign(riceBub, { t, at: now, until: now + ms });
@@ -7792,7 +7793,7 @@ function mzSpringShot() {   // ばねショット（快感）：ばねで はね
   const now = performance.now();
   if (!mzSpring.at || now - mzSpring.at > 1200) return;
   mzSpring.at = 0; mzSpring.shots = (mzSpring.shots || 0) + 1;
-  riceSay('🎯 やったぁ！', 1600, 'happy'); chordSound();   // 吹き出し（もとは「🎯 ばねショット！ うまいじゃん」）
+  riceSay('やったぁ！', 1600, 'happy'); chordSound();   // 吹き出し（もとは「🎯 ばねショット！ うまいじゃん」）
   const cols = ['#8cf078', '#ffd84a', '#ffffff'];
   for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.5 }); }
 }
@@ -7812,7 +7813,7 @@ function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マ�
     if (Math.abs(mzSpring.cx - rc) + Math.abs(mzSpring.cy - rr) > 34 || now - mzSpring.t0 > 60000) { mzSpring.on = false; mzSpring.next = now + 5000; return; }
     if (mzSpring.cx === rc && mzSpring.cy === rr) {   // とった
       mzSpring.on = false; mzSpring.until = now + MZ_SPRING_MS; mzSpring.next = now + 45000; mzSpring.got++;
-      riceSay('ばね だ！✨', 1600, 'happy');   // 吹き出し（もとは「ばね！ 12秒 生け垣で びよーんと はずむ」。のこり 秒は 時計の 札に 出る）
+      riceSay('ばね だ！', 1600, 'happy');   // 吹き出し（もとは「ばね！ 12秒 生け垣で びよーんと はずむ」。のこり 秒は 時計の 札に 出る）
       if (!mzSpring.told) { mzSpring.told = true; G.toast('ばねの 間は 生け垣で 前より 速く はね返るよ。うまく つかって 近道しよう'); }   // 40文字まで（文字は 少なく。main の 説明を みじかく）
       grainSound(); dirty = true;
     }
@@ -7842,7 +7843,7 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
   if (mzRt.t0) mzRt.t0 -= MZ_CROW_PEN * 1000;
   mzCrow.hitT = now + 2500; mzCrow.next = now + 6000; mzCrow.hits++;
   mzCrow.list = mzCrow.list.filter(o => o !== c);
-  riceSay(`うわっ カラス！💦`, 1400);   // 吹き出し（もとは「🐦 カァ！ ＋5秒」。すすんだ 時計は 時計の 札で 見える）
+  riceSay('うわっ カラス！', 1400);   // 吹き出し（もとは「🐦 カァ！ ＋5秒」。すすんだ 時計は 時計の 札で 見える）
   if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
 }
@@ -8302,7 +8303,7 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
         mzDots.lines++;
         chordSound(); combo.n += 2; combo.quietT = 0; comboStep(); roll.happyT = Math.max(roll.happyT || 0, 1);
         const tip = mzDots.lines % 3 === 1 ? mzMeibutsuTip() : '';   // 3回に 1回は、いる 所の 名物の ひと言（西尾らしく）
-        riceSay('ぜんぶ ひろった！🍚', 1500, 'happy');   // 吹き出し（もとは「🍚 ぜんぶ ひろったじゃん！（きょう Nつぶ）」）
+        riceSay('ぜんぶ ひろった！', 1500, 'happy');   // 吹き出し（もとは「🍚 ぜんぶ ひろったじゃん！（きょう Nつぶ）」）
         if (tip) floatText(`🍵 ${tip}`);   // 名物の ひと言は 知らせる 中身が あるので 文字の まま（3回に 1回）
         const cols = ['#ffffff', '#fff6c2', '#ffe066'];
         for (let j = 0; j < 12; j++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[j % 3], life: 0.5 + Math.random() * 0.4 }); }
@@ -8384,7 +8385,7 @@ function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から
     const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
-    if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！🏁', 3600, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
+    if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', 3600, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
     if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     ctx.globalAlpha = 1;
   } else if (mzBanner.t0) mzBanner.t0 = 0;

@@ -2040,6 +2040,35 @@ function deaiStep(now, ox, oy, T) {
   ctx.globalAlpha = 1;
   deai.drawn++; dirty = true;
 }
+// お米つぶの こぼれもの（kobore.js）：転がって いる 最中、いる 町と 月に 合った 西尾の 名物を、お米が 道に ぽろぽろ こぼす。小さく ふわっと 舞って 消える。
+// 1.4〜2.6秒に 1つ・同時に 3つまで・西尾市の 中だけ（ことばは なし。おとも・にもつ・ゆめとは ちがい、転がる 動きの 跡）
+const KOBORE_LIFE = 2200, KOBORE_MAX = 3;
+const kobore = { list: [], next: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function koboreStep(now, ox, oy, T, dpr) {
+  if (worldMode || driving || rp.x === null || !window.NISHIO_KOBORE || !LU) { kobore.list.length = 0; return; }
+  const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (now > kobore.next && sp > 1.5 && kobore.list.length < KOBORE_MAX && !mapCovered()) {
+    kobore.next = now + 1400 + Math.random() * 1200;
+    const ll = toLatLng(rp.x, rp.y);
+    let near = '';
+    for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+    const k = window.NISHIO_KOBORE.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 });
+    if (k) {
+      kobore.list.push({ id: k.id, x: rp.x + (Math.random() - 0.5) * 0.6, y: rp.y - 0.5, t0: now, side: Math.random() < 0.5 ? -1 : 1 });
+      if (G.track) G.track('kome_kobore', { id: k.id });
+    }
+  }
+  kobore.list = kobore.list.filter(p => now - p.t0 < KOBORE_LIFE);
+  const q = Math.max(1, Math.round(Math.max(Math.round(2 * dpr), Math.round(T / 16)) * 0.5));
+  for (const p of kobore.list) {
+    const t = (now - p.t0) / KOBORE_LIFE, sway = calmMotion ? 0 : Math.sin(t * 5) * 0.25 * p.side;
+    ctx.globalAlpha = Math.min(1, t * 6) * (1 - t * t);
+    drawNakama(Math.round(ox + (p.x + sway) * T), Math.round(oy + (p.y + t * 1.1) * T), q, p.id, calmMotion ? 0 : t * 4 * p.side);
+    kobore.drawn++;
+  }
+  ctx.globalAlpha = 1;
+  if (kobore.list.length) dirty = true;
+}
 function kaeruStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { kaeru.list.length = 0; return; }
   if (!kaeru.list.length && now > kaeru.next && kaeruSeason() && !mapCovered()) {   // 15〜30秒に 1回、まわり 3〜7マスの 田んぼの へりを さがす
@@ -6579,6 +6608,7 @@ function frame(now) {
   kaeruStep(now, ox, oy, T, w, h, dpr);   // 田んぼの あぜの カエル
   nakamaStep(now, ox, oy, T, w, h, dpr);   // 農作物も ころころ（いちご・なす・大豆）
   deaiStep(now, ox, oy, T);   // 水べで 出会う 西尾の 生きもの（deai.js）
+  koboreStep(now, ox, oy, T, dpr);   // 転がりながら こぼす 西尾の 名物（kobore.js）
   // 先回りしたライバル
   const rt = rivalTile();
   if (rt && rt.ok) {

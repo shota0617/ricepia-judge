@@ -1116,10 +1116,10 @@ async function walkTo(page, id) {
     const mid = await page.evaluate(() => { nishioPixel.comboBest(5); nishioPixel.comboAdd(6); return { c: nishioPixel.combo, f: nishioPixel.floats() }; });
     let end = null;
     for (let i = 0; i < 20 && !(end && end.n === 0); i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.combo); }   // 止まって 0.7秒で おしまい
-    // あと 少しで ベスト（ベスト 10 に 8）：おわった ときに「おしい！ ベストまで あと3」
+    // あと 少しで ベスト（ベスト 10 に 8）：おわった ときに「おしい！ あと3」
     await page.evaluate(() => { nishioPixel.comboBest(10); nishioPixel.comboAdd(8); });
     let near = false;
-    for (let i = 0; i < 20 && !near; i++) { await page.waitForTimeout(150); near = await page.evaluate(() => nishioPixel.floats().some(t => /おしい！ ベストまで あと3だったじゃん/.test(t))); }
+    for (let i = 0; i < 20 && !near; i++) { await page.waitForTimeout(150); near = await page.evaluate(() => nishioPixel.floats().some(t => t === 'おしい！ あと3')); }   // 文字は みじかく（「ベストまで … だったじゃん」は 長かった）
     // 同じ ベストに 同じ 近さ（8）では もう 出さない・前より 近づくと（9）また 出す（めいろで 迷う 間、2分で 7回「あと4」が 出た）
     const oshii = () => page.evaluate(() => nishioPixel.floats().filter(t => /おしい！/.test(t)));
     for (let i = 0; i < 40 && (await oshii()).length; i++) await page.waitForTimeout(150);   // 前の 文字が 消えるまで
@@ -1129,10 +1129,15 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.comboAdd(9));
     let closer = false;
     for (let i = 0; i < 20 && !closer; i++) { await page.waitForTimeout(150); closer = (await oshii()).some(t => /あと2/.test(t)); }
+    // とても 近い（あと1〜3）ときだけ：ベスト 10 に 7（あと4）では 出さない（200秒で 5回 出て うるさかった）
+    for (let i = 0; i < 40 && (await oshii()).length; i++) await page.waitForTimeout(150);
+    await page.evaluate(() => { nishioPixel.comboBest(10); nishioPixel.comboAdd(7); });
+    let far = false;
+    for (let i = 0; i < 14 && !far; i++) { await page.waitForTimeout(150); far = (await oshii()).length > 0; }
     await page.evaluate(o => { nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
     await page.evaluate(w => { const d = nishioGo.state.day || {}; if (w === null) delete d.watch; else d.watch = w; }, w0);
     const told = mid.f.some(t => /ベスト こえた/.test(t));
-    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near && !again && closer, beat: mid.c.beat, told, end, near, again, closer };
+    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near && !again && closer && !far, beat: mid.c.beat, told, end, near, again, closer, far };
   })();
   // ころころコンボで ベストを こえた 数の まま おわった ときは、「ベスト こえたじゃん！ ×6」と「あたらしい ベスト ×6」を つづけて 出さない（自分で 遊んで 分かった：同じ ×9 が 0.1秒 ちがいで 2回）。
   // こえた あとも のびて おわった ときは、おわりに のびた 数を 出す
@@ -1325,7 +1330,7 @@ async function walkTo(page, id) {
     const townOk = /のまち・西尾の まちが めいろに/.test(tNishio) && /抹茶/.test(tNishio) && /^にしおさんぽGOで、碧南市の まちが めいろに/.test(tHeki) && !/西尾の まち/.test(tHeki);
     return { ok: townOk && kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, tNishio, tHeki, text: text.slice(0, 160) };
   });
-  // めいろの はやさの ベスト：道のり ÷ 時間で くらべ、こえたら「ベスト こえたじゃん！」、とどかなければ「ベスト まで あと」。みじかい めいろは 数えない。札は「10m/秒」
+  // めいろの はやさの ベスト：道のり ÷ 時間で くらべ、こえたら「ベスト こえたじゃん！」、とどかなければ 足りない 数は 出さない（あおらない）。みじかい めいろは 数えない。札は「10m/秒」
   R.checks.mazeSpeed = await page.evaluate(async () => {
     const G = nishioGo, k = 'nsg_mz_speed', old = localStorage.getItem(k);
     localStorage.removeItem(k);
@@ -1336,7 +1341,7 @@ async function walkTo(page, id) {
     document.getElementById('reward').click();
     if (old === null) localStorage.removeItem(k); else localStorage.setItem(k, old);
     const g = G.guide, gl = g && nishioPixel.maze.goal(g.id || g.name), warp = gl ? typeof gl.warp : 'no-goal';   // とびこえた ゴールを はやさから のぞく ための しるし
-    return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && /1秒に 8m（ベスト 10m まで あと 2m）/.test(b) && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
+    return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && b === '🏃 はやさ 1秒に 8m' && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
   });
   // めいろの ゴールの あとの「めいろ、どうだった？」：★を えらび ひとことを 書いて 送ると、/api/feedback に kind: play・★・ひとこと・秒・めいろの★ が 届く。1日1回
   {

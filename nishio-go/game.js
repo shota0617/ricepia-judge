@@ -1203,7 +1203,7 @@ function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（�
   if (warp || !(m >= MZ_SPEED_MIN_M) || !(sec > 3)) return '';
   const v = Math.round(m / sec * 10) / 10, best = store.get('nsg_mz_speed', 0);
   if (v > best) { store.set('nsg_mz_speed', v); track('maze_speed_best', { v, prev: best }); return best ? `🏃 はやさ ベスト こえたじゃん！ 1秒に ${v}m（前 ${best}m）` : `🏃 はやさ 1秒に ${v}m（はじめての ベスト）`; }
-  return `🏃 はやさ 1秒に ${v}m（ベスト ${best}m まで あと ${Math.round((best - v) * 10) / 10}m）`;
+  return `🏃 はやさ 1秒に ${v}m`;   // とどかない ときは 足りない 数を 出さない（あおらない・文字を 少なく。運営者の声「競わない設計」「文字は 少なく」2026-10-29）
 }
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 function mazeGoal(id, name, lines) {

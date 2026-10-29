@@ -2646,6 +2646,56 @@ function tsunStep(hx, by, u, now) {
   ctx.globalAlpha = 1;
   t.drawn++; dirty = true;
 }
+// お米つぶの なぞなぞ（nazonazo.js）：止まって しばらく（約4.5秒）じっと して いると、お米が いる 地区に 合った 西尾の なぞなぞを 吹き出しで 出し、お米の したに 答えの 札が 2つ ならぶ。
+// 札を タップすると、あたりは「そのとおり」、はずれは ほんとうの 答えを お米が おしえる。ひとめぐり するまで 同じ なぞなぞは 出さない（nsg_nazonazo）。
+// 120〜210秒に 1回まで（はじめは 40秒あそんでから）・西尾市の 中だけ・動くか ねむりだす（12秒）と ひっこむ・ゲームボーイの4色では 出さない
+const NAZO_KEY = 'nsg_nazonazo';
+const nazo = { cur: null, flip: false, seen: null, next: 0, t0: 0, btn: null, drawn: 0 };   // btn：札の 当たり [[x0,y0,x1,y1] 左, 右]。drawn：描いた 数（テスト用）
+function nazoStep(hx, by, u, now) {
+  const n = nazo, N = window.NISHIO_NAZONAZO, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!N || !still || gbOn || rp.x === null || roll.idle > N.SHOW || mapCovered()) { n.cur = null; n.btn = null; return; }
+  if (!n.cur) {
+    if (roll.idle < N.STILL || !howtoEl.hidden || sightBusy() || now < riceBub.until || gochiso.cur || tsun.cur) return;
+    if (!n.next) n.next = now + N.FIRST;   // はじめは 40秒 あそんでから
+    if (now < n.next) return;
+    if (!n.seen) { try { n.seen = JSON.parse(localStorage.getItem(NAZO_KEY)) || []; } catch (e) { n.seen = []; } }
+    const r = N.pick({ city: here.city, town: here.town }, n.seen);
+    if (!r) { n.next = now + 10000; return; }
+    n.cur = r.item; n.flip = r.flip; n.t0 = now; n.seen = r.seen;
+    try { localStorage.setItem(NAZO_KEY, JSON.stringify(r.seen)); } catch (e) { /* noop */ }
+    riceSay(r.item.q, Math.max(3000, (N.SHOW - roll.idle) * 1000));
+    if (G.track) G.track('kome_nazonazo', { id: r.item.id, step: 'ask' });
+  }
+  const dpr = Math.min(window.devicePixelRatio || 1, 3), fz = Math.round(FLOAT_PX * dpr * 0.9), pad = Math.round(fz * 0.5), bh = Math.round(fz * 1.9), y = Math.round(by + 19 * u);
+  const labels = n.flip ? [n.cur.b, n.cur.a] : [n.cur.a, n.cur.b];
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (now - n.t0) / 300);
+  ctx.font = `bold ${fz}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const bw = Math.round(Math.max(...labels.map(t => ctx.measureText(t).width)) + pad * 2), gap = Math.round(fz * 0.6);
+  n.btn = [];
+  labels.forEach((t, i) => {
+    const x = Math.round(hx + (i ? gap / 2 : -gap / 2 - bw)), bob = calmMotion ? 0 : Math.round(Math.sin(now / 400 + i * 2) * fz * 0.08);
+    n.btn.push([x, y, x + bw, y + bh]);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y + bob, bw, bh, Math.round(bh * 0.3)) : ctx.rect(x, y + bob, bw, bh);
+    ctx.fillStyle = '#fffdf3'; ctx.fill(); ctx.lineWidth = Math.max(2, Math.round(dpr * 1.5)); ctx.strokeStyle = '#2a2420'; ctx.stroke();
+    ctx.fillStyle = '#2a2420'; ctx.fillText(t, x + bw / 2, y + bob + bh / 2 + 1);
+  });
+  ctx.restore();
+  n.drawn++; dirty = true;
+}
+function nazoTap(x, y, now) {   // 札に 当たった：答えを うけとれたら true
+  const n = nazo, N = window.NISHIO_NAZONAZO;
+  if (!N || !n.cur || !n.btn) return false;
+  const side = n.btn.findIndex(b => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]);
+  if (side < 0) return false;
+  const ok = N.judge(n.flip, side), d = n.cur;
+  n.cur = null; n.btn = null; n.next = now + N.GAP[0] + Math.random() * N.GAP[1];
+  roll.idle = 0;   // 答えたあとは ねむらない
+  if (ok) { roll.hv = 2; roll.h = 0.001; }   // あたり：ぴょん
+  riceSay(ok ? d.yes : d.no, 3600, ok ? 'happy' : '');
+  if (G.track) G.track('kome_nazonazo', { id: d.id, step: ok ? 'yes' : 'no' });
+  return true;
+}
 // お米つぶの かげえ（kage.js）：じっと 止まって いると、足もとの 影の となりに、いる 町と 月に 合った 名物の 影が すうっと のびる。7秒ごとに つぎの 影。動くと すっと 消える。
 // 影は drawNakama を 小さな 絵に 描いて 黒く ぬり、ひらたく のばして 貼る（絵は 1つずつ しまっておく）。ゲームボーイの4色・夜（めぐりの 時間）・ねむって いる間は 出さない
 const kage = { cur: null, last: '', still0: 0, t0: 0, chk: 0, said: false, drawn: 0, pics: {} };   // drawn：描いた 数（テスト用）
@@ -7440,6 +7490,7 @@ function frame(now) {
       kiriStep(hx, by, u, now);   // あさの 川・池の そばでは 川霧が たちこめる（kiri.js）
       meguriStep(hx, by, u, now);   // 夜は 名物が お米の まわりを めぐる（meguri.js）
       tsunStep(hx, by, u, now);   // お米を つんつんすると 名物が 飛び出す（tsun.js）
+      nazoStep(hx, by, u, now);   // 止まって じっと すると 西尾の なぞなぞ（答えの 札を タップ。nazonazo.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に
@@ -10213,6 +10264,7 @@ cv.addEventListener('click', e => {
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
   const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
+  if (G.demo && rp.x !== null && !driving && howtoEl.hidden && nazoTap(x, y, performance.now())) return;   // なぞなぞの 札を タップ（nazonazo.js）
   if (G.demo && rp.x !== null && !driving && howtoEl.hidden && Math.hypot(x - (cv.width / 2 + heroScr.x), y - (fieldCy + heroScr.y)) < T * 0.8 && tsunTap(performance.now())) return;   // お米を つんつん（tsun.js）
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }

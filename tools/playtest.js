@@ -769,6 +769,12 @@ async function walkTo(page, id) {
     const S = P.riceStreak, st = typeof S === 'function' ? [S(0.38, 0), S(0, 0), S(0.38, 0.99)].map(v => +v.toFixed(2)) : null;
     return { cool, shade: n, st, ok: cool < 16 && n > 50 && !!st && st[0] > 0.9 && st[1] < 0.01 && st[2] < 0.1 };
   });
+  // 主人公の 名前は「あいちのかおりちゃん」（運営者の声 2026-10-29）：おはなしの 名前の 札・はじめの あいさつ
+  R.checks.kaoriName = (() => {
+    const kt = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'kometalk.js'), 'utf8'), gm = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'game.js'), 'utf8');
+    const tag = /class="kt-name">あいちのかおりちゃん</.test(kt), hello = /はじめまして。[^']*あいちのかおりちゃん/.test(gm);
+    return { tag, hello, ok: tag && hello };
+  })();
   R.checks.smoothRice = await page.evaluate(() => {
     const P = nishioPixel;
     if (!P.riceLast || !P.drawRice) return { ok: false, why: 'no-api' };
@@ -3529,6 +3535,7 @@ async function walkTo(page, id) {
   need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.riceAichi && c.riceAichi.ok, `お米が あいちのかおりの つぶに なって いない（影が 青い・縦すじが ない。${JSON.stringify(c.riceAichi)}）`);
+  need(c.kaoriName && c.kaoriName.ok, `主人公の 名前が「あいちのかおりちゃん」に なって いない（${JSON.stringify(c.kaoriName)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
   need(c.mileCollapse && c.mileCollapse.ok, `歩いた道の 節目：前の 節目の 知らせを 待ちの 列から 取りのぞけない（文面の 頭が ちがう）（${JSON.stringify(c.mileCollapse)}）`);
   need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);

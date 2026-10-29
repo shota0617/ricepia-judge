@@ -13,8 +13,8 @@
     if (box) return;
     box = document.createElement('div');
     box.className = 'kome-talk'; box.id = 'komeTalk'; box.hidden = true;
-    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'お米つぶの おはなし');
-    box.innerHTML = '<div class="dq"><canvas width="48" height="40" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">お米つぶ</b>'
+    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'あいちのかおりちゃんの おはなし');
+    box.innerHTML = '<div class="dq"><canvas width="48" height="40" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">あいちのかおりちゃん</b>'
       + '<p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div><button type="button" class="kt-next">▼ つぎへ</button></div>'
       + '<button type="button" class="kt-x" aria-label="おはなしを とじる">✕</button></div>';
     document.body.append(box);

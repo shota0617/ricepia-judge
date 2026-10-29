@@ -125,7 +125,7 @@
   .farmerVerdict small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
   #farmerSay small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
   /* 上の 丸い 窓：素朴な キャラクターが 運転している（毎コマ 描く） */
-  #badge { position: fixed; left: 50%; top: max(6px, env(safe-area-inset-top)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 2; }
+  #badge { position: fixed; left: 50%; top: max(6px, env(safe-area-inset-top)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; }
   #badgeCv { width: 76px; height: 76px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 10px rgba(0,0,0,.28); }
   body.touch #badge { top: calc(max(8px, env(safe-area-inset-top)) + 46px); }   /* スマホ：上の ボタンの 下 */
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
@@ -134,7 +134,7 @@
   #rotateHint { display: none; }
   @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
   /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
-  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; } #badge { top: 140px; } #badgeCv { width: 64px; height: 64px; } }
+  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; } #badge, body.touch #badge { top: 168px; } #badgeCv { width: 64px; height: 64px; } }
   @media (max-width: 640px) and (orientation: portrait) {
     body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }
@@ -7960,7 +7960,7 @@ const BADGE = (() => {
     for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2; g.beginPath(); g.arc(x + Math.cos(a) * r, y + Math.sin(a) * r * 1.08, r * 0.17, 0, 7); g.fill(); }
     g.beginPath(); g.ellipse(x, y, r, r * 1.08, 0, 0, 7); g.fill();
   }
-  function draw(dt) {
+  function draw(dt) {                            // 窓は z-index なし：あとに 書いた メニュー・操作の表・おわりの画面（.sheet）が 上に 重なる
     if (!S.started) return;
     dt = Math.min(dt, 0.1); t += dt;
     const working = S.rotDown && S.rotPos < 0.1 && Math.abs(S.v) > 0.05, mv = Math.min(1, Math.abs(S.v) / 1.2);

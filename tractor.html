@@ -3488,7 +3488,7 @@ const FX = (() => {
       col.set(r < 0.08 ? [0.30 * t, 0.42 * t, 0.16 * t] : r < 0.14 ? [0.62 * t, 0.55 * t, 0.36 * t] : SOIL.map(v => v * t), i * 3);
       size[i] = (0.05 + Math.random() * 0.07) * Math.max(0.7, Math.min(1.8, (S.pitch || 9) / 9)); max[i] = 0.7 + Math.random() * 0.5;   // 速く走るほど大きな土くれ
     }
-    else if (k === 1) { col.set([0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }
+    else if (k === 1) { col.set(TOD === 'yu' ? [0.98 * t, 0.7 * t, 0.42 * t] : TOD === 'asa' ? [0.95 * t, 0.8 * t, 0.6 * t] : [0.62 * t, 0.55 * t, 0.45 * t], i * 3); size[i] = 0.5 + Math.random() * 0.6; max[i] = 1.8 + Math.random() * 1.5; }   // 夕方は 金色・朝は あわい だいだい
     else if (k === 2) { col.set([0.55 * t, 0.50 * t, 0.42 * t], i * 3); size[i] = 0.025 + Math.random() * 0.035; max[i] = 0.5 + Math.random() * 0.4; }
     else { col.set((c || EXH.col).map(v => v * t), i * 3); size[i] = 0.2 + Math.random() * 0.12; max[i] = 1.8 + Math.random() * 1.0; }   // c：湯気など 白い煙
     if (c && k !== 3) col.set(c.map(v => v * t), i * 3);   // c：草の きれはし など 色を かえる
@@ -3562,7 +3562,7 @@ function emitTilling(dt) {
     const back = -(0.6 + Math.random() * 1.2), up = 0.6 + Math.random() * 1.6, side = (Math.random() - 0.5) * 0.6;
     const vx = side * c + back * s + Math.sin(S.yaw) * S.v * 0.8, vz = -side * s + back * c + Math.cos(S.yaw) * S.v * 0.8;
     FX.emit(x, TILL_Y + 0.15, z, vx, up, vz, SHIRO ? 2 : 0);
-    if (!SHIRO && !RAIN && Math.random() < (season === 'aki' ? 0.05 : 0.12)) FX.emit(x, 0.35, z, vx * 0.3, 0.3, vz * 0.3, 1);   // 雨でぬれた土は ほこりが立たない
+    if (!SHIRO && !RAIN && Math.random() < (season === 'aki' ? 0.05 : 0.12) * (TOD === 'asa' || TOD === 'yu' ? 1.8 : 1)) FX.emit(x, 0.35, z, vx * 0.3, 0.3, vz * 0.3, 1);   // 朝・夕方は 低い 日に 光って よく 見える   // 雨でぬれた土は ほこりが立たない
   }
   // 冷えた朝は、掘り起こした下の土のほうが地表や空気よりあたたかく、耕したあとから うすい湯気が立つ（日がのぼると消える）
   if (TOD === 'asa' && !SHIRO) {
@@ -8623,6 +8623,10 @@ const BADGE = (() => {
   const cv = $('badgeCv'), g = cv.getContext('2d'), stEl = $('badgeSt'), W = 152, C = W / 2;
   let seed = 71; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
   let t = 0, lean = 0, wheel = 0, look = 0, blinkT = 2, label = '', peekT = 0, peekX = 0, peekZ = 0;
+  // 表情：目の あき（1 ふつう）・にこにこ目・まゆの 上げ・まゆの かたむき（＋ こまり）・口の あき・口の 曲がり（＋ 笑う）・ほっぺ・あせ。
+  // いまの 気もちから めあてを きめて、なめらかに 近づける。wowT：びっくり（生きもの・畦に ぶつかった）→ そのあと joyT：うれしい
+  const F = { eye: 1, smile: 0, brow: 0, tilt: 0, open: 0, curve: 0.5, blush: 0.5, sweat: 0 }, Fw = { ...F };
+  let wowT = 0, joyT = 0, idleT = 0, lastLevee = 0, notes = [];
   const SKY = { asa: ['#ffe7c4', '#cfe5f4'], hiru: ['#a9d8f5', '#e6f4fd'], yu: ['#f4b47c', '#fde3c2'], yoru: ['#25304a', '#46557a'] }[TOD];
   const FIELD = SHIRO ? '#8fa3a8' : season === 'aki' ? '#b59a62' : '#8f7a52';
   function fluff(x, y, r, col) {                  // ふわふわの 毛：ふちに 小さな 丸を ならべる
@@ -8644,6 +8648,24 @@ const BADGE = (() => {
     }
     look += (lookTo - look) * Math.min(1, dt * 3);
     if ((blinkT -= dt) < 0) blinkT = 2.4 + R() * 3.2;
+    // 気もち → 表情の めあて
+    if (SCORE.st.levee > lastLevee) { lastLevee = SCORE.st.levee; wowT = 0.8; joyT = 0; }   // 畦に ぶつかった：びくっ（そのあと こまり）
+    wowT = Math.max(0, wowT - dt); joyT = Math.max(0, joyT - dt);
+    idleT = idle && !SAY.talking ? idleT + dt : 0;
+    const stuck = !S.done && (S.stuck || HAMARU.rescuing), sleepy = TOD === 'yoru' && idleT > 12, hum = idleT > 4 && !sleepy;
+    const glare = (TOD === 'asa' || TOD === 'yu') && Math.cos(S.yaw - (TOD === 'asa' ? Math.PI / 2 : -Math.PI / 2)) > 0.6;   // 朝・夕方の 低い 日に 向かって 走る：まぶしい
+    Object.assign(Fw, { eye: 1, smile: 0, brow: 0, tilt: 0, open: 0, curve: 0.5, blush: 0.5, sweat: 0 });
+    if (S.done) Object.assign(Fw, { smile: 1, open: 0.7, curve: 1, blush: 1 });                     // おしまい：にっこにこ
+    else if (wowT > 0) Object.assign(Fw, { eye: 1.45, brow: 1, open: 0.8, curve: 0, blush: 0.6 });   // びっくり：目が まるく 口が「お」
+    else if (stuck || sleep || SCORE.st.leveeT > 0) Object.assign(Fw, { eye: 1.05, brow: 0.5, tilt: 1, curve: -0.6, sweat: 1, blush: 0.3 });   // こまった：まゆが ハの字・あせ
+    else if (joyT > 0) Object.assign(Fw, { smile: 1, open: 0.5, curve: 1, blush: 0.9 });             // うれしい（生きもの・刈れた）
+    else if (sleepy) Object.assign(Fw, { eye: 0.3, curve: 0.3, blush: 0.4 });                         // 夜：うとうと
+    else if (glare) Object.assign(Fw, { eye: 0.45, brow: -0.3, tilt: -0.3, curve: 0.3 });            // まぶしい：目を ほそく
+    else if (working) Object.assign(Fw, { eye: 0.9, brow: -0.4, tilt: -0.5, curve: 0.25 });          // 耕している：きりっと
+    else if (hum) Object.assign(Fw, { smile: 0.8, curve: 0.8, blush: 0.7 });                          // のんびり：はなうた
+    for (const k in F) F[k] += (Fw[k] - F[k]) * Math.min(1, dt * 6);
+    if (hum && R() < dt * 0.9) notes.push({ x: 26 + R() * 6, y: -10, t: 0 });                        // ♪ が ふわっと 出る
+    notes = notes.filter(n => (n.t += dt) < 2.2);
     const bob = (working ? Math.sin(t * 15) * 0.7 : Math.sin(t * 2.1) * 1.3) + Math.sin(t * 8.7) * mv * 1.4;
     // 空と 遠くの 田んぼ
     let gr = g.createLinearGradient(0, 0, 0, W); gr.addColorStop(0, SKY[0]); gr.addColorStop(0.62, SKY[1]); gr.addColorStop(0.62, FIELD); gr.addColorStop(1, FIELD);
@@ -8653,17 +8675,41 @@ const BADGE = (() => {
     fluff(0, 10, 40, TOD === 'yoru' ? '#bfae96' : '#e8d5ba');
     const fx = look * 5;
     g.fillStyle = TOD === 'yoru' ? '#d8c8b4' : '#f8eadb'; g.beginPath(); g.ellipse(fx, 4, 27, 22, 0, 0, 7); g.fill();   // 顔
-    g.fillStyle = 'rgba(240,130,120,.5)';                                                                                // ほっぺ
-    for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(fx + sx * 16, 11, 5.5, 3.8, 0, 0, 7); g.fill(); }
+    g.fillStyle = `rgba(240,130,120,${(0.25 + 0.45 * F.blush).toFixed(3)})`;                                         // ほっぺ（うれしいと 赤く）
+    for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(fx + sx * 16, 11, 5.5 + F.blush, 3.8 + F.blush * 0.6, 0, 0, 7); g.fill(); }
     g.strokeStyle = '#2a211a'; g.fillStyle = '#2a211a'; g.lineWidth = 2; g.lineCap = 'round';
     const ex = fx + look * 2.5;
-    for (const sx of [-1, 1]) {                    // 目：ふだんは 点、まばたきと ひとやすみは 線
-      if (blinkT < 0.13 || sleep) { g.beginPath(); g.arc(ex + sx * 9, 2, 3, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
-      else if (S.done) { g.beginPath(); g.arc(ex + sx * 9, 4, 3, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }   // にっこり
-      else { g.beginPath(); g.arc(ex + sx * 9, 2, 3.4, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + sx * 9 + 1.1, 0.8, 1.1, 0, 7); g.fill(); g.fillStyle = '#2a211a'; }
+    for (const sx of [-1, 1]) {                    // 目：ふだんは 点。まばたき・ひとやすみ・にこにこは 線、びっくりは まるく 大きく
+      const x = ex + sx * 9, shut = blinkT < 0.13 || (sleep && !stuck);
+      if (shut) { g.beginPath(); g.arc(x, 2, 3, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
+      else if (F.smile > 0.5) { g.beginPath(); g.arc(x, 4, 3.2, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }   // にっこり
+      else {
+        const h = Math.max(0.35, 3.4 * F.eye), w = 3.4 * Math.min(1.25, Math.max(1, F.eye));
+        g.beginPath(); g.ellipse(x, 2, w, h, 0, 0, 7); g.fill();
+        if (h > 1.6) { g.fillStyle = '#fff'; g.beginPath(); g.arc(x + 1.1, 2 - h * 0.35, 1.1 * Math.min(1.3, F.eye), 0, 7); g.fill(); g.fillStyle = '#2a211a'; }
+      }
+      // まゆ：上げると びっくり、内がわを 上げると こまり、内がわを 下げると きりっ
+      const by = -6 - F.brow * 3.5, inner = F.tilt * 2.4;
+      g.lineWidth = 1.8; g.beginPath(); g.moveTo(x - sx * 3.6, by - inner); g.lineTo(x + sx * 3.6, by + inner * 0.3); g.stroke(); g.lineWidth = 2;
     }
     if (SAY.talking && Math.sin(t * 16) > -0.2) { g.beginPath(); g.ellipse(fx, 10.5, 3.4, 2.6 + Math.sin(t * 16), 0, 0, 7); g.fill(); }   // 話している 口
-    else { g.beginPath(); g.arc(fx, 9, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke(); }   // 口
+    else if (F.open > 0.3) {                         // あいた 口（びっくりは まるく、うれしいは 下が まるい）
+      g.beginPath(); if (F.curve > 0.6) { g.arc(fx, 8.5, 4.6, 0, Math.PI); g.closePath(); } else g.ellipse(fx, 10.5, 2.6, 2 + F.open * 1.8, 0, 0, 7);
+      g.fill(); if (F.curve > 0.6) { g.fillStyle = '#e88b84'; g.beginPath(); g.ellipse(fx, 11.4, 2.4, 1.3, 0, 0, 7); g.fill(); g.fillStyle = '#2a211a'; }
+    } else { g.beginPath(); g.moveTo(fx - 4.2, 9); g.quadraticCurveTo(fx, 9 + F.curve * 5, fx + 4.2, 9); g.stroke(); }   // 口：笑うと 下へ・こまると 上へ
+    if (F.sweat > 0.2) {                             // あせ（こまった とき）
+      g.fillStyle = `rgba(120,180,235,${F.sweat.toFixed(3)})`; const sx0 = fx + 22, sy0 = -6 + (t * 6 % 6);
+      g.beginPath(); g.moveTo(sx0, sy0 - 5); g.quadraticCurveTo(sx0 + 3.6, sy0, sx0, sy0 + 3); g.quadraticCurveTo(sx0 - 3.6, sy0, sx0, sy0 - 5); g.fill(); g.fillStyle = '#2a211a';
+    }
+    if (S.done || joyT > 0) for (let k = 0; k < 3; k++) {   // うれしい きらきら
+      const a = t * 2 + k * 2.1, r = 1.6 + Math.sin(t * 6 + k) * 0.8, sx1 = fx + Math.cos(a) * 34, sy1 = -14 + Math.sin(a) * 10;
+      g.fillStyle = '#f4c542'; g.beginPath(); for (let j = 0; j < 8; j++) { const rr = j % 2 ? r * 0.4 : r * 2.2, aa = j * Math.PI / 4; g.lineTo(sx1 + Math.cos(aa) * rr, sy1 + Math.sin(aa) * rr); } g.fill(); g.fillStyle = '#2a211a';
+    }
+    for (const n of notes) {                         // はなうたの ♪
+      g.globalAlpha = Math.max(0, 1 - n.t / 2.2); g.font = 'bold 13px sans-serif'; g.fillStyle = '#6a8f4e';
+      g.fillText('♪', n.x + Math.sin(n.t * 4) * 3, n.y - n.t * 14); g.globalAlpha = 1; g.fillStyle = '#2a211a';
+    }
+    if (sleepy && !stuck) { g.font = 'bold 11px sans-serif'; g.fillStyle = '#9bb0d8'; g.fillText('z', 27, -16 - (t * 5 % 8)); g.fillText('z', 33, -26 - (t * 5 % 8)); g.fillStyle = '#2a211a'; }
     // 麦わら帽子
     g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(0, -30, 38, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.ellipse(0, -38, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(-20, -38, 40, 6);
@@ -8685,8 +8731,8 @@ const BADGE = (() => {
     const l = S.done ? 'おつかれさま' : sleep ? 'ひとやすみ' : INTRO.on && Math.abs(S.v) > 0.05 ? INTRO.label : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
     if (l !== label) { label = l; stEl.textContent = l; }
   }
-  function peek(x, z, sec = 3) { peekX = x; peekZ = z; peekT = sec; }
-  return { draw, peek, get label() { return label; } };
+  function peek(x, z, sec = 3, feel = 'wow') { peekX = x; peekZ = z; peekT = sec; if (feel === 'wow') { wowT = 0.7; joyT = 2.6; } else if (feel === 'joy') joyT = Math.max(joyT, 1.5); }   // 生きもの：びっくり → うれしい
+  return { draw, peek, get label() { return label; }, F, joy: sec => { joyT = Math.max(joyT, sec); } };
 })();
 
 // ---- はじめは 農道わきの 土手の 草かり（スライドモア）：あそびを 始めると、田んぼの 北の 農道の 東よりを 南へ ゆっくり 走り、
@@ -8850,7 +8896,7 @@ const INTRO = (() => {
         if (Math.random() < 0.15) FX.emit(GX[k], GY[k] + 0.15, GZ[k], bx * 0.5, 0.4, bz * 0.5, 1);
       }
       if (n) { grass.instanceMatrix.needsUpdate = true; grass.instanceColor.needsUpdate = true; }
-      if (n && (peekT -= dt) <= 0) { peekT = 6; BADGE.peek((A.x + B.x) / 2, (A.z + B.z) / 2, 2.2); }   // 右の 草刈機を 見る
+      if (n && (peekT -= dt) <= 0) { peekT = 6; BADGE.peek((A.x + B.x) / 2, (A.z + B.z) / 2, 2.2, 'joy'); }   // 右の 草刈機を 見る
     }
     if (S.z < Z1) {                                // 田んぼの 北の はしまで 来た：おしまい。ふわっと 白く なって 付けかえる
       ending = true; key.fwd = 0;
@@ -8871,7 +8917,7 @@ const INTRO = (() => {
       const n = Math.random() < dt * 40 ? 2 : 0;
       for (let j = 0; j < n; j++) AKI ? FX.emit(A.x, A.y + 0.25, A.z + 0.1, (Math.random() - 0.5) * 0.6, 0.8 + Math.random() * 0.8, -0.6 - Math.random() * 0.8, 0)   // 秋：土は 田んぼがわへ
         : FX.emit(A.x - 0.2, A.y + 0.3, A.z + 0.25, (Math.random() - 0.5) * 0.5, 0.6 + Math.random() * 0.9, 0.5 + Math.random() * 0.6, 0);   // 畦がわへ もって いって ぬる
-      if ((peekT -= dt) <= 0) { peekT = 6; rig.localToWorld(B.set(-1.5, 0.2, -1.25)); BADGE.peek(B.x, B.z, 2.2); }   // 右うしろの 円ばんを 見る
+      if ((peekT -= dt) <= 0) { peekT = 6; rig.localToWorld(B.set(-1.5, 0.2, -1.25)); BADGE.peek(B.x, B.z, 2.2, 'joy'); }   // 右うしろの 円ばんを 見る
     } else if (key.fwd && (stuckT += dt) > 6) A.x = XB;   // はまって すすめない：おしまいに する
     if (A.x >= XB) {
       ending = true; key.fwd = 0; reveal(groove, XB + 1); reveal(coat, XB + 1);

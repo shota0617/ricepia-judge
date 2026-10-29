@@ -159,7 +159,7 @@ let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
-const save = () => { if (!store.set(stateKey(), S)) toast('きろくを うまく 保存できませんでした。スマホの 空きが 少ないのかも。少し 空けてから、もう一度 ためしてね。'); };
+const save = () => { if (!store.set(stateKey(), S)) toast('このブラウザに きろくを 保存できませんでした。スマホの 空きや、ブラウザの 設定（プライベート モード など）を 見てみてね。'); };
 
 /* ---------- 地図 ---------- */
 if (!window.L) {
@@ -817,13 +817,13 @@ function addTrail(a, b, critters) {
 
 // きょうの100歩たんけん（ポケモンの「歩数の決まった場所で、めずらしいものを探す」）：その日 はじめて歩きだしたら始まり、100歩（1歩＝1マス 8m）のうちに
 // はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）と、自己ベストなら お祝い。1日1回（記録は モードごと）
-const H100 = { steps: 100, cap: 30, win: 5 };   // win：さんぽ仲間（ライバル）より多いと
+const H100 = { steps: 100, cap: 30, win: 5 };   // win：前の 自己ベストを こえると（さんぽ仲間と くらべない。運営者の声「競わない設計」2026-10-28）
 function hundred(meters, fresh) {   // meters：この1回で動いた距離。転がすと 1マスより小さい動きが何度も来るので、ためてから歩数にする
   if (driving || store.get('nsg_first_day', '') === ymd()) return;   // 遊びはじめた日は しない（はじめの日は ようこそ・はじめの1枚・週の知らせで いっぱいなので、次の日から）
   const day = dayState();
   let h = day.h100;
   if (h && h.done) return;
-  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0, rival: h100Rival(ymd()) }; toastAfter(`👣 きょうの100歩たんけん！ 100歩のうちに、はじめての道を いくつ歩けるかな（🏃 ${RIVAL}は きょう ${h.rival}マス${S.h100best ? `・自己ベスト ${S.h100best}マス` : ''}）`); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
+  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter('👣 100歩たんけん：はじめての道を さがそう'); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
   const rest = H100.steps * TRAIL_M - (h.m || 0), part = meters > rest ? Math.max(0, rest) / meters : 1;   // 100歩（800m）を またぐ1回は、800m までの分だけ
   h.m = (h.m || 0) + meters;
   const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
@@ -834,13 +834,13 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100（はじめての道 ${h.fresh}）`); save(); }
   if (h.steps < H100.steps) return;
   h.done = true;
-  const win = !!h.rival && h.fresh > h.rival, pts = Math.min(H100.cap, h.fresh) + (win ? H100.win : 0), best = h.fresh > (S.h100best || 0);   // さんぽ仲間に勝つと +5
+  const best = h.fresh > (S.h100best || 0), win = best && (S.h100best || 0) > 0, pts = Math.min(H100.cap, h.fresh) + (win ? H100.win : 0);   // 前の 自己ベストを こえると +5（ほかの 人とも、さんぽ仲間とも くらべない）
   if (best) S.h100best = h.fresh;
   weekStat().h100 = (weekStat().h100 || 0) + 1;   // 先週のさんぽ に「100歩たんけん ○回」
   if (pts) { gainPoints(pts); S.log.unshift({ type: 'h100', t: Date.now(), pts, icon: '👣', name: `100歩たんけん：はじめての道 ${h.fresh}マス` }); }
   save(); badgesSoon();   // たんけん名人
   toastAfter(`🏁 100歩たんけん おわり！ はじめての道 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}${best && h.fresh ? '　🎉 自己ベスト！' : S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`);
-  if (h.rival) toastAfter(win ? `🏃 ${RIVAL}「まけた！ ${h.fresh}マスは すごいじゃん。おれは ${h.rival}マスだったよ」` : `🏃 ${RIVAL}「おれは ${h.rival}マスだったよ。あしたは 知らん道を ねらってみりん」`);
+  toastAfter(h.fresh ? `🏃 ${RIVAL}「はじめての道 ${h.fresh}マス、いい たんけんだったね。あしたも 知らん道を 歩こまい」` : `🏃 ${RIVAL}「きょうは なじみの道だったね。あしたは 知らん道も 歩いてみりん」`);
   track('h100', { fresh: h.fresh, best, win, mode: demo ? 'play' : 'walk' });
 }
 
@@ -858,8 +858,8 @@ function trailMiles(after) {   // 歩いた道が after マスになる前に呼
     S.log.unshift({ type: 'trailmile', t: Date.now(), pts, icon: '👣', name: `歩いた道 ${fmtM(m)} の節目` });
     gainPoints(pts);
     const q = toastAfter.q || [];   // まだ出ていない前の節目の知らせは、新しい節目に まとめる（おくれて「1.0km に！」と出ないように。ポイントと記録は そのまま）
-    for (let i = q.length - 1; i >= 0; i--) if (q[i].startsWith('👣 これまでに歩いた道が')) q.splice(i, 1);   // 待っている処理が 同じ列を見ているので、その場で取りのぞく
-    toastAfter(`👣 これまでに歩いた道が ${fmtM(m)} に！ +${pts}pt（つぎの節目は ${fmtM(trailMile(k + 1))}）`);
+    for (let i = q.length - 1; i >= 0; i--) if (q[i].startsWith('👣 歩いた道 ')) q.splice(i, 1);   // 待っている処理が 同じ列を見ているので、その場で取りのぞく
+    toastAfter(`👣 歩いた道 ${fmtM(m)}！ +${pts}pt`);
     track('trail_mile', { m });
   }
 }
@@ -1203,7 +1203,7 @@ function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（�
   if (warp || !(m >= MZ_SPEED_MIN_M) || !(sec > 3)) return '';
   const v = Math.round(m / sec * 10) / 10, best = store.get('nsg_mz_speed', 0);
   if (v > best) { store.set('nsg_mz_speed', v); track('maze_speed_best', { v, prev: best }); return best ? `🏃 はやさ ベスト こえたじゃん！ 1秒に ${v}m（前 ${best}m）` : `🏃 はやさ 1秒に ${v}m（はじめての ベスト）`; }
-  return `🏃 はやさ 1秒に ${v}m（ベスト ${best}m まで あと ${Math.round((best - v) * 10) / 10}m）`;
+  return `🏃 はやさ 1秒に ${v}m`;   // とどかない ときは 足りない 数を 出さない（あおらない・文字を 少なく。運営者の声「競わない設計」「文字は 少なく」2026-10-29）
 }
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 function mazeGoal(id, name, lines) {
@@ -1226,6 +1226,7 @@ function mazeGoal(id, name, lines) {
   }
   const sp = mzSpeed(gl.m, gl.sec, gl.warp);
   if (sp) lines.push(sp);
+  lines.push('🍵 おつかれさま。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
   friendVs(gl.sec, st);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
@@ -1621,6 +1622,10 @@ new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(fi
    ・少しだけ自分でも選べる：みちしるべの札をひらくと、ほかの候補（2つまで）に変えられる。選ばなければ、すすめのとおりに進む
    報酬はきびしめ：すすめられた所に着いたら +5pt（1日5回まで）。人と話す +10pt は、はじめての人だけ */
 const GUIDE_PTS = 5, GUIDE_DAILY = 5, GUIDE_RANGE = { walk: 2000, play: 3000 };
+// 基本 5分で 終わる（10/29 店主「忙しい人向けに 5分で 終わるように」→「5分コースではなく 基本 5分で 終わる」）：めいろの 行き先は
+// まっすぐ 350〜900m（めいろの 道のり 1〜2km ＝ ふつうに 転がして 5分 ほど）。のこり 時間は 見せない（あせらせない）。近くに なければ いつもの 広さで えらぶ。
+// ★の 時間（道のりで きまる）・ポイントは かえない
+const MAZE_NEAR_MIN = 350, MAZE_NEAR = 900;
 const WEEKDAY = d => '日月火水木金土'[d.getDay()];
 const firstClause = t => String(t || '').split(/[。、]/)[0];
 // 着いたとみなす距離（checkGuide と decideGuide で同じものを使う）：人は話しかけられる距離、名所はチェックインできる距離
@@ -1636,12 +1641,18 @@ const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら�
 const fixOk = () => !!me && !driving && (demo || me.acc <= CFG.maxAccuracy);   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by, alts }（alts：ほかの候補。札から選べる）
 const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing());   // 地図の めいろで 遊んでいる（ドット絵の 地図を 出している 間だけ。ふつうの 地図に 切りかえたら 偽）
-function decideGuide(from) {
+function decideGuide(from) {   // めいろは まず 近く（5分）、なければ いつもの 広さ
+  const near = demo && mazeNow(), g = decideGuide0(from, false);
+  if (g) return near ? { ...g, near: true } : g;   // near：5分の 近さで えらんだ しるし（遠く なったら えらびなおす）
+  return near ? decideGuide0(from, true) : null;
+}
+function decideGuide0(from, wide) {
   if (!me) return null;
-  const now = new Date(), range = GUIDE_RANGE[demo ? 'play' : 'walk'];
+  const now = new Date(), range = !wide && demo && mazeNow() ? MAZE_NEAR : GUIDE_RANGE[demo ? 'play' : 'walk'];   // めいろは 5分で 着く 近さ
   const recent = new Set(S.guideDone || []);
   // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
-  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5) && d <= range && !recent.has(id); };
+  const five = range === MAZE_NEAR;
+  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
   const far = x => okFor('spot', x.id)(x);
   const by = from ? `${from.name}の話` : 'まわりのようす';
   const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
@@ -2004,13 +2015,21 @@ function setGuide(g) {
 // オフの 人（せってい）には false を かえす＝いままでどおりの 知らせを 出す
 const KT = window.nishioKomeTalk;
 const ktOn = () => !!(KT && KT.on());
-const ktBusy = () => toastBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden;   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+const ktBusy = () => toastBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+  || ['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden);   // きろく・とくてん・せってい を 開いている 間は 地図に もどるまで よける
 function ktAskGuide(lead, mood) {
   if (!ktOn()) return false;
+  let shown = [];   // 出した ボタンの 行き先（番号では なく id で おぼえる＝あとで 行き先が 決め直されても、押した 名前の 所へ）
   return KT.say([...lead, 'つぎは どこへ 行く？'], { mood, key: 'guide', busy: () => ktBusy() || !S.guide,
-    choices: () => { const g = S.guide; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
-    then: i => { if (i > 0) pickAlt(i - 1); if (i >= 0 && S.guide) { toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 }); } } });
+    choices: () => { const g = S.guide; shown = g ? [g, ...(g.alts || [])].map(o => o.id) : []; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
+    then: i => {
+      const id = shown[i], g = S.guide;
+      if (!id || !g) return;
+      if (g.id !== id) { const k = (g.alts || []).findIndex(a => a.id === id); if (k < 0) return; pickAlt(k); }   // 押した 所が もう 候補に ないときは 何も しない
+      toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 });
+    } });
 }
+modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作して を 切りかえたら、前の 遊びかたの 話は やめる
 const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
@@ -2060,7 +2079,7 @@ function checkGuide() {
   // （人のすすめは10kmまで出すので12km、それ以外は すすめる範囲の2倍まで）
   // 地図の めいろでは、すすめる範囲の 1.5倍より 遠い 行き先（めいろの 前に 人に すすめられた 遠くの 人など）は 決め直す
   // （めいろの 道は ゴールから いちど はなれる ことも あるので、すすめる範囲 ちょうどでは 決め直さない。自分で 選んだ 行き先は そのまま）
-  const farLimit = mazeNow() && !g.mine ? GUIDE_RANGE.play * 1.5 : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
+  const farLimit = mazeNow() && !g.mine ? (g.near ? MAZE_NEAR * 1.3 : GUIDE_RANGE.play * 1.5) : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
   if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;
@@ -2068,10 +2087,18 @@ function checkGuide() {
   const next = decideGuide(null);
   setGuide(next);
   if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }], 'smile')) { rivalSay(g, next); return; }
-  // 文字を少なく（ふだん）：次の行き先は下の札に出るので、知らせは「着いた・ポイント・次の名前」だけ
-  toast(simple() ? `${g.byId ? '🎉' : '🧭'} ${g.name}${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.name}` : ''}`
-    : `${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
+  const msg = arriveMsg(g, pts, next, mazeNow());
+  if (msg) toast(msg);
   rivalSay(g, next);
+}
+// 行き先に 着いた ときの 知らせ。文字を少なく（ふだん）：次の行き先は 下の札と「🏁 つぎの ゴール」に 出るので 書かない。
+// めいろでは 着いた 名所も「ゴール！」の 札に 出るので、ポイント だけ（自分で 遊んで 分かった：「🧭 西尾市歴史公園（西尾城跡） +5pt　→ らいすぴあの店員さん（らいすぴあ秀幸（永吉））」が
+// 3行に なって、ゴールの 札・つぎの ゴールの 札と 同じ 名前を くりかえした。運営者の声「文字は 少なく」2026-10-29）
+function arriveMsg(g, pts, next, maze) {
+  const icon = g.byId ? '🎉' : '🧭', p = pts ? ` +${pts}pt` : '';
+  if (!simple()) return `${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${p}${next ? `　→ ${next.why}` : ''}`;
+  if (maze) return p ? icon + p : '';
+  return `${icon} ${g.name}${p}`;
 }
 // さんぽ仲間（ライバル）：行き先（名所・すすめられた人）に3回着くごとに1回、同じくらいの年の さんぽ好きが先に来ていて、次の行き先へ先回りする。
 // その行き先に着くと、また会える（昔のドット絵RPGの、先々で待っているライバルのしくみ）。g.name は着いた所の名前
@@ -2096,8 +2123,9 @@ function rivalSay(g, next) {
   const to = next && (next.kind === 'npc' ? (placeNpcs().find(x => x.id === next.id) || {}).spotName || next.name : next.name);   // 人のときは、その人がいる所
   S.rival = go ? { at: next.id } : null;
   save();
-  if (met) toastAfter(`🏃 ${RIVAL}「おそかったじゃん！ ${g.name}、いい所だら。${go ? `おれは次、${to}へ行くでね` : 'またね'}」`);
-  else if (go) toastAfter(`🏃 ${RIVAL}「${g.name}は もう見たじゃん！ おれは先に${to}へ行っとるでね」`);
+  // きそう 相手では なく、行く先々で 会える さんぽ仲間（運営者の声「競わない設計」2026-10-28：「おそかったじゃん」「もう見たじゃん」で あおらない）
+  if (met) toastAfter(`🏃 ${RIVAL}「また 会えたね！ ${g.name}、いい所だら。${go ? `おれは 次、${to}へ 行ってみるね` : 'またね'}」`);
+  else if (go) toastAfter(`🏃 ${RIVAL}「${g.name}、いい所だね。おれは ${to}へ 行ってみるね。また 会えるかも」`);
 }
 // タップで話の全文と、ほかの行き先（2つまで）。ほかの行き先を押すと、そこへ変える
 $('guide').addEventListener('click', e => {
@@ -2614,7 +2642,8 @@ function toastHold() {
   const t = $('toast');
   if (!t.classList.contains('show')) return;
   if (Date.now() - (toast.at || 0) < 1500 && !toastQ.includes(t.textContent)) toastQ.push(t.textContent);
-  t.classList.remove('show'); clearTimeout(toastTimer);
+  // 窓より 手前に ある ので、0.3秒 かけて うすれる 間 窓の 題名に かぶって 見えた（自分で 遊んで 分かった：「本のできごと」の 題が かくれた）。窓が 開く ときは すっと 消す
+  t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = ''; clearTimeout(toastTimer);
 }
 // 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
 // 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓の 大きさが かわった ときにも 見る
@@ -3477,11 +3506,11 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) load
 /* 楽しく声を送る：チェックインのあとの ひとこと・今週のお題・記者のランクと おたより手帳 */
 const REACTS = [['love', '😍', 'よかった'], ['photo', '📷', '映える'], ['calm', '🍵', 'ほっこり'], ['hard', '🤔', 'わかりにくい'], ['access', '🚧', '行きにくい']];
 // 名所の窓の「みんなの声」（voices.json の reactions。多いじゅんに3つ）
-function reactLine(s) {
-  const c = voice.data && voice.data.reactions && voice.data.reactions[s.id];
+// 数は 出さない（運営者の声「競わない設計」2026-10-28：いいねの 数を 隠せる・なでなでの 回数は 人から 見えない。どんな 声が あるかだけ）
+function reactLine(s, c = voice.data && voice.data.reactions && voice.data.reactions[s.id]) {
   if (!c) return '';
   const top = REACTS.map(([k, e, n]) => [e, n, c[k] | 0]).filter(x => x[2] > 0).sort((a, b) => b[2] - a[2]).slice(0, 3);
-  return top.length ? `<p class="react-line">みんなの声：${top.map(([e, n, k]) => `<span title="${esc(n)}">${e} ${k}</span>`).join(' ')}</p>` : '';
+  return top.length ? `<p class="react-line">みんなの声：${top.map(([e, n]) => `<span>${e} ${esc(n)}</span>`).join(' ')}</p>` : '';
 }
 // 聞くのは、同じ名所は30日に1回、1日に3回まで
 function reactAsk(s) {
@@ -3530,7 +3559,7 @@ async function playSend(text) {
   if (res && res.ok) {
     fbStatsAdd(x => { x.react++; });
     const lv = gainPoints(5); save();
-    toast(`🎮 ありがとう！ +5pt（ゲームを よくするのに 使います）${lv ? ` レベル${lv}！` : ''}`);
+    toast(`🎮 ありがとう！ +5pt${lv ? ` レベル${lv}！` : ''}`);
   } else toast(res && (res.status === 503 || res.status === 404) ? '声は まだ受けつけていません。ごめんなさい。' : '声を送れませんでした。また こんど おねがいします。');
 }
 const playClose = () => reactHide();
@@ -3587,7 +3616,7 @@ $('reactBar').addEventListener('click', async e => {
     store.set('nsg_react', seen);
     fbStatsAdd(x => { x.react++; });
     const lv = gainPoints(5); save();
-    toast(`💬 ひとこと ありがとう！ +5pt（${esc(s.name)}の みんなの声に入ります）${lv ? ` レベル${lv}！` : ''}`);
+    toast(`💬 ありがとう！ +5pt${lv ? ` レベル${lv}！` : ''}`);
     track('feedback_react', { r: b.dataset.react });
     checkBadges();
   } else toast(r && (r.status === 503 || r.status === 404) ? 'ひとこと は まだ受けつけていません。ごめんなさい。' : 'ひとこと を送れませんでした。また こんど おねがいします。');
@@ -3755,7 +3784,7 @@ $('codeCopy').addEventListener('click', async () => {
 });
 $('codeLoad').addEventListener('click', async () => {
   const o = await readCode($('codeBox').value);
-  if (!o) { toast('🔑 あいことばが ちがうようです（さいごまで コピーできているか たしかめてね）'); return; }
+  if (!o) { toast('🔑 あいことばが ちがうみたい（さいごまで コピーできたかな）'); return; }
   if (!confirm(`この端末の いまの記録（${S.points}pt）は、あいことばの記録（${o.s.points}pt・めぐった所 ${Object.keys(o.s.visits || {}).length}か所）に おきかわります。よろしいですか？`)) return;
   store.set(stateKey(), o.s);
   if (o.started && !store.get('nsg_started', null)) store.set('nsg_started', o.started);
@@ -3843,11 +3872,10 @@ function tomorrowItems() {
   const done = S.streak.last === ymd(), d = done ? S.streak.days + 1 : S.streak.last === yesterday() ? S.streak.days + 1 : 1;
   const out = [done ? `名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt` : `きょう名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt。あしたも続けると +${bonus(d + 1)}pt`, '新しい「今日のクエスト」3つ（達成でポイント）', '新しい たからばこ（日によって置き場所が変わる）'];
   if (demo) out.push('閉じている間も るすばん でさんぽ（おかえりのポイントとドット絵）');
-  out.push(`あしたの 100歩たんけん：${RIVAL}は ${h100Rival(tomorrow())}マス（勝つと +${H100.win}pt）`);   // さんぽ仲間の あしたの数は 日で決まるので、前もって見せる
+  out.push(`あしたも 100歩たんけん：はじめての道を さがそう（自己ベストを こえると +${H100.win}pt）`);
   return out;
 }
 function tomorrow() { const d = new Date(); d.setDate(d.getDate() + 1); return ymd(d); }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
-function h100Rival(date) { return 20 + hashStr('h100:' + date) % 41; }   // さんぽ仲間の 100歩たんけん（日で決まる 20〜60マス）
 // きろく：今週のテーマ と おみやげ袋
 function renderBags() {
   const el = $('bagBox');
@@ -3895,7 +3923,7 @@ function renderTomorrow() {
   el.hidden = !store.get('nsg_started', false);
   const items = tomorrowItems();
   el.innerHTML = simple()   // 文字を少なく（ふだん）：絵＋数の札（くわしくは長押しで出る名前）
-    ? `<b>${ART32('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : []), ['stat-feet', `vs${h100Rival(tomorrow())}`, items[items.length - 1]]].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
+    ? `<b>${ART32('calendar', '')} あした</b><div class="chips">${[['stat-fire', `+${tomorrowBonus()}`, items[0]], ['quest', '×3', items[1]], ['stat-chest', '', items[2]], ...(demo ? [['home', '', items[3]]] : []), ['stat-feet', '', items[items.length - 1]]].map(([ic, v, t]) => `<span title="${esc(t)}">${ART32(ic, t)}${v}</span>`).join('')}</div>`
     : `<b>📅 あしたのおたのしみ</b><ul>${items.map(t => `<li>${esc(t)}</li>`).join('')}</ul>`;
 }
 // ホーム画面に追加（Android の Chrome などは追加の画面を出せる。iPhone の Safari は手順を出す）
@@ -4030,13 +4058,13 @@ function begin(isDemo) {
   friendBonus();
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
-  if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ）
-    store.set('nsg_kome_hello', true);   // めいろでは「あそびかた」の 画面を 先に 見てから
+  if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ。めいろでは「あそびかた」の 画面を 先に 見てから）
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
-    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけると、ぼくが 道を すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
+    // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
+    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
     KT.say([{ t: 'はじめまして。ぼく、西尾の お米つぶ だに。', mood: 'happy' }, how, 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。',
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
-    { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', then: () => { if (!chest) ktAskGuide([], 'smile'); } });
+    { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }
   }
   if (isDemo) toast(document.body.classList.contains('px')
@@ -4097,7 +4125,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, arriveMsg, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); }, openTab,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);
@@ -4116,7 +4144,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide,

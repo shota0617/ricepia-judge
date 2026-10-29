@@ -750,6 +750,120 @@ async function walkTo(page, id) {
     const flatGrew = (await page.evaluate(() => nishioPixel.roll.flat)) - rr.f0;   // 丸いお米が描けるのに、古い絵（平らな お米）を重ねて描いていないか
     return { stopS, still, spread: dbg.spread, vmax: dbg.vmax, style: dbg.style, wall: dbg.wall, round: rr.round, flatGrew, ok: stopped && stopS <= 3.5 && still !== false && rr.round && flatGrew === 0 };
   })();
+  // お米に 赤ちゃんの ような かわいさ（運営者の声 2026-10-28）：ふだんの 顔に 目の きらっ・止まって しばらくすると あくび（6秒 すぎ）・もっと たつと すやすや
+  R.checks.babyRice = await page.evaluate(() => {
+    const P = nishioPixel;
+    if (!P.riceFace || !P.moodAt) return { ok: false, why: 'no-api' };
+    const f = P.riceFace(), m = { a: P.moodAt(3), y: P.moodAt(6.3), b: P.moodAt(8), s: P.moodAt(13) };
+    return { ...f, m, ok: f.keys.includes('yawn') && f.shine >= 2 && m.y === 'yawn' && m.s === 'sleepy' && m.a !== 'yawn' && m.b !== 'yawn' };
+  });
+  // なめらかに ころころ（運営者の声 2026-10-28「この キャラクターくらい 滑らかに」）：お米は 画面の 細かさで 描き（絵の1点を 何ピクセルかで）、
+  // ふちは なめらか（半とうめいの ふち）、影は 段でなく 連続（色の 数が 多い）、位置は 整数に 丸めない（0.3 ずらすと 絵が かわる）
+  R.checks.smoothRice = await page.evaluate(() => {
+    const P = nishioPixel;
+    if (!P.riceLast || !P.drawRice) return { ok: false, why: 'no-api' };
+    const c = document.createElement('canvas'); c.width = c.height = 200; const x = c.getContext('2d');
+    const draw = X => { x.clearRect(0, 0, 200, 200); P.drawRice(x, X, 100, 0.4, 0, 'smile', 0, '', 3); return x.getImageData(0, 0, 200, 200).data; };
+    const a = draw(100), L = P.riceLast(), b = draw(100.4);
+    let diff = 0; for (let i = 3; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) > 8) diff++;
+    const ring = [0.5625, 0.2, 0.04].map(u => { x.clearRect(0, 0, 200, 200); P.drawRice(x, 100, 100, 0.4, 0, 'smile', 0, '', u); return P.riceLast().ring; });   // 小さく 描いても（せかいちず・めいろの 落ちる えんしゅつ）形の 外は とうめい（うすい 四角が 出ない。Codex の 指摘）
+    return { P: L.P, S: L.S, soft: L.soft, solid: L.solid, tones: L.tones, diff, ring, ok: L.P === 3 && L.S >= 48 * 3 && L.soft >= 60 && L.tones >= 24 && diff >= 20 && ring.every(v => v === 0) };
+  });
+  // すう すう 息：止まって いる お米は ゆっくり 息を する（足もとは 地面の まま。点より 細かく 描くので 0.5 ピクセルでも 見える）
+  R.checks.riceBreath = await (async () => {
+    const ok0 = await page.evaluate(() => !!(nishioPixel.breathAt && nishioPixel.riceLast));
+    if (!ok0) return { ok: false, why: 'no-api' };
+    const ys = [];   // 歩く地図の お米の 高さ（roll.by。riceLast は ほかの 絵の お米でも かわる ので つかわない）
+    for (let i = 0; i < 14; i++) { const r = await page.evaluate(() => { const R = nishioPixel.roll; return R.kind === 'stop' && R.v < 0.2 && R.h <= 0 && typeof R.by === 'number' ? R.by : null; }); if (r !== null) ys.push(r); await page.waitForTimeout(100); }
+    const rg = ys.length ? Math.max(...ys) - Math.min(...ys) : 0, b = await page.evaluate(() => [nishioPixel.breathAt(0), nishioPixel.breathAt(650)]);
+    return { n: ys.length, rg: +rg.toFixed(2), b, ok: ys.length >= 8 && rg > 0.15 && rg < 4 && Math.abs(b[0]) < 1e-9 && b[1] > 0.01 && b[1] < 0.04 };
+  })();
+  // ねむって いる お米の 頭に ちょうちょが 飛んで きて とまる（文字の ない 素朴な かわいさ）。3秒で とまり、遠くから 来る
+  R.checks.riceBfly = await (async () => {
+    const P0 = await page.evaluate(() => { const P = nishioPixel; if (!P.bflyIn) return null; const a = P.bflyIn(0), b = P.bflyIn(4); return { a: [Math.round(a.dx), Math.round(a.dy)], rest: b.rest, b: [b.dx, b.dy] }; });
+    if (!P0) return { ok: false, why: 'no-api' };
+    let st = null;
+    await page.evaluate(() => nishioPixel.setIdle && nishioPixel.setIdle(13));   // ねむった ところから（ねむるまで 12秒 待たない。rollPut は 1歩 あるいた ことに なり、バッジなどの 知らせが ふえて あとの 確認（kiraFar）が 落ちた ので 使わない）
+    for (let i = 0; i < 40; i++) { st = await page.evaluate(() => ({ ...nishioPixel.bfly, mood: nishioPixel.roll.mood })); if (st.phase === 'rest' || st.calm) break; await page.waitForTimeout(250); }
+    const z0 = await page.evaluate(() => (nishioPixel.zzz ? nishioPixel.zzz.n : -1));
+    const d0 = st.drawn; await page.waitForTimeout(300); const d1 = await page.evaluate(() => nishioPixel.bfly.drawn);
+    const zz = await page.evaluate(() => nishioPixel.zzz || null);   // すやすやの Z も 点より 細かい 位置で なめらかに のぼる
+    // ゲームボーイの4色では 点の まま 整数の 位置に（なめらかに まぜると 4色 いがいの 色が 出る。Codex の 指摘）
+    const gb = await page.evaluate(async () => { const P = nishioPixel; if (!P.setGb) return { smooth: null, at: null }; P.setGb(true); for (let i = 0; i < 3; i++) await new Promise(r => requestAnimationFrame(r)); const b = P.bfly; P.setGb(false); return { smooth: b.smooth, at: b.at }; });
+    const gbOk = st.calm || (gb.smooth === false && !!gb.at && gb.at.every(v => Number.isInteger(v)));
+    const zOk = !!zz && zz.n > z0 && !!zz.at && !zz.at.every(v => Number.isInteger(v));
+    const kindOk = st.calm || st.kind === (st.season === 'tonbo' ? 'tonbo' : 'chocho');   // 秋（季節の 虫が 赤とんぼの ころ）は 赤とんぼが とまる
+    return { ...P0, st, more: d1 - d0, gb, zz, ok: gbOk && zOk && kindOk && (st.calm || (st.phase === 'rest' && d1 > d0 && P0.a[0] > 30 && P0.rest && P0.b[0] === 0 && P0.b[1] === 0)) };
+  })();
+  // おきた ときの「のびー」：ねむって いた お米が おきると 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）。ちょうちょは 飛んで いく
+  R.checks.riceWake = await page.evaluate(async () => {
+    const P = nishioPixel, f = () => new Promise(r => requestAnimationFrame(r));
+    if (!P.riceWake || !P.setIdle) return { ok: false, why: 'no-api' };
+    const w = [P.riceWake(0), P.riceWake(300), P.riceWake(700)].map(v => +v.toFixed(3));
+    P.setIdle(14); await f(); await f(); const t0 = performance.now(); P.setIdle(0); await f(); await f();
+    const wt = P.wakeT, calm = P.bfly.calm; await new Promise(r => setTimeout(r, 200)); const ph = P.bfly.phase;
+    return { w, woke: wt >= t0, ph, calm, ok: calm || (w[0] === 0 && w[1] > 0.08 && w[2] === 0 && wt >= t0 && ph === 'out') };
+  });
+  // ころころ ×10 は 文字を 出さず 大きな きらきら（数は お米の よこの「×N」に 見えて いる。同じ ことを 2か所に 書かない）
+  R.checks.comboTen = await page.evaluate(async () => {
+    const P = nishioPixel, n0 = P.combo.n, b0 = P.combo.best, t0 = performance.now();
+    P.comboBest(1000); P.floatsClear(); P.comboAdd(10 - (n0 % 10));   // ベストを こえない ように（こえると beat が のこり、あとの comboBest が 落ちる）
+    const fl = P.floats().slice(), pop = P.combo.pop;
+    P.comboAdd(-P.combo.n); P.comboBest(b0); P.floatsClear();   // もとに もどす（コンボを おわらせない ので ベストは かわらない）
+    return { fl, popped: pop >= t0, ok: !fl.some(t => /ころころ ×\d+！/.test(t)) && pop >= t0 };
+  });
+  // お米を 描く 重さ：3倍の 画面の 大きさ（u=4）でも 1こまの 時間に 十分 おさまる（なめらかに した ぶん 重く なって、かくつかない ように。Math.hypot・Math.pow を やめ、うすい のこりかげは あらく 描く）
+  R.checks.ricePerf = await page.evaluate(() => {
+    const P = nishioPixel, c = document.createElement('canvas'); c.width = c.height = 400; const x = c.getContext('2d');
+    for (let i = 0; i < 3; i++) P.drawRice(x, 200.3, 200.6, i * 0.2, 0, 'smile', 0, '', 4);   // あたため
+    const t0 = performance.now(); for (let i = 0; i < 20; i++) P.drawRice(x, 200.3, 200.6, i * 0.15, 0, 'smile', 0, '', 4);
+    const ms = (performance.now() - t0) / 20, L = P.riceLast();   // ふつうの お米は あらく しない（のこりかげ だけ）
+    return { ms: +ms.toFixed(2), P: L && L.P, lowQ: L && L.lowQ, ok: ms < 6 && !!L && L.P === 4 && L.lowQ === false };
+  });
+  // ぽちゃん のあとの 水の しずくも 1枚の 絵で 点より 細かい 位置に（1点ずつ カクカク すべって いた）
+  R.checks.dropSmooth = await page.evaluate(async () => {
+    const P = nishioPixel; if (!P.setWet || !P.drop) return { ok: false, why: 'no-api' };
+    const n0 = P.drop.n; P.setWet(1.2); for (let i = 0; i < 4; i++) await new Promise(r => requestAnimationFrame(r));
+    const d = P.drop; P.setWet(0);
+    return { n: d.n - n0, at: d.at, ok: d.n > n0 && !!d.at && !d.at.every(v => Number.isInteger(v)) };
+  });
+  // 知らせが 出て いる ときに 窓（本のできごと など）が 開いたら、知らせは すっと 消える（0.3秒 うすれる 間 窓の 題名に かぶって いた）
+  R.checks.toastSnap = await page.evaluate(async () => {
+    const G = nishioGo, B = window.NISHIO_BOOKEV, el = document.getElementById('toast'), wait = ms => new Promise(r => setTimeout(r, ms));
+    if (!B) return { ok: false, why: 'no-bookev' };
+    const ev = B.EVENTS.find(e => !e.game && !(G.bookEvHas && G.bookEvHas(e.id)));
+    if (!ev) return { ok: true, skipped: 'no-event' };
+    G.toast('🧭 テストの 知らせ'); await wait(450);
+    const before = +getComputedStyle(el).opacity;
+    if (!B.open(ev)) return { ok: true, skipped: 'not-opened', before };
+    await new Promise(r => requestAnimationFrame(r));
+    const op = +getComputedStyle(el).opacity;
+    B.close(); await wait(100);
+    return { before, op, ok: before > 0.9 && op < 0.05 };
+  });
+  // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
+  R.checks.smoothShadow = await page.evaluate(async () => {
+    const P = nishioPixel, E = CanvasRenderingContext2D.prototype, keep = E.ellipse, cv = document.getElementById('pxCanvas'), hits = [];
+    E.ellipse = function (x, y, rx, ry) { if (this.canvas === cv && String(this.fillStyle).replace(/\s/g, '') === 'rgba(0,0,0,0.28)') hits.push([x, y, rx, ry]); return keep.apply(this, arguments); };
+    try { for (let i = 0; i < 4; i++) await new Promise(r => requestAnimationFrame(r)); } finally { E.ellipse = keep; }
+    const b = P.riceBox, c = b && [(b[0] + b[2]) / 2, b[3]], near = c ? hits.filter(h => Math.abs(h[0] - c[0]) < 2 && h[2] > 3) : [];
+    return { n: hits.length, near: near.length, first: near[0] && near[0].map(v => +v.toFixed(2)), ok: near.length > 0 };
+  });
+  // Godot の 記録係（?godot=1 の ためし）：歩く地図を 描く ときに 使う canvas の 命令が、記録係にも ぜんぶ ある（ない 命令で 止まると その こまの 絵が 送られない。Codex の 指摘：影の ellipse）
+  R.checks.godotRec = await page.evaluate(async () => {
+    const N = window.NSG_GODOT, rec = N && N.rec, errs = [], on = N && N.on;
+    if (!rec) return { ok: false, why: 'no-rec' };
+    const onErr = e => errs.push(String(e.message || e.error || e).slice(0, 120));
+    window.addEventListener('error', onErr);
+    document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    let shade = 0; const fill0 = rec.fill;
+    rec.fill = function () { if (String(this.fillStyle).replace(/\s/g, '') === 'rgba(0,0,0,.28)') shade++; return fill0.apply(this, arguments); };   // お米の 影まで 描けたか（お米が 描かれない こまでは この 確認に ならない）
+    N.on = () => true;   // Godot が 動いて いる ことに して、歩く地図を 記録係で 描かせる（Godot は 読みこまない）
+    let len = 0;
+    try { for (let i = 0; i < 6; i++) { await new Promise(r => requestAnimationFrame(r)); len = Math.max(len, rec.out.length); } }
+    finally { N.on = on; rec.fill = fill0; for (let i = 0; i < 2; i++) await new Promise(r => requestAnimationFrame(r)); window.removeEventListener('error', onErr); }
+    return { errs: [...new Set(errs)], len, shade, ok: !errs.length && len > 50 && shade > 0 };
+  });
   // たての 転がり方：上・下へ 転がると 前・うしろへ でんぐりがえし（pitch が 回る。こまのような くるくる＝spin には ならない。転がり方「くるくる」の日は のぞく）
   R.checks.rollVert = await (async () => {
     // べつの ページで 確かめる（お米を 平らな 所へ 動かしたり、転がる 間に 宝箱・ゴール・人の 話が 起きたりしても、あとの 確認に のこらない。Codex の 指摘）
@@ -1023,16 +1137,18 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400); await uncover(page);
     const pick = await page.evaluate(() => { const r = nishioPixel.roll; let best = null; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 30 && !nishioPixel.rollBlockedFrom(r.x + dx * (d - 1), r.y + dy * (d - 1), r.x + dx * d, r.y + dy * d)) d++; if (!best || d > best[1]) best = [k, d]; } return best; });
     if (pick[1] < 5) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-room', d: pick[1] }; }
+    const p0 = await page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]);
     await page.keyboard.down(pick[0]);
     let max = 0;
     for (let i = 0; i < 30; i++) { await page.waitForTimeout(100); max = Math.max(max, await page.evaluate(() => nishioPixel.combo.n)); }
     await page.keyboard.up(pick[0]);
     // かべに 当たるか、止まって 0.7秒で おしまい。ゆるい めいろでは 曲がり角も カーブに そって すべるので（当たらないので コンボは つづく）、止まるまで 待つ（5秒まで）
-    for (let i = 0; i < 25; i++) { await page.waitForTimeout(200); const r = await page.evaluate(() => nishioPixel.roll); if (Math.hypot(r.vx, r.vy) < 0.05) break; }
-    await page.waitForTimeout(1000);
-    const after = await page.evaluate(() => nishioPixel.combo);
-    await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ok: max >= 2 && after.n === 0 && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after };
+    // 止まって 0.7秒で コンボは おしまい（0 に もどる）。坂（本当の 高低差）や ゆるい カーブでは、止まった あと また 転がりだして 新しい コンボが はじまる ことが ある
+    // （ときどき 落ちていた：おわった あと 坂で ×2 から やりなおし、さいごの 1回だけ 見ると 0 で なかった）。なので 6秒の 間に いちど でも 0 に もどったかを 見る
+    let ended = false, after = null;
+    for (let i = 0; i < 30 && !ended; i++) { await page.waitForTimeout(200); after = await page.evaluate(() => nishioPixel.combo); ended = after.n === 0; }
+    await page.evaluate(p0 => { nishioPixel.rollPut(p0[0], p0[1]); nishioPixel.setRoll(false); }, p0);   // はじめの 場所に もどして 止める（坂で 転がり つづけて、あとの comboBest の コンボに まざらない ように）
+    return { ok: max >= 2 && ended && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after, ended };
   })();
   // ころころコンボの ベスト：転がっている うちに ベストを こえると その場で「🏅 ベスト こえた！」、止まると ベストが のこる
   R.checks.comboBest = await (async () => {
@@ -1042,10 +1158,10 @@ async function walkTo(page, id) {
     const mid = await page.evaluate(() => { nishioPixel.comboBest(5); nishioPixel.comboAdd(6); return { c: nishioPixel.combo, f: nishioPixel.floats() }; });
     let end = null;
     for (let i = 0; i < 20 && !(end && end.n === 0); i++) { await page.waitForTimeout(150); end = await page.evaluate(() => nishioPixel.combo); }   // 止まって 0.7秒で おしまい
-    // あと 少しで ベスト（ベスト 10 に 8）：おわった ときに「おしい！ ベストまで あと3」
+    // あと 少しで ベスト（ベスト 10 に 8）：おわった ときに「おしい！ あと3」
     await page.evaluate(() => { nishioPixel.comboBest(10); nishioPixel.comboAdd(8); });
     let near = false;
-    for (let i = 0; i < 20 && !near; i++) { await page.waitForTimeout(150); near = await page.evaluate(() => nishioPixel.floats().some(t => /おしい！ ベストまで あと3だったじゃん/.test(t))); }
+    for (let i = 0; i < 20 && !near; i++) { await page.waitForTimeout(150); near = await page.evaluate(() => nishioPixel.floats().some(t => t === 'おしい！ あと3')); }   // 文字は みじかく（「ベストまで … だったじゃん」は 長かった）
     // 同じ ベストに 同じ 近さ（8）では もう 出さない・前より 近づくと（9）また 出す（めいろで 迷う 間、2分で 7回「あと4」が 出た）
     const oshii = () => page.evaluate(() => nishioPixel.floats().filter(t => /おしい！/.test(t)));
     for (let i = 0; i < 40 && (await oshii()).length; i++) await page.waitForTimeout(150);   // 前の 文字が 消えるまで
@@ -1055,12 +1171,17 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.comboAdd(9));
     let closer = false;
     for (let i = 0; i < 20 && !closer; i++) { await page.waitForTimeout(150); closer = (await oshii()).some(t => /あと2/.test(t)); }
+    // とても 近い（あと1〜3）ときだけ：ベスト 10 に 7（あと4）では 出さない（200秒で 5回 出て うるさかった）
+    for (let i = 0; i < 40 && (await oshii()).length; i++) await page.waitForTimeout(150);
+    await page.evaluate(() => { nishioPixel.comboBest(10); nishioPixel.comboAdd(7); });
+    let far = false;
+    for (let i = 0; i < 14 && !far; i++) { await page.waitForTimeout(150); far = (await oshii()).length > 0; }
     await page.evaluate(o => { nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
     await page.evaluate(w => { const d = nishioGo.state.day || {}; if (w === null) delete d.watch; else d.watch = w; }, w0);
-    const told = mid.f.some(t => /ベスト こえた/.test(t));
-    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near && !again && closer, beat: mid.c.beat, told, end, near, again, closer };
+    const told = mid.f.some(t => t === '🏅 ベスト こえたじゃん！');   // 数は 横の「×6」に 出て いるので 書かない（同じ 数を 2か所に 書かない）
+    return { ok: mid.c.beat && told && end.n === 0 && end.best === 6 && !end.beat && near && !again && closer && !far, beat: mid.c.beat, told, end, near, again, closer, far };
   })();
-  // ころころコンボで ベストを こえた 数の まま おわった ときは、「ベスト こえたじゃん！ ×6」と「あたらしい ベスト ×6」を つづけて 出さない（自分で 遊んで 分かった：同じ ×9 が 0.1秒 ちがいで 2回）。
+  // ころころコンボで ベストを こえた 数の まま おわった ときは、「ベスト こえたじゃん！」（×6）と「あたらしい ベスト ×6」を つづけて 出さない（自分で 遊んで 分かった：同じ ×9 が 0.1秒 ちがいで 2回）。
   // こえた あとも のびて おわった ときは、おわりに のびた 数を 出す
   R.checks.comboBestOnce = await (async () => {
     const w0 = await page.evaluate(() => { const d = nishioGo.state.day || (nishioGo.state.day = {}), w = d.watch; d.watch = 2; return w === undefined ? null : w; });
@@ -1079,6 +1200,23 @@ async function walkTo(page, id) {
     await page.evaluate(o => { nishioPixel.floatsClear(); nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
     await page.evaluate(w => { const d = nishioGo.state.day || {}; if (w === null) delete d.watch; else d.watch = w; }, w0);
     return { same, grew, ok: same.length === 1 && /こえた/.test(same[0]) && grew.length === 2 && grew.some(t => /あたらしい ベスト ×8/.test(t)) };
+  })();
+  // コンボの 数の 下の ベストの 札は「🏅9」・こえたら「🏅」だけ（「ベスト 9」「ベスト こうしん中」と 文字で 書かない。こえた ことは 浮かぶ 文字が 言う。運営者の声「文字は 少なく」）
+  R.checks.comboTag = await (async () => {
+    const w0 = await page.evaluate(() => { const d = nishioGo.state.day || (nishioGo.state.day = {}), w = d.watch; d.watch = 2; return w === undefined ? null : w; });
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(300);
+    const old = await page.evaluate(() => nishioPixel.combo.best);
+    const tags = async (best, n) => {   // コンボを 足して、描いた 文字を 0.4秒 集める
+      await page.evaluate(([b, k]) => { const P = nishioPixel, C = CanvasRenderingContext2D.prototype; P.floatsClear(); P.comboBest(b); window.__ft = new Set(); window.__keepFt = window.__keepFt || C.fillText; C.fillText = function (t, ...a) { window.__ft.add(String(t)); return window.__keepFt.call(this, t, ...a); }; P.comboAdd(k); }, [best, n]);
+      await page.waitForTimeout(400);
+      const r = await page.evaluate(() => { CanvasRenderingContext2D.prototype.fillText = window.__keepFt; return [...window.__ft]; });
+      for (let i = 0; i < 30 && (await page.evaluate(() => nishioPixel.combo.n)); i++) await page.waitForTimeout(100);   // おわるまで
+      return r.filter(t => /^🏅\d*$|^ベスト (こうしん中|\d+)$/.test(t));
+    };
+    const under = await tags(20, 6), over = await tags(5, 6);
+    await page.evaluate(o => { nishioPixel.floatsClear(); nishioPixel.comboBest(o); try { localStorage.setItem('nsg_combo_best', String(o)); } catch (e) { /* noop */ } nishioPixel.setRoll(false); }, old);
+    await page.evaluate(w => { const d = nishioGo.state.day || {}; if (w === null) delete d.watch; else d.watch = w; }, w0);
+    return { under, over, ok: under.length === 1 && under[0] === '🏅20' && over.length === 1 && over[0] === '🏅' };
   })();
   // スピード線：とても 速いと（1秒に 5マスより）お米の うしろに 線が 出て、おそく なると うすれて 消える
   R.checks.speedLines = await (async () => {
@@ -1150,19 +1288,13 @@ async function walkTo(page, id) {
     const tipOk = (d1.lines % 3 !== 1 || !tip.tip || tip.floats.some(t => t.includes(tip.tip))) && !tip.none && !tip.out;
     return { ok: d1.n - c.d0.n >= L.dots.length && d1.lines === c.d0.lines + 1 && (run === 'no-goal' || run >= L.dots.length) && tipOk, len: L.dots.length, got: d1.n - c.d0.n, lines: d1.lines - c.d0.lines, run, tip: tip.tip, tipOk };
   })();
-  // めいろ図に びゅんパネルと ごはんつぶも 出る（寄り道の 計画に）
-  R.checks.mapMarks = await (async () => {
-    await page.evaluate(() => { nishioPixel.setRoll(true); document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); }); await page.waitForTimeout(300);
-    const goal = await page.evaluate(() => !!nishioGo.guide);
-    if (!goal) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-goal' }; }
-    await page.evaluate(() => nishioPixel.maze.map(5000));
-    let m = null;
-    for (let i = 0; i < 20 && !m; i++) { await page.waitForTimeout(200); m = await page.evaluate(() => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); return nishioPixel.maze.mapShown ? nishioPixel.maze.mapMarks : null; }); }
-    const inBox = m ? await page.evaluate(([x0, y0, cols, rows]) => { const K = nishioPixel.maze.K, ins = ([x, y]) => x / K >= x0 && x / K < x0 + cols && y / K >= y0 && y / K < y0 + rows;   // 図の 中に ある つぶ・パネル
-      return { dots: nishioPixel.maze.linesNear().filter(L => L.left === L.dots.length).reduce((n, L) => n + L.dots.filter(ins).length, 0), pads: nishioPixel.maze.padsNear(40).filter(([x, y]) => ins([(x + 0.5) * K, (y + 0.5) * K])).length }; }, m.box) : null;
-    await page.evaluate(() => { nishioPixel.maze.map(0); nishioPixel.setRoll(false); });
-    return { ok: !!m && (!inBox.pads || m.pads > 0) && (!inBox.dots || m.dots > 0), inBox, marks: m && { pads: m.pads, dots: m.dots } };
+  // ゴールまでの めいろ図は なくした（運営者の声「ゴールまでの迷路は削除」2026-10-29）：図を 出す 入口が なく、図の 文字も 描かない。縁の 矢印の タップは せかいちず
+  R.checks.noGoalMap = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8');
+    const left = ['ゴールまでの めいろ\'', 'function drawMzMap', 'function mzMapOpen', 'mzMapOpen('].filter(w => src.includes(w));
+    return { left, ok: !left.length };
   })();
+  R.checks.noGoalMapApi = await page.evaluate(() => { const M = nishioPixel.maze; return { map: typeof M.map, shown: 'mapShown' in M, ok: typeof M.map === 'undefined' && !('mapShown' in M) }; });
   // 特典の 100円引き：クーポンの 有効時間は 短め（10分）、条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が 特典の 札と 店頭の クーポン画面に 出る（操作して移動の サンプルで ためす）
   // （札の 条件は「条件」を タップ しないと 見えなかった。タップ なしで いつも 見える ことも 見る）
   R.checks.coupon100 = await (async () => {
@@ -1196,8 +1328,12 @@ async function walkTo(page, id) {
       return out;
     });
     if (r.found && !r.skipped) {   // 期限が きれたら（とくてんを 開いた まま）描きなおされて「使ってから」が とける。テストの 時計は とまって いるので 2分 すすめる
-      await page.clock.setFixedTime(new Date(new Date(PLAY_DATE).getTime() + 120000)); await page.waitForTimeout(2500);
-      r.unblocked = await page.evaluate(() => { const li3 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent)); return !!li3 && !/使ってから|使っていないクーポン/.test(li3.textContent + li3.querySelector('[data-redeem]').getAttribute('aria-label')); });
+      // 描きなおしを 2.5秒 だけ 待って 見ると、重い ときに 間に あわず ときどき 落ちた（2026-10-29：3回に 1回ほど unblocked が false）。8秒まで、とけるのを 見はる
+      await page.clock.setFixedTime(new Date(new Date(PLAY_DATE).getTime() + 120000));
+      for (let i = 0; i < 16 && !r.unblocked; i++) {
+        await page.waitForTimeout(500);
+        r.unblocked = await page.evaluate(() => { const li3 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent)); return !!li3 && !/使ってから|使っていないクーポン/.test(li3.textContent + li3.querySelector('[data-redeem]').getAttribute('aria-label')); });
+      }
       await page.clock.setFixedTime(new Date(PLAY_DATE));
       await page.evaluate(() => { const G = nishioGo, S = G.state, o = window.__cp100; S.points = o.p0; S.coupons.length = o.n0; S.log.splice(0, S.log.length - o.l0); G.openTab('map'); });   // ほかの チェックの ポイントが かわらない よう もどす
     }
@@ -1257,7 +1393,7 @@ async function walkTo(page, id) {
     const townOk = /のまち・西尾の まちが めいろに/.test(tNishio) && /抹茶/.test(tNishio) && /^にしおさんぽGOで、碧南市の まちが めいろに/.test(tHeki) && !/西尾の まち/.test(tHeki);
     return { ok: townOk && kind === 'mzgoal' && open && png > 5000 && !again && lv === 'lvup' && !after && npc !== false && text.includes('「テストの 名所」まで 1分23秒 ★★') && text.includes('コンボ ×6') && text.includes('?play=1&vs=83&vst=2&utm_source=share&utm_medium=social&utm_campaign=mzgoal') && !!(img && img.width === 360), kind, open, png, again, lv, after, npc, img: !!img, tNishio, tHeki, text: text.slice(0, 160) };
   });
-  // めいろの はやさの ベスト：道のり ÷ 時間で くらべ、こえたら「ベスト こえたじゃん！」、とどかなければ「ベスト まで あと」。みじかい めいろは 数えない。札は「10m/秒」
+  // めいろの はやさの ベスト：道のり ÷ 時間で くらべ、こえたら「ベスト こえたじゃん！」、とどかなければ 足りない 数は 出さない（あおらない）。みじかい めいろは 数えない。札は「10m/秒」
   R.checks.mazeSpeed = await page.evaluate(async () => {
     const G = nishioGo, k = 'nsg_mz_speed', old = localStorage.getItem(k);
     localStorage.removeItem(k);
@@ -1268,7 +1404,17 @@ async function walkTo(page, id) {
     document.getElementById('reward').click();
     if (old === null) localStorage.removeItem(k); else localStorage.setItem(k, old);
     const g = G.guide, gl = g && nishioPixel.maze.goal(g.id || g.name), warp = gl ? typeof gl.warp : 'no-goal';   // とびこえた ゴールを はやさから のぞく ための しるし
-    return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && /1秒に 8m（ベスト 10m まで あと 2m）/.test(b) && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
+    return { a, b, c, d, w, best, chip, warp, ok: (warp === 'boolean' || warp === 'no-goal') && w === '' && /1秒に 10m（はじめての ベスト）/.test(a) && b === '🏃 はやさ 1秒に 8m' && /ベスト こえたじゃん！ 1秒に 15m（前 10m）/.test(c) && d === '' && best === '15' && chip };
+  });
+  // 行き先に 着いた ときの 知らせ（文字を少なく）：つぎの 行き先の 名前は 書かない（下の札と「🏁 つぎの ゴール」に 出る）。めいろでは 着いた 名所も「ゴール！」の 札に 出るので ポイント だけ
+  R.checks.arriveMsg = await page.evaluate(() => {
+    const G = nishioGo, b = document.body, had = b.classList.contains('simple');
+    if (typeof G.arriveMsg !== 'function') return { ok: false, why: 'no-arriveMsg' };
+    b.classList.add('simple');
+    const g = { name: '西尾市歴史公園（西尾城跡）' }, next = { name: 'らいすぴあの店員さん（らいすぴあ秀幸（永吉））', why: 'テスト' };
+    const maze = G.arriveMsg(g, 5, next, true), walk = G.arriveMsg(g, 5, next, false), none = G.arriveMsg(g, 0, next, true), ev = G.arriveMsg({ ...g, byId: 'x' }, 30, next, true);
+    if (!had) b.classList.remove('simple');
+    return { maze, walk, none, ev, ok: maze === '🧭 +5pt' && walk === '🧭 西尾市歴史公園（西尾城跡） +5pt' && none === '' && ev === '🎉 +30pt' };
   });
   // めいろの ゴールの あとの「めいろ、どうだった？」：★を えらび ひとことを 書いて 送ると、/api/feedback に kind: play・★・ひとこと・秒・めいろの★ が 届く。1日1回
   {
@@ -1345,10 +1491,6 @@ async function walkTo(page, id) {
     const on = M.on();
     for (let i = 0; i < 12 && !M.trail().length; i++) await new Promise(f => setTimeout(f, 250));   // 足あと：いる 通路の マスに しるし
     const trail = M.trail().length;
-    M.map(4000);   // ゴールまでの めいろ図（行き先が あれば 出る。窓が 開いていれば 待つ）
-    let map = !nishioGo.guide ? 'no-goal' : false;
-    for (let i = 0; i < 12 && map === false; i++) { await new Promise(f => setTimeout(f, 250)); if (M.mapShown) map = true; }
-    M.map(0);
     // ゴールまでの タイムと ★：行き先が あれば 時計が 動き、目やすの 時間（★3）が きまる
     let clock = !nishioGo.guide ? 'no-goal' : false;
     for (let i = 0; i < 12 && clock === false; i++) { await new Promise(f => setTimeout(f, 250)); const c = M.clock(); if (c && c.par >= 20 && c.stars >= 1 && c.stars <= 3 && c.sec >= 0) clock = { par: Math.round(c.par), stars: c.stars }; }
@@ -1363,7 +1505,7 @@ async function walkTo(page, id) {
       if (grain === true && c0 && c1) { const back = s0 + (performance.now() - t0) / 1000 - c1.sec; grain = { back: Math.round(back * 10) / 10 }; if (s0 > 2.5 && back < 1.5) grain = false; }
     }
     nishioPixel.setRoll(false); nishioGo.moveTo(at.lat, at.lng);
-    return { ok: on && floors > 10 && walls > 3 && trail > 0 && map !== false && grain !== false && clock !== false, on, floors, walls, trail, map, grain, grains: near.length, clock };
+    return { ok: on && floors > 10 && walls > 3 && trail > 0 && grain !== false && clock !== false, on, floors, walls, trail, grain, grains: near.length, clock };
   });
   // めいろの 壁（生け垣）に 押しつけても、お米が 壁に 食いこんで 見えない（左右は 壁の さかいから 0.6マスより 手前で 止まる）。当たると 葉っぱが 舞う
   R.checks.mazeWallFit = await (async () => {
@@ -1390,7 +1532,9 @@ async function walkTo(page, id) {
     const tube = await page.evaluate(([x, y]) => { const q = nishioPixel.maze.near && nishioPixel.maze.near(x, y); return q ? +q.d.toFixed(3) : null; }, [r.x, r.y]);
     const same = Math.floor(r.x / c.K) === c.x && Math.floor(r.y / c.K) === c.y;
     await page.evaluate(() => nishioPixel.setRoll(false)); await page.evaluate(ll => { nishioGo.moveTo(ll.lat, ll.lng); Object.assign(nishioPixel.critterState, ll.cs); }, at);
-    const fit = tube !== null ? tube >= 0.4 && tube <= 0.5 && same : gap >= 0.6 && gap < 1;
+    // 上は 0.6：やわらかい 生け垣（10/28 店主「ぽよんぽよん」）は 押すと へこみ、生け垣の 絵も いっしょに へこむ。加速の 強い 転がり方（ロケット）で 押しつづけると
+    // 0.51〜0.53 まで 入り、0.5 で 見ると ときどき 落ちた（2026-10-29：3回に 1回ほど）。0.6 より 先は 見た目にも 食いこむ（前の きまりと 同じ）
+    const fit = tube !== null ? tube >= 0.4 && tube <= 0.6 && same : gap >= 0.6 && gap < 1;
     const ok = fit && !!hitMood;
     return { ok, gap, tube, same, bounced: !!hitMood, hitMood, tries, ...(ok ? {} : { cell: [c.x, c.y], env, tr }) };
   })();
@@ -1824,9 +1968,9 @@ async function walkTo(page, id) {
       // まよわず ゴールの 歩数：さかいを 0.4秒 以内に 何度 またいでも 前の 歩数は へらない。ゆっくり 行き来すれば 数える
       const A = [0, 0], B = [1, 0];
       const mv = { jitter: M.mvSim(100, [A, B, A, B, A, B, A, B, A, B], 100), slow: M.mvSim(0, [A, B, A, B, A], 1000), line: M.mvSim(0, [[0, 0], [1, 0], [2, 0], [3, 0]], 100), diag: M.mvSim(0, [[0, 0], [1, 1], [2, 1]], 100), reset: M.mvSim(0, [A, B, 'R', A], 100), diagBack: M.mvSim(0, [[0, 0], [1, 1], [1, 0], [2, 0]], 100) };   // diagBack：ななめの すぐ あとに 片方だけ ひきかえしても、その 1歩は とりけす（0,0→1,0→1,1→1,0→2,0 と 同じ 2歩）   // reset：ゴールが かわった すぐ あとに ひきかえしても 前の 1歩は とりけさない（1歩と 数える）   // diag：1こまに ななめに 2つ こえたら 2歩
-      return { auto, got: s1.got - g0, left: Math.round(s1.left), scaredAll, shoo: c1.shoo - o0, hit: c1.hits - h0, jump: c0 && k1 ? Math.round((k1.sec - c0.sec) * 10) / 10 : 0, float: nishioPixel.floats().some(t => /おいはらった/.test(t)), way: way ? way.way : 'no-goal', same, mv };
+      return { auto, got: s1.got - g0, left: Math.round(s1.left), scaredAll, shoo: c1.shoo - o0, hit: c1.hits - h0, jump: c0 && k1 ? Math.round((k1.sec - c0.sec) * 10) / 10 : 0, float: nishioPixel.floats().some(t => /おいはらった/.test(t)), said: M.say().log.some(t => /^かかし/.test(t)), way: way ? way.way : 'no-goal', same, mv };
     });
-    R.checks.mzScare = { ...scareA, ok: scareA.auto && scareA.got === 1 && scareA.left > 6500 && scareA.scaredAll && scareA.shoo === 1 && scareA.hit === 0 && scareA.jump < 2 && scareA.float && (scareA.way === 'no-goal' || scareA.way === 0 || scareA.way >= 1) && scareA.same.shoo === 1 && scareA.same.hit === 0 && scareA.mv.jitter >= 100 && scareA.mv.jitter <= 101 && scareA.mv.slow === 4 && scareA.mv.line === 3 && scareA.mv.diag === 3 && scareA.mv.reset === 1 && scareA.mv.diagBack === 2 };
+    R.checks.mzScare = { ...scareA, ok: scareA.auto && scareA.got === 1 && scareA.left > 6500 && scareA.scaredAll && scareA.shoo === 1 && scareA.hit === 0 && scareA.jump < 2 && scareA.float && scareA.said && (scareA.way === 'no-goal' || scareA.way === 0 || scareA.way >= 1) && scareA.same.shoo === 1 && scareA.same.hit === 0 && scareA.mv.jitter >= 100 && scareA.mv.jitter <= 101 && scareA.mv.slow === 4 && scareA.mv.line === 3 && scareA.mv.diag === 3 && scareA.mv.reset === 1 && scareA.mv.diagBack === 2 };
     // ゴールに 着いたら そのまま ゴール：名所は ひとりでに チェックイン（「🏁 ゴール！」）、人は 話しかける（人が ゴールでも「🏁 ゴール！」）
     const arriveA = await w.page.evaluate(async () => {
       const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));
@@ -2580,7 +2724,7 @@ async function walkTo(page, id) {
         if (!g) return { spot: 'none' };
         G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
         await wait(6500);   // 「🏁 つぎの ゴール」の 札が 消えるまで
-        document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show');
+        document.getElementById('pxInfo').hidden = true; el.classList.remove('show');
         const msg = '🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）';
         G.toast(msg); await wait(900);
         const a = M.mapArrow, c = cv.getBoundingClientRect(), k = c.width / cv.width, q = el.getBoundingClientRect();
@@ -2588,22 +2732,10 @@ async function walkTo(page, id) {
         const shown = el.classList.contains('show') && el.textContent === msg, hit = !!A && q.left < A[2] && q.right > A[0] && q.top < A[3] && q.bottom > A[1];
         const low = el.classList.contains('wlow');
         el.classList.remove('show', 'wlow');
-        // 下げた あとに めいろ図を 開いたら（縁の 矢印を タップ）、図に 重ねず 上へ もどす（Codex の 指摘）。図が 出るのは 近い ゴール（1km まで）
-        let mapUp = 'none';
-        const g2 = G.spots.filter(x => x.lat && !x.shop && x.lat > G.me.lat + 0.003 && G.dist(G.me, x) > 400 && G.dist(G.me, x) < 1000).sort((a, b) => Math.abs(a.lng - G.me.lng) - Math.abs(b.lng - G.me.lng))[0];
-        if (g2) {
-          G.setGuide({ kind: 'spot', id: g2.id, name: g2.name, why: 'テスト', by: 'テスト' });
-          await wait(6500); document.getElementById('pxInfo').hidden = true; M.map(0);
-          G.toast(msg); await wait(500);
-          el.classList.add('wlow'); await wait(200);   // 下げた ところ
-          M.map(8000); await wait(500);
-          mapUp = M.mapShown ? !el.classList.contains('wlow') : 'nomap';
-          M.map(0); el.classList.remove('show', 'wlow');
-        }
-        return { arrow: !!A, shown, hit, low, mapUp, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
+        return { arrow: !!A, shown, hit, low, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.arrow && r.shown && !r.hit && r.mapUp === true };
+      return { ...r, ok: r.arrow && r.shown && !r.hit };   // （めいろ図を 開いた ときの 確かめは 図を なくしたので やめた）
     })();
     // 「🏁 つぎの ゴール」の 札に 縁の 矢印が かかる 間は 矢印を うすく 描く（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印が 札の「つぎの」の 字に かぶった）。
     // 札が 消えたら もとの こさ。たて向き（360×640）で 札に かからない ときは うすく しない。直す 前の コードでは arrowDim が ない
@@ -2613,13 +2745,13 @@ async function walkTo(page, id) {
         await w.page.setViewportSize({ width: W, height: H }); await w.page.waitForTimeout(400);
         out[W + 'x' + H] = await w.page.evaluate(async () => {
           const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));
-          document.getElementById('pxInfo').hidden = true; M.map(0);
+          document.getElementById('pxInfo').hidden = true;
           G.setGuide({ kind: 'spot', id: 'test-dim' + innerWidth, name: 'テストの 北の ゴール', lat: G.me.lat + 0.012, lng: G.me.lng });
           let on = false; for (let i = 0; i < 80 && !on; i++) { await wait(50); const n = M.next(); on = n.on && !n.want && n.t0 > 0; }   // 札が 描かれ はじめるまで（めいろの 道のりが 分かるまで 2秒まで 待つ）
           await wait(300);
           const dur = M.next(), pin = M.arrowAt, b = dur.box, hit = !!(pin && b && pin[0] + pin[2] > b[0] && pin[0] - pin[2] < b[2] && pin[1] + pin[2] > b[1] && pin[1] - pin[2] < b[3]);
           for (let i = 0; i < 80 && M.next().on; i++) await wait(100);
-          await wait(300); M.map(0); await wait(200);
+          await wait(500);   // （めいろ図は なくしたので 閉じる 手順は いらない）
           const after = M.next();
           G.setGuide(null);
           return { on, hit, dim: dur.arrowDim, after: after.on ? 'still' : after.arrowDim, pin: pin && pin.slice(0, 3).map(Math.round), box: b && b.map(Math.round), U: Math.round(16 * devicePixelRatio) };
@@ -2641,7 +2773,7 @@ async function walkTo(page, id) {
           if (!g) return { spot: 'none' };
           G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
           await wait(6500);   // 「🏁 つぎの ゴール」の 札が 消えるまで
-          document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show', 'wlow', 'wside', 'wfloor');
+          document.getElementById('pxInfo').hidden = true; el.classList.remove('show', 'wlow', 'wside', 'wfloor');
           const msg = '📅 あしたも来ると +20pt';
           G.toast(msg); await wait(900);
           const a = M.mapArrow, c = cv.getBoundingClientRect(), k = c.width / cv.width, q = el.getBoundingClientRect();
@@ -2659,7 +2791,7 @@ async function walkTo(page, id) {
         let mode = 'none';
         for (const dl of [-0.002, -0.003, -0.0045, -0.006]) {
           G.setGuide({ kind: 'spot', id: 'test-rot' + dl, name: 'テストの 北の ゴール', lat: at.lat + 0.012, lng: at.lng + dl }); await wait(6500);
-          document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show', 'wlow', 'wside', 'wfloor');
+          document.getElementById('pxInfo').hidden = true; el.classList.remove('show', 'wlow', 'wside', 'wfloor');
           G.toast('📅 あしたも来ると +20pt'); await wait(900);
           mode = ['wlow', 'wside', 'wfloor'].find(m => el.classList.contains(m)) || 'top';
           if (mode === 'wside' && el.getBoundingClientRect().left > 360) return { mode, dl, left: Math.round(el.getBoundingClientRect().left) };
@@ -2818,12 +2950,8 @@ async function walkTo(page, id) {
         const at = M.arrowAt, hud = M.hudRects();
         hits.push(at ? hud.filter(r => at[0] + at[2] > r[0] && at[0] - at[2] < r[2] && at[1] + at[2] > r[1] && at[1] - at[2] < r[3]).length : -1);
       }
-      const b0 = M.mapBuilds;
-      M.map(12000);   // 画面の 外の ゴールを 描いた あとも、矢印を タップすると めいろ図が 出て、0.5秒ごとに かきなおす（「つぎの ゴール」の 札の 間は 待つ）
-      for (let i = 0; i < 40 && M.mapBuilds - b0 < 2; i++) await wait(200);
-      const mapOk = M.mapBuilds - b0 >= 2; M.map(0);   // テストの ゴールは めいろの 道が ないので 図は 出ない。かきなおしが 動くかだけ 見る
       G.setGuide(null);
-      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, mapOk, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) && mapOk };
+      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) };
     });
     // 地図の 上に 出る 知らせ（長い 文）が、右上の 丸い ボタン（せかいちず・しらべる など）に 重ならない（自分で 遊んで 分かった：「歩いた道が 8.0km に！」が 2つめの ボタンに かかっていた）
     R.checks.toastHud = await w.page.evaluate(async () => {
@@ -2951,6 +3079,13 @@ async function walkTo(page, id) {
     });
     const frozen = p0 === null ? p1 === null : !!(p1 && Math.hypot(p1[0] - p0[0], p1[1] - p0[1]) < 0.01);   // 読んでいる 間は 転がり はじめない（お米の 位置が まだ ない ままでも よい）
     R.checks.howtoFirst = { sub, shown, toastOver, toastAfterOk, frozen, closed, rolls, again, reopen, heldBack, afterOk, ok: !!sub && shown && !toastOver && frozen && closed && rolls && !again && reopen && heldBack && afterOk };
+    // 名所の窓の「みんなの声」は どんな 声かだけ。数（いいねの 数）は 出さない（運営者の声「競わない設計」）
+    R.checks.reactNoCount = await w.page.evaluate(() => {
+      const G = nishioGo;
+      if (!G.reactLine) return { ok: false, why: 'no-api' };
+      const h = G.reactLine({ id: 'test' }, { love: 12, calm: 3, photo: 7 }), t = h.replace(/<[^>]+>/g, '');
+      return { t, ok: /😍/.test(t) && /よかった/.test(t) && /🍵/.test(t) && !/\d/.test(t) && t.indexOf('😍') < t.indexOf('📷') && t.indexOf('📷') < t.indexOf('🍵') };   // 多い じゅんの まま、数字は なし
+    });
     // さんぽ仲間（ライバル）は、すぐ そば（300m 未満）の 次の 行き先へは 先回りしない（その 次の 遠い 行き先へ）。
     // 自分で 遊んで 分かった：6マス 先の 人へ「先に 行っとるでね」が 着いた あとに 出て、4秒後に「おそかったじゃん！」
     R.checks.rivalNear = await w.page.evaluate(() => {
@@ -2987,7 +3122,8 @@ async function walkTo(page, id) {
           if (box) break;
         }
         for (let i = 0; i < 15; i++) {   // 札の 間、こまごとに 知らせと 札の 重なりを 見る
-          box = null; G.toast(msg);
+          box = null; G.toast(msg); el.classList.add('show'); el.classList.remove('wlow');   // 知らせを 上に 出した まま 見る（縁の 矢印を よけて 下に いると 比べられず、ときどき seen 0 で 落ちた）
+          if (!P.townBox && i % 5 === 0) P.townBanner('テスト町');   // 札が 消えて いたら 出しなおす
           await new Promise(res => requestAnimationFrame(res));
           if (box && el.classList.contains('show') && !el.classList.contains('wlow')) {   // 知らせが 上に 出て いる こま（縁の 矢印を よけて 下に いる こまは 数えない）
             seen++;
@@ -3051,6 +3187,7 @@ async function walkTo(page, id) {
             if (A) { frames++; if (box) { drawn++; if (ov(box, A) || ov(box, Rb)) bad++; } }
             await wait(100);
           }
+          for (let i = 0; i < 50 && P.townBox; i++) { G.toast('🧭 テストの 知らせ：ちょうど 2行に なる 長さ'); await wait(100); }   // 置ける 所が あって とちゅうから 出た ときは、出た ぶん あとで 消える（5秒で まだ 出ていて ときどき 落ちた）
           gone = !P.townBox;
           ['top', 'bottom', 'left'].forEach(k => el.style.removeProperty(k));
         }
@@ -3130,6 +3267,44 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.frames > 0 && (r.hits > 0 || r.dodged > 0) && r.hits === 0 && r.emoji === true && r.bannerFrames > 0 && r.during === 0 && r.after };
     })();
+    // 浮かぶ 文字は 上の 知らせ（DOM。キャンバスの 上に 重なる）に かくれない：知らせの 下へ ずれるか、消えるまで 待つ（自分で 遊んで 分かった：320×568 で 4行の「🌙 夜のさんぽ…」が「おしい！ ベストまで…」の 1行目を かくした）
+    R.checks.floatToast = await (async () => {
+      const vp = w.page.viewportSize();
+      await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
+      const r = await w.page.evaluate(async () => {
+        const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d'), el = document.getElementById('toast');
+        document.querySelectorAll('.medashi').forEach(m => { m.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        G.setGuide(null); await wait(300);
+        const T0 = 'おしい！ ベストまで あと1だったじゃん', keep = ctx.fillText;
+        let box = null;
+        ctx.fillText = function (t, x, y) { if (t.length >= 4 && T0.includes(t)) { const fz = parseFloat((/(\d+(?:\.\d+)?)px/.exec(this.font) || [])[1]) || 16, fw = this.measureText(t).width, b = [x - fw / 2, y - fz, x + fw / 2, y]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; } return keep.apply(this, arguments); };
+        let frames = 0, under = 0, drawn = 0, after = 0;
+        for (let k = 0; k < 3; k++) {
+          el.classList.remove('wlow', 'low'); el.textContent = '🌙 テストの 知らせ：夜の さんぽ。明かりの まわりしか 見えないよ。たからばこは ほんのり 光っとる（長めの 文で 4行）'; el.classList.add('show');   // 知らせを じかに 出す（ほかの 窓で 待たされて 出ない ことが あった）
+          P.floatsClear(); P.floatText(T0);
+          for (let i = 0; i < 40; i++) {   // 知らせの 間（3秒）と 消えた あと
+            if (i < 30) { el.classList.add('show'); el.classList.remove('wlow'); } else if (i === 30) el.classList.remove('show');   // 前の 知らせの タイマーが 消しても 3秒は 出して おく
+            box = null;
+            await new Promise(res => requestAnimationFrame(res));
+            const show = el.classList.contains('show') && !el.classList.contains('wlow');
+            if (box) {
+              drawn++;
+              if (show) {
+                frames++;
+                const c = cv.getBoundingClientRect(), q = el.getBoundingClientRect(), s = c.width / cv.width;
+                const B = [c.left + box[0] * s, c.top + box[1] * s, c.left + box[2] * s, c.top + box[3] * s];
+                if (q.left < B[2] && q.right > B[0] && q.top < B[3] && q.bottom > B[1]) under++;   // 知らせの うしろに かくれた
+              } else after++;
+            }
+            await wait(100);
+          }
+        }
+        ctx.fillText = keep; P.floatsClear(); el.classList.remove('show');
+        return { frames, under, drawn, after };
+      });
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      return { ...r, ok: r.under === 0 && (r.frames > 0 || r.after > 0) };   // 知らせの 下へ よけて 出る（frames）か、縁の 矢印に かかって 下へ よけられない ときは 知らせが 消えてから 出る（after）。どちらも かくれない
+    })();
     R.errors.push(...w.errors);
     await w.ctx.close();
   }
@@ -3155,6 +3330,44 @@ async function walkTo(page, id) {
   }
 
   await browser.close(); server.close();
+  // 競わない 設計：さんぽ仲間は あおらない・勝ち負けで くらべない（運営者の声「競わない設計」2026-10-28）。コメントを のぞいた 文で 見る
+  // 歩いた道の 節目の 知らせ：待ちの 列に のこる 前の 節目を 取りのぞく 判定（startsWith）が、いまの 文面の 頭と 合う（文面を 短く した とき 取りのぞけなく なった。Codex の 指摘）
+  R.checks.mileCollapse = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'game.js'), 'utf8');
+    const pre = (/q\[i\]\.startsWith\('(👣[^']*)'\)\) q\.splice/.exec(src) || [])[1], msg = (/toastAfter\(`(👣 [^`$]*)\$\{fmtM\(m\)\}/.exec(src) || [])[1];
+    return { pre, msg, ok: !!pre && !!msg && msg.startsWith(pre) };
+  })();
+  R.checks.noRivalry = (() => {
+    const strip = f => fs.readFileSync(path.join(__dirname, '..', 'nishio-go', f), 'utf8').replace(/(^|[^:'"`])\/\/[^\n]*/g, '$1');
+    const src = ['game.js', 'pixel.js'].map(strip).join('\n'), bad = ['おそかったじゃん', 'もう見たじゃん', 'まけた！', '勝つと', 'vs${', 'ランキング', '位に'].filter(w => src.includes(w));
+    return { bad, ok: bad.length === 0 };
+  })();
+  // 文字は 少なく（運営者の声「文字は できるだけ 減らして」2026-10-28）：遊びの 知らせ・浮かぶ 文字は 40文字まで。安全・エラーの 知らせだけ 長くて よい
+  R.checks.shortText = (() => {
+    const long = [], ok = ['乗り物で移動中', 'スポット情報', '保存領域', '生きもの手帳が ぜんぶ', 'あるいて移動では', '保存できませんでした', '読みこめませんでした'];   // 保存・読みこみの 失敗は 遊びの 知らせで なく、どう すれば よいかまで 書く
+    for (const f of ['game.js', 'pixel.js', 'korostyle.js']) {
+      const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', f), 'utf8');
+      for (const m of src.matchAll(/(?:toast|toastAfter|floatText)\((`[^`]*`|'[^']*')/g)) {
+        const t = m[1].slice(1, -1).replace(/\$\{[^}]*\}/g, '○');
+        if (t.length > 40 && !ok.some(k => t.includes(k))) long.push(`${f}: ${t.slice(0, 40)}…（${t.length}）`);
+      }
+    }
+    return { long, ok: long.length === 0 };
+  })();
+  // かかしを とった ときの はじめての 知らせは、浮かぶ 文字（「かかし！ カラスが 8秒 にげる」）と 時計の 下の のこりの 札と 同じ「にげる」を くりかえさない（自分で 遊んで 分かった）
+  R.checks.scareToast = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), m = src.match(/mzScare\.told = true; G\.toast\('([^']*)'\)/);
+    const t = m ? m[1] : '';
+    return { t, ok: !!t && /かかし/.test(t) && /青く/.test(t) && /おいはらえる/.test(t) && !/にげる/.test(t) };   // かかしで 青く なる つながりは のこす（Codex の 指摘）
+  })();
+  // かかし・ばねを とった ときは、浮かぶ 文字・時計の 下の のこりの 札・はじめての 知らせの 3か所で 同じ ことを 言わない（自分で 遊んで 分かった：「かかし！ カラスが 8秒 にげる」
+  // 「かかし：カラスが にげる あと 8秒」「…おいはらえる」が いちどに 出た。運営者の声「文字は 少なく」）。浮かぶ 文字は みじかく、札は「かかし あと 8秒」、説明は 知らせ だけ
+  R.checks.powerWords = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8');
+    const fl = [...src.matchAll(/(?:floatText|riceSay)\(['`]((?:かかし|ばね)[^'`]*)['`]/g)].map(m => m[1]), tags = [...src.matchAll(/`((?:かかし|ばね)[^`]*あと \$\{[^`]*)`/g)].map(m => m[1]);
+    const ok = fl.length === 2 && fl.every(t => t.length <= 8 && !/にげる|はずむ|\$\{/.test(t)) && tags.length === 2 && tags.every(t => /^(かかし|ばね) あと \$\{/.test(t));
+    return { fl, tags, ok };
+  })();
   // ゴールの 戸の 道さがし（mzGateTry を 小さな 格子で）：戸 4つの 近い 道と、戸 3つで 8歩の 道が ある とき、上限（戸 3つ・歩数 まっすぐの 2倍＋4）以内の 道で 戸を あける
   // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸 4つの 道が えらばれて 上限で はねられ、戸が ひらかなかった。Codex の 指摘）
   // やわらかい 生け垣の へこみの ばね（mzDentStep を 取りだして）：軽く 押しつけて おさまった あと はなれると、へこみは 0 に もどる・押しつけて いる 間は 小さな ゆらぎで 動かない
@@ -3237,6 +3450,7 @@ async function walkTo(page, id) {
   need(c.eventToast && c.eventToast.ok, `イベントの 窓の 上に 知らせが 重なる（${JSON.stringify(c.eventToast)}）`);
   need(c.townNoRoom && c.townNoRoom.ok, `町名の 札：置き場所が ない ときに 重ねて 描く・町が かわっても 待ちを 引きつぐ（${JSON.stringify(c.townNoRoom)}）`);
   need(c.floatArrow && c.floatArrow.ok, `浮かぶ 文字：めいろの 縁の 矢印と 道のりの 札・「つぎの ゴール」の 札に 重ねない（${JSON.stringify(c.floatArrow)}）`);
+  need(c.floatToast && c.floatToast.ok, `浮かぶ 文字：上の 知らせの うしろに かくれる（${JSON.stringify(c.floatToast)}）`);
   need(c.townToast && c.townToast.ok, `町名の 札（〜 ○○町 〜）が 上の 知らせに かくれる（${JSON.stringify(c.townToast)}）`);
   need(c.landscape568 && c.landscape568.ok, `横に した 低い 画面（568×320）で はじめの1枚が えらべない・ごほうびの 窓が はみ出す（${JSON.stringify(c.landscape568)}）`);
   need(c.pickFit320 && c.pickFit320.ok, `はじめの1枚の 窓で 3枚の 絵が 320px の 画面に 入りきらない（左右が 切れる）（${JSON.stringify(c.pickFit320)}）`);
@@ -3264,6 +3478,7 @@ async function walkTo(page, id) {
   need(c.mzDentBack && c.mzDentBack.ok, `やわらかい 生け垣：はなれても 小さな へこみが のこる・押しつけた ままの ゆらぎで へこみが 動きつづける（${JSON.stringify(c.mzDentBack)}）`);
   need(c.mzGateSearch && c.mzGateSearch.ok, `ゴールの 戸の 道さがしが、上限 以内の 道を 見のがす（${JSON.stringify(c.mzGateSearch)}）`);
   need(c.rivalNear && c.rivalNear.ok, 'さんぽ仲間が すぐ そばの 次の 行き先へ 先回りする（着いた あとに「先に 行っとる」、すぐ「おそかったじゃん」）');
+  need(c.reactNoCount && c.reactNoCount.ok, `みんなの声：反応の 数を 出している（${JSON.stringify(c.reactNoCount)}）`);
   need(c.mzKeepGoal && c.mzKeepGoal.ok, 'めいろの とちゅうで ゴールでない 人と 話すと、ゴールが かわって しまう');
   need(c.mzFarGuide && c.mzFarGuide.ok, 'めいろで 人の すすめや 前の 行き先が 5km 先の 人に なる（めいろでは 着けない）');
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');
@@ -3281,6 +3496,22 @@ async function walkTo(page, id) {
   need(c.wayChip && c.wayChip.ok, '「まよわず ゴール」の 札が 文字を 少なく で 出ない');
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
+  need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
+  need(c.powerWords && c.powerWords.ok, `かかし・ばねを とった ときに 同じ ことを 3か所で 言う（浮かぶ 文字が 長い・札が「〇〇 あと 8秒」で ない。${JSON.stringify(c.powerWords)}）`);
+  need(c.shortText && c.shortText.ok, `文字は 少なく：遊びの 知らせ・浮かぶ 文字が 40文字を こえる（${JSON.stringify(c.shortText)}）`);
+  need(c.riceBreath && c.riceBreath.ok, `止まって いる お米が すう すう 息を しない（${JSON.stringify(c.riceBreath)}）`);
+  need(c.godotRec && c.godotRec.ok, `Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（${JSON.stringify(c.godotRec)}）`);
+  need(c.riceBfly && c.riceBfly.ok, `ねむって いる お米の 頭に ちょうちょが とまらない（${JSON.stringify(c.riceBfly)}）`);
+  need(c.riceWake && c.riceWake.ok, `ねむって いた お米が おきても のびを しない（または ちょうちょが 飛んで いかない）（${JSON.stringify(c.riceWake)}）`);
+  need(c.comboTen && c.comboTen.ok, `ころころ ×10 で 文字が 出る（お米の よこの ×N と 同じ ことを 2か所に 書いている）か、大きな きらきらが 出ない（${JSON.stringify(c.comboTen)}）`);
+  need(c.ricePerf && c.ricePerf.ok, `お米を 描くのが 重すぎる（1回 6ミリ秒 より 長い）（${JSON.stringify(c.ricePerf)}）`);
+  need(c.dropSmooth && c.dropSmooth.ok, `水の しずくが なめらかに 描けていない（${JSON.stringify(c.dropSmooth)}）`);
+  need(c.toastSnap && c.toastSnap.ok, `窓が 開いても 知らせが すぐ 消えず、窓の 上に かぶる（${JSON.stringify(c.toastSnap)}）`);
+  need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
+  need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
+  need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
+  need(c.mileCollapse && c.mileCollapse.ok, `歩いた道の 節目：前の 節目の 知らせを 待ちの 列から 取りのぞけない（文面の 頭が ちがう）（${JSON.stringify(c.mileCollapse)}）`);
+  need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);
   need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
@@ -3323,13 +3554,15 @@ async function walkTo(page, id) {
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
   need(c.comboBestOnce && c.comboBestOnce.ok, `ころころコンボ：ベストを こえた 数の まま おわると 同じ 数の ベストを 2回 出す（${JSON.stringify(c.comboBestOnce)}）`);
+  need(c.comboTag && c.comboTag.ok, `ころころコンボの ベストの 札が「🏅9」「🏅」に なって いない（文字で「ベスト 9」「ベスト こうしん中」と 書いて いる。${JSON.stringify(c.comboTag)}）`);
   need(c.speedLines && c.speedLines.ok, `スピード線：速くても 出ない／おそく なっても 消えない（${JSON.stringify(c.speedLines)}）`);
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
-  need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
+  need(c.noGoalMap && c.noGoalMap.ok && c.noGoalMapApi && c.noGoalMapApi.ok, `ゴールまでの めいろ図が のこって いる（${JSON.stringify([c.noGoalMap, c.noGoalMapApi])}）`);
   need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「売り出し期間中は使えません」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない・クーポン画面に 知らせが 重なる（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
+  need(c.arriveMsg && c.arriveMsg.ok, `行き先に 着いた ときの 知らせが 長い（つぎの 行き先・めいろで ゴールの 名前を くりかえす。${JSON.stringify(c.arriveMsg)}）`);
   need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);
   need(c.playRating && c.playRating.ok, `めいろの ゴールの あとの「めいろ、どうだった？」（★と ひとこと）が 出ない・届かない・同じ 日に また たずねる（${JSON.stringify(c.playRating)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);

@@ -2188,6 +2188,53 @@ function isshikiStep(hx, by, u, now) {
   if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
   m.drawn++; dirty = true;
 }
+// お米つぶの はずさんぽ（hazusanpo.js）：西尾市の 幡豆の 町なか（海べでは ない 所）で 止まって じっと すると、お米の うしろが 幡豆の ひとこまに なる。三ヶ根山の 山並み・スカイライン・カーネーション・あじさいと ひまわり畑が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 幡豆の 中だけ・ゲームボーイの4色では 出さない。海べは ほりだしが 先。お米の うしろに 描く
+const hazusanpo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function hazusanpoStep(hx, by, u, now) {
+  const m = hazusanpo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_HAZUSANPO || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_HAZUSANPO;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_hazusanpo', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const fade = Math.min(1, age / 500);
+  ctx.globalAlpha = fade;
+  if (id === 'yamanami') {   // 三ヶ根山の 山並み：段々の 山が 3つ かさなる
+    px(-20, 14, 40, 1, '#4a6a3a'); px(-20, 11, 14, 3, '#7aa06a'); px(-17, 8, 8, 3, '#7aa06a'); px(-15, 6, 4, 2, '#7aa06a');
+    px(-6, 10, 26, 4, '#5a8a4c'); px(0, 7, 14, 3, '#5a8a4c'); px(4, 4, 6, 3, '#5a8a4c'); px(6, 2, 2, 2, '#5a8a4c');
+    px(8, 11, 12, 3, '#3e6e3a'); px(11, 9, 6, 2, '#3e6e3a');
+  } else if (id === 'skyline') {   // スカイライン：山を ジグザグに のぼる 道と 小さな 車
+    px(-18, 14, 36, 1, '#4a6a3a'); px(-14, 10, 28, 4, '#5a8a4c'); px(-9, 6, 18, 4, '#5a8a4c'); px(-4, 2, 8, 4, '#5a8a4c');
+    px(-12, 12, 24, 1, '#d8d4c8'); px(-8, 9, 16, 1, '#d8d4c8'); px(-3, 5, 8, 1, '#d8d4c8'); px(6, 9, 2, 3, '#d8d4c8'); px(-9, 6, 2, 3, '#d8d4c8');
+    const ph = calmMotion ? 0.4 : (t * 0.25) % 1;
+    px(-10 + ph * 20, 10.5, 3, 1.5, '#d8302c'); px(-9.5 + ph * 20, 10, 1.5, 0.8, '#fff7e6');
+  } else if (id === 'carnation') {   // カーネーション：くきを のばした ピンクの 花が ならぶ
+    px(-18, 14, 36, 1, '#6e5a3a');
+    for (let i = 0; i < 5; i++) {
+      const fx = -15 + i * 7, sw = calmMotion ? 0 : Math.sin(t * 1.5 + i) * 0.6, top = 5 + (i % 2) * 2;
+      px(fx + 1, top + 2, 1, 12 - (top - 5), '#3e8a3c'); px(fx - 1 + sw, top, 5, 3, i % 2 ? '#f08ab0' : '#e85a8a'); px(fx + sw, top - 1, 3, 1, '#f8c0d4'); px(fx + 1 + sw, top + 1, 1, 1, '#fff0f4');
+    }
+  } else {   // あじさいと ひまわり畑：左に あじさい、右に ひまわり
+    px(-18, 14, 36, 1, '#6e5a3a');
+    px(-17, 8, 8, 6, '#6a86d8'); px(-15, 6, 6, 3, '#8aa0e8'); px(-19, 10, 4, 4, '#a07ad8'); px(-12, 11, 5, 3, '#a07ad8'); px(-16, 9, 1, 1, '#c8d4f8'); px(-12, 9, 1, 1, '#c8d4f8');
+    for (let i = 0; i < 2; i++) {
+      const fx = 4 + i * 9, sw = calmMotion ? 0 : Math.sin(t * 1.2 + i * 2) * 0.6, top = 3 + i * 2;
+      px(fx + 2, top + 3, 1, 14 - top - 3, '#3e8a3c'); px(fx + sw, top, 5, 5, '#f2c230'); px(fx + 1 + sw, top + 1, 3, 3, '#6a4220'); px(fx - 1 + sw, top + 2, 1, 1, '#f2c230'); px(fx + 5 + sw, top + 2, 1, 1, '#f2c230');
+    }
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
 // お米つぶの じょうかまちさんぽ（jokamachi.js）：西尾城の あと（西尾市歴史公園・旧近衛邸・尚古荘）の そばで 止まって じっと すると、お米の うしろが 城下町の ひとこまに なる。丑寅櫓・鍮石門・西条城・6万石・旧近衛邸の 抹茶・尚古荘・祇園祭・三河の小京都が 7秒ごとに かわり、かわるたび お米が ひと言。
 // 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 西尾城の あとの そばの 中だけ・ゲームボーイの4色では 出さない。ちゃせきより 先に 出る（ちゃせきは 譲る）。お米の うしろに 描く
 const jokamachi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
@@ -7278,6 +7325,7 @@ function frame(now) {
     shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
+    hazusanpoStep(hx, by, u, now);   // 幡豆の 町なかで じっと すると 山と 花の ひとこま（三ヶ根山・スカイライン・カーネーション・あじさい・ひまわり。hazusanpo.js）
     jokamachiStep(hx, by, u, now);   // 西尾城の あとの そばで じっと すると 城下町の ひとこま（丑寅櫓・鍮石門・祇園祭など。jokamachi.js。ちゃせきに 先んじる）
     chatsumiStep(hx, by, u, now);   // 稲荷山茶園公園の そばで じっと すると 茶畑の ひとこま（茶摘み・てん茶・川霧。chatsumi.js。ちゃせきに 先んじる）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）

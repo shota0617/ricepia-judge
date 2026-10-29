@@ -1086,6 +1086,12 @@ async function walkTo(page, id) {
     P.nightForce(null);
     return { night, day, toast, ok: night.n > 0 && night.warm >= night.n && day.n === 0 && !toast };
   });
+  // てん茶の 覆い（朝の 改善 10）：4月15日〜5月20日ごろ だけ、茶畑に 覆いの 棚（10月は かけない）。絵が 描ける
+  R.checks.kabuse = await page.evaluate(() => {
+    const K = nishioPixel.kabuse, on = d => K.on(Date.parse('2026-' + d + 'T10:00:00+09:00'));
+    const r = { apr10: on('04-10'), apr20: on('04-20'), may10: on('05-10'), may25: on('05-25'), now: K.on(), paint: K.paint() };
+    return { ...r, ok: !r.apr10 && r.apr20 && r.may10 && !r.may25 && !r.now && r.paint > 500 };
+  });
   // 朝の ひかり（朝の 改善 9）：日本時間 5〜8時に ほんのり あたたかい 色（6時が いちばん・8時で 消える）。10時（ふだんの テストの 時刻）には かけない
   R.checks.morning = await page.evaluate(async () => {
     const M = nishioPixel.morning, at = t => +M.level(Date.parse('2026-10-16T' + t + ':00+09:00')).toFixed(2);
@@ -2086,7 +2092,8 @@ async function walkTo(page, id) {
     const picked = await w.page.evaluate(() => { const g = nishioGo.state.guide; return g ? g.name : ''; });
     const closed = !(await st()).open;
     const off = await w.page.evaluate(() => { const t = document.getElementById('komeTalkToggle'); t.click(); const r = !nishioKomeTalk.on() && !nishioKomeTalk.say(['テスト']); t.click(); return r && nishioKomeTalk.on(); });
-    const hello = /^はじめ/.test(seen[0] || '') && seen.some(t => /はじめまして/.test(t));   // さいしょに 話すのは あいさつ（文字を 打つ とちゅうで 見る ことが あるので、言い切った ことは あとの こまで 見る）
+    const said = seen.filter((t, i) => !(seen[i + 1] && seen[i + 1].startsWith(t)));   // 文字を 打つ とちゅうで 見た ものは のぞく（つぎの こまが その つづき）
+    const hello = /はじめまして/.test(said[0] || '');   // さいしょに 言い切るのは あいさつ
     R.checks.komeTalk = { firstWhileHowto: s0.open && s0.howto, seen, ch, want, picked, closed, off, ok: !(s0.open && s0.howto) && hello && ch.length >= 2 && !!want && picked === want && closed && off };
     await w.ctx.close();
   }
@@ -3711,6 +3718,7 @@ async function walkTo(page, id) {
   need(c.chaHana && c.chaHana.ok, `茶畑の 茶の花：10月に 咲かない・ぽつぽつで ない（${JSON.stringify(c.chaHana)}）`);
   need(c.nightLamps && c.nightLamps.ok, `夜の あかり：夜に 街灯が ない・あたたかい 明かりが ない・昼にも 描く・文字を 出す（${JSON.stringify(c.nightLamps)}）`);
   need(c.hamon && c.hamon.ok, `水べの さざなみ：輪が 出ない・消えない・水の となりを 転がっても 出ない・文字を 出す（${JSON.stringify(c.hamon)}）`);
+  need(c.kabuse && c.kabuse.ok, `てん茶の 覆い：4月中ごろ〜5月中ごろ だけで ない・絵が 描けない（${JSON.stringify(c.kabuse)}）`);
   need(c.morning && c.morning.ok, `朝の ひかり：5〜8時の 色の 強さが ちがう・昼にも かける（${JSON.stringify(c.morning)}）`);
   need(c.sentaku && c.sentaku.ok, `物干しの せんたくもの：昼に 出ない・雨や 雪や 夜に 出る・絵が 描けない（${JSON.stringify(c.sentaku)}）`);
   need(c.donguri && c.donguri.ok, `どんぐりも ころころ：10月に 出ない・転がらない・止まらない・お米に かさなる・消えない・森の となりで 落ちない・文字を 出す（${JSON.stringify(c.donguri)}）`);

@@ -225,7 +225,7 @@ const CHECKS = {
     const p = await page(b, 844, 390, '');
     await p.evaluate(() => { KB.manual = true; KB.start(); for (let i=0;i<5;i++) KB.step(1/60); });
     await p.waitForTimeout(50);
-    await p.evaluate(() => { const S = KB.S; S.msg = { text:'表は 白い 糸だけです。袋を まわしましょう', kind:'ng', t:0.5, life:2 }; S.msgY = undefined; });
+    await p.evaluate(() => { const S = KB.S; S.msg = { text:'表でした。袋を まわしましょう', kind:'ng', t:0.5, life:2 }; S.msgY = undefined; });
     await p.waitForTimeout(100); // 1コマ かかせる
     const m = await p.evaluate(() => { const td = document.getElementById('timeDelta'), cv = document.getElementById('cv'); // 動く 前の「−1秒」の 下はし
       return { msgY: KB.S.msgY, msgTop: KB.S.msgTop, tdBottom: td.offsetTop + Math.max(td.offsetHeight, 22) - cv.offsetTop }; });
@@ -385,6 +385,17 @@ const CHECKS = {
     const pm = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.msgY = undefined; S.msg = { text:'その 調子です', kind:'ok', t:0.1, life:2 }; KB.step(1/60);
       return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ band: document.getElementById('stepNow').textContent, y: S.msgY })))); });
     ok(/その 調子です/.test(pm.band) && pm.y === undefined, 'れんしゅうの 声は 上の 帯に 出て、袋の 上に 吹き出しは 出ない', pm);
+    // 84周目（見えにくさ 5）：あいた 袋は「白糸は 自然に ぬけます」も 言う・まとめと 結果では キャンバスを 読まない・字 200%（幅 195）
+    const dn = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'一本どり！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
+    ok(/一本どり/.test(dn) && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);
+    const ah = await p.evaluate(() => { KB.start(); const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ res: !document.getElementById('result').hidden, cv: document.getElementById('cv').getAttribute('aria-hidden') })))); });
+    ok(ah.res && ah.cv === 'true', '結果の 間は キャンバス（前の 袋の 文）を 読み上げない', ah);
+    await p.setViewportSize({ width:195, height:422 }); await p.waitForTimeout(100);
+    const z2 = await p.evaluate(() => { const r = [...document.querySelectorAll('#result .talk>.say')].map(e => e.getBoundingClientRect().right); return { right: Math.max(...r), W: innerWidth }; });
+    ok(z2.right <= z2.W + 1, '幅 195（字 200% の かわり）で 結果の 吹き出しが はみ出さない', z2);
+    const z3 = await p.evaluate(async () => { document.getElementById('result').hidden = true; KB.startPractice(); const S = KB.S; S.bag.slide = 0; for (let i=0;i<3;i++){ KB.step(1/60); await new Promise(r => requestAnimationFrame(r)); } return { seam: KB.layout().seamY, banner: S.bannerBottom, H: KB.size().H }; });
+    ok(z3.seam >= z3.banner + 20, '幅 195 の れんしゅうで 上の 帯が 縫い目を かくさない', z3);
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     await p.setViewportSize({ width:320, height:568 }); // 65周目：じこベスト・はじめての ランク・袋の じこベストの 行が ふえても
     const ag4 = await p.evaluate(() => { localStorage.setItem('mishin-best2','5000'); localStorage.setItem('mishin-bestbags','3'); KB.start(); const S = KB.S; S.score = 8000; S.bags = 9; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });

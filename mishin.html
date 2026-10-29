@@ -102,7 +102,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk{display:flex;gap:8px;align-items:flex-end;text-align:left}
 .talk>.who{position:relative;flex:0 0 40px;width:40px;line-height:0}
 .talk>.who svg{width:100%;height:auto;display:block}
-.talk>.say{position:relative;flex:1;margin:0;background:#fbf3e0;color:#3e2a1a;border:2px solid #7a5a30;border-radius:18px 14px 18px 6px;padding:9px 13px;font-size:16px;line-height:1.55;font-weight:700}
+.talk>.say{position:relative;flex:1;min-width:0;overflow-wrap:anywhere;margin:0;background:#fbf3e0;color:#3e2a1a;border:2px solid #7a5a30;border-radius:18px 14px 18px 6px;padding:9px 13px;font-size:16px;line-height:1.55;font-weight:700}
 .talk>.say::before{content:'';position:absolute;left:-10px;bottom:9px;border:7px solid transparent;border-right:10px solid #7a5a30;border-left:0}
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
@@ -164,6 +164,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 .fb{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:6px}
 .fb i{font-style:normal;display:flex;align-items:center;gap:6px;font-size:15px;color:var(--ink-dim)}
 .fb svg{width:min(110px,30vw);height:22px}
+@media (max-width:259px){.steps .talk>.who{display:none} .steps .talk>.say::before,.steps .talk>.say::after{display:none}} /* 字 200% など せまい 画面の れんしゅう：帯の 顔を 消して 行を へらす（84周目） */
 @media (max-width:340px){body:not(.menu) button.sound{bottom:calc(68px + env(safe-area-inset-bottom,0px))}} /* れんしゅうの「やめて 手順を 見る」に かさねない */
 @media (max-width:300px){.res{grid-template-columns:1fr}.grow{flex-wrap:wrap}}
 @media (max-width:380px){.hanko{width:72px;height:72px;font-size:12px;right:-4px;top:-2px}}
@@ -202,7 +203,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
     <div class="hcell r"><span class="hlab">あけた袋</span><span class="hval" id="bags">0</span></div>
   </div>
   <div id="steps" class="steps" hidden></div>
-  <button type="button" id="soundBtn" class="sound" aria-pressed="true">音 あり</button>
+  <button type="button" id="soundBtn" class="sound" aria-pressed="true" aria-label="音・ふるえ">音 あり</button>
   <div id="timeDelta"></div>
 
   <div id="loading" role="status" hidden><span data-d="komeBlink" class="d-load"></span><span>袋を よういして います…</span></div>
@@ -383,7 +384,7 @@ function startGame(practice){
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
   Object.assign(S,{bestAt:(()=>{ try{ return +localStorage.getItem('mishin-best2')||0; }catch(e){ return 0; } })(),passedBest:false,lastBag:false,lastPulled:0,lastIdle:0,ending:0,hopT:[0,0,0,0],peckT:0,peckAll:false,mark:'',markT:0,mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
     bagNo:0,liftT:0,dirEff:1,quick:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
-  S.practice = practice;
+  S.practice = practice; S.bannerMax = 0; drawMsg.said = new Set(); /* 読み上げは 1回の ゲームで 同じ 文 1回（84周目） */
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true; $('loading').hidden = true; coinAuto = false;
   setTimeout(measureHud, 0); // HUD が 出てから はかる
@@ -551,7 +552,7 @@ function down(x,y){
     if(w!=='L' && w!=='R' && !S.practice){ say(b.face==='front' ? '表です。袋を タップして まわして ください' : '縫い目の 端を つまんで ください','ok'); S.pinchHint = 1.6; return; } // まん中を つまんでも なにも おきない → 声と 見本
     if(w==='L' || w==='R'){
       if(b.face==='front'){
-        S.fronts++; S.combo=0; S.feverT=0; S.streak=0; b.wrong=true; addTime(R.timeFront); birdsReact('？'); say('表は 白い 糸だけです。袋を まわしましょう','ng'); audio.knot();
+        S.fronts++; S.combo=0; S.feverT=0; S.streak=0; b.wrong=true; addTime(R.timeFront); birdsReact('？'); say('表でした。袋を まわしましょう','ng'); audio.knot();
         return;
       }
       if(!b.single && w!==b.start){
@@ -753,7 +754,8 @@ function srSay(text){ const sr = document.getElementById('sr'); if(!sr) return; 
 let W=360,H=640,DPR=1;
 function layout(){
   const bagW = Math.min(W*(S.practice ? 0.76 : 0.86), 420);
-  const seamY = Math.round(Math.max(210, Math.min(H*0.36, H-300)));
+  let seamY = Math.round(Math.max(210, Math.min(H*0.36, H-300)));
+  if(S.practice && S.bannerMax) seamY = Math.round(Math.min(H - 110, (S.soundTop || H) - 30, Math.max(seamY, S.bannerMax + 36))); /* 字 200% などで 帯が 高い ときは 縫い目を 下げる（84周目。一度 下げたら その れんしゅうの 間は もどさない） */
   const x0 = W/2 - bagW/2 + 14, x1 = W/2 + bagW/2 - 14; // 縫い目は 口の 縁 ちかくまで
   const k = bagW / BAG.mouthW; // Blender の 絵の 1px が 画面で 何 px か（絵は 1mm＝1.5px なので、画面の 1mm＝k×1.5px）
   return { bagW, seamY, x0, x1, bagH: H - seamY, k, mouthTop: seamY - (BAG.seamY - BAG.topY)*k }; // 袋は 画面の 下へ つづく
@@ -1203,7 +1205,7 @@ function drawSeamBack(L, b){
   const frac = Math.min(1, (b.pulled + (onPull ? b.sub/needNow : 0)) / n);
   const vp = Math.floor(frac*nv);
   const knotOf = j => b.knots.has(Math.floor(j*n/nv));
-  const headKnot = onPull && b.knots.has(b.pulled), jit = headKnot ? Math.min(1,S.tension)*1.2*Math.sin(S.t*70) : 0;
+  const headKnot = onPull && b.knots.has(b.pulled), jit = headKnot && !KB.calm ? Math.min(1,S.tension)*1.2*Math.sin(S.t*70) : 0;
   const ry = Math.max(1.6, 1.3*V.mm);
   // 目（針穴・ゆるんだ 輪・のこりの くさり）は、ほどけた 目の 数が かわる ときだけ かきなおす。きつい目で ふるえる 間は その場で かく
   const paintStitches = ()=>{
@@ -1514,7 +1516,7 @@ function drawMsg(L){
     let t = talkLine(S.bag); const d = drawMsg, b = S.bag, key = b ? `${b.id}|${b.phase}|${b.face}|${!!b.tangle}` : ''; /* 袋・場面が かわったら すぐ かえる */
     if(t !== d.cur){ if(d.cur && key === d.key && S.t - d.at < 0.8 && !/強すぎ/.test(t)) t = d.cur; /* 「強すぎます」は 待たせない */ else { d.cur = t; d.at = S.t; d.key = key; } }
     if(!t) return;
-    const bid = S.bag && S.bag.id; if(d.bid !== bid){ d.bid = bid; d.said = new Set(); }
+    if(!d.said) d.said = new Set(); /* 空に するのは startGame（11袋で 同じ 文を くりかえし 読まない） */
     if(!d.said.has(t)){ d.said.add(t); if(!/ゆるめて|きつい目|横へ/.test(t)) srSay(t.replace(/[→←]/g, '')); }
     m = {text:t, kind:'talk', t:1, life:99};
   }
@@ -1523,7 +1525,7 @@ function drawMsg(L){
   ctx.save(); ctx.globalAlpha = a;
   // 手がきの 吹き出し（米屋の POP の ように）。ok は クラフト紙に 墨、ng は 生成りに 朱、talk は 生成りに 墨（小さめ）
   const ok = m.kind!=='ng', big = m.kind==='ok'; let fs = big ? (W<360 ? 19 : 21) : (W<360 ? 15 : 17);
-  const face = S.practice ? 0 : 34, room = W - 64 - face; // 左に こめつぶの 顔（れんしゅうは 上の 帯に こめつぶが いるので 顔なし）
+  const face = S.practice || W < 260 ? 0 : 34, room = W - 64 - face; // 左に こめつぶの 顔（れんしゅうは 上の 帯に こめつぶが いるので 顔なし）
   ctx.font = `700 ${fs}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   let lines = [m.text];
   if(ctx.measureText(m.text).width > room){ // 長い 文は 字を つぶさず 2行に（空白の まん中に いちばん 近い 所で）
@@ -1532,6 +1534,8 @@ function drawMsg(L){
     if(sp.length){ const k = sp.reduce((p, q) => Math.abs(q-mid) < Math.abs(p-mid) ? q : p); lines = [m.text.slice(0, k+1).trim(), m.text.slice(k+1).trim()]; }
   }
   let tw = Math.max(...lines.map(l => ctx.measureText(l).width));
+  if(tw > room && W < 260){ const g = []; let cur = ''; for(const part of m.text.split(/(?<=[、。 　])/)){ if(cur && ctx.measureText(cur + part).width > room){ g.push(cur.trim()); cur = part; } else cur += part; } g.push(cur.trim()); /* 字 200% など せまい 画面：字を つぶさず 3行まで（84周目） */
+    if(g.length <= 3){ lines = g; tw = Math.max(...lines.map(l => ctx.measureText(l).width)); } }
   if(tw > room){ fs = Math.max(13, Math.floor(fs*room/tw)); ctx.font = `700 ${fs}px "Zen Maru Gothic",sans-serif`; tw = Math.min(room, Math.max(...lines.map(l => ctx.measureText(l).width))); }
   let lh = fs*1.25, bw = tw + 30, bh = lh*lines.length + 14;
   // 置く 高さ：上は 帯／HUD の 下、下は メーター（タイムアタック）・縫い目（れんしゅう）の 上。しっぽ 9px（78周目：2行で 縫い目や メーターに かからない）
@@ -1653,16 +1657,16 @@ function stepText(){
   return 'つまんだまま、<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引きましょう。はなして つまみなおしても 大丈夫です';
 }
 function syncUI(dt){
-  const menu = S.mode!=='play'; if(menu !== syncUI.menu){ syncUI.menu = menu; document.body.classList.toggle('menu', menu); }
+  const menu = S.mode!=='play'; if(menu !== syncUI.menu){ syncUI.menu = menu; document.body.classList.toggle('menu', menu); cv.setAttribute('aria-hidden', String(menu)); /* まとめ・結果で 前の 袋の 文を 読まない（84周目） */ }
   if(S.practice && S.mode==='play'){
     if(!ui.steps._built){
       ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">やめて 手順を 見る</button></div><div class="talk"><span class="who" aria-hidden="true">${DOODLE.kome('smile')}</span><div class="now say" id="stepNow" aria-live="polite"></div></div>`; /* こめつぶが 話す（74周目） */
       ui.steps._built = true;
     }
-    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, now = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : stepText(); /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
+    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, okNow = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : '', now = !okNow ? stepText() : S.bag && S.bag.done && !stepText().startsWith(okNow) ? okNow + ' ' + stepText() : okNow; /* あいた 袋は「白糸は 自然に ぬけます」も 言う（84周目） */ /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
     if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
     if(ui.steps._now !== now){ const first = !ui.steps._now; ui.steps._now = now; $('stepNow').innerHTML = now; if(first) srSay($('stepNow').textContent); /* 帯を 作った すぐは aria-live が 読まない ので */ cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
-      const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; }
+      const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; S.bannerMax = Math.max(S.bannerMax || 0, S.bannerBottom); S.soundTop = $('soundBtn').getBoundingClientRect().top - c.top; }
   }
   const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;
   audio.zipSet(pulling ? Math.min(1.2, S.tension) : 0, S.tension);

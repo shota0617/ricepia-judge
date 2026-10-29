@@ -124,12 +124,17 @@
   .farmerVerdict { margin: 0 0 8px; padding: 8px 12px; border: 2px solid #3b2f22; border-radius: 14px; background: #fffdf6; color: #2b2116; font-weight: 700; font-size: 14px; text-align: left; }
   .farmerVerdict small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
   #farmerSay small { display: block; font-size: 11px; font-weight: 400; color: #6b5a44; }
-  #toast { position: fixed; left: 50%; top: 64px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
+  /* 上の 丸い 窓：素朴な キャラクターが 運転している（毎コマ 描く） */
+  #badge { position: fixed; left: 50%; top: max(6px, env(safe-area-inset-top)); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; pointer-events: none; z-index: 2; }
+  #badgeCv { width: 76px; height: 76px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 10px rgba(0,0,0,.28); }
+  body.touch #badge { top: calc(max(8px, env(safe-area-inset-top)) + 46px); }   /* スマホ：上の ボタンの 下 */
+  #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
+  #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
   #rotateHint { display: none; }
   @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
   /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
-  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; } }
+  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; } #badge { top: 140px; } #badgeCv { width: 64px; height: 64px; } }
   @media (max-width: 640px) and (orientation: portrait) {
     body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }
@@ -172,6 +177,7 @@
 <div class="pad hidden" id="padB"><button data-k="lookBack" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
+<div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span></div>
 <div id="farmerSay"></div>
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
 <div id="coach" class="hidden"></div>
@@ -7682,7 +7688,7 @@ $('bStart').onclick = () => {
   if (S.done) { location.reload(); return; }    // 終わったあとは、同じ田んぼ・お題で始めから
   if (!S.started) startCrank();  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく
   $('start').classList.add('hidden');
-  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'padL', 'padC', 'padB', 'padD', 'padR'] : ['hud', 'bar']) $(id).classList.remove('hidden');
+  for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padL', 'padC', 'padB', 'padD', 'padR'] : ['hud', 'bar', 'badge']) $(id).classList.remove('hidden');
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
   if (!S.started) {
     S.started = true;
@@ -7938,6 +7944,69 @@ const COACH = (() => {
   return { step, update, msg, get turns() { return turns; }, get off() { return off; } };
 })();
 
+
+// ---- 上の 丸い 窓：ふわふわの フードを かぶった 素朴な キャラクターが 麦わら帽子で 運転している（運営者の ねがい：
+// 動画の アプリの 上の 丸い 窓のように、かわいい キャラクターが なめらかに 動く）。2D の 絵を 毎コマ 描く。
+// ハンドルを 切ると ハンドルが 回って 体が かたむき、目も そちらを 見る。耕していると 小きざみに ゆれ、でこぼこで はずむ。
+// 止まると のんびり きょろきょろ。ときどき まばたき。エンストは 目を つぶって ひとやすみ、おわりは にっこり
+const BADGE = (() => {
+  const cv = $('badgeCv'), g = cv.getContext('2d'), stEl = $('badgeSt'), W = 152, C = W / 2;
+  let seed = 71; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  let t = 0, lean = 0, wheel = 0, look = 0, blinkT = 2, label = '';
+  const SKY = { asa: ['#ffe7c4', '#cfe5f4'], hiru: ['#a9d8f5', '#e6f4fd'], yu: ['#f4b47c', '#fde3c2'], yoru: ['#25304a', '#46557a'] }[TOD];
+  const FIELD = SHIRO ? '#8fa3a8' : season === 'aki' ? '#b59a62' : '#8f7a52';
+  function fluff(x, y, r, col) {                  // ふわふわの 毛：ふちに 小さな 丸を ならべる
+    g.fillStyle = col;
+    for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2; g.beginPath(); g.arc(x + Math.cos(a) * r, y + Math.sin(a) * r * 1.08, r * 0.17, 0, 7); g.fill(); }
+    g.beginPath(); g.ellipse(x, y, r, r * 1.08, 0, 0, 7); g.fill();
+  }
+  function draw(dt) {
+    if (!S.started) return;
+    dt = Math.min(dt, 0.1); t += dt;
+    const working = S.rotDown && S.rotPos < 0.1 && Math.abs(S.v) > 0.05, mv = Math.min(1, Math.abs(S.v) / 1.2);
+    const idle = Math.abs(S.v) < 0.05 && !S.stalled && !S.done, sleep = S.stalled && !S.done;
+    lean += (-S.steer * 0.5 - lean) * Math.min(1, dt * 4);
+    wheel += (S.steer * 3 - wheel) * Math.min(1, dt * 8);
+    look += ((idle ? Math.sin(t * 0.7) : S.steer * 1.2) - look) * Math.min(1, dt * 3);
+    if ((blinkT -= dt) < 0) blinkT = 2.4 + R() * 3.2;
+    const bob = (working ? Math.sin(t * 15) * 0.7 : Math.sin(t * 2.1) * 1.3) + Math.sin(t * 8.7) * mv * 1.4;
+    // 空と 遠くの 田んぼ
+    let gr = g.createLinearGradient(0, 0, 0, W); gr.addColorStop(0, SKY[0]); gr.addColorStop(0.62, SKY[1]); gr.addColorStop(0.62, FIELD); gr.addColorStop(1, FIELD);
+    g.fillStyle = gr; g.fillRect(0, 0, W, W);
+    // キャラクター
+    g.save(); g.translate(C + lean * 9, 80 + bob); g.rotate(lean * 0.22);
+    fluff(0, 10, 40, TOD === 'yoru' ? '#bfae96' : '#e8d5ba');
+    const fx = look * 5;
+    g.fillStyle = TOD === 'yoru' ? '#d8c8b4' : '#f8eadb'; g.beginPath(); g.ellipse(fx, 4, 27, 22, 0, 0, 7); g.fill();   // 顔
+    g.fillStyle = 'rgba(240,130,120,.5)';                                                                                // ほっぺ
+    for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(fx + sx * 16, 11, 5.5, 3.8, 0, 0, 7); g.fill(); }
+    g.strokeStyle = '#2a211a'; g.fillStyle = '#2a211a'; g.lineWidth = 2; g.lineCap = 'round';
+    const ex = fx + look * 2.5;
+    for (const sx of [-1, 1]) {                    // 目：ふだんは 点、まばたきと ひとやすみは 線
+      if (blinkT < 0.13 || sleep) { g.beginPath(); g.arc(ex + sx * 9, 2, 3, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); }
+      else if (S.done) { g.beginPath(); g.arc(ex + sx * 9, 4, 3, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }   // にっこり
+      else { g.beginPath(); g.arc(ex + sx * 9, 2, 3.4, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + sx * 9 + 1.1, 0.8, 1.1, 0, 7); g.fill(); g.fillStyle = '#2a211a'; }
+    }
+    g.beginPath(); g.arc(fx, 9, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();   // 口
+    // 麦わら帽子
+    g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(0, -30, 38, 8, 0, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(0, -38, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(-20, -38, 40, 6);
+    g.fillStyle = '#b8443a'; g.fillRect(-20, -35, 40, 4);
+    g.restore();
+    // ハンドルと 手（手前）
+    g.save(); g.translate(C, 150); g.rotate(wheel * 0.22);
+    g.strokeStyle = '#3c3c40'; g.lineWidth = 7; g.beginPath(); g.arc(0, 0, 40, 0, 7); g.stroke();
+    g.lineWidth = 5; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, -40); g.stroke();
+    g.fillStyle = TOD === 'yoru' ? '#bfae96' : '#e8d5ba';
+    g.strokeStyle = '#a88f6c'; g.lineWidth = 1.6;
+    for (const a of [-0.75, 0.75]) { g.beginPath(); g.arc(Math.sin(a) * 40, -Math.cos(a) * 40, 7.5, 0, 7); g.fill(); g.stroke(); }   // ふわふわの 手
+    g.restore();
+    const l = S.done ? 'おつかれさま' : sleep ? 'ひとやすみ' : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
+    if (l !== label) { label = l; stEl.textContent = l; }
+  }
+  return { draw, get label() { return label; } };
+})();
+
 // ---- まわす ----
 let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0;
 function frame(now) {
@@ -7985,6 +8054,7 @@ function frame(now) {
   LIFE.update(dt);
   WIND_T.value += dt;
   CLOUD_T.value += dt;
+  BADGE.draw(dt);
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -8022,7 +8092,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

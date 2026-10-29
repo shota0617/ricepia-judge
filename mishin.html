@@ -112,7 +112,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talks{display:flex;flex-direction:column;gap:10px}
 .talk>.who.num{flex-basis:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f1dfba;color:#3e2a1a;font:400 20px var(--display);line-height:1;border:2px solid #7a5a30} /* まとめの 手順は 番号（こめつぶは はじめの 1つ だけ） */
 /* お店の LINE（リストづくり。75周目のあと：運営者の 声「リストマーケティングに 対応」） */
-a.go.lineAdd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:10px;text-decoration:none;background:#06c755;color:#fff;font:700 17px var(--body);min-height:52px;padding:8px 16px;border-radius:14px;box-shadow:0 4px 0 #04913f} .go.lineAdd small{font-size:12px;font-weight:700;opacity:.9} .go.lineAdd:focus-visible{outline:3px solid #3e2a1a;outline-offset:2px}
+a.go.lineAdd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:10px;text-decoration:none;background:#047a35;color:#fff;font:700 18px var(--body);min-height:56px;padding:8px 16px;border-radius:14px;box-shadow:0 4px 0 #035a27} .go.lineAdd small{font-size:15px;font-weight:700} /* 外でも 読める 濃い 緑（白い 字と 比 5 くらい。81周目） */ .go.lineAdd:focus-visible{outline:3px solid #3e2a1a;outline-offset:2px}
 details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src summary{cursor:pointer;min-height:32px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .panel h1.one{font-size:clamp(30px,9vw,40px);margin-bottom:18px} /* はんこが 図に かからない ように */
@@ -237,10 +237,10 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
         <div class="talk"><span class="who num">4</span><p class="say">ほどいた 糸は <strong>投入口に 入れず ごみ箱へ</strong> お願いします。</p></div>
         <div class="talk"><span class="who num">5</span><p class="say">引っかかったら、袋の 表側（白い 糸が まっすぐの 面）の <strong>白糸</strong>を 少し 引いてから、また 赤を 引きます（JAの 案内として 紹介されている 方法）。</p></div>
       </div>
+      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">価格表や 売り出しの お知らせは、らいすぴあの LINE で お届けして います。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-coin" target="_blank" rel="noopener">LINE で 友だち追加 <small>（価格表・売り出し情報）</small></a></div></div>
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
       <button class="go sub" id="toGame" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
       <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">取れない ときは <b>白糸だけ ハサミで 切って</b> 赤を 引く 方法も あります（農家の 説明）。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。紙くずも ごみ箱へ お願いします。</p></div>
-      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">価格表や 売り出しの お知らせは、らいすぴあの LINE で お届けして います。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-coin" target="_blank" rel="noopener">LINE で 友だち追加 <small>（価格表・売り出し情報）</small></a></div></div>
     </div>
   </div>
 
@@ -346,7 +346,7 @@ const PRACTICE_N = 3;
 function makePracticeBag(k){
   const b = makeBag(Math.min(k, 3));
   Object.assign(b, { kind:'genmai', golden:false, single:false, start:'L', safe:600, printed: k===1,
-    face: k===1 ? 'front' : 'back', N: k===0 ? 10 : 12, knots: new Set(k===1 ? [6] : []), hint: k<2, forceTangle: k===2 ? 4 : -1 });
+    face: k===1 ? 'front' : 'back', N: k===0 ? 10 : 12, knots: new Set(k===1 ? [3] : []) /* 画面の まん中 あたりで（はしで 止まると 横へ 引けない。81周目） */, hint: k<2, forceTangle: k===2 ? 4 : -1 });
   return b;
 }
 function pullDir(b){ return b.from==='R' ? -1 : 1; }
@@ -1308,7 +1308,7 @@ function drawSeamBack(L, b){
       ctx.beginPath(); ctx.arc(wt.x, wt.y, 26, 0, 7); ctx.strokeStyle='rgba(62,42,26,.85)'; ctx.lineWidth=6; ctx.stroke();
       ctx.strokeStyle=`rgba(240,196,76,${0.8+0.2*pulse})`; ctx.lineWidth=S.practice ? 5 : 3; ctx.stroke();
       ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      if(S.practice){ ctx.font='700 20px "Zen Maru Gothic",sans-serif'; otext('↓', Math.min(W-70, Math.max(70, wt.x + sd*80)), wt.y + 4, '#ffd0cc'); } // れんしゅう：表側の 白糸の 端（輪の 中）
+      if(S.practice){ ctx.font='700 20px "Zen Maru Gothic",sans-serif'; otext('↓', wt.x, wt.y + 40, '#ffd0cc'); } // れんしゅう：表側の 白糸の 端（輪の 中）
     }
   }
   if(b.hint && S.bag===b && b.phase==='look'){
@@ -1631,14 +1631,14 @@ $('toGame').addEventListener('click', ()=>startGame(false));
 // れんしゅうの いまの 手順（上の 帯）
 function stepText(){
   const b = S.bag; if(!b) return '';
-  const k = (t, key) => kbUser ? t.replace(/（<b>袋を タップ<\/b>）|<b>指で つまむ<\/b>|（タップでも ほぐせます）/, key) : t; /* キーの 人には キーの ことばで */
+  const k = (t, key) => kbUser ? t.replace(/（<b>袋を タップ<\/b>）|に <b>指を おいて<\/b>、少し ずらして ください|（タップでも ほぐせます）/, key) : t; /* キーの 人には キーの ことばで */
   if(b.phase==='look' && b.face==='front') return k('<b>表</b>ですね（白い 糸が まっすぐ）。袋を まわして <b>反対の面</b>を 見ましょう（<b>袋を タップ</b>）', '（<b>スペース</b>）');
-  if(b.phase==='look') return k(b.wrongEnd ? 'そちらは 縫い始めです。反対の端の、<b>赤い糸が 白い輪に ささっている</b>方を <b>指で つまむ</b>のが 正解です'
-    : '裏ですね。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）を <b>指で つまむ</b>ところから です', '<b>←・→キー</b>で つまむ（おしたまま 引く）');
+  if(b.phase==='look') return k(b.wrongEnd ? 'そちらは 縫い始めです。反対の端の、<b>赤い糸が 白い輪に ささっている</b>方に <b>指を おいて</b>、少し ずらして ください'
+    : '裏ですね。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）に <b>指を おいて</b>、少し ずらして ください', 'を <b>←・→キー</b>で つまんで ください（おしたまま 引く）');
   if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずしましょう</b>（つまんだまま 少し 引きます。下の 窓で 見えます）';
-  if(b.tangle) return k('引っかかりました。<b>表側の白糸</b>を つまんで 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
+  if(b.tangle) return k('引っかかりました。<b>黄色い 輪の 白い 糸</b>を 下へ 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
-  if(b.knots.has(b.pulled)) return '<b>きつい目</b>で 止まりました。指を はなさずに、<b>ゆっくり</b> 横へ どうぞ';
+  if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
   if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと 引っかかる</b> 袋。直し方を ためして みましょう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引いて ください';
   return 'つまんだまま、<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引きましょう。はなして つまみなおしても 大丈夫です';
 }
@@ -1736,7 +1736,7 @@ function fingerUp(e){
   const f = fingers.get(e.pointerId); fingers.delete(e.pointerId); if(fingers.size < 2) needOpen = false;
   if(oneCand && oneCand.id===e.pointerId) oneCand = null;
   if(pinch==='touch' || (pinch==='one' && !fingers.size)){ pinch=null; up(); }
-  if(tapCand && tapCand.id===e.pointerId && e.type==='pointerup' && performance.now()-tapCand.t < 350 && f) tap(f.x, f.y);
+  if(tapCand && tapCand.id===e.pointerId && e.type==='pointerup' && (performance.now()-tapCand.t < 350 || (S.practice && S.bag && S.bag.face==='front' && S.bag.phase==='look')) && f) tap(f.x, f.y); /* れんしゅうの 表は 長押しでも まわす（81周目） */
   tapCand = null;
 }
 cv.addEventListener('pointerup', fingerUp); cv.addEventListener('pointercancel', fingerUp);

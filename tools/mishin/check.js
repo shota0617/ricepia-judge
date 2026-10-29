@@ -348,7 +348,7 @@ const CHECKS = {
     const sn61 = await p.evaluate(() => document.getElementById('stepNow').textContent);
     ok(!r61.bonus || /9,000/.test(r61.bonus), 'おまけの 行は 新しい じこベストの 点', r61.bonus);
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
-    ok(/指で つまむ/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
+    ok(/指を おいて/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 画面（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
@@ -363,6 +363,9 @@ const CHECKS = {
     await p.setViewportSize({ width:390, height:844 });
     const pr = await p.evaluate(() => { KB.startPractice(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; S.bag.face = 'back'; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<40;i++) KB.step(1/60); return { face:S.bag.face, flip:S.bag.flipT }; });
     ok(pr.face==='back' && pr.flip===0, 'れんしゅうの 1袋目の 裏は 袋を タップしても まわらない', pr);
+    const lp = await p.evaluate(async () => { KB.startPractice(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; S.bag.face = 'front'; S.bag.k = 1;
+      ev('pointerdown',21,L.x0+30,L.seamY+30); await new Promise(r => setTimeout(r, 700)); ev('pointerup',21,L.x0+30,L.seamY+30); for (let i=0;i<5;i++) KB.step(1/60); return { flip:S.bag.flipT }; });
+    ok(lp.flip > 0, 'れんしゅうの 表は 長押しでも まわる', lp);
     // 78周目：低い 画面の 題でも ボタンが 見える・2行の 吹き出しが 縫い目や メーターに かからない
     for (const [w, h] of [[667,375],[844,390],[320,568]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });

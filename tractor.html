@@ -173,6 +173,9 @@
   body.calm .card h1 { font-size: 0; }
   body.calm .card h1::before { content: '🚜'; font-size: 34px; }
   body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
+  /* はじめは 選ぶ 画面を 出さず、読みこむ あいだは 進みぐあいの 棒（と 読みこめなかった ときの 知らせ）だけ。季節・お題は ≡ メニューで かえる */
+  #start.loading .card > :not(.prog):not(#progText) { display: none !important; }
+  #start.loading #progText:not(.err) { display: none !important; }
   body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
   body.calm #start label.easy input { margin-top: 0; }
   body.calm #start label.easy > span { font-size: 0; line-height: 0; }
@@ -234,7 +237,7 @@
 <div id="keyHint" class="hidden"><kbd>↑</kbd><kbd>↓</kbd> 前・うしろ　<kbd>←</kbd><kbd>→</kbd> ハンドル　<kbd>スペース</kbd> ロータリー上げ下げ　<kbd>H</kbd> 操作の表</div>
 <div class="sheet hidden" id="help"><div class="card"><div id="helpBody"></div><button class="go" id="bHelpClose">とじる（H）</button></div></div>
 
-<div class="sheet" id="start">
+<div class="sheet loading" id="start">
   <div class="card">
     <p class="challenge hidden" id="challenge"></p>
     <span class="tag">🧪 試作版</span>
@@ -656,6 +659,8 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   setRotBtn();
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   $('bStart').disabled = false;
+  $('start').classList.remove('loading');
+  if (!params.has('menu')) $('bStart').onclick();   // そのまま 草かりから 始める
 }).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
@@ -7978,6 +7983,12 @@ $('bGear').onclick = () => shiftGear(S.gear >= 4 ? -3 : 1);   // ボタンは 1�
 function nextCam() { if (INTRO.cam) { INTRO.cam = false; return; } camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
+if (params.has('menu')) $('start').classList.remove('loading');   // ?menu=1：今までの はじめの 画面（通しの テスト）
+// 音：自分で 始めないので、はじめて さわった ときに 音を 出せるように する（ブラウザは さわるまで 音を 出さない）
+for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, function unlock() {
+  if (audio && audio.ac.state === 'suspended' && soundOn) audio.ac.resume();
+  removeEventListener(ev, unlock, true);
+}, true);
 $('bMenu').onclick = () => { $('start').classList.remove('hidden'); };
 // 操作の表（？・H）：はじめの画面と同じ表を出す
 function toggleHelp() {
@@ -8255,7 +8266,9 @@ $('bStart').onclick = () => {
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー
   if (!S.started) {
     S.started = true;
-    if (ART.on) { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); }
+    if (LOOP.friend !== null) setTimeout(() => DETAIL ? toast('🏁 友だちは ' + LOOP.friend + ' 点。きみは何点とれる？', 5) : SAY.say('ともだちは ' + LOOP.friend + ' てん。きみは なんてん とれるかな'), 6000);
+    const artGo = () => { $('artBox').classList.remove('hidden'); toast('お題「' + ART.name + '」：白線の内側だけを耕そう。地図の黄色がまだの所、赤ははみ出し。できたら「📸 完成」', 7); };   // 田んぼアートの 地図と お題は 草かりの あとで
+    if (ART.on) INTRO.on ? INTRO.after(artGo) : artGo();
     // はじめの「下げて前へ」は、画面下の案内（COACH）が出す
     setTimeout(() => voice('car'), ART.on ? 12000 : 9000);
     if (ART.on) setTimeout(() => voice('art'), 30000);
@@ -8710,7 +8723,7 @@ const INTRO = (() => {
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
   const put = (k, h, w = GW[k]) => { E.set(cut[k] ? 0 : GL[k], GR[k], 0, 'YXZ'); Q.setFromEuler(E); M4.compose(V.set(GX[k], GY[k] - 0.02, GZ[k]), Q, SC.set(w, h, w)); grass.setMatrixAt(k, M4); };   // 刈ったら まっすぐ 短く
   const A = new THREE.Vector3(), B = new THREE.Vector3(), CP = new THREE.Vector3(), CL = new THREE.Vector3();
-  let on = false, cam = false, said = false, ending = false, peekT = 0, cutN = 0, fade = null;
+  let on = false, cam = false, said = false, ending = false, peekT = 0, cutN = 0, fade = null, then = [];
   function setup() {                               // 田んぼの 形を 読みこんで resetPos の あと（土手の 高さを はかる）
     if (OFF) return;
     const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0);
@@ -8734,6 +8747,7 @@ const INTRO = (() => {
     if (!on) return;
     on = false; cam = false; chase.set(0, 0, 0);
     mower.visible = false; P.Rotary.visible = true;
+    then.splice(0).forEach(f => f());              // 草かりの あとに 出す もの（田んぼアートの お題）
     if (teleport) { key.fwd = key.back = 0; resetPos(); }
   }
   function update(dt) {
@@ -8771,14 +8785,14 @@ const INTRO = (() => {
   }
   function camera_(dt) {                           // うしろの 左から 低く 見る（草刈機と 土手が 右に 見える）
     if (camera.parent !== scene) scene.add(camera);
-    rig.localToWorld(CP.set(0.9, 1.75, -4.6));
+    const tall = camera.aspect < 1; rig.updateMatrixWorld(); rig.localToWorld(CP.set(tall ? -0.3 : 0.9, tall ? 2.0 : 1.75, tall ? -5.6 : -4.6));   // 置いた ばかりの ときも 今の 場所から
     if (chase.lengthSq() === 0) chase.copy(CP);
     chase.lerp(CP, Math.min(1, dt * 3));
     camera.position.copy(chase);
-    camera.lookAt(rig.localToWorld(CL.set(-0.8, 0.7, 3)));
+    camera.lookAt(rig.localToWorld(CL.set(tall ? -1.9 : -0.8, 0.6, 3)));   // 縦長の 画面は 草刈機が 入るように 右へ
     camera.near = 0.2;
   }
-  return { setup, update, end, camera: camera_, mower, grass, get on() { return on; }, get cam() { return cam; }, set cam(v) { cam = v; chase.set(0, 0, 0); }, get cutN() { return cutN; }, get cutFrac() { return cutN / N; } };
+  return { setup, update, end, after: f => then.push(f), camera: camera_, mower, grass, get on() { return on; }, get cam() { return cam; }, set cam(v) { cam = v; chase.set(0, 0, 0); }, get cutN() { return cutN; }, get cutFrac() { return cutN / N; } };
 })();
 
 // ---- 1 回の あそびは 5 分：走りはじめてから（メニュー・操作の表を 開いているあいだと、タブを はなれているあいだは 数えない）

@@ -854,7 +854,7 @@ function draw(){
   ctx.restore();
   drawFx();
   ctx.restore();
-  if(S.mode==='play') drawMeter(L);
+  if(S.mode==='play' && !S.ending) drawMeter(L); /* 「そこまで！」の 間は メーターを 出さない */
   if(S.practice && S.mode==='play') drawPracticeAids(L, b);
   else if(S.mode==='play' && b.k < 2 && !b.done) drawFingerGauge(L, b); // はじめの 2袋は 指の 上にも 目安
   drawFingers(L);
@@ -893,6 +893,7 @@ function drawPracticeAids(L, b){
   drawFingerGauge(L, b);
 }
 // 指の すぐ 上の 張りの 目安（れんしゅう と、タイムアタックの 最初の 2袋）
+const gaugeOn = b => !!b && b.phase==='pull' && S.held && !b.tangle && !b.done && !(!S.practice && b.k===0 && b.pulled<3); /* 張りの 目安（こめつぶの 顔）が 出て いる */
 function drawFingerGauge(L, b){
   if(!S.practice && b.k===0 && b.pulled<3) return; // 1袋目の はじめは 点線の 見本と「つまんだまま…」が 出て いる
   if(b.phase==='pull' && S.held && !b.tangle){
@@ -900,10 +901,10 @@ function drawFingerGauge(L, b){
     const x = Math.min(W-50, Math.max(50, S.px - (low ? pullDir(b)*70 : 0))), y = Math.max(L.seamY + 48, S.py - 62); // 字が 縫い目に かからない 高さ
     const t = Math.min(1.5, S.tension), red = S.tension>1;
     ctx.lineWidth=7; ctx.lineCap='round';
-    ctx.strokeStyle='rgba(19,26,46,.75)'; ctx.beginPath(); ctx.arc(x, y+24, 30, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
+    ctx.strokeStyle='rgba(62,42,26,.6)'; ctx.beginPath(); ctx.arc(x, y+24, 30, Math.PI*1.15, Math.PI*1.85); ctx.stroke();
     ctx.strokeStyle = red ? '#ef5350' : '#5ccf7a'; ctx.beginPath(); ctx.arc(x, y+24, 30, Math.PI*1.15, Math.PI*(1.15 + 0.7*t/1.5)); ctx.stroke();
     // 弧の 先に こめつぶ：ちょうど よければ にこにこ、速すぎると びっくり（顔で 張りが わかる）
-    const ae = Math.PI*(1.15 + 0.7*t/1.5); doodle(red || S.dirEff < 0.5 ? 'komeWow' : 'kome', x + 30*Math.cos(ae), y + 24 + 30*Math.sin(ae) - 4, 24);
+    const ae = Math.PI*(1.15 + 0.7*t/1.5); doodle(red || S.dirEff < 0.5 || b.knots.has(b.pulled) ? 'komeWow' : 'kome', x + 30*Math.cos(ae), y + 24 + 30*Math.sin(ae) - 4, 24);
     ctx.font='700 18px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
     const side = S.dirEff < 0.5; // 上や 下へ 引いて いる（横へ 引かないと ほどけない）
     if(!side) return; /* 字は やめて こめつぶの 顔と 吹き出しで（74周目）。向きが ちがう ときだけ 矢印 */
@@ -1547,7 +1548,7 @@ function drawMsg(L){
   ctx.save(); ctx.globalAlpha = a;
   // 手がきの 吹き出し（米屋の POP の ように）。ok は クラフト紙に 墨、ng は 生成りに 朱、talk は 生成りに 墨（小さめ）
   const ok = m.kind!=='ng', big = m.kind==='ok'; let fs = big ? (W<360 ? 19 : 21) : (W<360 ? 15 : 17);
-  const face = S.practice || W < 260 ? 0 : 34, room = W - 64 - face; // 左に こめつぶの 顔（れんしゅうは 上の 帯に こめつぶが いるので 顔なし）
+  const stamp = m.text==='そこまで！', face = S.practice || W < 260 || stamp || gaugeOn(S.bag) ? 0 : 34 /* 目安の こめつぶが いる 間は 吹き出しの 顔を 出さない（98周目） */, room = W - 64 - face; // 左に こめつぶの 顔（れんしゅうは 上の 帯に こめつぶが いるので 顔なし）
   ctx.font = `700 ${fs}px "Zen Maru Gothic",sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
   let lines = [m.text];
   if(ctx.measureText(m.text).width > room){ // 長い 文は 字を つぶさず 2行に（空白の まん中に いちばん 近い 所で）
@@ -1569,11 +1570,13 @@ function drawMsg(L){
   ctx.translate(W/2, my);
   s = Math.min(s, (W-10)/(bw+face)); ctx.scale(s, s); ctx.translate(face/2, 0); // ふくらんでも はみ出さない
   let seed = 0; for(const c of m.text) seed = (seed*31 + c.charCodeAt(0)) % 9973; // ゆれは 字で きまる（毎コマ ふるえない）
-  bubblePath(-bw/2, -bh/2, bw, bh, seed, face ? 'left' : '');
-  ctx.fillStyle = big ? '#f1dfba' : ok ? '#fbf3e0' : '#fbefe6'; ctx.fill();
-  ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.strokeStyle = ok ? '#7a5a30' : '#c8352b'; ctx.stroke();
-  ctx.fillStyle = ok ? '#3e2a1a' : '#b3261e'; lines.forEach((l, i) => ctx.fillText(l, 0, 1 + (i - (lines.length-1)/2)*lh, tw));
-  if(face) doodle(!ok || /強すぎ|もつれ|きつい目です/.test(m.text) ? 'komeWow' : big && /一本どり|あきました|こえました|フィーバー！|ほぐれ|ゆるみ/.test(m.text) ? 'komeJoy' : 'kome', -bw/2 - face/2 - 4, 2, face); // 話して いる こめつぶ（あぶない ときは びっくり顔）
+  if(stamp) ctx.rotate(-0.07); /* 「そこまで！」は はんこ（98周目） */
+  bubblePath(-bw/2, -bh/2, bw, bh, seed, face ? 'left' : stamp ? 'none' : '');
+  ctx.fillStyle = stamp ? '#fbf3e0' : big ? '#f1dfba' : ok ? '#fbf3e0' : '#fbefe6'; ctx.fill();
+  ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.strokeStyle = stamp ? '#c8352b' : ok ? '#7a5a30' : '#c8352b'; ctx.stroke();
+  if(stamp){ ctx.lineWidth = 1.4; ctx.strokeRect(-bw/2 + 5, -bh/2 + 5, bw - 10, bh - 10); }
+  ctx.fillStyle = stamp ? '#b3261e' : ok ? '#3e2a1a' : '#b3261e'; lines.forEach((l, i) => ctx.fillText(l, 0, 1 + (i - (lines.length-1)/2)*lh, tw));
+  if(face) doodle(!ok || /強すぎ|もつれ|きつい目です/.test(m.text) ? 'komeWow' : big && /一本どり|あきました|こえました|フィーバー！|ほぐれ|ゆるみ/.test(m.text) ? 'komeJoy' : 'kome', -bw/2 - face/2 - 4, 2 - (big && !KB.calm && m.t < 0.3 ? 4*Math.sin(Math.PI*m.t/0.3) : 0), face); /* はじめに 1回 ぴょん（98周目） */ // 話して いる こめつぶ（あぶない ときは びっくり顔）
   ctx.restore();
 }
 // 少し ゆれた 角まるの 吹き出し。しっぽは 下の まん中（袋の 口を さす）
@@ -1587,7 +1590,7 @@ function bubblePath(x, y, w, h, seed, tail){
   ctx.quadraticCurveTo(x+w+1.5+j(7), y+h/2, x+w+j(8), y+h-r);
   ctx.quadraticCurveTo(x+w+j(9), y+h+j(10), x+w-r, y+h);
   const tx = tail==='left' ? x + r + 14 : x + w/2, tp = tail==='left' ? tx - 16 : tx + 2; /* left：しっぽを 左の こめつぶの 方へ */
-  ctx.lineTo(tx+9, y+h+j(11)*0.4); ctx.lineTo(tp, y+h+t); ctx.lineTo(tx-6, y+h);
+  if(tail !== 'none'){ ctx.lineTo(tx+9, y+h+j(11)*0.4); ctx.lineTo(tp, y+h+t); ctx.lineTo(tx-6, y+h); } else ctx.lineTo(tx-6, y+h);
   ctx.quadraticCurveTo((tx-6 + x+r)/2, y+h+1.5+j(12), x+r, y+h);
   ctx.quadraticCurveTo(x+j(13), y+h+j(14), x+j(15), y+h-r);
   ctx.quadraticCurveTo(x-1.5+j(16), y+h/2, x+j(17), y+r);

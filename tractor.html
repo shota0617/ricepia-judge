@@ -8604,7 +8604,7 @@ const TALK = (() => {
     if (LOAD_ST === 'ng') { talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', [], 'ng'); return; }   // 読みこみ失敗
     const sea = SEA[season].replace(/^\S+\s/, ''), art = artName(ART_ID);
     const lead = changed === 'season' ? `${sea}に したよ。お題は「${art}」。` : changed === 'art' ? `お題を「${art}」に したよ。いまは ${sea}。`
-      : `やあ。きょうは ぼくが トラクターを 運転するよ。いまは ${SEA[season]}、お題は「${art}」。`;
+      : `やあ。いっしょに トラクターを 運転しよう。いまは ${SEA[season]}、お題は「${art}」。`;
     talk(lead + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
       [ok ? '▶ これで 運転する' : '⏳ じゅんび中…', () => $('bStart').click(), true],
       ['季節を かえる', seasons],

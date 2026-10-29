@@ -334,7 +334,7 @@ const CHECKS = {
       const gap = document.getElementById('best').innerHTML, again = document.getElementById('againBtn').textContent;
       KB.start(); S.score = 5100; KB.step(1/60); const said = S.msg && S.msg.text; S.score = 8000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       return { gap, again, said, up: document.getElementById('best').innerHTML }; });
-    ok(/あと 1,000点/.test(bs.gap) && /あと 1,000点/.test(bs.again || ''), 'じこベストに とどかない ときは「じこベストまで あと 何点」（「もう一回」の 中にも。103周目）', bs);
+    ok(/あと 1,001点/.test(bs.gap) && /あと 1,001点/.test(bs.again || ''), 'じこベストに とどかない ときは「じこベストまで あと 何点」（「もう一回」の 中にも。103周目）', bs);
     ok(bs.said==='じこベストを こえました！', '遊んで いる 間に じこベストを こえたら 言う', bs.said);
     ok(/<b>じこベスト更新/.test(bs.up) && /はじめて「頼れるパートさん」/.test(bs.up), 'じこベスト更新は 金の 字・はじめての ランクも 出る', bs.up);
     // 60周目（見えにくさ 4回目）：おわりの 読み上げに 金の 行・タイムアタックの キャンバスの 名前・キーの 人には キーの ことばと 見える フォーカス
@@ -352,12 +352,14 @@ const CHECKS = {
     const r61 = await p.evaluate(() => { const ids = KB.GOALS.map(g=>g.id); localStorage.setItem('mishin-goals', JSON.stringify({ day: (()=>{ const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); })(), done: ids }));
       localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 9000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       const bonus = (document.querySelector('#rGoals .bonus')||{}).textContent || '';
+      localStorage.setItem('mishin-best2', '9000'); KB.start(); S.score = 5000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const bonus2 = (document.querySelector('#rGoals .bonus')||{}).textContent || '';
+      KB.start(); S.score = 9000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const tie = document.getElementById('best').textContent;
       KB.start(); S.wrongs = 1; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const tip = document.getElementById('tip').textContent;
       document.dispatchEvent(new PointerEvent('pointerdown', { bubbles:true })); document.dispatchEvent(new KeyboardEvent('keydown', { key:'=', ctrlKey:true, bubbles:true }));
-      KB.startPractice(); S.bag.slide = 0; S.bag.face = 'back'; return { bonus, tip }; });
+      KB.startPractice(); S.bag.slide = 0; S.bag.face = 'back'; return { bonus, bonus2, tie, tip }; });
     await p.waitForTimeout(200);
     const sn61 = await p.evaluate(() => document.getElementById('stepNow').textContent);
-    ok(!r61.bonus || !/おまけ/.test(r61.bonus) || /9,000/.test(r61.bonus), 'おまけの 行は 新しい じこベストの 点（更新した 回は おまけを 言わない）', r61.bonus);
+    ok(!/おまけ/.test(r61.bonus) && /おまけ/.test(r61.bonus2) && /9,000/.test(r61.bonus2) && /おなじ 点/.test(r61.tie) && !/あと 0点/.test(r61.tie), 'おまけの 行：更新した 回は 言わない・しない 回は じこベストの 点・同じ 点は「おなじ 点」（103・104周目）', r61);
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指を おいて/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
@@ -422,6 +424,12 @@ const CHECKS = {
     // 101周目：タイムアタックの 時計は はじめて さわって から
     const ck = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); for (let i=0;i<120;i++) KB.step(1/60); const t0 = S.time; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<60;i++) KB.step(1/60); const t1 = S.time; KB.manual = false; return { t0, t1 }; });
     ok(ck.t0 === 30 && ck.t1 < 29.5, 'タイムアタックの 時計は はじめて さわって から へる', ck);
+    const idle = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S; for (let i=0;i<60*10;i++) KB.step(1/60); const t = S.time; KB.manual = false; return t; });
+    ok(idle < 29, 'さわらなくても 8秒 たつと 時計が 動く（キーの 人・放って おいた 人が おわれる）', idle);
+    await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);
+    const a320 = await p.evaluate(() => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b: Math.round(r.bottom), h: Math.round(r.height), H: innerHeight, t: document.getElementById('againBtn').textContent }; });
+    ok(a320.b <= a320.H && /あと/.test(a320.t), '320×568 で「もう一回（じこベストまで あと…）」が 画面の 中', a320);
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 92周目：端の 近くでも 縫い目から はなれた 1本指タップは ふつうに 袋を まわす（罰に しない）
     await p.setViewportSize({ width:844, height:390 }); await p.waitForTimeout(100);
     const pr2 = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(4); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts; KB.tap(L.x0 + 50, L.seamY + 45); return { fronts: S.fronts - f0, flip: b.flipT > 0 }; });

@@ -232,7 +232,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       <p class="season" id="season" hidden><span data-d="ine" class="d-ine"></span>いまは 新米の きせつ</p>
       <h1>ミシン糸<br/>一本どり</h1>
       <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">西尾の 米屋 らいすぴあの こめつぶです。いらっしゃいませ。米袋の 口の 糸を <b>1本で</b> ぬいて みましょう。はじめての 方は れんしゅう から どうぞ。</p></div>
-      <div class="perch"><button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px);width:100%">糸の取り方を れんしゅう（2分）</button></div>
+      <div class="perch"><button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px);width:100%;word-break:keep-all;overflow-wrap:anywhere">糸の取り方を れんしゅう（2分）</button></div>
       <button class="go sub" id="startBtn" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
       <div class="goals" id="goals"></div>
       <details class="src"><summary>パソコンでの あそび方・出典</summary>
@@ -1741,7 +1741,7 @@ function syncUI(dt){
   put(ui.time, 'low', S.time<8);
   put(ui.bags, 'text', String(S.bags));
   const mult = multOf();
-  put(ui.combo, 'text', S.feverT>0 ? 'フィーバー '+Math.ceil(S.feverT)+'秒' : mult>1 ? 'スルスル ×'+mult : '');
+  put(ui.combo, 'text', S.feverT>0 ? 'フィーバー '+Math.ceil(S.feverT)+'秒' : mult>1 ? (W < 260 ? '×'+mult : 'スルスル ×'+mult) : ''); /* とても せまい（字 200%）と まん中の「+3秒」に かさなる（145周目） */
   put(ui.combo, 'color', mult>=5 ? 'var(--gold)' : 'var(--ok)');
   ui.tdT += dt; if(ui.tdT < 1.2){ put(ui.td, 'opacity', String(Math.max(0, 1 - ui.tdT/0.9))); put(ui.td, 'transform', `translate(-50%, ${KB.calm ? 0 : -ui.tdT*20}px)`); } /* 消えた あとは 書かない */
 }

@@ -419,6 +419,15 @@ const CHECKS = {
       try{ localStorage.removeItem('mishin-goals'); }catch(e){}
       KB.manual = m0; KB.today = null; KB.start(); return { ids, tip1, tip2, tip3, btn2, line1, line2 }; });
     ok(r143.ids.includes('quick8') && /あと 1つ/.test(r143.tip1) && /もつれが多め/.test(r143.tip3) && !/緑で 引けた/.test(r143.tip2) && /達成/.test(r143.btn2) && r143.line1 !== 'none' && r143.line2 === 'none', '結果：目標 あと 1つを 先に・数は 速さの ヒントの ときだけ・達成は もう一回の 中・LINE の 説明は 1回目 だけ', r143);
+    // 145周目：字 200%（幅 195px で かわりに 見る）でも「れんしゅう」を 途中で 切らない・「×2」と「+3秒」が かさならない
+    await p.setViewportSize({ width:195, height:280 }); await p.waitForTimeout(150);
+    const z145 = await p.evaluate(async () => { const t = document.getElementById('title'); t.hidden = false; document.body.classList.add('menu'); const btn = document.getElementById('practiceBtn'), tx = btn.firstChild, i = tx.textContent.indexOf('れんしゅう');
+      const rr = k => { const r = document.createRange(); r.setStart(tx, k); r.setEnd(tx, k+1); return Math.round(r.getBoundingClientRect().top); }, sameLine = rr(i) === rr(i+4);
+      t.hidden = true; document.body.classList.remove('menu'); const m0 = KB.manual; KB.manual = true; KB.start(); const S = KB.S; S.combo = 0.5; KB.step(1/60); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const c = document.getElementById('combo').getBoundingClientRect(), d = document.getElementById('timeDelta').getBoundingClientRect(), d0 = d.left, cx = c.right; KB.manual = m0;
+      return { sameLine, combo: document.getElementById('combo').textContent, comboRight: Math.round(cx), deltaLeft: Math.round(d0) }; });
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(150);
+    ok(z145.sameLine && z145.comboRight <= z145.deltaLeft, '字 200%：れんしゅうの ボタンを ことばの 途中で 切らない・倍率と 時間の 字が かさならない', z145);
     // 129周目：LINE は ricepia.jp の「価格表・売り出し情報」と 同じ リンク（ことばと あう）
     const lnk2 = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => a.getAttribute('href')));
     ok(lnk2.length === 2 && lnk2.every(h => /\/lin\.ee\/AULbClm\?from=mishin-(coin|result)$/.test(h)), 'LINE の リンクは 価格表・売り出し情報の もの（from つき）', lnk2);

@@ -2143,6 +2143,42 @@ function tsunStep(hx, by, u, now) {
   ctx.globalAlpha = 1;
   t.drawn++; dirty = true;
 }
+// お米つぶの かげえ（kage.js）：じっと 止まって いると、足もとの 影の となりに、いる 町と 月に 合った 名物の 影が すうっと のびる。7秒ごとに つぎの 影。動くと すっと 消える。
+// 影は drawNakama を 小さな 絵に 描いて 黒く ぬり、ひらたく のばして 貼る（絵は 1つずつ しまっておく）。ゲームボーイの4色・夜（めぐりの 時間）・ねむって いる間は 出さない
+const kage = { cur: null, last: '', still0: 0, t0: 0, chk: 0, said: false, drawn: 0, pics: {} };   // drawn：描いた 数（テスト用）
+function kagePic(id, q) {   // 名物の 黒い 影の 絵（16×16 の 点を q 倍に したもの）
+  const key = id + q;
+  if (kage.pics[key]) return kage.pics[key];
+  const c = document.createElement('canvas'); c.width = c.height = 16 * q;
+  const k = ctx, g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  ctx = g;
+  try { drawNakama(8 * q, 8 * q, q, id, 0, true); } finally { ctx = k; }
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
+  return (kage.pics[key] = c);
+}
+function kageDraw(hx, sy, shw, u, now, still) {   // sy：影の 高さ。shw：影の はば
+  const k = kage;
+  if (!window.NISHIO_KAGE || !still || gbOn || worldMode || driving || rp.x === null || nightLevel() >= 1 || roll.idle > 12) { k.cur = null; k.still0 = 0; k.said = false; return; }
+  if (!k.still0) k.still0 = now;
+  if (now - k.still0 < window.NISHIO_KAGE.STILL) return;
+  if (now >= k.chk) {   // 0.5秒に 1回：町に 合う 影を たしかめる（7秒たったら つぎの 影）
+    k.chk = now + 500;
+    if (!k.cur || now - k.t0 >= window.NISHIO_KAGE.EACH) {
+      const c = kasaFind(), d = c ? window.NISHIO_KAGE.next(Object.assign(c, { month: new Date().getMonth() + 1 }), k.last) : null;
+      if (!d) { k.cur = null; return; }
+      k.cur = d; k.last = d.id; k.t0 = now;
+      if (G.track) G.track('kome_kage', { id: d.id });
+      if (!k.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(d.say, 2400, 'happy'); k.said = true; }
+    }
+  }
+  if (!k.cur) return;
+  const q = Math.max(1, Math.round(u * 0.9)), age = now - k.t0, fade = Math.min(1, age / 700) * Math.min(1, (window.NISHIO_KAGE.EACH - age) / 500 + 0.0001);
+  const pic = kagePic(k.cur.id, q), dw = 16 * q * 1.3, dh = 16 * q * 0.38, grow = calmMotion ? 1 : Math.min(1, 0.3 + age / 700);   // すうっと のびる
+  ctx.globalAlpha = 0.26 * Math.max(0, fade);
+  ctx.drawImage(pic, Math.round(hx + shw * 0.45), Math.round(sy - dh * 0.5), Math.round(dw * grow), Math.round(dh));
+  ctx.globalAlpha = 1;
+  k.drawn++; dirty = true;
+}
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -6839,6 +6875,7 @@ function frame(now) {
         ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
         ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
       } else { ctx.beginPath(); ctx.ellipse(hx, hcy + T * 0.3 + u, shw / 2, 2 * u, 0, 0, Math.PI * 2); ctx.fill(); }   // お米と いっしょに なめらかに（点より 細かく 動く。整数に 丸めると 影だけ カクッと 動いた）
+      kageDraw(hx, hcy + T * 0.3 + u, shw, u, now, roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2);   // じっと すると 名物の 影が のびる（kage.js）
     }
     const sq = roll.sq;
     let sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる

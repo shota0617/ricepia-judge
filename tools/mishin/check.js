@@ -394,6 +394,13 @@ const CHECKS = {
     for (const [w, h] of [[667,375],[844,390],[320,568],[568,320]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); t.hidden = true; document.body.classList.remove('menu'); return { b:r.bottom, H:innerHeight }; }); /* あとの 確かめに のこさない */
       ok(tb.b <= tb.H, `低い 画面（${w}×${h}）の 題で「れんしゅう」の ボタンが 見える`, tb); }
+    // 128周目：れんしゅうで 速すぎると 帯が「ゆっくり」と 言う（ほめ言葉より 先）・題の ボタンの 時間は 2分
+    const fw = await p.evaluate(async () => { KB.manual = true; KB.startPractice(); const S = KB.S, b = S.bag; Object.assign(b, { slide:0, face:'back', phase:'pull', pulled:2 }); S.held = true; S.tension = 1.3; S.msg = { text:'その 調子です', kind:'ok', t:0.1, life:2 };
+      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const fast = document.getElementById('stepNow').textContent;
+      S.tension = 0.9; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const mid = document.getElementById('stepNow').textContent;
+      S.tension = 0.5; S.msg = null; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const slow = document.getElementById('stepNow').textContent; S.held = false; KB.manual = false;
+      return { fast, mid, slow, btn: document.getElementById('practiceBtn').textContent }; });
+    ok(/速すぎ/.test(fw.fast) && /速すぎ/.test(fw.mid) && !/速すぎ/.test(fw.slow) && /2分/.test(fw.btn), 'れんしゅうで 速すぎると 帯が ゆっくりと 言い、ちらつかない', fw);
     // 127周目：手順の 吹き出しは 朱の 字を 1か所まで・結果の こめつぶは 見出しの 1つだけ・育つ 絵の 字は 段の 名前を くり返さない
     const kw = await p.evaluate(() => ({ reds: [...document.querySelectorAll('#coinDone .talks .say')].map(e => e.querySelectorAll('strong').length), faces: [...document.querySelectorAll('#result .talk:not(.cont)>.who')].length, cap: document.getElementById('growCap').textContent }));
     ok(kw.reds.length >= 5 && kw.reds.every(n => n <= 1) && kw.faces <= 1 && !/（.+さん|五代目|ベテラン|見習い|はじめての袋）/.test(kw.cap), '手順の 吹き出しの 朱は 1か所・結果の こめつぶは 1つ・育つ 絵の 字は くり返さない', kw);
@@ -479,8 +486,8 @@ const CHECKS = {
     ok(pr2.fronts===0 && pr2.flip, '表の 袋の 端の 近くでも 縫い目から はなれた タップは まわす（罰なし）', pr2);
     await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 84周目（見えにくさ 5）：あいた 袋は「白糸は 自然に ぬけます」も 言う・まとめと 結果では キャンバスを 読まない・字 200%（幅 195）
-    const dn = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'一本どり！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
-    ok(/一本どり/.test(dn) && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);
+    const dn = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'きれいに あきました！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
+    ok(/^きれいに あきました！ 赤が/.test(dn) && (dn.match(/あきました/g)||[]).length === 1 && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);
     const dn2 = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あきました！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
     ok(/白糸は 自然に ぬけます/.test(dn2), '一本どりで ない ときも「白糸は 自然に ぬけます」が 帯に 出る', dn2);
     // 93周目（お客さん目線 4）：下へ 引くと「横へ」、とちゅうで はなすと「また 指を」、やめて 見に 来た 人には 手順を LINE より 先に

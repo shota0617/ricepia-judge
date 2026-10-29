@@ -234,7 +234,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       <p class="season" id="season" hidden><span data-d="ine" class="d-ine"></span>いまは 新米の きせつ</p>
       <h1>ミシン糸<br/>一本どり</h1>
       <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">西尾の 米屋 らいすぴあの こめつぶです。いらっしゃいませ。米袋の 口の 糸を <b>1本で</b> ぬいて みましょう。はじめての 方は れんしゅう から どうぞ。</p></div>
-      <div class="perch"><button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px);width:100%">糸の取り方を れんしゅう（1分）</button></div>
+      <div class="perch"><button class="go" id="practiceBtn" type="button" style="font-size:clamp(16px,5vw,21px);width:100%">糸の取り方を れんしゅう（2分）</button></div>
       <button class="go sub" id="startBtn" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
       <div class="goals" id="goals"></div>
       <details class="src"><summary>パソコンでの あそび方・出典</summary>
@@ -781,7 +781,7 @@ function finishBag(){
     if(b.from==='R' && !b.single) S.rightClean++;
     S.clean++; S.streak++; S.bestStreak = Math.max(S.bestStreak, S.streak);
     S.score += 100*mult*g + 50*(S.streak-1);
-    say(b.golden ? (S.streak>=2 ? '新米 '+S.streak+'連続！' : '新米 一本どり！') : S.streak>=2 ? '一本どり '+S.streak+'連続！' : '一本どり！','ok');
+    say(S.practice ? 'きれいに あきました！' /* QR から 来た 人は「一本どり」の 説明を 見て いない（128周目） */ : b.golden ? (S.streak>=2 ? '新米 '+S.streak+'連続！' : '新米 一本どり！') : S.streak>=2 ? '一本どり '+S.streak+'連続！' : '一本どり！','ok');
     audio.clean(S.streak); S.hopT = [0.4, 0.55, 0.68, 0.8]; /* 1羽ずつ 少し おくれて はねる（音の「ちゅん」と そろえる） */ // 電線の スズメが よろこんで はねる（2羽目は 少し おくれて）
   } else { say('あきました！','ok'); audio.open(); S.peckT = 0.5; S.peckAll = false; } // 一本どりで ない ときは 首を かしげる
   addTime(dtime);
@@ -1702,6 +1702,8 @@ function stepText(){
   if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずしましょう</b>（つまんだまま 少し 引きます。丸い 窓で 見えます）';
   if(b.tangle) return k('もつれました。<b>強く 引かずに</b>、<b>黄色い 輪の 白い 糸</b>を 下へ 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
+  if(S.held && S.tension>1) b.fastWarn = true; else if(!S.held || S.tension<0.8) b.fastWarn = false; /* 速すぎると もつれる のに 帯は 何も 言わなかった（128周目）。ちらつかない ように 0.8 まで 下がったら けす */
+  if(b.fastWarn && b.phase==='pull') return '<b>速すぎます</b>。もう少し <b>ゆっくり</b> 引いて ください';
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
   if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと もつれる</b> 袋。直し方を ためして みましょう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引いて ください';
   if(!S.held && S.liftT <= 0.8 && b._pullText) return b._pullText; /* はなした 直後は 前の 文の まま（つまみなおす たびに かえない。96周目） */
@@ -1720,7 +1722,7 @@ function syncUI(dt){
       ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">やめて 手順を 見る</button></div><div class="talk"><span class="who" aria-hidden="true">${DOODLE.kome('smile')}</span><div class="now say" id="stepNow"></div></div>`; /* こめつぶが 話す（74周目） */
       ui.steps._built = true;
     }
-    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, okNow = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : '', now = !okNow ? stepText() : S.bag && S.bag.done ? (stepText().startsWith(okNow) ? stepText() : okNow + ' ' + stepText()) : okNow; /* あいた 袋は「白糸は 自然に ぬけます」も 言う（84周目） */ /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
+    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, okNow = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : '', st = stepText(), now = !okNow ? st : S.bag && S.bag.done ? (st.startsWith(okNow) ? st : okNow.endsWith('あきました！') && st.startsWith('あきました！') ? okNow + st.slice(6) : okNow + ' ' + st) : S.bag && S.bag.fastWarn ? st : okNow; /* 「速すぎます」は ほめ言葉より 先 */ /* 「きれいに あきました！ あきました！」と 2回 言わない（128周目） */ /* あいた 袋は「白糸は 自然に ぬけます」も 言う（84周目） */ /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
     if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
     if(ui.steps._now !== now){ ui.steps._now = now; $('stepNow').innerHTML = now; { const bb = S.bag, key = bb ? `${bb.tangles}|${bb.face}|${bb.phase}` : '', t = $('stepNow').textContent; if(!ui.steps._said || ui.steps._bag !== bb || ui.steps._key !== key){ ui.steps._bag = bb; ui.steps._key = key; ui.steps._said = new Set(); } /* 袋・もつれの 回数・面・場面が かわったら また 読む（97周目） */ if(!ui.steps._said.has(t)){ ui.steps._said.add(t); srSay(t); } } /* 帯は aria-live を やめ、袋ごとに まだ 読んで いない 文 だけ 読む（引く たびに 何度も 読まない。96周目） */ cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
       const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; S.bannerMax = Math.max(S.bannerMax || 0, S.bannerBottom); S.soundTop = $('soundBtn').getBoundingClientRect().top - c.top; }

@@ -1930,6 +1930,42 @@ function drawNimotsu(hx, by, u, now, sleepy) {
   const bob = Math.sin(now / 420) * 0.35 * u;
   drawNakama(Math.round(hx), Math.round(by - 12.5 * u + bob), Math.max(1, Math.round(u * 0.8)), kind, 0);
 }
+// お米つぶの ゆめ（yume.js）：ねむって いる あいだ、いる 町の 名物を 頭の 左うえの ゆめの 吹き出しに 見る。おきると、見た ゆめを ひと言。
+// 町と 月で ねむり はじめに 1つ きめる（前と 同じ ゆめは つづけない）。西尾市の 外では 見ない。ねむり はじめた ときだけ さがす
+const yume = { cur: null, last: '', t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function yumeFind() {
+  if (!window.NISHIO_YUME || !LU || rp.x === null || worldMode) return null;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  return window.NISHIO_YUME.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, yume.last);
+}
+function yumeStep(hx, by, u, now, sleepy) {
+  if (sleepy && !yume.cur) {   // ねむり はじめ
+    const y = yumeFind();
+    if (!y) return;
+    yume.cur = y; yume.last = y.id; yume.t0 = now;
+    if (G.track) G.track('kome_yume', { id: y.id });
+  } else if (!sleepy && yume.cur) {   // おきた：見た ゆめを ひと言
+    const y = yume.cur; yume.cur = null;
+    if (!mapCovered()) riceSay(y.say, 2600, 'happy');
+    return;
+  }
+  if (!sleepy || !yume.cur) return;
+  const k = Math.min(1, (now - yume.t0) / 700), bob = calmMotion ? 0 : Math.sin(now / 900) * 0.5 * u, q = Math.max(1, Math.round(u * 0.8));
+  const cx = hx - 15 * u, cy = by - 19 * u + bob;   // 頭の 左うえ（Z は 右うえ）
+  ctx.save(); ctx.globalAlpha = k;
+  ctx.fillStyle = '#fffdf3'; ctx.strokeStyle = '#2a2420'; ctx.lineWidth = Math.max(1, Math.round(u * 0.5));
+  const puff = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); };
+  puff(hx - 8 * u, by - 12 * u, 0.9 * u); puff(hx - 10.5 * u, by - 14.5 * u, 1.4 * u);   // 頭から ゆめへ つづく 小さな まる
+  for (const [dx, dy, r] of [[-3.5, 0, 4.5], [3.5, 0, 4.5], [0, -3, 5], [0, 3, 4.5]]) puff(cx + dx * u, cy + dy * u, r * u);
+  for (const [dx, dy, r] of [[-3.5, 0, 4.5], [3.5, 0, 4.5], [0, -3, 5], [0, 3, 4.5]]) { ctx.beginPath(); ctx.arc(cx + dx * u, cy + dy * u, r * u - ctx.lineWidth, 0, Math.PI * 2); ctx.fill(); }   // ふちの 内がわを ぬりつぶして 1つの くもに
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = k;
+  drawNakama(Math.round(cx), Math.round(cy), q, yume.cur.id, 0);
+  ctx.restore();
+  yume.drawn++; dirty = true;
+}
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -6600,7 +6636,8 @@ function frame(now) {
         ctx.drawImage(dropSprite(q), crisp ? Math.round(dx0) - q : dx0 - q, crisp ? Math.round(dy0) - q : dy0 - q); drop.at = [dx0, dy0]; drop.n++;
         ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm;
       }
-      drawNimotsu(hx, by, u, now, mood === 'sleepy');   // 名所で のせた 持ち物（nimotsu.js）
+      drawNimotsu(hx, by, u, now, mood === 'sleepy');
+      yumeStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

@@ -1554,7 +1554,7 @@ function talkLine(b){
 function drawMsg(L){
   let m = S.msg;
   if(S.practice) return;
-  if(m && m.kind==='ok' && S.held && S.bag && S.bag.phase==='pull' && /強すぎ|きつい目/.test(talkLine(S.bag) || '')) m = null; /* 引いて いる 間の「強すぎ」「きつい目」は よろこびの 声より 先（116周目） */ // れんしゅうは 上の 帯（こめつぶ）が 言う
+  if(m && m.kind==='ok' && S.held && S.bag && S.bag.phase==='pull' && /強すぎ|きつい目です/.test(talkLine(S.bag) || '')) m = null; /* 「きつい目が 来ます」では よろこびを 消さない（118周目） */ /* 引いて いる 間の「強すぎ」「きつい目」は よろこびの 声より 先（116周目） */ // れんしゅうは 上の 帯（こめつぶ）が 言う
   if(!m){
     // 場面の ひとこと：0.8 秒は かえない（張りで 行ったり 来たり しない）。読み上げは 1袋に 同じ 文 1回、矢印は 読まない
     let t = talkLine(S.bag); const d = drawMsg, b = S.bag, key = b ? `${b.id}|${b.phase}|${b.face}|${!!b.tangle}` : ''; /* 袋・場面が かわったら すぐ かえる */
@@ -1741,7 +1741,7 @@ function pos(e){ const r = cv.getBoundingClientRect(); return [e.clientX - r.lef
 // タッチ：2本の 指が 近い（PINCH_ON 以内）と「つまむ」。指の まん中が 糸を もつ 手。
 //   はなれる（PINCH_OFF より 開く）か、どちらかの 指を あげると はなす。1本指で すぐ あげると タップ。
 // マウス：おしている 間を つまんでいる と みなす（パソコン用）。袋の 上の クリックは タップ。
-const PINCH_ON = 120, PINCH_OFF = 170;
+const PINCH_ON = 120, PINCH_OFF = 170; let farTok = 0;
 function oneFingerSay(){ S.oneTries = (S.oneTries || 0) + 1; S.pinchHint = 1.6; if(S.oneTries < 2) say('糸は 二本指で つまんで ください','ok'); else say('ゲームは れんしゅうと ちがい、親指と 人さし指で つまみます','ok', 2.5); } /* 2回目からは くわしく（117周目） */
 const fingers = new Map(); let pinch = null; let tapCand = null; let oneCand = null;
 let needOpen = false; // もつれ・袋の かわりめで はなした あと：二本指を 一度 ひらく まで つまみなおさない（とじた ままの 指で ただで ほぐせない ように）
@@ -1756,7 +1756,7 @@ function oneOk(x, y){
 }
 function oneStart(){ if(!oneCand || pinch) return; const f = fingers.get(oneCand.id); if(!f) return;
   pinch = 'one'; tapCand = null; down(oneCand.x, oneCand.y); if(f.x!==oneCand.x || f.y!==oneCand.y) move(f.x, f.y); oneCand = null; }
-function pinchTold(){ for(const f of fingers.values()) f.told = true; } /* 二本指で つまんだ 指は、1本 はなした あとも「二本指で」と 言わない */
+function pinchTold(){ farTok++; for(const f of fingers.values()) f.told = true; } /* つまめたら「はなれています」は 取りけし（118周目） */ /* 二本指で つまんだ 指は、1本 はなした あとも「二本指で」と 言わない */
 function pinchMid(){ const [a,b2] = [...fingers.values()]; return [(a.x+b2.x)/2, (a.y+b2.y)/2, Math.hypot(a.x-b2.x, a.y-b2.y)]; }
 cv.addEventListener('pointerdown', e=>{
   try{ cv.setPointerCapture(e.pointerId); }catch(_){}
@@ -1777,7 +1777,7 @@ cv.addEventListener('pointerdown', e=>{
     tapCand = null; oneCand = null;
     const [mx,my,d] = pinchMid();
     if(d < PINCH_ON){ pinch = 'touch'; down(mx,my); pinchTold(); }
-    else setTimeout(() => { if(fingers.size===2 && !pinch && S.mode==='play' && !S.ending && pinchMid()[2] >= PINCH_ON){ S.pinchHint = 1.6; say('指が はなれています。親指と 人さし指を 近づけて、赤い 糸の 端を つまんで ください','ok', 2.5); } }, 600); /* 2本の 指が はなれた まま（117周目） */
+    else { const tok = (farTok = (farTok || 0) + 1); setTimeout(() => { const b = S.bag; if(tok===farTok && !S.practice && fingers.size===2 && !pinch && S.mode==='play' && !S.ending && b && b.phase==='look' && b.face==='back' && pinchMid()[2] >= PINCH_ON){ S.pinchHint = 1.6; say('指が はなれています。親指と 人さし指を 近づけて、赤い 糸の 端を つまんで ください','ok', 2.5); } }, 600); } /* 2本の 指が はなれた まま（117周目）。つまんだら 取りけし・れんしゅう では 出さない（118周目） */
   }
 });
 cv.addEventListener('pointermove', e=>{

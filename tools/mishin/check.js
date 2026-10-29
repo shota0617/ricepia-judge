@@ -438,6 +438,11 @@ const CHECKS = {
     ok(ta1.wrong.dt === 0 && ta1.wrong.w === 0 && /縫い始め/.test(ta1.wrong.msg || '') && /はなれて/.test(ta1.far || ''), '教える 袋で 縫い始めを つまんでも 声だけ・2本の 指が はなれて いると 声（117周目）', ta1);
     const z0 = await p.evaluate(async () => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100)); const ag = document.getElementById('againBtn'); return { next: ag.nextElementSibling && ag.nextElementSibling.id, next2: ag.nextElementSibling && ag.nextElementSibling.nextElementSibling && ag.nextElementSibling.nextElementSibling.id }; });
     ok(z0.next === 'tip' && z0.next2 === 'toPractice', '0袋の 結果は「もう一回」の すぐ 下に ヒントと「れんしゅう」', z0);
+    // 118周目：はなれすぎの 声は つまめたら 出さない・れんしゅうでは 出さない。「きつい目が 来ます」で よろこびの 声を 消さない
+    const fa = await p.evaluate(async () => { const out = {}; KB.start(); let S = KB.S, L = KB.layout(); Object.assign(S.bag, { face:'back', slide:0, phase:'look' }); S.msg = null;
+      ev('pointerdown', 41, L.x0, L.seamY); ev('pointerdown', 42, L.x0 + 160, L.seamY); await new Promise(r => setTimeout(r, 100)); ev('pointermove', 42, L.x0 + 20, L.seamY); await new Promise(r => setTimeout(r, 700)); out.pinched = /はなれて/.test((S.msg && S.msg.text) || ''); ev('pointerup', 41, L.x0, L.seamY); ev('pointerup', 42, L.x0 + 20, L.seamY);
+      KB.startPractice(); S = KB.S; L = KB.layout(); S.bag.slide = 0; S.msg = null; ev('pointerdown', 43, L.x0, L.seamY); ev('pointerdown', 44, L.x0, L.seamY + 200); await new Promise(r => setTimeout(r, 700)); out.practice = /はなれて/.test((S.msg && S.msg.text) || ''); ev('pointerup', 43, L.x0, L.seamY); ev('pointerup', 44, L.x0, L.seamY + 200); return out; });
+    ok(!fa.pinched && !fa.practice, '「指が はなれています」は つまめたら 出さない・れんしゅうでは 出さない', fa);
     // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
     const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(/あと 1つで きょうの 目標/.test(near), '目標が あと 1つの ときは ヒントで「あと 1つで きょうの 目標」', near);

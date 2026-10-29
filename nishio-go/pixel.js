@@ -2013,6 +2013,43 @@ function gochisoStep(hx, by, u, now) {
   ctx.globalAlpha = 1;
   g.drawn++; dirty = true;
 }
+// お米つぶの おてだま（otedama.js）：お米が ぴょんと とびはねた とき、いる 町と 月に 合った 西尾の 名物を あたまの 上に ぽーんと ほうりなげ、おちて きたら キャッチして ひと言。
+// 30〜50秒に 1回まで（はじめは 10秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。ほうっている あいだも お米の あたまの 上に ついてくる
+const OTEDAMA_MS = 1300;
+const otedama = { cur: null, last: '', next: 0, prevH: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function otedamaStart(now) {   // ほうる：町と 月に 合う ものを 1つ。ほうれなければ false
+  if (!window.NISHIO_OTEDAMA || !LU || rp.x === null) return false;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  const d = window.NISHIO_OTEDAMA.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, otedama.last);
+  if (!d) return false;
+  otedama.cur = d; otedama.last = d.id; otedama.t0 = now;
+  if (G.track) G.track('kome_otedama', { id: d.id });
+  return true;
+}
+function otedamaStep(hx, by, u, now) {
+  const o = otedama, up = roll.h > 0 && o.prevH <= 0;   // とびはね はじめ
+  o.prevH = roll.h;
+  if (worldMode || driving || rp.x === null) { o.cur = null; return; }
+  if (!o.cur) {
+    if (!up || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until) return;
+    if (!o.next) o.next = now + 10000;   // はじめは 10秒 あそんでから
+    if (now < o.next || !otedamaStart(now)) return;
+    o.next = now + 30000 + Math.random() * 20000;
+  }
+  const age = now - o.t0, s = age / OTEDAMA_MS;
+  if (s >= 1) {   // キャッチ
+    const d = o.cur; o.cur = null;
+    if (!mapCovered()) riceSay(d.say, 1800, 'happy');
+    return;
+  }
+  const rise = (calmMotion ? 0.5 : 4 * s * (1 - s)) * 9 * u, q = Math.max(1, Math.round(u * 0.8));   // 山なりに あがって おりる（うごきを へらす 設定では 少しだけ）
+  ctx.globalAlpha = Math.min(1, age / 150);
+  drawNakama(Math.round(hx), Math.round(by - 12.5 * u - rise), q, o.cur.id, calmMotion ? 0 : s * Math.PI * 4);
+  ctx.globalAlpha = 1;
+  o.drawn++; dirty = true;
+}
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -6753,6 +6790,7 @@ function frame(now) {
       drawNimotsu(hx, by, u, now, mood === 'sleepy');
       yumeStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
       gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
+      otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

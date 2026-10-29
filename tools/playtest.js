@@ -833,13 +833,18 @@ async function walkTo(page, id) {
     if (!B) return { ok: false, why: 'no-bookev' };
     const ev = B.EVENTS.find(e => !e.game && !(G.bookEvHas && G.bookEvHas(e.id)));
     if (!ev) return { ok: true, skipped: 'no-event' };
+    // ごほうびの 窓・イベントの 窓が 開いて いると 知らせは とじるまで 待たされる（before が 0 で ときどき 落ちた）。先に とじて おく
+    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+    document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); await wait(150);
+    for (let i = 0; i < 25 && G.toastBlock && G.toastBlock(); i++) await wait(200);   // めいろの「つぎの ゴール」の 札が 出て いる 間も 待たされる
+    const blocked = !!(G.toastBlock && G.toastBlock());
     G.toast('🧭 テストの 知らせ'); await wait(450);
     const before = +getComputedStyle(el).opacity;
     if (!B.open(ev)) return { ok: true, skipped: 'not-opened', before };
     await new Promise(r => requestAnimationFrame(r));
     const op = +getComputedStyle(el).opacity;
     B.close(); await wait(100);
-    return { before, op, ok: before > 0.9 && op < 0.05 };
+    return { before, op, blocked, reward: rw.classList.contains('show'), ok: before > 0.9 && op < 0.05 };
   });
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
   R.checks.smoothShadow = await page.evaluate(async () => {
@@ -1013,6 +1018,16 @@ async function walkTo(page, id) {
     for (let i = 0; i < 30; i++) px.push(P.chaHanaPaint(1600 + i * 7, 1630 + i * 3));
     const bloom = px.filter(n => n > 0).length;
     return { on, bloom, of: px.length, ok: on && bloom >= 10 && bloom < px.length };
+  });
+  // 夜の あかり（夜の 改善 2）：夜は 道に ところどころ 街灯の あたたかい 光、家・お店の 窓も ほんのり だいだい色。文字の 知らせは 出さない。昼は 描かない
+  R.checks.nightLamps = await page.evaluate(async () => {
+    const P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), t0 = document.getElementById('toast').textContent;
+    P.nightForce(1); await wait(600);
+    const night = P.nightLamps, toast = document.getElementById('toast').textContent !== t0 && /夜/.test(document.getElementById('toast').textContent);
+    P.nightForce(0); await wait(400);
+    const day = P.nightLamps;
+    P.nightForce(null);
+    return { night, day, toast, ok: night.n > 0 && night.warm >= night.n && day.n === 0 && !toast };
   });
   // 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29）：10月は なす。お米の うしろへ ころころ ついて きて、しばらく すると ぴょんと はねて 消える。文字は 出さない
   R.checks.nakama = await (async () => {
@@ -3513,6 +3528,7 @@ async function walkTo(page, id) {
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.kaeru && c.kaeru.ok, `あぜの カエル：10月に 出ない・すわって いない・お米が 近づいても とびこまない・消えない・文字を 出す（${JSON.stringify(c.kaeru)}）`);
   need(c.chaHana && c.chaHana.ok, `茶畑の 茶の花：10月に 咲かない・ぽつぽつで ない（${JSON.stringify(c.chaHana)}）`);
+  need(c.nightLamps && c.nightLamps.ok, `夜の あかり：夜に 街灯が ない・あたたかい 明かりが ない・昼にも 描く・文字を 出す（${JSON.stringify(c.nightLamps)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);

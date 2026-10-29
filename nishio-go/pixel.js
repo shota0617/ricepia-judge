@@ -7617,7 +7617,7 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
     if (Math.abs(mzScare.cx - rc) + Math.abs(mzScare.cy - rr) > 34 || now - mzScare.t0 > 60000) { mzScare.on = false; mzScare.next = now + 5000; return; }   // 遠く はなれた・60秒 とられなかった（行けない 所 など）：たおして 別の 所に
     if (mzScare.cx === rc && mzScare.cy === rr) {   // とった
       mzScare.on = false; mzScare.until = now + MZ_SCARE_MS; mzScare.next = now + 45000; mzScare.got++;
-      floatText(`かかし！ カラスが ${MZ_SCARE_MS / 1000}秒 にげる`);
+      floatText('かかし！');   // のこりの 秒は 時計の 下の 札、何が おきるかは はじめての 知らせ だけ（同じ ことを 3か所で 言っていた。運営者の声「文字は 少なく」2026-10-29）
       // はじめての ときの 知らせは、浮かぶ 文字（カラスが ○秒 にげる）と 時計の 下の のこりの 札に ない ことだけ（同じ「にげる」を 3か所で 言っていた。自分で 遊んで 分かった）。
       // かかしと 青く なる ことの つながりは のこす（はじめての 人に 何で 青く なったか 分かる ように。Codex の 指摘）
       if (!mzScare.told) { mzScare.told = true; G.toast('🐦 かかしで 青く なった カラスに さわると おいはらえる（+3pt）'); }
@@ -7662,7 +7662,7 @@ function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マ�
     if (Math.abs(mzSpring.cx - rc) + Math.abs(mzSpring.cy - rr) > 34 || now - mzSpring.t0 > 60000) { mzSpring.on = false; mzSpring.next = now + 5000; return; }
     if (mzSpring.cx === rc && mzSpring.cy === rr) {   // とった
       mzSpring.on = false; mzSpring.until = now + MZ_SPRING_MS; mzSpring.next = now + 45000; mzSpring.got++;
-      floatText(`ばね！ ${MZ_SPRING_MS / 1000}秒 生け垣で びよーんと はずむ`);
+      floatText('ばね！ びよーん');   // かかしと 同じく、のこりの 秒は 時計の 下の 札、はずむ ことは はじめての 知らせ だけ
       if (!mzSpring.told) { mzSpring.told = true; G.toast('🌱 ばねの 間は 生け垣で よく はずむよ'); }
       grainSound(); dirty = true;
     }
@@ -7871,13 +7871,13 @@ function drawMzClock(w, dpr, now) {
   const sl = mzScare.until - now;
   let y2 = y;
   if (sl > 0) {   // かかしの のこり（カラスが にげて いる 間）
-    const t2 = `かかし：カラスが にげる あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
+    const t2 = `かかし あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,40,90,.78)'; ctx.fillRect(Math.round(x - tw2 / 2), Math.round(y2 - S * 0.85), Math.round(tw2), Math.round(S * 1.7));
     ctx.fillStyle = sl < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#9fd0ff'; ctx.fillText(t2, x, y2);
   }
   const sp = mzSpring.until - now;
   if (sp > 0) {   // ばねの わざの のこり
-    const t3 = `ばね：生け垣で はずむ あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
+    const t3 = `ばね あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,70,30,.8)'; ctx.fillRect(Math.round(x - tw3 / 2), Math.round(y2 - S * 0.85), Math.round(tw3), Math.round(S * 1.7));
     ctx.fillStyle = sp < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#b8f5a8'; ctx.fillText(t3, x, y2);
   }

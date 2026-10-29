@@ -3252,6 +3252,14 @@ async function walkTo(page, id) {
     const t = m ? m[1] : '';
     return { t, ok: !!t && /かかし/.test(t) && /青く/.test(t) && /おいはらえる/.test(t) && !/にげる/.test(t) };   // かかしで 青く なる つながりは のこす（Codex の 指摘）
   })();
+  // かかし・ばねを とった ときは、浮かぶ 文字・時計の 下の のこりの 札・はじめての 知らせの 3か所で 同じ ことを 言わない（自分で 遊んで 分かった：「かかし！ カラスが 8秒 にげる」
+  // 「かかし：カラスが にげる あと 8秒」「…おいはらえる」が いちどに 出た。運営者の声「文字は 少なく」）。浮かぶ 文字は みじかく、札は「かかし あと 8秒」、説明は 知らせ だけ
+  R.checks.powerWords = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8');
+    const fl = [...src.matchAll(/floatText\(['`]((?:かかし|ばね)[^'`]*)['`]\)/g)].map(m => m[1]), tags = [...src.matchAll(/`((?:かかし|ばね)[^`]*あと \$\{[^`]*)`/g)].map(m => m[1]);
+    const ok = fl.length === 2 && fl.every(t => t.length <= 8 && !/にげる|はずむ|\$\{/.test(t)) && tags.length === 2 && tags.every(t => /^(かかし|ばね) あと \$\{/.test(t));
+    return { fl, tags, ok };
+  })();
   // ゴールの 戸の 道さがし（mzGateTry を 小さな 格子で）：戸 4つの 近い 道と、戸 3つで 8歩の 道が ある とき、上限（戸 3つ・歩数 まっすぐの 2倍＋4）以内の 道で 戸を あける
   // （戸と 歩数を 重みに まぜて 1本 だけ えらぶと、戸 4つの 道が えらばれて 上限で はねられ、戸が ひらかなかった。Codex の 指摘）
   // やわらかい 生け垣の へこみの ばね（mzDentStep を 取りだして）：軽く 押しつけて おさまった あと はなれると、へこみは 0 に もどる・押しつけて いる 間は 小さな ゆらぎで 動かない
@@ -3378,6 +3386,7 @@ async function walkTo(page, id) {
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
   need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
+  need(c.powerWords && c.powerWords.ok, `かかし・ばねを とった ときに 同じ ことを 3か所で 言う（浮かぶ 文字が 長い・札が「〇〇 あと 8秒」で ない。${JSON.stringify(c.powerWords)}）`);
   need(c.shortText && c.shortText.ok, `文字は 少なく：遊びの 知らせ・浮かぶ 文字が 40文字を こえる（${JSON.stringify(c.shortText)}）`);
   need(c.riceBreath && c.riceBreath.ok, `止まって いる お米が すう すう 息を しない（${JSON.stringify(c.riceBreath)}）`);
   need(c.godotRec && c.godotRec.ok, `Godot の 記録係で 歩く地図を 描くと とちゅうで 止まる（?godot=1。記録係に ない canvas の 命令）（${JSON.stringify(c.godotRec)}）`);

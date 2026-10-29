@@ -135,6 +135,7 @@
   #say { margin-top: 6px; max-width: min(240px, 62vw); padding: 7px 12px; border-radius: 14px; background: rgba(251,248,240,.97); color: #3a2f22; font-size: 14px; font-weight: 800; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.25); position: relative; transition: opacity .3s; }
   #say::before { content: ''; position: absolute; top: -6px; right: 30px; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
   #say.off { opacity: 0; }
+  .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
@@ -7553,26 +7554,42 @@ document.body.classList.toggle('calm', !DETAIL);
 // 知らせは はじめの 一文（操作の 案内つき）、案内（COACH）は いま やること。進みぐあいも 声で 知らせる。
 // 窓を さわると いま やることを もう一度、なければ のんびり 話しかけてくれる。話すあいだは 口が 動く
 const SAY = (() => {
-  const el = $('say');
-  let t = 0, coachLine = '', talkT = 0, chatN = 0, pi = 0, doneSaid = false;
+  // 吹き出しは 2 だん：上は 知らせ・進みぐあい・雑談（知らせ ＞ 進みぐあい ＞ 雑談 の じゅんで、下の ものは 上の ものを 消さない）、
+  // 下は いま やること（案内。かわったら すぐ 出す。急ぎの 操作も 待たせない）
+  const el = $('say'), mainEl = document.createElement('div'), coachEl = document.createElement('div');
+  coachEl.className = 'sayCoach'; el.append(mainEl, coachEl);
+  let t = 0, kind = '', mainText = '', coachLine = '', talkT = 0, chatN = 0, pi = 0, doneSaid = false;
+  const RANK = { chat: 0, step: 1, toast: 2 };
   const CHAT = [TOD === 'yoru' ? 'ほしが きれいだね' : TOD === 'yu' ? 'ゆうやけ きれいだね' : 'いい てんきだね', 'のんびり いこう', 'つちの においが するね',
     SHIRO ? 'カエルさん いるかな' : season === 'aki' ? 'トンボが とんでるね' : 'ひばりが ないてるね', 'ゆっくりで いいよ', 'とりさんが きてるね'];
   const STEPS = [[10, 'いい ちょうし！'], [50, 'はんぶん できたね'], [80, 'もう すこし！']];
-  function show(x, sec) { el.textContent = x; el.classList.remove('off'); t = sec; talkT = Math.min(2.4, 0.11 * x.length); }
-  function say(x, sec = 4) { if (!DETAIL && x) show(x, sec); }
-  function coach(x) {                             // いま やること：ほかの 話が ないときに 出しておく
-    coachLine = DETAIL ? '' : x;
-    if (t <= 0) { if (coachLine) show(coachLine, 0); else el.classList.add('off'); }
+  const busy = () => t > 0 && kind === 'toast';    // 知らせを 話している とちゅう
+  function render() {
+    const m = !DETAIL && t > 0, c = !DETAIL && !!coachLine;
+    mainEl.textContent = m ? mainText : ''; mainEl.style.display = m ? '' : 'none';
+    coachEl.textContent = c ? coachLine : ''; coachEl.style.display = c ? '' : 'none'; coachEl.style.marginTop = m ? '4px' : '0';
+    el.classList.toggle('off', !m && !c);
   }
+  const talk = x => { talkT = Math.min(2.4, 0.11 * x.length); };
+  function show(x, sec, k) {
+    if (DETAIL || !x || (t > 0 && RANK[kind] > RANK[k])) return false;
+    mainText = x; kind = k; t = sec; talk(x); render(); return true;
+  }
+  const say = (x, sec = 4) => show(x, sec, 'toast');
+  function coach(x) { if (x !== coachLine) { coachLine = x; if (x && !DETAIL) talk(x); render(); } }   // 案内は 中身を いつも 覚えておく（くわしい説明から もどったとき すぐ 出せる）
   function update(dt) {
     if (talkT > 0) talkT -= dt;
-    if (t > 0 && (t -= dt) <= 0) { if (coachLine) show(coachLine, 0); else el.classList.add('off'); }
+    if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
     if (!S.started) return;
     if (S.done && !doneSaid) { doneSaid = true; say('おつかれさま！', 8); }
-    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0]) { say(STEPS[pi][1], 3); pi++; }
+    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ
   }
-  function tap() { if (!DETAIL) show(coachLine || CHAT[chatN++ % CHAT.length], 3.5); }
-  return { say, coach, update, tap, get talking() { return talkT > 0; } };
+  function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
+    if (DETAIL || busy()) return;
+    if (coachLine) talk(coachLine); else show(CHAT[chatN++ % CHAT.length], 3.5, 'chat');
+  }
+  function refresh() { if (DETAIL) { t = 0; kind = ''; talkT = 0; } render(); }   // くわしい説明の 切りかえ
+  return { say, coach, update, tap, refresh, get talking() { return talkT > 0; }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
 })();
 const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
 const cutParen = x => x.replace(/（[^）]*）/g, m => KEYH.test(m) ? m : '').replace(/[、\s]+$/, '').trim();
@@ -7595,7 +7612,7 @@ const speakText = t => {
 };
 function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; SAY.say(speakText(t), Math.min(sec, 5)); }
 $('detailBox').checked = DETAIL;
-$('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
+$('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); SAY.refresh(); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
 $('badgeCv').addEventListener('pointerdown', e => { e.stopPropagation(); SAY.tap(); });
 function toast(t, sec = 2.2) {                    // 農家の声を読んでいる途中にほかの知らせが来たら、声はあとでもう一度出す
   if (curVoice && toastT > 1) voiceQ.unshift(curVoice);

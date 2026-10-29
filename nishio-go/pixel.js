@@ -1712,7 +1712,7 @@ const rivalSprites = [sprite(NPC_ROWS, false, RIVAL_PAL), sprite(NPC_ROWS.map((r
 const rivalTile = () => { const r = G.rival; return r ? npcTile({ id: 'rival:' + r.at, lat: r.lat, lng: r.lng }) : null; };
 function rivalTalk() {   // ライバルをタップする：ひとこと（先回りした所の名前で）。おまかせ歩き・タップで歩く道をふさがないよう、ぶつかっても止めない
   const r = G.rival;
-  if (r) G.toast(`🏃 ${G.RIVAL}「先に来とったよ。${r.name}、ゆっくり見ていきん」`);
+  if (r) G.toast(`🏃 ${G.RIVAL}「ここで 会えたね。${r.name}、ゆっくり 見ていこまい」`);
 }
 // 生きもの（game.js の CRITTERS）：歩く地図の田んぼ・水べを歩いていると、ときどき出会う。16×16 の手描き
 const CRITTER_ROWS = {
@@ -2122,7 +2122,7 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
   gbPause++;
   ctx.drawImage(nightCv, 0, 0);
   gbPause--;
-  if (!nightNote.done && lv === 1) { nightNote.done = true; G.toast('🌙 夜のさんぽ。明かりの まわりしか見えないよ。たからばこは ほんのり光っとる'); }
+  if (!nightNote.done && lv === 1) { nightNote.done = true; G.toast('🌙 夜のさんぽ。たからばこは ほんのり 光るよ'); }
 }
 const nightNote = { done: false };
 // 人の話で 次の転がり先が決まる：転がしているとき、話で 行き先が決まったら、話を とじたときに その人が お米を 行き先のほうへ ころん と押してくれる
@@ -2221,8 +2221,8 @@ const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv
   };
   img.src = 'nishio-go/art/rice.png';
 })();
-// 丸く見せる：お米を 点の大きさ（1点＝絵の1点）のまま回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
-// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は5段（さかいは 点をまぜて なめらかに）、ふちどりは回したあとに描きなおす
+// 丸く見せる：お米を 画面の 細かさで 回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
+// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は 段なしの 連続、ふちどりは回したあとに描きなおす（くわしくは drawRiceBall・docs/korokoro.md「なめらかに ころころ」）
 const riceBall = { fill: null, face: null, cv: null, x: null, gx: 0, gy: 0, a: 1, b: 1, nx: 0, ny: 0, nr: 0 };
 const RB = 48;   // 回した絵を描く場所の大きさ（点）
 const RICE_TONE = [[172, 180, 204], [204, 210, 228], [230, 232, 238], [246, 245, 238], [253, 253, 250], [255, 255, 255]];   // 深い影・影・なか・つぶの色・明るい・てかり
@@ -2244,6 +2244,24 @@ function riceBallInit(src) {
   }
   fx.putImageData(fd, 0, 0); gx.putImageData(gd, 0, 0);
   const cv = document.createElement('canvas'); cv.width = cv.height = RB;
+  {   // ぼかした 形：絵の 点の 段（がたがた）ではなく、絵に 合わせた だ円から 胚芽の くぼみ（円）を けずった 形を 4倍の 細かさで 描き、
+    // 絵の1点ぶん ぼかす。こさ 0.5 の 線が つぶの ふち・0.16 が ふちどりの 外がわ（絵との ちがいは 点の 段だけ。2026-10-28 に 当てはめて 確かめた）
+    const pd = 3, F = 4, M = (N + 2 * pd) * F, gx = (L + R + 1) / 2, gy = (T + B + 1) / 2, A = (R - L + 1) / 2, Bv = (B - T + 1) / 2 - 0.1;
+    const nx = R + 1.5, ny = T + (B - T) * 0.2 + 0.5, nr = (R - L) * 0.26 * 0.96;
+    const sg0 = F, rad = Math.ceil(sg0 * 3), K = [];
+    for (let q = -rad; q <= rad; q++) K.push(Math.exp(-q * q / (2 * sg0 * sg0)));
+    const ks = K.reduce((x, y) => x + y, 0), a0 = new Float32Array(M * M), a1 = new Float32Array(M * M);
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) {
+      const X = (x + 0.5) / F - pd, Y = (y + 0.5) / F - pd;
+      a0[y * M + x] = ((X - gx) / A) ** 2 + ((Y - gy) / Bv) ** 2 < 1 && (X - nx) ** 2 + (Y - ny) ** 2 > nr * nr ? 1 : 0;
+    }
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) { let t = 0; for (let q = -rad; q <= rad; q++) { const xx = x + q; if (xx >= 0 && xx < M) t += K[q + rad] * a0[y * M + xx]; } a1[y * M + x] = t / ks; }
+    const soft = document.createElement('canvas'); soft.width = soft.height = M;
+    const sg = soft.getContext('2d'), si = sg.createImageData(M, M);
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) { let t = 0; for (let q = -rad; q <= rad; q++) { const yy = y + q; if (yy >= 0 && yy < M) t += K[q + rad] * a1[yy * M + x]; } si.data.set([255, 255, 255, Math.round(t / ks * 255)], (y * M + x) * 4); }
+    sg.putImageData(si, 0, 0);
+    riceBall.soft = soft; riceBall.pad = pd;
+  }
   riceBall.faces = riceFaces(face, sd, N);
   {   // よごれの しみの場所（つぶの中・顔と ふちを よけて、きまった ばらばらの10か所）
     const pts = [], fd2 = face.getContext('2d').getImageData(0, 0, N, N).data;
@@ -2263,7 +2281,7 @@ function riceBallInit(src) {
 }
 // 表情：ふだんの にっこり（絵のまま）のほかに、点で描いた顔。目・ほっぺ・口の場所は 絵の顔（左の目の左上）に合わせる
 //   blink まばたき・happy ^^ うれしい・excited ><（速くて たのしい）・wow びっくり（とんでいる）・ouch いたい・dizzy ×× 目が回る・sleepy すやすや
-const FACE_COL = { E: [14, 14, 14], P: [246, 160, 176], R: [184, 52, 64], T: [240, 124, 140] };
+const FACE_COL = { E: [14, 14, 14], P: [246, 160, 176], R: [184, 52, 64], T: [240, 124, 140], W: [255, 255, 255] };
 const FACE_PARTS = {
   eyes: 'E 0,0 1,0 0,1 1,1 0,2 1,2 7,0 8,0 7,1 8,1 7,2 8,2',
   shut: 'E 0,2 1,2 7,2 8,2',
@@ -2279,15 +2297,24 @@ const FACE_PARTS = {
   o: 'E 3,5 4,5 2,6 5,6 3,7 4,7|R 3,6 4,6',
   wave: 'E 1,5 2,4 3,5 4,4 5,5 6,4 7,5',
   tiny: 'E 3,5 4,5',
+  shine: 'W 0,0 7,0',   // 目の きらっ（赤ちゃんの ような うるうるの 目）
+  shineBig: 'W 0,-1 7,-1',
 };
 const FACE_SET = {
-  blink: 'shut cheeks smile', happy: 'arcUp cheeks open', excited: 'gtlt cheeksBig open', wow: 'big cheeks o',
+  blink: 'shut cheeks smile', happy: 'arcUp cheeks open', excited: 'gtlt cheeksBig open', wow: 'big shineBig cheeks o', yawn: 'shut cheeks o',
   ouch: 'gtlt cheeks wave', dizzy: 'cross wave', sleepy: 'arcDown cheeks tiny',
 };
 function riceFaces(face, sd, N) {
   let ex = N, ey = N;
   for (let i = 0; i < N * N; i++) if (sd[i * 4 + 3] && sd[i * 4] === 14 && sd[i * 4 + 1] === 14 && sd[i * 4 + 2] === 14) { const x = i % N, y = (i - x) / N; if (y < ey || (y === ey && x < ex)) { ey = y; ex = x; } }   // 左の目の左上
   const out = { smile: face };
+  {   // ふだんの にっこり（絵の 顔）にも 目の きらっ。左右の 目の 左上の 1点を 白く
+    const c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d'); g.drawImage(face, 0, 0);
+    const d = g.getImageData(0, 0, N, N);
+    for (const dx of [0, 7]) { const x = ex + dx, y = ey; if (x < N && y < N && d.data[(y * N + x) * 4 + 3]) d.data.set([...FACE_COL.W, 255], (y * N + x) * 4); }
+    g.putImageData(d, 0, 0); out.smile = c;
+  }
   for (const [k, parts] of Object.entries(FACE_SET)) {
     const c = document.createElement('canvas'); c.width = c.height = N;
     const g = c.getContext('2d'), d = g.createImageData(N, N);
@@ -2307,68 +2334,146 @@ function riceMood(now) {
   if (roll.dizzyT > 0) return 'dizzy';
   if (roll.v > 3.4) return 'excited';
   if (roll.happyT > 0) return 'happy';
+  if (roll.kind === 'stop' && roll.idle > 6 && roll.idle < 12 && (roll.idle - 6) % 5 < 0.9) return 'yawn';   // 止まって しばらくすると ふわぁと あくび（赤ちゃんの ような かわいさ。運営者の声 2026-10-28）
   if (roll.kind === 'stop' && roll.idle > 12) return 'sleepy';
   if (roll.kind === 'stop' && now % 3700 < 140) return 'blink';
   return 'smile';
 }
+const riceBreath = now => Math.sin(now / 2600 * Math.PI * 2) * (roll.idle > 12 ? 0.03 : 0.018);   // 息：2.6秒で 1回。ねむって いる ときは 少し 大きく ゆっくり 見える
+// ちょうちょ：ねむって いる お米の 頭に ひらひら 飛んで きて とまり、お米が おきると 飛んで いく（文字の ない 素朴な かわいさ。運営者の声 2026-10-28）。
+// 絵は 7×5 の 点（k ふち・y はね・b からだ）。動きを へらす 設定の 人には 出さない。遊びの じゃまに ならない よう、お米が 動き出したら すぐ 飛んで いく
+const BFLY = { open: ['kk...kk', 'kyk.kyk', 'kyybyyk', 'kyk.kyk', 'kk...kk'], shut: ['...k...', '..kyk..', '..kbk..', '..kyk..', '...k...'] }, BFLY_COL = { k: '#2a2a2a', y: '#ffe27a', b: '#5a4630' };
+// 秋（季節の 小さな 虫が 赤とんぼの ころ）は 赤とんぼが 頭に とまる（棒の 先などに とまる 秋の すがた）。点（h あたま・R からだ・w はね・g はねの ふち）。とまって いる 間は はねを ひらいた まま
+const TONBO = { open: ['....h....', 'gwwgRgwwg', '.ggwRwgg.', 'gwwgRgwwg', '.gg.R.gg.', '....R....'], shut: ['....h....', '..gwRwg..', '...gRg...', '..gwRwg..', '...gRg...', '....R....'] }, TONBO_COL = { h: '#5a1a14', R: '#d8402a', w: '#e4f2fb', g: '#6f8fa6' };   // 9×6。はねは 4枚（ふちを こく して 地面の 上でも 見える）
+const bfly = { phase: '', t0: 0, x: 0, y: 0, drawn: 0 }, bflyCv = {};
+const bflyIn = t => { const k = Math.min(1, t / 3), e = 1 - (1 - k) ** 2; return { dx: (1 - e) * 46 + Math.sin(t * 5) * 5 * (1 - e), dy: -(1 - e) * 40 + Math.cos(t * 4) * 3 * (1 - e), rest: k >= 1 }; };   // 頭からの ずれ（絵の 点）。3秒で とまる
+function drawBfly(hx, by, u, now, sleepy) {
+  if (calmMotion) { bfly.phase = ''; return; }
+  if (sleepy && bfly.phase !== 'in' && bfly.phase !== 'rest') { bfly.phase = 'in'; bfly.t0 = now; bfly.kind = mushiKind() === 'tonbo' ? 'tonbo' : 'chocho'; }   // 飛んで くる ときに きめる（とちゅうで かわらない）
+  else if (!sleepy && (bfly.phase === 'in' || bfly.phase === 'rest')) { bfly.phase = 'out'; bfly.t0 = now; }
+  if (!bfly.phase) return;
+  const t = (now - bfly.t0) / 1000, hx0 = hx + 2 * u, hy0 = by - 12 * u;   // 頭の てっぺん（すこし 右。足が 頭に つく 高さ）
+  let x, y, flap;
+  if (bfly.phase === 'out') {   // おきたら 右上へ ふわっと 飛んで いく
+    if (t > 1.6) { bfly.phase = ''; return; }
+    x = bfly.x + t * 30 * u + Math.sin(t * 9) * 2 * u; y = bfly.y - t * 34 * u; flap = Math.floor(now / 90) % 2;
+    ctx.globalAlpha = Math.max(0, 1 - t / 1.6);
+  } else {
+    const q = bflyIn(t); if (q.rest) bfly.phase = 'rest';
+    x = hx0 + q.dx * u; y = hy0 + q.dy * u; bfly.x = x; bfly.y = y;
+    flap = q.rest ? (bfly.kind === 'tonbo' ? 1 : now % 2600 < 700 ? Math.floor(now / 350) % 2 : 1) : Math.floor(now / (bfly.kind === 'tonbo' ? 60 : 110)) % 2;   // とまって いる 間は ときどき ゆっくり はねを 動かす（とんぼは ひらいた まま）
+  }
+  const tb = bfly.kind === 'tonbo', SP = tb ? TONBO : BFLY, COL = tb ? TONBO_COL : BFLY_COL, pat = flap ? SP.open : SP.shut, W = pat[0].length, Hh = pat.length, q = Math.max(1, Math.round(u * 1.3));
+  const key = (tb ? 't' : 'c') + (flap ? 'o' : 's') + q;
+  let cv = bflyCv[key];
+  if (!cv) {   // 点を 1枚の 絵に まとめて から 描く（点ごとに 小数の 位置で 描くと、点の あいだに すき間の 線が 出た）
+    cv = bflyCv[key] = document.createElement('canvas'); cv.width = W * q; cv.height = Hh * q; const g = cv.getContext('2d');
+    for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) { const c = pat[j][i]; if (c !== '.') { g.fillStyle = COL[c]; g.fillRect(i * q, j * q, q, q); } }
+  }
+  bfly.smooth = !rec && !(gbOn && !worldMode); bfly.at = [x - W / 2 * q, y - Hh * q];   // テスト用
+  if (!bfly.smooth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(cv, Math.round(x - W / 2 * q), Math.round(y - Hh * q)); ctx.imageSmoothingEnabled = sm; bfly.at = bfly.at.map(Math.round); }   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に（まぜると 4色 いがいの 色が 出る。Codex の 指摘）
+  else { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true; ctx.drawImage(cv, x - W / 2 * q, y - Hh * q); ctx.imageSmoothingEnabled = sm; }   // 点より 細かい 位置で なめらかに 飛ぶ
+  ctx.globalAlpha = 1; bfly.drawn++;
+}
+const riceWake = dt => (dt < 0 || dt > 600 ? 0 : 0.1 * Math.sin(Math.PI * dt / 600));   // おきた ときの のび（0.6秒・いちばん のびて 10%）
+const drop = { cv: {}, n: 0, at: null };   // ぽちゃん のあとの 水の しずく（5×5 の 点。テスト用に 描いた 数・位置）
+function dropSprite(q) {
+  if (!drop.cv[q]) {
+    const c = drop.cv[q] = document.createElement('canvas'); c.width = c.height = 5 * q; const g = c.getContext('2d'), r = (x, y, w, h) => g.fillRect((x + 1) * q, (y + 1) * q, w * q, h * q);   // (x, y) は しずくの 左上からの 点（-1 から）
+    g.fillStyle = '#1a1a1a'; r(1, -1, 1, 1); r(0, 0, 3, 3); r(-1, 1, 5, 2); r(0, 3, 3, 1);
+    g.fillStyle = '#8fd0f4'; r(1, 0, 1, 1); r(0, 1, 3, 2);
+    g.fillStyle = '#ffffff'; r(0, 1, 1, 1);
+  }
+  return drop.cv[q];
+}
+const zzz = { cv: {}, n: 0, at: null };   // すやすやの Z（テスト用に 描いた 数・位置）
+function zzzSprite(q) {
+  if (!zzz.cv[q]) { const c = zzz.cv[q] = document.createElement('canvas'); c.width = c.height = 5 * q; const g = c.getContext('2d'); g.fillStyle = '#34407a'; g.fillRect(0, 0, 5 * q, q); for (let j = 1; j < 4; j++) g.fillRect((4 - j) * q, j * q, q, q); g.fillRect(0, 4 * q, 5 * q, q); }
+  return zzz.cv[q];
+}
 const riceTall = pitch => Math.sqrt(Math.cos(pitch) ** 2 + (0.88 * (riceBall.a || 10) / (riceBall.b || 13.5) * Math.sin(pitch)) ** 2);   // たての ころころで 見える 高さ（立っているときを 1。寝ると つぶの 厚みだけ）
 // お米を描く：(X, Y) まん中（画面の点）・u：絵の1点の大きさ・th：回り・sx, sy：つぶれ・spin：くるくるの回り・dst：描く先（はじめの画面のアニメーションにも使う）・gb：ゲームボーイの4色で
 function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldMode, mood = 'smile', look = 0, dirt = 0, dirtCol = '', pitch = 0) {
+  // なめらかに ころころ（運営者の声 2026-10-28「この キャラクターくらい 滑らかに」）：画面の 細かさで 描き、影は 段でなく 連続に、ふちは なめらかに、
+  // 位置は 整数に 丸めない（点より 細かい ずれも 絵の 中で 描く）。ゲームボーイの4色の ときだけは これまでどおり 絵の 点の 細かさで
   const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
   const my = cp < 0 ? -1 : 1, ky = sy * riceTall(pitch) * my;   // たての ころころ：前に 寝ると 短く（はしから 見える）。うしろを 向くと 上下 さかさ
-  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, RB, RB); o.imageSmoothingEnabled = true;   // なめらかに回してから、半分より濃い所を つぶにする（ふちが がたがたしない）
-  o.setTransform(kx * Math.cos(th), ky * Math.sin(th), -kx * Math.sin(th), ky * Math.cos(th), H, H);
-  o.drawImage(rb.fill, -rb.gx, -rb.gy);
+  const P = gb ? 1 : Math.min(u, riceLowQ ? 2 : RICE_PMAX), k0 = P / u;   // riceLowQ：うすい のこりかげの とき だけ
+  const X0 = gb ? Math.round(X - H * u) : Math.floor(X - H * u - 1), Y0 = gb ? Math.round(Y - H * u) : Math.floor(Y - H * u - 1);
+  const ox0 = (X - X0) * k0, oy0 = (Y - Y0) * k0, S = Math.ceil(RB * P) + 3;   // つぶの まん中（絵の 中の ピクセル）。はしの ずれは 絵の 中で
+  if (rb.cv.width !== S) { rb.cv.width = rb.cv.height = S; rb.img = null; }
+  if (!rb.img) rb.img = o.createImageData(S, S);
+  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, S, S); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high';
+  o.setTransform(P * kx * Math.cos(th), P * ky * Math.sin(th), -P * kx * Math.sin(th), P * ky * Math.cos(th), ox0, oy0);
+  const pd = rb.pad, fn = rb.fill.width;
+  o.drawImage(rb.soft, -rb.gx - pd, -rb.gy - pd, fn + 2 * pd, fn + 2 * pd);   // ぼかした 形（こさ 0.5 が つぶの ふち・0.16 が ふちどりの 外がわ）
   o.setTransform(1, 0, 0, 1, 0, 0);
-  const img = o.getImageData(0, 0, RB, RB), d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
+  const fd = o.getImageData(0, 0, S, S).data, img = rb.img, d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
   const [lx0, ly0, lz0] = RICE_LIGHT, [hx, hy, hz] = RICE_HALF;
-  const solid = new Uint8Array(RB * RB), nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
-  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {
-    const k = j * RB + i;
-    if (d[k * 4 + 3] < 128) { d[k * 4 + 3] = 0; continue; }
-    solid[k] = 1;
-    const ux = (i + 0.5 - H) / kx, uy = (j + 0.5 - H) / ky, px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
-    const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
-    let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
-    const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy);
-    if (qd < rb.nr + 1.6) { nx = -qx / (qd || 1) * 0.8; ny = -qy / (qd || 1) * 0.8; nz = 0.6; }   // くぼみの内がわは 中へ向く（光の当たらない がわが 影になる）
-    let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
-    const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
-    const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
-    const v = 0.28 + 0.76 * dif + ((i + j) & 1 ? 0.035 : -0.035) * ((i ^ j) & 2 ? 1 : 0.4);   // 点をまぜて さかいを なめらかに
-    const t = spec > 0.55 ? 5 : v < 0.42 ? 0 : v < 0.58 ? 1 : v < 0.74 ? 2 : v < 0.9 ? 3 : 4;
-    let col = RICE_TONE[t];
-    if (nDirt) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
-      const qx = Math.floor(rb.gx + px), qy = Math.floor(rb.gy + py);
-      for (let m = 0; m < nDirt; m++) if (rb.spots[m][0] === qx && rb.spots[m][1] === qy) { const f = 0.55 + 0.3 * dif; col = [dc[0] * f, dc[1] * f, dc[2] * f]; break; }
+  const kk = Math.min(Math.abs(kx), Math.abs(ky)) || 1, w1 = Math.min(0.6, 0.4 / (P * kk)), w2 = Math.min(0.3, 0.24 / (P * kk));   // 1ピクセルで こさが どれだけ かわるか（ふちを 1ピクセルで ぼかす）。小さく 描く ときも 形の 外（こさ 0）は とうめいの まま（上限が ないと まわりに うすい 四角が 出た。Codex の 指摘）
+  const nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+    const k = (j * S + i) * 4, f = fd[k + 3] / 255;
+    if (!f) { d[k + 3] = 0; continue; }
+    const ao = Math.min(1, Math.max(0, (f - 0.16) / w2 + 0.5));
+    if (ao <= 0) { d[k + 3] = 0; continue; }
+    const ab = Math.min(1, Math.max(0, (f - 0.5) / w1 + 0.5));
+    let r = 26, g = 26, bl = 26;
+    if (ab > 0) {
+      const ux = (i + 0.5 - ox0) / (P * kx), uy = (j + 0.5 - oy0) / (P * ky), px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
+      const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
+      let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
+      const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.sqrt(qx * qx + qy * qy), nb = Math.min(1, Math.max(0, rb.nr + 1.6 - qd));   // くぼみの内がわは 中へ向く（さかいは なめらかに まぜる）
+      if (nb > 0) { const n0 = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1; nx = nx / n0 * (1 - nb) - qx / (qd || 1) * 0.8 * nb; ny = ny / n0 * (1 - nb) - qy / (qd || 1) * 0.8 * nb; nz = nz / n0 * (1 - nb) + 0.6 * nb; }
+      let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
+      const nn = Math.sqrt(wx * wx + wy * wy + nz * nz); wx /= nn; wy /= nn; const wz = nz / nn;
+      const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), s1 = Math.max(0, wx * hx + wy * hy + wz * hz), s4 = (s1 * s1) * (s1 * s1), s8 = s4 * s4, spec = s8 * s8 * s8 * s4;   // 28乗（かけ算で。Math.pow・Math.hypot は おそい）
+      const v = 0.28 + 0.76 * dif, tf = Math.min(4, Math.max(0, (v - 0.34) / 0.16)), t0 = Math.min(3, Math.floor(tf)), tt = tf - t0;   // 影は 段でなく 連続に
+      const T0 = RICE_TONE[t0], T1 = RICE_TONE[t0 + 1], sh = Math.min(1, Math.max(0, (spec - 0.35) / 0.35));
+      let cr = T0[0] + (T1[0] - T0[0]) * tt, cg = T0[1] + (T1[1] - T0[1]) * tt, cb = T0[2] + (T1[2] - T0[2]) * tt;
+      cr += (255 - cr) * sh; cg += (255 - cg) * sh; cb += (255 - cb) * sh;   // てかり
+      for (let m = 0; m < nDirt; m++) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
+        const ddx = rb.gx + px - rb.spots[m][0] - 0.5, ddy = rb.gy + py - rb.spots[m][1] - 0.5, dm = Math.sqrt(ddx * ddx + ddy * ddy), al = Math.min(1, Math.max(0, (0.72 - dm) / (w1 * 2.5) + 0.5));
+        if (al > 0) { const fm = 0.55 + 0.3 * dif; cr += (dc[0] * fm - cr) * al; cg += (dc[1] * fm - cg) * al; cb += (dc[2] * fm - cb) * al; }
+      }
+      const al = ab + ao * (1 - ab);   // つぶの 色を ふちどりの 上に かさねる
+      r = (cr * ab + 26 * ao * (1 - ab)) / al; g = (cg * ab + 26 * ao * (1 - ab)) / al; bl = (cb * ab + 26 * ao * (1 - ab)) / al;
     }
-    d[k * 4] = col[0]; d[k * 4 + 1] = col[1]; d[k * 4 + 2] = col[2];
+    d[k] = r; d[k + 1] = g; d[k + 2] = bl; d[k + 3] = 255 * ao;
   }
-  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {   // ふちどり（回したあとに、つぶのすぐ外がわの点を黒く）
-    const k = j * RB + i;
-    if (solid[k] || !((i > 0 && solid[k - 1]) || (i < RB - 1 && solid[k + 1]) || (j > 0 && solid[k - RB]) || (j < RB - 1 && solid[k + RB]))) continue;
-    d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 26; d[k * 4 + 3] = 255;
+  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる。ふちは ぼかさない）
+    for (let k = 0; k < d.length; k += 4) {
+      if (d[k + 3] < 128) { d[k + 3] = 0; continue; }
+      const L = gbLum(d[k], d[k + 1], d[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
+      d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
+    }
   }
   o.putImageData(img, 0, 0);
-  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる）
-    const g = o.getImageData(0, 0, RB, RB), q = g.data;
-    for (let k = 0; k < q.length; k += 4) {
-      if (!q[k + 3]) continue;
-      const L = gbLum(q[k], q[k + 1], q[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
-      q[k] = col[0]; q[k + 1] = col[1]; q[k + 2] = col[2]; q[k + 3] = 255;
-    }
-    o.putImageData(g, 0, 0);
-  }
+  rb.last = { P, S, X0, Y0, X, Y, th, lowQ: riceLowQ };   // テスト用
   gbPause++;
-  try { dst.drawImage(rb.cv, Math.round(X - H * u), Math.round(Y - H * u), RB * u, RB * u); } finally { gbPause--; }
+  const sm = dst.imageSmoothingEnabled;
+  try {
+    if (k0 === 1) dst.drawImage(rb.cv, X0, Y0);   // 1点＝1ピクセルで そのまま（にじまない）
+    else { dst.imageSmoothingEnabled = !gb; dst.drawImage(rb.cv, X0, Y0, S / k0, S / k0); }
+  } finally { gbPause--; dst.imageSmoothingEnabled = sm; }
   if (cs > 0.12 && cp > 0.12 && mood) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
-    dst.save(); dst.translate(Math.round(X), Math.round(Y)); dst.scale(sx, sy); dst.rotate(th);
+    dst.save(); dst.translate(gb ? Math.round(X) : X, gb ? Math.round(Y) : Y); dst.scale(sx, sy); dst.rotate(th);
     dst.translate((sn * rb.a * 0.7 + look) * u, sp * rb.b * 0.6 * u); dst.scale(Math.max(0.25, cs), Math.max(0.25, cp));   // look：きょろきょろ（顔を 少し よこへ）。たての ころころでは 顔が 上下へ すべる
     const fc = (rb.faces && rb.faces[mood]) || rb.face;
-    dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    if (gb) dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    else { dst.imageSmoothingEnabled = true; dst.drawImage(riceFaceHi(fc, Math.ceil(u)), -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u); }   // 点を 大きくしてから なめらかに 回す（目の 形は そのまま、ふちだけ なめらか）
     dst.restore();
   }
+}
+const RICE_PMAX = 6;
+let riceLowQ = false;   // うすい のこりかげは あらく 描いて のばす（重さを へらす。とても うすいので 見た目は かわらない）   // お米を 描く 細かさの 上限（絵の1点 = 6ピクセルまで）
+const faceHi = new WeakMap();
+function riceFaceHi(fc, q) {   // 顔の 絵を 点の まま q 倍に（なめらかに 回しても 目が ぼやけない）
+  let m = faceHi.get(fc);
+  if (!m) faceHi.set(fc, m = {});
+  if (!m[q]) { const c = document.createElement('canvas'); c.width = fc.width * q; c.height = fc.height * q; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(fc, 0, 0, c.width, c.height); m[q] = c; }
+  return m[q];
 }
 const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
 // なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
@@ -2424,14 +2529,14 @@ function comboStep() {
   combo.shown = performance.now();
   if (combo.n > mzRt.run.combo) mzRt.run.combo = combo.n;   // この ゴールまでの いちばん 長い コンボ
   if (!combo.beat && combo.best >= 5 && combo.n > combo.best) {   // 転がっている うちに ベストを こえた：その場で 知らせる（「あと 少しで ベスト」を 追いかける 楽しみ）
-    combo.beat = true; combo.beatN = combo.n; chordSound(); floatText(`🏅 ベスト こえたじゃん！ ×${combo.n}`);   // 知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
+    combo.beat = true; combo.beatN = combo.n; chordSound(); floatText('🏅 ベスト こえたじゃん！');   // 数は すぐ 横の「×9」に 出て いるので 書かない（運営者の声「文字は 少なく」2026-10-29）。知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
     const now = performance.now(), cols = ['#ff9fd0', '#ffe066', '#ffffff'];
     for (let i = 0; i < 24; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3.5, c: cols[i % 3], life: 0.7 + Math.random() * 0.5 }); }
   }
-  if (combo.n % 5 === 0) {   // 5ごとに きらきら（10ごとに 文字も）
-    if (combo.n % 10 === 0) floatText(`🎵 ころころ ×${combo.n}！ じょうずだら`);
-    const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'];
-    for (let i = 0; i < 10 + Math.min(20, combo.n / 2); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 4], life: 0.6 + Math.random() * 0.4 }); }
+  if (combo.n % 5 === 0) {   // 5ごとに きらきら。10ごとは 文字の かわりに 大きな きらきら（数は お米の よこの「×N」で 見えて いる。同じ ことを 2か所に 書かない。運営者の声「文字は 少なく」2026-10-28）
+    const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'], big = combo.n % 10 === 0;
+    if (big) combo.pop = now;   // テスト用（大きな きらきらの 時こく）
+    for (let i = 0; i < (10 + Math.min(20, combo.n / 2)) * (big ? 2 : 1); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v * (big ? 1.4 : 1), vy: Math.sin(t) * v * (big ? 1.4 : 1) - 3, c: cols[i % 4], life: (0.6 + Math.random() * 0.4) * (big ? 1.3 : 1) }); }
   }
 }
 function comboEnd() {
@@ -2440,10 +2545,10 @@ function comboEnd() {
   if (n < 5) return;
   if (n > combo.best) {
     combo.best = n; combo.near = 0; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ }
-    // 転がる うちに「ベスト こえたじゃん！ ×9」と 出した 数の まま おわった ときは、おわりの「あたらしい ベスト ×9」は 出さない（同じ 数を 2回 つづけて 出していた。自分で 遊んで 分かった）
+    // 転がる うちに「ベスト こえたじゃん！」と 出した ×9 の まま おわった ときは、おわりの「あたらしい ベスト ×9」は 出さない（同じ 数を 2回 つづけて 出していた。自分で 遊んで 分かった）
     if (!beat || n > combo.beatN) floatText(beat ? `🏅 あたらしい ベスト ×${n}！ やったじゃん` : `🏅 ころころ ベスト ×${n}！ やったじゃん`);
   }
-  else if (combo.best - n <= 3 && n > combo.near) { combo.near = n; floatText(`おしい！ ベストまで あと${combo.best - n + 1}だったじゃん`); }   // あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）。同じ ベストには、前より 近づいた ときだけ（自分で 遊んで 分かった：めいろで 迷う 間、2分で 7回「あと4」が 出た）
+  else if (combo.best - n <= 2 && n > combo.near) { combo.near = n; floatText(`おしい！ あと${combo.best - n + 1}`); }   // 文字は みじかく、とても 近い（あと1〜3）ときだけ（運営者の声「文字は 少なく」：200秒で「おしい！ ベストまで あと4だったじゃん」が 5回 出た。自分で 遊んで 分かった 2026-10-29）。あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）。同じ ベストには、前より 近づいた ときだけ（自分で 遊んで 分かった：めいろで 迷う 間、2分で 7回「あと4」が 出た）
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }
 // スピード線（運営者の声「スキルを繰り返す」3回目）：びゅんパネルで 加速しても 見た目が あまり かわらず、速さを 目で 感じにくかった。
@@ -2474,8 +2579,8 @@ function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数�
   ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
   const t = `×${combo.n}`;
   ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
-  if (combo.best >= 5) {   // その下に 小さく ベスト（こえたら「ベスト こうしん中」）
-    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? 'ベスト こうしん中' : `ベスト ${combo.best}`;
+  if (combo.best >= 5) {   // その下に 小さく ベスト「🏅9」（こえたら「🏅」だけ。こえた ことは 浮かぶ 文字と 音で 分かるので 2か所に 書かない。運営者の声「文字は 少なく」2026-10-29）
+    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? '🏅' : `🏅${combo.best}`;
     ctx.font = `bold ${s2}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(2, s2 / 4); ctx.fillStyle = combo.n > combo.best ? '#ff9fd0' : '#d9e6d0';
     ctx.strokeText(t2, x, y2); ctx.fillText(t2, x, y2);
   }
@@ -6324,12 +6429,19 @@ function frame(now) {
     {   // 影：つぶの いまの はば（寝ころぶと広い）に合わせた、まるい点の だ円。とぶと小さく
       const wv = Math.sqrt((A * Math.cos(th)) ** 2 + (B * Math.sin(th)) ** 2), shw = wv * 1.8 / (1 + roll.h * 3), q = Math.max(1, Math.round(u)), sy0 = Math.round(hcy + T * 0.3);
       ctx.fillStyle = 'rgba(0,0,0,.28)';
-      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
-      ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
-      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+      if (gbOn && !worldMode) {   // ゲームボーイの4色は 点の だ円の まま
+        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
+        ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
+        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+      } else { ctx.beginPath(); ctx.ellipse(hx, hcy + T * 0.3 + u, shw / 2, 2 * u, 0, 0, Math.PI * 2); ctx.fill(); }   // お米と いっしょに なめらかに（点より 細かく 動く。整数に 丸めると 影だけ カクッと 動いた）
     }
     const sq = roll.sq;
     let sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる
+    let br = 0;   // 息の ふくらみ（札が よける お米の はんいには 入れない。はんいが こまごとに ゆれると、ぎりぎりに よけた 札が お米に かかった）
+    if (roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2 && !calmMotion) { br = riceBreath(now); sy *= 1 + br; sx *= 1 - br * 0.5; }
+    if ((roll.prevIdle || 0) > 12 && roll.idle < roll.prevIdle && !calmMotion) roll.wakeT = now;   // ねむって いた お米が おきた
+    roll.prevIdle = roll.idle;
+    { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }   // おきたら「のびー」と 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる
     else if (t0 && t1 && roll.v > 2) {   // 速いと、進む向きに 少し のびる
@@ -6337,16 +6449,18 @@ function frame(now) {
       if (horiz) { sx *= 1 + st; sy *= 1 - st * 0.5; } else { sy *= 1 + st; sx *= 1 - st * 0.5; }
     }
     const by = sy !== 1 ? ground - low * sy - hop : mid;
+    roll.by = by;   // テスト用（お米の まん中の 高さ。息で かわる）
     const mood = roll.drawn = riceMood(now);
-    roll.box = [hx - 13 * u, by - 15 * u, hx + 13 * u, by + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
+    const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
+    roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
     if (riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
-        ctx.globalAlpha = al;
-        drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch);
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = al; riceLowQ = true;
+        try { drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch); }
+        finally { ctx.globalAlpha = 1; riceLowQ = false; }   // とちゅうで 止まっても、本体の お米まで あらく 描かない
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
@@ -6355,20 +6469,20 @@ function frame(now) {
       drawSendArrow(hx, by, T, u);   // お米の まん中から
       drawCombo(hx + 15 * u, by - 4 * u, u, now);   // ころころコンボの 数（お米の 右よこ。頭の上は 浮かぶ 文字の 場所）
       if (roll.wetT > 0) {   // ぽちゃん のあと：頭の左上に 水の しずく
-        const q = Math.max(1, Math.round(u)), dx0 = Math.round(hx - 11 * u), dy0 = Math.round(by - 12 * u + (1.4 - roll.wetT) * 3 * u);
-        ctx.globalAlpha = Math.min(1, roll.wetT * 2);
-        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(dx0 + q, dy0 - q, q, q); ctx.fillRect(dx0, dy0, 3 * q, 3 * q); ctx.fillRect(dx0 - q, dy0 + q, 5 * q, 2 * q); ctx.fillRect(dx0, dy0 + 3 * q, 3 * q, q);
-        ctx.fillStyle = '#8fd0f4'; ctx.fillRect(dx0 + q, dy0, q, q); ctx.fillRect(dx0, dy0 + q, 3 * q, 2 * q);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(dx0, dy0 + q, q, q);
-        ctx.globalAlpha = 1;
+        const q = Math.max(1, Math.round(u)), dx0 = hx - 11 * u, dy0 = by - 12 * u + (1.4 - roll.wetT) * 3 * u, crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;
+        ctx.globalAlpha = Math.min(1, roll.wetT * 2); ctx.imageSmoothingEnabled = !crisp;   // しずくも 1枚の 絵に して 点より 細かい 位置で なめらかに すべらせる（ゲームボーイの4色・記録係は 整数の 位置）
+        ctx.drawImage(dropSprite(q), crisp ? Math.round(dx0) - q : dx0 - q, crisp ? Math.round(dy0) - q : dy0 - q); drop.at = [dx0, dy0]; drop.n++;
+        ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm;
       }
+      drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
-        ctx.fillStyle = '#34407a';
-        for (let k = 0; k < 2; k++) {
-          const t = ((now / 1600) + k / 2) % 1, zx = Math.round(hx + 9 * u + t * 6 * u + k * 3 * u), zy = Math.round(by - 14 * u - t * 10 * u), q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
-          ctx.globalAlpha = 1 - t; ctx.fillRect(zx, zy, 5 * q, q); for (let j = 1; j < 4; j++) ctx.fillRect(zx + (4 - j) * q, zy + j * q, q, q); ctx.fillRect(zx, zy + 4 * q, 5 * q, q);   // 5×5 の Z
+        const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に
+        ctx.imageSmoothingEnabled = !crisp;
+        for (let k = 0; k < 2; k++) {   // 5×5 の Z を 1枚の 絵に して、点より 細かい 位置で なめらかに のぼらせる（1点ずつ カクカク のぼって いた）
+          const t = ((now / 1600) + k / 2) % 1, zx = hx + 9 * u + t * 6 * u + k * 3 * u, zy = by - 14 * u - t * 10 * u, q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
+          ctx.globalAlpha = 1 - t; ctx.drawImage(zzzSprite(q), crisp ? Math.round(zx) : zx, crisp ? Math.round(zy) : zy); zzz.at = [zx, zy];
         }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm; zzz.n++;
       }
     } else {   // 丸く描く用意が できるまでは、絵を回す
       roll.flat++;
@@ -6471,6 +6585,12 @@ function frame(now) {
   const floatHold = !!(mzBanner.t0 || mzNextOn());
   if (floatHold) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; if (floaters.length) floatLast = now + (floaters.length - 1) * 1300; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
   let floatWait = -1;   // よける 所が なくて 待っている 文字の 番号
+  // 上に 出て いる 知らせ（DOM）の わく（キャンバスの 画素）。浮かぶ 文字は 知らせの うしろに かくれるので よける（自分で 遊んで 分かった：320×568 で 4行の「🌙 夜のさんぽ…」が「おしい！ ベストまで…」の 1行目を かくした）
+  let floatToast = null;
+  if (floaters.length) {
+    const te = document.getElementById('toast');
+    if (te && te.classList.contains('show')) { const r = te.getBoundingClientRect(), c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1; if (r.width && r.height) floatToast = [(r.left - c.left) * k, (r.top - c.top) * k, (r.right - c.left) * k, (r.bottom - c.top) * k]; }
+  }
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (floatHold) continue;
@@ -6524,6 +6644,20 @@ function frame(now) {
       ({ ls, fx, fy } = q);
       floatShift = [fx - w / 2, fy - fy0];
     }
+    if (floatToast) {   // 知らせに かかる ときは 知らせの すぐ 下へ（お米の 頭より 下に なる・縁の 矢印に かかる ときは 知らせが 消えるまで 待つ）
+      const b = box(ls, fx, fy), Q = floatToast;
+      if (b[0] < Q[2] + m && b[2] > Q[0] - m && b[1] < Q[3] + m && b[3] > Q[1] - m) {
+        const ny = Math.round(Q[3] + m + lh * (ls.length - 1) + fz), foot = roll.box ? roll.box[1] - m : Math.round(cy - T * 1.15);
+        if (ny <= foot && !(A && hit(box(ls, fx, ny)))) { fy = Math.max(fy, ny); floatShift = [fx - w / 2, fy - fy0]; }
+        else {
+          floatDrawn.pop(); ctx.globalAlpha = 1;
+          if (!fl.w0) fl.w0 = now;
+          if (now - fl.w0 > 6000) { floaters.splice(i, 1); if (floatWait > i) floatWait--; }   // 知らせは 4秒ほどで 消える。6秒 待っても だめなら 出さない
+          else floatWait = i;
+          continue;
+        }
+      }
+    }
     ls.forEach((s, n) => { const y = fy - lh * (ls.length - 1 - n); ctx.strokeText(s, fx, y); ctx.fillText(s, fx, y); });
     ctx.globalAlpha = 1;
   }
@@ -6544,7 +6678,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now && !rec) drawMzMap(gt, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -6820,7 +6954,7 @@ function shopTag(cx, bottom, dpr, s) {
 // 左上の はしに 出て、「🧭 水色の 線が…」の 知らせに かくれて ゴールの 名前が 読めなかった）。いまの 位置で 重ならない 間は 動かさない（上下に ゆれない）。
 // 地図を 引っぱって 札が 下げた 知らせの 下に 来たら、上が 空いて いれば 上へ もどす（Codex の 指摘）。位置は 動きの とちゅうで なく、止まった 形で はかる
 // めいろでも 同じ：縁の 矢印と 道のりの 札（mzMap.arrow）に 重なる ときは 下へ（自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）。
-// 下へ 動かすのは、下の めいろ図・「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
+// 下へ 動かすのは、下の「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
 // 横向きの 低い 画面では 上も 下も 札に 重なる（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印と「840m」が「📅 あしたも来ると +20pt」に かくれた）。
 // そのときは 札の 横へ ずらし（wside。入る ときだけ）、それも だめなら いちばん 下（下の タブの 上に 重ねる。wfloor。知らせは タップを 通すので タブは 押せる。下の 欄の ゴールの 名前は かくさない）
 const wtd = { key: '' }, WT_MODES = ['wlow', 'wside', 'wfloor'];
@@ -6845,7 +6979,7 @@ function worldToastDodge(tag, avoid = []) {
   const clear = q => !over(q, T) && !A.some(a => over(q, a));
   const set = (m, x) => { el.classList.remove(...WT_MODES); if (m) el.classList.add(m); if (m === 'wside') el.style.setProperty('--toast-x', x + 'px'); };
   const top = posAt(''), here = posAt(cur, parseFloat(el.style.getPropertyValue('--toast-x')) || 0), M = 62;   // M：右上の 丸い ボタンの 列に かからない（.toast の max-width と 同じ あけ方）
-  if (cur && A.some(a => over(here, a))) { set(''); return; }   // 動かした あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
+  if (cur && A.some(a => over(here, a))) { set(''); return; }   // 動かした あとに 下の 札が 出て 重なった：上へ もどす（札を かくさない。Codex の 指摘）
   const out = cur === 'wside' && (here.left < M - 1 || here.right > innerWidth - M + 1);   // 横に 置いた あとに 画面が せまく なった（スマホを たてに した。--toast-x は 画素なので はみ出す。Codex の 指摘）：置きなおす
   if (!over(here, T) && !out) { if (cur && cur !== 'wlow' && clear(top)) set(''); return; }   // いまの 位置で 重ならない 間は 動かさない（ゆれない）。横・いちばん下は 上が 空いたら もどす
   const low = posAt('wlow');
@@ -6858,7 +6992,6 @@ function worldToastDodge(tag, avoid = []) {
 }
 function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない
   const avoid = [];
-  if (mzMap.until > now && mzMap.rect) avoid.push(mzMap.rect);
   const rb = document.getElementById('reactBar');
   if (rb && !rb.hidden) { const b = rb.getBoundingClientRect(); avoid.push({ page: [b.left, b.top, b.right, b.bottom] }); }
   worldToastDodge(mazeOn() && G.guide && !rec ? mzMap.arrow : null, avoid);
@@ -7476,7 +7609,7 @@ function mzHintTick(now) {   // 25秒 行き先に 近づけていない（め�
     // 知らせは ゴールごとに 1回目だけ（自分で 遊んで 分かった：迷って いる 間、25秒ごとに 同じ 知らせが 上を ふさいでいた。光る 点は 毎回 出す）。
     // 同じ ゴールで 3回目には、おたすけを すすめる（1回の あそびで 1回）
     if (mzRt.hints === 1) G.toast('💡 道しるべ：光る 点の ほうへ 進もう');
-    else if (mzRt.hints === 3 && !mzHelp.offered) { mzHelp.offered = true; G.toast('🧭 まよったら、せっていの「めいろの おたすけ」で 道しるべを いつも 出せるよ'); }
+    else if (mzRt.hints === 3 && !mzHelp.offered) { mzHelp.offered = true; G.toast('🧭 まよったら、せっていで 道しるべを 出せるよ'); }
   }
 }
 // めいろの おたすけ（運営者の声「迷路初心者でもわかりやすく」）：ゴールへの 道しるべを いつも 出し、行き止まりの マスに ✕。
@@ -7490,7 +7623,7 @@ function mzHelpSync() { const t = $('mzHelpToggle'); if (t) t.checked = mzHelpOn
 function mzHelpGoal() {   // めいろの ゴールに 着いた：3回目で 自動の おたすけは おしまい（知らせる）
   const n = mzGoalsDone() + 1;
   lsSet('nsg_mzgoals', String(n));
-  if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 めいろに なれてきたので、道しるべと ✕ を 消しました（せっていの「めいろの おたすけ」で いつでも 出せます）'), 4500);
+  if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 道しるべと ✕ を けしたよ（せっていで また 出せる）'), 4500);
   mzHelpSync();
 }
 if ($('mzHelpToggle')) { mzHelpSync(); $('mzHelpToggle').addEventListener('change', e => { lsSet('nsg_mzhelp', e.target.checked ? 'on' : 'off'); mzHelp.told = true; dirty = true; }); }   // せっていの「🧭 めいろの おたすけ」
@@ -7563,7 +7696,7 @@ function mzCrowTick(now) {
       if (!dx && !dy) break;
     }
     const x = c.cx + (c.nx - c.cx) * c.t + 0.5, y = c.cy + (c.ny - c.cy) * c.t + 0.5, d = Math.hypot(fx - x, fy - y);
-    if (!mzCrow.told && d < 8) { mzCrow.told = true; G.toast(`🐦 カラスが お米を ねらってる！ 当たると はじかれて ${MZ_CROW_PEN}秒 おそくなるよ`); }
+    if (!mzCrow.told && d < 8) { mzCrow.told = true; G.toast(`🐦 カラスに 当たると ${MZ_CROW_PEN}秒 おそくなるよ`); }
     if (scared && d < 0.6) mzCrowShoo(c, now);
     else if (!scared && d < 0.55 && now > mzCrow.hitT) mzCrowHit(c, fx - x, fy - y, now);
   }
@@ -7573,8 +7706,10 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
     if (Math.abs(mzScare.cx - rc) + Math.abs(mzScare.cy - rr) > 34 || now - mzScare.t0 > 60000) { mzScare.on = false; mzScare.next = now + 5000; return; }   // 遠く はなれた・60秒 とられなかった（行けない 所 など）：たおして 別の 所に
     if (mzScare.cx === rc && mzScare.cy === rr) {   // とった
       mzScare.on = false; mzScare.until = now + MZ_SCARE_MS; mzScare.next = now + 45000; mzScare.got++;
-      floatText(`かかし！ カラスが ${MZ_SCARE_MS / 1000}秒 にげる`);
-      if (!mzScare.told) { mzScare.told = true; G.toast('かかしを とると しばらく カラスが こわがって にげるよ。青い カラスに さわると おいはらえる（+3pt）'); }
+      floatText('かかし！');   // のこりの 秒は 時計の 下の 札、何が おきるかは はじめての 知らせ だけ（同じ ことを 3か所で 言っていた。運営者の声「文字は 少なく」2026-10-29）
+      // はじめての ときの 知らせは、浮かぶ 文字（カラスが ○秒 にげる）と 時計の 下の のこりの 札に ない ことだけ（同じ「にげる」を 3か所で 言っていた。自分で 遊んで 分かった）。
+      // かかしと 青く なる ことの つながりは のこす（はじめての 人に 何で 青く なったか 分かる ように。Codex の 指摘）
+      if (!mzScare.told) { mzScare.told = true; G.toast('🐦 かかしで 青く なった カラスに さわると おいはらえる（+3pt）'); }
       grainSound(); dirty = true;
     }
     return;
@@ -7617,7 +7752,7 @@ function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マ�
     if (mzSpring.cx === rc && mzSpring.cy === rr) {   // とった
       mzSpring.on = false; mzSpring.until = now + MZ_SPRING_MS; mzSpring.next = now + 45000; mzSpring.got++;
       riceSay('ばね だ！✨', 1600, 'happy');   // 吹き出し（もとは「ばね！ 12秒 生け垣で びよーんと はずむ」。のこり 秒は 時計の 札に 出る）
-      if (!mzSpring.told) { mzSpring.told = true; G.toast('ばねを とると しばらく、生け垣に 当たると 前より 速く はね返るよ。生け垣を うまく つかって 近道しよう'); }
+      if (!mzSpring.told) { mzSpring.told = true; G.toast('ばねの 間は 生け垣で 前より 速く はね返るよ。うまく つかって 近道しよう'); }   // 40文字まで（文字は 少なく。main の 説明を みじかく）
       grainSound(); dirty = true;
     }
     return;
@@ -7790,7 +7925,7 @@ function drawMzHint(ox, oy, T, now) {
   if (!mzRt.path) return;
   if (now >= mzRt.showUntil && mzHelpOn()) {   // おたすけ：ゴールへの 道すじを 水色の 流れる 線で いつも（16マス先まで。金の 米つぶと まちがえない 色と 形）
     // 「🏁 つぎの ゴール」の 大きな 文字が 出ている 間も 待つ（小さい 画面で、はじめの ゴールの 名前が この 知らせの 下に かくれた。自分で 遊んで 分かった）
-    if (!mzHelp.told && mzRt.path.length > 2 && !mapCovered() && !sightBusy() && !mzNext.want && !mzNext.t0) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）'); }   // あそびかた・窓・人の 話が 出ている 間は 待つ（読める ように なってから 知らせる）
+    if (!mzHelp.told && mzRt.path.length > 2 && !mapCovered() && !sightBusy() && !mzNext.want && !mzNext.t0) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり'); }   // あそびかた・窓・人の 話が 出ている 間は 待つ（読める ように なってから 知らせる）
     const S = MZ_K * T, pts = mzRt.path.slice(0, 17).map(([cx, cy]) => [ox + cx * S + S / 2, oy + cy * S + S / 2]);
     if (pts.length < 2) return;
     ctx.save();
@@ -7848,13 +7983,13 @@ function drawMzClock(w, dpr, now) {
   const sl = mzScare.until - now;
   let y2 = y;
   if (sl > 0) {   // かかしの のこり（カラスが にげて いる 間）
-    const t2 = `かかし：カラスが にげる あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
+    const t2 = `かかし あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,40,90,.78)'; ctx.fillRect(Math.round(x - tw2 / 2), Math.round(y2 - S * 0.85), Math.round(tw2), Math.round(S * 1.7));
     ctx.fillStyle = sl < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#9fd0ff'; ctx.fillText(t2, x, y2);
   }
   const sp = mzSpring.until - now;
   if (sp > 0) {   // ばねの わざの のこり
-    const t3 = `ばね：生け垣で はずむ あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
+    const t3 = `ばね あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,70,30,.8)'; ctx.fillRect(Math.round(x - tw3 / 2), Math.round(y2 - S * 0.85), Math.round(tw3), Math.round(S * 1.7));
     ctx.fillStyle = sp < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#b8f5a8'; ctx.fillText(t3, x, y2);
   }
@@ -7906,7 +8041,7 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中�
 }
 // 金の米つぶ：運営者の声「滞在時間を増やす」。めいろの 行き止まり（通れる さかいが 1つだけの 通路）に、区域ごとに 6つまで 金の米つぶが おちている。
 // ころがって 入ると ひろえる（+2pt。きょう 10こごとに +20pt）。場所は 日本の 日づけと 区域で きまり（だれでも 同じ）、毎日 かわる。ひろった つぶは その日は 出ない（game.js の dayState().grains）。
-// 行き止まりに 入るのが「はずれ」ではなく「たから さがし」に なる。ゴールまでの めいろ図にも 金の 点で 出る（寄り道の 計画に）
+// 行き止まりに 入るのが「はずれ」ではなく「たから さがし」に なる
 const MZ_GRAIN_N = 6, MZ_GRAIN_SEC = 2;   // 区域ごとの つぶの 数・ひろうと もどる 時計（秒）
 const jstDay = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3);
 function mzGrainSet(a) {   // 区域の 金の米つぶ（区域の 中の マスの 番号）
@@ -8213,7 +8348,7 @@ function drawMzNext(w, cy, U, now) {
     mzNext.dist = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : 0;
   }
   const a = (now - mzNext.t0) / 1000;
-  if (a > 3) { mzNext.t0 = 0; mzMapOpen(now, 6000); return; }   // 知らせの あとに ゴールまでの めいろ図を 6秒
+  if (a > 3) { mzNext.t0 = 0; return; }   // （ゴールまでの めいろ図は 運営者の声「ゴールまでの迷路は削除」2026-10-29 で なくした）
   const S = Math.round(MZ_CLOCK_PX * U / 16), under = mzRt.t0 && mzRt.len0 ? Math.round(S * 1.5 + S * 0.85 + U * 0.3) : 0;   // 時間と ★の 札（drawMzClock）の 下から（横向きの 低い 画面では お米が 上の ほうに いて、札と 重なって 字が 読めなかった）
   const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6, under + Math.round(big * 0.8) * 0.9), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
   ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
@@ -8286,7 +8421,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     const down = r[3] + R, up = r[1] - R;
     qy = down <= vh - m && (up < mt || down - qy <= qy - up) ? down : Math.max(mt, up);
   }
-  mzMap.pin = [qx, qy, R, a];   // 矢印の 位置（テスト用。mzMap.at は めいろ図を かきなおした 時刻なので 別に）
+  mzMap.pin = [qx, qy, R, a];   // 矢印の 位置（テスト用）
   // 「🏁 つぎの ゴール」の 札（同じ こまで 先に 描く）に 矢印が かかる 間は うすく 描く（向きは 見えて、札の 字は 読める。
   //   自分で 遊んで 分かった：スマホを 横に した 740×360 で、上の ゴールの 矢印が 札の「つぎの」の 字に かぶって 読めなかった）
   const nb0 = mzNext.at === now && mzNext.box;
@@ -8307,129 +8442,16 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
     label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
   }
-  if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは めいろ図を 出さない
-  mzMap.far = !!G.me && G.dist(G.me, gt) > MZ_FAR_MAP;
-  if (!mzMap.tapped && !labHide) label(mzMap.far ? '🌏 タップ' : '🗺 タップ', bx, by + U * 0.8, Math.round(U * MZ_TAP_K), '#bfefff');   // 矢印を タップすると めいろ図（遠い ゴールは せかいちず）。1回 タップしたら もう 出さない（小さい 字を へらす）
+  if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは 矢印の タップを 受けない
+  if (!mzMap.tapped && !labHide) label('🌏 タップ', bx, by + U * 0.8, Math.round(U * MZ_TAP_K), '#bfefff');   // 矢印を タップすると せかいちず。1回 タップしたら もう 出さない（小さい 字を へらす）
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
-// ゴールまでの めいろ図：運営者の声「ゴールをわかりやすく」。地図を 小さく しても ゴールは 画面の 外（めいろで 2km など）なので、
-// お米と ゴールが 入る はんいの めいろを 上から 見た 小さな 図に して 画面の 上に 出す（1マス＝数点。通路は 明るく・壁の かたまりは 暗い 緑・水は 青・まだ 読めていない 所は 灰色）。
-// 足あとの マスは 黄色、お米は 白い 点、ゴールは 黄色い わと 🏁。新しい ゴールの 知らせの あとに 6秒、縁の 矢印を タップしても 出る（図を タップで とじる）。道すじは 出さない（とく 楽しみを のこす）
-// Godot で 描く（?godot=1 の 試作）ときは 出さない（記録係は 絵を 1回だけ 送るので、かきかえる 図が かわらない）
-const mzMap = { until: 0, t0: 0, last: 0, cv: null, at: 0, key: '', box: null, rect: null, arrow: null, pin: null, far: false, tapped: false };
+const mzMap = { arrow: null, pin: null, tapped: false };   // 縁の 矢印（ゴールまでの めいろ図は 2026-10-29 に なくした）
 try { mzMap.tapped = localStorage.getItem('nsg_mz_arrow_tap') === '1'; } catch (e) { /* noop */ }
-// 遠い ゴール（まっすぐ 1km より 先）：運営者の声「ゴールがどこなのかわからない」（遠くて 地図の どこか 分からない）。めいろ図は こまかい めいろが つまって 町の どこか 分からないので、
-// 縁の 矢印を タップすると せかいちず（本当の 地図・地名つき）を、お米と ゴールが 両方 入る ように 開く。せかいちずには ゴールの 🏁 と 名前と、お米からの 点線
-const MZ_FAR_MAP = 1000;
+// 縁の 矢印を タップすると せかいちず（本当の 地図・地名つき）を、お米と ゴールが 両方 入る ように 開く（運営者の声「ゴールがどこなのかわからない」）。せかいちずには ゴールの 🏁 と 名前と、お米からの 点線
 function mzGoalWorld() {
   setWorld(true);
   G.toast('🌏 ゴールは 🏁 の 所（👣 で めいろに もどる）');
-}
-function mzMapOpen(now, ms) { if (mzMap.until <= now) { mzMap.t0 = now; mzMap.last = 0; } mzMap.until = now + ms; mzMap.at = 0; }
-function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
-  const g = toTile(gt.lat, gt.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(g.x / MZ_K), gr = Math.floor(g.y / MZ_K);
-  const pad = 4, x0 = Math.min(a, gc) - pad, y0 = Math.min(b, gr) - pad, cols = Math.max(a, gc) + pad - x0 + 1, rows = Math.max(b, gr) + pad - y0 + 1;
-  const c = Math.min(Math.round(12 * dpr), Math.floor(Math.min((w - 104 * dpr) / cols, H0 / rows)));   // 1マスの 点の 大きさ（左右は 地図の ボタンを よける）
-  if (c < 3) return null;   // 遠すぎる（図が 小さく なりすぎて、通路どうしの 細い壁が 描けない）
-  const cv = mzMap.cv || (mzMap.cv = document.createElement('canvas')), x = cv.getContext('2d');
-  cv.width = cols * c; cv.height = rows * c;
-  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy);
-  const net = new Path2D(), walked = new Path2D(), grains = [];   // ゆるい めいろ：通路は 道すじの 曲線で（歩く地図と 同じ 形）
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-    const cx = x0 + i, cy = y0 + j, t = mzType(cx, cy);
-    x.fillStyle = t < 0 ? ((i + j) & 1 ? '#4a4a4a' : '#3e3e3e') : t === 2 ? '#2f6aa0' : '#1d4434';
-    x.fillRect(i * c, j * c, c, c);
-    const cs = go(cx, cy) ? mzCurves(cx, cy) : null;
-    if (cs) for (const q of cs) for (const p of mzTrail.has(cx + ',' + cy) ? [net, walked] : [net]) { p.moveTo((q[0][0] / MZ_K - x0) * c, (q[0][1] / MZ_K - y0) * c); for (let k = 1; k < q.length; k++) p.lineTo((q[k][0] / MZ_K - x0) * c, (q[k][1] / MZ_K - y0) * c); }
-    if (t === 1 && mzGrainAt(cx, cy)) grains.push([i, j]);
-  }
-  x.lineCap = x.lineJoin = 'round'; x.lineWidth = c * 2 * MZ_HALF / MZ_K;
-  x.strokeStyle = '#ddd6b6'; x.stroke(net);
-  x.strokeStyle = '#f3e08a'; x.stroke(walked);   // 通った 所は 黄色く
-  for (const [i, j] of grains) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g);   // 金の米つぶ
-  }
-  let pads = 0, dots = 0;
-  {   // びゅんパネル（抹茶色の 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）。細い壁より 先に 描く（小さい 図でも 壁を ぬりつぶさない）
-    const now = performance.now(), q = Math.max(1, Math.round(c / 5));
-    x.lineWidth = 1; x.strokeStyle = '#1a1a1a'; x.fillStyle = '#9ccc4f';
-    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-      const d = mzType(x0 + i, y0 + j) === 1 ? mzPadAt(x0 + i, y0 + j) : -1;
-      if (d < 0) continue;
-      const [dx, dy] = MZ_PAD_D[d], mx = i * c + c / 2, my = j * c + c / 2, f = c * 0.55, h = c * 0.45;   // マスより 少し 大きく（小さい 図でも 見える）
-      x.beginPath(); x.moveTo(mx + dx * f, my + dy * f); x.lineTo(mx - dx * f * 0.7 - dy * h, my - dy * f * 0.7 + dx * h); x.lineTo(mx - dx * f * 0.7 + dy * h, my - dy * f * 0.7 - dx * h); x.closePath(); x.fill(); x.stroke();
-      pads++;
-    }
-    for (let ry = Math.floor(y0 / MZ_R); ry <= Math.floor((y0 + rows) / MZ_R); ry++) for (let rx = Math.floor(x0 / MZ_R); rx <= Math.floor((x0 + cols) / MZ_R); rx++) {
-      const a = mzAreas.get(rx + '_' + ry);   // 読めている 区域だけ
-      if (a) for (const L of mzLineSet(a)) L.dots.forEach((pt, k) => {
-        if (L.taken[k] && now - L.taken[k] <= MZ_DOT_BACK) return;
-        const px = (pt[0] / MZ_K - x0) * c, py = (pt[1] / MZ_K - y0) * c;
-        if (px < 0 || py < 0 || px >= cols * c || py >= rows * c) return;
-        x.fillStyle = '#5a4a2a'; x.fillRect(Math.round(px - q / 2) - 1, Math.round(py - q / 2) - 1, q + 2, q + 2); x.fillStyle = '#ffffff'; x.fillRect(Math.round(px - q / 2), Math.round(py - q / 2), q, q); dots++;   // こい ふちで 通路の 色から うく
-      });
-    }
-  }
-  return { x0, y0, cols, rows, c, pads, dots, near: ((G.reachOf ? G.reachOf(gt) : 40) || 40) * 0.8 / TILE_M / MZ_K, gx: g.x / MZ_K, gy: g.y / MZ_K };
-}
-function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上の ボタンに かさならない）
-  const dt = mzMap.last ? Math.min(now - mzMap.last, 1000) : 0;
-  mzMap.last = now;
-  if (mapCovered() || mzBanner.t0 || mzNext.t0 || rp.x === null) { mzMap.until += dt; mzMap.t0 += dt; return; }   // 窓や 知らせが 出ている 間は 待つ（とじてから 出す）
-  const S = Math.round(16 * dpr), top = cy + Math.round(40 * dpr) + S * 1.6;   // 図の 上の はし（お米の 足もとより 下。見出しの ぶん あける）
-  if (now - mzMap.at > 500) { mzMap.at = now; mzMap.builds = (mzMap.builds || 0) + 1; mzMap.box = mzMapBuild(gt, w, vh - top - S * 1.6, dpr); }   // 0.5秒ごとに かきなおす（読みこんだ 区域・足あとが ふえる）
-  const B = mzMap.box;
-  if (!B) { mzMap.rect = null; return; }
-  const al = Math.min(1, (now - mzMap.t0) / 250, (mzMap.until - now) / 400);
-  const W = B.cols * B.c, H = B.rows * B.c, X = Math.round(w / 2 - W / 2), Y = Math.round(top);
-  ctx.globalAlpha = al;
-  ctx.fillStyle = 'rgba(10,20,30,.85)'; ctx.fillRect(X - S * 0.5, Y - S * 1.6, W + S, H + S * 2.5);
-  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(X - 2, Y - 2, W + 4, H + 4);
-  ctx.drawImage(mzMap.cv, X, Y, W, H);
-  ctx.font = `bold ${Math.round(S * 0.8)}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  ctx.lineWidth = 3; ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
-  ctx.strokeText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8); ctx.fillText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8);
-  const pulse = (Math.sin(now / 200) + 1) / 2, help = mzHelpOn() && mzRt.path && mzRt.path.length > 1;
-  if (help) {   // おたすけ：ゴールまでの 道すじを 図にも 水色の 線で（めいろ全体の どこを 通るか 分かる）。図の 外へ 回る ところは 図の ふちで 切る
-    ctx.save();
-    ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip();
-    const P = mzRt.path.map(([cx, cy]) => [X + (cx + 0.5 - B.x0) * B.c, Y + (cy + 0.5 - B.y0) * B.c]);   // 道すじと 同じ 曲線（さかいの まん中を とおる）
-    ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]);
-    for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
-    ctx.lineTo(P[P.length - 1][0], P[P.length - 1][1]);
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(3, B.c * 0.9); ctx.stroke();
-    ctx.strokeStyle = '#7fe0ff'; ctx.lineWidth = Math.max(1.5, B.c * 0.5); ctx.stroke();
-    ctx.restore();
-  }
-  {   // ゴール：チェックインの 近さの 黄色い わと 🏁
-    const gx = X + (B.gx - B.x0) * B.c, gy = Y + (B.gy - B.y0) * B.c, r = Math.max(B.c * 1.6, B.near * B.c) * (0.9 + pulse * 0.15);
-    ctx.lineWidth = Math.max(3, B.c * 0.5); ctx.strokeStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.lineWidth = Math.max(2, B.c * 0.3); ctx.strokeStyle = '#ffd54f'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.font = `${Math.round(S * 1.1)}px sans-serif`; ctx.fillStyle = '#ffffff'; ctx.fillText('🏁', gx, gy - r - S * 0.5);
-  }
-  if (mzScare.on) {   // かかし：だいだい色の 丸（金の 四角の 米つぶと まちがえない）
-    const cx = X + (mzScare.cx + 0.5 - B.x0) * B.c, cy = Y + (mzScare.cy + 0.5 - B.y0) * B.c, r = Math.max(3 * dpr, B.c * 0.75);
-    if (cx >= X && cy >= Y && cx <= X + W && cy <= Y + H) { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, r + Math.max(1.5, dpr), 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff8a1e'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); }
-  }
-  for (const c of mzCrow.list) {   // カラス：黒い 点（赤い ふち。こわがって いる ときは 青い ふち）
-    const cx = X + (c.cx + (c.nx - c.cx) * c.t + 0.5 - B.x0) * B.c, cy = Y + (c.cy + (c.ny - c.cy) * c.t + 0.5 - B.y0) * B.c, r = Math.max(2.5 * dpr, B.c * 0.6);
-    if (cx < X || cy < Y || cx > X + W || cy > Y + H) continue;
-    ctx.fillStyle = c.scared ? '#6aaaff' : '#ff5a4a'; ctx.beginPath(); ctx.arc(cx, cy, r + Math.max(1, dpr), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-  }
-  {   // お米：白い 点（ちかちか）
-    const rx = X + (rp.x / MZ_K - B.x0) * B.c, ry = Y + (rp.y / MZ_K - B.y0) * B.c, r = Math.max(3 * dpr, B.c * 0.7) * (1 + pulse * 0.25);
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(rx, ry, r + Math.max(1.5, dpr), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.font = `bold ${Math.round(S * 0.55)}px "DotGothic16", sans-serif`; ctx.fillStyle = '#bfefff'; ctx.lineWidth = 3;
-  {   // 見かた。せまい 画面（360 など）で はみ出さない よう、入りきらなければ 文字を 小さく
-    const t = `⚪ いま 🏁 ゴール ${help ? '🟦 道 ' : ''}🟨 米つぶ${B.pads ? ' ▶ びゅん' : ''}${B.dots ? ' ･ つぶ' : ''}${mzCrow.list.length ? ' ⚫ カラス' : ''}${mzScare.on ? ' 🟠 かかし' : ''}（タップで とじる）`, tw = ctx.measureText(t).width;
-    if (tw > w * 0.96) ctx.font = `bold ${Math.max(8, Math.floor(S * 0.55 * w * 0.96 / tw))}px "DotGothic16", sans-serif`;
-    ctx.strokeText(t, w / 2, Y + H + S * 0.45); ctx.fillText(t, w / 2, Y + H + S * 0.45);
-  }
-  ctx.globalAlpha = 1;
-  mzMap.rect = [X - S * 0.5, Y - S * 1.6, X + W + S * 0.5, Y + H + S * 0.9];
 }
 // ゆるい めいろの 生け垣：道すじを 太い 線で なぞって、外がわの 帯（MZ_HEDGE）を 生け垣に、内がわ（MZ_HALF）を くりぬいて 通路に する。
 // 重ねた 絵（くりぬき）を 使うので 下絵に 描いて から 貼る。下絵は 地図の 1/8 マスを 1点に した 小さな 絵（ドット絵の 地図に そろい、スマホでも 軽い）。影は 右下へ ずらした 帯
@@ -9172,10 +9194,9 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
-  if (mazeOn() && !worldMode) {   // ゴールまでの めいろ図：図を タップで とじる・縁の 矢印を タップで 出す
+  if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];
-    if (mzMap.until > now && inR(mzMap.rect)) { mzMap.until = Math.min(mzMap.until, now + 300); return; }
-    if (inR(mzMap.arrow)) { if (!mzMap.tapped) { mzMap.tapped = true; try { localStorage.setItem('nsg_mz_arrow_tap', '1'); } catch (err) { /* noop */ } } if (mzMap.far) mzGoalWorld(); else mzMapOpen(now, 8000); return; }   // 遠い ゴールは せかいちずで（めいろ図では 町の どこか 分からない）
+    if (inR(mzMap.arrow)) { if (!mzMap.tapped) { mzMap.tapped = true; try { localStorage.setItem('nsg_mz_arrow_tap', '1'); } catch (err) { /* noop */ } } mzGoalWorld(); return; }   // 縁の 矢印を タップすると せかいちずで ゴールの 場所を 見る（ゴールまでの めいろ図は なくした。運営者の声 2026-10-29）
   }
   if (!(worldMode && dragMoved)) {   // 当店の札と絵がいちばん上に描かれているので、先に調べる
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr;
@@ -9297,7 +9318,7 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => acti
     if (!g || !g.t0) return null;
     const sec = g.sec !== undefined ? g.sec : (now - g.t0) / 1000;
     return { sec, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M, stars: g.len0 && !g.warp ? mzStars(sec, g.len0) : 0, par: g.len0 ? mzPar(g.len0).p3 : 0, way: g.len0 && !g.warp && g.len0 >= MZ_WAY_MIN ? Math.max(1, g.moves / (g.len0 - 1)) : 0, run: g.run || null, warp: !!g.warp };   // warp：とちゅうで とびこえた（★・はやさの ベストに 入れない）   // way：通った マスが ちかみちの 何倍か（1 に 近いほど まよわず 来た）
-  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy), critters: () => mzCritDrawn.slice(), critFled: () => mzCritFled.size, critHi: () => mzCritHiN, critMode: () => mzCritMode, say: () => ({ t: riceBub.t, on: performance.now() < riceBub.until, log: riceBub.log.slice() }), sayNow: (t, ms) => riceSay(t, ms, 'happy') }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, suzume: { get list() { return suzume.list.map(b => ({ x: b.x, y: b.y, fly: !!b.fly })); }, put: (x, y) => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; suzumeSpawn(x, y, performance.now() - 1000); }, clear: () => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; }, NEAR: SUZUME_NEAR, visit: () => suzumeVisit(performance.now()), VISIT: SUZUME_VISIT }, neko: { get cat() { const n = neko.cat; return n && { x: n.x, y: n.y, awake: performance.now() - n.awake < NEKO_AWAKE }; }, put: (x, y) => { neko.next = performance.now() + 6e4; neko.cat = { x: x + 0.5, y: y + 0.6, t0: performance.now(), awake: 0, dir: 1, col: NEKO_COLS[0] }; }, clear: () => { neko.cat = null; neko.next = performance.now() + 6e4; }, NEAR: NEKO_NEAR }, kaeru: { get list() { return kaeru.list.map(f => ({ x: f.x, y: f.y, jump: !!f.jump })); }, season: () => kaeruSeason(), put: (x, y) => { const now = performance.now(); kaeru.next = now + 6e4; kaeru.list = [{ x: x + 0.5, y: y + 0.5, t0: now, jump: 0, dir: 1, into: [1, 0], seed: 0 }]; }, clear: () => { kaeru.list.length = 0; kaeru.next = performance.now() + 6e4; }, NEAR: KAERU_NEAR }, mushi: { get m() { const m = mushi.m; return m && { kind: m.kind, x: m.x, y: m.y, flee: !!m.flee }; }, kind: () => mushiKind(), put: (x, y, k) => { const now = performance.now(); mushi.next = now + 6e4; mushi.m = { kind: k || mushiKind() || 'tonbo', x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: 0 }; }, clear: () => { mushi.m = null; mushi.next = performance.now() + 6e4; }, NEAR: MUSHI_NEAR }, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], get mapArrow() { return mzMap.arrow; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy), critters: () => mzCritDrawn.slice(), critFled: () => mzCritFled.size, critHi: () => mzCritHiN, critMode: () => mzCritMode, say: () => ({ t: riceBub.t, on: performance.now() < riceBub.until, log: riceBub.log.slice() }), sayNow: (t, ms) => riceSay(t, ms, 'happy') }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, suzume: { get list() { return suzume.list.map(b => ({ x: b.x, y: b.y, fly: !!b.fly })); }, put: (x, y) => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; suzumeSpawn(x, y, performance.now() - 1000); }, clear: () => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; }, NEAR: SUZUME_NEAR, visit: () => suzumeVisit(performance.now()), VISIT: SUZUME_VISIT }, neko: { get cat() { const n = neko.cat; return n && { x: n.x, y: n.y, awake: performance.now() - n.awake < NEKO_AWAKE }; }, put: (x, y) => { neko.next = performance.now() + 6e4; neko.cat = { x: x + 0.5, y: y + 0.6, t0: performance.now(), awake: 0, dir: 1, col: NEKO_COLS[0] }; }, clear: () => { neko.cat = null; neko.next = performance.now() + 6e4; }, NEAR: NEKO_NEAR }, kaeru: { get list() { return kaeru.list.map(f => ({ x: f.x, y: f.y, jump: !!f.jump })); }, season: () => kaeruSeason(), put: (x, y) => { const now = performance.now(); kaeru.next = now + 6e4; kaeru.list = [{ x: x + 0.5, y: y + 0.5, t0: now, jump: 0, dir: 1, into: [1, 0], seed: 0 }]; }, clear: () => { kaeru.list.length = 0; kaeru.next = performance.now() + 6e4; }, NEAR: KAERU_NEAR }, mushi: { get m() { const m = mushi.m; return m && { kind: m.kind, x: m.x, y: m.y, flee: !!m.flee }; }, kind: () => mushiKind(), put: (x, y, k) => { const now = performance.now(); mushi.next = now + 6e4; mushi.m = { kind: k || mushiKind() || 'tonbo', x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: 0 }; }, clear: () => { mushi.m = null; mushi.next = performance.now() + 6e4; }, NEAR: MUSHI_NEAR }, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, riceFace: () => { const f = riceBall.faces || {}, sm = f.smile; let shine = 0; if (sm) { const d = sm.getContext('2d').getImageData(0, 0, sm.width, sm.height).data; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] === 255 && d[i + 1] === 255 && d[i + 2] === 255) shine++; } return { keys: Object.keys(f), shine }; }, breathAt: now => riceBreath(now), get bfly() { return { phase: bfly.phase, drawn: bfly.drawn, calm: calmMotion, smooth: bfly.smooth, at: bfly.at, kind: bfly.kind || '', season: mushiKind() }; }, setIdle: v => { roll.idle = v; }, riceWake, get zzz() { return { n: zzz.n, at: zzz.at }; }, get drop() { return { n: drop.n, at: drop.at }; }, setWet: v => { roll.wetT = v; }, get wakeT() { return roll.wakeT || 0; }, setGb: v => { gbOn = !!v; dirty = true; }, bflyIn, riceLast: () => { const L = riceBall.last; if (!L) return null; const d = riceBall.x.getImageData(0, 0, L.S, L.S).data; let soft = 0, solid = 0, tones = new Set(); for (let i = 0; i < d.length; i += 4) { if (d[i + 3] > 0 && d[i + 3] < 255) soft++; else if (d[i + 3] === 255) { solid++; tones.add(d[i] >> 1); } } let ring = 0; for (let i = 0; i < L.S; i++) for (const [x, y] of [[i, 0], [i, L.S - 1], [0, i], [L.S - 1, i]]) ring = Math.max(ring, d[(y * L.S + x) * 4 + 3]); return { ...L, soft, solid, tones: tones.size, ring }; }, moodAt: idle => { const k = roll.kind, id = roll.idle, hv = [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT]; Object.assign(roll, { kind: 'stop', idle, happyT: 0, ouchT: 0, dizzyT: 0, v: 0, h: 0, wetT: 0 }); const m = riceMood(1000); roll.kind = k; roll.idle = id; [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT] = hv; return m; }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat, pop: combo.pop || 0 }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, by: roll.by, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   slopeAt: (x, y) => slopeAt(x, y),   // テスト用：その マスの かたむき
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）

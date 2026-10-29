@@ -1086,6 +1086,14 @@ async function walkTo(page, id) {
     P.nightForce(null);
     return { night, day, toast, ok: night.n > 0 && night.warm >= night.n && day.n === 0 && !toast };
   });
+  // 物干しの せんたくもの（夜の 改善 6）：昼（10時）は 出る・雨と 雪と 夜は 出さない。絵が 描ける。文字は なし
+  R.checks.sentaku = await page.evaluate(async () => {
+    const P = nishioPixel, S = P.sentaku, wait = ms => new Promise(res => setTimeout(res, ms));
+    const day = S.on(null), rain = S.on({ kind: 'rain' }), snow = S.on({ kind: 'snow' }), sunny = S.on({ kind: 'sunny' });
+    P.nightForce(1); const night = S.on(null); P.nightForce(null);
+    const paint = S.paint(); await wait(300);
+    return { day, sunny, rain, snow, night, paint, n: S.n, ok: day && sunny && !rain && !snow && !night && paint > 100 };
+  });
   // どんぐりも ころころ（夜の 改善 5）：10〜11月、森・公園の となりを 転がると どんぐりが 落ちて ころころ 転がり、お米の 手前で 止まって 消える。文字は 出さない
   R.checks.donguri = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -3666,6 +3674,7 @@ async function walkTo(page, id) {
   need(c.chaHana && c.chaHana.ok, `茶畑の 茶の花：10月に 咲かない・ぽつぽつで ない（${JSON.stringify(c.chaHana)}）`);
   need(c.nightLamps && c.nightLamps.ok, `夜の あかり：夜に 街灯が ない・あたたかい 明かりが ない・昼にも 描く・文字を 出す（${JSON.stringify(c.nightLamps)}）`);
   need(c.hamon && c.hamon.ok, `水べの さざなみ：輪が 出ない・消えない・水の となりを 転がっても 出ない・文字を 出す（${JSON.stringify(c.hamon)}）`);
+  need(c.sentaku && c.sentaku.ok, `物干しの せんたくもの：昼に 出ない・雨や 雪や 夜に 出る・絵が 描けない（${JSON.stringify(c.sentaku)}）`);
   need(c.donguri && c.donguri.ok, `どんぐりも ころころ：10月に 出ない・転がらない・止まらない・お米に かさなる・消えない・森の となりで 落ちない・文字を 出す（${JSON.stringify(c.donguri)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);

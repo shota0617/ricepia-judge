@@ -1878,6 +1878,7 @@ function potyaSound() {   // ぽちゃ：カエルが 田んぼに とびこむ�
 // なす（西三河の ハウスの「とげなし美茄子」・10〜6月）、大豆（西尾が 県の 主な 産地・フクユタカを 12月に かりとる）。7〜9月は 出ない
 const NAKAMA_FOLLOW = 6000, NAKAMA_CD = 40000;
 const nakama = { n: null, next: 0 };
+const otomo = { next: 0, last: '' };   // 町の おとも（otomo.js）：60〜100秒に 1回まで。同じ おともを つづけない
 const NAKAMA_MONTHS = { ichigo: [12, 1, 2, 3, 4, 5], nasu: [10, 11, 12, 1, 2, 3, 4, 5, 6], daizu: [12] };
 const nakamaKinds = () => { const mo = new Date().getMonth() + 1; return Object.keys(NAKAMA_MONTHS).filter(k => NAKAMA_MONTHS[k].includes(mo)); };
 const nakamaKind = () => { const a = nakamaKinds(); return a.length ? a[Math.floor(Math.random() * a.length)] : ''; };   // その 月の 作物から 1つ（なければ ''）
@@ -1891,16 +1892,47 @@ function drawNakama(x, y, u, kind, ang) {   // ang：ころがる 回り（四�
   } else if (kind === 'nasu') {   // なす：むらさきの まるい からだ・緑の へた
     draw([[-3, -1, 6, 4, '#5a2a7a'], [-2, 3, 4, 1, '#5a2a7a'], [-2, -2, 4, 1, '#3f9b3c'], [-1, -3, 2, 1, '#3f9b3c']]);
     px(-2, 0, 1, 2, '#9a6ac0');   // てかり
+  } else if (kind === 'unagi') {   // うなぎ（一色）：ほそ長い こい青ねずみの からだ・おなかは うすい 黄
+    draw([[-4, -1, 8, 3, '#3d4552'], [-3, 2, 6, 1, '#d9c88a'], [2, -2, 2, 1, '#3d4552']]);
+  } else if (kind === 'ebisen') {   // えびせんべい（一色）：だいだい色の まるい せんべい・えびの つぶつぶ
+    draw([[-3, -2, 6, 4, '#f0a050'], [-2, -3, 4, 1, '#f0a050'], [-2, 2, 4, 1, '#f0a050']]);
+    for (const [cx, cy] of [[-2, -2], [2, -2], [-2, 1], [1, 1]]) px(cx, cy, 1, 1, '#d8602c');
+  } else if (kind === 'tencha') {   // てん茶の 葉（西尾）：あざやかな 緑の 葉・まん中に こい 緑の すじ
+    draw([[-3, -1, 6, 3, '#4e9a3a'], [-2, -2, 4, 1, '#4e9a3a'], [-2, 2, 4, 1, '#4e9a3a'], [-1, -3, 2, 1, '#2f7a2a']]);
+    px(-3, 2, 1, 1, '#2f7a2a');
+  } else if (kind === 'inaho') {   // 金色の 稲穂（吉良）：こがね色の もみ
+    draw([[-2, -2, 4, 4, '#e8b830'], [-3, -1, 6, 2, '#e8b830'], [-1, -3, 2, 1, '#c89a20']]);
+    px(-2, -2, 1, 1, '#fff0a0'); px(1, 1, 1, 1, '#b8860b');
+  } else if (kind === 'asari') {   // アサリ（海べ）：茶色い すじの ある 貝
+    draw([[-3, -1, 6, 3, '#c9a77a'], [-2, -2, 4, 1, '#c9a77a'], [-2, 2, 4, 1, '#c9a77a']]);
+    for (const cx of [-3, 2]) px(cx, -1, 1, 3, '#8a6a44');
   } else {   // 大豆：うす黄色の まるい つぶ
     draw([[-2, -2, 4, 4, '#e8d08a'], [-3, -1, 6, 2, '#e8d08a']]);
     px(-1, -1, 1, 1, '#fff4c8'); px(1, 1, 1, 1, '#b89a50');
   }
-  if (kind !== 'daizu') { const e = kind === 'nasu' ? '#fff4e0' : '#1a1a1a'; px(-1, 0, 1, 1, e); px(1, 0, 1, 1, e); } else { px(-1, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#1a1a1a'); }   // にこっと した 目（なすは 色が こいので 白い 目）
+  if (kind !== 'daizu') { const e = kind === 'nasu' || kind === 'unagi' ? '#fff4e0' : '#1a1a1a'; px(-1, 0, 1, 1, e); px(1, 0, 1, 1, e); } else { px(-1, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#1a1a1a'); }   // にこっと した 目（なすは 色が こいので 白い 目）
   ctx.restore();
 }
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (!nakama.n && now > otomo.next && sp > 1.5 && !mapCovered() && window.NISHIO_OTOMO && LU && howtoEl.hidden && !sightBusy() && now > riceBub.until + 2000) {   // 町の おとも（otomo.js）
+    if (!otomo.next) otomo.next = now + 20000;   // はじめは 20秒 転がってから
+    else {
+      const ll = toLatLng(rp.x, rp.y);
+      let near = '';
+      for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+      const o = window.NISHIO_OTOMO.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, otomo.last);
+      if (!o) otomo.next = now + 8000;
+      else {
+        otomo.next = now + 60000 + Math.random() * 40000; otomo.last = o.id; nakama.next = now + NAKAMA_CD;
+        const bx = rp.vx >= 0 ? -1.5 : 1.5;   // お米の うしろから ころんと 出て くる
+        nakama.n = { kind: o.id, x: rp.x + bx, y: rp.y, t0: now, last: now, ang: 0, stop: 0 };
+        riceSay(o.say, 2400, 'happy');
+        if (G.track) G.track('kome_otomo', { id: o.id });
+      }
+    }
+  }
   if (!nakama.n && now > nakama.next && sp > 1.5 && !mapCovered() && nakamaKinds().length) {   // 畑・温室・農地の となりを 転がって いる とき
     const x = Math.floor(rp.x), y = Math.floor(rp.y), farm = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => [C.V, C.N, C.U].includes(codeAt(x + dx, y + dy)));
     if (farm) { nakama.next = now + NAKAMA_CD + Math.random() * NAKAMA_CD; nakama.n = { kind: nakamaKind(), x: x + 0.5 + farm[0], y: y + 0.5 + farm[1], t0: now, last: now, ang: 0, stop: 0 }; }

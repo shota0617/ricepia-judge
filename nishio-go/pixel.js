@@ -2040,7 +2040,7 @@ function yuamiStep(hx, by, u, now) {
 const horidashi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function horidashiStep(hx, by, u, now) {
   const h = horidashi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur || shimatabi.cur || tsutsumi.cur || tsutsumi.done) { h.cur = null; h.said = false; h.chk = 0; return; }
+  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur || shimatabi.cur || tombolo.cur || tsutsumi.cur || tsutsumi.done) { h.cur = null; h.said = false; h.chk = 0; return; }
   const H = window.NISHIO_HORIDASHI;
   if (!h.cur || now - h.t0 >= H.CYCLE) {
     if (!h.cur && (roll.idle < H.STILL || now < h.chk)) return;
@@ -2193,7 +2193,7 @@ function isshikiStep(hx, by, u, now) {
 const hazusanpo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function hazusanpoStep(hx, by, u, now) {
   const m = hazusanpo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_HAZUSANPO || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  if (!window.NISHIO_HAZUSANPO || !still || gbOn || rp.x === null || roll.idle > 12 || tombolo.cur) { m.cur = null; m.said = false; m.chk = 0; return; }
   const S = window.NISHIO_HAZUSANPO;
   if (!m.cur || now - m.t0 >= S.CYCLE) {
     if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
@@ -2314,6 +2314,48 @@ function chatsumiStep(hx, by, u, now) {
   } else {   // 川霧と 土：うねの 上を 白い もやが ながれる
     px(-16, 14, 32, 1, '#6e4a2a'); row(-16, 10, 32); row(-12, 5, 24);
     for (let i = 0; i < 3; i++) { const dx = calmMotion ? 0 : Math.sin(t * 0.8 + i * 2) * 3; ctx.globalAlpha = Math.min(1, age / 500) * 0.55; px(-15 + i * 10 + dx, 3 + i * 3.5, 14, 2.5, '#ffffff'); }
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの トンボロさんぽ（tombolo.js）：トンボロ干潟の そばで 止まって じっと すると、お米の うしろが 干潟の ひとこまに なる。満ちた 海・潮が 引く・海の 道（トンボロ現象）・干潟の 生きものが 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の トンボロ干潟の そばの 中だけ・ゲームボーイの4色では 出さない。ほりだし・はずさんぽより 先に 出る（それらは 譲る）。お米の うしろに 描く
+const tombolo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function tomboloStep(hx, by, u, now) {
+  const m = tombolo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_TOMBOLO || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_TOMBOLO;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.near(G.spots, ll.lat, ll.lng) }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_tombolo', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const wave = (x, y, w, i) => { const dx = calmMotion ? 0 : Math.sin(t * 1.4 + i * 2) * 1.5; px(x + dx, y, w, 1, '#d8ecf8'); };   // 波の 白い すじ
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'mitsu') {   // 満ちた 海：一面の 海に 小さな 島の かげ
+    px(-18, 6, 36, 9, '#4a8ac8'); px(-18, 6, 36, 1, '#6aa6dc'); wave(-14, 9, 6, 0); wave(2, 11, 7, 1); wave(-6, 13, 5, 2);
+    px(8, 3, 9, 3, '#4a7a3a'); px(10, 1, 5, 2, '#4a7a3a'); px(8, 6, 9, 1, '#e8cf94');
+  } else if (id === 'hiku') {   // 潮が 引く：海が 左右へ しりぞき、まんなかに 砂の 道が 見えはじめる
+    px(-18, 6, 36, 9, '#4a8ac8'); px(-18, 6, 36, 1, '#6aa6dc');
+    const open = calmMotion ? 6 : Math.min(6, 1 + age / 1200);
+    px(-open, 6, open * 2, 9, '#e8cf94'); px(-open + 1, 9, open * 2 - 2, 1, '#c9ad70');
+    wave(-14, 9, 6, 0); wave(8, 12, 6, 1); px(8, 3, 9, 3, '#4a7a3a'); px(10, 1, 5, 2, '#4a7a3a'); px(8, 6, 9, 1, '#e8cf94');
+  } else if (id === 'michi') {   // 海の 道：島へ のびる 砂の 道、両がわは 海
+    px(-18, 6, 36, 9, '#4a8ac8'); px(-18, 6, 36, 1, '#6aa6dc');
+    px(-18, 9, 28, 4, '#e8cf94'); px(-18, 9, 28, 1, '#f4e2b0'); px(-12, 11, 6, 1, '#c9ad70'); px(0, 12, 6, 1, '#c9ad70');
+    wave(-14, 7, 6, 0); wave(2, 7, 7, 1); wave(-8, 14, 6, 2);
+    px(8, 3, 9, 3, '#4a7a3a'); px(10, 1, 5, 2, '#4a7a3a'); px(8, 6, 10, 4, '#e8cf94');
+  } else {   // 干潟の 生きもの：ひろい 砂の 上に アサリと ウミニナ
+    px(-18, 11, 36, 4, '#e8cf94'); px(-16, 12, 8, 1, '#c9ad70'); px(4, 13, 10, 1, '#c9ad70'); px(-18, 8, 36, 3, '#c8e0ec'); wave(-12, 9, 6, 0);
+    const bob = calmMotion ? 0 : Math.sin(t * 2) * 0.6;
+    for (const [sx, sy, k] of [[-14, -4, 'asari'], [2, -4, 'uminina']]) if (critterSprites[k]) ctx.drawImage(critterSprites[k], Math.round(hx + sx * u), Math.round(by + (sy + bob) * u), Math.round(u * 1.2 * 16), Math.round(u * 1.2 * 16));
   }
   ctx.globalAlpha = 1;
   roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
@@ -7326,6 +7368,7 @@ function frame(now) {
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
     hazusanpoStep(hx, by, u, now);   // 幡豆の 町なかで じっと すると 山と 花の ひとこま（三ヶ根山・スカイライン・カーネーション・あじさい・ひまわり。hazusanpo.js）
+    tomboloStep(hx, by, u, now);   // トンボロ干潟の そばで じっと すると 干潟の ひとこま（満ち引き・海の道・干潟の 生きもの。tombolo.js。ほりだし・はずさんぽに 先んじる）
     jokamachiStep(hx, by, u, now);   // 西尾城の あとの そばで じっと すると 城下町の ひとこま（丑寅櫓・鍮石門・祇園祭など。jokamachi.js。ちゃせきに 先んじる）
     chatsumiStep(hx, by, u, now);   // 稲荷山茶園公園の そばで じっと すると 茶畑の ひとこま（茶摘み・てん茶・川霧。chatsumi.js。ちゃせきに 先んじる）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）

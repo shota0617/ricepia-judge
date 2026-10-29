@@ -174,7 +174,9 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     ends.forEach((i, k) => { const d = grains.length ? Math.min(...grains.map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))) : toG[i]; if (d > bd) { bd = d; bi = k; } });
     grains.push(ends.splice(bi, 1)[0]);
   }
-  return Object.assign(B, { start, len, grains });
+  let spring = -1, sd = 1e9;   // ばね：ゴールへの 近道の 上、スタートから 3割ほど 進んだ 所に 1つ（みんな 通る。とると 12秒 はずむ）
+  for (const i of onPath) { const d = Math.abs(fromS[i] - 1 - Math.round(L * 0.3)); if (d < sd && !B.holes.has(i) && i !== start[1] * tw + start[0] && !grains.includes(i)) { sd = d; spring = i; } }
+  return Object.assign(B, { start, len, grains, spring });
 }
 const pass = (b, x, y, dx, dy) => {   // (x, y) から となりへ 通れるか
   if (dx === 1) return x + 1 < b.tw && b.er[y * b.tw + x] === 1;
@@ -201,6 +203,7 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 // どこが 通れるかは そのまま。通れる さかいで つながる マスの まん中を なめらかな 曲線（さかいの まん中を とおり、マスの まん中へ 引かれる）で むすび、
 // お米の まん中は 道すじから TUBE マス以内を 転がる。直角の 曲がり角は まるく、階段の ような ななめの 道は ななめの 一本道に なる
 const TUBE = 0.12, HALF = TUBE + R;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（マス）
+const SPRING_S = 12, SPRING_E = 1.3;   // ばねの わざ（地図の めいろと 同じ。店主「迷路の壁が伸びて跳ね返って加速するスキル」）：とってから 何秒・当たった 速さの 何倍で はね返るか（数字は 仮）
 const SOFT_K = 2400, SOFT_C = 34, SOFT_MAX = 0.12;   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 function tubes(b) {   // マスごとに 受けもつ 道すじ（マスの 座標の 点の 列の 配列）。ゴールへ つながる 床と、そこから 入れる 水（落とし穴）
@@ -414,11 +417,18 @@ function waitChunks(spot, done) {
     else setTimeout(poll, 250);
   })();
 }
+function springShot(g) {   // ばねショット（快感。地図の めいろと 同じ）：ばねで はね返って 1.2秒 以内に 金の米つぶ・ゴール → 金と 緑の きらきらと ちりりん
+  const sp = g.spring, now = performance.now();
+  if (!sp || !sp.at || now - sp.at > 1200) return;
+  sp.at = 0; sp.shots = (sp.shots || 0) + 1;
+  [0, 70, 140].forEach((d, k) => setTimeout(() => api.koto(0.8 + k * 0.1, false), d));
+  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, v = 3.5; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, c: k % 2 ? '#ffd84a' : '#8cf078', t: 0, life: 0.7 }); }
+}
 function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = [];
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -552,13 +562,23 @@ function step(dt) {
     if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
       if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
+      if (!sf.on && hit > 2.5 && !calm && navigator.vibrate && localStorage.getItem('nsg_bgm') !== 'false') try { navigator.vibrate(Math.min(12, Math.round(3 + hit * 1.2))); } catch (e) { /* noop */ }   // 強く 当たった：ぶるっ（快感。地図の めいろには もう ある。動きを へらす 設定・音を 切った 人には しない）
       if (!sf.on) { sf.vin = Math.max(0, hit); sf.dv = Math.max(sf.dv, sf.vin / 6); }   // 当たった 速さ（ぽよんの 強さ）。へこみの 絵を ぐっと 押しこむ（盤の 1マスは 地図の 3マスぶん なので 地図の 1/3）
       Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
       let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり
       if (over > SOFT_MAX) { nx = q.x + ux * (TUBE + SOFT_MAX); ny = q.y + uy * (TUBE + SOFT_MAX); if (vn > 0) vn = 0; }   // それより 先へは のびない
       g.vx += (vn - hit) * ux; g.vy += (vn - hit) * uy;
     } else {
-      if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8)); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
+      if (sf.on && g.spring.left > 0 && sf.vin > 1.5) {   // ばねの わざ：はなれる ときに 外へ 押しだす（当たった 速さの SPRING_E 倍まで）。ぽよんと 鳴る ほどの 当たりだけ（カーブに こすれる たびに 押すと ピンボールの ように あばれて 穴に おちた）
+        const vo = -(g.vx * sf.ux + g.vy * sf.uy), want = Math.min(MAX, sf.vin * SPRING_E);
+        if (vo < want) {
+          g.vx -= (want - vo) * sf.ux; g.vy -= (want - vo) * sf.uy; g.spring.boosts++;
+          const now = performance.now(), sp = g.spring; sp.chain = now - (sp.at || 0) < 1500 ? sp.chain + 1 : 1; sp.at = now;   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 音が 1段ずつ 高く、2れんぱつ から 緑の きらきら
+          if (sp.chain >= 2) for (let k = 0; k < 6 + Math.min(12, sp.chain * 3); k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, c: k % 3 === 0 ? '#ffffff' : k % 2 ? '#8cf078' : '#e4ffd8', t: 0, life: 0.5 }); }
+        }
+        const v = Math.hypot(g.vx, g.vy); if (v > MAX) { g.vx *= MAX / v; g.vy *= MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
+      }
+      if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8), g.spring.left > 0 ? g.spring.chain || 1 : 0); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
     { const tg = sf.on ? Math.min(SOFT_MAX, sf.pen * 2) : 0; sf.dv += (80 * (tg - sf.dent) - (calm ? 18 : 5) * sf.dv) * dt; sf.dent = Math.max(calm ? 0 : -0.05, Math.min(SOFT_MAX, sf.dent + sf.dv * dt));   // 動きを へらす 設定の 人には ぷるぷる させない（1回で もどす）   // ふちの へこみの 絵：地図の めいろ（#358）と 同じ ばね。お米より 大きく ついていき、0.4秒ほど のびて、はなれると ぷるぷると もどる
@@ -589,10 +609,15 @@ function step(dt) {
     return;
   }
   for (const i of b.grains) if (!g.got.has(i) && Math.hypot(g.x - i % b.tw - 0.5, g.y - ((i / b.tw) | 0) - 0.5) < 0.45) {   // 金の米つぶを とった
-    g.got.add(i); api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90);
+    g.got.add(i); api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90); springShot(g);
     for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, c: k % 2 ? '#ffe066' : '#fff4b0', t: 0, life: 0.6 }); }
   }
-  if (Math.hypot(g.x - b.goal[0] - 0.5, g.y - b.goal[1] - 0.5) < 0.42) win();
+  if (g.spring.left > 0) g.spring.left = Math.max(0, g.spring.left - dt);
+  if (b.spring >= 0 && !g.spring.got && Math.hypot(g.x - b.spring % b.tw - 0.5, g.y - ((b.spring / b.tw) | 0) - 0.5) < 0.45) {   // ばねを とった
+    g.spring.got = true; g.spring.left = SPRING_S; api.koto(0.9, false); setTimeout(() => api.koto(1, false), 90);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3 - 1, c: k % 2 ? '#8cf078' : '#e4ffd8', t: 0, life: 0.6 }); }
+  }
+  if (Math.hypot(g.x - b.goal[0] - 0.5, g.y - b.goal[1] - 0.5) < 0.42) { springShot(g); win(); }
 }
 function win() {
   const g = game, b = g.board;
@@ -669,7 +694,7 @@ function tick(now) {
   api.rumble(g.done || g.fall > 0 || !ui.clear.hidden ? 0 : Math.hypot(g.vx, g.vy) * K);   // 転がる音（歩く地図と同じ。速いほど 大きく 高く）
   if (api.demGen !== g.dem && (!g.demT || now - g.demT > 1500)) { g.demT = now; g.dem = api.demGen; g.bg = paintBoard(g.board, g.T); }
   draw(now);
-  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + g.t.toFixed(1);
+  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + g.t.toFixed(1) + (g.spring && g.spring.left > 0 ? ` ばね${Math.ceil(g.spring.left)}` : '');
   // 盤を 傾けて見せる：矢印キー・なぞる で 動かすと、わくごと 少し 傾く（キーホルダーを 傾けたように）。スマホの傾きでは 手の中の 本物が 傾くので 小さく
   const t = api.tilt(), kx = keys.right - keys.left + drag.x, ky = keys.down - keys.up + drag.y, sx = kx * 5 + t.x * 2, sy = ky * 5 + t.y * 2;
   g.bx = (g.bx || 0) + (sx - (g.bx || 0)) * Math.min(1, dt * 10); g.by = (g.by || 0) + (sy - (g.by || 0)) * Math.min(1, dt * 10);
@@ -717,6 +742,17 @@ function draw(now) {
     x.fillStyle = '#3a2a08'; x.beginPath(); x.ellipse(cx, cy, rw + Math.max(1, T / 24), rh + Math.max(1, T / 24), 0.35, 0, Math.PI * 2); x.fill();
     x.fillStyle = '#f2c230'; x.beginPath(); x.ellipse(cx, cy, rw, rh, 0.35, 0, Math.PI * 2); x.fill();
     x.fillStyle = '#fff6c0'; x.beginPath(); x.ellipse(cx - rw * 0.35, cy - rh * 0.35, rw * 0.3, rh * 0.3, 0.35, 0, Math.PI * 2); x.fill();
+  }
+  if (b.spring >= 0 && g.spring && !g.spring.got) {   // ばね（地図の めいろと 同じ：緑の わと のびちぢみ する 銀の ぎざぎざ）
+    const cx = (b.spring % b.tw + 0.5) * T, cy = (((b.spring / b.tw) | 0) + 0.5) * T, q = Math.max(1, Math.round(T / 20)), h = T * (0.5 + Math.sin(now / 140) * 0.1), bw = T * 0.44, y0 = cy + T * 0.3;   // 盤の マスは 小さいので マスいっぱいに
+    x.fillStyle = 'rgba(140,240,120,.45)'; x.beginPath(); x.arc(cx, cy, T * (0.5 + Math.sin(now / 220) * 0.04), 0, Math.PI * 2); x.fill(); x.lineWidth = Math.max(2, q * 2); x.strokeStyle = '#8cf078'; x.stroke();
+    x.fillStyle = '#1a1a1a'; x.fillRect(Math.round(cx - bw / 2) - q, Math.round(y0) - q, Math.round(bw) + 2 * q, 3 * q); x.fillRect(Math.round(cx - bw / 2) - q, Math.round(y0 - h) - 2 * q, Math.round(bw) + 2 * q, 3 * q);
+    x.lineWidth = Math.max(2, q * 2); x.lineJoin = 'miter'; x.strokeStyle = '#1a1a1a'; x.beginPath();
+    for (let i = 0; i <= 6; i++) { const px = cx + (i % 2 ? bw / 2 : -bw / 2) * 0.8, py = y0 - (h * i) / 6; i ? x.lineTo(px, py) : x.moveTo(px, py); }
+    x.stroke(); x.lineWidth = Math.max(1, q); x.strokeStyle = '#d8e0e6'; x.stroke();
+  }
+  if (g.spring && g.spring.left > 0 && !(g.spring.left < 2 && Math.floor(now / 160) % 2)) {   // わざの 間：お米の まわりに 緑の わ（のこり 2秒は ちかちか）
+    x.lineWidth = Math.max(2, T / 12); x.strokeStyle = 'rgba(140,240,120,.85)'; x.beginPath(); x.arc(g.x * T, g.y * T, T * (0.4 + Math.sin(now / 120) * 0.04), 0, Math.PI * 2); x.stroke();
   }
   // お米
   const u = T * 0.031;

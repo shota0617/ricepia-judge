@@ -1227,7 +1227,7 @@ function mazeGoal(id, name, lines) {
   const sp = mzSpeed(gl.m, gl.sec, gl.warp);
   if (sp) lines.push(sp);
   friendVs(gl.sec, st);
-  mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now() };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）
+  mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
   track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
   return total;
@@ -2570,15 +2570,30 @@ const toastQ = [];
 const toastShowing = msg => $('toast').classList.contains('show') && $('toast').textContent === msg;
 function toast(msg) {
   const el = $('toast');
-  if ($('reward').classList.contains('show') || howtoOpen()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札の 上にも 重ねない（とじてから）
+  if (toastBlocked()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面・シェアの 窓・めいろの「🏁 つぎの ゴール」の 上にも 重ねない（とじてから）
+  if (toastQ.length) toastFlush();   // 待たせた ものが のこって いれば あとに 出す（札の 途中で 地図を はなれた など）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
-  el.textContent = msg; el.classList.add('show'); toast.at = Date.now(); toastDodge();
+  el.textContent = msg; el.classList.remove('wlow'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow：せかいちずの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
 function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
 function howtoOpen() { const h = $('howto'); return !!h && !h.hidden; }
-function toastFlush() { if (!$('reward').classList.contains('show') && !howtoOpen()) toastQ.splice(0).forEach(toastAfter); }   // あそびかたを とじたとき（pixel.js）
+// 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
+function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
+// シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
+// イベントの 窓（古い地図・虫の名前あて・本のできごと・雲母石 など。どれも .medashi）も 同じ：知らせが 窓の 絵や 問いの 上に 重なって いた（自分で 遊んで 分かった：古い地図の 写真に 重なった）
+function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden) || !!document.querySelector('.medashi:not([hidden])'); }
+if (window.MutationObserver && $('share')) new MutationObserver(() => { if ($('share').hidden) toastFlush(); else toastHold(); }).observe($('share'), { attributes: true, attributeFilter: ['hidden'] });
+if (window.MutationObserver) new MutationObserver(ms => {   // イベントの 窓は あとから 作られる ので、body の 下の hidden の 変化を 見る
+  const ev = ms.find(m => m.target.classList && m.target.classList.contains('medashi'));
+  if (!ev) return;
+  if (ev.target.hidden) toastFlush(); else toastHold();
+}).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
+// めいろの「🏁 つぎの ゴール」の 札（pixel.js の mzNextOn）
+function pxBusy() { try { return !!(window.nishioGo && nishioGo.toastBlock && nishioGo.toastBlock()); } catch (e) { return false; } }
+function toastBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy(); }
+function toastFlush() { if (!toastBlocked()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓・つぎの ゴールの 札を とじたとき
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
   const t = $('toast');
@@ -2644,6 +2659,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
       continue;
     }
     if (l.startsWith('🧭')) continue;   // 「つぎは〜へ」は下の案内に出ている
+    if (l.startsWith('🍚 来店スタンプ')) { const n = (l.match(/(\d+)こめ/) || [])[1]; if (n) out.push(`<span title="${esc(l)}">${PIA('bowl', l)}${n}こめ</span>`); continue; }   // 当店の 来店スタンプ：何こめか（数の ない 茶わんの 札だけ だった）
     const c = CHIP.find(([e]) => l.startsWith(e)), ic = c ? c[1] : 'flag';   // 名所・キャンペーンなどは旗
     if (ic === 'book') book = true;
     const plus = (l.match(/[+＋]\d+/) || [''])[0], days = (l.match(/（(\d+)日連続）/) || [])[1], time = (l.match(/るすばん\s*((?:\d+時間)?\d+分)/) || [])[1];
@@ -2651,6 +2667,7 @@ function rewardChips(lines, fact, total, hero) {   // hero：絵を大きく出�
     // 大きく出している絵（はじめの1枚）と、合計と同じ数の札は出さない。るすばんで2枚目からの絵は札で出す
     if (hero && ic === 'card' && !shown) { shown = true; continue; }
     if (hero && ic !== 'card' && v === `+${total}`) continue;
+    if (!v && (ic === 'flag' || ic === 'bowl')) continue;   // 数も しるしも ない 旗・茶わんの 札は 出さない（何の 札か 分からず、ならぶ だけ だった：当店の「ありがとう」「LINE でも たまります」）
     out.push(`<span title="${esc(l)}">${PIA(ic, l)}${v}</span>`);
   }
   return `<div class="chips">${out.join('')}</div>`;
@@ -2700,6 +2717,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
         ${rewardChips(lines, fact, total, true)}
         ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`
       : `<div class="rw${shareKind ? ' long' : ''}"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
+        ${lines.some(l => l.startsWith('🍚 当店に来てくれて')) ? '<div class="thanks">来てくれて ありがとう！</div>' : ''}
         ${rewardChips(lines, fact)}
         ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
@@ -3140,6 +3158,7 @@ let couponTimer = null, couponId = null;
 function showCoupon(id) {
   couponId = id;
   $('coupon').hidden = false;
+  toastHold();   // いま 出ている 知らせは 下げる（出た ばかりなら とじてから 出し直す）
   tickCoupon();
   clearInterval(couponTimer);
   couponTimer = setInterval(tickCoupon, 1000);
@@ -3165,6 +3184,7 @@ function closeCoupon() {
   clearInterval(couponTimer); couponTimer = null; couponId = null;
   $('coupon').hidden = true;
   if (!$('panel-rewards').hidden) renderRewards();
+  toastFlush();   // 待たせて いた 知らせを 出す
 }
 $('cpUse').addEventListener('click', () => {
   const c = S.coupons.find(x => x.id === couponId);

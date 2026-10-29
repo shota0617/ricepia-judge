@@ -2145,12 +2145,50 @@ function shimatabiStep(hx, by, u, now) {
   if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
   m.drawn++; dirty = true;
 }
+// お米つぶの ちょうちんよる（chochinyoru.js）：夜に 西尾市の 一色の 町なかで 止まって じっと すると、お米の うしろに 提灯の あかりが ともる。大提灯の あかり・提灯の れつ・大提灯を 見あげる が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・夜の 一色の 町なか（佐久島の 外・まわりに 海が ない 所）の 中だけ・ゲームボーイの4色では 出さない。いっしきさんぽ・めぐりの 輪に 先んじる。お米の うしろに 描く
+const chochinyoru = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function chochinyoruStep(hx, by, u, now) {
+  const m = chochinyoru, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_CHOCHINYORU || !still || gbOn || rp.x === null || roll.idle > 12 || !nightOn || nightLevel() < 1) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_CHOCHINYORU;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(Object.assign(c, { night: true }), m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_chochinyoru', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id, fade = Math.min(1, age / 500);
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const glow = (cx, cy, r, al) => { for (let k = 3; k >= 1; k--) { ctx.globalAlpha = fade * al * (4 - k) / 3 * 0.5; px(cx - r * k / 3, cy - r * k / 3, r * 2 * k / 3, r * 2 * k / 3, '#ffb040'); } ctx.globalAlpha = fade; };
+  const lantern = (cx, cy, w, h) => {   // 赤い 丸い 提灯：上下の 黒い ふた・まんなかの 金の すじ
+    px(cx - w / 2, cy, w, h, '#d8302c'); px(cx - w / 2 + 1, cy - 1, w - 2, 1, '#d8302c'); px(cx - w / 2 + 1, cy + h, w - 2, 1, '#d8302c');
+    px(cx - w / 4, cy - 2, w / 2, 1.5, '#3a2a1a'); px(cx - w / 4, cy + h + 0.5, w / 2, 1.5, '#3a2a1a');
+    px(cx - w / 2, cy + h / 2, w, 1, '#f0b040'); px(cx - w / 2 + 1, cy + 1, 1, h - 2, '#ff7a60');
+  };
+  ctx.globalAlpha = fade;
+  const pulse = calmMotion ? 1 : 0.85 + Math.sin(t * 3) * 0.15;
+  if (id === 'tomoru') {   // 大提灯の あかり：お米の よこ上に 大きな 提灯が ぽうっと ともる
+    glow(14, -12, 14 * pulse, 0.8); lantern(14, -18, 14, 14);
+  } else if (id === 'narabu') {   // 提灯の れつ：ひもに 5つ ならんで ゆらゆら
+    px(-22, -16, 44, 1, '#3a2a1a');
+    for (let i = 0; i < 5; i++) { const sw = calmMotion ? 0 : Math.sin(t * 2 + i * 0.9) * 1.5; glow(-18 + i * 9 + sw, -10, 5 * pulse, 0.8); lantern(-18 + i * 9 + sw, -14, 6, 7); }
+  } else {   // 大提灯を 見あげる：お米の 真上に 大きく どーんと
+    glow(0, -28, 20 * pulse, 0.7); lantern(0, -38, 22, 22);
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
 // お米つぶの いっしきさんぽ（isshiki.js）：西尾市の 一色の 町なかで 止まって じっと すると、お米の うしろが 一色の ひとこまに なる。えびせんべい焼き・うなぎ約2割・養鰻・さかな広場が 7秒ごとに かわり、かわるたび お米が ひと言。
 // 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 一色の 町なか（佐久島の 外・まわりに 海が ない 所）の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
 const isshiki = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function isshikiStep(hx, by, u, now) {
   const m = isshiki, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_ISSHIKI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  if (!window.NISHIO_ISSHIKI || !still || gbOn || rp.x === null || roll.idle > 12 || chochinyoru.cur) { m.cur = null; m.said = false; m.chk = 0; return; }
   const S = window.NISHIO_ISSHIKI;
   if (!m.cur || now - m.t0 >= S.CYCLE) {
     if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
@@ -2608,7 +2646,7 @@ function meguriStep(hx, by, u, now) {
     }
   }
   const n = m.items.length;
-  if (!n) return;
+  if (!n || chochinyoru.cur) return;   // 夜の 一色で 提灯の あかりが 出て いる 間は 輪を 休む
   const q = Math.max(1, Math.round(u * 0.7)), spin = calmMotion ? 0 : now / 3200, fade = Math.min(1, (now - m.t0) / 800);
   const pos = m.items.map((it, i) => { const a = spin + i * Math.PI * 2 / n; return { it, x: Math.cos(a) * 19 * u, y: Math.sin(a) * 6 * u, z: Math.sin(a) }; }).sort((a, b) => a.z - b.z);   // 手前（z が 大きい）を あとから 描く
   for (const p of pos) {
@@ -7531,6 +7569,7 @@ function frame(now) {
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
     tsutsumiStep(hx, by, u, now);   // 吉良の 田んぼで じっと すると 黄金堤を 築く（tsutsumi.js）
+    chochinyoruStep(hx, by, u, now);   // 夜の 一色の 町なかで じっと すると 提灯の あかり（大提灯・提灯の れつ。chochinyoru.js。いっしきさんぽ・めぐりに 先んじる）
     isshikiStep(hx, by, u, now);   // 一色の 町なかで じっと すると 港町の ひとこま（えびせん焼き・うなぎ・養鰻・さかな広場。isshiki.js）
     shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）

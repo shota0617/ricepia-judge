@@ -431,6 +431,13 @@ const CHECKS = {
     // 116周目：フィーバーの おわりは 吹き出しを 出さなくても 読み上げる・引いて いる 間の「強すぎます」は よろこびの 声より 先
     const fe = await p.evaluate(async () => { KB.manual = true; KB.start(); const S = KB.S; S.touched = true; S.msg = { text:'一本どり！', kind:'ok', t:0.3, life:1.2 }; S.feverT = 0.01; document.getElementById('sr').textContent = ''; KB.step(1/60); await new Promise(r => setTimeout(r, 300)); const sr = document.getElementById('sr').textContent; KB.manual = false; return { sr, msg: S.msg && S.msg.text }; });
     ok(/フィーバー おわり/.test(fe.sr) && fe.msg === '一本どり！', 'フィーバーの おわりは 吹き出しを 上書き しなくても 読み上げる', fe);
+    // 117周目（はじめての タイムアタック）：教える 袋で 縫い始めを つまんでも 声だけ・2本の 指が はなれて いると 声・1本指 2回目は くわしく・0袋の 結果は れんしゅうが 先
+    const ta1 = await p.evaluate(async () => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(1); Object.assign(b, { face:'back', slide:0, phase:'look', start:'L' }); S.bag = b; const t0 = S.time, w0 = S.wrongs; KB.down(L.x1 - 4, L.seamY); KB.up(); const wrong = { dt: S.time - t0, w: S.wrongs - w0, msg: S.msg && S.msg.text };
+      S.msg = null; ev('pointerdown', 31, L.x0, L.seamY); ev('pointerdown', 32, L.x0 + 200, L.seamY); await new Promise(r => setTimeout(r, 700)); const far = S.msg && S.msg.text; ev('pointerup', 31, L.x0, L.seamY); ev('pointerup', 32, L.x0 + 200, L.seamY);
+      S.oneTries = 1; S.msg = null; KB.manual = false; return { wrong, far }; });
+    ok(ta1.wrong.dt === 0 && ta1.wrong.w === 0 && /縫い始め/.test(ta1.wrong.msg || '') && /はなれて/.test(ta1.far || ''), '教える 袋で 縫い始めを つまんでも 声だけ・2本の 指が はなれて いると 声（117周目）', ta1);
+    const z0 = await p.evaluate(async () => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100)); const ag = document.getElementById('againBtn'); return { next: ag.nextElementSibling && ag.nextElementSibling.id, next2: ag.nextElementSibling && ag.nextElementSibling.nextElementSibling && ag.nextElementSibling.nextElementSibling.id }; });
+    ok(z0.next === 'tip' && z0.next2 === 'toPractice', '0袋の 結果は「もう一回」の すぐ 下に ヒントと「れんしゅう」', z0);
     // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
     const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(/あと 1つで きょうの 目標/.test(near), '目標が あと 1つの ときは ヒントで「あと 1つで きょうの 目標」', near);

@@ -66,7 +66,7 @@ async function main(){
               KB.down(L.x0 + 4, L.seamY); KB.up(); b._faceOk = true; b._flippedOnce = false; b._think = 0.3; tick(); continue;
             }
             let end = bot.alwaysL ? 'L' : b._readOk ? b.start : (b.start==='L'?'R':'L');
-            if (b.wrong && b.wrongEnd) end = b.wrongEnd==='L' ? 'R' : 'L';
+            if (b.wrongEnd) end = b.wrongEnd==='L' ? 'R' : 'L'; // 縫い始めと 言われたら 反対の 端へ（117周目：教える 袋は 罰なしで 声だけ）
             x = end==='L' ? L.x0 + 4 : L.x1 - 4; y = L.seamY + 40;
             KB.down(x, y); held = S.held;
             if (!held){ b._think = 0.3; tick(); continue; }

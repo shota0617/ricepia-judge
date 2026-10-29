@@ -413,7 +413,7 @@ function startGame(practice){
   track(practice ? 'mishin_practice_start' : 'mishin_game_start');
   S.practice = practice; S.bannerMax = 0; drawMsg.said = new Set(); /* 読み上げは 1回の ゲームで 同じ 文 1回（84周目） */
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
-  S.pinchHint = practice ? 0 : 2.5; S.touched = false; S.idleT = 0;
+  S.pinchHint = practice ? 0 : 2.5; S.touched = false; S.idleT = 0; S.oneTries = 0;
   if(!practice && kbUser) setTimeout(() => srSay('タイムアタックは 二本指で 遊ぶ ゲームです。キーボードでは れんしゅうを どうぞ。Esc で おわれます。'), 300); /* 108周目 */ /* 時計は はじめて さわってから（101周目） */ /* タイムアタックの はじめは 二本指の 見本を 出す（99周目） */
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true; $('loading').hidden = true; coinAuto = false;
   setTimeout(measureHud, 0); // HUD が 出てから はかる
@@ -464,6 +464,7 @@ let kbUser = false; addEventListener('keydown', e=>{ if(!e.ctrlKey && !e.metaKey
 function focusEnd(el){ el.focus({preventScroll:true}); if(kbUser) requestAnimationFrame(()=>el.scrollIntoView({block:'nearest'})); } /* 見出しを なるべく のこす */ // キーの 人は フォーカスが 見える 所まで
 function finish(){ if(S.ending) return; S.ending = 0.8; S.held = false; say('そこまで！','ok', 1.2); audio.hush(); audio.wood(1500, 0.26, 0.1); audio.later(()=>audio.wood(1500, 0.26, 0.1), 160); S.hopT = [0.4, 0.4, 0.56, 0.56]; /* 拍子木に スズメが ぴょんと おどろく（音なし） */ }
 function endGame(){
+  { const pn = ui.result.querySelector('.panel'), tip = $('tip'), tp = $('toPractice'), ag = $('againBtn'), rg = $('rGoals'); if(S.bags===0){ pn.insertBefore(tip, ag.nextSibling); pn.insertBefore(tp, tip.nextSibling); } else { pn.insertBefore(tip, rg.nextSibling); pn.insertBefore(tp, tip.nextSibling); } } /* 0袋の 人には ヒントと れんしゅうを 先に（117周目） */
   audio.hush(); track('mishin_game_end', { bags: S.bags });
   S.mode='over'; S.held=false;
   ui.hud.hidden = true; ui.result.hidden = false; ui.result.scrollTop = 0; /* 前の 回の 下へ 送った 位置を のこさない */ setTimeout(()=>focusEnd($('againBtn')), 0);
@@ -597,6 +598,7 @@ function down(x,y){
       }
       if(!b.single && w!==b.start){
         // 縫い始めの側：からまる
+        if(!S.practice && b.k<3){ b.wrongEnd = w; say('そちらは 縫い始めです。反対の 端へ どうぞ','ok'); return; } /* 教える 3袋は 声だけ（91・99周目と そろえる。117周目） */
         S.wrongs++; S.combo=0; S.feverT=0; S.streak=0; b.wrong=true; b.wrongEnd=w; addTime(R.timeWrong); birdsReact('？');
         say(S.practice ? 'そちらは 縫い始めです。反対の 端から どうぞ' : '縫い始めでした… からまりました','ng'); audio.knot(); S.shake=0.6; return;
       }
@@ -1740,6 +1742,7 @@ function pos(e){ const r = cv.getBoundingClientRect(); return [e.clientX - r.lef
 //   はなれる（PINCH_OFF より 開く）か、どちらかの 指を あげると はなす。1本指で すぐ あげると タップ。
 // マウス：おしている 間を つまんでいる と みなす（パソコン用）。袋の 上の クリックは タップ。
 const PINCH_ON = 120, PINCH_OFF = 170;
+function oneFingerSay(){ S.oneTries = (S.oneTries || 0) + 1; S.pinchHint = 1.6; if(S.oneTries < 2) say('糸は 二本指で つまんで ください','ok'); else say('ゲームは れんしゅうと ちがい、親指と 人さし指で つまみます','ok', 2.5); } /* 2回目からは くわしく（117周目） */
 const fingers = new Map(); let pinch = null; let tapCand = null; let oneCand = null;
 let needOpen = false; // もつれ・袋の かわりめで はなした あと：二本指を 一度 ひらく まで つまみなおさない（とじた ままの 指で ただで ほぐせない ように）
 function letGo(){ S.held = false; pinch = null; oneCand = null; keyHold = 0; needOpen = fingers.size >= 2; for(const f of fingers.values()) f.told = true; /* おいた ままの 指で つぎの 袋を まわさない */ }
@@ -1768,12 +1771,13 @@ cv.addEventListener('pointerdown', e=>{
   if(fingers.size===1){ tapCand = {id:e.pointerId, x, y, t:performance.now()};
     if(S.practice && oneOk(x, y)){ const id = e.pointerId; oneCand = {id, x, y}; setTimeout(()=>{ if(oneCand && oneCand.id===id && fingers.size===1) oneStart(); }, 250); }
     else if(!S.practice && S.mode==='play'){ const id = e.pointerId, w = whereTap(x, y); if(w==='L' || w==='R') setTimeout(()=>{ const g = fingers.get(id), b = S.bag; /* 1本指で 端を おさえた まま：れんしゅうの くせ */
-      if(g && fingers.size===1 && !pinch && !g.told && S.mode==='play' && !S.ending && b && b.phase==='look' && b.face==='back'){ g.told = true; S.pinchHint = 1.2; say('糸は 二本指で つまんで ください','ok'); } }, 450); }
+      if(g && fingers.size===1 && !pinch && !g.told && S.mode==='play' && !S.ending && b && b.phase==='look' && b.face==='back'){ g.told = true; oneFingerSay(); } }, 450); }
   }
   else if(fingers.size===2 && !pinch){
     tapCand = null; oneCand = null;
     const [mx,my,d] = pinchMid();
     if(d < PINCH_ON){ pinch = 'touch'; down(mx,my); pinchTold(); }
+    else setTimeout(() => { if(fingers.size===2 && !pinch && S.mode==='play' && !S.ending && pinchMid()[2] >= PINCH_ON){ S.pinchHint = 1.6; say('指が はなれています。親指と 人さし指を 近づけて、赤い 糸の 端を つまんで ください','ok', 2.5); } }, 600); /* 2本の 指が はなれた まま（117周目） */
   }
 });
 cv.addEventListener('pointermove', e=>{
@@ -1787,7 +1791,7 @@ cv.addEventListener('pointermove', e=>{
     if(oneCand && oneCand.id===e.pointerId && Math.hypot(x-oneCand.x, y-oneCand.y) > 14){ oneStart(); continue; }
     if(tapCand && tapCand.id===e.pointerId && Math.hypot(x-tapCand.x, y-tapCand.y) > 14) tapCand = null;
     // 1本指で なぞっても 糸は つまめない → 見本を 出す
-    if(fingers.size===1 && !pinch && !S.practice && S.mode==='play' && !S.ending && Math.hypot(x-f.sx, y-f.sy) > 30){ S.pinchHint = 1.2; if(!f.told){ f.told = true; say('糸は 二本指で つまんで ください','ok'); } } /* 字でも（1回の なぞりに 1回） */
+    if(fingers.size===1 && !pinch && !S.practice && S.mode==='play' && !S.ending && Math.hypot(x-f.sx, y-f.sy) > 30){ S.pinchHint = Math.max(S.pinchHint, 1.2); if(!f.told){ f.told = true; oneFingerSay(); } } /* 字でも（1回の なぞりに 1回） */
     // れんしゅう：1本指で なぞっても 何も おきない とき → 表なら まわす、裏なら 黄色い 輪へ（1回の なぞりに 1回）
     if(fingers.size===1 && !pinch && S.practice && S.mode==='play' && !f.told && Math.hypot(x-f.sx, y-f.sy) > 30){ const b = S.bag;
       if(b && b.phase==='look' && !b.done && b.slide<=0.05 && b.flipT<=0){ f.told = true; if(b.face==='front'){ b.flipT = 0.0001; audio.flip(); } else { say('黄色い 輪の 所に 指を おいて ください','ok', 0, true); S.pinchHint = 1.6; } } }

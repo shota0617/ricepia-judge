@@ -1064,6 +1064,26 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.season && r.sit && r.jump && r.gone && !r.toast };
   })();
+  // 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29）：10月は なす。お米の うしろへ ころころ ついて きて、しばらく すると ぴょんと はねて 消える。文字は 出さない
+  R.checks.nakama = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, N = P.nakama, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), t0 = document.getElementById('toast').textContent;
+      const kind = N.kind(), kinds = N.kinds().join(',');
+      P.suzume.clear(); P.neko.clear(); P.mushi.clear(); P.kaeru.clear(); N.put(r0.x - 3, r0.y);
+      const d0 = Math.hypot(N.n.x - P.roll.x, N.n.y - P.roll.y);
+      await wait(800);
+      const d1 = N.n ? Math.hypot(N.n.x - P.roll.x, N.n.y - P.roll.y) : null;
+      const follow = d1 !== null && d1 < d0 - 0.8 && d1 > 0.9;   // ちかづく けど お米には かさならない
+      let stop = false; for (let i = 0; i < 80 && !stop; i++) { await wait(100); stop = !N.n || N.n.stop; }
+      let gone = false; for (let i = 0; i < 20 && !gone; i++) { await wait(100); gone = !N.n; }
+      const toast = document.getElementById('toast').textContent !== t0 && /いちご|なす|大豆/.test(document.getElementById('toast').textContent);
+      N.clear();
+      return { kind, kinds, d0: +d0.toFixed(2), d1: d1 && +d1.toFixed(2), follow, stop, gone, toast };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.kind === 'nasu' && r.kinds === 'nasu' && r.follow && r.stop && r.gone && !r.toast };
+  })();
   // 季節の 小さな 虫（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：10月は 赤とんぼ。お米の まわりを とび、近くを 転がると はなれて 消える。文字は 出さない
   R.checks.kisetsuMushi = await (async () => {   // 名前は「虫の名前あて」の mushi と 分ける
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -3550,6 +3570,7 @@ async function walkTo(page, id) {
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.kaeru && c.kaeru.ok, `あぜの カエル：10月に 出ない・すわって いない・お米が 近づいても とびこまない・消えない・文字を 出す（${JSON.stringify(c.kaeru)}）`);
+  need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);
   need(c.neko && c.neko.ok, `ねこ：ねて いない・お米が 近づいても おきない・また ねない・文字を 出す（${JSON.stringify(c.neko)}）`);

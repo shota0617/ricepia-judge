@@ -106,8 +106,9 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::before{content:'';position:absolute;left:-10px;bottom:9px;border:7px solid transparent;border-right:10px solid #7a5a30;border-left:0}
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
-#result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{order:-1;margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
-#coinDone.skipped .panel>.line-talk{order:1} #coinDone.skipped .panel>.go,#coinDone.skipped .panel>.talk.cont{order:2} /* やめて 手順を 見に 来た 人には 手順を 先に（93周目） */
+#result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
+#coinH:focus-visible{outline:3px solid #3e2a1a;outline-offset:4px;border-radius:6px}
+@media (max-width:259px){#coinDone .talk>.who,#result .talk>.who{display:none} #coinDone .talk>.say::before,#coinDone .talk>.say::after,#result .talk>.say::before,#result .talk>.say::after{display:none} .nw{white-space:normal}} /* 字 200% など せまい 画面：まとめ・結果の 顔を けして 字に 幅を（96周目） */
 .talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none} /* 続きの ことば：1つの 画面に こめつぶを ふやしすぎない（89周目） */
 .talk>.say .fb i{color:#7a5a30}
 .talk>.say h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.4vw,36px);word-break:keep-all;line-height:1.15;margin:0;color:#3e2a1a;text-align:left}
@@ -158,7 +159,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
   #result .panel>.rankBox{grid-column:1;grid-row:2/span 6}
   #result .panel>:not(.talk:first-child):not(.rankBox){grid-column:2}
   #result .res{grid-template-columns:repeat(3,1fr);gap:6px} #result .res>div{padding:5px 2px;gap:0} #result .res span{white-space:nowrap;font-size:12px} #result .res strong{font-size:20px} /* 低い 画面では 点を 1行、のこり 3つを 1行に（ボタンを 画面の 中に） */
-  #result .panel>#bestTalk{order:2} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:3} #result .panel>.line-talk{order:1} /* 低い 画面では「もう一回」を 点の すぐ 下に、その 下に LINE（90周目） */
+  /* 低い 画面でも 並びは DOM の まま（「もう一回」→ LINE → じこベストの 声。96周目に DOM を 入れかえた） */
   #result .res>div:first-child{grid-column:1/-1;flex-direction:row;justify-content:center;align-items:baseline;gap:12px}
 }
 .season{margin:0 auto -6px;display:inline-flex;align-items:center;gap:6px;align-self:center;background:#f1dfba;color:#3e2a1a;font:700 14px var(--body);padding:4px 12px 4px 6px;border:2px dashed rgba(122,90,48,.6);border-radius:12px 9px 13px 10px;transform:rotate(-2deg)}
@@ -180,7 +181,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 @media (max-height:720px) and (max-width:500px){#title .panel>.talk{order:1} #title .panel>.goals,#title .panel>details{order:2}} /* 低い 画面の 題：ボタンを 先に、こめつぶの あいさつは その 下（78周目） */
 @media (max-height:360px){#title .season{display:none}} /* 568×320 で「ゲームで遊ぶ」が 切れない（90周目） */
 @media (max-height:500px){#title .panel>.talk{order:1} #title .panel>.goals,#title .panel>details{order:2}}
-@media (max-height:720px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel h1{font-size:30px} #result .res>div{padding:6px 10px} #result .panel>#bestTalk{order:2} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:2} #result .panel>.line-talk{order:1}} /* 低い 縦の 画面で「もう一回」を 中に */
+@media (max-height:720px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel h1{font-size:30px} #result .res>div{padding:6px 10px}} /* 低い 縦の 画面で「もう一回」を 中に */
 .ends{margin:0;display:flex;flex-direction:column;gap:4px}
 .ends canvas{width:100%;height:auto;border-radius:10px;display:block}
 .ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:16px;line-height:1.4;color:var(--ink);text-align:left}
@@ -235,7 +236,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 
   <div class="overlay" id="coinDone" hidden>
     <div class="panel">
-      <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><h1 class="one"><small id="coinSmall">れんしゅう できました</small>本物の 袋でも<br/>おなじです<span class="hanko" aria-hidden="true"><span><i>よく</i><i>できました</i></span></span></h1></div></div>
+      <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><h1 class="one" id="coinH" tabindex="-1"><small id="coinSmall">れんしゅう できました</small>本物の 袋でも<br/>おなじです<span class="hanko" aria-hidden="true"><span><i>よく</i><i>できました</i></span></span></h1></div></div>
       <div class="done3" aria-hidden="true"><span data-d="kome"></span><span data-d="kome"></span><span data-d="komeBlink"></span><small>3袋 できました</small></div>
       <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ここから。右：反対の端＝縫い始め（ここから 引くと からまる）"></canvas>
         <figcaption><span>反対の端（縫い始め）：からまる（×）</span></figcaption></figure>
@@ -263,9 +264,9 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
         <div><span>一本どり</span><strong id="rClean">0</strong></div>
         <div><span>もつれ</span><strong id="rSnap">0</strong></div>
       </div>
-      <div class="talk cont" id="bestTalk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say" id="best"></div></div>
       <button class="go" id="againBtn" type="button">もう一回</button>
-      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><span>らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。</span><a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a></div></div>
+      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a><span>らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。</span></div></div>
+      <div class="talk cont" id="bestTalk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say" id="best"></div></div>
       <div class="goals" id="rGoals"></div>
       <p id="tip" class="tip"></p>
       <button class="go sub" id="toPractice" type="button">糸の取り方を れんしゅう</button>
@@ -408,12 +409,13 @@ function startGame(practice){
 }
 
 function endPractice(skipped){
+  { const pn = ui.coinDone.querySelector('.panel'), lt = pn.querySelector('.line-talk'), ref = skipped === true ? pn.querySelector('.talks').nextSibling : pn.querySelector('.ends').nextSibling; if(lt.nextSibling !== ref && lt !== ref) pn.insertBefore(lt, ref); } /* やめて 見に 来た 人には 手順 → LINE。見た目と 読み上げの 順を そろえる（93・96周目） */
   const hw = ui.coinDone.querySelector('.talk>.who'); if(hw) hw.innerHTML = DOODLE.kome(skipped === true ? 'smile' : 'joy'); /* 89周目 */
   track('mishin_coin_done', { skipped: skipped === true ? 1 : 0 });
   srSay(skipped === true ? '取り方の まとめ です' : 'れんしゅう できました。本物の 袋での 取り方の まとめ です');
   // 途中で やめた ときは「よく できました」の はんこを 出さない
   ui.coinDone.classList.toggle('skipped', skipped === true); $('coinSmall').textContent = skipped === true ? '取り方の まとめ' : 'れんしゅう できました';
-  S.mode='over'; S.held=false; ui.steps.hidden = true; ui.coinDone.hidden = false; ui.coinDone.scrollTop = 0; drawEndsPic(); setTimeout(()=>focusEnd($('practiceAgain')), 0); // 見出しが かくれない ように 画面は 動かさない（キーで 遊んだ 人には ボタンを 見せる）
+  S.mode='over'; S.held=false; ui.steps.hidden = true; ui.coinDone.hidden = false; ui.coinDone.scrollTop = 0; drawEndsPic(); setTimeout(()=>focusEnd($('coinH')), 0); /* 見出しから（Tab で LINE →「もう一度」。96周目） */ // 見出しが かくれない ように 画面は 動かさない（キーで 遊んだ 人には ボタンを 見せる）
 }
 // まとめの 絵：袋の 口の 両はしを 大きく（左＝ほどき始め、右＝縫い始め）
 function drawEndsPic(){
@@ -1672,21 +1674,25 @@ function stepText(){
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
   if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと 引っかかる</b> 袋。直し方を ためして みましょう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引いて ください';
-  if(S.held && S.dirEff < 0.4) b.sideWarn = true; else if(!S.held || S.dirEff > 0.75) b.sideWarn = false; /* 行ったり 来たり しない ように 幅を もたせる（93周目） */
-  if(b.sideWarn) return '下では なく、<b>縫い目に そって 横へ</b> 引いて ください';
+  if(!S.held && S.liftT <= 0.8 && b._pullText) return b._pullText; /* はなした 直後は 前の 文の まま（つまみなおす たびに かえない。96周目） */
+  if(S.held && S.dirEff < 0.4) b.sideWarn = true; else if(S.held && S.dirEff > 0.75) b.sideWarn = false; /* 横へ 引けたら けす（はなしても けさない。93・96周目） */
+  return (b._pullText = pullText(b));
+}
+function pullText(b){
   if(!S.held && S.liftT > 0.8 && b.pulled > 0) return kbUser ? 'はなしても 大丈夫です。<b>←・→キー</b>で また つまんで ください' : 'はなしても 大丈夫です。<b>赤い 糸の 端</b>に また 指を おいて、横へ ゆっくり どうぞ'; /* とちゅうで はなした とき（93周目） */
+  if(b.sideWarn) return '下では なく、<b>縫い目に そって 横へ</b> 引いて ください';
   return 'つまんだまま、<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引きましょう。はなして つまみなおしても 大丈夫です';
 }
 function syncUI(dt){
   const menu = S.mode!=='play'; if(menu !== syncUI.menu){ syncUI.menu = menu; document.body.classList.toggle('menu', menu); cv.setAttribute('aria-hidden', String(menu)); /* まとめ・結果で 前の 袋の 文を 読まない（84周目） */ }
   if(S.practice && S.mode==='play'){
     if(!ui.steps._built){
-      ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">やめて 手順を 見る</button></div><div class="talk"><span class="who" aria-hidden="true">${DOODLE.kome('smile')}</span><div class="now say" id="stepNow" aria-live="polite"></div></div>`; /* こめつぶが 話す（74周目） */
+      ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">やめて 手順を 見る</button></div><div class="talk"><span class="who" aria-hidden="true">${DOODLE.kome('smile')}</span><div class="now say" id="stepNow"></div></div>`; /* こめつぶが 話す（74周目） */
       ui.steps._built = true;
     }
     const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, okNow = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : '', now = !okNow ? stepText() : S.bag && S.bag.done ? (stepText().startsWith(okNow) ? stepText() : okNow + ' ' + stepText()) : okNow; /* あいた 袋は「白糸は 自然に ぬけます」も 言う（84周目） */ /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
     if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
-    if(ui.steps._now !== now){ const first = !ui.steps._now; ui.steps._now = now; $('stepNow').innerHTML = now; if(first) srSay($('stepNow').textContent); /* 帯を 作った すぐは aria-live が 読まない ので */ cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
+    if(ui.steps._now !== now){ const first = !ui.steps._now; ui.steps._now = now; $('stepNow').innerHTML = now; { const bid = S.bag && S.bag.id, t = $('stepNow').textContent; if(!ui.steps._said || ui.steps._bid !== bid){ ui.steps._bid = bid; ui.steps._said = new Set(); } if(!ui.steps._said.has(t)){ ui.steps._said.add(t); srSay(t); } } /* 帯は aria-live を やめ、袋ごとに まだ 読んで いない 文 だけ 読む（引く たびに 何度も 読まない。96周目） */ void first; cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
       const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; S.bannerMax = Math.max(S.bannerMax || 0, S.bannerBottom); S.soundTop = $('soundBtn').getBoundingClientRect().top - c.top; }
   }
   const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;

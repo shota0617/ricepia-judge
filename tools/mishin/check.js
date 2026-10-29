@@ -177,7 +177,7 @@ const CHECKS = {
     r.sr = await p.evaluate(() => document.getElementById('sr').textContent); // 同じ 文でも 読むよう、一度 空に してから 入る
     ok(r.sr.length > 0, '読み上げの 欄に 声が 入る', r.sr);
     const f = await p.evaluate(() => document.activeElement && document.activeElement.id);
-    ok(f==='practiceAgain', 'まとめで「もう一回」に フォーカス', f);
+    ok(f==='coinH', 'まとめは 見出しに フォーカス（Tab で LINE →「もう一度」。96周目）', f);
     const q = await page(b, 1280, 800, '');
     const t = await q.evaluate(() => {
       KB.manual = true; KB.start(); steps(30); const S = KB.S;
@@ -337,7 +337,7 @@ const CHECKS = {
     await p.waitForTimeout(200);
     const fv = await p.evaluate(() => { const el = document.activeElement, r = el.getBoundingClientRect(); return { id: el.id, top:r.top, bottom:r.bottom, H:innerHeight }; });
     ok(/←・→キー/.test(kb), 'キーで 遊ぶ 人には れんしゅうの 帯も キーの ことば', kb);
-    ok(fv.id==='practiceAgain' && fv.bottom <= fv.H + 1, 'キーで 遊ぶ 人には まとめの フォーカスが 見える 所に', fv);
+    ok(fv.id==='coinH' && fv.top >= 0 && fv.bottom <= fv.H + 1, 'キーで 遊ぶ 人には まとめの フォーカスが 見える 所に', fv);
     // 61周目の レビュー：おまけの 行は 新しい じこベスト・0袋で 1回 まちがえた 人には その わけ・Ctrl では キーの 人に しない
     const r61 = await p.evaluate(() => { const ids = KB.GOALS.map(g=>g.id); localStorage.setItem('mishin-goals', JSON.stringify({ day: (()=>{ const d = new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); })(), done: ids }));
       localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 9000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
@@ -418,6 +418,16 @@ const CHECKS = {
     const sk = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); document.getElementById('skipBtn') && document.getElementById('skipBtn').click(); const c = document.getElementById('coinDone'); if (c.hidden) return { hidden:true };
       const t = c.querySelector('.talks').getBoundingClientRect().top, l = c.querySelector('.line-talk').getBoundingClientRect().top; c.hidden = true; return { talks:t, line:l }; });
     ok(sk.talks < sk.line, '「やめて 手順を 見る」で 来た ときは 手順が LINE より 先', sk);
+    // 96周目（見えにくさ 6）：つまみなおす たびに 帯の 文を かえない・見た目と DOM の 順を そろえる
+    const churn = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; Object.assign(S.bag, { slide:0, face:'back', phase:'pull', pulled:2 }); S.msg = null; const out = [];
+      for (const st of [{ held:true, dirEff:0.2, liftT:0 }, { held:false, dirEff:0.2, liftT:0.3 }, { held:true, dirEff:0.6, liftT:0 }, { held:false, dirEff:0.6, liftT:0.3 }, { held:true, dirEff:0.3, liftT:0 }]){
+        Object.assign(S, st); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); Object.assign(S, st); out.push(document.getElementById('stepNow').textContent.slice(0, 8)); }
+      return { n: new Set(out).size, out, live: document.getElementById('stepNow').getAttribute('aria-live') }; });
+    ok(churn.n === 1 && !churn.live, '下へ 引いて つまみなおしても 帯の 文は かわらない（aria-live なし・読み上げは 袋ごとに 1回）', churn);
+    const dom = await p.evaluate(() => { const g = document.getElementById('againBtn'), l = g.nextElementSibling, b = l && l.nextElementSibling; return { line: l && l.classList.contains('line-talk'), best: b && b.id, first: l && l.querySelector('.say').firstElementChild.tagName }; });
+    ok(dom.line && dom.best === 'bestTalk' && dom.first === 'A', '結果の DOM の 順＝見た目の 順（もう一回 → LINE（ボタン → 文）→ じこベストの 声）', dom);
+    const skd = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); const c = document.getElementById('coinDone'), sb = document.getElementById('skipBtn'); if (sb) sb.click(); const t = c.querySelector('.talks'), l = c.querySelector('.line-talk'); const r = !!(t.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING); c.hidden = true; return r; });
+    ok(skd, '「やめて 手順を 見る」の まとめは DOM でも 手順 → LINE', skd);
     const ah = await p.evaluate(() => { KB.start(); const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ res: !document.getElementById('result').hidden, cv: document.getElementById('cv').getAttribute('aria-hidden') })))); });
     ok(ah.res && ah.cv === 'true', '結果の 間は キャンバス（前の 袋の 文）を 読み上げない', ah);
     await p.setViewportSize({ width:195, height:422 }); await p.waitForTimeout(100);

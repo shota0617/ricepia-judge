@@ -1882,7 +1882,7 @@ const otomo = { next: 0, last: '' };   // 町の おとも（otomo.js）：60〜
 const NAKAMA_MONTHS = { ichigo: [12, 1, 2, 3, 4, 5], nasu: [10, 11, 12, 1, 2, 3, 4, 5, 6], daizu: [12] };
 const nakamaKinds = () => { const mo = new Date().getMonth() + 1; return Object.keys(NAKAMA_MONTHS).filter(k => NAKAMA_MONTHS[k].includes(mo)); };
 const nakamaKind = () => { const a = nakamaKinds(); return a.length ? a[Math.floor(Math.random() * a.length)] : ''; };   // その 月の 作物から 1つ（なければ ''）
-function drawNakama(x, y, u, kind, ang) {   // ang：ころがる 回り（四角の 絵を まるごと 回す）
+function drawNakama(x, y, u, kind, ang, noFace) {   // ang：ころがる 回り（四角の 絵を まるごと 回す）。noFace：目を 描かない（かさ）
   ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
   const px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(cx * u, cy * u, cw * u, ch * u); };
   const draw = parts => { for (const [cx, cy, cw, ch] of parts) px(cx - 1, cy - 1, cw + 2, ch + 2, '#2b1a0c'); for (const [cx, cy, cw, ch, c] of parts) px(cx, cy, cw, ch, c); };
@@ -1931,7 +1931,7 @@ function drawNakama(x, y, u, kind, ang) {   // ang：ころがる 回り（四�
     draw([[-2, -2, 4, 4, '#e8d08a'], [-3, -1, 6, 2, '#e8d08a']]);
     px(-1, -1, 1, 1, '#fff4c8'); px(1, 1, 1, 1, '#b89a50');
   }
-  if (kind !== 'daizu') { const e = kind === 'nasu' || kind === 'unagi' ? '#fff4e0' : '#1a1a1a'; px(-1, 0, 1, 1, e); px(1, 0, 1, 1, e); } else { px(-1, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#1a1a1a'); }   // にこっと した 目（なすは 色が こいので 白い 目）
+  if (noFace) { /* かさは 目なし */ } else if (kind !== 'daizu') { const e = kind === 'nasu' || kind === 'unagi' ? '#fff4e0' : '#1a1a1a'; px(-1, 0, 1, 1, e); px(1, 0, 1, 1, e); } else { px(-1, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#1a1a1a'); }   // にこっと した 目（なすは 色が こいので 白い 目）
   ctx.restore();
 }
 // お米つぶの にもつ（nimotsu.js）：着いた 名所の 名物を、転がって いる お米の あたまに のせる（絵は おともと 同じ drawNakama。
@@ -2049,6 +2049,39 @@ function otedamaStep(hx, by, u, now) {
   drawNakama(Math.round(hx), Math.round(by - 12.5 * u - rise), q, o.cur.id, calmMotion ? 0 : s * Math.PI * 4);
   ctx.globalAlpha = 1;
   o.drawn++; dirty = true;
+}
+// お米つぶの かさ（kasa.js）：西尾市で 雨が 降って いる あいだ（weather.js）、いる 町の 名物を おおきな かさに して あたまの 上に さす。さした とき・やんだ とき お米が ひと言。
+// 町が かわって 合わなく なったら さしかえる・西尾市の 外では 出さない。2秒に 1回 まちを しらべる
+const kasa = { cur: null, last: '', said: false, chk: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function kasaFind() {
+  if (!window.NISHIO_KASA || !LU || rp.x === null) return null;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  return { near, city: here.city, town: here.town };
+}
+function kasaStep(hx, by, u, now) {
+  const k = kasa, rain = wxKind() === 'rain' && !worldMode && !driving && rp.x !== null;
+  if (!rain) {   // やんだ（か、遊びかたが かわった）：たたむ
+    if (k.cur && wxKind() !== 'rain' && !worldMode && !driving && k.said && !mapCovered()) riceSay(window.NISHIO_KASA.END, 1800, 'happy');
+    k.cur = null; k.said = false; k.chk = 0;
+    return;
+  }
+  if (now >= k.chk) {   // 2秒に 1回：町に 合う かさか たしかめる
+    k.chk = now + 2000;
+    const c = kasaFind(), mine = c ? window.NISHIO_KASA.candidates(c) : [];
+    if (!mine.length) k.cur = null;
+    else if (!k.cur || !mine.some(x => x.id === k.cur.id)) {
+      const d = window.NISHIO_KASA.pick(c, k.last);
+      k.cur = d; k.last = d.id;
+      if (G.track) G.track('kome_kasa', { id: d.id });
+      if (!k.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(d.say, 2200, 'happy'); k.said = true; }
+    }
+  }
+  if (!k.cur) return;
+  const sway = calmMotion ? 0 : Math.sin(now / 700) * 0.5 * u, q = Math.max(2, Math.round(u * 1.5));
+  drawNakama(Math.round(hx + sway), Math.round(by - 12.5 * u - 6 * u), q, k.cur.id, 0, true);
+  k.drawn++; dirty = true;
 }
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
@@ -6791,6 +6824,7 @@ function frame(now) {
       yumeStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
       gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
       otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
+      kasaStep(hx, by, u, now);   // 雨の 日は 名物の かさを さす（kasa.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

@@ -1219,19 +1219,13 @@ async function walkTo(page, id) {
     const tipOk = (d1.lines % 3 !== 1 || !tip.tip || tip.floats.some(t => t.includes(tip.tip))) && !tip.none && !tip.out;
     return { ok: d1.n - c.d0.n >= L.dots.length && d1.lines === c.d0.lines + 1 && (run === 'no-goal' || run >= L.dots.length) && tipOk, len: L.dots.length, got: d1.n - c.d0.n, lines: d1.lines - c.d0.lines, run, tip: tip.tip, tipOk };
   })();
-  // めいろ図に びゅんパネルと ごはんつぶも 出る（寄り道の 計画に）
-  R.checks.mapMarks = await (async () => {
-    await page.evaluate(() => { nishioPixel.setRoll(true); document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); }); await page.waitForTimeout(300);
-    const goal = await page.evaluate(() => !!nishioGo.guide);
-    if (!goal) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-goal' }; }
-    await page.evaluate(() => nishioPixel.maze.map(5000));
-    let m = null;
-    for (let i = 0; i < 20 && !m; i++) { await page.waitForTimeout(200); m = await page.evaluate(() => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); return nishioPixel.maze.mapShown ? nishioPixel.maze.mapMarks : null; }); }
-    const inBox = m ? await page.evaluate(([x0, y0, cols, rows]) => { const K = nishioPixel.maze.K, ins = ([x, y]) => x / K >= x0 && x / K < x0 + cols && y / K >= y0 && y / K < y0 + rows;   // 図の 中に ある つぶ・パネル
-      return { dots: nishioPixel.maze.linesNear().filter(L => L.left === L.dots.length).reduce((n, L) => n + L.dots.filter(ins).length, 0), pads: nishioPixel.maze.padsNear(40).filter(([x, y]) => ins([(x + 0.5) * K, (y + 0.5) * K])).length }; }, m.box) : null;
-    await page.evaluate(() => { nishioPixel.maze.map(0); nishioPixel.setRoll(false); });
-    return { ok: !!m && (!inBox.pads || m.pads > 0) && (!inBox.dots || m.dots > 0), inBox, marks: m && { pads: m.pads, dots: m.dots } };
+  // ゴールまでの めいろ図は なくした（運営者の声「ゴールまでの迷路は削除」2026-10-29）：図を 出す 入口が なく、図の 文字も 描かない。縁の 矢印の タップは せかいちず
+  R.checks.noGoalMap = (() => {
+    const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8');
+    const left = ['ゴールまでの めいろ\'', 'function drawMzMap', 'function mzMapOpen', 'mzMapOpen('].filter(w => src.includes(w));
+    return { left, ok: !left.length };
   })();
+  R.checks.noGoalMapApi = await page.evaluate(() => { const M = nishioPixel.maze; return { map: typeof M.map, shown: 'mapShown' in M, ok: typeof M.map === 'undefined' && !('mapShown' in M) }; });
   // 特典の 100円引き：クーポンの 有効時間は 短め（10分）、条件「お米1袋につき1回まで」「LINE のクーポンとは併用できません」が 特典の 札と 店頭の クーポン画面に 出る（操作して移動の サンプルで ためす）
   // （札の 条件は「条件」を タップ しないと 見えなかった。タップ なしで いつも 見える ことも 見る）
   R.checks.coupon100 = await (async () => {
@@ -1414,10 +1408,6 @@ async function walkTo(page, id) {
     const on = M.on();
     for (let i = 0; i < 12 && !M.trail().length; i++) await new Promise(f => setTimeout(f, 250));   // 足あと：いる 通路の マスに しるし
     const trail = M.trail().length;
-    M.map(4000);   // ゴールまでの めいろ図（行き先が あれば 出る。窓が 開いていれば 待つ）
-    let map = !nishioGo.guide ? 'no-goal' : false;
-    for (let i = 0; i < 12 && map === false; i++) { await new Promise(f => setTimeout(f, 250)); if (M.mapShown) map = true; }
-    M.map(0);
     // ゴールまでの タイムと ★：行き先が あれば 時計が 動き、目やすの 時間（★3）が きまる
     let clock = !nishioGo.guide ? 'no-goal' : false;
     for (let i = 0; i < 12 && clock === false; i++) { await new Promise(f => setTimeout(f, 250)); const c = M.clock(); if (c && c.par >= 20 && c.stars >= 1 && c.stars <= 3 && c.sec >= 0) clock = { par: Math.round(c.par), stars: c.stars }; }
@@ -1432,7 +1422,7 @@ async function walkTo(page, id) {
       if (grain === true && c0 && c1) { const back = s0 + (performance.now() - t0) / 1000 - c1.sec; grain = { back: Math.round(back * 10) / 10 }; if (s0 > 2.5 && back < 1.5) grain = false; }
     }
     nishioPixel.setRoll(false); nishioGo.moveTo(at.lat, at.lng);
-    return { ok: on && floors > 10 && walls > 3 && trail > 0 && map !== false && grain !== false && clock !== false, on, floors, walls, trail, map, grain, grains: near.length, clock };
+    return { ok: on && floors > 10 && walls > 3 && trail > 0 && grain !== false && clock !== false, on, floors, walls, trail, grain, grains: near.length, clock };
   });
   // めいろの 壁（生け垣）に 押しつけても、お米が 壁に 食いこんで 見えない（左右は 壁の さかいから 0.6マスより 手前で 止まる）。当たると 葉っぱが 舞う
   R.checks.mazeWallFit = await (async () => {
@@ -2621,7 +2611,7 @@ async function walkTo(page, id) {
         if (!g) return { spot: 'none' };
         G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' });
         await wait(6500);   // 「🏁 つぎの ゴール」の 札が 消えるまで
-        document.getElementById('pxInfo').hidden = true; M.map(0); el.classList.remove('show');
+        document.getElementById('pxInfo').hidden = true; el.classList.remove('show');
         const msg = '🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）';
         G.toast(msg); await wait(900);
         const a = M.mapArrow, c = cv.getBoundingClientRect(), k = c.width / cv.width, q = el.getBoundingClientRect();
@@ -2629,22 +2619,10 @@ async function walkTo(page, id) {
         const shown = el.classList.contains('show') && el.textContent === msg, hit = !!A && q.left < A[2] && q.right > A[0] && q.top < A[3] && q.bottom > A[1];
         const low = el.classList.contains('wlow');
         el.classList.remove('show', 'wlow');
-        // 下げた あとに めいろ図を 開いたら（縁の 矢印を タップ）、図に 重ねず 上へ もどす（Codex の 指摘）。図が 出るのは 近い ゴール（1km まで）
-        let mapUp = 'none';
-        const g2 = G.spots.filter(x => x.lat && !x.shop && x.lat > G.me.lat + 0.003 && G.dist(G.me, x) > 400 && G.dist(G.me, x) < 1000).sort((a, b) => Math.abs(a.lng - G.me.lng) - Math.abs(b.lng - G.me.lng))[0];
-        if (g2) {
-          G.setGuide({ kind: 'spot', id: g2.id, name: g2.name, why: 'テスト', by: 'テスト' });
-          await wait(6500); document.getElementById('pxInfo').hidden = true; M.map(0);
-          G.toast(msg); await wait(500);
-          el.classList.add('wlow'); await wait(200);   // 下げた ところ
-          M.map(8000); await wait(500);
-          mapUp = M.mapShown ? !el.classList.contains('wlow') : 'nomap';
-          M.map(0); el.classList.remove('show', 'wlow');
-        }
-        return { arrow: !!A, shown, hit, low, mapUp, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
+        return { arrow: !!A, shown, hit, low, A: A && A.map(Math.round), t: [q.top, q.bottom].map(Math.round) };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
-      return { ...r, ok: r.arrow && r.shown && !r.hit && r.mapUp === true };
+      return { ...r, ok: r.arrow && r.shown && !r.hit };   // （めいろ図を 開いた ときの 確かめは 図を なくしたので やめた）
     })();
     // せかいちずの「ゴール：…」の 札に 知らせが 重ならない（重なる ときは 知らせが 下へ。自分で 遊んで 分かった：320×568 で 札が 知らせに かくれて ゴールの 名前が 読めなかった）
     R.checks.worldToast = await (async () => {
@@ -2786,12 +2764,8 @@ async function walkTo(page, id) {
         const at = M.arrowAt, hud = M.hudRects();
         hits.push(at ? hud.filter(r => at[0] + at[2] > r[0] && at[0] - at[2] < r[2] && at[1] + at[2] > r[1] && at[1] - at[2] < r[3]).length : -1);
       }
-      const b0 = M.mapBuilds;
-      M.map(12000);   // 画面の 外の ゴールを 描いた あとも、矢印を タップすると めいろ図が 出て、0.5秒ごとに かきなおす（「つぎの ゴール」の 札の 間は 待つ）
-      for (let i = 0; i < 40 && M.mapBuilds - b0 < 2; i++) await wait(200);
-      const mapOk = M.mapBuilds - b0 >= 2; M.map(0);   // テストの ゴールは めいろの 道が ないので 図は 出ない。かきなおしが 動くかだけ 見る
       G.setGuide(null);
-      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, mapOk, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) && mapOk };
+      return { top: ar ? Math.round(ar[1]) : null, clock: Math.round(S * 2.35), hits, ok: !!ar && ar[1] >= S * 2.35 - 1 && hits.every(n => n === 0) };
     });
     // 地図の 上に 出る 知らせ（長い 文）が、右上の 丸い ボタン（せかいちず・しらべる など）に 重ならない（自分で 遊んで 分かった：「歩いた道が 8.0km に！」が 2つめの ボタンに かかっていた）
     R.checks.toastHud = await w.page.evaluate(async () => {
@@ -3380,7 +3354,7 @@ async function walkTo(page, id) {
   need(c.speedLines && c.speedLines.ok, `スピード線：速くても 出ない／おそく なっても 消えない（${JSON.stringify(c.speedLines)}）`);
   need(c.mazePad && c.mazePad.ok, `びゅんパネル：矢印の 向きに 傾けても おされない／逆から 来ても おされる（${JSON.stringify(c.mazePad)}）`);
   need(c.mazeDots && c.mazeDots.ok, `ごはんつぶの 列：ふれても ひろえない／ぜんぶ ひろっても 列が そろわない（${JSON.stringify(c.mazeDots)}）`);
-  need(c.mapMarks && c.mapMarks.ok, `めいろ図に びゅんパネル・ごはんつぶが 出ない（${JSON.stringify(c.mapMarks)}）`);
+  need(c.noGoalMap && c.noGoalMap.ok && c.noGoalMapApi && c.noGoalMapApi.ok, `ゴールまでの めいろ図が のこって いる（${JSON.stringify([c.noGoalMap, c.noGoalMapApi])}）`);
   need(c.coupon100 && c.coupon100.ok, `特典の 100円引き：有効時間が 10分で ない／条件「お米1袋につき1回まで」「売り出し期間中は使えません」「LINE のクーポンとは併用できません」が クーポン・特典の 札に 出ない・クーポン画面に 知らせが 重なる（${JSON.stringify(c.coupon100)}）`);
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);

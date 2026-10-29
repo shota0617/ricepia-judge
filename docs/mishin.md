@@ -2164,3 +2164,9 @@ docs/mishin.md の はじめの「あそび方」「確かめ方」「テスト�
 151・152 周目の ボットの 確かめは 390 幅 だけ だった ので、768×1024（タブレット）で 10 回：expert 33931 ＞ regular 24125 ＞ human 11709 ＞ novice 6104。ずるい 5種（alwaysL 8947・noKnot 9843・noKnotH 10344・probe 7104・flick 2015）は どれも human より 下、slowRead 9862 ≧ alwaysL。順位は 390 幅と 同じ。
 
 ゲームは かえて いない。
+
+### 163 周目（151・152 周目の 袋の 並びを 360×560 でも）
+
+360×560（本物の Android の 高さ）で 10 回：expert 42895 ＞ regular 26039 ＞ human 11596 ＞ novice 4875。ずるい 5種（noKnotH 9501・alwaysL 8574・noKnot 6859・probe 6841・flick 1383）は どれも human より 下、slowRead 10252 ≧ alwaysL。390・768 幅と 同じ 順位。
+
+ゲームは かえて いない。

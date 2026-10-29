@@ -1,0 +1,5 @@
+# Blender の 出力（webp に して mishin.html に うめこむ。作りなおしは build_bag.py）
+bag_front.png
+bag_back.png
+bag_front_fast.png
+bag_back_fast.png

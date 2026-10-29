@@ -1909,7 +1909,8 @@ const FARMER = (() => {
       const turnWhy = st.turnsDown * 3 >= Math.max(st.levee, st.safety) * 2 ? (SHIRO ? '回るとき 速さを落とすのを' : '回るとき 上げるのを') : st.levee >= st.safety ? '畦に ぶつけんように 回るのを' : '坂を ゆっくり まっすぐ 通るのを';
       const weak = [['まっすぐ走るのを', P.straight / 30], ['となりの跡への 重ねかたを', P.overlap / 25], ['速さを', P.spd / 20], [turnWhy, P.turn / 25]].sort((a, b) => a[1] - b[1])[0];
       const lost = weak[1] < 0.995;                   // どこかで 点がへったか（へっていなければ、点が低いのは 🔰 アシストの 8 割だけ）
-      t = PLAY.up && total >= 75 ? 'きょうは ここまでだな。' + (lost ? weak[0] + ' 直しゃあ 一人前だ' : 'ええ 運転だったわ。のこりは また 頼むわ')   // 5 分で おわった：残りは しからない
+      t = !SCORE.ready() ? (PLAY.up ? 'きょうは ここまでだな。つぎは もうちょっと 耕してみりん' : 'まだ ほとんど 耕しとらんじゃん！ 最後まで 耕しりん')   // 点数の つかない 回
+        : PLAY.up && total >= 75 ? 'きょうは ここまでだな。' + (lost ? weak[0] + ' 直しゃあ 一人前だ' : 'ええ 運転だったわ。のこりは また 頼むわ')   // 5 分で おわった：残りは しからない
         : PLAY.up ? 'きょうは ここまでだな。' + (lost ? weak[0] + ' 練習しりん' : 'のこりは また 頼むわ')
         : area > 0.2 * 4 * HX * HZ ? 'まだ だいぶ 残っとるじゃん！ 最後まで 耕しりん'   // 田んぼの 2 割より多く 耕し残し
         : total >= 90 ? (area >= 1 ? '上手いもんだ。けど 四すみの耕し残しは 外周を回って 仕上げりん' : '上出来だら！ これなら 来年も 頼むわ')
@@ -8336,8 +8337,8 @@ function finish() {
   const area = left * CELL * CELL;
   const trkM = Math.round(TR.remaining(c => tilledMask[c]));   // 耕した所の上に、いま残っているタイヤの跡（4 本の車輪の跡の長さの合計）
   let tiltA = 0; for (let c = 0; c < NX * NZ; c++) if (tilledMask[c] && Math.abs(TILTY[c]) > 0.01) tiltA += CELL * CELL;   // 土が出たり 深すぎたりする所（はしの 1cm 以上）
-  const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
-  $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
+  const scored = SCORE.ready(), total = scored ? Math.round(sm.total * (EASY.used ? 0.8 : 1)) : 0;   // 🔰 かんたんアシストを使った回は 8 割。10m² 耕すまでは 点数なし（走らないで 5 分 まっても 満点に ならない）
+  $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${scored ? total + ' 点' : '— 点（10m² くらい 耕すと 点数が つく）'}</b>${scored && EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
     (PLAY.up ? `<br><span class="small">まだ 耕していない所（うすい 色）：${area.toFixed(0)}m²。のこりは また こんど</span>` : `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる（角は バックで寄せてから 下げて前へ）' : ''}</span>`) +
     (STONES.hits ? `<br><span class="small">爪が石に当たった：${STONES.hits} 回。耕す前に石を拾っておくと、爪がいたまない</span>` : '') +
     (RAMPDMG.told ? '<br><span class="small">出入口の坂を 崩した。坂では 作業機を 地面に当たらない高さにして、ハンドルを大きく切らずに まっすぐ通る</span>' : '') +

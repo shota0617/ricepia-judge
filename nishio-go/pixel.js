@@ -7781,7 +7781,7 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
   if (mzRt.t0) mzRt.t0 -= MZ_CROW_PEN * 1000;
   mzCrow.hitT = now + 2500; mzCrow.next = now + 6000; mzCrow.hits++;
   mzCrow.list = mzCrow.list.filter(o => o !== c);
-  floatText(`🐦 カァ！ ＋${MZ_CROW_PEN}秒`);
+  riceSay(`うわっ カラス！💦`, 1400);   // 吹き出し（もとは「🐦 カァ！ ＋5秒」。すすんだ 時計は 時計の 札で 見える）
   if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
 }

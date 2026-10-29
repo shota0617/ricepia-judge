@@ -108,6 +108,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
 #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
+#againBtn small{display:block;font:700 13px var(--body);margin-top:1px;letter-spacing:0;opacity:.85}
 #coinH:focus-visible{outline:3px solid #3e2a1a;outline-offset:4px;border-radius:6px}
 @media (max-width:259px){#coinDone .talk>.who:not(.num),#result .talk>.who{display:none} #coinDone .talk>.say::before,#coinDone .talk>.say::after,#result .talk>.say::before,#result .talk>.say::after{display:none} .nw{white-space:normal}} /* 字 200% など せまい 画面：まとめ・結果の 顔を けして 字に 幅を（96周目） */
 .coinHead{display:contents} /* たて では つつまない のと 同じ。低い 横向きは 左の 列（97周目） */
@@ -183,7 +184,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 @media (max-height:720px) and (max-width:500px){#title .panel>.talk{order:1} #title .panel>.goals,#title .panel>details{order:2}} /* 低い 画面の 題：ボタンを 先に、こめつぶの あいさつは その 下（78周目） */
 @media (max-height:360px){#title .season{display:none}} /* 568×320 で「ゲームで遊ぶ」が 切れない（90周目） */
 @media (max-height:500px){#title .panel>.talk{order:1} #title .panel>.goals,#title .panel>details{order:2}}
-@media (max-height:720px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel h1{font-size:30px} #result .res>div{padding:6px 10px}} /* 低い 縦の 画面で「もう一回」を 中に */
+@media (max-height:720px) and (max-width:500px){#againBtn small{display:inline;margin:0 0 0 8px} #result .growCap{display:none} #result .panel{gap:10px} #result .panel h1{font-size:30px} #result .res>div{padding:6px 10px}} /* 低い 縦の 画面で「もう一回」を 中に */
 .ends{margin:0;display:flex;flex-direction:column;gap:4px}
 .ends canvas{width:100%;height:auto;border-radius:10px;display:block}
 .ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:16px;line-height:1.4;color:var(--ink);text-align:left}
@@ -467,19 +468,21 @@ function endGame(){
   // 説明の 字でも いまの 段を 太字と「いま」で（色と 大きさ だけに しない）
   $('growCap').innerHTML = ['もみ','苗','稲穂','米俵','おにぎり'].map((n,i)=> i===ri ? `<b>いま：${n}</b>` : n).join(' → ');
   const zone = Math.round(100*S.zoneTime/Math.max(0.01,S.pullTime));
-  ui.tip.innerHTML = '<b>スルスル率 '+zone+'%</b>　' + tipOf(zone);
+  ui.tip.innerHTML = (S.pullTime > 0 ? '<b>スルスル率 '+zone+'%</b>　' : '') + tipOf(zone); /* 引いて いない 人に 0% を 見せない（103周目） */
   const done = goalsDone(), fresh = new Set();
   for(const g of todayGoals()) if(!done.has(g.id) && g.ok()){ done.add(g.id); fresh.add(g.id); }
-  let best=0; try{ best = +localStorage.getItem('mishin-best2')||0; if(S.score>best) localStorage.setItem('mishin-best2', S.score); }catch(e){} /* 目標の おまけの 行が 新しい じこベストを 出せる ように 先に */
+  let best=0; try{ best = +localStorage.getItem('mishin-best2')||0; if(S.score>best) localStorage.setItem('mishin-best2', S.score); }catch(e){} S.newBest = S.score > best && best > 0; /* 目標の おまけの 行が 新しい じこベストを 出せる ように 先に */
   saveGoals(done); renderGoals(ui.rGoals, fresh); renderGoals(ui.goals);
   let bestBags=0; try{ bestBags = +localStorage.getItem('mishin-bestbags')||0; if(S.bags>bestBags) localStorage.setItem('mishin-bestbags', S.bags); }catch(e){}
   const nr = nextRank(S.score);
   ui.best.innerHTML = [
-    S.score>best && best>0 ? '<b>じこベスト更新！</b>（前は '+best.toLocaleString()+'）' : best>0 ? `じこベストまで あと ${(best-S.score+1).toLocaleString()}点です（じこベスト ${best.toLocaleString()}）` : '',
+    S.score>best && best>0 ? '<b>じこベスト更新！</b>（前は '+best.toLocaleString()+'）' : best>0 && S.bags>0 ? `じこベストまで あと ${(best-S.score).toLocaleString()}点です（じこベスト ${best.toLocaleString()}）` : '', /* 0袋の 人には 出さない（103周目） */
     best>0 && rankIdx(S.score) > rankIdx(best) ? `<span class="up">はじめて「${rankOf(S.score)}」に なりました</span>` : '', /* 金は 1行 だけ（62周目） */
     nr ? `つぎの ランク「${nr[1]}」まで あと ${(nr[0]-S.score).toLocaleString()}点です` : '',
     S.bags>bestBags && bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : '', /* 更新の ときだけ */
   ].filter(Boolean).join('<br/>');
+  { const sub = S.newBest ? 'じこベスト更新です！' : best>0 && S.bags>0 && best>S.score ? `じこベストまで あと ${(best-S.score).toLocaleString()}点` : nr && S.bags>0 ? `つぎの ランクまで あと ${(nr[0]-S.score).toLocaleString()}点` : '';
+    $('againBtn').innerHTML = 'もう一回' + (sub ? `<small>${sub}</small>` : ''); } /* つぎの ねらいを ボタンの 中に 1行（1画面目に。103周目） */
   const gold = [...ui.best.querySelectorAll('b, .up')].map(x=>x.textContent).join('、'); /* 金の 行と 目標の 達成も 読む */
   srSay(`おわり。てんすう ${S.score.toLocaleString()}、あけた袋 ${S.bags}、きょうの 腕まえ ${rankOf(S.score)}` + (gold ? '。' + gold : '') + (fresh.size ? '。目標 達成' : ''));
 }
@@ -492,7 +495,7 @@ function tipOf(zone){
   if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。ひっかかったら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
   if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
   if(S.bestStreak<5) return 'いい手つきです。<b>一本どり</b>を続けると、連続ボーナスが つきます。';
-  return '名人の手つきです。' + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : '');
+  return (S.score >= 30000 ? '名人の手つきです。' : '一本どりが 続いて います。つぎは <b>フィーバー</b>を ねらって みてください。') + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : ''); /* 「名人」は 五代目の 点から（103周目） */
 }
 // きょうの 目標：日付で 3つ えらぶ（同じ日は 同じ 目標）。できた ものは この 端末に のこる
 const GOALS = [
@@ -521,7 +524,7 @@ function renderGoals(el, fresh){
   el.innerHTML = '<h2>きょうの目標</h2>' + gs.map(g=>{
     const isNew = fresh && fresh.has(g.id), prog = fresh && !done.has(g.id) && g.prog ? `<small class="prog">今回 ${g.prog()}</small>` : '';
     return `<div class="goal${done.has(g.id)?' done':''}${isNew?' new':''}"><i>${done.has(g.id)?'済':''}</i><span>${g.text}${isNew?'　<b style="color:var(--gold)">達成！</b>':''}${prog}</span></div>`; }).join('')
-    + (gs.every(g=>done.has(g.id)) ? '<p class="bonus">きょうの目標は ぜんぶ できた！ おまけ：じこベスト' + (()=>{ let v = 0; try{ v = +localStorage.getItem('mishin-best2')||0; }catch(e){} return v>0 ? ' '+v.toLocaleString()+'点' : ''; })() + 'を こえよう</p>' : '');
+    + (gs.every(g=>done.has(g.id)) ? '<p class="bonus">きょうの目標は ぜんぶ できました。' + (fresh && S.newBest ? '' : 'おまけ：じこベスト' + (()=>{ let v = 0; try{ v = +localStorage.getItem('mishin-best2')||0; }catch(e){} return v>0 ? ' '+v.toLocaleString()+'点' : ''; })() + 'を こえましょう') + '</p>' : ''); /* 更新した 回は おまけを 言わない（103周目） */
 }
 const RANKS = [[30000,'米屋の五代目'],[15000,'精米所のベテラン'],[7000,'頼れるパートさん'],[2500,'見習い'],[0,'はじめての袋']]; // 52周目：上の 線を 上げた（expert が いつも 天井に つかない）
 function rankOf(sc){ return RANKS.find(r=>sc>=r[0])[1]; }

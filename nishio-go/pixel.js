@@ -7706,7 +7706,7 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
     if (Math.abs(mzScare.cx - rc) + Math.abs(mzScare.cy - rr) > 34 || now - mzScare.t0 > 60000) { mzScare.on = false; mzScare.next = now + 5000; return; }   // 遠く はなれた・60秒 とられなかった（行けない 所 など）：たおして 別の 所に
     if (mzScare.cx === rc && mzScare.cy === rr) {   // とった
       mzScare.on = false; mzScare.until = now + MZ_SCARE_MS; mzScare.next = now + 45000; mzScare.got++;
-      floatText('かかし！');   // のこりの 秒は 時計の 下の 札、何が おきるかは はじめての 知らせ だけ（同じ ことを 3か所で 言っていた。運営者の声「文字は 少なく」2026-10-29）
+      riceSay('かかし だ！', 1600, 'happy');   // お米の 吹き出し（ばねの「ばね だ！✨」と そろえる。10/29 店主「素朴な 可愛い キャラクターとの 対話を 軸に」）。のこりの 秒は 時計の 下の 札、何が おきるかは はじめての 知らせ だけ（同じ ことを 3か所で 言っていた。運営者の声「文字は 少なく」2026-10-29）
       // はじめての ときの 知らせは、浮かぶ 文字（カラスが ○秒 にげる）と 時計の 下の のこりの 札に ない ことだけ（同じ「にげる」を 3か所で 言っていた。自分で 遊んで 分かった）。
       // かかしと 青く なる ことの つながりは のこす（はじめての 人に 何で 青く なったか 分かる ように。Codex の 指摘）
       if (!mzScare.told) { mzScare.told = true; G.toast('🐦 かかしで 青く なった カラスに さわると おいはらえる（+3pt）'); }

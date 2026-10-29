@@ -288,7 +288,7 @@ const CHECKS = {
       const bb = S.bag; bb.face = 'front'; const L = KB.layout(); ev('pointerdown',1,L.x0+4,L.seamY); ev('pointerup',1,L.x0+4,L.seamY); for (let i=0;i<40;i++) KB.step(1/60);
       return { face: bb.face }; });
     ok(r.face==='back', 'れんしゅうで 表の 端を さわると 裏返す', r);
-    const zw = await p.evaluate(() => { const S = KB.S; for (let i=0;i<40;i++) KB.step(1/60); const bb = S.bag, z = S.zoom;
+    const zw = await p.evaluate(async () => { const S = KB.S; for (let i=0;i<40;i++) KB.step(1/60); for (let i=0; i<40 && !S.zoom; i++) await new Promise(r => setTimeout(r, 50)); /* 拡大窓が かかれる まで（92周目） */ const bb = S.bag, z = S.zoom;
       ev('pointerdown',4,z.cx,z.cy); ev('pointerup',4,z.cx,z.cy); for (let i=0;i<40;i++) KB.step(1/60); return { face: bb.face }; });
     ok(zw.face==='back', 'れんしゅうで 拡大窓を さわっても 袋が 裏返らない', zw);
     const m = await p.evaluate(() => { const S = KB.S; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あいた！', kind:'ok', t:0, life:2.5 }; for (let i=0;i<150;i++) KB.step(1/60); return { bagNo:S.bagNo, msg: S.msg && S.msg.text }; });
@@ -400,6 +400,11 @@ const CHECKS = {
     // 91周目：タイムアタック 4袋目からは 表の 端を 1本指で さわっても 表を さわった ことに（声で たしかめる ずるさを ふさぐ）。教える 3袋は 声だけ
     const pf = await p.evaluate(() => { const out = []; for (const k of [1, 3]){ KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(k); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts, t0 = S.time; KB.tap(L.x0 + 4, L.seamY); out.push({ k, fronts: S.fronts - f0, dt: +(S.time - t0).toFixed(2) }); } return out; });
     ok(pf[0].fronts===0 && pf[1].fronts===1 && pf[1].dt < 0, '表の 端の 1本指タップ：教える 袋は 声だけ、4袋目からは 表を さわった ことに', pf);
+    // 92周目：端の 近くでも 縫い目から はなれた 1本指タップは ふつうに 袋を まわす（罰に しない）
+    await p.setViewportSize({ width:844, height:390 }); await p.waitForTimeout(100);
+    const pr2 = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(4); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts; KB.tap(L.x0 + 50, L.seamY + 45); return { fronts: S.fronts - f0, flip: b.flipT > 0 }; });
+    ok(pr2.fronts===0 && pr2.flip, '表の 袋の 端の 近くでも 縫い目から はなれた タップは まわす（罰なし）', pr2);
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 84周目（見えにくさ 5）：あいた 袋は「白糸は 自然に ぬけます」も 言う・まとめと 結果では キャンバスを 読まない・字 200%（幅 195）
     const dn = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'一本どり！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
     ok(/一本どり/.test(dn) && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);

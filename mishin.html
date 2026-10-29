@@ -147,6 +147,10 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 @keyframes sway2{from{transform:rotate(-1.5deg)}to{transform:rotate(1.5deg)}}
 @media (prefers-reduced-motion:reduce){.noren b{animation:none}}
 @media (max-height:500px){.noren{display:none}} /* 横向きの 低い 画面では ボタンを 先に */
+@media (max-height:500px) and (min-width:640px){
+  #coinDone .panel{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:24px;row-gap:12px;align-items:start}
+  #coinDone .panel>.talk:first-child{grid-column:1;grid-row:1} #coinDone .panel>.done3{display:none} #coinDone .panel>.talk:first-child h1{font-size:24px} #coinDone .panel>.ends{grid-column:1;grid-row:2} #coinDone .panel>:not(.talk:first-child):not(.ends){grid-column:2} /* 低い 横向きの まとめ：左に 見出しと 袋の 両はし、右に LINE と 手順（LINE を 1画面目に。90周目） */
+}
 @media (max-height:500px) and (min-width:560px){ /* 横向きの 結果は 2列（左に 腕まえ、右に 点と「もう一回」。ボタンを 画面の 中に） */
   #result .panel{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:28px;row-gap:10px;align-items:start}
   #result .panel>.talk:first-child{grid-column:1;grid-row:1;align-self:end}
@@ -154,8 +158,6 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
   #result .panel>:not(.talk:first-child):not(.rankBox){grid-column:2}
   #result .res{grid-template-columns:repeat(3,1fr);gap:6px} #result .res>div{padding:5px 2px;gap:0} #result .res span{white-space:nowrap;font-size:12px} #result .res strong{font-size:20px} /* 低い 画面では 点を 1行、のこり 3つを 1行に（ボタンを 画面の 中に） */
   #result .panel>#bestTalk{order:2} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:3} #result .panel>.line-talk{order:1} /* 低い 画面では「もう一回」を 点の すぐ 下に、その 下に LINE（90周目） */
-  #coinDone .panel{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:24px;row-gap:12px;align-items:start}
-  #coinDone .panel>.talk:first-child{grid-column:1;grid-row:1} #coinDone .panel>.done3{display:none} #coinDone .panel>.talk:first-child h1{font-size:24px} #coinDone .panel>.ends{grid-column:1;grid-row:2} #coinDone .panel>:not(.talk:first-child):not(.ends){grid-column:2} /* 低い 横向きの まとめ：左に 見出しと 袋の 両はし、右に LINE と 手順（LINE を 1画面目に。90周目） */
   #result .res>div:first-child{grid-column:1/-1;flex-direction:row;justify-content:center;align-items:baseline;gap:12px}
 }
 .season{margin:0 auto -6px;display:inline-flex;align-items:center;gap:6px;align-self:center;background:#f1dfba;color:#3e2a1a;font:700 14px var(--body);padding:4px 12px 4px 6px;border:2px dashed rgba(122,90,48,.6);border-radius:12px 9px 13px 10px;transform:rotate(-2deg)}
@@ -262,7 +264,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       </div>
       <div class="talk cont" id="bestTalk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say" id="best"></div></div>
       <button class="go" id="againBtn" type="button">もう一回</button>
-      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a></div></div>
+      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><span>らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。</span><a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a></div></div>
       <div class="goals" id="rGoals"></div>
       <p id="tip" class="tip"></p>
       <button class="go sub" id="toPractice" type="button">糸の取り方を れんしゅう</button>
@@ -385,7 +387,8 @@ function startPractice(){ startGame(true); }
 function frontPenalty(b){ S.fronts++; S.combo=0; S.feverT=0; S.streak=0; b.wrong=true; addTime(R.timeFront); birdsReact('？'); say('表でした。袋を まわしましょう','ng'); audio.knot(); }
 // お店の LINE の 友だちづくり（リスト）を はかる：れんしゅうを 終えた 人の うち 何人が LINE を 押したか（88周目）。
 // 送るのは 場面の 名前と QR から 来たか だけ。go.ricepia.jp・vercel でだけ 動く（nishio-go/analytics.js）
-const track = (name, params = {}) => { try{ window.nsgTrack && window.nsgTrack(name, Object.assign({ via: location.hash==='#coin' ? 'coin' : 'title' }, params)); }catch(e){} };
+const trackQ = [], track = (name, params = {}) => { const a = [name, Object.assign({ via: location.hash==='#coin' ? 'coin' : 'title' }, params)]; if(window.nsgTrack){ try{ window.nsgTrack(...a); }catch(e){} } else if(trackQ.length < 20) trackQ.push(a); }; /* analytics.js（defer）が 来る 前の #coin の 自動開始も ためて 送る（92周目） */
+const trackFlush = () => { if(window.nsgTrack) for(const a of trackQ.splice(0)) try{ window.nsgTrack(...a); }catch(e){} }; document.addEventListener('DOMContentLoaded', trackFlush); addEventListener('load', trackFlush);
 function startGame(practice){
   practice = practice === true; audio.hush();
   if(!practice) cv.setAttribute('aria-label', '米袋の 口の 縫い目（タイムアタックは 二本指で つまむ。キーボードでは れんしゅう だけ）'); /* れんしゅうの 帯の 文を のこさない */
@@ -539,7 +542,7 @@ function tap(x,y){
     const w = whereTap(x,y);
     if(w==='bag' && b.k===0 && b.face==='back'){ say('裏ですね。端の 赤い 糸を つまんで ください','ok'); S.pinchHint = 1.6; return; } /* 1袋目の 裏は まわさない（いちばん はじめに タップする 人が 多い） */
     if(w==='bag' || (S.practice && b.face==='front')){ b.flipT = 0.0001; audio.flip(); } /* れんしゅう：表なら どこを さわっても まわす（「くるっ」の 絵も） */ // れんしゅう：表なら 端を さわっても 裏返す（表の 端では 止まらない）
-    else if(w==='L' || w==='R'){ if(b.face==='front'){ if(!S.practice && b.k>=3){ frontPenalty(b); return; } /* 1本指で ちょんと さわって 表か たしかめるのも 表を さわった ことに（91周目。教える 3袋は 声だけ） */ say('表です。袋を タップして 裏へ どうぞ','ok'); return; } say(S.practice ? '指を おいたまま 少し 動かして ください' : '糸は 二本指で つまんで ください','ok', 0, true); /* 帯は かわらない ので 読み上げる */ S.pinchHint = 1.6; }
+    else if(w==='L' || w==='R'){ if(b.face==='front'){ if(Math.abs(y - layout().seamY) >= 22){ b.flipT = 0.0001; audio.flip(); return; } /* 端の 近くでも 縫い目から はなれた タップは まわす（92周目） */ if(!S.practice && b.k>=3){ frontPenalty(b); return; } /* 縫い目の 端を 1本指で ちょんと さわって 表か たしかめるのも 表を さわった ことに（91周目。教える 3袋は 声だけ） */ say('表です。袋を タップして 裏へ どうぞ','ok'); return; } say(S.practice ? '指を おいたまま 少し 動かして ください' : '糸は 二本指で つまんで ください','ok', 0, true); /* 帯は かわらない ので 読み上げる */ S.pinchHint = 1.6; }
     return;
   }
   if(b.tangle) untangleTap();

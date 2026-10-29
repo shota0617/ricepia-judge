@@ -64,7 +64,7 @@
 | `friend_bonus` | 友だちのシェアから来た人が、はじめて遊んで +20pt をもらった（シェアから増えた人の数） |
 | `campaign_landing`・`campaign_bonus`・`campaign_link` | キャンペーンのリンクから来た・当店チェックインのボーナス・くわしいページへ |
 | `sponsor_link` | 協賛スポットのサイトへ進んだ |
-| `line_add` | 当店の LINE の友だち追加（常連さまポイント）を押した（from：game-card 当店の窓／game-ending 殿堂入り／mishin-coin ミシン糸の れんしゅうの まとめ／mishin-result ミシン糸の 結果）。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
+| `line_add` | 当店の LINE の友だち追加を押した（from：game-card 当店の窓／game-ending 殿堂入り（ここまで 常連さまポイントの リンク `uPhkiiv`）／mishin-coin ミシン糸の れんしゅうの まとめ／mishin-result ミシン糸の 結果（この 2つは 価格表・売り出し情報の リンク `AULbClm`。129周目から））。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
 | `mishin_practice_start`・`mishin_coin_done`・`mishin_game_start`・`mishin_game_end` | ミシン糸 一本どり（`mishin.html`）の れんしゅうを 始めた・まとめを 見た（skipped：1 は 途中で やめて まとめへ）・タイムアタックを 始めた・結果を 見た（bags：あけた 袋）。via：coin（コイン精米機の QR `#coin`）／title。`mishin_coin_done` と `line_add`（from=mishin-coin）の 数を くらべると、れんしゅうを 終えた 人の うち LINE を 押した 割合が わかる |
 | `shop_link`（ミシン糸） | ミシン糸の まとめの「コイン精米所の 案内」（ricepia.jp/#coin-seimai）を 押した（link：site）。ricepia.jp の 側では `utm_source=mishin&utm_medium=game&utm_campaign=coin-done` で 来た 人と わかる（119周目） |
 | `shop_stamp` | 当店に来た日の来店スタンプ（n：何こめ。3・5・10こで +100・+200・+500pt） |

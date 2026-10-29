@@ -2283,6 +2283,44 @@ function kasaStep(hx, by, u, now) {
   drawNakama(Math.round(hx + sway), Math.round(by - 12.5 * u - 6 * u), q, k.cur.id, 0, true);
   k.drawn++; dirty = true;
 }
+// お米つぶの かわぎり（kiri.js）：あさ（日本時間の5時〜8時前）に 西尾市の 川・池・用水の そばを 通ると、川霧が お米の まわりに たちこめる。出た とき・はれた とき お米が ひと言。
+// 町が かわれば 話も かわる・西尾市の 外では 出さない・ゲームボーイの4色でも 出す（白い もやだけ）。2秒に 1回 場所を しらべる（見つけかたは kasaFind と 同じ）
+const kiri = { cur: null, t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function kiriHour() {
+  const q = new URLSearchParams(location.search).get('kiri');
+  if (q) return +q;   // 確かめ用（?kiri=6 で 6時の あさ）
+  return new Date(Date.now() + 9 * 3600000).getUTCHours();
+}
+function kiriStep(hx, by, u, now) {
+  const k = kiri, K = window.NISHIO_KIRI, on = K && !worldMode && !driving && rp.x !== null && K.morning(kiriHour());
+  if (!on) {   // 霧の 時間が おわった（か、遊びかたが かわった）：はれる
+    if (k.cur && k.said && K && !worldMode && !driving && !mapCovered()) riceSay(k.cur.end, 1800, 'happy');
+    k.cur = null; k.said = false; k.chk = 0;
+    return;
+  }
+  if (now >= k.chk) {   // 2秒に 1回：川・池の そばか たしかめる
+    k.chk = now + K.EVERY;
+    const c = kasaFind(), d = c ? K.pick(c) : null;
+    if (d && !k.cur) {
+      k.cur = d; k.t0 = now; k.said = false;
+      if (G.track) G.track('kome_kiri', { id: d.id });
+    } else if (!d && k.cur) {   // 水べを はなれた：はれる
+      if (k.said && !mapCovered()) riceSay(k.cur.end, 1800, 'happy');
+      k.cur = null; k.said = false;
+    } else if (d) k.cur = d;
+    if (k.cur && !k.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(k.cur.say, 2800, 'happy'); k.said = true; }
+  }
+  if (!k.cur) return;
+  const t = calmMotion ? 0 : now / 1000, fade = Math.min(1, (now - k.t0) / 1500);
+  for (let i = 0; i < 6; i++) {   // 霧：うすい 白い もやが 横に ゆっくり ながれる
+    const x = hx + (((i * 9 + t * 3) % 54) - 27) * u, y = by + (i % 3 - 1) * 5 * u + 3 * u, w = (14 + (i % 2) * 6) * u, h = 3.2 * u;
+    ctx.globalAlpha = fade * 0.28;
+    ctx.fillStyle = '#f2f6f8';
+    ctx.fillRect(Math.round(x - w / 2), Math.round(y - h / 2), Math.round(w), Math.max(1, Math.round(h)));
+  }
+  ctx.globalAlpha = 1;
+  k.drawn++; dirty = true;
+}
 // お米つぶの めぐり（meguri.js）：夜に なると、いる 町の 名物が お米の まわりを ゆっくり めぐる（お月さまの ように）。輪に なった とき・朝に なった とき お米が ひと言。
 // 町が かわれば 輪も かわる・西尾市の 外では 出さない。2秒に 1回 町を しらべる（見つけかたは kasaFind と 同じ）
 const meguri = { items: [], key: '', said: false, chk: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
@@ -7128,6 +7166,7 @@ function frame(now) {
       gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
       otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
       kasaStep(hx, by, u, now);   // 雨の 日は 名物の かさを さす（kasa.js）
+      kiriStep(hx, by, u, now);   // あさの 川・池の そばでは 川霧が たちこめる（kiri.js）
       meguriStep(hx, by, u, now);   // 夜は 名物が お米の まわりを めぐる（meguri.js）
       tsunStep(hx, by, u, now);   // お米を つんつんすると 名物が 飛び出す（tsun.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）

@@ -362,7 +362,7 @@ const CHECKS = {
     ok(!/おまけ/.test(r61.bonus) && /おまけ/.test(r61.bonus2) && /9,000/.test(r61.bonus2) && /おなじ 点/.test(r61.tie) && !/あと 0点/.test(r61.tie), 'おまけの 行：更新した 回は 言わない・しない 回は じこベストの 点・同じ 点は「おなじ 点」（103・104周目）', r61);
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指を おいて/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
-    for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
+    for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[341,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 400)); /* 結果が 落ちついて から（107周目） */ const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, t: document.getElementById('againBtn').textContent }; });
       ok(ag.b <= ag.H && /あと/.test(ag.t), `低い 画面（${w}×${h}）でも「もう一回（…まで あと）」が 画面の 中`, ag); }
     // 72周目：画面の 幅で むずかしさが かわらない（引く 長さに あわせて 速さの 上限も。広い 画面は 1.12 倍 まで）
@@ -425,8 +425,8 @@ const CHECKS = {
     const ck = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); for (let i=0;i<120;i++) KB.step(1/60); const t0 = S.time; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<60;i++) KB.step(1/60); const t1 = S.time; KB.manual = false; return { t0, t1 }; });
     ok(ck.t0 === 30 && ck.t1 < 29.5, 'タイムアタックの 時計は はじめて さわって から へる', ck);
     // 108周目：キーの 人は Esc で タイムアタックを おわれる・「もう一回」の 名前は きまって いる（小さい 字は 読ませない）
-    const esc = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true })); for (let i=0;i<150;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100));
-      const sm = document.querySelector('#againBtn small'); return { res: !document.getElementById('result').hidden, smHidden: !sm || sm.getAttribute('aria-hidden') === 'true' }; });
+    const esc = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); KB.S.score = 4000; KB.S.bags = 3; document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true })); for (let i=0;i<150;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100));
+      const sm = document.querySelector('#againBtn small'); return { res: !document.getElementById('result').hidden, sm: !!sm, smHidden: !!sm && sm.getAttribute('aria-hidden') === 'true' }; });
     ok(esc.res && esc.smHidden, 'キーの 人は Esc で タイムアタックを おわれる・「もう一回」の 小さい 字は 読ませない', esc);
     // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
     const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
@@ -474,8 +474,8 @@ const CHECKS = {
     const ah = await p.evaluate(() => { KB.start(); const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ res: !document.getElementById('result').hidden, cv: document.getElementById('cv').getAttribute('aria-hidden') })))); });
     ok(ah.res && ah.cv === 'true', '結果の 間は キャンバス（前の 袋の 文）を 読み上げない', ah);
     await p.setViewportSize({ width:195, height:422 }); await p.waitForTimeout(100);
-    const z2 = await p.evaluate(() => { const r = [...document.querySelectorAll('#result .talk>.say')].map(e => e.getBoundingClientRect().right); return { right: Math.max(...r), W: innerWidth }; });
-    ok(z2.right <= z2.W + 1, '幅 195（字 200% の かわり）で 結果の 吹き出しが はみ出さない', z2);
+    const z2 = await p.evaluate(() => { const r = [...document.querySelectorAll('#result .talk>.say')].map(e => e.getBoundingClientRect().right), hs = document.querySelector('#result h1 small'); return { right: Math.max(...r), W: innerWidth, hsOver: hs.scrollWidth - hs.clientWidth }; });
+    ok(z2.right <= z2.W + 1 && z2.hsOver <= 1, '幅 195（字 200% の かわり）で 結果の 吹き出しも 見出しの 小さい 字も はみ出さない', z2);
     const z3 = await p.evaluate(async () => { document.getElementById('result').hidden = true; KB.startPractice(); const S = KB.S; S.bag.slide = 0; for (let i=0;i<3;i++){ KB.step(1/60); await new Promise(r => requestAnimationFrame(r)); } return { seam: KB.layout().seamY, banner: S.bannerBottom, H: KB.size().H }; });
     ok(z3.seam >= z3.banner + 20, '幅 195 の れんしゅうで 上の 帯が 縫い目を かくさない', z3);
     await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);

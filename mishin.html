@@ -367,7 +367,9 @@ function zoomPos(L){
   if(room >= 2*48){ const r = Math.min(66, room/2); return { r, cx: W/2 + side*((L.x1 - L.x0)/2 + 18 + r), cy: Math.min(L.seamY + 24 + r, H - 70 - r) }; } /* 下の 音ボタンに かけない */
   const top = (S.bannerBottom || 0) + 10, ra = Math.min(66, W*0.17, (L.seamY - 26 - top)/2);
   if(ra >= 44) return { r:ra, cx: W/2 + side*Math.min(W*0.18, 70), cy: L.seamY - 26 - ra };
-  const r = Math.min(56, W*0.16); // 小さい 画面：袋の 上の 反対がわの 角（親指は 下の 角から 端へ のびる ので そこは かくれない）
+  const rs = Math.min(56, room/2), cs = Math.min(L.seamY + 24 + rs, H - 70 - rs); /* 低い 横向き（568×320 など）：小さめの 窓を 袋の 横へ。帯と 下の ボタンの 間に 入る なら */
+  if(rs >= 24 && cs - rs >= (S.bannerBottom || 0) + 4) return { r:rs, cx: W/2 + side*((L.x1 - L.x0)/2 + 18 + rs), cy: cs };
+  const r = Math.max(24, Math.min(56, W*0.16, (H - 70 - L.seamY - 34)/2)); // 小さい 画面：袋の 上の 反対がわの 角（親指は 下の 角から 端へ のびる ので そこは かくれない）。下の ボタンに かけない
   return { r, cx: side>0 ? L.x1 - r - 6 : L.x0 + r + 6, cy: L.seamY + 30 + r };
 }
 const tangleAfter = () => !S.practice && S.bag && S.bag.k < 2 ? 0.8 : R.tangleAfter;
@@ -508,9 +510,9 @@ function whereTap(x,y){
   const nearSeam = Math.abs(y - L.seamY) < 56;
   const span = L.x1 - L.x0;
   // れんしゅうの 拡大窓の 中は ほどき始めの 端と 同じ（窓を さわっても 袋が 裏返らない）
-  const b0 = S.bag; if(S.practice && b0 && b0.face==='back' && b0.phase==='look'){ const z = zoomPos(L); if(Math.hypot(x - z.cx, y - z.cy) < z.r) return b0.start; }
   if(nearSeam && x < L.x0 + span*0.3) return 'L';
   if(nearSeam && x > L.x1 - span*0.3) return 'R';
+  const b0 = S.bag; if(S.practice && b0 && b0.face==='back' && b0.phase==='look'){ const z = zoomPos(L); if(Math.hypot(x - z.cx, y - z.cy) < z.r) return b0.start; } /* 端の 判定を 先に（83周目） */
   const bx = W/2 - L.bagW/2;
   if(x>bx && x<bx+L.bagW && y>L.seamY-40 && y<L.seamY+L.bagH) return 'bag';
   return null;
@@ -743,7 +745,7 @@ function finishBag(){
 }
 
 function addTime(d){ if(S.practice || S.lastBag) return; /* ラスト1袋は 時計を もどさない */ S.time = Math.max(0, S.time + d); ui.td.textContent = (d>0?'+':'')+d+'秒'; ui.td.style.color = d>0?'var(--ok)':'#ff7b6e'; /* 紺の 空との 比 5.5 */ ui.tdT = 0; }
-function say(text, kind, life, read, srText){ S.msg = {text, kind, t:0, life: life || (S.practice ? 2.5 : 1.2)}; if(!S.practice || read) srSay(srText || text); } // れんしゅうは 上の 帯（aria-live）が 読む ので 2重に しない
+function say(text, kind, life, read, srText){ S.msg = {text, kind, t:0, life: life || (S.practice ? 2.5 : 1.2)}; if(!S.practice) srSay(srText || text); } /* れんしゅうは 帯（aria-live）が 読む */ // れんしゅうは 上の 帯（aria-live）が 読む ので 2重に しない
 function srSay(text){ const sr = document.getElementById('sr'); if(!sr) return; // 一度 空に して、同じ 文が つづいても 読む。すぐ つづいた 声は つなげて 読む
   srSay.q = srSay.q ? srSay.q + '。' + text : text; if(srSay.t) return; sr.textContent = ''; srSay.t = setTimeout(()=>{ sr.textContent = srSay.q; srSay.q = ''; srSay.t = 0; }, 60); }
 
@@ -905,6 +907,7 @@ function drawFingers(L){
     const ex = b.start==='R' ? L.x1 - 40 : L.x0 + 40, onEnd = !S.practice && b.k < 3 && b.face==='back' && b.phase==='look'; /* 3袋目までは いつも 左。それより あとは 端を 読む 遊びを こわさない ように 出さない */
     if(!S.practice && b.face==='front' && b.phase==='look') return; // 表の ときは「ふくろを タップ」の 字が 出て いる ので 指の 見本は 出さない
     let x = onEnd || S.practice ? Math.min(W-60, Math.max(60, ex)) : W/2, y = S.practice ? L.seamY + 96 : onEnd ? L.seamY + 110 : L.seamY + Math.min(L.bagH - 40, 200); /* れんしゅうは 端の 下から 黄色い 輪へ ↑ */
+    if(S.practice && y > H - 90){ x = Math.min(W - 50, ex + (b.start==='R' ? -70 : 70)); y = L.seamY + 40; } // 低い 画面：下の ボタンに かけず 端の 横へ
     if(S.practice){ // れんしゅうは 1本指：指の 点が 上の 黄色い 輪へ（↑）
       ctx.fillStyle='rgba(255,217,102,.9)'; ctx.strokeStyle='rgba(19,26,46,.8)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x, y - 4 - ph*10, 10, 0, 7); ctx.fill(); ctx.stroke();
       ctx.font='700 18px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; otext('↑', x + 22, y - 10, '#f0c44c');
@@ -1315,7 +1318,7 @@ function drawSeamBack(L, b){
       ctx.beginPath(); ctx.arc(wt.x, wt.y, 26, 0, 7); ctx.strokeStyle='rgba(62,42,26,.85)'; ctx.lineWidth=6; ctx.stroke();
       ctx.strokeStyle=`rgba(240,196,76,${0.8+0.2*pulse})`; ctx.lineWidth=S.practice ? 5 : 3; ctx.stroke();
       ctx.font='700 13px "Zen Maru Gothic",sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      if(S.practice){ ctx.font='700 20px "Zen Maru Gothic",sans-serif'; otext('↓', wt.x, wt.y + 40, '#ffd0cc'); } // れんしゅう：表側の 白糸の 端（輪の 中）
+      if(S.practice){ ctx.font='700 20px "Zen Maru Gothic",sans-serif'; if(wt.y + 40 < H - 90) otext('↓', wt.x, wt.y + 40, '#ffd0cc'); else otext('↓', Math.min(W-70, Math.max(70, wt.x + sd*80)), wt.y + 4, '#ffd0cc'); /* 低い 画面は 輪の 横 */ } // れんしゅう：表側の 白糸の 端（輪の 中）
     }
   }
   if(b.hint && S.bag===b && b.phase==='look'){
@@ -1505,7 +1508,7 @@ function talkLine(b){
 }
 function drawMsg(L){
   let m = S.msg;
-  if(m && S.practice && m.kind==='ng') m = null; // れんしゅうの まちがいは 上の 帯（こめつぶ）が 言う
+  if(S.practice) return; // れんしゅうは 上の 帯（こめつぶ）が 言う
   if(!m){
     // 場面の ひとこと：0.8 秒は かえない（張りで 行ったり 来たり しない）。読み上げは 1袋に 同じ 文 1回、矢印は 読まない
     let t = talkLine(S.bag); const d = drawMsg, b = S.bag, key = b ? `${b.id}|${b.phase}|${b.face}|${!!b.tangle}` : ''; /* 袋・場面が かわったら すぐ かえる */
@@ -1543,7 +1546,7 @@ function drawMsg(L){
   ctx.fillStyle = big ? '#f1dfba' : ok ? '#fbf3e0' : '#fbefe6'; ctx.fill();
   ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.strokeStyle = ok ? '#7a5a30' : '#c8352b'; ctx.stroke();
   ctx.fillStyle = ok ? '#3e2a1a' : '#b3261e'; lines.forEach((l, i) => ctx.fillText(l, 0, 1 + (i - (lines.length-1)/2)*lh, tw));
-  if(face) doodle(!ok || /強すぎ|もつれ|きつい目です/.test(m.text) ? 'komeWow' : big ? 'komeJoy' : 'kome', -bw/2 - face/2 - 4, 2, face); // 話して いる こめつぶ（あぶない ときは びっくり顔）
+  if(face) doodle(!ok || /強すぎ|もつれ|きつい目です/.test(m.text) ? 'komeWow' : big && /一本どり|あきました|こえました|フィーバー！|ほぐれ|ゆるみ/.test(m.text) ? 'komeJoy' : 'kome', -bw/2 - face/2 - 4, 2, face); // 話して いる こめつぶ（あぶない ときは びっくり顔）
   ctx.restore();
 }
 // 少し ゆれた 角まるの 吹き出し。しっぽは 下の まん中（袋の 口を さす）
@@ -1642,7 +1645,7 @@ function stepText(){
   if(b.phase==='look' && b.face==='front') return k('<b>表</b>ですね（白い 糸が まっすぐ）。袋を まわして <b>反対の面</b>を 見ましょう（<b>袋を タップ</b>）', '（<b>スペース</b>）');
   if(b.phase==='look') return k(b.wrongEnd ? 'そちらは 縫い始めです。反対の端の、<b>赤い糸が 白い輪に ささっている</b>方に <b>指を おいて</b>、少し ずらして ください'
     : '裏ですね。<b>赤い糸が 白い輪に ささっている</b>端（たいてい左）に <b>指を おいて</b>、少し ずらして ください', 'を <b>←・→キー</b>で つまんで ください（おしたまま 引く）');
-  if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずしましょう</b>（つまんだまま 少し 引きます。下の 窓で 見えます）';
+  if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずしましょう</b>（つまんだまま 少し 引きます。丸い 窓で 見えます）';
   if(b.tangle) return k('引っかかりました。<b>黄色い 輪の 白い 糸</b>を 下へ 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
@@ -1656,9 +1659,9 @@ function syncUI(dt){
       ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">やめて 手順を 見る</button></div><div class="talk"><span class="who" aria-hidden="true">${DOODLE.kome('smile')}</span><div class="now say" id="stepNow" aria-live="polite"></div></div>`; /* こめつぶが 話す（74周目） */
       ui.steps._built = true;
     }
-    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, now = stepText();
+    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, now = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : stepText(); /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
     if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
-    if(ui.steps._now !== now){ const first = !ui.steps._now; if(!first && S.msg && S.msg.t > 0.3) S.msg = null; /* 帯の 文が かわったら 前の 吹き出しを のこさない */ ui.steps._now = now; $('stepNow').innerHTML = now; if(first) srSay($('stepNow').textContent); /* 帯を 作った すぐは aria-live が 読まない ので */ cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
+    if(ui.steps._now !== now){ const first = !ui.steps._now; ui.steps._now = now; $('stepNow').innerHTML = now; if(first) srSay($('stepNow').textContent); /* 帯を 作った すぐは aria-live が 読まない ので */ cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
       const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; }
   }
   const zb = S.bag, pulling = S.mode==='play' && zb && zb.phase==='pull' && !zb.done && !zb.tangle && S.held;

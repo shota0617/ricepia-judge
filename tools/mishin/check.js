@@ -374,12 +374,17 @@ const CHECKS = {
     const bb = await p.evaluate(() => { document.getElementById('title').hidden = true; KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(0); Object.assign(b, { face:'back', slide:0 }); S.bag = b; S.msg = { text:'裏ですね。端の 赤い 糸を つまんで ください', kind:'ok', t:0.5, life:2 }; return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ top:S.msgTop, y:S.msgY, seam:L.seamY })))); });
     ok(bb.y + (bb.y - bb.top) + 9 <= bb.seam - 16, '320 幅で 2行の 吹き出しも 縫い目に かからない', bb);
     // 82周目：れんしゅうの 拡大窓は 右手の 親指（下の 角 → 左の 端）で かくれない 所・帯と 音ボタンに かからない
-    for (const [w, h] of [[390,844],[360,640],[320,568],[844,390]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+    for (const [w, h] of [[390,844],[360,640],[320,568],[844,390],[568,320]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const zz = await p.evaluate(async () => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; await new Promise(r => setTimeout(r, 250)); const L = KB.layout(), z = S.zoom, W = KB.size().W, H = KB.size().H;
         const snd = document.getElementById('soundBtn').getBoundingClientRect(), cv = document.getElementById('cv').getBoundingClientRect();
         const t = Math.max(0, Math.min(1, ((z.cx - W) * (L.x0 - W) + (z.cy - H) * (L.seamY - H)) / ((L.x0 - W)**2 + (L.seamY - H)**2))), px = W + t*(L.x0 - W), py = H + t*(L.seamY - H); /* 親指の 線（右下の 角 → 左の 端） */
-        return { thumb: Math.hypot(z.cx - px, z.cy - py) - z.r, banner: z.cy - z.r - (S.bannerBottom||0), sound: (snd.top - cv.top) - (z.cy + z.r) > 0 || (snd.left - cv.left) > z.cx + z.r }; });
-      ok(zz.thumb > 20 && zz.banner >= 0 && zz.sound, `れんしゅうの 拡大窓が 親指・帯・音ボタンに かからない（${w}×${h}）`, zz); }
+        return { thumb: Math.hypot(z.cx - px, z.cy - py) - z.r, banner: z.cy - z.r - (S.bannerBottom||0), sound: (snd.top - cv.top) - (z.cy + z.r) > 0 || (snd.left - cv.left) > z.cx + z.r, inside: z.cx - z.r >= 0 && z.cx + z.r <= W && z.cy + z.r <= H }; });
+      ok(zz.thumb > 20 && zz.banner >= 0 && zz.sound && zz.inside, `れんしゅうの 拡大窓が 画面の 中・親指・帯・音ボタンに かからない（${w}×${h}）`, zz); }
+    // 83周目：れんしゅうの 声は 上の 帯の こめつぶが 言う（袋の 上に 吹き出しを 出さない）
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
+    const pm = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; S.msgY = undefined; S.msg = { text:'その 調子です', kind:'ok', t:0.1, life:2 }; KB.step(1/60);
+      return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ band: document.getElementById('stepNow').textContent, y: S.msgY })))); });
+    ok(/その 調子です/.test(pm.band) && pm.y === undefined, 'れんしゅうの 声は 上の 帯に 出て、袋の 上に 吹き出しは 出ない', pm);
     await p.setViewportSize({ width:320, height:568 }); // 65周目：じこベスト・はじめての ランク・袋の じこベストの 行が ふえても
     const ag4 = await p.evaluate(() => { localStorage.setItem('mishin-best2','5000'); localStorage.setItem('mishin-bestbags','3'); KB.start(); const S = KB.S; S.score = 8000; S.bags = 9; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });

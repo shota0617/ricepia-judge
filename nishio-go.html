@@ -255,6 +255,10 @@
       <span><b>📱 傾きの 強さ</b><small>スマホを 傾けて 転がす ときの 強さ。びんかん は 少し 傾けるだけで よく 転がり、やさしい は 大きく 傾けないと 速く なりません（盤の めいろも 同じ）。はじめは ふつう です。</small></span>
       <select id="tiltSens" style="flex:none"><option value="15">びんかん</option><option value="20" selected>ふつう</option><option value="26">やさしい</option></select>
     </label>
+    <label class="row">
+      <span><b>⏱ 5分コース</b><small>いそがしい人むけ。オンに すると、めいろの 行き先を 近くに して、5分 ほどで ゴール できるように します。のこり 時間は 出しません。</small></span>
+      <input type="checkbox" id="fiveMin"/>
+    </label>
     <div class="row">
       <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
       <button type="button" id="koroOpen" class="btn" style="flex:none">ずかん</button>

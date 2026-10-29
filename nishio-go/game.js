@@ -159,7 +159,7 @@ let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
-const save = () => { if (!store.set(stateKey(), S)) toast('きろくを うまく 保存できませんでした。スマホの 空きが 少ないのかも。少し 空けてから、もう一度 ためしてね。'); };
+const save = () => { if (!store.set(stateKey(), S)) toast('このブラウザに きろくを 保存できませんでした。スマホの 空きや、ブラウザの 設定（プライベート モード など）を 見てみてね。'); };
 
 /* ---------- 地図 ---------- */
 if (!window.L) {
@@ -2004,13 +2004,21 @@ function setGuide(g) {
 // オフの 人（せってい）には false を かえす＝いままでどおりの 知らせを 出す
 const KT = window.nishioKomeTalk;
 const ktOn = () => !!(KT && KT.on());
-const ktBusy = () => toastBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden;   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+const ktBusy = () => toastBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+  || ['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden);   // きろく・とくてん・せってい を 開いている 間は 地図に もどるまで よける
 function ktAskGuide(lead, mood) {
   if (!ktOn()) return false;
+  let shown = [];   // 出した ボタンの 行き先（番号では なく id で おぼえる＝あとで 行き先が 決め直されても、押した 名前の 所へ）
   return KT.say([...lead, 'つぎは どこへ 行く？'], { mood, key: 'guide', busy: () => ktBusy() || !S.guide,
-    choices: () => { const g = S.guide; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
-    then: i => { if (i > 0) pickAlt(i - 1); if (i >= 0 && S.guide) { toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 }); } } });
+    choices: () => { const g = S.guide; shown = g ? [g, ...(g.alts || [])].map(o => o.id) : []; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
+    then: i => {
+      const id = shown[i], g = S.guide;
+      if (!id || !g) return;
+      if (g.id !== id) { const k = (g.alts || []).findIndex(a => a.id === id); if (k < 0) return; pickAlt(k); }   // 押した 所が もう 候補に ないときは 何も しない
+      toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 });
+    } });
 }
+modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作して を 切りかえたら、前の 遊びかたの 話は やめる
 const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
@@ -4039,13 +4047,13 @@ function begin(isDemo) {
   friendBonus();
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
-  if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ）
-    store.set('nsg_kome_hello', true);   // めいろでは「あそびかた」の 画面を 先に 見てから
+  if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ。めいろでは「あそびかた」の 画面を 先に 見てから）
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
-    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけると、ぼくが 道を すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
+    // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
+    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
     KT.say([{ t: 'はじめまして。ぼく、西尾の お米つぶ だに。', mood: 'happy' }, how, 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。',
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
-    { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', then: () => { if (!chest) ktAskGuide([], 'smile'); } });
+    { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }
   }
   if (isDemo) toast(document.body.classList.contains('px')

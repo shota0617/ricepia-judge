@@ -912,7 +912,8 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .kome-talk .kt-body{flex:1;min-width:0}
 .kome-talk .kt-name{display:block;font-size:12px;color:#e9c46a}
 .kome-talk .kt-say{margin:2px 0 0;white-space:pre-wrap;font-size:15px;min-height:3.2em}
-.kome-talk .kt-ch{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.kome-talk .kt-ch{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:min(38vh,38dvh);overflow:auto}   /* 横向き・文字の 拡大でも ✕ と 文が 画面に のこる */
+.kome-talk .kt-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .kome-talk .kt-btn{font-family:inherit;font-size:14px;text-align:left;background:#1d2a20;color:#fff;border:2px solid #e9c46a;border-radius:6px;padding:7px 10px;cursor:pointer}
 .kome-talk .kt-btn:focus-visible,.kome-talk .kt-next:focus-visible{outline:2px solid #fff;outline-offset:2px}
 .kome-talk .kt-next{display:block;margin:4px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:13px;cursor:pointer}

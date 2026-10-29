@@ -102,7 +102,7 @@ const CHECKS = {
         for (let i=0;i<400 && !bb.tangle;i++){ x += 40; if (x>l.x1){ KB.up(); x=l.x0+20; KB.down(x,l.seamY+50); } KB.move(x, l.seamY+50); KB.step(1/60); await raf(); }
         await st(10); KB.up(); for (let k=0;k<3;k++){ KB.tap((l.x0+l.x1)/2, l.seamY+150); await st(3); } await st(60); }
       mo.disconnect(); KB.manual = false; return { tangles: bb.tangles, reads: said.join('|').split('引っかかりました').length - 1 }; });
-    ok(t2.tangles < 2 || t2.reads >= 2, '同じ 袋で 2回目に もつれても 帯の 声を 読む', t2);
+    ok(t2.tangles >= 2 && t2.reads >= 2, '同じ 袋で 2回目に もつれても 帯の 声を 読む', t2);
     const make = practice => p.evaluate(practice => {
       KB.manual = true; KB.fixedSeed = 3; practice ? KB.startPractice() : KB.start(); const S = KB.S, L = KB.layout();
       const bb = KB.makeBag(6); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
@@ -414,6 +414,11 @@ const CHECKS = {
     const f99 = await p.evaluate(() => { const out = {}; KB.start(); let S = KB.S, L = KB.layout(); out.hint = S.pinchHint; const b = KB.makeBag(1); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts, t0 = S.time; KB.down(L.x0 + 4, L.seamY); KB.up(); out.fronts = S.fronts - f0; out.dt = +(S.time - t0).toFixed(2);
       KB.startPractice(); S = KB.S; L = KB.layout(); Object.assign(S.bag, { slide:0, face:'back' }); KB.tap(KB.size().W/2, L.seamY + 200); out.tapMsg = S.msg && S.msg.text; return out; });
     ok(f99.hint > 0 && f99.fronts === 0 && f99.dt === 0 && /指を 1本/.test(f99.tapMsg || ''), 'はじめての 30秒：二本指の 見本・教える 袋は 声だけ・れんしゅうは 1本指の ことば', f99);
+    // 100周目：張りの 目安（こめつぶ）が 出る はじめの 2袋 だけ 吹き出しの 顔を けす（3袋目からは 顔を 出す）
+    const g3 = [];
+    for (const k of [1, 3]) g3.push(await p.evaluate(k => { KB.start(); const S = KB.S; const b = KB.makeBag(k); Object.assign(b, { face:'back', slide:0, phase:'pull', pulled:4 }); S.bag = b; S.held = true; S.msg = { text:'強すぎます', kind:'ng', t:0.5, life:9 };
+      return new Promise(r => requestAnimationFrame(() => { S.held = true; requestAnimationFrame(() => r({ k, face: S.msgFace })); })); }, k));
+    ok(g3[0].face === 0 && g3[1].face > 0, '張りの 目安が ある 袋だけ 吹き出しの 顔を けす（3袋目からは 顔を 出す）', g3);
     // 92周目：端の 近くでも 縫い目から はなれた 1本指タップは ふつうに 袋を まわす（罰に しない）
     await p.setViewportSize({ width:844, height:390 }); await p.waitForTimeout(100);
     const pr2 = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(4); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts; KB.tap(L.x0 + 50, L.seamY + 45); return { fronts: S.fronts - f0, flip: b.flipT > 0 }; });

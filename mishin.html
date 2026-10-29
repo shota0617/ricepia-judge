@@ -549,7 +549,7 @@ function tap(x,y){
   const b=S.bag; if(!b || b.done || b.slide>0.05 || b.flipT>0) return;
   if(b.phase==='look'){
     const w = whereTap(x,y);
-    if(w==='bag' && b.k===0 && b.face==='back'){ say(S.practice ? '裏ですね。黄色い 輪の 赤い 糸に 指を 1本 おいて ください' : '裏ですね。端の 赤い 糸を つまんで ください','ok'); /* れんしゅうは 1本指の ことば（99周目） */ S.pinchHint = 1.6; return; } /* 1袋目の 裏は まわさない（いちばん はじめに タップする 人が 多い） */
+    if(w==='bag' && b.k===0 && b.face==='back'){ say(S.practice ? (kbUser ? '裏ですね。←・→キーで 赤い 糸の 端を つまんで ください' : '裏ですね。黄色い 輪の 赤い 糸に 指を 1本 おいて ください') : '裏ですね。端の 赤い 糸を つまんで ください','ok'); /* キーの 人には キーの ことば（100周目） */ /* れんしゅうは 1本指の ことば（99周目） */ S.pinchHint = 1.6; return; } /* 1袋目の 裏は まわさない（いちばん はじめに タップする 人が 多い） */
     if(w==='bag' || (S.practice && b.face==='front')){ b.flipT = 0.0001; audio.flip(); } /* れんしゅう：表なら どこを さわっても まわす（「くるっ」の 絵も） */ // れんしゅう：表なら 端を さわっても 裏返す（表の 端では 止まらない）
     else if(w==='L' || w==='R'){ if(b.face==='front'){ if(Math.abs(y - layout().seamY) >= 22){ b.flipT = 0.0001; audio.flip(); return; } /* 端の 近くでも 縫い目から はなれた タップは まわす（92周目） */ if(!S.practice && b.k>=3){ frontPenalty(b); return; } /* 縫い目の 端を 1本指で ちょんと さわって 表か たしかめるのも 表を さわった ことに（91周目。教える 3袋は 声だけ） */ say('表です。袋を タップして 裏へ どうぞ','ok'); return; } say(S.practice ? '指を おいたまま 少し 動かして ください' : '糸は 二本指で つまんで ください','ok', 0, true); /* 帯は かわらない ので 読み上げる */ S.pinchHint = 1.6; }
     return;
@@ -897,7 +897,7 @@ function drawPracticeAids(L, b){
   drawFingerGauge(L, b);
 }
 // 指の すぐ 上の 張りの 目安（れんしゅう と、タイムアタックの 最初の 2袋）
-const gaugeOn = b => !!b && b.phase==='pull' && S.held && !b.tangle && !b.done && !(!S.practice && b.k===0 && b.pulled<3); /* 張りの 目安（こめつぶの 顔）が 出て いる */
+const gaugeOn = b => !!b && (S.practice || b.k < 2) && b.phase==='pull' && S.held && !b.tangle && !b.done && !(!S.practice && b.k===0 && b.pulled<3); /* 張りの 目安（こめつぶの 顔）が 出て いる */
 function drawFingerGauge(L, b){
   if(!S.practice && b.k===0 && b.pulled<3) return; // 1袋目の はじめは 点線の 見本と「つまんだまま…」が 出て いる
   if(b.phase==='pull' && S.held && !b.tangle){
@@ -1570,7 +1570,7 @@ function drawMsg(L){
   const under = W < 260 && lines.length > 1 && bh > bot0 - top0; /* せまい 画面で 引く 間は メーターの 上に 入らない → 縫い目の 下へ（字を つぶさない。87周目） */
   if(!under && lines.length > 1 && bh > bot0 - top0){ lines = [m.text]; fs = Math.max(12, Math.floor(fs*room/ctx.measureText(m.text).width)); ctx.font = `700 ${fs}px "Zen Maru Gothic",sans-serif`; tw = Math.min(room, ctx.measureText(m.text).width); lh = fs*1.25; bw = tw + 30; bh = lh + 14; } /* 2行が 入らなければ 1行に */
   const my = under ? L.seamY + 30 + bh/2 : Math.max(top0 + bh/2, Math.min(Math.max(L.seamY - 128, top0 + 22), bot0 - bh/2));
-  S.msgY = my; S.msgTop = my - bh/2; // check.js 用
+  S.msgY = my; S.msgTop = my - bh/2; S.msgFace = face; // check.js 用
   ctx.translate(W/2, my);
   s = Math.min(s, (W-10)/(bw+face)); ctx.scale(s, s); ctx.translate(face/2, 0); // ふくらんでも はみ出さない
   let seed = 0; for(const c of m.text) seed = (seed*31 + c.charCodeAt(0)) % 9973; // ゆれは 字で きまる（毎コマ ふるえない）

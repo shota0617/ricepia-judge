@@ -93,6 +93,16 @@ const CHECKS = {
   // もつれ：マウスで 白糸を 引く・れんしゅうで 1本指で 白糸を 引く・二本指で つまんだまま 引っかかって つまみなおし
   async tangle(b){
     const p = await page(b, 390, 844, '');
+    // 97周目：同じ 袋で 2回目に もつれても 帯の 声を 読む（袋ごとに 1回 だけに して 2回目が 無音に なって いた）
+    const t2 = await p.evaluate(async () => {
+      const said = []; const sr = document.getElementById('sr'); const mo = new MutationObserver(() => { if (sr.textContent) said.push(sr.textContent); }); mo.observe(sr, { childList:true, characterData:true, subtree:true });
+      const raf = () => new Promise(r => requestAnimationFrame(() => r())); KB.manual = true; KB.startPractice(); const S = KB.S; const st = async n => { for (let i=0;i<n;i++){ KB.step(1/60); await raf(); } };
+      await st(30); const bb = S.bag, l = KB.layout(); KB.down(l.x0+2, l.seamY+4); for (let i=0;i<20;i++){ KB.move(l.x0+2-i*3, l.seamY+4+i*3); KB.step(1/60); await raf(); } await st(100);
+      for (let t=0;t<2 && !bb.done;t++){ KB.up(); await st(5); let x = l.x0+20; KB.down(x, l.seamY+50);
+        for (let i=0;i<400 && !bb.tangle;i++){ x += 40; if (x>l.x1){ KB.up(); x=l.x0+20; KB.down(x,l.seamY+50); } KB.move(x, l.seamY+50); KB.step(1/60); await raf(); }
+        await st(10); KB.up(); for (let k=0;k<3;k++){ KB.tap((l.x0+l.x1)/2, l.seamY+150); await st(3); } await st(60); }
+      mo.disconnect(); KB.manual = false; return { tangles: bb.tangles, reads: said.join('|').split('引っかかりました').length - 1 }; });
+    ok(t2.tangles < 2 || t2.reads >= 2, '同じ 袋で 2回目に もつれても 帯の 声を 読む', t2);
     const make = practice => p.evaluate(practice => {
       KB.manual = true; KB.fixedSeed = 3; practice ? KB.startPractice() : KB.start(); const S = KB.S, L = KB.layout();
       const bb = KB.makeBag(6); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
@@ -428,6 +438,12 @@ const CHECKS = {
     ok(dom.line && dom.best === 'bestTalk' && dom.first === 'A', '結果の DOM の 順＝見た目の 順（もう一回 → LINE（ボタン → 文）→ じこベストの 声）', dom);
     const skd = await p.evaluate(() => { KB.startPractice(); KB.step(1/60); const c = document.getElementById('coinDone'), sb = document.getElementById('skipBtn'); if (sb) sb.click(); const t = c.querySelector('.talks'), l = c.querySelector('.line-talk'); const r = !!(t.compareDocumentPosition(l) & Node.DOCUMENT_POSITION_FOLLOWING); c.hidden = true; return r; });
     ok(skd, '「やめて 手順を 見る」の まとめは DOM でも 手順 → LINE', skd);
+    // 97周目：横向きで やめて 見に 来ても 袋の 両はしは 左の 列の 上・せまい 画面でも 手順の 番号を けさない
+    for (const [w, h] of [[667,375],[195,422]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      const ls = await p.evaluate(async () => { KB.startPractice(); KB.step(1/60); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); document.getElementById('skipBtn').click(); await new Promise(r => setTimeout(r, 100));
+        const c = document.getElementById('coinDone'), e = c.querySelector('.ends').getBoundingClientRect(), n = [...c.querySelectorAll('.who.num')].filter(x => getComputedStyle(x).display !== 'none').length; c.hidden = true; return { endsTop: Math.round(e.top), H: innerHeight, nums: n }; });
+      ok(ls.endsTop < ls.H && ls.nums === 5, `やめて 見に 来た まとめで 袋の 両はしが 1画面目・手順の 番号 5つ（${w}×${h}）`, ls); }
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     const ah = await p.evaluate(() => { KB.start(); const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ res: !document.getElementById('result').hidden, cv: document.getElementById('cv').getAttribute('aria-hidden') })))); });
     ok(ah.res && ah.cv === 'true', '結果の 間は キャンバス（前の 袋の 文）を 読み上げない', ah);
     await p.setViewportSize({ width:195, height:422 }); await p.waitForTimeout(100);

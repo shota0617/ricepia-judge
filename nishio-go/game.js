@@ -625,7 +625,8 @@ function talkNpc(id, page = 0) {
   }
   if (say.length && simple()) {
     const got = S.total - brief.t0, lv = levelOf(S.total) > brief.lv0 ? levelOf(S.total) : 0;
-    toast([brief.icons && `${brief.icons}${got ? ` +${got}pt` : ''}${lv ? ` Lv${lv}` : ''}`, brief.next && `📜 → ${brief.next}${brief.marks ? ` ${brief.marks}` : ''}`].filter(Boolean).join('　'));
+    const msg = npcBriefMsg(brief, got, lv, mazeNow());
+    if (msg) toast(msg);
   } else if (say.length) toast(say.join('　'));
   const pages = npcPages(n), i = Math.min(page, pages.length - 1);
   const mzBtn = mzNpcShare && mzNpcShare.id === n.id ? '<button type="button" class="btn mini npc-share" data-mz-share>📣 ゴールを シェア</button>' : '';
@@ -2079,6 +2080,13 @@ function checkGuide() {
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
   rivalSay(g, next);
+}
+// 人と 話した ときの 知らせ（文字を少なく）：もらった しるし・ポイント・つぎの 行き先。めいろでは つぎの 行き先の 名前は「🏁 つぎの ゴール」の 札と 下の 札に 出るので、
+// 名前は 書かず 手がかり（🔍）・おとどけもの（📦）の しるし だけ（自分で 遊んで 分かった：「💬🎉🏁 +25pt　📜 → 尚古荘 🔍」。arriveMsg と そろえる。運営者の声「文字は 少なく」2026-10-29）
+function npcBriefMsg(brief, got, lv, maze) {
+  const head = brief.icons && `${brief.icons}${got ? ` +${got}pt` : ''}${lv ? ` Lv${lv}` : ''}`;
+  const tail = brief.next && (maze ? brief.marks : `📜 → ${brief.next}${brief.marks ? ` ${brief.marks}` : ''}`);
+  return [head, tail].filter(Boolean).join('　');
 }
 // 行き先に 着いた ときの 知らせ。文字を少なく（ふだん）：次の行き先は 下の札と「🏁 つぎの ゴール」に 出るので 書かない。
 // めいろでは 着いた 名所も「ゴール！」の 札に 出るので、ポイント だけ（自分で 遊んで 分かった：「🧭 西尾市歴史公園（西尾城跡） +5pt　→ らいすぴあの店員さん（らいすぴあ秀幸（永吉））」が
@@ -4114,7 +4122,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, arriveMsg, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, arriveMsg, npcBriefMsg, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); }, openTab,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

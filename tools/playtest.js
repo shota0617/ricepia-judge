@@ -1416,6 +1416,14 @@ async function walkTo(page, id) {
     if (!had) b.classList.remove('simple');
     return { maze, walk, none, ev, ok: maze === '🧭 +5pt' && walk === '🧭 西尾市歴史公園（西尾城跡） +5pt' && none === '' && ev === '🎉 +30pt' };
   });
+  // 人と 話した ときの 知らせ：めいろでは つぎの 行き先の 名前を 書かない（「🏁 つぎの ゴール」の 札に 出る）。しるし（🔍📦）は のこす。歩く ときは いままで どおり
+  R.checks.npcBriefMsg = await page.evaluate(() => {
+    const G = nishioGo;
+    if (typeof G.npcBriefMsg !== 'function') return { ok: false, why: 'no-npcBriefMsg' };
+    const b = { icons: '💬🎉🏁', next: '尚古荘', marks: '🔍' };
+    const maze = G.npcBriefMsg(b, 25, 0, true), walk = G.npcBriefMsg(b, 25, 0, false), plain = G.npcBriefMsg({ ...b, marks: '' }, 25, 7, true), none = G.npcBriefMsg({ icons: '', next: '', marks: '' }, 0, 0, true);
+    return { maze, walk, plain, none, ok: maze === '💬🎉🏁 +25pt　🔍' && walk === '💬🎉🏁 +25pt　📜 → 尚古荘 🔍' && plain === '💬🎉🏁 +25pt Lv7' && none === '' };
+  });
   // めいろの ゴールの あとの「めいろ、どうだった？」：★を えらび ひとことを 書いて 送ると、/api/feedback に kind: play・★・ひとこと・秒・めいろの★ が 届く。1日1回
   {
     const fb = [];
@@ -3563,6 +3571,7 @@ async function walkTo(page, id) {
   need(c.friendVs && c.friendVs.ok, `友だちの シェア（?vs=）から 来た 人に 友だちの タイムで さそう・はじめての ゴールで ならべる 知らせが 出ない（${JSON.stringify(c.friendVs)}）`);
   need(c.mazeSpeed && c.mazeSpeed.ok, `めいろの はやさの ベスト（道のり ÷ 時間）が 出ない・札に ならない（${JSON.stringify(c.mazeSpeed)}）`);
   need(c.arriveMsg && c.arriveMsg.ok, `行き先に 着いた ときの 知らせが 長い（つぎの 行き先・めいろで ゴールの 名前を くりかえす。${JSON.stringify(c.arriveMsg)}）`);
+  need(c.npcBriefMsg && c.npcBriefMsg.ok, `人と 話した ときの 知らせが めいろで つぎの 行き先の 名前を くりかえす（${JSON.stringify(c.npcBriefMsg)}）`);
   need(c.goalConfetti && c.goalConfetti.ok, `ゴールの 紙ふぶきが お米つぶ・抹茶の 葉・金の つぶで ない（${JSON.stringify(c.goalConfetti)}）`);
   need(c.playRating && c.playRating.ok, `めいろの ゴールの あとの「めいろ、どうだった？」（★と ひとこと）が 出ない・届かない・同じ 日に また たずねる（${JSON.stringify(c.playRating)}）`);
   need(c.mzGoalShare && c.mzGoalShare.ok, `めいろの ゴールで「📣 シェア」→ 遊んだ 画面の カードと すぐ 遊べる リンク（?play=1）が 出ない・別の ごほうびに 持ちこす・人の ゴールで 出ない（${JSON.stringify(c.mzGoalShare)}）`);

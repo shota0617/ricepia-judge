@@ -2004,7 +2004,7 @@ function nedokoStep(hx, by, u, now, sleepy) {
 const yuami = { cur: null, t0: 0, still0: 0, said: false, chk: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
 function yuamiStep(hx, by, u, now) {
   const y = yuami, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_YUAMI || !still || gbOn || rp.x === null || roll.idle > 12) { y.cur = null; y.said = false; y.chk = 0; return; }
+  if (!window.NISHIO_YUAMI || !still || gbOn || rp.x === null || roll.idle > 12 || tsutsumi.cur || tsutsumi.done) { y.cur = null; y.said = false; y.chk = 0; return; }
   if (!y.cur) {
     if (roll.idle < window.NISHIO_YUAMI.STILL || now < y.chk) return;
     y.chk = now + 2000;   // 2秒に 1回 町を しらべる
@@ -2040,7 +2040,7 @@ function yuamiStep(hx, by, u, now) {
 const horidashi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function horidashiStep(hx, by, u, now) {
   const h = horidashi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur || shimatabi.cur) { h.cur = null; h.said = false; h.chk = 0; return; }
+  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur || shimatabi.cur || tsutsumi.cur || tsutsumi.done) { h.cur = null; h.said = false; h.chk = 0; return; }
   const H = window.NISHIO_HORIDASHI;
   if (!h.cur || now - h.t0 >= H.CYCLE) {
     if (!h.cur && (roll.idle < H.STILL || now < h.chk)) return;
@@ -2070,6 +2070,45 @@ function horidashiStep(hx, by, u, now) {
     px(7, 12, 16, 3, '#e8cf94');   // 砂から 半分 出て いる ように 手前を 砂で かくす
   }
   h.drawn++; dirty = true;
+}
+// お米つぶの つつみづくり（tsutsumi.js）：西尾市の 吉良の 田んぼで 止まって じっと すると、お米の うしろで 領民に まじって 土を はこび、堤が 少しずつ 高く なる。
+// 「長さ180m・高さ4m」の 黄金堤が できたら、田の 稲穂が 金色に かわる。そのつど お米が ひと言。動くか ねむりだすと 消える。ひと通り おわったら 動くまで くりかえさない
+// 吉良の 田んぼの 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く（ゆあみ・ほりだしより 先に 出る）
+const tsutsumi = { cur: null, t0: 0, chk: 0, n: 0, done: false, drawn: 0 };   // n：言った ひと言の 数。drawn：描いた 数（テスト用）
+function tsutsumiStep(hx, by, u, now) {
+  const m = tsutsumi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_TSUTSUMI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.n = 0; m.done = false; m.chk = 0; return; }
+  const T = window.NISHIO_TSUTSUMI;
+  if (!m.cur) {
+    if (m.done || roll.idle < T.STILL || now < m.chk) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const f = kasaFind(), d = f ? T.pick(f) : null;
+    if (!d) return;
+    m.cur = d; m.t0 = now; m.n = 0;
+    if (G.track) G.track('kome_tsutsumi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000;
+  const k = Math.min(1, age / T.BUILD), g = Math.max(0, Math.min(1, (age - T.BUILD) / T.GOLD));
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 400);
+  for (let i = 0; i < 13; i++) {   // 田の 稲穂：はじめは 緑、できあがると 金色に かわり ゆらゆら
+    const sw = Math.sin(t * 2 + i) * 0.8 * g, x = -26 + i * 4;
+    px(x, 11, 0.8, 5, '#7fae45'); px(x + sw, 9.5, 1.6, 2.5, g > 0.5 ? '#e8b923' : '#9dc94f');
+  }
+  const h = 14 * k;   // 堤：土の 色の 台に 草の 帽子。上へ 少しずつ のびる
+  px(-24, 15 - h, 48, h, '#8a6a43'); px(-24, 15 - h, 48, Math.min(1.5, h), g > 0.5 ? '#d9b44a' : '#6fa04a');
+  if (age < T.BUILD) {   // 領民：土を かついで 堤に むかって ならぶ
+    for (let i = 0; i < 3; i++) {
+      const x = -22 + i * 18 + (calmMotion ? 0 : Math.sin(t * 3 + i * 2) * 1.5), y = 13 - h + Math.abs(Math.sin(t * 6 + i)) * (calmMotion ? 0 : 0.8);
+      px(x, y - 5, 2, 2, '#e6c9a0'); px(x, y - 3, 2, 3, '#5b6f8a'); px(x + 2, y - 4, 2.5, 2, '#a07a4c');
+    }
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  const at = [600, T.BUILD + 200, T.BUILD + T.GOLD], say = [m.cur.say, m.cur.done, m.cur.gold];
+  if (m.n < 3 && age >= at[m.n] && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(say[m.n], 2800, 'happy'); m.n++; }
+  if (m.n >= 3 && age > T.BUILD + T.GOLD + T.HOLD) { m.cur = null; m.done = true; return; }   // ひと通り おわり：動くまで くりかえさない
+  m.drawn++; dirty = true;
 }
 // お米つぶの しまたび（shimatabi.js）：西尾市の 佐久島で 止まって じっと すると、お米の うしろが 島の ひとこまに なる。アート作品の 台座・黒壁の 集落・一色港からの 高速船が 7秒ごとに かわり、かわるたび お米が ひと言。
 // 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 佐久島の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く（ほりだし・ゆあみより 先に 出る）
@@ -2219,7 +2258,7 @@ function kasaFind() {
   const ll = toLatLng(rp.x, rp.y);
   let near = '';
   for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
-  return { near, city: here.city, town: here.town };
+  return { near, land: luAt(ll.lat, ll.lng), city: here.city, town: here.town };
 }
 function kasaStep(hx, by, u, now) {
   const k = kasa, rain = wxKind() === 'rain' && !worldMode && !driving && rp.x !== null;
@@ -7068,6 +7107,7 @@ function frame(now) {
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
+    tsutsumiStep(hx, by, u, now);   // 吉良の 田んぼで じっと すると 黄金堤を 築く（tsutsumi.js）
     shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）

@@ -55,6 +55,17 @@
   .sheet { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 24, 20, .55); }
   .card { width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 20px; border-radius: 18px; background: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align: center; }
   .card h1 { margin: 0 0 4px; font-size: 22px; }
+  /* 運転する キャラクターとの おはなし（はじめの画面・10/29 店主「素朴な かわいい キャラクターとの 会話で 進む」） */
+  .talk { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 12px; text-align: left; }
+  .talk[hidden] { display: none; }
+  .talk canvas { flex: none; width: 64px; height: 64px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+  .talkBody { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 14px; background: #fff; border: 2px solid #e3d7bd; position: relative; }
+  .talkBody::before { content: ''; position: absolute; left: -9px; top: 22px; border: 8px solid transparent; border-right-color: #e3d7bd; border-left: 0; }
+  .talkBody p { margin: 0; font-size: 15px; line-height: 1.6; }
+  .talkCh { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .talkCh button { padding: 8px 12px; border: 2px solid #d8d0bc; border-radius: 999px; background: #fffdf7; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .talkCh button.main { border-color: var(--green); background: var(--green); color: #fff; }
+  .talkCh button:disabled { opacity: .55; cursor: default; }
   .card .tag { display: inline-block; margin-bottom: 10px; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 999px; color: #8a6423; font-size: 12px; font-weight: 700; }
   .card p { margin: 8px 0; font-size: 14px; line-height: 1.7; }
   .seasons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
@@ -90,6 +101,7 @@
   .go.line small { font-size: 12px; font-weight: normal; opacity: .9; }
   .challenge { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff3c4; color: #4a3600; font-weight: bold; line-height: 1.5; }
   .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
+  .easy .e { font-style: normal; }
   .easy input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--green); }
   .go.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
   .times button { padding: 6px 4px; }
@@ -138,6 +150,20 @@
   .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
+  /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
+  body.calm .ico { font-size: 0 !important; }
+  body.calm .ico::before { content: attr(data-i); font-size: 18px; }
+  body.calm .pad .ico::before { font-size: 26px; }
+  body.calm #bStart.ico::before { font-size: 30px; }
+  body.calm .seasons button { font-size: 0; }
+  body.calm .card h1 { font-size: 0; }
+  body.calm .card h1::before { content: '🚜'; font-size: 34px; }
+  body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
+  body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
+  body.calm #start label.easy input { margin-top: 0; }
+  body.calm #start label.easy > span { font-size: 0; line-height: 0; }
+  body.calm #start label.easy .e { font-size: 20px; line-height: 1; }
+  /* 読みこめなかった 知らせと「もう一度 よむ」は のんびりでも 出す（▶ が 押せない わけが わかるように） */
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
   #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
@@ -170,21 +196,21 @@
   <span id="scorePop"></span>
 </div>
 <div id="bar" class="hidden">
-  <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
+  <button id="bCam" class="ico" data-i="👁" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
   <button id="bEasy" title="かんたんアシスト（K）：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる">🔰</button>
   <button id="bEco" title="耕すときのエンジン回転（I）：2500 → 2000 → 1800。下げると軽油がへるが 力の余裕が少ない。DPF の再生は 2000 回転以上">⛽2500</button>
-  <button id="bAssist" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
-  <button id="bGear" title="主変速（Q で下げる・E で上げる）">変速 3</button>
-  <button id="bFast" title="早送り（F）">⏩ ×1</button>
-  <button id="bArt" class="hidden" title="田んぼアートを仕上げて、ドローンで上から撮る（Enter）">📸 完成</button>
+  <button id="bAssist" class="ico" data-i="🧭" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
+  <button id="bGear" class="ico" data-i="⚙3" title="主変速（Q で下げる・E で上げる）">変速 3</button>
+  <button id="bFast" class="ico" data-i="⏩" title="早送り（F）">⏩ ×1</button>
+  <button id="bArt" class="hidden ico" data-i="📸" title="田んぼアートを仕上げて、ドローンで上から撮る（Enter）">📸 完成</button>
   <button id="bHelp" title="操作の表（H）">？</button>
   <button id="bMenu" title="はじめの画面へ">≡</button>
 </div>
 <div class="pad hidden" id="padL"><button data-k="left" aria-label="左へ切る">◀</button><button data-k="right" aria-label="右へ切る">▶</button></div>
-<div class="pad hidden" id="padC"><button id="bRot" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
-<div class="pad hidden" id="padD"><button id="bShallow" aria-label="耕す深さを浅く">浅く</button><button id="bDeep" aria-label="耕す深さを深く">深く</button><button data-k="diff" id="bDiff" class="hidden" aria-label="押しているあいだ、デフロック（左右の後輪を いっしょに回す）">デフロック</button></div>
-<div class="pad hidden" id="padB"><button data-k="lookBack" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
+<div class="pad hidden" id="padC"><button id="bRot" class="ico" data-i="⬇" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
+<div class="pad hidden" id="padD"><button id="bShallow" class="ico" data-i="⇡" aria-label="耕す深さを浅く">浅く</button><button id="bDeep" class="ico" data-i="⇣" aria-label="耕す深さを深く">深く</button><button data-k="diff" id="bDiff" class="hidden ico" data-i="🔒" aria-label="押しているあいだ、デフロック（左右の後輪を いっしょに回す）">デフロック</button></div>
+<div class="pad hidden" id="padB"><button data-k="lookBack" class="ico" data-i="👀" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden ico" data-i="🧽" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
 <div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span><div id="say" class="off"></div></div>
@@ -198,12 +224,13 @@
   <div class="card">
     <p class="challenge hidden" id="challenge"></p>
     <span class="tag">🧪 試作版</span>
+    <div class="talk" id="talk" hidden><canvas id="talkFace" width="128" height="128" aria-hidden="true"></canvas><div class="talkBody"><p id="talkSay" aria-live="polite"></p><div class="talkCh" id="talkCh"></div></div></div>
     <h1>🚜 トラクターで<span style="display:inline-block">田んぼを耕そう</span></h1>
     <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで 30m×50m の田んぼを耕し、<b>田んぼに絵を描きます</b>（田んぼアート）。お題を「なし」にすると、田んぼをぜんぶ耕せたらクリア。</p>
     <div class="seasons" id="seasons">
-      <button data-s="haru"><span>🌸</span>春<br>耕す前の田んぼ</button>
-      <button data-s="aki"><span>🌾</span>秋<br>稲刈りのあと</button>
-      <button data-s="shirokaki"><span>💧</span>代かき<br>水を張った田んぼ</button>
+      <button data-s="haru"><span>🌸</span>春<br><small>耕す前の田んぼ</small></button>
+      <button data-s="aki"><span>🌾</span>秋<br><small>稲刈りのあと</small></button>
+      <button data-s="shirokaki"><span>💧</span>代かき<br><small>水を張った田んぼ</small></button>
     </div>
     <div class="seasons times" id="times">
       <button data-t="asa"><span>🌅</span>朝</button>
@@ -226,18 +253,18 @@
       <button data-a="smile"><span>😊</span>にっこり<i>★★★★★</i></button>
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
-    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
-    <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
-    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b>🌸 レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
-    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b>⛰️ 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
-    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b>⛽ エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
-    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
-    <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
-    <label class="easy"><input type="checkbox" id="detailBox"><span><b>📖 くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
+    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b><i class="e">👣</i> はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
+    <label class="easy"><input type="checkbox" id="checkBox"><span><b><i class="e">🔧</i> はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
+    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b><i class="e">🌸</i> レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
+    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b><i class="e">⛰️</i> 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
+    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b><i class="e">⛽</i> エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
+    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b><i class="e">🪨</i> はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
+    <label class="easy"><input type="checkbox" id="easyBox"><span><b><i class="e">🔰</i> かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
+    <label class="easy" id="detailLabel"><input type="checkbox" id="detailBox"><span><b><i class="e">📖</i> くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
     <p class="small" id="progText">読みこみ中…</p>
-    <button class="go" id="bStart" disabled>▶ 運転する</button>
+    <button class="go ico" id="bStart" data-i="▶" disabled>▶ 運転する</button>
     <p class="small" id="rotateHint">📱 スマホは横向きにすると広く見えます</p>
     <div class="how" id="keysBox">
       <b>はじめての人へ：耕すのは 3 ステップ</b>
@@ -490,7 +517,7 @@ if (WX !== 'hare') {                            // くもり・小雨：雲が�
 
 // ---- 描くしくみ ----
 const canvas = $('view');
-const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
+const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('progText').classList.add('err'); throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
 renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -607,7 +634,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   setRotBtn();
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   $('bStart').disabled = false;
-}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -3792,7 +3819,7 @@ const SHIHATSU = (() => {
       const [x, z, yaw] = rotC();
       if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, -0.035) && !toldUp) {
         toldUp = true;
-        toast('ロータリーを上げて 耕すのを止めた所は くぼむ。本物は 爪の回転を止め、PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで 穴がうまる（ゲームでは 耕しなおすと ならされる）', 7);
+        toast('あげた所が ちょっと くぼんだね。耕しなおすと ならせるよ（本物は 爪の回転を止め、PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで 穴がうまる）', 7);
         setTimeout(() => voice('shihatsu'), 7500);
       }
     }
@@ -6988,6 +7015,8 @@ function startDiesel(ac, out, onReady) {
 }
 // 音は、運転しているあいだだけ鳴らす（おわり・メニュー・ほかのタブでは止める。🔇 のときも止める）
 function syncAudio(running) {
+  // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・メニューや 操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
+  if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('start').classList.contains('hidden') || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
   const want = soundOn && running && !document.hidden, st = audio.ac.state;
   if (want && st === 'suspended') audio.ac.resume();
@@ -7432,7 +7461,7 @@ document.querySelectorAll('.pad button[data-k]').forEach(b => {
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
 });
 function setRotBtn() {
-  $('bRot').textContent = S.rotDown ? IMPL + 'を上げる' : IMPL + 'を下げる';
+  $('bRot').textContent = S.rotDown ? IMPL + 'を上げる' : IMPL + 'を下げる'; $('bRot').dataset.i = S.rotDown ? '⬆' : '⬇';
   $('bRot').classList.toggle('down', S.rotDown);
 }
 // 耕深ダイヤル：1cm ずつ。季節にあわない深さだと、ひとこと教える（春の田起こしは 15cm ほど、秋起こしは 5〜7cm の浅起こし）
@@ -7514,7 +7543,7 @@ function resetAssist() {
   toast('直進アシストの基準線を消しました。G で始点 A から登録しなおします');
 }
 function setAssistBtn() {
-  $('bAssist').textContent = { none: '直進 A点', a: '直進 B点', on: '直進 入', off: '直進 切' }[ASSIST.mode];
+  $('bAssist').textContent = { none: '直進 A点', a: '直進 B点', on: '直進 入', off: '直進 切' }[ASSIST.mode]; $('bAssist').dataset.i = { none: '🧭', a: '🧭B', on: '🧭', off: '🧭' }[ASSIST.mode];
   $('bAssist').classList.toggle('on', ASSIST.on);
   $('bAssist').classList.toggle('wait', ASSIST.mode === 'a');
 }
@@ -7523,14 +7552,14 @@ let SPEEDUP = 1;
 const GEARS = [1.6, 2.2, 2.8, 3.6].map(k => k / 3.6);
 function shiftGear(d) {
   S.gear = Math.max(1, Math.min(4, (S.gear || 3) + d));
-  $('bGear').textContent = '変速 ' + S.gear;
+  $('bGear').textContent = '変速 ' + S.gear; $('bGear').dataset.i = '⚙' + S.gear;
   toast('主変速 ' + S.gear + ' 速（耕すとき 時速 ' + (GEARS[S.gear - 1] * 3.6).toFixed(1) + 'km）' + (S.gear === 4 ? '。速すぎると土が細かく砕けない' : S.gear === 1 ? '。ていねいだが時間がかかる' : ''));
   // 速く進むと 爪が土をまぜきれず 浅い耕しになる（happy-ricefarm「初めてのトラクター耕し」）
   if (S.gear === 4 && d > 0 && !SHIRO) setTimeout(() => voice('hayasa'), 3000);
 }
 function toggleFast() {
   SPEEDUP = SPEEDUP === 1 ? 2 : SPEEDUP === 2 ? 4 : 1;
-  $('bFast').textContent = '⏩ ×' + SPEEDUP;
+  $('bFast').textContent = '⏩ ×' + SPEEDUP; $('bFast').dataset.i = SPEEDUP > 1 ? '⏩' + SPEEDUP : '⏩';
 }
 $('bRot').onclick = toggleRotary;
 {                                                // 直進ボタン：押すと A・B 登録／入切、長押し（0.8 秒）で登録しなおし
@@ -7600,6 +7629,9 @@ document.body.classList.toggle('calm', !DETAIL);
 // ---- 運転する キャラクターとの 対話：ふだん（くわしい説明 なし）は 画面に 文字を 出さず、上の 丸い 窓の キャラクターが 吹き出しで 一言 話す。
 // 知らせは はじめの 一文（操作の 案内つき）、案内（COACH）は いま やること。進みぐあいも 声で 知らせる。
 // 窓を さわると いま やることを もう一度、なければ のんびり 話しかけてくれる。話すあいだは 口が 動く
+const icoWords = x => x.replace(/右の「[^」]*を下げる」ボタンで下げる/g, '右の ⬇ で 下げよう')
+  .replace(/ボタンで( ?[^、。（]*?)(下げ|上げ)/g, (m, a, b) => (b === '下げ' ? '⬇' : '⬆') + ' で' + a + b)
+  .replace(/「変速」/g, '⚙').replace(/「浅く」/g, '⇡').replace(/「深く」/g, '⇣').replace(/「デフロック」/g, '🔒').replace(/「泥落とし」/g, '🧽').replace(/「うしろを見る」/g, '👀');
 const SAY = (() => {
   // 吹き出しは 2 だん：上は 知らせ・進みぐあい・雑談（知らせ ＞ 進みぐあい ＞ 雑談 の じゅんで、下の ものは 上の ものを 消さない）、
   // 下は いま やること（案内。かわったら すぐ 出す。急ぎの 操作も 待たせない）
@@ -7617,7 +7649,15 @@ const SAY = (() => {
     coachEl.textContent = c ? coachLine : ''; coachEl.style.display = c ? '' : 'none'; coachEl.style.marginTop = m ? '4px' : '0';
     el.classList.toggle('off', !m && !c);
   }
-  const talk = x => { talkT = Math.min(2.4, 0.11 * x.length); };
+  const voiceTalk = x => {
+    if (!soundOn || DETAIL || !('speechSynthesis' in window)) return;
+    try {
+      const u = new SpeechSynthesisUtterance(x.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/[：（）]/g, ' '));
+      u.lang = 'ja-JP'; u.pitch = 1.5; u.rate = 1.05; u.volume = 0.8;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) {}
+  };
+  const talk = x => { talkT = Math.min(2.4, 0.11 * x.length); voiceTalk(x); };
   function show(x, sec, k) {
     if (DETAIL || !x || (t > 0 && RANK[kind] > RANK[k])) return false;
     mainText = x; kind = k; t = sec; talk(x); render(); return true;
@@ -7658,7 +7698,7 @@ const speakText = t => {
   const first = (head.match(/^[^！？、]*[！？]?/) || [head])[0].trim() || head;
   return first + (/[！？]$/.test(first) ? ' ' : '。') + (KEYH.test(noParen(act)) ? noParen(act) : cutParen(act) || act);
 };
-function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; SAY.say(speakText(t), Math.min(sec, 5)); }
+function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; SAY.say(icoWords(speakText(t)), Math.min(sec, 5)); }
 $('detailBox').checked = DETAIL;
 $('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); SAY.refresh(); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
 $('badgeCv').addEventListener('pointerdown', e => { e.stopPropagation(); SAY.tap(); });
@@ -7931,6 +7971,62 @@ function finishArt() {
 // ---- 案内（コーチ）：いま何をすればよいかを、画面の下に 1 行で出す ----
 // ①下げる → ②前へ → ③畦が近いので上げる → ④回る → ⑤となりにならんだら下げる。上げて回って下げる旋回が 2 回できたら消える。
 // エンストのときと、田んぼアートが仕上がりそうなときも出す。パソコンはキー、スマホはボタンの場所で書く
+// ---- はじめの画面の おはなし：上の 丸い 窓の キャラクター（麦わら帽子）が 話しかけて、季節・お題を 会話で 決めて 運転を はじめる。
+// （10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。下の くわしい えらびかたは そのまま
+const TALK = (() => {
+  const say = $('talkSay'), ch = $('talkCh'), cv = $('talkFace');
+  const SEA = { haru: '🌸 春の 耕す前の田んぼ', aki: '🌾 秋の 稲刈りのあと', shirokaki: '💧 水を張った 代かき' };
+  const artBtn = id => document.querySelector(`#arts button[data-a="${id || 'none'}"]`);
+  const artName = id => { const b = artBtn(id); return b ? [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim() : ''; };   // 絵文字と ★ を のぞいた 名前
+  const artIcon = id => { const b = artBtn(id); return b && b.querySelector('span') ? b.querySelector('span').textContent : ''; };
+  (function face() {                               // 丸い 窓と 同じ 顔（止まっている 絵）
+    const g = cv.getContext('2d'), C = 64;
+    g.fillStyle = '#e8d5ba';
+    for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2; g.beginPath(); g.arc(C + Math.cos(a) * 40, 84 + Math.sin(a) * 43, 7, 0, 7); g.fill(); }
+    g.beginPath(); g.ellipse(C, 84, 40, 43, 0, 0, 7); g.fill();
+    g.fillStyle = '#f8eadb'; g.beginPath(); g.ellipse(C, 78, 27, 22, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(240,130,120,.5)'; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(C + sx * 16, 85, 5.5, 3.8, 0, 0, 7); g.fill(); }
+    g.fillStyle = '#2a211a'; g.strokeStyle = '#2a211a'; g.lineWidth = 2; g.lineCap = 'round';
+    for (const sx of [-1, 1]) { g.beginPath(); g.arc(C + sx * 9, 76, 3.4, 0, 7); g.fill(); }
+    g.beginPath(); g.arc(C, 83, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+    g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(C, 44, 38, 8, 0, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(C, 36, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(C - 20, 36, 40, 6);
+    g.fillStyle = '#b8443a'; g.fillRect(C - 20, 39, 40, 4);
+  })();
+  function talk(text, opts) {                      // opts：[[ボタンの字, 押したとき, main]]
+    $('talk').hidden = false;   // はじめは かくしておく（3D が 出せず ここまで 動かない ときに 空の ふきだしを 出さない）
+    say.textContent = text;
+    ch.innerHTML = '';
+    for (const [t, fn, main] of opts) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (main) b.className = 'main'; b.onclick = fn; ch.append(b); }
+  }
+  const mark = () => { try { sessionStorage.setItem('tr_talk', '1'); } catch (e) { /* なしで続ける */ } };
+  const again = (() => { try { return sessionStorage.getItem('tr_talk') === '1'; } catch (e) { return false; } })();
+  function ready() {
+    const ok = !$('bStart').disabled;
+    const now = `いまは ${SEA[season]}、お題は「${artName(ART_ID)}」。`;
+    talk((again ? `${SEA[season].replace(/^\S+\s/, '')}に したよ。お題は「${artName(ART_ID)}」。` : 'やあ。きょうは ぼくが トラクターを 運転するよ。' + now) + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
+      [ok ? '▶ これで 運転する' : '⏳ じゅんび中…', () => $('bStart').click(), true],
+      ['季節を かえる', seasons],
+      ['お題を かえる', arts],
+    ]);
+    if (!ok) {
+      ch.firstChild.disabled = true;
+      const w = setInterval(() => {
+        if (!$('bStart').disabled) { clearInterval(w); ready(); }
+        else if ($('progText').textContent.startsWith('🚜')) { clearInterval(w); talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', []); }   // 読みこみ失敗・3D が 出せない 端末
+      }, 400);
+    }
+  }
+  function seasons() {
+    talk('どの 田んぼに しよう？', [...Object.keys(SEA).map(k => [SEA[k], () => { if (k === season) { ready(); return; } mark(); go(k, TOD); }, k === season]), ['もどる', ready]]);
+  }
+  function arts() {
+    talk('田んぼに なにを 描こう？ ★が 多いほど むずかしいよ。', [...[...ARTS, null].map(a => [`${artIcon(a)} ${artName(a)} ${(artBtn(a) && artBtn(a).querySelector('i') || {}).textContent || ''}`.trim(), () => { if (a === ART_ID) { ready(); return; } mark(); go(season, TOD, a); }, a === ART_ID]), ['もどる', ready]]);
+  }
+  if ($('challenge') && !$('challenge').classList.contains('hidden')) mark();   // 友だちの 挑戦から 来た ときは、同じ 田んぼの まま すすめる
+  ready();
+  return { ready };
+})();
 const COACH = (() => {
   const el = $('coach'), PAD = MOBILE || params.has('pad');
   let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false;
@@ -8050,7 +8146,7 @@ const COACH = (() => {
   }
   function update(running) {                      // 表示は計器と同じ間隔で
     const m = running ? msg() : null, h = m ? '<b>' + m[0] + '</b>' + m[1] : '';
-    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(m ? m[1].replace(/<[^>]+>/g, '') : ''); }   // ふだんは キャラクターが 話す
+    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(m ? icoWords(m[1].replace(/<[^>]+>/g, '')) : ''); }   // ふだんは キャラクターが 話す
     $('bDoro').classList.toggle('hidden', !(running && SCRAPE.can()));   // スマホ：泥がついて 田んぼの中で止まって上げているときだけ
   }
   return { step, update, msg, get turns() { return turns; }, get off() { return off; } };

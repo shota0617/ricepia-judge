@@ -15,10 +15,11 @@ const STATION = [34.8640, 137.0560];   // あるいて移動で使う位置（�
 const PLAY_DATE = process.env.PLAYTEST_DATE || '2026-10-16T10:00:00+09:00';
 
 async function newPage(browser, opts = {}) {
-  const { howto, ...ctxOpts } = opts;
+  const { howto, kome, ...ctxOpts } = opts;
   const ctx = await browser.newContext({ viewport: VIEW, deviceScaleFactor: 2, ...ctxOpts });
-  await ctx.addInitScript(howto => {
-    if (!howto) localStorage.setItem('nsg_howto', '1');   // 「あそびかた」は 読んだことに（はじめての人の 案内は 下の howtoFirst で）
+  await ctx.addInitScript(([howto, kome]) => {
+    if (!howto) localStorage.setItem('nsg_howto', '1');
+    if (!kome && !localStorage.getItem('nsg_kome_talk')) localStorage.setItem('nsg_kome_talk', '0');   // お米つぶの おはなしは 下の komeTalk で（ほかの 台本の じゃまに しない）   // 「あそびかた」は 読んだことに（はじめての人の 案内は 下の howtoFirst で）
     localStorage.setItem('nsg_auto', 'false');   // おまかせ歩きは止めて、台本どおりに歩く
     if (!localStorage.getItem('nsg_roll')) { localStorage.setItem('nsg_roll', '0'); localStorage.setItem('nsg_roll_v2', '1'); }   // 台本は1マスずつ歩く（かたむけて転がすのは、下の roll のチェックで）
     // 転がり方は 日づけで きまる「きょうの転がり方」の まま（台本の 道のりで 新しい 転がり方を もらって 押す強さ・はね返りが かわると、転がる チェックの 数が 回ごとに ずれた。もらう ことは koroDist の チェックで）
@@ -30,7 +31,7 @@ async function newPage(browser, opts = {}) {
     document.addEventListener('DOMContentLoaded', () => { const r = document.getElementById('reward'); if (!r) return; new MutationObserver(() => { if (r.innerText) window.__rewards.push((r.innerText + ' ' + [...r.querySelectorAll('[title]')].map(e => e.title).join(' ')).replace(/\s+/g, ' ').slice(0, 400)); }).observe(r, { childList: true }); });
     const play = HTMLMediaElement.prototype.play;
     HTMLMediaElement.prototype.play = function () { window.__played.push(this.src.split('/').pop()); return play.call(this); };
-  }, !!howto);
+  }, [!!howto, !!kome]);
   const page = await ctx.newPage();
   await page.clock.setFixedTime(new Date(PLAY_DATE));   // Date だけ固定（タイマーやアニメーションはふつうに動く）
   const errors = [];
@@ -834,6 +835,24 @@ async function walkTo(page, id) {
     });
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.n >= 2 && r.n <= 3 && r.still && r.all && r.gone };   // pts：転がる とちゅうで ごはんつぶを ひろうと ふえる ので 見るだけ（すずめは ポイントに さわらない）
+  })();
+  // ねむって いる お米の そばに すずめが おりて くる（18秒 じっと して いたら）。お米が じっと して いる 間は いっしょに いて、動き だすと とびたつ
+  R.checks.suzumeVisit = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, S = P.suzume, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms));
+      P.rollPut(r0.x, r0.y, 0, 0); await wait(300);
+      S.visit(); await wait(600);
+      const L = S.list, near = L.length >= 1 && L.length <= 2 && L.every(b => Math.hypot(b.x - P.roll.x, b.y - P.roll.y) < 2.6);
+      await wait(1500);
+      const stay = S.list.length === L.length && S.list.every(b => !b.fly);   // お米が じっと して いる 間は とびたたない
+      const b = S.list[0]; P.rollPut(b.x - Math.sign(b.x - P.roll.x || 1) * 1, b.y, Math.sign(b.x - P.roll.x || 1) * 3, 0);
+      let fly = false; for (let i = 0; i < 15 && !fly; i++) { await wait(60); fly = S.list.length > 0 && S.list.every(x => x.fly); }
+      S.clear(); P.rollPut(r0.x, r0.y, 0, 0);
+      return { n: L.length, near, stay, fly, after: S.VISIT };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.near && r.stay && r.fly && r.after >= 15 };
   })();
   // 道ばたで ひるねする ねこ（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：ねて いて、お米が 近くを 転がると おきて、しばらく したら また ねる。文字は 出さない
   R.checks.neko = await (async () => {
@@ -1678,6 +1697,34 @@ async function walkTo(page, id) {
     await w.ctx.close();
   }
 
+  // お米つぶの おはなし（kometalk.js）：はじめて めいろに 入ると、あそびかたの あとで お米つぶが あいさつし、たからばこの あと「つぎは どこへ 行く？」と 聞く。
+  // えらんだ 答えで 行き先が かわる。せっていで オフに できる
+  {
+    const w = await newPage(browser, { howto: true, kome: true });
+    await w.page.goto(URL); await w.page.waitForTimeout(1500);
+    await w.page.click('#meiroBtn'); await w.page.waitForTimeout(2500);
+    const st = () => w.page.evaluate(() => { const b = document.getElementById('komeTalk'); return { open: !!b && !b.hidden, say: b ? b.querySelector('.kt-say').textContent : '', ch: b ? [...b.querySelectorAll('.kt-btn')].map(x => x.textContent) : [], howto: !document.getElementById('howto').hidden }; });
+    const s0 = await st();
+    const seen = [];
+    let ch = [];
+    for (let i = 0; i < 40 && !ch.length; i++) {
+      await w.page.evaluate(() => { const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); document.querySelectorAll('[data-pick-dot]')[0]?.click(); if (!document.getElementById('howto').hidden) document.getElementById('howtoOk').click(); });
+      const o = await st();
+      if (o.open && o.say && !seen.includes(o.say)) seen.push(o.say);
+      if (o.ch.length) { ch = o.ch; break; }
+      if (o.open) await w.page.evaluate(() => document.querySelector('#komeTalk .dq').click());
+      await w.page.waitForTimeout(900);
+    }
+    await shot(w.page, '12b-kome-talk');
+    const want = ch.length >= 2 ? ch[1].replace(/^\S+\s/, '') : '';
+    if (ch.length >= 2) { await w.page.evaluate(() => document.querySelector('#komeTalk .kt-btn[data-kt="1"]').click()); await w.page.waitForTimeout(600); }
+    const picked = await w.page.evaluate(() => { const g = nishioGo.state.guide; return g ? g.name : ''; });
+    const closed = !(await st()).open;
+    const off = await w.page.evaluate(() => { const t = document.getElementById('komeTalkToggle'); t.click(); const r = !nishioKomeTalk.on() && !nishioKomeTalk.say(['テスト']); t.click(); return r && nishioKomeTalk.on(); });
+    const hello = /はじめまして/.test(seen[0] || '');
+    R.checks.komeTalk = { firstWhileHowto: s0.open && s0.howto, seen, ch, want, picked, closed, off, ok: !(s0.open && s0.howto) && hello && ch.length >= 2 && !!want && picked === want && closed && off };
+    await w.ctx.close();
+  }
   // あそびかた：はじめて「🌀 傾けて めいろ」を 押した人に 1回だけ 出る。読んでいる 間は お米が 転がらず、「わかった！」で とじると 転がる。2回目は 出ない。せっていから もう一度 見られる
   {
     const w = await newPage(browser, { howto: true });
@@ -3202,6 +3249,7 @@ async function walkTo(page, id) {
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
+  need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);
   need(c.neko && c.neko.ok, `ねこ：ねて いない・お米が 近づいても おきない・また ねない・文字を 出す（${JSON.stringify(c.neko)}）`);
   need(c.suzume && c.suzume.ok, `すずめ：2〜3羽 おりない・お米が 近づいても みんなで とびたたない・とびさらない（${JSON.stringify(c.suzume)}）`);
   need(c.shopThanks && c.shopThanks.ok, `当店の ごほうびに「来てくれて ありがとう！」・来店スタンプの 数が 出ない、または 数の ない 札が ならぶ（${JSON.stringify(c.shopThanks)}）`);
@@ -3214,6 +3262,7 @@ async function walkTo(page, id) {
   need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
+  need(c.komeTalk && c.komeTalk.ok, `お米つぶの おはなし：あいさつ→「つぎは どこへ 行く？」→ えらぶと 行き先が かわる・せっていで オフ（${JSON.stringify(c.komeTalk)}）`);
   need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');
   need(c.firstOnField && c.welcomeChestM !== null && c.welcomeChestM <= 150, 'はじめての人が歩く地図から始まらないか、近くに ようこそ たからばこ がない');
   need(c.controlsGone, 'めいろに いらない ボタン・せってい（スティック・📱・🚗・地図の 切りかえ・ドット絵の地図・Godot）が のこっている');

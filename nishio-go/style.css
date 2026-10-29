@@ -904,3 +904,17 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
   .pick-first .pick3 button img{max-width:64px}
   body:has(#pxInfo:not([hidden])) .toast{bottom:calc(var(--safe-b) + 6px)}   /* 話の 窓の 間の 知らせは いちばん 下（タブの 上）へ：パネルを かくした ので、窓の 札（はじめの1枚の 名前）に 重なって いた */
 }
+/* お米つぶの おはなし（kometalk.js・案内役）。下の 行き先の札の 上に 出す。ごほうび・あそびかたの 画面より 下 */
+.kome-talk{position:fixed;left:12px;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 14px);z-index:1200;display:flex;justify-content:center}
+.kome-talk[hidden]{display:none}
+.kome-talk .dq{position:relative;width:100%;max-width:440px;display:flex;gap:10px;align-items:flex-start;box-sizing:border-box;cursor:pointer}
+.kome-talk canvas{width:64px;height:54px;image-rendering:pixelated;flex:none;background:#f6efe0;border-radius:6px}
+.kome-talk .kt-body{flex:1;min-width:0}
+.kome-talk .kt-name{display:block;font-size:12px;color:#e9c46a}
+.kome-talk .kt-say{margin:2px 0 0;white-space:pre-wrap;font-size:15px;min-height:3.2em}
+.kome-talk .kt-ch{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.kome-talk .kt-btn{font-family:inherit;font-size:14px;text-align:left;background:#1d2a20;color:#fff;border:2px solid #e9c46a;border-radius:6px;padding:7px 10px;cursor:pointer}
+.kome-talk .kt-btn:focus-visible,.kome-talk .kt-next:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.kome-talk .kt-next{display:block;margin:4px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:13px;cursor:pointer}
+.kome-talk .kt-next[hidden]{display:none}
+.kome-talk .kt-x{position:absolute;top:2px;right:4px;background:none;border:0;color:#bbb;font-size:14px;padding:4px;cursor:pointer}

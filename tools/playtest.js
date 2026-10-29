@@ -776,7 +776,11 @@ async function walkTo(page, id) {
     const list = await page.evaluate(() => (nishioGo.INTRO_SCENES || []).map(s => s.src));
     const bad = list.filter(f => { try { const b = fs.readFileSync(path.join(__dirname, '..', f)); return b.readUInt32BE(16) !== 80 || b.readUInt32BE(20) !== 36; } catch (e) { return true; } });
     const howto = await page.evaluate(async () => { const h = document.getElementById('howto'), b = document.getElementById('howtoScene'), was = h.hidden; h.hidden = false; await new Promise(f => setTimeout(f, 100)); const r = { bg: b ? b.style.backgroundImage : '', scene: b ? b.dataset.scene : '' }; h.hidden = was; return r; });
-    const kt = await page.evaluate(async () => {
+    // おはなしの 確かめは 新しい ページで（ここまでの 台本で めいろの 札などが 出て いると、とじた あとも 知らせが 待たされ つづけて 見分けられない）
+    const v = await newPage(browser, { auto: true }), p3 = v.page;
+    await p3.goto(URL); await p3.waitForTimeout(3000);
+    for (let i = 0; i < 4; i++) { await p3.evaluate(() => { document.querySelector('[data-pick-dot]')?.click(); const r = document.getElementById('reward'); if (r.classList.contains('show')) r.click(); }); await p3.waitForTimeout(1200); }
+    const kt = await p3.evaluate(async () => {
       const KT = window.nishioKomeTalk, G = nishioGo, wait = ms => new Promise(f => setTimeout(f, ms)), t = document.getElementById('toast');
       if (!KT) return { why: 'no-kt' };
       const was = KT.on(); KT.setOn(true); t.classList.remove('show');
@@ -790,6 +794,7 @@ async function walkTo(page, id) {
       t.classList.remove('show'); KT.setOn(was);
       return { shown, picOk, held, after, flick };
     });
+    R.errors.push(...v.errors); await v.ctx.close();
     return { n: list.length, bad, howto, kt, ok: list.length >= 12 && !bad.length && /art\/intro\//.test(howto.scene || '') && /url\(/.test(howto.bg || '') && kt.shown && kt.picOk && kt.held && kt.after && kt.flick === 0 };
   })();
   // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめての 人が 開くと、はじめの 画面の ボタンを 待たずに 地図の めいろで 転がる

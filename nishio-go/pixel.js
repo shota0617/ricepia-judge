@@ -2188,12 +2188,60 @@ function isshikiStep(hx, by, u, now) {
   if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
   m.drawn++; dirty = true;
 }
+// お米つぶの じょうかまちさんぽ（jokamachi.js）：西尾城の あと（西尾市歴史公園・旧近衛邸・尚古荘）の そばで 止まって じっと すると、お米の うしろが 城下町の ひとこまに なる。丑寅櫓・鍮石門・西条城・6万石・旧近衛邸の 抹茶・尚古荘・祇園祭・三河の小京都が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 西尾城の あとの そばの 中だけ・ゲームボーイの4色では 出さない。ちゃせきより 先に 出る（ちゃせきは 譲る）。お米の うしろに 描く
+const jokamachi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function jokamachiStep(hx, by, u, now) {
+  const m = jokamachi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_JOKAMACHI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_JOKAMACHI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.nearKeys(G.spots, ll.lat, ll.lng) }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_jokamachi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'ushitora') {   // 本丸丑寅櫓：石垣の 上に 白い 壁と かわらの 屋根
+    px(-14, 11, 28, 4, '#8a8a84'); px(-14, 11, 28, 1, '#b0b0aa'); px(-10, 4, 20, 7, '#f1ede0'); px(-10, 4, 20, 1, '#d8d2c0');
+    px(-13, 1, 26, 3, '#3a3c44'); px(-8, -2, 16, 3, '#3a3c44'); px(-4, 6, 3, 3, '#4a3a2a'); px(2, 6, 3, 3, '#4a3a2a');
+  } else if (id === 'yuseki') {   // 鍮石門：2本の 柱に 屋根の 門
+    px(-12, 4, 3, 11, '#6e4a2a'); px(9, 4, 3, 11, '#6e4a2a'); px(-15, 1, 30, 3, '#3a3c44'); px(-13, -1, 26, 2, '#4a4c54'); px(-9, 4, 18, 2, '#8a5a30');
+  } else if (id === 'shijo') {   // 西条城の はじまり：石垣と 旗
+    px(-16, 10, 32, 5, '#8a8a84'); px(-16, 10, 32, 1, '#b0b0aa'); for (let i = 0; i < 3; i++) px(-16 + i * 11, 12.5, 10, 1, '#6b6b66');
+    px(10, -4, 1, 14, '#7a4a22'); px(11, -4, 6, 4, '#d8302c'); px(12, -3, 4, 1, '#fff7e6');
+  } else if (id === 'rokuman') {   // 6万石：米俵が 6つ（下に 3つ、上に 2つ、てっぺんに 1つ）
+    const bale = (x, y) => { px(x, y, 8, 5, '#c9a55a'); px(x, y, 8, 1, '#e0c27a'); px(x + 2, y, 1, 5, '#8a6a2a'); px(x + 5, y, 1, 5, '#8a6a2a'); };
+    bale(-13, 10); bale(-4, 10); bale(5, 10); bale(-8.5, 5); bale(0.5, 5); bale(-4, 0);
+  } else if (id === 'konoe') {   // 旧近衛邸の 抹茶：畳の 上の 茶わん
+    px(-16, 12, 32, 3, '#9fb36a'); px(-16, 12, 32, 1, '#b9ca86'); px(-16, 14, 32, 1, '#6e4a2a');
+    drawNakama(Math.round(hx + 14 * u), Math.round(by + 9 * u), Math.max(1, Math.round(u * 0.9)), 'chawan', 0, true);
+  } else if (id === 'shokoso') {   // 尚古荘の 庭：松と 石どうろう
+    px(-14, 14, 28, 1, '#5d7a3a'); px(-12, 6, 2, 8, '#6e4a2a'); px(-17, 1, 12, 4, '#2f6a3a'); px(-15, -2, 8, 3, '#2f6a3a');
+    px(8, 12, 6, 2, '#8a8a84'); px(9, 8, 4, 4, '#b0b0aa'); px(8, 6, 6, 2, '#8a8a84'); px(10, 9, 2, 2, '#f2c84b');
+  } else if (id === 'gion') {   // 西尾祇園祭：提灯を つるした 山車（だし）。提灯が ゆれる
+    px(-14, 9, 28, 6, '#a8362c'); px(-14, 9, 28, 1, '#d8584a'); px(-12, 5, 24, 4, '#6e4a2a'); px(-15, 3, 30, 2, '#3a3c44');
+    for (let i = 0; i < 5; i++) { const sw = calmMotion ? 0 : Math.sin(t * 2 + i) * 0.8; px(-11 + i * 5.5 + sw, 6, 2.5, 3, '#f0d070'); px(-10.5 + i * 5.5 + sw, 6, 1.5, 3, '#e8481c'); }
+    px(-16, 13, 4, 4, '#2a2a30'); px(12, 13, 4, 4, '#2a2a30');
+  } else {   // 三河の小京都：お寺の 屋根と 本堂
+    px(-14, 11, 28, 4, '#8a8a84'); px(-9, 4, 18, 7, '#f1ede0'); px(-13, 0, 26, 4, '#3a3c44'); px(-9, -3, 18, 3, '#4a4c54');
+    px(-2, 6, 4, 5, '#7a4a22'); px(-1, -5, 2, 2, '#d8a82c');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
 // お米つぶの ちゃせき（chasetsu.js）：西尾地区で 止まって じっと すると、お米の よこに 石臼が 出て てん茶を ひき（くるくる）、茶わんに 抹茶を 点てて（茶せんが しゃかしゃか）、お米が ひと言。
 // 動くか ねむりだすと 消える。ひと席 おわったら 動くまで くりかえさない。西尾市の 西尾地区の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
 const chasetsu = { cur: null, t0: 0, chk: 0, said: false, done: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function chasetsuStep(hx, by, u, now) {
   const c = chasetsu, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
+  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12 || jokamachi.cur) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
   const C = window.NISHIO_CHASETSU;
   if (!c.cur) {
     if (c.done || roll.idle < C.STILL || now < c.chk) return;
@@ -7193,6 +7241,7 @@ function frame(now) {
     shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
+    jokamachiStep(hx, by, u, now);   // 西尾城の あとの そばで じっと すると 城下町の ひとこま（丑寅櫓・鍮石門・祇園祭など。jokamachi.js。ちゃせきに 先んじる）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）
     nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {

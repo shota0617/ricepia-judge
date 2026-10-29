@@ -2362,12 +2362,60 @@ function tomboloStep(hx, by, u, now) {
   if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
   m.drawn++; dirty = true;
 }
+// お米つぶの まんげきょう（mangekyo.js）：三河工芸ガラス美術館の そばで 止まって じっと すると、お米の うしろが ガラス工芸の ひとこまに なる。美術館・巨大な 万華鏡・万華鏡を のぞく が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の ガラス美術館の そばの 中だけ・ゲームボーイの4色では 出さない。ちゃせきより 先に 出る（ちゃせきは 譲る）。お米の うしろに 描く
+const mangekyo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function mangekyoStep(hx, by, u, now) {
+  const m = mangekyo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_MANGEKYO || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_MANGEKYO;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.near(G.spots, ll.lat, ll.lng) }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_mangekyo', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const COL = ['#e0527a', '#f0b840', '#4aa8d8', '#6ac060', '#a068d0'];
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'bijutsu') {   // ガラス工芸美術館：たなに ならんだ ガラスの 器が きらり
+    px(-16, 14, 32, 1, '#6b5a4a'); px(-14, 8, 28, 1, '#8a7258');
+    for (let i = 0; i < 4; i++) {
+      const x = -13 + i * 7, c = COL[i], sp = calmMotion || Math.sin(t * 3 + i * 1.6) > 0.5;
+      px(x + 1, 3, 3, 5, c); px(x, 5, 5, 3, c); px(x + 1, 4, 1, 3, '#ffffff');
+      if (sp) { px(x + 5, 2, 1, 1, '#ffffff'); px(x + 4, 1, 3, 1, '#ffffff'); }
+    }
+  } else if (id === 'kyodai') {   // 巨大な 万華鏡：大きな 筒の 先に、色ガラスの 模様が まわる
+    px(-18, 11, 22, 4, '#7a5a3a'); px(-18, 11, 22, 1, '#a07a50'); px(-12, 4, 18, 7, '#8a8a92'); px(-12, 4, 18, 1, '#b4b4bc');
+    const cx = 14, cy = 7, n = 6;
+    px(cx - 6, cy - 6, 12, 12, '#1c1c2a');
+    for (let i = 0; i < n; i++) {
+      const a = (calmMotion ? 0 : t * 0.9) + i * Math.PI * 2 / n, r = 3.4 + (calmMotion ? 0 : Math.sin(t * 1.3 + i) * 0.8);
+      px(cx + Math.cos(a) * r - 1, cy + Math.sin(a) * r - 1, 2, 2, COL[i % 5]);
+    }
+    px(cx - 0.5, cy - 0.5, 1, 1, '#ffffff');
+  } else {   // 万華鏡を のぞく：まるい 窓の なかに 模様が 6方向へ ひろがる
+    px(-20, 1, 40, 14, '#1c1c2a');
+    for (let k = 0; k < 6; k++) {
+      const a = k * Math.PI / 3 + (calmMotion ? 0 : t * 0.5);
+      for (let j = 1; j <= 4; j++) { const r = j * 3.2; px(Math.cos(a) * r - 1, 8 + Math.sin(a) * r * 0.9 - 1, 2, 2, COL[(k + j) % 5]); }
+    }
+    px(-1, 7, 2, 2, '#ffffff');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
 // お米つぶの ちゃせき（chasetsu.js）：西尾地区で 止まって じっと すると、お米の よこに 石臼が 出て てん茶を ひき（くるくる）、茶わんに 抹茶を 点てて（茶せんが しゃかしゃか）、お米が ひと言。
 // 動くか ねむりだすと 消える。ひと席 おわったら 動くまで くりかえさない。西尾市の 西尾地区の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
 const chasetsu = { cur: null, t0: 0, chk: 0, said: false, done: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function chasetsuStep(hx, by, u, now) {
   const c = chasetsu, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12 || jokamachi.cur || chatsumi.cur) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
+  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
   const C = window.NISHIO_CHASETSU;
   if (!c.cur) {
     if (c.done || roll.idle < C.STILL || now < c.chk) return;
@@ -7370,6 +7418,7 @@ function frame(now) {
     hazusanpoStep(hx, by, u, now);   // 幡豆の 町なかで じっと すると 山と 花の ひとこま（三ヶ根山・スカイライン・カーネーション・あじさい・ひまわり。hazusanpo.js）
     tomboloStep(hx, by, u, now);   // トンボロ干潟の そばで じっと すると 干潟の ひとこま（満ち引き・海の道・干潟の 生きもの。tombolo.js。ほりだし・はずさんぽに 先んじる）
     jokamachiStep(hx, by, u, now);   // 西尾城の あとの そばで じっと すると 城下町の ひとこま（丑寅櫓・鍮石門・祇園祭など。jokamachi.js。ちゃせきに 先んじる）
+    mangekyoStep(hx, by, u, now);   // 三河工芸ガラス美術館の そばで じっと すると ガラス工芸の ひとこま（美術館・巨大万華鏡・のぞく。mangekyo.js。ちゃせきに 先んじる）
     chatsumiStep(hx, by, u, now);   // 稲荷山茶園公園の そばで じっと すると 茶畑の ひとこま（茶摘み・てん茶・川霧。chatsumi.js。ちゃせきに 先んじる）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）
     nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）

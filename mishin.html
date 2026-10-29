@@ -64,7 +64,7 @@ button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;b
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
 .res{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.res div{background:rgba(255,255,255,.06);border-radius:18px 13px 17px 14px;padding:10px;display:flex;flex-direction:column;gap:4px}
+.res div{background:rgba(255,255,255,.06);border:2px dashed rgba(241,223,186,.3);border-radius:18px 13px 17px 14px;padding:10px;display:flex;flex-direction:column;gap:4px}
 .res span{font-size:14px;color:var(--ink-dim)}
 .res strong{font-family:var(--display);font-weight:400;font-size:24px;font-variant-numeric:tabular-nums}
 #rank{font-family:var(--body);font-weight:700;font-size:20px;color:#b3261e;border:3px solid #c8352b;border-radius:10px;padding:4px 14px;display:inline-block;transform:rotate(-3deg);background:#fbf3e0;box-shadow:inset 0 0 0 1.5px rgba(200,53,43,.3)} /* 朱の 角の はんこ */
@@ -106,13 +106,14 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::before{content:'';position:absolute;left:-10px;bottom:9px;border:7px solid transparent;border-right:10px solid #7a5a30;border-left:0}
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
+.talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none} /* 続きの ことば：1つの 画面に こめつぶを ふやしすぎない（89周目） */
 .talk>.say .fb i{color:#7a5a30}
 .talk>.say h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.4vw,36px);word-break:keep-all;line-height:1.15;margin:0;color:#3e2a1a;text-align:left}
 .talk>.say h1 small{color:#7a5a30}
 .talks{display:flex;flex-direction:column;gap:10px}
 .talk>.who.num{flex-basis:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f1dfba;color:#3e2a1a;font:400 20px var(--display);line-height:1;border:2px solid #7a5a30} /* まとめの 手順は 番号（こめつぶは はじめの 1つ だけ） */
 /* お店の LINE（リストづくり。75周目のあと：運営者の 声「リストマーケティングに 対応」） */
-a.go.lineAdd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:10px;text-decoration:none;background:#047a35;color:#fff;font:700 18px var(--body);min-height:56px;padding:8px 16px;border-radius:14px;box-shadow:0 4px 0 #035a27} .go.lineAdd small{font-size:15px;font-weight:700} /* 外でも 読める 濃い 緑（白い 字と 比 5 くらい。81周目） */ .go.lineAdd:focus-visible{outline:3px solid #3e2a1a;outline-offset:2px}
+a.go.lineAdd{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;margin-top:10px;text-decoration:none;background:#047a35;color:#fff;font:700 17px var(--body);min-height:52px;padding:8px 16px;border-radius:16px 12px 16px 10px;box-shadow:0 4px 0 #035a27} .go.lineAdd small{font-size:15px;font-weight:700} /* 外でも 読める 濃い 緑（白い 字と 比 5 くらい。81周目） */ .go.lineAdd:focus-visible{outline:3px solid #3e2a1a;outline-offset:2px}
 details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src summary{cursor:pointer;min-height:32px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .panel h1.one{font-size:clamp(30px,9vw,40px);margin-bottom:18px} /* はんこが 図に かからない ように */
@@ -241,13 +242,13 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       </div>
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
       <button class="go sub" id="toGame" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
-      <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">取れない ときは <b>白糸だけ ハサミで 切って</b> 赤を 引く 方法も あります（農家の 説明）。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。紙くずも ごみ箱へ お願いします。</p></div>
+      <div class="talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">取れない ときは <b>白糸だけ ハサミで 切って</b> 赤を 引く 方法も あります（農家の 説明）。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。紙くずも ごみ箱へ お願いします。</p></div>
     </div>
   </div>
 
   <div class="overlay" id="result" hidden>
     <div class="panel">
-      <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><h1><small>きょうの しごと</small>おつかれさま<wbr/>でした！</h1></div></div>
+      <div class="talk"><span class="who" data-d="komeJoy" aria-hidden="true"></span><div class="say"><h1><small>きょうの しごと</small>おつかれさま<wbr/>でした！</h1></div></div>
       <div class="rankBox"><span class="rankLbl">きょうの 腕まえ</span><div id="rank"></div><div class="grow" id="grow" aria-hidden="true"></div><small class="growCap" id="growCap">もみ → 苗 → 稲穂 → 米俵 → おにぎり</small></div>
       <div class="res">
         <div><span>てんすう</span><strong id="rScore">0</strong></div>
@@ -255,7 +256,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
         <div><span>一本どり</span><strong id="rClean">0</strong></div>
         <div><span>もつれ</span><strong id="rSnap">0</strong></div>
       </div>
-      <div class="talk" id="bestTalk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say" id="best"></div></div>
+      <div class="talk cont" id="bestTalk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say" id="best"></div></div>
       <button class="go" id="againBtn" type="button">もう一回</button>
       <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a></div></div>
       <div class="goals" id="rGoals"></div>
@@ -398,6 +399,7 @@ function startGame(practice){
 }
 
 function endPractice(skipped){
+  const hw = ui.coinDone.querySelector('.talk>.who'); if(hw) hw.innerHTML = DOODLE.kome(skipped === true ? 'smile' : 'joy'); /* 89周目 */
   track('mishin_coin_done', { skipped: skipped === true ? 1 : 0 });
   srSay(skipped === true ? '取り方の まとめ です' : 'れんしゅう できました。本物の 袋での 取り方の まとめ です');
   // 途中で やめた ときは「よく できました」の はんこを 出さない
@@ -1639,7 +1641,7 @@ $('startBtn').addEventListener('click', ()=>startGame(false));
 $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);
 document.documentElement.style.setProperty('--onigiri', 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DOODLE.grow(4)) + '")');
-for(const el of document.querySelectorAll('[data-d]')){ const k = el.dataset.d; el.innerHTML = k==='ine' ? DOODLE.grow(2) : k==='suzume' ? DOODLE.suzume(false) : k==='komeBlink' ? '<span class="blink">' + DOODLE.kome('smile') + DOODLE.kome('blink') + '</span>' : DOODLE.kome(k==='komeSleep' ? 'sleep' : k==='komeWow' ? 'wow' : 'smile'); el.setAttribute('aria-hidden','true'); }
+for(const el of document.querySelectorAll('[data-d]')){ const k = el.dataset.d; el.innerHTML = k==='ine' ? DOODLE.grow(2) : k==='suzume' ? DOODLE.suzume(false) : k==='komeBlink' ? '<span class="blink">' + DOODLE.kome('smile') + DOODLE.kome('blink') + '</span>' : DOODLE.kome(k==='komeSleep' ? 'sleep' : k==='komeWow' ? 'wow' : k==='komeJoy' ? 'joy' : 'smile'); el.setAttribute('aria-hidden','true'); }
 function showSound(){ const b = $('soundBtn'); b.textContent = soundOn ? '音・ふるえ あり' : '音・ふるえ なし'; b.setAttribute('aria-pressed', String(soundOn)); }
 $('soundBtn').addEventListener('click', ()=>{ soundOn = !soundOn; try{ localStorage.setItem('mishin-sound', soundOn ? 'on' : 'off'); }catch(e){} if(soundOn) audio.ensure(); audio.setOn(soundOn); showSound(); });
 showSound();

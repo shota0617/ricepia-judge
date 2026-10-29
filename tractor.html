@@ -164,6 +164,8 @@
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
   /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
   body.calm .ico { font-size: 0 !important; }
+  /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
+  body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
   body.calm .ico::before { content: attr(data-i); font-size: 18px; }
   body.calm .pad .ico::before { font-size: 26px; }
   body.calm #bStart.ico::before { font-size: 30px; }
@@ -6384,7 +6386,8 @@ const MAKURA = (() => {
       const i = Math.floor((p[k][0] + HX) / CELL), j = Math.floor((p[k][1] + HZ) / CELL);
       if (i >= 0 && j >= 0 && i < NX && j < NZ && DEEP[i * NZ + j] >= 4) {
         told = true;
-        toast('枕地は 何回も耕すと 深くなって、タイヤが 沈む。枕地は 浅く耕す（Z で 浅く）', 6);
+        document.body.classList.add('needDepth');   // のんびりでも ⇡⇣ を 出す（案内どおりに 浅く できるように）
+        toast('枕地は 何回も耕すと 深くなって、タイヤが 沈む。枕地は 浅く耕す（' + (MOBILE || params.has('pad') ? '「浅く」' : 'Z') + ' で 浅く）', 6);
         setTimeout(() => voice('makura'), 6500);
         return;
       }
@@ -7953,7 +7956,7 @@ document.body.classList.toggle('calm', !DETAIL);
 // ---- 運転する キャラクターとの 対話：ふだん（くわしい説明 なし）は 画面に 文字を 出さず、上の 丸い 窓の キャラクターが 吹き出しで 一言 話す。
 // 知らせは はじめの 一文（操作の 案内つき）、案内（COACH）は いま やること。進みぐあいも 声で 知らせる。
 // 窓を さわると いま やることを もう一度、なければ のんびり 話しかけてくれる。話すあいだは 口が 動く
-const icoWords = x => x.replace(/右の「[^」]*を下げる」ボタンで下げる/g, '右の ⬇ で 下げよう')
+const icoWords = x => x.replace(/か、「浅く」/g, '').replace(/右の「[^」]*を下げる」ボタンで下げる/g, '右の ⬇ で 下げよう')
   .replace(/ボタンで( ?[^、。（]*?)(下げ|上げ)/g, (m, a, b) => (b === '下げ' ? '⬇' : '⬆') + ' で' + a + b)
   .replace(/「変速」/g, '⚙').replace(/「浅く」/g, '⇡').replace(/「深く」/g, '⇣').replace(/「デフロック」/g, '🔒').replace(/「泥落とし」/g, '🧽').replace(/「うしろを見る」/g, '👀');
 const SAY = (() => {

@@ -9,7 +9,7 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
   const errs=[]; p.on('pageerror',e=>errs.push('pageerror '+e.message)); p.on('console',m=>{if(m.type()==='error')errs.push('console '+m.text());});
   await p.route('https://cdnjs.cloudflare.com/**',r=>r.fulfill({path:TN+'/build/three.min.js',contentType:'text/javascript'}));
   await p.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({path:TN+r.request().url().split('/three@0.128.0')[1],contentType:'text/javascript'}));
-  await p.goto(`http://localhost:${PORT}/tractor.html?season=${season}&time=hiru&noshadow&art=none${qs}`);
+  await p.goto(`http://localhost:${PORT}/tractor.html?season=${season}&time=hiru&noshadow&menu=1&art=none${qs}`);
   await p.waitForFunction(()=>!document.getElementById('bStart').disabled,null,{timeout:180000});
   if (!process.env.NOCHECK && await p.$('#checkBox')) await p.check('#checkBox');   // 始業点検をしてから（しないと 春は ファンベルトが切れる。ベルトは別のテストで見る）
   await p.click('#bStart'); await p.waitForTimeout(1500);

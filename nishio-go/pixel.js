@@ -7793,7 +7793,7 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
   if (mzRt.t0) mzRt.t0 -= MZ_CROW_PEN * 1000;
   mzCrow.hitT = now + 2500; mzCrow.next = now + 6000; mzCrow.hits++;
   mzCrow.list = mzCrow.list.filter(o => o !== c);
-  floatText(`🐦 カァ！ ＋${MZ_CROW_PEN}秒`);
+  riceSay(`うわっ カラス！💦`, 1400);   // 吹き出し（もとは「🐦 カァ！ ＋5秒」。すすんだ 時計は 時計の 札で 見える）
   if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
 }
@@ -8161,7 +8161,7 @@ function mzPadTick(ax, ay) {   // パネルの マスに いる 間 しらべる
   mzPad.chain = now - mzPad.lastT < MZ_PAD_CHAIN_MS ? mzPad.chain + 1 : 1; mzPad.lastT = now;
   if (mzPad.chain > mzPad.best) { mzPad.best = mzPad.chain; try { localStorage.setItem('nsg_pad_best', String(mzPad.best)); } catch (e) { /* noop */ } }   // びゅんの れんさの ベスト（この端末。きろくに 出す）   // びゅんの れんさ：前の パネルから 3.5秒 いないなら つながる
   mzPad.cell = key; mzPad.hits++; mzRt.run.pads++; mzPad.fx = key; mzPad.fxT = now;
-  if (mzPad.chain >= 2) floatText(`💨 びゅん×${mzPad.chain}！${mzPad.chain >= 3 ? ' はやいじゃん' : ''}`);
+  if (mzPad.chain >= 2) riceSay(`びゅーん${'💨'.repeat(Math.min(3, mzPad.chain - 1))}`, 1200, 'happy');   // 吹き出し：💨 の 数が れんぞく（もとは「💨 びゅん×N！ はやいじゃん」）
   padSound(mzPad.chain); roll.happyT = Math.max(roll.happyT || 0, 0.8); dirty = true;
   try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('🍵 抹茶びゅん！ 矢印の 向きに のってみりん'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
   combo.n++; combo.quietT = 0; comboStep();   // ころころコンボも つづく
@@ -8253,7 +8253,8 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
         mzDots.lines++;
         chordSound(); combo.n += 2; combo.quietT = 0; comboStep(); roll.happyT = Math.max(roll.happyT || 0, 1);
         const tip = mzDots.lines % 3 === 1 ? mzMeibutsuTip() : '';   // 3回に 1回は、いる 所の 名物の ひと言（西尾らしく）
-        floatText(tip ? `🍚 ぜんぶ ひろったじゃん！ ${tip}` : `🍚 ぜんぶ ひろったじゃん！（きょう ${mzDots.n}つぶ）`);
+        riceSay('ぜんぶ ひろった！🍚', 1500, 'happy');   // 吹き出し（もとは「🍚 ぜんぶ ひろったじゃん！（きょう Nつぶ）」）
+        if (tip) floatText(`🍵 ${tip}`);   // 名物の ひと言は 知らせる 中身が あるので 文字の まま（3回に 1回）
         const cols = ['#ffffff', '#fff6c2', '#ffe066'];
         for (let j = 0; j < 12; j++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[j % 3], life: 0.5 + Math.random() * 0.4 }); }
       }

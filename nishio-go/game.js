@@ -1230,6 +1230,7 @@ function mazeGoal(id, name, lines) {
   }
   const sp = mzSpeed(gl.m, gl.sec, gl.warp);
   if (sp) lines.push(sp);
+  lines.push('🍵 おつかれさま。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
   friendVs(gl.sec, st);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
   MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
@@ -1625,6 +1626,10 @@ new MutationObserver(() => { if (firstPick && $('pxInfo').hidden) finishFirst(fi
    ・少しだけ自分でも選べる：みちしるべの札をひらくと、ほかの候補（2つまで）に変えられる。選ばなければ、すすめのとおりに進む
    報酬はきびしめ：すすめられた所に着いたら +5pt（1日5回まで）。人と話す +10pt は、はじめての人だけ */
 const GUIDE_PTS = 5, GUIDE_DAILY = 5, GUIDE_RANGE = { walk: 2000, play: 3000 };
+// 基本 5分で 終わる（10/29 店主「忙しい人向けに 5分で 終わるように」→「5分コースではなく 基本 5分で 終わる」）：めいろの 行き先は
+// まっすぐ 350〜900m（めいろの 道のり 1〜2km ＝ ふつうに 転がして 5分 ほど）。のこり 時間は 見せない（あせらせない）。近くに なければ いつもの 広さで えらぶ。
+// ★の 時間（道のりで きまる）・ポイントは かえない
+const MAZE_NEAR_MIN = 350, MAZE_NEAR = 900;
 const WEEKDAY = d => '日月火水木金土'[d.getDay()];
 const firstClause = t => String(t || '').split(/[。、]/)[0];
 // 着いたとみなす距離（checkGuide と decideGuide で同じものを使う）：人は話しかけられる距離、名所はチェックインできる距離
@@ -1640,12 +1645,18 @@ const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら�
 const fixOk = () => !!me && !driving && (demo || me.acc <= CFG.maxAccuracy);   // 最近着いた行き先（この数だけ覚えて、続けてすすめない）
 // 次の行き先を決める。from：話した人（なければ環境が決める）。戻り値：{ kind, id, name, lat, lng, why, by, alts }（alts：ほかの候補。札から選べる）
 const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.playing && nishioPixel.maze.playing());   // 地図の めいろで 遊んでいる（ドット絵の 地図を 出している 間だけ。ふつうの 地図に 切りかえたら 偽）
-function decideGuide(from) {
+function decideGuide(from) {   // めいろは まず 近く（5分）、なければ いつもの 広さ
+  const near = demo && mazeNow(), g = decideGuide0(from, false);
+  if (g) return near ? { ...g, near: true } : g;   // near：5分の 近さで えらんだ しるし（遠く なったら えらびなおす）
+  return near ? decideGuide0(from, true) : null;
+}
+function decideGuide0(from, wide) {
   if (!me) return null;
-  const now = new Date(), range = GUIDE_RANGE[demo ? 'play' : 'walk'];
+  const now = new Date(), range = !wide && demo && mazeNow() ? MAZE_NEAR : GUIDE_RANGE[demo ? 'play' : 'walk'];   // めいろは 5分で 着く 近さ
   const recent = new Set(S.guideDone || []);
   // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
-  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5) && d <= range && !recent.has(id); };
+  const five = range === MAZE_NEAR;
+  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
   const far = x => okFor('spot', x.id)(x);
   const by = from ? `${from.name}の話` : 'まわりのようす';
   const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
@@ -2072,7 +2083,7 @@ function checkGuide() {
   // （人のすすめは10kmまで出すので12km、それ以外は すすめる範囲の2倍まで）
   // 地図の めいろでは、すすめる範囲の 1.5倍より 遠い 行き先（めいろの 前に 人に すすめられた 遠くの 人など）は 決め直す
   // （めいろの 道は ゴールから いちど はなれる ことも あるので、すすめる範囲 ちょうどでは 決め直さない。自分で 選んだ 行き先は そのまま）
-  const farLimit = mazeNow() && !g.mine ? GUIDE_RANGE.play * 1.5 : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
+  const farLimit = mazeNow() && !g.mine ? (g.near ? MAZE_NEAR * 1.3 : GUIDE_RANGE.play * 1.5) : g.refer ? GUIDE_FAR : GUIDE_RANGE[demo ? 'play' : 'walk'] * 2;
   if (dist(me, g) > farLimit && fixOk()) { setGuide(decideGuide(null)); return; }
   if (g.kind === 'npc') return;
   if (dist(me, g) > guideRadius(g) || !fixOk()) return;

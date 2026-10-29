@@ -7550,7 +7550,7 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
 }
 // 生け垣の 上の 小さな 生きもの（10/28 店主「西尾らしい 素朴な かわいさ」）：通路の マスの とじた さかい（生け垣）に ときどき ちょこんと すわっていて、
 // お米が 近づくと ぴょこっと とんで にげ、しばらくすると もどる。見た目だけ（当たり判定・ポイントなし）。生け垣の 種類で 生きものが かわる
-const MZ_CRIT = { ike: 'kaeru', ine: 'kaeru', dote: 'kaeru', cha: 'tonbo', kuro: 'tonbo', ami: 'kani', ishi: 'kani', matsu: 'sagi' }, MZ_CRIT_N = 23, MZ_CRIT_MAX = 3;   // N：何マスに 1つ・MAX：画面に いくつまで
+const MZ_CRIT = { ike: 'kaeru', ine: 'kaeru', dote: 'kaeru', cha: 'tonbo', kuro: 'tonbo', ami: 'kani', ishi: 'kani', matsu: 'sagi' }, MZ_CRIT_N = 23, MZ_CRIT_MAX = 2;   // N：何マスに 1つ・MAX：画面に いくつまで（すずめ・ねこ・虫も いるので 2つまで）
 const mzCritFled = new Map();   // マス → にげた 時刻
 let mzCritDrawn = [];   // この こまに 描いた 生きもの（試験用）
 function drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now) {

@@ -43,7 +43,7 @@ class KomeBanashiTests(unittest.TestCase):
 
     def test_game_hooks_in_arrival_talk(self):
         game = (GO / 'game.js').read_text()
-        self.assertIn('...komeBanashi(g)]', game)
+        self.assertIn('...komeBanashi(g)', game)
         self.assertIn('komeSeen', game)
         self.assertIn('komebanashi.js', (ROOT / 'nishio-go.html').read_text())
 

@@ -146,7 +146,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], komeSeen: [], idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
+    guide: null, guides: 0, guideDone: [], komeSeen: [], nimotsu: null, idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 歩いて遊ぶは なくした（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：前に あるいて移動で 遊んでいた 人も 操作して（ころころ）に。
@@ -2062,6 +2062,15 @@ function komeBanashi(g) {
   pages[0] = () => { S.komeSeen = r.seen; save(); track('kome_banashi', { id: r.item.id }); return first; };
   return pages;
 }
+// お米つぶの にもつ（nimotsu.js）：着いた 名所の 地区の 名物を、つぎの 名所まで あたまに のせて 転がる。のせた 絵は pixel.js の drawNimotsu。
+// 地区の ない 所（となりの 市町など）では 持ち物を 変えない。話は お米つぶの おしゃべりが オンの ときだけ（持ち物は オフでも のせる）
+function komeNimotsu(g) {
+  const NM = window.NISHIO_NIMOTSU, sp = spots.find(x => x.id === g.id);
+  const it = NM && sp && sp.area && NM.pick(sp.area, new Date().getMonth() + 1, NM.current(S.nimotsu, Date.now()));
+  if (!it) return [];
+  S.nimotsu = { id: it.id, t: Date.now() }; save(); track('kome_nimotsu', { id: it.id });
+  return ktOn() ? [it.say] : [];
+}
 modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作して を 切りかえたら、前の 遊びかたの 話は やめる
 const guideTarget = () => {
   const g = S.guide;
@@ -2119,7 +2128,7 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g)], 'smile')) { rivalSay(g, next); return; }
+  if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g), ...komeNimotsu(g)], 'smile')) { rivalSay(g, next); return; }
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
   rivalSay(g, next);
@@ -4189,6 +4198,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 window.nishioGo = {
   snapMaze, friendVs, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
+  get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,

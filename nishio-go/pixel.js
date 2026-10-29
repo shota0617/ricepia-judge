@@ -1906,12 +1906,29 @@ function drawNakama(x, y, u, kind, ang) {   // ang：ころがる 回り（四�
   } else if (kind === 'asari') {   // アサリ（海べ）：茶色い すじの ある 貝
     draw([[-3, -1, 6, 3, '#c9a77a'], [-2, -2, 4, 1, '#c9a77a'], [-2, 2, 4, 1, '#c9a77a']]);
     for (const cx of [-3, 2]) px(cx, -1, 1, 3, '#8a6a44');
+  } else if (kind === 'chawan') {   // 抹茶わん（西尾）：うすい 茶色の わん・上に あわだつ 抹茶の 緑
+    draw([[-3, -1, 6, 3, '#c98a5a'], [-2, 2, 4, 1, '#c98a5a'], [-2, -2, 4, 1, '#7fc04a']]);
+    px(-2, 0, 1, 1, '#e8b890');
+  } else if (kind === 'chochin') {   // 提灯（一色）：赤い まるい ちょうちん・上下の 黒い ふた
+    draw([[-3, -2, 6, 4, '#d8302c'], [-2, -3, 4, 1, '#d8302c'], [-2, 2, 4, 1, '#d8302c'], [-2, -4, 4, 1, '#3a2a1a'], [-2, 3, 4, 1, '#3a2a1a']]);
+    px(-3, 0, 6, 1, '#f0b040');
+  } else if (kind === 'carnation') {   // カーネーション（幡豆）：ピンクの 花びらと 緑の くき
+    draw([[-3, -2, 6, 3, '#f06a9a'], [-2, -3, 4, 1, '#f06a9a'], [-1, 1, 2, 1, '#3f9b3c'], [-1, 2, 2, 1, '#3f9b3c']]);
+    px(-1, -1, 2, 1, '#ffd0e0');
   } else {   // 大豆：うす黄色の まるい つぶ
     draw([[-2, -2, 4, 4, '#e8d08a'], [-3, -1, 6, 2, '#e8d08a']]);
     px(-1, -1, 1, 1, '#fff4c8'); px(1, 1, 1, 1, '#b89a50');
   }
   if (kind !== 'daizu') { const e = kind === 'nasu' || kind === 'unagi' ? '#fff4e0' : '#1a1a1a'; px(-1, 0, 1, 1, e); px(1, 0, 1, 1, e); } else { px(-1, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#1a1a1a'); }   // にこっと した 目（なすは 色が こいので 白い 目）
   ctx.restore();
+}
+// お米つぶの にもつ（nimotsu.js）：着いた 名所の 名物を、転がって いる お米の あたまに のせる（絵は おともと 同じ drawNakama。
+// お米が はねると いっしょに ぽよんと 動き、ねむって いる ときは 蝶と ぶつかるので 描かない）
+function drawNimotsu(hx, by, u, now, sleepy) {
+  const kind = window.nishioGo && window.nishioGo.nimotsu;
+  if (!kind || sleepy) return;
+  const bob = Math.sin(now / 420) * 0.35 * u;
+  drawNakama(Math.round(hx), Math.round(by - 12.5 * u + bob), Math.max(1, Math.round(u * 0.8)), kind, 0);
 }
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
@@ -6583,6 +6600,7 @@ function frame(now) {
         ctx.drawImage(dropSprite(q), crisp ? Math.round(dx0) - q : dx0 - q, crisp ? Math.round(dy0) - q : dy0 - q); drop.at = [dx0, dy0]; drop.n++;
         ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm;
       }
+      drawNimotsu(hx, by, u, now, mood === 'sleepy');   // 名所で のせた 持ち物（nimotsu.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

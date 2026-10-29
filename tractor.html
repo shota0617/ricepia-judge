@@ -129,6 +129,15 @@
   #badgeCv { width: 76px; height: 76px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 10px rgba(0,0,0,.28); }
   /* 窓の 置き場所：パソコン・スマホ横は 右上の ボタン列の 下、スマホ縦は まん中の 計器の 下 */
   body.touch #badge { top: calc(max(8px, env(safe-area-inset-top)) + 46px); }
+  #badge { align-items: flex-end; }
+  #badgeCv { pointer-events: auto; cursor: pointer; }   /* さわると 話しかけてくれる */
+  /* キャラクターの 吹き出し：ふだんは 画面の 文字の かわりに ここで 一言 話す */
+  #say { margin-top: 6px; max-width: min(240px, 62vw); padding: 7px 12px; border-radius: 14px; background: rgba(251,248,240,.97); color: #3a2f22; font-size: 14px; font-weight: 800; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.25); position: relative; transition: opacity .3s; }
+  #say::before { content: ''; position: absolute; top: -6px; right: 30px; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
+  #say.off { opacity: 0; }
+  .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
+  /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
+  body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
   #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
@@ -178,7 +187,7 @@
 <div class="pad hidden" id="padB"><button data-k="lookBack" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
-<div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span></div>
+<div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span><div id="say" class="off"></div></div>
 <div id="farmerSay"></div>
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
 <div id="coach" class="hidden"></div>
@@ -224,7 +233,7 @@
     <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b>⛽ エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
     <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
     <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
-    <label class="easy"><input type="checkbox" id="detailBox"><span><b>📖 くわしい説明</b>：知らせを ぜんぶ 出す・農家の声も 運転中に 出す</span></label>
+    <label class="easy"><input type="checkbox" id="detailBox"><span><b>📖 くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
     <p class="small" id="progText">読みこみ中…</p>
@@ -7540,6 +7549,48 @@ let toastT = 0, curVoice = null;
 // もとの 文は dataset.raw に 残す（知らせが 消されたかを くらべる 所は raw を 見る）
 let DETAIL = false;
 try { DETAIL = localStorage.getItem('tractorDetail') === '1'; } catch (e) {}
+document.body.classList.toggle('calm', !DETAIL);
+// ---- 運転する キャラクターとの 対話：ふだん（くわしい説明 なし）は 画面に 文字を 出さず、上の 丸い 窓の キャラクターが 吹き出しで 一言 話す。
+// 知らせは はじめの 一文（操作の 案内つき）、案内（COACH）は いま やること。進みぐあいも 声で 知らせる。
+// 窓を さわると いま やることを もう一度、なければ のんびり 話しかけてくれる。話すあいだは 口が 動く
+const SAY = (() => {
+  // 吹き出しは 2 だん：上は 知らせ・進みぐあい・雑談（知らせ ＞ 進みぐあい ＞ 雑談 の じゅんで、下の ものは 上の ものを 消さない）、
+  // 下は いま やること（案内。かわったら すぐ 出す。急ぎの 操作も 待たせない）
+  const el = $('say'), mainEl = document.createElement('div'), coachEl = document.createElement('div');
+  coachEl.className = 'sayCoach'; el.append(mainEl, coachEl);
+  let t = 0, kind = '', mainText = '', coachLine = '', talkT = 0, chatN = 0, pi = 0, doneSaid = false;
+  const RANK = { chat: 0, step: 1, toast: 2 };
+  const CHAT = [TOD === 'yoru' ? 'ほしが きれいだね' : TOD === 'yu' ? 'ゆうやけ きれいだね' : 'いい てんきだね', 'のんびり いこう', 'つちの においが するね',
+    SHIRO ? 'カエルさん いるかな' : season === 'aki' ? 'トンボが とんでるね' : 'ひばりが ないてるね', 'ゆっくりで いいよ', 'とりさんが きてるね'];
+  const STEPS = [[10, 'いい ちょうし！'], [50, 'はんぶん できたね'], [80, 'もう すこし！']];
+  const busy = () => t > 0 && kind === 'toast';    // 知らせを 話している とちゅう
+  function render() {
+    const m = !DETAIL && t > 0, c = !DETAIL && !!coachLine;
+    mainEl.textContent = m ? mainText : ''; mainEl.style.display = m ? '' : 'none';
+    coachEl.textContent = c ? coachLine : ''; coachEl.style.display = c ? '' : 'none'; coachEl.style.marginTop = m ? '4px' : '0';
+    el.classList.toggle('off', !m && !c);
+  }
+  const talk = x => { talkT = Math.min(2.4, 0.11 * x.length); };
+  function show(x, sec, k) {
+    if (DETAIL || !x || (t > 0 && RANK[kind] > RANK[k])) return false;
+    mainText = x; kind = k; t = sec; talk(x); render(); return true;
+  }
+  const say = (x, sec = 4) => show(x, sec, 'toast');
+  function coach(x) { if (x !== coachLine) { coachLine = x; if (x && !DETAIL) talk(x); render(); } }   // 案内は 中身を いつも 覚えておく（くわしい説明から もどったとき すぐ 出せる）
+  function update(dt) {
+    if (talkT > 0) talkT -= dt;
+    if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
+    if (!S.started) return;
+    if (S.done && !doneSaid) { doneSaid = true; say('おつかれさま！', 8); }
+    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ
+  }
+  function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
+    if (DETAIL || busy()) return;
+    if (coachLine) talk(coachLine); else show(CHAT[chatN++ % CHAT.length], 3.5, 'chat');
+  }
+  function refresh() { if (DETAIL) { t = 0; kind = ''; talkT = 0; } render(); }   // くわしい説明の 切りかえ
+  return { say, coach, update, tap, refresh, get talking() { return talkT > 0; }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
+})();
 const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
 const cutParen = x => x.replace(/（[^）]*）/g, m => KEYH.test(m) ? m : '').replace(/[、\s]+$/, '').trim();
 const shortText = t => {
@@ -7549,9 +7600,20 @@ const shortText = t => {
   const head = cutParen(ss[0]) || ss[0], act = ss.slice(1).find(x => KEYH.test(x));
   return act ? head + '。' + (cutParen(act) || act) : head;
 };
-function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; }
+// キャラクターの セリフ：はじめの 一文（あとに 操作の 案内が あれば その 一言目＋案内）。かっこ書きは キーの 案内だけ
+const noParen = x => x.replace(/（[^）]*）/g, '').trim();
+const speakText = t => {
+  const ss = t.split('。').map(x => x.trim()).filter(Boolean);
+  if (!ss.length) return t;
+  const head = (cutParen(ss[0]) || ss[0]).replace(/（[^）]*$/, '').trim() || ss[0], act = ss.slice(1).find(x => KEYH.test(x));   // 閉じていない かっこは 落とす
+  if (!act) return head;
+  const first = (head.match(/^[^！？、]*[！？]?/) || [head])[0].trim() || head;
+  return first + (/[！？]$/.test(first) ? ' ' : '。') + (KEYH.test(noParen(act)) ? noParen(act) : cutParen(act) || act);
+};
+function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; SAY.say(speakText(t), Math.min(sec, 5)); }
 $('detailBox').checked = DETAIL;
-$('detailBox').onchange = e => { DETAIL = e.target.checked; try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
+$('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); SAY.refresh(); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
+$('badgeCv').addEventListener('pointerdown', e => { e.stopPropagation(); SAY.tap(); });
 function toast(t, sec = 2.2) {                    // 農家の声を読んでいる途中にほかの知らせが来たら、声はあとでもう一度出す
   if (curVoice && toastT > 1) voiceQ.unshift(curVoice);
   curVoice = null;
@@ -7939,7 +8001,7 @@ const COACH = (() => {
   }
   function update(running) {                      // 表示は計器と同じ間隔で
     const m = running ? msg() : null, h = m ? '<b>' + m[0] + '</b>' + m[1] : '';
-    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; }
+    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(m ? m[1].replace(/<[^>]+>/g, '') : ''); }   // ふだんは キャラクターが 話す
     $('bDoro').classList.toggle('hidden', !(running && SCRAPE.can()));   // スマホ：泥がついて 田んぼの中で止まって上げているときだけ
   }
   return { step, update, msg, get turns() { return turns; }, get off() { return off; } };
@@ -7988,7 +8050,8 @@ const BADGE = (() => {
       else if (S.done) { g.beginPath(); g.arc(ex + sx * 9, 4, 3, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }   // にっこり
       else { g.beginPath(); g.arc(ex + sx * 9, 2, 3.4, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + sx * 9 + 1.1, 0.8, 1.1, 0, 7); g.fill(); g.fillStyle = '#2a211a'; }
     }
-    g.beginPath(); g.arc(fx, 9, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();   // 口
+    if (SAY.talking && Math.sin(t * 16) > -0.2) { g.beginPath(); g.ellipse(fx, 10.5, 3.4, 2.6 + Math.sin(t * 16), 0, 0, 7); g.fill(); }   // 話している 口
+    else { g.beginPath(); g.arc(fx, 9, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke(); }   // 口
     // 麦わら帽子
     g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(0, -30, 38, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.ellipse(0, -38, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(-20, -38, 40, 6);
@@ -8055,7 +8118,7 @@ function frame(now) {
   LIFE.update(dt);
   WIND_T.value += dt;
   CLOUD_T.value += dt;
-  BADGE.draw(dt);
+  BADGE.draw(dt); SAY.update(dt);
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -8093,7 +8156,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

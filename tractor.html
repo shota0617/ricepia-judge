@@ -7002,6 +7002,8 @@ function startDiesel(ac, out, onReady) {
 }
 // 音は、運転しているあいだだけ鳴らす（おわり・メニュー・ほかのタブでは止める。🔇 のときも止める）
 function syncAudio(running) {
+  // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・メニューや 操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
+  if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('start').classList.contains('hidden') || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
   const want = soundOn && running && !document.hidden, st = audio.ac.state;
   if (want && st === 'suspended') audio.ac.resume();

@@ -2515,8 +2515,8 @@ function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数�
   ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
   const t = `×${combo.n}`;
   ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
-  if (combo.best >= 5) {   // その下に 小さく ベスト（こえたら「ベスト こうしん中」）
-    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? 'ベスト こうしん中' : `ベスト ${combo.best}`;
+  if (combo.best >= 5) {   // その下に 小さく ベスト「🏅9」（こえたら「🏅」だけ。こえた ことは 浮かぶ 文字と 音で 分かるので 2か所に 書かない。運営者の声「文字は 少なく」2026-10-29）
+    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? '🏅' : `🏅${combo.best}`;
     ctx.font = `bold ${s2}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(2, s2 / 4); ctx.fillStyle = combo.n > combo.best ? '#ff9fd0' : '#d9e6d0';
     ctx.strokeText(t2, x, y2); ctx.fillText(t2, x, y2);
   }

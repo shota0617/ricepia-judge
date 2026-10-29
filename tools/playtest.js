@@ -791,7 +791,8 @@ async function walkTo(page, id) {
     const gb = await page.evaluate(async () => { const P = nishioPixel; if (!P.setGb) return { smooth: null, at: null }; P.setGb(true); for (let i = 0; i < 3; i++) await new Promise(r => requestAnimationFrame(r)); const b = P.bfly; P.setGb(false); return { smooth: b.smooth, at: b.at }; });
     const gbOk = st.calm || (gb.smooth === false && !!gb.at && gb.at.every(v => Number.isInteger(v)));
     const zOk = !!zz && zz.n > z0 && !!zz.at && !zz.at.every(v => Number.isInteger(v));
-    return { ...P0, st, more: d1 - d0, gb, zz, ok: gbOk && zOk && (st.calm || (st.phase === 'rest' && d1 > d0 && P0.a[0] > 30 && P0.rest && P0.b[0] === 0 && P0.b[1] === 0)) };
+    const kindOk = st.calm || st.kind === (st.season === 'tonbo' ? 'tonbo' : 'chocho');   // 秋（季節の 虫が 赤とんぼの ころ）は 赤とんぼが とまる
+    return { ...P0, st, more: d1 - d0, gb, zz, ok: gbOk && zOk && kindOk && (st.calm || (st.phase === 'rest' && d1 > d0 && P0.a[0] > 30 && P0.rest && P0.b[0] === 0 && P0.b[1] === 0)) };
   })();
   // おきた ときの「のびー」：ねむって いた お米が おきると 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）。ちょうちょは 飛んで いく
   R.checks.riceWake = await page.evaluate(async () => {
@@ -917,6 +918,61 @@ async function walkTo(page, id) {
     const tr = await traceOff(page);
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ok: entered && diag, cell: [c.x, c.y], entered, diag, ...(entered && diag ? {} : { env, tr }) };
+  })();
+  // 田んぼや 草地の すずめ（運営者の声「西尾の素朴なかわいさを随所に散りばめて」）：お米が 転がって 近づくと、群れ みんなで とびたって 消える。見る だけ（ポイントは かわらない）
+  R.checks.suzume = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, S = P.suzume, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points;
+      S.put(Math.floor(r0.x) + 3, Math.floor(r0.y));
+      const n = S.list.length, still = S.list.every(b => !b.fly);
+      const b = S.list[0]; P.rollPut(b.x - 1.4, b.y, 3, 0);   // すずめの 1.4マス 手前から 3マス/秒で
+      let all = false; for (let i = 0; i < 15 && !all; i++) { await wait(60); all = S.list.length > 0 && S.list.every(x => x.fly); }
+      let gone = false; for (let i = 0; i < 30 && !gone; i++) { await wait(100); gone = S.list.length === 0; }
+      S.clear(); P.rollPut(r0.x, r0.y, 0, 0);
+      return { n, still, all, gone, pts: nishioGo.state.points - p0 };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.n >= 2 && r.n <= 3 && r.still && r.all && r.gone };   // pts：転がる とちゅうで ごはんつぶを ひろうと ふえる ので 見るだけ（すずめは ポイントに さわらない）
+  })();
+  // 道ばたで ひるねする ねこ（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：ねて いて、お米が 近くを 転がると おきて、しばらく したら また ねる。文字は 出さない
+  R.checks.neko = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, N = P.neko, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points, t0 = document.getElementById('toast').textContent;
+      P.suzume.clear(); N.put(Math.floor(r0.x) + 3, Math.floor(r0.y));
+      await wait(200);
+      const asleep = !!N.cat && !N.cat.awake;
+      P.rollPut(N.cat.x - 1.6, N.cat.y, 2.5, 0);   // ねこの 1.6マス 手前から
+      let woke = false; for (let i = 0; i < 15 && !woke; i++) { await wait(60); woke = !!N.cat && N.cat.awake; }
+      P.rollPut(r0.x, r0.y, 0, 0);
+      let back = false; for (let i = 0; i < 40 && !back; i++) { await wait(100); back = !!N.cat && !N.cat.awake; }
+      const toast = document.getElementById('toast').textContent !== t0 && /ねこ|にゃ/.test(document.getElementById('toast').textContent);
+      N.clear();
+      return { asleep, woke, back, toast, pts: nishioGo.state.points - p0 };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.asleep && r.woke && r.back && !r.toast };   // pts は 見るだけ（転がる とちゅうの ごはんつぶで ふえる ことが ある）
+  })();
+  // 季節の 小さな 虫（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：10月は 赤とんぼ。お米の まわりを とび、近くを 転がると はなれて 消える。文字は 出さない
+  R.checks.kisetsuMushi = await (async () => {   // 名前は「虫の名前あて」の mushi と 分ける
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, U = P.mushi, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points, t0 = document.getElementById('toast').textContent;
+      const kind = U.kind();
+      P.suzume.clear(); P.neko.clear(); U.put(r0.x + 2.5, r0.y - 1);
+      await wait(800);
+      const flying = !!U.m && !U.m.flee, moved = !!U.m && Math.hypot(U.m.x - r0.x - 2.5, U.m.y - r0.y + 1) > 0.05;   // ふらふら 動く
+      const m = U.m; P.rollPut(m.x - 1.2, m.y, 3, 0);
+      let flee = false; for (let i = 0; i < 15 && !flee; i++) { await wait(60); flee = !!U.m && U.m.flee; }
+      let gone = false; for (let i = 0; i < 30 && !gone; i++) { await wait(100); gone = !U.m; }
+      P.rollPut(r0.x, r0.y, 0, 0);
+      const toast = document.getElementById('toast').textContent !== t0 && /とんぼ|ちょう/.test(document.getElementById('toast').textContent);
+      U.clear();
+      return { kind, flying, moved, flee, gone, toast, pts: nishioGo.state.points - p0 };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.kind === 'tonbo' && r.flying && r.moved && r.flee && r.gone && !r.toast };   // pts は 見るだけ
   })();
   // ゆるい めいろ（2026-10-26 店主「直角ではなく ゆるい構造に」）：通路は 道すじの 筒。次の マスの 向きだけ 押して 転がすと、
   // 筒から はみ出さずに（道すじから 0.45マス＋やわらかい 生け垣が のびる 0.4マス以内）、ゴールまでの めいろの 道のりが へる（まるい 角で 止まらない）
@@ -1869,9 +1925,10 @@ async function walkTo(page, id) {
       nishioGo.showReward(225, 'らいすぴあ秀幸（永吉）', ['🔗 れんさ ×1.5 +25', '✨ はじめての 名所 +100', '🍚 来店スタンプ 3こめ', '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります']);
       await new Promise(r => setTimeout(r, 300));
       const el = document.getElementById('reward'), t = el.innerText, chips = [...el.querySelectorAll('.chips span')].map(x => x.textContent.trim());
+      const closePx = parseFloat(getComputedStyle(el.querySelector('.rw'), '::after').fontSize);   // 「タップで とじる」も 読める 大きさ（13点 から）
       el.click();
       const thanks = /来てくれて ありがとう！/.test(t), stamp = chips.includes('3こめ'), blank = chips.filter(x => !x).length;
-      return { thanks, stamp, blank, chips, ok: thanks && stamp && blank === 0 && chips.length === 3 };
+      return { thanks, stamp, blank, chips, closePx, ok: thanks && stamp && blank === 0 && chips.length === 3 && closePx >= 13 };
     });
     R.checks.mzArrive = { ...arriveA, ok: arriveA.spot === true && arriveA.sb && (arriveA.held === 'none' || (arriveA.held.aged && arriveA.held.during && arriveA.held.got)) && arriveA.talk === true && arriveA.nb };
     // 人から はなれる（テストの 道具）：めいろの 道すじの 上で 人の マスから 5〜8マスの 所に 置き、道すじに そって となりの マスへ 転がす（4マス 以上 はなれた マスに 入る）。
@@ -3240,6 +3297,9 @@ async function walkTo(page, id) {
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
+  need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
+  need(c.neko && c.neko.ok, `ねこ：ねて いない・お米が 近づいても おきない・また ねない・文字を 出す（${JSON.stringify(c.neko)}）`);
+  need(c.suzume && c.suzume.ok, `すずめ：2〜3羽 おりない・お米が 近づいても みんなで とびたたない・とびさらない（${JSON.stringify(c.suzume)}）`);
   need(c.shopThanks && c.shopThanks.ok, `当店の ごほうびに「来てくれて ありがとう！」・来店スタンプの 数が 出ない、または 数の ない 札が ならぶ（${JSON.stringify(c.shopThanks)}）`);
   need(c.mzGoalEdge && c.mzGoalEdge.ok, 'ゴールが 画面の はしに ある とき、ゴールの 名前が 画面から はみ出して 切れる');
   need(c.mzArrowTop && c.mzArrowTop.ok, 'ゴールが 上の 外の とき、矢印が 時計の 札や 右上の ボタンに 重なる');

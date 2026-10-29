@@ -215,7 +215,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 </head>
 <body>
 <script>if(location.hash==='#coin') document.documentElement.classList.add('coin'); /* QR から：題を 出さず すぐ 用意中（電波が 弱い ときに 押しても 何も おきない ボタンを 見せない。99周目） */</script>
-<div id="app">
+<div id="app" role="main"> <!-- 読み上げの「本文」の 目じるし（131周目） -->
   <canvas id="cv" role="img" aria-label="米袋の 口の 縫い目"></canvas>
   <div id="sr" class="sr" aria-live="polite"></div>
   <div id="hud" hidden>
@@ -1704,7 +1704,7 @@ function stepText(){
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
   if(S.held && S.over > 0.12){ b.fastWarn = true; b.fastT = S.t; } else if(b.fastWarn && (!S.held || (S.tension < 0.8 && S.t - b.fastT > 0.6))) b.fastWarn = false; /* 速すぎると もつれる のに 帯は 何も 言わなかった（128周目）。張りで なく もつれの「ため」（S.over）で 出し、0.6 秒は 出したまま（ちらつき・きつい目の 声を 消さない。130周目） */
-  if(b.fastWarn && b.phase==='pull') return '<b>速すぎます</b>。もう少し <b>ゆっくり</b> 引いて ください';
+  if(b.fastWarn && b.phase==='pull') return keyHold ? '<b>速すぎます</b>。いったん <b>キーを はなして</b>、また おして ください' /* キーは おすほど 速く なる（131周目） */ : '<b>速すぎます</b>。もう少し <b>ゆっくり</b> 引いて ください';
   if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと もつれる</b> 袋。直し方を ためして みましょう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引いて ください';
   if(!S.held && S.liftT <= 0.8 && b._pullText) return b._pullText; /* はなした 直後は 前の 文の まま（つまみなおす たびに かえない。96周目） */
   if(S.held && S.dirEff < 0.4) b.sideWarn = true; else if(S.held && S.dirEff > 0.75) b.sideWarn = false; /* 横へ 引けたら けす（はなしても けさない。93・96周目） */
@@ -1845,7 +1845,7 @@ document.addEventListener('visibilitychange', ()=>{ if(document.hidden){ keyLost
 function keyPull(dt){ // キーを おしている 間：はじめは ゆっくり、0.9 秒ほどで 速すぎに なる
   const b=S.bag; if(!keyHold || !S.held || !b || b.done){ keyHold = keyHold && S.held ? keyHold : 0; return; }
   if(b.phase!=='free' && b.phase!=='pull') return;
-  keyHold += dt; const v = b.safe * Math.min(1.25, 0.15 + 0.9*keyHold);
+  keyHold += dt; const v = b.safe * (b.phase==='pull' && b.knots.has(b.pulled) ? knotSlow() : 1) * Math.min(1.25, 0.15 + 0.9*keyHold); /* きつい目では 指と 同じく 安全な 速さも おそく（キーの 人は 2袋目の きつい目で ほぼ かならず もつれて いた。131周目） */
   if(b.phase==='free') b.freePx += v*dt; else if(b.phase==='pull' && !b.tangle){ S.pend += v*dt; S.dirEff = 1; }
 }
 document.addEventListener('gesturestart', e=>{ if(S.mode==='play') e.preventDefault(); }); // 遊んでいる 間だけ iOS の 2本指 ズームを とめる
@@ -1853,7 +1853,7 @@ document.addEventListener('gesturestart', e=>{ if(S.mode==='play') e.preventDefa
 // ---------- テスト用の口（tools/mishin/playtest.js） ----------
 const KB = window.KB = {
   manual:false, fixedSeed:0, today:null, dpr:()=>DPR, calm: matchMedia('(prefers-reduced-motion: reduce)').matches, // 設定が かわったら 下で 追う
-  S, R, GOALS, DOODLE, audio, riceYear, start: startGame, startPractice, step, down, move, up, tap, fingers, layout, stitchPos, makeBag, pullDir, size:()=>({W,H}), renderGoals:()=>renderGoals(ui.goals),
+  S, R, GOALS, DOODLE, audio, riceYear, start: startGame, startPractice, step, down, move, up, tap, fingers, layout, stitchPos, makeBag, pullDir, size:()=>({W,H}), renderGoals:()=>renderGoals(ui.goals), kbUser:v=>{ if(v!==undefined) kbUser = v; return kbUser; },
 };
 
 let last = performance.now();

@@ -394,6 +394,12 @@ const CHECKS = {
     for (const [w, h] of [[667,375],[844,390],[320,568],[568,320]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); t.hidden = true; document.body.classList.remove('menu'); return { b:r.bottom, H:innerHeight }; }); /* あとの 確かめに のこさない */
       ok(tb.b <= tb.H, `低い 画面（${w}×${h}）の 題で「れんしゅう」の ボタンが 見える`, tb); }
+    // 131周目：キーの 人も きつい目では ゆっくりに なる（0.8 秒 おして はなす リズムで もつれない）・速すぎの 声は キーの ことば・本文の 目じるし
+    const kk = await p.evaluate(async () => { const m0 = KB.manual; KB.manual = true; KB.startPractice(); const S = KB.S, b = S.bag; Object.assign(b, { slide:0, face:'back', phase:'pull', pulled:3 }); b.knots = new Set([3,4,5]);
+      document.dispatchEvent(new KeyboardEvent('keydown', { key:'ArrowLeft', bubbles:true })); let maxT = 0; for (let i = 0; i < 48; i++){ KB.step(1/60); if (b.knots.has(b.pulled)) maxT = Math.max(maxT, S.tension); }
+      S.over = 0.2; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); b.knots = new Set(); await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const say = document.getElementById('stepNow').textContent;
+      document.dispatchEvent(new KeyboardEvent('keyup', { key:'ArrowLeft', bubbles:true })); S.over = 0; KB.start(); KB.manual = m0; KB.kbUser && KB.kbUser(false); /* キーの 人の 印を のこさない */ return { maxT:+maxT.toFixed(2), say, main: !!document.querySelector('[role=main] #cv') }; });
+    ok(kk.maxT <= 1 && /キーを はなして/.test(kk.say) && kk.main, 'キーの 人も きつい目では ゆっくり・速すぎの 声は キーの ことば・本文の 目じるし', kk);
     // 129周目：LINE は ricepia.jp の「価格表・売り出し情報」と 同じ リンク（ことばと あう）
     const lnk2 = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => a.getAttribute('href')));
     ok(lnk2.length === 2 && lnk2.every(h => /\/lin\.ee\/AULbClm\?from=mishin-(coin|result)$/.test(h)), 'LINE の リンクは 価格表・売り出し情報の もの（from つき）', lnk2);

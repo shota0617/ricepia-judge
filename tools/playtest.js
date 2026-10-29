@@ -759,6 +759,16 @@ async function walkTo(page, id) {
   });
   // なめらかに ころころ（運営者の声 2026-10-28「この キャラクターくらい 滑らかに」）：お米は 画面の 細かさで 描き（絵の1点を 何ピクセルかで）、
   // ふちは なめらか（半とうめいの ふち）、影は 段でなく 連続（色の 数が 多い）、位置は 整数に 丸めない（0.3 ずらすと 絵が かわる）
+  // あいちのかおりの つぶ（運営者の 写真 2026-10-29）：影の 青みを へらした 乳白色・たての 細い すじ 2本（はばの ±0.38、上下の はしで うすれる）
+  R.checks.riceAichi = await page.evaluate(() => {
+    const P = nishioPixel, c = document.createElement('canvas'); c.width = 160; c.height = 160; const x = c.getContext('2d');
+    if (!P.drawRice(x, 80, 80, 0, 0, 'smile', 0, '', 4.2, 0)) return { ok: false, why: 'no-rice' };
+    const d = x.getImageData(0, 0, 160, 160).data; let n = 0, cool = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] === 255 && d[i] > 120 && d[i] < 235) { n++; cool += d[i + 2] - d[i]; }   // 影の ところ（ふちどりの 黒と 明るい 所は のぞく）
+    cool = n ? +(cool / n).toFixed(1) : 99;
+    const S = P.riceStreak, st = typeof S === 'function' ? [S(0.38, 0), S(0, 0), S(0.38, 0.99)].map(v => +v.toFixed(2)) : null;
+    return { cool, shade: n, st, ok: cool < 16 && n > 50 && !!st && st[0] > 0.9 && st[1] < 0.01 && st[2] < 0.1 };
+  });
   R.checks.smoothRice = await page.evaluate(() => {
     const P = nishioPixel;
     if (!P.riceLast || !P.drawRice) return { ok: false, why: 'no-api' };
@@ -3518,6 +3528,7 @@ async function walkTo(page, id) {
   need(c.toastSnap && c.toastSnap.ok, `窓が 開いても 知らせが すぐ 消えず、窓の 上に かぶる（${JSON.stringify(c.toastSnap)}）`);
   need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
+  need(c.riceAichi && c.riceAichi.ok, `お米が あいちのかおりの つぶに なって いない（影が 青い・縦すじが ない。${JSON.stringify(c.riceAichi)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
   need(c.mileCollapse && c.mileCollapse.ok, `歩いた道の 節目：前の 節目の 知らせを 待ちの 列から 取りのぞけない（文面の 頭が ちがう）（${JSON.stringify(c.mileCollapse)}）`);
   need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);

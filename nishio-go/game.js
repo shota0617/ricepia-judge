@@ -4059,7 +4059,7 @@ function begin(isDemo) {
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
     const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
-    KT.say([{ t: 'はじめまして。ぼく、西尾の お米つぶ だに。', mood: 'happy' }, how, 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。',
+    KT.say([{ t: 'はじめまして。ぼく、あいちのかおり の お米つぶ だに。', mood: 'happy' }, how, 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。',
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
     { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }

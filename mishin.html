@@ -233,10 +233,10 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
         <figcaption><span>反対の端（縫い始め）：からまる（×）</span></figcaption></figure>
       <div class="talks">
         <div class="talk"><span class="who num">1</span><p class="say"><strong>白い 糸が まっすぐ</strong>なら 表です。袋を 立てたまま まわして、<strong>反対の面</strong>を 見て ください。表に「糸抜きはここから」と あっても、口は 裏です（製粉会社の 説明）。<span class="fb" aria-hidden="true"><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><path d="M4 7h62" stroke="#f8f4ea" stroke-width="2.4" stroke-dasharray="7 2.5"/></svg>表</i><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><g fill="none" stroke="#f8f4ea" stroke-width="2"><ellipse cx="10" cy="7" rx="6" ry="3.4"/><ellipse cx="22" cy="7" rx="6" ry="3.4"/><ellipse cx="34" cy="7" rx="6" ry="3.4"/><ellipse cx="46" cy="7" rx="6" ry="3.4"/><ellipse cx="58" cy="7" rx="6" ry="3.4"/></g><path d="M4 8l12-2 12 2 12-2 12 2 12-2" stroke="#d8342c" stroke-width="2" fill="none"/></svg>裏</i></span></p></div>
-        <div class="talk"><span class="who num">2</span><p class="say"><strong>赤い 糸が 白い輪に ささっている</strong>端から ほどきます。裏から 見て たいてい 左、袋に よっては 右です。</p></div>
+        <div class="talk"><span class="who num">2</span><p class="say"><strong>赤い 糸が 白い輪に ささっている</strong>端から ほどきます。裏から 見て たいてい 左、袋に よっては 右です。赤の ない、白い 糸 1本だけの 袋も あります。</p></div>
         <div class="talk"><span class="who num">3</span><p class="say">赤の 端を 指で つまんで、白い輪を くぐらせて はずします。<strong>縫い目に そって 反対の 端の 方へ ゆっくり</strong> 引きます（左からなら 右へ）。<strong>白糸は 自然に ぬけます</strong>。</p></div>
         <div class="talk"><span class="who num">4</span><p class="say">ほどいた 糸は <strong>投入口に 入れず ごみ箱へ</strong> お願いします。</p></div>
-        <div class="talk"><span class="who num">5</span><p class="say">引っかかったら、袋の 表側（白い 糸が まっすぐの 面）の <strong>白糸</strong>を 少し 引いてから、また 赤を 引きます（JAの 案内として 紹介されている 方法）。</p></div>
+        <div class="talk"><span class="who num">5</span><p class="say">引っかかったら <strong>強く 引かずに</strong>、細い もので ゆるめて 少し もどしてから やりなおします（製粉会社の 説明）。袋の 表側（白い 糸が まっすぐの 面）の <strong>白糸</strong>を 少し 引いてから 赤を 引く 方法も あります（JAの 案内として 紹介されている 方法）。</p></div>
       </div>
       <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">価格表や 売り出しの お知らせは、らいすぴあの LINE で お届けして います。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-coin" target="_blank" rel="noopener">LINE で 友だち追加 <small>（価格表・売り出し情報）</small></a></div></div>
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
@@ -460,13 +460,13 @@ function endGame(){
   srSay(`おわり。てんすう ${S.score.toLocaleString()}、あけた袋 ${S.bags}、きょうの 腕まえ ${rankOf(S.score)}` + (gold ? '。' + gold : '') + (fresh.size ? '。目標 達成' : ''));
 }
 function tipOf(zone){
-  if(zone<45 && S.wrongs<3 && S.fronts<2 && S.tangles<2 && S.bags>0) return 'もう少し速く引いても大丈夫です。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。'; /* 読みの まちがいが 2回 くらいなら、速さの ほうを 先に */
+  if(zone<45 && S.wrongs<3 && S.fronts<2 && S.tangles<2 && S.bags>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。'; /* 読みの まちがいが 2回 くらいなら、速さの ほうを 先に */
   const z0 = S.bags===0, n = z0 ? 1 : 2; /* 1袋も あけて いない ときは 1回 でも その わけを */
   if(z0 && !S.fronts && !S.wrongs && !S.tangles) return 'まずは <b>二本指</b>で、赤い糸が 白い輪に ささっている 端を つまむ ところから どうぞ。';
   if(S.fronts>=n) return '白い糸が<b>まっすぐ</b>だけなら表です。袋をタップして まわしましょう（反対の面へ）。';
   if(S.wrongs>=n) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始めです。反対の端（縫い始め）から 引くと からまります。';
-  if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。ひっかかって止まったら、はなさずに ゆっくり。';
-  if(zone<45 && S.pullTime>0) return 'もう少し速く引いても大丈夫です。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
+  if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。ひっかかったら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
+  if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
   if(S.bestStreak<5) return 'いい手つきです。<b>一本どり</b>を続けると、連続ボーナスが つきます。';
   return '名人の手つきです。' + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : '');
 }
@@ -1503,7 +1503,7 @@ function talkLine(b){
   if(S.tension>1) return '強すぎます。少し ゆるめて ください';
   if(S.held && S.dirEff<0.4 && S.speed>60) return '縫い目に そって 横へ どうぞ ' + (pullDir(b)>0 ? '→' : '←');
   let d=99; for(const k of b.knots){ if(k>=b.pulled) d=Math.min(d,k-b.pulled); }
-  if(d===0) return 'きつい目です。はなさずに ゆっくり';
+  if(d===0) return 'きつい目です。強く 引かずに ゆっくり'; /* れんしゅうの「はなして つまみなおしても 大丈夫」と ぶつけない（85周目） */
   if(d<=2) return 'きつい目が 来ます';
   if(b.k===0 && b.pulled<3) return 'つまんだまま 横へ。メーターの 緑で どうぞ';
   return '';

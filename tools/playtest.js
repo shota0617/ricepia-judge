@@ -1328,8 +1328,12 @@ async function walkTo(page, id) {
       return out;
     });
     if (r.found && !r.skipped) {   // 期限が きれたら（とくてんを 開いた まま）描きなおされて「使ってから」が とける。テストの 時計は とまって いるので 2分 すすめる
-      await page.clock.setFixedTime(new Date(new Date(PLAY_DATE).getTime() + 120000)); await page.waitForTimeout(2500);
-      r.unblocked = await page.evaluate(() => { const li3 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent)); return !!li3 && !/使ってから|使っていないクーポン/.test(li3.textContent + li3.querySelector('[data-redeem]').getAttribute('aria-label')); });
+      // 描きなおしを 2.5秒 だけ 待って 見ると、重い ときに 間に あわず ときどき 落ちた（2026-10-29：3回に 1回ほど unblocked が false）。8秒まで、とけるのを 見はる
+      await page.clock.setFixedTime(new Date(new Date(PLAY_DATE).getTime() + 120000));
+      for (let i = 0; i < 16 && !r.unblocked; i++) {
+        await page.waitForTimeout(500);
+        r.unblocked = await page.evaluate(() => { const li3 = [...document.querySelectorAll('#rewardList li')].find(l => /100円引き/.test(l.textContent)); return !!li3 && !/使ってから|使っていないクーポン/.test(li3.textContent + li3.querySelector('[data-redeem]').getAttribute('aria-label')); });
+      }
       await page.clock.setFixedTime(new Date(PLAY_DATE));
       await page.evaluate(() => { const G = nishioGo, S = G.state, o = window.__cp100; S.points = o.p0; S.coupons.length = o.n0; S.log.splice(0, S.log.length - o.l0); G.openTab('map'); });   // ほかの チェックの ポイントが かわらない よう もどす
     }

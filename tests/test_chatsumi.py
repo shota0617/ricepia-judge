@@ -42,7 +42,7 @@ class ChatsumiTests(unittest.TestCase):
         self.assertIn('NISHIO_CHATSUMI', px)
         self.assertIn('S.near(G.spots', px)
         self.assertIn('chatsumiStep(hx, by, u, now);', px)
-        self.assertIn('|| jokamachi.cur || chatsumi.cur || mangekyo.cur) { c.cur = null', px)   # ちゃせきは 譲る
+        self.assertIn('|| jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null', px)   # ちゃせきは 譲る
         for scene in IDS:
             self.assertIn("id === '%s'" % scene if scene != 'kiri' else '川霧と 土：', px)
         self.assertIn('chatsumi.js', (ROOT / 'nishio-go.html').read_text())

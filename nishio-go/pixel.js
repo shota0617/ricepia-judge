@@ -2183,6 +2183,49 @@ function chochinyoruStep(hx, by, u, now) {
   if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
   m.drawn++; dirty = true;
 }
+// お米つぶの かわべさんぽ（kawabe.js）：西尾市の 川・池・用水の そば（海べでは ない 所）で 止まって じっと すると、お米の うしろが 水べの ひとこまに なる。矢作川が 三河湾へ・メダカ・アカザと イチモンジタナゴ・ミサゴ・ニホンイシガメが 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 水べの 中だけ・ゲームボーイの4色では 出さない。ほかの 場所・町の 場面が 出て いる 間は 譲り、ちゃせきには 先んじる。お米の うしろに 描く
+const kawabe = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function kawabeStep(hx, by, u, now) {
+  const m = kawabe, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_KAWABE || !still || gbOn || rp.x === null || roll.idle > 12 || tsutsumi.cur || chochinyoru.cur || isshiki.cur || shimatabi.cur || yuami.cur || horidashi.cur || hazusanpo.cur || tombolo.cur || jokamachi.cur || mangekyo.cur || chatsumi.cur) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_KAWABE;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_kawabe', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id, fade = Math.min(1, age / 500);
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const spr = (k, cx, cy, sc) => { if (critterSprites[k]) ctx.drawImage(critterSprites[k], Math.round(hx + cx * u), Math.round(by + cy * u), Math.round(u * sc * 16), Math.round(u * sc * 16)); };
+  const water = (y, h) => { px(-20, y, 40, h, '#4a8fc4'); px(-20, y, 40, 1, '#8cc4e8'); for (let i = 0; i < 3; i++) { const sh = calmMotion ? 0 : Math.sin(t * 2 + i * 2) * 2; px(-14 + i * 12 + sh, y + 2, 5, 1, '#a8d4ee'); } };
+  ctx.globalAlpha = fade;
+  if (id === 'yahagi') {   // 矢作川が 三河湾へ：細い 川が 右へ ひろがって 海に 注ぐ
+    px(-20, 4, 22, 5, '#4a8fc4'); px(-20, 4, 22, 1, '#8cc4e8'); px(-2, 2, 14, 9, '#3f84bc'); px(10, -2, 12, 17, '#2f6ea8');
+    for (let i = 0; i < 3; i++) { const sh = calmMotion ? 0 : ((t * 6 + i * 8) % 24); px(-20 + sh, 6, 3, 1, '#d6ecf8'); }
+    px(-20, 9, 22, 2, '#b99c5e'); px(-20, 2, 22, 2, '#7ba04a');
+  } else if (id === 'medaka') {   // メダカ：水の 中を すいすい
+    water(4, 12); const sw = calmMotion ? 0 : Math.sin(t * 1.6) * 6;
+    spr('medaka', -10 + sw, 2, 1); spr('medaka', 6 - sw, 6, 0.8);
+  } else if (id === 'uo') {   // アカザと イチモンジタナゴ：川の 底と なかほど
+    water(2, 14); px(-20, 14, 40, 2, '#7a6a4a'); const sw = calmMotion ? 0 : Math.sin(t * 1.4) * 5;
+    spr('akaza', -14 + sw, 2, 1); spr('sakana', 4 - sw, -2, 0.9);
+  } else if (id === 'misago') {   // ミサゴ：空から 水面を 見おろす
+    water(8, 8); const fly = calmMotion ? 0 : Math.sin(t * 1.2) * 8;
+    spr('misago', -6 + fly, -16, 1.3);
+  } else {   // ニホンイシガメ：田んぼの あぜで ひなたぼっこ
+    water(8, 8); px(-12, 4, 24, 5, '#b99c5e'); px(-12, 4, 24, 1, '#7ba04a');
+    for (let i = 0; i < 5; i++) px(-10 + i * 5, 1 + (i % 2), 1.5, 3, '#e0c030');   // 稲穂
+    spr('ishigame', -7, -6, 1.1);
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
 // お米つぶの いっしきさんぽ（isshiki.js）：西尾市の 一色の 町なかで 止まって じっと すると、お米の うしろが 一色の ひとこまに なる。えびせんべい焼き・うなぎ約2割・養鰻・さかな広場が 7秒ごとに かわり、かわるたび お米が ひと言。
 // 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 一色の 町なか（佐久島の 外・まわりに 海が ない 所）の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
 const isshiki = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
@@ -2453,7 +2496,7 @@ function mangekyoStep(hx, by, u, now) {
 const chasetsu = { cur: null, t0: 0, chk: 0, said: false, done: false, drawn: 0 };   // drawn：描いた 数（テスト用）
 function chasetsuStep(hx, by, u, now) {
   const c = chasetsu, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
-  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
+  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
   const C = window.NISHIO_CHASETSU;
   if (!c.cur) {
     if (c.done || roll.idle < C.STILL || now < c.chk) return;
@@ -7579,6 +7622,7 @@ function frame(now) {
     jokamachiStep(hx, by, u, now);   // 西尾城の あとの そばで じっと すると 城下町の ひとこま（丑寅櫓・鍮石門・祇園祭など。jokamachi.js。ちゃせきに 先んじる）
     mangekyoStep(hx, by, u, now);   // 三河工芸ガラス美術館の そばで じっと すると ガラス工芸の ひとこま（美術館・巨大万華鏡・のぞく。mangekyo.js。ちゃせきに 先んじる）
     chatsumiStep(hx, by, u, now);   // 稲荷山茶園公園の そばで じっと すると 茶畑の ひとこま（茶摘み・てん茶・川霧。chatsumi.js。ちゃせきに 先んじる）
+    kawabeStep(hx, by, u, now);   // 川・池・用水の そばで じっと すると 水べの ひとこま（矢作川・メダカ・アカザ・ミサゴ・ニホンイシガメ。kawabe.js。ちゃせきに 先んじる）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）
     nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {

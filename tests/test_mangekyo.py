@@ -40,7 +40,7 @@ class MangekyoTests(unittest.TestCase):
         self.assertIn('NISHIO_MANGEKYO', px)
         self.assertIn('S.near(G.spots', px)
         self.assertIn('mangekyoStep(hx, by, u, now);', px)
-        self.assertIn('roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur) { c.cur = null', px)   # ちゃせきは 譲る
+        self.assertIn('roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null', px)   # ちゃせきは 譲る
         for scene in IDS[:2]:
             self.assertIn("id === '%s'" % scene, px)
         self.assertIn('mangekyo.js', (ROOT / 'nishio-go.html').read_text())

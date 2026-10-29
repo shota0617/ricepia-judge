@@ -428,6 +428,9 @@ const CHECKS = {
     const esc = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); KB.S.score = 4000; KB.S.bags = 3; document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true })); for (let i=0;i<150;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100));
       const sm = document.querySelector('#againBtn small'); return { res: !document.getElementById('result').hidden, sm: !!sm, smHidden: !!sm && sm.getAttribute('aria-hidden') === 'true' }; });
     ok(esc.res && esc.smHidden, 'キーの 人は Esc で タイムアタックを おわれる・「もう一回」の 小さい 字は 読ませない', esc);
+    // 116周目：フィーバーの おわりは 吹き出しを 出さなくても 読み上げる・引いて いる 間の「強すぎます」は よろこびの 声より 先
+    const fe = await p.evaluate(async () => { KB.manual = true; KB.start(); const S = KB.S; S.touched = true; S.msg = { text:'一本どり！', kind:'ok', t:0.3, life:1.2 }; S.feverT = 0.01; document.getElementById('sr').textContent = ''; KB.step(1/60); await new Promise(r => setTimeout(r, 300)); const sr = document.getElementById('sr').textContent; KB.manual = false; return { sr, msg: S.msg && S.msg.text }; });
+    ok(/フィーバー おわり/.test(fe.sr) && fe.msg === '一本どり！', 'フィーバーの おわりは 吹き出しを 上書き しなくても 読み上げる', fe);
     // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
     const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(/あと 1つで きょうの 目標/.test(near), '目標が あと 1つの ときは ヒントで「あと 1つで きょうの 目標」', near);

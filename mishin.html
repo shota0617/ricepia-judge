@@ -505,7 +505,7 @@ function tipOf(zone){
     if(near && S.bags>0) return `今回 あと 1つで きょうの 目標「<b>${near.text}</b>」でした。`; /* 数は 1回ごと（107周目） */ }
   if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
   if(S.bestStreak<5) return 'いい手つきです。<b>一本どり</b>を続けると、連続ボーナスが つきます。';
-  return (S.score >= 30000 ? '名人の手つきです。' : '一本どりが 続いて います。つぎは <b>フィーバー</b>を ねらって みてください。') + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : ''); /* 「名人」は 五代目の 点から（103周目） */
+  return (S.score >= 30000 ? '名人の手つきです。' : S.fevers < 3 ? '一本どりが 続いて います。つぎは <b>フィーバー</b>を ねらって みてください。' : 'いい手つきです。つぎは <b>新米シール</b>の 袋や じこベストを ねらって みてください。') + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : ''); /* 「名人」は 五代目の 点から（103周目） */
 }
 // きょうの 目標：日付で 3つ えらぶ（同じ日は 同じ 目標）。できた ものは この 端末に のこる
 const GOALS = [
@@ -657,11 +657,11 @@ function step(dt){
       if(S.lastBag && !lb.done){ if(lb.pulled !== S.lastPulled){ S.lastPulled = lb.pulled; S.lastIdle = 0; } else S.lastIdle += dt; } /* つまんだ まま 止まって いても おわる */
       if(!S.ending && (!S.lastBag || lb.tangle || (!lb.done && ((!S.held && S.liftT>0.8) || S.lastIdle>2.5)))) finish(); }
   }
-  if(!S.practice && !S.ending && S.bestAt>0 && !S.passedBest && S.score>S.bestAt && !S.bag.done && (!S.msg || S.msg.t>0.4)){ /* 袋が あく 間は 待つ（つぎの 袋で ゆっくり 見せる） */ S.passedBest = true; say('じこベストを こえました！','ok', 2); audio.clean(1); S.hopT = [0.4, 0.55, 0, 0]; } /* 「一本どり！」「フィーバー！」を すぐ 上書き しない */ /* 遊んで いる 間に 1回 だけ（59周目） */
+  if(!S.practice && !S.ending && S.bestAt>0 && !S.passedBest && S.score>S.bestAt && !S.bag.done && (!S.msg || S.msg.t>0.4)){ /* 袋が あく 間は 待つ（つぎの 袋で ゆっくり 見せる） */ S.passedBest = true; say('じこベストを こえました！','ok', 2); audio.clean(1); S.hopT[0] = 0.4; S.hopT[1] = 0.55; } /* とんで いる 3・4羽目は そのまま（116周目） */ /* 「一本どり！」「フィーバー！」を すぐ 上書き しない */ /* 遊んで いる 間に 1回 だけ（59周目） */
   if(S.ending > 0){ S.ending -= dt; if(S.ending <= 0) endGame(); return; } // 「そこまで！」の あと 結果へ
 
   // フィーバーの 残り時間は、袋が あく 間や 裏返す 間も へる（ゲームの 時計と そろえる）
-  if(S.feverT>0){ S.feverT -= dt; S.combo = 1; if(S.feverT<=0){ S.feverT = 0; S.combo = 0.25; if(!S.msg || S.msg.t > 0.8) say('フィーバー おわりです','talk', 0.9); /* 小さく。直前の よろこびを 上書き しない（115周目） */ /* すぐ 次の フィーバーに ならない ように */ } }
+  if(S.feverT>0){ S.feverT -= dt; S.combo = 1; if(S.feverT<=0){ S.feverT = 0; S.combo = 0.25; if(!S.msg || S.msg.t > 0.8) say('フィーバー おわりです','talk', 0.9); else srSay('フィーバー おわりです'); /* 小さく。直前の よろこびを 上書き しない（115周目） */ /* すぐ 次の フィーバーに ならない ように */ } }
   const b = S.bag;
   b.slide = Math.max(0, b.slide - dt*4);
   if(b.flipT>0){
@@ -1551,7 +1551,8 @@ function talkLine(b){
 }
 function drawMsg(L){
   let m = S.msg;
-  if(S.practice) return; // れんしゅうは 上の 帯（こめつぶ）が 言う
+  if(S.practice) return;
+  if(m && m.kind==='ok' && S.held && S.bag && S.bag.phase==='pull' && /強すぎ|きつい目/.test(talkLine(S.bag) || '')) m = null; /* 引いて いる 間の「強すぎ」「きつい目」は よろこびの 声より 先（116周目） */ // れんしゅうは 上の 帯（こめつぶ）が 言う
   if(!m){
     // 場面の ひとこと：0.8 秒は かえない（張りで 行ったり 来たり しない）。読み上げは 1袋に 同じ 文 1回、矢印は 読まない
     let t = talkLine(S.bag); const d = drawMsg, b = S.bag, key = b ? `${b.id}|${b.phase}|${b.face}|${!!b.tangle}` : ''; /* 袋・場面が かわったら すぐ かえる */

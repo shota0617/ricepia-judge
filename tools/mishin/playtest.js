@@ -7,7 +7,7 @@ const path = require('path');
 const args = process.argv.slice(2);
 const RUNS = +(args[args.indexOf('--runs')+1] || 12) || 12;
 const VW = args.includes('--w') ? +args[args.indexOf('--w')+1] : 390, VH = args.includes('--h') ? +args[args.indexOf('--h')+1] : 844; // 画面の 大きさ（72周目：幅で むずかしさが かわらないか）
-const FILE = 'file://' + (process.env.MISHIN_FILE || path.resolve(__dirname, '../../mishin.html')); // MISHIN_FILE で 前の 版と くらべられる（114周目）
+const FILE = 'file://' + (process.env.MISHIN_FILE ? path.resolve(process.env.MISHIN_FILE) : path.resolve(__dirname, '../../mishin.html')); // MISHIN_FILE で 前の 版と くらべられる（114周目）
 
 // face＝表裏を 見分ける確率、read＝ほどき始めを 読みあてる確率、target＝ねらう張り、noise＝ぶれ、react＝ひっかかりに 気づくまで、
 // bell＝なでる速さが 山なり（人の指）、stroke＝1回の なでる長さ

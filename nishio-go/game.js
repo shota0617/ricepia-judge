@@ -2632,7 +2632,9 @@ if (window.MutationObserver) new MutationObserver(ms => {   // イベントの �
 }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
 // めいろの「🏁 つぎの ゴール」の 札（pixel.js の mzNextOn）
 function pxBusy() { try { return !!(window.nishioGo && nishioGo.toastBlock && nishioGo.toastBlock()); } catch (e) { return false; } }
-function toastBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy(); }
+function toastBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy() || ktOpen(); }
+// あいちのかおりちゃんの おはなしの 間は 知らせを 待たせる（自分で 遊んで 分かった：「🧭 水色の 線が…」が おはなしの わくの 上に かぶった）
+function ktOpen() { const k = document.getElementById('komeTalk'); return !!k && !k.hidden; }
 function toastFlush() { if (!toastBlocked()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓・つぎの ゴールの 札を とじたとき
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
@@ -3968,15 +3970,37 @@ window.addEventListener('pagehide', sessionEnd);
 // （歩く地図と同じ お米の絵・同じ でこぼこの転がり方。pixel.js の riceSpin・riceFeel）。はじめの画面を閉じたら止める
 // はじめの画面のアニメーション：お米が 台地の上を ころころ進み、坂（本当の高低差のように）を ひとりでに速くなって転がり下りる。
 // 下で ぺたっ、田んぼの あぜ道で ゆっくり止まって、起き上がりこぼしのように ゆらゆら立って にっこり。また右へ転がっていく
+// 西尾の まちの 景色（運営者が 使用OKを 確かめた 写真を、ゲームの ドット絵に ディフォルメ：80×36・14色。運営者の声「ゲームの顔に」「ディフォルメして出す。ゲームの初めに随所に登場するように」2026-10-29）。
+// はじめの画面の 絵の 後ろ・あそびかた・あいちのかおりちゃんの はじめの あいさつ に 出す
+const INTRO_SCENES = [['002', '島へ のびる 道'], ['016', '抹茶と おかし'], ['020', '茶畑の 茶つみ'], ['024', 'うなぎの かば焼き'], ['037', '青い 海と 小島'], ['042', '白い 砂浜'], ['043', '西尾城の やぐら'],
+  ['053', '紅葉と 西尾城'], ['060', '大きな ちょうちんの まつり'], ['062', '夜の ちょうちん'], ['072', '川を わたる 赤い 電車'], ['073', '川の 橋と 河川じき'], ['078', '田んぼと 山なみ'], ['080', '田植えの あとの 田んぼ'],
+  ['082', 'あじさい'], ['084', 'お寺の 本堂'], ['097', 'ひまわり畑']].map(([f, t]) => ({ src: `nishio-go/art/intro/${f}.png`, t }));
+const sceneAt = i => INTRO_SCENES[((i % INTRO_SCENES.length) + INTRO_SCENES.length) % INTRO_SCENES.length];
+const sceneRand = () => sceneAt(Math.floor(Math.random() * INTRO_SCENES.length));
 function introHero() {
   const cv = $('introHero');
   if (!cv || !cv.getContext) return;
   const x = cv.getContext('2d'), img = new Image(), W = cv.width, H = cv.height;
+  // 後ろの 景色：4.5秒ごとに つぎの 景色へ（0.8秒 かけて うつりかわる。動きを へらす 人には 9秒ごとに ぱっと）。読めるまでは いままでの 空と 田んぼ
+  const calmM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, SHOW = calmM ? 9000 : 4500, FADE = calmM ? 0 : 800;
+  const sc = { i: Math.floor(Math.random() * INTRO_SCENES.length), t0: 0, imgs: new Map() };
+  const sceneImg = i => { const s = sceneAt(i); let m = sc.imgs.get(s.src); if (!m) { m = new Image(); m.src = s.src; sc.imgs.set(s.src, m); } return m; };
+  const ready = m => m && m.complete && m.naturalWidth;
+  cv.dataset.scene = '';
   const TOP = 46, LOW = 62, S0 = 56, S1 = 96;   // 台地の高さ・下の あぜ道の高さ・坂のはじまりと おわり（点）
   const gY = px => { const t = Math.min(1, Math.max(0, (px - S0) / (S1 - S0))); return TOP + (LOW - TOP) * t * t * (3 - 2 * t); };   // 地面の高さ
   const K = 280, FR = 52, DRAG = 0.3, DRIVE = 32, LEAVE = 40;   // 坂の強さ・ころがり抵抗・空気・台地で押す速さ・出ていく速さ（点/秒）
   const st = { x: -24, v: DRIVE, ang: 0, av: 0, rest: 0, mode: 'drive', sq: 0, sqv: 0, last: 0 };
   const scene = now => {
+    if (!sc.t0) sc.t0 = now;
+    if (now - sc.t0 > SHOW && ready(sceneImg(sc.i + 1))) { sc.i++; sc.t0 = now; }
+    const a = sceneImg(sc.i), b = sceneImg(sc.i + 1); sceneImg(sc.i + 2);   // つぎの つぎも 先に 読んでおく
+    if (ready(a)) {
+      x.imageSmoothingEnabled = false; x.globalAlpha = 1; x.drawImage(a, 0, 0, W, H);
+      const f = FADE ? (now - sc.t0 - (SHOW - FADE)) / FADE : 0;
+      if (f > 0 && ready(b)) { x.globalAlpha = Math.min(1, f); x.drawImage(b, 0, 0, W, H); x.globalAlpha = 1; }
+      cv.dataset.scene = sceneAt(f >= 0.5 && ready(b) ? sc.i + 1 : sc.i).src;   // テスト用：いま 見えて いる 景色
+    } else {
     const sky = x.createLinearGradient(0, 0, 0, 40);
     sky.addColorStop(0, '#8fd0f4'); sky.addColorStop(1, '#d8f0fb');
     x.fillStyle = sky; x.fillRect(0, 0, W, 40);
@@ -3984,6 +4008,7 @@ function introHero() {
     x.fillStyle = '#6dbb4c'; x.fillRect(0, 34, W, H - 34);   // 田んぼ（あぜ道の下まで）
     x.fillStyle = '#4f9a3e';
     for (let r = 0; r < 5; r++) for (let c = 0; c < 20; c++) x.fillRect(((c * 8 + r * 4 - now / 90) % (W + 8) + W + 8) % (W + 8) - 4, 37 + r * 5, 3, 3);   // 稲（風で ゆれて流れる）
+    }
     for (let c = 0; c < W; c++) {   // 地面：台地の土手 → 坂 → 田んぼの あぜ道
       const y = Math.round(gY(c + 0.5));
       x.fillStyle = '#c8b078'; x.fillRect(c, y, 1, H - y);
@@ -4031,6 +4056,8 @@ function introHero() {
   requestAnimationFrame(step);
 }
 document.addEventListener('DOMContentLoaded', introHero);
+// あそびかたの 上の 細い 景色（開くたびに ちがう 景色）
+if (window.MutationObserver && $('howto')) new MutationObserver(() => { const h = $('howto'), b = $('howtoScene'); if (h && b && !h.hidden) { const s = sceneRand(); b.style.backgroundImage = `url("${s.src}")`; b.dataset.scene = s.src; b.title = s.t; } }).observe($('howto'), { attributes: true, attributeFilter: ['hidden'] });
 
 /* はじめに */
 // 友だちのシェアから来た人（share.js が nsg_friend を立てる）：はじめて遊ぶときに +20pt（1回だけ）。
@@ -4059,7 +4086,7 @@ function begin(isDemo) {
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
     const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
-    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。', mood: 'happy' }, how, 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。',
+    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。', mood: 'happy', pic: sceneRand() }, how, { t: 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。', pic: sceneRand() },
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
     { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }
@@ -4122,7 +4149,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, arriveMsg, npcBriefMsg, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); }, openTab,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

@@ -919,3 +919,8 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .kome-talk .kt-next{display:block;margin:4px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:13px;cursor:pointer}
 .kome-talk .kt-next[hidden]{display:none}
 .kome-talk .kt-x{position:absolute;top:2px;right:4px;background:none;border:0;color:#bbb;font-size:14px;padding:4px;cursor:pointer}
+
+/* 西尾の まちの 景色（写真を ドット絵に ディフォルメ）：あそびかたの 上の 細い 帯・あいちのかおりちゃんの あいさつの 絵 */
+.howto-scene{height:44px;margin:-4px -4px 8px;border-radius:12px;background:#cfe8f5 center 40%/cover no-repeat;image-rendering:pixelated}
+.kome-talk .kt-pic{display:block;width:100%;max-width:220px;aspect-ratio:80/36;object-fit:cover;image-rendering:pixelated;border-radius:6px;margin:4px 0 2px}
+.kome-talk .kt-pic[hidden]{display:none}

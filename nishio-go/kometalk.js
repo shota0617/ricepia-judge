@@ -15,7 +15,7 @@
     box.className = 'kome-talk'; box.id = 'komeTalk'; box.hidden = true;
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'あいちのかおりちゃんの おはなし');
     box.innerHTML = '<div class="dq"><canvas width="48" height="40" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">あいちのかおりちゃん</b>'
-      + '<p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div><button type="button" class="kt-next">▼ つぎへ</button></div>'
+      + '<img class="kt-pic" alt="" hidden/><p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div><button type="button" class="kt-next">▼ つぎへ</button></div>'
       + '<button type="button" class="kt-x" aria-label="おはなしを とじる">✕</button></div>';
     document.body.append(box);
     cv = box.querySelector('canvas'); sayEl = box.querySelector('.kt-say'); srEl = box.querySelector('.kt-sr'); chEl = box.querySelector('.kt-ch'); nextEl = box.querySelector('.kt-next');
@@ -55,6 +55,8 @@
     if (!p) { if (page < cur.pages.length - 1) { page++; show(); } else done(-1); return; }
     const t = typeof p === 'string' ? p : p.t;
     face(typeof p === 'string' ? cur.mood : (p.mood || cur.mood));
+    const pic = box.querySelector('.kt-pic'), pc = typeof p === 'string' ? null : p.pic;   // 西尾の 景色の ドット絵（あいさつで まちを 見せる）
+    pic.hidden = !pc; if (pc) { pic.src = pc.src; pic.alt = pc.t || ''; }
     chEl.innerHTML = ''; nextEl.hidden = true; full = t;
     srEl.textContent = t;   // 読み上げには 1ページを 1回で わたす（1文字ずつ 書きかえない）
     clearTimeout(closeT); clearInterval(typing); typing = 0;
@@ -68,6 +70,7 @@
     clearInterval(typing); typing = 0; clearTimeout(closeT);
     const had = box && box.contains(document.activeElement);
     if (box) box.hidden = true; cur = null;
+    try { const G = root.nishioGo; if (G && G.toastFlush) setTimeout(() => G.toastFlush(), 0); } catch (e) { /* noop */ }   // 待たせた 知らせを 出す
     if (had && back && back.isConnected) back.focus({ preventScroll: true });   // キーボードの 人は もとの 場所へ
   }
   function done(i) {
@@ -92,11 +95,12 @@
     cur = q.shift(); page = 0;
     back = document.activeElement;
     box.hidden = false;
+    try { const G = root.nishioGo; if (G && G.toastHold) G.toastHold(); } catch (e) { /* noop */ }   // 下の 知らせが おはなしの わくに かぶらない（出た ばかりなら とじてから 出し直す）
     if (cur.onShow) try { cur.onShow(); } catch (e) { console.error(e); }
     show();
     // 話の とちゅうで ごほうび・町の人の 話などが 出たら、そのあいだは よけて、とじたら また 出す
     clearInterval(pump.w);
-    pump.w = setInterval(() => { if (!cur) { clearInterval(pump.w); return; } const b = !!(cur.busy && cur.busy()); if (box.hidden !== b) { box.hidden = b; if (b) clearTimeout(closeT); else if (!typing && !chEl.children.length && page === cur.pages.length - 1) afterType(); } }, 400);
+    pump.w = setInterval(() => { if (!cur) { clearInterval(pump.w); return; } const b = !!(cur.busy && cur.busy()); if (box.hidden !== b) { box.hidden = b; try { const G = root.nishioGo, f = G && (b ? G.toastFlush : G.toastHold); if (f) f(); } catch (e) { /* noop */ }   /* よけて いた あいだに 出た 知らせは、また 出す ときに 下げる */ if (b) clearTimeout(closeT); else if (!typing && !chEl.children.length && page === cur.pages.length - 1) afterType(); } }, 400);
   }
   // clear：ためている 話も 今の 話も やめる（遊びかたの 切りかえ など。then は よばない）
   function clear() { q.length = 0; clearInterval(pump.w); hide(); }

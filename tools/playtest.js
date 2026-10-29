@@ -769,6 +769,27 @@ async function walkTo(page, id) {
     const S = P.riceStreak, st = typeof S === 'function' ? [S(0.38, 0), S(0, 0), S(0.38, 0.99)].map(v => +v.toFixed(2)) : null;
     return { cool, shade: n, st, ok: cool < 16 && n > 50 && !!st && st[0] > 0.9 && st[1] < 0.01 && st[2] < 0.1 };
   });
+  // 西尾の 景色（写真を ドット絵に ディフォルメ。運営者の声「ゲームの顔に」「ディフォルメして出す。ゲームの初めに随所に登場するように」2026-10-29）：
+  // 80×36 の 絵が 12まい 以上・あそびかたを 開くと 上の 帯に 景色・あいちのかおりちゃんの おはなしに 景色の 絵が 出て、おはなしの 間は 下の 知らせを 待たせ、とじたら 出す
+  R.checks.introScenes = await (async () => {
+    const list = await page.evaluate(() => (nishioGo.INTRO_SCENES || []).map(s => s.src));
+    const bad = list.filter(f => { try { const b = fs.readFileSync(path.join(__dirname, '..', f)); return b.readUInt32BE(16) !== 80 || b.readUInt32BE(20) !== 36; } catch (e) { return true; } });
+    const howto = await page.evaluate(async () => { const h = document.getElementById('howto'), b = document.getElementById('howtoScene'), was = h.hidden; h.hidden = false; await new Promise(f => setTimeout(f, 100)); const r = { bg: b ? b.style.backgroundImage : '', scene: b ? b.dataset.scene : '' }; h.hidden = was; return r; });
+    const kt = await page.evaluate(async () => {
+      const KT = window.nishioKomeTalk, G = nishioGo, wait = ms => new Promise(f => setTimeout(f, ms)), t = document.getElementById('toast');
+      if (!KT) return { why: 'no-kt' };
+      const was = KT.on(); KT.setOn(true); t.classList.remove('show');
+      KT.say([{ t: 'テストの あいさつ', pic: G.INTRO_SCENES[0] }]);
+      let box = null; for (let i = 0; i < 20 && !(box && !box.hidden); i++) { await wait(150); box = document.getElementById('komeTalk'); }
+      const pic = box && box.querySelector('.kt-pic'), shown = !!box && !box.hidden, picOk = !!pic && !pic.hidden && /art\/intro\//.test(pic.getAttribute('src') || '');
+      G.toast('🧪 テストの 知らせ'); await wait(250);
+      const held = !(t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ');
+      KT.close(); let after = false; for (let i = 0; i < 20 && !after; i++) { await wait(200); after = t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ'; }
+      t.classList.remove('show'); KT.setOn(was);
+      return { shown, picOk, held, after };
+    });
+    return { n: list.length, bad, howto, kt, ok: list.length >= 12 && !bad.length && /art\/intro\//.test(howto.scene || '') && /url\(/.test(howto.bg || '') && kt.shown && kt.picOk && kt.held && kt.after };
+  })();
   // 主人公の 名前は「あいちのかおりちゃん」（運営者の声 2026-10-29）：おはなしの 名前の 札・はじめの あいさつ
   R.checks.kaoriName = (() => {
     const kt = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'kometalk.js'), 'utf8'), gm = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'game.js'), 'utf8');
@@ -3536,6 +3557,7 @@ async function walkTo(page, id) {
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.riceAichi && c.riceAichi.ok, `お米が あいちのかおりの つぶに なって いない（影が 青い・縦すじが ない。${JSON.stringify(c.riceAichi)}）`);
   need(c.kaoriName && c.kaoriName.ok, `主人公の 名前が「あいちのかおりちゃん」に なって いない（${JSON.stringify(c.kaoriName)}）`);
+  need(c.introScenes && c.introScenes.ok, `西尾の 景色の ドット絵が はじめの 画面・あそびかた・おはなしに 出ない、または おはなしの 上に 知らせが かぶる（${JSON.stringify(c.introScenes)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);
   need(c.mileCollapse && c.mileCollapse.ok, `歩いた道の 節目：前の 節目の 知らせを 待ちの 列から 取りのぞけない（文面の 頭が ちがう）（${JSON.stringify(c.mileCollapse)}）`);
   need(c.noRivalry && c.noRivalry.ok, `競わない 設計：あおる ことば・勝ち負けが のこっている（${JSON.stringify(c.noRivalry)}）`);

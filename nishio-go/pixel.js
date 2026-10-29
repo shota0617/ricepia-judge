@@ -7752,7 +7752,7 @@ function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マ�
     if (mzSpring.cx === rc && mzSpring.cy === rr) {   // とった
       mzSpring.on = false; mzSpring.until = now + MZ_SPRING_MS; mzSpring.next = now + 45000; mzSpring.got++;
       riceSay('ばね だ！✨', 1600, 'happy');   // 吹き出し（もとは「ばね！ 12秒 生け垣で びよーんと はずむ」。のこり 秒は 時計の 札に 出る）
-      if (!mzSpring.told) { mzSpring.told = true; G.toast('ばねを とると しばらく、生け垣に 当たると 前より 速く はね返るよ。生け垣を うまく つかって 近道しよう'); }
+      if (!mzSpring.told) { mzSpring.told = true; G.toast('ばねの 間は 生け垣で 前より 速く はね返るよ。うまく つかって 近道しよう'); }   // 40文字まで（文字は 少なく。main の 説明を みじかく）
       grainSound(); dirty = true;
     }
     return;

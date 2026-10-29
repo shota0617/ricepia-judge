@@ -3314,7 +3314,7 @@ async function walkTo(page, id) {
   })();
   // 文字は 少なく（運営者の声「文字は できるだけ 減らして」2026-10-28）：遊びの 知らせ・浮かぶ 文字は 40文字まで。安全・エラーの 知らせだけ 長くて よい
   R.checks.shortText = (() => {
-    const long = [], ok = ['乗り物で移動中', 'スポット情報', '保存領域', '生きもの手帳が ぜんぶ', 'あるいて移動では'];
+    const long = [], ok = ['乗り物で移動中', 'スポット情報', '保存領域', '生きもの手帳が ぜんぶ', 'あるいて移動では', '保存できませんでした', '読みこめませんでした'];   // 保存・読みこみの 失敗は 遊びの 知らせで なく、どう すれば よいかまで 書く
     for (const f of ['game.js', 'pixel.js', 'korostyle.js']) {
       const src = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', f), 'utf8');
       for (const m of src.matchAll(/(?:toast|toastAfter|floatText)\((`[^`]*`|'[^']*')/g)) {

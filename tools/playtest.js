@@ -1238,6 +1238,19 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: !!r.skipped || (r.out.every(o => o.pen > 0 && o.pen <= 0.41 && o.e >= 0.2 && !o.stuck && o.same && o.boing >= 1 && o.settled) && r.out[r.out.length - 1].show >= 200) };   // のびた へこみが 0.2秒 以上 見え（これまでは 0.1秒 たらずで もどり、お米の 絵に かくれて 見えなかった）、はなれると ぽよん
   })();
+  // 文字へらし（夜の 改善 7）：ばねを とった ときの 長い 知らせ「ばねの 間は 生け垣で…」は 出さない。かわりに はね返った 1回目から 小さな 緑の きらきら（吹き出しは 2れんぱつ から）
+  R.checks.springQuiet = await (async () => {
+    const txt = fs.readFileSync(path.join(__dirname, '..', 'nishio-go', 'pixel.js'), 'utf8'), toast = /G\.toast\([^)]*ばねの 間は/.test(txt);
+    const r = await page.evaluate(async () => {
+      const M = nishioPixel.maze;
+      if (!M.springBoing) return { why: 'no-api' };
+      await new Promise(res => setTimeout(res, 1600));   // 前の はね返りから 1.5秒 あけて 1回目に する
+      const f0 = M.fxKinds().length, s0 = M.say().log.length;
+      M.springBoing();
+      return { fx: M.fxKinds().length - f0, said: M.say().log.length - s0 };
+    });
+    return { toast, ...r, ok: !toast && r.fx >= 3 && r.said === 0 };
+  })();
   // ばねの わざ（2026-10-27 店主「迷路の壁が伸びて跳ね返って加速するスキル」）：ばねを とると 12秒、生け垣から はなれる ときに 当たった 速さより 速く（1.3倍）はね返る。
   // ふだんは 当たった 速さより おそく はね返る（4割ほど）。わざの 時間が すぎたら もとに もどる
   R.checks.yuruSpring = await (async () => {
@@ -3689,6 +3702,7 @@ async function walkTo(page, id) {
   need(c.mzArrive && c.mzArrive.ok, 'めいろの ゴール（名所・人）に 着いても そのまま ゴールに ならない');
   need(c.mzScare && c.mzScare.ok, 'めいろの かかし（立つ・とると カラスが にげる・さわると おいはらえる）が はたらかない');
   need(c.scareToast && c.scareToast.ok, `かかし：はじめての 知らせが 浮かぶ 文字と 同じ「にげる」を くりかえす（${JSON.stringify(c.scareToast)}）`);
+  need(c.springQuiet && c.springQuiet.ok, `文字へらし：ばねの 長い 知らせが 出る・はね返った 1回目に きらきらが ない（${JSON.stringify(c.springQuiet)}）`);
   need(c.powerWords && c.powerWords.ok, `かかし・ばねを とった ときに 同じ ことを 3か所で 言う（浮かぶ 文字が 長い・札が「〇〇 あと 8秒」で ない。${JSON.stringify(c.powerWords)}）`);
   need(c.shortText && c.shortText.ok, `文字は 少なく：遊びの 知らせ・浮かぶ 文字が 40文字を こえる（${JSON.stringify(c.shortText)}）`);
   need(c.riceBreath && c.riceBreath.ok, `止まって いる お米が すう すう 息を しない（${JSON.stringify(c.riceBreath)}）`);

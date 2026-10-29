@@ -1734,6 +1734,7 @@ const CRITTER_ROWS = {
   misago: ['................', '................', '................', '.......kkk......', '......kwwwk.....', '......kwkNky....', '......kwwwkk....', 'kkkNNNNkwkNNNNkk', 'kNNNNNNkwkNNNNNk', '.kNNNNNkwwkNNNk.', '..kkNNNkwwkNNkk.', '....kkkkwwkkkk..', '.......kwwk.....', '.......kkkk.....', '................', '................'],
   kochidori: ['................', '................', '................', '................', '................', '................', '.......kkk......', '......knnnk.....', '......kkwkkkk...', '....kknnnnk.....', '...knnnnnnnk....', '..knnnnwwwwwk...', '...kkwwwwwwk....', '.....kkkkk......', '......y..y......', '.ssssssssssssss.'],
   shijimi: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kkNNNNkk....', '...kNNGNNGNNk...', '..kNGNNGGNNGNk..', '..kNNNGNNGNNNk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................'],
+  uminina: ['................', '................', '................', '................', '.......kk.......', '......kNNk......', '......kNnk......', '.....kNnNnk.....', '.....kNnnNk.....', '....kNnNnNnk....', '....kNnnNnNk....', '...kknnNnnNkk...', '....kkkkkkkk....', '.ssssssssssssss.', 'ssssssssssssssss', '................'],
 };
 const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
@@ -2033,6 +2034,42 @@ function yuamiStep(hx, by, u, now) {
   }
   ctx.globalAlpha = 1;
   y.drawn++; dirty = true;
+}
+// お米つぶの ほりだし（horidashi.js）：一色・幡豆の 海べで 止まって じっと すると、お米が 砂を ほり（砂が とぶ）、干潟の 貝を ほり当てる。貝が 砂から 顔を 出し、お米が ひと言。
+// 7秒ごとに つぎの 貝。動くか ねむりだすと 消える。西尾市の 中だけ・ゲームボーイの4色では 出さない・ゆあみ〈吉良〉が 出ている ときは 出さない。お米の うしろに 描く
+const horidashi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function horidashiStep(hx, by, u, now) {
+  const h = horidashi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur) { h.cur = null; h.said = false; h.chk = 0; return; }
+  const H = window.NISHIO_HORIDASHI;
+  if (!h.cur || now - h.t0 >= H.CYCLE) {
+    if (!h.cur && (roll.idle < H.STILL || now < h.chk)) return;
+    h.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? H.pick(c, h.last) : null;
+    if (!d) { h.cur = null; return; }
+    h.cur = d; h.last = d.id; h.t0 = now; h.said = false;
+    if (G.track) G.track('kome_horidashi', { id: d.id });
+  }
+  const age = now - h.t0, dig = Math.min(1, age / H.DIG), t = calmMotion ? 0 : now / 1000;
+  const px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  px(-18, 11, 36, 4, '#e8cf94'); px(-16, 12, 8, 1, '#c9ad70'); px(4, 13, 10, 1, '#c9ad70');   // 干潟の 砂
+  if (dig < 1) {   // ほっている：砂が ぱっぱっと とぶ
+    for (let i = 0; i < 6; i++) {
+      const ph = (t * 2.2 + i / 6) % 1, sd = i % 2 ? 1 : -1;
+      ctx.globalAlpha = 1 - ph;
+      px(sd * (10 + ph * 8) - 1, 10 - Math.sin(ph * Math.PI) * 9, 2.5, 2.5, i % 3 ? '#e8cf94' : '#c9ad70');
+    }
+    ctx.globalAlpha = 1;
+    px(-11, 10, 5, 2, '#c9ad70'); px(7, 10, 5, 2, '#c9ad70');   // ほった あとの もりあがり
+  } else {   // ほり当てた：貝が 砂から ぴょこっと 顔を 出す
+    if (!h.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(h.cur.say, 2600, 'happy'); h.said = true; }
+    roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+    const up = Math.min(1, (age - H.DIG) / 400), s = Math.round(u * 1.2 * 16), bob = calmMotion ? 0 : Math.sin(t * 5) * 0.8;
+    px(8, 11, 14, 3, '#e8cf94');
+    ctx.drawImage(critterSprites[h.cur.id], Math.round(hx + 7 * u), Math.round(by + (-2 - bob - (1 - up) * -8) * u), s, s);
+    px(7, 12, 16, 3, '#e8cf94');   // 砂から 半分 出て いる ように 手前を 砂で かくす
+  }
+  h.drawn++; dirty = true;
 }
 // お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
 // 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
@@ -6964,6 +7001,7 @@ function frame(now) {
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
+    horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
     nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ

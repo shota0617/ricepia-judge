@@ -90,6 +90,7 @@
   .go.line small { font-size: 12px; font-weight: normal; opacity: .9; }
   .challenge { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff3c4; color: #4a3600; font-weight: bold; line-height: 1.5; }
   .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
+  .easy .e { font-style: normal; }
   .easy input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--green); }
   .go.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
   .times button { padding: 6px 4px; }
@@ -146,8 +147,11 @@
   body.calm .seasons button { font-size: 0; }
   body.calm .card h1 { font-size: 0; }
   body.calm .card h1::before { content: '🚜'; font-size: 34px; }
-  body.calm #start .tag, body.calm #start .card > p, body.calm #start label.easy:not(#detailLabel), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
-  body.calm #detailLabel .detailWords { display: none; }
+  body.calm #start .tag, body.calm #start .card > p, body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
+  body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
+  body.calm #start label.easy input { margin-top: 0; }
+  body.calm #start label.easy > span { font-size: 0; line-height: 0; }
+  body.calm #start label.easy .e { font-size: 20px; line-height: 1; }
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
   #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
@@ -236,14 +240,14 @@
       <button data-a="smile"><span>😊</span>にっこり<i>★★★★★</i></button>
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
-    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
-    <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
-    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b>🌸 レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
-    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b>⛰️ 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
-    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b>⛽ エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
-    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
-    <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
-    <label class="easy" id="detailLabel"><input type="checkbox" id="detailBox"><span><b>📖<span class="detailWords"> くわしい説明</span></b><span class="detailWords">：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></span></label>
+    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b><i class="e">👣</i> はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
+    <label class="easy"><input type="checkbox" id="checkBox"><span><b><i class="e">🔧</i> はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
+    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b><i class="e">🌸</i> レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
+    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b><i class="e">⛰️</i> 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
+    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b><i class="e">⛽</i> エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
+    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b><i class="e">🪨</i> はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
+    <label class="easy"><input type="checkbox" id="easyBox"><span><b><i class="e">🔰</i> かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
+    <label class="easy" id="detailLabel"><input type="checkbox" id="detailBox"><span><b><i class="e">📖</i> くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
     <p class="small" id="progText">読みこみ中…</p>

@@ -826,6 +826,20 @@ async function walkTo(page, id) {
     const d = P.drop; P.setWet(0);
     return { n: d.n - n0, at: d.at, ok: d.n > n0 && !!d.at && !d.at.every(v => Number.isInteger(v)) };
   });
+  // 知らせが 出て いる ときに 窓（本のできごと など）が 開いたら、知らせは すっと 消える（0.3秒 うすれる 間 窓の 題名に かぶって いた）
+  R.checks.toastSnap = await page.evaluate(async () => {
+    const G = nishioGo, B = window.NISHIO_BOOKEV, el = document.getElementById('toast'), wait = ms => new Promise(r => setTimeout(r, ms));
+    if (!B) return { ok: false, why: 'no-bookev' };
+    const ev = B.EVENTS.find(e => !e.game && !(G.bookEvHas && G.bookEvHas(e.id)));
+    if (!ev) return { ok: true, skipped: 'no-event' };
+    G.toast('🧭 テストの 知らせ'); await wait(450);
+    const before = +getComputedStyle(el).opacity;
+    if (!B.open(ev)) return { ok: true, skipped: 'not-opened', before };
+    await new Promise(r => requestAnimationFrame(r));
+    const op = +getComputedStyle(el).opacity;
+    B.close(); await wait(100);
+    return { before, op, ok: before > 0.9 && op < 0.05 };
+  });
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）
   R.checks.smoothShadow = await page.evaluate(async () => {
     const P = nishioPixel, E = CanvasRenderingContext2D.prototype, keep = E.ellipse, cv = document.getElementById('pxCanvas'), hits = [];
@@ -3316,6 +3330,7 @@ async function walkTo(page, id) {
   need(c.comboTen && c.comboTen.ok, `ころころ ×10 で 文字が 出る（お米の よこの ×N と 同じ ことを 2か所に 書いている）か、大きな きらきらが 出ない（${JSON.stringify(c.comboTen)}）`);
   need(c.ricePerf && c.ricePerf.ok, `お米を 描くのが 重すぎる（1回 6ミリ秒 より 長い）（${JSON.stringify(c.ricePerf)}）`);
   need(c.dropSmooth && c.dropSmooth.ok, `水の しずくが なめらかに 描けていない（${JSON.stringify(c.dropSmooth)}）`);
+  need(c.toastSnap && c.toastSnap.ok, `窓が 開いても 知らせが すぐ 消えず、窓の 上に かぶる（${JSON.stringify(c.toastSnap)}）`);
   need(c.smoothShadow && c.smoothShadow.ok, `お米の 影が なめらかに 描けていない（点の 四角の まま）（${JSON.stringify(c.smoothShadow)}）`);
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.babyRice && c.babyRice.ok, `お米の 赤ちゃんの かわいさ：目の きらっ・あくびが ない（${JSON.stringify(c.babyRice)}）`);

@@ -2600,7 +2600,8 @@ function toastHold() {
   const t = $('toast');
   if (!t.classList.contains('show')) return;
   if (Date.now() - (toast.at || 0) < 1500 && !toastQ.includes(t.textContent)) toastQ.push(t.textContent);
-  t.classList.remove('show'); clearTimeout(toastTimer);
+  // 窓より 手前に ある ので、0.3秒 かけて うすれる 間 窓の 題名に かぶって 見えた（自分で 遊んで 分かった：「本のできごと」の 題が かくれた）。窓が 開く ときは すっと 消す
+  t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = ''; clearTimeout(toastTimer);
 }
 // 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
 // 重なるときは 下の札の上に 重ねて出す（low）。ゴールの人に 着いたときは 知らせが 先に出て あとから 窓が開くので、窓の 大きさが かわった ときにも 見る

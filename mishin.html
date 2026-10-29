@@ -91,6 +91,7 @@ button.sound{position:absolute;right:max(12px,env(safe-area-inset-right,0px));bo
 body.menu button.sound{bottom:auto;top:calc(10px + env(safe-area-inset-top,0px))}
 body.menu .overlay{top:calc(60px + env(safe-area-inset-top,0px));padding-top:4px;background:linear-gradient(180deg,rgba(19,26,46,0),#131a2e 22px,#131a2e 45%,#2c2321)} /* 上の 端は ぼかす（板壁と ぷつっと 切れない） */ /* 音ボタンの 下から（下へ 送っても 字が かくれない） */
 button.sound[aria-pressed="false"]{color:var(--ink-dim);border-color:rgba(169,176,199,.5)}
+body:not(.menu) button.sound .fx{display:none}
 button.sound:focus-visible{outline:3px solid var(--ito);outline-offset:2px}
 button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px solid var(--kraft);font:700 18px var(--body);padding:10px 16px}
 .steps{position:absolute;left:0;right:0;top:calc(10px + env(safe-area-inset-top,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none;display:flex;flex-direction:column;gap:6px}
@@ -1693,7 +1694,7 @@ $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);
 document.documentElement.style.setProperty('--onigiri', 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DOODLE.grow(4)) + '")');
 for(const el of document.querySelectorAll('[data-d]')){ const k = el.dataset.d; el.innerHTML = k==='ine' ? DOODLE.grow(2) : k==='suzume' ? DOODLE.suzume(false) : k==='komeBlink' ? '<span class="blink">' + DOODLE.kome('smile') + DOODLE.kome('blink') + '</span>' : DOODLE.kome(k==='komeSleep' ? 'sleep' : k==='komeWow' ? 'wow' : k==='komeJoy' ? 'joy' : 'smile'); el.setAttribute('aria-hidden','true'); }
-function showSound(){ const b = $('soundBtn'); b.textContent = soundOn ? '音・ふるえ あり' : '音・ふるえ なし'; b.setAttribute('aria-pressed', String(soundOn)); }
+function showSound(){ const b = $('soundBtn'); b.innerHTML = '音<span class="fx">・ふるえ</span> ' + (soundOn ? 'あり' : 'なし'); /* 遊ぶ 間は「音 あり」だけ（袋の 右下に かかる ところを へらす。139周目） */ b.setAttribute('aria-pressed', String(soundOn)); }
 $('soundBtn').addEventListener('click', ()=>{ soundOn = !soundOn; try{ localStorage.setItem('mishin-sound', soundOn ? 'on' : 'off'); }catch(e){} if(soundOn) audio.ensure(); audio.setOn(soundOn); showSound(); });
 showSound();
 $('season').hidden = !BRANDS.some(br => shinmaiSeason(today(), br)); // 新米の きせつ だけ タイトルに 稲穂の POP

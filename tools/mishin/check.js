@@ -579,6 +579,11 @@ const CHECKS = {
     const a = await p.textContent('#soundBtn'); await p.click('#soundBtn'); const c = await p.textContent('#soundBtn');
     await p.reload(); await p.waitForTimeout(200); const d = await p.textContent('#soundBtn');
     ok(a.includes('あり') && c.includes('なし') && d.includes('なし'), '音・ふるえの 切りかえを おぼえる', { a, c, d });
+    // 139周目：遊ぶ 間は「音 なし／あり」だけ（袋の 右下に かかる ところを へらす）。メニューでは「音・ふるえ」。読み上げの 名前は かわらない
+    const sw = await p.evaluate(async () => { const B = document.getElementById('soundBtn'), menu = { w: B.getBoundingClientRect().width, t: B.innerText };
+      document.getElementById('title').hidden = true; KB.start(); await new Promise(r => setTimeout(r, 200)); const play = { w: B.getBoundingClientRect().width, t: B.innerText, label: B.getAttribute('aria-label') };
+      return { menu, play }; });
+    ok(/ふるえ/.test(sw.menu.t) && sw.play.t.replace(/\s+/g,' ').trim() === '音 なし' && sw.play.w <= 100 && sw.play.label === '音・ふるえ', '遊ぶ 間の 音ボタンは みじかく（袋に かかる ところを へらす）', sw);
   },
   // 重さ：CPU 4倍 おそく して、引いている 間の 1コマの 時間（ヘッドレスは GPU なし。目安）
   async perf(b){

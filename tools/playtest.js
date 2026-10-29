@@ -1093,26 +1093,32 @@ async function walkTo(page, id) {
       const P = nishioPixel, D = P.donguri, r0 = { x: P.roll.x, y: P.roll.y }, wait = ms => new Promise(res => setTimeout(res, ms)), t0 = document.getElementById('toast').textContent;
       const shut = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
       const season = D.season();
-      P.nakama.clear(); P.mushi.clear(); D.put(r0.x - 1.6, r0.y, 1.6, 0); await wait(900);
-      const a = D.d, rolled = !!a && a.x > r0.x - 1.55;
+      // めいろの 道の 上で、お米から 1.6マスの 所（とちゅうも 通れる 向き）に 置いて、お米の ほうへ 転がす（お米の となりは 生け垣の ことが ある）
+      const dirs = [0, 1, 2, 3, 4, 5, 6, 7].map(i => [Math.cos(i * Math.PI / 4), Math.sin(i * Math.PI / 4)]), dir = dirs.find(([u, v]) => [1.6, 1.2, 0.8].every(k => !D.blocked(r0.x + u * k, r0.y + v * k))) || dirs[0];
+      P.nakama.clear(); P.mushi.clear(); D.put(r0.x + dir[0] * 1.6, r0.y + dir[1] * 1.6, -dir[0] * 1.6, -dir[1] * 1.6); await wait(900);
+      const a = D.d, rolled = !!a && Math.hypot(a.x - r0.x, a.y - r0.y) < 1.55;
       await wait(2000);
-      const b = D.d, stopped = !!b && b.v < 0.2, apart = !!b && Math.hypot(b.x - P.roll.x, b.y - P.roll.y) > 0.6;   // お米に かさならない
+      const b = D.d, stopped = !!b && b.v < 0.2, apart = !!b && Math.hypot(b.x - P.roll.x, b.y - P.roll.y) > 0.6, free = !!b && !D.blocked(b.x, b.y);   // お米に かさならない・生け垣に 入らない
       await wait(D.LIFE - 2700);
       const gone = !D.d;
+      D.put(r0.x + 0.3, r0.y, 0, 0); await wait(700);   // お米に かさなって 落ちたら、外へ おし出す（Codex の 指摘）
+      const pushed = !!D.d && Math.hypot(D.d.x - P.roll.x, D.d.y - P.roll.y) >= 0.69;
+      D.clear();
       let tree = null;   // 森・公園の となりの 通れる マスを 近くで さがして、転がして みる
       for (let dy = -14; dy <= 14 && !tree; dy++) for (let dx = -14; dx <= 14 && !tree; dx++) {
         const x = Math.floor(r0.x) + dx, y = Math.floor(r0.y) + dy, c = P.codeAt(x, y);
-        if (c !== P.C.W && c !== P.C.P && !P.blockedAt(x + 0.5, y + 0.5) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([u, v]) => [P.C.W, P.C.P].includes(P.codeAt(x + u, y + v)))) tree = { x, y };
+        if (c !== P.C.W && c !== P.C.P && !P.blockedAt(x + 0.5, y + 0.5) && !D.blocked(x + 0.5, y + 0.5) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([u, v]) => [P.C.W, P.C.P].includes(P.codeAt(x + u, y + v)))) tree = { x, y };
       }
       D.clear(); D.ready();   // テストで 置いた あとの 待ち（60秒）を といて、自然に 落ちるかを 見る
       let spawn = false;
-      if (tree) { for (let i = 0; i < 12 && !spawn; i++) { shut(); P.rollPut(tree.x + 0.5, tree.y + 0.5, i % 2 ? 2.5 : -2.5, 0); await wait(80); spawn = !!D.d; } }
+      let spawnGap = null;
+      if (tree) { for (let i = 0; i < 12 && !spawn; i++) { shut(); P.rollPut(tree.x + 0.5, tree.y + 0.5, i % 2 ? 2.5 : -2.5, 0); await wait(80); spawn = !!D.d; if (spawn) spawnGap = Math.hypot(D.d.x - P.roll.x, D.d.y - P.roll.y); } }   // 落ちた 所は お米から はなれて いる
       P.rollPut(r0.x, r0.y, 0, 0); D.clear();
       const toast = document.getElementById('toast').textContent !== t0 && /どんぐり/.test(document.getElementById('toast').textContent);
-      return { season, rolled, stopped, apart, gone, tree: !!tree, spawn, toast };
+      return { season, rolled, stopped, apart, free, gone, pushed, tree: !!tree, spawn, spawnGap: spawnGap && +spawnGap.toFixed(2), toast };
     });
     await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ...r, ok: r.season && r.rolled && r.stopped && r.apart && r.gone && (!r.tree || r.spawn) && !r.toast };
+    return { ...r, ok: r.season && r.rolled && r.stopped && r.apart && r.free && r.gone && r.pushed && (!r.tree || (r.spawn && r.spawnGap >= 0.6)) && !r.toast };
   })();
   // 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29）：10月は なす。お米の うしろへ ころころ ついて きて、しばらく すると ぴょんと はねて 消える。文字は 出さない
   R.checks.nakama = await (async () => {
@@ -1140,6 +1146,8 @@ async function walkTo(page, id) {
     const r = await page.evaluate(async () => {
       const P = nishioPixel, U = P.mushi, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), p0 = nishioGo.state.points, t0 = document.getElementById('toast').textContent;
       const kind = U.kind();
+      const shut0 = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
+      shut0(); await wait(150);   // 前の テストで ごはんつぶを ひろって ごほうびの 窓が 出て いると、地図の 上の 虫は 止まる（moved: false で ときどき 落ちた）
       P.suzume.clear(); P.neko.clear(); U.put(r0.x + 2.5, r0.y - 1);
       await wait(800);
       const flying = !!U.m && !U.m.flee, moved = !!U.m && Math.hypot(U.m.x - r0.x - 2.5, U.m.y - r0.y + 1) > 0.05;   // ふらふら 動く

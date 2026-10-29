@@ -882,8 +882,9 @@ async function walkTo(page, id) {
       P.suzume.clear(); P.neko.clear(); U.put(r0.x + 2.5, r0.y - 1);
       await wait(800);
       const flying = !!U.m && !U.m.flee, moved = !!U.m && Math.hypot(U.m.x - r0.x - 2.5, U.m.y - r0.y + 1) > 0.05;   // ふらふら 動く
-      const m = U.m; P.rollPut(m.x - 1.2, m.y, 3, 0);
-      let flee = false; for (let i = 0; i < 15 && !flee; i++) { await wait(60); flee = !!U.m && U.m.flee; }
+      // とんぼは とび まわるので、毎回 いまの 所の すぐ 手前に 置きなおして 転がす（1回 置く だけ では、生け垣で 止まったり とんぼが はなれたり して 近づけない ことが あった）
+      const shut = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };   // 窓が 出て いる 間は お米が 止まる（ごはんつぶを ひろうと ごほうびが 出る ことが ある）
+      let flee = false; for (let i = 0; i < 15 && !flee; i++) { shut(); const m = U.m; if (!m) break; P.rollPut(m.x - 0.8, m.y, 3, 0); await wait(60); flee = !!U.m && U.m.flee; }
       let gone = false; for (let i = 0; i < 30 && !gone; i++) { await wait(100); gone = !U.m; }
       P.rollPut(r0.x, r0.y, 0, 0);
       const toast = document.getElementById('toast').textContent !== t0 && /とんぼ|ちょう/.test(document.getElementById('toast').textContent);

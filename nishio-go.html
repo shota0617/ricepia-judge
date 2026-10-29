@@ -251,6 +251,10 @@
       <span><b>🧭 めいろの おたすけ</b><small>オンにすると、めいろで ゴールへの 道を 水色の 線で いつも 出し、行き止まりに ✕ を 出します。はじめは めいろの ゴールに 3回 着くまで 自動で オンです。</small></span>
       <input type="checkbox" id="mzHelpToggle"/>
     </label>
+    <label class="row">
+      <span><b>📱 傾きの 強さ</b><small>スマホを 傾けて 転がす ときの 強さ。びんかん は 少し 傾けるだけで よく 転がり、やさしい は 大きく 傾けないと 速く なりません（盤の めいろも 同じ）。はじめは ふつう です。</small></span>
+      <select id="tiltSens" style="flex:none"><option value="15">びんかん</option><option value="20" selected>ふつう</option><option value="26">やさしい</option></select>
+    </label>
     <div class="row">
       <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
       <button type="button" id="koroOpen" class="btn" style="flex:none">ずかん</button>

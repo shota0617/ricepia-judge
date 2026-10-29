@@ -306,7 +306,7 @@ let spotsLoading = null;
 function loadSpots(force) {
   if (!spotsLoading) {
     spotsLoading = doLoadSpots(force)
-      .catch(() => toast('スポットの読み込みに失敗しました。もう一度お試しください。'))
+      .catch(() => toast('名所を うまく 読みこめませんでした。少し まってから、もう一度 ためしてね。'))
       .finally(() => { spotsLoading = null; refreshNearby(); });
     refreshNearby();
   }
@@ -753,8 +753,8 @@ function startGps() {
       if (!gpsError) track('geo_error', { code: err.code });
       gpsSlow = err.code === 3;   // 時間切れは、そのまま待てば届くことがある（待つ間の まちメモは続ける）
       gpsError = err.code === 1
-        ? '位置情報の利用が許可されていません。ブラウザの設定で「位置情報」を許可してから再読み込みしてください（「🎮 操作して移動」なら位置情報なしで遊べます）。'
-        : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報を取得できませんでした。電波の良い屋外でお試しください。';
+        ? '位置情報が つかえない ようです。ブラウザの設定で「位置情報」を許可してから、ページを 読みこみなおしてね（「🎮 操作して移動」なら 位置情報なしで 遊べます）。'
+        : err.code === 3 ? '位置情報の取得に時間がかかっています…' : '位置情報が とれませんでした。電波のよい 外で、もう一度 ためしてね。';
       refreshNearby();
     },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 });
@@ -2574,7 +2574,7 @@ function toast(msg) {
   if (toastBlocked()) { if (!toastQ.includes(msg)) toastQ.push(msg); return; }   // あそびかたの 札・店頭の クーポン画面・シェアの 窓・めいろの「🏁 つぎの ゴール」の 上にも 重ねない（とじてから）
   if (toastQ.length) toastFlush();   // 待たせた ものが のこって いれば あとに 出す（札の 途中で 地図を はなれた など）
   if (toastShowing(msg)) { toast.at = Date.now(); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs()); return; }   // いま出ている：のばすだけ
-  el.textContent = msg; el.classList.remove('wlow'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow：せかいちずの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
+  el.textContent = msg; el.classList.remove('wlow', 'wside', 'wfloor'); el.classList.add('show'); toast.at = Date.now(); toastDodge();   // wlow・wside・wfloor：せかいちず・めいろの ゴールの 札を よける（pixel.js の worldToastDodge。新しい 知らせごとに 見なおす）
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), toastMs());
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）

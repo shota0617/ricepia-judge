@@ -87,7 +87,7 @@ description: 米袋の ミシン糸 ゲーム「ミシン糸 一本どり」（m
    - 袋の 形や 紙を かえる ときは `build_bag.py`（`--fast` で 荒く 試す → 本番は 4分 ほど。バックグラウンドで 回して その間に ほかを）→ `pack_bag.py`。
 5. **確かめる**
    - `node tools/mishin/check.js`（ぜんぶ ✔ に なる まで）
-   - `node tools/mishin/playtest.js --runs 10 --goals`（順位：expert ＞ regular ≧ human ＞ novice、greedy・careful・guesser は human より 点が 低い こと。ずるい 打ち方 flick・alwaysL・noKnot も human より 低い こと（さいごに ✔／✖ が 出る）。expert の 1回は 2分 くらいまで）
+   - `node tools/mishin/playtest.js --runs 10 --goals`（順位：expert ＞ regular ≧ human ＞ novice、greedy・careful・guesser は human より 点が 低い こと。ずるい 打ち方 flick・alwaysL・noKnot・noKnotH も human より 低い こと（さいごに ✔／✖ が 出る）。画面の 幅は `--w 768 --h 1024` などで かえられる（72 周目。幅で 順位が かわらないか）。expert の 1回は 2分 くらいまで）
    - `node tools/mishin/shots.js` と `node tools/mishin/shots.js 360 640`・`844 390` の `sheet.png` を 目で 見る（字の 重なり・はみ出し・かくれ）。結果の「もう一回」は 低い 横向き（568×320・667×375・740×360）でも 画面の 中に。字 200% は 幅 195px（`deviceScaleFactor` 4）で かわりに 見る。
    - 新しい しぐさや 直しを 足したら、その 確かめを `check.js` に 足し、直す 前の 版で 落ちる ことも 見る（`git show HEAD:mishin.html > <スクラッチ>/old.html` → `MISHIN_FILE=<スクラッチ>/old.html node tools/mishin/check.js <名前>`）
 6. **記録**：`docs/mishin.md` に「### N 周目（テーマ）」。何が どう だったか → どう 直したか、出典、ボットの 表（数が かわった とき）、作らなかった もの。

@@ -23,8 +23,9 @@ const BOTS = {
   flick:   { face:1.00, read:1.00, flick:{ px:60, gap:0.14 }, stroke:9999, react:0, tug:true }, // 小さく すばやく はじく 連打
   alwaysL: { face:0.95, read:0.90, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, alwaysL:true }, // 端を 読まず いつも 左（human と 同じ 手）
   noKnot:  { face:1.00, read:1.00, target:0.80, noise:0.06, react:99, stroke:260, tug:true }, // きつい目でも ゆるめない
+  noKnotH: { face:0.95, read:0.90, target:0.65, noise:0.15, react:99, bell:true, stroke:200, tug:true }, // human と 同じ 手で きつい目を 気に しない（73周目）
 };
-const CHEATS = ['flick', 'alwaysL', 'noKnot'];
+const CHEATS = ['flick', 'alwaysL', 'noKnot', 'noKnotH'];
 
 async function main(){
   const browser = await chromium.launch();

@@ -275,7 +275,7 @@
     <label class="easy" id="detailLabel"><input type="checkbox" id="detailBox"><span><b><i class="e">📖</i> くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
-    <p class="small" id="progText">読みこみ中…</p>
+    <p class="small" id="progText">⏳ トラクターを 田んぼへ はこんでいるよ…</p>
     <button class="go ico" id="bStart" data-i="▶" disabled>▶ 運転する</button>
     <p class="small" id="rotateHint">📱 スマホは横向きにすると広く見えます</p>
     <div class="how" id="keysBox">
@@ -624,7 +624,7 @@ const prog = { t: 0, f: 0 };
 function showProg() {
   const p = Math.round((prog.t + prog.f) / 2 * 100);
   $('progBar').style.width = p + '%';
-  $('progText').textContent = p < 100 ? `読みこみ中… ${p}%（はじめは 8MB ほど）` : '準備ができました';
+  $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 8MB ほど）` : '🌱 じゅんび できたよ';
 }
 function load(url, key) {
   return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { if (e.total) { prog[key] = e.loaded / e.total; showProg(); } }, ng));

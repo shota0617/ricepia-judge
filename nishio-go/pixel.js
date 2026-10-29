@@ -2115,6 +2115,34 @@ function meguriStep(hx, by, u, now) {
   ctx.globalAlpha = 1;
   m.drawn++; dirty = true;
 }
+// お米つぶの つんつん（tsun.js）：お米を タップすると、ぴょんと はねて、いる 町と 月に 合った 西尾の 名物が あたまの 上に ぽんと 飛び出し、ふわっと のぼって 消える。お米が ひと言。
+// つづけて タップすると その 町の 名物が じゅんばんに 出る。西尾市の 外では 何も 出さない。0.9秒より 早い タップは 数えない
+const tsun = { cur: null, last: '', t0: 0, lock: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function tsunTap(now) {   // タップが お米に 当たった：出せたら true
+  if (!window.NISHIO_TSUN || !LU || rp.x === null || worldMode || driving || now < tsun.lock) return false;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  const d = window.NISHIO_TSUN.next({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, tsun.last);
+  if (!d) return false;
+  tsun.cur = d; tsun.last = d.id; tsun.t0 = now; tsun.lock = now + 900;
+  if (roll.h <= 0) { roll.hv = 2; roll.h = 0.001; }   // ぴょん
+  roll.happyT = Math.max(roll.happyT, 1.6);
+  riceSay(d.say, 2200, 'happy');
+  if (G.track) G.track('kome_tsun', { id: d.id });
+  return true;
+}
+function tsunStep(hx, by, u, now) {
+  const t = tsun;
+  if (!t.cur) return;
+  const age = now - t.t0, s = age / window.NISHIO_TSUN.MS;
+  if (worldMode || driving || s >= 1) { t.cur = null; return; }
+  const rise = (calmMotion ? 0.4 : Math.sqrt(s)) * 10 * u, q = Math.max(1, Math.round(u * 0.9));   // ぽんと 出て、だんだん ゆっくり のぼる
+  ctx.globalAlpha = Math.min(1, age / 120) * (s > 0.75 ? (1 - s) * 4 : 1);
+  drawNakama(Math.round(hx), Math.round(by - 13 * u - rise), q, t.cur.id, calmMotion ? 0 : Math.sin(age / 140) * 0.25);
+  ctx.globalAlpha = 1;
+  t.drawn++; dirty = true;
+}
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -6858,6 +6886,7 @@ function frame(now) {
       otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
       kasaStep(hx, by, u, now);   // 雨の 日は 名物の かさを さす（kasa.js）
       meguriStep(hx, by, u, now);   // 夜は 名物が お米の まわりを めぐる（meguri.js）
+      tsunStep(hx, by, u, now);   // お米を つんつんすると 名物が 飛び出す（tsun.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に
@@ -9631,6 +9660,7 @@ cv.addEventListener('click', e => {
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
   const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
+  if (G.demo && rp.x !== null && !driving && howtoEl.hidden && Math.hypot(x - (cv.width / 2 + heroScr.x), y - (fieldCy + heroScr.y)) < T * 0.8 && tsunTap(performance.now())) return;   // お米を つんつん（tsun.js）
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }
   const rt = rivalTile();

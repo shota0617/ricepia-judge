@@ -424,6 +424,10 @@ const CHECKS = {
     // 101周目：タイムアタックの 時計は はじめて さわって から
     const ck = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); for (let i=0;i<120;i++) KB.step(1/60); const t0 = S.time; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<60;i++) KB.step(1/60); const t1 = S.time; KB.manual = false; return { t0, t1 }; });
     ok(ck.t0 === 30 && ck.t1 < 29.5, 'タイムアタックの 時計は はじめて さわって から へる', ck);
+    // 108周目：キーの 人は Esc で タイムアタックを おわれる・「もう一回」の 名前は きまって いる（小さい 字は 読ませない）
+    const esc = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); document.dispatchEvent(new KeyboardEvent('keydown', { key:'Escape', bubbles:true })); for (let i=0;i<150;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100));
+      const sm = document.querySelector('#againBtn small'); return { res: !document.getElementById('result').hidden, smHidden: !sm || sm.getAttribute('aria-hidden') === 'true' }; });
+    ok(esc.res && esc.smHidden, 'キーの 人は Esc で タイムアタックを おわれる・「もう一回」の 小さい 字は 読ませない', esc);
     // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
     const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(/あと 1つで きょうの 目標/.test(near), '目標が あと 1つの ときは ヒントで「あと 1つで きょうの 目標」', near);

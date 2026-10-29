@@ -109,7 +109,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say b,.talk>.say strong{color:#b3261e}
 #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
 #againBtn small{display:block;font:700 13px var(--body);margin-top:1px;letter-spacing:0;opacity:.85;white-space:nowrap}
-@media (max-height:500px){#againBtn small{display:inline;margin:0 0 0 8px}} @media (max-width:340px){#againBtn small{font-size:12px}} @media (max-width:259px){#againBtn small{white-space:normal}}
+@media (max-height:500px){#againBtn small{display:inline;margin:0 0 0 8px}} @media (max-width:340px){#againBtn small{font-size:12px}} @media (max-width:259px){#againBtn small,#result h1 small{white-space:normal;letter-spacing:0}}
 @media (max-width:340px),(max-height:500px){#result h1 small{white-space:nowrap;font-size:11px}} /* 「らいすぴあでの きょうの しごと」を 1行に（見出しが 2行に なって「もう一回」を 下げない。107周目） */
 #coinH:focus-visible{outline:3px solid #3e2a1a;outline-offset:4px;border-radius:6px}
 @media (max-width:259px){#coinDone .talk>.who:not(.num),#result .talk>.who{display:none} #coinDone .talk>.say::before,#coinDone .talk>.say::after,#result .talk>.say::before,#result .talk>.say::after{display:none} .nw{white-space:normal}} /* 字 200% など せまい 画面：まとめ・結果の 顔を けして 字に 幅を（96周目） */
@@ -222,7 +222,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
   <button type="button" id="soundBtn" class="sound" aria-pressed="true" aria-label="音・ふるえ">音 あり</button>
   <div id="timeDelta"></div>
 
-  <div id="loading" role="status" hidden><span data-d="komeBlink" class="d-load"></span><span>袋を よういして います…</span></div>
+  <div id="loading" role="status" hidden><span data-d="komeBlink" class="d-load"></span><span aria-hidden="true">袋を よういして います…</span><span id="loadingText" class="sr"></span></div>
   <div class="overlay" id="title">
     <div class="panel">
       <div class="noren" aria-hidden="true"><i class="rod"></i><div class="cloth"><b>ら</b><b>い</b><b>す</b><b>ぴ</b><b>あ</b></div></div>
@@ -260,7 +260,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       <button class="go" id="practiceAgain" type="button">もう一度 れんしゅう</button>
       <button class="go sub" id="toGame" type="button">ゲームで遊ぶ<span class="nw">（二本指で つまむ）</span></button>
       <div class="talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">取れない ときは <b>白糸だけ ハサミで 切って</b> 赤を 引く 方法も あります（農家の 説明）。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。紙くずも ごみ箱へ お願いします。</p></div>
-      <div class="talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">玄米30kgは らいすぴあの 店頭・ドライブスルーで どうぞ。食べる 分だけ、24時間 いつでも 精米 できます。<a href="https://ricepia.jp/#coin-seimai" target="_blank" rel="noopener">コイン精米所の 案内</a></p></div> <!-- ricepia.jp の コイン精米所の 案内の ことば（106周目） -->
+      <div class="talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">玄米30kgは らいすぴあの 店頭・ドライブスルーで どうぞ。食べる 分だけ、24時間 いつでも 精米 できます。<a href="https://ricepia.jp/#coin-seimai" target="_blank" rel="noopener">コイン精米所の 案内<small>（新しい タブで ひらきます）</small></a></p></div> <!-- ricepia.jp の コイン精米所の 案内の ことば（106周目） -->
     </div>
   </div>
 
@@ -411,7 +411,8 @@ function startGame(practice){
   track(practice ? 'mishin_practice_start' : 'mishin_game_start');
   S.practice = practice; S.bannerMax = 0; drawMsg.said = new Set(); /* 読み上げは 1回の ゲームで 同じ 文 1回（84周目） */
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
-  S.pinchHint = practice ? 0 : 2.5; S.touched = false; S.idleT = 0; /* 時計は はじめて さわってから（101周目） */ /* タイムアタックの はじめは 二本指の 見本を 出す（99周目） */
+  S.pinchHint = practice ? 0 : 2.5; S.touched = false; S.idleT = 0;
+  if(!practice && kbUser) setTimeout(() => srSay('タイムアタックは 二本指で 遊ぶ ゲームです。キーボードでは れんしゅうを どうぞ。Esc で おわれます。'), 300); /* 108周目 */ /* 時計は はじめて さわってから（101周目） */ /* タイムアタックの はじめは 二本指の 見本を 出す（99周目） */
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true; $('loading').hidden = true; coinAuto = false;
   setTimeout(measureHud, 0); // HUD が 出てから はかる
   ui.hud.hidden = practice; ui.steps.hidden = !practice;
@@ -486,13 +487,14 @@ function endGame(){
     S.bags>bestBags && bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : '', /* 更新の ときだけ */
   ].filter(Boolean).join('<br/>');
   { const sub = S.newBest ? 'じこベスト更新です！' : best>0 && S.bags>0 && best>S.score ? `${innerWidth <= 340 ? 'ベスト' : 'じこベスト'}まで あと ${(best-S.score+1).toLocaleString()}点` : nr && S.bags>0 ? `${innerWidth <= 340 ? '' : 'つぎの '}ランクまで あと ${(nr[0]-S.score).toLocaleString()}点` : ''; /* せまい 画面は みじかく（1行に 入れる。107周目） */
-    $('againBtn').innerHTML = 'もう一回' + (sub ? `<small>${sub}</small>` : ''); } /* つぎの ねらいを ボタンの 中に 1行（1画面目に。103周目） */
+    $('againBtn').innerHTML = 'もう一回' + (sub ? `<small aria-hidden="true">${sub}</small>` : ''); /* 名前は「もう一回」（#best と 二重に 読まない。108周目） */ } /* つぎの ねらいを ボタンの 中に 1行（1画面目に。103周目） */
   const gold = [...ui.best.querySelectorAll('b, .up')].map(x=>x.textContent).join('、'); /* 金の 行と 目標の 達成も 読む */
   srSay(`おわり。てんすう ${S.score.toLocaleString()}、あけた袋 ${S.bags}、きょうの 腕まえ ${rankOf(S.score)}` + (gold ? '。' + gold : '') + (fresh.size ? '。目標 達成' : ''));
 }
 function tipOf(zone){
   if(zone<45 && S.wrongs<3 && S.fronts<2 && S.tangles<2 && S.bags>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。'; /* 読みの まちがいが 2回 くらいなら、速さの ほうを 先に */
   const z0 = S.bags===0, n = z0 ? 1 : 2; /* 1袋も あけて いない ときは 1回 でも その わけを */
+  if(z0 && kbUser && !S.fronts && !S.wrongs && !S.tangles) return 'キーボードでは <b>れんしゅう</b>で どうぞ（←・→キーで つまめます）。'; /* 108周目 */
   if(z0 && !S.fronts && !S.wrongs && !S.tangles) return 'まずは <b>二本指</b>で、赤い糸が 白い輪に ささっている 端を つまむ ところから どうぞ。';
   if(S.fronts>=n) return '白い糸が<b>まっすぐ</b>だけなら表です。袋をタップして まわしましょう（反対の面へ）。';
   if(S.wrongs>=n) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始めです。反対の端（縫い始め）から 引くと からまります。';
@@ -1810,6 +1812,7 @@ cv.addEventListener('pointerup', fingerUp); cv.addEventListener('pointercancel',
 // タイムアタックは 二本指（運営者の 決まり）なので キーボードでは 遊べない
 let keyHold = 0;
 document.addEventListener('keydown', e=>{
+  if(S.mode==='play' && !S.practice && e.key==='Escape' && !S.ending){ S.touched = true; S.time = Math.min(S.time, 0.01); return; } /* キーの 人は Esc で タイムアタックを おわれる（108周目） */
   if(S.mode!=='play' || !S.practice || e.ctrlKey || e.metaKey || e.altKey) return;
   if(e.key===' ' && e.target && e.target.closest && e.target.closest('button')) return; // ボタンの スペース（「やめて 手順を 見る」など）は ボタンに。矢印は ゲームに
   const b=S.bag; if(!b) return;
@@ -1855,7 +1858,7 @@ function frame(now){
 try{ matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', e=>{ KB.calm = e.matches; }); }catch(e){}
 resize(); requestAnimationFrame(frame);
 let coinAuto = location.hash === '#coin'; // 自分で ボタンを 押したら 自動では はじめない（まとめ画面を 消さない）
-if(coinAuto){ if(!bagReady()) $('loading').hidden = false; whenBag(()=>{ $('loading').hidden = true; if(coinAuto) startPractice(); }); } // コイン精米機の QR から（袋の 絵が とどいて から）
+if(coinAuto){ if(!bagReady()){ $('loading').hidden = false; $('loadingText').textContent = '袋を よういして います…'; } /* role=status は 中身が かわると 読む（108周目） */ whenBag(()=>{ $('loading').hidden = true; if(coinAuto) startPractice(); }); } // コイン精米機の QR から（袋の 絵が とどいて から）
 try{ document.fonts.ready.then(()=>{ bagStore.key = null; }); document.fonts.addEventListener('loadingdone', ()=>{ bagStore.key = null; }); }catch(e){} // フォントが あとから とどいたら 袋の 字を かきなおす
 })();
 </script>

@@ -91,7 +91,10 @@
     if (cur || !q.length) return;
     const n = q[0];
     if (!n.keep && Date.now() - n.t0 > 90000) { q.shift(); pump(); return; }   // keep（はじめての あいさつ）は すてない   // 1分半 出せなかった 話は すてる（古い 行き先の 話を あとから しない）
-    if (n.busy && n.busy()) { clearTimeout(pump.t); pump.t = setTimeout(pump, 500); return; }
+    if (n.busy && n.busy()) { n.calm = 0; clearTimeout(pump.t); pump.t = setTimeout(pump, 500); return; }
+    // ほかの 窓が とじて 0.6秒 なにも 開かないのを 見てから 話す（夜の 改善 8・通しで 遊んで 分かった：あそびかたを とじた とたん、
+    // あいさつが 出て「はじめまして。あ」まで 打った ところで、つづけて 開いた「はじめの1枚を えらぼう」に よけて 消えた。2つの 窓が 0.4秒 かさなって ちらついた）。はかるのは performance.now（Date は 止められる ことが ある）
+    if (n.busy) { const now = performance.now(); if (!n.calm) n.calm = now; const left = 600 - (now - n.calm); if (left > 0) { clearTimeout(pump.t); pump.t = setTimeout(pump, left); return; } }
     cur = q.shift(); page = 0;
     back = document.activeElement;
     box.hidden = false;

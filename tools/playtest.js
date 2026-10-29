@@ -2078,8 +2078,24 @@ async function walkTo(page, id) {
     const picked = await w.page.evaluate(() => { const g = nishioGo.state.guide; return g ? g.name : ''; });
     const closed = !(await st()).open;
     const off = await w.page.evaluate(() => { const t = document.getElementById('komeTalkToggle'); t.click(); const r = !nishioKomeTalk.on() && !nishioKomeTalk.say(['テスト']); t.click(); return r && nishioKomeTalk.on(); });
-    const hello = /はじめまして/.test(seen[0] || '');
+    const hello = /^はじめ/.test(seen[0] || '') && seen.some(t => /はじめまして/.test(t));   // さいしょに 話すのは あいさつ（文字を 打つ とちゅうで 見る ことが あるので、言い切った ことは あとの こまで 見る）
     R.checks.komeTalk = { firstWhileHowto: s0.open && s0.howto, seen, ch, want, picked, closed, off, ok: !(s0.open && s0.howto) && hello && ch.length >= 2 && !!want && picked === want && closed && off };
+    await w.ctx.close();
+  }
+  // お米つぶの あいさつは「はじめの1枚を えらぼう」の 窓と かさならない（夜の 改善 8・通しで 遊んで 分かった：あそびかたを とじた とたんに
+  // あいさつが 出て、つづけて 開いた 1枚えらびの 窓と 0.4秒 かさなり、打ちかけで 消えた）。ほかの 窓が とじて 0.6秒 待ってから 話す
+  {
+    const w = await newPage(browser, { howto: true, kome: true });
+    await w.page.goto(URL); await w.page.waitForTimeout(1500);
+    await w.page.click('#meiroBtn'); await w.page.waitForTimeout(2000);
+    await w.page.evaluate(() => { const b = document.getElementById('howtoOk'); if (b && !document.getElementById('howto').hidden) b.click(); });
+    let both = 0, kt = 0, info = 0;
+    for (let i = 0; i < 20; i++) {
+      const o = await w.page.evaluate(() => { const k = document.getElementById('komeTalk'); return { k: !!k && !k.hidden, i: !document.getElementById('pxInfo').hidden }; });
+      if (o.k && o.i) both++; if (o.k) kt++; if (o.i) info++;
+      await w.page.waitForTimeout(100);
+    }
+    R.checks.ktNoFlash = { both, kt, info, ok: both === 0 };
     await w.ctx.close();
   }
   // あそびかた：はじめて「🌀 傾けて めいろ」を 押した人に 1回だけ 出る。読んでいる 間は お米が 転がらず、「わかった！」で とじると 転がる。2回目は 出ない。せっていから もう一度 見られる
@@ -3725,6 +3741,7 @@ async function walkTo(page, id) {
   need(c.mzHelpAfterBanner && c.mzHelpAfterBanner.ok, 'おたすけの 知らせが「🏁 つぎの ゴール」の 大きな 文字に 重なって 出る（ゴールの 名前が かくれる）');
   need(c.mzHelp && c.mzHelp.ok, 'めいろの おたすけ（はじめは 自動で 道しるべと ✕・せっていで オフ・ゴール 3回で 自動は おしまい）が はたらかない');
   need(c.cityPage && c.cityPage.ok, '西尾市むけの 提案資料（city.html）の 数字・画面写真・QR が 出ないか、ドット絵の 枚数が ゲームと ちがう');
+  need(c.ktNoFlash && c.ktNoFlash.ok, `お米つぶの あいさつが「はじめの1枚」の 窓と かさなって 出る（${JSON.stringify(c.ktNoFlash)}）`);
   need(c.komeTalk && c.komeTalk.ok, `お米つぶの おはなし：あいさつ→「つぎは どこへ 行く？」→ えらぶと 行き先が かわる・せっていで オフ（${JSON.stringify(c.komeTalk)}）`);
   need(c.howtoFirst && c.howtoFirst.ok, 'はじめて めいろに 入った人に「あそびかた」が 出ないか、とじても 転がらないか、2回目も 出る（または せっていから 見られない・読んでいる 間の ごほうびが うしろに 重なる）');
   need(c.firstOnField && c.welcomeChestM !== null && c.welcomeChestM <= 150, 'はじめての人が歩く地図から始まらないか、近くに ようこそ たからばこ がない');

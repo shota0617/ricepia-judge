@@ -1895,7 +1895,7 @@ const FARMER = (() => {
     let t;
     if (art) {
       const issue = art.over >= 1 ? '白線から はみ出しとるな。白線の手前で 上げりん'
-        : art.fill < 0.95 ? 'まだ 黄色い所が 残っとるに。最後まで 耕しりん'
+        : art.fill < 0.95 ? (PLAY.up ? 'じかんだな。つぎは 5 分で 黄色い所まで 耕しりん' : 'まだ 黄色い所が 残っとるに。最後まで 耕しりん')
         : art.unten < 99.5 ? '絵はええけど 運転が あらいな。ゆっくり まっすぐ やりん'
         : art.kirei < 99.5 ? '白線の きわを もうちょい きれいに そろえりん'
         : '絵も 運転も ええじゃん。つぎは アシストなしで やってみりん';   // どこも へっていない：点が低いのは 🔰 アシストの 8 割だけ
@@ -1909,7 +1909,10 @@ const FARMER = (() => {
       const turnWhy = st.turnsDown * 3 >= Math.max(st.levee, st.safety) * 2 ? (SHIRO ? '回るとき 速さを落とすのを' : '回るとき 上げるのを') : st.levee >= st.safety ? '畦に ぶつけんように 回るのを' : '坂を ゆっくり まっすぐ 通るのを';
       const weak = [['まっすぐ走るのを', P.straight / 30], ['となりの跡への 重ねかたを', P.overlap / 25], ['速さを', P.spd / 20], [turnWhy, P.turn / 25]].sort((a, b) => a[1] - b[1])[0];
       const lost = weak[1] < 0.995;                   // どこかで 点がへったか（へっていなければ、点が低いのは 🔰 アシストの 8 割だけ）
-      t = area > 0.2 * 4 * HX * HZ ? 'まだ だいぶ 残っとるじゃん！ 最後まで 耕しりん'   // 田んぼの 2 割より多く 耕し残し
+      t = !SCORE.ready() ? (PLAY.up ? 'きょうは ここまでだな。つぎは もうちょっと 耕してみりん' : 'まだ ほとんど 耕しとらんじゃん！ 最後まで 耕しりん')   // 点数の つかない 回
+        : PLAY.up && total >= 75 ? 'きょうは ここまでだな。' + (lost ? weak[0] + ' 直しゃあ 一人前だ' : 'ええ 運転だったわ。のこりは また 頼むわ')   // 5 分で おわった：残りは しからない
+        : PLAY.up ? 'きょうは ここまでだな。' + (lost ? weak[0] + ' 練習しりん' : 'のこりは また 頼むわ')
+        : area > 0.2 * 4 * HX * HZ ? 'まだ だいぶ 残っとるじゃん！ 最後まで 耕しりん'   // 田んぼの 2 割より多く 耕し残し
         : total >= 90 ? (area >= 1 ? '上手いもんだ。けど 四すみの耕し残しは 外周を回って 仕上げりん' : '上出来だら！ これなら 来年も 頼むわ')
         : !lost ? '運転は ええじゃん。つぎは アシストなしで やってみりん'
         : total >= 75 ? 'まあまあだな。' + weak[0] + ' 直しゃあ 一人前だ'
@@ -8308,12 +8311,13 @@ function doneTalk() {
   doneTalked = true;
   let n = 1;
   try { n = (+localStorage.getItem('tractorPlays') || 0) + 1; localStorage.setItem('tractorPlays', String(n)); } catch (e) {}
-  $('doneSay').textContent = n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！ らいすぴあの LINE なら お米の おしらせも とどくよ` : 'おつかれさま！ たのしかったね。らいすぴあの LINE で お米の おしらせも うけとれるよ';
+  $('doneSay').textContent = (PLAY.up ? '5 ふん たったね。' : '') + (n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！ らいすぴあの LINE なら お米の おしらせも とどくよ` : 'おつかれさま！ たのしかったね。らいすぴあの LINE で お米の おしらせも うけとれるよ');
 }
 function finish() {
   S.done = true;
   if (ART.on) return finishArt();
-  $('doneText').textContent = `${{ haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season]}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
+  const fieldName = { haru: '春の田んぼ', aki: '秋の稲刈りあとの田んぼ', shirokaki: '代かきの田んぼ' }[season], pctNow = Math.min(100, Math.floor(tilledCount / workCount * 100));
+  $('doneText').textContent = PLAY.up ? `5 分 たちました。${fieldName}の ${pctNow}% を 耕しました。おつかれさまでした！` : `${fieldName}を ${fmtTime(S.elapsed)} で耕しました。おつかれさまでした！`;
   const sm = SCORE.summary();
   // 耕し残し：田んぼの中（畦から 50cm より内）で耕していないます目を数え、地図に赤でしるす（本物は外周を 3 周して、やり残しなく仕上げる）
   let left = 0;
@@ -8325,7 +8329,7 @@ function finish() {
     const inner = Math.abs(x) < HX - 0.5 && Math.abs(z) < HZ - 0.5;
     if (!t && inner) left++;
     const o = ((NX - 1 - i) * NZ + j) * 4;
-    const c = t ? [92, 70, 50] : inner ? [214, 58, 46] : [150, 140, 110];
+    const c = t ? [92, 70, 50] : inner ? (PLAY.up ? [206, 190, 140] : [214, 58, 46]) : [150, 140, 110];   // 5 分で おわった ときの まだの 所は しからない 色
     img.data.set([...c, 255], o);
   }
   const tmp = document.createElement('canvas'); tmp.width = NZ; tmp.height = NX; tmp.getContext('2d').putImageData(img, 0, 0);
@@ -8333,9 +8337,9 @@ function finish() {
   const area = left * CELL * CELL;
   const trkM = Math.round(TR.remaining(c => tilledMask[c]));   // 耕した所の上に、いま残っているタイヤの跡（4 本の車輪の跡の長さの合計）
   let tiltA = 0; for (let c = 0; c < NX * NZ; c++) if (tilledMask[c] && Math.abs(TILTY[c]) > 0.01) tiltA += CELL * CELL;   // 土が出たり 深すぎたりする所（はしの 1cm 以上）
-  const total = Math.round(sm.total * (EASY.used ? 0.8 : 1));   // 🔰 かんたんアシストを使った回は 8 割
-  $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${total} 点</b>${EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
-    `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる（角は バックで寄せてから 下げて前へ）' : ''}</span>` +
+  const scored = SCORE.ready(), total = scored ? Math.round(sm.total * (EASY.used ? 0.8 : 1)) : 0;   // 🔰 かんたんアシストを使った回は 8 割。10m² 耕すまでは 点数なし（走らないで 5 分 まっても 満点に ならない）
+  $('doneScore').innerHTML = FARMER.verdict(total, area, false) + `<b>${scored ? total + ' 点' : '— 点（10m² くらい 耕すと 点数が つく）'}</b>${scored && EASY.used ? `（🔰 かんたんアシストを使ったので 8 割。アシストなしなら ${sm.total} 点）` : ''}<br><span class="small">${sm.text}</span>` + (sm.tips.length ? '<br><span class="small">' + sm.tips.map(t => '・' + t).join('<br>') + '</span>' : '') +
+    (PLAY.up ? `<br><span class="small">まだ 耕していない所（うすい 色）：${area.toFixed(0)}m²。のこりは また こんど</span>` : `<br><span class="small">耕し残し（赤）：${area < 0.05 ? 'なし' : area.toFixed(1) + 'm²'}${area >= 1 ? '。四隅や畦ぎわは、最後に外周を回って仕上げる（角は バックで寄せてから 下げて前へ）' : ''}</span>`) +
     (STONES.hits ? `<br><span class="small">爪が石に当たった：${STONES.hits} 回。耕す前に石を拾っておくと、爪がいたまない</span>` : '') +
     (RAMPDMG.told ? '<br><span class="small">出入口の坂を 崩した。坂では 作業機を 地面に当たらない高さにして、ハンドルを大きく切らずに まっすぐ通る</span>' : '') +
     (tiltA >= 1 ? `<br><span class="small">傾いたハローで かいたままの所：約 ${Math.round(tiltA)}m²（片側が浅く 土が出る。ハローを付けかえたら 平らな所で傾きを合わせる）</span>` : '') +
@@ -8348,7 +8352,7 @@ function finish() {
     (season === 'aki' && SNAILS.count.up + SNAILS.count.crushed > 0 ? `<br><span class="small">ジャンボタニシ：つぶした 約 ${SNAILS.count.crushed} 匹・掘り起こした 約 ${SNAILS.count.up} 匹（ゆっくり走り、浅く耕すほど よくつぶれる）</span>` : '') + heardLine() + '<br>';
   $('doneScore').appendChild(cv);
   const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];
-  LOOP.result(total, ART.photo(null, `🚜 ${label} ${total} 点（${fmtTime(S.elapsed)}）`), `トラクターで${label}をしたよ。${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`);
+  LOOP.result(total, ART.photo(null, `🚜 ${label} ${total} 点（${PLAY.up ? '5 分で ' + pctNow + '%' : fmtTime(S.elapsed)}）`), `トラクターで${label}をしたよ。${PLAY.up ? '5 分で ' + pctNow + '% 耕して ' : ''}${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`);
   $('done').classList.remove('hidden'); doneTalk();
 }
 
@@ -8359,12 +8363,12 @@ function finishArt() {
   const r = ART.score(), url = ART.photo(r.final + ' 点' + (EASY.used ? ' 🔰' : ''));
   $('artBox').classList.add('hidden');
   $('doneTitle').textContent = '🎨 田んぼアートができました！';
-  $('doneText').textContent = `お題「${ART.name}」を ${fmtTime(S.elapsed)} で描きました。ドローンで真上から撮った写真です。`;
+  $('doneText').textContent = PLAY.up ? `5 分 たちました。お題「${ART.name}」の ${Math.round(r.fill * 100)}% まで 描きました。ドローンで真上から撮った写真です。` : `お題「${ART.name}」を ${fmtTime(S.elapsed)} で描きました。ドローンで真上から撮った写真です。`;
   $('artImg').src = url; $('artImg').classList.remove('hidden');
   $('artBtns').classList.remove('hidden');
   const f = r.final, msg = f >= 85 ? 'まるで本物の田んぼアート！' : f >= 70 ? '上から見ると ちゃんと' + ART.name + 'に見える' : f >= 45 ? 'もう少し。白線にそって ていねいに' : '白線の内側を、耕幅ずつならべて耕そう';
   const sm = SCORE.summary(), tips = [];
-  if (r.fill < 0.95) tips.push('のこりの黄色い所も耕すと、でき が上がる');
+  if (r.fill < 0.95) tips.push(PLAY.up ? '5 分で 黄色い所まで 耕しきると、でき が上がる（白線の 中を 耕幅ずつ まっすぐ 往復すると はやい）' : 'のこりの黄色い所も耕すと、でき が上がる');
   if (r.ready && r.kirei < 80) tips.push('白線の手前でロータリーを上げると、はみ出さない（はみ出した土はもどせない）');
   tips.push(...sm.tips);
   $('doneScore').innerHTML = FARMER.verdict(f, 0, r) + `<b>${f} 点</b>${EASY.used ? '（🔰 かんたんアシストを使ったので 8 割）' : ''}<br><span class="small">${msg}</span>` +
@@ -8629,6 +8633,11 @@ const BADGE = (() => {
     g.strokeStyle = '#a88f6c'; g.lineWidth = 1.6;
     for (const a of [-0.75, 0.75]) { g.beginPath(); g.arc(Math.sin(a) * 40, -Math.cos(a) * 40, 7.5, 0, 7); g.fill(); g.stroke(); }   // ふわふわの 手
     g.restore();
+    if (!S.done) {                                 // のこりの 時間：窓の ふちの 輪（12 時から 時計まわりに へる。のこり 1 分で だいだい色）
+      const f = PLAY.left; g.lineCap = 'round'; g.lineWidth = 7;
+      g.strokeStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.arc(C, C, 71, 0, 7); g.stroke();
+      if (f > 0) { g.strokeStyle = f * PLAY.LIMIT <= 60 ? '#e8963a' : '#7cb85a'; g.beginPath(); g.arc(C, C, 71, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); g.stroke(); }
+    }
     const l = S.done ? 'おつかれさま' : sleep ? 'ひとやすみ' : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
     if (l !== label) { label = l; stEl.textContent = l; }
   }
@@ -8636,11 +8645,26 @@ const BADGE = (() => {
   return { draw, peek, get label() { return label; } };
 })();
 
+// ---- 1 回の あそびは 5 分：走りはじめてから（メニュー・操作の表を 開いているあいだと、タブを はなれているあいだは 数えない）
+// 5 分たつと「きょうは ここまで」で おわりの画面へ。あと 1 分で 運転する キャラクターが 知らせる。上の 丸い 窓の ふちの 緑の 輪が
+// のこりの 時間（へっていき、のこり 1 分で だいだい色）。速さ・まっすぐ・重ね・旋回の 点数は 耕した 広さに よらないので、5 分で 終わっても くらべられる
+const PLAY = (() => {
+  const LIMIT = 300;
+  let t = 0, warned = false, up = false;
+  function update(dt) {                           // 本当の 時間（早送りでも ふえない）。sim では 進めない（通しの テストは 5 分より 長く 走る）
+    if (S.done) return;
+    t += dt;
+    if (!warned && t >= LIMIT - 60 && (DETAIL ? (toast('⏳ あと 1 分で おしまい', 4), true) : SAY.note('あと 1 ぷんで おしまいだよ'))) warned = true;
+    if (t >= LIMIT) { up = true; finish(); }
+  }
+  return { update, LIMIT, get t() { return t; }, get left() { return Math.max(0, LIMIT - t) / LIMIT; }, get up() { return up; } };
+})();
+
 // ---- まわす ----
 let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0;
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // 5 分の 時計は 本当の 時間（おそい 機械でも 5 分で おわる）
   last = now;
   if (!P.Rotary) { renderer.render(scene, camera); return; }
   const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;
@@ -8649,6 +8673,7 @@ function frame(now) {
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
   if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); KAMO.update(dt); ZARI.update(dt); GENGO.update(dt); KANA.update(dt); KABU.update(dt); DOJO.update(dt); HACHI.update(dt); MEDAKA.update(dt); MUKU.update(dt, S.rotDown && S.rotPos < 0.08); } } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
+  if (running) PLAY.update(realDt);
   syncAudio(running);
   updateCamera(dt);
   updateSound(dt);
@@ -8721,7 +8746,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, PLAY, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

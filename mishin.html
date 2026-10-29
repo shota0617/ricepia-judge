@@ -317,14 +317,14 @@ function riceYear(d, brand){ const [m, dd] = HARVEST[brand] || [7, 21]; // 銘�
   return (d.getMonth() > m || (d.getMonth()===m && d.getDate()>=dd)) ? d.getFullYear() : d.getFullYear()-1; }
 function shinmaiSeason(d, brand){ return riceYear(d, brand) === d.getFullYear(); }
 function makeBag(k){
-  const N = Math.min(18, 8 + Math.round(k*1.2));
+  const N = k>=11 ? 15 + Math.floor(rnd()*4) : Math.min(18, 8 + Math.round(k*1.2)); /* 11袋目からは 15〜18目で ゆらす（同じ 袋が つづかない。80周目） */
   // 表と裏：1袋目は 裏（すぐ ほどける）、2袋目は 表（裏返す 練習）、あとは 半々
   const face = k===0 ? 'back' : k===1 ? 'front' : (rnd()<0.5 ? 'front' : 'back');
   // ほどき始め：たいてい 裏から見て左。5袋目からは ときどき右
   const start = k<3 ? 'L' : (rnd() < 1 - Math.min(0.35, 0.1 + 0.03*k) ? 'L' : 'R'); // たいてい 左。後の 袋ほど 右が まじる（最大 35%）
   const single = k>=8 && rnd()<0.15; // 1本糸の袋：どちらからでも ほどける
   const knots = new Set();
-  const nk = k<2 ? 0 : Math.min(4, 1 + Math.floor((k-2)/3)); // 後の 袋ほど きつい目が ふえる（さいだい 4。52周目）
+  const nk = k<2 ? 0 : k>=11 ? 3 + (rnd()<0.5 ? 1 : 0) : Math.min(4, 1 + Math.floor((k-2)/3)); /* 11袋目からは きつい目 3〜4 */ // 後の 袋ほど きつい目が ふえる（さいだい 4。52周目）
   let guard=0;
   while(knots.size<nk && guard++<80){ const i = 3 + Math.floor(rnd()*(N-5));
     if(k>=12 && knots.size===nk-2 && !knots.has(i-1) && !knots.has(i) && !knots.has(i+1) && !knots.has(i+2) && i+1<N-1){ knots.add(i); knots.add(i+1); } // 13袋目から：きつい目が 2つ ならぶ 所（2つで さいごの 2つ。合わせて 4まで）

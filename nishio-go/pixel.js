@@ -1915,6 +1915,18 @@ function drawNakama(x, y, u, kind, ang) {   // ang：ころがる 回り（四�
   } else if (kind === 'carnation') {   // カーネーション（幡豆）：ピンクの 花びらと 緑の くき
     draw([[-3, -2, 6, 3, '#f06a9a'], [-2, -3, 4, 1, '#f06a9a'], [-1, 1, 2, 1, '#3f9b3c'], [-1, 2, 2, 1, '#3f9b3c']]);
     px(-1, -1, 2, 1, '#ffd0e0');
+  } else if (kind === 'unadon') {   // うな丼（一色）：赤い どんぶり・上に 照りの ある うなぎ
+    draw([[-3, 0, 6, 3, '#b03a2a'], [-2, 3, 4, 1, '#b03a2a'], [-3, -2, 6, 2, '#6a3a1a'], [-2, -3, 4, 1, '#6a3a1a']]);
+    px(-2, -2, 2, 1, '#a8642a');
+  } else if (kind === 'parfait') {   // 抹茶パフェ（西尾）：ガラスの 器・抹茶の 緑と クリームの 白
+    draw([[-2, 0, 4, 3, '#e8f4f0'], [-1, 3, 2, 1, '#e8f4f0'], [-3, -2, 6, 2, '#7fc04a'], [-2, -3, 4, 1, '#fff4e0']]);
+    px(-2, 1, 4, 1, '#a8d878');
+  } else if (kind === 'kakigori') {   // かき氷（西尾）：氷の 山に 抹茶の 緑の みつ
+    draw([[-3, -1, 6, 3, '#e8f4f0'], [-2, -2, 4, 1, '#e8f4f0'], [-2, 2, 4, 1, '#9ab8c8']]);
+    px(-2, -2, 4, 1, '#7fc04a'); px(-3, -1, 2, 1, '#a8d878');
+  } else if (kind === 'chasoba') {   // 茶そば（西尾）：茶色い せいろ・緑の めん
+    draw([[-3, 1, 6, 2, '#6a4a2a'], [-3, -1, 6, 2, '#8fbf6a'], [-2, -2, 4, 1, '#8fbf6a']]);
+    px(-1, -1, 1, 1, '#4e9a3a');
   } else {   // 大豆：うす黄色の まるい つぶ
     draw([[-2, -2, 4, 4, '#e8d08a'], [-3, -1, 6, 2, '#e8d08a']]);
     px(-1, -1, 1, 1, '#fff4c8'); px(1, 1, 1, 1, '#b89a50');
@@ -1965,6 +1977,41 @@ function yumeStep(hx, by, u, now, sleepy) {
   drawNakama(Math.round(cx), Math.round(cy), q, yume.cur.id, 0);
   ctx.restore();
   yume.drawn++; dirty = true;
+}
+// お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
+// 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
+const GOCHISO_MS = 6500;
+const gochiso = { cur: null, last: '', next: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function gochisoMunch(now) {   // もぐもぐ：からだが ぷるぷる ちぢむ（0〜0.05）
+  const age = now - gochiso.t0;
+  return !gochiso.cur || calmMotion || age < 900 || age > GOCHISO_MS - 600 ? 0 : Math.abs(Math.sin(age / 150)) * 0.05;
+}
+function gochisoStep(hx, by, u, now) {
+  const g = gochiso;
+  const still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (g.cur && !still) { g.cur = null; return; }   // 動き出した：食べかけで おしまい
+  if (!g.cur) {
+    if (!still || roll.idle < 1 || roll.idle > 5 || !window.NISHIO_GOCHISO || rp.x === null || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until + 1500) return;
+    if (!g.next) g.next = now + 30000;   // はじめは 30秒 あそんでから
+    if (now < g.next) return;
+    const d = window.NISHIO_GOCHISO.pick({ city: here.city, town: here.town, month: new Date().getMonth() + 1 }, g.last);
+    if (!d) return;
+    g.cur = d; g.last = d.id; g.t0 = now; g.next = now + 150000 + Math.random() * 90000;
+    riceSay('いただきます', 1500, 'happy');
+    if (G.track) G.track('kome_gochiso', { id: d.id });
+  }
+  const age = now - g.t0;
+  if (age > GOCHISO_MS) {   // ごちそうさま：ここで おなかいっぱい（すぐ ねむらない）
+    const d = g.cur; g.cur = null; roll.idle = 0;
+    if (!mapCovered()) riceSay(d.say, 2400, 'happy');
+    return;
+  }
+  if (age < GOCHISO_MS - 1500) roll.happyT = Math.max(roll.happyT, 0.3);   // 食べている あいだは にこにこ顔
+  const eat = Math.max(0, Math.min(1, (age - 900) / (GOCHISO_MS - 1500))), q = Math.max(1, Math.round(u * 0.9 * (1 - 0.75 * eat)));   // だんだん へる
+  ctx.globalAlpha = Math.min(1, age / 400);
+  drawNakama(Math.round(hx + 17 * u), Math.round(by + 13 * u - 4 * q), q, g.cur.id, 0);
+  ctx.globalAlpha = 1;
+  g.drawn++; dirty = true;
 }
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
@@ -6670,6 +6717,7 @@ function frame(now) {
     if ((roll.prevIdle || 0) > 12 && roll.idle < roll.prevIdle && !calmMotion) roll.wakeT = now;   // ねむって いた お米が おきた
     roll.prevIdle = roll.idle;
     { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }   // おきたら「のびー」と 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
+    { const mc = gochisoMunch(now); if (mc) { sy *= 1 - mc; sx *= 1 + mc * 0.5; } }   // 名物食を もぐもぐ（gochiso.js）
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる
     else if (t0 && t1 && roll.v > 2) {   // 速いと、進む向きに 少し のびる
@@ -6704,6 +6752,7 @@ function frame(now) {
       }
       drawNimotsu(hx, by, u, now, mood === 'sleepy');
       yumeStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
+      gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

@@ -21,6 +21,7 @@ const CHECKS = {
     const src = fs.readFileSync(FILE.replace('file://',''), 'utf-8'), scripts = [...src.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => m[1]);
     const bad = []; scripts.forEach((sc, i) => { try { new Function(sc); } catch (e) { bad.push(i + ': ' + e.message); } });
     ok(bad.length===0, 'script の 構文', bad);
+    const lb = scripts.filter(sc => /\(\?<[=!]/.test(sc)).length; ok(lb===0, '後読み (?<=) を 使わない（Safari 16.4 より 前で script ごと 止まる。87周目）', lb);
   },
   // れんしゅう（#coin）：3袋を KB の 手で 通して、まとめが 出る
   async practice(b){
@@ -388,6 +389,8 @@ const CHECKS = {
     // 84周目（見えにくさ 5）：あいた 袋は「白糸は 自然に ぬけます」も 言う・まとめと 結果では キャンバスを 読まない・字 200%（幅 195）
     const dn = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'一本どり！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
     ok(/一本どり/.test(dn) && /白糸は 自然に ぬけます/.test(dn), 'れんしゅうの あいた 袋で「白糸は 自然に ぬけます」も 帯に 出る', dn);
+    const dn2 = await p.evaluate(() => { KB.startPractice(); const S = KB.S; S.bag.slide = 0; KB.step(1/60); S.bag.phase = 'pull'; S.bag.done = true; S.bag.open = 0; S.msg = { text:'あきました！', kind:'ok', t:0.1, life:2 }; KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(document.getElementById('stepNow').textContent)))); });
+    ok(/白糸は 自然に ぬけます/.test(dn2), '一本どりで ない ときも「白糸は 自然に ぬけます」が 帯に 出る', dn2);
     const ah = await p.evaluate(() => { KB.start(); const S = KB.S; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ res: !document.getElementById('result').hidden, cv: document.getElementById('cv').getAttribute('aria-hidden') })))); });
     ok(ah.res && ah.cv === 'true', '結果の 間は キャンバス（前の 袋の 文）を 読み上げない', ah);
     await p.setViewportSize({ width:195, height:422 }); await p.waitForTimeout(100);

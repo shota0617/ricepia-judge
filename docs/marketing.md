@@ -64,7 +64,7 @@
 | `friend_bonus` | 友だちのシェアから来た人が、はじめて遊んで +20pt をもらった（シェアから増えた人の数） |
 | `campaign_landing`・`campaign_bonus`・`campaign_link` | キャンペーンのリンクから来た・当店チェックインのボーナス・くわしいページへ |
 | `sponsor_link` | 協賛スポットのサイトへ進んだ |
-| `line_add` | 当店の LINE の友だち追加（常連さまポイント）を押した（from：game-card 当店の窓／game-ending 殿堂入り）。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
+| `line_add` | 当店の LINE の友だち追加（常連さまポイント）を押した（from：game-card 当店の窓／game-ending 殿堂入り／mishin-coin ミシン糸の れんしゅうの まとめ／mishin-result ミシン糸の 結果）。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
 | `shop_stamp` | 当店に来た日の来店スタンプ（n：何こめ。3・5・10こで +100・+200・+500pt） |
 | `coupon_get`・`coupon_use` | とくてん（クーポン）と交換した・お店で使用済みにした |
 | `code_make`・`code_load` | ひきつぎの あいことばを出した・あいことばで続けた（機種変更などで遊び続けた人の数） |

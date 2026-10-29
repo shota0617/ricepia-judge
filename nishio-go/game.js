@@ -2019,7 +2019,7 @@ function setGuide(g) {
 // オフの 人（せってい）には false を かえす＝いままでどおりの 知らせを 出す
 const KT = window.nishioKomeTalk;
 const ktOn = () => !!(KT && KT.on());
-const ktBusy = () => toastBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+const ktBusy = () => winBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
   || ['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden);   // きろく・とくてん・せってい を 開いている 間は 地図に もどるまで よける
 function ktAskGuide(lead, mood) {
   if (!ktOn()) return false;
@@ -2646,7 +2646,8 @@ if (window.MutationObserver) new MutationObserver(ms => {   // イベントの �
 }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
 // めいろの「🏁 つぎの ゴール」の 札（pixel.js の mzNextOn）
 function pxBusy() { try { return !!(window.nishioGo && nishioGo.toastBlock && nishioGo.toastBlock()); } catch (e) { return false; } }
-function toastBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy() || ktOpen(); }
+function toastBlocked() { return winBlocked() || ktOpen(); }
+function winBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy(); }   // おはなし（ktOpen）を のぞいた 窓。おはなしの「まつ」判定（ktBusy）は こちら（自分を 見て 出たり 消えたり しない。Codex の 指摘）
 // あいちのかおりちゃんの おはなしの 間は 知らせを 待たせる（自分で 遊んで 分かった：「🧭 水色の 線が…」が おはなしの わくの 上に かぶった）
 function ktOpen() { const k = document.getElementById('komeTalk'); return !!k && !k.hidden; }
 function toastFlush() { if (!toastBlocked()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓・つぎの ゴールの 札を とじたとき

@@ -783,13 +783,14 @@ async function walkTo(page, id) {
       KT.say([{ t: 'テストの あいさつ', pic: G.INTRO_SCENES[0] }]);
       let box = null; for (let i = 0; i < 20 && !(box && !box.hidden); i++) { await wait(150); box = document.getElementById('komeTalk'); }
       const pic = box && box.querySelector('.kt-pic'), shown = !!box && !box.hidden, picOk = !!pic && !pic.hidden && /art\/intro\//.test(pic.getAttribute('src') || '');
+      let flick = 0; for (let i = 0; i < 12; i++) { await wait(100); if (box.hidden) flick++; }   // 出した あと 1.2秒、消えたり しない（おはなしが 自分を「ほかの 窓」と 見て 0.4秒ごとに 出たり 消えたり していた。Codex の 指摘）
       G.toast('🧪 テストの 知らせ'); await wait(250);
       const held = !(t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ');
       KT.close(); let after = false; for (let i = 0; i < 20 && !after; i++) { await wait(200); after = t.classList.contains('show') && t.textContent === '🧪 テストの 知らせ'; }
       t.classList.remove('show'); KT.setOn(was);
-      return { shown, picOk, held, after };
+      return { shown, picOk, held, after, flick };
     });
-    return { n: list.length, bad, howto, kt, ok: list.length >= 12 && !bad.length && /art\/intro\//.test(howto.scene || '') && /url\(/.test(howto.bg || '') && kt.shown && kt.picOk && kt.held && kt.after };
+    return { n: list.length, bad, howto, kt, ok: list.length >= 12 && !bad.length && /art\/intro\//.test(howto.scene || '') && /url\(/.test(howto.bg || '') && kt.shown && kt.picOk && kt.held && kt.after && kt.flick === 0 };
   })();
   // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめての 人が 開くと、はじめの 画面の ボタンを 待たずに 地図の めいろで 転がる
   // （あそびかたの 札が 出る）。「あるいて遊ぶ」の ボタンと、せっていの 移動の しかたの 切りかえは ない。前に あるいて移動だった 人も ころころに

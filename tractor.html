@@ -147,11 +147,12 @@
   body.calm .seasons button { font-size: 0; }
   body.calm .card h1 { font-size: 0; }
   body.calm .card h1::before { content: '🚜'; font-size: 34px; }
-  body.calm #start .tag, body.calm #start .card > p, body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
+  body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
   body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
   body.calm #start label.easy input { margin-top: 0; }
   body.calm #start label.easy > span { font-size: 0; line-height: 0; }
   body.calm #start label.easy .e { font-size: 20px; line-height: 1; }
+  /* 読みこめなかった 知らせと「もう一度 よむ」は のんびりでも 出す（▶ が 押せない わけが わかるように） */
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
   #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
@@ -504,7 +505,7 @@ if (WX !== 'hare') {                            // くもり・小雨：雲が�
 
 // ---- 描くしくみ ----
 const canvas = $('view');
-const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
+const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('progText').classList.add('err'); throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
 renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -621,7 +622,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   setRotBtn();
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   $('bStart').disabled = false;
-}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----

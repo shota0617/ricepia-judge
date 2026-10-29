@@ -8373,19 +8373,19 @@ function mzGoalFx(text) {
     const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6, k = kinds[i % kinds.length];
     mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: 1 + Math.random() * 0.8 });
   }
-  mzBanner.t0 = now; mzBanner.text = text || '';
+  mzBanner.t0 = now; mzBanner.text = text || ''; mzBanner.said = false;
   mzHelpGoal();   // 「🏁 ゴール！」の 大きな 文字（4秒。ごほうびの 窓を とじても 見える ように 長め）
 }
 function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
   const ba = (now - mzBanner.t0) / 1000;
-  if (mzBanner.t0 && ba < 4) {   // 大きな「🏁 ゴール！」と 時間（さいごの 0.5秒で うすく）
+  if (mzBanner.t0 && ba < 4) {   // ゴールの ★と 時間（さいごの 0.5秒で うすく）。「ついた〜！」は お米の 吹き出し
     ctx.globalAlpha = Math.min(1, (4 - ba) / 0.5);
     const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
-    ctx.strokeText('🏁 ゴール！', w / 2, y); ctx.fillText('🏁 ゴール！', w / 2, y);
-    if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; ctx.strokeText(mzBanner.text, w / 2, y + big * 0.95); ctx.fillText(mzBanner.text, w / 2, y + big * 0.95); }
+    if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！🏁', 3600, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
+    if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     ctx.globalAlpha = 1;
   } else if (mzBanner.t0) mzBanner.t0 = 0;
   for (let i = mzFx.length - 1; i >= 0; i--) {

@@ -1978,6 +1978,26 @@ function yumeStep(hx, by, u, now, sleepy) {
   ctx.restore();
   yume.drawn++; dirty = true;
 }
+// お米つぶの ねどこ（nedoko.js）：ねむって いる あいだ、いる 町と 月に 合った 名物が お米の 下に ならんで ねどこに なる。しき おわると お米が ひと言。おきると 消える。
+// ねむり はじめに 1つ きめる（前と 同じ ものは つづけない）。西尾市の 外・ゲームボーイの4色では 出さない。お米の うしろ（下）に 描く
+const nedoko = { cur: null, last: '', t0: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function nedokoStep(hx, by, u, now, sleepy) {
+  const n = nedoko;
+  if (!sleepy || !window.NISHIO_NEDOKO || gbOn || worldMode || driving || rp.x === null) { n.cur = null; n.said = false; return; }
+  if (!n.cur) {   // ねむり はじめ
+    const c = kasaFind(), d = c ? window.NISHIO_NEDOKO.pick(Object.assign(c, { month: new Date().getMonth() + 1 }), n.last) : null;
+    if (!d) return;
+    n.cur = d; n.last = d.id; n.t0 = now; n.said = false;
+    if (G.track) G.track('kome_nedoko', { id: d.id });
+  }
+  const age = now - n.t0, k = Math.min(1, age / window.NISHIO_NEDOKO.SETTLE);
+  if (!n.said && k >= 1 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(n.cur.say, 2600, 'happy'); n.said = true; }
+  const q = Math.max(1, Math.round(u * 0.8)), bob = calmMotion ? 0 : Math.sin(now / 900) * 0.3 * u;
+  ctx.globalAlpha = k;
+  [[-15, 0], [-6, 1], [6, 1], [15, 0]].forEach(([dx, dy]) => drawNakama(Math.round(hx + dx * u), Math.round(by + (10.5 + dy) * u + bob), q, n.cur.id, 0, true));   // 4つ ならべて ふとんに（目は 描かない）
+  ctx.globalAlpha = 1;
+  n.drawn++; dirty = true;
+}
 // お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
 // 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
 const GOCHISO_MS = 6500;
@@ -6907,6 +6927,7 @@ function frame(now) {
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
+    nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ
       drawSendArrow(hx, by, T, u);   // お米の まん中から

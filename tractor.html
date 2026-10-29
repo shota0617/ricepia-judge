@@ -8757,7 +8757,11 @@ const INTRO = (() => {
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3)); g.computeVertexNormals(); g.setDrawRange(0, 0);
     o.m = new THREE.Mesh(g, mat); o.m.receiveShadow = true; o.m.frustumCulled = false; Object.assign(o, { per: (prof.length - 1) * 6, x0, w, n }); scene.add(o.m);
   }
-  const reveal = (o, x) => { if (o.m) o.m.geometry.setDrawRange(0, Math.max(0, Math.min(o.n, Math.floor((x - o.x0) / o.w))) * o.per); };
+  const reveal = (o, x) => {                       // いちばん 先まで できた 所を おぼえる（バックしても 掘った みぞ・ぬった 畦は 消えない）
+    if (!o.m) return;
+    o.done = Math.max(o.done || 0, Math.max(0, Math.min(o.n, Math.floor((x - o.x0) / o.w))));
+    o.m.geometry.setDrawRange(0, o.done * o.per);
+  };
   // 土手の 高い 草：農道の 東の きわから 土手の 下まで（x 20.6〜22.4。草刈機が とどくのは 22m まで）。刈ると 短くなる
   const N = MOBILE ? 800 : 1500, GX = new Float32Array(N), GY = new Float32Array(N), GZ = new Float32Array(N), GR = new Float32Array(N), GL = new Float32Array(N), GW = new Float32Array(N), cut = new Uint8Array(N);
   const gm = new THREE.MeshLambertMaterial({ color: 0xffffff });

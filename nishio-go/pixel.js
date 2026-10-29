@@ -2733,6 +2733,39 @@ function youkosoStep(hx, by, u, now) {
   ctx.restore();
   y.drawn++; dirty = true;
 }
+// お米つぶの たびのしるし（shirushi.js）：西尾市の 地区に はじめて 入ると、その 地区の 小さな 旗が お米の 右がわに ならんで ずっと のこる（5つまで）。
+// 新しい 旗は ぽんと 立ち、境の 旗（ようこそ）の ひと言の あとに お米が ひと言。5つ そろうと 「ぜんぶ そろったに」。この 端末に おぼえる（nsg_shirushi）。
+// 西尾市の 中だけで 増える・ねむって いる あいだ・ゲームボーイの4色では 描かない
+const shirushi = { list: null, pop: '', t0: 0, say: null, drawn: 0 };   // pop：ぽんと 立てる 旗の 地区。say：[言う 時刻, ことば]。drawn：描いた 数（テスト用）
+function shirushiStep(hx, by, u, now, asleep) {
+  const s = shirushi, S = window.NISHIO_SHIRUSHI, Y = window.NISHIO_YOUKOSO;
+  if (!S || !Y || worldMode || driving || rp.x === null) return;
+  if (!s.list) { try { s.list = S.clean(JSON.parse(localStorage.getItem(S.KEY))); } catch (e) { s.list = []; } }
+  if (/西尾/.test(here.city || '')) {
+    const a = Y.areaOf(here.city, here.town), r = a ? S.add(s.list, a) : null;
+    if (r && r.added) {
+      s.list = r.list; s.pop = a; s.t0 = now;
+      try { localStorage.setItem(S.KEY, JSON.stringify(s.list)); } catch (e) { /* noop */ }
+      s.say = [now + S.DELAY, S.say(s.list.length, a)];
+      if (G.track) G.track('kome_shirushi', { area: a, n: s.list.length });
+    }
+  }
+  if (s.say && now >= s.say[0] && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(s.say[1], 3000, 'happy'); s.say = null; }
+  if (!s.list.length || gbOn || asleep) return;
+  const q = Math.max(1, Math.round(u * 0.35)), step = Math.round(6.5 * u), x0 = Math.round(hx + 15 * u), foot = Math.round(by + 8 * u);
+  S.AREAS.filter(a => s.list.includes(a.id)).forEach((a, i) => {
+    const pop = a.id === s.pop ? Math.min(1, (now - s.t0) / S.POP) : 1, bounce = pop < 1 ? Math.sin(pop * Math.PI) * 5 * u : 0;
+    const px = x0 + i * step, top = Math.round(foot - 11 * u * Math.min(1, pop * 2) - bounce), fw = Math.round(5 * u), fh = Math.round(4.5 * u);
+    ctx.fillStyle = '#2b1a0c'; ctx.fillRect(px - q, top - q, 2 * q, foot - top + q);   // さお（ふち）
+    ctx.fillStyle = '#8a5a2b'; ctx.fillRect(px - q + Math.round(q / 2), top, Math.max(1, q - 1), foot - top);
+    if (pop < 0.5) return;
+    const fx = px + q, fy = top + q;
+    ctx.fillStyle = '#2b1a0c'; ctx.fillRect(fx - q, fy - q, fw + 2 * q, fh + 2 * q);   // 旗（ふち）
+    ctx.fillStyle = a.color; ctx.fillRect(fx, fy, fw, fh);
+    drawNakama(Math.round(fx + fw / 2), Math.round(fy + fh / 2), Math.max(1, Math.round(u * 0.3)), a.emblem, 0, true);
+  });
+  s.drawn++; dirty = true;
+}
 // お米つぶの かげえ（kage.js）：じっと 止まって いると、足もとの 影の となりに、いる 町と 月に 合った 名物の 影が すうっと のびる。7秒ごとに つぎの 影。動くと すっと 消える。
 // 影は drawNakama を 小さな 絵に 描いて 黒く ぬり、ひらたく のばして 貼る（絵は 1つずつ しまっておく）。ゲームボーイの4色・夜（めぐりの 時間）・ねむって いる間は 出さない
 const kage = { cur: null, last: '', still0: 0, t0: 0, chk: 0, said: false, drawn: 0, pics: {} };   // drawn：描いた 数（テスト用）
@@ -7529,6 +7562,7 @@ function frame(now) {
       tsunStep(hx, by, u, now);   // お米を つんつんすると 名物が 飛び出す（tsun.js）
       nazoStep(hx, by, u, now);   // 止まって じっと すると 西尾の なぞなぞ（答えの 札を タップ。nazonazo.js）
       youkosoStep(hx, by, u, now);   // 地区の 境を こえると 名物の 旗が 立つ（youkoso.js）
+      shirushiStep(hx, by, u, now, mood === 'sleepy');   // 入った 地区の 旗が お米の よこに のこる（shirushi.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

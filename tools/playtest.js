@@ -873,6 +873,26 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.asleep && r.woke && r.back && !r.toast };   // pts は 見るだけ（転がる とちゅうの ごはんつぶで ふえる ことが ある）
   })();
+  // 田んぼの あぜの カエル（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：4〜10月。すわって いて、お米が 近くを 転がると 田んぼへ とびこんで 消える。文字は 出さない
+  R.checks.kaeru = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, K = P.kaeru, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms)), t0 = document.getElementById('toast').textContent;
+      const shut = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
+      const season = K.season();
+      P.suzume.clear(); P.neko.clear(); P.mushi.clear(); K.put(Math.floor(r0.x) + 2, Math.floor(r0.y) - 1);
+      await wait(500);
+      const sit = K.list.length === 1 && !K.list[0].jump;
+      let jump = false; for (let i = 0; i < 15 && !jump; i++) { shut(); const f = K.list[0]; if (!f) break; P.rollPut(f.x - 1, f.y, 3, 0); await wait(60); jump = !!K.list[0] && K.list[0].jump; }
+      let gone = false; for (let i = 0; i < 20 && !gone; i++) { await wait(100); gone = K.list.length === 0; }
+      P.rollPut(r0.x, r0.y, 0, 0);
+      const toast = document.getElementById('toast').textContent !== t0 && /カエル|かえる/.test(document.getElementById('toast').textContent);
+      K.clear();
+      return { season, sit, jump, gone, toast };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.season && r.sit && r.jump && r.gone && !r.toast };
+  })();
   // 季節の 小さな 虫（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：10月は 赤とんぼ。お米の まわりを とび、近くを 転がると はなれて 消える。文字は 出さない
   R.checks.kisetsuMushi = await (async () => {   // 名前は「虫の名前あて」の mushi と 分ける
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -882,8 +902,9 @@ async function walkTo(page, id) {
       P.suzume.clear(); P.neko.clear(); U.put(r0.x + 2.5, r0.y - 1);
       await wait(800);
       const flying = !!U.m && !U.m.flee, moved = !!U.m && Math.hypot(U.m.x - r0.x - 2.5, U.m.y - r0.y + 1) > 0.05;   // ふらふら 動く
-      const m = U.m; P.rollPut(m.x - 1.2, m.y, 3, 0);
-      let flee = false; for (let i = 0; i < 15 && !flee; i++) { await wait(60); flee = !!U.m && U.m.flee; }
+      // とんぼは とび まわるので、毎回 いまの 所の すぐ 手前に 置きなおして 転がす（1回 置く だけ では、生け垣で 止まったり とんぼが はなれたり して 近づけない ことが あった）
+      const shut = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };   // 窓が 出て いる 間は お米が 止まる（ごはんつぶを ひろうと ごほうびが 出る ことが ある）
+      let flee = false; for (let i = 0; i < 15 && !flee; i++) { shut(); const m = U.m; if (!m) break; P.rollPut(m.x - 0.8, m.y, 3, 0); await wait(60); flee = !!U.m && U.m.flee; }
       let gone = false; for (let i = 0; i < 30 && !gone; i++) { await wait(100); gone = !U.m; }
       P.rollPut(r0.x, r0.y, 0, 0);
       const toast = document.getElementById('toast').textContent !== t0 && /とんぼ|ちょう/.test(document.getElementById('toast').textContent);
@@ -3248,6 +3269,7 @@ async function walkTo(page, id) {
   need(c.toastHud && c.toastHud.ok, '地図の 上の 知らせが 右上の 丸い ボタンに 重なる');
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
+  need(c.kaeru && c.kaeru.ok, `あぜの カエル：10月に 出ない・すわって いない・お米が 近づいても とびこまない・消えない・文字を 出す（${JSON.stringify(c.kaeru)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);
   need(c.neko && c.neko.ok, `ねこ：ねて いない・お米が 近づいても おきない・また ねない・文字を 出す（${JSON.stringify(c.neko)}）`);

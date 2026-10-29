@@ -159,7 +159,7 @@ let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
-const save = () => { if (!store.set(stateKey(), S)) toast('記録を保存できませんでした（ブラウザの保存領域を確認してください）'); };
+const save = () => { if (!store.set(stateKey(), S)) toast('きろくを うまく 保存できませんでした。スマホの 空きが 少ないのかも。少し 空けてから、もう一度 ためしてね。'); };
 
 /* ---------- 地図 ---------- */
 if (!window.L) {
@@ -344,7 +344,7 @@ async function doLoadSpots(force) {
     } catch (e) {
       const old = cached || stored || baked || (await loadBaked());   // 取得できなければ古いキャッシュや前もって作ったスポットでも使う
       if (old) { items = old.items; spotMeta.osmAt = old.t; spotMeta.osmOk = true; }
-      else if (!force) toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
+      else if (!force) toast('名所の 地図データ（OpenStreetMap）を うまく 読みこめませんでした。注目スポットだけで 遊べるよ。');
     }
   }
   spots = buildSpots(config, items || []);
@@ -2218,7 +2218,7 @@ function refreshNearby() {
     showRing(null);
     showGuide(null);
     // 位置情報が使えないときは、その場で「操作して遊ぶ」に切り替えられるボタンを出す（ここで閉じられてしまわないように）
-    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…' + waitLine()), true);
+    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '🍚 いまの 場所を さがしているよ…' + waitLine()), true);
     return;
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
@@ -2253,7 +2253,7 @@ function refreshNearby() {
     if (th) $('spinIco').innerHTML = th; else if (simple()) $('spinIco').innerHTML = catArt(selected); else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
     $('spinName').textContent = selected.name;
     const why = driving ? '🚗 車を降りるとチェックインできます'
-      : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
+      : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSが はっきりするまで、ちょっと まってね…' : '';
     btn.disabled = !!why;
     if (why || !simple()) $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
     else $('spinSub').innerHTML = `${PIA('coin', 'ポイント')}+${ptsOf(selected)}${S.visits[selected.id] ? '' : ' ' + PI('new', 'はじめての場所')}`;
@@ -3071,7 +3071,7 @@ function renderSpotInfo() {
   const n = spots.length;
   $('spotInfo').textContent = spotsLoading ? '読み込んでいます…' : spotMeta.osmOk
     ? `${n.toLocaleString()}か所（注目${spotMeta.featured}）・地図データ取得 ${fmtTime(spotMeta.osmAt)}`
-    : `${n}か所（注目スポットのみ。OpenStreetMapを取得できませんでした）`;
+    : `${n}か所（注目スポットだけ。地図データを 読みこめませんでした）`;
   $('rules').innerHTML = [
     `スポットまで約${CFG.reach}m以内に近づくと「チェックイン」できます（お店など一部のスポットは範囲が広め。地図の点線の円が範囲です）`,
     `ふつうのスポット ${CFG.pts.normal}pt／⭐注目スポット ${featRange()}`,
@@ -3320,7 +3320,7 @@ $('reloadSpots').addEventListener('click', async e => {
   btn.disabled = true;
   try {
     const ok = await loadSpots(true);
-    toast(ok ? `スポットを更新しました（${spots.length}か所）` : 'スポット情報を取得できませんでした。通信環境を確認して、時間をおいてお試しください。');
+    toast(ok ? `スポットを更新しました（${spots.length}か所）` : '名所を うまく 読みこめませんでした。通信のよい所で、少し まってから もう一度 ためしてね。');
   }
   finally { btn.disabled = false; }
 });

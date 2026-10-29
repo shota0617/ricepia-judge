@@ -2145,6 +2145,49 @@ function shimatabiStep(hx, by, u, now) {
   if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
   m.drawn++; dirty = true;
 }
+// お米つぶの いっしきさんぽ（isshiki.js）：西尾市の 一色の 町なかで 止まって じっと すると、お米の うしろが 一色の ひとこまに なる。えびせんべい焼き・うなぎ約2割・養鰻・さかな広場が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 一色の 町なか（佐久島の 外・まわりに 海が ない 所）の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
+const isshiki = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function isshikiStep(hx, by, u, now) {
+  const m = isshiki, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_ISSHIKI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_ISSHIKI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_isshiki', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (m.cur.id === 'ebisen') {   // えびせんべい焼き：鉄の 台の 上で せんべいが じゅうじゅう。けむりが ゆらゆら
+    px(-16, 11, 32, 3, '#4a4a4e'); px(-16, 11, 32, 1, '#76767c'); px(-14, 14, 3, 1.5, '#2e2e32'); px(11, 14, 3, 1.5, '#2e2e32');
+    for (let i = 0; i < 3; i++) { const fl = !calmMotion && Math.sin(t * 3 + i) > 0.6; drawNakama(Math.round(hx + (-9 + i * 9) * u), Math.round(by + (9 - (fl ? 2 : 0)) * u), Math.max(1, Math.round(u * 0.8)), 'ebisen', 0, true); }
+    for (let i = 0; i < 3; i++) { const ph = (t * 0.8 + i / 3) % 1; ctx.globalAlpha = Math.min(1, age / 500) * 0.5 * (1 - ph); px(-10 + i * 9 + Math.sin(ph * 6 + i) * 2, 6 - ph * 8, 2, 2, '#eeeeee'); }
+  } else if (m.cur.id === 'unagi2') {   // 約2割：10この まるの うち 2つが うなぎ（のこりは 色を うすく）
+    for (let i = 0; i < 10; i++) {
+      const gx = -18 + (i % 5) * 8, gy = 6 + Math.floor(i / 5) * 6;
+      if (i < 2) drawNakama(Math.round(hx + (gx + 3) * u), Math.round(by + (gy + 2) * u), Math.max(1, Math.round(u * 0.8)), 'unagi', 0, true);
+      else { ctx.globalAlpha = Math.min(1, age / 500) * 0.45; px(gx, gy, 5, 4, '#9fb0c0'); ctx.globalAlpha = Math.min(1, age / 500); }
+    }
+  } else if (m.cur.id === 'yoman') {   // 養鰻：池に うなぎが くねくね。たて札
+    px(-20, 10, 40, 5, '#3e86a8'); px(-20, 10, 40, 1, '#8cc8de'); px(-20, 15, 40, 1, '#2b5f78');
+    const w = calmMotion ? 0 : Math.sin(t * 2) * 6;
+    drawNakama(Math.round(hx + (-4 + w) * u), Math.round(by + 12.5 * u), Math.max(1, Math.round(u * 0.8)), 'unagi', 0, true);
+    px(14, 3, 1, 8, '#7a4a22'); px(11, 1, 7, 4, '#e6d3a3'); px(12, 2, 5, 1, '#7a4422'); px(12, 3.5, 3, 1, '#7a4422');
+  } else {   // さかな広場：木の 台に 魚が ならぶ。のぼり
+    px(-18, 11, 36, 4, '#a9763f'); px(-18, 11, 36, 1, '#c9955a'); px(-18, 14, 36, 1, '#7a4f26');
+    for (let i = 0; i < 4; i++) { const fx = -14 + i * 8; px(fx, 8.5, 6, 2.5, i % 2 ? '#e8e8ee' : '#9fc0d8'); px(fx + 5.5, 9, 2, 1.5, i % 2 ? '#e8e8ee' : '#9fc0d8'); px(fx + 1, 9, 1, 1, '#2a2a30'); }
+    px(17, -2, 1, 13, '#7a4a22'); px(18, -2, 5, 7, '#d8302c'); px(19, 0, 3, 1, '#fff7e6');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
 // お米つぶの ちゃせき（chasetsu.js）：西尾地区で 止まって じっと すると、お米の よこに 石臼が 出て てん茶を ひき（くるくる）、茶わんに 抹茶を 点てて（茶せんが しゃかしゃか）、お米が ひと言。
 // 動くか ねむりだすと 消える。ひと席 おわったら 動くまで くりかえさない。西尾市の 西尾地区の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
 const chasetsu = { cur: null, t0: 0, chk: 0, said: false, done: false, drawn: 0 };   // drawn：描いた 数（テスト用）
@@ -7146,6 +7189,7 @@ function frame(now) {
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
     tsutsumiStep(hx, by, u, now);   // 吉良の 田んぼで じっと すると 黄金堤を 築く（tsutsumi.js）
+    isshikiStep(hx, by, u, now);   // 一色の 町なかで じっと すると 港町の ひとこま（えびせん焼き・うなぎ・養鰻・さかな広場。isshiki.js）
     shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
     yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）

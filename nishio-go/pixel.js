@@ -8272,7 +8272,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     { let nm = gt.name || ''; const ns = Math.round(U * 0.56);   // 名前も 大きく（0.45 → 0.56。運営者の声「大きい文字シンプルに」2026-10-27）
       ctx.font = `bold ${ns}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
       if (nm) { const nx = inside(nm, ns), hw = ctx.measureText(nm).width / 2; label(nm, nx, yN, ns, '#ffffff'); mzMap.goalLab = { x0: nx - hw, x1: nx + hw, w, ex, nm, y: Math.round(yN), ns }; } }   // 旗の 上（goalLab：プレイテストで 見る）
-    mzMap.arrow = null;
+    mzMap.arrow = null; mzNext.arrowDim = false;
     return;
   }
   // 上の 縁は、時計の 札（かかしの のこりの 札まで）より 下に（上に ゴールが あると、矢印と 旗が 時計の 札や 左上の 札に 重なっていた）
@@ -8287,7 +8287,12 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     qy = down <= vh - m && (up < mt || down - qy <= qy - up) ? down : Math.max(mt, up);
   }
   mzMap.pin = [qx, qy, R, a];   // 矢印の 位置（テスト用。mzMap.at は めいろ図を かきなおした 時刻なので 別に）
-  ctx.save(); ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
+  // 「🏁 つぎの ゴール」の 札（同じ こまで 先に 描く）に 矢印が かかる 間は うすく 描く（向きは 見えて、札の 字は 読める。
+  //   自分で 遊んで 分かった：スマホを 横に した 740×360 で、上の ゴールの 矢印が 札の「つぎの」の 字に かぶって 読めなかった）
+  const nb0 = mzNext.at === now && mzNext.box;
+  mzNext.arrowDim = !!nb0 && qx + R * k > nb0[0] && qx - R * k < nb0[2] && qy + R * k > nb0[1] && qy - R * k < nb0[3];
+  ctx.save(); if (mzNext.arrowDim) ctx.globalAlpha *= 0.3;
+  ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
   // 後ろに 切れこみの ある 矢じり（自分で 遊んで 分かった：正三角形に 近い 三角だと、ななめの とき どの 角が 先か 分からず、北東の ゴールで 左向きに 見えた）
   const dart = (t, b, h, n) => { ctx.beginPath(); ctx.moveTo(U * t, 0); ctx.lineTo(-U * b, -U * h); ctx.lineTo(-U * n, 0); ctx.lineTo(-U * b, U * h); ctx.closePath(); ctx.fill(); };
   ctx.fillStyle = '#1a1a1a'; dart(1.2, 0.55, 0.8, 0.15);
@@ -9286,7 +9291,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

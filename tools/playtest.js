@@ -2605,6 +2605,30 @@ async function walkTo(page, id) {
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.arrow && r.shown && !r.hit && r.mapUp === true };
     })();
+    // 「🏁 つぎの ゴール」の 札に 縁の 矢印が かかる 間は 矢印を うすく 描く（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印が 札の「つぎの」の 字に かぶった）。
+    // 札が 消えたら もとの こさ。たて向き（360×640）で 札に かからない ときは うすく しない。直す 前の コードでは arrowDim が ない
+    R.checks.mzNextArrowDim = await (async () => {
+      const vp = w.page.viewportSize(), out = {};
+      for (const [W, H] of [[740, 360], [360, 640]]) {
+        await w.page.setViewportSize({ width: W, height: H }); await w.page.waitForTimeout(400);
+        out[W + 'x' + H] = await w.page.evaluate(async () => {
+          const G = nishioGo, M = nishioPixel.maze, wait = ms => new Promise(res => setTimeout(res, ms));
+          document.getElementById('pxInfo').hidden = true; M.map(0);
+          G.setGuide({ kind: 'spot', id: 'test-dim' + innerWidth, name: 'テストの 北の ゴール', lat: G.me.lat + 0.012, lng: G.me.lng });
+          let on = false; for (let i = 0; i < 80 && !on; i++) { await wait(50); const n = M.next(); on = n.on && !n.want && n.t0 > 0; }   // 札が 描かれ はじめるまで（めいろの 道のりが 分かるまで 2秒まで 待つ）
+          await wait(300);
+          const dur = M.next(), pin = M.arrowAt, b = dur.box, hit = !!(pin && b && pin[0] + pin[2] > b[0] && pin[0] - pin[2] < b[2] && pin[1] + pin[2] > b[1] && pin[1] - pin[2] < b[3]);
+          for (let i = 0; i < 80 && M.next().on; i++) await wait(100);
+          await wait(300); M.map(0); await wait(200);
+          const after = M.next();
+          G.setGuide(null);
+          return { on, hit, dim: dur.arrowDim, after: after.on ? 'still' : after.arrowDim, pin: pin && pin.slice(0, 3).map(Math.round), box: b && b.map(Math.round), U: Math.round(16 * devicePixelRatio) };
+        });
+      }
+      await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
+      const a = out['740x360'], b = out['360x640'];
+      return { ...out, ok: a.on && a.hit && a.dim === true && a.after === false && b.on && b.dim === b.hit };
+    })();
     // 横向きの 低い 画面でも、縁の 矢印と 道のりの 札に 知らせが 重ならない（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印と「840m」が「📅 あしたも来ると +20pt」に かくれた。
     // 上も 下も 札に 重なるので、札の 横（wside）か いちばん 下（wfloor）へ）。直す 前は 上の まま 重なる
     R.checks.mzEdgeToastWide = await (async () => {
@@ -3223,6 +3247,7 @@ async function walkTo(page, id) {
   need(c.playMore320 && c.playMore320.ok, `320px の「めいろ、どうだった？」の ひとことの 欄が 切れる（${JSON.stringify(c.playMore320)}）`);
   need(c.nextGoalLabel && c.nextGoalLabel.ok, `「つぎの ゴール」の 札に 縁の 矢印の 道のりが かぶる（${JSON.stringify(c.nextGoalLabel)}）`);
   need(c.mzEdgeToast && c.mzEdgeToast.ok, `めいろの 縁の 矢印の 札に 知らせが 重なる（${JSON.stringify(c.mzEdgeToast)}）`);
+  need(c.mzNextArrowDim && c.mzNextArrowDim.ok, `「🏁 つぎの ゴール」の 札に 縁の 矢印が かぶって 字が 読めない（${JSON.stringify(c.mzNextArrowDim)}）`);
   need(c.mzEdgeToastWide && c.mzEdgeToastWide.ok, `横向きの 低い 画面で、知らせが めいろの 縁の 矢印と 道のりの 札に 重なる（${JSON.stringify(c.mzEdgeToastWide)}）`);
   need(c.nextGoalToast && c.nextGoalToast.ok, `めいろの「つぎの ゴール」の 札に 知らせが 重なる（${JSON.stringify(c.nextGoalToast)}）`);
   need(c.worldToast && c.worldToast.ok, `せかいちずの「ゴール：…」の 札に 知らせが 重なる（${JSON.stringify(c.worldToast)}）`);

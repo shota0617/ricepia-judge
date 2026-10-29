@@ -55,6 +55,7 @@ canvas#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-a
 .note{font-size:14px;line-height:1.6;color:var(--ink-dim);text-align:left;margin:0}
 .note a{color:var(--kraft);display:inline-block;padding-block:10px}
 .steps .skip:focus-visible,.note a:focus-visible{outline:3px solid #f6f2e7;outline-offset:2px;box-shadow:0 0 0 6px #131a2e}
+html.nofont :is(h1, button.go, .hval, #time, #timeDelta, #combo, .res strong, .talk>.who.num){font-weight:800} /* 見出しの 字が とどく まで（電波が 弱い・とどかない）は かわりの 字を 太く。細い 字だと 見出しらしく ない（146周目） */
 button.go{font-family:var(--display);font-size:22px;padding:14px 20px;border:0;border-radius:14px;background:var(--kraft);color:var(--ai-deep);cursor:pointer;box-shadow:0 4px 0 #8c6c3b}
 button.go:active{transform:translateY(3px);box-shadow:0 1px 0 #8c6c3b}
 button.go:focus-visible{outline:3px solid var(--ito);outline-offset:3px}
@@ -212,7 +213,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 </style>
 </head>
 <body>
-<script>if(location.hash==='#coin') document.documentElement.classList.add('coin'); /* QR から：題を 出さず すぐ 用意中（電波が 弱い ときに 押しても 何も おきない ボタンを 見せない。99周目） */</script>
+<script>document.documentElement.classList.add('nofont'); /* 見出しの 字（Dela Gothic One）が とどく まで（146周目） */ if(location.hash==='#coin') document.documentElement.classList.add('coin'); /* QR から：題を 出さず すぐ 用意中（電波が 弱い ときに 押しても 何も おきない ボタンを 見せない。99周目） */</script>
 <div id="app" role="main"> <!-- 読み上げの「本文」の 目じるし（131周目） -->
   <canvas id="cv" role="img" aria-label="米袋の 口の 縫い目"></canvas>
   <div id="sr" class="sr" aria-live="polite"></div>
@@ -1684,6 +1685,8 @@ const $ = id=>document.getElementById(id);
 const ui = { hud:$('hud'), title:$('title'), result:$('result'), score:$('score'), time:$('time'), bags:$('bags'), combo:$('combo'), td:$('timeDelta'), tdT:9,
   rScore:$('rScore'), rBags:$('rBags'), rClean:$('rClean'), rSnap:$('rSnap'), rank:$('rank'), best:$('best'), tip:$('tip'), goals:$('goals'), rGoals:$('rGoals'), steps:$('steps'), coinDone:$('coinDone') };
 renderGoals(ui.goals);
+{ const fx = () => { for(const f of document.fonts) if(/Dela Gothic One/.test(f.family) && f.status==='loaded'){ document.documentElement.classList.remove('nofont'); return; } }; /* 見出しの 字が とどいたら 太字を やめる（Dela は 1つの 太さ だけ） */
+  try{ document.fonts.addEventListener('loadingdone', fx); document.fonts.ready.then(fx); fx(); }catch(e){ document.documentElement.classList.remove('nofont'); } }
 $('startBtn').addEventListener('click', ()=>startGame(false));
 $('againBtn').addEventListener('click', ()=>startGame(false));
 $('practiceBtn').addEventListener('click', startPractice);

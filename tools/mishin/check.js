@@ -1,6 +1,6 @@
 // ミシン糸 一本どり：通しの 確かめ（本物の ポインタイベントで 遊んで、こわれて いないか 見る）
 //   node tools/mishin/check.js            # ぜんぶ
-//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor coin season fonts sound perf）
+//   node tools/mishin/check.js practice   # 名前で えらぶ（practice one pinch tangle fever keys keyedge decor coin season fonts nofont sound perf）
 // スクショは MISHIN_OUT（なければ OS の 一時フォルダの mishin-check）に 書く。リポジトリの 中には 書かない。
 const { chromium } = require('playwright');
 const path = require('path'), os = require('os'), fs = require('fs');
@@ -596,6 +596,14 @@ const CHECKS = {
   async fonts(){
     const r = require('child_process').spawnSync('python3', [path.resolve(__dirname, 'fonts.py'), '--check'], { cwd: path.resolve(__dirname, '../..'), encoding:'utf-8' });
     ok(r.status===0, 'フォントの 字に もれが ない', (r.stdout||'') + (r.stderr||''));
+  },
+  // 146周目：見出しの 字（Google Fonts）が とどかない ときは かわりの 字を 太く。とどいたら 太字を やめる
+  async nofont(b){
+    const ctx = await b.newContext({ viewport:{ width:360, height:560 } }); await ctx.route(/fonts\.(googleapis|gstatic)\.com/, r => r.abort());
+    const p = await ctx.newPage(); await p.goto(FILE); await p.waitForTimeout(1200);
+    const nf = await p.evaluate(() => ({ cls: document.documentElement.classList.contains('nofont'), h1: getComputedStyle(document.querySelector('#title h1')).fontWeight, btn: getComputedStyle(document.getElementById('practiceBtn')).fontWeight, start: Math.round(document.getElementById('startBtn').getBoundingClientRect().bottom), H: innerHeight }));
+    await ctx.close();
+    ok(nf.cls && +nf.h1 >= 700 && +nf.btn >= 700 && nf.start <= nf.H, '字が とどかない ときは 見出しと ボタンを 太い かわりの 字で・ボタンは 1画面目', nf);
   },
   async sound(b){
     const p = await page(b, 390, 844, '');

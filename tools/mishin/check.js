@@ -308,13 +308,13 @@ const CHECKS = {
       S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return { msg, mode:S.mode }; });
     await p.waitForTimeout(200);
     const tip = await p.evaluate(() => document.getElementById('tip').textContent);
-    ok(r.msg==='糸は 二本指で つまむ', 'タイムアタックで 1本指で なぞると「二本指で」と 字でも 言う', r);
+    ok(r.msg==='糸は 二本指で つまんで ください', 'タイムアタックで 1本指で なぞると「二本指で」と 字でも 言う', r);
     ok(r.mode==='over' && /二本指/.test(tip), '1袋も あけられなかった ときは つまみ方の ヒント', tip);
     // 57周目の レビュー：二本指で つまんで 1本 はなした あとに「二本指で」と 言わない・つまんだ 人には 0袋でも べつの ヒント・低い 横向きでも「もう一回」が 見える
     const pin = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; S.bag.face = 'back'; for (let i=0;i<5;i++) KB.step(1/60); S.msg = null;
       const x = L.x0+2, y = L.seamY; ev('pointerdown',11,x-10,y); ev('pointerdown',12,x+10,y); for (let i=1;i<=10;i++){ ev('pointermove',11,x-10+i*8,y+i*4); ev('pointermove',12,x+10+i*8,y+i*4); KB.step(1/60); }
       const held = S.held; ev('pointerup',12,x+90,y+40); ev('pointermove',11,x+80,y+60); KB.step(1/60); const msg = S.msg && S.msg.text; ev('pointerup',11,x+80,y+60); return { held, msg }; });
-    ok(pin.held && pin.msg!=='糸は 二本指で つまむ', '二本指で つまんで 1本 はなしても「二本指で」と 言わない', pin);
+    ok(pin.held && pin.msg!=='糸は 二本指で つまんで ください', '二本指で つまんで 1本 はなしても「二本指で」と 言わない', pin);
     const tip2 = await p.evaluate(() => { KB.start(); const S = KB.S; S.wrongs = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
     ok(!/まずは/.test(tip2), 'つまめた 人には 0袋でも べつの ヒント', tip2);
     // 59周目（もう一回）：じこベストまで あと 何点・こえた ときは 遊んで いる 間にも・はじめての ランク
@@ -324,7 +324,7 @@ const CHECKS = {
       KB.start(); S.score = 5100; KB.step(1/60); const said = S.msg && S.msg.text; S.score = 8000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       return { gap, said, up: document.getElementById('best').innerHTML }; });
     ok(/あと 1,001点/.test(bs.gap), 'じこベストに とどかない ときは「じこベストまで あと 何点」', bs.gap);
-    ok(bs.said==='じこベスト こえた！', '遊んで いる 間に じこベストを こえたら 言う', bs.said);
+    ok(bs.said==='じこベストを こえました！', '遊んで いる 間に じこベストを こえたら 言う', bs.said);
     ok(/<b>じこベスト更新/.test(bs.up) && /はじめて「頼れるパートさん」/.test(bs.up), 'じこベスト更新は 金の 字・はじめての ランクも 出る', bs.up);
     // 60周目（見えにくさ 4回目）：おわりの 読み上げに 金の 行・タイムアタックの キャンバスの 名前・キーの 人には キーの ことばと 見える フォーカス
     await p.waitForTimeout(200);

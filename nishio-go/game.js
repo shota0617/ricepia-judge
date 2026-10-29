@@ -2054,10 +2054,18 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  // 文字を少なく（ふだん）：次の行き先は下の札に出るので、知らせは「着いた・ポイント・次の名前」だけ
-  toast(simple() ? `${g.byId ? '🎉' : '🧭'} ${g.name}${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.name}` : ''}`
-    : `${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${pts ? ` +${pts}pt` : ''}${next ? `　→ ${next.why}` : ''}`);
+  const msg = arriveMsg(g, pts, next, mazeNow());
+  if (msg) toast(msg);
   rivalSay(g, next);
+}
+// 行き先に 着いた ときの 知らせ。文字を少なく（ふだん）：次の行き先は 下の札と「🏁 つぎの ゴール」に 出るので 書かない。
+// めいろでは 着いた 名所も「ゴール！」の 札に 出るので、ポイント だけ（自分で 遊んで 分かった：「🧭 西尾市歴史公園（西尾城跡） +5pt　→ らいすぴあの店員さん（らいすぴあ秀幸（永吉））」が
+// 3行に なって、ゴールの 札・つぎの ゴールの 札と 同じ 名前を くりかえした。運営者の声「文字は 少なく」2026-10-29）
+function arriveMsg(g, pts, next, maze) {
+  const icon = g.byId ? '🎉' : '🧭', p = pts ? ` +${pts}pt` : '';
+  if (!simple()) return `${g.byId ? '🎉 イベント達成：' : '🧭 '}${g.name}に着いた${p}${next ? `　→ ${next.why}` : ''}`;
+  if (maze) return p ? icon + p : '';
+  return `${icon} ${g.name}${p}`;
 }
 // さんぽ仲間（ライバル）：行き先（名所・すすめられた人）に3回着くごとに1回、同じくらいの年の さんぽ好きが先に来ていて、次の行き先へ先回りする。
 // その行き先に着くと、また会える（昔のドット絵RPGの、先々で待っているライバルのしくみ）。g.name は着いた所の名前
@@ -4070,7 +4078,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, arriveMsg, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); }, openTab,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

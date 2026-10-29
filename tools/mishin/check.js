@@ -429,11 +429,11 @@ const CHECKS = {
     await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(150);
     ok(z145.sameLine && /^×\d$/.test(z145.combo) && z145.apart && z145.feverApart, '字 200%：れんしゅうの ボタンを ことばの 途中で 切らない・倍率と 時間の 字が かさならない', z145);
     // 151周目：袋の 並び：左が 4つ 続いたら 右（4袋目から）・15袋目からは 1本糸の 袋が ふえる
-    const seq = await p.evaluate(() => { const m0 = KB.manual; KB.manual = true; let maxRunL = 0, singlesLate = 0, singlesMid = 0, games = 40;
+    const seq = await p.evaluate(() => { const m0 = KB.manual, s0 = KB.fixedSeed; KB.manual = true; let maxRunL = 0, singlesLate = 0, singlesMid = 0, games = 40;
       for (let g = 0; g < games; g++){ KB.fixedSeed = 1000 + g; KB.start(); const S = KB.S; let run = 0;
         for (let k = 0; k < 30; k++){ const b = KB.makeBag(k); S.bag = b; if (k >= 3){ if (b.start === 'L') run++; else run = 0; maxRunL = Math.max(maxRunL, run); } /* 1本糸の 袋も「右から」に 数えない ので、右に しても 1本糸に なる ことは ある */ if (b.single) { if (k >= 14) singlesLate++; else singlesMid++; } } }
-      KB.fixedSeed = 0; KB.manual = m0; KB.start(); return { maxRunL, lateRate: +(singlesLate / (games*16)).toFixed(3), midRate: +(singlesMid / (games*6)).toFixed(3) }; });
-    ok(seq.maxRunL <= 4 && seq.lateRate > seq.midRate, '袋の 並び：左が 4つより 長く 続かない・後半は 1本糸が ふえる', seq);
+      KB.fixedSeed = s0; KB.manual = m0; KB.start(); return { maxRunL, lateRate: +(singlesLate / (games*16)).toFixed(3), midRate: +(singlesMid / (games*6)).toFixed(3) }; });
+    ok(seq.maxRunL <= 6 && seq.lateRate > seq.midRate, '袋の 並び：左が 6つより 長く 続かない・後半は 1本糸が ふえる', seq);
     // 129周目：LINE は ricepia.jp の「価格表・売り出し情報」と 同じ リンク（ことばと あう）
     const lnk2 = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => a.getAttribute('href')));
     ok(lnk2.length === 2 && lnk2.every(h => /\/lin\.ee\/AULbClm\?from=mishin-(coin|result)$/.test(h)), 'LINE の リンクは 価格表・売り出し情報の もの（from つき）', lnk2);

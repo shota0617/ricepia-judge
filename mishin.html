@@ -347,7 +347,7 @@ function makeBag(k){
   const face = k===0 ? 'back' : k===1 ? 'front' : (rnd()<0.5 ? 'front' : 'back');
   // ほどき始め：たいてい 裏から見て左。5袋目からは ときどき右
   const prev = S.bag && S.bag.k === k-1 ? S.bag : null; // 1つ前の 袋（makeBag の 中では S.bag は まだ 前の 袋）
-  const start = k<3 ? 'L' : (r => prev && prev.sinceR >= 4 ? 'R' : r < 1 - Math.min(0.35, 0.1 + 0.03*k) ? 'L' : 'R')(rnd()); // たいてい 左。後の 袋ほど 右が まじる（最大 35%）。左が 4つ 続いたら 右（151周目：右の 袋が 1つも ない 回が あり、目標「右から ほどく袋」が できなかった。rnd() の 回数は かえない）
+  const start = k<3 ? 'L' : (r => prev && prev.sinceR >= 6 ? 'R' : prev && prev.sinceR >= 4 ? (r < 0.6 ? 'R' : 'L') : r < 1 - Math.min(0.35, 0.1 + 0.03*k) ? 'L' : 'R')(rnd()); // たいてい 左。後の 袋ほど 右が まじる（最大 35%）。左が 4つ 続くと 6割で 右、6つで かならず 右（151周目：右の 袋が 1つも ない 回が あり、目標「右から ほどく袋」が できなかった。152周目：4つで かならず だと 8袋目が 読まれる。rnd() の 回数は かえない）
   const single = k>=8 && rnd()<(k>=14 ? 0.3 : 0.15); // 1本糸の袋：どちらからでも ほどける。15袋目からは ふやす（うまい 人の 後半が 同じ 袋ばかりに ならない。151周目）
   const sinceR = k<3 || (start==='R' && !single) ? 0 : (prev ? (prev.sinceR||0) + 1 : 1); // 右から ほどく 袋から いくつ め か
   const knots = new Set();

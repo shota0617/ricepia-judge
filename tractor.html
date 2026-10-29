@@ -165,7 +165,7 @@
   /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
-  body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm #bShallow, body.calm #bDeep { display: none !important; }
+  body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
   body.calm .ico::before { content: attr(data-i); font-size: 18px; }
   body.calm .pad .ico::before { font-size: 26px; }
   body.calm #bStart.ico::before { font-size: 30px; }
@@ -6386,7 +6386,8 @@ const MAKURA = (() => {
       const i = Math.floor((p[k][0] + HX) / CELL), j = Math.floor((p[k][1] + HZ) / CELL);
       if (i >= 0 && j >= 0 && i < NX && j < NZ && DEEP[i * NZ + j] >= 4) {
         told = true;
-        toast('枕地は 何回も耕すと 深くなって、タイヤが 沈む。枕地は 浅く耕す（Z で 浅く）', 6);
+        document.body.classList.add('needDepth');   // のんびりでも ⇡⇣ を 出す（案内どおりに 浅く できるように）
+        toast('枕地は 何回も耕すと 深くなって、タイヤが 沈む。枕地は 浅く耕す（' + (MOBILE || params.has('pad') ? '「浅く」' : 'Z') + ' で 浅く）', 6);
         setTimeout(() => voice('makura'), 6500);
         return;
       }

@@ -55,6 +55,17 @@
   .sheet { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 24, 20, .55); }
   .card { width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 20px; border-radius: 18px; background: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align: center; }
   .card h1 { margin: 0 0 4px; font-size: 22px; }
+  /* 運転する キャラクターとの おはなし（はじめの画面・10/29 店主「素朴な かわいい キャラクターとの 会話で 進む」） */
+  .talk { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 12px; text-align: left; }
+  .talk[hidden] { display: none; }
+  .talk canvas { flex: none; width: 64px; height: 64px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+  .talkBody { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 14px; background: #fff; border: 2px solid #e3d7bd; position: relative; }
+  .talkBody::before { content: ''; position: absolute; left: -9px; top: 22px; border: 8px solid transparent; border-right-color: #e3d7bd; border-left: 0; }
+  .talkBody p { margin: 0; font-size: 15px; line-height: 1.6; }
+  .talkCh { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .talkCh button { padding: 8px 12px; border: 2px solid #d8d0bc; border-radius: 999px; background: #fffdf7; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .talkCh button.main { border-color: var(--green); background: var(--green); color: #fff; }
+  .talkCh button:disabled { opacity: .55; cursor: default; }
   .card .tag { display: inline-block; margin-bottom: 10px; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 999px; color: #8a6423; font-size: 12px; font-weight: 700; }
   .card p { margin: 8px 0; font-size: 14px; line-height: 1.7; }
   .seasons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
@@ -88,8 +99,21 @@
   .vs { margin: 4px 0 8px; font-weight: bold; font-size: 17px; }
   .go.line { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; margin: 8px auto 2px; max-width: 360px; min-height: 48px; background: #06c755; color: #fff; text-decoration: none; }
   .go.line small { font-size: 12px; font-weight: normal; opacity: .9; }
+  /* おわりの画面の キャラクター（のんびりの ときだけ）：いちばん うれしい ときに LINE に さそう */
+  .doneTalk { display: none; }
+  body.calm .doneTalk { display: flex; gap: 10px; align-items: center; margin: 6px 0 12px; text-align: left; }
+  #doneCv { width: 84px; height: 84px; border-radius: 50%; flex: none; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .doneBubble { flex: 1; min-width: 0; padding: 8px 12px; border: 2px solid #d8d0bc; border-radius: 14px; background: #fff; font-size: 14px; font-weight: 800; line-height: 1.45; color: #3a2f22; }
+  .doneBubble .go.line { margin: 8px 0 0; max-width: none; min-height: 44px; padding: 6px 10px; font-size: 15px; text-align: center; }
+  @media (max-width: 380px) {                     /* せまい スマホ：キャラクターを 上に、吹き出しを 下に ならべる */
+    body.calm .doneTalk { flex-direction: column; text-align: center; }
+    #doneCv { width: 72px; height: 72px; }
+    .doneBubble { width: 100%; box-sizing: border-box; }
+  }
+  body.calm #doneText, body.calm #bLineAdd, body.calm #doneScore > .small, body.calm #doneScore > br { display: none; }
   .challenge { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff3c4; color: #4a3600; font-weight: bold; line-height: 1.5; }
   .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
+  .easy .e { font-style: normal; }
   .easy input { width: 20px; height: 20px; margin-top: 2px; flex: none; accent-color: var(--green); }
   .go.sub { background: #fff; color: var(--green); border: 2px solid var(--green); }
   .times button { padding: 6px 4px; }
@@ -129,6 +153,31 @@
   #badgeCv { width: 76px; height: 76px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 10px rgba(0,0,0,.28); }
   /* 窓の 置き場所：パソコン・スマホ横は 右上の ボタン列の 下、スマホ縦は まん中の 計器の 下 */
   body.touch #badge { top: calc(max(8px, env(safe-area-inset-top)) + 46px); }
+  #badge { align-items: flex-end; }
+  #badgeCv { pointer-events: auto; cursor: pointer; }   /* さわると 話しかけてくれる */
+  /* キャラクターの 吹き出し：ふだんは 画面の 文字の かわりに ここで 一言 話す */
+  #say { margin-top: 6px; max-width: min(240px, 62vw); padding: 7px 12px; border-radius: 14px; background: rgba(251,248,240,.97); color: #3a2f22; font-size: 14px; font-weight: 800; line-height: 1.4; box-shadow: 0 2px 8px rgba(0,0,0,.25); position: relative; transition: opacity .3s; }
+  #say::before { content: ''; position: absolute; top: -6px; right: 30px; border: 6px solid transparent; border-top: 0; border-bottom-color: rgba(251,248,240,.97); }
+  #say.off { opacity: 0; }
+  .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
+  /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
+  body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
+  /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
+  body.calm .ico { font-size: 0 !important; }
+  /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
+  body.calm #bEco, body.calm #bAssist, body.calm #bFast, body.calm #bHelp, body.calm:not(.needDepth) #bShallow, body.calm:not(.needDepth) #bDeep { display: none !important; }   /* 深さは 案内が 浅くと 言ったら 出す（needDepth） */
+  body.calm .ico::before { content: attr(data-i); font-size: 18px; }
+  body.calm .pad .ico::before { font-size: 26px; }
+  body.calm #bStart.ico::before { font-size: 30px; }
+  body.calm .seasons button { font-size: 0; }
+  body.calm .card h1 { font-size: 0; }
+  body.calm .card h1::before { content: '🚜'; font-size: 34px; }
+  body.calm #start .tag, body.calm #start .card > p:not(.err), body.calm #start .how, body.calm #seasons button br, body.calm #seasons button small, body.calm #arts i { display: none !important; }
+  body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
+  body.calm #start label.easy input { margin-top: 0; }
+  body.calm #start label.easy > span { font-size: 0; line-height: 0; }
+  body.calm #start label.easy .e { font-size: 20px; line-height: 1; }
+  /* 読みこめなかった 知らせと「もう一度 よむ」は のんびりでも 出す（▶ が 押せない わけが わかるように） */
   #badgeSt { margin-top: -9px; padding: 2px 10px; border-radius: 999px; background: rgba(251,248,240,.96); color: #4a3d2c; font-size: 11px; font-weight: 800; white-space: nowrap; box-shadow: 0 1px 4px rgba(0,0,0,.22); }
   #toast { position: fixed; left: 50%; top: 104px; transform: translateX(-50%); padding: 8px 16px; border-radius: 999px; background: rgba(20,18,14,.75); color: #fff; font-size: 14px; font-weight: 700; pointer-events: none; transition: opacity .4s; }
   @media (max-width: 640px) { #hud { right: 8px; top: 56px; } .chip { font-size: 12px; } .pad button { width: 64px; height: 64px; } #toast { top: auto; bottom: 200px; max-width: 86vw; white-space: normal; text-align: center; } }
@@ -161,24 +210,24 @@
   <span id="scorePop"></span>
 </div>
 <div id="bar" class="hidden">
-  <button id="bCam" title="視点を切りかえる（C）">👁 運転席</button>
+  <button id="bCam" class="ico" data-i="👁" title="視点を切りかえる（C）">👁 運転席</button>
   <button id="bSnd" title="音（M）">🔇</button>
   <button id="bEasy" title="かんたんアシスト（K）：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる">🔰</button>
   <button id="bEco" title="耕すときのエンジン回転（I）：2500 → 2000 → 1800。下げると軽油がへるが 力の余裕が少ない。DPF の再生は 2000 回転以上">⛽2500</button>
-  <button id="bAssist" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
-  <button id="bGear" title="主変速（Q で下げる・E で上げる）">変速 3</button>
-  <button id="bFast" title="早送り（F）">⏩ ×1</button>
-  <button id="bArt" class="hidden" title="田んぼアートを仕上げて、ドローンで上から撮る（Enter）">📸 完成</button>
+  <button id="bAssist" class="ico" data-i="🧭" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
+  <button id="bGear" class="ico" data-i="⚙3" title="主変速（Q で下げる・E で上げる）">変速 3</button>
+  <button id="bFast" class="ico" data-i="⏩" title="早送り（F）">⏩ ×1</button>
+  <button id="bArt" class="hidden ico" data-i="📸" title="田んぼアートを仕上げて、ドローンで上から撮る（Enter）">📸 完成</button>
   <button id="bHelp" title="操作の表（H）">？</button>
   <button id="bMenu" title="はじめの画面へ">≡</button>
 </div>
 <div class="pad hidden" id="padL"><button data-k="left" aria-label="左へ切る">◀</button><button data-k="right" aria-label="右へ切る">▶</button></div>
-<div class="pad hidden" id="padC"><button id="bRot" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
-<div class="pad hidden" id="padD"><button id="bShallow" aria-label="耕す深さを浅く">浅く</button><button id="bDeep" aria-label="耕す深さを深く">深く</button><button data-k="diff" id="bDiff" class="hidden" aria-label="押しているあいだ、デフロック（左右の後輪を いっしょに回す）">デフロック</button></div>
-<div class="pad hidden" id="padB"><button data-k="lookBack" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
+<div class="pad hidden" id="padC"><button id="bRot" class="ico" data-i="⬇" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
+<div class="pad hidden" id="padD"><button id="bShallow" class="ico" data-i="⇡" aria-label="耕す深さを浅く">浅く</button><button id="bDeep" class="ico" data-i="⇣" aria-label="耕す深さを深く">深く</button><button data-k="diff" id="bDiff" class="hidden ico" data-i="🔒" aria-label="押しているあいだ、デフロック（左右の後輪を いっしょに回す）">デフロック</button></div>
+<div class="pad hidden" id="padB"><button data-k="lookBack" class="ico" data-i="👀" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden ico" data-i="🧽" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
-<div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span></div>
+<div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span><div id="say" class="off"></div></div>
 <div id="farmerSay"></div>
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
 <div id="coach" class="hidden"></div>
@@ -189,12 +238,13 @@
   <div class="card">
     <p class="challenge hidden" id="challenge"></p>
     <span class="tag">🧪 試作版</span>
+    <div class="talk" id="talk" hidden><canvas id="talkFace" width="128" height="128" aria-hidden="true"></canvas><div class="talkBody"><p id="talkSay" aria-live="polite"></p><div class="talkCh" id="talkCh"></div></div></div>
     <h1>🚜 トラクターで<span style="display:inline-block">田んぼを耕そう</span></h1>
     <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで 30m×50m の田んぼを耕し、<b>田んぼに絵を描きます</b>（田んぼアート）。お題を「なし」にすると、田んぼをぜんぶ耕せたらクリア。</p>
     <div class="seasons" id="seasons">
-      <button data-s="haru"><span>🌸</span>春<br>耕す前の田んぼ</button>
-      <button data-s="aki"><span>🌾</span>秋<br>稲刈りのあと</button>
-      <button data-s="shirokaki"><span>💧</span>代かき<br>水を張った田んぼ</button>
+      <button data-s="haru"><span>🌸</span>春<br><small>耕す前の田んぼ</small></button>
+      <button data-s="aki"><span>🌾</span>秋<br><small>稲刈りのあと</small></button>
+      <button data-s="shirokaki"><span>💧</span>代かき<br><small>水を張った田んぼ</small></button>
     </div>
     <div class="seasons times" id="times">
       <button data-t="asa"><span>🌅</span>朝</button>
@@ -217,18 +267,18 @@
       <button data-a="smile"><span>😊</span>にっこり<i>★★★★★</i></button>
       <button data-a="none"><span>🚜</span>なし</button>
     </div>
-    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b>👣 はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
-    <label class="easy"><input type="checkbox" id="checkBox"><span><b>🔧 はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
-    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b>🌸 レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
-    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b>⛰️ 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
-    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b>⛽ エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
-    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b>🪨 はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
-    <label class="easy"><input type="checkbox" id="easyBox"><span><b>🔰 かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
-    <label class="easy"><input type="checkbox" id="detailBox"><span><b>📖 くわしい説明</b>：知らせを ぜんぶ 出す・農家の声も 運転中に 出す</span></label>
+    <label class="easy" id="walkLabel"><input type="checkbox" id="walkBox"><span><b><i class="e">👣</i> はじめに田んぼを歩く</b>：耕す前に一回り歩いて、足が沈む やわらかい所を確かめ、モニターの地図に青く印をつける（2 分かかる）</span></label>
+    <label class="easy"><input type="checkbox" id="checkBox"><span><b><i class="e">🔧</i> はじめに点検する</b>：ファンベルト・冷却水・エンジンオイル・燃料・タイヤの空気・エアクリーナー・3 点リンクのグリース・爪のボルトと すり減り・リヤカバーの動き・作業機の傾きを見る（2〜5 分。傷んだ部品は 先に交換）</span></label>
+    <label class="easy" id="rengeLabel"><input type="checkbox" id="rengeBox"><span><b><i class="e">🌸</i> レンゲの田んぼ</b>：秋にまいた 緑肥のレンゲが 花ざかり。耕して 土にすきこむ（春だけ）</span></label>
+    <label class="easy" id="yamaLabel"><input type="checkbox" id="yamaBox"><span><b><i class="e">⛰️</i> 爪を 二山盛りに並べる</b>：1 回通るごとに 土の山が 2 本できる。稲わらが よく埋まる（ふつうは 平らにする平耕）</span></label>
+    <label class="easy" id="ecoLabel"><input type="checkbox" id="ecoBox"><span><b><i class="e">⛽</i> エンジンを 2000 回転に下げて耕す</b>：軽油が 1 時間あたり 3 割ほど へる。走る速さも 爪の回転も 2 割おそい。力の余裕が少ないので、ぬかるみなど重い所では エンストしやすい。重くなったら 回転を 2500 にもどす（I）か、変速を下げる（ふつうは 2500 回転。合う回転は 機種で ちがう）</span></label>
+    <label class="easy" id="stoneLabel"><input type="checkbox" id="stoneBox"><span><b><i class="e">🪨</i> はじめに石を拾う</b>：田んぼを歩いて 土の上の石を拾う（4 分）。石は 耕うんの爪をいためる</span></label>
+    <label class="easy"><input type="checkbox" id="easyBox"><span><b><i class="e">🔰</i> かんたんアシスト</b>：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる（使った回の点数は 8 割。運転中も「🔰」で入切）</span></label>
+    <label class="easy" id="detailLabel"><input type="checkbox" id="detailBox"><span><b><i class="e">📖</i> くわしい説明</b>：計器・知らせ・案内を 文字で ぜんぶ 出す・農家の声も 運転中に 出す（ふだんは 文字なしで、運転する キャラクターが 話しかける）</span></label>
     <p class="small" id="artHow">耕した所は黒い土になるので、上から見ると絵になります。<b>白線の内側だけ</b>を耕して、外は耕さない。地図で 黄色はまだ・緑は耕せた・赤ははみ出し。点数は<b>上手さ</b>（はみ出しの少なさ・まっすぐ・重ね・速さ）で、走りながら変わります。できたら「📸 完成」（<kbd>Enter</kbd>）でドローンが上から撮り、上手さ × でき で点数が決まります。耕した土と耕していない土の色の差は、春がいちばんはっきり</p>
     <div class="prog"><i id="progBar"></i></div>
-    <p class="small" id="progText">読みこみ中…</p>
-    <button class="go" id="bStart" disabled>▶ 運転する</button>
+    <p class="small" id="progText">⏳ トラクターを 田んぼへ はこんでいるよ…</p>
+    <button class="go ico" id="bStart" data-i="▶" disabled>▶ 運転する</button>
     <p class="small" id="rotateHint">📱 スマホは横向きにすると広く見えます</p>
     <div class="how" id="keysBox">
       <b>はじめての人へ：耕すのは 3 ステップ</b>
@@ -351,6 +401,12 @@
       ・朝 4 時前に トラクターの 暖機運転を はじめ、4 時すぎに 家を 出て 畑へ。暖機と 移動も ふくめて 1 時間 36 分（アワーメーター）…<a href="https://yuchuni-diy.com/entry/early-morning-tractor-work-300tsubo-kubota_" target="_blank" rel="noopener">camper_bakkasu の日記（はてなブログ）「朝4時起きのトラクター出動！300坪の畑作業と自家消費のリアル」</a>（ゲームでは 朝と夜は エンジンが 冷えていて、水温計が 青いあいだに 耕すと 回転が 上がりにくく、白い煙が 多く、ぬかるみで エンストしやすい。止まって 暖機してから。取扱説明書は 主変速・PTO を 中立に して 駐車ブレーキを かけ、約 1500 回転で 約 5 分。暖まる前に 走ると 寿命を 短くする）<br>
       ・10 月 30 日、畑を 鍬で 耕していたら、体の色が 灰色に かわった アマガエルを 起こしてしまった。目は ぱっちり。あやまって 耕さない 畑の縁に 埋めもどした。カエルは 10cm 以内の 浅い所で 冬を こすらしい…<a href="http://nanami-ishitsubo.cocolog-nifty.com/blog/2016/11/post-455c.html" target="_blank" rel="noopener">シニアナナ・思考徒然（ココログ）「冬眠中のカエルを起こしてしまった！！」</a>（ゲームでは 秋に 耕すと ときどき ロータリーのうしろの 土から 灰色の 小さな アマガエルが 出てきて、のどを ふくらませて 息をし、まばたきしながら 畦のほうへ ゆっくり はねていく。トラクターが 近いと 少し 急ぐ）<br>
       ・5 月、田んぼで アメリカザリガニが 大発生。小さな ザリガニが 畦に 上がってくる…<a href="https://negibouzu.org/?p=12819" target="_blank" rel="noopener">南房総 有機農園ねぎぼうず「ザリガニ大発生中(>_<) 田んぼの生き物」</a>（ゲームでは 代かきの 昼、畦の 巣穴の まわりの 水ぎわを 小さな ザリガニが のんびり 歩き、トラクターが 近づくと うしろへ すっと 水に もどる）<br>
+      ・代かきの あとの 田んぼで 草取りを していたら、水の 中に ゲンゴロウ・メダカ・どじょう・オタマジャクシが いた…<a href="https://green-wind.jp/%E7%94%B0%E3%82%93%E3%81%BC%E3%81%A7%E8%A6%8B%E3%81%A4%E3%81%91%E3%81%9F%E7%94%9F%E3%81%8D%E7%89%A9%E3%81%9F%E3%81%A1/" target="_blank" rel="noopener">グリーンウィンド「田んぼで見つけた生き物たち」</a>（ゲームでは 代かきの 昼、小さな ゲンゴロウが ときどき 水面に 上がって おしりを 出して 息つぎし、小さな 輪の 波が 立つ。トラクターが 近いと すっと もぐる。近くで 息つぎすると 運転する キャラクターが 気づく）<br>
+      ・田植えの ころ、気温が 上がった 日に カナヘビが 日向ぼっこ。体温が 上がりきらず 動きは ゆっくりだった…<a href="https://nouson-kaminaka.hatenablog.com/entry/2020/04/30/183946" target="_blank" rel="noopener">かみなか農楽舎「カナヘビの日向ぼっこ」</a>（ゲームでは 春と 代かきの 晴れた 朝・昼、畦の 上で カナヘビが ひなたぼっこ。ときどき 首を かしげ、ゆっくり 少し 歩く。トラクターが 近いと 草の 中へ するっと かくれ、しばらく すると また 出てくる。近くで 見つけると 運転する キャラクターが そっちを 見て 話す）<br>
+      ・稲刈りも 籾摺りも 終えた 日、刈り株だけに なった 田んぼで カエルを 見つけた。かくれる 所の ない カエル…<a href="https://terasawa.substack.com/p/a71" target="_blank" rel="noopener">農業詩人 てらさん「稲刈りが終わった、そのあとで」</a>（ゲームでは 秋の 朝・昼・夕方、刈り株の あいだに 小さな アマガエルが 3 びき。のどで 息を して じっと している。トラクターが 近づくと ぴょん ぴょんと 近くの 畦へ はねていき、草に かくれる。近くで 見つけると 運転する キャラクターが そっちを 見て 話す）<br>
+      ・春に 田んぼを 耕すと、水が ぬけきらない 土から ドジョウが 出てくる。腸や 皮ふでも 息が できる…<a href="https://www.bepal.net/archives/301693" target="_blank" rel="noopener">相川健志 BE-PAL「春の田んぼでコンニチワ！ドジョウの種類はヒゲの数で見分けられる」</a>（ゲームでは 春、ぬかるみ（右下の ぬれた 所）を 耕すと、ロータリーの うしろの 土から ドジョウが 出てきて くねくね 進み、やわらかい 泥に もぐる。近くで 出ると 運転する キャラクターが 見て 話す）<br>
+      ・レンゲの 種を 落とすため 例年より 1 週間 おそく、レンゲ畑を トラクターで 耕した。草が なくなって、テントウムシや ミツバチに 悪いことを した…<a href="https://fortunehills.blogspot.com/2019/05/blog-post_11.html" target="_blank" rel="noopener">幸か福岡かふくおかひろし「水田準備「田起こし」 レンゲ畑トラクターで耕す」</a>（ゲームでは「🌸 レンゲの田んぼ」の 晴れ・くもりの 朝・昼、ミツバチが レンゲの 花から 花へ みつを あつめて まわり、近くを 耕すと まだ 耕していない 遠くの レンゲへ とんでいく。運転する キャラクターが「ミツバチさん、ごめんね」）<br>
+      ・春から 夏は 水路を あけるだけで メダカが 田んぼに 入ってくる。田んぼで 卵を 産み、稲刈りの 前に 川へ もどす…<a href="https://kakunosh.in/kanzaki-aging-beef/cat-foodstuff/rice-medakamai/" target="_blank" rel="noopener">門崎ファーム「めだかが泳げる綺麗な田んぼで作る「めだか米」」</a>（ゲームでは 代かきの 朝・昼・夕方、東の 水口の そばで メダカの むれが 水面の すぐ 下を すいすい。トラクターが 近いと さっと はなれ、しばらく すると もどる。近くで 見つけると 運転する キャラクターが 見て 話す）<br>
       ・固い畦ぎわを耕すことの多い ロータリーの右はしの爪は とくに減りが はげしく、新品とくらべると 先が 針のように 細くなっていた（使いすぎ）。ほかの爪は 残りが 3〜4 割で ちょうど 交換どき。両はしの爪は 偏心爪で 1 本ずつなので、入れかえて 減りを ならせない…<a href="https://ameblo.jp/oisii-mineasahi/entry-12142804649.html" target="_blank" rel="noopener">アメブロ「トラクターの爪交換」</a>（先の幅が 25mm 以下で交換：<a href="https://faq.yanmar.com/jp/detail?site=FIWWZ5OB&amp;category=1&amp;id=381&amp;hot_list=true" target="_blank" rel="noopener">ヤンマーの FAQ</a>。ゲームでは 春に はじめの点検をしないと 右はしの爪が すり減っていて、耕したあとの 右はしに 20cm の すじが残る。止まって ロータリーを上げると 予備の爪に替える。5 分。爪を見るときは 平らな所で PTO を中立・エンジンを切り、降下止めを閉めて 作業機の下に 台を入れる：<a href="https://www.niplo.co.jp/file2021/manual/man14540562010.pdf#page=44" target="_blank" rel="noopener">ニプロのロータリーの取扱説明書</a>）<br>
       ・ふだんは 2500 回転・PTO 1 速（540〜580 回転）・時速 2.4km。エンジンを 1800〜2000 回転に下げて PTO を 2 速（580〜650 回転）にすると、8 時間耕して 燃料が 4 分の 1 ほど残った（2500 回転では ほぼ空）。ただ DPF つきは 低い回転のままだと、自動再生のとき 回転を上げないといけない…<a href="https://greenland-yoro.jp/nenpi/" target="_blank" rel="noopener">田んぼの作業を図解する作業者のブログ（greenland-yoro.jp）「【トラクター】PTO2速で燃費良く耕うんする方法」</a>（ゲームでは 2000 回転で P の PTO 2 速にすると 爪の回転が ふつうより 1 割ほど速くなり 土が細かくなる。I か「⛽」で 2500 → 2000 → 1800 回転。DPF の自動再生は 2000 回転より下（1800 回転・PTO 逆転の 1450 回転）では止まり、メーターに「回転を上げて」と出る。同じ人の <a href="https://greenland-yoro.jp/dpf/" target="_blank" rel="noopener">DPF の記事</a> の機種は 再生のとき 2000 回転まで上げる。どの回転かは 機種で ちがう）<br>
       ・トラクターで耕していると いつものカラスが来て、近ごろは モズも来る。切り株のあいだを 小さな鳥が走り、止まると うずくまって 見えにくい。トラクターを降りて近づくと 走って 草むらへ 飛んでいった。野生のウズラは はじめて見た…<a href="https://ameblo.jp/iko228-yamaha/entry-12730524373.html" target="_blank" rel="noopener">ikoのブログ「珍しい野生の鳥がいたー 田んぼ耕し！」</a>（ゲームでは 春と秋の昼、半分の日に 1 羽が 耕している先の 切り株のあいだに ひそんでいる。トラクターが近づくと 株の列のあいだを 走って逃げ、止まると うずくまる。すぐそばまで来ると 低く飛んで 畦の草むらへ。ウズラは 環境省のレッドリストで 絶滅危惧Ⅱ類：<a href="https://www.env.go.jp/nature/choju/docs/docs5/docs5-uzura.pdf" target="_blank" rel="noopener">環境省の資料</a>）<br>
@@ -376,13 +432,14 @@
       畦では この田んぼの持ち主（近所の米農家さん）が運転を見ていて、旋回で上げない・畦にぶつける・速すぎ・蛇行・すき間・はみ出しなどがあると、ふきだしで ダメ出しする（昼だけ）。<br>
       ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわ・タイヤ跡・畦にぶつけたときにも、その場面で言葉が出る。耕しなおすとタイヤ跡が消え、代かきでは かいた泥の上にタイヤ跡が残る。終わりの画面に、聞いた声の数
     </details>
-    <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>トラクターは、60 馬力クラスのキャビン付きトラクターを参考にした架空の車体です。農機メーカーの公式のゲームではありません。<br><b style="color:#7a4a12">🚸 本物のトラクターは とても危ないので、子どもは乗ったり、動いているトラクターや作業機に近づいたりしないでください。</b><br>遊んだ記録や操作は、当店にも ほかの会社にも送りません（覚えるのは この端末の「かんたんアシスト」の入切だけ）。<br>つくったのは 西尾のお米屋さん らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=credit" target="_blank" rel="noopener">ricepia.jp</a><br>農作業の説明に まちがいを見つけたら、<a href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=tractor-report" target="_blank" rel="noopener">当店の LINE</a> で教えてください。</p>
+    <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>トラクターは、60 馬力クラスのキャビン付きトラクターを参考にした架空の車体です。農機メーカーの公式のゲームではありません。<br><b style="color:#7a4a12">🚸 本物のトラクターは とても危ないので、子どもは乗ったり、動いているトラクターや作業機に近づいたりしないでください。</b><br>遊んだ記録や操作は、当店にも ほかの会社にも送りません（この端末に 覚えるのは「かんたんアシスト」と「くわしい説明」の入切、耕し終えた回数だけ。LINE の ボタンを 押したときだけ、このゲームから来たことが 当店に わかります）。<br>つくったのは 西尾のお米屋さん らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=credit" target="_blank" rel="noopener">ricepia.jp</a><br>農作業の説明に まちがいを見つけたら、<a href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=tractor-report" target="_blank" rel="noopener">当店の LINE</a> で教えてください。</p>
   </div>
 </div>
 
 <div class="sheet hidden" id="done">
   <div class="card">
     <h1 id="doneTitle">🎉 耕し終わりました！</h1>
+    <div class="doneTalk" id="doneTalk"><canvas id="doneCv" width="152" height="152" aria-hidden="true"></canvas><div class="doneBubble"><span id="doneSay"></span><a class="go line" id="bLineTalk" href="https://ricepia.jp/go/lin.ee/AULbClm?from=tractor-done-talk" target="_blank" rel="noopener">📩 LINE 友だち追加<small>価格表・売り出し情報</small></a></div></div>
     <p id="doneText"></p>
     <img id="artImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼアート">
     <div class="artBtns hidden" id="artBtns"><button class="go sub" id="bOther">別のお題</button></div>
@@ -393,7 +450,7 @@
       <img id="cardImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼと点数">
       <div class="artBtns"><button class="go sub hidden" id="bShare">📱 シェア</button><a class="go sub" id="bX" target="_blank" rel="noopener">𝕏 ポスト</a><a class="go sub" id="bLine" target="_blank" rel="noopener">LINE で送る</a><a class="go sub" id="bSave" download="tractor.jpg">💾 画像を保存</a></div>
       <p class="small">投稿のリンクから来た人は、同じ季節・お題で あなたの点数に挑戦できます</p>
-      <a class="go line" id="bLineAdd" href="https://line.me/R/ti/p/@wxh6702b" target="_blank" rel="noopener">📩 らいすぴあの LINE を友だち追加<small>価格表・売り出し情報</small></a>
+      <a class="go line" id="bLineAdd" href="https://ricepia.jp/go/lin.ee/AULbClm?from=tractor-done" target="_blank" rel="noopener">📩 らいすぴあの LINE を友だち追加<small>価格表・売り出し情報</small></a>
     </div>
     <button class="go hidden" id="bNext"></button>
     <button class="go sub" id="bWash">🚿 洗車して しまう</button>
@@ -480,7 +537,7 @@ if (WX !== 'hare') {                            // くもり・小雨：雲が�
 
 // ---- 描くしくみ ----
 const canvas = $('view');
-const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
+const renderer = (() => { try { return new THREE.WebGLRenderer({ canvas, antialias: !MOBILE, powerPreference: 'high-performance' }); } catch (e) { $('progText').textContent = '🚜 この スマホ（ブラウザ）では 3D の 絵が 出せない ようです。パソコンや ほかの ブラウザで ひらいてみてね。'; $('progText').classList.add('err'); throw e; } })();   // WebGL が 使えない 端末で「読みこみ中…」の まま 止まらない ように
 renderer.setPixelRatio(Math.min(devicePixelRatio, MOBILE ? 1.5 : 2));
 renderer.outputEncoding = THREE.sRGBEncoding;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -572,7 +629,7 @@ const prog = { t: 0, f: 0 };
 function showProg() {
   const p = Math.round((prog.t + prog.f) / 2 * 100);
   $('progBar').style.width = p + '%';
-  $('progText').textContent = p < 100 ? `読みこみ中… ${p}%（はじめは 8MB ほど）` : '準備ができました';
+  $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 8MB ほど）` : '🌱 じゅんび できたよ';
 }
 function load(url, key) {
   return new Promise((ok, ng) => loader.load(ASSET + url, ok, e => { if (e.total) { prog[key] = e.loaded / e.total; showProg(); } }, ng));
@@ -597,7 +654,7 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   setRotBtn();
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
   $('bStart').disabled = false;
-}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -1146,7 +1203,7 @@ const MUDDROP = (() => {
       put(w[k][0] + (Math.random() - 0.5) * 0.4, w[k][1] + (Math.random() - 0.5) * 0.4, 0.07 + Math.random() * 0.12 * (0.5 + MUD.level));
       MUD.level = Math.max(0, MUD.level - 0.006); road++;
     }
-    if (!told && road > 6) { told = true; toast('タイヤの泥が道に落ちています。本物は田んぼの中で止まって、泥を落としてから出ます（' + (MOBILE ? '「泥落とし」' : 'V') + '）'); }
+    if (!told && road > 6) { told = true; toast('道に 泥が おちちゃったね。田んぼの 中で 止まって ' + (MOBILE ? '「泥落とし」' : 'V') + ' で 泥を おとしてから 出ようね（本物も 田んぼの 中で 泥を 落としてから 道に 出る）'); }
   }
   return { step, put, mesh, get road() { return road; } };
 })();
@@ -1435,7 +1492,7 @@ const GASU = (() => {
     if (fixed && !S.parked) fixed = false;          // エンジンをかけなおした
     if (!out && left() <= 0 && S.started && !S.stalled && !(S.crank > 0)) {   // ガス欠：エンジンが止まる
       out = true; S.stalled = true; S.v = 0; S.parked = true;
-      toast('エンジンが止まった。ガス欠！ 燃料計が E。ディーゼルは 軽油が切れると 燃料の管に 空気が入るので、入れても すぐには かからない（セルを 回しつづけない）。エンジンも 油圧も 止まったので、' + IMPL + 'は 下ろしたまま、止まっていると 軽油を入れて エア抜きを する', 8);
+      toast('ガス欠で とまっちゃったね。止まって 待てば 軽油を 入れて エア抜き するよ（燃料計が E。ディーゼルは 軽油が切れると 燃料の管に 空気が入るので、入れても すぐには かからない。セルを 回しつづけない。エンジンも 油圧も 止まったので ' + IMPL + 'は 下ろしたまま）', 8);
     } else if (!out && !warned && left() < WARN && S.started && !(S.crank > 0)) {
       warned = true; warnOdo = S.odo || 0; toast('⛽ 燃料の 警告が ついている（残り ' + Math.max(0, left()).toFixed(1) + 'L。燃料計が 赤）。ガス欠になる前に、止まって ' + IMPL + 'を上げると 軽トラの 携行缶から 入れる', 6);
     }
@@ -2795,7 +2852,7 @@ const RENGE = (() => {
     }
     if (dirty) mesh.geometry.attributes.position.needsUpdate = true;
   }
-  return { setup, update, on: true, st };
+  return { setup, update, on: true, st, hAt };   // hAt：レンゲの 面の 高さ（ミツバチが とまる）
 })();
 // はまる：取水口のまわりの ぬかるみで、作業機を下げたまま大きく旋回したり エンストをくり返したりすると、後輪が泥に沈んで 自力で出られなくなる。
 // 空回りさせると もっと沈む。アクセルをはなして待つと、応援のトラクターを呼んで ロープで引き出してもらう（+20 分）。
@@ -2840,7 +2897,7 @@ const RAMPDMG = (() => {
     const up = Math.sin(S.yaw) * dir > 0.3;        // 坂は +x へ上がる
     if (up && !preTold && S.x > 9 && S.x < 12 && S.z > 18 && S.z < 22) {   // 坂に入る前に言う（坂の上では 変速しない）
       preTold = true;
-      toast('この先の坂は 崩れている。坂に入る前に 1 速に落としておく（坂の上では 変速しない）', 6);
+      toast('この先の 坂、くずれてるね。坂の 前で 1 速に 落としておこう（坂の上では 変速しない）', 6);
     }
     if (!up || !inBox(S.x, S.z)) return Infinity;
     if (!slipTold && Math.abs(S.v) > 0.1) {
@@ -3006,7 +3063,7 @@ const HAMARU = (() => {
         rescueT = 0; S.stuck = false; S.stuckSink = 0; acc = 0;
         S.x = to[0]; S.z = to[1];
         S.elapsed += 1200;
-        toast('抜けた！（+20 分）本物は 悪天候の日は作業しない・旋回を激しくしない。同じ田んぼの同じ所で はまりやすい', 6);
+        toast('抜けたね！ よかった（+20 分）。ここは また はまりやすいから ゆっくりね（本物は 悪天候の日は作業しない・旋回を激しくしない。同じ田んぼの同じ所で はまりやすい）', 6);
         const vid = ++rescues === 1 ? 'hamaru' : 'unikku';   // 2 回目は「今年も はまった」話（光男の米のブログ）。早送りで 待つあいだに次が来ても 取りちがえない
         setTimeout(() => voice(vid), 6500);
       }
@@ -3018,7 +3075,7 @@ const HAMARU = (() => {
       acc = Math.max(0, acc + (hard ? dt : grip ? -dt * 1.2 : -dt * 0.05));
       if (acc > 0.8 && !slipTold) {                // 片方の後輪が 空回りしはじめた（まだ はまってはいない）
         slipTold = true; DIFF.show();
-        toast('片方の後輪が 空回りしはじめた。アクセルをはなして 空回りを止め、ハンドルを まっすぐにしてから デフロック（' + DIFF.label() + '）を押し、ゆっくり出ると 左右の後輪が いっしょに回って 抜けやすい', 7);
+        toast('片方の タイヤが 空回り してるね。アクセルを はなして ハンドルを まっすぐに してから デフロック（' + DIFF.label() + '）を押して ゆっくり 出よう（左右の後輪が いっしょに回って 抜けやすい）', 7);
       }
       if (acc > 1.6) {
         S.stuck = true; S.v = 0; idle = 0; S.stuckSink = 0.05; esc = 0; DIFF.show();
@@ -3774,7 +3831,7 @@ const SHIHATSU = (() => {
       const [x, z, yaw] = pend; pend = null;
       if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, 0.035) && !toldDown) {
         toldDown = true;
-        toast('ロータリーを下ろして 耕しはじめた所は 土が盛り上がる（爪が 土をうしろへ けちらすから）。止まったまま 3 秒ほど 空回ししてから 走り出すと ならせる（本物は フラップを少し押さえ気味に）', 7);
+        toast('おろした所が もりあがったね。止まって 3 秒 空回ししてから 走ると ならせるよ（爪が 土を うしろへ けちらすから・本物は フラップを 少し 押さえ気味に）', 7);
         setTimeout(() => voice('shihatsu'), 7500);
       }
     }
@@ -3782,7 +3839,7 @@ const SHIHATSU = (() => {
       const [x, z, yaw] = rotC();
       if (Math.abs(x) < HX && Math.abs(z) < HZ && mark(x, z, yaw, -0.035) && !toldUp) {
         toldUp = true;
-        toast('ロータリーを上げて 耕すのを止めた所は くぼむ。本物は 爪の回転を止め、PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで 穴がうまる（ゲームでは 耕しなおすと ならされる）', 7);
+        toast('あげた所が ちょっと くぼんだね。耕しなおすと ならせるよ（本物は 爪の回転を止め、PTO を中立にして ゆっくり前へ出ると、うしろにたまった土を フラップが押しこんで 穴がうまる）', 7);
         setTimeout(() => voice('shihatsu'), 7500);
       }
     }
@@ -5527,6 +5584,428 @@ const ZARI = (() => {
   return { update, list };
 })();
 
+// ---- 春の 畦で ひなたぼっこする カナヘビ（ニホンカナヘビ）：晴れた 朝・昼、畦の 上で 日を あびて じっと している。
+// 体が あたたまるまでは 動きが ゆっくりで、ときどき 首を かしげたり 少し 歩いたり する。トラクターが 近いと 畦の 草の 中へ
+// するっと かくれ、しばらく すると また 出てくる。近くで 見つけたら 運転する キャラクターが そっちを 見て 話す
+// （かみなか農楽舎（福井県 若狭町の 米づくりの 研修農場）「カナヘビの日向ぼっこ」：田植えの ころ、気温が 上がった 日に
+// カナヘビが 日向ぼっこ。体温が 上がりきらず 動きは ゆっくりだった。ニホンカナヘビは 全長 16〜27cm で 尾が 3 分の 2 ほど、
+// 背は 茶色で わきに こい 茶色の すじ、冬眠明けは 3 月下旬〜4 月）
+const KANA = (() => {
+  if ((season !== 'haru' && season !== 'shirokaki') || TOD === 'yoru' || TOD === 'yu' || RAIN) return { update() {}, list: [] };
+  let seed = 83; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  const lam = c => new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() });   // 見た目の 色（sRGB）で 書く
+  const backM = lam(0x6e5232), sideM = lam(0x2e2214), bellyM = lam(0xc2ad78), eyeM = lam(0x0a0806), list = [];
+  // 畦の 上（田んぼの ふちから 0.33〜0.77m は 高さ 0.3m の 平らな 所）：辺・辺に そった 位置 → 位置
+  const lev = (side, t, d) => side < 2 ? [t * (HX + 0.3), (side ? 1 : -1) * (HZ + d)] : [(side === 2 ? 1 : -1) * (HX + d), t * (HZ + 0.3)];
+  // 畦の 面の 高さ：田んぼの 形に 上から 光線を 当てて 求める（草の 株は 数えない）。動いた ときだけ はかりなおす
+  const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0), tmp = new THREE.Vector3();
+  const groundY = (x, z) => {
+    if (!field) return 0.3;
+    ray.set(tmp.set(x, 2, z), DOWN);
+    const h = ray.intersectObject(field, true).find(h => h.object.visible && h.object.isMesh && !h.object.isInstancedMesh);
+    return h ? h.point.y : 0.3;
+  };
+  const bad = (x, z) => (x > HX && z > 16.8 && z < 23.2) || Math.hypot(x - (HX + 0.35), z + 18) < 1;   // 坂と 給水栓の そば
+  function place(u, first) {                      // first：はじめ（まだ トラクターの 位置が ない）
+    for (let k = 0; k < 20; k++) {
+      u.side = Math.floor(R() * 4); u.t = R() * 1.8 - 0.9; u.d = 0.45 + R() * 0.24;
+      const [x, z] = lev(u.side, u.t, u.d);
+      if (!bad(x, z) && (first || Math.hypot(x - S.x, z - S.z) > 9)) break;
+    }
+    u.dir = R() < 0.5 ? 1 : -1; u.st = 'bask'; u.t2 = 2 + R() * 3; u.walk = 0; u.g.visible = true;
+  }
+  for (let k = 0; k < 3; k++) {
+    const g = new THREE.Group(), body = new THREE.Group(); g.add(body); g.scale.setScalar(0.92);   // 頭の先（z≈+0.053）から 尾の先（z=−0.176）まで 0.229 → 全長 約 21cm（図鑑の 16〜27cm）
+    const back = new THREE.Mesh(new THREE.SphereGeometry(0.011, 10, 6), backM); back.scale.set(1.1, 0.55, 2.8); back.position.y = 0.006; body.add(back);
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.0105, 8, 6), bellyM); belly.scale.set(0.85, 0.4, 2.7); belly.position.y = 0.003; body.add(belly);
+    for (const sx of [-1, 1]) { const st = new THREE.Mesh(new THREE.BoxGeometry(0.0025, 0.003, 0.05), sideM); st.position.set(sx * 0.0085, 0.006, 0); body.add(st); }   // わきの こい すじ
+    const head = new THREE.Group(); head.position.set(0, 0.007, 0.032); body.add(head);
+    const hm = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 8, 6), backM); hm.scale.set(1.05, 0.65, 1.5); hm.position.z = 0.008; head.add(hm);
+    for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.0021, 6, 4), eyeM); e.position.set(sx * 0.0055, 0.003, 0.009); head.add(e); }
+    const tail = new THREE.Group(); tail.position.set(0, 0.005, -0.03); body.add(tail);
+    const t1 = new THREE.Mesh(new THREE.ConeGeometry(0.0065, 0.07, 6).rotateX(-Math.PI / 2).translate(0, 0, -0.035), backM); tail.add(t1);
+    const tail2 = new THREE.Group(); tail2.position.z = -0.066; tail.add(tail2);
+    const t2 = new THREE.Mesh(new THREE.ConeGeometry(0.0032, 0.08, 5).rotateX(-Math.PI / 2).translate(0, 0, -0.04), backM); tail2.add(t2);
+    const legs = [];
+    for (const [sx, lz] of [[-1, 0.018], [1, 0.018], [-1, -0.02], [1, -0.02]]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.014, 0.0025, 0.004), sideM); l.position.set(sx * 0.011, 0.002, lz); l.rotation.y = sx * (lz > 0 ? -0.5 : 0.5); body.add(l); legs.push(l); }
+    g.rotation.order = 'YXZ'; scene.add(g);
+    const u = { g, body, head, tail, tail2, legs, ph: R() * 6, look: 0, gx: 1e9, gz: 0, gy: 0.3 }; place(u, true); list.push(u);
+  }
+  let told = false;
+  function update(dt) {
+    for (const u of list) {
+      u.ph += dt;
+      if (u.st === 'hide') {                      // 草の 中：しばらく したら トラクターから はなれた 所に また 出てくる
+        if ((u.t2 -= dt) <= 0) place(u);
+        continue;
+      }
+      let [x, z] = lev(u.side, u.t, u.d);
+      const dist = Math.hypot(x - S.x, z - S.z), L = (u.side < 2 ? HX : HZ) + 0.3;
+      if (u.st === 'bask') {                      // ひなたぼっこ：じっと して、ときどき 首を かしげる・少し 歩く（まだ ゆっくり）
+        if ((u.t2 -= dt) <= 0) { u.t2 = 2 + R() * 4; u.look = (R() - 0.5) * 0.9; if (R() < 0.3) u.walk = 0.6 + R() * 0.8; }
+        if (u.walk > 0) { u.walk -= dt; u.t += u.dir * 0.035 * dt / L; }
+        if (dist < 3.5) { u.st = 'run'; u.walk = 0.9 + R() * 0.5; const along = u.side < 2 ? x - S.x : z - S.z; u.dir = along >= 0 ? 1 : -1; }   // トラクターから 遠い ほうへ
+        if (!told && S.started && dist < 9) {
+          if (DETAIL || SAY.note('カナヘビが ひなたぼっこ してるね')) { told = true; BADGE.peek(x, z, 3); voice('kanahebi'); }
+        }
+      } else if (u.st === 'run') {                // するっと 走って 畦の 草の 中へ
+        u.walk -= dt; u.t += u.dir * 0.7 * dt / L;
+        if (u.walk <= 0 || Math.abs(u.t) > 0.97 || bad(x, z)) { u.st = 'hide'; u.t2 = 12 + R() * 10; u.g.visible = false; continue; }
+      }
+      [x, z] = lev(u.side, u.t, u.d);
+      const run = u.st === 'run', moving = run || u.walk > 0, wig = moving ? Math.sin(u.ph * (run ? 32 : 9)) : 0;
+      if (Math.hypot(x - u.gx, z - u.gz) > 0.03) { u.gx = x; u.gz = z; u.gy = groundY(x, z); }
+      u.g.position.set(x, u.gy + 0.002, z);
+      u.g.rotation.y = (u.side < 2 ? (u.dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (u.dir > 0 ? 0 : Math.PI)) + wig * (run ? 0.18 : 0.08);
+      u.head.rotation.y += ((moving ? -wig * 0.15 : u.look) - u.head.rotation.y) * Math.min(1, dt * 3);
+      u.head.rotation.x = moving ? 0 : -0.18;      // ひなたぼっこ中は 頭を 少し 上げる
+      u.tail.rotation.y = -wig * (run ? 0.45 : 0.2); u.tail2.rotation.y = -wig * (run ? 0.6 : 0.25);
+      u.legs.forEach((l, n) => { l.position.z = (n < 2 ? 0.018 : -0.02) + (moving ? Math.sin(u.ph * (run ? 32 : 9) + (n % 2 ? 0 : Math.PI) + (n < 2 ? 0 : Math.PI)) * 0.004 : 0); });
+    }
+  }
+  return { update, list, get told() { return told; } };
+})();
+
+// ---- 秋の 刈り株の あいだの アマガエル：稲刈りの あと、刈り株だけに なった 田んぼに 小さな カエル。かくれる 所が ないので
+// じっと して のどで 息を している。トラクターが 近づくと ぴょん ぴょんと いちばん 近い 畦へ はねていき、畦の 草に かくれる
+// （もう もどらない）。近くで 見つけたら 運転する キャラクターが そっちを 見て 話す。
+// （農業詩人 てらさん（新潟で 米と 野菜を 育てる 農家）「稲刈りが終わった、そのあとで」：籾摺りも 終えた 日、刈り株だけに なった
+// 田んぼで カエルを 見つけた。かくれる 所の ない カエル。人の「終わった」と 生きものの 時間は ちがうのかも。
+// アマガエルは 体 3〜4cm、まわりに 合わせて 体の 色を かえる（秋は 灰色っぽく なる）、ジャンプは 体の 10 倍 ほど）
+const KABU = (() => {
+  if (season !== 'aki' || TOD === 'yoru') return { update() {}, list: [] };
+  let seed = 97; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const backM = lam(0x5a5a40), bellyM = lam(0xb8b49a), eyeM = lam(0x140f08), stripeM = lam(0x2a2418), list = [];
+  const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0), tmp = new THREE.Vector3();
+  const groundY = (x, z) => {                     // 刈り株の 田んぼの 土の 面（株は 数えない）
+    if (!field) return 0.02;
+    ray.set(tmp.set(x, 2, z), DOWN);
+    const h = ray.intersectObject(field, true).find(h => h.object.visible && h.object.isMesh && !h.object.isInstancedMesh);
+    return h ? h.point.y : 0.02;
+  };
+  const untilled = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && !tilledMask[i * NZ + j]; };
+  for (let k = 0; k < 3; k++) {
+    const g = new THREE.Group(); g.rotation.order = 'YXZ';
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.011, 10, 8), backM); body.scale.set(1, 0.72, 1.35); body.position.set(0, 0.011, -0.002); g.add(body);
+    const throat = new THREE.Mesh(new THREE.SphereGeometry(0.0052, 8, 6), bellyM); throat.scale.set(1, 0.7, 0.8); throat.position.set(0, 0.0045, 0.0085); g.add(throat);   // のど（息で ふくらむ）
+    for (const sx of [-1, 1]) {
+      const e = new THREE.Mesh(new THREE.SphereGeometry(0.0028, 6, 4), eyeM); e.position.set(sx * 0.0068, 0.0175, 0.008); g.add(e);
+      const st = new THREE.Mesh(new THREE.BoxGeometry(0.0012, 0.0015, 0.008), stripeM); st.position.set(sx * 0.0085, 0.0145, 0.004); g.add(st);   // 目の 横の 黒い すじ
+      const leg = new THREE.Mesh(new THREE.SphereGeometry(0.0055, 6, 4), backM); leg.scale.set(0.8, 0.6, 1.6); leg.position.set(sx * 0.0105, 0.005, -0.009); g.add(leg);   // たたんだ 後ろ脚
+    }
+    g.visible = false; scene.add(g);
+    list.push({ g, throat, st: 'wait', x: 0, z: 0, yaw: R() * 6.28, ph: R() * 6, t: 0, hop: 0, fx: 0, fz: 0, tx: 0, tz: 0, y0: 0, y1: 0 });
+  }
+  let told = false, placed = false;
+  function place() {                              // はじめの 1 回：トラクターから はなれた、まだ 耕していない 所
+    for (const u of list) {
+      for (let k = 0; k < 30; k++) {
+        u.x = (R() * 2 - 1) * (HX - 3); u.z = (R() * 2 - 1) * (HZ - 3);
+        if (untilled(u.x, u.z) && Math.hypot(u.x - S.x, u.z - S.z) > 10) break;
+      }
+      u.st = 'sit'; u.y0 = groundY(u.x, u.z); u.g.visible = true;
+    }
+  }
+  function update(dt) {
+    if (!placed) { if (!field) return; placed = true; place(); }
+    for (const u of list) {
+      if (u.st === 'gone' || u.st === 'wait') continue;
+      u.ph += dt;
+      const near = Math.hypot(u.x - S.x, u.z - S.z);
+      if (!told && S.started && near < 9) {         // 知らせの とちゅうなら 畦に つくまで 待つ
+        if (DETAIL || SAY.note('カエルさん、かりかぶの あいだに いるね')) { told = true; BADGE.peek(u.x, u.z, 3); voice('kabugaeru'); }
+      }
+      if (u.st === 'sit') {                       // じっと して のどで 息
+        const b = 1 + 0.3 * Math.max(0, Math.sin(u.ph * 5)); u.throat.scale.set(b, 0.7 * b, 0.8 * b);
+        if (near < 4.5 || !untilled(u.x, u.z)) { u.st = 'rest'; u.t = 0; }
+      } else if (u.st === 'rest' && (u.t -= dt) <= 0) {   // つぎの ひと はね：いちばん 近い 畦の ほうへ（トラクターから はなれる 向きも まぜる）
+        const ex = HX - Math.abs(u.x), ez = HZ - Math.abs(u.z);
+        let dx = ex < ez ? Math.sign(u.x) || 1 : 0, dz = ex < ez ? 0 : Math.sign(u.z) || 1;
+        const ax = u.x - S.x, az = u.z - S.z, al = Math.hypot(ax, az) || 1;
+        dx += ax / al * 0.6; dz += az / al * 0.6;
+        const d = Math.hypot(dx, dz) || 1, L = 0.22 + R() * 0.14;
+        u.fx = u.x; u.fz = u.z; u.tx = u.x + dx / d * L; u.tz = u.z + dz / d * L;
+        u.yaw = Math.atan2(dx, dz); u.y1 = groundY(u.tx, u.tz); u.st = 'hop'; u.hop = 0;
+      } else if (u.st === 'hop') {
+        u.hop = Math.min(1, u.hop + dt / 0.32);
+        u.x = u.fx + (u.tx - u.fx) * u.hop; u.z = u.fz + (u.tz - u.fz) * u.hop;
+        if (u.hop >= 1) {
+          u.y0 = u.y1;
+          if (Math.abs(u.x) > HX - 0.05 || Math.abs(u.z) > HZ - 0.05) { u.st = 'gone'; u.g.visible = false; continue; }   // 畦の 草の 中へ
+          u.st = 'rest'; u.t = near < 3 ? 0.15 + R() * 0.2 : 0.4 + R() * 0.6;
+        }
+      }
+      const arc = u.st === 'hop' ? Math.sin(u.hop * Math.PI) * 0.07 : 0;
+      u.g.position.set(u.x, (u.st === 'hop' ? u.y0 + (u.y1 - u.y0) * u.hop : u.y0) + arc, u.z);
+      u.g.rotation.y = u.yaw; u.g.rotation.x = u.st === 'hop' ? -0.35 * Math.cos(u.hop * Math.PI) : 0;
+      u.g.scale.set(1, u.st === 'hop' ? 1 + 0.25 * Math.sin(u.hop * Math.PI) : 1, 1);   // とぶ ときは 体が のびる
+    }
+  }
+  return { update, list, get told() { return told; } };
+})();
+
+// ---- 春の ぬかるみの ドジョウ：水が ぬけきらない ぬれた 所（WET）を 耕すと、ロータリーの うしろの 土から ドジョウが 出てくる。
+// くねくね と 少し およぐように 進んで、やわらかい 泥に もぐって いく（こわい 場面は なし）。近くで 出たら 運転する キャラクターが 見て 話す。
+// （相川健志（横浜 郊外で 約 1,500㎡ の 田んぼで 米づくり・里山の 保全）BE-PAL「春の田んぼでコンニチワ！ドジョウの種類はヒゲの数で見分けられる」：
+// 春に 田んぼを 耕すと、水が ぬけきらない 土から ドジョウが 出てくる。えらの ほか 腸や 皮ふでも 息が できるので、しめった 土の 中でも 生きられる。
+// マドジョウは 体長 10〜15cm・黄土色に 黒っぽい 点・口の まわりに ひげ 10 本（5 対））
+const DOJO = (() => {
+  if (season !== 'haru') return { update() {}, list: [] };
+  let seed = 113; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  const lin = c => new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() });
+  const bodyM = lin(0x5f5235), bellyM = lin(0xb8a878), eyeM = lin(0x0a0806), list = [];
+  const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0), tmp = new THREE.Vector3();
+  const groundY = (x, z) => {                     // 耕した 土の 面（株・草は 数えない）
+    ray.set(tmp.set(x, 2, z), DOWN);
+    const h = ray.intersectObjects([tilled, field].filter(Boolean), true).find(h => h.object.visible && h.object.isMesh && !h.object.isInstancedMesh);
+    return h ? h.point.y : 0.03;
+  };
+  const SEG = 8, LEN = 0.105;                     // 体長 12cm（頭と 尾の 先を 足して）を 8 つの ふしで（ふしは かさねて つなぐ）
+  for (let k = 0; k < 2; k++) {
+    const g = new THREE.Group(), segs = [];
+    for (let i = 0; i < SEG; i++) {
+      const r = 0.0062 * (i === 0 ? 0.92 : 1 - i / SEG * 0.5);
+      const m = new THREE.Mesh(new THREE.SphereGeometry(r, 8, 6), bodyM); m.scale.set(0.85, 0.8, 2.6); g.add(m); segs.push(m);
+      if (i === SEG - 1) { const fin = new THREE.Mesh(new THREE.SphereGeometry(0.004, 6, 4), bodyM); fin.scale.set(0.25, 1.1, 1.6); fin.position.z = -0.008; m.add(fin); }   // 尾びれ
+      if (i === 0) {                              // 頭：目と ひげ
+        for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.0011, 5, 4), eyeM); e.position.set(sx * 0.0035, 0.003, 0.004); m.add(e); }
+        for (let b = 0; b < 10; b++) { const sx = b < 5 ? -1 : 1, k = b % 5, w = new THREE.Mesh(new THREE.BoxGeometry(0.0004, 0.0004, 0.0025 + k * 0.0004), bodyM); w.position.set(sx * (0.0008 + k * 0.0007), -0.0022 + k * 0.0002, 0.0072 - k * 0.0008); w.rotation.y = sx * (0.35 + k * 0.18); m.add(w); }   // 口ひげ 5 対 10 本
+      }
+    }
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.005, 6, 4), bellyM); belly.scale.set(0.9, 0.5, 4); belly.position.y = -0.002; segs[1].add(belly);
+    g.visible = false; scene.add(g);
+    list.push({ g, segs, st: 'off', x: 0, z: 0, y: 0, yaw: 0, t: 0, ph: 0, sink: 0 });
+  }
+  let told = false, made = 0, cool = 3;
+  function update(dt) {
+    cool -= dt;
+    // ぬれた 所を 耕していると、ときどき ロータリーの うしろに 出てくる（1 回の 遊びで 4 ひきまで・20 秒に 1 ぴきまで）
+    if (S.started && cool <= 0 && made < 4 && S.rotDown && S.rotPos < 0.08 && Math.abs(S.v) > 0.2) {
+      const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), bx = S.x + fx * (ROTARY_Z - 0.6), bz = S.z + fz * (ROTARY_Z - 0.6);
+      const u = list.find(u => u.st === 'off');
+      if (u && WET.at(bx, bz) > 0.45 && R() < dt * 0.6) {
+        made++; cool = 20;
+        Object.assign(u, { st: 'swim', x: bx + (R() - 0.5) * 0.8, z: bz, yaw: Math.atan2(-fx, -fz) + (R() - 0.5) * 2, t: 2.5 + R() * 1.5, ph: R() * 6, sink: 0 });
+        u.y = groundY(u.x, u.z); u.g.visible = true;
+      }
+    }
+    for (const u of list) {
+      if (u.st === 'off') continue;
+      u.ph += dt;
+      if (u.st === 'swim') {                       // くねくね 進む（トラクターから はなれる 向きへ 少しずつ）
+        const ax = u.x - S.x, az = u.z - S.z, want = Math.atan2(ax, az);
+        u.yaw += Math.atan2(Math.sin(want - u.yaw), Math.cos(want - u.yaw)) * Math.min(1, dt * 0.8) + Math.sin(u.ph * 2.3) * dt * 0.8;
+        u.x += Math.sin(u.yaw) * 0.12 * dt; u.z += Math.cos(u.yaw) * 0.12 * dt;
+        u.y += (groundY(u.x, u.z) - u.y) * Math.min(1, dt * 6);
+        if (!told && S.started && Math.hypot(u.x - S.x, u.z - S.z) < 9) {
+          if (DETAIL || SAY.note('あ、ドジョウ！ ぬれた 土に もぐっていくね')) { told = true; BADGE.peek(u.x, u.z, 3); voice('dojo'); }
+        }
+        if ((u.t -= dt) <= 0) u.st = 'dig';
+      } else if (u.st === 'dig') {                 // 頭から やわらかい 泥へ もぐる
+        u.sink = Math.min(1, u.sink + dt / 1.2);
+        u.x += Math.sin(u.yaw) * 0.05 * dt; u.z += Math.cos(u.yaw) * 0.05 * dt;
+        if (u.sink >= 1) { u.st = 'off'; u.g.visible = false; continue; }
+      }
+      const amp = u.st === 'swim' ? 0.35 : 0.5, sp = u.st === 'swim' ? 9 : 14;
+      // もぐる：頭を 下げ（0.35rad）、体ごと 7.6cm まで 沈める。おわりには しっぽの 先（LEN·sin0.35 ≈ 3.6cm 上がる）も 土の 下
+      u.g.position.set(u.x, u.y + 0.004 - u.sink * 0.076, u.z); u.g.rotation.set(0.35 * Math.min(1, u.sink * 3), u.yaw, 0, 'YXZ');
+      let a = 0, px = 0, pz = 0;                   // 頭から しっぽへ、波が つたわる（体を S の 字に くねらせる）
+      u.segs.forEach((m, i) => { a = Math.sin(u.ph * sp - i * 1.1) * amp * (0.4 + i / SEG); m.position.set(px, 0, pz); m.rotation.y = a; px -= Math.sin(a) * LEN / SEG; pz -= Math.cos(a) * LEN / SEG; });
+    }
+  }
+  return { update, list, get told() { return told; }, get made() { return made; } };
+})();
+
+// ---- 春の レンゲの 田んぼ（renge=1）の ミツバチ：晴れ・くもりの 朝・昼、レンゲの 花から 花へ みつを あつめて まわる。
+// 近くを 耕すと（トラクターが 3.5m より 近い・いる 所が 耕された）、まだ 耕していない 遠くの レンゲへ とんでいく。
+// レンゲが ぜんぶ なくなったら 空へ 帰っていく。運転する キャラクターは はじめて 見たときと、はじめて よけて とんでいった ときに 話す。
+// （幸か福岡かふくおかひろし（福岡の 家の 田んぼを 耕す 農家の ブログ）「水田準備「田起こし」 レンゲ畑トラクターで耕す」：
+// レンゲの 種を 落とすため 例年より 1 週間 おそく、約 1 反 5 畝を 4 時間で 耕した。草が なくなって テントウムシや ミツバチに
+// 悪いことを した。ミツバチ（セイヨウミツバチ・ニホンミツバチ）は 体長 1.2〜1.4cm、レンゲは 春の だいじな 蜜源）
+const HACHI = (() => {
+  if (!RENGE_ON || TOD === 'yoru' || TOD === 'yu' || RAIN) return { update() {}, list: [] };
+  let seed = 131; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  const lin = c => new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() });
+  const bodyM = lin(0xc98a2e), darkM = lin(0x2a1d10), wingM = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.45, side: THREE.DoubleSide, depthWrite: false });
+  const grows = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && RENGE.st[i * NZ + j] === 0; };
+  const list = [];
+  for (let k = 0; k < 6; k++) {
+    const g = new THREE.Group(); g.rotation.order = 'YXZ'; g.scale.setScalar(1.6);   // 遠くからも 少し 見えるように 1.6 倍（体長 約 2cm）
+    const ab = new THREE.Mesh(new THREE.SphereGeometry(0.0032, 8, 6), bodyM); ab.scale.set(1, 0.95, 1.5); ab.position.z = -0.003; g.add(ab);   // 腹（しまもよう）
+    for (const z of [-0.0025, -0.0045]) { const r = new THREE.Mesh(new THREE.TorusGeometry(0.0029, 0.0006, 4, 10), darkM); r.position.z = z; g.add(r); }
+    const th = new THREE.Mesh(new THREE.SphereGeometry(0.0026, 8, 6), darkM); th.position.z = 0.0015; g.add(th);   // 胸
+    const hd = new THREE.Mesh(new THREE.SphereGeometry(0.0019, 6, 5), darkM); hd.position.z = 0.0045; g.add(hd);    // 頭
+    const wings = [];
+    for (const sx of [-1, 1]) { const w = new THREE.Mesh(new THREE.PlaneGeometry(0.006, 0.003).translate(sx * 0.003, 0, 0).rotateX(-Math.PI / 2), wingM); w.position.set(0, 0.0025, 0.0005); g.add(w); wings.push(w); }
+    g.visible = false; scene.add(g);
+    list.push({ g, wings, st: 'wait', x: 0, y: 1, z: 0, tx: 0, ty: 0, tz: 0, t: 0, ph: R() * 6 });
+  }
+  let told = false, toldSorry = false, started = false, since = 0;   // since：はじめの ひとことから の 秒（つづけて 話さない）
+  function pick(u, far) {                          // まだ 耕していない レンゲ（トラクターから はなれた 所）の 面の すぐ 上
+    for (let k = 0; k < 30; k++) {
+      const x = far ? (R() * 2 - 1) * (HX - 1) : u.x + (R() - 0.5) * 2.4, z = far ? (R() * 2 - 1) * (HZ - 1) : u.z + (R() - 0.5) * 2.4;
+      if (grows(x, z) && Math.hypot(x - S.x, z - S.z) > (far ? 7 : 4)) { u.tx = x; u.tz = z; u.ty = RENGE.hAt(x, z) + 0.006; return true; }
+    }
+    return false;
+  }
+  function update(dt) {
+    if (!started) {                                // はじめに レンゲの 上へ
+      if (!RENGE.st) return;
+      started = true;
+      for (const u of list) if (pick(u, true)) { u.x = u.tx; u.z = u.tz; u.y = u.ty; u.st = 'sip'; u.t = 1 + R() * 4; u.g.visible = true; }
+    }
+    if (told) since += dt;
+    for (const u of list) {
+      if (u.st === 'wait' || u.st === 'gone') continue;
+      u.ph += dt;
+      const near = Math.hypot(u.x - S.x, u.z - S.z) < 3.5, lost = !grows(u.x, u.z);
+      if (u.st === 'sip') {                        // 花に とまって みつを すう（ときどき 羽を ふるわせる）
+        if (!told && S.started && Math.hypot(u.x - S.x, u.z - S.z) < 7) {
+          if (DETAIL || SAY.note('ミツバチさんが レンゲの みつを あつめてるね')) { told = true; BADGE.peek(u.x, u.z, 3); voice('hachi'); }
+        }
+        if (near || lost) {
+          if (pick(u, true)) {
+            u.st = 'fly';
+            if (!toldSorry && told && since > 5 && S.started && (DETAIL || SAY.note('ミツバチさん、ごめんね。あっちの レンゲへ どうぞ'))) { toldSorry = true; BADGE.peek(u.x, u.z, 2); }
+          } else { u.st = 'leave'; u.tx = u.x + (R() - 0.5) * 20; u.tz = u.z + (R() - 0.5) * 20; u.ty = 8; }
+        } else if ((u.t -= dt) <= 0) { if (pick(u, false)) u.st = 'hop'; else u.t = 1; }   // となりの 花へ
+      } else {                                     // とぶ（hop：となりの 花へ ゆっくり・fly：遠くへ・leave：空へ）
+        if (u.st !== 'leave' && ((u.st === 'hop' && near) || !grows(u.tx, u.tz) || Math.hypot(u.tx - S.x, u.tz - S.z) < 3.5)) {   // とぶ とちゅうも：（となりへ 移る とちゅうに）トラクターが 近い・行く先の レンゲが 耕された・行く先に トラクター → 遠くの レンゲへ 行く先を かえる
+          if (pick(u, true)) u.st = 'fly';
+          else { u.st = 'leave'; u.tx = u.x + (R() - 0.5) * 20; u.tz = u.z + (R() - 0.5) * 20; u.ty = 8; }
+        }
+        const sp = u.st === 'hop' ? 0.5 : 2.2, dx = u.tx - u.x, dz = u.tz - u.z, d = Math.hypot(dx, dz);
+        const cruise = u.st === 'hop' ? u.ty + 0.08 : u.st === 'leave' ? u.ty : u.ty + 0.6;
+        const step = Math.min(d, sp * dt);
+        if (d > 1e-4) { u.x += dx / d * step; u.z += dz / d * step; u.g.rotation.y = Math.atan2(dx, dz); }
+        const wantY = d < 0.25 && u.st !== 'leave' ? u.ty : cruise;
+        u.y += (wantY - u.y) * Math.min(1, dt * 3) + Math.sin(u.ph * 7) * 0.003;   // ふわふわ
+        if (u.st === 'leave' && u.y > 6) { u.st = 'gone'; u.g.visible = false; continue; }
+        if (u.st !== 'leave' && d < 0.02 && Math.abs(u.y - u.ty) < 0.02) { u.st = 'sip'; u.t = 2 + R() * 3; u.y = u.ty; }
+      }
+      u.g.position.set(u.x, u.y, u.z);
+      const flap = u.st === 'sip' ? (Math.sin(u.ph * 3) > 0.7 ? Math.sin(u.ph * 90) : 0.2) : Math.sin(u.ph * 120);
+      u.wings.forEach((w, n) => { w.rotation.z = (n ? -1 : 1) * (0.2 + 0.6 * flap); });
+    }
+  }
+  return { update, list, get told() { return told; }, get toldSorry() { return toldSorry; } };
+})();
+
+// ---- 代かきの 田んぼの メダカの むれ：東の 水口（道ぞいの 水路の そば）から 入ってきた メダカが、水面の すぐ 下で
+// むれに なって すいすい およぐ。トラクターが 近いと さっと はなれ、しばらく すると また 水口の あたりに もどる。
+// 近くで 見つけたら 運転する キャラクターが そっちを 見て 話す。
+// （門崎ファーム（岩手県 一関市の 米農家）「めだかが泳げる綺麗な田んぼで作る「めだか米」」：春から 夏は 水路を あけるだけで
+// メダカが 田んぼに 入ってくる。田んぼで 卵を 産み、稲刈りの 前に 水路を あけて 川へ もどす。
+// メダカは 体長 3〜4cm、目が 大きく、口が 上を 向いていて 水面の すぐ 下を むれで およぐ（図鑑の 一般的な 記述））
+const MEDAKA = (() => {
+  if (!SHIRO || TOD === 'yoru') return { update() {}, list: [] };
+  let seed = 149; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  const lin = c => new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() });
+  const backM = lin(0x8a8566), bellyM = lin(0xd9d6c4), eyeM = lin(0x101010), list = [];
+  const surf = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.006; };
+  const HOME = [HX - 1.6, -18];                    // 水口の そば（給水栓・道ぞいの 水路の ある 東の 畦の 内がわ）。じっさいは 近くの 水たまりに 合わせる
+  const wet = (x, z) => Math.abs(x) < HX - 0.2 && Math.abs(z) < HZ - 0.2 && AMENBO.water(x, z);   // 水が ある（土くれの 上は だめ）
+  const pool = (x, z) => wet(x, z) && wet(x + 0.25, z) && wet(x - 0.25, z) && wet(x, z + 0.25) && wet(x, z - 0.25);
+  const path = (x0, z0, x1, z1) => { for (let k = 1; k <= 8; k++) { const f = k / 8; if (!wet(x0 + (x1 - x0) * f, z0 + (z1 - z0) * f)) return false; } return true; };   // とちゅうも ずっと 水
+  const C = { x: HOME[0], z: HOME[1], tx: HOME[0], tz: HOME[1], st: 'calm', t: 0 };   // むれの まん中
+  for (let k = 0; k < 7; k++) {
+    const g = new THREE.Group(); g.scale.setScalar(1.3);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.0035, 8, 6), backM); body.scale.set(0.75, 0.75, 4); g.add(body);   // 体長 約 3cm
+    const belly = new THREE.Mesh(new THREE.SphereGeometry(0.003, 6, 4), bellyM); belly.scale.set(0.7, 0.5, 3.4); belly.position.y = -0.0012; g.add(belly);
+    for (const sx of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(0.0014, 6, 4), eyeM); e.position.set(sx * 0.0019, 0.0006, 0.0095); g.add(e); }   // 大きな 目
+    const tail = new THREE.Group(); tail.position.z = -0.0125; g.add(tail);   // 尾びれ：体の うしろの はしを 中心に ふる
+    tail.add(new THREE.Mesh(new THREE.ConeGeometry(0.0024, 0.007, 4).rotateX(Math.PI / 2).scale(0.35, 1, 1).translate(0, 0, -0.0035), backM));
+    g.visible = false; scene.add(g);
+    list.push({ g, tail, ox: (R() - 0.5) * 0.5, oz: (R() - 0.5) * 0.5, x: HOME[0], z: HOME[1], yaw: R() * 6.28, ph: R() * 6, t: R() * 2 });
+  }
+  let told = false, placed = false;
+  function update(dt) {
+    if (!placed) {                                 // 水口の 近くで いちばん 近い 水たまりに（田んぼの 水が わかるまで 待つ）
+      if (!field) return;
+      let hit = null;
+      for (let r = 0; r <= 5 && !hit; r += 0.3) for (let a = 0; a < 16 && !hit; a++) { const x = HOME[0] - Math.abs(Math.cos(a / 16 * 6.28)) * r, z = HOME[1] + Math.sin(a / 16 * 6.28) * r; if (pool(x, z)) hit = [x, z]; }
+      if (!hit) return;
+      placed = true; HOME[0] = hit[0]; HOME[1] = hit[1]; C.x = C.tx = hit[0]; C.z = C.tz = hit[1];
+      for (const u of list) { if (!wet(C.x + u.ox, C.z + u.oz)) { u.ox = 0; u.oz = 0; } u.x = C.x + u.ox; u.z = C.z + u.oz; u.g.visible = true; }
+    }
+    const near = Math.hypot(C.x - S.x, C.z - S.z);
+    if (C.st === 'calm') {                         // 水口の あたりを ゆっくり 回る
+      if ((C.t -= dt) <= 0) {
+        C.t = 2 + R() * 3;
+        for (let k = 0; k < 10; k++) { const x = HOME[0] + (R() - 0.5) * 2.5, z = HOME[1] + (R() - 0.5) * 4; if (pool(x, z) && path(C.x, C.z, x, z)) { C.tx = x; C.tz = z; break; } }
+      }
+      if (near < 4) {                              // トラクターが 近い：さっと はなれる
+        C.st = 'flee'; C.t = 4;
+        const ax = C.x - S.x, az = C.z - S.z, al = Math.hypot(ax, az) || 1;
+        let best = -1;                             // 水で つながった 所の うち、トラクターから いちばん 遠い 所（小さな 水たまりなら その はしへ）
+        for (let k = 0; k < 24; k++) { const d = 0.5 + R() * 4.5, a = Math.atan2(ax, az) + (R() - 0.5) * 2.4, x = C.x + Math.sin(a) * d, z = C.z + Math.cos(a) * d;
+          if (wet(x, z) && path(C.x, C.z, x, z)) { const far = Math.hypot(x - S.x, z - S.z); if (far > best) { best = far; C.tx = x; C.tz = z; } } }
+      }
+    } else if ((C.t -= dt) <= 0 && near > 6) { C.st = 'calm'; C.t = 0; if (path(C.x, C.z, HOME[0], HOME[1])) { C.tx = HOME[0]; C.tz = HOME[1]; } }   // おちついたら 水口へ もどる（水で つながって いれば）
+    const sp = C.st === 'flee' ? 0.9 : 0.12, dx = C.tx - C.x, dz = C.tz - C.z, d = Math.hypot(dx, dz);
+    if (d > 0.01) { const st = Math.min(d, sp * dt), nx = C.x + dx / d * st, nz = C.z + dz / d * st; if (wet(nx, nz)) { C.x = nx; C.z = nz; } else { C.tx = C.x; C.tz = C.z; } }   // 土に ぶつかったら そこで 止まる
+    if (!told && S.started && near < 9) {
+      if (DETAIL || SAY.note('メダカの むれだ。水路から 入ってきたんだね')) { told = true; BADGE.peek(C.x, C.z, 3); voice('medaka'); }
+    }
+    for (const u of list) {                        // ひとりひとりは むれの まん中の まわりで 少しずつ 場所を かえる
+      u.ph += dt;
+      if ((u.t -= dt) <= 0) { u.t = 1 + R() * 2; const ox = (R() - 0.5) * 0.5, oz = (R() - 0.5) * 0.5; if (wet(C.x + ox, C.z + oz)) { u.ox = ox; u.oz = oz; } else { u.ox = 0; u.oz = 0; } }
+      const wx = C.x + u.ox - u.x, wz = C.z + u.oz - u.z, wd = Math.hypot(wx, wz), v = Math.min(wd * 2, C.st === 'flee' ? 1.1 : 0.25);
+      if (wd > 0.005) { const nx = u.x + wx / wd * v * dt, nz = u.z + wz / wd * v * dt; if (wet(nx, nz) || !wet(u.x, u.z)) { u.x = nx; u.z = nz; } const want = Math.atan2(wx, wz); u.yaw += Math.atan2(Math.sin(want - u.yaw), Math.cos(want - u.yaw)) * Math.min(1, dt * 6); }
+      u.g.position.set(u.x, surf(u.x, u.z) - 0.0012, u.z);   // 水面の すぐ 下（背中が 見える）
+      u.g.rotation.y = u.yaw + Math.sin(u.ph * (C.st === 'flee' ? 30 : 12)) * 0.12;
+      u.tail.rotation.y = Math.sin(u.ph * (C.st === 'flee' ? 30 : 12)) * 0.5;
+    }
+  }
+  return { update, list, C, get told() { return told; } };
+})();
+// ---- 代かきの 水の ゲンゴロウ：水の 中を 後ろ脚で こいで およぎ、ときどき 水面に 上がって おしりを 出して 息つぎする
+// （空気を 羽の 下に ためる）。上がる 所と もぐる 所に 小さな 輪の 波。トラクターが 近いと すっと もぐる。
+// 近くで 息つぎしたら 運転する キャラクターが 気づいて 話す（グリーンウィンド（無農薬の 農園）「田んぼで見つけた生き物たち」：
+// 代かきの あとの 草取りで、水の 中に ゲンゴロウ・メダカ・どじょう・オタマジャクシ。田んぼに 多い ヒメゲンゴロウは 体長 1.1〜1.4cm・茶色）
+const GENGO = (() => {
+  if (!SHIRO || TOD === 'yoru') return { update() {}, list: [] };
+  let seed = 61; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
+  const lam = c => new THREE.MeshLambertMaterial({ color: c });
+  const shellM = lam(0x3a3020), rimM = lam(0x8a7440), legM = lam(0x2a2216), list = [];
+  const surf = (x, z) => { const i = Math.floor((x + HX) / CELL), j = Math.floor((z + HZ) / CELL); return i >= 0 && j >= 0 && i < NX && j < NZ && tilledMask[i * NZ + j] ? TILL_Y + 0.008 : 0.006; };   // アメンボと 同じ 水面
+  for (let k = 0; k < 4; k++) {
+    const g = new THREE.Group(); g.scale.setScalar(0.9 + R() * 0.25);
+    const rim = new THREE.Mesh(new THREE.SphereGeometry(0.0068, 8, 6), rimM); rim.scale.set(0.82, 0.32, 1.02); g.add(rim);   // 黄色っぽい ふち
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.0065, 8, 6), shellM); body.scale.set(0.78, 0.4, 1); body.position.y = 0.0006; g.add(body);
+    const legs = [];
+    for (const sx of [-1, 1]) { const l = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.0008, 0.0016), legM); l.position.set(sx * 0.0055, -0.0005, -0.002); g.add(l); legs.push(l); }   // 後ろ脚（オール）
+    g.rotation.order = 'YXZ'; g.visible = false; scene.add(g);
+    list.push({ g, legs, st: 'under', t: 2 + k * 2.5 + R() * 3, x: (R() * 2 - 1) * (HX - 2), z: (R() * 2 - 1) * (HZ - 2), yaw: R() * 6.28, ph: R() * 6 });
+  }
+  let told = false;
+  function update(dt) {
+    for (const u of list) {
+      u.ph += dt;
+      const near = Math.hypot(u.x - S.x, u.z - S.z) < 5;
+      if (u.st === 'under') {                     // 水の 中を およいで 次に 上がる 所へ
+        u.x += Math.sin(u.yaw) * 0.12 * dt; u.z += Math.cos(u.yaw) * 0.12 * dt;
+        if (Math.abs(u.x) > HX - 1 || Math.abs(u.z) > HZ - 1) u.yaw += Math.PI;
+        if ((u.t -= dt) <= 0 && !near && !AMENBO.water(u.x, u.z)) {   // 水の ない 所（土くれ）では 上がらず、2m 以内の 水の ある 所を さがして そこへ およぐ
+          let to = null;
+          for (let n = 0; n < 16 && !to; n++) { const a = R() * 6.28, d = 0.3 + R() * 1.7, x = u.x + Math.sin(a) * d, z = u.z + Math.cos(a) * d; if (Math.abs(x) < HX - 1 && Math.abs(z) < HZ - 1 && AMENBO.water(x, z)) to = [a, d]; }
+          if (to) { u.yaw = to[0]; u.t = to[1] / 0.12; } else { u.yaw = R() * 6.28; u.t = 2 + R() * 2; }   // 見つからなければ べつの 向きへ しばらく まっすぐ
+        }
+        else if (u.t <= 0 && !near) { u.st = 'up'; u.t = 3 + R() * 3; u.g.visible = true; RIPPLE.ring(u.x, u.z, 0.35, 0.03, 0.5); }
+      } else if (u.st === 'up') {                  // おしりを 水面に 出して 息つぎ
+        if (!told && S.started && Math.hypot(u.x - S.x, u.z - S.z) < 8 && (DETAIL || SAY.note('あ、ゲンゴロウが いきつぎしてる'))) { told = true; voice('gengoro'); }   // 知らせの とちゅうは 次の 息つぎで
+        if ((u.t -= dt) <= 0 || near) { u.st = 'under'; u.t = 4 + R() * 5; u.yaw = near ? Math.atan2(u.x - S.x, u.z - S.z) : u.yaw + (R() - 0.5) * 2; u.g.visible = false; RIPPLE.ring(u.x, u.z, 0.3, 0.03, 0.4); }
+      }
+      if (!u.g.visible) continue;
+      u.g.position.set(u.x, surf(u.x, u.z) + 0.001, u.z); u.g.rotation.y = u.yaw; u.g.rotation.x = 0.55;   // 頭を 下に、おしりを 水面へ
+      const kick = Math.sin(u.ph * 5) > 0.6 ? 0.5 : 0;   // ときどき 後ろ脚を ちょい と うごかす
+      u.legs.forEach((l, n) => { l.rotation.y = (n ? -1 : 1) * (0.3 + kick); });
+    }
+  }
+  return { update, list, get told() { return told; } };
+})();
+
 const FROGS = (() => {
   if (!SHIRO) return { update() {} };
   const mat = new THREE.MeshLambertMaterial({ color: 0x4f9a2a }), list = [];
@@ -5977,7 +6456,8 @@ const MAKURA = (() => {
       const i = Math.floor((p[k][0] + HX) / CELL), j = Math.floor((p[k][1] + HZ) / CELL);
       if (i >= 0 && j >= 0 && i < NX && j < NZ && DEEP[i * NZ + j] >= 4) {
         told = true;
-        toast('枕地は 何回も耕すと 深くなって、タイヤが 沈む。枕地は 浅く耕す（Z で 浅く）', 6);
+        document.body.classList.add('needDepth');   // のんびりでも ⇡⇣ を 出す（案内どおりに 浅く できるように）
+        toast('枕地は 何回も耕すと 深くなって、タイヤが 沈む。枕地は 浅く耕す（' + (MOBILE || params.has('pad') ? '「浅く」' : 'Z') + ' で 浅く）', 6);
         setTimeout(() => voice('makura'), 6500);
         return;
       }
@@ -6932,6 +7412,8 @@ function startDiesel(ac, out, onReady) {
 }
 // 音は、運転しているあいだだけ鳴らす（おわり・メニュー・ほかのタブでは止める。🔇 のときも止める）
 function syncAudio(running) {
+  // キャラクターの 声（speechSynthesis）は audio と べつ：音を 切った・メニューや 操作の表を 開いた・べつの タブに した・くわしい説明に した ときは すぐ やめる
+  if (window.speechSynthesis && speechSynthesis.speaking && (!soundOn || DETAIL || document.hidden || !$('start').classList.contains('hidden') || !$('help').classList.contains('hidden'))) speechSynthesis.cancel();
   if (!audio) return;
   const want = soundOn && running && !document.hidden, st = audio.ac.state;
   if (want && st === 'suspended') audio.ac.resume();
@@ -7376,7 +7858,7 @@ document.querySelectorAll('.pad button[data-k]').forEach(b => {
   b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('pointerleave', off);
 });
 function setRotBtn() {
-  $('bRot').textContent = S.rotDown ? IMPL + 'を上げる' : IMPL + 'を下げる';
+  $('bRot').textContent = S.rotDown ? IMPL + 'を上げる' : IMPL + 'を下げる'; $('bRot').dataset.i = S.rotDown ? '⬆' : '⬇';
   $('bRot').classList.toggle('down', S.rotDown);
 }
 // 耕深ダイヤル：1cm ずつ。季節にあわない深さだと、ひとこと教える（春の田起こしは 15cm ほど、秋起こしは 5〜7cm の浅起こし）
@@ -7458,7 +7940,7 @@ function resetAssist() {
   toast('直進アシストの基準線を消しました。G で始点 A から登録しなおします');
 }
 function setAssistBtn() {
-  $('bAssist').textContent = { none: '直進 A点', a: '直進 B点', on: '直進 入', off: '直進 切' }[ASSIST.mode];
+  $('bAssist').textContent = { none: '直進 A点', a: '直進 B点', on: '直進 入', off: '直進 切' }[ASSIST.mode]; $('bAssist').dataset.i = { none: '🧭', a: '🧭B', on: '🧭', off: '🧭' }[ASSIST.mode];
   $('bAssist').classList.toggle('on', ASSIST.on);
   $('bAssist').classList.toggle('wait', ASSIST.mode === 'a');
 }
@@ -7467,14 +7949,14 @@ let SPEEDUP = 1;
 const GEARS = [1.6, 2.2, 2.8, 3.6].map(k => k / 3.6);
 function shiftGear(d) {
   S.gear = Math.max(1, Math.min(4, (S.gear || 3) + d));
-  $('bGear').textContent = '変速 ' + S.gear;
+  $('bGear').textContent = '変速 ' + S.gear; $('bGear').dataset.i = '⚙' + S.gear;
   toast('主変速 ' + S.gear + ' 速（耕すとき 時速 ' + (GEARS[S.gear - 1] * 3.6).toFixed(1) + 'km）' + (S.gear === 4 ? '。速すぎると土が細かく砕けない' : S.gear === 1 ? '。ていねいだが時間がかかる' : ''));
   // 速く進むと 爪が土をまぜきれず 浅い耕しになる（happy-ricefarm「初めてのトラクター耕し」）
   if (S.gear === 4 && d > 0 && !SHIRO) setTimeout(() => voice('hayasa'), 3000);
 }
 function toggleFast() {
   SPEEDUP = SPEEDUP === 1 ? 2 : SPEEDUP === 2 ? 4 : 1;
-  $('bFast').textContent = '⏩ ×' + SPEEDUP;
+  $('bFast').textContent = '⏩ ×' + SPEEDUP; $('bFast').dataset.i = SPEEDUP > 1 ? '⏩' + SPEEDUP : '⏩';
 }
 $('bRot').onclick = toggleRotary;
 {                                                // 直進ボタン：押すと A・B 登録／入切、長押し（0.8 秒）で登録しなおし
@@ -7540,6 +8022,60 @@ let toastT = 0, curVoice = null;
 // もとの 文は dataset.raw に 残す（知らせが 消されたかを くらべる 所は raw を 見る）
 let DETAIL = false;
 try { DETAIL = localStorage.getItem('tractorDetail') === '1'; } catch (e) {}
+document.body.classList.toggle('calm', !DETAIL);
+// ---- 運転する キャラクターとの 対話：ふだん（くわしい説明 なし）は 画面に 文字を 出さず、上の 丸い 窓の キャラクターが 吹き出しで 一言 話す。
+// 知らせは はじめの 一文（操作の 案内つき）、案内（COACH）は いま やること。進みぐあいも 声で 知らせる。
+// 窓を さわると いま やることを もう一度、なければ のんびり 話しかけてくれる。話すあいだは 口が 動く
+const icoWords = x => x.replace(/か、「浅く」/g, '').replace(/右の「[^」]*を下げる」ボタンで下げる/g, '右の ⬇ で 下げよう')
+  .replace(/ボタンで( ?[^、。（]*?)(下げ|上げ)/g, (m, a, b) => (b === '下げ' ? '⬇' : '⬆') + ' で' + a + b)
+  .replace(/「変速」/g, '⚙').replace(/「浅く」/g, '⇡').replace(/「深く」/g, '⇣').replace(/「デフロック」/g, '🔒').replace(/「泥落とし」/g, '🧽').replace(/「うしろを見る」/g, '👀');
+const SAY = (() => {
+  // 吹き出しは 2 だん：上は 知らせ・進みぐあい・雑談（知らせ ＞ 進みぐあい ＞ 雑談 の じゅんで、下の ものは 上の ものを 消さない）、
+  // 下は いま やること（案内。かわったら すぐ 出す。急ぎの 操作も 待たせない）
+  const el = $('say'), mainEl = document.createElement('div'), coachEl = document.createElement('div');
+  coachEl.className = 'sayCoach'; el.append(mainEl, coachEl);
+  let t = 0, kind = '', mainText = '', coachLine = '', talkT = 0, chatN = 0, pi = 0, doneSaid = false;
+  const RANK = { chat: 0, step: 1, toast: 2 };
+  const CHAT = [TOD === 'yoru' ? 'ほしが きれいだね' : TOD === 'yu' ? 'ゆうやけ きれいだね' : 'いい てんきだね', 'のんびり いこう', 'つちの においが するね',
+    SHIRO ? 'カエルさん いるかな' : season === 'aki' ? 'トンボが とんでるね' : 'ひばりが ないてるね', 'ゆっくりで いいよ', 'とりさんが きてるね'];
+  const STEPS = [[10, 'いい ちょうし！'], [50, 'はんぶん できたね'], [80, 'もう すこし！']];
+  const busy = () => t > 0 && kind === 'toast';    // 知らせを 話している とちゅう
+  function render() {
+    const m = !DETAIL && t > 0, c = !DETAIL && !!coachLine;
+    mainEl.textContent = m ? mainText : ''; mainEl.style.display = m ? '' : 'none';
+    coachEl.textContent = c ? coachLine : ''; coachEl.style.display = c ? '' : 'none'; coachEl.style.marginTop = m ? '4px' : '0';
+    el.classList.toggle('off', !m && !c);
+  }
+  const voiceTalk = x => {
+    if (!soundOn || DETAIL || !('speechSynthesis' in window)) return;
+    try {
+      const u = new SpeechSynthesisUtterance(x.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '').replace(/[：（）]/g, ' '));
+      u.lang = 'ja-JP'; u.pitch = 1.5; u.rate = 1.05; u.volume = 0.8;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    } catch (e) {}
+  };
+  const talk = x => { talkT = Math.min(2.4, 0.11 * x.length); voiceTalk(x); };
+  function show(x, sec, k) {
+    if (DETAIL || !x || (t > 0 && RANK[kind] > RANK[k])) return false;
+    mainText = x; kind = k; t = sec; talk(x); render(); return true;
+  }
+  const say = (x, sec = 4) => show(x, sec, 'toast');
+  function coach(x) { if (x !== coachLine) { coachLine = x; if (x && !DETAIL) talk(x); render(); } }   // 案内は 中身を いつも 覚えておく（くわしい説明から もどったとき すぐ 出せる）
+  function update(dt) {
+    if (talkT > 0) talkT -= dt;
+    if (t > 0 && (t -= dt) <= 0) { t = 0; kind = ''; render(); }
+    if (!S.started) return;
+    if (S.done && !doneSaid) { doneSaid = true; say('おつかれさま！', 8); }
+    if (!S.done && pi < STEPS.length && lastPct >= STEPS[pi][0] && !busy() && !DETAIL) { show(STEPS[pi][1], 3, 'step'); pi++; }   // 知らせの あいだは 待つ
+  }
+  function tap() {                                 // さわると：知らせの とちゅうは そのまま。案内が あれば もう一度 話す。なければ 雑談
+    if (DETAIL || busy()) return;
+    if (coachLine) talk(coachLine); else show(CHAT[chatN++ % CHAT.length], 3.5, 'chat');
+  }
+  function refresh() { if (DETAIL) { t = 0; kind = ''; talkT = 0; } render(); }   // くわしい説明の 切りかえ
+  const note = (x, sec = 3.5) => show(x, sec, 'step');   // 生きものに 気づいた ひとこと
+  return { say, note, coach, update, tap, refresh, get talking() { return talkT > 0; }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
+})();
 const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
 const cutParen = x => x.replace(/（[^）]*）/g, m => KEYH.test(m) ? m : '').replace(/[、\s]+$/, '').trim();
 const shortText = t => {
@@ -7549,9 +8085,20 @@ const shortText = t => {
   const head = cutParen(ss[0]) || ss[0], act = ss.slice(1).find(x => KEYH.test(x));
   return act ? head + '。' + (cutParen(act) || act) : head;
 };
-function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; }
+// キャラクターの セリフ：はじめの 一文（あとに 操作の 案内が あれば その 一言目＋案内）。かっこ書きは キーの 案内だけ
+const noParen = x => x.replace(/（[^）]*）/g, '').trim();
+const speakText = t => {
+  const ss = t.split('。').map(x => x.trim()).filter(Boolean);
+  if (!ss.length) return t;
+  const head = (cutParen(ss[0]) || ss[0]).replace(/（[^）]*$/, '').trim() || ss[0], act = ss.slice(1).find(x => KEYH.test(x));   // 閉じていない かっこは 落とす
+  if (!act) return head;
+  const first = (head.match(/^[^！？、]*[！？]?/) || [head])[0].trim() || head;
+  return first + (/[！？]$/.test(first) ? ' ' : '。') + (KEYH.test(noParen(act)) ? noParen(act) : cutParen(act) || act);
+};
+function showToast(t, sec) { const el = $('toast'); el.dataset.raw = t; el.textContent = shortText(t); el.style.opacity = 1; toastT = sec; SAY.say(icoWords(speakText(t)), Math.min(sec, 5)); }
 $('detailBox').checked = DETAIL;
-$('detailBox').onchange = e => { DETAIL = e.target.checked; try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
+$('detailBox').onchange = e => { DETAIL = e.target.checked; document.body.classList.toggle('calm', !DETAIL); SAY.refresh(); try { localStorage.setItem('tractorDetail', DETAIL ? '1' : '0'); } catch (err) {} };
+$('badgeCv').addEventListener('pointerdown', e => { e.stopPropagation(); SAY.tap(); });
 function toast(t, sec = 2.2) {                    // 農家の声を読んでいる途中にほかの知らせが来たら、声はあとでもう一度出す
   if (curVoice && toastT > 1) voiceQ.unshift(curVoice);
   curVoice = null;
@@ -7654,6 +8201,12 @@ const VOICES = {
   danki: ['朝 4 時前に トラクターの 暖機運転を はじめ、4 時すぎに 家を 出て 畑へ。アワーメーターは 296 時間 06 分から 297 時間 42 分、暖機と 移動も ふくめて 1 時間 36 分。300 坪の 畑は 障害物が なければ 1 時間ほどで 耕せる', 'camper_bakkasu の日記（はてなブログ）「朝4時起きのトラクター出動！300坪の畑作業と自家消費のリアル」'],
   nemugaeru: ['10 月 30 日、畑を 鍬で 耕していたら、体の色が 灰色に かわった アマガエルを 起こしてしまった。目は ぱっちり。あやまって、耕さない 畑の縁に 埋めもどした', 'シニアナナ・思考徒然（ココログ）「冬眠中のカエルを起こしてしまった！！」'],
   zarigani: ['5 月、田んぼで アメリカザリガニが 大発生。小さな ザリガニが 畦に 上がってくる', '南房総 有機農園ねぎぼうず「ザリガニ大発生中(>_<) 田んぼの生き物」'],
+  gengoro: ['代かきの あとの 田んぼで 草取りを していたら、水の 中に ゲンゴロウ・メダカ・どじょう・オタマジャクシが いた', 'グリーンウィンド（無農薬の 農園）「田んぼで見つけた生き物たち」'],
+  kanahebi: ['田植えの ころ、気温が 上がった 日に カナヘビが 日向ぼっこ。体温が 上がりきらず 動きは ゆっくりだった', 'かみなか農楽舎（福井県 若狭町の 米づくりの 研修農場）「カナヘビの日向ぼっこ」'],
+  kabugaeru: ['稲刈りも 籾摺りも 終えた 日、刈り株だけに なった 田んぼで カエルを 見つけた。かくれる 所の ない カエル。人の「終わった」と 生きものの 時間は ちがうのかも', '農業詩人 てらさん（新潟の 米農家）「稲刈りが終わった、そのあとで」'],
+  dojo: ['春に 田んぼを 耕すと、水が ぬけきらない 土から ドジョウが 出てくる。腸や 皮ふでも 息が できるので、しめった 土の 中でも 生きられる', '相川健志（横浜の 田んぼで 米づくり）BE-PAL「春の田んぼでコンニチワ！ドジョウの種類はヒゲの数で見分けられる」'],
+  hachi: ['レンゲの 種を 落とすため 例年より 1 週間 おそく、レンゲ畑を トラクターで 耕した。草が なくなって、テントウムシや ミツバチに 悪いことを した', '幸か福岡かふくおかひろし（ブログ）「水田準備「田起こし」 レンゲ畑トラクターで耕す」'],
+  medaka: ['春から 夏は 水路を あけるだけで メダカが 田んぼに 入ってくる。田んぼで 卵を 産み、稲刈りの 前に 水路を あけて 川へ もどす', '門崎ファーム（岩手県 一関市）「めだかが泳げる綺麗な田んぼで作る「めだか米」」'],
   ochisokudo: ['ロータリーが 降りなくなったら、まず ロータリーの油圧の調節（落下速度の つまみ）を ゆるめる。乗り降りのときに 足が当たって しまる方向に 回ることがある。それでも だめなら ポジションコントロールの 解除を 確かめる', '米屋四代目のブログ（岡山）「トラクターのロータリーが降りない時の対処方法」'],
   makura: ['田んぼの枕地は 土の表土が 高くなりやすい。そして 何回も耕すと 深くなりやすいので、枕地は 浅く耕起している', '岩手・盛岡の農家の YouTube「秋起こし時の枕地」'],
   arakuaki: ['田んぼの秋起こしは 来季の収量に つながる作業。畑とちがって、田んぼは 荒く起こして 乾きやすくする', '岩手・盛岡の農家の YouTube「田んぼの秋起こしは粗めに」'],
@@ -7745,6 +8298,18 @@ const LOOP = (() => {
   }
   return { result, get friend() { return friend; } };
 })();
+// ---- リストマーケティング：いちばん うれしい とき（耕し終わり）に、運転する キャラクターが らいすぴあの LINE に さそう。
+// 運転中は さそわない（のんびりの じゃまを しない）。耕し終えた 回数を この 端末に 覚え、2 回目からは「また きてくれて ありがとう」。
+// LINE の リンクは ricepia.jp の 転送（from= で このゲームの どこから 来たか だけ わかる。ricepia.jp の ほかの LINE ボタンと 同じ しくみ）
+const DONE_CV = $('doneCv').getContext('2d');
+let doneTalked = false;
+function doneTalk() {
+  if (doneTalked) return;
+  doneTalked = true;
+  let n = 1;
+  try { n = (+localStorage.getItem('tractorPlays') || 0) + 1; localStorage.setItem('tractorPlays', String(n)); } catch (e) {}
+  $('doneSay').textContent = n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！ らいすぴあの LINE なら お米の おしらせも とどくよ` : 'おつかれさま！ たのしかったね。らいすぴあの LINE で お米の おしらせも うけとれるよ';
+}
 function finish() {
   S.done = true;
   if (ART.on) return finishArt();
@@ -7784,7 +8349,7 @@ function finish() {
   $('doneScore').appendChild(cv);
   const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];
   LOOP.result(total, ART.photo(null, `🚜 ${label} ${total} 点（${fmtTime(S.elapsed)}）`), `トラクターで${label}をしたよ。${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`);
-  $('done').classList.remove('hidden');
+  $('done').classList.remove('hidden'); doneTalk();
 }
 
 // 終わりの画面：きょう聞いた農家の声（季節やお題で出る声はちがう）
@@ -7814,12 +8379,68 @@ function finishArt() {
     $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
   }
   LOOP.result(f, null, `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`, url);
-  $('done').classList.remove('hidden');
+  $('done').classList.remove('hidden'); doneTalk();
 }
 
 // ---- 案内（コーチ）：いま何をすればよいかを、画面の下に 1 行で出す ----
 // ①下げる → ②前へ → ③畦が近いので上げる → ④回る → ⑤となりにならんだら下げる。上げて回って下げる旋回が 2 回できたら消える。
 // エンストのときと、田んぼアートが仕上がりそうなときも出す。パソコンはキー、スマホはボタンの場所で書く
+// ---- はじめの画面の おはなし：上の 丸い 窓の キャラクター（麦わら帽子）が 話しかけて、季節・お題を 会話で 決めて 運転を はじめる。
+// （10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。下の くわしい えらびかたは そのまま
+const TALK = (() => {
+  const say = $('talkSay'), ch = $('talkCh'), cv = $('talkFace');
+  const SEA = { haru: '🌸 春の 耕す前の田んぼ', aki: '🌾 秋の 稲刈りのあと', shirokaki: '💧 水を張った 代かき' };
+  const artBtn = id => document.querySelector(`#arts button[data-a="${id || 'none'}"]`);
+  const artName = id => { const b = artBtn(id); return b ? [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim() : ''; };   // 絵文字と ★ を のぞいた 名前
+  const artIcon = id => { const b = artBtn(id); return b && b.querySelector('span') ? b.querySelector('span').textContent : ''; };
+  (function face() {                               // 丸い 窓と 同じ 顔（止まっている 絵）
+    const g = cv.getContext('2d'), C = 64;
+    g.fillStyle = '#e8d5ba';
+    for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2; g.beginPath(); g.arc(C + Math.cos(a) * 40, 84 + Math.sin(a) * 43, 7, 0, 7); g.fill(); }
+    g.beginPath(); g.ellipse(C, 84, 40, 43, 0, 0, 7); g.fill();
+    g.fillStyle = '#f8eadb'; g.beginPath(); g.ellipse(C, 78, 27, 22, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(240,130,120,.5)'; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(C + sx * 16, 85, 5.5, 3.8, 0, 0, 7); g.fill(); }
+    g.fillStyle = '#2a211a'; g.strokeStyle = '#2a211a'; g.lineWidth = 2; g.lineCap = 'round';
+    for (const sx of [-1, 1]) { g.beginPath(); g.arc(C + sx * 9, 76, 3.4, 0, 7); g.fill(); }
+    g.beginPath(); g.arc(C, 83, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+    g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(C, 44, 38, 8, 0, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(C, 36, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(C - 20, 36, 40, 6);
+    g.fillStyle = '#b8443a'; g.fillRect(C - 20, 39, 40, 4);
+  })();
+  function talk(text, opts) {                      // opts：[[ボタンの字, 押したとき, main]]
+    $('talk').hidden = false;   // はじめは かくしておく（3D が 出せず ここまで 動かない ときに 空の ふきだしを 出さない）
+    say.textContent = text;
+    ch.innerHTML = '';
+    for (const [t, fn, main] of opts) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (main) b.className = 'main'; b.onclick = fn; ch.append(b); }
+  }
+  const mark = () => { try { sessionStorage.setItem('tr_talk', '1'); } catch (e) { /* なしで続ける */ } };
+  const again = (() => { try { return sessionStorage.getItem('tr_talk') === '1'; } catch (e) { return false; } })();
+  function ready() {
+    const ok = !$('bStart').disabled;
+    const now = `いまは ${SEA[season]}、お題は「${artName(ART_ID)}」。`;
+    talk((again ? `${SEA[season].replace(/^\S+\s/, '')}に したよ。お題は「${artName(ART_ID)}」。` : 'やあ。きょうは ぼくが トラクターを 運転するよ。' + now) + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
+      [ok ? '▶ これで 運転する' : '⏳ じゅんび中…', () => $('bStart').click(), true],
+      ['季節を かえる', seasons],
+      ['お題を かえる', arts],
+    ]);
+    if (!ok) {
+      ch.firstChild.disabled = true;
+      const w = setInterval(() => {
+        if (!$('bStart').disabled) { clearInterval(w); ready(); }
+        else if ($('progText').textContent.startsWith('🚜')) { clearInterval(w); talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', []); }   // 読みこみ失敗・3D が 出せない 端末
+      }, 400);
+    }
+  }
+  function seasons() {
+    talk('どの 田んぼに しよう？', [...Object.keys(SEA).map(k => [SEA[k], () => { if (k === season) { ready(); return; } mark(); go(k, TOD); }, k === season]), ['もどる', ready]]);
+  }
+  function arts() {
+    talk('田んぼに なにを 描こう？ ★が 多いほど むずかしいよ。', [...[...ARTS, null].map(a => [`${artIcon(a)} ${artName(a)} ${(artBtn(a) && artBtn(a).querySelector('i') || {}).textContent || ''}`.trim(), () => { if (a === ART_ID) { ready(); return; } mark(); go(season, TOD, a); }, a === ART_ID]), ['もどる', ready]]);
+  }
+  if ($('challenge') && !$('challenge').classList.contains('hidden')) mark();   // 友だちの 挑戦から 来た ときは、同じ 田んぼの まま すすめる
+  ready();
+  return { ready };
+})();
 const COACH = (() => {
   const el = $('coach'), PAD = MOBILE || params.has('pad');
   let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false;
@@ -7939,7 +8560,7 @@ const COACH = (() => {
   }
   function update(running) {                      // 表示は計器と同じ間隔で
     const m = running ? msg() : null, h = m ? '<b>' + m[0] + '</b>' + m[1] : '';
-    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; }
+    if (h !== shown) { el.innerHTML = h; el.classList.toggle('hidden', !h); shown = h; SAY.coach(m ? icoWords(m[1].replace(/<[^>]+>/g, '')) : ''); }   // ふだんは キャラクターが 話す
     $('bDoro').classList.toggle('hidden', !(running && SCRAPE.can()));   // スマホ：泥がついて 田んぼの中で止まって上げているときだけ
   }
   return { step, update, msg, get turns() { return turns; }, get off() { return off; } };
@@ -7953,7 +8574,7 @@ const COACH = (() => {
 const BADGE = (() => {
   const cv = $('badgeCv'), g = cv.getContext('2d'), stEl = $('badgeSt'), W = 152, C = W / 2;
   let seed = 71; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
-  let t = 0, lean = 0, wheel = 0, look = 0, blinkT = 2, label = '';
+  let t = 0, lean = 0, wheel = 0, look = 0, blinkT = 2, label = '', peekT = 0, peekX = 0, peekZ = 0;
   const SKY = { asa: ['#ffe7c4', '#cfe5f4'], hiru: ['#a9d8f5', '#e6f4fd'], yu: ['#f4b47c', '#fde3c2'], yoru: ['#25304a', '#46557a'] }[TOD];
   const FIELD = SHIRO ? '#8fa3a8' : season === 'aki' ? '#b59a62' : '#8f7a52';
   function fluff(x, y, r, col) {                  // ふわふわの 毛：ふちに 小さな 丸を ならべる
@@ -7968,7 +8589,12 @@ const BADGE = (() => {
     const idle = Math.abs(S.v) < 0.05 && !S.stalled && !S.done, sleep = S.stalled && !S.done;
     lean += (-S.steer * 0.5 - lean) * Math.min(1, dt * 4);
     wheel += (S.steer * 3 - wheel) * Math.min(1, dt * 8);
-    look += ((idle ? Math.sin(t * 0.7) : S.steer * 1.2) - look) * Math.min(1, dt * 3);
+    let lookTo = idle ? Math.sin(t * 0.7) : S.steer * 1.2;
+    if (peekT > 0) {                               // 生きものに 気づいたら そっちを 見る（右が ＋）
+      peekT -= dt; const dx = peekX - S.x, dz = peekZ - S.z, d = Math.hypot(dx, dz) || 1;
+      lookTo = Math.max(-1.3, Math.min(1.3, 1.6 * (-dx * Math.cos(S.yaw) + dz * Math.sin(S.yaw)) / d));
+    }
+    look += (lookTo - look) * Math.min(1, dt * 3);
     if ((blinkT -= dt) < 0) blinkT = 2.4 + R() * 3.2;
     const bob = (working ? Math.sin(t * 15) * 0.7 : Math.sin(t * 2.1) * 1.3) + Math.sin(t * 8.7) * mv * 1.4;
     // 空と 遠くの 田んぼ
@@ -7988,7 +8614,8 @@ const BADGE = (() => {
       else if (S.done) { g.beginPath(); g.arc(ex + sx * 9, 4, 3, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }   // にっこり
       else { g.beginPath(); g.arc(ex + sx * 9, 2, 3.4, 0, 7); g.fill(); g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + sx * 9 + 1.1, 0.8, 1.1, 0, 7); g.fill(); g.fillStyle = '#2a211a'; }
     }
-    g.beginPath(); g.arc(fx, 9, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();   // 口
+    if (SAY.talking && Math.sin(t * 16) > -0.2) { g.beginPath(); g.ellipse(fx, 10.5, 3.4, 2.6 + Math.sin(t * 16), 0, 0, 7); g.fill(); }   // 話している 口
+    else { g.beginPath(); g.arc(fx, 9, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke(); }   // 口
     // 麦わら帽子
     g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(0, -30, 38, 8, 0, 0, 7); g.fill();
     g.beginPath(); g.ellipse(0, -38, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(-20, -38, 40, 6);
@@ -8005,7 +8632,8 @@ const BADGE = (() => {
     const l = S.done ? 'おつかれさま' : sleep ? 'ひとやすみ' : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
     if (l !== label) { label = l; stEl.textContent = l; }
   }
-  return { draw, get label() { return label; } };
+  function peek(x, z, sec = 3) { peekX = x; peekZ = z; peekT = sec; }
+  return { draw, peek, get label() { return label; } };
 })();
 
 // ---- まわす ----
@@ -8020,7 +8648,7 @@ function frame(now) {
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
-  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); KAMO.update(dt); ZARI.update(dt); MUKU.update(dt, S.rotDown && S.rotPos < 0.08); } } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
+  if (running || !S.started) { for (let k = 0; k < (running ? SPEEDUP : 1); k++) { pct = step(dt); if (running) { UZURA.update(dt); KERA.update(dt); KAMO.update(dt); ZARI.update(dt); GENGO.update(dt); KANA.update(dt); KABU.update(dt); DOJO.update(dt); HACHI.update(dt); MEDAKA.update(dt); MUKU.update(dt, S.rotDown && S.rotPos < 0.08); } } lastPct = pct; }   // 早送り（ウズラも トラクターと同じ時計で、1 こまずつ動かす）
   syncAudio(running);
   updateCamera(dt);
   updateSound(dt);
@@ -8055,7 +8683,7 @@ function frame(now) {
   LIFE.update(dt);
   WIND_T.value += dt;
   CLOUD_T.value += dt;
-  BADGE.draw(dt);
+  BADGE.draw(dt); SAY.update(dt); if (S.done) DONE_CV.drawImage($('badgeCv'), 0, 0);
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {
@@ -8093,7 +8721,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -436,7 +436,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.hop = 0; game.hopT = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -602,6 +602,7 @@ function step(dt) {
         }
         const v = Math.hypot(g.vx, g.vy); if (v > MAX) { g.vx *= MAX / v; g.vy *= MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
+      if (sf.on && sf.vin > 2.5 && !calm) g.hop = Math.max(g.hop || 0, Math.min(0.35, 0.1 + sf.vin * 0.035));   // ぽよんぽよん：はね返る ときに お米が ちょこんと とびはねる（見た目だけ。地図の めいろと そろえる）
       if (sf.on && sf.vin > 1.5) { if (api.boing) api.boing(Math.min(1, sf.vin / 8), g.spring.left > 0 ? g.spring.chain || 1 : 0); sf.boings++; }   // はなれた 瞬間：ぽよん（地図の めいろと 同じ きまり：当たった 速さ 1.5 より 速い とき。強さも 同じ）
       sf.on = false;
     }
@@ -621,6 +622,7 @@ function step(dt) {
     if (axis === 'x') g.vx = hit > 0.6 ? -v * BOUNCE : 0; else g.vy = hit > 0.6 ? -v * BOUNCE : 0;
   }
   g.th += (g.vx >= 0 ? 1 : -1) * Math.hypot(g.vx, g.vy) * dt / 0.32;   // 転がった道のりで 回す
+  if (g.hop > 0) { g.hopT = (g.hopT || 0) + dt; if (g.hopT > 0.32) { g.hop = 0; g.hopT = 0; } }   // とびはね：0.32秒で もどる
   g.sq = Math.max(0, g.sq - dt * 1.5); g.ouch = Math.max(0, g.ouch - dt); g.happy = Math.max(0, g.happy - dt);
   if (!g.go && Math.hypot(g.vx, g.vy) > 0.3) g.go = true;   // タイムは お米が 動きだしてから（盤を 見て 考える あいだは 数えない）
   if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); }   // ゴーストの ための 走りの きろく（1/20マス）
@@ -796,8 +798,9 @@ function draw(now) {
     if (k > 0.3) nishioPixel.drawRice(x, fx * T, fy * T, g.th + (1 - k) * 8, 0, 'dizzy', 0, '', u * (k - 0.3) / 0.7);
     return;
   }
-  const X = g.x * T, Y = g.y * T;
-  x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(X, Y + T * 0.3, T * 0.26, T * 0.09, 0, 0, Math.PI * 2); x.fill();
+  const hp = g.hop > 0 ? Math.sin(Math.min(1, (g.hopT || 0) / 0.32) * Math.PI) * g.hop : 0;   // とびはねの 高さ（マス）
+  const X = g.x * T, Y = (g.y - hp) * T;
+  x.fillStyle = `rgba(0,0,0,${(0.28 - hp * 0.3).toFixed(3)})`; x.beginPath(); x.ellipse(X, g.y * T + T * 0.3, T * 0.26 * (1 - hp * 0.6), T * 0.09 * (1 - hp * 0.6), 0, 0, Math.PI * 2); x.fill();   // かげは 地面に のこって 小さく うすく
   const mood = g.happy > 0 ? 'happy' : g.ouch > 0 ? 'ouch' : Math.hypot(g.vx, g.vy) > 4 ? 'excited' : 'smile';
   nishioPixel.drawRice(x, X, Y, g.th % (Math.PI * 2), g.sq, mood, 0, '', u);
   if (g.cd > 0) {   // 3・2・1 と「スマホを まっすぐ」

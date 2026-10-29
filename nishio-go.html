@@ -110,7 +110,7 @@
 
 <section class="sheet" id="sheet">
   <div class="guide" id="guide" hidden></div>
-  <div class="status" id="status">位置情報を待っています…</div>
+  <div class="status" id="status">🍚 いまの 場所を さがしているよ…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
     <span class="spin-ico" id="spinIco">⭐</span>
     <span class="spin-txt"><b id="spinName">スポット</b><small id="spinSub">タップしてポイントゲット</small></span>
@@ -270,6 +270,10 @@
     <label class="row">
       <span><b>📝 文字を多めに出す</b><small>オンにすると、地図の町名・駅名・お店の看板、ごほうびのくわしい説明、案内のすすめた人の話などの文字も出します。オフ（はじめ）は、文字を少なくしてドット絵で出します。</small></span>
       <input type="checkbox" id="textToggle"/>
+    </label>
+    <label class="row">
+      <span><b>🍚 お米つぶと おはなし</b><small>お米つぶが 話しかけて、つぎの 行き先を いっしょに えらびます。オフにすると、下の 小さな 知らせだけに なります。</small></span>
+      <input type="checkbox" id="komeTalkToggle"/>
     </label>
     <label class="row">
       <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。曲は100曲以上あり、朝・昼・夕方・夜・雨で変わります。</small></span>
@@ -450,6 +454,7 @@
 <script src="nishio-go/season.js"></script>
 <script src="nishio-go/weather.js"></script>
 <script src="nishio-go/osm-query.js"></script>
+<script src="nishio-go/kometalk.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/runner.js"></script>
 <script src="nishio-go/harvest.js"></script>

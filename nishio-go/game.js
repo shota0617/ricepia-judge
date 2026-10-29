@@ -159,7 +159,7 @@ let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
-const save = () => { if (!store.set(stateKey(), S)) toast('記録を保存できませんでした（ブラウザの保存領域を確認してください）'); };
+const save = () => { if (!store.set(stateKey(), S)) toast('きろくを うまく 保存できませんでした。スマホの 空きが 少ないのかも。少し 空けてから、もう一度 ためしてね。'); };
 
 /* ---------- 地図 ---------- */
 if (!window.L) {
@@ -344,7 +344,7 @@ async function doLoadSpots(force) {
     } catch (e) {
       const old = cached || stored || baked || (await loadBaked());   // 取得できなければ古いキャッシュや前もって作ったスポットでも使う
       if (old) { items = old.items; spotMeta.osmAt = old.t; spotMeta.osmOk = true; }
-      else if (!force) toast('スポット情報（OpenStreetMap）を取得できませんでした。注目スポットだけで遊べます。');
+      else if (!force) toast('名所の 地図データ（OpenStreetMap）を うまく 読みこめませんでした。注目スポットだけで 遊べるよ。');
     }
   }
   spots = buildSpots(config, items || []);
@@ -1544,6 +1544,7 @@ function tryChest() {
   save();
   const show = dt => showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...(newFact ? ['📖 まちメモ +1'] : []), ...dotLines(dt), ...(bag ? [`🎒 おみやげ袋（${bag.km}km 歩くと開く）`] : []), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dt);
   if (cands.length >= 2) pickFirst(cands, show); else show(dot);
+  if (welcome) ktAskGuide([{ t: 'たからばこ、あいたね！', mood: 'happy' }, 'こんどは 町の 名所や 人を たずねに 行こう。'], 'smile');
   updateQuests(1500);
   refreshNearby();
 }
@@ -1998,6 +1999,18 @@ function setGuide(g) {
   save();
   renderGuide();   // 人の話で行き先が変わったら、話の窓が開いているあいだも 下の行き先の札をすぐ書きかえる
 }
+// お米つぶの おはなし（kometalk.js・10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。
+// 着いた・はじめて・殿堂入り のときに お米つぶが 話しかけ、つぎの 行き先を 会話で えらぶ（えらんだ 答えで 行き先が かわる）。
+// オフの 人（せってい）には false を かえす＝いままでどおりの 知らせを 出す
+const KT = window.nishioKomeTalk;
+const ktOn = () => !!(KT && KT.on());
+const ktBusy = () => toastBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden;   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+function ktAskGuide(lead, mood) {
+  if (!ktOn()) return false;
+  return KT.say([...lead, 'つぎは どこへ 行く？'], { mood, key: 'guide', busy: () => ktBusy() || !S.guide,
+    choices: () => { const g = S.guide; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
+    then: i => { if (i > 0) pickAlt(i - 1); if (i >= 0 && S.guide) { toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 }); } } });
+}
 const guideTarget = () => {
   const g = S.guide;
   if (!g) return null;
@@ -2054,6 +2067,7 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
+  if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }], 'smile')) { rivalSay(g, next); return; }
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
   rivalSay(g, next);
@@ -2213,7 +2227,7 @@ function refreshNearby() {
     showRing(null);
     showGuide(null);
     // 位置情報が使えないときは、その場で「操作して遊ぶ」に切り替えられるボタンを出す（ここで閉じられてしまわないように）
-    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '位置情報を待っています…' + waitLine()), true);
+    setStatus(gpsError ? esc(gpsError) + (demo ? '' : RESCUE_BTN('geo')) + waitLine() : (demo ? '地図をタップすると、その場所へ移動します。' : '🍚 いまの 場所を さがしているよ…' + waitLine()), true);
     return;
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
@@ -2248,7 +2262,7 @@ function refreshNearby() {
     if (th) $('spinIco').innerHTML = th; else if (simple()) $('spinIco').innerHTML = catArt(selected); else $('spinIco').textContent = iconOf(selected);   // 文字を少なく（ふだん）：その名所のドット絵
     $('spinName').textContent = selected.name;
     const why = driving ? '🚗 車を降りるとチェックインできます'
-      : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSの精度が上がるのを待っています…' : '';
+      : !demo && me.acc > CFG.maxAccuracy ? '📡 GPSが はっきりするまで、ちょっと まってね…' : '';
     btn.disabled = !!why;
     if (why || !simple()) $('spinSub').textContent = why || `タップして +${ptsOf(selected)}pt${S.visits[selected.id] ? '' : '（初訪問ボーナスあり）'}`;
     else $('spinSub').innerHTML = `${PIA('coin', 'ポイント')}+${ptsOf(selected)}${S.visits[selected.id] ? '' : ' ' + PI('new', 'はじめての場所')}`;
@@ -2397,6 +2411,7 @@ function clearGive(n) {
   const key = stateKey();
   badgesSoon();   // バッジ（殿堂入り）は すぐ。知らせは ごほうびの画面が出ている間は閉じてから出る（toastQ）
   setTimeout(() => endingWhenFree(key), 900);
+  if (ktOn()) setTimeout(() => KT.say([{ t: 'ぜんぶの 地区を めぐったね！ いっしょに 歩けて うれしかったよ。', mood: 'happy' }, 'このあとも、また いっしょに さんぽ しよう。'], { busy: ktBusy, key: 'clear' }), 1500);
   return true;
 }
 // 少しあとでバッジを確かめる（知らせの順番のため）。そのあいだに記録（操作して移動／あるいて移動）が切りかわったら、ここでは確かめない（次の機会に確かめる）
@@ -3066,7 +3081,7 @@ function renderSpotInfo() {
   const n = spots.length;
   $('spotInfo').textContent = spotsLoading ? '読み込んでいます…' : spotMeta.osmOk
     ? `${n.toLocaleString()}か所（注目${spotMeta.featured}）・地図データ取得 ${fmtTime(spotMeta.osmAt)}`
-    : `${n}か所（注目スポットのみ。OpenStreetMapを取得できませんでした）`;
+    : `${n}か所（注目スポットだけ。地図データを 読みこめませんでした）`;
   $('rules').innerHTML = [
     `スポットまで約${CFG.reach}m以内に近づくと「チェックイン」できます（お店など一部のスポットは範囲が広め。地図の点線の円が範囲です）`,
     `ふつうのスポット ${CFG.pts.normal}pt／⭐注目スポット ${featRange()}`,
@@ -3315,7 +3330,7 @@ $('reloadSpots').addEventListener('click', async e => {
   btn.disabled = true;
   try {
     const ok = await loadSpots(true);
-    toast(ok ? `スポットを更新しました（${spots.length}か所）` : 'スポット情報を取得できませんでした。通信環境を確認して、時間をおいてお試しください。');
+    toast(ok ? `スポットを更新しました（${spots.length}か所）` : '名所を うまく 読みこめませんでした。通信のよい所で、少し まってから もう一度 ためしてね。');
   }
   finally { btn.disabled = false; }
 });
@@ -3763,6 +3778,10 @@ sound.apply();
 $('jumpBtn').addEventListener('click', openJump);   // ミニゲーム（runner.js）
 document.addEventListener('click', e => { if (e.target.closest('[data-jump-open]')) openJump(); });   // スポットの窓の「ミニゲーム」
 $('textToggle').checked = !simple();
+if ($('komeTalkToggle') && KT) {
+  $('komeTalkToggle').checked = KT.on();
+  $('komeTalkToggle').addEventListener('change', e => { KT.setOn(e.target.checked); toast(e.target.checked ? '🍚 お米つぶが 話しかけます' : '🍚 おはなしを オフにしました'); track('kome_talk', { on: e.target.checked }); });
+}
 $('textToggle').addEventListener('change', e => {
   document.body.classList.toggle('simple', !e.target.checked);
   try { localStorage.setItem('nsg_text_more', e.target.checked ? '1' : '0'); } catch (err) { /* noop */ }
@@ -4020,6 +4039,15 @@ function begin(isDemo) {
   friendBonus();
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
+  if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ）
+    store.set('nsg_kome_hello', true);   // めいろでは「あそびかた」の 画面を 先に 見てから
+    const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
+    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけると、ぼくが 道を すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
+    KT.say([{ t: 'はじめまして。ぼく、西尾の お米つぶ だに。', mood: 'happy' }, how, 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。',
+      () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
+    { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', then: () => { if (!chest) ktAskGuide([], 'smile'); } });
+    if (isDemo) { setTimeout(sealPickCheck, 3000); return; }
+  }
   if (isDemo) toast(document.body.classList.contains('px')
     ? (welcomeDue() ? (simple() ? '🎁 すぐ近くに たからばこ！' : '🎁 すぐ近くに たからばこ！ スマホを傾けて（矢印キー・地図を タップでも）近づくと開きます') : '🌀 スマホを傾けて、迷路を 進もう（矢印キー・地図を タップでも）')
     : '🎮 地図をタップするとその場所へ移動します');

@@ -363,8 +363,8 @@ const CHECKS = {
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指を おいて/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
     for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
-      const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
-      ok(ag.b <= ag.H, `低い 画面（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
+      const ag = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 400)); /* 結果が 落ちついて から（107周目） */ const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, t: document.getElementById('againBtn').textContent }; });
+      ok(ag.b <= ag.H && /あと/.test(ag.t), `低い 画面（${w}×${h}）でも「もう一回（…まで あと）」が 画面の 中`, ag); }
     // 72周目：画面の 幅で むずかしさが かわらない（引く 長さに あわせて 速さの 上限も。広い 画面は 1.12 倍 まで）
     const sf = {}; for (const [w, h] of [[360,640],[390,844],[768,1024]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       sf[w] = await p.evaluate(() => { const L = KB.layout(), b = KB.makeBag(0); return +(b.safe / ((L.x1-L.x0))).toFixed(3); }); }
@@ -430,7 +430,7 @@ const CHECKS = {
     const idle = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S; for (let i=0;i<60*10;i++) KB.step(1/60); const t = S.time; KB.manual = false; return t; });
     ok(idle < 29, 'さわらなくても 8秒 たつと 時計が 動く（キーの 人・放って おいた 人が おわれる）', idle);
     await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);
-    const a320 = await p.evaluate(() => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b: Math.round(r.bottom), h: Math.round(r.height), H: innerHeight, t: document.getElementById('againBtn').textContent }; });
+    const a320 = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 400)); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b: Math.round(r.bottom), h: Math.round(r.height), H: innerHeight, t: document.getElementById('againBtn').textContent }; });
     ok(a320.b <= a320.H && /あと/.test(a320.t), '320×568 で「もう一回（じこベストまで あと…）」が 画面の 中', a320);
     await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 92周目：端の 近くでも 縫い目から はなれた 1本指タップは ふつうに 袋を まわす（罰に しない）
@@ -488,10 +488,10 @@ const CHECKS = {
   async season(b){
     const p = await page(b, 390, 844, '');
     const r = await p.evaluate(() => { const out = {};
-      for (const d of ['2026-10-28', '2027-03-10', '2026-08-25']) { KB.today = d; const bag = KB.makeBag(4); out[d] = { year: KB.riceYear(new Date(d)), golden: bag.golden, brand: bag.brand, kaori: KB.riceYear(new Date(d), 'あいちのかおり') }; }
+      for (const d of ['2026-10-28', '2027-03-10', '2026-08-25']) { KB.today = d; const bag = KB.makeBag(4), bag9 = KB.makeBag(9); out[d] = { year: KB.riceYear(new Date(d)), golden: bag.golden, brand: bag.brand, brand9: bag9.golden ? bag9.brand : '', kaori: KB.riceYear(new Date(d), 'あいちのかおり') }; }
       KB.today = null; return out; });
     ok(r['2026-10-28'].golden && r['2026-10-28'].year===2026, '秋は その年が 産年で 新米シール', r['2026-10-28']);
-    ok(r['2026-08-25'].golden && r['2026-08-25'].brand!=='あいちのかおり' && r['2026-08-25'].kaori===2025, '8月下旬は あいちのかおりの 新米は まだ ない（10月中旬から）', r['2026-08-25']);
+    ok(r['2026-08-25'].golden && r['2026-08-25'].brand!=='あいちのかおり' && r['2026-08-25'].brand9!=='あいちのかおり' && r['2026-08-25'].kaori===2025, '8月下旬は あいちのかおりの 新米は まだ ない（10月中旬から）', r['2026-08-25']);
     ok(!r['2027-03-10'].golden && r['2027-03-10'].year===2026, '春は 前の 年が 産年で 新米シールなし', r['2027-03-10']);
   },
   // フォントは 使う 字だけ（tools/mishin/fonts.py）。字を 書き足したら 回す

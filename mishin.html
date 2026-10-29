@@ -109,7 +109,8 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say b,.talk>.say strong{color:#b3261e}
 #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
 #againBtn small{display:block;font:700 13px var(--body);margin-top:1px;letter-spacing:0;opacity:.85;white-space:nowrap}
-@media (max-height:500px){#againBtn small{display:inline;margin:0 0 0 8px}} @media (max-width:340px){#againBtn small{font-size:12px}}
+@media (max-height:500px){#againBtn small{display:inline;margin:0 0 0 8px}} @media (max-width:340px){#againBtn small{font-size:12px}} @media (max-width:259px){#againBtn small{white-space:normal}}
+@media (max-width:340px),(max-height:500px){#result h1 small{white-space:nowrap;font-size:11px}} /* 「らいすぴあでの きょうの しごと」を 1行に（見出しが 2行に なって「もう一回」を 下げない。107周目） */
 #coinH:focus-visible{outline:3px solid #3e2a1a;outline-offset:4px;border-radius:6px}
 @media (max-width:259px){#coinDone .talk>.who:not(.num),#result .talk>.who{display:none} #coinDone .talk>.say::before,#coinDone .talk>.say::after,#result .talk>.say::before,#result .talk>.say::after{display:none} .nw{white-space:normal}} /* 字 200% など せまい 画面：まとめ・結果の 顔を けして 字に 幅を（96周目） */
 .coinHead{display:contents} /* たて では つつまない のと 同じ。低い 横向きは 左の 列（97周目） */
@@ -484,7 +485,7 @@ function endGame(){
     nr ? `つぎの ランク「${nr[1]}」まで あと ${(nr[0]-S.score).toLocaleString()}点です` : '',
     S.bags>bestBags && bestBags>0 ? `あけた袋の じこベスト更新（${S.bags}袋）` : '', /* 更新の ときだけ */
   ].filter(Boolean).join('<br/>');
-  { const sub = S.newBest ? 'じこベスト更新です！' : best>0 && S.bags>0 && best>S.score ? `じこベストまで あと ${(best-S.score+1).toLocaleString()}点` : nr && S.bags>0 ? `つぎの ランクまで あと ${(nr[0]-S.score).toLocaleString()}点` : '';
+  { const sub = S.newBest ? 'じこベスト更新です！' : best>0 && S.bags>0 && best>S.score ? `${innerWidth <= 340 ? 'ベスト' : 'じこベスト'}まで あと ${(best-S.score+1).toLocaleString()}点` : nr && S.bags>0 ? `${innerWidth <= 340 ? '' : 'つぎの '}ランクまで あと ${(nr[0]-S.score).toLocaleString()}点` : ''; /* せまい 画面は みじかく（1行に 入れる。107周目） */
     $('againBtn').innerHTML = 'もう一回' + (sub ? `<small>${sub}</small>` : ''); } /* つぎの ねらいを ボタンの 中に 1行（1画面目に。103周目） */
   const gold = [...ui.best.querySelectorAll('b, .up')].map(x=>x.textContent).join('、'); /* 金の 行と 目標の 達成も 読む */
   srSay(`おわり。てんすう ${S.score.toLocaleString()}、あけた袋 ${S.bags}、きょうの 腕まえ ${rankOf(S.score)}` + (gold ? '。' + gold : '') + (fresh.size ? '。目標 達成' : ''));
@@ -497,7 +498,7 @@ function tipOf(zone){
   if(S.wrongs>=n) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始めです。反対の端（縫い始め）から 引くと からまります。';
   if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。ひっかかったら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
   { const done = goalsDone(), near = todayGoals().find(g => { if(done.has(g.id) || g.ok() || !g.prog) return false; const m = /^(\d+)\/(\d+)$/.exec(g.prog()); return m && +m[2] - +m[1] === 1; }); /* まだの 目標が あと 1つ なら それを（105周目） */
-    if(near && S.bags>0) return `あと 1つで きょうの 目標「<b>${near.text}</b>」です。もう一回 どうぞ。`; }
+    if(near && S.bags>0) return `今回 あと 1つで きょうの 目標「<b>${near.text}</b>」でした。`; /* 数は 1回ごと（107周目） */ }
   if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
   if(S.bestStreak<5) return 'いい手つきです。<b>一本どり</b>を続けると、連続ボーナスが つきます。';
   return (S.score >= 30000 ? '名人の手つきです。' : '一本どりが 続いて います。つぎは <b>フィーバー</b>を ねらって みてください。') + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : ''); /* 「名人」は 五代目の 点から（103周目） */

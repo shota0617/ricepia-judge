@@ -419,6 +419,9 @@ const CHECKS = {
     for (const k of [1, 3]) g3.push(await p.evaluate(k => { KB.start(); const S = KB.S; const b = KB.makeBag(k); Object.assign(b, { face:'back', slide:0, phase:'pull', pulled:4 }); S.bag = b; S.held = true; S.msg = { text:'強すぎます', kind:'ng', t:0.5, life:9 };
       return new Promise(r => requestAnimationFrame(() => { S.held = true; requestAnimationFrame(() => r({ k, face: S.msgFace })); })); }, k));
     ok(g3[0].face === 0 && g3[1].face > 0, '張りの 目安が ある 袋だけ 吹き出しの 顔を けす（3袋目からは 顔を 出す）', g3);
+    // 101周目：タイムアタックの 時計は はじめて さわって から
+    const ck = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); for (let i=0;i<120;i++) KB.step(1/60); const t0 = S.time; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<60;i++) KB.step(1/60); const t1 = S.time; KB.manual = false; return { t0, t1 }; });
+    ok(ck.t0 === 30 && ck.t1 < 29.5, 'タイムアタックの 時計は はじめて さわって から へる', ck);
     // 92周目：端の 近くでも 縫い目から はなれた 1本指タップは ふつうに 袋を まわす（罰に しない）
     await p.setViewportSize({ width:844, height:390 }); await p.waitForTimeout(100);
     const pr2 = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(4); Object.assign(b, { face:'front', slide:0, phase:'look' }); S.bag = b; const f0 = S.fronts; KB.tap(L.x0 + 50, L.seamY + 45); return { fronts: S.fronts - f0, flip: b.flipT > 0 }; });

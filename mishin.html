@@ -107,7 +107,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::before{content:'';position:absolute;left:-10px;bottom:9px;border:7px solid transparent;border-right:10px solid #7a5a30;border-left:0}
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
-#result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
+#result .line-talk.cont>.who{display:none} /* 顔の ない 続きの 吹き出しは 幅いっぱい（横に 空きを のこさない。130周目） */ #result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
 #againBtn small{display:block;font:700 13px var(--body);margin-top:1px;letter-spacing:0;opacity:.85;white-space:nowrap}
 @media (max-height:500px){#againBtn small{display:inline;margin:0 0 0 8px}} @media (max-width:340px){#againBtn small{font-size:12px}} @media (max-width:340px),(max-height:500px){#result h1 small{white-space:nowrap;font-size:11px}} /* 「らいすぴあでの きょうの しごと」を 1行に（見出しが 2行に なって「もう一回」を 下げない。107周目） */
 @media (max-width:259px){#againBtn small,#result h1 small{white-space:normal;letter-spacing:0}} /* 字 200%：折る（上の 規則より 後ろに。110周目） */
@@ -1702,9 +1702,9 @@ function stepText(){
   if(b.phase==='free') return '赤い糸の 端を <b>白い輪から はずしましょう</b>（つまんだまま 少し 引きます。丸い 窓で 見えます）';
   if(b.tangle) return k('もつれました。<b>強く 引かずに</b>、<b>黄色い 輪の 白い 糸</b>を 下へ 少し 引いて ください（タップでも ほぐせます）', '（<b>スペース</b>で ほぐせます）');
   if(b.done) return (b.k===0 ? 'あきました！ 赤が ぬけると <b>白糸は 自然に ぬけます</b>' : b.k===PRACTICE_N-1 ? 'ぜんぶ できました！' : 'あきました！') /* 同じ 話を くりかえさない */;
-  if(S.held && S.tension>1) b.fastWarn = true; else if(!S.held || S.tension<0.8) b.fastWarn = false; /* 速すぎると もつれる のに 帯は 何も 言わなかった（128周目）。ちらつかない ように 0.8 まで 下がったら けす */
-  if(b.fastWarn && b.phase==='pull') return '<b>速すぎます</b>。もう少し <b>ゆっくり</b> 引いて ください';
   if(b.knots.has(b.pulled)) return '<b>きつい目</b>です。<b>ゆっくり</b> 横へ どうぞ（はなして つまみなおしても 大丈夫です）';
+  if(S.held && S.over > 0.12){ b.fastWarn = true; b.fastT = S.t; } else if(b.fastWarn && (!S.held || (S.tension < 0.8 && S.t - b.fastT > 0.6))) b.fastWarn = false; /* 速すぎると もつれる のに 帯は 何も 言わなかった（128周目）。張りで なく もつれの「ため」（S.over）で 出し、0.6 秒は 出したまま（ちらつき・きつい目の 声を 消さない。130周目） */
+  if(b.fastWarn && b.phase==='pull') return '<b>速すぎます</b>。もう少し <b>ゆっくり</b> 引いて ください';
   if(b.forceTangle>=0 && !b.tangles) return '3袋目は <b>わざと もつれる</b> 袋。直し方を ためして みましょう。<b>縫い目に そって 反対の端の 方へ ゆっくり</b> 引いて ください';
   if(!S.held && S.liftT <= 0.8 && b._pullText) return b._pullText; /* はなした 直後は 前の 文の まま（つまみなおす たびに かえない。96周目） */
   if(S.held && S.dirEff < 0.4) b.sideWarn = true; else if(S.held && S.dirEff > 0.75) b.sideWarn = false; /* 横へ 引けたら けす（はなしても けさない。93・96周目） */
@@ -1722,7 +1722,7 @@ function syncUI(dt){
       ui.steps.innerHTML = `<div class="bar"><span id="stepNo"></span>${Array.from({length:PRACTICE_N},()=>'<i></i>').join('')}<button type="button" class="skip" id="skipBtn">やめて 手順を 見る</button></div><div class="talk"><span class="who" aria-hidden="true">${DOODLE.kome('smile')}</span><div class="now say" id="stepNow"></div></div>`; /* こめつぶが 話す（74周目） */
       ui.steps._built = true;
     }
-    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, okNow = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : '', st = stepText(), now = !okNow ? st : S.bag && S.bag.done ? (st.startsWith(okNow) ? st : okNow.endsWith('あきました！') && st.startsWith('あきました！') ? okNow + st.slice(6) : okNow + ' ' + st) : S.bag && S.bag.fastWarn ? st : okNow; /* 「速すぎます」は ほめ言葉より 先 */ /* 「きれいに あきました！ あきました！」と 2回 言わない（128周目） */ /* あいた 袋は「白糸は 自然に ぬけます」も 言う（84周目） */ /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
+    const no = `れんしゅう ${Math.min(S.bagNo+1, PRACTICE_N)}/${PRACTICE_N}`, okNow = S.msg && S.msg.kind==='ok' && S.msg.t < S.msg.life ? S.msg.text : '', st = stepText(), now = !okNow ? st : S.bag && S.bag.done ? (st.startsWith(okNow) ? st : okNow.endsWith('あきました！') && st.startsWith('あきました！') ? okNow + st.slice('あきました！'.length) : okNow + ' ' + st) : S.bag && S.bag.fastWarn ? st : okNow; /* 「速すぎます」は ほめ言葉より 先 */ /* 「きれいに あきました！ あきました！」と 2回 言わない（128周目） */ /* あいた 袋は「白糸は 自然に ぬけます」も 言う（84周目） */ /* れんしゅうの 声は 上の こめつぶ（帯）が 言う（83周目：吹き出しが 拡大窓に かからない） */
     if(ui.steps._no !== no){ ui.steps._no = no; $('stepNo').textContent = no; ui.steps.querySelectorAll('.bar i').forEach((el,i)=>el.classList.toggle('on', i<=S.bagNo)); }
     if(ui.steps._now !== now){ ui.steps._now = now; $('stepNow').innerHTML = now; { const bb = S.bag, key = bb ? `${bb.tangles}|${bb.face}|${bb.phase}` : '', t = $('stepNow').textContent; if(!ui.steps._said || ui.steps._bag !== bb || ui.steps._key !== key){ ui.steps._bag = bb; ui.steps._key = key; ui.steps._said = new Set(); } /* 袋・もつれの 回数・面・場面が かわったら また 読む（97周目） */ if(!ui.steps._said.has(t)){ ui.steps._said.add(t); srSay(t); } } /* 帯は aria-live を やめ、袋ごとに まだ 読んで いない 文 だけ 読む（引く たびに 何度も 読まない。96周目） */ cv.setAttribute('aria-label', '米袋の 口の 縫い目。' + $('stepNow').textContent);
       const r = ui.steps.getBoundingClientRect(), c = cv.getBoundingClientRect(); S.bannerBottom = r.bottom - c.top; S.bannerMax = Math.max(S.bannerMax || 0, S.bannerBottom); S.soundTop = $('soundBtn').getBoundingClientRect().top - c.top; }

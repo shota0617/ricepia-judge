@@ -398,12 +398,16 @@ const CHECKS = {
     const lnk2 = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => a.getAttribute('href')));
     ok(lnk2.length === 2 && lnk2.every(h => /\/lin\.ee\/AULbClm\?from=mishin-(coin|result)$/.test(h)), 'LINE の リンクは 価格表・売り出し情報の もの（from つき）', lnk2);
     // 128周目：れんしゅうで 速すぎると 帯が「ゆっくり」と 言う（ほめ言葉より 先）・題の ボタンの 時間は 2分
-    const fw = await p.evaluate(async () => { KB.manual = true; KB.startPractice(); const S = KB.S, b = S.bag; Object.assign(b, { slide:0, face:'back', phase:'pull', pulled:2 }); S.held = true; S.tension = 1.3; S.msg = { text:'その 調子です', kind:'ok', t:0.1, life:2 };
-      await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const fast = document.getElementById('stepNow').textContent;
-      S.tension = 0.9; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const mid = document.getElementById('stepNow').textContent;
-      S.tension = 0.5; S.msg = null; await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))); const slow = document.getElementById('stepNow').textContent; S.held = false; KB.manual = false;
-      return { fast, mid, slow, btn: document.getElementById('practiceBtn').textContent }; });
-    ok(/速すぎ/.test(fw.fast) && /速すぎ/.test(fw.mid) && !/速すぎ/.test(fw.slow) && /2分/.test(fw.btn), 'れんしゅうで 速すぎると 帯が ゆっくりと 言い、ちらつかない', fw);
+    const fw = await p.evaluate(async () => { const m0 = KB.manual, raf = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))), txt = () => document.getElementById('stepNow').textContent;
+      KB.manual = true; KB.startPractice(); const S = KB.S, b = S.bag; Object.assign(b, { slide:0, face:'back', phase:'pull', pulled:2 }); b.knots = new Set([9]); S.held = true;
+      S.tension = 1.3; S.over = 0.05; await raf(); const brief = txt(); /* 張りが 一瞬 こえた だけでは 言わない */
+      S.over = 0.2; S.msg = { text:'その 調子です', kind:'ok', t:0.1, life:2 }; await raf(); const fast = txt();
+      S.over = 0; S.tension = 0.5; await raf(); const hold = txt(); /* 0.6 秒は 出したまま（ちらつかない） */
+      S.t += 0.7; S.msg = null; await raf(); const slow = txt();
+      b.pulled = 9; S.over = 0.2; S.tension = 1.3; await raf(); const knot = txt(); /* きつい目の 声が 先 */
+      S.held = false; S.over = 0; S.tension = 0; KB.start(); KB.manual = m0; /* 前の 状態に もどす */
+      return { brief, fast, hold, slow, knot, btn: document.getElementById('practiceBtn').textContent }; });
+    ok(!/速すぎ/.test(fw.brief) && /速すぎ/.test(fw.fast) && /速すぎ/.test(fw.hold) && !/速すぎ/.test(fw.slow) && /きつい目/.test(fw.knot) && /2分/.test(fw.btn), 'れんしゅうで もつれそうに なると 帯が ゆっくりと 言い、ちらつかず、きつい目の 声は 消さない', fw);
     // 127周目：手順の 吹き出しは 朱の 字を 1か所まで・結果の こめつぶは 見出しの 1つだけ・育つ 絵の 字は 段の 名前を くり返さない
     const kw = await p.evaluate(() => ({ reds: [...document.querySelectorAll('#coinDone .talks .say')].map(e => e.querySelectorAll('strong').length), faces: [...document.querySelectorAll('#result .talk:not(.cont)>.who')].length, cap: document.getElementById('growCap').textContent }));
     ok(kw.reds.length >= 5 && kw.reds.every(n => n <= 1) && kw.faces <= 1 && !/（.+さん|五代目|ベテラン|見習い|はじめての袋）/.test(kw.cap), '手順の 吹き出しの 朱は 1か所・結果の こめつぶは 1つ・育つ 絵の 字は くり返さない', kw);

@@ -1737,3 +1737,13 @@ CPU を 6倍 おそく した Chromium（3倍の きめ細かさ、390×844）�
 4. **0袋の 結果で LINE が 1画面目から 出る**（117 周目に ヒントと「れんしゅう」を 先に した ため。90 周目の「結果の LINE は 1画面目」の 例外）→ 0袋の 人には れんしゅうが 先、と きめて のこす。
 
 `check.js` に「『指が はなれています』は つまめたら 出さない・れんしゅうでは 出さない」を 足した（直す 前の 版で 落ちる）。ぜんぶ ✔。点の しくみは かえて いない。
+
+### 119 周目（リストづくり 3回目：数える しくみの 点検）
+
+88 周目の あと、まとめ・結果の 並びや #coin の 入り口を 何度も かえた ので、go.ricepia.jp に 見せかけて（88 周目の 台本）もう一度 たしかめた。
+
+- まとめ・結果の LINE の ボタン：`line_add`（from=mishin-coin／mishin-result）と Google 広告の「LINE友だち追加クリック」が 出る。
+- 場面：`mishin_practice_start`・`mishin_coin_done`（skipped）・`mishin_game_start`・`mishin_game_end`（bags）が 出る。解析が 400ms 遅れても #coin の れんしゅう 開始が 出る（92 周目）。
+- 106 周目に 足した まとめの「コイン精米所の 案内」は `shop_link`（link：site）で 数えられる が、にしおさんぽGO の お店の リンクと 見分けが つかない → リンクに `utm_source=mishin&utm_medium=game&utm_campaign=coin-done` を つけ、ricepia.jp の 側で ミシン糸から 来た 人と わかる ように した（docs/marketing.md に 足した）。
+
+ぜんぶ ✔。

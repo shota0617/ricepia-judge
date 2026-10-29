@@ -836,6 +836,24 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.n >= 2 && r.n <= 3 && r.still && r.all && r.gone };   // pts：転がる とちゅうで ごはんつぶを ひろうと ふえる ので 見るだけ（すずめは ポイントに さわらない）
   })();
+  // ねむって いる お米の そばに すずめが おりて くる（18秒 じっと して いたら）。お米が じっと して いる 間は いっしょに いて、動き だすと とびたつ
+  R.checks.suzumeVisit = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, S = P.suzume, r0 = P.roll, wait = ms => new Promise(res => setTimeout(res, ms));
+      P.rollPut(r0.x, r0.y, 0, 0); await wait(300);
+      S.visit(); await wait(600);
+      const L = S.list, near = L.length >= 1 && L.length <= 2 && L.every(b => Math.hypot(b.x - P.roll.x, b.y - P.roll.y) < 2.6);
+      await wait(1500);
+      const stay = S.list.length === L.length && S.list.every(b => !b.fly);   // お米が じっと して いる 間は とびたたない
+      const b = S.list[0]; P.rollPut(b.x - Math.sign(b.x - P.roll.x || 1) * 1, b.y, Math.sign(b.x - P.roll.x || 1) * 3, 0);
+      let fly = false; for (let i = 0; i < 15 && !fly; i++) { await wait(60); fly = S.list.length > 0 && S.list.every(x => x.fly); }
+      S.clear(); P.rollPut(r0.x, r0.y, 0, 0);
+      return { n: L.length, near, stay, fly, after: S.VISIT };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: r.near && r.stay && r.fly && r.after >= 15 };
+  })();
   // 道ばたで ひるねする ねこ（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：ねて いて、お米が 近くを 転がると おきて、しばらく したら また ねる。文字は 出さない
   R.checks.neko = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -3206,6 +3224,7 @@ async function walkTo(page, id) {
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
+  need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);
   need(c.neko && c.neko.ok, `ねこ：ねて いない・お米が 近づいても おきない・また ねない・文字を 出す（${JSON.stringify(c.neko)}）`);
   need(c.suzume && c.suzume.ok, `すずめ：2〜3羽 おりない・お米が 近づいても みんなで とびたたない・とびさらない（${JSON.stringify(c.suzume)}）`);
   need(c.shopThanks && c.shopThanks.ok, `当店の ごほうびに「来てくれて ありがとう！」・来店スタンプの 数が 出ない、または 数の ない 札が ならぶ（${JSON.stringify(c.shopThanks)}）`);

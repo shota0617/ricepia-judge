@@ -135,7 +135,7 @@
   #rotateHint { display: none; }
   @media (orientation: portrait) and (pointer: coarse) { #rotateHint { display: block; } }
   /* せまい画面（縦のスマホ）：上のボタンは 2 段に折り返し、地図と案内は下の操作ボタンの上に重ねずに置く */
-  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; } #badge, body.touch #badge { right: auto; left: 50%; transform: translateX(-50%); top: 168px; } #badgeCv { width: 64px; height: 64px; } }
+  @media (max-width: 640px) { #bar { flex-wrap: wrap; } #hud { top: 96px; right: 76px; } #badge, body.touch #badge { right: 8px; top: 96px; } #badgeCv { width: 52px; height: 52px; } }   /* 縦：窓は 計器の 右はし（計器は 右を あけて 折り返す。知らせは 下なので 重ならない） */
   @media (max-width: 640px) and (orientation: portrait) {
     body.touch #artBox { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 204px); width: 120px; }
     body.touch #coach { top: auto; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 312px); max-width: calc(100vw - 24px); }

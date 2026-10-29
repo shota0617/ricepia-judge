@@ -38,6 +38,7 @@ function note() {   // きろく の 札に すすみぐあい（何面まで・
 
 let api = null, ui = null, game = null, raf = 0, wantDaily = false, wantOpen = false;
 const bad = new Set(st.skip || []);   // めいろが つくれなかった名所（道が すくない所）。面の いちらんから はずす（この端末に のこす）
+const HIT_STOP = 5, HIT_STOP_S = 0.045;   // これより 速く 当たったら（マス/秒）お米を 0.045秒 止める
 const calm = !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);   // 動きを へらす 設定の人には 盤を 傾けて見せない
 const keys = { up: 0, down: 0, left: 0, right: 0 }, drag = { on: false, x0: 0, y0: 0, x: 0, y: 0 };
 
@@ -174,9 +175,15 @@ function layout(n, tx0, ty0, tw, th, gx, gy, PATH) {
     ends.forEach((i, k) => { const d = grains.length ? Math.min(...grains.map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))) : toG[i]; if (d > bd) { bd = d; bi = k; } });
     grains.push(ends.splice(bi, 1)[0]);
   }
+  const komono = [];   // 西尾の 小物（10/28 店主「西尾らしい 素朴な かわいさ」）：米つぶの ない 行き止まり 2つまでに お地蔵さん・茶つぼ（見た目だけ）
+  while (komono.length < 2 && ends.length) {
+    let bi = 0, bd = -1;
+    ends.forEach((i, k) => { const d = Math.min(1e9, ...grains.concat(komono).map(j => Math.abs(j % tw - i % tw) + Math.abs(((j / tw) | 0) - ((i / tw) | 0)))); if (d > bd) { bd = d; bi = k; } });
+    komono.push(ends.splice(bi, 1)[0]);
+  }
   let spring = -1, sd = 1e9;   // ばね：ゴールへの 近道の 上、スタートから 3割ほど 進んだ 所に 1つ（みんな 通る。とると 12秒 はずむ）
   for (const i of onPath) { const d = Math.abs(fromS[i] - 1 - Math.round(L * 0.3)); if (d < sd && !B.holes.has(i) && i !== start[1] * tw + start[0] && !grains.includes(i)) { sd = d; spring = i; } }
-  return Object.assign(B, { start, len, grains, spring });
+  return Object.assign(B, { start, len, grains, spring, komono });
 }
 const pass = (b, x, y, dx, dy) => {   // (x, y) から となりへ 通れるか
   if (dx === 1) return x + 1 < b.tw && b.er[y * b.tw + x] === 1;
@@ -204,7 +211,8 @@ function bfs(b, from) {   // 床を 通れる さかいで たどった 歩数�
 // お米の まん中は 道すじから TUBE マス以内を 転がる。直角の 曲がり角は まるく、階段の ような ななめの 道は ななめの 一本道に なる
 const TUBE = 0.12, HALF = TUBE + R;   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（マス）
 const SPRING_S = 12, SPRING_E = 1.3;   // ばねの わざ（地図の めいろと 同じ。店主「迷路の壁が伸びて跳ね返って加速するスキル」）：とってから 何秒・当たった 速さの 何倍で はね返るか（数字は 仮）
-const SOFT_K = 2400, SOFT_C = 34, SOFT_MAX = 0.12;   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
+const SOFT_K = 2400, SOFT_C = 14, SOFT_MAX = 0.12;   // 10/28 店主「ふわふわ ぽよんぽよん」：ねばりを へらして よく はね返る（もとは C 34＝4割。K は かえない＝ふかく しずむと ぬける）
+//   // やわらかい 台の ふち（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：ばねの 強さ・めりこむ ときの ねばり（はね返りは 4割ほど）・のびる 限り（マス）
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 function tubes(b) {   // マスごとに 受けもつ 道すじ（マスの 座標の 点の 列の 配列）。ゴールへ つながる 床と、そこから 入れる 水（落とし穴）
   if (b.tube) return b.tube;
@@ -428,7 +436,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -490,11 +498,25 @@ function paintBoard(b, T) {   // ゆるい めいろ：道すじを 太い 線�
     }
   }
   for (const i of b.holes) { const p = onPath(b, i % b.tw, (i / b.tw) | 0); hole(x, p[0] * T, p[1] * T, T); }   // 道すじの 上に
+  (b.komono || []).forEach((i, n) => {   // 行き止まりの おく（あいて いない 向き）に 寄せて 小さく
+    const ci = i % b.tw, cj = (i / b.tw) | 0, op = DIRS.find(([dx, dy]) => pass(b, ci, cj, dx, dy) && at(ci + dx, cj + dy) === 1) || [0, 1];
+    komonoDraw(x, KOMONO[(ci + cj + n) % 2], (ci + 0.5 - op[0] * 0.12) * T, (cj + 0.5 - op[1] * 0.12) * T, T * 0.5);
+  });
   // スタート
   const sx = (b.start[0] + 0.5) * T, sy = (b.start[1] + 0.5) * T;
   x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = 2 * u; x.setLineDash([3 * u, 2 * u]);
   x.beginPath(); x.arc(sx, sy, T * 0.42, 0, Math.PI * 2); x.stroke(); x.setLineDash([]);
   return c;
+}
+// 西尾の 小物の ドット絵（12×12。k ふち・g 石・w 白・r 赤い よだれかけ・b 茶つぼ・B つや）
+const KOMONO = [
+  ['....kkkk....', '...kggggk...', '..kggggggk..', '..kgkggkgk..', '..kggggggk..', '...kggggk...', '..krrrrrrk..', '.kgrrrrrrgk.', '.kggrrrrggk.', '.kggggggggk.', '.kggggggggk.', '..kkkkkkkk..'],   // お地蔵さん
+  ['....kkkk....', '...kwwwwk...', '...kkkkkk...', '..kbbbbbbk..', '.kbbBbbbbbk.', '.kbBbbbbbbk.', 'kbbbbbbbbbbk', 'kbbbbbbbbbbk', '.kbbbbbbbbk.', '.kbbbbbbbbk.', '..kbbbbbbk..', '...kkkkkk...'],   // 茶つぼ
+];
+const KOMONO_C = { k: '#2a2420', g: '#aaa69b', w: '#f2ead8', r: '#c8423a', b: '#7a4a2a', B: '#b07c52' };
+function komonoDraw(x, rows, cx, cy, size) {
+  const p = size / 12, x0 = Math.round(cx - size / 2), y0 = Math.round(cy - size / 2);
+  rows.forEach((row, j) => { for (let i = 0; i < 12; i++) { const c = KOMONO_C[row[i]]; if (c) { x.fillStyle = c; x.fillRect(x0 + Math.floor(i * p), y0 + Math.floor(j * p), Math.ceil(p), Math.ceil(p)); } } });
 }
 function hole(x, cx, cy, T) {   // マンホールの穴：灰色の ふちと まっ暗な 中
   x.fillStyle = '#5a5a5a'; x.beginPath(); x.arc(cx, cy, T * 0.4, 0, Math.PI * 2); x.fill();
@@ -527,6 +549,7 @@ function step(dt) {
     if (g.fall <= 0) { g.x = b.start[0] + 0.5; g.y = b.start[1] + 0.5; g.vx = g.vy = 0; g.ouch = 1; }
     return;
   }
+  if (g.stop > 0) { g.stop -= dt; if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); } return; }   // ヒットストップ：強く 当たった 瞬間 お米を ほんの少し 止める（時計と ゴーストの きろくは すすめる）
   const [ax, ay] = input();
   const acc = ACC * (st.slow ? 0.55 : 1);   // 🐢 ゆっくり：押す強さと いちばん速い速さを 落とす（傾きに なれていない人・小さな子）
   g.vx += ax * acc * dt; g.vy += ay * acc * dt;
@@ -561,8 +584,9 @@ function step(dt) {
     const q = near(b, nx, ny), sf = g.soft;
     if (q && q.d > TUBE) {   // やわらかい ふち：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, hit = g.vx * ux + g.vy * uy, over = q.d - TUBE, pen = Math.min(over, SOFT_MAX);
-      if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.25, hit * 0.04); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
+      if (!sf.on && hit > 1.2) { api.koto(Math.min(1, hit / 6), hit > 4); g.sq = Math.min(0.32, hit * 0.06); if (hit > 4) g.ouch = 0.6; }   // 当たった 瞬間だけ コトン
       if (!sf.on && hit > 2.5 && !calm && navigator.vibrate && localStorage.getItem('nsg_bgm') !== 'false') try { navigator.vibrate(Math.min(12, Math.round(3 + hit * 1.2))); } catch (e) { /* noop */ }   // 強く 当たった：ぶるっ（快感。地図の めいろには もう ある。動きを へらす 設定・音を 切った 人には しない）
+      if (!sf.on && hit > HIT_STOP && !calm) g.stop = HIT_STOP_S;   // ヒットストップ（地図の めいろと そろえる）
       if (!sf.on) { sf.vin = Math.max(0, hit); sf.dv = Math.max(sf.dv, sf.vin / 6); }   // 当たった 速さ（ぽよんの 強さ）。へこみの 絵を ぐっと 押しこむ（盤の 1マスは 地図の 3マスぶん なので 地図の 1/3）
       Object.assign(sf, { on: true, x: q.x, y: q.y, ux, uy, pen });
       let vn = hit - SOFT_K * pen * dt - (hit > 0 ? SOFT_C * hit * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり

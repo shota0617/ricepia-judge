@@ -6094,7 +6094,7 @@ function frame(now) {
   }
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
-    if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
+    if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
     if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
   }
   waterWatch(tgt, dt);
@@ -6129,7 +6129,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -6739,27 +6739,40 @@ function shopTag(cx, bottom, dpr, s) {
 // 地図を 引っぱって 札が 下げた 知らせの 下に 来たら、上が 空いて いれば 上へ もどす（Codex の 指摘）。位置は 動きの とちゅうで なく、止まった 形で はかる
 // めいろでも 同じ：縁の 矢印と 道のりの 札（mzMap.arrow）に 重なる ときは 下へ（自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）。
 // 下へ 動かすのは、下の めいろ図・「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
-const wtd = { key: '' };
+// 横向きの 低い 画面では 上も 下も 札に 重なる（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印と「840m」が「📅 あしたも来ると +20pt」に かくれた）。
+// そのときは 札の 横へ ずらし（wside。入る ときだけ）、それも だめなら いちばん 下（下の タブの 上に 重ねる。wfloor。知らせは タップを 通すので タブは 押せる。下の 欄の ゴールの 名前は かくさない）
+const wtd = { key: '' }, WT_MODES = ['wlow', 'wside', 'wfloor'];
 function worldToastDodge(tag, avoid = []) {
   const el = document.getElementById('toast');
   if (!el) return;
-  if (!el.classList.contains('show') || !tag) { if (el.classList.contains('wlow')) el.classList.remove('wlow'); wtd.key = ''; return; }
+  if (!el.classList.contains('show') || !tag) { if (WT_MODES.some(m => el.classList.contains(m))) el.classList.remove(...WT_MODES); wtd.key = ''; return; }
   const r = cv.getBoundingClientRect(), k = r.width / cv.width, T = [r.left + tag[0] * k, r.top + tag[1] * k, r.left + tag[2] * k, r.top + tag[3] * k];
   const A = avoid.map(a => a.page ? a.page : [r.left + a[0] * k, r.top + a[1] * k, r.left + a[2] * k, r.top + a[3] * k]);   // page：画面の 座標（DOM の 札）
-  const low = el.classList.contains('wlow'), key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + low + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
+  const cur = WT_MODES.find(m => el.classList.contains(m)) || '', key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + cur + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
   if (key === wtd.key) return;   // 札・知らせ・画面が かわらなければ はかりなおさない
   wtd.key = key;
-  const posAt = lw => {   // wlow を lw に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）
+  const posAt = (m, x) => {   // 知らせを m（'' は 上）に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）。x：wside の 知らせの まん中
     const c = el.cloneNode(true);
-    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.toggle('wlow', lw); c.style.cssText = 'transition:none;visibility:hidden';
+    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.remove(...WT_MODES); if (m) c.classList.add(m);
+    c.style.cssText = 'transition:none;visibility:hidden' + (m === 'wside' ? `;--toast-x:${x}px` : '');
     el.parentNode.appendChild(c);
     const q = c.getBoundingClientRect(); c.remove();
     return q;
   };
   const over = (q, t) => q.left < t[2] && q.right > t[0] && q.top < t[3] && q.bottom > t[1];
-  const here = posAt(low), there = posAt(!low);
-  if (low && A.some(a => over(here, a))) { el.classList.remove('wlow'); return; }   // 下げた あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
-  if (over(here, T) && !over(there, T) && !A.some(a => over(there, a))) el.classList.toggle('wlow', !low);   // いまの 位置で 重なり、反対側が 空いて いれば そちらへ
+  const clear = q => !over(q, T) && !A.some(a => over(q, a));
+  const set = (m, x) => { el.classList.remove(...WT_MODES); if (m) el.classList.add(m); if (m === 'wside') el.style.setProperty('--toast-x', x + 'px'); };
+  const top = posAt(''), here = posAt(cur, parseFloat(el.style.getPropertyValue('--toast-x')) || 0), M = 62;   // M：右上の 丸い ボタンの 列に かからない（.toast の max-width と 同じ あけ方）
+  if (cur && A.some(a => over(here, a))) { set(''); return; }   // 動かした あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
+  const out = cur === 'wside' && (here.left < M - 1 || here.right > innerWidth - M + 1);   // 横に 置いた あとに 画面が せまく なった（スマホを たてに した。--toast-x は 画素なので はみ出す。Codex の 指摘）：置きなおす
+  if (!over(here, T) && !out) { if (cur && cur !== 'wlow' && clear(top)) set(''); return; }   // いまの 位置で 重ならない 間は 動かさない（ゆれない）。横・いちばん下は 上が 空いたら もどす
+  const low = posAt('wlow');
+  if (cur !== 'wlow' && clear(low)) { set('wlow'); return; }
+  if (cur === 'wlow' && clear(top)) { set(''); return; }
+  const w = top.width, R = T[2] + 8 + w / 2, L = T[0] - 8 - w / 2;   // 札の 右・左（広い ほうを 先に）
+  for (const x of (T[0] + T[2]) / 2 < innerWidth / 2 ? [R, L] : [L, R]) if (x - w / 2 >= M && x + w / 2 <= innerWidth - M && clear(posAt('wside', x))) { set('wside', x); return; }
+  if (clear(posAt('wfloor'))) set('wfloor');
+  else if (out) set('');   // どこも 空いて いなければ 上（画面の 外には 置かない）
 }
 function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない
   const avoid = [];
@@ -6995,6 +7008,11 @@ function npcGreet(n, tx, ty) {
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
+const TILT_DEGS = [15, 20, 26];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く
+tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); return TILT_DEGS.includes(v) ? v : 20; } catch (e) { return 20; } })();
+if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); } catch (er) { /* noop */ } }); }
+let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
+const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
 // へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
@@ -7016,7 +7034,7 @@ window.addEventListener('deviceorientation', e => {
     }
     return;
   }
-  const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
+  const c = v => Math.max(-1, Math.min(1, v / tiltG.deg));   // tiltG.deg 度で いちばん強く（ふつう 20度）
   const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
   const te = e.timeStamp || performance.now(), k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - (tiltG.t || te - 16)) / 1000)) / 0.035);   // センサーの細かいゆれを ならす（届く回数が ちがう スマホでも 同じ なめらかさ：時間で まぜる）
   tiltG.t = te;
@@ -7233,7 +7251,8 @@ function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マ�
 //   階段の ような ななめの 道（すじかいの 道・川ぞいの 道）は ななめの 一本道に なる。3つ以上の 分かれ道は まっすぐの 枝と、となりあう 枝の あいだの カーブ
 // ・道すじは 通路の マスの 中に おさまる（壁の マスへ はみ出さない）ので、マスで 数える しくみ（道しるべ・カラス・米つぶ・歩数）は そのまま
 const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5, MZ_RUB = 0.15;
-const MZ_SOFT_K = 300, MZ_SOFT_C = 12, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 5;   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
+const MZ_SOFT_K = 300, MZ_SOFT_C = 6, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 3.5;   // 10/28 店主「ふわふわした ぽよんぽよんする 迷路」：ねばりを へらして よく はね返る・へこみも ぷるぷる 長めに（ばねの 強さ K は かえない：やわらかく すると ふかく しずみ、となりの 通路へ ぬける）
+// （もとは K 300・C 12・DENT_C 5＝はね返り 3〜4割）   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
 // MZ_DENT_K・C：へこみの 絵の ばね（運営者「当たると 伸びて 跳ね返る」を もっと 分かりやすく：これまでは 0.1秒で もどり 目に 見えなかった。0.4秒ほど のびて、2〜3回 ぷるぷる ゆれて もどる）
 const mzSoft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0, vin: 0, boings: 0 };   // dent：生け垣の へこみの 絵（ばねで ついていき、はなれると ぷるんと もどる）   // MZ_RUB：生け垣に こすれる ときの すべりにくさ   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
 const mzCurveC = { key: '', m: new Map() };
@@ -7548,6 +7567,52 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
   floatText(`🐦 カァ！ ＋${MZ_CROW_PEN}秒`);
   if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
+}
+// 生け垣の 上の 小さな 生きもの（10/28 店主「西尾らしい 素朴な かわいさ」）：通路の マスの とじた さかい（生け垣）に ときどき ちょこんと すわっていて、
+// お米が 近づくと ぴょこっと とんで にげ、しばらくすると もどる。見た目だけ（当たり判定・ポイントなし）。生け垣の 種類で 生きものが かわる
+const MZ_CRIT = { ike: 'kaeru', ine: 'kaeru', dote: 'kaeru', cha: 'tonbo', kuro: 'tonbo', ami: 'kani', ishi: 'kani', matsu: 'sagi' }, MZ_CRIT_N = 23, MZ_CRIT_MAX = 2;   // N：何マスに 1つ・MAX：画面に いくつまで（すずめ・ねこ・虫も いるので 2つまで）
+const mzCritFled = new Map();   // マス → にげた 時刻
+const mzCritHi = new Map(), MZ_CRIT_CALM = 1.2;   // あいさつした 時刻・これより おそく 近づくと にげない（マス/秒）
+let mzCritHiN = 0;   // あいさつの 回数（試験用）
+let mzCritDrawn = [];   // この こまに 描いた 生きもの（試験用）
+function drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now) {
+  const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K), r0 = Math.floor(ty0 / MZ_K), c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
+  const bx = rp.x === null ? null : rp.x / MZ_K - 0.5, by = rp.x === null ? null : rp.y / MZ_K - 0.5;
+  const cand = [];
+  for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {   // 画面の 中の 生きものの 場所（お米に 近い じゅんに 描く。近くの 子が 数の 上限で 消えない ように）
+    const h = (Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663)) >>> 0;
+    if (h % MZ_CRIT_N || mzType(cx, cy) !== 1) continue;
+    const d = [[1, 0], [0, 1], [-1, 0], [0, -1]].find((_, i, D) => { const [dx, dy] = D[(i + (h >>> 8)) % 4]; return !mzOpen(cx, cy, dx, dy); });   // 生け垣は 通路の マスの とじた さかいに ある
+    if (!d) continue;
+    const px = cx + d[0] * 0.5, py = cy + d[1] * 0.5;   // さかいの 上（生け垣の 帯の まん中）
+    cand.push({ cx, cy, px, py, dist: bx === null ? 0 : Math.hypot(bx - px, by - py) });
+  }
+  cand.sort((a, b) => a.dist - b.dist);
+  let n = 0;
+  mzCritDrawn = [];
+  for (const { cx, cy, px, py, dist } of cand) {
+    if (n >= MZ_CRIT_MAX) break;
+    const img = critterSprites[MZ_CRIT[mzStyle(cx, cy)] || 'kaeru'];
+    if (!img) continue;
+    const k = cx + ',' + cy, f = mzCritFled.get(k);
+    const near = f === undefined && bx !== null && dist < 1.3;
+    if (near && Math.hypot(rp.vx, rp.vy) > MZ_CRIT_CALM) { mzCritFled.set(k, now); continue; }   // 速く 来たら にげる
+    if (near && !mzCritHi.has(k)) { mzCritHi.set(k, now); mzCritHiN++; }   // そっと 来たら にげずに ぴょこっと あいさつ（はなれるまで 1回）
+    else if (!near && mzCritHi.has(k) && now - mzCritHi.get(k) > 800) mzCritHi.delete(k);
+    let up = 0, al = 1;
+    if (f !== undefined) {
+      const t = now - f;
+      if (t > 25000) mzCritFled.delete(k);   // もどってきた
+      if (t < 25000 && t > 500) continue;   // にげて いる
+      if (t <= 500) { up = t / 500; al = 1 - up; }   // ぴょこっと とんで うすく なる
+    }
+    n++; mzCritDrawn.push([cx, cy, MZ_CRIT[mzStyle(cx, cy)] || 'kaeru']);
+    const hi = mzCritHi.has(k) ? (now - mzCritHi.get(k)) / 600 : 2;   // あいさつ：0.6秒で 2回 ぴょこぴょこ
+    const bob = calmMotion ? 0 : hi < 1 ? Math.round(Math.abs(Math.sin(hi * Math.PI * 2)) * T * 0.35) : Math.round(Math.max(0, Math.sin(now / 420 + cx * 1.7)) * T * 0.08);   // ときどき ちょこっと うごく
+    ctx.globalAlpha = al;
+    ctx.drawImage(img, Math.round(ox + (px + 0.5) * S - T / 2), Math.round(oy + (py + 0.5) * S - T / 2 - bob - up * T * 1.2), T, T);
+    ctx.globalAlpha = 1;
+  }
 }
 function drawMzSpring(ox, oy, T, now) {   // ばね：通路に 置いて ある ばね（緑の わが ふくらむ・のびちぢみ）と、わざの 間の お米の まわりの 光の わ
   const S = MZ_K * T, q = Math.max(1, Math.round(T / 8));
@@ -8287,6 +8352,8 @@ function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面�
 // ・地区ごと（店主「地区ごとの生垣も」。地区は その場所に いちばん 近い 注目スポットの 地区＝dots.js の areaOf。地区の 紹介 areas.json に そろえる）：
 //   一色 → 漁網の 垣（漁港・うなぎの 養殖池。水の そばも 網）・吉良 → 土手（堤防づくりの 名君）・幡豆 → 松の 垣（三ヶ根山と 国定公園の 海べ）・佐久島 → 黒塀（島の 黒壁の 集落）
 // ・田んぼの そば → 稲の 垣（店主「さらに西尾らしく」。西尾は 田んぼの 町。こよみの 田んぼと そろえて 青田・水田は 緑の 稲、実りは 黄金の 穂、刈田・田おこしは はざ掛けの 稲わら）
+// 生け垣に 当たって 舞う くず（[こい, うすい]）：いつもの=若葉・茶の木=茶の 葉・石垣=小石・黒塀=木くず・網=糸くず・土手=土くれ・松=松葉・田んぼ=わら
+const MZ_BITS = { ike: ['168,222,104', '236,244,150'], cha: ['86,140,52', '150,196,90'], ishi: ['150,146,136', '204,200,188'], kuro: ['96,70,46', '156,116,78'], ami: ['228,220,196', '120,156,176'], dote: ['140,106,70', '190,154,108'], matsu: ['62,112,62', '124,164,84'], ine: ['214,190,110', '238,222,160'] };
 const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro', 'ami', 'dote', 'matsu', 'ine'], MZ_CASTLE_R = 800 / TILE_M;
 const MZ_AREA_STYLE = { isshiki: 'ami', kira: 'dote', hazu: 'matsu', sakushima: 'kuro' };
 // 地区は いちばん 近い 町名（住所）で きめる：合併の あとも 住所に のこる「一色町○○」「吉良町○○」、幡豆は 東幡豆町・西幡豆町・寺部町・鳥羽町。
@@ -8593,6 +8660,7 @@ function rollStep(dt) {
     if (q && q.d > MZ_TUBE) {   // やわらかい 生け垣（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, vn = rp.vx * ux + rp.vy * uy, over = q.d - MZ_TUBE, pen = Math.min(over, MZ_SOFT_MAX);
       rub = [ux, uy];
+      if (!mzSoft.on && vn > MZ_HIT_STOP && !calmMotion) mzHitStop = performance.now() + MZ_HIT_STOP_MS;   // 動きを へらす 設定の 人には しない
       if (!mzSoft.on && vn > 0) { hit(vn, Math.abs(ux) >= Math.abs(uy), false); mzSoft.vin = vn; mzSoft.dv = Math.max(mzSoft.dv, vn * 0.5); }   // 当たった 瞬間だけ：がさっ（音・葉っぱ・ゆれ・いたい顔・コンボ おしまい）。へこみの 絵を ぐっと 押しこむ
       mzSoft.on = true; mzSoft.x = q.x; mzSoft.y = q.y; mzSoft.ux = ux; mzSoft.uy = uy; mzSoft.pen = pen;
       const push = MZ_SOFT_K * pen * dt + (vn > 0 ? MZ_SOFT_C * vn * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり（はね返りの 強さ）
@@ -8606,6 +8674,7 @@ function rollStep(dt) {
         if (vo < want) { rp.vx -= (want - vo) * mzSoft.ux; rp.vy -= (want - vo) * mzSoft.uy; mzSpring.boosts++; mzSpringChain(performance.now()); }
         const v = Math.hypot(rp.vx, rp.vy); if (v > ROLL_MAX) { rp.vx *= ROLL_MAX / v; rp.vy *= ROLL_MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
+      if (mzSoft.on && mzSoft.vin > 2.5 && roll.h <= 0 && !calmMotion) { roll.hv = Math.min(2.6, 0.8 + mzSoft.vin * 0.25); roll.h = 0.001; }   // ぽよんぽよん：はね返る ときに お米が ちょこんと とびはねる（見た目だけ。動きを へらす 人には しない）
       if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now() ? mzSpring.chain || 1 : 0); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
       mzSoft.on = false; mzSoft.vin = 0;
     }
@@ -8638,7 +8707,7 @@ function rollStep(dt) {
     if (spd > 1.4 && hedgeScrapeT <= 0 && inTube) {
       if (rub) {
         hedgeScrapeT = 0.22 / Math.min(3, spd / 1.4);
-        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: Math.random() < 0.5 ? '168,222,104' : '236,244,150', bit: true });
+        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: (MZ_BITS[mzStyle(Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K))] || MZ_BITS.ike)[Math.random() < 0.5 ? 0 : 1], bit: true });   // こすれた くずも 生け垣の 種類で
       }
     } else if (spd > 1.4 && hedgeScrapeT <= 0) {
       const horiz = Math.abs(rp.vx) >= Math.abs(rp.vy);
@@ -8708,11 +8777,12 @@ function bumpFx(hard = 1, horiz = true, wet = false, hedge = false) {
   if (hard < 0.25) return;
   comboEnd();   // 当たったら ころころコンボは おしまい
   if (hedge) {   // めいろの 生け垣に がさっ：やわらかく 受けとめて、葉っぱが 舞う。強く 当たった ときだけ いたい顔
-    roll.sq = Math.min(0.24, 0.07 + hard * 0.04); roll.sqv = 0; roll.sqx = horiz;
+    roll.sq = Math.min(0.32, 0.1 + hard * 0.05); roll.sqv = 0; roll.sqx = horiz;   // ふわふわ：生け垣に もふっと うもれて 大きく つぶれる
     roll.shake = Math.min(0.4, 0.06 + hard * 0.06);
     if (hard > 3.2) roll.ouchT = 0.5;
-    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;   // 当たった 生け垣の 面（はね返る まえの 向き）
-    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: i % 3 ? '168,222,104' : '236,244,150', bit: true });   // 若葉色（壁の 緑より 明るく）
+    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;
+    const bits = MZ_BITS[mzStyle(Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K))] || MZ_BITS.ike;   // 生け垣の 種類で くずを かえる（素朴な かわいさ）   // 当たった 生け垣の 面（はね返る まえの 向き）
+    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: bits[i % 3 ? 0 : 1], bit: true });   // 若葉色（壁の 緑より 明るく）
     hedgeSound(Math.min(1, hard / 4));
     if (navigator.vibrate) navigator.vibrate(Math.round(5 + hard * 2));
     return;
@@ -9129,7 +9199,7 @@ window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => acti
     if (!g || !g.t0) return null;
     const sec = g.sec !== undefined ? g.sec : (now - g.t0) / 1000;
     return { sec, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M, stars: g.len0 && !g.warp ? mzStars(sec, g.len0) : 0, par: g.len0 ? mzPar(g.len0).p3 : 0, way: g.len0 && !g.warp && g.len0 >= MZ_WAY_MIN ? Math.max(1, g.moves / (g.len0 - 1)) : 0, run: g.run || null, warp: !!g.warp };   // warp：とちゅうで とびこえた（★・はやさの ベストに 入れない）   // way：通った マスが ちかみちの 何倍か（1 に 近いほど まよわず 来た）
-  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy) }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, suzume: { get list() { return suzume.list.map(b => ({ x: b.x, y: b.y, fly: !!b.fly })); }, put: (x, y) => { suzume.list.length = 0; suzumeSpawn(x, y, performance.now() - 1000); }, clear: () => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; }, NEAR: SUZUME_NEAR, visit: () => suzumeVisit(performance.now()), VISIT: SUZUME_VISIT }, neko: { get cat() { const n = neko.cat; return n && { x: n.x, y: n.y, awake: performance.now() - n.awake < NEKO_AWAKE }; }, put: (x, y) => { neko.cat = { x: x + 0.5, y: y + 0.6, t0: performance.now(), awake: 0, dir: 1, col: NEKO_COLS[0] }; }, clear: () => { neko.cat = null; neko.next = performance.now() + 6e4; }, NEAR: NEKO_NEAR }, mushi: { get m() { const m = mushi.m; return m && { kind: m.kind, x: m.x, y: m.y, flee: !!m.flee }; }, kind: () => mushiKind(), put: (x, y, k) => { const now = performance.now(); mushi.m = { kind: k || mushiKind() || 'tonbo', x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: 0 }; }, clear: () => { mushi.m = null; mushi.next = performance.now() + 6e4; }, NEAR: MUSHI_NEAR }, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy), critters: () => mzCritDrawn.slice(), critFled: () => mzCritFled.size, critHi: () => mzCritHiN }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, suzume: { get list() { return suzume.list.map(b => ({ x: b.x, y: b.y, fly: !!b.fly })); }, put: (x, y) => { suzume.list.length = 0; suzumeSpawn(x, y, performance.now() - 1000); }, clear: () => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; }, NEAR: SUZUME_NEAR, visit: () => suzumeVisit(performance.now()), VISIT: SUZUME_VISIT }, neko: { get cat() { const n = neko.cat; return n && { x: n.x, y: n.y, awake: performance.now() - n.awake < NEKO_AWAKE }; }, put: (x, y) => { neko.cat = { x: x + 0.5, y: y + 0.6, t0: performance.now(), awake: 0, dir: 1, col: NEKO_COLS[0] }; }, clear: () => { neko.cat = null; neko.next = performance.now() + 6e4; }, NEAR: NEKO_NEAR }, mushi: { get m() { const m = mushi.m; return m && { kind: m.kind, x: m.x, y: m.y, flee: !!m.flee }; }, kind: () => mushiKind(), put: (x, y, k) => { const now = performance.now(); mushi.m = { kind: k || mushiKind() || 'tonbo', x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: 0 }; }, clear: () => { mushi.m = null; mushi.next = performance.now() + 6e4; }, NEAR: MUSHI_NEAR }, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   slopeAt: (x, y) => slopeAt(x, y),   // テスト用：その マスの かたむき
   rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）

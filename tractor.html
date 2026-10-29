@@ -626,7 +626,9 @@ scene.add(sun, sun.target);
 // ---- 読みこみ ----
 const loader = new THREE.GLTFLoader();
 const prog = { t: 0, f: 0 };
+let LOAD_ST = 'wait';                            // 読みこみ：wait（じゅんび中）・ok・ng（失敗。そのあと 進みぐあいで「もう一度 よむ」を 消さない）
 function showProg() {
+  if (LOAD_ST === 'ng') return;
   const p = Math.round((prog.t + prog.f) / 2 * 100);
   $('progBar').style.width = p + '%';
   $('progText').textContent = p < 100 ? `⏳ トラクターを 田んぼへ はこんでいるよ… ${p}%（はじめは 8MB ほど）` : '🌱 じゅんび できたよ';
@@ -653,8 +655,8 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   resetPos();
   setRotBtn();
   CLOUDS.apply(scene);                          // 雲の影（ほかの細工のあとで）
-  $('bStart').disabled = false;
-}).catch(e => { console.error(e); $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
+  $('bStart').disabled = false; LOAD_ST = 'ok';
+}).catch(e => { console.error(e); LOAD_ST = 'ng'; $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
@@ -8411,37 +8413,45 @@ const TALK = (() => {
     g.beginPath(); g.ellipse(C, 36, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(C - 20, 36, 40, 6);
     g.fillStyle = '#b8443a'; g.fillRect(C - 20, 39, 40, 4);
   })();
-  function talk(text, opts) {                      // opts：[[ボタンの字, 押したとき, main]]
+  let page = 'top';                                // いま 出している 会話：top（これで 行く？）・season・art・ng
+  function talk(text, opts, pg) {                  // opts：[[ボタンの字, 押したとき, main]]
+    page = pg;
+    const kb = ch.contains(document.activeElement);   // キーボードで えらんでいた 人は、つぎの ボタンへ
     $('talk').hidden = false;   // はじめは かくしておく（3D が 出せず ここまで 動かない ときに 空の ふきだしを 出さない）
     say.textContent = text;
     ch.innerHTML = '';
     for (const [t, fn, main] of opts) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (main) b.className = 'main'; b.onclick = fn; ch.append(b); }
+    if (kb && ch.firstChild) ch.firstChild.focus({ preventScroll: true });
   }
-  const mark = () => { try { sessionStorage.setItem('tr_talk', '1'); } catch (e) { /* なしで続ける */ } };
-  const again = (() => { try { return sessionStorage.getItem('tr_talk') === '1'; } catch (e) { return false; } })();
+  // 会話で かえた もの（season・art）を 読みこみなおしの あとに 1回だけ 言う
+  const mark = what => { try { sessionStorage.setItem('tr_talk', what); } catch (e) { /* なしで続ける */ } };
+  const changed = (() => { try { const v = sessionStorage.getItem('tr_talk'); sessionStorage.removeItem('tr_talk'); return v; } catch (e) { return null; } })();
+  let watch = 0;
   function ready() {
-    const ok = !$('bStart').disabled;
-    const now = `いまは ${SEA[season]}、お題は「${artName(ART_ID)}」。`;
-    talk((again ? `${SEA[season].replace(/^\S+\s/, '')}に したよ。お題は「${artName(ART_ID)}」。` : 'やあ。きょうは ぼくが トラクターを 運転するよ。' + now) + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
+    const ok = LOAD_ST === 'ok';
+    if (LOAD_ST === 'ng') { talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', [], 'ng'); return; }   // 読みこみ失敗
+    const sea = SEA[season].replace(/^\S+\s/, ''), art = artName(ART_ID);
+    const lead = changed === 'season' ? `${sea}に したよ。お題は「${art}」。` : changed === 'art' ? `お題を「${art}」に したよ。いまは ${sea}。`
+      : `やあ。きょうは ぼくが トラクターを 運転するよ。いまは ${SEA[season]}、お題は「${art}」。`;
+    talk(lead + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
       [ok ? '▶ これで 運転する' : '⏳ じゅんび中…', () => $('bStart').click(), true],
       ['季節を かえる', seasons],
       ['お題を かえる', arts],
-    ]);
-    if (!ok) {
-      ch.firstChild.disabled = true;
-      const w = setInterval(() => {
-        if (!$('bStart').disabled) { clearInterval(w); ready(); }
-        else if ($('progText').textContent.startsWith('🚜')) { clearInterval(w); talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', []); }   // 読みこみ失敗・3D が 出せない 端末
-      }, 400);
-    }
+    ], 'top');
+    if (!ok) ch.firstChild.disabled = true;
   }
+  // 見はりは 1つだけ。じゅんびが できても、季節・お題を えらんでいる 途中なら その 画面の まま（もどったときに「これで 行く？」が 押せる）
+  if (LOAD_ST === 'wait') watch = setInterval(() => {
+    if (LOAD_ST === 'wait') return;
+    clearInterval(watch);
+    if (page === 'top' || LOAD_ST === 'ng') ready();
+  }, 400);
   function seasons() {
-    talk('どの 田んぼに しよう？', [...Object.keys(SEA).map(k => [SEA[k], () => { if (k === season) { ready(); return; } mark(); go(k, TOD); }, k === season]), ['もどる', ready]]);
+    talk('どの 田んぼに しよう？', [...Object.keys(SEA).map(k => [SEA[k], () => { if (k === season) { ready(); return; } mark('season'); go(k, TOD); }, k === season]), ['もどる', ready]], 'season');
   }
   function arts() {
-    talk('田んぼに なにを 描こう？ ★が 多いほど むずかしいよ。', [...[...ARTS, null].map(a => [`${artIcon(a)} ${artName(a)} ${(artBtn(a) && artBtn(a).querySelector('i') || {}).textContent || ''}`.trim(), () => { if (a === ART_ID) { ready(); return; } mark(); go(season, TOD, a); }, a === ART_ID]), ['もどる', ready]]);
+    talk('田んぼに なにを 描こう？ ★が 多いほど むずかしいよ。', [...[...ARTS, null].map(a => [`${artIcon(a)} ${artName(a)} ${(artBtn(a) && artBtn(a).querySelector('i') || {}).textContent || ''}`.trim(), () => { if (a === ART_ID) { ready(); return; } mark('art'); go(season, TOD, a); }, a === ART_ID]), ['もどる', ready]], 'art');
   }
-  if ($('challenge') && !$('challenge').classList.contains('hidden')) mark();   // 友だちの 挑戦から 来た ときは、同じ 田んぼの まま すすめる
   ready();
   return { ready };
 })();

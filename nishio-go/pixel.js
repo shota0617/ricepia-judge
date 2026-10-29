@@ -749,7 +749,7 @@ function trailSave() {
     if (store.set(TRAIL.key, out)) { store.set(PX_IDX, idx); TRAIL.dirty = 0; return; }
   }
   store.set(PX_IDX, idx);
-  if (!TRAIL.warned) { TRAIL.warned = true; G.toast('保存領域がいっぱいで、あしあとを保存できませんでした（ブラウザの保存領域を確認してください）'); }
+  if (!TRAIL.warned) { TRAIL.warned = true; G.toast('スマホの 空きが いっぱいで、あしあとを 保存できませんでした。少し 空けてから、もう一度 ためしてね。'); }
 }
 // 記録を消す（せってい）：いまのモードのあしあとを、保存したものごと消す
 function trailClear() {

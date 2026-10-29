@@ -116,7 +116,8 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 @media (max-width:259px){#coinDone .talk>.who:not(.num),#result .talk>.who{display:none} #coinDone .talk>.say::before,#coinDone .talk>.say::after,#result .talk>.say::before,#result .talk>.say::after{display:none} .nw{white-space:normal}} /* 字 200% など せまい 画面：まとめ・結果の 顔を けして 字に 幅を（96周目） */
 .coinHead{display:contents} /* たて では つつまない のと 同じ。低い 横向きは 左の 列（97周目） */
 .talk>.say a:not(.go){color:#1f4d2b;font-weight:700;text-underline-offset:3px} /* 吹き出しの 中の リンク（お店の 深緑） */
-.talk>.say .src{font-size:13px;font-weight:700;color:#7a5a30} /* 出典の 注は 小さく（消さない。111周目） */
+/* 朱の 字は 吹き出し 1つに 1か所（127周目：手順の 吹き出しが 半分 赤で、どこも 目立たなかった） */
+.talk>.say .src{font-size:13px;font-weight:700;color:#7a5a30;white-space:nowrap} /* 出典の 注は 小さく（消さない。111周目） */
 .talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none} /* 続きの ことば：1つの 画面に こめつぶを ふやしすぎない（89周目） */
 .talk>.say .fb i{color:#7a5a30}
 .talk>.say h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.4vw,36px);word-break:keep-all;line-height:1.15;margin:0;color:#3e2a1a;text-align:left}
@@ -255,10 +256,10 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       </div>
       <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-coin" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a></div></div>
       <div class="talks">
-        <div class="talk"><span class="who num">1</span><p class="say"><strong>白い 糸が まっすぐ</strong>なら 表です。袋を 立てたまま まわして、<strong>裏</strong>を 見て ください。表に「糸抜きはここから」と あっても、口は 裏です<small class="src">（製粉会社の 説明）</small>。<span class="fb" aria-hidden="true"><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><path d="M4 7h62" stroke="#f8f4ea" stroke-width="2.4" stroke-dasharray="7 2.5"/></svg>表</i><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><g fill="none" stroke="#f8f4ea" stroke-width="2"><ellipse cx="10" cy="7" rx="6" ry="3.4"/><ellipse cx="22" cy="7" rx="6" ry="3.4"/><ellipse cx="34" cy="7" rx="6" ry="3.4"/><ellipse cx="46" cy="7" rx="6" ry="3.4"/><ellipse cx="58" cy="7" rx="6" ry="3.4"/></g><path d="M4 8l12-2 12 2 12-2 12 2 12-2" stroke="#d8342c" stroke-width="2" fill="none"/></svg>裏</i></span></p></div>
+        <div class="talk"><span class="who num">1</span><p class="say"><strong>白い 糸が まっすぐ</strong>なら 表です。袋を 立てたまま まわして、裏を 見て ください。表に「糸抜きはここから」と あっても、口は 裏です<small class="src">（製粉会社の 説明）</small>。<span class="fb" aria-hidden="true"><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><path d="M4 7h62" stroke="#f8f4ea" stroke-width="2.4" stroke-dasharray="7 2.5"/></svg>表</i><i><svg viewBox="0 0 70 14" width="70" height="14"><rect width="70" height="14" rx="3" fill="#c39a62"/><g fill="none" stroke="#f8f4ea" stroke-width="2"><ellipse cx="10" cy="7" rx="6" ry="3.4"/><ellipse cx="22" cy="7" rx="6" ry="3.4"/><ellipse cx="34" cy="7" rx="6" ry="3.4"/><ellipse cx="46" cy="7" rx="6" ry="3.4"/><ellipse cx="58" cy="7" rx="6" ry="3.4"/></g><path d="M4 8l12-2 12 2 12-2 12 2 12-2" stroke="#d8342c" stroke-width="2" fill="none"/></svg>裏</i></span></p></div>
         <div class="talk"><span class="who num">2</span><p class="say"><strong>赤い 糸が 白い輪に ささっている</strong>端から ほどきます。裏から 見て たいてい 左、袋に よっては 右です。赤の ない、白い 糸 1本だけの 袋も あります。</p></div>
-        <div class="talk"><span class="who num">3</span><p class="say">赤の 端を つまんで <strong>白い輪を くぐらせて はずし</strong>、<strong>縫い目に そって 反対の 端の 方へ ゆっくり</strong> 引きます（左からなら 右へ）。<strong>白糸は 自然に ぬけます</strong>。</p></div>
-        <div class="talk"><span class="who num">4</span><p class="say">もつれたら <strong>強く 引かずに</strong>、細い もので ゆるめて 少し もどしてから やりなおします<small class="src">（製粉会社の 説明）</small>。れんしゅうの ように、袋の 表側（白い 糸が まっすぐの 面）の <strong>白糸</strong>を 少し 引く 方法も あります<small class="src">（JAの 案内として 紹介）</small>。</p></div>
+        <div class="talk"><span class="who num">3</span><p class="say">赤の 端を つまんで 白い輪を くぐらせて はずし、縫い目に そって 反対の 端の 方へ <strong>ゆっくり</strong> 引きます（左からなら 右へ）。白い 糸は 自然に ぬけます。</p></div>
+        <div class="talk"><span class="who num">4</span><p class="say">もつれたら <strong>強く 引かずに</strong>、細い もので ゆるめて 少し もどしてから やりなおします<small class="src">（製粉会社の 説明）</small>。れんしゅうの ように、袋の 表側（白い 糸が まっすぐの 面）の 白い 糸を 少し 引く 方法も あります<small class="src">（JAの 案内として 紹介）</small>。</p></div>
         <div class="talk"><span class="who num">5</span><p class="say">ほどいた 糸や 紙くずは <strong>投入口に 入れず ごみ箱へ</strong> お願いします。</p></div>
       </div>
       <div class="talk cont" id="stuck"><span class="who" data-d="kome" aria-hidden="true"></span><p class="say">それでも 取れない ときは、<b>白糸だけ ハサミで 切って</b> 赤を 引く 方法<small class="src">（農家の 説明）</small>も あります。<b>紙ひもの 袋</b>は 結び目を ほどいて ください。</p></div> <!-- もつれの ほかの 直し方は ボタンの 上に 1つに（111周目） -->
@@ -279,7 +280,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
         <div><span>もつれ</span><strong id="rSnap">0</strong></div>
       </div>
       <button class="go" id="againBtn" type="button">もう一回</button>
-      <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a><span>らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。</span></div></div>
+      <div class="talk line-talk cont"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-result" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a><span>らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。</span></div></div>
       <div class="talk cont" id="bestTalk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say" id="best"></div></div>
       <div class="goals" id="rGoals"></div>
       <p id="tip" class="tip"></p>
@@ -476,7 +477,7 @@ function endGame(){
   const ri = RANKS.length - 1 - RANKS.findIndex(r=>S.score>=r[0]); // 0＝もみ … 4＝おにぎり
   $('grow').innerHTML = RANKS.map((r,i)=>`<span class="${i===ri?'now':i<ri?'got':''}">${DOODLE.grow(i)}</span>`).join('');
   // 説明の 字でも いまの 段を 太字と「いま」で（色と 大きさ だけに しない）
-  $('growCap').innerHTML = ['もみ','苗','稲穂','米俵','おにぎり'].map((n,i)=> i===ri ? `<b>いま：${n}（${rankOf(S.score)}）</b>` : n).join(' → ');
+  $('growCap').innerHTML = ['もみ','苗','稲穂','米俵','おにぎり'].map((n,i)=> i===ri ? `<b>${n}<span class="sr">（いま）</span></b>` : n).join(' → '); /* 段の 名前は すぐ 上の はんこに ある。くり返さず 1行に（127周目） */
   const zone = Math.round(100*S.zoneTime/Math.max(0.01,S.pullTime));
   ui.tip.innerHTML = (S.pullTime > 0 ? '<b>スルスル率 '+zone+'%</b>　' : '') + tipOf(zone); /* 引いて いない 人に 0% を 見せない（103周目） */
   const done = goalsDone(), fresh = new Set();

@@ -55,6 +55,17 @@
   .sheet { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(26, 24, 20, .55); }
   .card { width: min(520px, 100%); max-height: 100%; overflow: auto; padding: 22px 20px; border-radius: 18px; background: var(--paper); box-shadow: 0 10px 30px rgba(0,0,0,.3); text-align: center; }
   .card h1 { margin: 0 0 4px; font-size: 22px; }
+  /* 運転する キャラクターとの おはなし（はじめの画面・10/29 店主「素朴な かわいい キャラクターとの 会話で 進む」） */
+  .talk { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 12px; text-align: left; }
+  .talk[hidden] { display: none; }
+  .talk canvas { flex: none; width: 64px; height: 64px; border-radius: 50%; background: #fbf7ef; box-shadow: 0 2px 8px rgba(0,0,0,.2); }
+  .talkBody { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 14px; background: #fff; border: 2px solid #e3d7bd; position: relative; }
+  .talkBody::before { content: ''; position: absolute; left: -9px; top: 22px; border: 8px solid transparent; border-right-color: #e3d7bd; border-left: 0; }
+  .talkBody p { margin: 0; font-size: 15px; line-height: 1.6; }
+  .talkCh { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .talkCh button { padding: 8px 12px; border: 2px solid #d8d0bc; border-radius: 999px; background: #fffdf7; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .talkCh button.main { border-color: var(--green); background: var(--green); color: #fff; }
+  .talkCh button:disabled { opacity: .55; cursor: default; }
   .card .tag { display: inline-block; margin-bottom: 10px; padding: 2px 10px; border: 1px solid var(--gold); border-radius: 999px; color: #8a6423; font-size: 12px; font-weight: 700; }
   .card p { margin: 8px 0; font-size: 14px; line-height: 1.7; }
   .seasons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
@@ -198,6 +209,7 @@
   <div class="card">
     <p class="challenge hidden" id="challenge"></p>
     <span class="tag">🧪 試作版</span>
+    <div class="talk" id="talk" hidden><canvas id="talkFace" width="128" height="128" aria-hidden="true"></canvas><div class="talkBody"><p id="talkSay" aria-live="polite"></p><div class="talkCh" id="talkCh"></div></div></div>
     <h1>🚜 トラクターで<span style="display:inline-block">田んぼを耕そう</span></h1>
     <p>キャビン付きの 60 馬力のトラクターの運転席に座って、うしろのロータリーで 30m×50m の田んぼを耕し、<b>田んぼに絵を描きます</b>（田んぼアート）。お題を「なし」にすると、田んぼをぜんぶ耕せたらクリア。</p>
     <div class="seasons" id="seasons">
@@ -7931,6 +7943,62 @@ function finishArt() {
 // ---- 案内（コーチ）：いま何をすればよいかを、画面の下に 1 行で出す ----
 // ①下げる → ②前へ → ③畦が近いので上げる → ④回る → ⑤となりにならんだら下げる。上げて回って下げる旋回が 2 回できたら消える。
 // エンストのときと、田んぼアートが仕上がりそうなときも出す。パソコンはキー、スマホはボタンの場所で書く
+// ---- はじめの画面の おはなし：上の 丸い 窓の キャラクター（麦わら帽子）が 話しかけて、季節・お題を 会話で 決めて 運転を はじめる。
+// （10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。下の くわしい えらびかたは そのまま
+const TALK = (() => {
+  const say = $('talkSay'), ch = $('talkCh'), cv = $('talkFace');
+  const SEA = { haru: '🌸 春の 耕す前の田んぼ', aki: '🌾 秋の 稲刈りのあと', shirokaki: '💧 水を張った 代かき' };
+  const artBtn = id => document.querySelector(`#arts button[data-a="${id || 'none'}"]`);
+  const artName = id => { const b = artBtn(id); return b ? [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim() : ''; };   // 絵文字と ★ を のぞいた 名前
+  const artIcon = id => { const b = artBtn(id); return b && b.querySelector('span') ? b.querySelector('span').textContent : ''; };
+  (function face() {                               // 丸い 窓と 同じ 顔（止まっている 絵）
+    const g = cv.getContext('2d'), C = 64;
+    g.fillStyle = '#e8d5ba';
+    for (let k = 0; k < 30; k++) { const a = k / 30 * Math.PI * 2; g.beginPath(); g.arc(C + Math.cos(a) * 40, 84 + Math.sin(a) * 43, 7, 0, 7); g.fill(); }
+    g.beginPath(); g.ellipse(C, 84, 40, 43, 0, 0, 7); g.fill();
+    g.fillStyle = '#f8eadb'; g.beginPath(); g.ellipse(C, 78, 27, 22, 0, 0, 7); g.fill();
+    g.fillStyle = 'rgba(240,130,120,.5)'; for (const sx of [-1, 1]) { g.beginPath(); g.ellipse(C + sx * 16, 85, 5.5, 3.8, 0, 0, 7); g.fill(); }
+    g.fillStyle = '#2a211a'; g.strokeStyle = '#2a211a'; g.lineWidth = 2; g.lineCap = 'round';
+    for (const sx of [-1, 1]) { g.beginPath(); g.arc(C + sx * 9, 76, 3.4, 0, 7); g.fill(); }
+    g.beginPath(); g.arc(C, 83, 4, 0.2 * Math.PI, 0.8 * Math.PI); g.stroke();
+    g.fillStyle = '#e3c27a'; g.beginPath(); g.ellipse(C, 44, 38, 8, 0, 0, 7); g.fill();
+    g.beginPath(); g.ellipse(C, 36, 20, 12, 0, Math.PI, 2 * Math.PI); g.fill(); g.fillRect(C - 20, 36, 40, 6);
+    g.fillStyle = '#b8443a'; g.fillRect(C - 20, 39, 40, 4);
+  })();
+  function talk(text, opts) {                      // opts：[[ボタンの字, 押したとき, main]]
+    $('talk').hidden = false;   // はじめは かくしておく（3D が 出せず ここまで 動かない ときに 空の ふきだしを 出さない）
+    say.textContent = text;
+    ch.innerHTML = '';
+    for (const [t, fn, main] of opts) { const b = document.createElement('button'); b.type = 'button'; b.textContent = t; if (main) b.className = 'main'; b.onclick = fn; ch.append(b); }
+  }
+  const mark = () => { try { sessionStorage.setItem('tr_talk', '1'); } catch (e) { /* なしで続ける */ } };
+  const again = (() => { try { return sessionStorage.getItem('tr_talk') === '1'; } catch (e) { return false; } })();
+  function ready() {
+    const ok = !$('bStart').disabled;
+    const now = `いまは ${SEA[season]}、お題は「${artName(ART_ID)}」。`;
+    talk((again ? `${SEA[season].replace(/^\S+\s/, '')}に したよ。お題は「${artName(ART_ID)}」。` : 'やあ。きょうは ぼくが トラクターを 運転するよ。' + now) + (ok ? 'これで 行く？' : 'いま じゅんび してるから、ちょっと まってね。'), [
+      [ok ? '▶ これで 運転する' : '⏳ じゅんび中…', () => $('bStart').click(), true],
+      ['季節を かえる', seasons],
+      ['お題を かえる', arts],
+    ]);
+    if (!ok) {
+      ch.firstChild.disabled = true;
+      const w = setInterval(() => {
+        if (!$('bStart').disabled) { clearInterval(w); ready(); }
+        else if ($('progText').textContent.startsWith('🚜')) { clearInterval(w); talk('ごめんね、うまく じゅんび できなかったよ。下の 知らせを 見てね。', []); }   // 読みこみ失敗・3D が 出せない 端末
+      }, 400);
+    }
+  }
+  function seasons() {
+    talk('どの 田んぼに しよう？', [...Object.keys(SEA).map(k => [SEA[k], () => { if (k === season) { ready(); return; } mark(); go(k, TOD); }, k === season]), ['もどる', ready]]);
+  }
+  function arts() {
+    talk('田んぼに なにを 描こう？ ★が 多いほど むずかしいよ。', [...[...ARTS, null].map(a => [`${artIcon(a)} ${artName(a)} ${(artBtn(a) && artBtn(a).querySelector('i') || {}).textContent || ''}`.trim(), () => { if (a === ART_ID) { ready(); return; } mark(); go(season, TOD, a); }, a === ART_ID]), ['もどる', ready]]);
+  }
+  if ($('challenge') && !$('challenge').classList.contains('hidden')) mark();   // 友だちの 挑戦から 来た ときは、同じ 田んぼの まま すすめる
+  ready();
+  return { ready };
+})();
 const COACH = (() => {
   const el = $('coach'), PAD = MOBILE || params.has('pad');
   let shown = '', prevDown = false, liftYaw = null, turns = 0, off = false, afterStall = false;

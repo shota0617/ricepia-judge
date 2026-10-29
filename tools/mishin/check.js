@@ -360,6 +360,12 @@ const CHECKS = {
     // リストづくり：まとめと 結果に お店の LINE の 友だち追加（どこから 来たかの from つき）。手元では 解析は 動かない
     const ln = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => ({ from: new URL(a.href).searchParams.get('from'), host: new URL(a.href).hostname, rel: a.rel, inCoin: !!a.closest('#coinDone'), inRes: !!a.closest('#result') })).concat([{ analyticsOn: window.nsgAnalytics ? window.nsgAnalytics.on : 'none' }]));
     ok(ln.some(l => l.inCoin && l.from==='mishin-coin') && ln.some(l => l.inRes && l.from==='mishin-result') && ln.filter(l => l.host).every(l => l.host==='ricepia.jp' && /noopener/.test(l.rel)) && ln[ln.length-1].analyticsOn===false, 'まとめと 結果に LINE の 友だち追加（from つき）・手元では 解析は 動かない', ln);
+    // 88周目（リストづくり 2）：まとめの LINE は 1画面目（手順の 前）、結果は「もう一回」の すぐ 下
+    for (const [w, h] of [[390,844],[360,640]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      const lc = await p.evaluate(() => { document.getElementById('result').hidden = true; const c = document.getElementById('coinDone'); c.hidden = false; c.scrollTop = 0; const r = c.querySelector('a.lineAdd').getBoundingClientRect(), g = document.getElementById('againBtn');
+        const nx = g.nextElementSibling; c.hidden = true; return { b: r.bottom, H: innerHeight, next: nx && nx.classList.contains('line-talk') }; });
+      ok(lc.b <= lc.H && lc.next, `まとめの LINE の ボタンが 1画面目（${w}×${h}）・結果は「もう一回」の すぐ 下`, lc); }
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 76周目（こめつぶの 会話の 点検）：れんしゅうの 1袋目の 裏は タップで まわらない
     await p.setViewportSize({ width:390, height:844 });
     const pr = await p.evaluate(() => { KB.startPractice(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; S.bag.face = 'back'; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<40;i++) KB.step(1/60); return { face:S.bag.face, flip:S.bag.flipT }; });

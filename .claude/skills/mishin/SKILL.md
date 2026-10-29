@@ -59,7 +59,8 @@ description: 米袋の ミシン糸 ゲーム「ミシン糸 一本どり」（m
 ## お店の LINE（リストづくり）
 
 運営者の 声「リストマーケティングに 対応」（76 周目）。お店の いちばんの 目標は LINE の 友だちを ふやす こと（`docs/marketing.md`）。
-- まとめ（`from=mishin-coin`）と 結果（`from=mishin-result`）に、こめつぶの ことば「価格表や 売り出しの お知らせは、らいすぴあの LINE で お届けして います。登録は 10秒です。」と 緑の ボタン（`a.lineAdd`、`https://ricepia.jp/go/lin.ee/uPhkiiv?from=…`）。ことばは ricepia.jp の LINE の 案内（価格表・売り出し情報・登録は10秒）から。新しい とくてんを 書かない
+- まとめ（`from=mishin-coin`。袋の 両はしの 絵の すぐ 下＝1画面目）と 結果（`from=mishin-result`。「もう一回」の すぐ 下）に、こめつぶの ことば「らいすぴあの LINE なら、価格表が すぐ 見られて、売り出しの お知らせも 届きます。登録は 10秒です。」と 緑の ボタン（`a.lineAdd`、`https://ricepia.jp/go/lin.ee/uPhkiiv?from=…`、小さい 字「（LINE が ひらきます）」）。ことばは ricepia.jp の LINE の 案内（登録は10秒・価格表はすぐ見られます・売り出し情報が届く）から。新しい とくてんを 書かない
+- はかる：れんしゅう 開始・まとめ・ゲーム 開始・結果を `mishin_practice_start`・`mishin_coin_done`・`mishin_game_start`・`mishin_game_end`（via：coin／title）。`mishin_coin_done` と `line_add`（from=mishin-coin）を くらべる（88 周目。docs/marketing.md）
 - 数える：`nishio-go/analytics.js` を 読みこむ（ricepia.jp・にしおさんぽGO と 同じ GA4・Google 広告・LINEヤフー の タグ。go.ricepia.jp でだけ 動く）。lin.ee の リンクを 押すと `line_add`（from つき）と Google 広告の「LINE友だち追加クリック」
 - 遊びの じゃまを しない：ゲームの 途中には 出さない。おわった 画面 だけ
 

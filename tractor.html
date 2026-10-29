@@ -178,6 +178,9 @@
   #start.loading #progText:not(.err) { display: none !important; }
   /* 文字を へらしても、試作版・架空の 車体・子どもの 安全・だれが つくったか は 一行で のこす（信頼の 観点 D・G） */
   .calmNote { display: none; }
+  /* はじめて あそぶ ときだけ、草かりが 始まったら まん中に 3行の 札。「わかった」で とじるまで 残す（読みこみが はやいと 読みこみ中の 画面は すぐ 消えるので） */
+  #firstNote { position: fixed; left: 50%; top: 38%; transform: translate(-50%, -50%); width: min(340px, calc(100vw - 32px)); box-sizing: border-box; padding: 12px 14px; border-radius: 14px; background: rgba(251,248,240,.97); box-shadow: 0 6px 20px rgba(0,0,0,.3); color: #4a3d2c; font-size: 13px; line-height: 1.65; text-align: left; z-index: 50; }
+  #firstNote button { display: block; margin: 8px auto 0; min-height: 40px; padding: 0 22px; border: 0; border-radius: 999px; background: var(--green); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
   body.calm #start .card > p.calmNote, #start.loading .card > p.calmNote { display: block; margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: #6b5a40; }
   body.calm #start label.easy { display: inline-flex; align-items: center; gap: 6px; margin: 2px 4px 8px 0; padding: 6px 10px; }
   body.calm #start label.easy input { margin-top: 0; }
@@ -233,6 +236,7 @@
 <div class="pad hidden" id="padB"><button data-k="lookBack" class="ico" data-i="👀" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden ico" data-i="🧽" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
+<div id="firstNote" class="hidden" role="dialog" aria-label="はじめに"><div>🧪 試作版の ゲームです。トラクターは 架空の 車体で、メーカーの 公式では ありません。</div><div><b style="color:#7a4a12">🚸 本物の トラクターは とても あぶないので、子どもは 近づかないでね。</b></div><div>つくったのは 西尾の お米屋さん らいすぴあ（近藤米穀店）。</div><button type="button" id="firstNoteOk">わかった</button></div>
 <div id="badge" class="hidden"><canvas id="badgeCv" width="152" height="152"></canvas><span id="badgeSt"></span><div id="say" class="off"></div></div>
 <div id="farmerSay"></div>
 <div id="artBox" class="hidden"><canvas id="artMap" width="250" height="196"></canvas><span id="artPop"></span></div>
@@ -671,9 +675,13 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), SHIRO ? load
   $('bStart').disabled = false; LOAD_ST = 'ok';
   $('start').classList.remove('loading');
   if (!params.has('menu')) $('bStart').onclick();   // そのまま 草かりから 始める
+  // はじめての 端末だけ、3行の 札（「わかった」で とじる。≡ の はじめの 画面にも 同じ 3行が ある）
+  let seen = false; try { seen = localStorage.getItem('tractorNoteSeen') === '1'; } catch (e) {}
+  if (!seen && !params.has('menu')) { $('firstNote').classList.remove('hidden'); $('firstNoteOk').focus({ preventScroll: true }); }
 }).catch(e => { console.error(e); LOAD_ST = 'ng'; $('progText').innerHTML = '🚜 うまく 読みこめませんでした。通信のよい所で、もう一度 ひらいてみてね。 <button type="button" onclick="location.reload()">もう一度 よむ</button>'; $('progText').classList.add('err'); });   // 英語の エラー文は 画面に出さず コンソールへ（素朴な かわいさ）
 
 
+$('firstNoteOk').onclick = () => { $('firstNote').classList.add('hidden'); try { localStorage.setItem('tractorNoteSeen', '1'); } catch (e) {} };
 // ---- ヘッドライトと作業灯（LED）。夕方は点けて始める。L で入切（本物も作業灯は集中スイッチでまとめて入切） ----
 // テール：ライトといっしょに点く。作業機のうしろの灯火器も同じ
 const LAMPS = (() => {

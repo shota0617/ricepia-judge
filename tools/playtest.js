@@ -1097,19 +1097,18 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400); await uncover(page);
     const pick = await page.evaluate(() => { const r = nishioPixel.roll; let best = null; for (const [k, dx, dy] of [['ArrowLeft', -1, 0], ['ArrowRight', 1, 0], ['ArrowUp', 0, -1], ['ArrowDown', 0, 1]]) { let d = 1; while (d < 30 && !nishioPixel.rollBlockedFrom(r.x + dx * (d - 1), r.y + dy * (d - 1), r.x + dx * d, r.y + dy * d)) d++; if (!best || d > best[1]) best = [k, d]; } return best; });
     if (pick[1] < 5) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, skipped: 'no-room', d: pick[1] }; }
+    const p0 = await page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]);
     await page.keyboard.down(pick[0]);
     let max = 0;
     for (let i = 0; i < 30; i++) { await page.waitForTimeout(100); max = Math.max(max, await page.evaluate(() => nishioPixel.combo.n)); }
     await page.keyboard.up(pick[0]);
     // かべに 当たるか、止まって 0.7秒で おしまい。ゆるい めいろでは 曲がり角も カーブに そって すべるので（当たらないので コンボは つづく）、止まるまで 待つ（5秒まで）
-    let still = false;
-    for (let i = 0; i < 25; i++) { await page.waitForTimeout(200); const r = await page.evaluate(() => nishioPixel.roll); still = Math.hypot(r.vx, r.vy) < 0.05; if (still) break; }
-    // 5秒 たっても ゆるい カーブを すべり つづける ときは（ときどき あった：止まって 0.7秒の 前に また ころがり、コンボが ×2 から やりなおしに なり、あとの comboBest まで ずれた）、その 場で 止める
-    if (!still) await page.evaluate(() => { const r = nishioPixel.roll; nishioPixel.rollPut(r.x, r.y); });
-    await page.waitForTimeout(1000);
-    const after = await page.evaluate(() => nishioPixel.combo);
-    await page.evaluate(() => nishioPixel.setRoll(false));
-    return { ok: max >= 2 && after.n === 0 && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after, still };
+    // 止まって 0.7秒で コンボは おしまい（0 に もどる）。坂（本当の 高低差）や ゆるい カーブでは、止まった あと また 転がりだして 新しい コンボが はじまる ことが ある
+    // （ときどき 落ちていた：おわった あと 坂で ×2 から やりなおし、さいごの 1回だけ 見ると 0 で なかった）。なので 6秒の 間に いちど でも 0 に もどったかを 見る
+    let ended = false, after = null;
+    for (let i = 0; i < 30 && !ended; i++) { await page.waitForTimeout(200); after = await page.evaluate(() => nishioPixel.combo); ended = after.n === 0; }
+    await page.evaluate(p0 => { nishioPixel.rollPut(p0[0], p0[1]); nishioPixel.setRoll(false); }, p0);   // はじめの 場所に もどして 止める（坂で 転がり つづけて、あとの comboBest の コンボに まざらない ように）
+    return { ok: max >= 2 && ended && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after, ended };
   })();
   // ころころコンボの ベスト：転がっている うちに ベストを こえると その場で「🏅 ベスト こえた！」、止まると ベストが のこる
   R.checks.comboBest = await (async () => {

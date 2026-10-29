@@ -1086,6 +1086,14 @@ async function walkTo(page, id) {
     P.nightForce(null);
     return { night, day, toast, ok: night.n > 0 && night.warm >= night.n && day.n === 0 && !toast };
   });
+  // 朝の ひかり（朝の 改善 9）：日本時間 5〜8時に ほんのり あたたかい 色（6時が いちばん・8時で 消える）。10時（ふだんの テストの 時刻）には かけない
+  R.checks.morning = await page.evaluate(async () => {
+    const M = nishioPixel.morning, at = t => +M.level(Date.parse('2026-10-16T' + t + ':00+09:00')).toFixed(2);
+    const lv = { '04:30': at('04:30'), '05:30': at('05:30'), '06:00': at('06:00'), '07:00': at('07:00'), '08:30': at('08:30'), '10:00': at('10:00') };
+    await new Promise(r => setTimeout(r, 300)); const now = M.k;
+    M.force(1); await new Promise(r => setTimeout(r, 300)); const on = M.k; M.force(null);
+    return { lv, now, on, ok: lv['04:30'] === 0 && lv['05:30'] === 0.5 && lv['06:00'] === 1 && lv['07:00'] === 0.5 && lv['08:30'] === 0 && lv['10:00'] === 0 && now === 0 && on === 1 };
+  });
   // 物干しの せんたくもの（夜の 改善 6）：昼（10時）は 出る・雨と 雪と 夜は 出さない。絵が 描ける。文字は なし
   R.checks.sentaku = await page.evaluate(async () => {
     const P = nishioPixel, S = P.sentaku, wait = ms => new Promise(res => setTimeout(res, ms));
@@ -3703,6 +3711,7 @@ async function walkTo(page, id) {
   need(c.chaHana && c.chaHana.ok, `茶畑の 茶の花：10月に 咲かない・ぽつぽつで ない（${JSON.stringify(c.chaHana)}）`);
   need(c.nightLamps && c.nightLamps.ok, `夜の あかり：夜に 街灯が ない・あたたかい 明かりが ない・昼にも 描く・文字を 出す（${JSON.stringify(c.nightLamps)}）`);
   need(c.hamon && c.hamon.ok, `水べの さざなみ：輪が 出ない・消えない・水の となりを 転がっても 出ない・文字を 出す（${JSON.stringify(c.hamon)}）`);
+  need(c.morning && c.morning.ok, `朝の ひかり：5〜8時の 色の 強さが ちがう・昼にも かける（${JSON.stringify(c.morning)}）`);
   need(c.sentaku && c.sentaku.ok, `物干しの せんたくもの：昼に 出ない・雨や 雪や 夜に 出る・絵が 描けない（${JSON.stringify(c.sentaku)}）`);
   need(c.donguri && c.donguri.ok, `どんぐりも ころころ：10月に 出ない・転がらない・止まらない・お米に かさなる・消えない・森の となりで 落ちない・文字を 出す（${JSON.stringify(c.donguri)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);

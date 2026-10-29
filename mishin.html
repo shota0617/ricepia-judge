@@ -377,6 +377,9 @@ const tangleAfter = () => !S.practice && S.bag && S.bag.k < 2 ? 0.8 : R.tangleAf
 function pps(b){ const L=layout(); return Math.max(14, (L.x1-L.x0)*R.pullWidths/b.N); } // 1目ほどくのに引く長さ
 
 function startPractice(){ startGame(true); }
+// お店の LINE の 友だちづくり（リスト）を はかる：れんしゅうを 終えた 人の うち 何人が LINE を 押したか（88周目）。
+// 送るのは 場面の 名前と QR から 来たか だけ。go.ricepia.jp・vercel でだけ 動く（nishio-go/analytics.js）
+const track = (name, params = {}) => { try{ window.nsgTrack && window.nsgTrack(name, Object.assign({ via: location.hash==='#coin' ? 'coin' : 'title' }, params)); }catch(e){} };
 function startGame(practice){
   practice = practice === true; audio.hush();
   if(!practice) cv.setAttribute('aria-label', '米袋の 口の 縫い目（タイムアタックは 二本指で つまむ。キーボードでは れんしゅう だけ）'); /* れんしゅうの 帯の 文を のこさない */
@@ -384,6 +387,7 @@ function startGame(practice){
   seed = KB.fixedSeed || ((Date.now() ^ (Math.random()*1e9)) | 0);
   Object.assign(S,{bestAt:(()=>{ try{ return +localStorage.getItem('mishin-best2')||0; }catch(e){ return 0; } })(),passedBest:false,lastBag:false,lastPulled:0,lastIdle:0,ending:0,hopT:[0,0,0,0],peckT:0,peckAll:false,mark:'',markT:0,mode:'play',t:0,time:R.startTime,score:0,bags:0,clean:0,tangles:0,wrongs:0,fronts:0,streak:0,bestStreak:0,combo:0,
     bagNo:0,liftT:0,dirEff:1,quick:0,feverT:0,fevers:0,goldenClean:0,rightClean:0,maxMult:1,singleOpen:0,speed:0,tension:0,over:0,held:false,pend:0,fx:[],grains:[],shake:0,msg:null,zoneTime:0,pullTime:0});
+  track(practice ? 'mishin_practice_start' : 'mishin_game_start');
   S.practice = practice; S.bannerMax = 0; drawMsg.said = new Set(); /* 読み上げは 1回の ゲームで 同じ 文 1回（84周目） */
   S.bag = practice ? makePracticeBag(0) : makeBag(0);
   ui.title.hidden = true; ui.result.hidden = true; ui.coinDone.hidden = true; $('loading').hidden = true; coinAuto = false;
@@ -394,6 +398,7 @@ function startGame(practice){
 }
 
 function endPractice(skipped){
+  track('mishin_coin_done', { skipped: skipped === true ? 1 : 0 });
   srSay(skipped === true ? '取り方の まとめ です' : 'れんしゅう できました。本物の 袋での 取り方の まとめ です');
   // 途中で やめた ときは「よく できました」の はんこを 出さない
   ui.coinDone.classList.toggle('skipped', skipped === true); $('coinSmall').textContent = skipped === true ? '取り方の まとめ' : 'れんしゅう できました';
@@ -432,7 +437,7 @@ let kbUser = false; addEventListener('keydown', e=>{ if(!e.ctrlKey && !e.metaKey
 function focusEnd(el){ el.focus({preventScroll:true}); if(kbUser) requestAnimationFrame(()=>el.scrollIntoView({block:'nearest'})); } /* 見出しを なるべく のこす */ // キーの 人は フォーカスが 見える 所まで
 function finish(){ if(S.ending) return; S.ending = 0.8; S.held = false; say('そこまで！','ok', 1.2); audio.hush(); audio.wood(1500, 0.26, 0.1); audio.later(()=>audio.wood(1500, 0.26, 0.1), 160); S.hopT = [0.4, 0.4, 0.56, 0.56]; /* 拍子木に スズメが ぴょんと おどろく（音なし） */ }
 function endGame(){
-  audio.hush();
+  audio.hush(); track('mishin_game_end', { bags: S.bags });
   S.mode='over'; S.held=false;
   ui.hud.hidden = true; ui.result.hidden = false; ui.result.scrollTop = 0; /* 前の 回の 下へ 送った 位置を のこさない */ setTimeout(()=>focusEnd($('againBtn')), 0);
   ui.rScore.textContent = S.score.toLocaleString();

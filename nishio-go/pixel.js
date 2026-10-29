@@ -1998,6 +1998,42 @@ function nedokoStep(hx, by, u, now, sleepy) {
   ctx.globalAlpha = 1;
   n.drawn++; dirty = true;
 }
+// お米つぶの ゆあみ（yuami.js）：吉良で 止まって じっと すると、お米の まわりに 湯が わいて 吉良温泉に つかる（湯けむりが のぼる）。海べなら 波と うきわで 吉良ワイキキビーチ。
+// つかった とき お米が ひと言。動くか ねむりだすと 消える。西尾市の 吉良の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
+const yuami = { cur: null, t0: 0, still0: 0, said: false, chk: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function yuamiStep(hx, by, u, now) {
+  const y = yuami, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_YUAMI || !still || gbOn || rp.x === null || roll.idle > 12) { y.cur = null; y.said = false; y.chk = 0; return; }
+  if (!y.cur) {
+    if (roll.idle < window.NISHIO_YUAMI.STILL || now < y.chk) return;
+    y.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? window.NISHIO_YUAMI.pick(c) : null;
+    if (!d) return;
+    y.cur = d; y.t0 = now; y.said = false;
+    if (G.track) G.track('kome_yuami', { id: d.id });
+  }
+  const age = now - y.t0, k = Math.min(1, age / window.NISHIO_YUAMI.SETTLE);
+  if (!y.said && k >= 1 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(y.cur.say, 2600, 'happy'); y.said = true; }
+  if (k >= 1) roll.happyT = Math.max(roll.happyT, 0.3);   // つかって いる あいだは にこにこ顔
+  const q = Math.max(1, Math.round(u * 0.8)), px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const t = calmMotion ? 0 : now / 1000;
+  ctx.globalAlpha = k;
+  if (y.cur.id === 'onsen') {   // 湯：岩の ふちに 白っぽい 湯。湯けむりが ゆらゆら のぼる
+    px(-17, 5, 34, 9, '#6b5a4a'); px(-16, 6, 32, 7, '#8fd3e0'); px(-14, 7, 6, 1, '#d8f4f8'); px(5, 9, 8, 1, '#d8f4f8');
+    for (let i = 0; i < 3; i++) {
+      const ph = (t * 0.5 + i / 3) % 1;
+      ctx.globalAlpha = k * (1 - ph) * 0.7;
+      px(-10 + i * 10 + Math.sin(t * 2 + i * 2) * 1.5, -13 - ph * 12, 4, 2.5, '#ffffff');
+    }
+  } else {   // ビーチ：波の しま・うきわ（赤と 白）
+    px(-18, 8, 36, 6, '#4aa8d8'); px(-18, 8, 36, 1, '#bfe8f6');
+    const w = Math.sin(t * 2) * 1.5;
+    px(-15 + w, 10, 6, 1, '#bfe8f6'); px(7 - w, 12, 6, 1, '#bfe8f6');
+    px(-17, 6, 4, 4, '#e8384a'); px(13, 6, 4, 4, '#e8384a'); px(-13, 7, 26, 3, '#fff7e6'); px(-5, 7, 4, 3, '#e8384a'); px(5, 7, 4, 3, '#e8384a');
+  }
+  ctx.globalAlpha = 1;
+  y.drawn++; dirty = true;
+}
 // お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
 // 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
 const GOCHISO_MS = 6500;
@@ -6927,6 +6963,7 @@ function frame(now) {
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
+    yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
     nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ

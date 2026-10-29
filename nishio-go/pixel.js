@@ -2083,6 +2083,38 @@ function kasaStep(hx, by, u, now) {
   drawNakama(Math.round(hx + sway), Math.round(by - 12.5 * u - 6 * u), q, k.cur.id, 0, true);
   k.drawn++; dirty = true;
 }
+// お米つぶの めぐり（meguri.js）：夜に なると、いる 町の 名物が お米の まわりを ゆっくり めぐる（お月さまの ように）。輪に なった とき・朝に なった とき お米が ひと言。
+// 町が かわれば 輪も かわる・西尾市の 外では 出さない。2秒に 1回 町を しらべる（見つけかたは kasaFind と 同じ）
+const meguri = { items: [], key: '', said: false, chk: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function meguriStep(hx, by, u, now) {
+  const m = meguri, night = window.NISHIO_MEGURI && nightOn && !worldMode && !driving && rp.x !== null && nightLevel() >= 1;
+  if (!night) {   // 朝に なった（か、遊びかたが かわった）：消える
+    if (m.said && window.NISHIO_MEGURI && nightLevel() < 1 && !worldMode && !driving && !mapCovered()) riceSay(window.NISHIO_MEGURI.END, 1800, 'happy');
+    m.items = []; m.key = ''; m.said = false; m.chk = 0;
+    return;
+  }
+  if (now >= m.chk) {   // 2秒に 1回：町に 合う 名物を たしかめる
+    m.chk = now + 2000;
+    const c = kasaFind(), items = c ? window.NISHIO_MEGURI.ring(Object.assign(c, { month: new Date().getMonth() + 1 })) : [], key = items.map(x => x.id).join();
+    if (key !== m.key) {
+      m.items = items; m.key = key; m.t0 = now;
+      if (items.length) {
+        if (G.track) G.track('kome_meguri', { ids: key });
+        if (!m.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(window.NISHIO_MEGURI.say(items), 2600, 'happy'); m.said = true; }
+      }
+    }
+  }
+  const n = m.items.length;
+  if (!n) return;
+  const q = Math.max(1, Math.round(u * 0.7)), spin = calmMotion ? 0 : now / 3200, fade = Math.min(1, (now - m.t0) / 800);
+  const pos = m.items.map((it, i) => { const a = spin + i * Math.PI * 2 / n; return { it, x: Math.cos(a) * 19 * u, y: Math.sin(a) * 6 * u, z: Math.sin(a) }; }).sort((a, b) => a.z - b.z);   // 手前（z が 大きい）を あとから 描く
+  for (const p of pos) {
+    ctx.globalAlpha = fade * (p.z < 0 ? 0.55 : 1);   // 奥は うすく
+    drawNakama(Math.round(hx + p.x), Math.round(by + 2 * u + p.y), p.z < 0 ? Math.max(1, q - 1) : q, p.it.id, 0);
+  }
+  ctx.globalAlpha = 1;
+  m.drawn++; dirty = true;
+}
 function nakamaStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -6825,6 +6857,7 @@ function frame(now) {
       gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
       otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
       kasaStep(hx, by, u, now);   // 雨の 日は 名物の かさを さす（kasa.js）
+      meguriStep(hx, by, u, now);   // 夜は 名物が お米の まわりを めぐる（meguri.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

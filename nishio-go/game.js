@@ -146,7 +146,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
+    guide: null, guides: 0, guideDone: [], komeSeen: [], idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 歩いて遊ぶは なくした（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：前に あるいて移動で 遊んでいた 人も 操作して（ころころ）に。
@@ -2052,6 +2052,16 @@ function ktAskGuide(lead, mood) {
       toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 });
     } });
 }
+// お米つぶの 西尾ばなし（komebanashi.js）：着いた 名所の 地区と いまの 月に 合う 話を 1つ。出る ページが 最初に 表示された ときに「話した」と おぼえる
+function komeBanashi(g) {
+  const KB = window.NISHIO_KOMEBANASHI, sp = spots.find(x => x.id === g.id);
+  const r = KB && ktOn() && KB.pick(sp ? sp.area : null, new Date().getMonth() + 1, S.komeSeen);
+  if (!r) return [];
+  const pages = r.item.pages.map(p => typeof p === 'string' ? { t: p } : p);
+  const first = pages[0];
+  pages[0] = () => { S.komeSeen = r.seen; save(); track('kome_banashi', { id: r.item.id }); return first; };
+  return pages;
+}
 modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作して を 切りかえたら、前の 遊びかたの 話は やめる
 const guideTarget = () => {
   const g = S.guide;
@@ -2109,7 +2119,7 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }], 'smile')) { rivalSay(g, next); return; }
+  if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g)], 'smile')) { rivalSay(g, next); return; }
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
   rivalSay(g, next);

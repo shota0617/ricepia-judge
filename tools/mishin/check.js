@@ -442,7 +442,14 @@ const CHECKS = {
     const fa = await p.evaluate(async () => { const out = {}; KB.start(); let S = KB.S, L = KB.layout(); Object.assign(S.bag, { face:'back', slide:0, phase:'look' }); S.msg = null;
       ev('pointerdown', 41, L.x0, L.seamY); ev('pointerdown', 42, L.x0 + 160, L.seamY); await new Promise(r => setTimeout(r, 100)); ev('pointermove', 42, L.x0 + 20, L.seamY); await new Promise(r => setTimeout(r, 700)); out.pinched = /はなれて/.test((S.msg && S.msg.text) || ''); ev('pointerup', 41, L.x0, L.seamY); ev('pointerup', 42, L.x0 + 20, L.seamY);
       KB.startPractice(); S = KB.S; L = KB.layout(); S.bag.slide = 0; S.msg = null; ev('pointerdown', 43, L.x0, L.seamY); ev('pointerdown', 44, L.x0, L.seamY + 200); await new Promise(r => setTimeout(r, 700)); out.practice = /はなれて/.test((S.msg && S.msg.text) || ''); ev('pointerup', 43, L.x0, L.seamY); ev('pointerup', 44, L.x0, L.seamY + 200); return out; });
-    ok(!fa.pinched && !fa.practice, '「指が はなれています」は つまめたら 出さない・れんしゅうでは 出さない', fa);
+    const fa2 = await p.evaluate(async () => { KB.start(); const S = KB.S, L = KB.layout(); Object.assign(S.bag, { face:'back', slide:0, phase:'look' }); S.msg = null;
+      ev('pointerdown', 45, L.x0, L.seamY); ev('pointerdown', 46, L.x0 + 160, L.seamY); await new Promise(r => setTimeout(r, 100)); ev('pointermove', 46, L.x0 + 20, L.seamY); await new Promise(r => setTimeout(r, 100)); ev('pointermove', 46, L.x0 + 300, L.seamY); await new Promise(r => setTimeout(r, 600)); const m = (S.msg && S.msg.text) || ''; ev('pointerup', 45, L.x0, L.seamY); ev('pointerup', 46, L.x0 + 300, L.seamY); return m; });
+    ok(!fa.pinched && !fa.practice && !/はなれて/.test(fa2), '「指が はなれています」は つまめたら 出さない（はなして から ひらいても）・れんしゅうでは 出さない（118・123周目）', { fa, fa2 });
+    // 123周目：320×568 で もつれた とき 吹き出しの 字を つぶさない
+    await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);
+    const tg = await p.evaluate(() => new Promise(res => { KB.start(); const S = KB.S; S.msg = null; Object.assign(S.bag, { face:'back', slide:0, phase:'pull' }); S.bag.tangle = { x: KB.layout().x0 + 60, taps:0, tug:0 }; requestAnimationFrame(() => requestAnimationFrame(() => res({ fs: S.msgFs, fit: S.msgFit })) ); }));
+    ok(tg.fs >= 13 && tg.fit, '320×568 で もつれた とき 吹き出しの 字は 13px 以上で 横に つぶさない', tg);
+    await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 122周目：「もう一回」の 中に 出した 行は 結果の 吹き出しで 見た目に くりかえさない（読み上げには のこす）
     const dup = await p.evaluate(async () => { localStorage.setItem('mishin-best2', '5000'); KB.start(); const S = KB.S; S.score = 4000; S.bags = 3; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); await new Promise(r => setTimeout(r, 100)); const b = document.getElementById('best'), c = b.cloneNode(true); c.querySelectorAll('.sr').forEach(e => e.remove()); return { vis: c.textContent, all: b.textContent }; });
     ok(!/じこベストまで/.test(dup.vis) && /じこベストまで/.test(dup.all), '「もう一回」の 中に 出した 行は 結果の 吹き出しで くりかえさない（読み上げには のこす）', dup);

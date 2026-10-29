@@ -248,7 +248,7 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
       <div class="coinHead">
       <div class="talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say"><h1 class="one" id="coinH" tabindex="-1"><small id="coinSmall">れんしゅう できました</small>本物の 袋でも<br/>おなじです<span class="hanko" aria-hidden="true"><span><i>よく</i><i>できました</i></span></span></h1></div></div>
       <div class="done3" aria-hidden="true"><span data-d="kome"></span><span data-d="kome"></span><span data-d="komeBlink"></span><small>3袋 できました</small></div>
-      <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ほどき始め。右：反対の端＝縫い始め（ほどき始め 引くと からまる）"></canvas>
+      <figure class="ends"><canvas id="endsPic" role="img" width="640" height="150" aria-label="袋の口の 両はし。左：赤い糸が 白い輪に ささっている＝ほどき始め。右：反対の端＝縫い始め（こちらから 引くと からまる）"></canvas>
         <figcaption><span>反対の端（縫い始め）：からまる（×）</span></figcaption></figure>
       </div>
       <div class="talk line-talk"><span class="who" data-d="kome" aria-hidden="true"></span><div class="say">らいすぴあの LINE なら、<strong>価格表が すぐ 見られて</strong>、売り出しの お知らせも 届きます。登録は 10秒です。<a class="go lineAdd" href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=mishin-coin" target="_blank" rel="noopener">LINE で 友だち追加 <small>（LINE が ひらきます）</small></a></div></div>
@@ -501,7 +501,7 @@ function tipOf(zone){
   if(z0 && !S.fronts && !S.wrongs && !S.tangles) return 'まずは <b>二本指</b>で、赤い糸が 白い輪に ささっている 端を つまむ ところから どうぞ。';
   if(S.fronts>=n) return '白い糸が<b>まっすぐ</b>だけなら表です。袋をタップして まわしましょう（反対の面へ）。';
   if(S.wrongs>=n) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始めです。反対の端（縫い始め）から 引くと からまります。';
-  if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。ひっかかったら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
+  if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。もつれたら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
   { const done = goalsDone(), near = todayGoals().find(g => { if(done.has(g.id) || g.ok() || !g.prog) return false; const m = /^(\d+)\/(\d+)$/.exec(g.prog()); return m && +m[2] - +m[1] === 1; }); /* まだの 目標が あと 1つ なら それを（105周目） */
     if(near && S.bags>0) return `今回 あと 1つで きょうの 目標「<b>${near.text}</b>」でした。`; /* 数は 1回ごと（107周目） */ }
   if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
@@ -1540,7 +1540,7 @@ function drawMeterBody(L, b, mw, mx, my){
 // こめつぶの ことば（74周目：画面の 字を やめて、こめつぶとの 会話に）。できごとの 声（S.msg）が なければ、いまの 場面の ひとこと
 function talkLine(b){
   if(S.practice || S.mode!=='play' || !b || b.done || S.ending) return '';
-  if(b.tangle) return '黄色い 輪の 白糸を 二本指で 下へ 少し 引いて ください（タップでも ほぐせます）'; /* れんしゅうと 同じ ことば（122周目） */
+  if(b.tangle) return W < 400 ? '黄色い 輪の 白糸を 二本指で 下へ' : '黄色い 輪の 白糸を 二本指で 下へ 少し 引いて ください（タップでも ほぐせます）'; /* 小さい 画面は みじかく（字を つぶさない。123周目） */ /* れんしゅうと 同じ ことば（122周目） */
   if(b.phase==='look'){ if(b.slide>0.05 || b.flipT>0) return ''; if(b.face==='front') return '表ですね。袋を タップして まわしましょう'; if(b.golden) return '新米シールの 袋です。点が 2倍です'; return b.k<3 ? '赤が ささっている 端を 二本指で どうぞ' : 'どちらの 端から ほどきますか？'; }
   if(b.phase==='free') return '赤い 糸の 端を 輪から はずしましょう';
   if(S.tension>1) return '強すぎます。少し ゆるめて ください';
@@ -1587,7 +1587,7 @@ function drawMsg(L){
   const under = W < 260 && lines.length > 1 && bh > bot0 - top0; /* せまい 画面で 引く 間は メーターの 上に 入らない → 縫い目の 下へ（字を つぶさない。87周目） */
   if(!under && lines.length > 1 && bh > bot0 - top0){ lines = [m.text]; fs = Math.max(12, Math.floor(fs*room/ctx.measureText(m.text).width)); ctx.font = `700 ${fs}px "Zen Maru Gothic",sans-serif`; tw = Math.min(room, ctx.measureText(m.text).width); lh = fs*1.25; bw = tw + 30; bh = lh + 14; } /* 2行が 入らなければ 1行に */
   const my = under ? L.seamY + 30 + bh/2 : Math.max(top0 + bh/2, Math.min(Math.max(L.seamY - 128, top0 + 22), bot0 - bh/2));
-  S.msgY = my; S.msgTop = my - bh/2; S.msgFace = face; // check.js 用
+  S.msgY = my; S.msgTop = my - bh/2; S.msgFace = face; S.msgFs = fs; S.msgFit = lines.every(l => ctx.measureText(l).width <= tw + 0.5); // check.js 用（字の 大きさ・横に つぶして いないか）
   ctx.translate(W/2, my);
   s = Math.min(s, (W-10)/(bw+face)); ctx.scale(s, s); ctx.translate(face/2, 0); // ふくらんでも はみ出さない
   let seed = 0; for(const c of m.text) seed = (seed*31 + c.charCodeAt(0)) % 9973; // ゆれは 字で きまる（毎コマ ふるえない）

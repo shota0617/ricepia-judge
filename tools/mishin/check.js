@@ -361,10 +361,15 @@ const CHECKS = {
     const ln = await p.evaluate(() => [...document.querySelectorAll('a.lineAdd')].map(a => ({ from: new URL(a.href).searchParams.get('from'), host: new URL(a.href).hostname, rel: a.rel, inCoin: !!a.closest('#coinDone'), inRes: !!a.closest('#result') })).concat([{ analyticsOn: window.nsgAnalytics ? window.nsgAnalytics.on : 'none' }]));
     ok(ln.some(l => l.inCoin && l.from==='mishin-coin') && ln.some(l => l.inRes && l.from==='mishin-result') && ln.filter(l => l.host).every(l => l.host==='ricepia.jp' && /noopener/.test(l.rel)) && ln[ln.length-1].analyticsOn===false, 'まとめと 結果に LINE の 友だち追加（from つき）・手元では 解析は 動かない', ln);
     // 88周目（リストづくり 2）：まとめの LINE は 1画面目（手順の 前）、結果は「もう一回」の すぐ 下
-    for (const [w, h] of [[390,844],[360,640]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+    for (const [w, h] of [[390,844],[360,640],[667,375],[844,390]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const lc = await p.evaluate(() => { document.getElementById('result').hidden = true; const c = document.getElementById('coinDone'); c.hidden = false; c.scrollTop = 0; const r = c.querySelector('a.lineAdd').getBoundingClientRect(), g = document.getElementById('againBtn');
         const nx = g.nextElementSibling; c.hidden = true; return { b: r.bottom, H: innerHeight, next: nx && nx.classList.contains('line-talk') }; });
       ok(lc.b <= lc.H && lc.next, `まとめの LINE の ボタンが 1画面目（${w}×${h}）・結果は「もう一回」の すぐ 下`, lc); }
+    // 90周目：結果の LINE も 1画面目（たて は ボタンを 文の 前、横向きは「もう一回」の すぐ 下）
+    for (const [w, h] of [[390,844],[360,640],[667,375],[844,390]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      const rl = await p.evaluate(() => { KB.start(); const S = KB.S; S.score = 3200; S.bags = 4; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.querySelector('#result a.lineAdd').getBoundingClientRect(); return { b: r.bottom, H: innerHeight }; });
+      ok(rl.b <= rl.H, `結果の LINE の ボタンが 1画面目（${w}×${h}）`, rl); }
+    await p.evaluate(() => { document.getElementById('result').hidden = true; });
     await p.setViewportSize({ width:390, height:844 }); await p.waitForTimeout(100);
     // 76周目（こめつぶの 会話の 点検）：れんしゅうの 1袋目の 裏は タップで まわらない
     await p.setViewportSize({ width:390, height:844 });
@@ -374,7 +379,7 @@ const CHECKS = {
       ev('pointerdown',21,L.x0+30,L.seamY+30); await new Promise(r => setTimeout(r, 700)); ev('pointerup',21,L.x0+30,L.seamY+30); for (let i=0;i<5;i++) KB.step(1/60); return { flip:S.bag.flipT }; });
     ok(lp.flip > 0, 'れんしゅうの 表は 長押しでも まわる', lp);
     // 78周目：低い 画面の 題でも ボタンが 見える・2行の 吹き出しが 縫い目や メーターに かからない
-    for (const [w, h] of [[667,375],[844,390],[320,568]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+    for (const [w, h] of [[667,375],[844,390],[320,568],[568,320]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); t.hidden = true; document.body.classList.remove('menu'); return { b:r.bottom, H:innerHeight }; }); /* あとの 確かめに のこさない */
       ok(tb.b <= tb.H, `低い 画面（${w}×${h}）の 題で「れんしゅう」の ボタンが 見える`, tb); }
     await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);

@@ -106,6 +106,7 @@ button.go.sub{background:transparent;color:var(--ink);box-shadow:none;border:2px
 .talk>.say::before{content:'';position:absolute;left:-10px;bottom:9px;border:7px solid transparent;border-right:10px solid #7a5a30;border-left:0}
 .talk>.say::after{content:'';position:absolute;left:-6px;bottom:10px;border:6px solid transparent;border-right:8px solid #fbf3e0;border-left:0}
 .talk>.say b,.talk>.say strong{color:#b3261e}
+#result .line-talk>.say{display:flex;flex-direction:column} #result .line-talk a.lineAdd{order:-1;margin:0 0 8px} /* 結果は ボタンを 先に（「もう一回」の 下で 1画面目に。90周目） */
 .talk.cont>.who{visibility:hidden} .talk.cont>.say::before,.talk.cont>.say::after{display:none} /* 続きの ことば：1つの 画面に こめつぶを ふやしすぎない（89周目） */
 .talk>.say .fb i{color:#7a5a30}
 .talk>.say h1{font-family:var(--display);font-weight:400;font-size:clamp(24px,7.4vw,36px);word-break:keep-all;line-height:1.15;margin:0;color:#3e2a1a;text-align:left}
@@ -152,7 +153,9 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
   #result .panel>.rankBox{grid-column:1;grid-row:2/span 6}
   #result .panel>:not(.talk:first-child):not(.rankBox){grid-column:2}
   #result .res{grid-template-columns:repeat(3,1fr);gap:6px} #result .res>div{padding:5px 2px;gap:0} #result .res span{white-space:nowrap;font-size:12px} #result .res strong{font-size:20px} /* 低い 画面では 点を 1行、のこり 3つを 1行に（ボタンを 画面の 中に） */
-  #result .panel>#bestTalk{order:1} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:2} #result .panel>.line-talk{order:1} /* 低い 画面では「もう一回」を 点の すぐ 下に */
+  #result .panel>#bestTalk{order:2} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:3} #result .panel>.line-talk{order:1} /* 低い 画面では「もう一回」を 点の すぐ 下に、その 下に LINE（90周目） */
+  #coinDone .panel{width:min(780px,100%);display:grid;grid-template-columns:1fr 1fr;column-gap:24px;row-gap:12px;align-items:start}
+  #coinDone .panel>.talk:first-child{grid-column:1;grid-row:1} #coinDone .panel>.done3{display:none} #coinDone .panel>.talk:first-child h1{font-size:24px} #coinDone .panel>.ends{grid-column:1;grid-row:2} #coinDone .panel>:not(.talk:first-child):not(.ends){grid-column:2} /* 低い 横向きの まとめ：左に 見出しと 袋の 両はし、右に LINE と 手順（LINE を 1画面目に。90周目） */
   #result .res>div:first-child{grid-column:1/-1;flex-direction:row;justify-content:center;align-items:baseline;gap:12px}
 }
 .season{margin:0 auto -6px;display:inline-flex;align-items:center;gap:6px;align-self:center;background:#f1dfba;color:#3e2a1a;font:700 14px var(--body);padding:4px 12px 4px 6px;border:2px dashed rgba(122,90,48,.6);border-radius:12px 9px 13px 10px;transform:rotate(-2deg)}
@@ -172,8 +175,9 @@ details.src{font-size:12px;color:var(--ink-dim);text-align:left} details.src sum
 @media (max-width:440px){.hanko{top:auto;bottom:-24px;right:2px;width:72px;height:72px;font-size:12px}} /* スマホでは 見出しの 2行目（短い）の 横へ。字に かけない（64周目） */
 @media (max-width:340px){.hanko{width:60px;height:60px;font-size:10px;right:-8px}}
 @media (max-height:720px) and (max-width:500px){#title .panel>.talk{order:1} #title .panel>.goals,#title .panel>details{order:2}} /* 低い 画面の 題：ボタンを 先に、こめつぶの あいさつは その 下（78周目） */
+@media (max-height:360px){#title .season{display:none}} /* 568×320 で「ゲームで遊ぶ」が 切れない（90周目） */
 @media (max-height:500px){#title .panel>.talk{order:1} #title .panel>.goals,#title .panel>details{order:2}}
-@media (max-height:720px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel h1{font-size:30px} #result .res>div{padding:6px 10px} #result .panel>#bestTalk{order:1} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:2} #result .panel>.line-talk{order:1}} /* 低い 縦の 画面で「もう一回」を 中に */
+@media (max-height:720px) and (max-width:500px){#result .growCap{display:none} #result .panel{gap:10px} #result .panel h1{font-size:30px} #result .res>div{padding:6px 10px} #result .panel>#bestTalk{order:2} #result .panel>#rGoals,#result .panel>#tip,#result .panel>#toPractice{order:2} #result .panel>.line-talk{order:1}} /* 低い 縦の 画面で「もう一回」を 中に */
 .ends{margin:0;display:flex;flex-direction:column;gap:4px}
 .ends canvas{width:100%;height:auto;border-radius:10px;display:block}
 .ends figcaption{display:flex;justify-content:space-between;gap:8px;font-size:16px;line-height:1.4;color:var(--ink);text-align:left}
@@ -762,7 +766,8 @@ let W=360,H=640,DPR=1;
 function layout(){
   const bagW = Math.min(W*(S.practice ? 0.76 : 0.86), 420);
   let seamY = Math.round(Math.max(210, Math.min(H*0.36, H-300)));
-  if(S.practice && S.bannerMax) seamY = Math.round(Math.min(H - 110, (S.soundTop || H) - 30, Math.max(seamY, S.bannerMax + 36))); /* 字 200% などで 帯が 高い ときは 縫い目を 下げる（84周目。一度 下げたら その れんしゅうの 間は もどさない） */
+  if(S.practice && S.bannerMax){ const lo = S.bannerMax + 36, hi = (S.soundTop || H) - 100; /* 縫い目の 下 100px は 指の 目安・もつれの 輪（568×320 で 下の ボタンに かからない。90周目） */
+    seamY = lo <= hi ? Math.round(Math.max(lo, Math.min(hi, seamY))) : Math.round(Math.min(H - 110, (S.soundTop || H) - 30, lo)); } /* 字 200% などで 帯が 高い ときは 縫い目を 下げる（84周目。一度 下げたら その れんしゅうの 間は もどさない） */
   const x0 = W/2 - bagW/2 + 14, x1 = W/2 + bagW/2 - 14; // 縫い目は 口の 縁 ちかくまで
   const k = bagW / BAG.mouthW; // Blender の 絵の 1px が 画面で 何 px か（絵は 1mm＝1.5px なので、画面の 1mm＝k×1.5px）
   return { bagW, seamY, x0, x1, bagH: H - seamY, k, mouthTop: seamY - (BAG.seamY - BAG.topY)*k }; // 袋は 画面の 下へ つづく
@@ -851,7 +856,7 @@ function drawPracticeAids(L, b){
   if(!b || b.done) return;
   // 表の とき：袋の 横に 手がきの「くるっ」（袋を まわす）
   if(b.face==='front' && b.phase==='look' && b.flipT<=0 && b.slide<=0.05){
-    const ax = Math.max(26, (W - L.bagW)/2 - 4), ay = L.seamY + 150, r = 18;
+    const ax = Math.max(26, (W - L.bagW)/2 - 4), ay = Math.max(L.seamY + 40, Math.min(L.seamY + 150, (S.soundTop || H) - 30)), r = 18; /* 横向きで 下の ボタンに かくれない（90周目） */
     ctx.lineCap='round'; ctx.lineJoin='round';
     for(const [col, lw] of [['#3e2a1a', 8], ['#f1dfba', 4]]){ ctx.strokeStyle=col; ctx.lineWidth=lw;
       ctx.beginPath(); ctx.arc(ax, ay, r, Math.PI*0.9, Math.PI*2.35); ctx.stroke();

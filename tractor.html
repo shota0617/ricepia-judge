@@ -99,6 +99,13 @@
   .vs { margin: 4px 0 8px; font-weight: bold; font-size: 17px; }
   .go.line { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; margin: 8px auto 2px; max-width: 360px; min-height: 48px; background: #06c755; color: #fff; text-decoration: none; }
   .go.line small { font-size: 12px; font-weight: normal; opacity: .9; }
+  /* おわりの画面の キャラクター（のんびりの ときだけ）：いちばん うれしい ときに LINE に さそう */
+  .doneTalk { display: none; }
+  body.calm .doneTalk { display: flex; gap: 10px; align-items: center; margin: 6px 0 12px; text-align: left; }
+  #doneCv { width: 84px; height: 84px; border-radius: 50%; flex: none; box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+  .doneBubble { flex: 1; padding: 8px 12px; border: 2px solid #d8d0bc; border-radius: 14px; background: #fff; font-size: 14px; font-weight: 800; line-height: 1.45; color: #3a2f22; }
+  .doneBubble .go.line { margin: 8px 0 0; max-width: none; min-height: 44px; font-size: 15px; text-align: center; white-space: nowrap; }
+  body.calm #doneText, body.calm #bLineAdd, body.calm #doneScore > .small, body.calm #doneScore > br { display: none; }
   .challenge { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: #fff3c4; color: #4a3600; font-weight: bold; line-height: 1.5; }
   .easy { display: flex; gap: 8px; align-items: flex-start; margin: 4px 0 10px; padding: 8px 10px; border: 2px solid #d8d0bc; border-radius: 12px; background: #fff; font-size: 13px; line-height: 1.6; text-align: left; cursor: pointer; }
   .easy .e { font-style: normal; }
@@ -413,13 +420,14 @@
       畦では この田んぼの持ち主（近所の米農家さん）が運転を見ていて、旋回で上げない・畦にぶつける・速すぎ・蛇行・すき間・はみ出しなどがあると、ふきだしで ダメ出しする（昼だけ）。<br>
       ゲームでは：田んぼの東のはし（取水口のまわり）にぬかるみ。速い変速・深い耕深で耕しながら入るとエンストするので、上げてかけなおす。うしろを見ながら走るとハンドルが右へとられていく。蛇行・はみ出し・代かきのかき過ぎ・畦ぎわ・タイヤ跡・畦にぶつけたときにも、その場面で言葉が出る。耕しなおすとタイヤ跡が消え、代かきでは かいた泥の上にタイヤ跡が残る。終わりの画面に、聞いた声の数
     </details>
-    <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>トラクターは、60 馬力クラスのキャビン付きトラクターを参考にした架空の車体です。農機メーカーの公式のゲームではありません。<br><b style="color:#7a4a12">🚸 本物のトラクターは とても危ないので、子どもは乗ったり、動いているトラクターや作業機に近づいたりしないでください。</b><br>遊んだ記録や操作は、当店にも ほかの会社にも送りません（覚えるのは この端末の「かんたんアシスト」の入切だけ）。<br>つくったのは 西尾のお米屋さん らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=credit" target="_blank" rel="noopener">ricepia.jp</a><br>農作業の説明に まちがいを見つけたら、<a href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=tractor-report" target="_blank" rel="noopener">当店の LINE</a> で教えてください。</p>
+    <p class="small">畦（あぜ）は越えられません。田んぼの右奥の坂から農道に出られます。<br>トラクターは、60 馬力クラスのキャビン付きトラクターを参考にした架空の車体です。農機メーカーの公式のゲームではありません。<br><b style="color:#7a4a12">🚸 本物のトラクターは とても危ないので、子どもは乗ったり、動いているトラクターや作業機に近づいたりしないでください。</b><br>遊んだ記録や操作は、当店にも ほかの会社にも送りません（この端末に 覚えるのは「かんたんアシスト」と「くわしい説明」の入切、耕し終えた回数だけ。LINE の ボタンを 押したときだけ、このゲームから来たことが 当店に わかります）。<br>つくったのは 西尾のお米屋さん らいすぴあ（近藤米穀店）・<a href="https://ricepia.jp/?utm_source=tractor&amp;utm_medium=game&amp;utm_campaign=credit" target="_blank" rel="noopener">ricepia.jp</a><br>農作業の説明に まちがいを見つけたら、<a href="https://ricepia.jp/go/lin.ee/uPhkiiv?from=tractor-report" target="_blank" rel="noopener">当店の LINE</a> で教えてください。</p>
   </div>
 </div>
 
 <div class="sheet hidden" id="done">
   <div class="card">
     <h1 id="doneTitle">🎉 耕し終わりました！</h1>
+    <div class="doneTalk" id="doneTalk"><canvas id="doneCv" width="152" height="152" aria-hidden="true"></canvas><div class="doneBubble"><span id="doneSay"></span><a class="go line" id="bLineTalk" href="https://ricepia.jp/go/lin.ee/AULbClm?from=tractor-done-talk" target="_blank" rel="noopener">📩 LINE 友だち追加<small>価格表・売り出し情報</small></a></div></div>
     <p id="doneText"></p>
     <img id="artImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼアート">
     <div class="artBtns hidden" id="artBtns"><button class="go sub" id="bOther">別のお題</button></div>
@@ -430,7 +438,7 @@
       <img id="cardImg" class="artImg hidden" alt="ドローンで真上から撮った田んぼと点数">
       <div class="artBtns"><button class="go sub hidden" id="bShare">📱 シェア</button><a class="go sub" id="bX" target="_blank" rel="noopener">𝕏 ポスト</a><a class="go sub" id="bLine" target="_blank" rel="noopener">LINE で送る</a><a class="go sub" id="bSave" download="tractor.jpg">💾 画像を保存</a></div>
       <p class="small">投稿のリンクから来た人は、同じ季節・お題で あなたの点数に挑戦できます</p>
-      <a class="go line" id="bLineAdd" href="https://line.me/R/ti/p/@wxh6702b" target="_blank" rel="noopener">📩 らいすぴあの LINE を友だち追加<small>価格表・売り出し情報</small></a>
+      <a class="go line" id="bLineAdd" href="https://ricepia.jp/go/lin.ee/AULbClm?from=tractor-done" target="_blank" rel="noopener">📩 らいすぴあの LINE を友だち追加<small>価格表・売り出し情報</small></a>
     </div>
     <button class="go hidden" id="bNext"></button>
     <button class="go sub" id="bWash">🚿 洗車して しまう</button>
@@ -7896,6 +7904,18 @@ const LOOP = (() => {
   }
   return { result, get friend() { return friend; } };
 })();
+// ---- リストマーケティング：いちばん うれしい とき（耕し終わり）に、運転する キャラクターが らいすぴあの LINE に さそう。
+// 運転中は さそわない（のんびりの じゃまを しない）。耕し終えた 回数を この 端末に 覚え、2 回目からは「また きてくれて ありがとう」。
+// LINE の リンクは ricepia.jp の 転送（from= で このゲームの どこから 来たか だけ わかる。ricepia.jp の ほかの LINE ボタンと 同じ しくみ）
+const DONE_CV = $('doneCv').getContext('2d');
+let doneTalked = false;
+function doneTalk() {
+  if (doneTalked) return;
+  doneTalked = true;
+  let n = 1;
+  try { n = (+localStorage.getItem('tractorPlays') || 0) + 1; localStorage.setItem('tractorPlays', String(n)); } catch (e) {}
+  $('doneSay').textContent = n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！ らいすぴあの LINE なら お米の おしらせも とどくよ` : 'おつかれさま！ たのしかったね。らいすぴあの LINE で お米の おしらせも うけとれるよ';
+}
 function finish() {
   S.done = true;
   if (ART.on) return finishArt();
@@ -7935,7 +7955,7 @@ function finish() {
   $('doneScore').appendChild(cv);
   const label = { haru: '春の田起こし', aki: '秋起こし', shirokaki: '代かき' }[season];
   LOOP.result(total, ART.photo(null, `🚜 ${label} ${total} 点（${fmtTime(S.elapsed)}）`), `トラクターで${label}をしたよ。${total} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`);
-  $('done').classList.remove('hidden');
+  $('done').classList.remove('hidden'); doneTalk();
 }
 
 // 終わりの画面：きょう聞いた農家の声（季節やお題で出る声はちがう）
@@ -7965,7 +7985,7 @@ function finishArt() {
     $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
   }
   LOOP.result(f, null, `トラクターで田んぼアート「${ART.name}」を描いたよ。${f} 点${EASY.used ? '（🔰 アシストあり）' : ''}。きみは何点とれる？`, url);
-  $('done').classList.remove('hidden');
+  $('done').classList.remove('hidden'); doneTalk();
 }
 
 // ---- 案内（コーチ）：いま何をすればよいかを、画面の下に 1 行で出す ----
@@ -8263,7 +8283,7 @@ function frame(now) {
   LIFE.update(dt);
   WIND_T.value += dt;
   CLOUD_T.value += dt;
-  BADGE.draw(dt); SAY.update(dt);
+  BADGE.draw(dt); SAY.update(dt); if (S.done) DONE_CV.drawImage($('badgeCv'), 0, 0);
   if ((meterT -= dt) <= 0) { drawMeter(); meterT = 0.1; }
   if ((monT -= dt) <= 0) { drawMonitor(pct); monT = 0.25; }
   if ((hudT -= dt) <= 0) {

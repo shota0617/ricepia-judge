@@ -1142,6 +1142,31 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.season && r.rolled && r.stopped && r.apart && r.free && r.gone && r.pushed && (!r.tree || (r.spawn && r.spawnGap >= 0.6)) && !r.toast };
   })();
+  // 出かたの 調整（朝の 改善 11）：すずめ・ねこ・虫・カエル・作物・どんぐりは 画面に 2種類まで。すずめと 虫が いる 間は、森の そばを 転がっても どんぐりは 落ちない。いなく なれば 落ちる
+  R.checks.ambCap = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
+    const r = await page.evaluate(async () => {
+      const P = nishioPixel, D = P.donguri, r0 = { x: P.roll.x, y: P.roll.y }, wait = ms => new Promise(res => setTimeout(res, ms));
+      const shut = () => { document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click(); };
+      let tree = null;
+      for (let dy = -14; dy <= 14 && !tree; dy++) for (let dx = -14; dx <= 14 && !tree; dx++) {
+        const x = Math.floor(r0.x) + dx, y = Math.floor(r0.y) + dy, c = P.codeAt(x, y);
+        if (c !== P.C.W && c !== P.C.P && !P.blockedAt(x + 0.5, y + 0.5) && !D.blocked(x + 0.5, y + 0.5) && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([u, v]) => [P.C.W, P.C.P].includes(P.codeAt(x + u, y + v)))) tree = { x, y };
+      }
+      if (!tree) return { skipped: 'no-tree', max: P.AMB_MAX };
+      const roll = async () => { let got = false; for (let i = 0; i < 12 && !got; i++) { shut(); P.rollPut(tree.x + 0.5, tree.y + 0.5, i % 2 ? 2.5 : -2.5, 0); await wait(80); got = !!D.d; } return got; };
+      P.nakama.clear(); P.kaeru.clear(); P.neko.clear(); D.clear();
+      P.suzume.put(tree.x + 7, tree.y + 7); P.mushi.put(tree.x - 7, tree.y + 7, 'tonbo');   // 2種類（お米から はなして 置く）
+      const two = P.ambN(); D.ready();
+      const blocked = !(await roll());
+      P.suzume.clear(); P.mushi.clear(); D.clear(); D.ready();
+      const freed = await roll();
+      P.rollPut(r0.x, r0.y, 0, 0); D.clear();
+      return { max: P.AMB_MAX, two, blocked, freed, sentaku: P.sentaku.n };
+    });
+    await page.evaluate(() => nishioPixel.setRoll(false));
+    return { ...r, ok: !!r.skipped || (r.max === 2 && r.two === 2 && r.blocked && r.freed && r.sentaku <= 3) };
+  })();
   // 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29）：10月は なす。お米の うしろへ ころころ ついて きて、しばらく すると ぴょんと はねて 消える。文字は 出さない
   R.checks.nakama = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -3722,6 +3747,7 @@ async function walkTo(page, id) {
   need(c.morning && c.morning.ok, `朝の ひかり：5〜8時の 色の 強さが ちがう・昼にも かける（${JSON.stringify(c.morning)}）`);
   need(c.sentaku && c.sentaku.ok, `物干しの せんたくもの：昼に 出ない・雨や 雪や 夜に 出る・絵が 描けない（${JSON.stringify(c.sentaku)}）`);
   need(c.donguri && c.donguri.ok, `どんぐりも ころころ：10月に 出ない・転がらない・止まらない・お米に かさなる・消えない・森の となりで 落ちない・文字を 出す（${JSON.stringify(c.donguri)}）`);
+  need(c.ambCap && c.ambCap.ok, `出かたの 調整：生きものが 3種類 出る・2種類 いても どんぐりが 落ちる・いなく なっても 落ちない（${JSON.stringify(c.ambCap)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);

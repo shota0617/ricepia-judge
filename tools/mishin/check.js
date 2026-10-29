@@ -225,11 +225,11 @@ const CHECKS = {
     const p = await page(b, 844, 390, '');
     await p.evaluate(() => { KB.manual = true; KB.start(); for (let i=0;i<5;i++) KB.step(1/60); });
     await p.waitForTimeout(50);
-    await p.evaluate(() => { const S = KB.S; S.msg = { text:'もつれた… 白糸を 少し 引こう', kind:'ng', t:0.5, life:2 }; S.msgY = undefined; });
+    await p.evaluate(() => { const S = KB.S; S.msg = { text:'表は 白い 糸だけです。袋を まわしましょう', kind:'ng', t:0.5, life:2 }; S.msgY = undefined; });
     await p.waitForTimeout(100); // 1コマ かかせる
     const m = await p.evaluate(() => { const td = document.getElementById('timeDelta'), cv = document.getElementById('cv'); // 動く 前の「−1秒」の 下はし
-      return { msgY: KB.S.msgY, tdBottom: td.offsetTop + Math.max(td.offsetHeight, 22) - cv.offsetTop }; });
-    ok(m.msgY - 20 > m.tdBottom, '横向きでも 吹き出しが「−1秒」の 下', m);
+      return { msgY: KB.S.msgY, msgTop: KB.S.msgTop, tdBottom: td.offsetTop + Math.max(td.offsetHeight, 22) - cv.offsetTop }; });
+    ok(m.msgTop > m.tdBottom, '横向きでも 吹き出しが「−1秒」の 下（吹き出しの 上はし で）', m);
     const c = await p.evaluate(() => { const S = KB.S; S.hopT = [0.3, 0.4]; S.peckT = 0.4; KB.start(); return { reset: S.hopT[0]===0 && S.peckT===0 }; });
     ok(c.reset, 'はじめから やりなおすと スズメの はね・首かしげは もどる', c);
     const w = await p.evaluate(() => { KB.start(); const S = KB.S, L = KB.layout(); const bb = KB.makeBag(3); Object.assign(bb, { face:'back', start:'L', slide:0, single:false }); S.bag = bb;
@@ -349,7 +349,7 @@ const CHECKS = {
     ok(!r61.bonus || /9,000/.test(r61.bonus), 'おまけの 行は 新しい じこベストの 点', r61.bonus);
     ok(/白い輪にささっている/.test(r61.tip), '0袋で 1回 まちがえた 人には その わけの ヒント', r61.tip);
     ok(/指で つまむ/.test(sn61), 'Ctrl＋（拡大）では キーの ことばに かえない', sn61);
-    for (const [w, h] of [[568,320],[667,375],[740,360],[320,568]]){ await p.setViewportSize({ width:w, height:h });
+    for (const [w, h] of [[568,320],[667,375],[740,360],[320,568],[360,640],[375,667]]){ await p.setViewportSize({ width:w, height:h });
       const ag = await p.evaluate(() => { KB.start(); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
       ok(ag.b <= ag.H, `低い 画面（${w}×${h}）でも「もう一回」が 画面の 中`, ag); }
     // 72周目：画面の 幅で むずかしさが かわらない（引く 長さに あわせて 速さの 上限も。広い 画面は 1.12 倍 まで）
@@ -363,6 +363,13 @@ const CHECKS = {
     await p.setViewportSize({ width:390, height:844 });
     const pr = await p.evaluate(() => { KB.startPractice(); const S = KB.S, L = KB.layout(); S.bag.slide = 0; S.bag.face = 'back'; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<40;i++) KB.step(1/60); return { face:S.bag.face, flip:S.bag.flipT }; });
     ok(pr.face==='back' && pr.flip===0, 'れんしゅうの 1袋目の 裏は 袋を タップしても まわらない', pr);
+    // 78周目：低い 画面の 題でも ボタンが 見える・2行の 吹き出しが 縫い目や メーターに かからない
+    for (const [w, h] of [[667,375],[844,390],[320,568]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight }; });
+      ok(tb.b <= tb.H, `低い 画面（${w}×${h}）の 題で「れんしゅう」の ボタンが 見える`, tb); }
+    await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);
+    const bb = await p.evaluate(() => { document.getElementById('title').hidden = true; KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(0); Object.assign(b, { face:'back', slide:0 }); S.bag = b; S.msg = { text:'裏ですね。端の 赤い 糸を つまんで ください', kind:'ok', t:0.5, life:2 }; return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ top:S.msgTop, y:S.msgY, seam:L.seamY })))); });
+    ok(bb.y + (bb.y - bb.top) + 9 <= bb.seam - 16, '320 幅で 2行の 吹き出しも 縫い目に かからない', bb);
     await p.setViewportSize({ width:320, height:568 }); // 65周目：じこベスト・はじめての ランク・袋の じこベストの 行が ふえても
     const ag4 = await p.evaluate(() => { localStorage.setItem('mishin-best2','5000'); localStorage.setItem('mishin-bestbags','3'); KB.start(); const S = KB.S; S.score = 8000; S.bags = 9; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60);
       const r = document.getElementById('againBtn').getBoundingClientRect(); return { b:r.bottom, H:innerHeight, lines: document.getElementById('best').innerHTML.split('<br>').length }; });

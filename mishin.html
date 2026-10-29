@@ -346,8 +346,10 @@ function makeBag(k){
   // 表と裏：1袋目は 裏（すぐ ほどける）、2袋目は 表（裏返す 練習）、あとは 半々
   const face = k===0 ? 'back' : k===1 ? 'front' : (rnd()<0.5 ? 'front' : 'back');
   // ほどき始め：たいてい 裏から見て左。5袋目からは ときどき右
-  const start = k<3 ? 'L' : (rnd() < 1 - Math.min(0.35, 0.1 + 0.03*k) ? 'L' : 'R'); // たいてい 左。後の 袋ほど 右が まじる（最大 35%）
-  const single = k>=8 && rnd()<0.15; // 1本糸の袋：どちらからでも ほどける
+  const prev = S.bag && S.bag.k === k-1 ? S.bag : null; // 1つ前の 袋（makeBag の 中では S.bag は まだ 前の 袋）
+  const start = k<3 ? 'L' : (r => prev && prev.sinceR >= 4 ? 'R' : r < 1 - Math.min(0.35, 0.1 + 0.03*k) ? 'L' : 'R')(rnd()); // たいてい 左。後の 袋ほど 右が まじる（最大 35%）。左が 4つ 続いたら 右（151周目：右の 袋が 1つも ない 回が あり、目標「右から ほどく袋」が できなかった。rnd() の 回数は かえない）
+  const single = k>=8 && rnd()<(k>=14 ? 0.3 : 0.15); // 1本糸の袋：どちらからでも ほどける。15袋目からは ふやす（うまい 人の 後半が 同じ 袋ばかりに ならない。151周目）
+  const sinceR = k<3 || (start==='R' && !single) ? 0 : (prev ? (prev.sinceR||0) + 1 : 1); // 右から ほどく 袋から いくつ め か
   const knots = new Set();
   const nk = k<2 ? 0 : k>=11 ? 3 + (rnd()<0.5 ? 1 : 0) : Math.min(4, 1 + Math.floor((k-2)/3)); /* 11袋目からは きつい目 3〜4 */ // 後の 袋ほど きつい目が ふえる（さいだい 4。52周目）
   let guard=0;
@@ -360,7 +362,7 @@ function makeBag(k){
   const Lw = layout(), wf = Math.min(1.12, (Lw.x1 - Lw.x0) / 307); /* 引く 長さは 画面の 幅に 比例 → 速さの 上限も 幅に あわせる（390 幅で 1。広い 画面は 1.12 まで：72周目） */
   const safe = Math.max(470, 700 - k*14) * (golden ? 0.85 : 1) * wf; // 新米シールの 袋は ゲームの 上で 少し むずかしく（点 2倍）。本物の 糸の かたさの 出典は ない
   const kg = 30; // ミシンで 口を 縫う クラフト紙の 米袋は 30kg の 業務用が 多い
-  return { N, face, start, from:null, single, knots, safe, golden, kg, brand,
+  return { N, face, start, from:null, single, knots, safe, golden, kg, brand, sinceR,
     printed: k>=1 && rnd()<0.6, // 表に「糸抜きはここから」の印刷（実際の口は裏、という例がある）
     phase:'look', pulled:0, sub:0, tangle:null, tangles:0, wrong:false, wrongEnd:null, flipT:0, flipped:false,
     open:0, done:false, failed:false, hint:k<2, slide:1, k, /* 動きを へらす 設定でも 待つ 時間は 同じ（絵だけ すべらせない） */ knotHit:-1, knotT:0, zoneSt:0, readT:0 };

@@ -1007,6 +1007,13 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: r.season && r.sit && r.jump && r.gone && !r.toast };
   })();
+  // 茶畑の 茶の花（夜の 改善 1。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：秋（9〜11月）、茶畑の マスに 白い 花が ぽつぽつ（咲かない マスも ある）
+  R.checks.chaHana = await page.evaluate(() => {
+    const P = nishioPixel, on = P.chaHana(), px = [];
+    for (let i = 0; i < 30; i++) px.push(P.chaHanaPaint(1600 + i * 7, 1630 + i * 3));
+    const bloom = px.filter(n => n > 0).length;
+    return { on, bloom, of: px.length, ok: on && bloom >= 10 && bloom < px.length };
+  });
   // 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29）：10月は なす。お米の うしろへ ころころ ついて きて、しばらく すると ぴょんと はねて 消える。文字は 出さない
   R.checks.nakama = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -3505,6 +3512,7 @@ async function walkTo(page, id) {
   need(c.toastTalk && c.toastTalk.ok, '小さい 画面で、人の 話の 窓が 開いて いる 間の 知らせが 窓（「▶ とじる」）に 重なる');
   need(c.mzBannerFloat && c.mzBannerFloat.ok, 'めいろの「ゴール！」と 頭の 上に 浮かぶ 文字が 同じ ときに 出て、重なって 読めない');
   need(c.kaeru && c.kaeru.ok, `あぜの カエル：10月に 出ない・すわって いない・お米が 近づいても とびこまない・消えない・文字を 出す（${JSON.stringify(c.kaeru)}）`);
+  need(c.chaHana && c.chaHana.ok, `茶畑の 茶の花：10月に 咲かない・ぽつぽつで ない（${JSON.stringify(c.chaHana)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);

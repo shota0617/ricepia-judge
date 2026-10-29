@@ -2847,6 +2847,38 @@ function shirushiStep(hx, by, u, now, asleep) {
   });
   s.drawn++; dirty = true;
 }
+// お米つぶの ものさし（monosashi.js）：西尾市の 中を 転がった 道のり（roll.d）を 黄金堤の 長さ（180m）で はかる。お米の 左よこに 小さな 堤の めもりが 出て、転がるほど 金色に たまり、180mごとに ひと言。
+// 道のりは この 端末に おぼえる（nsg_monosashi）。転がるのを やめて 4秒で 消える・ねむって いる あいだと ゲームボーイの4色では 描かない・西尾市の 外では 数えない
+const monosashi = { total: null, lastD: null, last: 0, saved: 0, show: 0, pop: 0, say: null, drawn: 0 };   // total：m。lastD：前の roll.d。pop：1本 できた 時刻。drawn：描いた 数（テスト用）
+function monosashiStep(hx, by, u, now, asleep) {
+  const m = monosashi, M = window.NISHIO_MONOSASHI;
+  if (!M || worldMode || driving || rp.x === null) { m.lastD = null; return; }
+  if (m.total === null) { try { m.total = M.clean(JSON.parse(localStorage.getItem(M.KEY))); } catch (e) { m.total = 0; } }
+  const dd = m.lastD === null ? 0 : roll.d - m.lastD;
+  m.lastD = roll.d;
+  if (dd > 0 && /西尾/.test(here.city || '')) {
+    const r = M.add(m.total, dd * TILE_M);
+    m.total = r.total; m.show = now + M.SHOW;
+    if (r.born > 0) {
+      m.pop = now; m.show = now + M.SHOW + M.POP;
+      m.say = [now + 600, M.say(M.gauge(m.total).n)];
+      if (G.track) G.track('kome_monosashi', { n: M.gauge(m.total).n });
+    }
+    if (now - m.saved > 5000 || r.born > 0) { m.saved = now; try { localStorage.setItem(M.KEY, String(Math.round(m.total * 10) / 10)); } catch (e) { /* noop */ } }
+  }
+  if (m.say && now >= m.say[0] && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.say[1], 3000, 'happy'); m.say = null; }
+  if (gbOn || asleep || now > m.show || !m.total) return;
+  const g = M.gauge(m.total), q = Math.max(1, Math.round(u * 0.35)), w = Math.round(13 * u), h = Math.round(4 * u), x0 = Math.round(hx - 15 * u - w), foot = Math.round(by + 8 * u);
+  const lit = m.pop && now - m.pop < M.POP ? Math.sin((now - m.pop) / M.POP * Math.PI * 3) > 0 : false;   // できた ばかりは ぴかぴか
+  ctx.globalAlpha = Math.min(1, (m.show - now) / 400);
+  ctx.fillStyle = '#2b1a0c'; ctx.fillRect(x0 - q, foot - h - q, w + 2 * q, h + 2 * q);   // 堤の ふち
+  ctx.fillStyle = '#c9b48a'; ctx.fillRect(x0, foot - h, w, h);   // 堤の 土
+  ctx.fillStyle = lit ? '#fff3a0' : '#e0b030'; ctx.fillRect(x0, foot - h, Math.round(w * (m.pop && now - m.pop < M.POP ? 1 : g.frac)), h);   // 金色が 左から たまる
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.round(3.4 * u)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText(g.n ? '堤' + g.n + '本' : '堤', x0 + w / 2, foot - h - 2 * q);
+  ctx.globalAlpha = 1;
+  m.drawn++; dirty = true;
+}
 // お米つぶの かげえ（kage.js）：じっと 止まって いると、足もとの 影の となりに、いる 町と 月に 合った 名物の 影が すうっと のびる。7秒ごとに つぎの 影。動くと すっと 消える。
 // 影は drawNakama を 小さな 絵に 描いて 黒く ぬり、ひらたく のばして 貼る（絵は 1つずつ しまっておく）。ゲームボーイの4色・夜（めぐりの 時間）・ねむって いる間は 出さない
 const kage = { cur: null, last: '', still0: 0, t0: 0, chk: 0, said: false, drawn: 0, pics: {} };   // drawn：描いた 数（テスト用）
@@ -7646,6 +7678,7 @@ function frame(now) {
       nazoStep(hx, by, u, now);   // 止まって じっと すると 西尾の なぞなぞ（答えの 札を タップ。nazonazo.js）
       youkosoStep(hx, by, u, now);   // 地区の 境を こえると 名物の 旗が 立つ（youkoso.js）
       shirushiStep(hx, by, u, now, mood === 'sleepy');   // 入った 地区の 旗が お米の よこに のこる（shirushi.js）
+      monosashiStep(hx, by, u, now, mood === 'sleepy');   // 転がった 道のりを 黄金堤の 長さ（180m）で はかる（monosashi.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

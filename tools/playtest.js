@@ -3273,13 +3273,19 @@ async function walkTo(page, id) {
         const msg2 = '🧭 テストの 知らせ：ちょうど 2行に なる 長さ';
         let ne = 'none', arrowSeen = 0, arrowHits = 0, dodged = 0;
         const ngs = G.spots.filter(x => x.lat && x.lat > G.me.lat && x.lng > G.me.lng && G.dist(G.me, x) > 1200 && G.dist(G.me, x) < 5000).slice(0, 14).concat(G.spots.filter(x => x.lat && x.lat > G.me.lat + 0.008 && Math.abs(x.lng - G.me.lng) < (x.lat - G.me.lat) * 0.35 && G.dist(G.me, x) < 6000).slice(0, 6));   // 北東と 北（北の ゴールは 札を 下げると お米に かかりやすい）
+        const tried = [];   // ゴールごとの ようす（落ちた ときに 何が 足りなかったか 分かるように：[id, 札, 矢印, ゴールが かわった 回数, 知らせが 出て いない, 知らせが 下]）
         for (const g of ngs) {
-          G.setGuide({ kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' }); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
-          let as = 0, ah = 0, dg = 0;
+          const want = { kind: 'spot', id: g.id, name: g.name, why: 'テスト', by: 'テスト' };
+          let swapped = 0;
+          G.setGuide(want); await wait(6500); shut();   // 「🏁 つぎの ゴール」の 札が 消えるまで
+          while (swapped < 2 && (!G.guide || G.guide.id !== g.id)) { swapped++; G.setGuide(want); await wait(6500); shut(); }   // 待つ 間に 人の 呼びとめ などで ゴールが かわったら 置きなおす（mzGoalEdge と 同じ ゆらぎ）
+          let as = 0, ah = 0, dg = 0, nb = 0, na = 0, nh = 0, nl = 0;
           for (let i = 0; i < 12; i++) {
-            el.classList.remove('show', 'wlow'); G.toast(msg2); P.townBanner('テスト町'); box = null;
+            el.classList.remove('show', 'wlow'); G.toast(msg2); el.classList.add('show'); el.classList.remove('wlow'); P.townBanner('テスト町'); box = null;   // 知らせを 上に 出した まま 見る（1だんめと 同じ。北東の 矢印を よけて 下に いると 1こまも 比べられず、ときどき 20の ゴール ぜんぶで arrowSeen 0 に なって 落ちた）
             await new Promise(res => requestAnimationFrame(() => requestAnimationFrame(res)));
+            if (!el.classList.contains('show')) nh++; else if (el.classList.contains('wlow')) nl++;
             const A = P.maze.mapArrow;
+            if (box) nb++; if (A) na++;
             if (box && A && el.classList.contains('show') && !el.classList.contains('wlow')) {
               as++;
               if (box[0] < A[2] && box[2] > A[0] && box[1] < A[3] && box[3] > A[1]) ah++;   // 札が 縁の 札に かかった（直す 前）
@@ -3288,10 +3294,11 @@ async function walkTo(page, id) {
             { const Rb = P.riceBox; if (box && Rb && box[0] < Rb[2] && box[2] > Rb[0] && box[1] < Rb[3] && box[3] > Rb[1]) riceHits++; }   // よけた 先が お米に かからない（Codex の 指摘）
             await wait(60);
           }
+          tried.push([g.id.slice(0, 14), nb, na, swapped, nh, nl]);
           if (ah || dg) { ne = g.name; arrowSeen = as; arrowHits = ah; dodged = dg; break; }
         }
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
-        return { moved, seen, hits, riceHits, ne, arrowSeen, arrowHits, dodged };
+        return { moved, seen, hits, riceHits, ne, arrowSeen, arrowHits, dodged, ngs: ngs.length, tried: ne === 'none' ? tried : tried.length };
       });
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.seen > 0 && r.hits === 0 && r.riceHits === 0 && (r.arrowHits > 0 || r.dodged > 0) && r.arrowHits === 0 };

@@ -424,6 +424,9 @@ const CHECKS = {
     // 101周目：タイムアタックの 時計は はじめて さわって から
     const ck = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S, L = KB.layout(); for (let i=0;i<120;i++) KB.step(1/60); const t0 = S.time; KB.tap(KB.size().W/2, L.seamY + 200); for (let i=0;i<60;i++) KB.step(1/60); const t1 = S.time; KB.manual = false; return { t0, t1 }; });
     ok(ck.t0 === 30 && ck.t1 < 29.5, 'タイムアタックの 時計は はじめて さわって から へる', ck);
+    // 105周目：まだの 目標が あと 1つ なら ヒントで つなげる
+    const near = await p.evaluate(() => { localStorage.removeItem('mishin-goals'); KB.start(); const S = KB.S; S.bags = 7; S.clean = 7; S.bestStreak = 4; S.quick = 7; S.fevers = 2; S.goldenClean = 1; S.pullTime = 30; S.zoneTime = 25; S.score = 6000; S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); return document.getElementById('tip').textContent; });
+    ok(/あと 1つで きょうの 目標/.test(near), '目標が あと 1つの ときは ヒントで「あと 1つで きょうの 目標」', near);
     const idle = await p.evaluate(() => { KB.manual = true; KB.start(); const S = KB.S; for (let i=0;i<60*10;i++) KB.step(1/60); const t = S.time; KB.manual = false; return t; });
     ok(idle < 29, 'さわらなくても 8秒 たつと 時計が 動く（キーの 人・放って おいた 人が おわれる）', idle);
     await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);

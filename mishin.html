@@ -494,6 +494,8 @@ function tipOf(zone){
   if(S.fronts>=n) return '白い糸が<b>まっすぐ</b>だけなら表です。袋をタップして まわしましょう（反対の面へ）。';
   if(S.wrongs>=n) return '赤い糸の端が<b>白い輪にささっている</b>方が ほどき始めです。反対の端（縫い始め）から 引くと からまります。';
   if(S.tangles>=n) return 'もつれが多めでした。<b>ゆっくり</b>引くのが本物のコツです。ひっかかったら 強く 引かずに、少し もどして やりなおします（製粉会社の 説明）。';
+  { const done = goalsDone(), near = todayGoals().find(g => { if(done.has(g.id) || g.ok() || !g.prog) return false; const m = /^(\d+)\/(\d+)$/.exec(g.prog()); return m && +m[2] - +m[1] === 1; }); /* まだの 目標が あと 1つ なら それを（105周目） */
+    if(near && S.bags>0) return `あと 1つで きょうの 目標「<b>${near.text}</b>」です。もう一回 どうぞ。`; }
   if(zone<45 && S.pullTime>0) return 'ゲームでは もう少し速く引いても大丈夫です（本物の 袋は ゆっくり）。メーターの<b>緑</b>の中で引くと、×5まで点がふえて、時間ものびます。';
   if(S.bestStreak<5) return 'いい手つきです。<b>一本どり</b>を続けると、連続ボーナスが つきます。';
   return (S.score >= 30000 ? '名人の手つきです。' : '一本どりが 続いて います。つぎは <b>フィーバー</b>を ねらって みてください。') + (BRANDS.some(br => shinmaiSeason(day(), br)) ? '新米シールの袋は 点が2倍です。' : ''); /* 「名人」は 五代目の 点から（103周目） */

@@ -394,6 +394,14 @@ const CHECKS = {
     for (const [w, h] of [[667,375],[844,390],[320,568],[568,320]]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
       const tb = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); const r = document.getElementById('practiceBtn').getBoundingClientRect(); t.hidden = true; document.body.classList.remove('menu'); return { b:r.bottom, H:innerHeight }; }); /* あとの 確かめに のこさない */
       ok(tb.b <= tb.H, `低い 画面（${w}×${h}）の 題で「れんしゅう」の ボタンが 見える`, tb); }
+    // 125周目：横向きでも 店の 名前（のれん）が 1画面目に・360×640 では あいさつが ボタンの 上で 両方 見える・題の 目標に ことばの 意味
+    for (const [w, h, want] of [[844,390,'noren'],[667,375,'noren'],[360,640,'talk']]){ await p.setViewportSize({ width:w, height:h }); await p.waitForTimeout(100);
+      const tt = await p.evaluate(() => { document.getElementById('result').hidden = true; document.getElementById('coinDone').hidden = true; const t = document.getElementById('title'); t.hidden = false; t.scrollTop = 0; document.body.classList.add('menu'); let keep = null; try{ keep = localStorage.getItem('mishin-goals'); localStorage.removeItem('mishin-goals'); }catch(e){} KB.renderGoals && KB.renderGoals(); /* まだの 目標で 見る */
+        const R = s => document.querySelector(s).getBoundingClientRect(), n = R('.noren'), k = R('#title .talk'), st = R('#startBtn'), pr = R('#practiceBtn');
+        const o = { noren: n.height > 10 && n.bottom <= innerHeight, talkAbove: k.bottom <= pr.top && k.top >= 0, start: st.bottom <= innerHeight, hints: document.querySelectorAll('#goals .goal:not(.done) .hint').length, undone: document.querySelectorAll('#goals .goal:not(.done)').length, dashed: getComputedStyle(document.querySelector('#goals .goal')).borderTopStyle };
+        try{ if (keep !== null) localStorage.setItem('mishin-goals', keep); }catch(e){} KB.renderGoals && KB.renderGoals(); t.hidden = true; document.body.classList.remove('menu'); return o; });
+      ok(tt.start && (want === 'noren' ? tt.noren : tt.talkAbove), `題（${w}×${h}）で ${want === 'noren' ? '店の のれん' : 'あいさつ'}と「ゲームで遊ぶ」が 1画面目に 見える`, tt);
+      if (want === 'talk') ok(tt.dashed === 'dashed' && tt.undone === 3 && tt.hints >= 1, '題の 目標は 点線の 箱で、ことばの 意味を そえる', tt); }
     await p.setViewportSize({ width:320, height:568 }); await p.waitForTimeout(100);
     const bb = await p.evaluate(() => { document.getElementById('title').hidden = true; KB.start(); const S = KB.S, L = KB.layout(); const b = KB.makeBag(0); Object.assign(b, { face:'back', slide:0 }); S.bag = b; S.msg = { text:'裏ですね。端の 赤い 糸を つまんで ください', kind:'ok', t:0.5, life:2 }; return new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r({ top:S.msgTop, y:S.msgY, seam:L.seamY })))); });
     ok(bb.y + (bb.y - bb.top) + 9 <= bb.seam - 16, '320 幅で 2行の 吹き出しも 縫い目に かからない', bb);

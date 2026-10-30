@@ -6424,7 +6424,7 @@ const TONOSAMA = (() => {
     add(new THREE.BoxGeometry(0.008, 0.007, 0.032).translate(0, 0, 0.012), legM, 0, 0, 0, 1, 1, 1, hip);
     const knee = new THREE.Group(); knee.position.set(0, 0, 0.026); hip.add(knee);
     add(new THREE.BoxGeometry(0.006, 0.005, 0.034).translate(0, 0, -0.017), legM, 0, 0, 0, 1, 1, 1, knee);
-    hip.rotation.y = sx * 0.55; return { hip, knee };
+    hip.rotation.y = sx * 0.55; return { hip, knee, sx };
   });
   g.visible = false; scene.add(g);
   const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0), V = new THREE.Vector3();
@@ -6455,15 +6455,15 @@ const TONOSAMA = (() => {
         else { f.yaw += Math.PI; q.push(['ぴょーん！ たかく とんだね', 'joy', () => { told2 = true; BADGE.joy(3); }]); }   // 畦の 向こうで ふりかえって じっと
       }
     } else if (f.st === 'crouch' && (f.t += dt) > 0.35) leap();
-    g.position.set(f.x, f.y + (f.st === 'air' ? 0 : 0.009), f.z); g.rotation.y = f.yaw;   // 頭を 上げて すわると おしりが 下がる ぶん 上げる（めりこまない）
+    g.position.set(f.x, f.y + (f.st === 'air' ? 0 : 0.009), f.z);   // 頭を 上げて すわると おしりが 下がる ぶん 上げる（めりこまない）
     const air = f.st === 'air' ? Math.sin(Math.min(1, f.t / f.T) * Math.PI) : 0;
-    g.rotation.x = f.st === 'air' ? -0.5 + Math.min(1, f.t / f.T) * 0.9 : -0.22;   // すわる ときは 前足で 頭を 上げる。とびだしは 頭が 上、おりる ときは 頭が 下
-    hinds.forEach(({ hip, knee }, i) => { hip.rotation.x = air * 0.9; knee.rotation.x = -air * 2.4; hip.rotation.y = (i ? -1 : 1) * (0.55 - air * 0.45); });   // とぶ ときは うしろ足を のばす
+    g.rotation.set(f.st === 'air' ? -0.5 + Math.min(1, f.t / f.T) * 0.9 : -0.22, f.yaw, 0, 'YXZ');   // 向きの あとで 上下（どの 向きでも）：すわる ときは 前足で 頭を 上げる。とびだしは 頭が 上、おりる ときは 頭が 下
+    hinds.forEach(({ hip, knee, sx }) => { hip.rotation.x = 0.32 + air * 2.52; knee.rotation.x = -0.35 + air * 3.35; hip.rotation.y = sx * (0.55 - air * 0.3); });   // すわる ときは ももを 少し 下げて 足先を 地面に。とぶ ときは もも（ふだん 前向き）を うしろ やや 下へ まわし、すね（ふだん たたんで うしろ向き）を のばして 足先を うしろ（−z）へ。左右の ひらきは 作った ときと 同じ 向き
     fronts.forEach(l => { l.rotation.x = air * -0.9; });
     body.position.y = f.st === 'sit' ? Math.max(0, Math.sin(f.ph * 2.2)) * 0.0008 : 0;   // のどを ふくらませて 息
     const top = q[0]; if (top && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(f.x, f.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから
   }
-  return { update, f, get told() { return told; }, get told2() { return told2; } };
+  return { update, f, g, hinds, get told() { return told; }, get told2() { return told2; } };
 })();
 // ---- 代かきの 水の ゲンゴロウ：水の 中を 後ろ脚で こいで およぎ、ときどき 水面に 上がって おしりを 出して 息つぎする
 // （空気を 羽の 下に ためる）。上がる 所と もぐる 所に 小さな 輪の 波。トラクターが 近いと すっと もぐる。

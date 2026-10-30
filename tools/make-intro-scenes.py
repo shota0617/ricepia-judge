@@ -38,9 +38,9 @@ def castle(d, cx, base, s=1, wall=(246, 244, 236), roof=(70, 78, 92)):   # 西�
     d.rectangle([cx - 1, base - 25 * s, cx + 1, base - 23 * s], fill=(214, 178, 72))   # しゃちほこ（金）
 
 
-def save(name, im):
+def save(name, im, colors=24):
     os.makedirs(OUT, exist_ok=True)
-    im.quantize(colors=24, dither=Image.Dither.NONE).convert('RGB').save(os.path.join(OUT, name + '.png'), optimize=True)
+    im.quantize(colors=colors, dither=Image.Dither.NONE).convert('RGB').save(os.path.join(OUT, name + '.png'), optimize=True)
 
 
 def s_castle():   # 西尾城と 青空・まわりの 木
@@ -159,14 +159,38 @@ def s_unagi():   # うなぎの かば焼き（ごはんの 上）
     return im
 
 
-def s_hydrangea():   # あじさい
-    im, d = canvas((200, 220, 230), (230, 236, 240))
-    d.rectangle([0, 26, W, H], fill=(96, 140, 90))
-    for x, y, c in ((10, 20, (140, 150, 230)), (26, 16, (180, 140, 220)), (42, 21, (120, 170, 230)), (58, 15, (200, 150, 220)), (72, 21, (150, 160, 240))):
-        d.ellipse([x - 9, y - 9, x + 9, y + 9], fill=(70, 120, 70))
-        d.ellipse([x - 7, y - 8, x + 7, y + 4], fill=c)
-        for dx, dy in ((-3, -4), (2, -5), (-1, -1), (4, -1)):
-            d.point((x + dx, y + dy), fill=(250, 250, 255))
+def s_hydrangea():   # 雨の 日の あじさい（葉の 茂みに 小花が あつまった 手まり・石の 小道・かたつむり）
+    im, d = canvas((188, 206, 222), (226, 232, 238))
+    for x, y in ((6, 3), (19, 7), (33, 2), (47, 6), (61, 3), (74, 8), (12, 11), (54, 12)):
+        d.line([(x, y), (x - 1, y + 2)], fill=(232, 240, 248))   # こぬか雨
+    d.ellipse([-10, 10, 30, 30], fill=(132, 166, 136)); d.ellipse([22, 8, 62, 30], fill=(124, 160, 130)); d.ellipse([54, 11, 92, 31], fill=(132, 166, 136))   # 奥の 木
+    d.rectangle([0, 26, W, H], fill=(92, 140, 84))   # 草地
+    def bush(x0, x1, y0):
+        d.ellipse([x0, y0, x1, H + 8], fill=(56, 112, 64))
+        for lx in range(x0 + 3, x1 - 2, 5):   # 葉（ひし形・上が 明るい）
+            ly = y0 + 6 + (lx * 3) % 5
+            d.polygon([(lx, ly - 2), (lx + 2, ly), (lx, ly + 2), (lx - 2, ly)], fill=(84, 146, 82))
+            d.point((lx, ly - 1), fill=(126, 186, 110))
+    def ball(cx, cy, r, base, hi, lo):
+        d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=lo)
+        d.ellipse([cx - r, cy - r, cx + r - 1, cy + r - 2], fill=base)
+        for fy in range(cy - r + 2, cy + r, 3):   # 小花（十字）を ならべる
+            for fx in range(cx - r + 2 + (fy % 2), cx + r - 1, 3):
+                if (fx - cx) ** 2 + (fy - cy) ** 2 <= (r - 1) ** 2:
+                    c = hi if fx + fy < cx + cy else base
+                    d.point((fx, fy - 1), fill=c); d.point((fx - 1, fy), fill=c); d.point((fx + 1, fy), fill=c); d.point((fx, fy + 1), fill=c)
+                    d.point((fx, fy), fill=lo)
+        d.point((cx - r // 2, cy - r // 2), fill=(255, 255, 255))   # 雨の しずくの 光
+    bush(-6, 34, 18); bush(46, 86, 17)
+    for x0, y0, w in ((37, 27, 6), (35, 30, 8), (33, 33, 10)):   # 飛び石の 小道
+        d.ellipse([x0, y0, x0 + w, y0 + 2], fill=(204, 198, 184)); d.line([(x0 + 1, y0 + 2), (x0 + w - 1, y0 + 2)], fill=(160, 154, 140))
+    BLUE = ((112, 150, 226), (176, 204, 246), (78, 108, 186))
+    PURP = ((162, 124, 210), (210, 182, 238), (118, 86, 166))
+    PINK = ((232, 144, 182), (248, 196, 218), (190, 100, 140))
+    for cx, cy, r, c in ((6, 22, 6, BLUE), (18, 19, 7, PURP), (29, 25, 5, BLUE), (52, 24, 5, PINK), (63, 19, 7, BLUE), (75, 22, 6, PURP)):
+        ball(cx, cy, r, *c)
+    d.ellipse([22, 29, 26, 33], fill=(214, 176, 112)); d.point((24, 31), fill=(160, 120, 70))   # かたつむりの から
+    d.line([(20, 33), (27, 33)], fill=(226, 214, 190)); d.point((20, 32), fill=(226, 214, 190)); d.point((19, 31), fill=(120, 110, 100))   # からだと つの
     return im
 
 
@@ -187,5 +211,5 @@ if __name__ == '__main__':
         if f.endswith('.png'):
             os.remove(os.path.join(OUT, f))   # 前の 絵（写真から 作った もの）は のこさない
     for name, fn in SCENES:
-        save(name, fn())
+        save(name, fn(), 32 if name == 'hydrangea' else 24)   # あじさいは 花の 色が 多いので 32色
     print(len(SCENES), 'scenes →', os.path.normpath(OUT))

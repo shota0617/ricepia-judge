@@ -745,7 +745,8 @@ def fenders_lamps():
     for s, wk in ((1, 'winker_L'), (-1, 'winker_R')):
         prof = [(0.47, 0.70), (0.47, 0.775), (0.86, 0.79), (0.905, 0.765), (0.91, 0.69), (0.895, 0.69), (0.89, 0.755), (0.855, 0.775), (0.485, 0.762), (0.485, 0.70)]
         lathe('paint_red', [(s * x, r) for x, r in prof], 0.0, RZ, n=40, a0=-58, a1=82, closed_prof=True, smooth=40)
-        # フェンダーの後ろのはしの黒い縁
+        # フェンダーの後ろのはしの黒い泥よけフラップ（後輪の後ろ側。下はじ z=0.30 で地面に届かない）
+        box('black', (0.40, 0.014, 0.46), (s * 0.68, 0.755, 0.55), (-5, 0, 0), bev=(0.005,))
         # スマートリヤコンビランプ（上がテール、下がウインカー）
         ph = math.radians(48)
         cy, cz = 0.80 * math.sin(ph), RZ + 0.80 * math.cos(ph)
@@ -790,6 +791,20 @@ WN = Vector((0, math.sin(math.radians(COL_TILT)), math.cos(math.radians(COL_TILT
 W_UP = Vector((0, -math.cos(math.radians(COL_TILT)), math.sin(math.radians(COL_TILT))))  # ハンドルの 12 時の向き
 WHEEL_R = 0.165                   # リムの中心までの半径（外径 約 0.37）
 W_MTX = Matrix.Translation(WHEEL_C) @ Euler((math.radians(-COL_TILT), 0, 0)).to_matrix().to_4x4() @ Matrix.Rotation(math.pi, 4, 'Z')
+
+
+def front_fender(s):
+    """前輪の赤いフェンダー（Steer の中に入れる。転がり回転には付かず、転舵だけ一緒に動く）。
+    後輪フェンダーと同じ lathe。幅は前タイヤの外側面（TR+F_W/2）までで、内側へ余裕をとる"""
+    xi, xo = TR - F_W / 2 - 0.03, TR + F_W / 2
+    ro = F_OD / 2
+    prof = [(xi, ro + 0.012), (xi, ro + 0.050), (xo - 0.02, ro + 0.060), (xo, ro + 0.045), (xo, ro + 0.012),
+            (xo - 0.012, ro + 0.012), (xo - 0.012, ro + 0.040), (xo - 0.02, ro + 0.048), (xi + 0.012, ro + 0.038), (xi + 0.012, ro + 0.012)]
+    lathe('paint_red', [(s * x, r) for x, r in prof], FY, FZ, n=24, a0=-55, a1=70, closed_prof=True, smooth=40)
+    # ステー：キングピンの上から、フェンダーの前と後ろの内側へ
+    for ph in (-38, 45):
+        a = math.radians(ph)
+        pipe('darkgray', [(s * (xi + 0.02), FY, FZ + 0.13), (s * (xi + 0.02), FY + (ro + 0.035) * math.sin(a), FZ + (ro + 0.035) * math.cos(a))], 0.011, 8)
 
 
 def interior():
@@ -1345,6 +1360,7 @@ def build():
             cyl('darkgray', 0.06, 0.26, (s * KP, FY, FZ), n=16)
             cyl_x('darkgray', 0.075, s * (KP - 0.05), s * (TR - F_W * 0.1), FY, FZ, 18)
             box('darkgray', (0.06, 0.12, 0.05), (s * KP, FY + 0.10, FZ + 0.05))
+            front_fender(s)
     # 外のミラーの面
     for nm, s in (('MirrorL', 1), ('MirrorR', -1)):
         mp = Vector((s * 0.861, GLASS_F_SIDE + 0.05, 2.06))

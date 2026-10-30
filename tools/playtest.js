@@ -439,7 +439,7 @@ async function walkTo(page, id) {
   // イベントの絵（Blender のシート）：3まいとも読める・大きさが並びと合う・開いた窓の絵がシートの絵に描きかわる
   R.checks.evart = await page.evaluate(async () => {
     const bad = [], load = src => new Promise(r => { const im = new Image(); im.onload = () => r(im); im.onerror = () => r(null); im.src = src; });
-    const want = { 'nishio-go/art/ev/bugs.png': [640, 32], 'nishio-go/art/ev/stones.png': [312, 24], 'nishio-go/art/ev/places.png': [160, 32], 'nishio-go/art/ev/hiryo.png': [128, 16], 'nishio-go/art/ev/seeds.png': [96, 32], 'nishio-go/art/ev/dankyu.png': [64, 16], 'nishio-go/art/ev/dankyu-flag.png': [16, 32], 'nishio-go/art/ev/dankyu-rock.png': [8, 8] };
+    const want = { 'nishio-go/art/ev/korokoro.png': [128, 32], 'nishio-go/art/ev/bugs.png': [640, 32], 'nishio-go/art/ev/stones.png': [312, 24], 'nishio-go/art/ev/places.png': [160, 32], 'nishio-go/art/ev/hiryo.png': [128, 16], 'nishio-go/art/ev/seeds.png': [96, 32], 'nishio-go/art/ev/dankyu.png': [64, 16], 'nishio-go/art/ev/dankyu-flag.png': [16, 32], 'nishio-go/art/ev/dankyu-rock.png': [8, 8] };
     for (const [src, [w, h]] of Object.entries(want)) { const im = await load(src); if (!im || im.naturalWidth !== w || im.naturalHeight !== h) bad.push(`${src} ${im ? im.naturalWidth + 'x' + im.naturalHeight : 'なし'}`); }
     // 虫は角・大あご・触角・足の先まで枠に入っている（どの絵も、ふちの1列は すきとおっている）
     const bugs = await load('nishio-go/art/ev/bugs.png');
@@ -1167,6 +1167,20 @@ async function walkTo(page, id) {
     await page.evaluate(() => nishioPixel.setRoll(false));
     return { ...r, ok: !!r.skipped || (r.max === 2 && r.two === 2 && r.blocked && r.freed && r.sentaku <= 3) };
   })();
+  // ころころ 仲間・どんぐりの Blender の 絵（ブレンダーで 磨く）：シートが 読めて、4つとも 枠で 切れず、ちがう 絵。ゲームでも 読めて いる
+  R.checks.koroArt = await page.evaluate(async () => {
+    const im = await new Promise(r => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = 'nishio-go/art/ev/korokoro.png'; });
+    if (!im) return { ok: false, why: 'no-sheet' };
+    const cv = document.createElement('canvas'); cv.width = 128; cv.height = 32; const c = cv.getContext('2d'); c.drawImage(im, 0, 0);
+    const d = c.getImageData(0, 0, 128, 32).data, A = (x, y) => d[(y * 128 + x) * 4 + 3], cut = [], sig = [];
+    for (let i = 0; i < 4; i++) {
+      let edge = false, n = 0; for (let k = 0; k < 32; k++) if (A(i * 32 + k, 0) || A(i * 32 + k, 31) || A(i * 32, k) || A(i * 32 + 31, k)) edge = true;
+      for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) if (A(i * 32 + x, y)) n++;
+      if (edge) cut.push(i); sig.push(n);
+    }
+    await new Promise(r => setTimeout(r, 300));
+    return { cut, sig, inGame: nishioPixel.koroArt(), ok: !cut.length && new Set(sig).size === 4 && sig.every(n => n > 150) && nishioPixel.koroArt() };
+  });
   // 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29）：10月は なす。お米の うしろへ ころころ ついて きて、しばらく すると ぴょんと はねて 消える。文字は 出さない
   R.checks.nakama = await (async () => {
     await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(400);
@@ -3748,6 +3762,7 @@ async function walkTo(page, id) {
   need(c.sentaku && c.sentaku.ok, `物干しの せんたくもの：昼に 出ない・雨や 雪や 夜に 出る・絵が 描けない（${JSON.stringify(c.sentaku)}）`);
   need(c.donguri && c.donguri.ok, `どんぐりも ころころ：10月に 出ない・転がらない・止まらない・お米に かさなる・消えない・森の となりで 落ちない・文字を 出す（${JSON.stringify(c.donguri)}）`);
   need(c.ambCap && c.ambCap.ok, `出かたの 調整：生きものが 3種類 出る・2種類 いても どんぐりが 落ちる・いなく なっても 落ちない（${JSON.stringify(c.ambCap)}）`);
+  need(c.koroArt && c.koroArt.ok, `ころころ 仲間・どんぐりの Blender の 絵：シートが ない・枠で 切れる・同じ 絵・ゲームで 読めない（${JSON.stringify(c.koroArt)}）`);
   need(c.nakama && c.nakama.ok, `農作物も ころころ：10月に なすで ない（10月は なす だけ）・お米を おいかけない（かさなる）・止まらない・消えない・文字を 出す（${JSON.stringify(c.nakama)}）`);
   need(c.kisetsuMushi && c.kisetsuMushi.ok, `季節の 虫：10月に 赤とんぼが 出ない・とばない・お米が 近づいても はなれない・消えない・文字を 出す（${JSON.stringify(c.kisetsuMushi)}）`);
   need(c.suzumeVisit && c.suzumeVisit.ok, `ねむって いる お米の そばに すずめが こない・じっと して いる 間に とびたつ・動いても とびたたない（${JSON.stringify(c.suzumeVisit)}）`);

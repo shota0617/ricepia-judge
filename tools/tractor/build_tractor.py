@@ -534,6 +534,13 @@ def wheel(cx, cy, cz, OD, W, rim, rear):
         a = 2 * math.pi * k / (8 if rear else 6)
         rr = 0.085 if rear else 0.058
         cyl_x('silver', 0.012, hub_x + 0.07 * s, hub_x + 0.085 * s, cy + rr * math.sin(a), cz + rr * math.cos(a), 6)
+    if rear:  # 後輪ウェイト（cycle 11）：鋳鉄の円板＋取付ボルト。皿の外面 face に内側へ 0.02 埋め込んで浮きなし
+        face = cx + off + 0.05 * s
+        cyl_x('darkgray', 0.20, face - 0.02 * s, face + 0.04 * s, cy, cz, 32)
+        for k in range(6):
+            a = 2 * math.pi * k / 6
+            rr = 0.16
+            cyl_x('silver', 0.012, face + 0.04 * s, face + 0.055 * s, cy + rr * math.sin(a), cz + rr * math.cos(a), 6)
 
 
 # ================================================================

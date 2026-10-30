@@ -793,6 +793,34 @@ const WINKER = (() => {
   return { setup, update };
 })();
 
+// ---- 回転灯（屋根の左前のアンバー・ビーコン。cycle 9 で付けたドーム）。エンジンが回っている間だけ、約 1 秒周期で明滅する ----
+// Body の orange はドーム単独（GLB実測：バウンディングボックス中心 y 約 2.73）なので、中心 y が 2.5 より高い orange だけを拾う。
+// 室内・レバーの orange は y が低く拾われない。拾った材質は clone してから書き換える（共有のままでは室内・レバーまで光ってしまう）
+const BEACON = (() => {
+  const mats = [];
+  let lastOn = false;
+  function setup(root) {
+    root.traverse(o => {
+      if (!o.isMesh || !o.material || o.material.name !== 'orange') return;
+      o.geometry.computeBoundingBox();
+      const c = o.geometry.boundingBox.getCenter(new THREE.Vector3());
+      if (c.y < 2.5) return;   // 屋根の上のドームだけ
+      o.material = o.material.clone();
+      if (!mats.includes(o.material)) mats.push(o.material);
+    });
+  }
+  function update() {
+    if (!mats.length) return;
+    // エンジンが回っている間だけ（始める前・セル回転中・エンスト・駐車中・おわりは消灯）。アワーメーターと同じ条件
+    const running = S.started && !S.done && !S.stalled && !(S.crank > 0);
+    const on = running && Math.floor(performance.now() / 500) % 2 === 0;   // 約 1 秒周期・点灯 50%
+    if (on === lastOn) return;
+    lastOn = on;
+    for (const m of mats) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2.5 : 1; }
+  }
+  return { setup, update };
+})();
+
 function setupTractor(root) {
   rig.add(root);
   root.traverse(o => {
@@ -808,6 +836,7 @@ function setupTractor(root) {
   P.flap0 = P.Flap.rotation.x;
   LAMPS.setup(root);
   WINKER.setup(root);   // ハローの付け替えは setupTractor の呼び出しより前に済んでいるので、ハローのウインカー材質も拾える
+  BEACON.setup(root);   // 回転灯ドーム（Body の orange）の材質を clone して保持する
   P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
   P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
   root.traverse(o => {                            // 映りこみのすじ：Glass の外（Body の中）にあるので、ルート全体から拾う
@@ -9890,6 +9919,7 @@ function frame(now) {
   LEAK.update(dt);
   LAMPS.update();
   WINKER.update();
+  BEACON.update();
   GLINT_CAB.value = camMode === 0 ? 0.3 : 1;      // 運転席ではすじをうすく（うっすら残す）
   emitExhaust(dt);
   DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も

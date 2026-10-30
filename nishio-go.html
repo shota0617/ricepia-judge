@@ -18,7 +18,7 @@
  ],
  "name": "にしおさんぽGO",
  "url": "https://go.ricepia.jp/nishio-go.html",
- "description": "スマホを傾けると、お米がころころ進むゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。位置情報を使って実際に西尾を歩く「あるいて遊ぶ」もあります。",
+ "description": "スマホを傾けると、お米がころころ進むゲーム。西尾の地図ぜんぶが、本物の道でできた迷路に。ゴールは西尾の名所。",
  "image": "https://go.ricepia.jp/nishio-go/ogp.png",
  "inLanguage": "ja",
  "genre": [
@@ -110,7 +110,7 @@
 
 <section class="sheet" id="sheet">
   <div class="guide" id="guide" hidden></div>
-  <div class="status" id="status">位置情報を待っています…</div>
+  <div class="status" id="status">🍚 いまの 場所を さがしているよ…</div>
   <button class="spin" id="spinBtn" type="button" hidden>
     <span class="spin-ico" id="spinIco">⭐</span>
     <span class="spin-txt"><b id="spinName">スポット</b><small id="spinSub">タップしてポイントゲット</small></span>
@@ -235,7 +235,7 @@
 <section class="panel" id="panel-settings" hidden>
   <h2>せってい</h2>
   <div class="card">
-    <div class="mode-sw" role="group" aria-label="移動のしかた">
+    <div class="mode-sw" role="group" aria-label="移動のしかた" hidden>
       <button type="button" data-mode="real" aria-pressed="true">🚶 あるいて移動</button>
       <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
     </div>
@@ -250,6 +250,10 @@
     <label class="row">
       <span><b>🧭 めいろの おたすけ</b><small>オンにすると、めいろで ゴールへの 道を 水色の 線で いつも 出し、行き止まりに ✕ を 出します。はじめは めいろの ゴールに 3回 着くまで 自動で オンです。</small></span>
       <input type="checkbox" id="mzHelpToggle"/>
+    </label>
+    <label class="row">
+      <span><b>📱 傾きの 強さ</b><small>スマホを 傾けて 転がす ときの 強さ。びんかん は 少し 傾けるだけで よく 転がり、やさしい は 大きく 傾けないと 速く なりません（盤の めいろも 同じ）。はじめは ふつう です。</small></span>
+      <select id="tiltSens" style="flex:none"><option value="15">びんかん</option><option value="20" selected>ふつう</option><option value="26">やさしい</option></select>
     </label>
     <div class="row">
       <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
@@ -266,6 +270,10 @@
     <label class="row">
       <span><b>📝 文字を多めに出す</b><small>オンにすると、地図の町名・駅名・お店の看板、ごほうびのくわしい説明、案内のすすめた人の話などの文字も出します。オフ（はじめ）は、文字を少なくしてドット絵で出します。</small></span>
       <input type="checkbox" id="textToggle"/>
+    </label>
+    <label class="row">
+      <span><b>🍚 あいちのかおりちゃんと おはなし</b><small>あいちのかおりちゃんが 話しかけて、つぎの 行き先を いっしょに えらびます。オフにすると、下の 小さな 知らせだけに なります。</small></span>
+      <input type="checkbox" id="komeTalkToggle"/>
     </label>
     <label class="row">
       <span><b>🎵 音楽（BGM）</b><small>地図を見ている間、音楽と効果音を流します。曲は100曲以上あり、朝・昼・夕方・夜・雨で変わります。</small></span>
@@ -316,7 +324,7 @@
     <p class="note">現在地の座標そのものは、どこにも送信しません（「こえ」タブのおたよりで「いまいる場所の近く」にチェックしたときだけ、約100mの細かさに丸めた位置をおたよりといっしょに送ります）。記録はこのブラウザ（localStorage）にだけ保存されます。ただし地図を表示するために、表示している場所のまわりの地図画像・標高（国土地理院）と地図データ（OpenStreetMap の Overpass API）を取得するので、いま見ている場所のおおよその範囲（数百m〜約1km四方）はこれらのサービスに伝わります。スポット情報は西尾市全域分をまとめて取得します。</p>
   </div>
   <div class="card danger">
-    <div class="row"><span><b>記録を消す</b><small>表示中のモード（あるいて移動／操作して移動）のポイントと記録をすべて削除します。</small></span>
+    <div class="row"><span><b>記録を消す</b><small>ポイントと記録をすべて削除します。</small></span>
       <button type="button" class="btn red" id="resetBtn">削除</button></div>
   </div>
   <p class="credit">地図：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a>／スポット：© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a><br/>土地利用・市町の境界：「国土数値情報（土地利用細分メッシュデータ・行政区域データ）」（<a href="https://nlftp.mlit.go.jp/ksj/" target="_blank" rel="noopener">国土交通省</a>）を加工して作成<br/>名所のドット絵：<a href="https://commons.wikimedia.org/" target="_blank" rel="noopener">Wikimedia Commons</a> の写真（CC0・CC BY・CC BY-SA など。<a href="nishio-go/photo-credits.html" target="_blank" rel="noopener">作者とライセンスの一覧</a>）を参考に描いたもの<br/>まちの人（ガイドさん・お坊さん・店員さんなど）は、ゲームの中の 架空の人物です。お話は 出典のある公開資料をもとにしたもので、その場所の方の言葉や、施設の公式の案内ではありません<br/><span id="creditOp">運営：近藤米穀店 らいすぴあ（西尾市）</span></p>
@@ -328,7 +336,7 @@
     <h1 class="logo"><img src="nishio-go/logo.svg" alt="にしおさんぽGO" width="544" height="80"/><span class="logo-lane" aria-hidden="true"><span class="logo-rice"><span class="logo-heart"></span></span></span></h1>
     <p class="player-count" id="playerCount" hidden></p>
     <p class="player-count voice-intro" id="voiceIntro" hidden></p>
-    <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="お米が 台地から 坂を ころころ転がり下りて、田んぼの あぜ道で にっこり"></canvas>
+    <canvas class="intro-roll" id="introHero" width="160" height="72" role="img" aria-label="西尾の まちの 景色の 前を、お米が 台地から 坂を ころころ転がり下りて、あぜ道で にっこり"></canvas>
     <p class="tagline">お米が ころころ、西尾をめぐろう</p>
     <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころころ。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
@@ -338,13 +346,11 @@
     <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
     <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
     <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
-    <button type="button" class="btn big mode-pick alt" id="startBtn"><span class="mp-t">🚶 あるいて遊ぶ</span><small class="mp-s">本当に 西尾のまちを 歩く（位置情報）</small><small>位置情報を使って、実際に西尾のまちを歩きます（お米が ついて転がる）</small></button>
     <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
     <ul class="intro-shots" aria-label="プレイ画面">
       <li><img src="nishio-go/shots/meiro.webp" alt="西尾の歩く地図が 緑の生け垣の めいろになり、行き止まりに ✕、金の米つぶ、お米から ゴールへの 青い 道しるべ。画面の はしに ゴールの 🏁 と のこりの 道のり" width="540" height="1080" loading="lazy" decoding="async"/><span>地図が めいろに</span></li>
       <li><img src="nishio-go/shots/meiro-board.webp" alt="西尾駅の まわりの 本当の道で できた めいろ。立った 緑の 壁の あいだを、お米が ゴールの 西尾駅へ 転がる画面" width="540" height="1080" loading="lazy" decoding="async"/><span>めいろで ゴールへ</span></li>
-      <li><img src="nishio-go/shots/roll.webp" alt="🗺 ゴールまでの めいろ図。お米の いる所から ゴールの 名所までの めいろを 上から 見た 小さな 図に、金の米つぶと 足あとも 出る" width="540" height="1080" loading="lazy" decoding="async"/><span>めいろ図で 道を考える</span></li>
       <li><img src="nishio-go/shots/reward.webp" alt="はじめての たからばこから 抹茶と和菓子の ドット絵が 出た画面" width="540" height="1080" loading="lazy" decoding="async"/><span>ドット絵をあつめる</span></li>
       <li><img src="nishio-go/shots/world.webp" alt="西尾とまわりのまちの、せかいちず" width="540" height="1080" loading="lazy" decoding="async"/><span>名所をめぐる</span></li>
       <li><img src="nishio-go/shots/badges.webp" alt="バッジの画面" width="540" height="1080" loading="lazy" decoding="async"/><span>バッジをそろえる</span></li>
@@ -371,6 +377,7 @@
 <!-- あそびかた（はじめて めいろに 入ったときに 1回。せっていの「❓ あそびかた」で もう一度） -->
 <div class="howto" id="howto" hidden role="dialog" aria-modal="true" aria-labelledby="howtoT">
   <div class="howto-box">
+    <div class="howto-scene" id="howtoScene" aria-hidden="true"></div>
     <h3 id="howtoT">🌀 あそびかた</h3>
     <ol class="howto-list">
       <li><span class="hi" aria-hidden="true">📱</span><span><b>スマホを傾けると、お米が 転がる</b><small id="howtoKey">傾けにくい ときは、地図を タップした所へ 向かう</small></span></li>
@@ -447,6 +454,41 @@
 <script src="nishio-go/season.js"></script>
 <script src="nishio-go/weather.js"></script>
 <script src="nishio-go/osm-query.js"></script>
+<script src="nishio-go/komebanashi.js"></script>
+<script src="nishio-go/michikusa.js"></script>
+<script src="nishio-go/otomo.js"></script>
+<script src="nishio-go/nimotsu.js"></script>
+<script src="nishio-go/yume.js"></script>
+<script src="nishio-go/deai.js"></script>
+<script src="nishio-go/kobore.js"></script>
+<script src="nishio-go/gochiso.js"></script>
+<script src="nishio-go/otedama.js"></script>
+<script src="nishio-go/kasa.js"></script>
+<script src="nishio-go/meguri.js"></script>
+<script src="nishio-go/tsun.js"></script>
+<script src="nishio-go/kage.js"></script>
+<script src="nishio-go/nedoko.js"></script>
+<script src="nishio-go/yuami.js"></script>
+<script src="nishio-go/horidashi.js"></script>
+<script src="nishio-go/chasetsu.js"></script>
+<script src="nishio-go/shimatabi.js"></script>
+<script src="nishio-go/isshiki.js"></script>
+<script src="nishio-go/chochinyoru.js"></script>
+<script src="nishio-go/hazusanpo.js"></script>
+<script src="nishio-go/kawabe.js"></script>
+<script src="nishio-go/tombolo.js"></script>
+<script src="nishio-go/mangekyo.js"></script>
+<script src="nishio-go/nazonazo.js"></script>
+<script src="nishio-go/youkoso.js"></script>
+<script src="nishio-go/shirushi.js"></script>
+<script src="nishio-go/monosashi.js"></script>
+<script src="nishio-go/okaeri.js"></script>
+<script src="nishio-go/furusato.js"></script>
+<script src="nishio-go/jokamachi.js"></script>
+<script src="nishio-go/chatsumi.js"></script>
+<script src="nishio-go/tsutsumi.js"></script>
+<script src="nishio-go/kiri.js"></script>
+<script src="nishio-go/kometalk.js"></script>
 <script src="nishio-go/game.js"></script>
 <script src="nishio-go/runner.js"></script>
 <script src="nishio-go/harvest.js"></script>

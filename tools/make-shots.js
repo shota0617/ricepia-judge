@@ -1,9 +1,9 @@
 // にしおさんぽGO の はじめの画面に のせる 画面写真を、ほんとうのゲーム画面から撮る：node tools/make-shots.js [出力フォルダ]
 // ・nishio-go.html の「プレイ画面」（#intro の .intro-shots）と ricepia.jp の ゲームの 紹介に のせる。既定は nishio-go/shots/*.webp（540×1080）に書く
 // ・「🌀 傾けて めいろ」で はじめて 遊ぶ 人と 同じ 順に すすむ（あそびかた → はじめの1枚 → めいろ）。画面の スティックや 📱/🚗 の 切りかえは もう ないので 写らない
-// ・撮るもの：reward（はじめの1枚の ごほうび）・meiro（地図の めいろ：生け垣・お米・足あと・金の米つぶ）・roll（🗺 ゴールまでの めいろ図）・world（せかいちず）・badges（バッジ）
+// ・撮るもの：reward（はじめの1枚の ごほうび）・meiro（地図の めいろ：生け垣・お米・足あと・金の米つぶ）・world（せかいちず）・badges（バッジ）
 //   meiro-board.webp（🌀 ステージの めいろ）は ここでは 撮らない
-// 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、SHOTS_PORT、SHOTS（撮る 名前を カンマで。例 meiro,roll）、SHOTS_TIME（画面の 時刻。既定は きょうの 正午）
+// 環境変数：CHROMIUM（Chromium の場所）、LEAFLET_DIR（ネットにつながらないとき）、SHOTS_PORT、SHOTS（撮る 名前を カンマで。例 meiro,world）、SHOTS_TIME（画面の 時刻。既定は きょうの 正午）
 const { chromium } = require('playwright');
 const fs = require('fs'), path = require('path');
 const { startServer, ROOT } = require('./bake-common');
@@ -107,23 +107,16 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
     if (cx !== x || cy !== y) await G(([x, y]) => { const K = nishioPixel.maze.K; nishioPixel.rollPut(x * K + K / 2, y * K + K / 2); }, [x, y]);
   }
   await sleep(1200); for (let i = 0; i < 3; i++) { await closeAll(); await sleep(300); }
-  await G(() => nishioPixel.maze.map(0));   // ゴールまでの めいろ図（つぎの ゴールの 知らせの あとに 出る）は つぎの 写真で
   await sleep(2500); await noToast();   // 町の 名前の 札が 消えるまで
   await shot('meiro');
 
-  // 3) 🗺 ゴールまでの めいろ図
-  await closeAll(); await G(() => nishioPixel.maze.map(10000));
-  await page.waitForFunction(() => nishioPixel.maze.mapShown, null, { timeout: 8000 });
-  await sleep(600); await noToast();
-  await shot('roll');
-  await G(() => nishioPixel.maze.map(0));
-
-  // 4) せかいちず（西尾と まわりの まち）
+  // （ゴールまでの めいろ図は 2026-10-29 に なくしたので 撮らない。roll.webp は ricepia.jp が まだ 使うので のこす）
+  // 3) せかいちず（西尾と まわりの まち）
   await G(() => nishioPixel.setWorld(true)); await sleep(2500); await closeAll(); await noToast();
   await shot('world');
   await G(() => nishioPixel.setWorld(false)); await sleep(800);
 
-  // 5) バッジ（きろく）
+  // 4) バッジ（きろく）
   await closeAll(); await page.click('[data-tab="log"]'); await sleep(800);
   await G(() => document.getElementById('badgeHead').scrollIntoView({ block: 'start' })); await sleep(600); await noToast();
   await shot('badges');

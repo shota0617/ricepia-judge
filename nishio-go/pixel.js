@@ -749,7 +749,7 @@ function trailSave() {
     if (store.set(TRAIL.key, out)) { store.set(PX_IDX, idx); TRAIL.dirty = 0; return; }
   }
   store.set(PX_IDX, idx);
-  if (!TRAIL.warned) { TRAIL.warned = true; G.toast('保存領域がいっぱいで、あしあとを保存できませんでした（ブラウザの保存領域を確認してください）'); }
+  if (!TRAIL.warned) { TRAIL.warned = true; G.toast('このブラウザに あしあとを 保存できませんでした。スマホの 空きや、ブラウザの 設定（プライベート モード など）を 見てみてね。'); }
 }
 // 記録を消す（せってい）：いまのモードのあしあとを、保存したものごと消す
 function trailClear() {
@@ -1404,6 +1404,36 @@ function decoList(code) {
   decoLists.set(key, list);
   return list;
 }
+// てん茶の 覆い（朝の 改善 10。運営者の声「西尾らしく」・「文字は減らして素朴なかわいさと平和さを散りばめる」）：「西尾の抹茶」は、4月ごろ 新芽が のびはじめてから
+// 25日 以上、茶棚の 上に 遮光資材を 広げて 覆う 棚式の 覆い下栽培（愛知県「西尾の抹茶」栽培法の 定義）。4月15日〜5月20日ごろ、茶畑の マスに 柱と こい 灰色の 覆いの 棚。文字は なし
+function kabuseOn(t = Date.now()) {
+  const d = new Date(t + 9 * 3600000), md = (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+  return md >= 415 && md <= 520;
+}
+function drawKabuse(tx, ty, X, Y, T) {
+  const p = Math.max(1, Math.round(T / 16));
+  ctx.fillStyle = 'rgba(38,42,46,0.68)'; ctx.fillRect(X, Y, T, T);   // 覆い（下の 茶の 列が うっすら すける）
+  ctx.fillStyle = 'rgba(120,128,134,0.35)';
+  for (let i = 2; i < 16; i += 4) { ctx.fillRect(X + i * p, Y, p, T); ctx.fillRect(X, Y + i * p, T, p); }   // あみの 目
+  const n = codeAt(tx, ty + 1) !== C.E, w = codeAt(tx - 1, ty) !== C.E, e = codeAt(tx + 1, ty) !== C.E;
+  ctx.fillStyle = '#7a5a3a';
+  if (n && w) ctx.fillRect(X + p, Y + 12 * p, p, 4 * p);   // 棚の はしの 柱（茶畑の 南の へりの 角）
+  if (n && e) ctx.fillRect(X + 14 * p, Y + 12 * p, p, 4 * p);
+  if (n) { ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(X, Y + 15 * p, T, p); }   // 南の へりの 影
+}
+// 茶畑の 白い 茶の花（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」・夜の 改善 1）：茶の花は 秋（9〜11月）に 咲く
+// （埼玉県「茶の実」・横浜市の 食育資料）。西尾の 抹茶の 茶畑の うねに、白い 5まいの 花びらと 黄色い しべを ぽつぽつ。文字は なし
+const chaHanaOn = () => DECO.m >= 9 && DECO.m <= 11;
+function drawChaHana(tx, ty, X, Y, T) {
+  const h = Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663), u = (h ^ (h >>> 13)) >>> 0;
+  if (u % 3 === 0) return;   // 3マスに 1つは 咲いて いない（ぽつぽつ）
+  const p = Math.max(1, Math.round(T / 16));
+  for (let i = 0, n = 1 + (u >>> 3) % 2; i < n; i++) {   // 1〜2りん。茶の木の 列（上 1〜6・下 9〜14）の 上に
+    const r = u >>> (6 + i * 7), cx = 2 + r % 12, cy = (i & 1 ? 10 : 2) + (r >>> 4) % 3, x = X + cx * p, y = Y + cy * p;
+    ctx.fillStyle = '#fbfaf2'; ctx.fillRect(x, y - p, p, p * 3); ctx.fillRect(x - p, y, p * 3, p);   // 花びら（十字）
+    ctx.fillStyle = '#f2c94c'; ctx.fillRect(x, y, p, p);   // しべ
+  }
+}
 function drawDeco(code, tx, ty, X, Y, T, now) {
   if (!DECO.img || !DECO.idx) return;
   const L = decoList(code);
@@ -1712,7 +1742,7 @@ const rivalSprites = [sprite(NPC_ROWS, false, RIVAL_PAL), sprite(NPC_ROWS.map((r
 const rivalTile = () => { const r = G.rival; return r ? npcTile({ id: 'rival:' + r.at, lat: r.lat, lng: r.lng }) : null; };
 function rivalTalk() {   // ライバルをタップする：ひとこと（先回りした所の名前で）。おまかせ歩き・タップで歩く道をふさがないよう、ぶつかっても止めない
   const r = G.rival;
-  if (r) G.toast(`🏃 ${G.RIVAL}「先に来とったよ。${r.name}、ゆっくり見ていきん」`);
+  if (r) G.toast(`🏃 ${G.RIVAL}「ここで 会えたね。${r.name}、ゆっくり 見ていこまい」`);
 }
 // 生きもの（game.js の CRITTERS）：歩く地図の田んぼ・水べを歩いていると、ときどき出会う。16×16 の手描き
 const CRITTER_ROWS = {
@@ -1725,7 +1755,16 @@ const CRITTER_ROWS = {
   keri: ['................', '.....ggg........', '....ggggg.......', 'kyygrgggg.......', '....ggggg.......', '.....ggg........', '.....kkkk.......', '....wkkknnnn....', '....wwnnnnnnnn..', '....wwwnnnnnnnnk', '.....wwwwnnnnk..', '.......y.y......', '.......y.y......', '.......y.y......', '.......y.y......', '......yy.yy.....'],
   seitaka: ['................', '....kk..........', '...kwwk.........', 'kkkkwkwk........', '...kwwwk........', '....kwwk........', '....kwwwkkkk....', '...kwwwwkkkkkk..', '...kwwwwwkkkkkkk', '....kwwwwkkkkk..', '.....kkkkkkk....', '.......r.r......', '.......r.r......', '.......r.r......', '.......r.r......', '......rr.rr.....'],
   suzugamo: ['................', '................', '................', '................', '...kkk..........', '..kkkkk.........', 'ggkykkk.........', '..kkkkk.........', '...kkkkkkkkkkk..', '..kkkwwwwwgwgkk.', '..kkwwwwwwwwgkkk', '...kwwwwwwwwwkk.', '....kkkkkkkkkk..', 'bbbbbbbbbbbbbbbb', '.bbbbbbbbbbbbbb.', '................'],
-  asari: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kknnnnkk....', '...knnNnnNnnk...', '..knNnnNNnnNnk..', '..knnnNnnNnnnk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................']
+  asari: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kknnnnkk....', '...knnNnnNnnk...', '..knNnnNNnnNnk..', '..knnnNnnNnnnk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................'],
+  medaka: ['................', '................', '................', '................', '................', '................', '................', '................', '....kkkkkkk.....', '..kkgggggggkk.k.', '.kwkgggggggggkkk', '..kkwwwwwwwkk.k.', '....kkkkkkk.....', '.b..b.....b..b..', '..bb.bb..bb.bb..', '................'],
+  dojo: ['................', '................', '................', '................', '................', '................', '................', '................', '..kk............', '.knnkkk.....kk..', '.kwnnnnkk..knnk.', '..kkknnnnkknnk..', '......kknnnnk...', '........kkkk....', '.b..b.....b..b..', '..bb.bb..bb.bb..'],
+  ishigame: ['................', '................', '................', '................', '................', '................', '................', '................', '......kkkkk.....', '....kkNNnNNkk...', '...kNnNnNnNnNk..', '.kkkNNnNNnNNNkk.', 'ksskkkkkkkkkk...', '.kk.kk....kk.kk.', '.b..b.....b..b..', '..bb.bb..bb.bb..'],
+  akaza: ['................', '................', '................', '................', '................', '................', '................', '................', '....kkkkkkk.....', '..kkGGGGGGGkk.k.', '.kwkGGGGGGGGGkkk', 'kk.kggggggggkk.k', '.k.kkkkkkkkk....', '.b..b.....b..b..', '..bb.bb..bb.bb..', '................'],
+  kamatsuka: ['................', '................', '................', '................', '................', '................', '................', '................', '...kkkkkkkk.....', '.kkssnssnssskk.k', 'kwkssssssssssskk', '.kkswwwwwwwskk.k', '...kkkkkkkk.....', '.b..b.....b..b..', '..bb.bb..bb.bb..', '................'],
+  misago: ['................', '................', '................', '.......kkk......', '......kwwwk.....', '......kwkNky....', '......kwwwkk....', 'kkkNNNNkwkNNNNkk', 'kNNNNNNkwkNNNNNk', '.kNNNNNkwwkNNNk.', '..kkNNNkwwkNNkk.', '....kkkkwwkkkk..', '.......kwwk.....', '.......kkkk.....', '................', '................'],
+  kochidori: ['................', '................', '................', '................', '................', '................', '.......kkk......', '......knnnk.....', '......kkwkkkk...', '....kknnnnk.....', '...knnnnnnnk....', '..knnnnwwwwwk...', '...kkwwwwwwk....', '.....kkkkk......', '......y..y......', '.ssssssssssssss.'],
+  shijimi: ['................', '................', '................', '................', '................', '................', '................', '......kkkk......', '....kkNNNNkk....', '...kNNGNNGNNk...', '..kNGNNGGNNGNk..', '..kNNNGNNGNNNk..', '...kkkkkkkkkk...', '.ssssssssssssss.', 'ssssssssssssssss', '................'],
+  uminina: ['................', '................', '................', '................', '.......kk.......', '......kNNk......', '......kNnk......', '.....kNnNnk.....', '.....kNnnNk.....', '....kNnNnNnk....', '....kNnnNnNk....', '...kknnNnnNkk...', '....kkkkkkkk....', '.ssssssssssssss.', 'ssssssssssssssss', '................'],
 };
 const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
@@ -1734,7 +1773,8 @@ const critterS = { steps: 0, paddy: 0, water: 0, show: null, where: '', told: {}
 // 田んぼや 草地の すずめ（運営者の声「西尾の素朴なかわいさを随所に散りばめて」2026-10-28）：お米の まわりの 田んぼ・畑・草地・公園に ときどき 2〜3羽 おりて ついばみ、
 // お米が 転がって 近づくと「ちゅん」と とびたつ。見る だけ（ポイントは つけない・ぶつからない・道を ふさがない）
 const SUZUME_MAX = 3, SUZUME_LIFE = 14000, SUZUME_NEAR = 2.2;   // いちどに 3羽まで・14秒で とびさる・お米が 2.2マスより 近くで 転がると とびたつ
-const suzume = { list: [], next: 0 };
+const suzume = { list: [], next: 0, visit: 0 };
+const SUZUME_VISIT = 18;   // お米が 18秒 じっと して いる（ねむそうな 顔の あと）と、そばに すずめが おりて くる
 const SUZUME_AT = () => [C.F, C.U, C.V, C.G, C.P];   // おりる 所：田んぼ・農地・畑・草地・公園（町なかでも 公園や 草地に いる）
 function suzumeSpawn(x, y, now) {   // x, y：おりる マス
   const n = Math.random() < 0.5 ? 2 : 3;
@@ -1799,9 +1839,14 @@ function nyaSound() {   // にゃ：ねこが おきる（小さく 1回）
     o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.32);
   } catch (e) { /* 音が 出ない 端末 */ }
 }
+// 出かたの 調整（朝の 改善 11。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」・まれで 小さく）：すずめ・ねこ・虫・カエル・作物・どんぐりは
+// 画面に 2種類まで。2種類 いる 間は、つぎの 種類は 出ない（通しで 60秒 転がして はかると、すずめ 3羽と 赤とんぼが いっしょに いる 時間が 長く、3種類 出る ことも あった）。
+// ねて いる お米に おりる すずめ（suzumeVisit）・テストの put は べつ
+const AMB_MAX = 2;
+const ambN = () => (suzume.list.length ? 1 : 0) + (neko.cat ? 1 : 0) + (mushi.m ? 1 : 0) + (kaeru.list.length ? 1 : 0) + (nakama.n ? 1 : 0) + (donguri.d ? 1 : 0);
 function nekoStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { neko.cat = null; return; }
-  if (!neko.cat && now > neko.next && !mapCovered()) {   // 20〜40秒に 1回、まわり 3〜7マスの 家の となりの 地面（画面の 中）を さがす
+  if (!neko.cat && now > neko.next && !mapCovered() && ambN() < AMB_MAX) {   // 20〜40秒に 1回、まわり 3〜7マスの 家の となりの 地面（画面の 中）を さがす
     neko.next = now + 20000 + Math.random() * 20000;
     for (let k = 0; k < 16; k++) {
       const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 4, x = Math.floor(rp.x + Math.cos(a) * r), y = Math.floor(rp.y + Math.sin(a) * r);
@@ -1838,10 +1883,1417 @@ function drawMushi(x, y, u, kind, now, dir) {
     px(-3 + o, -3, 1, 1, '#3a3a3a'); px(2, -3, 1, 1, '#3a3a3a');   // はねの 黒い てん
   }
 }
+// 田んぼの あぜの カエル（運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」2026-10-29）：4〜10月、田んぼの へり（となりが 田んぼで ない マス）に
+// ときどき 1〜2匹 すわって いて、ときどき のどを ふくらませる。お米が 近くを 転がると ぴょんと 田んぼへ とびこんで「ぽちゃ」。文字・ポイントは なし
+const KAERU_MAX = 2, KAERU_LIFE = 20000, KAERU_NEAR = 2.0;
+const kaeru = { list: [], next: 0 };
+const kaeruSeason = () => { const mo = new Date().getMonth() + 1; return mo >= 4 && mo <= 10; };
+function drawKaeru(x, y, u, dir, pose) {   // pose：0 すわる・1 のどを ふくらませる・2 とぶ（足を のばす）
+  const parts = pose === 2
+    ? [[-3, -1, 5, 3, '#5cb85c'], [1, -2, 2, 1, '#5cb85c'], [-5, 1, 2, 1, '#3f8f3f'], [-6, 2, 2, 1, '#3f8f3f']]   // とぶ：からだ・目の もりあがり・のばした 足
+    : [[-3, 0, 6, 3, '#5cb85c'], [-3, -1, 2, 1, '#5cb85c'], [1, -1, 2, 1, '#5cb85c'], [-4, 2, 2, 1, '#3f8f3f'], [2, 2, 2, 1, '#3f8f3f']];   // すわる：まるい からだ・目の もりあがり・足
+  const px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(dir > 0 ? x + cx * u : x - (cx + cw) * u, y + cy * u, cw * u, ch * u); };
+  for (const [cx, cy, cw, ch] of parts) px(cx - 1, cy - 1, cw + 2, ch + 2, '#1e2a14');   // こい ふち
+  for (const [cx, cy, cw, ch, c] of parts) px(cx, cy, cw, ch, c);
+  if (pose !== 2) { px(-3, -1, 1, 1, '#ffffff'); px(-2, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#ffffff'); px(2, -1, 1, 1, '#1a1a1a'); px(-2, 2, 4, 1, '#cfe8a0'); }   // 白目と 黒目・おなか
+  if (pose === 1) { px(-1, 2, 2, 2, '#f2f7d8'); }   // のどを ぷくっと
+}
+function potyaSound() {   // ぽちゃ：カエルが 田んぼに とびこむ（小さく やわらかく）
+  const a = sfxCtx();
+  if (!a) return;
+  try {
+    const t = a.currentTime, o = a.createOscillator(), g = a.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(520, t); o.frequency.exponentialRampToValueAtTime(180, t + 0.12);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.18);
+  } catch (e) { /* 音が 出ない 端末 */ }
+}
+// 農作物も ころころ（運営者の声「農作物もコロコロしてる」2026-10-29。JA西三河の 農産物マップより）：お米が 畑・温室・農地の そばを 転がると、季節の 作物が 1つ
+// ころんと 出て きて、しばらく お米の あとを ころころ ついて くる（止まると ぴょんと はねて 消える）。文字・ポイントは なし・ぶつからない
+// 作物は 西尾・西三河の 主な もの と その 季節（愛知県・東海農政局の 資料）：いちご（西三河で 県内 出荷の 約3割・冬〜春）、
+// なす（西三河の ハウスの「とげなし美茄子」・10〜6月）、大豆（西尾が 県の 主な 産地・フクユタカを 12月に かりとる）。7〜9月は 出ない
+const NAKAMA_FOLLOW = 6000, NAKAMA_CD = 40000;
+const nakama = { n: null, next: 0 };
+const otomo = { next: 0, last: '' };   // 町の おとも（otomo.js）：60〜100秒に 1回まで。同じ おともを つづけない
+const NAKAMA_MONTHS = { ichigo: [12, 1, 2, 3, 4, 5], nasu: [10, 11, 12, 1, 2, 3, 4, 5, 6], daizu: [12] };
+const nakamaKinds = () => { const mo = new Date().getMonth() + 1; return Object.keys(NAKAMA_MONTHS).filter(k => NAKAMA_MONTHS[k].includes(mo)); };
+const nakamaKind = () => { const a = nakamaKinds(); return a.length ? a[Math.floor(Math.random() * a.length)] : ''; };   // その 月の 作物から 1つ（なければ ''）
+// ころころ 仲間（いちご・なす・大豆）と どんぐりの 絵は Blender で 焼いた シート（tools/blender/korokoro-art.py → nishio-go/art/ev/korokoro.png。32×32 が 横に 4こ）。
+// 読めたら その 絵を ころがる 向きに 回して 描く（1点を 画面の 整数倍に）。読めるまでは 手描き（drawNakama・drawDonguri）。
+// drawNakama は ほかの 名物（うなぎ・茶わん など）を 小さく 描く ときにも 使うので、Blender の 絵は ついて くる ころころ 仲間（nakamaStep）と どんぐり だけ
+const KORO_ART = ['ichigo', 'nasu', 'daizu', 'donguri'], koroArt = { img: null };
+function koroReady() { if (!koroArt.img) { koroArt.img = new Image(); koroArt.img.src = 'nishio-go/art/ev/korokoro.png'; } return koroArt.img.complete && koroArt.img.naturalWidth > 0; }
+function drawKoroArt(x, y, u, kind, ang) {
+  const i = KORO_ART.indexOf(kind);
+  if (i < 0 || !koroReady()) return false;
+  const k = Math.max(1, Math.round(u / 2)), S = 32 * k, sm = ctx.imageSmoothingEnabled;
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(koroArt.img, i * 32, 0, 32, 32, -S / 2, -S / 2, S, S);
+  ctx.imageSmoothingEnabled = sm; ctx.restore();
+  return true;
+}
+function drawNakama(x, y, u, kind, ang, noFace) {   // ang：ころがる 回り（四角の 絵を まるごと 回す）。noFace：目を 描かない（かさ）
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  const px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(cx * u, cy * u, cw * u, ch * u); };
+  const draw = parts => { for (const [cx, cy, cw, ch] of parts) px(cx - 1, cy - 1, cw + 2, ch + 2, '#2b1a0c'); for (const [cx, cy, cw, ch, c] of parts) px(cx, cy, cw, ch, c); };
+  if (kind === 'ichigo') {   // いちご：赤い からだ・緑の へた・つぶつぶ
+    draw([[-3, -2, 6, 3, '#e8384a'], [-2, 1, 4, 1, '#e8384a'], [-1, 2, 2, 1, '#e8384a'], [-2, -3, 4, 1, '#3f9b3c'], [-1, -4, 2, 1, '#3f9b3c']]);
+    for (const [cx, cy] of [[-2, -2], [1, -2], [-2, 1], [1, 1]]) px(cx, cy, 1, 1, '#ffe08a');   // 目の となりは あける
+  } else if (kind === 'nasu') {   // なす：むらさきの まるい からだ・緑の へた
+    draw([[-3, -1, 6, 4, '#5a2a7a'], [-2, 3, 4, 1, '#5a2a7a'], [-2, -2, 4, 1, '#3f9b3c'], [-1, -3, 2, 1, '#3f9b3c']]);
+    px(-2, 0, 1, 2, '#9a6ac0');   // てかり
+  } else if (kind === 'unagi') {   // うなぎ（一色）：ほそ長い こい青ねずみの からだ・おなかは うすい 黄
+    draw([[-4, -1, 8, 3, '#3d4552'], [-3, 2, 6, 1, '#d9c88a'], [2, -2, 2, 1, '#3d4552']]);
+  } else if (kind === 'ebisen') {   // えびせんべい（一色）：だいだい色の まるい せんべい・えびの つぶつぶ
+    draw([[-3, -2, 6, 4, '#f0a050'], [-2, -3, 4, 1, '#f0a050'], [-2, 2, 4, 1, '#f0a050']]);
+    for (const [cx, cy] of [[-2, -2], [2, -2], [-2, 1], [1, 1]]) px(cx, cy, 1, 1, '#d8602c');
+  } else if (kind === 'tencha') {   // てん茶の 葉（西尾）：あざやかな 緑の 葉・まん中に こい 緑の すじ
+    draw([[-3, -1, 6, 3, '#4e9a3a'], [-2, -2, 4, 1, '#4e9a3a'], [-2, 2, 4, 1, '#4e9a3a'], [-1, -3, 2, 1, '#2f7a2a']]);
+    px(-3, 2, 1, 1, '#2f7a2a');
+  } else if (kind === 'inaho') {   // 金色の 稲穂（吉良）：こがね色の もみ
+    draw([[-2, -2, 4, 4, '#e8b830'], [-3, -1, 6, 2, '#e8b830'], [-1, -3, 2, 1, '#c89a20']]);
+    px(-2, -2, 1, 1, '#fff0a0'); px(1, 1, 1, 1, '#b8860b');
+  } else if (kind === 'asari') {   // アサリ（海べ）：茶色い すじの ある 貝
+    draw([[-3, -1, 6, 3, '#c9a77a'], [-2, -2, 4, 1, '#c9a77a'], [-2, 2, 4, 1, '#c9a77a']]);
+    for (const cx of [-3, 2]) px(cx, -1, 1, 3, '#8a6a44');
+  } else if (kind === 'chawan') {   // 抹茶わん（西尾）：うすい 茶色の わん・上に あわだつ 抹茶の 緑
+    draw([[-3, -1, 6, 3, '#c98a5a'], [-2, 2, 4, 1, '#c98a5a'], [-2, -2, 4, 1, '#7fc04a']]);
+    px(-2, 0, 1, 1, '#e8b890');
+  } else if (kind === 'chochin') {   // 提灯（一色）：赤い まるい ちょうちん・上下の 黒い ふた
+    draw([[-3, -2, 6, 4, '#d8302c'], [-2, -3, 4, 1, '#d8302c'], [-2, 2, 4, 1, '#d8302c'], [-2, -4, 4, 1, '#3a2a1a'], [-2, 3, 4, 1, '#3a2a1a']]);
+    px(-3, 0, 6, 1, '#f0b040');
+  } else if (kind === 'carnation') {   // カーネーション（幡豆）：ピンクの 花びらと 緑の くき
+    draw([[-3, -2, 6, 3, '#f06a9a'], [-2, -3, 4, 1, '#f06a9a'], [-1, 1, 2, 1, '#3f9b3c'], [-1, 2, 2, 1, '#3f9b3c']]);
+    px(-1, -1, 2, 1, '#ffd0e0');
+  } else if (kind === 'unadon') {   // うな丼（一色）：赤い どんぶり・上に 照りの ある うなぎ
+    draw([[-3, 0, 6, 3, '#b03a2a'], [-2, 3, 4, 1, '#b03a2a'], [-3, -2, 6, 2, '#6a3a1a'], [-2, -3, 4, 1, '#6a3a1a']]);
+    px(-2, -2, 2, 1, '#a8642a');
+  } else if (kind === 'parfait') {   // 抹茶パフェ（西尾）：ガラスの 器・抹茶の 緑と クリームの 白
+    draw([[-2, 0, 4, 3, '#e8f4f0'], [-1, 3, 2, 1, '#e8f4f0'], [-3, -2, 6, 2, '#7fc04a'], [-2, -3, 4, 1, '#fff4e0']]);
+    px(-2, 1, 4, 1, '#a8d878');
+  } else if (kind === 'kakigori') {   // かき氷（西尾）：氷の 山に 抹茶の 緑の みつ
+    draw([[-3, -1, 6, 3, '#e8f4f0'], [-2, -2, 4, 1, '#e8f4f0'], [-2, 2, 4, 1, '#9ab8c8']]);
+    px(-2, -2, 4, 1, '#7fc04a'); px(-3, -1, 2, 1, '#a8d878');
+  } else if (kind === 'chasoba') {   // 茶そば（西尾）：茶色い せいろ・緑の めん
+    draw([[-3, 1, 6, 2, '#6a4a2a'], [-3, -1, 6, 2, '#8fbf6a'], [-2, -2, 4, 1, '#8fbf6a']]);
+    px(-1, -1, 1, 1, '#4e9a3a');
+  } else {   // 大豆：うす黄色の まるい つぶ
+    draw([[-2, -2, 4, 4, '#e8d08a'], [-3, -1, 6, 2, '#e8d08a']]);
+    px(-1, -1, 1, 1, '#fff4c8'); px(1, 1, 1, 1, '#b89a50');
+  }
+  if (noFace) { /* かさは 目なし */ } else if (kind !== 'daizu') { const e = kind === 'nasu' || kind === 'unagi' ? '#fff4e0' : '#1a1a1a'; px(-1, 0, 1, 1, e); px(1, 0, 1, 1, e); } else { px(-1, -1, 1, 1, '#1a1a1a'); px(1, -1, 1, 1, '#1a1a1a'); }   // にこっと した 目（なすは 色が こいので 白い 目）
+  ctx.restore();
+}
+// お米つぶの にもつ（nimotsu.js）：着いた 名所の 名物を、転がって いる お米の あたまに のせる（絵は おともと 同じ drawNakama。
+// お米が はねると いっしょに ぽよんと 動き、ねむって いる ときは 蝶と ぶつかるので 描かない）
+function drawNimotsu(hx, by, u, now, sleepy) {
+  const kind = window.nishioGo && window.nishioGo.nimotsu;
+  if (!kind || sleepy) return;
+  const bob = Math.sin(now / 420) * 0.35 * u;
+  drawNakama(Math.round(hx), Math.round(by - 12.5 * u + bob), Math.max(1, Math.round(u * 0.8)), kind, 0);
+}
+// お米つぶの ゆめ（yume.js）：ねむって いる あいだ、いる 町の 名物を 頭の 左うえの ゆめの 吹き出しに 見る。おきると、見た ゆめを ひと言。
+// 町と 月で ねむり はじめに 1つ きめる（前と 同じ ゆめは つづけない）。西尾市の 外では 見ない。ねむり はじめた ときだけ さがす
+const yume = { cur: null, last: '', t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function yumeFind() {
+  if (!window.NISHIO_YUME || !LU || rp.x === null || worldMode) return null;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  return window.NISHIO_YUME.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, yume.last);
+}
+function yumeStep(hx, by, u, now, sleepy) {
+  if (sleepy && !yume.cur) {   // ねむり はじめ
+    const y = yumeFind();
+    if (!y) return;
+    yume.cur = y; yume.last = y.id; yume.t0 = now;
+    if (G.track) G.track('kome_yume', { id: y.id });
+  } else if (!sleepy && yume.cur) {   // おきた：見た ゆめを ひと言
+    const y = yume.cur; yume.cur = null;
+    if (!mapCovered()) riceSay(y.say, 2600, 'happy');
+    return;
+  }
+  if (!sleepy || !yume.cur) return;
+  const k = Math.min(1, (now - yume.t0) / 700), bob = calmMotion ? 0 : Math.sin(now / 900) * 0.5 * u, q = Math.max(1, Math.round(u * 0.8));
+  const cx = hx - 15 * u, cy = by - 19 * u + bob;   // 頭の 左うえ（Z は 右うえ）
+  ctx.save(); ctx.globalAlpha = k;
+  ctx.fillStyle = '#fffdf3'; ctx.strokeStyle = '#2a2420'; ctx.lineWidth = Math.max(1, Math.round(u * 0.5));
+  const puff = (x, y, r) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); };
+  puff(hx - 8 * u, by - 12 * u, 0.9 * u); puff(hx - 10.5 * u, by - 14.5 * u, 1.4 * u);   // 頭から ゆめへ つづく 小さな まる
+  for (const [dx, dy, r] of [[-3.5, 0, 4.5], [3.5, 0, 4.5], [0, -3, 5], [0, 3, 4.5]]) puff(cx + dx * u, cy + dy * u, r * u);
+  for (const [dx, dy, r] of [[-3.5, 0, 4.5], [3.5, 0, 4.5], [0, -3, 5], [0, 3, 4.5]]) { ctx.beginPath(); ctx.arc(cx + dx * u, cy + dy * u, r * u - ctx.lineWidth, 0, Math.PI * 2); ctx.fill(); }   // ふちの 内がわを ぬりつぶして 1つの くもに
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha = k;
+  drawNakama(Math.round(cx), Math.round(cy), q, yume.cur.id, 0);
+  ctx.restore();
+  yume.drawn++; dirty = true;
+}
+// お米つぶの ねどこ（nedoko.js）：ねむって いる あいだ、いる 町と 月に 合った 名物が お米の 下に ならんで ねどこに なる。しき おわると お米が ひと言。おきると 消える。
+// ねむり はじめに 1つ きめる（前と 同じ ものは つづけない）。西尾市の 外・ゲームボーイの4色では 出さない。お米の うしろ（下）に 描く
+const nedoko = { cur: null, last: '', t0: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function nedokoStep(hx, by, u, now, sleepy) {
+  const n = nedoko;
+  if (!sleepy || !window.NISHIO_NEDOKO || gbOn || worldMode || driving || rp.x === null) { n.cur = null; n.said = false; return; }
+  if (!n.cur) {   // ねむり はじめ
+    const c = kasaFind(), d = c ? window.NISHIO_NEDOKO.pick(Object.assign(c, { month: new Date().getMonth() + 1 }), n.last) : null;
+    if (!d) return;
+    n.cur = d; n.last = d.id; n.t0 = now; n.said = false;
+    if (G.track) G.track('kome_nedoko', { id: d.id });
+  }
+  const age = now - n.t0, k = Math.min(1, age / window.NISHIO_NEDOKO.SETTLE);
+  if (!n.said && k >= 1 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(n.cur.say, 2600, 'happy'); n.said = true; }
+  const q = Math.max(1, Math.round(u * 0.8)), bob = calmMotion ? 0 : Math.sin(now / 900) * 0.3 * u;
+  ctx.globalAlpha = k;
+  [[-15, 0], [-6, 1], [6, 1], [15, 0]].forEach(([dx, dy]) => drawNakama(Math.round(hx + dx * u), Math.round(by + (10.5 + dy) * u + bob), q, n.cur.id, 0, true));   // 4つ ならべて ふとんに（目は 描かない）
+  ctx.globalAlpha = 1;
+  n.drawn++; dirty = true;
+}
+// お米つぶの ゆあみ（yuami.js）：吉良で 止まって じっと すると、お米の まわりに 湯が わいて 吉良温泉に つかる（湯けむりが のぼる）。海べなら 波と うきわで 吉良ワイキキビーチ。
+// つかった とき お米が ひと言。動くか ねむりだすと 消える。西尾市の 吉良の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
+const yuami = { cur: null, t0: 0, still0: 0, said: false, chk: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function yuamiStep(hx, by, u, now) {
+  const y = yuami, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_YUAMI || !still || gbOn || rp.x === null || roll.idle > 12 || tsutsumi.cur || tsutsumi.done) { y.cur = null; y.said = false; y.chk = 0; return; }
+  if (!y.cur) {
+    if (roll.idle < window.NISHIO_YUAMI.STILL || now < y.chk) return;
+    y.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? window.NISHIO_YUAMI.pick(c) : null;
+    if (!d) return;
+    y.cur = d; y.t0 = now; y.said = false;
+    if (G.track) G.track('kome_yuami', { id: d.id });
+  }
+  const age = now - y.t0, k = Math.min(1, age / window.NISHIO_YUAMI.SETTLE);
+  if (!y.said && k >= 1 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(y.cur.say, 2600, 'happy'); y.said = true; }
+  if (k >= 1) roll.happyT = Math.max(roll.happyT, 0.3);   // つかって いる あいだは にこにこ顔
+  const q = Math.max(1, Math.round(u * 0.8)), px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const t = calmMotion ? 0 : now / 1000;
+  ctx.globalAlpha = k;
+  if (y.cur.id === 'onsen') {   // 湯：岩の ふちに 白っぽい 湯。湯けむりが ゆらゆら のぼる
+    px(-17, 5, 34, 9, '#6b5a4a'); px(-16, 6, 32, 7, '#8fd3e0'); px(-14, 7, 6, 1, '#d8f4f8'); px(5, 9, 8, 1, '#d8f4f8');
+    for (let i = 0; i < 3; i++) {
+      const ph = (t * 0.5 + i / 3) % 1;
+      ctx.globalAlpha = k * (1 - ph) * 0.7;
+      px(-10 + i * 10 + Math.sin(t * 2 + i * 2) * 1.5, -13 - ph * 12, 4, 2.5, '#ffffff');
+    }
+  } else {   // ビーチ：波の しま・うきわ（赤と 白）
+    px(-18, 8, 36, 6, '#4aa8d8'); px(-18, 8, 36, 1, '#bfe8f6');
+    const w = Math.sin(t * 2) * 1.5;
+    px(-15 + w, 10, 6, 1, '#bfe8f6'); px(7 - w, 12, 6, 1, '#bfe8f6');
+    px(-17, 6, 4, 4, '#e8384a'); px(13, 6, 4, 4, '#e8384a'); px(-13, 7, 26, 3, '#fff7e6'); px(-5, 7, 4, 3, '#e8384a'); px(5, 7, 4, 3, '#e8384a');
+  }
+  ctx.globalAlpha = 1;
+  y.drawn++; dirty = true;
+}
+// お米つぶの ほりだし（horidashi.js）：一色・幡豆の 海べで 止まって じっと すると、お米が 砂を ほり（砂が とぶ）、干潟の 貝を ほり当てる。貝が 砂から 顔を 出し、お米が ひと言。
+// 7秒ごとに つぎの 貝。動くか ねむりだすと 消える。西尾市の 中だけ・ゲームボーイの4色では 出さない・ゆあみ〈吉良〉が 出ている ときは 出さない。お米の うしろに 描く
+const horidashi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function horidashiStep(hx, by, u, now) {
+  const h = horidashi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_HORIDASHI || !still || gbOn || rp.x === null || roll.idle > 12 || yuami.cur || shimatabi.cur || tombolo.cur || tsutsumi.cur || tsutsumi.done) { h.cur = null; h.said = false; h.chk = 0; return; }
+  const H = window.NISHIO_HORIDASHI;
+  if (!h.cur || now - h.t0 >= H.CYCLE) {
+    if (!h.cur && (roll.idle < H.STILL || now < h.chk)) return;
+    h.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? H.pick(c, h.last) : null;
+    if (!d) { h.cur = null; return; }
+    h.cur = d; h.last = d.id; h.t0 = now; h.said = false;
+    if (G.track) G.track('kome_horidashi', { id: d.id });
+  }
+  const age = now - h.t0, dig = Math.min(1, age / H.DIG), t = calmMotion ? 0 : now / 1000;
+  const px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  px(-18, 11, 36, 4, '#e8cf94'); px(-16, 12, 8, 1, '#c9ad70'); px(4, 13, 10, 1, '#c9ad70');   // 干潟の 砂
+  if (dig < 1) {   // ほっている：砂が ぱっぱっと とぶ
+    for (let i = 0; i < 6; i++) {
+      const ph = (t * 2.2 + i / 6) % 1, sd = i % 2 ? 1 : -1;
+      ctx.globalAlpha = 1 - ph;
+      px(sd * (10 + ph * 8) - 1, 10 - Math.sin(ph * Math.PI) * 9, 2.5, 2.5, i % 3 ? '#e8cf94' : '#c9ad70');
+    }
+    ctx.globalAlpha = 1;
+    px(-11, 10, 5, 2, '#c9ad70'); px(7, 10, 5, 2, '#c9ad70');   // ほった あとの もりあがり
+  } else {   // ほり当てた：貝が 砂から ぴょこっと 顔を 出す
+    if (!h.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(h.cur.say, 2600, 'happy'); h.said = true; }
+    roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+    const up = Math.min(1, (age - H.DIG) / 400), s = Math.round(u * 1.2 * 16), bob = calmMotion ? 0 : Math.sin(t * 5) * 0.8;
+    px(8, 11, 14, 3, '#e8cf94');
+    ctx.drawImage(critterSprites[h.cur.id], Math.round(hx + 7 * u), Math.round(by + (-2 - bob - (1 - up) * -8) * u), s, s);
+    px(7, 12, 16, 3, '#e8cf94');   // 砂から 半分 出て いる ように 手前を 砂で かくす
+  }
+  h.drawn++; dirty = true;
+}
+// お米つぶの つつみづくり（tsutsumi.js）：西尾市の 吉良の 田んぼで 止まって じっと すると、お米の うしろで 領民に まじって 土を はこび、堤が 少しずつ 高く なる。
+// 「長さ180m・高さ4m」の 黄金堤が できたら、田の 稲穂が 金色に かわる。そのつど お米が ひと言。動くか ねむりだすと 消える。ひと通り おわったら 動くまで くりかえさない
+// 吉良の 田んぼの 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く（ゆあみ・ほりだしより 先に 出る）
+const tsutsumi = { cur: null, t0: 0, chk: 0, n: 0, done: false, drawn: 0 };   // n：言った ひと言の 数。drawn：描いた 数（テスト用）
+function tsutsumiStep(hx, by, u, now) {
+  const m = tsutsumi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_TSUTSUMI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.n = 0; m.done = false; m.chk = 0; return; }
+  const T = window.NISHIO_TSUTSUMI;
+  if (!m.cur) {
+    if (m.done || roll.idle < T.STILL || now < m.chk) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const f = kasaFind(), d = f ? T.pick(f) : null;
+    if (!d) return;
+    m.cur = d; m.t0 = now; m.n = 0;
+    if (G.track) G.track('kome_tsutsumi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000;
+  const k = Math.min(1, age / T.BUILD), g = Math.max(0, Math.min(1, (age - T.BUILD) / T.GOLD));
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 400);
+  for (let i = 0; i < 13; i++) {   // 田の 稲穂：はじめは 緑、できあがると 金色に かわり ゆらゆら
+    const sw = Math.sin(t * 2 + i) * 0.8 * g, x = -26 + i * 4;
+    px(x, 11, 0.8, 5, '#7fae45'); px(x + sw, 9.5, 1.6, 2.5, g > 0.5 ? '#e8b923' : '#9dc94f');
+  }
+  const h = 14 * k;   // 堤：土の 色の 台に 草の 帽子。上へ 少しずつ のびる
+  px(-24, 15 - h, 48, h, '#8a6a43'); px(-24, 15 - h, 48, Math.min(1.5, h), g > 0.5 ? '#d9b44a' : '#6fa04a');
+  if (age < T.BUILD) {   // 領民：土を かついで 堤に むかって ならぶ
+    for (let i = 0; i < 3; i++) {
+      const x = -22 + i * 18 + (calmMotion ? 0 : Math.sin(t * 3 + i * 2) * 1.5), y = 13 - h + Math.abs(Math.sin(t * 6 + i)) * (calmMotion ? 0 : 0.8);
+      px(x, y - 5, 2, 2, '#e6c9a0'); px(x, y - 3, 2, 3, '#5b6f8a'); px(x + 2, y - 4, 2.5, 2, '#a07a4c');
+    }
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  const at = [600, T.BUILD + 200, T.BUILD + T.GOLD], say = [m.cur.say, m.cur.done, m.cur.gold];
+  if (m.n < 3 && age >= at[m.n] && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(say[m.n], 2800, 'happy'); m.n++; }
+  if (m.n >= 3 && age > T.BUILD + T.GOLD + T.HOLD) { m.cur = null; m.done = true; return; }   // ひと通り おわり：動くまで くりかえさない
+  m.drawn++; dirty = true;
+}
+// お米つぶの しまたび（shimatabi.js）：西尾市の 佐久島で 止まって じっと すると、お米の うしろが 島の ひとこまに なる。アート作品の 台座・黒壁の 集落・一色港からの 高速船が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 佐久島の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く（ほりだし・ゆあみより 先に 出る）
+const shimatabi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function shimatabiStep(hx, by, u, now) {
+  const m = shimatabi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_SHIMATABI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_SHIMATABI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_shimatabi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (m.cur.id === 'art') {   // 作品の 台座：石の 台に 名札。まわりに 赤い ポールと ロープ
+    px(-14, 11, 28, 4, '#b8b2a4'); px(-14, 11, 28, 1, '#d8d3c6'); px(-14, 14, 28, 1, '#8c8678'); px(-4, 12.5, 8, 1.5, '#4a4a4a');
+    px(-18, 8, 2, 7, '#c0392b'); px(16, 8, 2, 7, '#c0392b'); px(-16, 9, 4, 1, '#e6d3a3'); px(12, 9, 4, 1, '#e6d3a3');
+  } else if (m.cur.id === 'kurokabe') {   // 黒壁：黒い 板壁に 銀ねずの 瓦の ひさし
+    px(-22, -8, 44, 23, '#2b2f36'); for (let i = 0; i < 11; i++) px(-22 + i * 4, -6, 0.6, 21, '#1d2026');
+    px(-24, -11, 48, 3, '#7a7f86'); px(-24, -8, 48, 1, '#5b5f66'); px(12, -2, 7, 6, '#161a1f'); px(13, -1, 5, 4, '#e0c070');
+  } else {   // 高速船：海の 帯を 白い 船が ゆっくり 横ぎる
+    px(-24, 12, 48, 3, '#4a8fc2'); px(-24, 12, 48, 1, '#7db5dc');
+    for (let i = 0; i < 4; i++) px(-20 + i * 12 + Math.sin(t * 2 + i) * 2, 13.5, 4, 0.8, '#e8f3fb');
+    const sx = calmMotion ? -6 : -22 + ((age / 7000) % 1) * 34;
+    px(sx, 8, 14, 3, '#f4f4f4'); px(sx, 11, 14, 1.5, '#2f6fb0'); px(sx + 4, 5, 6, 3, '#f4f4f4'); px(sx + 5, 6, 4, 1, '#222');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの ちょうちんよる（chochinyoru.js）：夜に 西尾市の 一色の 町なかで 止まって じっと すると、お米の うしろに 提灯の あかりが ともる。大提灯の あかり・提灯の れつ・大提灯を 見あげる が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・夜の 一色の 町なか（佐久島の 外・まわりに 海が ない 所）の 中だけ・ゲームボーイの4色では 出さない。いっしきさんぽ・めぐりの 輪に 先んじる。お米の うしろに 描く
+const chochinyoru = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function chochinyoruStep(hx, by, u, now) {
+  const m = chochinyoru, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_CHOCHINYORU || !still || gbOn || rp.x === null || roll.idle > 12 || !nightOn || nightLevel() < 1) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_CHOCHINYORU;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(Object.assign(c, { night: true }), m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_chochinyoru', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id, fade = Math.min(1, age / 500);
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const glow = (cx, cy, r, al) => { for (let k = 3; k >= 1; k--) { ctx.globalAlpha = fade * al * (4 - k) / 3 * 0.5; px(cx - r * k / 3, cy - r * k / 3, r * 2 * k / 3, r * 2 * k / 3, '#ffb040'); } ctx.globalAlpha = fade; };
+  const lantern = (cx, cy, w, h) => {   // 赤い 丸い 提灯：上下の 黒い ふた・まんなかの 金の すじ
+    px(cx - w / 2, cy, w, h, '#d8302c'); px(cx - w / 2 + 1, cy - 1, w - 2, 1, '#d8302c'); px(cx - w / 2 + 1, cy + h, w - 2, 1, '#d8302c');
+    px(cx - w / 4, cy - 2, w / 2, 1.5, '#3a2a1a'); px(cx - w / 4, cy + h + 0.5, w / 2, 1.5, '#3a2a1a');
+    px(cx - w / 2, cy + h / 2, w, 1, '#f0b040'); px(cx - w / 2 + 1, cy + 1, 1, h - 2, '#ff7a60');
+  };
+  ctx.globalAlpha = fade;
+  const pulse = calmMotion ? 1 : 0.85 + Math.sin(t * 3) * 0.15;
+  if (id === 'tomoru') {   // 大提灯の あかり：お米の よこ上に 大きな 提灯が ぽうっと ともる
+    glow(14, -12, 14 * pulse, 0.8); lantern(14, -18, 14, 14);
+  } else if (id === 'narabu') {   // 提灯の れつ：ひもに 5つ ならんで ゆらゆら
+    px(-22, -16, 44, 1, '#3a2a1a');
+    for (let i = 0; i < 5; i++) { const sw = calmMotion ? 0 : Math.sin(t * 2 + i * 0.9) * 1.5; glow(-18 + i * 9 + sw, -10, 5 * pulse, 0.8); lantern(-18 + i * 9 + sw, -14, 6, 7); }
+  } else {   // 大提灯を 見あげる：お米の 真上に 大きく どーんと
+    glow(0, -28, 20 * pulse, 0.7); lantern(0, -38, 22, 22);
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの かわべさんぽ（kawabe.js）：西尾市の 川・池・用水の そば（海べでは ない 所）で 止まって じっと すると、お米の うしろが 水べの ひとこまに なる。矢作川が 三河湾へ・メダカ・アカザと イチモンジタナゴ・ミサゴ・ニホンイシガメが 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 水べの 中だけ・ゲームボーイの4色では 出さない。ほかの 場所・町の 場面が 出て いる 間は 譲り、ちゃせきには 先んじる。お米の うしろに 描く
+const kawabe = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function kawabeStep(hx, by, u, now) {
+  const m = kawabe, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_KAWABE || !still || gbOn || rp.x === null || roll.idle > 12 || tsutsumi.cur || chochinyoru.cur || isshiki.cur || shimatabi.cur || yuami.cur || horidashi.cur || hazusanpo.cur || tombolo.cur || jokamachi.cur || mangekyo.cur || chatsumi.cur) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_KAWABE;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_kawabe', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id, fade = Math.min(1, age / 500);
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const spr = (k, cx, cy, sc) => { if (critterSprites[k]) ctx.drawImage(critterSprites[k], Math.round(hx + cx * u), Math.round(by + cy * u), Math.round(u * sc * 16), Math.round(u * sc * 16)); };
+  const water = (y, h) => { px(-20, y, 40, h, '#4a8fc4'); px(-20, y, 40, 1, '#8cc4e8'); for (let i = 0; i < 3; i++) { const sh = calmMotion ? 0 : Math.sin(t * 2 + i * 2) * 2; px(-14 + i * 12 + sh, y + 2, 5, 1, '#a8d4ee'); } };
+  ctx.globalAlpha = fade;
+  if (id === 'yahagi') {   // 矢作川が 三河湾へ：細い 川が 右へ ひろがって 海に 注ぐ
+    px(-20, 4, 22, 5, '#4a8fc4'); px(-20, 4, 22, 1, '#8cc4e8'); px(-2, 2, 14, 9, '#3f84bc'); px(10, -2, 12, 17, '#2f6ea8');
+    for (let i = 0; i < 3; i++) { const sh = calmMotion ? 0 : ((t * 6 + i * 8) % 24); px(-20 + sh, 6, 3, 1, '#d6ecf8'); }
+    px(-20, 9, 22, 2, '#b99c5e'); px(-20, 2, 22, 2, '#7ba04a');
+  } else if (id === 'medaka') {   // メダカ：水の 中を すいすい
+    water(4, 12); const sw = calmMotion ? 0 : Math.sin(t * 1.6) * 6;
+    spr('medaka', -10 + sw, 2, 1); spr('medaka', 6 - sw, 6, 0.8);
+  } else if (id === 'uo') {   // アカザと イチモンジタナゴ：川の 底と なかほど
+    water(2, 14); px(-20, 14, 40, 2, '#7a6a4a'); const sw = calmMotion ? 0 : Math.sin(t * 1.4) * 5;
+    spr('akaza', -14 + sw, 2, 1); spr('sakana', 4 - sw, -2, 0.9);
+  } else if (id === 'misago') {   // ミサゴ：空から 水面を 見おろす
+    water(8, 8); const fly = calmMotion ? 0 : Math.sin(t * 1.2) * 8;
+    spr('misago', -6 + fly, -16, 1.3);
+  } else {   // ニホンイシガメ：田んぼの あぜで ひなたぼっこ
+    water(8, 8); px(-12, 4, 24, 5, '#b99c5e'); px(-12, 4, 24, 1, '#7ba04a');
+    for (let i = 0; i < 5; i++) px(-10 + i * 5, 1 + (i % 2), 1.5, 3, '#e0c030');   // 稲穂
+    spr('ishigame', -7, -6, 1.1);
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの いっしきさんぽ（isshiki.js）：西尾市の 一色の 町なかで 止まって じっと すると、お米の うしろが 一色の ひとこまに なる。えびせんべい焼き・うなぎ約2割・養鰻・さかな広場が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 一色の 町なか（佐久島の 外・まわりに 海が ない 所）の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
+const isshiki = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function isshikiStep(hx, by, u, now) {
+  const m = isshiki, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_ISSHIKI || !still || gbOn || rp.x === null || roll.idle > 12 || chochinyoru.cur) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_ISSHIKI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_isshiki', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (m.cur.id === 'ebisen') {   // えびせんべい焼き：鉄の 台の 上で せんべいが じゅうじゅう。けむりが ゆらゆら
+    px(-16, 11, 32, 3, '#4a4a4e'); px(-16, 11, 32, 1, '#76767c'); px(-14, 14, 3, 1.5, '#2e2e32'); px(11, 14, 3, 1.5, '#2e2e32');
+    for (let i = 0; i < 3; i++) { const fl = !calmMotion && Math.sin(t * 3 + i) > 0.6; drawNakama(Math.round(hx + (-9 + i * 9) * u), Math.round(by + (9 - (fl ? 2 : 0)) * u), Math.max(1, Math.round(u * 0.8)), 'ebisen', 0, true); }
+    for (let i = 0; i < 3; i++) { const ph = (t * 0.8 + i / 3) % 1; ctx.globalAlpha = Math.min(1, age / 500) * 0.5 * (1 - ph); px(-10 + i * 9 + Math.sin(ph * 6 + i) * 2, 6 - ph * 8, 2, 2, '#eeeeee'); }
+  } else if (m.cur.id === 'unagi2') {   // 約2割：10この まるの うち 2つが うなぎ（のこりは 色を うすく）
+    for (let i = 0; i < 10; i++) {
+      const gx = -18 + (i % 5) * 8, gy = 6 + Math.floor(i / 5) * 6;
+      if (i < 2) drawNakama(Math.round(hx + (gx + 3) * u), Math.round(by + (gy + 2) * u), Math.max(1, Math.round(u * 0.8)), 'unagi', 0, true);
+      else { ctx.globalAlpha = Math.min(1, age / 500) * 0.45; px(gx, gy, 5, 4, '#9fb0c0'); ctx.globalAlpha = Math.min(1, age / 500); }
+    }
+  } else if (m.cur.id === 'yoman') {   // 養鰻：池に うなぎが くねくね。たて札
+    px(-20, 10, 40, 5, '#3e86a8'); px(-20, 10, 40, 1, '#8cc8de'); px(-20, 15, 40, 1, '#2b5f78');
+    const w = calmMotion ? 0 : Math.sin(t * 2) * 6;
+    drawNakama(Math.round(hx + (-4 + w) * u), Math.round(by + 12.5 * u), Math.max(1, Math.round(u * 0.8)), 'unagi', 0, true);
+    px(14, 3, 1, 8, '#7a4a22'); px(11, 1, 7, 4, '#e6d3a3'); px(12, 2, 5, 1, '#7a4422'); px(12, 3.5, 3, 1, '#7a4422');
+  } else {   // さかな広場：木の 台に 魚が ならぶ。のぼり
+    px(-18, 11, 36, 4, '#a9763f'); px(-18, 11, 36, 1, '#c9955a'); px(-18, 14, 36, 1, '#7a4f26');
+    for (let i = 0; i < 4; i++) { const fx = -14 + i * 8; px(fx, 8.5, 6, 2.5, i % 2 ? '#e8e8ee' : '#9fc0d8'); px(fx + 5.5, 9, 2, 1.5, i % 2 ? '#e8e8ee' : '#9fc0d8'); px(fx + 1, 9, 1, 1, '#2a2a30'); }
+    px(17, -2, 1, 13, '#7a4a22'); px(18, -2, 5, 7, '#d8302c'); px(19, 0, 3, 1, '#fff7e6');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの はずさんぽ（hazusanpo.js）：西尾市の 幡豆の 町なか（海べでは ない 所）で 止まって じっと すると、お米の うしろが 幡豆の ひとこまに なる。三ヶ根山の 山並み・スカイライン・カーネーション・あじさいと ひまわり畑が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 幡豆の 中だけ・ゲームボーイの4色では 出さない。海べは ほりだしが 先。お米の うしろに 描く
+const hazusanpo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function hazusanpoStep(hx, by, u, now) {
+  const m = hazusanpo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_HAZUSANPO || !still || gbOn || rp.x === null || roll.idle > 12 || tombolo.cur) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_HAZUSANPO;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const c = kasaFind(), d = c ? S.pick(c, m.last) : null;
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_hazusanpo', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const fade = Math.min(1, age / 500);
+  ctx.globalAlpha = fade;
+  if (id === 'yamanami') {   // 三ヶ根山の 山並み：段々の 山が 3つ かさなる
+    px(-20, 14, 40, 1, '#4a6a3a'); px(-20, 11, 14, 3, '#7aa06a'); px(-17, 8, 8, 3, '#7aa06a'); px(-15, 6, 4, 2, '#7aa06a');
+    px(-6, 10, 26, 4, '#5a8a4c'); px(0, 7, 14, 3, '#5a8a4c'); px(4, 4, 6, 3, '#5a8a4c'); px(6, 2, 2, 2, '#5a8a4c');
+    px(8, 11, 12, 3, '#3e6e3a'); px(11, 9, 6, 2, '#3e6e3a');
+  } else if (id === 'skyline') {   // スカイライン：山を ジグザグに のぼる 道と 小さな 車
+    px(-18, 14, 36, 1, '#4a6a3a'); px(-14, 10, 28, 4, '#5a8a4c'); px(-9, 6, 18, 4, '#5a8a4c'); px(-4, 2, 8, 4, '#5a8a4c');
+    px(-12, 12, 24, 1, '#d8d4c8'); px(-8, 9, 16, 1, '#d8d4c8'); px(-3, 5, 8, 1, '#d8d4c8'); px(6, 9, 2, 3, '#d8d4c8'); px(-9, 6, 2, 3, '#d8d4c8');
+    const ph = calmMotion ? 0.4 : (t * 0.25) % 1;
+    px(-10 + ph * 20, 10.5, 3, 1.5, '#d8302c'); px(-9.5 + ph * 20, 10, 1.5, 0.8, '#fff7e6');
+  } else if (id === 'carnation') {   // カーネーション：くきを のばした ピンクの 花が ならぶ
+    px(-18, 14, 36, 1, '#6e5a3a');
+    for (let i = 0; i < 5; i++) {
+      const fx = -15 + i * 7, sw = calmMotion ? 0 : Math.sin(t * 1.5 + i) * 0.6, top = 5 + (i % 2) * 2;
+      px(fx + 1, top + 2, 1, 12 - (top - 5), '#3e8a3c'); px(fx - 1 + sw, top, 5, 3, i % 2 ? '#f08ab0' : '#e85a8a'); px(fx + sw, top - 1, 3, 1, '#f8c0d4'); px(fx + 1 + sw, top + 1, 1, 1, '#fff0f4');
+    }
+  } else {   // あじさいと ひまわり畑：左に あじさい、右に ひまわり
+    px(-18, 14, 36, 1, '#6e5a3a');
+    px(-17, 8, 8, 6, '#6a86d8'); px(-15, 6, 6, 3, '#8aa0e8'); px(-19, 10, 4, 4, '#a07ad8'); px(-12, 11, 5, 3, '#a07ad8'); px(-16, 9, 1, 1, '#c8d4f8'); px(-12, 9, 1, 1, '#c8d4f8');
+    for (let i = 0; i < 2; i++) {
+      const fx = 4 + i * 9, sw = calmMotion ? 0 : Math.sin(t * 1.2 + i * 2) * 0.6, top = 3 + i * 2;
+      px(fx + 2, top + 3, 1, 14 - top - 3, '#3e8a3c'); px(fx + sw, top, 5, 5, '#f2c230'); px(fx + 1 + sw, top + 1, 3, 3, '#6a4220'); px(fx - 1 + sw, top + 2, 1, 1, '#f2c230'); px(fx + 5 + sw, top + 2, 1, 1, '#f2c230');
+    }
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの じょうかまちさんぽ（jokamachi.js）：西尾城の あと（西尾市歴史公園・旧近衛邸・尚古荘）の そばで 止まって じっと すると、お米の うしろが 城下町の ひとこまに なる。丑寅櫓・鍮石門・西条城・6万石・旧近衛邸の 抹茶・尚古荘・祇園祭・三河の小京都が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 西尾城の あとの そばの 中だけ・ゲームボーイの4色では 出さない。ちゃせきより 先に 出る（ちゃせきは 譲る）。お米の うしろに 描く
+const jokamachi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function jokamachiStep(hx, by, u, now) {
+  const m = jokamachi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_JOKAMACHI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_JOKAMACHI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.nearKeys(G.spots, ll.lat, ll.lng) }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_jokamachi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'ushitora') {   // 本丸丑寅櫓：石垣の 上に 白い 壁と かわらの 屋根
+    px(-14, 11, 28, 4, '#8a8a84'); px(-14, 11, 28, 1, '#b0b0aa'); px(-10, 4, 20, 7, '#f1ede0'); px(-10, 4, 20, 1, '#d8d2c0');
+    px(-13, 1, 26, 3, '#3a3c44'); px(-8, -2, 16, 3, '#3a3c44'); px(-4, 6, 3, 3, '#4a3a2a'); px(2, 6, 3, 3, '#4a3a2a');
+  } else if (id === 'yuseki') {   // 鍮石門：2本の 柱に 屋根の 門
+    px(-12, 4, 3, 11, '#6e4a2a'); px(9, 4, 3, 11, '#6e4a2a'); px(-15, 1, 30, 3, '#3a3c44'); px(-13, -1, 26, 2, '#4a4c54'); px(-9, 4, 18, 2, '#8a5a30');
+  } else if (id === 'shijo') {   // 西条城の はじまり：石垣と 旗
+    px(-16, 10, 32, 5, '#8a8a84'); px(-16, 10, 32, 1, '#b0b0aa'); for (let i = 0; i < 3; i++) px(-16 + i * 11, 12.5, 10, 1, '#6b6b66');
+    px(10, -4, 1, 14, '#7a4a22'); px(11, -4, 6, 4, '#d8302c'); px(12, -3, 4, 1, '#fff7e6');
+  } else if (id === 'rokuman') {   // 6万石：米俵が 6つ（下に 3つ、上に 2つ、てっぺんに 1つ）
+    const bale = (x, y) => { px(x, y, 8, 5, '#c9a55a'); px(x, y, 8, 1, '#e0c27a'); px(x + 2, y, 1, 5, '#8a6a2a'); px(x + 5, y, 1, 5, '#8a6a2a'); };
+    bale(-13, 10); bale(-4, 10); bale(5, 10); bale(-8.5, 5); bale(0.5, 5); bale(-4, 0);
+  } else if (id === 'konoe') {   // 旧近衛邸の 抹茶：畳の 上の 茶わん
+    px(-16, 12, 32, 3, '#9fb36a'); px(-16, 12, 32, 1, '#b9ca86'); px(-16, 14, 32, 1, '#6e4a2a');
+    drawNakama(Math.round(hx + 14 * u), Math.round(by + 9 * u), Math.max(1, Math.round(u * 0.9)), 'chawan', 0, true);
+  } else if (id === 'shokoso') {   // 尚古荘の 庭：松と 石どうろう
+    px(-14, 14, 28, 1, '#5d7a3a'); px(-12, 6, 2, 8, '#6e4a2a'); px(-17, 1, 12, 4, '#2f6a3a'); px(-15, -2, 8, 3, '#2f6a3a');
+    px(8, 12, 6, 2, '#8a8a84'); px(9, 8, 4, 4, '#b0b0aa'); px(8, 6, 6, 2, '#8a8a84'); px(10, 9, 2, 2, '#f2c84b');
+  } else if (id === 'gion') {   // 西尾祇園祭：提灯を つるした 山車（だし）。提灯が ゆれる
+    px(-14, 9, 28, 6, '#a8362c'); px(-14, 9, 28, 1, '#d8584a'); px(-12, 5, 24, 4, '#6e4a2a'); px(-15, 3, 30, 2, '#3a3c44');
+    for (let i = 0; i < 5; i++) { const sw = calmMotion ? 0 : Math.sin(t * 2 + i) * 0.8; px(-11 + i * 5.5 + sw, 6, 2.5, 3, '#f0d070'); px(-10.5 + i * 5.5 + sw, 6, 1.5, 3, '#e8481c'); }
+    px(-16, 13, 4, 4, '#2a2a30'); px(12, 13, 4, 4, '#2a2a30');
+  } else {   // 三河の小京都：お寺の 屋根と 本堂
+    px(-14, 11, 28, 4, '#8a8a84'); px(-9, 4, 18, 7, '#f1ede0'); px(-13, 0, 26, 4, '#3a3c44'); px(-9, -3, 18, 3, '#4a4c54');
+    px(-2, 6, 4, 5, '#7a4a22'); px(-1, -5, 2, 2, '#d8a82c');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの ちゃつみ（chatsumi.js）：稲荷山茶園公園の そばで 止まって じっと すると、お米の うしろが 茶畑の ひとこまに なる。茶畑の 一望・茶摘み（4〜5月）・てん茶の 産地・川霧と 土の 場面が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の 稲荷山茶園公園の そばの 中だけ・ゲームボーイの4色では 出さない。ちゃせきより 先に 出る（ちゃせきは 譲る）。お米の うしろに 描く
+const chatsumi = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function chatsumiStep(hx, by, u, now) {
+  const m = chatsumi, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_CHATSUMI || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_CHATSUMI;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.near(G.spots, ll.lat, ll.lng), month: new Date().getMonth() + 1 }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_chatsumi', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const row = (x, y, w) => { px(x, y, w, 4, '#2f7a3a'); px(x + 1, y - 1, w - 2, 1, '#4a9a4c'); px(x, y + 3, w, 1, '#1f5a2c'); };   // 茶の うね（かまぼこ形の 緑）
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'ichibo') {   // 茶畑の 一望：高台から 奥へ ひろがる うね
+    px(-17, 14, 34, 1, '#6e5a3a'); row(-16, 10, 32); row(-13, 6, 26); row(-10, 2, 20); row(-7, -2, 14);
+  } else if (id === 'tsumi') {   // 茶摘み：うねの 横に 竹かご、新芽が 光る
+    row(-16, 9, 32); px(-16, 14, 32, 1, '#6e5a3a');
+    px(8, 5, 8, 6, '#c9a55a'); px(8, 5, 8, 1, '#e0c27a'); px(9, 7, 6, 1, '#8a6a2a'); px(9, 9, 6, 1, '#8a6a2a');
+    for (let i = 0; i < 4; i++) { const tw = calmMotion ? 1 : (Math.sin(t * 3 + i * 1.7) > 0.3 ? 1 : 0.4); px(-13 + i * 6, 7, 1.5, 2, tw >= 1 ? '#c8f06a' : '#8ac04a'); }
+  } else if (id === 'tencha') {   // てん茶の 産地：てん茶の 葉の 山と ふくろ
+    px(-16, 14, 32, 1, '#6e5a3a'); px(-14, 9, 28, 5, '#4a9a4c'); px(-10, 5, 20, 4, '#4a9a4c'); px(-6, 2, 12, 3, '#6ab45a'); px(-12, 9, 24, 1, '#7ac06a');
+    px(11, 6, 5, 8, '#e8dcb8'); px(11, 6, 5, 1, '#c8b890'); px(12, 9, 3, 2, '#2f7a3a');
+  } else {   // 川霧と 土：うねの 上を 白い もやが ながれる
+    px(-16, 14, 32, 1, '#6e4a2a'); row(-16, 10, 32); row(-12, 5, 24);
+    for (let i = 0; i < 3; i++) { const dx = calmMotion ? 0 : Math.sin(t * 0.8 + i * 2) * 3; ctx.globalAlpha = Math.min(1, age / 500) * 0.55; px(-15 + i * 10 + dx, 3 + i * 3.5, 14, 2.5, '#ffffff'); }
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの トンボロさんぽ（tombolo.js）：トンボロ干潟の そばで 止まって じっと すると、お米の うしろが 干潟の ひとこまに なる。満ちた 海・潮が 引く・海の 道（トンボロ現象）・干潟の 生きものが 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の トンボロ干潟の そばの 中だけ・ゲームボーイの4色では 出さない。ほりだし・はずさんぽより 先に 出る（それらは 譲る）。お米の うしろに 描く
+const tombolo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function tomboloStep(hx, by, u, now) {
+  const m = tombolo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_TOMBOLO || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_TOMBOLO;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.near(G.spots, ll.lat, ll.lng) }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_tombolo', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const wave = (x, y, w, i) => { const dx = calmMotion ? 0 : Math.sin(t * 1.4 + i * 2) * 1.5; px(x + dx, y, w, 1, '#d8ecf8'); };   // 波の 白い すじ
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'mitsu') {   // 満ちた 海：一面の 海に 小さな 島の かげ
+    px(-18, 6, 36, 9, '#4a8ac8'); px(-18, 6, 36, 1, '#6aa6dc'); wave(-14, 9, 6, 0); wave(2, 11, 7, 1); wave(-6, 13, 5, 2);
+    px(8, 3, 9, 3, '#4a7a3a'); px(10, 1, 5, 2, '#4a7a3a'); px(8, 6, 9, 1, '#e8cf94');
+  } else if (id === 'hiku') {   // 潮が 引く：海が 左右へ しりぞき、まんなかに 砂の 道が 見えはじめる
+    px(-18, 6, 36, 9, '#4a8ac8'); px(-18, 6, 36, 1, '#6aa6dc');
+    const open = calmMotion ? 6 : Math.min(6, 1 + age / 1200);
+    px(-open, 6, open * 2, 9, '#e8cf94'); px(-open + 1, 9, open * 2 - 2, 1, '#c9ad70');
+    wave(-14, 9, 6, 0); wave(8, 12, 6, 1); px(8, 3, 9, 3, '#4a7a3a'); px(10, 1, 5, 2, '#4a7a3a'); px(8, 6, 9, 1, '#e8cf94');
+  } else if (id === 'michi') {   // 海の 道：島へ のびる 砂の 道、両がわは 海
+    px(-18, 6, 36, 9, '#4a8ac8'); px(-18, 6, 36, 1, '#6aa6dc');
+    px(-18, 9, 28, 4, '#e8cf94'); px(-18, 9, 28, 1, '#f4e2b0'); px(-12, 11, 6, 1, '#c9ad70'); px(0, 12, 6, 1, '#c9ad70');
+    wave(-14, 7, 6, 0); wave(2, 7, 7, 1); wave(-8, 14, 6, 2);
+    px(8, 3, 9, 3, '#4a7a3a'); px(10, 1, 5, 2, '#4a7a3a'); px(8, 6, 10, 4, '#e8cf94');
+  } else {   // 干潟の 生きもの：ひろい 砂の 上に アサリと ウミニナ
+    px(-18, 11, 36, 4, '#e8cf94'); px(-16, 12, 8, 1, '#c9ad70'); px(4, 13, 10, 1, '#c9ad70'); px(-18, 8, 36, 3, '#c8e0ec'); wave(-12, 9, 6, 0);
+    const bob = calmMotion ? 0 : Math.sin(t * 2) * 0.6;
+    for (const [sx, sy, k] of [[-14, -4, 'asari'], [2, -4, 'uminina']]) if (critterSprites[k]) ctx.drawImage(critterSprites[k], Math.round(hx + sx * u), Math.round(by + (sy + bob) * u), Math.round(u * 1.2 * 16), Math.round(u * 1.2 * 16));
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの まんげきょう（mangekyo.js）：三河工芸ガラス美術館の そばで 止まって じっと すると、お米の うしろが ガラス工芸の ひとこまに なる。美術館・巨大な 万華鏡・万華鏡を のぞく が 7秒ごとに かわり、かわるたび お米が ひと言。
+// 動くか ねむりだすと 消える。前と 同じ 場面は つづけない・西尾市の ガラス美術館の そばの 中だけ・ゲームボーイの4色では 出さない。ちゃせきより 先に 出る（ちゃせきは 譲る）。お米の うしろに 描く
+const mangekyo = { cur: null, last: '', t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function mangekyoStep(hx, by, u, now) {
+  const m = mangekyo, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_MANGEKYO || !still || gbOn || rp.x === null || roll.idle > 12) { m.cur = null; m.said = false; m.chk = 0; return; }
+  const S = window.NISHIO_MANGEKYO;
+  if (!m.cur || now - m.t0 >= S.CYCLE) {
+    if (!m.cur && (roll.idle < S.STILL || now < m.chk)) return;
+    m.chk = now + 2000;   // 2秒に 1回 場所を しらべる
+    const ll = toLatLng(rp.x, rp.y), d = S.pick({ city: here.city, near: S.near(G.spots, ll.lat, ll.lng) }, m.last);
+    if (!d) { m.cur = null; return; }
+    m.cur = d; m.last = d.id; m.t0 = now; m.said = false;
+    if (G.track) G.track('kome_mangekyo', { id: d.id });
+  }
+  const age = now - m.t0, t = calmMotion ? 0 : now / 1000, id = m.cur.id;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  const COL = ['#e0527a', '#f0b840', '#4aa8d8', '#6ac060', '#a068d0'];
+  ctx.globalAlpha = Math.min(1, age / 500);
+  if (id === 'bijutsu') {   // ガラス工芸美術館：たなに ならんだ ガラスの 器が きらり
+    px(-16, 14, 32, 1, '#6b5a4a'); px(-14, 8, 28, 1, '#8a7258');
+    for (let i = 0; i < 4; i++) {
+      const x = -13 + i * 7, c = COL[i], sp = calmMotion || Math.sin(t * 3 + i * 1.6) > 0.5;
+      px(x + 1, 3, 3, 5, c); px(x, 5, 5, 3, c); px(x + 1, 4, 1, 3, '#ffffff');
+      if (sp) { px(x + 5, 2, 1, 1, '#ffffff'); px(x + 4, 1, 3, 1, '#ffffff'); }
+    }
+  } else if (id === 'kyodai') {   // 巨大な 万華鏡：大きな 筒の 先に、色ガラスの 模様が まわる
+    px(-18, 11, 22, 4, '#7a5a3a'); px(-18, 11, 22, 1, '#a07a50'); px(-12, 4, 18, 7, '#8a8a92'); px(-12, 4, 18, 1, '#b4b4bc');
+    const cx = 14, cy = 7, n = 6;
+    px(cx - 6, cy - 6, 12, 12, '#1c1c2a');
+    for (let i = 0; i < n; i++) {
+      const a = (calmMotion ? 0 : t * 0.9) + i * Math.PI * 2 / n, r = 3.4 + (calmMotion ? 0 : Math.sin(t * 1.3 + i) * 0.8);
+      px(cx + Math.cos(a) * r - 1, cy + Math.sin(a) * r - 1, 2, 2, COL[i % 5]);
+    }
+    px(cx - 0.5, cy - 0.5, 1, 1, '#ffffff');
+  } else {   // 万華鏡を のぞく：まるい 窓の なかに 模様が 6方向へ ひろがる
+    px(-20, 1, 40, 14, '#1c1c2a');
+    for (let k = 0; k < 6; k++) {
+      const a = k * Math.PI / 3 + (calmMotion ? 0 : t * 0.5);
+      for (let j = 1; j <= 4; j++) { const r = j * 3.2; px(Math.cos(a) * r - 1, 8 + Math.sin(a) * r * 0.9 - 1, 2, 2, COL[(k + j) % 5]); }
+    }
+    px(-1, 7, 2, 2, '#ffffff');
+  }
+  ctx.globalAlpha = 1;
+  roll.happyT = Math.max(roll.happyT, 0.3);   // にこにこ顔
+  if (!m.said && age > 600 && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.cur.say, 2800, 'happy'); m.said = true; }
+  m.drawn++; dirty = true;
+}
+// お米つぶの ちゃせき（chasetsu.js）：西尾地区で 止まって じっと すると、お米の よこに 石臼が 出て てん茶を ひき（くるくる）、茶わんに 抹茶を 点てて（茶せんが しゃかしゃか）、お米が ひと言。
+// 動くか ねむりだすと 消える。ひと席 おわったら 動くまで くりかえさない。西尾市の 西尾地区の 中だけ・ゲームボーイの4色では 出さない。お米の うしろに 描く
+const chasetsu = { cur: null, t0: 0, chk: 0, said: false, done: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function chasetsuStep(hx, by, u, now) {
+  const c = chasetsu, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!window.NISHIO_CHASETSU || !still || gbOn || rp.x === null || roll.idle > 12 || jokamachi.cur || chatsumi.cur || mangekyo.cur || kawabe.cur) { c.cur = null; c.said = false; c.done = false; c.chk = 0; return; }
+  const C = window.NISHIO_CHASETSU;
+  if (!c.cur) {
+    if (c.done || roll.idle < C.STILL || now < c.chk) return;
+    c.chk = now + 2000;   // 2秒に 1回 町を しらべる
+    const f = kasaFind(), d = f ? C.pick(f, new Date().getMonth() + 1) : null;
+    if (!d) return;
+    c.cur = d; c.t0 = now; c.said = false;
+    if (G.track) G.track('kome_chasetsu', { id: d.id });
+  }
+  const age = now - c.t0, t = calmMotion ? 0 : now / 1000, ate = age >= C.MILL + C.WHISK;
+  const px = (cx, cy, cw, ch, col) => { ctx.fillStyle = col; ctx.fillRect(Math.round(hx + cx * u), Math.round(by + cy * u), Math.max(1, Math.round(cw * u)), Math.max(1, Math.round(ch * u))); };
+  ctx.globalAlpha = Math.min(1, age / 400);
+  if (age < C.MILL) {   // 石臼：下の 臼に 上の 臼。取っ手が くるくる まわり、緑の 粉が ふちから おちる
+    px(11, 9, 14, 4, '#8a8a86'); px(12, 5, 12, 4, '#b3b3ad'); px(12, 5, 12, 1, '#d6d6d0'); px(10, 13, 16, 1, '#6b6b66');
+    const a = t * 5, hxp = 18 + Math.cos(a) * 4;
+    px(hxp, 4, 2, 2, '#7a4422'); px(hxp + (hxp > 18 ? -3 : 1), 3, 1, 1, '#7a4422');
+    for (let i = 0; i < 3; i++) { const ph = (t * 1.5 + i / 3) % 1; ctx.globalAlpha = Math.min(1, age / 400) * (1 - ph); px(10 + i * 0.5 - ph * 2, 10 + ph * 3, 1.5, 1.5, '#6fa85a'); }
+  } else {   // 茶わんに 点てる：茶せんが 左右に しゃかしゃか。できたら 抹茶の あわだつ 緑
+    drawNakama(Math.round(hx + 18 * u), Math.round(by + 8 * u), Math.max(1, Math.round(u * 0.9)), 'chawan', 0, true);
+    if (!ate) { const w = Math.sin(now / 55) * 2.5; px(17 + w, -2, 1, 6, '#e6d3a3'); px(16 + w, 3, 3, 1, '#e6d3a3'); px(17 + w, -3, 1, 1, '#7a4422'); }
+  }
+  ctx.globalAlpha = 1;
+  if (age >= C.MILL) roll.happyT = Math.max(roll.happyT, 0.3);   // 点てている あいだは にこにこ顔
+  if (ate && !c.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(c.cur.say, 2800, 'happy'); c.said = true; }
+  if (ate && c.said && now - c.t0 > C.MILL + C.WHISK + 3500) { c.cur = null; c.done = true; return; }   // ひと席 おわり：動くまで くりかえさない
+  c.drawn++; dirty = true;
+}
+// お米つぶの ごちそう（gochiso.js）：止まった お米の 目の 前に、いる 町と 月に 合った 西尾の 名物食が 出る。「いただきます」→ もぐもぐ → 「ごちそうさま」。
+// 150〜240秒に 1回まで（はじめは 30秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。動き出すか ねむりかけたら やめる
+const GOCHISO_MS = 6500;
+const gochiso = { cur: null, last: '', next: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function gochisoMunch(now) {   // もぐもぐ：からだが ぷるぷる ちぢむ（0〜0.05）
+  const age = now - gochiso.t0;
+  return !gochiso.cur || calmMotion || age < 900 || age > GOCHISO_MS - 600 ? 0 : Math.abs(Math.sin(age / 150)) * 0.05;
+}
+function gochisoStep(hx, by, u, now) {
+  const g = gochiso;
+  const still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (g.cur && !still) { g.cur = null; return; }   // 動き出した：食べかけで おしまい
+  if (!g.cur) {
+    if (!still || roll.idle < 1 || roll.idle > 5 || !window.NISHIO_GOCHISO || rp.x === null || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until + 1500) return;
+    if (!g.next) g.next = now + 30000;   // はじめは 30秒 あそんでから
+    if (now < g.next) return;
+    const d = window.NISHIO_GOCHISO.pick({ city: here.city, town: here.town, month: new Date().getMonth() + 1 }, g.last);
+    if (!d) return;
+    g.cur = d; g.last = d.id; g.t0 = now; g.next = now + 150000 + Math.random() * 90000;
+    riceSay('いただきます', 1500, 'happy');
+    if (G.track) G.track('kome_gochiso', { id: d.id });
+  }
+  const age = now - g.t0;
+  if (age > GOCHISO_MS) {   // ごちそうさま：ここで おなかいっぱい（すぐ ねむらない）
+    const d = g.cur; g.cur = null; roll.idle = 0;
+    if (!mapCovered()) riceSay(d.say, 2400, 'happy');
+    return;
+  }
+  if (age < GOCHISO_MS - 1500) roll.happyT = Math.max(roll.happyT, 0.3);   // 食べている あいだは にこにこ顔
+  const eat = Math.max(0, Math.min(1, (age - 900) / (GOCHISO_MS - 1500))), q = Math.max(1, Math.round(u * 0.9 * (1 - 0.75 * eat)));   // だんだん へる
+  ctx.globalAlpha = Math.min(1, age / 400);
+  drawNakama(Math.round(hx + 17 * u), Math.round(by + 13 * u - 4 * q), q, g.cur.id, 0);
+  ctx.globalAlpha = 1;
+  g.drawn++; dirty = true;
+}
+// お米つぶの おてだま（otedama.js）：お米が ぴょんと とびはねた とき、いる 町と 月に 合った 西尾の 名物を あたまの 上に ぽーんと ほうりなげ、おちて きたら キャッチして ひと言。
+// 30〜50秒に 1回まで（はじめは 10秒後）・西尾市の 中だけ・前と 同じ ものは つづけない。ほうっている あいだも お米の あたまの 上に ついてくる
+const OTEDAMA_MS = 1300;
+const otedama = { cur: null, last: '', next: 0, prevH: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function otedamaStart(now) {   // ほうる：町と 月に 合う ものを 1つ。ほうれなければ false
+  if (!window.NISHIO_OTEDAMA || !LU || rp.x === null) return false;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  const d = window.NISHIO_OTEDAMA.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, otedama.last);
+  if (!d) return false;
+  otedama.cur = d; otedama.last = d.id; otedama.t0 = now;
+  if (G.track) G.track('kome_otedama', { id: d.id });
+  return true;
+}
+function otedamaStep(hx, by, u, now) {
+  const o = otedama, up = roll.h > 0 && o.prevH <= 0;   // とびはね はじめ
+  o.prevH = roll.h;
+  if (worldMode || driving || rp.x === null) { o.cur = null; return; }
+  if (!o.cur) {
+    if (!up || mapCovered() || !howtoEl.hidden || sightBusy() || now < riceBub.until) return;
+    if (!o.next) o.next = now + 10000;   // はじめは 10秒 あそんでから
+    if (now < o.next || !otedamaStart(now)) return;
+    o.next = now + 30000 + Math.random() * 20000;
+  }
+  const age = now - o.t0, s = age / OTEDAMA_MS;
+  if (s >= 1) {   // キャッチ
+    const d = o.cur; o.cur = null;
+    if (!mapCovered()) riceSay(d.say, 1800, 'happy');
+    return;
+  }
+  const rise = (calmMotion ? 0.5 : 4 * s * (1 - s)) * 9 * u, q = Math.max(1, Math.round(u * 0.8));   // 山なりに あがって おりる（うごきを へらす 設定では 少しだけ）
+  ctx.globalAlpha = Math.min(1, age / 150);
+  drawNakama(Math.round(hx), Math.round(by - 12.5 * u - rise), q, o.cur.id, calmMotion ? 0 : s * Math.PI * 4);
+  ctx.globalAlpha = 1;
+  o.drawn++; dirty = true;
+}
+// お米つぶの かさ（kasa.js）：西尾市で 雨が 降って いる あいだ（weather.js）、いる 町の 名物を おおきな かさに して あたまの 上に さす。さした とき・やんだ とき お米が ひと言。
+// 町が かわって 合わなく なったら さしかえる・西尾市の 外では 出さない。2秒に 1回 まちを しらべる
+const kasa = { cur: null, last: '', said: false, chk: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function kasaFind() {
+  if (!window.NISHIO_KASA || !LU || rp.x === null) return null;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  return { near, land: luAt(ll.lat, ll.lng), city: here.city, town: here.town };
+}
+function kasaStep(hx, by, u, now) {
+  const k = kasa, rain = wxKind() === 'rain' && !worldMode && !driving && rp.x !== null;
+  if (!rain) {   // やんだ（か、遊びかたが かわった）：たたむ
+    if (k.cur && wxKind() !== 'rain' && !worldMode && !driving && k.said && !mapCovered()) riceSay(window.NISHIO_KASA.END, 1800, 'happy');
+    k.cur = null; k.said = false; k.chk = 0;
+    return;
+  }
+  if (now >= k.chk) {   // 2秒に 1回：町に 合う かさか たしかめる
+    k.chk = now + 2000;
+    const c = kasaFind(), mine = c ? window.NISHIO_KASA.candidates(c) : [];
+    if (!mine.length) k.cur = null;
+    else if (!k.cur || !mine.some(x => x.id === k.cur.id)) {
+      const d = window.NISHIO_KASA.pick(c, k.last);
+      k.cur = d; k.last = d.id;
+      if (G.track) G.track('kome_kasa', { id: d.id });
+      if (!k.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(d.say, 2200, 'happy'); k.said = true; }
+    }
+  }
+  if (!k.cur) return;
+  const sway = calmMotion ? 0 : Math.sin(now / 700) * 0.5 * u, q = Math.max(2, Math.round(u * 1.5));
+  drawNakama(Math.round(hx + sway), Math.round(by - 12.5 * u - 6 * u), q, k.cur.id, 0, true);
+  k.drawn++; dirty = true;
+}
+// お米つぶの かわぎり（kiri.js）：あさ（日本時間の5時〜8時前）に 西尾市の 川・池・用水の そばを 通ると、川霧が お米の まわりに たちこめる。出た とき・はれた とき お米が ひと言。
+// 町が かわれば 話も かわる・西尾市の 外では 出さない・ゲームボーイの4色でも 出す（白い もやだけ）。2秒に 1回 場所を しらべる（見つけかたは kasaFind と 同じ）
+const kiri = { cur: null, t0: 0, chk: 0, said: false, drawn: 0 };   // drawn：描いた 数（テスト用）
+function kiriHour() {
+  const q = new URLSearchParams(location.search).get('kiri');
+  if (q) return +q;   // 確かめ用（?kiri=6 で 6時の あさ）
+  return new Date(Date.now() + 9 * 3600000).getUTCHours();
+}
+function kiriStep(hx, by, u, now) {
+  const k = kiri, K = window.NISHIO_KIRI, on = K && !worldMode && !driving && rp.x !== null && K.morning(kiriHour());
+  if (!on) {   // 霧の 時間が おわった（か、遊びかたが かわった）：はれる
+    if (k.cur && k.said && K && !worldMode && !driving && !mapCovered()) riceSay(k.cur.end, 1800, 'happy');
+    k.cur = null; k.said = false; k.chk = 0;
+    return;
+  }
+  if (now >= k.chk) {   // 2秒に 1回：川・池の そばか たしかめる
+    k.chk = now + K.EVERY;
+    const c = kasaFind(), d = c ? K.pick(c) : null;
+    if (d && !k.cur) {
+      k.cur = d; k.t0 = now; k.said = false;
+      if (G.track) G.track('kome_kiri', { id: d.id });
+    } else if (!d && k.cur) {   // 水べを はなれた：はれる
+      if (k.said && !mapCovered()) riceSay(k.cur.end, 1800, 'happy');
+      k.cur = null; k.said = false;
+    } else if (d) k.cur = d;
+    if (k.cur && !k.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(k.cur.say, 2800, 'happy'); k.said = true; }
+  }
+  if (!k.cur) return;
+  const t = calmMotion ? 0 : now / 1000, fade = Math.min(1, (now - k.t0) / 1500);
+  for (let i = 0; i < 6; i++) {   // 霧：うすい 白い もやが 横に ゆっくり ながれる
+    const x = hx + (((i * 9 + t * 3) % 54) - 27) * u, y = by + (i % 3 - 1) * 5 * u + 3 * u, w = (14 + (i % 2) * 6) * u, h = 3.2 * u;
+    ctx.globalAlpha = fade * 0.28;
+    ctx.fillStyle = '#f2f6f8';
+    ctx.fillRect(Math.round(x - w / 2), Math.round(y - h / 2), Math.round(w), Math.max(1, Math.round(h)));
+  }
+  ctx.globalAlpha = 1;
+  k.drawn++; dirty = true;
+}
+// お米つぶの めぐり（meguri.js）：夜に なると、いる 町の 名物が お米の まわりを ゆっくり めぐる（お月さまの ように）。輪に なった とき・朝に なった とき お米が ひと言。
+// 町が かわれば 輪も かわる・西尾市の 外では 出さない。2秒に 1回 町を しらべる（見つけかたは kasaFind と 同じ）
+const meguri = { items: [], key: '', said: false, chk: 0, t0: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function meguriStep(hx, by, u, now) {
+  const m = meguri, night = window.NISHIO_MEGURI && nightOn && !worldMode && !driving && rp.x !== null && nightLevel() >= 1;
+  if (!night) {   // 朝に なった（か、遊びかたが かわった）：消える
+    if (m.said && window.NISHIO_MEGURI && nightLevel() < 1 && !worldMode && !driving && !mapCovered()) riceSay(window.NISHIO_MEGURI.END, 1800, 'happy');
+    m.items = []; m.key = ''; m.said = false; m.chk = 0;
+    return;
+  }
+  if (now >= m.chk) {   // 2秒に 1回：町に 合う 名物を たしかめる
+    m.chk = now + 2000;
+    const c = kasaFind(), items = c ? window.NISHIO_MEGURI.ring(Object.assign(c, { month: new Date().getMonth() + 1 })) : [], key = items.map(x => x.id).join();
+    if (key !== m.key) {
+      m.items = items; m.key = key; m.t0 = now;
+      if (items.length) {
+        if (G.track) G.track('kome_meguri', { ids: key });
+        if (!m.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(window.NISHIO_MEGURI.say(items), 2600, 'happy'); m.said = true; }
+      }
+    }
+  }
+  const n = m.items.length;
+  if (!n || chochinyoru.cur) return;   // 夜の 一色で 提灯の あかりが 出て いる 間は 輪を 休む
+  const q = Math.max(1, Math.round(u * 0.7)), spin = calmMotion ? 0 : now / 3200, fade = Math.min(1, (now - m.t0) / 800);
+  const pos = m.items.map((it, i) => { const a = spin + i * Math.PI * 2 / n; return { it, x: Math.cos(a) * 19 * u, y: Math.sin(a) * 6 * u, z: Math.sin(a) }; }).sort((a, b) => a.z - b.z);   // 手前（z が 大きい）を あとから 描く
+  for (const p of pos) {
+    ctx.globalAlpha = fade * (p.z < 0 ? 0.55 : 1);   // 奥は うすく
+    drawNakama(Math.round(hx + p.x), Math.round(by + 2 * u + p.y), p.z < 0 ? Math.max(1, q - 1) : q, p.it.id, 0);
+  }
+  ctx.globalAlpha = 1;
+  m.drawn++; dirty = true;
+}
+// お米つぶの つんつん（tsun.js）：お米を タップすると、ぴょんと はねて、いる 町と 月に 合った 西尾の 名物が あたまの 上に ぽんと 飛び出し、ふわっと のぼって 消える。お米が ひと言。
+// つづけて タップすると その 町の 名物が じゅんばんに 出る。西尾市の 外では 何も 出さない。0.9秒より 早い タップは 数えない
+const tsun = { cur: null, last: '', t0: 0, lock: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function tsunTap(now) {   // タップが お米に 当たった：出せたら true
+  if (!window.NISHIO_TSUN || !LU || rp.x === null || worldMode || driving || now < tsun.lock) return false;
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  const d = window.NISHIO_TSUN.next({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, tsun.last);
+  if (!d) return false;
+  tsun.cur = d; tsun.last = d.id; tsun.t0 = now; tsun.lock = now + 900;
+  if (roll.h <= 0) { roll.hv = 2; roll.h = 0.001; }   // ぴょん
+  roll.happyT = Math.max(roll.happyT, 1.6);
+  riceSay(d.say, 2200, 'happy');
+  if (G.track) G.track('kome_tsun', { id: d.id });
+  return true;
+}
+function tsunStep(hx, by, u, now) {
+  const t = tsun;
+  if (!t.cur) return;
+  const age = now - t.t0, s = age / window.NISHIO_TSUN.MS;
+  if (worldMode || driving || s >= 1) { t.cur = null; return; }
+  const rise = (calmMotion ? 0.4 : Math.sqrt(s)) * 10 * u, q = Math.max(1, Math.round(u * 0.9));   // ぽんと 出て、だんだん ゆっくり のぼる
+  ctx.globalAlpha = Math.min(1, age / 120) * (s > 0.75 ? (1 - s) * 4 : 1);
+  drawNakama(Math.round(hx), Math.round(by - 13 * u - rise), q, t.cur.id, calmMotion ? 0 : Math.sin(age / 140) * 0.25);
+  ctx.globalAlpha = 1;
+  t.drawn++; dirty = true;
+}
+// お米つぶの なぞなぞ（nazonazo.js）：止まって しばらく（約4.5秒）じっと して いると、お米が いる 地区に 合った 西尾の なぞなぞを 吹き出しで 出し、お米の したに 答えの 札が 2つ ならぶ。
+// 札を タップすると、あたりは「そのとおり」、はずれは ほんとうの 答えを お米が おしえる。ひとめぐり するまで 同じ なぞなぞは 出さない（nsg_nazonazo）。
+// 120〜210秒に 1回まで（はじめは 40秒あそんでから）・西尾市の 中だけ・動くか ねむりだす（12秒）と ひっこむ・ゲームボーイの4色では 出さない
+const NAZO_KEY = 'nsg_nazonazo';
+const nazo = { cur: null, flip: false, seen: null, next: 0, t0: 0, btn: null, drawn: 0 };   // btn：札の 当たり [[x0,y0,x1,y1] 左, 右]。drawn：描いた 数（テスト用）
+function nazoStep(hx, by, u, now) {
+  const n = nazo, N = window.NISHIO_NAZONAZO, still = !worldMode && !driving && roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2;
+  if (!N || !still || gbOn || rp.x === null || roll.idle > N.SHOW || mapCovered()) { n.cur = null; n.btn = null; return; }
+  if (!n.cur) {
+    if (roll.idle < N.STILL || !howtoEl.hidden || sightBusy() || now < riceBub.until || gochiso.cur || tsun.cur) return;
+    if (!n.next) n.next = now + N.FIRST;   // はじめは 40秒 あそんでから
+    if (now < n.next) return;
+    if (!n.seen) { try { n.seen = JSON.parse(localStorage.getItem(NAZO_KEY)) || []; } catch (e) { n.seen = []; } }
+    const r = N.pick({ city: here.city, town: here.town }, n.seen);
+    if (!r) { n.next = now + 10000; return; }
+    n.cur = r.item; n.flip = r.flip; n.t0 = now; n.seen = r.seen;
+    try { localStorage.setItem(NAZO_KEY, JSON.stringify(r.seen)); } catch (e) { /* noop */ }
+    riceSay(r.item.q, Math.max(3000, (N.SHOW - roll.idle) * 1000));
+    if (G.track) G.track('kome_nazonazo', { id: r.item.id, step: 'ask' });
+  }
+  const dpr = Math.min(window.devicePixelRatio || 1, 3), fz = Math.round(FLOAT_PX * dpr * 0.9), pad = Math.round(fz * 0.5), bh = Math.round(fz * 1.9), y = Math.round(by + 19 * u);
+  const labels = n.flip ? [n.cur.b, n.cur.a] : [n.cur.a, n.cur.b];
+  ctx.save();
+  ctx.globalAlpha = Math.min(1, (now - n.t0) / 300);
+  ctx.font = `bold ${fz}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const bw = Math.round(Math.max(...labels.map(t => ctx.measureText(t).width)) + pad * 2), gap = Math.round(fz * 0.6);
+  n.btn = [];
+  labels.forEach((t, i) => {
+    const x = Math.round(hx + (i ? gap / 2 : -gap / 2 - bw)), bob = calmMotion ? 0 : Math.round(Math.sin(now / 400 + i * 2) * fz * 0.08);
+    n.btn.push([x, y, x + bw, y + bh]);
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y + bob, bw, bh, Math.round(bh * 0.3)) : ctx.rect(x, y + bob, bw, bh);
+    ctx.fillStyle = '#fffdf3'; ctx.fill(); ctx.lineWidth = Math.max(2, Math.round(dpr * 1.5)); ctx.strokeStyle = '#2a2420'; ctx.stroke();
+    ctx.fillStyle = '#2a2420'; ctx.fillText(t, x + bw / 2, y + bob + bh / 2 + 1);
+  });
+  ctx.restore();
+  n.drawn++; dirty = true;
+}
+function nazoTap(x, y, now) {   // 札に 当たった：答えを うけとれたら true
+  const n = nazo, N = window.NISHIO_NAZONAZO;
+  if (!N || !n.cur || !n.btn) return false;
+  const side = n.btn.findIndex(b => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3]);
+  if (side < 0) return false;
+  const ok = N.judge(n.flip, side), d = n.cur;
+  n.cur = null; n.btn = null; n.next = now + N.GAP[0] + Math.random() * N.GAP[1];
+  roll.idle = 0;   // 答えたあとは ねむらない
+  if (ok) { roll.hv = 2; roll.h = 0.001; }   // あたり：ぴょん
+  riceSay(ok ? d.yes : d.no, 3600, ok ? 'happy' : '');
+  if (G.track) G.track('kome_nazonazo', { id: d.id, step: ok ? 'yes' : 'no' });
+  return true;
+}
+// お米つぶの ようこそ（youkoso.js）：転がって 西尾市の 地区（西尾・一色・吉良・幡豆・佐久島）の 境を こえると、お米の 足もとに その地区の 名物の 絵が ついた 旗が すっと 立ち、お米が ひと言。
+// 約4.5秒で 消える・45秒に 1回まで・遊びはじめの 一歩目と 同じ 地区の 町名がわりでは 出ない（町名の 札は 別）・西尾市の 外では 出さない・ゲームボーイの4色では 旗を 描かない
+const youkoso = { area: null, cur: null, last: '', t0: 0, next: 0, drawn: 0 };   // area：いま いる 地区（まだ 見ていない＝null、西尾市の 外＝''）。drawn：描いた 数（テスト用）
+function youkosoStep(hx, by, u, now) {
+  const y = youkoso, Y = window.NISHIO_YOUKOSO;
+  if (!Y || worldMode || driving || rp.x === null) { y.cur = null; return; }
+  const inCity = /西尾/.test(here.city || ''), a = !inCity ? '' : Y.areaOf(here.city, here.town);   // 西尾市の 外＝''。町名が ない 田畑・山の 中（null）では 前の 地区の まま
+  if (a !== null && a !== y.area) {
+    const was = y.area;
+    y.area = a;
+    if (Y.entered(was, a) && now >= y.next && !mapCovered() && howtoEl.hidden) {
+      const d = Y.pick(a, new Date().getMonth() + 1, y.last);
+      if (d) {
+        y.cur = d; y.last = d.id; y.t0 = now; y.next = now + Y.COOL;
+        riceSay(d.say, 3200, 'happy');
+        if (G.track) G.track('kome_youkoso', { id: d.id, area: a });
+      }
+    }
+  }
+  if (!y.cur) return;
+  const age = now - y.t0;
+  if (age > Y.SHOW) { y.cur = null; return; }
+  if (gbOn) return;
+  const rise = Math.min(1, age / 350), fade = Math.min(1, (Y.SHOW - age) / 600), q = Math.max(1, Math.round(u)), poleX = Math.round(hx - 17 * u), foot = Math.round(by + 8 * u), top = Math.round(foot - 22 * u * rise);
+  const wave = calmMotion ? 0 : Math.sin(now / 260) * u * 0.8, cw = Math.round(10 * u), ch = Math.round(8 * u);
+  ctx.save(); ctx.globalAlpha = fade;
+  ctx.fillStyle = '#2b1a0c'; ctx.fillRect(poleX - q, top - q, 2 * q + q, foot - top + q);   // さお（ふち）
+  ctx.fillStyle = '#8a5a2b'; ctx.fillRect(poleX, top, q, foot - top);
+  if (rise >= 1) {
+    const fx = poleX + q, fy = top + q, fw = cw + Math.round(wave);
+    ctx.fillStyle = '#2b1a0c'; ctx.fillRect(fx - q, fy - q, fw + 2 * q, ch + 2 * q);   // 旗（ふち）
+    ctx.fillStyle = '#fffdf3'; ctx.fillRect(fx, fy, fw, ch);
+    drawNakama(Math.round(fx + fw / 2), Math.round(fy + ch / 2), Math.max(1, Math.round(u * 0.6)), y.cur.id, 0, true);
+  }
+  ctx.restore();
+  y.drawn++; dirty = true;
+}
+// お米つぶの たびのしるし（shirushi.js）：西尾市の 地区に はじめて 入ると、その 地区の 小さな 旗が お米の 右がわに ならんで ずっと のこる（5つまで）。
+// 新しい 旗は ぽんと 立ち、境の 旗（ようこそ）の ひと言の あとに お米が ひと言。5つ そろうと 「ぜんぶ そろったに」。この 端末に おぼえる（nsg_shirushi）。
+// 西尾市の 中だけで 増える・ねむって いる あいだ・ゲームボーイの4色では 描かない
+const shirushi = { list: null, pop: '', t0: 0, say: null, drawn: 0 };   // pop：ぽんと 立てる 旗の 地区。say：[言う 時刻, ことば]。drawn：描いた 数（テスト用）
+function shirushiStep(hx, by, u, now, asleep) {
+  const s = shirushi, S = window.NISHIO_SHIRUSHI, Y = window.NISHIO_YOUKOSO;
+  if (!S || !Y || worldMode || driving || rp.x === null) return;
+  if (!s.list) { try { s.list = S.clean(JSON.parse(localStorage.getItem(S.KEY))); } catch (e) { s.list = []; } }
+  if (/西尾/.test(here.city || '')) {
+    const a = Y.areaOf(here.city, here.town), r = a ? S.add(s.list, a) : null;
+    if (r && r.added) {
+      s.list = r.list; s.pop = a; s.t0 = now;
+      try { localStorage.setItem(S.KEY, JSON.stringify(s.list)); } catch (e) { /* noop */ }
+      s.say = [now + S.DELAY, S.say(s.list.length, a)];
+      if (G.track) G.track('kome_shirushi', { area: a, n: s.list.length });
+    }
+  }
+  if (s.say && now >= s.say[0] && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(s.say[1], 3000, 'happy'); s.say = null; }
+  if (!s.list.length || gbOn || asleep) return;
+  const q = Math.max(1, Math.round(u * 0.35)), step = Math.round(6.5 * u), x0 = Math.round(hx + 15 * u), foot = Math.round(by + 8 * u);
+  S.AREAS.filter(a => s.list.includes(a.id)).forEach((a, i) => {
+    const pop = a.id === s.pop ? Math.min(1, (now - s.t0) / S.POP) : 1, bounce = pop < 1 ? Math.sin(pop * Math.PI) * 5 * u : 0;
+    const px = x0 + i * step, top = Math.round(foot - 11 * u * Math.min(1, pop * 2) - bounce), fw = Math.round(5 * u), fh = Math.round(4.5 * u);
+    ctx.fillStyle = '#2b1a0c'; ctx.fillRect(px - q, top - q, 2 * q, foot - top + q);   // さお（ふち）
+    ctx.fillStyle = '#8a5a2b'; ctx.fillRect(px - q + Math.round(q / 2), top, Math.max(1, q - 1), foot - top);
+    if (pop < 0.5) return;
+    const fx = px + q, fy = top + q;
+    ctx.fillStyle = '#2b1a0c'; ctx.fillRect(fx - q, fy - q, fw + 2 * q, fh + 2 * q);   // 旗（ふち）
+    ctx.fillStyle = a.color; ctx.fillRect(fx, fy, fw, fh);
+    drawNakama(Math.round(fx + fw / 2), Math.round(fy + fh / 2), Math.max(1, Math.round(u * 0.3)), a.emblem, 0, true);
+  });
+  s.drawn++; dirty = true;
+}
+// お米つぶの ものさし（monosashi.js）：西尾市の 中を 転がった 道のり（roll.d）を 黄金堤の 長さ（180m）で はかる。お米の 左よこに 小さな 堤の めもりが 出て、転がるほど 金色に たまり、180mごとに ひと言。
+// 道のりは この 端末に おぼえる（nsg_monosashi）。転がるのを やめて 4秒で 消える・ねむって いる あいだと ゲームボーイの4色では 描かない・西尾市の 外では 数えない
+const monosashi = { total: null, lastD: null, last: 0, saved: 0, show: 0, pop: 0, say: null, drawn: 0 };   // total：m。lastD：前の roll.d。pop：1本 できた 時刻。drawn：描いた 数（テスト用）
+function monosashiStep(hx, by, u, now, asleep) {
+  const m = monosashi, M = window.NISHIO_MONOSASHI;
+  if (!M || worldMode || driving || rp.x === null) { m.lastD = null; return; }
+  if (m.total === null) { try { m.total = M.clean(JSON.parse(localStorage.getItem(M.KEY))); } catch (e) { m.total = 0; } }
+  const dd = m.lastD === null ? 0 : roll.d - m.lastD;
+  m.lastD = roll.d;
+  if (dd > 0 && /西尾/.test(here.city || '')) {
+    const r = M.add(m.total, dd * TILE_M);
+    m.total = r.total; m.show = now + M.SHOW;
+    if (r.born > 0) {
+      m.pop = now; m.show = now + M.SHOW + M.POP;
+      m.say = [now + 600, M.say(M.gauge(m.total).n)];
+      if (G.track) G.track('kome_monosashi', { n: M.gauge(m.total).n });
+    }
+    if (now - m.saved > 5000 || r.born > 0) { m.saved = now; try { localStorage.setItem(M.KEY, String(Math.round(m.total * 10) / 10)); } catch (e) { /* noop */ } }
+  }
+  if (m.say && now >= m.say[0] && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(m.say[1], 3000, 'happy'); m.say = null; }
+  if (gbOn || asleep || now > m.show || !m.total) return;
+  const g = M.gauge(m.total), q = Math.max(1, Math.round(u * 0.35)), w = Math.round(13 * u), h = Math.round(4 * u), x0 = Math.round(hx - 15 * u - w), foot = Math.round(by + 8 * u);
+  const lit = m.pop && now - m.pop < M.POP ? Math.sin((now - m.pop) / M.POP * Math.PI * 3) > 0 : false;   // できた ばかりは ぴかぴか
+  ctx.globalAlpha = Math.min(1, (m.show - now) / 400);
+  ctx.fillStyle = '#2b1a0c'; ctx.fillRect(x0 - q, foot - h - q, w + 2 * q, h + 2 * q);   // 堤の ふち
+  ctx.fillStyle = '#c9b48a'; ctx.fillRect(x0, foot - h, w, h);   // 堤の 土
+  ctx.fillStyle = lit ? '#fff3a0' : '#e0b030'; ctx.fillRect(x0, foot - h, Math.round(w * (m.pop && now - m.pop < M.POP ? 1 : g.frac)), h);   // 金色が 左から たまる
+  ctx.fillStyle = '#fff'; ctx.font = `bold ${Math.round(3.4 * u)}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText(g.n ? '堤' + g.n + '本' : '堤', x0 + w / 2, foot - h - 2 * q);
+  ctx.globalAlpha = 1;
+  m.drawn++; dirty = true;
+}
+// お米つぶの おかえり（okaeri.js）：しばらく あいだを あけて もどると、西尾市に 入った とき お米が「おかえり。3日ぶりだに」と むかえ、いる 地区の 名物が お米の よこに ぴょこんと 出て ひと言。ひと回の あそびに 1回だけ。
+// 最後に あそんだ 日は この 端末に おぼえる（nsg_okaeri）。名物と 地区の 名前は ようこそ（youkoso.js）・たびのしるし（shirushi.js）を 共用。ゲームボーイの4色・ねむって いる あいだは 名物を 描かない
+const okaeri = { prev: null, saved: 0, done: false, cur: null, t0: 0, drawn: 0 };   // prev：前に あそんだ 時刻（まだ 読んでいない＝null）。cur：出して いる 名物。drawn：描いた 数（テスト用）
+function okaeriStep(hx, by, u, now, asleep) {
+  const o = okaeri, K = window.NISHIO_OKAERI, Y = window.NISHIO_YOUKOSO, S = window.NISHIO_SHIRUSHI;
+  if (!K || !Y || !S || worldMode || driving || rp.x === null) return;
+  const wall = Date.now();
+  if (o.prev === null) { try { o.prev = K.clean(JSON.parse(localStorage.getItem(K.KEY))); } catch (e) { o.prev = 0; } }
+  if (now - o.saved > K.SAVE) { o.saved = now; try { localStorage.setItem(K.KEY, String(wall)); } catch (e) { /* noop */ } }
+  if (!o.done && /西尾/.test(here.city || '')) {
+    const a = Y.areaOf(here.city, here.town), n = K.days(o.prev, wall);
+    if (!n) { if (a) o.done = true; }   // はじめて・同じ日は むかえない（ひと回の あそびで 1回だけ しらべる）
+    else if (a && !asleep && !mapCovered() && howtoEl.hidden && now >= riceBub.until) {
+      const d = Y.pick(a, new Date().getMonth() + 1, ''), ar = S.AREAS.find(x => x.id === a);
+      o.done = true;
+      if (d && ar) {
+        o.cur = d; o.t0 = now;
+        riceSay(K.say(n, ar.name, d.name), 4000, 'happy');
+        if (G.track) G.track('kome_okaeri', { area: a, days: n });
+      }
+    }
+  }
+  if (!o.cur) return;
+  const age = now - o.t0;
+  if (age > K.SHOW) { o.cur = null; return; }
+  if (gbOn || asleep) return;
+  const pop = Math.min(1, age / 500), hop = calmMotion ? 0 : Math.abs(Math.sin(now / 240)) * 2.5 * u, fade = Math.min(1, (K.SHOW - age) / 600);
+  ctx.globalAlpha = fade;
+  drawNakama(Math.round(hx + 16 * u), Math.round(by + 4 * u - hop - Math.sin(pop * Math.PI) * 4 * u), Math.max(1, Math.round(u * 0.9)), o.cur.id, 0, false);
+  ctx.globalAlpha = 1;
+  o.drawn++; dirty = true;
+}
+// お米つぶの ふるさと（furusato.js）：転がって 西尾市の 外（となりの 市町）に 出ると、お米の よこに 西尾の 方角を さす 矢じるしが 名物を かかえて 出て、お米が「岡崎市に 来たに。西尾は あっちだに」と ひと言。
+// 方角は いちばん 近い 地区の 中心（G.areas）。西尾市に もどるか 1分たつと 消える・出した あとは 2分は くりかえさない。ゲームボーイの4色・ねむって いる あいだは 描かない
+const furusato = { out0: 0, shown0: 0, last: -1e9, cur: null, said: false, drawn: 0 };   // out0：外に 出た 時刻（0＝中）。cur：{ item, ang }。drawn：描いた 数（テスト用）
+function furusatoStep(hx, by, u, now, asleep) {
+  const f = furusato, K = window.NISHIO_FURUSATO;
+  if (!K || worldMode || driving || rp.x === null || !K.outside(here.city)) {   // 西尾市の 中（か 遊びかたが かわった）：しまう
+    f.out0 = 0; f.cur = null; f.said = false;
+    return;
+  }
+  if (!f.out0) f.out0 = now;
+  if (!f.cur && now - f.out0 >= K.WAIT && now - f.last >= K.COOL && !asleep && !mapCovered()) {
+    const ll = toLatLng(rp.x, rp.y), n = K.nearest(ll.lat, ll.lng, G.areas), item = n && K.pick(n.area);
+    if (item) {
+      f.cur = { item, ang: n.ang }; f.shown0 = now; f.last = now; f.said = false;
+      if (G.track) G.track('kome_furusato', { area: n.area });
+    }
+  }
+  if (!f.cur) return;
+  if (now - f.shown0 > K.SHOW) { f.cur = null; return; }
+  if (!f.said && howtoEl.hidden && now >= riceBub.until && !asleep && !mapCovered()) { riceSay(K.say(here.city, f.cur.item), 3500, 'happy'); f.said = true; }
+  if (gbOn || asleep) return;
+  const ll = toLatLng(rp.x, rp.y), n = K.nearest(ll.lat, ll.lng, G.areas);
+  if (n) f.cur.ang = n.ang;   // 転がると 方角も かわる
+  const a = f.cur.ang, r = 17 * u, bob = calmMotion ? 0 : Math.sin(now / 320) * 1.2 * u;
+  const cx = Math.round(hx + Math.cos(a) * r), cy = Math.round(by + Math.sin(a) * r * 0.8 + bob);
+  const fade = Math.min(1, (now - f.shown0) / 500, (K.SHOW - (now - f.shown0)) / 800);
+  ctx.globalAlpha = Math.max(0, fade);
+  const q = Math.max(1, Math.round(u * 0.5)), tip = [cx + Math.cos(a) * 5 * u, cy + Math.sin(a) * 5 * u], nx = -Math.sin(a), ny = Math.cos(a);
+  ctx.fillStyle = '#2b1a0c';   // 矢じるし：ふち → 金色
+  for (const [grow, col] of [[q, '#2b1a0c'], [0, '#e0b030']]) {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(tip[0] + Math.cos(a) * grow, tip[1] + Math.sin(a) * grow);
+    ctx.lineTo(cx + nx * (3 * u + grow), cy + ny * (3 * u + grow));
+    ctx.lineTo(cx - nx * (3 * u + grow), cy - ny * (3 * u + grow));
+    ctx.closePath(); ctx.fill();
+  }
+  drawNakama(Math.round(cx - Math.cos(a) * 5 * u), Math.round(cy - Math.sin(a) * 5 * u), Math.max(1, Math.round(u * 0.9)), f.cur.item.id, 0, false);   // 名物は 矢じるしの うしろ
+  ctx.globalAlpha = 1;
+  f.drawn++; dirty = true;
+}
+// お米つぶの かげえ（kage.js）：じっと 止まって いると、足もとの 影の となりに、いる 町と 月に 合った 名物の 影が すうっと のびる。7秒ごとに つぎの 影。動くと すっと 消える。
+// 影は drawNakama を 小さな 絵に 描いて 黒く ぬり、ひらたく のばして 貼る（絵は 1つずつ しまっておく）。ゲームボーイの4色・夜（めぐりの 時間）・ねむって いる間は 出さない
+const kage = { cur: null, last: '', still0: 0, t0: 0, chk: 0, said: false, drawn: 0, pics: {} };   // drawn：描いた 数（テスト用）
+function kagePic(id, q) {   // 名物の 黒い 影の 絵（16×16 の 点を q 倍に したもの）
+  const key = id + q;
+  if (kage.pics[key]) return kage.pics[key];
+  const c = document.createElement('canvas'); c.width = c.height = 16 * q;
+  const k = ctx, g = c.getContext('2d'); g.imageSmoothingEnabled = false;
+  ctx = g;
+  try { drawNakama(8 * q, 8 * q, q, id, 0, true); } finally { ctx = k; }
+  g.globalCompositeOperation = 'source-in'; g.fillStyle = '#000'; g.fillRect(0, 0, c.width, c.height);
+  return (kage.pics[key] = c);
+}
+function kageDraw(hx, sy, shw, u, now, still) {   // sy：影の 高さ。shw：影の はば
+  const k = kage;
+  if (!window.NISHIO_KAGE || !still || gbOn || worldMode || driving || rp.x === null || nightLevel() >= 1 || roll.idle > 12) { k.cur = null; k.still0 = 0; k.said = false; return; }
+  if (!k.still0) k.still0 = now;
+  if (now - k.still0 < window.NISHIO_KAGE.STILL) return;
+  if (now >= k.chk) {   // 0.5秒に 1回：町に 合う 影を たしかめる（7秒たったら つぎの 影）
+    k.chk = now + 500;
+    if (!k.cur || now - k.t0 >= window.NISHIO_KAGE.EACH) {
+      const c = kasaFind(), d = c ? window.NISHIO_KAGE.next(Object.assign(c, { month: new Date().getMonth() + 1 }), k.last) : null;
+      if (!d) { k.cur = null; return; }
+      k.cur = d; k.last = d.id; k.t0 = now;
+      if (G.track) G.track('kome_kage', { id: d.id });
+      if (!k.said && !mapCovered() && howtoEl.hidden && now >= riceBub.until) { riceSay(d.say, 2400, 'happy'); k.said = true; }
+    }
+  }
+  if (!k.cur) return;
+  const q = Math.max(1, Math.round(u * 0.9)), age = now - k.t0, fade = Math.min(1, age / 700) * Math.min(1, (window.NISHIO_KAGE.EACH - age) / 500 + 0.0001);
+  const pic = kagePic(k.cur.id, q), dw = 16 * q * 1.3, dh = 16 * q * 0.38, grow = calmMotion ? 1 : Math.min(1, 0.3 + age / 700);   // すうっと のびる
+  ctx.globalAlpha = 0.26 * Math.max(0, fade);
+  ctx.drawImage(pic, Math.round(hx + shw * 0.45), Math.round(sy - dh * 0.5), Math.round(dw * grow), Math.round(dh));
+  ctx.globalAlpha = 1;
+  k.drawn++; dirty = true;
+}
+function nakamaStep(now, ox, oy, T, w, h, dpr) {
+  if (worldMode || driving || rp.x === null) { nakama.n = null; return; }
+  const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (!nakama.n && now > otomo.next && sp > 1.5 && !mapCovered() && window.NISHIO_OTOMO && LU && howtoEl.hidden && !sightBusy() && now > riceBub.until + 2000) {   // 町の おとも（otomo.js）
+    if (!otomo.next) otomo.next = now + 20000;   // はじめは 20秒 転がってから
+    else {
+      const ll = toLatLng(rp.x, rp.y);
+      let near = '';
+      for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+      const o = window.NISHIO_OTOMO.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 }, otomo.last);
+      if (!o) otomo.next = now + 8000;
+      else {
+        otomo.next = now + 60000 + Math.random() * 40000; otomo.last = o.id; nakama.next = now + NAKAMA_CD;
+        const bx = rp.vx >= 0 ? -1.5 : 1.5;   // お米の うしろから ころんと 出て くる
+        nakama.n = { kind: o.id, x: rp.x + bx, y: rp.y, t0: now, last: now, ang: 0, stop: 0 };
+        riceSay(o.say, 2400, 'happy');
+        if (G.track) G.track('kome_otomo', { id: o.id });
+      }
+    }
+  }
+  if (!nakama.n && now > nakama.next && sp > 1.5 && !mapCovered() && nakamaKinds().length && ambN() < AMB_MAX) {   // 畑・温室・農地の となりを 転がって いる とき
+    const x = Math.floor(rp.x), y = Math.floor(rp.y), farm = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => [C.V, C.N, C.U].includes(codeAt(x + dx, y + dy)));
+    if (farm) { nakama.next = now + NAKAMA_CD + Math.random() * NAKAMA_CD; nakama.n = { kind: nakamaKind(), x: x + 0.5 + farm[0], y: y + 0.5 + farm[1], t0: now, last: now, ang: 0, stop: 0 }; }
+  }
+  const n = nakama.n;
+  if (!n) return;
+  const dt = Math.min(0.1, (now - n.last) / 1000); n.last = now;
+  if (n.stop) { if (now - n.stop > 700) { nakama.n = null; return; } }
+  else if (now - n.t0 > NAKAMA_FOLLOW) n.stop = now;
+  else {   // お米の すこし うしろへ ころころ（はなれすぎたら はやく）
+    const dx = rp.x - n.x, dy = rp.y - n.y, d = Math.hypot(dx, dy), want = Math.max(0, d - 1.1), v = Math.min(6, want * 3);
+    if (d > 0.01) { n.x += dx / d * v * dt; n.y += dy / d * v * dt; n.ang += (dx >= 0 ? 1 : -1) * v * dt / 0.45; }
+  }
+  const hop = n.stop ? Math.sin(Math.min(1, (now - n.stop) / 700) * Math.PI) * T * 0.5 : 0;
+  ctx.globalAlpha = n.stop ? Math.max(0, 1 - (now - n.stop) / 700) : 1;
+  { const X = Math.round(ox + n.x * T), Y = Math.round(oy + n.y * T - hop), u = Math.max(Math.round(2 * dpr), Math.round(T / 16)); if (!drawKoroArt(X, Y, u, n.kind, n.ang)) drawNakama(X, Y, u, n.kind, n.ang); }   // Blender の 絵（読めるまでは 手描き）
+  ctx.globalAlpha = 1;
+  dirty = true;
+}
+// お米つぶの であい（deai.js）：転がって いる 最中、いる 所に 合った 西尾の 生きものが お米の 前に 姿を 見せる。お米は にこにこ顔で ひと言、
+// 生きものは ぴょこぴょこ して、しばらくして はねて いなくなる。80〜140秒に 1回まで（はじめは 25秒後）・前と 同じ 生きものは つづけない・西尾市の 中だけ
+const DEAI_STAY = 4200, DEAI_GO = 600;
+const deai = { next: 0, last: '', d: null, drawn: 0 };   // drawn：描いた 数（テスト用）
+function deaiStep(now, ox, oy, T) {
+  if (worldMode || driving || rp.x === null) { deai.d = null; return; }
+  const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (!deai.d && now > deai.next && sp > 1.5 && !mapCovered() && window.NISHIO_DEAI && LU && howtoEl.hidden && !sightBusy() && !nakama.n && now > riceBub.until + 2500) {
+    if (!deai.next) deai.next = now + 25000;   // はじめは 25秒 転がってから
+    else {
+      const ll = toLatLng(rp.x, rp.y);
+      let near = '';
+      for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+      const e = window.NISHIO_DEAI.pick({ city: here.city, town: here.town, land: luAt(ll.lat, ll.lng), near, month: new Date().getMonth() + 1 }, deai.last);
+      if (!e) deai.next = now + 8000;
+      else {
+        deai.next = now + 80000 + Math.random() * 60000; deai.last = e.id;
+        const m = sp || 1, fx = rp.vx / m, fy = rp.vy / m;   // お米の 進む 先の すこし 前（動いて いない ときは 右）
+        deai.d = { id: e.id, x: rp.x + (sp ? fx : 1) * 2.6, y: rp.y + (sp ? fy : 0) * 2.6, t0: now };
+        riceSay(e.say, 2600, 'happy');
+        if (G.track) G.track('kome_deai', { id: e.id });
+      }
+    }
+  }
+  const d = deai.d;
+  if (!d) return;
+  const age = now - d.t0;
+  if (age > DEAI_STAY + DEAI_GO) { deai.d = null; return; }
+  const out = age > DEAI_STAY ? (age - DEAI_STAY) / DEAI_GO : 0;   // いなくなる：ぴょんと はねて うすく なる
+  const hop = out ? Math.sin(out * Math.PI) * T * 0.7 : calmMotion ? 0 : Math.round(Math.max(0, Math.sin(age / 380)) * T * 0.12);
+  ctx.globalAlpha = Math.min(1, age / 300) * (1 - out);
+  ctx.drawImage(critterSprites[d.id], Math.round(ox + d.x * T - T / 2), Math.round(oy + d.y * T - T / 2 - hop), T, T);
+  ctx.globalAlpha = 1;
+  deai.drawn++; dirty = true;
+}
+// お米つぶの こぼれもの（kobore.js）：転がって いる 最中、いる 町と 月に 合った 西尾の 名物を、お米が 道に ぽろぽろ こぼす。小さく ふわっと 舞って 消える。
+// 1.4〜2.6秒に 1つ・同時に 3つまで・西尾市の 中だけ（ことばは なし。おとも・にもつ・ゆめとは ちがい、転がる 動きの 跡）
+const KOBORE_LIFE = 2200, KOBORE_MAX = 3;
+const kobore = { list: [], next: 0, drawn: 0 };   // drawn：描いた 数（テスト用）
+function koboreStep(now, ox, oy, T, dpr) {
+  if (worldMode || driving || rp.x === null || !window.NISHIO_KOBORE || !LU) { kobore.list.length = 0; return; }
+  const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (now > kobore.next && sp > 1.5 && kobore.list.length < KOBORE_MAX && !mapCovered()) {
+    kobore.next = now + 1400 + Math.random() * 1200;
+    const ll = toLatLng(rp.x, rp.y);
+    let near = '';
+    for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+    const k = window.NISHIO_KOBORE.pick({ city: here.city, town: here.town, near, month: new Date().getMonth() + 1 });
+    if (k) {
+      kobore.list.push({ id: k.id, x: rp.x + (Math.random() - 0.5) * 0.6, y: rp.y - 0.5, t0: now, side: Math.random() < 0.5 ? -1 : 1 });
+      if (G.track) G.track('kome_kobore', { id: k.id });
+    }
+  }
+  kobore.list = kobore.list.filter(p => now - p.t0 < KOBORE_LIFE);
+  const q = Math.max(1, Math.round(Math.max(Math.round(2 * dpr), Math.round(T / 16)) * 0.5));
+  for (const p of kobore.list) {
+    const t = (now - p.t0) / KOBORE_LIFE, sway = calmMotion ? 0 : Math.sin(t * 5) * 0.25 * p.side;
+    ctx.globalAlpha = Math.min(1, t * 6) * (1 - t * t);
+    drawNakama(Math.round(ox + (p.x + sway) * T), Math.round(oy + (p.y + t * 1.1) * T), q, p.id, calmMotion ? 0 : t * 4 * p.side);
+    kobore.drawn++;
+  }
+  ctx.globalAlpha = 1;
+  if (kobore.list.length) dirty = true;
+}
+// 物干しの せんたくもの（夜の 改善 6。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：昼（日本時間 8〜16時）、雨・雪で ない 日は、
+// 家の マス（住宅地・町）に ところどころ（29マスに 1つほど）物干しが 出て、タオル・シャツ・くつしたが 風に ゆらゆら。めいろでは 道と 生け垣から はなれた 所だけ。文字は なし
+const sentaku = { n: 0 };
+function sentakuOn(wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current) {
+  if (wx && (wx.kind === 'rain' || wx.kind === 'snow')) return false;
+  const hr = new Date(Date.now() + 9 * 3600000).getUTCHours();
+  return hr >= 8 && hr < 16 && !(nightOn && nightLevel() > 0);
+}
+function drawSentaku(X, Y, p, now, seed) {   // (X, Y) を 左上に、16×14 点の 物干し（2本の 柱・1本の ひも・3まいの ほしもの）。p は 1点の 大きさ
+  const px = (x, y, w0, h0, c) => { ctx.fillStyle = c; ctx.fillRect(X + x * p, Y + y * p, w0 * p, h0 * p); };
+  px(1, 3, 1, 11, '#6b5a48'); px(14, 3, 1, 11, '#6b5a48'); px(1, 4, 14, 1, '#e8e4dc');   // 柱と ひも
+  const items = [[3, ['#ffffff', '#d8dde6'], 3, 5], [7, ['#9cc8f0', '#6fa4d6'], 4, 4], [12, ['#f4b8c8', '#d890a6'], 2, 3]];   // タオル・シャツ・くつした
+  items.forEach(([x, [c, sh], w0, h0], i) => {
+    const sway = Math.round(Math.sin(now / 520 + i * 1.7 + seed) * 1);   // 下の はしが 風で 左右に
+    px(x, 5, w0, h0 - 1, c); px(x + sway, 5 + h0 - 1, w0, 1, sh);
+    if (i === 1) { px(x - 1, 5, 1, 2, c); px(x + w0, 5, 1, 2, c); }   // シャツの そで
+    px(x, 4, 1, 1, '#c8a040'); px(x + w0 - 1, 4, 1, 1, '#c8a040');   // せんたくばさみ
+  });
+}
+function sentakuStep(now, ox, oy, T, w, h, dpr) {
+  sentaku.n = 0;
+  if (worldMode || driving || !sentakuOn()) return;
+  const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T), maze = mazeOn();
+  for (let ty = ty0; ty <= ty1 && sentaku.n < 3; ty++) for (let tx = tx0; tx <= tx1 && sentaku.n < 3; tx++) {   // 1画面に 3つまで（まれで 小さく。はじめは 12で、めいろでは 6つ 見えた）
+    const c = codeAt(tx, ty);
+    if (c !== C.Q && c !== C.T) continue;
+    const hh = Math.imul(tx, 2246822519) ^ Math.imul(ty, 3266489917), u = (hh ^ (hh >>> 15)) >>> 0;
+    if (u % 29) continue;
+    if (rp.x !== null && Math.hypot(tx + 0.5 - rp.x, ty + 0.5 - rp.y) < 1.5) continue;   // お米の 上には かさねない
+    if (maze) { const q = mzNear(tx + 0.5, ty + 0.5); if (!q || q.d < MZ_TUBE + MZ_HEDGE + 1.2) continue; }   // 道・生け垣の 上には 出さない（絵は 1マス半ほど）
+    const p = Math.max(Math.round(1.5 * dpr), Math.round(T / 16));   // めいろは 地図を 小さく 描くので、マスに 合わせると 数点に なって 見えない（すずめ・虫と 同じく 画面の 細かさから）
+    drawSentaku(Math.round(ox + (tx + 0.5) * T - 8 * p), Math.round(oy + (ty + 0.5) * T - 8 * p), p, now, u % 7);
+    sentaku.n++;
+  }
+  if (sentaku.n) dirty = true;
+}
+// どんぐりも ころころ（夜の 改善 5。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：秋（10〜11月）、お米が 森・公園の となりを
+// 転がると、木から どんぐりが 1つ ころんと 落ちて、ぽんと はねて 少し ころころ 転がり、止まって しばらく すると 消える（25〜50秒に 1回）。
+// 西尾の 森にも コナラ・アベマキの どんぐり（西尾市「いきものふれあいの里だより」令和6年10月号・令和8年7月号）。文字・ポイントは なし・ぶつからない
+const DONGURI_LIFE = 7000, DONGURI_CD = 25000;
+const donguri = { d: null, next: 0 };
+const donguriSeason = () => { const mo = new Date().getMonth() + 1; return mo === 10 || mo === 11; };
+function drawDonguri(x, y, u, ang) {
+  if (drawKoroArt(x, y, u, 'donguri', ang)) return;   // Blender の 絵（読めるまでは 下の 手描き）
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  const px = (cx, cy, cw, ch, c) => { ctx.fillStyle = c; ctx.fillRect(cx * u, cy * u, cw * u, ch * u); };
+  const parts = [[-2, -1, 4, 4, '#a8682e'], [-1, 3, 2, 1, '#a8682e'], [-3, -2, 6, 2, '#6b4a2a'], [-1, -3, 2, 1, '#6b4a2a'], [0, -4, 1, 1, '#4a321c']];   // 実・ぼうし（はかま）・へた
+  for (const [cx, cy, cw, ch] of parts) px(cx - 1, cy - 1, cw + 2, ch + 2, '#2b1a0c');
+  for (const [cx, cy, cw, ch, c] of parts) px(cx, cy, cw, ch, c);
+  px(-2, -2, 1, 1, '#8a6440'); px(1, -2, 1, 1, '#8a6440');   // ぼうしの うろこ
+  px(-1, 0, 1, 2, '#d39a5a');   // てかり
+  ctx.restore();
+}
+const donBlocked = (x, y) => { if (rollBlocked(x, y)) return true; if (!mazeOn()) return false; const q = mzNear(x, y); return !!q && q.d > MZ_TUBE - 0.15; };   // めいろでは 生け垣（道すじの 筒の 外）も（どんぐりの 大きさ ぶん 内がわまで。Codex の 指摘）
+function donguriStep(now, ox, oy, T, w, h, dpr) {
+  if (worldMode || driving || rp.x === null || !donguriSeason()) { donguri.d = null; return; }
+  const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (!donguri.d && now > donguri.next && sp > 1.2 && !mapCovered() && ambN() < AMB_MAX) {
+    const x = Math.floor(rp.x), y = Math.floor(rp.y), tree = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => { const c = codeAt(x + dx, y + dy); return c === C.W || c === C.P; });
+    if (tree) {
+      donguri.next = now + DONGURI_CD + Math.random() * DONGURI_CD;
+      const side = Math.random() < 0.5 ? -1 : 1, [tx, ty] = tree, sx = ty ? side : 0, sy = tx ? side : 0;   // 木の ほうから 道へ、少し 横へ ころがる
+      // 落ちる 所は お米から 0.8マス はなれた 通れる 所（木の がわ → 横 → ななめ）。お米に かさなる・生け垣や 建物の 上 なら 落とさない（Codex の 指摘）
+      const at = [[tx, ty], [sx, sy], [-sx, -sy], [tx + sx, ty + sy], [tx - sx, ty - sy]].map(([a, b]) => { const n = Math.hypot(a, b) || 1; return [rp.x + a / n * 0.8, rp.y + b / n * 0.8]; }).find(([a, b]) => !donBlocked(a, b));
+      if (at) donguri.d = { x: at[0], y: at[1], vx: -tx * 0.6 + sx * 1.3, vy: -ty * 0.6 + sy * 1.3, t0: now, last: now, ang: 0 };
+    }
+  }
+  const d = donguri.d;
+  if (!d) return;
+  const age = now - d.t0, dt = Math.min(0.1, (now - d.last) / 1000); d.last = now;
+  if (age > DONGURI_LIFE) { donguri.d = null; return; }
+  const fall = Math.max(0, 1 - age / 350);   // 0.35秒で 上から ぽとん
+  if (!fall) {   // ころころ（だんだん ゆっくり。生け垣・建物の 手前で 止まる）
+    const nx = d.x + d.vx * dt, ny = d.y + d.vy * dt;
+    if (donBlocked(nx, ny) || Math.hypot(nx - rp.x, ny - rp.y) < 0.7) { d.vx = d.vy = 0; } else {   // 生け垣・建物と お米の 手前で 止まる（かさならない）
+      d.x = nx; d.y = ny; d.ang += Math.hypot(d.vx, d.vy) * dt / 0.18 * Math.sign(d.vx || d.vy || 1);
+    }
+    const k = Math.pow(0.25, dt); d.vx *= k; d.vy *= k;
+    if (Math.hypot(d.vx, d.vy) < 0.25) { const r = Math.round(d.ang / (Math.PI * 2)) * Math.PI * 2; d.ang += (r - d.ang) * Math.min(1, dt * 6); }   // 止まりぎわに ころんと たてに もどる
+    const ox2 = d.x - rp.x, oy2 = d.y - rp.y, od = Math.hypot(ox2, oy2);
+    if (od < 0.7) {   // あとから お米が 来て かさなったら、外へ おし出して ころんと 転がす（通れる 向きを、近い 向きから 順に さがす。めいろの 角では 1方向が 生け垣）
+      const a0 = od > 0.01 ? Math.atan2(oy2, ox2) : 0;
+      for (const da of [0, 0.8, -0.8, 1.6, -1.6, 2.4, -2.4, Math.PI]) {
+        const ux = Math.cos(a0 + da), uy = Math.sin(a0 + da), qx = rp.x + ux * 0.72, qy = rp.y + uy * 0.72;
+        if (donBlocked(qx, qy)) continue;
+        d.x = qx; d.y = qy; const v = Math.max(0.8, Math.hypot(rp.vx || 0, rp.vy || 0) * 0.5); d.vx = ux * v; d.vy = uy * v;
+        break;
+      }
+    }
+  }
+  const hop = age < 350 ? fall * T * 0.9 : age < 650 ? Math.sin((age - 350) / 300 * Math.PI) * T * 0.2 : 0;   // おちて、ぽんと 1回 はねる
+  ctx.globalAlpha = age > DONGURI_LIFE - 600 ? Math.max(0, (DONGURI_LIFE - age) / 600) : 1;
+  drawDonguri(Math.round(ox + d.x * T), Math.round(oy + d.y * T - hop), Math.max(Math.round(2 * dpr), Math.round(T / 18)), d.ang);
+  ctx.globalAlpha = 1;
+  dirty = true;
+}
+// 水べの さざなみ（夜の 改善 3。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：お米が 川・池・海（三河湾・矢作古川 など）の
+// となりを 転がると、水面に 小さな 輪が ぽわん と ひろがって 消える（0.35秒に 1つまで・0.9秒で 消える）。文字・音・ポイントは なし
+const HAMON_MS = 900, HAMON_GAP = 350;
+const hamon = { list: [], last: 0 };
+function hamonStep(now, ox, oy, T, w, h, dpr) {
+  if (worldMode || driving || rp.x === null) { hamon.list.length = 0; return; }
+  const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  if (sp > 1.2 && now - hamon.last > HAMON_GAP && !mapCovered()) {
+    const x = Math.floor(rp.x), y = Math.floor(rp.y), wet = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => codeAt(x + dx, y + dy) === C.A);
+    if (wet) { hamon.last = now; hamon.list.push({ x: rp.x + wet[0] * 0.7, y: rp.y + wet[1] * 0.7, t0: now }); if (hamon.list.length > 6) hamon.list.shift(); }
+  }
+  if (!hamon.list.length) return;
+  const u = Math.max(Math.round(2 * dpr), Math.round(T / 16));
+  hamon.list = hamon.list.filter(r => now - r.t0 < HAMON_MS);
+  for (const r of hamon.list) {   // 点の 輪（四角い 点を 円に ならべる）。ひろがり ながら うすく
+    const k = (now - r.t0) / HAMON_MS, R = T * (0.2 + 0.75 * k), cx = ox + r.x * T, cy = oy + r.y * T, n = Math.max(8, Math.round(R * 2 * Math.PI / (u * 1.6)));
+    ctx.globalAlpha = 0.95 * Math.pow(1 - k, 0.7); ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; ctx.fillRect(Math.round(cx + Math.cos(a) * R - u / 2), Math.round(cy + Math.sin(a) * R * 0.6 - u / 2), u, u); }   // 少し つぶした だ円（水面を ななめに 見る）
+  }
+  ctx.globalAlpha = 1;
+  dirty = true;
+}
+function kaeruStep(now, ox, oy, T, w, h, dpr) {
+  if (worldMode || driving || rp.x === null) { kaeru.list.length = 0; return; }
+  if (!kaeru.list.length && now > kaeru.next && kaeruSeason() && !mapCovered() && ambN() < AMB_MAX) {   // 15〜30秒に 1回、まわり 3〜7マスの 田んぼの へりを さがす
+    kaeru.next = now + 15000 + Math.random() * 15000;
+    for (let k = 0; k < 16; k++) {
+      const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 4, x = Math.floor(rp.x + Math.cos(a) * r), y = Math.floor(rp.y + Math.sin(a) * r);
+      const sx = ox + x * T, sy = oy + y * T;
+      if (sx < T || sy < T * 2 || sx > w - 2 * T || sy > h - 3 * T) continue;
+      const paddy = (cx, cy) => PADDY_CODES.has(codeAt(cx, cy)), edge = [[1, 0], [-1, 0], [0, 1], [0, -1]].find(([dx, dy]) => !paddy(x + dx, y + dy));
+      if (!paddy(x, y) || !edge) continue;   // 田んぼの へり（あぜ ぎわ）
+      const n = Math.random() < 0.6 ? 1 : 2;
+      for (let i = 0; i < n; i++) kaeru.list.push({ x: x + 0.5 + edge[0] * 0.3 + (i ? -edge[1] * 0.6 : 0), y: y + 0.5 + edge[1] * 0.3 + (i ? edge[0] * 0.6 : 0), t0: now, jump: 0, dir: edge[0] ? -edge[0] : (Math.random() < 0.5 ? -1 : 1), into: [-edge[0], -edge[1]], seed: Math.random() * 3000 });   // あぜの ほうを 向いて すわり、とぶ ときは 田んぼの なかへ
+      break;
+    }
+  }
+  if (!kaeru.list.length) return;
+  const u = Math.max(Math.round(2 * dpr), Math.round(T / 16)), sp = Math.hypot(rp.vx || 0, rp.vy || 0);
+  let plop = false;
+  kaeru.list = kaeru.list.filter(f => {
+    if (!f.jump && (now - f.t0 > KAERU_LIFE || (sp > 0.8 && Math.hypot(f.x - rp.x, f.y - rp.y) < KAERU_NEAR))) f.jump = now;
+    let X = ox + f.x * T, Y = oy + f.y * T, pose = Math.floor((now + f.seed) / 1600) % 4 === 0 ? 1 : 0;
+    if (f.jump) {
+      const jt = (now - f.jump) / 1000;
+      if (jt > 0.45) { plop = true; return false; }   // 田んぼの なかへ ぽちゃ
+      X += f.into[0] * jt * T * 2.2; Y += f.into[1] * jt * T * 2.2 - Math.sin(jt / 0.45 * Math.PI) * T * 0.6; pose = 2;
+    }
+    drawKaeru(Math.round(X), Math.round(Y), u, f.jump && f.into[0] ? f.into[0] : f.dir, pose);
+    return true;
+  });
+  if (plop) potyaSound();
+  dirty = true;
+}
 function mushiStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { mushi.m = null; return; }
   const kind = mushiKind();
-  if (!mushi.m && kind && now > mushi.next && !mapCovered()) {   // 25〜50秒に 1回、お米の まわり 3〜6マスに あらわれる
+  if (!mushi.m && kind && now > mushi.next && !mapCovered() && ambN() < AMB_MAX) {   // 25〜50秒に 1回、お米の まわり 3〜6マスに あらわれる
     mushi.next = now + 25000 + Math.random() * 25000;
     const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 3, x = rp.x + Math.cos(a) * r, y = rp.y + Math.sin(a) * r, sx = ox + x * T, sy = oy + y * T;
     if (sx > T && sy > T * 2 && sx < w - T && sy < h - 3 * T) mushi.m = { kind, x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: Math.random() * 6 };
@@ -1862,9 +3314,15 @@ function mushiStep(now, ox, oy, T, w, h, dpr) {
   drawMushi(Math.round(ox + m.x * T), Math.round(oy + m.y * T), Math.max(Math.round(2 * dpr), Math.round(T / 16)), m.kind, now, m.vx >= 0 ? 1 : -1);
   dirty = true;
 }
+function suzumeVisit(now) {   // ねむって いる お米の そばに 1〜2羽（お米の ほうを 向いて）。動き だすと いつもの ように とびたつ
+  const side = Math.random() < 0.5 ? -1 : 1, n = Math.random() < 0.5 ? 1 : 2;
+  suzume.list.length = 0;
+  for (let i = 0; i < n; i++) suzume.list.push({ x: rp.x + side * (1.1 + i * 0.7), y: rp.y + 0.25 + i * 0.15, t0: now + i * 400, fly: 0, dir: -side, seed: Math.random() * 1000, v: true });   // v：お米が ねて いる 間は いっしょに いる
+}
 function suzumeStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { suzume.list.length = 0; return; }
-  if (!suzume.list.length && now > suzume.next && !mapCovered()) {   // 9〜18秒に 1回、まわり 3〜7マスの 田んぼ・草地など（画面の 中）を さがして おりる
+  if (!suzume.list.length && roll.kind === 'stop' && roll.idle > SUZUME_VISIT && now > suzume.visit && !mapCovered()) { suzume.visit = now + 30000; suzumeVisit(now); }   // お米が ねむって いると、そばに おりて くる（30秒に 1回まで）
+  if (!suzume.list.length && now > suzume.next && !mapCovered() && ambN() < AMB_MAX) {   // 9〜18秒に 1回、まわり 3〜7マスの 田んぼ・草地など（画面の 中）を さがして おりる
     suzume.next = now + 9000 + Math.random() * 9000;
     for (let k = 0; k < 14; k++) {
       const a = Math.random() * Math.PI * 2, r = 3 + Math.random() * 4, x = Math.floor(rp.x + Math.cos(a) * r), y = Math.floor(rp.y + Math.sin(a) * r);
@@ -1881,7 +3339,7 @@ function suzumeStep(now, ox, oy, T, w, h, dpr) {
   suzume.list = suzume.list.filter(b => {
     if (now < b.t0) return true;
     const age = now - b.t0, peck = Math.floor((age + b.seed) / 450) % 3 === 0;
-    if (!b.fly && (age > SUZUME_LIFE || (sp > 0.8 && Math.hypot(b.x - rp.x, b.y - rp.y) < SUZUME_NEAR))) {   // 1羽 とびたつと、みんな いっしょに（すこし ずつ おくれて）
+    if (!b.fly && ((age > SUZUME_LIFE && !(b.v && roll.kind === 'stop')) || (sp > 0.8 && Math.hypot(b.x - rp.x, b.y - rp.y) < SUZUME_NEAR))) {   // 1羽 とびたつと、みんな いっしょに（すこし ずつ おくれて）
       suzume.list.forEach((o, i) => { if (!o.fly) { o.fly = now + i * 90; o.dir = o.x < rp.x ? -1 : 1; } }); chirp = true;
     }
     let X = ox + b.x * T, Y = oy + b.y * T, pose = peck ? 1 : 0;
@@ -1897,6 +3355,13 @@ const CRITTER_SURE = 100;
 // 田んぼ・水べに入ったとき、いまの季節に そこで会える生きもののうち まだ手帳にない数を出す（どこに いるかは言わない）。
 // 0 なら「ぜんぶ会えた」で、ほかの場所へ行く目安になる。同じ場所の知らせは 10分に1回まで。その日の出会いが おわったら出さない
 // 知らせを出せた（または出すものがない）ら true。歩く地図が見えていない・窓やパネルの下・運転中なら false（次の1歩で もう一度）
+// 水べが川・池・用水か、海か（国土数値情報の土地利用。まわり100mメッシュ9つに「海水域」があれば海）。土地利用が読めていないときは ''
+function waterKind(lat, lng) {
+  if (!LU) return '';
+  const dLat = LU.dLat, dLng = LU.dLng;
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) if (luAt(lat + a * dLat, lng + b * dLng) === 'k') return 'umi';
+  return 'kawa';
+}
 function critterCount(where) {
   const now = performance.now();
   if (!G.critterLeft || !active || worldMode || driving || mapCovered() || sightBusy()) return false;
@@ -2029,15 +3494,35 @@ function emoteAt(sx, sy, T, k, age) {   // 頭の上の吹き出し（ぽんと�
 let nightOn = true;
 try { nightOn = localStorage.getItem('nsg_night') !== '0'; } catch (e) { /* 既定 */ }
 const nightCv = document.createElement('canvas');
+let nightForce = null;
+const nightLamps = { n: 0, warm: 0 };   // いま 描いた 街灯の 数・あたたかい 明かりの 数（テスト用）
 function nightLevel(t = Date.now()) {
   const q = new URLSearchParams(location.search).get('night');
   if (q) return +q;   // 確かめ用（?night=1 で夜・0.5 で夕方）
+  if (nightForce !== null) return nightForce;   // テスト用（nishioPixel.nightForce）
   const hr = new Date(t + 9 * 3600000).getUTCHours();
   return hr >= 19 || hr < 5 ? 1 : hr === 18 || hr === 5 ? 0.5 : 0;
 }
+// 朝の ひかり（朝の 改善 9。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：日本時間の 5〜8時、夜の あかり（drawNight）の あとに
+// 地図の 上から ほんのり あたたかい 朝の 色（6時ごろが いちばん・8時に 消える）。見にくく ならない よう うすく（上 0.22・下 0.05）。文字は なし
+let morningForce = null;
+function morningLevel(t = Date.now()) {
+  if (morningForce !== null) return morningForce;
+  const d = new Date(t + 9 * 3600000), h = d.getUTCHours() + d.getUTCMinutes() / 60;
+  return h < 5 || h >= 8 ? 0 : h < 6 ? h - 5 : 1 - (h - 6) / 2;
+}
+const morning = { k: 0 };
+function drawMorning(w, h) {
+  const k = nightOn && !worldMode && !gbOn ? morningLevel() : 0;
+  morning.k = k;
+  if (!k) return;
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, `rgba(255,180,110,${0.22 * k})`); g.addColorStop(0.55, `rgba(255,210,150,${0.1 * k})`); g.addColorStop(1, `rgba(255,230,190,${0.05 * k})`);
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+}
 function drawNight(w, h, ox, oy, T, cy, pois, now) {
   const lv = nightOn && !worldMode ? nightLevel() : 0;
-  if (!lv) return;
+  if (!lv) { nightLamps.n = nightLamps.warm = 0; return; }
   if (nightCv.width !== w || nightCv.height !== h) { nightCv.width = w; nightCv.height = h; }
   const x = nightCv.getContext('2d');
   x.globalCompositeOperation = 'source-over';
@@ -2055,12 +3540,34 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
   for (const p of pois) light(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * (p[4] === 'lm' ? 1.6 : 1.3), 0.85);   // お店・駅・建物の窓の明かり
   for (const s of G.spots || []) if (s.shop) { const p = toTile(s.lat, s.lng); light(ox + p.x * T, oy + p.y * T - T, T * 3.2); }   // 当店は いちばん明るく
   for (const c of G.liveChests()) { const p = toTile(c.lat, c.lng); light(ox + p.x * T, oy + p.y * T, T * 0.9, 0.7); }
+  // 道の 街灯（夜の 改善 2。運営者の声「文字は減らして素朴なかわいさと平和さを散りばめる」）：道の マスに ところどころ（11マスに 1つほど）、
+  // あたたかい 色の 光の 輪。家・お店の 窓の 明かりも ほんのり だいだい色に。文字の 知らせ（「🌙 夜のさんぽ…」）は やめて 明かりで 伝える
+  const lamps = [], tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
+  for (let ty = ty0; ty <= ty1 && lamps.length < 60; ty++) for (let tx = tx0; tx <= tx1 && lamps.length < 60; tx++) {
+    const c = codeAt(tx, ty);
+    if (c !== C.R && c !== C.H && c !== C.D) continue;
+    const hh = Math.imul(tx, 83492791) ^ Math.imul(ty, 2971215073), u = (hh ^ (hh >>> 16)) >>> 0;
+    if (u % 11 === 0) lamps.push([ox + (tx + 0.5) * T, oy + (ty + 0.5) * T]);
+  }
+  for (const [lx, ly] of lamps) light(lx, ly, T * 1.2, 0.75);
   gbPause++;
   ctx.drawImage(nightCv, 0, 0);
+  if (!gbOn) {
+    const warm = (px, py, r, a) => {
+      if (px < -r || py < -r || px > w + r || py > h + r) return 0;
+      const g = ctx.createRadialGradient(px, py, 0, px, py, r);
+      g.addColorStop(0, `rgba(255,170,70,${a * lv})`); g.addColorStop(1, 'rgba(255,170,70,0)');
+      ctx.fillStyle = g; ctx.fillRect(px - r, py - r, r * 2, r * 2); return 1;
+    };
+    let n = 0;
+    for (const p of pois) n += warm(ox + p[0] * T, oy + p[1] * T - T * 0.5, T * 1.1, 0.3);
+    const u = Math.max(1, Math.round(T / 16));
+    for (const [lx, ly] of lamps) { n += warm(lx, ly, T * 1.1, 0.34); ctx.fillStyle = '#ffe7a8'; ctx.fillRect(Math.round(lx - u), Math.round(ly - u), u * 2, u * 2); }   // 街灯の あかりの 粒
+    nightLamps.warm = n;
+  }
+  nightLamps.n = lamps.length;
   gbPause--;
-  if (!nightNote.done && lv === 1) { nightNote.done = true; G.toast('🌙 夜のさんぽ。明かりの まわりしか見えないよ。たからばこは ほんのり光っとる'); }
 }
-const nightNote = { done: false };
 // 人の話で 次の転がり先が決まる：転がしているとき、話で 行き先が決まったら、話を とじたときに その人が お米を 行き先のほうへ ころん と押してくれる
 let npcSend = null;
 function openNpc(n) {
@@ -2157,11 +3664,18 @@ const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv
   };
   img.src = 'nishio-go/art/rice.png';
 })();
-// 丸く見せる：お米を 点の大きさ（1点＝絵の1点）のまま回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
-// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は5段（さかいは 点をまぜて なめらかに）、ふちどりは回したあとに描きなおす
+// 丸く見せる：お米を 画面の 細かさで 回し、光を いつも左上から当てなおす（つぶを たまごの形とみて、点ごとに 面の向きを出す）。
+// 回っても てかりは左上・影は右下のままなので、紙を回したようにならず、ころんと丸く見える。影は 段なしの 連続、ふちどりは回したあとに描きなおす（くわしくは drawRiceBall・docs/korokoro.md「なめらかに ころころ」）
 const riceBall = { fill: null, face: null, cv: null, x: null, gx: 0, gy: 0, a: 1, b: 1, nx: 0, ny: 0, nr: 0 };
 const RB = 48;   // 回した絵を描く場所の大きさ（点）
-const RICE_TONE = [[172, 180, 204], [204, 210, 228], [230, 232, 238], [246, 245, 238], [253, 253, 250], [255, 255, 255]];   // 深い影・影・なか・つぶの色・明るい・てかり
+const RICE_TONE = [[178, 182, 192], [208, 211, 219], [231, 232, 234], [246, 245, 239], [252, 251, 247], [255, 255, 255]];   // 深い影・影・なか・つぶの色・明るい・てかり
+// あいちのかおりの つぶ（運営者の 写真「あいちのかおりが ころころ 転がる」2026-10-29）：まっ白より すこし すきとおった 乳白色。影は 青みを へらした やわらかい 灰、
+// ふちは 光が ぬけて うすく 明るい、まん中は 白く にごる。たてに 細い すじ（縦溝）が 2本 うっすら。顔・ふちどり・形は そのまま（赤ちゃんの かわいさは のこす）
+const RICE_MILK = [236, 237, 236], RICE_CORE = [251, 250, 246];
+function riceStreak(ex, ey) {   // 縦すじの こさ（0〜1）：つぶの 中の 位置（はば・高さを −1〜1）。はばの ±0.38 に 細く、上下の はしでは うすれる
+  const a = (ex - 0.38) / 0.075, b = (ex + 0.38) / 0.075, fade = Math.max(0, 1 - ey * ey * 1.15);
+  return (Math.exp(-a * a) + Math.exp(-b * b)) * fade;
+}
 const RICE_LIGHT = (() => { const v = [-0.5, -0.7, 0.75], n = Math.hypot(...v); return v.map(c => c / n); })();
 const RICE_HALF = (() => { const v = [RICE_LIGHT[0], RICE_LIGHT[1], RICE_LIGHT[2] + 1], n = Math.hypot(...v); return v.map(c => c / n); })();
 function riceBallInit(src) {
@@ -2180,6 +3694,24 @@ function riceBallInit(src) {
   }
   fx.putImageData(fd, 0, 0); gx.putImageData(gd, 0, 0);
   const cv = document.createElement('canvas'); cv.width = cv.height = RB;
+  {   // ぼかした 形：絵の 点の 段（がたがた）ではなく、絵に 合わせた だ円から 胚芽の くぼみ（円）を けずった 形を 4倍の 細かさで 描き、
+    // 絵の1点ぶん ぼかす。こさ 0.5 の 線が つぶの ふち・0.16 が ふちどりの 外がわ（絵との ちがいは 点の 段だけ。2026-10-28 に 当てはめて 確かめた）
+    const pd = 3, F = 4, M = (N + 2 * pd) * F, gx = (L + R + 1) / 2, gy = (T + B + 1) / 2, A = (R - L + 1) / 2, Bv = (B - T + 1) / 2 - 0.1;
+    const nx = R + 1.5, ny = T + (B - T) * 0.2 + 0.5, nr = (R - L) * 0.26 * 0.96;
+    const sg0 = F, rad = Math.ceil(sg0 * 3), K = [];
+    for (let q = -rad; q <= rad; q++) K.push(Math.exp(-q * q / (2 * sg0 * sg0)));
+    const ks = K.reduce((x, y) => x + y, 0), a0 = new Float32Array(M * M), a1 = new Float32Array(M * M);
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) {
+      const X = (x + 0.5) / F - pd, Y = (y + 0.5) / F - pd;
+      a0[y * M + x] = ((X - gx) / A) ** 2 + ((Y - gy) / Bv) ** 2 < 1 && (X - nx) ** 2 + (Y - ny) ** 2 > nr * nr ? 1 : 0;
+    }
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) { let t = 0; for (let q = -rad; q <= rad; q++) { const xx = x + q; if (xx >= 0 && xx < M) t += K[q + rad] * a0[y * M + xx]; } a1[y * M + x] = t / ks; }
+    const soft = document.createElement('canvas'); soft.width = soft.height = M;
+    const sg = soft.getContext('2d'), si = sg.createImageData(M, M);
+    for (let y = 0; y < M; y++) for (let x = 0; x < M; x++) { let t = 0; for (let q = -rad; q <= rad; q++) { const yy = y + q; if (yy >= 0 && yy < M) t += K[q + rad] * a1[yy * M + x]; } si.data.set([255, 255, 255, Math.round(t / ks * 255)], (y * M + x) * 4); }
+    sg.putImageData(si, 0, 0);
+    riceBall.soft = soft; riceBall.pad = pd;
+  }
   riceBall.faces = riceFaces(face, sd, N);
   {   // よごれの しみの場所（つぶの中・顔と ふちを よけて、きまった ばらばらの10か所）
     const pts = [], fd2 = face.getContext('2d').getImageData(0, 0, N, N).data;
@@ -2199,7 +3731,7 @@ function riceBallInit(src) {
 }
 // 表情：ふだんの にっこり（絵のまま）のほかに、点で描いた顔。目・ほっぺ・口の場所は 絵の顔（左の目の左上）に合わせる
 //   blink まばたき・happy ^^ うれしい・excited ><（速くて たのしい）・wow びっくり（とんでいる）・ouch いたい・dizzy ×× 目が回る・sleepy すやすや
-const FACE_COL = { E: [14, 14, 14], P: [246, 160, 176], R: [184, 52, 64], T: [240, 124, 140] };
+const FACE_COL = { E: [14, 14, 14], P: [246, 160, 176], R: [184, 52, 64], T: [240, 124, 140], W: [255, 255, 255] };
 const FACE_PARTS = {
   eyes: 'E 0,0 1,0 0,1 1,1 0,2 1,2 7,0 8,0 7,1 8,1 7,2 8,2',
   shut: 'E 0,2 1,2 7,2 8,2',
@@ -2215,15 +3747,24 @@ const FACE_PARTS = {
   o: 'E 3,5 4,5 2,6 5,6 3,7 4,7|R 3,6 4,6',
   wave: 'E 1,5 2,4 3,5 4,4 5,5 6,4 7,5',
   tiny: 'E 3,5 4,5',
+  shine: 'W 0,0 7,0',   // 目の きらっ（赤ちゃんの ような うるうるの 目）
+  shineBig: 'W 0,-1 7,-1',
 };
 const FACE_SET = {
-  blink: 'shut cheeks smile', happy: 'arcUp cheeks open', excited: 'gtlt cheeksBig open', wow: 'big cheeks o',
+  blink: 'shut cheeks smile', happy: 'arcUp cheeks open', excited: 'gtlt cheeksBig open', wow: 'big shineBig cheeks o', yawn: 'shut cheeks o',
   ouch: 'gtlt cheeks wave', dizzy: 'cross wave', sleepy: 'arcDown cheeks tiny',
 };
 function riceFaces(face, sd, N) {
   let ex = N, ey = N;
   for (let i = 0; i < N * N; i++) if (sd[i * 4 + 3] && sd[i * 4] === 14 && sd[i * 4 + 1] === 14 && sd[i * 4 + 2] === 14) { const x = i % N, y = (i - x) / N; if (y < ey || (y === ey && x < ex)) { ey = y; ex = x; } }   // 左の目の左上
   const out = { smile: face };
+  {   // ふだんの にっこり（絵の 顔）にも 目の きらっ。左右の 目の 左上の 1点を 白く
+    const c = document.createElement('canvas'); c.width = c.height = N;
+    const g = c.getContext('2d'); g.drawImage(face, 0, 0);
+    const d = g.getImageData(0, 0, N, N);
+    for (const dx of [0, 7]) { const x = ex + dx, y = ey; if (x < N && y < N && d.data[(y * N + x) * 4 + 3]) d.data.set([...FACE_COL.W, 255], (y * N + x) * 4); }
+    g.putImageData(d, 0, 0); out.smile = c;
+  }
   for (const [k, parts] of Object.entries(FACE_SET)) {
     const c = document.createElement('canvas'); c.width = c.height = N;
     const g = c.getContext('2d'), d = g.createImageData(N, N);
@@ -2243,68 +3784,151 @@ function riceMood(now) {
   if (roll.dizzyT > 0) return 'dizzy';
   if (roll.v > 3.4) return 'excited';
   if (roll.happyT > 0) return 'happy';
+  if (roll.kind === 'stop' && roll.idle > 6 && roll.idle < 12 && (roll.idle - 6) % 5 < 0.9) return 'yawn';   // 止まって しばらくすると ふわぁと あくび（赤ちゃんの ような かわいさ。運営者の声 2026-10-28）
   if (roll.kind === 'stop' && roll.idle > 12) return 'sleepy';
   if (roll.kind === 'stop' && now % 3700 < 140) return 'blink';
   return 'smile';
 }
+const riceBreath = now => Math.sin(now / 2600 * Math.PI * 2) * (roll.idle > 12 ? 0.03 : 0.018);   // 息：2.6秒で 1回。ねむって いる ときは 少し 大きく ゆっくり 見える
+// ちょうちょ：ねむって いる お米の 頭に ひらひら 飛んで きて とまり、お米が おきると 飛んで いく（文字の ない 素朴な かわいさ。運営者の声 2026-10-28）。
+// 絵は 7×5 の 点（k ふち・y はね・b からだ）。動きを へらす 設定の 人には 出さない。遊びの じゃまに ならない よう、お米が 動き出したら すぐ 飛んで いく
+const BFLY = { open: ['kk...kk', 'kyk.kyk', 'kyybyyk', 'kyk.kyk', 'kk...kk'], shut: ['...k...', '..kyk..', '..kbk..', '..kyk..', '...k...'] }, BFLY_COL = { k: '#2a2a2a', y: '#ffe27a', b: '#5a4630' };
+// 秋（季節の 小さな 虫が 赤とんぼの ころ）は 赤とんぼが 頭に とまる（棒の 先などに とまる 秋の すがた）。点（h あたま・R からだ・w はね・g はねの ふち）。とまって いる 間は はねを ひらいた まま
+const TONBO = { open: ['....h....', 'gwwgRgwwg', '.ggwRwgg.', 'gwwgRgwwg', '.gg.R.gg.', '....R....'], shut: ['....h....', '..gwRwg..', '...gRg...', '..gwRwg..', '...gRg...', '....R....'] }, TONBO_COL = { h: '#5a1a14', R: '#d8402a', w: '#e4f2fb', g: '#6f8fa6' };   // 9×6。はねは 4枚（ふちを こく して 地面の 上でも 見える）
+const bfly = { phase: '', t0: 0, x: 0, y: 0, drawn: 0 }, bflyCv = {};
+const bflyIn = t => { const k = Math.min(1, t / 3), e = 1 - (1 - k) ** 2; return { dx: (1 - e) * 46 + Math.sin(t * 5) * 5 * (1 - e), dy: -(1 - e) * 40 + Math.cos(t * 4) * 3 * (1 - e), rest: k >= 1 }; };   // 頭からの ずれ（絵の 点）。3秒で とまる
+function drawBfly(hx, by, u, now, sleepy) {
+  if (calmMotion) { bfly.phase = ''; return; }
+  if (sleepy && bfly.phase !== 'in' && bfly.phase !== 'rest') { bfly.phase = 'in'; bfly.t0 = now; bfly.kind = mushiKind() === 'tonbo' ? 'tonbo' : 'chocho'; }   // 飛んで くる ときに きめる（とちゅうで かわらない）
+  else if (!sleepy && (bfly.phase === 'in' || bfly.phase === 'rest')) { bfly.phase = 'out'; bfly.t0 = now; }
+  if (!bfly.phase) return;
+  const t = (now - bfly.t0) / 1000, hx0 = hx + 2 * u, hy0 = by - 12 * u;   // 頭の てっぺん（すこし 右。足が 頭に つく 高さ）
+  let x, y, flap;
+  if (bfly.phase === 'out') {   // おきたら 右上へ ふわっと 飛んで いく
+    if (t > 1.6) { bfly.phase = ''; return; }
+    x = bfly.x + t * 30 * u + Math.sin(t * 9) * 2 * u; y = bfly.y - t * 34 * u; flap = Math.floor(now / 90) % 2;
+    ctx.globalAlpha = Math.max(0, 1 - t / 1.6);
+  } else {
+    const q = bflyIn(t); if (q.rest) bfly.phase = 'rest';
+    x = hx0 + q.dx * u; y = hy0 + q.dy * u; bfly.x = x; bfly.y = y;
+    flap = q.rest ? (bfly.kind === 'tonbo' ? 1 : now % 2600 < 700 ? Math.floor(now / 350) % 2 : 1) : Math.floor(now / (bfly.kind === 'tonbo' ? 60 : 110)) % 2;   // とまって いる 間は ときどき ゆっくり はねを 動かす（とんぼは ひらいた まま）
+  }
+  const tb = bfly.kind === 'tonbo', SP = tb ? TONBO : BFLY, COL = tb ? TONBO_COL : BFLY_COL, pat = flap ? SP.open : SP.shut, W = pat[0].length, Hh = pat.length, q = Math.max(1, Math.round(u * 1.3));
+  const key = (tb ? 't' : 'c') + (flap ? 'o' : 's') + q;
+  let cv = bflyCv[key];
+  if (!cv) {   // 点を 1枚の 絵に まとめて から 描く（点ごとに 小数の 位置で 描くと、点の あいだに すき間の 線が 出た）
+    cv = bflyCv[key] = document.createElement('canvas'); cv.width = W * q; cv.height = Hh * q; const g = cv.getContext('2d');
+    for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) { const c = pat[j][i]; if (c !== '.') { g.fillStyle = COL[c]; g.fillRect(i * q, j * q, q, q); } }
+  }
+  bfly.smooth = !rec && !(gbOn && !worldMode); bfly.at = [x - W / 2 * q, y - Hh * q];   // テスト用
+  if (!bfly.smooth) { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false; ctx.drawImage(cv, Math.round(x - W / 2 * q), Math.round(y - Hh * q)); ctx.imageSmoothingEnabled = sm; bfly.at = bfly.at.map(Math.round); }   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に（まぜると 4色 いがいの 色が 出る。Codex の 指摘）
+  else { const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = true; ctx.drawImage(cv, x - W / 2 * q, y - Hh * q); ctx.imageSmoothingEnabled = sm; }   // 点より 細かい 位置で なめらかに 飛ぶ
+  ctx.globalAlpha = 1; bfly.drawn++;
+}
+const riceWake = dt => (dt < 0 || dt > 600 ? 0 : 0.1 * Math.sin(Math.PI * dt / 600));   // おきた ときの のび（0.6秒・いちばん のびて 10%）
+const drop = { cv: {}, n: 0, at: null };   // ぽちゃん のあとの 水の しずく（5×5 の 点。テスト用に 描いた 数・位置）
+function dropSprite(q) {
+  if (!drop.cv[q]) {
+    const c = drop.cv[q] = document.createElement('canvas'); c.width = c.height = 5 * q; const g = c.getContext('2d'), r = (x, y, w, h) => g.fillRect((x + 1) * q, (y + 1) * q, w * q, h * q);   // (x, y) は しずくの 左上からの 点（-1 から）
+    g.fillStyle = '#1a1a1a'; r(1, -1, 1, 1); r(0, 0, 3, 3); r(-1, 1, 5, 2); r(0, 3, 3, 1);
+    g.fillStyle = '#8fd0f4'; r(1, 0, 1, 1); r(0, 1, 3, 2);
+    g.fillStyle = '#ffffff'; r(0, 1, 1, 1);
+  }
+  return drop.cv[q];
+}
+const zzz = { cv: {}, n: 0, at: null };   // すやすやの Z（テスト用に 描いた 数・位置）
+function zzzSprite(q) {
+  if (!zzz.cv[q]) { const c = zzz.cv[q] = document.createElement('canvas'); c.width = c.height = 5 * q; const g = c.getContext('2d'); g.fillStyle = '#34407a'; g.fillRect(0, 0, 5 * q, q); for (let j = 1; j < 4; j++) g.fillRect((4 - j) * q, j * q, q, q); g.fillRect(0, 4 * q, 5 * q, q); }
+  return zzz.cv[q];
+}
 const riceTall = pitch => Math.sqrt(Math.cos(pitch) ** 2 + (0.88 * (riceBall.a || 10) / (riceBall.b || 13.5) * Math.sin(pitch)) ** 2);   // たての ころころで 見える 高さ（立っているときを 1。寝ると つぶの 厚みだけ）
 // お米を描く：(X, Y) まん中（画面の点）・u：絵の1点の大きさ・th：回り・sx, sy：つぶれ・spin：くるくるの回り・dst：描く先（はじめの画面のアニメーションにも使う）・gb：ゲームボーイの4色で
 function drawRiceBall(X, Y, u, th, sx, sy, spin, dst = ctx, gb = gbOn && !worldMode, mood = 'smile', look = 0, dirt = 0, dirtCol = '', pitch = 0) {
+  // なめらかに ころころ（運営者の声 2026-10-28「この キャラクターくらい 滑らかに」）：画面の 細かさで 描き、影は 段でなく 連続に、ふちは なめらかに、
+  // 位置は 整数に 丸めない（点より 細かい ずれも 絵の 中で 描く）。ゲームボーイの4色の ときだけは これまでどおり 絵の 点の 細かさで
   const rb = riceBall, o = rb.x, H = RB / 2, cs = Math.cos(spin), sn = Math.sin(spin), cp = Math.cos(pitch), sp = Math.sin(pitch);
   const bw = Math.sqrt(cs * cs + (0.88 * sn) ** 2), mx = cs < 0 ? -1 : 1, kx = sx * bw * mx;   // くるくる：横を向いても つぶの厚み（88%）は残る。うしろを向いたら くぼみは反対がわ
   const my = cp < 0 ? -1 : 1, ky = sy * riceTall(pitch) * my;   // たての ころころ：前に 寝ると 短く（はしから 見える）。うしろを 向くと 上下 さかさ
-  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, RB, RB); o.imageSmoothingEnabled = true;   // なめらかに回してから、半分より濃い所を つぶにする（ふちが がたがたしない）
-  o.setTransform(kx * Math.cos(th), ky * Math.sin(th), -kx * Math.sin(th), ky * Math.cos(th), H, H);
-  o.drawImage(rb.fill, -rb.gx, -rb.gy);
+  const P = gb ? 1 : Math.min(u, riceLowQ ? 2 : RICE_PMAX), k0 = P / u;   // riceLowQ：うすい のこりかげの とき だけ
+  const X0 = gb ? Math.round(X - H * u) : Math.floor(X - H * u - 1), Y0 = gb ? Math.round(Y - H * u) : Math.floor(Y - H * u - 1);
+  const ox0 = (X - X0) * k0, oy0 = (Y - Y0) * k0, S = Math.ceil(RB * P) + 3;   // つぶの まん中（絵の 中の ピクセル）。はしの ずれは 絵の 中で
+  if (rb.cv.width !== S) { rb.cv.width = rb.cv.height = S; rb.img = null; }
+  if (!rb.img) rb.img = o.createImageData(S, S);
+  o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, S, S); o.imageSmoothingEnabled = true; o.imageSmoothingQuality = 'high';
+  o.setTransform(P * kx * Math.cos(th), P * ky * Math.sin(th), -P * kx * Math.sin(th), P * ky * Math.cos(th), ox0, oy0);
+  const pd = rb.pad, fn = rb.fill.width;
+  o.drawImage(rb.soft, -rb.gx - pd, -rb.gy - pd, fn + 2 * pd, fn + 2 * pd);   // ぼかした 形（こさ 0.5 が つぶの ふち・0.16 が ふちどりの 外がわ）
   o.setTransform(1, 0, 0, 1, 0, 0);
-  const img = o.getImageData(0, 0, RB, RB), d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
+  const fd = o.getImageData(0, 0, S, S).data, img = rb.img, d = img.data, c = Math.cos(th), s = Math.sin(th), A = rb.a, Bb = rb.b, Cc = rb.a * 0.88;
   const [lx0, ly0, lz0] = RICE_LIGHT, [hx, hy, hz] = RICE_HALF;
-  const solid = new Uint8Array(RB * RB), nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
-  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {
-    const k = j * RB + i;
-    if (d[k * 4 + 3] < 128) { d[k * 4 + 3] = 0; continue; }
-    solid[k] = 1;
-    const ux = (i + 0.5 - H) / kx, uy = (j + 0.5 - H) / ky, px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
-    const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
-    let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
-    const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.hypot(qx, qy);
-    if (qd < rb.nr + 1.6) { nx = -qx / (qd || 1) * 0.8; ny = -qy / (qd || 1) * 0.8; nz = 0.6; }   // くぼみの内がわは 中へ向く（光の当たらない がわが 影になる）
-    let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
-    const nn = Math.hypot(wx, wy, nz); wx /= nn; wy /= nn; const wz = nz / nn;
-    const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), spec = Math.pow(Math.max(0, wx * hx + wy * hy + wz * hz), 28);
-    const v = 0.28 + 0.76 * dif + ((i + j) & 1 ? 0.035 : -0.035) * ((i ^ j) & 2 ? 1 : 0.4);   // 点をまぜて さかいを なめらかに
-    const t = spec > 0.55 ? 5 : v < 0.42 ? 0 : v < 0.58 ? 1 : v < 0.74 ? 2 : v < 0.9 ? 3 : 4;
-    let col = RICE_TONE[t];
-    if (nDirt) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
-      const qx = Math.floor(rb.gx + px), qy = Math.floor(rb.gy + py);
-      for (let m = 0; m < nDirt; m++) if (rb.spots[m][0] === qx && rb.spots[m][1] === qy) { const f = 0.55 + 0.3 * dif; col = [dc[0] * f, dc[1] * f, dc[2] * f]; break; }
+  const kk = Math.min(Math.abs(kx), Math.abs(ky)) || 1, w1 = Math.min(0.6, 0.4 / (P * kk)), w2 = Math.min(0.3, 0.24 / (P * kk));   // 1ピクセルで こさが どれだけ かわるか（ふちを 1ピクセルで ぼかす）。小さく 描く ときも 形の 外（こさ 0）は とうめいの まま（上限が ないと まわりに うすい 四角が 出た。Codex の 指摘）
+  const nDirt = rb.spots ? Math.round(Math.min(1, dirt) * rb.spots.length) : 0, dc = (dirtCol || '150,120,80').split(',').map(Number);
+  for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+    const k = (j * S + i) * 4, f = fd[k + 3] / 255;
+    if (!f) { d[k + 3] = 0; continue; }
+    const ao = Math.min(1, Math.max(0, (f - 0.16) / w2 + 0.5));
+    if (ao <= 0) { d[k + 3] = 0; continue; }
+    const ab = Math.min(1, Math.max(0, (f - 0.5) / w1 + 0.5));
+    let r = 26, g = 26, bl = 26;
+    if (ab > 0) {
+      const ux = (i + 0.5 - ox0) / (P * kx), uy = (j + 0.5 - oy0) / (P * ky), px = c * ux + s * uy, py = -s * ux + c * uy;   // 画面の点 → つぶの中の位置
+      const ex = px / A, ey = py / Bb, ez = Math.sqrt(Math.max(0, 1 - ex * ex - ey * ey));
+      let nx = ex / A, ny = ey / Bb, nz = ez / Cc;   // たまごの面の向き
+      const qx = rb.gx + px - rb.nx, qy = rb.gy + py - rb.ny, qd = Math.sqrt(qx * qx + qy * qy), nb = Math.min(1, Math.max(0, rb.nr + 1.6 - qd));   // くぼみの内がわは 中へ向く（さかいは なめらかに まぜる）
+      if (nb > 0) { const n0 = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1; nx = nx / n0 * (1 - nb) - qx / (qd || 1) * 0.8 * nb; ny = ny / n0 * (1 - nb) - qy / (qd || 1) * 0.8 * nb; nz = nz / n0 * (1 - nb) + 0.6 * nb; }
+      let wx = (c * nx - s * ny) * mx, wy = (s * nx + c * ny) * my;   // 面の向きを 画面の向きに
+      const nn = Math.sqrt(wx * wx + wy * wy + nz * nz); wx /= nn; wy /= nn; const wz = nz / nn;
+      const dif = Math.max(0, wx * lx0 + wy * ly0 + wz * lz0), s1 = Math.max(0, wx * hx + wy * hy + wz * hz), s4 = (s1 * s1) * (s1 * s1), s8 = s4 * s4, spec = s8 * s8 * s8 * s4;   // 28乗（かけ算で。Math.pow・Math.hypot は おそい）
+      const v = 0.28 + 0.76 * dif, tf = Math.min(4, Math.max(0, (v - 0.34) / 0.16)), t0 = Math.min(3, Math.floor(tf)), tt = tf - t0;   // 影は 段でなく 連続に
+      const T0 = RICE_TONE[t0], T1 = RICE_TONE[t0 + 1], sh = Math.min(1, Math.max(0, (spec - 0.35) / 0.35));
+      let cr = T0[0] + (T1[0] - T0[0]) * tt, cg = T0[1] + (T1[1] - T0[1]) * tt, cb = T0[2] + (T1[2] - T0[2]) * tt;
+      {   // あいちのかおり：ふちは すきとおって 明るく（光が ぬける）、まん中は 白く にごる、縦すじは うっすら 暗く（大きく 描く ときだけ。小さいと ざらつく）
+        const rim = (1 - ez) * (1 - ez) * (1 - ez) * 0.35 * (1 - nb), core = ez * ez * 0.14 * (1 - nb), st = P >= 2.5 ? riceStreak(ex, ey) * 0.055 * (1 - nb) : 0;
+        cr += (RICE_MILK[0] - cr) * rim + (RICE_CORE[0] - cr) * core; cg += (RICE_MILK[1] - cg) * rim + (RICE_CORE[1] - cg) * core; cb += (RICE_MILK[2] - cb) * rim + (RICE_CORE[2] - cb) * core;
+        cr *= 1 - st; cg *= 1 - st; cb *= 1 - st * 0.9;
+      }
+      cr += (255 - cr) * sh; cg += (255 - cg) * sh; cb += (255 - cb) * sh;   // てかり
+      for (let m = 0; m < nDirt; m++) {   // よごれの しみ（つぶと いっしょに回る。光の当たり方で こさを かえる）
+        const ddx = rb.gx + px - rb.spots[m][0] - 0.5, ddy = rb.gy + py - rb.spots[m][1] - 0.5, dm = Math.sqrt(ddx * ddx + ddy * ddy), al = Math.min(1, Math.max(0, (0.72 - dm) / (w1 * 2.5) + 0.5));
+        if (al > 0) { const fm = 0.55 + 0.3 * dif; cr += (dc[0] * fm - cr) * al; cg += (dc[1] * fm - cg) * al; cb += (dc[2] * fm - cb) * al; }
+      }
+      const al = ab + ao * (1 - ab);   // つぶの 色を ふちどりの 上に かさねる
+      r = (cr * ab + 26 * ao * (1 - ab)) / al; g = (cg * ab + 26 * ao * (1 - ab)) / al; bl = (cb * ab + 26 * ao * (1 - ab)) / al;
     }
-    d[k * 4] = col[0]; d[k * 4 + 1] = col[1]; d[k * 4 + 2] = col[2];
+    d[k] = r; d[k + 1] = g; d[k + 2] = bl; d[k + 3] = 255 * ao;
   }
-  for (let j = 0; j < RB; j++) for (let i = 0; i < RB; i++) {   // ふちどり（回したあとに、つぶのすぐ外がわの点を黒く）
-    const k = j * RB + i;
-    if (solid[k] || !((i > 0 && solid[k - 1]) || (i < RB - 1 && solid[k + 1]) || (j > 0 && solid[k - RB]) || (j < RB - 1 && solid[k + RB]))) continue;
-    d[k * 4] = d[k * 4 + 1] = d[k * 4 + 2] = 26; d[k * 4 + 3] = 255;
+  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる。ふちは ぼかさない）
+    for (let k = 0; k < d.length; k += 4) {
+      if (d[k + 3] < 128) { d[k + 3] = 0; continue; }
+      const L = gbLum(d[k], d[k + 1], d[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
+      d[k] = col[0]; d[k + 1] = col[1]; d[k + 2] = col[2]; d[k + 3] = 255;
+    }
   }
   o.putImageData(img, 0, 0);
-  if (gb) {   // ゲームボーイの4色（絵が毎回かわるので、ここで色をかえる）
-    const g = o.getImageData(0, 0, RB, RB), q = g.data;
-    for (let k = 0; k < q.length; k += 4) {
-      if (!q[k + 3]) continue;
-      const L = gbLum(q[k], q[k + 1], q[k + 2]), col = GB_RGB[L < 0.16 ? 3 : L > 0.8 ? 0 : L > 0.62 ? 1 : 2];
-      q[k] = col[0]; q[k + 1] = col[1]; q[k + 2] = col[2]; q[k + 3] = 255;
-    }
-    o.putImageData(g, 0, 0);
-  }
+  rb.last = { P, S, X0, Y0, X, Y, th, lowQ: riceLowQ };   // テスト用
   gbPause++;
-  try { dst.drawImage(rb.cv, Math.round(X - H * u), Math.round(Y - H * u), RB * u, RB * u); } finally { gbPause--; }
+  const sm = dst.imageSmoothingEnabled;
+  try {
+    if (k0 === 1) dst.drawImage(rb.cv, X0, Y0);   // 1点＝1ピクセルで そのまま（にじまない）
+    else { dst.imageSmoothingEnabled = !gb; dst.drawImage(rb.cv, X0, Y0, S / k0, S / k0); }
+  } finally { gbPause--; dst.imageSmoothingEnabled = sm; }
   if (cs > 0.12 && cp > 0.12 && mood) {   // 顔は 画面の細かさで描く（点の大きさで回すと 目が くずれる）。くるくるのときは、つぶの まわりを すべって見える
-    dst.save(); dst.translate(Math.round(X), Math.round(Y)); dst.scale(sx, sy); dst.rotate(th);
+    dst.save(); dst.translate(gb ? Math.round(X) : X, gb ? Math.round(Y) : Y); dst.scale(sx, sy); dst.rotate(th);
     dst.translate((sn * rb.a * 0.7 + look) * u, sp * rb.b * 0.6 * u); dst.scale(Math.max(0.25, cs), Math.max(0.25, cp));   // look：きょろきょろ（顔を 少し よこへ）。たての ころころでは 顔が 上下へ すべる
     const fc = (rb.faces && rb.faces[mood]) || rb.face;
-    dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    if (gb) dst.drawImage(fc, -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u);
+    else { dst.imageSmoothingEnabled = true; dst.drawImage(riceFaceHi(fc, Math.ceil(u)), -rb.gx * u, -rb.gy * u, fc.width * u, fc.height * u); }   // 点を 大きくしてから なめらかに 回す（目の 形は そのまま、ふちだけ なめらか）
     dst.restore();
   }
+}
+const RICE_PMAX = 6;
+let riceLowQ = false;   // うすい のこりかげは あらく 描いて のばす（重さを へらす。とても うすいので 見た目は かわらない）   // お米を 描く 細かさの 上限（絵の1点 = 6ピクセルまで）
+const faceHi = new WeakMap();
+function riceFaceHi(fc, q) {   // 顔の 絵を 点の まま q 倍に（なめらかに 回しても 目が ぼやけない）
+  let m = faceHi.get(fc);
+  if (!m) faceHi.set(fc, m = {});
+  if (!m[q]) { const c = document.createElement('canvas'); c.width = fc.width * q; c.height = fc.height * q; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(fc, 0, 0, c.width, c.height); m[q] = c; }
+  return m[q];
 }
 const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
 // なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
@@ -2360,14 +3984,14 @@ function comboStep() {
   combo.shown = performance.now();
   if (combo.n > mzRt.run.combo) mzRt.run.combo = combo.n;   // この ゴールまでの いちばん 長い コンボ
   if (!combo.beat && combo.best >= 5 && combo.n > combo.best) {   // 転がっている うちに ベストを こえた：その場で 知らせる（「あと 少しで ベスト」を 追いかける 楽しみ）
-    combo.beat = true; combo.beatN = combo.n; chordSound(); floatText(`🏅 ベスト こえたじゃん！ ×${combo.n}`);   // 知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
+    combo.beat = true; combo.beatN = combo.n; chordSound(); floatText('🏅 ベスト こえたじゃん！');   // 数は すぐ 横の「×9」に 出て いるので 書かない（運営者の声「文字は 少なく」2026-10-29）。知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
     const now = performance.now(), cols = ['#ff9fd0', '#ffe066', '#ffffff'];
     for (let i = 0; i < 24; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3.5, c: cols[i % 3], life: 0.7 + Math.random() * 0.5 }); }
   }
-  if (combo.n % 5 === 0) {   // 5ごとに きらきら（10ごとに 文字も）
-    if (combo.n % 10 === 0) floatText(`🎵 ころころ ×${combo.n}！ じょうずだら`);
-    const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'];
-    for (let i = 0; i < 10 + Math.min(20, combo.n / 2); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 4], life: 0.6 + Math.random() * 0.4 }); }
+  if (combo.n % 5 === 0) {   // 5ごとに きらきら。10ごとは 文字の かわりに 大きな きらきら（数は お米の よこの「×N」で 見えて いる。同じ ことを 2か所に 書かない。運営者の声「文字は 少なく」2026-10-28）
+    const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'], big = combo.n % 10 === 0;
+    if (big) combo.pop = now;   // テスト用（大きな きらきらの 時こく）
+    for (let i = 0; i < (10 + Math.min(20, combo.n / 2)) * (big ? 2 : 1); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v * (big ? 1.4 : 1), vy: Math.sin(t) * v * (big ? 1.4 : 1) - 3, c: cols[i % 4], life: (0.6 + Math.random() * 0.4) * (big ? 1.3 : 1) }); }
   }
 }
 function comboEnd() {
@@ -2376,10 +4000,10 @@ function comboEnd() {
   if (n < 5) return;
   if (n > combo.best) {
     combo.best = n; combo.near = 0; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ }
-    // 転がる うちに「ベスト こえたじゃん！ ×9」と 出した 数の まま おわった ときは、おわりの「あたらしい ベスト ×9」は 出さない（同じ 数を 2回 つづけて 出していた。自分で 遊んで 分かった）
+    // 転がる うちに「ベスト こえたじゃん！」と 出した ×9 の まま おわった ときは、おわりの「あたらしい ベスト ×9」は 出さない（同じ 数を 2回 つづけて 出していた。自分で 遊んで 分かった）
     if (!beat || n > combo.beatN) floatText(beat ? `🏅 あたらしい ベスト ×${n}！ やったじゃん` : `🏅 ころころ ベスト ×${n}！ やったじゃん`);
   }
-  else if (combo.best - n <= 3 && n > combo.near) { combo.near = n; floatText(`おしい！ ベストまで あと${combo.best - n + 1}だったじゃん`); }   // あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）。同じ ベストには、前より 近づいた ときだけ（自分で 遊んで 分かった：めいろで 迷う 間、2分で 7回「あと4」が 出た）
+  else if (combo.best - n <= 2 && n > combo.near) { combo.near = n; floatText(`おしい！ あと${combo.best - n + 1}`); }   // 文字は みじかく、とても 近い（あと1〜3）ときだけ（運営者の声「文字は 少なく」：200秒で「おしい！ ベストまで あと4だったじゃん」が 5回 出た。自分で 遊んで 分かった 2026-10-29）。あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）。同じ ベストには、前より 近づいた ときだけ（自分で 遊んで 分かった：めいろで 迷う 間、2分で 7回「あと4」が 出た）
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }
 // スピード線（運営者の声「スキルを繰り返す」3回目）：びゅんパネルで 加速しても 見た目が あまり かわらず、速さを 目で 感じにくかった。
@@ -2410,8 +4034,8 @@ function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数�
   ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
   const t = `×${combo.n}`;
   ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
-  if (combo.best >= 5) {   // その下に 小さく ベスト（こえたら「ベスト こうしん中」）
-    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? 'ベスト こうしん中' : `ベスト ${combo.best}`;
+  if (combo.best >= 5) {   // その下に 小さく ベスト「🏅9」（こえたら「🏅」だけ。こえた ことは 浮かぶ 文字と 音で 分かるので 2か所に 書かない。運営者の声「文字は 少なく」2026-10-29）
+    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? '🏅' : `🏅${combo.best}`;
     ctx.font = `bold ${s2}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(2, s2 / 4); ctx.fillStyle = combo.n > combo.best ? '#ff9fd0' : '#d9e6d0';
     ctx.strokeText(t2, x, y2); ctx.fillText(t2, x, y2);
   }
@@ -2642,8 +4266,7 @@ function npcSendOff() {
   rp.vx = dx * 3.4; rp.vy = dy * 3.4;   // ころん と押す
   roll.sendT = 4; roll.sends++; roll.happyT = 1.4;
   kotoSound(0.7);
-  npcEmotes.set(s.n.id, { t: performance.now(), k: '♪' });
-  floatText(`→ ${s.name}へ ころころ`);
+  npcEmotes.set(s.n.id, { t: performance.now(), k: '♪' });   // 行き先は お米の まわりの 点の 矢印・下の 札・「つぎの ゴール」で 分かる ので、頭の 上の「→ 〇〇へ ころころ」の 文字は 出さない（運営者の声「文字は減らして」2026-10-29）
 }
 function drawSendArrow(hx, hcy, T, u) {   // お米の まわりに 行き先を指す 点の矢印（話で決まってから 4秒）
   if (roll.sendT <= 0 || !G.guide || !roll.last) return;
@@ -5845,6 +7468,31 @@ function occludeRice(hx, by, footY, u, again) {
   ctx.globalAlpha = 0.5; again(); ctx.globalAlpha = 1;
   return true;
 }
+// お米の 吹き出し（10/29 店主「文字を 廃止して 素朴な 可愛い キャラクターとの 対話を 軸に」。めいろの 中だけ・試作）：
+// めいろの 知らせを、お米が 頭の 上の 吹き出しで みじかく しゃべる（6字 くらいまで）。新しい ひと言は 前の ひと言と 入れかわる
+const riceBub = { t: '', at: 0, until: 0, log: [] };   // log：しゃべった ことば（試験用。新しい 8つ）
+// 言いかたの きまり（10/29 クラウドの「お米つぶの おはなし」・かかしと そろえる）：みじかく、絵文字は 数を あらわす ときだけ（♪＝れんぱつ・💨＝れんぞく）。かざりの 絵文字は つけない
+function riceSay(t, ms = 1400, mood = '') {
+  const now = performance.now();
+  Object.assign(riceBub, { t, at: now, until: now + ms });
+  riceBub.log.push(t); if (riceBub.log.length > 8) riceBub.log.shift();
+  if (mood === 'happy') roll.happyT = Math.max(roll.happyT, ms / 1000);   // にこにこ顔で しゃべる
+  dirty = true;
+}
+function drawRiceSay(w, cy, T, now, dpr) {   // dpr：画面の 点の こまかさ（frame の 中の 値を もらう）
+  if (!riceBub.t || now > riceBub.until) return;
+  const age = now - riceBub.at, left = riceBub.until - now, k = calmMotion ? 1 : Math.min(1, 0.6 + age / 300);   // ぽんっと ふくらんで 出る
+  const fz = Math.round(FLOAT_PX * dpr * k), pad = Math.round(fz * 0.45), r = Math.round(fz * 0.5), tl = Math.round(fz * 0.45);
+  ctx.save(); ctx.globalAlpha = Math.min(1, left / 250);
+  ctx.font = `bold ${fz}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const bw = Math.min(w * 0.9, ctx.measureText(riceBub.t).width + pad * 2), bh = fz + pad * 1.4, x = Math.round(w / 2 - bw / 2), y = Math.round(cy - T * 1.2 - tl - bh);
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, bw, bh, r) : ctx.rect(x, y, bw, bh);
+  ctx.moveTo(w / 2 - tl * 0.7, y + bh - 1); ctx.lineTo(w / 2, y + bh + tl); ctx.lineTo(w / 2 + tl * 0.7, y + bh - 1);   // しっぽ（お米を さす）
+  ctx.fillStyle = '#fffdf3'; ctx.fill(); ctx.lineWidth = Math.max(2, Math.round(dpr * 1.5)); ctx.strokeStyle = '#2a2420'; ctx.stroke();
+  ctx.fillStyle = '#fffdf3'; ctx.fillRect(Math.round(w / 2 - tl * 0.7) + 1, y + bh - 3, Math.round(tl * 1.4) - 2, 4);   // しっぽの つけねの 線を けす
+  ctx.fillStyle = '#2a2420'; ctx.fillText(riceBub.t, w / 2, y + bh / 2 + 1);
+  ctx.restore();
+}
 function floatText(t) {   // 「ゴール！」の あと 待っていた 文字を 順に 出している 間（floatQEnd まで）に 来た 文字は、列の 最後に（重ねない）
   // つづけて 来た 文字は 前の 文字が 消えてから 出す（字を 大きく したら、同じ 所に 2つ 重なって 読めなかった 2026-10-27）
   const now = performance.now(), at = Math.max(now, floatQEnd, floatLast + FLOAT_GAP);
@@ -5998,8 +7646,10 @@ function drawTile(tx, ty, X, Y, T, f, now) {
   }
   else if (code === C.A && MT.shore && (shoreAt = nbrLook(tx, ty, shoreIndex))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
   else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
+  if (code === C.E && kabuseOn()) drawKabuse(tx, ty, X, Y, T);   // 春の てん茶の 覆い（かざり〈茶つみの 人 など〉より 先に。人は 覆いの 上に 見える）
   if (code === C.B) drawWall(tx, ty, X, Y, T);
   else drawDeco(code, tx, ty, X, Y, T, now);
+  if (code === C.E && chaHanaOn()) drawChaHana(tx, ty, X, Y, T);   // 秋の 茶の花
   if (sh !== 2 && !gbOn) { ctx.fillStyle = SHADE[sh]; ctx.fillRect(X, Y, T, T); }   // 土地の高さの影（ゲームボーイの4色では つけない）
   if (TRAIL.map.size && trailHas(tx, ty)) drawFoot(code, tx, ty, X, Y, T);   // 歩いた道の足あと
   if (code === C.R && !regionPaint && alleyHint(tx, ty)) drawAlleyHint(X, Y, T, now);   // まだ しらべていない 路地の行き止まり（めいろの 盤には 描かない）
@@ -6087,8 +7737,8 @@ function frame(now) {
   }
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
-    if (howtoEl.hidden) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
-    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
+    if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
   }
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
@@ -6122,7 +7772,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -6188,6 +7838,13 @@ function frame(now) {
   suzumeStep(now, ox, oy, T, w, h, dpr);   // 田んぼや 草地の すずめ
   nekoStep(now, ox, oy, T, w, h, dpr);   // 道ばたで ひるねする ねこ
   mushiStep(now, ox, oy, T, w, h, dpr);   // 季節の 小さな 虫（赤とんぼ・ちょうちょ）
+  kaeruStep(now, ox, oy, T, w, h, dpr);   // 田んぼの あぜの カエル
+  nakamaStep(now, ox, oy, T, w, h, dpr);   // 農作物も ころころ（いちご・なす・大豆）
+  hamonStep(now, ox, oy, T, w, h, dpr);   // 水べの さざなみ
+  sentakuStep(now, ox, oy, T, w, h, dpr);   // 物干しの せんたくもの
+  donguriStep(now, ox, oy, T, w, h, dpr);   // どんぐりも ころころ
+  deaiStep(now, ox, oy, T);   // 水べで 出会う 西尾の 生きもの（deai.js）
+  koboreStep(now, ox, oy, T, dpr);   // 転がりながら こぼす 西尾の 名物（kobore.js）
   // 先回りしたライバル
   const rt = rivalTile();
   if (rt && rt.ok) {
@@ -6236,12 +7893,21 @@ function frame(now) {
     {   // 影：つぶの いまの はば（寝ころぶと広い）に合わせた、まるい点の だ円。とぶと小さく
       const wv = Math.sqrt((A * Math.cos(th)) ** 2 + (B * Math.sin(th)) ** 2), shw = wv * 1.8 / (1 + roll.h * 3), q = Math.max(1, Math.round(u)), sy0 = Math.round(hcy + T * 0.3);
       ctx.fillStyle = 'rgba(0,0,0,.28)';
-      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
-      ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
-      ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+      if (gbOn && !worldMode) {   // ゲームボーイの4色は 点の だ円の まま
+        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
+        ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
+        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
+      } else { ctx.beginPath(); ctx.ellipse(hx, hcy + T * 0.3 + u, shw / 2, 2 * u, 0, 0, Math.PI * 2); ctx.fill(); }   // お米と いっしょに なめらかに（点より 細かく 動く。整数に 丸めると 影だけ カクッと 動いた）
+      kageDraw(hx, hcy + T * 0.3 + u, shw, u, now, roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2);   // じっと すると 名物の 影が のびる（kage.js）
     }
     const sq = roll.sq;
     let sx = roll.sqx ? 1 - sq : 1 + sq, sy = roll.sqx ? 1 + sq * 0.6 : 1 - sq;   // ぺたっと つぶれて ぷるんと もどる
+    let br = 0;   // 息の ふくらみ（札が よける お米の はんいには 入れない。はんいが こまごとに ゆれると、ぎりぎりに よけた 札が お米に かかった）
+    if (roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2 && !calmMotion) { br = riceBreath(now); sy *= 1 + br; sx *= 1 - br * 0.5; }
+    if ((roll.prevIdle || 0) > 12 && roll.idle < roll.prevIdle && !calmMotion) roll.wakeT = now;   // ねむって いた お米が おきた
+    roll.prevIdle = roll.idle;
+    { const ws = riceWake(now - (roll.wakeT || -1e9)); if (ws) { sy *= 1 + ws; sx *= 1 - ws * 0.5; } }   // おきたら「のびー」と 0.6秒 たてに のびる（赤ちゃんの ような かわいさ）   // 止まっている 間は すう すう 息を する（赤ちゃんの ような かわいさ。足もとは 地面の まま）
+    { const mc = gochisoMunch(now); if (mc) { sy *= 1 - mc; sx *= 1 + mc * 0.5; } }   // 名物食を もぐもぐ（gochiso.js）
     const tr = roll.trail, t0 = tr[tr.length - 3], t1 = tr[tr.length - 1];
     if (roll.h > 0) { const st = Math.min(0.12, Math.abs(roll.hv) * 0.035); sy *= 1 + st; sx *= 1 - st * 0.5; }   // とんでいる：たてに のびる
     else if (t0 && t1 && roll.v > 2) {   // 速いと、進む向きに 少し のびる
@@ -6249,38 +7915,68 @@ function frame(now) {
       if (horiz) { sx *= 1 + st; sy *= 1 - st * 0.5; } else { sy *= 1 + st; sx *= 1 - st * 0.5; }
     }
     const by = sy !== 1 ? ground - low * sy - hop : mid;
+    roll.by = by;   // テスト用（お米の まん中の 高さ。息で かわる）
     const mood = roll.drawn = riceMood(now);
-    roll.box = [hx - 13 * u, by - 15 * u, hx + 13 * u, by + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
+    const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
+    roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
     if (riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
-        ctx.globalAlpha = al;
-        drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch);
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = al; riceLowQ = true;
+        try { drawRiceBall(ox + p.x * T, by + (oy + p.y * T - hcy), u, p.th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, null, 0, 0, '', roll.pitch); }
+        finally { ctx.globalAlpha = 1; riceLowQ = false; }   // とちゅうで 止まっても、本体の お米まで あらく 描かない
       }
     }
     if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
+    tsutsumiStep(hx, by, u, now);   // 吉良の 田んぼで じっと すると 黄金堤を 築く（tsutsumi.js）
+    chochinyoruStep(hx, by, u, now);   // 夜の 一色の 町なかで じっと すると 提灯の あかり（大提灯・提灯の れつ。chochinyoru.js。いっしきさんぽ・めぐりに 先んじる）
+    isshikiStep(hx, by, u, now);   // 一色の 町なかで じっと すると 港町の ひとこま（えびせん焼き・うなぎ・養鰻・さかな広場。isshiki.js）
+    shimatabiStep(hx, by, u, now);   // 佐久島で じっと すると 島の ひとこま（アート・黒壁・高速船。shimatabi.js）
+    yuamiStep(hx, by, u, now);   // 吉良で じっと すると 温泉・ビーチに つかる（yuami.js）
+    horidashiStep(hx, by, u, now);   // 一色・幡豆の 海べで じっと すると 砂を ほって 貝を ほり当てる（horidashi.js）
+    hazusanpoStep(hx, by, u, now);   // 幡豆の 町なかで じっと すると 山と 花の ひとこま（三ヶ根山・スカイライン・カーネーション・あじさい・ひまわり。hazusanpo.js）
+    tomboloStep(hx, by, u, now);   // トンボロ干潟の そばで じっと すると 干潟の ひとこま（満ち引き・海の道・干潟の 生きもの。tombolo.js。ほりだし・はずさんぽに 先んじる）
+    jokamachiStep(hx, by, u, now);   // 西尾城の あとの そばで じっと すると 城下町の ひとこま（丑寅櫓・鍮石門・祇園祭など。jokamachi.js。ちゃせきに 先んじる）
+    mangekyoStep(hx, by, u, now);   // 三河工芸ガラス美術館の そばで じっと すると ガラス工芸の ひとこま（美術館・巨大万華鏡・のぞく。mangekyo.js。ちゃせきに 先んじる）
+    chatsumiStep(hx, by, u, now);   // 稲荷山茶園公園の そばで じっと すると 茶畑の ひとこま（茶摘み・てん茶・川霧。chatsumi.js。ちゃせきに 先んじる）
+    kawabeStep(hx, by, u, now);   // 川・池・用水の そばで じっと すると 水べの ひとこま（矢作川・メダカ・アカザ・ミサゴ・ニホンイシガメ。kawabe.js。ちゃせきに 先んじる）
+    chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）
+    nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ
       drawSendArrow(hx, by, T, u);   // お米の まん中から
       drawCombo(hx + 15 * u, by - 4 * u, u, now);   // ころころコンボの 数（お米の 右よこ。頭の上は 浮かぶ 文字の 場所）
       if (roll.wetT > 0) {   // ぽちゃん のあと：頭の左上に 水の しずく
-        const q = Math.max(1, Math.round(u)), dx0 = Math.round(hx - 11 * u), dy0 = Math.round(by - 12 * u + (1.4 - roll.wetT) * 3 * u);
-        ctx.globalAlpha = Math.min(1, roll.wetT * 2);
-        ctx.fillStyle = '#1a1a1a'; ctx.fillRect(dx0 + q, dy0 - q, q, q); ctx.fillRect(dx0, dy0, 3 * q, 3 * q); ctx.fillRect(dx0 - q, dy0 + q, 5 * q, 2 * q); ctx.fillRect(dx0, dy0 + 3 * q, 3 * q, q);
-        ctx.fillStyle = '#8fd0f4'; ctx.fillRect(dx0 + q, dy0, q, q); ctx.fillRect(dx0, dy0 + q, 3 * q, 2 * q);
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(dx0, dy0 + q, q, q);
-        ctx.globalAlpha = 1;
+        const q = Math.max(1, Math.round(u)), dx0 = hx - 11 * u, dy0 = by - 12 * u + (1.4 - roll.wetT) * 3 * u, crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;
+        ctx.globalAlpha = Math.min(1, roll.wetT * 2); ctx.imageSmoothingEnabled = !crisp;   // しずくも 1枚の 絵に して 点より 細かい 位置で なめらかに すべらせる（ゲームボーイの4色・記録係は 整数の 位置）
+        ctx.drawImage(dropSprite(q), crisp ? Math.round(dx0) - q : dx0 - q, crisp ? Math.round(dy0) - q : dy0 - q); drop.at = [dx0, dy0]; drop.n++;
+        ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm;
       }
+      drawNimotsu(hx, by, u, now, mood === 'sleepy');
+      yumeStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
+      gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
+      otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
+      kasaStep(hx, by, u, now);   // 雨の 日は 名物の かさを さす（kasa.js）
+      kiriStep(hx, by, u, now);   // あさの 川・池の そばでは 川霧が たちこめる（kiri.js）
+      meguriStep(hx, by, u, now);   // 夜は 名物が お米の まわりを めぐる（meguri.js）
+      tsunStep(hx, by, u, now);   // お米を つんつんすると 名物が 飛び出す（tsun.js）
+      nazoStep(hx, by, u, now);   // 止まって じっと すると 西尾の なぞなぞ（答えの 札を タップ。nazonazo.js）
+      youkosoStep(hx, by, u, now);   // 地区の 境を こえると 名物の 旗が 立つ（youkoso.js）
+      shirushiStep(hx, by, u, now, mood === 'sleepy');   // 入った 地区の 旗が お米の よこに のこる（shirushi.js）
+      monosashiStep(hx, by, u, now, mood === 'sleepy');   // 転がった 道のりを 黄金堤の 長さ（180m）で はかる（monosashi.js）
+      okaeriStep(hx, by, u, now, mood === 'sleepy');   // しばらくぶりに もどると 名物と いっしょに むかえる（okaeri.js）
+      furusatoStep(hx, by, u, now, mood === 'sleepy');   // 西尾市の 外では 西尾の 方角を 名物の 矢じるしで しめす（furusato.js）
+      drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
-        ctx.fillStyle = '#34407a';
-        for (let k = 0; k < 2; k++) {
-          const t = ((now / 1600) + k / 2) % 1, zx = Math.round(hx + 9 * u + t * 6 * u + k * 3 * u), zy = Math.round(by - 14 * u - t * 10 * u), q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
-          ctx.globalAlpha = 1 - t; ctx.fillRect(zx, zy, 5 * q, q); for (let j = 1; j < 4; j++) ctx.fillRect(zx + (4 - j) * q, zy + j * q, q, q); ctx.fillRect(zx, zy + 4 * q, 5 * q, q);   // 5×5 の Z
+        const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に
+        ctx.imageSmoothingEnabled = !crisp;
+        for (let k = 0; k < 2; k++) {   // 5×5 の Z を 1枚の 絵に して、点より 細かい 位置で なめらかに のぼらせる（1点ずつ カクカク のぼって いた）
+          const t = ((now / 1600) + k / 2) % 1, zx = hx + 9 * u + t * 6 * u + k * 3 * u, zy = by - 14 * u - t * 10 * u, q = Math.max(1, Math.round(u * (k ? 0.8 : 1.1)));
+          ctx.globalAlpha = 1 - t; ctx.drawImage(zzzSprite(q), crisp ? Math.round(zx) : zx, crisp ? Math.round(zy) : zy); zzz.at = [zx, zy];
         }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm; zzz.n++;
       }
     } else {   // 丸く描く用意が できるまでは、絵を回す
       roll.flat++;
@@ -6294,6 +7990,7 @@ function frame(now) {
   } else if (me || G.demo) ctx.drawImage(heroSprites[facing][f], Math.round(w / 2 - T / 2), Math.round(cy - T * 0.75), T, T);
 
   if (!rec) drawNight(w, h, ox, oy, T, cy, pois, now);   // 夜のさんぽ：明かりのまわりだけ見える
+  if (!rec) drawMorning(w, h);   // 朝の ひかり
   {   // 看板は人や建物の上に出す（主人公には重ねない）
     // 町名の札（青地に白い字。電柱の町名表示のように）・駅名標（白地に黒い字と青い線）・お店の看板（その店らしい色に白い字）
     // 重ならないように、町名 → 駅 → 大きなお店 → ほかのお店 の順に場所を取る
@@ -6378,10 +8075,17 @@ function frame(now) {
   // めいろの「🏁 ゴール！」が 出ている 間は 待って、消えてから 浮かべる（ゴールの 時間・★の 行と 重なって どちらも 読めなかった。自分で 遊んで 分かった）
   //   待っている 文字が いくつか あれば、消えた あとに 来た 順に 1つずつ（1.3秒ずつ）。同じ 所に いっしょに 出すと 重なって 読めない
   //   つづく「🏁 つぎの ゴール」の 札（3秒）の 間も 待つ（自分で 遊んで 分かった：ゴールの あと 待っていた「おしい！…」が 札の「めいろで 2.0km」に 重なった）
+  if (mazeOn()) drawRiceSay(w, cy, T, now, dpr);   // お米の 吹き出し（めいろの 中だけ）
   floatDrawn.length = 0;
   const floatHold = !!(mzBanner.t0 || mzNextOn());
   if (floatHold) { floaters.forEach((fl, k) => { fl.at = now + k * 1300; }); floatQEnd = floaters.length ? now + floaters.length * 1300 : 0; if (floaters.length) floatLast = now + (floaters.length - 1) * 1300; }   // 1つ 1.2秒で 消える。すこし あけて 次を（ちょうど 1.2秒だと 消える こまと 出る こまが 重なる）
   let floatWait = -1;   // よける 所が なくて 待っている 文字の 番号
+  // 上に 出て いる 知らせ（DOM）の わく（キャンバスの 画素）。浮かぶ 文字は 知らせの うしろに かくれるので よける（自分で 遊んで 分かった：320×568 で 4行の「🌙 夜のさんぽ…」が「おしい！ ベストまで…」の 1行目を かくした）
+  let floatToast = null;
+  if (floaters.length) {
+    const te = document.getElementById('toast');
+    if (te && te.classList.contains('show')) { const r = te.getBoundingClientRect(), c = cv.getBoundingClientRect(), k = c.width ? cv.width / c.width : 1; if (r.width && r.height) floatToast = [(r.left - c.left) * k, (r.top - c.top) * k, (r.right - c.left) * k, (r.bottom - c.top) * k]; }
+  }
   for (let i = floaters.length - 1; i >= 0; i--) {
     const fl = floaters[i];
     if (floatHold) continue;
@@ -6435,6 +8139,20 @@ function frame(now) {
       ({ ls, fx, fy } = q);
       floatShift = [fx - w / 2, fy - fy0];
     }
+    if (floatToast) {   // 知らせに かかる ときは 知らせの すぐ 下へ（お米の 頭より 下に なる・縁の 矢印に かかる ときは 知らせが 消えるまで 待つ）
+      const b = box(ls, fx, fy), Q = floatToast;
+      if (b[0] < Q[2] + m && b[2] > Q[0] - m && b[1] < Q[3] + m && b[3] > Q[1] - m) {
+        const ny = Math.round(Q[3] + m + lh * (ls.length - 1) + fz), foot = roll.box ? roll.box[1] - m : Math.round(cy - T * 1.15);
+        if (ny <= foot && !(A && hit(box(ls, fx, ny)))) { fy = Math.max(fy, ny); floatShift = [fx - w / 2, fy - fy0]; }
+        else {
+          floatDrawn.pop(); ctx.globalAlpha = 1;
+          if (!fl.w0) fl.w0 = now;
+          if (now - fl.w0 > 6000) { floaters.splice(i, 1); if (floatWait > i) floatWait--; }   // 知らせは 4秒ほどで 消える。6秒 待っても だめなら 出さない
+          else floatWait = i;
+          continue;
+        }
+      }
+    }
     ls.forEach((s, n) => { const y = fy - lh * (ls.length - 1 - n); ctx.strokeText(s, fx, y); ctx.fillText(s, fx, y); });
     ctx.globalAlpha = 1;
   }
@@ -6455,7 +8173,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); if (mzMap.until > now && !rec) drawMzMap(gt, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）と、ゴールまでの めいろ図
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -6731,32 +8449,46 @@ function shopTag(cx, bottom, dpr, s) {
 // 左上の はしに 出て、「🧭 水色の 線が…」の 知らせに かくれて ゴールの 名前が 読めなかった）。いまの 位置で 重ならない 間は 動かさない（上下に ゆれない）。
 // 地図を 引っぱって 札が 下げた 知らせの 下に 来たら、上が 空いて いれば 上へ もどす（Codex の 指摘）。位置は 動きの とちゅうで なく、止まった 形で はかる
 // めいろでも 同じ：縁の 矢印と 道のりの 札（mzMap.arrow）に 重なる ときは 下へ（自分で 遊んで 分かった：北西の ゴールで「2.0km」が 4行の 知らせに かくれた）。
-// 下へ 動かすのは、下の めいろ図・「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
-const wtd = { key: '' };
+// 下へ 動かすのは、下の「めいろ、どうだった？」の 札（avoid）にも 重ならない ときだけ
+// 横向きの 低い 画面では 上も 下も 札に 重なる（自分で 遊んで 分かった：740×360 で 上の ゴールの 矢印と「840m」が「📅 あしたも来ると +20pt」に かくれた）。
+// そのときは 札の 横へ ずらし（wside。入る ときだけ）、それも だめなら いちばん 下（下の タブの 上に 重ねる。wfloor。知らせは タップを 通すので タブは 押せる。下の 欄の ゴールの 名前は かくさない）
+const wtd = { key: '' }, WT_MODES = ['wlow', 'wside', 'wfloor'];
 function worldToastDodge(tag, avoid = []) {
   const el = document.getElementById('toast');
   if (!el) return;
-  if (!el.classList.contains('show') || !tag) { if (el.classList.contains('wlow')) el.classList.remove('wlow'); wtd.key = ''; return; }
+  if (!el.classList.contains('show') || !tag) { if (WT_MODES.some(m => el.classList.contains(m))) el.classList.remove(...WT_MODES); wtd.key = ''; return; }
   const r = cv.getBoundingClientRect(), k = r.width / cv.width, T = [r.left + tag[0] * k, r.top + tag[1] * k, r.left + tag[2] * k, r.top + tag[3] * k];
   const A = avoid.map(a => a.page ? a.page : [r.left + a[0] * k, r.top + a[1] * k, r.left + a[2] * k, r.top + a[3] * k]);   // page：画面の 座標（DOM の 札）
-  const low = el.classList.contains('wlow'), key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + low + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
+  const cur = WT_MODES.find(m => el.classList.contains(m)) || '', key = [T, ...A].map(q => q.map(Math.round).join()).join('/') + '|' + cur + '|' + el.textContent + '|' + innerWidth + 'x' + innerHeight;
   if (key === wtd.key) return;   // 札・知らせ・画面が かわらなければ はかりなおさない
   wtd.key = key;
-  const posAt = lw => {   // wlow を lw に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）
+  const posAt = (m, x) => {   // 知らせを m（'' は 上）に した ときの 止まった 位置（transition の ない 見えない 写しで はかる）。x：wside の 知らせの まん中
     const c = el.cloneNode(true);
-    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.toggle('wlow', lw); c.style.cssText = 'transition:none;visibility:hidden';
+    ['id', 'role', 'aria-live'].forEach(a => c.removeAttribute(a)); c.classList.remove(...WT_MODES); if (m) c.classList.add(m);
+    c.style.cssText = 'transition:none;visibility:hidden' + (m === 'wside' ? `;--toast-x:${x}px` : '');
     el.parentNode.appendChild(c);
     const q = c.getBoundingClientRect(); c.remove();
     return q;
   };
   const over = (q, t) => q.left < t[2] && q.right > t[0] && q.top < t[3] && q.bottom > t[1];
-  const here = posAt(low), there = posAt(!low);
-  if (low && A.some(a => over(here, a))) { el.classList.remove('wlow'); return; }   // 下げた あとに めいろ図・下の 札が 出て 重なった：上へ もどす（図や 札を かくさない。Codex の 指摘）
-  if (over(here, T) && !over(there, T) && !A.some(a => over(there, a))) el.classList.toggle('wlow', !low);   // いまの 位置で 重なり、反対側が 空いて いれば そちらへ
+  const clear = q => !over(q, T) && !A.some(a => over(q, a));
+  const set = (m, x) => { el.classList.remove(...WT_MODES); if (m) el.classList.add(m); if (m === 'wside') el.style.setProperty('--toast-x', x + 'px'); };
+  const top = posAt(''), here = posAt(cur, parseFloat(el.style.getPropertyValue('--toast-x')) || 0), M = 62;   // M：右上の 丸い ボタンの 列に かからない（.toast の max-width と 同じ あけ方）
+  if (cur && A.some(a => over(here, a))) { set(''); return; }   // 動かした あとに 下の 札が 出て 重なった：上へ もどす（札を かくさない。Codex の 指摘）
+  const out = cur === 'wside' && (here.left < M - 1 || here.right > innerWidth - M + 1);   // 横に 置いた あとに 画面が せまく なった（スマホを たてに した。--toast-x は 画素なので はみ出す。Codex の 指摘）：置きなおす
+  if (!over(here, T) && !out) { if (cur && cur !== 'wlow' && clear(top)) set(''); return; }   // いまの 位置で 重ならない 間は 動かさない（ゆれない）。横・いちばん下は 上が 空いたら もどす
+  const low = posAt('wlow');
+  if (cur !== 'wlow' && clear(low)) { set('wlow'); return; }
+  if (cur === 'wlow' && clear(top)) { set(''); return; }
+  const w = top.width, R = T[2] + 8 + w / 2, L = T[0] - 8 - w / 2;   // 札の 右・左（広い ほうを 先に）
+  for (const x of (T[0] + T[2]) / 2 < innerWidth / 2 ? [R, L] : [L, R]) if (x - w / 2 >= M && x + w / 2 <= innerWidth - M && clear(posAt('wside', x))) { set('wside', x); return; }
+  if (clear(posAt('wfloor'))) set('wfloor');
+  else if (out) set('');   // どこも 空いて いなければ 上（画面の 外には 置かない）
 }
+let toastDodgeOff = false;   // テスト用：知らせの よけを 止める（町名の 札が 上の 知らせの 下で 縁の 矢印を よけるかを、知らせが 下へ にげずに 見る。playtest の townToast）
 function mzToastDodge(now) {   // めいろ（ふつうの 地図の 描きの おわり）：縁の 矢印の 札を 知らせが かくさない
+  if (toastDodgeOff) return;
   const avoid = [];
-  if (mzMap.until > now && mzMap.rect) avoid.push(mzMap.rect);
   const rb = document.getElementById('reactBar');
   if (rb && !rb.hidden) { const b = rb.getBoundingClientRect(); avoid.push({ page: [b.left, b.top, b.right, b.bottom] }); }
   worldToastDodge(mazeOn() && G.guide && !rec ? mzMap.arrow : null, avoid);
@@ -6988,6 +8720,11 @@ function npcGreet(n, tx, ty) {
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
+const TILT_DEGS = [15, 20, 26];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く
+tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); return TILT_DEGS.includes(v) ? v : 20; } catch (e) { return 20; } })();
+if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); } catch (er) { /* noop */ } }); }
+let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
+const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
 // へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
@@ -7009,7 +8746,7 @@ window.addEventListener('deviceorientation', e => {
     }
     return;
   }
-  const c = v => Math.max(-1, Math.min(1, v / 20));   // 20度で いちばん強く
+  const c = v => Math.max(-1, Math.min(1, v / tiltG.deg));   // tiltG.deg 度で いちばん強く（ふつう 20度）
   const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
   const te = e.timeStamp || performance.now(), k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - (tiltG.t || te - 16)) / 1000)) / 0.035);   // センサーの細かいゆれを ならす（届く回数が ちがう スマホでも 同じ なめらかさ：時間で まぜる）
   tiltG.t = te;
@@ -7226,7 +8963,8 @@ function mzBlocked(fx, fy, x, y) {   // (fx, fy) から (x, y)（地図の マ�
 //   階段の ような ななめの 道（すじかいの 道・川ぞいの 道）は ななめの 一本道に なる。3つ以上の 分かれ道は まっすぐの 枝と、となりあう 枝の あいだの カーブ
 // ・道すじは 通路の マスの 中に おさまる（壁の マスへ はみ出さない）ので、マスで 数える しくみ（道しるべ・カラス・米つぶ・歩数）は そのまま
 const MZ_TUBE = 0.45, MZ_HALF = 1.1, MZ_HEDGE = 0.5, MZ_RUB = 0.15;
-const MZ_SOFT_K = 300, MZ_SOFT_C = 12, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 5;   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
+const MZ_SOFT_K = 300, MZ_SOFT_C = 6, MZ_SOFT_MAX = 0.4, MZ_DENT_K = 80, MZ_DENT_C = 3.5;   // 10/28 店主「ふわふわした ぽよんぽよんする 迷路」：ねばりを へらして よく はね返る・へこみも ぷるぷる 長めに（ばねの 強さ K は かえない：やわらかく すると ふかく しずみ、となりの 通路へ ぬける）
+// （もとは K 300・C 12・DENT_C 5＝はね返り 3〜4割）   // やわらかい 生け垣：ばねの 強さ（速く 当たると 約0.2〜0.3マス めりこむ）・めりこむ ときの ねばり（はね返りは 半分ほど）・のびる 限り
 // MZ_DENT_K・C：へこみの 絵の ばね（運営者「当たると 伸びて 跳ね返る」を もっと 分かりやすく：これまでは 0.1秒で もどり 目に 見えなかった。0.4秒ほど のびて、2〜3回 ぷるぷる ゆれて もどる）
 const mzSoft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, dent: 0, dv: 0, vin: 0, boings: 0 };   // dent：生け垣の へこみの 絵（ばねで ついていき、はなれると ぷるんと もどる）   // MZ_RUB：生け垣に こすれる ときの すべりにくさ   // お米の まん中が 動ける はば・通路の 見た目の 半分の はば（お米の 半分 0.65 を たす）・生け垣の あつさ（地図の マス）
 const mzCurveC = { key: '', m: new Map() };
@@ -7368,7 +9106,7 @@ function mzHintTick(now) {   // 25秒 行き先に 近づけていない（め�
     // 知らせは ゴールごとに 1回目だけ（自分で 遊んで 分かった：迷って いる 間、25秒ごとに 同じ 知らせが 上を ふさいでいた。光る 点は 毎回 出す）。
     // 同じ ゴールで 3回目には、おたすけを すすめる（1回の あそびで 1回）
     if (mzRt.hints === 1) G.toast('💡 道しるべ：光る 点の ほうへ 進もう');
-    else if (mzRt.hints === 3 && !mzHelp.offered) { mzHelp.offered = true; G.toast('🧭 まよったら、せっていの「めいろの おたすけ」で 道しるべを いつも 出せるよ'); }
+    else if (mzRt.hints === 3 && !mzHelp.offered) { mzHelp.offered = true; G.toast('🧭 まよったら、せっていで 道しるべを 出せるよ'); }
   }
 }
 // めいろの おたすけ（運営者の声「迷路初心者でもわかりやすく」）：ゴールへの 道しるべを いつも 出し、行き止まりの マスに ✕。
@@ -7382,7 +9120,7 @@ function mzHelpSync() { const t = $('mzHelpToggle'); if (t) t.checked = mzHelpOn
 function mzHelpGoal() {   // めいろの ゴールに 着いた：3回目で 自動の おたすけは おしまい（知らせる）
   const n = mzGoalsDone() + 1;
   lsSet('nsg_mzgoals', String(n));
-  if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 めいろに なれてきたので、道しるべと ✕ を 消しました（せっていの「めいろの おたすけ」で いつでも 出せます）'), 4500);
+  if (n === MZ_HELP_N && lsGet('nsg_mzhelp', 'auto') === 'auto') setTimeout(() => G.toast('🧭 道しるべと ✕ を けしたよ（せっていで また 出せる）'), 4500);
   mzHelpSync();
 }
 if ($('mzHelpToggle')) { mzHelpSync(); $('mzHelpToggle').addEventListener('change', e => { lsSet('nsg_mzhelp', e.target.checked ? 'on' : 'off'); mzHelp.told = true; dirty = true; }); }   // せっていの「🧭 めいろの おたすけ」
@@ -7455,7 +9193,7 @@ function mzCrowTick(now) {
       if (!dx && !dy) break;
     }
     const x = c.cx + (c.nx - c.cx) * c.t + 0.5, y = c.cy + (c.ny - c.cy) * c.t + 0.5, d = Math.hypot(fx - x, fy - y);
-    if (!mzCrow.told && d < 8) { mzCrow.told = true; G.toast(`🐦 カラスが お米を ねらってる！ 当たると はじかれて ${MZ_CROW_PEN}秒 おそくなるよ`); }
+    if (!mzCrow.told && d < 8) { mzCrow.told = true; G.toast(`🐦 カラスに 当たると ${MZ_CROW_PEN}秒 おそくなるよ`); }
     if (scared && d < 0.6) mzCrowShoo(c, now);
     else if (!scared && d < 0.55 && now > mzCrow.hitT) mzCrowHit(c, fx - x, fy - y, now);
   }
@@ -7465,8 +9203,10 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
     if (Math.abs(mzScare.cx - rc) + Math.abs(mzScare.cy - rr) > 34 || now - mzScare.t0 > 60000) { mzScare.on = false; mzScare.next = now + 5000; return; }   // 遠く はなれた・60秒 とられなかった（行けない 所 など）：たおして 別の 所に
     if (mzScare.cx === rc && mzScare.cy === rr) {   // とった
       mzScare.on = false; mzScare.until = now + MZ_SCARE_MS; mzScare.next = now + 45000; mzScare.got++;
-      floatText(`かかし！ カラスが ${MZ_SCARE_MS / 1000}秒 にげる`);
-      if (!mzScare.told) { mzScare.told = true; G.toast('かかしを とると しばらく カラスが こわがって にげるよ。青い カラスに さわると おいはらえる（+3pt）'); }
+      riceSay('かかし だ！', 1600, 'happy');   // お米の 吹き出し（ばねの「ばね だ！✨」と そろえる。10/29 店主「素朴な 可愛い キャラクターとの 対話を 軸に」）。のこりの 秒は 時計の 下の 札、何が おきるかは はじめての 知らせ だけ（同じ ことを 3か所で 言っていた。運営者の声「文字は 少なく」2026-10-29）
+      // はじめての ときの 知らせは、浮かぶ 文字（カラスが ○秒 にげる）と 時計の 下の のこりの 札に ない ことだけ（同じ「にげる」を 3か所で 言っていた。自分で 遊んで 分かった）。
+      // かかしと 青く なる ことの つながりは のこす（はじめての 人に 何で 青く なったか 分かる ように。Codex の 指摘）
+      if (!mzScare.told) { mzScare.told = true; G.toast('🐦 かかしで 青く なった カラスに さわると おいはらえる（+3pt）'); }
       grainSound(); dirty = true;
     }
     return;
@@ -7488,14 +9228,17 @@ function mzSpringShot() {   // ばねショット（快感）：ばねで はね
   const now = performance.now();
   if (!mzSpring.at || now - mzSpring.at > 1200) return;
   mzSpring.at = 0; mzSpring.shots = (mzSpring.shots || 0) + 1;
-  floatText('🎯 ばねショット！ うまいじゃん'); chordSound();
+  riceSay('やったぁ！', 1600, 'happy'); chordSound();   // 吹き出し（もとは「🎯 ばねショット！ うまいじゃん」）
   const cols = ['#8cf078', '#ffd84a', '#ffffff'];
   for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.5 }); }
 }
-function mzSpringChain(now) {   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 数が ふえ、ぽよんの 音が 1段ずつ 高く、2れんぱつ から 文字と 緑の きらきら
+function mzSpringChain(now) {   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 数が ふえ、ぽよんの 音が 1段ずつ 高く、2れんぱつ から 吹き出しと 大きな 緑の きらきら（1回目は 小さな きらきら だけ）
   mzSpring.chain = now - mzSpring.at < 1500 ? mzSpring.chain + 1 : 1; mzSpring.at = now; mzSpring.best = Math.max(mzSpring.best, mzSpring.chain);
-  if (mzSpring.chain < 2) return;
-  floatText(`びよーん ${mzSpring.chain}れんぱつ！`);
+  if (mzSpring.chain < 2) {   // 1回目から 小さな 緑の きらきら（夜の 改善 7：はじめての 知らせ「ばねの 間は 生け垣で 前より 速く はね返るよ…」を やめ、はね返る ところを 絵で 見せる）
+    for (let i = 0; i < 5; i++) { const t = Math.random() * Math.PI * 2, v = 1 + Math.random() * 2; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2, c: i % 2 ? '#8cf078' : '#e4ffd8', life: 0.4 + Math.random() * 0.3 }); }
+    return;
+  }
+  riceSay('びよーん' + '♪'.repeat(Math.min(4, mzSpring.chain - 1)), 1200, 'happy');   // 吹き出し：♪ の 数が れんぱつ（もとは「びよーん Nれんぱつ！」）
   const cols = ['#8cf078', '#e4ffd8', '#ffffff'];
   for (let i = 0; i < 6 + Math.min(12, mzSpring.chain * 3); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2.5, c: cols[i % 3], life: 0.5 + Math.random() * 0.4 }); }
 }   // on：ばねが 置いて ある。until：わざの おわり
@@ -7508,8 +9251,7 @@ function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マ�
     if (Math.abs(mzSpring.cx - rc) + Math.abs(mzSpring.cy - rr) > 34 || now - mzSpring.t0 > 60000) { mzSpring.on = false; mzSpring.next = now + 5000; return; }
     if (mzSpring.cx === rc && mzSpring.cy === rr) {   // とった
       mzSpring.on = false; mzSpring.until = now + MZ_SPRING_MS; mzSpring.next = now + 45000; mzSpring.got++;
-      floatText(`ばね！ ${MZ_SPRING_MS / 1000}秒 生け垣で びよーんと はずむ`);
-      if (!mzSpring.told) { mzSpring.told = true; G.toast('ばねを とると しばらく、生け垣に 当たると 前より 速く はね返るよ。生け垣を うまく つかって 近道しよう'); }
+      riceSay('ばね だ！', 1600, 'happy');   // 吹き出し（もとは「ばね！ 12秒 生け垣で びよーんと はずむ」。のこり 秒は 時計の 札に 出る）
       grainSound(); dirty = true;
     }
     return;
@@ -7538,9 +9280,65 @@ function mzCrowHit(c, ax, ay, now) {   // つつかれた：お米を カラス�
   if (mzRt.t0) mzRt.t0 -= MZ_CROW_PEN * 1000;
   mzCrow.hitT = now + 2500; mzCrow.next = now + 6000; mzCrow.hits++;
   mzCrow.list = mzCrow.list.filter(o => o !== c);
-  floatText(`🐦 カァ！ ＋${MZ_CROW_PEN}秒`);
+  riceSay('うわっ カラス！', 1400);   // 吹き出し（もとは「🐦 カァ！ ＋5秒」。すすんだ 時計は 時計の 札で 見える）
   if (navigator.vibrate) navigator.vibrate(40);
   dirty = true;
+}
+// 生け垣の 上の 小さな 生きもの（10/28 店主「西尾らしい 素朴な かわいさ」）：通路の マスの とじた さかい（生け垣）に ときどき ちょこんと すわっていて、
+// お米が 近づくと ぴょこっと とんで にげ、しばらくすると もどる。見た目だけ（当たり判定・ポイントなし）。生け垣の 種類で 生きものが かわる
+const MZ_CRIT = { ike: 'kaeru', ine: 'kaeru', dote: 'kaeru', cha: 'tonbo', kuro: 'tonbo', ami: 'kani', ishi: 'kani', matsu: 'sagi' }, MZ_CRIT_N = 23, MZ_CRIT_MAX = 2;   // N：何マスに 1つ・MAX：画面に いくつまで（すずめ・ねこ・虫も いるので 2つまで）
+const mzCritFled = new Map();   // マス → にげた 時刻
+const mzCritHi = new Map(), MZ_CRIT_CALM = 1.2;   // あいさつした 時刻・これより おそく 近づくと にげない（マス/秒）
+let mzCritHiN = 0, mzCritSaid = 0, mzCritMode = '';   // mode：'night'（うとうと）・'rain'（かえる よろこぶ）   // あいさつの 回数（試験用）
+let mzCritDrawn = [];   // この こまに 描いた 生きもの（試験用）
+function drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now) {
+  const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K), r0 = Math.floor(ty0 / MZ_K), c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
+  const bx = rp.x === null ? null : rp.x / MZ_K - 0.5, by = rp.x === null ? null : rp.y / MZ_K - 0.5;
+  const cand = [];
+  for (let cy = r0; cy <= r1; cy++) for (let cx = c0; cx <= c1; cx++) {   // 画面の 中の 生きものの 場所（お米に 近い じゅんに 描く。近くの 子が 数の 上限で 消えない ように）
+    const h = (Math.imul(cx, 73856093) ^ Math.imul(cy, 19349663)) >>> 0;
+    if (h % MZ_CRIT_N || mzType(cx, cy) !== 1) continue;
+    const d = [[1, 0], [0, 1], [-1, 0], [0, -1]].find((_, i, D) => { const [dx, dy] = D[(i + (h >>> 8)) % 4]; return !mzOpen(cx, cy, dx, dy); });   // 生け垣は 通路の マスの とじた さかいに ある
+    if (!d) continue;
+    const px = cx + d[0] * 0.5, py = cy + d[1] * 0.5;   // さかいの 上（生け垣の 帯の まん中）
+    cand.push({ cx, cy, px, py, dist: bx === null ? 0 : Math.hypot(bx - px, by - py) });
+  }
+  cand.sort((a, b) => a.dist - b.dist);
+  const wx = window.NISHIO_WEATHER && window.NISHIO_WEATHER.current, rain = !!(wx && wx.kind === 'rain'), night = nightOn && !worldMode && nightLevel() >= 1;   // 夜は うとうと・雨は かえるが よろこび とんぼは かくれる
+  mzCritMode = night ? 'night' : rain ? 'rain' : '';
+  let n = 0;
+  mzCritDrawn = [];
+  for (const { cx, cy, px, py, dist } of cand) {
+    if (n >= MZ_CRIT_MAX) break;
+    const kind = MZ_CRIT[mzStyle(cx, cy)] || 'kaeru', img = critterSprites[kind];
+    if (!img || (rain && kind === 'tonbo')) continue;   // 雨の 日の とんぼは 葉の かげで あまやどり
+    const k = cx + ',' + cy, f = mzCritFled.get(k);
+    const near = f === undefined && bx !== null && dist < 1.3;
+    if (near && night && Math.hypot(rp.vx, rp.vy) <= MZ_CRIT_CALM) {   // 夜：ねている 子には あいさつ しない。お米が「しーっ」
+      if (!mzCritHi.has(k)) { mzCritHi.set(k, -1); if (now - mzCritSaid > 4000) { mzCritSaid = now; riceSay('しーっ…', 1300); } }
+    } else
+    if (near && Math.hypot(rp.vx, rp.vy) > MZ_CRIT_CALM) { mzCritFled.set(k, now); continue; }   // 速く 来たら にげる
+    if (near && !mzCritHi.has(k)) { mzCritHi.set(k, now); mzCritHiN++; if (now - mzCritSaid > 4000) { mzCritSaid = now; riceSay('やぁ♪', 1300, 'happy'); } }   // お米も あいさつを かえす   // そっと 来たら にげずに ぴょこっと あいさつ（はなれるまで 1回）
+    else if (!near && mzCritHi.has(k) && now - mzCritHi.get(k) > 800) mzCritHi.delete(k);
+    let up = 0, al = 1;
+    if (f !== undefined) {
+      const t = now - f;
+      if (t > 25000) mzCritFled.delete(k);   // もどってきた
+      if (t < 25000 && t > 500) continue;   // にげて いる
+      if (t <= 500) { up = t / 500; al = 1 - up; }   // ぴょこっと とんで うすく なる
+    }
+    n++; mzCritDrawn.push([cx, cy, MZ_CRIT[mzStyle(cx, cy)] || 'kaeru']);
+    const hi = mzCritHi.has(k) && mzCritHi.get(k) >= 0 ? (now - mzCritHi.get(k)) / 600 : 2;   // あいさつ：0.6秒で 2回 ぴょこぴょこ（夜の「しーっ」は -1）
+    const bob = calmMotion || (night && f === undefined) ? 0 : rain && kind === 'kaeru' && hi >= 1 ? Math.round(Math.max(0, Math.sin(now / 160 + cx * 1.7)) * T * 0.3) : hi < 1 ? Math.round(Math.abs(Math.sin(hi * Math.PI * 2)) * T * 0.35) : Math.round(Math.max(0, Math.sin(now / 420 + cx * 1.7)) * T * 0.08);   // ときどき ちょこっと うごく
+    ctx.globalAlpha = al;
+    ctx.drawImage(img, Math.round(ox + (px + 0.5) * S - T / 2), Math.round(oy + (py + 0.5) * S - T / 2 - bob - up * T * 1.2), T, T);
+    if (night && f === undefined) {   // うとうと：小さな z が ゆっくり のぼる
+      const zt = ((now / 1800 + cx * 0.37) % 1), zx = ox + (px + 0.5) * S + T * (0.3 + zt * 0.25), zy = oy + (py + 0.5) * S - T * (0.5 + (calmMotion ? 0.2 : zt * 0.5));
+      ctx.globalAlpha = al * (calmMotion ? 0.9 : Math.sin(zt * Math.PI)); ctx.font = `bold ${Math.max(8, Math.round(T * 0.45))}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineWidth = Math.max(2, T / 10); ctx.strokeStyle = 'rgba(20,24,48,.8)'; ctx.strokeText('z', zx, zy); ctx.fillStyle = '#e8eeff'; ctx.fillText('z', zx, zy);
+    }
+    ctx.globalAlpha = 1;
+  }
 }
 function drawMzSpring(ox, oy, T, now) {   // ばね：通路に 置いて ある ばね（緑の わが ふくらむ・のびちぢみ）と、わざの 間の お米の まわりの 光の わ
   const S = MZ_K * T, q = Math.max(1, Math.round(T / 8));
@@ -7626,7 +9424,7 @@ function drawMzHint(ox, oy, T, now) {
   if (!mzRt.path) return;
   if (now >= mzRt.showUntil && mzHelpOn()) {   // おたすけ：ゴールへの 道すじを 水色の 流れる 線で いつも（16マス先まで。金の 米つぶと まちがえない 色と 形）
     // 「🏁 つぎの ゴール」の 大きな 文字が 出ている 間も 待つ（小さい 画面で、はじめの ゴールの 名前が この 知らせの 下に かくれた。自分で 遊んで 分かった）
-    if (!mzHelp.told && mzRt.path.length > 2 && !mapCovered() && !sightBusy() && !mzNext.want && !mzNext.t0) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり（めいろに なれたら、せっていで 消せます）'); }   // あそびかた・窓・人の 話が 出ている 間は 待つ（読める ように なってから 知らせる）
+    if (!mzHelp.told && mzRt.path.length > 2 && !mapCovered() && !sightBusy() && !mzNext.want && !mzNext.t0) { mzHelp.told = true; G.toast('🧭 水色の 線が ゴールへの 道。✕ は 行き止まり'); }   // あそびかた・窓・人の 話が 出ている 間は 待つ（読める ように なってから 知らせる）
     const S = MZ_K * T, pts = mzRt.path.slice(0, 17).map(([cx, cy]) => [ox + cx * S + S / 2, oy + cy * S + S / 2]);
     if (pts.length < 2) return;
     ctx.save();
@@ -7684,13 +9482,13 @@ function drawMzClock(w, dpr, now) {
   const sl = mzScare.until - now;
   let y2 = y;
   if (sl > 0) {   // かかしの のこり（カラスが にげて いる 間）
-    const t2 = `かかし：カラスが にげる あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
+    const t2 = `かかし あと ${Math.ceil(sl / 1000)}秒`, tw2 = ctx.measureText(t2).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,40,90,.78)'; ctx.fillRect(Math.round(x - tw2 / 2), Math.round(y2 - S * 0.85), Math.round(tw2), Math.round(S * 1.7));
     ctx.fillStyle = sl < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#9fd0ff'; ctx.fillText(t2, x, y2);
   }
   const sp = mzSpring.until - now;
   if (sp > 0) {   // ばねの わざの のこり
-    const t3 = `ばね：生け垣で はずむ あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
+    const t3 = `ばね あと ${Math.ceil(sp / 1000)}秒`, tw3 = ctx.measureText(t3).width + S * 1.2; y2 += S * 1.9;
     ctx.fillStyle = 'rgba(20,70,30,.8)'; ctx.fillRect(Math.round(x - tw3 / 2), Math.round(y2 - S * 0.85), Math.round(tw3), Math.round(S * 1.7));
     ctx.fillStyle = sp < 2000 && Math.floor(now / 160) % 2 ? '#ffffff' : '#b8f5a8'; ctx.fillText(t3, x, y2);
   }
@@ -7742,7 +9540,7 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中�
 }
 // 金の米つぶ：運営者の声「滞在時間を増やす」。めいろの 行き止まり（通れる さかいが 1つだけの 通路）に、区域ごとに 6つまで 金の米つぶが おちている。
 // ころがって 入ると ひろえる（+2pt。きょう 10こごとに +20pt）。場所は 日本の 日づけと 区域で きまり（だれでも 同じ）、毎日 かわる。ひろった つぶは その日は 出ない（game.js の dayState().grains）。
-// 行き止まりに 入るのが「はずれ」ではなく「たから さがし」に なる。ゴールまでの めいろ図にも 金の 点で 出る（寄り道の 計画に）
+// 行き止まりに 入るのが「はずれ」ではなく「たから さがし」に なる
 const MZ_GRAIN_N = 6, MZ_GRAIN_SEC = 2;   // 区域ごとの つぶの 数・ひろうと もどる 時計（秒）
 const jstDay = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3);
 function mzGrainSet(a) {   // 区域の 金の米つぶ（区域の 中の マスの 番号）
@@ -7850,7 +9648,7 @@ function mzPadTick(ax, ay) {   // パネルの マスに いる 間 しらべる
   mzPad.chain = now - mzPad.lastT < MZ_PAD_CHAIN_MS ? mzPad.chain + 1 : 1; mzPad.lastT = now;
   if (mzPad.chain > mzPad.best) { mzPad.best = mzPad.chain; try { localStorage.setItem('nsg_pad_best', String(mzPad.best)); } catch (e) { /* noop */ } }   // びゅんの れんさの ベスト（この端末。きろくに 出す）   // びゅんの れんさ：前の パネルから 3.5秒 いないなら つながる
   mzPad.cell = key; mzPad.hits++; mzRt.run.pads++; mzPad.fx = key; mzPad.fxT = now;
-  if (mzPad.chain >= 2) floatText(`💨 びゅん×${mzPad.chain}！${mzPad.chain >= 3 ? ' はやいじゃん' : ''}`);
+  if (mzPad.chain >= 2) riceSay(`びゅーん${'💨'.repeat(Math.min(3, mzPad.chain - 1))}`, 1200, 'happy');   // 吹き出し：💨 の 数が れんぞく（もとは「💨 びゅん×N！ はやいじゃん」）
   padSound(mzPad.chain); roll.happyT = Math.max(roll.happyT || 0, 0.8); dirty = true;
   try { if (!localStorage.getItem('nsg_pad_seen')) { localStorage.setItem('nsg_pad_seen', '1'); floatText('🍵 抹茶びゅん！ 矢印の 向きに のってみりん'); } } catch (e) { /* noop */ }   // はじめて のった ときだけ
   combo.n++; combo.quietT = 0; comboStep();   // ころころコンボも つづく
@@ -7926,6 +9724,26 @@ function mzMeibutsuTip() {
   if (/^(吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)/.test(t)) return '🐚 三河湾の あさりも 名物だら';
   return '🍵 西尾は 抹茶の まちだら';
 }
+// お米の みちくさ（michikusa.js）：転がって いる 最中に、いる 所（田んぼ・川や池・海べ・町）と 月に 合う ひとりごとを 吹き出しで 言う。
+// 名所に 着いた ときの 西尾ばなし（game.js の komeBanashi）とは ちがい、道ばたで お米が 自分で 気づく 形。45〜75秒に 1回まで・ほかの ひと言の 直後は 言わない。
+// 言った ことは この 端末に おぼえて（nsg_michikusa）、同じ 所の ひとりごとを ひとめぐり するまで くりかえさない
+const MICHI_KEY = 'nsg_michikusa';
+const michi = { next: 0, seen: null };
+function mzMichikusa(now) {
+  const M = window.NISHIO_MICHIKUSA;
+  if (!M || !LU || now < michi.next || now < riceBub.until + 3000 || !howtoEl.hidden || mapCovered() || sightBusy() || worldMode || driving || rp.x === null || Math.hypot(rp.vx, rp.vy) < 0.2) return;
+  if (!michi.seen) { try { michi.seen = JSON.parse(localStorage.getItem(MICHI_KEY)) || []; } catch (e) { michi.seen = []; } }
+  if (!michi.next) { michi.next = now + 15000; return; }   // はじめは 15秒 転がってから
+  const ll = toLatLng(rp.x, rp.y);
+  let near = '';
+  for (const a of [-1, 0, 1]) for (const b of [-1, 0, 1]) near += luAt(ll.lat + a * LU.dLat, ll.lng + b * LU.dLng);   // まわり100mメッシュ9つ
+  const r = M.pick({ city: here.city, town: here.town, land: luAt(ll.lat, ll.lng), near, month: new Date().getMonth() + 1 }, michi.seen);
+  if (!r) { michi.next = now + 5000; return; }
+  michi.seen = r.seen; try { localStorage.setItem(MICHI_KEY, JSON.stringify(r.seen)); } catch (e) { /* noop */ }
+  michi.next = now + 45000 + Math.random() * 30000;
+  riceSay(r.item.say, 2400);
+  if (G.track) G.track('kome_michikusa', { id: r.item.id });
+}
 function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
   const now = performance.now();
   mzLinesNear(L => {
@@ -7942,7 +9760,8 @@ function mzDotTick() {   // ふれた つぶを ひろう（まいコマ）
         mzDots.lines++;
         chordSound(); combo.n += 2; combo.quietT = 0; comboStep(); roll.happyT = Math.max(roll.happyT || 0, 1);
         const tip = mzDots.lines % 3 === 1 ? mzMeibutsuTip() : '';   // 3回に 1回は、いる 所の 名物の ひと言（西尾らしく）
-        floatText(tip ? `🍚 ぜんぶ ひろったじゃん！ ${tip}` : `🍚 ぜんぶ ひろったじゃん！（きょう ${mzDots.n}つぶ）`);
+        riceSay('ぜんぶ ひろった！', 1500, 'happy');   // 吹き出し（もとは「🍚 ぜんぶ ひろったじゃん！（きょう Nつぶ）」）
+        if (tip) floatText(`🍵 ${tip}`);   // 名物の ひと言は 知らせる 中身が あるので 文字の まま（3回に 1回）
         const cols = ['#ffffff', '#fff6c2', '#ffe066'];
         for (let j = 0; j < 12; j++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[j % 3], life: 0.5 + Math.random() * 0.4 }); }
       }
@@ -8012,19 +9831,19 @@ function mzGoalFx(text) {
     const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 6, k = kinds[i % kinds.length];
     mzFx.push({ t0: now, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 4, k, c: k === 'leaf' ? cols.leaf[i % 2] : cols[k], spin: 4 + Math.random() * 8, ph: Math.random() * 6.3, life: 1 + Math.random() * 0.8 });
   }
-  mzBanner.t0 = now; mzBanner.text = text || '';
+  mzBanner.t0 = now; mzBanner.text = text || ''; mzBanner.said = false;
   mzHelpGoal();   // 「🏁 ゴール！」の 大きな 文字（4秒。ごほうびの 窓を とじても 見える ように 長め）
 }
 function drawMzFx(w, cy, T, now, S) {   // 画面の まん中（お米）から はじける。重さで 落ちて うすく なる。S：文字の 大きさの もと（画面の 点）
   if (mapCovered()) { if (mzBanner.t0) mzBanner.t0 = now; for (const p of mzFx) p.t0 = now; return; }   // ごほうびの 窓などが 開いている 間は 待って、とじたら はじめる
   const ba = (now - mzBanner.t0) / 1000;
-  if (mzBanner.t0 && ba < 4) {   // 大きな「🏁 ゴール！」と 時間（さいごの 0.5秒で うすく）
+  if (mzBanner.t0 && ba < 4) {   // ゴールの ★と 時間（さいごの 0.5秒で うすく）。「ついた〜！」は お米の 吹き出し
     ctx.globalAlpha = Math.min(1, (4 - ba) / 0.5);
     const big = Math.round(S * 1.6), y = Math.max(big, cy - S * 3.2) - Math.max(0, 0.3 - ba) * S * 6;   // 画面の 上に はみ出さない
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
     ctx.font = `bold ${big}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(4, big / 5); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
-    ctx.strokeText('🏁 ゴール！', w / 2, y); ctx.fillText('🏁 ゴール！', w / 2, y);
-    if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; ctx.strokeText(mzBanner.text, w / 2, y + big * 0.95); ctx.fillText(mzBanner.text, w / 2, y + big * 0.95); }
+    if (!mzBanner.said) { mzBanner.said = true; riceSay('ついた〜！', 3600, 'happy'); }   // 大きな「🏁 ゴール！」の 文字は やめて、お米が 吹き出しで 言う（10/29 店主「文字を 廃止して キャラクターとの 対話」）。窓を とじてから
+    if (mzBanner.text) { const sm = Math.round(big * 0.5); ctx.font = `bold ${sm}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(3, sm / 4); ctx.fillStyle = '#ffffff'; const ty = cy + T * 1.4; ctx.strokeText(mzBanner.text, w / 2, ty); ctx.fillText(mzBanner.text, w / 2, ty); }
     ctx.globalAlpha = 1;
   } else if (mzBanner.t0) mzBanner.t0 = 0;
   for (let i = mzFx.length - 1; i >= 0; i--) {
@@ -8049,7 +9868,7 @@ function drawMzNext(w, cy, U, now) {
     mzNext.dist = mzRt.path ? (mzRt.path.length - 1) * MZ_K * TILE_M : 0;
   }
   const a = (now - mzNext.t0) / 1000;
-  if (a > 3) { mzNext.t0 = 0; mzMapOpen(now, 6000); return; }   // 知らせの あとに ゴールまでの めいろ図を 6秒
+  if (a > 3) { mzNext.t0 = 0; return; }   // （ゴールまでの めいろ図は 運営者の声「ゴールまでの迷路は削除」2026-10-29 で なくした）
   const S = Math.round(MZ_CLOCK_PX * U / 16), under = mzRt.t0 && mzRt.len0 ? Math.round(S * 1.5 + S * 0.85 + U * 0.3) : 0;   // 時間と ★の 札（drawMzClock）の 下から（横向きの 低い 画面では お米が 上の ほうに いて、札と 重なって 字が 読めなかった）
   const big = Math.round(U * 1.05), y = Math.max(big, cy - U * 5.6, under + Math.round(big * 0.8) * 0.9), d = mzNext.dist, dist = !d ? '' : d < 1000 ? `めいろで ${Math.round(d / 10) * 10}m` : `めいろで ${(d / 1000).toFixed(1)}km`;   // y：画面の 上に はみ出さない
   ctx.globalAlpha = Math.min(1, a / 0.25, (3 - a) / 0.4);
@@ -8108,7 +9927,7 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     { let nm = gt.name || ''; const ns = Math.round(U * 0.56);   // 名前も 大きく（0.45 → 0.56。運営者の声「大きい文字シンプルに」2026-10-27）
       ctx.font = `bold ${ns}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
       if (nm) { const nx = inside(nm, ns), hw = ctx.measureText(nm).width / 2; label(nm, nx, yN, ns, '#ffffff'); mzMap.goalLab = { x0: nx - hw, x1: nx + hw, w, ex, nm, y: Math.round(yN), ns }; } }   // 旗の 上（goalLab：プレイテストで 見る）
-    mzMap.arrow = null;
+    mzMap.arrow = null; mzNext.arrowDim = false;
     return;
   }
   // 上の 縁は、時計の 札（かかしの のこりの 札まで）より 下に（上に ゴールが あると、矢印と 旗が 時計の 札や 左上の 札に 重なっていた）
@@ -8122,8 +9941,13 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     const down = r[3] + R, up = r[1] - R;
     qy = down <= vh - m && (up < mt || down - qy <= qy - up) ? down : Math.max(mt, up);
   }
-  mzMap.pin = [qx, qy, R, a];   // 矢印の 位置（テスト用。mzMap.at は めいろ図を かきなおした 時刻なので 別に）
-  ctx.save(); ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
+  mzMap.pin = [qx, qy, R, a];   // 矢印の 位置（テスト用）
+  // 「🏁 つぎの ゴール」の 札（同じ こまで 先に 描く）に 矢印が かかる 間は うすく 描く（向きは 見えて、札の 字は 読める。
+  //   自分で 遊んで 分かった：スマホを 横に した 740×360 で、上の ゴールの 矢印が 札の「つぎの」の 字に かぶって 読めなかった）
+  const nb0 = mzNext.at === now && mzNext.box;
+  mzNext.arrowDim = !!nb0 && qx + R * k > nb0[0] && qx - R * k < nb0[2] && qy + R * k > nb0[1] && qy - R * k < nb0[3];
+  ctx.save(); if (mzNext.arrowDim) ctx.globalAlpha *= 0.3;
+  ctx.translate(qx, qy); ctx.rotate(a); ctx.scale(k, k);   // 大きな 矢印（ゴールの ほうへ）
   // 後ろに 切れこみの ある 矢じり（自分で 遊んで 分かった：正三角形に 近い 三角だと、ななめの とき どの 角が 先か 分からず、北東の ゴールで 左向きに 見えた）
   const dart = (t, b, h, n) => { ctx.beginPath(); ctx.moveTo(U * t, 0); ctx.lineTo(-U * b, -U * h); ctx.lineTo(-U * n, 0); ctx.lineTo(-U * b, U * h); ctx.closePath(); ctx.fill(); };
   ctx.fillStyle = '#1a1a1a'; dart(1.2, 0.55, 0.8, 0.15);
@@ -8138,129 +9962,16 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
     label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
   }
-  if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは めいろ図を 出さない
-  mzMap.far = !!G.me && G.dist(G.me, gt) > MZ_FAR_MAP;
-  if (!mzMap.tapped && !labHide) label(mzMap.far ? '🌏 タップ' : '🗺 タップ', bx, by + U * 0.8, Math.round(U * MZ_TAP_K), '#bfefff');   // 矢印を タップすると めいろ図（遠い ゴールは せかいちず）。1回 タップしたら もう 出さない（小さい 字を へらす）
+  if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは 矢印の タップを 受けない
+  if (!mzMap.tapped && !labHide) label('🌏 タップ', bx, by + U * 0.8, Math.round(U * MZ_TAP_K), '#bfefff');   // 矢印を タップすると せかいちず。1回 タップしたら もう 出さない（小さい 字を へらす）
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
-// ゴールまでの めいろ図：運営者の声「ゴールをわかりやすく」。地図を 小さく しても ゴールは 画面の 外（めいろで 2km など）なので、
-// お米と ゴールが 入る はんいの めいろを 上から 見た 小さな 図に して 画面の 上に 出す（1マス＝数点。通路は 明るく・壁の かたまりは 暗い 緑・水は 青・まだ 読めていない 所は 灰色）。
-// 足あとの マスは 黄色、お米は 白い 点、ゴールは 黄色い わと 🏁。新しい ゴールの 知らせの あとに 6秒、縁の 矢印を タップしても 出る（図を タップで とじる）。道すじは 出さない（とく 楽しみを のこす）
-// Godot で 描く（?godot=1 の 試作）ときは 出さない（記録係は 絵を 1回だけ 送るので、かきかえる 図が かわらない）
-const mzMap = { until: 0, t0: 0, last: 0, cv: null, at: 0, key: '', box: null, rect: null, arrow: null, pin: null, far: false, tapped: false };
+const mzMap = { arrow: null, pin: null, tapped: false };   // 縁の 矢印（ゴールまでの めいろ図は 2026-10-29 に なくした）
 try { mzMap.tapped = localStorage.getItem('nsg_mz_arrow_tap') === '1'; } catch (e) { /* noop */ }
-// 遠い ゴール（まっすぐ 1km より 先）：運営者の声「ゴールがどこなのかわからない」（遠くて 地図の どこか 分からない）。めいろ図は こまかい めいろが つまって 町の どこか 分からないので、
-// 縁の 矢印を タップすると せかいちず（本当の 地図・地名つき）を、お米と ゴールが 両方 入る ように 開く。せかいちずには ゴールの 🏁 と 名前と、お米からの 点線
-const MZ_FAR_MAP = 1000;
+// 縁の 矢印を タップすると せかいちず（本当の 地図・地名つき）を、お米と ゴールが 両方 入る ように 開く（運営者の声「ゴールがどこなのかわからない」）。せかいちずには ゴールの 🏁 と 名前と、お米からの 点線
 function mzGoalWorld() {
   setWorld(true);
   G.toast('🌏 ゴールは 🏁 の 所（👣 で めいろに もどる）');
-}
-function mzMapOpen(now, ms) { if (mzMap.until <= now) { mzMap.t0 = now; mzMap.last = 0; } mzMap.until = now + ms; mzMap.at = 0; }
-function mzMapBuild(gt, w, H0, dpr) {   // H0：図に つかえる 高さ
-  const g = toTile(gt.lat, gt.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(g.x / MZ_K), gr = Math.floor(g.y / MZ_K);
-  const pad = 4, x0 = Math.min(a, gc) - pad, y0 = Math.min(b, gr) - pad, cols = Math.max(a, gc) + pad - x0 + 1, rows = Math.max(b, gr) + pad - y0 + 1;
-  const c = Math.min(Math.round(12 * dpr), Math.floor(Math.min((w - 104 * dpr) / cols, H0 / rows)));   // 1マスの 点の 大きさ（左右は 地図の ボタンを よける）
-  if (c < 3) return null;   // 遠すぎる（図が 小さく なりすぎて、通路どうしの 細い壁が 描けない）
-  const cv = mzMap.cv || (mzMap.cv = document.createElement('canvas')), x = cv.getContext('2d');
-  cv.width = cols * c; cv.height = rows * c;
-  const go = (cx, cy) => mzType(cx, cy) === 1 || mzSpotCell(cx, cy);
-  const net = new Path2D(), walked = new Path2D(), grains = [];   // ゆるい めいろ：通路は 道すじの 曲線で（歩く地図と 同じ 形）
-  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-    const cx = x0 + i, cy = y0 + j, t = mzType(cx, cy);
-    x.fillStyle = t < 0 ? ((i + j) & 1 ? '#4a4a4a' : '#3e3e3e') : t === 2 ? '#2f6aa0' : '#1d4434';
-    x.fillRect(i * c, j * c, c, c);
-    const cs = go(cx, cy) ? mzCurves(cx, cy) : null;
-    if (cs) for (const q of cs) for (const p of mzTrail.has(cx + ',' + cy) ? [net, walked] : [net]) { p.moveTo((q[0][0] / MZ_K - x0) * c, (q[0][1] / MZ_K - y0) * c); for (let k = 1; k < q.length; k++) p.lineTo((q[k][0] / MZ_K - x0) * c, (q[k][1] / MZ_K - y0) * c); }
-    if (t === 1 && mzGrainAt(cx, cy)) grains.push([i, j]);
-  }
-  x.lineCap = x.lineJoin = 'round'; x.lineWidth = c * 2 * MZ_HALF / MZ_K;
-  x.strokeStyle = '#ddd6b6'; x.stroke(net);
-  x.strokeStyle = '#f3e08a'; x.stroke(walked);   // 通った 所は 黄色く
-  for (const [i, j] of grains) { const g = Math.max(2, Math.round(c * 0.7)), o = Math.floor((c - g) / 2); x.fillStyle = '#5a3a00'; x.fillRect(i * c + o - 1, j * c + o - 1, g + 2, g + 2); x.fillStyle = '#ffc928'; x.fillRect(i * c + o, j * c + o, g, g);   // 金の米つぶ
-  }
-  let pads = 0, dots = 0;
-  {   // びゅんパネル（抹茶色の 三角。矢印の 向き）と ごはんつぶ（白い 点）：どこで 加速できるか・ひろえるかを 見て、道を えらべる（寄り道の 計画に）。細い壁より 先に 描く（小さい 図でも 壁を ぬりつぶさない）
-    const now = performance.now(), q = Math.max(1, Math.round(c / 5));
-    x.lineWidth = 1; x.strokeStyle = '#1a1a1a'; x.fillStyle = '#9ccc4f';
-    for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-      const d = mzType(x0 + i, y0 + j) === 1 ? mzPadAt(x0 + i, y0 + j) : -1;
-      if (d < 0) continue;
-      const [dx, dy] = MZ_PAD_D[d], mx = i * c + c / 2, my = j * c + c / 2, f = c * 0.55, h = c * 0.45;   // マスより 少し 大きく（小さい 図でも 見える）
-      x.beginPath(); x.moveTo(mx + dx * f, my + dy * f); x.lineTo(mx - dx * f * 0.7 - dy * h, my - dy * f * 0.7 + dx * h); x.lineTo(mx - dx * f * 0.7 + dy * h, my - dy * f * 0.7 - dx * h); x.closePath(); x.fill(); x.stroke();
-      pads++;
-    }
-    for (let ry = Math.floor(y0 / MZ_R); ry <= Math.floor((y0 + rows) / MZ_R); ry++) for (let rx = Math.floor(x0 / MZ_R); rx <= Math.floor((x0 + cols) / MZ_R); rx++) {
-      const a = mzAreas.get(rx + '_' + ry);   // 読めている 区域だけ
-      if (a) for (const L of mzLineSet(a)) L.dots.forEach((pt, k) => {
-        if (L.taken[k] && now - L.taken[k] <= MZ_DOT_BACK) return;
-        const px = (pt[0] / MZ_K - x0) * c, py = (pt[1] / MZ_K - y0) * c;
-        if (px < 0 || py < 0 || px >= cols * c || py >= rows * c) return;
-        x.fillStyle = '#5a4a2a'; x.fillRect(Math.round(px - q / 2) - 1, Math.round(py - q / 2) - 1, q + 2, q + 2); x.fillStyle = '#ffffff'; x.fillRect(Math.round(px - q / 2), Math.round(py - q / 2), q, q); dots++;   // こい ふちで 通路の 色から うく
-      });
-    }
-  }
-  return { x0, y0, cols, rows, c, pads, dots, near: ((G.reachOf ? G.reachOf(gt) : 40) || 40) * 0.8 / TILE_M / MZ_K, gx: g.x / MZ_K, gy: g.y / MZ_K };
-}
-function drawMzMap(gt, w, vh, cy, dpr, now) {   // お米の 下（お米と 上の ボタンに かさならない）
-  const dt = mzMap.last ? Math.min(now - mzMap.last, 1000) : 0;
-  mzMap.last = now;
-  if (mapCovered() || mzBanner.t0 || mzNext.t0 || rp.x === null) { mzMap.until += dt; mzMap.t0 += dt; return; }   // 窓や 知らせが 出ている 間は 待つ（とじてから 出す）
-  const S = Math.round(16 * dpr), top = cy + Math.round(40 * dpr) + S * 1.6;   // 図の 上の はし（お米の 足もとより 下。見出しの ぶん あける）
-  if (now - mzMap.at > 500) { mzMap.at = now; mzMap.builds = (mzMap.builds || 0) + 1; mzMap.box = mzMapBuild(gt, w, vh - top - S * 1.6, dpr); }   // 0.5秒ごとに かきなおす（読みこんだ 区域・足あとが ふえる）
-  const B = mzMap.box;
-  if (!B) { mzMap.rect = null; return; }
-  const al = Math.min(1, (now - mzMap.t0) / 250, (mzMap.until - now) / 400);
-  const W = B.cols * B.c, H = B.rows * B.c, X = Math.round(w / 2 - W / 2), Y = Math.round(top);
-  ctx.globalAlpha = al;
-  ctx.fillStyle = 'rgba(10,20,30,.85)'; ctx.fillRect(X - S * 0.5, Y - S * 1.6, W + S, H + S * 2.5);
-  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(X - 2, Y - 2, W + 4, H + 4);
-  ctx.drawImage(mzMap.cv, X, Y, W, H);
-  ctx.font = `bold ${Math.round(S * 0.8)}px "DotGothic16", sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
-  ctx.lineWidth = 3; ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = '#ffe680';
-  ctx.strokeText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8); ctx.fillText('🗺 ゴールまでの めいろ', w / 2, Y - S * 0.8);
-  const pulse = (Math.sin(now / 200) + 1) / 2, help = mzHelpOn() && mzRt.path && mzRt.path.length > 1;
-  if (help) {   // おたすけ：ゴールまでの 道すじを 図にも 水色の 線で（めいろ全体の どこを 通るか 分かる）。図の 外へ 回る ところは 図の ふちで 切る
-    ctx.save();
-    ctx.beginPath(); ctx.rect(X, Y, W, H); ctx.clip();
-    const P = mzRt.path.map(([cx, cy]) => [X + (cx + 0.5 - B.x0) * B.c, Y + (cy + 0.5 - B.y0) * B.c]);   // 道すじと 同じ 曲線（さかいの まん中を とおる）
-    ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]);
-    for (let i = 1; i < P.length - 1; i++) ctx.quadraticCurveTo(P[i][0], P[i][1], (P[i][0] + P[i + 1][0]) / 2, (P[i][1] + P[i + 1][1]) / 2);
-    ctx.lineTo(P[P.length - 1][0], P[P.length - 1][1]);
-    ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-    ctx.strokeStyle = '#1a1a1a'; ctx.lineWidth = Math.max(3, B.c * 0.9); ctx.stroke();
-    ctx.strokeStyle = '#7fe0ff'; ctx.lineWidth = Math.max(1.5, B.c * 0.5); ctx.stroke();
-    ctx.restore();
-  }
-  {   // ゴール：チェックインの 近さの 黄色い わと 🏁
-    const gx = X + (B.gx - B.x0) * B.c, gy = Y + (B.gy - B.y0) * B.c, r = Math.max(B.c * 1.6, B.near * B.c) * (0.9 + pulse * 0.15);
-    ctx.lineWidth = Math.max(3, B.c * 0.5); ctx.strokeStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.lineWidth = Math.max(2, B.c * 0.3); ctx.strokeStyle = '#ffd54f'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.font = `${Math.round(S * 1.1)}px sans-serif`; ctx.fillStyle = '#ffffff'; ctx.fillText('🏁', gx, gy - r - S * 0.5);
-  }
-  if (mzScare.on) {   // かかし：だいだい色の 丸（金の 四角の 米つぶと まちがえない）
-    const cx = X + (mzScare.cx + 0.5 - B.x0) * B.c, cy = Y + (mzScare.cy + 0.5 - B.y0) * B.c, r = Math.max(3 * dpr, B.c * 0.75);
-    if (cx >= X && cy >= Y && cx <= X + W && cy <= Y + H) { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, r + Math.max(1.5, dpr), 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff8a1e'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill(); }
-  }
-  for (const c of mzCrow.list) {   // カラス：黒い 点（赤い ふち。こわがって いる ときは 青い ふち）
-    const cx = X + (c.cx + (c.nx - c.cx) * c.t + 0.5 - B.x0) * B.c, cy = Y + (c.cy + (c.ny - c.cy) * c.t + 0.5 - B.y0) * B.c, r = Math.max(2.5 * dpr, B.c * 0.6);
-    if (cx < X || cy < Y || cx > X + W || cy > Y + H) continue;
-    ctx.fillStyle = c.scared ? '#6aaaff' : '#ff5a4a'; ctx.beginPath(); ctx.arc(cx, cy, r + Math.max(1, dpr), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fill();
-  }
-  {   // お米：白い 点（ちかちか）
-    const rx = X + (rp.x / MZ_K - B.x0) * B.c, ry = Y + (rp.y / MZ_K - B.y0) * B.c, r = Math.max(3 * dpr, B.c * 0.7) * (1 + pulse * 0.25);
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(rx, ry, r + Math.max(1.5, dpr), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(rx, ry, r, 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.font = `bold ${Math.round(S * 0.55)}px "DotGothic16", sans-serif`; ctx.fillStyle = '#bfefff'; ctx.lineWidth = 3;
-  {   // 見かた。せまい 画面（360 など）で はみ出さない よう、入りきらなければ 文字を 小さく
-    const t = `⚪ いま 🏁 ゴール ${help ? '🟦 道 ' : ''}🟨 米つぶ${B.pads ? ' ▶ びゅん' : ''}${B.dots ? ' ･ つぶ' : ''}${mzCrow.list.length ? ' ⚫ カラス' : ''}${mzScare.on ? ' 🟠 かかし' : ''}（タップで とじる）`, tw = ctx.measureText(t).width;
-    if (tw > w * 0.96) ctx.font = `bold ${Math.max(8, Math.floor(S * 0.55 * w * 0.96 / tw))}px "DotGothic16", sans-serif`;
-    ctx.strokeText(t, w / 2, Y + H + S * 0.45); ctx.fillText(t, w / 2, Y + H + S * 0.45);
-  }
-  ctx.globalAlpha = 1;
-  mzMap.rect = [X - S * 0.5, Y - S * 1.6, X + W + S * 0.5, Y + H + S * 0.9];
 }
 // ゆるい めいろの 生け垣：道すじを 太い 線で なぞって、外がわの 帯（MZ_HEDGE）を 生け垣に、内がわ（MZ_HALF）を くりぬいて 通路に する。
 // 重ねた 絵（くりぬき）を 使うので 下絵に 描いて から 貼る。下絵は 地図の 1/8 マスを 1点に した 小さな 絵（ドット絵の 地図に そろい、スマホでも 軽い）。影は 右下へ ずらした 帯
@@ -8280,6 +9991,8 @@ function mzLayerCtx(k, w, h, q, sx, sy, m) {   // q：下絵の 1点が 画面�
 // ・地区ごと（店主「地区ごとの生垣も」。地区は その場所に いちばん 近い 注目スポットの 地区＝dots.js の areaOf。地区の 紹介 areas.json に そろえる）：
 //   一色 → 漁網の 垣（漁港・うなぎの 養殖池。水の そばも 網）・吉良 → 土手（堤防づくりの 名君）・幡豆 → 松の 垣（三ヶ根山と 国定公園の 海べ）・佐久島 → 黒塀（島の 黒壁の 集落）
 // ・田んぼの そば → 稲の 垣（店主「さらに西尾らしく」。西尾は 田んぼの 町。こよみの 田んぼと そろえて 青田・水田は 緑の 稲、実りは 黄金の 穂、刈田・田おこしは はざ掛けの 稲わら）
+// 生け垣に 当たって 舞う くず（[こい, うすい]）：いつもの=若葉・茶の木=茶の 葉・石垣=小石・黒塀=木くず・網=糸くず・土手=土くれ・松=松葉・田んぼ=わら
+const MZ_BITS = { ike: ['168,222,104', '236,244,150'], cha: ['86,140,52', '150,196,90'], ishi: ['150,146,136', '204,200,188'], kuro: ['96,70,46', '156,116,78'], ami: ['228,220,196', '120,156,176'], dote: ['140,106,70', '190,154,108'], matsu: ['62,112,62', '124,164,84'], ine: ['214,190,110', '238,222,160'] };
 const MZ_STYLES = ['ike', 'cha', 'ishi', 'kuro', 'ami', 'dote', 'matsu', 'ine'], MZ_CASTLE_R = 800 / TILE_M;
 const MZ_AREA_STYLE = { isshiki: 'ami', kira: 'dote', hazu: 'matsu', sakushima: 'kuro' };
 // 地区は いちばん 近い 町名（住所）で きめる：合併の あとも 住所に のこる「一色町○○」「吉良町○○」、幡豆は 東幡豆町・西幡豆町・寺部町・鳥羽町。
@@ -8586,6 +10299,8 @@ function rollStep(dt) {
     if (q && q.d > MZ_TUBE) {   // やわらかい 生け垣（店主「迷路の壁は柔らかく、当たると伸びて跳ね返る」）：筒の ふちから 先は ばね。めりこむ ほど 強く 押しもどし、ぽよんと はね返る
       const ux = (nx - q.x) / q.d, uy = (ny - q.y) / q.d, vn = rp.vx * ux + rp.vy * uy, over = q.d - MZ_TUBE, pen = Math.min(over, MZ_SOFT_MAX);
       rub = [ux, uy];
+      if (!mzSoft.on && vn > MZ_HIT_STOP && !calmMotion) mzHitStop = performance.now() + MZ_HIT_STOP_MS;
+      if (!mzSoft.on && vn > MZ_HIT_STOP && performance.now() - riceBub.at > 4000) riceSay('いたっ', 900);   // 強く 当たった ときだけ（4秒に 1回まで）   // 動きを へらす 設定の 人には しない
       if (!mzSoft.on && vn > 0) { hit(vn, Math.abs(ux) >= Math.abs(uy), false); mzSoft.vin = vn; mzSoft.dv = Math.max(mzSoft.dv, vn * 0.5); }   // 当たった 瞬間だけ：がさっ（音・葉っぱ・ゆれ・いたい顔・コンボ おしまい）。へこみの 絵を ぐっと 押しこむ
       mzSoft.on = true; mzSoft.x = q.x; mzSoft.y = q.y; mzSoft.ux = ux; mzSoft.uy = uy; mzSoft.pen = pen;
       const push = MZ_SOFT_K * pen * dt + (vn > 0 ? MZ_SOFT_C * vn * dt : 0);   // ばね ＋ めりこむ 向きの ときだけ ねばり（はね返りの 強さ）
@@ -8599,6 +10314,7 @@ function rollStep(dt) {
         if (vo < want) { rp.vx -= (want - vo) * mzSoft.ux; rp.vy -= (want - vo) * mzSoft.uy; mzSpring.boosts++; mzSpringChain(performance.now()); }
         const v = Math.hypot(rp.vx, rp.vy); if (v > ROLL_MAX) { rp.vx *= ROLL_MAX / v; rp.vy *= ROLL_MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
+      if (mzSoft.on && mzSoft.vin > 2.5 && roll.h <= 0 && !calmMotion) { roll.hv = Math.min(2.6, 0.8 + mzSoft.vin * 0.25); roll.h = 0.001; }   // ぽよんぽよん：はね返る ときに お米が ちょこんと とびはねる（見た目だけ。動きを へらす 人には しない）
       if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now() ? mzSpring.chain || 1 : 0); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
       mzSoft.on = false; mzSoft.vin = 0;
     }
@@ -8631,7 +10347,7 @@ function rollStep(dt) {
     if (spd > 1.4 && hedgeScrapeT <= 0 && inTube) {
       if (rub) {
         hedgeScrapeT = 0.22 / Math.min(3, spd / 1.4);
-        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: Math.random() < 0.5 ? '168,222,104' : '236,244,150', bit: true });
+        roll.dust.push({ x: rp.x + rub[0] * 0.7, y: rp.y + rub[1] * 0.6, t: 0, s: 0.8 + Math.random() * 0.5, vx: (Math.random() - 0.5) * 0.8, c: (MZ_BITS[mzStyle(Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K))] || MZ_BITS.ike)[Math.random() < 0.5 ? 0 : 1], bit: true });   // こすれた くずも 生け垣の 種類で
       }
     } else if (spd > 1.4 && hedgeScrapeT <= 0) {
       const horiz = Math.abs(rp.vx) >= Math.abs(rp.vy);
@@ -8701,11 +10417,12 @@ function bumpFx(hard = 1, horiz = true, wet = false, hedge = false) {
   if (hard < 0.25) return;
   comboEnd();   // 当たったら ころころコンボは おしまい
   if (hedge) {   // めいろの 生け垣に がさっ：やわらかく 受けとめて、葉っぱが 舞う。強く 当たった ときだけ いたい顔
-    roll.sq = Math.min(0.24, 0.07 + hard * 0.04); roll.sqv = 0; roll.sqx = horiz;
+    roll.sq = Math.min(0.32, 0.1 + hard * 0.05); roll.sqv = 0; roll.sqx = horiz;   // ふわふわ：生け垣に もふっと うもれて 大きく つぶれる
     roll.shake = Math.min(0.4, 0.06 + hard * 0.06);
     if (hard > 3.2) roll.ouchT = 0.5;
-    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;   // 当たった 生け垣の 面（はね返る まえの 向き）
-    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: i % 3 ? '168,222,104' : '236,244,150', bit: true });   // 若葉色（壁の 緑より 明るく）
+    const sx = Math.sign(rp.vx) * (horiz ? 0.75 : 0), sy = horiz ? 0 : rp.vy > 0 ? 0.65 : -0.45;
+    const bits = MZ_BITS[mzStyle(Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K))] || MZ_BITS.ike;   // 生け垣の 種類で くずを かえる（素朴な かわいさ）   // 当たった 生け垣の 面（はね返る まえの 向き）
+    for (let i = 0; i < Math.min(9, 3 + Math.round(hard * 1.4)); i++) roll.dust.push({ x: rp.x - sx * 0.1 * (1 - i % 2) + sx, y: rp.y + sy, t: 0, s: 0.9 + Math.random() * 0.6, vx: (Math.random() - 0.5) * 2.2, c: bits[i % 3 ? 0 : 1], bit: true });   // 若葉色（壁の 緑より 明るく）
     hedgeSound(Math.min(1, hard / 4));
     if (navigator.vibrate) navigator.vibrate(Math.round(5 + hard * 2));
     return;
@@ -8997,10 +10714,9 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
-  if (mazeOn() && !worldMode) {   // ゴールまでの めいろ図：図を タップで とじる・縁の 矢印を タップで 出す
+  if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];
-    if (mzMap.until > now && inR(mzMap.rect)) { mzMap.until = Math.min(mzMap.until, now + 300); return; }
-    if (inR(mzMap.arrow)) { if (!mzMap.tapped) { mzMap.tapped = true; try { localStorage.setItem('nsg_mz_arrow_tap', '1'); } catch (err) { /* noop */ } } if (mzMap.far) mzGoalWorld(); else mzMapOpen(now, 8000); return; }   // 遠い ゴールは せかいちずで（めいろ図では 町の どこか 分からない）
+    if (inR(mzMap.arrow)) { if (!mzMap.tapped) { mzMap.tapped = true; try { localStorage.setItem('nsg_mz_arrow_tap', '1'); } catch (err) { /* noop */ } } mzGoalWorld(); return; }   // 縁の 矢印を タップすると せかいちずで ゴールの 場所を 見る（ゴールまでの めいろ図は なくした。運営者の声 2026-10-29）
   }
   if (!(worldMode && dragMoved)) {   // 当店の札と絵がいちばん上に描かれているので、先に調べる
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr;
@@ -9030,6 +10746,8 @@ cv.addEventListener('click', e => {
   const x = (e.clientX - r.left) * dpr, y = (e.clientY - r.top) * dpr;
   // 西尾の人（絵は半マス上に描いているので、その分を足して調べる）
   const ttx = Math.floor(c.x + (x - cv.width / 2) / T), tty = Math.floor(c.y + (y - fieldCy) / T + 0.25);
+  if (G.demo && rp.x !== null && !driving && howtoEl.hidden && nazoTap(x, y, performance.now())) return;   // なぞなぞの 札を タップ（nazonazo.js）
+  if (G.demo && rp.x !== null && !driving && howtoEl.hidden && Math.hypot(x - (cv.width / 2 + heroScr.x), y - (fieldCy + heroScr.y)) < T * 0.8 && tsunTap(performance.now())) return;   // お米を つんつん（tsun.js）
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
   if (who) { openNpc(who); return; }
   const rt = rivalTile();
@@ -9116,15 +10834,15 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;
     const sec = g.sec !== undefined ? g.sec : (now - g.t0) / 1000;
     return { sec, m: Math.max(0, g.len0 - 1) * MZ_K * TILE_M, stars: g.len0 && !g.warp ? mzStars(sec, g.len0) : 0, par: g.len0 ? mzPar(g.len0).p3 : 0, way: g.len0 && !g.warp && g.len0 >= MZ_WAY_MIN ? Math.max(1, g.moves / (g.len0 - 1)) : 0, run: g.run || null, warp: !!g.warp };   // warp：とちゅうで とびこえた（★・はやさの ベストに 入れない）   // way：通った マスが ちかみちの 何倍か（1 に 近いほど まよわず 来た）
-  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], map: (ms = 8000) => { if (ms) mzMapOpen(performance.now(), ms); else mzMap.until = 0; }, get mapShown() { return mzMap.until > performance.now() && !!mzMap.rect; }, get mapArrow() { return mzMap.arrow; }, get mapMarks() { const B = mzMap.box; return B ? { pads: B.pads, dots: B.dots, box: [B.x0, B.y0, B.cols, B.rows] } : null; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, get mapBuilds() { return mzMap.builds || 0; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, area: (cx, cy) => mzArea0(cx, cy) }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, critterSprite: id => critterSprites[id], critterStep, suzume: { get list() { return suzume.list.map(b => ({ x: b.x, y: b.y, fly: !!b.fly })); }, put: (x, y) => { suzume.list.length = 0; suzumeSpawn(x, y, performance.now() - 1000); }, clear: () => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; }, NEAR: SUZUME_NEAR }, neko: { get cat() { const n = neko.cat; return n && { x: n.x, y: n.y, awake: performance.now() - n.awake < NEKO_AWAKE }; }, put: (x, y) => { neko.cat = { x: x + 0.5, y: y + 0.6, t0: performance.now(), awake: 0, dir: 1, col: NEKO_COLS[0] }; }, clear: () => { neko.cat = null; neko.next = performance.now() + 6e4; }, NEAR: NEKO_NEAR }, mushi: { get m() { const m = mushi.m; return m && { kind: m.kind, x: m.x, y: m.y, flee: !!m.flee }; }, kind: () => mushiKind(), put: (x, y, k) => { const now = performance.now(); mushi.m = { kind: k || mushiKind() || 'tonbo', x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: 0 }; }, clear: () => { mushi.m = null; mushi.next = performance.now() + 6e4; }, NEAR: MUSHI_NEAR }, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
+  }, goalFx: text => mzGoalFx(text), fxKinds: () => mzFx.map(p => p.k), route: () => (mazeOn() && mzRt.path ? { cells: mzRt.path.length - 1, m: (mzRt.path.length - 1) * MZ_K * TILE_M } : null), get banner() { return mzBanner.t0 ? mzBanner.text : ''; }, arrive: () => ({ done: mzArrive.done, covered: mapCovered(), howto: !howtoEl.hidden, sight: sightBusy(), soon: !!(G.rewardSoon && G.rewardSoon()), g: G.guide && { kind: G.guide.kind, id: G.guide.id, d: G.me ? Math.round(G.dist(G.me, G.guide)) : null, r: G.guideRadius(G.guide) }, t0: mzRt.t0 }), prevAge: ms => { if (mzRt.prev) mzRt.prev.at -= ms; return !!mzRt.prev; }, routePath: () => (mazeOn() && mzRt.path ? mzRt.path.map(p => [p[0], p[1]]) : null), hint: () => { mzRt.showUntil = performance.now() + 6000; }, lost: () => { mzRt.bestT -= 26000; mzRt.showUntil = 0; }, help: () => ({ on: mzHelpOn(), dots: mzHelp.dots, dead: mzHelp.dead, goals: mzGoalsDone(), told: mzHelp.told, banner: !!(mzNext.want || mzNext.t0) }), helpReset: () => { mzHelp.told = false; }, crows: () => ({ on: mzCrowOn(), hits: mzCrow.hits, shoo: mzCrow.shoo, list: mzCrow.list.map(c => ({ cx: c.cx, cy: c.cy, nx: c.nx, ny: c.ny, t: c.t, chase: c.chase, scared: !!c.scared })) }), scare: () => ({ on: mzScare.on, cx: mzScare.cx, cy: mzScare.cy, left: Math.max(0, mzScare.until - performance.now()), got: mzScare.got }), mvSim: (n0, cells, dt) => { const m = { n: 0, cell: '', prev: '', t: 0, undo: false, x: 0, y: 0 }; let t = 0; for (const c of cells) { if (c === 'R') { mzMvReset(m); continue; } mzMvStep(m, c[0], c[1], t); t += dt; if (m.n === 1 && n0) m.n = n0; } return m.n; }, scarePut: (cx, cy) => { Object.assign(mzScare, { cx, cy, on: true, until: 0, t0: performance.now() }); }, crowPut: (cx, cy) => { mzCrow.list = []; mzCrow.list.push({ id: ++mzCrow.seq, cx, cy, nx: cx, ny: cy, t: 0, dx: 0, dy: 0, chase: false }); mzCrow.hitT = 0; }, open: (cx, cy, dx, dy) => mzOpen(cx, cy, dx, dy), type: (cx, cy) => mzType(cx, cy), spot: (cx, cy) => mzSpotCell(cx, cy), trail: () => [...mzTrail.keys()], get mapArrow() { return mzMap.arrow; }, get arrowAt() { return mzMap.pin || null; }, get goalLab() { return mzMap.goalLab || null; }, get worldGoal() { return worldMode ? mzMap.worldGoal || null : null; }, hudRects: () => mzHudRects(-1e9), clock: () => (mazeOn() && mzRt.t0 && mzRt.len0 ? { sec: (performance.now() - mzRt.t0) / 1000, stars: mzStars((performance.now() - mzRt.t0) / 1000, mzRt.len0), par: mzPar(mzRt.len0).p3 } : null), padsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) { const d = mzPadAt(x, y); if (d >= 0) out.push([x, y, d]); } return out; }, get padHits() { return mzPad.hits; }, get padChain() { return { n: mzPad.chain, best: mzPad.best }; }, linesNear: () => { const out = []; mzLinesNear(L => out.push({ dots: L.dots.map(d => [...d]), left: L.taken.filter(t => !t).length })); return out; }, get dots() { return { n: mzDots.d === jstDay() ? mzDots.n : 0, lines: mzDots.lines }; }, meibutsuTip: () => mzMeibutsuTip(), grainsNear: (r = 12) => { const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), out = []; for (let y = b - r; y <= b + r; y++) for (let x = a - r; x <= a + r; x++) if (mzType(x, y) === 1 && mzGrainAt(x, y)) out.push([x, y]); return out; }, K: MZ_K, clockS: MZ_CLOCK_PX, tapK: MZ_TAP_K, get arrowTapped() { return mzMap.tapped; }, near: (x, y) => mzNear(x, y), gates: () => [...mzGate.keys()], style: (cx, cy) => mzStyle(cx, cy), soft: () => ({ ...mzSoft }), spring: () => ({ ...mzSpring, left: Math.max(0, mzSpring.until - performance.now()) }), springPut: (cx, cy) => { Object.assign(mzSpring, { cx, cy, on: true, t0: performance.now() }); }, springOn: (ms = MZ_SPRING_MS) => { mzSpring.until = performance.now() + ms; }, springBoing: () => mzSpringChain(performance.now()), area: (cx, cy) => mzArea0(cx, cy), critters: () => mzCritDrawn.slice(), critFled: () => mzCritFled.size, critHi: () => mzCritHiN, critMode: () => mzCritMode, say: () => ({ t: riceBub.t, on: performance.now() < riceBub.until, log: riceBub.log.slice() }), sayNow: (t, ms) => riceSay(t, ms, 'happy') }, townBanner: name => { here.banner = name; here.bannerAt = performance.now(); here.box = null; here.waited = 0; here.lastT = 0; }, get riceBox() { return roll.box || null; }, get townWait() { return here.waited || 0; }, set townWait(v) { here.waited = v; }, get townBox() { return here.banner && here.box || null; }, get townDodged() { return !!(here.banner && here.dodged); }, get toastDodgeOff() { return toastDodgeOff; }, set toastDodgeOff(v) { toastDodgeOff = !!v; wtd.key = ''; }, critterSprite: id => critterSprites[id], waterKind, critterStep, suzume: { get list() { return suzume.list.map(b => ({ x: b.x, y: b.y, fly: !!b.fly })); }, put: (x, y) => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; suzumeSpawn(x, y, performance.now() - 1000); }, clear: () => { suzume.list.length = 0; suzume.next = performance.now() + 6e4; }, NEAR: SUZUME_NEAR, visit: () => suzumeVisit(performance.now()), VISIT: SUZUME_VISIT }, neko: { get cat() { const n = neko.cat; return n && { x: n.x, y: n.y, awake: performance.now() - n.awake < NEKO_AWAKE }; }, put: (x, y) => { neko.next = performance.now() + 6e4; neko.cat = { x: x + 0.5, y: y + 0.6, t0: performance.now(), awake: 0, dir: 1, col: NEKO_COLS[0] }; }, clear: () => { neko.cat = null; neko.next = performance.now() + 6e4; }, NEAR: NEKO_NEAR }, deai: { get d() { const d = deai.d; return d && { id: d.id, x: d.x, y: d.y }; }, put: (x, y, id) => { const now = performance.now(); deai.next = now + 6e5; deai.d = { id: id || 'medaka', x, y, t0: now }; }, clear: () => { deai.d = null; deai.next = performance.now() + 6e5; }, get drawn() { return deai.drawn; } }, nakama: { get n() { const n = nakama.n; return n && { kind: n.kind, x: n.x, y: n.y, stop: !!n.stop }; }, kind: () => nakamaKind(), kinds: () => nakamaKinds(), put: (x, y, k) => { const now = performance.now(); nakama.next = now + 6e4; nakama.n = { kind: k || nakamaKind() || 'nasu', x, y, t0: now, last: now, ang: 0, stop: 0 }; }, clear: () => { nakama.n = null; nakama.next = performance.now() + 6e4; }, FOLLOW: NAKAMA_FOLLOW }, kaeru: { get list() { return kaeru.list.map(f => ({ x: f.x, y: f.y, jump: !!f.jump })); }, season: () => kaeruSeason(), put: (x, y) => { const now = performance.now(); kaeru.next = now + 6e4; kaeru.list = [{ x: x + 0.5, y: y + 0.5, t0: now, jump: 0, dir: 1, into: [1, 0], seed: 0 }]; }, clear: () => { kaeru.list.length = 0; kaeru.next = performance.now() + 6e4; }, NEAR: KAERU_NEAR }, mushi: { get m() { const m = mushi.m; return m && { kind: m.kind, x: m.x, y: m.y, flee: !!m.flee }; }, kind: () => mushiKind(), put: (x, y, k) => { const now = performance.now(); mushi.next = now + 6e4; mushi.m = { kind: k || mushiKind() || 'tonbo', x, y, vx: 0, vy: 0, t0: now, last: now, flee: 0, rest: 0, ph: 0 }; }, clear: () => { mushi.m = null; mushi.next = performance.now() + 6e4; }, NEAR: MUSHI_NEAR }, floats: () => floaters.map(f => f.t), floatText, get floatsDrawn() { return floatDrawn.slice(); }, get floatPx() { return floatPx; }, get floatShift() { return floatShift.slice(); }, riceFace: () => { const f = riceBall.faces || {}, sm = f.smile; let shine = 0; if (sm) { const d = sm.getContext('2d').getImageData(0, 0, sm.width, sm.height).data; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] === 255 && d[i + 1] === 255 && d[i + 2] === 255) shine++; } return { keys: Object.keys(f), shine }; }, breathAt: now => riceBreath(now), get bfly() { return { phase: bfly.phase, drawn: bfly.drawn, calm: calmMotion, smooth: bfly.smooth, at: bfly.at, kind: bfly.kind || '', season: mushiKind() }; }, setIdle: v => { roll.idle = v; }, riceWake, get zzz() { return { n: zzz.n, at: zzz.at }; }, get drop() { return { n: drop.n, at: drop.at }; }, setWet: v => { roll.wetT = v; }, get wakeT() { return roll.wakeT || 0; }, setGb: v => { gbOn = !!v; dirty = true; }, bflyIn, riceLast: () => { const L = riceBall.last; if (!L) return null; const d = riceBall.x.getImageData(0, 0, L.S, L.S).data; let soft = 0, solid = 0, tones = new Set(); for (let i = 0; i < d.length; i += 4) { if (d[i + 3] > 0 && d[i + 3] < 255) soft++; else if (d[i + 3] === 255) { solid++; tones.add(d[i] >> 1); } } let ring = 0; for (let i = 0; i < L.S; i++) for (const [x, y] of [[i, 0], [i, L.S - 1], [0, i], [L.S - 1, i]]) ring = Math.max(ring, d[(y * L.S + x) * 4 + 3]); return { ...L, soft, solid, tones: tones.size, ring }; }, moodAt: idle => { const k = roll.kind, id = roll.idle, hv = [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT]; Object.assign(roll, { kind: 'stop', idle, happyT: 0, ouchT: 0, dizzyT: 0, v: 0, h: 0, wetT: 0 }); const m = riceMood(1000); roll.kind = k; roll.idle = id; [roll.happyT, roll.ouchT, roll.dizzyT, roll.v, roll.h, roll.wetT] = hv; return m; }, FLOAT_PX, floatAts: () => floaters.map(f => Math.round(f.at - performance.now())), floatsClear: () => { floaters.length = 0; floatLast = -1e9; }, get critterState() { return critterS; }, alleyEnd, get combo() { return { n: combo.n, best: combo.best, beat: combo.beat, pop: combo.pop || 0 }; }, comboBest: v => { combo.best = v; combo.near = 0; }, comboAdd: k => { combo.n += k; combo.quietT = 0; comboStep(); }, get speedK() { return speedFx.k; }, get roll() { return { on: rollOn, x: rp.x, y: rp.y, vx: rp.vx, vy: rp.vy, d: roll.d, ready: riceSprites.ready, kind: roll.kind, av: roll.av, look: roll.look, hv: roll.hv, jumps: roll.jumps, sends: roll.sends, dirt: roll.dirt, mood: riceMood(performance.now()), drawn: roll.drawn, flat: roll.flat, round: !!riceBall.cv, v: roll.v, idle: roll.idle, by: roll.by, spin: roll.spin, pitch: roll.pitch, h: roll.h, slope: rp.x === null ? null : slopeAt(rp.x, rp.y), height: rp.x === null ? null : heightAt(rp.x, rp.y), ground: Object.keys(GROUND).find(k => GROUND[k] === roll.gnd) || "" }; }, blockedAt: (x, y) => rollBlocked(x, y), rollPut: (x, y, vx = 0, vy = 0) => { const ll = toLatLng(x, y); G.moveTo(ll.lat, ll.lng, 'step'); Object.assign(rp, { x, y, vx, vy, sent: { x, y }, sentAt: performance.now(), tile: `${Math.floor(x)},${Math.floor(y)}` }); },   // テスト用：お米を その位置・速さに置く
   slopeAt: (x, y) => slopeAt(x, y),   // テスト用：その マスの かたむき
-  rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
+  rollBlockedFrom: (fx, fy, x, y) => (mazeOn() ? mzBlocked(fx, fy, x, y) : rollBlocked(x, y)), chaHana: () => chaHanaOn(), koroArt: () => koroReady(), ambN: () => ambN(), AMB_MAX, kabuse: { on: t => kabuseOn(t), paint: (T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawKabuse(0, 0, 0, 0, T); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 100) n++; return n; } }, morning: { get k() { return morning.k; }, level: t => morningLevel(t), force: v => { morningForce = v; dirty = true; } }, sentaku: { get n() { return sentaku.n; }, on: wx => sentakuOn(wx), paint: (T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawSentaku(0, 0, Math.max(1, Math.round(T / 16)), 0, 0); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i]) n++; return n; } }, donguri: { get d() { const d = donguri.d; return d && { x: d.x, y: d.y, v: Math.hypot(d.vx, d.vy) }; }, season: () => donguriSeason(), put: (x, y, vx = 1.4, vy = 0) => { const now = performance.now(); donguri.next = now + 6e4; donguri.d = { x, y, vx, vy, t0: now, last: now, ang: 0 }; }, clear: () => { donguri.d = null; donguri.next = performance.now() + 6e4; }, ready: () => { donguri.next = 0; }, blocked: (x, y) => donBlocked(x, y), LIFE: DONGURI_LIFE }, hamon: { get list() { return hamon.list.map(r => ({ x: r.x, y: r.y })); }, put: (x, y) => { hamon.list.push({ x, y, t0: performance.now() }); }, clear: () => { hamon.list.length = 0; }, MS: HAMON_MS }, nightForce: v => { nightForce = v; dirty = true; }, get nightLamps() { return { ...nightLamps }; }, chaHanaPaint: (tx, ty, T = 32) => { const c = document.createElement('canvas'); c.width = c.height = T; const keep = ctx; ctx = c.getContext('2d'); try { drawChaHana(tx, ty, 0, 0, T); } finally { ctx = keep; } const d = c.getContext('2d').getImageData(0, 0, T, T).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i] > 240 && d[i + 2] > 230) n++; return n; }, tileAt: (x, y) => codeAt(Math.floor(x), Math.floor(y)), wet: () => roll.wetT, riceStreak, drawRice: (dst, X, Y, th, sq = 0, mood = 'smile', dirt = 0, dirtCol = '', u = 1, pitch = 0) => { if (!riceBall.cv) return false; drawRiceBall(X, Y, u, th, 1 + sq, 1 - sq, 0, dst, false, mood, 0, dirt, dirtCol, pitch); return true; }, setRoll, setHeightFn: fn => { heightFn = fn || null; }, mapCovered, sightBusy, sightCheck, sightForget: id => { sight.seen.delete(id); },
   // いまの町名が新しいか（歩く地図を描いていて、いまの位置で2秒以内に確かめた。せかいちず・ふつうの地図に切り替えたあとの古い町名は使わない）
   get hereFresh() { return active && !worldMode && !!G.me && performance.now() - here.at < 2000; }, spotSprites, spriteOf: sp => spriteOf(sp)[0], npcSprite: look => (npcSprites[look] || npcSprites.man)[0], art: { hiCanvas, shopCanvas, tileRoof, spanRows, pix, genSprite, GEN_DRAW }, get towns() { return towns; }, get here() { return here; }, npcTile, rasterize, chunkQuery, chunkBox, chunkInPlay, luReady, luAt, unrle, overpass, toTile, toLatLng, codeAt, rawAt, C, CHUNK, chunks, setActive, centerOnMe, demFor, get worldMode() { return worldMode; }, merc, buildWorld, setWorld, llToW, WORLD_KEY, WW, WH, get world() { return world; }, get worldPois() { return worldPois; }, get worldLabels() { return worldLabels; }, get pois() { return poiCache.list; }, BUILDING_ART, get worldState() { return worldState; }, get areaBoxes() { return areaBoxes; }, get shopHits() { return shopHits; }, get chests() { return chests; }, get traffic() { return traffic; }, get driving() { return driving; }, toggleCar, floatText, onPaddy, get tapGoal() { return tapS.goal; }, trailWalk, trailHas, trailClear, get trailCells() { return TRAIL.world.size; }, get trailWorld() { return [...TRAIL.world]; },
   tileToClient(tx, ty) {   // 歩く地図のマスのまん中が、画面のどこか（台本でタップするため）

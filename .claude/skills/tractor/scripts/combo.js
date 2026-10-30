@@ -9,7 +9,7 @@ const srv=http.createServer((r,s)=>{const u=decodeURIComponent(r.url.split('?')[
     await p.route('https://cdnjs.cloudflare.com/**',r=>r.fulfill({path:TN+'/build/three.min.js',contentType:'text/javascript'}));
     await p.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({path:TN+r.request().url().split('/three@0.128.0')[1],contentType:'text/javascript'}));
     try {
-      await p.goto(`http://localhost:${PORT}/tractor.html?season=${season}&time=${time}&w=${w}&noshadow`);
+      await p.goto(`http://localhost:${PORT}/tractor.html?season=${season}&time=${time}&w=${w}&noshadow&menu=1`);
       await p.waitForFunction(()=>!document.getElementById('bStart').disabled,null,{timeout:240000});
       await p.click('#bStart'); await p.waitForTimeout(800);
       await p.evaluate(()=>{ const g=game; g.sim(2); g.toggleRotary(); g.key.fwd=1; g.sim(6); g.key.left=1; g.sim(1); g.key.left=0; g.key.fwd=0; g.toggleRotary(); g.sim(1); g.nextCam(); });

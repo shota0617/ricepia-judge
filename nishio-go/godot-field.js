@@ -51,6 +51,7 @@
     save() { this.stack.push({ m: this.m.slice(), fillStyle: this.fillStyle, strokeStyle: this.strokeStyle, globalAlpha: this.globalAlpha, font: this.font, textAlign: this.textAlign, textBaseline: this.textBaseline, lineWidth: this.lineWidth }); },
     restore() { const s = this.stack.pop(); if (s) Object.assign(this, s); },
     translate(x, y) { const m = this.m; m[4] += m[0] * x + m[2] * y; m[5] += m[1] * x + m[3] * y; },
+    scale(x, y) { const m = this.m; this.m = [m[0] * x, m[1] * x, m[2] * y, m[3] * y, m[4], m[5]]; },   // 大きさは 絵の はばに まだ かけない（向きと 位置だけ）
     rotate(a) { const m = this.m, c = Math.cos(a), s = Math.sin(a); this.m = [m[0] * c + m[2] * s, m[1] * c + m[3] * s, m[2] * c - m[0] * s, m[3] * c - m[1] * s, m[4], m[5]]; },
     drawImage(img, a, b, c, d) {
       if (!img) return;
@@ -65,6 +66,10 @@
     moveTo(x, y) { this.path.push(this.pt(x, y)); },
     lineTo(x, y) { this.path.push(this.pt(x, y)); },
     closePath() {},
+    ellipse(x, y, rx, ry, rot = 0, a0 = 0, a1 = Math.PI * 2) {   // だ円は 24角形で 送る（お米の 影。Codex の 指摘：ないと 止まって その こまが 送られない）
+      const n = 24, c = Math.cos(rot), s = Math.sin(rot);
+      for (let i = 0; i <= n; i++) { const a = a0 + (a1 - a0) * i / n, ex = Math.cos(a) * rx, ey = Math.sin(a) * ry; this.path.push(this.pt(x + ex * c - ey * s, y + ex * s + ey * c)); }
+    },
     fill() {
       const p = this.path, [c, al] = parseColor(this.fillStyle);
       if (p.length < 3) return;

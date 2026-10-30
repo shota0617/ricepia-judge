@@ -1,0 +1,171 @@
+# 配信中の広告を 3社のAI でレビューする：Claude Opus・Claude Fable（Anthropic）と Codex（OpenAI）が、同じ一覧を別々に見る
+# 1. 広告の一覧をそろえる（どれか1つ。上ほど優先）
+#    - 「広告の一覧」に貼る：Google広告スクリプト tools/google-ads-serving-2026-10.js を管理画面で「プレビュー」したログをそのまま
+#    - Secrets に GOOGLE_ADS_*（tools/google-ads-run.js と同じ）があれば、API から いまの広告を読む
+#    - どちらも無いときは、リポジトリの mkt/ads/google-ads-serving.md（前に取った一覧）
+# 2. 3つのレビューを同時に動かす。どれも ファイルを読むだけ（書く・シェル・ウェブは使えない）
+# 3. まとめを この実行の Summary と artifact（ads-review）に出す。アカウントは変えない
+# 必要な準備：ANTHROPIC_API_KEY か CLAUDE_CODE_OAUTH_TOKEN（Opus・Fable）、OPENAI_API_KEY（Codex）。無いものは飛ばす
+# 注意：公開リポジトリなので、ログと Summary はだれでも見られる。一覧にお客様IDや電話番号は入れない（書き出しスクリプトは入れない）
+name: Ads review (Opus · Fable · Codex)
+on:
+  workflow_dispatch:
+    inputs:
+      ads:
+        description: '広告の一覧（tools/google-ads-serving-2026-10.js のログを貼る。空なら API → mkt/ads/google-ads-serving.md）'
+        required: false
+      focus:
+        description: '今回とくに見てほしいこと（例：年末の新米の表示・業務用）'
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: ads-review
+  cancel-in-progress: false
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+      - name: Ads list
+        env:
+          ADS: ${{ inputs.ads }}
+          FOCUS: ${{ inputs.focus }}
+          GOOGLE_ADS_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_ADS_DEVELOPER_TOKEN }}
+          GOOGLE_ADS_CLIENT_ID: ${{ secrets.GOOGLE_ADS_CLIENT_ID }}
+          GOOGLE_ADS_CLIENT_SECRET: ${{ secrets.GOOGLE_ADS_CLIENT_SECRET }}
+          GOOGLE_ADS_REFRESH_TOKEN: ${{ secrets.GOOGLE_ADS_REFRESH_TOKEN }}
+          GOOGLE_ADS_CUSTOMER_ID: ${{ secrets.GOOGLE_ADS_CUSTOMER_ID }}
+          GOOGLE_ADS_LOGIN_CUSTOMER_ID: ${{ secrets.GOOGLE_ADS_LOGIN_CUSTOMER_ID }}
+        run: |
+          mkdir -p .ads-review
+          if [ -n "$ADS" ]; then
+            printf '%s\n' "$ADS" > .ads-review/ads.md; echo "広告の一覧：貼られたもの"
+          elif [ -n "$GOOGLE_ADS_REFRESH_TOKEN" ] && { node tools/google-ads-run.js --job serving --out .ads-review/ads.md > /dev/null || true; [ -s .ads-review/ads.md ]; }; then
+            echo "広告の一覧：Google Ads API（いまの広告。読めなかった節は一覧の中に書いてある）"
+          else
+            cp mkt/ads/google-ads-serving.md .ads-review/ads.md; echo "::warning::広告の一覧：mkt/ads/google-ads-serving.md（前に取った一覧。いまと違うことがある）"
+          fi
+          if [ -n "$FOCUS" ]; then printf '\n## 今回とくに見てほしいこと（運営者から）\n\n%s\n' "$FOCUS" >> .ads-review/ads.md; fi
+          node tools/ads-review.js prompt .ads-review/ads.md .ads-review/prompt.md
+          cat .ads-review/ads.md
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ads-list
+          path: .ads-review/
+          include-hidden-files: true
+          retention-days: 30
+
+  claude:
+    needs: list
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: opus
+            model: claude-opus-5-5
+          - key: fable
+            model: claude-fable-5-1
+    steps:
+      - name: Check settings
+        id: cfg
+        env:
+          A: ${{ secrets.ANTHROPIC_API_KEY }}${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: if [ -n "$A" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "::warning::ANTHROPIC_API_KEY も CLAUDE_CODE_OAUTH_TOKEN も無いので、${{ matrix.key }} は飛ばします"; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.cfg.outputs.on
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        if: steps.cfg.outputs.on
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: steps.cfg.outputs.on
+        with:
+          name: ads-list
+          path: .ads-review
+      - name: Claude reviews (${{ matrix.key }})
+        if: steps.cfg.outputs.on
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          npm i -g --prefix "$RUNNER_TEMP/cc" @anthropic-ai/claude-code@2.1.305 > /dev/null
+          mkdir -p "$RUNNER_TEMP/out"
+          CLAUDE_BIN="$RUNNER_TEMP/cc/bin/claude" node tools/ads-review.js claude ${{ matrix.model }} .ads-review/prompt.md "$RUNNER_TEMP/out/review.md"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: steps.cfg.outputs.on
+        with:
+          name: review-${{ matrix.key }}
+          path: ${{ runner.temp }}/out/review.md
+          retention-days: 30
+
+  codex:
+    needs: list
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check settings
+        id: cfg
+        env:
+          O: ${{ secrets.OPENAI_API_KEY }}
+        run: if [ -n "$O" ]; then echo "on=1" >> "$GITHUB_OUTPUT"; else echo "::warning::OPENAI_API_KEY が無いので、Codex は飛ばします"; fi
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: steps.cfg.outputs.on
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        if: steps.cfg.outputs.on
+        with:
+          name: ads-list
+          path: .ads-review
+      - name: Prepare
+        if: steps.cfg.outputs.on
+        run: mkdir -p "$RUNNER_TEMP/out"
+      - name: Codex reviews
+        if: steps.cfg.outputs.on
+        uses: openai/codex-action@bdf19a4a223ec2549a3e2274a0cf61556bc07675 # v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt-file: .ads-review/prompt.md
+          output-file: ${{ runner.temp }}/out/review.md
+          permission-profile: ':read-only'
+          model: ${{ vars.CODEX_MODEL }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: steps.cfg.outputs.on
+        with:
+          name: review-codex
+          path: ${{ runner.temp }}/out/review.md
+          retention-days: 30
+
+  report:
+    needs: [claude, codex]
+    if: always() && needs.claude.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: review-*
+          path: ${{ runner.temp }}/reviews
+      - name: Combine
+        run: |
+          node tools/ads-review.js combine "$RUNNER_TEMP/reviews" "$RUNNER_TEMP/ads-review.md"
+          cat "$RUNNER_TEMP/ads-review.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ads-review
+          path: ${{ runner.temp }}/ads-review.md
+          retention-days: 90

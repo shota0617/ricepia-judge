@@ -6,7 +6,8 @@ const { chromium } = require('playwright');
 const path = require('path');
 const args = process.argv.slice(2);
 const RUNS = +(args[args.indexOf('--runs')+1] || 12) || 12;
-const FILE = 'file://' + path.resolve(__dirname, '../../mishin.html');
+const VW = args.includes('--w') ? +args[args.indexOf('--w')+1] : 390, VH = args.includes('--h') ? +args[args.indexOf('--h')+1] : 844; // 画面の 大きさ（72周目：幅で むずかしさが かわらないか）
+const FILE = 'file://' + (process.env.MISHIN_FILE ? path.resolve(process.env.MISHIN_FILE) : path.resolve(__dirname, '../../mishin.html')); // MISHIN_FILE で 前の 版と くらべられる（114周目）
 
 // face＝表裏を 見分ける確率、read＝ほどき始めを 読みあてる確率、target＝ねらう張り、noise＝ぶれ、react＝ひっかかりに 気づくまで、
 // bell＝なでる速さが 山なり（人の指）、stroke＝1回の なでる長さ
@@ -22,12 +23,16 @@ const BOTS = {
   flick:   { face:1.00, read:1.00, flick:{ px:60, gap:0.14 }, stroke:9999, react:0, tug:true }, // 小さく すばやく はじく 連打
   alwaysL: { face:0.95, read:0.90, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, alwaysL:true }, // 端を 読まず いつも 左（human と 同じ 手）
   noKnot:  { face:1.00, read:1.00, target:0.80, noise:0.06, react:99, stroke:260, tug:true }, // きつい目でも ゆるめない
+  noKnotH: { face:0.95, read:0.90, target:0.65, noise:0.15, react:99, bell:true, stroke:200, tug:true }, // human と 同じ 手で きつい目を 気に しない（73周目）
+  probe:   { face:0.95, read:0.90, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, probe:true }, // 表裏を 見ずに 端を 1本指で ちょんと さわって 声で たしかめる（91周目）
+  // ていねいに 読む 人（91周目）：表裏・端を まちがえないが 1袋で 1秒ほど 長く 見る。alwaysL（読まない）より 低く ならない こと
+  slowRead:{ face:1.00, read:1.00, target:0.65, noise:0.15, react:0.25, bell:true, stroke:200, think:1.4 },
 };
-const CHEATS = ['flick', 'alwaysL', 'noKnot'];
+const CHEATS = ['flick', 'alwaysL', 'noKnot', 'noKnotH', 'probe'];
 
 async function main(){
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport:{ width:390, height:844 }, deviceScaleFactor:1 });
+  const page = await browser.newPage({ viewport:{ width:VW, height:VH }, deviceScaleFactor:1 });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto(FILE);
@@ -51,16 +56,17 @@ async function main(){
           const b = S.bag, L = KB.layout();
           if (b.done || b.slide > 0.05 || b.flipT > 0){ if (held){ KB.up(); held=false; } tick(); continue; }
           if (b.phase === 'look'){
-            if (seen !== b){ seen = b; b._think = 0.4 + rand()*0.3; b._faceOk = rand() < bot.face; b._readOk = rand() < bot.read; }
+            if (seen !== b){ seen = b; b._think = (bot.think || 0.4) + rand()*0.3; b._faceOk = rand() < bot.face; b._readOk = rand() < bot.read; }
             if (b._think > 0){ b._think -= dt; tick(); continue; }
             const isFront = b.face === 'front';
-            const thinksFront = b._faceOk ? isFront : !isFront;
+            if (bot.probe && !b._probed){ b._probed = true; KB.tap(L.x0 + 4, L.seamY); b._probeFront = !!(S.msg && /表/.test(S.msg.text)); b._think = 0.15; tick(); continue; }
+            const thinksFront = bot.probe ? b._probeFront : b._faceOk ? isFront : !isFront;
             if (thinksFront && !b._flippedOnce){ b._flippedOnce = true; KB.tap(W/2, L.seamY + L.bagH*0.6); b._think = 0.25; tick(); continue; }
             if (isFront){ // 表のまま 端を さわって しまった → 気づいて 裏返す
               KB.down(L.x0 + 4, L.seamY); KB.up(); b._faceOk = true; b._flippedOnce = false; b._think = 0.3; tick(); continue;
             }
             let end = bot.alwaysL ? 'L' : b._readOk ? b.start : (b.start==='L'?'R':'L');
-            if (b.wrong && b.wrongEnd) end = b.wrongEnd==='L' ? 'R' : 'L';
+            if (b.wrongEnd) end = b.wrongEnd==='L' ? 'R' : 'L'; // 縫い始めと 言われたら 反対の 端へ（117周目：教える 袋は 罰なしで 声だけ）
             x = end==='L' ? L.x0 + 4 : L.x1 - 4; y = L.seamY + 40;
             KB.down(x, y); held = S.held;
             if (!held){ b._think = 0.3; tick(); continue; }
@@ -106,16 +112,17 @@ async function main(){
           tick();
         }
         const goals = {}; for (const g of KB.GOALS) goals[g.id] = g.ok() ? 1 : 0;
-        return { goals, score:S.score, bags:S.bags, clean:S.clean, tangles:S.tangles, wrongs:S.wrongs+S.fronts, len:+t.toFixed(1), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2) };
+        return { goals, score:S.score, bags:S.bags, clean:S.clean, tangles:S.tangles, wrongs:S.wrongs+S.fronts, len:+t.toFixed(1), zone:+(S.zoneTime/Math.max(0.01,S.pullTime)).toFixed(2), fevers:S.fevers };
       }, [bot, 1000 + r]));
     }
     const mean = k => +(runs.reduce((a,c)=>a+c[k],0)/runs.length).toFixed(2);
     const gl = {}; for (const r of runs) for (const k in r.goals) gl[k] = (gl[k]||0) + r.goals[k]/runs.length;
     goalTable[name] = Object.fromEntries(Object.entries(gl).map(([k,v])=>[k, Math.round(v*100)+'%']));
-    out[name] = { score:Math.round(mean('score')), bags:mean('bags'), clean:mean('clean'), tangles:mean('tangles'), wrongs:mean('wrongs'), len:mean('len'), zone:mean('zone'), maxBags: Math.max(...runs.map(r=>r.bags)) };
+    out[name] = { score:Math.round(mean('score')), bags:mean('bags'), clean:mean('clean'), tangles:mean('tangles'), wrongs:mean('wrongs'), len:mean('len'), zone:mean('zone'), fevers:mean('fevers'), maxBags: Math.max(...runs.map(r=>r.bags)) };
   }
   console.table(out);
   const bad = CHEATS.filter(c => out[c] && out.human && out[c].score >= out.human.score);
+  if (out.slowRead && out.alwaysL && out.slowRead.score < out.alwaysL.score) bad.push('slowRead（ていねいに 読む 人）が alwaysL（読まない）より 低い');
   console.log(bad.length ? '✖ ずるい 打ち方が human 以上：' + bad.join('・') : '✔ ずるい 打ち方（' + CHEATS.join('・') + '）は どれも human より 低い');
   if (args.includes('--goals')) { console.log('きょうの目標が できた 割合'); console.table(goalTable); }
   if (errors.length) console.log('ERRORS', errors);

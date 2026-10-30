@@ -729,17 +729,22 @@ function tick(now) {
 }
 // 盤の 生け垣の 上の 小さな 生きもの（地図の めいろと そろえる：とじた さかいに 2つまで・そっと 来ると ぴょこぴょこ・速いと にげて 20秒で もどる。見た目だけ）
 const CRIT = { ike: 'kaeru', ine: 'kaeru', dote: 'kaeru', cha: 'tonbo', kuro: 'tonbo', ami: 'kani', ishi: 'kani', matsu: 'sagi' };
-function boardCritters(b) {
-  const own = tubes(b), out = [], used = new Set([b.start[1] * b.tw + b.start[0], b.goal[1] * b.tw + b.goal[0], b.spring, ...(b.grains || []), ...(b.komono || [])]);
-  for (let k = 0; k < b.tw * b.th && out.length < 2; k++) {
+function boardCritters(b) {   // 道すじの ある マスの とじた さかいから、はなれた 2つ（1つめは マスの 番号の まぜた 値で・2つめは 1つめから いちばん 遠い 所。上に かたよらない）
+  const own = tubes(b), cand = [], used = new Set([b.start[1] * b.tw + b.start[0], b.goal[1] * b.tw + b.goal[0], b.spring, ...(b.grains || []), ...(b.komono || [])]);
+  for (let k = 0; k < b.tw * b.th; k++) {
     const i = k % b.tw, j = (k / b.tw) | 0, h = (Math.imul(i + b.tx0, 73856093) ^ Math.imul(j + b.ty0, 19349663)) >>> 0;
-    if (h % 9 || b.cell[k] !== 1 || !own[k] || used.has(k) || b.holes.has(k) || out.some(c => Math.abs(c.i - i) + Math.abs(c.j - j) < 6)) continue;
+    if (b.cell[k] !== 1 || !own[k] || used.has(k) || b.holes.has(k)) continue;
     const d = DIRS.find((_, n) => { const [dx, dy] = DIRS[(n + (h >>> 8)) % 4]; return !pass(b, i, j, dx, dy); });
-    if (!d) continue;
-    const st = api.hedgeStyleAt ? api.hedgeStyleAt((b.tx0 + i) * K + K / 2, (b.ty0 + j) * K + K / 2) : 'ike';
-    out.push({ i, j, px: i + 0.5 + d[0] * 0.5, py: j + 0.5 + d[1] * 0.5, kind: CRIT[st] || 'kaeru', fled: 0, hi: 0 });
+    if (d) cand.push({ i, j, h, d });
   }
-  return out;
+  if (!cand.length) return [];
+  cand.sort((a, c) => a.h - c.h);
+  const pick = [cand[0]], far = cand.reduce((m, c) => (Math.hypot(c.i - pick[0].i, c.j - pick[0].j) > Math.hypot(m.i - pick[0].i, m.j - pick[0].j) ? c : m), cand[0]);
+  if (far !== cand[0] && Math.abs(far.i - pick[0].i) + Math.abs(far.j - pick[0].j) >= 6) pick.push(far);
+  return pick.map(({ i, j, d }) => {
+    const st = api.hedgeStyleAt ? api.hedgeStyleAt((b.tx0 + i) * K + K / 2, (b.ty0 + j) * K + K / 2) : 'ike';
+    return { i, j, px: i + 0.5 + d[0] * 0.5, py: j + 0.5 + d[1] * 0.5, kind: CRIT[st] || 'kaeru', fled: 0, hi: 0 };
+  });
 }
 function drawCritters(x, g, T, now) {
   const sp = Math.hypot(g.vx, g.vy), P = root.nishioPixel;

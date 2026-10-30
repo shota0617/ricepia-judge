@@ -6418,7 +6418,10 @@ const TONOSAMA = (() => {
     add(new THREE.SphereGeometry(0.0032, 6, 5), pupilM, sx * 0.0115, 0.0255, 0.033, 0.6, 0.6, 1);
     add(new THREE.BoxGeometry(0.003, 0.0025, 0.03), stripeM, sx * 0.0125, 0.0235, 0.004).rotation.y = sx * 0.12;   // わきの すじ
   }
-  const fronts = [-1, 1].map(sx => add(new THREE.BoxGeometry(0.004, 0.016, 0.004), legM, sx * 0.012, 0.007, 0.024));   // 前足
+  const fronts = [-1, 1].map(sx => {             // 前足：肩から 下へ。すわると 体が 頭を 上げて かたむく ぶん 長く、地面に とどく（肩 地上 3.6cm → 足先 1mm）
+    const sh = new THREE.Group(); sh.position.set(sx * 0.012, 0.012, 0.024); body.add(sh);
+    add(new THREE.BoxGeometry(0.004, 0.0224, 0.004).translate(0, -0.0112, 0), legM, 0, 0, 0, 1, 1, 1, sh); return sh;
+  });
   const hinds = [-1, 1].map(sx => {                // うしろ足：もも と すね（とぶ ときは のびる）
     const hip = new THREE.Group(); hip.position.set(sx * 0.014, 0.011, -0.02); body.add(hip);
     add(new THREE.BoxGeometry(0.008, 0.007, 0.032).translate(0, 0, 0.012), legM, 0, 0, 0, 1, 1, 1, hip);
@@ -6463,7 +6466,7 @@ const TONOSAMA = (() => {
     body.position.y = f.st === 'sit' ? Math.max(0, Math.sin(f.ph * 2.2)) * 0.0008 : 0;   // のどを ふくらませて 息
     const top = q[0]; if (top && (DETAIL || SAY.free && SAY.note(top[0]))) { BADGE.peek(f.x, f.z, 3, top[1]); top[2](); q.shift(); }   // まえの ひとことが 消えてから
   }
-  return { update, f, g, hinds, get told() { return told; }, get told2() { return told2; } };
+  return { update, f, g, hinds, fronts, get told() { return told; }, get told2() { return told2; } };
 })();
 // ---- 代かきの 水の ゲンゴロウ：水の 中を 後ろ脚で こいで およぎ、ときどき 水面に 上がって おしりを 出して 息つぎする
 // （空気を 羽の 下に ためる）。上がる 所と もぐる 所に 小さな 輪の 波。トラクターが 近いと すっと もぐる。

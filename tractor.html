@@ -6273,13 +6273,15 @@ const KIJI = (() => {
     if (y === undefined) { ray.set(V.set(x, 3, z), DOWN); const h = field && ray.intersectObject(field, true).find(h => h.object.visible && h.object.isMesh && !h.object.isInstancedMesh && !/^rice/.test(h.object.material && h.object.material.name)); y = h ? h.point.y : 0; memo.set(k, y); }   // 稲（秋の となりの 田んぼ）の 上には のらない
     return y;
   };
-  const NX = 21.6, NZ = 36, AZ = 25.5;            // 巣（土手の 下の 草の 中・草刈機が とどく 所）。AZ：となりの 田んぼと 田んぼの あいだの 畦（東西）
+  const NX = 21.92, NZ = 36, AZ = 25.5;           // 巣（土手の 外の 畦の 平らな 上 x 21.75〜22.1 の 草の 中・草刈機が とどく 所）。AZ：となりの 田んぼと 田んぼの あいだの 畦（東西）
   const hen = NEST ? { ...bird(false), st: 'sit', x: NX, z: NZ, yaw: -2.2, t: 0 } : null;
   const cock = { ...bird(true), st: NEST ? 'stand' : 'hide', x: NEST ? 25.2 : 21.65, z: NEST ? AZ : 35.5, yaw: NEST ? -0.9 : -1.6, t: 4 + R() * 3 };   // 春：となりの 田んぼの あいだの 畦の 上（草の 外・前に 見える）、秋：土手の 草の 中
   let nest = null; const told = { egg: false, back: false, cock: false }, toldQ = [];   // 話す ことの 順番まち
   function setup() {
     if (hen) {
       nest = new THREE.Group(); nest.position.set(NX, gy(NX, NZ), NZ); nest.scale.setScalar(1.3); scene.add(nest);
+      const sx = (gy(NX + 0.15, NZ) - gy(NX - 0.15, NZ)) / 0.3, sz = (gy(NX, NZ + 0.15) - gy(NX, NZ - 0.15)) / 0.3;   // まわりの 地面の 傾きに 合わせて かたむける
+      nest.quaternion.setFromUnitVectors(UP, new THREE.Vector3(-sx, 1, -sz).normalize());
       const ring = new THREE.Mesh(new THREE.TorusGeometry(0.11, 0.026, 5, 12), nestM); ring.rotation.x = Math.PI / 2; ring.scale.z = 0.7; ring.position.y = 0.01; ring.receiveShadow = true; nest.add(ring);   // 枯れ草を しいた あさい くぼみ
       const bed = new THREE.Mesh(new THREE.CircleGeometry(0.11, 12), nestM); bed.rotation.x = -Math.PI / 2; bed.position.y = 0.004; nest.add(bed);
       for (let k = 0; k < 8; k++) {               // たまご 8 こ（オリーブ色の 茶色）
@@ -6377,7 +6379,7 @@ const KIJI = (() => {
       cock.wings.forEach((w, i) => { w.visible = drum; w.rotation.z = (i ? -1 : 1) * (1.0 + Math.sin(c * 95) * 0.45); });   // 体の よこで たてに 速く うつ
     }
     cock.g.position.set(cock.x, cock.y, cock.z); cock.g.rotation.y = cock.yaw;
-    const q = toldQ[0]; if (q && S.started && (DETAIL || SAY.note(q.txt))) { BADGE.peek(q.x, q.z, 3.5, q.feel); q.then(); toldQ.shift(); }
+    const q = toldQ[0]; if (q && S.started && (DETAIL || SAY.free && SAY.note(q.txt))) { BADGE.peek(q.x, q.z, 3.5, q.feel); q.then(); toldQ.shift(); }   // まえの ひとことが 消えてから
   }
   return {
     setup, update, hen, cock, get nest() { return nest; }, get told() { return told; },
@@ -8508,7 +8510,7 @@ const SAY = (() => {
   }
   function refresh() { if (DETAIL) { t = 0; kind = ''; talkT = 0; } render(); }   // くわしい説明の 切りかえ
   const note = (x, sec = 3.5) => show(x, sec, 'step');   // 生きものに 気づいた ひとこと
-  return { say, note, coach, update, tap, refresh, get talking() { return talkT > 0; }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
+  return { say, note, coach, update, tap, refresh, get talking() { return talkT > 0; }, get free() { return !(t > 0 && kind !== 'chat'); }, get text() { return [t > 0 && !DETAIL ? mainText : '', DETAIL ? '' : coachLine]; } };
 })();
 const KEYH = /[A-Z] で|（[A-Z]）|[A-Z]・|スペース|ボタン|押す|押して|押すと|ゆるめる|解除|止まって|上げると/;   // 操作の 案内
 const cutParen = x => x.replace(/（[^）]*）/g, m => KEYH.test(m) ? m : '').replace(/[、\s]+$/, '').trim();
@@ -9183,6 +9185,12 @@ const INTRO = (() => {
   rod([-1.3, 0.56, -0.98], [-1.42, 0.55, -1.0], 0.07, darkM);
   const arm = box(0.14, 0.14, 0.34, redM, -1.6, 0.44, -0.92);
   const cyl = rod([-0.9, 0.62, -0.74], [-1.62, 0.66, -0.98], 0.03, grayM);
+  const ARM0 = new THREE.Vector3(-1.6, 0.44, -0.75), CYL0 = new THREE.Vector3(-0.9, 0.62, -0.74), CYL_L = Math.hypot(0.72, 0.04, 0.24), ZA = new THREE.Vector3(0, 0, -1), YA = new THREE.Vector3(0, 1, 0), LV = new THREE.Vector3();
+  function links(up) {                            // うで と シリンダー：はりの 側の 付け根は そのまま、刈る 所の 側の はしを 刈る 所の 高さ（headY + up）に 合わせて のばす・かたむける
+    const hy = headY + up;
+    LV.set(-1.6, hy, -1.09).sub(ARM0); const la = LV.length(); arm.position.copy(ARM0).addScaledVector(LV, 0.5); arm.quaternion.setFromUnitVectors(ZA, LV.normalize()); arm.scale.z = la / 0.34;
+    LV.set(-1.62, 0.66 + hy - 0.44, -0.98).sub(CYL0); const lc = LV.length(); cyl.position.copy(CYL0).addScaledVector(LV, 0.5); cyl.quaternion.setFromUnitVectors(YA, LV.normalize()); cyl.scale.y = lc / CYL_L;
+  }
   // 刈る 所（ハウジング）：長さ 1.45m を 外へ。斜面に 合わせて 外へ さがる
   const head = new THREE.Group(); head.position.set(-1.62, 0.44, -1.05); head.rotation.z = 0.5; mower.add(head);
   box(1.45, 0.36, 0.58, redM, -0.74, 0, 0, head);
@@ -9263,7 +9271,7 @@ const INTRO = (() => {
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
   const put = (k, h, w = GW[k]) => { E.set(cut[k] ? 0 : GL[k], GR[k], 0, 'YXZ'); Q.setFromEuler(E); M4.compose(V.set(GX[k], GY[k] - 0.02, GZ[k]), Q, SC.set(w, h, w)); grass.setMatrixAt(k, M4); };   // 刈ったら まっすぐ 短く
   const A = new THREE.Vector3(), B = new THREE.Vector3(), CP = new THREE.Vector3(), CL = new THREE.Vector3();
-  let on = false, cam = false, said = false, said2 = false, ending = false, peekT = 0, cutN = 0, fade = null, then = [], phase = 1, stuckT = 0, headY = 0.44, cylY = 0.64, liftK = 0;
+  let on = false, cam = false, said = false, said2 = false, ending = false, peekT = 0, cutN = 0, fade = null, then = [], phase = 1, stuckT = 0, headY = 0.44, liftK = 0;
   const hold = (H, px, pz) => {                    // ハンドルは キャラクターが もつ：向き H で 点（px, pz）を 通る 線に そって まっすぐ
     const dr = (S.x - px) * -Math.cos(H) + (S.z - pz) * Math.sin(H), want = H + 0.35 * Math.max(-1, Math.min(1, dr)), a = Math.atan2(Math.sin(want - S.yaw), Math.cos(want - S.yaw));
     key.left = key.right = 0; S.steer = Math.max(-0.3, Math.min(0.3, -1.5 * a));
@@ -9287,7 +9295,7 @@ const INTRO = (() => {
       if (!best || gap < best.gap) best = { a, oy, gap };
     }
     head.rotation.z = best.a; head.position.y = best.oy;
-    arm.position.y = best.oy; cyl.position.y += best.oy - 0.44; headY = best.oy; cylY = cyl.position.y;
+    headY = best.oy; links(0);
     return best;
   }
   function setup() {                               // 田んぼの 形を 読みこんで resetPos の あと（土手の 高さを はかる）
@@ -9336,7 +9344,7 @@ const INTRO = (() => {
     if (!said) said = DETAIL ? (toast('まずは 農道わきの 土手の 草刈り。前へ進むと 草刈機（スライドモア）が 土手の 草を 刈る', 5), true) : SAY.note('まずは みちばたの くさかり。まえへ すすもう');
     hold(Math.PI, X, 0);                           // 道ぞいに まっすぐ
     liftK += (KIJI.lift(S.z + 1.05) - liftK) * Math.min(1, dt * 4);   // キジの 巣の 上では 刈る 所を 持ちあげて よける
-    head.position.y = headY + liftK * 0.35; arm.position.y = headY + liftK * 0.35; cyl.position.y = cylY + liftK * 0.35;
+    head.position.y = headY + liftK * 0.35; links(liftK * 0.35);
     if (Math.abs(S.v) > 0.05) {                    // 走っている：刈る 所の 下の 草を 刈る（刈る 所の 中ほど 0.3m の はば）
       rig.updateMatrixWorld(); rig.localToWorld(A.set(-1.6, 0, -1.05)); rig.localToWorld(B.set(-3.0, 0, -1.05));
       const dx = B.x - A.x, dz = B.z - A.z, L2 = dx * dx + dz * dz;

@@ -240,7 +240,7 @@
       <button type="button" data-mode="demo" aria-pressed="false">🎮 操作して移動</button>
     </div>
     <div class="row">
-      <span><b>❓ あそびかた</b><small>傾けると お米が ころころ。めいろを ぬけて 西尾の名所へ。はじめに出た 説明を もう一度 見られます。</small></span>
+      <span><b>❓ あそびかた</b><small>傾けると お米が ころころ。めいろを ぬけて 西尾の名所へ。操作を ここで 確かめられます。</small></span>
       <button type="button" id="howtoOpen" class="btn" style="flex:none">見る</button>
     </div>
     <label class="row">
@@ -340,7 +340,7 @@
     <p class="tagline">お米が ころころ、西尾をめぐろう</p>
     <p class="pitch"><b>🍚 スマホを傾けると、お米が ころころ転がる。</b><br/>🌀 西尾の地図ぜんぶが、本物の道で できた 迷路に。行き止まりを よけて、名所から名所へ ころころ。<br/>坂は 本当の西尾の高低差で、ひとりでに転がり下ります。西尾の名所に転がりこむとポイント。たからばこと、西尾ならではのドット絵が集まります。まちの人の話が、次の行き先をすすめてくれます。</p>
     <p class="mode-q">遊びかたをえらんでください（あとから切り替えられます）</p>
-    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">🌀 傾けて めいろ</span><small class="mp-s">スマホを傾けて、お米を 名所へ。家で遊べる</small><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米が 名所から名所へ ころころ。家からでも西尾めぐり</small></button>
+    <button type="button" class="btn big mode-pick meiro" id="meiroBtn"><span class="mp-t">あそぶ</span><small class="mp-s">スマホを傾けて、お米を 名所へ。家で遊べる</small><small>西尾の本物の地図ぜんぶが 迷路に。スマホを傾けて、お米が 名所から名所へ ころころ。家からでも西尾めぐり</small></button>
     <!-- 押すのに 抵抗が ある人へ：お金・登録・アプリ・位置情報の 心配が ないことを ボタンの すぐ下に（運営者の声「プレイボタンを押すのに抵抗がある人対策」） -->
     <p class="no-risk" aria-label="無料・登録なし・アプリ不要・位置情報なし"><span>✓ 無料</span><span>✓ 登録なし</span><span>✓ アプリ不要</span><span>✓ 位置情報なし</span></p>
     <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
@@ -374,7 +374,15 @@
   </div>
 </div>
 
-<!-- あそびかた（はじめて めいろに 入ったときに 1回。せっていの「❓ あそびかた」で もう一度） -->
+<!-- 開始は 許可の 必要な 端末だけ 1タップ。あそびかたは せっていから -->
+<div class="howto" id="playReady" role="dialog" aria-modal="true" aria-labelledby="playReadyTitle" hidden>
+  <div class="howto-box">
+    <h2 id="playReadyTitle">🍚 にしおさんぽGO</h2>
+    <p>傾けるか、地図を タップして ころころ。</p>
+    <button type="button" class="btn big" id="playReadyOk">あそぶ</button>
+    <small>傾きの 確認が 出たら「許可」。許可なしでも 遊べます。</small>
+  </div>
+</div>
 <div class="howto" id="howto" hidden role="dialog" aria-modal="true" aria-labelledby="howtoT">
   <div class="howto-box">
     <div class="howto-scene" id="howtoScene" aria-hidden="true"></div>
@@ -387,7 +395,7 @@
       <li><span class="hi" aria-hidden="true">⭐</span><span><b>着いたら ポイントと ドット絵</b><small>まちの人の 話で、つぎの ゴールが きまる</small></span></li>
     </ol>
     <p class="howto-btns"><span>🌏 せかいちず</span><span>🔍 地図の大きさ</span><span>🌀 ステージの めいろ</span></p>
-    <button type="button" class="btn big" id="howtoOk">わかった！ 傾けてみる</button>
+    <button type="button" class="btn big" id="howtoOk">とじる</button>
   </div>
 </div>
 

@@ -308,7 +308,7 @@ function build() {
   document.body.appendChild(el);
   ui = { el, st: el.querySelector('.mz-st'), time: el.querySelector('.mz-time'), cv: el.querySelector('canvas'), glass: el.querySelector('.mz-glass'), bezel: el.querySelector('.mz-bezel'),
     load: el.querySelector('.mz-load'), clear: el.querySelector('.mz-clear'), card: el.querySelector('.mz-card') };
-  ['click', 'touchend'].forEach(ev => el.addEventListener(ev, () => { if (api) api.tiltAsk(); }, { passive: true }));   // iPhone の 傾きの 許可（リンクから すぐ ひらいた ときは、めいろを さわった ときに 聞く。2回めからは 何もしない）
+  ['click', 'touchend'].forEach(ev => el.addEventListener(ev, e => { if (api) api.tiltAsk(e); }, { passive: true }));   // iPhone の 傾きの 許可（リンクから すぐ ひらいた ときは、めいろを さわった ときに 聞く。2回めからは 何もしない）
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-mz]');
     if (!b) return;
@@ -353,7 +353,7 @@ function open(n, daily = false) {   // daily：☀️ きょうの めいろ を
   ui.el.hidden = false;
   ui.el.querySelector('[data-mz=slow]').setAttribute('aria-pressed', String(!!st.slow));
   api.pause(true);
-  api.tiltAsk(); api.tiltReset();   // いまの持ち方を「まっすぐ」に
+  api.tiltReset();   // いまの持ち方を「まっすぐ」に。共有リンクから 自動で 開くので、許可は ここで 求めない。
   startStage(daily ? null : typeof n === 'number' ? n : Math.min(st.stage, goalList().length - 1), daily);
   if (root.nsgTrack) root.nsgTrack('meiro_open', { stage: (game && game.n + 1) || 0 });
   return true;
@@ -855,12 +855,12 @@ function flag(x, X, Y, T) {   // 🏁 の旗（白黒の市松）
   for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) { x.fillStyle = (i + j) % 2 ? '#111' : '#fff'; x.fillRect(Math.round(X + u + i * u * 1.5), Math.round(Y - 9 * u + j * u * 1.5), Math.ceil(u * 1.5), Math.ceil(u * 1.5)); }
 }
 
-// はじめの画面の「🌀 傾けて めいろ」：操作して遊ぶ で始めてから めいろを開く。地図の 🌀 ボタンでも開く
+// はじめの画面の「あそぶ」：操作して遊ぶ で始めてから めいろを開く。地図の 🌀 ボタンでも開く
 document.addEventListener('DOMContentLoaded', () => {
   const b = $('meiroBtn');
-  if (b) b.addEventListener('click', () => {
+  if (b) b.addEventListener('click', e => {
     const P = root.nishioPixel && root.nishioPixel.meiroApi;
-    if (P) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
+    if (P) P.tiltAsk(e);   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
     if (root.nishioPixel && root.nishioPixel.setRoll) root.nishioPixel.setRoll(true);   // 傾けて 転がす（地図が めいろに なる）
     const d = $('demoBtn'); if (d) d.click();   // 操作して遊ぶ で 始める：歩く地図ぜんぶが めいろ（メインの 遊び）
     if (wantOpen) setTimeout(() => open(undefined, wantDaily), 60);   // シェアの リンクから 来た人は、その めいろ（☀️ きょうの めいろ など）を ひらく
@@ -874,14 +874,15 @@ document.addEventListener('DOMContentLoaded', () => {
     else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
   }
   // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめの 画面で ボタンを 待たず、開いたら すぐ 地図の めいろで 転がる
-  // （はじめての 人は「あそびかた」の 札から）。iPhone の 傾きの 許可は、さいしょに 画面を さわった ときに 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
+  // あそびかたは せっていから。iPhone の 傾きの 許可は「あそぶ」の タップで 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
   let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
   const intro0 = $('intro');
   if (b && intro0 && !intro0.hidden && !noAuto) b.click();
+  if (!noAuto && !wantOpen && navigator.maxTouchPoints > 0 && root.nishioPixel && root.nishioPixel.meiroApi.tiltNeedsPermission()) { root.nishioGo.toastHold(); $('playReady').hidden = false; $('playReadyOk').focus(); }
   const m = $('pxMeiro');
-  if (m) m.addEventListener('click', () => open());
+  if (m) m.addEventListener('click', e => { root.nishioPixel.meiroApi.tiltAsk(e); open(); });
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）
-  if (c) c.addEventListener('click', () => open());
+  if (c) c.addEventListener('click', e => { root.nishioPixel.meiroApi.tiltAsk(e); open(); });
   note();
 });
 

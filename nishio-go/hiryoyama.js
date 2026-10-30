@@ -5,8 +5,7 @@
 // ・ことばは sangyo.js（資料集649ページ 資料347「肥料山の取扱についての方針」）に書いてあることだけ。草を刈って運ぶ遊び方は、
 //   「草を刈る山（採草地）」という中身からの作りもの（何束とったかなどの数は本には書いていない）
 // ・遊べる所：ドット絵の地図で丘・山のマス（またはすぐとなり）にいるとき、地図の右上の列の 🌿 ボタン（pixel.js の pxHiryo）。
-//   「本のできごと」の「肥料山の取り上げ」（明治の幡豆村・三和村・豊坂村の町で起きる）からも始まる（bookev.js）
-// ・ごほうびは game.js の hiryoReward（1日1回）。自己ベストは miniBest（'hiryo'）。持ち主に正しく答えると「本のできごと」も1つ見たことになる
+// ・ごほうびは game.js の hiryoReward（1日1回）。自己ベストは miniBest（'hiryo'）
 // ・人の絵は、地図の人の絵（pixel.js の npcSprite）を使う
 (() => {
   'use strict';
@@ -88,14 +87,11 @@
     const G = window.nishioGo, st = starsOf(total);
     const got = st && G && G.hiryoReward ? G.hiryoReward(st) : null;
     const mb = st && G && G.miniBest ? G.miniBest('hiryo', 0, st, total, false) : null;
-    const be = window.NISHIO_BOOKEV, ev = be && be.EVENTS.find(e => e.id === 'hiryoyama');
-    const bk = ev && G && G.bookEvDone && ownerAsked && !(G.bookEvHas && G.bookEvHas('hiryoyama')) ? G.bookEvDone('hiryoyama', ownerOk, ev.facts, be.EVENTS.length) : null;
     const res = root.querySelector('.jump-result');
     res.innerHTML = `<b>${why === 'give' ? '肥料山を返した…' : st ? '草刈り おわり！' : '時間切れ'}</b>`
       + `<span>${'★'.repeat(st)}${'☆'.repeat(3 - st)}　運んだ束 ${total}（★は ${STARS.join('・')}束）</span>`
       + (mb && mb.best ? `<span>${mb.fresh ? '自己ベスト更新！ ' : '自己ベスト '}${mb.best.v}束</span>` : '')
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : st && got === null && G && G.hiryoReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
-      + (bk ? `<span>📖 本のできごと ${bk.n}/${be.EVENTS.length}${bk.pts ? ` +${bk.pts}pt` : ''}</span>` : '')
       + '<span class="harvest-tip">1948年の幡豆地方事務所長の方針：田畑だけが買収されても、のこった肥料山の草刈りには小作の権利があり、持ち主が勝手に取り上げたり売ったりはできず、知事の許可がいるとされた。肥料山は、田畑といっしょに貸し借りされ、農業にとても大事な役わりをもっていた。</span>'
       + '<span class="jump-btns"><button type="button" class="btn" data-hy="again">もういちど</button><button type="button" class="btn" data-hy="close">もどる</button></span>';
     res.hidden = false;

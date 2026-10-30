@@ -28,8 +28,8 @@
   }
   // 本数 n に なった とき お米が 言う ことば
   function say(n) {
-    if (n <= 1) return '180m ころがったに。黄金堤の 長さと おなじだに';
-    return '黄金堤 ' + n + '本ぶん ころがったに。1本は 180mだに';
+    if (n <= 1) return '180m ころがったよ。黄金堤の 長さと おなじだね';
+    return '黄金堤 ' + n + '本ぶん ころがったよ。1本は 180mだよ';
   }
   root.NISHIO_MONOSASHI = { LEN_M, KEY, SHOW, POP, SRC, clean, add, gauge, say };
 })(window);

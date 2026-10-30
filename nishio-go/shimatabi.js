@@ -10,9 +10,9 @@
   const AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/';
   const SAKU = '^一色町佐久島';
   const LIST = [
-    { id: 'art', name: 'アート作品', town: SAKU, say: '作品みたいに なったに。佐久島は アートの 島だに', src: AN },
-    { id: 'kurokabe', name: '黒壁の 集落', town: SAKU, say: '黒壁の 集落に とけこんだに。島の 景色が 作品だに', src: AN },
-    { id: 'fune', name: '高速船', town: SAKU, say: '一色港から 船で 約20分だに。三河湾で いちばん 大きい 島だに', src: AN },
+    { id: 'art', name: 'アート作品', town: SAKU, say: '作品みたいに なったよ。佐久島は アートの 島だね', src: AN },
+    { id: 'kurokabe', name: '黒壁の 集落', town: SAKU, say: '黒壁の 集落に とけこんだよ。島の 景色が 作品みたいだね', src: AN },
+    { id: 'fune', name: '高速船', town: SAKU, say: '一色港から 船で 約20分だよ。三河湾で いちばん 大きい 島なんだ', src: AN },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

@@ -1,5 +1,5 @@
 // お米つぶの ふるさと：転がって 西尾市の 外（となりの 市町）に 出ると、お米の よこに 西尾の 方角を さす 小さな 矢じるしが 名物を かかえて 出て、
-// お米が「岡崎市に 来たに。西尾は あっちだに。抹茶の まちだに」と ひと言。西尾市に もどる か、市町を 出て 1分たつと 消える。
+// お米が「岡崎市に 来たよ。西尾は あっちだよ。抹茶の まちだね」と ひと言。西尾市に もどる か、市町を 出て 1分たつと 消える。
 // （これまでの 追加は すべて 西尾市の 中だけ。これは 西尾市を はなれた ことが きっかけで、お米が ふるさとの 方角を 知らせる）
 // 手帳や 図鑑では なく、主人公の そばに 出す（docs/nishio-rashisa-brief.md の 設計原則）
 // ・area：地区（nimotsu.js と 同じ id）。id：絵の 名前（pixel.js の drawNakama と そろえる）。say：方角を さした とき お米が 言う ことば（かざりの 絵文字は つけない）
@@ -8,10 +8,10 @@
 (function (root) {
   const NK = 'https://nishiokanko.com/tw/specialty/', MAFF = 'https://www.maff.go.jp/j/nousin/sekkei/museum/m_kakuti/27_kogane/index.html';
   const LIST = [
-    { area: 'nishio', id: 'chawan', name: '抹茶わん', say: '西尾は あっちだに。抹茶の まちだに', src: NK },
-    { area: 'isshiki', id: 'unagi', name: 'うなぎ', say: '一色は あっちだに。うなぎは 全国の 約2割だに', src: NK },
-    { area: 'kira', id: 'inaho', name: '稲穂', say: '吉良は あっちだに。黄金堤の さとだに', src: MAFF },
-    { area: 'hazu', id: 'carnation', name: 'カーネーション', say: '幡豆は あっちだに。カーネーションの 花き産地だに', src: NK },
+    { area: 'nishio', id: 'chawan', name: '抹茶わん', say: '西尾は あっちだよ。抹茶の まちだね', src: NK },
+    { area: 'isshiki', id: 'unagi', name: 'うなぎ', say: '一色は あっちだよ。うなぎは 全国の 約2割なんだ', src: NK },
+    { area: 'kira', id: 'inaho', name: '稲穂', say: '吉良は あっちだよ。黄金堤の さとだね', src: MAFF },
+    { area: 'hazu', id: 'carnation', name: 'カーネーション', say: '幡豆は あっちだよ。カーネーションの 花き産地だね', src: NK },
   ];
   const WAIT = 5000;     // 西尾市の 外に 出て から 矢じるしを 出す までの ミリ秒
   const SHOW = 60000;    // 矢じるしを 出して おく ミリ秒（うるさく ならない）
@@ -35,6 +35,6 @@
   // 方角を さす 名物。西尾市の 地区だけ（月は 見ない）
   function pick(area) { return LIST.find(x => x.area === area) || null; }
   // お米の ことば。city＝いる 市町の 名前（岡崎市 など）
-  function say(city, item) { return city + 'に 来たに。' + item.say; }
+  function say(city, item) { return city + 'に 来たよ。' + item.say; }
   root.NISHIO_FURUSATO = { LIST, WAIT, SHOW, COOL, outside, nearest, pick, say };
 })(window);

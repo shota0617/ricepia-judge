@@ -10,9 +10,9 @@
   const NK = 'https://nishiokanko.com/tw/specialty/';
   const TOWN = '^一色町(?!佐久島)';   // 一色の 町（佐久島は しまたびが あるので のぞく）
   const LIST = [
-    { id: 'tomoru', name: '大提灯の あかり', say: '提灯に あかりが ともったに。一色は 大提灯まつりの まちだに', src: NK },
-    { id: 'narabu', name: '提灯の れつ', say: '提灯が ずらっと ならんだに。ゆらゆら きれいだに', src: NK },
-    { id: 'miage', name: '大提灯を 見あげる', say: '巨大な 提灯だに。見あげても 見あげても 大きいに', src: NK },
+    { id: 'tomoru', name: '大提灯の あかり', say: '提灯に あかりが ともったよ。一色は 大提灯まつりの まちだね', src: NK },
+    { id: 'narabu', name: '提灯の れつ', say: '提灯が ずらっと ならんだよ。ゆらゆら きれいじゃん', src: NK },
+    { id: 'miage', name: '大提灯を 見あげる', say: '巨大な 提灯だよ。見あげても 見あげても 大きいね', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

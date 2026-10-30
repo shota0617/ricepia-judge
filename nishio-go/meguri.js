@@ -21,7 +21,7 @@
   ];
   const MAX = 4;   // 輪に 並べる 数の うえ
   // 朝に なって 消える とき お米が 言う ことば
-  const END = 'あさだに。おつかれさん';
+  const END = 'あさだよ。おつかれさん';
   // いる 所：{ city, town, near（まわり 100m メッシュの 土地利用の 文字を まとめた 文字列）, month }
   // 西尾市の 中で、いる 所と 月に 合う 名物を 順に MAX 個まで かえす（なければ 空）
   function ring(c) {
@@ -29,9 +29,9 @@
     const town = c.town || '', higata = (c.near || '').includes('k');
     return LIST.filter(x => new RegExp(x.town).test(town) && (!x.months || x.months.includes(c.month)) && (x.where !== 'higata' || higata)).slice(0, MAX);
   }
-  // 輪に なった ときの お米の ひと言（「提灯と うなぎと よるの さんぽだに」）
+  // 輪に なった ときの お米の ひと言（「提灯と うなぎと よるの さんぽだよ」）
   function say(items) {
-    return items.map(x => x.name).join('と') + 'と よるの さんぽだに';
+    return items.map(x => x.name).join('と') + 'と よるの さんぽだよ';
   }
   root.NISHIO_MEGURI = { LIST, MAX, END, ring, say };
 })(window);

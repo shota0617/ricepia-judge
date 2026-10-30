@@ -505,8 +505,8 @@ function npcPages(n) {
   if (KO) {
     pages[0] = KO.daypart(now).greet + pages[0];   // 時間帯のあいさつ
     const h = KO.seasonSpots(now).find(x => x.spot === n.spot);
-    if (h) pages.push(`いまは${h.text}だに。ちょうどええ時に来たねえ。`);
-    if (KO.doyoUshi(now) && MEIBUTSU.some(m => m.id === 'unagi' && m.spots.includes(n.spot))) pages.push('きょうは土用の丑の日。うなぎを食べる人が多い日だもんで、一色のうなぎも大いそがしだに。');
+    if (h) pages.push(`いまは${h.text}だよ。ちょうどええ時に来たねえ。`);
+    if (KO.doyoUshi(now) && MEIBUTSU.some(m => m.id === 'unagi' && m.spots.includes(n.spot))) pages.push('きょうは土用の丑の日。うなぎを食べる人が多い日だもんで、一色のうなぎも大いそがしだよ。');
   }
   const wx = weatherNow();   // 天気のひとこと
   if (wx) pages.push(wx.raining ? (wx.kind === 'snow' ? '雪がふっとるねえ。すべらんように気をつけりんよ。' : '雨の中、よう来たねえ。ぬれんように気をつけりんよ。')
@@ -541,10 +541,10 @@ function guideRecord() {
   const ids = S.cleared ? SEAL_POST : SEAL_MAIN, own = (S.seals || []), got = [...ids].filter(id => own.includes(id)).length;
   const near = [...ids].filter(id => !own.includes(id)).map(id => ({ id, a: areas.find(x => x.id === id), p: areaProgress(id), goal: sealGoal(id) }))
     .filter(x => x.a && x.p.total > 0).map(x => ({ ...x, left: Math.max(0, x.goal - x.p.done) })).sort((a, b) => a.left - b.left)[0];
-  const seal = got >= [...ids].length ? (S.cleared ? 'となりの市町のしるしも ぜんぶ そろったね。' : '5つのしるしが そろっとるよ。わしに話しかけてくれりゃあ 殿堂入りだに。')
+  const seal = got >= [...ids].length ? (S.cleared ? 'となりの市町のしるしも ぜんぶ そろったね。' : '5つのしるしが そろっとるよ。わしに話しかけてくれりゃあ 殿堂入りだよ。')
     : `しるしは ${got}/${[...ids].length}。${near ? (near.left ? `いちばん近いのは ${near.a.name}のしるしで、あと${near.left}か所めぐると もらえるよ。` : `${near.a.name}のしるしは もう もらえるで、${sealBy(near.id) ? sealBy(near.id).name : '地区の人'}に会いに行きりん。`) : ''}`;
   const day = dayState(), h = day.h100, left = [h && h.done ? '' : store.get('nsg_first_day', '') === ymd() ? '' : '100歩たんけん', (day.alleys || 0) < ALLEY.daily ? `路地の行き止まり あと${ALLEY.daily - (day.alleys || 0)}か所` : '', (day.watch || 0) < WATCH_DAILY ? '水べで じっと見る' : ''].filter(Boolean);
-  return `📒 記録しといたよ。つぎの レベル${lv + 1}まで あと${need}pt。${seal}${left.length ? `きょうは まだ ${left.join('・')}が のこっとるに。` : 'きょうの お楽しみは ぜんぶ すんだね。'}`;   // 毎日の しくみの のこり
+  return `📒 記録しといたよ。つぎの レベル${lv + 1}まで あと${need}pt。${seal}${left.length ? `きょうは まだ ${left.join('・')}が のこっとるよ。` : 'きょうの お楽しみは ぜんぶ すんだね。'}`;   // 毎日の しくみの のこり
 }
 // 人の立つ所。ドット絵の地図では、決めた位置が建物や水のとき近くの歩けるマスへずらして描くので、そのマスの中心にする
 function npcSpot(n) {
@@ -975,44 +975,6 @@ function dankyuReward(stars, level) {
   return pts;
 }
 
-// 田んぼのイベント「芽出しの見きわめ」（medashi.js）：1日1回。えらんだ種もみで ポイント（OK 20・ギリギリOK 10・伸び過ぎ 0）と、
-// そのわけの 米づくりの まちメモ（kome.js。OK・ギリギリOK は「いちばんよい芽出し」、伸び過ぎは「伸びすぎるわけ」）
-// 芽出し（催芽）は 苗づくりの はじめ。こよみ（season.js）の 田おこし・田植えの ころ（4〜6月）だけ 出す（冬に 種もみの 芽出しは しない。自分で 遊んで 分かった：12月に 出ていた）
-const medashiSeason = () => { const p = window.NISHIO_SEASON && NISHIO_SEASON.paddy(new Date()); return !p || p.id === 'taokoshi' || p.id === 'taue'; };
-const medashiDue = () => S.medashiDay !== ymd() && KOME.length > 0 && medashiSeason();
-function medashiReward(choice, pts) {
-  if (!medashiDue()) return { pts: 0, fresh: false };
-  S.medashiDay = ymd();
-  const k = `k:tanemomi:${choice === 'nobisugi' ? 2 : 0}`, fresh = !S.facts.includes(k);
-  if (fresh) S.facts.push(k);
-  pts = Math.max(0, Math.min(20, pts | 0));
-  if (pts) gainPoints(pts);
-  S.log.unshift({ type: 'medashi', t: Date.now(), pts, name: `イベント「芽出しの見きわめ」${choice === 'ok' ? '正解' : ''}`, icon: '🌱' });
-  save();
-  renderLog();
-  track('medashi_pick', { choice, mode: demo ? 'play' : 'walk' });
-  return { pts, fresh };
-}
-
-// 水べのイベント「虫の名前あて」（mushi.js）：1日1回。3問のうち当たった数で ポイント（0・6・12・20）と、
-// 西尾の自然の本にのっている虫の まちメモ（shizen.js の mushi。まだのものから1つ）
-const MUSHI_PTS = [0, 6, 12, 20];
-const mushiDue = () => S.mushiDay !== ymd() && SHIZEN.some(x => x.id === 'mushi');
-function mushiReward(right) {
-  if (!mushiDue()) return { pts: 0, fresh: false };
-  S.mushiDay = ymd();
-  right = Math.max(0, Math.min(3, right | 0));
-  const g = SHIZEN.find(x => x.id === 'mushi'), k = g.facts.map((f, i) => `z:mushi:${i}`).find(x => !S.facts.includes(x)), fresh = !!k;
-  if (fresh) S.facts.push(k);
-  const pts = MUSHI_PTS[right];
-  if (pts) gainPoints(pts);
-  S.log.unshift({ type: 'mushi', t: Date.now(), pts, name: `イベント「虫の名前あて」${right}/3`, icon: '🪲' });
-  save();
-  renderLog();
-  track('mushi_done', { right, mode: demo ? 'play' : 'walk' });
-  return { pts, fresh };
-}
-
 // イベント「古い地図が出てきた」（oldmap.js）：明治39年ごろの村を、はじめて見つけたら +15pt。ぜんぶ見つけるとバッジ
 const OLDMAP_PTS = 15;
 const oldmapHas = id => (S.oldmap || []).includes(id);
@@ -1028,23 +990,6 @@ function oldmapFound(id, total) {
   badgesSoon();
   track('oldmap_found', { village: id, n: S.oldmap.length });
   return { n: S.oldmap.length, pts: OLDMAP_PTS, all: S.oldmap.length >= total };
-}
-
-// イベント「本のできごと」（bookev.js）：できごとごとに1回。正解 +20pt・ちがっても +5pt、そのできごとの まちメモ。ぜんぶ見るとバッジ
-const bookEvHas = id => (S.bookEv || []).includes(id);
-function bookEvDone(id, ok, facts, total) {
-  if (!Array.isArray(S.bookEv)) S.bookEv = [];
-  if (S.bookEv.includes(id)) return null;
-  S.bookEv.push(id);
-  const pts = ok ? 20 : 5;
-  for (const k of facts || []) if (!S.facts.includes(k)) S.facts.push(k);
-  gainPoints(pts);
-  S.log.unshift({ type: 'bookev', t: Date.now(), pts, name: `本のできごと ${S.bookEv.length}/${total}${ok ? '（正解）' : ''}`, icon: '📖' });
-  save();
-  renderLog();
-  badgesSoon();
-  track('bookev_done', { ev: id, ok, n: S.bookEv.length });
-  return { pts, n: S.bookEv.length, all: S.bookEv.length >= total };
 }
 
 // イベント「雲母石を探せ」（kirara.js）：場所ごとに1回。石の中から雲母石を見つけると +15pt（1回目で見つけたら +20pt）と、その場所の まちメモ。
@@ -1739,13 +1684,13 @@ function heardOf(g, n) {
 // しらべるの手がかりの言い方：人の見た目（npcs.js の look）ごとに2つずつ。どちらを言うかは人ごとに決まっている（id から）。
 // 名所の名前だけを入れて、名所についての事実は言わない（見つかる まちメモ は出典つきのもの）
 const HINT_SAY = {
-  elder: ['{s}に着いたら、よう しらべてみりん。なんか見つかるかもしれんで', '{s}はな、すみずみまで よう見るもんだに'],
+  elder: ['{s}に着いたら、よう しらべてみりん。なんか見つかるかもしれんで', '{s}はな、すみずみまで よう見るもんだよ'],
   granny: ['{s}へ行ったら、すみっこまで よう見てってね', '{s}に着いたら、あわてんと ゆっくり しらべりんね'],
-  man: ['{s}に着いたら、ちょっと しらべてみるといいよ', '{s}は、よう見ると おもしろいもんがあるだに'],
+  man: ['{s}に着いたら、ちょっと しらべてみるといいよ', '{s}は、よう見ると おもしろいもんがあるんだ'],
   woman: ['{s}に行ったら、よく見てみて。きっと何か見つかるよ', '{s}に着いたら、まわりも しらべてみりん'],
   kid: ['{s}って、しらべると なんか出てくるんだって！', '{s}に行ったら、たんけんしてみてね！'],
   student: ['{s}は、しらべがいがあるよ', '{s}に着いたら、調べてみなよ。メモしとくといいじゃん'],
-  fisher: ['{s}に行ったら、目を こらしてみりん', '{s}に着いたら、よう見ときん。見とるもんが見つけるだに'],
+  fisher: ['{s}に行ったら、目を こらしてみりん', '{s}に着いたら、よう見ときん。見とるもんが見つけるんだ'],
   staff: ['{s}に寄ったら、ぜひ しらべてってくださいね', '{s}に着いたら、まわりも見てみてください'],
   guide: ['{s}に着いたら、ぜひ しらべてみてください。歩いてこそ見つかる話がありますよ', '{s}では、足をとめて よく見てみてください'],
   monk: ['{s}では、心しずかに よう見てごらんなさい', '{s}に着いたら、ゆっくり しらべてごらんなさい'],
@@ -1806,7 +1751,7 @@ const CRITTERS = [
   { id: 'dojo', name: 'ドジョウ', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: '田んぼの泥の中で、ドジョウが にょろっと もぐった。',
     note: 'ドジョウやシマドジョウは、矢作川の流域に すむ魚として国土交通省の調査に載っとる。', src: YAHAGI_SRC },
   { id: 'ishigame', name: 'ニホンイシガメ', where: 'paddy', months: [4, 5, 6, 7, 8, 9, 10], say: 'あぜの草かげで、石みたいな甲らの カメが ひなたぼっこしとる。',
-    note: 'ニホンイシガメは、水田や畑を えさ場や たまごを産む場所に使う（矢作川流域の調査）。田んぼは、カメにも大事な場所だに。', src: YAHAGI_SRC },
+    note: 'ニホンイシガメは、水田や畑を えさ場や たまごを産む場所に使う（矢作川流域の調査）。田んぼは、カメにも大事な場所だよ。', src: YAHAGI_SRC },
   { id: 'akaza', name: 'アカザ', where: 'kawa', say: '川の石の下から、ひげのある小さな魚が ちらっと のぞいた。',
     note: 'アカザは、矢作川にすむ魚で「絶滅危惧II類」に入っとる（国土交通省の調査）。', src: YAHAGI_SRC },
   { id: 'kamatsuka', name: 'カマツカ', where: 'kawa', say: '川底の砂の上を、細長い魚が すーっと すべっていった。',
@@ -2025,7 +1970,7 @@ function praiseCheck(at) {
   const who = (window.NISHIO_NPCS || []).find(x => x.id === 'castle-guide');
   const open = areas.map(a => ({ a, p: areaProgress(a.id) })).filter(x => x.p.total > x.p.done).sort((x, y) => x.p.done / x.p.total - y.p.done / y.p.total || (y.p.total - y.p.done) - (x.p.total - x.p.done));
   const left = open.find(x => x.a.id !== at) || open[0];
-  setTimeout(() => toastAfter(`📜 ${who ? who.name : 'ガイドさん'}「もう${n}か所もめぐったじゃん！${left ? `つぎは${left.a.name}${left.a.id === at ? 'の まだ行っとらん所' : 'のほう'}も歩いてみりん。まだ${left.p.total - left.p.done}か所あるに」` : 'たいしたもんだに」'}`), 1200);   // バッジの知らせ（チェックインの0.8秒あと）が出てから、そのあとに
+  setTimeout(() => toastAfter(`📜 ${who ? who.name : 'ガイドさん'}「もう${n}か所もめぐったじゃん！${left ? `つぎは${left.a.name}${left.a.id === at ? 'の まだ行っとらん所' : 'のほう'}も歩いてみりん。まだ${left.p.total - left.p.done}か所あるよ」` : 'たいしたもんだよ」'}`), 1200);   // バッジの知らせ（チェックインの0.8秒あと）が出てから、そのあとに
 }
 function setGuide(g) {
   S.guide = g ? { ...g, t: Date.now() } : null;
@@ -2131,8 +2076,8 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  // 着いたときの 一言は 3つを かわりばんこ（三河弁の「だに」は ときどき）
-  const hi = [`${g.name}に 着いたね！`, `${g.name}、いい所だに。`, `${g.name}に とうちゃく！`][(S.guides || 0) % 3];
+  // 着いたときの 一言は 3つを かわりばんこ（三河弁の「じゃん」は ときどき）
+  const hi = [`${g.name}に 着いたね！`, `${g.name}、いい所じゃん。`, `${g.name}に とうちゃく！`][(S.guides || 0) % 3];
   if (ktAskGuide([{ t: `${hi}${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g), ...komeNimotsu(g)], 'smile')) { rivalSay(g, next); return; }
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
@@ -2416,7 +2361,6 @@ function badgeDefs() {
     { id: 'park', i: '🌳', n: '公園めぐり', d: '公園を5か所', cur: countVisits(v => v.cat === 'park'), goal: 5 },
     { id: 'castle', i: '🏯', n: '西尾城へ', d: '西尾城跡を訪ねる', cur: S.visits['f-nishio-castle'] ? 1 : 0, goal: 1 },
     { id: 'featall', i: '⭐', n: '注目スポット制覇', d: `注目スポット${featTotal}か所すべて`, cur: Object.entries(S.visits).filter(([id, v]) => v.featured && !nearIds.has(id)).length, goal: Math.max(featTotal, 1), ready: spotMeta.loaded && featTotal > 0 },
-    { id: 'bookev', i: '📖', n: '西尾の歴史はかせ', d: '「本のできごと」を ぜんぶ見る（本に出てくる場所へ行くと起きる）', cur: (S.bookEv || []).length, goal: (window.NISHIO_BOOKEV && NISHIO_BOOKEV.EVENTS.length) || 9 },
     { id: 'oldmap', i: '🗺️', n: '明治の村あつめ', d: '「古い地図」のイベントで、明治39年ごろの村を ぜんぶ見つける', cur: (S.oldmap || []).length, goal: (window.NISHIO_OLDMAP && NISHIO_OLDMAP.VILLAGES.length) || 11 },
     { id: 'critterall', i: '📜', n: '生きもの手帳の賞状', d: `生きもの手帳の${CRITTERS.length}しゅるい ぜんぶに出会う（季節で出るものもあるので、1年かけて）`, cur: CRITTERS.filter(c => (S.critters || {})[c.id]).length, goal: CRITTERS.length },
     { id: 'clear', i: '👑', n: '殿堂入り', d: '5つの地区のしるしを集めて、西尾城跡のガイドさんに会う（クリア）', cur: S.cleared ? 1 : 0, goal: 1 },
@@ -2453,7 +2397,7 @@ function checkBadges() {
     fresh.forEach(b => S.badges.push(b.id));
     save();
     toastAfter(`🏅 バッジ獲得：${fresh.map(b => b.i + ' ' + b.n).join('、')}`);   // いま出ている知らせ（生きものに出会った など）が消えてから
-    if (fresh.some(b => b.id === 'critterall')) toastAfter(`📜 ${(sealBy('nishio') || {}).name || 'ガイドさん'}「生きもの手帳が ぜんぶ そろったじゃん！ 1年 歩きとおした あかしだに。賞状を おくるでね」`);   // 図鑑がそろったら 賞状（昔のドット絵RPGの しくみ）
+    if (fresh.some(b => b.id === 'critterall')) toastAfter(`📜 ${(sealBy('nishio') || {}).name || 'ガイドさん'}「生きもの手帳が ぜんぶ そろったじゃん！ 1年 歩きとおした あかしだよ。賞状を おくるでね」`);   // 図鑑がそろったら 賞状（昔のドット絵RPGの しくみ）
   }
   sealHints();
 }
@@ -2524,7 +2468,7 @@ function showEnding() {
   const seals = SEAL_MAIN.map(id => { const a = areas.find(x => x.id === id), p = npcs.find(n => n.id === SEAL_BY[id]); return a ? `<li>🔖 ${esc(a.name)}のしるし <small>${esc(p ? p.name : '')}</small></li>` : ''; }).join('');
   const el = $('reward');
   el.innerHTML = `<div class="rw ending"><div class="big">🏯</div><div class="nm">西尾さんぽ 殿堂入り</div>
-    <p class="say">${esc(by ? by.name : 'ガイドさん')}「5つの地区を ぜんぶ歩いてくれたじゃん。あんたは もう 西尾さんぽの名人だに！」</p>
+    <p class="say">${esc(by ? by.name : 'ガイドさん')}「5つの地区を ぜんぶ歩いてくれたじゃん。あんたは もう 西尾さんぽの名人だよ！」</p>
     <ul class="rec">${rows.map(([k, v]) => `<li>${esc(k)} <b>${esc(v)}</b></li>`).join('')}</ul>
     <ul class="seals">${seals}</ul>
     <p class="say">🏃 ${esc(RIVAL)}「おめでとう！ つぎは となりの市町も いっしょに歩こまい」</p>
@@ -2679,7 +2623,7 @@ function howtoOpen() { const h = $('howto'); return !!h && !h.hidden; }
 // 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
 function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
 // シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
-// イベントの 窓（古い地図・虫の名前あて・本のできごと・雲母石 など。どれも .medashi）も 同じ：知らせが 窓の 絵や 問いの 上に 重なって いた（自分で 遊んで 分かった：古い地図の 写真に 重なった）
+// イベントの 窓（古い地図・雲母石 など。どれも .medashi）も 同じ：知らせが 窓の 絵や 問いの 上に 重なって いた（自分で 遊んで 分かった：古い地図の 写真に 重なった）
 function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden) || !!document.querySelector('.medashi:not([hidden])'); }
 if (window.MutationObserver && $('share')) new MutationObserver(() => { if ($('share').hidden) toastFlush(); else toastHold(); }).observe($('share'), { attributes: true, attributeFilter: ['hidden'] });
 if (window.MutationObserver) new MutationObserver(ms => {   // イベントの 窓は あとから 作られる ので、body の 下の hidden の 変化を 見る
@@ -2699,7 +2643,7 @@ function toastHold() {
   const t = $('toast');
   if (!t.classList.contains('show')) return;
   if (Date.now() - (toast.at || 0) < 1500 && !toastQ.includes(t.textContent)) toastQ.push(t.textContent);
-  // 窓より 手前に ある ので、0.3秒 かけて うすれる 間 窓の 題名に かぶって 見えた（自分で 遊んで 分かった：「本のできごと」の 題が かくれた）。窓が 開く ときは すっと 消す
+  // 窓より 手前に ある ので、0.3秒 かけて うすれる 間 窓の 題名に かぶって 見えた（自分で 遊んで 分かった：窓の 題が かくれた）。窓が 開く ときは すっと 消す
   t.style.transition = 'none'; t.classList.remove('show'); void t.offsetWidth; t.style.transition = ''; clearTimeout(toastTimer);
 }
 // 人の話の窓が開いている間、知らせは 窓の下（下の札の すぐ上）に出るが、小さい画面（320×568）では 窓が そこまで のびていて「▶ とじる」に重なった（自分で 遊んで 分かった）。
@@ -2779,8 +2723,8 @@ const dotStars = f => (DOT_TWO_STARS.has(f.motif) ? 2 : 3) + (['rainbow', 'snow'
 const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i></i>'.repeat(n)}</div>`;
 // チェックインのあとの ひとこと：ごほうびの画面が消えたら、下に小さく出す（react.pending）
 const react = { pending: null, shown: 0, t: 0 };
-// 田んぼのイベント「芽出しの見きわめ」（medashi.js）が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
-const medashiOpen = () => !!document.querySelector('.medashi:not([hidden]), #howto:not([hidden])');   // イベントの窓（田んぼ・古い地図・本のできごと。どれも .medashi）と「あそびかた」。開いている 間の ごほうびは 待って、とじてから 出す
+// イベントの窓が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
+const medashiOpen = () => !!document.querySelector('.medashi:not([hidden]), #howto:not([hidden])');   // イベントの窓（古い地図・雲母石。どれも .medashi）と「あそびかた」。開いている 間の ごほうびは 待って、とじてから 出す
 function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz：めいろの ゴールの シェア（takeMzShare）
   if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
     const q = showReward.pending || (showReward.pending = []);
@@ -2929,7 +2873,7 @@ function walkBags(d) {
 const bagDone = () => { const b = Array.isArray(S.bags) && S.bags[0]; return !!b && b.walked >= b.km * 1000; };
 // ほかのごほうびが出ている間・絵を読みこんで出るのを待っている間は待つ（重ならないように。消えてしまわないように）
 const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting || !!(showReward.pending && showReward.pending.length);
-const rewardSoon = () => rewardBusy() || !!openBagSoon.t || !!movieWhenFree.wait;   // 開く予約をした おみやげ袋・ムービーも（田んぼ・旧地図・本のできごとのイベントは、これが済んでから始める）
+const rewardSoon = () => rewardBusy() || !!openBagSoon.t || !!movieWhenFree.wait;   // 開く予約をした おみやげ袋・ムービーも（旧地図などのイベントは、これが済んでから始める）
 function openBagSoon() {
   if (openBagSoon.t) return;
   const key = stateKey();   // 予約したときの記録。モードを切り替えたら、その記録の袋は戻ったときに開く（refreshNearby がまた予約する）
@@ -4145,7 +4089,7 @@ function begin(isDemo) {
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
     const how = !isDemo ? 'きみが あるくと、いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、すすむよ。' : '地図を タップすると、そこへ 行くよ。';
     const pics = sceneSet(3);   // あいさつの ページごとに ちがう 西尾の 景色
-    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。いっしょに 町を めぐろう！', mood: 'happy', pic: pics[0] }, { t: how, pic: pics[1] },
+    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だよ。いっしょに 町を めぐろう！', mood: 'happy', pic: pics[0] }, { t: how, pic: pics[1] },
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
     { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }
@@ -4208,7 +4152,7 @@ window.nishioGo = {
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
-  begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, medashiDue, medashiReward, mushiDue, mushiReward, oldmapFound, oldmapHas, bookEvDone, bookEvHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
+  begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,
   get started() { return store.get('nsg_started', false); }, openTab,
   playMode() {   // 広告のリンク（?play=1）：もう始めている人も「操作して遊ぶ」に切り替える（はじめて遊んだ数には入れない）
     if (!document.body.classList.contains('px') && window.nishioPixel) nishioPixel.setActive(true);

@@ -17,14 +17,14 @@
   const R = 150;
   const ALL = ['castle', 'konoe', 'shokoso'];
   const LIST = [
-    { id: 'ushitora', name: '本丸丑寅櫓', at: ['castle'], say: '本丸丑寅櫓だに。西尾市歴史公園で 見られるに', src: NK },
-    { id: 'yuseki', name: '鍮石門', at: ['castle'], say: '鍮石門だに。西尾市歴史公園の 見どころだに', src: NK },
-    { id: 'shijo', name: '西条城', at: ['castle'], say: '鎌倉時代の はじめに 足利義氏が 築いた 西条城が 西尾城の はじまりだに', src: NK },
-    { id: 'rokuman', name: '6万石', at: ALL, say: '西尾は 大給松平家 6万石の 城下町だに', src: NK },
-    { id: 'konoe', name: '旧近衛邸', at: ['konoe'], say: '旧近衛邸では 抹茶を いただけるに', src: NK },
-    { id: 'shokoso', name: '尚古荘', at: ['shokoso'], say: '尚古荘も 西尾市歴史公園の 見どころだに', src: NK },
-    { id: 'gion', name: '西尾祇園祭', at: ALL, say: '城下町の 栄華は 西尾祇園祭として 今も 残っとるに', src: NK },
-    { id: 'koto', name: '三河の小京都', at: ALL, say: '西駅の 西がわは 寺社が 多くて 三河の小京都だに', src: AICHI },
+    { id: 'ushitora', name: '本丸丑寅櫓', at: ['castle'], say: '本丸丑寅櫓だよ。西尾市歴史公園で 見られるよ', src: NK },
+    { id: 'yuseki', name: '鍮石門', at: ['castle'], say: '鍮石門だよ。西尾市歴史公園の 見どころだね', src: NK },
+    { id: 'shijo', name: '西条城', at: ['castle'], say: '鎌倉時代の はじめに 足利義氏が 築いた 西条城が 西尾城の はじまりなんだ', src: NK },
+    { id: 'rokuman', name: '6万石', at: ALL, say: '西尾は 大給松平家 6万石の 城下町だよ', src: NK },
+    { id: 'konoe', name: '旧近衛邸', at: ['konoe'], say: '旧近衛邸では 抹茶を いただけるよ', src: NK },
+    { id: 'shokoso', name: '尚古荘', at: ['shokoso'], say: '尚古荘も 西尾市歴史公園の 見どころだよ', src: NK },
+    { id: 'gion', name: '西尾祇園祭', at: ALL, say: '城下町の 栄華は 西尾祇園祭として 今も 残っとるよ', src: NK },
+    { id: 'koto', name: '三河の小京都', at: ALL, say: '西駅の 西がわは 寺社が 多くて 三河の小京都じゃん', src: AICHI },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

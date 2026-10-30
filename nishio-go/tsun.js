@@ -12,14 +12,14 @@
     AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/';
   const NIS = '^(?!一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)';   // 西尾地区の 町（一色・吉良・幡豆の 町を のぞく）
   const LIST = [
-    { id: 'unagi', name: 'うなぎ', town: '^一色町', say: 'うひゃ、うなぎが 出たに。一色は うなぎの まちだに', src: NK },
-    { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'くすぐったいに。えびせんが ぽんと 出たに', src: NK },
-    { id: 'chochin', name: '提灯', town: '^一色町', say: 'つんつんしたら 提灯が 出たに。大提灯まつりの まちだに', src: NK },
-    { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: 'こそばゆいに。茶の葉が ぽんと 出たに', src: NK },
-    { id: 'chawan', name: '抹茶わん', town: NIS, say: 'つんつんしたら 抹茶わんが 出たに。西尾は 抹茶の まちだに', src: NK },
-    { id: 'inaho', name: '稲穂', town: '^吉良町', say: 'くすぐったいに。稲穂が 出たに。黄金堤の まちだに', src: MAFF },
-    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'つんつんしたら カーネーションが 出たに', src: NK },
-    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'あれ、アサリが 出たに。海が ちかいに', src: AN },
+    { id: 'unagi', name: 'うなぎ', town: '^一色町', say: 'うひゃ、うなぎが 出たよ。一色は うなぎの まちだね', src: NK },
+    { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'くすぐったいよ。えびせんが ぽんと 出たよ', src: NK },
+    { id: 'chochin', name: '提灯', town: '^一色町', say: 'つんつんしたら 提灯が 出たよ。大提灯まつりの まちだね', src: NK },
+    { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: 'こそばゆいよ。茶の葉が ぽんと 出たよ', src: NK },
+    { id: 'chawan', name: '抹茶わん', town: NIS, say: 'つんつんしたら 抹茶わんが 出たよ。西尾は 抹茶の まちだね', src: NK },
+    { id: 'inaho', name: '稲穂', town: '^吉良町', say: 'くすぐったいよ。稲穂が 出たよ。黄金堤の まちだね', src: MAFF },
+    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'つんつんしたら カーネーションが 出たよ', src: NK },
+    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'あれ、アサリが 出たよ。海が ちかいよ', src: AN },
   ];
   const MS = 1600;   // 飛び出して 消えるまで
   // いる 所：{ city, town, near（まわり 100m メッシュの 土地利用の 文字を まとめた 文字列）, month }

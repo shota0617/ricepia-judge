@@ -58,7 +58,7 @@ class MeguriTests(unittest.TestCase):
         self.assertEqual(o['hazu'], ['carnation', 'asari'])
         self.assertEqual(o['out'], [])                              # 西尾市の 外では 出さない
         self.assertEqual(o['none'], ['chawan'])                     # 町名が 分からない 西尾市の 中は 西尾地区あつかい（ごちそう・かさと 同じ）
-        self.assertEqual(o['say'], '提灯とうなぎとえびせんべいと よるの さんぽだに')
+        self.assertEqual(o['say'], '提灯とうなぎとえびせんべいと よるの さんぽだよ')
 
 
 if __name__ == '__main__':

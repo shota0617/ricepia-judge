@@ -32,10 +32,10 @@
   const npcs = (window.NISHIO_NPCS || []).filter(n => !SHOP_SPOTS.has(n.spot));
   // 市役所の観光担当の職員さん（話すのは、ほかの人や areas.json・events.js と同じ、出典のある事実だけ）
   npcs.unshift({ id: 'city-staff', spot: 'nishio-cityhall', off: [-25, -20], look: 'guide', name: '市役所の観光担当の職員さん',
-    lines: ['ようこそ、西尾市役所へ。わたしは観光の担当だに。にしおさんぽGOで、西尾のまちをのんびり歩いてみてね。',
+    lines: ['ようこそ、西尾市役所へ。わたしは観光の担当だよ。にしおさんぽGOで、西尾のまちをのんびり歩いてみてね。',
       '西尾市は2011年（平成23年）4月に、一色町・吉良町・幡豆町といっしょになって、いまの西尾市になったんだよ。',
-      '西尾は抹茶のもとになる「てん茶」の産地。海のほうへ行けば一色のうなぎ、一色港から船で佐久島へも渡れるに。'],
-    refer: [['castle-guide', 'まずは西尾城跡へ行ってみりん。観光ボランティアガイドさんが、丑寅櫓の話をしてくれるに。'],
+      '西尾は抹茶のもとになる「てん茶」の産地。海のほうへ行けば一色のうなぎ、一色港から船で佐久島へも渡れるよ。'],
+    refer: [['castle-guide', 'まずは西尾城跡へ行ってみりん。観光ボランティアガイドさんが、丑寅櫓の話をしてくれるよ。'],
       ['sakana-okami', 'うなぎのことは、一色さかな広場のおかみさんにきいてみりん。']] });
   const ids = new Set(npcs.map(n => n.id));
   for (const n of npcs) if (Array.isArray(n.refer)) n.refer = n.refer.filter(([to]) => ids.has(to));

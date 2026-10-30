@@ -27,7 +27,7 @@ class ShirushiTests(unittest.TestCase):
         for a in self.areas:
             self.assertIn("kind === '%s'" % a[2], px, a[2])
         for ch in DECO:
-            self.assertNotIn(ch, ''.join(re.findall(r"'([^']*だに[^']*)'", self.src)))
+            self.assertNotIn(ch, ''.join(re.findall(r"'([^']*(?:ふえた|そろった)[^']*)'", self.src)))
 
     def test_hooked_into_game(self):
         px = (GO / 'pixel.js').read_text()
@@ -50,7 +50,7 @@ class ShirushiTests(unittest.TestCase):
         self.assertFalse(o['d']['added'])   # 知らない 地区は 数えない
         self.assertEqual(o['junk'], ['nishio', 'hazu'])
         self.assertEqual(o['bad'], [[], []])
-        self.assertEqual(o['s2'], '吉良の 旗が ふえたに。あと 3つだに')
+        self.assertEqual(o['s2'], '吉良の 旗が ふえたよ。あと 3つだね')
         self.assertIn('ぜんぶ', o['s5'])
         self.assertGreater(o['delay'], 3200)   # ようこその ひと言（3.2秒）の あとに 言う
 

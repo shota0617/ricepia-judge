@@ -16,7 +16,7 @@ class MonosashiTests(unittest.TestCase):
         cls.src = (GO / 'monosashi.js').read_text()
 
     def test_say_is_plain_and_uses_only_brief_numbers(self):
-        said = ''.join(re.findall(r"'([^']*だに[^']*)'", self.src))
+        said = ''.join(re.findall(r"'([^']*ころがった[^']*)'", self.src))
         for ch in DECO:
             self.assertNotIn(ch, said)
         self.assertIn('LEN_M = 180', self.src)   # ブリーフ 5：黄金堤の 長さ180m
@@ -45,7 +45,7 @@ class MonosashiTests(unittest.TestCase):
         self.assertEqual(o['bad'], [0, 0, 0, 0, 90])
         self.assertEqual(o['neg'], {'total': 50, 'born': 0})   # へる ことは ない
         self.assertIn('おなじ', o['s1'])
-        self.assertEqual(o['s3'], '黄金堤 3本ぶん ころがったに。1本は 180mだに')
+        self.assertEqual(o['s3'], '黄金堤 3本ぶん ころがったよ。1本は 180mだよ')
         self.assertEqual(o['key'], 'nsg_monosashi')
 
 

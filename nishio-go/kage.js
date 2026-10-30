@@ -12,14 +12,14 @@
     AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/';
   const NIS = '^(?!一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)';   // 西尾地区の 町（一色・吉良・幡豆の 町を のぞく）
   const LIST = [
-    { id: 'unagi', name: 'うなぎ', town: '^一色町', say: 'かげが うなぎの かたちだに。一色らしいに', src: NK },
-    { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'かげが えびせんの かたちに なったに', src: NK },
-    { id: 'chochin', name: '提灯', town: '^一色町', say: 'かげが 提灯の かたちだに。大提灯まつりの まちだに', src: NK },
-    { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: 'かげが 茶の葉に なったに。茶摘みの ころだに', src: NK },
-    { id: 'chawan', name: '抹茶わん', town: NIS, say: 'かげが 抹茶わんの かたちだに。西尾は 抹茶の まちだに', src: NK },
-    { id: 'inaho', name: '稲穂', town: '^吉良町', say: 'かげが 稲穂の かたちだに。黄金堤の まちだに', src: MAFF },
-    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'かげが カーネーションの かたちに なったに', src: NK },
-    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'かげが アサリの かたちだに。海が ちかいに', src: AN },
+    { id: 'unagi', name: 'うなぎ', town: '^一色町', say: 'かげが うなぎの かたちだよ。一色らしいね', src: NK },
+    { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'かげが えびせんの かたちに なったよ', src: NK },
+    { id: 'chochin', name: '提灯', town: '^一色町', say: 'かげが 提灯の かたちだよ。大提灯まつりの まちだね', src: NK },
+    { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: 'かげが 茶の葉に なったよ。茶摘みの ころだね', src: NK },
+    { id: 'chawan', name: '抹茶わん', town: NIS, say: 'かげが 抹茶わんの かたちだよ。西尾は 抹茶の まちだね', src: NK },
+    { id: 'inaho', name: '稲穂', town: '^吉良町', say: 'かげが 稲穂の かたちだよ。黄金堤の まちだね', src: MAFF },
+    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'かげが カーネーションの かたちに なったよ', src: NK },
+    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'かげが アサリの かたちだよ。海が ちかいね', src: AN },
   ];
   const STILL = 2500;   // じっと して から 影が のび はじめるまで
   const EACH = 7000;    // ひとつの 影で いる 長さ

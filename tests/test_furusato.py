@@ -48,7 +48,7 @@ class FurusatoTests(unittest.TestCase):
         self.assertTrue(o['west'])
         self.assertIn(o['sk'], ('isshiki', 'nishio', 'kira', 'hazu'))   # 佐久島は えらばない
         self.assertIsNone(o['none'])
-        self.assertEqual(o['say'], '岡崎市に 来たに。西尾は あっちだに。抹茶の まちだに')
+        self.assertEqual(o['say'], '岡崎市に 来たよ。西尾は あっちだよ。抹茶の まちだね')
         self.assertIsNone(o['pk'])
 
 

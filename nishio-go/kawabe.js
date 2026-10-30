@@ -9,11 +9,11 @@
 (function (root) {
   const MLIT = 'https://www.mlit.go.jp/river/basic_info/jigyo_keikaku/gaiyou/seibi/pdf/yahagigawa-5.pdf', WIKI = 'https://ja.wikipedia.org/wiki/%E7%9F%A2%E7%B0%AF%E5%B7%9D';
   const LIST = [
-    { id: 'yahagi', name: '矢作川が 三河湾へ', say: '矢作川は 西尾で 三河湾に 注ぐんだに', src: WIKI },
-    { id: 'medaka', name: 'メダカ', say: 'メダカが およいどるに。絶滅危惧II類の さかなだに', src: MLIT },
-    { id: 'uo', name: 'アカザと イチモンジタナゴ', say: 'アカザや イチモンジタナゴが 矢作川に おるに', src: MLIT },
-    { id: 'misago', name: 'ミサゴ', say: 'ミサゴが 空から 見とるに', src: MLIT },
-    { id: 'ishigame', name: 'ニホンイシガメ', say: 'ニホンイシガメは 水田や 畑を えさ場や 産卵場に するに', src: MLIT },
+    { id: 'yahagi', name: '矢作川が 三河湾へ', say: '矢作川は 西尾で 三河湾に 注ぐんだよ', src: WIKI },
+    { id: 'medaka', name: 'メダカ', say: 'メダカが およいどるよ。絶滅危惧II類の さかなだよ', src: MLIT },
+    { id: 'uo', name: 'アカザと イチモンジタナゴ', say: 'アカザや イチモンジタナゴが 矢作川に おるよ', src: MLIT },
+    { id: 'misago', name: 'ミサゴ', say: 'ミサゴが 空から 見とるよ', src: MLIT },
+    { id: 'ishigame', name: 'ニホンイシガメ', say: 'ニホンイシガメは 水田や 畑を えさ場や 産卵場に するよ', src: MLIT },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

@@ -10,8 +10,8 @@
   const NK = 'https://nishiokanko.com/tw/specialty/', WIKI = 'https://ja.wikipedia.org/wiki/%E7%9F%A2%E7%B0%AF%E5%B7%9D';
   const NIS = '^(?!一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)';   // 西尾地区の 町（一色・吉良・幡豆の 町を のぞく）
   const LIST = [
-    { id: 'tencha', name: 'てん茶の 川霧', town: NIS, say: '矢作川の 川霧だに。てん茶は この 霧で 育つんだって', end: '霧が はれたに。今日も ええ お茶に なるに', src: NK },
-    { id: 'kawa', name: '矢作川の 川霧', town: '^(一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)', say: 'あさの 川霧だに。矢作川は 西尾で 三河湾に 注ぐんだに', end: '霧が はれたに。ええ あさだに', src: WIKI },
+    { id: 'tencha', name: 'てん茶の 川霧', town: NIS, say: '矢作川の 川霧だよ。てん茶は この 霧で 育つんだって', end: '霧が はれたよ。今日も ええ お茶に なるね', src: NK },
+    { id: 'kawa', name: '矢作川の 川霧', town: '^(一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)', say: 'あさの 川霧だよ。矢作川は 西尾で 三河湾に 注ぐんだよ', end: '霧が はれたよ。ええ あさだね', src: WIKI },
   ];
   const FROM = 5, TO = 8;   // 霧の 出る 時間（日本時間。5時〜8時前）
   const EVERY = 2000;       // 場所を しらべる 間かく（ミリ秒）

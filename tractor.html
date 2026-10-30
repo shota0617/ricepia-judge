@@ -6127,7 +6127,8 @@ const IMORI = (() => {
   // 田んぼの 土の 高さ（水の 底）：代かきの 田んぼの 水は 土の 上 数 mm しか ないので、イモリは 底に のせる（土に うめない）
   const ray = new THREE.Raycaster(), DOWN = new THREE.Vector3(0, -1, 0), V3 = new THREE.Vector3();
   let soilMesh = null;                            // 田んぼの 土の 面（あとから 形が かわるので 0.25 秒ごとに はかりなおす）
-  const soilY = (x, z) => { if (!soilMesh && field) field.traverse(o => { if (!soilMesh && o.isMesh && o.material && o.material.name === 'soil_untilled') soilMesh = o; }); if (!soilMesh) return 0; ray.set(V3.set(x, 1, z), DOWN); const h = ray.intersectObject(soilMesh, false)[0]; return h ? h.point.y : 0; };
+  const untilY = (x, z) => { if (!soilMesh && field) field.traverse(o => { if (!soilMesh && o.isMesh && o.material && o.material.name === 'soil_untilled') soilMesh = o; }); if (!soilMesh) return 0; ray.set(V3.set(x, 1, z), DOWN); const h = ray.intersectObject(soilMesh, false)[0]; return h ? h.point.y : 0; };
+  const bedY = (x, z, un) => soilCell(x, z) >= 0 ? soilY(x, z) - 0.003 : un === undefined ? untilY(x, z) : un;   // 代かきした 所は 上に かさねた 泥の 面（soilY・毎コマ）、まだの 所は もとの 土の 面（un：はかって おいた 値）
   const SPOTS = [[-4, 24.2], [-0.5, 24.3], [3, 24.1], [6.5, 24.25], [14.3, 6], [14.4, 11]];   // 北の 畦ぎわ 4・東の 畦ぎわ 2
   const inBand = (x, z) => Math.abs(x) < HX - 0.15 && Math.abs(z) < HZ - 0.15 && (Math.abs(x) > HX - 1.8 || Math.abs(z) > HZ - 1.8);
   for (const [sx, sz] of SPOTS) {
@@ -6151,9 +6152,9 @@ const IMORI = (() => {
       placed = true;
       for (const u of list) {                      // まわりで いちばん 水の ふかい 所を えらぶ
         let best = null;
-        for (let k = 0; k < 24; k++) { const x = u.x + (k ? (R() - 0.5) * 1.6 : 0), z = u.z + (k ? (R() - 0.5) * 1.2 : 0); if (!inBand(x, z) || !AMENBO.water(x, z)) continue; const dep = surf(x, z) - soilY(x, z); if (!best || dep > best[2]) best = [x, z, dep]; }
-        if (best) { u.x = u.tx = best[0]; u.z = u.tz = best[1]; u.soil = surf(u.x, u.z) - best[2]; u.sx = 1e9; }   // つぎの 1 コマで 頭・しっぽの 下も はかる
-        u.g.visible = !!best; u.off = !best; if (!best) { u.sx = u.x; u.sz = u.z; }
+        for (let k = 0; k < 24; k++) { const x = u.x + (k ? (R() - 0.5) * 1.6 : 0), z = u.z + (k ? (R() - 0.5) * 1.2 : 0); if (!inBand(x, z) || !AMENBO.water(x, z)) continue; const dep = surf(x, z) - bedY(x, z); if (!best || dep > best[2]) best = [x, z, dep]; }
+        if (best) { u.x = u.tx = best[0]; u.z = u.tz = best[1]; }   // つぎの 1 コマで 頭・まん中・しっぽの 下の 底を はかる
+        u.g.visible = !!best; u.off = !best;
       }
     }
     for (const u of list) {
@@ -6179,8 +6180,14 @@ const IMORI = (() => {
       const upW = u.st === 'breathe' ? Math.sin(Math.min(1, (2.2 - u.t) / 2.2) * Math.PI) : 0;   // 息つぎ：上がって もどる
       u.up += (upW - u.up) * Math.min(1, dt * 4);
       const y = surf(u.x, u.z);
-      if ((u.mt = (u.mt || 0) - dt) <= 0) { u.mt = 0.25; const fx = Math.sin(u.yaw) * 0.06, fz = Math.cos(u.yaw) * 0.06; u.soil = Math.max(soilY(u.x, u.z), soilY(u.x + fx, u.z + fz), soilY(u.x - fx, u.z - fz)); }   // 0.25 秒ごとに 頭・まん中・しっぽの 下の 底を はかりなおす
-      u.g.position.set(u.x, Math.max(y - 0.0165, u.soil + 0.013) + u.up * 0.009, u.z);   // おなかの 下（1.5 倍で 原点から 8.9mm）は 底より 上（水が あさい 所では せなかが 少し 出る）   // ふだんは せなかの 上（1.5 倍で 原点から 14.6mm）が 水面の 2mm 下。息つぎで 上がって はなさきが 水面に とどく
+      const sx = Math.sin(u.yaw), sz = Math.cos(u.yaw), hx = u.x + sx * 0.06, hz = u.z + sz * 0.06, tx = u.x - sx * 0.105, tz = u.z - sz * 0.105;   // 頭の 先・しっぽの 先
+      if ((u.mt = (u.mt || 0) - dt) <= 0) { u.mt = 0.25; u.uh = untilY(hx, hz); u.um = untilY(u.x, u.z); u.ut = untilY(tx, tz); }   // もとの 土の 面は 0.25 秒ごとに はかりなおす（光線は 重いので）
+      const bh = bedY(hx, hz, u.uh), bm = bedY(u.x, u.z, u.um), bt = bedY(tx, tz, u.ut);   // 代かきした 泥の 面は すぐ かわるので 毎コマ
+      // 息つぎで はなさきを 上げると しっぽが 下がる：かたむけた あとの 頭の 下（前 6cm・原点 −6mm）・おなかの 下（−8.9mm、うしろ 3.8cm まで）・
+      // しっぽの 先（うしろ 10.5cm・−2mm）が どれも 底より 4mm 上に なる 高さ
+      const sp_ = Math.sin(u.up * 0.35), cp_ = Math.cos(u.up * 0.35);
+      const need = Math.max(bh + 0.006 * cp_ - 0.06 * sp_, bm + 0.0089 * cp_ + 0.038 * sp_, bt + 0.002 * cp_ + 0.105 * sp_) + 0.004;
+      u.g.position.set(u.x, Math.max(y - 0.0165, need) + u.up * 0.009, u.z);   // おなかの 下（1.5 倍で 原点から 8.9mm）は 底より 上（水が あさい 所では せなかが 少し 出る）   // ふだんは せなかの 上（1.5 倍で 原点から 14.6mm）が 水面の 2mm 下。息つぎで 上がって はなさきが 水面に とどく
       u.g.rotation.set(-u.up * 0.35, u.yaw, 0, 'YXZ');   // 向きの あとで はなさきを 上げる（どの 向きでも 上を 向く）
       u.body.rotation.z = u.up * 0.9 * Math.sin(u.ph * 2);   // からだを ひねると 赤い おなかが ちらっと
       const wig = sp ? Math.sin(u.ph * (u.st === 'flee' ? 22 : 9)) : Math.sin(u.ph * 1.5) * 0.15;

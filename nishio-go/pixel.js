@@ -10294,7 +10294,8 @@ function rollStep(dt) {
       //   その 向きの 通路が この マスか となりの マスに あれば、道すじに そって そちらへ 転がす（まるい 角を まわって 入れる）
       const ux = (rp.x - tube.x) / tube.d, uy = (rp.y - tube.y) / tube.d;
       if ((ix * ux + iy * uy) / im > 0.6) {
-        const dx = Math.abs(ix) >= Math.abs(iy) ? Math.sign(ix) : 0, dy = dx ? 0 : Math.sign(iy), cx = Math.floor(rp.x / MZ_K), cy = Math.floor(rp.y / MZ_K);
+        // 縦横が 同じ力なら 縦を 先に（筒の 外の toY と そろえる）。中心の 傾きが きっちり0でも 曲がれるように。
+        const dx = Math.abs(ix) > Math.abs(iy) ? Math.sign(ix) : 0, dy = dx ? 0 : Math.sign(iy), cx = Math.floor(rp.x / MZ_K), cy = Math.floor(rp.y / MZ_K);
         let aim = mzOpen(cx, cy, dx, dy) ? [(cx + 0.5 + dx * 0.5) * MZ_K, (cy + 0.5 + dy * 0.5) * MZ_K] : null;
         if (!aim) for (const [ex, ey] of MZ_DIRS) {
           if (ex * dx + ey * dy || !mzOpen(cx, cy, ex, ey) || !mzOpen(cx + ex, cy + ey, dx, dy)) continue;

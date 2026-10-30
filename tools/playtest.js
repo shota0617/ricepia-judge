@@ -975,7 +975,8 @@ async function walkTo(page, id) {
   })();
   // 曲がり角アシスト（めいろ）：右へ 開いた 曲がり角で、通路の まん中から 横に ずれて いても、上へ 傾けると 上の 通路に 入れる（アシストで 曲がれなく なっていないか）
   R.checks.cornerAssist = await (async () => {
-    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(500);
+    await page.evaluate(() => { nishioPixel.meiroApi.tiltReset(); nishioPixel.setRoll(true); });   // 前の センサー確認の 残りの力に 頼らず、同じ強さの 斜め入力で 確かめる
+    await page.waitForTimeout(500);
     const c = await page.evaluate(() => { const M = nishioPixel.maze, r = nishioPixel.roll, K = M.K, a = Math.floor(r.x / K), b = Math.floor(r.y / K);
       for (let y = b - 8; y <= b + 8; y++) for (let x = a - 8; x <= a + 8; x++) if (M.type(x, y) === 1 && M.type(x + 1, y) === 1 && M.type(x, y - 1) === 1 && M.open(x, y, 1, 0) && M.open(x, y, 0, -1) && !M.spot(x, y)) return { x, y, K };
       return null; });

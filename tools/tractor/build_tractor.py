@@ -1173,6 +1173,8 @@ def rotary():
     with part('Rotary'):
         # 赤いカバー（爪のまわりの半円筒）・両側の板
         lathe('paint_red', [(-TILL_W / 2 - 0.02 + (TILL_W + 0.04) * k / 16, 0.31) for k in range(17)], ay, az, n=24, a0=-75, a1=60, smooth=50)
+        for rx in (-0.8, -0.4, 0.0, 0.4, 0.8):                                          # カバーの補強リブ（cycle 7。カバーの面に半分埋まる太さで、浮かない）
+            pipe('paint_red', [(rx, ay + 0.315 * math.sin(math.radians(ph)), az + 0.315 * math.cos(math.radians(ph))) for ph in range(-70, 51, 10)], 0.010, 8)
         for s in (1, -1):
             arc = [(0.33 * math.sin(math.radians(a)), az + 0.33 * math.cos(math.radians(a))) for a in range(-80, 66, 10)]
             prism('paint_red', [(0.0 + p[0], p[1]) for p in arc] + [(0.25, 0.02), (-0.25, 0.02)], 0.012,

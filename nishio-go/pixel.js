@@ -8717,7 +8717,7 @@ function npcGreet(n, tx, ty) {
   if (mazeOn() && g1 && g1 !== g0 && g1.byId === n.id) npcBump.carry = { id: n.id, from: mzRt.gkey };
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
-const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, walkTold: false };
+const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, retry: false, walkTold: false };
 const TILT_DEGS = [15, 20, 26];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く
 tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); return TILT_DEGS.includes(v) ? v : 20; } catch (e) { return 20; } })();
 if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); } catch (er) { /* noop */ } }); }
@@ -8766,9 +8766,9 @@ function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.t = 0; tiltG.x = ti
 function tiltNeedsPermission() { return !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'); }
 function tiltAsk(event) {   // 通常の「あそぶ」の タップで 1回だけ。拒否・例外でも タップや 矢印キーで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
-  tiltG.asked = true;
+  tiltG.asked = true; tiltG.retry = false;
   const fallback = () => G.toast('地図を タップして 遊べるよ（矢印キーでも）');
-  const failed = e => { if (e && e.name === 'NotAllowedError') tiltG.asked = false; fallback(); };   // 一時的に 操作と 認められなかったときは、次の 本当の タップで 再試行。denied では 繰り返さない
+  const failed = e => { if (e && e.name === 'NotAllowedError') { tiltG.asked = false; tiltG.retry = true; } fallback(); };   // 一時的に 操作と 認められなかったときは、次の 本当の タップで 再試行。denied では 繰り返さない
   try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, failed); }
   catch (e) { failed(e); }
 }
@@ -10728,6 +10728,7 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
 }
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
+  if (tiltG.retry) tiltAsk(e);   // 一時的な 許可失敗の あとだけ、次の 地図タップで 再試行（denied では 求めない）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];

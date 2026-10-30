@@ -14,10 +14,14 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
       if (kind === 'unsupported') window.DeviceOrientationEvent = undefined;
       else if (kind !== 'normal') DeviceOrientationEvent.requestPermission = () => {
         window.__asks++;
-        if (kind === 'notallowed' && window.__asks === 1) return Promise.reject(new DOMException('gesture needed', 'NotAllowedError'));
+        if (kind.startsWith('notallowed') && window.__asks === 1) {
+          const e = new DOMException('gesture needed', 'NotAllowedError');
+          if (kind === 'notallowed-sync') throw e;
+          return Promise.reject(e);
+        }
         if (kind === 'throws') throw new Error('sensor unavailable');
         if (kind === 'rejected') return Promise.reject(new Error('denied'));
-        return new Promise(resolve => setTimeout(() => resolve(['granted', 'notallowed'].includes(kind) ? 'granted' : 'denied'), 200));
+        return new Promise(resolve => setTimeout(() => resolve((kind === 'granted' || kind.startsWith('notallowed')) ? 'granted' : 'denied'), 200));
       };
     }, kind);
     const page = await ctx.newPage();
@@ -36,7 +40,7 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
   }
   const visible = page => page.evaluate(() => ({ intro: !document.getElementById('intro').hidden, help: !document.getElementById('howto').hidden, ready: !document.getElementById('playReady').hidden, talk: !!document.querySelector('#komeTalk:not([hidden])'), asks: window.__asks }));
   const shot = (page, name) => page.screenshot({ path: path.join(out, `start-${name}.png`) });
-  for (const kind of (shareOnly ? [] : ['normal', 'unsupported', 'desktop', 'granted', 'denied', 'throws', 'rejected'])) {
+  for (const kind of (shareOnly ? [] : ['normal', 'unsupported', 'desktop', 'granted', 'denied', 'throws', 'rejected', 'notallowed', 'notallowed-sync'])) {
     const { ctx, page } = await fresh(kind);
     try {
       await page.waitForTimeout(400);
@@ -48,6 +52,18 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
         await page.waitForTimeout(300);
       }
       const after = await visible(page);
+      if (kind.startsWith('notallowed')) {
+        await page.evaluate(() => nishioPixel.meiroApi.tiltAsk(new Event('click')));
+        const synthetic = await page.evaluate(() => window.__asks);
+        await page.click('#pxCanvas', { position: { x: 150, y: 150 } });
+        await page.waitForTimeout(300);
+        const retry = await page.evaluate(() => ({ asks: window.__asks, asked: nishioPixel.meiroApi.tilt().asked }));
+        checks[kind + 'Retry'] = { synthetic, ...retry, ok: synthetic === 1 && retry.asks === 2 && retry.asked };
+      } else if (permission) {
+        await page.click('#pxCanvas', { position: { x: 150, y: 150 } });
+        const noRetry = await page.evaluate(() => ({ asks: window.__asks, retry: nishioPixel.meiroApi.tilt().retry }));
+        checks[kind + 'NoRetry'] = { ...noRetry, ok: noRetry.asks === 1 && !noRetry.retry };
+      }
       const fallback = ['denied', 'throws', 'rejected', 'unsupported', 'desktop'].includes(kind) ? await movementWithClear(page, false) : { ok: true };
       checks[kind + 'Controls'] = fallback;
       fs.writeFileSync(path.join(out, 'start-progress.json'), JSON.stringify(checks, null, 2));

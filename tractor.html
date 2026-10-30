@@ -1409,7 +1409,7 @@ const GREASE = (() => {
     moving = m;
     if (m && (t -= dt) <= 0) { t = 0.42; if (audio && soundOn) squeak(audio.ac, audio.out, 0.6 + 0.4 * Math.random()); }   // 動いているあいだ ギーッ、ギーッ
     if (!m) t = 0;
-    if (moves >= 3 && !m && !told) { told = true; toast('ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます', 7); }
+    if (moves >= 3 && !m && !told) { told = true; toast('ギーギー いってるね。とまって 上げたら みるよ（ロータリーを上げ下げすると ギーギー鳴る。3 点リンクの 動く所の グリースが 切れているのかも。止まって 上げると 見ます）', 7); }
     if (told && Math.abs(S.v) < 0.05 && !S.rotDown && S.rotPos > 0.9 && (S.rotorW || 0) < 1 && (!S.stalled || offFree()) && !(S.crank > 0)) {   // 爪が止まってから
       S.stalled = true; S.parked = true; S.v = 0; S.autoUp = false;
       for (const k of ['fwd', 'back', 'left', 'right']) key[k] = 0;
@@ -8915,6 +8915,24 @@ const LOOP = (() => {
 // ---- リストマーケティング：いちばん うれしい とき（耕し終わり）に、運転する キャラクターが らいすぴあの LINE に さそう。
 // 運転中は さそわない（のんびりの じゃまを しない）。耕し終えた 回数を この 端末に 覚え、2 回目からは「また きてくれて ありがとう」。
 // LINE の リンクは ricepia.jp の 転送（from= で このゲームの どこから 来たか だけ わかる。ricepia.jp の ほかの LINE ボタンと 同じ しくみ）
+// つぎは ○○に あえるかも：この 回で 会えた 生きものを この 端末に 覚え（どこにも 送らない）、まだ 会って いない 生きものと
+// 会える 季節・時間を キャラクターが 話す。「▶ ○○へ」で その 季節・時間から もう一度。LINE は 季節の おしらせ（運転中は さそわない）
+const MEET = [
+  { id: 'hotaru', name: 'ホタル', s: 'shirokaki', t: 'yu', where: 'ゆうがたの 代かき', ok: () => HOTARU.told },
+  { id: 'kiji', name: 'キジの たまご', s: 'haru', t: 'asa', where: 'はるの あさ', ok: () => !!(KIJI.told && KIJI.told.egg) },
+  { id: 'imori', name: 'イモリ', s: 'shirokaki', t: 'hiru', where: 'ひるの 代かき', ok: () => IMORI.told },
+  { id: 'tonosama', name: 'トノサマガエル', s: 'haru', t: 'hiru', where: 'はるの ひる', ok: () => TONOSAMA.told },
+  { id: 'kawasemi', name: 'カワセミ', s: 'shirokaki', t: 'asa', where: 'あさの 代かき', ok: () => KAWASEMI.told },
+  { id: 'mogura', name: 'モグラ', s: 'aki', t: 'hiru', where: 'あきの ひる', ok: () => MOGURA.told },
+];
+function nextMeet(n) {                            // まだ 会って いない（ちがう 季節・時間で 会える）生きもの。ぜんぶ 会えたら じゅんばんに
+  let met = [];
+  try { met = JSON.parse(localStorage.getItem('tractorMet') || '[]'); } catch (e) {}
+  for (const m of MEET) if (m.ok() && !met.includes(m.id)) met.push(m.id);
+  try { localStorage.setItem('tractorMet', JSON.stringify(met)); } catch (e) {}
+  const other = MEET.filter(m => m.s !== season || m.t !== TOD);
+  return other.find(m => !met.includes(m.id)) || other[n % other.length];
+}
 const DONE_CV = $('doneCv').getContext('2d');
 let doneTalked = false;
 function doneTalk() {
@@ -8922,7 +8940,15 @@ function doneTalk() {
   doneTalked = true;
   let n = 1;
   try { n = (+localStorage.getItem('tractorPlays') || 0) + 1; localStorage.setItem('tractorPlays', String(n)); } catch (e) {}
-  $('doneSay').textContent = (PLAY.up ? '5 ふん たったね。' : '') + (n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！ お米屋さん「らいすぴあ」の LINE なら お米の おしらせも とどくよ` : 'おつかれさま！ たのしかったね。お米屋さん「らいすぴあ」の LINE で お米の おしらせも うけとれるよ');
+  const nx = nextMeet(n);
+  $('doneSay').textContent = (PLAY.up ? '5 ふん たったね。' : '') + (n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！` : 'おつかれさま！ たのしかったね。') +
+    `つぎは ${nx.where}で ${nx.name}に あえるかも。お米屋さん「らいすぴあ」の LINE なら きせつの おしらせも とどくよ`;
+  if ($('bNext').classList.contains('hidden')) {   // 田んぼアートの「次のお題」が 出て いない とき（アートを 70 点 未満・最後の お題 でも）
+    $('bNext').textContent = `▶ ${nx.where}へ（${nx.name}）`;
+    $('bNext').onclick = () => go(nx.s, nx.t, 'none');
+    $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');
+  }
+  if (!$('bNext').classList.contains('hidden')) $('doneTalk').after($('bNext'));   // つぎへの ボタンは キャラクターの すぐ 下（スクロール しなくても 見える）
 }
 function finish() {
   S.done = true;

@@ -45,6 +45,7 @@
   - 印刷して置けるA4のPOP：`https://go.ricepia.jp/nishio-go/pop.html`（このQRと、「西尾の地図ぜんぶが めいろに／スマホを傾けると お米が ころころ」・めいろの画面3枚・「スマホのカメラで読みこむだけ／無料・登録なし／家からでも遊べます」・「ホーム画面に追加」のひとこと。右下の「印刷する」で印刷。検索にはのせない）。QRを作り直すときは `python3 tools/make-pop.py`（segno が要る）
   - レジで手わたすカード：`https://go.ricepia.jp/nishio-go/card.html`（名刺の大きさ 91×55mm が A4 に 10 枚。印刷して 点線で 切る。QR は POP と同じなので、カードから来た人も `from=pop-honten` に入る。カードだけ 別に 数えたくなったら、`from=card-honten` の QR を segno で 作って card.html の `<symbol id="qr">` に入れかえる）
   - ホーム画面に追加したときの見え方（`nishio-go.webmanifest`）：Android の Chrome の 追加の画面に、めいろの 画面写真 3枚（`nishio-go/shots/install-meiro.jpg`・`install-roll.jpg`・`install-reward.jpg`。Chrome の 追加の 画面は PNG・JPEG だけ なので、`meiro.webp` などを JPEG に した もの）が 出る。`id` は いままでの start_url と 同じにして、もう 追加した人の アプリが 別ものに ならないように した。画面写真を 撮りなおしたら JPEG も 作りなおし、形式（type）と 大きさ（sizes）も 合わせる（プレイテストの entryPrint が 見る）
+- コイン精米機の 中に 貼る ミシン糸の 紹介（A4）：`https://go.ricepia.jp/mishin-pop.html`。QR は `https://go.ricepia.jp/mishin.html?utm_source=qr&utm_medium=offline&utm_campaign=coin-seimai#coin`（すぐ れんしゅう。GA4 の 参照元 qr／キャンペーン coin-seimai、ゲームの 場面は via：coin）。作りなおしは `tools/mishin/make-pop.py`（docs/mishin.md）
 
 ## 2. 数えられること（計測）
 
@@ -64,7 +65,9 @@
 | `friend_bonus` | 友だちのシェアから来た人が、はじめて遊んで +20pt をもらった（シェアから増えた人の数） |
 | `campaign_landing`・`campaign_bonus`・`campaign_link` | キャンペーンのリンクから来た・当店チェックインのボーナス・くわしいページへ |
 | `sponsor_link` | 協賛スポットのサイトへ進んだ |
-| `line_add` | 当店の LINE の友だち追加（常連さまポイント）を押した（from：game-card 当店の窓／game-ending 殿堂入り）。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
+| `line_add` | 当店の LINE の友だち追加を押した（from：game-card 当店の窓／game-ending 殿堂入り（ここまで 常連さまポイントの リンク `uPhkiiv`）／mishin-coin ミシン糸の れんしゅうの まとめ／mishin-result ミシン糸の 結果（この 2つは 価格表・売り出し情報の リンク `AULbClm`。129周目から））。Google 広告の「LINE友だち追加クリック」の成果にも数え、Meta では「Lead」 |
+| `mishin_practice_start`・`mishin_coin_done`・`mishin_game_start`・`mishin_game_end` | ミシン糸 一本どり（`mishin.html`）の れんしゅうを 始めた・まとめを 見た（skipped：1 は 途中で やめて まとめへ）・タイムアタックを 始めた・結果を 見た（bags：あけた 袋）。via：coin（コイン精米機の QR `#coin`）／title。`mishin_coin_done` と `line_add`（from=mishin-coin）の 数を くらべると、れんしゅうを 終えた 人の うち LINE を 押した 割合が わかる |
+| `shop_link`（ミシン糸） | ミシン糸の まとめの「コイン精米所の 案内」（ricepia.jp/#coin-seimai）を 押した（link：site）。ricepia.jp の 側では `utm_source=mishin&utm_medium=game&utm_campaign=coin-done` で 来た 人と わかる（119周目） |
 | `shop_stamp` | 当店に来た日の来店スタンプ（n：何こめ。3・5・10こで +100・+200・+500pt） |
 | `coupon_get`・`coupon_use` | とくてん（クーポン）と交換した・お店で使用済みにした |
 | `code_make`・`code_load` | ひきつぎの あいことばを出した・あいことばで続けた（機種変更などで遊び続けた人の数） |

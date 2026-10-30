@@ -436,7 +436,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.hop = 0; game.hopT = 0; game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.hop = 0; game.hopT = 0; game.crit = boardCritters(b); game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -727,6 +727,40 @@ function tick(now) {
   const tf = !calm && Math.abs(g.bx) + Math.abs(g.by) > 0.05 ? `perspective(900px) rotateX(${(-g.by).toFixed(2)}deg) rotateY(${g.bx.toFixed(2)}deg)` : '';
   if (ui.bezel.style.transform !== tf) ui.bezel.style.transform = tf;
 }
+// 盤の 生け垣の 上の 小さな 生きもの（地図の めいろと そろえる：とじた さかいに 2つまで・そっと 来ると ぴょこぴょこ・速いと にげて 20秒で もどる。見た目だけ）
+const CRIT = { ike: 'kaeru', ine: 'kaeru', dote: 'kaeru', cha: 'tonbo', kuro: 'tonbo', ami: 'kani', ishi: 'kani', matsu: 'sagi' };
+function boardCritters(b) {   // 道すじの ある マスの とじた さかいから、はなれた 2つ（1つめは マスの 番号の まぜた 値で・2つめは 1つめから いちばん 遠い 所。上に かたよらない）
+  const own = tubes(b), cand = [], used = new Set([b.start[1] * b.tw + b.start[0], b.goal[1] * b.tw + b.goal[0], b.spring, ...(b.grains || []), ...(b.komono || [])]);
+  for (let k = 0; k < b.tw * b.th; k++) {
+    const i = k % b.tw, j = (k / b.tw) | 0, h = (Math.imul(i + b.tx0, 73856093) ^ Math.imul(j + b.ty0, 19349663)) >>> 0;
+    if (b.cell[k] !== 1 || !own[k] || used.has(k) || b.holes.has(k)) continue;
+    const d = DIRS.find((_, n) => { const [dx, dy] = DIRS[(n + (h >>> 8)) % 4]; return !pass(b, i, j, dx, dy); });
+    if (d) cand.push({ i, j, h, d });
+  }
+  if (!cand.length) return [];
+  cand.sort((a, c) => a.h - c.h);
+  const pick = [cand[0]], far = cand.reduce((m, c) => (Math.hypot(c.i - pick[0].i, c.j - pick[0].j) > Math.hypot(m.i - pick[0].i, m.j - pick[0].j) ? c : m), cand[0]);
+  if (far !== cand[0] && Math.abs(far.i - pick[0].i) + Math.abs(far.j - pick[0].j) >= 6) pick.push(far);
+  return pick.map(({ i, j, d }) => {
+    const st = api.hedgeStyleAt ? api.hedgeStyleAt((b.tx0 + i) * K + K / 2, (b.ty0 + j) * K + K / 2) : 'ike';
+    return { i, j, px: i + 0.5 + d[0] * 0.5, py: j + 0.5 + d[1] * 0.5, kind: CRIT[st] || 'kaeru', fled: 0, hi: 0 };
+  });
+}
+function drawCritters(x, g, T, now) {
+  const sp = Math.hypot(g.vx, g.vy), P = root.nishioPixel;
+  for (const c of g.crit || []) {
+    const img = P && P.critterSprite && P.critterSprite(c.kind);
+    if (!img) continue;
+    const d = Math.hypot(g.x - c.px, g.y - c.py);
+    if (!c.fled && d < 0.75) { if (sp > 1.2) c.fled = now; else if (!c.hi) c.hi = now; }
+    else if (c.hi && d > 1.2) c.hi = 0;
+    let up = 0, al = 1;
+    if (c.fled) { const t = now - c.fled; if (t > 20000) c.fled = 0; else if (t > 500) continue; else { up = t / 500; al = 1 - up; } }
+    const hi = c.hi ? (now - c.hi) / 600 : 2, s = T * 0.8;
+    const bob = calm ? 0 : hi < 1 ? Math.abs(Math.sin(hi * Math.PI * 2)) * T * 0.3 : Math.max(0, Math.sin(now / 420 + c.i)) * T * 0.06;
+    x.globalAlpha = al; x.drawImage(img, Math.round(c.px * T - s / 2), Math.round(c.py * T - s / 2 - bob - up * T), Math.round(s), Math.round(s)); x.globalAlpha = 1;
+  }
+}
 function draw(now) {
   const g = game, b = g.board, T = g.T, x = ui.cv.getContext('2d');
   x.imageSmoothingEnabled = false;
@@ -798,6 +832,7 @@ function draw(now) {
     if (k > 0.3) nishioPixel.drawRice(x, fx * T, fy * T, g.th + (1 - k) * 8, 0, 'dizzy', 0, '', u * (k - 0.3) / 0.7);
     return;
   }
+  drawCritters(x, g, T, now);   // 生け垣の 上の 生きもの（お米の 下に）
   const hp = g.hop > 0 ? Math.sin(Math.min(1, (g.hopT || 0) / 0.32) * Math.PI) * g.hop : 0;   // とびはねの 高さ（マス）
   const X = g.x * T, Y = (g.y - hp) * T;
   x.fillStyle = `rgba(0,0,0,${(0.28 - hp * 0.3).toFixed(3)})`; x.beginPath(); x.ellipse(X, g.y * T + T * 0.3, T * 0.26 * (1 - hp * 0.6), T * 0.09 * (1 - hp * 0.6), 0, 0, Math.PI * 2); x.fill();   // かげは 地面に のこって 小さく うすく
@@ -838,6 +873,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (intro && !intro.hidden && b) { if (t && wantDaily) t.textContent = '☀️ きょうの めいろ に ちょうせん'; }   // はじめての人：いちばん上の ボタンで（iPhone の 傾きの 許可は タップの その場で）
     else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
   }
+  // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめの 画面で ボタンを 待たず、開いたら すぐ 地図の めいろで 転がる
+  // （はじめての 人は「あそびかた」の 札から）。iPhone の 傾きの 許可は、さいしょに 画面を さわった ときに 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
+  let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
+  const intro0 = $('intro');
+  if (b && intro0 && !intro0.hidden && !noAuto) b.click();
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）

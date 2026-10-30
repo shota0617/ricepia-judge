@@ -764,6 +764,31 @@ const LAMPS = (() => {
   return { setup, toggle, update, get on() { return on; } };
 })();
 
+// ---- ウインカー（前・後ろ・作業機。材質 winker_L・winker_R）。前進で大きく切っている間だけ、曲がる側が点滅する ----
+const WINKER = (() => {
+  const mats = { L: [], R: [] };
+  let lastSide = null, lastOn = false;
+  function setup(root) {
+    root.traverse(o => {
+      if (!o.isMesh || !o.material) return;
+      const s = o.material.name === 'winker_L' ? 'L' : o.material.name === 'winker_R' ? 'R' : null;
+      if (s && !mats[s].includes(o.material)) mats[s].push(o.material);   // 前・後ろ・作業機は同じ材質を共有しているので、左右1つずつで全箇所が変わる
+    });
+  }
+  function apply(side, on) {
+    for (const m of mats[side]) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2 : 1; }
+  }
+  function update() {
+    // 右へ切ると steer > 0（前輪の箇所の注釈通り）。前進で大きく切っている間だけ点滅し、それ以外は両側とも消灯
+    const side = S.v > 0.2 && Math.abs(S.steer) > 0.26 ? (S.steer > 0 ? 'R' : 'L') : null;
+    const on = !!side && Math.floor(performance.now() / 400) % 2 === 0;   // 約 0.8 秒周期・点灯 50%
+    if (side !== lastSide) { if (lastSide) apply(lastSide, false); lastSide = side; lastOn = false; }
+    if (side && on !== lastOn) { apply(side, on); lastOn = on; }
+    if (!side) lastOn = false;
+  }
+  return { setup, update };
+})();
+
 function setupTractor(root) {
   rig.add(root);
   root.traverse(o => {
@@ -778,6 +803,7 @@ function setupTractor(root) {
   P.rotY0 = P.Rotary.position.y;
   P.flap0 = P.Flap.rotation.x;
   LAMPS.setup(root);
+  WINKER.setup(root);   // ハローの付け替えは setupTractor の呼び出しより前に済んでいるので、ハローのウインカー材質も拾える
   P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
   P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
   root.traverse(o => {                            // 映りこみのすじ：Glass の外（Body の中）にあるので、ルート全体から拾う
@@ -9859,6 +9885,7 @@ function frame(now) {
   AKIAKANE.update(dt);
   LEAK.update(dt);
   LAMPS.update();
+  WINKER.update();
   GLINT_CAB.value = camMode === 0 ? 0.3 : 1;      // 運転席ではすじをうすく（うっすら残す）
   emitExhaust(dt);
   DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も

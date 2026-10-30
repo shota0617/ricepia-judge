@@ -855,12 +855,12 @@ function flag(x, X, Y, T) {   // 🏁 の旗（白黒の市松）
   for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) { x.fillStyle = (i + j) % 2 ? '#111' : '#fff'; x.fillRect(Math.round(X + u + i * u * 1.5), Math.round(Y - 9 * u + j * u * 1.5), Math.ceil(u * 1.5), Math.ceil(u * 1.5)); }
 }
 
-// はじめの画面の「🌀 傾けて めいろ」：操作して遊ぶ で始めてから めいろを開く。地図の 🌀 ボタンでも開く
+// はじめの画面の「あそぶ」：操作して遊ぶ で始めてから めいろを開く。地図の 🌀 ボタンでも開く
 document.addEventListener('DOMContentLoaded', () => {
   const b = $('meiroBtn');
-  if (b) b.addEventListener('click', () => {
+  if (b) b.addEventListener('click', e => {
     const P = root.nishioPixel && root.nishioPixel.meiroApi;
-    if (P) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
+    if (P && e.isTrusted) P.tiltAsk();   // iPhone の 傾きの 許可は、タップした その場でしか 聞けない（open は 少しあとなので ここで聞く）
     if (root.nishioPixel && root.nishioPixel.setRoll) root.nishioPixel.setRoll(true);   // 傾けて 転がす（地図が めいろに なる）
     const d = $('demoBtn'); if (d) d.click();   // 操作して遊ぶ で 始める：歩く地図ぜんぶが めいろ（メインの 遊び）
     if (wantOpen) setTimeout(() => open(undefined, wantDaily), 60);   // シェアの リンクから 来た人は、その めいろ（☀️ きょうの めいろ など）を ひらく
@@ -874,10 +874,11 @@ document.addEventListener('DOMContentLoaded', () => {
     else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
   }
   // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめの 画面で ボタンを 待たず、開いたら すぐ 地図の めいろで 転がる
-  // （はじめての 人は「あそびかた」の 札から）。iPhone の 傾きの 許可は、さいしょに 画面を さわった ときに 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
+  // あそびかたは せっていから。iPhone の 傾きの 許可は「あそぶ」の タップで 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
   let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
   const intro0 = $('intro');
   if (b && intro0 && !intro0.hidden && !noAuto) b.click();
+  if (!noAuto && !wantOpen && navigator.maxTouchPoints > 0 && root.nishioPixel && root.nishioPixel.meiroApi.tiltNeedsPermission()) { root.nishioGo.toastHold(); $('playReady').hidden = false; $('playReadyOk').focus(); }
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', () => open());
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）

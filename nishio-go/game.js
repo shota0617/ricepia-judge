@@ -160,6 +160,9 @@ function loadState() {
 }
 let S = loadState();
 let stepMove = false;   // いまの移動が、歩く地図の1歩か（pixel.js の moveTo(…, 'step')）
+// 開始の 位置合わせだけで ようこそ箱を 開かず、最初の 操作から 遊べるようにする。
+let playInteracted = false;
+const notePlayInput = () => { playInteracted = true; };
 const session = { start: Date.now(), on: false, gained: 0, rewards: 0 };   // 1回に遊んだ間のこと（離脱を減らす：session_end）
 const modeListeners = [];   // あるいて移動／操作して移動の切り替えを知らせる先（pixel.js）
 const save = () => { if (!store.set(stateKey(), S)) toast('このブラウザに きろくを 保存できませんでした。スマホの 空きや、ブラウザの 設定（プライベート モード など）を 見てみてね。'); };
@@ -1525,6 +1528,7 @@ function nearestChest() {
   return best;
 }
 function tryChest() {
+  if (welcomeDue() && !playInteracted) return;
   if (driving) return;   // 車に乗っている間は開けない（降りると開く）
   if (rewardBusy()) return;   // ほかの ごほうび（同じ位置の知らせで見つけた 路地の行き止まり など）を上書きしない。閉じたら もう一度 調べる（hideReward）
   // あるいて移動では、チェックインと同じく GPS の誤差が大きいときは開けない（乗り物で移動中でも開ける）
@@ -2675,7 +2679,7 @@ function toast(msg) {
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
 function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
-function howtoOpen() { const h = $('howto'); return !!h && !h.hidden; }
+function howtoOpen() { return ['howto', 'playReady'].some(id => $(id) && !$(id).hidden); }
 // 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
 function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
 // シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
@@ -4129,6 +4133,7 @@ function friendBonus() {
   setTimeout(() => toast(`👋 友だちのシェアから来てくれた人に +${FRIEND_BONUS}pt`), 1500);
 }
 function begin(isDemo) {
+  if ($('intro').hidden && store.get('nsg_started', false)) return;   // 開始の 連打で 保存・あいさつを 重ねない
   if (!store.get('nsg_started', false)) store.set('nsg_begin_t', Date.now());
   if (!store.get('nsg_first_day', '')) store.set('nsg_first_day', ymd());
   store.set('nsg_started', true);
@@ -4140,7 +4145,8 @@ function begin(isDemo) {
   friendBonus();
   // はじめての人は、せかいちずではなく歩く地図から（すぐ近くの ようこそ たからばこ と主人公が見えて、おまかせ歩きも動く）
   if (isDemo && welcomeDue() && window.nishioPixel && nishioPixel.worldMode) nishioPixel.setWorld(false);
-  if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ。めいろでは「あそびかた」の 画面を 先に 見てから）
+  // 運営者の声「スタートを簡単に」：操作して遊ぶ ときの あいさつは 省き、たからばこなど 遊びの 中の 会話は 残す。
+  if (!isDemo && ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ。めいろでは「あそびかた」の 画面を 先に 見てから）
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
     const how = !isDemo ? 'きみが あるくと、いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、すすむよ。' : '地図を タップすると、そこへ 行くよ。';
@@ -4201,7 +4207,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
-  snapMaze, friendVs, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  notePlayInput, snapMaze, friendVs, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },

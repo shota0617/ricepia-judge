@@ -7689,18 +7689,16 @@ function paintRegion(dst, tx0, ty0, tw, th, T) {
     drawContours(tx0, ty0, tx0 + tw, ty0 + th, -tx0 * T, -ty0 * T, T);   // 本当の高低差の 等高線（標高が 読めていれば）
   } finally { ctx = keep; regionPaint = false; }
 }
-// あそびかた：はじめて めいろに 入った 人に 1回だけ（運営者の声「ゲームをわかりやすく」）。せっていの「❓ あそびかた」で もう一度
+// 運営者の声「スタートを簡単に」：あそびかたは せっていから 開く。開始を 確認の 札で 止めない。
 const howtoEl = $('howto');
-let howtoSeen = (() => { try { return localStorage.getItem('nsg_howto') === '1'; } catch (e) { return false; } })();
 function howtoShow() {
   const k = $('howtoKey'), pc = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (k) k.textContent = pc ? 'パソコンは 矢印キー。地図を クリックした所へも 向かう' : '傾けにくい ときは、地図を タップした所へ 向かう';
   if (G.toastHold) G.toastHold();   // いま 出ている 知らせは 下げて、とじてから（札の 見出しに 重なっていた）
-  howtoEl.hidden = false; howtoSeen = true;
+  howtoEl.hidden = false; rp.vx = rp.vy = 0;
   try { localStorage.setItem('nsg_howto', '1'); } catch (e) { /* noop */ }
   setTimeout(() => { const b = $('howtoOk'); if (b && !howtoEl.hidden) b.focus(); }, 50);
 }
-function howtoTick() { if (!howtoSeen && mazeOn() && !mapCovered() && !sightBusy() && !(G.rewardSoon && G.rewardSoon())) howtoShow(); }   // 出る 予定の ごほうび（開く 予約の おみやげ袋・読みこみ中の 絵・ムービー）が 済んでから
 $('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; if (G.toastFlush) G.toastFlush(); });   // いまの 持ち方を「まっすぐ」に して はじめる
 $('howtoOpen').addEventListener('click', howtoShow);
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
@@ -7708,7 +7706,6 @@ function frame(now) {
   if (!active) return;
   raf = requestAnimationFrame(frame);
   if (meiroPause) { lastT = 0; return; }
-  howtoTick();
   mzNextHoldTick();
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
   const w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
@@ -8665,6 +8662,7 @@ const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・水べ mushi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
   if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
+  G.notePlayInput();
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
   facing = dir;
@@ -8728,44 +8726,58 @@ const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たっ�
 const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
 // へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
-// 傾き：はじめに読めた持ち方を「まっすぐ」にする（寝かせて持っても、立てて持っても、その持ち方から傾けた分だけ転がる）。📱 を押しなおすと やりなおす。
-// 画面を横にしているときは、左右と前後を入れかえる
+// 運営者の声「傾けた時の反応をよく」：静かな 中心は 残し、少しの 傾きでも 抵抗を こえる。
+// 最大の 力・速さ・ころがり抵抗は 変えず、中央の 手ぶれは 力を 0 に もどす。
+function tiltCurve(degrees) {
+  const v = Math.min(1, Math.abs(degrees) / tiltG.deg);
+  if (v <= 0.08) return 0;
+  const force = v < 0.25 ? (v - 0.08) / 0.17 * 0.45 : 0.45 + (v - 0.25) / 0.75 * 0.55;
+  return Math.sign(degrees) * force;
+}
+const tiltDelta = (a, b) => ((a - b + 540) % 360) - 180;
 window.addEventListener('deviceorientation', e => {
-  if (e.gamma == null || e.beta == null) return;
+  if (!Number.isFinite(e.gamma) || !Number.isFinite(e.beta) || document.hidden) return;
+  const ang = ((screen.orientation ? screen.orientation.angle : window.orientation) || 0) % 360;
+  // 回転した あとは 古い 軸の 中心・いきおいを 持ちこさない（180度も 対応）。
+  if (tiltG.angle !== ang) { tiltReset(); tiltG.angle = ang; rp.vx = rp.vy = 0; }
   tiltG.on = true;
-  const ang = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
   let lr = e.gamma, fb = e.beta;
-  if (ang === 90) { lr = e.beta; fb = -e.gamma; } else if (ang === -90 || ang === 270) { lr = -e.beta; fb = e.gamma; }
-  if (!tiltG.base || tiltG.n < 8) {   // はじめの8回の平均を まっすぐに
-    tiltG.n++;
-    tiltG.base = tiltG.base ? { lr: tiltG.base.lr + (lr - tiltG.base.lr) / tiltG.n, fb: tiltG.base.fb + (fb - tiltG.base.fb) / tiltG.n } : { lr, fb };
-    if (tiltG.n === 8 && tiltG.announce) {   // 📱 を押したときの 知らせを 読みおえたころに
-      const wait = Math.max(0, 2600 - (performance.now() - tiltG.announce));
-      tiltG.announce = 0;
-      setTimeout(() => G.toast('📱 いまの持ち方を「まっすぐ」にしました（📱 を押すと 合わせなおせます）'), wait);
-    }
-    return;
+  if (ang === 90 || ang === -270) { lr = e.beta; fb = -e.gamma; }
+  else if (ang === -90 || ang === 270) { lr = -e.beta; fb = e.gamma; }
+  else if (Math.abs(ang) === 180) { lr = -e.gamma; fb = -e.beta; }
+  const te = e.timeStamp || performance.now();
+  if (!tiltG.base) { tiltG.base = { lr, fb }; tiltG.n = 1; tiltG.t = te; return; }
+  // はじめの 2回だけ 平均（8回 待って 動き出しの 傾きまで 中心に まぜていた）。
+  if (tiltG.n < 2) {
+    tiltG.base.lr += tiltDelta(lr, tiltG.base.lr) / 2; tiltG.base.fb += tiltDelta(fb, tiltG.base.fb) / 2;
+    tiltG.n++; tiltG.t = te; return;
   }
-  const c = v => Math.max(-1, Math.min(1, v / tiltG.deg));   // tiltG.deg 度で いちばん強く（ふつう 20度）
-  const dz = v => (Math.abs(v) < 0.08 ? 0 : Math.sign(v) * Math.pow(Math.abs(v), 1.35));   // 手のふるえは無視。少しの傾きは やさしく（細かく あやつれる）
-  const te = e.timeStamp || performance.now(), k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - (tiltG.t || te - 16)) / 1000)) / 0.035);   // センサーの細かいゆれを ならす（届く回数が ちがう スマホでも 同じ なめらかさ：時間で まぜる）
+  const x = tiltCurve(tiltDelta(lr, tiltG.base.lr)), y = tiltCurve(tiltDelta(fb, tiltG.base.fb));
+  const k = 1 - Math.exp(-Math.min(0.1, Math.max(0.004, (te - tiltG.t) / 1000)) / 0.022);
   tiltG.t = te;
-  tiltG.x += (dz(c(lr - tiltG.base.lr)) - tiltG.x) * k; tiltG.y += (dz(c(fb - tiltG.base.fb)) - tiltG.y) * k;
-  if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {   // あるいて移動で傾けたとき：1回だけ教える
+  tiltG.x = x === 0 ? 0 : tiltG.x + (x - tiltG.x) * k;
+  tiltG.y = y === 0 ? 0 : tiltG.y + (y - tiltG.y) * k;
+  if (!G.demo && rollOn && !tiltG.walkTold && Math.hypot(tiltG.x, tiltG.y) > 0.7 && active) {
     tiltG.walkTold = true;
     G.toast('🍚 あるいて移動では、歩いた所へ お米が転がるよ。傾けて遊ぶのは「操作して遊ぶ」で');
   }
 });
-function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.x = tiltG.y = 0; }
-function tiltAsk() {   // iPhone：傾きを使う許可（画面をさわったときにしか聞けない）
-  if (tiltG.asked || !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function')) return;
+function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.t = 0; tiltG.x = tiltG.y = 0; }
+function tiltNeedsPermission() { return !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'); }
+function tiltAsk() {   // 通常の「あそぶ」の タップで 1回だけ。拒否・例外でも タップや 矢印キーで 遊べる。
+  if (tiltG.asked || !tiltNeedsPermission() || (navigator.userActivation && !navigator.userActivation.isActive)) return;
   tiltG.asked = true;
-  DeviceOrientationEvent.requestPermission().then(r => { if (r !== 'granted') G.toast('📱 傾きの許可がないので、地図を タップした所へ お米が進むよ（矢印キーでも）'); else tiltReset(); }).catch(() => { tiltG.asked = false; });
+  const fallback = () => G.toast('地図を タップして 遊べるよ（矢印キーでも）');
+  try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, fallback); }
+  catch (e) { fallback(); }
 }
-['click', 'touchend'].forEach(ev => document.addEventListener(ev, () => { if (rollOn) tiltAsk(); }, { capture: true, passive: true }));
-document.addEventListener('visibilitychange', () => { if (!document.hidden) tiltReset(); });
+$('playReadyOk').addEventListener('click', () => { tiltAsk(); tiltReset(); $('playReady').hidden = true; if (G.toastFlush) G.toastFlush(); });
+document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });
+window.addEventListener('pageshow', () => { tiltReset(); rp.vx = rp.vy = 0; });
+window.addEventListener('orientationchange', () => { tiltReset(); rp.vx = rp.vy = 0; });
+if (screen.orientation) screen.orientation.addEventListener('change', () => { tiltReset(); rp.vx = rp.vy = 0; });
 document.addEventListener('keyup', e => { const k = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' }[e.key]; if (k) rk[k] = 0; });
-window.addEventListener('blur', () => { for (const k in rk) rk[k] = 0; });
+window.addEventListener('blur', () => { for (const k in rk) rk[k] = 0; tiltReset(); rp.vx = rp.vy = 0; });
 const rollBlocked = (x, y) => { const c = codeAt(Math.floor(x), Math.floor(y)); return BLOCK.has(c) && c !== C.X; };
 /* ---------- 地図の めいろ（傾けて 転がすときの メインの 遊び） ---------- */
 // 運営者の指示「転がす迷路はミニゲームではなくメインのゲームに」「歩く地図を めいろに」（2026-10-23）
@@ -10227,14 +10239,15 @@ function rollStep(dt) {
     if (rp.x !== null && rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 6 && performance.now() - (mzRt.snapT || 0) > 800) mzRt.warp = true;   // めいろを とびこえた（名所の 窓の「ここへ」など）：この ゴールは ★なし
     Object.assign(rp, { x: t.x, y: t.y, vx: 0, vy: 0, sent: { x: t.x, y: t.y }, tile: `${Math.floor(t.x)},${Math.floor(t.y)}` });
   }
-  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
+  if (!$('playReady').hidden || sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
   const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
+  if (Math.hypot(ax, ay) > 0.08) G.notePlayInput();
   const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
   const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1);   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
   const up = rp.vx * sl.x + rp.vy * sl.y < 0 ? 0.6 : 1;   // 上り坂は、下りより ゆるく おそくなる（いきおいで 堤防や 坂を のぼれる）
   const acc = ROLL_ACC * (KP.accel || 1);
-  // ころがり抵抗は 押す力の 4わり まで：どの 地面・転がり方・天気でも 約10度 傾ければ 動きだす（「ぴたっ」で 砂浜は いくら 傾けても 動かず、草は 14度 いった。めいろで「詰まって 動かない」の もと）
+  // ころがり抵抗は 押す力の 4わり まで：どの 地面・転がり方・天気でも 小さな 傾きで 動きだす（「ぴたっ」で 砂浜は いくら 傾けても 動かず、草は 14度 いった。めいろで「詰まって 動かない」の もと）
   const cr = Math.min(crr * (KP.crr || 1), acc * 0.4);
   const fx = Math.max(-1, Math.min(1, ax)) * acc + sl.x * up, fy = Math.max(-1, Math.min(1, ay)) * acc + sl.y * up, fp = Math.hypot(fx, fy);   // 押す力（傾き・坂）
   let sp = Math.hypot(rp.vx, rp.vy);
@@ -10799,6 +10812,7 @@ function tapWalkTick() {
   tapS.timer = setTimeout(tapWalkTick, G.autoInterval ? Math.min(180, G.autoInterval()) : 180);
 }
 function tapWalk(gx, gy) {
+  G.notePlayInput();
   tapWalkStop();
   if (driving) { G.toast('🚗 車は スティックで うごかします'); return; }
   const t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
@@ -10831,7 +10845,7 @@ const meiroApi = {
   hedgeStyleAt: (tx, ty) => mzStyle(Math.floor(tx / MZ_K), Math.floor(ty / MZ_K)), hedgePat: (x, ox, oy, tile, style) => mzHedgePat(x, ox, oy, tile, style),   // 盤の 台の ふちも 地図と 同じ 生け垣の 種類で（tile：地図の 1マスの 点の 大きさ）
   forgetChunk(cx, cy) { const k = cx + '_' + cy, c = chunks.get(k); if (c && c.state === 'fail') chunks.delete(k); },   // 読めなかった区画を わすれる（やりなおしで すぐ 読みなおす。ふだんは 60秒 待つ）
   slopeAt: (x, y) => slopeAt(x, y), get demGen() { return demGen; },   // 坂（マス/秒² の加速）と、標高が とどくたびに ふえる数（盤を 描きなおす）
-  tilt: () => tiltG, tiltAsk, tiltReset, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
+  tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
 window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり

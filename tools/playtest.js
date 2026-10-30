@@ -3366,9 +3366,14 @@ async function walkTo(page, id) {
     R.checks.townToast = await (async () => {
       const vp = w.page.viewportSize();
       await w.page.setViewportSize({ width: 320, height: 568 }); await w.page.waitForTimeout(400);
-      const r = await w.page.evaluate(async () => {
+      let r;
+      try {
+      r = await w.page.evaluate(async () => {
         const G = nishioGo, P = nishioPixel, wait = ms => new Promise(res => setTimeout(res, ms)), cv = document.getElementById('pxCanvas'), ctx = cv.getContext('2d'), el = document.getElementById('toast');
         document.getElementById('pxInfo').hidden = true; const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
+        // 知らせの よけ（縁の 矢印に 重なると wlow で 下へ）を テストの あいだ 止める。止めないと、こまの はじめに wlow を 外しても 次の 描きで ゲームが また つけて、
+        // お米の 位置しだいで 20の ゴール ぜんぶ 12/12 が「知らせが 下」に なり、2だんめが ときどき 落ちた（知らせが 上に いる ときの 札の よけ方を まちがいなく 見る）
+        P.toastDodgeOff = true; el.classList.remove('wlow', 'wside', 'wfloor');
         const keep = { fr: ctx.fillRect, ft: ctx.fillText };
         let box = null, seen = 0, hits = 0, riceHits = 0, lastRect = null;
         ctx.fillRect = function (x, y, w0, h0) { lastRect = [x, y, x + w0, y + h0]; return keep.fr.apply(this, arguments); };
@@ -3427,6 +3432,7 @@ async function walkTo(page, id) {
         ctx.fillRect = keep.fr; ctx.fillText = keep.ft; el.classList.remove('show');
         return { moved, seen, hits, riceHits, ne, arrowSeen, arrowHits, dodged, ngs: ngs.length, tried: ne === 'none' ? tried : tried.length };
       });
+      } finally { await w.page.evaluate(() => { nishioPixel.toastDodgeOff = false; }).catch(() => {}); }   // あとの テストでは 知らせの よけを もどす（とちゅうで 落ちても）
       await w.page.setViewportSize(vp); await w.page.waitForTimeout(400);
       return { ...r, ok: r.seen > 0 && r.hits === 0 && r.riceHits === 0 && (r.arrowHits > 0 || r.dodged > 0) && r.arrowHits === 0 };
     })();

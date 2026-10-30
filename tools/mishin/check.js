@@ -408,7 +408,7 @@ const CHECKS = {
     ok(al.lefts.length >= 2 && al.lefts.every(x => x === al.lefts[0]) && /速すぎ/.test(al.warn), '結果の 顔の ない 吹き出しは 左が そろう・速すぎの 声は 早めに', al);
     // 143周目：結果の ヒントは 目標 あと 1つを 先に・数は「速く」の ヒントの ときだけ・達成は「もう一回」の 中に・LINE の 説明は 1回目 だけ
     const r143 = await p.evaluate(async () => { const m0 = KB.manual; KB.manual = true; const S = KB.S, raf = () => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-      try{ localStorage.removeItem('mishin-goals'); localStorage.setItem('mishin-best2', '999999'); }catch(e){} KB.ends && KB.ends(0); /* この ページで 1回目の 結果 から */ for (let t = Date.UTC(2026,9,1); !(KB.todayGoals().includes('quick8')); t += 864e5) KB.today = new Date(t).toISOString().slice(0,10); /* 早わざの 目標が ある 日に（144周目：その 日に ないと 空振り） */ const ids = KB.todayGoals();
+      try{ localStorage.removeItem('mishin-goals'); localStorage.setItem('mishin-best2', '999999'); }catch(e){} KB.ends && KB.ends(0); /* この ページで 1回目の 結果 から */ S.day = null; KB.today = '2026-10-01'; for (let t = Date.UTC(2026,9,1), i = 0; !(KB.todayGoals().includes('quick8')) && i < 400; t += 864e5, i++) KB.today = new Date(t).toISOString().slice(0,10); /* 早わざの 目標が ある 日に（144周目：その 日に ないと 空振り）。ゲームの 日（S.day）を 消して から（300周目：日付が かわると 止まらなく なって いた） */ const ids = KB.todayGoals();
       const end = (f) => { KB.start(); f(KB.S); KB.S.time = 0.01; for (let i=0;i<120;i++) KB.step(1/60); };
       end(S => { S.bags = 3; S.clean = 3; S.pullTime = 10; S.zoneTime = 1; S.quick = 7; S.bestStreak = 2; S.streak = 0; });
       await raf(); const tip1 = document.getElementById('tip').textContent, line1 = getComputedStyle(document.querySelector('#resLine .say>span')).display;
@@ -588,7 +588,7 @@ const CHECKS = {
       for (const d of ['2026-10-28', '2027-03-10', '2026-08-25']) { KB.today = d; const bag = KB.makeBag(4), bag9 = KB.makeBag(9); out[d] = { year: KB.riceYear(new Date(d)), golden: bag.golden, brand: bag.brand, brand9: bag9.golden ? bag9.brand : '', kaori: KB.riceYear(new Date(d), 'あいちのかおり') }; }
       KB.today = null; return out; });
     // 135周目：きょうの 目標は 1年 どの 日も 3つ ちがう・1つは はじめての 人にも とれる（8袋 あける か 右から ほどく袋）・新米の 目標は 新米の きせつ だけ
-    const yg = await p.evaluate(() => { const bad = [], cnt = {}, first = {}; let n = 0; for (let t = Date.UTC(2026,0,1); t < Date.UTC(2027,0,1); t += 864e5){ const d = new Date(t).toISOString().slice(0,10); KB.today = d; const ids = KB.todayGoals(); n++;
+    const yg = await p.evaluate(() => { KB.S.day = null; /* ゲームの 日が のこって いると KB.today が きかない（300周目） */ const bad = [], cnt = {}, first = {}; let n = 0; for (let t = Date.UTC(2026,0,1); t < Date.UTC(2027,0,1); t += 864e5){ const d = new Date(t).toISOString().slice(0,10); KB.today = d; const ids = KB.todayGoals(); n++;
         if (new Set(ids).size !== 3 || !ids.some(i => i==='bags8' || i==='right')) bad.push(d + ':' + ids.join(',')); first[ids[0]] = (first[ids[0]]||0) + 1; for (const i of ids) cnt[i] = (cnt[i]||0) + 1; }
       let same = 0, days = 0, prev = null; for (let t = Date.UTC(2026,0,1); t < Date.UTC(2031,0,1); t += 864e5){ KB.today = new Date(t).toISOString().slice(0,10); const e = KB.todayGoals()[0]; if (prev) { days++; if (e === prev) same++; } prev = e; } /* 141周目：となりの 日で やさしい 目標が 同じに なる 割合（でたらめなら 0.5） */
       KB.today = null; return { n, bad: bad.slice(0,5), nbad: bad.length, first, cnt, sameNext: +(same/days).toFixed(3) }; });

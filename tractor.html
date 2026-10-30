@@ -8943,7 +8943,7 @@ function doneTalk() {
   const nx = nextMeet(n);
   $('doneSay').textContent = (PLAY.up ? '5 ふん たったね。' : '') + (n >= 2 ? `${n} かいめ だね。また きてくれて ありがとう！` : 'おつかれさま！ たのしかったね。') +
     `つぎは ${nx.where}で ${nx.name}に あえるかも。お米屋さん「らいすぴあ」の LINE なら きせつの おしらせも とどくよ`;
-  if (!ART.on && $('bNext').classList.contains('hidden')) {   // 田んぼアートの「次のお題」が ない ときだけ
+  if ($('bNext').classList.contains('hidden')) {   // 田んぼアートの「次のお題」が 出て いない とき（アートを 70 点 未満・最後の お題 でも）
     $('bNext').textContent = `▶ ${nx.where}へ（${nx.name}）`;
     $('bNext').onclick = () => go(nx.s, nx.t, 'none');
     $('bNext').classList.remove('hidden'); $('bAgain').classList.add('sub');

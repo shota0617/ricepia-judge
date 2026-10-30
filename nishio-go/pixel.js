@@ -7481,7 +7481,8 @@ function riceSay(t, ms = 1400, mood = '') {
 }
 function drawRiceSay(w, cy, T, now, dpr) {   // dpr：画面の 点の こまかさ（frame の 中の 値を もらう）
   if (!riceBub.t || now > riceBub.until) return;
-  const age = now - riceBub.at, left = riceBub.until - now, k = calmMotion ? 1 : Math.min(1, 0.6 + age / 300);   // ぽんっと ふくらんで 出る
+  // 発言は performance.now()、描画は フレーム時刻。重い こまでは 発言の 方が 新しいので、出始めの 大きさを 下回らせない。
+  const age = Math.max(0, now - riceBub.at), left = riceBub.until - now, k = calmMotion ? 1 : Math.min(1, 0.6 + age / 300);   // ぽんっと ふくらんで 出る
   const fz = Math.round(FLOAT_PX * dpr * k), pad = Math.round(fz * 0.45), r = Math.round(fz * 0.5), tl = Math.round(fz * 0.45);
   ctx.save(); ctx.globalAlpha = Math.min(1, left / 250);
   ctx.font = `bold ${fz}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';

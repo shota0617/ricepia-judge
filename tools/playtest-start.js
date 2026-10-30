@@ -74,18 +74,22 @@ async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
         localStorage.setItem('nsg_state', JSON.stringify({ v: 1, points: 789, total: 789 }));
         const key = nishioGo.stateKey, data = nishioGo.state;
         data.points = 123; data.total = 456; data.welcomed = true;
+        // 移動の 検査で100m直前にいると、再開の位置合わせで正規の歩行ボーナスが入る。保存検査は境界から離す（一致条件は変えない）。
+        data.walkCarry = 0;
         nishioGo.setGuide(data.guide); return key;
       });
       await page.reload(); await page.waitForFunction(() => window.nishioPixel && nishioGo.started);
       const revisit = await visible(page);
       if (permission) await page.click('#playReadyOk');
-      const kept = await page.evaluate(() => {
+      const persistence = await page.evaluate(() => {
         for (let i = 0; i < 10; i++) nishioGo.begin(true);
-        return nishioGo.state.points === 123 && nishioGo.state.total === 456 && localStorage.getItem('nsg_tilt') === '26' && localStorage.getItem('nsg_start_test') === 'keep' && JSON.parse(localStorage.getItem('nsg_state')).points === 789;
+        const points = nishioGo.state.points, total = nishioGo.state.total, tilt = localStorage.getItem('nsg_tilt'), marker = localStorage.getItem('nsg_start_test'), legacyPoints = JSON.parse(localStorage.getItem('nsg_state')).points;
+        return { points, total, tilt, marker, legacyPoints, kept: points === 123 && total === 456 && tilt === '26' && marker === 'keep' && legacyPoints === 789 };
       });
+      const kept = persistence.kept;
       await page.goto('about:blank'); await page.goBack(); await page.waitForFunction(() => window.nishioPixel && nishioGo.started);
       const back = await page.evaluate(key => !!localStorage.getItem(key) && nishioGo.state.points === 123 && document.getElementById('howto').hidden, saved);
-      checks[kind] = { before, after, revisit, kept, back, ok: !before.intro && !before.help && !before.talk && before.ready === permission && before.asks === 0 && !after.ready && after.asks === (permission ? 1 : 0) && !revisit.help && kept && back };
+      checks[kind] = { before, after, revisit, kept, back, persistence, ok: !before.intro && !before.help && !before.talk && before.ready === permission && before.asks === 0 && !after.ready && after.asks === (permission ? 1 : 0) && !revisit.help && kept && back };
     } finally { await ctx.close(); }
   }
   // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。

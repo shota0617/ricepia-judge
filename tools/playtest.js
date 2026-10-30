@@ -124,6 +124,7 @@ async function walkTo(page, id) {
   const server = startServer(PORT);
   const browser = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const R = { shots: [], checks: {}, walk: [], errors: [] };
+  R.checks.riceBubbleTime = await require('./playtest-bubble').runBubbleChecks(browser);
   R.checks.startTilt = await require('./playtest-start').runStartChecks(browser, URL, OUT);
   const shot = async (page, name) => { await page.screenshot({ path: path.join(OUT, name + '.png') }); R.shots.push(name + '.png'); };
   const state = page => page.evaluate(() => ({ pts: nishioGo.state.points, demo: nishioGo.demo, status: document.getElementById('status').textContent }));
@@ -3804,6 +3805,7 @@ async function walkTo(page, id) {
   need(c.smoothRice && c.smoothRice.ok, `お米が なめらかに 描けていない（画面の 細かさ・ふちの ぼかし・連続の 影・点より 細かい 位置）（${JSON.stringify(c.smoothRice)}）`);
   need(c.riceAichi && c.riceAichi.ok, `お米が あいちのかおりの つぶに なって いない（影が 青い・縦すじが ない。${JSON.stringify(c.riceAichi)}）`);
   need(c.kaoriName && c.kaoriName.ok, `主人公の 名前が「あいちのかおりちゃん」に なって いない（${JSON.stringify(c.kaoriName)}）`);
+  need(c.riceBubbleTime && c.riceBubbleTime.ok, `吹き出し：古い フレーム時刻で 描画が 止まる（${JSON.stringify(c.riceBubbleTime)}）`);
   need(c.startTilt && c.startTilt.ok, `開始・傾きの 回帰（${JSON.stringify(c.startTilt)}）`);
   need(c.autoStart && c.autoStart.ok, `開いても いきなり ころころ はじまらない／「あるいて遊ぶ」が のこって いる（${JSON.stringify(c.autoStart)}）`);
   need(c.introScenes && c.introScenes.ok, `西尾の 景色の ドット絵が はじめの 画面・あそびかた・おはなしに 出ない、または おはなしの 上に 知らせが かぶる（${JSON.stringify(c.introScenes)}）`);

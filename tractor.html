@@ -6170,8 +6170,8 @@ const IMORI = (() => {
       const upW = u.st === 'breathe' ? Math.sin(Math.min(1, (2.2 - u.t) / 2.2) * Math.PI) : 0;   // 息つぎ：上がって もどる
       u.up += (upW - u.up) * Math.min(1, dt * 4);
       const y = surf(u.x, u.z);
-      u.g.position.set(u.x, y - 0.0025 + u.up * 0.007, u.z);   // せなかが 水面の すぐ 下
-      u.g.rotation.set(-u.up * 0.35, u.yaw, 0);
+      u.g.position.set(u.x, y - 0.0165 + u.up * 0.009, u.z);   // ふだんは せなかの 上（1.5 倍で 原点から 14.6mm）が 水面の 2mm 下。息つぎで 上がって はなさきが 水面に とどく
+      u.g.rotation.set(-u.up * 0.35, u.yaw, 0, 'YXZ');   // 向きの あとで はなさきを 上げる（どの 向きでも 上を 向く）
       u.body.rotation.z = u.up * 0.9 * Math.sin(u.ph * 2);   // からだを ひねると 赤い おなかが ちらっと
       const wig = sp ? Math.sin(u.ph * (u.st === 'flee' ? 22 : 9)) : Math.sin(u.ph * 1.5) * 0.15;
       u.tail.rotation.y = wig * 0.6; u.body.rotation.y = wig * 0.12;

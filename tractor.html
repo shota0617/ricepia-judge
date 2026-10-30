@@ -780,6 +780,11 @@ function setupTractor(root) {
   LAMPS.setup(root);
   P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
   P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
+  root.traverse(o => {                            // 映りこみのすじ：Glass の外（Body の中）にあるので、ルート全体から拾う
+    if (!o.isMesh || o.material.name !== 'glass_glint') return;
+    o.castShadow = false; o.renderOrder = 3;      // 薄い透明板。ガラス（2）より手前に描く
+    if (!o.material.userData.dust) { o.material.userData.dust = 1; glintGlass(o.material); }
+  });
   for (const [n, k] of [['WheelRL', 1], ['WheelRR', 1], ['WheelFL', 1], ['WheelFR', 1], ['Rotary', 0.75]]) {
     P[n].traverse(o => {
       if (!o.isMesh || /^(tail|winker_|reflector)/.test(o.material.name)) return;   // 灯火器は泥をかぶらせず、ライトの入切がきくようにそのまま
@@ -1144,6 +1149,25 @@ function dustyGlass(m) {
   glare *= ${TOD === 'yoru' ? '0.05' : WX === 'hare' ? '1.0' : '0.15'};   // くもりの日は 日ざしがないので まぶしくない。夜の月明かりは ほとんど光らない
   gl_FragColor.rgb += vec3(1.0, 0.95, 0.85) * glare * (0.15 + 2.2 * dust);
   gl_FragColor.a = max(gl_FragColor.a, glare * clamp(dust * 2.5, 0.0, 0.7));`);
+  };
+  m.needsUpdate = true;
+}
+
+// 前ガラス外の映りこみのすじ（材質 glass_glint・Body の中）：ガラスと同じ uniform（泥・曇り・雨）でうすくなる。運転席の視点ではさらにうすい
+const GLINT_CAB = { value: 1 };   // 1＝外から見る・小さいほど運転席でうすい（視点の切りかえで毎コマ更新）
+function glintGlass(m) {
+  const base = m.onBeforeCompile;
+  m.onBeforeCompile = sh => {
+    if (base) base.call(m, sh);
+    sh.uniforms.glassMud = GLASS_MUD;
+    sh.uniforms.glassFog = GLASS_FOG;
+    sh.uniforms.fogClear = FOG_CLEAR;
+    sh.uniforms.rainAmt = RAIN_AMT;
+    sh.uniforms.glintCab = GLINT_CAB;
+    sh.fragmentShader = 'uniform float glassMud;\nuniform float glassFog;\nuniform float fogClear;\nuniform float rainAmt;\nuniform float glintCab;\n' +
+      sh.fragmentShader.replace('#include <output_fragment>', `#include <output_fragment>
+  float gDirt = max(max(glassMud * 0.7, glassFog * (1.0 - 0.6 * clamp(fogClear, 0.0, 1.0))), rainAmt * 0.5);   // よごれ・曇り・雨の強いほうで
+  gl_FragColor.a *= glintCab * (1.0 - 0.75 * clamp(gDirt, 0.0, 1.0));                                            // 消えはせず、うすくなる`);
   };
   m.needsUpdate = true;
 }
@@ -9835,6 +9859,7 @@ function frame(now) {
   AKIAKANE.update(dt);
   LEAK.update(dt);
   LAMPS.update();
+  GLINT_CAB.value = camMode === 0 ? 0.3 : 1;      // 運転席ではすじをうすく（うっすら残す）
   emitExhaust(dt);
   DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も
   MIRROR.update(dt, camMode === 0);

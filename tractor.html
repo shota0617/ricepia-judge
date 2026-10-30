@@ -6778,7 +6778,7 @@ const HIBARI = (() => {
   const wsh = new THREE.Shape([[0, 0.014], [0.05, 0.016], [0.085, 0.007], [0.096, -0.005], [0.082, -0.02], [0.045, -0.028], [0, -0.026]].map(([a, b]) => new THREE.Vector2(a, b)));   // 幅の ひろい 先の まるい 羽
   for (const sx of [-1, 1]) { const w = new THREE.Group(); w.position.set(sx * 0.018, 0.01, 0.006); g.add(w); add(new THREE.ShapeGeometry(wsh).rotateX(Math.PI / 2).scale(sx, 1, 1), wingM, 0, 0, 0, 1, 1, 1, w); wings.push({ w, sx }); }   // 形の −y が うしろ（−z）
   g.visible = false; scene.add(g);
-  let st = 'wait', t = 4, x = 0, z = 0, y = 0, H = 0, top = 0, ph = 0, cx = 0, cz = 0, lx = 0, lz = 0, told = false, told2 = false;
+  let st = 'wait', t = 4, x = 0, z = 0, y = 0, H = 0, top = 0, ph = 0, cx = 0, cz = 0, lx = 0, lz = 0, told = false, told2 = false, wk = 0;
   function spot(r0, r1) {                          // トラクターの まえの 田んぼの 中
     for (let k = 0; k < 20; k++) { const a = S.yaw + (R() - 0.5) * 1.4, r = r0 + R() * (r1 - r0), px = S.x + Math.sin(a) * r, pz = S.z + Math.cos(a) * r; if (Math.abs(px) < HX - 1 && Math.abs(pz) < HZ - 1) return [px, pz]; }
     return [Math.max(-HX + 1, Math.min(HX - 1, S.x)), Math.max(-HZ + 1, Math.min(HZ - 1, S.z))];
@@ -6805,8 +6805,9 @@ const HIBARI = (() => {
       const m = Math.min(1, k); x = cx + (lx - cx) * m; z = cz + (lz - cz) * m;
       if (k >= 1) { st = 'wait'; t = 25 + R() * 20; g.visible = false; }
     }
-    const fl = st === 'drop' ? (t < 1.2 ? 0.9 : -0.15) : 0.15 + Math.sin(ph * 45) * 0.75;   // 羽ばたき（おりる ときは ひろげて → たたむ）
-    for (const { w, sx } of wings) w.rotation.z = sx * fl;
+    const fl = st === 'drop' ? 0.35 : 0.15 + Math.sin(ph * 45) * 0.75;   // 羽ばたき（おりる はじめは あさい V に ひろげて ふわっと）
+    wk += ((st === 'drop' && t >= 1.2 ? 1 : 0) - wk) * Math.min(1, dt * 8);   // すとんと おちる ときは 羽を うしろへ たたむ
+    for (const { w, sx } of wings) { w.rotation.z = sx * (fl * (1 - wk) - 0.1 * wk); w.rotation.y = sx * 1.35 * wk; }   // 羽は 横（±x）へ のびる：z で 羽ばたき、y で 先を 尾（−z）へ
     g.position.set(x, y, z);
     g.rotation.set(st === 'drop' ? (t < 1.2 ? -0.3 : 1.1) : -0.55, 1.0 + Math.sin(ph * 0.3) * 0.3, 0);   // 頭を 上に して 風に むかう／おりる ときは 頭から
     if (!told && (st === 'rise' || st === 'hover') && d < 40 && gate && (DETAIL || SAY.free && SAY.note('ヒバリだ！ たかーく のぼって うたってるね'))) { told = true; BADGE.peek(x, z, 4, 'wow', 1); voice('hibari'); }

@@ -1549,7 +1549,7 @@ function tryChest() {
   save();
   const show = dt => showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...(newFact ? ['📖 まちメモ +1'] : []), ...dotLines(dt), ...(bag ? [`🎒 おみやげ袋（${bag.km}km 歩くと開く）`] : []), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dt);
   if (cands.length >= 2) pickFirst(cands, show); else show(dot);
-  if (welcome) ktAskGuide([{ t: 'たからばこ、あいたね！', mood: 'happy' }, 'こんどは 町の 名所や 人を たずねに 行こう。'], 'smile');
+  if (welcome) ktAskGuide([{ t: 'たからばこ、あいたね！ こんどは 町の 名所や 人を たずねて みよう。', mood: 'happy' }], 'smile');
   updateQuests(1500);
   refreshNearby();
 }
@@ -2043,7 +2043,10 @@ const ktBusy = () => winBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('
 function ktAskGuide(lead, mood) {
   if (!ktOn()) return false;
   let shown = [];   // 出した ボタンの 行き先（番号では なく id で おぼえる＝あとで 行き先が 決め直されても、押した 名前の 所へ）
-  return KT.say([...lead, 'つぎは どこへ 行く？'], { mood, key: 'guide', busy: () => ktBusy() || !S.guide,
+  // さいごの 一言と「つぎは どこへ 行く？」は 1つの ふきだしに（タップを へらして、めいろを 止める 時間を 短く）
+  const Q = 'つぎは どこへ 行く？', last = lead[lead.length - 1];
+  const pages = !last ? [Q] : [...lead.slice(0, -1), typeof last === 'string' ? `${last}\n${Q}` : { ...last, t: `${last.t}\n${Q}` }];
+  return KT.say(pages, { mood, key: 'guide', busy: () => ktBusy() || !S.guide,
     choices: () => { const g = S.guide; shown = g ? [g, ...(g.alts || [])].map(o => o.id) : []; return g ? [g, ...(g.alts || [])].map((o, i) => `${o.kind === 'npc' ? '👤' : '📍'} ${o.name}${i ? '' : ' ← おすすめ'}`) : []; },
     then: i => {
       const id = shown[i], g = S.guide;
@@ -2128,7 +2131,9 @@ function checkGuide() {
   const pts = guideReward(g);
   const next = decideGuide(null);
   setGuide(next);
-  if (ktAskGuide([{ t: `${g.name}に 着いたね！${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g), ...komeNimotsu(g)], 'smile')) { rivalSay(g, next); return; }
+  // 着いたときの 一言は 3つを かわりばんこ（三河弁の「だに」は ときどき）
+  const hi = [`${g.name}に 着いたね！`, `${g.name}、いい所だに。`, `${g.name}に とうちゃく！`][(S.guides || 0) % 3];
+  if (ktAskGuide([{ t: `${hi}${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g), ...komeNimotsu(g)], 'smile')) { rivalSay(g, next); return; }
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
   rivalSay(g, next);
@@ -4138,9 +4143,9 @@ function begin(isDemo) {
   if (ktOn() && !store.get('nsg_kome_hello', false)) {   // はじめての人へ：お米つぶの あいさつ（1回だけ。めいろでは「あそびかた」の 画面を 先に 見てから）
     const px = isDemo && document.body.classList.contains('px'), chest = isDemo && welcomeDue();
     // 傾けられない（許可なし・パソコン）人にも 本当の ことに なるよう、タップを いっしょに 言う
-    const how = !isDemo ? 'きみが あるくと、ぼくも いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、ぼくが すすむよ。' : '地図を タップすると、ぼくが そこへ 行くよ。';
+    const how = !isDemo ? 'きみが あるくと、いっしょに すすむよ。' : px ? 'スマホを かたむけるか、行きたい 所を タップすると、すすむよ。' : '地図を タップすると、そこへ 行くよ。';
     const pics = sceneSet(3);   // あいさつの ページごとに ちがう 西尾の 景色
-    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。', mood: 'happy', pic: pics[0] }, { t: how, pic: pics[1] }, { t: 'お寺や 名物、町の 人を たずねて、西尾を いっしょに めぐろう。', pic: pics[2] },
+    KT.say([{ t: 'はじめまして。あいちのかおりちゃん だに。いっしょに 町を めぐろう！', mood: 'happy', pic: pics[0] }, { t: how, pic: pics[1] },
       () => (chest && welcomeDue() ? { t: 'まずは、すぐ近くの たからばこを あけに 行こう！', mood: 'excited' } : null)],   // もう あけていたら 言わない
     { busy: () => ktBusy() || (px && !store.get('nsg_howto', 0)), key: 'hello', keep: true, onShow: () => store.set('nsg_kome_hello', true), then: () => { if (!chest) ktAskGuide([], 'smile'); } });
     if (isDemo) { setTimeout(sealPickCheck, 3000); return; }

@@ -16,7 +16,7 @@
     { id: 'ebisen', area: 'isshiki', name: 'えびせんべい', say: 'えびせんべいを あたまに のせたに。', src: NK },
     { id: 'chochin', area: 'isshiki', name: '提灯', say: '小さな 提灯を のせたに。大提灯まつりの 大きさには かなわんけど。', src: NK },
     { id: 'inaho', area: 'kira', name: '金色の 稲穂', months: [9, 10], say: '金色の 稲穂を あたまに のせたに。黄金堤の 名前の とおりだら。', src: MAFF },
-    { id: 'inaho', area: 'kira', name: '稲穂', say: '稲穂を あたまに のせたに。ぼくたちの ふるさとだに。', src: MAFF },
+    { id: 'inaho', area: 'kira', name: '稲穂', say: '稲穂を あたまに のせたに。お米の ふるさとだに。', src: MAFF },
     { id: 'carnation', area: 'hazu', name: 'カーネーション', say: 'カーネーションを あたまに かざったに。', src: NK },
     { id: 'asari', area: 'sakushima', name: 'アサリ', say: 'アサリを あたまに のせたに。島の 海の 幸だよ。', src: AN },
   ];

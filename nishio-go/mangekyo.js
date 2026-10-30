@@ -13,7 +13,7 @@
   const LIST = [
     { id: 'bijutsu', name: 'ガラス工芸美術館', say: '三河ガラス工芸美術館だに。ガラスが きらきら しとるに', src: NK },
     { id: 'kyodai', name: '巨大な 万華鏡', say: '巨大な 万華鏡が あるに。くるくる 模様が かわるに', src: NK },
-    { id: 'nozoku', name: '万華鏡を のぞく', say: 'のぞいたら ぼくが いっぱい 見えたに', src: NK },
+    { id: 'nozoku', name: '万華鏡を のぞく', say: 'のぞいたら お米が いっぱい 見えたに', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

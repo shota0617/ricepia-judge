@@ -1,19 +1,23 @@
 // 開始・傾きの 回帰。実機の センサー体感ではなく、ブラウザへ 送る 合成イベントで 確かめる。
 const fs = require('fs'), path = require('path');
-async function runStartChecks(browser, url, out) {
+async function runStartChecks(browser, url, out, { shareOnly = false } = {}) {
   const checks = {}, errors = [];
-  async function fresh(kind = 'normal', viewport = { width: 390, height: 780 }) {
+  async function fresh(kind = 'normal', viewport = { width: 390, height: 780 }, suffix = '') {
     const ctx = await browser.newContext({ viewport, hasTouch: kind !== 'desktop' });
     await ctx.addInitScript(kind => {
+      const legacy = kind.startsWith('legacy-');
+      kind = kind.replace('legacy-', '');
+      if (legacy) Object.defineProperty(navigator, 'userActivation', { value: undefined, configurable: true });
       window.__asks = 0;
       if (!window.DeviceOrientationEvent) return;
       if (kind === 'normal') DeviceOrientationEvent.requestPermission = undefined;
       if (kind === 'unsupported') window.DeviceOrientationEvent = undefined;
       else if (kind !== 'normal') DeviceOrientationEvent.requestPermission = () => {
         window.__asks++;
+        if (kind === 'notallowed' && window.__asks === 1) return Promise.reject(new DOMException('gesture needed', 'NotAllowedError'));
         if (kind === 'throws') throw new Error('sensor unavailable');
         if (kind === 'rejected') return Promise.reject(new Error('denied'));
-        return new Promise(resolve => setTimeout(() => resolve(kind === 'granted' ? 'granted' : 'denied'), 200));
+        return new Promise(resolve => setTimeout(() => resolve(['granted', 'notallowed'].includes(kind) ? 'granted' : 'denied'), 200));
       };
     }, kind);
     const page = await ctx.newPage();
@@ -26,13 +30,13 @@ async function runStartChecks(browser, url, out) {
       }
       return r.abort();
     });
-    await page.goto(url);
+    await page.goto(url + suffix);
     await page.waitForFunction(() => window.nishioPixel && window.nishioGo && nishioGo.started && nishioPixel.roll.ready);
     return { ctx, page };
   }
   const visible = page => page.evaluate(() => ({ intro: !document.getElementById('intro').hidden, help: !document.getElementById('howto').hidden, ready: !document.getElementById('playReady').hidden, talk: !!document.querySelector('#komeTalk:not([hidden])'), asks: window.__asks }));
   const shot = (page, name) => page.screenshot({ path: path.join(out, `start-${name}.png`) });
-  for (const kind of ['normal', 'unsupported', 'desktop', 'granted', 'denied', 'throws', 'rejected']) {
+  for (const kind of (shareOnly ? [] : ['normal', 'unsupported', 'desktop', 'granted', 'denied', 'throws', 'rejected'])) {
     const { ctx, page } = await fresh(kind);
     try {
       await page.waitForTimeout(400);
@@ -44,7 +48,7 @@ async function runStartChecks(browser, url, out) {
         await page.waitForTimeout(300);
       }
       const after = await visible(page);
-      const fallback = ['denied', 'unsupported', 'desktop'].includes(kind) ? await movementWithClear(page, false) : { ok: true };
+      const fallback = ['denied', 'throws', 'rejected', 'unsupported', 'desktop'].includes(kind) ? await movementWithClear(page, false) : { ok: true };
       checks[kind + 'Controls'] = fallback;
       fs.writeFileSync(path.join(out, 'start-progress.json'), JSON.stringify(checks, null, 2));
       // 保存した 設定・進行を 読みなおしても 消さない。開始連打で ポイントも 増えない。
@@ -68,6 +72,35 @@ async function runStartChecks(browser, url, out) {
       checks[kind] = { before, after, revisit, kept, back, ok: !before.intro && !before.help && !before.talk && before.ready === permission && before.asks === 0 && !after.ready && after.asks === (permission ? 1 : 0) && !revisit.help && kept && back };
     } finally { await ctx.close(); }
   }
+  // UserActivation API が ない 端末でも、共有リンクの 自動openから 許可を 求めない。
+  for (const link of ['1', 'daily']) for (const outcome of ['granted', 'denied', 'notallowed']) {
+    const { ctx, page } = await fresh('legacy-' + outcome, { width: 390, height: 780 }, '?meiro=' + link);
+    try {
+      await page.waitForFunction(() => window.NISHIO_MEIRO && NISHIO_MEIRO.game && document.getElementById('meiro') && !document.getElementById('meiro').hidden);
+      const automatic = await page.evaluate(() => {
+        nishioPixel.meiroApi.tiltAsk();   // タイマーや 自動openからの 呼び出しと 同じ。APIへは 到達させない。
+        return { calls: window.__asks, asked: nishioPixel.meiroApi.tilt().asked, legacy: navigator.userActivation === undefined };
+      });
+      await page.click('#meiro [data-mz="slow"]');
+      await page.waitForTimeout(300);
+      const first = await page.evaluate(() => ({ calls: window.__asks, asked: nishioPixel.meiroApi.tilt().asked }));
+      await page.click('#meiro [data-mz="slow"]');
+      await page.waitForTimeout(300);
+      await page.click('#meiro [data-mz="slow"]');
+      const last = await page.evaluate(() => ({ calls: window.__asks, asked: nishioPixel.meiroApi.tilt().asked }));
+      await page.waitForFunction(() => NISHIO_MEIRO.game && NISHIO_MEIRO.game.board && NISHIO_MEIRO.game.cd <= 0);
+      let moved = 0;
+      for (const key of ['ArrowRight', 'ArrowDown', 'ArrowLeft', 'ArrowUp']) {
+        const at = await page.evaluate(() => [NISHIO_MEIRO.game.x, NISHIO_MEIRO.game.y]);
+        await page.keyboard.down(key); await page.waitForTimeout(500); await page.keyboard.up(key);
+        moved = await page.evaluate(a => Math.hypot(NISHIO_MEIRO.game.x - a[0], NISHIO_MEIRO.game.y - a[1]), at);
+        if (moved > 0.1) break;
+      }
+      checks['share-' + link + '-' + outcome] = { automatic, first, last, moved, ok: automatic.calls === 0 && !automatic.asked && automatic.legacy && first.calls === 1 && first.asked === (outcome !== 'notallowed') && last.calls === (outcome === 'notallowed' ? 2 : 1) && last.asked && moved > 0.1 };
+      fs.writeFileSync(path.join(out, 'start-progress.json'), JSON.stringify(checks, null, 2));
+    } finally { await ctx.close(); }
+  }
+  if (shareOnly) return { ...checks, errors, ok: !errors.length && Object.values(checks).every(c => c.ok) };
   const { ctx, page } = await fresh();
   try {
     checks.sensor = await page.evaluate(() => {
@@ -202,6 +235,6 @@ if (require.main === module) (async () => {
   const out = path.resolve(process.argv[2]); fs.mkdirSync(out, { recursive: true });
   const { chromium } = require('playwright'), { startServer } = require('./bake-common');
   const server = startServer(8901), browser = await chromium.launch({ executablePath: process.env.CHROMIUM });
-  try { const r = await runStartChecks(browser, 'http://127.0.0.1:8901/nishio-go.html', out); fs.writeFileSync(path.join(out, 'start.json'), JSON.stringify(r, null, 2)); console.log(JSON.stringify(r)); process.exitCode = r.ok ? 0 : 1; }
+  try { const r = await runStartChecks(browser, 'http://127.0.0.1:8901/nishio-go.html', out, { shareOnly: process.argv.includes('--share') }); fs.writeFileSync(path.join(out, process.argv.includes('--share') ? 'share.json' : 'start.json'), JSON.stringify(r, null, 2)); console.log(JSON.stringify(r)); process.exitCode = r.ok ? 0 : 1; }
   finally { await browser.close(); server.close(); }
 })();

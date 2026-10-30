@@ -8764,14 +8764,15 @@ window.addEventListener('deviceorientation', e => {
 });
 function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.t = 0; tiltG.x = tiltG.y = 0; }
 function tiltNeedsPermission() { return !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'); }
-function tiltAsk() {   // 通常の「あそぶ」の タップで 1回だけ。拒否・例外でも タップや 矢印キーで 遊べる。
-  if (tiltG.asked || !tiltNeedsPermission() || (navigator.userActivation && !navigator.userActivation.isActive)) return;
+function tiltAsk(event) {   // 通常の「あそぶ」の タップで 1回だけ。拒否・例外でも タップや 矢印キーで 遊べる。
+  if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true;
   const fallback = () => G.toast('地図を タップして 遊べるよ（矢印キーでも）');
-  try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, fallback); }
-  catch (e) { fallback(); }
+  const failed = e => { if (e && e.name === 'NotAllowedError') tiltG.asked = false; fallback(); };   // 一時的に 操作と 認められなかったときは、次の 本当の タップで 再試行。denied では 繰り返さない
+  try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, failed); }
+  catch (e) { failed(e); }
 }
-$('playReadyOk').addEventListener('click', () => { tiltAsk(); tiltReset(); $('playReady').hidden = true; if (G.toastFlush) G.toastFlush(); });
+$('playReadyOk').addEventListener('click', e => { tiltAsk(e); tiltReset(); $('playReady').hidden = true; if (G.toastFlush) G.toastFlush(); });
 document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('pageshow', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('orientationchange', () => { tiltReset(); rp.vx = rp.vy = 0; });

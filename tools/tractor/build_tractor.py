@@ -821,6 +821,9 @@ def front_fender(s):
     for ph in (-38, 45):
         a = math.radians(ph)
         pipe('darkgray', [(s * (xi + 0.02), FY, FZ + 0.13), (s * (xi + 0.02), FY + (ro + 0.035) * math.sin(a), FZ + (ro + 0.035) * math.cos(a))], 0.011, 8)
+    # 後端の泥よけフラップ（cycle 13。後輪の泥よけと対になる。Steer の中なので転舵だけ一緒に動く）
+    # フェンダー後端（角度70°・半径約0.50）は y≒-1.68・z≒0.616。フラップ上端0.63で重なり、下端0.25で地面に届かない
+    box('black', (0.22, 0.014, 0.38), (s * 0.645, -1.68, 0.44), bev=(0.005,))
 
 
 def interior():

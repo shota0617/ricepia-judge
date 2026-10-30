@@ -146,7 +146,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
+    guide: null, guides: 0, guideDone: [], komeSeen: [], nimotsu: null, idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [] };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 歩いて遊ぶは なくした（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：前に あるいて移動で 遊んでいた 人も 操作して（ころころ）に。
@@ -1780,10 +1780,11 @@ function hintSay(n, name) {
 // 生きもの手帳：歩く地図の田んぼ・水べで、ときどき生きものに出会う（pixel.js の critterStep）。はじめて出会うと手帳に載って +10pt。1日5回まで。
 // ふつうは、どこの田んぼ・川・海べりでも見られるものの場面のひとことだけ（豆知識は書かない）。
 // 西尾ならではの生きもの（note のあるもの）は、出典（src）で確かめた事実だけを note に書き、手帳に出典といっしょに出す。
-// where：paddy 田んぼ／water 川・池・海の水べ／higata 水べのうち、一色干潟（衣崎海岸）・トンボロ干潟から1.5km以内。months：出る月（ないときは1年じゅう）
+// where：paddy 田んぼ／water 川・池・海の水べ／kawa 水べのうち、海ではない川・池・用水（pixel.js の waterKind。国土数値情報の土地利用で、まわりに海水域がない所）／higata 水べのうち、一色干潟（衣崎海岸）・トンボロ干潟から1.5km以内。months：出る月（ないときは1年じゅう）
 // at：出る干潟をしぼる（出典の範囲の干潟だけ。IBA の範囲は一色・吉良までで、幡豆のトンボロ干潟は入らない）
 // IBA：日本野鳥の会「重要野鳥生息地（IBA）矢作川河口」（矢作川の河口と、矢作古川の河口沖に広がる一色の干潟。西尾市・碧南市にまたがる）
 // 昔のドット絵RPGの「草むらを歩くと出会う」しくみ
+const YAHAGI_SRC = 'https://www.mlit.go.jp/river/basic_info/jigyo_keikaku/gaiyou/seibi/pdf/yahagigawa-5.pdf';
 const IBA_SRC = 'https://ftp.wbsj.org/nature/hogo/others/iba/search/sites/toukai-cyubu/imgs/JP109.pdf';
 const CRITTERS = [
   { id: 'sagi', name: 'サギ', where: 'paddy', say: '田んぼで、白いサギが じっと えものを ねらっとる。' },
@@ -1799,15 +1800,33 @@ const CRITTERS = [
   { id: 'suzugamo', name: 'スズガモ', where: 'higata', at: ['f-koromozaki'], months: [11, 12, 1, 2, 3], say: '沖のほうに、白と黒のカモが たくさん うかんどる。',
     note: '矢作川の河口は、スズガモが たくさん集まる所として「重要野鳥生息地（IBA）」に選ばれとる。', src: IBA_SRC },
   { id: 'asari', name: 'アサリ', where: 'higata', months: (EVENTS.find(e => e.id === 'shiohigari') || {}).months || [3, 4, 5], say: '干潟の砂に、貝の小さな穴を見つけた。潮干狩りの季節だね。' },
+  // 矢作川と田んぼの生きもの（出典は国土交通省「矢作川流域の自然状況」。重要種の一覧に載っていることだけを note に書く）
+  { id: 'medaka', name: 'メダカ', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: '田んぼの水の上を、小さな魚の群れが すいーっと 泳いどる。',
+    note: 'メダカは、矢作川の流域で見つかる魚のうち「絶滅危惧II類」に入っとる（国土交通省の調査）。水のある田んぼや用水が、すみかになっとる。', src: YAHAGI_SRC },
+  { id: 'dojo', name: 'ドジョウ', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: '田んぼの泥の中で、ドジョウが にょろっと もぐった。',
+    note: 'ドジョウやシマドジョウは、矢作川の流域に すむ魚として国土交通省の調査に載っとる。', src: YAHAGI_SRC },
+  { id: 'ishigame', name: 'ニホンイシガメ', where: 'paddy', months: [4, 5, 6, 7, 8, 9, 10], say: 'あぜの草かげで、石みたいな甲らの カメが ひなたぼっこしとる。',
+    note: 'ニホンイシガメは、水田や畑を えさ場や たまごを産む場所に使う（矢作川流域の調査）。田んぼは、カメにも大事な場所だに。', src: YAHAGI_SRC },
+  { id: 'akaza', name: 'アカザ', where: 'kawa', say: '川の石の下から、ひげのある小さな魚が ちらっと のぞいた。',
+    note: 'アカザは、矢作川にすむ魚で「絶滅危惧II類」に入っとる（国土交通省の調査）。', src: YAHAGI_SRC },
+  { id: 'kamatsuka', name: 'カマツカ', where: 'kawa', say: '川底の砂の上を、細長い魚が すーっと すべっていった。',
+    note: 'カマツカは、ギンブナ・モツゴなどと いっしょに、矢作川にすむ魚として国土交通省の調査に載っとる。', src: YAHAGI_SRC },
+  { id: 'misago', name: 'ミサゴ', where: 'water', say: '空の高い所から、白い頭の鳥が 水めがけて ぐーんと 降りてきた。',
+    note: 'ミサゴは、矢作川の流域で見られる鳥として国土交通省の調査に載っとる。', src: YAHAGI_SRC },
+  { id: 'kochidori', name: 'コチドリ', where: 'higata', at: ['f-koromozaki'], say: '砂の上を、小さな鳥が ちょこちょこ 走っては ぴたっと 止まる。',
+    note: 'コチドリは、矢作川の河口の汽水域で見られる鳥として国土交通省の調査に載っとる。', src: YAHAGI_SRC },
+  { id: 'shijimi', name: 'ヤマトシジミ', where: 'higata', at: ['f-koromozaki'], say: '砂まじりの泥から、黒い小さな貝が のぞいとる。',
+    note: 'ヤマトシジミは、アサリ・ウミニナと いっしょに、矢作川の河口の干潟で見つかる貝として国土交通省の調査に載っとる。', src: YAHAGI_SRC },
 ];
 const CRITTER_DAILY = 5, CRITTER_PTS = 10, HIGATA = ['f-koromozaki', 'f-tombolo'];
-const WHERE_NAME = { paddy: '田んぼ', water: '水べ', higata: '干潟' };
+const WHERE_NAME = { paddy: '田んぼ', water: '水べ', kawa: '川・池', higata: '干潟' };
 // いま ここ（田んぼ・水べ）で会える生きもの（季節・干潟の近く）
 function critterPool(where) {
   const m = new Date().getMonth() + 1;
   const nearIds = where === 'water' ? spots.filter(s => HIGATA.includes(s.id) && dist(me, s) < 1500).map(s => s.id) : [];
   const higata = c => c.where === 'higata' && nearIds.some(id => !c.at || c.at.includes(id));
-  return CRITTERS.filter(c => (c.where === where || higata(c)) && (!c.months || c.months.includes(m)));
+  const P = window.nishioPixel, fresh = where === 'water' && !nearIds.length && !!me && !!P && P.waterKind(me.lat, me.lng) === 'kawa';   // 海ではない水べ（川・池・用水）だけ
+  return CRITTERS.filter(c => (c.where === where || higata(c) || (c.where === 'kawa' && fresh)) && (!c.months || c.months.includes(m)));
 }
 // のこりの数（pixel.js の critterCount）：いま ここで会えるうち、まだ手帳にない数。その日の出会いが おわっていたら null
 function critterLeft(where) {
@@ -2036,6 +2055,25 @@ function ktAskGuide(lead, mood) {
       toast(`🧭 ${S.guide.name}へ 行こう`); track('kome_talk_pick', { alt: i > 0 });
     } });
 }
+// お米つぶの 西尾ばなし（komebanashi.js）：着いた 名所の 地区と いまの 月に 合う 話を 1つ。出る ページが 最初に 表示された ときに「話した」と おぼえる
+function komeBanashi(g) {
+  const KB = window.NISHIO_KOMEBANASHI, sp = spots.find(x => x.id === g.id);
+  const r = KB && ktOn() && KB.pick(sp ? sp.area : null, new Date().getMonth() + 1, S.komeSeen);
+  if (!r) return [];
+  const pages = r.item.pages.map(p => typeof p === 'string' ? { t: p } : p);
+  const first = pages[0];
+  pages[0] = () => { S.komeSeen = r.seen; save(); track('kome_banashi', { id: r.item.id }); return first; };
+  return pages;
+}
+// お米つぶの にもつ（nimotsu.js）：着いた 名所の 地区の 名物を、つぎの 名所まで あたまに のせて 転がる。のせた 絵は pixel.js の drawNimotsu。
+// 地区の ない 所（となりの 市町など）では 持ち物を 変えない。話は お米つぶの おしゃべりが オンの ときだけ（持ち物は オフでも のせる）
+function komeNimotsu(g) {
+  const NM = window.NISHIO_NIMOTSU, sp = spots.find(x => x.id === g.id);
+  const it = NM && sp && sp.area && NM.pick(sp.area, new Date().getMonth() + 1, NM.current(S.nimotsu, Date.now()));
+  if (!it) return [];
+  S.nimotsu = { id: it.id, t: Date.now() }; save(); track('kome_nimotsu', { id: it.id });
+  return ktOn() ? [it.say] : [];
+}
 modeListeners.push(() => { if (KT) KT.clear(); });   // あるいて／操作して を 切りかえたら、前の 遊びかたの 話は やめる
 const guideTarget = () => {
   const g = S.guide;
@@ -2095,7 +2133,7 @@ function checkGuide() {
   setGuide(next);
   // 着いたときの 一言は 3つを かわりばんこ（三河弁の「だに」は ときどき）
   const hi = [`${g.name}に 着いたね！`, `${g.name}、いい所だに。`, `${g.name}に とうちゃく！`][(S.guides || 0) % 3];
-  if (ktAskGuide([{ t: `${hi}${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }], 'smile')) { rivalSay(g, next); return; }
+  if (ktAskGuide([{ t: `${hi}${pts ? `　+${pts}pt` : ''}`, mood: 'happy' }, ...komeBanashi(g), ...komeNimotsu(g)], 'smile')) { rivalSay(g, next); return; }
   const msg = arriveMsg(g, pts, next, mazeNow());
   if (msg) toast(msg);
   rivalSay(g, next);
@@ -4165,6 +4203,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 window.nishioGo = {
   snapMaze, friendVs, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
+  get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
   get areas() { return areas; }, areaProgress,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,

@@ -2911,6 +2911,47 @@ function okaeriStep(hx, by, u, now, asleep) {
   ctx.globalAlpha = 1;
   o.drawn++; dirty = true;
 }
+// お米つぶの ふるさと（furusato.js）：転がって 西尾市の 外（となりの 市町）に 出ると、お米の よこに 西尾の 方角を さす 矢じるしが 名物を かかえて 出て、お米が「岡崎市に 来たに。西尾は あっちだに」と ひと言。
+// 方角は いちばん 近い 地区の 中心（G.areas）。西尾市に もどるか 1分たつと 消える・出した あとは 2分は くりかえさない。ゲームボーイの4色・ねむって いる あいだは 描かない
+const furusato = { out0: 0, shown0: 0, last: -1e9, cur: null, said: false, drawn: 0 };   // out0：外に 出た 時刻（0＝中）。cur：{ item, ang }。drawn：描いた 数（テスト用）
+function furusatoStep(hx, by, u, now, asleep) {
+  const f = furusato, K = window.NISHIO_FURUSATO;
+  if (!K || worldMode || driving || rp.x === null || !K.outside(here.city)) {   // 西尾市の 中（か 遊びかたが かわった）：しまう
+    f.out0 = 0; f.cur = null; f.said = false;
+    return;
+  }
+  if (!f.out0) f.out0 = now;
+  if (!f.cur && now - f.out0 >= K.WAIT && now - f.last >= K.COOL && !asleep && !mapCovered()) {
+    const ll = toLatLng(rp.x, rp.y), n = K.nearest(ll.lat, ll.lng, G.areas), item = n && K.pick(n.area);
+    if (item) {
+      f.cur = { item, ang: n.ang }; f.shown0 = now; f.last = now; f.said = false;
+      if (G.track) G.track('kome_furusato', { area: n.area });
+    }
+  }
+  if (!f.cur) return;
+  if (now - f.shown0 > K.SHOW) { f.cur = null; return; }
+  if (!f.said && howtoEl.hidden && now >= riceBub.until && !asleep && !mapCovered()) { riceSay(K.say(here.city, f.cur.item), 3500, 'happy'); f.said = true; }
+  if (gbOn || asleep) return;
+  const ll = toLatLng(rp.x, rp.y), n = K.nearest(ll.lat, ll.lng, G.areas);
+  if (n) f.cur.ang = n.ang;   // 転がると 方角も かわる
+  const a = f.cur.ang, r = 17 * u, bob = calmMotion ? 0 : Math.sin(now / 320) * 1.2 * u;
+  const cx = Math.round(hx + Math.cos(a) * r), cy = Math.round(by + Math.sin(a) * r * 0.8 + bob);
+  const fade = Math.min(1, (now - f.shown0) / 500, (K.SHOW - (now - f.shown0)) / 800);
+  ctx.globalAlpha = Math.max(0, fade);
+  const q = Math.max(1, Math.round(u * 0.5)), tip = [cx + Math.cos(a) * 5 * u, cy + Math.sin(a) * 5 * u], nx = -Math.sin(a), ny = Math.cos(a);
+  ctx.fillStyle = '#2b1a0c';   // 矢じるし：ふち → 金色
+  for (const [grow, col] of [[q, '#2b1a0c'], [0, '#e0b030']]) {
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(tip[0] + Math.cos(a) * grow, tip[1] + Math.sin(a) * grow);
+    ctx.lineTo(cx + nx * (3 * u + grow), cy + ny * (3 * u + grow));
+    ctx.lineTo(cx - nx * (3 * u + grow), cy - ny * (3 * u + grow));
+    ctx.closePath(); ctx.fill();
+  }
+  drawNakama(Math.round(cx - Math.cos(a) * 5 * u), Math.round(cy - Math.sin(a) * 5 * u), Math.max(1, Math.round(u * 0.9)), f.cur.item.id, 0, false);   // 名物は 矢じるしの うしろ
+  ctx.globalAlpha = 1;
+  f.drawn++; dirty = true;
+}
 // お米つぶの かげえ（kage.js）：じっと 止まって いると、足もとの 影の となりに、いる 町と 月に 合った 名物の 影が すうっと のびる。7秒ごとに つぎの 影。動くと すっと 消える。
 // 影は drawNakama を 小さな 絵に 描いて 黒く ぬり、ひらたく のばして 貼る（絵は 1つずつ しまっておく）。ゲームボーイの4色・夜（めぐりの 時間）・ねむって いる間は 出さない
 const kage = { cur: null, last: '', still0: 0, t0: 0, chk: 0, said: false, drawn: 0, pics: {} };   // drawn：描いた 数（テスト用）
@@ -7712,6 +7753,7 @@ function frame(now) {
       shirushiStep(hx, by, u, now, mood === 'sleepy');   // 入った 地区の 旗が お米の よこに のこる（shirushi.js）
       monosashiStep(hx, by, u, now, mood === 'sleepy');   // 転がった 道のりを 黄金堤の 長さ（180m）で はかる（monosashi.js）
       okaeriStep(hx, by, u, now, mood === 'sleepy');   // しばらくぶりに もどると 名物と いっしょに むかえる（okaeri.js）
+      furusatoStep(hx, by, u, now, mood === 'sleepy');   // 西尾市の 外では 西尾の 方角を 名物の 矢じるしで しめす（furusato.js）
       drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
       if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に

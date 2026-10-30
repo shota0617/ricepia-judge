@@ -45,6 +45,7 @@
   - 印刷して置けるA4のPOP：`https://go.ricepia.jp/nishio-go/pop.html`（このQRと、「西尾の地図ぜんぶが めいろに／スマホを傾けると お米が ころころ」・めいろの画面3枚・「スマホのカメラで読みこむだけ／無料・登録なし／家からでも遊べます」・「ホーム画面に追加」のひとこと。右下の「印刷する」で印刷。検索にはのせない）。QRを作り直すときは `python3 tools/make-pop.py`（segno が要る）
   - レジで手わたすカード：`https://go.ricepia.jp/nishio-go/card.html`（名刺の大きさ 91×55mm が A4 に 10 枚。印刷して 点線で 切る。QR は POP と同じなので、カードから来た人も `from=pop-honten` に入る。カードだけ 別に 数えたくなったら、`from=card-honten` の QR を segno で 作って card.html の `<symbol id="qr">` に入れかえる）
   - ホーム画面に追加したときの見え方（`nishio-go.webmanifest`）：Android の Chrome の 追加の画面に、めいろの 画面写真 3枚（`nishio-go/shots/install-meiro.jpg`・`install-roll.jpg`・`install-reward.jpg`。Chrome の 追加の 画面は PNG・JPEG だけ なので、`meiro.webp` などを JPEG に した もの）が 出る。`id` は いままでの start_url と 同じにして、もう 追加した人の アプリが 別ものに ならないように した。画面写真を 撮りなおしたら JPEG も 作りなおし、形式（type）と 大きさ（sizes）も 合わせる（プレイテストの entryPrint が 見る）
+- コイン精米機の 中に 貼る ミシン糸の 紹介（A4）：`https://go.ricepia.jp/mishin-pop.html`。QR は `https://go.ricepia.jp/mishin.html?utm_source=qr&utm_medium=offline&utm_campaign=coin-seimai#coin`（すぐ れんしゅう。GA4 の 参照元 qr／キャンペーン coin-seimai、ゲームの 場面は via：coin）。作りなおしは `tools/mishin/make-pop.py`（docs/mishin.md）
 
 ## 2. 数えられること（計測）
 

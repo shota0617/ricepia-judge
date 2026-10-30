@@ -271,57 +271,6 @@ async function walkTo(page, id) {
     if (!/^\d+\/\d+（\d+%）$/.test(document.getElementById('badgeCount').textContent)) bad.push('バッジの達成率');
     return bad.length ? bad.join(',') : true;
   });
-  // 水べのイベント「虫の名前あて」：水べを歩くと始まり、3問。名前の絵を3びきから えらぶ。3問当たると +20pt と虫の まちメモ。1日1回
-  R.checks.mushi = await page.evaluate(async () => {
-    const M = window.NISHIO_MUSHI, G = nishioGo, P = nishioPixel, C = P.C, bad = [];
-    if (!M) return 'none';
-    if (G.state.mushiDay === G.ymd()) return 'もう今日は遊んだことになっている';
-    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
-    await new Promise(r => setTimeout(r, 1700));   // 芽出しのあとの ごほうびが消えるまで
-    if (rw.classList.contains('show')) rw.click();
-    let p0 = G.state.points;
-    const t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
-    const N = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]], walk = new Set([C.A, C.B, C.M, C.X]);
-    let hit = null;
-    for (let r = 0; r < 200 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) {
-      const x = x0 + dx, y = y0 + dy;
-      if (walk.has(P.codeAt(x, y)) || !N.some(([a, b]) => P.codeAt(x + a, y + b) === C.A) || N.some(([a, b]) => [C.U, C.F].includes(P.codeAt(x + a, y + b)))) continue;
-      hit = [x, y]; break;
-    }
-    if (!hit) return '近くに水べがない';
-    for (let i = 0; i < 20 && !M.shown; i++) P.critterStep(hit[0], hit[1]);
-    if (!M.shown) return '水べを歩いても開かない';
-    p0 = G.state.points;   // 歩いている間に生きものに出会って ふえた分は数えない
-    if (document.querySelectorAll('#mushi .mu-bug').length !== 3) bad.push('虫の絵が3つでない');
-    // 画面読み上げでも絵の見た目がわかる（名前は言わない）
-    if ([...document.querySelectorAll('#mushi .mu-bug')].some(b => { const x = M.BUGS.find(y => y.id === b.dataset.mu); return !b.getAttribute('aria-label').includes(x.look) || b.getAttribute('aria-label').includes(x.name); })) bad.push('絵の読み上げ');
-    // 開いてから5分たって「あとで」で閉じても、閉じた時刻から5分は出ない（10分後には また出る）
-    const now0 = Date.now, t0 = now0();
-    Date.now = () => t0 + 6 * 60000; M.close();
-    if (M.open()) bad.push('閉じてすぐ また開いた');
-    Date.now = () => t0 + 12 * 60000;
-    if (!M.open()) bad.push('閉じて6分たっても開かない');
-    Date.now = now0;
-    // 絵は ちがう虫ごとに ちがう（描けている）
-    const imgs = [...document.querySelectorAll('#mushi .mu-bug canvas')].map(c => c.toDataURL());
-    if (new Set(imgs).size !== 3) bad.push('絵が同じ');
-    for (let i = 0; i < 3; i++) {
-      const q = M.q;
-      if (!q || !q.opts.includes(q.target) || new Set(q.opts).size !== 3) { bad.push('問いの えらぶもの'); break; }
-      const B = M.BUGS.find(b => b.id === q.target);
-      if (q.opts.some(o => B.not.includes(o))) bad.push('ヒントが当てはまる虫が まちがいに出た');
-      M.pick(q.target);
-      if (!/正解/.test(document.querySelector('#mushi .md-res').textContent)) bad.push('こたえ');
-      M.next();
-    }
-    if (!M.done || M.right !== 3) bad.push(`当たり ${M.right}`);
-    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
-    if (!G.state.facts.includes('z:mushi:0')) bad.push('まちメモ');
-    if (!/3\/3/.test(document.getElementById('mushi').textContent)) bad.push('けっか');
-    M.close();
-    if (G.mushiDue() || M.open()) bad.push('1日に2回');
-    return bad.length ? bad.join(',') : true;
-  });
   // イベント「雲母石を探せ」：場所ごとに1回。ちがう石は「ただの石」、雲母石で +15pt（1回目なら +20pt）と まちメモ。3か所ぜんぶで もう +30pt
   R.checks.kirara = await page.evaluate(async () => {
     const K = window.NISHIO_KIRARA, G = nishioGo, bad = [];
@@ -449,26 +398,9 @@ async function walkTo(page, id) {
     if (O.villageOf('中根町', '西尾市').id !== 'terazu' || O.villageOf('南中根町', '西尾市').id !== 'meiji') bad.push('中根と南中根');
     return bad.length ? bad.join(',') : true;
   });
-  // イベント「本のできごと」：本に出てくる場所の近くで起き、正解で +20pt と まちメモ。同じできごとは2回起きない
-  R.checks.bookev = await page.evaluate(() => {
-    const B = window.NISHIO_BOOKEV, G = nishioGo, bad = [];
-    if (!B) return 'none';
-    const pool = B.EVENTS.flatMap(e => e.facts);
-    if (pool.some(k => !/^g:[a-z-]+:\d$/.test(k))) bad.push('まちメモの鍵');
-    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
-    const ev = B.EVENTS.find(e => e.id === 'shisei'), p0 = G.state.points;
-    if (!B.open(ev) || !B.shown) return '開かない';
-    B.pick(0);
-    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
-    if (!ev.facts.every(k => G.state.facts.includes(k))) bad.push('まちメモ');
-    if (!/正解/.test(document.getElementById('bookev').textContent)) bad.push('こたえ');
-    B.close();
-    if (B.open(ev)) bad.push('2回起きた');
-    return bad.length ? bad.join(',') : true;
-  });
-  // ミニゲーム「肥料山の草刈り」：草を刈って5束で かごがいっぱい、田んぼでおろす。持ち主に「知事の許可」と答えると +10秒、本のできごとも見たことに
+  // ミニゲーム「肥料山の草刈り」：草を刈って5束で かごがいっぱい、田んぼでおろす。持ち主に「知事の許可」と答えると +10秒
   R.checks.hiryo = await page.evaluate(async () => {
-    const Y = window.NISHIO_HIRYO, G = nishioGo, B = window.NISHIO_BOOKEV, bad = [];
+    const Y = window.NISHIO_HIRYO, G = nishioGo, bad = [];
     if (!Y) return 'none';
     const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
     Y.open(true);
@@ -487,7 +419,6 @@ async function walkTo(page, id) {
     Y.answer('ok');
     if (Y.info.left < l0 + 9) bad.push('+10秒');
     Y.finish('time');
-    if (!G.bookEvHas('hiryoyama')) bad.push('本のできごと');
     if (!/草刈り|時間切れ/.test(document.querySelector('#hiryo .jump-result').textContent)) bad.push('結果');
     Y.close();
     if (document.body.classList.contains('jump-open')) bad.push('閉じない');
@@ -829,12 +760,10 @@ async function walkTo(page, id) {
     const d = P.drop; P.setWet(0);
     return { n: d.n - n0, at: d.at, ok: d.n > n0 && !!d.at && !d.at.every(v => Number.isInteger(v)) };
   });
-  // 知らせが 出て いる ときに 窓（本のできごと など）が 開いたら、知らせは すっと 消える（0.3秒 うすれる 間 窓の 題名に かぶって いた）
+  // 知らせが 出て いる ときに 窓（ごほうび など）が 開いたら、知らせは すっと 消える（0.3秒 うすれる 間 窓の 題名に かぶって いた）
   R.checks.toastSnap = await page.evaluate(async () => {
-    const G = nishioGo, B = window.NISHIO_BOOKEV, el = document.getElementById('toast'), wait = ms => new Promise(r => setTimeout(r, ms));
-    if (!B) return { ok: false, why: 'no-bookev' };
-    const ev = B.EVENTS.find(e => !e.game && !(G.bookEvHas && G.bookEvHas(e.id)));
-    if (!ev) return { ok: true, skipped: 'no-event' };
+    const G = nishioGo, el = document.getElementById('toast'), wait = ms => new Promise(r => setTimeout(r, ms));
+    if (!G.toastHold) return { ok: false, why: 'no-toastHold' };
     // ごほうびの 窓・イベントの 窓が 開いて いると 知らせは とじるまで 待たされる（before が 0 で ときどき 落ちた）。先に とじて おく
     const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();
     document.querySelectorAll('.medashi').forEach(e => { e.hidden = true; }); await wait(150);
@@ -842,10 +771,10 @@ async function walkTo(page, id) {
     const blocked = !!(G.toastBlock && G.toastBlock());
     G.toast('🧭 テストの 知らせ'); await wait(450);
     const before = +getComputedStyle(el).opacity;
-    if (!B.open(ev)) return { ok: true, skipped: 'not-opened', before };
+    G.toastHold();   // 窓が 開く ときに 呼ばれる（game.js の toastHold）
     await new Promise(r => requestAnimationFrame(r));
     const op = +getComputedStyle(el).opacity;
-    B.close(); await wait(100);
+    await wait(100);
     return { before, op, blocked, reward: rw.classList.contains('show'), ok: before > 0.9 && op < 0.05 };
   });
   // お米の 影も なめらかに：まるい だ円を 点より 細かい 位置に 描く（整数に 丸めた 点の 四角だと、なめらかに 動く お米の 下で 影だけ カクッと 動く）

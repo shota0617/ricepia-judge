@@ -6503,7 +6503,7 @@ const MOGURA = (() => {
   add(new THREE.SphereGeometry(0.022, 12, 8), furM, 0, 0, 0.018, 1, 0.9, 1.15, head);       // 頭
   add(new THREE.ConeGeometry(0.0075, 0.026, 8).rotateX(Math.PI / 2), pinkM, 0, -0.002, 0.048, 1, 1, 1, head);   // ピンクの はな
   add(new THREE.SphereGeometry(0.0055, 8, 6), pinkM, 0, -0.002, 0.061, 1, 1, 1, head);
-  for (const sx of [-1, 1]) add(new THREE.SphereGeometry(0.0016, 5, 4), eyeM, sx * 0.012, 0.006, 0.032, 1, 1, 1, head);   // とても 小さい 目
+  for (const sx of [-1, 1]) add(new THREE.SphereGeometry(0.0016, 5, 4), eyeM, sx * 0.0144, 0.0072, 0.0348, 1, 1, 1, head);   // とても 小さい 目（中心を 頭の 表面に のせて 半分 見える）
   const paws = [-1, 1].map(sx => { const p = add(new THREE.CylinderGeometry(0.017, 0.015, 0.005, 12), pawM, sx * 0.028, 0.006, 0.035); p.rotation.set(0.3, 0, sx * 1.25); return p; });   // 土を かく 大きな 前足（手のひらを 外へ）
   const st = { s: 'in', t: 0, armed: true, ph: 0 };
   let placed = false, told = false, toldHole = false, mh = null;

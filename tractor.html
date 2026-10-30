@@ -6571,9 +6571,9 @@ const TSUBAME = (() => {
       t.rotation.y = sx * 0.22; t.scale.y = 0.4;
     }
     const wings = [-1, 1].map(sx => {             // 細長く うしろへ ながれる つばさ（rotation.z で 上下に）
-      const w = new THREE.Group(); w.position.set(sx * 0.012, 0.006, 0.008); g.add(w);
+      const w = new THREE.Group(); w.position.set(sx * 0.012, 0.006, 0.008); g.add(w);   // Shape の −y（翼端）が うしろ（−z）へ ながれる よう ＋π/2 で ねかせる
       const s_ = new THREE.Shape(); s_.moveTo(0, 0.012); s_.quadraticCurveTo(sx * 0.07, 0.006, sx * 0.12, -0.04); s_.quadraticCurveTo(sx * 0.06, -0.012, 0, -0.016); s_.lineTo(0, 0.012);
-      const m = new THREE.Mesh(new THREE.ShapeGeometry(s_).rotateX(-Math.PI / 2), backM.clone()); m.material.side = THREE.DoubleSide; m.castShadow = true; w.add(m);
+      const m = new THREE.Mesh(new THREE.ShapeGeometry(s_).rotateX(Math.PI / 2), backM.clone()); m.material.side = THREE.DoubleSide; m.castShadow = true; w.add(m);
       return w;
     });
     g.scale.setScalar(1.3); g.visible = false; scene.add(g);
@@ -6599,11 +6599,14 @@ const TSUBAME = (() => {
         tx = cx + Math.cos(u.a) * r; tz = cz + Math.sin(u.a) * r;
         ty = Math.max(0.25, u.h + Math.sin(u.ph * 1.3) * 0.35 - (Math.sin(u.ph * 0.9) > 0.85 ? 0.3 : 0));
         if (Math.hypot(tx - S.x, tz - S.z) < 3.2) ty = Math.max(ty, 2.9);   // トラクターの 近くは キャビンの 上を こえる（めりこまない）
-        if (INTRO.on && tx > 20.4) ty = Math.max(ty, 1.3);   // 土手の 高い 草の 上
+        if (INTRO.on && tx > 19.6) ty = Math.max(ty, 1.75);   // 土手の 高い 草（地面 0.5m ＋ 草 1.1m まで）の 上。草むらの 手前から 上がる
         nHunt++;
       } else { tx = u.home[0] + Math.cos(u.a * 0.3) * 6; ty = u.home[1] + Math.sin(u.ph * 0.5); tz = u.home[2] + Math.sin(u.a * 0.3) * 6; }
       const k = Math.min(1, dt * (hunt ? 3.2 : 0.8));   // なめらかに おいかける（速さは あとから 向きと かたむきに）
-      const nx = u.x + (tx - u.x) * k, ny = u.y + (ty - u.y) * k, nz = u.z + (tz - u.z) * k;
+      const nx = u.x + (tx - u.x) * k, nz = u.z + (tz - u.z) * k;
+      let ny = u.y + (ty - u.y) * k;
+      if (INTRO.on && nx > 20.4 && ny < 1.7) ny = 1.7;   // いま いる 所でも 草むらの 中へは 入らない（翼の 下の すきま こみ）
+      if (hunt && Math.hypot(nx - S.x, nz - S.z) < 3.2 && ny < 2.9) ny += (2.9 - ny) * Math.min(1, dt * 8);   // トラクターの 近くでは すばやく キャビンの 上へ
       const vx = (nx - u.x) / dt, vy = (ny - u.y) / dt, vz = (nz - u.z) / dt, sp = Math.hypot(vx, vz);
       u.x = nx; u.y = ny; u.z = nz;
       if (sp > 0.2) {

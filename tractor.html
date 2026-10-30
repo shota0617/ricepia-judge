@@ -766,7 +766,8 @@ const LAMPS = (() => {
 
 // ---- ウインカー（前・後ろ・作業機。材質 winker_L・winker_R）。前進で大きく切っている間だけ、曲がる側が点滅する。
 // ハザード：エンジンを切って駐車ブレーキをかけている間（S.parked）は、左右両側を同時に点滅させる（旋回より優先）
-// 後退：走行中の後退（S.v < -0.2）の間も、左右両側を同時に点滅させる（ハザードの次、旋回より優先） ----
+// 後退：走行中の後退（S.v < -0.2）の間も、左右両側を同時に点滅させる（ハザードの次、旋回より優先）
+// 片側の点滅では、点灯相に入るたびに relayClick(0.5) でカチッと鳴る（ハザード・後退の両側は鳴らさない。後退はREVBEEPが担う） ----
 const WINKER = (() => {
   const mats = { L: [], R: [] };
   let lastSide = null, lastOn = false;
@@ -787,7 +788,9 @@ const WINKER = (() => {
     const side = S.parked ? 'B' : S.v < -0.2 ? 'B' : S.v > 0.2 && Math.abs(S.steer) > 0.26 ? (S.steer > 0 ? 'R' : 'L') : null;
     const on = !!side && Math.floor(performance.now() / 400) % 2 === 0;   // 約 0.8 秒周期・点灯 50%
     if (side !== lastSide) { if (lastSide) apply(lastSide, false); lastSide = side; lastOn = false; }
+    const rising = side && side !== 'B' && on && !lastOn;   // 片側だけ。点灯相への立ち上がりでカチッと1回（ハザード・後退の両側は鳴らさない。後退はREVBEEPが担う）
     if (side && on !== lastOn) { apply(side, on); lastOn = on; }
+    if (rising) relayClick(0.5);   // relayClick 側のガード（音切・未開始・suspended）で鳴らないときは鳴らない
     if (!side) lastOn = false;
   }
   return { setup, update };

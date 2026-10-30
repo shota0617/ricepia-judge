@@ -233,7 +233,7 @@
 <div class="pad hidden" id="padL"><button data-k="left" aria-label="左へ切る">◀</button><button data-k="right" aria-label="右へ切る">▶</button></div>
 <div class="pad hidden" id="padC"><button id="bRot" class="ico" data-i="⬇" aria-label="ロータリーを下げる・上げる">ロータリーを下げる</button></div>
 <div class="pad hidden" id="padD"><button id="bShallow" class="ico" data-i="⇡" aria-label="耕す深さを浅く">浅く</button><button id="bDeep" class="ico" data-i="⇣" aria-label="耕す深さを深く">深く</button><button data-k="diff" id="bDiff" class="hidden ico" data-i="🔒" aria-label="押しているあいだ、デフロック（左右の後輪を いっしょに回す）">デフロック</button></div>
-<div class="pad hidden" id="padB"><button data-k="lookBack" class="ico" data-i="👀" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bDoro" class="hidden ico" data-i="🧽" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
+<div class="pad hidden" id="padB"><button data-k="lookBack" class="ico" data-i="👀" aria-label="押しているあいだ、うしろの作業機を見る">うしろを見る</button><button id="bHorn" class="ico" data-i="📣" aria-label="クラクションを鳴らす">クラクション</button><button id="bDoro" class="hidden ico" data-i="🧽" aria-label="エンジンを切って、タイヤと作業機の泥を落とす">泥落とし</button></div>
 <div class="pad hidden" id="padR"><button data-k="back" aria-label="うしろへ">▼</button><button data-k="fwd" aria-label="前へ">▲</button></div>
 <div id="toast" style="opacity:0"></div>
 <div id="firstNote" class="hidden" role="dialog" aria-label="はじめに"><div>🧪 試作版の ゲームです。トラクターは 架空の 車体で、メーカーの 公式では ありません。</div><div><b style="color:#7a4a12">🚸 本物の トラクターは とても あぶないので、子どもは 近づかないでね。</b></div><div>つくったのは 西尾の お米屋さん らいすぴあ（近藤米穀店）。</div><button type="button" id="firstNoteOk">わかった</button></div>
@@ -305,6 +305,7 @@
         <tr><td>速さ（主変速 1〜4 速。耕すのは 2〜3 速）</td><td class="pc"><kbd>Q</kbd> 遅く・<kbd>E</kbd> 速く</td><td>「変速」</td></tr>
         <tr><td>耕す深さ</td><td class="pc"><kbd>Z</kbd> 浅く・<kbd>X</kbd> 深く</td><td>「浅く」「深く」</td></tr>
         <tr><td>うしろの作業機を見る</td><td class="pc"><kbd>B</kbd>（押しているあいだ）</td><td>「うしろを見る」</td></tr>
+        <tr><td>クラクション（バックの前に うしろを見て、要るときに知らせる）</td><td class="pc"><kbd>Y</kbd></td><td>「クラクション」</td></tr>
         <tr><td>デフロック（ぬかるみで 片方の後輪が空回りしたとき。まっすぐ出るときだけ）</td><td class="pc"><kbd>J</kbd>（押しているあいだ）</td><td>「デフロック」（空回りしたあと出る）</td></tr>
         <tr><td>まわりを見る</td><td class="pc">画面をドラッグ</td><td>画面をドラッグ</td></tr>
         <tr><td>視点（運転席・うしろ・上）</td><td class="pc"><kbd>C</kbd></td><td>「👁」</td></tr>
@@ -846,6 +847,19 @@ const REVBEEP = (() => {
     lastPhase = phase;
   }
   return { update };
+})();
+
+// ---- クラクション（Y キー・「クラクション」ボタン）。バックの前に「うしろを目で見て、要るときはクラクションで知らせる」（BACKCHK・農家の声）の、知らせる側 ----
+// 音の出し方は relayClick・REVBEEP と同じ型（AudioContext に直接、方形波 420Hz・1音・約 0.45 秒で減衰）。音切（M）・未開始・suspended のときは鳴らない
+const HORN = (() => {
+  function honk() {
+    if (!audio || !soundOn || audio.ac.state !== 'running') return;
+    const ac = audio.ac, t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(420, t);
+    g.gain.setValueAtTime(0.08 * (camMode === 0 ? 1 : 0.4), t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.5);
+  }
+  return { honk };
 })();
 
 function setupTractor(root) {
@@ -8787,6 +8801,7 @@ addEventListener('keydown', e => {
   else if (e.code === 'KeyV') SCRAPE.start();
   else if (e.code === 'KeyB') key.lookBack = 1;
   else if (e.code === 'KeyH') toggleHelp();
+  else if (e.code === 'KeyY') HORN.honk();
   else if (e.code === 'KeyK') setEasy(!EASY.on);
   else if (e.code === 'KeyI') cycleEco();
   else if (e.code === 'KeyP' && (S.rotDown || (S.rotorW || 0) > 1)) toast('PTO の変速は、' + IMPL + 'を上げて 爪の回転が止まってから（本物も PTO を切り、止まってから変速レバーを動かす）（P）', 4);
@@ -8973,6 +8988,7 @@ function walkField() {
 setEasy(EASY.on);
 $('bShallow').onclick = () => setDepth(-1);
 $('bDoro').onclick = () => SCRAPE.start();
+$('bHorn').addEventListener('pointerdown', () => HORN.honk());
 $('bDeep').onclick = () => setDepth(1);
 $('bAgain').onclick = () => location.reload();
 $('bWash').onclick = () => WASH.start();

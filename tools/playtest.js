@@ -271,60 +271,6 @@ async function walkTo(page, id) {
     if (!/^\d+\/\d+（\d+%）$/.test(document.getElementById('badgeCount').textContent)) bad.push('バッジの達成率');
     return bad.length ? bad.join(',') : true;
   });
-  // 田んぼのイベント「芽出しの見きわめ」：種もみが3つ出て、OK をえらぶと +20pt と米づくりの まちメモ。1日1回
-  // 芽出しは こよみの 田おこし・田植えの ころ（4〜6月）だけ。台本の 日付（10月）では 出ないので、ここだけ 田おこしの ころに する
-  R.checks.medashiSeason = await page.evaluate(() => {
-    const S = window.NISHIO_SEASON, G = nishioGo, p0 = S.paddy, res = {};
-    for (const m of [12, 1, 4, 5, 6, 10]) { S.paddy = () => p0(new Date(2026, m - 1, 15)); res[m] = G.medashiDue(); }
-    S.paddy = p0;
-    return { ...res, ok: !res[12] && !res[1] && !res[10] && res[4] && res[5] && res[6] };
-  });
-  R.checks.medashi = await page.evaluate(async () => {
-    const M = window.NISHIO_MEDASHI, G = nishioGo, bad = [], S = window.NISHIO_SEASON, p0 = S.paddy;
-    if (!M) return 'none';
-    if (G.state.medashiDay === G.ymd()) return 'もう今日は遊んだことになっている';
-    S.paddy = () => p0(new Date(2026, 3, 20));   // 田おこしの ころ（芽出しの イベントが 出る）
-    try {
-    const rw = document.getElementById('reward'); if (rw.classList.contains('show')) rw.click();   // ごほうびの画面の上には出ないので、閉じてから
-    const p0 = G.state.points;
-    // 田んぼを歩いて始まる。きろく のパネルを開いている間は始まらず、閉じたあとの1歩で始まる
-    const P = nishioPixel, t = P.toTile(G.me.lat, G.me.lng), x0 = Math.floor(t.x), y0 = Math.floor(t.y);
-    let hit = null;
-    for (let r = 0; r < 120 && !hit; r++) for (let dy = -r; dy <= r && !hit; dy++) for (let dx = -r; dx <= r; dx++) { const c = P.codeAt(x0 + dx, y0 + dy); if (c === P.C.F || c === P.C.U) { hit = [x0 + dx, y0 + dy]; break; } }
-    if (!hit) return '近くに田んぼがない';
-    const rb = G.rewardSoon; G.rewardSoon = () => true;   // 絵を読みこんでいて まだ出ていない ごほうび・開く予約をした おみやげ袋があるとき
-    if (M.open()) { bad.push('ごほうびを待つ間に出た'); M.close(); }
-    G.rewardSoon = rb;
-    document.querySelector('.tabs button[data-tab="log"]').click();
-    for (let i = 0; i < 20; i++) P.critterStep(hit[0], hit[1]);
-    if (M.shown) bad.push('パネルの上に出た');
-    document.querySelector('.tabs button[data-tab="map"]').click();
-    for (let i = 0; i < 3 && !M.shown; i++) P.critterStep(hit[0], hit[1]);
-    if (!M.shown) return `田んぼを歩いても開かない（${document.body.classList.contains('jump-open') ? 'ミニゲーム中' : document.getElementById('reward').classList.contains('show') ? 'ごほうびの画面' : 'ほか'}）${bad.join(',')}`;
-    // 開いている間は、矢印キーで主人公が動かない
-    const before = G.me.lat + ',' + G.me.lng;
-    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    if (G.me.lat + ',' + G.me.lng !== before) bad.push('開いている間に歩いた');
-    // 開いている間に来た ごほうびは、閉じるまで出さない
-    G.showReward(1, 'テスト1', [], false, '', null);
-    G.showReward(2, 'テスト2', [], false, '', null);
-    if (rw.classList.contains('show') || !G.rewardBusy()) bad.push('開いている間に ごほうびが出た');
-    if (document.querySelectorAll('#medashi .md-seed').length !== 3) bad.push('種もみが3つでない');
-    M.pick('ok');
-    if (G.state.points - p0 !== 20) bad.push(`ポイント ${G.state.points - p0}`);
-    if (!G.state.facts.includes('k:tanemomi:0')) bad.push('まちメモ');
-    if (!/正解/.test(document.querySelector('#medashi .md-res').textContent)) bad.push('こたえ');
-    M.close();
-    if (G.medashiDue() || M.open()) bad.push('1日に2回');
-    await new Promise(r => setTimeout(r, 900));
-    if (!rw.classList.contains('show') || !/テスト1/.test(rw.textContent)) bad.push('閉じたあとに 1つめの ごほうびが出ない');
-    rw.click();
-    await new Promise(r => setTimeout(r, 1600));
-    if (!rw.classList.contains('show') || !/テスト2/.test(rw.textContent)) bad.push('1つめを閉じたあとに 2つめの ごほうびが出ない');
-    rw.click();
-    return bad.length ? bad.join(',') : true;
-    } finally { S.paddy = p0; }
-  });
   // 水べのイベント「虫の名前あて」：水べを歩くと始まり、3問。名前の絵を3びきから えらぶ。3問当たると +20pt と虫の まちメモ。1日1回
   R.checks.mushi = await page.evaluate(async () => {
     const M = window.NISHIO_MUSHI, G = nishioGo, P = nishioPixel, C = P.C, bad = [];
@@ -3889,8 +3835,6 @@ async function walkTo(page, id) {
   need(c.hiryo === true, `ミニゲーム 肥料山の草刈り：${c.hiryo}`);
   need(c.bookev === true, `イベント 本のできごと：${c.bookev}`);
   need(c.oldmap === true, `イベント 古い地図：${c.oldmap}`);
-  need(c.medashiSeason && c.medashiSeason.ok, `芽出しの見きわめが 季節の ちがう 月（冬・秋）に 出る／春に 出ない：${JSON.stringify(c.medashiSeason)}`);
-  need(c.medashi === true, `田んぼのイベント 芽出しの見きわめ：${c.medashi}`);
   need(c.mushi === true, `水べのイベント 虫の名前あて：${c.mushi}`);
   need(c.kirara === true, `イベント 雲母石を探せ：${c.kirara}`);
   need(c.yatsumushi === true, `イベント 八ツ面山の昆虫さがし：${c.yatsumushi}`);

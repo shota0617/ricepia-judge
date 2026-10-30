@@ -6497,14 +6497,14 @@ const MOGURA = (() => {
     scene.add(g); return { g, x, z, top: y - 0.004 + 0.13 * k * 0.75 };
   }
   // モグラ（体長 約 13cm × 1.5）：塚の 中に かくれていて、顔と 前足だけ 出す。前が ＋z
-  const mole = new THREE.Group(), head = new THREE.Group(); mole.add(head); mole.scale.setScalar(1.5); mole.visible = false; scene.add(mole);
+  const mole = new THREE.Group(), head = new THREE.Group(); head.position.y = 0.016; mole.add(head); mole.scale.setScalar(1.5); mole.visible = false; scene.add(mole);   // 頭は 体より 少し 上（顔を 出すと はなが 塚の 上に）
   const add = (geo, m, x, y, z, a = 1, b = 1, c = 1, par = mole) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(a, b, c); par.add(o); return o; };
   add(new THREE.SphereGeometry(0.03, 12, 8), furM, 0, -0.03, -0.01, 0.95, 0.85, 1.3);       // 体（塚の 中）
   add(new THREE.SphereGeometry(0.022, 12, 8), furM, 0, 0, 0.018, 1, 0.9, 1.15, head);       // 頭
   add(new THREE.ConeGeometry(0.0075, 0.026, 8).rotateX(Math.PI / 2), pinkM, 0, -0.002, 0.048, 1, 1, 1, head);   // ピンクの はな
   add(new THREE.SphereGeometry(0.0055, 8, 6), pinkM, 0, -0.002, 0.061, 1, 1, 1, head);
   for (const sx of [-1, 1]) add(new THREE.SphereGeometry(0.0016, 5, 4), eyeM, sx * 0.012, 0.006, 0.032, 1, 1, 1, head);   // とても 小さい 目
-  const paws = [-1, 1].map(sx => { const p = add(new THREE.CylinderGeometry(0.017, 0.015, 0.005, 12), pawM, sx * 0.03, -0.012, 0.03); p.rotation.set(0.3, 0, sx * 1.25); return p; });   // 土を かく 大きな 前足（手のひらを 外へ）
+  const paws = [-1, 1].map(sx => { const p = add(new THREE.CylinderGeometry(0.017, 0.015, 0.005, 12), pawM, sx * 0.028, 0.006, 0.035); p.rotation.set(0.3, 0, sx * 1.25); return p; });   // 土を かく 大きな 前足（手のひらを 外へ）
   const st = { s: 'in', t: 0, armed: true, ph: 0 };
   let placed = false, told = false, toldHole = false, mh = null;
   function setup() {
@@ -6530,7 +6530,7 @@ const MOGURA = (() => {
     } else {
       st.t += dt;
       const k = st.s === 'up' ? Math.min(1, st.t / 0.5) : st.s === 'down' ? 1 - Math.min(1, st.t / 0.4) : 1;
-      mole.position.y = mh.top - 0.09 + k * 0.075;   // 顔と 前足だけ 塚の 上に
+      mole.position.y = mh.top - 0.09 + k * 0.085;   // 顔と 前足の 手のひらだけ 塚の 上に（体は 塚の 中）
       head.rotation.y = st.s === 'look' ? Math.sin(st.ph * 2.6) * 0.5 : 0;   // きょろきょろ
       head.rotation.x = st.s === 'look' ? -0.15 + Math.sin(st.ph * 9) * 0.04 : 0;   // はなを ひくひく
       paws.forEach((p, i) => { p.rotation.x = 0.3 + (st.s === 'look' ? Math.sin(st.ph * 3 + i) * 0.15 : 0); });
@@ -6541,7 +6541,7 @@ const MOGURA = (() => {
     const cov = INTRO.coat && INTRO.coat.m ? INTRO.coat.x0 + (INTRO.coat.done || 0) * INTRO.coat.w : -1e9;   // ぬった 畦の 東の はし（泥の 下に なった 穴は 見えない）。モグラが 顔を 出す ほうが さき
     if (!toldHole && S.started && st.s === 'in' && holes.some(h => h.x < cov - 0.2) && (!INTRO.on || INTRO.talked) && (DETAIL || SAY.free && SAY.note('モグラの あなも ふさいだよ'))) { toldHole = true; BADGE.joy(3); }
   }
-  return { update, mole, st, hills, holes, get told() { return told; }, get toldHole() { return toldHole; } };
+  return { update, mole, st, hills, holes, paws, get hill() { return mh; }, get told() { return told; }, get toldHole() { return toldHole; } };
 })();
 // ---- 代かきの 水の ゲンゴロウ：水の 中を 後ろ脚で こいで およぎ、ときどき 水面に 上がって おしりを 出して 息つぎする
 // （空気を 羽の 下に ためる）。上がる 所と もぐる 所に 小さな 輪の 波。トラクターが 近いと すっと もぐる。

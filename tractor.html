@@ -6568,7 +6568,7 @@ const TSUBAME = (() => {
     add(new THREE.ConeGeometry(0.004, 0.012, 5).rotateX(Math.PI / 2), eyeM, 0, 0.002, 0.059);  // みじかい くちばし
     for (const sx of [-1, 1]) {                   // ふたまたの 長い 尾
       const t = add(new THREE.ConeGeometry(0.004, 0.07, 4).rotateX(-Math.PI / 2).translate(0, 0, -0.035), backM, sx * 0.006, 0.002, -0.035);
-      t.rotation.y = sx * 0.22; t.scale.y = 0.4;
+      t.rotation.y = -sx * 0.22; t.scale.y = 0.4;   // −z へ のびる ので、外へ ひらくには 符号を 逆に
     }
     const wings = [-1, 1].map(sx => {             // 細長く うしろへ ながれる つばさ（rotation.z で 上下に）
       const w = new THREE.Group(); w.position.set(sx * 0.012, 0.006, 0.008); g.add(w);   // Shape の −y（翼端）が うしろ（−z）へ ながれる よう ＋π/2 で ねかせる

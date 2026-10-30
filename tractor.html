@@ -821,6 +821,28 @@ const BEACON = (() => {
   return { setup, update };
 })();
 
+// ---- 後退警告音（バックブザー）。後退中（S.v < -0.2、cycle 8 の両側ウインカーと同じしきい値）は、ウインカーの点灯相に合わせて「ピッ」と鳴る ----
+// 音が切ってある（M）・まだ音が始まっていない間は鳴らない。音の出し方は relayClick と同じ型（AudioContext に直接、方形波 950Hz・約 0.28 秒）
+// 駐車中は S.v = 0 のため条件は成立しない。NB の音は変えない（REVBEEP は自分のトラクターの S.v だけを見る）
+const REVBEEP = (() => {
+  let lastPhase = -1;
+  function beep() {
+    if (!audio || !soundOn || audio.ac.state !== 'running') return;
+    const ac = audio.ac, t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(950, t);
+    g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.3);
+  }
+  function update() {
+    const rev = S.v < -0.2 && !S.done;
+    if (!rev) { lastPhase = -1; return; }
+    const phase = Math.floor(performance.now() / 400) % 2;   // ウインカーと同じ 0.8 秒周期・点灯相（0）で鳴る
+    if (phase === 0 && lastPhase !== 0) beep();
+    lastPhase = phase;
+  }
+  return { update };
+})();
+
 function setupTractor(root) {
   rig.add(root);
   root.traverse(o => {
@@ -9920,6 +9942,7 @@ function frame(now) {
   LAMPS.update();
   WINKER.update();
   BEACON.update();
+  REVBEEP.update();
   GLINT_CAB.value = camMode === 0 ? 0.3 : 1;      // 運転席ではすじをうすく（うっすら残す）
   emitExhaust(dt);
   DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も

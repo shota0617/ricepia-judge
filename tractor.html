@@ -764,7 +764,8 @@ const LAMPS = (() => {
   return { setup, toggle, update, get on() { return on; } };
 })();
 
-// ---- ウインカー（前・後ろ・作業機。材質 winker_L・winker_R）。前進で大きく切っている間だけ、曲がる側が点滅する ----
+// ---- ウインカー（前・後ろ・作業機。材質 winker_L・winker_R）。前進で大きく切っている間だけ、曲がる側が点滅する。
+// ハザード：エンジンを切って駐車ブレーキをかけている間（S.parked）は、左右両側を同時に点滅させる（旋回より優先） ----
 const WINKER = (() => {
   const mats = { L: [], R: [] };
   let lastSide = null, lastOn = false;
@@ -776,11 +777,13 @@ const WINKER = (() => {
     });
   }
   function apply(side, on) {
-    for (const m of mats[side]) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2 : 1; }
+    const sides = side === 'B' ? ['L', 'R'] : [side];   // 'B'＝両側（ハザード）
+    for (const s of sides) for (const m of mats[s]) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2 : 1; }
   }
   function update() {
+    // 駐車中は S.v = 0 のため旋回条件は成立しないが、意図を順序で明示するためハザードを先に評価する
     // 右へ切ると steer > 0（前輪の箇所の注釈通り）。前進で大きく切っている間だけ点滅し、それ以外は両側とも消灯
-    const side = S.v > 0.2 && Math.abs(S.steer) > 0.26 ? (S.steer > 0 ? 'R' : 'L') : null;
+    const side = S.parked ? 'B' : S.v > 0.2 && Math.abs(S.steer) > 0.26 ? (S.steer > 0 ? 'R' : 'L') : null;
     const on = !!side && Math.floor(performance.now() / 400) % 2 === 0;   // 約 0.8 秒周期・点灯 50%
     if (side !== lastSide) { if (lastSide) apply(lastSide, false); lastSide = side; lastOn = false; }
     if (side && on !== lastOn) { apply(side, on); lastOn = on; }

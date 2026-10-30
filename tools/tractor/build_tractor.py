@@ -72,7 +72,8 @@ PAL = {
     'wheel_cream': dict(c='#ebe6d2', r=0.35),           # 白っぽいアイボリー（X の農家さんの写真 3 人が「白い・白っぽいホイール」）
     'tire': dict(c='#1b1b1b', r=0.85),
     'white': dict(c='#f2f2ef', r=0.3),
-    'glass': dict(c='#8fb3a2', r=0.04, a=0.2),            # 少し緑がかった色ガラス
+    'glass': dict(c='#6f9f93', r=0.03, a=0.26, m=0.2),    # 青みがかった緑の色ガラス（環境マップがあれば空が映る）
+    'glass_glint': dict(c='#ffffff', r=0.1, a=0.09, e=0.6),   # 前ガラスの うすい映りこみの すじ
     'visor': dict(c='#202a2a', r=0.1, a=0.65),
     'lamp_head': dict(c='#e9eef2', r=0.06, m=0.3),
     'lamp_work': dict(c='#e9eef2', r=0.06, m=0.3),
@@ -533,19 +534,29 @@ def wheel(cx, cy, cz, OD, W, rim, rear):
         a = 2 * math.pi * k / (8 if rear else 6)
         rr = 0.085 if rear else 0.058
         cyl_x('silver', 0.012, hub_x + 0.07 * s, hub_x + 0.085 * s, cy + rr * math.sin(a), cz + rr * math.cos(a), 6)
+    if rear:  # 後輪ウェイト（cycle 11）：鋳鉄の円板＋取付ボルト。皿の外面 face に内側へ 0.02 埋め込んで浮きなし
+        face = cx + off + 0.05 * s
+        cyl_x('darkgray', 0.20, face - 0.02 * s, face + 0.04 * s, cy, cz, 32)
+        for k in range(6):
+            a = 2 * math.pi * k / 6
+            rr = 0.16
+            cyl_x('silver', 0.012, face + 0.04 * s, face + 0.055 * s, cy + rr * math.sin(a), cz + rr * math.cos(a), 6)
 
 
 # ================================================================
 #  外装
 # ================================================================
-def hood_sec(y, w, t, b, rc, n=6):
+CROWN = 0.04                      # ボンネット上面のまん中の盛り上がり
+
+
+def hood_sec(y, w, t, b, rc, n=8):
     pts = [(-w, b + (t - rc - b) * k / 4) for k in range(4)]
     for i in range(n + 1):
         a = math.pi - (math.pi / 2) * i / n
         pts.append((-w + rc + rc * math.cos(a), t - rc + rc * math.sin(a)))
-    for k in range(1, 8):                           # 上の面はまん中が少し盛り上がる
-        x = -(w - rc) + 2 * (w - rc) * k / 8
-        pts.append((x, t + 0.022 * (1 - (x / (w - rc)) ** 2)))
+    for k in range(1, 10):                          # 上の面はまん中がゆるやかに盛り上がる（両はしへ丸く落ちる）
+        x = -(w - rc) + 2 * (w - rc) * k / 10
+        pts.append((x, t + CROWN * (1 - (x / (w - rc)) ** 2)))
     for i in range(n + 1):
         a = math.pi / 2 - (math.pi / 2) * i / n
         pts.append((w - rc + rc * math.cos(a), t - rc + rc * math.sin(a)))
@@ -561,7 +572,7 @@ def hood():
     for i in range(N):
         s = i / (N - 1)
         y = y0 + (y1 - y0) * s
-        secs.append((y, 0.385 - 0.04 * s, 1.565 - 0.20 * s - 0.06 * s ** 2.5, 0.86, 0.12 - 0.03 * s))
+        secs.append((y, 0.385 - 0.04 * s, 1.565 - 0.20 * s - 0.06 * s ** 2.5 - CROWN * 0.5 * (1 - s) ** 2, 0.86, 0.17 - 0.05 * s))
     for dy, dt, dw in ((0.04, 0.012, 0.006), (0.07, 0.035, 0.018), (0.085, 0.065, 0.034)):   # 鼻先を丸める
         y, w, t, b, rc = secs[N - 1]
         secs.append((y1 - dy, w - dw, t - dt, b, rc))
@@ -578,12 +589,14 @@ def hood():
         box('darkgray', (2 * gw - 0.05, 0.01, 0.012), (0, gy - 0.008, 0.905 + k * 0.038))
     pipe('chrome', [(-0.21, gy - 0.014, 1.085), (0, gy - 0.014, 0.915), (0.21, gy - 0.014, 1.085)], 0.011, 8)
     pipe('chrome', [(-0.17, gy - 0.012, 1.085), (0, gy - 0.012, 0.95), (0.17, gy - 0.012, 1.085)], 0.006, 6)
-    # 吊り目ヘッドライト（外のはしが上がった細長い灯。黒い縁の中）
+    # 吊り目ヘッドライト：黒いランプハウスが鼻先から出て、中に銀のリフレクタ、前へふくらむレンズ
     for s in (1, -1):
-        poly = [(0.075, 1.125), (0.27, 1.175), (0.275, 1.205), (0.07, 1.153)]
-        rim_ = [(0.055, 1.112), (0.285, 1.165), (0.29, 1.218), (0.05, 1.167)]
-        prism('black_gloss', [(s * x, z) for x, z in rim_], 0.012, T((0, gy + 0.002, 0), (90, 0, 0)))
-        prism('lamp_head', [(s * x, z) for x, z in poly], 0.012, T((0, gy - 0.003, 0), (90, 0, 0)))
+        rim_ = [(0.050, 1.108), (0.290, 1.160), (0.296, 1.226), (0.046, 1.172)]
+        refl = [(0.068, 1.121), (0.274, 1.166), (0.278, 1.212), (0.064, 1.162)]
+        prism('black_gloss', [(s * x, z) for x, z in rim_], 0.05, T((0, gy - 0.005, 0), (90, 0, 0)), bev=(0.01, 2))
+        prism('silver', [(s * x, z) for x, z in refl], 0.02, T((0, gy - 0.026, 0), (90, 0, 0)))
+        sph('lamp_head', 0.5, (s * 0.172, gy - 0.034, 1.1675), (0.206, 0.046, 0.046), (0, -13 * s, 0), n=24)     # レンズ（平たい楕円体）
+        sph('chrome', 0.5, (s * 0.115, gy - 0.036, 1.148), (0.05, 0.03, 0.05), n=12)                         # 内側の丸い玉（ロービーム）
     # ボンネットの横の下半分は黒いパネル（実車は赤い上半分と黒い下半分の 2 色。境目は前で低く、運転席のほうへ上がる）
     for sd in (1, -1):
         rows = []
@@ -603,7 +616,7 @@ def hood():
     # ボンネットの窓寄りのまん中の金具：持ち手のくぼみと丸い金具・小さなボルト（X の運転席からの写真 4 枚に共通。運転席から真正面に見える）
     hy = -0.76
     hs = (hy - y0) / (y1 - y0)
-    hz = 1.565 - 0.20 * hs - 0.06 * hs ** 2.5 + 0.022                          # 上の面（まん中の盛り上がりの上）
+    hz = 1.565 - 0.20 * hs - 0.06 * hs ** 2.5 - CROWN * 0.5 * (1 - hs) ** 2 + CROWN                          # 上の面（まん中の盛り上がりの上）
     tilt = math.degrees(math.atan2(0.20 + 0.15 * hs ** 1.5, y0 - y1))           # 前下がりの傾き
     hm = T((0, hy, hz), (-tilt, 0, 0))
     oval = [(0.055 * math.cos(2 * math.pi * k / 20), 0.028 * math.sin(2 * math.pi * k / 20)) for k in range(20)]
@@ -615,11 +628,21 @@ def hood():
     box('darkgray', (0.46, 1.4, 0.18), (0, -1.45, 0.52), bev=(0.03,))
     box('darkgray', (0.50, 0.70, 0.36), (0, -2.58, 0.66), bev=(0.02,))           # 前の枠（バンパー台）
     box('black', (0.60, 0.15, 0.30), (0, -2.86, 0.62), bev=(0.015,))             # ウェイトの台
-    for k in range(8):                                                           # 黒いフロントウェイト
-        x = -0.385 + k * 0.11
-        box('black_gloss', (0.098, 0.17, 0.36), (x, -2.995, 0.62), bev=(0.012,))
-        box('black_gloss', (0.03, 0.06, 0.06), (x, -3.04, 0.83), bev=(0.006,))
-    pipe('black', [(-0.30, -3.02, 0.85), (-0.30, -3.055, 0.89), (0.30, -3.055, 0.89), (0.30, -3.02, 0.85)], 0.016, 8)  # 持ち手
+    for k in range(5):                                                           # 積み重ねた鋳鉄のフロントウェイト（板 5 枚。ふちが丸い）
+        z = 0.47 + k * 0.077
+        box('black_gloss', (0.80 - 0.01 * (k % 2), 0.17, 0.068), (0, -2.995, z), bev=(0.016, 3))
+        box('darkgray', (0.20, 0.012, 0.022), (0, -3.085, z), bev=(0.006,))       # 持ち手の穴（くぼみ）
+    for x in (-0.15, 0.15):                                                      # 板をつらぬくボルトの頭
+        cyl('silver', 0.018, 0.02, (x, -2.995, 0.855), n=6)
+    box('black', (0.86, 0.19, 0.03), (0, -2.995, 0.435), bev=(0.01,))             # いちばん下の受け板
+    pipe('black', [(-0.30, -3.02, 0.87), (-0.30, -3.055, 0.91), (0.30, -3.055, 0.91), (0.30, -3.02, 0.87)], 0.016, 8)  # 持ち手
+    gr = 0.026                                                                   # フロントガード（パイプ製の前部保護枠。ウェイトの手前）
+    gy, gz0, gz1 = -3.14, 0.35, 1.02
+    for s in (-1, 1):
+        pipe('black', [(s * 0.42, gy, gz0), (s * 0.42, gy, gz1)], gr, 10)             # 縦パイプ
+        pipe('darkgray', [(s * 0.22, -2.75, 0.66), (s * 0.47, -2.85, 0.62), (s * 0.47, -3.00, 0.58), (s * 0.42, gy, 0.52)], gr, 10)  # 取付アーム（ウェイトの外側をまわす）
+    pipe('black', [(-0.42, gy, gz1), (0.42, gy, gz1)], gr, 10)                       # 上の横バー
+    pipe('black', [(-0.42, gy, 0.62), (0.42, gy, 0.62)], gr, 10)                     # 下の横バー
     cyl_x('darkgray', 0.075, -KP + 0.06, KP - 0.06, FY, FZ, 20)                     # 前車軸
     sph('darkgray', 0.15, (0, FY, FZ), (1.0, 1.1, 0.95))
     cyl('darkgray', 0.03, 1.2, (0, -1.5, 0.47), (90, 0, 0), 12)                   # 前輪へのシャフト
@@ -632,6 +655,9 @@ def hood():
     for k in range(4):                                                            # 燃料噴射の管
         pipe('silver', [(0.25, -1.55 - 0.12 * k, 1.00), (0.29, -1.50 - 0.12 * k, 0.92), (0.29, -1.40, 0.82)], 0.005, 5)
     box('black', (0.20, 0.36, 0.30), (0.40, -0.42, 1.06), bev=(0.04, 3))          # 燃料タンク（左のステップの奥）
+    cyl('silver', 0.045, 0.016, (0.40, -0.50, 1.215), n=20)                       # 給油口（ふた）
+    cyl('black', 0.034, 0.024, (0.40, -0.50, 1.225), n=16)
+    box('silver', (0.05, 0.012, 0.012), (0.40, -0.50, 1.240))                     # ふたのつまみ
 
 
 def cab():
@@ -667,6 +693,9 @@ def cab():
     # GNSS アンテナ（白い傘）
     cyl('white', 0.05, 0.04, (0, -0.25, ROOF_IN + 0.195), n=20)
     sph('white', 0.085, (0, -0.25, ROOF_IN + 0.19), (1, 1, 0.41), n=24)
+    # 回転灯（cycle 9。屋根の左前 1 灯のみ。材質は既存の orange。winker 材質は使わない）
+    cyl('black', 0.06, 0.025, (0.45, -0.40, 2.6625), n=20)              # 台座（屋根上面 2.65 の上）
+    sph('orange', 0.052, (0.45, -0.40, 2.725), (1, 1, 1.1), n=24)       # アンバーのドーム（最上部 約2.78）
     # LED ワークランプ（前後 2 灯ずつ）
     for s in (1, -1):
         box('black', (0.11, 0.06, 0.06), (s * 0.48, -0.79, ROOF_IN - 0.01), (-10, 0, 0), bev=(0.008,))
@@ -681,6 +710,12 @@ def cab():
     cyl('black_gloss', 0.05, 0.05, (ex, -0.645, 2.45), n=16)                   # 先の口
     for z in (1.70, 2.28):
         box('black', (0.07, 0.03, 0.02), (ex + 0.045, -0.615, z))
+    # マフラーまわりの磨き（cycle 5）：カバーの締めバンド・口の縁・雨よけキャップ（追加のみ）
+    for z in (1.66, 1.98, 2.30):
+        cyl('darkgray', 0.079, 0.022, (ex, -0.64, z), n=20)                   # 締めバンド（取付ブラケットと高さが重ならない位置）
+    cyl('darkgray', 0.056, 0.018, (ex, -0.645, 2.44), n=20)                   # 先の口の縁リング
+    cyl('black_gloss', 0.054, 0.008, (ex, -0.645, 2.486), (12, 0, 0), n=20)   # 雨よけキャップ（少し開いた状態）
+    box('darkgray', (0.03, 0.02, 0.012), (ex, -0.598, 2.480))                 # キャップのヒンジ（後ろ側）
     # 前のウインカー（Aピラーの下の外）
     for s, nm in ((1, 'winker_L'), (-1, 'winker_R')):
         box('black', (0.07, 0.07, 0.08), (s * (CAB_X + 0.05), fy(CAB_X) - 0.02, 1.46), bev=(0.01,))
@@ -692,7 +727,10 @@ def cab():
     # 乗降ステップ（左右とも。ドアは両側にある）
     for s in (1, -1):
         for z, y in ((0.48, -0.78), (0.86, -0.77), (1.25, -0.70)):
-            box('darkgray', (0.27, 0.13 if z < 1 else 0.17, 0.025), (s * 0.68, y, z), bev=(0.006,))
+            sd = 0.13 if z < 1 else 0.17
+            box('darkgray', (0.27, sd, 0.025), (s * 0.68, y, z), bev=(0.006,))
+            for k in range(4):                                                  # 滑り止めの横みぞ（細い山）
+                box('black', (0.25, 0.012, 0.008), (s * 0.68, y - sd * 0.36 + sd * 0.24 * k, z + 0.0165))
         for x in (0.545, 0.815):
             prism('black', [(-0.86, 0.44), (-0.70, 0.44), (-0.60, FLOOR), (-0.80, FLOOR)], 0.012, T((s * x, 0, 0), (90, 0, 90)))
         pipe('black', [(s * 0.71, -0.62, 1.45), (s * 0.73, -0.62, 1.60), (s * 0.73, -0.60, 2.15), (s * 0.70, -0.58, 2.22)], 0.015, 8)   # 乗降グリップ（外）
@@ -714,6 +752,15 @@ def glass():
             ys = [DOOR_Y0 + (DOOR_Y1 - DOOR_Y0) * i / 24 for i in range(25)]
             loft('glass', [[(s * door_x(y), y, door_bottom(y)), (s * door_x(y), y, ROOF_IN - 0.01)] for y in ys], smooth=60)
         box('glass', (2 * CAB_X - 0.04, 0.008, ROOF_IN - 1.62), (0, GLASS_R, (ROOF_IN + 1.61) / 2))
+    # 前ガラスの映りこみ：ななめのうすい白いすじ 2 本（外へ 6mm。Body に入れて Glass の材質は glass だけに保つ）
+    for x0, x1, w in ((-0.40, 0.05, 0.10), (0.12, 0.30, 0.045)):
+        gs = []
+        for i in range(13):
+            x = x0 + (x1 - x0) * i / 12
+            zc = 1.78 + (x - x0) * 0.9 + 0.30 * (x0 + 0.4)
+            gs.append([(x, fy(x) - 0.006, zc - w), (x, fy(x) - 0.006, zc + w)])
+        with part('Body'):
+            loft('glass_glint', gs, smooth=60)
 
 
 def fenders_lamps():
@@ -721,7 +768,8 @@ def fenders_lamps():
     for s, wk in ((1, 'winker_L'), (-1, 'winker_R')):
         prof = [(0.47, 0.70), (0.47, 0.775), (0.86, 0.79), (0.905, 0.765), (0.91, 0.69), (0.895, 0.69), (0.89, 0.755), (0.855, 0.775), (0.485, 0.762), (0.485, 0.70)]
         lathe('paint_red', [(s * x, r) for x, r in prof], 0.0, RZ, n=40, a0=-58, a1=82, closed_prof=True, smooth=40)
-        # フェンダーの後ろのはしの黒い縁
+        # フェンダーの後ろのはしの黒い泥よけフラップ（後輪の後ろ側。下はじ z=0.30 で地面に届かない）
+        box('black', (0.40, 0.014, 0.46), (s * 0.68, 0.755, 0.55), (-5, 0, 0), bev=(0.005,))
         # スマートリヤコンビランプ（上がテール、下がウインカー）
         ph = math.radians(48)
         cy, cz = 0.80 * math.sin(ph), RZ + 0.80 * math.cos(ph)
@@ -766,6 +814,23 @@ WN = Vector((0, math.sin(math.radians(COL_TILT)), math.cos(math.radians(COL_TILT
 W_UP = Vector((0, -math.cos(math.radians(COL_TILT)), math.sin(math.radians(COL_TILT))))  # ハンドルの 12 時の向き
 WHEEL_R = 0.165                   # リムの中心までの半径（外径 約 0.37）
 W_MTX = Matrix.Translation(WHEEL_C) @ Euler((math.radians(-COL_TILT), 0, 0)).to_matrix().to_4x4() @ Matrix.Rotation(math.pi, 4, 'Z')
+
+
+def front_fender(s):
+    """前輪の赤いフェンダー（Steer の中に入れる。転がり回転には付かず、転舵だけ一緒に動く）。
+    後輪フェンダーと同じ lathe。幅は前タイヤの外側面（TR+F_W/2）までで、内側へ余裕をとる"""
+    xi, xo = TR - F_W / 2 - 0.03, TR + F_W / 2
+    ro = F_OD / 2
+    prof = [(xi, ro + 0.012), (xi, ro + 0.050), (xo - 0.02, ro + 0.060), (xo, ro + 0.045), (xo, ro + 0.012),
+            (xo - 0.012, ro + 0.012), (xo - 0.012, ro + 0.040), (xo - 0.02, ro + 0.048), (xi + 0.012, ro + 0.038), (xi + 0.012, ro + 0.012)]
+    lathe('paint_red', [(s * x, r) for x, r in prof], FY, FZ, n=24, a0=-55, a1=70, closed_prof=True, smooth=40)
+    # ステー：キングピンの上から、フェンダーの前と後ろの内側へ
+    for ph in (-38, 45):
+        a = math.radians(ph)
+        pipe('darkgray', [(s * (xi + 0.02), FY, FZ + 0.13), (s * (xi + 0.02), FY + (ro + 0.035) * math.sin(a), FZ + (ro + 0.035) * math.cos(a))], 0.011, 8)
+    # 後端の泥よけフラップ（cycle 13。後輪の泥よけと対になる。Steer の中なので転舵だけ一緒に動く）
+    # フェンダー後端（角度70°・半径約0.50）は y≒-1.68・z≒0.616。フラップ上端0.63で重なり、下端0.25で地面に届かない
+    box('black', (0.22, 0.014, 0.38), (s * 0.645, -1.68, 0.44), bev=(0.005,))
 
 
 def interior():
@@ -1128,6 +1193,8 @@ def rotary():
     with part('Rotary'):
         # 赤いカバー（爪のまわりの半円筒）・両側の板
         lathe('paint_red', [(-TILL_W / 2 - 0.02 + (TILL_W + 0.04) * k / 16, 0.31) for k in range(17)], ay, az, n=24, a0=-75, a1=60, smooth=50)
+        for rx in (-0.8, -0.4, 0.0, 0.4, 0.8):                                          # カバーの補強リブ（cycle 7。カバーの面に半分埋まる太さで、浮かない）
+            pipe('paint_red', [(rx, ay + 0.315 * math.sin(math.radians(ph)), az + 0.315 * math.cos(math.radians(ph))) for ph in range(-70, 51, 10)], 0.010, 8)
         for s in (1, -1):
             arc = [(0.33 * math.sin(math.radians(a)), az + 0.33 * math.cos(math.radians(a))) for a in range(-80, 66, 10)]
             prism('paint_red', [(0.0 + p[0], p[1]) for p in arc] + [(0.25, 0.02), (-0.25, 0.02)], 0.012,
@@ -1321,6 +1388,7 @@ def build():
             cyl('darkgray', 0.06, 0.26, (s * KP, FY, FZ), n=16)
             cyl_x('darkgray', 0.075, s * (KP - 0.05), s * (TR - F_W * 0.1), FY, FZ, 18)
             box('darkgray', (0.06, 0.12, 0.05), (s * KP, FY + 0.10, FZ + 0.05))
+            front_fender(s)
     # 外のミラーの面
     for nm, s in (('MirrorL', 1), ('MirrorR', -1)):
         mp = Vector((s * 0.861, GLASS_F_SIDE + 0.05, 2.06))

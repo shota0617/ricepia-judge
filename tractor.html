@@ -766,6 +766,88 @@ const LAMPS = (() => {
   return { setup, toggle, update, get on() { return on; } };
 })();
 
+// ---- ウインカー（前・後ろ・作業機。材質 winker_L・winker_R）。前進で大きく切っている間だけ、曲がる側が点滅する。
+// ハザード：エンジンを切って駐車ブレーキをかけている間（S.parked）は、左右両側を同時に点滅させる（旋回より優先）
+// 後退：走行中の後退（S.v < -0.2）の間も、左右両側を同時に点滅させる（ハザードの次、旋回より優先）
+// 片側の点滅では、点灯相に入るたびに relayClick(0.5) でカチッと鳴る（ハザード・後退の両側は鳴らさない。後退はREVBEEPが担う） ----
+const WINKER = (() => {
+  const mats = { L: [], R: [] };
+  let lastSide = null, lastOn = false;
+  function setup(root) {
+    root.traverse(o => {
+      if (!o.isMesh || !o.material) return;
+      const s = o.material.name === 'winker_L' ? 'L' : o.material.name === 'winker_R' ? 'R' : null;
+      if (s && !mats[s].includes(o.material)) mats[s].push(o.material);   // 前・後ろ・作業機は同じ材質を共有しているので、左右1つずつで全箇所が変わる
+    });
+  }
+  function apply(side, on) {
+    const sides = side === 'B' ? ['L', 'R'] : [side];   // 'B'＝両側（ハザード）
+    for (const s of sides) for (const m of mats[s]) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2 : 1; }
+  }
+  function update() {
+    // 優先順位：駐車中ハザード ＞ 後退中の両側点滅 ＞ 前進の旋回ウインカー。駐車中は S.v = 0 のため旋回条件は成立しないが、意図を順序で明示する
+    // 右へ切ると steer > 0（前輪の箇所の注釈通り）。前進で大きく切っている間だけ点滅し、それ以外は両側とも消灯
+    const side = S.parked ? 'B' : S.v < -0.2 ? 'B' : S.v > 0.2 && Math.abs(S.steer) > 0.26 ? (S.steer > 0 ? 'R' : 'L') : null;
+    const on = !!side && Math.floor(performance.now() / 400) % 2 === 0;   // 約 0.8 秒周期・点灯 50%
+    if (side !== lastSide) { if (lastSide) apply(lastSide, false); lastSide = side; lastOn = false; }
+    const rising = side && side !== 'B' && on && !lastOn;   // 片側だけ。点灯相への立ち上がりでカチッと1回（ハザード・後退の両側は鳴らさない。後退はREVBEEPが担う）
+    if (side && on !== lastOn) { apply(side, on); lastOn = on; }
+    if (rising) relayClick(0.5);   // relayClick 側のガード（音切・未開始・suspended）で鳴らないときは鳴らない
+    if (!side) lastOn = false;
+  }
+  return { setup, update };
+})();
+
+// ---- 回転灯（屋根の左前のアンバー・ビーコン。cycle 9 で付けたドーム）。エンジンが回っている間だけ、約 1 秒周期で明滅する ----
+// Body の orange はドーム単独（GLB実測：バウンディングボックス中心 y 約 2.73）なので、中心 y が 2.5 より高い orange だけを拾う。
+// 室内・レバーの orange は y が低く拾われない。拾った材質は clone してから書き換える（共有のままでは室内・レバーまで光ってしまう）
+const BEACON = (() => {
+  const mats = [];
+  let lastOn = false;
+  function setup(root) {
+    root.traverse(o => {
+      if (!o.isMesh || !o.material || o.material.name !== 'orange') return;
+      o.geometry.computeBoundingBox();
+      const c = o.geometry.boundingBox.getCenter(new THREE.Vector3());
+      if (c.y < 2.5) return;   // 屋根の上のドームだけ
+      o.material = o.material.clone();
+      if (!mats.includes(o.material)) mats.push(o.material);
+    });
+  }
+  function update() {
+    if (!mats.length) return;
+    // エンジンが回っている間だけ（始める前・セル回転中・エンスト・駐車中・おわりは消灯）。アワーメーターと同じ条件
+    const running = S.started && !S.done && !S.stalled && !(S.crank > 0);
+    const on = running && Math.floor(performance.now() / 500) % 2 === 0;   // 約 1 秒周期・点灯 50%
+    if (on === lastOn) return;
+    lastOn = on;
+    for (const m of mats) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2.5 : 1; }
+  }
+  return { setup, update };
+})();
+
+// ---- 後退警告音（バックブザー）。後退中（S.v < -0.2、cycle 8 の両側ウインカーと同じしきい値）は、ウインカーの点灯相に合わせて「ピッ」と鳴る ----
+// 音が切ってある（M）・まだ音が始まっていない間は鳴らない。音の出し方は relayClick と同じ型（AudioContext に直接、方形波 950Hz・約 0.28 秒）
+// 駐車中は S.v = 0 のため条件は成立しない。NB の音は変えない（REVBEEP は自分のトラクターの S.v だけを見る）
+const REVBEEP = (() => {
+  let lastPhase = -1;
+  function beep() {
+    if (!audio || !soundOn || audio.ac.state !== 'running') return;
+    const ac = audio.ac, t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(950, t);
+    g.gain.setValueAtTime(0.05, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.3);
+  }
+  function update() {
+    const rev = S.v < -0.2 && !S.done;
+    if (!rev) { lastPhase = -1; return; }
+    const phase = Math.floor(performance.now() / 400) % 2;   // ウインカーと同じ 0.8 秒周期・点灯相（0）で鳴る
+    if (phase === 0 && lastPhase !== 0) beep();
+    lastPhase = phase;
+  }
+  return { update };
+})();
+
 function setupTractor(root) {
   rig.add(root);
   root.traverse(o => {
@@ -780,8 +862,15 @@ function setupTractor(root) {
   P.rotY0 = P.Rotary.position.y;
   P.flap0 = P.Flap.rotation.x;
   LAMPS.setup(root);
+  WINKER.setup(root);   // ハローの付け替えは setupTractor の呼び出しより前に済んでいるので、ハローのウインカー材質も拾える
+  BEACON.setup(root);   // 回転灯ドーム（Body の orange）の材質を clone して保持する
   P.Glass.traverse(o => { if (o.isMesh) { o.castShadow = false; o.renderOrder = 2; } });
   P.Glass.traverse(o => { if (o.isMesh && !o.material.userData.dust) { o.material.userData.dust = 1; dustyGlass(o.material); } });
+  root.traverse(o => {                            // 映りこみのすじ：Glass の外（Body の中）にあるので、ルート全体から拾う
+    if (!o.isMesh || o.material.name !== 'glass_glint') return;
+    o.castShadow = false; o.renderOrder = 3;      // 薄い透明板。ガラス（2）より手前に描く
+    if (!o.material.userData.dust) { o.material.userData.dust = 1; glintGlass(o.material); }
+  });
   for (const [n, k] of [['WheelRL', 1], ['WheelRR', 1], ['WheelFL', 1], ['WheelFR', 1], ['Rotary', 0.75]]) {
     P[n].traverse(o => {
       if (!o.isMesh || /^(tail|winker_|reflector)/.test(o.material.name)) return;   // 灯火器は泥をかぶらせず、ライトの入切がきくようにそのまま
@@ -1146,6 +1235,25 @@ function dustyGlass(m) {
   glare *= ${TOD === 'yoru' ? '0.05' : WX === 'hare' ? '1.0' : '0.15'};   // くもりの日は 日ざしがないので まぶしくない。夜の月明かりは ほとんど光らない
   gl_FragColor.rgb += vec3(1.0, 0.95, 0.85) * glare * (0.15 + 2.2 * dust);
   gl_FragColor.a = max(gl_FragColor.a, glare * clamp(dust * 2.5, 0.0, 0.7));`);
+  };
+  m.needsUpdate = true;
+}
+
+// 前ガラス外の映りこみのすじ（材質 glass_glint・Body の中）：ガラスと同じ uniform（泥・曇り・雨）でうすくなる。運転席の視点ではさらにうすい
+const GLINT_CAB = { value: 1 };   // 1＝外から見る・小さいほど運転席でうすい（視点の切りかえで毎コマ更新）
+function glintGlass(m) {
+  const base = m.onBeforeCompile;
+  m.onBeforeCompile = sh => {
+    if (base) base.call(m, sh);
+    sh.uniforms.glassMud = GLASS_MUD;
+    sh.uniforms.glassFog = GLASS_FOG;
+    sh.uniforms.fogClear = FOG_CLEAR;
+    sh.uniforms.rainAmt = RAIN_AMT;
+    sh.uniforms.glintCab = GLINT_CAB;
+    sh.fragmentShader = 'uniform float glassMud;\nuniform float glassFog;\nuniform float fogClear;\nuniform float rainAmt;\nuniform float glintCab;\n' +
+      sh.fragmentShader.replace('#include <output_fragment>', `#include <output_fragment>
+  float gDirt = max(max(glassMud * 0.7, glassFog * (1.0 - 0.6 * clamp(fogClear, 0.0, 1.0))), rainAmt * 0.5);   // よごれ・曇り・雨の強いほうで
+  gl_FragColor.a *= glintCab * (1.0 - 0.75 * clamp(gDirt, 0.0, 1.0));                                            // 消えはせず、うすくなる`);
   };
   m.needsUpdate = true;
 }
@@ -9929,6 +10037,10 @@ function frame(now) {
   AKIAKANE.update(dt);
   LEAK.update(dt);
   LAMPS.update();
+  WINKER.update();
+  BEACON.update();
+  REVBEEP.update();
+  GLINT_CAB.value = camMode === 0 ? 0.3 : 1;      // 運転席ではすじをうすく（うっすら残す）
   emitExhaust(dt);
   DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も
   MIRROR.update(dt, camMode === 0);

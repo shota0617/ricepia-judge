@@ -8859,6 +8859,20 @@ function mzBuild(rx, ry) {   // 区域の マスの 種類と、穴ほりで え
   }
   for (let k = extra.length - 1; k > 0; k--) { const m = (rn() * (k + 1)) | 0; [extra[k], extra[m]] = [extra[m], extra[k]]; }
   for (const [u, v, arr] of extra) { const a = find(u), b = find(v); if (a !== b) { par[a] = b; arr[u] = 1; } }
+  // ななめに かどだけ ふれあう 通路どうし（ななめの 道は 上下左右では つながらず、はなれ島に なって 名所に とどかない：長圓寺・大浜熊野大神社）は、
+  // まわりの 壁の マス 1つを 通路に して つなぐ（水の マスは 使わない）
+  for (let j = 0; j + 1 < N; j++) for (let i = 0; i < N; i++) for (const sx of [1, -1]) {
+    const i2 = i + sx;
+    if (i2 < 0 || i2 >= N) continue;
+    const k = j * N + i, m = (j + 1) * N + i2;
+    if (t[k] !== 1 || t[m] !== 1 || find(k) === find(m)) continue;
+    for (const c of [j * N + i2, (j + 1) * N + i]) {
+      if (t[c] !== 0) continue;
+      t[c] = 1;
+      for (const [u, v] of [[k, c], [m, c]]) { (Math.abs(u - v) === 1 ? er : ed)[Math.min(u, v)] = 1; par[find(u)] = find(v); }
+      break;
+    }
+  }
   return { rx, ry, x0, y0, cells, t, er, ed };
 }
 // 名所への 参道：道の ない 区画の 中の 名所にも とどくように、名所の マスから いちばん近い 通路まで（5マスまで）を「参道」に して 入れる。

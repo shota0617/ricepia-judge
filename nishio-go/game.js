@@ -1623,9 +1623,9 @@ function decideGuide0(from, wide, tooNearOk) {
   // ①' この人が知っている人（人から人へ）。まだ話していない人だけ。遠くても10kmまで（佐久島へは船で）
   // 地図の めいろでは、ほかの 行き先と 同じ すすめる範囲まで（めいろの 道のりは まっすぐの 3〜4倍。5km 先の 人や 船の 先の 島は、めいろでは 着けない）
   if (from && Array.isArray(from.refer)) {
-    const all = placeNpcs(), lim = mazeNow() ? range : 10000;
+    const all = placeNpcs(), lim = mazeNow() ? range : 10000, lo = five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0;   // めいろは 近すぎる 人も のぞく（81m 先の 人では 数秒で 終わる）
     const ref = from.refer.map(([id, words]) => ({ n: all.find(x => x.id === id), words }))
-      .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > guideRadius({ kind: 'npc' }) * 1.5 && dist(me, x.n) <= lim);
+      .find(x => x.n && !npcMet(x.n.id) && !recent.has(x.n.id) && dist(me, x.n) > Math.max(guideRadius({ kind: 'npc' }) * 1.5, lo) && dist(me, x.n) <= lim);
     if (ref) cands.push({ kind: 'npc', id: ref.n.id, name: `${ref.n.name}（${ref.n.spotName}）`, lat: ref.n.lat, lng: ref.n.lng, why: ref.words, refer: true });
   }
   // ②'' 雨がふっている（天気）→ 屋根のある所（博物館・資料館・美術館・水族館・図書館）。いちばん先に

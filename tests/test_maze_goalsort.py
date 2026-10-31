@@ -46,6 +46,10 @@ class MazeGoalSortStaticTests(unittest.TestCase):
     def test_vertfirst_definition(self):
         self.assertIn("const vertFirst = x => mazeVert && dist(me, x) <= MAZE_NEAR && dNS(x) >= dEW(x);", self.src)
 
+    def test_refer_respects_near_floor(self):
+        self.assertIn("lo = five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0", self.src)
+        self.assertIn("dist(me, x.n) > Math.max(guideRadius({ kind: 'npc' }) * 1.5, lo)", self.src)
+
     def test_goalsort_definition(self):
         self.assertIn("(a, b) => ((vertFirst(a) ? 0 : 1) - (vertFirst(b) ? 0 : 1)) || dist(me, a) - dist(me, b)", self.src)
         self.assertRegex(self.src, r"const goalSort = mazeVert\n\s+\? .*\n\s+: \(a, b\) => dist\(me, a\) - dist\(me, b\);")

@@ -9035,7 +9035,7 @@ function mzRoute(now) {
   const p = toTile(g.lat, g.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(p.x / MZ_K), gr = Math.floor(p.y / MZ_K);
   const near = ((g.kind === 'npc' && G.guideRadius ? G.guideRadius(g) : G.reachOf ? G.reachOf(g) : 40) || 40) * 0.8 / TILE_M;   // 着いたと みなす 近さ（チェックインの 半径・人は 話しかけられる 近さより 少し 内がわ。マス）
   const inReach = (x, y) => Math.hypot(Math.max(x * MZ_K - p.x, 0, p.x - (x + 1) * MZ_K), Math.max(y * MZ_K - p.y, 0, p.y - (y + 1) * MZ_K)) <= near;   // マスの いちばん 近い 所が その 近さに 入る
-  const gkey = gc + ',' + gr + ':' + (g.id || g.name || ''), key = a + ',' + b + '>' + gkey;   // ゴールの マスと 名前（同じ マスに 2つの ゴールが つづくと、かわった ことに 気づかず、「🏁 つぎの ゴール」も 時計の やりなおしも なかった：西尾城跡の ガイドさん → 旧近衛邸の お姉さん）
+  const gkey = gc + ',' + gr + ':' + (g.id || g.name || ''), key = a + ',' + b + '>' + gkey + '#' + mzSpotV + ':' + mzSpotCells.size;   // 参道が ふえたら さがしなおす（名所の ゴールは 参道が できる まで 通れず、道のりが なし・遠回りのまま 残った）。ゴールの マスと 名前（同じ マスに 2つの ゴールが つづくと、かわった ことに 気づかず、「🏁 つぎの ゴール」も 時計の やりなおしも なかった：西尾城跡の ガイドさん → 旧近衛邸の お姉さん）
   if (gkey !== mzRt.gkey) {   // ゴールが かわった（着いて 次の 行き先に なった など）：前の ゴールも 2分 おぼえる（チェックインは 行き先が かわった あとに なる）
     if (rp.x !== null) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), now);   // 着いた こまの 移動まで 前の ゴールに 数えてから（足あとの 数えは この あと）
     if (mzRt.gid) mzRt.prev = { id: mzRt.gid, t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, at: now, sec: mzRt.t0 ? (now - mzRt.t0) / 1000 : 0, moves: mzMv.n, run: { ...mzRt.run } };   // moves：通った マスの 数（同じ マスを また 通っても 数える。まよわず 来られたか）

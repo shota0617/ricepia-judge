@@ -9063,23 +9063,30 @@ function mzRoute(now) {
   mzRt.gid = g.id || g.name;
   if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
   mzRt.key = key; mzRt.retry = 0;
-  const pad = 30, x0 = Math.min(a, gc) - pad, x1 = Math.max(a, gc) + pad, y0 = Math.min(b, gr) - pad, y1 = Math.max(b, gr) + pad, W = x1 - x0 + 1;
-  if (W * (y1 - y0 + 1) > 160000) { mzRt.path = null; return; }   // 遠すぎる（10km ほど）：さがさない
-  const from = new Int32Array(W * (y1 - y0 + 1)).fill(-2), q = [(b - y0) * W + a - x0];
-  from[q[0]] = -1;
-  let end = -1, unk = false;
-  for (let h = 0; h < q.length && h < 60000; h++) {
-    const i = q[h], x = i % W + x0, y = (i / W | 0) + y0;
-    if (inReach(x, y)) { end = i; break; }   // 行き先の チェックインの 近さに 入る マスまで
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const nx = x + dx, ny = y + dy;
-      if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
-      const j = (ny - y0) * W + nx - x0;
-      if (from[j] !== -2) continue;
-      if (mzType(nx, ny) < 0) { unk = true; continue; }   // まだ 読めていない 区域は 通らない（道のりが 分からない。読みに いって あとで さがしなおす）
-      if (!mzOpen(x, y, dx, dy)) continue;
-      from[j] = i; q.push(j);
+  let x0, y0, W, from, end = -1, unk = false;
+  for (const pad of [30, 60]) {   // 30マスの 外まわりで 見つからなければ 60マスまで ひろげる（長圓寺 → 平原の滝：連結の 道は 30マスの 外を 大きく まわる 286マス。ひろげても 上限は 同じ）
+    x0 = Math.min(a, gc) - pad; y0 = Math.min(b, gr) - pad;
+    const x1 = Math.max(a, gc) + pad, y1 = Math.max(b, gr) + pad; W = x1 - x0 + 1;
+    if (W * (y1 - y0 + 1) > 160000) { if (pad === 30) { mzRt.path = null; return; } break; }   // 遠すぎる（10km ほど）：さがさない
+    from = new Int32Array(W * (y1 - y0 + 1)).fill(-2);
+    const q = [(b - y0) * W + a - x0];
+    from[q[0]] = -1;
+    let capped = false;
+    for (let h = 0; h < q.length; h++) {
+      if (h >= 60000) { capped = true; break; }
+      const i = q[h], x = i % W + x0, y = (i / W | 0) + y0;
+      if (inReach(x, y)) { end = i; break; }   // 行き先の チェックインの 近さに 入る マスまで
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy;
+        if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
+        const j = (ny - y0) * W + nx - x0;
+        if (from[j] !== -2) continue;
+        if (mzType(nx, ny) < 0) { unk = true; continue; }   // まだ 読めていない 区域は 通らない（道のりが 分からない。読みに いって あとで さがしなおす）
+        if (!mzOpen(x, y, dx, dy)) continue;
+        from[j] = i; q.push(j);
+      }
     }
+    if (end >= 0 || capped) break;   // 見つかった・上限に 当たったら ひろげない
   }
   if (end < 0) { mzRt.path = null; if (unk) mzRt.retry = now + 1500; return; }
   const path = [];

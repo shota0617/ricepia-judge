@@ -1611,8 +1611,10 @@ function decideGuide0(from, wide) {
   // めいろ以外（あるいて移動・ふつうの地図）では 今までどおり 近い順のまま。
   const mazeVert = demo && mazeNow();
   const dNS = x => Math.abs((x.lat - me.lat) * 111320), dEW = x => Math.abs((x.lng - me.lng) * 111320 * Math.cos(me.lat * Math.PI / 180));
+  // 縦を先にするのは 5分で 着く 近さ（MAZE_NEAR）の 中だけ。近くに 候補が なくて 広い範囲から 選ぶときは、縦に こだわらず 近い順（遠い 縦を 選んで 2〜3km 先へ とばないように）
+  const vertFirst = x => mazeVert && dist(me, x) <= MAZE_NEAR && dNS(x) >= dEW(x);
   const goalSort = mazeVert
-    ? (a, b) => ((dNS(a) >= dEW(a) ? 0 : 1) - (dNS(b) >= dEW(b) ? 0 : 1)) || dist(me, a) - dist(me, b)
+    ? (a, b) => ((vertFirst(a) ? 0 : 1) - (vertFirst(b) ? 0 : 1)) || dist(me, a) - dist(me, b)
     : (a, b) => dist(me, a) - dist(me, b);
   const far = x => okFor('spot', x.id)(x);
   const by = from ? `${from.name}の話` : 'まわりのようす';
@@ -1676,7 +1678,7 @@ function decideGuide0(from, wide) {
   let c = cands.find(x => x.refer) || cands.find(x => x.weather);
   if (!c) {
     // めいろでは 縦（南北）の 候補が あれば、そちらの中から 選ぶ（注目スポットが 横で、ふつうの名所・人が 縦のとき、種類の順で 横が 勝たないように）
-    const vert = mazeVert ? cands.filter(x => dNS(x) >= dEW(x)) : [], pool = vert.length ? vert : cands;
+    const vert = mazeVert ? cands.filter(vertFirst) : [], pool = vert.length ? vert : mazeVert && !five ? [cands.slice().sort(goalSort)[0]] : cands;   // 広い範囲では いちばん 近い 候補
     const order = [['spot', 'npc'], ['npc', 'spot']][(S.guides || 0) % 2]; for (const k of order) if ((c = pool.find(x => x.kind === k))) break;
   }
   c = c || cands[0];

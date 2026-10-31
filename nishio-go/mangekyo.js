@@ -11,9 +11,9 @@
   const PLACE = 'ガラス美術館';   // 注目スポット（spots.json）の 名前に ふくむ ことば
   const R = 150;
   const LIST = [
-    { id: 'bijutsu', name: 'ガラス工芸美術館', say: '三河ガラス工芸美術館だに。ガラスが きらきら しとるに', src: NK },
-    { id: 'kyodai', name: '巨大な 万華鏡', say: '巨大な 万華鏡が あるに。くるくる 模様が かわるに', src: NK },
-    { id: 'nozoku', name: '万華鏡を のぞく', say: 'のぞいたら お米が いっぱい 見えたに', src: NK },
+    { id: 'bijutsu', name: 'ガラス工芸美術館', say: '三河ガラス工芸美術館だよ。ガラスが きらきら しとるね', src: NK },
+    { id: 'kyodai', name: '巨大な 万華鏡', say: '巨大な 万華鏡が あるよ。くるくる 模様が かわるよ', src: NK },
+    { id: 'nozoku', name: '万華鏡を のぞく', say: 'のぞいたら お米が いっぱい 見えたよ', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

@@ -37,9 +37,9 @@ class OkaeriTests(unittest.TestCase):
         o = json.loads(subprocess.run(['node', '-e', js], capture_output=True, text=True, check=True).stdout)
         self.assertEqual((o['same'], o['next'], o['three'], o['first'], o['fut']), (0, 1, 3, 0, 0))
         self.assertEqual(o['bad'], [0, 0, 0])
-        self.assertEqual(o['s1'], 'おかえり。きのうぶりだに。一色の うなぎも 待っとったに')
-        self.assertEqual(o['s3'], 'おかえり。3日ぶりだに。吉良の 稲穂も 待っとったに')
-        self.assertEqual(o['s40'], 'おかえり。ひさしぶりだに。西尾の 抹茶わんも 待っとったに')
+        self.assertEqual(o['s1'], 'おかえり。きのうぶりだね。一色の うなぎも 待っとったよ')
+        self.assertEqual(o['s3'], 'おかえり。3日ぶりだね。吉良の 稲穂も 待っとったよ')
+        self.assertEqual(o['s40'], 'おかえり。ひさしぶりだね。西尾の 抹茶わんも 待っとったよ')
         self.assertEqual(o['key'], 'nsg_okaeri')
 
 

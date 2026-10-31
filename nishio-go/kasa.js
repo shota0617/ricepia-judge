@@ -10,14 +10,14 @@
     AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/';
   const NIS = '^(?!一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)';   // 西尾地区の 町（一色・吉良・幡豆の 町を のぞく）
   const LIST = [
-    { id: 'chochin', name: '提灯', town: '^一色町', say: '提灯を かさに したに', src: NK },
-    { id: 'tencha', name: 'てん茶の 葉', town: NIS, say: '茶の葉の かさだに', src: NK },
-    { id: 'inaho', name: '稲穂', town: '^吉良町', say: '稲穂の かさだに', src: MAFF },
-    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'カーネーションの かさだに', src: NK },
-    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'アサリの からを かさに したに', src: AN },
+    { id: 'chochin', name: '提灯', town: '^一色町', say: '提灯を かさに したよ', src: NK },
+    { id: 'tencha', name: 'てん茶の 葉', town: NIS, say: '茶の葉の かさだよ', src: NK },
+    { id: 'inaho', name: '稲穂', town: '^吉良町', say: '稲穂の かさだね', src: MAFF },
+    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'カーネーションの かさだよ', src: NK },
+    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'アサリの からを かさに したよ', src: AN },
   ];
   // やんだ とき お米が 言う ことば
-  const END = 'かさ、もう いらんに';
+  const END = 'かさ、もう いらんよ';
   // いる 所：{ city, town, near（まわり 100m メッシュの 土地利用の 文字を まとめた 文字列） }
   // 西尾市の 中で、いる 所に 合う 候補を すべて かえす（なければ 空）
   function candidates(c) {

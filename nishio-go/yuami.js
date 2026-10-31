@@ -9,8 +9,8 @@
 (function (root) {
   const AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/';
   const LIST = [
-    { id: 'onsen', name: '吉良温泉', town: '^吉良町', say: 'ええ ゆだに。吉良温泉だに', src: AN },
-    { id: 'beach', name: '吉良ワイキキビーチ', town: '^吉良町', where: 'higata', say: 'ワイキキビーチで ぷかぷかだに', src: AN },
+    { id: 'onsen', name: '吉良温泉', town: '^吉良町', say: 'ええ ゆだね。吉良温泉だよ', src: AN },
+    { id: 'beach', name: '吉良ワイキキビーチ', town: '^吉良町', where: 'higata', say: 'ワイキキビーチで ぷかぷかだよ', src: AN },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const SETTLE = 1400;   // 出はじめて から つかりおわるまで

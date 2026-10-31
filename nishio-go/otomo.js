@@ -14,7 +14,7 @@
     { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'えびせんが ついてきた', src: NK },
     { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: '茶摘みの 葉が ついてきた', src: NK },
     { id: 'tencha', name: 'てん茶の 葉', town: NIS, say: 'てん茶の 葉が ついてきた', src: NK },
-    { id: 'inaho', name: '金色の 稲穂', town: '^吉良町', months: [9, 10], say: '金色の 稲穂だに', src: MAFF },
+    { id: 'inaho', name: '金色の 稲穂', town: '^吉良町', months: [9, 10], say: '金色の 稲穂だよ', src: MAFF },
     { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'アサリが ついてきた', src: AN },
   ];
   // いる 所：{ city, town, near（まわり 100m メッシュの 土地利用の 文字を まとめた 文字列）, month }

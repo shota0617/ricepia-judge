@@ -32,8 +32,8 @@
   // 旗が ふえた とき お米が 言う ことば。n＝いまの 旗の 数、area＝いま 入った 地区
   function say(n, area) {
     const a = AREAS.find(x => x.id === area), name = a ? a.name : '';
-    if (n >= AREAS.length) return '5つの 地区の 旗が ぜんぶ そろったに。西尾を ひとめぐりしたに';
-    return name + 'の 旗が ふえたに。あと ' + (AREAS.length - n) + 'つだに';
+    if (n >= AREAS.length) return '5つの 地区の 旗が ぜんぶ そろったよ。西尾を ひとめぐりしたよ';
+    return name + 'の 旗が ふえたよ。あと ' + (AREAS.length - n) + 'つだね';
   }
   root.NISHIO_SHIRUSHI = { AREAS, KEY, DELAY, POP, clean, add, say };
 })(window);

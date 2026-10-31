@@ -10,8 +10,8 @@
   const NK = 'https://nishiokanko.com/tw/specialty/';
   const NIS = '^(?!一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)';   // 西尾地区の 町（一色・吉良・幡豆の 町を のぞく）
   const LIST = [
-    { id: 'matcha', name: '抹茶', town: NIS, say: '石臼で ひいて 点てたに。西尾は 抹茶の まちだに', src: NK },
-    { id: 'shincha', name: '新茶の 抹茶', town: NIS, months: [4, 5], say: '新茶の 抹茶を 点てたに。茶摘みの ころだに', src: NK },
+    { id: 'matcha', name: '抹茶', town: NIS, say: '石臼で ひいて 点てたよ。西尾は 抹茶の まちだね', src: NK },
+    { id: 'shincha', name: '新茶の 抹茶', town: NIS, months: [4, 5], say: '新茶の 抹茶を 点てたよ。茶摘みの ころだね', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const MILL = 3200;     // 石臼で ひく 長さ

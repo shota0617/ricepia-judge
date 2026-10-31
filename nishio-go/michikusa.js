@@ -13,27 +13,27 @@
     // 田んぼの上で（どの町でも）
     { id: 'p-medaka', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: 'メダカ、いるかな', src: MLIT },
     { id: 'p-ishigame', where: 'paddy', say: 'イシガメも 来るのかな', src: MLIT },
-    { id: 'p-doji', where: 'paddy', months: [5, 6, 7, 8, 9], say: 'ドジョウの 田んぼだに', src: MLIT },
+    { id: 'p-doji', where: 'paddy', months: [5, 6, 7, 8, 9], say: 'ドジョウの 田んぼだよ', src: MLIT },
     // 吉良の 田んぼ（黄金堤）
-    { id: 'p-kogane', where: 'paddy', town: '^吉良町', say: '黄金堤が 守った 田んぼだに', src: MAFF },
-    { id: 'p-kogane-aki', where: 'paddy', town: '^吉良町', months: [9, 10], say: '稲穂が 金色だに', src: MAFF },
+    { id: 'p-kogane', where: 'paddy', town: '^吉良町', say: '黄金堤が 守った 田んぼだよ', src: MAFF },
+    { id: 'p-kogane-aki', where: 'paddy', town: '^吉良町', months: [9, 10], say: '稲穂が 金色だよ', src: MAFF },
     // 川・池・用水の そば
     { id: 'k-akaza', where: 'kawa', say: 'アカザは いるかな', src: MLIT },
     { id: 'k-misago', where: 'kawa', say: 'ミサゴが 見とるかも', src: MLIT },
-    { id: 'k-kamatsuka', where: 'kawa', say: 'カマツカの 川だに', src: MLIT },
+    { id: 'k-kamatsuka', where: 'kawa', say: 'カマツカの 川だよ', src: MLIT },
     // 海べ（一色・吉良・幡豆）
-    { id: 'h-asari', where: 'higata', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', say: 'アサリの 海だに', src: AN },
-    { id: 'h-shijimi', where: 'higata', town: '^一色町', say: 'ヤマトシジミも いるに', src: MLIT },
+    { id: 'h-asari', where: 'higata', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', say: 'アサリの 海だよ', src: AN },
+    { id: 'h-shijimi', where: 'higata', town: '^一色町', say: 'ヤマトシジミも いるよ', src: MLIT },
     { id: 'h-kochidori', where: 'higata', town: '^一色町', say: 'コチドリが いるかな', src: MLIT },
     // 町で
-    { id: 'm-unagi', where: 'machi', town: '^一色町', say: '一色は うなぎの 町だに', src: NK },
-    { id: 'm-ebisen', where: 'machi', town: '^一色町', say: 'えびせんべいの 町だに', src: NK },
-    { id: 'm-chochin', where: 'machi', town: '^一色町', say: '大提灯まつりの 町だに', src: NK },
-    { id: 'm-kira', where: 'machi', town: '^吉良町', say: '吉良は 黄金堤の 里だに', src: MAFF },
-    { id: 'm-matcha', where: 'machi', town: NIS, say: '西尾は 抹茶の 町だに', src: NK },
-    { id: 'm-mikane', where: 'machi', town: '^(東幡豆町|西幡豆町)', say: '三ヶ根山が 見えるに', src: NK },
+    { id: 'm-unagi', where: 'machi', town: '^一色町', say: '一色は うなぎの 町だよ', src: NK },
+    { id: 'm-ebisen', where: 'machi', town: '^一色町', say: 'えびせんべいの 町だよ', src: NK },
+    { id: 'm-chochin', where: 'machi', town: '^一色町', say: '大提灯まつりの 町だよ', src: NK },
+    { id: 'm-kira', where: 'machi', town: '^吉良町', say: '吉良は 黄金堤の 里だよ', src: MAFF },
+    { id: 'm-matcha', where: 'machi', town: NIS, say: '西尾は 抹茶の 町だよ', src: NK },
+    { id: 'm-mikane', where: 'machi', town: '^(東幡豆町|西幡豆町)', say: '三ヶ根山が 見えるよ', src: NK },
     // 農用地（田では ない 畑）。西尾の 畑だと 決まった わけでは ないので「かも」で言う
-    { id: 'f-tencha', where: 'hatake', town: NIS, months: [4, 5], say: '茶摘みの ころだに', src: NK },
+    { id: 'f-tencha', where: 'hatake', town: NIS, months: [4, 5], say: '茶摘みの ころだよ', src: NK },
     { id: 'f-tencha2', where: 'hatake', town: NIS, say: 'てん茶の 畑かも', src: NK },
     { id: 'f-hana', where: 'hatake', say: 'カーネーションの 畑かも', src: NK },
   ];

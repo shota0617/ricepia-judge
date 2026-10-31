@@ -11,10 +11,10 @@
   const PLACE = '稲荷山茶園';   // 注目スポット（spots.json）の 名前に ふくむ ことば
   const R = 200;
   const LIST = [
-    { id: 'ichibo', name: '茶畑の 一望', say: '稲荷山茶園公園からは 茶畑を 一望できるに', src: NK },
-    { id: 'tsumi', name: '茶摘み', months: [4, 5], say: '茶摘みだに。4月の おわりから 5月が 茶摘みの ころだに', src: NK },
-    { id: 'tencha', name: 'てん茶の 産地', say: '西尾は 抹茶の 原料 てん茶の 生産量が 日本有数だに', src: NK },
-    { id: 'kiri', name: '川霧と 土', say: '温暖な 気候と 矢作川の 川霧と 土が てん茶を 育てるに', src: NK },
+    { id: 'ichibo', name: '茶畑の 一望', say: '稲荷山茶園公園からは 茶畑を 一望できるよ', src: NK },
+    { id: 'tsumi', name: '茶摘み', months: [4, 5], say: '茶摘みだよ。4月の おわりから 5月が 茶摘みの ころだね', src: NK },
+    { id: 'tencha', name: 'てん茶の 産地', say: '西尾は 抹茶の 原料 てん茶の 生産量が 日本有数なんだ', src: NK },
+    { id: 'kiri', name: '川霧と 土', say: '温暖な 気候と 矢作川の 川霧と 土が てん茶を 育てるよ', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

@@ -10,15 +10,15 @@
     MAFF = 'https://www.maff.go.jp/j/nousin/sekkei/museum/m_kakuti/27_kogane/index.html';
   const KEEP = 24 * 3600 * 1000;   // 持ち物を のせて いる 長さ（つぎの 名所に 着かなくても 1日で おろす）
   const LIST = [
-    { id: 'tencha', area: 'nishio', name: 'てん茶の 葉', months: [4, 5], say: '茶摘みの 葉を あたまに のせたに。', src: NK },
-    { id: 'chawan', area: 'nishio', name: '抹茶わん', say: '抹茶わんを あたまに のせたに。こぼさんように 転がるよ。', src: NK },
-    { id: 'unagi', area: 'isshiki', name: 'うなぎ', say: 'うなぎを あたまに のせたに。落とさんように 転がるよ。', src: NK },
-    { id: 'ebisen', area: 'isshiki', name: 'えびせんべい', say: 'えびせんべいを あたまに のせたに。', src: NK },
-    { id: 'chochin', area: 'isshiki', name: '提灯', say: '小さな 提灯を のせたに。大提灯まつりの 大きさには かなわんけど。', src: NK },
-    { id: 'inaho', area: 'kira', name: '金色の 稲穂', months: [9, 10], say: '金色の 稲穂を あたまに のせたに。黄金堤の 名前の とおりだら。', src: MAFF },
-    { id: 'inaho', area: 'kira', name: '稲穂', say: '稲穂を あたまに のせたに。お米の ふるさとだに。', src: MAFF },
-    { id: 'carnation', area: 'hazu', name: 'カーネーション', say: 'カーネーションを あたまに かざったに。', src: NK },
-    { id: 'asari', area: 'sakushima', name: 'アサリ', say: 'アサリを あたまに のせたに。島の 海の 幸だよ。', src: AN },
+    { id: 'tencha', area: 'nishio', name: 'てん茶の 葉', months: [4, 5], say: '茶摘みの 葉を あたまに のせたよ。', src: NK },
+    { id: 'chawan', area: 'nishio', name: '抹茶わん', say: '抹茶わんを あたまに のせたよ。こぼさんように 転がるよ。', src: NK },
+    { id: 'unagi', area: 'isshiki', name: 'うなぎ', say: 'うなぎを あたまに のせたよ。落とさんように 転がるよ。', src: NK },
+    { id: 'ebisen', area: 'isshiki', name: 'えびせんべい', say: 'えびせんべいを あたまに のせたよ。', src: NK },
+    { id: 'chochin', area: 'isshiki', name: '提灯', say: '小さな 提灯を のせたよ。大提灯まつりの 大きさには かなわんけど。', src: NK },
+    { id: 'inaho', area: 'kira', name: '金色の 稲穂', months: [9, 10], say: '金色の 稲穂を あたまに のせたよ。黄金堤の 名前の とおりだら。', src: MAFF },
+    { id: 'inaho', area: 'kira', name: '稲穂', say: '稲穂を あたまに のせたよ。お米の ふるさとだね。', src: MAFF },
+    { id: 'carnation', area: 'hazu', name: 'カーネーション', say: 'カーネーションを あたまに かざったよ。', src: NK },
+    { id: 'asari', area: 'sakushima', name: 'アサリ', say: 'アサリを あたまに のせたよ。島の 海の 幸だよ。', src: AN },
   ];
   // 着いた 地区と 月で 持ち物を 1つ えらぶ。last＝いま のせて いる 持ち物の id（なるべく ちがう ものを）、rand＝0〜1の 乱数。地区に 持ち物が なければ null
   function pick(area, month, last, rand) {

@@ -12,7 +12,7 @@
   const MAFF = 'https://www.maff.go.jp/j/nousin/sekkei/museum/m_kakuti/27_kogane/index.html';
   const LIST = [
     { id: 'kogane', name: '黄金堤', town: '^吉良町', where: 'paddy', say: '領民と いっしょに 一夜で 堤を 築くに',
-      done: '長さ180m、高さ4mの 黄金堤が できたに', gold: '水害が なくなって 稲穂が 金色に なったに', src: MAFF },
+      done: '長さ180m、高さ4mの 黄金堤が できたよ', gold: '水害が なくなって 稲穂が 金色に なったよ', src: MAFF },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const BUILD = 4200;    // 堤を 築く 長さ

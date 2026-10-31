@@ -11,10 +11,10 @@
   const PLACE = 'トンボロ干潟';   // 注目スポット（spots.json）の 名前に ふくむ ことば
   const R = 200;
   const LIST = [
-    { id: 'mitsu', name: '満ちた 海', say: 'いまは 海だに。干潮に なると 海の道が あらわれるに', src: AICHI },
-    { id: 'hiku', name: '潮が 引く', say: '潮が 引いて きたに。砂の 道が 見えて きたに', src: AICHI },
-    { id: 'michi', name: '海の 道', say: 'トンボロ現象だに。干潮の ときに 海の道が あらわれるに', src: AICHI },
-    { id: 'higata', name: '干潟の 生きもの', say: '干潟には アサリや ウミニナが おるに', src: MLIT },
+    { id: 'mitsu', name: '満ちた 海', say: 'いまは 海だよ。干潮に なると 海の道が あらわれるんだ', src: AICHI },
+    { id: 'hiku', name: '潮が 引く', say: '潮が 引いて きたよ。砂の 道が 見えて きたよ', src: AICHI },
+    { id: 'michi', name: '海の 道', say: 'トンボロ現象だよ。干潮の ときに 海の道が あらわれるんだ', src: AICHI },
+    { id: 'higata', name: '干潟の 生きもの', say: '干潟には アサリや ウミニナが おるよ', src: MLIT },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

@@ -10,10 +10,10 @@
   const NK = 'https://nishiokanko.com/tw/specialty/', CITY = 'https://www.city.nishio.aichi.jp/shisei/shokai/1003109.html';
   const TOWN = '^一色町(?!佐久島)';   // 一色の 町（佐久島は しまたびが あるので のぞく）
   const LIST = [
-    { id: 'ebisen', name: 'えびせんべい焼き', say: 'えびせんべいを 焼く 体験だに。一色は えびせんべいの まちだに', src: NK },
-    { id: 'unagi2', name: 'うなぎ 約2割', say: '一色の うなぎは 全国の 約2割だに', src: CITY },
-    { id: 'yoman', name: '養鰻', say: '一色の 養鰻は 明治27年から だに', src: CITY },
-    { id: 'sakana', name: 'さかな広場', say: '三河一色さかな広場と さかな村は 一色の 顔だに', src: NK },
+    { id: 'ebisen', name: 'えびせんべい焼き', say: 'えびせんべいを 焼く 体験だよ。一色は えびせんべいの まちだね', src: NK },
+    { id: 'unagi2', name: 'うなぎ 約2割', say: '一色の うなぎは 全国の 約2割なんだ', src: CITY },
+    { id: 'yoman', name: '養鰻', say: '一色の 養鰻は 明治27年からなんだ', src: CITY },
+    { id: 'sakana', name: 'さかな広場', say: '三河一色さかな広場と さかな村は 一色の 顔だよ', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

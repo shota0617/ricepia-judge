@@ -10,10 +10,10 @@
   const NK = 'https://nishiokanko.com/tw/specialty/', CITY = 'https://www.city.nishio.aichi.jp/shisei/shokai/1003109.html';
   const TOWN = '^(東幡豆町|西幡豆町)';   // 幡豆の 町
   const LIST = [
-    { id: 'yamanami', name: '三ヶ根山の 山並み', say: '三ヶ根山の 山並みだに。幡豆の 景色だに', src: CITY },
-    { id: 'skyline', name: '三ヶ根山 スカイライン', say: '三ヶ根山には スカイラインが あるに', src: CITY },
-    { id: 'carnation', name: 'カーネーション', say: 'カーネーションだに。西尾は 花きの 産地だに', src: NK },
-    { id: 'hana', name: 'あじさいと ひまわり畑', say: 'あじさいも ひまわり畑も 西尾の 花の 景色だに', src: NK },
+    { id: 'yamanami', name: '三ヶ根山の 山並み', say: '三ヶ根山の 山並みだよ。幡豆の 景色だね', src: CITY },
+    { id: 'skyline', name: '三ヶ根山 スカイライン', say: '三ヶ根山には スカイラインが あるよ', src: CITY },
+    { id: 'carnation', name: 'カーネーション', say: 'カーネーションだよ。西尾は 花きの 産地なんだ', src: NK },
+    { id: 'hana', name: 'あじさいと ひまわり畑', say: 'あじさいも ひまわり畑も 西尾の 花の 景色だね', src: NK },
   ];
   const STILL = 3;       // じっと して から 出るまでの 秒（ねむる 12秒より 前）
   const CYCLE = 7000;    // 1つの 場面の 長さ

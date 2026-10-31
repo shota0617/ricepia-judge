@@ -8,9 +8,9 @@
 (function (root) {
   const MLIT = 'https://www.mlit.go.jp/river/basic_info/jigyo_keikaku/gaiyou/seibi/pdf/yahagigawa-5.pdf';
   const LIST = [
-    { id: 'asari', name: 'アサリ', town: '^(一色町|東幡豆町|西幡豆町)', say: 'ほったら アサリが 出てきたに', src: MLIT },
+    { id: 'asari', name: 'アサリ', town: '^(一色町|東幡豆町|西幡豆町)', say: 'ほったら アサリが 出てきたよ', src: MLIT },
     { id: 'shijimi', name: 'ヤマトシジミ', town: '^一色町', say: 'ヤマトシジミが 出てきた', src: MLIT },
-    { id: 'uminina', name: 'ウミニナ', town: '^一色町', say: 'ウミニナが おったに', src: MLIT },
+    { id: 'uminina', name: 'ウミニナ', town: '^一色町', say: 'ウミニナが おったよ', src: MLIT },
   ];
   const STILL = 3;      // じっと して から ほりはじめるまでの 秒（ねむる 12秒より 前）
   const DIG = 2800;     // ほりはじめて から 貝が 顔を 出すまで

@@ -10,16 +10,16 @@
   const MLIT = 'https://www.mlit.go.jp/river/basic_info/jigyo_keikaku/gaiyou/seibi/pdf/yahagigawa-5.pdf';
   const LIST = [
     // 田んぼで
-    { id: 'medaka', name: 'メダカ', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: 'メダカが おったに', src: MLIT },
+    { id: 'medaka', name: 'メダカ', where: 'paddy', months: [4, 5, 6, 7, 8, 9], say: 'メダカが おったよ', src: MLIT },
     { id: 'dojo', name: 'ドジョウ', where: 'paddy', months: [5, 6, 7, 8, 9], say: 'ドジョウが 出てきた', src: MLIT },
     { id: 'ishigame', name: 'ニホンイシガメ', where: 'paddy', say: 'イシガメが 田んぼに', src: MLIT },
     // 川・池・用水で
-    { id: 'kamatsuka', name: 'カマツカ', where: 'kawa', say: 'カマツカだに', src: MLIT },
+    { id: 'kamatsuka', name: 'カマツカ', where: 'kawa', say: 'カマツカだよ', src: MLIT },
     { id: 'akaza', name: 'アカザ', where: 'kawa', say: 'アカザが おった', src: MLIT },
-    { id: 'misago', name: 'ミサゴ', where: 'kawa', say: 'ミサゴが 見とるに', src: MLIT },
+    { id: 'misago', name: 'ミサゴ', where: 'kawa', say: 'ミサゴが 見とるよ', src: MLIT },
     // 海べ（一色・吉良・幡豆）で
     { id: 'asari', name: 'アサリ', where: 'higata', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', say: 'アサリが おった', src: MLIT },
-    { id: 'shijimi', name: 'ヤマトシジミ', where: 'higata', town: '^一色町', say: 'ヤマトシジミだに', src: MLIT },
+    { id: 'shijimi', name: 'ヤマトシジミ', where: 'higata', town: '^一色町', say: 'ヤマトシジミだよ', src: MLIT },
     { id: 'kochidori', name: 'コチドリ', where: 'higata', town: '^一色町', say: 'コチドリが 来とる', src: MLIT },
   ];
   // いる 所：{ city, town, land（土地利用の 1文字）, near（まわり 100m メッシュの 文字を まとめた 文字列）, month }。場所の 見かたは michikusa.js の whereOf と 同じ

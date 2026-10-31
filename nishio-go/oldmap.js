@@ -154,7 +154,6 @@
     if (!v || (G.oldmapHas && G.oldmapHas(v.id))) return;
     if (document.body.classList.contains('jump-open') || (G.rewardSoon && G.rewardSoon())) return;
     if ((P.mapCovered && P.mapCovered()) || (P.sightBusy && P.sightBusy())) return;
-    if (window.NISHIO_MEDASHI && NISHIO_MEDASHI.shown) return;
     open(v, town);
   }
   setInterval(tick, 1500);

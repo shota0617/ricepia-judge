@@ -1769,7 +1769,7 @@ const CRITTER_ROWS = {
 const critterSprites = {};
 for (const [k, r] of Object.entries(CRITTER_ROWS)) critterSprites[k] = sprite(r);
 // 田んぼ（となりも）・水べ（となりが水）を歩いた歩数を数え、25歩をこえたら 1/40 で出会う（1日の数は game.js が決める）。出会ったら、となりに3秒出す
-const critterS = { steps: 0, paddy: 0, water: 0, show: null, where: '', told: {} };
+const critterS = { steps: 0, show: null, where: '', told: {} };
 // 田んぼや 草地の すずめ（運営者の声「西尾の素朴なかわいさを随所に散りばめて」2026-10-28）：お米の まわりの 田んぼ・畑・草地・公園に ときどき 2〜3羽 おりて ついばみ、
 // お米が 転がって 近づくと「ちゅん」と とびたつ。見る だけ（ポイントは つけない・ぶつからない・道を ふさがない）
 const SUZUME_MAX = 3, SUZUME_LIFE = 14000, SUZUME_NEAR = 2.2;   // いちどに 3羽まで・14秒で とびさる・お米が 2.2マスより 近くで 転がると とびたつ
@@ -2864,7 +2864,7 @@ function youkosoStep(hx, by, u, now) {
   y.drawn++; dirty = true;
 }
 // お米つぶの たびのしるし（shirushi.js）：西尾市の 地区に はじめて 入ると、その 地区の 小さな 旗が お米の 右がわに ならんで ずっと のこる（5つまで）。
-// 新しい 旗は ぽんと 立ち、境の 旗（ようこそ）の ひと言の あとに お米が ひと言。5つ そろうと 「ぜんぶ そろったに」。この 端末に おぼえる（nsg_shirushi）。
+// 新しい 旗は ぽんと 立ち、境の 旗（ようこそ）の ひと言の あとに お米が ひと言。5つ そろうと 「ぜんぶ そろったよ」。この 端末に おぼえる（nsg_shirushi）。
 // 西尾市の 中だけで 増える・ねむって いる あいだ・ゲームボーイの4色では 描かない
 const shirushi = { list: null, pop: '', t0: 0, say: null, drawn: 0 };   // pop：ぽんと 立てる 旗の 地区。say：[言う 時刻, ことば]。drawn：描いた 数（テスト用）
 function shirushiStep(hx, by, u, now, asleep) {
@@ -2928,7 +2928,7 @@ function monosashiStep(hx, by, u, now, asleep) {
   ctx.globalAlpha = 1;
   m.drawn++; dirty = true;
 }
-// お米つぶの おかえり（okaeri.js）：しばらく あいだを あけて もどると、西尾市に 入った とき お米が「おかえり。3日ぶりだに」と むかえ、いる 地区の 名物が お米の よこに ぴょこんと 出て ひと言。ひと回の あそびに 1回だけ。
+// お米つぶの おかえり（okaeri.js）：しばらく あいだを あけて もどると、西尾市に 入った とき お米が「おかえり。3日ぶりだね」と むかえ、いる 地区の 名物が お米の よこに ぴょこんと 出て ひと言。ひと回の あそびに 1回だけ。
 // 最後に あそんだ 日は この 端末に おぼえる（nsg_okaeri）。名物と 地区の 名前は ようこそ（youkoso.js）・たびのしるし（shirushi.js）を 共用。ゲームボーイの4色・ねむって いる あいだは 名物を 描かない
 const okaeri = { prev: null, saved: 0, done: false, cur: null, t0: 0, drawn: 0 };   // prev：前に あそんだ 時刻（まだ 読んでいない＝null）。cur：出して いる 名物。drawn：描いた 数（テスト用）
 function okaeriStep(hx, by, u, now, asleep) {
@@ -2960,7 +2960,7 @@ function okaeriStep(hx, by, u, now, asleep) {
   ctx.globalAlpha = 1;
   o.drawn++; dirty = true;
 }
-// お米つぶの ふるさと（furusato.js）：転がって 西尾市の 外（となりの 市町）に 出ると、お米の よこに 西尾の 方角を さす 矢じるしが 名物を かかえて 出て、お米が「岡崎市に 来たに。西尾は あっちだに」と ひと言。
+// お米つぶの ふるさと（furusato.js）：転がって 西尾市の 外（となりの 市町）に 出ると、お米の よこに 西尾の 方角を さす 矢じるしが 名物を かかえて 出て、お米が「岡崎市に 来たよ。西尾は あっちだよ」と ひと言。
 // 方角は いちばん 近い 地区の 中心（G.areas）。西尾市に もどるか 1分たつと 消える・出した あとは 2分は くりかえさない。ゲームボーイの4色・ねむって いる あいだは 描かない
 const furusato = { out0: 0, shown0: 0, last: -1e9, cur: null, said: false, drawn: 0 };   // out0：外に 出た 時刻（0＝中）。cur：{ item, ang }。drawn：描いた 数（テスト用）
 function furusatoStep(hx, by, u, now, asleep) {
@@ -3425,11 +3425,6 @@ function critterStep(x, y) {
   const where = near(PADDY_CODES) ? 'paddy' : !BLOCK.has(codeAt(x, y)) && near(new Set([C.A])) ? 'water' : '';
   if (where) critterS.steps++;   // 田んぼ・水べのイベントが始まる1歩も 出会いまでの歩数に数える
   if (where !== critterS.where && (!where || critterCount(where))) critterS.where = where;   // 知らせを出せなかったら、次の1歩で もう一度
-  // 田んぼのイベント「芽出しの見きわめ」（medashi.js）：田んぼを15歩 歩くと、1日1回 田んぼの人に呼びとめられる
-  //   説明の窓・きろく などのパネル・ダイアログ・呼びとめの最中は始めない（閉じたあとの田んぼの1歩で始まる）
-  if (where === 'paddy' && window.NISHIO_MEDASHI && G.medashiDue && G.medashiDue() && ++critterS.paddy >= 15 && !mapCovered() && !sightBusy() && NISHIO_MEDASHI.open()) { critterS.paddy = 0; return true; }
-  // 水べのイベント「虫の名前あて」（mushi.js）：水べを15歩 歩くと、1日1回（始めない条件は田んぼのイベントと同じ）
-  if (where === 'water' && window.NISHIO_MUSHI && G.mushiDue && G.mushiDue() && ++critterS.water >= 15 && !mapCovered() && !sightBusy() && NISHIO_MUSHI.open()) { critterS.water = 0; return true; }
   // はじめての出会いは かならず・待ちすぎない（マインスイーパーの「1手目で地雷を ふんで終わる」・ブロックくずしの「打ちだしてすぐ落とす」から。
   // はじめの1回の運の悪さで やめてしまわないように）：まだ1回も会っていなければ 25歩目で、会ったことがあっても 100歩で かならず出会う
   // （1/40 の運だけだと、10人に1人は 115歩より長く待っていた）
@@ -8660,7 +8655,7 @@ function curScale() { return mazeOn() ? mzScale : scale; }
 
 // デモ：スティックで1マスずつ歩く（水と建物には入れない）
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
-const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（田んぼ medashi.js・水べ mushi.js・古い地図 oldmap.js・本のできごと bookev.js。どれも .medashi）が開いている
+const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（古い地図 oldmap.js・雲母石 kirara.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
   if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
   G.notePlayInput();

@@ -12,13 +12,13 @@
     AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/';
   const NIS = '^(?!一色町|吉良町|東幡豆町|西幡豆町|鳥羽町|寺部町)';   // 西尾地区の 町（一色・吉良・幡豆の 町を のぞく）
   const LIST = [
-    { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'えびせんの ざぶとんだに。一色の ねどこだに', src: NK },
-    { id: 'chochin', name: '提灯', town: '^一色町', say: '提灯の ねどこで ゆらゆら ねむるに', src: NK },
-    { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: '茶の葉の ふとんだに。茶摘みの ころだに', src: NK },
-    { id: 'chawan', name: '抹茶わん', town: NIS, say: '抹茶わんの ねどこだに。西尾は 抹茶の まちだに', src: NK },
-    { id: 'inaho', name: '稲穂', town: '^吉良町', say: '稲穂の ふとんで ぬくぬくだに。黄金堤の まちだに', src: MAFF },
-    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'カーネーションの ベッドだに。ええ かおりだに', src: NK },
-    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'アサリの ベッドだに。海が ちかいに', src: AN },
+    { id: 'ebisen', name: 'えびせんべい', town: '^一色町', say: 'えびせんの ざぶとんだよ。一色の ねどこだね', src: NK },
+    { id: 'chochin', name: '提灯', town: '^一色町', say: '提灯の ねどこで ゆらゆら ねむるよ', src: NK },
+    { id: 'tencha', name: 'てん茶の 葉', town: NIS, months: [4, 5], say: '茶の葉の ふとんだよ。茶摘みの ころだね', src: NK },
+    { id: 'chawan', name: '抹茶わん', town: NIS, say: '抹茶わんの ねどこだよ。西尾は 抹茶の まちだね', src: NK },
+    { id: 'inaho', name: '稲穂', town: '^吉良町', say: '稲穂の ふとんで ぬくぬくだよ。黄金堤の まちだね', src: MAFF },
+    { id: 'carnation', name: 'カーネーション', town: '^(東幡豆町|西幡豆町)', say: 'カーネーションの ベッドだよ。ええ かおりじゃん', src: NK },
+    { id: 'asari', name: 'アサリ', town: '^(一色町|吉良町|東幡豆町|西幡豆町)', where: 'higata', say: 'アサリの ベッドだよ。海が ちかいね', src: AN },
   ];
   const SETTLE = 1500;   // ねむり はじめて から ねどこが しき おわるまで
   // いる 所：{ city, town, near（まわり 100m メッシュの 土地利用の 文字を まとめた 文字列）, month }

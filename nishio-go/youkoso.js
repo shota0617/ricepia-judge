@@ -9,15 +9,15 @@
   const NK = 'https://nishiokanko.com/tw/specialty/', AN = 'https://aichinow.pref.aichi.jp/modelcourse/detail/122/',
     MAFF = 'https://www.maff.go.jp/j/nousin/sekkei/museum/m_kakuti/27_kogane/index.html';
   const LIST = [
-    { id: 'tencha', area: 'nishio', name: 'てん茶の 葉', months: [4, 5], say: '西尾に 入ったに。ちょうど 茶摘みの ころだに', src: NK },
-    { id: 'chawan', area: 'nishio', name: '抹茶わん', say: '西尾に 入ったに。抹茶の まちだに', src: NK },
-    { id: 'unagi', area: 'isshiki', name: 'うなぎ', say: '一色に 入ったに。うなぎは 全国の 約2割だに', src: NK },
-    { id: 'ebisen', area: 'isshiki', name: 'えびせんべい', say: '一色に 入ったに。えびせんべいの まちだに', src: NK },
-    { id: 'chochin', area: 'isshiki', name: '提灯', say: '一色に 入ったに。大提灯まつりの まちだに', src: NK },
-    { id: 'inaho', area: 'kira', name: '金色の 稲穂', months: [9, 10], say: '吉良に 入ったに。黄金堤の 金色の 稲穂だに', src: MAFF },
-    { id: 'inaho', area: 'kira', name: '稲穂', say: '吉良に 入ったに。黄金堤の さとだに', src: MAFF },
-    { id: 'carnation', area: 'hazu', name: 'カーネーション', say: '幡豆に 入ったに。カーネーションの 花き産地だに', src: NK },
-    { id: 'asari', area: 'sakushima', name: 'アサリ', say: '佐久島に ついたに。三河湾で いちばん 大きい 島だに', src: AN },
+    { id: 'tencha', area: 'nishio', name: 'てん茶の 葉', months: [4, 5], say: '西尾に 入ったよ。ちょうど 茶摘みの ころだね', src: NK },
+    { id: 'chawan', area: 'nishio', name: '抹茶わん', say: '西尾に 入ったよ。抹茶の まちだね', src: NK },
+    { id: 'unagi', area: 'isshiki', name: 'うなぎ', say: '一色に 入ったよ。うなぎは 全国の 約2割なんだ', src: NK },
+    { id: 'ebisen', area: 'isshiki', name: 'えびせんべい', say: '一色に 入ったよ。えびせんべいの まちだね', src: NK },
+    { id: 'chochin', area: 'isshiki', name: '提灯', say: '一色に 入ったよ。大提灯まつりの まちだね', src: NK },
+    { id: 'inaho', area: 'kira', name: '金色の 稲穂', months: [9, 10], say: '吉良に 入ったよ。黄金堤の 金色の 稲穂だね', src: MAFF },
+    { id: 'inaho', area: 'kira', name: '稲穂', say: '吉良に 入ったよ。黄金堤の さとだね', src: MAFF },
+    { id: 'carnation', area: 'hazu', name: 'カーネーション', say: '幡豆に 入ったよ。カーネーションの 花き産地だね', src: NK },
+    { id: 'asari', area: 'sakushima', name: 'アサリ', say: '佐久島に ついたよ。三河湾で いちばん 大きい 島だね', src: AN },
   ];
   const SHOW = 4500;     // 旗を 立てて おく ミリ秒
   const COOL = 45000;    // 次に 旗を 立てる までの ミリ秒（境を ふらふら 行き来しても うるさく ならない）

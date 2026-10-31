@@ -862,6 +862,26 @@ const HORN = (() => {
   return { honk };
 })();
 
+// ---- エンジン始動完了の合図音。セル回転（S.crank）が終わって走れるようになった瞬間に、1回だけ「ピン」と鳴る ----
+// 前フレームの S.crank > 0 から今フレームで 0 になった遷移だけを見る（step() のクランク処理には手を入れない）。かけなおしでもう一度クランク→0 になれば、また鳴る
+// 音の出し方は relayClick・REVBEEP・HORN と同じ型（AudioContext に直接、サイン波 880Hz・約 0.4 秒で減衰）。音切（M）・未開始・suspended のときは鳴らない
+const STARTCHIME = (() => {
+  let prevCrank = 0;
+  function chime() {
+    if (!audio || !soundOn || audio.ac.state !== 'running') return;
+    const ac = audio.ac, t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(880, t);
+    g.gain.setValueAtTime(0.06 * (camMode === 0 ? 1 : 0.4), t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+    o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.45);
+  }
+  function update() {
+    const c = S.crank || 0;
+    if (prevCrank > 0 && c === 0 && S.started && !S.done) chime();
+    prevCrank = c;
+  }
+  return { update };
+})();
+
 function setupTractor(root) {
   rig.add(root);
   root.traverse(o => {
@@ -10056,6 +10076,7 @@ function frame(now) {
   WINKER.update();
   BEACON.update();
   REVBEEP.update();
+  STARTCHIME.update();
   GLINT_CAB.value = camMode === 0 ? 0.3 : 1;      // 運転席ではすじをうすく（うっすら残す）
   emitExhaust(dt);
   DRIVER.update(dt, -(S.steer + (S.rutPull || 0)) / MAX_STEER * 4.2, camMode === 0);   // ハンドルが取られると 手も

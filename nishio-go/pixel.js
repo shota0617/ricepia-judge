@@ -8714,20 +8714,22 @@ function npcGreet(n, tx, ty) {
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, retry: false, walkTold: false };
-const TILT_DEGS = [15, 20, 26];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く
-tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); return TILT_DEGS.includes(v) ? v : 20; } catch (e) { return 20; } })();
+const TILT_DEGS = [12, 16, 21];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く。運営者の声「転がりの感度を上げる」（2026-10-31）で 全体に びんかん側へ（旧 15・20・26。旧の 値で 覚えていた 人は 同じ 段の 新しい 値へ）
+tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); const MIG = { 15: 12, 20: 16, 26: 21 }; const m = MIG[v] || (TILT_DEGS.includes(v) ? v : 16); try { localStorage.setItem('nsg_tilt', String(m)); } catch (e) { /* noop */ } return m; } catch (e) { return 16; } })();
 if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); } catch (er) { /* noop */ } }); }
 let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
-const ROLL_ACC = 9, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
-// へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約5.8マス/秒）
+const ROLL_ACC = 11, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
+// へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約6.3マス/秒）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
 // 運営者の声「傾けた時の反応をよく」：静かな 中心は 残し、少しの 傾きでも 抵抗を こえる。
 // 最大の 力・速さ・ころがり抵抗は 変えず、中央の 手ぶれは 力を 0 に もどす。
+// 運営者の声「転がりの感度を上げる」（2026-10-31）：中心の 無力は 0.08→0.05 に せばめ、小さい 傾きの 力は 0.45→0.55 に。
+// あわせて ROLL_ACC（9→11）と 傾きの 角度（TILT_DEGS）も びんかん側へ。ころがり抵抗と ROLL_MAX は そのまま。
 function tiltCurve(degrees) {
   const v = Math.min(1, Math.abs(degrees) / tiltG.deg);
-  if (v <= 0.08) return 0;
-  const force = v < 0.25 ? (v - 0.08) / 0.17 * 0.45 : 0.45 + (v - 0.25) / 0.75 * 0.55;
+  if (v <= 0.05) return 0;
+  const force = v < 0.25 ? (v - 0.05) / 0.20 * 0.55 : 0.55 + (v - 0.25) / 0.75 * 0.45;
   return Math.sign(degrees) * force;
 }
 const tiltDelta = (a, b) => ((a - b + 540) % 360) - 180;

@@ -9780,8 +9780,11 @@ const BADGE = (() => {
 // 運営者の 声「みぞほりも できる」）
 // （soutome_farm（Instagram の 動画）：トラクターの うしろの スライドモアを 右へ のばし、農道わきの 土手の 斜面に 合わせて
 // かたむけて、高い 草を 刈りながら 道を まっすぐ 走る。運営者から もらった 画面の 写し）
+// 農道の 東の 肩には 電柱が 35m ごとに 立っていて（build_field.py）、草かりの 帯（z 46→26）の 中には z 29・x 21.05 の 1 本が ある。
+// 近づいたら 草刈機を 手前へ 引っこめて 柱を よけ、柱の まわり（0.85m）は 刈りのこす（柱の 際は 本物も 刈れない）。
 const INTRO = (() => {
   const OFF = params.get('intro') === '0', X = 19.0, Z0 = 46, Z1 = 26;   // 農道（x 16.7〜20.7）の 東よりを 北から 南へ
+  const POLE = { x: 21.05, z: 29 }, SLIDE = 1.3;   // 草かりの 帯の 中の 電柱（農道の 東の 肩）と、よけるとき 刈る 所を 引っこめる 量（m）
   let seed = 211; const R = () => (seed = (seed * 16807) % 2147483647) / 2147483647;   // 自分の 乱数（ほかの 乱数を ずらさない）
   const lin = c => new THREE.MeshLambertMaterial({ color: new THREE.Color(c).convertSRGBToLinear() });
   const redM = lin(0xc63a2c), darkM = lin(0x2b2b2e), yelM = lin(0xd6b03e), grayM = lin(0x6a6d72), rubM = lin(0x161616);
@@ -9800,10 +9803,10 @@ const INTRO = (() => {
   const arm = box(0.14, 0.14, 0.34, redM, -1.6, 0.44, -0.92);
   const cyl = rod([-0.9, 0.62, -0.74], [-1.62, 0.66, -0.98], 0.03, grayM);
   const ARM0 = new THREE.Vector3(-1.6, 0.44, -0.75), CYL0 = new THREE.Vector3(-0.9, 0.62, -0.74), CYL_L = Math.hypot(0.72, 0.04, 0.24), ZA = new THREE.Vector3(0, 0, -1), YA = new THREE.Vector3(0, 1, 0), LV = new THREE.Vector3();
-  function links(up) {                            // うで と シリンダー：はりの 側の 付け根は そのまま、刈る 所の 側の はしを 刈る 所の 高さ（headY + up）に 合わせて のばす・かたむける
+  function links(up, s = 0) {                     // うで と シリンダー：はりの 側の 付け根は そのまま、刈る 所の 側の はしを 刈る 所の 高さ（headY + up）と 横の ずらし（s：電柱よけの 引っこめ）に 合わせて のばす・かたむける
     const hy = headY + up;
-    LV.set(-1.6, hy, -1.09).sub(ARM0); const la = LV.length(); arm.position.copy(ARM0).addScaledVector(LV, 0.5); arm.quaternion.setFromUnitVectors(ZA, LV.normalize()); arm.scale.z = la / 0.34;
-    LV.set(-1.62, 0.66 + hy - 0.44, -0.98).sub(CYL0); const lc = LV.length(); cyl.position.copy(CYL0).addScaledVector(LV, 0.5); cyl.quaternion.setFromUnitVectors(YA, LV.normalize()); cyl.scale.y = lc / CYL_L;
+    LV.set(-1.6 + s, hy, -1.09).sub(ARM0); const la = LV.length(); arm.position.copy(ARM0).addScaledVector(LV, 0.5); arm.quaternion.setFromUnitVectors(ZA, LV.normalize()); arm.scale.z = la / 0.34;
+    LV.set(-1.62 + s, 0.66 + hy - 0.44, -0.98).sub(CYL0); const lc = LV.length(); cyl.position.copy(CYL0).addScaledVector(LV, 0.5); cyl.quaternion.setFromUnitVectors(YA, LV.normalize()); cyl.scale.y = lc / CYL_L;
   }
   // 刈る 所（ハウジング）：長さ 1.45m を 外へ。斜面に 合わせて 外へ さがる
   const head = new THREE.Group(); head.position.set(-1.62, 0.44, -1.05); head.rotation.z = 0.5; mower.add(head);
@@ -9885,7 +9888,7 @@ const INTRO = (() => {
   const M4 = new THREE.Matrix4(), Q = new THREE.Quaternion(), E = new THREE.Euler(), V = new THREE.Vector3(), SC = new THREE.Vector3();
   const put = (k, h, w = GW[k]) => { E.set(cut[k] ? 0 : GL[k], GR[k], 0, 'YXZ'); Q.setFromEuler(E); M4.compose(V.set(GX[k], GY[k] - 0.02, GZ[k]), Q, SC.set(w, h, w)); grass.setMatrixAt(k, M4); };   // 刈ったら まっすぐ 短く
   const A = new THREE.Vector3(), B = new THREE.Vector3(), CP = new THREE.Vector3(), CL = new THREE.Vector3();
-  let on = false, cam = false, said = false, said2 = false, ending = false, peekT = 0, cutN = 0, fade = null, then = [], phase = 1, stuckT = 0, headY = 0.44, liftK = 0;
+  let on = false, cam = false, said = false, said2 = false, ending = false, peekT = 0, cutN = 0, fade = null, then = [], phase = 1, stuckT = 0, headY = 0.44, liftK = 0, slideK = 0, poleSaid = false;
   const hold = (H, px, pz) => {                    // ハンドルは キャラクターが もつ：向き H で 点（px, pz）を 通る 線に そって まっすぐ
     const dr = (S.x - px) * -Math.cos(H) + (S.z - pz) * Math.sin(H), want = H + 0.35 * Math.max(-1, Math.min(1, dr)), a = Math.atan2(Math.sin(want - S.yaw), Math.cos(want - S.yaw));
     key.left = key.right = 0; S.steer = Math.max(-0.3, Math.min(0.3, -1.5 * a));
@@ -9958,13 +9961,17 @@ const INTRO = (() => {
     if (!said) said = DETAIL ? (toast('まずは 農道わきの 土手の 草刈り。前へ進むと 草刈機（スライドモア）が 土手の 草を 刈る', 5), true) : SAY.note('まずは みちばたの くさかり。まえへ すすもう');
     hold(Math.PI, X, 0);                           // 道ぞいに まっすぐ
     liftK += (KIJI.lift(S.z + 1.05) - liftK) * Math.min(1, dt * 4);   // キジの 巣の 上では 刈る 所を 持ちあげて よける
-    head.position.y = headY + liftK * 0.35; links(liftK * 0.35);
+    const hz = S.z + 1.05, avoid = hz < POLE.z + 3.0 && hz > POLE.z - 1.8 ? 1 : 0;   // 電柱に 近づいたら 刈る 所を 引っこめて よける（過ぎたら また のばす）
+    if (avoid && !poleSaid) { poleSaid = true; if (DETAIL) toast('電柱だ。草刈機を 引っこめて よけて 刈る', 4); else SAY.note('でんちゅうだ！ よけて かろう'); }
+    slideK += (avoid - slideK) * Math.min(1, dt * 3);
+    const slide = slideK * SLIDE;
+    head.position.y = headY + liftK * 0.35; head.position.x = -1.62 + slide; links(liftK * 0.35, slide);
     if (Math.abs(S.v) > 0.05) {                    // 走っている：刈る 所の 下の 草を 刈る（刈る 所の 中ほど 0.3m の はば）
-      rig.updateMatrixWorld(); rig.localToWorld(A.set(-1.6, 0, -1.05)); rig.localToWorld(B.set(-3.0, 0, -1.05));
+      rig.updateMatrixWorld(); rig.localToWorld(A.set(-1.6 + slide, 0, -1.05)); rig.localToWorld(B.set(-3.0 + slide, 0, -1.05));
       const dx = B.x - A.x, dz = B.z - A.z, L2 = dx * dx + dz * dz;
       let n = 0;
       for (let k = 0; k < N; k++) {
-        if (cut[k] || Math.abs(GZ[k] - A.z) > 1.2 || KIJI.keep(GX[k], GZ[k])) continue;   // キジの 巣の まわりは 刈りのこす
+        if (cut[k] || Math.abs(GZ[k] - A.z) > 1.2 || KIJI.keep(GX[k], GZ[k]) || ((GX[k] - POLE.x) ** 2 + (GZ[k] - POLE.z) ** 2 < 0.72)) continue;   // キジの 巣と 電柱の まわり（0.85m）は 刈りのこす
         const t = Math.max(0, Math.min(1, ((GX[k] - A.x) * dx + (GZ[k] - A.z) * dz) / L2)), ex = GX[k] - A.x - t * dx, ez = GZ[k] - A.z - t * dz;
         if (ex * ex + ez * ez > 0.12) continue;
         cut[k] = 1; cutN++; n++;

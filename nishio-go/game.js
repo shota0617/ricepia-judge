@@ -1681,7 +1681,9 @@ function decideGuide0(from, wide) {
   }
   c = c || cands[0];
   // ほかの候補（行き先がちがうものを2つまで）。札をひらくと選べる
-  const alts = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i).slice(0, 2)
+  // めいろでは ほかの候補も 縦（南北）が 先、同じ 向きの 中では 近い順（並びだけ。主行き先は 上で 決まっている）
+  const rest = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i);
+  const alts = (mazeVert ? rest.sort(goalSort) : rest).slice(0, 2)
     .map(x => ({ kind: x.kind, id: x.id, name: x.name, lat: x.lat, lng: x.lng, why: x.why, by: x.by || by, refer: x.refer, weather: x.weather }));
   return { ...c, by: c.by || by, alts };
 }

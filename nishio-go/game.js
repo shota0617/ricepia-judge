@@ -2623,7 +2623,7 @@ function toast(msg) {
 }
 // 出しておく時間：あとに待っている知らせが2つ以上あるときは短め（転がり方・バッジ・節目が続けて来ても、30秒も おくれて出ないように）
 function toastMs() { return (toastAfter.q || []).length >= 2 ? 2400 : 3800; }   // 読みこみの とちゅうで呼ばれても使えるよう、function で
-function howtoOpen() { return ['howto', 'playReady'].some(id => $(id) && !$(id).hidden); }
+function howtoOpen() { return ['howto'].some(id => $(id) && !$(id).hidden); }
 // 店頭で 店員さんに 見せる クーポン画面（自分で 遊んで 分かった：「🎁 すぐ近くに たからばこ！」が 画面の 下の 店員さん向けの 説明に 重なって 読めなかった）
 function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
 // シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る

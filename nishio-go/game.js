@@ -1606,6 +1606,14 @@ function decideGuide0(from, wide) {
   // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
   const five = range === MAZE_NEAR;
   const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
+  // 地図の めいろは「縦移動」に（運営者の声 2026-10-31「横移動の迷路から縦移動の迷路へ」）：めいろで 遊んでいるときの 行き先は、
+  // 近い順ではなく、まず 南北（縦）に ある所を 先に する（同じ 向きの 中では 近い順）。東西にしか 候補が なければ 今までどおり 近い順で 選ばれる。
+  // めいろ以外（あるいて移動・ふつうの地図）では 今までどおり 近い順のまま。
+  const mazeVert = demo && mazeNow();
+  const dNS = x => Math.abs((x.lat - me.lat) * 111320), dEW = x => Math.abs((x.lng - me.lng) * 111320 * Math.cos(me.lat * Math.PI / 180));
+  const goalSort = mazeVert
+    ? (a, b) => ((dNS(a) >= dEW(a) ? 0 : 1) - (dNS(b) >= dEW(b) ? 0 : 1)) || dist(me, a) - dist(me, b)
+    : (a, b) => dist(me, a) - dist(me, b);
   const far = x => okFor('spot', x.id)(x);
   const by = from ? `${from.name}の話` : 'まわりのようす';
   const say = (a, b) => from ? a : b;   // 人のことば（三河弁）／環境の知らせ
@@ -1644,7 +1652,7 @@ function decideGuide0(from, wide) {
   }
   if (seasonC && (S.guides || 0) % 2 === 1) cands.push(seasonC);
   // ③ まだ話していない人（人の話から、次の人へ）
-  const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && okFor('npc', n.id)(n)).sort((a, b) => dist(me, a) - dist(me, b));
+  const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && okFor('npc', n.id)(n)).sort(goalSort);
   const pickN = people[(S.guides || 0) % Math.min(3, people.length || 1)];
   if (pickN) {
     const s = spots.find(x => x.id === 'f-' + pickN.spot), about = firstClause(s && s.desc);
@@ -1652,11 +1660,11 @@ function decideGuide0(from, wide) {
       why: say(`${pickN.spotName}のそばに${pickN.name}がおるで、話を聞いてみりん。${about ? `（${about}）` : ''}`, `${pickN.spotName}のほうに人がいる。話を聞いてみよう。`) });
   }
   // ⑤ まだ行っていない注目スポット
-  const sp = spots.filter(s => s.featured && !s.shop && !S.visits[s.id] && far(s) && !ISLAND_SPOTS.has(s.id.slice(2))).sort((a, b) => dist(me, a) - dist(me, b))[0];
+  const sp = spots.filter(s => s.featured && !s.shop && !S.visits[s.id] && far(s) && !ISLAND_SPOTS.has(s.id.slice(2))).sort(goalSort)[0];
   if (sp) cands.push({ kind: 'spot', id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng, why: say(`${sp.name}へは、もう行ったかん？${firstClause(sp.desc)}。`, `${sp.name}が近いらしい。行ってみよう。`) });
   // ⑥ まだ行っていない ふつうの名所（神社・お寺・史跡・公園・駅など。近い3つから順に）。注目スポットが遠い所（半田・刈谷など）でも行き先があるように
   // 公園（ちびっこ広場なども多い）より、神社・お寺・史跡・駅などを先に
-  const ordAll = spots.filter(s => !s.featured && !s.shop && !S.visits[s.id] && far(s)).sort((a, b) => dist(me, a) - dist(me, b));
+  const ordAll = spots.filter(s => !s.featured && !s.shop && !S.visits[s.id] && far(s)).sort(goalSort);
   const ord = (ordAll.some(s => s.cat !== 'park') ? ordAll.filter(s => s.cat !== 'park') : ordAll).slice(0, 3);
   const os = ord[(S.guides || 0) % (ord.length || 1)];
   if (os) {

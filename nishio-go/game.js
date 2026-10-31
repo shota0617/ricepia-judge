@@ -1674,7 +1674,11 @@ function decideGuide0(from, wide) {
   if (!cands.length) return null;
   // 話した人が知っている人、雨なら屋根のある所を先に。それ以外は、話を聞くたびに「名所・人」を順に
   let c = cands.find(x => x.refer) || cands.find(x => x.weather);
-  if (!c) { const order = [['spot', 'npc'], ['npc', 'spot']][(S.guides || 0) % 2]; for (const k of order) if ((c = cands.find(x => x.kind === k))) break; }
+  if (!c) {
+    // めいろでは 縦（南北）の 候補が あれば、そちらの中から 選ぶ（注目スポットが 横で、ふつうの名所・人が 縦のとき、種類の順で 横が 勝たないように）
+    const vert = mazeVert ? cands.filter(x => dNS(x) >= dEW(x)) : [], pool = vert.length ? vert : cands;
+    const order = [['spot', 'npc'], ['npc', 'spot']][(S.guides || 0) % 2]; for (const k of order) if ((c = pool.find(x => x.kind === k))) break;
+  }
   c = c || cands[0];
   // ほかの候補（行き先がちがうものを2つまで）。札をひらくと選べる
   const alts = cands.filter(x => x.id !== c.id).filter((x, i, a) => a.findIndex(y => y.id === x.id) === i).slice(0, 2)

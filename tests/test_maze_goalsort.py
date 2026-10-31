@@ -57,6 +57,14 @@ class MazeGoalSortStaticTests(unittest.TestCase):
     def test_alts_use_goalsort_in_maze(self):
         self.assertIn("const alts = (mazeVert ? rest.sort(goalSort) : rest).slice(0, 2)", self.src)
 
+    def test_unreachable_goal_is_rerolled_not_persisted(self):
+        # 道すじが出なかった行き先は、10分だけ候補から外して選びなおす（S には書かない）。自分で選んだ・人のすすめは対象外
+        self.assertIn("const recent = new Set([...(S.guideDone || []), ...mzNoPathIds()]);", self.src)
+        self.assertIn("cur.mine || cur.refer || cur.byId || !mazeNow() || !fixOk()", self.src)
+        self.assertIn("decideGuide, setGuide, guideNoPath,", self.src)
+        px = (ROOT / 'nishio-go' / 'pixel.js').read_text()
+        self.assertIn("!capHit && seen >= 600 && G.guideNoPath", px)
+
     def test_wide_pool_is_nearest_only(self):
         self.assertIn("mazeVert && !five ? [cands.slice().sort(goalSort)[0]] : cands", self.src)
 

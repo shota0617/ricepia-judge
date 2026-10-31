@@ -1597,15 +1597,15 @@ const mazeNow = () => !!(demo && window.nishioPixel && nishioPixel.maze && nishi
 function decideGuide(from) {   // めいろは まず 近く（5分）、なければ いつもの 広さ
   const near = demo && mazeNow(), g = decideGuide0(from, false);
   if (g) return near ? { ...g, near: true } : g;   // near：5分の 近さで えらんだ しるし（遠く なったら えらびなおす）
-  return near ? decideGuide0(from, true) : null;
+  return near ? decideGuide0(from, true) || decideGuide0(from, true, true) : null;   // 広い範囲でも まず 近すぎる 所は のぞき、なければ 近い所も 許す
 }
-function decideGuide0(from, wide) {
+function decideGuide0(from, wide, tooNearOk) {
   if (!me) return null;
   const now = new Date(), range = !wide && demo && mazeNow() ? MAZE_NEAR : GUIDE_RANGE[demo ? 'play' : 'walk'];   // めいろは 5分で 着く 近さ
   const recent = new Set(S.guideDone || []);
   // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
   const five = range === MAZE_NEAR;
-  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
+  const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
   // 地図の めいろは「縦移動」に（運営者の声 2026-10-31「横移動の迷路から縦移動の迷路へ」）：めいろで 遊んでいるときの 行き先は、
   // 近い順ではなく、まず 南北（縦）に ある所を 先に する（同じ 向きの 中では 近い順）。東西にしか 候補が なければ 今までどおり 近い順で 選ばれる。
   // めいろ以外（あるいて移動・ふつうの地図）では 今までどおり 近い順のまま。

@@ -253,7 +253,7 @@
     </label>
     <label class="row">
       <span><b>📱 傾きの 強さ</b><small>スマホを 傾けて 転がす ときの 強さ。びんかん は 少し 傾けるだけで よく 転がり、やさしい は 大きく 傾けないと 速く なりません（盤の めいろも 同じ）。はじめは ふつう です。</small></span>
-      <select id="tiltSens" style="flex:none"><option value="12">びんかん</option><option value="16" selected>ふつう</option><option value="21">やさしい</option></select>
+      <select id="tiltSens" style="flex:none"><option value="9">びんかん</option><option value="12" selected>ふつう</option><option value="16">やさしい</option></select>
     </label>
     <div class="row">
       <span><b>🍚 転がり方</b><small>いま：<span id="koroName">きょうの転がり方</span>。200の転がり方（はねる・すべる・回る… × さくら・ほし・にじ…）を、転がった道のりで あつめられます。</small></span>
@@ -344,7 +344,7 @@
     <!-- 押すのに 抵抗が ある人へ：お金・登録・アプリ・位置情報の 心配が ないことを ボタンの すぐ下に（運営者の声「プレイボタンを押すのに抵抗がある人対策」） -->
     <p class="no-risk" aria-label="無料・登録なし・アプリ不要・位置情報なし"><span>✓ 無料</span><span>✓ 登録なし</span><span>✓ アプリ不要</span><span>✓ 位置情報なし</span></p>
     <p class="no-risk-sub">押すと すぐ 地図が 出ます。とじれば おしまい（記録は この スマホの 中だけ）</p>
-    <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
+    <p class="no-risk-sub ios-tilt" id="iosTiltNote" hidden>📱 iPhone は、最初に地図をタップすると「動きと方向」の確認が出ます。「許可」で 傾けて遊べます（地図を タップしても 遊べます）</p>
     <button type="button" class="btn big mode-pick" id="demoBtn" hidden>📱 操作して遊ぶ</button>
     <p class="warn">⚠️ 歩きスマホ・傾けながら歩くのは やめましょう。立ち止まって遊んでください。</p>
     <!-- プレイ画面（どんなゲームか、絵で分かるように。遊びかたのボタンより下に置き、ボタンはスクロールしなくても見えるまま） -->
@@ -374,15 +374,7 @@
   </div>
 </div>
 
-<!-- 開始は 許可の 必要な 端末だけ 1タップ。あそびかたは せっていから -->
-<div class="howto" id="playReady" role="dialog" aria-modal="true" aria-labelledby="playReadyTitle" hidden>
-  <div class="howto-box">
-    <h2 id="playReadyTitle">🍚 にしおさんぽGO</h2>
-    <p>傾けるか、地図を タップして ころころ。</p>
-    <button type="button" class="btn big" id="playReadyOk">あそぶ</button>
-    <small>傾きの 確認が 出たら「許可」。許可なしでも 遊べます。</small>
-  </div>
-</div>
+<!-- 「あそぶ」ボタンは廃止（運営者の声 2026-10-31）：開いたらすぐ開始。iPhone の傾き許可は、最初に地図をタップしたときに聞く（pixel.js）。あそびかたは せっていから -->
 <div class="howto" id="howto" hidden role="dialog" aria-modal="true" aria-labelledby="howtoT">
   <div class="howto-box">
     <div class="howto-scene" id="howtoScene" aria-hidden="true"></div>

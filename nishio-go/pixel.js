@@ -8714,22 +8714,23 @@ function npcGreet(n, tx, ty) {
 }
 const rk = { up: 0, down: 0, left: 0, right: 0 };
 const tiltG = { x: 0, y: 0, on: false, base: null, n: 0, asked: false, retry: false, walkTold: false };
-const TILT_DEGS = [12, 16, 21];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く。運営者の声「転がりの感度を上げる」（2026-10-31）で 全体に びんかん側へ（旧 15・20・26。旧の 値で 覚えていた 人は 同じ 段の 新しい 値へ）
-tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); const MIG = { 15: 12, 20: 16, 26: 21 }; const m = MIG[v] || (TILT_DEGS.includes(v) ? v : 16); try { localStorage.setItem('nsg_tilt', String(m)); } catch (e) { /* noop */ } return m; } catch (e) { return 16; } })();
-if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); } catch (er) { /* noop */ } }); }
+const TILT_DEGS = [9, 12, 16];   // 傾きの 強さ（せってい nsg_tilt）：びんかん・ふつう（はじめ）・やさしい。この 角度で いちばん強く。運営者の声「傾き感度上げる」（2026-10-31、2回目）で さらに びんかん側へ（前回 12・16・21、もと 15・20・26。旧の 値で 覚えていた 人は 同じ 段の 新しい 値へ）
+tiltG.deg = (() => { try { const v = +localStorage.getItem('nsg_tilt'); let m; if (localStorage.getItem('nsg_tilt_v') === '2') m = TILT_DEGS.includes(v) ? v : 12; else { const MIG = { 15: 9, 20: 12, 26: 16, 12: 9, 16: 12, 21: 16 }; m = MIG[v] || 12; } try { localStorage.setItem('nsg_tilt', String(m)); localStorage.setItem('nsg_tilt_v', '2'); } catch (e) { /* noop */ } return m; } catch (e) { return 12; } })();   // 旧い 値（12・16 は 前の 段と 新しい 段で 重なる）ので、段の 移し替えは nsg_tilt_v=2 の 目印が あるときだけ しない
+if ($('tiltSens')) { $('tiltSens').value = String(tiltG.deg); $('tiltSens').addEventListener('change', e => { const v = +e.target.value; if (!TILT_DEGS.includes(v)) return; tiltG.deg = v; try { localStorage.setItem('nsg_tilt', String(v)); localStorage.setItem('nsg_tilt_v', '2'); } catch (er) { /* noop */ } }); }
 let mzHitStop = 0;   // ヒットストップ：強く 当たった 瞬間、お米を ほんの少し 止める（手ごたえ。画面と ★の 時計は 止めない）
 const MZ_HIT_STOP = 5, MZ_HIT_STOP_MS = 45;   // これより 速く 当たったら（マス/秒）・止める 長さ
-const ROLL_ACC = 11, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
+const ROLL_ACC = 13, ROLL_MAX = 8, ROLL_BOUNCE = 0.42, ROLL_STICK = 0.6;   // マス/秒²・いちばん速い速さ（下り坂でも これまで）・はね返り・これより おそく当たったら はねずに ぴたっと止まる
 // へり方：ころがり抵抗（いつも同じだけ へる。止まる所で ぴたっと止まる）＋ 速さに比べて へる分 ＋ 空気（速いほど強い。いちばん速い速さが しぜんに決まる：道で 約6.3マス/秒）
 const ROLL_CRR = 0.9, ROLL_LIN = 0.35, ROLL_AIR = 0.2;
 // 運営者の声「傾けた時の反応をよく」：静かな 中心は 残し、少しの 傾きでも 抵抗を こえる。
 // 最大の 力・速さ・ころがり抵抗は 変えず、中央の 手ぶれは 力を 0 に もどす。
 // 運営者の声「転がりの感度を上げる」（2026-10-31）：中心の 無力は 0.08→0.05 に せばめ、小さい 傾きの 力は 0.45→0.55 に。
 // あわせて ROLL_ACC（9→11）と 傾きの 角度（TILT_DEGS）も びんかん側へ。ころがり抵抗と ROLL_MAX は そのまま。
+// 運営者の声「傾き感度上げる」（2026-10-31、2回目）：無力は 0.05→0.03 に せばめ、小さい 傾きの 力は 0.55→0.65 に。ROLL_ACC は 11→13、TILT_DEGS は 12・16・21→9・12・16。
 function tiltCurve(degrees) {
   const v = Math.min(1, Math.abs(degrees) / tiltG.deg);
-  if (v <= 0.05) return 0;
-  const force = v < 0.25 ? (v - 0.05) / 0.20 * 0.55 : 0.55 + (v - 0.25) / 0.75 * 0.45;
+  if (v <= 0.03) return 0;
+  const force = v < 0.25 ? (v - 0.03) / 0.22 * 0.65 : 0.65 + (v - 0.25) / 0.75 * 0.35;
   return Math.sign(degrees) * force;
 }
 const tiltDelta = (a, b) => ((a - b + 540) % 360) - 180;
@@ -8762,7 +8763,7 @@ window.addEventListener('deviceorientation', e => {
 });
 function tiltReset() { tiltG.base = null; tiltG.n = 0; tiltG.t = 0; tiltG.x = tiltG.y = 0; }
 function tiltNeedsPermission() { return !!(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function'); }
-function tiltAsk(event) {   // 通常の「あそぶ」の タップで 1回だけ。拒否・例外でも タップや 矢印キーで 遊べる。
+function tiltAsk(event) {   // 本当の タップで 1回だけ（はじめの画面の「あそぶ」・地図のタップ・めいろを開くボタンなど）。拒否・例外でも タップや 矢印キーで 遊べる。
   if (!event || !event.isTrusted || tiltG.asked || !tiltNeedsPermission()) return;   // userActivation が ない 端末でも、自動表示・合成クリックからは 求めない
   tiltG.asked = true; tiltG.retry = false;
   const fallback = () => G.toast('地図を タップして 遊べるよ（矢印キーでも）');
@@ -8770,7 +8771,7 @@ function tiltAsk(event) {   // 通常の「あそぶ」の タップで 1回だ�
   try { Promise.resolve(DeviceOrientationEvent.requestPermission()).then(r => { if (r === 'granted') tiltReset(); else fallback(); }, failed); }
   catch (e) { failed(e); }
 }
-$('playReadyOk').addEventListener('click', e => { tiltAsk(e); tiltReset(); $('playReady').hidden = true; if (G.toastFlush) G.toastFlush(); });
+// 「あそぶ」ボタン（playReady）は廃止（運営者の声 2026-10-31）。傾きの許可は、最初に地図をタップしたときに聞く（下の 地図タップの処理）
 document.addEventListener('visibilitychange', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('pageshow', () => { tiltReset(); rp.vx = rp.vy = 0; });
 window.addEventListener('orientationchange', () => { tiltReset(); rp.vx = rp.vy = 0; });
@@ -10238,7 +10239,7 @@ function rollStep(dt) {
     if (rp.x !== null && rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 6 && performance.now() - (mzRt.snapT || 0) > 800) mzRt.warp = true;   // めいろを とびこえた（名所の 窓の「ここへ」など）：この ゴールは ★なし
     Object.assign(rp, { x: t.x, y: t.y, vx: 0, vy: 0, sent: { x: t.x, y: t.y }, tile: `${Math.floor(t.x)},${Math.floor(t.y)}` });
   }
-  if (!$('playReady').hidden || sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
+  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
   const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   if (Math.hypot(ax, ay) > 0.08) G.notePlayInput();
@@ -10726,7 +10727,7 @@ function planPath(sx, sy, gx, gy, goalR, avoid) {
 }
 // スポットをタップすると、ドラクエ風のウィンドウで説明
 cv.addEventListener('click', e => {
-  if (tiltG.retry) tiltAsk(e);   // 一時的な 許可失敗の あとだけ、次の 地図タップで 再試行（denied では 求めない）
+  if (!tiltG.asked || tiltG.retry) tiltAsk(e);   // 「あそぶ」ボタン廃止のため、傾きの許可は 最初の 地図タップで 1回だけ聞く。一時的な 許可失敗の あとは 次の タップで 再試行（denied では 繰り返さない）
   const r = cv.getBoundingClientRect(), dpr = cv.width / r.width;
   if (mazeOn() && !worldMode) {   // 縁の 矢印を タップで せかいちず
     const px = (e.clientX - r.left) * dpr, py = (e.clientY - r.top) * dpr, now = performance.now(), inR = q => q && px >= q[0] && px <= q[2] && py >= q[1] && py <= q[3];

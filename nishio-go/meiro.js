@@ -874,11 +874,11 @@ document.addEventListener('DOMContentLoaded', () => {
     else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
   }
   // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめの 画面で ボタンを 待たず、開いたら すぐ 地図の めいろで 転がる
-  // あそびかたは せっていから。iPhone の 傾きの 許可は「あそぶ」の タップで 聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
+  // あそびかたは せっていから。iPhone の 傾きの 許可は、最初に地図をタップしたときに聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
   let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
   const intro0 = $('intro');
   if (b && intro0 && !intro0.hidden && !noAuto) b.click();
-  if (!noAuto && !wantOpen && navigator.maxTouchPoints > 0 && root.nishioPixel && root.nishioPixel.meiroApi.tiltNeedsPermission()) { root.nishioGo.toastHold(); $('playReady').hidden = false; $('playReadyOk').focus(); }
+  // 「あそぶ」ボタン廃止（運営者の声 2026-10-31）：開始を止める窓（playReady）は出さない。iPhone の傾き許可は、最初に地図をタップしたときに聞く（pixel.js の地図タップ）
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', e => { root.nishioPixel.meiroApi.tiltAsk(e); open(); });
   const c = $('meiroCardBtn');   // きろく の 札（あるいて遊ぶ の人も ここから）

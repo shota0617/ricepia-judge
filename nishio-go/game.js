@@ -1655,7 +1655,9 @@ function decideGuide0(from, wide, tooNearOk) {
   if (seasonC && (S.guides || 0) % 2 === 1) cands.push(seasonC);
   // ③ まだ話していない人（人の話から、次の人へ）
   const people = placeNpcs().filter(n => !npcMet(n.id) && (!from || n.id !== from.id) && okFor('npc', n.id)(n)).sort(goalSort);
-  const pickN = people[(S.guides || 0) % Math.min(3, people.length || 1)];
+  // 近い 3つから 順に 選ぶとき、めいろでは 縦の 候補が あれば 縦の 中だけで 順に 選ぶ（2番目に 近い 横が 選ばれて、すぐ 近くの 縦が 飛ばされないように）
+  const top3 = list => { const t = list.slice(0, 3), v = mazeVert ? t.filter(vertFirst) : []; return v.length ? v : t; };
+  const pn = top3(people), pickN = pn[(S.guides || 0) % (pn.length || 1)];
   if (pickN) {
     const s = spots.find(x => x.id === 'f-' + pickN.spot), about = firstClause(s && s.desc);
     cands.push({ kind: 'npc', id: pickN.id, name: `${pickN.name}（${pickN.spotName}）`, lat: pickN.lat, lng: pickN.lng,
@@ -1667,7 +1669,7 @@ function decideGuide0(from, wide, tooNearOk) {
   // ⑥ まだ行っていない ふつうの名所（神社・お寺・史跡・公園・駅など。近い3つから順に）。注目スポットが遠い所（半田・刈谷など）でも行き先があるように
   // 公園（ちびっこ広場なども多い）より、神社・お寺・史跡・駅などを先に
   const ordAll = spots.filter(s => !s.featured && !s.shop && !S.visits[s.id] && far(s)).sort(goalSort);
-  const ord = (ordAll.some(s => s.cat !== 'park') ? ordAll.filter(s => s.cat !== 'park') : ordAll).slice(0, 3);
+  const ord = top3(ordAll.some(s => s.cat !== 'park') ? ordAll.filter(s => s.cat !== 'park') : ordAll);
   const os = ord[(S.guides || 0) % (ord.length || 1)];
   if (os) {
     const cat = (CATS[os.cat] || {}).n || '名所';

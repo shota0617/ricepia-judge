@@ -9067,7 +9067,7 @@ function mzRoute(now) {
   if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
   mzRt.key = key; mzRt.retry = 0;
   let x0, y0, W, from, end = -1, unk = false, seen = 0, capHit = false;   // seen：出発点から たどれた マスの 数（小さければ 出発点が 行き止まり・島の 中）
-  for (const pad of [30, 60]) {   // 30マスの 外まわりで 見つからなければ 60マスまで ひろげる（長圓寺 → 平原の滝：連結の 道は 30マスの 外を 大きく まわる 286マス。ひろげても 上限は 同じ）
+  for (const pad of [30, 60, 120]) {   // 30マスの 外まわりで 見つからなければ 60マス・120マスまで ひろげる（長圓寺 → 平原の滝：連結の 道は 30マスの 外を 大きく まわる 286マス。衣崎海岸（一色干潟）→ 吉良饗庭塩の里 など 4〜8km：川を 大きく まわる 428〜690マスで 60マスでは 届かず 道すじが 出なかった。ひろげても 上限は 同じ）
     x0 = Math.min(a, gc) - pad; y0 = Math.min(b, gr) - pad;
     const x1 = Math.max(a, gc) + pad, y1 = Math.max(b, gr) + pad; W = x1 - x0 + 1;
     if (W * (y1 - y0 + 1) > 160000) { if (pad === 30) { mzRt.path = null; return; } break; }   // 遠すぎる（10km ほど）：さがさない

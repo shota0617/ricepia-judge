@@ -59,7 +59,7 @@ class Cycle18FogTests(unittest.TestCase):
         # 3x1 の通路（x=0 踏破済み・x=1 ゴール・x=2 遠い未踏）。fillRect の色と位置を記録する
         pre = ("const MZ_R = 3, MZ_K = 1; let rec = false; const rp = { x: -20, y: 0.5 }; const mzScale = %d;"
                "const mzAreas = new Map([['0_0', { x0: 0, y0: 0, t: new Uint8Array([1,1,1, 0,0,0, 0,0,0]), eaten: new Set(['0,0']) }]]);"
-               "const mzTrail = new Map(); const mzRt = { path: %s }; const mzOn = (x, y) => [x, y];"
+               "const mzTrail = new Map(); const mzZoneTint = () => ({ rgb: '255,214,102', k: 1 }); const mzRt = { path: %s }; const mzOn = (x, y) => [x, y];"
                "const calls = []; const ctx = { canvas: { width: 999, height: 999 }, fillStyle: '', fillRect(x, y, w, h) { calls.push([String(this.fillStyle), x]); }, createRadialGradient() { return { addColorStop() {}, toString() { return 'glow'; } }; } };"
                % (scale, goal)
                )

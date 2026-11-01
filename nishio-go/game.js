@@ -1684,7 +1684,8 @@ function decideGuide0(from, wide, tooNearOk) {
   // ⑥ まだ行っていない ふつうの名所（神社・お寺・史跡・公園・駅など。近い3つから順に）。注目スポットが遠い所（半田・刈谷など）でも行き先があるように
   // 公園（ちびっこ広場なども多い）より、神社・お寺・史跡・駅などを先に
   const ordAll = spots.filter(s => !s.featured && !s.shop && !S.visits[s.id] && far(s)).sort(goalSort);
-  const ord = top3(ordAll.some(s => s.cat !== 'park') ? ordAll.filter(s => s.cat !== 'park') : ordAll);
+  // めいろでは 縦の 公園しか ないとき、横の 神社・お寺より 縦の 公園を 選ぶ（縦移動が 先。縦に 神社・お寺などが あれば そちらが 先）
+  const ord = top3(ordAll.some(s => s.cat !== 'park') && !(mazeVert && !ordAll.some(s => s.cat !== 'park' && vertFirst(s)) && ordAll.some(vertFirst)) ? ordAll.filter(s => s.cat !== 'park') : ordAll);
   const os = ord[(S.guides || 0) % (ord.length || 1)];
   if (os) {
     const cat = (CATS[os.cat] || {}).n || '名所';

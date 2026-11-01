@@ -422,6 +422,10 @@ body.px .leaflet-control-container{display:none}
 body.pxw #pxCanvas{touch-action:none;cursor:grab}
 
 /* 地区ごとのめぐり具合 */
+.list li.area-row[data-tint="1"]{background:rgba(227,164,43,.12)}
+.list li.area-row[data-tint="2"]{background:rgba(227,164,43,.26)}
+.list li.area-row[data-tint="3"]{background:rgba(227,164,43,.42)}
+.area-hint{margin:-4px 0 6px;font-size:12px;color:#6b6552}
 .area-row .bar{display:block;height:6px;margin-top:4px;border-radius:3px;background:#e6e1d3;overflow:hidden}
 .area-row .bar i{display:block;height:100%;background:var(--gold)}
 .px-info .area-card h4 small{font-size:12px;color:#ddd;margin-left:4px}

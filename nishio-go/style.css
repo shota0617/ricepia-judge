@@ -501,6 +501,11 @@ body:has(#panel-log:not([hidden])) .toast,body:has(#panel-voice:not([hidden])) .
 body.px .guide .chip{background:#000;color:#7ee0ff;border-color:#7ee0ff;border-radius:0}
 body.px .guide .chip.main{background:#1d3a44;color:#fff}
 body.px .guide .chip .zn{background:rgba(var(--zc),.45);color:#fff}
+.guide .glow{display:block;margin-top:4px;font-size:12px;font-weight:700;color:#8a5a00}
+.guide .chip.glow{border-color:#ffd54f;box-shadow:0 0 6px #ffd54f;animation:glowPulse 1.6s ease-in-out infinite}
+body.px .guide .glow{color:#ffe680}
+@keyframes glowPulse{50%{box-shadow:0 0 12px #ffec96}}
+@media (prefers-reduced-motion:reduce){.guide .chip.glow{animation:none}}
 body.px .guide{background:#000;color:#7ee0ff;border:2px solid #7ee0ff;border-left-width:4px}
 body.px .guide b{font-weight:400}
 body.px .guide small{color:#ddd}

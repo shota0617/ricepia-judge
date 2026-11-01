@@ -1186,6 +1186,58 @@ function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（�
   return `🏃 はやさ 1秒に ${v}m`;   // とどかない ときは 足りない 数を 出さない（あおらない・文字を 少なく。運営者の声「競わない設計」「文字は 少なく」2026-10-29）
 }
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
+// 時限の 光（ピクミン ブルームの「歩いた先に 期間限定で 花が 咲く」）：めいろの はしの 名所が 10分 だけ「光るゴール」（+20pt）、
+// ゴールに 着くと 近くの 寄り道が 5分 だけ 光って（+10pt）。画面の 間だけ おぼえる（セーブには 入れない）。時間が 切れたら 光りは 消えて いつもどおり
+const GLOW = { goalMs: 10 * 60000, goalPts: 20, nearMs: 5 * 60000, nearPts: 10, nearMax: 3, nearM: 2000 };
+const glow = { goal: null, near: null };   // goal：{ id, name, lat, lng, until } / near：{ until, list: [{ id, name, lat, lng }] }
+const glowLeft = (o, now = Date.now()) => (o ? Math.max(0, o.until - now) : 0);
+const glowMin = ms => Math.max(1, Math.ceil(ms / 60000));
+function glowPickGoal(from, cands) {   // 行き先の 候補の うち、いちばん 遠い 名所（人は 光らせない）
+  if (!from) return null;
+  const far = (cands || []).filter(o => o && o.kind === 'spot' && Number.isFinite(o.lat) && Number.isFinite(o.lng)).sort((a, b) => dist(from, b) - dist(from, a))[0];
+  return far ? { id: far.id, name: far.name, lat: far.lat, lng: far.lng } : null;
+}
+function glowPickNear(goal, list, visits, zoneOf, max = GLOW.nearMax) {   // ゴールの 同じ 地区の 行っていない 名所を 近い 順に
+  if (!goal) return [];
+  const z = zoneOf || (() => ''), gz = z(goal);
+  return (list || []).filter(s => s && s.id !== goal.id && !s.shop && !(visits || {})[s.id] && Number.isFinite(s.lat) && Number.isFinite(s.lng)
+    && dist(goal, s) <= GLOW.nearM && (!gz || z(s) === gz))
+    .sort((a, b) => dist(goal, a) - dist(goal, b)).slice(0, max).map(s => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lng }));
+}
+function glowArm(g) {   // 行き先が 決まった とき（めいろ）：光るゴールが 無い・切れた・候補から 消えた なら えらびなおす
+  if (!g || !mazeNow() || !me) return;
+  glow.armed = true;
+  const cands = [g, ...(g.alts || [])], now = Date.now();
+  if (glowLeft(glow.goal, now) > 0 && cands.some(o => o.id === glow.goal.id)) return;
+  const pick = glowPickGoal(me, cands);
+  glow.goal = pick ? { ...pick, until: now + GLOW.goalMs } : null;
+  if (pick) track('glow_goal', { spot: pick.name });
+}
+function glowArrive(id, lines) {   // めいろの ゴールに 着いた：光るゴールなら +20pt、近くの 寄り道を 光らせる。戻り値：ポイント
+  let pts = 0;
+  const now = Date.now(), gg = glow.goal;
+  if (gg && gg.id === id && glowLeft(gg, now) > 0) { pts += GLOW.goalPts; lines.push(`✨ 光るゴール！ +${GLOW.goalPts}`); glow.goal = null; track('glow_goal_hit', {}); }
+  const sp = spots.find(x => x.id === id), list = sp ? glowPickNear(sp, spots, S.visits, areaZone) : [];
+  glow.near = list.length ? { until: now + GLOW.nearMs, list } : null;
+  if (list.length) lines.push(`✨ 近くの 寄り道が ${glowMin(GLOW.nearMs)}分 光るよ：${list.map(x => x.name).join('・')}`);
+  return pts;
+}
+function glowCheckin(id, lines) {   // 光っている 寄り道に チェックイン：+10pt（1か所1回）。戻り値：ポイント
+  const n = glow.near;
+  if (!n || glowLeft(n) <= 0 || !n.list.some(x => x.id === id)) return 0;
+  n.list = n.list.filter(x => x.id !== id);
+  if (!n.list.length) glow.near = null;
+  lines.push(`✨ 光る 寄り道 +${GLOW.nearPts}`); track('glow_near_hit', {});
+  return GLOW.nearPts;
+}
+const glowIds = () => (glowLeft(glow.near) > 0 ? glow.near.list.map(x => x.id) : []);
+function glowHtml() {   // ガイド札の 光る 行（のこり 時間つき）。光りが 無ければ ''
+  const now = Date.now(), parts = [];
+  if (glowLeft(glow.goal, now) > 0) parts.push(`✨ 光るゴール：${esc(glow.goal.name)} あと${glowMin(glowLeft(glow.goal, now))}分 +${GLOW.goalPts}pt`);
+  if (glowLeft(glow.near, now) > 0) parts.push(`✨ 光る 寄り道（あと${glowMin(glowLeft(glow.near, now))}分 +${GLOW.nearPts}pt）：${glow.near.list.map(x => esc(x.name)).join('・')}`);
+  return parts.length ? `<span class="glow">${parts.join('<br>')}</span>` : '';
+}
+setInterval(() => { if (glow.goal || glow.near) { if (glowLeft(glow.goal) <= 0) glow.goal = null; if (glowLeft(glow.near) <= 0) glow.near = null; renderGuide(); } }, 15000);   // 時間が 切れたら 光りを 消す
 function mazeGoal(id, name, lines) {
   mzShare = null;
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
@@ -1206,6 +1258,7 @@ function mazeGoal(id, name, lines) {
   }
   const sp = mzSpeed(gl.m, gl.sec, gl.warp);
   if (sp) lines.push(sp);
+  total += glowArrive(id, lines);   // 光るゴール +20・近くの 寄り道を 光らせる
   lines.push('🍵 おつかれさま。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
   friendVs(gl.sec, st);
   mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
@@ -1272,6 +1325,7 @@ function checkin() {
   day.checkins++;
   if (!day.spots.includes(s.id)) day.spots.push(s.id);
   if (jumpNew) lines.push('🎮 名所でミニゲーム「にしおジャンプ」があそべる（スポットの窓・きろく から）');
+  total += glowCheckin(s.id, lines);   // 光っている 寄り道（ゴールの あと 5分）
   total += mazeGoal(s.id, s.name, lines);   // 地図の めいろの ゴール（行き先の 名所）に 着いた：かかった 時間と めいろの 道のり、紙ふぶき
   const mz = takeMzShare();   // この ごほうびに だけ シェアの ボタン
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
@@ -2048,6 +2102,7 @@ function praiseCheck(at) {
 function setGuide(g) {
   S.guide = g ? { ...g, t: Date.now() } : null;
   if (g) S.guides = (S.guides || 0) + 1;
+  glowArm(S.guide);   // めいろの 行き先が 決まったら、光るゴールを えらぶ（なければ えらびなおす）
   save();
   renderGuide();   // 人の話で行き先が変わったら、話の窓が開いているあいだも 下の行き先の札をすぐ書きかえる
 }
@@ -2237,6 +2292,7 @@ function renderGuide() {
   const g = guideTarget();
   if (!g || !me) { el.hidden = true; return; }
   el.hidden = false;
+  if (!glow.armed) glowArm(S.guide);   // めいろが はじまった とき（行き先は もう 決まっている）に 一度だけ
   // 2行に収める（1行目：行き先と方角・距離、2行目：だれの話か。長い話は「…」。タップで全文）
   const alts = (S.guide && S.guide.alts) || [];
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
@@ -2246,11 +2302,13 @@ function renderGuide() {
   el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
+  el.insertAdjacentHTML('beforeend', glowHtml());
   const chips = guideChips(me, g, alts, areaZone);
   if (chips.length > 1) {   // 距離順チップ：いつも 見える。主行き先は ✓、ほかを 押すと そこへ 変わる（候補が 1つだけの ときは 出さない）
     el.insertAdjacentHTML('beforeend', `<span class="chips">${chips.map(c => {
       const rgb = areaRgb(c.zone), ar = areas.find(a => a.id === c.zone), sw = rgb ? ` style="--zc:${rgb.join(',')}"` : '';
-      return `<button type="button" class="chip${c.main ? ' main' : ''}${rgb ? ' zone' : ''}"${sw}${c.main ? ' aria-current="true"' : ` data-alt="${c.alt}"`}>${c.main ? '✓ ' : ''}${ar && rgb ? `<i class="zn">${esc(ar.name)}</i>` : ''}${esc(c.name)} ${fmtM(c.m)} ${c.dir}</button>`;
+      const gl = glowLeft(glow.goal) > 0 && glow.goal.name === c.name;
+      return `<button type="button" class="chip${c.main ? ' main' : ''}${rgb ? ' zone' : ''}${gl ? ' glow' : ''}"${sw}${c.main ? ' aria-current="true"' : ` data-alt="${c.alt}"`}>${c.main ? '✓ ' : ''}${gl ? '✨' : ''}${ar && rgb ? `<i class="zn">${esc(ar.name)}</i>` : ''}${esc(c.name)} ${fmtM(c.m)} ${c.dir}</button>`;
     }).join('')}</span>`);
     el.classList.add('hasChips');
   } else el.classList.remove('hasChips');
@@ -4380,7 +4438,7 @@ window.nishioGo = {
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
-  get areas() { return areas; }, areaProgress, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
+  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,

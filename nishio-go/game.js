@@ -294,6 +294,8 @@ function areaNear(p) {
   for (const x of spots) if (x.featured && x.area) { const d = dist(p, x); if (d < bd) { bd = d; best = x; } }
   return best ? best.area : '';
 }
+// コレクションの「のこり」：集めた数/ぜんぶの数（既存の集計）から。0件は出さない、そろったら「コンプ！」
+const leftLabel = (done, total) => total > 0 ? (done >= total ? 'コンプ！' : `あと${total - done}`) : '';
 function areaProgress(id) {
   const list = spots.filter(s => s.featured && s.area === id);
   return { list, total: list.length, done: list.filter(s => S.visits[s.id]).length };
@@ -3083,7 +3085,7 @@ function renderLog() {
 
   // 生きもの手帳：出会ったものは絵と回数、まだのものは影と「どこで出会えるか」
   const book = S.critters || {}, cimg = id => { try { const c = window.nishioPixel && nishioPixel.critterSprite(id); return c ? `<img class="gthumb" src="${c.toDataURL()}" alt="" width="28" height="28"/>` : ''; } catch (e) { return ''; } };
-  $('critterCount').textContent = `${CRITTERS.filter(c => book[c.id]).length}/${CRITTERS.length}`;
+  { const got = CRITTERS.filter(c => book[c.id]).length; $('critterCount').textContent = `${got}/${CRITTERS.length}${CRITTERS.length ? `　${leftLabel(got, CRITTERS.length)}` : ''}`; }
   $('critterList').innerHTML = CRITTERS.map(c => book[c.id]
     ? `<li><span class="ico">${cimg(c.id) || '🐾'}</span><span class="main"><b>${esc(c.name)}</b>${simple() && !c.note ? '' : `<small>${esc(c.note || c.say)}${c.src ? ` <a href="${esc(c.src)}" target="_blank" rel="noopener">出典</a>` : ''}</small>`}</span><span class="num">×${book[c.id].n}</span></li>`
     : `<li><span class="ico heard">${cimg(c.id) || '❔'}</span><span class="main"><b>？？？</b><small>${WHERE_NAME[c.where]}${c.months ? `・${c.months[0]}〜${c.months[c.months.length - 1]}月` : ''}</small></span></li>`).join('');
@@ -3100,7 +3102,7 @@ function renderLog() {
     const art = simple() && areaArt(a.id);
     const p = areaProgress(a.id), pct = p.total ? Math.round(p.done / p.total * 100) : 0;
     return `<li class="area-row"><span class="ico">${art ? `<img class="gthumb area-art${p.total && p.done === p.total ? ' done' : ''}" src="${art}" alt="" width="32" height="32"/>` : simple() ? PI(p.total && p.done === p.total ? 'medal' : 'flag', '') : esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
-      ${simple() ? '' : `<small>${esc(a.catch || '')}</small>`}<span class="bar"><i style="width:${pct}%"></i></span></span><span class="num">${p.done}/${p.total}</span></li>`;
+      ${simple() ? '' : `<small>${esc(a.catch || '')}</small>`}<span class="bar"><i style="width:${pct}%"></i></span></span><span class="num">${p.done}/${p.total}${p.total ? `<small>　${leftLabel(p.done, p.total)}</small>` : ''}</span></li>`;
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>

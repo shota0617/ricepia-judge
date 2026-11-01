@@ -299,3 +299,22 @@ class Cycle13TodayWalkReviewTests(unittest.TestCase):
     def test_wired_into_card_without_touching_log_list(self):
         self.assertIn("${todaySpotsHtml(day)}", self.src)
         self.assertIn("kaoriWalkSay(walked, (day.spots || []).length)", self.src)
+
+
+@unittest.skipUnless(shutil.which('node'), 'node がない')
+class Cycle14CollectionLeftTests(unittest.TestCase):
+    """サイクル14：コレクションの「のこり」表示（game.js の leftLabel）"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.src = (GO / 'game.js').read_text(encoding='utf-8')
+        cls.fn = grab(cls.src, r"^(const leftLabel = .*);")
+
+    def test_left_label(self):
+        cases = [{'d': 0, 't': 12}, {'d': 5, 't': 12}, {'d': 11, 't': 12}, {'d': 12, 't': 12}, {'d': 0, 't': 0}, {'d': 3, 't': 0}]
+        out = node(self.fn + '; return leftLabel(d, t);', ['d', 't'], cases)
+        self.assertEqual(out, ['あと12', 'あと7', 'あと1', 'コンプ！', '', ''])
+
+    def test_wired_into_critter_and_area(self):
+        self.assertIn("leftLabel(got, CRITTERS.length)", self.src)
+        self.assertIn("leftLabel(p.done, p.total)", self.src)

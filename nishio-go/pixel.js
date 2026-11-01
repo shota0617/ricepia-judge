@@ -7731,12 +7731,13 @@ function frame(now) {
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
-    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzDeadTick(); mzGrainTick(); mzDotTick(); mzPebTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); mzFruitTick(now); mzPieceTick(now); mzViewTick(now); mzCacheTick(now); } else if (mzFruit.sx >= 0) mzFruitReset(); if (!mazeOn() && mzPiece.sx >= 0) mzPieceReset(); if (!mazeOn() && mzView.sx >= 0) mzViewReset();
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzDeadTick(); mzGrainTick(); mzDotTick(); mzPebTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); mzFruitTick(now); mzPieceTick(now); mzViewTick(now); mzCacheTick(now); mzQuestTick(now); } else if (mzFruit.sx >= 0) mzFruitReset(); if (!mazeOn() && mzPiece.sx >= 0) mzPieceReset(); if (!mazeOn() && mzView.sx >= 0) mzViewReset();
   if (!mazeOn() && mzCache.sx >= 0) mzCacheReset();   // かくし宝箱も 同じく はじめから
   }
   if (!mazeOn() && mzPiece.sx >= 0) mzPieceReset();   // 転がすを やめた・車・ワールドなどで めいろで なくなっても、上の 行だけでは 届かないため ここでも はじめから
   if (!mazeOn() && mzView.sx >= 0) mzViewReset();   // 見晴らし台も 同じく はじめから
   if (!mazeOn() && mzCache.sx >= 0) mzCacheReset();   // かくし宝箱も 同じく はじめから（転がすブロックの外。内側だけだと転がすをやめたときに残る）
+  if (!mazeOn() && mzQuest.sx >= 0) mzQuestReset();   // どうぐクエストも 同じく はじめから（転がすブロックの外にも）
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
   else { const k = Math.min(1, dt * (G.demo && rollOn ? 14 : 6)); cam.x += (tgt.x - cam.x) * k; cam.y += (tgt.y - cam.y) * k; }
@@ -7769,7 +7770,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -8170,7 +8171,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzViewClearTag(w, dpr, now); drawMzCacheHint(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzViewClearTag(w, dpr, now); drawMzCacheHint(w, dpr, now); drawMzQuestTag(w, dpr, now); mzToastDodge(now); }   // めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -9075,6 +9076,7 @@ function mzRoute(now) {
     mzPieceReset();   // 地図ピースも 迷路（ゴール）ごとに はじめから
     mzViewReset();   // 見晴らし台も 迷路（ゴール）ごとに はじめから
     mzCacheReset();   // かくし宝箱も 迷路（ゴール）ごとに はじめから
+    mzQuestReset();   // どうぐクエストも 迷路（ゴール）ごとに はじめから
     mzTrail.clear();   // 足あとは いまの ゴールへの ぶんだけ
     const bc = npcBump.carry; if (bc) npcBump.carry = bc.from === mzRt.gkey ? { id: bc.id, to: gkey } : null;   // ゴールの 人に 着いて 話した：あいさつ ずみは その すぐ 次の ゴールへ だけ もちこす（動く 前に 行き先を また かえたら すてる）
     mzRt.gkey = gkey; mzRt.best = Infinity; mzRt.bestT = now; mzRt.showUntil = 0; mzRt.hints = 0; mzRt.t0 = now; mzRt.clockT = now; mzRt.len0 = 0;
@@ -9866,6 +9868,7 @@ function mzFruitOk(cx, cy) {   // そこに くだものを 置いて よいか
   if (typeof mzPiece !== 'undefined' && mzPiece.cx === cx && mzPiece.cy === cy) return false;   // 地図ピースの マス
   if (typeof mzView !== 'undefined' && mzView.cx === cx && mzView.cy === cy) return false;   // 見晴らし台の マス（あとから 出る みかん・ピースも よける）
   if (typeof mzCache !== 'undefined' && mzCache.cx === cx && mzCache.cy === cy) return false;   // かくし宝箱の マス（あとから 出る ものも よける）
+  if (typeof mzQuest !== 'undefined' && mzQuest.cx === cx && mzQuest.cy === cy) return false;   // 農具の マス（あとから 出る ものも よける）
   for (const k of mzGate.keys()) { const m = /^(-?\d+),(-?\d+)([rd])$/.exec(k); if (m && ((+m[1] === cx && +m[2] === cy) || (+m[1] + (m[3] === 'r' ? 1 : 0) === cx && +m[2] + (m[3] === 'd' ? 1 : 0) === cy))) return false; }   // 生け垣の 戸の 両がわ
   if (mzLineSet(a).some(L => L.dots.some(d => Math.floor(d[0] / MZ_K) === cx && Math.floor(d[1] / MZ_K) === cy))) return false;   // ごはんつぶの 列
   return !mzCritDrawn.some(c => c[0] === cx && c[1] === cy);   // 生けがきの 生きもの
@@ -10153,6 +10156,76 @@ function drawMzCacheHint(w, dpr, now) {   // 手がかり札（宝箱が 出て�
   const bh = Math.round(S * 1.4);
   ctx.fillStyle = 'rgba(10,20,30,.6)'; ctx.fillRect(Math.round(w / 2 - bw / 2), y0, bw, bh);
   ctx.fillStyle = mzCache.warm > 0 ? '#ffd9a0' : mzCache.warm < 0 ? '#cfeaff' : '#e6d4ff'; ctx.fillText(t, w / 2, y0 + bh / 2);
+}
+// どうぐクエスト（Orna: GPS RPG の「装備クエスト」）：迷路の 中に 農具を 3つ（くわ→かま→みの の 順番）。次に 取る 農具だけが 出て、取るたびに クエスト札が 進む。
+// 1つ +5pt、3つ そろうと 完成ボーナス +15pt（3つ目は +20pt）。位置と 進みは この 画面の 間だけ（セーブは 増やさない。ポイントと 完成回数だけ game.js の mzQuest が 保存）
+const MZ_QUEST = { min: 8, reach: 18, pts: 5, done: 15 };   // スタートからの 歩数の 下限・さがす はんい（歩数）・1つの ポイント・完成ボーナス
+const QUEST_TOOLS = [{ name: 'くわ', emoji: '⛏️', color: '#8b5a2b' }, { name: 'かま', emoji: '🌾', color: '#2f7d32' }, { name: 'みの', emoji: '👒', color: '#d4a017' }];   // 順番は 固定
+const QUEST_RING = ['139,90,43', '47,125,50', '150,100,45'];   // 輪の 色（茶・緑・茶寄り）。みかんの オレンジ・ピースの 白・見晴らし台の 水色・宝箱の 紫・ゴールの 金とは ちがう
+const mzQuest = { got: 0, cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, doneAt: 0 };   // got：集めた 数・cx cy：次に 取る 農具の マス（-1 なし）・sx sy：スタートの マス・last：直前に 取った マス
+function mzQuestReset() { Object.assign(mzQuest, { got: 0, cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, doneAt: 0 }); }
+function mzQuestPick() {   // スタートから 8歩以上 はなれた 通路。みかん・ピース・見晴らし台・宝箱の マスと 直前に 取った マスは よける
+  const sx = mzQuest.sx, sy = mzQuest.sy, rx = Math.floor(rp.x / MZ_K), ry = Math.floor(rp.y / MZ_K), ls = mzQuest.last;
+  if (sx < 0) return null;
+  const seen = new Map([[sx + ',' + sy, 0]]), q = [[sx, sy]], cand = [];
+  for (let h = 0; h < q.length; h++) {
+    const [x, y] = q[h], d = seen.get(x + ',' + y);
+    if (d >= MZ_QUEST.min && Math.abs(x - sx) + Math.abs(y - sy) >= MZ_QUEST.min - 1 && Math.abs(x - rx) + Math.abs(y - ry) >= 3 && !(ls && ls[0] === x && ls[1] === y) && !(x === mzFruit.cx && y === mzFruit.cy) && !(x === mzPiece.cx && y === mzPiece.cy) && !(x === mzView.cx && y === mzView.cy) && !(x === mzCache.cx && y === mzCache.cy) && mzFruitOk(x, y)) cand.push([x, y]);
+    if (d >= MZ_QUEST.reach) continue;
+    for (const [dx, dy] of MZ_DIRS) {
+      const nx = x + dx, ny = y + dy, k = nx + ',' + ny;
+      if (seen.has(k) || mzType(nx, ny) !== 1 || !mzOpen(x, y, dx, dy)) continue;
+      seen.set(k, d + 1); q.push([nx, ny]);
+    }
+  }
+  return cand.length ? cand[Math.floor(Math.random() * cand.length)] : null;
+}
+function mzQuestTick(now) {
+  if (rp.x === null) return;
+  const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
+  if (mzQuest.sx < 0) { mzQuest.sx = a; mzQuest.sy = b; }   // 迷路の スタート（ゴールが きまった ときの お米の マス）
+  if (mzQuest.cx < 0) {   // まだ 出ていない：地図が 読めるまで 0.5秒ごとに さがす。3つ そろったら もう 出ない
+    if (mzQuest.got >= QUEST_TOOLS.length || now < mzQuest.next) return;
+    mzQuest.next = now + 500;
+    const c = mzQuestPick();
+    if (c) { mzQuest.cx = c[0]; mzQuest.cy = c[1]; dirty = true; }
+    return;
+  }
+  if (a !== mzQuest.cx || b !== mzQuest.cy) return;
+  const fin = mzQuest.got === QUEST_TOOLS.length - 1, tool = QUEST_TOOLS[mzQuest.got], r = G.mzQuest && G.mzQuest(fin);
+  if (!r) return;
+  mzQuest.got++; mzQuest.last = [a, b]; mzQuest.cx = mzQuest.cy = -1; mzQuest.next = now;
+  grainSound(); roll.happyT = 1.2; dirty = true;
+  if (fin) mzQuest.doneAt = now;
+  floatText(fin ? `🎉 どうぐ そろった！ +${r.pts}pt` : `${tool.emoji} ${tool.name} ゲット！ +${r.pts}pt`);
+  const cols = [tool.color, '#ffffff', '#ffe27a'];
+  for (let i = 0; i < (fin ? 24 : 12); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }
+}
+function drawMzQuest(ox, oy, T, now) {   // 次に 取る 農具だけ：農具の 色の 脈打つ わと 大きな 絵文字（もやより前に 描く）
+  if (mzQuest.cx < 0 || mzQuest.got >= QUEST_TOOLS.length) return;
+  const tool = QUEST_TOOLS[mzQuest.got], r = Math.max(5, T * 0.5), q = Math.max(1, Math.round(T / 8)), on = mzOn((mzQuest.cx + 0.5) * MZ_K, (mzQuest.cy + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y0 = Math.round(oy + on[1] * T), Y = Math.round(Y0 + Math.sin(now / 360) * T * 0.06), p = Math.sin(now / 300);
+  ctx.strokeStyle = `rgba(${QUEST_RING[mzQuest.got]},${(0.55 + 0.3 * p).toFixed(2)})`; ctx.lineWidth = Math.max(2, q * 2); ctx.beginPath(); ctx.arc(X, Y0, r * (1.2 + 0.12 * p), 0, Math.PI * 2); ctx.stroke();
+  ctx.font = `${Math.max(12, Math.round(T * 0.95))}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = tool.color; ctx.fillText(tool.emoji, X, Y);
+}
+function drawMzQuestTag(w, dpr, now) {   // クエスト札（迷路の 間だけ。ピース棚の 下。パノラマ・見晴らし中の 札・手がかり札が 出ている 間は その 下）。そろった あと 約6秒は 金色の 完成札
+  if (mzQuest.sx < 0 || mapCovered(true) || mzBanner.t0) return;
+  const fin = mzQuest.doneAt && now - mzQuest.doneAt < 6000;
+  if (mzQuest.got >= QUEST_TOOLS.length && !fin) return;
+  const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
+  let y0 = mzViewShelfY(w, dpr, now);
+  if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
+  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
+  if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;   // 手がかり札が 出ている 間は その 下
+  const t = fin ? '🎉 どうぐ そろった！ かおりちゃんの どうぐセット 完成！' : '🧰 どうぐクエスト ' + QUEST_TOOLS.map((o, i) => `${o.name} ${i < mzQuest.got ? '✓' : i === mzQuest.got ? '◎' : '◯'}`).join(' ');
+  ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  let bw = Math.round(ctx.measureText(t).width) + gap * 4;
+  if (bw > w - gap * 2) {   // 狭い画面では文字を小さくして札を画面内に収める
+    const fs = Math.max(8, Math.floor(13 * dpr * (w - gap * 2) / bw));
+    ctx.font = `${fs}px sans-serif`; bw = Math.round(ctx.measureText(t).width) + gap * 4;
+  }
+  const bh = Math.round(S * 1.4);
+  ctx.fillStyle = fin ? 'rgba(90,60,0,.75)' : 'rgba(10,20,30,.6)'; ctx.fillRect(Math.round(w / 2 - bw / 2), y0, bw, bh);
+  ctx.fillStyle = fin ? '#ffe27a' : '#f0e0c8'; ctx.fillText(t, w / 2, y0 + bh / 2);
 }
 // びゅんパネル（運営者の声「クセになるギミック」）：めいろの まっすぐな 通路の 床に 矢印の パネル。矢印の 向きに 転がって（止まって いれば その 向きに 傾けて）のると、
 // びゅんと 速く おされる（ころころコンボも +1）。矢印と 逆から のっても なにも しない（通れなく ならない）。矢印の 先が まっすぐ 4マス以上 あいている 所だけ。

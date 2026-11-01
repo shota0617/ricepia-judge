@@ -9063,7 +9063,7 @@ function mzRoute(now) {
   mzRt.gid = g.id || g.name;
   if (key === mzRt.key && !(mzRt.retry && now > mzRt.retry)) return;
   mzRt.key = key; mzRt.retry = 0;
-  let x0, y0, W, from, end = -1, unk = false;
+  let x0, y0, W, from, end = -1, unk = false, seen = 0, capHit = false;   // seen：出発点から たどれた マスの 数（小さければ 出発点が 行き止まり・島の 中）
   for (const pad of [30, 60]) {   // 30マスの 外まわりで 見つからなければ 60マスまで ひろげる（長圓寺 → 平原の滝：連結の 道は 30マスの 外を 大きく まわる 286マス。ひろげても 上限は 同じ）
     x0 = Math.min(a, gc) - pad; y0 = Math.min(b, gr) - pad;
     const x1 = Math.max(a, gc) + pad, y1 = Math.max(b, gr) + pad; W = x1 - x0 + 1;
@@ -9086,9 +9086,15 @@ function mzRoute(now) {
         from[j] = i; q.push(j);
       }
     }
+    seen = q.length; capHit = capped;
     if (end >= 0 || capped) break;   // 見つかった・上限に 当たったら ひろげない
   }
-  if (end < 0) { mzRt.path = null; if (unk) mzRt.retry = now + 1500; return; }
+  if (end < 0) {
+    mzRt.path = null;
+    if (unk) mzRt.retry = now + 1500;
+    else if (!capHit && seen >= 600 && G.guideNoPath) G.guideNoPath(g);   // 出発点の まわりは 広いのに 行き先へ 届かない（はなれ島・行き止まり）：行き先を ほかの 候補に かえる（出発点が 島の 中なら かえない）
+    return;
+  }
   const path = [];
   for (let i = end; i >= 0; i = from[i]) path.push([i % W + x0, (i / W | 0) + y0]);
   mzRt.path = path.reverse();

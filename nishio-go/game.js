@@ -1588,6 +1588,21 @@ function guideRadius(g) {
   return (s ? reachOf(s) : 40) + Math.min((me && me.acc) || 0, CFG.accSlack);
 }
 const GUIDE_RECENT = 8;
+// めいろで 道すじが 出なかった 行き先（はなれ島・行き止まり。pixel.js の mzRoute が 知らせる）：10分 だけ 候補から 外す（S には 書かない。島の中で 遊ぶ人には ひびかない）
+const mzNoPath = new Map();
+const mzNoPathIds = () => { const t = Date.now(); return [...mzNoPath].filter(([, u]) => u > t).map(([id]) => id); };
+function guideNoPath(g) {   // 外して 選びなおす。自分で 選んだ・人の すすめの 行き先は そのまま。続けて 3回（30秒）まで
+  const cur = S.guide;
+  if (!g || !cur || cur.id !== g.id || cur.mine || cur.refer || cur.byId || !mazeNow() || !fixOk()) return false;
+  const now = Date.now(), ts = (guideNoPath.ts || []).filter(t => now - t < 30000);
+  guideNoPath.ts = ts;
+  if (ts.length >= 3) return false;
+  ts.push(now); mzNoPath.set(g.id, now + 600000);
+  const next = decideGuide(null);
+  if (!next) { mzNoPath.delete(g.id); return false; }
+  setGuide(next);
+  return true;
+}
 const GUIDE_FAR = 12000;   // 行き先からこれより遠くへ移ったら（m）、決め直す（人のすすめは10kmまでなので、それより少し遠く）
 // その場にいると認めてよい位置か（チェックイン・たからばこと同じ条件）。車（軽トラ）に乗っているあいだはだめ（降りれば着いたことになる）。
 // あるいて移動では GPS の精度が悪いときもだめ（電車・バスなどの乗り物で移動中は、着いたことにしてよい）
@@ -1602,7 +1617,7 @@ function decideGuide(from) {   // めいろは まず 近く（5分）、なけ�
 function decideGuide0(from, wide, tooNearOk) {
   if (!me) return null;
   const now = new Date(), range = !wide && demo && mazeNow() ? MAZE_NEAR : GUIDE_RANGE[demo ? 'play' : 'walk'];   // めいろは 5分で 着く 近さ
-  const recent = new Set(S.guideDone || []);
+  const recent = new Set([...(S.guideDone || []), ...mzNoPathIds()]);
   // 着いたとみなす距離の外（1.5倍より遠く）で、遠すぎず、最近着いた所でもない
   const five = range === MAZE_NEAR;
   const okFor = (kind, id) => x => { const d = dist(me, x); return d > Math.max(60, guideRadius({ kind, id }) * 1.5, five || (mazeNow() && !tooNearOk) ? MAZE_NEAR_MIN : 0) && d <= range && !recent.has(id); };   // めいろは 近すぎる 所も のぞく（1分で 終わって しまう）
@@ -4198,7 +4213,7 @@ window.nishioGo = {
   dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
-  get guide() { return guideTarget(); }, decideGuide, setGuide,
+  get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath,
   autoInterval, autoLearn, idleCheck, buyUp, IDLE,
   setDriving(on) { driving = !!on && demo; if (!driving) tryChest(); refreshNearby(); },
   invalidateMap() { setTimeout(() => { map.invalidateSize(); if (me) map.setView([me.lat, me.lng]); }, 0); },

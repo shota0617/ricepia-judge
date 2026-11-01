@@ -1242,6 +1242,7 @@ function checkin() {
     total += c.shopBonus; lines.push(`${c.icon} ${c.title}${c.active ? '' : '（サンプル）'} +${c.shopBonus}`);
     track('campaign_bonus', { campaign: c.id, mode: demo ? 'play' : 'walk' });
   }
+  postcardCheckin(s, lines);   // 記念ポストカード：名所ではじめての日に 1枚（眺めるだけ。ポイントは つけない）
   const courseDone = courseCheckin(s, lines);   // モデルコース：順番どおりなら スタンプ（ポイントは つけない）
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
   if (!v) praiseCheck(s.area || areaNear(s));   // ふつうのスポットには地区がないので、いちばん近い注目スポットの地区で
@@ -3042,6 +3043,7 @@ function renderKoroRec() {
 }
 function renderLog() {
   renderCourse();
+  renderPostcards();
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
   $('jumpBtn').disabled = !jOk;
   $('jumpNote').textContent = jOk ? 'コインを集めて西尾城の旗をめざそう（ごほうびは1日1回）' : '名所（注目スポット）でチェックインすると、その日あそべます';
@@ -3918,6 +3920,57 @@ function courseCelebrate() {   // ごほうびの 窓が とじるのを まっ�
   const t0 = Date.now();
   (function wait() { if ((rewardBusy() || winBlocked()) && Date.now() - t0 < 120000) return setTimeout(wait, 700); openCourse(CO.mosaic(CO.clean(S.course).done).join('').includes(CO.BLANK) ? 'コース ぜんぶ まわった！ 絵が ひとつ そろったよ' : '西尾の 1枚絵 できあがり！'); })();
 }
+/* ---------- 記念ポストカード（postcard.js） ---------- */
+// 名所（注目スポット）に はじめて チェックインしたら 1枚。眺めるだけ（ポイント・収集・袋は かえない）。記録は S.postcards（こわれていても postcard.js の clean が 直す）
+const PC = window.NISHIO_POSTCARD;
+function postcardCheckin(s, lines) {
+  if (!PC || !s.featured || s.shop) return;
+  const r = PC.issue(S.postcards, s.id, ymd(), PC.say(s.name, s.desc));
+  S.postcards = r.st;
+  if (!r.fresh) return;
+  lines.push(`💌 記念ポストカード（きろく から）`);
+  track('postcard_issue', { spot: s.name, mode: demo ? 'play' : 'walk' });
+}
+let pcRiceUrl = null;
+function pcRice() {   // かおりちゃん（お米の ドット絵。描けなければ 絵文字）
+  if (pcRiceUrl !== null) return pcRiceUrl;
+  pcRiceUrl = '';
+  try {
+    const P = window.nishioPixel;
+    if (P && P.drawRice) { const c = document.createElement('canvas'); c.width = 48; c.height = 40; const x = c.getContext('2d'); x.imageSmoothingEnabled = false; if (P.drawRice(x, 24, 22, 0, 0, 'smile')) pcRiceUrl = c.toDataURL(); }
+  } catch (e) { pcRiceUrl = ''; }
+  return pcRiceUrl;
+}
+function pcEntries() {   // 行った 名所の 札だけ（新しい 順）。名前は きろくの 訪問から（スポット一覧が まだ でも 出せる）
+  const cards = PC ? PC.clean(S.postcards) : {};
+  return Object.entries(cards).map(([id, c]) => {
+    const sp = spots.find(x => x.id === id), v = S.visits[id];
+    const a = sp && sp.area && areas.find(x => x.id === sp.area);
+    return { id, c, name: ((sp && sp.name) || (v && v.name) || '').replace(/（.*?）/g, ''), icon: (sp && iconOf(sp)) || (v && v.icon) || '📮', area: a ? a.name : '' };
+  }).filter(e => e.name).sort((a, b) => b.c.day.localeCompare(a.c.day));
+}
+function renderPostcards() {
+  const ul = $('postcardList');
+  if (!ul) return;
+  const es = pcEntries();
+  if ($('postcardCount')) $('postcardCount').textContent = es.length ? `${es.length}枚` : '';
+  ul.innerHTML = es.length ? es.map(e => `<li data-pc="${esc(e.id)}"><span class="ico">${esc(e.icon)}</span><span class="main"><b>${esc(e.name)}</b><small>${esc(e.c.day)}</small></span></li>`).join('')
+    : '<li class="empty">名所（注目スポット）にチェックインすると、記念ポストカードが 1枚もらえます</li>';
+}
+function openPostcard(id) {
+  const e = pcEntries().find(x => x.id === id);
+  if (!e) return;
+  let el = $('postcardPanel');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'postcardPanel'; el.className = 'course-panel';
+    el.addEventListener('click', ev => { if (ev.target === el || (ev.target.closest && ev.target.closest('[data-pc-close]'))) el.hidden = true; });
+    document.body.appendChild(el);
+  }
+  const rice = pcRice();
+  el.innerHTML = `<div class="co-box pc-card"><div class="pc-top"><span class="pc-icon">${esc(e.icon)}</span><b>${esc(e.name)}</b></div><p class="pc-meta">${esc(e.area)}${e.area ? '　' : ''}${esc(e.c.day)} に 到着</p><div class="pc-say">${rice ? `<img class="pi" src="${rice}" alt="かおりちゃん" width="48" height="40"/>` : '<span class="pc-icon">🍚</span>'}<p>${esc(e.c.say)}</p></div><p class="pc-stamp">💌 にしおさんぽGO 記念ポストカード</p><button type="button" class="btn" data-pc-close>とじる</button></div>`;
+  el.hidden = false;
+}
+document.addEventListener('click', e => { const li = e.target.closest && e.target.closest('#postcardList [data-pc]'); if (li) openPostcard(li.dataset.pc); });
 $('courseBtn').addEventListener('click', () => openCourse());
 $('courseNext').addEventListener('click', () => {   // つぎの 名所を 行き先の 札へ（自分で 選んだ 行き先と おなじ あつかい）
   const c = CO.byId(CO.clean(S.course).cur), s = c && coSpot(c.spots[CO.clean(S.course).n]);

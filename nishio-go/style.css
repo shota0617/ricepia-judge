@@ -282,8 +282,9 @@ label.row{min-height:44px;cursor:pointer}
 body.px .toast{top:calc(var(--bar-h) + 52px)}   /* ドット絵の地図では、左上の「めぐった名所」と重ならないよう少し下に */
 body.px .toast{max-width:calc(100% - 124px)}   /* 右上の 丸い ボタンの 列（.px-zoom：はば 40px＋右 10px）に かからない よう、左右とも 58px ずつ あける（知らせが 2つめの ボタンに 重なっていた。自分で 遊んで 分かった） */
 .reward{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:2500}
-.reward.show{pointer-events:auto;cursor:pointer}   /* 出ている間はタップで消せる */
-.reward .rw::after{content:'タップで とじる';display:block;margin-top:8px;font-size:13px;font-weight:700;color:#4f5d52}   /* 毎回 出る 案内なので 読める 大きさ・こさに（11点の うすい 字 だった。運営者の声「大きい文字シンプルに」） */
+.reward.show{pointer-events:none}   /* 流れを 止めない 浮き札：下の 地図・めいろを そのまま さわれる */
+.reward.show [data-rw-share],.reward.show [data-rw-tip],.reward.show [data-rw-close],.reward.show a{pointer-events:auto;cursor:pointer}
+.reward .rw::after{content:'そのまま すすめるよ';display:block;margin-top:8px;font-size:13px;font-weight:700;color:#4f5d52}   /* 毎回 出る 案内なので 読める 大きさ・こさに（11点の うすい 字 だった。運営者の声「大きい文字シンプルに」） */
 .reward .rw{background:#fff;border-radius:20px;padding:18px 24px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.35);animation:pop 2.6s ease forwards;min-width:220px;max-width:calc(100% - 40px)}
 .reward .rw .big{font-size:40px;font-weight:900;color:var(--gold);line-height:1.1}
 .reward .rw .nm{font-weight:700;margin-top:4px}
@@ -806,7 +807,7 @@ body.simple #pxZoomIn,body.simple #pxZoomOut{display:none}
 .card.bags .kirahour small{flex-basis:100%;color:var(--sub);font-size:12px}
 .card.bags .kirahour.now b{color:#b07800}
 /* 出会いの場面：画面が ちかっと光り、黒いウィンドウに生きものの絵と ことば */
-.meet{position:absolute;left:16px;right:16px;top:22%;display:flex;justify-content:center;z-index:30}
+.meet{pointer-events:none;position:absolute;left:16px;right:16px;top:22%;display:flex;justify-content:center;z-index:30}
 .meet .dq{width:100%;max-width:420px;display:flex;gap:12px;align-items:flex-start}
 .meet canvas{width:64px;height:64px;image-rendering:pixelated;flex:none;background:#000}
 .meet p{margin:0;white-space:pre-wrap;font-size:15px;color:#fff;min-height:3.4em}
@@ -928,9 +929,10 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
   body:has(#pxInfo:not([hidden])) .toast{bottom:calc(var(--safe-b) + 6px)}   /* 話の 窓の 間の 知らせは いちばん 下（タブの 上）へ：パネルを かくした ので、窓の 札（はじめの1枚の 名前）に 重なって いた */
 }
 /* お米つぶの おはなし（kometalk.js・案内役）。下の 行き先の札の 上に 出す。ごほうび・あそびかたの 画面より 下 */
-.kome-talk{position:fixed;left:12px;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 14px);z-index:1200;display:flex;justify-content:center}
+.kome-talk{pointer-events:none;position:fixed;left:12px;right:12px;bottom:calc(var(--tabs-h) + var(--safe-b) + 14px);z-index:1200;display:flex;justify-content:center}
 .kome-talk[hidden]{display:none}
-.kome-talk .dq{position:relative;width:100%;max-width:440px;display:flex;gap:10px;align-items:flex-start;box-sizing:border-box;cursor:pointer}
+.kome-talk .dq{position:relative;width:100%;max-width:440px;display:flex;gap:10px;align-items:flex-start;box-sizing:border-box}
+.kome-talk .kt-btn{pointer-events:auto}
 .kome-talk canvas{width:64px;height:54px;image-rendering:auto;flex:none;background:#f6efe0;border-radius:6px}
 .kome-talk .kt-body{flex:1;min-width:0}
 .kome-talk .kt-name{display:block;font-size:12px;color:#e9c46a}
@@ -938,10 +940,7 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .kome-talk .kt-ch{display:flex;flex-direction:column;gap:6px;margin-top:6px;max-height:min(38vh,38dvh);overflow:auto}   /* 横向き・文字の 拡大でも ✕ と 文が 画面に のこる */
 .kome-talk .kt-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .kome-talk .kt-btn{font-family:inherit;font-size:14px;text-align:left;background:#1d2a20;color:#fff;border:2px solid #e9c46a;border-radius:6px;padding:7px 10px;cursor:pointer}
-.kome-talk .kt-btn:focus-visible,.kome-talk .kt-next:focus-visible{outline:2px solid #fff;outline-offset:2px}
-.kome-talk .kt-next{display:block;margin:4px 0 0 auto;background:none;border:0;color:#fff;font-family:inherit;font-size:13px;cursor:pointer}
-.kome-talk .kt-next[hidden]{display:none}
-.kome-talk .kt-x{position:absolute;top:2px;right:4px;background:none;border:0;color:#bbb;font-size:14px;padding:4px;cursor:pointer}
+.kome-talk .kt-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
 
 /* 西尾の まちの 景色（写真を ドット絵に ディフォルメ）：あそびかたの 上の 細い 帯・あいちのかおりちゃんの あいさつの 絵 */
 .howto-scene{height:44px;margin:-4px -4px 8px;border-radius:12px;background:#cfe8f5 center 40%/cover no-repeat;image-rendering:pixelated}

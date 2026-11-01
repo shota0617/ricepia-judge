@@ -2039,7 +2039,6 @@ function meetType(m) {
   meetShow.t = setTimeout(meetHide, 3000);
 }
 function meetHide() { clearInterval(meetShow.iv); clearTimeout(meetShow.t); meetShow.m = null; $('meetBox').hidden = true; }
-$('meetBox').addEventListener('click', () => { const m = meetShow.m; if (!m) return meetHide(); if (m.done) meetHide(); else { m.n = m.chars.length; meetType(m); } });
 // しらべる：聞いた名所に着いたら、名所の窓の「🔍 しらべる」で、まだ知らない まちメモが1つ見つかる（すすめた人のことば（hintSay）が手がかり）。
 // 1か所1回。たからばこと同じく +5pt と まちメモ（昔のドット絵RPGの、何もない所を しらべると見つかる道具のしくみ）
 const SEARCH_PTS = 5;
@@ -2237,7 +2236,7 @@ function setGuide(g) {
 // オフの 人（せってい）には false を かえす＝いままでどおりの 知らせを 出す
 const KT = window.nishioKomeTalk;
 const ktOn = () => !!(KT && KT.on());
-const ktBusy = () => winBlocked() || rewardBusy() || !$('pxInfo').hidden || !$('meetBox').hidden   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間も まつ
+const ktBusy = () => howtoOpen() || modalOpen() || pxBusy() || !$('pxInfo').hidden   // 町の人の 話・はじめの1枚を えらぶ 窓が 出ている 間は まつ。ごほうび・出会いの 札は 流れを 止めないので またない
   || ['log', 'voice', 'rewards', 'settings'].some(t => !$('panel-' + t).hidden);   // きろく・とくてん・せってい を 開いている 間は 地図に もどるまで よける
 function ktAskGuide(lead, mood) {
   if (!ktOn()) return false;
@@ -2740,7 +2739,8 @@ function showEnding() {
     <p class="say">🏃 ${esc(RIVAL)}「おめでとう！ つぎは となりの市町も いっしょに歩こまい」</p>
     ${ED.shops ? `<p class="say">🍚 お米屋さん（らいすぴあ・近藤米穀店）「西尾を歩いてくれて ありがとう。おなかが すいたら、お米を買いに 寄ってってね」</p>
     <p><a class="btn mini line" href="${esc(lineUrl('ending'))}" target="_blank" rel="noopener">LINEで友だち追加（常連さまポイント）</a></p>` : ''}
-    <p class="note">このあとも そのまま遊べます。きろく の バッジ「👑 殿堂入り」から、いつでも この記録を見られます</p></div>`;
+    <p class="note">このあとも そのまま遊べます。きろく の バッジ「👑 殿堂入り」から、いつでも この記録を見られます</p>
+    <button type="button" class="btn mini" data-rw-close>とじる</button></div>`;
   toastHold(); el.classList.add('show'); clearTimeout(showReward.t);
 }
 function sealGive(n) {
@@ -2899,10 +2899,9 @@ if (window.MutationObserver) new MutationObserver(ms => {   // イベントの �
 }).observe(document.body, { attributes: true, attributeFilter: ['hidden'], subtree: true });
 // めいろの「🏁 つぎの ゴール」の 札（pixel.js の mzNextOn）
 function pxBusy() { try { return !!(window.nishioGo && nishioGo.toastBlock && nishioGo.toastBlock()); } catch (e) { return false; } }
-function toastBlocked() { return winBlocked() || ktOpen(); }
+function toastBlocked() { return winBlocked(); }
 function winBlocked() { return $('reward').classList.contains('show') || howtoOpen() || modalOpen() || pxBusy(); }   // おはなし（ktOpen）を のぞいた 窓。おはなしの「まつ」判定（ktBusy）は こちら（自分を 見て 出たり 消えたり しない。Codex の 指摘）
-// あいちのかおりちゃんの おはなしの 間は 知らせを 待たせる（自分で 遊んで 分かった：「🧭 水色の 線が…」が おはなしの わくの 上に かぶった）
-function ktOpen() { const k = document.getElementById('komeTalk'); return !!k && !k.hidden; }
+// おはなしは 流れを 止めない 吹き出し：知らせも 待たせない
 function toastFlush() { if (!toastBlocked()) toastQ.splice(0).forEach(toastAfter); }   // あそびかた（pixel.js）・クーポン画面・シェアの 窓・つぎの ゴールの 札を とじたとき
 // ごほうびの画面を出すとき、いま出ている知らせは下げる。出たばかり（1.5秒まで）で まだ読めていないものだけ、閉じてから出し直す
 function toastHold() {
@@ -3064,8 +3063,10 @@ $('reward').addEventListener('click', e => {
     return;
   }
   const b = e.target.closest('[data-rw-share]');
+  if (e.target.closest('[data-rw-close]')) { hideReward(); return; }
+  if (!b) return;   // 札の ほかの 所は 何もしない（流れを 止めない。自動で 消える）
   hideReward();
-  if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null, mzgoal: b.dataset.rwShare === 'mzgoal' ? showReward.mz : null }); }
+  if (window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null, mzgoal: b.dataset.rwShare === 'mzgoal' ? showReward.mz : null }); }
 });
 
 /* ---------- 西尾ドット絵帳（dots.js：西尾ならではのドット絵 74000枚。ぜんぶ Blender で作った絵） ----------
@@ -4130,9 +4131,8 @@ function openCourse(hi) {
   }
   el.innerHTML = coPanelHtml(hi); el.hidden = false;
 }
-function courseCelebrate() {   // ごほうびの 窓が とじるのを まってから、1枚絵の 窓を 出す
-  const t0 = Date.now();
-  (function wait() { if ((rewardBusy() || winBlocked()) && Date.now() - t0 < 120000) return setTimeout(wait, 700); openCourse(CO.mosaic(CO.clean(S.course).done).join('').includes(CO.BLANK) ? 'コース ぜんぶ まわった！ 絵が ひとつ そろったよ' : '西尾の 1枚絵 できあがり！'); })();
+function courseCelebrate() {   // 自動では 開かない：流れを 止めない 札を 1回 出すだけ（1枚絵は コースボタンから）
+  toastAfter('🗾 コースをまわりきった！ 1枚絵は コースボタンから 見られるよ');
 }
 /* ---------- 記念ポストカード（postcard.js） ---------- */
 // 名所（注目スポット）に はじめて チェックインしたら 1枚。眺めるだけ（ポイント・収集・袋は かえない）。記録は S.postcards（こわれていても postcard.js の clean が 直す）

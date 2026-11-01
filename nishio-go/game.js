@@ -1693,7 +1693,8 @@ function decideGuide0(from, wide, tooNearOk) {
   }
   if (!cands.length) return null;
   // 話した人が知っている人、雨なら屋根のある所を先に。それ以外は、話を聞くたびに「名所・人」を順に
-  let c = cands.find(x => x.refer) || cands.find(x => x.weather);
+  // めいろで 広い範囲から 選ぶとき（5分の 近さに 何も ないとき）は、遠い 屋根を 先にせず ほかの 候補と 同じに 近い順で 選ぶ（雨の日だけ 2〜3km 先へ とばないように）
+  let c = cands.find(x => x.refer) || cands.find(x => x.weather && (!mazeVert || dist(me, x) <= MAZE_NEAR));
   if (!c) {
     // めいろでは 縦（南北）の 候補が あれば、そちらの中から 選ぶ（注目スポットが 横で、ふつうの名所・人が 縦のとき、種類の順で 横が 勝たないように）
     const vert = mazeVert ? cands.filter(vertFirst) : [], pool = vert.length ? vert : mazeVert && !five ? [cands.slice().sort(goalSort)[0]] : cands;   // 広い範囲では いちばん 近い 候補

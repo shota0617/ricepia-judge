@@ -318,3 +318,36 @@ class Cycle14CollectionLeftTests(unittest.TestCase):
     def test_wired_into_critter_and_area(self):
         self.assertIn("leftLabel(got, CRITTERS.length)", self.src)
         self.assertIn("leftLabel(p.done, p.total)", self.src)
+
+
+@unittest.skipUnless(shutil.which('node'), 'node がない')
+class Cycle15AreaDexTests(unittest.TestCase):
+    """サイクル15：地区ごとの図鑑（game.js の areaDexHtml。集計は areaProgress と同じ）"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.src = (GO / 'game.js').read_text(encoding='utf-8')
+        cls.ap = re.search(r"^(function areaProgress\(id\) \{\n.*?\n\})", cls.src, re.M | re.S).group(1)
+        cls.dex = re.search(r"^(function areaDexHtml\(p\) \{\n.*?\n\})", cls.src, re.M | re.S).group(1)
+        cls.pre = ("const esc = s => String(s); const simple = () => false; const spotThumb = () => '';"
+                   "const spots = [{id:'a',area:'x',featured:true,icon:'A'},{id:'b',area:'x',featured:true,icon:'B'},{id:'c',area:'x',featured:true,icon:'C'},{id:'d',area:'x'},{id:'e',area:'y',featured:true,icon:'E'}];"
+                   + cls.ap + cls.dex)
+
+    def run_case(self, visits, area):
+        body = "const S = {visits: v};" + self.pre + "const p = areaProgress(area); return [p.done, p.total, areaDexHtml(p)];"
+        return node(body, ['v', 'area'], [{'v': visits, 'area': area}])[0]
+
+    def test_empty_partial_complete_none(self):
+        d, t, h = self.run_case({}, 'x')
+        self.assertEqual((d, t, h.count('class="got"')), (0, 3, 0))
+        self.assertEqual(h.count('<i></i>'), 3)
+        d, t, h = self.run_case({'a': {}, 'c': {}, 'd': {}}, 'x')
+        self.assertEqual((d, t, h.count('class="got"'), h.count('<i></i>')), (2, 3, 2, 1))
+        d, t, h = self.run_case({'a': {}, 'b': {}, 'c': {}}, 'x')
+        self.assertEqual((d, t, h.count('class="got"'), h.count('<i></i>')), (3, 3, 3, 0))
+        d, t, h = self.run_case({}, 'none')
+        self.assertEqual((d, t, h), (0, 0, ''))
+
+    def test_wired_into_area_list_with_same_progress(self):
+        self.assertIn("${areaDexHtml(p)}", self.src)
+        self.assertIn("leftLabel(p.done, p.total)", self.src)

@@ -175,7 +175,7 @@ class Cycle15QuestTests(unittest.TestCase):
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))   # きろくの行と数が合う
-        self.assertEqual(pi.count(',') + 1, 13)
+        self.assertEqual(pi.count(',') + 1, 14)
 
     def test_no_forbidden_words_in_diff(self):
         words = ('ぼく', 'だに', '約20%')   # このリスト自身は検査から除く

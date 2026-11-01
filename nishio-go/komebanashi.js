@@ -44,9 +44,11 @@
   function pick(area, month, seen) {
     const mine = LIST.filter(x => x.area === area), pool = mine.length ? mine : LIST.filter(x => x.area === '*');
     if (!pool.length) return null;
-    let base = seen || [], left = pool.filter(x => !base.includes(x.id));
-    if (!left.length) { left = pool; base = base.filter(id => !pool.some(x => x.id === id)); }
-    const item = left.find(x => x.months && x.months.includes(month)) || left.find(x => !x.months) || left[0];
+    // 月に 合わない 話は 出さない（のこりが 季節外れの 話だけ なら、ひとめぐり したことに して 最初から）
+    const inSeason = x => !x.months || x.months.includes(month), okPool = pool.filter(inSeason).length ? pool.filter(inSeason) : pool;
+    let base = seen || [], left = okPool.filter(x => !base.includes(x.id));
+    if (!left.length) { left = okPool; base = base.filter(id => !pool.some(x => x.id === id)); }
+    const item = left.find(x => x.months) || left[0];
     return { item, seen: [...base, item.id].slice(-60) };
   }
   root.NISHIO_KOMEBANASHI = { LIST, pick };

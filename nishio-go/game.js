@@ -1275,7 +1275,7 @@ function checkin() {
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
   const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
-  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot, false, mz);
+  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot, false, mz, s.shop ? '' : spotTip(s));
   reactAsk(s);
   if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   if (s.shop) shopAfter(s);   // ごほうびのあと、当店の窓（営業時間・LINE の常連さまポイント）を出す
@@ -1304,6 +1304,9 @@ if (WX) WX.onChange(() => { renderKoyomi.key = null; renderKoyomi(); if (me) ref
 // area があるのは となりの市町の名物（バッジを「西尾の名物」と分ける）
 const MB_NISHIO = MEIBUTSU.filter(m => !m.area), MB_NEAR = MEIBUTSU.filter(m => m.area && m.spots.length);
 const spotMeibutsu = s => MEIBUTSU.filter(m => m.spots.some(id => 'f-' + id === s.id));
+// 到達カードの「💡」：その名所ゆかりの名物の一言 → なければ地区の一言 → なければ ''（出さない）
+const AREA_TIP = window.NISHIO_AREA_TIP || {};
+const spotTip = s => { const m = spotMeibutsu(s)[0]; return (m && (m.tip || m.note)) || (s.featured && s.area && AREA_TIP[s.area]) || ''; };
 
 /* ---------- 西尾のおまつり・行事（events.js：西尾市観光協会と西尾市公式ウェブサイトから） ---------- */
 const EVENTS = (window.NISHIO_EVENTS && NISHIO_EVENTS.list) || [];
@@ -2764,10 +2767,10 @@ const starRow = n => `<div class="stars" aria-label="めずらしさ ${n}">${'<i
 const react = { pending: null, shown: 0, t: 0 };
 // イベントの窓が開いている間に来た ごほうびは、閉じてから出す（イベントの下で出て、答えている間に消えないように）
 const medashiOpen = () => !!document.querySelector('.medashi:not([hidden]), #howto:not([hidden])');   // イベントの窓（古い地図・雲母石。どれも .medashi）と「あそびかた」。開いている 間の ごほうびは 待って、とじてから 出す
-function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz：めいろの ゴールの シェア（takeMzShare）
+function showReward(total, name, lines, lvUp, fact, dot, waited, mz, tip) {   // mz：めいろの ゴールの シェア（takeMzShare）
   if (medashiOpen()) {   // 待っている ごほうびは来た順に1つずつ（閉じたあと、前のごほうびが消えてから次）
     const q = showReward.pending || (showReward.pending = []);
-    q.push([total, name, lines, lvUp, fact, dot, waited, mz]);
+    q.push([total, name, lines, lvUp, fact, dot, waited, mz, tip]);
     if (q.length === 1) setTimeout(function drain() {
       if (medashiOpen() || $('reward').classList.contains('show') || showReward.waiting) { setTimeout(drain, 600); return; }
       const args = q.shift();
@@ -2779,7 +2782,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
   const el = $('reward'), D = window.NISHIO_DOTS;
   if (waited !== true) {
     const gen = showReward.gen = (showReward.gen || 0) + 1;   // あとから来たごほうびが先。読みこみを待っている古いごほうびは出さない
-    if (dot && D && D.ready && !D.ready([dot.id])) { showReward.waiting = gen; D.load([dot.id]).then(() => { if (showReward.waiting === gen) showReward.waiting = 0; if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true, mz); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
+    if (dot && D && D.ready && !D.ready([dot.id])) { showReward.waiting = gen; D.load([dot.id]).then(() => { if (showReward.waiting === gen) showReward.waiting = 0; if (gen === showReward.gen) showReward(total, name, lines, lvUp, fact, dot, true, mz, tip); }); return; }   // Blender の絵のシートを読んでから出す（読めなければ前の描き方の絵）
   }
   showReward.waiting = 0;
   sound.jingle(lvUp ? 'levelup' : 'checkin');
@@ -2787,6 +2790,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
   const shareKind = dot && (dot.fresh || dot.kira) && D ? 'dot' : lvUp ? 'lvup' : mz ? 'mzgoal' : '';   // めいろの ゴール：遊んだ 画面を シェア
   showReward.mz = shareKind === 'mzgoal' ? mz : null;
   const shareBtn = shareKind ? `<button type="button" class="btn mini rw-share" data-rw-share="${shareKind}"${shareKind === 'dot' ? ` data-dot="${dot.id}"` : ''}>📣 シェア</button>` : '';
+  const tipHtml = tip ? `<button type="button" class="rw-tip" data-rw-tip aria-expanded="false" aria-label="名物のひとこと">💡</button><p class="rw-tipline" hidden>${esc(tip)}</p>` : '';   // ふだんは 💡だけ。押したときに 1行
   const stay = shareKind ? 7000 : 0;   // シェアのボタンがあるときは長めに出す（.rw.long の7秒のアニメーションに合わせる）
   if (simple()) {
     // 絵が主役：ドット絵を大きく、金の額縁に。はじめての絵には NEW のリボンと、めずらしさの星
@@ -2799,11 +2803,11 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
         ${starRow(dotStars(f))}<div class="banner">${PIA('card', 'もらった絵')} ${esc(f.title)}</div>
         <div class="sub">${ART32('stat-coin', 'ポイント')}<b>+${total}</b></div>
         ${rewardChips(lines, fact, total, true)}
-        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`
+        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${tipHtml}${shareBtn}</div>`
       : `<div class="rw${shareKind ? ' long' : ''}"><div class="big">${ART32('stat-coin', 'ポイント')}+${total}</div><div class="nm">${esc(name)}</div>
         ${lines.some(l => l.startsWith('🍚 当店に来てくれて')) ? '<div class="thanks">来てくれて ありがとう！</div>' : ''}
         ${rewardChips(lines, fact)}
-        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${shareBtn}</div>`;
+        ${lvUp ? `<div class="lvup">${PIA('star', 'レベルアップ')} Lv${lvUp}</div>` : ''}${tipHtml}${shareBtn}</div>`;
     if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
     toastHold(); el.classList.add('show');
     clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, stay || (dot ? 5000 : 2700));
@@ -2814,7 +2818,7 @@ function showReward(total, name, lines, lvUp, fact, dot, waited, mz) {   // mz�
     ${dot && D ? `<img class="dot-card${dot.kira ? ' kira' : ''}" src="${D.dataUrl(dot.id)}" alt="${esc(D.info(dot.id).name)}" width="144" height="144"/>` : ''}
     <ul>${lines.map(l => `<li>${esc(l)}</li>`).join('')}</ul>
     ${fact ? `<p class="fact">💡 ${esc(fact)}</p>` : ''}
-    ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}${shareBtn}</div>`;
+    ${lvUp ? `<div class="lvup">🎉 レベルアップ！<br/><span>Lv${lvUp}「${esc(titleOf(lvUp))}」</span></div>` : ''}${tipHtml}${shareBtn}</div>`;
   if (navigator.vibrate) navigator.vibrate([60, 40, 120]);
   toastHold(); el.classList.add('show');
   clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, Math.max(stay, fact || dot ? 7000 : 2700));
@@ -2828,6 +2832,13 @@ function hideReward(quiet) {
   setTimeout(tryChest, 300);   // ごほうびの間に着いていた たからばこ を開ける
 }
 $('reward').addEventListener('click', e => {
+  const t = e.target.closest('[data-rw-tip]');
+  if (t) {   // 💡：名物の一言を ひらく／とじる（ごほうびは とじない。ひらいたら 読む間 7秒 のばす）
+    const line = t.parentNode.querySelector('.rw-tipline'), open = line.hidden;
+    line.hidden = !open; t.setAttribute('aria-expanded', open); t.closest('.rw').classList.toggle('tipopen', open);
+    if (open) { clearTimeout(showReward.t); showReward.t = setTimeout(hideReward, 7000); }
+    return;
+  }
   const b = e.target.closest('[data-rw-share]');
   hideReward();
   if (b && window.nishioGo.openShare) { track('share_prompt', { kind: b.dataset.rwShare }); window.nishioGo.openShare(b.dataset.rwShare, { dot: b.dataset.dot ? +b.dataset.dot : null, mzgoal: b.dataset.rwShare === 'mzgoal' ? showReward.mz : null }); }
@@ -4212,7 +4223,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath,

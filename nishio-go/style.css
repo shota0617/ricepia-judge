@@ -924,3 +924,7 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .howto-scene{height:44px;margin:-4px -4px 8px;border-radius:12px;background:#cfe8f5 center 40%/cover no-repeat;image-rendering:pixelated}
 .kome-talk .kt-pic{display:block;width:100%;max-width:220px;aspect-ratio:80/36;object-fit:cover;image-rendering:pixelated;border-radius:6px;margin:4px 0 2px}
 .kome-talk .kt-pic[hidden]{display:none}
+.reward .rw .rw-tip{display:block;margin:8px auto 0;padding:4px 14px;border:0;border-radius:999px;background:#f4f1e6;font-size:18px;line-height:1.4;cursor:pointer}   /* 名物の一言：ふだんは 💡だけ */
+.reward .rw .rw-tipline{margin:6px 0 0;font-size:15px;font-weight:700;line-height:1.6;color:var(--ink)}
+.reward .rw .rw-tipline[hidden]{display:none}
+.reward .rw.tipopen{animation:none}   /* ひらいている間は 消えない（とじる タップか 7秒で） */

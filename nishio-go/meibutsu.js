@@ -7,7 +7,7 @@
 //  ・西尾市 市長の朝の館内放送（2019年9月2日。市ウェブサイトの資料）
 // spots：その名物にゆかりのある注目スポット（spots.json の id）。そこでの説明・たからばこのまめちしき・バッジに使う
 window.NISHIO_MEIBUTSU = [
-  { id: 'matcha', icon: '🍵', name: '西尾の抹茶',
+  { id: 'matcha', icon: '🍵', name: '西尾の抹茶', tip: '西尾の抹茶は、特許庁の地域ブランドに 認められとるじゃん。',
     spots: ['wakuwaku', 'inariyama-chaen', 'kojuin', 'jissoji', 'konoe-tei', 'kasuya-tei', 'michinoeki-okanoyama'],
     note: '日本有数の抹茶の里。特許庁の地域ブランドに認定されています。',
     facts: [
@@ -18,7 +18,7 @@ window.NISHIO_MEIBUTSU = [
       '温暖な気候と、矢作川がもたらす豊かな土と川霧に恵まれた、日本有数の抹茶の産地です。',
       '2019年の全国茶品評会のてん茶部門で、西尾市の生産者が農林水産大臣賞（質の面での日本一）を受けました。',
     ] },
-  { id: 'unagi', icon: '🐟', name: '一色産うなぎ',
+  { id: 'unagi', icon: '🐟', name: '一色産うなぎ', tip: '国産うなぎの5尾に1尾は 一色産と いわれとるじゃん。',
     spots: ['isshiki-sakana', 'michinoeki-okanoyama'],
     note: '国産うなぎの5尾に1尾は一色産。「西尾の抹茶」とともに特許庁の地域ブランドです。',
     facts: [
@@ -29,7 +29,7 @@ window.NISHIO_MEIBUTSU = [
       '出荷のときは、生産者どうしが力を合わせて、池からうなぎを揚げます（池揚げ）。',
       'うなぎのマスコット「まんてんくん」は、若手の生産者の「一色うなぎ研究会」が作りました。「まん」は鰻、「てん」は天にも昇る うなぎのぼりの意味です。',
     ] },
-  { id: 'ebisen', icon: '🦐', name: '三河一色えびせんべい',
+  { id: 'ebisen', icon: '🦐', name: '三河一色えびせんべい', tip: 'えびせんべいは 一色が 発祥の地と いわれとるじゃん。',
     spots: ['isshiki-sakana', 'michinoeki-okanoyama'],
     note: '一色が発祥の地といわれる、えびのせんべい。平成30年に地域ブランドになりました。',
     facts: [
@@ -37,7 +37,7 @@ window.NISHIO_MEIBUTSU = [
       '西尾市は首都圏でのPRに、抹茶・うなぎ・えびせんべいの「3点セット」を使ってきました（2018年の学生議会での市長の話）。',
       '一色町には、えびせんべいの店や工場が何軒もあり、一色さかな広場や道の駅にしお岡ノ山でも買えます。',
     ] },
-  { id: 'asari', icon: '🐚', name: '三河湾のあさり',
+  { id: 'asari', icon: '🐚', name: '三河湾のあさり', tip: '三河湾は、長いあいだ あさりの 漁獲量が 全国一だったじゃん。',
     spots: ['koromozaki', 'tombolo'],
     note: '三河湾は、長いあいだ漁獲量が全国一だった、あさりの名産地です。',
     facts: [
@@ -56,3 +56,13 @@ window.NISHIO_MEIBUTSU = [
   {"id": "fudegaki", "area": "kota", "icon": "🟠", "name": "筆柿", "spots": ["kota-michinoeki"], "note": "形が筆の先ににている、幸田町いちばんの特産の柿。", "facts": ["形が毛筆ににていることから「筆柿」と名づけられたといわれる。", "幸田町の筆柿は、全国シェアの約95%をしめる。", "1本の木に甘柿と渋柿が実る「不完全甘柿」で、出荷の前に甘柿と渋柿を分けている。", "富有柿や次郎柿より、約1か月早く出荷できる。", "例年9月中旬から出荷が始まる。", "江戸時代から、町の南西部の農家の庭先で育てられてきた。"], "src": ["https://www.town.kota.lg.jp/soshiki/13/764.html", "https://www.ja-aichimikawa.or.jp/product/product_kaki.php", "https://www.ja-aichimikawa.or.jp/wp/archives/7157"]},
   // ==== となりの市町ここまで ====
 ];
+
+// 到達カードの「💡」（展開したときだけ1行）。ゆかりの注目スポットは、上の名物の tip（ないときは note）。
+// それ以外は、地区（areas.json の summary・specialties にある事実）の1行。個別の店・商品の話や数字は書かない
+window.NISHIO_AREA_TIP = {
+  nishio: '西尾は 抹茶の まち。お茶の ほとんどが 抹茶に なる てん茶じゃん。',
+  isshiki: '一色は うなぎと えびせんべいの まちじゃん。',
+  kira: '吉良は むかし、饗庭塩の 産地として 栄えたじゃん。',
+  hazu: '幡豆の 三ヶ根山は、あじさいの 名所じゃん。',
+  sakushima: '佐久島は、アサリや タコの とれる 島じゃん。',
+};

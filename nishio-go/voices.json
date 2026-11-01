@@ -3,7 +3,7 @@
  "replies": {},
  "log": [],
  "counts": {},
- "updated": "2026-10-28",
+ "updated": "2026-11-02",
  "reactions": {
   "n4581974121": {
    "love": 1
@@ -18,12 +18,23 @@
    "calm": 1
   },
   "f-nishio-castle": {
-   "photo": 1
+   "photo": 1,
+   "love": 1
+  },
+  "f-ibun-jinja": {
+   "hard": 1
+  },
+  "f-nishio-shiryokan": {
+   "calm": 1
+  },
+  "f-jissoji": {
+   "love": 1
   }
  },
  "reactedIssues": [
   2,
   3,
-  5
+  5,
+  6
  ]
 }

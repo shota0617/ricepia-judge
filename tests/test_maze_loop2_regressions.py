@@ -229,3 +229,34 @@ class Cycle5SearchPadTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+@unittest.skipUnless(shutil.which('node'), 'node がない')
+class Cycle11DeadEndRewardTests(unittest.TestCase):
+    """サイクル11：金の米つぶがない行き止まりにも、かおりちゃんの三河弁ひとこと（pixel.js の mzDeadTick）"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.src = (GO / 'pixel.js').read_text(encoding='utf-8')
+        cls.lines = json.loads(grab(cls.src, r"^const MZ_DEAD_SAY = (\[.*\]);").replace("'", '"'))
+
+    def test_lines_are_mikawa_and_not_boku(self):
+        self.assertGreaterEqual(len(self.lines), 6)
+        for t in self.lines:
+            self.assertNotIn('ぼく', t)
+            self.assertNotIn('だに', t)   # 遠州弁は混ぜない
+            self.assertNotIn('20%', t)
+
+    def test_line_is_stable_per_cell_and_in_pool(self):
+        fn = grab(self.src, r"^(const mzDeadLine = .*);\s*//").replace('const mzDeadLine = ', 'const f = ') + '; return f(cx, cy);'
+        cases = [{'cx': x, 'cy': y} for x in range(0, 50, 7) for y in range(0, 50, 5)]
+        a = node('const MZ_DEAD_SAY = ' + json.dumps(self.lines, ensure_ascii=False) + ';' + fn, ['cx', 'cy'], cases)
+        self.assertEqual(a, node('const MZ_DEAD_SAY = ' + json.dumps(self.lines, ensure_ascii=False) + ';' + fn, ['cx', 'cy'], cases))
+        self.assertTrue(set(a) <= set(self.lines))
+        self.assertGreater(len(set(a)), 3)
+
+    def test_tick_is_wired_and_guards_repeats(self):
+        self.assertRegex(self.src, r'mzTrailTick\(\); mzDeadTick\(\); mzGrainTick\(\);')
+        body = grab(self.src, r'(?s)(function mzDeadTick\(\) \{.*?\n\})')
+        for needle in ('mzDeadSeen.has(key)', 'MZ_DEAD_GAP', 'mzGrainAt(a, b)', 'mzIsDead(a, b)'):
+            self.assertIn(needle, body)

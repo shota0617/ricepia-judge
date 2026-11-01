@@ -14,7 +14,7 @@
     box = document.createElement('div');
     box.className = 'kome-talk'; box.id = 'komeTalk'; box.hidden = true;
     box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'あいちのかおりちゃんの おはなし');
-    box.innerHTML = '<div class="dq"><canvas width="48" height="40" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">あいちのかおりちゃん</b>'
+    box.innerHTML = '<div class="dq"><canvas width="192" height="162" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">あいちのかおりちゃん</b>'
       + '<img class="kt-pic" alt="" hidden/><p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div><button type="button" class="kt-next">▼ つぎへ</button></div>'
       + '<button type="button" class="kt-x" aria-label="おはなしを とじる">✕</button></div>';
     document.body.append(box);
@@ -29,9 +29,19 @@
     });
     box.addEventListener('keydown', () => clearTimeout(closeT));   // キーで 読んでいる 人の 前で 勝手に とじない
   }
-  // 顔：歩く地図の お米と 同じ 描き方（まだ 絵が できていなければ 🍚）
+  // 顔：かおりちゃんの 3表情（パックマンの ように 場面で 見た目が かわる）。読めなければ 歩く地図の お米と 同じ ドット絵、それも なければ 🍚
+  const FACE_OF = { happy: 'smile', smile: 'smile', excited: 'surprised', surprised: 'surprised', normal: 'normal' };
+  const faceImg = {};
+  let curMood = null;
+  ['normal', 'smile', 'surprised'].forEach(k => {
+    try { const im = new Image(); im.onload = () => { faceImg[k] = im; if (box && !box.hidden && curMood) face(curMood); }; im.onerror = () => { faceImg[k] = null; }; im.src = 'nishio-go/art/kaori/face-' + k + '.png'; } catch (e) { faceImg[k] = null; }
+  });
   function face(mood) {
-    const g = cv.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 48, 40);
+    curMood = mood;
+    const g = cv.getContext('2d'), W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
+    const im = faceImg[FACE_OF[mood] || 'smile'];
+    if (im && im.complete && im.naturalWidth) { g.imageSmoothingEnabled = true; g.drawImage(im, (W - H) / 2, 0, H, H); return; }
+    g.imageSmoothingEnabled = false; g.scale(W / 48, W / 48);
     const P = root.nishioPixel;
     if (!(P && P.drawRice && P.drawRice(g, 24, 22, 0, 0, mood || 'smile'))) { g.font = '26px sans-serif'; g.textAlign = 'center'; g.fillText('🍚', 24, 30); }
   }

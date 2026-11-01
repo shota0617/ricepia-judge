@@ -7731,7 +7731,7 @@ function frame(now) {
   last = tgt;
   if (G.demo && rollOn && !driving) {   // かたむけて転がす（勢い・はね返り）。1/120秒ずつ くり返して計算する（おそい スマホ・速い画面でも 同じ転がり方に）
     if (howtoEl.hidden && performance.now() >= mzHitStop) for (let rem = dt; rem > 1e-4;) { const h = Math.min(rem, 1 / 120); rollStep(h); rem -= h; if (rp.x !== null && mazeOn()) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), performance.now()); }   // 「まよわず ゴール」の 歩数は 転がる 1/120秒ごとに（こまの 間に 2つの さかいを こえても 1つずつ）   // あそびかたを 読んでいる 間は 転がさない（地図は 描く）
-    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzGrainTick(); mzDotTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
+    if (mazeOn()) { mzSpotUpdate(now); mzSnap(now); mzRoute(now); mzHintTick(now); mzTrailTick(); mzDeadTick(); mzGrainTick(); mzDotTick(); mzMichikusa(now); mzClock(now); mzCrowTick(now); mzSpringTick(now); mzArriveTick(now); }
   }
   waterWatch(tgt, dt);
   if (!cam || Math.hypot(tgt.x - cam.x, tgt.y - cam.y) > 40) cam = { ...tgt };
@@ -9623,6 +9623,36 @@ function mzGrainTick() {
   floatText(`🌾 金の米つぶ +${r.pts}pt${back >= 1000 ? `・⏱−${Math.round(back / 1000)}秒` : ''}（きょう ${r.n}こ）`);
   const now = performance.now(), cols = ['#ffe066', '#ffd23f', '#fff6c2'];
   for (let i = 0; i < 14; i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }   // 小さな きらきら（ゴールの 紙ふぶきと 同じ しくみ）
+}
+// 行き止まりの 小ごほうび（パックマン・世界樹の「行き止まりにも 意味を」）：金の米つぶが ない 行き止まりに 入っても、かおりちゃんが 三河弁で ひとこと、米つぶが ぽわっと 出る。
+// 行き止まり ＝ drawMzDeadEnds と 同じ（通路で、入れる 向きが 1つだけ。名所の 参道・ゴールの 手前は のぞく）。ポイント・進み具合は 動かさない（「損した」感を 消すだけ）。
+// うるさく ならない ように、同じ 行き止まりは その日 1回だけ・つづけて 出すのは 6秒 あけて
+const MZ_DEAD_SAY = ['行き止まりだら〜。ぐるっと もどろまい', 'ここ 静かで ええ とこじゃん', 'ちょっと 寄り道 したら ええ ことが あるんだら', '🐸 かえるが ひょっこり。ここまで 来たん？', '🐦 すずめが ちゅん。ひとやすみ していこまい', '🌾 風が ふいて 気持ちええ ねぇ', 'おっと 行き止まり！ でも 寄り道も 楽しいじゃん', '🍵 ここで 抹茶でも 飲みたい ねぇ'];
+const MZ_DEAD_GAP = 6000;
+const mzDeadSeen = new Set();
+let mzDeadCell = '', mzDeadAt = -1e9;
+function mzIsDead(cx, cy) {   // 行き止まりの マスか（区域が まだ 読めて いなければ false）
+  if (mzType(cx, cy) !== 1 || mzSpotCell(cx, cy)) return false;
+  let open = 0;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (mzOpen(cx, cy, dx, dy)) open++;
+  return open === 1;
+}
+const mzDeadLine = (cx, cy) => MZ_DEAD_SAY[((cx * 7919 + cy * 104729) >>> 0) % MZ_DEAD_SAY.length];   // 場所で きまる（同じ 行き止まりは 毎日 同じ ひとこと）
+function mzDeadTick() {
+  if (rp.x === null) return;
+  const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), k = a + ',' + b;
+  if (k === mzDeadCell || !mzArea(a, b)) return;
+  mzDeadCell = k;
+  const key = jstDay() + ':' + k, now = performance.now();
+  if (mzDeadSeen.has(key) || now - mzDeadAt < MZ_DEAD_GAP || mzGrainAt(a, b) || !mzIsDead(a, b)) return;
+  const p = mzRt.path, last = p && p.length ? p[p.length - 1] : null;
+  if (last && last[0] === a && last[1] === b) return;   // ゴールの マスは 行き止まりでも 「ゴール」の 知らせを 優先
+  if (sightBusy() || mapCovered()) return;
+  mzDeadSeen.add(key); mzDeadAt = now;
+  riceSay(mzDeadLine(a, b), 2200, 'happy');
+  const cols = ['#ffe066', '#fff6c2', '#ffffff'];
+  for (let i = 0; i < 6; i++) { const t = Math.random() * Math.PI * 2, v = 1 + Math.random() * 2; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2, c: cols[i % 3], life: 0.5 + Math.random() * 0.3 }); }   // 米つぶの ぽわっと
+  dirty = true;
 }
 function drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 金の 米つぶ（ふわふわ うかんで、ときどき きらり）
   const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);

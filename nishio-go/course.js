@@ -72,5 +72,14 @@
     }
     return rows;
   }
-  root.NISHIO_COURSE = { COURSES, BLANK, WALK_M_PER_MIN, byId, clean, next, start, quit, advance, dist, measure, measureText, mosaic };
+  // 1枚絵の 「歩いた 地図」版：mosaic の 3段に、手前の 道の 1行を 足した 4行。まわりきった 分は 足跡 👣、その 最後の 1マスは 主人公 🍚。まだ 0コースなら 先頭が 🍚
+  function mosaicScene(done) {
+    const d = clean({ cur: null, done }).done;
+    const cells = [];
+    for (const c of COURSES) for (let k = 0; k < 2; k++) cells.push(d.includes(c.id) ? '👣' : BLANK);
+    const last = cells.lastIndexOf('👣');
+    cells[last < 0 ? 0 : last] = '🍚';
+    return [...mosaic(d), cells.join('')];
+  }
+  root.NISHIO_COURSE = { COURSES, BLANK, WALK_M_PER_MIN, byId, clean, next, start, quit, advance, dist, measure, measureText, mosaic, mosaicScene };
 })(typeof window !== 'undefined' ? window : globalThis);

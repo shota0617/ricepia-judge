@@ -3983,7 +3983,7 @@ function coPanelHtml(hi) {
     return `<section class="co-item${on ? ' on' : ''}"><h4>${c.icon} ${esc(c.name)} ${'●'.repeat(n)}${'○'.repeat(c.spots.length - n)}</h4><p class="co-m">${esc(CO.measureText(CO.measure(c, pos)))}</p><ol class="co-route">${route}</ol>${btn}</section>`;
   }).join('');
   const all = st.done.length >= CO.COURSES.length;
-  return `<div class="co-box"><h3>🗾 モデルコース</h3>${hi ? `<p class="co-hi">${esc(hi)}</p>` : ''}${items}<h4>${all ? '西尾の 1枚絵　できあがり！' : '西尾の 1枚絵'}</h4><pre class="co-mosaic" aria-label="スタンプで できる 西尾の 1枚絵">${CO.mosaic(st.done).join('\n')}</pre><button type="button" class="btn" data-co="close">とじる</button></div>`;
+  return `<div class="co-box"><h3>🗾 モデルコース</h3>${hi ? `<p class="co-hi">${esc(hi)}</p>` : ''}${items}<h4>${all ? '西尾の 1枚絵　できあがり！ かおりちゃんも いっしょ！' : '西尾の 1枚絵'}</h4><pre class="co-mosaic${all ? ' done' : ''}" aria-label="スタンプで できる 西尾の 1枚絵">${CO.mosaicScene(st.done).join('\n')}</pre><p class="co-m">かおりちゃんが 手前の 道を てくてく。足跡は まわりきった コースの 分じゃん</p><button type="button" class="btn" data-co="close">とじる</button></div>`;
 }
 function openCourse(hi) {
   if (!CO) return;

@@ -968,7 +968,8 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 .co-item{border-top:1px solid #e5e5e5;padding:6px 0}.co-item.on{background:#fff9ec}
 .co-m{margin:0;font-size:14px;color:var(--sub)}
 .co-route{margin:2px 0 6px;padding:0;list-style:none;font-size:15px}.co-route .got{color:#2a8a3a}.co-route .next{font-weight:700;color:#b36b00}
-.co-mosaic{margin:4px 0 8px;font:inherit;font-size:30px;line-height:1.25;letter-spacing:2px;text-align:center;white-space:pre}
+.co-mosaic{margin:4px 0 8px;font:inherit;font-size:36px;line-height:1.25;letter-spacing:2px;text-align:center;white-space:pre}
+.co-mosaic.done{border:3px solid var(--gold);border-radius:12px;background:rgba(227,164,43,.12)}
 /* 記念ポストカード（postcard.js） */
 .pc-list li[data-pc]{cursor:pointer}
 .pc-card{border:3px solid #e8a33a;background:#fffaf0;text-align:center}

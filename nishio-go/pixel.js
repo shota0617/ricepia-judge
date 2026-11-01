@@ -7765,7 +7765,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFog(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -9637,6 +9637,47 @@ function mzPebTick() {   // お米の いる マスの ドットを 食べる（
   (a.eaten || (a.eaten = new Set())).add(cx + ',' + cy);
   dirty = true;
   mzFanfare(a);
+}
+// 踏破マップ＋ズーム連動フォグ（世界樹・ローグライクの 3段階フォグ）：通路の マスを「未踏／踏破済み（視界の 外）／視界の 中」で 濃淡を わける。
+// 通った 印は 新しい セーブを 増やさず、米粒ドットの 食べた 印（区域の eaten）と 足あと（mzTrail）を 使う（区域が 作りなおされれば ドットと 同じく 置き直し）。
+// ズーム（mzScale）：1＝全体を うすく（未踏だけ もや。視界の 制限なし）、2〜4＝近づくほど 現在地の まわりだけ 見える。ゴールの マスは どの 段階でも フォグの 外で、やわらかく 光る。ポイント・収集・道すじは 動かさない
+const MZ_FOG = { 1: { sight: 0, veil: 0.2 }, 2: { sight: 9, veil: 0.3 }, 3: { sight: 6, veil: 0.4 }, 4: { sight: 4, veil: 0.46 } };   // sight：見える 半径（マス。0＝制限なし）・veil：視界の 外の 未踏の こさ
+function mzFogAlpha(scale, d, visited) {   // d：お米からの 距離（マス）。{ veil 白いもやの こさ, tint 踏破の 色づけ }
+  const f = MZ_FOG[Math.min(4, Math.max(1, Math.round(scale)))];
+  if (!f.sight) return { veil: visited ? 0 : f.veil, tint: visited ? 0.16 : 0 };   // ズームアウト：視界の 制限は なく、未踏の 通路網を うすく
+  if (d <= f.sight) return { veil: 0, tint: visited ? 0.16 : 0 };
+  return { veil: visited ? f.veil * 0.4 : f.veil, tint: visited ? 0.1 : 0 };
+}
+function drawMzFog(tx0, ty0, tx1, ty1, ox, oy, T, now) {
+  if (rec) return;
+  const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
+  const me = rp.x === null ? null : [rp.x / MZ_K, rp.y / MZ_K], gp = mzRt.path && mzRt.path.length ? mzRt.path[mzRt.path.length - 1] : null, sc = mzScale;
+  const buckets = new Map();   // 'veil,tint' → [x, y, ...]（同じ こさを まとめて 塗る）
+  for (let ry = Math.floor(r0 / MZ_R); ry <= Math.floor(r1 / MZ_R); ry++) for (let rx = Math.floor(c0 / MZ_R); rx <= Math.floor(c1 / MZ_R); rx++) {
+    const a = mzAreas.get(rx + '_' + ry);   // 読めている 区域だけ
+    if (!a) continue;
+    for (let cy = Math.max(r0, a.y0); cy <= Math.min(r1, a.y0 + MZ_R - 1); cy++) for (let cx = Math.max(c0, a.x0); cx <= Math.min(c1, a.x0 + MZ_R - 1); cx++) {
+      if (a.t[(cy - a.y0) * MZ_R + cx - a.x0] !== 1 || (gp && gp[0] === cx && gp[1] === cy)) continue;   // 通路だけ。ゴールの マスは フォグの 外
+      const visited = mzTrail.has(cx + ',' + cy) || !!(a.eaten && a.eaten.has(cx + ',' + cy)), d = me ? Math.hypot(cx + 0.5 - me[0], cy + 0.5 - me[1]) : 0, f = mzFogAlpha(sc, d, visited);
+      if (f.veil < 0.01 && f.tint < 0.01) continue;
+      const k = f.veil.toFixed(2) + ',' + f.tint.toFixed(2), b = buckets.get(k) || buckets.set(k, []).get(k);
+      b.push(ox + cx * S, oy + cy * S);
+    }
+  }
+  for (const [k, xs] of buckets) {
+    const [veil, tint] = k.split(',').map(Number);
+    ctx.fillStyle = veil >= 0.01 ? `rgba(244,240,222,${veil})` : `rgba(255,214,102,${tint})`;
+    for (let i = 0; i < xs.length; i += 2) ctx.fillRect(Math.floor(xs[i]), Math.floor(xs[i + 1]), Math.ceil(S), Math.ceil(S));
+    if (veil >= 0.01 && tint >= 0.01) { ctx.fillStyle = `rgba(255,214,102,${tint})`; for (let i = 0; i < xs.length; i += 2) ctx.fillRect(Math.floor(xs[i]), Math.floor(xs[i + 1]), Math.ceil(S), Math.ceil(S)); }
+  }
+  if (gp) {   // ゴールの マス：フォグに かかわらず ぼんやり 光る（旗と 輪は drawMzGoal）
+    const p = mzOn((gp[0] + 0.5) * MZ_K, (gp[1] + 0.5) * MZ_K), X = ox + p[0] * T, Y = oy + p[1] * T, R = S * 0.9, pulse = (Math.sin(now / 260) + 1) / 2;
+    if (X > -R && Y > -R && X < ctx.canvas.width + R && Y < ctx.canvas.height + R) {
+      const g = ctx.createRadialGradient(X, Y, 0, X, Y, R);
+      g.addColorStop(0, `rgba(255,224,102,${0.45 + pulse * 0.2})`); g.addColorStop(1, 'rgba(255,224,102,0)');
+      ctx.fillStyle = g; ctx.fillRect(X - R, Y - R, R * 2, R * 2);
+    }
+  }
 }
 function drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T) {   // 小さな 四角の 米つぶ（淡い 色。金の 米つぶより ずっと 小さい）
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), q = Math.max(1, Math.round(T / 8));

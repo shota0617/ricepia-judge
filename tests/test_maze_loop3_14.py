@@ -149,8 +149,8 @@ class Cycle14CacheTests(unittest.TestCase):
         self.assertEqual((r['S']['points'], r['saved'], r['tracked']), (25, 1, [['maze_cache', {}]]))
 
     def test_draw_order_and_look(self):
-        self.assertLess(PIXEL.index('drawMzCache(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); }'))
-        self.assertLess(PIXEL.index('drawMzView(ox, oy, T, now); drawMzCache('), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); }'))
+        self.assertLess(PIXEL.index('drawMzCache(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); }'))
+        self.assertLess(PIXEL.index('drawMzView(ox, oy, T, now); drawMzCache('), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); }'))
         self.assertIn('drawMzViewClearTag(w, dpr, now); drawMzCacheHint(w, dpr, now);', PIXEL)
         d = PIXEL[PIXEL.index('function drawMzCache('):PIXEL.index('function drawMzCacheHint(')]
         self.assertIn('170,120,235', d)   # うすい紫
@@ -169,7 +169,7 @@ class Cycle14CacheTests(unittest.TestCase):
         self.assertIn('S.cacheGot = (S.cacheGot || 0) + 1', GAME)
         self.assertIn("['かくし宝箱はっけん', S.cacheGot || 0, '回']", GAME)
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
-        self.assertEqual(pi.count(',') + 1, 14)   # きろく14行と対応（サイクル16できょうりゅう行が増えた。サイクル15でどうぐクエスト行が増えた）
+        self.assertEqual(pi.count(",") + 1, 15)   # きろく15行と対応（サイクル17で夕立行が増えた。サイクル16できょうりゅう行が増えた。サイクル15でどうぐクエスト行が増えた）
         h = PIXEL[PIXEL.index('function drawMzCacheHint('):PIXEL.index('// びゅんパネル')]
         self.assertIn('w - gap * 2', h)   # 狭い画面では札を画面内に収める
 

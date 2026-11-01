@@ -1,11 +1,11 @@
 // お米つぶの おはなし（案内役・10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。
 // 主人公の お米つぶが 話しかけて、つぎの 行き先を いっしょに 決める。町の人の 話と 同じ 黒い わく（.dq）で、左に お米の 顔。
-// タップで つぎへ。さいごの ページに えらぶ ボタンが あれば、えらんだ 答えで ゲームが 進む（行き先が かわる）。
+// 流れを 止めない 吹き出し（シレンの ログのように）：タップ不要で 自動で つぎへ。地図・めいろは そのまま さわれる。さいごの ページに えらぶ ボタンが あれば、えらんだ 答えで ゲームが 進む（行き先が かわる）。
 // せっていで オフに できる（オフの 人には、いままでどおり 下の 小さな 知らせだけ）。
 (function (root) {
   const KEY = 'nsg_kome_talk';   // '0' なら オフ
   const q = [];
-  let box, cv, sayEl, srEl, chEl, nextEl, cur = null, page = 0, typing = 0, full = '', closeT = 0, back = null, mem = null;   // mem：この ページで えらんだ オン・オフ（保存できない ブラウザでも 守る）
+  let box, cv, sayEl, srEl, chEl, cur = null, page = 0, typing = 0, full = '', closeT = 0, autoT = 0, mem = null;   // mem：この ページで えらんだ オン・オフ（保存できない ブラウザでも 守る）
   const calm = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
   function on() { if (mem !== null) return mem; try { return localStorage.getItem(KEY) !== '0'; } catch (e) { return true; } }
   function setOn(v) { mem = !!v; try { localStorage.setItem(KEY, v ? '1' : '0'); } catch (e) { /* なしで続ける */ } if (!v) { q.length = 0; hide(); } }
@@ -13,21 +13,15 @@
     if (box) return;
     box = document.createElement('div');
     box.className = 'kome-talk'; box.id = 'komeTalk'; box.hidden = true;
-    box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'あいちのかおりちゃんの おはなし');
+    box.setAttribute('aria-label', 'あいちのかおりちゃんの おはなし');
     box.innerHTML = '<div class="dq"><canvas width="192" height="162" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">あいちのかおりちゃん</b>'
-      + '<img class="kt-pic" alt="" hidden/><p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div><button type="button" class="kt-next">▼ つぎへ</button></div>'
-      + '<button type="button" class="kt-x" aria-label="おはなしを とじる">✕</button></div>';
+      + '<img class="kt-pic" alt="" hidden/><p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div></div></div>';
     document.body.append(box);
-    cv = box.querySelector('canvas'); sayEl = box.querySelector('.kt-say'); srEl = box.querySelector('.kt-sr'); chEl = box.querySelector('.kt-ch'); nextEl = box.querySelector('.kt-next');
-    box.addEventListener('click', e => {
-      e.stopPropagation();
+    cv = box.querySelector('canvas'); sayEl = box.querySelector('.kt-say'); srEl = box.querySelector('.kt-sr'); chEl = box.querySelector('.kt-ch');
+    box.addEventListener('click', e => {   // 本体は pointer-events:none。押せるのは えらぶ ボタンだけ
       const c = e.target.closest('[data-kt]');
-      if (c) { pick(+c.dataset.kt); return; }
-      if (e.target.closest('.kt-x')) { done(-1); return; }
-      if (typing) { finishType(); return; }
-      if (!chEl.children.length) step();
+      if (c) { e.stopPropagation(); pick(+c.dataset.kt); }
     });
-    box.addEventListener('keydown', () => clearTimeout(closeT));   // キーで 読んでいる 人の 前で 勝手に とじない
   }
   // 顔：かおりちゃんの 3表情（パックマンの ように 場面で 見た目が かわる）。読めなければ 歩く地図の お米と 同じ ドット絵、それも なければ 🍚
   const FACE_OF = { happy: 'smile', smile: 'smile', excited: 'surprised', surprised: 'surprised', normal: 'normal' };
@@ -50,13 +44,15 @@
     const last = page === cur.pages.length - 1;
     if (last && typeof cur.choices === 'function') cur.choices = cur.choices();   // えらぶ ボタンは 出す ときに 決める（行き先が かわっていても 今の ものを 出す）
     const ch = last && cur.choices && cur.choices.length;
-    nextEl.hidden = !!ch;
-    nextEl.textContent = last ? '▶ とじる' : '▼ つぎへ';
     if (ch) chEl.innerHTML = cur.choices.map((c, i) => `<button type="button" class="kt-btn" data-kt="${i}">${esc(c)}</button>`).join('');
-    if (!box.hidden) { const b = ch ? chEl.firstChild : nextEl; if (b) b.focus({ preventScroll: true }); }   // キーボードで そのまま すすめる
-    // えらぶ ボタンの ない さいごの ページは、読まれなくても しばらくで とじる（めいろの じゃまを しない）
-    clearTimeout(closeT);
-    if (last && !ch) closeT = setTimeout(() => done(-1), 9000);
+    // 読み終えたら 自動で つぎへ（タップ不要＝歩きも めいろも 止めない）。えらぶ ボタンの ある さいごの ページだけ 15秒 まって 未選択で とじる
+    // ほかの 窓で かくれている 間は タイマーを しかけない（見えないまま 進んだり えらぶ 機会が 消えたり しないように。再表示のときに pump が ここを よび直す）
+    clearTimeout(closeT); clearTimeout(autoT);
+    if (box.hidden) return;
+    if (ch) { closeT = setTimeout(() => done(-1), 15000); return; }
+    const wait = Math.min(2800 + full.length * 60, 7000);
+    if (last) closeT = setTimeout(() => done(-1), wait);
+    else autoT = setTimeout(step, wait);
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function show() {
@@ -67,9 +63,9 @@
     face(typeof p === 'string' ? cur.mood : (p.mood || cur.mood));
     const pic = box.querySelector('.kt-pic'), pc = typeof p === 'string' ? null : p.pic;   // 西尾の 景色の ドット絵（あいさつで まちを 見せる）
     pic.hidden = !pc; if (pc) { pic.src = pc.src; pic.alt = pc.t || ''; }
-    chEl.innerHTML = ''; nextEl.hidden = true; full = t;
+    chEl.innerHTML = ''; full = t;
     srEl.textContent = t;   // 読み上げには 1ページを 1回で わたす（1文字ずつ 書きかえない）
-    clearTimeout(closeT); clearInterval(typing); typing = 0;
+    clearTimeout(closeT); clearTimeout(autoT); clearInterval(typing); typing = 0;
     if (calm()) { sayEl.textContent = t; afterType(); return; }
     let i = 0; sayEl.textContent = '';
     typing = setInterval(() => { i++; sayEl.textContent = t.slice(0, i); if (i >= t.length) finishType(); }, 40);
@@ -77,11 +73,8 @@
   function step() { if (page < cur.pages.length - 1) { page++; show(); } else done(-1); }
   function pick(i) { done(i); }
   function hide() {
-    clearInterval(typing); typing = 0; clearTimeout(closeT);
-    const had = box && box.contains(document.activeElement);
+    clearInterval(typing); typing = 0; clearTimeout(closeT); clearTimeout(autoT);
     if (box) box.hidden = true; cur = null;
-    try { const G = root.nishioGo; if (G && G.toastFlush) setTimeout(() => G.toastFlush(), 0); } catch (e) { /* noop */ }   // 待たせた 知らせを 出す
-    if (had && back && back.isConnected) back.focus({ preventScroll: true });   // キーボードの 人は もとの 場所へ
   }
   function done(i) {
     const c = cur; hide();
@@ -106,14 +99,12 @@
     // あいさつが 出て「はじめまして。あ」まで 打った ところで、つづけて 開いた「はじめの1枚を えらぼう」に よけて 消えた。2つの 窓が 0.4秒 かさなって ちらついた）。はかるのは performance.now（Date は 止められる ことが ある）
     if (n.busy) { const now = performance.now(); if (!n.calm) n.calm = now; const left = 600 - (now - n.calm); if (left > 0) { clearTimeout(pump.t); pump.t = setTimeout(pump, left); return; } }
     cur = q.shift(); page = 0;
-    back = document.activeElement;
     box.hidden = false;
-    try { const G = root.nishioGo; if (G && G.toastHold) G.toastHold(); } catch (e) { /* noop */ }   // 下の 知らせが おはなしの わくに かぶらない（出た ばかりなら とじてから 出し直す）
     if (cur.onShow) try { cur.onShow(); } catch (e) { console.error(e); }
     show();
     // 話の とちゅうで ごほうび・町の人の 話などが 出たら、そのあいだは よけて、とじたら また 出す
     clearInterval(pump.w);
-    pump.w = setInterval(() => { if (!cur) { clearInterval(pump.w); return; } const b = !!(cur.busy && cur.busy()); if (box.hidden !== b) { box.hidden = b; try { const G = root.nishioGo, f = G && (b ? G.toastFlush : G.toastHold); if (f) f(); } catch (e) { /* noop */ }   /* よけて いた あいだに 出た 知らせは、また 出す ときに 下げる */ if (b) clearTimeout(closeT); else if (!typing && !chEl.children.length && page === cur.pages.length - 1) afterType(); } }, 400);
+    pump.w = setInterval(() => { if (!cur) { clearInterval(pump.w); return; } const b = !!(cur.busy && cur.busy()); if (box.hidden !== b) { box.hidden = b; if (b) { clearTimeout(closeT); clearTimeout(autoT); } else if (!typing) afterType(); } }, 400);
   }
   // clear：ためている 話も 今の 話も やめる（遊びかたの 切りかえ など。then は よばない）
   function clear() { q.length = 0; clearInterval(pump.w); hide(); }

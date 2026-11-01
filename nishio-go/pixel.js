@@ -11706,7 +11706,7 @@ cv.addEventListener('click', e => {
 // 見ていない間に うしろで歩いて、たからばこなどが進まないように
 //   soft：下に 出る 小さな「ホーム画面に追加」の 帯は のぞく（地図は 見えている。めいろの お米と 時計は 止めない）
 function mapCovered(soft) {
-  return $('reward').classList.contains('show') || document.body.classList.contains('jump-open')
+  return document.body.classList.contains('jump-open')
     || !!document.querySelector(`#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])${soft ? ':not(#a2hs)' : ''}`);
 }
 function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path = []; tapS.goal = null; }

@@ -9047,8 +9047,11 @@ function mzRoute(now) {
   const g = G.guide;
   if (!g || rp.x === null) { mzRt.path = null; return; }
   const p = toTile(g.lat, g.lng), a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K), gc = Math.floor(p.x / MZ_K), gr = Math.floor(p.y / MZ_K);
-  const near = ((g.kind === 'npc' && G.guideRadius ? G.guideRadius(g) : G.reachOf ? G.reachOf(g) : 40) || 40) * 0.8 / TILE_M;   // 着いたと みなす 近さ（チェックインの 半径・人は 話しかけられる 近さより 少し 内がわ。マス）
+  const rch = (g.kind === 'npc' && G.guideRadius ? G.guideRadius(g) : G.reachOf ? G.reachOf(g) : 40) || 40, near = rch * 0.8 / TILE_M;   // 着いたと みなす 近さ（チェックインの 半径・人は 話しかけられる 近さより 少し 内がわ。マス）
   const inReach = (x, y) => Math.hypot(Math.max(x * MZ_K - p.x, 0, p.x - (x + 1) * MZ_K), Math.max(y * MZ_K - p.y, 0, p.y - (y + 1) * MZ_K)) <= near;   // マスの いちばん 近い 所が その 近さに 入る
+  // 名所は、そのマスの 道すじ（お米が 転がれる 筒。まん中から MZ_TUBE まで）の どこかが チェックインの 半径に 入る マスまで（マスの かどだけ 近くて 道すじは 45m 以上 はなれ、生け垣の 向こうに ゴールが 見えるのに 道すじが そこで 終わり、チェックインできなかった：実データの 名所への 道すじ 125本のうち 7本）。見つからなければ これまでの 近さで
+  const tubeIn = (x, y) => { const cs = mzCurves(x, y); return !cs || cs.some(q => q.some(([qx, qy]) => Math.hypot(qx - p.x, qy - p.y) <= rch / TILE_M + MZ_TUBE)); };
+  const inReachT = g.kind === 'npc' ? inReach : (x, y) => inReach(x, y) && tubeIn(x, y);
   const gkey = gc + ',' + gr + ':' + (g.id || g.name || ''), key = a + ',' + b + '>' + gkey + '#' + mzSpotV + ':' + mzSpotCells.size;   // 参道が ふえたら さがしなおす（名所の ゴールは 参道が できる まで 通れず、道のりが なし・遠回りのまま 残った）。ゴールの マスと 名前（同じ マスに 2つの ゴールが つづくと、かわった ことに 気づかず、「🏁 つぎの ゴール」も 時計の やりなおしも なかった：西尾城跡の ガイドさん → 旧近衛邸の お姉さん）
   if (gkey !== mzRt.gkey) {   // ゴールが かわった（着いて 次の 行き先に なった など）：前の ゴールも 2分 おぼえる（チェックインは 行き先が かわった あとに なる）
     if (rp.x !== null) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), now);   // 着いた こまの 移動まで 前の ゴールに 数えてから（足あとの 数えは この あと）
@@ -9071,11 +9074,12 @@ function mzRoute(now) {
     from = new Int32Array(W * (y1 - y0 + 1)).fill(-2);
     const q = [(b - y0) * W + a - x0];
     from[q[0]] = -1;
-    let capped = false;
+    let capped = false, loose = -1;
     for (let h = 0; h < q.length; h++) {
       if (h >= 60000) { capped = true; break; }
       const i = q[h], x = i % W + x0, y = (i / W | 0) + y0;
-      if (inReach(x, y)) { end = i; break; }   // 行き先の チェックインの 近さに 入る マスまで
+      if (inReachT(x, y)) { end = i; break; }   // 行き先の チェックインの 近さに 入る マスまで
+      if (loose < 0 && inReach(x, y)) loose = i;   // 道すじが 半径に 届かない マス（見つからない ときの 代わり）
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy;
         if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
@@ -9086,6 +9090,7 @@ function mzRoute(now) {
         from[j] = i; q.push(j);
       }
     }
+    if (end < 0) end = loose;
     seen = q.length; capHit = capped;
     if (end >= 0 || capped) break;   // 見つかった・上限に 当たったら ひろげない
   }
@@ -9102,7 +9107,7 @@ function mzRoute(now) {
   if (!mzRt.len0) mzRt.len0 = L;
   if (L !== mzRt.shownLen && G.renderGuide) { mzRt.shownLen = L; G.renderGuide(); }   // 案内の 札の 道のり（🌀）を すぐ かえる
   if (L < mzRt.best) { mzRt.best = L; mzRt.bestT = now; }
-  if (mzRt.gated !== gkey && mzGateTry(a, b, gc, gr, inReach, L)) { mzRt.gated = gkey; mzRt.key = ''; }   // ゴールの 戸（1つの ゴールに 1回）。道のりは 次の こまで さがしなおす
+  if (mzRt.gated !== gkey && mzGateTry(a, b, gc, gr, inReachT, L)) { mzRt.gated = gkey; mzRt.key = ''; }   // ゴールの 戸（1つの ゴールに 1回）。道のりは 次の こまで さがしなおす
 }
 // ゴールに 着いたら、そのまま ゴール（自分で 遊んで 分かった：ゴールの 輪に 入っても、下の 札を タップしないと「🏁 ゴール！」に ならず、
 // 時計も 動いた まま。人が ゴールの ときは 30m まで 近づかないと 話せないのに、道すじは 32m で 止まって いた）。

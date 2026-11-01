@@ -154,7 +154,7 @@ class Cycle17ChaseTests(unittest.TestCase):
         self.assertEqual(r, {'sx': -1, 'sy': -1, 'cx': -1, 'cy': -1, 'fx': -1, 'fy': -1, 'moveAt': 0, 'next': 0, 'last': 0, 'caught': False, 'caughtAt': 0, 'rainAt': 0, 'paid': False, 'dist': -1, 'dkey': ''})
         self.assertIn('if (!mazeOn() && mzChase.sx >= 0) mzChaseReset();', PIXEL)
         self.assertIn('mzChaseReset();   // 夕立雲も 迷路（ゴール）ごとに はじめから', PIXEL)
-        self.assertIn('mzDinoTick(now); mzChaseTick(now); }', PIXEL)
+        self.assertIn('mzDinoTick(now); mzChaseTick(now);', PIXEL)
         # 転がすブロックの外（ブロック内の行とは別に）にも置く
         outer = [l for l in PIXEL.splitlines() if l.startswith('  if (!mazeOn() && mzChase.sx >= 0)')]
         self.assertEqual(len(outer), 1)
@@ -184,7 +184,7 @@ class Cycle17ChaseTests(unittest.TestCase):
         self.assertIn('chase: () => ({', PIXEL)
 
     def test_draw_order_look_and_tag(self):
-        self.assertIn('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); }', PIXEL)   # もやの あと
+        self.assertIn('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(', PIXEL)   # もやの あと
         self.assertLess(PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase('), PIXEL.index('\n  updateTraffic(dt, now, tx0'))
         self.assertIn('drawMzDinoTag(w, dpr, now); drawMzChaseTag(w, dpr, now);', PIXEL)
         d = PIXEL[PIXEL.index('function drawMzChase('):PIXEL.index('function drawMzChaseTag(')]
@@ -203,7 +203,7 @@ class Cycle17ChaseTests(unittest.TestCase):
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))
-        self.assertEqual(pi.count(',') + 1, 15)
+        self.assertEqual(pi.count(",") + 1, 16)
 
     def test_no_forbidden_words_in_diff(self):
         words = ('ぼく', 'だに', '約20%')   # このリスト自身は検査から除く

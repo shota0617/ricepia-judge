@@ -31,6 +31,7 @@ class Cycle16PebbleTests(unittest.TestCase):
     def setUpClass(cls):
         cls.src = (GO / 'pixel.js').read_text(encoding='utf-8')
         cls.ok = re.search(r"^(function mzPebOk\(a, cx, cy\) \{[^\n]*\n.*?\n\})", cls.src, re.M | re.S).group(1)
+        cls.skip = re.search(r"^(function mzPebSkip\(a\) \{[^\n]*\n.*?\n\})", cls.src, re.M | re.S).group(1)
         cls.tick = re.search(r"^(function mzPebTick\(\) \{[^\n]*\n.*?\n\})", cls.src, re.M | re.S).group(1)
 
     def run_js(self, body):
@@ -41,7 +42,7 @@ class Cycle16PebbleTests(unittest.TestCase):
                "const mzPadAt = (x, y) => (x === 3 && y === 0 ? 2 : -1);"
                "const mzLineSet = () => [{ dots: [[0.5, 3.5 + 1], [1.5, 4.5]] }];"
                "const mzArea = (x, y) => (x >= 0 && x < 4 && y >= 0 && y < 4 ? a : null);")
-        return node(pre + self.ok + self.tick + body)
+        return node(pre + 'const mzPebPct = () => -1; const mzFanfare = () => {};' + self.skip + '\n' + self.ok + '\n' + self.tick + body)   # %と お祝いは test_maze_coverage.py で確かめる
 
     def test_placement_and_exclusions(self):
         r = self.run_js("const out = []; for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) if (mzPebOk(a, x, y)) out.push([x, y]); return out;")

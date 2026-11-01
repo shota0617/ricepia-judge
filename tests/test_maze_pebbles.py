@@ -72,7 +72,7 @@ class Cycle16PebbleTests(unittest.TestCase):
         self.assertEqual(r, [False, False])
 
     def test_wired_only_in_maze(self):
-        self.assertRegex(self.src, r"if \(mazeOn\(\)\) \{ drawMzFog\([^)]*\); drawMzPebs\(")   # サイクル18：フォグは米粒ドットの下
+        self.assertRegex(self.src, r"if \(mazeOn\(\)\) \{ drawMzFogTint\([^)]*\); drawMzPebs\(")   # サイクル5：色づけは米粒ドットの下（もやは最後）
         self.assertIn("if (mazeOn()) { mzSpotUpdate(now);", self.src)
         self.assertRegex(self.src, r"mzDotTick\(\); mzPebTick\(\);")
         # 金の米つぶの配置・回収は変えない

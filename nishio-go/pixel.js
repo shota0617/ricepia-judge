@@ -8386,6 +8386,15 @@ function drawWorld(now, w, h, dpr) {
     const t = drawShopTag(x, y, dpr, s);
     shopHits.push([Math.min(t[0], x - sz / 2), t[1], Math.max(t[2], x + sz / 2), y + sz, s]);
   }
+  { const pu = (Math.sin(now / 260) + 1) / 2, mk = (o, r0) => {   // 時限の 光（光るゴール・光る 寄り道）：金色の 脈打つ 輪（地区色とは べつ）
+      const q = llToW(o.lat, o.lng), X = ox + q.x * T, Y = oy + q.y * T;
+      if (X < 0 || Y < 0 || X > w || Y > h) return;
+      const rr = (r0 + pu * 3) * dpr;
+      ctx.lineWidth = 3 * dpr; ctx.strokeStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(X, Y, rr, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 2 * dpr; ctx.strokeStyle = `rgba(255,236,150,${0.5 + pu * 0.5})`; ctx.beginPath(); ctx.arc(X, Y, rr, 0, Math.PI * 2); ctx.stroke();
+    };
+    if (G.glowGoal) mk(G.glowGoal, 10);
+    for (const o of G.glowNear) mk(o, 7); }
   // めいろの ゴール：お米からの 点線と、🏁 と 名前の 札（遠い ゴールが 町の どこか 分かる ように）
   const gl = mazeBack() && G.guide, me = G.me;
   if (gl && gl.lat != null) {
@@ -10144,6 +10153,10 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
     ctx.lineWidth = Math.max(2, U * 0.1); ctx.strokeStyle = `rgba(255,213,79,${0.6 + pulse * 0.4})`; ctx.beginPath(); ctx.arc(ex, ey, r, 0, Math.PI * 2); ctx.stroke();
     flag(ex, ey - U * 0.3, U * 1.3);
+    const gg = G.glowGoal;
+    if (gg && gg.id === gt.id) {   // 光るゴール（時限）：金色の ふちが 脈打つ。ゴールの 外がわに もう 1つ 輪
+      ctx.lineWidth = Math.max(2, U * 0.12); ctx.strokeStyle = `rgba(255,236,150,${0.35 + pulse * 0.6})`; ctx.beginPath(); ctx.arc(ex, ey, r + U * (0.25 + pulse * 0.2), 0, Math.PI * 2); ctx.stroke();
+    }
     // 文字は 画面の はしで 切れない ように、まん中を 内がわへ ずらす（ゴールが 画面の はしに あると、名前の 頭が 切れて 読めなかった）
     const inside = (t, size) => { ctx.font = `bold ${size}px "DotGothic16", sans-serif`; const hw = ctx.measureText(t).width / 2 + Math.max(3, size / 4); return Math.max(hw, Math.min(w - hw, ex)); };
     const gs = Math.round(U * 0.62), bob = pulse * U * 0.12;

@@ -32,7 +32,7 @@ class Cycle18FogTests(unittest.TestCase):
         src = (GO / 'pixel.js').read_text(encoding='utf-8')
         cls.table = re.search(r"^(const MZ_FOG = [^\n]*)", src, re.M).group(1)
         cls.alpha = re.search(r"^(function mzFogAlpha\(.*?\n\})", src, re.M | re.S).group(1)
-        cls.draw = re.search(r"^(function drawMzFog\(.*?\n\})", src, re.M | re.S).group(1)
+        cls.draw = "\n".join(re.search(r"^(function %s\(.*?\n\})" % n, src, re.M | re.S).group(1) for n in ("mzFogCells", "mzFogFill", "drawMzFogTint", "drawMzFogVeil"))
 
     def fog(self, body):
         return node(self.table + '\n' + self.alpha + '\n' + body)
@@ -63,7 +63,7 @@ class Cycle18FogTests(unittest.TestCase):
                "const calls = []; const ctx = { canvas: { width: 999, height: 999 }, fillStyle: '', fillRect(x, y, w, h) { calls.push([String(this.fillStyle), x]); }, createRadialGradient() { return { addColorStop() {}, toString() { return 'glow'; } }; } };"
                % (scale, goal)
                )
-        return node(pre + self.table + '\n' + self.alpha + '\n' + self.draw + "\ndrawMzFog(0, 0, 3, 1, 0, 0, 10, 0); return calls;")
+        return node(pre + self.table + '\n' + self.alpha + '\n' + self.draw + "\ndrawMzFogTint(0, 0, 3, 1, 0, 0, 10); drawMzFogVeil(0, 0, 3, 1, 0, 0, 10, 0); return calls;")
 
     def test_goal_cell_is_outside_fog_and_glows(self):
         calls = self.run_draw('[[2, 0]]', scale=4)   # ゴール(2,0)は遠い未踏だがもやをかけない

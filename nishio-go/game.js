@@ -1242,6 +1242,7 @@ function checkin() {
     total += c.shopBonus; lines.push(`${c.icon} ${c.title}${c.active ? '' : '（サンプル）'} +${c.shopBonus}`);
     track('campaign_bonus', { campaign: c.id, mode: demo ? 'play' : 'walk' });
   }
+  const courseDone = courseCheckin(s, lines);   // モデルコース：順番どおりなら スタンプ（ポイントは つけない）
   S.visits[s.id] = { n: (v ? v.n : 0) + 1, first: v ? v.first : now, last: now, name: s.name, cat: s.kind || s.cat, icon: iconOf(s), featured: !!s.featured };
   if (!v) praiseCheck(s.area || areaNear(s));   // ふつうのスポットには地区がないので、いちばん近い注目スポットの地区で
   movieCheck(s);   // その名所の イベント「ドット絵ムービー」（まだ見ていなければ）
@@ -1285,6 +1286,7 @@ function checkin() {
   const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
   showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot, false, mz, s.shop ? '' : spotTip(s));
   reactAsk(s);
+  if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
   if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
   if (s.shop) shopAfter(s);   // ごほうびのあと、当店の窓（営業時間・LINE の常連さまポイント）を出す
   map.closePopup();
@@ -2674,7 +2676,7 @@ function howtoOpen() { return ['howto'].some(id => $(id) && !$(id).hidden); }
 function couponOpen() { const c = $('coupon'); return !!c && !c.hidden; }
 // シェアの 窓（share.js）も 同じ：知らせが シェアする 絵の 上に 重なって いた（自分で 遊んで 分かった）。窓の 開け閉めは hidden の 変化を 見る
 // イベントの 窓（古い地図・雲母石 など。どれも .medashi）も 同じ：知らせが 窓の 絵や 問いの 上に 重なって いた（自分で 遊んで 分かった：古い地図の 写真に 重なった）
-function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden) || !!document.querySelector('.medashi:not([hidden])'); }
+function modalOpen() { const sh = $('share'); return couponOpen() || (!!sh && !sh.hidden) || !!document.querySelector('.medashi:not([hidden]), .course-panel:not([hidden])'); }
 if (window.MutationObserver && $('share')) new MutationObserver(() => { if ($('share').hidden) toastFlush(); else toastHold(); }).observe($('share'), { attributes: true, attributeFilter: ['hidden'] });
 if (window.MutationObserver) new MutationObserver(ms => {   // イベントの 窓は あとから 作られる ので、body の 下の hidden の 変化を 見る
   const ev = ms.find(m => m.target.classList && m.target.classList.contains('medashi'));
@@ -3039,6 +3041,7 @@ function renderKoroRec() {
   box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>${c >= 3 ? '<button type="button" class="btn mini" data-share-open="koro">📣 シェア</button>' : ''}` : '';   // コンボの ベストを あとからでも シェア（バイラルループの 入口。share.js の 'koro'）
 }
 function renderLog() {
+  renderCourse();
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
   $('jumpBtn').disabled = !jOk;
   $('jumpNote').textContent = jOk ? 'コインを集めて西尾城の旗をめざそう（ごほうびは1日1回）' : '名所（注目スポット）でチェックインすると、その日あそべます';
@@ -3854,6 +3857,74 @@ $('anaToggle').addEventListener('change', e => { try { localStorage.setItem('nsg
 sound.apply();
 // 文字を多めに出す（オフ＝文字を少なくしてドット絵。はじめはオフ）
 $('jumpBtn').addEventListener('click', openJump);   // ミニゲーム（runner.js）
+
+/* ---------- モデルコース（course.js） ---------- */
+// 順路を 案内して スタンプを 記録するだけ（ポイント・収集・行き先選び・道すじは かえない）。記録は S.course（こわれていても course.js の clean が 直す）
+const CO = window.NISHIO_COURSE;
+const coSpot = id => spots.find(x => x.id === 'f-' + id);
+const coName = id => { const s = coSpot(id); return s ? s.name.replace(/（.*?）/g, '') : '？'; };
+function courseCheckin(s, lines) {
+  if (!CO || !String(s.id).startsWith('f-')) return null;
+  const r = CO.advance(S.course, s.id.slice(2));
+  S.course = r.st;
+  if (!r.stamped) return null;
+  const len = r.course.spots.length;
+  lines.push(r.completed ? `🗾 ${r.course.name} ぜんぶ まわった！ スタンプ ${len}/${len}` : `🗾 ${r.course.name} スタンプ ${r.st.n}/${len}`);
+  track('course_stamp', { course: r.course.id, n: r.completed ? len : r.st.n, done: r.completed, mode: demo ? 'play' : 'walk' });
+  return r.completed ? r.course : null;
+}
+function renderCourse() {
+  if (!CO) return;
+  const st = CO.clean(S.course), c = CO.byId(st.cur), chip = $('courseNext');
+  if (chip) {
+    const nx = c && coSpot(c.spots[st.n]);
+    chip.hidden = !nx;
+    if (nx) chip.textContent = `🗾 つぎは ${coName(c.spots[st.n])}　${st.n + 1}/${c.spots.length}`;
+  }
+  const note = $('courseNote');
+  if (note) note.textContent = c ? `${c.name} ${st.n}/${c.spots.length}　つぎ：${coName(c.spots[st.n])}` : st.done.length >= CO.COURSES.length ? '西尾の 1枚絵 できあがり！' : `まわりきった ${st.done.length}/${CO.COURSES.length}　順番に まわって スタンプ`;
+}
+function coPanelHtml(hi) {
+  const st = CO.clean(S.course), pos = {};
+  for (const c of CO.COURSES) for (const id of c.spots) { const s = coSpot(id); if (s) pos[id] = s; }
+  const items = CO.COURSES.map(c => {
+    const on = st.cur === c.id, done = st.done.includes(c.id), n = on ? st.n : done ? c.spots.length : 0;
+    const route = c.spots.map((id, i) => `<li class="${i < n ? 'got' : on && i === n ? 'next' : ''}">${i < n ? '✓' : i + 1} ${esc(coName(id))}</li>`).join('');
+    const btn = on ? '<button type="button" class="btn mini" data-co="quit">やめる</button>'
+      : `<button type="button" class="btn mini" data-co="pick" data-id="${c.id}">${st.cur && st.n > 0 ? 'このコースに かえる（スタンプは 0から）' : done ? 'もういちど' : 'このコースにする'}</button>`;
+    return `<section class="co-item${on ? ' on' : ''}"><h4>${c.icon} ${esc(c.name)} ${'●'.repeat(n)}${'○'.repeat(c.spots.length - n)}</h4><p class="co-m">${esc(CO.measureText(CO.measure(c, pos)))}</p><ol class="co-route">${route}</ol>${btn}</section>`;
+  }).join('');
+  const all = st.done.length >= CO.COURSES.length;
+  return `<div class="co-box"><h3>🗾 モデルコース</h3>${hi ? `<p class="co-hi">${esc(hi)}</p>` : ''}${items}<h4>${all ? '西尾の 1枚絵　できあがり！' : '西尾の 1枚絵'}</h4><pre class="co-mosaic" aria-label="スタンプで できる 西尾の 1枚絵">${CO.mosaic(st.done).join('\n')}</pre><button type="button" class="btn" data-co="close">とじる</button></div>`;
+}
+function openCourse(hi) {
+  if (!CO) return;
+  let el = $('coursePanel');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'coursePanel'; el.className = 'course-panel';
+    el.addEventListener('click', e => {
+      const b = e.target.closest && e.target.closest('[data-co]');
+      if (e.target === el || (b && b.dataset.co === 'close')) { el.hidden = true; return; }
+      if (!b) return;
+      if (b.dataset.co === 'pick') { S.course = CO.start(S.course, b.dataset.id); track('course_pick', { course: b.dataset.id, mode: demo ? 'play' : 'walk' }); }
+      else if (b.dataset.co === 'quit') S.course = CO.quit(S.course);
+      save(); renderCourse(); el.innerHTML = coPanelHtml();
+    });
+    document.body.appendChild(el);
+  }
+  el.innerHTML = coPanelHtml(hi); el.hidden = false;
+}
+function courseCelebrate() {   // ごほうびの 窓が とじるのを まってから、1枚絵の 窓を 出す
+  const t0 = Date.now();
+  (function wait() { if ((rewardBusy() || winBlocked()) && Date.now() - t0 < 120000) return setTimeout(wait, 700); openCourse(CO.mosaic(CO.clean(S.course).done).join('').includes(CO.BLANK) ? 'コース ぜんぶ まわった！ 絵が ひとつ そろったよ' : '西尾の 1枚絵 できあがり！'); })();
+}
+$('courseBtn').addEventListener('click', () => openCourse());
+$('courseNext').addEventListener('click', () => {   // つぎの 名所を 行き先の 札へ（自分で 選んだ 行き先と おなじ あつかい）
+  const c = CO.byId(CO.clean(S.course).cur), s = c && coSpot(c.spots[CO.clean(S.course).n]);
+  if (!s) return;
+  setGuide({ kind: 'spot', id: s.id, name: s.name, lat: s.lat, lng: s.lng, why: `${c.name}の つぎ`, mine: true, alts: [] });
+  toast(`🧭 行き先を「${s.name}」にした`);
+});
 document.addEventListener('click', e => { if (e.target.closest('[data-jump-open]')) openJump(); });   // スポットの窓の「ミニゲーム」
 $('textToggle').checked = !simple();
 if ($('komeTalkToggle') && KT) {

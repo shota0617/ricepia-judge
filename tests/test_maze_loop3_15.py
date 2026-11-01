@@ -158,7 +158,7 @@ class Cycle15QuestTests(unittest.TestCase):
         self.assertEqual(r['tracked'], [['maze_quest', {'done': False}], ['maze_quest', {'done': True}]])
 
     def test_draw_order_look_and_tag(self):
-        self.assertLess(PIXEL.index('drawMzQuest(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); }'))
+        self.assertLess(PIXEL.index('drawMzQuest(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); }'))
         self.assertIn('drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now);', PIXEL)
         self.assertIn('drawMzCacheHint(w, dpr, now); drawMzQuestTag(w, dpr, now);', PIXEL)
         d = PIXEL[PIXEL.index('function drawMzQuest('):PIXEL.index('function drawMzQuestTag(')]
@@ -175,7 +175,7 @@ class Cycle15QuestTests(unittest.TestCase):
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))   # きろくの行と数が合う
-        self.assertEqual(pi.count(',') + 1, 14)
+        self.assertEqual(pi.count(",") + 1, 15)
 
     def test_no_forbidden_words_in_diff(self):
         words = ('ぼく', 'だに', '約20%')   # このリスト自身は検査から除く

@@ -167,7 +167,7 @@ class Cycle16DinoTests(unittest.TestCase):
         self.assertEqual(r['toasts'], ['⭐ レベル2！'])
 
     def test_draw_order_look_and_tag(self):
-        self.assertLess(PIXEL.index('drawMzDino(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); }'))
+        self.assertLess(PIXEL.index('drawMzDino(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertIn('drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now);', PIXEL)
         self.assertIn('drawMzQuestTag(w, dpr, now); drawMzDinoTag(w, dpr, now);', PIXEL)
         d = PIXEL[PIXEL.index('function drawMzDino('):PIXEL.index('function drawMzDinoTag(')]
@@ -186,7 +186,7 @@ class Cycle16DinoTests(unittest.TestCase):
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))   # きろくの行と数が合う
-        self.assertEqual(pi.count(",") + 1, 15)
+        self.assertEqual(pi.count(",") + 1, 16)
 
     def test_no_forbidden_words_in_diff(self):
         words = ('ぼく', 'だに', '約20%')   # このリスト自身は検査から除く

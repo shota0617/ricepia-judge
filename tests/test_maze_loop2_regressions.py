@@ -260,3 +260,42 @@ class Cycle11DeadEndRewardTests(unittest.TestCase):
         body = grab(self.src, r'(?s)(function mzDeadTick\(\) \{.*?\n\})')
         for needle in ('mzDeadSeen.has(key)', 'MZ_DEAD_GAP', 'mzGrainAt(a, b)', 'mzIsDead(a, b)'):
             self.assertIn(needle, body)
+
+
+@unittest.skipUnless(shutil.which('node'), 'node がない')
+class Cycle13TodayWalkReviewTests(unittest.TestCase):
+    """サイクル13：きょうのさんぽの振り返り（game.js の kaoriWalkSay・todaySpotsHtml）"""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.src = (GO / 'game.js').read_text(encoding='utf-8')
+        cls.say = grab(cls.src, r"^(const WALK_SAY = \{.*\};)")
+        cls.fn = grab(cls.src, r"^(const kaoriWalkSay = .*);")
+        cls.html = grab(cls.src, r"(?s)^(function todaySpotsHtml\(day\) \{.*?\n\})")
+
+    def test_lines_are_mikawa_and_not_boku(self):
+        pool = json.loads(node(self.say + 'return JSON.stringify(Object.values(WALK_SAY));', [], [{}])[0])
+        self.assertEqual(len(pool), 5)
+        for t in pool:
+            for bad in ('ぼく', 'だに', '20%', '％'):
+                self.assertNotIn(bad, t)
+
+    def test_say_by_walk(self):
+        body = self.say + self.fn + '; return kaoriWalkSay(w, n);'
+        cases = [{'w': 0, 'n': 0}, {'w': 100, 'n': 1}, {'w': 1500, 'n': 2}, {'w': 4000, 'n': 2}, {'w': 100, 'n': 3}]
+        out = node(body, ['w', 'n'], cases)
+        self.assertEqual(len(set(out)), 5)
+
+    def test_spots_list_with_area_and_empty(self):
+        body = ("const spots = [{id:'a',name:'西尾城',area:'nishio'},{id:'b',name:'ふつうの公園'}];"
+                "const DOT_AREA = {nishio:'西尾'}; const esc = x => x;" + self.html + "; return todaySpotsHtml(day);")
+        out = node(body, ['day'], [{'day': {'spots': []}}, {'day': {}}, {'day': {'spots': ['a', 'b', 'zzz']}}])
+        self.assertEqual(out[0], '')
+        self.assertEqual(out[1], '')
+        self.assertIn('西尾城</b> <small>西尾</small>', out[2])
+        self.assertIn('<b>ふつうの公園</b></li>', out[2])
+        self.assertEqual(out[2].count('<li>'), 2)
+
+    def test_wired_into_card_without_touching_log_list(self):
+        self.assertIn("${todaySpotsHtml(day)}", self.src)
+        self.assertIn("kaoriWalkSay(walked, (day.spots || []).length)", self.src)

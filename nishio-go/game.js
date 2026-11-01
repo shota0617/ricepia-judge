@@ -3112,7 +3112,7 @@ function renderLog() {
   $('areaList').innerHTML = areas.length ? areas.map(a => {
     const art = simple() && areaArt(a.id);
     const p = areaProgress(a.id), pct = p.total ? Math.round(p.done / p.total * 100) : 0;
-    return `<li class="area-row"><span class="ico">${art ? `<img class="gthumb area-art${p.total && p.done === p.total ? ' done' : ''}" src="${art}" alt="" width="32" height="32"/>` : simple() ? PI(p.total && p.done === p.total ? 'medal' : 'flag', '') : esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>
+    return `<li class="area-row"><span class="ico">${art ? `<img class="gthumb area-art${p.total && p.done === p.total ? ' done' : ''}" src="${art}" alt="" width="32" height="32"/>` : simple() ? PI(p.total && p.done === p.total ? 'medal' : 'flag', '') : esc(a.icon || '🗾')}</span><span class="main"><b>${esc(a.name)}</b>${shogoHtml(a.id, p)}
       ${simple() ? '' : `<small>${esc(a.catch || '')}</small>`}<span class="bar"><i style="width:${pct}%"></i></span>${areaDexHtml(p)}</span><span class="num">${p.done}/${p.total}${p.total ? `<small>　${leftLabel(p.done, p.total)}</small>` : ''}</span></li>`;
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
@@ -4079,6 +4079,16 @@ const TRAIL_M = 8;   // 足あとの1マス（pixel.js の TILE_M）
 // 振り返り：きょう寄った名所（地区つき）と、かおりちゃんの三河弁ひとこと（歩いた内容で出し分け）
 const WALK_SAY = { none: 'きょうは まだ これからだらぁ。ちょっと そこまで 歩いてみりん', short: 'ちょっと歩いたねぇ。ええ散歩だがん', mid: 'よう歩いたなも。西尾の道は ええもんだなぁ', long: 'こんなに歩いたん！ えらいなぁ。足、やすめりんよ', spots: 'あっちこっち 寄れたねぇ。ええ名所めぐりだったがん' };
 const kaoriWalkSay = (walked, n) => n >= 3 ? WALK_SAY.spots : walked >= 3000 ? WALK_SAY.long : walked >= 1000 ? WALK_SAY.mid : walked >= 30 ? WALK_SAY.short : WALK_SAY.none;
+// 称号（shogo.js）：西尾の 5地区の 注目スポットを ぜんぶ めぐったら 地区の 名前の よこに。眺めるだけ（S.visits から 毎回 計算）
+const SG = window.NISHIO_SHOGO;
+function shogoHtml(id, p) { const t = SG && SG.title(id, p); return t ? ` <small class="shogo" title="${esc(t.name)}">${t.icon} ${esc(t.name)}</small>` : ''; }
+// めぐった 名所の 数の 段階で ふえる ひとこと（「きょうのさんぽ」の かおりちゃんに 1行 足すだけ）
+function shogoSayHtml() {
+  if (!SG) return '';
+  const ids = Object.keys(SG.TITLES), all = spotMeta.loaded && ids.every(id => SG.title(id, areaProgress(id)));
+  const t = SG.say(SG.tier(Object.keys(S.visits || {}).length, all));
+  return t ? `<p class="kaori-say">${PIA('talk', 'かおりちゃん')} ${esc(t)}</p>` : '';
+}
 function todaySpotsHtml(day) {
   const list = (day.spots || []).map(id => spots.find(x => x.id === id)).filter(Boolean);
   if (!list.length) return '';
@@ -4095,7 +4105,7 @@ function todayWalkCard() {
   return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
     <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
     <p class="word">${esc(word)}</p>
-    ${todaySpotsHtml(day)}<p class="kaori-say">${PIA('talk', 'かおりちゃん')} ${esc(kaoriWalkSay(walked, (day.spots || []).length))}</p>
+    ${todaySpotsHtml(day)}<p class="kaori-say">${PIA('talk', 'かおりちゃん')} ${esc(kaoriWalkSay(walked, (day.spots || []).length))}</p>${shogoSayHtml()}
     ${dayGoals(day)}
     <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}（つぎの節目 ${fmtM(trailMile(trailMileNext()))} まで あと ${fmtM(Math.max(0, trailMile(trailMileNext()) - (S.trail || 0) * TRAIL_M))}）${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}${S.h100best ? `・100歩たんけんの自己ベスト ${S.h100best}マス` : ''}</small></div>`;   // きょうの数は 上の札に
 }

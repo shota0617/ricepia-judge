@@ -3944,6 +3944,14 @@ function renderBags() {
 }
 // きょうのさんぽ（ゲームのおわりに出る「この試合のハイライト」のように）：歩いた距離・はじめて歩いた道・チェックインの3つと、ひとこと
 const TRAIL_M = 8;   // 足あとの1マス（pixel.js の TILE_M）
+// 振り返り：きょう寄った名所（地区つき）と、かおりちゃんの三河弁ひとこと（歩いた内容で出し分け）
+const WALK_SAY = { none: 'きょうは まだ これからだらぁ。ちょっと そこまで 歩いてみりん', short: 'ちょっと歩いたねぇ。ええ散歩だがん', mid: 'よう歩いたなも。西尾の道は ええもんだなぁ', long: 'こんなに歩いたん！ えらいなぁ。足、やすめりんよ', spots: 'あっちこっち 寄れたねぇ。ええ名所めぐりだったがん' };
+const kaoriWalkSay = (walked, n) => n >= 3 ? WALK_SAY.spots : walked >= 3000 ? WALK_SAY.long : walked >= 1000 ? WALK_SAY.mid : walked >= 30 ? WALK_SAY.short : WALK_SAY.none;
+function todaySpotsHtml(day) {
+  const list = (day.spots || []).map(id => spots.find(x => x.id === id)).filter(Boolean);
+  if (!list.length) return '';
+  return `<ul class="tw-spots">${list.map(sp => `<li><b>${esc(sp.name)}</b>${sp.area && DOT_AREA[sp.area] ? ` <small>${esc(DOT_AREA[sp.area])}</small>` : ''}</li>`).join('')}</ul>`;
+}
 function todayWalkCard() {
   const day = dayState(), walked = day.walked || 0, fresh = (day.trail || 0) * TRAIL_M, best = S.best || { m: 0, date: '' };
   const isBest = best.date === day.date && walked >= 300 && day.bestToast;
@@ -3955,6 +3963,7 @@ function todayWalkCard() {
   return `<div class="todaywalk"><p><b>${PIA('feet', '')} きょうのさんぽ</b></p>
     <div class="tw3">${cell('歩いた', fmtM(walked))}${cell('はじめての道', fmtM(fresh))}${cell('チェックイン', (day.checkins || 0) + '回')}</div>
     <p class="word">${esc(word)}</p>
+    ${todaySpotsHtml(day)}<p class="kaori-say">${PIA('talk', 'かおりちゃん')} ${esc(kaoriWalkSay(walked, (day.spots || []).length))}</p>
     ${dayGoals(day)}
     <small>自己ベスト ${best.m ? fmtM(best.m) : '—'}・これまでに歩いた道 ${fmtM((S.trail || 0) * TRAIL_M)}（つぎの節目 ${fmtM(trailMile(trailMileNext()))} まで あと ${fmtM(Math.max(0, trailMile(trailMileNext()) - (S.trail || 0) * TRAIL_M))}）${S.chain && S.chain.best >= 2 ? `・いちばんの れんさ ${S.chain.best}` : ''}${S.h100best ? `・100歩たんけんの自己ベスト ${S.h100best}マス` : ''}</small></div>`;   // きょうの数は 上の札に
 }

@@ -7768,7 +7768,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -9823,16 +9823,19 @@ function drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 最後の 回�
     }
   }
 }
-function drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T) {   // 小さな 四角の 米つぶ（淡い 色。金の 米つぶより ずっと 小さい）
-  const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), q = Math.max(1, Math.round(T / 8));
+// パックマンの ドットの 並びのように、主人公の 近くの 米つぶが 波のように ふくらんで 金いろに 光る（0〜1。7マスより 遠い・動きを へらす ときは 0）
+function mzPebWave(d, now) { return d === null || d > 7 || calmMotion ? 0 : Math.max(0, Math.sin(now / 280 - d * 0.9)); }
+function drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 小さな 四角の 米つぶ（淡い 色。金の 米つぶより ずっと 小さい）
+  const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), q = Math.max(1, Math.round(T / 8)), me = rp.x === null ? null : [rp.x / MZ_K, rp.y / MZ_K];
   for (let ry = Math.floor(r0 / MZ_R); ry <= Math.floor(r1 / MZ_R); ry++) for (let rx = Math.floor(c0 / MZ_R); rx <= Math.floor(c1 / MZ_R); rx++) {
     const a = mzAreas.get(rx + '_' + ry);   // 読めている 区域だけ（ここでは 読みに いかない）
     if (!a) continue;
     for (let cy = Math.max(r0, a.y0); cy <= Math.min(r1, a.y0 + MZ_R - 1); cy++) for (let cx = Math.max(c0, a.x0); cx <= Math.min(c1, a.x0 + MZ_R - 1); cx++) {
       if (!mzPebOk(a, cx, cy)) continue;
       const p = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), X = Math.round(ox + p[0] * T), Y = Math.round(oy + p[1] * T);
-      ctx.fillStyle = 'rgba(26,26,26,.3)'; ctx.fillRect(X - q - 1, Y - q - 1, q * 2 + 2, q * 2 + 2);
-      ctx.fillStyle = 'rgba(255,250,232,.9)'; ctx.fillRect(X - q, Y - q, q * 2, q * 2);
+      const w = mzPebWave(me ? Math.hypot(cx + 0.5 - me[0], cy + 0.5 - me[1]) : null, now), qq = Math.round(q * (1 + 0.9 * w));
+      ctx.fillStyle = 'rgba(26,26,26,.3)'; ctx.fillRect(X - qq - 1, Y - qq - 1, qq * 2 + 2, qq * 2 + 2);
+      ctx.fillStyle = w > 0.5 ? 'rgba(255,214,102,.95)' : 'rgba(255,250,232,.9)'; ctx.fillRect(X - qq, Y - qq, qq * 2, qq * 2);
     }
   }
 }

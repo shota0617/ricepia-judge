@@ -31,7 +31,7 @@ class StationLink(unittest.TestCase):
 
     def test_link_before_station_marks_after_flowers(self):
         t = body("drawMzTrail")
-        self.assertLess(t.index("for (const [X, Y, rgb] of flowers)"), t.index("i + 1 < stationAll.length"))
+        self.assertLess(t.index("for (const [X, Y, rgb, scale, full] of flowers)"), t.index("i + 1 < stationAll.length"))
         self.assertLess(t.index("i + 1 < stationAll.length"), t.index("of stations)"))
 
     def test_station_all_includes_offscreen_before_cull(self):

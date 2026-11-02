@@ -32,7 +32,7 @@ class Rescue(unittest.TestCase):
         self.assertIn("mzRescue.next = now + 500", tick)
 
     def test_tick_wiring(self):
-        self.assertIn("mzPurifyTick(now); mzRescueTick(now); }", PIXEL)
+        self.assertIn("mzPurifyTick(now); mzRescueTick(now); mzCubeTick(now); }", PIXEL)
 
     def test_join_and_public_api(self):
         tick = func_body("function mzRescueTick(")

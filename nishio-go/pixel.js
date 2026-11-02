@@ -11238,7 +11238,13 @@ function drawMzCubeBig(ox, oy, T, now) {   // 完成した 大きな 金の キ�
   const fade = Math.min(1, (MZ_CUBE.bigMs - (now - mzCube.doneAt)) / 500, (now - mzCube.doneAt) / 300 + 0.2);
   ctx.save(); ctx.globalAlpha = Math.max(0, fade);
   ctx.strokeStyle = `rgba(255,220,100,${(0.5 + 0.25 * Math.sin(now / 200)).toFixed(2)})`; ctx.lineWidth = Math.max(2, s / 6); ctx.beginPath(); ctx.arc(X, Y, s * (2 + 0.12 * Math.sin(now / 200)), 0, Math.PI * 2); ctx.stroke();
-  mzCubePoly(X, Y, s, calmMotion ? 0.6 : (now - mzCube.doneAt) / 700);
+  const el = now - mzCube.doneAt, ang = calmMotion ? 0.6 : el / 700, asm = calmMotion ? 1 : Math.min(1, el / 900);   // asm：かけらが 中心へ 組み上がる 進み
+  const cxp = Math.round(ox + on[0] * T), cyp = Math.round(oy + on[1] * T), R = T * 1.35;   // 視点フレーム：かおりちゃんの まわりを 回る 金の 菱形
+  ctx.strokeStyle = `rgba(255,210,70,${(0.55 + 0.2 * Math.sin(now / 240)).toFixed(2)})`; ctx.lineWidth = Math.max(2, T / 10); ctx.lineJoin = 'round'; ctx.beginPath();
+  for (let i = 0; i < 4; i++) { const a = ang + i * Math.PI / 2, px = cxp + Math.cos(a) * R, py = cyp + Math.sin(a) * R; if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py); }
+  ctx.closePath(); ctx.stroke();
+  if (asm < 1) for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4, d = s * 2.2 * (1 - asm); mzCubePoly(Math.round(X + Math.cos(a) * d), Math.round(Y + Math.sin(a) * d), s * 0.38 * (1 - asm * 0.5), ang); }   // 四方から 飛んで くる かけら（中心へ たどりついて 大きな キューブに 吸いこまれる）
+  mzCubePoly(X, Y, s * (0.55 + 0.45 * asm), ang);
   ctx.restore();
 }
 function drawMzCubeShelf(w, dpr, now) {   // 迷路の 上の キューブ棚（4つの 小さな 立方体の 絵。取った 分は 金・まだは 輪郭だけ）。文字・数字は 書かない。ピース棚の すぐ 下

@@ -9636,10 +9636,11 @@ function drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now) {
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
-  const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [], flowers = [], stations = [];
+  const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [], flowers = [], stations = [], stationAll = [];
   let seq = 0;   // 通った 順の 通し番号（画面の 外の マスも 数える）
   for (const [cx, cy] of mzTrail.values()) {
     seq++;
+    if (seq % 10 === 0) { const pp = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), arA = mzArea(cx, cy); stationAll.push([ox + pp[0] * T, oy + pp[1] * T, arA ? mzZoneTint(arA).rgb : '220,70,60']); }   // リンク用は 画面の 外の 駅も ふくむ（とばして 結ばない・画面を 横切る 線も 描く）
     if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
     const at = (x, y) => { const p = mzOn(x, y); return [ox + p[0] * T, oy + p[1] * T]; };   // ゆるい めいろ：角の マスでは 道すじの カーブの 上に
     const a = at((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K);
@@ -9659,6 +9660,11 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太�
     ctx.fillStyle = 'rgba(' + rgb + ',.95)';
     for (let i = 0; i < 5; i++) { const an = i * Math.PI * 2 / 5 - Math.PI / 2; ctx.beginPath(); ctx.arc(X + Math.cos(an) * pr * 1.4, Y + Math.sin(an) * pr * 1.4, pr, 0, Math.PI * 2); ctx.fill(); }
     ctx.fillStyle = '#ffd84a'; ctx.beginPath(); ctx.arc(X, Y, pr * 0.8, 0, Math.PI * 2); ctx.fill();
+  }
+  for (let i = 0; i + 1 < stationAll.length; i++) {   // 駅と 駅の リンク（Ingress Prime）：つづく 駅を 地区色の 直線で むすぶ。下地の 薄い 光 ＋ 白い 芯線。駅印の 下。毎フレーム おなじ
+    const p = stationAll[i], q = stationAll[i + 1];
+    ctx.strokeStyle = 'rgba(' + p[2] + ',.28)'; ctx.lineWidth = Math.max(3, T * 0.22); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = Math.max(1.5, T * 0.07); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
   }
   const sr = Math.max(4, T * 0.38);
   for (const [X, Y, rgb] of stations) {   // 駅印（駅メモ！）：白い 円 ＋ 地区色の 太い 輪 ＋ 中心の 点。毎フレーム おなじ

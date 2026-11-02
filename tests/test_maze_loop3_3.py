@@ -46,7 +46,7 @@ class MapLookTest(unittest.TestCase):
     def test_map_tint_uses_area_color_and_progress(self):
         self.assertIn('mzZoneTint', PIXEL)
         self.assertIn('G.areaTint(a.zone, G.areaProgress(a.zone))', PIXEL)
-        self.assertIn('rgba(${zt.rgb},${Math.min(0.42, f.tint * zt.k).toFixed(2)})', PIXEL)
+        self.assertIn('rgba(${zt.rgb},${Math.min(0.58, f.tint * zt.k).toFixed(2)})', PIXEL)
 
     def test_area_name_shown_with_color(self):
         self.assertIn('<i class="zn">${esc(ar.name)}</i>', GAME)

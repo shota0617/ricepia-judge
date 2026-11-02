@@ -9633,22 +9633,23 @@ function drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now) {
     }
   }
 }
-function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // マスの まん中に 米つぶ（丸。Godot の 記録係には ellipse が ないので arc だけ）、通れる となりの 足あとへ 点を 2つ（「・・」で つながって 見える）
+function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
-  const S = MZ_K * T, c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
-  const rg = Math.max(1.5, T * 0.26), rd = Math.max(1, T * 0.16), dots = [], grains = [];
+  const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
+  const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [];
   for (const [cx, cy] of mzTrail.values()) {
     if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
     const at = (x, y) => { const p = mzOn(x, y); return [ox + p[0] * T, oy + p[1] * T]; };   // ゆるい めいろ：角の マスでは 道すじの カーブの 上に
-    grains.push(at((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K));
-    for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) for (const f of [1 / 3, 2 / 3]) dots.push(at((cx + 0.5 + dx * f) * MZ_K, (cy + 0.5 + dy * f) * MZ_K));
+    const a = at((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K);
+    grains.push(a);
+    for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) links.push([a, at((cx + 0.5 + dx) * MZ_K, (cy + 0.5 + dy) * MZ_K)]);
   }
-  ctx.fillStyle = 'rgba(26,26,26,.45)';
-  for (const [X, Y] of dots) { ctx.beginPath(); ctx.arc(X, Y, rd + 1, 0, Math.PI * 2); ctx.fill(); }
-  for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, rg + 1, 0, Math.PI * 2); ctx.fill(); }
-  ctx.fillStyle = 'rgba(255,250,232,.85)';
-  for (const [X, Y] of dots) { ctx.beginPath(); ctx.arc(X, Y, rd, 0, Math.PI * 2); ctx.fill(); }
-  for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, rg, 0, Math.PI * 2); ctx.fill(); }
+  ctx.lineCap = 'round';
+  const stroke = (col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); for (const [p, q] of links) { ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); } ctx.stroke(); };
+  const dot = (col, r) => { ctx.fillStyle = col; for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill(); } };
+  stroke('rgba(26,26,26,.35)', lw + 2); dot('rgba(26,26,26,.35)', rg + 1);
+  stroke('rgba(255,250,232,.55)', lw); dot('rgba(255,250,232,.55)', rg);
+  ctx.lineCap = 'butt';
 }
 // 米粒ドット（パックマン。踏破の見える化）：めいろの 通路の マスの まん中に 小さくて 淡い 米つぶを 置き、お米が マスに 入ると 消える。歩いた 道が 見えて 消えていく。
 // 金の 米つぶ（行き止まり・ひろうと +pt）・ごはんつぶの 列（ふれて ひろう・音）・足あと（いまの ゴール分）とは べつ。ポイント・収集・袋には 関係しない。
@@ -9713,9 +9714,9 @@ const MZ_FOG = { 1: { sight: 0, veil: 0.2 }, 2: { sight: 9, veil: 0.3 }, 3: { si
 function mzFogAlpha(scale, d, visited, bonus = 0) {   // d：お米からの 距離（マス）。{ veil 白いもやの こさ, tint 踏破の 色づけ }
   const f = MZ_FOG[Math.min(4, Math.max(1, Math.round(scale)))];
   const sight = f.sight ? f.sight + bonus : 0;   // bonus：たいまつを もっている 間の 視界の ふえる マス数（呼ぶ 側が mzTorchBonus() を 渡す。ここが 半径の 合流点）
-  if (!sight) return { veil: visited ? 0 : f.veil, tint: visited ? 0.16 : 0 };   // ズームアウト：視界の 制限は なく、未踏の 通路網を うすく
-  if (d <= sight) return { veil: 0, tint: visited ? 0.16 : 0 };
-  return { veil: visited ? f.veil * 0.4 : f.veil, tint: visited ? 0.1 : 0 };
+  if (!sight) return { veil: visited ? 0 : f.veil, tint: visited ? 0.34 : 0 };   // ズームアウト：視界の 制限は なく、未踏の 通路網を うすく
+  if (d <= sight) return { veil: 0, tint: visited ? 0.34 : 0 };
+  return { veil: visited ? f.veil * 0.4 : f.veil, tint: visited ? 0.22 : 0 };
 }
 // 地区ごとの色味（第3弾サイクル3 P2。テクテクライフの「歩いた所が 自分の色に なる」）：区域の まん中の 地区を 1回 きめて、歩いた 通路の 色づけを 地区の 色に。コンプ率が 高い 地区ほど はっきり（game.js の areaTint）。となりの 市町は 金色のまま
 function mzZoneTint(a) {
@@ -9739,7 +9740,7 @@ function mzFogCells(tx0, ty0, tx1, ty1, ox, oy, T, want) {   // want：'tint' �
     for (let cy = Math.max(r0, a.y0); cy <= Math.min(r1, a.y0 + MZ_R - 1); cy++) for (let cx = Math.max(c0, a.x0); cx <= Math.min(c1, a.x0 + MZ_R - 1); cx++) {
       if (a.t[(cy - a.y0) * MZ_R + cx - a.x0] !== 1 || (gp && gp[0] === cx && gp[1] === cy)) continue;   // 通路だけ。ゴールの マスは フォグの 外
       const visited = mzTrail.has(cx + ',' + cy) || !!(a.eaten && a.eaten.has(cx + ',' + cy)), d = me ? Math.hypot(cx + 0.5 - me[0], cy + 0.5 - me[1]) : 0, f = mzFogAlpha(sc, d, visited, tb);
-      const k = want === 'tint' ? (f.tint < 0.01 ? '' : `rgba(${zt.rgb},${Math.min(0.42, f.tint * zt.k).toFixed(2)})`) : (f.veil < 0.01 ? '' : `rgba(244,240,222,${f.veil.toFixed(2)})`);
+      const k = want === 'tint' ? (f.tint < 0.01 ? '' : `rgba(${zt.rgb},${Math.min(0.58, f.tint * zt.k).toFixed(2)})`) : (f.veil < 0.01 ? '' : `rgba(244,240,222,${f.veil.toFixed(2)})`);
       if (!k) continue;
       const b = buckets.get(k) || buckets.set(k, []).get(k);
       b.push(ox + cx * S, oy + cy * S);

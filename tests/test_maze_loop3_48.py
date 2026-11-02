@@ -91,7 +91,7 @@ class Diff(unittest.TestCase):
 
     def test_changed_files(self):
         out = git("diff", "--name-only", "origin/main").split()
-        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop3_48.py", "tests/test_maze_loop3_49.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_36.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_46.py"}
+        allowed = {"nishio-go/pixel.js", "tests/test_maze_loop3_48.py", "tests/test_maze_loop3_49.py", "tests/test_maze_loop3_50.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_36.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_46.py"}
         self.assertTrue(set(out) <= allowed, out)
 
 

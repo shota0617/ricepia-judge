@@ -9620,7 +9620,7 @@ function drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // はまった タ
   }
   ctx.restore();
 }
-// 一度通った 近道（P5）：ゴールの 戸（mzGate）の さかいを お米が またいだら「通った」。通った 戸だけ 金色に 光って のこり、まだの 戸は うすい 白い 点だけ
+// 一度通った 近道（P5）：ゴールの 戸（mzGate）の さかいを お米が またいだら「通った」。通った 戸だけ 金色の 門に 光って のこり、まだの 戸は クリーム色の 石の 門
 function mzGateWalk(prev, a, b) {
   if (!prev || !mzGate.size) return;
   const [pa, pb] = prev.split(',').map(Number), dx = a - pa, dy = b - pb;
@@ -9636,15 +9636,23 @@ function drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now) {
     if (!m) continue;
     const cx = +m[1], cy = +m[2], dx = m[3] === 'r' ? 1 : 0, dy = 1 - dx, used = mzGateUsed.has(k);
     if (cx < tx0 / MZ_K - 2 || cx > tx1 / MZ_K + 2 || cy < ty0 / MZ_K - 2 || cy > ty1 / MZ_K + 2) continue;
-    for (const f of used ? [0.25, 0.5, 0.75] : [0.5]) {
-      const p = mzOn((cx + 0.5 + dx * f) * MZ_K, (cy + 0.5 + dy * f) * MZ_K), X = Math.round(ox + p[0] * T), Y = Math.round(oy + p[1] * T);
-      if (used) {
-        const h = q * 2 + Math.round(pulse * q);
-        ctx.fillStyle = `rgba(255,214,102,${0.28 + pulse * 0.2})`; ctx.fillRect(X - h, Y - h, h * 2, h * 2);
-        ctx.fillStyle = '#7a4a00'; ctx.fillRect(X - q - 1, Y - q - 1, q * 2 + 2, q * 2 + 2);
-        ctx.fillStyle = '#ffe066'; ctx.fillRect(X - q, Y - q, q * 2, q * 2);
-      } else { ctx.fillStyle = 'rgba(255,250,232,.7)'; ctx.fillRect(X - 1, Y - 1, 3, 3); }
+    // 戸の 開き口（2マスの さかいの まん中）に、さかいに 沿った 2本の 柱と それを 結ぶ 梁で「門」の 形を 描く
+    const p = mzOn((cx + 0.5 + dx * 0.5) * MZ_K, (cy + 0.5 + dy * 0.5) * MZ_K), X = Math.round(ox + p[0] * T), Y = Math.round(oy + p[1] * T);
+    const px = dy, py = dx, gap = T * 0.42, s = Math.max(3, T * 0.2), e = Math.round(s / 2);
+    const ax = X + px * gap, ay = Y + py * gap, bx = X - px * gap, by = Y - py * gap;   // 2本の 柱の 中心（梁と 共有）
+    if (used) {
+      const h = q * 2 + Math.round(pulse * q);
+      ctx.fillStyle = `rgba(255,214,102,${0.28 + pulse * 0.2})`; ctx.fillRect(X - h, Y - h, h * 2, h * 2);
     }
+    ctx.save();
+    ctx.lineCap = 'butt'; ctx.lineWidth = Math.max(2, T * 0.14);
+    ctx.strokeStyle = used ? '#ffd24a' : `rgba(255,248,230,${0.55 + 0.3 * pulse})`;
+    ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax - px * T * 0.22, ay - py * T * 0.22); ctx.moveTo(bx, by); ctx.lineTo(bx + px * T * 0.22, by + py * T * 0.22); ctx.stroke();   // 梁は 柱から 内がわへ 少しだけ（まん中は 開けて、通れる 開き口が 見えるように）
+    for (const [qx, qy] of [[ax, ay], [bx, by]]) {
+      ctx.fillStyle = '#1a1a1a'; ctx.fillRect(Math.round(qx - e - 1), Math.round(qy - e - 1), e * 2 + 2, e * 2 + 2);
+      ctx.fillStyle = used ? '#ffe066' : '#fff8e6'; ctx.fillRect(Math.round(qx - e), Math.round(qy - e), e * 2, e * 2);
+    }
+    ctx.restore();
   }
 }
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）

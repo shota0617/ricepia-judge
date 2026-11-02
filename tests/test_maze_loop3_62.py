@@ -82,7 +82,7 @@ class Maze(unittest.TestCase):
 
     def test_scope_and_words(self):
         files = git("diff", "--name-only", "origin/main").split()
-        self.assertTrue(set(files) <= {"nishio-go/pixel.js", "tests/test_maze_loop3_62.py", "tests/test_maze_loop3_63.py", "tests/test_maze_loop3_65.py", "tests/test_maze_loop3_66.py", "tests/test_maze_loop3_12.py", "tests/test_maze_loop3_13.py", "tests/test_maze_loop3_14.py", "tests/test_maze_loop3_15.py", "tests/test_maze_loop3_16.py", "tests/test_maze_loop3_17.py", "tests/test_maze_loop3_36.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_46.py", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_48.py"}, files)
+        self.assertTrue(set(files) <= {"nishio-go/pixel.js", "tests/test_maze_loop3_62.py", "tests/test_maze_loop3_63.py", "tests/test_maze_loop3_65.py", "tests/test_maze_loop3_66.py", "tests/test_maze_loop3_67.py", "tests/test_maze_loop3_12.py", "tests/test_maze_loop3_13.py", "tests/test_maze_loop3_14.py", "tests/test_maze_loop3_15.py", "tests/test_maze_loop3_16.py", "tests/test_maze_loop3_17.py", "tests/test_maze_loop3_36.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_46.py", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_48.py"}, files)
         body = "\n".join(ADDED)
         for w in ["ぼく", "だに", "約20%"]:
             self.assertNotIn(w, body)

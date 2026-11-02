@@ -32,7 +32,7 @@ class Cycle18FogTests(unittest.TestCase):
         src = (GO / 'pixel.js').read_text(encoding='utf-8')
         cls.table = re.search(r"^(const MZ_FOG = [^\n]*)", src, re.M).group(1)
         cls.alpha = re.search(r"^(function mzFogAlpha\(.*?\n\})", src, re.M | re.S).group(1)
-        cls.draw = "\n".join(re.search(r"^(function %s\(.*?\n\})" % n, src, re.M | re.S).group(1) for n in ("mzFogCells", "mzFogFill", "drawMzFogTint", "drawMzFogVeil"))
+        cls.draw = re.search(r"^(function mzGoalBeacon\(.*)", src, re.M).group(1) + "\n" + "\n".join(re.search(r"^(function %s\(.*?\n\})" % n, src, re.M | re.S).group(1) for n in ("mzFogCells", "mzFogFill", "drawMzFogTint", "drawMzFogVeil"))
 
     def fog(self, body):
         return node(self.table + '\n' + self.alpha + '\n' + body)
@@ -60,7 +60,7 @@ class Cycle18FogTests(unittest.TestCase):
         pre = ("const MZ_R = 3, MZ_K = 1; let rec = false; const rp = { x: -20, y: 0.5 }; const mzScale = %d;"
                "const mzAreas = new Map([['0_0', { x0: 0, y0: 0, t: new Uint8Array([1,1,1, 0,0,0, 0,0,0]), eaten: new Set(['0,0']) }]]);"
                "const mzTrail = new Map(); const mzZoneTint = () => ({ rgb: '255,214,102', k: 1 }); const mzRt = { path: %s }; const mzOn = (x, y) => [x, y]; const mzViewClear = () => false;"  # サイクル13：見晴らし中でない前提（もやは通常どおり描く）
-               "const calls = []; const ctx = { canvas: { width: 999, height: 999 }, fillStyle: '', fillRect(x, y, w, h) { calls.push([String(this.fillStyle), x]); }, createRadialGradient() { return { addColorStop() {}, toString() { return 'glow'; } }; } };"
+               "const calls = []; const ctx = { canvas: { width: 999, height: 999 }, fillStyle: '', fillRect(x, y, w, h) { calls.push([String(this.fillStyle), x]); }, createRadialGradient() { return { addColorStop() {}, toString() { return 'glow'; } }; }, createLinearGradient() { return { addColorStop() {}, toString() { return 'pillar'; } }; } };"
                % (scale, goal)
                )
         return node(pre + self.table + '\n' + self.alpha + '\n' + self.draw + "\ndrawMzFogTint(0, 0, 3, 1, 0, 0, 10); drawMzFogVeil(0, 0, 3, 1, 0, 0, 10, 0); return calls;")

@@ -9828,16 +9828,23 @@ function drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T) {   // 早い 回：踏破
   if (rec) return;
   mzFogFill(mzFogCells(tx0, ty0, tx1, ty1, ox, oy, T, 'tint'), MZ_K * T);
 }
+function mzGoalBeacon(n) { return typeof n !== 'number' || !(n >= 0) || n >= 40 ? 0 : Math.min(1, Math.max(0, (40 - n) / 40)); }   // ゴールまでの 残りマス数 → 光の柱の 育ち（0〜1。40マスより 遠いと 0、ゴールで 1）
 function drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 最後の 回：視界の 外の 小物・ヒント・生きもの・ドットを 白い もやで 覆う。そのあと ゴールの 光（ゴールの マスは もやの 外）
   if (rec) return;
   const S = MZ_K * T, gp = mzRt.path && mzRt.path.length ? mzRt.path[mzRt.path.length - 1] : null;
   if (!mzViewClear(now)) mzFogFill(mzFogCells(tx0, ty0, tx1, ty1, ox, oy, T, 'veil'), S);   // 見晴らし中は もやを 描かない（ゴールの 光は そのまま）
   if (gp) {   // ゴールの マス：フォグに かかわらず ぼんやり 光る（旗と 輪は drawMzGoal）
-    const p = mzOn((gp[0] + 0.5) * MZ_K, (gp[1] + 0.5) * MZ_K), X = ox + p[0] * T, Y = oy + p[1] * T, R = S * 0.9, pulse = (Math.sin(now / 260) + 1) / 2;
-    if (X > -R && Y > -R && X < ctx.canvas.width + R && Y < ctx.canvas.height + R) {
+    const p = mzOn((gp[0] + 0.5) * MZ_K, (gp[1] + 0.5) * MZ_K), X = ox + p[0] * T, Y = oy + p[1] * T, prox = mzGoalBeacon(mzRt.path ? mzRt.path.length - 1 : null), R = S * (0.9 + 0.6 * prox), ph = S * (1.2 + 2.8 * prox), pw = S * (0.34 + 0.3 * prox), pulse = (Math.sin(now / 260) + 1) / 2;
+    if (X + R > 0 && X - R < ctx.canvas.width && Y + R > 0 && Y - ph < ctx.canvas.height) {   // 光と柱を合わせた範囲が画面と重なるときだけ（柱の上端が画面内なら足元が画面下でも描く）
       const g = ctx.createRadialGradient(X, Y, 0, X, Y, R);
-      g.addColorStop(0, `rgba(255,224,102,${0.45 + pulse * 0.2})`); g.addColorStop(1, 'rgba(255,224,102,0)');
+      g.addColorStop(0, `rgba(255,224,102,${Math.min(0.95, 0.45 + pulse * 0.2 + prox * 0.25)})`); g.addColorStop(1, 'rgba(255,224,102,0)');
       ctx.fillStyle = g; ctx.fillRect(X - R, Y - R, R * 2, R * 2);
+      const pg = ctx.createLinearGradient(0, Y, 0, Y - ph);   // 光の柱：近づくほど 高く・太く・明るい
+      pg.addColorStop(0, `rgba(255,224,102,${0.28 + 0.4 * prox})`); pg.addColorStop(1, 'rgba(255,224,102,0)');
+      ctx.fillStyle = pg; ctx.fillRect(X - pw / 2, Y - ph, pw, ph);
+      const cg = ctx.createLinearGradient(0, Y, 0, Y - ph * 0.7);   // 細く 明るい 芯（上へ消える）
+      cg.addColorStop(0, `rgba(255,246,214,${0.25 + 0.4 * prox})`); cg.addColorStop(1, 'rgba(255,246,214,0)');
+      ctx.fillStyle = cg; ctx.fillRect(X - pw / 6, Y - ph * 0.7, pw / 3, ph * 0.7);
     }
   }
 }

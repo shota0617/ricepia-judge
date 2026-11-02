@@ -11623,8 +11623,17 @@ function mzStyle(cx, cy) {
   if (!unread && mzCastle && area !== null) mzStyleC.set(k, v);   // 地図・名所・地区が わかってから おぼえる（まだなら あとで きめなおす）
   return v;
 }
+// ミズ・パックマン式：行き先（ゴール）が かわると 生け垣の 色が かわる。ゴールの 名前（id）の 文字コードの 合計 % 4 で きまる（同じ 行き先なら いつも 同じ色・ゴールが 無ければ 0）。0 は 従来の 緑。いつもの 生け垣（ike）と 直角めいろの 緑の 壁だけ（茶の木・石垣・黒塀などは 土地の 種類なので そのまま）
+const MZ_WALL_THEMES = [['#2f7a58', '#256548', '#3d9168', '#5aac7c'], ['#2a7a7a', '#1f6262', '#36908f', '#58aeab'], ['#24566e', '#1b4560', '#306a84', '#5088a2'], ['#6a7d2c', '#55671f', '#7f943a', '#a2b858']];   // [基調, こい葉, うすい葉, てかり]
+function mzWallTheme() {
+  const id = String(mzRt.gid || '');
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n += id.charCodeAt(i);
+  return n % 4;
+}
+const mzWallCols = () => MZ_WALL_THEMES[mzWallTheme()];   // 壁の 色は ここから（基調・こい葉・うすい葉・てかり）
 function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱの 模様（16×16 点・地図に くっついて 動く）。春は ところどころ つつじの 花
-  const spring = mapSeason() === 0, key = style + (spring ? 's' : 'n') + (style === 'ine' ? PADDY_TILE : '');   // 稲の 垣は 田んぼの ようすごとに
+  const spring = mapSeason() === 0, wc = mzWallCols(), key = style + (spring ? 's' : 'n') + (style === 'ine' ? PADDY_TILE : '') + (style === 'ike' ? mzWallTheme() : '');   // 稲の 垣は 田んぼの ようすごとに
   if (!mzLayer.pats) mzLayer.pats = {};
   if (!mzLayer.pats[key]) {
     const c = document.createElement('canvas'); c.width = c.height = 16;
@@ -11667,8 +11676,8 @@ function mzHedgePat(x, ox, oy, T, style = 'ike') {   // 生け垣の 葉っぱ�
       for (let i = 0; i < 12; i++) px('#4a443d', (rn() * 16) | 0, (rn() * 16) | 0, 1, 2);   // 木目
       px('#8f877a', 0, 0, 16, 1); px('#5a544b', 0, 1, 16, 1);   // 笠の 瓦（白い しまに 見えない ように 暗めに）
     } else {
-      px('#2f7a58', 0, 0, 16, 16);
-      for (let i = 0; i < 70; i++) { const r = rn(); g.fillStyle = r < 0.4 ? '#256548' : r < 0.8 ? '#3d9168' : '#5aac7c'; g.fillRect((rn() * 16) | 0, (rn() * 16) | 0, 1 + (rn() < 0.3), 1); }   // こい葉・うすい葉・てかり
+      px(wc[0], 0, 0, 16, 16);
+      for (let i = 0; i < 70; i++) { const r = rn(); g.fillStyle = r < 0.4 ? wc[1] : r < 0.8 ? wc[2] : wc[3]; g.fillRect((rn() * 16) | 0, (rn() * 16) | 0, 1 + (rn() < 0.3), 1); }   // こい葉・うすい葉・てかり
       if (spring) for (let i = 0; i < 3; i++) { const fx = (rn() * 14) | 0, fy = (rn() * 14) | 0; g.fillStyle = '#f07aa0'; g.fillRect(fx, fy, 2, 2); g.fillStyle = '#ffd0e0'; g.fillRect(fx, fy, 1, 1); }
     }
     mzLayer.pats[key] = { c, p: null };
@@ -11683,7 +11692,7 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K), S = MZ_K * T;
   const m = ctx.getTransform(), live = mzSoft.dv !== 0 && mazeOn(), dk = mazeOn() && mzSoft.dent > 0.01 ? [mzSoft.dent.toFixed(2), mzSoft.x.toFixed(1), mzSoft.y.toFixed(1)].join('/') : '';   // ぷるぷる ゆれて いる 間は 毎こま 描く。おさまった へこみ（押しつけた まま）は 下絵に 入れて 使い回す
   // 下絵の 使い回し：画面の 位置・大きさ・読めた 区域・参道・生け垣の 種類・季節が 同じで、生け垣が へこんで いなければ、前の 下絵を そのまま 貼る（止まって いる 間の 重さを へらす）
-  const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason(), dk].join();
+  const key = [ox, oy, T, ctx.canvas.width, ctx.canvas.height, m.a, m.b, m.c, m.d, m.e, m.f, mzCurveC.key, mzStyleC.size, mapSeason(), dk, mzWallTheme()].join();
   if (!live && key === mzLayer.key) { mzBlit(); return; }
   const blocks = [], net = new Path2D(), nets = {};
   let n = 0;
@@ -11708,7 +11717,7 @@ function drawMaze(tx0, ty0, tx1, ty1, ox, oy, T) {
   L.fillStyle = 'rgba(28,70,52,.4)'; for (const [X, Y] of blocks) L.fillRect(X, Y, S, S);   // 壁の かたまりの 台
   L.strokeStyle = '#0d2219'; L.lineWidth = wo; L.stroke(net);   // 生け垣の 外の 黒い ふち
   L.lineWidth = wo - 2 * u;
-  for (const st of MZ_STYLES) if (nets[st]) { L.strokeStyle = mzHedgePat(L, ox, oy, T, st) || '#2f7a58'; L.stroke(nets[st]); }   // 葉っぱ・茶の木・石垣・黒塀（マスの まわりで 種類を かえる）
+  for (const st of MZ_STYLES) if (nets[st]) { L.strokeStyle = mzHedgePat(L, ox, oy, T, st) || mzWallCols()[0]; L.stroke(nets[st]); }   // 葉っぱ・茶の木・石垣・黒塀（マスの まわりで 種類を かえる）
   L.strokeStyle = '#0d2219'; L.lineWidth = wi + 2 * u; L.stroke(net);   // 通路がわの 黒い ふち
   L.globalCompositeOperation = 'destination-out'; L.lineWidth = wi; L.stroke(net);   // 通路を くりぬく
   const dent = mzSoft.dent > 0.01 && mazeOn() ? [ox + (mzSoft.x + mzSoft.ux * (MZ_TUBE + mzSoft.dent)) * T, oy + (mzSoft.y + mzSoft.uy * (MZ_TUBE + mzSoft.dent)) * T, (MZ_HALF - MZ_TUBE) * T] : null;   // やわらかい 生け垣の へこみ（お米の 形に 押されて のびる）
@@ -11754,7 +11763,7 @@ function drawMazeGrid(tx0, ty0, tx1, ty1, ox, oy, T) {   // これまでの 直�
   const hi = hedgeImg();
   if (hi && T % 16 === 0) { drawHedges(hi, segs, ox, oy, T, S, lw); return; }   // Blender の 生け垣（読めない あいだと、半端な 大きさの ときは 下の 平らな 壁）
   ctx.fillStyle = '#0d2219'; for (const [X, Y, w, h] of segs) ctx.fillRect(X, Y, w, h);   // 黒い ふち
-  ctx.fillStyle = '#2f7a58'; for (const [X, Y, w, h] of segs) ctx.fillRect(X + u, Y + u, w - 2 * u, h - 2 * u);   // 緑の 壁
+  ctx.fillStyle = mzWallCols()[0]; for (const [X, Y, w, h] of segs) ctx.fillRect(X + u, Y + u, w - 2 * u, h - 2 * u);   // 緑の 壁（ゴールごとの 色）
   ctx.fillStyle = 'rgba(200,255,220,.55)'; for (const [X, Y, w, h] of segs) { if (w > h) ctx.fillRect(X + u, Y + u, w - 2 * u, u); else ctx.fillRect(X + u, Y + u, u, h - 2 * u); }   // 上・左の 面の てかり
 }
 // めいろの 生け垣の 絵（Blender：tools/blender/hedge.py → nishio-go/art/hedge.png）
@@ -12431,7 +12440,7 @@ const meiroApi = {
   tilt: () => tiltG, tiltAsk, tiltReset, tiltNeedsPermission, koto: (v, low) => kotoSound(v, low), splash: v => splashSound(v), boing: (v, hi) => boingSound(v, hi), rumble: v => rumbleTick(v, GROUND.road),   // rumble：転がる音（速さは 地図の マス/秒）
   pause(on) { meiroPause = !!on; dirty = true; if (on && mzNext.hold) { mzNext.hold = false; if (G.toastFlush) G.toastFlush(); } },   // 止める ときは「つぎの ゴール」で 待たせた 知らせを 出す
 };
-window.nishioPixel = { meiroApi, maze: { on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
+window.nishioPixel = { meiroApi, maze: { wallTheme: () => mzWallTheme(), on: () => mazeOn(), playing: () => active && mazeOn(), next: () => ({ want: mzNext.want, t0: mzNext.t0, on: mzNextOn(), labHide: !!mzNext.labHide, arrowDim: !!mzNext.arrowDim, box: mzNext.box || null }), goal: id => {   // id の 名所が いまの ゴール（か 2分 以内の 前の ゴール）なら、かかった 時間と めいろの 道のり
     if (!mazeOn()) return null;
     const now = performance.now(), pv = mzRt.prev, g = mzRt.gid === id ? { t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, moves: mzMv.n, run: { ...mzRt.run } } : pv && pv.id === id && now - pv.at < 120000 ? pv : null;
     if (!g || !g.t0) return null;

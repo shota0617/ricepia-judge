@@ -7768,7 +7768,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -10748,6 +10748,34 @@ function drawMzPulse(ox, oy, T, now) {   // かおりちゃんの まわりに �
     const phase = ((now % period) / period + i / count) % 1;
     ctx.strokeStyle = `rgba(${r},${g},${b},${(0.55 + 0.25 * sig) * (1 - phase)})`;
     ctx.beginPath(); ctx.arc(X, Y, S * (0.3 + (2.9 + 0.9 * sig) * phase), 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+function mzGlideWind(vx, vy, now) {   // 速く 転がる あいだだけ 後ろに 流れる 風の 線（速さ→本数・長さ・濃さ。状態は 読み書きしない）
+  const none = { n: 0, len: 0, alpha: 0, ang: 0, phase: 0 };
+  if (typeof vx !== 'number' || typeof vy !== 'number' || typeof now !== 'number' || !isFinite(vx) || !isFinite(vy) || !isFinite(now)) return none;
+  const sp = Math.hypot(vx, vy);
+  if (sp < 0.8) return none;
+  return { n: sp < 1.6 ? 3 : sp < 2.6 ? 4 : 5, len: Math.min(2.2, 0.7 + 0.55 * sp), alpha: Math.min(0.85, 0.35 + 0.18 * sp), ang: Math.atan2(vy, vx), phase: ((now / 90) % 1 + 1) % 1 };
+}
+function drawMzGlide(ox, oy, T, now) {   // かおりちゃんが 速い ときだけ、後ろに 白い 風の 流れ線（滑空の 風。止まって いる・ゆっくりでは 何も 出ない）
+  if (rec || rp.x === null || rp.x === undefined) return;
+  const w = mzGlideWind(rp.vx, rp.vy, now);
+  if (w.n === 0) return;
+  const on = mzOn(rp.x, rp.y), X = ox + on[0] * T, Y = oy + on[1] * T, S = MZ_K * T;
+  const bx = Math.cos(w.ang + Math.PI), by = Math.sin(w.ang + Math.PI), px = -Math.sin(w.ang), py = Math.cos(w.ang);
+  const flow = calmMotion ? 0 : w.phase;
+  ctx.save();
+  ctx.lineWidth = Math.max(2, T * 0.14);
+  ctx.lineCap = 'round';
+  for (let i = 0; i < w.n; i++) {
+    const side = i - (w.n - 1) / 2, off = side * S * 0.22;
+    const st = S * (0.25 + 0.1 * Math.abs(side)) + flow * S * 0.3, ln = w.len * S;
+    const x0 = X + px * off + bx * st, y0 = Y + py * off + by * st;
+    const x1 = x0 + bx * ln, y1 = y0 + by * ln;
+    const bend = (side >= 0 ? 1 : -1) * S * 0.12;
+    ctx.strokeStyle = `rgba(255,255,255,${w.alpha * (1 - 0.18 * Math.abs(side))})`;
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo((x0 + x1) / 2 + px * bend, (y0 + y1) / 2 + py * bend, x1, y1); ctx.stroke();
   }
   ctx.restore();
 }

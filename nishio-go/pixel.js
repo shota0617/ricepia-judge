@@ -9669,6 +9669,7 @@ function mzEntrancePulse(now) {   // 未踏への 入口印の 透明度（0.2�
   if (typeof now !== 'number' || !isFinite(now)) return 0.8;
   return 0.55 + 0.35 * Math.sin(now / 300);
 }
+function mzRailTiePerp(dx, dy) { if (typeof dx !== 'number' || typeof dy !== 'number' || !isFinite(dx) || !isFinite(dy) || (dx === 0 && dy === 0)) return [1, 0]; const l = Math.hypot(dx, dy); return [-dy / l, dx / l]; }   // 枕木の 向き（進行方向と 直角）。駅メモ！の 線路
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
@@ -9697,11 +9698,19 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 歩いた 道を
     if (dx === 1) { ctx.moveTo(X + S, Y); ctx.lineTo(X + S, Y + S); } else if (dx === -1) { ctx.moveTo(X, Y); ctx.lineTo(X, Y + S); } else if (dy === 1) { ctx.moveTo(X, Y + S); ctx.lineTo(X + S, Y + S); } else { ctx.moveTo(X, Y); ctx.lineTo(X + S, Y); }
     ctx.stroke();
   }
+  ctx.lineCap = 'butt'; ctx.strokeStyle = 'rgba(101,67,33,.8)'; ctx.lineWidth = Math.max(2, T * 0.14);   // 枕木（駅メモ！の 線路）：歩いた 道の つながりごとに 中点へ 直角の 茶色い 棒。塗り道より 長く、両がわに はみ出す。塗り道の 下
+  const tieH = (lw + T * 0.55) / 2;
+  ctx.beginPath();
+  for (const [p, q] of links) { const m = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2], u = mzRailTiePerp(q[0] - p[0], q[1] - p[1]); ctx.moveTo(m[0] - u[0] * tieH, m[1] - u[1] * tieH); ctx.lineTo(m[0] + u[0] * tieH, m[1] + u[1] * tieH); }
+  ctx.stroke();
   ctx.lineCap = 'round';
   const stroke = (col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); for (const [p, q] of links) { ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); } ctx.stroke(); };
   const dot = (col, r) => { ctx.fillStyle = col; for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill(); } };
   stroke('rgba(26,26,26,.35)', lw + 2); dot('rgba(26,26,26,.35)', rg + 1);
   stroke('rgba(255,250,232,.55)', lw); dot('rgba(255,250,232,.55)', rg);
+  ctx.strokeStyle = 'rgba(70,70,78,.85)'; ctx.lineWidth = Math.max(1.5, T * 0.05); ctx.beginPath();   // レール（駅メモ！の 線路）：枕木の 上に 2本の 細い 平行線。つながりごとに 直角へ ずらして 引く
+  for (const [p, q] of links) { const u = mzRailTiePerp(q[0] - p[0], q[1] - p[1]), o = T * 0.16; for (const s of [-1, 1]) { ctx.moveTo(p[0] + u[0] * o * s, p[1] + u[1] * o * s); ctx.lineTo(q[0] + u[0] * o * s, q[1] + u[1] * o * s); } }
+  ctx.stroke();
   const pr0 = Math.max(1.5, T * 0.09);   // 花びらの 半径（花 全体は 直径 約0.43T）
   for (const [X, Y, rgb, scale, full] of flowers) {   // 歩いた マスに 花（ピクミン ブルーム）：花びら5まい・中心は 黄色。歩き込んだ 場所ほど 大きく、となり3つ以上は 満開（外側に 薄い 花びら）。毎フレーム おなじ 位置
     const pr = pr0 * scale;

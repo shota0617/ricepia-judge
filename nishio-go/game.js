@@ -2864,15 +2864,13 @@ function idleCheck(tries = 0) {
     const sp = home[Math.floor(Math.random() * home.length)], d = gainDot(sp.lat, sp.lng, `idle:${now}:${k}`, sp.area);
     if (d) dots.push(d);
   }
-  S.log.unshift({ type: 'idle', t: now, pts, name: 'るすばんのさんぽ', icon: '🏠' });
+  const h = Math.floor(min / 60), m = Math.round(min % 60), capped = (now - last) / 60000 >= idleCapH() * 60;
+  const detail = `${h ? h + '時間' : ''}${m}分${learned.length ? `・まちメモ+${learned.length}` : ''}${dots.length ? `・絵+${dots.length}` : ''}${capped ? `・上限${idleCapH()}時間` : ''}`;
+  S.log.unshift({ type: 'idle', t: now, pts, name: `るすばんのさんぽ（${detail}）`, icon: '🏠', mins: Math.round(min), facts: learned.length, dots: dots.length });
   const lvUp = gainPoints(pts);
   save();
   track('idle_return', { minutes: Math.round(min) });
-  const h = Math.floor(min / 60), m = Math.round(min % 60), capped = (now - last) / 60000 >= idleCapH() * 60;
-  const lines = [`⏱️ るすばん ${h ? h + '時間' : ''}${m}分${capped ? `（上限${idleCapH()}時間）` : ''}`, `🏠 さんぽのポイント +${pts}`];
-  if (learned.length) lines.push(`📖 まちメモ +${learned.length}（きろくで読めます）`);
-  for (const d of dots) lines.push(...dotLines(d));
-  showReward(pts, 'おかえりなさい！ るすばん中に まちをさんぽしてきました', lines, lvUp, learned.length ? factPool().get(learned[0]) : '', dots[0]);
+  toast(simple() ? `🏠 +${pts}${lvUp ? ` ⭐Lv${lvUp}` : ''}` : `🏠 るすばん +${pts}pt${lvUp ? ` ⭐Lv${lvUp}` : ''}`);
   renderLog();
   refreshNearby();
 }

@@ -62,7 +62,9 @@ class WallTheme(unittest.TestCase):
                               # サイクル37（地図タイル）が tick 並び・diff 検査法の期待を更新した分
                               "tests/test_maze_loop3_24.py", "tests/test_maze_loop3_26.py",
                               "tests/test_maze_loop3_29.py", "tests/test_maze_loop3_30.py",
-                              "tests/test_maze_loop3_31.py", "tests/test_maze_loop3_37.py"))
+                              "tests/test_maze_loop3_31.py", "tests/test_maze_loop3_37.py",
+                              # サイクル38（るすばん結果カード廃止）が game.js を変更した分
+                              "nishio-go/game.js", "tests/test_maze_loop3_38.py"))
         diff = subprocess.run(["git", "diff", "main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for bad in ("ぼく", "約20%", "約２０％"):

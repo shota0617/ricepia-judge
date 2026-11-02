@@ -29,7 +29,7 @@ class Station(unittest.TestCase):
 
     def test_drawn_after_flowers(self):
         t = body("drawMzTrail")
-        self.assertLess(t.index("for (const [X, Y, rgb] of flowers)"), t.index("of stations"))
+        self.assertLess(t.index("for (const [X, Y, rgb, scale, full] of flowers)"), t.index("of stations"))
         self.assertIn("Math.max(4, T * 0.38)", t)
         self.assertIn("Math.max(2, T * 0.12)", t)
         self.assertIn("sr * 0.38", t)

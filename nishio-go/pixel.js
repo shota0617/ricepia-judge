@@ -9655,6 +9655,10 @@ function drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now) {
     ctx.restore();
   }
 }
+function mzBloomScale(n) {   // 歩き込んだ 道ほど 花が 大きい：となりの 歩いた マス数(0〜4)で 1〜2.4倍。純粋
+  if (typeof n !== 'number' || !(n > 0)) return 1;
+  return Math.min(2.4, 1 + 0.35 * n);
+}
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
@@ -9672,7 +9676,8 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太�
     const ar = mzArea(cx, cy);
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!mzTrail.has((cx + dx) + ',' + (cy + dy))) edges.push([ox + cx * S, oy + cy * S, dx, dy, ar ? mzZoneTint(ar).rgb : '255,214,102']);   // 隣が まだの 方向の 辺だけ
     if (seq % 10 === 0) stations.push([a[0], a[1], ar ? mzZoneTint(ar).rgb : '220,70,60']);   // 10マスごとに 駅
-    flowers.push([a[0] + T * 0.22, a[1] - T * 0.18, ar ? mzZoneTint(ar).rgb : '255,170,200']);   // 花は 地区の 色（なければ ピンク）
+    let nb = 0; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) nb++;   // 4方向の 歩いた マス数（壁越しは 数えない）
+    flowers.push([a[0] + T * 0.22, a[1] - T * 0.18, ar ? mzZoneTint(ar).rgb : '255,170,200', mzBloomScale(nb), nb >= 3]);   // 花は 地区の 色（なければ ピンク）
     for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) links.push([a, at((cx + 0.5 + dx) * MZ_K, (cy + 0.5 + dy) * MZ_K)]);
   }
   ctx.lineCap = 'butt'; ctx.lineWidth = Math.max(2, T * 0.12);
@@ -9686,8 +9691,13 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太�
   const dot = (col, r) => { ctx.fillStyle = col; for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill(); } };
   stroke('rgba(26,26,26,.35)', lw + 2); dot('rgba(26,26,26,.35)', rg + 1);
   stroke('rgba(255,250,232,.55)', lw); dot('rgba(255,250,232,.55)', rg);
-  const pr = Math.max(1.5, T * 0.09);   // 花びらの 半径（花 全体は 直径 約0.43T）
-  for (const [X, Y, rgb] of flowers) {   // 歩いた マスに 小さな 花（ピクミン ブルーム）：花びら5まい・中心は 黄色。毎フレーム おなじ 位置
+  const pr0 = Math.max(1.5, T * 0.09);   // 花びらの 半径（花 全体は 直径 約0.43T）
+  for (const [X, Y, rgb, scale, full] of flowers) {   // 歩いた マスに 花（ピクミン ブルーム）：花びら5まい・中心は 黄色。歩き込んだ 場所ほど 大きく、となり3つ以上は 満開（外側に 薄い 花びら）。毎フレーム おなじ 位置
+    const pr = pr0 * scale;
+    if (full) {
+      ctx.fillStyle = 'rgba(' + rgb + ',.35)';
+      for (let i = 0; i < 5; i++) { const an = i * Math.PI * 2 / 5 - Math.PI / 2 + Math.PI / 5; ctx.beginPath(); ctx.arc(X + Math.cos(an) * pr * 1.4 * 1.55, Y + Math.sin(an) * pr * 1.4 * 1.55, pr * 1.55, 0, Math.PI * 2); ctx.fill(); }
+    }
     ctx.fillStyle = 'rgba(' + rgb + ',.95)';
     for (let i = 0; i < 5; i++) { const an = i * Math.PI * 2 / 5 - Math.PI / 2; ctx.beginPath(); ctx.arc(X + Math.cos(an) * pr * 1.4, Y + Math.sin(an) * pr * 1.4, pr, 0, Math.PI * 2); ctx.fill(); }
     ctx.fillStyle = '#ffd84a'; ctx.beginPath(); ctx.arc(X, Y, pr * 0.8, 0, Math.PI * 2); ctx.fill();

@@ -9636,12 +9636,14 @@ function drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now) {
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
-  const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [];
+  const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [], flowers = [];
   for (const [cx, cy] of mzTrail.values()) {
     if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
     const at = (x, y) => { const p = mzOn(x, y); return [ox + p[0] * T, oy + p[1] * T]; };   // ゆるい めいろ：角の マスでは 道すじの カーブの 上に
     const a = at((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K);
     grains.push(a);
+    const ar = mzArea(cx, cy);
+    flowers.push([a[0] + T * 0.22, a[1] - T * 0.18, ar ? mzZoneTint(ar).rgb : '255,170,200']);   // 花は 地区の 色（なければ ピンク）
     for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) links.push([a, at((cx + 0.5 + dx) * MZ_K, (cy + 0.5 + dy) * MZ_K)]);
   }
   ctx.lineCap = 'round';
@@ -9649,6 +9651,12 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太�
   const dot = (col, r) => { ctx.fillStyle = col; for (const [X, Y] of grains) { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill(); } };
   stroke('rgba(26,26,26,.35)', lw + 2); dot('rgba(26,26,26,.35)', rg + 1);
   stroke('rgba(255,250,232,.55)', lw); dot('rgba(255,250,232,.55)', rg);
+  const pr = Math.max(1.5, T * 0.09);   // 花びらの 半径（花 全体は 直径 約0.43T）
+  for (const [X, Y, rgb] of flowers) {   // 歩いた マスに 小さな 花（ピクミン ブルーム）：花びら5まい・中心は 黄色。毎フレーム おなじ 位置
+    ctx.fillStyle = 'rgba(' + rgb + ',.95)';
+    for (let i = 0; i < 5; i++) { const an = i * Math.PI * 2 / 5 - Math.PI / 2; ctx.beginPath(); ctx.arc(X + Math.cos(an) * pr * 1.4, Y + Math.sin(an) * pr * 1.4, pr, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#ffd84a'; ctx.beginPath(); ctx.arc(X, Y, pr * 0.8, 0, Math.PI * 2); ctx.fill();
+  }
   ctx.lineCap = 'butt';
 }
 // 米粒ドット（パックマン。踏破の見える化）：めいろの 通路の マスの まん中に 小さくて 淡い 米つぶを 置き、お米が マスに 入ると 消える。歩いた 道が 見えて 消えていく。

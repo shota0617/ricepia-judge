@@ -53,7 +53,7 @@ class Carry(unittest.TestCase):
     def test_order(self):
         line = next(l for l in PIXEL.splitlines() if "if (mazeOn()) {" in l and "drawMzFogVeil(" in l)
         self.assertLess(line.index("drawMzFogVeil("), line.index("drawMzQuestCarry("))
-        self.assertIn("drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzRescueMate(", line)
+        self.assertIn("drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(", line)
         self.assertEqual(PIXEL.count("drawMzQuestCarry(ox, oy, T, now);"), 1)
 
     def test_pure(self):

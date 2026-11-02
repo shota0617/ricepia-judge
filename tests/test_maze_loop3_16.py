@@ -167,7 +167,7 @@ class Cycle16DinoTests(unittest.TestCase):
         self.assertEqual(r['toasts'], ['⭐ レベル2！'])
 
     def test_draw_order_look_and_tag(self):
-        self.assertLess(PIXEL.index('drawMzDino(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
+        self.assertLess(PIXEL.index('drawMzDino(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertIn('drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now);', PIXEL)
         self.assertNotIn('drawMzDinoTag(w, dpr, now);', PIXEL)   # 常時描画しない（サイクル25）
         d = PIXEL[PIXEL.index('function drawMzDino('):PIXEL.index('function drawMzDinoTag(')]

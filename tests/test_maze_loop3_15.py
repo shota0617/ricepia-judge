@@ -158,7 +158,7 @@ class Cycle15QuestTests(unittest.TestCase):
         self.assertEqual(r['tracked'], [['maze_quest', {'done': False}], ['maze_quest', {'done': True}]])
 
     def test_draw_order_look_and_tag(self):
-        self.assertLess(PIXEL.index('drawMzQuest(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
+        self.assertLess(PIXEL.index('drawMzQuest(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertIn('drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now);', PIXEL)
         self.assertNotIn('drawMzQuestTag(w, dpr, now);', PIXEL)   # 常時描画しない（サイクル25）
         d = PIXEL[PIXEL.index('function drawMzQuest('):PIXEL.index('function drawMzQuestTag(')]

@@ -7768,7 +7768,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -10570,6 +10570,20 @@ function drawMzDino(ox, oy, T, now) {   // 足跡（茶色の 楕円＋つま先
   const r = Math.max(5, T * 0.5), on = mzOn((mzDino.cx + 0.5) * MZ_K, (mzDino.cy + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y0 = Math.round(oy + on[1] * T), Y = Math.round(Y0 + Math.sin(now / 420) * T * 0.05), p = Math.sin(now / 320);
   ctx.strokeStyle = `rgba(63,181,107,${(0.55 + 0.3 * p).toFixed(2)})`; ctx.lineWidth = Math.max(2, q * 2); ctx.beginPath(); ctx.arc(X, Y0, r * (1.25 + 0.12 * p), 0, Math.PI * 2); ctx.stroke();
   ctx.font = `${Math.max(12, Math.round(T * 1.1))}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#3fb56b'; ctx.fillText('🦕', X, Y);
+}
+function mzDinoSonar(now) {   // 🦕 から 広がる 緑の ソナーの 輪 2重（周期 2600ms。状態は 読み書きしない）
+  if (typeof now !== 'number' || !isFinite(now) || now < 0) return [{ r: 0, a: 0 }, { r: 0, a: 0 }];
+  return [0, 1].map(i => { const p = ((now / 2600) + i * 0.5) % 1; return { r: 1.3 + 3.2 * p, a: 0.62 * (1 - p) }; });
+}
+function drawMzDinoSonar(ox, oy, T, now) {   // 🦕 の マスから 緑の 同心円が ゆっくり 広がる（もやより前に 描く。文字は 描かない）
+  if (mzDino.found || mzDino.cx < 0) return;
+  const on = mzOn((mzDino.cx + 0.5) * MZ_K, (mzDino.cy + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y = Math.round(oy + on[1] * T), base = Math.max(5, T * 0.5);
+  ctx.save(); ctx.lineWidth = Math.max(2, T * 0.07);
+  mzDinoSonar(calmMotion ? 650 : now).forEach(w => {
+    if (w.a <= 0) return;
+    ctx.strokeStyle = `rgba(63,181,107,${w.a.toFixed(2)})`; ctx.beginPath(); ctx.arc(X, Y, base * w.r, 0, Math.PI * 2); ctx.stroke();
+  });
+  ctx.restore();
 }
 function drawMzDinoTag(w, dpr, now) {   // 足跡札（迷路の 間だけ。農具の 札・手がかり札などが 出ている 間は その 下）。出会った あと 約6秒は 金色の 出会い札
   if (mzDino.sx < 0 || mapCovered(true) || mzBanner.t0) return;

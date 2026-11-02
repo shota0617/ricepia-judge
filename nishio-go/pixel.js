@@ -10015,9 +10015,17 @@ function drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 金の 米つ�
 // くだものボーナス（ミズ・パックマンの 迷路に 出る フルーツ）：迷路の 中の 通路に みかんが 1つ 出て、ころがって 着くと +10pt。取ると 別の 通路に 出なおす（1つの 迷路で 3回まで）。
 // スタートから 6マス以上 はなれた 所に 出る。壁・ゴール・参道・生け垣の 戸・金の米つぶ・びゅんパネル・ごはんつぶ・生きものの マスは よける。
 // 光る ゴールの 金の わとは ちがう オレンジの みかん。位置と 残りは この 画面の 間だけ（セーブは 増やさない。ポイントだけ game.js の mzFruit が 保存）
-const MZ_FRUIT = { n: 3, min: 6, reach: 18 };   // 1回の 迷路で 出る 数・スタートからの 歩数の 下限・さがす はんい（歩数）
-const mzFruit = { left: MZ_FRUIT.n, cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0 };   // cx・cy：いま 出ている マス（-1 なし）・sx・sy：スタートの マス・last：直前に 取った マス
-function mzFruitReset() { Object.assign(mzFruit, { left: MZ_FRUIT.n, cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0 }); }
+const MZ_FRUIT = { n: 3, min: 6, reach: 18, moveMs: 1800 };   // 1回の 迷路で 出る 数・スタートからの 歩数の 下限・さがす はんい（歩数）・1マス 動く 間かく
+const mzFruit = { left: MZ_FRUIT.n, cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, dx: 0, dy: 0, mv: 0, px: -1, py: -1, mt: 0 };   // cx・cy：いま 出ている マス（-1 なし）・sx・sy：スタートの マス・last：直前に 取った マス・dx dy：進む 向き・mv：次に 動く 時刻・px py mt：滑りの 出発マスと 開始時刻
+function mzFruitReset() { Object.assign(mzFruit, { left: MZ_FRUIT.n, cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, dx: 0, dy: 0, mv: 0, px: -1, py: -1, mt: 0 }); }
+function mzFruitDir(dx, dy, open) {   // みかんの 次の 向き：まっすぐ → 時計回り → 反時計回り → 逆（なければ [0,0]）
+  const unit = d => Array.isArray(d) && d.length >= 2 && Math.abs(d[0]) + Math.abs(d[1]) === 1 && Number.isInteger(d[0]) && Number.isInteger(d[1]);
+  const ok = Array.isArray(open) ? open.filter(unit) : [];
+  if (!ok.length) return [0, 0];
+  if (!unit([dx, dy])) return [ok[0][0], ok[0][1]];
+  for (const [x, y] of [[dx, dy], [-dy, dx], [dy, -dx], [-dx, -dy]]) if (ok.some(d => d[0] === x && d[1] === y)) return [x, y];
+  return [0, 0];
+}
 function mzFruitOk(cx, cy) {   // そこに くだものを 置いて よいか
   const a = mzArea(cx, cy);
   if (!a || a.t[(cy - a.y0) * MZ_R + cx - a.x0] !== 1 || mzSpotCell(cx, cy) || mzGrainAt(cx, cy) || mzPadAt(cx, cy) >= 0) return false;
@@ -10061,13 +10069,22 @@ function mzFruitTick(now) {
     if (mzFruit.left <= 0 || now < mzFruit.next) return;
     mzFruit.next = now + 500;
     const c = mzFruitPick();
-    if (c) { mzFruit.cx = c[0]; mzFruit.cy = c[1]; dirty = true; }
+    if (c) { Object.assign(mzFruit, { cx: c[0], cy: c[1], px: c[0], py: c[1], mt: 0, dx: 0, dy: 0, mv: now + MZ_FRUIT.moveMs }); dirty = true; }
     return;
   }
-  if (a !== mzFruit.cx || b !== mzFruit.cy) return;
+  if (a !== mzFruit.cx || b !== mzFruit.cy) {   // 取られていない：ゆっくり 1マスだけ 通路を 転がる
+    if (now < mzFruit.mv) return;
+    const open = MZ_DIRS.filter(([dx, dy]) => { const nx = mzFruit.cx + dx, ny = mzFruit.cy + dy; return mzOpen(mzFruit.cx, mzFruit.cy, dx, dy) && mzType(nx, ny) === 1 && mzFruitOk(nx, ny) && !(nx === a && ny === b); });
+    const d = mzFruitDir(mzFruit.dx, mzFruit.dy, open);
+    mzFruit.mv = now + MZ_FRUIT.moveMs;
+    if (!d[0] && !d[1]) return;
+    mzFruit.px = mzFruit.cx; mzFruit.py = mzFruit.cy; mzFruit.mt = now;
+    mzFruit.cx += d[0]; mzFruit.cy += d[1]; mzFruit.dx = d[0]; mzFruit.dy = d[1]; dirty = true;
+    return;
+  }
   const r = G.mzFruit && G.mzFruit();
   if (!r) return;
-  mzFruit.left--; mzFruit.last = [a, b]; mzFruit.cx = mzFruit.cy = -1; mzFruit.next = now;
+  mzFruit.left--; mzFruit.last = [a, b]; mzFruit.cx = mzFruit.cy = -1; mzFruit.next = now; mzFruit.dx = mzFruit.dy = 0; mzFruit.px = mzFruit.py = -1; mzFruit.mt = 0;
   grainSound(); roll.happyT = 1.2; dirty = true;
   floatText(`🍊 くだものゲット！ +${r.pts}pt${mzFruit.left ? `（あと ${mzFruit.left}こ）` : ''}`);
   const cols = ['#ff9a1f', '#ffc46b', '#7ccf5a'];
@@ -10075,7 +10092,7 @@ function mzFruitTick(now) {
 }
 function drawMzFruit(ox, oy, T, now) {   // みかん（オレンジの まるに 緑の はっぱ・まわりに うすい オレンジの わ。ゴールの 金の わとは ちがう）
   if (mzFruit.cx < 0) return;
-  const r = Math.max(5, T * 0.5), q = Math.max(1, Math.round(T / 8)), on = mzOn((mzFruit.cx + 0.5) * MZ_K, (mzFruit.cy + 0.5) * MZ_K), X = ox + on[0] * T, Y0 = oy + on[1] * T, Y = Y0 + Math.sin(now / 320) * T * 0.1;
+  const r = Math.max(5, T * 0.5), q = Math.max(1, Math.round(T / 8)), sl = mzFruit.mt && mzFruit.px >= 0 ? Math.max(0, Math.min(1, (now - mzFruit.mt) / 350)) : 1, fx = sl < 1 ? mzFruit.px + (mzFruit.cx - mzFruit.px) * sl : mzFruit.cx, fy = sl < 1 ? mzFruit.py + (mzFruit.cy - mzFruit.py) * sl : mzFruit.cy, on = mzOn((fx + 0.5) * MZ_K, (fy + 0.5) * MZ_K), X = ox + on[0] * T, Y0 = oy + on[1] * T, Y = Y0 + Math.sin(now / 320) * T * 0.1;
   ctx.strokeStyle = `rgba(255,140,40,${(0.45 + 0.35 * Math.sin(now / 260)).toFixed(2)})`; ctx.lineWidth = Math.max(2, q * 2); ctx.beginPath(); ctx.arc(X, Y0, r * (1.45 + 0.12 * Math.sin(now / 260)), 0, Math.PI * 2); ctx.stroke();
   ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(Math.round(X - r * 0.7), Math.round(Y0 + r * 0.9), Math.round(r * 1.4), q * 2);   // かげ
   ctx.fillStyle = '#7a3a00'; ctx.beginPath(); ctx.arc(X, Y, r + q, 0, Math.PI * 2); ctx.fill();

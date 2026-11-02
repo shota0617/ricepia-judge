@@ -87,9 +87,7 @@ class Brigade(unittest.TestCase):
         self.assertLess(line.index("drawMzBrigade("), line.index("drawMzFogVeil("))            # おとも米は veil より前
         self.assertGreater(line.index("drawMzBrigadeMates("), line.index("drawMzFogVeil("))    # 編成おともは veil より後
         self.assertGreater(line.index("drawMzBrigadeMates("), line.index("drawMzTorchFlame("))
-        hud = next(l for l in PIXEL.splitlines() if "drawMzTorchTag(w, dpr, now);" in l)
-        self.assertLess(hud.index("drawMzTorchTag("), hud.index("drawMzBrigadeTag("))
-        self.assertLess(hud.index("drawMzBrigadeTag("), hud.index("drawMzMini("))
+        self.assertNotIn("drawMzBrigadeTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_non_blocking(self):
         seg = PIXEL[PIXEL.index("// おとも旅団（ルフラン"):PIXEL.index("// 手描き探索マップ")]
@@ -104,7 +102,7 @@ class Brigade(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
-        self.assertIn("mzBrigade", added)
+        self.assertIn("function mzBrigadeTick(", PIXEL)   # サイクル25：差分は 描画行だけなので 仕組みの 残りで 確かめる
         self.assertNotIn("ぼく", added)
         self.assertNotIn("だに", added)
         self.assertNotRegex(added, r"抹茶.{0,6}20")

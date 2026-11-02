@@ -94,9 +94,7 @@ class Torch(unittest.TestCase):
         self.assertLess(line.index("drawMzTorch("), line.index("drawMzFogVeil("))        # 立つたいまつは veil より前
         self.assertGreater(line.index("drawMzTorchFlame("), line.index("drawMzFogVeil("))  # 炎は veil より後
         self.assertGreater(line.index("drawMzTorchFlame("), line.index("drawMzChase("))    # 夕立雲と同じ側（もやの後）
-        hud = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l)
-        self.assertLess(hud.index("drawMzEnergyBar("), hud.index("drawMzTorchTag("))
-        self.assertLess(hud.index("drawMzTorchTag("), hud.index("drawMzMini("))
+        self.assertNotIn("drawMzTorchTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_non_blocking(self):
         seg = PIXEL[PIXEL.index("// たいまつ（Legend of Grimrock"):PIXEL.index("// 手描き探索マップ")]
@@ -111,7 +109,7 @@ class Torch(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
-        self.assertIn("mzTorch", added)
+        self.assertIn("function mzTorchTick(", PIXEL)   # サイクル25：差分は 描画行だけなので 仕組みの 残りで 確かめる
         self.assertNotIn("ぼく", added)
         self.assertNotIn("だに", added)
         self.assertNotRegex(added, r"抹茶.{0,6}20")

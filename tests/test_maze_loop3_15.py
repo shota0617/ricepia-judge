@@ -160,7 +160,7 @@ class Cycle15QuestTests(unittest.TestCase):
     def test_draw_order_look_and_tag(self):
         self.assertLess(PIXEL.index('drawMzQuest(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertIn('drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now);', PIXEL)
-        self.assertIn('drawMzCacheHint(w, dpr, now); drawMzQuestTag(w, dpr, now);', PIXEL)
+        self.assertNotIn('drawMzQuestTag(w, dpr, now);', PIXEL)   # 常時描画しない（サイクル25）
         d = PIXEL[PIXEL.index('function drawMzQuest('):PIXEL.index('function drawMzQuestTag(')]
         for c in ('#ff8c1a', '80,170,235', '255,224,102', '170,120,235'):
             self.assertNotIn(c, d)

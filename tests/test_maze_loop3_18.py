@@ -86,9 +86,10 @@ class Cycle18EnergyTests(unittest.TestCase):
 
     def test_bar_drawn_always_in_maze(self):
         h = PIXEL[PIXEL.index('function drawMzEnergyBar('):PIXEL.index('// びゅんパネル')]
-        for t in ('⚡ さんぽエネルギー ${', 'MZ_ENERGY.need', 'createLinearGradient', '#ffd84a', '#6fbf3a', 'mzViewShelfY', 'mzChase.sx >= 0', 'mzDino.sx >= 0', 'mzQuest.sx >= 0', 'mzCache.cx >= 0', '1200'):
+        for t in ('⚡ ${', 'MZ_ENERGY.need', 'createLinearGradient', '#ffd84a', '#6fbf3a', 'mzViewShelfY', '1200'):
             self.assertIn(t, h)
-        self.assertIn('drawMzChaseTag(w, dpr, now); drawMzEnergyBar(w, dpr, now);', PIXEL)
+        self.assertIn('drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(w, dpr, now);', PIXEL)
+        self.assertNotIn('さんぽエネルギー ${', h)   # 文章ラベルは 描かない（サイクル25）
 
     def test_burst_ring_around_hero(self):
         h = PIXEL[PIXEL.index('function drawMzEnergyRing('):PIXEL.index('function drawMzEnergyBar(')]

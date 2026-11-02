@@ -70,7 +70,7 @@ class WallTheme(unittest.TestCase):
                               # サイクル42（吹き出し廃止）が kometalk.js・html・既存テスト期待を更新した分
                               "nishio-go.html", "nishio-go/kometalk.js", "tests/test_maze_loop3_42.py", "tests/test_maze_loop3_2.py", "tests/test_maze_loop3_19.py",
                               # サイクル43（エネルギーオーラ）が新規テストを追加した分
-                              "tests/test_maze_loop3_43.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py"))
+                              "tests/test_maze_loop3_43.py", "tests/test_maze_loop3_44.py", "tests/test_maze_loop3_45.py", "tests/test_maze_loop3_46.py", "tests/test_maze_loop3_12.py", "tests/test_maze_loop3_13.py", "tests/test_maze_loop3_14.py", "tests/test_maze_loop3_15.py", "tests/test_maze_loop3_16.py", "tests/test_maze_loop3_17.py"))
         diff = subprocess.run(["git", "diff", "main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for bad in ("ぼく", "約20%", "約２０％"):

@@ -19,21 +19,15 @@ class KaoriFaceTest(unittest.TestCase):
             self.assertTrue(os.path.exists(p), p)
             self.assertLessEqual(os.path.getsize(p), 100 * 1024)
 
-    def test_mood_mapping(self):
+    def test_mood_mapping(self):   # 11/2 吹き出し廃止：顔の 読みこみは 無い
         js = read('nishio-go/kometalk.js')
-        self.assertIn("happy: 'smile'", js)
-        self.assertIn("excited: 'surprised'", js)
-        self.assertIn("normal: 'normal'", js)
-        for k in ('normal', 'smile', 'surprised'):
-            self.assertIn("'%s'" % k, js)
-        self.assertIn('art/kaori/face-', js)
+        self.assertNotIn('art/kaori/face-', js)
+        self.assertNotIn('Image(', js)
 
-    def test_fallbacks_kept(self):
+    def test_fallbacks_kept(self):   # 11/2 窓を 作らない（顔の 描画も 無い）
         js = read('nishio-go/kometalk.js')
-        self.assertIn('drawRice', js)
-        self.assertIn('🍚', js)
-        self.assertIn('onerror', js)
-        self.assertIn('drawImage', js)
+        self.assertNotIn('drawImage', js)
+        self.assertNotIn('createElement', js)
 
     def test_css_auto_only_for_kome_talk(self):
         css = read('nishio-go/style.css')

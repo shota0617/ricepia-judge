@@ -1,112 +1,15 @@
-// お米つぶの おはなし（案内役・10/29 店主「素朴な かわいい キャラクターとの 会話で ゲームが 進むように」）。
-// 主人公の お米つぶが 話しかけて、つぎの 行き先を いっしょに 決める。町の人の 話と 同じ 黒い わく（.dq）で、左に お米の 顔。
-// 流れを 止めない 吹き出し（シレンの ログのように）：タップ不要で 自動で つぎへ。地図・めいろは そのまま さわれる。さいごの ページに えらぶ ボタンが あれば、えらんだ 答えで ゲームが 進む（行き先が かわる）。
-// せっていで オフに できる（オフの 人には、いままでどおり 下の 小さな 知らせだけ）。
+// 11/2 運営者の声「しゃべらなくていい。吹き出し廃止」：かおりちゃんの おはなし窓は なくなった。
+// 窓は 作らない・出さない。game.js が こわれないよう、API の 形だけ のこす（say は いつも false、on は いつも false）。
+// 行き先は 既存の 知らせ・ガイドチップで 決まる。nsg_kome_talk の 保存は 見ない。
 (function (root) {
-  const KEY = 'nsg_kome_talk';   // '0' なら オフ
-  const q = [];
-  let box, cv, sayEl, srEl, chEl, cur = null, page = 0, typing = 0, full = '', closeT = 0, autoT = 0, mem = null;   // mem：この ページで えらんだ オン・オフ（保存できない ブラウザでも 守る）
-  const calm = () => !!(root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  function on() { if (mem !== null) return mem; try { return localStorage.getItem(KEY) !== '0'; } catch (e) { return true; } }
-  function setOn(v) { mem = !!v; try { localStorage.setItem(KEY, v ? '1' : '0'); } catch (e) { /* なしで続ける */ } if (!v) { q.length = 0; hide(); } }
-  function build() {
-    if (box) return;
-    box = document.createElement('div');
-    box.className = 'kome-talk'; box.id = 'komeTalk'; box.hidden = true;
-    box.setAttribute('aria-label', 'あいちのかおりちゃんの おはなし');
-    box.innerHTML = '<div class="dq"><canvas width="192" height="162" aria-hidden="true"></canvas><div class="kt-body"><b class="kt-name">あいちのかおりちゃん</b>'
-      + '<img class="kt-pic" alt="" hidden/><p class="kt-say"></p><p class="kt-sr" aria-live="polite"></p><div class="kt-ch"></div></div></div>';
-    document.body.append(box);
-    cv = box.querySelector('canvas'); sayEl = box.querySelector('.kt-say'); srEl = box.querySelector('.kt-sr'); chEl = box.querySelector('.kt-ch');
-    box.addEventListener('click', e => {   // 本体は pointer-events:none。押せるのは えらぶ ボタンだけ
-      const c = e.target.closest('[data-kt]');
-      if (c) { e.stopPropagation(); pick(+c.dataset.kt); }
-    });
-  }
-  // 顔：かおりちゃんの 3表情（パックマンの ように 場面で 見た目が かわる）。読めなければ 歩く地図の お米と 同じ ドット絵、それも なければ 🍚
-  const FACE_OF = { happy: 'smile', smile: 'smile', excited: 'surprised', surprised: 'surprised', normal: 'normal' };
-  const faceImg = {};
-  let curMood = null;
-  ['normal', 'smile', 'surprised'].forEach(k => {
-    try { const im = new Image(); im.onload = () => { faceImg[k] = im; if (box && !box.hidden && curMood) face(curMood); }; im.onerror = () => { faceImg[k] = null; }; im.src = 'nishio-go/art/kaori/face-' + k + '.png'; } catch (e) { faceImg[k] = null; }
-  });
-  function face(mood) {
-    curMood = mood;
-    const g = cv.getContext('2d'), W = cv.width, H = cv.height; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, W, H);
-    const im = faceImg[FACE_OF[mood] || 'smile'];
-    if (im && im.complete && im.naturalWidth) { g.imageSmoothingEnabled = true; g.drawImage(im, (W - H) / 2, 0, H, H); return; }
-    g.imageSmoothingEnabled = false; g.scale(W / 48, W / 48);
-    const P = root.nishioPixel;
-    if (!(P && P.drawRice && P.drawRice(g, 24, 22, 0, 0, mood || 'smile'))) { g.font = '26px sans-serif'; g.textAlign = 'center'; g.fillText('🍚', 24, 30); }
-  }
-  function finishType() { clearInterval(typing); typing = 0; sayEl.textContent = full; afterType(); }
-  function afterType() {
-    const last = page === cur.pages.length - 1;
-    if (last && typeof cur.choices === 'function') cur.choices = cur.choices();   // えらぶ ボタンは 出す ときに 決める（行き先が かわっていても 今の ものを 出す）
-    const ch = last && cur.choices && cur.choices.length;
-    if (ch) chEl.innerHTML = cur.choices.map((c, i) => `<button type="button" class="kt-btn" data-kt="${i}">${esc(c)}</button>`).join('');
-    // 読み終えたら 自動で つぎへ（タップ不要＝歩きも めいろも 止めない）。えらぶ ボタンの ある さいごの ページだけ 15秒 まって 未選択で とじる
-    // ほかの 窓で かくれている 間は タイマーを しかけない（見えないまま 進んだり えらぶ 機会が 消えたり しないように。再表示のときに pump が ここを よび直す）
-    clearTimeout(closeT); clearTimeout(autoT);
-    if (box.hidden) return;
-    if (ch) { closeT = setTimeout(() => done(-1), 15000); return; }
-    const wait = Math.min(2800 + full.length * 60, 7000);
-    if (last) closeT = setTimeout(() => done(-1), wait);
-    else autoT = setTimeout(step, wait);
-  }
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  function show() {
-    let p = cur.pages[page];
-    if (typeof p === 'function') p = cur.pages[page] = p();   // 出す ときに 決める ページ（null なら とばす）
-    if (!p) { if (page < cur.pages.length - 1) { page++; show(); } else done(-1); return; }
-    const t = typeof p === 'string' ? p : p.t;
-    face(typeof p === 'string' ? cur.mood : (p.mood || cur.mood));
-    const pic = box.querySelector('.kt-pic'), pc = typeof p === 'string' ? null : p.pic;   // 西尾の 景色の ドット絵（あいさつで まちを 見せる）
-    pic.hidden = !pc; if (pc) { pic.src = pc.src; pic.alt = pc.t || ''; }
-    chEl.innerHTML = ''; full = t;
-    srEl.textContent = t;   // 読み上げには 1ページを 1回で わたす（1文字ずつ 書きかえない）
-    clearTimeout(closeT); clearTimeout(autoT); clearInterval(typing); typing = 0;
-    if (calm()) { sayEl.textContent = t; afterType(); return; }
-    let i = 0; sayEl.textContent = '';
-    typing = setInterval(() => { i++; sayEl.textContent = t.slice(0, i); if (i >= t.length) finishType(); }, 40);
-  }
-  function step() { if (page < cur.pages.length - 1) { page++; show(); } else done(-1); }
-  function pick(i) { done(i); }
-  function hide() {
-    clearInterval(typing); typing = 0; clearTimeout(closeT); clearTimeout(autoT);
-    if (box) box.hidden = true; cur = null;
-  }
-  function done(i) {
-    const c = cur; hide();
-    try { if (c && c.then) c.then(i); } catch (e) { console.error(e); }
-    setTimeout(pump, 600);
-  }
-  // 話しかける：pages＝['…', {t:'…', mood:'happy'}, ()=>ページか null]。opts：{ keep（1分半で すてない）, onShow（はじめて 出た とき）, choices:['…'] か ()=>['…'], then:i=>{}（-1＝えらばずに とじた）, mood, busy:()=>bool（ほかの 画面が 出ている）, key（同じ 話を 2つ ためない） }
-  function say(pages, opts = {}) {
-    if (!on() || !pages || !pages.length) return false;
-    if (opts.key && (cur && cur.key === opts.key || q.some(x => x.key === opts.key))) return false;
-    build();
-    q.push({ pages, ...opts, t0: Date.now() });
-    pump();
-    return true;
-  }
-  function pump() {
-    if (cur || !q.length) return;
-    const n = q[0];
-    if (!n.keep && Date.now() - n.t0 > 90000) { q.shift(); pump(); return; }   // keep（はじめての あいさつ）は すてない   // 1分半 出せなかった 話は すてる（古い 行き先の 話を あとから しない）
-    if (n.busy && n.busy()) { n.calm = 0; clearTimeout(pump.t); pump.t = setTimeout(pump, 500); return; }
-    // ほかの 窓が とじて 0.6秒 なにも 開かないのを 見てから 話す（夜の 改善 8・通しで 遊んで 分かった：あそびかたを とじた とたん、
-    // あいさつが 出て「はじめまして。あ」まで 打った ところで、つづけて 開いた「はじめの1枚を えらぼう」に よけて 消えた。2つの 窓が 0.4秒 かさなって ちらついた）。はかるのは performance.now（Date は 止められる ことが ある）
-    if (n.busy) { const now = performance.now(); if (!n.calm) n.calm = now; const left = 600 - (now - n.calm); if (left > 0) { clearTimeout(pump.t); pump.t = setTimeout(pump, left); return; } }
-    cur = q.shift(); page = 0;
-    box.hidden = false;
-    if (cur.onShow) try { cur.onShow(); } catch (e) { console.error(e); }
-    show();
-    // 話の とちゅうで ごほうび・町の人の 話などが 出たら、そのあいだは よけて、とじたら また 出す
-    clearInterval(pump.w);
-    pump.w = setInterval(() => { if (!cur) { clearInterval(pump.w); return; } const b = !!(cur.busy && cur.busy()); if (box.hidden !== b) { box.hidden = b; if (b) { clearTimeout(closeT); clearTimeout(autoT); } else if (!typing) afterType(); } }, 400);
-  }
-  // clear：ためている 話も 今の 話も やめる（遊びかたの 切りかえ など。then は よばない）
-  function clear() { q.length = 0; clearInterval(pump.w); hide(); }
-  root.nishioKomeTalk = { say, on, setOn, clear, get open() { return !!cur; }, close: () => cur && done(-1), get text() { return cur ? full : ''; }, pickFor: i => cur && pick(i) };
+  root.nishioKomeTalk = {
+    say: () => false,
+    on: () => false,
+    setOn: () => {},
+    clear: () => {},
+    get open() { return false; },
+    close: () => {},
+    get text() { return ''; },
+    pickFor: () => {}
+  };
 })(window);

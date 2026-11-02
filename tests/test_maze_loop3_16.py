@@ -145,7 +145,7 @@ class Cycle16DinoTests(unittest.TestCase):
         r = self.run_js("""
           mzDinoTick(1000); mzDino.found = true; mzDino.foundAt = 5; mzDino.trail = [[2, 2]]; mzDinoReset();
           return { ...mzDino };""")
-        self.assertEqual(r, {'cx': -1, 'cy': -1, 'sx': -1, 'sy': -1, 'trail': [], 'found': False, 'foundAt': 0, 'next': 0})
+        self.assertEqual(r, {'cx': -1, 'cy': -1, 'sx': -1, 'sy': -1, 'trail': [], 'ang': [], 'found': False, 'foundAt': 0, 'next': 0})
         self.assertIn('if (!mazeOn() && mzDino.sx >= 0) mzDinoReset();', PIXEL)
         self.assertIn('mzDinoReset();   // きょうりゅうの あしあとも 迷路（ゴール）ごとに はじめから', PIXEL)
         self.assertIn('mzQuestTick(now); mzDinoTick(now);', PIXEL)

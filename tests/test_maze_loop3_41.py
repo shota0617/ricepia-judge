@@ -1,0 +1,72 @@
+"""第3弾サイクル41：きょうりゅうの足跡が進む向きを向く（Jurassic World Alive）。"""
+import re
+import subprocess
+import unittest
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+PIXEL = (ROOT / "nishio-go/pixel.js").read_text(encoding="utf-8")
+
+
+def body(name):
+    i = PIXEL.index(f"function {name}(")
+    return PIXEL[i:PIXEL.index("\n}\n", i)]
+
+
+class Footprints(unittest.TestCase):
+    def test_node_check(self):
+        subprocess.run(["node", "--check", str(ROOT / "nishio-go/pixel.js")], check=True)
+
+    def test_ang_state(self):
+        self.assertIn("trail: [], ang: [], found: false", PIXEL[PIXEL.index("const mzDino = {"):])
+        self.assertIn("trail: [], ang: [], found: false", body("mzDinoReset"))
+        t = body("mzDinoTick")
+        self.assertIn("mzDino.trail.push(c); mzDino.ang.push(mzDinoAngle(null, c, path[i + 1]))", t)
+
+    def test_angle_fn(self):
+        t = body("mzDinoAngle")
+        self.assertIn("Math.atan2(dy, dx)", t)
+        js = t + "\n}\nconsole.log(JSON.stringify([mzDinoAngle([0,0],null,[1,0]), mzDinoAngle([0,0],null,[0,1]), mzDinoAngle([2,2],null,[2,2]), mzDinoAngle(null,null,[1,1]), mzDinoAngle([0,0],[2,0],[2,1])]));"
+        out = subprocess.run(["node", "-e", js], check=True, capture_output=True, text=True).stdout
+        import json
+        v = json.loads(out)
+        self.assertAlmostEqual(v[0], 0)
+        self.assertAlmostEqual(v[1], 1.5707963, places=5)
+        self.assertEqual(v[2:4], [0, 0])
+        # 曲がり角: (0,0)→(1,0)→(2,0)→(2,1)→(1,1) の (2,0) の足跡は南（次の 一歩）を向き、弦の南東にはならない
+        self.assertAlmostEqual(v[4], 1.5707963, places=5)
+
+    def test_draw_rotated(self):
+        d = body("drawMzDino")
+        a, b = d.index("ctx.save()"), d.index("ctx.restore()")
+        self.assertLess(a, b)
+        inner = d[a:b]
+        self.assertIn("ctx.translate(", inner)
+        self.assertIn("ctx.rotate(", inner)
+        self.assertIn("mzDino.ang[i]", inner)
+        self.assertIn("Math.PI / 2", inner)
+        self.assertIn("ctx.ellipse(", inner)
+        self.assertIn("ctx.arc(", inner)
+
+    def test_growing_size(self):
+        d = body("drawMzDino")
+        self.assertIn("0.85 + 0.35 * (i / Math.max(1, mzDino.trail.length - 1))", d)
+
+    def test_draw_pure(self):
+        d = body("drawMzDino")
+        for bad in ("G.", "floatText", "dirty =", "mzDino.found =", "mzDino.trail =", "mzDino.ang =", "Math.random", "Date.now"):
+            self.assertNotIn(bad, d)
+
+    def test_changed_files_and_words(self):
+        names = subprocess.run(["git", "diff", "--name-only", "origin/main...HEAD"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.split()
+        for n in names:
+            self.assertTrue(n == "nishio-go/pixel.js" or re.fullmatch(r"tests/test_maze_loop3_\d+\.py", n), n)
+        diff = subprocess.run(["git", "diff", "origin/main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
+        for l in diff.splitlines():
+            if l.startswith("+") and not l.startswith("+++"):
+                for w in ("ぼく", "だに", "約20%"):
+                    self.assertNotIn(w, l)
+
+
+if __name__ == "__main__":
+    unittest.main()

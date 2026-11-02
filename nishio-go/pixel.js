@@ -7780,7 +7780,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -10300,6 +10300,19 @@ function drawMzQuest(ox, oy, T, now) {   // 次に 取る 農具だけ：農具�
   const tool = QUEST_TOOLS[mzQuest.got], r = Math.max(5, T * 0.5), q = Math.max(1, Math.round(T / 8)), on = mzOn((mzQuest.cx + 0.5) * MZ_K, (mzQuest.cy + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y0 = Math.round(oy + on[1] * T), Y = Math.round(Y0 + Math.sin(now / 360) * T * 0.06), p = Math.sin(now / 300);
   ctx.strokeStyle = `rgba(${QUEST_RING[mzQuest.got]},${(0.55 + 0.3 * p).toFixed(2)})`; ctx.lineWidth = Math.max(2, q * 2); ctx.beginPath(); ctx.arc(X, Y0, r * (1.2 + 0.12 * p), 0, Math.PI * 2); ctx.stroke();
   ctx.font = `${Math.max(12, Math.round(T * 0.95))}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = tool.color; ctx.fillText(tool.emoji, X, Y);
+}
+function drawMzQuestCarry(ox, oy, T, now) {   // 集めた 農具：かおりちゃんの 頭の 上に 小さな 丸バッジの 弧（1つ 取るごとに 1つ 増え、3つで 弧が 完成）。見た目だけ。もやの あとに 描く
+  if (!mzQuest.got || rp.x === null) return;
+  const on = mzOn(rp.x, rp.y), u = Math.max(5, T * 0.5), r = Math.max(3, T * 0.3), q = Math.max(1, Math.round(T / 10)), done = mzQuest.got >= QUEST_TOOLS.length;
+  const slots = [[-1.8, -1.1], [0, -1.7], [1.8, -1.1]];   // 左上・真上・右上（隣の バッジと 重ならない 間かく）
+  ctx.font = `${Math.max(10, Math.round(T * 0.55))}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const bob = calmMotion ? 0 : Math.sin(now / 320) * q;   // 弧ぜんたいで 同じ 揺れ（バッジ同士の 間かくが 変わらない）
+  for (let i = 0; i < Math.min(mzQuest.got, QUEST_TOOLS.length, slots.length); i++) {
+    const X = Math.round(ox + on[0] * T + slots[i][0] * u), Y = Math.round(oy + on[1] * T + slots[i][1] * u + bob);
+    ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = done ? '#d4a017' : QUEST_TOOLS[i].color; ctx.lineWidth = Math.max(1.5, T * 0.07); ctx.stroke();
+    ctx.fillStyle = QUEST_TOOLS[i].color; ctx.fillText(QUEST_TOOLS[i].emoji, X, Y);
+  }
 }
 function drawMzQuestTag(w, dpr, now) {   // クエスト札（迷路の 間だけ。ピース棚の 下。パノラマ・見晴らし中の 札・手がかり札が 出ている 間は その 下）。そろった あと 約6秒は 金色の 完成札
   if (mzQuest.sx < 0 || mapCovered(true) || mzBanner.t0) return;

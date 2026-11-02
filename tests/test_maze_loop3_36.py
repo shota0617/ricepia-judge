@@ -64,7 +64,9 @@ class WallTheme(unittest.TestCase):
                               "tests/test_maze_loop3_29.py", "tests/test_maze_loop3_30.py",
                               "tests/test_maze_loop3_31.py", "tests/test_maze_loop3_37.py",
                               # サイクル38（るすばん結果カード廃止）が game.js を変更した分
-                              "nishio-go/game.js", "tests/test_maze_loop3_38.py"))
+                              "nishio-go/game.js", "tests/test_maze_loop3_38.py",
+                              # サイクル39（探知リング）が波紋の期待と新規テストを追加した分
+                              "tests/test_maze_loop3_32.py", "tests/test_maze_loop3_39.py"))
         diff = subprocess.run(["git", "diff", "main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for bad in ("ぼく", "約20%", "約２０％"):

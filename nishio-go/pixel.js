@@ -10574,15 +10574,24 @@ function drawMzSightRing(ox, oy, T, now) {   // 視界の 縁に 白金の 光�
   ctx.beginPath(); ctx.arc(X, Y, R - S * 0.1, 0, Math.PI * 2); ctx.stroke();
   ctx.restore();
 }
-function drawMzPulse(ox, oy, T, now) {   // かおりちゃんの まわりに 白金の 波紋が ゆっくり 広がって 消える（探索中の しるし。時刻だけで 決まる）
+const MZ_PULSE = { baseMs: 2400, fastMs: 1000, near: 3, mid: 8, far: 18 };   // 波紋の ふつうの 周期・いちばん はやい 周期・宝箱までの 歩数の 段
+function mzPulseSignal() {   // かくし宝箱が ちかいほど 強い 探知の 信号（0 〜 1。読むだけで 何も 書き換えない）
+  if (mzCache.cx < 0 || mzCache.done || mzCache.dist < 0) return 0;
+  const d = mzCache.dist;
+  return d <= MZ_PULSE.near ? 1 : d <= MZ_PULSE.mid ? 0.66 : d <= MZ_PULSE.far ? 0.33 : 0;
+}
+function drawMzPulse(ox, oy, T, now) {   // かおりちゃんの まわりに 波紋が 広がって 消える（ふだんは 白金でゆっくり・宝箱に ちかいほど 紫で はやく 3本。時刻だけで 決まる）
   if (rec || rp.x === null || rp.x === undefined) return;
   const on = mzOn(rp.x, rp.y), X = ox + on[0] * T, Y = oy + on[1] * T, S = MZ_K * T;
+  const sig = mzPulseSignal();
+  const period = Math.round(MZ_PULSE.baseMs - (MZ_PULSE.baseMs - MZ_PULSE.fastMs) * sig), count = sig >= 1 ? 3 : 2;
+  const r = Math.round(255 + (190 - 255) * sig), g = Math.round(246 + (150 - 246) * sig), b = Math.round(200 + (245 - 200) * sig);
   ctx.save();
   ctx.lineWidth = Math.max(2, Math.min(3, T * 0.12));
-  for (let i = 0; i < 2; i++) {
-    const phase = ((now % 2400) / 2400 + i / 2) % 1;
-    ctx.strokeStyle = `rgba(255,246,200,${0.55 * (1 - phase)})`;
-    ctx.beginPath(); ctx.arc(X, Y, S * (0.3 + 2.9 * phase), 0, Math.PI * 2); ctx.stroke();
+  for (let i = 0; i < count; i++) {
+    const phase = ((now % period) / period + i / count) % 1;
+    ctx.strokeStyle = `rgba(${r},${g},${b},${(0.55 + 0.25 * sig) * (1 - phase)})`;
+    ctx.beginPath(); ctx.arc(X, Y, S * (0.3 + (2.9 + 0.9 * sig) * phase), 0, Math.PI * 2); ctx.stroke();
   }
   ctx.restore();
 }

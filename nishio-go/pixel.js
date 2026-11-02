@@ -7768,7 +7768,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -10952,6 +10952,22 @@ function drawMzPurify(ox, oy, T, now) {   // 浄化前：濃い紫の まるい 
         ctx.fillRect(X + u, Y - u, q, q); ctx.fillRect(X - u - q, Y + Math.round(u * 0.6), q, q);
       }
     }
+  }
+}
+function drawMzPurifyPetals(ox, oy, T, now) {   // 浄化の 進み具合：浄化した 数だけ 金の 花びらが かおりちゃんの 体の 周りの 輪に 1枚ずつ 増え、ぜんぶで 輪が 閉じる。見た目だけ（文字なし）。もやの あとに 描く
+  const total = mzPurify.cells.length, n = Math.min(mzPurify.count, total);
+  if (mzPurify.count <= 0 || rp.x === null || !total) return;
+  const on = mzOn(rp.x, rp.y), R = T * 0.8, s = Math.max(2, Math.round(T * 0.32)), s2 = Math.max(1, Math.round(T * 0.16));
+  const bob = calmMotion ? 0 : Math.sin(now / 380) * Math.max(1, Math.round(T / 10)) * 0.5;   // 輪ぜんたいで 同じ 揺れ（花びら同士の 間かくが 変わらない）
+  const cx = ox + on[0] * T, cy = oy + on[1] * T + bob;
+  for (let i = 0; i < n; i++) {
+    const a = -Math.PI / 2 + i * (Math.PI * 2 / total), X = Math.round(cx + Math.cos(a) * R), Y = Math.round(cy + Math.sin(a) * R);
+    ctx.fillStyle = '#ffd24a'; ctx.fillRect(X - Math.round(s / 2), Y - Math.round(s / 2), s, s);
+    ctx.fillStyle = '#fff2a8'; ctx.fillRect(X - Math.round(s2 / 2), Y - Math.round(s2 / 2), s2, s2);
+  }
+  if (mzPurify.count >= total) {   // ぜんぶ 浄化：外がわに もう1つ 薄い 金の 輪（完成）
+    ctx.strokeStyle = 'rgba(255,210,74,0.45)'; ctx.lineWidth = Math.max(1.5, T * 0.07);
+    ctx.beginPath(); ctx.arc(cx, cy, R + s, 0, Math.PI * 2); ctx.stroke();
   }
 }
 function drawMzPurifyTag(w, dpr, now) {   // 進み具合の 札（浄化マスの ある 迷路だけ。旅団札の 下）。完成の あと 約6秒は 金色

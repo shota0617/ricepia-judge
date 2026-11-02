@@ -162,7 +162,7 @@ class Cycle12PieceTests(unittest.TestCase):
 
     def test_drawn_before_fog_and_shelf_shown(self):
         self.assertIn('drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); if (mzHelpOn())', PIXEL)   # もやより前（サイクル14でかくし宝箱が見晴らし台の後に描かれる）
-        self.assertLess(PIXEL.index('drawMzPiece(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
+        self.assertLess(PIXEL.index('drawMzPiece(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertIn('drawMzShelf(w, dpr, now);', PIXEL)
         d = PIXEL[PIXEL.index('function drawMzPiece('):PIXEL.index('function drawMzShelf(')]
         self.assertIn('#fffaf0', d)

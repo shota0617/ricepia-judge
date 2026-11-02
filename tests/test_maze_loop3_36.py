@@ -68,7 +68,9 @@ class WallTheme(unittest.TestCase):
                               # サイクル39（探知リング）が波紋の期待と新規テストを追加した分
                               "tests/test_maze_loop3_32.py", "tests/test_maze_loop3_39.py", "tests/test_maze_loop3_40.py", "tests/test_maze_loop3_41.py", "tests/test_maze_loop3_16.py", "tests/test_maze_loop3_28.py", "tests/test_maze_loop3_29.py", "tests/test_maze_loop3_30.py", "tests/test_maze_loop3_31.py",
                               # サイクル42（吹き出し廃止）が kometalk.js・html・既存テスト期待を更新した分
-                              "nishio-go.html", "nishio-go/kometalk.js", "tests/test_maze_loop3_42.py", "tests/test_maze_loop3_2.py", "tests/test_maze_loop3_19.py"))
+                              "nishio-go.html", "nishio-go/kometalk.js", "tests/test_maze_loop3_42.py", "tests/test_maze_loop3_2.py", "tests/test_maze_loop3_19.py",
+                              # サイクル43（エネルギーオーラ）が新規テストを追加した分
+                              "tests/test_maze_loop3_43.py"))
         diff = subprocess.run(["git", "diff", "main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for bad in ("ぼく", "約20%", "約２０％"):

@@ -9490,6 +9490,7 @@ function drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T) {   // 行き止まり（
     mzHelp.dead++;
   }
 }
+function mzRouteChevAngle(dx, dy) { return typeof dx !== 'number' || typeof dy !== 'number' || !isFinite(dx) || !isFinite(dy) || (dx === 0 && dy === 0) ? 0 : Math.atan2(dy, dx); }   // ルートの 矢印の 向き（右が 0、下が π/2）
 function drawMzHint(ox, oy, T, now) {
   mzHelp.dots = 0;
   if (!mzRt.path) return;
@@ -9515,10 +9516,15 @@ function drawMzHint(ox, oy, T, now) {
   }
   if (now >= mzRt.showUntil) return;
   const S = MZ_K * T, pts = mzRt.path.slice(1, 9);
-  pts.forEach(([cx, cy], k) => {
-    const on = Math.floor(now / 120) % 8 === k, r = T * (on ? 0.55 : 0.38), p = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), X = ox + p[0] * T, Y = oy + p[1] * T;   // 道すじの 上に
-    ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(X, Y, r + Math.max(1, T / 6), 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = on ? '#fff59d' : '#ffffff'; ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
+  const P = mzRt.path, last = pts.length - 1;
+  pts.forEach(([cx, cy], k) => {   // ルート：その マスから 次へ 進む 向きの 矢じりが スタート側から ゴール側へ 流れる
+    const i = k + 1, nxt = P[i + 1], dir = nxt ? [nxt[0] - cx, nxt[1] - cy] : [cx - P[i - 1][0], cy - P[i - 1][1]], ang = mzRouteChevAngle(dir[0], dir[1]);   // 続きが あれば そちらへの 向き、なければ（本当の 最後・1つだけの ときも）入ってきた 向き
+    const on = Math.floor(now / 120) % 8 === k, end = i === P.length - 1, r = T * (end ? (on ? 0.8 : 0.7) : on ? 0.62 : 0.45), p = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), X = ox + p[0] * T, Y = oy + p[1] * T;   // 道すじの 上に。end は 本当の ゴールの マスの ときだけ（8つ目で 切り捨てた 点は ふつうの 矢じり）
+    const dart = q => { ctx.beginPath(); ctx.moveTo(q, 0); ctx.lineTo(-q * 0.8, -q * 0.9); ctx.lineTo(-q * 0.3, 0); ctx.lineTo(-q * 0.8, q * 0.9); ctx.closePath(); ctx.fill(); };   // うしろに 切れこみの ある 矢じり
+    ctx.save(); ctx.translate(X, Y); ctx.rotate(ang);
+    ctx.fillStyle = '#1a1a1a'; dart(r + Math.max(1, T / 6));
+    ctx.fillStyle = end ? (on ? '#ffe680' : '#ffd54f') : on ? '#ffd54f' : '#ffffff'; dart(r);
+    ctx.restore();
   });
 }
 // ゴールまでの タイムと ★：運営者の声「迷路を磨く」。めいろの 道のりから 目やすの 時間（★3）を きめ、画面の 上に いまの 時間と「★★★ あと 0:23」。

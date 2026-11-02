@@ -9659,6 +9659,7 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太�
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
   const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [], flowers = [], stations = [], stationAll = [], hubAll = [];
+  const S = MZ_K * T, edges = [];   // ふちどり：歩いた マスと まだの マスの 境目の 辺 [X, Y, dx, dy, rgb]
   let seq = 0;   // 通った 順の 通し番号（画面の 外の マスも 数える）
   for (const [cx, cy] of mzTrail.values()) {
     seq++;
@@ -9669,9 +9670,16 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T) {   // 歩いた 道を 太�
     const a = at((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K);
     grains.push(a);
     const ar = mzArea(cx, cy);
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (!mzTrail.has((cx + dx) + ',' + (cy + dy))) edges.push([ox + cx * S, oy + cy * S, dx, dy, ar ? mzZoneTint(ar).rgb : '255,214,102']);   // 隣が まだの 方向の 辺だけ
     if (seq % 10 === 0) stations.push([a[0], a[1], ar ? mzZoneTint(ar).rgb : '220,70,60']);   // 10マスごとに 駅
     flowers.push([a[0] + T * 0.22, a[1] - T * 0.18, ar ? mzZoneTint(ar).rgb : '255,170,200']);   // 花は 地区の 色（なければ ピンク）
     for (const [dx, dy] of [[1, 0], [0, 1]]) if (mzTrail.has((cx + dx) + ',' + (cy + dy)) && mzOpen(cx, cy, dx, dy)) links.push([a, at((cx + 0.5 + dx) * MZ_K, (cy + 0.5 + dy) * MZ_K)]);
+  }
+  ctx.lineCap = 'butt'; ctx.lineWidth = Math.max(2, T * 0.12);
+  for (const [X, Y, dx, dy, rgb] of edges) {   // 塗った 範囲の ふちどり（テクテクライフ）：地区色の 太い 線。塗り道の 下。毎フレーム おなじ
+    ctx.strokeStyle = 'rgba(' + rgb + ',.9)'; ctx.beginPath();
+    if (dx === 1) { ctx.moveTo(X + S, Y); ctx.lineTo(X + S, Y + S); } else if (dx === -1) { ctx.moveTo(X, Y); ctx.lineTo(X, Y + S); } else if (dy === 1) { ctx.moveTo(X, Y + S); ctx.lineTo(X + S, Y + S); } else { ctx.moveTo(X, Y); ctx.lineTo(X + S, Y); }
+    ctx.stroke();
   }
   ctx.lineCap = 'round';
   const stroke = (col, w) => { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); for (const [p, q] of links) { ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); } ctx.stroke(); };

@@ -4250,10 +4250,6 @@ $('courseNext').addEventListener('click', () => {   // つぎの 名所を 行�
 });
 document.addEventListener('click', e => { if (e.target.closest('[data-jump-open]')) openJump(); });   // スポットの窓の「ミニゲーム」
 $('textToggle').checked = !simple();
-if ($('komeTalkToggle') && KT) {
-  $('komeTalkToggle').checked = KT.on();
-  $('komeTalkToggle').addEventListener('change', e => { KT.setOn(e.target.checked); toast(e.target.checked ? '🍚 あいちのかおりちゃんが 話しかけます' : '🍚 おはなしを オフにしました'); track('kome_talk', { on: e.target.checked }); });
-}
 $('textToggle').addEventListener('change', e => {
   document.body.classList.toggle('simple', !e.target.checked);
   try { localStorage.setItem('nsg_text_more', e.target.checked ? '1' : '0'); } catch (err) { /* noop */ }

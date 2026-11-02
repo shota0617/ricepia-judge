@@ -18,19 +18,13 @@ def func_body(src, head):
 
 
 class KomeTalkNonBlocking(unittest.TestCase):
-    def test_no_dialog_role_no_focus_auto_advance(self):
-        self.assertNotIn("role', 'dialog'", KT)
-        self.assertNotIn(".focus(", KT)
-        self.assertNotIn("toastHold", KT)
-        self.assertNotIn("toastFlush", KT)
-        self.assertIn("autoT = setTimeout(step", KT)
-        self.assertIn("15000", KT)
-        self.assertIn("kt-sr", KT)
+    def test_no_dialog_role_no_focus_auto_advance(self):   # 11/2 吹き出し廃止：窓そのものが 無い
+        for w in ("role', 'dialog'", ".focus(", "toastHold", "toastFlush", "createElement", "setTimeout"):
+            self.assertNotIn(w, KT)
 
-    def test_hidden_does_not_arm_auto_timers(self):
-        i = KT.index("function afterType()")
-        body = KT[i:KT.index("function show()", i)]
-        self.assertIn("if (box.hidden) return;", body)
+    def test_hidden_does_not_arm_auto_timers(self):   # 11/2 窓が 無いので タイマーも 無い
+        self.assertNotIn("afterType", KT)
+        self.assertNotIn("setInterval", KT)
 
     def test_css_pointer_events(self):
         self.assertRegex(CSS, r"\.kome-talk\{pointer-events:none;")

@@ -186,7 +186,7 @@ class Cycle17ChaseTests(unittest.TestCase):
     def test_draw_order_look_and_tag(self):
         self.assertIn('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(', PIXEL)   # もやの あと
         self.assertLess(PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase('), PIXEL.index('\n  updateTraffic(dt, now, tx0'))
-        self.assertIn('drawMzDinoTag(w, dpr, now); drawMzChaseTag(w, dpr, now);', PIXEL)
+        self.assertNotIn('drawMzChaseTag(w, dpr, now);', PIXEL)   # 常時描画しない（サイクル25）
         d = PIXEL[PIXEL.index('function drawMzChase('):PIXEL.index('function drawMzChaseTag(')]
         for c in ('#ff8c1a', '80,170,235', '255,224,102', '170,120,235', '#3fb56b'):
             self.assertNotIn(c, d)

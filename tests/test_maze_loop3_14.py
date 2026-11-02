@@ -151,7 +151,7 @@ class Cycle14CacheTests(unittest.TestCase):
     def test_draw_order_and_look(self):
         self.assertLess(PIXEL.index('drawMzCache(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
         self.assertLess(PIXEL.index('drawMzView(ox, oy, T, now); drawMzCache('), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
-        self.assertIn('drawMzViewClearTag(w, dpr, now); drawMzCacheHint(w, dpr, now);', PIXEL)
+        self.assertNotIn('drawMzCacheHint(w, dpr, now);', PIXEL)   # 常時描画しない（サイクル25）
         d = PIXEL[PIXEL.index('function drawMzCache('):PIXEL.index('function drawMzCacheHint(')]
         self.assertIn('170,120,235', d)   # うすい紫
         self.assertIn('MZ_CACHE.show', d)   # 3歩以内だけ

@@ -157,7 +157,8 @@ class Cycle13ViewTests(unittest.TestCase):
     def test_drawn_before_fog_and_panorama_below_shelf(self):
         self.assertIn('drawMzView(ox, oy, T, now);', PIXEL)
         self.assertLess(PIXEL.index('drawMzView(ox, oy, T, now);'), PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing('))
-        self.assertIn('drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzViewClearTag(w, dpr, now);', PIXEL)
+        self.assertIn('drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(', PIXEL)
+        self.assertNotIn('drawMzViewClearTag(w, dpr, now);', PIXEL)   # 文章札は 常時描画しない（サイクル25）
         self.assertIn("if (!mzViewClear(now)) mzFogFill(mzFogCells(tx0, ty0, tx1, ty1, ox, oy, T, 'veil'), S);", PIXEL)
         d = PIXEL[PIXEL.index('function drawMzView('):PIXEL.index('function mzViewShelfY(')]
         self.assertIn('#234a6e', d)   # 望遠鏡

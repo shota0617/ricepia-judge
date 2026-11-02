@@ -2475,8 +2475,7 @@ function renderGuide() {
   el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
-  el.insertAdjacentHTML('beforeend', glowHtml());
-  el.insertAdjacentHTML('beforeend', treasureHtml());
+  // glowHtml / treasureHtml は 文字を 減らすため ここでは 呼ばない（サイクル25。関数は 残す）
   const chips = guideChips(me, g, alts, areaZone);
   if (chips.length > 1) {   // 距離順チップ：いつも 見える。主行き先は ✓、ほかを 押すと そこへ 変わる（候補が 1つだけの ときは 出さない）
     el.insertAdjacentHTML('beforeend', `<span class="chips">${chips.map(c => {

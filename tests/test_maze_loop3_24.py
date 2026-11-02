@@ -77,9 +77,7 @@ class Rescue(unittest.TestCase):
         line = next(l for l in PIXEL.splitlines() if "drawMzFogVeil(tx0" in l and "drawMzRescue(" in l)
         self.assertLess(line.index("drawMzRescue("), line.index("drawMzFogVeil("))        # 対象は veil より前
         self.assertGreater(line.index("drawMzRescueMate("), line.index("drawMzFogVeil("))  # 追従は veil より後
-        hud = next(l for l in PIXEL.splitlines() if "drawMzPurifyTag(w, dpr, now);" in l)
-        self.assertLess(hud.index("drawMzPurifyTag("), hud.index("drawMzRescueTag("))
-        self.assertLess(hud.index("drawMzRescueTag("), hud.index("drawMzMini("))
+        self.assertNotIn("drawMzRescueTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_mate_uses_history(self):
         m = func_body("function drawMzRescueMate(")
@@ -108,7 +106,7 @@ class Rescue(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
-        self.assertIn("mzRescue", added)
+        self.assertIn("function mzRescueTick(", PIXEL)   # サイクル25：差分は 描画行だけなので 仕組みの 残りで 確かめる
         self.assertNotIn("ぼく", added)
         self.assertNotIn("だに", added)
         self.assertNotRegex(added, r"約\s*20\s*[%％]")

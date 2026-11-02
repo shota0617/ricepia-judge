@@ -69,9 +69,7 @@ class Purify(unittest.TestCase):
     def test_draw_order(self):
         line = next(l for l in PIXEL.splitlines() if "drawMzFogVeil(tx0" in l and "drawMzPurify(" in l)
         self.assertLess(line.index("drawMzPurify("), line.index("drawMzFogVeil("))   # けがれは veil より前（視界外はもや）
-        hud = next(l for l in PIXEL.splitlines() if "drawMzBrigadeTag(w, dpr, now);" in l)
-        self.assertLess(hud.index("drawMzBrigadeTag("), hud.index("drawMzPurifyTag("))
-        self.assertLess(hud.index("drawMzPurifyTag("), hud.index("drawMzMini("))
+        self.assertNotIn("drawMzPurifyTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_draw_uses_rects_and_calm(self):
         d = func_body("function drawMzPurify(")
@@ -92,7 +90,7 @@ class Purify(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
-        self.assertIn("mzPurify", added)
+        self.assertIn("function mzPurifyTick(", PIXEL)   # サイクル25：差分は 描画行だけなので 仕組みの 残りで 確かめる
         self.assertNotIn("ぼく", added)
         self.assertNotIn("だに", added)
         self.assertNotRegex(added, r"抹茶.{0,6}20")

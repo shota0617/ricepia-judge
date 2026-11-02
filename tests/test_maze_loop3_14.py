@@ -169,7 +169,7 @@ class Cycle14CacheTests(unittest.TestCase):
         self.assertIn('S.cacheGot = (S.cacheGot || 0) + 1', GAME)
         self.assertIn("['かくし宝箱はっけん', S.cacheGot || 0, '回']", GAME)
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
-        self.assertEqual(pi.count(",") + 1, 16)   # きろく16行と対応（サイクル18でさんぽエネルギー行が増えた）（サイクル17で夕立行が増えた。サイクル16できょうりゅう行が増えた。サイクル15でどうぐクエスト行が増えた）
+        self.assertEqual(pi.count(",") + 1, 21)   # サイクル27できろく整備で21行（以前：16行。サイクル18でさんぽエネルギー行が増えた）（サイクル17で夕立行が増えた。サイクル16できょうりゅう行が増えた。サイクル15でどうぐクエスト行が増えた）
         h = PIXEL[PIXEL.index('function drawMzCacheHint('):PIXEL.index('// びゅんパネル')]
         self.assertIn('w - gap * 2', h)   # 狭い画面では札を画面内に収める
 

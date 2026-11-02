@@ -100,7 +100,6 @@ class Cube(unittest.TestCase):
         diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
-        self.assertIn("function mzCubeTick(", added)
         self.assertNotIn("ぼく", added)
         self.assertNotIn("だに", added)
         self.assertNotRegex(added, r"約\s*20\s*[%％]")

@@ -45,8 +45,8 @@ class Purify(unittest.TestCase):
         self.assertRegex(GAME, r"mzBrigade, mzPurify,")
         self.assertIn("purifyGot: 0", GAME)
 
-    def test_no_stat_rows(self):
-        self.assertNotIn("S.purifyGot || 0, '回']", GAME)
+    def test_stat_row_added_in_cycle27(self):
+        self.assertIn("S.purifyGot || 0, '回']", GAME)   # サイクル27できろく整備で行を追加
 
     def test_reset_rules(self):
         self.assertRegex(PIXEL, r"mzPurifyReset\(\);[^\n]*\n\s*mzRescueReset\(\);[^\n]*\n\s*mzBrigadeReset\(\);")

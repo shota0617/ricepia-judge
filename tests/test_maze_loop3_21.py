@@ -63,12 +63,12 @@ class Torch(unittest.TestCase):
         self.assertIn("torchGot: 0", GAME)
 
     def test_stat_rows_unchanged(self):
-        # 取得回数は S.torchGot に保存するが、きろく行は増やさない（STAT_PI と行数の対応は16のまま）
-        self.assertNotIn("S.torchGot || 0, '回']", GAME)
+        # 取得回数は S.torchGot に保存し、サイクル27のきろく整備で行も追加した（STAT_PI と行数の対応は21）
+        self.assertIn("S.torchGot || 0, '回']", GAME)
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))
-        self.assertEqual(pi.count(',') + 1, 16)
+        self.assertEqual(pi.count(',') + 1, 21)
 
     def test_reset_rules(self):
         self.assertRegex(PIXEL, r"mzTorchReset\(\);[^\n]*\n\s*mzMini\.seen\.clear\(\);")   # ゴール変更時

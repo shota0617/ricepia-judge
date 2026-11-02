@@ -9670,6 +9670,12 @@ function mzEntrancePulse(now) {   // 未踏への 入口印の 透明度（0.2�
   return 0.55 + 0.35 * Math.sin(now / 300);
 }
 function mzRailTiePerp(dx, dy) { if (typeof dx !== 'number' || typeof dy !== 'number' || !isFinite(dx) || !isFinite(dy) || (dx === 0 && dy === 0)) return [1, 0]; const l = Math.hypot(dx, dy); return [-dy / l, dx / l]; }   // 枕木の 向き（進行方向と 直角）。駅メモ！の 線路
+function mzFieldArea(p, q, r) {   // 3つの 駅で 囲む 三角形の 面積（フィールド）。点は [x, y]。配列・数で なければ 0。純粋
+  if (!Array.isArray(p) || !Array.isArray(q) || !Array.isArray(r)) return 0;
+  const v = [p[0], p[1], q[0], q[1], r[0], r[1]];
+  if (v.some(n => typeof n !== 'number' || !isFinite(n))) return 0;
+  return Math.abs((q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1])) / 2;
+}
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
@@ -9726,6 +9732,10 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 歩いた 道を
     const p = stationAll[i], q = stationAll[i + 1];
     ctx.strokeStyle = 'rgba(' + p[2] + ',.28)'; ctx.lineWidth = Math.max(3, T * 0.22); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
     ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = Math.max(1.5, T * 0.07); ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+  }
+  for (let i = 0; i + 2 < stationAll.length; i += 2) {   // フィールド（Ingress Prime）：つづく 駅を 3つずつ（端の 駅は 共有）。囲んだ 三角形を 最初の 駅の 地区色の 薄い 膜で 塗る。まっすぐ（面積 ほぼ 0）は 塗らない。駅リンクの 上・拠点リングと 駅印の 下
+    const p = stationAll[i], q = stationAll[i + 1], r = stationAll[i + 2];
+    if (mzFieldArea(p, q, r) > T * T * 4) { ctx.fillStyle = 'rgba(' + p[2] + ',.13)'; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.lineTo(r[0], r[1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(' + p[2] + ',.28)'; ctx.lineWidth = Math.max(3, T * 0.22); ctx.beginPath(); ctx.moveTo(r[0], r[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = Math.max(1.5, T * 0.07); ctx.beginPath(); ctx.moveTo(r[0], r[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); }   // 閉じる 辺（r→p）も リンク線で 引いて、3本で 囲んだことが 見えるように
   }
   const sr = Math.max(4, T * 0.38);
   const hr = Math.max(10, T * 1.5, sr * 4);   // 小さい 倍率でも 駅印の 4倍を 保つ

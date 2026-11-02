@@ -10144,14 +10144,36 @@ function mzPieceTick(now) {
   const cols = ['#ffffff', '#7fc4e8', '#9ccc4f'];
   for (let i = 0; i < (fin ? 24 : 12); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }
 }
-function drawMzPieceArt(x, y, s, kind, on) {   // ピース 1枚（s：1辺）。kind 0 海・1 田んぼ・2 町。on でなければ うすい 輪郭だけ。四角だけで 描く
+function mzPieceJoin(kind) {   // 3枚が 1枚の パノラマに つながる ための 切り分けの きまり（1辺を 8と した 格子の 単位）。0 左・1 中・2 右。それ以外は null
+  if (kind !== 0 && kind !== 1 && kind !== 2) return null;
+  return { horizon: 3, sun: [{ dx: 8, dy: 2, r: 1.6 }, { dx: 0, dy: 2, r: 1.6 }, null][kind], pathIn: [null, 6, 6][kind], pathOut: [6, 6, null][kind] };   // 太陽は 左と 中の 境目・川は 境目で 同じ 高さ
+}
+function drawMzPieceArt(x, y, s, kind, on, joined) {   // ピース 1枚（s：1辺）。kind 0 左（川原）・1 中（田んぼ）・2 右（町）の 1枚絵の 切り分け。on でなければ うすい 輪郭だけ。joined なら 3枚の 内側の 境目に 枠を 引かない。四角だけで 描く
   const q = Math.max(1, Math.round(s / 8)), W = Math.round(s);
   if (!on) { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x, y, W, q); ctx.fillRect(x, y + W - q, W, q); ctx.fillRect(x, y, q, W); ctx.fillRect(x + W - q, y, q, W); return; }
-  ctx.fillStyle = '#4a3a22'; ctx.fillRect(x - q, y - q, W + q * 2, W + q * 2);
-  ctx.fillStyle = ['#7fc4e8', '#9ccc4f', '#e8d8a8'][kind]; ctx.fillRect(x, y, W, W);
-  if (kind === 0) { ctx.fillStyle = '#ffffff'; for (let i = 0; i < 2; i++) { ctx.fillRect(x + q * 2, y + q * (2 + i * 3), q * 2, q); ctx.fillRect(x + q * 5, y + q * (3 + i * 3), q * 2, q); } }   // 波
-  else if (kind === 1) { ctx.fillStyle = '#5a9a2a'; for (let i = 1; i < 4; i++) ctx.fillRect(x, y + q * i * 2 - q, W, q); }   // 田んぼの うね
-  else { ctx.fillStyle = '#c0583a'; ctx.fillRect(x + q * 2, y + q * 3, q * 2, q * 2); ctx.fillRect(x + q * 5, y + q * 2, q * 2, q * 3); ctx.fillStyle = '#5a3a1a'; ctx.fillRect(x + q * 2, y + q * 5, q * 5, q); }   // 町の 屋根
+  const J = mzPieceJoin(kind), u = v => Math.round(v * s / 8), hz = y + u(J.horizon);
+  ctx.fillStyle = '#4a3a22';
+  if (joined) { ctx.fillRect(x, y - q, W, q); ctx.fillRect(x, y + W, W, q); if (kind === 0) ctx.fillRect(x - q, y - q, q, W + q * 2); if (kind === 2) ctx.fillRect(x + W, y - q, q, W + q * 2); }   // 外周だけ（左は 右辺・右は 左辺・中は 上下の 境目に 引かない）
+  else ctx.fillRect(x - q, y - q, W + q * 2, W + q * 2);
+  ctx.fillStyle = '#bfe6fa'; ctx.fillRect(x, y, W, hz - y);   // 空（全ピース 同じ）
+  if (J.sun) {   // 太陽：四角の 段差で 円に。ピースの 端で 切れて 隣と 合わさる
+    const cx = x + u(J.sun.dx), cy = y + u(J.sun.dy), R = J.sun.r * s / 8;
+    ctx.fillStyle = '#ffd84a';
+    for (let r = -Math.ceil(R); r < Math.ceil(R); r++) {
+      const m = r + 0.5; if (Math.abs(m) >= R) continue;
+      const hw = Math.sqrt(R * R - m * m), x0 = Math.max(x, Math.round(cx - hw)), x1 = Math.min(x + W, Math.round(cx + hw)), y0 = Math.round(cy + r), y1 = Math.min(hz, Math.round(cy + r + 1));
+      if (x1 > x0 && y1 > Math.max(y, y0)) ctx.fillRect(x0, Math.max(y, y0), x1 - x0, y1 - Math.max(y, y0));
+    }
+  }
+  ctx.fillStyle = ['#a8dcf0', '#9ccc4f', '#e8d8a8'][kind]; ctx.fillRect(x, hz, W, y + W - hz);   // 地面
+  ctx.fillStyle = '#6f9a5a'; ctx.fillRect(x, hz, W, Math.max(1, q >> 1));   // 地平線（全ピース 同じ）
+  if (kind === 0) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + u(1), y + u(4), u(2), q); ctx.fillRect(x + u(4), y + u(5), u(2), q); ctx.fillRect(x + u(2), y + u(7), u(2), q); }   // 波
+  else if (kind === 1) { ctx.fillStyle = '#5a9a2a'; for (const r of [4, 5, 7]) ctx.fillRect(x, y + u(r) + q - Math.max(1, q >> 1), W, Math.max(1, q >> 1)); }   // 田んぼの うね
+  else { ctx.fillStyle = '#c0583a'; ctx.fillRect(x + u(1), y + u(4), u(2), u(1)); ctx.fillRect(x + u(5), y + u(4), u(2), u(1)); ctx.fillStyle = '#5a3a1a'; ctx.fillRect(x + u(1), y + u(5), u(2), q); ctx.fillRect(x + u(5), y + u(5), u(2), q); }   // 町の 屋根
+  const pi = J.pathIn, po = J.pathOut;   // 川（道）：入り口の 行から 出口の 行へ 四角の 階段で。地面の 目印の あとに 描く
+  const xa = pi === null ? u(2) : 0, xb = po === null ? u(6) : W, ra = pi === null ? po : pi, rb = po === null ? pi : po, n = Math.max(1, Math.abs(rb - ra) + 1), seg = (xb - xa) / n;
+  ctx.fillStyle = '#4aa8e0';   // 川は 全ピース 同じ 水色（境目で 色が 変わらない）
+  for (let i = 0; i < n; i++) { const row = ra + (rb >= ra ? i : -i), x0 = x + xa + Math.round(seg * i), x1 = x + xa + Math.round(seg * (i + 1)); ctx.fillRect(x0, y + u(row), x1 - x0, Math.max(1, u(row + 1) - u(row))); }
 }
 function drawMzPiece(ox, oy, T, now) {   // 地図ピース（白い 紙に 折れ目と ジグソーの 出っぱり。まわりに 水色の わ）
   if (mzPiece.cx < 0) return;
@@ -10160,6 +10182,7 @@ function drawMzPiece(ox, oy, T, now) {   // 地図ピース（白い 紙に 折�
   ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.fillRect(X - h, Y0 + h + q, h * 2, q * 2);   // かげ
   ctx.fillStyle = '#4a3a22'; ctx.fillRect(X - h - q, Y - h - q, h * 2 + q * 2, h * 2 + q * 2); ctx.fillRect(X + h, Y - q * 2, q * 3, q * 4);
   ctx.fillStyle = '#fffaf0'; ctx.fillRect(X - h, Y - h, h * 2, h * 2); ctx.fillRect(X + h, Y - q, q * 2, q * 2);   // 紙と 出っぱり
+  if (mzPiece.got >= 0 && mzPiece.got < MZ_PIECE.n && Number.isInteger(mzPiece.got)) { drawMzPieceArt(X - h, Y - h, h * 2, mzPiece.got, true, false); return; }   // 次に 入る 場所（棚の got 番目）の 切り分け絵が 紙の 中に 見える
   ctx.fillStyle = '#d9cdb0'; ctx.fillRect(X - q, Y - h, q, h * 2); ctx.fillRect(X - h, Y - q, h * 2, q);   // 折れ目（たて・よこ）
   ctx.fillStyle = '#c0583a'; ctx.fillRect(X + q, Y + q, q * 2, q * 2);   // 赤い 印
 }
@@ -10169,7 +10192,7 @@ function drawMzShelf(w, dpr, now) {   // 迷路の 上の ピース棚（3枠。
   const done = mzPiece.doneAt && now - mzPiece.doneAt < MZ_PIECE.showMs, k = done ? 1.8 : 1, ps = Math.round(s * k), tot = ps * 3 + (done ? 0 : gap * 2), x0 = Math.round(w / 2 - tot / 2), y0 = Math.round(S * 1.5 + S * 1.9 * (rows - 1) + S * 1.35);
   if (!done) { ctx.fillStyle = 'rgba(10,20,30,.55)'; ctx.fillRect(x0 - gap, y0 - gap, tot + gap * 2, ps + gap * 2); }
   else { ctx.globalAlpha = Math.min(1, (MZ_PIECE.showMs - (now - mzPiece.doneAt)) / 500); ctx.fillStyle = 'rgba(10,20,30,.55)'; ctx.fillRect(x0 - gap, y0 - gap, tot + gap * 2, ps + gap * 2); }
-  for (let i = 0; i < 3; i++) drawMzPieceArt(x0 + i * (ps + (done ? 0 : gap)), y0, ps, i, i < mzPiece.got);
+  for (let i = 0; i < 3; i++) drawMzPieceArt(x0 + i * (ps + (done ? 0 : gap)), y0, ps, i, i < mzPiece.got, !!done);
   ctx.globalAlpha = 1;
 }
 // 見晴らし台（A Short Hike の「頂上の 見晴らし台」）：迷路の 中の 通路に 木の 見晴らし台が 1つ 出て、ころがって 着くと +15pt。

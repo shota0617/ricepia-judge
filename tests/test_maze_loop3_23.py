@@ -20,7 +20,7 @@ class Purify(unittest.TestCase):
         for h in ("function mzPurifyReset(", "function mzPurifyPick(", "function mzPurifyTick(", "function mzPurifyState(",
                   "function drawMzPurify(", "function drawMzPurifyTag("):
             self.assertIn(h, PIXEL)
-        self.assertIn("mzBrigadeTick(now); mzPurifyTick(now); }", PIXEL)   # 旅団 tick のあと
+        self.assertIn("mzBrigadeTick(now); mzPurifyTick(now);", PIXEL)   # 旅団 tick のあと
 
     def test_placement_and_mutual_avoidance(self):
         pick = func_body("function mzPurifyPick(")
@@ -49,7 +49,7 @@ class Purify(unittest.TestCase):
         self.assertNotIn("S.purifyGot || 0, '回']", GAME)
 
     def test_reset_rules(self):
-        self.assertRegex(PIXEL, r"mzPurifyReset\(\);[^\n]*\n\s*mzBrigadeReset\(\);")
+        self.assertRegex(PIXEL, r"mzPurifyReset\(\);[^\n]*\n\s*mzRescueReset\(\);[^\n]*\n\s*mzBrigadeReset\(\);")
         self.assertRegex(PIXEL, r"!mazeOn\(\) && \(mzPurify\.sx >= 0 \|\| mzPurify\.count\)\) mzPurifyReset\(\)")
         self.assertIn("count: 0", func_body("function mzPurifyReset("))
 

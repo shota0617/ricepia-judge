@@ -61,7 +61,7 @@ class Footprints(unittest.TestCase):
         names = subprocess.run(["git", "diff", "--name-only", "origin/main...HEAD"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.split()
         for n in names:
             # サイクル42（吹き出し廃止）は kometalk.js・game.js・nishio-go.html も変更する
-            self.assertTrue(n in ("nishio-go/pixel.js", "nishio-go/kometalk.js", "nishio-go/game.js", "nishio-go.html") or re.fullmatch(r"tests/test_maze_loop3_\d+\.py", n), n)
+            self.assertTrue(n in ("nishio-go/pixel.js", "nishio-go/kometalk.js", "nishio-go/game.js", "nishio-go.html") or re.fullmatch(r"tests/test_maze_(loop3_\d+|fog)\.py", n), n)
         diff = subprocess.run(["git", "diff", "origin/main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         for l in diff.splitlines():
             if l.startswith("+") and not l.startswith("+++"):

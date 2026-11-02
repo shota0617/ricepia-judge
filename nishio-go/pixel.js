@@ -11128,10 +11128,21 @@ function drawMzMini(w, vh, dpr) {
   mzMini.box = [x0, y0, x0 + sz, y0 + sz];
   ctx.save();
   ctx.fillStyle = 'rgba(30,40,30,.5)'; ctx.fillRect(x0 - q, y0 - q, sz + q * 2, sz + q * 2);
-  ctx.fillStyle = 'rgba(244,240,222,.12)'; ctx.fillRect(x0, y0, sz, sz);
+  ctx.fillStyle = 'rgba(244,240,222,.94)'; ctx.fillRect(x0, y0, sz, sz);   // 方眼紙の 地（世界樹の迷宮：歩いた ところを 自分で 描いた 地図）
+  ctx.fillStyle = 'rgba(90,120,160,.18)';
+  for (let i = 0; i <= n; i++) { ctx.fillRect(x0 + i * q - (i === n ? 1 : 0), y0, 1, sz); ctx.fillRect(x0, y0 + i * q - (i === n ? 1 : 0), sz, 1); }
   const zc = new Map();   // 区域ごとの 地区色
   const tint = (cx, cy) => { const a = mzAreas.get(Math.floor(cx / MZ_R) + '_' + Math.floor(cy / MZ_R)); if (!a) return 'rgba(255,214,102,.8)'; if (!zc.has(a)) { const t = mzZoneTint(a); zc.set(a, `rgba(${t.rgb},.85)`); } return zc.get(a); };
   for (const [cx, cy] of mzTrail.values()) if (inside(cx, cy)) { ctx.fillStyle = tint(cx, cy); ctx.fillRect(x0 + (cx - ax) * q, y0 + (cy - ay) * q, q, q); }
+  ctx.fillStyle = 'rgba(43,38,30,.9)';   // インクの 壁線：歩いた マスの 辺のうち、実際には 通れない（mzOpen でない）辺だけ。通路が 未踏へ つづく 辺は あけて おく（手描き地図の 壁）
+  const lw = Math.max(1, Math.round(q * 0.28));
+  for (const [cx, cy] of mzTrail.values()) if (inside(cx, cy)) {
+    const px0 = x0 + (cx - ax) * q, py0 = y0 + (cy - ay) * q;
+    if (!mzOpen(cx, cy, 0, -1)) ctx.fillRect(px0, py0, q, lw);
+    if (!mzOpen(cx, cy, 0, 1)) ctx.fillRect(px0, py0 + q - lw, q, lw);
+    if (!mzOpen(cx, cy, -1, 0)) ctx.fillRect(px0, py0, lw, q);
+    if (!mzOpen(cx, cy, 1, 0)) ctx.fillRect(px0 + q - lw, py0, lw, q);
+  }
   for (const [k, col] of mzMini.seen) {   // しるしは 1マスより 少し 大きく
     const [cx, cy] = k.split(',').map(Number);
     if (inside(cx, cy)) { ctx.fillStyle = col; ctx.fillRect(x0 + (cx - ax) * q - 1, y0 + (cy - ay) * q - 1, q + 2, q + 2); }

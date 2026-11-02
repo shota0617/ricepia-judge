@@ -10780,8 +10780,8 @@ function drawMzTorchTag(w, dpr, now) {   // 残り秒の 札（迷路の 間だ�
 // 1迷路で 3つまで（1つ +5pt）。3つ そろうと 旅団 完成（+15pt）。取ると 別の 通路へ 湧き直し、3つ そろったら その迷路では もう 出さない。ズーム1（フォグなし）でも 同じ。敵・ゴーストは 出さない。操作も 止めない（札と おともは 表示だけ）。
 // 位置と 集めた 数は この 画面の 間だけ（セーブは 増やさない。ポイントと 完成回数だけ game.js の mzBrigade が 保存）。うすいピンクの 輪で、みかん・たいまつ・ゴールの 金の わとは 色で 見分ける
 const MZ_BRIGADE = { n: 3, pts: 5, bonus: 15, min: 6, reach: 18, tagMs: 6000 };   // 1迷路で 出る 数・1つの ポイント・完成の ボーナス・スタートからの 歩数の 下限・さがす はんい（歩数）・完成札を 出す 長さ
-const mzBrigade = { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, count: 0, doneAt: 0 };   // cx cy：立っている マス・sx sy：スタートの マス・count：集めた おとも・doneAt：完成した 時刻
-function mzBrigadeReset() { Object.assign(mzBrigade, { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, count: 0, doneAt: 0 }); }
+const mzBrigade = { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, count: 0, doneAt: 0, hist: [] };   // cx cy：立っている マス・sx sy：スタートの マス・count：集めた おとも・doneAt：完成した 時刻
+function mzBrigadeReset() { Object.assign(mzBrigade, { cx: -1, cy: -1, sx: -1, sy: -1, last: null, next: 0, count: 0, doneAt: 0, hist: [] }); }
 function mzBrigadePick() {   // くだものと 同じ 条件（mzFruitOk。ほかの ボーナスの マスも そこで よける）で、お米の すぐ 近く・さっき 取った 所は よける
   const sx = mzBrigade.sx, sy = mzBrigade.sy, rx = Math.floor(rp.x / MZ_K), ry = Math.floor(rp.y / MZ_K);
   if (sx < 0) return null;
@@ -10802,6 +10802,7 @@ function mzBrigadeTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
   if (mzBrigade.sx < 0) { mzBrigade.sx = a; mzBrigade.sy = b; }   // 迷路の スタート（ゴールが きまった ときの お米の マス）
+  const h0 = mzBrigade.hist[0]; if (!h0 || h0[0] !== a || h0[1] !== b) { mzBrigade.hist.unshift([a, b]); if (mzBrigade.hist.length > 6) mzBrigade.hist.length = 6; }   // 通った マスの 履歴（おともの 数に 関係なく 育てる。隊列の 位置に つかう）
   if (mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs + 500) dirty = true;   // 完成札を 時間で 消す
   if (mzBrigade.count >= MZ_BRIGADE.n) return;   // 3つ そろったら もう 出さない
   if (mzBrigade.cx < 0) {   // まだ 立っていない：地図が 読めるまで 0.5秒ごとに さがす
@@ -10823,7 +10824,7 @@ function mzBrigadeTick(now) {
 }
 function mzBrigadeState() {   // テスト用：立っている マス・スタート・集めた 数・完成したか
   const now = performance.now();
-  return { at: mzBrigade.cx < 0 ? null : [mzBrigade.cx, mzBrigade.cy], start: mzBrigade.sx < 0 ? null : [mzBrigade.sx, mzBrigade.sy], count: mzBrigade.count, done: mzBrigade.count >= MZ_BRIGADE.n, tag: !!mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs };
+  return { at: mzBrigade.cx < 0 ? null : [mzBrigade.cx, mzBrigade.cy], start: mzBrigade.sx < 0 ? null : [mzBrigade.sx, mzBrigade.sy], count: mzBrigade.count, done: mzBrigade.count >= MZ_BRIGADE.n, tag: !!mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs, trail: mzBrigade.hist.map(c => c.slice()) };
 }
 function mzMateRice(X, Y, r, q) {   // 小さな お米 ひとつぶ：白い まるに うすいピンクの ふち ＋ ほっぺ
   ctx.fillStyle = '#ff9ec0'; ctx.fillRect(X - r - q, Y - r * 0.7 - q, (r + q) * 2, Math.round(r * 1.4) + q * 2);
@@ -10842,13 +10843,16 @@ function drawMzBrigade(ox, oy, T, now) {   // 立っている おとも米：小
   ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.fillRect(X - r, Math.round(Y + r * 1.1), r * 2, q);   // かげ
   mzMateRice(X, Y, r, q);
 }
-function drawMzBrigadeMates(ox, oy, T, now) {   // 集めた おとも：かおりちゃんの 後ろ・左・右に 小さな お米。もやの あとに 描く（いつも 見える）
+function drawMzBrigadeMates(ox, oy, T, now) {   // 集めた おとも：かおりちゃんの 通った 道を 1マスずつ おくれて 行列で ついてくる。もやの あとに 描く（いつも 見える）
   if (!mzBrigade.count || rp.x === null) return;
   const on = mzOn(rp.x, rp.y), u = Math.max(5, T * 0.5), r = Math.max(3, Math.round(u * 0.42)), q = Math.max(1, Math.round(T / 10));
-  const slots = [[-1.35, 0.55], [0, 1.45], [1.0, 1.3]];   // 左・後ろ・右うしろ（たいまつの 炎は 右よこ：すこし はなす）
+  const slots = [[-1.35, 0.55], [0, 1.45], [1.0, 1.3]];   // 歩き はじめで 履歴が 足りない とき：左・後ろ・右うしろ（たいまつの 炎は 右よこ：すこし はなす）
   for (let i = 0; i < Math.min(mzBrigade.count, slots.length); i++) {
-    const bob = calmMotion ? 0 : Math.sin(now / 320 + i * 2.1) * q;
-    mzMateRice(Math.round(ox + on[0] * T + slots[i][0] * u), Math.round(oy + on[1] * T + slots[i][1] * u + bob), r, q);
+    const bob = calmMotion ? 0 : Math.sin(now / 320 + i * 2.1) * q, c = mzBrigade.hist[i + 1];
+    if (c) {
+      const m = mzOn((c[0] + 0.5) * MZ_K, (c[1] + 0.5) * MZ_K);
+      mzMateRice(Math.round(ox + m[0] * T), Math.round(oy + m[1] * T + bob), r, q);
+    } else mzMateRice(Math.round(ox + on[0] * T + slots[i][0] * u), Math.round(oy + on[1] * T + slots[i][1] * u + bob), r, q);
   }
 }
 function drawMzBrigadeTag(w, dpr, now) {   // 旅団札（迷路の 間だけ。たいまつ札の 下）。完成の あと 約6秒は 金色

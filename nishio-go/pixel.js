@@ -11125,13 +11125,8 @@ function mzCubePick() {   // くだものと 同じ 条件（mzFruitOk。ほか�
   return cand.length ? cand[Math.floor(Math.random() * cand.length)] : null;
 }
 function mzCubeReveal() {   // 視点が 回って 隠れていた 印が 見える：いま 出ている ボーナス（ゴール含む）の マスを ミニマップに ぜんぶ 記録。宝箱は 本体の 光と 同じ 条件（3歩いない）のときだけ（mzMiniMarks）
-  const ex = [];
-  if (mzTorch.cx >= 0) ex.push([mzTorch.cx, mzTorch.cy, '#ff7a2e']);
-  if (mzBrigade.cx >= 0) ex.push([mzBrigade.cx, mzBrigade.cy, '#f29ac0']);
-  mzPurify.cells.forEach((c, i) => { if (!mzPurify.done[i]) ex.push([c[0], c[1], '#c58ae8']); });
-  if (mzRescue.cx >= 0 && !mzRescue.joined) ex.push([mzRescue.cx, mzRescue.cy, '#4a90e2']);
   let n = 0;
-  for (const [cx, cy, col] of mzMiniMarks().concat(ex)) { mzMini.seen.set(cx + ',' + cy, col); n++; }
+  for (const [cx, cy, col] of mzMiniMarks()) { mzMini.seen.set(cx + ',' + cy, col); n++; }
   return n;
 }
 function mzCubeTick(now) {
@@ -11212,12 +11207,17 @@ function mzMiniMarks() {   // いま 出ている しるしの [cx, cy, 色]
   if (mzQuest.cx >= 0 && mzQuest.got < QUEST_TOOLS.length) out.push([mzQuest.cx, mzQuest.cy, QUEST_TOOLS[mzQuest.got].color]);
   if (mzDino.cx >= 0 && !mzDino.found) out.push([mzDino.cx, mzDino.cy, '#7cc576']);
   if (mzCube.cx >= 0) out.push([mzCube.cx, mzCube.cy, '#f5b800']);
+  if (mzTorch.cx >= 0) out.push([mzTorch.cx, mzTorch.cy, '#ff7a2e']);   // たいまつ・おとも米・迷子のお米・浄化マスも 見えたら 地図に 描き込む（浄化は 紫→金）
+  if (mzBrigade.cx >= 0) out.push([mzBrigade.cx, mzBrigade.cy, '#f29ac0']);
+  if (mzRescue.cx >= 0 && !mzRescue.joined) out.push([mzRescue.cx, mzRescue.cy, '#4a90e2']);
+  mzPurify.cells.forEach((c, i) => { if (!mzPurify.done[i]) out.push([c[0], c[1], '#c58ae8']); });   // 浄化マスは 未浄化の 紫だけ（浄化すると 地図からも 染みが 消える。金の ゴールと まぎれない）
   return out;
 }
 function mzMiniTick() {   // 見える はんいに 入った しるしを おぼえる（ゴールは 着くまえでも 見えたら 金の 点）
   if (rp.x === null) return;
   const f = MZ_FOG[Math.min(4, Math.max(1, Math.round(mzScale)))], sight = f.sight ? f.sight + mzTorchBonus() : 9, me = [rp.x / MZ_K, rp.y / MZ_K];
   for (const [cx, cy, col] of mzMiniMarks()) if (Math.hypot(cx + 0.5 - me[0], cy + 0.5 - me[1]) <= sight) mzMini.seen.set(cx + ',' + cy, col);
+  for (let i = 0; i < mzPurify.cells.length; i++) if (mzPurify.done[i]) mzMini.seen.delete(mzPurify.cells[i][0] + ',' + mzPurify.cells[i][1]);   // 浄化した マスの 紫の 印は 地図から 消す
 }
 function mzMiniState() {   // テスト用：探索済みマス数・主人公の マス・ゴールが 見えたか
   const gp = mzRt.path && mzRt.path.length ? mzRt.path[mzRt.path.length - 1] : null;

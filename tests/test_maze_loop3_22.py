@@ -49,7 +49,7 @@ class Brigade(unittest.TestCase):
         self.assertIn("brigadeGot: 0", GAME)
 
     def test_stat_rows_unchanged(self):
-        self.assertNotIn("S.brigadeGot || 0, '回']", GAME)
+        self.assertIn("S.brigadeGot || 0, '回']", GAME)   # サイクル27できろく整備で行を追加
         pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
         rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
         self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))

@@ -3301,7 +3301,7 @@ $('dotMotifs').addEventListener('click', e => {
 });
 
 const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift', trail: 'feet', trailmile: 'feet', alley: 'book', h100: 'feet' };   // 最近のポイントの絵
-const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest', 'chest', 'chest', 'chest', 'chest', 'chest', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
+const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest', 'chest', 'chest', 'chest', 'chest', 'chest', 'chest', 'fire', 'face', 'star', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
 // ころころの きろく（めいろで 転がって ためた もの。ポイントは つけない）：コンボの ベスト・きょう ひろった ごはんつぶ・びゅんの れんさの ベスト
 function renderKoroRec() {
   const box = $('koroRec'), P = window.nishioPixel;
@@ -3352,6 +3352,7 @@ function renderLog() {
     ['歩いた距離', fmtM(S.walked), ''], ['連続日数', S.streak.last === ymd() || S.streak.last === yesterday() ? S.streak.days : 0, '日'],
     ['最長連続', S.streak.max || 0, '日'], ['これまでの合計', S.total.toLocaleString(), 'pt'],
     ['お宝ゲット', S.treasureGot || 0, '回'], ['かくし宝箱はっけん', S.cacheGot || 0, '回'], ['どうぐクエスト', S.questGot || 0, '回'], ['きょうりゅうと であった', S.dinoGot || 0, '回'], ['夕立から にげきった', S.chaseGot || 0, '回'], ['さんぽエネルギー満タン', S.energyGot || 0, '回'],
+    ['たいまつを とった', S.torchGot || 0, '回'], ['おとも旅団 完成', S.brigadeGot || 0, '回'], ['ぜんぶ浄化', S.purifyGot || 0, '回'], ['救助完了', S.rescueGot || 0, '回'], ['回転キューブ 完成', S.cubeGot || 0, '回'],   // サイクル27：保存済みの達成回数をきろくに出す（21行）
   ].map(([k, v, u], i) => simple()   // 文字を少なく（ふだん）：名前のかわりにドット絵（名前は読み上げと長押しで）
     ? `<div class="stat pic" title="${esc(k)}"><img class="pi art" src="nishio-go/art/stat-${STAT_PI[i]}.png" alt="${esc(k)}" width="32" height="32"/><b>${esc(v)}<small>${esc(i === 1 ? '' : u)}</small></b></div>`
     : `<div class="stat"><small>${k}</small><b>${esc(v)}<small>${esc(u)}</small></b></div>`).join('');

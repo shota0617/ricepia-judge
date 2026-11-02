@@ -48,7 +48,7 @@ class Rescue(unittest.TestCase):
         self.assertIn("MZ_RESCUE_JOIN = 5, MZ_RESCUE_PTS = 30", GAME)
         self.assertRegex(GAME, r"mzPurify, mzRescueJoin, mzRescue,")
         self.assertIn("rescueGot: 0", GAME)
-        self.assertNotIn("S.rescueGot || 0, '回']", GAME)
+        self.assertIn("S.rescueGot || 0, '回']", GAME)   # サイクル27できろく整備で行を追加
 
     def test_goal_hook_after_guard(self):
         body = func_body("function mazeGoal(", GAME)

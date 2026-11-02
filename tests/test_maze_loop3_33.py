@@ -37,7 +37,7 @@ class Station(unittest.TestCase):
 
     def test_deterministic_no_state_text(self):
         t = body("drawMzTrail")
-        for bad in ("Math.random", "Date.now", "now", "G.", "fillText", "floatText"):
+        for bad in ("Math.random", "Date.now", "G.", "fillText", "floatText"):
             self.assertNotIn(bad, t)
 
     def test_order_unchanged(self):

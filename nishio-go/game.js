@@ -146,7 +146,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], komeSeen: [], nimotsu: null, idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [], treasureGot: 0, cacheGot: 0, questGot: 0, dinoGot: 0, chaseGot: 0, energyGot: 0 };
+    guide: null, guides: 0, guideDone: [], komeSeen: [], nimotsu: null, idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [], treasureGot: 0, cacheGot: 0, questGot: 0, dinoGot: 0, chaseGot: 0, torchGot: 0, energyGot: 0 };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 歩いて遊ぶは なくした（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：前に あるいて移動で 遊んでいた 人も 操作して（ころころ）に。
@@ -1456,6 +1456,16 @@ function mzEnergy() {
   save();
   track('maze_energy', {});
   return { pts: MZ_ENERGY_PTS };
+}
+// たいまつ（Legend of Grimrock の 明かりの 輪。pixel.js の 地図の めいろ）：取ると 一定時間 フォグの 視界が ひろがる +10pt。位置と 残り時間は pixel.js が 画面の 間だけ もつ。ここは ポイントの 加算と 取得回数の 保存だけ
+const MZ_TORCH_PTS = 10;
+function mzTorch() {
+  const lvUp = gainPoints(MZ_TORCH_PTS);
+  S.torchGot = (S.torchGot || 0) + 1;
+  if (lvUp) toast(`⭐ レベル${lvUp}！`);
+  save();
+  track('maze_torch', {});
+  return { pts: MZ_TORCH_PTS };
 }
 // イベント「ドット絵ムービー」（movie.js）で見せる話。たからばこ・しらべる などでは出さない（最後まで見ると まちメモ に残る）
 const movieFact = k => !!(window.NISHIO_MOVIE && NISHIO_MOVIE.list.some(m => m.facts.includes(k)));
@@ -4588,7 +4598,7 @@ window.nishioGo = {
     toast(`📍 ${s.name}${me && !demo ? `（ここから ${fmtM(dist(me, s))}）` : ''}`);
     return true;
   },
-  spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
+  spotTip, dist, cooldownLeft, inReach, reachOf, guideRadius, renderGuide, checkin, checkinSpot, popupHtml, toast, toastAfter, renderLog, ymd, refreshNearby, reactLine, get npcs() { return placeNpcs(); }, weekTheme, giveBag, talkNpc, callNpc(id) { calledBy = id || null; }, meetCritter, critterLeft, critterFirst: () => !Object.keys(S.critters || {}).length, watchOpen, watchWater, alleyFind, mzGrain, mzFruit, mzPiece, mzView, mzCache, mzQuest, mzDino, mzChase, mzEnergy, mzShoo, mzTorch, mzGrainHas: key => mzGrainGot().includes(key), get mzGrains() { return mzGrainGot().length; }, alleyOpen: (x, y) => (dayState().alleys || 0) < ALLEY.daily && !(S.alleys || []).includes(`${x},${y}`), sealCands, sealPickCheck, clearInfo: () => ({ cleared: !!S.cleared, got: SEAL_MAIN.filter(id => (S.seals || []).includes(id)).length, need: SEAL_MAIN.length }), get rival() { return rivalWhere(); }, rivalSay, RIVAL, areaArt, npcMet, chestOpened: id => dayState().chests.includes(id), liveChests, get welcomeChest() { return welcomeDue(); },
   moveTo(lat, lng, kind) { if (!demo) return; follow = false; stepMove = kind === 'step'; try { onFix(lat, lng, 5, Date.now()); } finally { stepMove = false; } },
   get driving() { return driving; },
   get guide() { return guideTarget(); }, decideGuide, setGuide, guideNoPath,

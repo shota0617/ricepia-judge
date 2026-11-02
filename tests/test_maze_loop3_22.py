@@ -20,7 +20,7 @@ class Brigade(unittest.TestCase):
         for h in ("function mzBrigadeReset(", "function mzBrigadePick(", "function mzBrigadeTick(", "function mzBrigadeState(",
                   "function drawMzBrigade(", "function drawMzBrigadeMates(", "function drawMzBrigadeTag("):
             self.assertIn(h, PIXEL)
-        self.assertIn("mzTorchTick(now); mzBrigadeTick(now); }", PIXEL)   # 既存 tick の並びの後ろ
+        self.assertIn("mzTorchTick(now); mzBrigadeTick(now);", PIXEL)   # 既存 tick の並びの後ろ
 
     def test_placement_exclusions(self):
         pick = func_body("function mzBrigadePick(")

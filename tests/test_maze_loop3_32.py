@@ -22,9 +22,9 @@ class Pulse(unittest.TestCase):
 
     def test_deterministic_time_based(self):
         t = body("drawMzPulse")
-        self.assertIn("(now % 2400) / 2400 + i / 2) % 1", t)
-        self.assertIn("0.55 * (1 - phase)", t)
-        self.assertIn("0.3 + 2.9 * phase", t)
+        self.assertIn("((now % period) / period + i / count) % 1", t)
+        self.assertIn("(0.55 + 0.25 * sig) * (1 - phase)", t)
+        self.assertIn("0.3 + (2.9 + 0.9 * sig) * phase", t)
         self.assertNotIn("Math.random", t)
         self.assertNotIn("Date.now", t)
         self.assertNotIn("fill(", t)

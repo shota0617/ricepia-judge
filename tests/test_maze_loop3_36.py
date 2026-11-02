@@ -58,7 +58,7 @@ class WallTheme(unittest.TestCase):
     def test_only_pixel_js_changed_and_no_banned_words(self):
         files = subprocess.run(["git", "diff", "--name-only", "main...HEAD"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.split()
         for f in files:
-            self.assertIn(f, ("nishio-go/pixel.js", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_48.py", "tests/test_maze_loop3_49.py", "tests/test_maze_loop3_50.py", "tests/test_maze_loop3_51.py", "tests/test_maze_loop3_52.py", "tests/test_maze_loop3_53.py", "tests/test_maze_loop3_54.py", "tests/test_maze_loop3_55.py", "tests/test_maze_fog.py", "tests/test_maze_loop3_41.py", "tests/test_maze_loop3_33.py", "tests/test_maze_loop3_34.py", "tests/test_maze_loop3_36.py",
+            self.assertIn(f, ("nishio-go/pixel.js", "tests/test_maze_loop3_47.py", "tests/test_maze_loop3_48.py", "tests/test_maze_loop3_49.py", "tests/test_maze_loop3_50.py", "tests/test_maze_loop3_51.py", "tests/test_maze_loop3_52.py", "tests/test_maze_loop3_53.py", "tests/test_maze_loop3_54.py", "tests/test_maze_loop3_55.py", "tests/test_maze_loop3_56.py", "tests/test_maze_fog.py", "tests/test_maze_loop3_41.py", "tests/test_maze_loop3_33.py", "tests/test_maze_loop3_34.py", "tests/test_maze_loop3_36.py",
                               # サイクル37（地図タイル）が tick 並び・diff 検査法の期待を更新した分
                               "tests/test_maze_loop3_24.py", "tests/test_maze_loop3_26.py",
                               "tests/test_maze_loop3_29.py", "tests/test_maze_loop3_30.py",

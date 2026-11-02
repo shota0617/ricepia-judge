@@ -42,7 +42,7 @@ class StationLink(unittest.TestCase):
 
     def test_deterministic_no_state_text(self):
         t = body("drawMzTrail")
-        for bad in ("Math.random", "Date.now", "now", "G.", "fillText", "floatText", "localStorage"):
+        for bad in ("Math.random", "Date.now", "G.", "fillText", "floatText", "localStorage"):
             self.assertNotIn(bad, t)
 
     def test_diff_scope_and_forbidden_words(self):

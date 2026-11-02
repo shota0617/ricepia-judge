@@ -24,7 +24,7 @@ ADDED = [l[1:] for l in git("diff", "origin/main", "--", "nishio-go/pixel.js").s
 
 class Edge(unittest.TestCase):
     def test_grid(self):
-        self.assertIn("const S = MZ_K * T, edges = [];", BODY)
+        self.assertIn("const S = MZ_K * T, edges = [], entrances = [];", BODY)
         self.assertIn("ox + cx * S, oy + cy * S", BODY)
 
     def test_four_neighbours(self):

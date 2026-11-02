@@ -9676,14 +9676,23 @@ function mzFieldArea(p, q, r) {   // 3つの 駅で 囲む 三角形の 面積�
   if (v.some(n => typeof n !== 'number' || !isFinite(n))) return 0;
   return Math.abs((q[0] - p[0]) * (r[1] - p[1]) - (r[0] - p[0]) * (q[1] - p[1])) / 2;
 }
+function mzFootprint(dx, dy, seq) {   // 足跡（モンハンNow）：進む 向きの 角度と、左右（seq の 偶奇で -1 / +1）。数でない・有限でない・(0,0)・seq が 有限でない ときは 角度0・ずれ0。純粋
+  if (typeof dx !== 'number' || typeof dy !== 'number' || !isFinite(dx) || !isFinite(dy) || (dx === 0 && dy === 0)) return { angle: 0, side: 0 };
+  const s = Number(seq); if (!isFinite(s)) return { angle: 0, side: 0 };
+  return { angle: Math.atan2(dy, dx), side: Math.abs(Math.floor(s)) % 2 === 0 ? -1 : 1 };
+}
 function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 歩いた 道を 太い 塗り道に（テクテクライフ）：足あとの マスの まん中に 大きな 丸、通れる となりの 足あとへ 太い 線（壁は こえない）
   if (!mzTrail.size) return;
   const c0 = Math.floor(tx0 / MZ_K) - 1, r0 = Math.floor(ty0 / MZ_K) - 1, c1 = Math.ceil(tx1 / MZ_K), r1 = Math.ceil(ty1 / MZ_K);
   const rg = Math.max(2, T * 0.3), lw = Math.max(3, T * 0.5), grains = [], links = [], flowers = [], stations = [], stationAll = [], hubAll = [];
   const S = MZ_K * T, edges = [], entrances = [];   // ふちどり：歩いた マスと まだの マスの 境目の 辺 [X, Y, dx, dy, rgb]
   let seq = 0;   // 通った 順の 通し番号（画面の 外の マスも 数える）
+  const prints = []; let pend = null;   // 足跡（モンハンNow）：6マスごとの マスを、つぎの マスへの 向きで。最後の マス（つぎが ない）は 描かない
   for (const [cx, cy] of mzTrail.values()) {
     seq++;
+    const pn = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K);
+    if (pend) { prints.push([pend[0], pend[1], ox + pn[0] * T - pend[0], oy + pn[1] * T - pend[1], pend[2], pend[3], pend[4]]); pend = null; }
+    if (seq % 6 === 0) pend = [ox + pn[0] * T, oy + pn[1] * T, seq / 6, cx, cy];
     if (seq % 10 === 0) { const pp = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), arA = mzArea(cx, cy); stationAll.push([ox + pp[0] * T, oy + pp[1] * T, arA ? mzZoneTint(arA).rgb : '220,70,60']); }   // リンク用は 画面の 外の 駅も ふくむ（とばして 結ばない・画面を 横切る 線も 描く）
     if (seq % 30 === 0) { const ph = mzOn((cx + 0.5) * MZ_K, (cy + 0.5) * MZ_K), arH = mzArea(cx, cy); hubAll.push([ox + ph[0] * T, oy + ph[1] * T, arH ? mzZoneTint(arH).rgb : '220,70,60']); }   // 拠点（30マスごと）も 画面の 外の 中心を ふくむ（輪の 一部が 見えるように）
     if (cx < c0 || cx > c1 || cy < r0 || cy > r1) continue;
@@ -9737,6 +9746,18 @@ function drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now) {   // 歩いた 道を
     const p = stationAll[i], q = stationAll[i + 1], r = stationAll[i + 2];
     if (mzFieldArea(p, q, r) > T * T * 4) { ctx.fillStyle = 'rgba(' + p[2] + ',.13)'; ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.lineTo(r[0], r[1]); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(' + p[2] + ',.28)'; ctx.lineWidth = Math.max(3, T * 0.22); ctx.beginPath(); ctx.moveTo(r[0], r[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = Math.max(1.5, T * 0.07); ctx.beginPath(); ctx.moveTo(r[0], r[1]); ctx.lineTo(p[0], p[1]); ctx.stroke(); }   // 閉じる 辺（r→p）も リンク線で 引いて、3本で 囲んだことが 見えるように
   }
+  ctx.save(); ctx.fillStyle = 'rgba(40,26,16,.75)';   // 足跡：進む 向きを 向いた 濃い 楕円。進行方向と 直角へ 左右 交互に ずらす（地面の 印。駅印より 下）
+  for (const [X, Y, dx, dy, k, pcx, pcy] of prints) {
+    if (X < ox + tx0 * T - T || X > ox + tx1 * T + T || Y < oy + ty0 * T - T || Y > oy + ty1 * T + T) continue;
+    const f = mzFootprint(dx, dy, k);
+    if (!f.side) continue;
+    if (!(Math.hypot(dx, dy) > S * 0.9 && Math.hypot(dx, dy) < S * 1.1)) continue;   // つぎの 挿入マスが となりでない（再訪を はさんだ）ときは 向きが 信じられないので 描かない
+    if (!mzOpen(pcx, pcy, Math.round(dx / S), Math.round(dy / S))) continue;   // 壁越しの 向きも 描かない（通れる 方向だけ）
+    const off = f.side * T * 0.18, fx = X - Math.sin(f.angle) * off, fy = Y + Math.cos(f.angle) * off;
+    ctx.beginPath(); ctx.ellipse(fx, fy, T * 0.25, T * 0.15, f.angle, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(fx + Math.cos(f.angle) * T * 0.3, fy + Math.sin(f.angle) * T * 0.3, T * 0.09, 0, Math.PI * 2); ctx.fill();   // つま先の 小さい 丸（進む 側）で 前後が 分かる
+  }
+  ctx.restore();
   const sr = Math.max(4, T * 0.38);
   const hr = Math.max(10, T * 1.5, sr * 4);   // 小さい 倍率でも 駅印の 4倍を 保つ
   for (const [X, Y, rgb] of hubAll) {   // 拠点リング（モンハンNow の 出現サークル）：30マスごとの 大きな 節目を 駅印の 約4倍の 輪で。薄い 塗り ＋ 地区色の 外輪 ＋ 白い 内輪。駅印の 下。毎フレーム おなじ

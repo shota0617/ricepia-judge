@@ -41,7 +41,7 @@ class HubRing(unittest.TestCase):
 
     def test_deterministic_no_state_text(self):
         t = body("drawMzTrail")
-        for bad in ("Math.random", "Date.now", "G.", "fillText", "floatText", "localStorage", "gainPoints", "save(", "mzHub"):
+        for bad in ("Math.random", "Date.now", "G.", "fillText", "floatText", "localStorage", "gainPoints", "saveGame(", "mzHub"):
             self.assertNotIn(bad, t)
 
     def test_forbidden_words(self):

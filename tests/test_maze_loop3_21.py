@@ -20,7 +20,7 @@ class Torch(unittest.TestCase):
         for h in ("function mzTorchReset(", "function mzTorchPick(", "function mzTorchTick(", "function mzTorchBonus(",
                   "function mzTorchState(", "function drawMzTorch(", "function drawMzTorchFlame(", "function drawMzTorchTag("):
             self.assertIn(h, PIXEL)
-        self.assertIn("mzMiniTick(); mzTorchTick(now); }", PIXEL)
+        self.assertIn("mzMiniTick(); mzTorchTick(now); mzBrigadeTick(now); }", PIXEL)
 
     def test_placement_exclusions(self):
         pick = func_body("function mzTorchPick(")

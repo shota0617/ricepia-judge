@@ -10337,8 +10337,8 @@ function drawMzQuestTag(w, dpr, now) {   // クエスト札（迷路の 間だ�
 // きょうりゅうの あしあとたどり（Jurassic World Alive の「恐竜との遭遇」）：迷路の 遠くに 🦕 が 1頭 出て、スタートから そこまでの 通路に 足跡が 2マスおきに ならぶ。
 // 足跡を たどって 🦕 の マスに 着くと +20pt。敵は 出さない。足跡は 地面の しるしで、ほかの ボーナスは ふつうに 取れる。位置は この 画面の 間だけ（セーブは 増やさない。ポイントと 回数だけ game.js の mzDino が 保存）
 const MZ_DINO = { min: 10, reach: 18, pts: 20 };   // スタートからの 歩数の 下限・さがす はんい（歩数）・出会いの ポイント
-const mzDino = { cx: -1, cy: -1, sx: -1, sy: -1, trail: [], found: false, foundAt: 0, next: 0 };   // cx cy：🦕 の マス・sx sy：スタートの マス・trail：足跡の マスの 列
-function mzDinoReset() { Object.assign(mzDino, { cx: -1, cy: -1, sx: -1, sy: -1, trail: [], found: false, foundAt: 0, next: 0 }); }
+const mzDino = { cx: -1, cy: -1, sx: -1, sy: -1, trail: [], ang: [], found: false, foundAt: 0, next: 0 };   // cx cy：🦕 の マス・sx sy：スタートの マス・trail：足跡の マスの 列
+function mzDinoReset() { Object.assign(mzDino, { cx: -1, cy: -1, sx: -1, sy: -1, trail: [], ang: [], found: false, foundAt: 0, next: 0 }); }
 function mzDinoPick() {   // スタートから 10歩以上 はなれた 通路。みかん・ピース・見晴らし台・宝箱・農具の マスは よける
   const sx = mzDino.sx, sy = mzDino.sy;
   if (sx < 0) return null;
@@ -10373,6 +10373,12 @@ function mzDinoPath(sx, sy, cx, cy) {   // スタートから 🦕 までの 通
   }
   return [];
 }
+function mzDinoAngle(prev, cur, next) {   // 足跡の マスから 次の 一歩へ すすむ 向き（ラジアン。cur が なければ prev→next。ゼロ・欠けは 0）
+  const f = cur || prev;
+  if (!f || !next) return 0;
+  const dx = next[0] - f[0], dy = next[1] - f[1];
+  return dx === 0 && dy === 0 ? 0 : Math.atan2(dy, dx);
+}
 function mzDinoTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
@@ -10386,14 +10392,15 @@ function mzDinoTick(now) {
     const path = mzDinoPath(mzDino.sx, mzDino.sy, c[0], c[1]);
     if (!path.length) return;
     mzDino.cx = c[0]; mzDino.cy = c[1];
-    mzDino.trail = path.filter((_, i) => i > 0 && i < path.length - 1 && i % 2 === 0);   // スタートと 🦕 の マスは のぞく
+    mzDino.trail = []; mzDino.ang = [];
+    path.forEach((c, i) => { if (i > 0 && i < path.length - 1 && i % 2 === 0) { mzDino.trail.push(c); mzDino.ang.push(mzDinoAngle(null, c, path[i + 1])); } });   // スタートと 🦕 の マスは のぞく。向きは その 足跡から 次の 一歩（経路の 隣の マス）で 決める＝曲がり角でも 経路の 外を 向かない
     dirty = true;
     return;
   }
   if (a !== mzDino.cx || b !== mzDino.cy) return;
   const r = G.mzDino && G.mzDino();
   if (!r) return;
-  mzDino.found = true; mzDino.foundAt = now; mzDino.trail = []; mzDino.cx = mzDino.cy = -1;
+  mzDino.found = true; mzDino.foundAt = now; mzDino.trail = []; mzDino.ang = []; mzDino.cx = mzDino.cy = -1;
   grainSound(); roll.happyT = 1.2; dirty = true;
   floatText(`🦕 きょうりゅうと であった！ +${r.pts}pt`);
   const cols = ['#3fb56b', '#ffffff', '#ffe27a'];
@@ -10403,10 +10410,14 @@ function drawMzDino(ox, oy, T, now) {   // 足跡（茶色の 楕円＋つま先
   if (mzDino.found || mzDino.cx < 0) return;
   const q = Math.max(1, Math.round(T / 8));
   mzDino.trail.forEach((c, i) => {
-    const on = mzOn((c[0] + 0.5) * MZ_K, (c[1] + 0.5) * MZ_K), side = i % 2 ? 1 : -1, X = Math.round(ox + on[0] * T + side * T * 0.12), Y = Math.round(oy + on[1] * T);
+    const on = mzOn((c[0] + 0.5) * MZ_K, (c[1] + 0.5) * MZ_K), side = i % 2 ? 1 : -1, X = Math.round(ox + on[0] * T), Y = Math.round(oy + on[1] * T);
+    const qs = q * (0.85 + 0.35 * (i / Math.max(1, mzDino.trail.length - 1)));   // 🦕 に 近づくほど 大きく
+    ctx.save(); ctx.translate(X, Y); ctx.rotate((mzDino.ang[i] || 0) + Math.PI / 2);   // つま先（-Y）が すすむ 向き
     ctx.fillStyle = 'rgba(120,78,40,.85)';
-    ctx.beginPath(); ctx.ellipse(X, Y + q, q * 2, q * 1.5, 0, 0, Math.PI * 2); ctx.fill();
-    for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.arc(X + k * q * 1.6, Y - q, Math.max(1, q * 0.7), 0, Math.PI * 2); ctx.fill(); }
+    const sx = side * T * 0.12;   // 左右の 足は すすむ 向きの 両側に
+    ctx.beginPath(); ctx.ellipse(sx, qs, qs * 2, qs * 1.5, 0, 0, Math.PI * 2); ctx.fill();
+    for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.arc(sx + k * qs * 1.6, -qs, Math.max(1, qs * 0.7), 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
   });
   const r = Math.max(5, T * 0.5), on = mzOn((mzDino.cx + 0.5) * MZ_K, (mzDino.cy + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y0 = Math.round(oy + on[1] * T), Y = Math.round(Y0 + Math.sin(now / 420) * T * 0.05), p = Math.sin(now / 320);
   ctx.strokeStyle = `rgba(63,181,107,${(0.55 + 0.3 * p).toFixed(2)})`; ctx.lineWidth = Math.max(2, q * 2); ctx.beginPath(); ctx.arc(X, Y0, r * (1.25 + 0.12 * p), 0, Math.PI * 2); ctx.stroke();

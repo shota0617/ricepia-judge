@@ -37,7 +37,7 @@ class HandDrawnMap(unittest.TestCase):
             self.assertIn(s, t)
 
     def test_no_new_state_or_calls(self):
-        diff = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
+        diff = subprocess.run(["git", "diff", "--word-diff=porcelain", "origin/main", "--", "nishio-go"], cwd=ROOT, check=True,
                               capture_output=True, text=True, encoding="utf-8").stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
         self.assertNotRegex(added, r"fillText|G\.\w+\(|gainPoints|localStorage|floatText|riceSay|drawMz\w*Tag")

@@ -32,7 +32,7 @@ class Cube(unittest.TestCase):
         self.assertIn("mzCube.next = now + 500", tick)
 
     def test_tick_wiring_and_api(self):
-        self.assertIn("mzRescueTick(now); mzCubeTick(now); }", PIXEL)
+        self.assertIn("mzRescueTick(now); mzCubeTick(now); mzTileTick(); }", PIXEL)
         tick = func_body("function mzCubeTick(")
         self.assertIn("r = G.mzCube && G.mzCube(fin);\n  if (!r) return;", tick)
         self.assertIn("🎉 キューブ完成！ +${r.pts}pt", tick)

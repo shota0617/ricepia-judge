@@ -58,7 +58,11 @@ class WallTheme(unittest.TestCase):
     def test_only_pixel_js_changed_and_no_banned_words(self):
         files = subprocess.run(["git", "diff", "--name-only", "main...HEAD"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.split()
         for f in files:
-            self.assertIn(f, ("nishio-go/pixel.js", "tests/test_maze_loop3_36.py"))
+            self.assertIn(f, ("nishio-go/pixel.js", "tests/test_maze_loop3_36.py",
+                              # サイクル37（地図タイル）が tick 並び・diff 検査法の期待を更新した分
+                              "tests/test_maze_loop3_24.py", "tests/test_maze_loop3_26.py",
+                              "tests/test_maze_loop3_29.py", "tests/test_maze_loop3_30.py",
+                              "tests/test_maze_loop3_31.py", "tests/test_maze_loop3_37.py"))
         diff = subprocess.run(["git", "diff", "main...HEAD", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         added = "\n".join(l for l in diff.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for bad in ("ぼく", "約20%", "約２０％"):

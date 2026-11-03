@@ -3470,6 +3470,7 @@ function renderLog() {
 
   renderBlockTower();
   renderSugoroku();
+  renderPicross();
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -3483,6 +3484,15 @@ function renderBlockTower() {
   el.hidden = !tower.total;
   el.innerHTML = tower.cols.map(c => `<div class="bt-col">${Array.from({ length: tower.max }, (_, i) => { const lv = tower.max - 1 - i; return `<span class="bt-cell"${lv < c.blocks ? ` style="background:rgb(${c.rgb.join(',')})"` : ''}></span>`; }).join('')}</div>`).join('');
   el.setAttribute('aria-label', `地区ごとの積み上がり ${tower.done}/${tower.total}（${tower.cols.map(c => { const a = areas.find(x => x.id === c.id); return `${a ? a.name : c.id} ${c.done}/${c.total}`; }).join('、')}）`);
+}
+
+function renderPicross() {
+  const ps = [...TINT_AREAS].map(id => areaProgress(id));
+  const r = window.nishioPicross.reveal(ps.reduce((n, p) => n + p.done, 0), ps.reduce((n, p) => n + p.total, 0));
+  const el = $('picross');
+  el.hidden = !r.total;
+  el.innerHTML = r.cells.map(c => `<span class="pxl-cell"${c.on ? ` style="background:${c.color}"` : ''}></span>`).join('');
+  el.setAttribute('aria-label', `かおりちゃんの ドット絵 ${r.shown}/${r.cellsTotal}`);
 }
 
 function renderSugoroku() {

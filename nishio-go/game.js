@@ -146,7 +146,7 @@ const OSM_KEY = 'nsg_osm_v1';
 function freshState() {
   return { v: 1, points: 0, total: 0, checkins: 0, walked: 0, walkCarry: 0, walkDay: { date: '', pts: 0 },
     visits: {}, log: [], streak: { last: '', days: 0, max: 0 }, badges: [], coupons: [], day: null, facts: [], met: [],
-    guide: null, guides: 0, guideDone: [], komeSeen: [], nimotsu: null, idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [], treasureGot: 0, cacheGot: 0, questGot: 0, dinoGot: 0, chaseGot: 0, torchGot: 0, brigadeGot: 0, purifyGot: 0, rescueGot: 0, cubeGot: 0, energyGot: 0 };
+    guide: null, guides: 0, guideDone: [], komeSeen: [], nimotsu: null, idle: { last: 0, lv: {} }, dots: [], kira: [], bags: [], treasureGot: 0, glowGoal: null, glowNear: [], treasureSpot: null, treasureLast: '', cacheGot: 0, questGot: 0, dinoGot: 0, chaseGot: 0, torchGot: 0, brigadeGot: 0, purifyGot: 0, rescueGot: 0, cubeGot: 0, energyGot: 0 };
 }
 let demo = store.get('nsg_mode', 'real') === 'demo';
 // 歩いて遊ぶは なくした（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：前に あるいて移動で 遊んでいた 人も 操作して（ころころ）に。
@@ -407,6 +407,7 @@ async function doLoadSpots(force) {
   renderMarkers();
   npcMarkers.forEach(m => m.remove()); npcMarkers.clear();
   renderNpcMarkers();
+  glowRestore(); treasureRestore();   // 閉じる前の 光と お宝を 戻す
   treasureArm();   // 名所が 読めたら、近くに お宝を 湧かせる
   refreshNearby();
   renderSpotInfo();
@@ -1203,8 +1204,8 @@ function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（�
 }
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 // 穏やかな 光（Wanderstop：期限で 焦らせない）：めいろの はしの 名所が「光るゴール」（+20pt）、
-// ゴールに 着くと 近くの 寄り道が 光って（+10pt）。着く まで 光り つづける。画面の 間だけ おぼえる（セーブには 入れない）
-const GLOW = { goalPts: 20, nearPts: 10, nearMax: 3, nearM: 2000 };
+// ゴールに 着くと 近くの 寄り道が 光って（+10pt）。着く まで 光り つづける。閉じても 光は セーブに 残り、寄り道は 最大 nearCap か所まで 積み上がる
+const GLOW = { goalPts: 20, nearPts: 10, nearMax: 3, nearCap: 6, nearM: 2000 };
 const glow = { goal: null, near: null };   // goal：{ id, name, lat, lng } / near：{ list: [{ id, name, lat, lng }] }
 function glowPickGoal(from, cands) {   // 行き先の 候補の うち、いちばん 遠い 名所（人は 光らせない）
   if (!from) return null;
@@ -1218,6 +1219,42 @@ function glowPickNear(goal, list, visits, zoneOf, max = GLOW.nearMax) {   // ゴ
     && dist(goal, s) <= GLOW.nearM && (!gz || z(s) === gz))
     .sort((a, b) => dist(goal, a) - dist(goal, b)).slice(0, max).map(s => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lng }));
 }
+const glowValid = o => !!o && typeof o.id === 'string' && o.id !== '' && Number.isFinite(o.lat) && Number.isFinite(o.lng);
+function glowMergeNear(oldList, picks, cap, goalId) {   // 既存（古い順）の 後ろに 新しい 分を 足す。id の 重複・ゴール自身・不正な 要素は 除き、cap で 切る
+  const seen = new Set(), out = [];
+  for (const o of [...(Array.isArray(oldList) ? oldList : []), ...(Array.isArray(picks) ? picks : [])]) {
+    if (!glowValid(o) || o.id === goalId || seen.has(o.id)) continue;
+    seen.add(o.id); out.push({ id: o.id, name: typeof o.name === 'string' ? o.name : '', lat: o.lat, lng: o.lng });
+  }
+  return out.slice(0, Number.isFinite(cap) ? cap : GLOW.nearCap);
+}
+function glowCleanOne(item, spotsById, visits) {   // 保存された 光を 実在の 名所で 検証しなおす（名前・座標は 名所側の 最新で 作りなおす）
+  if (!item || typeof item.id !== 'string') return null;
+  const sp = (spotsById || {})[item.id];
+  if (!sp || (visits || {})[item.id] || sp.shop || sp.kind === 'npc' || !Number.isFinite(sp.lat) || !Number.isFinite(sp.lng)) return null;
+  return { id: sp.id, name: sp.name, lat: sp.lat, lng: sp.lng };
+}
+function glowCleanSaved(list, spotsById, visits) {
+  const seen = new Set(), out = [];
+  for (const o of (Array.isArray(list) ? list : [])) {
+    const c = glowCleanOne(o, spotsById, visits);
+    if (c && !seen.has(c.id)) { seen.add(c.id); out.push(c); }
+  }
+  return out;
+}
+function glowSave() {   // 光の 場所を セーブへ 写す
+  S.glowGoal = glow.goal || null;
+  S.glowNear = glow.near ? glow.near.list.slice() : [];
+  save();
+}
+function glowRestore() {   // 名所が 読めた あと：保存された 光を 検証して 戻す
+  const byId = {};
+  for (const sp of spots) if (sp && sp.id != null) byId[sp.id] = sp;
+  glow.goal = glowCleanOne(S.glowGoal, byId, S.visits);
+  const list = glowCleanSaved(S.glowNear, byId, S.visits).slice(0, GLOW.nearCap);
+  glow.near = list.length ? { list } : null;
+  glowSave();
+}
 function glowArm(g) {   // 行き先が 決まった とき（めいろ）：光るゴールが 無い・候補から 消えた なら えらびなおす
   if (!g || !mazeNow() || !me) return;
   glow.armed = true;
@@ -1226,14 +1263,19 @@ function glowArm(g) {   // 行き先が 決まった とき（めいろ）：光
   const pick = glowPickGoal(me, cands);
   glow.goal = pick || null;
   if (pick) track('glow_goal', { spot: pick.name });
+  glowSave();
 }
 function glowArrive(id, lines) {   // めいろの ゴールに 着いた：光るゴールなら +20pt、近くの 寄り道を 光らせる。戻り値：ポイント
   let pts = 0;
   const gg = glow.goal;
   if (gg && gg.id === id) { pts += GLOW.goalPts; lines.push(`✨ 光るゴール！ +${GLOW.goalPts}`); glow.goal = null; track('glow_goal_hit', {}); }
   const sp = spots.find(x => x.id === id), list = sp ? glowPickNear(sp, spots, S.visits, areaZone) : [];
-  glow.near = list.length ? { list } : null;   // 寄り道の 光は 時間では 消えないが、つぎの ゴールに 着くと その ゴールの 寄り道へ 移る（引き継ぎ条件）
-  if (list.length) lines.push(`✨ 近くの 寄り道が 光るよ：${list.map(x => x.name).join('・')}`);
+  const before = new Set((glow.near ? glow.near.list : []).map(x => x.id));
+  const merged = glowMergeNear(glow.near ? glow.near.list : [], list, GLOW.nearCap, id);   // 未回収の 寄り道は 消さず、新しい 分を 足す
+  glow.near = merged.length ? { list: merged } : null;
+  const added = merged.filter(x => !before.has(x.id));   // 案内は 実際に 増えた 分だけ（上限で 落ちた 分は 光らない）
+  if (added.length) lines.push(`✨ 近くの 寄り道が 光るよ：${added.map(x => x.name).join('・')}`);
+  glowSave();
   return pts;
 }
 function glowCheckin(id, lines) {   // 光っている 寄り道に チェックイン：+10pt（1か所1回）。戻り値：ポイント
@@ -1241,6 +1283,7 @@ function glowCheckin(id, lines) {   // 光っている 寄り道に チェック
   if (!n || !n.list.some(x => x.id === id)) return 0;
   n.list = n.list.filter(x => x.id !== id);
   if (!n.list.length) glow.near = null;
+  glowSave();
   lines.push(`✨ 光る 寄り道 +${GLOW.nearPts}`); track('glow_near_hit', {});
   return GLOW.nearPts;
 }
@@ -1267,7 +1310,22 @@ function treasureSpawn(skipId) {   // 湧かせる（同じ 所を 続けて 選
   treasure.last = pick ? '' : (skipId || treasure.last);
   if (pick) track('treasure_spawn', { spot: pick.name });
   treasureMarker();
+  treasureSave();
   return treasure.cur;
+}
+function treasureSave() {   // お宝の 場所を セーブへ 写す
+  S.treasureSpot = treasure.cur || null;
+  S.treasureLast = treasure.last;
+  save();
+}
+function treasureRestore() {   // 名所が 読めた あと：保存された お宝を 検証して 戻す（行き先と 重なる・消えた なら 湧かせなおし）
+  const byId = {};
+  for (const sp of spots) if (sp && sp.id != null) byId[sp.id] = sp;
+  const c = glowCleanOne(S.treasureSpot, byId, S.visits);
+  treasure.cur = c && !(S.guide && S.guide.id === c.id) ? c : null;
+  treasure.last = typeof S.treasureLast === 'string' ? S.treasureLast : '';
+  treasureMarker();
+  treasureSave();
 }
 function treasureArm() {   // 今 湧いて いなければ、行き先と 重なったら 湧かせなおす
   const guideId = S.guide && S.guide.id;

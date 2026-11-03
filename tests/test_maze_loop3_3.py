@@ -49,7 +49,7 @@ class MapLookTest(unittest.TestCase):
         self.assertIn('rgba(${zt.rgb},${Math.min(0.58, f.tint * zt.k).toFixed(2)})', PIXEL)
 
     def test_area_name_shown_with_color(self):
-        self.assertIn('<i class="zn">${esc(ar.name)}</i>', GAME)
+        self.assertNotIn('<i class="zn">', GAME)   # 第4弾サイクル9：チップ行は出さない
         self.assertIn('--zc', CSS)
 
     def test_chips_sorted_by_distance(self):
@@ -65,9 +65,7 @@ class MapLookTest(unittest.TestCase):
         self.assertEqual(d['noloc'], 1)   # 位置のない候補は出さない
 
     def test_chip_tap_reuses_pick_alt_and_hides_when_single(self):
-        self.assertIn('data-alt="${c.alt}"', GAME)
-        self.assertIn('chips.length > 1', GAME)
-        self.assertIn('aria-current="true"', GAME)
+        self.assertIn('data-alt="${i}"', GAME)    # 「ほかの行き先」ボタンは残る
         self.assertIn('overflow-x:auto', CSS)
 
     def test_guide_logic_unchanged(self):

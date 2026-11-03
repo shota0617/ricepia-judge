@@ -86,8 +86,9 @@ class Cycle18EnergyTests(unittest.TestCase):
 
     def test_bar_drawn_always_in_maze(self):
         h = PIXEL[PIXEL.index('function drawMzEnergyBar('):PIXEL.index('// びゅんパネル')]
-        for t in ('⚡ ${', 'MZ_ENERGY.need', 'createLinearGradient', '#ffd84a', '#6fbf3a', 'mzViewShelfY', '1200'):
+        for t in ('⚡ ${', 'MZ_ENERGY.need', 'mzViewShelfY'):
             self.assertIn(t, h)
+        self.assertNotIn('createLinearGradient', h)   # サイクル9（第4弾）：脈打ち・グラデーションをやめ、静かな単色に
         self.assertIn('drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(w, dpr, now);', PIXEL)
         self.assertNotIn('さんぽエネルギー ${', h)   # 文章ラベルは 描かない（サイクル25）
 

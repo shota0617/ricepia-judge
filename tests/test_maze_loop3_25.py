@@ -31,7 +31,7 @@ class MinimalText(unittest.TestCase):
         h = func_body("function drawMzEnergyBar(", PIXEL)
         self.assertIn("`⚡ ${", h)
         self.assertNotIn("さんぽエネルギー", h)
-        self.assertIn("createLinearGradient", h)
+        self.assertNotIn("createLinearGradient", h)   # 第4弾サイクル9：単色の静かなゲージ
 
     def test_guide_has_no_glow_treasure_lines(self):
         g = func_body("function renderGuide(", GAME)
@@ -39,7 +39,8 @@ class MinimalText(unittest.TestCase):
         self.assertNotIn("treasureHtml()", g)
         self.assertIn("function glowHtml(", GAME)
         self.assertIn("function treasureHtml(", GAME)
-        self.assertIn("guideChips(", g)
+        self.assertIn("function guideChips(", GAME)   # 第4弾サイクル9：チップ行は出さない（純関数は残す）
+        self.assertNotIn("guideChips(", g)
 
     def test_cache_chip_icon_number_only(self):
         h = func_body("function drawMzCacheChip(", PIXEL)

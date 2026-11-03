@@ -8030,42 +8030,8 @@ function frame(now) {
   drawWeather(now, w, h, dpr, !!rec);   // Godot で描くときは、暗さだけ。雨と雪は Godot のつぶで
 
   // 町が変わったら、まん中に町名を大きく出す（いまいる町名は、左上の こよみ の札に出す）
-  if (here.banner) {
-    const age = (now - here.bannerAt) / 1000;
-    if (age > 2.8) { here.banner = ''; here.waited = 0; here.lastT = 0; }
-    else {
-      ctx.globalAlpha = Math.min(1, age * 3, (2.8 - age) * 2);
-      const mz = mazeOn() && rollOn, bs = Math.round((mz ? 14 : 18) * dpr), t = `〜 ${here.banner} 〜`;
-      ctx.font = `${bs}px "DotGothic16", monospace`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      // 左上の こよみ の札より下に。めいろでは お米の すぐ上（これから 転がす 所）を ふさがない よう、上の 時計・かかしの 札の 下に 小さく
-      const tw = ctx.measureText(t).width, bx0 = w / 2 - tw / 2 - 14 * dpr, bx1 = w / 2 + tw / 2 + 14 * dpr;
-      let by = Math.max(mz ? Math.round(13 * dpr * 5.4 + bs) : Math.round(Math.max(cy - T * 3, 48 * dpr + bs)), Math.round(toastFoot() + bs + 6 * dpr));   // 上の 知らせが 出て いれば その 下に（2行の 知らせに 町名が かくれていた。自分で 遊んで 分かった）
-      // めいろの 縁の 矢印と 道のりの 札（前の こまの 場所。あとから 描くので 札に かぶる）に かかる ときは よける（Codex の 指摘）：
-      // まず 横（矢印と 反対の がわ）、だめなら 矢印の 下（お米に かからなければ）。どちらも だめなら 出すのを 待つ（4秒まで）
-      const A = mz && mzMap.arrow, R = mz && roll.box, hit = (y, x0, x1, r) => !!r && x0 < r[2] && x1 > r[0] && y - bs < r[3] && y + bs > r[1];
-      const blocked = (y, a, b) => hit(y, a, b, A) || hit(y, a, b, R);
-      let x0 = bx0, x1 = bx1, wait = false;
-      here.dodged = blocked(by, x0, x1);   // dodged：テスト用
-      if (here.dodged) {
-        const bw = x1 - x0, m = 4 * dpr, right = !A || (A[0] + A[2]) / 2 < w / 2, xs = right ? [w - m - bw, m] : [m, w - m - bw], y2 = A ? Math.round(A[3] + bs + 4 * dpr) : 0;   // 矢印と 反対の はしから
-        const nx = xs.find(x => x >= m - 0.5 && x + bw <= w - m + 0.5 && !blocked(by, x, x + bw));
-        if (nx !== undefined) { x0 = nx; x1 = nx + bw; }
-        else if (A && !blocked(y2, x0, x1)) by = y2;
-        else if ((here.waited || 0) < 4000) wait = true;
-        else { here.banner = ''; here.box = null; here.waited = 0; here.lastT = 0; ctx.globalAlpha = 1; }   // 4秒 待っても 空かなければ この 町名は 出さない（重なる 所には 描かない。Codex の 指摘）
-      }
-      if (here.banner) {   // 上で 出さない ことに した ときは 描かない
-      const dtw = here.lastT ? now - here.lastT : 0; here.lastT = now;
-      if (wait) { here.waited = (here.waited || 0) + dtw; here.bannerAt += dtw; here.box = null; ctx.globalAlpha = 1; }   // 待って いる 間は 時間を 進めない
-      else {
-      ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(Math.round(x0), by - bs, Math.round(tw + 28 * dpr), bs * 2);
-      here.box = [x0, by - bs, x1, by + bs];   // テスト用
-      ctx.fillStyle = '#fff'; ctx.fillText(t, (x0 + x1) / 2, by);
-      ctx.globalAlpha = 1;
-      }
-      }
-    }
-  }
+  // 町名の 帯は 描かない（運営者の声 2026-11-03「文字が多すぎる」）。町の 検出と 時間ぎれだけ 残す
+  if (here.banner && (now - here.bannerAt) / 1000 > 2.8) { here.banner = ''; here.box = null; here.waited = 0; here.lastT = 0; }
 
   // 主人公の頭の上に浮かぶ文字（ポイントなど）
   // めいろの「🏁 ゴール！」が 出ている 間は 待って、消えてから 浮かべる（ゴールの 時間・★の 行と 重なって どちらも 読めなかった。自分で 遊んで 分かった）
@@ -9539,13 +9505,12 @@ function mzClock(now) {
   mzRt.clockT = now;
   if (mzRt.t0 && (dt > 1000 || mapCovered(true) || !howtoEl.hidden || sightBusy())) mzRt.t0 += dt;   // 止める（画面が かくれて 1こまが 長い ときも）
 }
-function mzClockFoot(dpr, now) {   // 上の 時計の 札（と かかし・ばねの のこりの 札）の 下はし（キャンバスの 画素。出ていなければ 0。drawMzClock と 同じ 計算）
-  if (!mzRt.t0 || !mzRt.len0 || mapCovered(true) || mzBanner.t0) return 0;
-  const S = Math.round(MZ_CLOCK_PX * dpr);
-  return Math.round(S * 1.5 + S * 1.9 * ((mzScare.until > now ? 1 : 0) + (mzSpring.until > now ? 1 : 0)) + S * 0.85);
+function mzClockFoot(dpr, now) {   // 時計の 札は 描かない ので いつも 0（運営者の声 2026-11-03「文字が多すぎる」。時計の 進みと ★の 判定は mzClock / mzStars で 残す）
+  return 0;
 }
 function drawMzClock(w, dpr, now) {
-  if (!mzRt.t0 || !mzRt.len0 || mapCovered(true) || mzBanner.t0) return;
+  return;   // 黒帯の 時間・★・🍚% と かかし・ばねの のこり秒は 描かない（到着時の ★判定は 別）
+  // eslint-disable-next-line no-unreachable
   const sec = (now - mzRt.t0) / 1000, p = mzPar(mzRt.len0), st = mzStars(sec, mzRt.len0), left = st === 3 ? p.p3 - sec : st === 2 ? p.p2 - sec : 0;
   const mmss = v => `${Math.floor(v / 60)}:${String(Math.floor(v % 60)).padStart(2, '0')}`;
   // 時間と ★だけ（シンプルに）。「あと 何秒で ★が へる」は のこり 10秒から だけ 出す
@@ -10931,17 +10896,14 @@ function drawMzEnergyBar(w, dpr, now) {   // 迷路の 間 いつも 出す 大�
   const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
   let y0 = mzViewShelfY(w, dpr, now);
   if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  const burst = mzEnergy.burstT0 && now - mzEnergy.burstT0 < 1200, pulse = burst ? 0.5 + 0.5 * Math.sin(now / 70) : 0;
-  const t = `⚡ ${burst ? MZ_ENERGY.need : mzEnergy.steps}/${MZ_ENERGY.need}`;   // 数字だけ（文章ラベルは 描かない）
+  const burst = false, t = `⚡ ${mzEnergy.steps}/${MZ_ENERGY.need}`;   // burst：満タンの 脈打ち・グラデーションは やめた（静かな 単色。2026-11-03）   // 数字だけ（文章ラベルは 描かない）
   const bw = Math.min(w - gap * 2, Math.round(S * 4)), bh = Math.round(S * 1.5), x0 = Math.round(w - gap - bw);
-  ctx.fillStyle = burst ? `rgba(120,80,0,${0.7 + 0.2 * pulse})` : 'rgba(30,40,30,.65)'; ctx.fillRect(x0, y0, bw, bh);
+  ctx.fillStyle = 'rgba(30,40,30,.65)'; ctx.fillRect(x0, y0, bw, bh);
   const bx = x0 + gap, by = y0 + Math.round(bh * 0.55), bbw = bw - gap * 2, bbh = Math.round(bh * 0.3);
   ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(bx, by, bbw, bbh);
-  const fill = Math.round(bbw * (burst ? 1 : Math.min(1, mzEnergy.steps / MZ_ENERGY.need)));
+  const fill = Math.round(bbw * Math.min(1, mzEnergy.steps / MZ_ENERGY.need));
   if (fill > 0) {
-    const g = ctx.createLinearGradient(bx, 0, bx + bbw, 0);
-    if (burst) { g.addColorStop(0, '#ffd84a'); g.addColorStop(1, pulse > 0.5 ? '#fff3b0' : '#ffc400'); } else { g.addColorStop(0, '#ffd84a'); g.addColorStop(1, '#6fbf3a'); }
-    ctx.fillStyle = g; ctx.fillRect(bx, by, fill, bbh);
+    ctx.fillStyle = '#9fcf4a'; ctx.fillRect(bx, by, fill, bbh);
   }
   ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillStyle = burst ? '#fff3b0' : '#e8f5d0'; ctx.fillText(t, x0 + bw / 2, y0 + Math.round(bh * 0.28), bw - gap);
@@ -11932,10 +11894,10 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
     const gs = Math.round(U * 0.62), bob = pulse * U * 0.12;
     // 旗の 上に 入らない（ゴールが 画面の 上の ほう。時計の 札の 下まで）ときは 旗の 下に（大きく した 名前が 画面の 上で 切れていた）
     const below = ey - U * 2.9 - gs * 0.6 < Math.round(MZ_CLOCK_PX * dpr * 2.35), yG = below ? ey + U * 1.55 : ey - U * 2.9 - bob, yN = below ? ey + U * 0.95 : ey - U * 2.15 - bob;
-    label('ゴール', inside('ゴール', gs), yG, gs, '#ffe680');
-    { let nm = gt.name || ''; const ns = Math.round(U * 0.56);   // 名前も 大きく（0.45 → 0.56。運営者の声「大きい文字シンプルに」2026-10-27）
+    if (false) { label('ゴール', inside('ゴール', gs), yG, gs, '#ffe680');
+    let nm = gt.name || ''; const ns = Math.round(U * 0.56);   // 名前も 大きく（0.45 → 0.56。運営者の声「大きい文字シンプルに」2026-10-27）
       ctx.font = `bold ${ns}px "DotGothic16", sans-serif`; while (nm.length > 2 && ctx.measureText(nm).width > w * 0.8) nm = nm.slice(0, -2) + '…';   // 名所の 名前も（どこが ゴールか 名前で 分かる。長い 名前は「…」）
-      if (nm) { const nx = inside(nm, ns), hw = ctx.measureText(nm).width / 2; label(nm, nx, yN, ns, '#ffffff'); mzMap.goalLab = { x0: nx - hw, x1: nx + hw, w, ex, nm, y: Math.round(yN), ns }; } }   // 旗の 上（goalLab：プレイテストで 見る）
+      if (nm) { const nx = inside(nm, ns), hw = ctx.measureText(nm).width / 2; label(nm, nx, yN, ns, '#ffffff'); mzMap.goalLab = { x0: nx - hw, x1: nx + hw, w, ex, nm, y: Math.round(yN), ns }; } }   // 名前・距離の 字は 描かない（2026-11-03）。goalLab は null のまま
     mzMap.arrow = null; mzNext.arrowDim = false;
     return;
   }
@@ -11969,10 +11931,9 @@ function drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now) {
   mzNext.labHide = labHide;
   if (!labHide) {
     flag(bx - U * 0.45, by + U * 0.15, U * 0.7);
-    label(dist, bx + U * 0.5, by, Math.round(U * 0.62), '#ffffff');   // 道のりは 大きく
+    // 道のりの 字は 描かない（2026-11-03）
   }
   if (rec) { mzMap.arrow = null; return; }   // Godot で 描く ときは 矢印の タップを 受けない
-  if (!mzMap.tapped && !labHide) label('🌏 タップ', bx, by + U * 0.8, Math.round(U * MZ_TAP_K), '#bfefff');   // 矢印を タップすると せかいちず。1回 タップしたら もう 出さない（小さい 字を へらす）
   mzMap.arrow = [Math.min(qx, bx) - U * 1.3, Math.min(qy, by) - U * 1.3, Math.max(qx, bx) + U * 1.3, Math.max(qy, by) + U * 1.3];
 }
 const mzMap = { arrow: null, pin: null, tapped: false };   // 縁の 矢印（ゴールまでの めいろ図は 2026-10-29 に なくした）

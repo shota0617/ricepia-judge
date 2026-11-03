@@ -3471,6 +3471,7 @@ function renderLog() {
   renderBlockTower();
   renderSugoroku();
   renderPicross();
+  renderBingo();
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -3493,6 +3494,24 @@ function renderPicross() {
   el.hidden = !r.total;
   el.innerHTML = r.cells.map(c => `<span class="pxl-cell"${c.on ? ` style="background:${c.color}"` : ''}></span>`).join('');
   el.setAttribute('aria-label', `かおりちゃんの ドット絵 ${r.shown}/${r.cellsTotal}`);
+}
+
+// ビンゴ：行＝5地区、列＝その地区の注目スポット先頭5件（id順）。行ったスポットのマスが押され、そろった列は金の輪
+function renderBingo() {
+  const ids = [...TINT_AREAS];
+  const ps = ids.map(id => areaProgress(id));
+  const lists = ps.map(p => p.list.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).slice(0, 5));
+  const card = window.nishioBingo.bingoCard(lists.map((l, i) => ({ id: ids[i], cells: l.map(s => ({ on: !!S.visits[s.id] })) })));
+  const el = $('bingo');
+  el.hidden = !ps.reduce((n, p) => n + p.total, 0);
+  el.innerHTML = card.cells.map(c => {
+    const s = lists[c.row][c.col];
+    const bg = `style="background:rgb(${AREA_RGB[ids[c.row]].join(',')})"`;
+    if (!s) return `<span class="bgo-cell on free${c.line ? ' line' : ''}" ${bg}></span>`;
+    return `<span class="bgo-cell${c.on ? ' on' : ' off'}${c.line ? ' line' : ''}"${c.on ? ' ' + bg : ''}>${esc(s.icon || '📍')}</span>`;
+  }).join('');
+  const realOn = lists.reduce((n, l) => n + l.filter(s => S.visits[s.id]).length, 0), realTotal = lists.reduce((n, l) => n + l.length, 0);
+  el.setAttribute('aria-label', `ビンゴ ${realOn}/${realTotal}、そろった列 ${card.lineCount}`);
 }
 
 function renderSugoroku() {
@@ -4735,7 +4754,7 @@ window.nishioGo = {
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
-  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, blockTower, sugorokuBoard, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
+  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, blockTower, sugorokuBoard, bingoCard: window.nishioBingo && window.nishioBingo.bingoCard, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,

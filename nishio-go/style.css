@@ -1008,6 +1008,11 @@ body.px .guide .treasure{color:#ffe680}
 .sugoroku[hidden]{display:none}
 .picross{display:grid;grid-template-columns:repeat(12,min(26px,6.8vw));gap:1px;justify-content:center;margin:0 auto 12px}
 .picross[hidden]{display:none}
+.bingo{display:grid;grid-template-columns:repeat(5,min(56px,17vw));gap:3px;justify-content:center;margin:0 auto 12px}
+.bingo[hidden]{display:none}
+.bgo-cell{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;aspect-ratio:1;box-sizing:border-box;border-radius:8px;background:rgba(0,0,0,.05);font-size:min(30px,9vw);line-height:1}
+.bgo-cell.line{box-shadow:inset 0 0 0 4px #e8b923,0 0 0 1px #e8b923}
+.bgo-cell.off{opacity:.35;filter:grayscale(.6)}
 .pxl-cell{aspect-ratio:1;background:rgba(0,0,0,.08)}
 .sg-cell{min-width:44px;aspect-ratio:1;border-radius:6px;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1}
 .bt-cell{width:min(52px,15vw);height:20px;border-radius:4px;background:rgba(0,0,0,.08)}

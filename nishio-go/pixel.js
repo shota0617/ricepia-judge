@@ -12337,7 +12337,7 @@ function rollStep(dt) {
   if (idl) { fx += idl.fx; fy += idl.fy; }
   const fp = Math.hypot(fx, fy);
   let sp = Math.hypot(rp.vx, rp.vy);
-  if (sp < 0.05) {   // 止まっている：押す力が ころがり抵抗より弱ければ 動かない（ゆるい坂では 止まっていられる）
+  if (sp < (window.nishioRollSync && window.nishioRollSync.STOP_V || 0.05)) {   // 止まっている：押す力が ころがり抵抗より弱ければ 動かない（ゆるい坂では 止まっていられる）
     const c0 = cr;
     if (fp > c0) { rp.vx += fx / fp * (fp - c0) * dt; rp.vy += fy / fp * (fp - c0) * dt; }
     else if (!mzSoft.on) { rp.vx = rp.vy = 0; return; }   // やわらかい 生け垣に めりこんだ ままの ときは 止めない（ばねで 押しもどす）
@@ -12345,7 +12345,8 @@ function rollStep(dt) {
     const pvx = rp.vx, pvy = rp.vy;   // 力を足す前の速度（向きの変わり方の上限に使う）
     rp.vx += fx * dt; rp.vy += fy * dt;
     sp = Math.hypot(rp.vx, rp.vy);
-    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (cr + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * feel.lin * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
+    const RSg = window.nishioRollSync, linK = ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * feel.lin * (KP.lin || 1), airK = ROLL_AIR * (KP.air || 1);
+    const ns = Math.max(0, Math.min(ROLL_MAX, RSg && RSg.glideSpeed ? RSg.glideSpeed(sp, dt, cr, linK, airK) : sp - (cr + linK * sp + airK * sp * sp) * dt));   // 慣性：刻みをそろえた 減衰。低速は 定数摩擦を 弱めて そっと 止まる（rollsync.js glideSpeed）
     if (sp > 0) { rp.vx *= ns / sp; rp.vy *= ns / sp; }
     const RS = window.nishioRollSync;
     if (RS && RS.limitTurn) { const lt = RS.limitTurn(rp.vx, rp.vy, pvx, pvy, RS.TURN_PER_SEC * dt); rp.vx = lt.vx; rp.vy = lt.vy; }   // 方向転換：向きは 1秒に TURN_PER_SEC rad まで。速さは そのまま 弧を描いて 曲がる（rollsync.js）

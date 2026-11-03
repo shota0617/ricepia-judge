@@ -103,5 +103,18 @@
     }
     return { ema: s.ema, n: s.n, fps: s.ema, slow: s.n >= FPS_MIN && s.ema < (wasSlow ? FPS_RECOVER : FPS_SLOW) };
   }
-  root.nishioRollSync = { FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  // 慣性と止まり方（第4弾サイクル27：M2。刻み幅によらず同じ距離・時間で、低速ではそっと止まる）
+  const GLIDE_SOFT = 0.6, STOP_V = 0.05, GLIDE_H = 1 / 240;   // STOP_V は 従来の 止まっている 判定（0.05）と 同じ：最後の 切り落としの 段差を 小さくする（Codexレビュー指摘）
+  function glideSpeed(sp, dt, a, b, c) {
+    const co = (k) => (typeof k === 'number' && isFinite(k) && k > 0 ? k : 0);
+    let v = typeof sp === 'number' && isFinite(sp) && sp > 0 ? sp : 0;
+    if (!(typeof dt === 'number' && isFinite(dt) && dt > 0 && dt <= 0.1)) return v < STOP_V ? 0 : v;
+    const ca = co(a), cb = co(b), cc = co(c), n = Math.ceil(dt / GLIDE_H), h = dt / n;
+    for (let i = 0; i < n; i++) {
+      v = Math.max(0, v - (ca * Math.min(1, v / GLIDE_SOFT) + cb * v + cc * v * v) * h);
+      if (v < STOP_V) return 0;
+    }
+    return v;
+  }
+  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -80,7 +80,7 @@ class Static(unittest.TestCase):
             self.assertRegex(RS_SRC, r'root\.nishioRollSync = \{[^}]*\b%s\b' % k)
 
     def test_pixel_wiring(self):
-        self.assertIn("const idleRoll = { last: performance.now(), on: false, key: '', skip: [], guideKey: '' }", PIXEL)
+        self.assertIn("const idleRoll = { last: performance.now(), on: false, key: '', skip: [], fails: [], guideKey: '' }", PIXEL)
         self.assertIn("document.addEventListener('pointerdown', idleTouch, true)", PIXEL)
         i = PIXEL.index('function tapWalk(gx, gy) {')
         self.assertIn('idleTouch();', PIXEL[i:i + 120])

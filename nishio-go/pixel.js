@@ -7619,11 +7619,8 @@ function landAreaOf(tx, ty) {
   landAreaCache.set(key, id);
   return id;
 }
-function drawLandscape(tx, ty, X, Y, T) {
-  const L = window.nishioLandscape;
-  if (!L) return;   // 読み込めなかったら 描かない
-  const m = L.motifFor(landAreaOf(tx, ty));
-  if (!m) return;
+// 従来の 1マスずつの 絵（landscape.js に spanOf / shadeFor が 無いときだけ）
+function drawLandscapeTile(L, m, tx, ty, X, Y, T) {
   const ph = L.phase(tx, ty), u = T / 8, a = 0.24 + ph * 0.03;   // alpha 0.24〜0.33（Codex指摘で 大きく・濃く）
   const col = `rgba(${m.color},${a})`;
   ctx.save();
@@ -7646,6 +7643,47 @@ function drawLandscape(tx, ty, X, Y, T) {
   } else if (m.kind === 'island') {   // 島の輪：同心円2重（タイルに 収まる 半径）
     ctx.beginPath(); ctx.arc(X + T / 2, Y + T / 2, T * 0.24, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(X + T / 2, Y + T / 2, T * 0.44, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawLandscape(tx, ty, X, Y, T) {
+  const L = window.nishioLandscape;
+  if (!L) return;   // 読み込めなかったら 描かない
+  const m = L.motifFor(landAreaOf(tx, ty));
+  if (!m) return;
+  if (typeof L.spanOf !== 'function' || typeof L.shadeFor !== 'function') { drawLandscapeTile(L, m, tx, ty, X, Y, T); return; }   // 旧い landscape.js は 1マスずつの 従来の絵
+  const sp = L.spanOf(tx, ty);
+  if (!sp) return;
+  const S = (L.SPAN || 4) * T, u = T / 8, a = L.shadeFor(tx, ty);   // 区画の 一辺 S。濃さは 区画ごとに そろう
+  const col = `rgba(${m.color},${a})`;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();   // タイルの 外へは はみ出さない
+  ctx.translate(X - sp.lx * T, Y - sp.ly * T);   // これより 区画の 左上が 原点（図形は 区画いっぱいで 決め、clip が このマスの 切片だけ のこす）
+  ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = Math.max(1, u * 0.7);
+  if (m.kind === 'tea') {   // 茶畑のうね：ゆるく 傾いた 縞4本（区画の中で 高さが 変わり、マスごとに 切片が 違う。傾きの 落ち幅は 縞の 間隔と 同じで、隣の区画とも つづく）
+    const h = S * 0.045, d = S * 0.125;
+    for (const f of [0.12, 0.37, 0.62, 0.87]) {
+      const y0 = S * f - h / 2;
+      ctx.beginPath(); ctx.moveTo(0, y0 + d); ctx.lineTo(S, y0 - d); ctx.lineTo(S, y0 - d + h); ctx.lineTo(0, y0 + d + h); ctx.closePath(); ctx.fill();
+    }
+  } else if (m.kind === 'wave') {   // 港の波：半径 0.5マスの 弧を 1マスおきに ならべて 2段（段ごとに 半マスずらす）
+    for (let row = 0; row < 2; row++) {
+      const yy = S * (0.32 + row * 0.38), off = row ? T / 2 : 0;
+      ctx.beginPath();
+      for (let i = -1; i <= L.SPAN; i++) { const cx = T * (i + 0.5) + off; ctx.moveTo(cx - T * 0.5, yy); ctx.arc(cx, yy, T * 0.5, Math.PI, 0); }
+      ctx.stroke();
+    }
+  } else if (m.kind === 'shore') {   // 浜の寄せ波：左下から右上へ ななめの帯（平行。帯の並びは区画の端でも同じ高さでつづく）と 点
+    const w = Math.max(1, T * 0.12);
+    ctx.lineWidth = w;
+    for (const d of [-0.78, -0.22, 0.22, 0.78]) { ctx.beginPath(); ctx.moveTo(-S * 0.1, S * (1.1 + d)); ctx.lineTo(S * 1.1, S * (-0.1 + d)); ctx.stroke(); }
+    for (const [fx, fy] of [[0.18, 0.2], [0.62, 0.12], [0.86, 0.52], [0.34, 0.74], [0.12, 0.9]]) ctx.fillRect(S * fx, S * fy, u * 0.6, u * 0.6);
+  } else if (m.kind === 'hill') {   // 山並み：大きな三角2つ（幅 2.2マス・高さ 1.6マス）を 区画の 下辺に。谷間は 少し かさなる
+    const w = T * 2.2, hh = T * 1.6;
+    for (const x0 of [-T * 0.1, S - w + T * 0.1]) { ctx.beginPath(); ctx.moveTo(x0, S); ctx.lineTo(x0 + w / 2, S - hh); ctx.lineTo(x0 + w, S); ctx.closePath(); ctx.fill(); }
+  } else if (m.kind === 'island') {   // 島の輪：区画の 中心の 同心円2重（1マスに おさまらない 大きな輪）
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, T * 0.9, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, T * 1.7, 0, Math.PI * 2); ctx.stroke();
   }
   ctx.restore();
 }

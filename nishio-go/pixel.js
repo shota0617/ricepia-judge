@@ -7591,6 +7591,49 @@ function ensureVisible(w, h, T) {
     for (let cx = Math.floor((c.x - mx) / CHUNK); cx <= Math.floor((c.x + mx) / CHUNK); cx++) ensureChunk(cx, cy);
 }
 
+// 風景の描き分け（landscape.js）：タイルの 地区（茶畑の西尾・港の一色・浜の吉良・山の幡豆・島の佐久島）ごとに 大きな 模様を 地面に 薄く 重ねる
+const LAND_CODES = new Set([C.G, C.F, C.P, C.W, C.K, C.V, C.E, C.U, C.Y, C.S]);   // 地面らしい マスだけ（GROUND の 草・田んぼ・砂。道・水・建物・木は 除く）
+const landAreaCache = new Map(), LAND_CACHE_MAX = 6000;
+function landAreaOf(tx, ty) {
+  const key = tx + ',' + ty;
+  if (landAreaCache.has(key)) return landAreaCache.get(key);
+  let id = '';
+  try { const gz = G['areaZone']; id = gz ? gz(toLatLng(tx + 0.5, ty + 0.5)) || '' : ''; } catch (e) { id = ''; }
+  if (!id) return '';   // 地区が 分からない間は 模様なし（覚えない。読み込み後に しらべなおす）
+  if (landAreaCache.size >= LAND_CACHE_MAX) landAreaCache.clear();
+  landAreaCache.set(key, id);
+  return id;
+}
+function drawLandscape(tx, ty, X, Y, T) {
+  const L = window.nishioLandscape;
+  if (!L) return;   // 読み込めなかったら 描かない
+  const m = L.motifFor(landAreaOf(tx, ty));
+  if (!m) return;
+  const ph = L.phase(tx, ty), u = T / 8, a = 0.24 + ph * 0.03;   // alpha 0.24〜0.33（Codex指摘で 大きく・濃く）
+  const col = `rgba(${m.color},${a})`;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();   // タイルの 外へは はみ出さない
+  ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = Math.max(1, u * 0.7);
+  if (m.kind === 'tea') {   // 茶畑のうね：横縞2本
+    ctx.fillRect(X, Y + T * 0.24, T, T * 0.18); ctx.fillRect(X, Y + T * 0.64, T, T * 0.18);
+  } else if (m.kind === 'wave') {   // 波：弧を2段（tx の 偶奇で 半マスずらす）
+    const off = (tx & 1) ? T / 4 : 0;
+    for (let row = 0; row < 2; row++) {
+      const yy = Y + T * (0.32 + row * 0.38);
+      ctx.beginPath(); ctx.arc(X + T * 0.25 + off, yy, T * 0.26, Math.PI, 0); ctx.arc(X + T * 0.75 + off, yy, T * 0.26, Math.PI, 0); ctx.stroke();
+    }
+  } else if (m.kind === 'shore') {   // 浜の寄せ波：斜めの帯1本と 小さな点
+    ctx.beginPath(); ctx.moveTo(X, Y + T * 0.8); ctx.quadraticCurveTo(X + T * 0.5, Y + T * 0.3, X + T, Y + T * 0.2); ctx.stroke();
+    ctx.fillRect(X + T * 0.2, Y + T * 0.25, u * 0.6, u * 0.6); ctx.fillRect(X + T * 0.65, Y + T * 0.7, u * 0.6, u * 0.6);
+  } else if (m.kind === 'hill') {   // 山並み：下辺に 三角1〜2個
+    const n = 1 + (ph & 1), w = T / (n + 0.5);
+    for (let i = 0; i < n; i++) { const x0 = X + i * w + w * 0.25; ctx.beginPath(); ctx.moveTo(x0, Y + T); ctx.lineTo(x0 + w / 2, Y + T * 0.36); ctx.lineTo(x0 + w, Y + T); ctx.closePath(); ctx.fill(); }
+  } else if (m.kind === 'island') {   // 島の輪：同心円2重（タイルに 収まる 半径）
+    ctx.beginPath(); ctx.arc(X + T / 2, Y + T / 2, T * 0.24, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(X + T / 2, Y + T / 2, T * 0.44, 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+}
 // 1マスを描く（地形の絵・道のつながり・建物の壁・かざり・高さの影・足あと）。歩く地図（frame）と、めいろ（meiro.js の paintRegion）で使う
 function drawTile(tx, ty, X, Y, T, f, now) {
   const raw = rawAt(tx, ty), code = raw & 31, sh = raw >> 5;
@@ -7610,6 +7653,7 @@ function drawTile(tx, ty, X, Y, T, f, now) {
   }
   else if (code === C.A && MT.shore && (shoreAt = nbrLook(tx, ty, shoreIndex))) ctx.drawImage(MT.shore[shoreAt[0]][shoreAt[1] + f], X, Y, T, T);   // 岸は 護岸・土手・浜の絵
   else ctx.drawImage(tiles[code][v % tiles[code].length][tileFrame(code, f, tx, ty, now)], X, Y, T, T);
+  if (LAND_CODES.has(code)) drawLandscape(tx, ty, X, Y, T);   // 地区の 大きな 風景模様（道・水・建物・木には 重ねない。landscape.js）
   if (code === C.E && kabuseOn()) drawKabuse(tx, ty, X, Y, T);   // 春の てん茶の 覆い（かざり〈茶つみの 人 など〉より 先に。人は 覆いの 上に 見える）
   if (code === C.B) drawWall(tx, ty, X, Y, T);
   else drawDeco(code, tx, ty, X, Y, T, now);

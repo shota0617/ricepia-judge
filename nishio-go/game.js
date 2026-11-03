@@ -1202,12 +1202,10 @@ function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（�
   return `🏃 はやさ 1秒に ${v}m`;   // とどかない ときは 足りない 数を 出さない（あおらない・文字を 少なく。運営者の声「競わない設計」「文字は 少なく」2026-10-29）
 }
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
-// 時限の 光（ピクミン ブルームの「歩いた先に 期間限定で 花が 咲く」）：めいろの はしの 名所が 10分 だけ「光るゴール」（+20pt）、
-// ゴールに 着くと 近くの 寄り道が 5分 だけ 光って（+10pt）。画面の 間だけ おぼえる（セーブには 入れない）。時間が 切れたら 光りは 消えて いつもどおり
-const GLOW = { goalMs: 10 * 60000, goalPts: 20, nearMs: 5 * 60000, nearPts: 10, nearMax: 3, nearM: 2000 };
-const glow = { goal: null, near: null };   // goal：{ id, name, lat, lng, until } / near：{ until, list: [{ id, name, lat, lng }] }
-const glowLeft = (o, now = Date.now()) => (o ? Math.max(0, o.until - now) : 0);
-const glowMin = ms => Math.max(1, Math.ceil(ms / 60000));
+// 穏やかな 光（Wanderstop：期限で 焦らせない）：めいろの はしの 名所が「光るゴール」（+20pt）、
+// ゴールに 着くと 近くの 寄り道が 光って（+10pt）。着く まで 光り つづける。画面の 間だけ おぼえる（セーブには 入れない）
+const GLOW = { goalPts: 20, nearPts: 10, nearMax: 3, nearM: 2000 };
+const glow = { goal: null, near: null };   // goal：{ id, name, lat, lng } / near：{ list: [{ id, name, lat, lng }] }
 function glowPickGoal(from, cands) {   // 行き先の 候補の うち、いちばん 遠い 名所（人は 光らせない）
   if (!from) return null;
   const far = (cands || []).filter(o => o && o.kind === 'spot' && Number.isFinite(o.lat) && Number.isFinite(o.lng)).sort((a, b) => dist(from, b) - dist(from, a))[0];
@@ -1220,44 +1218,43 @@ function glowPickNear(goal, list, visits, zoneOf, max = GLOW.nearMax) {   // ゴ
     && dist(goal, s) <= GLOW.nearM && (!gz || z(s) === gz))
     .sort((a, b) => dist(goal, a) - dist(goal, b)).slice(0, max).map(s => ({ id: s.id, name: s.name, lat: s.lat, lng: s.lng }));
 }
-function glowArm(g) {   // 行き先が 決まった とき（めいろ）：光るゴールが 無い・切れた・候補から 消えた なら えらびなおす
+function glowArm(g) {   // 行き先が 決まった とき（めいろ）：光るゴールが 無い・候補から 消えた なら えらびなおす
   if (!g || !mazeNow() || !me) return;
   glow.armed = true;
-  const cands = [g, ...(g.alts || [])], now = Date.now();
-  if (glowLeft(glow.goal, now) > 0 && cands.some(o => o.id === glow.goal.id)) return;
+  const cands = [g, ...(g.alts || [])];
+  if (glow.goal && cands.some(o => o.id === glow.goal.id)) return;
   const pick = glowPickGoal(me, cands);
-  glow.goal = pick ? { ...pick, until: now + GLOW.goalMs } : null;
+  glow.goal = pick || null;
   if (pick) track('glow_goal', { spot: pick.name });
 }
 function glowArrive(id, lines) {   // めいろの ゴールに 着いた：光るゴールなら +20pt、近くの 寄り道を 光らせる。戻り値：ポイント
   let pts = 0;
-  const now = Date.now(), gg = glow.goal;
-  if (gg && gg.id === id && glowLeft(gg, now) > 0) { pts += GLOW.goalPts; lines.push(`✨ 光るゴール！ +${GLOW.goalPts}`); glow.goal = null; track('glow_goal_hit', {}); }
+  const gg = glow.goal;
+  if (gg && gg.id === id) { pts += GLOW.goalPts; lines.push(`✨ 光るゴール！ +${GLOW.goalPts}`); glow.goal = null; track('glow_goal_hit', {}); }
   const sp = spots.find(x => x.id === id), list = sp ? glowPickNear(sp, spots, S.visits, areaZone) : [];
-  glow.near = list.length ? { until: now + GLOW.nearMs, list } : null;
-  if (list.length) lines.push(`✨ 近くの 寄り道が ${glowMin(GLOW.nearMs)}分 光るよ：${list.map(x => x.name).join('・')}`);
+  glow.near = list.length ? { list } : null;   // 寄り道の 光は 時間では 消えないが、つぎの ゴールに 着くと その ゴールの 寄り道へ 移る（引き継ぎ条件）
+  if (list.length) lines.push(`✨ 近くの 寄り道が 光るよ：${list.map(x => x.name).join('・')}`);
   return pts;
 }
 function glowCheckin(id, lines) {   // 光っている 寄り道に チェックイン：+10pt（1か所1回）。戻り値：ポイント
   const n = glow.near;
-  if (!n || glowLeft(n) <= 0 || !n.list.some(x => x.id === id)) return 0;
+  if (!n || !n.list.some(x => x.id === id)) return 0;
   n.list = n.list.filter(x => x.id !== id);
   if (!n.list.length) glow.near = null;
   lines.push(`✨ 光る 寄り道 +${GLOW.nearPts}`); track('glow_near_hit', {});
   return GLOW.nearPts;
 }
-const glowIds = () => (glowLeft(glow.near) > 0 ? glow.near.list.map(x => x.id) : []);
-function glowHtml() {   // ガイド札の 光る 行（のこり 時間つき）。光りが 無ければ ''
-  const now = Date.now(), parts = [];
-  if (glowLeft(glow.goal, now) > 0) parts.push(`✨ 光るゴール：${esc(glow.goal.name)} あと${glowMin(glowLeft(glow.goal, now))}分 +${GLOW.goalPts}pt`);
-  if (glowLeft(glow.near, now) > 0) parts.push(`✨ 光る 寄り道（あと${glowMin(glowLeft(glow.near, now))}分 +${GLOW.nearPts}pt）：${glow.near.list.map(x => esc(x.name)).join('・')}`);
+const glowIds = () => (glow.near ? glow.near.list.map(x => x.id) : []);
+function glowHtml() {   // ガイド札の 光る 行。光りが 無ければ ''
+  const parts = [];
+  if (glow.goal) parts.push(`✨ 光るゴール：${esc(glow.goal.name)} +${GLOW.goalPts}pt`);
+  if (glow.near) parts.push(`✨ 光る 寄り道（+${GLOW.nearPts}pt）：${glow.near.list.map(x => esc(x.name)).join('・')}`);
   return parts.length ? `<span class="glow">${parts.join('<br>')}</span>` : '';
 }
-setInterval(() => { if (glow.goal || glow.near) { if (glowLeft(glow.goal) <= 0) glow.goal = null; if (glowLeft(glow.near) <= 0) glow.near = null; renderGuide(); } }, 15000);   // 時間が 切れたら 光りを 消す
 // きらきらお宝（モンスターハンターNow の「歩いていると 近くに 大物が 湧いて、時間で 消える」）：行き先や 光る ゴールとは 別に、
-// 今いる 所の 2km 以内の 名所に 大きな 宝箱が 10分 だけ 湧く。着いて チェックインすれば +15pt。ゲット・時間切れの あとは 別の 名所に 湧き直す。画面の 間だけ おぼえる（セーブには 数だけ）
-const TREASURE = { lifeMs: 10 * 60000, pts: 15, radiusM: 2000 };
-const treasure = { cur: null, last: '' };   // cur：{ id, name, lat, lng, until }
+// 今いる 所の 2km 以内の 名所に 大きな 宝箱が 湧く。着いて チェックインすれば +15pt。取る まで 同じ 所に ある（期限なし）。ゲットの あとは 別の 名所に 湧き直す。画面の 間だけ おぼえる（セーブには 数だけ）
+const TREASURE = { pts: 15, radiusM: 2000 };
+const treasure = { cur: null, last: '' };   // cur：{ id, name, lat, lng }
 function treasurePick(from, list, visits, skipId, guideId) {   // 近い 順に 1つ（人・当店・行った 所・行き先・2km の 外は 対象外）
   if (!from) return null;
   const c = (list || []).filter(s => s && s.kind !== 'npc' && !s.shop && !(visits || {})[s.id] && s.id !== skipId && s.id !== guideId && Number.isFinite(s.lat) && Number.isFinite(s.lng) && dist(from, s) <= TREASURE.radiusM)
@@ -1266,40 +1263,38 @@ function treasurePick(from, list, visits, skipId, guideId) {   // 近い 順に 
 }
 function treasureSpawn(skipId) {   // 湧かせる（同じ 所を 続けて 選ばない。候補が ない ときは 直前の id を おぼえ、別の 候補が 出るまで 湧かせない）
   const pick = treasurePick(me, spots, S.visits, skipId, S.guide && S.guide.id);
-  treasure.cur = pick ? { ...pick, until: Date.now() + TREASURE.lifeMs } : null;
+  treasure.cur = pick || null;
   treasure.last = pick ? '' : (skipId || treasure.last);
   if (pick) track('treasure_spawn', { spot: pick.name });
   treasureMarker();
   return treasure.cur;
 }
-function treasureArm() {   // 今 湧いて いなければ、時間切れなら、行き先と 重なったら 湧かせなおす
+function treasureArm() {   // 今 湧いて いなければ、行き先と 重なったら 湧かせなおす
   const guideId = S.guide && S.guide.id;
-  if (treasure.cur && glowLeft(treasure.cur) > 0 && treasure.cur.id !== guideId) return treasure.cur;
+  if (treasure.cur && treasure.cur.id !== guideId) return treasure.cur;
   return treasureSpawn(treasure.cur ? treasure.cur.id : treasure.last);
 }
-function treasureCheckin(id, lines) {   // 湧いている お宝に チェックイン：期限内なら +15pt（1回）。戻り値：ポイント
+function treasureCheckin(id, lines) {   // 湧いている お宝に チェックイン：+15pt（1回）。戻り値：ポイント
   const t = treasure.cur;
   if (!t || t.id !== id) return 0;
   if (S.guide && S.guide.id === id) { treasureSpawn(id); return 0; }   // 行き先に なった 直後（タイマー前）の 重なりは、報酬なしで 湧き直す
-  if (glowLeft(t) <= 0) { treasureSpawn(id); return 0; }
   S.treasureGot = (S.treasureGot || 0) + 1; save();
   lines.push(`🎁 きらきらお宝ゲット！ +${TREASURE.pts}`); track('treasure_hit', {});
   treasureSpawn(id);
   return TREASURE.pts;
 }
-function treasureHtml() {   // ガイド札の お宝 行（のこり 時間つき）。無ければ ''
+function treasureHtml() {   // ガイド札の お宝 行。無ければ ''
   const t = treasure.cur;
-  return t && glowLeft(t) > 0 ? `<span class="treasure">🎁 きらきらお宝：${esc(t.name)} あと${glowMin(glowLeft(t))}分 +${TREASURE.pts}pt${me ? `（${fmtM(dist(me, t))}・近づいてチェックイン）` : ''}</span>` : '';
+  return t ? `<span class="treasure">🎁 きらきらお宝：${esc(t.name)} +${TREASURE.pts}pt${me ? `（${fmtM(dist(me, t))}・近づいてチェックイン）` : ''}</span>` : '';
 }
 let treasureMk = null;
 function treasureMarker() {   // 地図の 大きな 金色の 宝箱（無ければ 消す）
   if (typeof map === 'undefined' || !map) return;
   const t = treasure.cur;
   if (treasureMk) { treasureMk.remove(); treasureMk = null; }
-  if (t && glowLeft(t) > 0) treasureMk = L.marker([t.lat, t.lng], { icon: L.divIcon({ className: '', html: '<div class="treasure-mk">🎁</div>', iconSize: [44, 44], iconAnchor: [22, 22] }), keyboard: false, interactive: false, zIndexOffset: 700 }).addTo(map);
+  if (t) treasureMk = L.marker([t.lat, t.lng], { icon: L.divIcon({ className: '', html: '<div class="treasure-mk">🎁</div>', iconSize: [44, 44], iconAnchor: [22, 22] }), keyboard: false, interactive: false, zIndexOffset: 700 }).addTo(map);
 }
-let treasureMin = -1;
-setInterval(() => { if (me && spots.length) { const had = treasure.cur; treasureArm(); const min = treasure.cur ? glowMin(glowLeft(treasure.cur)) : -1; if (had !== treasure.cur || min !== treasureMin) renderGuide(); treasureMin = min; } }, 15000);   // 時間が 切れたら 湧き直す（位置が 分かるまで 待つ）。分の 表示が 変わった ときも 札を 描き直す
+setInterval(() => { if (me && spots.length && !treasure.cur) { treasureArm(); if (treasure.cur) renderGuide(); } }, 15000);   // 位置が 分かるまで 待って、まだ 湧いて いなければ 湧かせる（期限は 無いので 描き直しは 湧いた ときだけ）
 function mazeGoal(id, name, lines) {
   mzShare = null;
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
@@ -1390,7 +1385,7 @@ function checkin() {
   if (!day.spots.includes(s.id)) day.spots.push(s.id);
   if (jumpNew) lines.push('🎮 名所でミニゲーム「にしおジャンプ」があそべる（スポットの窓・きろく から）');
   total += treasureCheckin(s.id, lines);   // きらきらお宝（湧いている 名所に 着いた）
-  total += glowCheckin(s.id, lines);   // 光っている 寄り道（ゴールの あと 5分）
+  total += glowCheckin(s.id, lines);   // 光っている 寄り道
   total += mazeGoal(s.id, s.name, lines);   // 地図の めいろの ゴール（行き先の 名所）に 着いた：かかった 時間と めいろの 道のり、紙ふぶき
   const mz = takeMzShare();   // この ごほうびに だけ シェアの ボタン
   if (['shrine', 'temple', 'worship'].includes(s.kind || s.cat)) day.shrine++;
@@ -2553,13 +2548,7 @@ function refreshNearby() {
     return;
   }
   if (bagDone()) openBagSoon();   // 歩き終えた袋が開いていない（モードを切り替えた・閉じた など）：ここで開く
-  const wt = weekTheme(), wk = String(weekNo());
   if (welcomeDue() || firstPick || rewardBusy()) { /* はじめての人は「🎁 すぐ近くに たからばこ！」を読んでもらう：ようこそ たからばこ を開けて、はじめの1枚を えらんで、ごほうびを閉じてから、週の知らせを出す */ }
-  else if (store.get('nsg_started', false) && store.get('nsg_theme_wk', '') !== wk) {   // 週に1回：今週のテーマと、先週のまとめ
-    store.set('nsg_theme_wk', wk);
-    const lw = lastWeekStat();
-    setTimeout(() => toastAfter(simple() ? `${wt.icon} 今週は「${wt.name}」で ポイント2倍` : `${wt.icon} 今週は「${wt.name}」の週！ ${wt.name}でチェックインすると ポイント2倍・おみやげ袋${lw ? `（先週は ${fmtM(lw.m)}・新しい絵 ${lw.dots}枚）` : ''}`), 2500);
-  } else if (kiraHour() && store.get('nsg_started', false) && store.get('nsg_kira_day', '') !== ymd()) { store.set('nsg_kira_day', ymd()); setTimeout(() => toastAfter('✨ いま キラの時間！（土曜の10時台は キラの絵が出やすい）'), 2500); }   // 前の知らせ（はじめの案内など）を上書きしないよう、あとに
   else if (store.get('nsg_started', false) && S.prevToast !== ymd() && prevDayStat()) {   // 日に1回：前回のさんぽ（知らせたかは記録ごと＝モード・版ごとに。知らせることがない日は使わない）
     const p = prevDayStat();
     S.prevToast = ymd(); save();
@@ -4358,7 +4347,6 @@ function afterReward() {
   store.set('nsg_rw_day', { date: today, n });
   if (n < 2) return;
   afterRewardClosed(() => {
-    if (store.get('nsg_tmr_day', '') !== ymd()) { store.set('nsg_tmr_day', ymd()); toastAfter(simple() ? `📅 あしたも来ると +${tomorrowBonus()}pt` : `📅 ${tomorrowItems()[0]}（きろくの「あしたのおたのしみ」）`); }
     setTimeout(a2hsOffer, 4200);
   });
 }
@@ -4669,7 +4657,7 @@ window.nishioGo = {
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
-  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
+  get areas() { return areas; }, get glowGoal() { return glow.goal || null; }, get glowNear() { return glow.near ? glow.near.list : []; }, areaProgress, exploreRing, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,

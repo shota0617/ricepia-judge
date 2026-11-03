@@ -12204,6 +12204,15 @@ function mzDentStep(dt) {   // 生け垣の へこみの 絵：お米より 大�
   }
   if (Math.abs(mzSoft.dv) < 0.02 && Math.abs(mzSoft.dent - tg) < 0.004) { mzSoft.dent = tg; mzSoft.dv = 0; }   // おさまった（止まった あとも 毎こま 描きなおさない）
 }
+const rollArea = { key: '', id: '', at: 0 };   // 転がる地区のキャッシュ（タイルが かわる間だけ 地区を しらべなおす。rollStep は 1/120秒でも呼ばれる）
+function rollAreaAt(x, y) {
+  const key = Math.floor(x) + ',' + Math.floor(y), now = performance.now();
+  if (key === rollArea.key && (rollArea.id || now - rollArea.at < 2000)) return rollArea.id;   // 地区が分からなかった（''）ときは 2秒後に しらべなおす（読み込み直後のまま固定しない。Codexレビュー指摘）
+  let id = '';
+  try { const gz = G['areaZone']; id = gz ? gz(toLatLng(Math.floor(x) + 0.5, Math.floor(y) + 0.5)) || '' : ''; } catch (e) { id = ''; }
+  rollArea.key = key; rollArea.id = id; rollArea.at = now;
+  return id;
+}
 function rollStep(dt) {
   mzDentStep(dt);
   const t = targetTile();
@@ -12217,7 +12226,7 @@ function rollStep(dt) {
   const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   if (Math.hypot(ax, ay) > 0.08) G.notePlayInput();
   const sl = slopeAt(rp.x, rp.y);   // 坂：下る向きへ ひとりでに転がる（上りは おそくなる）
-  const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1);   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
+  const gnd = groundAt(rp.x, rp.y), wxr = WX_ROLL[wxKind()], RS0 = window.nishioRollSync, feel = RS0 && RS0.groundFeel ? RS0.groundFeel(rollAreaAt(rp.x, rp.y)) : { crr: 1, lin: 1 }, crr = ROLL_CRR * gnd.crr * (wxr ? wxr.crr : 1) * feel.crr;   // 地区ごとの 地面の感じ（rollsync.js groundFeel）を タイルの 地面の 上に 掛け算   // 雨・雪の日は すべる   // 道は するする・草や田んぼは もさもさ・砂浜は ずぶずぶ
   const up = rp.vx * sl.x + rp.vy * sl.y < 0 ? 0.6 : 1;   // 上り坂は、下りより ゆるく おそくなる（いきおいで 堤防や 坂を のぼれる）
   const acc = ROLL_ACC * (KP.accel || 1);
   // ころがり抵抗は 押す力の 4わり まで：どの 地面・転がり方・天気でも 小さな 傾きで 動きだす（「ぴたっ」で 砂浜は いくら 傾けても 動かず、草は 14度 いった。めいろで「詰まって 動かない」の もと）
@@ -12232,7 +12241,7 @@ function rollStep(dt) {
     const pvx = rp.vx, pvy = rp.vy;   // 力を足す前の速度（向きの変わり方の上限に使う）
     rp.vx += fx * dt; rp.vy += fy * dt;
     sp = Math.hypot(rp.vx, rp.vy);
-    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (cr + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
+    const ns = Math.max(0, Math.min(ROLL_MAX, sp - (cr + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * feel.lin * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
     if (sp > 0) { rp.vx *= ns / sp; rp.vy *= ns / sp; }
     const RS = window.nishioRollSync;
     if (RS && RS.limitTurn) { const lt = RS.limitTurn(rp.vx, rp.vy, pvx, pvy, RS.TURN_PER_SEC * dt); rp.vx = lt.vx; rp.vy = lt.vy; }   // 方向転換：向きは 1秒に TURN_PER_SEC rad まで。速さは そのまま 弧を描いて 曲がる（rollsync.js）
@@ -12842,4 +12851,5 @@ window.nishioPixel = { meiroApi, maze: { wallTheme: () => mzWallTheme(), on: () 
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
   }, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
+{ const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 } }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
 })();

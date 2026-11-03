@@ -51,5 +51,39 @@
       return f ? { crr: f.crr, lin: f.lin } : { crr: 1, lin: 1 };
     } catch (e) { return { crr: 1, lin: 1 }; }
   }
-  root.nishioRollSync = { R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  // 眺めるコロコロ（M5）：無操作が IDLE_START 秒続くと、近くの名所（目的地があればそこ）へ 歩くより おそい 一定の速さ IDLE_SPEED で ゆっくり 転がり続ける。
+  // 向かう力 IDLE_ACC は ころがり抵抗より 大きい。速さが IDLE_SPEED に 届いたら 力は 0（あおらない・せかさない）。
+  const IDLE_START = 8, IDLE_SPEED = 1.4, IDLE_ACC = 5;
+  const fin = v => typeof v === 'number' && isFinite(v);
+  function idleDue(sec, hasInput) {
+    try { return fin(sec) && sec >= IDLE_START && hasInput !== true && !hasInput; } catch (e) { return false; }
+  }
+  function idleTarget(mx, my, spots, excludeKey) {
+    try {
+      if (!fin(mx) || !fin(my) || !Array.isArray(spots)) return null;
+      const ex = Array.isArray(excludeKey) ? excludeKey : [excludeKey];   // 除外は 1件でも 複数（配列）でもよい（近くの到着済みを まとめて外す）
+      let best = null;
+      for (const s of spots) {
+        if (!s || !fin(s.x) || !fin(s.y)) continue;
+        const key = typeof s.key === 'string' ? s.key : s.x + ',' + s.y;
+        if (ex.indexOf(key) >= 0) continue;
+        const dist = Math.hypot(s.x - mx, s.y - my);
+        if (!best || dist < best.dist) best = { x: s.x, y: s.y, key, dist };   // 近い点も候補にする（距離で外すと 到着判定(1.5)との間で 目標が 行き来して 止まる。ドライバの数値検証で確認）
+      }
+      return best;
+    } catch (e) { return null; }
+  }
+  function idleForce(mx, my, tx, ty, vx, vy) {
+    try {
+      if (![mx, my, tx, ty].every(fin)) return { fx: 0, fy: 0, dist: 0, arrived: true };
+      const dx = tx - mx, dy = ty - my, dist = Math.hypot(dx, dy);
+      if (dist < 1.5) return { fx: 0, fy: 0, dist, arrived: true };
+      const ux = dx / dist, uy = dy / dist;
+      const along = num(vx) * ux + num(vy) * uy;
+      if (along >= IDLE_SPEED) return { fx: 0, fy: 0, dist, arrived: false };
+      if (along >= 0 && Math.hypot(num(vx), num(vy)) >= IDLE_SPEED * 1.5) return { fx: 0, fy: 0, dist, arrived: false };   // 坂などで すでに じゅうぶん 速いときは あおらない（Codexレビュー指摘）
+      return { fx: ux * IDLE_ACC, fy: uy * IDLE_ACC, dist, arrived: false };
+    } catch (e) { return { fx: 0, fy: 0, dist: 0, arrived: true }; }
+  }
+  root.nishioRollSync = { IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

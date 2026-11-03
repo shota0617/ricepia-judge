@@ -1002,6 +1002,10 @@ body.px .guide .treasure{color:#ffe680}
 /* 大きなめぐりリング（きろく画面。背景の conic-gradient は game.js が入れる） */
 .explore-ring{width:148px;height:148px;border-radius:50%;margin:8px auto 12px;background:#dcebd2;display:flex;align-items:center;justify-content:center}
 .explore-ring[hidden]{display:none}
+.block-tower{display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:0 auto 12px}
+.block-tower[hidden]{display:none}
+.bt-col{display:flex;flex-direction:column;gap:3px}
+.bt-cell{width:min(52px,15vw);height:20px;border-radius:4px;background:rgba(0,0,0,.08)}
 .explore-hole{width:62%;height:62%;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .explore-hole b{font-size:34px;font-weight:700}
 .explore-hole small{font-size:11px;color:#777}

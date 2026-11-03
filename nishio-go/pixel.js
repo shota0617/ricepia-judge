@@ -3922,10 +3922,10 @@ function riceFaceHi(fc, q) {   // 顔の 絵を 点の まま q 倍に（なめ�
   if (!m[q]) { const c = document.createElement('canvas'); c.width = fc.width * q; c.height = fc.height * q; const g = c.getContext('2d'); g.imageSmoothingEnabled = false; g.drawImage(fc, 0, 0, c.width, c.height); m[q] = c; }
   return m[q];
 }
-const riceFrame = () => riceSprites[facing][Math.floor(roll.d * 8) & 7];
+const riceFrame = () => riceSprites[facing][window.nishioRollSync ? window.nishioRollSync.frameFor(roll.d, KP.radius || 1) : Math.floor(roll.d * 8) & 7];   // 円周 2.639マスで 8コマ一周（rollsync.js）
 // なめらかに転がる：止まっている お米の絵（にっこり）を、進んだ道のりだけ その場で回す（右・下へは時計まわり、左・上へは反時計まわり）。
 // 止まると、起き上がりこぼしのように ゆらゆらして、立って こっちを見る
-const RICE_R = 0.42;   // 回る半径（マス）。1マス進むと 約136度まわる
+const RICE_R = 0.42;   // 回る半径（マス）。1マス進むと 約136度まわる・円周 2.639マスで 1回転（rollsync.js の R と おなじ）
 // 転がり方のバリエーション（korostyle.js。200 ＝ うごき20 × かざり10）：koro いまの転がり方（ふつうは null）・KP その うごきの数（書いていないものは ふつう）。毎こま はじめに読む
 let koro = null, KP = {};
 // クセになる転がり方：たて長のつぶは、寝ころぶと まん中が下がり、立つと上がる（コロン、コロンと でこぼこ転がる）。寝ころぶたびに「コトン」と小さな音。
@@ -4326,41 +4326,26 @@ function riceSpin(dx, dy, dt) {
   if (roll.kind === 'spin') { roll.spinT += dt; if (roll.spinT > 1.2) roll.dizzyT = 1; } else roll.spinT = Math.max(0, roll.spinT - dt * 2);   // くるくるが続くと 目が回る
   const moving = d > 0.002 && d < 3 && v > 0.15, up = Math.round(roll.ang / (Math.PI * 2)) * Math.PI * 2, R2 = RICE_R * (KP.radius || 1);   // R2：回る半径（転がり方で かわる）
   let target = up;
-  if (moving && v >= (KP.waddleV || WADDLE_V)) {
-    const vert = roll.vert = KP.spinAlways || (roll.vert ? Math.abs(dy) > Math.abs(dx) * 0.75 : Math.abs(dy) > Math.abs(dx) * 1.35);   // ななめで よこ・たての 回りが 入れかわりつづけないように
-    if (!vert) {   // ころころ
-      const sg = Math.sign(dx), wt = sg * d / R2 / Math.max(dt, 1e-3);   // すべらずに転がるときの 回る速さ
-      const slip = wt - roll.av;   // 回りの いきおいは すぐには かわらない：はね返ったあとは 少しのあいだ 前の向きに回りつづけて、地面で こすれて合っていく（ズザッと 土ぼこり）。とんでいる間は そのまま回る
-      if (roll.h <= 0) roll.av += slip * Math.min(1, dt * 9);
-      roll.ang += roll.av * dt;
-      if (Math.abs(slip) > 8 && roll.h <= 0 && Math.random() < dt * 40) roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: 0.7 + Math.random() * 0.5, vx: -Math.sign(roll.av) * 0.8, c: (roll.gnd || GROUND.dirt).dust });
-      if (roll.h <= 0) roll.kind = 'tumble';
-      if (KP.spinMix) roll.spin += d / R2 * 0.5;   // ねじねじ：ころころしながら ひねる
-      else settleSpin(dt);
-      settlePitch(dt);
-      return;
-    }
-    if (!KP.spinAlways) {   // たてに ころころ：前（下）・うしろ（上）へ でんぐりがえし。顔が 下（上）へ まわって かくれ、せなかが 見えて、また 顔が 出る（前は こまのように 横を 向いて 回っていた）
-      const wt = Math.sign(dy) * d / R2 / Math.max(dt, 1e-3), slip = wt - roll.pv;   // すべらずに 転がるときの 回る速さ（よこの ころころと 同じ）
-      if (roll.h <= 0) roll.pv += slip * Math.min(1, dt * 9);   // 回りの いきおいは すぐには かわらない。とんでいる間は そのまま回る
-      roll.pitch += roll.pv * dt;
-      if (Math.abs(slip) > 8 && roll.h <= 0 && Math.random() < dt * 40) roll.dust.push({ x: roll.last ? roll.last.x : 0, y: roll.last ? roll.last.y : 0, t: 0, s: 0.7 + Math.random() * 0.5, vx: 0, c: (roll.gnd || GROUND.dirt).dust });
-      if (roll.h <= 0) roll.kind = 'tumble';
-      settleSpin(dt);
-    } else {   // 転がり方「くるくる」：どの向きでも こまのように 回る（下へは右まわり・上へは左まわりに見える）
-      settlePitch(dt);
-      if (roll.h <= 0) roll.kind = 'spin';
-      const wt = (Math.sign(dy) || Math.sign(dx)) * d / R2 * 0.9 / Math.max(dt, 1e-3);
-      if (roll.h <= 0) roll.sv += (wt - roll.sv) * Math.min(1, dt * 14);   // くるくるも 回りの いきおいが残る
-      roll.spin += roll.sv * dt;
-    }
+  if (!KP.spinAlways && d > 1e-9 && d < 3) {   // 歩かず転がる：回る角度＝進んだ道のり÷半径（rollsync.js）。速さや moving 判定によらず、実際に進んだ分は はじめも止まり際も はね返りも 道のりと そろう（Codex指摘：微小な移動の取りこぼし対策）
+    const sc = KP.radius || 1, RS = window.nishioRollSync;
+    const adv = RS ? RS.advance(dx, dy, sc) : { dAng: dx / R2, dPitch: dy / R2, dist: d };
+    roll.ang += adv.dAng; roll.pitch += adv.dPitch;
+    roll.av = adv.dAng / Math.max(dt, 1e-3); roll.pv = adv.dPitch / Math.max(dt, 1e-3);   // 止まり・コトンが見る、いまの回る速さ
+    if (roll.h <= 0) roll.kind = 'tumble';
+    if (KP.spinMix) roll.spin += adv.dist / R2 * 0.5;   // ねじねじ：ころころしながら ひねる
+    else settleSpin(dt);
+    if (Math.abs(dy) < 1e-6) settlePitch(dt);   // たてに進まないときは 起きあがる
+    if (Math.abs(dx) >= 1e-6) return;   // よこが進まないときだけ、あとのばねで 立たせる
+  } else if (moving) {
+    // 転がり方「くるくる」：どの向きでも こまのように 回る（下へは右まわり・上へは左まわりに見える）
+    settlePitch(dt);
+    if (roll.h <= 0) roll.kind = 'spin';
+    const wt = (Math.sign(dy) || Math.sign(dx)) * d / R2 * 0.9 / Math.max(dt, 1e-3);
+    if (roll.h <= 0) roll.sv += (wt - roll.sv) * Math.min(1, dt * 14);   // くるくるも 回りの いきおいが残る
+    roll.spin += roll.sv * dt;
   } else {
     settleSpin(dt); settlePitch(dt);
-    if (moving) {   // よちよち
-      if (roll.h <= 0) roll.kind = 'waddle';
-      roll.wad += d * 11;
-      target = up + Math.sin(roll.wad) * (KP.sway || 0.3);
-    } else if (roll.h <= 0 && Math.abs(roll.av) < 0.05 && Math.abs(roll.pv) < 0.05) roll.kind = 'stop';
+    if (roll.h <= 0 && Math.abs(roll.av) < 0.05 && Math.abs(roll.pv) < 0.05) roll.kind = 'stop';
   }
   roll.av += (target - roll.ang) * 70 * dt;   // いちばん近い「立った」向き（よちよちは ゆれる向き）へ、ばねで もどる
   roll.av *= Math.pow(0.86, dt * 60);

@@ -3473,6 +3473,7 @@ function renderLog() {
   renderPicross();
   renderBingo();
   renderMemory();
+  renderSlidePuzzle();
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -3551,6 +3552,53 @@ $('memoryBox').addEventListener('click', e => {
     memShown = [first, i]; memLock = true; renderMemory();
     setTimeout(() => { memShown = []; memPick = -1; memLock = false; renderMemory(); }, 900);
   }
+});
+
+// スライドパズル：9マス（名物8種＋空き）。状態は nsg_slide に（S のセーブは かえない・ポイントなし）。
+const SLIDE_ICONS = ['🍵', '🍚', '🌾', '🏯', '🦐', '🌸', '🌊', '🍘'];
+function slideSolvable(t) {
+  let inv = 0;
+  const a = t.filter(v => v !== 8);
+  for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) if (a[i] > a[j]) inv++;
+  return inv % 2 === 0;
+}
+function slideValid(t) {
+  return Array.isArray(t) && t.length === 9 && [...t].sort((a, b) => a - b).every((v, i) => v === i) && slideSolvable(t);
+}
+function slideLoad() {
+  const day = ymd();
+  let rec = store.get('nsg_slide', null);
+  if (!rec || rec.day !== day || !slideValid(rec.tiles)) {
+    rec = { day, tiles: window.nishioSlidePuzzle.start(day), moves: 0, done: false };
+    store.set('nsg_slide', rec);
+  } else if (!!rec.done !== window.nishioSlidePuzzle.solved(rec.tiles)) {
+    rec.done = window.nishioSlidePuzzle.solved(rec.tiles);
+    store.set('nsg_slide', rec);
+  }
+  return rec;
+}
+function renderSlidePuzzle() {
+  const el = $('slideBox'), mv = $('slideMoves');
+  if (!el || !mv || !window.nishioSlidePuzzle) { if (el) el.hidden = true; return; }
+  const rec = slideLoad();
+  el.hidden = false;
+  el.innerHTML = rec.tiles.map((v, i) => v === 8
+    ? '<span class="slide-tile blank" aria-hidden="true"></span>'
+    : `<button type="button" class="slide-tile" data-i="${i}" aria-label="${v + 1}番 ${SLIDE_ICONS[v]}">${SLIDE_ICONS[v]}<span class="slide-num">${v + 1}</span></button>`
+  ).join('') + (rec.done ? '<span class="slide-star">⭐</span>' : '');
+  el.classList.toggle('done', !!rec.done);
+  mv.textContent = rec.moves | 0;
+  el.setAttribute('aria-label', `スライドパズル、うごかした回数 ${rec.moves | 0}${rec.done ? '、そろった' : ''}`);
+}
+$('slideBox').addEventListener('click', e => {
+  const b = e.target.closest('.slide-tile[data-i]');
+  if (!b || !window.nishioSlidePuzzle) return;
+  const P = window.nishioSlidePuzzle, rec = slideLoad(), i = +b.dataset.i;
+  const next = P.move(rec.tiles, i);
+  if (next.every((v, k) => v === rec.tiles[k])) return;
+  rec.tiles = next; rec.moves = (rec.moves | 0) + 1;
+  rec.done = P.solved(next);
+  store.set('nsg_slide', rec); renderSlidePuzzle();
 });
 
 function renderSugoroku() {

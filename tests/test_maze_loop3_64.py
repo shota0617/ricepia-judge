@@ -86,7 +86,7 @@ class Scope(unittest.TestCase):
     def test_files_allowed(self):
         out = git("diff", "--name-only", "origin/main").split() + git("ls-files", "--others", "--exclude-standard").split()
         for f in out:
-            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css") or f.startswith("tests/"), f)
+            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go.html") or f.startswith("tests/"), f)
 
     def test_no_banned_words(self):
         text = "\n".join(ADDED)

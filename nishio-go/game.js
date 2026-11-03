@@ -4210,7 +4210,14 @@ function renderPostcards() {
   const ul = $('postcardList');
   if (!ul) return;
   const es = pcEntries();
-  if ($('postcardCount')) $('postcardCount').textContent = es.length ? `${es.length}枚` : '';
+  const total = Array.isArray(spots) ? spots.filter(s => s.featured && !s.shop).length : 0;
+  const pg = PC && PC.progress ? PC.progress(es.length, total) : { have: Math.min(es.length, total), total, pct: total > 0 ? Math.floor(100 * Math.min(es.length, total) / total) : 0, left: Math.max(0, total - es.length) };
+  if ($('postcardCount')) $('postcardCount').textContent = pg.total > 0 ? `${pg.have}/${pg.total}枚` : es.length ? `${es.length}枚` : '';
+  if ($('postcardAlbum')) {   // アルバム：集めた数と進み具合（バー＋のこり枚数）
+    $('postcardAlbum').hidden = pg.total <= 0;
+    if ($('postcardBarFill')) $('postcardBarFill').style.width = `${pg.pct}%`;
+    if ($('postcardLeft')) $('postcardLeft').textContent = pg.left > 0 ? `あと ${pg.left}枚` : pg.total > 0 ? 'コンプ！' : '';
+  }
   ul.innerHTML = es.length ? es.map(e => `<li data-pc="${esc(e.id)}"><span class="ico">${esc(e.icon)}</span><span class="main"><b>${esc(e.name)}</b><small>${esc(e.c.day)}</small></span></li>`).join('')
     : '<li class="empty">名所（注目スポット）にチェックインすると、記念ポストカードが 1枚もらえます</li>';
 }

@@ -2347,6 +2347,18 @@ function setupField(root) {
     if (RAIN && o.isMesh && ['soil_untilled', 'track'].includes(o.material.name)) wetSoil(o.material);
     if (o.isMesh && ['grass_tuft', 'higanbana'].includes(o.material.name)) FENCE.mow(o);   // 秋：電気柵の線のまわりは 草を刈ってある
     if (o.isMesh && o.material.name === 'higanbana' && season === 'aki') higanbanaAfter(o);
+    if (o.isMesh && o.material && o.material.name === 'soil_untilled' && !o.material.userData.t2) {   // T2：まだ耕していない土を明るい黄土色へ寄せ、耕し進むほど残りが目立つ（色だけ・文字なし）
+      o.material.userData.t2 = 1;
+      const prev = o.material.onBeforeCompile;
+      o.material.onBeforeCompile = (sh, r) => {
+        if (prev) prev.call(o.material, sh, r);
+        sh.uniforms.t2u = T2.u;
+        sh.fragmentShader = 'uniform float t2u;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.85, 0.68, 0.30), 0.12 + 0.43 * t2u);');
+      };
+      const key = o.material.customProgramCacheKey ? o.material.customProgramCacheKey.bind(o.material) : () => '';
+      o.material.customProgramCacheKey = () => key() + '|t2left';
+      o.material.needsUpdate = true;
+    }
   });
   AMENBO.setWater(root);                           // 代かき：水たまりに アメンボを置く
   RENGE.setup(root);                               // 春：レンゲの田んぼ
@@ -2559,6 +2571,23 @@ let dirtyLo = Infinity, dirtyHi = -1;
 // 見た目：土くれが細かくなって平らに。乾いた土は少し明るく、ぬかるみや雨の日だけ 練れて黒っぽい
 const TILLN = new Uint8Array(NX * NZ), TODO = new Float32Array(NX * NZ), DEEP = new Uint8Array(NX * NZ);   // DEEP：耕しなおして 深くなった分（cm）   // 耕した回数（通った回数）と、さいごに耕したときの走った道のり
 let overTilled = 0;
+// T2 無駄の見える化（モーション磨き）: 重なって耕した所は色を濃くし、耕し残しは明るい色で目立たせる。文字は出さない（色だけ）。
+// 物差し＝重なり率と残し率を内部で測れること: T2.rates() が対象ます目（畦ぎわ 50cm を除く workCount と同じ範囲）で
+// covered（耕せた率）・overlap（2 回以上通った率）・left（残し率＝1−covered）を返す（window.game.T2 から読める）。
+const T2 = {
+  u: { value: 0 },                                 // 残しハイライトの強さ（0〜1。耕した割合で step が更新。soil_untilled の細工が読む）
+  tint(c) { return TILLN[c] >= 3 ? 0.66 : TILLN[c] === 2 ? 0.82 : 1; },   // 通った回数で濃く（1 回＝そのまま）
+  rates() {
+    let n = 0, cov = 0, ov = 0;
+    for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+      const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL;
+      if (Math.abs(x) >= HX - 0.5 || Math.abs(z) >= HZ - 0.5) continue;
+      n++; const c = i * NZ + j;
+      if (tilledMask[c]) { cov++; if (TILLN[c] >= 2) ov++; }
+    }
+    return { covered: n ? cov / n : 0, overlap: n ? ov / n : 0, left: n ? 1 - cov / n : 0, cells: n, overlapCells: ov };
+  }
+};
 function overTill(c) {
   const x0 = -HX + ((c / NZ) | 0) * CELL, z0 = -HZ + (c % NZ) * CELL;
   WAVY[c] = 0; setCell(c, null, 0);              // 土くれがなくなって 平らに（波も土塊も消える。二山盛りの山は 残る）
@@ -2631,7 +2660,7 @@ function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ
   });
   if (wv) WAVD[c] = wv.yaw;
   CLOD[c] = clod;
-  if (SHIRO) g.attributes.color.array.fill(1 + 10 * TILTY[c], c * 12, c * 12 + 12);   // 高い所は 土が出て明るく、低い所は 水がたまって暗い
+  if (SHIRO) g.attributes.color.array.fill((1 + 10 * TILTY[c]) * T2.tint(c), c * 12, c * 12 + 12);   // 高い所は 土が出て明るく、低い所は 水がたまって暗い。T2：重なった所は濃く
   dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);
 }
 function tillCell(i, j, lx = 0) {               // lx：作業機のまん中から 左へ何 m の所か
@@ -2648,6 +2677,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
     if (!SHIRO && (S.odo || 0) - TODO[c] > 1.5 && TILLN[c] < 255) {
       OMO.bury(c);                                // 耕しなおすと 出た オモダカの 塊茎は また 土に まざる
       if (++TILLN[c] === 3) overTill(c);
+      DRY.repaint(c);                             // T2：重なった所は その場で濃く（overTill の直後も tint が効くよう最後に描く）
       // 枕地は 何回も耕すと 深くなる（岩手・盛岡の農家の YouTube「秋起こし時の枕地：田んぼの枕地耕起は、何回も耕すと深くなる」：枕地は
       // 深くなりやすいので 浅く耕起している）。3 回目から、ふだんに近い深さで耕すたびに 2cm ずつ 深くなる（10cm まで）。浅く（初めより 2cm 以上）なら 深くならない
       if (TILLN[c] >= 3 && DEPTH > DEPTH0 - 2) DEEP[c] = Math.min(10, DEEP[c] + 2);
@@ -2691,9 +2721,16 @@ function tillPitch() {
 const DRY = (() => {
   const WET = season === 'aki' ? 0.68 : 0.6, T = 150, list = [], last = new Map();   // last：ます目ごとの いちばん新しい 記録
   let clock = 0, acc = 0;
-  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v * ROUGH[c], c * 12, c * 12 + 12); };
+  const set = (c, v) => { const a = tilled.geometry.attributes.color; if (a) a.array.fill(v * ROUGH[c] * T2.tint(c), c * 12, c * 12 + 12); };   // T2：重なった所は濃く
   return {
     list,                                         // 乾いていく所（[ます目, 耕した時刻, 乾く時間の倍率]）
+    repaint(c) {                                  // T2：重ねて耕して回数が増えた所を、いまの乾き具合のまま濃く描き直す（乾き時計は戻さない）
+      if (SHIRO) return;
+      const e = last.get(c), f = RAIN ? 0 : e ? Math.min(1, (clock - e[1]) / (T * e[2])) : 1, v = WET + (1 - WET) * Math.pow(f, 0.7);   // 雨の日は乾かないので WET のまま
+      set(c, v);
+      dirtyLo = Math.min(dirtyLo, c); dirtyHi = Math.max(dirtyHi, c);   // flushTilled の送り範囲にも入れておく（その場の needsUpdate だけに頼らない）
+      const a = tilled.geometry.attributes.color; if (a) { a.updateRange.offset = c * 12; a.updateRange.count = 12; a.needsUpdate = true; }
+    },
     // 秋起こしは 荒く起こして 乾きやすくする（岩手・盛岡の農家の YouTube「田んぼの秋起こしは粗めに」）。秋に ゆっくり・PTO 2 速で
     // 細かくしすぎた所（耕うんピッチ 5cm より細かい）は、土の塊の すきまが少なく 乾くのに 2 倍かかる
     wet(c) { if (SHIRO) return; set(c, WET); if (!RAIN) { const e = [c, clock, season === 'aki' && (S.pitch || 9) < 5 ? 2 : 1]; last.set(c, e); list.push(e); } },   // 耕しなおしたら 前の記録は 使わない   // 雨の日は 耕した土が乾かない
@@ -8231,6 +8268,7 @@ function step(dt) {
   if (S.cool === undefined) S.cool = COOL0;
   if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) + (BELT.broken ? 0.65 : 0) - S.cool) * Math.min(1, dt / (BELT.broken ? 14 : S.cool < 0.5 ? 40 : 15));   // ファンベルトが切れると ファンが止まって どんどん上がる
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
+  if (!SHIRO) T2.u.value = pct / 100;             // T2：耕し進むほど 残りの土が目立つ（代かきは水の下なので上げない）
   if (pct >= 50 && !SHIRO && S.started) voice('hajimete');   // 半分 耕せたころ
   if (pct >= 40 && !SHIRO && !ART.on && S.rotDown && S.rotPos < 0.08 && S.v > 0.05 && !S.stalled && Math.abs(S.x) < HX && Math.abs(S.z) < HZ
     && (Math.abs(S.x) > HX - 3 * PITCH || Math.abs(S.z) > HZ - 3 * PITCH)) voice('sanshu');   // 外周の帯の中で 実際に耕しはじめたころ（止まっている・エンスト・田んぼの外は 数えない）
@@ -8392,7 +8430,9 @@ function drawMonitor(pct) {
       if (WALK.mask && WALK.mask[i * NZ + j]) { img.data[o] = img.data[o] * 0.5 + 30; img.data[o + 1] = img.data[o + 1] * 0.5 + 45; img.data[o + 2] = img.data[o + 2] * 0.5 + 115; }
       continue;
     }
-    img.data[o] = t ? 70 : 92; img.data[o + 1] = t ? 140 : 74; img.data[o + 2] = t ? 60 : 52; img.data[o + 3] = 255;
+    if (t) { const n2 = TILLN[i * NZ + j]; img.data[o] = n2 >= 3 ? 25 : n2 === 2 ? 45 : 70; img.data[o + 1] = n2 >= 3 ? 70 : n2 === 2 ? 105 : 140; img.data[o + 2] = n2 >= 3 ? 30 : n2 === 2 ? 45 : 60; }   // T2：重なった所は濃い緑
+    else { img.data[o] = 230; img.data[o + 1] = 190; img.data[o + 2] = 70; }   // T2：まだの所は明るい黄色で目立たせる
+    img.data[o + 3] = 255;
     if (WALK.mask && WALK.mask[i * NZ + j]) { img.data[o] = t ? 50 : 60; img.data[o + 1] = t ? 120 : 90; img.data[o + 2] = t ? 150 : 160; }   // 歩いて見つけた やわらかい所
   }
   mg.putImageData(img, 0, 0);
@@ -10237,7 +10277,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

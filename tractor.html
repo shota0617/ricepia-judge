@@ -282,6 +282,7 @@
       <button data-i="mulch"><span>🎞️</span>マルチ</button>
       <button data-i="caster"><span>🌾</span>施肥</button>
       <button data-i="drill"><span>🌱</span>播種</button>
+      <button data-i="manure"><span>💩</span>堆肥</button>
     </div>
     <div class="seasons arts" id="arts">
       <button data-a="shikaku"><span>⬛</span>四角<i>★</i></button>
@@ -514,19 +515,19 @@ document.body.classList.toggle('touch', MOBILE);   // スマホ：操作の表�
 const params = new URLSearchParams(location.search);
 let season = FIELD[params.get('season')] ? params.get('season') : 'haru';
 const SHIRO = season === 'shirokaki';
-// 作業機の付け替え（サイクル63で第1弾・64で第2弾・67で第4弾・68で第5弾・79で第6弾・80で第7弾）: impl=rotary|harrow|plow|disc|ditch|aze|ridge|flail|sub|mulch|caster|drill。既定は季節の従来作業機（代かき=ハロー、それ以外=ロータリー）
-const IMPL_ID = ['rotary', 'harrow', 'plow', 'disc', 'ditch', 'aze', 'ridge', 'flail', 'sub', 'mulch', 'caster', 'drill'].includes(params.get('impl')) ? params.get('impl') : (SHIRO ? 'harrow' : 'rotary');
+// 作業機の付け替え（サイクル63で第1弾・64で第2弾・67で第4弾・68で第5弾・79で第6弾・80で第7弾・81で第8弾）: impl=rotary|harrow|plow|disc|ditch|aze|ridge|flail|sub|mulch|caster|drill|manure。既定は季節の従来作業機（代かき=ハロー、それ以外=ロータリー）
+const IMPL_ID = ['rotary', 'harrow', 'plow', 'disc', 'ditch', 'aze', 'ridge', 'flail', 'sub', 'mulch', 'caster', 'drill', 'manure'].includes(params.get('impl')) ? params.get('impl') : (SHIRO ? 'harrow' : 'rotary');
 const IS_HARROW = IMPL_ID === 'harrow';        // 翼を折りたたむウイングハローかどうか（従来は SHIRO で判定していた作業機側の性質）
-const PTO_IMPL = IMPL_ID === 'rotary' || IS_HARROW || IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster';   // PTO 駆動の作業機か（プラウ・ディスクハローは地表駆動で PTO は要らない）
-const IMPL = { rotary: 'ロータリー', harrow: 'ハロー', plow: 'プラウ', disc: 'ディスクハロー', ditch: '溝掘り機', aze: '畦塗り機', ridge: '畝立て機', flail: 'フレールモア', sub: 'サブソイラー', mulch: 'マルチャー', caster: 'ブロードキャスター', drill: 'シードドリル' }[IMPL_ID];   // 作業機の呼び名
+const PTO_IMPL = IMPL_ID === 'rotary' || IS_HARROW || IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster' || IMPL_ID === 'manure';   // マニュアスプレッダーの散布ビーターも PTO 駆動（サイクル81）   // PTO 駆動の作業機か（プラウ・ディスクハローは地表駆動で PTO は要らない）
+const IMPL = { rotary: 'ロータリー', harrow: 'ハロー', plow: 'プラウ', disc: 'ディスクハロー', ditch: '溝掘り機', aze: '畦塗り機', ridge: '畝立て機', flail: 'フレールモア', sub: 'サブソイラー', mulch: 'マルチャー', caster: 'ブロードキャスター', drill: 'シードドリル', manure: 'マニュアスプレッダー' }[IMPL_ID];   // 作業機の呼び名
 let IMPL_SPIN = [];                            // 付け替えた作業機の回る部品（プラウの深度輪・ディスクのギャング・溝掘り円盤・畦塗りローター）。爪軸の回転に合わせて回す
-const IMPL_SPIN_K = (IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster') ? 1 : 0.2;   // 回る速さ：PTOローター（溝掘り・畦塗り）は爪軸と同じ、地表駆動部品は ゆっくり 0.2 倍
+const IMPL_SPIN_K = (IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster' || IMPL_ID === 'manure') ? 1 : 0.2;   // 回る速さ：PTOローター（溝掘り・畦塗り）は爪軸と同じ、地表駆動部品は ゆっくり 0.2 倍
 const IMPL_SPIN_AXIS = IMPL_ID === 'caster' ? 'y' : 'x';   // 回る軸（サイクル79）：ブロードキャスターの散布円盤は縦軸（y）で回る。他の作業機は横軸（x）
-const IMPL_DZ = { caster: -2.35, drill: -1.8 }[IMPL_ID] || 0;   // 牽引式の後方ずらし（サイクル79・80）：牽引式は原点が車体中央寄りなので、ヒッチ先端がトラクター後部に合うよう本体を後方へずらす（車輪が後輪と重ならない。ドリルはヒッチ先端が後部+0.74mになる -1.8）
+const IMPL_DZ = { caster: -2.35, drill: -1.8, manure: -2.97 }[IMPL_ID] || 0;   // 牽引式の後方ずらし（サイクル79・80）：牽引式は原点が車体中央寄りなので、ヒッチ先端がトラクター後部に合うよう本体を後方へずらす（車輪が後輪と重ならない。ドリルはヒッチ先端が後部+0.74mになる -1.8。堆肥機も先端が後部+0.74mになる -2.97＝サイクル81）
 // 耕深（cm）：春の田起こしは 15cm くらい深く（根を張らせる）、秋起こしは 5cm くらい浅く藁と土をまぜる、代かきは浅く
 let DEPTH = { haru: 15, aki: 6, shirokaki: 8 }[season];        // Z・X で変えられる（右の操作盤の耕深ダイヤル）
 const DEPTH0 = DEPTH, DEPTH_RANGE = { haru: [8, 20], aki: [4, 14], shirokaki: [4, 12] }[season];
-const ROTARY_Z = { caster: -3.1, drill: -3.5 }[IMPL_ID] ?? -1.38, TILL_W = { rotary: 2.2, harrow: 3.4, plow: 1.35, disc: 2.4, ditch: 0.9, aze: 1.4, ridge: 1.9, flail: 1.9, sub: 1.9, mulch: 1.35, caster: 2.6, drill: 2.1 }[IMPL_ID];   // 耕うん幅は作業機で決まる（ハローは幅 3.4m のウイングハロー、溝掘りは溝の幅 0.9m）。作業の中心の後方距離も作業機で決まる（サイクル79：ブロードキャスターは散布の重心＝車輪〜円盤の中間 -3.1m、幅は散布幅 2.6m。サイクル80：シードドリルはコールター〜鎮圧輪の中間 -3.5m、幅は播種幅 2.1m）
+const ROTARY_Z = { caster: -3.1, drill: -3.5, manure: -4.6 }[IMPL_ID] ?? -1.38, TILL_W = { rotary: 2.2, harrow: 3.4, plow: 1.35, disc: 2.4, ditch: 0.9, aze: 1.4, ridge: 1.9, flail: 1.9, sub: 1.9, mulch: 1.35, caster: 2.6, drill: 2.1, manure: 2.2 }[IMPL_ID];   // 耕うん幅は作業機で決まる（ハローは幅 3.4m のウイングハロー、溝掘りは溝の幅 0.9m）。作業の中心の後方距離も作業機で決まる（サイクル79：ブロードキャスターは散布の重心＝車輪〜円盤の中間 -3.1m、幅は散布幅 2.6m。サイクル80：シードドリルはコールター〜鎮圧輪の中間 -3.5m、幅は播種幅 2.1m。サイクル81：マニュアスプレッダーは散布ビーターの位置 -4.6m、幅は散布幅 2.2m）
 const TILL_Y = SHIRO ? 0.045 : 0.035;
 
 const $ = id => document.getElementById(id);
@@ -693,7 +694,7 @@ scene.add(rig);
 const P = {};                                  // 動く部品
 let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikobaeGeo = null, hikobaeMat;
 
-const IMPL_FILE = { rotary: 'rotary_v2.glb', harrow: 'harrow_v2.glb', plow: 'plow.glb', disc: 'disc_harrow.glb', ditch: 'ditcher_v2.glb', aze: 'azenuri.glb', ridge: 'ridger.glb', flail: 'flail_mower.glb', sub: 'subsoiler.glb', mulch: 'mulcher.glb', caster: 'broadcaster.glb', drill: 'seed_drill.glb' }[IMPL_ID] || null;   // ロータリー／ハローは v2 の姿に差し替え（サイクル65）
+const IMPL_FILE = { rotary: 'rotary_v2.glb', harrow: 'harrow_v2.glb', plow: 'plow.glb', disc: 'disc_harrow.glb', ditch: 'ditcher_v2.glb', aze: 'azenuri.glb', ridge: 'ridger.glb', flail: 'flail_mower.glb', sub: 'subsoiler.glb', mulch: 'mulcher.glb', caster: 'broadcaster.glb', drill: 'seed_drill.glb', manure: 'manure_spreader.glb' }[IMPL_ID] || null;   // ロータリー／ハローは v2 の姿に差し替え（サイクル65）
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? load(IMPL_FILE, 'h') : null]).then(([t, f, h]) => {
   prog.t = prog.f = 1; showProg();
   if (h && (IS_HARROW || IMPL_ID === 'rotary')) {   // ハロー／ロータリーv2：Rotary ごと差しかえる（名前・階層・原点は差し替え元と同一）
@@ -701,13 +702,13 @@ Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? 
     old.parent.add(hr); old.parent.remove(old);
   } else if (h) {                                // プラウ／ディスクハロー／溝掘り／畦塗り：本体だけを「Rotary」ラッパーに入れて付けかえる（圃場プロップは付けない）
     const old = t.scene.getObjectByName('Rotary');
-    const body = h.scene.getObjectByName({ plow: 'PlowBody', disc: 'HarrowFrame', ditch: 'DitchFrame', aze: 'AzenuriFrame', ridge: 'RidgerBody', flail: 'MowerBody', sub: 'SubsoilerBody', mulch: 'MulcherFrame', caster: 'SpreaderBody', drill: 'DrillBody' }[IMPL_ID]);
-    if (IMPL_DZ) body.position.z += IMPL_DZ;   // 牽引式（ブロードキャスター・シードドリル）：ヒッチが合うよう本体を後方へずらす（サイクル79・80）
+    const body = h.scene.getObjectByName({ plow: 'PlowBody', disc: 'HarrowFrame', ditch: 'DitchFrame', aze: 'AzenuriFrame', ridge: 'RidgerBody', flail: 'MowerBody', sub: 'SubsoilerBody', mulch: 'MulcherFrame', caster: 'SpreaderBody', drill: 'DrillBody', manure: 'SpreaderBody' }[IMPL_ID]);   // 堆肥機の本体も SpreaderBody（キャスターと同名だが IMPL_ID で引くため衝突なし。サイクル81）
+    if (IMPL_DZ) body.position.z += IMPL_DZ;   // 牽引式（ブロードキャスター・シードドリル・マニュアスプレッダー）：ヒッチが合うよう本体を後方へずらす（サイクル79・80・81）
     const wrap = new THREE.Group(); wrap.name = 'Rotary';
     const rotor = new THREE.Object3D(); rotor.name = 'Rotor';   // 既存の P.Rotor 参照用（実物の回転部は IMPL_SPIN で回す）
     const flap = new THREE.Object3D(); flap.name = 'Flap';     // 既存の P.Flap 参照用
     wrap.add(body, rotor, flap);
-    IMPL_SPIN = { plow: ['DepthWheel'], disc: ['FrontGang', 'RearGang'], ditch: ['DiggerDisc'], aze: ['FormerRotor'], ridge: ['ShapingRoller'], flail: ['FlailRotor'], sub: ['PackerRoller'], mulch: ['FilmRoll', 'PressRoller'], caster: ['SpinnerDisc'], drill: ['PressWheelUnit'] }[IMPL_ID].map(n => body.getObjectByName(n));
+    IMPL_SPIN = { plow: ['DepthWheel'], disc: ['FrontGang', 'RearGang'], ditch: ['DiggerDisc'], aze: ['FormerRotor'], ridge: ['ShapingRoller'], flail: ['FlailRotor'], sub: ['PackerRoller'], mulch: ['FilmRoll', 'PressRoller'], caster: ['SpinnerDisc'], drill: ['PressWheelUnit'], manure: ['BeaterUnit'] }[IMPL_ID].map(n => body.getObjectByName(n));
     old.parent.add(wrap); old.parent.remove(old);
   }
   NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形。代かきはハロー）
@@ -2721,7 +2722,7 @@ const YAMA = { on: false, n: 0,
 // T6 作業機ごとの跡（モーション磨き総仕上げ）: 作業機ごとに、耕した跡の断面（模様）と土の粗さが変わる。形と粗さだけ・文字なし。
 // 物差し＝断面の形が作業機で分かれること（ループ側 scripts/sim_t6_pattern.js）と、T6.measure() で幅とカバー率・重なり率・残し率がいつでも測れること（自動計測の固定）。
 const T6 = {
-  roughK: { rotary: 1, harrow: 0.6, plow: 1.7, disc: 1.25, ditch: 1, aze: 0.3, ridge: 0.8, flail: 0.5, sub: 0.9, mulch: 0.15, caster: 0.1, drill: 0.4 }[IMPL_ID],   // ブロードキャスターは粒をまくだけで土を乱さない（サイクル79）。シードドリルは浅い溝で軽く乱す（サイクル80）
+  roughK: { rotary: 1, harrow: 0.6, plow: 1.7, disc: 1.25, ditch: 1, aze: 0.3, ridge: 0.8, flail: 0.5, sub: 0.9, mulch: 0.15, caster: 0.1, drill: 0.4, manure: 0.6 }[IMPL_ID],   // ブロードキャスターは粒をまくだけで土を乱さない（サイクル79）。シードドリルは浅い溝で軽く乱す（サイクル80）。マニュアスプレッダーは堆肥の小塊で軽く乱す（サイクル81）
   h: new Float32Array((NX + 1) * (NZ + 1)), gx: new Float32Array((NX + 1) * (NZ + 1)), gz: new Float32Array((NX + 1) * (NZ + 1)),
   profile(lx) {
     switch (IMPL_ID) {

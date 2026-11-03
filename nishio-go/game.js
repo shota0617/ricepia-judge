@@ -334,6 +334,18 @@ function blockTower(list) {
     .map(x => ({ id: x.id, rgb: AREA_RGB[x.id] || [227, 164, 43], blocks: x.done <= 0 ? 0 : x.done >= x.total ? 10 : Math.min(9, Math.max(1, Math.round(x.done / x.total * 10))), done: x.done, total: x.total }));
   return { cols, max: 10, done: cols.reduce((a, x) => a + x.done, 0), total: cols.reduce((a, x) => a + x.total, 0) };
 }
+// 大きなすごろくボード（人生ゲーム：コマの位置がそのまま今の到達点）。areaProgress の結果 [{id,done,total}] から、地区ごと5マス（1マス＝20％）を出す。cells は蛇行（1行目は左→右、2行目は右→左…）の表示順、step は道すじの順、pos はコマが立つ step（新しい集計・セーブ項目なし）
+function sugorokuBoard(list) {
+  const n = v => Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0, W = 5;
+  const cols = (Array.isArray(list) ? list : []).map(x => { const total = n(x && x.total); return { id: x && x.id, total, done: Math.min(n(x && x.done), total) }; }).filter(x => x.total > 0)
+    .map(x => ({ id: x.id, rgb: AREA_RGB[x.id] || [227, 164, 43], filled: x.done <= 0 ? 0 : x.done >= x.total ? W : Math.min(W - 1, Math.max(1, Math.floor(x.done / x.total * W))), done: x.done, total: x.total }));
+  const path = [];
+  cols.forEach(c => { for (let i = 0; i < W; i++) path.push({ id: c.id, rgb: c.rgb, on: i < c.filled, step: path.length }); });
+  const first = path.findIndex(c => !c.on), pos = path.length ? (first < 0 ? path.length - 1 : first) : -1;
+  const cells = [];
+  for (let r = 0; r * W < path.length; r++) { const row = path.slice(r * W, r * W + W); cells.push(...(r % 2 ? row.reverse() : row)); }
+  return { cols, cells, pos, done: cols.reduce((a, x) => a + x.done, 0), total: cols.reduce((a, x) => a + x.total, 0) };
+}
 const areaZone = t => { const sp = t && t.id && spots.find(x => x.id === t.id); return (sp && sp.area) || (t && Number.isFinite(t.lat) && spots.length ? areaNear(t) : '') || ''; };
 // 行き先の距離順チップ（P6）：主行き先と ほかの 候補を 近い 順に。表示だけで、行き先の 決め方は かえない。alt：alts の 何番目か（主行き先は -1）
 function guideChips(from, g, alts, zoneOf) {
@@ -3457,6 +3469,7 @@ function renderLog() {
   ringEl.setAttribute('aria-label', `全地区のめぐり具合 ${ring.done}/${ring.total}（${ring.pct}%）`);
 
   renderBlockTower();
+  renderSugoroku();
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -3470,6 +3483,14 @@ function renderBlockTower() {
   el.hidden = !tower.total;
   el.innerHTML = tower.cols.map(c => `<div class="bt-col">${Array.from({ length: tower.max }, (_, i) => { const lv = tower.max - 1 - i; return `<span class="bt-cell"${lv < c.blocks ? ` style="background:rgb(${c.rgb.join(',')})"` : ''}></span>`; }).join('')}</div>`).join('');
   el.setAttribute('aria-label', `地区ごとの積み上がり ${tower.done}/${tower.total}（${tower.cols.map(c => { const a = areas.find(x => x.id === c.id); return `${a ? a.name : c.id} ${c.done}/${c.total}`; }).join('、')}）`);
+}
+
+function renderSugoroku() {
+  const b = sugorokuBoard([...TINT_AREAS].map(id => ({ id, ...areaProgress(id) })));
+  const el = $('sugoroku');
+  el.hidden = !b.total;
+  el.innerHTML = b.cells.map(c => `<span class="sg-cell"${c.on ? ` style="background:rgb(${c.rgb.join(',')})"` : ''}>${c.step === b.pos ? '🍚' : ''}</span>`).join('');
+  el.setAttribute('aria-label', `すごろく ${b.done}/${b.total}（${b.cols.map(c => { const a = areas.find(x => x.id === c.id); return `${a ? a.name : c.id} ${c.filled}/5`; }).join('、')}）`);
 }
 
 // 地区の名物の絵（tools/blender/pixel-art.py で Blender から作った 48×48。絵のない地区は ''）
@@ -4704,7 +4725,7 @@ window.nishioGo = {
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
-  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, blockTower, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
+  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, blockTower, sugorokuBoard, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,

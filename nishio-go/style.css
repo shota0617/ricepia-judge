@@ -1003,6 +1003,10 @@ body.px .guide .treasure{color:#ffe680}
 .block-tower{display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:0 auto 12px}
 .block-tower[hidden]{display:none}
 .bt-col{display:flex;flex-direction:column;gap:3px}
+.sg-title{margin:4px 0 6px;text-align:center;font-size:14px}
+.sugoroku{display:grid;grid-template-columns:repeat(5,min(52px,17vw));gap:4px;justify-content:center;margin:0 auto 12px}
+.sugoroku[hidden]{display:none}
+.sg-cell{min-width:44px;aspect-ratio:1;border-radius:6px;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1}
 .bt-cell{width:min(52px,15vw);height:20px;border-radius:4px;background:rgba(0,0,0,.08)}
 .explore-hole{width:62%;height:62%;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .explore-hole b{font-size:34px;font-weight:700}

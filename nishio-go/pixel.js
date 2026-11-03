@@ -7768,7 +7768,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -10897,6 +10897,32 @@ function drawMzEnergyAura(ox, oy, T, now) {   // 歩いて 貯まるほど、か
     const a = now / 600 + i * Math.PI * 2 / n;
     ctx.fillStyle = cols[i % 3];
     ctx.beginPath(); ctx.arc(X + Math.cos(a) * R, Y + Math.sin(a) * R, Math.max(1.5, T * 0.09), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+function mzEnergyStars(ratio) {   // 足あとの 星屑（Walkr）：さんぽエネルギーの 貯まり具合 → { n：星を 描く 足あとの 最大数, a：星の こさの 基準 }。0.25 未満・数でない・有限でない は { n:0, a:0 }
+  if (typeof ratio !== 'number' || !Number.isFinite(ratio) || ratio < 0.25) return { n: 0, a: 0 };
+  const r = Math.min(1, ratio);
+  if (r < 0.5) return { n: 4, a: 0.35 };
+  if (r < 0.75) return { n: 8, a: 0.6 };
+  return { n: 12, a: 0.9 };
+}
+function drawMzEnergyStars(ox, oy, T, now) {   // エネルギーが 貯まるほど、最近 歩いた 足あと（新しい 順）に 金の 星屑が きらめく（文字なし）
+  if (rec) return;
+  const w = mzEnergyStars(mzEnergyCharge());
+  if (w.n === 0 || !mzTrail.size) return;
+  const cells = [...mzTrail.values()].slice(-w.n).reverse(), S = MZ_K * T, R = S * 0.30;
+  ctx.save();
+  for (let i = 0; i < cells.length; i++) {
+    const pn = mzOn((cells[i][0] + 0.5) * MZ_K, (cells[i][1] + 0.5) * MZ_K);
+    if (!pn) continue;
+    const X = ox + pn[0] * T, Y = oy + pn[1] * T;
+    const tw = calmMotion ? 0.8 : Math.max(0.3, Math.min(1, 0.55 + 0.45 * Math.sin(now / 300 + i * 1.7)));
+    ctx.fillStyle = 'rgba(255, 210, 90, ' + (w.a * tw) + ')';
+    ctx.beginPath();
+    ctx.moveTo(X, Y - R); ctx.lineTo(X + R * 0.28, Y - R * 0.28); ctx.lineTo(X + R, Y); ctx.lineTo(X + R * 0.28, Y + R * 0.28);
+    ctx.lineTo(X, Y + R); ctx.lineTo(X - R * 0.28, Y + R * 0.28); ctx.lineTo(X - R, Y); ctx.lineTo(X - R * 0.28, Y - R * 0.28);
+    ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 }

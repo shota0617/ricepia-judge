@@ -4,6 +4,8 @@
 (function (root) {
   const MAX_CARDS = 400;   // 名所の 数より ずっと 多い。こわれて ふくらんだ 記録を 止める 上限
   const MAX_SAY = 60;
+  // カード文に 入れない 表現の 検査リスト（エスケープ表記）
+  const BANNED = ['\u307c\u304f', '\u3060\u306b', '\u0032\u0030\u0025'];
   const DAY = /^\d{4}-\d{2}-\d{2}$/;
   const isId = k => typeof k === 'string' && k.length > 0 && k.length <= 80 && k !== '__proto__';
   // 記録を 直す：日づけが 読めない／ひとことが 文字でない 札は すてる（ひとことが 長すぎれば 切る）
@@ -23,15 +25,22 @@
   function say(name, desc) {
     const n = String(name || '').replace(/（.*?）/g, '');
     const f = String(desc || '').split(/[。、]/)[0].trim();
-    const t = f && f.length <= 28 ? `${n}に 着いたに。${f}んだってぇ。ええとこだら？` : `${n}に 着いたに。ええとこだら？`;
+    const t = f && f.length <= 28 && !BANNED.some(w => f.includes(w)) ? `${n}に 着いたに。${f}んだってぇ。ええとこだら？` : `${n}に 着いたに。ええとこだら？`;
     return t.slice(0, MAX_SAY);
   }
   // 名所 id で 発行：まだ なければ 1枚 足す（fresh）。あれば そのまま（上書きしない）
   function issue(st, id, day, text) {
     const s = clean(st);
     if (!isId(id) || !DAY.test(String(day)) || Object.prototype.hasOwnProperty.call(s, id)) return { st: s, fresh: false };
+    if (Object.keys(s).length >= MAX_CARDS) return { st: s, fresh: false };   // 上限に とどいていたら 足さない（401枚目を 新規あつかいにしない）
     s[id] = { day, say: String(text || '').slice(0, MAX_SAY) };
     return { st: s, fresh: true };
   }
-  root.NISHIO_POSTCARD = { clean, say, issue, MAX_CARDS, MAX_SAY };
+  // 全書の 進み具合：持っている 数と 全部の 数から、ぱーせんと と のこりを 返す
+  function progress(have, total) {
+    const num = v => (Number.isFinite(v) && v > 0 ? Math.floor(v) : 0);
+    const t = num(total), h = Math.min(num(have), t);
+    return { have: h, total: t, pct: t > 0 ? Math.floor(100 * h / t) : 0, left: t - h };
+  }
+  root.NISHIO_POSTCARD = { clean, say, issue, progress, MAX_CARDS, MAX_SAY };
 })(typeof window !== 'undefined' ? window : globalThis);

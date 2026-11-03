@@ -3344,10 +3344,38 @@ function renderPhotoQuiz() {
     renderPhotoQuiz();
   }));
 }
+// 14日スタンプ：さんぽした日を 大きな マスに。日の 集合は nsg_days に 今日を 足して 保存（S のセーブ・ポイントは かえない）
+function renderDayStamps() {
+  const box = $('dsBox');
+  if (!box) return;
+  box.hidden = true;
+  const DS = window.nishioDayStamp;
+  if (!DS) return;
+  const today = ymd(), set = new Set();
+  const add = d => { if (typeof d === 'string' && DS.addDays(d, 0)) set.add(d); };
+  const saved = store.get('nsg_days', null);
+  if (Array.isArray(saved)) saved.forEach(add);
+  (Array.isArray(S.log) ? S.log : []).forEach(e => {
+    if (!e) return;
+    if (e.date) add(e.date);
+    else if (Number.isFinite(Number(e.t)) && Number(e.t) > 0) add(ymd(new Date(Number(e.t))));
+  });
+  if (S.day && S.day.date && ((S.day.walked || 0) > 0 || (S.day.checkins || 0) > 0 || (S.day.spots || []).length > 0 || (S.day.done || []).length > 0)) add(S.day.date);   // きろくを 開いただけでは スタンプしない（歩く・チェックイン等の 活動があった日だけ）
+  if (S.prevDay) add(S.prevDay.date);
+  if (S.streak) add(S.streak.last);
+  const days = [...set].sort().slice(-60);
+  store.set('nsg_days', days);
+  const cells = DS.grid(days, today, 14);
+  if (!cells.length) return;
+  const md = ds => ds.slice(5).replace('-', '/');
+  box.innerHTML = `<h3>📅 ${md(cells[0].date)}〜${md(cells[cells.length - 1].date)}</h3><div class="ds-grid">${cells.map(c => `<span class="ds-cell${c.on ? ' on' : ''}${c.today ? ' today' : ''}" aria-label="${esc(c.date)}${c.on ? ' さんぽした日' : ''}${c.today ? ' 今日' : ''}">${c.day}</span>`).join('')}</div>`;
+  box.hidden = false;
+}
 function renderLog() {
   renderCourse();
   renderPostcards();
   renderPhotoQuiz();
+  renderDayStamps();
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
   $('jumpBtn').disabled = !jOk;
   $('jumpNote').textContent = jOk ? 'コインを集めて西尾城の旗をめざそう（ごほうびは1日1回）' : '名所（注目スポット）でチェックインすると、その日あそべます';

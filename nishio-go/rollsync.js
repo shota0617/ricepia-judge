@@ -20,5 +20,20 @@
     const f = Math.floor(turnsFor(dist, scale) * 8) % 8;
     return f < 0 ? f + 8 : f;
   }
-  root.nishioRollSync = { R, advance, turnsFor, frameFor };
+  // 方向転換（M3）：向きの変わり方は TURN_PER_SEC rad/秒まで。速さは変えず、向きだけを上限の角度まで回す（弧を描いて曲がる）。
+  const TURN_PER_SEC = 5.5;
+  function limitTurn(vx, vy, pvx, pvy, maxRad) {
+    try {
+      const x = num(vx), y = num(vy), px = num(pvx), py = num(pvy);
+      const sp = Math.hypot(x, y), psp = Math.hypot(px, py);
+      if (sp < 0.05 || psp < 0.05 || typeof maxRad !== 'number' || !isFinite(maxRad) || maxRad < 0) return { vx: x, vy: y };
+      const cross = px * y - py * x, dot = px * x + py * y;
+      const diff = Math.atan2(cross, dot);   // 前の向き→新しい向きの符号つき角度（最短弧）
+      if (Math.abs(diff) <= maxRad) return { vx: x, vy: y };
+      const turn = diff === -Math.PI || diff === Math.PI ? maxRad : Math.sign(diff) * maxRad;   // ちょうど反対は + 側へ（決定的に）
+      const target = Math.atan2(py, px) + turn, c = Math.cos(target), s = Math.sin(target);
+      return { vx: sp * c, vy: sp * s };
+    } catch (e) { return { vx: 0, vy: 0 }; }
+  }
+  root.nishioRollSync = { R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn };
 })(typeof window !== 'undefined' ? window : globalThis);

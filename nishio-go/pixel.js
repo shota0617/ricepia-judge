@@ -7882,10 +7882,10 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) drawTile(tx, ty, ox + tx * T, oy + ty * T, T, f, now);
 
-  drawRollPath(ox, oy, T, now);   // コロコロの跡（タイルの上・スポットや主人公の下）
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawRollPath(ox, oy, T, now); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (!mazeOn()) drawRollPath(ox, oy, T, now);   // コロコロの跡（迷路のときは迷路ブロックの中で壁の後・小物ともやの前に描く。スポット・主人公より下）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
 
@@ -8386,6 +8386,21 @@ function worldCamStart() {
 function drawRollPath(ox, oy, T, now) {
   const RT = window.nishioRollTrail;
   if (!RT || fpsMeter.slow || !rollPath.list.length) return;
+  const last = rollPath.list[rollPath.list.length - 1];
+  if (RT.segments) {   // 点を補間したつながった柔らかい帯（相手の区間ごとに1回で描き継ぎ目の重なりを避ける。古い端ほど薄い）
+    ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = T * 0.20;
+    let g = null, sum = 0, cnt = 0;
+    const flush = () => { if (cnt && sum > 0) { ctx.strokeStyle = 'rgba(255,246,220,' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
+    for (const s of RT.segments(rollPath.list, now)) {
+      if (s.g !== g) { flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; sum = 0; cnt = 0; }
+      ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); cnt++;
+    }
+    flush();
+    const a = RT.alphaFor(now - last.t);
+    if (a > 0) { ctx.fillStyle = 'rgba(255,246,220,' + a.toFixed(3) + ')'; ctx.beginPath(); ctx.arc(ox + last.x * T, oy + last.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    return;
+  }
   for (const p of rollPath.list) {
     const a = RT.alphaFor(now - p.t);
     if (a <= 0) continue;

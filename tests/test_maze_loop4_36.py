@@ -87,9 +87,11 @@ class Wiring(unittest.TestCase):
     def test_draw_after_tiles(self):
         loop = PIXEL.index('drawTile(tx, ty, ox + tx * T')
         call = PIXEL.index('drawRollPath(ox, oy, T, now);')
-        corners = PIXEL.index('drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけ')
-        self.assertLess(loop, call)
-        self.assertLess(call, corners)
+        maze = PIXEL.index('if (mazeOn()) { drawMzFogTint(')
+        traffic = PIXEL.index('updateTraffic(dt, now, tx0, ty0, tx1, ty1);')
+        self.assertLess(loop, maze)
+        self.assertLess(maze, call)
+        self.assertLess(call, traffic)
 
     def test_slow_skips(self):
         m = re.search(r'function drawRollPath\(.*?\n\}\n', PIXEL, re.S)

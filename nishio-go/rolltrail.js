@@ -29,5 +29,35 @@
       return Math.min(ALPHA, Math.max(0, ALPHA * (1 - ageMs / LIFE_MS)));
     } catch (e) { return 0; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, push, alive, alphaFor };
+  // 点と点を補間してつながった帯にする小セグメント列（最古→最新）。古い端ほど薄くして、最古が落ちても急に消えて見えない
+  const STEP = 0.28;
+  function segments(list, now) {
+    try {
+      if (!Array.isArray(list) || !num(now)) return [];
+      const pts = list.filter(p => p && num(p.x) && num(p.y) && num(p.t));
+      if (pts.length < 2) return [];
+      const out = [];
+      for (let i = 0; i + 1 < pts.length; i++) {
+        const p = pts[i], q = pts[i + 1];
+        const d = Math.hypot(q.x - p.x, q.y - p.y);
+        if (!(d <= 3)) continue;   // ひとっとび（ワープ・位置の復元）は来た道ではないのでつながない
+        const n = Math.max(1, Math.ceil(d / STEP - 1e-9));
+        for (let k = 0; k < n; k++) {
+          const u0 = k / n, u1 = (k + 1) / n;
+          out.push({
+            x1: p.x + (q.x - p.x) * u0, y1: p.y + (q.y - p.y) * u0,
+            x2: k + 1 === n ? q.x : p.x + (q.x - p.x) * u1, y2: k + 1 === n ? q.y : p.y + (q.y - p.y) * u1,
+            t: p.t + (q.t - p.t) * (u0 + u1) / 2, g: i
+          });
+        }
+      }
+      const m = out.length;
+      return out.map((s, i) => {
+        const frac = m > 1 ? i / (m - 1) : 1;
+        const a = Math.min(ALPHA, Math.max(0, alphaFor(now - s.t) * (0.45 + 0.55 * frac)));
+        return { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, a, g: s.g };
+      });
+    } catch (e) { return []; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, push, alive, alphaFor, segments };
 })(typeof window !== 'undefined' ? window : globalThis);

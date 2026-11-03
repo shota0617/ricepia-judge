@@ -3313,9 +3313,41 @@ function renderKoroRec() {
   box.hidden = !parts.length;
   box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>${c >= 3 ? '<button type="button" class="btn mini" data-share-open="koro">📣 シェア</button>' : ''}` : '';   // コンボの ベストを あとからでも シェア（バイラルループの 入口。share.js の 'koro'）
 }
+// 絵あて（どこでしょう）：名所のドット絵を大きく出し、名前3つから1つ。その日の回答は nsg_pq に（S のセーブは かえない・ポイントなし）
+function renderPhotoQuiz() {
+  const box = $('pqBox');
+  if (!box) return;
+  box.hidden = true;
+  const PQ = window.nishioPhotoQuiz;
+  if (!PQ) return;
+  const list = spots.filter(s => s.featured && s.name).map(s => ({ id: s.id, name: s.name, area: s.area || '' })).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);   // 並びが かわっても その日の 問題は 同じ
+  const day = ymd(), q = PQ.pick(list, day);
+  if (!q) return;
+  const byId = id => spots.find(x => x.id === id);
+  const art = spotThumb(byId(q.id)).replace('class="gthumb"', 'class="pq-art"').replace(/width="28" height="28"/, 'width="144" height="144"');
+  if (!art) return;
+  const pqCount = v => { try { const n = Number(v); return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0; } catch (e) { return 0; } };   // こわれた 保存値でも 止まらない
+  const rec = store.get('nsg_pq', null) || {};
+  const n = pqCount(rec.n);
+  const done = rec.day === day && rec.done === true && rec.qid === q.id;   // 問題が かわったら 回答ずみには しない
+  const res = ok => `<p class="pq-res">${ok ? '⭕' : `❌<small>${esc(byId(q.id).name)}</small>`}</p>`;
+  box.innerHTML = `<h3>📸 どこでしょう</h3>${art}`
+    + q.choices.map(id => `<button type="button" class="btn pq-choice" data-id="${esc(id)}"${done ? ' disabled' : ''}>${esc(byId(id).name)}</button>`).join('')
+    + (done ? res(rec.ok === true) : '') + (n ? `<p class="pq-n">🎯 ${n}</p>` : '');
+  box.hidden = false;
+  if (done) return;
+  box.querySelectorAll('.pq-choice').forEach(b => b.addEventListener('click', () => {
+    const cur = store.get('nsg_pq', null) || {};
+    if (cur.day === day && cur.done === true && cur.qid === q.id) return renderPhotoQuiz();
+    const ok = PQ.judge(q, b.dataset.id);
+    store.set('nsg_pq', { day, done: true, ok, qid: q.id, n: pqCount(cur.n) + (ok ? 1 : 0) });
+    renderPhotoQuiz();
+  }));
+}
 function renderLog() {
   renderCourse();
   renderPostcards();
+  renderPhotoQuiz();
   const jOk = featuredToday();   // ミニゲームは、きょう名所でチェックインしたら
   $('jumpBtn').disabled = !jOk;
   $('jumpNote').textContent = jOk ? 'コインを集めて西尾城の旗をめざそう（ごほうびは1日1回）' : '名所（注目スポット）でチェックインすると、その日あそべます';

@@ -89,7 +89,7 @@ class Diff(unittest.TestCase):
 
     def test_changed_files(self):
         for f in git("diff", "--name-only", "origin/main").split():
-            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go.html") or f.startswith("tests/"), f)
+            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go.html") or f.startswith("tests/"), f)
 
 
 if __name__ == "__main__":

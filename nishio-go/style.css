@@ -1005,3 +1005,13 @@ body.px .guide .treasure{color:#ffe680}
 .explore-hole{width:62%;height:62%;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .explore-hole b{font-size:34px;font-weight:700}
 .explore-hole small{font-size:11px;color:#777}
+
+/* きろく画面の 絵あて（どこでしょう）：絵が 主役、答えは 大きな ボタン */
+.pq-card[hidden]{display:none}
+.pq-card{text-align:center}
+.pq-card h3{margin:0 0 6px;font-size:16px}
+img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-rendering:pixelated;border-radius:8px;background:rgba(0,0,0,.06)}
+.pq-choice{display:block;width:100%;padding:14px 12px;margin:8px 0 0;font-size:17px;font-weight:700}
+.pq-res{font-size:32px;margin:6px 0 0}
+.pq-res small{display:block;font-size:17px;font-weight:700}
+.pq-n{margin:4px 0 0;font-size:17px;font-weight:700}

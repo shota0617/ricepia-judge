@@ -829,14 +829,14 @@ function draw(now) {
   if (g.fall > 0) {   // おちていく：くるくる 小さく
     const k = g.fall / 0.8, [fx, fy] = g.fallAt;
     if (g.fallWater) { x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = Math.max(1, T / 14); x.beginPath(); x.arc(fx * T, fy * T, T * (0.5 - k * 0.3), 0, Math.PI * 2); x.stroke(); }
-    if (k > 0.3) nishioPixel.drawRice(x, fx * T, fy * T, g.th + (1 - k) * 8, 0, 'dizzy', 0, '', u * (k - 0.3) / 0.7);
+    if (k > 0.3) nishioPixel.drawRice(x, fx * T, fy * T, g.th + (1 - k) * 8, 0, 'smile', 0, '', u * (k - 0.3) / 0.7);
     return;
   }
   drawCritters(x, g, T, now);   // 生け垣の 上の 生きもの（お米の 下に）
   const hp = g.hop > 0 ? Math.sin(Math.min(1, (g.hopT || 0) / 0.32) * Math.PI) * g.hop : 0;   // とびはねの 高さ（マス）
   const X = g.x * T, Y = (g.y - hp) * T;
   x.fillStyle = `rgba(0,0,0,${(0.28 - hp * 0.3).toFixed(3)})`; x.beginPath(); x.ellipse(X, g.y * T + T * 0.3, T * 0.26 * (1 - hp * 0.6), T * 0.09 * (1 - hp * 0.6), 0, 0, Math.PI * 2); x.fill();   // かげは 地面に のこって 小さく うすく
-  const mood = g.happy > 0 ? 'happy' : g.ouch > 0 ? 'ouch' : Math.hypot(g.vx, g.vy) > 4 ? 'excited' : 'smile';
+  const mood = 'smile';
   nishioPixel.drawRice(x, X, Y, g.th % (Math.PI * 2), g.sq, mood, 0, '', u);
   if (g.cd > 0) {   // 3・2・1 と「スマホを まっすぐ」
     const W = b.tw * T, H = b.th * T, n = Math.ceil(g.cd / (CD / 3)), big = Math.round(T * 3.2);
@@ -871,13 +871,13 @@ document.addEventListener('DOMContentLoaded', () => {
     wantDaily = want === 'daily'; wantOpen = true;
     const intro = $('intro'), t = b && b.querySelector('.mp-t');
     if (intro && !intro.hidden && b) { if (t && wantDaily) t.textContent = '☀️ きょうの めいろ に ちょうせん'; }   // はじめての人：いちばん上の ボタンで（iPhone の 傾きの 許可は タップの その場で）
-    else setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
+    else if (root.nishioGo && root.nishioGo.started) setTimeout(() => open(undefined, wantDaily), 400);   // もう 遊んでいる人：すぐ ひらく（傾きの 許可は 盤を さわったときに 聞く）
   }
   // いきなり ころころ（運営者の声「歩いて遊ぶは削除。いきなりころころゲームスタート」2026-10-29）：はじめの 画面で ボタンを 待たず、開いたら すぐ 地図の めいろで 転がる
   // あそびかたは せっていから。iPhone の 傾きの 許可は、最初に地図をタップしたときに聞く（pixel.js）。nsg_noauto：プレイテストの 台本だけ はじめの 画面から
   let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
-  const intro0 = $('intro');
-  if (b && intro0 && !intro0.hidden && !noAuto) b.click();
+  const fresh = !(root.nishioGo && root.nishioGo.started);   // はじめての人：はじめの画面は 隠れたまま すぐ 始める
+  if (b && fresh && !noAuto) b.click();
   // 「あそぶ」ボタン廃止（運営者の声 2026-10-31）：開始を止める窓（playReady）は出さない。iPhone の傾き許可は、最初に地図をタップしたときに聞く（pixel.js の地図タップ）
   const m = $('pxMeiro');
   if (m) m.addEventListener('click', e => { root.nishioPixel.meiroApi.tiltAsk(e); open(); });

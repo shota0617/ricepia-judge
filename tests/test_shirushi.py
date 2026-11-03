@@ -32,7 +32,7 @@ class ShirushiTests(unittest.TestCase):
     def test_hooked_into_game(self):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_SHIRUSHI', px)
-        self.assertIn("shirushiStep(hx, by, u, now, mood === 'sleepy');", px)
+        self.assertIn("shirushiStep(hx, by, u, now, asleep);", px)
         self.assertIn('S.add(s.list, a)', px)
         self.assertIn('shirushi.js', (ROOT / 'nishio-go.html').read_text())
 

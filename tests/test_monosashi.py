@@ -25,7 +25,7 @@ class MonosashiTests(unittest.TestCase):
     def test_hooked_into_game(self):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_MONOSASHI', px)
-        self.assertIn("monosashiStep(hx, by, u, now, mood === 'sleepy');", px)
+        self.assertIn("monosashiStep(hx, by, u, now, asleep);", px)
         self.assertIn('dd * TILE_M', px)
         self.assertIn('西尾', px[px.index('function monosashiStep'):px.index('function monosashiStep') + 900])   # 西尾市の 中だけ
         self.assertIn('monosashi.js', (ROOT / 'nishio-go.html').read_text())

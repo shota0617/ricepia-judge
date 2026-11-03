@@ -8110,12 +8110,19 @@ function step(dt) {
   }
   let newCells = 0;
   if (working && S.v > 0.05) {
-    const p = wheelPoints(S.x, S.z, S.yaw);
-    for (let lx = -TILL_W / 2 + 0.05; lx <= TILL_W / 2 - 0.05 + 1e-6; lx += 0.1) for (const lz of [ROTARY_Z - 0.22, ROTARY_Z, ROTARY_Z + 0.18]) {
+    // T1 耕し跡（モーション磨き）: 見る点を密に（横 0.05m 間隔・前後 6 列）して、通ったのに色が変わらない ます目をへらす。
+    // 物差し＝軌跡と色変化セルの一致率: 直進 98.1%→100%、半径 2m の旋回 91.5%→98.2%（ループ側 scripts/sim_t1_v3.js で計測）。
+    // tillCell は ます目ごとに 1 回だけ（その ます目のまん中にいちばん近い点の lx で。傾き KATA の高さも その lx で決まる）
+    const p = wheelPoints(S.x, S.z, S.yaw), best = new Map();
+    for (let lx = -TILL_W / 2 + 0.025; lx <= TILL_W / 2 - 0.025 + 1e-6; lx += 0.05) for (let lz = ROTARY_Z - 0.25; lz <= ROTARY_Z + 0.25 + 1e-6; lz += 0.1) {
       const [wx, wz] = p.w(lx, lz);
       if (CLAW.skip(lx) || HERI.skip(lx)) continue;   // 取れた爪・すり減った はしの爪の所は 耕せない（すじが残る）
-      if (Math.abs(wx) <= HX && Math.abs(wz) <= HZ) newCells += tillCell(Math.floor((wx + HX) / CELL), Math.floor((wz + HZ) / CELL), lx) || 0;
+      if (Math.abs(wx) > HX || Math.abs(wz) > HZ) continue;
+      const ci = Math.floor((wx + HX) / CELL), cj = Math.floor((wz + HZ) / CELL), cc = ci * NZ + cj;
+      const dx = wx - (-HX + (ci + 0.5) * CELL), dz = wz - (-HZ + (cj + 0.5) * CELL), d2 = dx * dx + dz * dz, b = best.get(cc);
+      if (!b || d2 < b.d2) best.set(cc, { d2, ci, cj, lx });
     }
+    for (const b of best.values()) newCells += tillCell(b.ci, b.cj, b.lx) || 0;
   }
   // 逆転のまま まだ耕していない硬い所へ入った：とても重い（盛り上がった所の土寄せだけに使う）
   let hard = 0;                                   // ロータリーのすぐ前で、まだ耕していない所の割合

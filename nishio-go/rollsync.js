@@ -86,6 +86,28 @@
       return t ? { x: t.x, y: t.y, key: t.key, dist: t.dist, guide: false } : null;
     } catch (e) { return null; }
   }
+  // 届かなかった 名所は その回のあいだ 覚える（第4弾サイクル33：ABZÛ の 流れ。行き止まりでも 止まらず 次へ。skip を 解放しても fails は 残る）
+  function idleNoteFail(fails, key) {
+    try {
+      const a = Array.isArray(fails) ? fails.filter(k => typeof k === 'string') : [];
+      if (typeof key !== 'string') return a;
+      if (a.indexOf(key) < 0) a.push(key);
+      return a;   // 上限で 古いものを 落とさない：落とすと 一巡の 再開で 届かない 名所が 復活する（Codexレビュー指摘）
+    } catch (e) { return []; }
+  }
+  function idleExclude(skip, fails) {
+    try {
+      const out = [];
+      for (const list of [skip, fails]) {
+        if (!Array.isArray(list)) continue;
+        for (const k of list) if (typeof k === 'string' && out.indexOf(k) < 0) out.push(k);
+      }
+      return out;
+    } catch (e) { return []; }
+  }
+  function idleFailed(fails, key) {
+    try { return Array.isArray(fails) && fails.indexOf(key) >= 0; } catch (e) { return false; }
+  }
   function idleForce(mx, my, tx, ty, vx, vy) {
     try {
       if (![mx, my, tx, ty].every(fin)) return { fx: 0, fy: 0, dist: 0, arrived: true };
@@ -129,5 +151,5 @@
     }
     return v;
   }
-  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

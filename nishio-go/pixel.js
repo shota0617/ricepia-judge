@@ -7856,17 +7856,22 @@ function frame(now) {
   const spots = G.spots;
   const pois = visiblePois(tx0, ty0, tx1, ty1), labelBoxes = [];
   // 実在の店の名前札：主人公の近くの 3枚まで（運営者の声「西尾らしさ」2026-11-03）。めいろ中は出さない。モジュールが無ければ 札なし //c17
-  const SM = window.nishioShopMap, tagged = new Set(); //c17
+  const SM = window.nishioShopMap, tagged = new Map(); //c17
   if (SM && !mazeOn()) { //c17
     const mt = G.me ? toTile(G.me.lat, G.me.lng) : { x: cam.x, y: cam.y }; //c17
-    for (const p of SM.pickLabels(pois, { me: mt, goalName: G.guide && G.guide.name, limit: 3 })) tagged.add(p); //c17
+    const picked = SM.pickLabels(pois, { me: mt, goalName: G.guide && G.guide.name, limit: 3 }); //c17 c31
+    const levels = SM.layoutLevels ? SM.layoutLevels(picked) : []; //c17 c31
+    picked.forEach((p, i) => tagged.set(p, levels[i] || 0)); //c17 c31
   } //c17
   for (const p of pois) {
     const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（読めるまではいつもの絵）
     const img = (giant || spotSprites[p[2]] || spotSprites.shop)[0], size = dotSize(img, T), sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
     ctx.drawImage(img, sx, sy, size, size);
     if (giant) { poiHits.push([sx, sy, size, p, giant[0]]); depthArt.push([img, sx, sy, size, sy + size * 0.72, false]); }   // タップは絵のある所（透明でない点）で決める
-    if (tagged.has(p)) poiTag(sx + size / 2, sy, dpr, p[3]); //c17
+    if (tagged.has(p)) { //c17 c31
+      const box = poiTag(sx + size / 2, sy - tagged.get(p) * Math.round(20 * dpr), dpr, SM.shortName ? SM.shortName(p[3]) : p[3]); //c17 c31
+      if (box) labelBoxes.push(box); //c17 c31
+    } //c17 c31
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;

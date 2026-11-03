@@ -994,3 +994,7 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 body.px .guide .treasure{color:#ffe680}
 @keyframes treasurePulse{50%{transform:scale(1.15);box-shadow:0 0 18px #ffec96}}
 @media (prefers-reduced-motion:reduce){.treasure-mk{animation:none}}
+/* 第4弾サイクル3：文字削減。既定（simple）では長い説明を出さず、見出し・絵・数字だけで進める */
+.simple .intro-more{display:none}
+.simple .intro .by,.simple .intro .beta-note{display:none}
+.simple .jump-card small{display:none}

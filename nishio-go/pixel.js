@@ -7310,6 +7310,14 @@ const bigOf = (s, load = true) => (giantTiles(s) >= 6 ? giantOf(s, load) : null)
 // 当店の特大の絵（128×128）は、地図と同じ点の細かさ（1点＝マスの 1/16）で 8×8 マス。ほかの名所の特大の絵（6マス）より大きい。
 // 倍にすると 点が地図の1.5〜2倍に粗くなり（細かく作りこんだのが見えない）、12〜16 マスで画面を ほぼ おおってしまう。読めるまでの 48×48 の絵は 倍の 6 マス
 const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop && spr[0].width <= 48 ? 2 : 1);
+// 近づくと大きく迫る名所の絵（biglandmark.js）：描くときも タップの判定も この大きさを使う。特大の絵（giant）は二重に大きくしない・めいろ中・モジュールなしは等倍
+const bigHero = { x: null, y: null };   // お米のいる所（毎こま描くときに入れる）
+const bigSpotSize = (s, spr, T, giant) => {
+  const base = spotSize(s, spr, T), B = window.nishioBigLandmark;
+  if (!B || giant || bigHero.x === null || mazeOn() || !B.isBig(s)) return base;
+  const p = toTile(s.lat, s.lng);
+  return base * B.scaleFor(Math.hypot(p.x - bigHero.x, p.y - bigHero.y));
+};
 
 /* ---------- 画面 ---------- */
 const view = $('pxView'), cv = $('pxCanvas'), ctx0 = cv.getContext('2d');
@@ -7773,6 +7781,7 @@ function frame(now) {
     cam.x = rp.x + camLead.x; cam.y = rp.y + camLead.y;
   } else camLead.x = camLead.y = 0;
   const hp = rolling ? { x: rp.x, y: rp.y } : { x: cam.x, y: cam.y };   // お米のいる所（転がす：rp・ほかは 画面のまん中）
+  bigHero.x = hp.x; bigHero.y = hp.y;
   if (roll.last) { const ddx = hp.x - roll.last.x, ddy = hp.y - roll.last.y, d = Math.hypot(ddx, ddy); if (d < 3) roll.d += d; riceSpin(ddx, ddy, dt); }
   // 転がった道のりで 転がり方を もらう：画面の まん中（cam）では なく、行き先（tgt・転がす ときは rp）の 動きで 数える。ひとっとび（名所の「ここへ」など）の あと
   //   cam が なめらかに 追いつく ぶんまで 道のりに 入って いて、しかも こまが おそいと 入る 量が へった（25マス とぶと 25マス・CPU 4倍 おそいと 16マス。転がり方が かわる 時が 端末で ずれた）
@@ -7822,7 +7831,7 @@ function frame(now) {
     const near = ox + p.x * T > -T * 4 && ox + p.x * T < w + T * 4 && oy + p.y * T > -T * 2 && oy + p.y * T < h + T * 5;   // 画面に入るかもしれない名所だけ、特大の絵を読む
     const giant = near ? bigOf(s) : null;
     const spr = giant || spriteOf(s);
-    const size = spotSize(s, spr, T);
+    const size = bigSpotSize(s, spr, T, giant);
     const sx = ox + p.x * T - size / 2, sy = oy + p.y * T - size * (giant ? 0.72 : 0.5);   // 特大の絵は、地面が名所の場所にくるように上へずらす
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
@@ -12852,7 +12861,7 @@ cv.addEventListener('click', e => {
     if (bigOf(s, false)) continue;   // 特大の絵は上で調べた
     const p = toTile(s.lat, s.lng);
     const sx = cv.width / 2 + (p.x - c.x) * T, sy = fieldCy + (p.y - c.y) * T;
-    const half = spotSize(s, spriteOf(s), T) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
+    const half = bigSpotSize(s, spriteOf(s), T, null) / 2 + 4 * dpr, d = Math.hypot(x - sx, y - sy);   // 描いた大きさの半分
     if (Math.abs(x - sx) <= half && Math.abs(y - sy) <= half && d < best) { hit = s; best = d; }
   }
   if (hit) { $('pxInfoBody').innerHTML = G.popupHtml(hit); $('pxInfo').hidden = false; return; }

@@ -31,7 +31,7 @@ class NedokoTests(unittest.TestCase):
     def test_hooked_into_game(self):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_NEDOKO.pick(', px)
-        self.assertIn("nedokoStep(hx, by, u, now, mood === 'sleepy')", px)
+        self.assertIn("nedokoStep(hx, by, u, now, asleep)", px)
         self.assertIn('nedoko.js', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')

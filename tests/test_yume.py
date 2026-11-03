@@ -32,7 +32,7 @@ class YumeTests(unittest.TestCase):
         px = (GO / 'pixel.js').read_text()
         self.assertIn('NISHIO_YUME.pick(', px)
         self.assertIn('riceSay(y.say', px)
-        self.assertIn("yumeStep(hx, by, u, now, mood === 'sleepy')", px)
+        self.assertIn("yumeStep(hx, by, u, now, asleep)", px)
         self.assertIn('yume.js', (ROOT / 'nishio-go.html').read_text())
 
     @unittest.skipUnless(shutil.which('node'), 'node がない')

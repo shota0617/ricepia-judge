@@ -20,7 +20,7 @@ class FurusatoTests(unittest.TestCase):
 
     def test_hooked_into_game(self):
         px = (GO / 'pixel.js').read_text()
-        self.assertIn("furusatoStep(hx, by, u, now, mood === 'sleepy');", px)
+        self.assertIn("furusatoStep(hx, by, u, now, asleep);", px)
         body = px[px.index('function furusatoStep'):px.index('function furusatoStep') + 2200]
         self.assertIn('K.outside(here.city)', body)   # 西尾市の 外だけ
         self.assertIn('G.areas', body)

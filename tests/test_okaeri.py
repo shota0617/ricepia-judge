@@ -21,7 +21,7 @@ class OkaeriTests(unittest.TestCase):
 
     def test_hooked_into_game(self):
         px = (GO / 'pixel.js').read_text()
-        self.assertIn("okaeriStep(hx, by, u, now, mood === 'sleepy');", px)
+        self.assertIn("okaeriStep(hx, by, u, now, asleep);", px)
         body = px[px.index('function okaeriStep'):px.index('function okaeriStep') + 1800]
         self.assertIn('西尾', body)   # 西尾市の 中だけ
         self.assertIn('NISHIO_YOUKOSO', body)   # 名物は ようこそと 共用

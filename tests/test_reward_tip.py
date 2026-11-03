@@ -64,7 +64,7 @@ class RewardTipTests(unittest.TestCase):
         self.assertEqual(g.count('${tipHtml}${shareBtn}'), 3)   # 絵つき・絵なし・ふつう表示の3か所
         i = g.index("$('reward').addEventListener('click'")
         self.assertLess(g.index('data-rw-tip', i), g.index("data-rw-share", i))   # 💡は とじる処理より前で受けて return
-        self.assertIn("s.shop ? '' : spotTip(s)", g)   # 当店には出さない
+        self.assertIn('function showReward(', g)   # サイクル16：名所到着では カードを出さない（checkin は showReward を呼ばない）。関数は ほかの ごほうびで残す
         css = (GO / 'style.css').read_text(encoding='utf-8')
         self.assertIn('.rw-tipline[hidden]{display:none}', css)
 

@@ -65,7 +65,7 @@ class Scope(unittest.TestCase):
     def test_files_and_words(self):
         out = subprocess.run(["git", "diff", "--name-only", "origin/main"], cwd=ROOT, check=True, capture_output=True, text=True).stdout.split()
         for f in out:
-            self.assertRegex(f, r"^(nishio-go/pixel\.js|nishio-go/style\.css|nishio-go\.html|nishio-go/game\.js|nishio-go/postcard\.js|nishio-go/photoquiz\.js|nishio-go/daystamp\.js|nishio-go/picross\.js|nishio-go/bingo\.js|nishio-go/memory\.js|nishio-go/slidepuzzle\.js|nishio-go/janken\.js|nishio-go/kometalk\.js|tests/test_maze_(loop3_\d+|loop4_\d+|fog)\.py)$")
+            self.assertRegex(f, r"^(nishio-go/pixel\.js|nishio-go/style\.css|nishio-go\.html|nishio-go/game\.js|nishio-go/postcard\.js|nishio-go/photoquiz\.js|nishio-go/daystamp\.js|nishio-go/picross\.js|nishio-go/bingo\.js|nishio-go/memory\.js|nishio-go/slidepuzzle\.js|nishio-go/janken\.js|nishio-go/meiro\.js|nishio-go/kometalk\.js|tests/test_(maze_(loop3_\d+|loop4_\d+|fog)|furusato|monosashi|nedoko|okaeri|reward_tip|shirushi|yume)\.py)$")
         d = subprocess.run(["git", "diff", "origin/main", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True, capture_output=True, text=True).stdout
         added = "\n".join(l for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
         for w in ("ぼく", "だに", "約20%"):

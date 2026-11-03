@@ -1442,12 +1442,13 @@ function checkin() {
 
   const btn = $('spinBtn');
   btn.classList.remove('go'); void btn.offsetWidth; btn.classList.add('go');
-  const sp = special ? [`🎉 ${S.streak.days}日連続のごほうび：めずらしい天気のキラの絵`, ...dotLines(special)] : [];
-  showReward(total, s.name, s.shop ? [...lines, ...sp, '🍚 当店に来てくれてありがとう！', '📱 お店の常連さまポイントも LINE でたまります'] : [...lines, ...sp, ...(fk ? ['📖 まちメモ +1'] : []), ...dotLines(dot)], lvUp, s.shop ? SHOP_NOTE : fk ? factPool().get(fk) : '', special || dot, false, mz, s.shop ? '' : spotTip(s));
+  // 運営者の声（2026-11-03）「到着カードは いらない」：大きなカード（showReward）は出さない。ポイント・記録・ドット絵・袋・ポストカード・コースは 上で そのまま。知らせは 数字だけ
+  toast(lvUp ? `+${total}pt　⭐ レベル${lvUp}！` : `+${total}pt`);
+  setTimeout(() => { if (react.pending) reactShow(); else if (playQ.pending) playShow(); }, 1500);   // 下の小さなひとこと欄だけ（カードが無いので ここから）
   reactAsk(s);
   if (courseDone) courseCelebrate();   // コースを まわりきった：ごほうびの 窓が とじたら 1枚絵
   if (mz) playAsk(mz);   // めいろの ゴール：「めいろ、どうだった？」（1日1回。名所の ひとこと より 先に）
-  if (s.shop) shopAfter(s);   // ごほうびのあと、当店の窓（営業時間・LINE の常連さまポイント）を出す
+  // 当店の窓（shopAfter）は 自動では 開かない：カードが無いので、窓が いきなり 開いて 歩きを 止めない（お店の窓は 自分で タップして 開く）
   map.closePopup();
   renderMarkers();
   refreshNearby();
@@ -2102,27 +2103,13 @@ function critterMet(c) {
   if (first) { gainPoints(CRITTER_PTS); S.log.unshift({ type: 'critter', t: Date.now(), pts: CRITTER_PTS, name: `生きもの手帳：${c.name}`, icon: '🐾' }); badgesSoon(); }   // そろったら賞状
   save();
   track('critter_meet', { critter: c.id, first, mode: demo ? 'play' : 'walk' });
-  if (!meetShow(c, first)) toast(`🐾 ${c.say}${first ? `　📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}` : ''}`);
+  if (!meetShow(c, first)) toast(first ? `🐾 ${c.name}　📗 +${CRITTER_PTS}pt` : `🐾 ${c.name}`);
   return c;
 }
 // 出会いの場面（昔のドット絵RPGの、敵に出会ったときのしくみ）：画面が2回 ちかっと光り、黒いウィンドウに 生きものの絵と、1文字ずつ出る ことば。
 // 歩く地図を見ているときだけ（ごほうびの画面が出ているときは、いつもの知らせ）。タップで文字を全部出す・もう一度で閉じる。読み終えて3秒で閉じる
-function meetShow(c, first) {
-  const box = $('meetBox'), P = window.nishioPixel, spr = P && P.critterSprite(c.id);
-  if (!box || !spr || !document.body.classList.contains('px') || rewardBusy()) return false;
-  const x = $('meetArt').getContext('2d');
-  x.clearRect(0, 0, 16, 16); x.drawImage(spr, 0, 0);
-  const text = [`${c.name}に であった！`, c.say, ...(first ? [`📗 生きもの手帳に「${c.name}」 +${CRITTER_PTS}pt${c.note ? '（西尾の話つき）' : ''}`] : [])].join('\n'), chars = [...text];
-  const m = meetShow.m = { n: 0, chars, done: false };
-  clearInterval(meetShow.iv); clearTimeout(meetShow.t);
-  $('meetText').textContent = '';
-  document.body.classList.remove('meet-flash'); void document.body.offsetWidth; document.body.classList.add('meet-flash');
-  sound.jingle('eye');
-  setTimeout(() => {
-    box.hidden = false;
-    meetShow.iv = setInterval(() => { if (meetShow.m !== m) return; m.n++; meetType(m); }, 45);
-  }, 420);   // 光りおわってから
-  return true;
+function meetShow(c, first) {   // 運営者の声（2026-11-03）：黒い遭遇パネル（#meetBox）と 画面フラッシュは 出さない。いつもの 短い知らせ（toast）だけ
+  return false;
 }
 function meetType(m) {
   $('meetText').textContent = m.chars.slice(0, m.n).join('');
@@ -4786,7 +4773,7 @@ function introHero() {
     const gy = gY(st.x), th = st.ang, low = Math.sqrt((10 * Math.sin(th)) ** 2 + (13.5 * Math.cos(th)) ** 2);   // たて長のつぶ：寝ころぶと低く
     x.fillStyle = 'rgba(0,0,0,.25)'; x.fillRect(Math.round(st.x - 8), Math.round(gy) + 1, 16, 2);
     const cy = gy - low * (1 - st.sq);
-    const mood = st.mode === 'free' && st.v > 45 ? 'excited' : st.mode === 'rest' && st.rest > 0.7 ? 'happy' : st.mode === 'rest' && now % 3700 < 140 ? 'blink' : 'smile';   // 表情：坂で速いと ><、止まると ^^
+    const mood = 'smile';   // 表情：坂で速いと ><、止まると ^^
     if (!(window.nishioPixel && nishioPixel.drawRice && nishioPixel.drawRice(x, st.x, cy, th % (Math.PI * 2), st.sq, mood)) && img.complete && img.naturalWidth) {   // 丸く見える描き方（pixel.js）。読めるまでは 絵を回す
       x.save(); x.translate(Math.round(st.x), Math.round(cy)); x.rotate(th % (Math.PI * 2));
       x.imageSmoothingEnabled = false; x.drawImage(img, 0, 0, 32, 32, -16, -16, 32, 32);
@@ -4797,7 +4784,6 @@ function introHero() {
   img.src = 'nishio-go/art/rice.png';
   requestAnimationFrame(step);
 }
-document.addEventListener('DOMContentLoaded', introHero);
 // あそびかたの 上の 細い 景色（開くたびに ちがう 景色）
 if (window.MutationObserver && $('howto')) new MutationObserver(() => { const h = $('howto'), b = $('howtoScene'); if (h && b && !h.hidden) { const s = sceneRand(); b.style.backgroundImage = `url("${s.src}")`; b.dataset.scene = s.src; b.title = s.t; } }).observe($('howto'), { attributes: true, attributeFilter: ['hidden'] });
 
@@ -4865,18 +4851,14 @@ if (store.get('nsg_started', false)) {
   $('intro').hidden = true; setMode(demo);   // setMode が1回に遊んだ時間を数えはじめる
 }
 else {
-  track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
-  // 押すのに 抵抗が ある人へ：iPhone は 傾きの 確認が 出ることを 先に 伝える。8秒 押されなければ、いちばん上の ボタンが はねて お米の ふきだし（1回だけ。アクセス解析に intro_nudge）
-  if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') $('iosTiltNote').hidden = false;
-  setTimeout(() => {
-    const b = $('meiroBtn');
-    if ($('intro').hidden || !b) return;
-    b.classList.add('nudge');
-    const tip = document.createElement('span');
-    tip.className = 'nudge-tip'; tip.setAttribute('aria-hidden', 'true'); tip.textContent = '🍚 おしても だいじょうぶ！';
-    b.append(tip);
-    track('intro_nudge', {});
-  }, 8000);
+  // 運営者の声（2026-11-03）「開いたらすぐ始まる」：はじめの画面（intro）・転がるお米・8秒後のはね/ふきだしは出さない。
+  // intro を隠したまま、meiro.js が はじめての人も すぐ begin する。nsg_noauto（プレイテストの台本だけ）は 従来どおり はじめの画面から
+  let noAuto = false; try { noAuto = localStorage.getItem('nsg_noauto') === '1'; } catch (e) { /* なしで続ける */ }
+  if (noAuto) {
+    track('intro_view', {});   // はじめての人は、遊びかたを選んだとき（begin）から1回に遊んだ時間を数える
+    if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') $('iosTiltNote').hidden = false;
+    document.addEventListener('DOMContentLoaded', introHero);
+  } else $('intro').hidden = true;
 }
 setInterval(() => { renderMarkers(); refreshNearby(); }, 10000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { renderMarkers(); refreshNearby(); idleCheck(); } else idleMark(); });

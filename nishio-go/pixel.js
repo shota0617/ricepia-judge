@@ -3567,13 +3567,15 @@ function drawNight(w, h, ox, oy, T, cy, pois, now) {
 }
 // 人の話で 次の転がり先が決まる：転がしているとき、話で 行き先が決まったら、話を とじたときに その人が お米を 行き先のほうへ ころん と押してくれる
 let npcSend = null;
-function openNpc(n) {
+// 触れたとき（こつん・呼びとめ・めいろのゴール）は 話の 窓を 開かない（2026-11-03）。記録（はじめて話した・ポイント・次の行き先）は 裏で 残す。自分で タップしたとき（tapped）だけ 窓を 開く
+function openNpc(n, tapped) {
   const first = !G.npcMet(n.id);
   const r = G.talkNpc(n.id);
   if (!r) return;
   const gs = G.state.guide;
   npcSend = rollOn && G.demo && gs && gs.byId === n.id && Date.now() - (gs.t || 0) < 3000 ? { n, name: gs.name } : null;
   npcEmotes.set(n.id, { t: performance.now(), k: first ? '!' : (n.id.length + G.state.met.length) % 2 ? '♪' : '♥' });
+  if (!tapped) { npcSend = null; return; }
   $('pxInfoBody').innerHTML = r.html; $('pxInfo').hidden = false;
 }
 // 呼びとめ（昔のドット絵RPGの「目が合ったら勝負」を、話しかけに）：まだ話していない人の まっすぐ前後左右 SIGHT マス以内に入り、
@@ -3774,18 +3776,11 @@ function riceFaces(face, sd, N) {
   return out;
 }
 // いまの表情（転がり方・できごとから）
-function riceMood(now) {
-  if (roll.ouchT > 0) return 'ouch';
-  if (roll.wetT > 0.7) return 'wow';   // 水に ぽちゃん：びっくり
-  if (roll.h > 0) return 'wow';
-  if (roll.dizzyT > 0) return 'dizzy';
-  if (roll.v > 3.4) return 'excited';
-  if (roll.happyT > 0) return 'happy';
-  if (roll.kind === 'stop' && roll.idle > 6 && roll.idle < 12 && (roll.idle - 6) % 5 < 0.9) return 'yawn';   // 止まって しばらくすると ふわぁと あくび（赤ちゃんの ような かわいさ。運営者の声 2026-10-28）
-  if (roll.kind === 'stop' && roll.idle > 12) return 'sleepy';
-  if (roll.kind === 'stop' && now % 3700 < 140) return 'blink';
-  return 'smile';
-}
+// 運営者の声（2026-11-03）「かおりちゃんは いつも 笑顔」：痛そう・苦しそうな顔（ouch・dizzy・wow など）は 使わない。顔は いつも smile（口は 笑ったまま）
+// ouchT・dizzyT・happyT などの 計時や 転がり・音の 動きは そのまま（顔にだけ 出さない）
+function riceMood(now) { return 'smile'; }
+// ねむって いる（止まって しばらく）：顔ではなく 動きの 判定。ちょうちょ・ねどこ・ゆめは これで 出る
+const riceAsleep = () => roll.kind === 'stop' && roll.idle > 12;
 const riceBreath = now => Math.sin(now / 2600 * Math.PI * 2) * (roll.idle > 12 ? 0.03 : 0.018);   // 息：2.6秒で 1回。ねむって いる ときは 少し 大きく ゆっくり 見える
 // ちょうちょ：ねむって いる お米の 頭に ひらひら 飛んで きて とまり、お米が おきると 飛んで いく（文字の ない 素朴な かわいさ。運営者の声 2026-10-28）。
 // 絵は 7×5 の 点（k ふち・y はね・b からだ）。動きを へらす 設定の 人には 出さない。遊びの じゃまに ならない よう、お米が 動き出したら すぐ 飛んで いく
@@ -7912,7 +7907,7 @@ function frame(now) {
     }
     const by = sy !== 1 ? ground - low * sy - hop : mid;
     roll.by = by;   // テスト用（お米の まん中の 高さ。息で かわる）
-    const mood = roll.drawn = riceMood(now);
+    const mood = roll.drawn = riceMood(now), asleep = riceAsleep();
     const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
     roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
@@ -7939,7 +7934,7 @@ function frame(now) {
     chatsumiStep(hx, by, u, now);   // 稲荷山茶園公園の そばで じっと すると 茶畑の ひとこま（茶摘み・てん茶・川霧。chatsumi.js。ちゃせきに 先んじる）
     kawabeStep(hx, by, u, now);   // 川・池・用水の そばで じっと すると 水べの ひとこま（矢作川・メダカ・アカザ・ミサゴ・ニホンイシガメ。kawabe.js。ちゃせきに 先んじる）
     chasetsuStep(hx, by, u, now);   // 西尾地区で じっと すると 石臼で ひいて 抹茶を 点てる（chasetsu.js）
-    nedokoStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
+    nedokoStep(hx, by, u, now, asleep);   // ねむって いる あいだ、名物の ねどこを お米の 下に しく（nedoko.js）
     if (riceBall.cv) {
       drawRiceBall(hx, by, u, th % (Math.PI * 2), sx, sy, roll.spin, ctx, gbOn && !worldMode, mood, roll.look, roll.dirt, roll.dirtCol, roll.pitch);   // 光を当てなおして 丸く。表情つき・きょろきょろ
       drawSendArrow(hx, by, T, u);   // お米の まん中から
@@ -7950,8 +7945,8 @@ function frame(now) {
         ctx.drawImage(dropSprite(q), crisp ? Math.round(dx0) - q : dx0 - q, crisp ? Math.round(dy0) - q : dy0 - q); drop.at = [dx0, dy0]; drop.n++;
         ctx.globalAlpha = 1; ctx.imageSmoothingEnabled = sm;
       }
-      drawNimotsu(hx, by, u, now, mood === 'sleepy');
-      yumeStep(hx, by, u, now, mood === 'sleepy');   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
+      drawNimotsu(hx, by, u, now, asleep);
+      yumeStep(hx, by, u, now, asleep);   // ねむって いる あいだの ゆめ（yume.js）   // 名所で のせた 持ち物（nimotsu.js）
       gochisoStep(hx, by, u, now);   // 止まって 名物食を 食べる（gochiso.js）
       otedamaStep(hx, by, u, now);   // とびはねて 名物を ほうって キャッチ（otedama.js）
       kasaStep(hx, by, u, now);   // 雨の 日は 名物の かさを さす（kasa.js）
@@ -7960,12 +7955,12 @@ function frame(now) {
       tsunStep(hx, by, u, now);   // お米を つんつんすると 名物が 飛び出す（tsun.js）
       nazoStep(hx, by, u, now);   // 止まって じっと すると 西尾の なぞなぞ（答えの 札を タップ。nazonazo.js）
       youkosoStep(hx, by, u, now);   // 地区の 境を こえると 名物の 旗が 立つ（youkoso.js）
-      shirushiStep(hx, by, u, now, mood === 'sleepy');   // 入った 地区の 旗が お米の よこに のこる（shirushi.js）
-      monosashiStep(hx, by, u, now, mood === 'sleepy');   // 転がった 道のりを 黄金堤の 長さ（180m）で はかる（monosashi.js）
-      okaeriStep(hx, by, u, now, mood === 'sleepy');   // しばらくぶりに もどると 名物と いっしょに むかえる（okaeri.js）
-      furusatoStep(hx, by, u, now, mood === 'sleepy');   // 西尾市の 外では 西尾の 方角を 名物の 矢じるしで しめす（furusato.js）
-      drawBfly(hx, by, u, now, mood === 'sleepy');   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
-      if (mood === 'sleepy') {   // すやすや：頭の右上に z が ふわふわ のぼる
+      shirushiStep(hx, by, u, now, asleep);   // 入った 地区の 旗が お米の よこに のこる（shirushi.js）
+      monosashiStep(hx, by, u, now, asleep);   // 転がった 道のりを 黄金堤の 長さ（180m）で はかる（monosashi.js）
+      okaeriStep(hx, by, u, now, asleep);   // しばらくぶりに もどると 名物と いっしょに むかえる（okaeri.js）
+      furusatoStep(hx, by, u, now, asleep);   // 西尾市の 外では 西尾の 方角を 名物の 矢じるしで しめす（furusato.js）
+      drawBfly(hx, by, u, now, asleep);   // ねむって いる お米の 頭に ちょうちょが ひらひら（文字の ない 小さな かわいさ）
+      if (asleep) {   // すやすや：頭の右上に z が ふわふわ のぼる
         const crisp = !!rec || (gbOn && !worldMode), sm = ctx.imageSmoothingEnabled;   // ゲームボーイの4色・Godot の 記録係は 点の まま 整数の 位置に
         ctx.imageSmoothingEnabled = !crisp;
         for (let k = 0; k < 2; k++) {   // 5×5 の Z を 1枚の 絵に して、点より 細かい 位置で なめらかに のぼらせる（1点ずつ カクカク のぼって いた）
@@ -12731,7 +12726,7 @@ cv.addEventListener('click', e => {
   if (G.demo && rp.x !== null && !driving && howtoEl.hidden && nazoTap(x, y, performance.now())) return;   // なぞなぞの 札を タップ（nazonazo.js）
   if (G.demo && rp.x !== null && !driving && howtoEl.hidden && Math.hypot(x - (cv.width / 2 + heroScr.x), y - (fieldCy + heroScr.y)) < T * 0.8 && tsunTap(performance.now())) return;   // お米を つんつん（tsun.js）
   const who = npcAt(ttx, tty) || npcAt(ttx, tty - 1);
-  if (who) { openNpc(who); return; }
+  if (who) { openNpc(who, true); return; }
   const rt = rivalTile();
   if (rt && rt.x === ttx && (rt.y === tty || rt.y === tty - 1)) { rivalTalk(); return; }
   let hit = null, best = Infinity;

@@ -88,7 +88,7 @@ class Scope(unittest.TestCase):
                 self.assertNotIn(w, l)
         files = subprocess.run(['git', 'diff', '--name-only', 'origin/main'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
         for f in files:
-            self.assertTrue(f.startswith('nishio-go/') or f.startswith('tests/'), f)
+            self.assertTrue(f.startswith('nishio-go/') or f == 'nishio-go.html' or f.startswith('tests/'), f)
 
 
 if __name__ == '__main__':

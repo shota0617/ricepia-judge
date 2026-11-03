@@ -4145,6 +4145,10 @@ function sfxCtx() {
     return kotoCtx;
   } catch (e) { return null; }
 }
+{   // 転がる音が 初回から 鳴るように、最初の さわり・キーで 一度だけ 音を 解錠（音の設定オフ・画面が 隠れた ときは sfxCtx が 何もしない）
+  const unlock = () => { document.removeEventListener('pointerdown', unlock, true); document.removeEventListener('keydown', unlock, true); sfxCtx(); };
+  document.addEventListener('pointerdown', unlock, true); document.addEventListener('keydown', unlock, true);
+}
 function grainSound() {   // ちりん：金の米つぶを ひろった（高い 2音）
   const a = sfxCtx();
   if (!a) return;
@@ -7721,9 +7725,11 @@ function howtoShow() {
 $('howtoOk').addEventListener('click', () => { howtoEl.hidden = true; tiltReset(); dirty = true; if (G.toastFlush) G.toastFlush(); });   // いまの 持ち方を「まっすぐ」に して はじめる
 $('howtoOpen').addEventListener('click', howtoShow);
 let meiroPause = false;   // めいろ（meiro.js）を遊んでいるあいだは、うしろの 歩く地図を 止める（お米も 動かない）
+let fpsMeter = { ema: 0, n: 0, fps: 0, slow: false }, fpsPrevT = 0;   // 重い 端末では 飾り（のこりかげ・スピード線）を 落とす（rollsync.js fpsStep。画面には 出さない）
 function frame(now) {
   if (!active) return;
   raf = requestAnimationFrame(frame);
+  { const RSf = window.nishioRollSync; if (RSf && RSf.fpsStep && fpsPrevT) fpsMeter = RSf.fpsStep(fpsMeter, now - fpsPrevT); fpsPrevT = now; }
   if (meiroPause) { lastT = 0; return; }
   mzNextHoldTick();
   const dpr = Math.min(window.devicePixelRatio || 1, 3);
@@ -7937,12 +7943,13 @@ function frame(now) {
     }
     {   // 影：つぶの いまの はば（寝ころぶと広い）に合わせた、まるい点の だ円。とぶと小さく
       const wv = Math.sqrt((A * Math.cos(th)) ** 2 + (B * Math.sin(th)) ** 2), shw = wv * 1.8 / (1 + roll.h * 3), q = Math.max(1, Math.round(u)), sy0 = Math.round(hcy + T * 0.3);
+      const RSs = window.nishioRollSync, st = RSs && RSs.shadowStretch ? RSs.shadowStretch(roll.v) : 1, tl = roll.trail, tp = tl[tl.length - 1], tq = tl[tl.length - 3], rot = st > 1.02 && tp && tq && Math.hypot(tp.x - tq.x, tp.y - tq.y) > 0.01 ? Math.atan2(tp.y - tq.y, tp.x - tq.x) : 0;   // 速いほど 進む 向きへ 影が のびる（のびが ほぼ無い 低速では 接地の 影のまま＝向きが 跳ねない）
       ctx.fillStyle = 'rgba(0,0,0,.28)';
       if (gbOn && !worldMode) {   // ゲームボーイの4色は 点の だ円の まま
-        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 - q, Math.round(shw * 0.72), q);
-        ctx.fillRect(Math.round(hx - shw / 2), sy0, Math.round(shw), 2 * q);
-        ctx.fillRect(Math.round(hx - shw * 0.36), sy0 + 2 * q, Math.round(shw * 0.72), q);
-      } else { ctx.beginPath(); ctx.ellipse(hx, hcy + T * 0.3 + u, shw / 2, 2 * u, 0, 0, Math.PI * 2); ctx.fill(); }   // お米と いっしょに なめらかに（点より 細かく 動く。整数に 丸めると 影だけ カクッと 動いた）
+        ctx.fillRect(Math.round(hx - shw * st * 0.36), sy0 - q, Math.round(shw * st * 0.72), q);
+        ctx.fillRect(Math.round(hx - shw * st / 2), sy0, Math.round(shw * st), 2 * q);
+        ctx.fillRect(Math.round(hx - shw * st * 0.36), sy0 + 2 * q, Math.round(shw * st * 0.72), q);
+      } else { ctx.beginPath(); ctx.ellipse(hx, hcy + T * 0.3 + u, (shw / 2) * st, (2 * u) / Math.sqrt(st), rot, 0, Math.PI * 2); ctx.fill(); }   // お米と いっしょに なめらかに（点より 細かく 動く。整数に 丸めると 影だけ カクッと 動いた）
       kageDraw(hx, hcy + T * 0.3 + u, shw, u, now, roll.kind === 'stop' && roll.h <= 0 && roll.v < 0.2);   // じっと すると 名物の 影が のびる（kage.js）
     }
     const sq = roll.sq;
@@ -7965,7 +7972,7 @@ function frame(now) {
     const sy0 = sy / (1 + br), byB = sy0 !== 1 ? ground - low * sy0 - hop : mid;
     roll.box = [hx - 13 * u, byB - 15 * u, hx + 13 * u, byB + 9 * u];   // お米の 描く はんい（町名の 札が よける。テスト用にも）
     drawKoroTrail(ox, oy, T, u);   // 転がり方の かざり（お米の うしろ）
-    if (riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
+    if (!fpsMeter.slow && riceBall.cv && (roll.v > 3.4 || (KP.ghost && roll.v > 0.8))) {   // のこりかげ：速いと、うしろに うすい お米が2つ（ロケットは いつも）
       for (const [k, al] of [[6, 0.14], [3, 0.26]]) {
         const p = roll.trail[roll.trail.length - 1 - k];
         if (!p) continue;
@@ -7974,7 +7981,7 @@ function frame(now) {
         finally { ctx.globalAlpha = 1; riceLowQ = false; }   // とちゅうで 止まっても、本体の お米まで あらく 描かない
       }
     }
-    if (rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
+    if (!fpsMeter.slow && rollOn && rp.x !== null) drawSpeedLines(hx, by, u, now);   // とても 速い（びゅんパネル・下り坂）：うしろに スピード線
     tsutsumiStep(hx, by, u, now);   // 吉良の 田んぼで じっと すると 黄金堤を 築く（tsutsumi.js）
     chochinyoruStep(hx, by, u, now);   // 夜の 一色の 町なかで じっと すると 提灯の あかり（大提灯・提灯の れつ。chochinyoru.js。いっしきさんぽ・めぐりに 先んじる）
     isshikiStep(hx, by, u, now);   // 一色の 町なかで じっと すると 港町の ひとこま（えびせん焼き・うなぎ・養鰻・さかな広場。isshiki.js）
@@ -12950,5 +12957,5 @@ window.nishioPixel = { meiroApi, maze: { wallTheme: () => mzWallTheme(), on: () 
     const r = cv.getBoundingClientRect(), dpr = cv.width / r.width, T = fieldT(Math.min(window.devicePixelRatio || 1, 3)), c = camTile();
     return { x: r.left + (cv.width / 2 + (tx + 0.5 - c.x) * T) / dpr, y: r.top + (fieldCy + (ty + 0.5 - c.y) * T) / dpr };
   }, ensureAround(lat, lng) { const q = toTile(lat, lng); ensureChunk(Math.floor(q.x / CHUNK), Math.floor(q.y / CHUNK)); } };
-{ const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 } }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
+{ const rollGet = Object.getOwnPropertyDescriptor(window.nishioPixel, 'roll').get; Object.defineProperty(window.nishioPixel, 'roll', { configurable: true, enumerable: true, get() { const r = rollGet(), ra = rp.x === null ? '' : rollAreaAt(rp.x, rp.y), RSg = window.nishioRollSync; return { ...r, area: ra, feel: RSg && RSg.groundFeel ? RSg.groundFeel(ra) : { crr: 1, lin: 1 }, fps: fpsMeter.fps, shadow: RSg && RSg.shadowStretch ? RSg.shadowStretch(r.v) : 1 }; } }); }   // テスト用：いまの 地区と 地面の感じ（係数）を roll に足す
 })();

@@ -85,5 +85,23 @@
       return { fx: ux * IDLE_ACC, fy: uy * IDLE_ACC, dist, arrived: false };
     } catch (e) { return { fx: 0, fy: 0, dist: 0, arrived: true }; }
   }
-  root.nishioRollSync = { IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  // 影の のび と フレームレートの 見はり（第4弾サイクル25：仕上げ。速いと 影が 進む 向きへ のびる・重い 端末は 飾りを 落として 60fps を 守る）
+  const FPS_SLOW = 42, FPS_MIN = 90, FPS_RECOVER = 48;   // 飾りを 落とす 境界（42）と もどす 境界（48）を ずらす：境界の 近くで 出たり 消えたりを くり返さない
+  function shadowStretch(v) {
+    if (typeof v !== 'number' || !isFinite(v)) return 1;
+    if (v <= 1.5) return 1;
+    return Math.min(1.3, 1 + (v - 1.5) * 0.05);
+  }
+  function fpsStep(state, dtMs) {
+    const ok = state && typeof state === 'object' && isFinite(state.ema) && isFinite(state.n);
+    const s = ok ? { ema: state.ema, n: state.n } : { ema: 0, n: 0 };
+    const wasSlow = ok && state.slow === true;
+    if (typeof dtMs === 'number' && isFinite(dtMs) && dtMs > 0 && dtMs <= 250) {
+      const fps = 1000 / dtMs;
+      s.ema = s.n === 0 ? fps : s.ema + (fps - s.ema) * 0.05;
+      s.n += 1;
+    }
+    return { ema: s.ema, n: s.n, fps: s.ema, slow: s.n >= FPS_MIN && s.ema < (wasSlow ? FPS_RECOVER : FPS_SLOW) };
+  }
+  root.nishioRollSync = { FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

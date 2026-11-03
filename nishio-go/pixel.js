@@ -3636,8 +3636,8 @@ const heroMarkerStyle = document.createElement('style');
 // 主人公の「お米」（tools/blender/rice.py → nishio-go/art/rice.png）：32×32 が 横8 × たて2（1行め：右へ でんぐり返る、2行め：手前へ転がる）。歩く地図には 2マスで描く（ドットの大きさは ほかの絵と同じ）。
 // 左は右の反転、上は手前の逆の順。転がった道のり（roll.d、マス）で コマを進める（1マスで ひとまわり）。止まっているときは1コマめ（こっちを見ている）
 const riceSprites = { right: [], left: [], down: [], up: [], ready: false };
-const idleRoll = { last: performance.now(), on: false, key: '', skip: [] };   // 眺めるコロコロ（M5）：last＝最後の 手動入力の 時刻・on＝ひとりで 転がり中・key＝いま向かう/さっき着いた 名所・skip＝着いた/届かなかった 名所（除外リスト）
-function idleTouch() { idleRoll.last = performance.now(); idleRoll.on = false; idleRoll.skip = []; idleRoll.anchor = null; }
+const idleRoll = { last: performance.now(), on: false, key: '', skip: [], guideKey: '' };   // 眺めるコロコロ（M5）：last＝最後の 手動入力の 時刻・on＝ひとりで 転がり中・key＝いま向かう/さっき着いた 名所・skip＝着いた/届かなかった 名所（除外リスト）・guideKey＝済みにした 目的地（skip の上限で 消えないよう 別に持つ。第4弾サイクル29 Codexレビュー）
+function idleTouch() { idleRoll.last = performance.now(); idleRoll.on = false; idleRoll.skip = []; idleRoll.guideKey = ''; idleRoll.anchor = null; }
 document.addEventListener('pointerdown', idleTouch, true);   // 画面に さわったら すぐ 手動に もどる
 const roll = { d: 0, last: null, lastK: null, ang: 0, av: 0, side: 0, sq: 0, sqv: 0, sqx: false, shake: 0, dust: [], dustT: 0, kind: 'stop', wad: 0, spin: 0, sv: 0, pitch: 0, pv: 0, vert: false, h: 0, hv: 0, gnd: null, back: null, trail: [], fx: [], fxAcc: 0, fxN: 0, sendT: 0, sendA: 0, sends: 0, flat: 0, wetT: 0, jumpCd: 0, zg: null, jumps: 0, look: 0, dirt: 0, dirtCol: '150,120,80', v: 0, peak: 0, idle: 0, ouchT: 0, happyT: 0, spinT: 0, dizzyT: 0 };   // d：転がった道のり（マス）・lastK：転がり方の 道のりを 数える 前の こまの 行き先・ang：いまの回り（ラジアン）・av：回る速さ・side：寝た回数（コトン）・sq：つぶれ・shake：画面のゆれ・dust：土ぼこり
 // v：いまの速さ・peak：止まるまでの いちばんの速さ・idle：止まっている時間・ouchT・happyT・dizzyT：表情（いたい・うれしい・目が回る）の のこり時間・spinT：くるくるしている時間
@@ -12281,28 +12281,35 @@ function idleRollForce() {   // 眺めるコロコロ（M5）の 力。条件が
   if (!RS || !RS.idleDue || mazeOn() || worldMode || driving || tapS.path.length || mapCovered(false, true)) { idleRoll.on = false; return null; }
   const now = performance.now();
   if (!RS.idleDue((now - idleRoll.last) / 1000, false)) { idleRoll.on = false; return null; }
-  let tg = null, guide = false;
+  let tg = null, gobj = null;
   if (gd) {
     const p = toTile(gd.lat, gd.lng);
-    if (Number.isFinite(p.x) && Number.isFinite(p.y)) { tg = { x: p.x, y: p.y, key: 'g:' + (gd.id || gd.name || '') }; guide = true; }
+    if (Number.isFinite(p.x) && Number.isFinite(p.y)) gobj = { x: p.x, y: p.y, key: 'g:' + (gd.id || gd.name || '') };
   }
-  for (let hop = 0; hop < 8; hop++) {   // 近くの名所に 着いていたら その場で つぎへ（近接2件で 到着だけ くり返して 止まらないよう、着いた名所は skip に ためて まとめて外す。Codexレビュー指摘）
+  const idleSkipAdd = k => { idleRoll.key = k; if (typeof k === 'string' && k.indexOf('g:') === 0) idleRoll.guideKey = k; if (idleRoll.skip.indexOf(k) < 0) { idleRoll.skip.push(k); if (idleRoll.skip.length > 24) idleRoll.skip.shift(); } };
+  const gEff = (gobj && idleRoll.guideKey === gobj.key) ? null : gobj;   // 済みの 目的地は その回の あいだ えらばない（手動入力で idleTouch が もどす）
+  let restarted = false;
+  for (let hop = 0; hop < 8; hop++) {   // 目的地や 近くの 名所に 着いていたら その場で つぎへ（着いた ものは skip に ためて まとめて外す。目的地の 次も 名所めぐりで 転がり続ける）
     if (!tg) {
       const list = (G['spots'] || []).map(s => { const p = toTile(s.lat, s.lng); return { x: p.x, y: p.y, key: 's:' + (s.id || s.name) }; });
-      tg = RS.idleTarget(rp.x, rp.y, list, idleRoll.skip);
+      if (RS.nextIdleTarget) tg = RS.nextIdleTarget(rp.x, rp.y, gEff, list, idleRoll.skip);
+      else if (gEff && idleRoll.skip.indexOf(gEff.key) < 0) tg = Object.assign({ guide: true }, gEff);
+      else tg = RS.idleTarget(rp.x, rp.y, list, idleRoll.skip);
     }
-    if (!tg) { idleRoll.on = false; return null; }
+    if (!tg) {
+      if (!restarted && idleRoll.skip.length) { restarted = true; idleRoll.skip = []; continue; }   // 名所を 一巡したら 履歴を 解放して 巡回を 再開する（目的地の 済みは guideKey で保持。Codexレビュー）
+      idleRoll.on = false; return null;
+    }
+    const guide = tg.guide === true;
     const f = RS.idleForce(rp.x, rp.y, tg.x, tg.y, rp.vx, rp.vy);
     if (f.arrived) {
-      if (guide) { idleRoll.on = false; idleRoll.last = now; return null; }   // 目的地に 着いた：その場で とまる（また 無操作8秒後）
-      idleRoll.key = tg.key; if (idleRoll.skip.indexOf(tg.key) < 0) { idleRoll.skip.push(tg.key); if (idleRoll.skip.length > 24) idleRoll.skip.shift(); }
-      tg = null; continue;   // 名所に 着いた：つぎの 名所を えらびなおす（転がり続ける）
+      idleSkipAdd(tg.key);   // 目的地・名所に 着いた：済みにして つぎの 名所を えらびなおす（転がり続ける）
+      tg = null; continue;
     }
     if (!idleRoll.anchor || idleRoll.anchor.key !== tg.key) idleRoll.anchor = { key: tg.key, x: rp.x, y: rp.y, t: now };
     else if (now - idleRoll.anchor.t > 4000) {   // 4秒で 0.5マスも 進めない＝壁の むこう等で 届かない：その目標は 外す
       if (Math.hypot(rp.x - idleRoll.anchor.x, rp.y - idleRoll.anchor.y) < 0.5) {
-        if (guide) { idleRoll.on = false; idleRoll.last = now; return null; }
-        idleRoll.key = tg.key; if (idleRoll.skip.indexOf(tg.key) < 0) idleRoll.skip.push(tg.key);
+        idleSkipAdd(tg.key);   // 届かない 目的地も その回は 外して 名所めぐりへ
         idleRoll.anchor = null; return null;
       }
       idleRoll.anchor = { key: tg.key, x: rp.x, y: rp.y, t: now };

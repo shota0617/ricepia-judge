@@ -73,6 +73,19 @@
       return best;
     } catch (e) { return null; }
   }
+  // 目的地の次は 名所めぐり（第4弾サイクル29：Flower の 花から 花へ。目的地は 最初の 1つで、着いたら skip に ためて 近くの 名所へ 転がり続ける）
+  function nextIdleTarget(mx, my, guide, spots, skip) {
+    try {
+      if (!fin(mx) || !fin(my)) return null;
+      const ex = Array.isArray(skip) ? skip : [skip];
+      if (guide && typeof guide === 'object' && fin(guide.x) && fin(guide.y)) {
+        const key = typeof guide.key === 'string' ? guide.key : guide.x + ',' + guide.y;
+        if (ex.indexOf(key) < 0) return { x: guide.x, y: guide.y, key, dist: Math.hypot(guide.x - mx, guide.y - my), guide: true };
+      }
+      const t = idleTarget(mx, my, spots, ex);
+      return t ? { x: t.x, y: t.y, key: t.key, dist: t.dist, guide: false } : null;
+    } catch (e) { return null; }
+  }
   function idleForce(mx, my, tx, ty, vx, vy) {
     try {
       if (![mx, my, tx, ty].every(fin)) return { fx: 0, fy: 0, dist: 0, arrived: true };
@@ -116,5 +129,5 @@
     }
     return v;
   }
-  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

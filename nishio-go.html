@@ -161,6 +161,16 @@
   <b class="mem-tries" id="memTries">0</b>
   <div class="slide" id="slideBox" role="group" hidden></div>
   <b class="mem-tries" id="slideMoves">0</b>
+  <div class="janken" id="jankenBox" role="group" hidden>
+    <div class="jan-hand" id="jankenTheirs">❓</div>
+    <div class="jan-result" id="jankenResult"></div>
+    <div class="jan-row">
+      <button type="button" class="jan-btn" data-h="0">✊</button>
+      <button type="button" class="jan-btn" data-h="1">✌️</button>
+      <button type="button" class="jan-btn" data-h="2">✋</button>
+    </div>
+    <b class="jan-wins" id="jankenWins">⭐ 0</b>
+  </div>
   <ul class="list" id="areaList"></ul>
   <h3><i data-pi="book" data-art="stat-book"></i> まちメモ（西尾と まわりのまち） <small id="factCount"></small></h3>
   <ul class="list" id="factList"></ul>
@@ -510,6 +520,7 @@
 <script src="nishio-go/bingo.js"></script>
 <script src="nishio-go/memory.js"></script>
 <script src="nishio-go/slidepuzzle.js"></script>
+<script src="nishio-go/janken.js"></script>
 <script src="nishio-go/postcard.js"></script>
 <script src="nishio-go/shogo.js"></script>
 <script src="nishio-go/game.js"></script>

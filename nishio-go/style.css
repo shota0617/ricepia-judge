@@ -1052,3 +1052,13 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 .ds-cell.on{background:#f5c542;color:#5a3d00}
 .ds-cell.today{box-shadow:0 0 0 4px #c98a00}
 .pq-n{margin:4px 0 0;font-size:17px;font-weight:700}
+.janken{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto 4px;padding:6px}
+.janken[hidden]{display:none}
+.jan-hand{width:96px;height:96px;display:flex;align-items:center;justify-content:center;font-size:72px;line-height:1;border-radius:50%}
+.jan-hand.win{box-shadow:0 0 0 4px #e8b923}
+.jan-result{min-height:44px;font-size:40px;line-height:44px}
+.jan-row{display:flex;gap:8px;justify-content:center}
+.jan-btn{width:min(88px,26vw);min-width:64px;min-height:64px;aspect-ratio:1;box-sizing:border-box;border:0;padding:0;border-radius:10px;background:#f3ead6;font-size:min(44px,13vw);line-height:1;cursor:pointer}
+.jan-btn:disabled{cursor:default;opacity:.5}
+.jan-btn.mine:disabled{opacity:1;outline:3px solid #e8b923}
+.jan-wins{font-size:22px}

@@ -3474,6 +3474,7 @@ function renderLog() {
   renderBingo();
   renderMemory();
   renderSlidePuzzle();
+  renderJanken();
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -3599,6 +3600,55 @@ $('slideBox').addEventListener('click', e => {
   rec.tiles = next; rec.moves = (rec.moves | 0) + 1;
   rec.done = P.solved(next);
   store.set('nsg_slide', rec); renderSlidePuzzle();
+});
+
+// じゃんけん：相手の 手は 日づけで 決まる。1日1回。状態は nsg_jan に（S のセーブは かえない・ポイントなし）。
+const JAN_HANDS = ['✊', '✌️', '✋'];
+const JAN_RESULT = { win: '⭕', lose: '❌', draw: '🔁' };
+function janSeed(day, round) { return day + ':' + round; }
+function janLoad() {
+  const day = ymd();
+  const raw = store.get('nsg_jan', null);
+  const r = raw && typeof raw === 'object' ? raw : {};
+  const wins = Number.isFinite(r.wins) && r.wins > 0 ? Math.floor(r.wins) : 0;
+  const round = Number.isInteger(r.round) && r.round >= 0 ? r.round : 0;
+  const played = r.day === day && Number.isInteger(r.mine) && r.mine >= 0 && r.mine <= 2 && JAN_RESULT[r.result];
+  const drew = r.day === day && r.mine === null && r.result === 'draw';
+  const rec = played ? { day, mine: r.mine, result: window.nishioJanken.judge(r.mine, window.nishioJanken.handOf(janSeed(day, round))), wins, round }
+            : drew ? { day, mine: null, result: 'draw', wins, round }
+            : { day, mine: null, result: null, wins, round: r.day === day ? round : 0 };
+  if (!raw || raw.day !== rec.day || raw.mine !== rec.mine || raw.result !== rec.result || raw.wins !== rec.wins || raw.round !== rec.round) store.set('nsg_jan', rec);
+  return rec;
+}
+function renderJanken() {
+  const el = $('jankenBox'), th = $('jankenTheirs'), rs = $('jankenResult'), wn = $('jankenWins');
+  if (!el || !th || !rs || !wn || !window.nishioJanken) { if (el) el.hidden = true; return; }
+  const rec = janLoad(), J = window.nishioJanken, theirs = J.handOf(janSeed(rec.day, rec.round)), done = rec.mine !== null, locked = done && rec.result !== 'draw';
+  el.hidden = false;
+  th.textContent = done ? JAN_HANDS[theirs] : '❓';
+  th.className = 'jan-hand' + (rec.result === 'win' ? ' win' : '');
+  th.setAttribute('aria-label', done ? `あいての手 ${JAN_HANDS[theirs]}` : 'あいての手 かくれている');
+  rs.textContent = rec.result ? JAN_RESULT[rec.result] : '';
+  rs.setAttribute('aria-label', rec.result ? `けっか ${JAN_RESULT[rec.result]}` : '');
+  wn.textContent = '⭐ ' + rec.wins;
+  el.querySelectorAll('.jan-btn').forEach(b => {
+    const h = +b.dataset.h;
+    b.disabled = locked;
+    b.classList.toggle('mine', done && h === rec.mine);
+    b.setAttribute('aria-label', `じぶんの手 ${JAN_HANDS[h]}${done ? (h === rec.mine ? '、えらんだ' : '') : ''}`);
+  });
+  el.setAttribute('aria-label', `じゃんけん、勝った回数 ${rec.wins}${rec.result ? '、' + JAN_RESULT[rec.result] : ''}`);
+}
+$('jankenBox').addEventListener('click', e => {
+  const b = e.target.closest('.jan-btn[data-h]');
+  if (!b || !window.nishioJanken) return;
+  const rec = janLoad();
+  if (rec.mine !== null && rec.result !== 'draw') return;
+  const h = +b.dataset.h, J = window.nishioJanken;
+  const res = J.judge(h, J.handOf(janSeed(rec.day, rec.round)));
+  if (res === 'draw') { rec.round += 1; rec.mine = null; rec.result = 'draw'; }
+  else { rec.mine = h; rec.result = res; if (res === 'win') rec.wins += 1; }
+  store.set('nsg_jan', rec); renderJanken();
 });
 
 function renderSugoroku() {

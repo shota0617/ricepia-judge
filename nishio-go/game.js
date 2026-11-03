@@ -3472,6 +3472,7 @@ function renderLog() {
   renderSugoroku();
   renderPicross();
   renderBingo();
+  renderMemory();
 
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
@@ -3513,6 +3514,44 @@ function renderBingo() {
   const realOn = lists.reduce((n, l) => n + l.filter(s => S.visits[s.id]).length, 0), realTotal = lists.reduce((n, l) => n + l.length, 0);
   el.setAttribute('aria-label', `ビンゴ ${realOn}/${realTotal}、そろった列 ${card.lineCount}`);
 }
+
+// 絵あわせ（神経衰弱）：その日の 12枚から 2枚ずつ めくる。状態は nsg_mem に（S のセーブは かえない・ポイントなし）。
+// めくり途中の 1枚は 画面の 変数だけ。ちがう 絵は 約900ms後に 閉じる（その間だけ 入力を うけない）
+let memPick = -1, memShown = [], memLock = false;
+function renderMemory() {
+  const el = $('memoryBox'), tr = $('memTries');
+  if (!el || !tr || !window.nishioMemory) { if (el) el.hidden = true; return; }
+  const day = ymd();
+  let rec = store.get('nsg_mem', null);
+  if (!rec || rec.day !== day || !Array.isArray(rec.found)) { rec = { day, found: [], tries: 0 }; store.set('nsg_mem', rec); memPick = -1; memShown = []; }
+  const cards = window.nishioMemory.deck(day);
+  el.hidden = false;
+  el.innerHTML = cards.map((c, i) => {
+    const f = rec.found.includes(c.pair), open = f || memShown.includes(i);
+    return `<button type="button" class="mem-card${f ? ' found' : open ? ' open' : ''}" data-i="${i}" aria-label="${i + 1}枚目${f ? ` ${c.icon} そろった` : open ? ` ${c.icon}` : ' うら'}">${open ? c.icon : ''}</button>`;
+  }).join('') + (rec.found.length >= cards.length / 2 ? '<span class="mem-star">⭐</span>' : '');
+  tr.textContent = rec.tries;
+  el.setAttribute('aria-label', `絵あわせ ${rec.found.length}/${cards.length / 2}、めくった回数 ${rec.tries}`);
+}
+$('memoryBox').addEventListener('click', e => {
+  const b = e.target.closest('.mem-card');
+  if (!b || memLock || !window.nishioMemory) return;
+  const day = ymd(), i = +b.dataset.i, cards = window.nishioMemory.deck(day);
+  const rec = store.get('nsg_mem', null);
+  if (!rec || rec.day !== day || !Array.isArray(rec.found)) { renderMemory(); return; }
+  if (!cards[i] || rec.found.includes(cards[i].pair) || i === memPick) return;
+  if (memPick < 0) { memPick = i; memShown = [i]; renderMemory(); return; }
+  const first = memPick;
+  rec.tries = (rec.tries | 0) + 1;
+  if (window.nishioMemory.judge(cards[first].pair, cards[i].pair)) {
+    rec.found.push(cards[i].pair); memPick = -1; memShown = [];
+    store.set('nsg_mem', rec); renderMemory();
+  } else {
+    store.set('nsg_mem', rec);
+    memShown = [first, i]; memLock = true; renderMemory();
+    setTimeout(() => { memShown = []; memPick = -1; memLock = false; renderMemory(); }, 900);
+  }
+});
 
 function renderSugoroku() {
   const b = sugorokuBoard([...TINT_AREAS].map(id => ({ id, ...areaProgress(id) })));

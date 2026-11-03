@@ -3242,6 +3242,7 @@ function donguriStep(now, ox, oy, T, w, h, dpr) {
 // となりを 転がると、水面に 小さな 輪が ぽわん と ひろがって 消える（0.35秒に 1つまで・0.9秒で 消える）。文字・音・ポイントは なし
 const HAMON_MS = 900, HAMON_GAP = 350;
 const hamon = { list: [], last: 0 };
+const rollPath = { list: [] };   // コロコロの跡（rolltrail.js）。画面の中だけの飾りで、得点・記録・セーブには使わない
 function hamonStep(now, ox, oy, T, w, h, dpr) {
   if (worldMode || driving || rp.x === null) { hamon.list.length = 0; return; }
   const sp = Math.hypot(rp.vx || 0, rp.vy || 0);
@@ -7868,6 +7869,7 @@ function frame(now) {
   roll.lastK = { x: kp.x, y: kp.y };
   roll.last = hp;
   roll.trail.push({ x: hp.x, y: hp.y, th: roll.ang }); if (roll.trail.length > 8) roll.trail.shift();   // のこりかげ用
+  { const RT = window.nishioRollTrail; if (RT && rolling && !fpsMeter.slow) { rollPath.list = RT.push(rollPath.list, hp.x, hp.y, now); rollPath.list = RT.alive(rollPath.list, now); } }   // 転がった道に跡を残す
 
   if (now - lastEnsure > 500) { lastEnsure = now; ensureVisible(w, h, T); snapDemoStart(); updateChests(); checkCar(); sightCheck(); updateCover(); loadTowns(); updateHere(); updateHarvestBtn(); updateDankyuBtn(); updateHiryoBtn(); }
 
@@ -7880,6 +7882,7 @@ function frame(now) {
   const tx0 = Math.floor(-ox / T), ty0 = Math.floor(-oy / T), tx1 = Math.ceil((w - ox) / T), ty1 = Math.ceil((h - oy) / T);
   for (let ty = ty0; ty < ty1; ty++) for (let tx = tx0; tx < tx1; tx++) drawTile(tx, ty, ox + tx * T, oy + ty * T, T, f, now);
 
+  drawRollPath(ox, oy, T, now);   // コロコロの跡（タイルの上・スポットや主人公の下）
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
   if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
@@ -8380,6 +8383,16 @@ function worldCamStart() {
 }
 // 角だけで接する水のマス（1マス幅の ななめの用水路など）は、マスを描いたあとで その角を まん中に ななめの水路を重ねてつなぐ（kawakado.png）。
 // どの角も、左下のマスの右上・右下のマスの左上として1回だけ調べる。岸は、あいだの陸のマスに砂浜があれば浜（浅瀬）、町なかがあれば護岸、なければ土手
+function drawRollPath(ox, oy, T, now) {
+  const RT = window.nishioRollTrail;
+  if (!RT || fpsMeter.slow || !rollPath.list.length) return;
+  for (const p of rollPath.list) {
+    const a = RT.alphaFor(now - p.t);
+    if (a <= 0) continue;
+    ctx.fillStyle = 'rgba(255,246,220,' + a.toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(ox + p.x * T, oy + p.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill();
+  }
+}
 function drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f) {
   if (!MT.kawakado) return;
   const A = (x, y) => gridAt(x, y) === C.A;

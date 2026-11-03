@@ -1000,37 +1000,6 @@ body.px .guide .treasure{color:#ffe680}
 /* 大きなめぐりリング（きろく画面。背景の conic-gradient は game.js が入れる） */
 .explore-ring{width:148px;height:148px;border-radius:50%;margin:8px auto 12px;background:#dcebd2;display:flex;align-items:center;justify-content:center}
 .explore-ring[hidden]{display:none}
-.block-tower{display:flex;gap:8px;justify-content:center;align-items:flex-end;margin:0 auto 12px}
-.block-tower[hidden]{display:none}
-.bt-col{display:flex;flex-direction:column;gap:3px}
-.sg-title{margin:4px 0 6px;text-align:center;font-size:14px}
-.sugoroku{display:grid;grid-template-columns:repeat(5,min(52px,17vw));gap:4px;justify-content:center;margin:0 auto 12px}
-.sugoroku[hidden]{display:none}
-.picross{display:grid;grid-template-columns:repeat(12,min(26px,6.8vw));gap:1px;justify-content:center;margin:0 auto 12px}
-.picross[hidden]{display:none}
-.bingo{display:grid;grid-template-columns:repeat(5,min(56px,17vw));gap:3px;justify-content:center;margin:0 auto 12px}
-.bingo[hidden]{display:none}
-.bgo-cell{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;aspect-ratio:1;box-sizing:border-box;border-radius:8px;background:rgba(0,0,0,.05);font-size:min(30px,9vw);line-height:1}
-.bgo-cell.line{box-shadow:inset 0 0 0 4px #e8b923,0 0 0 1px #e8b923}
-.bgo-cell.off{opacity:.35;filter:grayscale(.6)}
-.memory{display:grid;grid-template-columns:repeat(3,min(88px,26vw));gap:6px;justify-content:center;margin:0 auto 4px}
-.memory[hidden]{display:none}
-.mem-card{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:64px;aspect-ratio:1;box-sizing:border-box;border:0;padding:0;border-radius:10px;background:#c9b99a;font-size:min(40px,12vw);line-height:1;cursor:pointer}
-.mem-card.open{background:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}
-.mem-card.found{background:#f3d36b;box-shadow:inset 0 0 0 2px #e8b923}
-.mem-star{grid-column:1/-1;text-align:center;font-size:44px;line-height:1.1}
-.mem-tries{display:block;text-align:center;font-size:34px;font-weight:700;margin:0 auto 12px}
-.mem-tries[hidden]{display:none}
-.slide{display:grid;grid-template-columns:repeat(3,min(88px,26vw));gap:6px;justify-content:center;margin:0 auto 4px;padding:6px;border-radius:12px}
-.slide[hidden]{display:none}
-.slide.done{box-shadow:0 0 0 4px #e8b923}
-.slide-tile{position:relative;display:flex;align-items:center;justify-content:center;min-width:64px;min-height:64px;aspect-ratio:1;box-sizing:border-box;border:0;padding:0;border-radius:10px;background:#f3ead6;font-size:min(44px,13vw);line-height:1;cursor:pointer}
-.slide-num{position:absolute;top:4px;left:7px;font-size:15px;font-weight:700;color:#8a7a52}
-.slide-tile.blank{background:rgba(0,0,0,.04);cursor:default}
-.slide-star{grid-column:1/-1;text-align:center;font-size:44px;line-height:1.1}
-.pxl-cell{aspect-ratio:1;background:rgba(0,0,0,.08)}
-.sg-cell{min-width:44px;aspect-ratio:1;border-radius:6px;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1}
-.bt-cell{width:min(52px,15vw);height:20px;border-radius:4px;background:rgba(0,0,0,.08)}
 .explore-hole{width:62%;height:62%;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
 .explore-hole b{font-size:34px;font-weight:700}
 .explore-hole small{font-size:11px;color:#777}
@@ -1052,16 +1021,6 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 .ds-cell.on{background:#f5c542;color:#5a3d00}
 .ds-cell.today{box-shadow:0 0 0 4px #c98a00}
 .pq-n{margin:4px 0 0;font-size:17px;font-weight:700}
-.janken{display:flex;flex-direction:column;align-items:center;gap:6px;margin:0 auto 4px;padding:6px}
-.janken[hidden]{display:none}
-.jan-hand{width:96px;height:96px;display:flex;align-items:center;justify-content:center;font-size:72px;line-height:1;border-radius:50%}
-.jan-hand.win{box-shadow:0 0 0 4px #e8b923}
-.jan-result{min-height:44px;font-size:40px;line-height:44px}
-.jan-row{display:flex;gap:8px;justify-content:center}
-.jan-btn{width:min(88px,26vw);min-width:64px;min-height:64px;aspect-ratio:1;box-sizing:border-box;border:0;padding:0;border-radius:10px;background:#f3ead6;font-size:min(44px,13vw);line-height:1;cursor:pointer}
-.jan-btn:disabled{cursor:default;opacity:.5}
-.jan-btn.mine:disabled{opacity:1;outline:3px solid #e8b923}
-.jan-wins{font-size:22px}
 
 /* きろくの 店への 導線（大きなボタン。影・グラデーションなし） */
 .shop-links{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}

@@ -327,25 +327,6 @@ function exploreRing(list) {
   });
   return { done, total, pct: Math.floor(100 * done / total), gradient: stops.join(', ') };
 }
-// 大きなブロックタワー（テトリス：積み上がった高さがそのまま進み具合）。areaProgress の結果 [{id,done,total}] から、地区ごとの段数（最大10）を出す（新しい集計・セーブ項目なし）
-function blockTower(list) {
-  const n = v => Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
-  const cols = (Array.isArray(list) ? list : []).map(x => { const total = n(x && x.total); return { id: x && x.id, total, done: Math.min(n(x && x.done), total) }; }).filter(x => x.total > 0)
-    .map(x => ({ id: x.id, rgb: AREA_RGB[x.id] || [227, 164, 43], blocks: x.done <= 0 ? 0 : x.done >= x.total ? 10 : Math.min(9, Math.max(1, Math.round(x.done / x.total * 10))), done: x.done, total: x.total }));
-  return { cols, max: 10, done: cols.reduce((a, x) => a + x.done, 0), total: cols.reduce((a, x) => a + x.total, 0) };
-}
-// 大きなすごろくボード（人生ゲーム：コマの位置がそのまま今の到達点）。areaProgress の結果 [{id,done,total}] から、地区ごと5マス（1マス＝20％）を出す。cells は蛇行（1行目は左→右、2行目は右→左…）の表示順、step は道すじの順、pos はコマが立つ step（新しい集計・セーブ項目なし）
-function sugorokuBoard(list) {
-  const n = v => Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0, W = 5;
-  const cols = (Array.isArray(list) ? list : []).map(x => { const total = n(x && x.total); return { id: x && x.id, total, done: Math.min(n(x && x.done), total) }; }).filter(x => x.total > 0)
-    .map(x => ({ id: x.id, rgb: AREA_RGB[x.id] || [227, 164, 43], filled: x.done <= 0 ? 0 : x.done >= x.total ? W : Math.min(W - 1, Math.max(1, Math.floor(x.done / x.total * W))), done: x.done, total: x.total }));
-  const path = [];
-  cols.forEach(c => { for (let i = 0; i < W; i++) path.push({ id: c.id, rgb: c.rgb, on: i < c.filled, step: path.length }); });
-  const first = path.findIndex(c => !c.on), pos = path.length ? (first < 0 ? path.length - 1 : first) : -1;
-  const cells = [];
-  for (let r = 0; r * W < path.length; r++) { const row = path.slice(r * W, r * W + W); cells.push(...(r % 2 ? row.reverse() : row)); }
-  return { cols, cells, pos, done: cols.reduce((a, x) => a + x.done, 0), total: cols.reduce((a, x) => a + x.total, 0) };
-}
 const areaZone = t => { const sp = t && t.id && spots.find(x => x.id === t.id); return (sp && sp.area) || (t && Number.isFinite(t.lat) && spots.length ? areaNear(t) : '') || ''; };
 // 行き先の距離順チップ（P6）：主行き先と ほかの 候補を 近い 順に。表示だけで、行き先の 決め方は かえない。alt：alts の 何番目か（主行き先は -1）
 function guideChips(from, g, alts, zoneOf) {
@@ -3455,195 +3436,10 @@ function renderLog() {
   $('explorePct').textContent = ring.pct + '%';
   ringEl.setAttribute('aria-label', `全地区のめぐり具合 ${ring.done}/${ring.total}（${ring.pct}%）`);
 
-  renderBlockTower();
-  renderSugoroku();
-  renderPicross();
-  renderBingo();
-  renderMemory();
-  renderSlidePuzzle();
-  renderJanken();
-
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
       ${simple() ? '' : `<small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small>`}</span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
     : '<li class="empty">まだありません</li>';
-}
-
-function renderBlockTower() {
-  const tower = blockTower([...TINT_AREAS].map(id => ({ id, ...areaProgress(id) })));
-  const el = $('blockTower');
-  el.hidden = !tower.total;
-  el.innerHTML = tower.cols.map(c => `<div class="bt-col">${Array.from({ length: tower.max }, (_, i) => { const lv = tower.max - 1 - i; return `<span class="bt-cell"${lv < c.blocks ? ` style="background:rgb(${c.rgb.join(',')})"` : ''}></span>`; }).join('')}</div>`).join('');
-  el.setAttribute('aria-label', `地区ごとの積み上がり ${tower.done}/${tower.total}（${tower.cols.map(c => { const a = areas.find(x => x.id === c.id); return `${a ? a.name : c.id} ${c.done}/${c.total}`; }).join('、')}）`);
-}
-
-function renderPicross() {
-  const ps = [...TINT_AREAS].map(id => areaProgress(id));
-  const r = window.nishioPicross.reveal(ps.reduce((n, p) => n + p.done, 0), ps.reduce((n, p) => n + p.total, 0));
-  const el = $('picross');
-  el.hidden = !r.total;
-  el.innerHTML = r.cells.map(c => `<span class="pxl-cell"${c.on ? ` style="background:${c.color}"` : ''}></span>`).join('');
-  el.setAttribute('aria-label', `かおりちゃんの ドット絵 ${r.shown}/${r.cellsTotal}`);
-}
-
-// ビンゴ：行＝5地区、列＝その地区の注目スポット先頭5件（id順）。行ったスポットのマスが押され、そろった列は金の輪
-function renderBingo() {
-  const ids = [...TINT_AREAS];
-  const ps = ids.map(id => areaProgress(id));
-  const lists = ps.map(p => p.list.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).slice(0, 5));
-  const card = window.nishioBingo.bingoCard(lists.map((l, i) => ({ id: ids[i], cells: l.map(s => ({ on: !!S.visits[s.id] })) })));
-  const el = $('bingo');
-  el.hidden = !ps.reduce((n, p) => n + p.total, 0);
-  el.innerHTML = card.cells.map(c => {
-    const s = lists[c.row][c.col];
-    const bg = `style="background:rgb(${AREA_RGB[ids[c.row]].join(',')})"`;
-    if (!s) return `<span class="bgo-cell on free${c.line ? ' line' : ''}" ${bg}></span>`;
-    return `<span class="bgo-cell${c.on ? ' on' : ' off'}${c.line ? ' line' : ''}"${c.on ? ' ' + bg : ''}>${esc(s.icon || '📍')}</span>`;
-  }).join('');
-  const realOn = lists.reduce((n, l) => n + l.filter(s => S.visits[s.id]).length, 0), realTotal = lists.reduce((n, l) => n + l.length, 0);
-  el.setAttribute('aria-label', `ビンゴ ${realOn}/${realTotal}、そろった列 ${card.lineCount}`);
-}
-
-// 絵あわせ（神経衰弱）：その日の 12枚から 2枚ずつ めくる。状態は nsg_mem に（S のセーブは かえない・ポイントなし）。
-// めくり途中の 1枚は 画面の 変数だけ。ちがう 絵は 約900ms後に 閉じる（その間だけ 入力を うけない）
-let memPick = -1, memShown = [], memLock = false;
-function renderMemory() {
-  const el = $('memoryBox'), tr = $('memTries');
-  if (!el || !tr || !window.nishioMemory) { if (el) el.hidden = true; return; }
-  const day = ymd();
-  let rec = store.get('nsg_mem', null);
-  if (!rec || rec.day !== day || !Array.isArray(rec.found)) { rec = { day, found: [], tries: 0 }; store.set('nsg_mem', rec); memPick = -1; memShown = []; }
-  const cards = window.nishioMemory.deck(day);
-  el.hidden = false;
-  el.innerHTML = cards.map((c, i) => {
-    const f = rec.found.includes(c.pair), open = f || memShown.includes(i);
-    return `<button type="button" class="mem-card${f ? ' found' : open ? ' open' : ''}" data-i="${i}" aria-label="${i + 1}枚目${f ? ` ${c.icon} そろった` : open ? ` ${c.icon}` : ' うら'}">${open ? c.icon : ''}</button>`;
-  }).join('') + (rec.found.length >= cards.length / 2 ? '<span class="mem-star">⭐</span>' : '');
-  tr.textContent = rec.tries;
-  el.setAttribute('aria-label', `絵あわせ ${rec.found.length}/${cards.length / 2}、めくった回数 ${rec.tries}`);
-}
-$('memoryBox').addEventListener('click', e => {
-  const b = e.target.closest('.mem-card');
-  if (!b || memLock || !window.nishioMemory) return;
-  const day = ymd(), i = +b.dataset.i, cards = window.nishioMemory.deck(day);
-  const rec = store.get('nsg_mem', null);
-  if (!rec || rec.day !== day || !Array.isArray(rec.found)) { renderMemory(); return; }
-  if (!cards[i] || rec.found.includes(cards[i].pair) || i === memPick) return;
-  if (memPick < 0) { memPick = i; memShown = [i]; renderMemory(); return; }
-  const first = memPick;
-  rec.tries = (rec.tries | 0) + 1;
-  if (window.nishioMemory.judge(cards[first].pair, cards[i].pair)) {
-    rec.found.push(cards[i].pair); memPick = -1; memShown = [];
-    store.set('nsg_mem', rec); renderMemory();
-  } else {
-    store.set('nsg_mem', rec);
-    memShown = [first, i]; memLock = true; renderMemory();
-    setTimeout(() => { memShown = []; memPick = -1; memLock = false; renderMemory(); }, 900);
-  }
-});
-
-// スライドパズル：9マス（名物8種＋空き）。状態は nsg_slide に（S のセーブは かえない・ポイントなし）。
-const SLIDE_ICONS = ['🍵', '🍚', '🌾', '🏯', '🦐', '🌸', '🌊', '🍘'];
-function slideSolvable(t) {
-  let inv = 0;
-  const a = t.filter(v => v !== 8);
-  for (let i = 0; i < a.length; i++) for (let j = i + 1; j < a.length; j++) if (a[i] > a[j]) inv++;
-  return inv % 2 === 0;
-}
-function slideValid(t) {
-  return Array.isArray(t) && t.length === 9 && [...t].sort((a, b) => a - b).every((v, i) => v === i) && slideSolvable(t);
-}
-function slideLoad() {
-  const day = ymd();
-  let rec = store.get('nsg_slide', null);
-  if (!rec || rec.day !== day || !slideValid(rec.tiles)) {
-    rec = { day, tiles: window.nishioSlidePuzzle.start(day), moves: 0, done: false };
-    store.set('nsg_slide', rec);
-  } else if (!!rec.done !== window.nishioSlidePuzzle.solved(rec.tiles)) {
-    rec.done = window.nishioSlidePuzzle.solved(rec.tiles);
-    store.set('nsg_slide', rec);
-  }
-  return rec;
-}
-function renderSlidePuzzle() {
-  const el = $('slideBox'), mv = $('slideMoves');
-  if (!el || !mv || !window.nishioSlidePuzzle) { if (el) el.hidden = true; return; }
-  const rec = slideLoad();
-  el.hidden = false;
-  el.innerHTML = rec.tiles.map((v, i) => v === 8
-    ? '<span class="slide-tile blank" aria-hidden="true"></span>'
-    : `<button type="button" class="slide-tile" data-i="${i}" aria-label="${v + 1}番 ${SLIDE_ICONS[v]}">${SLIDE_ICONS[v]}<span class="slide-num">${v + 1}</span></button>`
-  ).join('') + (rec.done ? '<span class="slide-star">⭐</span>' : '');
-  el.classList.toggle('done', !!rec.done);
-  mv.textContent = rec.moves | 0;
-  el.setAttribute('aria-label', `スライドパズル、うごかした回数 ${rec.moves | 0}${rec.done ? '、そろった' : ''}`);
-}
-$('slideBox').addEventListener('click', e => {
-  const b = e.target.closest('.slide-tile[data-i]');
-  if (!b || !window.nishioSlidePuzzle) return;
-  const P = window.nishioSlidePuzzle, rec = slideLoad(), i = +b.dataset.i;
-  const next = P.move(rec.tiles, i);
-  if (next.every((v, k) => v === rec.tiles[k])) return;
-  rec.tiles = next; rec.moves = (rec.moves | 0) + 1;
-  rec.done = P.solved(next);
-  store.set('nsg_slide', rec); renderSlidePuzzle();
-});
-
-// じゃんけん：相手の 手は 日づけで 決まる。1日1回。状態は nsg_jan に（S のセーブは かえない・ポイントなし）。
-const JAN_HANDS = ['✊', '✌️', '✋'];
-const JAN_RESULT = { win: '⭕', lose: '❌', draw: '🔁' };
-function janSeed(day, round) { return day + ':' + round; }
-function janLoad() {
-  const day = ymd();
-  const raw = store.get('nsg_jan', null);
-  const r = raw && typeof raw === 'object' ? raw : {};
-  const wins = Number.isFinite(r.wins) && r.wins > 0 ? Math.floor(r.wins) : 0;
-  const round = Number.isInteger(r.round) && r.round >= 0 ? r.round : 0;
-  const played = r.day === day && Number.isInteger(r.mine) && r.mine >= 0 && r.mine <= 2 && JAN_RESULT[r.result];
-  const drew = r.day === day && r.mine === null && r.result === 'draw';
-  const rec = played ? { day, mine: r.mine, result: window.nishioJanken.judge(r.mine, window.nishioJanken.handOf(janSeed(day, round))), wins, round }
-            : drew ? { day, mine: null, result: 'draw', wins, round }
-            : { day, mine: null, result: null, wins, round: r.day === day ? round : 0 };
-  if (!raw || raw.day !== rec.day || raw.mine !== rec.mine || raw.result !== rec.result || raw.wins !== rec.wins || raw.round !== rec.round) store.set('nsg_jan', rec);
-  return rec;
-}
-function renderJanken() {
-  const el = $('jankenBox'), th = $('jankenTheirs'), rs = $('jankenResult'), wn = $('jankenWins');
-  if (!el || !th || !rs || !wn || !window.nishioJanken) { if (el) el.hidden = true; return; }
-  const rec = janLoad(), J = window.nishioJanken, theirs = J.handOf(janSeed(rec.day, rec.round)), done = rec.mine !== null, locked = done && rec.result !== 'draw';
-  el.hidden = false;
-  th.textContent = done ? JAN_HANDS[theirs] : '❓';
-  th.className = 'jan-hand' + (rec.result === 'win' ? ' win' : '');
-  th.setAttribute('aria-label', done ? `あいての手 ${JAN_HANDS[theirs]}` : 'あいての手 かくれている');
-  rs.textContent = rec.result ? JAN_RESULT[rec.result] : '';
-  rs.setAttribute('aria-label', rec.result ? `けっか ${JAN_RESULT[rec.result]}` : '');
-  wn.textContent = '⭐ ' + rec.wins;
-  el.querySelectorAll('.jan-btn').forEach(b => {
-    const h = +b.dataset.h;
-    b.disabled = locked;
-    b.classList.toggle('mine', done && h === rec.mine);
-    b.setAttribute('aria-label', `じぶんの手 ${JAN_HANDS[h]}${done ? (h === rec.mine ? '、えらんだ' : '') : ''}`);
-  });
-  el.setAttribute('aria-label', `じゃんけん、勝った回数 ${rec.wins}${rec.result ? '、' + JAN_RESULT[rec.result] : ''}`);
-}
-$('jankenBox').addEventListener('click', e => {
-  const b = e.target.closest('.jan-btn[data-h]');
-  if (!b || !window.nishioJanken) return;
-  const rec = janLoad();
-  if (rec.mine !== null && rec.result !== 'draw') return;
-  const h = +b.dataset.h, J = window.nishioJanken;
-  const res = J.judge(h, J.handOf(janSeed(rec.day, rec.round)));
-  if (res === 'draw') { rec.round += 1; rec.mine = null; rec.result = 'draw'; }
-  else { rec.mine = h; rec.result = res; if (res === 'win') rec.wins += 1; }
-  store.set('nsg_jan', rec); renderJanken();
-});
-
-function renderSugoroku() {
-  const b = sugorokuBoard([...TINT_AREAS].map(id => ({ id, ...areaProgress(id) })));
-  const el = $('sugoroku');
-  el.hidden = !b.total;
-  el.innerHTML = b.cells.map(c => `<span class="sg-cell"${c.on ? ` style="background:rgb(${c.rgb.join(',')})"` : ''}>${c.step === b.pos ? '🍚' : ''}</span>`).join('');
-  el.setAttribute('aria-label', `すごろく ${b.done}/${b.total}（${b.cols.map(c => { const a = areas.find(x => x.id === c.id); return `${a ? a.name : c.id} ${c.filled}/5`; }).join('、')}）`);
 }
 
 // 地区の名物の絵（tools/blender/pixel-art.py で Blender から作った 48×48。絵のない地区は ''）
@@ -4873,7 +4669,7 @@ window.nishioGo = {
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
-  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, blockTower, sugorokuBoard, bingoCard: window.nishioBingo && window.nishioBingo.bingoCard, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
+  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,

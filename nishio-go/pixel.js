@@ -12229,10 +12229,13 @@ function rollStep(dt) {
     if (fp > c0) { rp.vx += fx / fp * (fp - c0) * dt; rp.vy += fy / fp * (fp - c0) * dt; }
     else if (!mzSoft.on) { rp.vx = rp.vy = 0; return; }   // やわらかい 生け垣に めりこんだ ままの ときは 止めない（ばねで 押しもどす）
   } else {
+    const pvx = rp.vx, pvy = rp.vy;   // 力を足す前の速度（向きの変わり方の上限に使う）
     rp.vx += fx * dt; rp.vy += fy * dt;
     sp = Math.hypot(rp.vx, rp.vy);
     const ns = Math.max(0, Math.min(ROLL_MAX, sp - (cr + ROLL_LIN * gnd.drag * (wxr ? wxr.lin : 1) * (KP.lin || 1) * sp + ROLL_AIR * (KP.air || 1) * sp * sp) * dt));
-    rp.vx *= ns / sp; rp.vy *= ns / sp;
+    if (sp > 0) { rp.vx *= ns / sp; rp.vy *= ns / sp; }
+    const RS = window.nishioRollSync;
+    if (RS && RS.limitTurn) { const lt = RS.limitTurn(rp.vx, rp.vy, pvx, pvy, RS.TURN_PER_SEC * dt); rp.vx = lt.vx; rp.vy = lt.vy; }   // 方向転換：向きは 1秒に TURN_PER_SEC rad まで。速さは そのまま 弧を描いて 曲がる（rollsync.js）
   }
   const mz = mazeOn(), rb = mz ? (x, y) => mzBlocked(rp.x, rp.y, x, y) : rollBlocked;   // めいろの ときは めいろの 壁だけに 当たる
   const tube = mz ? mzNear(rp.x, rp.y) : null, inTube = !!tube && tube.d <= MZ_TUBE + 0.35;   // ゆるい めいろ：道すじの 筒の 中に いる（壁の かたまりの 中から 出る とき・読めて いない 所では これまでの 当たり）

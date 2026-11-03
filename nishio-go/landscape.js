@@ -44,5 +44,22 @@
       return isFinite(v) ? Math.min(0.33, Math.max(0.24, v)) : 0.24;
     } catch (e) { return 0.24; }
   }
-  root.nishioLandscape = { MOTIFS, SPAN, motifFor, phase, spanOf, shadeFor };
+  // 地区の境：隣の地区の模様が 縁の帯に 薄く 入りこんで 混ざる（Dorfromantik のように 景色を 切らない）
+  const BORDER_W = 0.42;   // 帯の幅（タイル幅に対する割合。0より大きく 0.5以下）
+  // 自分と 隣が ちがう 有効な地区のときだけ、隣の模様を返す。それ以外は null
+  function borderMotif(areaId, nAreaId) {
+    try {
+      if (typeof areaId !== 'string' || typeof nAreaId !== 'string' || areaId === nAreaId) return null;
+      if (!motifFor(areaId)) return null;
+      return motifFor(nAreaId);
+    } catch (e) { return null; }
+  }
+  // 境の帯の濃さ：自分の模様（0.24〜0.33）の 0.6倍を 0〜0.20 に 丸める。不正な値は 0.24 として 扱う
+  function borderAlpha(a) {
+    try {
+      const v = (typeof a === 'number' && isFinite(a) ? a : 0.24) * 0.6;
+      return Math.min(0.20, Math.max(0, v));
+    } catch (e) { return 0.144; }
+  }
+  root.nishioLandscape = { MOTIFS, SPAN, BORDER_W, motifFor, phase, spanOf, shadeFor, borderMotif, borderAlpha };
 })(typeof window !== 'undefined' ? window : globalThis);

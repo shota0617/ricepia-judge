@@ -7649,16 +7649,48 @@ function drawLandscapeTile(L, m, tx, ty, X, Y, T) {
 function drawLandscape(tx, ty, X, Y, T) {
   const L = window.nishioLandscape;
   if (!L) return;   // 読み込めなかったら 描かない
-  const m = L.motifFor(landAreaOf(tx, ty));
+  const area = landAreaOf(tx, ty), m = L.motifFor(area);   // 地区の判定は 1回（自分の模様と 境の帯の 両方に使う）
   if (!m) return;
   if (typeof L.spanOf !== 'function' || typeof L.shadeFor !== 'function') { drawLandscapeTile(L, m, tx, ty, X, Y, T); return; }   // 旧い landscape.js は 1マスずつの 従来の絵
   const sp = L.spanOf(tx, ty);
   if (!sp) return;
-  const S = (L.SPAN || 4) * T, u = T / 8, a = L.shadeFor(tx, ty);   // 区画の 一辺 S。濃さは 区画ごとに そろう
-  const col = `rgba(${m.color},${a})`;
+  const S = (L.SPAN || 4) * T, a = L.shadeFor(tx, ty);   // 区画の 一辺 S。濃さは 区画ごとに そろう
   ctx.save();
-  ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();   // タイルの 外へは はみ出さない
-  ctx.translate(X - sp.lx * T, Y - sp.ly * T);   // これより 区画の 左上が 原点（図形は 区画いっぱいで 決め、clip が このマスの 切片だけ のこす）
+  try {   // 途中で 例外が 出ても 開始時の save は かならず restore する
+    ctx.beginPath(); ctx.rect(X, Y, T, T); ctx.clip();   // タイルの 外へは はみ出さない
+    ctx.translate(X - sp.lx * T, Y - sp.ly * T);   // これより 区画の 左上が 原点（図形は 区画いっぱいで 決め、clip が このマスの 切片だけ のこす）
+    drawLandscapeSpan(m, S, T, `rgba(${m.color},${a})`);
+  } finally {
+    ctx.restore();
+  }
+  // 境の帯：隣が ちがう地区なら、縁に そって 隣の模様が 薄く 入りこむ（隣の区画空間で 描くので 模様が つづく）
+  if (typeof L.borderMotif !== 'function' || typeof L.borderAlpha !== 'function' || !(L.BORDER_W > 0)) return;
+  const bw = L.BORDER_W * T;
+  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+    const nx = tx + dx, ny = ty + dy;
+    const nm = L.borderMotif(area, landAreaOf(nx, ny));
+    if (!nm) continue;
+    const nsp = L.spanOf(nx, ny);
+    if (!nsp) continue;
+    ctx.save();
+    try {
+      ctx.beginPath();
+      ctx.rect(dx > 0 ? X + T - bw : X, dy > 0 ? Y + T - bw : Y, dx ? bw : T, dy ? bw : T);   // その向きの 縁の 帯
+      ctx.clip();
+      ctx.translate(X + dx * T - nsp.lx * T, Y + dy * T - nsp.ly * T);   // 隣の マスの 区画の 原点
+      for (const off of [-S, 0, S]) {   // 模様は 区画ごとに 同じ形の くり返し：境が 区画の 端と 重なっても 切れないよう 前後の 区画分も 描く
+        ctx.save(); ctx.translate(dx ? off : 0, dy ? off : 0);
+        drawLandscapeSpan(nm, S, T, `rgba(${nm.color},${L.borderAlpha(L.shadeFor(nx, ny))})`);
+        ctx.restore();
+      }
+    } finally {
+      ctx.restore();
+    }
+  }
+}
+// 区画空間（原点は 区画の 左上。呼ぶ側が translate 済み）で 模様1つを 描く。col は 色（rgba）
+function drawLandscapeSpan(m, S, T, col) {
+  const L = window.nishioLandscape, u = T / 8;
   ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = Math.max(1, u * 0.7);
   if (m.kind === 'tea') {   // 茶畑のうね：ゆるく 傾いた 縞4本（区画の中で 高さが 変わり、マスごとに 切片が 違う。傾きの 落ち幅は 縞の 間隔と 同じで、隣の区画とも つづく）
     const h = S * 0.045, d = S * 0.125;
@@ -7685,7 +7717,6 @@ function drawLandscape(tx, ty, X, Y, T) {
     ctx.beginPath(); ctx.arc(S / 2, S / 2, T * 0.9, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(S / 2, S / 2, T * 1.7, 0, Math.PI * 2); ctx.stroke();
   }
-  ctx.restore();
 }
 // 1マスを描く（地形の絵・道のつながり・建物の壁・かざり・高さの影・足あと）。歩く地図（frame）と、めいろ（meiro.js の paintRegion）で使う
 function drawTile(tx, ty, X, Y, T, f, now) {

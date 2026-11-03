@@ -311,6 +311,22 @@ function areaTint(id, p) {
 // 地区ごとの落ち着いた色味（第3弾サイクル3 P2：テクテクライフの「歩いた所が自分の色になる」。金色の濃淡とは別に、地区を見分ける色。色だけに せず 地区名も そえる）
 const AREA_RGB = { nishio: [122, 168, 84], isshiki: [78, 146, 190], kira: [196, 124, 88], hazu: [146, 118, 176], sakushima: [66, 166, 158] };
 const areaRgb = id => AREA_RGB[id] || null;
+// 大きなめぐりリング（リングフィット：満ちていく輪＋中心の数字1つ）。areaProgress の結果 [{id,done,total}] から、地区ごとに総数ぶんの角度で区切った conic-gradient を作る（新しい集計・セーブ項目なし）
+function exploreRing(list) {
+  const n = v => Number.isFinite(v) ? Math.max(0, Math.floor(v)) : 0;
+  const rows = (Array.isArray(list) ? list : []).map(x => { const total = n(x && x.total); return { id: x && x.id, total, done: Math.min(n(x && x.done), total) }; }).filter(x => x.total > 0);
+  const total = rows.reduce((a, x) => a + x.total, 0), done = rows.reduce((a, x) => a + x.done, 0);
+  if (!total) return { done: 0, total: 0, pct: 0, gradient: '' };
+  let at = 0;
+  const stops = [];
+  rows.forEach(x => {
+    const rgb = (AREA_RGB[x.id] || [227, 164, 43]).join(','), a0 = at / total * 100, a1 = (at + x.done) / total * 100, a2 = (at + x.total) / total * 100;
+    at += x.total;
+    if (x.done > 0) stops.push(`rgb(${rgb}) ${a0}% ${a1}%`);
+    if (x.done < x.total) stops.push(`rgba(${rgb},.18) ${a1}% ${a2}%`);
+  });
+  return { done, total, pct: Math.floor(100 * done / total), gradient: stops.join(', ') };
+}
 const areaZone = t => { const sp = t && t.id && spots.find(x => x.id === t.id); return (sp && sp.area) || (t && Number.isFinite(t.lat) && spots.length ? areaNear(t) : '') || ''; };
 // 行き先の距離順チップ（P6）：主行き先と ほかの 候補を 近い 順に。表示だけで、行き先の 決め方は かえない。alt：alts の 何番目か（主行き先は -1）
 function guideChips(from, g, alts, zoneOf) {
@@ -3374,6 +3390,13 @@ function renderLog() {
       ${simple() ? '' : `<small>${esc(a.catch || '')}</small>`}<span class="bar"><i style="width:${pct}%"></i></span>${areaDexHtml(p)}</span><span class="num">${p.done}/${p.total}${p.total ? `<small>　${leftLabel(p.done, p.total)}</small>` : ''}</span></li>`;
   }).join('') : '<li class="empty">地区の情報を読み込めませんでした</li>';
 
+  const ring = exploreRing([...TINT_AREAS].map(id => ({ id, ...areaProgress(id) })));
+  const ringEl = $('exploreRing');
+  ringEl.hidden = !ring.total;
+  ringEl.style.background = ring.gradient ? `conic-gradient(${ring.gradient})` : '';
+  $('explorePct').textContent = ring.pct + '%';
+  ringEl.setAttribute('aria-label', `全地区のめぐり具合 ${ring.done}/${ring.total}（${ring.pct}%）`);
+
   $('logList').innerHTML = S.log.length ? S.log.slice(0, 50).map(l =>
     `<li><span class="ico">${simple() && (l.type === 'chest' || l.type === 'welcome') ? '<img class="gthumb" src="nishio-go/art/chest.png" alt="" width="28" height="28"/>' : simple() ? (l.type === 'jump' ? PIA('jump', '') : PI(LOG_PI[l.type] || 'flag', '')) : l.type === 'walk' ? '👣' : l.type === 'use' ? '🎁' : esc(l.icon || '📍')}</span><span class="main"><b>${esc(l.name)}</b>
       ${simple() ? '' : `<small>${l.type === 'walk' ? l.date.replace(/^\d+-0?(\d+)-0?(\d+)$/, '$1/$2') : fmtTime(l.t)}</small>`}</span><span class="num${l.pts < 0 ? ' minus' : ''}">${l.pts > 0 ? '+' : ''}${l.pts}</span></li>`).join('')
@@ -4612,7 +4635,7 @@ window.nishioGo = {
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },
-  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
+  get areas() { return areas; }, get glowGoal() { return glowLeft(glow.goal) > 0 ? glow.goal : null; }, get glowNear() { return glowLeft(glow.near) > 0 ? glow.near.list : []; }, areaProgress, exploreRing, areaTint, areaRgb, areaZone, guideChips, AREA_RGB,
   get selected() { return selected; }, CFG, REGION, playBounds, cityAt, cityNear, placeAt, setPlace, inPlay,
   // share.js（シェア・広告からの来訪）から使う
   begin, track, utmUrl, arriveMsg, npcBriefMsg, INTRO_SCENES, jumpReward, harvestReward, dankyuReward, hiryoReward, oldmapFound, oldmapHas, kiraraFound, kiraraHas, yatsuMushiDue, yatsuMushiSeen, yatsuMushiReward, rewardBusy, rewardSoon, showReward, toastHold, toastFlush, miniBest, miniRecords, miniStart, FRIEND_BONUS,

@@ -683,7 +683,7 @@ scene.add(rig);
 const P = {};                                  // 動く部品
 let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikobaeGeo = null, hikobaeMat;
 
-const IMPL_FILE = { rotary: 'rotary_v2.glb', harrow: 'harrow_v2.glb', plow: 'plow.glb', disc: 'disc_harrow.glb', ditch: 'ditcher.glb', aze: 'azenuri.glb' }[IMPL_ID] || null;   // ロータリー／ハローは v2 の姿に差し替え（サイクル65）
+const IMPL_FILE = { rotary: 'rotary_v2.glb', harrow: 'harrow_v2.glb', plow: 'plow.glb', disc: 'disc_harrow.glb', ditch: 'ditcher_v2.glb', aze: 'azenuri.glb' }[IMPL_ID] || null;   // ロータリー／ハローは v2 の姿に差し替え（サイクル65）
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? load(IMPL_FILE, 'h') : null]).then(([t, f, h]) => {
   prog.t = prog.f = 1; showProg();
   if (h && (IS_HARROW || IMPL_ID === 'rotary')) {   // ハロー／ロータリーv2：Rotary ごと差しかえる（名前・階層・原点は差し替え元と同一）

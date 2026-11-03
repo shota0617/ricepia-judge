@@ -2596,7 +2596,7 @@ const T4 = {
   lanes() {
     const a = [], x0 = -HX + 0.5 + TILL_W / 2, xe = HX - 0.5 - TILL_W / 2;
     for (let x = x0; x <= xe + 1e-6; x += PITCH) a.push(x);
-    if (a.length && xe - a[a.length - 1] > 0.3) a.push(xe);   // 東端に残りがあれば 最後の列を端に合わせる（端の残しを作らない）
+    if (a.length && xe - a[a.length - 1] > 0.2) a.push(xe);   // 東端に残りがあれば 最後の列を端に合わせる（端の残しを作らない。T6で検証: 幅1.4では残り0.3で東端の1列が残ったため閾値は0.2）
     return a;
   },
   cov(cx) {                                   // その列の帯（中心±作業幅/2、作業範囲の内側）の耕せた割合。走査は帯の列の範囲だけ（Codex指摘：全ます目走査を避ける）
@@ -2711,6 +2711,38 @@ const YAMA = { on: false, n: 0,
       if (a >= 0 && b >= 0 && a < NX && b < NZ && c2 !== c && tilledMask[c2]) setCell(c2, cellWave(c2), CLOD[c2]);
     }
   } };
+// T6 作業機ごとの跡（モーション磨き総仕上げ）: 作業機ごとに、耕した跡の断面（模様）と土の粗さが変わる。形と粗さだけ・文字なし。
+// 物差し＝断面の形が作業機で分かれること（ループ側 scripts/sim_t6_pattern.js）と、T6.measure() で幅とカバー率・重なり率・残し率がいつでも測れること（自動計測の固定）。
+const T6 = {
+  roughK: { rotary: 1, harrow: 0.6, plow: 1.7, disc: 1.25, ditch: 1, aze: 0.3, ridge: 0.8, flail: 0.5, sub: 0.9, mulch: 0.15 }[IMPL_ID],
+  h: new Float32Array((NX + 1) * (NZ + 1)), gx: new Float32Array((NX + 1) * (NZ + 1)), gz: new Float32Array((NX + 1) * (NZ + 1)),
+  profile(lx) {
+    switch (IMPL_ID) {
+      case 'plow': return 0.038 * Math.cos(2 * Math.PI * lx / 0.5);
+      case 'disc': return 0.02 * Math.cos(2 * Math.PI * lx / 0.6 + 0.8);
+      case 'ditch': return -0.085 * Math.exp(-((lx / 0.16) ** 2)) + 0.028 * Math.exp(-(((Math.abs(lx) - 0.38) / 0.13) ** 2));
+      case 'ridge': return 0.055 * Math.exp(-((lx / 0.42) ** 2)) - 0.012;
+      case 'flail': return 0.008 * Math.cos(2 * Math.PI * lx / 0.5);
+      case 'sub': return -0.05 * (Math.exp(-(((lx + 0.6) / 0.14) ** 2)) + Math.exp(-((lx / 0.14) ** 2)) + Math.exp(-(((lx - 0.6) / 0.14) ** 2)));
+      default: return 0;
+    }
+  },
+  slope(lx) { return (this.profile(lx + 0.01) - this.profile(lx - 0.01)) / 0.02; },
+  till(i, j) {
+    const cs = Math.cos(S.yaw), sn = Math.sin(S.yaw), o = S.x * cs - S.z * sn; let ch = false;
+    for (const [a, b] of [[i, j], [i + 1, j], [i + 1, j + 1], [i, j + 1]]) {
+      const v = a * (NZ + 1) + b, [x, z] = warp(-HX + a * CELL, -HZ + b * CELL), lx = x * cs - z * sn - o, h = this.profile(lx), s = this.slope(lx);
+      if (Math.abs(h - this.h[v]) > 0.002 || Math.abs(s * cs - this.gx[v]) + Math.abs(s * sn + this.gz[v]) > 0.02) { this.h[v] = h; this.gx[v] = s * cs; this.gz[v] = -s * sn; ch = true; }
+    }
+    return ch;
+  },
+  refresh(i, j, c) {
+    for (let a = i - 1; a <= i + 1; a++) for (let b = j - 1; b <= j + 1; b++) {
+      const c2 = a * NZ + b;
+      if (a >= 0 && b >= 0 && a < NX && b < NZ && c2 !== c && tilledMask[c2]) setCell(c2, cellWave(c2), CLOD[c2]);
+    }
+  },
+  measure() { const r = T2.rates(); return { impl: IMPL_ID, width: TILL_W, covered: r.covered, overlap: r.overlap, left: r.left, done: T5.isDone() }; } };
 const cellWave = c => WAVY[c] ? COVER.wave(WAVD[c]) : null;   // 描きなおすときに 波うった ます目の波を 消さない
 function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ・UV・法線（wv：波うち。clod：水分が多くて 大きな土塊が残る 0〜1）
   const i = Math.floor(c / NZ), j = c % NZ, x0 = -HX + i * CELL, z0 = -HZ + j * CELL, x1 = x0 + CELL, z1 = z0 + CELL;
@@ -2720,10 +2752,11 @@ function setCell(c, wv, clod = 0) {               // ます目の四隅の高さ
     const [x, z] = warp(x0_, z0_);
     const hx = Math.sin(x * 41.3 + z * 17.1), hz = Math.sin(x * 13.7 - z * 29.3);   // 土塊の面の向き（場所で決まる）
     const v = (i + (k === 1 || k === 2 ? 1 : 0)) * (NZ + 1) + j + (k >= 2 ? 1 : 0);   // 格子の角（二山盛りの山）
-    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : fine ? 0.25 * jitter(x, z) : jitter(x, z) * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c] + DIP[c] + (YAMA.on ? YAMA.h[v] : 0), z], c * 12 + k * 3);
+    pos.set([x, TILL_Y + (SHIRO ? 0.004 * Math.sin(x * 3 + z * 2) : fine ? 0.25 * jitter(x, z) : jitter(x, z) * T6.roughK * (1 + 1.5 * clod) + clod * 0.02 * (1 + hx * hz)) + (wv ? wv.y(x, z) : 0) + TILTY[c] + DIP[c] + (YAMA.on ? YAMA.h[v] : 0) + T6.h[v], z], c * 12 + k * 3);
     uv.set([x / 2, -z / 2], c * 8 + k * 2);
     const n = wv ? wv.n(x, z) : [0, 1, 0];
     if (YAMA.on && (YAMA.gx[v] || YAMA.gz[v])) { const l = Math.hypot(n[0], n[1], n[2]); n[0] = n[0] / l - YAMA.gx[v]; n[1] /= l; n[2] = n[2] / l - YAMA.gz[v]; const m = Math.hypot(n[0], n[1], n[2]); n[0] /= m; n[1] /= m; n[2] /= m; }   // 山の斜面に 陰がつく
+    if (T6.gx[v] || T6.gz[v]) { const l = Math.hypot(n[0], n[1], n[2]); n[0] = n[0] / l - T6.gx[v]; n[1] /= l; n[2] = n[2] / l - T6.gz[v]; const m = Math.hypot(n[0], n[1], n[2]); n[0] /= m; n[1] /= m; n[2] /= m; }   // T6：跡の斜面に 陰がつく
     if (clod > 0) { n[0] += hx * 0.45 * clod; n[2] += hz * 0.45 * clod; const l = Math.hypot(n[0], n[1], n[2]); n[0] /= l; n[1] /= l; n[2] /= l; }   // 大きな土塊の面で 陰がまだらに
     nor.set(n, c * 12 + k * 3);
   });
@@ -2742,6 +2775,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
     if (WAVY[c] && !COVER.stuck) { WAVY[c] = 0; setCell(c, null, CLOD[c]); }   // 直したあとに耕しなおすと 波がならされる
     if (DIP[c]) { DIP[c] = 0; setCell(c, cellWave(c), CLOD[c]); }   // 始発の盛り上がり・終着のくぼみも 耕しなおすと ならされる
     if (YAMA.on && YAMA.till(i, j)) { setCell(c, cellWave(c), CLOD[c]); YAMA.refresh(i, j, c); }   // 耕しなおすと そのときの山の並び・向きになる
+    if (T6.till(i, j)) { setCell(c, cellWave(c), CLOD[c]); T6.refresh(i, j, c); }   // T6：耕しなおすと そのときの作業機の跡の向きになる
     if (season === 'aki' && (S.retill = (S.retill || 0) + 1) > 1500) voice('wara');   // 秋：同じ所をもう一度耕している
     if (!SHIRO && (S.odo || 0) - TODO[c] > 1.5 && TILLN[c] < 255) {
       OMO.bury(c);                                // 耕しなおすと 出た オモダカの 塊茎は また 土に まざる
@@ -2761,6 +2795,7 @@ function tillCell(i, j, lx = 0) {               // lx：作業機のまん中か
   const wv = COVER.stuck ? COVER.wave() : null;  // リヤカバーが固まっていると 波うつ
   TILTY[c] = KATA.y(lx);                          // ハローが傾いていると 片側が浅い
   if (YAMA.on && YAMA.till(i, j)) YAMA.refresh(i, j, c);
+  if (T6.till(i, j)) T6.refresh(i, j, c);
   if (YAMA.on && ++YAMA.n === 600) {              // 24m² ほど耕したら
     toast('⛰️ 二山盛り：1 回通るごとに 土の山が 2 本できた。稲わらは よく埋まるが、平耕より 田面の高い低いが わかりにくい', 6);
     setTimeout(() => voice('futayama'), 6500); setTimeout(() => voice('hirakou'), 6500);
@@ -10349,7 +10384,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T4, T5, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -2228,12 +2228,9 @@ function mzQuest(done) {
 // イベント「ドット絵ムービー」（movie.js）：西尾の海と大地の話（shizen.js）は、文で ばらばらに出すのではなく、ゆかりの名所に着いたときに ムービーで見せる。
 // 最後まで見ると、その話が まちメモ に残る。途中で閉じたら、次に着いたとき（名所の窓の「📽️ ムービー」からも）また見られる
 const movieOf = s => (window.NISHIO_MOVIE && s ? NISHIO_MOVIE.movieAt(s.id, s.area) : null);
-function movieCheck(s) {
-  const m = movieOf(s);
-  if (!m || (S.movies || []).includes(m.id) || s.shop) return;
-  movieWhenFree(m.id);
+function movieCheck() {
+  // 自動では 再生しない（流れを 止めない）：名所の窓の「📽️ ムービー」ボタンから 自分で 見る
 }
-// ごほうびの画面・人の話・ミニゲーム・殿堂入りの画面が出ている間は待ってから（予約したときの記録が切りかわったら やめる）
 function shopAfter(s, key = stateKey(), t0 = Date.now()) {   // 当店でチェックインしたあと：ごほうびが閉じたら、当店の窓を出す（ほかの窓を開いた・30秒すぎた ときは出さない）
   (function go() {
     if (stateKey() !== key || !$('pxInfo').hidden || Date.now() - t0 > 30000) return;
@@ -2241,16 +2238,6 @@ function shopAfter(s, key = stateKey(), t0 = Date.now()) {   // 当店でチェ�
     if (document.body.classList.contains('px')) { $('pxInfoBody').innerHTML = popupHtml(s); $('pxInfo').hidden = false; }
     else markers.get(s.id)?.openPopup();
   })();
-}
-function movieWhenFree(id, key = stateKey()) {
-  if (movieWhenFree.wait) return;
-  movieWhenFree.wait = true;
-  function go() {
-    if (stateKey() !== key) { movieWhenFree.wait = false; return; }
-    if (rewardBusy() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || medashiOpen() || document.querySelector('[role="dialog"]:not([hidden])')) return setTimeout(go, 600);   // イベントの窓（.medashi）・シェア（ごほうびの「📣 シェア」から開く）などの ダイアログが 開いている 間も 待つ
-    movieWhenFree.wait = false; playMovie(id);
-  }
-  setTimeout(go, 50);   // チェックインの とちゅうで よばれる：そのあと 出す ごほうびの 窓を 待つ（すぐ 調べると まだ ごほうびが なく、ムービーが ごほうびと「🏁 ゴール！」の 上に 出て かくしていた）
 }
 function playMovie(id) {
   if (!window.NISHIO_MOVIE) return;
@@ -3203,7 +3190,7 @@ function walkBags(d) {
 const bagDone = () => { const b = Array.isArray(S.bags) && S.bags[0]; return !!b && b.walked >= b.km * 1000; };
 // ほかのごほうびが出ている間・絵を読みこんで出るのを待っている間は待つ（重ならないように。消えてしまわないように）
 const rewardBusy = () => $('reward').classList.contains('show') || !!showReward.waiting || !!(showReward.pending && showReward.pending.length);
-const rewardSoon = () => rewardBusy() || !!openBagSoon.t || !!movieWhenFree.wait;   // 開く予約をした おみやげ袋・ムービーも（旧地図などのイベントは、これが済んでから始める）
+const rewardSoon = () => rewardBusy() || !!openBagSoon.t;   // 開く予約をした おみやげ袋も（旧地図などのイベントは、これが済んでから始める）
 function openBagSoon() {
   if (openBagSoon.t) return;
   const key = stateKey();   // 予約したときの記録。モードを切り替えたら、その記録の袋は戻ったときに開く（refreshNearby がまた予約する）

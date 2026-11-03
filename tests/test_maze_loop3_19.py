@@ -39,7 +39,7 @@ class RewardNonBlocking(unittest.TestCase):
         self.assertNotIn("タップで とじる", CSS)
 
     def test_map_covered_ignores_reward(self):
-        body = func_body(PIXEL, "function mapCovered(soft)")
+        body = func_body(PIXEL, "function mapCovered(soft, free)")
         self.assertNotIn("$('reward')", body)
 
     def test_ending_has_close(self):

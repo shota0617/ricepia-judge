@@ -882,7 +882,7 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   const day = dayState();
   let h = day.h100;
   if (h && h.done) return;
-  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter('👣 100歩たんけん：はじめての道を さがそう'); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
+  if (!h) { h = day.h100 = { steps: 0, fresh: 0, m: 0 }; toastAfter('👣 100歩たんけん'); }   // さんぽ仲間も毎日たんけんする（日で決まる 20〜60マス）
   const rest = H100.steps * TRAIL_M - (h.m || 0), part = meters > rest ? Math.max(0, rest) / meters : 1;   // 100歩（800m）を またぐ1回は、800m までの分だけ
   h.m = (h.m || 0) + meters;
   const take = Math.min(Math.floor(h.m / TRAIL_M) - h.steps, H100.steps - h.steps), before = h.steps;
@@ -890,7 +890,7 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   if (take <= 0) return;
   h.steps += take;
   const P = window.nishioPixel;
-  if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100（はじめての道 ${h.fresh}）`); save(); }
+  if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100`); save(); }
   if (h.steps < H100.steps) return;
   h.done = true;
   const best = h.fresh > (S.h100best || 0), win = best && (S.h100best || 0) > 0, pts = Math.min(H100.cap, h.fresh) + (win ? H100.win : 0);   // 前の 自己ベストを こえると +5（ほかの 人とも、さんぽ仲間とも くらべない）
@@ -898,8 +898,7 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   weekStat().h100 = (weekStat().h100 || 0) + 1;   // 先週のさんぽ に「100歩たんけん ○回」
   if (pts) { gainPoints(pts); S.log.unshift({ type: 'h100', t: Date.now(), pts, icon: '👣', name: `100歩たんけん：はじめての道 ${h.fresh}マス` }); }
   save(); badgesSoon();   // たんけん名人
-  toastAfter(`🏁 100歩たんけん おわり！ はじめての道 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}${best && h.fresh ? '　🎉 自己ベスト！' : S.h100best ? `（自己ベスト ${S.h100best}マス）` : ''}`);
-  toastAfter(h.fresh ? `🏃 ${RIVAL}「はじめての道 ${h.fresh}マス、いい たんけんだったね。あしたも 知らん道を 歩こまい」` : `🏃 ${RIVAL}「きょうは なじみの道だったね。あしたは 知らん道も 歩いてみりん」`);
+  toastAfter(`🏁 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}${best && h.fresh ? ' 🎉' : ''}`);   // 数字だけ（運営者の声 2026-11-03「文字が多すぎる」）
   track('h100', { fresh: h.fresh, best, win, mode: demo ? 'play' : 'walk' });
 }
 
@@ -2491,20 +2490,12 @@ function renderGuide() {
   const mr = demo && window.nishioPixel && nishioPixel.maze && nishioPixel.maze.route ? nishioPixel.maze.route() : null;   // 地図の めいろ：まっすぐ ではなく めいろの 道のり
   const far = mr ? `🌀${fmtM(mr.m)}` : fmtM(dist(me, g));   // 🌀：めいろの 道のり（名前が 長くても 入るように みじかく）
   const gname = `<em class="gn">${mr ? '🏁 ' : ''}${esc(g.name)}</em>`;   // めいろの ときは 行き先が ゴール（地図の 🏁 と おなじ しるし）。長い 名前は こちらを「…」に して 道のりは のこす
-  const dir = bearing(me, g), head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(dir)}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${dir}へ ${far}</span>`;
-  el.innerHTML = `<b>${head}</b><small>${esc(g.mine ? '自分で選んだ行き先' : g.by)}「${esc(g.why)}」</small>`
+  const head = simple() && window.NSG_ICONS ? `${NSG_ICONS.arrow(bearing(me, g))}${guideThumb(g)}${g.byId ? PIA('scroll', 'イベント') : ''} ${gname}<span>　${far}</span>` : `${g.byId ? '📜' : '🧭'} ${gname}<span>　${far}</span>`;   // 1行だけ：目的地の名前と 距離（運営者の声 2026-11-03「文字が多すぎる」）
+  el.innerHTML = `<b>${head}</b>`
     + (alts.length ? `<span class="alts"><em>ほかの行き先：</em>${alts.map((a, i) => `<button type="button" class="btn mini" data-alt="${i}">↪ ${esc(a.name)}${me ? `（${fmtM(dist(me, a))}）` : ''}</button>`).join('')}</span>` : '');
   el.title = `${g.by}「${g.why}」`;
   // glowHtml / treasureHtml は 文字を 減らすため ここでは 呼ばない（サイクル25。関数は 残す）
-  const chips = guideChips(me, g, alts, areaZone);
-  if (chips.length > 1) {   // 距離順チップ：いつも 見える。主行き先は ✓、ほかを 押すと そこへ 変わる（候補が 1つだけの ときは 出さない）
-    el.insertAdjacentHTML('beforeend', `<span class="chips">${chips.map(c => {
-      const rgb = areaRgb(c.zone), ar = areas.find(a => a.id === c.zone), sw = rgb ? ` style="--zc:${rgb.join(',')}"` : '';
-      const gl = glowLeft(glow.goal) > 0 && glow.goal.name === c.name;
-      return `<button type="button" class="chip${c.main ? ' main' : ''}${rgb ? ' zone' : ''}${gl ? ' glow' : ''}"${sw}${c.main ? ' aria-current="true"' : ` data-alt="${c.alt}"`}>${c.main ? '✓ ' : ''}${gl ? '✨' : ''}${ar && rgb ? `<i class="zn">${esc(ar.name)}</i>` : ''}${esc(c.name)} ${fmtM(c.m)} ${c.dir}</button>`;
-    }).join('')}</span>`);
-    el.classList.add('hasChips');
-  } else el.classList.remove('hasChips');
+  el.classList.remove('hasChips');   // 距離順チップは 出さない（guideChips は 純関数として 残す）
 }
 const DIR8 = ['北', '北東', '東', '南東', '南', '南西', '西', '北西'];
 function bearing(a, b) {
@@ -2527,6 +2518,7 @@ function renderKoyomi() {
   const el = $('koyomi');
   if (!el || !KO) return;
   const now = new Date(), px = document.body.classList.contains('px');
+  if (px) { el.hidden = true; renderKoyomi.key = ''; return; }   // ドット絵の 地図では こよみの 札を 出さない（運営者の声 2026-11-03「文字が多すぎる」）
   const pc = px ? place : { city: ((me && placeAt(me.lat, me.lng)) || {}).name || '', town: '' };
   const key = ymd() + ':' + now.getHours() + ':' + pc.city + ':' + pc.town;
   if (WX) {   // 天気は10分ごとに取り直す（weather.js）。予報の地域（東部・西部）をまたいだら、1分を待たずにすぐ

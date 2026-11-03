@@ -35,5 +35,21 @@
       return { vx: sp * c, vy: sp * s };
     } catch (e) { return { vx: 0, vy: 0 }; }
   }
-  root.nishioRollSync = { R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn };
+  // 地面の感じ（M4）：地区ごとに ころがり抵抗(crr)と 速さ比例の減り(lin)の 倍率を少しずつ変える（0.8〜1.3。港は よく転がり、茶畑・砂の島は 少し重い）
+  const AREA_FEEL = {
+    isshiki: { crr: 0.82, lin: 0.85 },
+    kira: { crr: 0.95, lin: 0.97 },
+    hazu: { crr: 1.12, lin: 1.08 },
+    nishio: { crr: 1.18, lin: 1.10 },
+    sakushima: { crr: 1.28, lin: 1.15 }
+  };
+  for (const k in AREA_FEEL) Object.freeze(AREA_FEEL[k]);
+  Object.freeze(AREA_FEEL);   // 公開しても書きかえられない（純関数の前提を守る。Codexレビュー指摘）
+  function groundFeel(areaId) {
+    try {
+      const f = typeof areaId === 'string' && Object.prototype.hasOwnProperty.call(AREA_FEEL, areaId) ? AREA_FEEL[areaId] : null;
+      return f ? { crr: f.crr, lin: f.lin } : { crr: 1, lin: 1 };
+    } catch (e) { return { crr: 1, lin: 1 }; }
+  }
+  root.nishioRollSync = { R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

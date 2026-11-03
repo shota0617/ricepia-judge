@@ -1014,4 +1014,12 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 .pq-choice{display:block;width:100%;padding:14px 12px;margin:8px 0 0;font-size:17px;font-weight:700}
 .pq-res{font-size:32px;margin:6px 0 0}
 .pq-res small{display:block;font-size:17px;font-weight:700}
+/* きろく画面の 14日スタンプ：数字と 色だけ（金色＝さんぽした日、太い輪＝今日） */
+.ds-card[hidden]{display:none}
+.ds-card{text-align:center}
+.ds-card h3{margin:0 0 8px;font-size:16px}
+.ds-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.ds-cell{display:flex;align-items:center;justify-content:center;min-height:44px;font-size:20px;font-weight:700;border-radius:10px;background:rgba(0,0,0,.06);color:rgba(0,0,0,.45)}
+.ds-cell.on{background:#f5c542;color:#5a3d00}
+.ds-cell.today{box-shadow:0 0 0 4px #c98a00}
 .pq-n{margin:4px 0 0;font-size:17px;font-weight:700}

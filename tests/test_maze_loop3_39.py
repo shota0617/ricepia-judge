@@ -73,7 +73,7 @@ class Diff(unittest.TestCase):
     def test_only_pixel_changed(self):
         names = subprocess.run(["git", "diff", "origin/main", "--name-only"], cwd=ROOT, check=True,
                                capture_output=True, text=True, encoding="utf-8").stdout.split()
-        self.assertTrue(set(n for n in names if not n.startswith("tests/") and n not in ("nishio-go.html", "nishio-go/style.css", "nishio-go/game.js", "nishio-go/kometalk.js")) <= {"nishio-go/pixel.js", "nishio-go/postcard.js", "nishio-go/photoquiz.js"})   # 後のサイクルでは 吹き出し廃止の 4ファイルや ポストカードの ファイルも 差分に 入る
+        self.assertTrue(set(n for n in names if not n.startswith("tests/") and n not in ("nishio-go.html", "nishio-go/style.css", "nishio-go/game.js", "nishio-go/kometalk.js")) <= {"nishio-go/pixel.js", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js"})   # 後のサイクルでは 吹き出し廃止の 4ファイルや ポストカードの ファイルも 差分に 入る
 
 
 if __name__ == "__main__":

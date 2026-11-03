@@ -224,6 +224,7 @@
   <button id="bEasy" title="かんたんアシスト（K）：畦の手前で止まる・速さをおさえる・まっすぐを手伝う・白線で上げる">🔰</button>
   <button id="bEco" title="耕すときのエンジン回転（I）：2500 → 2000 → 1800。下げると軽油がへるが 力の余裕が少ない。DPF の再生は 2000 回転以上">⛽2500</button>
   <button id="bAssist" class="ico" data-i="🧭" title="直進アシスト（G：始点 A → 終点 B を登録して入切。Shift+G で登録しなおし）">直進 A点</button>
+  <button id="bAuto" class="ico" data-i="🌙" title="のんびり自動運転（J）：列にそって ゆっくり自動で耕す。キー・ボタン・なぞりで 手動にもどる">🌙 自動</button>
   <button id="bGear" class="ico" data-i="⚙3" title="主変速（Q で下げる・E で上げる）">変速 3</button>
   <button id="bFast" class="ico" data-i="⏩" title="早送り（F）">⏩ ×1</button>
   <button id="bArt" class="hidden ico" data-i="📸" title="田んぼアートを仕上げて、ドローンで上から撮る（Enter）">📸 完成</button>
@@ -7867,6 +7868,81 @@ const TRACE = {
     return true;
   }
 };
+// ---- のんびり自動運転（サイクル75、ユーザー指示 2026-11-03 21:20「平和でのんびり自動運転」・21:23「転がりつづける」）----
+// ボタン1つ（🌙自動・J）で、T4の列にそって ゆっくり（0.85m/s）自動で耕す。眺めているだけでのんびりできる形で、競争・タイマー・失敗は入れない。
+// 列は step 本ずつ飛ばして巡回し、列間隔3.9m以上の半円ターン（半径1.95m以上＝最小旋回半径1.84mを満たす）で往復する。区間の切れ目（西端→東端）は端沿いの直線と2つの弧でつなぐ。
+// 物差し（ループ側 scripts/sim_t7_auto.js）: ロータリー 完走・直線部横ずれ最大0.409m・列の帯（|z|<=19.5）カバー率0.9895 / ハロー 完走・0.205m・0.9931。
+// 操作に触れたら手動にもどる: キー・パッド（key が立つ）／なぞり開始（TRACE.begin 成功時）／ボタンの押し直し。エンスト中と終了後は追従せず、2.5秒進めなければ自動を切る（畦へ押しつづけない）。
+const AUTO = {
+  pts: [], on: false, drive: false, cap: 0.85, stuckT: 0, ZLIM: 19.5,
+  build() {
+    const ls = T4.lanes(), pitch = TILL_W - 0.1, step = Math.max(2, Math.ceil(3.9 / pitch));
+    let si = 0; for (let i = 0; i < ls.length; i++) if (Math.abs(ls[i] - S.x) < Math.abs(ls[si] - S.x)) si = i;
+    const cls = ((si % step) + step) % step, segs = [];
+    { const s0 = []; for (let i = si; i >= 0; i -= step) s0.push(i); segs.push(s0); }
+    for (let k = 1; k < step; k++) {
+      const c = (cls + k) % step; let top = -1;
+      for (let i = ls.length - 1; i >= 0; i--) if (i % step === c) { top = i; break; }
+      const sg = []; for (let i = top; i >= 0; i -= step) sg.push(i); if (sg.length) segs.push(sg);
+    }
+    { const sN = []; let topN = -1; for (let i = ls.length - 1; i > si; i--) if (i % step === cls) { topN = i; break; } for (let i = topN; i > si; i -= step) sN.push(i); if (sN.length) segs.push(sN); }   // 残りの同クラス列も降順（区間の切れ目が隣の列にならないように）
+    const order = segs.flat(), pts = [[S.x, S.z]];
+    const push = (x, z) => { const l = pts[pts.length - 1]; if (!l || Math.hypot(x - l[0], z - l[1]) >= 0.3) pts.push([+x.toFixed(3), +z.toFixed(3)]); };
+    let d = -1;   // 最初の列は いまの z（+側）から -z へ
+    order.forEach((li, k) => {
+      const x = ls[li], ze = d * this.ZLIM, zFrom = k === 0 ? S.z : -ze, zTo = ze;
+      for (let z = zFrom; d < 0 ? z >= zTo : z <= zTo; z += d * 0.35) push(x, z);
+      push(x, zTo);
+      const nx = ls[order[k + 1]];
+      if (nx === undefined) return;
+      const s = Math.abs(nx - x), sgn = Math.sign(nx - x) || 1, jump = segs.some(sg => sg[sg.length - 1] === order[k]);
+      if (!jump) {   // 半円ターン（半径＝列間隔/2、3.9m以上を step 巡回で確保）
+        const R = s / 2, cx = (x + nx) / 2, n = Math.max(4, Math.round(Math.PI * R / 0.35));
+        for (let i = 1; i <= n; i++) { const a = Math.PI * i / n; push(cx - sgn * R * Math.cos(a), ze + d * R * Math.sin(a)); }
+      } else {       // 端沿い移動: 弧（R<=2）→端沿いの直線→弧
+        const R = Math.min(2, s / 2), n = Math.max(3, Math.round(Math.PI * R / 2 / 0.35));
+        for (let i = 1; i <= n; i++) { const a = Math.PI / 2 * i / n; push(x + sgn * R - sgn * R * Math.cos(a), ze + d * R * Math.sin(a)); }
+        for (let xx = x + sgn * R; sgn > 0 ? xx <= nx - sgn * R : xx >= nx - sgn * R; xx += sgn * 0.35) push(xx, ze + d * R);
+        push(nx - sgn * R, ze + d * R);
+        for (let i = 1; i <= n; i++) { const a = Math.PI / 2 * i / n; push(nx - sgn * R + sgn * R * Math.sin(a), ze + d * R * Math.cos(a)); }
+      }
+      d = -d;
+    });
+    this.pts = pts;
+  },
+  toggle() {
+    if (this.on) { this.off(); return; }
+    if (!S.started || S.done || INTRO.on || ART.on || !$('start').classList.contains('hidden')) return;   // 田んぼアート（白線の下絵）では使わない
+    this.build();
+    if (this.pts.length < 2) return;
+    this.on = true; this.stuckT = 0;
+    if (!S.rotDown && !S.stalled) toggleRotary();   // 下りていなければ 自動で下ろす（開始時だけ。エンスト中は下げない）
+    $('bAuto').classList.add('on');
+  },
+  off() { this.on = false; this.drive = false; this.pts = []; const b = $('bAuto'); if (b) b.classList.remove('on'); },
+  follow(dt) {                                          // step から毎フレーム: 追従するなら true（TRACE と同じ制御。速度だけ のんびり 0.85）
+    if (!this.on) { this.drive = false; return false; }
+    if (key.fwd || key.back || key.left || key.right) { this.off(); return false; }   // 操作に触れたら手動にもどる（エンスト中の操作でも解除する。Codex指摘）
+    if (S.done) { this.off(); return false; }   // 終わったら自動も切る（T5の耕し切り・タイマー終了と統合）
+    if (S.stalled) { this.drive = false; return false; }   // エンスト中は追従も詰まり計時もしない
+    let bi = 0, bd = 1e9;
+    for (let i = 0, n = Math.min(this.pts.length, 60); i < n; i++) { const dd = Math.hypot(this.pts[i][0] - S.x, this.pts[i][1] - S.z); if (dd < bd) { bd = dd; bi = i; } }
+    if (bi) this.pts.splice(0, bi); else if (this.pts.length > 1 && bd < 0.5) this.pts.shift();
+    if (!this.pts.length) { this.off(); return false; }
+    let remaining = Math.hypot(this.pts[0][0] - S.x, this.pts[0][1] - S.z);
+    for (let i = 0; i < this.pts.length - 1; i++) remaining += Math.hypot(this.pts[i + 1][0] - this.pts[i][0], this.pts[i + 1][1] - this.pts[i][1]);
+    if (remaining < 0.35) { this.off(); return false; }   // 路の終わりで スッと止まる
+    let tgt = this.pts[this.pts.length - 1];
+    for (const p of this.pts) if (Math.hypot(p[0] - S.x, p[1] - S.z) >= 1.2) { tgt = p; break; }
+    const dw = Math.atan2(tgt[0] - S.x, tgt[1] - S.z) - S.yaw, err = Math.atan2(Math.sin(dw), Math.cos(dw));
+    const steerT = Math.max(-MAX_STEER, Math.min(MAX_STEER, -1.4 * err));
+    S.steer += Math.max(-2.6 * dt, Math.min(2.6 * dt, steerT - S.steer));
+    this.cap = Math.abs(steerT) > 0.7 ? 0.45 : 0.85;
+    if (Math.abs(S.v) < 0.02) { this.stuckT += dt; if (this.stuckT > 2.5) { this.off(); return false; } } else this.stuckT = 0;   // 進めないまま押しつづけない: 自動を切って手動にもどす
+    this.drive = true;
+    return true;
+  }
+};
 // 前輪の切れ角の最大：外側の前輪の通る円が半径 3.3m（ヤンマー YT460A の最小旋回半径）になるように。後輪の車軸のまん中では半径 1.84m
 const MAX_STEER = Math.atan(WB / (Math.sqrt(3.3 * 3.3 - WB * WB) - TRACK));
 function resetPos() {
@@ -8078,12 +8154,13 @@ function step(dt) {
   if (S.stalled) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || GASU.out || KATA.fixing || PANKU.fixing || AIRCL.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れ・グリース入れ・爪の付けなおし・傾きの調整のあいだは エンジンを切ったまま
-    else if ((key.fwd || key.back || TRACE.on) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる。なぞり直しても かかる
+    else if ((key.fwd || key.back || TRACE.on || AUTO.on) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる。なぞり直しても かかる
     else if ((key.fwd || key.back) && S.rotDown && GASU.fixed && !(S.crank > 0)) { S.rotDown = false; S.autoUp = false; setRotBtn(); S.stalled = false; S.parked = false; startCrank(); toast('PTO を切って かけなおす（' + IMPL + 'は エンジンが かかってから 油圧で 上がる）', 3); }   // ガス欠のあと：エンジンが止まって 上げられなかった
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
   const tracing = TRACE.follow(dt);                     // なぞり中は跡を追う（切れ角は TRACE.follow が寄せている）
-  let want = S.crank > 0 || S.stalled || S.stuck ? 0 : tracing ? Math.min(vmax, TRACE.cap || 1.15) : key.fwd ? vmax : key.back ? -0.85 : 0;   // はまったら 進まない
+  const autoing = !tracing && AUTO.follow(dt);          // 自動運転中は列にそって ゆっくり追う（切れ角は AUTO.follow が寄せている）
+  let want = S.crank > 0 || S.stalled || S.stuck ? 0 : tracing ? Math.min(vmax, TRACE.cap || 1.15) : autoing ? Math.min(vmax, AUTO.cap || 0.85) : key.fwd ? vmax : key.back ? -0.85 : 0;   // はまったら 進まない
   if (want) want = Math.sign(want) * Math.min(Math.abs(want), RAMPDMG.cap(Math.sign(want)));   // 崩れた坂では すべって ゆっくり（バックでも）
   if (want > 0 && MAEUKI.held) want = 0;            // 前輪が浮いたら 上れない（後輪が 泥で空回り）
   if (EASY.on && want > 0) {                       // 🔰 耕すときは時速 3km まで、坂は時速 5km まで
@@ -8185,10 +8262,10 @@ function step(dt) {
     if (SCORE.st.swept > 80 && 1 - SCORE.st.newA / SCORE.st.swept > 0.35) voice('konashi');      // 同じ所を何度もかいている
     if ((S.workT || 0) > 20 && (Math.abs(S.x) > HX - 2.2 || Math.abs(S.z) > HZ - 2.2)) voice('aze');   // 畦ぎわをかきはじめた
   }
-  if (!tracing && key.lookBack && Math.abs(S.v) > 0.2 && !ASSIST.active) { S.steer = Math.max(-MAX_STEER, S.steer - 0.05 * dt); S.lookT = (S.lookT || 0) + dt; if (S.lookT > 2.5) voice('look'); }
-  else if (!tracing && ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
-  else if (!tracing && EASY.on && !sIn && S.rotDown && S.rotPos < 0.08 && Math.abs(S.v) > 0.1 && !onRoad && easyStraight(dt)) ASSIST.active = true;   // 🔰 まっすぐを手伝う（点数のまっすぐには数えない）
-  else if (!tracing && Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
+  if (!tracing && !autoing && key.lookBack && Math.abs(S.v) > 0.2 && !ASSIST.active) { S.steer = Math.max(-MAX_STEER, S.steer - 0.05 * dt); S.lookT = (S.lookT || 0) + dt; if (S.lookT > 2.5) voice('look'); }
+  else if (!tracing && !autoing && ASSIST.on && S.v > 0.1 && !onRoad && assistSteer(dt)) ASSIST.active = true;
+  else if (!tracing && !autoing && EASY.on && !sIn && S.rotDown && S.rotPos < 0.08 && Math.abs(S.v) > 0.1 && !onRoad && easyStraight(dt)) ASSIST.active = true;   // 🔰 まっすぐを手伝う（点数のまっすぐには数えない）
+  else if (!tracing && !autoing && Math.abs(S.v) > 0.1) S.steer -= Math.sign(S.steer) * Math.min(Math.abs(S.steer), 0.35 * dt);   // 手をはなすと少しずつもどる
   // オートブレーキ：ロータリーを上げて大きく切ると、内側の後輪に半ブレーキがかかって小さく回れる（枕地での旋回）
   // 旋回連動（直進アシスト仕様）：直進アシストで耕したあと、旋回でハンドルを切ると作業機が自動で上がり、アシストも切れる。
   // 旋回のあとロータリーを下げると、アシストがまた入る
@@ -9058,7 +9135,7 @@ addEventListener('keydown', e => {
   if (!$('start').classList.contains('hidden') || !$('done').classList.contains('hidden')) return;   // はじめ・おわりの画面では運転しない
   if (KEYS[e.code]) { key[KEYS[e.code]] = 1; e.preventDefault(); return; }
   if (e.repeat) { if (e.code === 'Space') e.preventDefault(); return; }   // 押しっぱなしでくりかえさない（上げ下げ・視点・音・直進アシストなど）
-  if (e.code === 'Space') { toggleRotary(); e.preventDefault(); }
+  if (e.code === 'Space') { AUTO.off(); toggleRotary(); e.preventDefault(); }   // 作業機キーに触れたら自動は切れる
   else if (e.code === 'KeyC') nextCam();
   else if (e.code === 'KeyM') toggleSound();
   else if (e.code === 'KeyR') resetPos();
@@ -9082,13 +9159,14 @@ addEventListener('keydown', e => {
     if (PTOREV) setTimeout(() => voice('gyakuten'), 6500);
   }
   else if (e.code === 'KeyT') { S.dbl = !S.dbl; toast('倍速ターン ' + (S.dbl ? '入：35° より大きく切ると前輪が約 2 倍の速さで回って小さく回れる' : '切：大きく回る') + '（T）'); }
+  else if (e.code === 'KeyJ') AUTO.toggle();
   else if (e.code === 'KeyU') { S.turnUp = !S.turnUp; toast('旋回アップ ' + (S.turnUp ? '入：耕しながら大きく切ると ' + IMPL + 'が自動で上がる' : '切') + '（U）'); }
   else if (e.code === 'KeyZ') setDepth(-1);
   else if (e.code === 'KeyX') setDepth(1);
   else if (e.code === 'Enter' && ART.on && S.started && !S.done && $('start').classList.contains('hidden') && $('help').classList.contains('hidden')
     && !/^(BUTTON|A|INPUT|SELECT|TEXTAREA|SUMMARY)$/.test((document.activeElement || {}).tagName || '')) finish();   // ボタンを押す Enter・操作の表を開いているときは完成にしない
-  else if (e.code === 'KeyQ') shiftGear(-1);
-  else if (e.code === 'KeyE') shiftGear(1);
+  else if (e.code === 'KeyQ') { AUTO.off(); shiftGear(-1); }   // 変速キーに触れたら自動は切れる
+  else if (e.code === 'KeyE') { AUTO.off(); shiftGear(1); }
 });
 addEventListener('keyup', e => { if (KEYS[e.code]) key[KEYS[e.code]] = 0; if (e.code === 'KeyB') key.lookBack = 0; });
 // ほかの窓やタブへ移ると keyup が来ないことがあるので、押しているキー・ボタン・画面のドラッグをはなす
@@ -9207,7 +9285,7 @@ function toggleFast() {
   SPEEDUP = SPEEDUP === 1 ? 2 : SPEEDUP === 2 ? 4 : 1;
   $('bFast').textContent = '⏩ ×' + SPEEDUP; $('bFast').dataset.i = SPEEDUP > 1 ? '⏩' + SPEEDUP : '⏩';
 }
-$('bRot').onclick = toggleRotary;
+$('bRot').onclick = () => { AUTO.off(); toggleRotary(); };   // 作業機ボタンに触れたら自動は切れて手動にもどる
 {                                                // 直進ボタン：押すと A・B 登録／入切、長押し（0.8 秒）で登録しなおし
   let lp = null, longDone = false;
   $('bAssist').addEventListener('pointerdown', () => { longDone = false; lp = setTimeout(() => { longDone = true; resetAssist(); }, 800); });
@@ -9215,7 +9293,8 @@ $('bRot').onclick = toggleRotary;
   $('bAssist').onclick = () => { if (!longDone) toggleAssist(); };
 }
 $('bFast').onclick = toggleFast;
-$('bGear').onclick = () => shiftGear(S.gear >= 4 ? -3 : 1);   // ボタンは 1→2→3→4→1
+$('bAuto').onclick = () => AUTO.toggle();   // 🌙 のんびり自動運転の入切
+$('bGear').onclick = () => { AUTO.off(); shiftGear(S.gear >= 4 ? -3 : 1); };   // ボタンは 1→2→3→4→1。変速ボタンに触れたら自動は切れる
 function nextCam() { if (INTRO.cam) { INTRO.cam = false; return; } camMode = (camMode + 1) % CAMS.length; look.yaw = look.pitch = 0; chase.set(0, 0, 0); $('bCam').textContent = '👁 ' + CAMS[camMode]; }
 $('bCam').onclick = nextCam;
 $('bSnd').onclick = toggleSound;
@@ -9265,7 +9344,7 @@ $('bArt').onclick = () => { if (S.started && !S.done) finish(); };
 $('bOther').onclick = () => { $('done').classList.add('hidden'); $('start').classList.remove('hidden'); };
 // なぞる（サイクル70）: 運転中は canvas をなぞると跡を追って耕し、離すと止まる。なぞらなかったドラッグは従来どおり まわりを見る（はなすと前にもどる）
 let drag = null;
-canvas.addEventListener('pointerdown', e => { if (TRACE.begin(e)) { drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
+canvas.addEventListener('pointerdown', e => { if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
   if (TRACE.on) { TRACE.add(e); return; }
   if (!drag) return;
@@ -10384,7 +10463,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, AUTO, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

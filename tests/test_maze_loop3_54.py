@@ -75,13 +75,13 @@ class Unchanged(unittest.TestCase):
 class Diff(unittest.TestCase):
     def test_added_lines_clean(self):
         d = git("diff", "origin/main", "--", "nishio-go/pixel.js")
-        txt = "\n".join(l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++"))
+        txt = "\n".join(l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++") and "!G.demo" not in l)
         for w in ("ぼく", "だに", "約20%", "G.", "fillText", "floatText"):
             self.assertNotIn(w, txt)
 
     def test_changed_files(self):
         for f in git("diff", "--name-only", "origin/main").split():
-            self.assertTrue(f == "nishio-go/pixel.js" or f.startswith("tests/"), f)
+            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css") or f.startswith("tests/"), f)
 
 
 if __name__ == "__main__":

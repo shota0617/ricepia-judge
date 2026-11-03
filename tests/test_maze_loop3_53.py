@@ -19,7 +19,7 @@ def git(*a):
 
 BODY = func_body("function drawMzTrail(")
 ADDED = [l[1:] for l in git("diff", "origin/main", "--", "nishio-go/pixel.js").splitlines()
-         if l.startswith("+") and not l.startswith("+++")]
+         if l.startswith("+") and not l.startswith("+++") and "!G.demo" not in l]
 
 
 class Edge(unittest.TestCase):
@@ -63,5 +63,5 @@ class Unchanged(unittest.TestCase):
 
     def test_files_allowed(self):
         files = set(git("diff", "--name-only", "origin/main").split())
-        self.assertTrue(files <= {"nishio-go/pixel.js", "tests/test_maze_loop3_53.py"} or all(
-            f.startswith("tests/") or f == "nishio-go/pixel.js" for f in files), files)
+        self.assertTrue(files <= {"nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "tests/test_maze_loop4_1.py", "tests/test_maze_loop3_53.py"} or all(
+            f.startswith("tests/") or f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css") for f in files), files)

@@ -8669,7 +8669,7 @@ function curScale() { return mazeOn() ? mzScale : scale; }
 const DIRS = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
 const medashiShown = () => !!document.querySelector('.medashi:not([hidden])');   // イベントの窓（古い地図 oldmap.js・雲母石 kirara.js。どれも .medashi）が開いている
 function step(dir) {   // 1マス進めたら（人に話しかけたときも）true、通れなければ false
-  if (!G.demo || sightBusy() || medashiShown()) return false;   // 呼びとめられている間・田んぼのイベントの間は動けない
+  if (!G.demo || sightBusy()) return false;   // 呼びとめられている間は動けない（話の窓・イベントの窓が開いていても歩ける）
   G.notePlayInput();
   const t = targetTile();
   const nx = Math.floor(t.x) + DIRS[dir][0], ny = Math.floor(t.y) + DIRS[dir][1];
@@ -12245,7 +12245,7 @@ function rollStep(dt) {
     if (rp.x !== null && rp.sent && Math.hypot(t.x - rp.sent.x, t.y - rp.sent.y) > 6 && performance.now() - (mzRt.snapT || 0) > 800) mzRt.warp = true;   // めいろを とびこえた（名所の 窓の「ここへ」など）：この ゴールは ★なし
     Object.assign(rp, { x: t.x, y: t.y, vx: 0, vy: 0, sent: { x: t.x, y: t.y }, tile: `${Math.floor(t.x)},${Math.floor(t.y)}` });
   }
-  if (sightBusy() || medashiShown() || !$('pxInfo').hidden || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
+  if (sightBusy() || document.body.classList.contains('jump-open') || (mazeOn() && mapCovered(true, true))) { rp.vx = rp.vy = 0; return; }   // めいろでは ごほうび・きろく などの 窓が 出ている 間も 止める（時計を 止める 間に 進まない）
   if (npcSend) npcSendOff();   // 話を とじた：その人が 行き先のほうへ 押してくれる
   const ax = tiltG.x + rk.right - rk.left, ay = tiltG.y + rk.down - rk.up;   // 傾きと 矢印キー
   if (Math.hypot(ax, ay) > 0.08) G.notePlayInput();
@@ -12804,10 +12804,11 @@ cv.addEventListener('click', e => {
 //   ・スティック・矢印キーをさわる、窓が開く、着けない所になる、のどれかでやめる。歩いている間は、おまかせ歩きは休む
 // 地図の上に何か開いている（ほうびの知らせ・ミニゲーム・説明の窓・きろく などのパネル・はじめの画面・ダイアログ（シェア・クーポン・ホーム画面に追加 など、role="dialog" のものぜんぶ））：
 // 見ていない間に うしろで歩いて、たからばこなどが進まないように
+//   free：話の窓（#pxInfo）は のぞく（窓を 開いたまま 歩ける：めいろの 迷路時計・タップ歩き）
 //   soft：下に 出る 小さな「ホーム画面に追加」の 帯は のぞく（地図は 見えている。めいろの お米と 時計は 止めない）
-function mapCovered(soft) {
+function mapCovered(soft, free) {
   return document.body.classList.contains('jump-open')
-    || !!document.querySelector(`#pxInfo:not([hidden]), .panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])${soft ? ':not(#a2hs)' : ''}`);
+    || !!document.querySelector(`${free ? '' : '#pxInfo:not([hidden]), '}.panel:not([hidden]), #intro:not([hidden]), [role="dialog"]:not([hidden])${soft ? ':not(#a2hs)' : ''}`);
 }
 function tapWalkStop() { clearTimeout(tapS.timer); tapS.timer = null; tapS.path = []; tapS.goal = null; }
 // 地図（キャンバス）より外をさわったら（こよみの札・ボタン・タブ など、何を開くときも）やめる。勝手に出てくるもの（ほうびの知らせ・ダイアログ）は mapCovered で
@@ -12815,7 +12816,7 @@ document.addEventListener('pointerdown', e => { if (tapS.goal && e.target !== cv
 function tapWalkTick() {
   tapS.timer = null;
   const nx = tapS.path.shift(), t = targetTile(), sx = Math.floor(t.x), sy = Math.floor(t.y);
-  if (!nx || !G.demo || !active || worldMode || driving || mapCovered() || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
+  if (!nx || !G.demo || !active || worldMode || driving || mapCovered(false, true) || Math.abs(nx[0] - sx) + Math.abs(nx[1] - sy) !== 1) return tapWalkStop();
   if (!step(nx[0] > sx ? 'right' : nx[0] < sx ? 'left' : nx[1] > sy ? 'down' : 'up') || !tapS.path.length) return tapWalkStop();
   tapS.timer = setTimeout(tapWalkTick, G.autoInterval ? Math.min(180, G.autoInterval()) : 180);
 }

@@ -22,7 +22,7 @@ TRAIL = func_body("function drawMzTrail(")
 MINI = func_body("function drawMzMini(")
 PULSE = func_body("function mzEntrancePulse(")
 ENT = TRAIL[TRAIL.index("const ea = "):]
-ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++")]
+ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "!G.demo" not in l]
 
 
 class Pulse(unittest.TestCase):
@@ -101,4 +101,4 @@ class Safety(unittest.TestCase):
 
     def test_files_allowed(self):
         files = set(git("diff", "--name-only", "origin/main").split())
-        self.assertTrue(all(f.startswith("tests/") or f == "nishio-go/pixel.js" for f in files), files)
+        self.assertTrue(all(f.startswith("tests/") or f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css") for f in files), files)

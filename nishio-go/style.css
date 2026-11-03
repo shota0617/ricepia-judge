@@ -391,8 +391,8 @@ body.px #map{visibility:hidden}
 .px-pad .a{font-size:19px}.px-pad .a.on{background:rgba(31,77,43,.9);border-color:#ffd54f;animation:autoGlow 1.6s ease-in-out infinite}
 @keyframes autoGlow{50%{box-shadow:0 0 0 3px rgba(255,213,79,.45)}}
 @media (prefers-reduced-motion:reduce){.px-pad .a.on{animation:none}}
-.px-info{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
-.px-info .dq{width:100%;max-width:420px;max-height:70%;overflow-y:auto}
+.px-info{pointer-events:none;position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:16px;background:rgba(0,0,0,.25)}
+.px-info .dq{pointer-events:auto;width:100%;max-width:420px;max-height:70%;overflow-y:auto}
 .px-info .popup h4{font-size:17px;margin:0 0 6px;color:#ffd54f}
 .px-info .popup p{color:#fff;font-size:14px;margin:2px 0}
 .px-info .popup .tag{background:none;border:1px solid #fff;color:#fff;border-radius:3px}
@@ -816,9 +816,9 @@ body.meet-flash #pxCanvas{animation:meetFlash .42s steps(1) 1}
 @media (prefers-reduced-motion:reduce){body.meet-flash #pxCanvas{animation:none}}
 #codeBox{width:100%;box-sizing:border-box;font-family:monospace;font-size:12px;margin:6px 0;word-break:break-all}
 /* イベントの窓（oldmap.js・kirara.js などが共通で使う） */
-.medashi{position:fixed;inset:0;z-index:2900;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+.medashi{pointer-events:none;position:fixed;inset:0;z-index:2900;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px}
 .medashi[hidden]{display:none}
-.md-card{background:var(--card);color:var(--ink,#222);border:2px solid var(--gold);border-radius:14px;padding:14px;max-width:420px;width:100%;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.md-card{pointer-events:auto;background:var(--card);color:var(--ink,#222);border:2px solid var(--gold);border-radius:14px;padding:14px;max-width:420px;width:100%;box-shadow:0 6px 20px rgba(0,0,0,.3)}
 .md-head{margin:0 0 6px;font-weight:800}
 .md-say{margin:0 0 10px;font-size:14px;line-height:1.5}
 .md-seeds{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

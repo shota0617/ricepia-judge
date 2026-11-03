@@ -272,6 +272,8 @@
       <button data-i="harrow"><span>🌊</span>ハロー</button>
       <button data-i="plow"><span>⛏️</span>プラウ</button>
       <button data-i="disc"><span>💿</span>ディスク</button>
+      <button data-i="ditch"><span>🕳️</span>溝掘り</button>
+      <button data-i="aze"><span>🧱</span>畦塗り</button>
     </div>
     <div class="seasons arts" id="arts">
       <button data-a="shikaku"><span>⬛</span>四角<i>★</i></button>
@@ -504,16 +506,17 @@ document.body.classList.toggle('touch', MOBILE);   // スマホ：操作の表�
 const params = new URLSearchParams(location.search);
 let season = FIELD[params.get('season')] ? params.get('season') : 'haru';
 const SHIRO = season === 'shirokaki';
-// 作業機の付け替え（サイクル63で組み込み第1弾）: impl=rotary|harrow|plow|disc。既定は季節の従来作業機（代かき=ハロー、それ以外=ロータリー）
-const IMPL_ID = ['rotary', 'harrow', 'plow', 'disc'].includes(params.get('impl')) ? params.get('impl') : (SHIRO ? 'harrow' : 'rotary');
+// 作業機の付け替え（サイクル63で組み込み第1弾・サイクル64で第2弾）: impl=rotary|harrow|plow|disc|ditch|aze。既定は季節の従来作業機（代かき=ハロー、それ以外=ロータリー）
+const IMPL_ID = ['rotary', 'harrow', 'plow', 'disc', 'ditch', 'aze'].includes(params.get('impl')) ? params.get('impl') : (SHIRO ? 'harrow' : 'rotary');
 const IS_HARROW = IMPL_ID === 'harrow';        // 翼を折りたたむウイングハローかどうか（従来は SHIRO で判定していた作業機側の性質）
-const PTO_IMPL = IMPL_ID === 'rotary' || IS_HARROW;   // PTO 駆動の作業機か（プラウ・ディスクハローは地表駆動で PTO は要らない）
-const IMPL = { rotary: 'ロータリー', harrow: 'ハロー', plow: 'プラウ', disc: 'ディスクハロー' }[IMPL_ID];   // 作業機の呼び名
-let IMPL_SPIN = [];                            // 付け替えた作業機の回る部品（プラウの深度輪・ディスクのギャング）。爪軸の回転に合わせて ゆっくり回す
+const PTO_IMPL = IMPL_ID === 'rotary' || IS_HARROW || IMPL_ID === 'ditch' || IMPL_ID === 'aze';   // PTO 駆動の作業機か（プラウ・ディスクハローは地表駆動で PTO は要らない）
+const IMPL = { rotary: 'ロータリー', harrow: 'ハロー', plow: 'プラウ', disc: 'ディスクハロー', ditch: '溝掘り機', aze: '畦塗り機' }[IMPL_ID];   // 作業機の呼び名
+let IMPL_SPIN = [];                            // 付け替えた作業機の回る部品（プラウの深度輪・ディスクのギャング・溝掘り円盤・畦塗りローター）。爪軸の回転に合わせて回す
+const IMPL_SPIN_K = (IMPL_ID === 'ditch' || IMPL_ID === 'aze') ? 1 : 0.2;   // 回る速さ：PTOローター（溝掘り・畦塗り）は爪軸と同じ、地表駆動部品は ゆっくり 0.2 倍
 // 耕深（cm）：春の田起こしは 15cm くらい深く（根を張らせる）、秋起こしは 5cm くらい浅く藁と土をまぜる、代かきは浅く
 let DEPTH = { haru: 15, aki: 6, shirokaki: 8 }[season];        // Z・X で変えられる（右の操作盤の耕深ダイヤル）
 const DEPTH0 = DEPTH, DEPTH_RANGE = { haru: [8, 20], aki: [4, 14], shirokaki: [4, 12] }[season];
-const ROTARY_Z = -1.38, TILL_W = { rotary: 2.2, harrow: 3.4, plow: 1.35, disc: 2.4 }[IMPL_ID];   // 耕うん幅は作業機で決まる（ハローは幅 3.4m のウイングハロー）
+const ROTARY_Z = -1.38, TILL_W = { rotary: 2.2, harrow: 3.4, plow: 1.35, disc: 2.4, ditch: 0.9, aze: 1.4 }[IMPL_ID];   // 耕うん幅は作業機で決まる（ハローは幅 3.4m のウイングハロー、溝掘りは溝の幅 0.9m）
 const TILL_Y = SHIRO ? 0.045 : 0.035;
 
 const $ = id => document.getElementById(id);
@@ -680,20 +683,20 @@ scene.add(rig);
 const P = {};                                  // 動く部品
 let field, tilled, stubble = null, stubbleGeo, stubbleMat, hikobae = null, hikobaeGeo = null, hikobaeMat;
 
-const IMPL_FILE = { harrow: 'harrow_yt.glb', plow: 'plow.glb', disc: 'disc_harrow.glb' }[IMPL_ID] || null;
+const IMPL_FILE = { harrow: 'harrow_yt.glb', plow: 'plow.glb', disc: 'disc_harrow.glb', ditch: 'ditcher.glb', aze: 'azenuri.glb' }[IMPL_ID] || null;
 Promise.all([load('tractor_yt.glb', 't'), load(FIELD[season], 'f'), IMPL_FILE ? load(IMPL_FILE, 'h') : null]).then(([t, f, h]) => {
   prog.t = prog.f = 1; showProg();
   if (h && IS_HARROW) {                          // ハロー：ロータリーをウイングハローにつけかえる（原点は同じ）
     const old = t.scene.getObjectByName('Rotary'), hr = h.scene.getObjectByName('Rotary');
     old.parent.add(hr); old.parent.remove(old);
-  } else if (h) {                                // プラウ／ディスクハロー：本体だけを「Rotary」ラッパーに入れて付けかえる（圃場プロップは付けない）
+  } else if (h) {                                // プラウ／ディスクハロー／溝掘り／畦塗り：本体だけを「Rotary」ラッパーに入れて付けかえる（圃場プロップは付けない）
     const old = t.scene.getObjectByName('Rotary');
-    const body = h.scene.getObjectByName(IMPL_ID === 'plow' ? 'PlowBody' : 'HarrowFrame');
+    const body = h.scene.getObjectByName({ plow: 'PlowBody', disc: 'HarrowFrame', ditch: 'DitchFrame', aze: 'AzenuriFrame' }[IMPL_ID]);
     const wrap = new THREE.Group(); wrap.name = 'Rotary';
     const rotor = new THREE.Object3D(); rotor.name = 'Rotor';   // 既存の P.Rotor 参照用（実物の回転部は IMPL_SPIN で回す）
     const flap = new THREE.Object3D(); flap.name = 'Flap';     // 既存の P.Flap 参照用
     wrap.add(body, rotor, flap);
-    IMPL_SPIN = IMPL_ID === 'plow' ? [body.getObjectByName('DepthWheel')] : [body.getObjectByName('FrontGang'), body.getObjectByName('RearGang')];
+    IMPL_SPIN = { plow: ['DepthWheel'], disc: ['FrontGang', 'RearGang'], ditch: ['DiggerDisc'], aze: ['FormerRotor'] }[IMPL_ID].map(n => body.getObjectByName(n));
     old.parent.add(wrap); old.parent.remove(old);
   }
   NB.setup(t.scene.clone(true));               // となりの田んぼで耕しているトラクター（自分のと同じ形。代かきはハロー）
@@ -8081,7 +8084,7 @@ function step(dt) {
   const wT = S.stalled ? 0 : working ? wPto : S.rotDown ? wPto * 0.9 : 0;
   S.rotorW = (S.rotorW || 0) + (wT - (S.rotorW || 0)) * Math.min(1, dt * (wT > (S.rotorW || 0) ? 4 : 0.9));
   P.Rotor.rotation.x += S.rotorW * dt * (PTOREV ? -1 : 1);   // 逆転は 爪が逆に回る
-  for (const o of IMPL_SPIN) if (o) o.rotation.x = P.Rotor.rotation.x * 0.2;   // 付け替え作業機の回る部品（深度輪・円盤ギャング）は 地表で ゆっくり連動する
+  for (const o of IMPL_SPIN) if (o) o.rotation.x = P.Rotor.rotation.x * IMPL_SPIN_K;   // 付け替え作業機の回る部品：地表駆動は ゆっくり、PTOローター（溝掘り・畦塗り）は爪軸と同じ速さで連動する
   if (P.WingL) {                                  // ハロー：上げると翼を上へ折りたたみ、下げると広げる
     const fold = Math.max(0, Math.min(1, (S.rotPos - 0.25) / 0.6)) * 1.72;
     P.WingL.rotation.z = fold; P.WingR.rotation.z = -fold;

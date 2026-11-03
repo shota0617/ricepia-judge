@@ -2588,6 +2588,52 @@ const T2 = {
     return { covered: n ? cov / n : 0, overlap: n ? ov / n : 0, left: n ? 1 - cov / n : 0, cells: n, overlapCells: ov };
   }
 };
+// T4 列の目印（モーション磨き）: 次に耕す列が うっすら光る帯で見える。色だけ・文字なし。
+// 列は田んぼの長い向き（Z）で、間隔は PITCH（作業幅−0.1m＝10cm重ね。ASSIST のガイドと同じ考え方）。
+// 物差し＝目印どおり走ると重なりが減ること（ループ側 scripts/sim_t4_guide.js: 目印どおり 重なり6.9%・残し0%・14列 / 目分量（0.5m重ね） 重なり30.6%・17列）。
+const T4 = {
+  mesh: null, lane: null, t: 0, acc: 1,
+  lanes() {
+    const a = [], x0 = -HX + 0.5 + TILL_W / 2, xe = HX - 0.5 - TILL_W / 2;
+    for (let x = x0; x <= xe + 1e-6; x += PITCH) a.push(x);
+    if (a.length && xe - a[a.length - 1] > 0.3) a.push(xe);   // 東端に残りがあれば 最後の列を端に合わせる（端の残しを作らない）
+    return a;
+  },
+  cov(cx) {                                   // その列の帯（中心±作業幅/2、作業範囲の内側）の耕せた割合。走査は帯の列の範囲だけ（Codex指摘：全ます目走査を避ける）
+    let n = 0, c = 0;
+    const i0 = Math.max(0, Math.floor((cx - TILL_W / 2 + HX) / CELL)), i1 = Math.min(NX - 1, Math.ceil((cx + TILL_W / 2 + HX) / CELL));
+    for (let i = i0; i <= i1; i++) for (let j = 0; j < NZ; j++) {
+      const x = -HX + (i + 0.5) * CELL, z = -HZ + (j + 0.5) * CELL;
+      if (Math.abs(x - cx) >= TILL_W / 2 || Math.abs(z) >= HZ - 0.5) continue;
+      n++; if (tilledMask[i * NZ + j]) c++;
+    }
+    return n ? c / n : 1;
+  },
+  next() {
+    const ls = this.lanes(); if (!ls.length) return null;
+    const ix = S.x + ROTARY_Z * Math.sin(S.yaw);   // 作業機の中心の x
+    let near = ls[0]; for (const cx of ls) if (Math.abs(cx - ix) < Math.abs(near - ix)) near = cx;
+    if (this.cov(near) < 0.85) return near;        // いまの列を耕しているあいだは その列のまま
+    let best = null, bd = 1e9;
+    for (const cx of ls) if (this.cov(cx) < 0.85 && Math.abs(cx - ix) < bd) { bd = Math.abs(cx - ix); best = cx; }
+    return best;                                   // 全部の列が終われば null（帯は消える）
+  },
+  ensure() {
+    if (this.mesh) return;
+    this.mesh = new THREE.Mesh(new THREE.PlaneGeometry(TILL_W, 2 * HZ - 1), new THREE.MeshBasicMaterial({ color: 0xfff3a0, transparent: true, opacity: 0.13, depthWrite: false }));
+    this.mesh.rotation.x = -Math.PI / 2; this.mesh.position.y = 0.13; this.mesh.renderOrder = 2; this.mesh.frustumCulled = false; this.mesh.visible = false;
+    scene.add(this.mesh);
+  },
+  update(dt) {
+    this.t += dt; this.acc += dt;
+    if (this.acc >= 0.25) { this.acc = 0; this.lane = ART.on ? null : this.next(); }   // 列の判定は 0.25 秒ごと（毎コマ全ます目は数えない）。田んぼアートには白線の下絵があるので出さない
+    this.ensure();
+    if (this.lane === null || this.lane === undefined) { this.mesh.visible = false; return; }
+    this.mesh.visible = true;
+    this.mesh.position.x = this.lane;
+    this.mesh.material.opacity = 0.13 + 0.03 * Math.sin(this.t * 1.6);   // ゆっくり息づく光（速い点滅はしない）
+  }
+};
 function overTill(c) {
   const x0 = -HX + ((c / NZ) | 0) * CELL, z0 = -HZ + (c % NZ) * CELL;
   WAVY[c] = 0; setCell(c, null, 0);              // 土くれがなくなって 平らに（波も土塊も消える。二山盛りの山は 残る）
@@ -8269,6 +8315,7 @@ function step(dt) {
   if (S.started && !S.stalled) S.cool += (0.55 + (S.rotDown && S.rotPos < 0.1 ? 0.04 : 0) + (BELT.broken ? 0.65 : 0) - S.cool) * Math.min(1, dt / (BELT.broken ? 14 : S.cool < 0.5 ? 40 : 15));   // ファンベルトが切れると ファンが止まって どんどん上がる
   const pct = Math.min(100, Math.floor(tilledCount / workCount * 100));
   if (!SHIRO) T2.u.value = pct / 100;             // T2：耕し進むほど 残りの土が目立つ（代かきは水の下なので上げない）
+  T4.update(dt);                                  // T4：次に耕す列の目印の帯を出す・動かす
   if (pct >= 50 && !SHIRO && S.started) voice('hajimete');   // 半分 耕せたころ
   if (pct >= 40 && !SHIRO && !ART.on && S.rotDown && S.rotPos < 0.08 && S.v > 0.05 && !S.stalled && Math.abs(S.x) < HX && Math.abs(S.z) < HZ
     && (Math.abs(S.x) > HX - 3 * PITCH || Math.abs(S.z) > HZ - 3 * PITCH)) voice('sanshu');   // 外周の帯の中で 実際に耕しはじめたころ（止まっている・エンスト・田んぼの外は 数えない）
@@ -10277,7 +10324,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T4, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

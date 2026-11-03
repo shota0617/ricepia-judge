@@ -1062,3 +1062,7 @@ img.pq-art{display:block;width:144px;height:144px;margin:6px auto 10px;image-ren
 .jan-btn:disabled{cursor:default;opacity:.5}
 .jan-btn.mine:disabled{opacity:1;outline:3px solid #e8b923}
 .jan-wins{font-size:22px}
+
+/* きろくの 店への 導線（大きなボタン。影・グラデーションなし） */
+.shop-links{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.shop-links .btn{min-height:44px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}

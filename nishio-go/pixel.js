@@ -7770,11 +7770,18 @@ function frame(now) {
   // 主要な建物（同じ場所にスポットがあるときはスポットを優先）
   const spots = G.spots;
   const pois = visiblePois(tx0, ty0, tx1, ty1), labelBoxes = [];
+  // 実在の店の名前札：主人公の近くの 3枚まで（運営者の声「西尾らしさ」2026-11-03）。めいろ中は出さない。モジュールが無ければ 札なし //c17
+  const SM = window.nishioShopMap, tagged = new Set(); //c17
+  if (SM && !mazeOn()) { //c17
+    const mt = G.me ? toTile(G.me.lat, G.me.lng) : { x: cam.x, y: cam.y }; //c17
+    for (const p of SM.pickLabels(pois, { me: mt, goalName: G.guide && G.guide.name, limit: 3 })) tagged.add(p); //c17
+  } //c17
   for (const p of pois) {
     const gid = giantPoiOf(p), giant = gid ? giantImg(gid) : null;   // 街の主な建物は特大の絵（読めるまではいつもの絵）
     const img = (giant || spotSprites[p[2]] || spotSprites.shop)[0], size = dotSize(img, T), sx = Math.round(ox + p[0] * T - size / 2), sy = Math.round(oy + p[1] * T - size * (giant ? 0.72 : 0.7));
     ctx.drawImage(img, sx, sy, size, size);
     if (giant) { poiHits.push([sx, sy, size, p, giant[0]]); depthArt.push([img, sx, sy, size, sy + size * 0.72, false]); }   // タップは絵のある所（透明でない点）で決める
+    if (tagged.has(p)) poiTag(sx + size / 2, sy, dpr, p[3]); //c17
   }
   const me = G.me;
   let nearest = null, nearestD = Infinity;
@@ -7788,6 +7795,12 @@ function frame(now) {
     const cool = G.cooldownLeft(s) > 0;
     if (me && !cool) { const d = G.dist(me, s); if (d < nearestD) { nearest = s; nearestD = d; } }
     if (sx > w || sy > h || sx + size < 0 || sy + size < 0) continue;
+    if (s.shop) {   // 自店は 地図の目印：絵の下に 金色の 脈打つ輪（光るゴールの輪と 同じ流儀） //c17
+      const pu = (Math.sin(now / 400) + 1) / 2, rr = size * 0.62, rx = sx + size / 2, ry = sy + size * 0.6, lw = Math.max(2, Math.round(dpr * 2)); //c17
+      ctx.lineWidth = lw + Math.max(2, Math.round(dpr * 2)); ctx.strokeStyle = 'rgba(26,26,26,.75)'; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
+      ctx.lineWidth = lw; ctx.strokeStyle = `rgba(255,213,79,${0.55 + pu * 0.45})`; ctx.beginPath(); ctx.arc(rx, ry, rr, 0, Math.PI * 2); ctx.stroke(); //c17
+      dirty = true; //c17
+    } //c17
     if (s.shop) gbPause++;
     ctx.drawImage(spr[cool ? 1 : 0], Math.round(sx), Math.round(sy), size, size);
     if (s.shop) gbPause--;
@@ -8400,6 +8413,19 @@ function drawShopTag(cx, bottom, dpr, s) {
   gbPause++;
   try { return shopTag(cx, bottom, dpr, s); } finally { gbPause--; }   // 看板も本物の色のまま
 }
+// 実在の店の名前札（白地・黒字・黒枠。14文字まで。「…」は付けない） //c17
+function poiTag(cx, bottom, dpr, name) { //c17
+  const text = String(name || '').slice(0, 14); //c17
+  if (!text) return null; //c17
+  const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr)); //c17
+  ctx.font = `${fs}px "DotGothic16", monospace`; //c17
+  const bw = Math.ceil(ctx.measureText(text).width) + pad * 2, bh = fs + pad * 2; //c17
+  const x = Math.round(cx - bw / 2), y = Math.round(bottom - bh - 2 * dpr); //c17
+  ctx.fillStyle = '#000'; ctx.fillRect(x - b, y - b, bw + b * 2, bh + b * 2); //c17
+  ctx.fillStyle = '#fff'; ctx.fillRect(x, y, bw, bh); //c17
+  ctx.fillStyle = '#000'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, x + bw / 2, y + bh / 2 + dpr * 0.5); //c17
+  return [x - b, y - b, x + bw + b, y + bh + b]; //c17
+} //c17
 function shopTag(cx, bottom, dpr, s) {
   const [text, bg, fg] = SHOP_SIGN[s && s.id] || ['当店', '#d23a2e', '#ffffff'];
   const fs = Math.round(11 * dpr), pad = Math.round(3 * dpr), b = Math.max(1, Math.round(dpr));

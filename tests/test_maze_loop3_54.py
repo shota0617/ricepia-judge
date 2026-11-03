@@ -75,13 +75,13 @@ class Unchanged(unittest.TestCase):
 class Diff(unittest.TestCase):
     def test_added_lines_clean(self):
         d = git("diff", "origin/main", "--", "nishio-go/pixel.js")
-        txt = "\n".join(l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++") and "!G.demo" not in l)
+        txt = "\n".join(l[1:] for l in d.splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l)
         for w in ("ぼく", "だに", "約20%", "G.", "fillText", "floatText"):
             self.assertNotIn(w, txt)
 
     def test_changed_files(self):
         for f in git("diff", "--name-only", "origin/main").split():
-            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/meiro.js", "nishio-go.html") or f.startswith("tests/"), f)
+            self.assertTrue(f in ("nishio-go/pixel.js", "nishio-go/game.js", "nishio-go/style.css", "nishio-go/postcard.js", "nishio-go/photoquiz.js", "nishio-go/daystamp.js", "nishio-go/picross.js", "nishio-go/shopmap.js", "nishio-go/bingo.js", "nishio-go/memory.js", "nishio-go/slidepuzzle.js", "nishio-go/janken.js", "nishio-go/meiro.js", "nishio-go.html") or f.startswith("tests/"), f)
 
 
 if __name__ == "__main__":

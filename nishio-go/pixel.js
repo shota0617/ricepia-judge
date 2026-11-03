@@ -7318,9 +7318,12 @@ const spotSize = (s, spr, T) => dotSize(spr[0], T) * (s.shop && spr[0].width <= 
 const bigHero = { x: null, y: null };   // お米のいる所（毎こま描くときに入れる）
 const bigSpotSize = (s, spr, T, giant) => {
   const base = spotSize(s, spr, T), B = window.nishioBigLandmark;
-  if (!B || giant || bigHero.x === null || mazeOn() || !B.isBig(s)) return base;
+  if (!B || bigHero.x === null || mazeOn() || !B.isBig(s)) return base;
+  // 特大の絵も近づくと少しずつ迫る（最大 1.25 倍・giantScaleFor が無ければ等倍）
+  if (giant && !B.giantScaleFor) return base;
   const p = toTile(s.lat, s.lng);
-  return base * B.scaleFor(Math.hypot(p.x - bigHero.x, p.y - bigHero.y));
+  const d = Math.hypot(p.x - bigHero.x, p.y - bigHero.y);
+  return base * (giant ? B.giantScaleFor(d) : B.scaleFor(d));
 };
 
 /* ---------- 画面 ---------- */

@@ -162,6 +162,7 @@
   .sayCoach { font-size: 13px; color: #6a5536; }   /* 下の だん：いま やること */
   /* のんびり（くわしい説明 なし）：計器の 札・知らせ・案内・キーの 一覧・窓の 札は 出さない（キャラクターが 話す） */
   body.calm #hud, body.calm #toast, body.calm #coach, body.calm #keyHint, body.calm #badgeSt { display: none !important; }
+  body.calm #artPop { display: none !important; }   /* サイクル76 総点検：のんびりでは 点数の ＋− ポップ（報酬・罰の 浮き文字）は 出さない */
   /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
@@ -10084,11 +10085,7 @@ const BADGE = (() => {
     g.strokeStyle = '#a88f6c'; g.lineWidth = 1.6;
     for (const a of [-0.75, 0.75]) { g.beginPath(); g.arc(Math.sin(a) * 40, -Math.cos(a) * 40, 7.5, 0, 7); g.fill(); g.stroke(); }   // ふわふわの 手
     g.restore();
-    if (!S.done) {                                 // のこりの 時間：窓の ふちの 輪（12 時から 時計まわりに へる。のこり 1 分で だいだい色）
-      const f = PLAY.left; g.lineCap = 'round'; g.lineWidth = 7;
-      g.strokeStyle = 'rgba(0,0,0,.08)'; g.beginPath(); g.arc(C, C, 71, 0, 7); g.stroke();
-      if (f > 0) { g.strokeStyle = f * PLAY.LIMIT <= 60 ? '#e8963a' : '#7cb85a'; g.beginPath(); g.arc(C, C, 71, -Math.PI / 2, -Math.PI / 2 + f * Math.PI * 2); g.stroke(); }
-    }
+    // サイクル76 総点検：窓のふちの 残り時間の 輪は 廃止（時間制限そのものを 無くしたため。土台の 薄い円も 描かない）
     const l = S.done ? 'おつかれさま' : sleep ? 'ひとやすみ' : INTRO.on && Math.abs(S.v) > 0.05 ? INTRO.label : working ? (SHIRO ? 'しろかき中' : 'たがやし中') : idle ? 'のんびり' : 'おさんぽ';
     if (l !== label) { label = l; stEl.textContent = l; }
   }
@@ -10355,26 +10352,22 @@ const INTRO = (() => {
     get label() { return phase === 2 ? (AKI ? 'みぞほり中' : 'あぜぬり中') : 'くさかり中'; }, aze, disc, groove, coat };
 })();
 
-// ---- 1 回の あそびは 5 分：走りはじめてから（メニュー・操作の表を 開いているあいだと、タブを はなれているあいだは 数えない）
-// 5 分たつと「きょうは ここまで」で おわりの画面へ。あと 1 分で 運転する キャラクターが 知らせる。上の 丸い 窓の ふちの 緑の 輪が
-// のこりの 時間（へっていき、のこり 1 分で だいだい色）。速さ・まっすぐ・重ね・旋回の 点数は 耕した 広さに よらないので、5 分で 終わっても くらべられる
+// ---- あそびに 時間制限は ない（サイクル76 総点検で 5 分制限を 廃止）：以前は 実時間 5 分で 強制的に おわりの画面へ 進み、
+// あと 1 分の 知らせと 窓のふちの 残り時間の 輪で あおっていた。焦らせる仕組みと 流れを止める要素は 廃止し（オキシトシン系・
+// 両ゲーム共通ルール）、終わりは 耕し切り（T5 100%）・田んぼアートの「完成」・≡ メニューだけにする。
+// PLAY の名前と形（update/t/left/up/LIMIT）は、終わりの画面や 農家の判定が PLAY.up を 読むため 残す（up は常に false、left は常に 1）。
 const PLAY = (() => {
-  const LIMIT = 300;
-  let t = 0, warned = false, up = false;
-  function update(dt) {                           // 本当の 時間（早送りでも ふえない）。sim では 進めない（通しの テストは 5 分より 長く 走る）
-    if (S.done) return;
-    t += dt;
-    if (!warned && t >= LIMIT - 60 && (DETAIL ? (toast('⏳ あと 1 分で おしまい', 4), true) : SAY.note('あと 1 ぷんで おしまいだよ'))) warned = true;
-    if (t >= LIMIT) { up = true; finish(); }
-  }
-  return { update, LIMIT, get t() { return t; }, get left() { return Math.max(0, LIMIT - t) / LIMIT; }, get up() { return up; } };
+  const LIMIT = 300;                              // 互換のためだけに残す（制限としては使わない）
+  let t = 0;
+  function update(dt) { if (S.done) return; t += dt; }   // 経過だけ数える。警告も強制終了もしない
+  return { update, LIMIT, get t() { return t; }, get left() { return 1; }, get up() { return false; } };
 })();
 
 // ---- まわす ----
 let last = performance.now(), hudT = 0, meterT = 0, monT = 0, lastPct = 0;
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // 5 分の 時計は 本当の 時間（おそい 機械でも 5 分で おわる）
+  const dt = Math.min(0.05, (now - last) / 1000), realDt = Math.min(0.25, (now - last) / 1000);   // realDt は PLAY の経過用（実時間。サイクル76で制限には使わない）
   last = now;
   if (!P.Rotary) { renderer.render(scene, camera); return; }
   const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;

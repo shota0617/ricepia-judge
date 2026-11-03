@@ -1,4 +1,4 @@
-# 第3弾サイクル10：きらきらお宝（モンスターハンターNow の「近くに湧いて、時間で消える」）
+# 第3弾サイクル10：きらきらお宝（モンスターハンターNow の「近くに湧く」）。第4弾サイクル26で期限なしに変更
 import json
 import os
 import subprocess
@@ -21,9 +21,8 @@ const src = require('fs').readFileSync(process.argv[1], 'utf8');
 const a = src.indexOf('const TREASURE = '), b = src.indexOf('let treasureMk');
 const dist = (p, q) => Math.hypot(p.lat - q.lat, p.lng - q.lng) * 111000;
 let S = { visits: {}, treasureGot: undefined }, spots = [], me = { lat: 34.8, lng: 137.0 };
-const track = () => {}, save = () => {}, esc = s => s, glowMin = ms => Math.max(1, Math.ceil(ms / 60000));
+const track = () => {}, save = () => {}, esc = s => s;
 const fmtM = m => Math.round(m) + 'm';
-const glowLeft = (o, now = Date.now()) => (o ? Math.max(0, o.until - now) : 0);
 const treasureMarker = () => {};
 eval(src.slice(a, b) + ';globalThis.G = { TREASURE, treasure, treasurePick, treasureArm, treasureCheckin, treasureHtml, setSpots: v => { spots = v; }, setVisits: v => { S.visits = v; }, setGuide: v => { S.guide = v; }, got: () => S.treasureGot };');
 const at = (id, dm, extra) => ({ id, name: id, kind: 'spot', lat: 34.8 + dm / 111000, lng: 137.0, ...extra });
@@ -32,11 +31,11 @@ const all = [at('far', 1500), at('near', 100), at('mid', 500), at('seen', 50), a
 out.pick = G.treasurePick(me, all, { seen: { n: 1 } }).id;
 out.pickNone = G.treasurePick(me, [at('out', 2500), at('man', 10, { kind: 'npc' })], {});
 out.pickNoMe = G.treasurePick(null, all, {});
-out.consts = [G.TREASURE.lifeMs, G.TREASURE.pts, G.TREASURE.radiusM];
+out.consts = [G.TREASURE.pts, G.TREASURE.radiusM];
 // 湧く・ゲット
 G.setSpots(all); G.setVisits({ seen: { n: 1 } });
 G.treasureArm();
-out.armed = G.treasure.cur.id; out.life = G.treasure.cur.until - Date.now() > 599000;
+out.armed = G.treasure.cur.id; out.noUntil = !('until' in G.treasure.cur);
 out.html = G.treasureHtml();
 let lines = [];
 out.other = G.treasureCheckin('mid', lines);
@@ -44,12 +43,12 @@ out.hit = G.treasureCheckin('near', lines); out.hitLines = lines; out.got = G.go
 out.respawn = G.treasure.cur.id;
 G.setVisits({ seen: { n: 1 }, near: { n: 1 } });
 out.again = G.treasureCheckin('near', []);
-// 時間切れ：ポイントなし・表示なし・湧き直し
+// 期限なし：旧形式の until が過去でも、時間が たっても 同じ場所で +15・表示も残る
 G.treasure.cur.until = Date.now() - 1;
 const old = G.treasure.cur.id;
-out.expiredHtml = G.treasureHtml(); out.late = G.treasureCheckin(old, []);
+out.lateHtml = G.treasureHtml(); G.treasureArm(); out.stay = G.treasure.cur.id === old;
+out.late = G.treasureCheckin(old, []);
 out.afterLate = G.treasure.cur ? G.treasure.cur.id : null; out.old = old;
-G.treasure.cur.until = Date.now() - 1; G.treasureArm(); out.rearm = G.treasure.cur && G.treasure.cur.until > Date.now();
 // 行き先の除外：行き先と同じ名所は選ばない（選び方・湧き直しの両方）
 out.pickGuide = G.treasurePick(me, all, { seen: { n: 1 } }, '', 'near').id;
 G.setSpots(all); G.setVisits({ seen: { n: 1 } });
@@ -66,7 +65,7 @@ G.setGuide(null);
 G.setSpots([at('solo', 100)]); G.setVisits({});
 G.treasure.cur = null; G.treasure.last = '';
 G.treasureArm(); out.solo = G.treasure.cur.id;
-G.treasure.cur.until = Date.now() - 1; G.treasureArm(); out.soloAfter = G.treasure.cur;
+G.setGuide({ id: 'solo', kind: 'spot' }); G.treasureArm(); out.soloAfter = G.treasure.cur; G.setGuide(null);
 G.treasureArm(); out.soloAgain = G.treasure.cur;
 console.log(JSON.stringify(out));
 """
@@ -84,7 +83,7 @@ class TreasureTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
 
     def test_consts(self):
-        self.assertEqual(self.d['consts'], [600000, 15, 2000])
+        self.assertEqual(self.d['consts'], [15, 2000])
 
     def test_pick(self):
         self.assertEqual(self.d['pick'], 'near')   # 近い順・行った所と人と当店は除く
@@ -93,9 +92,9 @@ class TreasureTest(unittest.TestCase):
 
     def test_spawn_and_html(self):
         self.assertEqual(self.d['armed'], 'near')
-        self.assertTrue(self.d['life'])
-        self.assertIn('🎁 きらきらお宝：near あと10分 +15pt', self.d['html'])
-        self.assertEqual(self.d['expiredHtml'], '')
+        self.assertTrue(self.d['noUntil'])
+        self.assertIn('🎁 きらきらお宝：near +15pt', self.d['html'])
+        self.assertNotIn('あと', self.d['html'])
 
     def test_hit(self):
         self.assertEqual(self.d['other'], 0)
@@ -108,10 +107,11 @@ class TreasureTest(unittest.TestCase):
         self.assertNotEqual(self.d['respawn'], 'near')
         self.assertEqual(self.d['respawn'], 'mid')
 
-    def test_expired(self):
-        self.assertEqual(self.d['late'], 0)
+    def test_no_deadline(self):
+        self.assertIn('きらきらお宝', self.d['lateHtml'])
+        self.assertTrue(self.d['stay'])
+        self.assertEqual(self.d['late'], 15)   # 時間が たっても 同じ場所で +15
         self.assertNotEqual(self.d['afterLate'], self.d['old'])
-        self.assertTrue(self.d['rearm'])
 
     def test_guide_excluded(self):
         self.assertEqual(self.d['pickGuide'], 'mid')   # 行き先 near は選ばない
@@ -121,7 +121,7 @@ class TreasureTest(unittest.TestCase):
 
     def test_single_candidate_waits(self):
         self.assertEqual(self.d['solo'], 'solo')
-        self.assertIsNone(self.d['soloAfter'])   # 時間切れで消え、すぐ復活しない
+        self.assertIsNone(self.d['soloAfter'])   # 行き先と重なって消え、すぐ復活しない
         self.assertIsNone(self.d['soloAgain'])   # 次のタイマーでも同じ場所に復活しない
 
     def test_wiring(self):

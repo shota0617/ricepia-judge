@@ -1,4 +1,4 @@
-# 第3弾サイクル4：時限の光るゴールと寄り道ボーナス（P1 光るゴール・P4 寄り道ボーナス）
+# 第3弾サイクル4（第4弾サイクル26で期限なしに変更）：光るゴールと寄り道ボーナス（P1 光るゴール・P4 寄り道ボーナス）
 import json
 import os
 import subprocess
@@ -20,11 +20,11 @@ CSS = read('nishio-go/style.css')
 NODE_GLOW = r"""
 const src = require('fs').readFileSync(process.argv[1], 'utf8');
 const a = src.indexOf('const GLOW = '), b = src.indexOf('function glowArm');
-const c = src.indexOf('function glowArrive'), d = src.indexOf('setInterval(() => { if (glow.goal');
+const c = src.indexOf('function glowArrive'), d = src.indexOf('// きらきらお宝');
 const dist = (p, q) => Math.hypot(p.lat - q.lat, p.lng - q.lng) * 111000;
 let S = { visits: {} }, spots = [], tracked = [];
 const track = n => tracked.push(n), areaZone = t => t.zone || '', mazeNow = () => true, me = { lat: 34.8, lng: 137.0 };
-eval(src.slice(a, b) + src.slice(c, d) + ';globalThis.G = { GLOW, glow, glowLeft, glowMin, glowPickGoal, glowPickNear, glowArrive, glowCheckin, glowHtml, setSpots: v => { spots = v; }, setVisits: v => { S.visits = v; } };');
+eval(src.slice(a, b) + src.slice(c, d) + ';globalThis.G = { GLOW, glow, glowPickGoal, glowPickNear, glowArrive, glowCheckin, glowHtml, setSpots: v => { spots = v; }, setVisits: v => { S.visits = v; } };');
 const esc = s => s;
 const at = (id, dm, zone, extra) => ({ id, name: id, kind: 'spot', lat: 34.8 + dm / 111000, lng: 137.0, zone, ...extra });
 const out = {};
@@ -38,7 +38,7 @@ const all = [goal, at('a', 300, 'nishio'), at('b', 100, 'nishio'), at('c', 200, 
 out.near = G.glowPickNear(goal, all, { v: { n: 1 } }, areaZone).map(x => x.id);
 // 到着：光るゴールなら +20、寄り道の一覧ができる
 G.setSpots(all); G.setVisits({ v: { n: 1 } });
-G.glow.goal = { id: 'goal', name: 'goal', until: Date.now() + 60000 };
+G.glow.goal = { id: 'goal', name: 'goal' };
 let lines = [];
 out.arrive = G.glowArrive('goal', lines); out.arriveLines = lines;
 out.nearAfter = G.glow.near.list.map(x => x.id); out.goalAfter = G.glow.goal;
@@ -46,14 +46,13 @@ out.html = G.glowHtml();
 // 寄り道にチェックイン：+10・同じ所は1回だけ
 lines = [];
 out.hit = G.glowCheckin('b', lines); out.hitLines = lines; out.hitAgain = G.glowCheckin('b', []); out.hitOther = G.glowCheckin('zzz', []);
-// 時間切れ：光りは消える（ボーナスなし・表示なし）
-G.glow.near.until = Date.now() - 1; out.expired = G.glowCheckin('a', []); out.expiredHtml = G.glowHtml();
-// 光るゴールの時間切れ：着いても +20 なし。寄り道は光る
+// 期限なし：旧形式の until が過去でも、時間が たっても 光りつづける（ゴール +20・寄り道 +10）
+G.glow.near.until = Date.now() - 1; out.late = G.glowCheckin('a', []); out.lateHtml = G.glowHtml();
 G.glow.goal = { id: 'goal', name: 'goal', until: Date.now() - 1 };
 lines = []; out.lateArrive = G.glowArrive('goal', lines);
 // 候補なし：寄り道なし
 G.setSpots([goal]); G.glow.goal = null; lines = []; out.lonely = G.glowArrive('goal', lines); out.lonelyLines = lines; out.lonelyNear = G.glow.near;
-out.consts = [G.GLOW.goalPts, G.GLOW.nearPts, G.GLOW.goalMs, G.GLOW.nearMs, G.GLOW.nearMax];
+out.consts = [G.GLOW.goalPts, G.GLOW.nearPts, G.GLOW.nearMax];
 console.log(JSON.stringify(out));
 """
 
@@ -71,7 +70,7 @@ class GlowTest(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stderr)
 
     def test_consts(self):
-        self.assertEqual(self.d['consts'], [20, 10, 600000, 300000, 3])
+        self.assertEqual(self.d['consts'], [20, 10, 3])
 
     def test_goal_is_farthest_spot(self):
         self.assertEqual(self.d['pick'], 'far')
@@ -84,10 +83,10 @@ class GlowTest(unittest.TestCase):
     def test_goal_arrival_adds_bonus_and_lights_detours(self):
         self.assertEqual(self.d['arrive'], 20)
         self.assertEqual(self.d['arriveLines'][0], '✨ 光るゴール！ +20')
-        self.assertIn('✨ 近くの 寄り道が 5分 光るよ：', self.d['arriveLines'][1])
+        self.assertIn('✨ 近くの 寄り道が 光るよ：', self.d['arriveLines'][1])
         self.assertIsNone(self.d['goalAfter'])
         self.assertEqual(self.d['nearAfter'], ['b', 'a', 'd'])
-        self.assertIn('あと5分', self.d['html'])
+        self.assertNotIn('あと', self.d['html'])
         self.assertIn('光る 寄り道', self.d['html'])
 
     def test_detour_checkin_bonus_once(self):
@@ -96,10 +95,10 @@ class GlowTest(unittest.TestCase):
         self.assertEqual(self.d['hitAgain'], 0)
         self.assertEqual(self.d['hitOther'], 0)
 
-    def test_expired_glow_disappears(self):
-        self.assertEqual(self.d['expired'], 0)
-        self.assertEqual(self.d['expiredHtml'], '')
-        self.assertEqual(self.d['lateArrive'], 0)
+    def test_glow_has_no_deadline(self):
+        self.assertEqual(self.d['late'], 10)
+        self.assertIn('光る 寄り道', self.d['lateHtml'])
+        self.assertEqual(self.d['lateArrive'], 20)
 
     def test_no_candidates_works_as_before(self):
         self.assertEqual(self.d['lonely'], 0)

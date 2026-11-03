@@ -23,7 +23,7 @@ const a = src.indexOf('const GLOW = '), b = src.indexOf('function glowArm');
 const c = src.indexOf('function glowArrive'), d = src.indexOf('// きらきらお宝');
 const dist = (p, q) => Math.hypot(p.lat - q.lat, p.lng - q.lng) * 111000;
 let S = { visits: {} }, spots = [], tracked = [];
-const track = n => tracked.push(n), areaZone = t => t.zone || '', mazeNow = () => true, me = { lat: 34.8, lng: 137.0 };
+const track = n => tracked.push(n), save = () => {}, areaZone = t => t.zone || '', mazeNow = () => true, me = { lat: 34.8, lng: 137.0 };
 eval(src.slice(a, b) + src.slice(c, d) + ';globalThis.G = { GLOW, glow, glowPickGoal, glowPickNear, glowArrive, glowCheckin, glowHtml, setSpots: v => { spots = v; }, setVisits: v => { S.visits = v; } };');
 const esc = s => s;
 const at = (id, dm, zone, extra) => ({ id, name: id, kind: 'spot', lat: 34.8 + dm / 111000, lng: 137.0, zone, ...extra });
@@ -51,7 +51,7 @@ G.glow.near.until = Date.now() - 1; out.late = G.glowCheckin('a', []); out.lateH
 G.glow.goal = { id: 'goal', name: 'goal', until: Date.now() - 1 };
 lines = []; out.lateArrive = G.glowArrive('goal', lines);
 // 候補なし：寄り道なし
-G.setSpots([goal]); G.glow.goal = null; lines = []; out.lonely = G.glowArrive('goal', lines); out.lonelyLines = lines; out.lonelyNear = G.glow.near;
+G.setSpots([goal]); G.glow.goal = null; G.glow.near = null; lines = []; out.lonely = G.glowArrive('goal', lines); out.lonelyLines = lines; out.lonelyNear = G.glow.near;
 out.consts = [G.GLOW.goalPts, G.GLOW.nearPts, G.GLOW.nearMax];
 console.log(JSON.stringify(out));
 """
@@ -111,7 +111,7 @@ class GlowTest(unittest.TestCase):
         self.assertIn('glowArm(S.guide);', GAME)
         self.assertIn('glowHtml()', GAME)
         self.assertIn('get glowGoal()', GAME)
-        self.assertNotIn('S.glow', GAME)   # セーブには入れない
+        self.assertIn('S.glowNear', GAME)   # サイクル32：光は セーブに 場所だけ 残す
 
     def test_map_marker_and_style(self):
         self.assertIn('G.glowGoal', PIXEL)

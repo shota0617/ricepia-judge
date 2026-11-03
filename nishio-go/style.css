@@ -1013,6 +1013,14 @@ body.px .guide .treasure{color:#ffe680}
 .bgo-cell{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;aspect-ratio:1;box-sizing:border-box;border-radius:8px;background:rgba(0,0,0,.05);font-size:min(30px,9vw);line-height:1}
 .bgo-cell.line{box-shadow:inset 0 0 0 4px #e8b923,0 0 0 1px #e8b923}
 .bgo-cell.off{opacity:.35;filter:grayscale(.6)}
+.memory{display:grid;grid-template-columns:repeat(3,min(88px,26vw));gap:6px;justify-content:center;margin:0 auto 4px}
+.memory[hidden]{display:none}
+.mem-card{display:flex;align-items:center;justify-content:center;min-width:64px;min-height:64px;aspect-ratio:1;box-sizing:border-box;border:0;padding:0;border-radius:10px;background:#c9b99a;font-size:min(40px,12vw);line-height:1;cursor:pointer}
+.mem-card.open{background:#fff;box-shadow:inset 0 0 0 2px rgba(0,0,0,.15)}
+.mem-card.found{background:#f3d36b;box-shadow:inset 0 0 0 2px #e8b923}
+.mem-star{grid-column:1/-1;text-align:center;font-size:44px;line-height:1.1}
+.mem-tries{display:block;text-align:center;font-size:34px;font-weight:700;margin:0 auto 12px}
+.mem-tries[hidden]{display:none}
 .pxl-cell{aspect-ratio:1;background:rgba(0,0,0,.08)}
 .sg-cell{min-width:44px;aspect-ratio:1;border-radius:6px;background:rgba(0,0,0,.08);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1}
 .bt-cell{width:min(52px,15vw);height:20px;border-radius:4px;background:rgba(0,0,0,.08)}

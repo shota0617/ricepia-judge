@@ -24,5 +24,25 @@
       return (((x * 7 + y * 13 + x * y) % 4) + 4) % 4;
     } catch (e) { return 0; }
   }
-  root.nishioLandscape = { MOTIFS, motifFor, phase };
+  // 区画（SPAN×SPAN マス）：模様を 区画いっぱいの 大きさで 描いて、隣のマスと つなげる
+  const SPAN = 4;
+  // タイル座標が 属する区画。sx,sy は 区画の原点タイル、lx,ly は 区画の中の位置（0〜SPAN-1）。不正な値は null
+  function spanOf(tx, ty) {
+    try {
+      if (typeof tx !== 'number' || typeof ty !== 'number' || !isFinite(tx) || !isFinite(ty)) return null;
+      const x = Math.floor(tx), y = Math.floor(ty);
+      const sx = Math.floor(x / SPAN) * SPAN, sy = Math.floor(y / SPAN) * SPAN;
+      return { sx, sy, lx: x - sx, ly: y - sy };
+    } catch (e) { return null; }
+  }
+  // 模様の濃さ（alpha 0.24〜0.33）。同じ区画の マスは みんな同じ。不正な値・あふれた計算は 0.24
+  function shadeFor(tx, ty) {
+    try {
+      const s = spanOf(tx, ty);
+      if (!s) return 0.24;
+      const v = 0.24 + phase(s.sx / SPAN, s.sy / SPAN) * 0.03;   // 大きすぎる座標では phase が NaN に なりうる
+      return isFinite(v) ? Math.min(0.33, Math.max(0.24, v)) : 0.24;
+    } catch (e) { return 0.24; }
+  }
+  root.nishioLandscape = { MOTIFS, SPAN, motifFor, phase, spanOf, shadeFor };
 })(typeof window !== 'undefined' ? window : globalThis);

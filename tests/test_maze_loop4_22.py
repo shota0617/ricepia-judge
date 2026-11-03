@@ -55,7 +55,7 @@ class Static(unittest.TestCase):
         body = PIXEL[i:i + 3500]
         self.assertIn('window.nishioLandscape', body)
         self.assertIn('motifFor(', body)
-        self.assertIn('phase(', body)
+        self.assertIn('phase(', PIXEL[PIXEL.index('function drawLandscapeTile('):i])   # サイクル30：phase は 従来の絵（フォールバック）に のこる
         self.assertIn('clip()', body)
         j = PIXEL.index('function landAreaOf(')
         c = PIXEL[j:j + 700]

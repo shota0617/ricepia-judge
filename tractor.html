@@ -518,7 +518,7 @@ const SHIRO = season === 'shirokaki';
 // 作業機の付け替え（サイクル63で第1弾・64で第2弾・67で第4弾・68で第5弾・79で第6弾・80で第7弾・81で第8弾）: impl=rotary|harrow|plow|disc|ditch|aze|ridge|flail|sub|mulch|caster|drill|manure。既定は季節の従来作業機（代かき=ハロー、それ以外=ロータリー）
 const IMPL_ID = ['rotary', 'harrow', 'plow', 'disc', 'ditch', 'aze', 'ridge', 'flail', 'sub', 'mulch', 'caster', 'drill', 'manure'].includes(params.get('impl')) ? params.get('impl') : (SHIRO ? 'harrow' : 'rotary');
 const IS_HARROW = IMPL_ID === 'harrow';        // 翼を折りたたむウイングハローかどうか（従来は SHIRO で判定していた作業機側の性質）
-const PTO_IMPL = IMPL_ID === 'rotary' || IS_HARROW || IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster' || IMPL_ID === 'manure';   // マニュアスプレッダーの散布ビーターも PTO 駆動（サイクル81）   // PTO 駆動の作業機か（プラウ・ディスクハローは地表駆動で PTO は要らない）
+const PTO_IMPL = IMPL_ID === 'rotary' || IS_HARROW || IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster' || IMPL_ID === 'manure';   // PTO 駆動の作業機か（プラウ・ディスクハローは地表駆動で PTO は要らない。マニュアスプレッダーの散布ビーターも PTO 駆動＝サイクル81）
 const IMPL = { rotary: 'ロータリー', harrow: 'ハロー', plow: 'プラウ', disc: 'ディスクハロー', ditch: '溝掘り機', aze: '畦塗り機', ridge: '畝立て機', flail: 'フレールモア', sub: 'サブソイラー', mulch: 'マルチャー', caster: 'ブロードキャスター', drill: 'シードドリル', manure: 'マニュアスプレッダー' }[IMPL_ID];   // 作業機の呼び名
 let IMPL_SPIN = [];                            // 付け替えた作業機の回る部品（プラウの深度輪・ディスクのギャング・溝掘り円盤・畦塗りローター）。爪軸の回転に合わせて回す
 const IMPL_SPIN_K = (IMPL_ID === 'ditch' || IMPL_ID === 'aze' || IMPL_ID === 'flail' || IMPL_ID === 'caster' || IMPL_ID === 'manure') ? 1 : 0.2;   // 回る速さ：PTOローター（溝掘り・畦塗り）は爪軸と同じ、地表駆動部品は ゆっくり 0.2 倍

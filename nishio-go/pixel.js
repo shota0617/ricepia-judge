@@ -3,6 +3,7 @@
  * 16×16 のドット絵タイルで描きます。航空写真は使いません。地図データ © OpenStreetMap contributors（ODbL）。 */
 (() => {
 'use strict';
+// 第4弾サイクル77 参考ゲーム「スナフキン：ムーミン谷のメロディ」：ばねで はね返った 直後に 急いで とっても ゆっくり とっても 同じ 通常の 反応だけ（急がせない）
 // 第4弾サイクル76 参考ゲーム「あつまれ どうぶつの森」：同じ ことを くりかえしても 音も 反応も 段階的に 大きく ならず、いつも 同じ おだやかな 反応。集めた ものは 静かに 持っている 記録として 残り、過去の 自分とは 比べない
 const G = window.nishioGo;
 if (!G) return;
@@ -9473,15 +9474,10 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
 // 生け垣から はなれる ときに 当たった 速さより 速く（MZ_SPRING_E 倍。いちばん速い 速さ ROLL_MAX まで）はね返る。ふだんの 生け垣は かわらない（4割ほど）
 const MZ_SPRING_MS = 12000, MZ_SPRING_E = 1.3;   // わざの 長さ・はね返りの 強さ（数字は 仮。店主に 聞く）
 const mzSpring = { cx: 0, cy: 0, on: false, t0: 0, until: 0, next: 0, told: false, got: 0, boosts: 0, last: 0, chain: 0, at: 0, best: 0 };   // chain：いつも 1 以下（はね返りは 何回 つづいても 同じ おだやかな ぽよん。数えない）。best：つかわない（互換）。at：さいごに はね返った 時刻
-function mzSpringShot() {   // ばねショット（快感）：ばねで はね返って 1.2秒 以内に 金の米つぶ・ごはんつぶ・ゴールを とった（わざを うまく つかえた ほめ。1回 はね返るごとに 1つ）
-  const now = performance.now();
-  if (!mzSpring.at || now - mzSpring.at > 1200) return;
-  mzSpring.at = 0; mzSpring.shots = (mzSpring.shots || 0) + 1;
-  riceSay('やったぁ！', 1600, 'happy'); chordSound();   // 吹き出し（もとは「🎯 ばねショット！ うまいじゃん」）
-  const cols = ['#8cf078', '#ffd84a', '#ffffff'];
-  for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.5 }); }
+function mzSpringShot() {   // ばねショット：もう 何も 出さない。はね返った 直後に 急いで とっても ゆっくり とっても 同じ 通常の 反応だけ（タイミングでは 何も 変わらない／急がせない。サイクル77・スナフキン：ムーミン谷のメロディ）
+  mzSpring.at = 0;
 }
-function mzSpringChain(now) {   // ばねの はね返り：何回 つづいても いつも 同じ 小さな 緑の きらきら 5つ だけ（数えず、音も 高くならず、吹き出しも 出さない）。at は ばねショット（1.2秒）の 判定用
+function mzSpringChain(now) {   // ばねの はね返り：何回 つづいても いつも 同じ 小さな 緑の きらきら 5つ だけ（数えず、音も 高くならず、吹き出しも 出さない）。at は 最後に はね返った 時刻の 記録だけ（ばねショットは もう 判定に 使わない）
   mzSpring.chain = 1; mzSpring.at = now;
   for (let i = 0; i < 5; i++) { const t = Math.random() * Math.PI * 2, v = 1 + Math.random() * 2; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2, c: i % 2 ? '#8cf078' : '#e4ffd8', life: 0.4 + Math.random() * 0.3 }); }
 }   // on：ばねが 置いて ある。until：わざの おわり

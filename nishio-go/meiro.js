@@ -1,3 +1,4 @@
+// 第4弾サイクル77 参考ゲーム「スナフキン：ムーミン谷のメロディ」：ばねで はね返った 直後に 急いで とっても ゆっくり とっても 同じ 通常の 反応だけ（急がせない）
 // 第4弾サイクル76 参考ゲーム「あつまれ どうぶつの森」：ばねは 何回 はね返っても いつも 同じ 穏やかな ぽよん（急がせない・高く ならない）
 // にしおさんぽGO：西尾めいろ（スマホを傾けて、お米を 西尾の地図の迷路の ゴールまで ころがす。キーホルダーの 玉ころがし迷路のように）
 // ・盤は 本物の西尾の地図の一部（ドット絵の地図と同じ絵。pixel.js の paintRegion）。めいろの1マスは 地図の 2×2マス（約16m）。
@@ -413,12 +414,9 @@ function waitChunks(spot, done) {
     else setTimeout(poll, 250);
   })();
 }
-function springShot(g) {   // ばねショット（快感。地図の めいろと 同じ）：ばねで はね返って 1.2秒 以内に 金の米つぶ・ゴール → 金と 緑の きらきらと ちりりん
-  const sp = g.spring, now = performance.now();
-  if (!sp || !sp.at || now - sp.at > 1200) return;
-  sp.at = 0; sp.shots = (sp.shots || 0) + 1;
-  [0, 70, 140].forEach((d, k) => setTimeout(() => api.koto(0.8 + k * 0.1, false), d));
-  for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, v = 3.5; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, c: k % 2 ? '#ffd84a' : '#8cf078', t: 0, life: 0.7 }); }
+function springShot(g) {   // ばねショット：もう 何も 出さない。地図の めいろと 同じ（タイミングでは 何も 変わらない／急がせない。サイクル77・スナフキン：ムーミン谷のメロディ）
+  const sp = g.spring;
+  if (sp) sp.at = 0;
 }
 function restart() {
   const b = game.board;

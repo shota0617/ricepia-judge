@@ -3,6 +3,7 @@
  * 16×16 のドット絵タイルで描きます。航空写真は使いません。地図データ © OpenStreetMap contributors（ODbL）。 */
 (() => {
 'use strict';
+// 第4弾サイクル76 参考ゲーム「あつまれ どうぶつの森」：同じ ことを くりかえしても 音も 反応も 段階的に 大きく ならず、いつも 同じ おだやかな 反応。集めた ものは 静かに 持っている 記録として 残り、過去の 自分とは 比べない
 const G = window.nishioGo;
 if (!G) return;
 const $ = id => document.getElementById(id);
@@ -4068,14 +4069,13 @@ function riceFeel(dt, speed) {
   roll.dust = roll.dust.filter(p => p.t < 0.45);
 }
 let kotoCtx = null;
-function boingSound(v, hi) {   // やわらかい 生け垣で はね返った：ぽよん（低い 音から 上がって、少し ふるえる）。hi：ばねの わざ（高く のびる びよーん。数は れんぱつの 何つめ か）
+function boingSound(v, hi) {   // やわらかい 生け垣で はね返った：ぽよん（低い 音から 上がって、少し ふるえる）。hi：ばねの わざ（高く のびる びよーん。れんぱつでは 高くならない：いつも 同じ 音程）
   try {
     if (localStorage.getItem('nsg_bgm') === 'false' || document.hidden) return;
     kotoCtx = kotoCtx || new (window.AudioContext || window.webkitAudioContext)();
     if (kotoCtx.state === 'suspended') kotoCtx.resume();
     const t = kotoCtx.currentTime, o = kotoCtx.createOscillator(), w = kotoCtx.createOscillator(), wg = kotoCtx.createGain(), g = kotoCtx.createGain();
-    const up = hi ? Math.pow(2, Math.min(6, hi - 1) * 2 / 12) : 1;   // れんぱつ：1つごとに 全音 上へ（6つで 止める）
-    o.type = 'sine'; o.frequency.setValueAtTime(hi ? 240 * up : 170, t); o.frequency.exponentialRampToValueAtTime(hi ? 760 * up : 420, t + 0.16);
+    o.type = 'sine'; o.frequency.setValueAtTime(hi ? 240 : 170, t); o.frequency.exponentialRampToValueAtTime(hi ? 760 : 420, t + 0.16);
     w.frequency.setValueAtTime(18, t); wg.gain.setValueAtTime(25, t); w.connect(wg); wg.connect(o.frequency);   // ぷるぷる
     g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.09 * (0.4 + v * 0.6), t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
     o.connect(g); g.connect(kotoCtx.destination); o.start(t); w.start(t); o.stop(t + 0.26); w.stop(t + 0.26);
@@ -9472,7 +9472,7 @@ function mzScareTick(now, rc, rr) {   // かかし：カラスが いる とき�
 // ばねの わざ（2026-10-27 店主「迷路の壁が伸びて跳ね返って加速するスキル」）：通路に ときどき ばねが 1つ 出る。とると しばらく、
 // 生け垣から はなれる ときに 当たった 速さより 速く（MZ_SPRING_E 倍。いちばん速い 速さ ROLL_MAX まで）はね返る。ふだんの 生け垣は かわらない（4割ほど）
 const MZ_SPRING_MS = 12000, MZ_SPRING_E = 1.3;   // わざの 長さ・はね返りの 強さ（数字は 仮。店主に 聞く）
-const mzSpring = { cx: 0, cy: 0, on: false, t0: 0, until: 0, next: 0, told: false, got: 0, boosts: 0, last: 0, chain: 0, at: 0, best: 0 };   // chain：つづけて はね返った 数（1.5秒 以内）。at：さいごに はね返った 時刻
+const mzSpring = { cx: 0, cy: 0, on: false, t0: 0, until: 0, next: 0, told: false, got: 0, boosts: 0, last: 0, chain: 0, at: 0, best: 0 };   // chain：いつも 1 以下（はね返りは 何回 つづいても 同じ おだやかな ぽよん。数えない）。best：つかわない（互換）。at：さいごに はね返った 時刻
 function mzSpringShot() {   // ばねショット（快感）：ばねで はね返って 1.2秒 以内に 金の米つぶ・ごはんつぶ・ゴールを とった（わざを うまく つかえた ほめ。1回 はね返るごとに 1つ）
   const now = performance.now();
   if (!mzSpring.at || now - mzSpring.at > 1200) return;
@@ -9481,15 +9481,9 @@ function mzSpringShot() {   // ばねショット（快感）：ばねで はね
   const cols = ['#8cf078', '#ffd84a', '#ffffff'];
   for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.5 }); }
 }
-function mzSpringChain(now) {   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 数が ふえ、ぽよんの 音が 1段ずつ 高く、2れんぱつ から 吹き出しと 大きな 緑の きらきら（1回目は 小さな きらきら だけ）
-  mzSpring.chain = now - mzSpring.at < 1500 ? mzSpring.chain + 1 : 1; mzSpring.at = now; mzSpring.best = Math.max(mzSpring.best, mzSpring.chain);
-  if (mzSpring.chain < 2) {   // 1回目から 小さな 緑の きらきら（夜の 改善 7：はじめての 知らせ「ばねの 間は 生け垣で 前より 速く はね返るよ…」を やめ、はね返る ところを 絵で 見せる）
-    for (let i = 0; i < 5; i++) { const t = Math.random() * Math.PI * 2, v = 1 + Math.random() * 2; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2, c: i % 2 ? '#8cf078' : '#e4ffd8', life: 0.4 + Math.random() * 0.3 }); }
-    return;
-  }
-  riceSay('びよーん' + '♪'.repeat(Math.min(4, mzSpring.chain - 1)), 1200, 'happy');   // 吹き出し：♪ の 数が れんぱつ（もとは「びよーん Nれんぱつ！」）
-  const cols = ['#8cf078', '#e4ffd8', '#ffffff'];
-  for (let i = 0; i < 6 + Math.min(12, mzSpring.chain * 3); i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2.5, c: cols[i % 3], life: 0.5 + Math.random() * 0.4 }); }
+function mzSpringChain(now) {   // ばねの はね返り：何回 つづいても いつも 同じ 小さな 緑の きらきら 5つ だけ（数えず、音も 高くならず、吹き出しも 出さない）。at は ばねショット（1.2秒）の 判定用
+  mzSpring.chain = 1; mzSpring.at = now;
+  for (let i = 0; i < 5; i++) { const t = Math.random() * Math.PI * 2, v = 1 + Math.random() * 2; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 2, c: i % 2 ? '#8cf078' : '#e4ffd8', life: 0.4 + Math.random() * 0.3 }); }
 }   // on：ばねが 置いて ある。until：わざの おわり
 function mzSpringTick(now) {   // ばね：お米から めいろの 6〜14マスの 通路に 1つ。とったら 45秒 たつまで 次は 出ない。60秒 とられなければ 別の 所に
   const gap = mzSpring.last ? now - mzSpring.last : 0;
@@ -12458,7 +12452,7 @@ function rollStep(dt) {
         const v = Math.hypot(rp.vx, rp.vy); if (v > ROLL_MAX) { rp.vx *= ROLL_MAX / v; rp.vy *= ROLL_MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }
       if (mzSoft.on && mzSoft.vin > 2.5 && roll.h <= 0 && !calmMotion) { roll.hv = Math.min(2.6, 0.8 + mzSoft.vin * 0.25); roll.h = 0.001; }   // ぽよんぽよん：はね返る ときに お米が ちょこんと とびはねる（見た目だけ。動きを へらす 人には しない）
-      if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now() ? mzSpring.chain || 1 : 0); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
+      if (mzSoft.on && mzSoft.vin > 1.5) { boingSound(Math.min(1, mzSoft.vin / 8), mzSpring.until > performance.now() ? 1 : 0); mzSoft.boings++; }   // はなれた：ぽよん（はね返った ことを 音でも）
       mzSoft.on = false; mzSoft.vin = 0;
     }
     rp.x = nx; rp.y = ny;

@@ -112,6 +112,29 @@
   #backToSort { display:none; margin:10px auto 0; border:0; border-radius:999px; background:#e3d7bd; color:var(--ink);
     font:inherit; font-size:16px; font-weight:800; padding:10px 18px; cursor:pointer; }
   #backToSort.on { display:block; }
+  /* おす（サイクル5）: 等級証印＋日付印を袋に押す。次の山で1ロット完結し、続けられる */
+  #stampWrap { display:none; margin-top:12px; }
+  #stampWrap.on { display:block; }
+  #stampBag { position:relative; background:linear-gradient(180deg,#efe3c2,#e2d0a4); border-radius:14px; min-height:190px;
+    box-shadow:inset 0 3px 10px rgba(120,84,30,.25), 0 4px 12px rgba(26,24,20,.2); cursor:pointer; overflow:hidden; }
+  #stampBag .bagWeight { position:absolute; top:14px; left:16px; font-size:34px; font-weight:800; color:#8a6f3c; }
+  #stampBag .bagHint { position:absolute; bottom:12px; left:0; right:0; text-align:center; font-size:15px; font-weight:800; color:#8a6f3c; opacity:.8; }
+  #stampMark { position:absolute; right:18px; top:44px; width:104px; height:104px; border:5px solid #b03a2e; border-radius:50%;
+    color:#b03a2e; display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1;
+    opacity:0; transform:scale(1.5) rotate(-10deg); pointer-events:none; background:rgba(255,252,244,.35); }
+  #stampMark.on { transition:all .5s ease; opacity:.92; transform:scale(1) rotate(-10deg); }
+  #stampMark b { font-size:38px; }
+  #stampMark span { font-size:12px; font-weight:800; margin-top:5px; }
+  #dateMark { position:absolute; right:26px; top:158px; font-size:17px; font-weight:800; color:#4a4438;
+    border:2px solid #4a4438; border-radius:6px; padding:2px 8px; opacity:0; transform:rotate(-3deg); pointer-events:none; background:rgba(255,252,244,.4); }
+  #dateMark.on { transition:opacity .6s ease .25s; opacity:.85; }
+  #stampBtn { display:block; width:100%; margin-top:12px; border:0; border-radius:999px; background:var(--green); color:#fff;
+    font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; }
+  #stampBtn:disabled { opacity:.45; cursor:default; }
+  #stampCount { margin:12px 2px 0; text-align:center; font-size:18px; font-weight:800; }
+  #stampCount b { font-size:34px; }
+  #scene.nextPile img { animation:nextPile 1.2s ease; }
+  @keyframes nextPile { 0%{ opacity:.35; transform:translateX(14px);} 100%{ opacity:1; transform:translateX(0);} }
   footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
 </style>
 </head>
@@ -159,9 +182,19 @@
     <p id="gradeMsg" aria-live="polite"></p>
     <button id="backToSort">👀 皿をみる</button>
   </div>
+  <div id="stampWrap">
+    <div id="stampBag" role="button" aria-label="米袋をタップして等級証印を押す">
+      <span class="bagWeight">30kg</span>
+      <div id="stampMark"><b id="stampGrade">1等</b><span>等級証印</span></div>
+      <div id="dateMark"></div>
+      <span class="bagHint">ふくろを タップ</span>
+    </div>
+    <button id="stampBtn">🖐 おす</button>
+    <p id="stampCount">🖐 <b>0</b></p>
+  </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。判定した等級は等級証印として米袋に押印し、あわせて検査証明年月日の日付印を押します。</footer>
 </main>
 <script>
 "use strict";
@@ -200,13 +233,18 @@ function judgeGrade(truth, moisture) {
   }
   return "規格外";
 }
+/* 日付印（サイクル5）: 検査証明年月日をその日の日付で押す（実在の所作・brief_cycle1.md §1/§2-5） */
+function stampDateText(d) {
+  return d.getFullYear() + "." + (d.getMonth() + 1) + "." + d.getDate();
+}
 const tray = document.getElementById("tray");
 const count = document.getElementById("count");
 const bagTap = document.getElementById("bagTap");
 const nextBtn = document.getElementById("nextBtn");
 const stepChip = document.getElementById("stepChip");
 let sampled = false;
-let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → kimeru → kimeru-done */
+let selectedGrade = "";
+let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → kimeru → kimeru-done → osu → osu-done */
 nextBtn.addEventListener("click", () => {
   if (phase === "sas" && sampled) {
     phase = "hakaru";
@@ -234,10 +272,82 @@ nextBtn.addEventListener("click", () => {
     count.textContent = "等級を えらぶ";
     nextBtn.classList.remove("on");
   } else if (phase === "kimeru-done") {
-    count.textContent = "👀 つぎのサイクルで はじまる";
-    nextBtn.textContent = "⑤ おす 🖐（つぎのサイクルで）";
+    phase = "osu";
+    stepChip.textContent = "⑤ おす";
+    document.getElementById("gradeWrap").classList.remove("on"); /* 道具は常時1つだけ: 等級ボタンはしまう */
+    document.getElementById("stampGrade").textContent = selectedGrade;
+    document.getElementById("stampWrap").classList.add("on");
+    count.textContent = "ふくろに 証印を おす";
+    nextBtn.classList.remove("on");
+  } else if (phase === "osu-done") {
+    startNextLot();
   }
 });
+/* おす（サイクル5）: 等級証印＋日付印を袋に押す。ボタンでも袋タップでも押せる。1回だけ・罰なし */
+let stampPressed = false;
+let stampTotal = 0;
+function pressStamp() {
+  if (phase !== "osu" || stampPressed) return;
+  stampPressed = true;
+  document.getElementById("stampMark").classList.add("on");
+  const dateEl = document.getElementById("dateMark");
+  dateEl.textContent = stampDateText(new Date());
+  dateEl.classList.add("on");
+  document.getElementById("stampBtn").disabled = true;
+  stampTotal++;
+  document.querySelector("#stampCount b").textContent = stampTotal;
+  stepChip.textContent = "⑤ おす ✓";
+  count.textContent = "証印を おした ✓";
+  phase = "osu-done";
+  nextBtn.textContent = "つぎの山 🌾";
+  nextBtn.classList.add("on");
+}
+document.getElementById("stampBtn").addEventListener("click", pressStamp);
+document.getElementById("stampBag").addEventListener("click", pressStamp);
+/* 次の山（サイクル5）: ゆっくり運ばれてくる演出のあと、最初の所作へ戻る。証印の数だけ残る（競わない） */
+function startNextLot() {
+  const scene = document.getElementById("scene");
+  scene.classList.remove("nextPile");
+  void scene.offsetWidth; /* アニメーションをやり直す */
+  scene.classList.add("nextPile");
+  phase = "sas";
+  sampled = false;
+  selectedGrade = "";
+  bagTap.classList.remove("done");
+  document.getElementById("probe").classList.remove("go");
+  document.getElementById("seal").classList.remove("on");
+  tray.innerHTML = "";
+  document.getElementById("trayWrap").style.display = "";
+  stepChip.textContent = "① さす";
+  count.textContent = "ふくろを タップ";
+  /* はかるのリセット */
+  measured = 0;
+  document.getElementById("meterWrap").classList.remove("on");
+  slots.forEach((s) => { s.textContent = "—"; s.classList.remove("filled"); });
+  document.getElementById("avg").classList.remove("on");
+  document.getElementById("bandMark").classList.remove("on");
+  meterBtn.disabled = false;
+  /* みわけるのリセット */
+  sortFound = 0;
+  sortBuilt = false;
+  document.getElementById("sortWrap").classList.remove("on");
+  document.querySelectorAll("#whiteTray .sgrain, #blackTray .sgrain").forEach((g) => g.remove());
+  document.getElementById("yokeTray").innerHTML = "";
+  sortProgress();
+  /* きめるのリセット */
+  document.getElementById("gradeWrap").classList.remove("on");
+  document.querySelectorAll(".gradeBtn").forEach((b) => { b.disabled = false; b.classList.remove("picked"); });
+  gradeMsg.classList.remove("on");
+  backToSort.classList.remove("on");
+  /* おすのリセット */
+  stampPressed = false;
+  document.getElementById("stampWrap").classList.remove("on");
+  document.getElementById("stampMark").classList.remove("on");
+  document.getElementById("dateMark").classList.remove("on");
+  document.getElementById("stampBtn").disabled = false;
+  nextBtn.textContent = "② はかる 💧";
+  nextBtn.classList.remove("on");
+}
 /* きめる（サイクル4）: 大きな等級ボタンを1つタップ。合えば次へ、外れても流れを止めず皿に戻って見直せる */
 const gradeMsg = document.getElementById("gradeMsg");
 const backToSort = document.getElementById("backToSort");
@@ -246,6 +356,7 @@ document.querySelectorAll(".gradeBtn").forEach((btn) => {
     if (phase !== "kimeru") return;
     const answer = judgeGrade(LOT.truth, moistureAverage(LOT.moisture));
     if (btn.dataset.grade === answer) {
+      selectedGrade = answer;
       phase = "kimeru-done";
       document.querySelectorAll(".gradeBtn").forEach((b) => { b.disabled = true; });
       btn.classList.add("picked");

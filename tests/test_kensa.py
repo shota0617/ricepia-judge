@@ -145,6 +145,31 @@ class KensaTests(unittest.TestCase):
                          ["1等", "1等", "2等", "1等", "2等", "2等",
                           "1等", "3等", "規格外", "規格外", "1等", "規格外"])
 
+    def test_stamp_ui(self):
+        # サイクル5「おす」: 等級証印＋日付印＋次の山（1ロット完結）
+        self.assertIn('id="stampWrap"', HTML)
+        self.assertIn('id="stampBag"', HTML)    # 袋タップでも押せる
+        self.assertIn('id="stampBtn"', HTML)    # 大きなボタンでも押せる
+        self.assertIn('id="stampMark"', HTML)   # 等級証印
+        self.assertIn('id="stampGrade"', HTML)
+        self.assertIn('id="dateMark"', HTML)    # 検査証明年月日の日付印
+        self.assertIn('id="stampCount"', HTML)  # 今日おした証印の数だけ（競わない）
+        self.assertIn("pressStamp", HTML)
+        self.assertIn("startNextLot", HTML)     # 次の山へ戻って続けられる
+        self.assertIn("つぎの山", HTML)
+        self.assertNotIn("alert(", HTML)        # 流れを止める要素は作らない
+        self.assertNotIn("setInterval", HTML)   # タイマー・焦らせる仕組みを入れない
+
+    def test_stamp_date_text(self):
+        # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
+        node = shutil.which("node")
+        self.assertIsNotNone(node, "node が必要")
+        func = re.search(r"function stampDateText\(d\) \{.*?^\}", HTML, re.S | re.M).group(0)
+        script = func + "\nconsole.log(JSON.stringify([stampDateText(new Date(2026,10,5)), stampDateText(new Date(2026,0,9))]));\n"
+        out = subprocess.run([node, "-e", script], capture_output=True, text=True, timeout=30)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        self.assertEqual(json.loads(out.stdout), ["2026.11.5", "2026.1.9"])
+
 
 if __name__ == "__main__":
     unittest.main()

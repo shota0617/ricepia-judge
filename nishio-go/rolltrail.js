@@ -274,7 +274,7 @@
           const gLo = Math.max(offLo, offHi) - HALF * wOf(d.s) * Math.abs(dot), gHi = Math.min(offLo, offHi) + HALF * wOf(d.s) * Math.abs(dot);
           if (gLo > gHi) continue; // 保証区間が空の覆いは、横の残りを戻せないまま長手方向だけ消してしまうので覆いに数えない（サイクル59 Codex指摘）
           cover.push([lo, hi]);
-          bands.push({ lo, hi, gLo, gHi, tilt: Math.abs(dot) < 1 - 1e-9 });
+          bands.push({ lo, hi, gLo, gHi, off, tan, xMid, proj: HALF * wOf(d.s) * Math.abs(dot), tilt: Math.abs(dot) < 1 - 1e-9 });
         }
         if (!cover.length) { out.push(seg); return; }
         cover.sort((p, q) => p[0] - q[0]);
@@ -297,18 +297,24 @@
         // 横にはみ出した細い帯（第4弾サイクル48・Lawn Mowing Simulator）：覆いを線でなく帯の幅（HALF×w）で数え、重ならない横の残りを細い帯として残す
         // 斜め覆いも両端で見る（第4弾サイクル59・SuchArt）：傾いた覆いの横ずれは中点だけでなく重なり区間の両端（offLo・offHi）で測り、大きい方が SPLIT_SIDE 以下のときだけ覆いに数える。横に保証できる区間は射影幅（HALF×w×|cosΔ|）から両端のずれの差を引いた [gLo, gHi] だけ（空なら細い帯の引き算には入れない）。傾いた覆い（tilt）は中心が真ん中でも保証区間が名目幅より狭いので細い帯を出す。平行（Δ=0）なら従来と同じ
         // 真ん中を通る細い覆いでも横の残りを出す（第4弾サイクル61・Manifold Garden）：重ねた面は重なった範囲だけが隠れるので、中心がずれていなくても保証区間が古い帯の全幅（2×hi0）を覆いきれないときは両側の残りを細い帯として出す（幅不足では古い帯を消さない、サイクル60の dedupeNear と同じ原則）
+        // 斜め覆いの横の残りは前半・後半で保証し直す（第4弾サイクル62・Fruit Ninja）：刃を斜めに振ると残りは位置によって片側だけになるので、重なり区間全体の最悪値を一律に使わず、tilt な覆いは重なり区間の中点でも切って小区間ごとに両端の横ずれから保証区間を測り直す。平行な覆いは従来どおり
         // 複数の覆いは軸の小区間ごとに横の覆い区間を和集合にしてから引く（第4弾サイクル49・ぷよぷよ）：合わさって覆う所は二重に出さない
         const hi0 = HALF * wOf(s), nx = -c.dy, ny = c.dx;
         const cuts = [0, 1];
-        bands.forEach(b => { cuts.push(b.lo, b.hi); });
+        bands.forEach(b => { cuts.push(b.lo, b.hi); if (b.tilt) cuts.push((b.lo + b.hi) / 2); });
         cuts.sort((p, q) => p - q);
         for (let k = 0; k + 1 < cuts.length; k++) {
           const lo = cuts[k], hi = cuts[k + 1];
           if (!(hi - lo > 1e-9)) continue;
-          const here = bands.filter(b => b.lo <= lo + 1e-9 && hi <= b.hi + 1e-9);
-          if (!here.some(b => b.tilt || Math.abs((b.gLo + b.gHi) / 2) > 0.005 || (b.gHi - b.gLo) < 2 * hi0 - 1e-9)) continue;
+          // 小区間の両端で横ずれを測り直した保証区間（平行なら offLo=offHi で [gLo, gHi] と一致）
+          const here = bands.filter(b => b.lo <= lo + 1e-9 && hi <= b.hi + 1e-9).map(b => {
+            const oLo = b.off + (lo * c.len - b.xMid) * b.tan, oHi = b.off + (hi * c.len - b.xMid) * b.tan;
+            const sgLo = b.tilt ? Math.max(oLo, oHi) - b.proj : b.gLo, sgHi = b.tilt ? Math.min(oLo, oHi) + b.proj : b.gHi;
+            return { tilt: b.tilt, sgLo, sgHi };
+          });
+          if (!here.some(b => b.tilt || Math.abs((b.sgLo + b.sgHi) / 2) > 0.005 || (b.sgHi - b.sgLo) < 2 * hi0 - 1e-9)) continue;
           const uni = [];
-          here.map(b => [b.gLo, b.gHi]).sort((p, q) => p[0] - q[0]).forEach(iv => {
+          here.map(b => [b.sgLo, b.sgHi]).sort((p, q) => p[0] - q[0]).forEach(iv => {
             const m = uni[uni.length - 1];
             if (m && iv[0] <= m[1] + 1e-9) m[1] = Math.max(m[1], iv[1]); else uni.push([iv[0], iv[1]]);
           });

@@ -19,7 +19,6 @@ def git(*a):
 
 
 TRAIL = func_body("function drawMzTrail(")
-MINI = func_body("function drawMzMini(")
 PULSE = func_body("function mzEntrancePulse(")
 ENT = TRAIL[TRAIL.index("const ea = "):]
 ADDED = [l[1:] for l in git("diff", "-U0", "origin/main", "--", "nishio-go/pixel.js").splitlines() if l.startswith("+") and not l.startswith("+++") and "//c17" not in l and "!G.demo" not in l]
@@ -78,16 +77,9 @@ class Draw(unittest.TestCase):
 
 
 class Mini(unittest.TestCase):
-    def test_mini_triangle(self):
-        self.assertIn("mzOpen(cx, cy, dx, dy) && !mzTrail.has((cx + dx) + ',' + (cy + dy))", MINI)
-        self.assertIn("px0 + (0.5 + dx * 0.5) * q - dx * q * 0.45, Y = py0 + (0.5 + dy * 0.5) * q - dy * q * 0.45", MINI)
-        self.assertIn("ctx.fillStyle = '#ffffff'", MINI)
-        self.assertIn("q * 0.45", MINI)
-        self.assertIn("q * 0.4", MINI)
-
-    def test_mini_order(self):
-        self.assertGreater(MINI.index("q * 0.45"), MINI.index("if (!mzOpen(cx, cy, 1, 0))"))
-        self.assertGreater(MINI.index("q * 0.45"), MINI.index("of mzMini.seen"))  # 入口は しるしの 上（Codex指摘対応）
+    def test_mini_abolished_cycle63(self):
+        self.assertNotIn("function drawMzMini(", PIXEL)   # ミニマップ廃止（本線の白い三角は残る）
+        self.assertIn("mzOpen(cx, cy, dx, dy) && !mzTrail.has((cx + dx) + ',' + (cy + dy))", TRAIL)
 
 
 class Safety(unittest.TestCase):

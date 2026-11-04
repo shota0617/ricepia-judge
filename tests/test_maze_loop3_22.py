@@ -90,7 +90,7 @@ class Brigade(unittest.TestCase):
         self.assertNotIn("drawMzBrigadeTag(w, dpr, now);", PIXEL)   # 文章札は 常時描画しない（サイクル25）
 
     def test_non_blocking(self):
-        seg = PIXEL[PIXEL.index("// おとも旅団（ルフラン"):PIXEL.index("// 手描き探索マップ")]
+        seg = PIXEL[PIXEL.index("// おとも旅団（ルフラン"):PIXEL.index("// 見えたしるしの記録（表示はサイクル63で廃止")]
         for w in ("addEventListener", "confirm(", "alert(", "modal"):
             self.assertNotIn(w, seg)
 

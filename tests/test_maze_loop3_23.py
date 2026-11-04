@@ -78,7 +78,7 @@ class Purify(unittest.TestCase):
         self.assertIn("calmMotion", d)
 
     def test_non_blocking(self):
-        seg = PIXEL[PIXEL.index("// 迷路の 浄化マス（Mary"):PIXEL.index("// 手描き探索マップ")]
+        seg = PIXEL[PIXEL.index("// 迷路の 浄化マス（Mary"):PIXEL.index("// 見えたしるしの記録（表示はサイクル63で廃止")]
         for w in ("addEventListener", "confirm(", "alert(", "modal"):
             self.assertNotIn(w, seg)
 

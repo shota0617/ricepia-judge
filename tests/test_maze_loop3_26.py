@@ -59,7 +59,7 @@ class Cube(unittest.TestCase):
         shelf = func_body("function drawMzCubeShelf(")
         self.assertIn("MZ_CUBE.n", shelf)
         self.assertIn("mzCube.got", shelf)
-        self.assertIn("drawMzCacheChip(w, dpr, now); drawMzCubeShelf(w, dpr, now); drawMzMini(", PIXEL)
+        self.assertIn("drawMzCacheChip(w, dpr, now); drawMzCubeShelf(w, dpr, now); mzToastDodge(now); }", PIXEL)
         self.assertIn("mzCubeShelfH(dpr)", func_body("function mzViewShelfY("))   # ピース棚の下に置き、後ろの札はその下へ
 
     def test_poly_is_rotating_isometric(self):

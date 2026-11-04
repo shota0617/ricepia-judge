@@ -94,7 +94,7 @@ class Rescue(unittest.TestCase):
         self.assertIn("🆘 たすけて！", func_body("function drawMzRescue("))
 
     def test_non_blocking(self):
-        seg = PIXEL[PIXEL.index("// 迷路の 救助クエスト（ポケモン"):PIXEL.index("// 手描き探索マップ")]
+        seg = PIXEL[PIXEL.index("// 迷路の 救助クエスト（ポケモン"):PIXEL.index("// 見えたしるしの記録（表示はサイクル63で廃止")]
         for w in ("addEventListener", "confirm(", "alert(", "modal"):
             self.assertNotIn(w, seg)
 

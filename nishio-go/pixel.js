@@ -8271,7 +8271,7 @@ function frame(now) {
   }
   if (mzFx.length || mzBanner.t0) drawMzFx(w, cy, Math.max(T, Math.round(16 * dpr)), now, Math.round(16 * dpr));
   if (mazeOn() && gt && (mzNext.want || mzNext.t0)) drawMzNext(w, cy, Math.round(16 * dpr), now);   // 文字は 画面の 大きさで（地図を 大きく しても 画面から はみ出さない）
-  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(w, dpr, now); drawMzCacheChip(w, dpr, now); drawMzCubeShelf(w, dpr, now); drawMzMini(w, vh, dpr); mzToastDodge(now); }   // 文字の 常時表示は しない（サイクル25）：各種の 文章札（drawMz…Tag・drawMzCacheHint）は 未使用の まま 残す。めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
+  if (mazeOn() && gt) { drawMzGoal(gt, ox, oy, T, w, vh, cy, dpr, now); drawMzClock(w, dpr, now); drawMzShelf(w, dpr, now); drawMzViewPanorama(w, dpr, now); drawMzEnergyBar(w, dpr, now); drawMzCacheChip(w, dpr, now); drawMzCubeShelf(w, dpr, now); mzToastDodge(now); }   // 文字の 常時表示は しない（サイクル25）：各種の 文章札（drawMz…Tag・drawMzCacheHint）は 未使用の まま 残す。めいろの ゴール（🏁 と 光る わ。画面の 外なら 縁に 大きな 矢印と 道のり）
   else if (gt || (aim && !G.selected)) {   // 行き先はいつも指す（ほかのスポットの範囲にいても）
     const p = toTile(aim.lat, aim.lng);
     const ex = ox + p.x * T, ey = oy + p.y * T;
@@ -8822,10 +8822,6 @@ $('pxZoomIn').addEventListener('click', () => {
 $('pxZoomOut').addEventListener('click', () => {
   if (worldMode) { wscale = Math.max(0, wscale - 1); return; }
   if (curScale() > 1) setScale(curScale() - 1); else { wscale = WSIZES.length - 1; setWorld(true); }
-});
-$('pxZoom').addEventListener('click', () => {   // 🔍：押すたびに大きく。いちばん大きいと、はじめの大きさ（いちばん小さい）へ
-  if (worldMode) { wscale = wscale < WSIZES.length - 1 ? wscale + 1 : 0; return; }
-  setScale(curScale() < 4 ? curScale() + 1 : 1);
 });
 {   // せってい「夜は地図を暗く」
   const t = $('nightToggle');
@@ -11699,10 +11695,7 @@ function drawMzCubeShelf(w, dpr, now) {   // 迷路の 上の キューブ棚（
     if (i < mzCube.got) mzCubePoly(X, Y, s * 0.36, 0.6); else mzCubePoly(X, Y, s * 0.36, 0.6, null, null, 'rgba(255,255,255,.35)');
   }
 }
-// 手描き探索マップ（ペルソナQ：歩いた 所が 自分で 描かれる 地図）：迷路の 間 すみに 小さな 地図を いつも 出す。迷路は 世界じゅうに つづくので、お米の まわり 41×41マスの まどを 描く。
-// 歩いた 通路は 足あと（mzTrail）を そのまま 使い（二重の 数えは しない）、見たことの ある ゴール・ぼうけんの しるしだけ mzMini.seen に 持つ（この 画面の 間だけ。セーブは 増やさない）。
-// 未探索の 通路・壁は 描かない（ネタバレなし）。表示だけで、さわれない（canvas の 上の 絵。pointer は 受けない）
-const MZ_MINI = { r: 20, px: 3, maxPx: 130 };   // r：お米から 片がわの マス数・px：1マスの 大きさ（css px。画面が せまければ 2）・maxPx：地図の 一辺の 上限
+// 見えたしるしの記録（表示はサイクル63で廃止。cubeReveal とテスト用に記録だけ残す）
 const mzMini = { seen: new Map(), box: null };   // seen：'cx,cy' → 色（見えた ゴール・しるし）
 function mzMiniMarks() {   // いま 出ている しるしの [cx, cy, 色]
   const out = [], gp = mzRt.path && mzRt.path.length ? mzRt.path[mzRt.path.length - 1] : null;
@@ -11729,52 +11722,6 @@ function mzMiniTick() {   // 見える はんいに 入った しるしを お�
 function mzMiniState() {   // テスト用：探索済みマス数・主人公の マス・ゴールが 見えたか
   const gp = mzRt.path && mzRt.path.length ? mzRt.path[mzRt.path.length - 1] : null;
   return { explored: mzTrail.size, me: rp.x === null ? null : [Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K)], goal: !!(gp && mzMini.seen.has(gp[0] + ',' + gp[1])), marks: mzMini.seen.size, box: mzMini.box };
-}
-function drawMzMini(w, vh, dpr) {
-  mzMini.box = null;
-  if (rec || rp.x === null || mapCovered(true) || mzBanner.t0) return;
-  const n = MZ_MINI.r * 2 + 1, px = Math.max(1, Math.round((w < 420 * dpr ? 2 : MZ_MINI.px) * dpr)), q = Math.max(1, Math.min(px, Math.floor(MZ_MINI.maxPx * dpr / n))), sz = q * n, gap = Math.round(8 * dpr);
-  // すみは 既存の ボタン・札と かさならない ところを えらぶ（下の 左 → 下の 右 → 上の 右 → 上の 左）
-  const hud = mzHudRects(performance.now()), bot = vh - sz - gap;
-  let pos = null;
-  for (const [x, y] of [[gap, bot], [w - sz - gap, bot], [w - sz - gap, gap], [gap, gap]]) if (!hud.some(r => x < r[2] && x + sz > r[0] && y < r[3] && y + sz > r[1])) { pos = [x, y]; break; }
-  if (!pos) return;
-  const [x0, y0] = pos, ca = Math.floor(rp.x / MZ_K), cb = Math.floor(rp.y / MZ_K), ax = ca - MZ_MINI.r, ay = cb - MZ_MINI.r, inside = (cx, cy) => cx >= ax && cy >= ay && cx < ax + n && cy < ay + n;
-  mzMini.box = [x0, y0, x0 + sz, y0 + sz];
-  ctx.save();
-  ctx.fillStyle = 'rgba(30,40,30,.5)'; ctx.fillRect(x0 - q, y0 - q, sz + q * 2, sz + q * 2);
-  ctx.fillStyle = 'rgba(244,240,222,.94)'; ctx.fillRect(x0, y0, sz, sz);   // 方眼紙の 地（世界樹の迷宮：歩いた ところを 自分で 描いた 地図）
-  ctx.fillStyle = 'rgba(90,120,160,.18)';
-  for (let i = 0; i <= n; i++) { ctx.fillRect(x0 + i * q - (i === n ? 1 : 0), y0, 1, sz); ctx.fillRect(x0, y0 + i * q - (i === n ? 1 : 0), sz, 1); }
-  const zc = new Map();   // 区域ごとの 地区色
-  const tint = (cx, cy) => { const a = mzAreas.get(Math.floor(cx / MZ_R) + '_' + Math.floor(cy / MZ_R)); if (!a) return 'rgba(255,214,102,.8)'; if (!zc.has(a)) { const t = mzZoneTint(a); zc.set(a, `rgba(${t.rgb},.85)`); } return zc.get(a); };
-  for (const [cx, cy] of mzTrail.values()) if (inside(cx, cy)) { ctx.fillStyle = tint(cx, cy); ctx.fillRect(x0 + (cx - ax) * q, y0 + (cy - ay) * q, q, q); }
-  ctx.fillStyle = 'rgba(43,38,30,.9)';   // インクの 壁線：歩いた マスの 辺のうち、実際には 通れない（mzOpen でない）辺だけ。通路が 未踏へ つづく 辺は あけて おく（手描き地図の 壁）
-  const lw = Math.max(1, Math.round(q * 0.28));
-  for (const [cx, cy] of mzTrail.values()) if (inside(cx, cy)) {
-    const px0 = x0 + (cx - ax) * q, py0 = y0 + (cy - ay) * q;
-    if (!mzOpen(cx, cy, 0, -1)) ctx.fillRect(px0, py0, q, lw);
-    if (!mzOpen(cx, cy, 0, 1)) ctx.fillRect(px0, py0 + q - lw, q, lw);
-    if (!mzOpen(cx, cy, -1, 0)) ctx.fillRect(px0, py0, lw, q);
-    if (!mzOpen(cx, cy, 1, 0)) ctx.fillRect(px0 + q - lw, py0, lw, q);
-  }
-  for (const [k, col] of mzMini.seen) {   // しるしは 1マスより 少し 大きく
-    const [cx, cy] = k.split(',').map(Number);
-    if (inside(cx, cy)) { ctx.fillStyle = col; ctx.fillRect(x0 + (cx - ax) * q - 1, y0 + (cy - ay) * q - 1, q + 2, q + 2); }
-  }
-  ctx.fillStyle = '#ffffff';   // 未踏への 入口：通れるのに まだ 歩いていない となりへ つづく 辺に 小さい 白い 三角（しるしの 上に 描き、先端は 辺の 上に 収めて 地図の 外へ はみ出さない）
-  for (const [cx, cy] of mzTrail.values()) if (inside(cx, cy)) {
-    const px0 = x0 + (cx - ax) * q, py0 = y0 + (cy - ay) * q;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (mzOpen(cx, cy, dx, dy) && !mzTrail.has((cx + dx) + ',' + (cy + dy))) {
-      const X = px0 + (0.5 + dx * 0.5) * q - dx * q * 0.45, Y = py0 + (0.5 + dy * 0.5) * q - dy * q * 0.45;
-      ctx.beginPath(); ctx.moveTo(X + dx * q * 0.45, Y + dy * q * 0.45); ctx.lineTo(X + dy * q * 0.4, Y + dx * q * 0.4); ctx.lineTo(X - dy * q * 0.4, Y - dx * q * 0.4); ctx.closePath(); ctx.fill();
-    }
-  }
-  const mx = x0 + (ca - ax) * q, my = y0 + (cb - ay) * q, m = q + 2;   // 主人公：白い 丸（ふち つき）と 目
-  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(mx - 2, my - 2, m + 2, m + 2);
-  ctx.fillStyle = '#ffffff'; ctx.fillRect(mx - 1, my - 1, m, m);
-  ctx.fillStyle = '#1a1a1a'; ctx.fillRect(mx, my, 1, 1); ctx.fillRect(mx + m - 2, my, 1, 1);
-  ctx.restore();
 }
 // びゅんパネル（運営者の声「クセになるギミック」）：めいろの まっすぐな 通路の 床に 矢印の パネル。矢印の 向きに 転がって（止まって いれば その 向きに 傾けて）のると、
 // びゅんと 速く おされる（ころころコンボも +1）。矢印と 逆から のっても なにも しない（通れなく ならない）。矢印の 先が まっすぐ 4マス以上 あいている 所だけ。

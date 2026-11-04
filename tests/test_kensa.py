@@ -1,6 +1,9 @@
 """農産物検査ゲーム（kensa.html）の規格値テスト。
 期待値は農産物規格規程 平成13年告示第244号（水稲うるち玄米の品位）で確認した原典値。"""
+import json
 import re
+import shutil
+import subprocess
 import unittest
 from pathlib import Path
 
@@ -89,6 +92,58 @@ class KensaTests(unittest.TestCase):
         self.assertLessEqual(mugi, 0.1)
         self.assertLessEqual(other, 0.3)
         self.assertLessEqual(ibutsu, 0.2)
+
+    def test_grade_ui(self):
+        # サイクル4「きめる」: 大きな等級ボタン4つ（1等／2等／3等／規格外）と見直し導線
+        self.assertIn('id="gradeWrap"', HTML)
+        for grade in ("1等", "2等", "3等", "規格外"):
+            self.assertIn(f'data-grade="{grade}"', HTML)
+        self.assertEqual(HTML.count('class="gradeBtn"'), 4)
+        self.assertIn('id="backToSort"', HTML)   # 外れても皿に戻って見直せる
+        self.assertIn("judgeGrade", HTML)
+        self.assertNotIn("alert(", HTML)         # 流れを止める要素は作らない
+
+    def _judge(self, cases):
+        # kensa.html の GRADE_TABLE と judgeGrade をそのまま node で実行して判定させる
+        node = shutil.which("node")
+        self.assertIsNotNone(node, "node が必要")
+        table = re.search(r"const GRADE_TABLE = \[.*?\];", HTML, re.S).group(0)
+        func = re.search(r"function judgeGrade\(truth, moisture\) \{.*?^\}", HTML, re.S | re.M).group(0)
+        script = table + "\n" + func + "\n"
+        script += "const cases = JSON.parse(process.argv[1]);\n"
+        script += "console.log(JSON.stringify(cases.map(c => judgeGrade(c[0], c[1]))));\n"
+        out = subprocess.run([node, "-e", script, json.dumps(cases)],
+                             capture_output=True, text=True, timeout=30)
+        self.assertEqual(out.returncode, 0, out.stderr)
+        return json.loads(out.stdout)
+
+    def test_judge_grade_boundaries(self):
+        # サイクル4: 判定関数の境界値（brief_cycle1.md §3）。基準は現行ロットの真値（1等）
+        base = {"seiryu": 87.5, "higai": 4.0, "shini": 3.0, "mijuku": 5.0,
+                "color": 0.1, "momi": 0.2, "mugi": 0.0, "other": 0.1, "ibutsu": 0.1}
+
+        def mod(**kw):
+            t = dict(base)
+            t.update(kw)
+            return t
+
+        cases = [
+            (base, 14.2),                                   # 現行ロット → 1等
+            (mod(seiryu=70), 14.2),                         # 整粒ちょうど70 → 1等
+            (mod(seiryu=69.9), 14.2),                       # 整粒が1等を割る → 2等
+            (mod(higai=11.5), 14.2),                        # 計ちょうど15.0 → 1等
+            (mod(higai=11.6), 14.2),                        # 計15.1 → 2等
+            (mod(color=0.2), 14.2),                         # 着色粒が1等を割る → 2等
+            (mod(mijuku=30.0), 14.2),                       # 未熟粒は計に入らない → 1等のまま
+            (mod(shini=20.0, higai=9.5), 14.2),             # 死米・計とも3等の限度ちょうど → 3等
+            (mod(shini=20.1, higai=5.3), 14.2),             # 死米が3等を割る → 規格外
+            (mod(seiryu=44.9), 14.2),                       # 整粒が3等を割る → 規格外
+            (base, 15.0),                                   # 水分ちょうど表値 → 1等
+            (base, 15.1),                                   # 水分が全等級の表値を超える → 規格外
+        ]
+        self.assertEqual(self._judge(cases),
+                         ["1等", "1等", "2等", "1等", "2等", "2等",
+                          "1等", "3等", "規格外", "規格外", "1等", "規格外"])
 
 
 if __name__ == "__main__":

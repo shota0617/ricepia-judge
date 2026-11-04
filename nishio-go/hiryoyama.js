@@ -5,7 +5,7 @@
 // ・ことばは sangyo.js（資料集649ページ 資料347「肥料山の取扱についての方針」）に書いてあることだけ。草を刈って運ぶ遊び方は、
 //   「草を刈る山（採草地）」という中身からの作りもの（何束とったかなどの数は本には書いていない）
 // ・遊べる所：ドット絵の地図で丘・山のマス（またはすぐとなり）にいるとき、地図の右上の列の 🌿 ボタン（pixel.js の pxHiryo）。
-// ・ごほうびは game.js の hiryoReward（1日1回）。自己ベストは miniBest（'hiryo'）
+// ・ごほうびは game.js の hiryoReward（1日1回）。記録は miniBest（'hiryo'。結果では比べない。Townscaper）
 // ・人の絵は、地図の人の絵（pixel.js の npcSprite）を使う
 (() => {
   'use strict';
@@ -86,11 +86,10 @@
     shown = true; done = true;
     const G = window.nishioGo, st = starsOf(total);
     const got = st && G && G.hiryoReward ? G.hiryoReward(st) : null;
-    const mb = st && G && G.miniBest ? G.miniBest('hiryo', 0, st, total, false) : null;
+    if (st && G && G.miniBest) G.miniBest('hiryo', 0, st, total, false);   // 記録は静かに残すだけ
     const res = root.querySelector('.jump-result');
     res.innerHTML = `<b>${why === 'give' ? '肥料山を返した…' : st ? '草刈り おわり！' : '時間切れ'}</b>`
       + `<span>${'★'.repeat(st)}${'☆'.repeat(3 - st)}　運んだ束 ${total}（★は ${STARS.join('・')}束）</span>`
-      + (mb && mb.best ? `<span>${mb.fresh ? '自己ベスト更新！ ' : '自己ベスト '}${mb.best.v}束</span>` : '')
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : st && got === null && G && G.hiryoReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + '<span class="harvest-tip">1948年の幡豆地方事務所長の方針：田畑だけが買収されても、のこった肥料山の草刈りには小作の権利があり、持ち主が勝手に取り上げたり売ったりはできず、知事の許可がいるとされた。肥料山は、田畑といっしょに貸し借りされ、農業にとても大事な役わりをもっていた。</span>'
       + '<span class="jump-btns"><button type="button" class="btn" data-hy="again">もういちど</button><button type="button" class="btn" data-hy="close">もどる</button></span>';

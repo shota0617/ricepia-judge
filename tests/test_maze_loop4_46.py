@@ -37,9 +37,9 @@ class DedupeNear(unittest.TestCase):
         self.assertEqual(run("r.dedupeNear(%s)" % json.dumps(v)), [v[1], v[2]])
 
     def test_not_chained(self):
-        # 中点 0 / 0.06 / 0.12：真ん中は最新に落とされ、最古は残った最新とは遠いので残る
+        # 中点 0 / 0.06 / 0.12：サイクル52から長手方向も端で見るので、0.06ずれた真ん中は最新に覆いきられず残る。連鎖して落ちることもない
         out = run("r.dedupeNear([s(-0.07,0,0.07,0),s(-0.01,0,0.13,0),s(0.05,0,0.19,0)])")
-        self.assertEqual(out, [seg(-0.07, 0, 0.07, 0), seg(0.05, 0, 0.19, 0)])
+        self.assertEqual(out, [seg(-0.07, 0, 0.07, 0), seg(-0.01, 0, 0.13, 0), seg(0.05, 0, 0.19, 0)])
 
     def test_bad_input(self):
         for v in ('null', '"x"', '5', '{}', 'undefined'):

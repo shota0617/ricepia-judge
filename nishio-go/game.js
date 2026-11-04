@@ -983,37 +983,39 @@ function jumpReward(coins, cleared) {
   return pts;
 }
 
-// 稲刈りミニゲーム（harvest.js）のごほうび：成功したとき1日1回、10pt＋星1つ5pt（名人は25pt）。きょうはもうもらっていれば null
-function harvestReward(stars, level) {
+// ミニゲームのごほうびは一律20pt・1日1回（Cozy Grove：できた頼みに優劣はつかず、できたこと自体が進み具合）。きょうはもうもらっていれば null
+const MINI_PTS = 20;
+// 稲刈りミニゲーム（harvest.js）：成功したとき
+function harvestReward(level) {
   if (S.harvestDay === ymd()) return null;
-  const pts = 10 + 5 * Math.max(1, Math.min(3, stars | 0));
+  const pts = MINI_PTS;
   S.harvestDay = ymd();
   gainPoints(pts);
-  S.log.unshift({ type: 'harvest', t: Date.now(), pts, name: `ミニゲーム「コンバインで稲刈り」${'★'.repeat(Math.max(1, Math.min(3, stars | 0)))}（${(level | 0) + 1}枚目の田んぼ）`, icon: '🌾' });
+  S.log.unshift({ type: 'harvest', t: Date.now(), pts, name: `ミニゲーム「コンバインで稲刈り」（${(level | 0) + 1}枚目の田んぼ）`, icon: '🌾' });
   save();
   renderLog();
   return pts;
 }
 
-// 肥料山の草刈り（hiryoyama.js）のごほうび：★がついたとき1日1回、10pt＋星1つ5pt。きょうはもうもらっていれば null
-function hiryoReward(stars) {
+// 肥料山の草刈り（hiryoyama.js）：運び終えたとき
+function hiryoReward() {
   if (S.hiryoDay === ymd()) return null;
-  const st = Math.max(1, Math.min(3, stars | 0)), pts = 10 + 5 * st;
+  const pts = MINI_PTS;
   S.hiryoDay = ymd();
   gainPoints(pts);
-  S.log.unshift({ type: 'hiryo', t: Date.now(), pts, name: `ミニゲーム「肥料山の草刈り」${'★'.repeat(st)}`, icon: '🌿' });
+  S.log.unshift({ type: 'hiryo', t: Date.now(), pts, name: `ミニゲーム「肥料山の草刈り」`, icon: '🌿' });
   save();
   renderLog();
   return pts;
 }
 
-// 段丘をのぼるミニゲーム（dankyu.js）のごほうび：のぼりきったとき1日1回、10pt＋星1つ5pt。きょうはもうもらっていれば null
-function dankyuReward(stars, level) {
+// 段丘をのぼるミニゲーム（dankyu.js）：のぼりきったとき
+function dankyuReward(level) {
   if (S.dankyuDay === ymd()) return null;
-  const st = Math.max(1, Math.min(3, stars | 0)), pts = 10 + 5 * st;
+  const pts = MINI_PTS;
   S.dankyuDay = ymd();
   gainPoints(pts);
-  S.log.unshift({ type: 'dankyu', t: Date.now(), pts, name: `ミニゲーム「段丘をのぼる」${'★'.repeat(st)}（${(level | 0) + 1}つ目の段丘）`, icon: '⛰️' });
+  S.log.unshift({ type: 'dankyu', t: Date.now(), pts, name: `ミニゲーム「段丘をのぼる」（${(level | 0) + 1}つ目の段丘）`, icon: '⛰️' });
   save();
   renderLog();
   return pts;
@@ -1076,7 +1078,7 @@ function yatsuMushiReward(gotTarget, seenIds) {
 }
 
 // ミニゲームの面ごとの記録（結果の画面では更新を知らせず、静かに残すだけ。Townscaper）（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
-// 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
+// s は「できた印」（1固定）。効率（v）では比べない（呼び出しは (…, 1, 0, false)。既存セーブの s=2,3 もそのまま読む）。成功（s が1以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
   const all = S.mini || (S.mini = {}), list = all[game] || (all[game] = []), old = list[level] || null;
   const better = stars > 0 && (!old || stars > old.s || (stars === old.s && (lower ? v < old.v : v > old.v)));

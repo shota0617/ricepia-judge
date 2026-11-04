@@ -1,8 +1,8 @@
 // にしおさんぽGO：ミニゲーム「コンバインで稲刈り」
 // ・ドット絵の地図で田んぼの上にいるとき、地図の右上の列の「稲刈り」ボタンから遊べる（pixel.js の pxHarvest。あるいて移動でも）
 // ・黄金色の田んぼを、コンバインで1マスずつ刈る。矢印（◀▲▼▶・キーボードの矢印や WASD）を押すと、その向きへ1マス進む
-// ・成功の条件：①刈り残しがない ②刈ったあとのマスを通らない（むだ走り0）。どちらかだめなら不成功。曲がる回数は成否に関係なく、数だけ見せる（目安とは比べない。Spiritfarer：自分のペースで、できたこと自体が進み具合）
-//   ★は、いちばん少ない刈り方の回数（par）との差で静かに数える（画面には出さない）
+// ・成功の条件：①刈り残しがない ②刈ったあとのマスを通らない（むだ走り0）。どちらかだめなら不成功。曲がる回数は成否に関係なく、数だけ見せる（目安とは比べない）
+//   ★での優劣はつけない（Spiritfarer・Cozy Grove：頼みは自分のペースで叶え、できたこと自体が進み具合）。成功すれば一律のごほうびと「できた」印（✓）だけ
 // ・田んぼは3枚（だんだん広くなる）。成功すると次の田んぼへ。ごほうびは game.js の harvestReward（1日1回）
 // ・倉庫番のゲームのように：「↶ もどす」（Z・Backspace）で1マスずつ取り消せる（取り消した分は数えない）。田んぼごとの記録を静かに残し（結果では比べない。Townscaper）、
 //   開くと まだ成功していない田んぼから。結果の画面で、成功した田んぼと その次の田んぼを えらべる（game.js の miniBest）
@@ -29,7 +29,7 @@
     get('nishio-go/maptiles/sprites.png', 'spr');
   }
 
-  /* ---------- par（いちばん少ない曲がる回数。★の記録用）：回り刈り（右回り・左回り）と、往復刈り（たて・よこ）で数えて、少ないほう ---------- */
+  /* ---------- par（いちばん少ない曲がる回数。info・track 用の内部値）：回り刈り（右回り・左回り）と、往復刈り（たて・よこ）で数えて、少ないほう ---------- */
   function turnsOf(path, startDir) {
     let d = startDir, n = 0;
     for (let i = 1; i < path.length; i++) {
@@ -109,13 +109,13 @@
     pos = h.pos; dir = h.dir; turns = h.turns; waste = h.waste; moves--;
     say('1マス もどしました');
   }
-  // 田んぼをえらぶボタン：成功した田んぼと、その次の田んぼ（★は記録）
+  // 田んぼをえらぶボタン：成功した田んぼと、その次の田んぼ（✓はできた印）
   function levelBtns() {
     const G = window.nishioGo;
     if (!G || !G.miniRecords) return '';
     const rec = G.miniRecords('harvest');
     let open = 0; while (open < FIELDS.length - 1 && rec[open]) open++;   // えらべるのは、まだ成功していない いちばん前の田んぼまで
-    return `<span class="mini-levels">${FIELDS.map((f, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-hv="lv" data-lv="${i}" aria-label="${i + 1}枚目の田んぼ">${i + 1}枚目 ${rec[i] ? '★'.repeat(rec[i].s) + '☆'.repeat(3 - rec[i].s) : '—'}</button>`).join('')}</span>`;
+    return `<span class="mini-levels">${FIELDS.map((f, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-hv="lv" data-lv="${i}" aria-label="${i + 1}枚目の田んぼ">${i + 1}枚目 ${rec[i] ? '✓' : '—'}</button>`).join('')}</span>`;
   }
 
   function judge() {
@@ -124,26 +124,25 @@
     const reasons = [];
     if (rest) reasons.push(`刈り残しが ${rest}マス あります`);
     if (waste) reasons.push(`刈ったあとを ${waste}回 走りました（むだ走り）`);
-    const stars = !ok ? 0 : turns <= par ? 3 : turns <= par + 1 ? 2 : 1;
-    return { ok, rest, stars, reasons };
+    return { ok, rest, reasons };
   }
   function finish(gaveUp) {
     if (shown) return;
     shown = true; done = true;
     const r = judge(), G = window.nishioGo;
-    const got = r.ok && G && G.harvestReward ? G.harvestReward(r.stars, lv) : null;
-    if (G && G.miniBest) G.miniBest('harvest', lv, r.stars, turns, true);   // 記録は静かに残すだけ
+    const got = r.ok && G && G.harvestReward ? G.harvestReward(lv) : null;
+    if (r.ok && G && G.miniBest) G.miniBest('harvest', lv, 1, 0, false);   // 記録は成功したときだけ静かに残す（Codex指摘・サイクル74）
     const res = root.querySelector('.jump-result');
     const head = r.ok ? '刈り取り成功！' : (gaveUp && r.rest ? '刈り残しがあります' : '不成功');
     res.innerHTML = `<b>${head}</b>`
-      + (r.ok ? `<span>${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}　曲がった回数 ${turns}回</span>` : r.reasons.map(t => `<span>${t}</span>`).join(''))
+      + (r.ok ? `<span>曲がった回数 ${turns}回</span>` : r.reasons.map(t => `<span>${t}</span>`).join(''))
       + (!r.ok ? '<span class="harvest-tip">まっすぐ往復するか、外がわから回ると むだなく刈れます</span>' : '')
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : r.ok && got === null && G && G.harvestReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + levelBtns()
       + `<span class="jump-btns"><button type="button" class="btn" data-hv="again">もういちど</button>${r.ok && lv < FIELDS.length - 1 ? '<button type="button" class="btn" data-hv="next">つぎの田んぼ</button>' : ''}<button type="button" class="btn" data-hv="close">もどる</button></span>`;
     res.hidden = false;
     sound(r.ok ? 'clear' : 'fail');
-    if (G && G.track) G.track(r.ok ? 'harvest_clear' : 'harvest_fail', { level: lv + 1, turns, par, waste, rest: r.rest, stars: r.stars });
+    if (G && G.track) G.track(r.ok ? 'harvest_clear' : 'harvest_fail', { level: lv + 1, turns, par, waste, rest: r.rest });
   }
 
   /* ---------- 音（BGM の設定がオフなら鳴らさない） ---------- */

@@ -26,7 +26,7 @@ class Calm(unittest.TestCase):
     def test_level_stars_kept(self):
         for n in ['dankyu', 'harvest']:
             i = SRC[n].index('levelBtns')
-            self.assertIn("'★'.repeat", SRC[n][i:i + 1200], n)
+            self.assertIn("rec[i] ? '✓' : '—'", SRC[n][i:i + 1200], n)   # サイクル74：★から ✓（できた印）へ
 
     def test_minibest_logic(self):
         g = SRC['game']

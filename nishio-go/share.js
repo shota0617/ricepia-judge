@@ -6,6 +6,7 @@
 //   おたよりが反映されたシェア（voice）は「みんなの声で名所がふえる」ことを伝える
 // ・広告やQRのリンクのパラメータ：?c=キャンペーンのid ／ ?spot=スポットのid（そのスポットを見せる）／ ?play=1（操作して遊ぶで始める）／ ?meiro=daily（☀️ きょうの めいろ。meiro.js が ひらく）・?meiro=1（めいろ）／ ?from=どこから（チラシ・POP など）
 //   来た人は analytics.js の landing イベントで数える（utm_* もいっしょに）
+// ・参考：Alba: A Wildlife Adventure。西尾めいろのシェアは 面の進み具合や 金の米つぶの 達成度を 載せず、「どの名所まで ついたか」の 様子だけを 届ける
 (() => {
 'use strict';
 const G = window.nishioGo;
@@ -70,7 +71,7 @@ function shareText() {
   }
   if (cur === 'meiro' && curMeiro) {   // 西尾めいろの ゴール（きょうの めいろ は だれでも 同じ 名所なので、同じ 名所を いっしょに たのしめる）
     const m = curMeiro;
-    return `にしおさんぽGOの「西尾めいろ」${m.daily ? '☀️きょうの めいろ' : `${m.n}面`}で「${m.name}」まで ついた🌀${m.grains && m.got === m.grains ? '（金の米つぶ ぜんぶ）' : ''}\nスマホを傾けて、お米を 西尾の地図の めいろの 名所へ\n${tags}`;
+    return `にしおさんぽGOの「西尾めいろ」${m.daily ? '☀️きょうの めいろ' : ''}で「${m.name}」まで ついた🌀\nスマホを傾けて、お米を 西尾の地図の めいろの 名所へ\n${tags}`;
   }
   if (cur === 'mzgoal' && curMz) {   // 地図の めいろの ゴール：遊んだ 画面と、この 道の がんばり。見た 人が すぐ 遊べる（?play=1）
     const m = curMz, run = mzRunLine(m.run);
@@ -127,7 +128,7 @@ function drawCard() {
   } else if (cur === 'meiro' && curMeiro) {
     const m = curMeiro;
     line(`🌀 ${m.name} まで ついた`, 62, 240, true);
-    line(`西尾めいろ ${m.daily ? '☀️ きょうの めいろ' : `${m.n}面`}${m.grains ? ` ・ 🌾 ${m.got}/${m.grains}` : ''}`, 36, 306);
+    line(`西尾めいろ${m.daily ? ' ☀️ きょうの めいろ' : ''}`, 36, 306);
     line('スマホを 傾けると、お米が 名所へ ころころ', 30, 358);
     if (mz) {
       const sh = 372, sw = Math.round(sh * mz.width / mz.height), dx = W - sw - 60, dy = 112;

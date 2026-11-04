@@ -176,3 +176,12 @@ class KensaTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class KeyVisualTests(unittest.TestCase):
+    def test_key_visual_published(self):
+        # サイクル7: キービジュアル（軸写真の可愛いキャラクター風描き起こし）を og:image に使う
+        self.assertIn("https://go.ricepia.jp/kensa/kv.webp", HTML)
+        kv = Path(__file__).resolve().parent.parent.joinpath("kensa", "kv.webp")
+        self.assertTrue(kv.exists())
+        self.assertLess(kv.stat().st_size, 300_000)

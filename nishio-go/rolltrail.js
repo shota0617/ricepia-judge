@@ -263,12 +263,16 @@
           if (!d || Math.abs(c.dx * d.dx + c.dy * d.dy) < 0.87) continue;
           const mx = (d.s.x1 + d.s.x2) / 2 - s.x1, my = (d.s.y1 + d.s.y2) / 2 - s.y1;
           const off = mx * -c.dy + my * c.dx;
-          if (Math.abs(off) > SPLIT_SIDE + 1e-9) continue;
           const ta = ((d.s.x1 - s.x1) * c.dx + (d.s.y1 - s.y1) * c.dy) / c.len, tb = ((d.s.x2 - s.x1) * c.dx + (d.s.y2 - s.y1) * c.dy) / c.len;
           const lo = Math.max(0, Math.min(ta, tb)), hi = Math.min(1, Math.max(ta, tb));
           if ((hi - lo) * c.len < SPLIT_MIN_COVER) continue;
+          const dot = c.dx * d.dx + c.dy * d.dy, tan = (d.dx * -c.dy + d.dy * c.dx) / dot, xMid = mx * c.dx + my * c.dy;
+          const offLo = off + (lo * c.len - xMid) * tan, offHi = off + (hi * c.len - xMid) * tan;
+          if (!(Math.max(Math.abs(offLo), Math.abs(offHi)) <= SPLIT_SIDE + 1e-9)) continue;
+          const gLo = Math.max(offLo, offHi) - HALF * wOf(d.s) * Math.abs(dot), gHi = Math.min(offLo, offHi) + HALF * wOf(d.s) * Math.abs(dot);
+          if (gLo > gHi) continue; // 保証区間が空の覆いは、横の残りを戻せないまま長手方向だけ消してしまうので覆いに数えない（サイクル59 Codex指摘）
           cover.push([lo, hi]);
-          bands.push({ lo, hi, off, hw: HALF * wOf(d.s) });
+          bands.push({ lo, hi, gLo, gHi, tilt: Math.abs(dot) < 1 - 1e-9 });
         }
         if (!cover.length) { out.push(seg); return; }
         cover.sort((p, q) => p[0] - q[0]);
@@ -289,6 +293,7 @@
           }));
         });
         // 横にはみ出した細い帯（第4弾サイクル48・Lawn Mowing Simulator）：覆いを線でなく帯の幅（HALF×w）で数え、重ならない横の残りを細い帯として残す
+        // 斜め覆いも両端で見る（第4弾サイクル59・SuchArt）：傾いた覆いの横ずれは中点だけでなく重なり区間の両端（offLo・offHi）で測り、大きい方が SPLIT_SIDE 以下のときだけ覆いに数える。横に保証できる区間は射影幅（HALF×w×|cosΔ|）から両端のずれの差を引いた [gLo, gHi] だけ（空なら細い帯の引き算には入れない）。傾いた覆い（tilt）は中心が真ん中でも保証区間が名目幅より狭いので細い帯を出す。平行（Δ=0）なら従来と同じ
         // 複数の覆いは軸の小区間ごとに横の覆い区間を和集合にしてから引く（第4弾サイクル49・ぷよぷよ）：合わさって覆う所は二重に出さない
         const hi0 = HALF * wOf(s), nx = -c.dy, ny = c.dx;
         const cuts = [0, 1];
@@ -298,9 +303,9 @@
           const lo = cuts[k], hi = cuts[k + 1];
           if (!(hi - lo > 1e-9)) continue;
           const here = bands.filter(b => b.lo <= lo + 1e-9 && hi <= b.hi + 1e-9);
-          if (!here.some(b => Math.abs(b.off) > 0.005)) continue;
+          if (!here.some(b => b.tilt || Math.abs((b.gLo + b.gHi) / 2) > 0.005)) continue;
           const uni = [];
-          here.map(b => [b.off - b.hw, b.off + b.hw]).sort((p, q) => p[0] - q[0]).forEach(iv => {
+          here.map(b => [b.gLo, b.gHi]).sort((p, q) => p[0] - q[0]).forEach(iv => {
             const m = uni[uni.length - 1];
             if (m && iv[0] <= m[1] + 1e-9) m[1] = Math.max(m[1], iv[1]); else uni.push([iv[0], iv[1]]);
           });

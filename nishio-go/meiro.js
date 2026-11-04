@@ -4,7 +4,7 @@
 //   通路は マスの まん中を なめらかな 曲線で むすんだ「道すじ」（直角に 曲がらない ゆるい めいろ。2026-10-26）。通路は 地図を 明るく、そのほかは 盛りあがった 緑の 台（影と てかり つき）
 // ・川や池（水のマス）と、面が進むと ふえる マンホールの 穴は「落とし穴」：おちると スタートに もどる
 // ・ゴールは 西尾の名所（1面 西尾駅 → 2面 西尾城跡 → らいすぴあ …）。スタートは ゴールから 道を たどって いちばん遠い所
-// ・傾き（pixel.js の傾きを そのまま使う）・矢印キー・盤を なぞる で 転がす。ベストタイムは この端末（localStorage nsg_meiro）
+// ・傾き（pixel.js の傾きを そのまま使う）・矢印キー・盤を なぞる で 転がす。時間も ベストも くらべない（参考：Sable。たどり着くこと自体が 体験）。すすみぐあいは この端末（localStorage nsg_meiro）
 // ・pixel.js より後に読む（nishioPixel.meiroApi を使う）
 (function (root) {
 'use strict';
@@ -16,24 +16,15 @@ const K = 2;   // めいろの1マス = 地図の K×K マス（約16m。細か�
 const CD = 2.4;   // はじめの 3・2・1（秒）。「1」の あいだに いまの持ち方を「まっすぐ」に しなおす
 const SLOPE = 2;   // 坂の 引っぱりの つよさ（めいろの ころがり抵抗に かつのは 5%より 急な坂：台地の ふちなど）
 const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // マス/秒²・いちばん速い速さ・ころがり抵抗・速さに比べて へる分・はね返り・お米の半径（マス）
-// stage：遊べる いちばん先の面・best：名所の id ごとの ベスト {t 秒, s ★}・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
+// stage：遊べる いちばん先の面・best：名所の id ごとの「着いた」印 {c:1}（秒も ★も かかない）・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
 const load = () => { try { return Object.assign({ stage: 0, best: {}, skip: [] }, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return { stage: 0, best: {}, skip: [] }; } };
 const st = load();
-if (st.ver !== 3) { st.best = {}; st.skip = []; st.ver = 3; }   // めいろの 作り方を かえた（2：1本道の 迷路・3：1マスを 地図の 2×2 に 細かく）。前の 盤の ベスト・はずした名所は つかわない
-// 👻 ゴースト：ベストの ときの 走り（0.1秒ごとの 位置）。記録と 同じ キーで、べつの 場所に のこす（大きいので st には 入れない）
-const GKEY = 'nsg_meiro_ghost', GSTEP = 0.1;
-const ghosts = (() => { try { return JSON.parse(localStorage.getItem(GKEY) || '{}') || {}; } catch (e) { return {}; } })();
-function saveGhost(k, gh) {
-  delete ghosts[k]; ghosts[k] = gh;
-  const ks = Object.keys(ghosts); for (let i = 0; i < ks.length - 40; i++) delete ghosts[ks[i]];   // 新しい 40面ぶんまで
-  try { localStorage.setItem(GKEY, JSON.stringify(ghosts)); } catch (e) { /* いっぱいなら のこさない */ }
-}
+if (st.ver !== 3) { st.best = {}; st.skip = []; st.ver = 3; }   // めいろの 作り方を かえた（2：1本道の 迷路・3：1マスを 地図の 2×2 に 細かく）。前の 盤の 印・はずした名所は つかわない
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) { /* 保存できない端末 */ } note(); };
-function note() {   // きろく の 札に すすみぐあい（何面まで・★の合計）
+function note() {   // きろく の 札に すすみぐあい（何面まで）
   const el = document.getElementById('meiroNote');
   if (!el || !st.stage) return;
-  const stars = Object.entries(st.best).reduce((a, [k, b]) => a + (!k.startsWith('day:') && b && b.s ? b.s : 0), 0);   // ★の合計は ふつうの面だけ
-  el.textContent = `${st.stage + 1}面まで あそべる・★${stars}`;
+  el.textContent = `${st.stage + 1}面まで あそべる`;
 }
 
 let api = null, ui = null, game = null, raf = 0, wantDaily = false, wantOpen = false;
@@ -290,7 +281,6 @@ const CSS = `.share.over-meiro{z-index:3600}
 #meiro .mz-card h3{margin:0 0 6px;font-size:24px;color:#d0402a}
 #meiro .mz-card p{margin:6px 0;font-size:15px;line-height:1.5}
 #meiro .mz-card .mz-memo{font-size:13px;color:#4a5040;background:#f1eedd;border-radius:10px;padding:8px 10px;text-align:left}
-#meiro .mz-card .mz-stars{font-size:28px;letter-spacing:4px;color:#f0b020}
 #meiro .mz-card .mz-row{display:flex;gap:8px;justify-content:center;margin-top:12px;flex-wrap:wrap}
 #meiro .mz-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;background:rgba(0,0,0,.35)}
 #meiro .mz-load[hidden]{display:none}`;
@@ -388,9 +378,8 @@ function startStage(n, daily = false) {
   game = { n, daily, spot: list[n], board: null, t: 0, falls: 0, done: false };
   ui.clear.hidden = true;
   ui.load.hidden = false; ui.load.textContent = 'めいろを つくっています…';
-  const bt = st.best[recKey(game)];
-  ui.st.innerHTML = `${daily ? '☀️ <b>きょうの めいろ</b>' : `🌀 めいろ <b>${n + 1}</b>`}${bt ? `<small>　ベスト ${bt.t.toFixed(1)}秒 ${'★'.repeat(bt.s)}</small>` : ''}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面と ベスト・2行め：ゴール（長い名前は …）
-  ui.time.textContent = '0.0';
+  ui.st.innerHTML = `${daily ? '☀️ <b>きょうの めいろ</b>' : `🌀 めいろ <b>${n + 1}</b>`}<span class="mz-goal">🏁 ${esc(game.spot.name)}</span>`;   // 1行め：面・2行め：ゴール（長い名前は …）
+  ui.time.textContent = '';
   const g = game;
   waitChunks(g.spot, allOk => {
     if (game !== g) return;
@@ -403,8 +392,6 @@ function startStage(n, daily = false) {
       return;
     }
     g.board = b;
-    const gh = ghosts[recKey(g)];   // 盤が かわっていたら（地図の 作りなおし など）つかわない
-    g.ghost = gh && gh.v === 3 && gh.w === b.tw && gh.s === b.start[1] * b.tw + b.start[0] && gh.e === b.goal[1] * b.tw + b.goal[0] && gh.p && gh.p.length >= 4 ? gh : null;
     ui.load.hidden = true;
     fit();
     restart();
@@ -436,7 +423,7 @@ function restart() {
   const b = game.board;
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
-  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.hop = 0; game.hopT = 0; game.crit = boardCritters(b); game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.rec = []; game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
+  game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.hop = 0; game.hopT = 0; game.crit = boardCritters(b); game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
   game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
   ui.clear.hidden = true;
 }
@@ -549,7 +536,7 @@ function step(dt) {
     if (g.fall <= 0) { g.x = b.start[0] + 0.5; g.y = b.start[1] + 0.5; g.vx = g.vy = 0; g.ouch = 1; }
     return;
   }
-  if (g.stop > 0) { g.stop -= dt; if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); } return; }   // ヒットストップ：強く 当たった 瞬間 お米を ほんの少し 止める（時計と ゴーストの きろくは すすめる）
+  if (g.stop > 0) { g.stop -= dt; if (g.go) g.t += dt; return; }   // ヒットストップ：強く 当たった 瞬間 お米を ほんの少し 止める
   const [ax, ay] = input();
   const acc = ACC * (st.slow ? 0.55 : 1);   // 🐢 ゆっくり：押す強さと いちばん速い速さを 落とす（傾きに なれていない人・小さな子）
   g.vx += ax * acc * dt; g.vy += ay * acc * dt;
@@ -625,7 +612,7 @@ function step(dt) {
   if (g.hop > 0) { g.hopT = (g.hopT || 0) + dt; if (g.hopT > 0.32) { g.hop = 0; g.hopT = 0; } }   // とびはね：0.32秒で もどる
   g.sq = Math.max(0, g.sq - dt * 1.5); g.ouch = Math.max(0, g.ouch - dt); g.happy = Math.max(0, g.happy - dt);
   if (!g.go && Math.hypot(g.vx, g.vy) > 0.3) g.go = true;   // タイムは お米が 動きだしてから（盤を 見て 考える あいだは 数えない）
-  if (g.go) { g.t += dt; while (g.rec.length / 2 * GSTEP <= g.t) g.rec.push(Math.round(g.x * 20), Math.round(g.y * 20)); }   // ゴーストの ための 走りの きろく（1/20マス）
+  if (g.go) g.t += dt;
   const ci = Math.floor(g.x), cj = Math.floor(g.y), idx = cj * b.tw + ci;
   const water = b.cell[idx] === 2, inHole = b.holes.has(idx) && (p => Math.hypot(g.x - p[0], g.y - p[1]) < 0.3)(onPath(b, ci, cj));
   if (water || inHole) {   // おちた
@@ -648,22 +635,16 @@ function step(dt) {
 function win() {
   const g = game, b = g.board;
   g.done = true; g.happy = 99;
-  const sec = Math.round(g.t * 10) / 10, par = (b.len * 0.45 + 3) * (st.slow ? 1.6 : 1);   // 目やすの時間（道のりから。ゆっくりでは 長め）
-  const stars = g.falls === 0 && !g.hints && sec <= par ? 3 : sec <= par * 1.6 ? 2 : 1;   // ヒントを 見たら ★3 には しない
-  const prev = st.best[recKey(g)], newBest = !prev || sec < prev.t;
-  if (newBest) { g.ghost = { v: 3, s: b.start[1] * b.tw + b.start[0], e: b.goal[1] * b.tw + b.goal[0], w: b.tw, p: g.rec }; saveGhost(recKey(g), g.ghost); }   // つぎの「もういちど」から この走りと きそう
-  st.best[recKey(g)] = { t: newBest ? sec : prev.t, s: Math.max(stars, prev ? prev.s : 0) };   // いちばん速い タイムと、いちばん多い ★ を べつべつに のこす
+  st.best[recKey(g)] = { c: 1 };   // 「着いた」印だけ（秒も ★も のこさない）
   if (!g.daily) st.stage = Math.max(st.stage, g.n + 1);   // きょうの めいろ では 面を すすめない
   save();
-  if (root.nsgTrack) root.nsgTrack('meiro_clear', { stage: g.n + 1, sec, falls: g.falls, stars });
+  if (root.nsgTrack) root.nsgTrack('meiro_clear', { stage: g.n + 1, falls: g.falls });
   const has = !g.daily && g.n + 1 < goalList().length;
   ui.card.innerHTML = `<h3>🏁 ゴール！</h3><p>${g.daily ? '☀️ きょうの めいろ ' : ''}${esc(g.spot.name)} に ついた${g.daily ? '<br/><small>あしたは べつの 名所だよ</small>' : ''}</p>
-    <div class="mz-stars">${'★'.repeat(stars)}${'☆'.repeat(3 - stars)}</div>
-    <p>タイム ${sec.toFixed(1)}秒${newBest ? '（ベスト！）' : `（ベスト ${prev.t.toFixed(1)}秒）`}　おちた ${g.falls}回</p>
     ${b.grains.length ? `<p>🌾 金の米つぶ ${g.got.size} / ${b.grains.length}${g.got.size === b.grains.length ? '　ぜんぶ とれた！' : ''}</p>` : ''}
     ${g.spot.desc ? `<p class="mz-memo">📖 ${esc(g.spot.desc.length > 70 ? g.spot.desc.slice(0, 69) + '…' : g.spot.desc)}</p>` : ''}
     <div class="mz-row">${has ? '<button type="button" data-mz="next">つぎの めいろ ▶</button>' : ''}<button type="button" class="sub" data-mz="again">もういちど</button><button type="button" class="sub" data-mz="map">🗺 地図で見る</button>${root.nishioGo && root.nishioGo.openShare ? '<button type="button" class="sub" data-mz="share">📣 シェア</button>' : ''}</div>`;
-  g.result = { name: g.spot.name, sec, stars, daily: !!g.daily, n: g.n + 1, got: g.got.size, grains: b.grains.length };   // 📣 シェア の 文と 絵に
+  g.result = { name: g.spot.name, daily: !!g.daily, n: g.n + 1, got: g.got.size, grains: b.grains.length };   // 📣 シェア の 文と 絵に
   g.cardHtml = ui.card.innerHTML;   // いちらんを 見て もどったときに 出しなおす
   // 紙ふぶき：ゴールから ごはんつぶ・星・桜が はじける。音は コトンを 4つ 上がっていく
   const gx = b.goal[0] + 0.5, gy = b.goal[1] + 0.5, cols = ['#ffffff', '#ffe066', '#ff8fb0', '#7fd8f6', '#9be07a'];
@@ -694,10 +675,9 @@ function resume() {   // いちらんから もどる：とちゅうなら そ�
 }
 function showList() {
   const list = goalList(), open = Math.min(st.stage, list.length - 1);
-  const ds = goalList(true)[dailyIndex()], db = ds && st.best['day:' + ds.id];
-  ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3>${ds ? `<div class="mz-row"><button type="button" data-mz="daily">☀️ きょうの めいろ<br/><small>${esc(ds.name)}${db ? `　${'★'.repeat(db.s)} ${db.t.toFixed(1)}秒` : ''}</small></button></div>` : ''}<div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
-    const b = st.best[s.id];
-    return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}${b ? `<br/><small>${'★'.repeat(b.s)} ${b.t.toFixed(1)}秒</small>` : ''}</button>`;
+  const ds = goalList(true)[dailyIndex()];
+  ui.card.innerHTML = `<h3 style="color:#2f5d34">🌀 めいろ の いちらん</h3>${ds ? `<div class="mz-row"><button type="button" data-mz="daily">☀️ きょうの めいろ<br/><small>${esc(ds.name)}</small></button></div>` : ''}<div class="mz-row" style="max-height:50vh;overflow:auto">${list.slice(0, open + 1).map((s, i) => {
+    return `<button type="button" class="sub" style="background:#eef3e6;color:#2a2a20;box-shadow:none" data-mz="go:${i}">${i + 1}. ${esc(s.name)}</button>`;
   }).join('')}</div><div class="mz-row"><button type="button" data-mz="resume">もどる</button></div>`;
   ui.clear.hidden = false;
   if (game) game.paused = true;
@@ -720,7 +700,7 @@ function tick(now) {
   api.rumble(g.done || g.fall > 0 || !ui.clear.hidden ? 0 : Math.hypot(g.vx, g.vy) * K);   // 転がる音（歩く地図と同じ。速いほど 大きく 高く）
   if (api.demGen !== g.dem && (!g.demT || now - g.demT > 1500)) { g.demT = now; g.dem = api.demGen; g.bg = paintBoard(g.board, g.T); }
   draw(now);
-  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + g.t.toFixed(1) + (g.spring && g.spring.left > 0 ? ` ばね${Math.ceil(g.spring.left)}` : '');
+  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + (g.spring && g.spring.left > 0 ? ` ばね${Math.ceil(g.spring.left)}` : '');
   // 盤を 傾けて見せる：矢印キー・なぞる で 動かすと、わくごと 少し 傾く（キーホルダーを 傾けたように）。スマホの傾きでは 手の中の 本物が 傾くので 小さく
   const t = api.tilt(), kx = keys.right - keys.left + drag.x, ky = keys.down - keys.up + drag.y, sx = kx * 5 + t.x * 2, sy = ky * 5 + t.y * 2;
   g.bx = (g.bx || 0) + (sx - (g.bx || 0)) * Math.min(1, dt * 10); g.by = (g.by || 0) + (sy - (g.by || 0)) * Math.min(1, dt * 10);
@@ -816,16 +796,7 @@ function draw(now) {
   }
   // お米
   const u = T * 0.031;
-  const gh = g.ghost;
-  if (gh && !g.done) {   // 👻 ベストの 自分（うすく。タイムが 動きだしてから いっしょに 走る。ゴールに ついたら 消える）
-    const f = g.t / GSTEP, i = Math.min(Math.floor(f), gh.p.length / 2 - 1), j = Math.min(i + 1, gh.p.length / 2 - 1), k = f - Math.floor(f);
-    if (f < gh.p.length / 2 + 2) {
-      const hx = (gh.p[i * 2] + (gh.p[j * 2] - gh.p[i * 2]) * k) / 20, hy = (gh.p[i * 2 + 1] + (gh.p[j * 2 + 1] - gh.p[i * 2 + 1]) * k) / 20;
-      x.fillStyle = 'rgba(110,190,255,.35)'; x.strokeStyle = 'rgba(60,140,230,.7)'; x.lineWidth = Math.max(1, T / 16);   // 灰色の 道でも わかるように 水色の わ
-      x.beginPath(); x.arc(hx * T, hy * T, T * 0.34, 0, Math.PI * 2); x.fill(); x.stroke();
-      x.globalAlpha = 0.5; nishioPixel.drawRice(x, hx * T, hy * T, (g.t * 6) % (Math.PI * 2), 0, 'smile', 0, '', u); x.globalAlpha = 1;
-    }
-  }   // お米の 点の大きさ（はばが マスの 6割ほど。当たりの 半径 R と 見た目を そろえる）
+  // お米の 点の大きさ（はばが マスの 6割ほど。当たりの 半径 R と 見た目を そろえる）
   if (g.fall > 0) {   // おちていく：くるくる 小さく
     const k = g.fall / 0.8, [fx, fy] = g.fallAt;
     if (g.fallWater) { x.strokeStyle = 'rgba(255,255,255,.8)'; x.lineWidth = Math.max(1, T / 14); x.beginPath(); x.arc(fx * T, fy * T, T * (0.5 - k * 0.3), 0, Math.PI * 2); x.stroke(); }

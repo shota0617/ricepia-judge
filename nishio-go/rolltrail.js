@@ -100,5 +100,40 @@
       return out;
     } catch (e) { return Array.isArray(colors) ? colors.slice() : []; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, AREA_COLORS };
+  // 帯のリボン化（第4弾サイクル42・スプラトゥーン）：小セグメントごとの左右の縁を結んだ四角形。隣と縁を共有するので継ぎ目で重ならず、太さも点ごとに連続する。座標はタイル単位
+  const HALF = 0.10, JOIN = 1e-6;
+  function ribbon(segs) {
+    try {
+      if (!Array.isArray(segs)) return [];
+      const info = segs.map(s => {
+        if (!s || !num(s.x1) || !num(s.y1) || !num(s.x2) || !num(s.y2)) return null;
+        const len = Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
+        if (!(len > 0)) return null;
+        return { s, dx: (s.x2 - s.x1) / len, dy: (s.y2 - s.y1) / len, w: (num(s.w) && s.w > 0) ? s.w : 1 };
+      });
+      const joined = (a, b) => a && b && Math.abs(a.s.x2 - b.s.x1) <= JOIN && Math.abs(a.s.y2 - b.s.y1) <= JOIN;
+      const edge = (x, y, dx, dy, w) => {
+        const h = HALF * w, nx = -dy, ny = dx;
+        return [x + nx * h, y + ny * h, x - nx * h, y - ny * h];
+      };
+      // 鎖の途中の点：入ってくる向きと出ていく向きの和（真逆なら入ってくる向き）、太さは前後の平均。曲がり角では帯がくびれないよう、なす角の半分の cos で割り戻す（上限2倍。真逆の折り返しは割り戻さない）
+      const mid = (a, b) => {
+        let dx = a.dx + b.dx, dy = a.dy + b.dy;
+        const l = Math.hypot(dx, dy);
+        let w = (a.w + b.w) / 2;
+        if (l < 1e-9) { dx = a.dx; dy = a.dy; }
+        else { dx /= l; dy /= l; const cos = Math.sqrt((1 + Math.min(1, Math.max(-1, a.dx * b.dx + a.dy * b.dy))) / 2); if (cos > 0) w *= Math.min(2, 1 / cos); }
+        return { dx, dy, w };
+      };
+      return info.map((c, i) => {
+        if (!c) return null;
+        const prev = joined(info[i - 1], c) ? info[i - 1] : null;
+        const next = joined(c, info[i + 1]) ? info[i + 1] : null;
+        const a = prev ? mid(prev, c) : c, b = next ? mid(c, next) : c;
+        const L = edge(c.s.x1, c.s.y1, a.dx, a.dy, a.w), R = edge(c.s.x2, c.s.y2, b.dx, b.dy, b.w);
+        return { lx1: L[0], ly1: L[1], rx1: L[2], ry1: L[3], rx2: R[2], ry2: R[3], lx2: R[0], ly2: R[1] };
+      });
+    } catch (e) { return []; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

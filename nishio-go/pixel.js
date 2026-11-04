@@ -8404,6 +8404,15 @@ function drawRollPath(ox, oy, T, now) {
     const bases = segs.map(s => rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2));   // 小セグメントごとに地区色を調べる
     const smooth = RT.smoothColors ? RT.smoothColors(bases) : null;   // 境の前後3つに広げて4段階で溶け合わせる（Journey）
     if (smooth) { for (let si = 1; si < segs.length; si++) { if (segs[si].g !== segs[si - 1].g) { smooth[si - 1] = bases[si - 1]; smooth[si] = bases[si]; if (si + 1 < segs.length && segs[si + 1].g === segs[si].g) smooth[si + 1] = bases[si + 1]; } } }   // ひとっとびで途切れた区間の間では色を混ぜない（Codex指摘・サイクル41）
+    const quads = RT.ribbon ? RT.ribbon(segs) : null;   // 計算が失敗して長さが合わないときは従来の線描画へ戻す
+    if (quads && quads.length === segs.length) {   // 塗りのリボン（スプラトゥーン）：隣と縁を共有する四角形を fill だけで描き、継ぎ目の重なりをなくす
+      for (let si = 0; si < segs.length; si++) {
+        const q = quads[si], s = segs[si];
+        if (!q || !(s.a > 0)) continue;
+        ctx.fillStyle = 'rgba(' + ((smooth && smooth[si]) || bases[si]) + ',' + s.a.toFixed(3) + ')';
+        ctx.beginPath(); ctx.moveTo(ox + q.lx1 * T, oy + q.ly1 * T); ctx.lineTo(ox + q.rx1 * T, oy + q.ry1 * T); ctx.lineTo(ox + q.rx2 * T, oy + q.ry2 * T); ctx.lineTo(ox + q.lx2 * T, oy + q.ly2 * T); ctx.closePath(); ctx.fill();
+      }
+    } else {
     for (let si = 0; si < segs.length; si++) {
       const s = segs[si], base = bases[si];
       let srgb = base, mixed = false;
@@ -8418,6 +8427,7 @@ function drawRollPath(ox, oy, T, now) {
       if (mixed) force = true;   // 混ざった小セグメントは単独の帯
     }
     flush();
+    }
     const a = RT.alphaFor(now - last.t);
     if (a > 0) { ctx.fillStyle = 'rgba(' + rgbAt(last.x, last.y) + ',' + a.toFixed(3) + ')'; ctx.beginPath(); ctx.arc(ox + last.x * T, oy + last.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore();

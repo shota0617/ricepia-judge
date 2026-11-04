@@ -85,5 +85,20 @@
       return A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',');
     } catch (e) { return null; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, AREA_COLORS };
+  // 境の前後3小セグメントに広げた4段階の溶け合い（第4弾サイクル41・Journey）：入力は小セグメントごとの 'r,g,b' 配列。入力は変えず新しい配列を返す
+  function smoothColors(colors) {
+    try {
+      if (!Array.isArray(colors)) return [];
+      const out = colors.slice();
+      for (let i = 1; i < colors.length; i++) {
+        const A = colors[i - 1], B = colors[i];
+        if (A === B || !parseRgb(A) || !parseRgb(B)) continue;
+        out[i - 1] = mixRgb(A, B, 0.25);
+        out[i] = mixRgb(A, B, 0.5);
+        if (i + 1 < colors.length) out[i + 1] = mixRgb(A, B, 0.75);
+      }
+      return out;
+    } catch (e) { return Array.isArray(colors) ? colors.slice() : []; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

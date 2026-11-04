@@ -8400,13 +8400,18 @@ function drawRollPath(ox, oy, T, now) {
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = T * 0.20;
     let g = null, sum = 0, cnt = 0, wsum = 0, w0 = 0, rgb = CREAM, prev = null, force = true;
     const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(' + rgb + ',' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
-    for (const s of RT.segments(rollPath.list, now)) {
-      const base = rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);   // 小セグメントごとに地区色を調べる
+    const segs = RT.segments(rollPath.list, now);
+    const bases = segs.map(s => rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2));   // 小セグメントごとに地区色を調べる
+    const smooth = RT.smoothColors ? RT.smoothColors(bases) : null;   // 境の前後3つに広げて4段階で溶け合わせる（Journey）
+    if (smooth) { for (let si = 1; si < segs.length; si++) { if (segs[si].g !== segs[si - 1].g) { smooth[si - 1] = bases[si - 1]; smooth[si] = bases[si]; if (si + 1 < segs.length && segs[si + 1].g === segs[si].g) smooth[si + 1] = bases[si + 1]; } } }   // ひとっとびで途切れた区間の間では色を混ぜない（Codex指摘・サイクル41）
+    for (let si = 0; si < segs.length; si++) {
+      const s = segs[si], base = bases[si];
       let srgb = base, mixed = false;
-      if (prev !== null && base !== prev && RT.mixRgb) { const m = RT.mixRgb(prev, base, 0.5); if (m) { srgb = m; mixed = true; } }   // 境の直後の1つは2色を混ぜて、境が段にならない（Gris）
+      if (smooth) { if (smooth[si]) srgb = smooth[si]; }
+      else if (prev !== null && base !== prev && RT.mixRgb) { const m = RT.mixRgb(prev, base, 0.5); if (m) { srgb = m; mixed = true; } }   // smoothColors が無いときは境の直後の1つだけ混ぜる（Gris）
       prev = base;
       const w = (typeof s.w === 'number' && isFinite(s.w) && s.w > 0) ? s.w : 1;
-      if (force || mixed || s.g !== g || srgb !== rgb || Math.abs(w - w0) > 0.15) {   // 区間・色が変わる／太さが最初から 0.15 を超えて変わったら新しい帯
+      if (force || mixed || s.g !== g || srgb !== rgb || Math.abs(w - w0) > 0.03) {   // 区間・色が変わる／太さが最初から 0.03 を超えて変わったら新しい帯
         flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; rgb = srgb; sum = 0; cnt = 0; wsum = 0; w0 = w; force = false;
       }
       ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); wsum += w; cnt++;

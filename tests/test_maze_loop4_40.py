@@ -60,7 +60,7 @@ class PixelStatic(unittest.TestCase):
     def test_uses_mix_and_width_flush(self):
         b = self.body()
         self.assertIn('mixRgb', b)
-        self.assertIn('0.15', b)
+        self.assertIn('0.03', b)   # サイクル41で太さの区切りを 0.15 から 0.03 へ
         self.assertIn('colorFor', b)
         self.assertIn("'255,246,220'", b)
 

@@ -148,6 +148,18 @@ class KensaTests(unittest.TestCase):
                          ["1等", "1等", "2等", "1等", "2等", "2等",
                           "1等", "3等", "規格外", "規格外", "1等", "規格外"])
 
+    def test_grain_distinguishability(self):
+        # サイクル9: わるい粒は種類ごとに形・模様がはっきり違い、タップ範囲も大きい
+        self.assertIn("width:44px; height:44px", HTML)   # 粒のタップ範囲（旧38pxから拡大）
+        self.assertIn("width:17px; height:26px", HTML)   # 粒本体（旧13x21から拡大）
+        for kind in ("shini", "color", "mijuku", "momi", "higai"):
+            self.assertIn(f".sgrain.{kind} i", HTML)     # 種類ごとの見た目定義がある
+        self.assertIn("radial-gradient", HTML)           # 着色粒: 濃い芯
+        self.assertIn("repeating-linear-gradient(90deg,#d8bc7a 0 4px,#a9853e 4px 7px)", HTML)  # もみ: 太い殻の縞
+        self.assertIn("#3d2a14 40% 60%", HTML)           # 被害粒: 太い割れ目
+        self.assertIn("#9db56e", HTML)                   # 未熟粒: はっきりした青緑
+        self.assertIn("#fdfaf0", HTML)                   # 死米: 粉状の白
+
     def test_machine_ui(self):
         # サイクル8: 穀粒判別器は死米・着色粒だけを見る（農水省通知 元政統第1290号）
         self.assertIn('id="machineBtn"', HTML)   # 任意の大きなボタン1つ

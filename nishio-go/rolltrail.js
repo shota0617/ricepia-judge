@@ -54,8 +54,9 @@
       const m = out.length;
       return out.map((s, i) => {
         const frac = m > 1 ? i / (m - 1) : 1;
-        const a = Math.min(ALPHA, Math.max(0, alphaFor(now - s.t) * (0.45 + 0.55 * frac)));
-        return { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, a, g: s.g };
+        const a = Math.min(ALPHA, Math.max(0, alphaFor(now - s.t) * (0.08 + 0.92 * frac)));
+        const w = Math.min(1, Math.max(0.30, 0.30 + 0.70 * frac));   // 古い端ほど細く（筆の跡）
+        return { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, a, w, g: s.g };
       });
     } catch (e) { return []; }
   }

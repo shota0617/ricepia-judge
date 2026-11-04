@@ -8389,11 +8389,11 @@ function drawRollPath(ox, oy, T, now) {
   const last = rollPath.list[rollPath.list.length - 1];
   if (RT.segments) {   // 点を補間したつながった柔らかい帯（相手の区間ごとに1回で描き継ぎ目の重なりを避ける。古い端ほど薄い）
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = T * 0.20;
-    let g = null, sum = 0, cnt = 0;
-    const flush = () => { if (cnt && sum > 0) { ctx.strokeStyle = 'rgba(255,246,220,' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
+    let g = null, sum = 0, cnt = 0, wsum = 0;
+    const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(255,246,220,' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
     for (const s of RT.segments(rollPath.list, now)) {
-      if (s.g !== g) { flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; sum = 0; cnt = 0; }
-      ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); cnt++;
+      if (s.g !== g) { flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; sum = 0; cnt = 0; wsum = 0; }
+      ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); wsum += (typeof s.w === 'number' && isFinite(s.w) && s.w > 0) ? s.w : 1; cnt++;
     }
     flush();
     const a = RT.alphaFor(now - last.t);

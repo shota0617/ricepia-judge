@@ -183,8 +183,9 @@ const CHECKS = {
       return { mode:S.mode, bagNo:S.bagNo, tangles:log, sr, focus:document.activeElement && document.activeElement.id };
     });
     ok(r.mode==='over' && r.bagNo===3, 'キーボードだけで れんしゅう 3袋', r);
-    await p.waitForTimeout(100);
-    r.sr = await p.evaluate(() => document.getElementById('sr').textContent); // 同じ 文でも 読むよう、一度 空に してから 入る
+    // 同じ 文でも 読むよう、一度 空に してから 60ms 後に 入る（mishin.html の srSay）。決め打ちの 100ms では 重い ときに 間に あわず 空で 落ちた（2000周目）ので、入るまで 待つ
+    await p.waitForFunction(() => document.getElementById('sr').textContent.length > 0, null, { timeout: 2000 }).catch(() => {});
+    r.sr = await p.evaluate(() => document.getElementById('sr').textContent);
     ok(r.sr.length > 0, '読み上げの 欄に 声が 入る', r.sr);
     const f = await p.evaluate(() => document.activeElement && document.activeElement.id);
     ok(f==='coinH', 'まとめは 見出しに フォーカス（Tab で LINE →「もう一度」。96周目）', f);

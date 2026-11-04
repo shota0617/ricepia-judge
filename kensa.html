@@ -95,6 +95,23 @@
   #yokeTray .sgrain i { width:10px; height:16px; }
   #sortPct { margin:12px 2px 0; font-size:20px; font-weight:800; }
   #sortPct b { font-size:44px; }
+  /* きめる（サイクル4）: 大きな等級ボタン4つ。流れを止めない見直し導線つき */
+  #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
+  #gradeWrap.on { display:block; }
+  #gradeRecap { margin:0 0 12px; font-size:18px; font-weight:800; text-align:center; }
+  #gradeRecap b { font-size:30px; }
+  #gradeBtns { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .gradeBtn { border:3px solid #d8cfb8; border-radius:16px; background:#fff; color:var(--ink);
+    font:inherit; font-size:34px; font-weight:800; padding:22px 6px; cursor:pointer; }
+  .gradeBtn:active { transform:scale(.97); }
+  .gradeBtn.picked { border-color:var(--green); background:#e6efdf; }
+  .gradeBtn:disabled { opacity:.55; cursor:default; }
+  .gradeBtn.picked:disabled { opacity:1; }
+  #gradeMsg { min-height:28px; margin:12px 2px 0; text-align:center; font-size:18px; font-weight:800; color:var(--green); opacity:0; }
+  #gradeMsg.on { opacity:1; transition:opacity .6s ease; }
+  #backToSort { display:none; margin:10px auto 0; border:0; border-radius:999px; background:#e3d7bd; color:var(--ink);
+    font:inherit; font-size:16px; font-weight:800; padding:10px 18px; cursor:pointer; }
+  #backToSort.on { display:block; }
   footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
 </style>
 </head>
@@ -131,15 +148,26 @@
     <div id="yokeWrap"><span class="plateLabel">よけた粒</span><div id="yokeTray"></div></div>
     <p id="sortPct">みわけ <b>0%</b> <span id="sortCount">0 / 10</span></p>
   </div>
+  <div id="gradeWrap">
+    <p id="gradeRecap">💧 <b id="gradeMoisture">—</b>　👀 <span id="gradeSort">0 / 10</span></p>
+    <div id="gradeBtns">
+      <button class="gradeBtn" data-grade="1等">1等</button>
+      <button class="gradeBtn" data-grade="2等">2等</button>
+      <button class="gradeBtn" data-grade="3等">3等</button>
+      <button class="gradeBtn" data-grade="規格外">規格外</button>
+    </div>
+    <p id="gradeMsg" aria-live="polite"></p>
+    <button id="backToSort">👀 皿をみる</button>
+  </div>
   <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。粒の鑑定は同じ試料を白い皿と黒い皿の双方に入れて目視で確認します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。等級は、整粒・水分・被害粒・死米・着色粒・異種穀粒・異物の全項目がその等級の限度内にある、最も良い等級です（未熟粒は「計」に入りません）。</footer>
 </main>
 <script>
 "use strict";
 /* 等級規格（水稲うるち玄米）: 農産物規格規程 平成13年農林水産省告示第244号で本サイクルに原典確認済み。
    水分は表値15.0%。同規程の附により当分の間は各等級とも+1.0%（16.0%）が運用上限だが、
-   ゲームのロットは解釈の割れない帯域だけを使う（設計書 brief_cycle1.md §4）。判定UIはサイクル4で実装。 */
+   ゲームのロットは解釈の割れない帯域だけを使う（設計書 brief_cycle1.md §4）。判定は judgeGrade（サイクル4）。 */
 const GRADE_TABLE = [
   { grade:"1等", seiryuMin:70, moistureMax:15.0, totalMax:15, shiniMax:7,  colorMax:0.1, momiMax:0.3, mugiMax:0.1, otherMax:0.3, ibutsuMax:0.2 },
   { grade:"2等", seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, momiMax:0.5, mugiMax:0.3, otherMax:0.5, ibutsuMax:0.4 },
@@ -158,13 +186,27 @@ const LOT = {
 function moistureAverage(values) {
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
 }
+/* 等級判定（サイクル4・brief_cycle1.md §3）: 1等から順に全項目が限度内かを見て、最初に満たした等級が正解。
+   計 = 被害粒+死米+着色粒+異種穀粒（もみ+麦+その他）+異物。未熟粒は計に入らない。
+   形質（標準品との比較）は数値化できないため判定には入れない。どれも満たさなければ規格外。 */
+function judgeGrade(truth, moisture) {
+  const total = truth.higai + truth.shini + truth.color + truth.momi + truth.mugi + truth.other + truth.ibutsu; /* 丸めずに比較する（Codexレビュー指摘・サイクル4）。浮動小数の誤差は下の 1e-9 の余裕で吸収 */
+  for (const g of GRADE_TABLE) {
+    if (truth.seiryu >= g.seiryuMin - 1e-9 && moisture <= g.moistureMax + 1e-9 && total <= g.totalMax + 1e-9 &&
+        truth.shini <= g.shiniMax + 1e-9 && truth.color <= g.colorMax + 1e-9 && truth.momi <= g.momiMax + 1e-9 &&
+        truth.mugi <= g.mugiMax + 1e-9 && truth.other <= g.otherMax + 1e-9 && truth.ibutsu <= g.ibutsuMax + 1e-9) {
+      return g.grade;
+    }
+  }
+  return "規格外";
+}
 const tray = document.getElementById("tray");
 const count = document.getElementById("count");
 const bagTap = document.getElementById("bagTap");
 const nextBtn = document.getElementById("nextBtn");
 const stepChip = document.getElementById("stepChip");
 let sampled = false;
-let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → miwakeru-done */
+let phase = "sas"; /* sas → hakaru → hakaru-done → miwakeru → kimeru → kimeru-done */
 nextBtn.addEventListener("click", () => {
   if (phase === "sas" && sampled) {
     phase = "hakaru";
@@ -183,10 +225,56 @@ nextBtn.addEventListener("click", () => {
     nextBtn.textContent = "④ きめる ⚖️";
     nextBtn.classList.add("on"); /* 全部よけ終わらなくても進める（brief_cycle1.md §2-3） */
   } else if (phase === "miwakeru") {
-    phase = "miwakeru-done";
+    phase = "kimeru";
+    stepChip.textContent = "④ きめる";
+    document.getElementById("sortWrap").classList.remove("on"); /* 道具は常時1つだけ: 皿はしまう */
+    document.getElementById("gradeMoisture").textContent = moistureAverage(LOT.moisture).toFixed(1) + "%";
+    document.getElementById("gradeSort").textContent = sortFound + " / " + sortBadTotal;
+    document.getElementById("gradeWrap").classList.add("on");
+    count.textContent = "等級を えらぶ";
+    nextBtn.classList.remove("on");
+  } else if (phase === "kimeru-done") {
     count.textContent = "👀 つぎのサイクルで はじまる";
-    nextBtn.textContent = "④ きめる ⚖️（つぎのサイクルで）";
+    nextBtn.textContent = "⑤ おす 🖐（つぎのサイクルで）";
   }
+});
+/* きめる（サイクル4）: 大きな等級ボタンを1つタップ。合えば次へ、外れても流れを止めず皿に戻って見直せる */
+const gradeMsg = document.getElementById("gradeMsg");
+const backToSort = document.getElementById("backToSort");
+document.querySelectorAll(".gradeBtn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (phase !== "kimeru") return;
+    const answer = judgeGrade(LOT.truth, moistureAverage(LOT.moisture));
+    if (btn.dataset.grade === answer) {
+      phase = "kimeru-done";
+      document.querySelectorAll(".gradeBtn").forEach((b) => { b.disabled = true; });
+      btn.classList.add("picked");
+      btn.disabled = false; /* 選んだ等級だけ大きく残す */
+      gradeMsg.textContent = "✓ " + answer;
+      gradeMsg.classList.add("on");
+      backToSort.classList.remove("on");
+      stepChip.textContent = "④ きめる ✓";
+      count.textContent = "等級が きまった ✓";
+      nextBtn.textContent = "⑤ おす 🖐";
+      nextBtn.classList.add("on");
+    } else {
+      gradeMsg.textContent = "もう一度 皿をみてみよう 👀";
+      gradeMsg.classList.add("on");
+      backToSort.classList.add("on"); /* 罰なし・回数制限なし: 皿に戻って見直せるだけ */
+    }
+  });
+});
+backToSort.addEventListener("click", () => {
+  if (phase !== "kimeru") return;
+  phase = "miwakeru";
+  stepChip.textContent = sortFound >= sortBadTotal ? "③ みわける ✓" : "③ みわける";
+  document.getElementById("gradeWrap").classList.remove("on");
+  document.getElementById("sortWrap").classList.add("on");
+  gradeMsg.classList.remove("on");
+  backToSort.classList.remove("on");
+  count.textContent = "わるい粒を タップして よける";
+  nextBtn.textContent = "④ きめる ⚖️";
+  nextBtn.classList.add("on");
 });
 /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）に真値連動の粒を広げ、
    整粒でない粒をタップしてよける。白い粒（死米・未熟粒）は黒い皿で、濃い粒（着色粒）は白い皿で見つけやすい。 */

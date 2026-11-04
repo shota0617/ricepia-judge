@@ -177,13 +177,17 @@
     }
     return false;
   }
-  // 横の合わせ覆い（第4弾サイクル54・カルカソンヌ）：長手方向を単独で端まで覆う候補（中点・向きの条件つき）の横区間（中心線の横ずれ±HALF×w）を和集合にし、古い要素の横幅を隙間なく覆うときも落とす。NEAR_TOL は両端の端切れだけに使い、途中の隙間は埋めない
+  // 横の合わせ覆い（第4弾サイクル54・カルカソンヌ）：長手方向を単独で端まで覆う候補（中点・向きの条件つき）の横区間を和集合にし、古い要素の横幅を隙間なく覆うときも落とす。NEAR_TOL は両端の端切れだけに使い、途中の隙間は埋めない
+  // 傾いた候補の保証区間（第4弾サイクル55・シムシティ）：横区間は中点ではなく候補の両端の横位置から、端から端まで保証できる共通部分だけを数える（矩形として四隅まで見る）
   function coveredSideways(c, cands) {
     if (cands.length < 2) return false; // 1本だけの覆いは単独条件が見る（傾きの端のずれを中心線だけで見逃さない）
-    const iv = cands.map(k => {
-      const off = (k.mx - c.mx) * -c.dy + (k.my - c.my) * c.dx;
-      return [off - HALF * k.w, off + HALF * k.w];
-    }).sort((p, q) => p[0] - q[0]);
+    const iv = [];
+    cands.forEach(k => {
+      const o1 = (k.x1 - c.mx) * -c.dy + (k.y1 - c.my) * c.dx, o2 = (k.x2 - c.mx) * -c.dy + (k.y2 - c.my) * c.dx;
+      const lo = Math.max(o1, o2) - HALF * k.w, hi = Math.min(o1, o2) + HALF * k.w;
+      if (lo <= hi) iv.push([lo, hi]); // 傾きが大きく端まで保証できる横幅が無い候補は外す
+    });
+    iv.sort((p, q) => p[0] - q[0]);
     let reach = -HALF * c.w + NEAR_TOL;
     for (let n = 0; n < iv.length; n++) {
       if (iv[n][0] > reach + 1e-9) return false;

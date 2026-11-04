@@ -1181,20 +1181,9 @@ function snapMaze() {   // ドット絵の 地図の まん中（お米の ま�
     return out;
   } catch (e) { return null; }
 }
-// 友だちの シェア（share.js の ?vs=秒&vst=★）から 来た 人の はじめての ゴール：友だちの タイムと ならべる（1回だけ。行き先が ちがうので 勝ち負けは 言わない）。
-// 知らせで 出す（文字を 少なく の ごほうびの 札や、人の ゴールの 話の 窓では 文が 見えないので。ごほうびの 窓を とじた あとに 出る）
-function friendVs(sec, st) {
-  const vs = store.get('nsg_vs', null);
-  if (!vs || !vs.sec) return '';
-  store.del('nsg_vs'); track('friend_vs', { sec: Math.round(sec), vs: vs.sec });
-  const msg = `👋 友だちは ${fmtSec(vs.sec)}${vs.st ? ` ${'★'.repeat(vs.st)}` : ''}、きみは ${fmtSec(sec)}${st ? ` ${'★'.repeat(st)}` : ''}。シェアで おかえし しよまい`;
-  toastAfter(msg);
-  return msg;
-}
 // めいろの はやさの ベスト（クセになる「じぶんの 記録を こえる 目あて」2026-10-26）：ゴールの タイムは 出発した 所で 道のりが かわるので
 // （サイクル66で 廃止：Alba にならい 速さの ベストは 記録しない）
 function mzSpeed() { return ''; }   // 速さは 競わない：ベストを 記録せず 表示も しない（nsg_mz_speed の 古い 保存値は そのまま）
-const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 // 穏やかな 光（Wanderstop：期限で 焦らせない）：めいろの はしの 名所が「光るゴール」（+20pt）、
 // ゴールに 着くと 近くの 寄り道が 光って（+10pt）。着く まで 光り つづける。閉じても 光は セーブに 残り、寄り道は 最大 nearCap か所まで 積み上がる
 const GLOW = { goalPts: 20, nearPts: 10, nearMax: 3, nearCap: 6, nearM: 2000 };
@@ -3995,7 +3984,7 @@ $('reactBar').addEventListener('click', async e => {
     playQ.r = +ps.dataset.play;
     $('reactBar').querySelectorAll('[data-play]').forEach(b => b.classList.toggle('on', +b.dataset.play <= playQ.r));
     const more = $('reactBar').querySelector('.play-more'); if (more) more.hidden = false;
-    // ★4〜5：たのしかった いま、友だちにも さそう（めいろの ゴールの シェア。見た 人は タイムに いどめる）。★3 より 下では 出さない
+    // ★4〜5：たのしかった いま、友だちにも さそう（めいろの ゴールの シェア。見た 人は すぐ 遊べる）。★3 より 下では 出さない
     const sh = $('reactBar').querySelector('[data-play-share]'); if (sh) sh.hidden = !(playQ.r >= 4 && playQ.ctx && playQ.ctx.mz && window.nishioGo.openShare);
     clearTimeout(react.t); react.t = setTimeout(() => playClose(), 30000);
     return;
@@ -4679,7 +4668,7 @@ document.addEventListener('click', e => { const b = e.target.closest && e.target
 
 // ドット絵表示（pixel.js）とテストから使う窓口
 window.nishioGo = {
-  notePlayInput, snapMaze, friendVs, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
+  notePlayInput, snapMaze, mzSpeed, playAsk, playShow, get playPending() { return playQ.pending; }, set mzNpcShareTest(v) { mzNpcShare = v; },   // テスト用：遊んでいる 画面を とる・人の ゴールの シェアを 置く
   sound,
   get nimotsu() { const NM = window.NISHIO_NIMOTSU; return NM ? NM.current(S.nimotsu, Date.now()) : ''; },   // いま あたまに のせて いる 持ち物の 絵の id（なければ ''）
   get state() { return S; }, get stateKey() { return stateKey(); }, get spotsVersion() { return spotsVersion; }, get spots() { return spots; }, get me() { return me; }, get demo() { return demo; },

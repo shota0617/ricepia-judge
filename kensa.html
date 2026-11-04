@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+<title>農産物検査ゲーム（試作） - らいすぴあ（近藤米穀店）</title>
+<meta name="description" content="米袋の山から穀刺しで試料を抜き、水分を測り、粒を鑑定して等級証印を押す、農産物検査の仕事を題材にしたのんびりゲームの試作です。"/>
+<meta name="theme-color" content="#2d2d1e"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%BE%3C/text%3E%3C/svg%3E"/>
+<style>
+  :root { --ink:#1a1814; --paper:#fbf8f0; --green:#1f4d2b; --gold:#b8893a; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; min-height:100%; background:#e9e2d2; color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",Meiryo,sans-serif; }
+  main { max-width:560px; margin:0 auto; padding:10px 10px 28px; }
+  h1 { font-size:20px; margin:6px 2px 8px; letter-spacing:.04em; }
+  h1 small { font-size:12px; color:#fff; background:var(--gold); border-radius:999px; padding:2px 8px; vertical-align:3px; margin-left:6px; }
+  /* 場面: 軸の写真（検査員が30kg紙袋の山から穀刺しで試料を抜く風景） */
+  #scene { position:relative; border-radius:16px; overflow:hidden; box-shadow:0 4px 16px rgba(26,24,20,.25); line-height:0; }
+  #scene img { width:100%; height:auto; display:block; }
+  /* 刺す袋の誘い（ゆっくり光る・入力をふさがない小さな範囲だけ） */
+  #bagTap { position:absolute; left:34%; top:34%; width:32%; height:34%; border:0; background:transparent; cursor:pointer; border-radius:18px; }
+  #bagTap::after { content:""; position:absolute; inset:0; border-radius:18px;
+    box-shadow:inset 0 0 0 3px rgba(255,216,74,.0); animation:breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe { 0%,100%{ box-shadow:inset 0 0 0 3px rgba(255,216,74,0);} 50%{ box-shadow:inset 0 0 0 3px rgba(255,216,74,.85);} }
+  #bagTap.done { pointer-events:none; }
+  #bagTap.done::after { animation:none; }
+  /* 穀刺し */
+  #probe { position:absolute; left:16%; top:52%; font-size:44px; line-height:1; transform:rotate(-24deg); opacity:0; pointer-events:none; filter:drop-shadow(0 2px 3px rgba(0,0,0,.4)); }
+  #probe.go { animation:probeIn 1.1s ease forwards; }
+  @keyframes probeIn { 0%{opacity:0; transform:translate(0,0) rotate(-24deg);} 25%{opacity:1;} 70%{opacity:1; transform:translate(88px,-30px) rotate(-24deg);} 100%{opacity:1; transform:translate(30px,-8px) rotate(-24deg);} }
+  /* 穴をふさぐシール */
+  #seal { position:absolute; left:56%; top:56%; width:30px; height:30px; border-radius:50%; background:#3f7fbf; color:#fff;
+    font-size:15px; font-weight:800; display:flex; align-items:center; justify-content:center; line-height:1;
+    opacity:0; transform:scale(.4); box-shadow:0 1px 4px rgba(0,0,0,.35); pointer-events:none; }
+  #seal.on { transition:all .45s ease; opacity:1; transform:scale(1); }
+  /* 下の道具エリア: 常時1つだけ */
+  #stepChip { display:inline-block; margin:14px 2px 8px; padding:6px 14px; border-radius:999px; background:var(--green); color:#fff; font-size:17px; font-weight:800; }
+  /* 黒い鑑定皿 */
+  #trayWrap { background:#26241f; border-radius:50%/22px; padding:18px 14px 22px; box-shadow:inset 0 3px 10px rgba(0,0,0,.7), 0 4px 12px rgba(26,24,20,.3); }
+  #tray { position:relative; height:150px; }
+  .grain { position:absolute; width:9px; height:15px; border-radius:50%; background:#c9a86a; box-shadow:inset -2px -3px 0 rgba(120,84,30,.45); opacity:0; }
+  .grain.fall { animation:fall .8s ease forwards; }
+  .grain.pale { background:#e8e0c8; } .grain.dark { background:#8a6a34; } .grain.momi { background:#d8bc7a; border-radius:40% 40% 50% 50%; }
+  @keyframes fall { 0%{ opacity:0; transform:translateY(-46px) rotate(0deg);} 100%{ opacity:1; transform:translateY(0) rotate(var(--r,20deg));} }
+  #count { margin:10px 2px 0; font-size:15px; font-weight:700; min-height:22px; }
+  #count b { font-size:24px; }
+  #nextBtn { display:none; margin-top:10px; border:0; border-radius:999px; background:var(--paper); color:var(--ink);
+    font:inherit; font-size:16px; font-weight:800; padding:12px 20px; box-shadow:0 2px 8px rgba(26,24,20,.3); cursor:pointer; }
+  #nextBtn.on { display:inline-block; }
+  footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
+</style>
+</head>
+<body>
+<main>
+  <h1>🌾 こめの けんさ<small>試作</small></h1>
+
+  <div id="scene">
+    <img src="kensa/scene.webp" alt="検査員が30kg紙袋の山に穀刺しを刺して試料を抜く様子"/>
+    <button id="bagTap" aria-label="米袋をタップして穀刺しを刺す"></button>
+    <div id="probe" aria-hidden="true">🗡️</div>
+    <div id="seal" aria-hidden="true">済</div>
+  </div>
+
+  <div id="stepChip">① さす</div>
+  <div id="trayWrap"><div id="tray" aria-label="鑑定皿"></div></div>
+  <p id="count">ふくろを タップ</p>
+  <button id="nextBtn">② はかる 💧（つぎのサイクルで）</button>
+
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。</footer>
+</main>
+<script>
+"use strict";
+/* 等級規格（水稲うるち玄米）: 農産物規格規程 平成13年農林水産省告示第244号で本サイクルに原典確認済み。
+   水分は表値15.0%。同規程の附により当分の間は各等級とも+1.0%（16.0%）が運用上限だが、
+   ゲームのロットは解釈の割れない帯域だけを使う（設計書 brief_cycle1.md §4）。判定UIはサイクル4で実装。 */
+const GRADE_TABLE = [
+  { grade:"1等", seiryuMin:70, moistureMax:15.0, totalMax:15, shiniMax:7,  colorMax:0.1, momiMax:0.3, mugiMax:0.1, otherMax:0.3, ibutsuMax:0.2 },
+  { grade:"2等", seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, momiMax:0.5, mugiMax:0.3, otherMax:0.5, ibutsuMax:0.4 },
+  { grade:"3等", seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, momiMax:1.0, mugiMax:0.7, otherMax:1.0, ibutsuMax:0.6 }
+];
+const tray = document.getElementById("tray");
+const count = document.getElementById("count");
+const bagTap = document.getElementById("bagTap");
+let sampled = false;
+bagTap.addEventListener("click", () => {
+  if (sampled) return; sampled = true;
+  bagTap.classList.add("done");
+  document.getElementById("probe").classList.add("go");
+  /* 穀刺しで抜いた試料が鑑定皿へ落ちる（約40gのイメージで粒を60粒） */
+  const kinds = ["", "", "", "", "", "", "pale", "dark", "momi"];
+  for (let i = 0; i < 60; i++) {
+    const g = document.createElement("div");
+    const kind = kinds[Math.floor(Math.random() * kinds.length)];
+    g.className = "grain" + (kind ? " " + kind : "");
+    g.style.left = (4 + Math.random() * 90) + "%";
+    g.style.top = (8 + Math.random() * 76) + "%";
+    g.style.setProperty("--r", (Math.random() * 160 - 80) + "deg");
+    g.style.animationDelay = (0.55 + Math.random() * 0.5) + "s";
+    tray.appendChild(g);
+    requestAnimationFrame(() => g.classList.add("fall"));
+  }
+  setTimeout(() => document.getElementById("seal").classList.add("on"), 1250);
+  setTimeout(() => {
+    count.innerHTML = "とれた試料 <b>約40g</b>";
+    document.getElementById("stepChip").textContent = "① さす ✓";
+    document.getElementById("nextBtn").classList.add("on");
+  }, 1500);
+});
+</script>
+</body>
+</html>

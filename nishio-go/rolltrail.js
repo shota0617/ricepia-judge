@@ -86,17 +86,26 @@
     } catch (e) { return null; }
   }
   // 境の前後3小セグメントに広げた4段階の溶け合い（第4弾サイクル41・Journey）：入力は小セグメントごとの 'r,g,b' 配列。入力は変えず新しい配列を返す
+  // 狭い地区で境の窓が重なる所は上書きせず、寄与の各成分を平均する（第4弾サイクル43・Chicory）
   function smoothColors(colors) {
     try {
       if (!Array.isArray(colors)) return [];
       const out = colors.slice();
+      const acc = colors.map(() => []);
       for (let i = 1; i < colors.length; i++) {
         const A = colors[i - 1], B = colors[i];
         if (A === B || !parseRgb(A) || !parseRgb(B)) continue;
-        out[i - 1] = mixRgb(A, B, 0.25);
-        out[i] = mixRgb(A, B, 0.5);
-        if (i + 1 < colors.length) out[i + 1] = mixRgb(A, B, 0.75);
+        acc[i - 1].push(mixRgb(A, B, 0.25));
+        acc[i].push(mixRgb(A, B, 0.5));
+        if (i + 1 < colors.length) acc[i + 1].push(mixRgb(A, B, 0.75));
       }
+      acc.forEach((list, j) => {
+        if (list.length === 1) out[j] = list[0];
+        else if (list.length > 1) {
+          const cs = list.map(parseRgb);
+          out[j] = [0, 1, 2].map(k => Math.round(cs.reduce((t, c) => t + c[k], 0) / cs.length)).join(',');
+        }
+      });
       return out;
     } catch (e) { return Array.isArray(colors) ? colors.slice() : []; }
   }

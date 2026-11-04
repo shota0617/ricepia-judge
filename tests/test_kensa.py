@@ -202,6 +202,17 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                     # 流れを止める要素は作らない
 
+    def test_cycle11_meter_sort_tactility(self):
+        # サイクル11: はかる／みわけるの触感（サイクル10の押印と同じ穏やかな流儀にそろえる）
+        self.assertIn("#meterBtn:active { transform:scale(.98); }", HTML)   # はかるボタンが少し沈む
+        self.assertIn("#machineBtn:active { transform:scale(.98); }", HTML)  # きかいでみるも同じ
+        self.assertIn("@keyframes markLand", HTML)           # 平均の印が静かに着地する
+        self.assertIn("#bandMark.on { opacity:1; animation:markLand .55s ease; }", HTML)
+        self.assertIn(".sgrain:active { transform:scale(.93); }", HTML)  # 粒が押した時だけ少し沈む
+        self.assertIn("@keyframes yokeIn", HTML)             # よけた粒が受け皿へ静かに落ち着く
+        self.assertNotIn("setInterval", HTML)                # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                     # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

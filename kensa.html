@@ -61,7 +61,8 @@
   #meterWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
   #meterWrap.on { display:block; }
   #meterBtn { display:block; width:100%; border:0; border-radius:999px; background:var(--green); color:#fff;
-    font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; }
+    font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; transition:transform .15s ease; }
+  #meterBtn:active { transform:scale(.98); } /* はかるの触感（サイクル11）: 押した時だけほんの少し沈む */
   #meterBtn:disabled { opacity:.45; cursor:default; }
   #slots { display:flex; gap:8px; margin-top:14px; }
   .slot { flex:1; text-align:center; font-size:32px; font-weight:800; background:#f1ead8; border-radius:12px; padding:10px 2px; color:#b7ab8e; min-height:62px; }
@@ -76,7 +77,9 @@
   #bandLine span { position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:16px; font-weight:800; }
   #bandMark { position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--ink);
     transform:translate(-50%,-50%); opacity:0; transition:opacity .6s ease; }
-  #bandMark.on { opacity:1; }
+  /* 平均の印の着地（サイクル11）: 大きく跳ねず、少しだけ行き過ぎて静かに落ち着く（サイクル10の証印と同じ流儀） */
+  #bandMark.on { opacity:1; animation:markLand .55s ease; }
+  @keyframes markLand { 0%{ transform:translate(-50%,-50%) scale(1.45); } 55%{ transform:translate(-50%,-50%) scale(.94); } 100%{ transform:translate(-50%,-50%) scale(1); } }
   /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）＋よけた粒の受け皿 */
   #sortWrap { display:none; margin-top:12px; }
   #sortWrap.on { display:block; }
@@ -96,13 +99,15 @@
   .sgrain.mijuku i { width:12px; height:27px; background:#9db56e; box-shadow:inset -2px -3px 0 rgba(90,105,55,.45); }
   .sgrain.momi i { width:20px; height:29px; background:repeating-linear-gradient(90deg,#d8bc7a 0 4px,#a9853e 4px 7px); border-radius:46% 46% 50% 50% / 62% 62% 38% 38%; box-shadow:inset -2px -3px 0 rgba(120,84,30,.35); }
   .sgrain.higai i { background:linear-gradient(115deg,#c9a86a 0 40%,#3d2a14 40% 60%,#b28c50 60% 100%); }
+  .sgrain:active { transform:scale(.93); } /* みわけるの触感（サイクル11）: どの粒も押した時だけほんの少し沈む（罰なし・音なし） */
   .sgrain.good:active i { animation:wiggle .35s ease; }
   @keyframes wiggle { 0%,100%{ transform:rotate(0deg);} 50%{ transform:rotate(14deg);} }
   .sgrain.away { opacity:0; transform:translateY(10px) scale(.6); pointer-events:none; }
   #yokeWrap { margin-top:10px; background:#e3d7bd; border-radius:16px; padding:10px 12px; min-height:58px; box-shadow:inset 0 2px 6px rgba(26,24,20,.2); }
   #yokeWrap .plateLabel { position:static; color:#6b6353; }
   #yokeTray { display:flex; flex-wrap:wrap; gap:2px; margin-top:4px; min-height:30px; }
-  #yokeTray .sgrain { position:static; width:28px; height:28px; cursor:default; }
+  #yokeTray .sgrain { position:static; width:28px; height:28px; cursor:default; animation:yokeIn .45s ease; } /* よけた粒が受け皿へ静かに落ち着く（サイクル11） */
+  @keyframes yokeIn { 0%{ opacity:0; transform:translateY(6px) scale(.6); } 100%{ opacity:1; transform:translateY(0) scale(1); } }
   #yokeTray .sgrain i { width:12px; height:19px; }
   #sortPct { margin:12px 2px 0; font-size:20px; font-weight:800; }
   #sortPct b { font-size:44px; }
@@ -114,7 +119,8 @@
   #scanBar.on { animation:scanMove 1.1s ease forwards; }
   @keyframes scanMove { 0%{ opacity:0; transform:translateY(0);} 15%{ opacity:1; } 85%{ opacity:1; } 100%{ opacity:0; transform:translateY(420px);} }
   #machineBtn { display:block; width:100%; margin-top:12px; border:0; border-radius:999px; background:#4a4438; color:#fff;
-    font:inherit; font-size:20px; font-weight:800; padding:14px 10px; cursor:pointer; }
+    font:inherit; font-size:20px; font-weight:800; padding:14px 10px; cursor:pointer; transition:transform .15s ease; }
+  #machineBtn:active { transform:scale(.98); } /* きかいでみるの触感（サイクル11）: 他の大きなボタンとそろえる */
   #machineBtn:disabled { opacity:.45; cursor:default; }
   /* きめる（サイクル4）: 大きな等級ボタン4つ。流れを止めない見直し導線つき */
   #gradeWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }

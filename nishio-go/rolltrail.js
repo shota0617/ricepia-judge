@@ -296,6 +296,7 @@
         });
         // 横にはみ出した細い帯（第4弾サイクル48・Lawn Mowing Simulator）：覆いを線でなく帯の幅（HALF×w）で数え、重ならない横の残りを細い帯として残す
         // 斜め覆いも両端で見る（第4弾サイクル59・SuchArt）：傾いた覆いの横ずれは中点だけでなく重なり区間の両端（offLo・offHi）で測り、大きい方が SPLIT_SIDE 以下のときだけ覆いに数える。横に保証できる区間は射影幅（HALF×w×|cosΔ|）から両端のずれの差を引いた [gLo, gHi] だけ（空なら細い帯の引き算には入れない）。傾いた覆い（tilt）は中心が真ん中でも保証区間が名目幅より狭いので細い帯を出す。平行（Δ=0）なら従来と同じ
+        // 真ん中を通る細い覆いでも横の残りを出す（第4弾サイクル61・Manifold Garden）：重ねた面は重なった範囲だけが隠れるので、中心がずれていなくても保証区間が古い帯の全幅（2×hi0）を覆いきれないときは両側の残りを細い帯として出す（幅不足では古い帯を消さない、サイクル60の dedupeNear と同じ原則）
         // 複数の覆いは軸の小区間ごとに横の覆い区間を和集合にしてから引く（第4弾サイクル49・ぷよぷよ）：合わさって覆う所は二重に出さない
         const hi0 = HALF * wOf(s), nx = -c.dy, ny = c.dx;
         const cuts = [0, 1];
@@ -305,7 +306,7 @@
           const lo = cuts[k], hi = cuts[k + 1];
           if (!(hi - lo > 1e-9)) continue;
           const here = bands.filter(b => b.lo <= lo + 1e-9 && hi <= b.hi + 1e-9);
-          if (!here.some(b => b.tilt || Math.abs((b.gLo + b.gHi) / 2) > 0.005)) continue;
+          if (!here.some(b => b.tilt || Math.abs((b.gLo + b.gHi) / 2) > 0.005 || (b.gHi - b.gLo) < 2 * hi0 - 1e-9)) continue;
           const uni = [];
           here.map(b => [b.gLo, b.gHi]).sort((p, q) => p[0] - q[0]).forEach(iv => {
             const m = uni[uni.length - 1];

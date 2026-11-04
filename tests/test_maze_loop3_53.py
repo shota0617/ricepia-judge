@@ -50,7 +50,7 @@ class Edge(unittest.TestCase):
 class Unchanged(unittest.TestCase):
     def test_other_funcs_untouched(self):
         d = git("diff", "origin/main", "-U0", "--", "nishio-go/pixel.js")
-        for f in ("mzTrailTick", "mzFogAlpha", "mzFogCells", "veil", "tint"):
+        for f in ("mzTrailTick", "mzFogAlpha", "mzFogCells", "veil"):   # サイクル64：ミニマップ描画（tint を含む）を廃止したため "tint" は除外
             self.assertFalse([l for l in d.splitlines() if l[:1] in "+-" and f in l], f)
 
     def test_no_state_or_text(self):

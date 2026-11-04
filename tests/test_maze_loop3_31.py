@@ -13,28 +13,13 @@ def body(name):
 
 
 class HandDrawnMap(unittest.TestCase):
-    def test_graph_paper_ground(self):
-        t = body("drawMzMini")
-        self.assertIn("rgba(244,240,222,.94)", t)
-        self.assertIn("rgba(90,120,160,.18)", t)
-        self.assertIn("i * q", t)
-
-    def test_ink_walls_only_where_not_open(self):
-        t = body("drawMzMini")
-        self.assertIn("rgba(43,38,30,.9)", t)
-        self.assertIn("Math.max(1, Math.round(q * 0.28))", t)
-        for d in ("0, -1", "0, 1", "-1, 0", "1, 0"):
-            self.assertIn(f"if (!mzOpen(cx, cy, {d}))", t)
-
-    def test_outline_after_tint_before_marks(self):
-        t = body("drawMzMini")
-        self.assertLess(t.index("tint(cx, cy); ctx.fillRect"), t.index("rgba(43,38,30,.9)"))
-        self.assertLess(t.index("rgba(43,38,30,.9)"), t.index("mzMini.seen"))
-
-    def test_existing_parts_remain(self):
-        t = body("drawMzMini")
-        for s in ("mzZoneTint(a)", "mzMini.seen", "mzHudRects", "mapCovered(true)", "mzBanner.t0", "rec ||", "#ffffff"):
-            self.assertIn(s, t)
+    def test_drawing_abolished_cycle64(self):
+        # サイクル64：手描き地図の描画（方眼紙・インクの壁線）ごと廃止。記録層は残る
+        self.assertNotIn("drawMzMini", PIXEL)
+        self.assertNotIn("MZ_MINI", PIXEL)
+        self.assertNotIn("rgba(244,240,222,.94)", PIXEL)
+        for n in ("mzMiniTick", "mzMiniMarks", "mzMiniState"):
+            self.assertIn(f"function {n}(", PIXEL)
 
     def test_no_new_state_or_calls(self):
         diff = subprocess.run(["git", "diff", "--word-diff=porcelain", "origin/main", "--", "nishio-go/pixel.js"], cwd=ROOT, check=True,

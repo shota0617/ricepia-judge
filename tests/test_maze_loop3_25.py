@@ -16,12 +16,13 @@ def func_body(head, src):
 
 class MinimalText(unittest.TestCase):
     def test_no_always_on_text_tags(self):
-        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzMini(" in l)
+        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzCubeShelf(" in l)
         for t in TAGS:
             self.assertNotIn(f"drawMz{t}(", line)
             self.assertIn(f"function drawMz{t}(", PIXEL)   # 関数は 未使用のまま 残す
-        for k in ("drawMzShelf(", "drawMzViewPanorama(", "drawMzMini("):
+        for k in ("drawMzShelf(", "drawMzViewPanorama("):
             self.assertIn(k, line)
+        self.assertNotIn("drawMzMini(", line)   # サイクル64：ミニマップ廃止
 
     def test_no_tag_call_anywhere(self):
         for t in TAGS:
@@ -47,7 +48,7 @@ class MinimalText(unittest.TestCase):
         self.assertIn("`🔍 ${mzCache.dist}`", h)   # アイコン＋数字だけ
         for w in ("あつい", "つめたい", "かくし宝箱"):
             self.assertNotIn(w, h)   # 文章は 描かない
-        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzMini(" in l)
+        line = next(l for l in PIXEL.splitlines() if "drawMzEnergyBar(w, dpr, now);" in l and "drawMzCubeShelf(" in l)
         self.assertIn("drawMzCacheChip(w, dpr, now);", line)   # 描画行に 配線されている
         e = func_body("function drawMzEnergyBar(", PIXEL)
         self.assertNotIn("mzViewClear(now)) y0", e)   # 消した 見晴らし札の 余白を 残さない

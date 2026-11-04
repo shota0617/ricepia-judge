@@ -1351,7 +1351,6 @@ function mazeGoal(id, name, lines) {
   mzShare = null;
   const MZ = demo && window.nishioPixel && nishioPixel.maze, gl = MZ && MZ.goal ? MZ.goal(id) : null;   // 着いた とたんに 行き先は 次に かわるので、前の ゴールも 見る
   if (!gl || gl.sec <= 3) return 0;
-  if (MZ.chaseGoal) MZ.chaseGoal(id);   // 夕立雲に つかまらずに 着いた：+25pt と 逃げきりの 札（ポイントは mzChase が 加える）
   if (MZ.rescueGoal) MZ.rescueGoal(id);   // 迷子の お米と いっしょに 着いた：+30pt と 救助完了の 札（ポイントは mzRescue が 加える）
   let total = 0;
   lines.unshift(`🏁 めいろ ゴール！${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
@@ -1403,9 +1402,8 @@ function checkin() {
     S.streak.days = S.streak.last === yesterday() ? S.streak.days + 1 : 1;
     S.streak.last = today;
     S.streak.max = Math.max(S.streak.max || 0, S.streak.days);
-    const b = CFG.pts.daily + Math.min(S.streak.days - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
-    total += b; lines.push(`📅 今日のはじめて（${S.streak.days}日連続） +${b}`);
-    if (S.streak.days % 7 === 0) special = streakDot();   // 7日連続ごとに特別な1枚
+    const b = CFG.pts.daily;   // 連続日数に関係なく毎日同じ（第4弾サイクル67・参考ゲーム Lake：来た日そのものを同じだけ迎える）
+    total += b; lines.push(`📅 今日のはじめて +${b}`);
   }
   // キャンペーン中は、当店でのチェックインに1日1回ボーナス
   if (s.shop) for (const c of liveCampaigns()) {
@@ -1490,16 +1488,8 @@ function mzDino() {
   track('maze_dino', {});
   return { pts: MZ_DINO_PTS };
 }
-// 夕立雲の にげきりラン（pixel.js の 地図の めいろ）：ゴールまで 雲に つかまらなければ +25pt。雲の 位置は pixel.js が 画面の 間だけ もつ。ここは ポイントの 加算と 逃げきり回数の 保存だけ
-const MZ_CHASE_PTS = 25;
-function mzChase() {
-  const lvUp = gainPoints(MZ_CHASE_PTS);
-  S.chaseGot = (S.chaseGot || 0) + 1;
-  if (lvUp) toast(`⭐ レベル${lvUp}！`);
-  save();
-  track('maze_chase', {});
-  return { pts: MZ_CHASE_PTS };
-}
+// 夕立雲（pixel.js の 地図の めいろ）：第4弾サイクル67で 追いかけない 天気に。ポイントも 逃げきり回数も 加えない（互換のため 関数だけ 残す）
+function mzChase() { return null; }
 // さんぽエネルギー（pixel.js の 地図の めいろ）：歩数ゲージが 満タンになるたび +20pt。ゲージは pixel.js が 画面の 間だけ もつ。ここは ポイントの 加算と 回数の 保存だけ
 const MZ_ENERGY_PTS = 20;
 function mzEnergy() {
@@ -3318,14 +3308,13 @@ $('dotMotifs').addEventListener('click', e => {
 
 const LOG_PI = { bag: 'bag', walk: 'feet', use: 'gift', chest: 'chest', idle: 'home', welcome: 'star', checkin: 'flag', quest: 'scroll', npc: 'talk', guide: 'compass', spot: 'flag', up: 'up', search: 'book', critter: 'feet', parcel: 'gift', trail: 'feet', trailmile: 'feet', alley: 'book', h100: 'feet' };   // 最近のポイントの絵
 const STAT_PI = ['coin', 'star', 'book', 'face', 'flag', 'pin', 'feet', 'fire', 'medal', 'chest', 'chest', 'chest', 'chest', 'chest', 'chest', 'chest', 'fire', 'face', 'star', 'medal', 'chest'];   // きろく の数字の絵。Blender で作った nishio-go/art/stat-<名前>.png（使えるポイント・レベル・まちメモ・話した人・めぐったスポット・チェックイン・歩いた距離・連続日数・最長連続・合計）
-// ころころの きろく（めいろで 転がって ためた もの。ポイントは つけない）：コンボの ベスト・きょう ひろった ごはんつぶ・びゅんの れんさの ベスト
+// ころころの きろく（めいろで 転がって ためた もの。ポイントは つけない）：きょう ひろった ごはんつぶ だけ（コンボ・びゅんの ベストは 比べないので 持たない）
 function renderKoroRec() {
   const box = $('koroRec'), P = window.nishioPixel;
   if (!box) return;
-  const c = P && P.combo ? P.combo.best : 0, d = P && P.maze && P.maze.dots ? P.maze.dots.n : 0, b = P && P.maze && P.maze.padChain ? P.maze.padChain.best : 0;
-  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
-  box.hidden = !parts.length;
-  box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>${c >= 3 ? '<button type="button" class="btn mini" data-share-open="koro">📣 シェア</button>' : ''}` : '';   // コンボの ベストを あとからでも シェア（バイラルループの 入口。share.js の 'koro'）
+  const d = P && P.maze && P.maze.dots ? P.maze.dots.n : 0;
+  box.hidden = !d;
+  box.innerHTML = d ? `<p><b>🍙 ころころの きろく</b><small>${esc(`🍚 きょう ひろった つぶ ${d}`)}</small></p>` : '';
 }
 // 絵あて（どこでしょう）：名所のドット絵を大きく出し、名前3つから1つ。その日の回答は nsg_pq に（S のセーブは かえない・ポイントなし）
 function renderPhotoQuiz() {
@@ -3524,7 +3513,7 @@ function renderSpotInfo() {
     `スポットまで約${CFG.reach}m以内に近づくと「チェックイン」できます（お店など一部のスポットは範囲が広め。地図の点線の円が範囲です）`,
     `ふつうのスポット ${CFG.pts.normal}pt／⭐注目スポット ${featRange()}`,
     `はじめての訪問 +${CFG.pts.first}pt（注目スポットは +${CFG.pts.firstFeatured}pt）`,
-    `その日はじめてのチェックイン +${CFG.pts.daily}pt、連続日数ごとに +${CFG.pts.streakStep}pt（最大 +${CFG.pts.streakStep * CFG.pts.streakMax}pt）`,
+    `その日はじめてのチェックイン +${CFG.pts.daily}pt（毎日同じ）`,
     `同じスポットは${CFG.cooldownMin}分ごとにチェックインできます`,
     `${CFG.walkUnitM}m 歩くごとに ${CFG.walkUnitPts}pt（1日 ${CFG.walkDailyCap}ptまで）。数えるのは、このページを開いて画面がついている間に歩いた距離だけです（画面を消す・ほかのアプリを開くと止まります）`,
     '乗り物（時速約30km以上）で移動中も、チェックイン・たからばこ・行き先に着くことはできます（運転中の操作はやめましょう）。歩いた距離のポイントは、歩いた分だけ数えます',
@@ -4402,14 +4391,9 @@ function afterRewardClosed(fn) {
   const wait = () => { afterRewardClosed.t = setTimeout(() => ($('reward').classList.contains('show') ? wait() : fn()), 1000); };
   wait();
 }
-function tomorrowBonus() {   // あした来たときの、その日はじめてのチェックインのボーナス（きょうチェックインしていれば連続）
-  const d = S.streak.last === ymd() ? S.streak.days + 1 : 1;
-  return CFG.pts.daily + Math.min(d - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
-}
+function tomorrowBonus() { return CFG.pts.daily; }   // あした来たときの、その日はじめてのチェックインのボーナス（連続日数に関係なく毎日同じ）
 function tomorrowItems() {
-  const bonus = d => CFG.pts.daily + Math.min(d - 1, CFG.pts.streakMax) * CFG.pts.streakStep;
-  const done = S.streak.last === ymd(), d = done ? S.streak.days + 1 : S.streak.last === yesterday() ? S.streak.days + 1 : 1;
-  const out = [done ? `名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt` : `きょう名所にチェックインすると 連続${d}日目のボーナス +${bonus(d)}pt。あしたも続けると +${bonus(d + 1)}pt`, '新しい「今日のクエスト」3つ（達成でポイント）', '新しい たからばこ（日によって置き場所が変わる）'];
+  const out = [`名所にチェックインすると +${tomorrowBonus()}pt（毎日同じ）`, '新しい「今日のクエスト」3つ（達成でポイント）', '新しい たからばこ（日によって置き場所が変わる）'];
   if (demo) out.push('閉じている間も るすばん でさんぽ（おかえりのポイントとドット絵）');
   out.push(`あしたも 100歩たんけん：はじめての道を さがそう（自己ベストを こえると +${H100.win}pt）`);
   return out;

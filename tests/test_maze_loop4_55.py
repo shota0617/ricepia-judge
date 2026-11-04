@@ -29,7 +29,7 @@ class Tilted(unittest.TestCase):
         self.assertEqual(count(tilt(0.07, -0.05, 25, 0.6), tilt(0.07, 0.05, 25, 0.6)), 3)
 
     def test_thick_tilted_pair_drops(self):
-        self.assertEqual(count(tilt(0.07, -0.05, 25, 1), tilt(0.07, 0.05, -25, 1)), 2)
+        self.assertEqual(count(tilt(0.07, -0.05, 10, 1.6), tilt(0.07, 0.05, -10, 1.6)), 2)
 
     def test_parallel_drops(self):
         self.assertEqual(count("s(0,-0.05,0.14,-0.05,{w:1})", "s(0,0.05,0.14,0.05,{w:1})"), 2)

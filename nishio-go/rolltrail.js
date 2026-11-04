@@ -198,6 +198,7 @@
     }
     return false;
   }
+  // 端キャップまで見る（第4弾サイクル57・Poly Bridge）：傾いた候補で覆うとき、古い帯の四隅は中心線の端より長手方向へ HALF×w_old×|sinΔ|（Δは両方向のなす角）だけはみ出す。長手方向の必要量はこのはみ出し分を足した値にし、角が候補の端キャップを超えるときは古い帯を残す。平行（sinΔ=0）なら従来どおり。coveredTogether は中心線の区間しか見ないので1本だけの覆いでは使わず（2本以上のときだけ）、1本は単独条件が角まで見る
   function dedupeNear(segs) {
     try {
       if (!Array.isArray(segs)) return [];
@@ -214,10 +215,14 @@
         const near = k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
           && Math.max(Math.abs((c.x1 - k.mx) * -k.dy + (c.y1 - k.my) * k.dx), Math.abs((c.x2 - k.mx) * -k.dy + (c.y2 - k.my) * k.dx)) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9;
         const along = (k, x, y) => Math.abs((x - k.mx) * k.dx + (y - k.my) * k.dy);
-        if (kept.some(k => near(k) && Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) <= k.len / 2 + LONG_TOL + 1e-9)
-          || coveredTogether(c, kept.filter(near))
+        const alongMax = k => {
+          const sin = Math.abs(-c.dy * k.dx + c.dx * k.dy);
+          return Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) + HALF * c.w * (Number.isFinite(sin) ? sin : 0);
+        };
+        if (kept.some(k => near(k) && alongMax(k) <= k.len / 2 + LONG_TOL + 1e-9)
+          || (kept.filter(near).length >= 2 && coveredTogether(c, kept.filter(near)))
           || coveredSideways(c, kept.filter(k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
-            && Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) <= k.len / 2 + LONG_TOL + 1e-9))) drop[i] = true;
+            && alongMax(k) <= k.len / 2 + LONG_TOL + 1e-9))) drop[i] = true;
         else kept.push(c);
       }
       return segs.filter((s, i) => !drop[i]);

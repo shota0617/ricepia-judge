@@ -1790,7 +1790,14 @@ function tryChest() {
   S.log.unshift({ type: 'chest', t: Date.now(), pts: c.pts, name: 'たからばこ', icon: '🎁' });
   const lvUp = gainPoints(c.pts);
   save();
-  const show = dt => showReward(c.pts, welcome ? 'ようこそ！ はじめての たからばこ' : 'たからばこを見つけた！', [`🎁 たからばこ +${c.pts}`, ...(newFact ? ['📖 まちメモ +1'] : []), ...dotLines(dt), ...(bag ? [`🎒 おみやげ袋（${bag.km}km 歩くと開く）`] : []), ...(welcome ? ['🧭 つぎは、下の案内の行き先へ行ってみよう'] : [])], lvUp, pick ? factPool().get(pick) : '', dt);
+  // 大きなカードは出さず、主人公のまわりの浮き文字だけで知らせる（歩行・転がりを止めない）。記録と収集は上で残してある
+  const show = () => {
+    const P = window.nishioPixel, say = t => { if (P && P.floatText) P.floatText(t); else toast(t); };
+    say(`🎁 +${c.pts}`);
+    if (newFact) say('📖 +1');
+    if (bag) say(`🎒 ${bag.km}km`);
+    if (lvUp) say(`⭐ Lv${lvUp}`);
+  };
   if (cands.length >= 2) pickFirst(cands, show); else show(dot);
   if (welcome) ktAskGuide([{ t: 'たからばこ、あいたね！ こんどは 町の 名所や 人を たずねて みよう。', mood: 'happy' }], 'smile');
   updateQuests(1500);

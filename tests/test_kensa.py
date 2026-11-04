@@ -190,6 +190,18 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("alert(", HTML)        # 流れを止める要素は作らない
         self.assertNotIn("setInterval", HTML)   # タイマー・焦らせる仕組みを入れない
 
+    def test_cycle10_scene_blend_and_stamp_tactility(self):
+        # サイクル10: 場面写真の縁を地色へ溶かす重ね（操作をふさがない）＋押印の触感
+        self.assertIn("#scene::after", HTML)                 # 写真の馴染み用の重ねがある
+        self.assertIn("pointer-events:none", HTML)           # 重ねは操作をふさがない
+        self.assertIn("rgba(233,226,210,.55)", HTML)         # 下端がページの地色へ溶ける
+        self.assertIn("@keyframes bagPress", HTML)           # 押した袋が少し沈む
+        self.assertIn("@keyframes stampLand", HTML)          # 証印が静かに着地する
+        self.assertIn('classList.add("pressed")', HTML)      # 押印で袋の沈み込みが発火する
+        self.assertIn('classList.remove("pressed")', HTML)   # 次の山で触感もリセットされる
+        self.assertNotIn("setInterval", HTML)                # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                     # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

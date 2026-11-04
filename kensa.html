@@ -48,6 +48,26 @@
   #nextBtn { display:none; margin-top:10px; border:0; border-radius:999px; background:var(--paper); color:var(--ink);
     font:inherit; font-size:16px; font-weight:800; padding:12px 20px; box-shadow:0 2px 8px rgba(26,24,20,.3); cursor:pointer; }
   #nextBtn.on { display:inline-block; }
+  /* 水分計（サイクル2「はかる」）: 大きなボタン1つ・大きな数字・15.0の線入り色帯 */
+  #meterWrap { display:none; margin-top:12px; background:var(--paper); border-radius:16px; padding:16px 14px 18px; box-shadow:0 4px 12px rgba(26,24,20,.18); }
+  #meterWrap.on { display:block; }
+  #meterBtn { display:block; width:100%; border:0; border-radius:999px; background:var(--green); color:#fff;
+    font:inherit; font-size:26px; font-weight:800; padding:20px 10px; cursor:pointer; }
+  #meterBtn:disabled { opacity:.45; cursor:default; }
+  #slots { display:flex; gap:8px; margin-top:14px; }
+  .slot { flex:1; text-align:center; font-size:32px; font-weight:800; background:#f1ead8; border-radius:12px; padding:10px 2px; color:#b7ab8e; min-height:62px; }
+  .slot.filled { color:var(--ink); animation:slotIn .5s ease; }
+  @keyframes slotIn { 0%{ transform:scale(.92); opacity:.4; } 100%{ transform:scale(1); opacity:1; } }
+  #avg { display:none; margin-top:12px; text-align:center; font-size:22px; font-weight:800; }
+  #avg b { font-size:42px; }
+  #avg.on { display:block; animation:slotIn .7s ease; }
+  #band { position:relative; height:26px; border-radius:999px; margin-top:36px;
+    background:linear-gradient(90deg,#b7d3a8 0%,#b7d3a8 50%,#e8d9a0 50%,#e8d9a0 66.7%,#f2c9a4 66.7%,#f2c9a4 100%); }
+  #bandLine { position:absolute; left:50%; top:-5px; bottom:-5px; width:3px; background:var(--ink); border-radius:2px; }
+  #bandLine span { position:absolute; top:-24px; left:50%; transform:translateX(-50%); font-size:16px; font-weight:800; }
+  #bandMark { position:absolute; top:50%; width:22px; height:22px; border-radius:50%; background:#fff; border:4px solid var(--ink);
+    transform:translate(-50%,-50%); opacity:0; transition:opacity .6s ease; }
+  #bandMark.on { opacity:1; }
   footer { margin-top:16px; font-size:12px; color:#6b6353; line-height:1.7; }
 </style>
 </head>
@@ -65,9 +85,22 @@
   <div id="stepChip">① さす</div>
   <div id="trayWrap"><div id="tray" aria-label="鑑定皿"></div></div>
   <p id="count">ふくろを タップ</p>
-  <button id="nextBtn">② はかる 💧（つぎのサイクルで）</button>
+  <div id="meterWrap">
+    <button id="meterBtn">💧 はかる</button>
+    <div id="slots">
+      <div class="slot" aria-label="1回目">—</div>
+      <div class="slot" aria-label="2回目">—</div>
+      <div class="slot" aria-label="3回目">—</div>
+    </div>
+    <p id="avg">平均 <b></b></p>
+    <div id="band" aria-label="水分の色帯（15.0に線）">
+      <div id="bandLine"><span>15.0</span></div>
+      <div id="bandMark"></div>
+    </div>
+  </div>
+  <button id="nextBtn">② はかる 💧</button>
 
-  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。</footer>
+  <footer>農産物検査の仕事が題材です。試料の採取は穀刺しで1袋 約40g（標準抽出方法・平成13年農林水産省告示第443号）。水分は3回の測定の平均で判定します。等級の規格は農産物規格規程（平成13年告示第244号）の水稲うるち玄米に基づきます。</footer>
 </main>
 <script>
 "use strict";
@@ -79,12 +112,57 @@ const GRADE_TABLE = [
   { grade:"2等", seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, momiMax:0.5, mugiMax:0.3, otherMax:0.5, ibutsuMax:0.4 },
   { grade:"3等", seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, momiMax:1.0, mugiMax:0.7, otherMax:1.0, ibutsuMax:0.6 }
 ];
+/* 今回のロット（サイクル2）: 水分は解釈の割れない帯域だけを使う（brief_cycle1.md §4）。
+   3回測定の平均で判定するのが実在の手順（成分検査実施マニュアル／現場記録）。 */
+const LOT = { moisture: [14.1, 14.3, 14.2] };
+function moistureAverage(values) {
+  return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
+}
 const tray = document.getElementById("tray");
 const count = document.getElementById("count");
 const bagTap = document.getElementById("bagTap");
+const nextBtn = document.getElementById("nextBtn");
+const stepChip = document.getElementById("stepChip");
 let sampled = false;
-document.getElementById("nextBtn").addEventListener("click", () => {
-  count.textContent = "💧 つぎのサイクルで はじまる";
+let phase = "sas"; /* sas → hakaru → hakaru-done */
+nextBtn.addEventListener("click", () => {
+  if (phase === "sas" && sampled) {
+    phase = "hakaru";
+    stepChip.textContent = "② はかる";
+    nextBtn.classList.remove("on");
+    count.textContent = "💧 ボタンを 3回 タップ";
+    document.getElementById("meterWrap").classList.add("on");
+  } else if (phase === "hakaru-done") {
+    count.textContent = "👀 つぎのサイクルで はじまる";
+  }
+});
+/* 水分計: 大きなボタンを3回タップ → 毎回大きな数字 → 3回目で平均が確定し色帯に印が出る */
+const meterBtn = document.getElementById("meterBtn");
+const slots = Array.from(document.querySelectorAll(".slot"));
+let measured = 0;
+meterBtn.addEventListener("click", () => {
+  if (measured >= LOT.moisture.length) return;
+  const v = LOT.moisture[measured];
+  slots[measured].textContent = v.toFixed(1) + "%";
+  slots[measured].classList.add("filled");
+  measured++;
+  if (measured < LOT.moisture.length) {
+    count.textContent = "💧 あと " + (LOT.moisture.length - measured) + "回";
+    return;
+  }
+  const avg = moistureAverage(LOT.moisture);
+  const avgEl = document.getElementById("avg");
+  avgEl.querySelector("b").textContent = avg.toFixed(1) + "%";
+  avgEl.classList.add("on");
+  const mark = document.getElementById("bandMark");
+  mark.style.left = ((avg - 12) / 6 * 100) + "%"; /* 色帯は12.0〜18.0% */
+  mark.classList.add("on");
+  meterBtn.disabled = true;
+  stepChip.textContent = "② はかる ✓";
+  count.textContent = "へいきん が でた";
+  phase = "hakaru-done";
+  nextBtn.textContent = "③ みわける 👀（つぎのサイクルで）";
+  nextBtn.classList.add("on");
 });
 bagTap.addEventListener("click", () => {
   if (sampled) return; sampled = true;

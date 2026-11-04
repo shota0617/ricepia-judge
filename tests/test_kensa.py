@@ -38,6 +38,23 @@ class KensaTests(unittest.TestCase):
         self.assertIn("kensa/scene.webp", HTML)
         self.assertNotIn("setInterval", HTML)  # タイマー・焦らせる仕組みを入れない
 
+    def test_moisture_lot_clear_band(self):
+        # サイクル2のロット水分: 3回測定。解釈の割れない帯域だけを使う（brief_cycle1.md §4）
+        # ＝各回も平均も 15.0未満（適合が明らか）か 16.5以上（不適合が明らか）
+        m = re.search(r"LOT = \{ moisture: \[([\d., ]+)\] \}", HTML)
+        self.assertIsNotNone(m)
+        vals = [float(x) for x in m.group(1).split(",")]
+        self.assertEqual(len(vals), 3)  # 水分は3回測定の平均で判定（実在の手順）
+        avg = round(sum(vals) / len(vals), 1)
+        for v in vals + [avg]:
+            self.assertTrue(v < 15.0 or v >= 16.5, f"水分 {v} が解釈の割れる帯域にある")
+
+    def test_moisture_meter_ui(self):
+        self.assertIn('id="meterBtn"', HTML)          # 大きな測定ボタン1つ
+        self.assertIn('id="band"', HTML)              # 15.0の線入り色帯
+        self.assertIn("moistureAverage", HTML)        # 3回平均の関数
+        self.assertEqual(HTML.count('class="slot"'), 3)  # 測定値の表示枠は3回分
+
 
 if __name__ == "__main__":
     unittest.main()

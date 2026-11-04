@@ -851,7 +851,7 @@ const WINKER = (() => {
   }
   function apply(side, on) {
     const sides = side === 'B' ? ['L', 'R'] : [side];   // 'B'＝両側（ハザード）
-    for (const s of sides) for (const m of mats[s]) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2 : 1; }
+    for (const s of sides) for (const m of mats[s]) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? (DETAIL ? 2 : 1.4) : 1; }   // サイクル120：のんびりでは 光を少し穏やかに（点滅の周期は安全信号のため不変更）
   }
   function update() {
     // 優先順位：駐車中ハザード ＞ 後退中の両側点滅 ＞ 前進の旋回ウインカー。駐車中は S.v = 0 のため旋回条件は成立しないが、意図を順序で明示する
@@ -890,7 +890,7 @@ const BEACON = (() => {
     const on = running && Math.floor(performance.now() / 500) % 2 === 0;   // 約 1 秒周期・点灯 50%
     if (on === lastOn) return;
     lastOn = on;
-    for (const m of mats) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? 2.5 : 1; }
+    for (const m of mats) { m.emissive.set(on ? 0xff8c00 : 0x000000); m.emissiveIntensity = on ? (DETAIL ? 2.5 : 1.6) : 1; }   // サイクル120：のんびりでは 光を少し穏やかに（周期は不変更）
   }
   return { setup, update };
 })();
@@ -4993,7 +4993,7 @@ function keriCall(pos) {
   const g = ac.createGain(), o = ac.createOscillator(), p = ac.createStereoPanner ? ac.createStereoPanner() : null;
   o.type = 'triangle'; o.connect(g); g.gain.value = 0;
   if (p) { p.pan.value = pan; g.connect(p); p.connect(ac.destination); } else g.connect(ac.destination);
-  const v = 0.16 / (1 + d * 0.12) * (camMode === 0 ? 0.4 : 1);
+  const v = 0.16 / (1 + d * 0.12) * (camMode === 0 ? 0.4 : 1) * (DETAIL ? 1 : 0.5);   // サイクル120：のんびりでは ケリの鳴き声は 半分の大きさ（驚かせない）
   const note = (t, f0, f1, len) => { o.frequency.setValueAtTime(f0, t); o.frequency.linearRampToValueAtTime(f1, t + len); g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + 0.006); g.gain.linearRampToValueAtTime(0, t + len); };
   note(t0, 3000, 2500, 0.07); note(t0 + 0.16, 3000, 2500, 0.07);       // キッ キッ
   for (let i = 0; i < 3; i++) note(t0 + 0.34 + i * 0.035, 3300, 2800, 0.03);   // キリッ
@@ -5050,18 +5050,18 @@ const KERI = (() => {
         if (alarmT > 0) {
           u.state = 'fly';
           const a = u.t * (0.9 + k * 0.25) + u.ph, cx = (NEST[0] + S.x) / 2, cz = (NEST[1] + S.z) / 2;
-          const dive = Math.max(0, Math.sin(u.t * 0.7 + k * 2)) ** 6;   // ときどき トラクターめがけて急降下
+          const dive = DETAIL ? Math.max(0, Math.sin(u.t * 0.7 + k * 2)) ** 6 : 0;   // ときどき トラクターめがけて急降下。サイクル120：のんびりでは 急降下せず 高いまま ゆっくり回る
           const sy = Math.sin(S.yaw), cy = Math.cos(S.yaw), side = k ? 1.6 : -1.6;   // 急降下は ボンネットの先の 横あたりへ（キャビンを つきぬけない）
           const dx = S.x + sy * 3.2 + cy * side, dz = S.z + cy * 3.2 - sy * side;
           tx = cx + (Math.cos(a) * 6) * (1 - dive) + (dx - cx) * dive; tz = cz + (Math.sin(a) * 6) * (1 - dive) + (dz - cz) * dive;
           ty = Math.max(3.1, 4.6 - 1.4 * dive + Math.sin(u.t * 1.3 + k) * 0.5); sp = 1.6;
-          if ((u.call -= dt) <= 0) { u.call = 0.6 + Math.random() * 0.8; keriCall(b.position); }
+          if ((u.call -= dt) <= 0) { u.call = DETAIL ? 0.6 + Math.random() * 0.8 : 1.8 + Math.random() * 1.2; keriCall(b.position); }   // サイクル120：のんびりでは 鳴く間隔も ゆっくりに
         } else if (u.state === 'fly') {           // 巣のそばへもどる
           [tx, tz] = home(k); ty = 0; sp = 1.2;
           if (Math.hypot(b.position.x - tx, b.position.z - tz) < 0.3 && b.position.y < 0.2) { u.state = 'ground'; b.position.set(tx, 0, tz); }
         }
         const fly = u.state === 'fly';
-        b.userData.wings.forEach((w, i) => { w.visible = fly; w.rotation.z = (i ? -1 : 1) * Math.sin(u.t * 13) * 0.8; });
+        b.userData.wings.forEach((w, i) => { w.visible = fly; w.rotation.z = (i ? -1 : 1) * (DETAIL ? Math.sin(u.t * 13) * 0.8 : Math.sin(u.t * 8) * 0.5); });   // サイクル120：のんびりでは 羽ばたきも ゆっくり小さく
         if (fly) {
           const dx = tx - b.position.x, dz = tz - b.position.z, f = Math.min(1, dt * sp);
           b.position.x += dx * f; b.position.z += dz * f; b.position.y += (ty - b.position.y) * f;
@@ -8653,7 +8653,7 @@ function updateCamera(dt) {
   else if (camMode === 0) {                          // 運転者の目（前を向いて 12°下）。ドラッグでまわりを見る
     if (camera.parent !== rig) rig.add(camera);
     const tt = performance.now() / 1000, rough = (S.rotDown && S.rotPos < 0.1 ? 1.6 : 1) * Math.min(1, Math.abs(S.v) / 1.5);
-    const crankShake = S.crank > 0.6 && !(S.glow > 0) ? 0.004 * (Math.sin(tt * 38) > 0 ? 1 : -0.6) : 0;   // セルの がくがく
+    const crankShake = S.crank > 0.6 && !(S.glow > 0) ? 0.004 * (DETAIL ? 1 : 0.5) * (Math.sin(tt * 38) > 0 ? 1 : -0.6) : 0;   // セルの がくがく。サイクル120：のんびりでは 揺れを半分に
     // ディーゼルのふるえ：アイドリング（900 回転）は ぶるぶる大きくゆっくり、回転を上げると細かくなる
     const rpm = engineRpm(tt), idle = Math.max(0, Math.min(1, (1500 - rpm) / 600)), fq = 8.5 - 3 * idle;
     const shake = (S.crank > 0.6 ? 0 : 0.0009 + 0.0016 * idle) + 0.0035 * rough + crankShake + 0.006 * (S.flare || 0);   // エンジンのふるえと、土の凸凹のゆっくりしたゆれ

@@ -7937,7 +7937,7 @@ const TRACE = {
     h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: 地面の上なら どこで始めても なぞり（田んぼの外は ふちへ寄せる）
     this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.on = true; this.fade = 0;
     this.fv = 0; this.fHist = [[e.timeStamp || 0, h.x, h.z]]; this.fT = e.timeStamp || 0; this.fPos = [h.x, h.z]; this.scCd = 0;   // サイクル116
-    if (camMode !== 2) { camMode = 2; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[2]; this.rebase = true; }   // 田んぼ全体を見て なぞれるように 上からの視点へ。最初の点は旧視点の座標なので、次の add で引き直す（Codex指摘）
+    if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; this.rebase = true; }   // サイクル118: 運転席視点に戻す（ユーザー実機指示 2026-11-05）。なぞりは運転席から前方の田んぼをなぞる形にする。最初の点は旧視点の座標なので、次の add で引き直す（従来の rebase）
     if (!S.rotDown && !S.stalled) toggleRotary();       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
     this.draw();
     return true;
@@ -8088,6 +8088,7 @@ const AUTO = {
     this.build();
     if (this.pts.length < 2) return;
     this.on = true; this.stuckT = 0;
+    if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 自動運転も運転席から眺める
     if (!S.rotDown && !S.stalled) toggleRotary();   // 下りていなければ 自動で下ろす（開始時だけ。エンスト中は下げない）
     $('bAuto').classList.add('on');
   },
@@ -9775,6 +9776,7 @@ $('bStart').onclick = () => {
     location.reload(); return;
   }    // 終わったあとは、同じ田んぼ・お題で始めから
   if (!S.started) startCrank();  // エンジンをかける：（冷えていれば予熱）→ セル（1.1 秒）→ かかる → 回転が上がって落ちつく
+  if (camMode !== 0) { camMode = 0; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[0]; }   // サイクル118: 始まりは運転席視点（洗車などで外から見た後でも）
   $('start').classList.add('hidden');
   for (const id of MOBILE || params.has('pad') ? ['hud', 'bar', 'badge', 'padC', 'padB', 'padD'] : ['hud', 'bar', 'badge']) $(id).classList.remove('hidden');   // サイクル98: 運転パッドは全廃済み（DOMなし）。運転はなぞり操作のみ（キーボードは予備として残す）
   if (!MOBILE && !params.has('pad')) $('keyHint').classList.remove('hidden');   // パソコン：はじめのうちは 画面の左下に いちばん使うキー

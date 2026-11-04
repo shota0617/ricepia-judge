@@ -62,7 +62,8 @@ class Center(unittest.TestCase):
 
 class Source(unittest.TestCase):
     def test_condition(self):
-        self.assertIn("(b.gHi - b.gLo) < 2 * hi0 - 1e-9", SRC)
+        # サイクル62で小区間の保証区間（sgLo/sgHi）で判定する形に追随（条件の意味は不変）
+        self.assertIn("(b.sgHi - b.sgLo) < 2 * hi0 - 1e-9", SRC)
         self.assertIn("第4弾サイクル61・Manifold Garden", SRC)
 
     def test_no_banned(self):

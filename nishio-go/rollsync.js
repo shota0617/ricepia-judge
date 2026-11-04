@@ -151,5 +151,20 @@
     }
     return v;
   }
-  root.nishioRollSync = { GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
+  // 吸いこみ（第4弾サイクル63：M6。運営者の声「転がす楽しさ」の「金の米つぶに 吸いこまれる 感じ」）：金の 米つぶの そばに 来ると、つぶへ やさしく 引きよせられて ひろう。
+  //   PULL_R（マス）より 近いと、近いほど 強く つぶの 向きへ 力（PULL_ACC × (1 − 距離 ÷ PULL_R)。傾きの 力 13 より 弱く、ころがり抵抗 0.9 より 強い：手を はなしても すっと 入り、傾けて 出れば 出られる）。
+  //   つぶへ 向かう 速さが PULL_V に 届いたら 力は 0（あおらない）。PULL_PICK より 近づいたら ひろう（pick）。純関数：位置・速さだけで きめる（生け垣ごしかは 呼ぶ がわが 見る）。
+  const PULL_R = 2.4, PULL_ACC = 9, PULL_V = 3.2, PULL_PICK = 0.8;
+  function pullForce(mx, my, tx, ty, vx, vy) {
+    try {
+      if (![mx, my, tx, ty].every(fin)) return { fx: 0, fy: 0, dist: Infinity, on: false, pick: false };
+      const dx = tx - mx, dy = ty - my, dist = Math.hypot(dx, dy), pick = dist <= PULL_PICK;
+      if (!(dist < PULL_R) || dist === 0) return { fx: 0, fy: 0, dist, on: dist === 0, pick };
+      const ux = dx / dist, uy = dy / dist, along = num(vx) * ux + num(vy) * uy;
+      if (along >= PULL_V) return { fx: 0, fy: 0, dist, on: true, pick };
+      const w = 1 - dist / PULL_R;
+      return { fx: ux * PULL_ACC * w, fy: uy * PULL_ACC * w, dist, on: true, pick };
+    } catch (e) { return { fx: 0, fy: 0, dist: Infinity, on: false, pick: false }; }
+  }
+  root.nishioRollSync = { PULL_R, PULL_ACC, PULL_V, PULL_PICK, pullForce, GLIDE_SOFT, STOP_V, GLIDE_H, glideSpeed, FPS_SLOW, FPS_MIN, FPS_RECOVER, shadowStretch, fpsStep, IDLE_START, IDLE_SPEED, IDLE_ACC, idleDue, idleTarget, nextIdleTarget, idleNoteFail, idleExclude, idleFailed, idleForce, R, advance, turnsFor, frameFor, TURN_PER_SEC, limitTurn, AREA_FEEL, groundFeel };
 })(typeof window !== 'undefined' ? window : globalThis);

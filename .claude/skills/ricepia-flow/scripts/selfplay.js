@@ -24,7 +24,8 @@ const OUT = path.resolve(process.argv[2] || 'selfplay-out'), GOALS = Number(proc
   await page.route('https://unpkg.com/**', r => { const f = r.request().url().endsWith('.css') ? 'leaflet.css' : 'leaflet.js'; r.fulfill({ body: fs.readFileSync(path.join(ENV.LEAFLET_DIR, f)), contentType: f.endsWith('css') ? 'text/css' : 'text/javascript' }); });
   await page.route(/^https:\/\/[^/]*overpass[^/]*\//, r => r.fulfill({ status: 504, body: '' }));
   await page.goto(`http://localhost:${process.env.PORT || 8987}/nishio-go.html`); await sleep(1500);
-  await page.click('#meiroBtn'); await sleep(2000);
+  { const mb = page.locator('#meiroBtn'); if (await mb.isVisible()) await mb.click(); }   // 2026-10-30 から PC は 地図が ひとりでに 開く（「あそぶ」は センサーの 許可が いる 端末だけ）
+  await sleep(2000);
   const log = [], t0 = Date.now(), T = () => Math.round((Date.now() - t0) / 100) / 10;
   const note = (k, v) => { log.push([T(), k, v]); console.log(T(), k, typeof v === 'string' ? v : JSON.stringify(v)); };
   // 窓を とじる（人が 読んで とじる 速さで：1.2秒 見てから）

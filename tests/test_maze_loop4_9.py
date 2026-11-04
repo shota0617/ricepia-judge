@@ -87,8 +87,8 @@ class Scope(unittest.TestCase):
             for w in ('\u307c\u304f', '\u3060\u306b', '\u7d0420%'):
                 self.assertNotIn(w, l)
         files = subprocess.run(['git', 'diff', '--name-only', 'origin/main'], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
-        for f in files:
-            self.assertTrue(f.startswith('nishio-go/') or f == 'nishio-go.html' or f.startswith('tests/'), f)
+        for f in files:   # ゲームの コード・テストの ほか、記録（docs）・通しテスト（tools）・作業の スクリプト（.claude）は よい（第4弾サイクル63：docs/korokoro.md の 記録と tools/playtest.js の 確認で 落ちていた）
+            self.assertTrue(f.startswith('nishio-go/') or f == 'nishio-go.html' or f.startswith('tests/') or f.startswith('docs/') or f.startswith('tools/') or f.startswith('.claude/'), f)
 
 
 if __name__ == '__main__':

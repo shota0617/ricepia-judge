@@ -1239,6 +1239,31 @@ async function walkTo(page, id) {
     await page.evaluate(p0 => { nishioPixel.rollPut(p0[0], p0[1]); nishioPixel.setRoll(false); }, p0);   // はじめの 場所に もどして 止める（坂で 転がり つづけて、あとの comboBest の コンボに まざらない ように）
     return { ok: max >= 2 && ended && (max < 5 || after.best >= max), key: pick[0], room: pick[1], max, after, ended };
   })();
+  // 吸いこみ（第4弾サイクル63）：金の 米つぶの マスに 入った だけでは ひろわず（あそびかたを 開いて 転がりを 止めた まま 置いても ひろわない）、
+  //   とじて 転がりが もどると、手を はなした ままで つぶへ 吸いこまれて ひろう（grainPull.n が ふえる）
+  R.checks.grainPull = await (async () => {
+    await page.evaluate(() => nishioPixel.setRoll(true)); await page.waitForTimeout(300); await uncover(page);
+    const p0 = await page.evaluate(() => [nishioPixel.roll.x, nishioPixel.roll.y]);
+    const put = await page.evaluate(() => {
+      const M = nishioPixel.maze, near = M.grainsNear(20);
+      if (!near.length) return { skipped: 'none-near' };
+      let pick = null;
+      for (const [gx, gy] of near) { for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (M.open(gx, gy, dx, dy) && M.type(gx + dx, gy + dy) === 1) { pick = [gx, gy, dx, dy]; break; } if (pick) break; }
+      if (!pick) return { skipped: 'no-entrance' };
+      const [gx, gy, dx, dy] = pick, g = M.grainPos(gx, gy), q = M.near(g[0] + dx * 1.2, g[1] + dy * 1.2) || { x: g[0] + dx * 1.2, y: g[1] + dy * 1.2 };   // つぶの マスの 中・入口がわ 1.2マス（道すじの 上に）
+      document.getElementById('howtoOpen').click();   // あそびかた：転がりは 止まる（mzGrainTick は 回る）
+      nishioPixel.rollPut(q.x, q.y, 0, 0);
+      return { gx, gy, dx, dy, d: Math.hypot(q.x - g[0], q.y - g[1]), n0: nishioGo.mzGrains, pn0: M.grainPull().n, howto: !document.getElementById('howto').hidden };
+    });
+    if (put.skipped) { await page.evaluate(() => nishioPixel.setRoll(false)); return { ok: true, ...put }; }
+    await page.waitForTimeout(500);
+    const held = await page.evaluate(() => nishioGo.mzGrains);   // 止まった まま では ひろわない
+    await page.evaluate(() => document.getElementById('howtoOk').click()); await uncover(page);
+    let got = null, on = false;
+    for (let i = 0; i < 30 && !got; i++) { await page.waitForTimeout(100); const q = await page.evaluate(() => ({ n: nishioGo.mzGrains, p: nishioPixel.maze.grainPull(), v: Math.hypot(nishioPixel.roll.vx, nishioPixel.roll.vy) })); on = on || q.p.on; if (q.n === put.n0 + 1) got = q; }
+    await page.evaluate(p0 => { nishioPixel.rollPut(p0[0], p0[1]); nishioPixel.setRoll(false); }, p0);
+    return { ok: put.howto && put.d > 0.9 && held === put.n0 && !!got && on && got.p.n === put.pn0 + 1, ...put, held, on, got };
+  })();
   // ころころコンボの ベスト：転がっている うちに ベストを こえると その場で「🏅 ベスト こえた！」、止まると ベストが のこる
   R.checks.comboBest = await (async () => {
     const w0 = await page.evaluate(() => { const d = nishioGo.state.day || (nishioGo.state.day = {}), w = d.watch; d.watch = 2; return w === undefined ? null : w; });   // 止まって 待つ 間に、水べの「じっと見る」が 起きない ように（あとの waterWatch・critterSure が ずれる）
@@ -3738,6 +3763,7 @@ async function walkTo(page, id) {
   need(c.yuruMeiro && c.yuruMeiro.ok, `ゆるい めいろ：次の 向きだけ 押すと 筒から はみ出す・角で 止まって 進めない（${JSON.stringify(c.yuruMeiro)}）`);
   need(c.yuruSpring && c.yuruSpring.ok, `ばねの わざ：とれない・とっても 速く はね返らない・速く なりすぎる・時間が すぎても もどらない（${JSON.stringify(c.yuruSpring)}）`);
   need(c.yuruSoft && c.yuruSoft.ok, `やわらかい 生け垣：当たっても のびない・のびた ことが 見えない・へこみの ゆれが おさまらない・ぽよんと 鳴らない・はね返らない・へこみの 奥で 固まる・通りぬける（${JSON.stringify(c.yuruSoft)}）`);
+  need(c.grainPull && c.grainPull.ok, `吸いこみ：金の 米つぶの マスに 入った だけで ひろった／吸いこまれて ひろえない（${JSON.stringify(c.grainPull)}）`);
   need(c.rollCombo && c.rollCombo.ok, `ころころコンボ：かべに 当たらずに 転がっても 数が ふえない／当たっても もどらない（${JSON.stringify(c.rollCombo)}）`);
   need(c.comboBest && c.comboBest.ok, `ころころコンボの ベスト：こえても その場で 知らせない／止まっても ベストが のこらない（${JSON.stringify(c.comboBest)}）`);
   need(c.comboBestOnce && c.comboBestOnce.ok, `ころころコンボ：ベストを こえた 数の まま おわると 同じ 数の ベストを 2回 出す（${JSON.stringify(c.comboBestOnce)}）`);

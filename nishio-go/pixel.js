@@ -8400,12 +8400,15 @@ function drawRollPath(ox, oy, T, now) {
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = T * 0.20;
     let g = null, sum = 0, cnt = 0, wsum = 0, w0 = 0, rgb = CREAM, prev = null, force = true;
     const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(' + rgb + ',' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
-    const segs = RT.segments(rollPath.list, now);
+    const rawSegs = RT.segments(rollPath.list, now);
+    const segs = RT.dedupe ? RT.dedupe(rawSegs) : rawSegs;   // 同じ場所を再び転がっても1回だけ塗る（マリオペイント）
+    let ribbonUsed = false;
     const bases = segs.map(s => rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2));   // 小セグメントごとに地区色を調べる
     const smooth = RT.smoothColors ? RT.smoothColors(bases) : null;   // 境の前後3つに広げて4段階で溶け合わせる（Journey）
     if (smooth) { for (let si = 1; si < segs.length; si++) { if (segs[si].g !== segs[si - 1].g) { smooth[si - 1] = bases[si - 1]; smooth[si] = bases[si]; if (si + 1 < segs.length && segs[si + 1].g === segs[si].g) smooth[si + 1] = bases[si + 1]; } } }   // ひとっとびで途切れた区間の間では色を混ぜない（Codex指摘・サイクル41）
     const quads = RT.ribbon ? RT.ribbon(segs) : null;   // 計算が失敗して長さが合わないときは従来の線描画へ戻す
-    if (quads && quads.length === segs.length) {   // 塗りのリボン（スプラトゥーン）：隣と縁を共有する四角形を fill だけで描き、継ぎ目の重なりをなくす
+    if (quads && segs.length && quads.length === segs.length) {   // 塗りのリボン（スプラトゥーン）：隣と縁を共有する四角形を fill だけで描き、継ぎ目の重なりをなくす。空のときはリボン扱いにせず先端の丸を残す（Codex指摘・サイクル44）
+      ribbonUsed = true;
       for (let si = 0; si < segs.length; si++) {
         const q = quads[si], s = segs[si];
         if (!q || !(s.a > 0)) continue;
@@ -8429,7 +8432,7 @@ function drawRollPath(ox, oy, T, now) {
     flush();
     }
     const a = RT.alphaFor(now - last.t);
-    if (a > 0) { ctx.fillStyle = 'rgba(' + rgbAt(last.x, last.y) + ',' + a.toFixed(3) + ')'; ctx.beginPath(); ctx.arc(ox + last.x * T, oy + last.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill(); }
+    if (a > 0 && !ribbonUsed) { ctx.fillStyle = 'rgba(' + rgbAt(last.x, last.y) + ',' + a.toFixed(3) + ')'; ctx.beginPath(); ctx.arc(ox + last.x * T, oy + last.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore();
     return;
   }

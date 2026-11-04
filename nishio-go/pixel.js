@@ -8398,12 +8398,19 @@ function drawRollPath(ox, oy, T, now) {
   };
   if (RT.segments) {   // 点を補間したつながった柔らかい帯（相手の区間ごとに1回で描き継ぎ目の重なりを避ける。古い端ほど薄い）
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = T * 0.20;
-    let g = null, sum = 0, cnt = 0, wsum = 0, rgb = CREAM;
+    let g = null, sum = 0, cnt = 0, wsum = 0, w0 = 0, rgb = CREAM, prev = null, force = true;
     const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(' + rgb + ',' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
     for (const s of RT.segments(rollPath.list, now)) {
-      const srgb = rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);   // 小セグメントごとに地区色を調べ、色が変わればそこで描き分ける（地区の境で色が切り替わる）
-      if (s.g !== g || srgb !== rgb) { flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; rgb = srgb; sum = 0; cnt = 0; wsum = 0; }
-      ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); wsum += (typeof s.w === 'number' && isFinite(s.w) && s.w > 0) ? s.w : 1; cnt++;
+      const base = rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);   // 小セグメントごとに地区色を調べる
+      let srgb = base, mixed = false;
+      if (prev !== null && base !== prev && RT.mixRgb) { const m = RT.mixRgb(prev, base, 0.5); if (m) { srgb = m; mixed = true; } }   // 境の直後の1つは2色を混ぜて、境が段にならない（Gris）
+      prev = base;
+      const w = (typeof s.w === 'number' && isFinite(s.w) && s.w > 0) ? s.w : 1;
+      if (force || mixed || s.g !== g || srgb !== rgb || Math.abs(w - w0) > 0.15) {   // 区間・色が変わる／太さが最初から 0.15 を超えて変わったら新しい帯
+        flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; rgb = srgb; sum = 0; cnt = 0; wsum = 0; w0 = w; force = false;
+      }
+      ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); wsum += w; cnt++;
+      if (mixed) force = true;   // 混ざった小セグメントは単独の帯
     }
     flush();
     const a = RT.alphaFor(now - last.t);

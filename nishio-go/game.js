@@ -871,8 +871,8 @@ function addTrail(a, b, critters) {
 }
 
 // きょうの100歩たんけん（ポケモンの「歩数の決まった場所で、めずらしいものを探す」）：その日 はじめて歩きだしたら始まり、100歩（1歩＝1マス 8m）のうちに
-// はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）と、自己ベストなら お祝い。1日1回（記録は モードごと）
-const H100 = { steps: 100, cap: 30, win: 5 };   // win：前の 自己ベストを こえると（さんぽ仲間と くらべない。運営者の声「競わない設計」2026-10-28）
+// はじめての道を 何マス歩けるか。25歩ごとに数を出し、おわったら そのマスの数だけ pt（30まで）。1日1回（記録は モードごと）
+const H100 = { steps: 100, cap: 30 };   // 歩き切れば その日の分だけ。自己ベストを こえても 追加なし（PowerWash Simulator：洗い終われば完了）
 function hundred(meters, fresh) {   // meters：この1回で動いた距離。転がすと 1マスより小さい動きが何度も来るので、ためてから歩数にする
   if (driving || store.get('nsg_first_day', '') === ymd()) return;   // 遊びはじめた日は しない（はじめの日は ようこそ・はじめの1枚・週の知らせで いっぱいなので、次の日から）
   const day = dayState();
@@ -889,13 +889,13 @@ function hundred(meters, fresh) {   // meters：この1回で動いた距離。�
   if (Math.floor(h.steps / 25) > Math.floor(before / 25) && h.steps < H100.steps) { if (P && P.floatText) P.floatText(`👣 ${h.steps}/100`); save(); }
   if (h.steps < H100.steps) return;
   h.done = true;
-  const best = h.fresh > (S.h100best || 0), win = best && (S.h100best || 0) > 0, pts = Math.min(H100.cap, h.fresh) + (win ? H100.win : 0);   // 前の 自己ベストを こえると +5（ほかの 人とも、さんぽ仲間とも くらべない）
+  const best = h.fresh > (S.h100best || 0), pts = Math.min(H100.cap, h.fresh);   // 記録は しずかに残すだけ（追加点なし）
   if (best) S.h100best = h.fresh;
   weekStat().h100 = (weekStat().h100 || 0) + 1;   // 先週のさんぽ に「100歩たんけん ○回」
   if (pts) { gainPoints(pts); S.log.unshift({ type: 'h100', t: Date.now(), pts, icon: '👣', name: `100歩たんけん：はじめての道 ${h.fresh}マス` }); }
   save(); badgesSoon();   // たんけん名人
-  toastAfter(`🏁 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}${best && h.fresh ? ' 🎉' : ''}`);   // 数字だけ（運営者の声 2026-11-03「文字が多すぎる」）
-  track('h100', { fresh: h.fresh, best, win, mode: demo ? 'play' : 'walk' });
+  toastAfter(`🏁 ${h.fresh}マス${pts ? ` +${pts}pt` : ''}`);   // 数字だけ（運営者の声 2026-11-03「文字が多すぎる」）
+  track('h100', { fresh: h.fresh, best, mode: demo ? 'play' : 'walk' });
 }
 
 // 歩いた道の節目（2048 の「倍々で大きくなる数字」から）：これまでに歩いた道が 500m・1km・2km・4km… と倍ごとの節目に届くたびに、お祝いと
@@ -4395,7 +4395,7 @@ function tomorrowBonus() { return CFG.pts.daily; }   // あした来たときの
 function tomorrowItems() {
   const out = [`名所にチェックインすると +${tomorrowBonus()}pt（毎日同じ）`, '新しい「今日のクエスト」3つ（達成でポイント）', '新しい たからばこ（日によって置き場所が変わる）'];
   if (demo) out.push('閉じている間も るすばん でさんぽ（おかえりのポイントとドット絵）');
-  out.push(`あしたも 100歩たんけん：はじめての道を さがそう（自己ベストを こえると +${H100.win}pt）`);
+  out.push(`あしたも 100歩たんけん：はじめての道を さがそう`);
   return out;
 }
 function tomorrow() { const d = new Date(); d.setDate(d.getDate() + 1); return ymd(d); }   // 読みこみの とちゅうで呼ばれても使えるよう、function で

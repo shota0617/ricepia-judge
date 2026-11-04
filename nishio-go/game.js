@@ -1152,21 +1152,19 @@ function shopInfoHtml(s) {   // 当店の窓：営業時間・電話・来店ス
       <a class="btn mini line" href="${esc(lineUrl('card'))}" target="_blank" rel="noopener">LINEで友だち追加</a></p></div>`;
 }
 const SHOP_STAMP = { 3: 100, 5: 200, 10: 500 };   // 来店スタンプ（当店に来た日の数）のごほうびポイント
-// めぐりの れんさ（落ちものパズルの「まとめて消すほど 大きく得をする」から）：チェックインのあと30分以内に、ちがう名所でチェックインすると
-// れんさが つながり、2つめは ×1.2・3つめは ×1.5・4つめからは ×2（スポットのポイントに）。30分あくと 1 からやりなおし。いちばん長い れんさを覚える
-const CHAIN = { ms: 30 * 60000, mult: [1, 1, 1.2, 1.5, 2] };
+// めぐりの れんさ（落ちものパズルの「まとめて消すほど 大きく得をする」から）：ちがう名所でチェックインすると
+// れんさが つながり、2つめは ×1.2・3つめは ×1.5・4つめからは ×2（スポットのポイントに）。時間では きれない（Alba：自分の ペースで めぐる）。同じ名所の くりかえしで 1 に もどる。いちばん長い れんさを覚える
+const CHAIN = { mult: [1, 1, 1.2, 1.5, 2] };
 const chainMult = n => CHAIN.mult[Math.min(Math.max(n, 0), CHAIN.mult.length - 1)];
-const chainLeft = () => { const c = S.chain; return c && c.last ? Math.max(0, CHAIN.ms - (Date.now() - c.last)) : 0; };
 function chainStep(s, now) {
   const c = S.chain || { n: 0, last: 0, id: '', best: 0 };
-  c.n = c.last && now - c.last <= CHAIN.ms && c.id !== s.id ? c.n + 1 : 1;
+  c.n = c.last && c.id !== s.id ? c.n + 1 : 1;
   c.last = now; c.id = s.id; c.best = Math.max(c.best || 0, c.n);
   S.chain = c;
   return { n: c.n, bonus: c.n >= 2 ? Math.round(ptsOf(s) * (chainMult(c.n) - 1)) : 0 };
 }
 
-const MZ_STAR_PTS = [0, 2, 5, 10];   // 地図の めいろの ゴールの ★（1〜3）の ボーナス
-const MZ_WAY = { good: 1.3, pts: 5 };   // 通った マスが ちかみちの 1.3倍 までなら「まよわず ゴール」
+// めいろの ゴールは「着いた」だけで じゅうぶん（Alba：時間・★・近さ比では 評価しない）
 const MZ_SHOO_PTS = 3;   // かかしで こわがった カラスを おいはらった
 // 地図の めいろの ゴール（行き先の 名所・人）に 着いた：かかった 時間と めいろの 道のり・★・まよわず ゴール、紙ふぶき。
 // lines の 先頭に 行を 足し、ボーナスの ポイントを かえす（名所は checkin、人は 話しかけた とき）
@@ -1196,14 +1194,8 @@ function friendVs(sec, st) {
   return msg;
 }
 // めいろの はやさの ベスト（クセになる「じぶんの 記録を こえる 目あて」2026-10-26）：ゴールの タイムは 出発した 所で 道のりが かわるので
-// くらべられない。めいろの 道のり ÷ かかった 時間（1秒に 何m）で くらべ、この 端末に ベストを のこす（nsg_mz_speed）。ポイントは つけない
-const MZ_SPEED_MIN_M = 80;   // みじかい めいろは 数えない（すぐ 着いて ベストが ゆがむ）
-function mzSpeed(m, sec, warp) {   // warp：とちゅうで とびこえた（名所の「ここへ」など）ゴールは 数えない
-  if (warp || !(m >= MZ_SPEED_MIN_M) || !(sec > 3)) return '';
-  const v = Math.round(m / sec * 10) / 10, best = store.get('nsg_mz_speed', 0);
-  if (v > best) { store.set('nsg_mz_speed', v); track('maze_speed_best', { v, prev: best }); return best ? `🏃 はやさ ベスト こえたじゃん！ 1秒に ${v}m（前 ${best}m）` : `🏃 はやさ 1秒に ${v}m（はじめての ベスト）`; }
-  return `🏃 はやさ 1秒に ${v}m`;   // とどかない ときは 足りない 数を 出さない（あおらない・文字を 少なく。運営者の声「競わない設計」「文字は 少なく」2026-10-29）
-}
+// （サイクル66で 廃止：Alba にならい 速さの ベストは 記録しない）
+function mzSpeed() { return ''; }   // 速さは 競わない：ベストを 記録せず 表示も しない（nsg_mz_speed の 古い 保存値は そのまま）
 const fmtSec = sec => (sec < 60 ? `${Math.round(sec)}秒` : `${Math.floor(sec / 60)}分${String(Math.round(sec % 60)).padStart(2, '0')}秒`);
 // 穏やかな 光（Wanderstop：期限で 焦らせない）：めいろの はしの 名所が「光るゴール」（+20pt）、
 // ゴールに 着くと 近くの 寄り道が 光って（+10pt）。着く まで 光り つづける。閉じても 光は セーブに 残り、寄り道は 最大 nearCap か所まで 積み上がる
@@ -1362,27 +1354,16 @@ function mazeGoal(id, name, lines) {
   if (MZ.chaseGoal) MZ.chaseGoal(id);   // 夕立雲に つかまらずに 着いた：+25pt と 逃げきりの 札（ポイントは mzChase が 加える）
   if (MZ.rescueGoal) MZ.rescueGoal(id);   // 迷子の お米と いっしょに 着いた：+30pt と 救助完了の 札（ポイントは mzRescue が 加える）
   let total = 0;
-  const t = fmtSec(gl.sec);
-  const st = gl.stars || 0, stars = st ? '★'.repeat(st) + '☆'.repeat(3 - st) : '', sb = MZ_STAR_PTS[st] || 0;   // 目やすの 時間（めいろの 道のりで きまる）より はやいほど ★が ふえて ボーナス
-  if (sb) { total += sb; lines.unshift(`${stars} ${st === 3 ? 'はやい！' : st === 2 ? 'いいね！' : 'ゴール！'} +${sb}`); }
-  if (gl.way) {   // 通った マスが ちかみちの 何倍か（ほかの 迷路ゲームの「何手で とけた」）。1.3倍 までなら まよわず ゴールで ボーナス
-    const wx = gl.way.toFixed(1);
-    if (gl.way <= MZ_WAY.good) { total += MZ_WAY.pts; lines.unshift(`🧭 まよわず ゴール！（通った 道 ${wx}倍） +${MZ_WAY.pts}`); }
-    else lines.push(`🧭 通った 道は ちかみちの ${wx}倍（${MZ_WAY.good}倍 までなら ボーナス）`);
-  }
-  lines.unshift(`🏁 めいろ ゴール！ ${t}${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
+  lines.unshift(`🏁 めいろ ゴール！${gl.m ? `（めいろの 道のり ${fmtM(gl.m)}）` : ''}`);
   {   // この 道の ふり返り（ポイントは つけない）：ひろった ごはんつぶ・のった びゅんパネル・いちばん 長い コンボ
     const r = gl.run || {}, parts = [r.dots ? `🍚 つぶ ${r.dots}` : '', r.pads ? `💨 びゅん ${r.pads}` : '', r.combo >= 3 ? `🎵 コンボ ×${r.combo}` : ''].filter(Boolean);
     if (parts.length) lines.push(`この 道で がんばったじゃん：${parts.join('・')}`);
   }
-  const sp = mzSpeed(gl.m, gl.sec, gl.warp);
-  if (sp) lines.push(sp);
   total += glowArrive(id, lines);   // 光るゴール +20・近くの 寄り道を 光らせる
   lines.push('🍵 おつかれさま。ここで おわっても だいじょうぶ（つづけるなら つぎの ゴールへ）');   // 基本 5分で 1回 おわる
-  friendVs(gl.sec, st);
-  mzShare = { name, sec: gl.sec, stars: st, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
-  MZ.goalFx(`${stars ? stars + ' ' : ''}${t}${gl.m ? `・めいろ ${fmtM(gl.m)}` : ''}`);
-  track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: st, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
+  mzShare = { name, sec: gl.sec, stars: 0, m: gl.m || 0, run: gl.run || null, img: snapMaze(), t: Date.now(), city: (me && (cityNear(me.lat, me.lng) || {}).name) || '' };   // ゴールの ごほうびに シェアの ボタン（画面を 投稿する）。city：シェアの 文で 西尾市の 外を「西尾の」と 言わない ため
+  MZ.goalFx(gl.m ? `めいろ ${fmtM(gl.m)}` : '🏁 めいろ ゴール！');
+  track('maze_goal', { spot: name, sec: Math.round(gl.sec), m: Math.round(gl.m), stars: 0, way: gl.way ? Math.round(gl.way * 10) / 10 : 0 });
   return total;
 }
 // めいろの ゴールの 名所に 着いた（pixel.js）：その 名所で チェックイン（近くに ほかの 注目スポットが あって 下の 札が そちらでも）。
@@ -1411,8 +1392,8 @@ function checkin() {
   const base = ptsOf(s), theme = weekTheme(), inTheme = inThemeOf(s, theme);
   total += base; lines.push(`${iconOf(s)} スポット +${base}`);
   if (inTheme) { total += base; lines.push(`🎌 今週は${theme.icon}${theme.name}の週（ポイント2倍） +${base}`); }
-  const ch = chainStep(s, now);   // めぐりの れんさ：30分以内に ちがう名所へ着くと、スポットのポイントが ×1.2・×1.5・×2
-  if (ch.bonus) { total += ch.bonus; lines.push(`🔗 めぐりの れんさ ${ch.n}（30分以内に次の名所） ×${chainMult(ch.n)} +${ch.bonus}`); }
+  const ch = chainStep(s, now);   // めぐりの れんさ：ちがう名所へ着くと、スポットのポイントが ×1.2・×1.5・×2
+  if (ch.bonus) { total += ch.bonus; lines.push(`🔗 めぐりの れんさ ${ch.n} ×${chainMult(ch.n)} +${ch.bonus}`); }
   if (!v) {
     const b = s.featured ? CFG.pts.firstFeatured : CFG.pts.first;
     total += b; lines.push(`🆕 はじめての訪問 +${b}`);
@@ -2665,9 +2646,8 @@ function refreshNearby() {
     else if (spotsLoading && !spots.length) msgs.push('スポットを読み込んでいます…');
     else if (!spots.length) msgs.push('スポットがありません。「せってい」から再読み込みしてください。');
   }
-  // めぐりの れんさ：つながっている間は、文字を少なく（ふだん）でも のこり時間を出す（次の名所に間に合うか分かるように）
-  // 文字を少なく（ふだん）では、れんさは つながって いる（2か所 いじょう）ときだけ。1か所目の「のこり22分で 次の名所 → れんさ」は 小さい 字が ふえるので 出さない（運営者の声「大きい文字シンプルに」2026-10-27）
-  const cl0 = chainLeft(), cl = cl0 && (S.chain.n >= 2 || !simple()) ? cl0 : 0, h1 = dayState().h100, chain = [cl ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} ${S.chain.n >= 2 ? `れんさ <b>${S.chain.n}</b> のこり${Math.ceil(cl / 60000)}分` : `のこり${Math.ceil(cl / 60000)}分で 次の名所 → れんさ`}` : '',   // 1か所目は まだ つながっていないので「次の名所で れんさ」
+  // めぐりの れんさ：2か所 いじょう つながって いる ときだけ「れんさ N」（時間は 出さない・1か所目は 何も 出さない）
+  const cn = S.chain && S.chain.n >= 2 && S.chain.last && ymd(new Date(S.chain.last)) === ymd() ? S.chain.n : 0, h1 = dayState().h100, chain = [cn ? `${simple() ? PIA('compass', 'めぐりの れんさ') : '🔗'} れんさ <b>${cn}</b>` : '',
     h1 && !h1.done ? `${simple() ? PIA('feet', '100歩たんけん') : '👣'} たんけん <b>${h1.steps}</b>/100` : ''].filter(Boolean).join('　');   // 100歩たんけんの とちゅうも（何歩目か）
   if (!msgs.length && simple()) { setStatus(chain, true); return; }   // 文字を少なく（ふだん）：気をつけることがないときは、下のパネルは行き先の札だけ（数は きろく・とくてん に）
   if (!msgs.length) {
@@ -2736,7 +2716,7 @@ function badgeDefs() {
     { id: 'walk42', i: '🏃', n: 'フルマラソン', d: '合計42.195km歩く', cur: km, goal: 42.195 },
     { id: 'alley10', i: '🔍', n: '路地はかせ', d: '歩く地図で、路地の行き止まりを10か所 しらべる', cur: (S.alleys || []).length, goal: 10 },   // 夜の開発の しくみのバッジ
     { id: 'h100', i: '👣', n: 'たんけん名人', d: '100歩たんけんで、はじめての道を50マス 歩く', cur: S.h100best || 0, goal: 50 },
-    { id: 'chain4', i: '🔗', n: 'めぐりの達人', d: '30分以内に つぎの名所へ、4か所つづけて めぐる（めぐりの れんさ 4）', cur: (S.chain && S.chain.best) || 0, goal: 4 },
+    { id: 'chain4', i: '🔗', n: 'めぐりの達人', d: 'ちがう名所を 4か所つづけて めぐる（めぐりの れんさ 4）', cur: (S.chain && S.chain.best) || 0, goal: 4 },
     { id: 'streak7', i: '📅', n: '1週間つづけた', d: '7日連続でチェックイン', cur: S.streak.max || 0, goal: 7 },
     { id: 'meibutsu', i: '🍵', n: '西尾の名物めぐり', d: `${MB_NISHIO.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NISHIO.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NISHIO.length, 1) },
     { id: 'meibutsu2', i: '🧭', n: 'となりまちの名物めぐり', d: `${MB_NEAR.map(m => m.name).join('・')}にゆかりの場所をそれぞれ訪ねる`, cur: MB_NEAR.filter(m => m.spots.some(id => S.visits['f-' + id])).length, goal: Math.max(MB_NEAR.length, 1), ready: MB_NEAR.length > 0 },
@@ -3343,8 +3323,7 @@ function renderKoroRec() {
   const box = $('koroRec'), P = window.nishioPixel;
   if (!box) return;
   const c = P && P.combo ? P.combo.best : 0, d = P && P.maze && P.maze.dots ? P.maze.dots.n : 0, b = P && P.maze && P.maze.padChain ? P.maze.padChain.best : 0;
-  const v = store.get('nsg_mz_speed', 0);   // めいろの はやさの ベスト（mzSpeed）
-  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', v ? `🏃 はやさ ベスト 1秒に ${v}m` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
+  const parts = [c ? `🎵 コンボ ベスト ×${c}` : '', d ? `🍚 きょう ひろった つぶ ${d}` : '', b >= 2 ? `💨 びゅん れんさ ベスト ×${b}` : ''].filter(Boolean);
   box.hidden = !parts.length;
   box.innerHTML = parts.length ? `<p><b>🍙 ころころの きろく</b><small>${parts.map(esc).join('<br>')}</small></p>${c >= 3 ? '<button type="button" class="btn mini" data-share-open="koro">📣 シェア</button>' : ''}` : '';   // コンボの ベストを あとからでも シェア（バイラルループの 入口。share.js の 'koro'）
 }

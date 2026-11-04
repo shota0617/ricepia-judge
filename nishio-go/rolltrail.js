@@ -199,6 +199,18 @@
     return false;
   }
   // 端キャップまで見る（第4弾サイクル57・Poly Bridge）：傾いた候補で覆うとき、古い帯の四隅は中心線の端より長手方向へ HALF×w_old×|sinΔ|（Δは両方向のなす角）だけはみ出す。長手方向の必要量はこのはみ出し分を足した値にし、角が候補の端キャップを超えるときは古い帯を残す。平行（sinΔ=0）なら従来どおり。coveredTogether は中心線の区間しか見ないので1本だけの覆いでは使わず（2本以上のときだけ）、1本は単独条件が角まで見る
+  // 合わせ覆いも四隅まで見る（第4弾サイクル58・Patchwork）：キルト盤は真ん中が埋まっても隅が空いていれば完成しない。coveredTogether は中心線の区間しか見ないので、古い帯の四隅（両端点±HALF×w の法線）がそれぞれ候補のどれか1つの矩形（長手 len/2+LONG_TOL、横 HALF×w+NEAR_TOL）に収まるときだけ落とす。候補が空・不正なら false
+  function coveredCorners(c, cands) {
+    try {
+      if (!c || !Array.isArray(cands) || !cands.length) return false;
+      const h = HALF * c.w, nx = -c.dy, ny = c.dx;
+      const corners = [[c.x1, c.y1], [c.x2, c.y2]].reduce((a, p) => a.concat([[p[0] + nx * h, p[1] + ny * h], [p[0] - nx * h, p[1] - ny * h]]), []);
+      return corners.every(([x, y]) => cands.some(k => {
+        const a = Math.abs((x - k.mx) * k.dx + (y - k.my) * k.dy), sd = Math.abs((x - k.mx) * -k.dy + (y - k.my) * k.dx);
+        return a <= k.len / 2 + LONG_TOL + 1e-9 && sd <= HALF * k.w + NEAR_TOL + 1e-9;
+      }));
+    } catch (e) { return false; }
+  }
   function dedupeNear(segs) {
     try {
       if (!Array.isArray(segs)) return [];
@@ -214,13 +226,14 @@
         if (!c) continue;
         const near = k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
           && Math.max(Math.abs((c.x1 - k.mx) * -k.dy + (c.y1 - k.my) * k.dx), Math.abs((c.x2 - k.mx) * -k.dy + (c.y2 - k.my) * k.dx)) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9;
+        const nearK = kept.filter(near);
         const along = (k, x, y) => Math.abs((x - k.mx) * k.dx + (y - k.my) * k.dy);
         const alongMax = k => {
           const sin = Math.abs(-c.dy * k.dx + c.dx * k.dy);
           return Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) + HALF * c.w * (Number.isFinite(sin) ? sin : 0);
         };
         if (kept.some(k => near(k) && alongMax(k) <= k.len / 2 + LONG_TOL + 1e-9)
-          || (kept.filter(near).length >= 2 && coveredTogether(c, kept.filter(near)))
+          || (nearK.length >= 2 && coveredTogether(c, nearK) && coveredCorners(c, nearK))
           || coveredSideways(c, kept.filter(k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
             && alongMax(k) <= k.len / 2 + LONG_TOL + 1e-9))) drop[i] = true;
         else kept.push(c);

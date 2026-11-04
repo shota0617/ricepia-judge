@@ -177,6 +177,21 @@
     }
     return false;
   }
+  // 横の合わせ覆い（第4弾サイクル54・カルカソンヌ）：長手方向を単独で端まで覆う候補（中点・向きの条件つき）の横区間（中心線の横ずれ±HALF×w）を和集合にし、古い要素の横幅を隙間なく覆うときも落とす。NEAR_TOL は両端の端切れだけに使い、途中の隙間は埋めない
+  function coveredSideways(c, cands) {
+    if (cands.length < 2) return false; // 1本だけの覆いは単独条件が見る（傾きの端のずれを中心線だけで見逃さない）
+    const iv = cands.map(k => {
+      const off = (k.mx - c.mx) * -c.dy + (k.my - c.my) * c.dx;
+      return [off - HALF * k.w, off + HALF * k.w];
+    }).sort((p, q) => p[0] - q[0]);
+    let reach = -HALF * c.w + NEAR_TOL;
+    for (let n = 0; n < iv.length; n++) {
+      if (iv[n][0] > reach + 1e-9) return false;
+      reach = Math.max(reach, iv[n][1]);
+      if (reach >= HALF * c.w - NEAR_TOL - 1e-9) return true;
+    }
+    return false;
+  }
   function dedupeNear(segs) {
     try {
       if (!Array.isArray(segs)) return [];
@@ -194,7 +209,9 @@
           && Math.max(Math.abs((c.x1 - k.mx) * -k.dy + (c.y1 - k.my) * k.dx), Math.abs((c.x2 - k.mx) * -k.dy + (c.y2 - k.my) * k.dx)) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9;
         const along = (k, x, y) => Math.abs((x - k.mx) * k.dx + (y - k.my) * k.dy);
         if (kept.some(k => near(k) && Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) <= k.len / 2 + LONG_TOL + 1e-9)
-          || coveredTogether(c, kept.filter(near))) drop[i] = true;
+          || coveredTogether(c, kept.filter(near))
+          || coveredSideways(c, kept.filter(k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
+            && Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) <= k.len / 2 + LONG_TOL + 1e-9))) drop[i] = true;
         else kept.push(c);
       }
       return segs.filter((s, i) => !drop[i]);

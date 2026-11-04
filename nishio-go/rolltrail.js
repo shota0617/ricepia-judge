@@ -60,5 +60,13 @@
       });
     } catch (e) { return []; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, push, alive, alphaFor, segments };
+  // 転がった土地の色（第4弾サイクル39・de Blob）：game.js の AREA_RGB と同じ5地区の色。分からなければ null（従来のクリーム）
+  const AREA_COLORS = Object.freeze({ nishio: '122,168,84', isshiki: '78,146,190', kira: '196,124,88', hazu: '146,118,176', sakushima: '66,166,158' });
+  function colorFor(areaId) {
+    try {
+      if (typeof areaId !== 'string' || !Object.prototype.hasOwnProperty.call(AREA_COLORS, areaId)) return null;
+      return AREA_COLORS[areaId];
+    } catch (e) { return null; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, push, alive, alphaFor, segments, colorFor, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

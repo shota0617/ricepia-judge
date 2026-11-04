@@ -8387,24 +8387,34 @@ function drawRollPath(ox, oy, T, now) {
   const RT = window.nishioRollTrail;
   if (!RT || fpsMeter.slow || !rollPath.list.length) return;
   const last = rollPath.list[rollPath.list.length - 1];
+  // 転がった土地の地区色（de Blob）。分からない・失敗のときは従来のクリーム色
+  const CREAM = '255,246,220';
+  const rgbAt = (x, y) => {
+    try {
+      if (!RT.colorFor) return CREAM;
+      const id = landAreaOf(Math.floor(x), Math.floor(y));
+      return (id && RT.colorFor(id)) || CREAM;
+    } catch (e) { return CREAM; }
+  };
   if (RT.segments) {   // 点を補間したつながった柔らかい帯（相手の区間ごとに1回で描き継ぎ目の重なりを避ける。古い端ほど薄い）
     ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = T * 0.20;
-    let g = null, sum = 0, cnt = 0, wsum = 0;
-    const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(255,246,220,' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
+    let g = null, sum = 0, cnt = 0, wsum = 0, rgb = CREAM;
+    const flush = () => { if (cnt && sum > 0) { ctx.lineWidth = T * 0.20 * (wsum / cnt); ctx.strokeStyle = 'rgba(' + rgb + ',' + (sum / cnt).toFixed(3) + ')'; ctx.stroke(); } };
     for (const s of RT.segments(rollPath.list, now)) {
-      if (s.g !== g) { flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; sum = 0; cnt = 0; wsum = 0; }
+      const srgb = rgbAt((s.x1 + s.x2) / 2, (s.y1 + s.y2) / 2);   // 小セグメントごとに地区色を調べ、色が変わればそこで描き分ける（地区の境で色が切り替わる）
+      if (s.g !== g || srgb !== rgb) { flush(); ctx.beginPath(); ctx.moveTo(ox + s.x1 * T, oy + s.y1 * T); g = s.g; rgb = srgb; sum = 0; cnt = 0; wsum = 0; }
       ctx.lineTo(ox + s.x2 * T, oy + s.y2 * T); sum += Math.max(0, s.a); wsum += (typeof s.w === 'number' && isFinite(s.w) && s.w > 0) ? s.w : 1; cnt++;
     }
     flush();
     const a = RT.alphaFor(now - last.t);
-    if (a > 0) { ctx.fillStyle = 'rgba(255,246,220,' + a.toFixed(3) + ')'; ctx.beginPath(); ctx.arc(ox + last.x * T, oy + last.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill(); }
+    if (a > 0) { ctx.fillStyle = 'rgba(' + rgbAt(last.x, last.y) + ',' + a.toFixed(3) + ')'; ctx.beginPath(); ctx.arc(ox + last.x * T, oy + last.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore();
     return;
   }
   for (const p of rollPath.list) {
     const a = RT.alphaFor(now - p.t);
     if (a <= 0) continue;
-    ctx.fillStyle = 'rgba(255,246,220,' + a.toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(' + rgbAt(p.x, p.y) + ',' + a.toFixed(3) + ')';
     ctx.beginPath(); ctx.arc(ox + p.x * T, oy + p.y * T, T * 0.10, 0, Math.PI * 2); ctx.fill();
   }
 }

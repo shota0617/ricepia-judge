@@ -144,5 +144,20 @@
       });
     } catch (e) { return []; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, AREA_COLORS };
+  // 同じ場所の重なりは1回だけ（第4弾サイクル44・マリオペイント）：向きに依らず両端点（小数第2位）が同じ小セグメントは最後の1つだけ残す。座標が不正な要素はそのまま残す。入力は変えない
+  function dedupe(segs) {
+    try {
+      if (!Array.isArray(segs)) return [];
+      const last = new Map();
+      const keyOf = s => {
+        if (!s || !num(s.x1) || !num(s.y1) || !num(s.x2) || !num(s.y2)) return null;
+        const a = s.x1.toFixed(2) + ',' + s.y1.toFixed(2), b = s.x2.toFixed(2) + ',' + s.y2.toFixed(2);
+        return a <= b ? a + '|' + b : b + '|' + a;
+      };
+      const keys = segs.map(keyOf);
+      keys.forEach((k, i) => { if (k !== null) last.set(k, i); });
+      return segs.filter((s, i) => keys[i] === null || last.get(keys[i]) === i);
+    } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, smoothColors, ribbon, dedupe, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

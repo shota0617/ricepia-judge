@@ -190,20 +190,23 @@
         if (!(len > 0)) return null;
         return { s, len, dx: (s.x2 - s.x1) / len, dy: (s.y2 - s.y1) / len };
       });
+      const wOf = s => (num(s.w) && s.w > 0) ? s.w : 1;
       const out = [];
       segs.forEach((seg, i) => {
         const c = info[i];
         if (!c) { out.push(seg); return; }
-        const s = c.s, cover = [];
+        const s = c.s, cover = [], bands = [];
         for (let j = i + 1; j < segs.length; j++) {
           const d = info[j];
           if (!d || Math.abs(c.dx * d.dx + c.dy * d.dy) < 0.87) continue;
           const mx = (d.s.x1 + d.s.x2) / 2 - s.x1, my = (d.s.y1 + d.s.y2) / 2 - s.y1;
-          if (Math.abs(mx * -c.dy + my * c.dx) > SPLIT_SIDE + 1e-9) continue;
+          const off = mx * -c.dy + my * c.dx;
+          if (Math.abs(off) > SPLIT_SIDE + 1e-9) continue;
           const ta = ((d.s.x1 - s.x1) * c.dx + (d.s.y1 - s.y1) * c.dy) / c.len, tb = ((d.s.x2 - s.x1) * c.dx + (d.s.y2 - s.y1) * c.dy) / c.len;
           const lo = Math.max(0, Math.min(ta, tb)), hi = Math.min(1, Math.max(ta, tb));
           if ((hi - lo) * c.len < SPLIT_MIN_COVER) continue;
           cover.push([lo, hi]);
+          bands.push({ lo, hi, off, hw: HALF * wOf(d.s) });
         }
         if (!cover.length) { out.push(seg); return; }
         cover.sort((p, q) => p[0] - q[0]);
@@ -222,6 +225,23 @@
           out.push(Object.assign({}, s, {
             x1: at(r[0], s.x1, s.x2), y1: at(r[0], s.y1, s.y2), x2: at(r[1], s.x1, s.x2), y2: at(r[1], s.y1, s.y2)
           }));
+        });
+        // 横にはみ出した細い帯（第4弾サイクル48・Lawn Mowing Simulator）：覆いを線でなく帯の幅（HALF×w）で数え、重ならない横の残りを細い帯として残す
+        const hi0 = HALF * wOf(s), nx = -c.dy, ny = c.dx;
+        bands.forEach(b => {
+          if (Math.abs(b.off) <= 0.005) return;
+          const lat = [];
+          if (b.off - b.hw > -hi0) lat.push([-hi0, Math.min(hi0, b.off - b.hw)]);
+          if (b.off + b.hw < hi0) lat.push([Math.max(-hi0, b.off + b.hw), hi0]);
+          lat.forEach(l => {
+            if (l[1] - l[0] < 0.03 - 1e-9) return;
+            const ctr = (l[0] + l[1]) / 2;
+            out.push(Object.assign({}, s, {
+              x1: at(b.lo, s.x1, s.x2) + nx * ctr, y1: at(b.lo, s.y1, s.y2) + ny * ctr,
+              x2: at(b.hi, s.x1, s.x2) + nx * ctr, y2: at(b.hi, s.y1, s.y2) + ny * ctr,
+              w: (l[1] - l[0]) / (2 * HALF)
+            }));
+          });
         });
       });
       return out;

@@ -225,6 +225,17 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                     # 流れを止める要素は作らない
 
+    def test_cycle13_band_scale_and_reduced_motion(self):
+        # サイクル13: はかる色帯の両端（12／18）を数字だけで示し、動きを抑える配慮を入れる
+        self.assertIn('id="bandScale"', HTML)                 # 色帯の範囲が数字で分かる
+        self.assertIn("<span>12</span><span>18</span>", HTML)  # 帯は12.0〜18.0%（JSの印位置計算と一致）
+        self.assertIn("#bandScale", HTML)
+        self.assertIn("prefers-reduced-motion: reduce", HTML)  # 動きを減らす端末設定を尊重する
+        self.assertIn("#nextBtn:active { transform:scale(.98); }", HTML)  # 次ボタンの触感をそろえる
+        self.assertIn("#bagTap:active", HTML)                  # さす袋にも同じ触感
+        self.assertNotIn("setInterval", HTML)                  # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                       # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

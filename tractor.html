@@ -4660,14 +4660,14 @@ const BATS = (() => {
     const time = performance.now() / 1000;
     for (const u of list) {
       if ((u.t -= dt) <= 0) {                        // 0.3〜0.8 秒ごとに向きをかえる（虫を追う）
-        u.t = 0.3 + Math.random() * 0.5;
-        u.tgt.set(S.x + (Math.random() - 0.5) * 40, 2.5 + Math.random() * 7, S.z + (Math.random() - 0.5) * 40);
+        u.t = DETAIL ? 0.3 + Math.random() * 0.5 : 0.9 + Math.random() * 0.9;   // サイクル122：のんびりでは 向き替えを ゆっくりに
+        u.tgt.set(S.x + (Math.random() - 0.5) * (DETAIL ? 40 : 28), (DETAIL ? 2.5 : 3.5) + Math.random() * (DETAIL ? 7 : 5), S.z + (Math.random() - 0.5) * (DETAIL ? 40 : 28));   // サイクル122：のんびりでは 目標の跳びも 小さく
       }
-      tmp.subVectors(u.tgt, u.g.position).normalize().multiplyScalar(6.5);
-      u.vel.lerp(tmp, Math.min(1, dt * 4));
+      tmp.subVectors(u.tgt, u.g.position).normalize().multiplyScalar(DETAIL ? 6.5 : 4.2);   // サイクル122：のんびりでは コウモリの飛行も ゆっくりに
+      u.vel.lerp(tmp, Math.min(1, dt * (DETAIL ? 4 : 2)));   // サイクル122：のんびりでは 向きの変わり方も なめらかに
       u.g.position.addScaledVector(u.vel, dt);
       u.g.rotation.y = Math.atan2(u.vel.x, u.vel.z);
-      const f = Math.sin(time * 38 + u.ph) * 0.9;    // はやいはばたき
+      const f = DETAIL ? Math.sin(time * 38 + u.ph) * 0.9 : Math.sin(time * 22 + u.ph) * 0.6;    // はやいはばたき。サイクル122：のんびりでは ゆっくり小さく
       u.wl.rotation.z = f; u.wr.rotation.z = -f;
     }
   }

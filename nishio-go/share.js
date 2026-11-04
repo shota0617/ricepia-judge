@@ -73,9 +73,9 @@ function shareText() {
     const city = cityOf(curSpot), a = areaOf(curSpot);
     return `${city ? `${city}の` : ''}「${curSpot.name}」📍${a && a.catch ? `\n${a.name}は「${a.catch}」` : ''}\nにしおさんぽGOで、西尾とまわりのまちの名所をめぐろう\n${tags}`;
   }
-  if (cur === 'meiro' && curMeiro) {   // 西尾めいろの ゴール（きょうの めいろ は だれでも 同じ 名所なので、タイムを くらべられる）
+  if (cur === 'meiro' && curMeiro) {   // 西尾めいろの ゴール（きょうの めいろ は だれでも 同じ 名所なので、同じ 名所を いっしょに たのしめる）
     const m = curMeiro;
-    return `にしおさんぽGOの「西尾めいろ」${m.daily ? '☀️きょうの めいろ' : `${m.n}面`}で「${m.name}」まで ${m.sec.toFixed(1)}秒 ${'★'.repeat(m.stars)}🌀${m.grains && m.got === m.grains ? '（金の米つぶ ぜんぶ）' : ''}\nスマホを傾けて、お米を 西尾の地図の めいろの 名所へ\n${tags}`;
+    return `にしおさんぽGOの「西尾めいろ」${m.daily ? '☀️きょうの めいろ' : `${m.n}面`}で「${m.name}」まで ついた🌀${m.grains && m.got === m.grains ? '（金の米つぶ ぜんぶ）' : ''}\nスマホを傾けて、お米を 西尾の地図の めいろの 名所へ\n${tags}`;
   }
   if (cur === 'mzgoal' && curMz) {   // 地図の めいろの ゴール：遊んだ 画面と、タイム・★・この 道の がんばり。見た 人が すぐ 遊べる（?play=1）
     const m = curMz, run = mzRunLine(m.run);
@@ -131,8 +131,8 @@ function drawCard() {
     line('にしおさんぽGOで、名所をめぐろう', 30, 356);
   } else if (cur === 'meiro' && curMeiro) {
     const m = curMeiro;
-    line(`🌀 ${m.name} まで ${m.sec.toFixed(1)}秒`, 62, 240, true);
-    line(`西尾めいろ ${m.daily ? '☀️ きょうの めいろ' : `${m.n}面`} ${'★'.repeat(m.stars)}${'☆'.repeat(3 - m.stars)}${m.grains ? ` ・ 🌾 ${m.got}/${m.grains}` : ''}`, 36, 306);
+    line(`🌀 ${m.name} まで ついた`, 62, 240, true);
+    line(`西尾めいろ ${m.daily ? '☀️ きょうの めいろ' : `${m.n}面`}${m.grains ? ` ・ 🌾 ${m.got}/${m.grains}` : ''}`, 36, 306);
     line('スマホを 傾けると、お米が 名所へ ころころ', 30, 358);
     if (mz) {
       const sh = 372, sw = Math.round(sh * mz.width / mz.height), dx = W - sw - 60, dy = 112;

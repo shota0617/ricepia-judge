@@ -179,12 +179,14 @@
   }
   // 横の合わせ覆い（第4弾サイクル54・カルカソンヌ）：長手方向を単独で端まで覆う候補（中点・向きの条件つき）の横区間を和集合にし、古い要素の横幅を隙間なく覆うときも落とす。NEAR_TOL は両端の端切れだけに使い、途中の隙間は埋めない
   // 傾いた候補の保証区間（第4弾サイクル55・シムシティ）：横区間は中点ではなく候補の両端の横位置から、端から端まで保証できる共通部分だけを数える（矩形として四隅まで見る）
+  // 四隅の実効半幅（第4弾サイクル56・Factorio）：傾いた候補の四隅の横位置は、候補自身の法線方向の半幅が古い帯の法線へ射影された分（HALF×w×|cosθ|）しか広がらない。保証区間の半幅はこの実効半幅にする
   function coveredSideways(c, cands) {
     if (cands.length < 2) return false; // 1本だけの覆いは単独条件が見る（傾きの端のずれを中心線だけで見逃さない）
     const iv = [];
     cands.forEach(k => {
       const o1 = (k.x1 - c.mx) * -c.dy + (k.y1 - c.my) * c.dx, o2 = (k.x2 - c.mx) * -c.dy + (k.y2 - c.my) * c.dx;
-      const lo = Math.max(o1, o2) - HALF * k.w, hi = Math.min(o1, o2) + HALF * k.w;
+      const cos = Math.abs(c.dx * k.dx + c.dy * k.dy), eh = HALF * k.w * (Number.isFinite(cos) ? cos : 1);
+      const lo = Math.max(o1, o2) - eh, hi = Math.min(o1, o2) + eh;
       if (lo <= hi) iv.push([lo, hi]); // 傾きが大きく端まで保証できる横幅が無い候補は外す
     });
     iv.sort((p, q) => p[0] - q[0]);

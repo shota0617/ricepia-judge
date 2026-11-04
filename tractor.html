@@ -21,6 +21,10 @@
   canvas#view { display: block; width: 100vw; height: 100vh; height: 100dvh; touch-action: none; }
   .hidden { display: none !important; }
   #vignette { position: fixed; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, rgba(0,0,0,0) 55%, rgba(20,14,6,.28) 100%); }
+  /* サイクル101: なぞり方ヒント（指と点線の跡。文字なし・入力をふさがない） */
+  #hintSwipe { position: fixed; inset: 0; pointer-events: none; z-index: 40; }
+  #hintSwipe .hDot { position: fixed; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #ffd84a; box-shadow: 0 0 0 3px rgba(255,216,74,.35), 0 1px 4px rgba(0,0,0,.4); }
+  #hintFinger { position: fixed; font-size: 56px; line-height: 1; margin: -48px 0 0 -12px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.45)); }
   /* 上の計器（速さ・前後・ロータリー・耕した割合） */
   #hud { position: fixed; top: max(8px, env(safe-area-inset-top)); left: 8px; right: 8px; display: flex; gap: 6px; flex-wrap: wrap; pointer-events: none; }
   .chip { padding: 5px 10px; border-radius: 999px; background: rgba(20, 18, 14, .62); color: #fff; font-size: 13px; font-weight: 700; white-space: nowrap; }
@@ -202,6 +206,7 @@
 <body>
 <canvas id="view"></canvas>
 <div id="vignette"></div>
+<div id="hintSwipe" class="hidden"><div id="hintFinger">👆</div></div>
 
 <div id="hud" class="hidden">
   <span class="chip"><b id="spd">0.0</b> km/h</span>
@@ -332,7 +337,7 @@
         <tr><td>うしろの作業機を見る</td><td class="pc"><kbd>B</kbd>（押しているあいだ）</td><td>「うしろを見る」</td></tr>
         <tr><td>クラクション（バックの前に うしろを見て、要るときに知らせる）</td><td class="pc"><kbd>Y</kbd></td><td>「クラクション」</td></tr>
         <tr><td>デフロック（ぬかるみで 片方の後輪が空回りしたとき。まっすぐ出るときだけ）</td><td class="pc"><kbd>J</kbd>（押しているあいだ）</td><td>「デフロック」（空回りしたあと出る）</td></tr>
-        <tr><td>まわりを見る</td><td class="pc">田んぼの外をドラッグ</td><td>田んぼの外をドラッグ</td></tr>
+        <tr><td>まわりを見る</td><td class="pc">空をドラッグ（サイクル101: 地面は どこでも なぞり）</td><td>空をドラッグ（サイクル101: 地面は どこでも なぞり）</td></tr>
         <tr><td>視点（運転席・うしろ・上）</td><td class="pc"><kbd>C</kbd></td><td>「👁」</td></tr>
         <tr><td>直進アシスト</td><td class="pc"><kbd>G</kbd></td><td>「直進」</td></tr>
         <tr><td>早送り</td><td class="pc"><kbd>F</kbd></td><td>「⏩」</td></tr>
@@ -7881,6 +7886,12 @@ const TRACE = {
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 512), 3));
     this.line = new THREE.Line(g, new THREE.LineBasicMaterial({ color: 0xffe98a, transparent: true, opacity: 0.95 }));
     this.line.frustumCulled = false; this.line.visible = false; scene.add(this.line);
+    const rg = new THREE.BufferGeometry();   // サイクル101: 細い線だけでは見えにくいため、幅0.35mの帯（リボン）を重ねる
+    rg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3 * 2 * 512), 3));
+    const ridx = []; for (let i = 0; i < 511; i++) { const a = 2 * i; ridx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+    rg.setIndex(ridx);
+    this.ribbon = new THREE.Mesh(rg, new THREE.MeshBasicMaterial({ color: 0xffd94a, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide }));   // 両面（なぞる向きで表裏が入れかわるため。Codex指摘）
+    this.ribbon.frustumCulled = false; this.ribbon.visible = false; scene.add(this.ribbon);
   },
   draw() {
     this.ensure();
@@ -7888,12 +7899,23 @@ const TRACE = {
     for (let i = 0; i < n; i++) a.setXYZ(i, this.pts[i][0], 0.15, this.pts[i][1]);
     this.line.geometry.setDrawRange(0, n); a.needsUpdate = true;
     this.line.visible = n > 1; this.line.material.opacity = 0.95;
+    if (this.ribbon) {   // サイクル101: 帯も同じ点列で引く（向きは前後の点から、幅は左右へ±0.175m）
+      const ra = this.ribbon.geometry.attributes.position;
+      for (let i = 0; i < n; i++) {
+        const p = this.pts[i], q = this.pts[Math.min(i + 1, n - 1)], o = this.pts[Math.max(i - 1, 0)];
+        let dx = q[0] - o[0], dz = q[1] - o[1]; const L = Math.hypot(dx, dz) || 1; dx /= L; dz /= L;
+        ra.setXYZ(2 * i, p[0] - dz * 0.175, 0.16, p[1] + dx * 0.175); ra.setXYZ(2 * i + 1, p[0] + dz * 0.175, 0.16, p[1] - dx * 0.175);
+      }
+      this.ribbon.geometry.setDrawRange(0, n > 1 ? (n - 1) * 6 : 0); ra.needsUpdate = true;
+      this.ribbon.visible = n > 1; this.ribbon.material.opacity = 0.55;
+    }
   },
   ground(e) { const rc = new THREE.Raycaster(), ndc = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), hit = new THREE.Vector3(); rc.setFromCamera(ndc, camera); return rc.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), hit) ? hit : null; },
   begin(e) {
     if (!S.started || S.done || INTRO.on || !$('start').classList.contains('hidden')) return false;
     const h = this.ground(e);
-    if (!h || Math.abs(h.x) > HX + 2 || Math.abs(h.z) > HZ + 2) return false;   // 田んぼの上だけ なぞれる
+    if (!h) return false;   // 地面と交わらない（空）だけ なぞれない＝まわりを見る側へ回す
+    h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: 地面の上なら どこで始めても なぞり（田んぼの外は ふちへ寄せる）
     this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.on = true; this.fade = 0;
     if (camMode !== 2) { camMode = 2; look.yaw = look.pitch = 0; $('bCam').textContent = '👁 ' + CAMS[2]; this.rebase = true; }   // 田んぼ全体を見て なぞれるように 上からの視点へ。最初の点は旧視点の座標なので、次の add で引き直す（Codex指摘）
     if (!S.rotDown && !S.stalled) toggleRotary();       // 下りていなければ 自動で下ろす（降下止めの判定は toggleRotary 側）。エンスト中は下げない（なぞりでの再始動が できなくなるため。Codex指摘）
@@ -7903,14 +7925,15 @@ const TRACE = {
   add(e) {
     if (!this.on) return;
     const h = this.ground(e);
-    if (!h || Math.abs(h.x) > HX + 2 || Math.abs(h.z) > HZ + 2) return;
+    if (!h) return;
+    h.x = Math.max(-HX, Math.min(HX, h.x)); h.z = Math.max(-HZ, Math.min(HZ, h.z));   // サイクル101: ふちの外へ出ても 線が途切れない
     if (this.rebase) { this.rebase = false; this.pts = [[h.x, h.z]]; this.ctx = 0; this.sync(); this.draw(); return; }   // 視点が切りかわった直後: 線をいまの指の位置から引き直す
     const l = this.pts[this.pts.length - 1];
     if (l && Math.hypot(h.x - l[0], h.z - l[1]) < 0.35) return;   // 0.35m ごとに点を取る
     if (this.pts.length < 512) { this.pts.push([h.x, h.z]); this.sync(); this.draw(); }
   },
   end() { if (!this.on) return; this.on = false; this.drive = false; this.pts = []; this.cps = []; this.ctx = 0; this.fade = 1; },   // 指を離す: 跡を消して止まる
-  tick(dt) { if (this.fade > 0 && this.line) { this.fade = Math.max(0, this.fade - dt * 2.5); this.line.material.opacity = 0.95 * this.fade; if (!this.fade) this.line.visible = false; } },
+  tick(dt) { if (this.fade > 0 && this.line) { this.fade = Math.max(0, this.fade - dt * 2.5); this.line.material.opacity = 0.95 * this.fade; if (this.ribbon) this.ribbon.material.opacity = 0.55 * this.fade; if (!this.fade) { this.line.visible = false; if (this.ribbon) this.ribbon.visible = false; } } },
   follow(dt) {                                          // step から毎フレーム: 追従するなら true。切れ角を目標へなめらかに寄せる
     if (!this.on || !this.cps.length) { this.drive = false; return false; }
     let bi = 0, bd = 1e9;                               // 進捗: いちばん近い点までを捨てる（通り過ぎた古い点を追い直して回りつづけるのを防ぐ。sim で発見・修正）。対象は制御用点列（cps）
@@ -7927,6 +7950,42 @@ const TRACE = {
     this.cap = r.cap;
     this.drive = true;
     return true;
+  }
+};
+// ---- なぞり方ヒント（サイクル101、ユーザー実機フィードバック 2026-11-04 13:59「なぞり方わからない」）----
+// 文字の説明は置かず、指アイコンが田んぼの上をスッとなぞる動きと点線の跡を、最初のなぞりが成功するまで繰り返し見せる。
+// 経路はトラクター前方の点列（3D）を毎フレーム画面へ投影するので、どの視点でも田んぼの上に重なる。入力はふさがない。
+const HINT = {
+  t: 0, done: false, okT: 0, pts: null, at: null, dots: [],
+  build() {   // トラクターの前方 3〜13m（田んぼの内側へ寄せた点列）
+    const fx = Math.sin(S.yaw), fz = Math.cos(S.yaw), pts = [];
+    for (let d = 3; d <= 13.01; d += 1) pts.push([Math.max(-HX + 0.5, Math.min(HX - 0.5, S.x + fx * d)), Math.max(-HZ + 0.5, Math.min(HZ - 0.5, S.z + fz * d))]);
+    this.at = [S.x, S.z, S.yaw];
+    return pts;
+  },
+  ensure() {
+    if (this.dots.length) return;
+    const box = $('hintSwipe'); if (!box) return;
+    for (let i = 0; i < 10; i++) { const el = document.createElement('div'); el.className = 'hDot'; box.appendChild(el); this.dots.push(el); }
+  },
+  proj(p) { const v = new THREE.Vector3(p[0], 0.2, p[1]).project(camera); return v.z < 1 ? [(v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight] : null; },
+  update(dt) {
+    const box = $('hintSwipe'); if (!box) return;
+    const show = !this.done && S.started && !S.done && !INTRO.on && $('start').classList.contains('hidden') && $('help').classList.contains('hidden');
+    if (!show) { box.classList.add('hidden'); return; }
+    this.ensure();
+    if (!this.pts || (this.at && (Math.hypot(S.x - this.at[0], S.z - this.at[1]) > 2 || Math.abs(S.yaw - this.at[2]) > 0.6))) this.pts = this.build();   // 自動運転などで位置が変わったら経路を作り直す
+    if (TRACE.drive && Math.abs(S.v) > 0.2) { this.okT += dt; if (this.okT > 0.4) { this.done = true; box.classList.add('hidden'); return; } } else this.okT = 0;   // 最初のなぞりが成功（連続0.4秒 実際に追って動く）したら消える
+    box.classList.remove('hidden');
+    this.t = (this.t + dt) % 2.6;   // 2.2秒かけてなぞり、0.4秒休んで繰り返す
+    const ph = this.t / 2.2, n = this.pts.length, pos = ph >= 1 ? null : ph * (n - 1), fi = pos === null ? n - 1 : Math.floor(pos), fr = pos === null ? 0 : pos - fi;
+    const fp = pos === null ? this.pts[n - 1] : [this.pts[fi][0] + (this.pts[Math.min(fi + 1, n - 1)][0] - this.pts[fi][0]) * fr, this.pts[fi][1] + (this.pts[Math.min(fi + 1, n - 1)][1] - this.pts[fi][1]) * fr];
+    const fs = this.proj(fp), fel = $('hintFinger');
+    if (fs && ph < 1) { fel.style.left = fs[0] + 'px'; fel.style.top = fs[1] + 'px'; fel.style.display = ''; } else fel.style.display = 'none';
+    this.dots.forEach((el, i) => {
+      const pi = Math.round(i * (n - 1) / 9), s = this.proj(this.pts[pi]), lit = ph < 1 && pi <= fi;
+      if (s && lit) { el.style.left = s[0] + 'px'; el.style.top = s[1] + 'px'; el.style.display = ''; } else el.style.display = 'none';
+    });
   }
 };
 // ---- のんびり自動運転（サイクル75、ユーザー指示 2026-11-03 21:20「平和でのんびり自動運転」・21:23「転がりつづける」）----
@@ -8216,6 +8275,7 @@ function step(dt) {
     S.v = 0;
     if (S.scrape > 0 || BELT.fixing || COVER.fixing || GREASE.fixing || CLAW.fixing || HERI.fixing || GASU.fixing || GASU.out || KATA.fixing || PANKU.fixing || AIRCL.fixing) {}   // 泥落とし・ベルトの交換・リヤカバーの手入れ・グリース入れ・爪の付けなおし・傾きの調整のあいだは エンジンを切ったまま
     else if ((key.fwd || key.back || TRACE.on || AUTO.on) && !S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // かけなおし：（予熱）→ セル → かかる。なぞり直しても かかる
+    else if (TRACE.on && S.rotDown && !(S.crank > 0)) { S.stalled = false; S.parked = false; startCrank(); }   // サイクル101: エンスト中に なぞり始めれば、作業機が下りていても自動で かけなおす（かかれば そのまま跡を追う）
     else if ((key.fwd || key.back) && S.rotDown && GASU.fixed && !(S.crank > 0)) { S.rotDown = false; S.autoUp = false; setRotBtn(); S.stalled = false; S.parked = false; startCrank(); toast('PTO を切って かけなおす（' + IMPL + 'は エンジンが かかってから 油圧で 上がる）', 3); }   // ガス欠のあと：エンジンが止まって 上げられなかった
     else if ((key.fwd || key.back) && S.rotDown && !S.stallTold) { S.stallTold = true; toast(IMPL + 'を上げてから、かけなおそう（スペース）'); }
   }
@@ -9403,7 +9463,7 @@ $('bAgain').onclick = () => location.reload();
 $('bWash').onclick = () => WASH.start();
 $('bArt').onclick = () => { if (S.started && !S.done) finish(); };
 $('bOther').onclick = () => { $('done').classList.add('hidden'); $('start').classList.remove('hidden'); };
-// なぞる（サイクル70）: 運転中は canvas をなぞると跡を追って耕し、離すと止まる。なぞらなかったドラッグは従来どおり まわりを見る（はなすと前にもどる）
+// なぞる（サイクル70）: 運転中は canvas をなぞると跡を追って耕し、離すと止まる。サイクル101: 地面の上なら どこで始めても なぞりになり、まわりを見るのは空のドラッグだけ
 let drag = null;
 canvas.addEventListener('pointerdown', e => { if (TRACE.begin(e)) { AUTO.off(); drag = null; canvas.setPointerCapture(e.pointerId); return; } drag = { x: e.clientX, y: e.clientY, yaw: look.yaw, pitch: look.pitch }; canvas.setPointerCapture(e.pointerId); });
 canvas.addEventListener('pointermove', e => {
@@ -10432,7 +10492,7 @@ function frame(now) {
   if (!P.Rotary) { renderer.render(scene, camera); return; }
   const running = S.started && $('start').classList.contains('hidden') && $('help').classList.contains('hidden') && !S.done;
   if (!running) { key.fwd = key.back = key.left = key.right = 0; TRACE.end(); }
-  TRACE.tick(dt);
+  TRACE.tick(dt); HINT.update(dt);
   if (!drag && camMode === 0) { look.yaw *= 1 - Math.min(1, dt * 1.5); look.pitch *= 1 - Math.min(1, dt * 1.5); }
   // 止まっているあいだ（メニュー・操作の表・おわり）は、トラクターの動き・時間・燃料を進めない。始める前はエンジンをかける所だけ進める
   let pct = lastPct;
@@ -10516,7 +10576,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 // 試験用：window.game から状態をのぞける
-window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, AUTO, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
+window.game = { HERI, GASU, get ECO() { return ECO; }, set ECO(v) { ECO = v; }, get ECO_RPM() { return ECO_RPM; }, cycleEco, setRpm, WORK_RPM, DIFF, SAGE, WARAYAMA, FENCE, RENGE, SHIHATSU, DIP, YAMA, MARKS, CLAW, USHI, UZURA, soilY, soilCell, WAVD, CLOD, GREASE, squeak, SCRAPE, BELT, COVER, KATA, RAMPDMG, CORNER, TILTY, WAVY, STONES, HAMARU, WASH, squeeze, moistAt, clodH, ROUGHA: () => ROUGH, engineLoad, engineRpm, WALK, walkField, TILLN, T2, T3, T4, T5, T6, get overTilled() { return overTilled; }, AKIAKANE, BUTTERFLIES, LEAK, INAGO, ROADSIDE, TOBI, KABASHIRA, LEVEE_FLOWERS, KERI, SNAILS, WRAP, RUTS, canBe, turnRate, EASY, setEasy, COACH, ART, finish, tillCell, trackCells, toast, voiceQ, get toastT() { return toastT; }, WET, voice, heard, setDepth, get depth() { return DEPTH; }, GLASS_MUD, thud, BATS, SPARROWS, FROGS, AMENBO, KERA, KAMO, ZARI, GENGO, KANA, KABU, DOJO, HACHI, MEDAKA, HOTARU, KAWASEMI, IMORI, KIJI, TONOSAMA, MOGURA, TSUBAME, KABUTO, HIGAN, HIBARI, PLAY, INTRO, MAEUKI, OSHI, MUKU, DRY, MAKURA, DEEP, softAt, OCHI, PANKU, AIRCL, OMO, KEIKAL, DANKI, PASSER, FROST, meter, monitor, drawMeter, drawMonitor, GOSSAMER, RIPPLE, ROUGH, caw, NB, updateSound, toggleSound, BIRDS, sinkW, CLOUD_T, FLOAT, FARMER, get audio() { return audio; }, MUDDROP, WEEDS, shiftGear, resetAssist, SCORE, LAMPS, TURBID, HEAPS, WAGTAILS, rig, S, key, TRACE, HINT, AUTO, ASSIST, toggleAssist, DRIVER, DBG, toggleRotary, nextCam, tilledMask, P, renderer, scene, TR, MUD, BADGE, SAY, sim: sec => { for (let t = 0; t < sec; t += 0.05) { lastPct = step(0.05); FX.update(0.05); BIRDS.update(0.05, S.rotDown && S.rotPos < 0.08); MUKU.update(0.05, S.rotDown && S.rotPos < 0.08); WAGTAILS.update(0.05, S.rotDown && S.rotPos < 0.08); SPARROWS.update(0.05); TURBID.update(0.05); RIPPLE.update(0.05); FROGS.update(0.05); USHI.update(0.05); UZURA.update(0.05); AMENBO.update(0.05); KERA.update(0.05); KAMO.update(0.05); ZARI.update(0.05); GENGO.update(0.05); KANA.update(0.05); KABU.update(0.05); DOJO.update(0.05); HACHI.update(0.05); MEDAKA.update(0.05); HOTARU.update(0.05); KAWASEMI.update(0.05); IMORI.update(0.05); KIJI.update(0.05); TONOSAMA.update(0.05); MOGURA.update(0.05); TSUBAME.update(0.05); KABUTO.update(0.05); HIGAN.update(0.05); HIBARI.update(0.05); INTRO.update(0.05); DRY.update(0.05); FLOAT.update(0.05); updateMud(0.05, S.rotDown && S.rotPos < 0.08); NB.update(0.05); PASSER.update(0.05); FARMER.update(0.05, S.started && !S.done); } buildHills(); } };
 </script>
 </body>
 </html>

@@ -943,16 +943,10 @@ function addWalk(d, bag = true) {
   checkBadges();
 }
 
-// 自己ベスト（いちばん歩いた日）：ほかの日の記録（300m以上）をこえたら、その日1回だけ知らせる
+// 歩いた距離は比べず静かに記録するだけ（Proteus：歩くこと自体が体験）
 function walkBest() {
   const day = dayState(), b = S.best || { m: 0, date: '' };
-  if (day.walked <= b.m) return;
-  if (b.date !== day.date && b.m >= 300 && !day.bestToast) {
-    day.bestToast = true;
-    toastAfter(`👟 自己ベスト！ きょうは ${fmtM(day.walked)}（これまでは ${fmtM(b.m)}）`);   // 同じ1歩で出るクエスト達成の知らせに上書きされないように
-    track('walk_best', { m: Math.round(day.walked) });
-  }
-  S.best = { m: day.walked, date: day.date };
+  if (day.walked > b.m) S.best = { m: day.walked, date: day.date };
 }
 
 /* ---------- ポイント ---------- */
@@ -4436,9 +4430,7 @@ function todaySpotsHtml(day) {
 }
 function todayWalkCard() {
   const day = dayState(), walked = day.walked || 0, fresh = (day.trail || 0) * TRAIL_M, best = S.best || { m: 0, date: '' };
-  const isBest = best.date === day.date && walked >= 300 && day.bestToast;
   const word = walked < 30 ? 'まだ歩いていません。きょうは どの道を歩こう？'
-    : isBest ? '自己ベストの日！ よく歩きました'
     : fresh >= walked * 0.5 ? '知らない道をたくさん歩きました。地図に足あとが ふえています'
     : '地図の足あとの外へ出ると、はじめての道のポイントがもらえます';
   const cell = (label, v) => `<span><small>${label}</small><b>${v}</b></span>`;

@@ -277,6 +277,19 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                                # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                                     # 流れを止める要素は作らない
 
+    def test_cycle17_live_announcements(self):
+        # サイクル17: 読み上げの静かな案内。主要な結果だけを aria-live="polite" で穏やかに伝える。
+        # 段階チップ（所作の切り替わり）・水分の平均・押した証印の数の3か所だけにし、
+        # みわけの途中経過（タップごとの%）は読み上げない（うるさくしない）。
+        self.assertIn('<div id="stepChip" aria-live="polite">', HTML)        # 段階の切り替わり
+        self.assertIn('<p id="avg" aria-live="polite">', HTML)               # 水分の平均が確定したとき
+        self.assertIn('<p id="stampCount" aria-live="polite">', HTML)        # 証印を押した数
+        self.assertIn('<p id="gradeMsg" aria-live="polite">', HTML)          # 等級の結果（既存・維持）
+        self.assertNotIn('id="sortPct" aria-live', HTML)                     # 途中経過は読み上げない
+        self.assertNotIn('aria-live="assertive"', HTML)                      # 強い割り込み読み上げはしない
+        self.assertNotIn("setInterval", HTML)                                # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                                     # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

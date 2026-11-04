@@ -206,16 +206,40 @@ const GRADE_TABLE = [
   { grade:"2等", seiryuMin:60, moistureMax:15.0, totalMax:20, shiniMax:10, colorMax:0.3, momiMax:0.5, mugiMax:0.3, otherMax:0.5, ibutsuMax:0.4 },
   { grade:"3等", seiryuMin:45, moistureMax:15.0, totalMax:30, shiniMax:20, colorMax:0.7, momiMax:1.0, mugiMax:0.7, otherMax:1.0, ibutsuMax:0.6 }
 ];
-/* 今回のロット: 水分は解釈の割れない帯域だけを使う（brief_cycle1.md §4）。
+/* ロット6件（サイクル6・brief_cycle1.md §2）: 水分は解釈の割れない帯域だけを使う（同 §4）。
    3回測定の平均で判定するのが実在の手順（成分検査実施マニュアル／現場記録）。
-   truth は等級判定（サイクル4）に使う真値（重量%・規格規程の項目）で、合計100%になるよう設計した1等ロット。
+   truth は等級判定（サイクル4）に使う真値（重量%・規格規程の項目）で、どのロットも合計100%。
+   正解はすべて judgeGrade(truth, 平均水分) で決まる（テストで6件とも固定）。
    sort は「みわける」皿の見本の粒数（合計50粒）。着色粒・もみなど本物の重量%ではごく僅かな粒は、
    皿の上で見つけられるよう誇張して表す。見本の粒数%と判定に使う重量%（truth）は別物。 */
-const LOT = {
-  moisture: [14.1, 14.3, 14.2],
-  truth: { seiryu:87.5, higai:4.0, shini:3.0, mijuku:5.0, color:0.1, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
-  sort: { total:50, seiryu:40, higai:3, shini:3, mijuku:2, color:1, momi:1 }
-};
+const LOTS = [
+  /* 1: きれいな1等 */
+  { moisture: [14.1, 14.3, 14.2],
+    truth: { seiryu:87.5, higai:4.0, shini:3.0, mijuku:5.0, color:0.1, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
+    sort: { total:50, seiryu:40, higai:3, shini:3, mijuku:2, color:1, momi:1 } },
+  /* 2: 着色粒0.2%だけが1等を割る → 2等 */
+  { moisture: [13.8, 14.0, 13.9],
+    truth: { seiryu:90.4, higai:3.0, shini:2.0, mijuku:4.0, color:0.2, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
+    sort: { total:50, seiryu:38, higai:3, shini:2, mijuku:2, color:4, momi:1 } },
+  /* 3: 水分だけ高い（平均16.9%・附則の16.0%でも超える）→ 他が1等でも規格外 */
+  { moisture: [16.8, 17.0, 16.9],
+    truth: { seiryu:87.5, higai:4.0, shini:3.0, mijuku:5.0, color:0.1, momi:0.2, mugi:0.0, other:0.1, ibutsu:0.1 },
+    sort: { total:50, seiryu:40, higai:3, shini:3, mijuku:2, color:1, momi:1 } },
+  /* 4: 未熟・死米の多い → 3等（死米15%・計22.2%） */
+  { moisture: [14.4, 14.2, 14.3],
+    truth: { seiryu:65.8, higai:5.0, shini:15.0, mijuku:12.0, color:0.5, momi:0.5, mugi:0.3, other:0.5, ibutsu:0.4 },
+    sort: { total:50, seiryu:28, higai:4, shini:8, mijuku:7, color:1, momi:2 } },
+  /* 5: 規格外寸前ではなく一歩外（死米21%・計30.2%が3等を割る）→ 規格外 */
+  { moisture: [14.0, 14.2, 14.1],
+    truth: { seiryu:61.8, higai:6.0, shini:21.0, mijuku:8.0, color:0.6, momi:0.8, mugi:0.5, other:0.8, ibutsu:0.5 },
+    sort: { total:50, seiryu:26, higai:4, shini:9, mijuku:6, color:2, momi:3 } },
+  /* 6: 境界ぎりぎり2等（整粒60・計20.0・死米10・着色0.3がすべて2等の限度ちょうど） */
+  { moisture: [14.5, 14.6, 14.4],
+    truth: { seiryu:60.0, higai:8.0, shini:10.0, mijuku:20.0, color:0.3, momi:0.5, mugi:0.3, other:0.5, ibutsu:0.4 },
+    sort: { total:50, seiryu:30, higai:5, shini:5, mijuku:6, color:2, momi:2 } }
+];
+let lotIndex = 0;
+let LOT = LOTS[0];
 function moistureAverage(values) {
   return Math.round(values.reduce((a, b) => a + b, 0) / values.length * 10) / 10;
 }
@@ -306,6 +330,9 @@ document.getElementById("stampBtn").addEventListener("click", pressStamp);
 document.getElementById("stampBag").addEventListener("click", pressStamp);
 /* 次の山（サイクル5）: ゆっくり運ばれてくる演出のあと、最初の所作へ戻る。証印の数だけ残る（競わない） */
 function startNextLot() {
+  lotIndex = (lotIndex + 1) % LOTS.length; /* ロットは6件を順に繰り返す（終わりなし） */
+  LOT = LOTS[lotIndex];
+  sortBadTotal = LOT.sort.total - LOT.sort.seiryu;
   const scene = document.getElementById("scene");
   scene.classList.remove("nextPile");
   void scene.offsetWidth; /* アニメーションをやり直す */
@@ -389,7 +416,7 @@ backToSort.addEventListener("click", () => {
 });
 /* みわける（サイクル3）: 白い皿と黒い皿（実在の鑑定）に真値連動の粒を広げ、
    整粒でない粒をタップしてよける。白い粒（死米・未熟粒）は黒い皿で、濃い粒（着色粒）は白い皿で見つけやすい。 */
-const sortBadTotal = LOT.sort.total - LOT.sort.seiryu;
+let sortBadTotal = LOT.sort.total - LOT.sort.seiryu;
 let sortFound = 0;
 let sortBuilt = false;
 function sortProgress() {
@@ -403,7 +430,7 @@ function placeGrains(plate, kinds) {
     b.setAttribute("aria-label", kind ? "わるい粒" : "よい粒");
     const cols = 7;
     b.style.left = (4 + (i % cols) * 13.5 + (Math.floor(i / cols) % 2) * 4) + "%";
-    b.style.top = (30 + Math.floor(i / cols) * 37) + "px";
+    b.style.top = (28 + Math.floor(i / cols) * 30) + "px"; /* 粒の多いロット（サイクル6）でも皿に収まる間隔 */
     b.appendChild(document.createElement("i"));
     b.firstChild.style.transform = "rotate(" + ((i * 47) % 70 - 35) + "deg)";
     if (kind) {
@@ -428,11 +455,13 @@ function placeGrains(plate, kinds) {
 function buildSortGrains() {
   if (sortBuilt) return; sortBuilt = true;
   const repeat = (kind, n) => Array(n).fill(kind);
-  /* 白い皿: 濃い粒が目立つ。黒い皿: 白い粒が目立つ（実在の使い分け） */
+  /* 白い皿: 濃い粒が目立つ。黒い皿: 白い粒が目立つ（実在の使い分け）。
+     よい粒はロットの整粒数に合わせて半分ずつ分け、皿に出る粒の合計を sort.total にそろえる */
+  const whiteGood = Math.ceil(LOT.sort.seiryu / 2);
   placeGrains(document.getElementById("whiteTray"),
-    [].concat(repeat("", 20), repeat("color", LOT.sort.color), repeat("momi", LOT.sort.momi), repeat("higai", 1)));
+    [].concat(repeat("", whiteGood), repeat("color", LOT.sort.color), repeat("momi", LOT.sort.momi), repeat("higai", 1)));
   placeGrains(document.getElementById("blackTray"),
-    [].concat(repeat("", 20), repeat("shini", LOT.sort.shini), repeat("mijuku", LOT.sort.mijuku), repeat("higai", LOT.sort.higai - 1)));
+    [].concat(repeat("", LOT.sort.seiryu - whiteGood), repeat("shini", LOT.sort.shini), repeat("mijuku", LOT.sort.mijuku), repeat("higai", LOT.sort.higai - 1)));
   sortProgress();
 }
 /* 水分計: 大きなボタンを3回タップ → 毎回大きな数字 → 3回目で平均が確定し色帯に印が出る */

@@ -41,16 +41,25 @@ class KensaTests(unittest.TestCase):
         self.assertIn("kensa/scene.webp", HTML)
         self.assertNotIn("setInterval", HTML)  # タイマー・焦らせる仕組みを入れない
 
+    def _lots(self):
+        moistures = [[float(x) for x in m.split(",")]
+                     for m in re.findall(r"moisture: \[([\d., ]+)\]", HTML)]
+        truths = [tuple(float(x) for x in m) for m in re.findall(
+            r"truth: \{ seiryu:([\d.]+), higai:([\d.]+), shini:([\d.]+), mijuku:([\d.]+), color:([\d.]+), momi:([\d.]+), mugi:([\d.]+), other:([\d.]+), ibutsu:([\d.]+) \}", HTML)]
+        sorts = [tuple(int(x) for x in m) for m in re.findall(
+            r"sort: \{ total:(\d+), seiryu:(\d+), higai:(\d+), shini:(\d+), mijuku:(\d+), color:(\d+), momi:(\d+) \}", HTML)]
+        return moistures, truths, sorts
+
     def test_moisture_lot_clear_band(self):
-        # サイクル2のロット水分: 3回測定。解釈の割れない帯域だけを使う（brief_cycle1.md §4）
+        # 全ロットの水分: 3回測定。解釈の割れない帯域だけを使う（brief_cycle1.md §4）
         # ＝各回も平均も 15.0未満（適合が明らか）か 16.5以上（不適合が明らか）
-        m = re.search(r"moisture: \[([\d., ]+)\]", HTML)
-        self.assertIsNotNone(m)
-        vals = [float(x) for x in m.group(1).split(",")]
-        self.assertEqual(len(vals), 3)  # 水分は3回測定の平均で判定（実在の手順）
-        avg = round(sum(vals) / len(vals), 1)
-        for v in vals + [avg]:
-            self.assertTrue(v < 15.0 or v >= 16.5, f"水分 {v} が解釈の割れる帯域にある")
+        moistures, _, _ = self._lots()
+        self.assertEqual(len(moistures), 6)  # サイクル6: ロット6件
+        for vals in moistures:
+            self.assertEqual(len(vals), 3)  # 水分は3回測定の平均で判定（実在の手順）
+            avg = round(sum(vals) / len(vals), 1)
+            for v in vals + [avg]:
+                self.assertTrue(v < 15.0 or v >= 16.5, f"水分 {v} が解釈の割れる帯域にある")
 
     def test_moisture_meter_ui(self):
         self.assertIn('id="meterBtn"', HTML)          # 大きな測定ボタン1つ
@@ -58,17 +67,13 @@ class KensaTests(unittest.TestCase):
         self.assertIn("moistureAverage", HTML)        # 3回平均の関数
         self.assertEqual(HTML.count('class="slot"'), 3)  # 測定値の表示枠は3回分
 
-    def _lot_sort(self):
-        m = re.search(r"sort: \{ total:(\d+), seiryu:(\d+), higai:(\d+), shini:(\d+), mijuku:(\d+), color:(\d+), momi:(\d+) \}", HTML)
-        self.assertIsNotNone(m)
-        keys = ("total", "seiryu", "higai", "shini", "mijuku", "color", "momi")
-        return dict(zip(keys, (int(x) for x in m.groups())))
-
     def test_sort_grains_linked_to_lot(self):
-        # サイクル3「みわける」: 皿の粒数は LOT.sort の真値から生成する（合計が一致）
-        s = self._lot_sort()
-        self.assertEqual(s["seiryu"] + s["higai"] + s["shini"] + s["mijuku"] + s["color"] + s["momi"], s["total"])
-        self.assertGreater(s["total"] - s["seiryu"], 0)  # よける粒がある
+        # サイクル3/6「みわける」: 皿の粒数は各ロットの sort から生成する（合計が一致）
+        _, _, sorts = self._lots()
+        self.assertEqual(len(sorts), 6)
+        for total, seiryu, higai, shini, mijuku, color, momi in sorts:
+            self.assertEqual(seiryu + higai + shini + mijuku + color + momi, total)
+            self.assertGreater(total - seiryu, 0)  # よける粒がある
 
     def test_sort_ui(self):
         self.assertIn('id="sortWrap"', HTML)
@@ -77,21 +82,19 @@ class KensaTests(unittest.TestCase):
         self.assertIn('id="yokeTray"', HTML)    # よけた粒の受け皿
         self.assertIn("buildSortGrains", HTML)
 
-    def test_truth_is_grade1(self):
-        # ロットの真値（重量%）は合計100%で、規格表の1等の限度をすべて満たす
-        m = re.search(r"truth: \{ seiryu:([\d.]+), higai:([\d.]+), shini:([\d.]+), mijuku:([\d.]+), color:([\d.]+), momi:([\d.]+), mugi:([\d.]+), other:([\d.]+), ibutsu:([\d.]+) \}", HTML)
-        self.assertIsNotNone(m)
-        seiryu, higai, shini, mijuku, color, momi, mugi, other, ibutsu = (float(x) for x in m.groups())
-        self.assertAlmostEqual(seiryu + higai + shini + mijuku + color + momi + mugi + other + ibutsu, 100.0)
-        total = higai + shini + color + momi + mugi + other + ibutsu  # 未熟粒は「計」に入らない（brief §3）
-        self.assertGreaterEqual(seiryu, 70)
-        self.assertLessEqual(total, 15)
-        self.assertLessEqual(shini, 7)
-        self.assertLessEqual(color, 0.1)
-        self.assertLessEqual(momi, 0.3)
-        self.assertLessEqual(mugi, 0.1)
-        self.assertLessEqual(other, 0.3)
-        self.assertLessEqual(ibutsu, 0.2)
+    def test_lots_truth_and_answers(self):
+        # サイクル6: 全ロットの真値（重量%）は合計100%。正解は judgeGrade で
+        # 1等／2等（着色粒）／規格外（水分のみ）／3等／規格外／2等（境界）になる
+        moistures, truths, _ = self._lots()
+        self.assertEqual(len(truths), 6)
+        for t in truths:
+            self.assertAlmostEqual(sum(t), 100.0)
+        keys = ("seiryu", "higai", "shini", "mijuku", "color", "momi", "mugi", "other", "ibutsu")
+        cases = [(dict(zip(keys, t)), round(sum(m) / len(m), 1)) for t, m in zip(truths, moistures)]
+        self.assertEqual(self._judge(cases),
+                         ["1等", "2等", "規格外", "3等", "規格外", "2等"])
+        self.assertIn("LOTS", HTML)
+        self.assertIn("lotIndex = (lotIndex + 1) % LOTS.length", HTML)  # 次の山で次のロットへ
 
     def test_grade_ui(self):
         # サイクル4「きめる」: 大きな等級ボタン4つ（1等／2等／3等／規格外）と見直し導線

@@ -236,6 +236,20 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                  # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                       # 流れを止める要素は作らない
 
+    def test_cycle14_focus_and_scene_warmth(self):
+        # サイクル14: 焦点の輪（キーボードで今どこか分かる）＋場面の温かみをKVに寄せる
+        self.assertIn(":focus-visible", HTML)                       # 焦点が見える配慮がある
+        self.assertIn("button:focus-visible, #stampBag:focus-visible", HTML)
+        self.assertIn("outline:3px solid var(--gold)", HTML)        # 穏やかな金の輪（警告色でない）
+        self.assertIn("#bagTap:focus-visible", HTML)                # 写真上の袋も焦点が分かる
+        self.assertIn(".sgrain:focus-visible", HTML)                # 粒もキーボードで分かる
+        self.assertIn('id="stampBag" role="button" tabindex="0"', HTML)  # 袋がキーボードで操作できる
+        self.assertIn('addEventListener("keydown"', HTML)           # Enter／Space で押印できる
+        self.assertIn("rgba(184,137,58,.22)", HTML)                 # KVの金に寄せた場面の細い内枠
+        self.assertIn("rgba(233,226,210,.16)", HTML)                # 場面の上端の溶かしを少し温かく
+        self.assertNotIn("setInterval", HTML)                       # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                            # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

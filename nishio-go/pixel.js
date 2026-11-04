@@ -7224,6 +7224,18 @@ GIANT_ART['f-kondo-beikoku'] = 'kondo';   // 近藤米穀店（本店）も：�
 let giantIds = null;
 fetch('nishio-go/art/giant/list.json').then(r => (r.ok ? r.json() : null)).then(j => { giantIds = new Set((j && j.ids) || []); dirty = true; }).catch(() => { giantIds = new Set(); });
 const giants = {};
+// 翔米の可愛いドット絵（自店の目印。読めるまでは描かない）
+let shomaiImg = null;
+function shomaiArt() {
+  if (shomaiImg === null) {
+    shomaiImg = 'loading';
+    const img = new Image();
+    img.onload = () => { shomaiImg = img; dirty = true; };
+    img.onerror = () => { setTimeout(() => { shomaiImg = null; }, 15000); };   // 読めなかったら15秒後に読みなおす
+    img.src = 'nishio-go/art/shomai-cute.png';
+  }
+  return shomaiImg === 'loading' ? null : shomaiImg;
+}
 // 特大の絵の大きさ（マス）：まわりに特大の絵のスポットがなければ6マス、近くにあれば 4.5マス・3マスに小さくする
 // （同じ境内の碑と本堂のように20mほどしか離れていない所で、絵が重なって道や家並みを隠さないように）
 let giantSize = null, giantSizeKey = '';
@@ -7937,6 +7949,15 @@ function frame(now) {
       const u = Math.min(size, 3 * T) / 16, kx = sx + size * 13 / 16, ky = sy + size / 16;   // 大きさは いつもの絵（3マス）まで。特大の絵の大きさに合わせると 1マスより大きな 十字になっていた
       ctx.fillRect(Math.round(kx), Math.round(ky), Math.ceil(u), Math.ceil(u * 3));
       ctx.fillRect(Math.round(kx - u), Math.round(ky + u), Math.ceil(u * 3), Math.ceil(u));
+    }
+    if (s.shop && window.nishioShomai) {   // 店先に翔米：ドット絵のまま拡大して、タップでもお店が開く
+      const m = shomaiArt(), q = m && window.nishioShomai.place(sx, sy, size);
+      if (q) {
+        const sm = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(m, Math.round(q.x), Math.round(q.y), Math.round(q.w), Math.round(q.h));
+        ctx.imageSmoothingEnabled = sm;
+        shopHits.push([q.x, q.y, q.x + q.w, q.y + q.h, s]);
+      }
     }
     if (s.shop) { const t = drawShopTag(sx + size / 2, sy, dpr, s); shopHits.push([Math.min(t[0], sx), t[1], Math.max(t[2], sx + size), sy + size, s]); }
   }

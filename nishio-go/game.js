@@ -443,6 +443,8 @@ function makeIcon(s, cls) {
 
 // 当店の「お店のなか」の絵（運営者が撮った写真から Blender で作った お米の売り場。tools/blender/giant-shop.py）
 const shopInside = s => s.id === 'f-ricepia' ? '<figure class="shop-pic"><img src="nishio-go/art/giant/ricepia-uriba.png" alt="らいすぴあのお米の売り場（ドット絵）" width="192" height="192" loading="lazy"/><figcaption>お店のなか：銘柄ごとの お米がならぶ売り場</figcaption></figure>' : '';
+// 翔米の可愛いドット絵（お店の窓の目印。お店のときだけ）
+const shopMascot = s => s.shop ? '<img class="shomai-art" src="nishio-go/art/shomai-cute.png" alt="翔米" width="84" height="116" loading="lazy"/>' : '';
 // 名所の窓の「📽️ ムービー」：その名所のムービーを見たことがあるか、いま その名所にいるとき
 function movieBtn(s, pic) {
   const m = movieOf(s);
@@ -466,7 +468,7 @@ function popupHtml(s) {
     <p>現在地から ${d}${s.approx ? '（位置は概算・広めに判定）' : ''}</p>
     <p>${v ? `訪問 ${v.n}回・最後 ${fmtTime(v.last)}` : 'まだ行ったことがありません'}</p>
     ${left ? `<p>再チェックインまで あと${Math.ceil(left / 60000)}分</p>` : ''}
-    ${shopInside(s)}
+    ${shopInside(s)}${shopMascot(s)}
     ${s.shop ? shopInfoHtml(s) : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}
@@ -489,7 +491,7 @@ function popupPic(s, c, v, left, d) {
     ${s.sponsor ? `<p class="sponsor"><span class="tag">🤝 協賛</span> <b>${esc(s.sponsor.name)}</b>${s.sponsor.text ? `：${esc(s.sponsor.text)}` : ''}${s.sponsor.url ? `<br><a class="btn mini" href="${esc(utmUrl(s.sponsor.url, 'sponsor'))}" target="_blank" rel="noopener" data-sponsor="${esc(s.id)}">${esc(s.sponsor.name)}のサイト</a>` : ''}</p>` : ''}
     ${spotEvents(s).map(x => `<p class="ev">${PIA('calendar', '行事')} ${esc(x.when)}　${esc(x.e.name)}</p>`).join('')}
     ${spotMeibutsu(s).map(m => `<details class="mb"><summary>${m.icon} <b>${esc(m.name)}</b></summary>${esc(m.note)}</details>`).join('')}
-    ${shopInside(s)}
+    ${shopInside(s)}${shopMascot(s)}
     ${s.shop ? shopInfoHtml(s) : ''}
     ${s.shop ? `<p class="shop-links">${s.url ? `<a class="btn mini" href="${esc(s.url)}" target="_blank" rel="noopener">お店のサイト</a>` : ''}
       <a class="btn mini" href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.lat},${s.lng}" target="_blank" rel="noopener">道案内（Googleマップ）</a></p>` : ''}

@@ -163,6 +163,20 @@
   // 幅も見る（第4弾サイクル50・de Blob）：（第4弾サイクル51・Farming Simulator で両端まで見る）古い要素の両端それぞれについて、残す要素の中点から残す要素の法線で測った横ずれの大きい方が HALF×(w_new−w_old)+NEAR_TOL 以下、つまり新しい帯が古い帯を横に覆いきるときだけ落とす。覆いきれない細い帯や、太い古い跡は残る
   // 長手方向も両端で見る（第4弾サイクル52・Train Valley）：古い要素の両端それぞれについて、残す要素の中点から残す要素の向きで測った長手方向の距離の大きい方が len/2+LONG_TOL 以下、つまり新しい帯が古い帯を端まで覆いきるときだけ落とす。LONG_TOL は dedupeSplit の SPLIT_MIN_KEEP と同じ（それより短いはみ出しは残し帯としても残らない）
   const NEAR_TOL = 0.01, LONG_TOL = 0.02;
+  // 合わせ覆い（第4弾サイクル53・タングラム）：覆い候補（中点・向き・横ずれの条件を満たす残す要素）の長手区間を和集合にし、古い要素の [0, len] を隙間なく覆うときも落とす。LONG_TOL は両端の端切れだけに使い、途中の隙間は埋めない
+  function coveredTogether(c, cands) {
+    const iv = cands.map(k => {
+      const a = (k.x1 - c.x1) * c.dx + (k.y1 - c.y1) * c.dy, b = (k.x2 - c.x1) * c.dx + (k.y2 - c.y1) * c.dy;
+      return [Math.min(a, b), Math.max(a, b)];
+    }).sort((p, q) => p[0] - q[0]);
+    let reach = LONG_TOL;
+    for (let n = 0; n < iv.length; n++) {
+      if (iv[n][0] > reach + 1e-9) return false;
+      reach = Math.max(reach, iv[n][1]);
+      if (reach >= c.len - LONG_TOL - 1e-9) return true;
+    }
+    return false;
+  }
   function dedupeNear(segs) {
     try {
       if (!Array.isArray(segs)) return [];
@@ -176,9 +190,11 @@
       for (let i = segs.length - 1; i >= 0; i--) {
         const c = info[i];
         if (!c) continue;
-        if (kept.some(k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
-          && Math.max(Math.abs((c.x1 - k.mx) * -k.dy + (c.y1 - k.my) * k.dx), Math.abs((c.x2 - k.mx) * -k.dy + (c.y2 - k.my) * k.dx)) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9
-          && Math.max(Math.abs((c.x1 - k.mx) * k.dx + (c.y1 - k.my) * k.dy), Math.abs((c.x2 - k.mx) * k.dx + (c.y2 - k.my) * k.dy)) <= k.len / 2 + LONG_TOL + 1e-9)) drop[i] = true;
+        const near = k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
+          && Math.max(Math.abs((c.x1 - k.mx) * -k.dy + (c.y1 - k.my) * k.dx), Math.abs((c.x2 - k.mx) * -k.dy + (c.y2 - k.my) * k.dx)) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9;
+        const along = (k, x, y) => Math.abs((x - k.mx) * k.dx + (y - k.my) * k.dy);
+        if (kept.some(k => near(k) && Math.max(along(k, c.x1, c.y1), along(k, c.x2, c.y2)) <= k.len / 2 + LONG_TOL + 1e-9)
+          || coveredTogether(c, kept.filter(near))) drop[i] = true;
         else kept.push(c);
       }
       return segs.filter((s, i) => !drop[i]);

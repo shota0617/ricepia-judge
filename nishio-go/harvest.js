@@ -4,7 +4,7 @@
 // ・成功の条件：①刈り残しがない ②刈ったあとのマスを通らない（むだ走り0） ③曲がる回数が目安＋2回まで（目安はいちばん少ない刈り方の回数）
 //   どれかひとつでもだめなら不成功。目安ちょうどなら「名人」。長い辺にそった往復や、外側からの回り刈りだと、曲がる回数が少なくなる
 // ・田んぼは3枚（だんだん広くなる）。成功すると次の田んぼへ。ごほうびは game.js の harvestReward（1日1回）
-// ・倉庫番のゲームのように：「↶ もどす」（Z・Backspace）で1マスずつ取り消せる（取り消した分は数えない）。田んぼごとの自己ベストを残し、
+// ・倉庫番のゲームのように：「↶ もどす」（Z・Backspace）で1マスずつ取り消せる（取り消した分は数えない）。田んぼごとの記録を静かに残し（結果では比べない。Townscaper）、
 //   開くと まだ成功していない田んぼから。結果の画面で、成功した田んぼと その次の田んぼを えらべる（game.js の miniBest）
 // ・絵は Blender で作ったもの：田んぼ（nishio-go/maptiles/paddy-gold.png・paddy-stubble.png）、コンバインと軽トラ（sprites.png）
 (() => {
@@ -110,7 +110,7 @@
     pos = h.pos; dir = h.dir; turns = h.turns; waste = h.waste; moves--;
     say('1マス もどしました');
   }
-  // 田んぼをえらぶボタン：成功した田んぼと、その次の田んぼ（★は自己ベスト）
+  // 田んぼをえらぶボタン：成功した田んぼと、その次の田んぼ（★は記録）
   function levelBtns() {
     const G = window.nishioGo;
     if (!G || !G.miniRecords) return '';
@@ -134,13 +134,12 @@
     shown = true; done = true;
     const r = judge(), G = window.nishioGo;
     const got = r.ok && G && G.harvestReward ? G.harvestReward(r.stars, lv) : null;
-    const mb = G && G.miniBest ? G.miniBest('harvest', lv, r.stars, turns, true) : null;
+    if (G && G.miniBest) G.miniBest('harvest', lv, r.stars, turns, true);   // 記録は静かに残すだけ
     const res = root.querySelector('.jump-result');
     const head = r.ok ? (r.stars === 3 ? '名人の刈り方！' : '刈り取り成功！') : (gaveUp && r.rest ? '刈り残しがあります' : '不成功');
     res.innerHTML = `<b>${head}</b>`
       + (r.ok ? `<span>${'★'.repeat(r.stars)}${'☆'.repeat(3 - r.stars)}　曲がった回数 ${turns}回（目安 ${par}回）</span>` : r.reasons.map(t => `<span>${t}</span>`).join(''))
       + (!r.ok ? '<span class="harvest-tip">ヒント：長い辺にそってまっすぐ往復するか、外がわからうずまきのように回ると、むだなく少ない曲がりで刈れます</span>' : '')
-      + (mb && mb.best ? `<span>${mb.fresh ? '自己ベスト更新！ ' : '自己ベスト '}${'★'.repeat(mb.best.s)}${'☆'.repeat(3 - mb.best.s)}　曲がった回数 ${mb.best.v}回</span>` : '')
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : r.ok && got === null && G && G.harvestReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + levelBtns()
       + `<span class="jump-btns"><button type="button" class="btn" data-hv="again">もういちど</button>${r.ok && lv < FIELDS.length - 1 ? '<button type="button" class="btn" data-hv="next">つぎの田んぼ</button>' : ''}<button type="button" class="btn" data-hv="close">もどる</button></span>`;

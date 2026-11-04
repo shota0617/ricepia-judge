@@ -1075,7 +1075,7 @@ function yatsuMushiReward(gotTarget, seenIds) {
   return { pts, fresh, newOnes: newOnes.length, total: S.yatsuMushi.length };
 }
 
-// ミニゲームの面ごとの自己ベスト（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
+// ミニゲームの面ごとの記録（結果の画面では更新を知らせず、静かに残すだけ。Townscaper）（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
 // 星が多いほど上。星が同じなら v が良いほど上（lower：v が小さいほど良い。稲刈りの曲がった回数）。成功（星1つ以上）だけ記録する
 function miniBest(game, level, stars, v, lower) {
   const all = S.mini || (S.mini = {}), list = all[game] || (all[game] = []), old = list[level] || null;

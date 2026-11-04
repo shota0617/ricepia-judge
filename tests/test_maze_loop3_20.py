@@ -14,32 +14,19 @@ def func_body(head):
 
 class MiniMap(unittest.TestCase):
     def test_functions_exist_and_wired(self):
-        for h in ("function drawMzMini(", "function mzMiniTick(", "function mzMiniMarks(", "function mzMiniState("):
+        # サイクル64：描画（drawMzMini）は廃止。記録層だけ残る
+        for h in ("function mzMiniTick(", "function mzMiniMarks(", "function mzMiniState("):
             self.assertIn(h, PIXEL)
         self.assertIn("mzMiniTick();", PIXEL)
-        self.assertIn("drawMzMini(w, vh, dpr);", PIXEL)
+        self.assertNotIn("drawMzMini", PIXEL)
 
-    def test_reuses_trail_no_second_count(self):
-        body = func_body("function drawMzMini(")
-        self.assertIn("mzTrail.values()", body)
+    def test_tick_has_no_storage(self):
         self.assertNotIn("localStorage", func_body("function mzMiniTick("))
-
-    def test_unexplored_not_drawn_and_goal_only_when_seen(self):
-        body = func_body("function drawMzMini(")
-        self.assertIn("mzMini.seen", body)
-        self.assertNotIn("mzRt.path", body)       # ゴールは seen 経由のみ
-        self.assertNotIn("mzType(", body)         # 未探索の通路・壁を引かない
         self.assertIn("Math.hypot", func_body("function mzMiniTick("))
 
     def test_reset_rules(self):
         self.assertRegex(PIXEL, r"mzMini\.seen\.clear\(\);[^\n]*\n\s*mzTrail\.clear\(\);")
         self.assertRegex(PIXEL, r"!mazeOn\(\) && mzMini\.seen\.size\) mzMini\.seen\.clear\(\)")
-
-    def test_display_only(self):
-        body = func_body("function drawMzMini(")
-        self.assertNotIn("addEventListener", body)
-        self.assertNotIn("pointer", body)
-        self.assertIn("mzHudRects(", body)
 
     def test_test_hooks(self):
         self.assertIn("mini: () => mzMiniState()", PIXEL)
@@ -53,7 +40,7 @@ class MiniMap(unittest.TestCase):
         self.assertIn("mzCache.dist <= MZ_CACHE.show", body)
 
     def test_no_forbidden_words(self):
-        seg = PIXEL[PIXEL.index("// 手描き探索マップ"):PIXEL.index("// びゅんパネル（運営者の声")]
+        seg = PIXEL[PIXEL.index("// 見えたしるしの記録（表示はサイクル64で廃止"):PIXEL.index("// びゅんパネル（運営者の声")]
         self.assertNotIn("ぼく", seg)
         self.assertNotRegex(seg, r"抹茶.{0,6}20")
 

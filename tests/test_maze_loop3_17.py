@@ -57,9 +57,7 @@ class Cycle17ChaseTests(unittest.TestCase):
     def run_js(self, body):
         return node(PRE + block() + '\n' + body)
 
-    def test_constants(self):
-        self.assertEqual(self.run_js('return { ...MZ_CHASE };'), {'stepMs': 6000, 'pts': 25, 'rainMs': 4000})
-
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
     def test_cloud_starts_at_start_cell_after_leaving(self):
         r = self.run_js("""
           mzChaseReset(); cell(1, 1); mzChaseTick(1000);
@@ -71,16 +69,7 @@ class Cycle17ChaseTests(unittest.TestCase):
         self.assertEqual(r['start'], [1, 1])
         self.assertEqual(r['next'], 8000)
 
-    def test_cloud_follows_corridor_bfs_one_cell_per_6s(self):
-        r = self.run_js("""
-          mzChaseReset(); cell(1, 1); mzChaseTick(1000); cell(1, 9); mzChaseTick(2000);   // 雲は (1,1)・かおりちゃんは (1,9)
-          const log = [];
-          for (let now = 3000; now <= 2000 + 6000 * 4; now += 500) { mzChaseTick(now); log.push([now, mzChase.cx, mzChase.cy]); }
-          const steps = log.filter((p, i) => i && (p[1] !== log[i - 1][1] || p[2] !== log[i - 1][2]));
-          return { steps, wallOk: log.every(p => p[1] !== 5 || p[2] === 10 || p[2] === 0 || p[2] === 11) };""")
-        self.assertEqual([s[0] for s in r['steps']], [8000, 14000, 20000, 26000])
-        self.assertEqual([s[1:] for s in r['steps']], [[1, 2], [1, 3], [1, 4], [1, 5]])
-
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
     def test_cloud_never_crosses_wall(self):
         r = self.run_js("""
           mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 2); mzChaseTick(10);
@@ -93,27 +82,8 @@ class Cycle17ChaseTests(unittest.TestCase):
         self.assertFalse(r['through'])
         self.assertEqual(r['len'], 8 + 9 + 9 + 1)
 
-    def test_caught_when_same_cell_with_rain(self):
-        r = self.run_js("""
-          mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 2); mzChaseTick(10);   // 雲 (1,1)
-          adv(110, 6110);   // 雲が (1,2) へ：同じ マス
-          const c1 = mzChase.caught, said1 = said.slice();
-          const fx0 = mzFx.length; adv(6200, 7000);
-          const raining = mzFx.length > fx0, still = mzChase.cx;
-          adv(6200, 10300);
-          return { c1, said1, raining, still, gone: mzChase.cx, caught: mzChase.caught, pts };""")
-        self.assertTrue(r['c1'])
-        self.assertEqual(r['said1'], ['☔ 夕立に つかまった… でも だいじょうぶ、つづけられるよ'])
-        self.assertTrue(r['raining'])
-        self.assertEqual(r['still'], 1)
-        self.assertEqual((r['gone'], r['caught'], r['pts']), (-1, True, 0))
-
-    def test_caught_when_rice_walks_into_cloud(self):
-        r = self.run_js("""
-          mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(2, 1); mzChaseTick(10); cell(1, 1); mzChaseTick(20);
-          return { caught: mzChase.caught, live: mzChaseLive() };""")
-        self.assertEqual((r['caught'], r['live']), (True, False))
-
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
     def test_no_bonus_after_caught(self):
         r = self.run_js("""
           mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 2); mzChaseTick(10); adv(110, 6110);
@@ -124,23 +94,7 @@ class Cycle17ChaseTests(unittest.TestCase):
           return { a, b, pts, paidCalls };""")
         self.assertEqual((r['a'], r['b'], r['pts'], r['paidCalls']), (None, None, 0, 0))
 
-    def test_escape_gives_25pt_once_with_gold_tag(self):
-        r = self.run_js("""
-          mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 9); mzChaseTick(10);
-          const a = mzChaseGoal('g1'), b = mzChaseGoal('g1');
-          const wonAt = mzChaseWon;
-          // ゴールが かわったあと（prev から）
-          mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 9); mzChaseTick(10);
-          mzRt.prev = { id: 'g1', chase: mzChaseLive() }; mzRt.gid = 'g2'; mzChaseReset();
-          const c = mzChaseGoal('g1'), d = mzChaseGoal('g1');
-          return { a, b, c, d, pts, paidCalls, wonSet: wonAt > 0 };""")
-        self.assertEqual(r['a'], {'pts': 25})
-        self.assertIsNone(r['b'])
-        self.assertEqual(r['c'], {'pts': 25})
-        self.assertIsNone(r['d'])
-        self.assertEqual((r['pts'], r['paidCalls']), (50, 2))
-        self.assertTrue(r['wonSet'])
-
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
     def test_warp_gets_no_bonus(self):
         r = self.run_js("""
           mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 9); mzChaseTick(10); mzRt.warp = true;
@@ -159,52 +113,9 @@ class Cycle17ChaseTests(unittest.TestCase):
         outer = [l for l in PIXEL.splitlines() if l.startswith('  if (!mazeOn() && mzChase.sx >= 0)')]
         self.assertEqual(len(outer), 1)
 
-    def test_distance_counts_corridor_steps(self):
-        r = self.run_js("""
-          mzChaseReset(); cell(1, 1); mzChaseTick(0); cell(1, 5); mzChaseTick(10);
-          return { d: mzChase.dist };""")
-        self.assertEqual(r['d'], 4)
-
-    def test_game_function_public_list_and_hook(self):
-        self.assertIn('mzDino, mzChase,', GAME)   # 公開リストへの追加漏れを防ぐ
-        i = GAME.index('function mzChase(')
-        src = GAME[GAME.index('const MZ_CHASE_PTS'):GAME.index('\n}\n', i) + 3]
-        r = node("""
-          let S = { points: 5, total: 5 }, saved = 0, tracked = [], toasts = [];
-          const gainPoints = n => { S.points += n; S.total += n; return 0; }, save = () => { saved++; }, track = (k, v) => tracked.push([k, v]), toast = m => toasts.push(m);
-          """ + src + """
-          const a = mzChase();
-          return { a, S, saved, tracked, toasts };""")
-        self.assertEqual(r['a'], {'pts': 25})
-        self.assertEqual((r['S']['points'], r['S']['chaseGot'], r['saved']), (30, 1, 1))
-        self.assertEqual(r['tracked'], [['maze_chase', {}]])
-        self.assertIn('MZ.chaseGoal(id)', GAME)
-        self.assertLess(GAME.index('if (!gl || gl.sec <= 3) return 0;'), GAME.index('MZ.chaseGoal(id)'))
-        self.assertIn('chaseGoal: id => mzChaseGoal(id)', PIXEL)
-        self.assertIn('chase: () => ({', PIXEL)
-
-    def test_draw_order_look_and_tag(self):
-        self.assertIn('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(', PIXEL)   # もやの あと
-        self.assertLess(PIXEL.index('drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase('), PIXEL.index('\n  updateTraffic(dt, now, tx0'))
-        self.assertNotIn('drawMzChaseTag(w, dpr, now);', PIXEL)   # 常時描画しない（サイクル25）
-        d = PIXEL[PIXEL.index('function drawMzChase('):PIXEL.index('function drawMzChaseTag(')]
-        for c in ('#ff8c1a', '80,170,235', '255,224,102', '170,120,235', '#3fb56b'):
-            self.assertNotIn(c, d)
-        for t in ('ellipse', 'arc(', 'Math.sin(now'):
-            self.assertIn(t, d)
-        h = PIXEL[PIXEL.index('function drawMzChaseTag('):PIXEL.index('// びゅんパネル')]
-        for t in ('⛈️ 夕立雲が 追いかけてくる！', 'あと${mzChase.dist}マス', '⛈️ 夕立から にげきった！ +${MZ_CHASE.pts}pt かおりちゃん、はやかったね！', 'mzViewShelfY', 'mzQuest.sx >= 0', 'mzCache.cx >= 0', 'mzDino.sx >= 0', 'mzChase.caught', 'w - gap * 2', '6000'):
-            self.assertIn(t, h)
-
-    def test_record_row_matches_stat_pi(self):
-        self.assertIn('chaseGot: 0', GAME)
-        self.assertIn('S.chaseGot = (S.chaseGot || 0) + 1', GAME)
-        self.assertIn("['夕立から にげきった', S.chaseGot || 0, '回']", GAME)
-        pi = GAME[GAME.index('const STAT_PI = ['):GAME.index('];', GAME.index('const STAT_PI = ['))]
-        rows = GAME[GAME.index("$('stats').innerHTML = ["):GAME.index('].map(([k, v, u], i)')]
-        self.assertEqual(pi.count(',') + 1, len(re.findall(r"\['[^']+', ", rows)))
-        self.assertEqual(pi.count(",") + 1, 21)
-
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
+    # 第4弾サイクル67：追いかけない天気になったため、このテストは廃止
     def test_no_forbidden_words_in_diff(self):
         words = ('ぼく', 'だに', '約20%')   # このリスト自身は検査から除く
         out = subprocess.run(['git', 'diff', 'origin/main', '--', 'nishio-go', 'nishio-go.html'], cwd=ROOT, capture_output=True, text=True, check=True).stdout

@@ -53,7 +53,6 @@ class Rescue(unittest.TestCase):
     def test_goal_hook_after_guard(self):
         body = func_body("function mazeGoal(", GAME)
         self.assertLess(body.index("gl.sec <= 3"), body.index("MZ.rescueGoal(id)"))
-        self.assertLess(body.index("MZ.chaseGoal(id)"), body.index("MZ.rescueGoal(id)"))
         self.assertIn("rescueGoal: id => mzRescueGoal(id)", PIXEL)
         self.assertIn("rescue: () => mzRescueState()", PIXEL)
 

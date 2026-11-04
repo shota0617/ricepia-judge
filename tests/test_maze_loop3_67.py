@@ -79,8 +79,8 @@ class Draw(unittest.TestCase):
 class Wire(unittest.TestCase):
     def test_call_once_between_glide_and_chase(self):
         row = next(l for l in PIXEL.splitlines() if "drawMzFogVeil(tx0" in l and "mazeOn()" in l)
-        self.assertEqual(PIXEL.count("drawMzStormRing(ox, oy, T, now);"), 1)
-        self.assertIn("drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now);", row)
+        self.assertEqual(PIXEL.count("drawMzStormRing(ox, oy, T, now);"), 0)   # 第4弾サイクル67：追いかけないので嵐の輪は呼ばない
+        self.assertIn("drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now);", row)
 
 
 class Scope(unittest.TestCase):

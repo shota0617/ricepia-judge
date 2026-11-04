@@ -3961,9 +3961,9 @@ function groundAt(x, y) {
   return GROUND.dirt;
 }
 // ころころコンボ（運営者の声「クセになる転がり方を研究」）：かべに 当たらずに 転がりつづけると、コトンの たびに 数が ふえ、音が ドレミソラ…と 1音ずつ 高く なる（転がるだけで メロディに。
-// 当てるたびに 音が 上がっていく ゲームの 気持ちよさ）。3から お米の 右よこに「×12」（下に 小さく じぶんの ベスト）、5ごとに きらきら、10ごとに「🎵 ころころ ×20！」。当たる・止まると おしまい。じぶんの ベストを こえた その場で「🏅」。
-// ポイントは つけない（同じ所を ぐるぐる しても もうからない。音と 数と ベストだけの 楽しみ）。ベストは この端末（nsg_combo_best）
-const combo = { n: 0, quietT: 0, shown: 0, beat: false, beatN: 0, near: 0, best: (() => { try { return +localStorage.getItem('nsg_combo_best') || 0; } catch (e) { return 0; } })() };
+// 当てるたびに 音が 上がっていく ゲームの 気持ちよさ）。3から お米の 右よこに「×12」、5ごとに きらきら、10ごとに「🎵 ころころ ×20！」。当たる・止まると おしまい。
+// ポイントは つけない（同じ所を ぐるぐる しても もうからない。音と 数だけの 楽しみ。第4弾サイクル67：ベストは 持たない・比べない＝今の 転がりだけを 楽しむ）
+const combo = { n: 0, quietT: 0, shown: 0, beat: false, beatN: 0, near: 0, best: 0 };   // best：テスト用の 互換（今の 数と 同じ。保存も 比べも しない）
 const PENTA = [0, 2, 4, 7, 9];
 function comboNote(n, v) {   // ドレミソラ（五音の 音階）を 下から。2オクターブ 上まで いったら そこで くり返す
   const a = sfxCtx();
@@ -3977,13 +3977,8 @@ function comboNote(n, v) {   // ドレミソラ（五音の 音階）を 下か�
   } catch (e) { /* 音が出せない端末 */ }
 }
 function comboStep() {
-  combo.shown = performance.now();
+  combo.shown = performance.now(); combo.best = combo.n;   // best：テスト用の 互換（いつも 今の 数と 同じ）
   if (combo.n > mzRt.run.combo) mzRt.run.combo = combo.n;   // この ゴールまでの いちばん 長い コンボ
-  if (!combo.beat && combo.best >= 5 && combo.n > combo.best) {   // 転がっている うちに ベストを こえた：その場で 知らせる（「あと 少しで ベスト」を 追いかける 楽しみ）
-    combo.beat = true; combo.beatN = combo.n; chordSound(); floatText('🏅 ベスト こえたじゃん！');   // 数は すぐ 横の「×9」に 出て いるので 書かない（運営者の声「文字は 少なく」2026-10-29）。知らせは ゲームの 人たちと 同じ 三河弁（運営者の声「西尾らしく」）
-    const now = performance.now(), cols = ['#ff9fd0', '#ffe066', '#ffffff'];
-    for (let i = 0; i < 24; i++) { const t = Math.random() * Math.PI * 2, v = 2 + Math.random() * 3.5; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3.5, c: cols[i % 3], life: 0.7 + Math.random() * 0.5 }); }
-  }
   if (combo.n % 5 === 0) {   // 5ごとに きらきら。10ごとは 文字の かわりに 大きな きらきら（数は お米の よこの「×N」で 見えて いる。同じ ことを 2か所に 書かない。運営者の声「文字は 少なく」2026-10-28）
     const now = performance.now(), cols = ['#fff6c2', '#ffd23f', '#9be07a', '#7fd8f6'], big = combo.n % 10 === 0;
     if (big) combo.pop = now;   // テスト用（大きな きらきらの 時こく）
@@ -3992,14 +3987,8 @@ function comboStep() {
 }
 function comboEnd() {
   const n = combo.n, beat = combo.beat;
-  combo.n = 0; combo.quietT = 0; combo.beat = false;
+  combo.n = 0; combo.best = 0; combo.quietT = 0; combo.beat = false;
   if (n < 5) return;
-  if (n > combo.best) {
-    combo.best = n; combo.near = 0; try { localStorage.setItem('nsg_combo_best', String(n)); } catch (e) { /* noop */ }
-    // 転がる うちに「ベスト こえたじゃん！」と 出した ×9 の まま おわった ときは、おわりの「あたらしい ベスト ×9」は 出さない（同じ 数を 2回 つづけて 出していた。自分で 遊んで 分かった）
-    if (!beat || n > combo.beatN) floatText(beat ? `🏅 あたらしい ベスト ×${n}！ やったじゃん` : `🏅 ころころ ベスト ×${n}！ やったじゃん`);
-  }
-  else if (combo.best - n <= 2 && n > combo.near) { combo.near = n; floatText(`おしい！ あと${combo.best - n + 1}`); }   // 文字は みじかく、とても 近い（あと1〜3）ときだけ（運営者の声「文字は 少なく」：200秒で「おしい！ ベストまで あと4だったじゃん」が 5回 出た。自分で 遊んで 分かった 2026-10-29）。あと 少しで ベスト：もう 1回 やりたく なる（ベストに ならんだ ときも「あと1」）。同じ ベストには、前より 近づいた ときだけ（自分で 遊んで 分かった：めいろで 迷う 間、2分で 7回「あと4」が 出た）
   if (G.track) G.track('roll_combo', { n, best: combo.best });
 }
 // スピード線（運営者の声「スキルを繰り返す」3回目）：びゅんパネルで 加速しても 見た目が あまり かわらず、速さを 目で 感じにくかった。
@@ -4030,11 +4019,6 @@ function drawCombo(x, y, u, now) {   // お米の 右よこに「×12」（数�
   ctx.lineWidth = Math.max(3, sz / 4); ctx.strokeStyle = '#1a1a1a'; ctx.fillStyle = combo.n >= 30 ? '#ff9fd0' : combo.n >= 20 ? '#7fd8f6' : combo.n >= 10 ? '#ffe066' : '#ffffff';
   const t = `×${combo.n}`;
   ctx.strokeText(t, x, y); ctx.fillText(t, x, y);
-  if (combo.best >= 5) {   // その下に 小さく ベスト「🏅9」（こえたら「🏅」だけ。こえた ことは 浮かぶ 文字と 音で 分かるので 2か所に 書かない。運営者の声「文字は 少なく」2026-10-29）
-    const s2 = Math.round(13 * u), y2 = y + sz * 0.5 + s2 * 0.8, t2 = combo.n > combo.best ? '🏅' : `🏅${combo.best}`;
-    ctx.font = `bold ${s2}px "DotGothic16", sans-serif`; ctx.lineWidth = Math.max(2, s2 / 4); ctx.fillStyle = combo.n > combo.best ? '#ff9fd0' : '#d9e6d0';
-    ctx.strokeText(t2, x, y2); ctx.fillText(t2, x, y2);
-  }
 }
 function riceFeel(dt, speed) {
   if (combo.n) { combo.quietT = speed < 0.6 ? combo.quietT + dt : 0; if (combo.quietT > 0.7) comboEnd(); }   // 止まったら おしまい
@@ -7896,7 +7880,7 @@ function frame(now) {
 
   drawWaterCorners(tx0, ty0, tx1, ty1, ox, oy, T, f);   // 角だけで接する水路をつなぐ
   if (!gbOn) drawContours(tx0, ty0, tx1, ty1, ox, oy, T);   // 本当の高低差（国土地理院の標高）の等高線
-  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawRollPath(ox, oy, T, now); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzStormRing(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
+  if (mazeOn()) { drawMzFogTint(tx0, ty0, tx1, ty1, ox, oy, T); drawMzPebs(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTiles(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTerritory(tx0, ty0, tx1, ty1, ox, oy, T); drawMzTrail(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMaze(tx0, ty0, tx1, ty1, ox, oy, T); drawRollPath(ox, oy, T, now); drawMzGates(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzPads(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzGrains(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzFruit(ox, oy, T, now); drawMzPiece(ox, oy, T, now); drawMzView(ox, oy, T, now); drawMzCache(ox, oy, T, now); drawMzQuest(ox, oy, T, now); drawMzDino(ox, oy, T, now); drawMzDinoSonar(ox, oy, T, now); if (mzHelpOn()) drawMzDeadEnds(tx0, ty0, tx1, ty1, ox, oy, T); else mzHelp.dead = 0; drawMzHint(ox, oy, T, now); drawMzDots(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzCrows(ox, oy, T, now); drawMzSpring(ox, oy, T, now); drawMzCritters(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorch(ox, oy, T, now); drawMzBrigade(ox, oy, T, now); drawMzPurify(ox, oy, T, now); drawMzRescue(ox, oy, T, now); drawMzCube(ox, oy, T, now); drawMzFogVeil(tx0, ty0, tx1, ty1, ox, oy, T, now); drawMzTorchLight(ox, oy, T, now); drawMzSightRing(ox, oy, T, now); drawMzPulse(ox, oy, T, now); drawMzCacheGlow(ox, oy, T, now); drawMzGlide(ox, oy, T, now); drawMzChase(ox, oy, T, now); drawMzEnergyRing(ox, oy, T, now); drawMzEnergyAura(ox, oy, T, now); drawMzEnergyStars(ox, oy, T, now); drawMzTorchFlame(ox, oy, T, now); drawMzBrigadeMates(ox, oy, T, now); drawMzQuestCarry(ox, oy, T, now); drawMzPurifyPetals(ox, oy, T, now); drawMzRescueMate(ox, oy, T, now); drawMzRescueRing(ox, oy, T, now); drawMzCubeBig(ox, oy, T, now); }   // 転がす ときは 地図が めいろ（と 道しるべ）
   if (!mazeOn()) drawRollPath(ox, oy, T, now);   // コロコロの跡（迷路のときは迷路ブロックの中で壁の後・小物ともやの前に描く。スポット・主人公より下）
   updateTraffic(dt, now, tx0, ty0, tx1, ty1);   // 町を走る電車・車・船
   drawTraffic(ox, oy, T, w, h);
@@ -9263,7 +9247,7 @@ function mzRoute(now) {
     if (rp.x !== null) mzMvStep(mzMv, Math.floor(rp.x / MZ_K), Math.floor(rp.y / MZ_K), now);   // 着いた こまの 移動まで 前の ゴールに 数えてから（足あとの 数えは この あと）
     if (mzRt.gid) mzRt.prev = { id: mzRt.gid, t0: mzRt.t0, len0: mzRt.len0, warp: mzRt.warp, at: now, sec: mzRt.t0 ? (now - mzRt.t0) / 1000 : 0, moves: mzMv.n, run: { ...mzRt.run }, chase: !mzRt.warp && mzChaseLive(), rescue: !mzRt.warp && mzRescueLive() };   // chase：夕立雲に つかまらずに 着いた（逃げきりの 札の もと）。moves：通った マスの 数（同じ マスを また 通っても 数える。まよわず 来られたか）
     mzMvReset(mzMv);   // 着いた ときの 時間で 止める（チェックインまでに 窓を 読む 時間を 足さない）
-    mzRt.warp = false; mzRt.run = { dots: 0, pads: 0, combo: 0 };
+    mzRt.warp = false; mzRt.run = { dots: 0, pads: 0, combo: 0 }; mzPad.chain = mzPad.best = 0;   // びゅんの れんさも この道の 間だけ
     mzFruitReset();   // くだものは 迷路（ゴール）ごとに はじめから
     mzPieceReset();   // 地図ピースも 迷路（ゴール）ごとに はじめから
     mzViewReset();   // 見晴らし台も 迷路（ゴール）ごとに はじめから
@@ -10799,14 +10783,13 @@ function drawMzDinoTag(w, dpr, now) {   // 足跡札（迷路の 間だけ。農
   ctx.fillStyle = fin ? 'rgba(90,60,0,.75)' : 'rgba(10,20,30,.6)'; ctx.fillRect(Math.round(w / 2 - bw / 2), y0, bw, bh);
   ctx.fillStyle = fin ? '#ffe27a' : '#e0f5e4'; ctx.fillText(t, w / 2, y0 + bh / 2);
 }
-// 夕立雲の にげきりラン（Zombies, Run! の「追いかけてくる なにかから にげきる」）：迷路が はじまると、かおりちゃんが スタートを 出た あと、西尾の 夏の 夕立雲が スタートの マスから 追ってくる。
-// 通路だけを 最短で 6秒ごとに 1マス。ゴールに 着くまで つかまらなければ +25pt（つかまっても 迷路は そのまま つづけられる）。敵は 出さない。雲は 地面の 天気で、ほかの ボーナスの マスは さまたげない。
-// 位置は この 画面の 間だけ（セーブは 増やさない。ポイントと 逃げきり回数だけ game.js の mzChase が 保存）
-const MZ_CHASE = { stepMs: 6000, pts: 25, rainMs: 4000 };   // 雲が 1マス すすむ 間隔・逃げきりの ポイント・つかまった ときの 雨の 長さ
-const mzChase = { sx: -1, sy: -1, cx: -1, cy: -1, fx: -1, fy: -1, moveAt: 0, next: 0, last: 0, caught: false, caughtAt: 0, rainAt: 0, paid: false, dist: -1, dkey: '' };   // sx sy：スタート・cx cy：雲の マス・fx fy：ひとつ前の マス（なめらかに 動かす）・next：つぎに すすむ 時刻
-let mzChaseWon = 0;   // 逃げきった 時刻（金色の 札を 約6秒）
+// 夕立雲（第4弾サイクル67：追いかけない。参考ゲーム Lake＝追いかけて くるもの・制限時間・ベストの ない 郵便の ゲーム）：雲は スタートの 近くに ゆっくり 漂う 天気。
+// 追いかけない・つかまらない・ポイントも 札も 嵐の 輪も ない。位置は この 画面の 間だけ（セーブは 増やさない）
+const MZ_CHASE = { stepMs: 6000, pts: 0, rainMs: 4000 };   // 雲が ふわっと 動く 間隔
+const mzChase = { sx: -1, sy: -1, cx: -1, cy: -1, fx: -1, fy: -1, moveAt: 0, next: 0, last: 0, caught: false, caughtAt: 0, rainAt: 0, paid: false, dist: -1, dkey: '' };   // sx sy：スタート・cx cy：雲の マス・fx fy：ひとつ前の マス（なめらかに 動かす）・next：つぎに 漂う 時刻
+let mzChaseWon = 0;   // 逃げきりは なくなった（いつも 0）
 function mzChaseReset() { Object.assign(mzChase, { sx: -1, sy: -1, cx: -1, cy: -1, fx: -1, fy: -1, moveAt: 0, next: 0, last: 0, caught: false, caughtAt: 0, rainAt: 0, paid: false, dist: -1, dkey: '' }); }
-function mzChaseLive() { return mzChase.sx >= 0 && !mzChase.caught && !mzChase.paid; }   // まだ つかまっていない（逃げきりの チャンスが ある）
+function mzChaseLive() { return false; }   // 追いかけて こないので「逃げきり」の チャンスは いつも ない
 function mzChaseWay(sx, sy, tx, ty) {   // 雲から かおりちゃんまでの 通路だけの 最短経路（マスの 列。見つからなければ 空）。壁は すり抜けない
   const prev = new Map([[sx + ',' + sy, null]]), q = [[sx, sy]];
   for (let h = 0; h < q.length; h++) {
@@ -10825,99 +10808,40 @@ function mzChaseWay(sx, sy, tx, ty) {   // 雲から かおりちゃんまでの
   }
   return [];
 }
-function mzChaseCatch(now) {   // 雲と かおりちゃんが 同じ マス：つかまった（ペナルティなし。逃げきりの チャンスだけ なくなる）
-  mzChase.caught = true; mzChase.caughtAt = now; mzChase.rainAt = 0; dirty = true;
-  floatText('☔ 夕立に つかまった… でも だいじょうぶ、つづけられるよ');
-}
 function mzChaseTick(now) {
   if (rp.x === null) return;
   const a = Math.floor(rp.x / MZ_K), b = Math.floor(rp.y / MZ_K);
   if (mzChase.sx < 0) { mzChase.sx = a; mzChase.sy = b; mzChase.last = now; }   // 迷路の スタート（ゴールが きまった ときの お米の マス）
-  const gap = now - mzChase.last;
   mzChase.last = now;
-  if (mzChase.caught) {   // 雨の アニメ：約4秒、雲の 上の 雨粒と 画面の しずく。そのあと 雲は 消える
-    if (mzChase.cx < 0) return;
-    if (now - mzChase.caughtAt >= MZ_CHASE.rainMs) { mzChase.cx = mzChase.cy = -1; dirty = true; return; }
-    if (now >= mzChase.rainAt) {
-      mzChase.rainAt = now + 220;
-      const cols = ['#9fd4ff', '#ffffff', '#6fb4ee'];
-      for (let i = 0; i < 6; i++) mzFx.push({ t0: now, vx: (Math.random() - 0.5) * 3, vy: 1 + Math.random() * 2, c: cols[i % 3], life: 0.5 + Math.random() * 0.4 });
-    }
-    dirty = true;
-    return;
-  }
-  if (mzChase.paid) return;
-  if (mzChase.cx < 0) {   // かおりちゃんが スタートを 出たら、雲が スタートの マスから 出発
+  if (mzChase.cx < 0) {   // かおりちゃんが スタートを 出たら、雲が スタートの マスに 浮かぶ
     if (a === mzChase.sx && b === mzChase.sy) return;
     mzChase.cx = mzChase.fx = mzChase.sx; mzChase.cy = mzChase.fy = mzChase.sy; mzChase.moveAt = now; mzChase.next = now + MZ_CHASE.stepMs; dirty = true;
-  } else if (gap > 1000) mzChase.next += gap;   // 止まって いた 間（タブを はなれた など）は 雲も 待つ
-  if (a === mzChase.cx && b === mzChase.cy) { mzChaseCatch(now); return; }   // お米が 雲の マスに 入った
-  for (let n = 0; now >= mzChase.next && n < 4; n++) {   // 6秒ごとに 1マス（時間ベース。お米の 動きとは べつ）
-    mzChase.next += MZ_CHASE.stepMs;
-    const way = mzChaseWay(mzChase.cx, mzChase.cy, a, b);
-    if (way.length < 2) continue;
-    mzChase.fx = mzChase.cx; mzChase.fy = mzChase.cy; mzChase.cx = way[1][0]; mzChase.cy = way[1][1]; mzChase.moveAt = now; mzChase.dkey = ''; dirty = true;
-    if (mzChase.cx === a && mzChase.cy === b) { mzChaseCatch(now); return; }
+    return;
   }
-  const k = a + ',' + b + '/' + mzChase.cx + ',' + mzChase.cy;
-  if (k !== mzChase.dkey) { mzChase.dkey = k; const way = mzChaseWay(mzChase.cx, mzChase.cy, a, b); mzChase.dist = way.length ? way.length - 1 : -1; }   // 雲と かおりちゃんの 間の 歩数（マスが かわった ときだけ 数える）
+  if (now < mzChase.next) return;
+  mzChase.next = now + MZ_CHASE.stepMs;
+  const opts = MZ_DIRS.map(([dx, dy]) => [mzChase.cx + dx, mzChase.cy + dy, dx, dy]).filter(([nx, ny, dx, dy]) => mzType(nx, ny) === 1 && mzOpen(mzChase.cx, mzChase.cy, dx, dy) && Math.abs(nx - mzChase.sx) + Math.abs(ny - mzChase.sy) <= 2);   // スタートの 近く（2マスまで）で ゆっくり 漂う。お米は 追わない
+  if (!opts.length) return;
+  const o = opts[Math.floor(Math.random() * opts.length)];
+  mzChase.fx = mzChase.cx; mzChase.fy = mzChase.cy; mzChase.cx = o[0]; mzChase.cy = o[1]; mzChase.moveAt = now; dirty = true;
 }
-function mzChaseGoal(id) {   // 迷路の ゴールに 本当に 着いた とき（game.js の mazeGoal から）。つかまっていなければ +25pt と 逃げきりの 札
-  if (!mazeOn()) return null;
-  const pv = mzRt.prev;
-  let ok = false;
-  if (mzRt.gid === id) ok = !mzRt.warp && mzChaseLive();
-  else if (pv && pv.id === id) ok = !!pv.chase;
-  if (!ok) return null;
-  const r = G.mzChase && G.mzChase();
-  if (!r) return null;
-  if (pv && pv.id === id) pv.chase = false;
-  if (mzRt.gid === id) mzChase.paid = true;
-  const now = performance.now();
-  mzChaseWon = now; mzChase.cx = mzChase.cy = -1;
-  grainSound(); roll.happyT = 1.2; dirty = true;
-  const cols = ['#ffe27a', '#ffffff', '#bfc8d4'];
-  for (let i = 0; i < 18; i++) { const t = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; mzFx.push({ t0: now, vx: Math.cos(t) * v, vy: Math.sin(t) * v - 3, c: cols[i % 3], life: 0.6 + Math.random() * 0.4 }); }
-  return r;
-}
+function mzChaseGoal(id) { return null; }   // 逃げきりボーナスは なくなった（追いかけない 天気）
 function drawMzChase(ox, oy, T, now) {   // 灰色の 雲（丸を 重ねた 形）と 雨粒。もやに 覆われない ように もやの あとに 描く。つかまった ときは 約4秒 雨と 画面の しずく
   if (mzChase.cx < 0) return;
   const q = Math.max(1, Math.round(T / 8)), k = Math.min(1, (now - mzChase.moveAt) / 600), e = k * k * (3 - 2 * k);
   const fx = mzChase.fx < 0 ? mzChase.cx : mzChase.fx, fy = mzChase.fy < 0 ? mzChase.cy : mzChase.fy;
   const on = mzOn((fx + (mzChase.cx - fx) * e + 0.5) * MZ_K, (fy + (mzChase.cy - fy) * e + 0.5) * MZ_K), X = Math.round(ox + on[0] * T), Y = Math.round(oy + on[1] * T + Math.sin(now / 500) * T * 0.04 - T * 0.15), r = Math.max(5, T * 0.5);
-  const dark = mzChase.caught ? '#5d6670' : '#7d8794';
+  const dark = '#7d8794';
   ctx.fillStyle = 'rgba(40,46,56,.28)'; ctx.beginPath(); ctx.ellipse(X, Y + r * 1.15, r * 1.1, r * 0.25, 0, 0, Math.PI * 2); ctx.fill();   // 地面の かげ
   ctx.fillStyle = dark;
   for (const [dx, dy, rr] of [[-0.7, 0.1, 0.5], [0.7, 0.1, 0.5], [-0.3, -0.35, 0.6], [0.35, -0.3, 0.55], [0, 0.2, 0.6]]) { ctx.beginPath(); ctx.arc(X + dx * r, Y + dy * r, rr * r, 0, Math.PI * 2); ctx.fill(); }
   ctx.fillStyle = 'rgba(205,212,222,.55)'; ctx.beginPath(); ctx.arc(X - 0.3 * r, Y - 0.5 * r, 0.3 * r, 0, Math.PI * 2); ctx.fill();   // 雲の てり
-  ctx.fillStyle = mzChase.caught ? '#6fb4ee' : '#aab4c2';
-  const n = mzChase.caught ? 6 : 3;
+  ctx.fillStyle = '#aab4c2';
+  const n = 3;
   for (let i = 0; i < n; i++) {   // 雨粒（しずくの 形：細い 楕円）。つかまった あいだは 多く
     const ph = ((now / 600) + i / n) % 1, dx = (i / (n - 1 || 1) - 0.5) * r * 1.6;
     ctx.beginPath(); ctx.ellipse(X + dx, Y + r * 0.7 + ph * r * 1.1, Math.max(1, q * 0.7), Math.max(2, q * 1.6), 0, 0, Math.PI * 2); ctx.fill();
   }
-}
-function drawMzChaseTag(w, dpr, now) {   // 追跡札（迷路の 間だけ。ピース棚・手がかり札・クエスト札・足跡札の 下）。逃げきった あと 約6秒は 金色の 札。つかまった あとは 出さない
-  if (mzChase.sx < 0 || mapCovered(true) || mzBanner.t0) return;
-  const fin = now - mzChaseWon < 6000;
-  if (!fin && (mzChase.cx < 0 || mzChase.caught || mzChase.paid)) return;
-  const S = Math.round(MZ_CLOCK_PX * dpr), gap = Math.round(S * 0.35);
-  let y0 = mzViewShelfY(w, dpr, now);
-  if (mzView.panoAt && now - mzView.panoAt < MZ_VIEW.panoMs) y0 += Math.round(S * 1.6) + gap * 2;
-  else if (mzViewClear(now)) y0 += Math.round(S * 1.4) + gap;
-  if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;   // 手がかり札の 下
-  if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;   // クエスト札の 下
-  if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;   // 足跡札の 下
-  const t = fin ? `⛈️ 夕立から にげきった！ +${MZ_CHASE.pts}pt かおりちゃん、はやかったね！` : '⛈️ 夕立雲が 追いかけてくる！' + (mzChase.dist >= 0 ? ` あと${mzChase.dist}マス` : '');
-  ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  let bw = Math.round(ctx.measureText(t).width) + gap * 4;
-  if (bw > w - gap * 2) {   // 狭い画面では文字を小さくして札を画面内に収める
-    const fs = Math.max(8, Math.floor(13 * dpr * (w - gap * 2) / bw));
-    ctx.font = `${fs}px sans-serif`; bw = Math.round(ctx.measureText(t).width) + gap * 4;
-  }
-  const bh = Math.round(S * 1.4);
-  ctx.fillStyle = fin ? 'rgba(90,60,0,.75)' : 'rgba(30,36,46,.65)'; ctx.fillRect(Math.round(w / 2 - bw / 2), y0, bw, bh);
-  ctx.fillStyle = fin ? '#ffe27a' : '#dfe6ef'; ctx.fillText(t, w / 2, y0 + bh / 2);
 }
 // さんぽエネルギー（Walkr：歩くこと自体が エネルギーに なる）：迷路で お米が マスを 1つ すすむたびに ゲージが 1 たまり、36で 満タン → バースト +20pt。何回でも 満タンに できる
 // 回数と ポイントは game.js の mzEnergy が 保存。ゲージの 中身は この 画面の 間だけ
@@ -11229,7 +11153,6 @@ function drawMzTorchTag(w, dpr, now) {   // 残り秒の 札（迷路の 間だ�
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
-  if (mzChase.sx >= 0 && (now - mzChaseWon < 6000 || (mzChase.cx >= 0 && !mzChase.caught && !mzChase.paid))) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;   // エネルギーゲージの 下
   const t = `🔥 たいまつ あと${Math.ceil((mzTorch.until - now) / 1000)}秒　視界が ひろいよ`;
   ctx.font = `${Math.round(13 * dpr)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -11332,7 +11255,6 @@ function drawMzBrigadeTag(w, dpr, now) {   // 旅団札（迷路の 間だけ。
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
-  if (mzChase.sx >= 0 && (now - mzChaseWon < 6000 || (mzChase.cx >= 0 && !mzChase.caught && !mzChase.paid))) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;   // エネルギーゲージの 下
   if (mzTorch.until && mzTorch.until > now) y0 += Math.round(S * 1.4) + gap;   // たいまつ札の 下
   const t = done ? '🎉 おとも旅団 完成！ かおりちゃんと おとも米たち！' : `🎒 おとも旅団 ${mzBrigade.count}/${MZ_BRIGADE.n}　おとも米 ${Array.from({ length: MZ_BRIGADE.n }, (_, i) => (i < mzBrigade.count ? '✓' : '◯')).join('')}`;
@@ -11448,7 +11370,6 @@ function drawMzPurifyTag(w, dpr, now) {   // 進み具合の 札（浄化マス�
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
-  if (mzChase.sx >= 0 && (now - mzChaseWon < 6000 || (mzChase.cx >= 0 && !mzChase.caught && !mzChase.paid))) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;
   if (mzTorch.until && mzTorch.until > now) y0 += Math.round(S * 1.4) + gap;
   if ((mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs) || !(mzBrigade.count >= MZ_BRIGADE.n || (!mzBrigade.count && mzBrigade.cx < 0))) y0 += Math.round(S * 1.4) + gap;   // 旅団札の 下
@@ -11604,7 +11525,6 @@ function drawMzRescueTag(w, dpr, now) {   // 救助札（迷路の 間だけ。�
   if (mzCache.cx >= 0 && mzCache.sx >= 0) y0 += Math.round(S * 1.4) + gap;
   if (mzQuest.sx >= 0 && (mzQuest.got < QUEST_TOOLS.length || (mzQuest.doneAt && now - mzQuest.doneAt < 6000))) y0 += Math.round(S * 1.4) + gap;
   if (mzDino.sx >= 0 && (mzDino.found ? now - mzDino.foundAt < 6000 : mzDino.cx >= 0)) y0 += Math.round(S * 1.4) + gap;
-  if (mzChase.sx >= 0 && (now - mzChaseWon < 6000 || (mzChase.cx >= 0 && !mzChase.caught && !mzChase.paid))) y0 += Math.round(S * 1.4) + gap;
   if (mzEnergy.lastCx >= 0) y0 += Math.round(S * 1.7) + gap;   // エネルギーゲージの 下
   if (mzTorch.until && mzTorch.until > now) y0 += Math.round(S * 1.4) + gap;   // たいまつ札の 下
   if ((mzBrigade.doneAt && now - mzBrigade.doneAt < MZ_BRIGADE.tagMs) || !(mzBrigade.count >= MZ_BRIGADE.n || (!mzBrigade.count && mzBrigade.cx < 0))) y0 += Math.round(S * 1.4) + gap;   // 旅団札の 下
@@ -11747,8 +11667,8 @@ function mzMiniState() {   // テスト用：探索済みマス数・主人公�
 // びゅんパネル（運営者の声「クセになるギミック」）：めいろの まっすぐな 通路の 床に 矢印の パネル。矢印の 向きに 転がって（止まって いれば その 向きに 傾けて）のると、
 // びゅんと 速く おされる（ころころコンボも +1）。矢印と 逆から のっても なにも しない（通れなく ならない）。矢印の 先が まっすぐ 4マス以上 あいている 所だけ。
 // 場所は 区域で きまり、毎日 同じ（おぼえて「あの びゅんで 加速して、つきあたりで くるっと 曲がる」と 近道や コンボを くふうできる）。区域ごとに 5つまで、たがいに 5マス以上 はなす
-const MZ_PAD_N = 5, MZ_PAD_RUN = 4, MZ_PAD_V = 7.5, MZ_PAD_CHAIN_MS = 3500, MZ_PAD_D = [[1, 0], [0, 1], [-1, 0], [0, -1]];   // 向き 0右 1下 2左 3上
-const mzPad = { cell: '', hits: 0, fx: '', fxT: 0, chain: 0, lastT: 0, best: (() => { try { return +localStorage.getItem('nsg_pad_best') || 0; } catch (e) { return 0; } })() };   // chain：3.5秒 いないに 続けて のった 数（びゅん×2・×3…）
+const MZ_PAD_N = 5, MZ_PAD_RUN = 4, MZ_PAD_V = 7.5, MZ_PAD_D = [[1, 0], [0, 1], [-1, 0], [0, -1]];   // 向き 0右 1下 2左 3上
+const mzPad = { cell: '', hits: 0, fx: '', fxT: 0, chain: 0, best: 0 };   // chain：ゴールまでの 道の 間に のった 数（びゅん×2・×3…。時間では 切れない。ベストとは 比べない）
 function mzPadSet(a) {   // 区域の びゅんパネル（区域の 中の マスの 番号 → 向き）
   if (a.pads) return a.pads;
   const N = MZ_R, op = (k, d) => (d === 0 ? a.er[k] : d === 1 ? a.ed[k] : d === 2 ? a.er[k - 1] : a.ed[k - N]) === 1, cand = [];
@@ -11791,8 +11711,7 @@ function mzPadTick(ax, ay) {   // パネルの マスに いる 間 しらべる
   const s = Math.max(along, MZ_PAD_V);
   if (dx) { rp.vx = dx * s; rp.vy *= 0.2; } else { rp.vy = dy * s; rp.vx *= 0.2; }
   const now = performance.now();
-  mzPad.chain = now - mzPad.lastT < MZ_PAD_CHAIN_MS ? mzPad.chain + 1 : 1; mzPad.lastT = now;
-  if (mzPad.chain > mzPad.best) { mzPad.best = mzPad.chain; try { localStorage.setItem('nsg_pad_best', String(mzPad.best)); } catch (e) { /* noop */ } }   // びゅんの れんさの ベスト（この端末。きろくに 出す）   // びゅんの れんさ：前の パネルから 3.5秒 いないなら つながる
+  mzPad.best = ++mzPad.chain;   // best は テスト用の 互換（いつも chain と 同じ。保存も 比べも しない）
   mzPad.cell = key; mzPad.hits++; mzRt.run.pads++; mzPad.fx = key; mzPad.fxT = now;
   if (mzPad.chain >= 2) riceSay(`びゅーん${'💨'.repeat(Math.min(3, mzPad.chain - 1))}`, 1200, 'happy');   // 吹き出し：💨 の 数が れんぞく（もとは「💨 びゅん×N！ はやいじゃん」）
   padSound(mzPad.chain); roll.happyT = Math.max(roll.happyT || 0, 0.8); dirty = true;

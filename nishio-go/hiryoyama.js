@@ -1,7 +1,7 @@
 // にしおさんぽGO：ミニゲーム「肥料山の草刈り」
-// ・肥料山（採草地）で草を刈り、背負いかご（5束まで）に入れて、下の田んぼへ運ぶ。60秒で運んだ束の数で ★（15束・25束・35束）
-// ・とちゅうで山の持ち主が「肥料山を返してくれ」と言いに来る。1948年の幡豆地方事務所長の方針どおり「知事の許可がいる」と答えると、
-//   持ち主は帰って +10秒。「返す」と答えると、そこで草刈りは おしまい
+// ・肥料山（採草地）で草を刈り、背負いかご（5束まで）に入れて、下の田んぼへ運ぶ。制限時間はなく、草を刈りきって運び終えたら おしまい。運んだ束の数で ★（15束・25束・35束。Spiritfarer：自分のペースで、できたこと自体が進み具合）
+// ・はじめて30秒ほどたつと、山の持ち主が「肥料山を返してくれ」と言いに来る（時間は画面に出さない）。1948年の幡豆地方事務所長の方針どおり「知事の許可がいる」と答えると、
+//   持ち主は帰っていく。「返す」と答えると、そこで草刈りは おしまい
 // ・ことばは sangyo.js（資料集649ページ 資料347「肥料山の取扱についての方針」）に書いてあることだけ。草を刈って運ぶ遊び方は、
 //   「草を刈る山（採草地）」という中身からの作りもの（何束とったかなどの数は本には書いていない）
 // ・遊べる所：ドット絵の地図で丘・山のマス（またはすぐとなり）にいるとき、地図の右上の列の 🌿 ボタン（pixel.js の pxHiryo）。
@@ -10,12 +10,12 @@
 (() => {
   'use strict';
   const W = 192, H = 144, T = 16, COLS = 12, ROWS = 9;   // 画面（12×9マス）
-  const TIME = 60, CARRY = 5, OWNER_AT = 30, STARS = [15, 25, 35];
+  const CARRY = 5, OWNER_AT = 30, STARS = [15, 25, 35];
   const DIRS = { up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0] };
   const KEYMAP = { ArrowUp: 'up', w: 'up', W: 'up', ArrowRight: 'right', d: 'right', D: 'right', ArrowDown: 'down', s: 'down', S: 'down', ArrowLeft: 'left', a: 'left', A: 'left' };
   // マス：g 草、c 刈ったあと、r 岩（通れない）、t 木（通れない）、p 道、f 田んぼ（ここで束をおろす）
   let root, cv, ctx, scale = 2, raf = 0, running = false, last = 0;
-  let map, pos, carry, done, shown, gen = 0, left, owner, ownerAsked, ownerOk = false, total = 0, msg, msgT, fromEvent = false, parts;
+  let map, pos, carry, done, shown, gen = 0, elapsed, owner, ownerAsked, ownerOk = false, total = 0, msg, msgT, fromEvent = false, parts;
   const art = { me: null, owner: null };
   // マスの絵は Blender で焼いたシート（tools/blender/hiryo-art.py → nishio-go/art/ev/hiryo.png：草・草（ゆれ）・刈ったあと・田んぼ・あぜ道・岩・木・草の束）。読めるまでは手描き
   const TILE_AT = { g: 0, c: 2, f: 3, p: 4, r: 5, t: 6 }, BUNDLE = 7;
@@ -40,7 +40,7 @@
   }
   function reset() {
     map = layout(); pos = [5, ROWS - 2]; carry = 0; done = false; shown = false; gen++;
-    left = TIME; owner = null; ownerAsked = false; parts = []; last = performance.now();
+    elapsed = 0; owner = null; ownerAsked = false; parts = []; last = performance.now();
     total = 0; ownerOk = false;
     say('草を刈って（5束まで）、下の田んぼへ運ぼう');
     if (root) root.querySelector('.jump-result').hidden = true;
@@ -61,7 +61,10 @@
     }
     pos = [nx, ny];
     if (c === 'f' && carry) { total += carry; say(`${carry}束 おろした（ぜんぶで ${total}束）`); carry = 0; sound('drop'); }
+    checkDone();
   }
+  // 草が残っておらず、かごも空になったら おしまい（最後の草を刈ったときは、運び終えるまで終わらない）
+  function checkDone() { if (!done && carry === 0 && !map.some(r => r.includes('g'))) finish('done'); }
 
   function askOwner() {
     owner = { t: performance.now() }; ownerAsked = true;
@@ -75,7 +78,7 @@
     owner = null;
     const res = root.querySelector('.jump-result');
     res.hidden = true;
-    if (a === 'ok') { left += 10; ownerOk = true; say('持ち主は帰っていった（+10秒）。知事の許可なしには取り上げられない'); }
+    if (a === 'ok') { ownerOk = true; say('持ち主は帰っていった。知事の許可なしには取り上げられない'); }
     else if (a === 'give') { ownerOk = false; finish('give'); }
     else { ownerOk = false; say('持ち主は帰っていった。でも、決めるのは村長ではなく知事の許可だった'); }
     last = performance.now();
@@ -88,14 +91,14 @@
     const got = st && G && G.hiryoReward ? G.hiryoReward(st) : null;
     if (st && G && G.miniBest) G.miniBest('hiryo', 0, st, total, false);   // 記録は静かに残すだけ
     const res = root.querySelector('.jump-result');
-    res.innerHTML = `<b>${why === 'give' ? '肥料山を返した…' : st ? '草刈り おわり！' : '時間切れ'}</b>`
+    res.innerHTML = `<b>${why === 'give' ? '肥料山を返した…' : '草刈り おわり！'}</b>`
       + `<span>${'★'.repeat(st)}${'☆'.repeat(3 - st)}　運んだ束 ${total}（★は ${STARS.join('・')}束）</span>`
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : st && got === null && G && G.hiryoReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + '<span class="harvest-tip">1948年の幡豆地方事務所長の方針：田畑だけが買収されても、のこった肥料山の草刈りには小作の権利があり、持ち主が勝手に取り上げたり売ったりはできず、知事の許可がいるとされた。肥料山は、田畑といっしょに貸し借りされ、農業にとても大事な役わりをもっていた。</span>'
       + '<span class="jump-btns"><button type="button" class="btn" data-hy="again">もういちど</button><button type="button" class="btn" data-hy="close">もどる</button></span>';
     res.hidden = false;
     sound(st ? 'clear' : 'fail');
-    if (G && G.track) G.track('hiryo_end', { total, stars: st, owner: ownerOk, why: why || 'time' });
+    if (G && G.track) G.track('hiryo_end', { total, stars: st, owner: ownerOk, why: why || 'done' });
   }
 
   /* ---------- 音（BGM の設定がオフなら鳴らさない） ---------- */
@@ -134,7 +137,6 @@
     if (art.me) ctx.drawImage(art.me, X, Y - 2, T, T); else { ctx.fillStyle = '#e0602a'; ctx.fillRect(X + 4, Y + 2, 8, 12); }
     for (let i = 0; i < carry; i++) { if (sheet) ctx.drawImage(tiles, BUNDLE * 16, 0, 16, 16, X + 9, Y + 8 - i * 3, 8, 8); else { ctx.fillStyle = '#a8c050'; ctx.fillRect(X + 12, Y + 12 - i * 2, 4, 2); } }
     if (owner) { const ox = Math.min(COLS - 1, px + 1) * T; if (art.owner) ctx.drawImage(art.owner, ox, Y - 2, T, T); else { ctx.fillStyle = '#556'; ctx.fillRect(ox + 4, Y + 2, 8, 12); } }
-    hud('time', `のこり ${Math.ceil(left)}秒`, left < 10);
     hud('carry', `かご ${carry}/${CARRY}`, carry >= CARRY);
     hud('total', `運んだ ${total}束`, false);
     hud('msg', msg && now - msgT < 2600 ? msg : '', false);
@@ -148,9 +150,8 @@
     if (!running) return;
     const dt = Math.min(0.2, (now - last) / 1000); last = now;
     if (!done && !owner) {
-      left -= dt;
-      if (!ownerAsked && left <= OWNER_AT) askOwner();
-      if (left <= 0) { left = 0; finish('time'); }
+      elapsed += dt;
+      if (!ownerAsked && elapsed > OWNER_AT) askOwner();
     }
     draw(now);
     raf = requestAnimationFrame(loop);
@@ -167,7 +168,7 @@
     root = document.createElement('div');
     root.className = 'jump harvest hiryo'; root.id = 'hiryo'; root.hidden = true;
     root.innerHTML = `<div class="jump-top"><b>肥料山の草刈り</b><span class="jump-btns"><button type="button" class="btn mini" data-hy="close" aria-label="とじる">とじる</button></span></div>
-      <div class="harvest-hud"><span data-h="time"></span><span data-h="carry"></span><span data-h="total"></span></div>
+      <div class="harvest-hud"><span data-h="carry"></span><span data-h="total"></span></div>
       <div class="jump-stage"><canvas width="${W}" height="${H}" aria-label="ミニゲーム 肥料山の草刈り"></canvas><div class="jump-result" hidden></div></div>
       <p class="harvest-msg" data-h="msg"></p>
       <p class="jump-help">矢印で歩くと草を刈る（背負いかごに5束まで）。下の田んぼに着くと束をおろす。肥料山（採草地）は、田畑といっしょに貸し借りされた、草を刈る山</p>
@@ -214,7 +215,7 @@
   // テスト用
   window.NISHIO_HIRYO = {
     open, close, reset, move, answer, finish, STARS,
-    setLeft(v) { left = v; },
-    get info() { return map ? { pos: pos.slice(), carry, total, left, owner: !!owner, ownerAsked, done, map: map.map(r => r.join('')) } : null; },
+    setElapsed(v) { elapsed = v; },
+    get info() { return map ? { pos: pos.slice(), carry, total, elapsed, owner: !!owner, ownerAsked, done, map: map.map(r => r.join('')) } : null; },
   };
 })();

@@ -5,6 +5,7 @@
 // ・川や池（水のマス）と、面が進むと ふえる マンホールの 穴は「落とし穴」：おちると スタートに もどる
 // ・ゴールは 西尾の名所（1面 西尾駅 → 2面 西尾城跡 → らいすぴあ …）。スタートは ゴールから 道を たどって いちばん遠い所
 // ・傾き（pixel.js の傾きを そのまま使う）・矢印キー・盤を なぞる で 転がす。時間も ベストも くらべない（参考：Sable。たどり着くこと自体が 体験）。すすみぐあいは この端末（localStorage nsg_meiro）
+// ・参考：Unpacking。数えずに すぐ 始める（3・2・1 なし）／ばねの のこりは 数字でなく わの 濃さと 大きさで わかる
 // ・pixel.js より後に読む（nishioPixel.meiroApi を使う）
 (function (root) {
 'use strict';
@@ -13,7 +14,6 @@ const KEY = 'nsg_meiro';
 // 面のゴール（名所の id）。この順に。あとは 西尾の注目スポットを 西尾城跡から近い順に
 const GOALS = ['f-nishio-station', 'f-nishio-castle', 'f-ricepia', 'f-iwase-bunko', 'f-kondo-beikoku', 'f-konrenji', 'f-jofukuji', 'f-kurokabe', 'f-inariyama-chaen'];
 const K = 2;   // めいろの1マス = 地図の K×K マス（約16m。細かいほど 本物の 道に そった 細い通路が たくさん できる）
-const CD = 2.4;   // はじめの 3・2・1（秒）。「1」の あいだに いまの持ち方を「まっすぐ」に しなおす
 const SLOPE = 2;   // 坂の 引っぱりの つよさ（めいろの ころがり抵抗に かつのは 5%より 急な坂：台地の ふちなど）
 const ACC = 16, MAX = 7.5, CRR = 1.1, LIN = 0.55, BOUNCE = 0.38, R = 0.3;   // マス/秒²・いちばん速い速さ・ころがり抵抗・速さに比べて へる分・はね返り・お米の半径（マス）
 // stage：遊べる いちばん先の面・best：名所の id ごとの「着いた」印 {c:1}（秒も ★も かかない）・skip：めいろが つくれなかった 名所の id（面の ならびが 開きなおしても かわらないように のこす）
@@ -424,7 +424,7 @@ function restart() {
   clearTimeout(game.cardT);   // ゴールの カードが まだ 出ていなければ やめる
   game.x = b.start[0] + 0.5; game.y = b.start[1] + 0.5; game.vx = game.vy = 0; game.th = 0; game.sq = 0;
   game.t = 0; game.falls = 0; game.done = false; game.fall = 0; game.stop = 0; game.hop = 0; game.hopT = 0; game.crit = boardCritters(b); game.happy = 0; game.ouch = 0; game.go = false; game.fx = []; game.soft = { on: false, x: 0, y: 0, ux: 0, uy: 0, pen: 0, vin: 0, dent: 0, dv: 0, boings: 0 }; game.hint = null; game.hints = 0; game.got = new Set(); game.spring = { got: false, left: 0, boosts: 0, chain: 0, at: 0 };
-  game.cd = CD; game.cdReset = false;   // 3・2・1 の あいだは 動かさない
+  if (api && api.tiltReset) api.tiltReset();   // 数えずに すぐ 始める：いまの持ち方を「まっすぐ」に（リトライでも）
   ui.clear.hidden = true;
 }
 
@@ -689,18 +689,14 @@ function tick(now) {
   raf = requestAnimationFrame(tick);
   const g = game, dt = Math.min(0.05, g.last ? (now - g.last) / 1000 : 0);
   g.last = now;
-  if (g.cd > 0 && ui.clear.hidden) {   // 3・2・1：スマホを まっすぐ 持ってもらい、「1」で 傾きを 合わせなおす
-    g.cd -= dt;
-    if (!g.cdReset && g.cd < 0.9) { g.cdReset = true; api.tiltReset(); }
-    if (g.cd <= 0) api.koto(0.9, false);
-  } else if (!g.done && ui.clear.hidden) { g.acc = (g.acc || 0) + dt; while (g.acc >= 1 / 120) { g.acc -= 1 / 120; step(1 / 120); if (g.done) break; } }
+  if (!g.done && ui.clear.hidden) { g.acc = (g.acc || 0) + dt; while (g.acc >= 1 / 120) { g.acc -= 1 / 120; step(1 / 120); if (g.done) break; } }
   else if (g.done) { g.happy = 99; g.th += dt * 3; }
   for (const p of g.fx || []) { p.t += dt; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 9 * dt; p.vx *= 1 - dt * 1.5; }
   if (g.fx) g.fx = g.fx.filter(p => p.t < p.life);
   api.rumble(g.done || g.fall > 0 || !ui.clear.hidden ? 0 : Math.hypot(g.vx, g.vy) * K);   // 転がる音（歩く地図と同じ。速いほど 大きく 高く）
   if (api.demGen !== g.dem && (!g.demT || now - g.demT > 1500)) { g.demT = now; g.dem = api.demGen; g.bg = paintBoard(g.board, g.T); }
   draw(now);
-  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + (g.spring && g.spring.left > 0 ? ` ばね${Math.ceil(g.spring.left)}` : '');
+  ui.time.textContent = (b0 => (b0.grains.length ? `🌾${g.got.size}/${b0.grains.length} ` : ''))(g.board) + (g.spring && g.spring.left > 0 ? ' ばね' : '');
   // 盤を 傾けて見せる：矢印キー・なぞる で 動かすと、わくごと 少し 傾く（キーホルダーを 傾けたように）。スマホの傾きでは 手の中の 本物が 傾くので 小さく
   const t = api.tilt(), kx = keys.right - keys.left + drag.x, ky = keys.down - keys.up + drag.y, sx = kx * 5 + t.x * 2, sy = ky * 5 + t.y * 2;
   g.bx = (g.bx || 0) + (sx - (g.bx || 0)) * Math.min(1, dt * 10); g.by = (g.by || 0) + (sy - (g.by || 0)) * Math.min(1, dt * 10);
@@ -791,8 +787,9 @@ function draw(now) {
     for (let i = 0; i <= 6; i++) { const px = cx + (i % 2 ? bw / 2 : -bw / 2) * 0.8, py = y0 - (h * i) / 6; i ? x.lineTo(px, py) : x.moveTo(px, py); }
     x.stroke(); x.lineWidth = Math.max(1, q); x.strokeStyle = '#d8e0e6'; x.stroke();
   }
-  if (g.spring && g.spring.left > 0 && !(g.spring.left < 2 && Math.floor(now / 160) % 2)) {   // わざの 間：お米の まわりに 緑の わ（のこり 2秒は ちかちか）
-    x.lineWidth = Math.max(2, T / 12); x.strokeStyle = 'rgba(140,240,120,.85)'; x.beginPath(); x.arc(g.x * T, g.y * T, T * (0.4 + Math.sin(now / 120) * 0.04), 0, Math.PI * 2); x.stroke();
+  if (g.spring && g.spring.left > 0) {   // わざの 間：お米の まわりに 緑の わ。のこりは 数字でなく わの 濃さと 大きさで（ゆっくり 薄く 小さく。ちかちか・脈打ちは しない）
+    const fr = Math.max(0, Math.min(1, g.spring.left / SPRING_S));
+    x.lineWidth = Math.max(2, T / 12); x.strokeStyle = `rgba(140,240,120,${(0.2 + 0.65 * fr).toFixed(3)})`; x.beginPath(); x.arc(g.x * T, g.y * T, T * (0.34 + 0.06 * fr), 0, Math.PI * 2); x.stroke();
   }
   // お米
   const u = T * 0.031;
@@ -809,16 +806,6 @@ function draw(now) {
   x.fillStyle = `rgba(0,0,0,${(0.28 - hp * 0.3).toFixed(3)})`; x.beginPath(); x.ellipse(X, g.y * T + T * 0.3, T * 0.26 * (1 - hp * 0.6), T * 0.09 * (1 - hp * 0.6), 0, 0, Math.PI * 2); x.fill();   // かげは 地面に のこって 小さく うすく
   const mood = 'smile';
   nishioPixel.drawRice(x, X, Y, g.th % (Math.PI * 2), g.sq, mood, 0, '', u);
-  if (g.cd > 0) {   // 3・2・1 と「スマホを まっすぐ」
-    const W = b.tw * T, H = b.th * T, n = Math.ceil(g.cd / (CD / 3)), big = Math.round(T * 3.2);
-    x.fillStyle = 'rgba(10,30,40,.35)'; x.fillRect(0, 0, W, H);
-    x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineJoin = 'round';
-    x.font = `bold ${big}px "DotGothic16", sans-serif`; x.lineWidth = Math.max(4, T / 4); x.strokeStyle = '#123247'; x.fillStyle = '#ffe680';
-    x.strokeText(String(n), W / 2, H / 2); x.fillText(String(n), W / 2, H / 2);
-    const msg = 'スマホを まっすぐ 持ってね';
-    x.font = `bold ${Math.round(Math.min(T * 0.8, W * 0.8 / 12))}px "DotGothic16", sans-serif`; x.fillStyle = '#ffffff';   // 盤の はばに おさまる 大きさ（12字ぶん）
-    x.strokeText(msg, W / 2, H / 2 + big * 0.8); x.fillText(msg, W / 2, H / 2 + big * 0.8);
-  }
 }
 function flag(x, X, Y, T) {   // 🏁 の旗（白黒の市松）
   const u = Math.max(1, Math.round(T / 16));

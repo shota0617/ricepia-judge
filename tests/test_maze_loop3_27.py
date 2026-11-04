@@ -20,9 +20,9 @@ class Record(unittest.TestCase):
             self.assertIn(f"['{k}', S.{g} || 0, '回']", self.rows)
 
     def test_stat_pi_matches_rows(self):
-        self.assertEqual(len(self.pi), 21)
+        self.assertEqual(len(self.pi), 20)
         self.assertEqual(len(self.pi), len(re.findall(r"\['[^']+', ", self.rows)))
-        self.assertEqual(self.pi[16:], ["fire", "face", "star", "medal", "chest"])
+        self.assertEqual(self.pi[15:], ["fire", "face", "star", "medal", "chest"])
         for n in set(self.pi):
             self.assertTrue((ROOT / f"nishio-go/art/stat-{n}.png").exists(), n)
 

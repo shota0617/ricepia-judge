@@ -160,7 +160,7 @@
     } catch (e) { return Array.isArray(segs) ? segs.slice() : []; }
   }
   // 端点がずれた部分的な重なりも1回だけ（第4弾サイクル46・ハウスフリッパー）：後ろ（新しい方）から走査し、残すと決めた要素と中点が STEP/2 以内かつ向きがほぼ同じ（逆向き含む）なら落とす。無効な要素（座標が不正・長さ0）はそのまま残す。入力は変えない
-  // 幅も見る（第4弾サイクル50・de Blob）：古い要素の中点から残す要素の中点への横ずれが HALF×(w_new−w_old)+NEAR_TOL 以下、つまり新しい帯が古い帯を横に覆いきるときだけ落とす。覆いきれない細い帯や、太い古い跡は残る
+  // 幅も見る（第4弾サイクル50・de Blob）：（第4弾サイクル51・Farming Simulator で両端まで見る）古い要素の両端それぞれについて、残す要素の中点から残す要素の法線で測った横ずれの大きい方が HALF×(w_new−w_old)+NEAR_TOL 以下、つまり新しい帯が古い帯を横に覆いきるときだけ落とす。覆いきれない細い帯や、太い古い跡は残る
   const NEAR_TOL = 0.01;
   function dedupeNear(segs) {
     try {
@@ -169,14 +169,14 @@
         if (!s || !num(s.x1) || !num(s.y1) || !num(s.x2) || !num(s.y2)) return null;
         const len = Math.hypot(s.x2 - s.x1, s.y2 - s.y1);
         if (!(len > 0)) return null;
-        return { mx: (s.x1 + s.x2) / 2, my: (s.y1 + s.y2) / 2, dx: (s.x2 - s.x1) / len, dy: (s.y2 - s.y1) / len, w: (num(s.w) && s.w > 0) ? s.w : 1 };
+        return { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, mx: (s.x1 + s.x2) / 2, my: (s.y1 + s.y2) / 2, dx: (s.x2 - s.x1) / len, dy: (s.y2 - s.y1) / len, w: (num(s.w) && s.w > 0) ? s.w : 1 };
       });
       const kept = [], drop = new Array(segs.length).fill(false);
       for (let i = segs.length - 1; i >= 0; i--) {
         const c = info[i];
         if (!c) continue;
         if (kept.some(k => Math.hypot(c.mx - k.mx, c.my - k.my) <= STEP / 2 + 1e-9 && Math.abs(c.dx * k.dx + c.dy * k.dy) >= 0.87
-          && Math.abs((k.mx - c.mx) * -c.dy + (k.my - c.my) * c.dx) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9)) drop[i] = true;
+          && Math.max(Math.abs((c.x1 - k.mx) * -k.dy + (c.y1 - k.my) * k.dx), Math.abs((c.x2 - k.mx) * -k.dy + (c.y2 - k.my) * k.dx)) <= HALF * (k.w - c.w) + NEAR_TOL + 1e-9)) drop[i] = true;
         else kept.push(c);
       }
       return segs.filter((s, i) => !drop[i]);

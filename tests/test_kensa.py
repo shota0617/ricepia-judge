@@ -264,6 +264,19 @@ class KensaTests(unittest.TestCase):
         self.assertNotIn("setInterval", HTML)                        # タイマー・焦らせる仕組みを入れない
         self.assertNotIn("alert(", HTML)                             # 流れを止める要素は作らない
 
+    def test_cycle16_focus_handoff(self):
+        # サイクル16: 焦点の受け渡し。段階が進むと前の操作が隠れたり無効になって焦点が消えるため、
+        # 次の所作の主な操作へ静かに渡す（流れを止める要素・タイマーは入れない）
+        self.assertIn('document.getElementById("meterBtn").focus()', HTML)   # さす→はかる
+        self.assertIn('querySelector("#whiteTray .sgrain")', HTML)           # はかる→みわける（最初の粒）
+        self.assertIn('document.querySelector(".gradeBtn").focus()', HTML)   # みわける→きめる
+        self.assertIn('document.getElementById("stampBtn").focus()', HTML)   # きめる→おす
+        self.assertIn("bagTap.focus()", HTML)                                # 次の山→最初の袋
+        self.assertGreaterEqual(HTML.count("nextBtn.focus()"), 3)            # 平均確定・等級確定・押印で次ボタンへ
+        self.assertIn(".sgrain:not(.away)", HTML)                            # 皿へ戻ったら残っている粒へ
+        self.assertNotIn("setInterval", HTML)                                # タイマー・焦らせる仕組みを入れない
+        self.assertNotIn("alert(", HTML)                                     # 流れを止める要素は作らない
+
     def test_stamp_date_text(self):
         # 日付印は固定日付でなく、その日の日付を YYYY.M.D で作る純粋関数
         node = shutil.which("node")

@@ -171,7 +171,7 @@
       <div class="harvest-hud"><span data-h="carry"></span><span data-h="total"></span></div>
       <div class="jump-stage"><canvas width="${W}" height="${H}" aria-label="ミニゲーム 肥料山の草刈り"></canvas><div class="jump-result" hidden></div></div>
       <p class="harvest-msg" data-h="msg"></p>
-      <p class="jump-help">矢印で歩くと草を刈る（背負いかごに5束まで）。下の田んぼに着くと束をおろす。肥料山（採草地）は、田畑といっしょに貸し借りされた、草を刈る山</p>
+      <p class="jump-help">矢印で歩くと草を刈る（背負いかごに5束まで）。下の田んぼに着くと束をおろす。草を全部刈って運び終えたら おしまい。肥料山（採草地）は、田畑といっしょに貸し借りされた、草を刈る山</p>
       <div class="harvest-pad"><button type="button" data-dir="up" aria-label="上へ">▲</button><button type="button" data-dir="left" aria-label="左へ">◀</button><button type="button" data-dir="down" aria-label="下へ">▼</button><button type="button" data-dir="right" aria-label="右へ">▶</button></div>`;
     document.body.appendChild(root);
     cv = root.querySelector('canvas'); ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;

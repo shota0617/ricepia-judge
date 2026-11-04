@@ -3,11 +3,11 @@
 // ・下の田んぼ（氾濫平野）から、少し高い自然堤防、碧海層の見える段丘崖をへて、上の碧海台地の旗をめざす
 // ・崖の途中の「露頭」（碧海層が見える所）にさわると、まめちしき。上から落ちてくる小石にあたると ♥ がへる（3つ）。♥ がなくなると不成功。制限時間はなく、自分のペースでのぼれる
 // ・段丘は3つ（だんだん高くなる）：西尾の本で分けた a〜e 地区の名前（a・b 地区の碧海台地 → c・d 地区の碧海台地 → e 地区の段丘）。のぼりきると次の段丘へ
-// ・★：のぼりきった・露頭をぜんぶ見た・♥ が2つ以上のこった（小石にあたったのが1回まで）。速さは見ない（Spiritfarer：自分のペースで、できたこと自体が進み具合）
+// ・★での優劣はつけない（Spiritfarer・Cozy Grove：頼みは自分のペースで叶え、できたこと自体が進み具合）。のぼりきれば一律のごほうびと「できた」印（✓）だけ。♥ は遊びの仕組みで、評価には使わない
 // ・ことばは shizen.js（西尾の海と大地。出典つき）の「碧海台地と碧海層」「西尾の低い土地」「自然堤防の上の集落」の話だけを使う
 // ・主人公と地面の絵は「にしおジャンプ」と同じ Blender の絵（nishio-go/art/runner.png）。ごほうびは game.js の dankyuReward（1日1回）
 // ・操作：◀ ▶ と「ジャンプ」、キーボードは ← → / A D と スペース・↑・Z
-// ・段丘ごとの記録（★）を静かに残し（結果では比べない。Townscaper：作ること自体が体験）、開くと まだのぼりきっていない段丘から。結果の画面で えらべる（game.js の miniBest）
+// ・段丘ごとの「できた」印（✓）を静かに残し（結果では比べない。Townscaper：作ること自体が体験）、開くと まだのぼりきっていない段丘から。結果の画面で えらべる（game.js の miniBest）
 (() => {
   'use strict';
   const W = 192, H = 144, T = 16, COLS = W / T;   // 画面（12×9マス）
@@ -172,36 +172,32 @@
     const want = Math.max(0, Math.min(worldH - H, pl.y - 84));
     camY += (want - camY) * 0.15;
   }
-  function stars() {
-    const all = outcrops.every(o => o.got), gentle = hearts >= 2;   // 小石にあたったのが1回まで
-    return 1 + (all ? 1 : 0) + (gentle ? 1 : 0);
-  }
   function later(fn) { const g = gen; setTimeout(() => { if (running && g === gen) fn(); }, 300); }   // 閉じた・やりなおしたあとに前のプレイの結果を出さない
   function clear() { done = true; sound('clear'); later(() => result(true)); }
   function fail(why) { done = true; sound('fail'); later(() => result(false, why)); }
-  // 段丘をえらぶボタン：のぼりきった段丘と、その次の段丘（★は記録）
+  // 段丘をえらぶボタン：のぼりきった段丘と、その次の段丘（✓はできた印）
   function levelBtns() {
     const G = window.nishioGo;
     if (!G || !G.miniRecords) return '';
     const rec = G.miniRecords('dankyu');
     let open = 0; while (open < LEVELS.length - 1 && rec[open]) open++;   // えらべるのは、まだのぼりきっていない いちばん前の段丘まで
-    return `<span class="mini-levels">${LEVELS.map((l, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-dk="lv" data-lv="${i}" aria-label="${i + 1}つ目の段丘 ${l.name}">${i + 1} ${rec[i] ? '★'.repeat(rec[i].s) + '☆'.repeat(3 - rec[i].s) : '—'}</button>`).join('')}</span>`;
+    return `<span class="mini-levels">${LEVELS.map((l, i) => i > open && !rec[i] ? '' : `<button type="button" class="btn mini${i === lv ? ' now' : ''}" data-dk="lv" data-lv="${i}" aria-label="${i + 1}つ目の段丘 ${l.name}">${i + 1} ${rec[i] ? '✓' : '—'}</button>`).join('')}</span>`;
   }
   function result(ok, why) {
     if (shown) return;
     shown = true;
-    const G = window.nishioGo, st = ok ? stars() : 0;
-    const got = ok && G && G.dankyuReward ? G.dankyuReward(st, lv) : null;
-    if (ok && G && G.miniBest) G.miniBest('dankyu', lv, st, hearts, false);   // 記録は静かに残すだけ
+    const G = window.nishioGo;
+    const got = ok && G && G.dankyuReward ? G.dankyuReward(lv) : null;
+    if (ok && G && G.miniBest) G.miniBest('dankyu', lv, 1, 0, false);   // 記録は静かに残すだけ
     const n = outcrops.filter(o => o.got).length;
     const res = root.querySelector('.jump-result');
     res.innerHTML = `<b>${ok ? `${L.name}に のぼりきった！` : '不成功'}</b><span>${lv + 1}つ目の段丘：${L.name}（${L.where}）</span>`
-      + (ok ? `<span>${'★'.repeat(st)}${'☆'.repeat(3 - st)}　露頭 ${n}/${outcrops.length}</span>` : `<span>${why}</span>`)
+      + (ok ? `<span>露頭 ${n}/${outcrops.length}</span>` : `<span>${why}</span>`)
       + (got > 0 ? `<span>きょうのごほうび +${got}pt</span>` : ok && got === null && G && G.dankyuReward ? '<span>きょうのごほうびは、もうもらいました（あしたまた）</span>' : '')
       + levelBtns()
       + `<span class="jump-btns"><button type="button" class="btn" data-dk="again">もういちど</button>${ok && lv < LEVELS.length - 1 ? '<button type="button" class="btn" data-dk="next">つぎの段丘</button>' : ''}<button type="button" class="btn" data-dk="close">もどる</button></span>`;
     res.hidden = false;
-    if (G && G.track) G.track(ok ? 'dankyu_clear' : 'dankyu_fail', { level: lv + 1, stars: st, outcrops: n });
+    if (G && G.track) G.track(ok ? 'dankyu_clear' : 'dankyu_fail', { level: lv + 1, outcrops: n });
   }
 
   /* ---------- 音（BGM の設定がオフなら鳴らさない） ---------- */

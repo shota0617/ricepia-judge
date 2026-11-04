@@ -32,12 +32,12 @@ class Dankyu(unittest.TestCase):
         self.assertNotRegex(levels, r'\btime\b')
 
     def test_stars_by_hearts(self):
-        body = func_body(DK, 'function stars()')
-        self.assertNotIn('time', body.lower())
-        self.assertIn('hearts >= 2', body)
+        # サイクル74で★の評価を廃止（stars() は無く、♥ は遊びの仕組みとして残る）
+        self.assertNotIn('function stars()', DK)
+        self.assertIn('hearts', DK)
 
     def test_best_gets_hearts(self):
-        self.assertIn("G.miniBest('dankyu', lv, st, hearts, false)", DK)
+        self.assertIn("G.miniBest('dankyu', lv, 1, 0, false)", DK)
 
 
 class Hiryo(unittest.TestCase):
@@ -75,7 +75,7 @@ class Harvest(unittest.TestCase):
         self.assertIn('waste === 0', ok)
 
     def test_stars_unchanged(self):
-        self.assertIn('turns <= par ? 3 : turns <= par + 1 ? 2 : 1', HV)
+        self.assertNotIn('turns <= par ? 3 : turns <= par + 1 ? 2 : 1', HV)   # サイクル74で★の式を廃止
 
 
 class Common(unittest.TestCase):

@@ -170,6 +170,8 @@
   body.calm #loopBox, body.calm #challenge { display: none !important; }
   body.calm #doneScore .farmerVerdict, body.calm #doneScore > b { display: none !important; }
   body.calm #doneScore { font-size: 0; }   /* 🔰8割などの 素の文字も 消す（あとから 足す 地図の キャンバスは そのまま 見える） */
+  /* サイクル119 のんびり・平和監査第2弾「叱らない」：のんびりでは 農家の ダメ出し（ふきだし）は 出さない */
+  body.calm #farmerSay { display: none !important; }
   /* 文字を 消す：ボタンは 絵（data-i）だけ、はじめの画面は 季節・時刻・天気・絵・▶ だけ（くわしい説明を 入れると もどる） */
   body.calm .ico { font-size: 0 !important; }
   /* 操作を かんたんに：ふだんは よく使う ボタンだけ（くわしい説明を 入れると ぜんぶ 出る。キーボードの キーは いつでも 使える） */
@@ -2073,6 +2075,7 @@ const FARMER = (() => {
     return false;
   }
   function critic(dt) {
+    if (!DETAIL) return;   // サイクル119：のんびりでは ダメ出し（叱る・急かす言葉）は 言わない（くわしい説明では 従来どおり）
     if (!S.started || S.done) return;
     quiet -= dt;
     const sc = SCORE.st, working = S.rotDown && S.rotPos < 0.08 && S.v > 0.1, kmh = S.v * 3.6;
@@ -9174,25 +9177,28 @@ function relayClick(vol = 1) {
 }
 // 土くれに当たった ごつっという低い音（短く下がる）
 function thud(ac, dest, vol = 1) {
+  const v = DETAIL ? vol : vol * 0.5;   // サイクル119：のんびりでは 衝撃音は 半分の 大きさ（驚かせない）
   const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain();
   o.type = 'triangle'; o.frequency.setValueAtTime(95, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6 * vol, t + 0.01); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.6 * v, t + 0.01); g.gain.exponentialRampToValueAtTime(0.01, t + 0.18);
   o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.2);
 }
 function squeak(ac, dest, vol = 1) {              // グリースが切れた 可動部の ギーッ（高い音が ふるえながら きしむ）
+  const v = DETAIL ? vol : vol * 0.5;   // サイクル119：のんびりでは 半分の 大きさ
   const t = ac.currentTime, o = ac.createOscillator(), lfo = ac.createOscillator(), lg = ac.createGain(), b = ac.createBiquadFilter(), g = ac.createGain();
   o.type = 'sawtooth'; o.frequency.setValueAtTime(780 + Math.random() * 140, t); o.frequency.linearRampToValueAtTime(960, t + 0.3);
   lfo.frequency.value = 34; lg.gain.value = 70; lfo.connect(lg); lg.connect(o.frequency);   // ふるえ（スティックスリップ）
   b.type = 'bandpass'; b.frequency.value = 1800; b.Q.value = 3;
-  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3 * vol, t + 0.04); g.gain.setValueAtTime(0.3 * vol, t + 0.24); g.gain.linearRampToValueAtTime(0, t + 0.34);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3 * v, t + 0.04); g.gain.setValueAtTime(0.3 * v, t + 0.24); g.gain.linearRampToValueAtTime(0, t + 0.34);
   o.connect(b); b.connect(g); g.connect(dest); o.start(t); lfo.start(t); o.stop(t + 0.36); lfo.stop(t + 0.36);
 }
 function clank(ac, dest, vol = 1) {                // 爪が石に当たる：カン（金属の高い音）
+  const v = DETAIL ? vol : vol * 0.5;   // サイクル119：のんびりでは 半分の 大きさ
   const t = ac.currentTime;
   for (const [f, a] of [[1850, 1], [2930, 0.6], [4170, 0.35]]) {
     const o = ac.createOscillator(), g = ac.createGain();
     o.type = 'sine'; o.frequency.setValueAtTime(f, t);
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3 * a * vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.3 * a * v, t + 0.004); g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
     o.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.27);
   }
 }
@@ -10177,7 +10183,7 @@ const BADGE = (() => {
     upT = Math.max(0, upT - dt); upK += ((upT > 0 ? 1 : 0) - upK) * Math.min(1, dt * 3);   // 空の 鳥を 見上げる
     if ((blinkT -= dt) < 0) blinkT = 2.4 + R() * 3.2;
     // 気もち → 表情の めあて
-    if (SCORE.st.levee > lastLevee) { lastLevee = SCORE.st.levee; wowT = 0.8; joyT = 0; }   // 畦に ぶつかった：びくっ（そのあと こまり）
+    if (SCORE.st.levee > lastLevee) { lastLevee = SCORE.st.levee; if (DETAIL) { wowT = 0.8; joyT = 0; } }   // 畦に ぶつかった：びくっ（そのあと こまり）。サイクル119：のんびりでは びっくりさせない
     wowT = Math.max(0, wowT - dt); joyT = Math.max(0, joyT - dt);
     idleT = idle && !SAY.talking ? idleT + dt : 0;
     const stuck = !S.done && (S.stuck || HAMARU.rescuing), sleepy = TOD === 'yoru' && idleT > 12, hum = idleT > 4 && !sleepy;
@@ -10185,7 +10191,7 @@ const BADGE = (() => {
     Object.assign(Fw, { eye: 1, smile: 0, brow: 0, tilt: 0, open: 0, curve: 0.5, blush: 0.5, sweat: 0 });
     if (S.done) Object.assign(Fw, { smile: 1, open: 0.7, curve: 1, blush: 1 });                     // おしまい：にっこにこ
     else if (wowT > 0) Object.assign(Fw, { eye: 1.45, brow: 1, open: 0.8, curve: 0, blush: 0.6 });   // びっくり：目が まるく 口が「お」
-    else if (stuck || sleep || SCORE.st.leveeT > 0) Object.assign(Fw, { eye: 1.05, brow: 0.5, tilt: 1, curve: -0.6, sweat: 1, blush: 0.3 });   // こまった：まゆが ハの字・あせ
+    else if (stuck || sleep || (DETAIL && SCORE.st.leveeT > 0)) Object.assign(Fw, !DETAIL && sleep && !stuck ? { eye: 0.6, curve: 0.3, blush: 0.4 } : { eye: 1.05, brow: 0.5, tilt: 1, curve: -0.6, sweat: 1, blush: 0.3 });   // こまった：まゆが ハの字・あせ。サイクル119：のんびりでは エンストだけなら 穏やかな ひとやすみ顔、畦ぶつかりだけでは こまらない（はまったときは 状態を知らせるため 従来どおり）
     else if (joyT > 0) Object.assign(Fw, { smile: 1, open: 0.5, curve: 1, blush: 0.9 });             // うれしい（生きもの・刈れた）
     else if (sleepy) Object.assign(Fw, { eye: 0.3, curve: 0.3, blush: 0.4 });                         // 夜：うとうと
     else if (glare) Object.assign(Fw, { eye: 0.45, brow: -0.3, tilt: -0.3, curve: 0.3 });            // まぶしい：目を ほそく

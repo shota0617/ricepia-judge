@@ -30,7 +30,7 @@
     } catch (e) { return 0; }
   }
   // 点と点を補間してつながった帯にする小セグメント列（最古→最新）。古い端ほど薄くして、最古が落ちても急に消えて見えない
-  const STEP = 0.28;
+  const STEP = 0.14;
   function segments(list, now) {
     try {
       if (!Array.isArray(list) || !num(now)) return [];
@@ -68,5 +68,22 @@
       return AREA_COLORS[areaId];
     } catch (e) { return null; }
   }
-  root.nishioRollTrail = { MAX, GAP, LIFE_MS, push, alive, alphaFor, segments, colorFor, AREA_COLORS };
+  // 地区の境の混ざった色（第4弾サイクル40・Gris）：'r,g,b' 2色の k（0..1に丸め）での混合。不正な側は無視し、両方不正なら null
+  const parseRgb = v => {
+    if (typeof v !== 'string') return null;
+    const m = /^(\d{1,3}),(\d{1,3}),(\d{1,3})$/.exec(v);
+    if (!m) return null;
+    const c = [+m[1], +m[2], +m[3]];
+    return c.every(n => n <= 255) ? c : null;
+  };
+  function mixRgb(a, b, k) {
+    try {
+      const A = parseRgb(a), B = parseRgb(b);
+      if (!A) return B ? B.join(',') : null;
+      if (!B) return A.join(',');
+      const t = num(k) ? Math.min(1, Math.max(0, k)) : 0;
+      return A.map((v, i) => Math.round(v + (B[i] - v) * t)).join(',');
+    } catch (e) { return null; }
+  }
+  root.nishioRollTrail = { MAX, GAP, LIFE_MS, STEP, push, alive, alphaFor, segments, colorFor, mixRgb, AREA_COLORS };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -36,7 +36,7 @@ class Brush(unittest.TestCase):
         self.assertGreaterEqual(v[-1]['a'], 0.35)
 
     def test_single_segment_w(self):
-        v = run('r.segments([{x:0,y:0,t:0},{x:0.2,y:0,t:0}],0)')
+        v = run('r.segments([{x:0,y:0,t:0},{x:0.1,y:0,t:0}],0)')
         self.assertEqual(len(v), 1)
         self.assertEqual(v[0]['w'], 1)
 

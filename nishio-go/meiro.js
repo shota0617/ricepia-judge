@@ -1,3 +1,4 @@
+// 第4弾サイクル76 参考ゲーム「あつまれ どうぶつの森」：ばねは 何回 はね返っても いつも 同じ 穏やかな ぽよん（急がせない・高く ならない）
 // にしおさんぽGO：西尾めいろ（スマホを傾けて、お米を 西尾の地図の迷路の ゴールまで ころがす。キーホルダーの 玉ころがし迷路のように）
 // ・盤は 本物の西尾の地図の一部（ドット絵の地図と同じ絵。pixel.js の paintRegion）。めいろの1マスは 地図の 2×2マス（約16m）。
 //   道の ある マスが 床で、となりへ 通れるのは 本当の 道が さかいを またいで つながる 所だけ。その中から 穴ほりで 1本道の 迷路を えらぶ（町の 通りが そのまま 迷路になる）。
@@ -584,8 +585,7 @@ function step(dt) {
         const vo = -(g.vx * sf.ux + g.vy * sf.uy), want = Math.min(MAX, sf.vin * SPRING_E);
         if (vo < want) {
           g.vx -= (want - vo) * sf.ux; g.vy -= (want - vo) * sf.uy; g.spring.boosts++;
-          const now = performance.now(), sp = g.spring; sp.chain = now - (sp.at || 0) < 1500 ? sp.chain + 1 : 1; sp.at = now;   // ばねの れんぱつ（快感）：1.5秒 以内に また はね返ると 音が 1段ずつ 高く、2れんぱつ から 緑の きらきら
-          if (sp.chain >= 2) for (let k = 0; k < 6 + Math.min(12, sp.chain * 3); k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 2; g.fx.push({ x: g.x, y: g.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, c: k % 3 === 0 ? '#ffffff' : k % 2 ? '#8cf078' : '#e4ffd8', t: 0, life: 0.5 }); }
+          const now = performance.now(), sp = g.spring; sp.chain = 1; sp.at = now;   // ばねの はね返りは 何回 つづいても 同じ 穏やかな ぽよん（数えない。音も きらきらも 増やさない）
         }
         const v = Math.hypot(g.vx, g.vy); if (v > MAX) { g.vx *= MAX / v; g.vy *= MAX / v; }   // 横向きの 速さと あわせても いちばん速い 速さまで
       }

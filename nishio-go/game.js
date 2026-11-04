@@ -2,6 +2,7 @@
  * 外部ライブラリ：Leaflet のみ。データはすべて localStorage（キー接頭辞 nsg_）。 */
 (() => {
 'use strict';
+// 第4弾サイクル76 参考ゲーム「あつまれ どうぶつの森」：同じ ことを くりかえしても 音も 反応も 段階的に 大きく ならず、いつも 同じ おだやかな 反応。集めた ものは 静かに 持っている 記録として 残り、過去の 自分とは 比べない
 
 // 版（edition.js）：shops が false の版（西尾市版・提案用デモ）では、当店・特典・キャンペーンを出さない
 const ED = window.NSG_EDITION || { id: 'shop', shops: true };
@@ -1077,13 +1078,14 @@ function yatsuMushiReward(gotTarget, seenIds) {
   return { pts, fresh, newOnes: newOnes.length, total: S.yatsuMushi.length };
 }
 
-// ミニゲームの面ごとの記録（結果の画面では更新を知らせず、静かに残すだけ。Townscaper）（倉庫番のゲームのように、面ごとに いちばん良い記録と、どこまで解いたかを残す）
-// s は「できた印」（1固定）。効率（v）では比べない（呼び出しは (…, 1, 0, false)。既存セーブの s=2,3 もそのまま読む）。成功（s が1以上）だけ記録する
+// ミニゲームの面ごとの記録（結果の画面では更新を知らせず、静かに残すだけ。Townscaper）（倉庫番のゲームのように、面ごとに 解いたかどうかを残す）
+// 参考ゲーム「あつまれ どうぶつの森」：初めて成功した印（s が1以上）だけ静かに残し、既にある記録は 比べず 上書きしない（星・効率では更新を競わない）
+// 引数 v, lower は 互換のため 残すだけで 比較には つかわない。戻り値の fresh は「今回 初めて 記録した」（以前は「記録を 更新した」）。既存セーブの s=2,3 もそのまま読む
 function miniBest(game, level, stars, v, lower) {
   const all = S.mini || (S.mini = {}), list = all[game] || (all[game] = []), old = list[level] || null;
-  const better = stars > 0 && (!old || stars > old.s || (stars === old.s && (lower ? v < old.v : v > old.v)));
-  if (better) { list[level] = { s: stars, v }; save(); }
-  return { old, best: list[level] || null, fresh: better && !!old };
+  const fresh = stars > 0 && !old;
+  if (fresh) { list[level] = { s: stars, v }; save(); }
+  return { old, best: list[level] || null, fresh };
 }
 const miniRecords = game => ((S.mini || {})[game] || []).map(r => r || null);
 // ミニゲームを開いたときの面：まだ成功していない いちばん前の面（ぜんぶ成功していれば1つ目）

@@ -32,9 +32,9 @@ class Calm(unittest.TestCase):
         g = SRC['game']
         i = g.index('function miniBest(')
         blk = g[i:g.index('\n}\n', i)]
-        self.assertIn('stars > 0 && (!old || stars > old.s || (stars === old.s && (lower ? v < old.v : v > old.v)))', blk)
+        self.assertIn('stars > 0 && !old', blk)
         self.assertIn('list[level] = { s: stars, v }', blk)
-        self.assertIn('fresh: better && !!old', blk)
+        self.assertNotIn('stars > old.s', blk)
 
     def test_townscaper(self):
         for n in SRC:
